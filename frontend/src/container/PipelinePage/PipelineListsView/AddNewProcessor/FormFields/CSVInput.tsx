@@ -1,4 +1,6 @@
 import { ChangeEventHandler, useState } from 'react';
+// TODO(@signozhq/ui-input): migrate to @signozhq/ui Input once the antd
+// `InputProps` spread (`size`, etc.) is no longer needed on this wrapper.
 import { Input, InputProps } from 'antd';
 
 function CSVInput({ value, onChange, ...otherProps }: InputProps): JSX.Element {

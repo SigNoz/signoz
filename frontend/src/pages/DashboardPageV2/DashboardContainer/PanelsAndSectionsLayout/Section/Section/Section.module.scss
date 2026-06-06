@@ -1,0 +1,9 @@
+.section {
+	margin-bottom: 12px;
+	border: 1px solid var(--bg-slate-500);
+	border-radius: 4px;
+}
+
+.dragging {
+	opacity: 0.8;
+}

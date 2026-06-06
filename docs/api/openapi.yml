@@ -970,14 +970,6 @@ components:
       - timestampMillis
       - data
       type: object
-    CloudintegrationtypesAssets:
-      properties:
-        dashboards:
-          items:
-            $ref: '#/components/schemas/CloudintegrationtypesDashboard'
-          nullable: true
-          type: array
-      type: object
     CloudintegrationtypesAzureAccountConfig:
       properties:
         deploymentRegion:
@@ -1124,17 +1116,6 @@ components:
       - sigNozApiKey
       - ingestionUrl
       - ingestionKey
-      type: object
-    CloudintegrationtypesDashboard:
-      properties:
-        definition:
-          $ref: '#/components/schemas/DashboardtypesStorableDashboardData'
-        description:
-          type: string
-        id:
-          type: string
-        title:
-          type: string
       type: object
     CloudintegrationtypesDataCollected:
       properties:
@@ -1309,7 +1290,7 @@ components:
     CloudintegrationtypesService:
       properties:
         assets:
-          $ref: '#/components/schemas/CloudintegrationtypesAssets'
+          $ref: '#/components/schemas/CloudintegrationtypesServiceAssets'
         cloudIntegrationService:
           $ref: '#/components/schemas/CloudintegrationtypesCloudIntegrationService'
         dataCollected:
@@ -1322,8 +1303,6 @@ components:
           type: string
         supportedSignals:
           $ref: '#/components/schemas/CloudintegrationtypesSupportedSignals'
-        telemetryCollectionStrategy:
-          $ref: '#/components/schemas/CloudintegrationtypesTelemetryCollectionStrategy'
         title:
           type: string
       required:
@@ -1334,8 +1313,16 @@ components:
       - assets
       - supportedSignals
       - dataCollected
-      - telemetryCollectionStrategy
       - cloudIntegrationService
+      type: object
+    CloudintegrationtypesServiceAssets:
+      properties:
+        dashboards:
+          items:
+            $ref: '#/components/schemas/CloudintegrationtypesServiceDashboard'
+          type: array
+      required:
+      - dashboards
       type: object
     CloudintegrationtypesServiceConfig:
       properties:
@@ -1343,6 +1330,18 @@ components:
           $ref: '#/components/schemas/CloudintegrationtypesAWSServiceConfig'
         azure:
           $ref: '#/components/schemas/CloudintegrationtypesAzureServiceConfig'
+      type: object
+    CloudintegrationtypesServiceDashboard:
+      properties:
+        description:
+          type: string
+        integrationDashboard:
+          $ref: '#/components/schemas/CloudintegrationtypesStorableIntegrationDashboard'
+        title:
+          type: string
+      required:
+      - title
+      - description
       type: object
     CloudintegrationtypesServiceID:
       enum:
@@ -1378,19 +1377,36 @@ components:
       - icon
       - enabled
       type: object
+    CloudintegrationtypesStorableIntegrationDashboard:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        dashboardId:
+          type: string
+        id:
+          type: string
+        provider:
+          type: string
+        slug:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      required:
+      - id
+      - dashboardId
+      - provider
+      - slug
+      - createdAt
+      - updatedAt
+      type: object
     CloudintegrationtypesSupportedSignals:
       properties:
         logs:
           type: boolean
         metrics:
           type: boolean
-      type: object
-    CloudintegrationtypesTelemetryCollectionStrategy:
-      properties:
-        aws:
-          $ref: '#/components/schemas/CloudintegrationtypesAWSTelemetryCollectionStrategy'
-        azure:
-          $ref: '#/components/schemas/CloudintegrationtypesAzureTelemetryCollectionStrategy'
       type: object
     CloudintegrationtypesUpdatableAccount:
       properties:
@@ -2403,6 +2419,26 @@ components:
         repeatVariable:
           type: string
       type: object
+    DashboardLink:
+      properties:
+        name:
+          type: string
+        renderVariables:
+          type: boolean
+        targetBlank:
+          type: boolean
+        tooltip:
+          type: string
+        url:
+          type: string
+      type: object
+    DashboardPanelDisplay:
+      properties:
+        description:
+          type: string
+        name:
+          type: string
+      type: object
     DashboardTextVariableSpec:
       properties:
         constant:
@@ -2533,7 +2569,7 @@ components:
           type: array
         links:
           items:
-            $ref: '#/components/schemas/V1Link'
+            $ref: '#/components/schemas/DashboardLink'
           type: array
         panels:
           additionalProperties:
@@ -2668,10 +2704,34 @@ components:
         legend:
           $ref: '#/components/schemas/DashboardtypesLegend'
       type: object
+    DashboardtypesJSONPatchOperation:
+      properties:
+        from:
+          description: Source JSON Pointer for move/copy ops; ignored for other ops.
+          type: string
+        op:
+          $ref: '#/components/schemas/DashboardtypesPatchOp'
+        path:
+          description: JSON Pointer (RFC 6901) into the dashboard's postable shape
+            — e.g. /spec/display/name, /spec/panels/<id>, /spec/panels/<id>/spec/queries/0,
+            /tags/-.
+          type: string
+        value:
+          description: 'Value to add/replace/test against. The expected type depends
+            on the path. Common shapes (see referenced schemas for the exact field
+            set): /spec/panels/<id> takes a DashboardtypesPanel; /spec/panels/<id>/spec/queries/N
+            (or /-) takes a DashboardtypesQuery; /spec/variables/N takes a DashboardtypesVariable;
+            /spec/layouts/N takes a DashboardtypesLayout; /tags/N (or /-) takes a
+            TagtypesPostableTag; /spec/display/name and other leaf string fields take
+            a string. Required for add/replace/test; ignored for remove/move/copy.'
+      required:
+      - op
+      - path
+      type: object
     DashboardtypesLayout:
       oneOf:
-      - $ref: '#/components/schemas/DashboardtypesLayoutEnvelopeGithubComPersesPersesPkgModelApiV1DashboardGridLayoutSpec'
-    DashboardtypesLayoutEnvelopeGithubComPersesPersesPkgModelApiV1DashboardGridLayoutSpec:
+      - $ref: '#/components/schemas/DashboardtypesLayoutEnvelopeGithubComPersesSpecGoDashboardGridLayoutSpec'
+    DashboardtypesLayoutEnvelopeGithubComPersesSpecGoDashboardGridLayoutSpec:
       properties:
         kind:
           enum:
@@ -2754,7 +2814,7 @@ components:
     DashboardtypesPanel:
       properties:
         kind:
-          type: string
+          $ref: '#/components/schemas/DashboardtypesPanelKind'
         spec:
           $ref: '#/components/schemas/DashboardtypesPanelSpec'
       type: object
@@ -2765,6 +2825,10 @@ components:
         unit:
           type: string
       type: object
+    DashboardtypesPanelKind:
+      enum:
+      - Panel
+      type: string
     DashboardtypesPanelPlugin:
       oneOf:
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpec'
@@ -2871,10 +2935,10 @@ components:
     DashboardtypesPanelSpec:
       properties:
         display:
-          $ref: '#/components/schemas/V1PanelDisplay'
+          $ref: '#/components/schemas/DashboardPanelDisplay'
         links:
           items:
-            $ref: '#/components/schemas/V1Link'
+            $ref: '#/components/schemas/DashboardLink'
           type: array
         plugin:
           $ref: '#/components/schemas/DashboardtypesPanelPlugin'
@@ -2883,6 +2947,20 @@ components:
             $ref: '#/components/schemas/DashboardtypesQuery'
           type: array
       type: object
+    DashboardtypesPatchOp:
+      enum:
+      - add
+      - remove
+      - replace
+      - move
+      - copy
+      - test
+      type: string
+    DashboardtypesPatchableDashboardV2:
+      items:
+        $ref: '#/components/schemas/DashboardtypesJSONPatchOperation'
+      nullable: true
+      type: array
     DashboardtypesPieChartPanelSpec:
       properties:
         formatting:
@@ -2933,7 +3011,7 @@ components:
     DashboardtypesQuery:
       properties:
         kind:
-          type: string
+          $ref: '#/components/schemas/Querybuildertypesv5RequestType'
         spec:
           $ref: '#/components/schemas/DashboardtypesQuerySpec'
       type: object
@@ -3170,6 +3248,27 @@ components:
         timePreference:
           $ref: '#/components/schemas/DashboardtypesTimePreference'
       type: object
+    DashboardtypesUpdatableDashboardV2:
+      properties:
+        image:
+          type: string
+        name:
+          type: string
+        schemaVersion:
+          type: string
+        spec:
+          $ref: '#/components/schemas/DashboardtypesDashboardSpec'
+        tags:
+          items:
+            $ref: '#/components/schemas/TagtypesPostableTag'
+          nullable: true
+          type: array
+      required:
+      - schemaVersion
+      - name
+      - tags
+      - spec
+      type: object
     DashboardtypesUpdatablePublicDashboard:
       properties:
         defaultTimeRange:
@@ -3180,8 +3279,8 @@ components:
     DashboardtypesVariable:
       oneOf:
       - $ref: '#/components/schemas/DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpec'
-      - $ref: '#/components/schemas/DashboardtypesVariableEnvelopeGithubComPersesPersesPkgModelApiV1DashboardTextVariableSpec'
-    DashboardtypesVariableEnvelopeGithubComPersesPersesPkgModelApiV1DashboardTextVariableSpec:
+      - $ref: '#/components/schemas/DashboardtypesVariableEnvelopeGithubComPersesSpecGoDashboardTextVariableSpec'
+    DashboardtypesVariableEnvelopeGithubComPersesSpecGoDashboardTextVariableSpec:
       properties:
         kind:
           enum:
@@ -3260,7 +3359,19 @@ components:
           items:
             $ref: '#/components/schemas/ErrorsResponseerroradditional'
           type: array
+        invalidReferences:
+          items:
+            type: string
+          type: array
         message:
+          type: string
+        retry:
+          $ref: '#/components/schemas/ErrorsResponseretryjson'
+        suggestions:
+          items:
+            type: string
+          type: array
+        type:
           type: string
         url:
           type: string
@@ -3272,6 +3383,11 @@ components:
       properties:
         message:
           type: string
+      type: object
+    ErrorsResponseretryjson:
+      properties:
+        delay:
+          $ref: '#/components/schemas/TimeDuration'
       type: object
     FactoryResponse:
       properties:
@@ -6531,6 +6647,15 @@ components:
       required:
       - items
       type: object
+    SpantypesGettableTraceAggregations:
+      properties:
+        aggregations:
+          items:
+            $ref: '#/components/schemas/SpantypesSpanAggregationResult'
+          type: array
+      required:
+      - aggregations
+      type: object
     SpantypesGettableWaterfallTrace:
       properties:
         aggregations:
@@ -6569,6 +6694,15 @@ components:
           nullable: true
           type: array
       type: object
+    SpantypesOtelSpanRef:
+      properties:
+        refType:
+          type: string
+        spanId:
+          type: string
+        traceId:
+          type: string
+      type: object
     SpantypesPostableSpanMapper:
       properties:
         config:
@@ -6596,6 +6730,15 @@ components:
       - name
       - condition
       type: object
+    SpantypesPostableTraceAggregations:
+      properties:
+        aggregations:
+          items:
+            $ref: '#/components/schemas/SpantypesSpanAggregation'
+          type: array
+      required:
+      - aggregations
+      type: object
     SpantypesPostableWaterfall:
       properties:
         aggregations:
@@ -6620,6 +6763,9 @@ components:
           $ref: '#/components/schemas/SpantypesSpanAggregationType'
         field:
           $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+      required:
+      - field
+      - aggregation
       type: object
     SpantypesSpanAggregationResult:
       properties:
@@ -6633,6 +6779,10 @@ components:
             type: integer
           nullable: true
           type: object
+      required:
+      - field
+      - aggregation
+      - value
       type: object
     SpantypesSpanAggregationType:
       enum:
@@ -6816,6 +6966,10 @@ components:
           type: string
         parent_span_id:
           type: string
+        references:
+          items:
+            $ref: '#/components/schemas/SpantypesOtelSpanRef'
+          type: array
         resource:
           additionalProperties:
             type: string
@@ -6841,6 +6995,8 @@ components:
           type: string
         trace_state:
           type: string
+      required:
+      - references
       type: object
     TagtypesPostableTag:
       properties:
@@ -7091,6 +7247,13 @@ components:
       required:
       - name
       type: object
+    TypesPostableVerifyResetPasswordToken:
+      properties:
+        token:
+          type: string
+      required:
+      - token
+      type: object
     TypesResetPasswordToken:
       properties:
         expiresAt:
@@ -7134,26 +7297,6 @@ components:
           type: string
       required:
       - id
-      type: object
-    V1Link:
-      properties:
-        name:
-          type: string
-        renderVariables:
-          type: boolean
-        targetBlank:
-          type: boolean
-        tooltip:
-          type: string
-        url:
-          type: string
-      type: object
-    V1PanelDisplay:
-      properties:
-        description:
-          type: string
-        name:
-          type: string
       type: object
     VariableDefaultValue:
       type: object
@@ -7987,7 +8130,139 @@ paths:
       summary: Update account
       tags:
       - cloudintegration
+  /api/v1/cloud_integrations/{cloud_provider}/accounts/{id}/services:
+    get:
+      deprecated: false
+      description: This endpoint lists the services metadata for the specified account
+        and cloud provider
+      operationId: ListAccountServicesMetadata
+      parameters:
+      - in: path
+        name: cloud_provider
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CloudintegrationtypesGettableServicesMetadata'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: List account services metadata
+      tags:
+      - cloudintegration
   /api/v1/cloud_integrations/{cloud_provider}/accounts/{id}/services/{service_id}:
+    get:
+      deprecated: false
+      description: This endpoint gets a service and its configuration for the specified
+        cloud integration account
+      operationId: GetAccountService
+      parameters:
+      - in: path
+        name: cloud_provider
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: service_id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CloudintegrationtypesService'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Get service for account
+      tags:
+      - cloudintegration
     put:
       deprecated: false
       description: This endpoint updates a service for the specified cloud provider
@@ -12264,6 +12539,75 @@ paths:
       summary: Test notification channel (deprecated)
       tags:
       - channels
+  /api/v1/traces/{traceID}/aggregations:
+    post:
+      deprecated: false
+      description: Computes span aggregations grouped by requested field.
+      operationId: GetTraceAggregations
+      parameters:
+      - in: path
+        name: traceID
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpantypesPostableTraceAggregations'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SpantypesGettableTraceAggregations'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get aggregations for a trace
+      tags:
+      - tracedetail
   /api/v1/user:
     get:
       deprecated: false
@@ -12714,6 +13058,12 @@ paths:
                 - data
                 type: object
           description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
         "401":
           content:
             application/json:
@@ -12766,6 +13116,12 @@ paths:
                 - data
                 type: object
           description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
         "401":
           content:
             application/json:
@@ -12778,6 +13134,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
         "500":
           content:
             application/json:
@@ -12790,6 +13152,262 @@ paths:
       - tokenizer:
         - VIEWER
       summary: Get dashboard (v2)
+      tags:
+      - dashboard
+    patch:
+      deprecated: false
+      description: 'This endpoint applies an RFC 6902 JSON Patch to a v2-shape dashboard.
+        The patch is applied against the postable view of the dashboard (metadata,
+        data, tags), so individual panels, queries, variables, layouts, or tags can
+        be updated without re-sending the rest of the dashboard. Apply is lenient:
+        `remove` on a missing path is a no-op (idempotent) and `add` creates any missing
+        parent objects, rather than failing as strict RFC 6902 would. The resulting
+        dashboard is still validated. Locked dashboards are rejected.'
+      operationId: PatchDashboardV2
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DashboardtypesPatchableDashboardV2'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DashboardtypesGettableDashboardV2'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - EDITOR
+      - tokenizer:
+        - EDITOR
+      summary: Patch dashboard (v2)
+      tags:
+      - dashboard
+    put:
+      deprecated: false
+      description: This endpoint updates a v2-shape dashboard's metadata, data, and
+        tag set. Locked dashboards are rejected.
+      operationId: UpdateDashboardV2
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DashboardtypesUpdatableDashboardV2'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DashboardtypesGettableDashboardV2'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - EDITOR
+      - tokenizer:
+        - EDITOR
+      summary: Update dashboard (v2)
+      tags:
+      - dashboard
+  /api/v2/dashboards/{id}/lock:
+    delete:
+      deprecated: false
+      description: This endpoint unlocks a v2-shape dashboard. Only the dashboard's
+        creator or an org admin may lock or unlock.
+      operationId: UnlockDashboardV2
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - EDITOR
+      - tokenizer:
+        - EDITOR
+      summary: Unlock dashboard (v2)
+      tags:
+      - dashboard
+    put:
+      deprecated: false
+      description: This endpoint locks a v2-shape dashboard. Only the dashboard's
+        creator or an org admin may lock or unlock.
+      operationId: LockDashboardV2
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - EDITOR
+      - tokenizer:
+        - EDITOR
+      summary: Lock dashboard (v2)
       tags:
       - dashboard
   /api/v2/factor_password/forgot:
@@ -14872,6 +15490,41 @@ paths:
       summary: Readiness check
       tags:
       - health
+  /api/v2/reset_password_tokens/verify:
+    post:
+      deprecated: false
+      description: This endpoint verifies whether a reset password token exists and
+        is not expired
+      operationId: VerifyResetPasswordToken
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TypesPostableVerifyResetPasswordToken'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      summary: Verify a reset password token
+      tags:
+      - users
   /api/v2/roles/{id}/users:
     get:
       deprecated: false

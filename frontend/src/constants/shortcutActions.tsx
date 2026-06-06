@@ -15,10 +15,10 @@ import {
 	ListMinus,
 	ScrollText,
 	Settings,
-	Sparkles,
 	TowerControl,
 	Workflow,
 } from '@signozhq/icons';
+import Noz from 'components/Noz/Noz';
 import { ROLES } from 'types/roles';
 
 export type CmdAction = {
@@ -292,11 +292,11 @@ export function createShortcutActions(deps: ActionDeps): CmdAction[] {
 	if (aiAssistant) {
 		actions.unshift({
 			id: 'ai-assistant',
-			name: 'Open AI Assistant',
+			name: 'Open Noz',
 			shortcut: ['cmd+j'],
-			keywords: 'ai assistant chat ask sparkles copilot',
-			section: 'AI Assistant',
-			icon: <Sparkles size={14} />,
+			keywords: 'noz ai assistant chat ask sparkles copilot',
+			section: 'Noz',
+			icon: <Noz size={16} />,
 			roles: ['ADMIN', 'EDITOR', 'VIEWER'],
 			perform: aiAssistant.open,
 		});

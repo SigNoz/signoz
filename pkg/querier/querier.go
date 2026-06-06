@@ -217,7 +217,7 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 		}
 	}
 	preseededResults := make(map[string]any)
-	for _, name := range missingMetricQueries { // at this point missing metrics will not have any non existent metrics, only normal ones
+	for _, name := range missingMetricQueries {
 		switch req.RequestType {
 		case qbtypes.RequestTypeTimeSeries:
 			preseededResults[name] = &qbtypes.TimeSeriesData{QueryName: name}
@@ -375,11 +375,24 @@ func (q *querier) resolveMetricMetadata(ctx context.Context, queries []qbtypes.Q
 		return missingMetricQueries, "", nil
 	}
 
+	isInternalMetric := func(n string) bool { return strings.HasPrefix(n, "signoz.") || strings.HasPrefix(n, "signoz_") }
+	externalMissingMetrics := make([]string, 0, len(missingMetrics))
+	for _, m := range missingMetrics {
+		if !isInternalMetric(m) {
+			externalMissingMetrics = append(externalMissingMetrics, m)
+		}
+	}
+	if len(externalMissingMetrics) == 0 {
+		// this means all missing metrics are internal, and since internal metrics
+		// aren't user-controlled, skip errors/warnings for them since users can't act on them
+		return missingMetricQueries, "", nil
+	}
+
 	// Classify each missing metric: never-seen → NotFound error; seen-but-no-
 	// data-in-window → dormant warning.
-	lastSeenInfo, _ := q.metadataStore.FetchLastSeenInfoMulti(ctx, missingMetrics...)
+	lastSeenInfo, _ := q.metadataStore.FetchLastSeenInfoMulti(ctx, externalMissingMetrics...)
 	nonExistentMetrics := []string{}
-	for _, name := range missingMetrics {
+	for _, name := range externalMissingMetrics {
 		if ts, ok := lastSeenInfo[name]; ok && ts > 0 {
 			continue
 		}
@@ -400,11 +413,11 @@ func (q *querier) resolveMetricMetadata(ctx context.Context, queries []qbtypes.Q
 		}
 		return name
 	}
-	if len(missingMetrics) == 1 {
+	if len(externalMissingMetrics) == 1 {
 		dormantWarning = fmt.Sprintf("no data found for the metric %s in the query time range", lastSeenStr(missingMetrics[0]))
 	} else {
-		parts := make([]string, len(missingMetrics))
-		for i, m := range missingMetrics {
+		parts := make([]string, len(externalMissingMetrics))
+		for i, m := range externalMissingMetrics {
 			parts[i] = lastSeenStr(m)
 		}
 		dormantWarning = fmt.Sprintf("no data found for the following metrics in the query time range: %s", strings.Join(parts, ", "))
@@ -642,6 +655,12 @@ func (q *querier) run(
 		},
 	}
 
+	// Warnings can arrive duplicated: the bucket cache returns the cached
+	// portion's warnings alongside an identical warning emitted by every
+	// freshly-executed missing range (see mergeResults), and distinct queries
+	// can surface the same warning. Collapse exact duplicates before building
+	// the response.
+	warnings = dedupeWarnings(warnings)
 	if len(warnings) != 0 {
 		warns := make([]qbtypes.QueryWarnDataAdditional, len(warnings))
 		for i, warning := range warnings {
@@ -1125,6 +1144,8 @@ func (q *querier) adjustStepInterval(queries []qbtypes.QueryEnvelope, start, end
 			case qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]:
 				if qe.GetSource() == telemetrytypes.SourceMeter {
 					clampStep(qe, meterRecommended, meterMin, &warnings)
+					// we don't want to return warnings for meter metrics.
+					warnings = nil
 				} else {
 					clampStep(qe, metricRecommended, metricMin, &warnings)
 				}
@@ -1139,4 +1160,22 @@ func (q *querier) adjustStepInterval(queries []qbtypes.QueryEnvelope, start, end
 		}
 	}
 	return warnings
+}
+
+// dedupeWarnings removes exact-duplicate warning messages while preserving the
+// order of first occurrence. Returns nil for an empty input. Warning counts are
+// tiny (a handful per request), so a linear scan beats the allocation and
+// hashing overhead of a map.
+func dedupeWarnings(warnings []string) []string {
+	if len(warnings) == 0 {
+		return nil
+	}
+	unique := make([]string, 0, len(warnings))
+	// N^2 is faster than map-based deduping for small warning counts, and it preserves order of first occurrence without extra bookkeeping.
+	for _, warning := range warnings {
+		if !slices.Contains(unique, warning) {
+			unique = append(unique, warning)
+		}
+	}
+	return unique
 }

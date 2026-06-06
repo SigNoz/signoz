@@ -518,7 +518,6 @@ function VariableItem({
 										size={14}
 										style={{
 											color: isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_500,
-											marginTop: 1,
 										}}
 									/>
 								}
@@ -614,7 +613,6 @@ function VariableItem({
 												size={14}
 												style={{
 													color: isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_500,
-													marginTop: 1,
 												}}
 											/>
 										}

@@ -1,0 +1,5 @@
+.wrapper {
+	composes: cardWrapper from '../states.module.scss';
+	padding: 105px 190px;
+	gap: 8px;
+}

@@ -3,7 +3,6 @@ import { useQueryClient } from 'react-query';
 import * as Sentry from '@sentry/react';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
-import { TelemetryFieldKey } from 'api/v5/v5';
 import cx from 'classnames';
 import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
 import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
@@ -15,12 +14,6 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import { usePageActions } from 'container/AIAssistant/pageActions/usePageActions';
 import LogExplorerQuerySection from 'container/LogExplorerQuerySection';
 import LogsExplorerViewsContainer from 'container/LogsExplorerViews';
-import {
-	defaultLogsSelectedColumns,
-	defaultOptionsQuery,
-	URL_OPTIONS,
-} from 'container/OptionsMenu/constants';
-import { OptionsQuery } from 'container/OptionsMenu/types';
 import LeftToolbarActions from 'container/QueryBuilder/components/ToolbarActions/LeftToolbarActions';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
 import Toolbar from 'container/Toolbar/Toolbar';
@@ -31,11 +24,9 @@ import {
 	useHandleExplorerTabChange,
 } from 'hooks/useHandleExplorerTabChange';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
-import useUrlQueryData from 'hooks/useUrlQueryData';
-import { defaultTo, isEmpty, isEqual, isNull } from 'lodash-es';
+import { defaultTo, isEmpty, isNull } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { EventSourceProvider } from 'providers/EventSource';
-import { usePreferenceContext } from 'providers/preferences/context/PreferenceContextProvider';
 import { Warning } from 'types/api';
 import { DataSource } from 'types/common/queryBuilder';
 import {
@@ -62,8 +53,6 @@ function LogsExplorer(): JSX.Element {
 	const [selectedView, setSelectedView] = useState<ExplorerViews>(
 		() => panelTypeToExplorerView[panelTypesFromUrl],
 	);
-	const { logs } = usePreferenceContext();
-	const { preferences } = logs;
 
 	const [showFilters, setShowFilters] = useState<boolean>(() => {
 		const localStorageValue = getLocalStorageKey(
@@ -181,116 +170,6 @@ function LogsExplorer(): JSX.Element {
 		);
 		setShowFilters((prev) => !prev);
 	};
-
-	const { redirectWithQuery: redirectWithOptionsData } =
-		useUrlQueryData<OptionsQuery>(URL_OPTIONS, defaultOptionsQuery);
-
-	// Get and parse stored columns from localStorage
-	const logListOptionsFromLocalStorage = useMemo(() => {
-		const data = getLocalStorageKey(LOCALSTORAGE.LOGS_LIST_OPTIONS);
-
-		if (!data) {
-			return null;
-		}
-
-		try {
-			return JSON.parse(data);
-		} catch {
-			return null;
-		}
-	}, []);
-
-	// Check if the columns have the required columns (timestamp, body)
-	const hasRequiredColumns = useCallback(
-		(columns?: TelemetryFieldKey[] | null): boolean => {
-			if (!columns?.length) {
-				return false;
-			}
-
-			const hasTimestamp = columns.some((col) => col.name === 'timestamp');
-			const hasBody = columns.some((col) => col.name === 'body');
-
-			return hasTimestamp && hasBody;
-		},
-		[],
-	);
-
-	// Merge the columns with the required columns (timestamp, body) if missing
-	const mergeWithRequiredColumns = useCallback(
-		(columns: TelemetryFieldKey[]): TelemetryFieldKey[] => [
-			// Add required columns (timestamp, body) if missing
-			...(!hasRequiredColumns(columns) ? defaultLogsSelectedColumns : []),
-			...columns,
-		],
-		[hasRequiredColumns],
-	);
-
-	// Migrate the options query to the new format
-	const migrateOptionsQuery = useCallback(
-		(query: OptionsQuery): OptionsQuery => {
-			// Skip if already migrated
-			if (query.version) {
-				return query;
-			}
-
-			if (logListOptionsFromLocalStorage?.version) {
-				return logListOptionsFromLocalStorage;
-			}
-
-			// Case 1: we have localStorage columns
-			if (logListOptionsFromLocalStorage?.selectColumns?.length > 0) {
-				return {
-					...query,
-					version: 1,
-					selectColumns: mergeWithRequiredColumns(
-						logListOptionsFromLocalStorage.selectColumns,
-					),
-				};
-			}
-
-			// Case 2: No query columns in localStorage in but query has columns
-			if (query.selectColumns.length > 0) {
-				return {
-					...query,
-					version: 1,
-					selectColumns: mergeWithRequiredColumns(query.selectColumns),
-				};
-			}
-
-			// Case 3: No columns anywhere, use defaults
-			return {
-				...query,
-				version: 1,
-				selectColumns: defaultLogsSelectedColumns,
-			};
-		},
-		[mergeWithRequiredColumns, logListOptionsFromLocalStorage],
-	);
-
-	useEffect(() => {
-		if (!preferences) {
-			return;
-		}
-		const migratedQuery = migrateOptionsQuery({
-			selectColumns: preferences.columns || defaultLogsSelectedColumns,
-			maxLines: preferences.formatting?.maxLines || defaultOptionsQuery.maxLines,
-			format: preferences.formatting?.format || defaultOptionsQuery.format,
-			fontSize: preferences.formatting?.fontSize || defaultOptionsQuery.fontSize,
-			version: preferences.formatting?.version,
-		});
-		// Only redirect if the query was actually modified
-		if (
-			!isEqual(migratedQuery, {
-				selectColumns: preferences?.columns,
-				maxLines: preferences?.formatting?.maxLines,
-				format: preferences?.formatting?.format,
-				fontSize: preferences?.formatting?.fontSize,
-				version: preferences?.formatting?.version,
-			})
-		) {
-			redirectWithOptionsData(migratedQuery);
-		}
-	}, [migrateOptionsQuery, preferences, redirectWithOptionsData]);
 
 	const toolbarViews = useMemo(
 		() => ({

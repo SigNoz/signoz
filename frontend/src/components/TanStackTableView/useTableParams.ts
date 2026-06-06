@@ -4,6 +4,7 @@ import { parseAsInteger, useQueryState } from 'nuqs';
 import { parseAsJsonNoValidate } from 'utils/nuqsParsers';
 
 import { SortState, TanstackTableQueryParamsConfig } from './types';
+import { usePreferredPageSize } from './usePreferredPageSize.store';
 
 const NUQS_OPTIONS = { history: 'push' as const };
 const DEFAULT_PAGE = 1;
@@ -20,9 +21,15 @@ type Defaults = {
 	limit?: number;
 	orderBy?: SortState | null;
 	expanded?: ExpandedState;
+	/** Storage key for persisting user's page size preference */
+	storageKey?: string;
+	/** Auto-calculated page size from container. URL initializes with this when available. */
+	calculatedPageSize?: number | null;
+	/** Clear URL params on unmount. Useful when navigating away from table views. */
+	cleanupOnUnmount?: boolean;
 };
 
-type TableParamsResult = {
+export type TableParamsResult = {
 	page: number;
 	limit: number;
 	orderBy: SortState | null;
@@ -99,14 +106,22 @@ export function useTableParams(
 				? (enableQueryParams.expanded ?? URL_KEYS_DEFAULT.expanded)
 				: URL_KEYS_DEFAULT.expanded;
 	const pageDefault = defaults?.page ?? DEFAULT_PAGE;
-	const limitDefault = defaults?.limit ?? DEFAULT_LIMIT;
 	const orderByDefault = defaults?.orderBy ?? null;
 	const expandedDefault = defaults?.expanded ?? {};
+	const storageKey = defaults?.storageKey;
+	const calculatedPageSize = defaults?.calculatedPageSize;
+	const cleanupOnUnmount = defaults?.cleanupOnUnmount ?? false;
 	const expandedDefaultArray = useMemo(
 		() => expandedStateToArray(expandedDefault),
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[],
 	);
+
+	const [preferredPageSize, setPreferredPageSize] =
+		usePreferredPageSize(storageKey);
+
+	const limitDefault =
+		preferredPageSize ?? calculatedPageSize ?? defaults?.limit ?? DEFAULT_LIMIT;
 
 	const [localPage, setLocalPage] = useState(pageDefault);
 	const [localLimit, setLocalLimit] = useState(limitDefault);
@@ -120,9 +135,71 @@ export function useTableParams(
 		pageQueryParam,
 		parseAsInteger.withDefault(pageDefault).withOptions(NUQS_OPTIONS),
 	);
-	const [urlLimit, setUrlLimit] = useQueryState(
+	const [urlLimitRaw, setUrlLimitRaw] = useQueryState(
 		limitQueryParam,
-		parseAsInteger.withDefault(limitDefault).withOptions(NUQS_OPTIONS),
+		parseAsInteger.withOptions(NUQS_OPTIONS),
+	);
+
+	// Track if URL had limit on initial mount
+	const hadUrlLimitOnMountRef = useRef<boolean | null>(null);
+	if (hadUrlLimitOnMountRef.current === null) {
+		hadUrlLimitOnMountRef.current = urlLimitRaw !== null;
+	}
+	const hadUrlLimit = hadUrlLimitOnMountRef.current ?? false;
+
+	const urlLimit = urlLimitRaw ?? limitDefault;
+
+	// Initialize URL with preferred/calculated when available (only if URL was empty)
+	const hasInitializedUrlRef = useRef(false);
+	useEffect(() => {
+		if (!useUrlForLimit || hasInitializedUrlRef.current || hadUrlLimit) {
+			return;
+		}
+
+		if (preferredPageSize !== null) {
+			hasInitializedUrlRef.current = true;
+			void setUrlLimitRaw(preferredPageSize);
+			return;
+		}
+		if (calculatedPageSize != null) {
+			hasInitializedUrlRef.current = true;
+			void setUrlLimitRaw(calculatedPageSize);
+		}
+	}, [
+		useUrlForLimit,
+		calculatedPageSize,
+		preferredPageSize,
+		hadUrlLimit,
+		setUrlLimitRaw,
+	]);
+
+	// Wrapped setLimit that persists preference when different from calculated
+	const setUrlLimit = useCallback(
+		(newLimit: number): void => {
+			if (storageKey) {
+				if (newLimit !== calculatedPageSize) {
+					setPreferredPageSize(newLimit);
+				} else {
+					setPreferredPageSize(null);
+				}
+			}
+			void setUrlLimitRaw(newLimit);
+		},
+		[storageKey, calculatedPageSize, setPreferredPageSize, setUrlLimitRaw],
+	);
+
+	const setLocalLimitWithPersist = useCallback(
+		(newLimit: number): void => {
+			if (storageKey) {
+				if (newLimit !== calculatedPageSize) {
+					setPreferredPageSize(newLimit);
+				} else {
+					setPreferredPageSize(null);
+				}
+			}
+			setLocalLimit(newLimit);
+		},
+		[storageKey, calculatedPageSize, setPreferredPageSize],
 	);
 	const [urlOrderBy, setUrlOrderBy] = useQueryState(
 		orderByQueryParam,
@@ -155,7 +232,7 @@ export function useTableParams(
 				typeof updaterOrValue === 'function'
 					? updaterOrValue(urlExpandedRef.current)
 					: updaterOrValue;
-			setUrlExpandedArray(expandedStateToArray(newState));
+			void setUrlExpandedArray(expandedStateToArray(newState));
 		},
 		[setUrlExpandedArray],
 	);
@@ -172,21 +249,53 @@ export function useTableParams(
 		[],
 	);
 
-	const orderByDefaultMemoKey = `${orderByDefault?.columnName}${orderByDefault?.order}`;
 	const orderByUrlMemoKey = `${urlOrderBy?.columnName}${urlOrderBy?.order}`;
+	const prevOrderByRef = useRef<string | null>(null);
 
 	useEffect(() => {
-		if (useUrlForPage) {
-			setUrlPage(pageDefault);
-		} else {
-			setLocalPage(pageDefault);
+		// Only reset page when orderBy actually changes, not on initial mount
+		if (
+			prevOrderByRef.current !== null &&
+			prevOrderByRef.current !== orderByUrlMemoKey
+		) {
+			if (useUrlForPage) {
+				void setUrlPage(pageDefault);
+			} else {
+				setLocalPage(pageDefault);
+			}
 		}
+		prevOrderByRef.current = orderByUrlMemoKey;
+	}, [useUrlForPage, orderByUrlMemoKey, pageDefault, setUrlPage]);
+
+	useEffect(() => {
+		if (!cleanupOnUnmount) {
+			return;
+		}
+
+		return (): void => {
+			if (useUrlForPage) {
+				void setUrlPage(null);
+			}
+			if (useUrlForLimit) {
+				void setUrlLimitRaw(null);
+			}
+			if (useUrlForOrderBy) {
+				void setUrlOrderBy(null);
+			}
+			if (useUrlForExpanded) {
+				void setUrlExpandedArray(null);
+			}
+		};
 	}, [
+		cleanupOnUnmount,
 		useUrlForPage,
-		orderByDefaultMemoKey,
-		orderByUrlMemoKey,
-		pageDefault,
+		useUrlForLimit,
+		useUrlForOrderBy,
+		useUrlForExpanded,
 		setUrlPage,
+		setUrlLimitRaw,
+		setUrlOrderBy,
+		setUrlExpandedArray,
 	]);
 
 	return {
@@ -195,7 +304,7 @@ export function useTableParams(
 		orderBy: (useUrlForOrderBy ? urlOrderBy : localOrderBy) as SortState | null,
 		expanded: useUrlForExpanded ? urlExpanded : localExpanded,
 		setPage: useUrlForPage ? setUrlPage : setLocalPage,
-		setLimit: useUrlForLimit ? setUrlLimit : setLocalLimit,
+		setLimit: useUrlForLimit ? setUrlLimit : setLocalLimitWithPersist,
 		setOrderBy: useUrlForOrderBy ? setUrlOrderBy : setLocalOrderBy,
 		setExpanded: useUrlForExpanded ? setUrlExpanded : handleSetLocalExpanded,
 	};

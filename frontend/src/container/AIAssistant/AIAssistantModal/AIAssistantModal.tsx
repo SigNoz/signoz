@@ -4,7 +4,8 @@ import { useHistory, useLocation } from 'react-router-dom';
 import { Button } from '@signozhq/ui/button';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
 import ROUTES from 'constants/routes';
-import { History, Maximize2, Minus, Plus, Sparkles, X } from '@signozhq/icons';
+import { History, Maximize2, Minus, Plus, X } from '@signozhq/icons';
+import Noz from 'components/Noz/Noz';
 
 import logEvent from 'api/common/logEvent';
 
@@ -142,15 +143,15 @@ export default function AIAssistantModal(): JSX.Element | null {
 				className={styles.backdrop}
 				role="dialog"
 				aria-modal="true"
-				aria-label="AI Assistant"
+				aria-label="Noz"
 				onClick={handleBackdropClick}
 			>
 				<div className={styles.modal}>
 					{/* Header */}
 					<div className={styles.header}>
-						<div className={styles.title}>
-							<Sparkles size={16} color="var(--primary)" />
-							<span>AI Assistant</span>
+						<div className={`${styles.title} noz-wave`}>
+							<Noz size={16} />
+							<span>Noz</span>
 							<kbd className={styles.shortcut}>
 								<span>⌘</span>
 								<span>J</span>
