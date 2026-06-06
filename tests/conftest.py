@@ -51,6 +51,12 @@ def pytest_addoption(parser: pytest.Parser):
         help="Build and run with web. Run pytest --basetemp=./tmp/ -vv --with-web src/bootstrap/setup::test_setup to setup your local dev environment with web.",
     )
     parser.addoption(
+        "--base-path",
+        action="store",
+        default="",
+        help="Serve SigNoz under this URL path prefix, e.g. /signoz. When set, SIGNOZ_GLOBAL_EXTERNAL__URL is configured with this path and all test requests are issued under the prefix.",
+    )
+    parser.addoption(
         "--sqlstore-provider",
         action="store",
         default="postgres",

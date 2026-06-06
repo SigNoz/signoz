@@ -1,6 +1,6 @@
 from collections.abc import Callable
 from typing import Any
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urlparse
 from xml.etree import ElementTree
 
 import pytest
@@ -33,7 +33,7 @@ def create_saml_client(idp: types.TestContainerIDP, signoz: types.SigNoz) -> Cal
                 "description": f"client for {client_id}",
                 "rootUrl": "",
                 "adminUrl": "",
-                "baseUrl": urljoin(f"{signoz.self.host_configs['8080'].base()}", callback_path),
+                "baseUrl": signoz.self.host_configs["8080"].get(callback_path),
                 "surrogateAuthRequired": False,
                 "enabled": True,
                 "alwaysDisplayInConsole": False,
@@ -68,7 +68,7 @@ def create_saml_client(idp: types.TestContainerIDP, signoz: types.SigNoz) -> Cal
                     "saml_signature_canonicalization_method": "http://www.w3.org/2001/10/xml-exc-c14n#",
                     "saml.onetimeuse.condition": "false",
                     "saml.server.signature.keyinfo.xmlSigKeyInfoKeyNameTransformer": "NONE",
-                    "saml_assertion_consumer_url_post": urljoin(f"{signoz.self.host_configs['8080'].base()}", callback_path),
+                    "saml_assertion_consumer_url_post": signoz.self.host_configs["8080"].get(callback_path),
                 },
                 "authenticationFlowBindingOverrides": {},
                 "fullScopeAllowed": True,
@@ -206,7 +206,7 @@ def create_oidc_client(idp: types.TestContainerIDP, signoz: types.SigNoz) -> Cal
                 "enabled": True,
                 "alwaysDisplayInConsole": False,
                 "clientAuthenticatorType": "client-secret",
-                "redirectUris": [f"{urljoin(signoz.self.host_configs['8080'].base(), callback_path)}"],
+                "redirectUris": [signoz.self.host_configs["8080"].get(callback_path)],
                 "webOrigins": ["/*"],
                 "notBefore": 0,
                 "bearerOnly": False,

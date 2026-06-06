@@ -39,6 +39,9 @@ def create_signoz(
         # Get the no-web flag
         with_web = pytestconfig.getoption("--with-web")
 
+        # Get the base path prefix (e.g. /signoz). Empty string means root serving.
+        base_path = pytestconfig.getoption("--base-path")
+
         arch = platform.machine()
         if arch == "x86_64":
             arch = "amd64"
@@ -85,6 +88,12 @@ def create_signoz(
 
         if with_web:
             env["SIGNOZ_WEB_ENABLED"] = True
+
+        if base_path:
+            # Only the path component is read by global.ExternalPath(), which
+            # derives the HTTP route prefix (http.StripPrefix). The host is
+            # irrelevant for routing.
+            env["SIGNOZ_GLOBAL_EXTERNAL__URL"] = f"http://localhost:8080{base_path}"
 
         if env_overrides:
             env = env | env_overrides
@@ -145,6 +154,7 @@ def create_signoz(
                         "http",
                         container.get_container_host_ip(),
                         container.get_exposed_port(8080),
+                        base_path=base_path,
                     )
                 },
                 container_configs={
@@ -152,6 +162,7 @@ def create_signoz(
                         "http",
                         container.get_wrapped_container().name,
                         8080,
+                        base_path=base_path,
                     )
                 },
             ),

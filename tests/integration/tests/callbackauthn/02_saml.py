@@ -91,7 +91,7 @@ def test_create_auth_domain(
     assert relay_state_path is not None
 
     # Get the relay state url from domains API
-    relay_state_url = signoz.self.host_configs["8080"].base() + "/" + relay_state_path
+    relay_state_url = signoz.self.host_configs["8080"].get("/" + relay_state_path)
 
     # Update the saml client with new attributes
     update_saml_client_attributes(
