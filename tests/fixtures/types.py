@@ -17,8 +17,6 @@ class TestContainerUrlConfig:
     scheme: str
     address: str
     port: int
-    # Optional URL path prefix (e.g. /signoz) when SigNoz is served under a base
-    # path. Prepended to every path in get(); empty string means root serving.
     base_path: str = ""
 
     def base(self) -> str:
