@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Check } from '@signozhq/icons';
+import { Check, Info } from '@signozhq/icons';
 import {
 	Button,
 	DatePicker,
@@ -11,6 +11,7 @@ import {
 	Select,
 	SelectProps,
 	Spin,
+	Tooltip,
 } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import type { DefaultOptionType } from 'antd/es/select';
@@ -53,6 +54,7 @@ import {
 } from './PlannedDowntimeutils';
 
 import './PlannedDowntime.styles.scss';
+import { RadioGroupItem, RadioGroup } from '@signozhq/ui/radio-group';
 
 dayjs.locale('en');
 dayjs.extend(utc);
@@ -70,14 +72,18 @@ const TZ_OPTIONS: DefaultOptionType[] = ALL_TIME_ZONES.map(
 	}),
 );
 
+type AlertRuleScope = 'all' | 'specific';
+
 interface PlannedDowntimeFormData {
 	name: string;
 	startTime: dayjs.Dayjs | null;
 	endTime: dayjs.Dayjs | null;
 	recurrence?: AlertmanagertypesRecurrenceDTO;
+	alertRuleScope: AlertRuleScope;
 	alertRules: DefaultOptionType[];
 	recurrenceSelect?: AlertmanagertypesRecurrenceDTO;
 	timezone?: string;
+	scope?: string;
 }
 
 const customFormat = DATE_TIME_FORMATS.ORDINAL_DATETIME;
@@ -127,6 +133,12 @@ export function PlannedDowntimeForm(
 			recurrenceOptions.doesNotRepeat.value,
 	);
 
+	const [alertRuleScope, setAlertRuleScope] = useState<AlertRuleScope>(
+		initialValues.id && (initialValues.alertIds || []).length === 0
+			? 'all'
+			: 'specific',
+	);
+
 	const { notifications } = useNotifications();
 	const { showErrorModal } = useErrorModal();
 
@@ -140,10 +152,14 @@ export function PlannedDowntimeForm(
 	const saveHandler = useCallback(
 		async (values: PlannedDowntimeFormData) => {
 			const data: AlertmanagertypesPostablePlannedMaintenanceDTO = {
-				alertIds: values.alertRules
-					.map((alert) => alert.value)
-					.filter((alert) => alert !== undefined) as string[],
+				alertIds:
+					values.alertRuleScope === 'all'
+						? []
+						: (values.alertRules
+								.map((alert) => alert.value)
+								.filter((alert) => alert !== undefined) as string[]),
 				name: values.name,
+				scope: values.scope,
 				schedule: {
 					startTime: values.startTime?.format(),
 					endTime: values.endTime?.format(),
@@ -262,12 +278,13 @@ export function PlannedDowntimeForm(
 		const startTime = schedule?.recurrence?.startTime || schedule?.startTime;
 		const endTime = schedule?.recurrence?.endTime || schedule?.endTime;
 
+		const initialAlertIds = initialValues.alertIds || [];
+
 		return {
 			name: defaultTo(initialValues.name, ''),
-			alertRules: getAlertOptionsFromIds(
-				initialValues.alertIds || [],
-				alertOptions,
-			),
+			alertRuleScope:
+				isEditMode && initialAlertIds.length === 0 ? 'all' : 'specific',
+			alertRules: getAlertOptionsFromIds(initialAlertIds, alertOptions),
 			startTime: startTime ? dayjs(startTime).tz(schedule.timezone) : null,
 			endTime: endTime ? dayjs(endTime).tz(schedule.timezone) : null,
 			recurrence: {
@@ -278,11 +295,13 @@ export function PlannedDowntimeForm(
 				duration: getDurationInfo(schedule?.recurrence?.duration)?.value ?? '',
 			} as AlertmanagertypesRecurrenceDTO,
 			timezone: schedule?.timezone as string,
+			scope: initialValues.scope || '',
 		};
 	}, [initialValues, alertOptions]);
 
 	useEffect(() => {
 		setSelectedTags(formattedInitialValues.alertRules);
+		setAlertRuleScope(formattedInitialValues.alertRuleScope);
 		form.setFieldsValue({ ...formattedInitialValues });
 	}, [form, formattedInitialValues, initialValues]);
 
@@ -311,7 +330,7 @@ export function PlannedDowntimeForm(
 			default:
 				return `Scheduled for ${formattedStartDate} starting at ${formattedStartTime}.`;
 		}
-	}, [formData, recurrenceType, timezone]);
+	}, [formData, recurrenceType]);
 
 	const endTimeText = useMemo((): string => {
 		const endTime = formData.endTime;
@@ -322,7 +341,7 @@ export function PlannedDowntimeForm(
 		const formattedEndTime = endTime.format(TIME_FORMAT);
 		const formattedEndDate = endTime.format(DATE_FORMAT);
 		return `Scheduled to end maintenance on ${formattedEndDate} at ${formattedEndTime}.`;
-	}, [formData, recurrenceType, timezone]);
+	}, [formData, recurrenceType]);
 
 	return (
 		<Modal
@@ -345,6 +364,7 @@ export function PlannedDowntimeForm(
 				onFinish={onFinish}
 				onValuesChange={(): void => {
 					setRecurrenceType(form.getFieldValue('recurrence')?.repeatType as string);
+					setAlertRuleScope(form.getFieldValue('alertRuleScope') as AlertRuleScope);
 					handleFormData(form.getFieldsValue());
 				}}
 				autoComplete="off"
@@ -444,50 +464,107 @@ export function PlannedDowntimeForm(
 					<div className="scheduleTimeInfoText">{endTimeText}</div>
 				)}
 				<div>
-					<div className="alert-rule-form">
-						<Typography style={{ marginBottom: 8 }}>Silence Alerts</Typography>
-						<Typography style={{ marginBottom: 8 }} className="alert-rule-info">
-							(Leave empty to silence all alerts)
-						</Typography>
-					</div>
-					<Form.Item noStyle shouldUpdate>
-						<AlertRuleTags
-							closable
-							selectedTags={selectedTags}
-							handleClose={handleClose}
-						/>
+					<Typography style={{ marginBottom: 8 }}>Silence Alerts</Typography>
+					<Form.Item
+						name="alertRuleScope"
+						initialValue="specific"
+						className="alert-rule-scope"
+					>
+						<RadioGroup className="silence-alerts-radio-group">
+							<RadioGroupItem value="all">All alert rules</RadioGroupItem>
+							<RadioGroupItem value="specific">Specific alert rules</RadioGroupItem>
+						</RadioGroup>
 					</Form.Item>
-					<Form.Item name={alertRuleFormName}>
-						<Select
-							placeholder="Search for alerts rules or groups..."
-							mode="multiple"
-							status={isError ? 'error' : undefined}
-							loading={isLoading}
-							tagRender={noTagRenderer}
-							onChange={handleAlertRulesChange}
-							showSearch
-							options={alertOptions}
-							filterOption={(input, option): boolean =>
-								(option?.label as string)?.toLowerCase()?.includes(input.toLowerCase())
-							}
-							notFoundContent={
-								isLoading ? (
-									<span>
-										<Spin size="small" /> Loading...
-									</span>
-								) : (
-									<span>No alert available.</span>
-								)
-							}
-						>
-							{alertOptions?.map((option) => (
-								<Select.Option key={option.value} value={option.value}>
-									{option.label}
-								</Select.Option>
-							))}
-						</Select>
-					</Form.Item>
+					{alertRuleScope === 'specific' && (
+						<>
+							<Form.Item noStyle shouldUpdate>
+								<AlertRuleTags
+									closable
+									selectedTags={selectedTags}
+									handleClose={handleClose}
+								/>
+							</Form.Item>
+							<Form.Item
+								name={alertRuleFormName}
+								rules={[
+									{
+										validator: async (
+											_rule,
+											value: DefaultOptionType[] | undefined,
+										): Promise<void> => {
+											if (!value || value.length === 0) {
+												throw new Error(
+													'Select at least one alert rule, or choose "All alert rules" to silence everything.',
+												);
+											}
+										},
+									},
+								]}
+							>
+								<Select
+									placeholder="Search for alert rules or groups..."
+									mode="multiple"
+									status={isError ? 'error' : undefined}
+									loading={isLoading}
+									tagRender={noTagRenderer}
+									onChange={handleAlertRulesChange}
+									showSearch
+									options={alertOptions}
+									filterOption={(input, option): boolean =>
+										(option?.label as string)
+											?.toLowerCase()
+											?.includes(input.toLowerCase())
+									}
+									notFoundContent={
+										isLoading ? (
+											<span>
+												<Spin size="small" /> Loading...
+											</span>
+										) : (
+											<span>No alert available.</span>
+										)
+									}
+								>
+									{alertOptions?.map((option) => (
+										<Select.Option key={option.value} value={option.value}>
+											{option.label}
+										</Select.Option>
+									))}
+								</Select>
+							</Form.Item>
+						</>
+					)}
 				</div>
+				<Form.Item
+					label={
+						<span>
+							Scope&nbsp;
+							<Tooltip
+								mouseLeaveDelay={0.3}
+								title={
+									<span>
+										Scope the planned downtime by alert labels.{' '}
+										<a
+											href="https://signoz.io/docs/alerts-management/planned-maintenance/#scoping-with-label-expressions"
+											target="_blank"
+											rel="noopener noreferrer"
+										>
+											Learn more
+										</a>
+									</span>
+								}
+							>
+								<Info size={13} />
+							</Tooltip>
+						</span>
+					}
+					name="scope"
+				>
+					<Input.TextArea
+						placeholder='e.g. env = "prod" AND region = "us-east-1"'
+						autoSize={{ minRows: 2, maxRows: 4 }}
+					/>
+				</Form.Item>
 				<Form.Item style={{ marginBottom: 0 }}>
 					<ModalButtonWrapper>
 						<Button

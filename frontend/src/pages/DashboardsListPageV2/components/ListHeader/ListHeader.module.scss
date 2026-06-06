@@ -1,0 +1,182 @@
+.wrapper {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 16px;
+	height: 44px;
+	flex-shrink: 0;
+	border-radius: 6px 6px 0px 0px;
+	border: 1px solid var(--l1-border);
+	background: var(--l2-background);
+	box-shadow: 0px 4px 12px 0px rgba(0, 0, 0, 0.1);
+}
+
+.label {
+	color: var(--l2-foreground);
+	font-family: Inter;
+	font-size: var(--font-size-sm);
+	font-style: normal;
+	font-weight: var(--font-weight-normal);
+	line-height: 20px;
+	letter-spacing: -0.07px;
+}
+
+.rightActions {
+	display: flex;
+	gap: 4px;
+	color: white;
+}
+
+// Shared trigger button for the sort + configure-group icons in the right
+// actions cluster. Provides a square hover/active background so users know
+// which icon they're targeting.
+.iconTrigger {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	padding: 0;
+	background: transparent;
+	border: none;
+	border-radius: 4px;
+	color: inherit;
+	cursor: pointer;
+	transition: background 120ms ease;
+
+	&:hover,
+	&:focus-visible {
+		background: color-mix(in srgb, var(--l1-foreground) 12%, transparent);
+		outline: none;
+	}
+
+	&:active,
+	&[aria-expanded='true'] {
+		background: color-mix(in srgb, var(--l1-foreground) 20%, transparent);
+	}
+}
+
+.sortContent {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	width: 140px;
+}
+
+.sortHeading {
+	color: var(--l3-foreground);
+	font-family: Inter;
+	font-size: 11px;
+	font-style: normal;
+	font-weight: var(--font-weight-semibold);
+	line-height: 18px;
+	letter-spacing: 0.88px;
+	text-transform: uppercase;
+	padding: 12px 18px 6px 14px;
+}
+
+.sortDivider {
+	width: 100%;
+	height: 1px;
+	background: var(--l1-border);
+	margin: 4px 0;
+}
+
+.sortButton {
+	text-align: start;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	width: 100%;
+	color: var(--l2-foreground);
+	font-family: Inter;
+	font-size: var(--font-size-sm);
+	font-style: normal;
+	font-weight: var(--font-weight-normal);
+	line-height: normal;
+	letter-spacing: 0.14px;
+	padding: 12px 18px 12px 14px;
+	height: auto;
+}
+
+.configureContent {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	padding: 4px;
+}
+
+.configureItem {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	width: 100%;
+	padding: 8px 12px;
+	background: transparent;
+	border: none;
+	border-radius: 4px;
+	color: var(--l2-foreground);
+	font-family: Inter;
+	font-size: var(--font-size-sm);
+	font-weight: var(--font-weight-normal);
+	line-height: normal;
+	letter-spacing: 0.14px;
+	text-align: left;
+	cursor: pointer;
+	transition: background 120ms ease;
+
+	&:hover,
+	&:focus-visible {
+		background: color-mix(in srgb, var(--l1-foreground) 10%, transparent);
+		outline: none;
+	}
+
+	&:active {
+		background: color-mix(in srgb, var(--l1-foreground) 18%, transparent);
+	}
+}
+
+.configureIcon {
+	display: inline-flex;
+	width: 16px;
+	height: 16px;
+	flex: 0 0 16px;
+	align-items: center;
+	justify-content: center;
+}
+
+:global(.sortDashboardsPopover) {
+	:global(.ant-popover-inner) {
+		display: flex;
+		padding: 0px;
+		align-items: center;
+		border-radius: 4px;
+		border: 1px solid var(--l1-border);
+		background: linear-gradient(
+			139deg,
+			color-mix(in srgb, var(--card) 80%, transparent) 0%,
+			color-mix(in srgb, var(--card) 90%, transparent) 98.68%
+		);
+		box-shadow: 4px 10px 16px 2px rgba(0, 0, 0, 0.2);
+		backdrop-filter: blur(20px);
+		gap: 16px;
+	}
+}
+
+:global(.configureGroupPopover) {
+	:global(.ant-popover-inner) {
+		display: flex;
+		align-items: center;
+		border-radius: 4px;
+		padding: 0px;
+		border: 1px solid var(--l1-border);
+		background: linear-gradient(
+			139deg,
+			color-mix(in srgb, var(--card) 80%, transparent) 0%,
+			color-mix(in srgb, var(--card) 90%, transparent) 98.68%
+		);
+		box-shadow: 4px 10px 16px 2px rgba(0, 0, 0, 0.2);
+		backdrop-filter: blur(20px);
+		gap: 16px;
+	}
+}

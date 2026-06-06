@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
@@ -121,11 +121,6 @@ function Hosts(): JSX.Element {
 		[dotMetricsEnabled],
 	);
 
-	const primaryFilterKeys = useMemo(
-		() => [dotMetricsEnabled ? 'host.name' : 'host_name'],
-		[dotMetricsEnabled],
-	);
-
 	const controlListPrefix = !showFilters ? (
 		<div className={styles.quickFiltersToggleContainer}>
 			<Button
@@ -188,7 +183,6 @@ function Hosts(): JSX.Element {
 				getEntityName={hostGetEntityName}
 				getInitialLogTracesFilters={getInitialLogTracesFilters}
 				getInitialEventsFilters={hostInitialEventsFilter}
-				primaryFilterKeys={primaryFilterKeys}
 				metadataConfig={hostDetailsMetadataConfig}
 				entityWidgetInfo={hostWidgetInfo}
 				getEntityQueryPayload={getHostMetricsQueryPayload}

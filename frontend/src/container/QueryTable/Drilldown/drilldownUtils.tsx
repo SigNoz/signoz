@@ -168,7 +168,7 @@ export const getAggregateColumnHeader = (
 	};
 };
 
-const getFiltersFromMetric = (metric: any): FilterData[] =>
+export const getFiltersFromMetric = (metric: any): FilterData[] =>
 	Object.keys(metric).map((key) => ({
 		filterKey: key,
 		filterValue: metric[key],

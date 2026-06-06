@@ -1,6 +1,11 @@
-import { themeColors } from 'constants/theme';
-import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
+
+import { COLOR_BY_OPTIONS } from './constants';
+import {
+	ColorPair,
+	generateColorPair,
+	RESERVED_ERROR,
+} from './utils/generateColorPair';
 
 /**
  * Look up an attribute from both `resource` and `attributes` on a span.
@@ -92,18 +97,27 @@ export function getSpanGroupValue(
 
 /**
  * Resolves the rendering colour for a span. Error spans always get the
- * semantic destructive colour; everything else is derived deterministically
- * from its group value via `generateColor`.
+ * reserved error colour; everything else is derived deterministically from its
+ * group value via `generateColorPair`. Returns both the base color and a
+ * darkened variant for light-mode hover/selected foregrounds.
  */
 export function resolveSpanColor(
 	span: SpanV3,
 	colorByFieldName: string,
-): string {
+): ColorPair {
 	if (span.has_error) {
-		return 'var(--destructive)';
+		return { color: RESERVED_ERROR, colorDark: RESERVED_ERROR };
 	}
-	return generateColor(
-		getSpanGroupValue(span, colorByFieldName),
-		themeColors.traceDetailColorsV3,
-	);
+	return generateColorPair(getSpanGroupValue(span, colorByFieldName));
+}
+
+/**
+ * Color-by fields present on any of the given spans — replaces the old
+ * server-side aggregation gating. `service.name` is always offered by the store
+ * regardless of this list.
+ */
+export function getAvailableColorByFieldNames(spans: SpanV3[]): string[] {
+	return COLOR_BY_OPTIONS.filter((opt) =>
+		spans.some((s) => getSpanAttribute(s, opt.field.name)),
+	).map((opt) => opt.field.name);
 }

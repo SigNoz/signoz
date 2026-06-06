@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
-import { Button, Input } from 'antd';
+import { Input } from '@signozhq/ui/input';
+import { Button } from 'antd';
 import { Check, TableColumnsSplit, X } from '@signozhq/icons';
 import { Filter as FilterType } from 'types/api/quickFilters/getCustomFilters';
 

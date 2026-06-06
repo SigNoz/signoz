@@ -5,7 +5,10 @@ import cx from 'classnames';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
-import { getSanitizedLogBody } from 'container/LogDetailedView/utils';
+import {
+	getBodyDisplayString,
+	getSanitizedLogBody,
+} from 'container/LogDetailedView/utils';
 import { FontSize } from 'container/OptionsMenu/types';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -196,7 +199,7 @@ function ListLogView({
 							{updatedSelecedFields.some((field) => field.name === 'body') && (
 								<LogGeneralField
 									fieldKey="Log"
-									fieldValue={flattenLogData.body}
+									fieldValue={getBodyDisplayString(logData.body)}
 									linesPerRow={linesPerRow}
 									fontSize={fontSize}
 								/>
