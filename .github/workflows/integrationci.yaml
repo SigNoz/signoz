@@ -39,6 +39,7 @@ jobs:
       matrix:
         suite:
           - alerts
+          - basepath
           - callbackauthn
           - cloudintegrations
           - dashboard
@@ -66,16 +67,6 @@ jobs:
           - v0.144.3
         postgres-version:
           - 15
-        base-path:
-          - ""
-        include:
-          - suite: callbackauthn
-            sqlstore-provider: postgres
-            sqlite-mode: wal
-            clickhouse-version: 25.5.6
-            schema-migrator-version: v0.144.3
-            postgres-version: 15
-            base-path: /signoz
     if: |
       ((github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
       (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))) && contains(github.event.pull_request.labels.*.name, 'safe-to-integrate')
@@ -93,7 +84,7 @@ jobs:
         run: |
           cd tests && uv sync
       - name: webdriver
-        if: matrix.suite == 'callbackauthn'
+        if: matrix.suite == 'callbackauthn' || matrix.suite == 'basepath'
         run: |
           wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
           echo "deb http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee -a /etc/apt/sources.list.d/google-chrome.list
@@ -116,7 +107,6 @@ jobs:
             uv run pytest \
             --basetemp=./tmp/ \
             integration/tests/${{matrix.suite}} \
-            --base-path "${{matrix.base-path}}" \
             --sqlstore-provider ${{matrix.sqlstore-provider}} \
             --sqlite-mode ${{matrix.sqlite-mode}} \
             --postgres-version ${{matrix.postgres-version}} \
