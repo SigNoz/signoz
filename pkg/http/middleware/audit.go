@@ -113,92 +113,34 @@ func (middleware *Audit) emitAuditEvent(req *http.Request, writer responseCaptur
 		errorCode = render.ErrorCodeFromBody(writer.BodyBytes())
 	}
 
-	// Preferred path: resources resolved by the Resource middleware. Emit one
-	// event per resolved resource.
-	if resolved, ok := ResolvedFromContext(req.Context()); ok && len(*resolved) > 0 {
-		handler.FinalizeResponseIDs(*resolved, handler.ExtractorContext{Request: req, ResponseBody: writer.BodyBytes()})
+	// Resources resolved by the Resource middleware — emit one event per entry.
+	resolved, ok := ResolvedFromContext(req.Context())
+	if !ok || len(*resolved) == 0 {
+		return
+	}
 
-		for _, entry := range *resolved {
-			resourceAttributes := audittypes.NewResourceAttributes(entry.ID, entry.Resource.Kind())
-			if entry.Related != nil {
-				resourceAttributes = audittypes.NewRelatedResourceAttributes(entry.ID, entry.Resource.Kind(), entry.Related.ID, entry.Related.Resource.Kind())
-			}
+	handler.FinalizeResponseIDs(*resolved, handler.ExtractorContext{Request: req, ResponseBody: writer.BodyBytes()})
 
-			event := audittypes.NewAuditEvent(
-				req,
-				routeTemplate,
-				statusCode,
-				span.SpanContext().TraceID(),
-				span.SpanContext().SpanID(),
-				entry.Verb,
-				audittypes.CategoryFor(entry.Resource),
-				claims,
-				resourceAttributes,
-				errorType,
-				errorCode,
-			)
-
-			middleware.auditor.Audit(req.Context(), event)
+	for _, entry := range *resolved {
+		resourceAttributes := audittypes.NewResourceAttributes(entry.Resource, entry.ID)
+		if entry.Related != nil {
+			resourceAttributes = audittypes.NewAttachResourceAttributes(entry.Resource, entry.ID, entry.Related.Resource, entry.Related.ID)
 		}
 
-		return
+		event := audittypes.NewAuditEvent(
+			req,
+			routeTemplate,
+			statusCode,
+			span.SpanContext().TraceID(),
+			span.SpanContext().SpanID(),
+			entry.Verb,
+			audittypes.CategoryFor(entry.Resource),
+			claims,
+			resourceAttributes,
+			errorType,
+			errorCode,
+		)
+
+		middleware.auditor.Audit(req.Context(), event)
 	}
-
-	// Legacy fallback: AuditDef declared via WithAuditDef.
-	def := auditDefFromRequest(req)
-	if def == nil {
-		return
-	}
-
-	event := audittypes.NewAuditEventFromHTTPRequest(
-		req,
-		routeTemplate,
-		statusCode,
-		span.SpanContext().TraceID(),
-		span.SpanContext().SpanID(),
-		def.Action,
-		def.Category,
-		claims,
-		resourceIDFromRequest(req, def.ResourceIDParam),
-		def.ResourceKind,
-		errorType,
-		errorCode,
-	)
-
-	middleware.auditor.Audit(req.Context(), event)
-}
-
-func auditDefFromRequest(req *http.Request) *handler.AuditDef {
-	route := mux.CurrentRoute(req)
-	if route == nil {
-		return nil
-	}
-
-	actualHandler := route.GetHandler()
-	if actualHandler == nil {
-		return nil
-	}
-
-	// The type assertion is necessary because route.GetHandler() returns
-	// http.Handler, and not every http.Handler on the mux is a handler.Handler
-	// (e.g. middleware wrappers, raw http.HandlerFunc registrations).
-	provider, ok := actualHandler.(handler.Handler)
-	if !ok {
-		return nil
-	}
-
-	return provider.AuditDef()
-}
-
-func resourceIDFromRequest(req *http.Request, param string) string {
-	if param == "" {
-		return ""
-	}
-
-	vars := mux.Vars(req)
-	if vars == nil {
-		return ""
-	}
-
-	return vars[param]
 }

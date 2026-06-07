@@ -44,26 +44,8 @@ type AuditEvent struct {
 	TransportAttributes TransportAttributes
 }
 
-func NewAuditEventFromHTTPRequest(
-	req *http.Request,
-	route string,
-	statusCode int,
-	traceID oteltrace.TraceID,
-	spanID oteltrace.SpanID,
-	action coretypes.Verb,
-	actionCategory ActionCategory,
-	claims authtypes.Claims,
-	resourceID string,
-	resourceKind coretypes.Kind,
-	errorType string,
-	errorCode string,
-) AuditEvent {
-	return NewAuditEvent(req, route, statusCode, traceID, spanID, action, actionCategory, claims, NewResourceAttributes(resourceID, resourceKind), errorType, errorCode)
-}
-
 // NewAuditEvent builds an audit event from pre-built resource attributes (which
-// may carry related/attach context). NewAuditEventFromHTTPRequest is the simple
-// single-resource wrapper over this.
+// may carry attach/target context).
 func NewAuditEvent(
 	req *http.Request,
 	route string,
@@ -87,7 +69,7 @@ func NewAuditEvent(
 		TraceID:             traceID,
 		SpanID:              spanID,
 		Body:                newBody(auditAttributes, principalAttributes, resourceAttributes, errorAttributes),
-		EventName:           NewEventName(resourceAttributes.ResourceKind, auditAttributes.Action),
+		EventName:           NewEventName(resourceAttributes.Resource.Kind(), auditAttributes.Action),
 		AuditAttributes:     auditAttributes,
 		PrincipalAttributes: principalAttributes,
 		ResourceAttributes:  resourceAttributes,
@@ -107,7 +89,11 @@ func NewPLogsFromAuditEvents(events []AuditEvent, name string, version string, s
 	groups := make(map[resourceKey][]int)
 	order := make([]resourceKey, 0)
 	for i, event := range events {
-		key := resourceKey{kind: event.ResourceAttributes.ResourceKind.String(), id: event.ResourceAttributes.ResourceID}
+		kind := ""
+		if event.ResourceAttributes.Resource != nil {
+			kind = event.ResourceAttributes.Resource.Kind().String()
+		}
+		key := resourceKey{kind: kind, id: event.ResourceAttributes.ResourceID}
 		if _, exists := groups[key]; !exists {
 			order = append(order, key)
 		}
@@ -119,7 +105,8 @@ func NewPLogsFromAuditEvents(events []AuditEvent, name string, version string, s
 		resourceAttrs := resourceLogs.Resource().Attributes()
 		resourceAttrs.PutStr(string(semconv.ServiceNameKey), name)
 		resourceAttrs.PutStr(string(semconv.ServiceVersionKey), version)
-		events[groups[key][0]].ResourceAttributes.PutResource(resourceAttrs)
+		first := events[groups[key][0]]
+		first.ResourceAttributes.PutResource(first.PrincipalAttributes.PrincipalOrgID, resourceAttrs)
 
 		scopeLogs := resourceLogs.ScopeLogs().AppendEmpty()
 		scopeLogs.Scope().SetName(scope)

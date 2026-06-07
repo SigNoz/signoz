@@ -15,12 +15,12 @@ func TestCategoryFor(t *testing.T) {
 	assert.Equal(t, ActionCategoryConfigurationChange, CategoryFor(coretypes.ResourceMetaResourceNotificationChannel))
 }
 
-func TestNewBodyWithRelated(t *testing.T) {
+func TestNewBodyWithTarget(t *testing.T) {
 	auditAttributes := AuditAttributes{Action: coretypes.VerbAttach, Outcome: OutcomeSuccess}
 	principalAttributes := PrincipalAttributes{}
-	resourceAttributes := NewRelatedResourceAttributes("sa-1", coretypes.MustNewKind("serviceaccount"), "key-9", coretypes.MustNewKind("factor-api-key"))
+	resourceAttributes := NewAttachResourceAttributes(coretypes.ResourceServiceAccount, "sa-1", coretypes.ResourceMetaResourceFactorAPIKey, "key-9")
 
 	body := newBody(auditAttributes, principalAttributes, resourceAttributes, ErrorAttributes{})
 	assert.Contains(t, body, "serviceaccount (sa-1)")
-	assert.Contains(t, body, "related factor-api-key (key-9)")
+	assert.Contains(t, body, "target factor-api-key (key-9)")
 }

@@ -71,30 +71,30 @@ func (attributes PrincipalAttributes) Put(dest pcommon.Map) {
 // Audit attributes — Resource (On What).
 // These are OTel resource attributes (placed on the Resource, not event attributes).
 type ResourceAttributes struct {
-	ResourceID   string
-	ResourceKind coretypes.Kind // guaranteed to be present
+	Resource   coretypes.Resource // guaranteed to be present
+	ResourceID string
 
-	// Related names a counterpart resource for attach/detach events (audit
-	// context only). Both empty when there is no relationship.
-	RelatedID   string
-	RelatedKind coretypes.Kind
+	// TargetResource names the counterpart of an attach/detach event (audit
+	// context only). nil when there is no relationship.
+	TargetResource   coretypes.Resource
+	TargetResourceID string
 }
 
-func NewResourceAttributes(resourceID string, resourceKind coretypes.Kind) ResourceAttributes {
+func NewResourceAttributes(resource coretypes.Resource, resourceID string) ResourceAttributes {
 	return ResourceAttributes{
-		ResourceID:   resourceID,
-		ResourceKind: resourceKind,
+		Resource:   resource,
+		ResourceID: resourceID,
 	}
 }
 
-// NewRelatedResourceAttributes builds resource attributes that additionally name
-// a related counterpart (used for attach/detach audit events).
-func NewRelatedResourceAttributes(resourceID string, resourceKind coretypes.Kind, relatedID string, relatedKind coretypes.Kind) ResourceAttributes {
+// NewAttachResourceAttributes builds resource attributes that additionally name
+// the target counterpart (used for attach/detach audit events).
+func NewAttachResourceAttributes(resource coretypes.Resource, resourceID string, targetResource coretypes.Resource, targetResourceID string) ResourceAttributes {
 	return ResourceAttributes{
-		ResourceID:   resourceID,
-		ResourceKind: resourceKind,
-		RelatedID:    relatedID,
-		RelatedKind:  relatedKind,
+		Resource:         resource,
+		ResourceID:       resourceID,
+		TargetResource:   targetResource,
+		TargetResourceID: targetResourceID,
 	}
 }
 
@@ -112,11 +112,24 @@ func CategoryFor(resource coretypes.Resource) ActionCategory {
 // PutResource writes the resource attributes to an OTel Resource's attribute map.
 // These are resource-level attributes (stored in the resource JSON column),
 // not event-level attributes (stored in attributes_string).
-func (attributes ResourceAttributes) PutResource(dest pcommon.Map) {
-	putStrIfNotEmpty(dest, "signoz.audit.resource.kind", attributes.ResourceKind.String())
-	putStrIfNotEmpty(dest, "signoz.audit.resource.id", attributes.ResourceID)
-	putStrIfNotEmpty(dest, "signoz.audit.resource.related.kind", attributes.RelatedKind.String())
-	putStrIfNotEmpty(dest, "signoz.audit.resource.related.id", attributes.RelatedID)
+func (attributes ResourceAttributes) PutResource(orgID valuer.UUID, dest pcommon.Map) {
+	if attributes.Resource != nil {
+		putStrIfNotEmpty(dest, "signoz.audit.resource.kind", attributes.Resource.Kind().String())
+		putStrIfNotEmpty(dest, "signoz.audit.resource.id", attributes.ResourceID)
+		if attributes.ResourceID != "" {
+			// The FGA object string — correlates with the authz Check() object on
+			// the same resource (id-keyed resources match exactly).
+			putStrIfNotEmpty(dest, "signoz.audit.resource.object", attributes.Resource.Object(orgID, attributes.ResourceID))
+		}
+	}
+
+	if attributes.TargetResource != nil {
+		putStrIfNotEmpty(dest, "signoz.audit.resource.target.kind", attributes.TargetResource.Kind().String())
+		putStrIfNotEmpty(dest, "signoz.audit.resource.target.id", attributes.TargetResourceID)
+		if attributes.TargetResourceID != "" {
+			putStrIfNotEmpty(dest, "signoz.audit.resource.target.object", attributes.TargetResource.Object(orgID, attributes.TargetResourceID))
+		}
+	}
 }
 
 // Audit attributes — Error (When outcome is failure)
@@ -221,21 +234,23 @@ func newBody(auditAttributes AuditAttributes, principalAttributes PrincipalAttri
 	}
 
 	// Resource: " kind (id)" or " kind".
-	b.WriteString(" ")
-	b.WriteString(resourceAttributes.ResourceKind.String())
-	if resourceAttributes.ResourceID != "" {
-		b.WriteString(" (")
-		b.WriteString(resourceAttributes.ResourceID)
-		b.WriteString(")")
+	if resourceAttributes.Resource != nil {
+		b.WriteString(" ")
+		b.WriteString(resourceAttributes.Resource.Kind().String())
+		if resourceAttributes.ResourceID != "" {
+			b.WriteString(" (")
+			b.WriteString(resourceAttributes.ResourceID)
+			b.WriteString(")")
+		}
 	}
 
-	// Related (attach/detach context): " · related kind (id)" or " · related kind".
-	if resourceAttributes.RelatedKind.String() != "" {
-		b.WriteString(" · related ")
-		b.WriteString(resourceAttributes.RelatedKind.String())
-		if resourceAttributes.RelatedID != "" {
+	// Target (attach/detach context): " · target kind (id)" or " · target kind".
+	if resourceAttributes.TargetResource != nil {
+		b.WriteString(" · target ")
+		b.WriteString(resourceAttributes.TargetResource.Kind().String())
+		if resourceAttributes.TargetResourceID != "" {
 			b.WriteString(" (")
-			b.WriteString(resourceAttributes.RelatedID)
+			b.WriteString(resourceAttributes.TargetResourceID)
 			b.WriteString(")")
 		}
 	}
