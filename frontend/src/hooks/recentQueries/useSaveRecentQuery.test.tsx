@@ -49,7 +49,8 @@ const buildQuery = (overrides: Partial<IBuilderQuery>[] = [{}]): Query => ({
 
 describe('useSaveRecentQuery', () => {
 	beforeEach(() => {
-		store.__resetForTests();
+		store.useRecentQueriesStore.setState({ buckets: {} });
+		localStorage.clear();
 		mockedValidateQuery.mockReturnValue({
 			isValid: true,
 			message: '',
@@ -92,11 +93,11 @@ describe('useSaveRecentQuery', () => {
 		const stagedQuery = buildQuery([
 			{
 				dataSource: DataSource.LOGS,
-				filter: { expression: 'service.name = "a"' },
+				filter: { expression: "service.name = 'frontend'" },
 			},
 			{
 				dataSource: DataSource.TRACES,
-				filter: { expression: 'service.name = "b"' },
+				filter: { expression: "service.name = 'orders-api'" },
 			},
 		]);
 
@@ -123,8 +124,12 @@ describe('useSaveRecentQuery', () => {
 	});
 
 	it('re-saves when the staged query filter changes', () => {
-		const initial = buildQuery([{ filter: { expression: 'a = 1' } }]);
-		const changed = buildQuery([{ filter: { expression: 'b = 2' } }]);
+		const initial = buildQuery([
+			{ filter: { expression: "severity_text = 'ERROR'" } },
+		]);
+		const changed = buildQuery([
+			{ filter: { expression: 'http.status_code >= 500' } },
+		]);
 
 		const { rerender } = renderHook(
 			({ q }: { q: Query }) => useSaveRecentQuery(q),

@@ -5,7 +5,6 @@ import type { SignalType } from 'types/api/v5/queryRange';
 
 // Stable empty reference so the selector returns the same array when a bucket
 // has no entries — avoids re-renders via zustand's Object.is comparison.
-// Mirrors EMPTY_ARRAY in components/TanStackTableView/useColumnStore.ts.
 const EMPTY: RecentQueryEntry[] = [];
 
 function bucketKey(signal: SignalType, source: string): string {

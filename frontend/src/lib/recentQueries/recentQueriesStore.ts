@@ -1,5 +1,7 @@
-import { create } from 'zustand';
+import get from 'api/browser/localstorage/get';
+import set from 'api/browser/localstorage/set';
 import type { SignalType } from 'types/api/v5/queryRange';
+import { create } from 'zustand';
 
 import { normalizeFilterExpression } from './normalize';
 import type { RecentQueriesStoreShape, RecentQueryEntry } from './types';
@@ -20,12 +22,6 @@ function storageKeyFor(signal: SignalType, source: string): string {
 	return `${STORAGE_KEY_PREFIX}:${bucketKey(signal, source)}`;
 }
 
-function hasLocalStorage(): boolean {
-	return (
-		typeof window !== 'undefined' && typeof window.localStorage !== 'undefined'
-	);
-}
-
 // Mirrors parsed localStorage so equal raw strings return the same array ref —
 // preserves Object.is for zustand selector bail-out.
 const persistedBucketCache = new Map<
@@ -37,12 +33,9 @@ function loadBucketFromStorage(
 	signal: SignalType,
 	source: string,
 ): RecentQueryEntry[] | null {
-	if (!hasLocalStorage()) {
-		return null;
-	}
 	const key = bucketKey(signal, source);
 	try {
-		const raw = window.localStorage.getItem(storageKeyFor(signal, source));
+		const raw = get(storageKeyFor(signal, source));
 		if (!raw) {
 			persistedBucketCache.delete(key);
 			return null;
@@ -72,15 +65,9 @@ function saveBucketToStorage(
 	source: string,
 	entries: RecentQueryEntry[],
 ): void {
-	if (!hasLocalStorage()) {
-		return;
-	}
-	try {
-		const raw = JSON.stringify({ version: STORAGE_VERSION, entries });
-		window.localStorage.setItem(storageKeyFor(signal, source), raw);
+	const raw = JSON.stringify({ version: STORAGE_VERSION, entries });
+	if (set(storageKeyFor(signal, source), raw)) {
 		persistedBucketCache.set(bucketKey(signal, source), { raw, parsed: entries });
-	} catch {
-		// Persistence failed; zustand state still reflects the user's intent in-session.
 	}
 }
 
@@ -170,27 +157,4 @@ export function list(signal: SignalType, source = ''): RecentQueryEntry[] {
 		return state.buckets[key];
 	}
 	return loadBucketFromStorage(signal, source) ?? [];
-}
-
-// Test escape hatch: clears state, cache, and qb_recent_v1:* localStorage keys.
-export function __resetForTests(): void {
-	useRecentQueriesStore.setState({ buckets: {} });
-	persistedBucketCache.clear();
-	if (!hasLocalStorage()) {
-		return;
-	}
-	const toRemove: string[] = [];
-	for (let i = 0; i < window.localStorage.length; i += 1) {
-		const k = window.localStorage.key(i);
-		if (k && k.startsWith(`${STORAGE_KEY_PREFIX}:`)) {
-			toRemove.push(k);
-		}
-	}
-	toRemove.forEach((k) => window.localStorage.removeItem(k));
-}
-
-// Test escape hatch: drops in-memory state but leaves localStorage — exercises cold-read.
-export function __dropCacheForTests(): void {
-	useRecentQueriesStore.setState({ buckets: {} });
-	persistedBucketCache.clear();
 }

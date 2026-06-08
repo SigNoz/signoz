@@ -6,16 +6,20 @@ import { useRecents } from './useRecents';
 
 describe('useRecents', () => {
 	beforeEach(() => {
-		store.__resetForTests();
+		store.useRecentQueriesStore.setState({ buckets: {} });
+		localStorage.clear();
 	});
 
 	it('returns the current entries for a (signal, source) bucket', () => {
-		store.save({ signal: 'logs', filter: { expression: 'a = 1' } });
+		store.save({
+			signal: 'logs',
+			filter: { expression: "severity_text = 'ERROR'" },
+		});
 
 		const { result } = renderHook(() => useRecents('logs', ''));
 
 		expect(result.current).toHaveLength(1);
-		expect(result.current[0].filter.expression).toBe('a = 1');
+		expect(result.current[0].filter.expression).toBe("severity_text = 'ERROR'");
 	});
 
 	it('re-renders when the subscribed bucket is updated', () => {
@@ -23,11 +27,14 @@ describe('useRecents', () => {
 		expect(result.current).toHaveLength(0);
 
 		act(() => {
-			store.save({ signal: 'logs', filter: { expression: 'a = 1' } });
+			store.save({
+				signal: 'logs',
+				filter: { expression: "severity_text = 'ERROR'" },
+			});
 		});
 
 		expect(result.current).toHaveLength(1);
-		expect(result.current[0].filter.expression).toBe('a = 1');
+		expect(result.current[0].filter.expression).toBe("severity_text = 'ERROR'");
 	});
 
 	it('returns a stable reference when an unrelated bucket changes', () => {
@@ -38,7 +45,7 @@ describe('useRecents', () => {
 			store.save({
 				signal: 'metrics',
 				source: 'meter',
-				filter: { expression: 'cpu = 1' },
+				filter: { expression: 'cpu_usage > 80' },
 			});
 		});
 
@@ -49,11 +56,14 @@ describe('useRecents', () => {
 	});
 
 	it('switches buckets when (signal, source) deps change', () => {
-		store.save({ signal: 'logs', filter: { expression: 'a = 1' } });
+		store.save({
+			signal: 'logs',
+			filter: { expression: "severity_text = 'ERROR'" },
+		});
 		store.save({
 			signal: 'metrics',
 			source: 'meter',
-			filter: { expression: 'b = 2' },
+			filter: { expression: 'cpu_usage > 80' },
 		});
 
 		const { result, rerender } = renderHook(
@@ -63,18 +73,18 @@ describe('useRecents', () => {
 		);
 
 		expect(result.current).toHaveLength(1);
-		expect(result.current[0].filter.expression).toBe('a = 1');
+		expect(result.current[0].filter.expression).toBe("severity_text = 'ERROR'");
 
 		rerender({ signal: 'metrics' as SignalType, source: 'meter' });
 
 		expect(result.current).toHaveLength(1);
-		expect(result.current[0].filter.expression).toBe('b = 2');
+		expect(result.current[0].filter.expression).toBe('cpu_usage > 80');
 	});
 
 	it('reflects removals', () => {
 		const saved = store.save({
 			signal: 'logs',
-			filter: { expression: 'a = 1' },
+			filter: { expression: "severity_text = 'ERROR'" },
 		});
 		if (!saved) {
 			throw new Error('save did not return an entry');

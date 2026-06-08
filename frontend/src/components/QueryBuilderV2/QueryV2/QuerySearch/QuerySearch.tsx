@@ -1257,9 +1257,8 @@ function QuerySearch({
 		};
 	}
 
-	const recentsSignal = dataSource as RecentsSignal;
-	const recentsSource = signalSource ?? '';
-	const recents = useRecents(recentsSignal, recentsSource);
+	const signal = dataSource as RecentsSignal;
+	const recents = useRecents(signal, signalSource ?? '');
 
 	function combinedSuggestions(
 		context: CompletionContext,
