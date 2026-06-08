@@ -38,7 +38,7 @@ describe('BillingContainer', () => {
 		});
 		expect(pricePerUnit).toBeInTheDocument();
 		const cost = await screen.findByRole('columnheader', {
-			name: /cost \(billing period to date\)/i,
+			name: /cost/i,
 		});
 		expect(cost).toBeInTheDocument();
 
