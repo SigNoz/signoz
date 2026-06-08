@@ -23,7 +23,7 @@ import ChQuerySection from './ChQuerySection';
 import PromqlSection from './PromqlSection';
 import { FormContainer, StepHeading } from './styles';
 
-import './QuerySection.styles.scss';
+import styles from './QuerySection.module.scss';
 
 const ANOMALY_QUERY_SUPPORT_CLICKHOUSE_ISSUE =
 	'https://github.com/SigNoz/signoz/issues/11034';
@@ -105,7 +105,7 @@ function QuerySection({
 		{
 			label: (
 				<Tooltip title="Query Builder">
-					<Button className="nav-btns">
+					<Button className={styles.navBtns}>
 						<Atom size={14} />
 						<Typography.Text>Query Builder</Typography.Text>
 					</Button>
@@ -122,7 +122,7 @@ function QuerySection({
 							: 'ClickHouse'
 					}
 				>
-					<Button className="nav-btns" disabled={isAnomalyDetection}>
+					<Button className={styles.navBtns} disabled={isAnomalyDetection}>
 						<Terminal size={14} />
 						<Typography.Text>ClickHouse Query</Typography.Text>
 					</Button>
@@ -145,7 +145,7 @@ function QuerySection({
 			{
 				label: (
 					<Tooltip title="Query Builder">
-						<Button className="nav-btns" data-testid="query-builder-tab">
+						<Button className={styles.navBtns} data-testid="query-builder-tab">
 							<Atom size={14} />
 							<Typography.Text>Query Builder</Typography.Text>
 						</Button>
@@ -162,7 +162,7 @@ function QuerySection({
 								: 'ClickHouse'
 						}
 					>
-						<Button className="nav-btns" disabled={isAnomalyDetection}>
+						<Button className={styles.navBtns} disabled={isAnomalyDetection}>
 							<Terminal size={14} />
 							<Typography.Text>ClickHouse Query</Typography.Text>
 						</Button>
@@ -180,7 +180,7 @@ function QuerySection({
 								: 'PromQL'
 						}
 					>
-						<Button className="nav-btns" disabled={isAnomalyDetection}>
+						<Button className={styles.navBtns} disabled={isAnomalyDetection}>
 							<PromQLIcon
 								fillColor={isDarkMode ? Color.BG_VANILLA_200 : Color.BG_INK_300}
 							/>
@@ -212,7 +212,7 @@ function QuerySection({
 			case AlertTypes.LOGS_BASED_ALERT:
 			case AlertTypes.EXCEPTIONS_BASED_ALERT:
 				return (
-					<div className="alert-tabs">
+					<div className={styles.alertTabs}>
 						<Tabs
 							type="card"
 							style={{ width: '100%', padding: '0px 8px' }}
@@ -243,7 +243,7 @@ function QuerySection({
 			case AlertTypes.METRICS_BASED_ALERT:
 			default:
 				return (
-					<div className="alert-tabs">
+					<div className={styles.alertTabs}>
 						<Tabs
 							type="card"
 							style={{ width: '100%', padding: '0px 8px' }}
@@ -285,7 +285,7 @@ function QuerySection({
 			{!hideTitle && (
 				<StepHeading> {t('alert_form_step2', { step: step2Label })}</StepHeading>
 			)}
-			<FormContainer className="alert-query-section-container">
+			<FormContainer className={styles.alertQuerySectionContainer}>
 				<div>{renderTabs(alertType)}</div>
 				{renderQuerySection(currentTab)}
 			</FormContainer>
