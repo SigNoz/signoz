@@ -274,13 +274,13 @@ function RolesListingTable({
 
 			<div className="roles-table-pagination">
 				{totalRoleCount > 0 && (
-					<>
+					<div className="roles-table-count">
 						<span className="numbers">
 							{(currentPage - 1) * PAGE_SIZE + 1} &#8212;{' '}
 							{Math.min(currentPage * PAGE_SIZE, totalRoleCount)}
 						</span>
-						<span className="total"> of {totalRoleCount}</span>
-					</>
+						<span className="total">of {totalRoleCount}</span>
+					</div>
 				)}
 				<Pagination
 					current={currentPage}

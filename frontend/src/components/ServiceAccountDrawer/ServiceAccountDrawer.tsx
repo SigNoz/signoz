@@ -532,13 +532,13 @@ function ServiceAccountDrawer({
 			{activeTab === ServiceAccountDrawerTab.Keys ? (
 				<div className="sa-drawer__keys-pagination">
 					{keys.length > 0 && (
-						<>
+						<div className="sa-drawer__pagination-count">
 							<span className="sa-drawer__pagination-range">
 								{(keysPage - 1) * PAGE_SIZE + 1} &#8212;{' '}
 								{Math.min(keysPage * PAGE_SIZE, keys.length)}
 							</span>
-							<span className="sa-drawer__pagination-total"> of {keys.length}</span>
-						</>
+							<span className="sa-drawer__pagination-total">of {keys.length}</span>
+						</div>
 					)}
 					<Pagination
 						current={keysPage}
