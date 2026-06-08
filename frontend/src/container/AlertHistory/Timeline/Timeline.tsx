@@ -2,7 +2,7 @@ import GraphWrapper from './GraphWrapper/GraphWrapper';
 import TimelineTable from './Table/Table';
 import TabsAndFilters from './TabsAndFilters/TabsAndFilters';
 
-import './Timeline.styles.scss';
+import styles from './Timeline.module.scss';
 
 function TimelineTableRenderer(): JSX.Element {
 	return <TimelineTable />;
@@ -14,15 +14,15 @@ function Timeline({
 	totalCurrentTriggers: number;
 }): JSX.Element {
 	return (
-		<div className="timeline">
-			<div className="timeline__title">Timeline</div>
-			<div className="timeline__tabs-and-filters">
+		<div className={styles.timeline}>
+			<div className={styles.timelineTitle}>Timeline</div>
+			<div>
 				<TabsAndFilters />
 			</div>
-			<div className="timeline__graph">
+			<div>
 				<GraphWrapper totalCurrentTriggers={totalCurrentTriggers} />
 			</div>
-			<div className="timeline__table">
+			<div>
 				<TimelineTableRenderer />
 			</div>
 		</div>
