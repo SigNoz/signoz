@@ -2,7 +2,7 @@ import type { DashboardSection } from '../../../utils';
 import SectionHeader from '../SectionHeader/SectionHeader';
 import styles from './SectionDragPreview.module.scss';
 
-interface Props {
+interface SectionDragPreviewProps {
 	section: DashboardSection;
 }
 
@@ -11,7 +11,7 @@ interface Props {
  * dragged. Deliberately header-only (no react-grid-layout) so the overlay is
  * cheap and never triggers RGL width re-measurement.
  */
-function SectionDragPreview({ section }: Props): JSX.Element {
+function SectionDragPreview({ section }: SectionDragPreviewProps): JSX.Element {
 	const panelCount = section.items.length;
 	const title = `${section.title ?? ''} · ${panelCount} ${
 		panelCount === 1 ? 'panel' : 'panels'
