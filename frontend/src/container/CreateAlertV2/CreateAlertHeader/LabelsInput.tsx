@@ -1,6 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { X } from '@signozhq/icons';
 import { useNotifications } from 'hooks/useNotifications';
+import { Input } from '@signozhq/ui/input';
 
 import { LabelInputState, LabelsInputProps } from './types';
 import styles from './CreateAlertHeader.module.scss';
@@ -155,7 +156,7 @@ function LabelsInput({
 				</button>
 			) : (
 				<div className={styles.labelsInputInputContainer}>
-					<input
+					<Input
 						autoFocus
 						type="text"
 						value={inputState.isKeyInput ? inputState.key : inputState.value}

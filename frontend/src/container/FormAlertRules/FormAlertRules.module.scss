@@ -123,3 +123,55 @@
 .createNotificationBtn {
 	box-shadow: none;
 }
+
+.formAlertContainerBasic {
+	:global(.ant-input-number-group-addon) {
+		background-color: var(--l3-background);
+		border: 1px solid var(--l3-border);
+		color: var(--l2-foreground);
+	}
+
+	:global(.ant-input),
+	:global(.ant-input-number) {
+		background-color: var(--l3-background);
+		border: 1px solid var(--l3-border);
+		color: var(--l2-foreground);
+		min-height: 32px;
+
+		&::placeholder {
+			font-family: 'Space Mono';
+		}
+
+		&:hover {
+			border-color: var(--internal-ant-border-color-hover);
+		}
+
+		&:focus {
+			border-color: var(--internal-ant-border-color-focus);
+		}
+	}
+
+	:global(.ant-select) {
+		:global(.ant-select-selector) {
+			background-color: var(--l3-background);
+			border: 1px solid var(--l3-border);
+			color: var(--muted-foreground);
+
+			&:hover {
+				border-color: var(--internal-ant-border-color-hover);
+			}
+
+			&:focus {
+				border-color: var(--internal-ant-border-color-focus);
+			}
+		}
+
+		:global(.ant-select-selection-item) {
+			color: var(--l1-foreground);
+		}
+
+		:global(.ant-select-arrow) {
+			color: var(--muted-foreground);
+		}
+	}
+}

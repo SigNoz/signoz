@@ -15,8 +15,8 @@
 
 	textarea {
 		height: 150px;
-		background: var(--l2-background);
-		border: 1px solid var(--l1-border);
+		background: var(--l3-background);
+		border: 1px solid var(--l3-border);
 		border-radius: 4px;
 		color: var(--l2-foreground) !important;
 		font-family: Inter;
@@ -78,10 +78,12 @@
 	align-items: center;
 	gap: var(--spacing-4);
 
-	:global(.ant-input) {
-		width: 120px;
-		border: 1px solid var(--l1-border);
-	}
+	--input-background: var(--l3-background);
+	--input-hover-background: var(--l3-background);
+	--input-focus-background: var(--l3-background);
+	--input-border-color: var(--l3-border);
+	--input-hover-border-color: var(--internal-ant-border-color-hover);
+	--input-focus-border-color: var(--internal-ant-border-color-hover);
 
 	:global(.ant-select) {
 		:global(.ant-select-selector) {
@@ -120,6 +122,34 @@
 
 	:global(.ant-select) {
 		width: 300px;
+
+		:global(.ant-select-selector) {
+			background-color: var(--l3-background);
+			border: 1px solid var(--l3-border);
+			color: var(--l2-foreground);
+			height: 32px;
+
+			&:hover {
+				border-color: var(--l2-border);
+			}
+
+			&:focus {
+				border-color: var(--l2-border);
+				box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+			}
+
+			:global(.ant-select-selection-placeholder) {
+				font-family: 'Space Mono';
+			}
+		}
+
+		:global(.ant-select-selection-item) {
+			color: var(--l2-foreground);
+		}
+
+		:global(.ant-select-arrow) {
+			color: var(--l2-foreground);
+		}
 	}
 }
 

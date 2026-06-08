@@ -13,10 +13,10 @@
 }
 
 .advancedOptionItemTitle {
-	color: var(--l2-foreground);
+	color: var(--l1-foreground);
 	font-family: Inter;
 	font-size: var(--periscope-font-size-base);
-	font-weight: var(--font-weight-medium);
+	font-weight: 500;
 	--typography-text-display: flex;
 	align-items: center;
 	gap: var(--spacing-4);
@@ -33,9 +33,9 @@
 	margin-top: var(--spacing-8);
 
 	:global(.ant-input) {
-		background-color: var(--l2-background);
-		border: 1px solid var(--l1-border);
-		color: var(--l1-foreground);
+		background-color: var(--l3-background);
+		border: 1px solid var(--l3-border);
+		color: var(--l3-foreground);
 		height: 32px;
 
 		&::placeholder {
@@ -43,29 +43,27 @@
 		}
 
 		&:hover {
-			border-color: var(--l1-border);
+			border-color: var(--internal-ant-border-color-hover);
 		}
 
 		&:focus {
-			border-color: var(--l1-border);
-			box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+			border-color: var(--internal-ant-border-color-focus);
 		}
 	}
 
 	:global(.ant-select) {
 		:global(.ant-select-selector) {
-			background-color: var(--l2-background);
-			border: 1px solid var(--l1-border);
-			color: var(--l1-foreground);
+			background-color: var(--l3-background);
+			border: 1px solid var(--l3-border);
+			color: var(--l2-foreground);
 			height: 32px;
 
 			&:hover {
-				border-color: var(--l1-border);
+				border-color: var(--internal-ant-border-color-hover);
 			}
 
 			&:focus {
-				border-color: var(--l1-border);
-				box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+				border-color: var(--internal-ant-border-color-focus);
 			}
 
 			:global(.ant-select-selection-placeholder) {
@@ -94,34 +92,40 @@
 	align-items: center;
 	gap: var(--spacing-4);
 
+	--input-background: var(--l3-background);
+	--input-hover-background: var(--l3-background);
+	--input-focus-background: var(--l3-background);
+	--input-border-color: var(--l3-border);
+	--input-hover-border-color: var(--internal-ant-border-color-hover);
+	--input-focus-border-color: var(--internal-ant-border-color-hover);
+
 	:global(.ant-input) {
-		background-color: var(--l2-background);
-		border: 1px solid var(--l1-border);
-		color: var(--l1-foreground);
+		background-color: var(--l3-background);
+		border: 1px solid var(--l3-border);
+		color: var(--l2-foreground);
 
 		&:hover {
-			border-color: var(--l1-border);
+			border-color: var(--internal-ant-border-color-hover);
 		}
 
 		&:focus {
-			border-color: var(--l1-border);
-			box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+			border-color: var(--internal-ant-border-color-focus);
 		}
 	}
 
 	:global(.ant-select) {
 		:global(.ant-select-selector) {
-			background-color: var(--l2-background);
-			color: var(--l1-foreground);
+			background-color: var(--l3-background);
+			color: var(--l3-foreground);
 			height: 32px;
-			border: 1px solid var(--l1-border);
+			border: 1px solid var(--l3-border);
 
 			&:hover {
-				border-color: var(--l1-border);
+				border-color: var(--l3-border);
 			}
 
 			&:focus {
-				border-color: var(--l1-border);
+				border-color: var(--l3-border);
 			}
 
 			:global(.ant-select-selection-placeholder) {

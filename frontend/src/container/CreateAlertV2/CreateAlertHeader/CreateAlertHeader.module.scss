@@ -3,6 +3,13 @@
 	font-family: inherit;
 	color: var(--l1-foreground);
 	padding: var(--spacing-6) var(--spacing-8);
+
+	--input-background: var(--l2-background);
+	--input-hover-background: var(--l2-background);
+	--input-focus-background: var(--l2-background);
+	--input-border-color: var(--l2-border);
+	--input-hover-border-color: var(--internal-ant-border-color-hover);
+	--input-focus-border-color: var(--internal-ant-border-color-hover);
 }
 
 .editAlertHeader {
@@ -43,9 +50,14 @@
 
 .inputTitle {
 	background-color: transparent;
-	color: var(--l1-foreground);
+	background: var(--l2-background);
+	color: var(--l2-foreground);
 	width: 100%;
 	min-width: 300px;
+
+	&:hover {
+		background: var(--l2-background);
+	}
 }
 
 .inputDescription {
@@ -64,15 +76,14 @@
 	width: fit-content;
 	font-size: var(--periscope-font-size-base);
 	color: var(--l2-foreground);
-	border: 1px solid var(--l1-border);
-	background-color: transparent;
+	background-color: var(--l3-background);
+	border: 1px solid var(--l3-border);
 	cursor: pointer;
 	padding: var(--spacing-2) var(--spacing-4);
 	border-radius: 4px;
 
 	&:hover {
-		border-color: var(--l1-border);
-		color: var(--l1-foreground);
+		border-color: var(--internal-ant-border-color-hover);
 	}
 }
 
@@ -120,20 +131,4 @@
 
 .labelsInputInput {
 	flex: 1;
-	background-color: transparent;
-	border: none;
-	outline: none;
-	padding: var(--spacing-3) var(--spacing-4);
-	color: var(--l1-foreground);
-	font-size: var(--periscope-font-size-base);
-
-	&::placeholder {
-		color: var(--l2-foreground);
-	}
-
-	&:focus,
-	&:active {
-		border: none;
-		outline: none;
-	}
 }

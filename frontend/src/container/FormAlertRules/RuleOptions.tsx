@@ -375,7 +375,7 @@ function RuleOptions({
 	return (
 		<>
 			<StepHeading>{t('alert_form_step3', { step: step3Label })}</StepHeading>
-			<FormContainer>
+			<FormContainer className={styles.formContainer}>
 				{queryCategory === EQueryType.PROM && renderPromRuleOptions()}
 				{queryCategory !== EQueryType.PROM &&
 					ruleType === AlertDetectionTypes.ANOMALY_DETECTION_ALERT && (

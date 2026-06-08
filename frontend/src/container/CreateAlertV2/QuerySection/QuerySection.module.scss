@@ -60,10 +60,10 @@
 
 .explorerViewOptionActive {
 	composes: explorerViewOption;
-	background-color: var(--l1-background);
+	background-color: var(--l3-background);
 	border-bottom: none;
 
 	&:hover {
-		background-color: var(--l1-background) !important;
+		background-color: var(--l3-background) !important;
 	}
 }

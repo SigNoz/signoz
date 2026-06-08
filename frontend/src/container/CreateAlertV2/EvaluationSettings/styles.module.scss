@@ -81,8 +81,9 @@
 		min-width: 240px;
 		width: auto;
 		justify-content: space-between;
-		background-color: var(--l2-background);
-		border: 1px solid var(--l1-border);
+		background-color: var(--l3-background);
+		border: 1px solid var(--l3-border);
+		box-shadow: none;
 	}
 }
 
@@ -103,7 +104,7 @@
 .evaluateAlertConditionsButtonRightText {
 	font-size: var(--periscope-font-size-small);
 	font-weight: 500;
-	background-color: var(--l1-border);
+	background-color: var(--l3-border);
 	padding: 1px 4px;
 }
 

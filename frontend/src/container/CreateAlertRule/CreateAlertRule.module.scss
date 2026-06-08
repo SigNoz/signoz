@@ -57,10 +57,6 @@
 		&[data-node-key='TriggeredAlerts'] {
 			margin-left: var(--spacing-8);
 		}
-
-		&:not(:first-of-type) {
-			margin-left: var(--spacing-10) !important;
-		}
 	}
 
 	:global(.ant-tabs-tab) [aria-selected='false'] :global(.periscope-tab) {

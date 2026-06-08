@@ -13,7 +13,7 @@
 .alertConditionTabs {
 	display: flex;
 	border-radius: 2px;
-	border: 1px solid var(--l1-border);
+	border: 1px solid var(--l2-border);
 	background: var(--l2-background);
 	flex-direction: row;
 	border-bottom: none;
@@ -29,8 +29,8 @@
 	padding: 9px;
 	box-shadow: none;
 	border-radius: 0;
-	border-left: 0.5px solid var(--l1-border);
-	border-bottom: 0.5px solid var(--l1-border);
+	border-left: 0.5px solid var(--l2-border);
+	border-bottom: 0.5px solid var(--l2-border);
 	width: 120px;
 	height: 36px;
 	gap: var(--spacing-4);
@@ -42,7 +42,7 @@
 	&:hover {
 		background-color: transparent !important;
 		border-left: 1px solid transparent !important;
-		color: var(--l1-foreground);
+		color: var(--l3-foreground);
 	}
 
 	&:disabled {
@@ -52,11 +52,11 @@
 }
 
 .activeTab {
-	background-color: var(--l1-background);
+	background-color: var(--l2-background);
 	border-bottom: none;
 
 	&:hover {
-		background-color: var(--l1-background) !important;
+		background-color: var(--l2-background-hover) !important;
 	}
 }
 
