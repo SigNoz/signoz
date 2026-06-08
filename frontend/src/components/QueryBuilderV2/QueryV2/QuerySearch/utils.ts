@@ -53,9 +53,10 @@ export function getUserExpressionFromCombined(
 
 export function getRecentOptions(
 	signal: RecentsSignal,
+	source: string,
 	fullDoc: string,
 ): Completion[] {
-	const all = recentQueriesStore.list(signal);
+	const all = recentQueriesStore.list(signal, source);
 	const normalizedDoc = normalizeFilterExpression(fullDoc);
 
 	const matches = all
@@ -79,6 +80,7 @@ export function getRecentOptions(
 		detail: dayjs(entry.lastUsedAt).fromNow(),
 		recentId: entry.id,
 		recentSignal: entry.signal,
+		recentSource: entry.source,
 		apply: (view: EditorView): void => {
 			view.dispatch({
 				changes: {
@@ -107,6 +109,7 @@ export function renderRecentDeleteButton(
 	const c = completion as Completion & {
 		recentId?: string;
 		recentSignal?: RecentsSignal;
+		recentSource?: string;
 	};
 
 	const btn = document.createElement('button');
@@ -132,7 +135,7 @@ export function renderRecentDeleteButton(
 		if (!c.recentId || !c.recentSignal) {
 			return;
 		}
-		recentQueriesStore.remove(c.recentId, c.recentSignal);
+		recentQueriesStore.remove(c.recentId, c.recentSignal, c.recentSource ?? '');
 		if (view) {
 			view.focus();
 			startCompletion(view);

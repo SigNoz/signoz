@@ -1256,12 +1256,13 @@ function QuerySearch({
 	}
 
 	const recentsSignal = dataSource as RecentsSignal;
+	const recentsSource = signalSource ?? '';
 
 	function combinedSuggestions(
 		context: CompletionContext,
 	): CompletionResult | null {
 		const fullDoc = context.state.doc.toString();
-		const recentOptions = getRecentOptions(recentsSignal, fullDoc);
+		const recentOptions = getRecentOptions(recentsSignal, recentsSource, fullDoc);
 		const result = autoSuggestions(context);
 
 		const sectionedSuggestions = (result?.options || []).map((opt) => ({

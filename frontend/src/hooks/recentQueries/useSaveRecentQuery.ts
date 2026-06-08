@@ -30,6 +30,7 @@ function buildSignature(stagedQuery: Query | null | undefined): string | null {
 	return JSON.stringify(
 		queryData.map((q) => ({
 			ds: q.dataSource,
+			src: q.source ?? '',
 			f: q.filter?.expression ?? '',
 		})),
 	);
@@ -62,6 +63,7 @@ export function useSaveRecentQuery(
 			}
 			store.save({
 				signal,
+				source: q.source ?? '',
 				filter: q.filter ?? { expression: '' },
 			});
 		});
