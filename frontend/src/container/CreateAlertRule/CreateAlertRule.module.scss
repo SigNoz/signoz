@@ -1,0 +1,69 @@
+.createAlertTabsExtra {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-8);
+}
+
+.createAlertWrapper {
+	margin-top: var(--spacing-5);
+
+	:global(.divider) {
+		border-color: var(--l1-border);
+		margin: var(--spacing-8) 0;
+	}
+
+	:global(.breadcrumb-divider) {
+		margin-top: var(--spacing-5);
+	}
+}
+
+.createAlertBreadcrumb {
+	padding-left: var(--spacing-8);
+
+	:global(.breadcrumb-item) {
+		color: var(--l2-foreground);
+		font-size: var(--periscope-font-size-base);
+		line-height: var(--line-height-20);
+		letter-spacing: 0.25px;
+		padding: 0;
+	}
+
+	:global(.ant-breadcrumb-separator),
+	:global(.breadcrumb-item--last) {
+		color: var(--muted-foreground);
+		font-family: var(--periscope-font-family-mono);
+	}
+}
+
+.createAlertBreadcrumb ol {
+	align-items: center;
+}
+
+.alertsContainer {
+	:global(.top-level-tab.periscope-tab) {
+		padding: var(--spacing-1) 0;
+	}
+
+	:global(.ant-tabs-nav) {
+		padding: 0 var(--spacing-4);
+		margin-bottom: 0 !important;
+
+		&::before {
+			border-bottom: 1px solid var(--l1-border) !important;
+		}
+	}
+
+	:global(.ant-tabs-tab) {
+		&[data-node-key='TriggeredAlerts'] {
+			margin-left: var(--spacing-8);
+		}
+
+		&:not(:first-of-type) {
+			margin-left: var(--spacing-10) !important;
+		}
+	}
+
+	:global(.ant-tabs-tab) [aria-selected='false'] :global(.periscope-tab) {
+		color: var(--l2-foreground);
+	}
+}
