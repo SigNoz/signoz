@@ -192,7 +192,9 @@ describe('round-trip (Phase 2 — bare BuilderQuery): perses → fromPerses → 
 		});
 
 		expect(roundTripped).toHaveLength(1);
-		expect(roundTripped[0].kind).toBe(Querybuildertypesv5RequestTypeDTO.time_series);
+		expect(roundTripped[0].kind).toBe(
+			Querybuildertypesv5RequestTypeDTO.time_series,
+		);
 
 		const origPlugin = extractPlugin(original);
 		const rtPlugin = extractPlugin(roundTripped[0]);
@@ -293,7 +295,9 @@ describe('round-trip (Phase 3 — multi-builder CompositeQuery): perses → from
 		});
 
 		expect(roundTripped).toHaveLength(1);
-		expect(roundTripped[0].kind).toBe(Querybuildertypesv5RequestTypeDTO.time_series);
+		expect(roundTripped[0].kind).toBe(
+			Querybuildertypesv5RequestTypeDTO.time_series,
+		);
 		const rtPlugin = extractPlugin(roundTripped[0]);
 		expect(rtPlugin.kind).toBe('signoz/CompositeQuery');
 		const subqueries = rtPlugin.spec.queries as Array<{

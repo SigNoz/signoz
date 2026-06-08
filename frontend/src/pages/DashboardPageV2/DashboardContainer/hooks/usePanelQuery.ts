@@ -32,7 +32,11 @@ export interface UsePanelQueryResult {
 	data: MetricQueryRangeSuccessResponse | undefined;
 	/** Combines `isLoading` (first fetch) and `isFetching` (background refresh). */
 	isLoading: boolean;
+	/** Background refresh in flight while data is already present. */
+	isFetching: boolean;
 	error: Error | null;
+	/** Re-run the query (e.g. a retry button on the error state). */
+	refetch: () => void;
 }
 
 /**
@@ -116,9 +120,11 @@ export function usePanelQuery({
 	return {
 		data: response.data,
 		isLoading: response.isLoading || response.isFetching,
+		isFetching: response.isFetching,
 		// Coerce undefined → null so the contract is `Error | null`, not
 		// `Error | null | undefined`. Consumers can rely on a single
 		// "no error" sentinel.
 		error: (response.error as Error | null) ?? null,
+		refetch: response.refetch,
 	};
 }

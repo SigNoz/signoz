@@ -16,8 +16,12 @@ export type PersesOuterKind = 'TimeSeriesQuery' | 'LogQuery';
 
 // LIST panels (rows-oriented data — logs and traces alike) use LogQuery.
 // Every other panel type uses TimeSeriesQuery.
-export function deriveOuterKind(graphType: PANEL_TYPES): Querybuildertypesv5RequestTypeDTO {
-	return graphType === PANEL_TYPES.LIST ? Querybuildertypesv5RequestTypeDTO.raw : Querybuildertypesv5RequestTypeDTO.time_series;
+export function deriveOuterKind(
+	graphType: PANEL_TYPES,
+): Querybuildertypesv5RequestTypeDTO {
+	return graphType === PANEL_TYPES.LIST
+		? Querybuildertypesv5RequestTypeDTO.raw
+		: Querybuildertypesv5RequestTypeDTO.time_series;
 }
 
 // v5 builder query carries `signal` as a literal union; V1 in-memory uses the

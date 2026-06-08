@@ -1,4 +1,7 @@
-import { Querybuildertypesv5RequestTypeDTO, type DashboardtypesQueryDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	Querybuildertypesv5RequestTypeDTO,
+	type DashboardtypesQueryDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import type {
