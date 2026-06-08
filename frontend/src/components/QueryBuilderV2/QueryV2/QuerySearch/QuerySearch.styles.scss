@@ -3,9 +3,7 @@
 $dropdown-base-height: 250px;
 $recents-header-height: 30px;
 $recent-row-height: 36px;
-// MUST stay in sync with RECENTS_DISPLAY_CAP in ./constants.ts — the TS side caps
-// how many recents are rendered; this caps how tall the dropdown can grow to fit
-// them. If you change one, change the other.
+// how many recents are rendered; this caps how tall the dropdown can grow to fit them.
 $max-recents-shown: 5;
 
 .code-mirror-where-clause {

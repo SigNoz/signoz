@@ -47,12 +47,12 @@ import { validateQuery } from 'utils/queryValidationUtils';
 import { unquote } from 'utils/stringUtils';
 
 import { useRecents } from 'hooks/recentQueries/useRecents';
+import type { SignalType } from 'types/api/v5/queryRange';
 
 import { queryExamples, SUGGESTIONS_SECTION } from './constants';
 import {
 	combineInitialAndUserExpression,
 	getRecentOptions,
-	type RecentsSignal,
 	renderRecentDeleteButton,
 } from './utils';
 
@@ -1257,7 +1257,7 @@ function QuerySearch({
 		};
 	}
 
-	const signal = dataSource as RecentsSignal;
+	const signal = dataSource as SignalType;
 	const recents = useRecents(signal, signalSource ?? '');
 
 	function combinedSuggestions(
@@ -1281,14 +1281,12 @@ function QuerySearch({
 				from: 0,
 				to: fullDoc.length,
 				options: recentOptions,
-				filter: false,
 			};
 		}
 
 		return {
 			...result,
 			options: [...recentOptions, ...suggestionOptions],
-			filter: false,
 		};
 	}
 

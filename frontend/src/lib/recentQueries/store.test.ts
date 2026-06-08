@@ -1,3 +1,4 @@
+import { MAX_ENTRIES } from './constants';
 import * as store from './recentQueriesStore';
 import type { RecentQueryInput } from './recentQueriesStore';
 import type { RecentQueryEntry } from './types';
@@ -145,14 +146,15 @@ describe('recentQueries store', () => {
 	});
 
 	describe('LRU cap', () => {
-		it('caps the bucket at 10 entries and evicts the oldest', () => {
-			for (let i = 0; i < 11; i += 1) {
+		it('caps the bucket at MAX_ENTRIES and evicts the oldest', () => {
+			const total = MAX_ENTRIES + 1;
+			for (let i = 0; i < total; i += 1) {
 				store.save(baseInput({ filter: { expression: `attempt = ${i}` } }));
 			}
 
 			const entries = store.list('logs');
-			expect(entries).toHaveLength(10);
-			expect(entries[0].filter.expression).toBe('attempt = 10');
+			expect(entries).toHaveLength(MAX_ENTRIES);
+			expect(entries[0].filter.expression).toBe(`attempt = ${total - 1}`);
 			expect(entries.some((e) => e.filter.expression === 'attempt = 0')).toBe(
 				false,
 			);

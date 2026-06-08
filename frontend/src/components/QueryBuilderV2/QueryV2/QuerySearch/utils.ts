@@ -5,6 +5,7 @@ import dayjs from 'dayjs';
 import { normalizeFilterExpression } from 'lib/recentQueries/normalize';
 import * as recentQueriesStore from 'lib/recentQueries/recentQueriesStore';
 import type { RecentQueryEntry } from 'lib/recentQueries/types';
+import type { SignalType } from 'types/api/v5/queryRange';
 import 'utils/timeUtils';
 
 import {
@@ -12,8 +13,6 @@ import {
 	RECENTS_DISPLAY_CAP,
 	RECENTS_SECTION,
 } from './constants';
-
-export type RecentsSignal = 'logs' | 'traces' | 'metrics';
 
 export function combineInitialAndUserExpression(
 	initial: string,
@@ -79,10 +78,15 @@ export function getRecentOptions(
 		})
 		.slice(0, RECENTS_DISPLAY_CAP);
 
-	return matches.map((entry) => ({
+	return matches.map((entry, index) => ({
 		label: entry.filter.expression,
 		type: RECENT_COMPLETION_TYPE,
-		boost: -50,
+		// CodeMirror sorts within a section by boost desc, then label asc. The store
+		// returns entries newest-first, so we mirror that by giving the newest entry
+		// the highest boost — otherwise CM falls back to alphabetical order and the
+		// "most recently used" expectation breaks. Stays within the recents section
+		// because section.rank keeps recents above suggestions regardless of boost.
+		boost: matches.length - index,
 		section: RECENTS_SECTION,
 		detail: dayjs(entry.lastUsedAt).fromNow(),
 		recentId: entry.id,
@@ -106,16 +110,14 @@ export function renderRecentDeleteButton(
 	completion: Completion,
 	_state: unknown,
 	view: EditorView | null,
-): Node {
+): Node | null {
 	if (completion.type !== RECENT_COMPLETION_TYPE) {
-		const empty = document.createElement('span');
-		empty.style.display = 'none';
-		return empty;
+		return null;
 	}
 
 	const c = completion as Completion & {
 		recentId?: string;
-		recentSignal?: RecentsSignal;
+		recentSignal?: SignalType;
 		recentSource?: string;
 	};
 
