@@ -73,7 +73,7 @@ import {
 import { usePrefillAlertConditions } from './usePrefillAlertConditions';
 import { getSelectedQueryOptions } from './utils';
 
-import './FormAlertRules.styles.scss';
+import styles from './FormAlertRules.module.scss';
 
 export enum AlertDetectionTypes {
 	THRESHOLD_ALERT = 'threshold_rule',
@@ -848,13 +848,13 @@ function FormAlertRules({
 
 			<div
 				id="top"
-				className={`form-alert-rules-container ${
-					isNewRule ? 'create-mode' : 'edit-mode'
+				className={`${styles.formAlertRulesContainer} ${
+					isNewRule ? styles.createMode : ''
 				}`}
 			>
-				<div className="overview-header">
-					<div className="alert-type-container">
-						<Typography.Title level={5} className="alert-type-title">
+				<div className={styles.overviewHeader}>
+					<div className={styles.alertTypeContainer}>
+						<Typography.Title level={5} className={styles.alertTypeTitle}>
 							<BellDot size={14} />
 
 							{alertDef.alertType === AlertTypes.ANOMALY_BASED_ALERT &&
@@ -883,9 +883,8 @@ function FormAlertRules({
 					initialValues={initialValue}
 					layout="vertical"
 					form={formInstance}
-					className="main-container"
 				>
-					<div className="chart-preview-container">
+					<div className={styles.chartPreviewContainer}>
 						{currentQuery.queryType === EQueryType.QUERY_BUILDER &&
 							renderQBChartPreview()}
 						{currentQuery.queryType === EQueryType.PROM &&
@@ -904,10 +903,10 @@ function FormAlertRules({
 						/>
 					</StepContainer>
 
-					<div className="steps-container">
+					<div className={styles.stepsContainer}>
 						{alertDef.alertType === AlertTypes.METRICS_BASED_ALERT &&
 							isAnomalyDetectionEnabled && (
-								<div className="detection-method-container">
+								<div className={styles.detectionMethodContainer}>
 									<StepHeading> {t('alert_form_step1')}</StepHeading>
 
 									<Tabs2
@@ -917,7 +916,7 @@ function FormAlertRules({
 										onSelectTab={handleDetectionMethodChange}
 									/>
 
-									<div className="detection-method-description">
+									<div className={styles.detectionMethodDescription}>
 										{detectionMethod === AlertDetectionTypes.ANOMALY_DETECTION_ALERT
 											? t('anomaly_detection_alert_desc')
 											: t('threshold_alert_desc')}
