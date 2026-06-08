@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"bytes"
-	"context"
 	"io"
 	"log/slog"
 	"net/http"
@@ -10,9 +9,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/gorilla/mux"
 )
-
-// resolvedKey is the context key under which the resolved resource list is stored.
-type resolvedKey struct{}
 
 // Resource resolves a route's declared ResourceDefs (request-side) and stashes
 // the result in the request context. It is the OUTER of the resource-aware
@@ -48,7 +44,7 @@ func (middleware *Resource) Wrap(next http.Handler) http.Handler {
 		}
 		resolved := handler.ResolveRequest(defs, extractorCtx)
 
-		ctx := withResolved(req.Context(), &resolved)
+		ctx := handler.NewContextWithResolvedResources(req.Context(), resolved)
 		next.ServeHTTP(rw, req.WithContext(ctx))
 	})
 }
@@ -70,16 +66,4 @@ func resourceDefsFromRequest(req *http.Request) []handler.ResourceSpec {
 	}
 
 	return provider.ResourceDefs()
-}
-
-func withResolved(ctx context.Context, resolved *[]handler.ResolvedResource) context.Context {
-	return context.WithValue(ctx, resolvedKey{}, resolved)
-}
-
-// ResolvedFromContext returns the resolved resource list placed by the Resource
-// middleware. The pointer lets the audit middleware finalize response-phase ids
-// in place.
-func ResolvedFromContext(ctx context.Context) (*[]handler.ResolvedResource, bool) {
-	resolved, ok := ctx.Value(resolvedKey{}).(*[]handler.ResolvedResource)
-	return resolved, ok
 }

@@ -12,7 +12,10 @@ import (
 	"github.com/tidwall/gjson"
 )
 
-var errCodeInvalidResourceDef = errors.MustNewCode("invalid_resource_def")
+var (
+	errCodeInvalidResourceDef        = errors.MustNewCode("invalid_resource_def")
+	errCodeResolvedResourcesNotFound = errors.MustNewCode("resolved_resources_not_found")
+)
 
 // ExtractorContext carries everything an extractor may read. The resource
 // middleware fills Request + RequestBody pre-handler; the audit middleware adds
@@ -124,7 +127,7 @@ var IDSelector SelectorFunc = func(_ context.Context, resource coretypes.Resourc
 // ResourcesDef. Only these two satisfy WithResourceDefs.
 type ResourceSpec interface {
 	sealResourceSpec()
-	resolveRequest(ec ExtractorContext) []ResolvedResource
+	resolveRequest(ec ExtractorContext) []*ResolvedResource
 }
 
 // ResourceDef declares one resource an operation acts on. For attach/detach,
@@ -159,23 +162,23 @@ type RelatedResource struct {
 func (ResourceDef) sealResourceSpec()  {}
 func (ResourcesDef) sealResourceSpec() {}
 
-func (d ResourceDef) resolveRequest(ec ExtractorContext) []ResolvedResource {
-	resolved := ResolvedResource{Resource: d.Resource, Verb: d.Verb, Selector: d.Selector, Category: d.Category}
+func (d ResourceDef) resolveRequest(ec ExtractorContext) []*ResolvedResource {
+	resolved := &ResolvedResource{Resource: d.Resource, Verb: d.Verb, Selector: d.Selector, Category: d.Category}
 	resolved.ID, resolved.responseID = resolveID(d.ID, ec)
 	resolved.Related = resolveRelated(d.Related, ec)
 
-	return []ResolvedResource{resolved}
+	return []*ResolvedResource{resolved}
 }
 
-func (d ResourcesDef) resolveRequest(ec ExtractorContext) []ResolvedResource {
+func (d ResourcesDef) resolveRequest(ec ExtractorContext) []*ResolvedResource {
 	var ids []string
 	if d.IDs.fn != nil {
 		ids, _ = d.IDs.fn(ec)
 	}
 
-	resolved := make([]ResolvedResource, 0, len(ids))
+	resolved := make([]*ResolvedResource, 0, len(ids))
 	for _, id := range ids {
-		resolved = append(resolved, ResolvedResource{
+		resolved = append(resolved, &ResolvedResource{
 			Resource: d.Resource,
 			Verb:     d.Verb,
 			ID:       id,
@@ -235,10 +238,33 @@ type ResolvedRelated struct {
 	responseID ResourceIDExtractor
 }
 
+// resolvedKey is the context key under which the resolved resource list is stored.
+type resolvedKey struct{}
+
+// NewContextWithResolvedResources stores the resolved resource list in the
+// context. Entries are pointers so the audit middleware can finalize
+// response-phase ids in place after the handler runs.
+func NewContextWithResolvedResources(ctx context.Context, resolved []*ResolvedResource) context.Context {
+	return context.WithValue(ctx, resolvedKey{}, resolved)
+}
+
+// ResolvedResourcesFromContext returns the resolved resource list placed by the
+// Resource middleware, or an error if no list is present (the route declared no
+// ResourceDefs or the Resource middleware is not wired). Entries are pointers so
+// the audit middleware can finalize response-phase ids in place.
+func ResolvedResourcesFromContext(ctx context.Context) ([]*ResolvedResource, error) {
+	resolved, ok := ctx.Value(resolvedKey{}).([]*ResolvedResource)
+	if !ok {
+		return nil, errors.New(errors.TypeInternal, errCodeResolvedResourcesNotFound, "resolved resources not found in context")
+	}
+
+	return resolved, nil
+}
+
 // ResolveRequest resolves the request-phase ids for all specs (fan-out included)
 // against ec. Called by the resource middleware pre-handler.
-func ResolveRequest(defs []ResourceSpec, ec ExtractorContext) []ResolvedResource {
-	var resolved []ResolvedResource
+func ResolveRequest(defs []ResourceSpec, ec ExtractorContext) []*ResolvedResource {
+	var resolved []*ResolvedResource
 	for _, def := range defs {
 		resolved = append(resolved, def.resolveRequest(ec)...)
 	}
@@ -249,14 +275,14 @@ func ResolveRequest(defs []ResourceSpec, ec ExtractorContext) []ResolvedResource
 // FinalizeResponseIDs runs the carried response-phase extractors against ec to
 // fill the ids that were unknown pre-handler. Called by the audit middleware
 // post-handler. Mutates the entries in place.
-func FinalizeResponseIDs(resolved []ResolvedResource, ec ExtractorContext) {
-	for idx := range resolved {
-		if resolved[idx].responseID.fn != nil {
-			resolved[idx].ID, _ = resolved[idx].responseID.fn(ec)
+func FinalizeResponseIDs(resolved []*ResolvedResource, ec ExtractorContext) {
+	for _, entry := range resolved {
+		if entry.responseID.fn != nil {
+			entry.ID, _ = entry.responseID.fn(ec)
 		}
 
-		if resolved[idx].Related != nil && resolved[idx].Related.responseID.fn != nil {
-			resolved[idx].Related.ID, _ = resolved[idx].Related.responseID.fn(ec)
+		if entry.Related != nil && entry.Related.responseID.fn != nil {
+			entry.Related.ID, _ = entry.Related.responseID.fn(ec)
 		}
 	}
 }
@@ -264,13 +290,13 @@ func FinalizeResponseIDs(resolved []ResolvedResource, ec ExtractorContext) {
 // HasResponseIDs reports whether any resolved entry needs the response body to
 // finalize its id. The audit middleware uses this to decide whether to capture
 // the success response body.
-func HasResponseIDs(resolved []ResolvedResource) bool {
-	for idx := range resolved {
-		if resolved[idx].responseID.fn != nil {
+func HasResponseIDs(resolved []*ResolvedResource) bool {
+	for _, entry := range resolved {
+		if entry.responseID.fn != nil {
 			return true
 		}
 
-		if resolved[idx].Related != nil && resolved[idx].Related.responseID.fn != nil {
+		if entry.Related != nil && entry.Related.responseID.fn != nil {
 			return true
 		}
 	}

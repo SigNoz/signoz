@@ -64,7 +64,7 @@ func (middleware *Audit) Wrap(next http.Handler) http.Handler {
 
 		// If any resolved resource derives its id from the response, capture the
 		// success body (bounded) so the audit event can read it post-handler.
-		if resolved, ok := ResolvedFromContext(req.Context()); ok && handler.HasResponseIDs(*resolved) {
+		if resolved, err := handler.ResolvedResourcesFromContext(req.Context()); err == nil && handler.HasResponseIDs(resolved) {
 			writer.EnableBodyCapture()
 		}
 
@@ -114,8 +114,8 @@ func (middleware *Audit) emitAuditEvent(req *http.Request, writer responseCaptur
 	}
 
 	// Resources resolved by the Resource middleware — emit one event per entry.
-	resolved, ok := ResolvedFromContext(req.Context())
-	if !ok || len(*resolved) == 0 {
+	resolved, err := handler.ResolvedResourcesFromContext(req.Context())
+	if err != nil || len(resolved) == 0 {
 		return
 	}
 
@@ -123,9 +123,9 @@ func (middleware *Audit) emitAuditEvent(req *http.Request, writer responseCaptur
 		Request:      req,
 		ResponseBody: writer.BodyBytes(),
 	}
-	handler.FinalizeResponseIDs(*resolved, extractorCtx)
+	handler.FinalizeResponseIDs(resolved, extractorCtx)
 
-	for _, entry := range *resolved {
+	for _, entry := range resolved {
 		// Audit records state changes only — skip read/list verbs (they still
 		// exist on the def for authz).
 		if !entry.Verb.IsMutation() {
