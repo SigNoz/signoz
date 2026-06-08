@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { EllipsisVertical, FolderInput, Trash2 } from '@signozhq/icons';
+import { Button } from '@signozhq/ui/button';
 import { DropdownMenuSimple } from '@signozhq/ui/dropdown-menu';
 import type { MenuItem } from '@signozhq/ui/dropdown-menu';
 
@@ -8,7 +9,7 @@ import type { DeletePanelArgs } from '../hooks/useDeletePanel';
 import type { MovePanelArgs } from '../hooks/useMovePanelToSection';
 import styles from './PanelActionsMenu.module.scss';
 
-interface Props {
+interface PanelActionsMenuProps {
 	panelId: string;
 	currentLayoutIndex: number;
 	sections: DashboardSection[];
@@ -22,7 +23,7 @@ function PanelActionsMenu({
 	sections,
 	onMovePanel,
 	onDeletePanel,
-}: Props): JSX.Element {
+}: PanelActionsMenuProps): JSX.Element {
 	const items = useMemo<MenuItem[]>(() => {
 		const result: MenuItem[] = [];
 
@@ -75,8 +76,11 @@ function PanelActionsMenu({
 
 	return (
 		<DropdownMenuSimple menu={{ items }}>
-			<button
+			<Button
 				type="button"
+				variant="ghost"
+				color="secondary"
+				size="icon"
 				className={styles.trigger}
 				aria-label="Panel actions"
 				data-testid={`panel-actions-${panelId}`}
@@ -87,7 +91,7 @@ function PanelActionsMenu({
 				onClick={(e): void => e.stopPropagation()}
 			>
 				<EllipsisVertical size={14} />
-			</button>
+			</Button>
 		</DropdownMenuSimple>
 	);
 }

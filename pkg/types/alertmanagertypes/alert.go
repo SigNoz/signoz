@@ -134,7 +134,7 @@ func NewAlertsFromPostableAlerts(ctx context.Context, postableAlerts PostableAle
 	return validAlerts, errs
 }
 
-func NewTestAlert(receiver Receiver, startsAt time.Time, updatedAt time.Time) *Alert {
+func NewTestAlert(receiver *Receiver, startsAt time.Time, updatedAt time.Time) *Alert {
 	return &Alert{
 		Alert: model.Alert{
 			StartsAt: startsAt,
