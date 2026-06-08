@@ -1,0 +1,102 @@
+.statsCard {
+	width: 21.7%;
+	border-right: 1px solid var(--l1-border);
+	padding: var(--spacing-4) var(--spacing-6) var(--spacing-6);
+}
+
+.statsCardEmpty {
+	justify-content: normal;
+}
+
+.statsCardTitleWrapper {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.title {
+	text-transform: uppercase;
+	font-size: var(--periscope-font-size-base);
+	line-height: 22px;
+	color: var(--l2-foreground);
+	font-weight: var(--font-weight-medium);
+}
+
+.durationIndicator {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-2);
+}
+
+.icon {
+	display: flex;
+	align-self: center;
+}
+
+.text {
+	text-transform: uppercase;
+	color: var(--l3-foreground);
+	font-size: var(--periscope-font-size-small);
+	font-weight: var(--font-weight-semibold);
+	letter-spacing: 0.48px;
+}
+
+.statsCardStats {
+	margin-top: var(--spacing-10);
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-2);
+}
+
+.countLabel {
+	color: var(--l1-foreground);
+	font-family: var(--periscope-font-family-mono);
+	font-size: var(--font-size-2xl);
+	line-height: 36px;
+}
+
+.statsCardAlertHistoryGraph {
+	margin-top: var(--spacing-16);
+}
+
+.alertHistoryGraph {
+	width: 100%;
+	height: 72px;
+}
+
+.changePercentage {
+	width: max-content;
+	display: flex;
+	padding: var(--spacing-2) var(--spacing-4);
+	border-radius: 20px;
+	align-items: center;
+	gap: var(--spacing-2);
+}
+
+// TODO(@signozhq/design-tokens): replace --text-forest-* with --success-foreground after release
+.changePercentageSuccess {
+	background: color-mix(in srgb, var(--text-forest-500) 10%, transparent);
+	color: var(--text-forest-400);
+}
+
+.changePercentageError {
+	background: color-mix(in srgb, var(--danger-background) 10%, transparent);
+	color: var(--danger-foreground);
+}
+
+.changePercentageNoPreviousData {
+	color: var(--primary-foreground);
+	background: color-mix(in srgb, var(--primary-background) 10%, transparent);
+	padding: var(--spacing-2) var(--spacing-8);
+}
+
+.changePercentageIcon {
+	display: flex;
+	align-self: center;
+}
+
+.changePercentageLabel {
+	font-size: var(--periscope-font-size-small);
+	font-weight: var(--font-weight-medium);
+	line-height: 16px;
+}

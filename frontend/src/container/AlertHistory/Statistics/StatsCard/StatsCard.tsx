@@ -1,3 +1,4 @@
+import cx from 'classnames';
 import { Color } from '@signozhq/design-tokens';
 import { Tooltip } from 'antd';
 import { QueryParams } from 'constants/query';
@@ -12,7 +13,7 @@ import {
 	extractDayFromTimestamp,
 } from './utils';
 
-import './StatsCard.styles.scss';
+import styles from './StatsCard.module.scss';
 
 type ChangePercentageProps = {
 	percentage: number;
@@ -26,11 +27,11 @@ function ChangePercentage({
 }: ChangePercentageProps): JSX.Element {
 	if (direction > 0) {
 		return (
-			<div className="change-percentage change-percentage--success">
-				<div className="change-percentage__icon">
+			<div className={cx(styles.changePercentage, styles.changePercentageSuccess)}>
+				<div className={styles.changePercentageIcon}>
 					<ArrowDownLeft size={14} color={Color.BG_FOREST_500} />
 				</div>
-				<div className="change-percentage__label">
+				<div className={styles.changePercentageLabel}>
 					{percentage}% vs Last {duration}
 				</div>
 			</div>
@@ -38,11 +39,11 @@ function ChangePercentage({
 	}
 	if (direction < 0) {
 		return (
-			<div className="change-percentage change-percentage--error">
-				<div className="change-percentage__icon">
+			<div className={cx(styles.changePercentage, styles.changePercentageError)}>
+				<div className={styles.changePercentageIcon}>
 					<ArrowUpRight size={14} color={Color.BG_CHERRY_500} />
 				</div>
-				<div className="change-percentage__label">
+				<div className={styles.changePercentageLabel}>
 					{percentage}% vs Last {duration}
 				</div>
 			</div>
@@ -50,8 +51,13 @@ function ChangePercentage({
 	}
 
 	return (
-		<div className="change-percentage change-percentage--no-previous-data">
-			<div className="change-percentage__label">no previous data</div>
+		<div
+			className={cx(
+				styles.changePercentage,
+				styles.changePercentageNoPreviousData,
+			)}
+		>
+			<div className={styles.changePercentageLabel}>no previous data</div>
 		</div>
 	);
 }
@@ -103,27 +109,27 @@ function StatsCard({
 	const formattedEndTimeForTooltip = convertTimestampToLocaleDateString(endTime);
 
 	return (
-		<div className={`stats-card ${isEmpty ? 'stats-card--empty' : ''}`}>
-			<div className="stats-card__title-wrapper">
-				<div className="title">{title}</div>
-				<div className="duration-indicator">
-					<div className="icon">
+		<div className={cx(styles.statsCard, { [styles.statsCardEmpty]: isEmpty })}>
+			<div className={styles.statsCardTitleWrapper}>
+				<div className={styles.title}>{title}</div>
+				<div className={styles.durationIndicator}>
+					<div className={styles.icon}>
 						<Calendar size={14} color={Color.BG_SLATE_200} />
 					</div>
 					{relativeTime ? (
-						<div className="text">{displayTime}</div>
+						<div className={styles.text}>{displayTime}</div>
 					) : (
 						<Tooltip
 							title={`From ${formattedStartTimeForTooltip} to ${formattedEndTimeForTooltip}`}
 						>
-							<div className="text">{displayTime}</div>
+							<div className={styles.text}>{displayTime}</div>
 						</Tooltip>
 					)}
 				</div>
 			</div>
 
-			<div className="stats-card__stats">
-				<div className="count-label">
+			<div className={styles.statsCardStats}>
+				<div className={styles.countLabel}>
 					{isEmpty ? emptyMessage : displayValue || totalCurrentCount}
 				</div>
 
@@ -134,8 +140,8 @@ function StatsCard({
 				/>
 			</div>
 
-			<div className="stats-card__alert-history-graph">
-				<div className="alert-history-graph">
+			<div className={styles.statsCardAlertHistoryGraph}>
+				<div className={styles.alertHistoryGraph}>
 					{!isEmpty && timeSeries.length > 1 && (
 						<StatsGraph timeSeries={timeSeries} changeDirection={changeDirection} />
 					)}
