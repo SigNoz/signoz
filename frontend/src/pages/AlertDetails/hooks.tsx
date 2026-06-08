@@ -61,6 +61,8 @@ import APIError from 'types/api/error';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { nanoToMilli } from 'utils/timeUtils';
 
+import styles from './AlertDetails.module.scss';
+
 export const useAlertHistoryQueryParams = (): {
 	ruleId: string | null;
 	startTime: number;
@@ -129,7 +131,7 @@ export const useRouteTabUtils = (): { routes: TabRoutes[] } => {
 		{
 			Component: EditRules,
 			name: (
-				<div className="tab-item">
+				<div className={styles.tabItem}>
 					<Table size={14} />
 					Overview
 				</div>
@@ -140,7 +142,7 @@ export const useRouteTabUtils = (): { routes: TabRoutes[] } => {
 		{
 			Component: AlertHistory,
 			name: (
-				<div className="tab-item">
+				<div className={styles.tabItem}>
 					<History size={14} />
 					History
 					<BetaTag />
