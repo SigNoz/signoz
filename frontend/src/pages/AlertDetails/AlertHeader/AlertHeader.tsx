@@ -13,7 +13,7 @@ import AlertLabels from './AlertLabels/AlertLabels';
 import AlertSeverity from './AlertSeverity/AlertSeverity';
 import AlertState from './AlertState/AlertState';
 
-import './AlertHeader.styles.scss';
+import styles from './AlertHeader.module.scss';
 
 export type AlertHeaderProps = {
 	alertDetails: RuletypesRuleDTO | PostableAlertRuleV2;
@@ -44,16 +44,16 @@ function AlertHeader({ alertDetails }: AlertHeaderProps): JSX.Element {
 	const isV2Alert = alertDetails.schemaVersion === NEW_ALERT_SCHEMA_VERSION;
 
 	const CreateAlertV1Header = (
-		<div className="alert-info__info-wrapper">
-			<div className="top-section">
-				<div className="alert-title-wrapper">
+		<div className={styles.infoWrapper}>
+			<div className={styles.topSection}>
+				<div className={styles.alertTitleWrapper}>
 					<AlertState state={alertRuleState ?? state ?? ''} />
-					<div className="alert-title">
+					<div className={styles.alertTitle}>
 						<LineClampedText text={displayName || ''} />
 					</div>
 				</div>
 			</div>
-			<div className="bottom-section">
+			<div className={styles.bottomSection}>
 				{labels?.severity && <AlertSeverity severity={labels.severity} />}
 
 				{/* // TODO(shaheer): Get actual data when we are able to get alert firing from state from API */}
@@ -67,9 +67,9 @@ function AlertHeader({ alertDetails }: AlertHeaderProps): JSX.Element {
 	);
 
 	return (
-		<div className="alert-info">
+		<div className={styles.alertInfo}>
 			{isV2Alert ? <CreateAlertV2Header /> : CreateAlertV1Header}
-			<div className="alert-info__action-buttons">
+			<div className={styles.actionButtons}>
 				<AlertActionButtons
 					alertDetails={alertDetails}
 					ruleId={alertDetails?.id || ''}
