@@ -18,8 +18,8 @@ import (
 // ══════════════════════════════════════════════
 
 type PanelPlugin struct {
-	Kind PanelPluginKind `json:"kind"`
-	Spec any             `json:"spec"`
+	Kind PanelPluginKind `json:"kind" required:"true"`
+	Spec any             `json:"spec" required:"true"`
 }
 
 // PrepareJSONSchema drops the reflected struct shape (type: object, properties)
@@ -72,8 +72,8 @@ func (v PanelPluginVariant[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
 // ══════════════════════════════════════════════
 
 type QueryPlugin struct {
-	Kind QueryPluginKind `json:"kind"`
-	Spec any             `json:"spec"`
+	Kind QueryPluginKind `json:"kind" required:"true"`
+	Spec any             `json:"spec" required:"true"`
 }
 
 func (QueryPlugin) PrepareJSONSchema(s *jsonschema.Schema) error {
@@ -123,8 +123,8 @@ func (v QueryPluginVariant[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
 // ══════════════════════════════════════════════
 
 type VariablePlugin struct {
-	Kind VariablePluginKind `json:"kind"`
-	Spec any                `json:"spec"`
+	Kind VariablePluginKind `json:"kind" required:"true"`
+	Spec any                `json:"spec" required:"true"`
 }
 
 func (VariablePlugin) PrepareJSONSchema(s *jsonschema.Schema) error {
@@ -171,8 +171,8 @@ func (v VariablePluginVariant[S]) PrepareJSONSchema(s *jsonschema.Schema) error 
 // ══════════════════════════════════════════════
 
 type DatasourcePlugin struct {
-	Kind DatasourcePluginKind `json:"kind"`
-	Spec any                  `json:"spec"`
+	Kind DatasourcePluginKind `json:"kind" required:"true"`
+	Spec any                  `json:"spec" required:"true"`
 }
 
 func (DatasourcePlugin) PrepareJSONSchema(s *jsonschema.Schema) error {

@@ -2432,13 +2432,6 @@ components:
         url:
           type: string
       type: object
-    DashboardPanelDisplay:
-      properties:
-        description:
-          type: string
-        name:
-          type: string
-      type: object
     DashboardTextVariableSpec:
       properties:
         constant:
@@ -2559,13 +2552,12 @@ components:
             $ref: '#/components/schemas/DashboardtypesDatasourceSpec'
           type: object
         display:
-          $ref: '#/components/schemas/CommonDisplay'
+          $ref: '#/components/schemas/DashboardtypesDisplay'
         duration:
           type: string
         layouts:
           items:
             $ref: '#/components/schemas/DashboardtypesLayout'
-          nullable: true
           type: array
         links:
           items:
@@ -2574,7 +2566,6 @@ components:
         panels:
           additionalProperties:
             $ref: '#/components/schemas/DashboardtypesPanel'
-          nullable: true
           type: object
         refreshInterval:
           type: string
@@ -2582,10 +2573,19 @@ components:
           items:
             $ref: '#/components/schemas/DashboardtypesVariable'
           type: array
+      required:
+      - display
+      - variables
+      - panels
+      - layouts
+      - duration
       type: object
     DashboardtypesDatasourcePlugin:
       oneOf:
       - $ref: '#/components/schemas/DashboardtypesDatasourcePluginVariantStruct'
+      required:
+      - kind
+      - spec
     DashboardtypesDatasourcePluginKind:
       enum:
       - signoz/Datasource
@@ -2611,6 +2611,15 @@ components:
           $ref: '#/components/schemas/CommonDisplay'
         plugin:
           $ref: '#/components/schemas/DashboardtypesDatasourcePlugin'
+      type: object
+    DashboardtypesDisplay:
+      properties:
+        description:
+          type: string
+        name:
+          type: string
+      required:
+      - name
       type: object
     DashboardtypesDynamicVariableSpec:
       properties:
@@ -2731,6 +2740,9 @@ components:
     DashboardtypesLayout:
       oneOf:
       - $ref: '#/components/schemas/DashboardtypesLayoutEnvelopeGithubComPersesSpecGoDashboardGridLayoutSpec'
+      required:
+      - kind
+      - spec
     DashboardtypesLayoutEnvelopeGithubComPersesSpecGoDashboardGridLayoutSpec:
       properties:
         kind:
@@ -2790,7 +2802,7 @@ components:
         defaultValue:
           $ref: '#/components/schemas/VariableDefaultValue'
         display:
-          $ref: '#/components/schemas/VariableDisplay'
+          $ref: '#/components/schemas/DashboardtypesDisplay'
         name:
           type: string
         plugin:
@@ -2798,6 +2810,8 @@ components:
         sort:
           nullable: true
           type: string
+      required:
+      - display
       type: object
     DashboardtypesNumberPanelSpec:
       properties:
@@ -2817,6 +2831,9 @@ components:
           $ref: '#/components/schemas/DashboardtypesPanelKind'
         spec:
           $ref: '#/components/schemas/DashboardtypesPanelSpec'
+      required:
+      - kind
+      - spec
       type: object
     DashboardtypesPanelFormatting:
       properties:
@@ -2838,6 +2855,9 @@ components:
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTablePanelSpec'
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHistogramPanelSpec'
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpec'
+      required:
+      - kind
+      - spec
     DashboardtypesPanelPluginKind:
       enum:
       - signoz/TimeSeriesPanel
@@ -2935,7 +2955,7 @@ components:
     DashboardtypesPanelSpec:
       properties:
         display:
-          $ref: '#/components/schemas/DashboardPanelDisplay'
+          $ref: '#/components/schemas/DashboardtypesDisplay'
         links:
           items:
             $ref: '#/components/schemas/DashboardLink'
@@ -2945,7 +2965,12 @@ components:
         queries:
           items:
             $ref: '#/components/schemas/DashboardtypesQuery'
+          nullable: true
           type: array
+      required:
+      - display
+      - plugin
+      - queries
       type: object
     DashboardtypesPatchOp:
       enum:
@@ -3014,6 +3039,9 @@ components:
           $ref: '#/components/schemas/Querybuildertypesv5RequestType'
         spec:
           $ref: '#/components/schemas/DashboardtypesQuerySpec'
+      required:
+      - kind
+      - spec
       type: object
     DashboardtypesQueryPlugin:
       oneOf:
@@ -3023,6 +3051,9 @@ components:
       - $ref: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5PromQuery'
       - $ref: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5ClickHouseQuery'
       - $ref: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderTraceOperator'
+      required:
+      - kind
+      - spec
     DashboardtypesQueryPluginKind:
       enum:
       - signoz/BuilderQuery
@@ -3110,6 +3141,8 @@ components:
           type: string
         plugin:
           $ref: '#/components/schemas/DashboardtypesQueryPlugin'
+      required:
+      - plugin
       type: object
     DashboardtypesQueryVariableSpec:
       properties:
@@ -3280,6 +3313,9 @@ components:
       oneOf:
       - $ref: '#/components/schemas/DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpec'
       - $ref: '#/components/schemas/DashboardtypesVariableEnvelopeGithubComPersesSpecGoDashboardTextVariableSpec'
+      required:
+      - kind
+      - spec
     DashboardtypesVariableEnvelopeGithubComPersesSpecGoDashboardTextVariableSpec:
       properties:
         kind:
@@ -3309,6 +3345,9 @@ components:
       - $ref: '#/components/schemas/DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDynamicVariableSpec'
       - $ref: '#/components/schemas/DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesQueryVariableSpec'
       - $ref: '#/components/schemas/DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesCustomVariableSpec'
+      required:
+      - kind
+      - spec
     DashboardtypesVariablePluginKind:
       enum:
       - signoz/DynamicVariable

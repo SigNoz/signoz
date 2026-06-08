@@ -12,7 +12,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/tagtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/perses/spec/go/common"
 	"k8s.io/apimachinery/pkg/util/validation"
 )
 
@@ -158,9 +157,6 @@ func (p *PostableDashboardV2) UnmarshalJSON(data []byte) error {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "%s", err.Error())
 	}
 	*p = PostableDashboardV2(tmp)
-	if p.Spec.Display == nil {
-		p.Spec.Display = &common.Display{}
-	}
 	if !p.GenerateName && p.Spec.Display.Name == "" {
 		p.Spec.Display.Name = p.Name
 	}
@@ -187,7 +183,7 @@ func (p *PostableDashboardV2) validateName() error {
 	if p.Name != "" {
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "name must be empty when generateName is true, got %q", p.Name)
 	}
-	if p.Spec.Display == nil || p.Spec.Display.Name == "" {
+	if p.Spec.Display.Name == "" {
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.display.name is required when generateName is true")
 	}
 	return nil
@@ -331,9 +327,6 @@ func (u *UpdatableDashboardV2) UnmarshalJSON(data []byte) error {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "%s", err.Error())
 	}
 	*u = UpdatableDashboardV2(tmp)
-	if u.Spec.Display == nil {
-		u.Spec.Display = &common.Display{}
-	}
 	if u.Spec.Display.Name == "" {
 		u.Spec.Display.Name = u.Name
 	}
