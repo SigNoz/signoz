@@ -5,11 +5,8 @@ export const SUGGESTIONS_SECTION = { name: 'Suggestions', rank: 2 } as const;
 // recents from regular autocomplete completions in renderers and event handlers.
 export const RECENT_COMPLETION_TYPE = 'recent';
 
-// Max number of recents rendered in the autocomplete dropdown. The SCSS upper
-// bound in QuerySearch.styles.scss ($max-recents-upper-bound) must be >= this
-// value so the dropdown can grow to fit, but the two no longer have to match
-// exactly — the stylesheet generates rules for every count up to that bound
-// and only the rule for the actual rendered count matches via `:has()`.
+// Max number of recents rendered in the autocomplete dropdown.
+//  Do change $max-recents-shown: in QuerySearch.styles.scss if you change this.
 export const RECENTS_DISPLAY_CAP = 5;
 
 export const queryExamples = [

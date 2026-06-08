@@ -6,12 +6,7 @@ import { create } from 'zustand';
 import { MAX_ENTRIES, STORAGE_VERSION } from './constants';
 import { normalizeFilterExpression } from './normalize';
 import type { RecentQueriesStoreShape, RecentQueryEntry } from './types';
-import {
-	bucketKey,
-	makeId,
-	normalizeSource,
-	storageKeyFor,
-} from './utils';
+import { bucketKey, makeId, normalizeSource, storageKeyFor } from './utils';
 
 // Mirrors parsed localStorage so equal raw strings return the same array ref —
 // preserves Object.is for zustand selector bail-out.
@@ -56,9 +51,16 @@ function saveBucketToStorage(
 	source: string,
 	entries: RecentQueryEntry[],
 ): void {
-	const raw = JSON.stringify({ version: STORAGE_VERSION, entries });
-	if (set(storageKeyFor(signal, source), raw)) {
-		persistedBucketCache.set(bucketKey(signal, source), { raw, parsed: entries });
+	try {
+		const raw = JSON.stringify({ version: STORAGE_VERSION, entries });
+		if (set(storageKeyFor(signal, source), raw)) {
+			persistedBucketCache.set(bucketKey(signal, source), {
+				raw,
+				parsed: entries,
+			});
+		}
+	} catch {
+		// Ignore storage errors (e.g. quota exceeded, JSON.stringify failure).
 	}
 }
 
