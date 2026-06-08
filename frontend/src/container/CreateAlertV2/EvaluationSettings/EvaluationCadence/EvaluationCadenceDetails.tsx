@@ -21,6 +21,7 @@ import {
 	isValidRRule,
 } from '../utils';
 import { ScheduleList } from './EvaluationCadencePreview';
+import styles from './styles.module.scss';
 
 function EvaluationCadenceDetails({
 	setIsOpen,
@@ -90,8 +91,8 @@ function EvaluationCadenceDetails({
 	}, [evaluationCadence.custom.repeatEvery]);
 
 	const EditorView = (
-		<div className="editor-view" data-testid="editor-view">
-			<div className="select-group">
+		<div className={styles.editorView} data-testid="editor-view">
+			<div className={styles.selectGroup}>
 				<Typography.Text>REPEAT EVERY</Typography.Text>
 				<Select
 					options={EVALUATION_CADENCE_REPEAT_EVERY_OPTIONS}
@@ -113,7 +114,7 @@ function EvaluationCadenceDetails({
 				/>
 			</div>
 			{evaluationCadence.custom.repeatEvery !== 'day' && (
-				<div className="select-group">
+				<div className={styles.selectGroup}>
 					<Typography.Text>ON DAY(S)</Typography.Text>
 					<Select
 						options={occurenceOptions}
@@ -135,7 +136,7 @@ function EvaluationCadenceDetails({
 					/>
 				</div>
 			)}
-			<div className="select-group">
+			<div className={styles.selectGroup}>
 				<Typography.Text>AT</Typography.Text>
 				<TimeInput
 					value={evaluationCadence.custom.startAt}
@@ -150,7 +151,7 @@ function EvaluationCadenceDetails({
 					}
 				/>
 			</div>
-			<div className="select-group">
+			<div className={styles.selectGroup}>
 				<Typography.Text>TIMEZONE</Typography.Text>
 				<Select
 					options={TIMEZONE_DATA}
@@ -174,8 +175,8 @@ function EvaluationCadenceDetails({
 	);
 
 	const RRuleView = (
-		<div className="rrule-view" data-testid="rrule-view">
-			<div className="select-group">
+		<div className={styles.rruleView} data-testid="rrule-view">
+			<div className={styles.selectGroup}>
 				<Typography.Text>STARTING ON</Typography.Text>
 				<DatePicker
 					value={evaluationCadence.rrule.date}
@@ -191,7 +192,7 @@ function EvaluationCadenceDetails({
 					placeholder="Select date"
 				/>
 			</div>
-			<div className="select-group">
+			<div className={styles.selectGroup}>
 				<Typography.Text>AT</Typography.Text>
 				<TimeInput
 					value={evaluationCadence.rrule.startAt}
@@ -294,19 +295,19 @@ function EvaluationCadenceDetails({
 	};
 
 	return (
-		<div className="evaluation-cadence-details">
-			<Typography.Text className="evaluation-cadence-details-title">
+		<div className={styles.evaluationCadenceDetails}>
+			<Typography.Text className={styles.evaluationCadenceDetailsTitle}>
 				Add Custom Schedule
 			</Typography.Text>
-			<div className="evaluation-cadence-details-content">
-				<div className="evaluation-cadence-details-content-row">
-					<div className="query-section-tabs">
-						<div className="query-section-query-actions">
+			<div className={styles.evaluationCadenceDetailsContent}>
+				<div className={styles.evaluationCadenceDetailsContentRow}>
+					<div className={styles.querySectionTabs}>
+						<div className={styles.querySectionQueryActions}>
 							{tabs.map((tab) => (
 								<Button
 									key={tab.value}
-									className={classNames('list-view-tab', 'explorer-view-option', {
-										'active-tab': activeTab === tab.value,
+									className={classNames(styles.explorerViewOption, {
+										[styles.activeTab]: activeTab === tab.value,
 									})}
 									onClick={(): void => {
 										handleChangeTab(tab.value as 'editor' | 'rrule');
@@ -320,7 +321,7 @@ function EvaluationCadenceDetails({
 					</div>
 					{activeTab === 'editor' && EditorView}
 					{activeTab === 'rrule' && RRuleView}
-					<div className="buttons-row">
+					<div className={styles.buttonsRow}>
 						<Button type="default" onClick={handleDiscard}>
 							Discard
 						</Button>
@@ -333,7 +334,7 @@ function EvaluationCadenceDetails({
 						</Button>
 					</div>
 				</div>
-				<div className="evaluation-cadence-details-content-row">
+				<div className={styles.evaluationCadenceDetailsContentRow}>
 					<ScheduleList
 						schedule={schedule}
 						currentTimezone={evaluationCadence.custom.timezone}

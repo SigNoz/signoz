@@ -16,6 +16,7 @@ import {
 } from '../types';
 import EvaluationWindowDetails from './EvaluationWindowDetails';
 import { useKeyboardNavigationForEvaluationWindowPopover } from './useKeyboardNavigation';
+import styles from '../styles.module.scss';
 
 function EvaluationWindowPopover({
 	evaluationWindow,
@@ -51,34 +52,42 @@ function EvaluationWindowPopover({
 		onChange: (value: string) => void,
 		sectionId: string,
 	): JSX.Element => (
-		<div className="evaluation-window-content-item" data-section-id={sectionId}>
-			<Typography.Text className="evaluation-window-content-item-label">
+		<div
+			className={styles.evaluationWindowContentItem}
+			data-section-id={sectionId}
+		>
+			<Typography.Text className={styles.evaluationWindowContentItemLabel}>
 				{label}
 			</Typography.Text>
-			<div className="evaluation-window-content-list">
-				{contentOptions.map((option, index) => (
-					<div
-						className={classNames('evaluation-window-content-list-item', {
-							active: currentValue === option.value,
-						})}
-						key={option.value}
-						role="button"
-						tabIndex={0}
-						data-value={option.value}
-						data-section-id={sectionId}
-						onClick={(): void => onChange(option.value)}
-						onKeyDown={(e): void => {
-							if (e.key === 'Enter' || e.key === ' ') {
-								e.preventDefault();
-								onChange(option.value);
-							}
-						}}
-						ref={index === 0 ? firstItemRef : undefined}
-					>
-						<Typography.Text>{option.label}</Typography.Text>
-						{currentValue === option.value && <Check size={12} />}
-					</div>
-				))}
+			<div className={styles.evaluationWindowContentList}>
+				{contentOptions.map((option, index) => {
+					const isActive = currentValue === option.value;
+					return (
+						<div
+							className={classNames(styles.evaluationWindowContentListItem, {
+								[styles.evaluationWindowContentListItemActive]: isActive,
+							})}
+							key={option.value}
+							role="button"
+							tabIndex={0}
+							data-value={option.value}
+							data-section-id={sectionId}
+							data-testid={`${sectionId}-option-${option.value}`}
+							data-active={isActive}
+							onClick={(): void => onChange(option.value)}
+							onKeyDown={(e): void => {
+								if (e.key === 'Enter' || e.key === ' ') {
+									e.preventDefault();
+									onChange(option.value);
+								}
+							}}
+							ref={index === 0 ? firstItemRef : undefined}
+						>
+							<Typography.Text>{option.label}</Typography.Text>
+							{isActive && <Check size={12} />}
+						</div>
+					);
+				})}
 			</div>
 		</div>
 	);
@@ -94,7 +103,7 @@ function EvaluationWindowPopover({
 				);
 			}
 			return (
-				<div className="selection-content">
+				<div className={styles.selectionContent}>
 					<Typography.Text>
 						{getRollingWindowDescription(evaluationWindow.timeframe)}
 					</Typography.Text>
@@ -108,7 +117,7 @@ function EvaluationWindowPopover({
 			!evaluationWindow.timeframe
 		) {
 			return (
-				<div className="selection-content">
+				<div className={styles.selectionContent}>
 					<Typography.Text>
 						{getCumulativeWindowDescription(evaluationWindow.timeframe)}
 					</Typography.Text>
@@ -127,12 +136,12 @@ function EvaluationWindowPopover({
 
 	return (
 		<div
-			className="evaluation-window-popover"
+			className={styles.evaluationWindowPopover}
 			ref={containerRef}
 			role="menu"
 			aria-label="Evaluation window options"
 		>
-			<div className="evaluation-window-content">
+			<div className={styles.evaluationWindowContent}>
 				{renderEvaluationWindowContent(
 					'EVALUATION WINDOW',
 					EVALUATION_WINDOW_TYPE,

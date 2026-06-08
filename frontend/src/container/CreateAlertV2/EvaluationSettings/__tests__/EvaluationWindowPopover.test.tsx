@@ -12,12 +12,15 @@ const mockEvaluationWindow: EvaluationWindowState =
 	createMockEvaluationWindowState();
 const mockSetEvaluationWindow = jest.fn();
 
-const EVALUATION_WINDOW_CONTENT_LIST_ITEM_CLASS =
-	'.evaluation-window-content-list-item';
 const EVALUATION_WINDOW_DETAILS_TEST_ID = 'evaluation-window-details';
 const ENTER_VALUE_PLACEHOLDER = 'Enter value';
 const EVALUATION_WINDOW_TEXT = 'EVALUATION WINDOW';
-const LAST_5_MINUTES_TEXT = 'Last 5 minutes';
+
+// Test IDs for window type and timeframe options
+const WINDOW_TYPE_ROLLING_TEST_ID = 'window-type-option-rolling';
+const WINDOW_TYPE_CUMULATIVE_TEST_ID = 'window-type-option-cumulative';
+const TIMEFRAME_LAST_5_MINUTES_TEST_ID = 'timeframe-option-5m0s';
+const TIMEFRAME_CURRENT_HOUR_TEST_ID = 'timeframe-option-currentHour';
 
 jest.mock('../EvaluationWindowPopover/EvaluationWindowDetails', () => ({
 	__esModule: true,
@@ -49,15 +52,11 @@ describe('EvaluationWindowPopover', () => {
 		EVALUATION_WINDOW_TYPE.forEach((option) => {
 			expect(screen.getByText(option.label)).toBeInTheDocument();
 		});
-		const rollingItem = screen
-			.getByText('Rolling')
-			.closest(EVALUATION_WINDOW_CONTENT_LIST_ITEM_CLASS) as HTMLElement;
-		expect(rollingItem).toHaveClass('active');
+		const rollingItem = screen.getByTestId(WINDOW_TYPE_ROLLING_TEST_ID);
+		expect(rollingItem).toHaveAttribute('data-active', 'true');
 
-		const cumulativeItem = screen
-			.getByText('Cumulative')
-			.closest(EVALUATION_WINDOW_CONTENT_LIST_ITEM_CLASS) as HTMLElement;
-		expect(cumulativeItem).not.toHaveClass('active');
+		const cumulativeItem = screen.getByTestId(WINDOW_TYPE_CUMULATIVE_TEST_ID);
+		expect(cumulativeItem).toHaveAttribute('data-active', 'false');
 	});
 
 	it('should render all window type options with cumulative selected', () => {
@@ -73,14 +72,10 @@ describe('EvaluationWindowPopover', () => {
 			expect(screen.getByText(option.label)).toBeInTheDocument();
 		});
 
-		const cumulativeItem = screen
-			.getByText('Cumulative')
-			.closest(EVALUATION_WINDOW_CONTENT_LIST_ITEM_CLASS) as HTMLElement;
-		expect(cumulativeItem).toHaveClass('active');
-		const rollingItem = screen
-			.getByText('Rolling')
-			.closest(EVALUATION_WINDOW_CONTENT_LIST_ITEM_CLASS) as HTMLElement;
-		expect(rollingItem).not.toHaveClass('active');
+		const cumulativeItem = screen.getByTestId(WINDOW_TYPE_CUMULATIVE_TEST_ID);
+		expect(cumulativeItem).toHaveAttribute('data-active', 'true');
+		const rollingItem = screen.getByTestId(WINDOW_TYPE_ROLLING_TEST_ID);
+		expect(rollingItem).toHaveAttribute('data-active', 'false');
 	});
 
 	it('should render all timeframe options in rolling mode with last 5 minutes selected by default', () => {
@@ -93,10 +88,8 @@ describe('EvaluationWindowPopover', () => {
 		EVALUATION_WINDOW_TIMEFRAME.rolling.forEach((option) => {
 			expect(screen.getByText(option.label)).toBeInTheDocument();
 		});
-		const last5MinutesItem = screen
-			.getByText(LAST_5_MINUTES_TEXT)
-			.closest(EVALUATION_WINDOW_CONTENT_LIST_ITEM_CLASS) as HTMLElement;
-		expect(last5MinutesItem).toHaveClass('active');
+		const last5MinutesItem = screen.getByTestId(TIMEFRAME_LAST_5_MINUTES_TEST_ID);
+		expect(last5MinutesItem).toHaveAttribute('data-active', 'true');
 	});
 
 	it('should render all timeframe options in cumulative mode with current hour selected by default', () => {
@@ -112,10 +105,8 @@ describe('EvaluationWindowPopover', () => {
 		EVALUATION_WINDOW_TIMEFRAME.cumulative.forEach((option) => {
 			expect(screen.getByText(option.label)).toBeInTheDocument();
 		});
-		const currentHourItem = screen
-			.getByText('Current hour')
-			.closest(EVALUATION_WINDOW_CONTENT_LIST_ITEM_CLASS) as HTMLElement;
-		expect(currentHourItem).toHaveClass('active');
+		const currentHourItem = screen.getByTestId(TIMEFRAME_CURRENT_HOUR_TEST_ID);
+		expect(currentHourItem).toHaveAttribute('data-active', 'true');
 	});
 
 	it('renders help text in details section for rolling mode with non-custom timeframe', () => {
@@ -187,15 +178,11 @@ describe('EvaluationWindowPopover', () => {
 				/>,
 			);
 
-			const rollingItem = screen
-				.getByText('Rolling')
-				.closest(EVALUATION_WINDOW_CONTENT_LIST_ITEM_CLASS) as HTMLElement;
+			const rollingItem = screen.getByTestId(WINDOW_TYPE_ROLLING_TEST_ID);
 			rollingItem?.focus();
 
 			fireEvent.keyDown(rollingItem, { key: 'ArrowDown' });
-			const cumulativeItem = screen
-				.getByText('Cumulative')
-				.closest(EVALUATION_WINDOW_CONTENT_LIST_ITEM_CLASS);
+			const cumulativeItem = screen.getByTestId(WINDOW_TYPE_CUMULATIVE_TEST_ID);
 			expect(cumulativeItem).toHaveFocus();
 		});
 
@@ -207,15 +194,11 @@ describe('EvaluationWindowPopover', () => {
 				/>,
 			);
 
-			const cumulativeItem = screen
-				.getByText('Cumulative')
-				.closest(EVALUATION_WINDOW_CONTENT_LIST_ITEM_CLASS) as HTMLElement;
+			const cumulativeItem = screen.getByTestId(WINDOW_TYPE_CUMULATIVE_TEST_ID);
 			cumulativeItem?.focus();
 
 			fireEvent.keyDown(cumulativeItem, { key: 'ArrowUp' });
-			const rollingItem = screen
-				.getByText('Rolling')
-				.closest(EVALUATION_WINDOW_CONTENT_LIST_ITEM_CLASS);
+			const rollingItem = screen.getByTestId(WINDOW_TYPE_ROLLING_TEST_ID);
 			expect(rollingItem).toHaveFocus();
 		});
 
@@ -227,15 +210,11 @@ describe('EvaluationWindowPopover', () => {
 				/>,
 			);
 
-			const rollingItem = screen
-				.getByText('Rolling')
-				.closest(EVALUATION_WINDOW_CONTENT_LIST_ITEM_CLASS) as HTMLElement;
+			const rollingItem = screen.getByTestId(WINDOW_TYPE_ROLLING_TEST_ID);
 			rollingItem?.focus();
 
 			fireEvent.keyDown(rollingItem, { key: 'ArrowRight' });
-			const timeframeItem = screen
-				.getByText(LAST_5_MINUTES_TEXT)
-				.closest(EVALUATION_WINDOW_CONTENT_LIST_ITEM_CLASS);
+			const timeframeItem = screen.getByTestId(TIMEFRAME_LAST_5_MINUTES_TEST_ID);
 			expect(timeframeItem).toHaveFocus();
 		});
 
@@ -247,15 +226,11 @@ describe('EvaluationWindowPopover', () => {
 				/>,
 			);
 
-			const timeframeItem = screen
-				.getByText(LAST_5_MINUTES_TEXT)
-				.closest(EVALUATION_WINDOW_CONTENT_LIST_ITEM_CLASS) as HTMLElement;
+			const timeframeItem = screen.getByTestId(TIMEFRAME_LAST_5_MINUTES_TEST_ID);
 			timeframeItem?.focus();
 
 			fireEvent.keyDown(timeframeItem, { key: 'ArrowLeft' });
-			const rollingItem = screen
-				.getByText('Rolling')
-				.closest(EVALUATION_WINDOW_CONTENT_LIST_ITEM_CLASS);
+			const rollingItem = screen.getByTestId(WINDOW_TYPE_ROLLING_TEST_ID);
 			expect(rollingItem).toHaveFocus();
 		});
 
@@ -267,9 +242,7 @@ describe('EvaluationWindowPopover', () => {
 				/>,
 			);
 
-			const cumulativeItem = screen
-				.getByText('Cumulative')
-				.closest(EVALUATION_WINDOW_CONTENT_LIST_ITEM_CLASS) as HTMLElement;
+			const cumulativeItem = screen.getByTestId(WINDOW_TYPE_CUMULATIVE_TEST_ID);
 			cumulativeItem?.focus();
 
 			fireEvent.keyDown(cumulativeItem, { key: 'Enter' });
@@ -287,9 +260,7 @@ describe('EvaluationWindowPopover', () => {
 				/>,
 			);
 
-			const cumulativeItem = screen
-				.getByText('Cumulative')
-				.closest(EVALUATION_WINDOW_CONTENT_LIST_ITEM_CLASS) as HTMLElement;
+			const cumulativeItem = screen.getByTestId(WINDOW_TYPE_CUMULATIVE_TEST_ID);
 			cumulativeItem?.focus();
 
 			fireEvent.keyDown(cumulativeItem, { key: ' ' });
