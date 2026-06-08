@@ -50,3 +50,12 @@
 .bodyKind {
 	margin-bottom: 6px;
 }
+
+// Container for the rendered chart — fills the panel below the header and lets
+// the chart shrink (min-* 0) so it resizes with the grid cell.
+.chartBody {
+	flex: 1;
+	display: flex;
+	min-height: 0;
+	min-width: 0;
+}

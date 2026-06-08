@@ -1,10 +1,24 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
+// eslint-disable-next-line no-restricted-imports -- TODO: migrate global time dispatch off redux
+import { useDispatch } from 'react-redux';
+import { useLocation, useParams } from 'react-router-dom';
+import { Spin } from 'antd';
 import { Badge } from '@signozhq/ui/badge';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
-import { EllipsisVertical } from '@signozhq/icons';
+import { EllipsisVertical, Loader } from '@signozhq/icons';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import cx from 'classnames';
+import { QueryParams } from 'constants/query';
+import { PanelMode } from 'container/DashboardContainer/visualization/panels/types';
+import { getPanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Panels';
+import type { DashboardPreference } from 'pages/DashboardPageV2/DashboardContainer/Panels/types';
+import { usePanelQuery } from 'pages/DashboardPageV2/DashboardContainer/hooks/usePanelQuery';
+import { useDashboardCursorSyncMode } from 'hooks/dashboard/useDashboardCursorSyncMode';
+import { useSyncTooltipFilterMode } from 'hooks/dashboard/useSyncTooltipFilterMode';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import useUrlQuery from 'hooks/useUrlQuery';
+import { UpdateTimeInterval } from 'store/actions';
 
 import type { DashboardSection } from '../../utils';
 import type { DeletePanelArgs } from './hooks/useDeletePanel';
@@ -23,11 +37,7 @@ export interface PanelActionsConfig {
 interface PanelProps {
 	panel: DashboardtypesPanelDTO | undefined;
 	panelId: string;
-	/**
-	 * Placeholder: true once this panel's section enters the viewport. The panel
-	 * query-loading implementation (later PR) will consume this to lazily fetch
-	 * data. Currently unused on purpose.
-	 */
+	/** True once this panel's section enters the viewport — gates the fetch. */
 	isVisible?: boolean;
 	/** Move/delete actions — present only in editable sectioned mode. */
 	panelActions?: PanelActionsConfig;
@@ -41,8 +51,57 @@ function Panel({
 }: PanelProps): JSX.Element {
 	const name = panel?.spec?.display?.name || `Panel ${panelId.slice(0, 6)}`;
 	const description = panel?.spec?.display?.description;
-	const kind = panel?.spec?.plugin?.kind?.replace(/^signoz\//, '') ?? 'unknown';
+	const fullKind = panel?.spec?.plugin?.kind;
+	const kind = fullKind?.replace(/^signoz\//, '') ?? 'unknown';
 	const queryCount = panel?.spec?.queries?.length ?? 0;
+
+	const panelDef = getPanelDefinition(fullKind);
+
+	const { data, isLoading, error } = usePanelQuery({
+		panel,
+		panelId,
+		// Lazy: only fetch once the section is on screen (undefined → treat as
+		// visible) and a renderer exists for the kind.
+		enabled: !!panelDef && isVisible !== false,
+	});
+
+	const dispatch = useDispatch();
+	const { pathname } = useLocation();
+	const { safeNavigate } = useSafeNavigate();
+	const urlQuery = useUrlQuery();
+
+	// Dashboard-wide preferences propagated to the renderer (cursor sync,
+	// tooltip filter), keyed off the dashboard id from the route.
+	const { dashboardId } = useParams<{ dashboardId: string }>();
+	const [syncMode] = useDashboardCursorSyncMode(
+		dashboardId,
+		PanelMode.DASHBOARD_VIEW,
+	);
+	const [syncFilterMode] = useSyncTooltipFilterMode(dashboardId);
+	const dashboardPreference = useMemo<DashboardPreference>(
+		() => ({ syncMode, syncFilterMode, dashboardId }),
+		[syncMode, syncFilterMode, dashboardId],
+	);
+
+	/**
+	 * Drag-select a time range on the chart → update the URL + global time so
+	 * every panel re-fetches against the same window.
+	 */
+	const onDragSelect = useCallback(
+		(start: number, end: number): void => {
+			const startTimestamp = Math.trunc(start);
+			const endTimestamp = Math.trunc(end);
+
+			urlQuery.set(QueryParams.startTime, startTimestamp.toString());
+			urlQuery.set(QueryParams.endTime, endTimestamp.toString());
+			safeNavigate(`${pathname}?${urlQuery.toString()}`);
+
+			if (startTimestamp !== endTimestamp) {
+				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
+			}
+		},
+		[dispatch, pathname, safeNavigate, urlQuery],
+	);
 
 	const headerTitle = useMemo(() => {
 		if (!description) {
@@ -80,15 +139,38 @@ function Panel({
 				)}
 			</div>
 
-			<div className={styles.body}>
-				<div>
-					<div className={styles.bodyKind}>{kind} panel</div>
+			{/* eslint-disable-next-line no-nested-ternary -- 3-way branch on shell state */}
+			{!panelDef ? (
+				<div className={styles.body} data-testid="panel-unknown-kind-fallback">
 					<div>
-						{queryCount} {queryCount === 1 ? 'query' : 'queries'} · chart rendering
-						coming next
+						<div className={styles.bodyKind}>{kind} panel</div>
+						<div>
+							{queryCount} {queryCount === 1 ? 'query' : 'queries'} · not yet
+							supported in V2
+						</div>
 					</div>
 				</div>
-			</div>
+			) : isLoading && !data ? (
+				// First-load only — background refetches keep `data` so the chart
+				// stays mounted instead of blinking.
+				<div className={styles.body} data-testid="panel-loading">
+					<Spin indicator={<Loader size={14} className="animate-spin" />} />
+				</div>
+			) : (
+				<div className={styles.chartBody}>
+					<panelDef.Renderer
+						panelId={panelId}
+						panel={panel}
+						data={data}
+						isLoading={isLoading}
+						error={error}
+						onDragSelect={onDragSelect}
+						panelMode={PanelMode.DASHBOARD_VIEW}
+						enableDrillDown={false}
+						dashboardPreference={dashboardPreference}
+					/>
+				</div>
+			)}
 		</div>
 	);
 }
