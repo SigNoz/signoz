@@ -11,7 +11,7 @@ import NotificationSettings from '../CreateAlertV2/NotificationSettings';
 import QuerySection from '../CreateAlertV2/QuerySection';
 import { Spinner } from '../CreateAlertV2/utils';
 
-import '../CreateAlertV2/CreateAlertV2.styles.scss';
+import styles from './EditAlertV2.module.scss';
 
 interface EditAlertV2Props {
 	alertType?: AlertTypes;
@@ -35,7 +35,7 @@ function EditAlertV2({
 	return (
 		<>
 			<Spinner />
-			<div className="create-alert-v2-container">
+			<div className={styles.editAlertV2Container}>
 				<QuerySection />
 				<AlertCondition />
 				<NotificationSettings />
