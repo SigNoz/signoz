@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { Button } from 'antd';
-import classNames from 'classnames';
+import cx from 'classnames';
 import { YAxisSource } from 'components/YAxisUnitSelector/types';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -24,8 +24,7 @@ import { useCreateAlertState } from '../context';
 import Stepper from '../Stepper';
 import ChartPreview from './ChartPreview';
 import { buildAlertDefForChartPreview } from './utils';
-
-import './styles.scss';
+import styles from './QuerySection.module.scss';
 
 function QuerySection(): JSX.Element {
 	const {
@@ -130,7 +129,7 @@ function QuerySection(): JSX.Element {
 	];
 
 	return (
-		<div className="query-section">
+		<div className={styles.querySection}>
 			<Stepper stepNumber={1} label="Define the query" />
 			<ChartPreview
 				alertDef={alertDef}
@@ -138,13 +137,13 @@ function QuerySection(): JSX.Element {
 				isCancelled={isCancelled}
 				onFetchingStateChange={setIsLoadingQueries}
 			/>
-			<div className="query-section-tabs">
-				<div className="query-section-query-actions">
+			<div className={styles.querySectionTabs}>
+				<div className={styles.querySectionQueryActions}>
 					{tabs.map((tab) => (
 						<Button
 							key={tab.value}
-							className={classNames('list-view-tab', 'explorer-view-option', {
-								'active-tab': alertType === tab.value,
+							className={cx(styles.explorerViewOption, {
+								[styles.explorerViewOptionActive]: alertType === tab.value,
 							})}
 							onClick={(): void => {
 								setAlertType(tab.value as AlertTypes);
