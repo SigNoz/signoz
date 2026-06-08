@@ -1,4 +1,4 @@
-import { startCompletion } from '@codemirror/autocomplete';
+import { closeCompletion, startCompletion } from '@codemirror/autocomplete';
 import type { Completion } from '@codemirror/autocomplete';
 import type { EditorView } from '@uiw/react-codemirror';
 import dayjs from 'dayjs';
@@ -60,12 +60,14 @@ export function getRecentOptions(
 
 	const matches = all
 		.filter((e) => {
+			const normalizedRecent = normalizeFilterExpression(e.filter.expression);
+			if (normalizedRecent === normalizedDoc) {
+				return false;
+			}
 			if (normalizedDoc === '') {
 				return true;
 			}
-			return normalizeFilterExpression(e.filter.expression).includes(
-				normalizedDoc,
-			);
+			return normalizedRecent.includes(normalizedDoc);
 		})
 		.slice(0, RECENTS_DISPLAY_CAP);
 
@@ -86,6 +88,7 @@ export function getRecentOptions(
 				},
 				selection: { anchor: entry.filter.expression.length },
 			});
+			closeCompletion(view);
 		},
 	}));
 }

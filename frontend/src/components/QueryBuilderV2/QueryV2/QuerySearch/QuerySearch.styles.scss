@@ -156,13 +156,8 @@ $max-recents-shown: 5;
 					text-transform: uppercase;
 					color: var(--l3-foreground, var(--l2-foreground));
 					opacity: 0.7;
-					border-top: 1px solid var(--l1-border);
+					border-bottom: 0;
 					background-color: transparent;
-				}
-
-				// The first section header doesn't need a divider above it.
-				completion-section:first-of-type {
-					border-top: 0;
 				}
 
 				li {
