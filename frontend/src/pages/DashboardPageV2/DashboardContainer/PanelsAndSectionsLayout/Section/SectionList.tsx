@@ -20,12 +20,12 @@ import Section from './Section/Section';
 import SectionDragPreview from './SectionDragPreview/SectionDragPreview';
 import SortableSection from './SortableSection';
 
-interface Props {
+interface SectionListProps {
 	sections: DashboardSection[];
 	layouts: DashboardtypesLayoutDTO[] | undefined | null;
 }
 
-function SectionList({ sections, layouts }: Props): JSX.Element {
+function SectionList({ sections, layouts }: SectionListProps): JSX.Element {
 	const isEditable = useDashboardStore((s) => s.isEditable);
 
 	const {
