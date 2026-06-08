@@ -5,8 +5,7 @@ import { ChevronDown, ChevronUp } from '@signozhq/icons';
 import { useCreateAlertState } from '../context';
 import EvaluationWindowPopover from './EvaluationWindowPopover';
 import { getEvaluationWindowTypeText, getTimeframeText } from './utils';
-
-import './styles.scss';
+import styles from './styles.module.scss';
 
 function EvaluationSettings(): JSX.Element {
 	const { evaluationWindow, setEvaluationWindow } = useCreateAlertState();
@@ -28,13 +27,14 @@ function EvaluationSettings(): JSX.Element {
 			}
 			trigger="click"
 			showArrow={false}
+			rootClassName="evaluation-window-popover-overlay"
 		>
 			<Button data-testid="evaluation-settings-button">
-				<div className="evaluate-alert-conditions-button-left">
+				<div className={styles.evaluateAlertConditionsButtonLeft}>
 					{getTimeframeText(evaluationWindow)}
 				</div>
-				<div className="evaluate-alert-conditions-button-right">
-					<div className="evaluate-alert-conditions-button-right-text">
+				<div className={styles.evaluateAlertConditionsButtonRight}>
+					<div className={styles.evaluateAlertConditionsButtonRightText}>
 						{getEvaluationWindowTypeText(evaluationWindow.windowType)}
 					</div>
 					{isEvaluationWindowPopoverOpen ? (
@@ -49,7 +49,7 @@ function EvaluationSettings(): JSX.Element {
 
 	return (
 		<div
-			className="condensed-evaluation-settings-container"
+			className={styles.condensedEvaluationSettingsContainer}
 			data-testid="condensed-evaluation-settings-container"
 		>
 			{popoverContent}
