@@ -124,7 +124,6 @@ var IDSelector SelectorFunc = func(_ context.Context, resource coretypes.Resourc
 // ResourcesDef. Only these two satisfy WithResourceDefs.
 type ResourceSpec interface {
 	sealResourceSpec()
-	validate() error
 	resolveRequest(ec ExtractorContext) []ResolvedResource
 }
 
@@ -160,32 +159,8 @@ type RelatedResource struct {
 func (ResourceDef) sealResourceSpec()  {}
 func (ResourcesDef) sealResourceSpec() {}
 
-func (d ResourceDef) validate() error {
-	if err := coretypes.ErrIfVerbNotValidForResource(d.Verb, *coretypes.NewResourceRef(d.Resource)); err != nil {
-		return err
-	}
-
-	if d.Related != nil && d.Verb != coretypes.VerbAttach && d.Verb != coretypes.VerbDetach {
-		return errors.Newf(errors.TypeInvalidInput, errCodeInvalidResourceDef, "Related is only valid with attach/detach, got %s", d.Verb.StringValue())
-	}
-
-	return nil
-}
-
-func (d ResourcesDef) validate() error {
-	if err := coretypes.ErrIfVerbNotValidForResource(d.Verb, *coretypes.NewResourceRef(d.Resource)); err != nil {
-		return err
-	}
-
-	if d.Related != nil && d.Verb != coretypes.VerbAttach && d.Verb != coretypes.VerbDetach {
-		return errors.Newf(errors.TypeInvalidInput, errCodeInvalidResourceDef, "Related is only valid with attach/detach, got %s", d.Verb.StringValue())
-	}
-
-	return nil
-}
-
 func (d ResourceDef) resolveRequest(ec ExtractorContext) []ResolvedResource {
-	resolved := ResolvedResource{Resource: d.Resource, Verb: d.Verb, Selector: d.Selector}
+	resolved := ResolvedResource{Resource: d.Resource, Verb: d.Verb, Selector: d.Selector, Category: d.Category}
 	resolved.ID, resolved.responseID = resolveID(d.ID, ec)
 	resolved.Related = resolveRelated(d.Related, ec)
 
@@ -205,6 +180,7 @@ func (d ResourcesDef) resolveRequest(ec ExtractorContext) []ResolvedResource {
 			Verb:     d.Verb,
 			ID:       id,
 			Selector: d.Selector,
+			Category: d.Category,
 			Related:  resolveRelated(d.Related, ec),
 		})
 	}

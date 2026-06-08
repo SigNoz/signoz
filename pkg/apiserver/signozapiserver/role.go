@@ -5,6 +5,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/audittypes"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/gorilla/mux"
@@ -32,6 +33,7 @@ func (provider *provider) addRoleRoutes(router *mux.Router) error {
 			Verb:     coretypes.VerbCreate,
 			ID:       handler.ResponseJSONPath("data.id"),
 			Selector: handler.WildcardSelector,
+			Category: audittypes.ActionCategoryAccessControl,
 		}),
 	)).Methods(http.MethodPost).GetError(); err != nil {
 		return err
@@ -57,6 +59,7 @@ func (provider *provider) addRoleRoutes(router *mux.Router) error {
 			Resource: coretypes.ResourceRole,
 			Verb:     coretypes.VerbList,
 			Selector: handler.WildcardSelector,
+			Category: audittypes.ActionCategoryAccessControl,
 		}),
 	)).Methods(http.MethodGet).GetError(); err != nil {
 		return err
@@ -83,6 +86,7 @@ func (provider *provider) addRoleRoutes(router *mux.Router) error {
 			Verb:     coretypes.VerbRead,
 			ID:       handler.PathParam("id"),
 			Selector: provider.roleSelector,
+			Category: audittypes.ActionCategoryAccessControl,
 		}),
 	)).Methods(http.MethodGet).GetError(); err != nil {
 		return err
@@ -109,6 +113,7 @@ func (provider *provider) addRoleRoutes(router *mux.Router) error {
 			Verb:     coretypes.VerbRead,
 			ID:       handler.PathParam("id"),
 			Selector: provider.roleSelector,
+			Category: audittypes.ActionCategoryAccessControl,
 		}),
 	)).Methods(http.MethodGet).GetError(); err != nil {
 		return err
@@ -135,6 +140,7 @@ func (provider *provider) addRoleRoutes(router *mux.Router) error {
 			Verb:     coretypes.VerbUpdate,
 			ID:       handler.PathParam("id"),
 			Selector: provider.roleSelector,
+			Category: audittypes.ActionCategoryAccessControl,
 		}),
 	)).Methods(http.MethodPatch).GetError(); err != nil {
 		return err
@@ -161,6 +167,7 @@ func (provider *provider) addRoleRoutes(router *mux.Router) error {
 			Verb:     coretypes.VerbUpdate,
 			ID:       handler.PathParam("id"),
 			Selector: provider.roleSelector,
+			Category: audittypes.ActionCategoryAccessControl,
 		}),
 	)).Methods(http.MethodPatch).GetError(); err != nil {
 		return err
@@ -187,6 +194,7 @@ func (provider *provider) addRoleRoutes(router *mux.Router) error {
 			Verb:     coretypes.VerbDelete,
 			ID:       handler.PathParam("id"),
 			Selector: provider.roleSelector,
+			Category: audittypes.ActionCategoryAccessControl,
 		}),
 	)).Methods(http.MethodDelete).GetError(); err != nil {
 		return err

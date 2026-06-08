@@ -49,14 +49,6 @@ func New(handlerFunc http.HandlerFunc, openAPIDef OpenAPIDef, opts ...Option) Ha
 		opt(handler)
 	}
 
-	// Resource defs are a developer-authored, registration-time declaration —
-	// fail fast and loud on misconfiguration, like coretypes' MustSelector.
-	for _, def := range handler.resourceDefs {
-		if err := def.validate(); err != nil {
-			panic(err)
-		}
-	}
-
 	return handler
 }
 

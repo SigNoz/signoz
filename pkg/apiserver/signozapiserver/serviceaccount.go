@@ -36,6 +36,7 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 			Verb:     coretypes.VerbCreate,
 			ID:       handler.ResponseJSONPath("data.id"),
 			Selector: handler.WildcardSelector,
+			Category: audittypes.ActionCategoryAccessControl,
 		}),
 	)).Methods(http.MethodPost).GetError(); err != nil {
 		return err
@@ -105,6 +106,7 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 			Verb:     coretypes.VerbRead,
 			ID:       handler.PathParam("id"),
 			Selector: handler.IDSelector,
+			Category: audittypes.ActionCategoryAccessControl,
 		}),
 	)).Methods(http.MethodGet).GetError(); err != nil {
 		return err
@@ -131,6 +133,7 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 			Verb:     coretypes.VerbRead,
 			ID:       handler.PathParam("id"),
 			Selector: handler.IDSelector,
+			Category: audittypes.ActionCategoryAccessControl,
 		}),
 	)).Methods(http.MethodGet).GetError(); err != nil {
 		return err
@@ -158,6 +161,7 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 				Verb:     coretypes.VerbAttach,
 				ID:       handler.PathParam("id"),
 				Selector: handler.IDSelector,
+				Category: audittypes.ActionCategoryAccessControl,
 				Related:  &handler.RelatedResource{Resource: coretypes.ResourceRole, ID: handler.BodyJSONPath("id")},
 			},
 			handler.ResourceDef{
@@ -165,6 +169,7 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 				Verb:     coretypes.VerbAttach,
 				ID:       handler.BodyJSONPath("id"),
 				Selector: provider.roleSelector,
+				Category: audittypes.ActionCategoryAccessControl,
 			},
 		),
 	)).Methods(http.MethodPost).GetError(); err != nil {
@@ -193,6 +198,7 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 				Verb:     coretypes.VerbDetach,
 				ID:       handler.PathParam("id"),
 				Selector: handler.IDSelector,
+				Category: audittypes.ActionCategoryAccessControl,
 				Related:  &handler.RelatedResource{Resource: coretypes.ResourceRole, ID: handler.PathParam("rid")},
 			},
 			handler.ResourceDef{
@@ -200,6 +206,7 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 				Verb:     coretypes.VerbDetach,
 				ID:       handler.PathParam("rid"),
 				Selector: provider.roleSelector,
+				Category: audittypes.ActionCategoryAccessControl,
 			},
 		),
 	)).Methods(http.MethodDelete).GetError(); err != nil {
@@ -244,6 +251,7 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 			Verb:     coretypes.VerbUpdate,
 			ID:       handler.PathParam("id"),
 			Selector: handler.IDSelector,
+			Category: audittypes.ActionCategoryAccessControl,
 		}),
 	)).Methods(http.MethodPut).GetError(); err != nil {
 		return err
@@ -270,6 +278,7 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 			Verb:     coretypes.VerbDelete,
 			ID:       handler.PathParam("id"),
 			Selector: handler.IDSelector,
+			Category: audittypes.ActionCategoryAccessControl,
 		}),
 	)).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
@@ -297,12 +306,14 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 				Verb:     coretypes.VerbCreate,
 				ID:       handler.ResponseJSONPath("data.id"),
 				Selector: handler.WildcardSelector,
+				Category: audittypes.ActionCategoryAccessControl,
 			},
 			handler.ResourceDef{
 				Resource: coretypes.ResourceServiceAccount,
 				Verb:     coretypes.VerbAttach,
 				ID:       handler.PathParam("id"),
 				Selector: handler.IDSelector,
+				Category: audittypes.ActionCategoryAccessControl,
 				Related:  &handler.RelatedResource{Resource: coretypes.ResourceMetaResourceFactorAPIKey, ID: handler.ResponseJSONPath("data.id")},
 			},
 		),
@@ -330,6 +341,7 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 			Resource: coretypes.ResourceMetaResourceFactorAPIKey,
 			Verb:     coretypes.VerbList,
 			Selector: handler.WildcardSelector,
+			Category: audittypes.ActionCategoryAccessControl,
 		}),
 	)).Methods(http.MethodGet).GetError(); err != nil {
 		return err
@@ -356,6 +368,7 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 			Verb:     coretypes.VerbUpdate,
 			ID:       handler.PathParam("fid"),
 			Selector: handler.IDSelector,
+			Category: audittypes.ActionCategoryAccessControl,
 		}),
 	)).Methods(http.MethodPut).GetError(); err != nil {
 		return err
@@ -383,12 +396,14 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 				Verb:     coretypes.VerbDelete,
 				ID:       handler.PathParam("fid"),
 				Selector: handler.IDSelector,
+				Category: audittypes.ActionCategoryAccessControl,
 			},
 			handler.ResourceDef{
 				Resource: coretypes.ResourceServiceAccount,
 				Verb:     coretypes.VerbDetach,
 				ID:       handler.PathParam("id"),
 				Selector: handler.IDSelector,
+				Category: audittypes.ActionCategoryAccessControl,
 				Related:  &handler.RelatedResource{Resource: coretypes.ResourceMetaResourceFactorAPIKey, ID: handler.PathParam("fid")},
 			},
 		),

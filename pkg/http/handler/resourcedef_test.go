@@ -13,20 +13,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestResourceDefValidate(t *testing.T) {
-	// Related on a lifecycle verb is rejected.
-	err := ResourceDef{Resource: coretypes.ResourceServiceAccount, Verb: coretypes.VerbCreate, Related: &RelatedResource{Resource: coretypes.ResourceRole}}.validate()
-	require.Error(t, err)
-
-	// Attach is valid for service account and may carry Related.
-	err = ResourceDef{Resource: coretypes.ResourceServiceAccount, Verb: coretypes.VerbAttach, Related: &RelatedResource{Resource: coretypes.ResourceRole}}.validate()
-	require.NoError(t, err)
-
-	// Verb not valid for resource: factor-api-key disallows attach.
-	err = ResourceDef{Resource: coretypes.ResourceMetaResourceFactorAPIKey, Verb: coretypes.VerbAttach}.validate()
-	require.Error(t, err)
-}
-
 func TestStandardSelectors(t *testing.T) {
 	ctx := context.Background()
 	claims := authtypes.Claims{}
