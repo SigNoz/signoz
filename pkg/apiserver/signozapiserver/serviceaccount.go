@@ -170,6 +170,7 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 				ID:       handler.BodyJSONPath("id"),
 				Selector: provider.roleSelector,
 				Category: audittypes.ActionCategoryAccessControl,
+				Related:  &handler.RelatedResource{Resource: coretypes.ResourceServiceAccount, ID: handler.PathParam("id")},
 			},
 		),
 	)).Methods(http.MethodPost).GetError(); err != nil {
@@ -207,6 +208,7 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 				ID:       handler.PathParam("rid"),
 				Selector: provider.roleSelector,
 				Category: audittypes.ActionCategoryAccessControl,
+				Related:  &handler.RelatedResource{Resource: coretypes.ResourceServiceAccount, ID: handler.PathParam("id")},
 			},
 		),
 	)).Methods(http.MethodDelete).GetError(); err != nil {
