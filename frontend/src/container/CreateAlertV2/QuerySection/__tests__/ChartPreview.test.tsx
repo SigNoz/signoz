@@ -152,9 +152,7 @@ describe('ChartPreview', () => {
 	it('renders the component with correct container class', () => {
 		renderChartPreview();
 
-		const container = screen
-			.getByTestId(CHART_PREVIEW_COMPONENT_TEST_ID)
-			.closest('.chart-preview-container');
+		const container = screen.getByTestId('chart-preview-container');
 		expect(container).toBeInTheDocument();
 	});
 

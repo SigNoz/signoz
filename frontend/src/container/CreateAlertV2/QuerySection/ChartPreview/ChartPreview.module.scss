@@ -1,0 +1,21 @@
+.chartPreviewContainer {
+	height: 100%;
+	width: 100%;
+	margin-right: var(--spacing-2);
+
+	:global(.ant-card) {
+		border: 1px solid var(--l1-border);
+
+		:global(.ant-card-body) {
+			background-color: var(--l1-background);
+		}
+	}
+}
+
+.chartPreviewHeadline {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: var(--spacing-4);
+	width: 100%;
+}
