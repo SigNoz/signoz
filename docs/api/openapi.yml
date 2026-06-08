@@ -96,6 +96,19 @@ components:
       - createdAt
       - updatedAt
       type: object
+    AlertmanagertypesGoogleChatReceiverConfig:
+      properties:
+        http_config:
+          $ref: '#/components/schemas/ConfigHTTPClientConfig'
+        send_resolved:
+          type: boolean
+        text:
+          type: string
+        title:
+          type: string
+        webhook_url:
+          $ref: '#/components/schemas/ConfigSecretURL'
+      type: object
     AlertmanagertypesMaintenanceKind:
       enum:
       - fixed
@@ -148,6 +161,8 @@ components:
     AlertmanagertypesPostableChannel:
       oneOf:
       - required:
+        - googlechat_configs
+      - required:
         - discord_configs
       - required:
         - email_configs
@@ -191,6 +206,10 @@ components:
         email_configs:
           items:
             $ref: '#/components/schemas/ConfigEmailConfig'
+          type: array
+        googlechat_configs:
+          items:
+            $ref: '#/components/schemas/AlertmanagertypesGoogleChatReceiverConfig'
           type: array
         incidentio_configs:
           items:
@@ -304,6 +323,87 @@ components:
       - expression
       - channels
       - name
+      type: object
+    AlertmanagertypesReceiver:
+      properties:
+        discord_configs:
+          items:
+            $ref: '#/components/schemas/ConfigDiscordConfig'
+          type: array
+        email_configs:
+          items:
+            $ref: '#/components/schemas/ConfigEmailConfig'
+          type: array
+        googlechat_configs:
+          items:
+            $ref: '#/components/schemas/AlertmanagertypesGoogleChatReceiverConfig'
+          type: array
+        incidentio_configs:
+          items:
+            $ref: '#/components/schemas/ConfigIncidentioConfig'
+          type: array
+        jira_configs:
+          items:
+            $ref: '#/components/schemas/ConfigJiraConfig'
+          type: array
+        mattermost_configs:
+          items:
+            $ref: '#/components/schemas/ConfigMattermostConfig'
+          type: array
+        msteams_configs:
+          items:
+            $ref: '#/components/schemas/ConfigMSTeamsConfig'
+          type: array
+        msteamsv2_configs:
+          items:
+            $ref: '#/components/schemas/ConfigMSTeamsV2Config'
+          type: array
+        name:
+          type: string
+        opsgenie_configs:
+          items:
+            $ref: '#/components/schemas/ConfigOpsGenieConfig'
+          type: array
+        pagerduty_configs:
+          items:
+            $ref: '#/components/schemas/ConfigPagerdutyConfig'
+          type: array
+        pushover_configs:
+          items:
+            $ref: '#/components/schemas/ConfigPushoverConfig'
+          type: array
+        rocketchat_configs:
+          items:
+            $ref: '#/components/schemas/ConfigRocketchatConfig'
+          type: array
+        slack_configs:
+          items:
+            $ref: '#/components/schemas/ConfigSlackConfig'
+          type: array
+        sns_configs:
+          items:
+            $ref: '#/components/schemas/ConfigSNSConfig'
+          type: array
+        telegram_configs:
+          items:
+            $ref: '#/components/schemas/ConfigTelegramConfig'
+          type: array
+        victorops_configs:
+          items:
+            $ref: '#/components/schemas/ConfigVictorOpsConfig'
+          type: array
+        webex_configs:
+          items:
+            $ref: '#/components/schemas/ConfigWebexConfig'
+          type: array
+        webhook_configs:
+          items:
+            $ref: '#/components/schemas/ConfigWebhookConfig'
+          type: array
+        wechat_configs:
+          items:
+            $ref: '#/components/schemas/ConfigWechatConfig'
+          type: array
       type: object
     AlertmanagertypesRecurrence:
       properties:
@@ -1865,83 +1965,6 @@ components:
         user_key_file:
           type: string
       type: object
-    ConfigReceiver:
-      properties:
-        discord_configs:
-          items:
-            $ref: '#/components/schemas/ConfigDiscordConfig'
-          type: array
-        email_configs:
-          items:
-            $ref: '#/components/schemas/ConfigEmailConfig'
-          type: array
-        incidentio_configs:
-          items:
-            $ref: '#/components/schemas/ConfigIncidentioConfig'
-          type: array
-        jira_configs:
-          items:
-            $ref: '#/components/schemas/ConfigJiraConfig'
-          type: array
-        mattermost_configs:
-          items:
-            $ref: '#/components/schemas/ConfigMattermostConfig'
-          type: array
-        msteams_configs:
-          items:
-            $ref: '#/components/schemas/ConfigMSTeamsConfig'
-          type: array
-        msteamsv2_configs:
-          items:
-            $ref: '#/components/schemas/ConfigMSTeamsV2Config'
-          type: array
-        name:
-          type: string
-        opsgenie_configs:
-          items:
-            $ref: '#/components/schemas/ConfigOpsGenieConfig'
-          type: array
-        pagerduty_configs:
-          items:
-            $ref: '#/components/schemas/ConfigPagerdutyConfig'
-          type: array
-        pushover_configs:
-          items:
-            $ref: '#/components/schemas/ConfigPushoverConfig'
-          type: array
-        rocketchat_configs:
-          items:
-            $ref: '#/components/schemas/ConfigRocketchatConfig'
-          type: array
-        slack_configs:
-          items:
-            $ref: '#/components/schemas/ConfigSlackConfig'
-          type: array
-        sns_configs:
-          items:
-            $ref: '#/components/schemas/ConfigSNSConfig'
-          type: array
-        telegram_configs:
-          items:
-            $ref: '#/components/schemas/ConfigTelegramConfig'
-          type: array
-        victorops_configs:
-          items:
-            $ref: '#/components/schemas/ConfigVictorOpsConfig'
-          type: array
-        webex_configs:
-          items:
-            $ref: '#/components/schemas/ConfigWebexConfig'
-          type: array
-        webhook_configs:
-          items:
-            $ref: '#/components/schemas/ConfigWebhookConfig'
-          type: array
-        wechat_configs:
-          items:
-            $ref: '#/components/schemas/ConfigWechatConfig'
-          type: array
-      type: object
     ConfigRocketchatAttachmentAction:
       properties:
         image_url:
@@ -2396,6 +2419,26 @@ components:
         repeatVariable:
           type: string
       type: object
+    DashboardLink:
+      properties:
+        name:
+          type: string
+        renderVariables:
+          type: boolean
+        targetBlank:
+          type: boolean
+        tooltip:
+          type: string
+        url:
+          type: string
+      type: object
+    DashboardPanelDisplay:
+      properties:
+        description:
+          type: string
+        name:
+          type: string
+      type: object
     DashboardTextVariableSpec:
       properties:
         constant:
@@ -2526,7 +2569,7 @@ components:
           type: array
         links:
           items:
-            $ref: '#/components/schemas/V1Link'
+            $ref: '#/components/schemas/DashboardLink'
           type: array
         panels:
           additionalProperties:
@@ -2687,8 +2730,8 @@ components:
       type: object
     DashboardtypesLayout:
       oneOf:
-      - $ref: '#/components/schemas/DashboardtypesLayoutEnvelopeGithubComPersesPersesPkgModelApiV1DashboardGridLayoutSpec'
-    DashboardtypesLayoutEnvelopeGithubComPersesPersesPkgModelApiV1DashboardGridLayoutSpec:
+      - $ref: '#/components/schemas/DashboardtypesLayoutEnvelopeGithubComPersesSpecGoDashboardGridLayoutSpec'
+    DashboardtypesLayoutEnvelopeGithubComPersesSpecGoDashboardGridLayoutSpec:
       properties:
         kind:
           enum:
@@ -2771,7 +2814,7 @@ components:
     DashboardtypesPanel:
       properties:
         kind:
-          type: string
+          $ref: '#/components/schemas/DashboardtypesPanelKind'
         spec:
           $ref: '#/components/schemas/DashboardtypesPanelSpec'
       type: object
@@ -2782,6 +2825,10 @@ components:
         unit:
           type: string
       type: object
+    DashboardtypesPanelKind:
+      enum:
+      - Panel
+      type: string
     DashboardtypesPanelPlugin:
       oneOf:
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpec'
@@ -2888,10 +2935,10 @@ components:
     DashboardtypesPanelSpec:
       properties:
         display:
-          $ref: '#/components/schemas/V1PanelDisplay'
+          $ref: '#/components/schemas/DashboardPanelDisplay'
         links:
           items:
-            $ref: '#/components/schemas/V1Link'
+            $ref: '#/components/schemas/DashboardLink'
           type: array
         plugin:
           $ref: '#/components/schemas/DashboardtypesPanelPlugin'
@@ -2964,7 +3011,7 @@ components:
     DashboardtypesQuery:
       properties:
         kind:
-          type: string
+          $ref: '#/components/schemas/Querybuildertypesv5RequestType'
         spec:
           $ref: '#/components/schemas/DashboardtypesQuerySpec'
       type: object
@@ -3232,8 +3279,8 @@ components:
     DashboardtypesVariable:
       oneOf:
       - $ref: '#/components/schemas/DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpec'
-      - $ref: '#/components/schemas/DashboardtypesVariableEnvelopeGithubComPersesPersesPkgModelApiV1DashboardTextVariableSpec'
-    DashboardtypesVariableEnvelopeGithubComPersesPersesPkgModelApiV1DashboardTextVariableSpec:
+      - $ref: '#/components/schemas/DashboardtypesVariableEnvelopeGithubComPersesSpecGoDashboardTextVariableSpec'
+    DashboardtypesVariableEnvelopeGithubComPersesSpecGoDashboardTextVariableSpec:
       properties:
         kind:
           enum:
@@ -7251,26 +7298,6 @@ components:
       required:
       - id
       type: object
-    V1Link:
-      properties:
-        name:
-          type: string
-        renderVariables:
-          type: boolean
-        targetBlank:
-          type: boolean
-        tooltip:
-          type: string
-        url:
-          type: string
-      type: object
-    V1PanelDisplay:
-      properties:
-        description:
-          type: string
-        name:
-          type: string
-      type: object
     VariableDefaultValue:
       type: object
     VariableDisplay:
@@ -7687,7 +7714,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ConfigReceiver'
+              $ref: '#/components/schemas/AlertmanagertypesReceiver'
       responses:
         "204":
           description: No Content
@@ -7738,7 +7765,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ConfigReceiver'
+              $ref: '#/components/schemas/AlertmanagertypesReceiver'
       responses:
         "204":
           description: No Content
@@ -8162,6 +8189,80 @@ paths:
       tags:
       - cloudintegration
   /api/v1/cloud_integrations/{cloud_provider}/accounts/{id}/services/{service_id}:
+    get:
+      deprecated: false
+      description: This endpoint gets a service and its configuration for the specified
+        cloud integration account
+      operationId: GetAccountService
+      parameters:
+      - in: path
+        name: cloud_provider
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: service_id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CloudintegrationtypesService'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Get service for account
+      tags:
+      - cloudintegration
     put:
       deprecated: false
       description: This endpoint updates a service for the specified cloud provider
@@ -12402,7 +12503,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ConfigReceiver'
+              $ref: '#/components/schemas/AlertmanagertypesReceiver'
       responses:
         "204":
           description: No Content
