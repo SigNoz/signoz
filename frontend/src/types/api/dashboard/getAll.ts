@@ -142,6 +142,12 @@ export interface IBaseWidget {
 	lineStyle?: LineStyle;
 	fillMode?: FillMode;
 	spanGaps?: boolean | number;
+	/** scatter panel: queryName whose scalar value is plotted on the X axis */
+	scatterXQuery?: string;
+	/** scatter panel: queryName whose scalar value is plotted on the Y axis */
+	scatterYQuery?: string;
+	/** scatter panel: y-axis style unit applied to the X axis */
+	xAxisUnit?: string;
 }
 export interface Widgets extends IBaseWidget {
 	query: Query;

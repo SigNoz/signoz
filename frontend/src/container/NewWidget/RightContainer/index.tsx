@@ -5,6 +5,7 @@ import { ExecStats } from 'api/v5/v5';
 import { PrecisionOption, PrecisionOptionsEnum } from 'components/Graph/types';
 import { PANEL_TYPES, PanelDisplay } from 'constants/queryBuilder';
 import { PanelTypesWithData } from 'container/DashboardContainer/PanelTypeSelectionModal/menuItems';
+import { getScatterQueryNames } from 'container/PanelWrapper/scatterUtils';
 import { useDashboardVariables } from 'hooks/dashboard/useDashboardVariables';
 import useCreateAlerts from 'hooks/queryBuilder/useCreateAlerts';
 import {
@@ -51,6 +52,7 @@ import FormattingUnitsSection from './SettingSections/FormattingUnitsSection/For
 import GeneralSettingsSection from './SettingSections/GeneralSettingsSection/GeneralSettingsSection';
 import HistogramBucketsSection from './SettingSections/HistogramBucketsSection/HistogramBucketsSection';
 import LegendSection from './SettingSections/LegendSection/LegendSection';
+import ScatterAxesSection from './SettingSections/ScatterAxesSection/ScatterAxesSection';
 import ThresholdsSection from './SettingSections/ThresholdsSection/ThresholdsSection';
 import VisualizationSettingsSection from './SettingSections/VisualizationSettingsSection/VisualizationSettingsSection';
 import { ThresholdProps } from './Threshold/types';
@@ -110,6 +112,12 @@ function RightContainer({
 	setContextLinks,
 	enableDrillDown = false,
 	isNewDashboard,
+	scatterXQuery,
+	setScatterXQuery,
+	scatterYQuery,
+	setScatterYQuery,
+	xAxisUnit,
+	setXAxisUnit,
 }: RightContainerProps): JSX.Element {
 	const { dashboardVariables } = useDashboardVariables();
 
@@ -144,6 +152,12 @@ function RightContainer({
 	const allowFillMode = panelTypeVsFillMode[selectedGraph];
 	const allowShowPoints = panelTypeVsShowPoints[selectedGraph];
 	const allowSpanGaps = panelTypeVsSpanGaps[selectedGraph];
+	const allowScatterAxes = selectedGraph === PANEL_TYPES.SCATTER;
+
+	const scatterQueryNames = useMemo(
+		() => getScatterQueryNames(selectedWidget?.query),
+		[selectedWidget?.query],
+	);
 
 	const decimapPrecisionOptions = useMemo(
 		() => [
@@ -231,6 +245,21 @@ function RightContainer({
 					allowStackingBarChart={allowStackingBarChart}
 					allowFillSpans={allowFillSpans}
 				/>
+
+				{allowScatterAxes && (
+					<ScatterAxesSection
+						queryNames={scatterQueryNames}
+						xQuery={scatterXQuery}
+						setXQuery={setScatterXQuery}
+						yQuery={scatterYQuery}
+						setYQuery={setScatterYQuery}
+						xAxisUnit={xAxisUnit}
+						setXAxisUnit={setXAxisUnit}
+						yAxisUnit={yAxisUnit}
+						setYAxisUnit={setYAxisUnit}
+						isNewDashboard={isNewDashboard}
+					/>
+				)}
 
 				{isFormattingSectionVisible && (
 					<FormattingUnitsSection
@@ -392,6 +421,12 @@ export interface RightContainerProps {
 	setShowPoints: Dispatch<SetStateAction<boolean>>;
 	spanGaps: boolean | number;
 	setSpanGaps: Dispatch<SetStateAction<boolean | number>>;
+	scatterXQuery?: string;
+	setScatterXQuery: Dispatch<SetStateAction<string | undefined>>;
+	scatterYQuery?: string;
+	setScatterYQuery: Dispatch<SetStateAction<string | undefined>>;
+	xAxisUnit: string;
+	setXAxisUnit: Dispatch<SetStateAction<string>>;
 }
 
 RightContainer.defaultProps = {

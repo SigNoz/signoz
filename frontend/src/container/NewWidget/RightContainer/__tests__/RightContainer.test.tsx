@@ -182,6 +182,12 @@ describe('RightContainer - Alerts Section', () => {
 		setShowPoints: jest.fn(),
 		spanGaps: false,
 		setSpanGaps: jest.fn(),
+		scatterXQuery: undefined,
+		setScatterXQuery: jest.fn(),
+		scatterYQuery: undefined,
+		setScatterYQuery: jest.fn(),
+		xAxisUnit: 'none',
+		setXAxisUnit: jest.fn(),
 	};
 
 	beforeEach(() => {
