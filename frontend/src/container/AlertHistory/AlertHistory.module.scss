@@ -1,5 +1,5 @@
-.alert-history {
+.alertHistory {
 	display: flex;
 	flex-direction: column;
-	gap: 24px;
+	gap: var(--spacing-10);
 }
