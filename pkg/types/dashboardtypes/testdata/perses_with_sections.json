@@ -30,7 +30,7 @@
                 },
                 "queries": [
                     {
-                        "kind": "TimeSeriesQuery",
+                        "kind": "time_series",
                         "spec": {
                             "plugin": {
                                 "kind": "signoz/BuilderQuery",
@@ -85,7 +85,7 @@
                 },
                 "queries": [
                     {
-                        "kind": "TimeSeriesQuery",
+                        "kind": "time_series",
                         "spec": {
                             "plugin": {
                                 "kind": "signoz/BuilderQuery",
