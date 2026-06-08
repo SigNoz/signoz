@@ -42,7 +42,11 @@ func (middleware *Resource) Wrap(next http.Handler) http.Handler {
 			req.Body = io.NopCloser(bytes.NewReader(body))
 		}
 
-		resolved := handler.ResolveRequest(defs, handler.ExtractorContext{Request: req, RequestBody: body})
+		extractorCtx := handler.ExtractorContext{
+			Request:     req,
+			RequestBody: body,
+		}
+		resolved := handler.ResolveRequest(defs, extractorCtx)
 
 		ctx := withResolved(req.Context(), &resolved)
 		next.ServeHTTP(rw, req.WithContext(ctx))

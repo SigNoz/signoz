@@ -126,6 +126,12 @@ func (middleware *Audit) emitAuditEvent(req *http.Request, writer responseCaptur
 	handler.FinalizeResponseIDs(*resolved, extractorCtx)
 
 	for _, entry := range *resolved {
+		// Audit records state changes only — skip read/list verbs (they still
+		// exist on the def for authz).
+		if !entry.Verb.IsMutation() {
+			continue
+		}
+
 		resourceAttributes := audittypes.NewResourceAttributes(entry.Resource, entry.ID)
 		if entry.Related != nil {
 			resourceAttributes = audittypes.NewRelatedResourceAttributes(entry.Resource, entry.ID, entry.Related.Resource, entry.Related.ID)
