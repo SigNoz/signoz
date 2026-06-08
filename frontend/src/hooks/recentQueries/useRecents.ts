@@ -1,15 +1,12 @@
 import * as recentQueriesStore from 'lib/recentQueries/recentQueriesStore';
 import { useRecentQueriesStore } from 'lib/recentQueries/recentQueriesStore';
 import type { RecentQueryEntry } from 'lib/recentQueries/types';
+import { bucketKey } from 'lib/recentQueries/utils';
 import type { SignalType } from 'types/api/v5/queryRange';
 
 // Stable empty reference so the selector returns the same array when a bucket
 // has no entries — avoids re-renders via zustand's Object.is comparison.
 const EMPTY: RecentQueryEntry[] = [];
-
-function bucketKey(signal: SignalType, source: string): string {
-	return `${signal}:${source}`;
-}
 
 // Subscribes the calling component to the recent-queries store and returns the
 // entries for the given (signal, source) bucket. On cold reads, falls back to

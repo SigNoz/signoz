@@ -3,24 +3,15 @@ import set from 'api/browser/localstorage/set';
 import type { SignalType } from 'types/api/v5/queryRange';
 import { create } from 'zustand';
 
+import { MAX_ENTRIES, STORAGE_VERSION } from './constants';
 import { normalizeFilterExpression } from './normalize';
 import type { RecentQueriesStoreShape, RecentQueryEntry } from './types';
-
-const STORAGE_KEY_PREFIX = 'qb_recent_v1';
-const STORAGE_VERSION = 1;
-const MAX_ENTRIES = 10;
-
-function normalizeSource(source: string | undefined): string {
-	return source ?? '';
-}
-
-function bucketKey(signal: SignalType, source: string): string {
-	return `${signal}:${source}`;
-}
-
-function storageKeyFor(signal: SignalType, source: string): string {
-	return `${STORAGE_KEY_PREFIX}:${bucketKey(signal, source)}`;
-}
+import {
+	bucketKey,
+	makeId,
+	normalizeSource,
+	storageKeyFor,
+} from './utils';
 
 // Mirrors parsed localStorage so equal raw strings return the same array ref —
 // preserves Object.is for zustand selector bail-out.
@@ -69,15 +60,6 @@ function saveBucketToStorage(
 	if (set(storageKeyFor(signal, source), raw)) {
 		persistedBucketCache.set(bucketKey(signal, source), { raw, parsed: entries });
 	}
-}
-
-// Same (signal, source, normalized filter) ⇒ same id ⇒ upsert.
-function makeId(
-	signal: SignalType,
-	source: string,
-	normalizedFilter: string,
-): string {
-	return `${signal}|${source}|${normalizedFilter}`;
 }
 
 export type RecentQueryInput = Omit<
