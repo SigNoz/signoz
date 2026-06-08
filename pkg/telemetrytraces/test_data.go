@@ -1,10 +1,12 @@
 package telemetrytraces
 
 import (
+	"time"
+
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
-func buildCompleteFieldKeyMap() map[string][]*telemetrytypes.TelemetryFieldKey {
+func buildCompleteFieldKeyMap(releaseTime time.Time) map[string][]*telemetrytypes.TelemetryFieldKey {
 	keysMap := map[string][]*telemetrytypes.TelemetryFieldKey{
 		"service.name": {
 			{
@@ -115,7 +117,33 @@ func buildCompleteFieldKeyMap() map[string][]*telemetrytypes.TelemetryFieldKey {
 	for _, keys := range keysMap {
 		for _, key := range keys {
 			key.Signal = telemetrytypes.SignalTraces
+			if key.FieldContext == telemetrytypes.FieldContextResource {
+				key.Evolutions = mockEvolutionData(releaseTime)
+			}
 		}
 	}
 	return keysMap
+}
+
+// mockEvolutionData returns the canonical resource-column evolution timeline used in tests:
+// the legacy resources_string map at epoch 0 and the JSON resource column released at releaseTime.
+func mockEvolutionData(releaseTime time.Time) []*telemetrytypes.EvolutionEntry {
+	return []*telemetrytypes.EvolutionEntry{
+		{
+			Signal:       telemetrytypes.SignalTraces,
+			ColumnName:   "resources_string",
+			FieldContext: telemetrytypes.FieldContextResource,
+			ColumnType:   "Map(LowCardinality(String), String)",
+			FieldName:    "__all__",
+			ReleaseTime:  time.Unix(0, 0),
+		},
+		{
+			Signal:       telemetrytypes.SignalTraces,
+			ColumnName:   "resource",
+			ColumnType:   "JSON()",
+			FieldContext: telemetrytypes.FieldContextResource,
+			FieldName:    "__all__",
+			ReleaseTime:  releaseTime,
+		},
+	}
 }
