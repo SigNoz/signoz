@@ -3,11 +3,7 @@
  * so the renderer stays declarative (per the one-component-per-file rule).
  */
 
-interface ScaledFontSizeArgs {
-	text: string;
-	baseSize: number;
-	innerRadius: number;
-}
+import { ArcGeometry, ParsedRgb, ScaledFontSizeArgs } from './types';
 
 /**
  * Shrinks the centre-total font as the text gets longer so it never overflows
@@ -31,17 +27,6 @@ export function getScaledFontSize({
 	return Math.min(baseSize * scaleFactor, maxSize);
 }
 
-export interface ArcGeometry {
-	/** Outer point where the leader label sits. */
-	labelX: number;
-	labelY: number;
-	/** Elbow point where the leader line bends toward the label. */
-	lineEndX: number;
-	lineEndY: number;
-	/** Anchor the label left/right depending on which half of the circle it's in. */
-	textAnchor: 'start' | 'end';
-}
-
 /**
  * Computes the leader-line / label geometry for one arc from its angular span.
  * Pulled out of the render prop so the SVG markup stays declarative.
@@ -61,12 +46,6 @@ export function getArcGeometry(
 		lineEndY: -Math.cos(angle) * lineEndRadius,
 		textAnchor: Math.sin(angle) > 0 ? 'start' : 'end',
 	};
-}
-
-interface ParsedRgb {
-	r: number;
-	g: number;
-	b: number;
 }
 
 // Parses `#rrggbb` into its components. Returns null for anything else (e.g. an

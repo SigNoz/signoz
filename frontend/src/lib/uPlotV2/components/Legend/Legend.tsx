@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { VirtuosoGrid } from 'react-virtuoso';
 import { Input } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
 import cx from 'classnames';
 import { useCopyToClipboard } from 'hooks/useCopyToClipboard';
@@ -21,20 +22,20 @@ export const MAX_LEGEND_WIDTH = 240;
  */
 export default function Legend({
 	items,
-	position = LegendPosition.BOTTOM,
+	position,
 	averageLegendWidth = MAX_LEGEND_WIDTH,
-	focusedSeriesIndex = null,
+	focusedSeriesIndex,
 	onClick,
 	onMouseMove,
 	onMouseLeave,
 	showCopy = true,
-	showSearch,
 }: LegendProps): JSX.Element {
 	const legendContainerRef = useRef<HTMLDivElement | null>(null);
 	const [legendSearchQuery, setLegendSearchQuery] = useState('');
 	const { copyToClipboard, id: copiedId } = useCopyToClipboard();
 
-	const searchEnabled = showSearch ?? position === LegendPosition.RIGHT;
+	// Search is intrinsic to the right-positioned legend.
+	const searchEnabled = position === LegendPosition.RIGHT;
 
 	const isSingleRow = useMemo(() => {
 		if (!legendContainerRef.current || position !== LegendPosition.BOTTOM) {
@@ -79,7 +80,7 @@ export default function Legend({
 						'legend-item-focused': focusedSeriesIndex === item.seriesIndex,
 					})}
 				>
-					<TooltipSimple title={item.label} arrow side="top">
+					<TooltipSimple title={item.label} arrow side="top" disableHoverableContent>
 						<div className="legend-item-label-trigger">
 							<div
 								className="legend-marker"
@@ -90,18 +91,30 @@ export default function Legend({
 						</div>
 					</TooltipSimple>
 					{showCopy && (
-						<TooltipSimple title={isCopied ? 'Copied' : 'Copy'} arrow side="top">
-							<button
+						<TooltipSimple
+							title={isCopied ? 'Copied' : 'Copy'}
+							arrow
+							side="top"
+							disableHoverableContent
+						>
+							<Button
 								type="button"
+								size="icon"
+								variant="ghost"
+								color="secondary"
 								className="legend-copy-button"
 								onClick={(e): void =>
 									handleCopyLegendItem(e, item.seriesIndex, item.label ?? '')
 								}
 								aria-label={`Copy ${item.label}`}
+								// data-testid (not testId): TooltipSimple's trigger injects
+								// data-testid:undefined via Radix Slot, and Button spreads
+								// incoming props after its own testId — so set it as a prop
+								// that wins the Slot merge and survives the spread.
 								data-testid="legend-copy"
 							>
 								{isCopied ? <Check size={12} /> : <Copy size={12} />}
-							</button>
+							</Button>
 						</TooltipSimple>
 					)}
 				</div>

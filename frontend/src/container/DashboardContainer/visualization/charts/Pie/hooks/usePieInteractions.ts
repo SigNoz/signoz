@@ -5,8 +5,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
 	getStoredSeriesVisibility,
 	updateSeriesVisibilityToLocalStorage,
-} from '../../panels/utils/legendVisibilityUtils';
-import { PieSlice } from '../types';
+} from '../../../panels/utils/legendVisibilityUtils';
+import { PieSlice } from '../../types';
 
 export interface UsePieInteractionsResult {
 	/** The hovered/focused slice (drives donut dimming + tooltip). */

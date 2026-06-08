@@ -11,17 +11,12 @@ import { LegendPosition } from 'lib/uPlotV2/components/types';
 import { PieChartProps, PieSlice } from '../types';
 import { calculateChartDimensions } from '../utils';
 
+import { usePieInteractions } from './hooks/usePieInteractions';
 import PieArc from './PieArc';
 import PieCenterLabel from './PieCenterLabel';
 import styles from './Pie.module.scss';
-import { usePieInteractions } from './usePieInteractions';
+import { PieTooltipData } from './types';
 import { getFillColor } from './utils';
-
-interface PieTooltipData {
-	label: string;
-	value: string;
-	color: string;
-}
 
 /**
  * Donut chart rendered with @visx. Splits its area into chart + legend with the
@@ -82,10 +77,22 @@ export default function Pie({
 		[containerWidth, containerHeight, position, data],
 	);
 
-	const size = Math.min(dimensions.width, dimensions.height);
-	const radius = size * 0.35;
-	const innerRadius = radius * 0.6;
-	const totalValue = visibleData.reduce((sum, slice) => sum + slice.value, 0);
+	// Donut geometry derived from the allocated chart box.
+	const { size, radius, innerRadius } = useMemo(() => {
+		const nextSize = Math.min(dimensions.width, dimensions.height);
+		const nextRadius = nextSize * 0.35;
+		return {
+			size: nextSize,
+			radius: nextRadius,
+			innerRadius: nextRadius * 0.6,
+		};
+	}, [dimensions.width, dimensions.height]);
+
+	const totalValue = useMemo(
+		() => visibleData.reduce((sum, slice) => sum + slice.value, 0),
+		[visibleData],
+	);
+
 	const labelColor = isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_400;
 	const activeColor = active?.color ?? null;
 
@@ -212,15 +219,15 @@ export default function Pie({
 							className={styles.pieChartIndicator}
 							style={{ background: tooltipData.color }}
 						/>
-						<div className={styles.pieTooltipContent}>
+						<div className={styles.pieChartTooltipContent}>
 							<span>{tooltipData.label}</span>
-							<span className={styles.tooltipValue}>{tooltipData.value}</span>
+							<span className={styles.pieChartTooltipValue}>{tooltipData.value}</span>
 						</div>
 					</TooltipInPortal>
 				)}
 			</div>
 			<div
-				className={styles.pieLegend}
+				className={styles.pieChartLegend}
 				style={{
 					width: dimensions.legendWidth,
 					height: dimensions.legendHeight,

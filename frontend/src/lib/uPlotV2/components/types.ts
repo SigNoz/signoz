@@ -111,27 +111,27 @@ export interface LegendConfig {
 	position: LegendPosition;
 }
 /**
- * Presentational legend props. Source-agnostic: it renders whatever
- * `items` it's given and delegates interaction to the container handlers, so
- * it serves both uPlot charts (via UPlotLegend) and non-uPlot charts (Pie).
+ * Presentational legend props. Source-agnostic: it renders whatever `items`
+ * it's given and delegates interaction to the container handlers, so it serves
+ * both uPlot charts (via UPlotLegend) and non-uPlot charts (Pie). The search
+ * box is intrinsic to the RIGHT position (derived from `position`, not a flag).
  */
 export interface LegendProps {
 	items: LegendItem[];
-	position?: LegendPosition;
+	/** Legend placement; always supplied by the container. */
+	position: LegendPosition;
 	averageLegendWidth?: number;
 	/** Series index to highlight (hovered/focused). */
-	focusedSeriesIndex?: number | null;
+	focusedSeriesIndex: number | null;
 	/**
 	 * Container-delegated handlers. Items carry `data-legend-item-id`, so the
 	 * handler reads the target's id rather than binding per item.
 	 */
-	onClick?: MouseEventHandler<HTMLDivElement>;
-	onMouseMove?: MouseEventHandler<HTMLDivElement>;
-	onMouseLeave?: () => void;
+	onClick: MouseEventHandler<HTMLDivElement>;
+	onMouseMove: MouseEventHandler<HTMLDivElement>;
+	onMouseLeave: () => void;
 	/** Show the per-item copy button. Default true. */
 	showCopy?: boolean;
-	/** Show the filter search box. Default: only for the RIGHT position. */
-	showSearch?: boolean;
 }
 
 /** Props for the uPlot legend controller, which derives items + interaction

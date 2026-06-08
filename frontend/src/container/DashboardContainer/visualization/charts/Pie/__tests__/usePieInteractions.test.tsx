@@ -6,7 +6,7 @@ import {
 import type { MouseEvent } from 'react';
 
 import { PieSlice } from '../../types';
-import { usePieInteractions } from '../usePieInteractions';
+import { usePieInteractions } from '../hooks/usePieInteractions';
 
 jest.mock(
 	'container/DashboardContainer/visualization/panels/utils/legendVisibilityUtils',

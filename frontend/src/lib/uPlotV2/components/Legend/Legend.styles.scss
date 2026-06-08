@@ -173,17 +173,15 @@
 	.legend-copy-button {
 		// Always laid out (space reserved) but transparent, so revealing it on
 		// hover fades the icon in without reflowing the row / shifting the label.
-		display: flex;
+		// Shrink the shared icon Button (defaults to a 2rem square) to the
+		// compact legend row via its size tokens.
+		--button-height: auto;
+		--button-width: auto;
+		--button-padding: 2px;
+
 		opacity: 0;
-		align-items: center;
-		justify-content: center;
 		flex-shrink: 0;
-		padding: 2px;
-		margin: 0;
-		border: none;
-		background: transparent;
 		color: var(--l2-foreground);
-		cursor: pointer;
 		border-radius: 4px;
 		transition:
 			opacity 0.15s ease,

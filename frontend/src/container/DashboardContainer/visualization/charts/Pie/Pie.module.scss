@@ -36,7 +36,7 @@
 	align-items: center;
 	justify-content: center;
 }
-.pieTooltipContent {
+.pieChartTooltipContent {
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -51,7 +51,7 @@
 	display: inline-block;
 }
 
-.tooltipValue {
+.pieChartTooltipValue {
 	font-weight: bold;
 	margin-top: 4px;
 }
@@ -59,7 +59,7 @@
 // Wraps the shared chart Legend. Its width/height are set inline from the
 // computed chart dimensions, so the VirtuosoGrid inside gets the same bounded
 // box (right column / bottom rows) the uPlot charts use.
-.pieLegend {
+.pieChartLegend {
 	flex: 0 0 auto;
 	min-height: 0;
 	min-width: 0;
