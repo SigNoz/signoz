@@ -134,113 +134,6 @@ export interface AlertmanagertypesGettableRoutePolicyDTO {
 	updatedBy?: string | null;
 }
 
-export enum AlertmanagertypesMaintenanceKindDTO {
-	fixed = 'fixed',
-	recurring = 'recurring',
-}
-export enum AlertmanagertypesMaintenanceStatusDTO {
-	active = 'active',
-	upcoming = 'upcoming',
-	expired = 'expired',
-}
-export enum AlertmanagertypesRepeatOnDTO {
-	sunday = 'sunday',
-	monday = 'monday',
-	tuesday = 'tuesday',
-	wednesday = 'wednesday',
-	thursday = 'thursday',
-	friday = 'friday',
-	saturday = 'saturday',
-}
-export enum AlertmanagertypesRepeatTypeDTO {
-	daily = 'daily',
-	weekly = 'weekly',
-	monthly = 'monthly',
-}
-export interface AlertmanagertypesRecurrenceDTO {
-	/**
-	 * @type string
-	 */
-	duration: string;
-	/**
-	 * @type string,null
-	 * @format date-time
-	 */
-	endTime?: string | null;
-	/**
-	 * @type array,null
-	 */
-	repeatOn?: AlertmanagertypesRepeatOnDTO[] | null;
-	repeatType: AlertmanagertypesRepeatTypeDTO;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	startTime: string;
-}
-
-export interface AlertmanagertypesScheduleDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	endTime?: string;
-	recurrence?: AlertmanagertypesRecurrenceDTO;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	startTime?: string;
-	/**
-	 * @type string
-	 */
-	timezone: string;
-}
-
-export interface AlertmanagertypesPlannedMaintenanceDTO {
-	/**
-	 * @type array,null
-	 */
-	alertIds?: string[] | null;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt?: string;
-	/**
-	 * @type string
-	 */
-	createdBy?: string;
-	/**
-	 * @type string
-	 */
-	description?: string;
-	/**
-	 * @type string
-	 */
-	id: string;
-	kind: AlertmanagertypesMaintenanceKindDTO;
-	/**
-	 * @type string
-	 */
-	name: string;
-	schedule: AlertmanagertypesScheduleDTO;
-	/**
-	 * @type string
-	 */
-	scope?: string;
-	status: AlertmanagertypesMaintenanceStatusDTO;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt?: string;
-	/**
-	 * @type string
-	 */
-	updatedBy?: string;
-}
-
 export interface ConfigAuthorizationDTO {
 	/**
 	 * @type string
@@ -473,6 +366,130 @@ export interface ConfigHTTPClientConfigDTO {
 
 export interface ConfigSecretURLDTO {
 	[key: string]: unknown;
+}
+
+export interface AlertmanagertypesGoogleChatReceiverConfigDTO {
+	http_config?: ConfigHTTPClientConfigDTO;
+	/**
+	 * @type boolean
+	 */
+	send_resolved?: boolean;
+	/**
+	 * @type string
+	 */
+	text?: string;
+	/**
+	 * @type string
+	 */
+	title?: string;
+	webhook_url?: ConfigSecretURLDTO;
+}
+
+export enum AlertmanagertypesMaintenanceKindDTO {
+	fixed = 'fixed',
+	recurring = 'recurring',
+}
+export enum AlertmanagertypesMaintenanceStatusDTO {
+	active = 'active',
+	upcoming = 'upcoming',
+	expired = 'expired',
+}
+export enum AlertmanagertypesRepeatOnDTO {
+	sunday = 'sunday',
+	monday = 'monday',
+	tuesday = 'tuesday',
+	wednesday = 'wednesday',
+	thursday = 'thursday',
+	friday = 'friday',
+	saturday = 'saturday',
+}
+export enum AlertmanagertypesRepeatTypeDTO {
+	daily = 'daily',
+	weekly = 'weekly',
+	monthly = 'monthly',
+}
+export interface AlertmanagertypesRecurrenceDTO {
+	/**
+	 * @type string
+	 */
+	duration: string;
+	/**
+	 * @type string,null
+	 * @format date-time
+	 */
+	endTime?: string | null;
+	/**
+	 * @type array,null
+	 */
+	repeatOn?: AlertmanagertypesRepeatOnDTO[] | null;
+	repeatType: AlertmanagertypesRepeatTypeDTO;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	startTime: string;
+}
+
+export interface AlertmanagertypesScheduleDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	endTime?: string;
+	recurrence?: AlertmanagertypesRecurrenceDTO;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	startTime?: string;
+	/**
+	 * @type string
+	 */
+	timezone: string;
+}
+
+export interface AlertmanagertypesPlannedMaintenanceDTO {
+	/**
+	 * @type array,null
+	 */
+	alertIds?: string[] | null;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: string;
+	/**
+	 * @type string
+	 */
+	createdBy?: string;
+	/**
+	 * @type string
+	 */
+	description?: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	kind: AlertmanagertypesMaintenanceKindDTO;
+	/**
+	 * @type string
+	 */
+	name: string;
+	schedule: AlertmanagertypesScheduleDTO;
+	/**
+	 * @type string
+	 */
+	scope?: string;
+	status: AlertmanagertypesMaintenanceStatusDTO;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: string;
+	/**
+	 * @type string
+	 */
+	updatedBy?: string;
 }
 
 export interface ConfigDiscordConfigDTO {
@@ -1637,6 +1654,10 @@ export type AlertmanagertypesPostableChannelDTO = unknown & {
 	/**
 	 * @type array
 	 */
+	googlechat_configs?: AlertmanagertypesGoogleChatReceiverConfigDTO[];
+	/**
+	 * @type array
+	 */
 	incidentio_configs?: ConfigIncidentioConfigDTO[];
 	/**
 	 * @type array
@@ -1746,6 +1767,89 @@ export interface AlertmanagertypesPostableRoutePolicyDTO {
 	 * @type array,null
 	 */
 	tags?: string[] | null;
+}
+
+export interface AlertmanagertypesReceiverDTO {
+	/**
+	 * @type array
+	 */
+	discord_configs?: ConfigDiscordConfigDTO[];
+	/**
+	 * @type array
+	 */
+	email_configs?: ConfigEmailConfigDTO[];
+	/**
+	 * @type array
+	 */
+	googlechat_configs?: AlertmanagertypesGoogleChatReceiverConfigDTO[];
+	/**
+	 * @type array
+	 */
+	incidentio_configs?: ConfigIncidentioConfigDTO[];
+	/**
+	 * @type array
+	 */
+	jira_configs?: ConfigJiraConfigDTO[];
+	/**
+	 * @type array
+	 */
+	mattermost_configs?: ConfigMattermostConfigDTO[];
+	/**
+	 * @type array
+	 */
+	msteams_configs?: ConfigMSTeamsConfigDTO[];
+	/**
+	 * @type array
+	 */
+	msteamsv2_configs?: ConfigMSTeamsV2ConfigDTO[];
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type array
+	 */
+	opsgenie_configs?: ConfigOpsGenieConfigDTO[];
+	/**
+	 * @type array
+	 */
+	pagerduty_configs?: ConfigPagerdutyConfigDTO[];
+	/**
+	 * @type array
+	 */
+	pushover_configs?: ConfigPushoverConfigDTO[];
+	/**
+	 * @type array
+	 */
+	rocketchat_configs?: ConfigRocketchatConfigDTO[];
+	/**
+	 * @type array
+	 */
+	slack_configs?: ConfigSlackConfigDTO[];
+	/**
+	 * @type array
+	 */
+	sns_configs?: ConfigSNSConfigDTO[];
+	/**
+	 * @type array
+	 */
+	telegram_configs?: ConfigTelegramConfigDTO[];
+	/**
+	 * @type array
+	 */
+	victorops_configs?: ConfigVictorOpsConfigDTO[];
+	/**
+	 * @type array
+	 */
+	webex_configs?: ConfigWebexConfigDTO[];
+	/**
+	 * @type array
+	 */
+	webhook_configs?: ConfigWebhookConfigDTO[];
+	/**
+	 * @type array
+	 */
+	wechat_configs?: ConfigWechatConfigDTO[];
 }
 
 export interface AuthtypesAttributeMappingDTO {
@@ -2959,85 +3063,6 @@ export interface CommonJSONRefDTO {
 	$ref?: string;
 }
 
-export interface ConfigReceiverDTO {
-	/**
-	 * @type array
-	 */
-	discord_configs?: ConfigDiscordConfigDTO[];
-	/**
-	 * @type array
-	 */
-	email_configs?: ConfigEmailConfigDTO[];
-	/**
-	 * @type array
-	 */
-	incidentio_configs?: ConfigIncidentioConfigDTO[];
-	/**
-	 * @type array
-	 */
-	jira_configs?: ConfigJiraConfigDTO[];
-	/**
-	 * @type array
-	 */
-	mattermost_configs?: ConfigMattermostConfigDTO[];
-	/**
-	 * @type array
-	 */
-	msteams_configs?: ConfigMSTeamsConfigDTO[];
-	/**
-	 * @type array
-	 */
-	msteamsv2_configs?: ConfigMSTeamsV2ConfigDTO[];
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type array
-	 */
-	opsgenie_configs?: ConfigOpsGenieConfigDTO[];
-	/**
-	 * @type array
-	 */
-	pagerduty_configs?: ConfigPagerdutyConfigDTO[];
-	/**
-	 * @type array
-	 */
-	pushover_configs?: ConfigPushoverConfigDTO[];
-	/**
-	 * @type array
-	 */
-	rocketchat_configs?: ConfigRocketchatConfigDTO[];
-	/**
-	 * @type array
-	 */
-	slack_configs?: ConfigSlackConfigDTO[];
-	/**
-	 * @type array
-	 */
-	sns_configs?: ConfigSNSConfigDTO[];
-	/**
-	 * @type array
-	 */
-	telegram_configs?: ConfigTelegramConfigDTO[];
-	/**
-	 * @type array
-	 */
-	victorops_configs?: ConfigVictorOpsConfigDTO[];
-	/**
-	 * @type array
-	 */
-	webex_configs?: ConfigWebexConfigDTO[];
-	/**
-	 * @type array
-	 */
-	webhook_configs?: ConfigWebhookConfigDTO[];
-	/**
-	 * @type array
-	 */
-	wechat_configs?: ConfigWechatConfigDTO[];
-}
-
 export interface CoretypesObjectGroupDTO {
 	resource: CoretypesResourceRefDTO;
 	/**
@@ -3102,6 +3127,40 @@ export interface DashboardGridLayoutSpecDTO {
 	 * @type string
 	 */
 	repeatVariable?: string;
+}
+
+export interface DashboardLinkDTO {
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type boolean
+	 */
+	renderVariables?: boolean;
+	/**
+	 * @type boolean
+	 */
+	targetBlank?: boolean;
+	/**
+	 * @type string
+	 */
+	tooltip?: string;
+	/**
+	 * @type string
+	 */
+	url?: string;
+}
+
+export interface DashboardPanelDisplayDTO {
+	/**
+	 * @type string
+	 */
+	description?: string;
+	/**
+	 * @type string
+	 */
+	name?: string;
 }
 
 export interface VariableDisplayDTO {
@@ -3805,40 +3864,9 @@ export type DashboardtypesDashboardSpecDTODatasources = {
 	[key: string]: DashboardtypesDatasourceSpecDTO;
 };
 
-export interface V1PanelDisplayDTO {
-	/**
-	 * @type string
-	 */
-	description?: string;
-	/**
-	 * @type string
-	 */
-	name?: string;
+export enum DashboardtypesPanelKindDTO {
+	Panel = 'Panel',
 }
-
-export interface V1LinkDTO {
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type boolean
-	 */
-	renderVariables?: boolean;
-	/**
-	 * @type boolean
-	 */
-	targetBlank?: boolean;
-	/**
-	 * @type string
-	 */
-	tooltip?: string;
-	/**
-	 * @type string
-	 */
-	url?: string;
-}
-
 export enum DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpecDTOKind {
 	'signoz/TimeSeriesPanel' = 'signoz/TimeSeriesPanel',
 }
@@ -4080,6 +4108,13 @@ export type DashboardtypesPanelPluginDTO =
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHistogramPanelSpecDTO
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpecDTO;
 
+export enum Querybuildertypesv5RequestTypeDTO {
+	scalar = 'scalar',
+	time_series = 'time_series',
+	raw = 'raw',
+	raw_stream = 'raw_stream',
+	trace = 'trace',
+}
 export enum DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBuilderQuerySpecDTOKind {
 	'signoz/BuilderQuery' = 'signoz/BuilderQuery',
 }
@@ -4384,19 +4419,16 @@ export interface DashboardtypesQuerySpecDTO {
 }
 
 export interface DashboardtypesQueryDTO {
-	/**
-	 * @type string
-	 */
-	kind?: string;
+	kind?: Querybuildertypesv5RequestTypeDTO;
 	spec?: DashboardtypesQuerySpecDTO;
 }
 
 export interface DashboardtypesPanelSpecDTO {
-	display?: V1PanelDisplayDTO;
+	display?: DashboardPanelDisplayDTO;
 	/**
 	 * @type array
 	 */
-	links?: V1LinkDTO[];
+	links?: DashboardLinkDTO[];
 	plugin?: DashboardtypesPanelPluginDTO;
 	/**
 	 * @type array
@@ -4405,10 +4437,7 @@ export interface DashboardtypesPanelSpecDTO {
 }
 
 export interface DashboardtypesPanelDTO {
-	/**
-	 * @type string
-	 */
-	kind?: string;
+	kind?: DashboardtypesPanelKindDTO;
 	spec?: DashboardtypesPanelSpecDTO;
 }
 
@@ -4422,20 +4451,20 @@ export type DashboardtypesDashboardSpecDTOPanelsAnyOf = {
 export type DashboardtypesDashboardSpecDTOPanels =
 	DashboardtypesDashboardSpecDTOPanelsAnyOf | null;
 
-export enum DashboardtypesLayoutEnvelopeGithubComPersesPersesPkgModelApiV1DashboardGridLayoutSpecDTOKind {
+export enum DashboardtypesLayoutEnvelopeGithubComPersesSpecGoDashboardGridLayoutSpecDTOKind {
 	Grid = 'Grid',
 }
-export interface DashboardtypesLayoutEnvelopeGithubComPersesPersesPkgModelApiV1DashboardGridLayoutSpecDTO {
+export interface DashboardtypesLayoutEnvelopeGithubComPersesSpecGoDashboardGridLayoutSpecDTO {
 	/**
 	 * @enum Grid
 	 * @type string
 	 */
-	kind: DashboardtypesLayoutEnvelopeGithubComPersesPersesPkgModelApiV1DashboardGridLayoutSpecDTOKind;
+	kind: DashboardtypesLayoutEnvelopeGithubComPersesSpecGoDashboardGridLayoutSpecDTOKind;
 	spec: DashboardGridLayoutSpecDTO;
 }
 
 export type DashboardtypesLayoutDTO =
-	DashboardtypesLayoutEnvelopeGithubComPersesPersesPkgModelApiV1DashboardGridLayoutSpecDTO;
+	DashboardtypesLayoutEnvelopeGithubComPersesSpecGoDashboardGridLayoutSpecDTO;
 
 export enum DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpecDTOKind {
 	ListVariable = 'ListVariable',
@@ -4539,21 +4568,21 @@ export interface DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDash
 	spec: DashboardtypesListVariableSpecDTO;
 }
 
-export enum DashboardtypesVariableEnvelopeGithubComPersesPersesPkgModelApiV1DashboardTextVariableSpecDTOKind {
+export enum DashboardtypesVariableEnvelopeGithubComPersesSpecGoDashboardTextVariableSpecDTOKind {
 	TextVariable = 'TextVariable',
 }
-export interface DashboardtypesVariableEnvelopeGithubComPersesPersesPkgModelApiV1DashboardTextVariableSpecDTO {
+export interface DashboardtypesVariableEnvelopeGithubComPersesSpecGoDashboardTextVariableSpecDTO {
 	/**
 	 * @enum TextVariable
 	 * @type string
 	 */
-	kind: DashboardtypesVariableEnvelopeGithubComPersesPersesPkgModelApiV1DashboardTextVariableSpecDTOKind;
+	kind: DashboardtypesVariableEnvelopeGithubComPersesSpecGoDashboardTextVariableSpecDTOKind;
 	spec: DashboardTextVariableSpecDTO;
 }
 
 export type DashboardtypesVariableDTO =
 	| DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpecDTO
-	| DashboardtypesVariableEnvelopeGithubComPersesPersesPkgModelApiV1DashboardTextVariableSpecDTO;
+	| DashboardtypesVariableEnvelopeGithubComPersesSpecGoDashboardTextVariableSpecDTO;
 
 export interface DashboardtypesDashboardSpecDTO {
 	/**
@@ -4572,7 +4601,7 @@ export interface DashboardtypesDashboardSpecDTO {
 	/**
 	 * @type array
 	 */
-	links?: V1LinkDTO[];
+	links?: DashboardLinkDTO[];
 	/**
 	 * @type object,null
 	 */
@@ -6954,13 +6983,6 @@ export type Querybuildertypesv5QueryRangeRequestDTOVariables = {
 	[key: string]: Querybuildertypesv5VariableItemDTO;
 };
 
-export enum Querybuildertypesv5RequestTypeDTO {
-	scalar = 'scalar',
-	time_series = 'time_series',
-	raw = 'raw',
-	raw_stream = 'raw_stream',
-	trace = 'trace',
-}
 /**
  * Request body for the v5 query range endpoint. Supports builder queries (traces, logs, metrics), formulas, joins, trace operators, PromQL, and ClickHouse SQL queries.
  */
@@ -8701,6 +8723,19 @@ export type ListAccountServicesMetadataPathParameters = {
 };
 export type ListAccountServicesMetadata200 = {
 	data: CloudintegrationtypesGettableServicesMetadataDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetAccountServicePathParameters = {
+	cloudProvider: string;
+	id: string;
+	serviceId: string;
+};
+export type GetAccountService200 = {
+	data: CloudintegrationtypesServiceDTO;
 	/**
 	 * @type string
 	 */
