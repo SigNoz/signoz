@@ -119,7 +119,7 @@ func (store *store) ListV2(
 		Offset(params.Offset)
 
 	if err := q.Scan(ctx); err != nil {
-		return nil, 0, err
+		return nil, 0, errors.WrapInternalf(err, errors.CodeInternal, "couldn't list dashboards")
 	}
 
 	// COUNT(*) OVER () is computed pre-LIMIT, so any returned row carries the
@@ -336,11 +336,11 @@ func (store *store) PinForUser(ctx context.Context, preference *dashboardtypes.U
 		preference.UserID, preference.DashboardID,
 	).Exec(ctx)
 	if err != nil {
-		return err
+		return errors.WrapInternalf(err, errors.CodeInternal, "couldn't pin dashboard for user")
 	}
 	rows, err := res.RowsAffected()
 	if err != nil {
-		return err
+		return errors.WrapInternalf(err, errors.CodeInternal, "couldn't read pin result")
 	}
 	if rows == 0 {
 		return errors.Newf(errors.TypeAlreadyExists, dashboardtypes.ErrCodePinnedDashboardLimitHit,
@@ -359,7 +359,10 @@ func (store *store) UnpinForUser(ctx context.Context, userID valuer.UUID, dashbo
 		Where("user_id = ?", userID).
 		Where("dashboard_id = ?", dashboardID).
 		Exec(ctx)
-	return err
+	if err != nil {
+		return errors.WrapInternalf(err, errors.CodeInternal, "couldn't unpin dashboard for user")
+	}
+	return nil
 }
 
 func (store *store) DeletePreferencesForDashboard(ctx context.Context, dashboardID valuer.UUID) error {
@@ -368,5 +371,8 @@ func (store *store) DeletePreferencesForDashboard(ctx context.Context, dashboard
 		Model((*dashboardtypes.UserDashboardPreference)(nil)).
 		Where("dashboard_id = ?", dashboardID).
 		Exec(ctx)
-	return err
+	if err != nil {
+		return errors.WrapInternalf(err, errors.CodeInternal, "couldn't delete dashboard preferences")
+	}
+	return nil
 }
