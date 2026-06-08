@@ -361,3 +361,12 @@ func (store *store) UnpinForUser(ctx context.Context, userID valuer.UUID, dashbo
 		Exec(ctx)
 	return err
 }
+
+func (store *store) DeletePreferencesForDashboard(ctx context.Context, dashboardID valuer.UUID) error {
+	_, err := store.sqlstore.BunDBCtx(ctx).
+		NewDelete().
+		Model((*dashboardtypes.UserDashboardPreference)(nil)).
+		Where("dashboard_id = ?", dashboardID).
+		Exec(ctx)
+	return err
+}

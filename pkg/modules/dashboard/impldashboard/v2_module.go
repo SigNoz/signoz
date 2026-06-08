@@ -172,6 +172,9 @@ func (module *module) DeleteV2(ctx context.Context, orgID valuer.UUID, id valuer
 		if _, err := module.tagModule.SyncTags(ctx, orgID, coretypes.KindDashboard, id, nil); err != nil {
 			return err
 		}
+		if err := module.store.DeletePreferencesForDashboard(ctx, id); err != nil {
+			return err
+		}
 		return module.store.Delete(ctx, orgID, id)
 	})
 }
