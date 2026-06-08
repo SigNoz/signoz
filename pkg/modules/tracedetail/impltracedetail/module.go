@@ -39,51 +39,6 @@ func NewModule(traceStore spantypes.TraceStore, providerSettings factory.Provide
 	return m
 }
 
-func (m *module) GetWaterfall(ctx context.Context, traceID string, req *spantypes.PostableWaterfall) (*spantypes.GettableWaterfallTrace, error) {
-	waterfallTrace, err := m.getTraceData(ctx, traceID)
-	if err != nil {
-		return nil, err
-	}
-
-	selectedSpans, uncollapsedSpans, selectedAllSpans := waterfallTrace.GetWaterfallSpans(
-		req.UncollapsedSpans,
-		req.SelectedSpanID,
-		min(req.Limit, m.config.Waterfall.MaxLimitToSelectAllSpans),
-		m.config.Waterfall.SpanPageSize,
-		m.config.Waterfall.MaxDepthToAutoExpand,
-	)
-
-	aggregationResults := make([]spantypes.SpanAggregationResult, 0, len(req.Aggregations))
-	for _, a := range req.Aggregations {
-		aggregationResults = append(aggregationResults, waterfallTrace.GetSpanAggregation(a.Aggregation, a.Field))
-	}
-
-	return spantypes.NewGettableWaterfallTrace(waterfallTrace, selectedSpans, uncollapsedSpans, selectedAllSpans, aggregationResults), nil
-}
-
-// getTraceData fetches all spans for a trace and builds the WaterfallTrace.
-func (m *module) getTraceData(ctx context.Context, traceID string) (*spantypes.WaterfallTrace, error) {
-	summary, err := m.store.GetTraceSummary(ctx, traceID)
-	if err != nil {
-		return nil, err
-	}
-
-	spanItems, err := m.store.GetTraceSpans(ctx, traceID, summary)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(spanItems) == 0 {
-		return nil, spantypes.ErrTraceNotFound
-	}
-
-	nodes := make([]*spantypes.WaterfallSpan, len(spanItems))
-	for i := range spanItems {
-		nodes[i] = spanItems[i].ToWaterfallSpan(traceID)
-	}
-	return spantypes.NewWaterfallTraceFromSpans(nodes), nil
-}
-
 // GetWaterfallV4 is the OOM-safe V4 waterfall.
 // For large traces (NumSpans > effectiveLimit) it uses a two-step fetch:
 // minimal fields for all spans to build the tree, then full fields for the
@@ -120,7 +75,7 @@ func (m *module) getFullWaterfall(ctx context.Context, traceID string, summary *
 	waterfallTrace := spantypes.NewWaterfallTraceFromSpans(nodes)
 	selectedSpans := waterfallTrace.GetAllSpans()
 
-	return spantypes.NewGettableWaterfallTrace(waterfallTrace, selectedSpans, nil, true, nil), nil
+	return spantypes.NewGettableWaterfallTrace(waterfallTrace, selectedSpans, nil, true), nil
 }
 
 func (m *module) GetTraceAggregations(ctx context.Context, traceID string, req *spantypes.PostableTraceAggregations) (*spantypes.GettableTraceAggregations, error) {
@@ -215,7 +170,7 @@ func (m *module) getWindowedWaterfall(ctx context.Context, traceID, selectedSpan
 	spantypes.EnrichSelectedSpans(selectedSpans, fullSpans)
 
 	return spantypes.NewGettableWaterfallTrace(
-		waterfallTrace, selectedSpans, uncollapsedSpans, false, nil,
+		waterfallTrace, selectedSpans, uncollapsedSpans, false,
 	), nil
 }
 
