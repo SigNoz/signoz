@@ -483,7 +483,7 @@ def test_enable_metrics_provisions_dashboards(
     assert isinstance(dashboards_in_service, list) and len(dashboards_in_service) > 0, "assets.dashboards should be non-empty after enabling metrics"
     provisioned_ids = set()
     for dash in dashboards_in_service:
-        assert "integrationDashboard" in dash, f"Integration dashboard entry missing"
+        assert "integrationDashboard" in dash, "Integration dashboard entry missing"
         try:
             uuid.UUID(dash["integrationDashboard"]["id"])
         except ValueError as err:
