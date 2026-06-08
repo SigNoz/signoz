@@ -1,6 +1,13 @@
 export const RECENTS_SECTION = { name: 'Recent searches', rank: 1 } as const;
 export const SUGGESTIONS_SECTION = { name: 'Suggestions', rank: 2 } as const;
 
+// Custom CodeMirror Completion.type for recent-query entries. Used to discriminate
+// recents from regular autocomplete completions in renderers and event handlers.
+export const RECENT_COMPLETION_TYPE = 'recent';
+
+// Max number of recents rendered in the autocomplete dropdown. Keep in sync with
+// the SCSS `$max-recents-shown` in QuerySearch.styles.scss — the stylesheet sizes
+// the dropdown based on this count.
 export const RECENTS_DISPLAY_CAP = 5;
 
 export const queryExamples = [

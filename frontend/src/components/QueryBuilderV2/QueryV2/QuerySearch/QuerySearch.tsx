@@ -46,6 +46,8 @@ import {
 import { validateQuery } from 'utils/queryValidationUtils';
 import { unquote } from 'utils/stringUtils';
 
+import { useRecents } from 'hooks/recentQueries/useRecents';
+
 import { queryExamples, SUGGESTIONS_SECTION } from './constants';
 import {
 	combineInitialAndUserExpression,
@@ -1257,20 +1259,21 @@ function QuerySearch({
 
 	const recentsSignal = dataSource as RecentsSignal;
 	const recentsSource = signalSource ?? '';
+	const recents = useRecents(recentsSignal, recentsSource);
 
 	function combinedSuggestions(
 		context: CompletionContext,
 	): CompletionResult | null {
 		const fullDoc = context.state.doc.toString();
-		const recentOptions = getRecentOptions(recentsSignal, recentsSource, fullDoc);
+		const recentOptions = getRecentOptions(recents, fullDoc);
 		const result = autoSuggestions(context);
 
-		const sectionedSuggestions = (result?.options || []).map((opt) => ({
+		const suggestionOptions = (result?.options || []).map((opt) => ({
 			...opt,
 			section: SUGGESTIONS_SECTION,
 		}));
 
-		if (recentOptions.length === 0 && sectionedSuggestions.length === 0) {
+		if (recentOptions.length === 0 && suggestionOptions.length === 0) {
 			return result;
 		}
 
@@ -1285,7 +1288,7 @@ function QuerySearch({
 
 		return {
 			...result,
-			options: [...recentOptions, ...sectionedSuggestions],
+			options: [...recentOptions, ...suggestionOptions],
 			filter: false,
 		};
 	}

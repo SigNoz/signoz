@@ -3,10 +3,15 @@ import type { Completion } from '@codemirror/autocomplete';
 import type { EditorView } from '@uiw/react-codemirror';
 import dayjs from 'dayjs';
 import { normalizeFilterExpression } from 'lib/recentQueries/normalize';
-import * as recentQueriesStore from 'lib/recentQueries/store';
+import * as recentQueriesStore from 'lib/recentQueries/recentQueriesStore';
+import type { RecentQueryEntry } from 'lib/recentQueries/types';
 import 'utils/timeUtils';
 
-import { RECENTS_DISPLAY_CAP, RECENTS_SECTION } from './constants';
+import {
+	RECENT_COMPLETION_TYPE,
+	RECENTS_DISPLAY_CAP,
+	RECENTS_SECTION,
+} from './constants';
 
 export type RecentsSignal = 'logs' | 'traces' | 'metrics';
 
@@ -51,15 +56,17 @@ export function getUserExpressionFromCombined(
 	return c;
 }
 
+// Filters and projects a list of recent-query entries into CodeMirror completions.
+// Entries are supplied by the caller (typically via the useRecents hook) so this
+// function stays pure and React doesn't have to re-subscribe inside CodeMirror's
+// autocomplete callback.
 export function getRecentOptions(
-	signal: RecentsSignal,
-	source: string,
+	entries: RecentQueryEntry[],
 	fullDoc: string,
 ): Completion[] {
-	const all = recentQueriesStore.list(signal, source);
 	const normalizedDoc = normalizeFilterExpression(fullDoc);
 
-	const matches = all
+	const matches = entries
 		.filter((e) => {
 			const normalizedRecent = normalizeFilterExpression(e.filter.expression);
 			if (normalizedRecent === normalizedDoc) {
@@ -74,7 +81,7 @@ export function getRecentOptions(
 
 	return matches.map((entry) => ({
 		label: entry.filter.expression,
-		type: 'recent' as const,
+		type: RECENT_COMPLETION_TYPE,
 		boost: -50,
 		section: RECENTS_SECTION,
 		detail: dayjs(entry.lastUsedAt).fromNow(),
@@ -100,7 +107,7 @@ export function renderRecentDeleteButton(
 	_state: unknown,
 	view: EditorView | null,
 ): Node {
-	if (completion.type !== 'recent') {
+	if (completion.type !== RECENT_COMPLETION_TYPE) {
 		const empty = document.createElement('span');
 		empty.style.display = 'none';
 		return empty;
@@ -128,6 +135,10 @@ export function renderRecentDeleteButton(
 		e.preventDefault();
 		e.stopPropagation();
 	};
+	// CodeMirror's autocomplete closes the popup on pointerdown / mousedown outside
+	// the editor. The delete button lives inside the popup, so we must stop those
+	// events early — otherwise clicking × would dismiss the dropdown before the
+	// click handler fires and the entry wouldn't actually get removed.
 	btn.addEventListener('pointerdown', stop);
 	btn.addEventListener('mousedown', stop);
 	btn.addEventListener('click', (e) => {

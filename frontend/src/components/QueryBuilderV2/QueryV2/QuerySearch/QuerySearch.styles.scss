@@ -3,6 +3,9 @@
 $dropdown-base-height: 250px;
 $recents-header-height: 30px;
 $recent-row-height: 36px;
+// MUST stay in sync with RECENTS_DISPLAY_CAP in ./constants.ts — the TS side caps
+// how many recents are rendered; this caps how tall the dropdown can grow to fit
+// them. If you change one, change the other.
 $max-recents-shown: 5;
 
 .code-mirror-where-clause {
@@ -125,6 +128,13 @@ $max-recents-shown: 5;
 				max-height: $dropdown-base-height !important;
 				overflow-y: auto !important;
 
+				// Recents render at the top of the dropdown ahead of regular suggestions.
+				// At the base max-height, having recents in view would crowd out the
+				// suggestion list below. This loop grows the dropdown by one row's worth
+				// of height for every recent present (up to $max-recents-shown), plus the
+				// section header. `:has(> li:nth-of-type(N) .cm-completionIcon-recent)`
+				// matches when the Nth child of <ul> is a recent — i.e. there are at
+				// least N recents visible.
 				@for $i from 1 through $max-recents-shown {
 					&:has(> li:nth-of-type(#{$i}) .cm-completionIcon-recent) {
 						max-height: $dropdown-base-height +
@@ -189,7 +199,7 @@ $max-recents-shown: 5;
 					.cm-completionDetail {
 						margin-left: auto;
 						font-style: normal;
-						font-size: 10px;
+						font-size: var(--periscope-font-size-small);
 						font-weight: 600;
 						letter-spacing: 0.06em;
 						text-transform: uppercase;
@@ -228,7 +238,7 @@ $max-recents-shown: 5;
 					border: 0;
 					border-radius: 4px;
 					background: transparent;
-					color: var(--text-vanilla-400);
+					color: var(--l2-foreground);
 					font-size: 18px;
 					line-height: 1;
 					cursor: pointer;
@@ -239,7 +249,7 @@ $max-recents-shown: 5;
 
 					&:hover {
 						opacity: 1;
-						background: color-mix(in srgb, var(--text-vanilla-400) 18%, transparent);
+						background: color-mix(in srgb, var(--l2-foreground) 18%, transparent);
 					}
 				}
 			}

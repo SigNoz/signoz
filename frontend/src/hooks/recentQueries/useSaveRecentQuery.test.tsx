@@ -7,7 +7,7 @@ import type {
 } from 'types/api/queryBuilder/queryBuilderData';
 import { validateQuery } from 'utils/queryValidationUtils';
 
-import * as store from 'lib/recentQueries/store';
+import * as store from 'lib/recentQueries/recentQueriesStore';
 
 import { useSaveRecentQuery } from './useSaveRecentQuery';
 

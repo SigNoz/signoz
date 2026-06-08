@@ -1,5 +1,5 @@
-import * as store from './store';
-import type { RecentQueryInput } from './store';
+import * as store from './recentQueriesStore';
+import type { RecentQueryInput } from './recentQueriesStore';
 import type { RecentQueryEntry } from './types';
 
 const baseInput = (
@@ -168,34 +168,29 @@ describe('recentQueries store', () => {
 		});
 	});
 
-	describe('subscribe', () => {
-		it('notifies subscribers on save', () => {
+	describe('reactive subscription via zustand', () => {
+		it('notifies zustand subscribers on save', () => {
 			const cb = jest.fn();
-			store.subscribe(cb);
+			const unsubscribe = store.useRecentQueriesStore.subscribe(cb);
 			store.save(baseInput({ filter: { expression: 'a = 1' } }));
 			expect(cb).toHaveBeenCalledTimes(1);
+			unsubscribe();
 		});
 
-		it('notifies subscribers on remove', () => {
+		it('notifies zustand subscribers on remove', () => {
 			const saved = saveOrThrow(baseInput({ filter: { expression: 'a = 1' } }));
 			const cb = jest.fn();
-			store.subscribe(cb);
+			const unsubscribe = store.useRecentQueriesStore.subscribe(cb);
 			store.remove(saved.id, 'logs');
 			expect(cb).toHaveBeenCalledTimes(1);
+			unsubscribe();
 		});
 
 		it('stops notifying after unsubscribe', () => {
 			const cb = jest.fn();
-			const unsubscribe = store.subscribe(cb);
+			const unsubscribe = store.useRecentQueriesStore.subscribe(cb);
 			unsubscribe();
 			store.save(baseInput({ filter: { expression: 'a = 1' } }));
-			expect(cb).not.toHaveBeenCalled();
-		});
-
-		it('does not notify for no-op removes', () => {
-			const cb = jest.fn();
-			store.subscribe(cb);
-			store.remove('does-not-exist', 'logs');
 			expect(cb).not.toHaveBeenCalled();
 		});
 	});

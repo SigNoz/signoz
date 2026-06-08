@@ -6,7 +6,7 @@ import type {
 import type { SignalType } from 'types/api/v5/queryRange';
 import { validateQuery } from 'utils/queryValidationUtils';
 
-import * as store from 'lib/recentQueries/store';
+import * as store from 'lib/recentQueries/recentQueriesStore';
 
 function toSignal(dataSource: IBuilderQuery['dataSource']): SignalType | null {
 	if (
