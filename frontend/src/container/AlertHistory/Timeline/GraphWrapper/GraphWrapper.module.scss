@@ -1,0 +1,22 @@
+.timelineGraph {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-10);
+	background: var(--l2-background);
+	padding: var(--spacing-6);
+	border-radius: 4px;
+	border: 1px solid var(--l1-border);
+	height: 150px;
+}
+
+.timelineGraphTitle {
+	width: max-content;
+	padding: var(--spacing-1) var(--spacing-4);
+	border-radius: 4px;
+	border: 1px solid var(--l1-border);
+	background: var(--l1-background);
+	color: var(--l1-foreground);
+	font-size: var(--periscope-font-size-small);
+	line-height: var(--line-height-18);
+	letter-spacing: -0.06px;
+}

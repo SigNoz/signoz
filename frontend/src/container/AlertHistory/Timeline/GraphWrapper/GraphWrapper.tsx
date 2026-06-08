@@ -4,7 +4,7 @@ import DataStateRenderer from 'periscope/components/DataStateRenderer/DataStateR
 
 import Graph from '../Graph/Graph';
 
-import '../Graph/Graph.styles.scss';
+import styles from './GraphWrapper.module.scss';
 
 function GraphWrapper({
 	totalCurrentTriggers,
@@ -40,11 +40,11 @@ function GraphWrapper({
 	// }, [startTime]);
 
 	return (
-		<div className="timeline-graph">
-			<div className="timeline-graph__title">
+		<div className={styles.timelineGraph}>
+			<div className={styles.timelineGraphTitle}>
 				{totalCurrentTriggers} triggers in {relativeTime}
 			</div>
-			<div className="timeline-graph__chart">
+			<div>
 				<DataStateRenderer
 					isLoading={isLoading}
 					isError={isError || !isValidRuleId || !ruleId}
