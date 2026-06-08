@@ -2,12 +2,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
+import FieldsSelector from 'components/FieldsSelector';
 import LogsFormatOptionsMenu from 'components/LogsFormatOptionsMenu/LogsFormatOptionsMenu';
 import { MAX_LOGS_LIST_SIZE } from 'constants/liveTail';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
 import GoToTop from 'container/GoToTop';
 import { useOptionsMenu } from 'container/OptionsMenu';
+import { LOGS_REQUIRED_COLUMNS } from 'container/OptionsMenu/constants';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
@@ -55,6 +57,8 @@ function LiveLogsContainer({
 		dataSource: DataSource.LOGS,
 		aggregateOperator: listQuery?.aggregateOperator || StringOperators.NOOP,
 	});
+
+	const [isFieldsSelectorOpen, setIsFieldsSelectorOpen] = useState(false);
 
 	const formatItems = [
 		{
@@ -238,6 +242,7 @@ function LiveLogsContainer({
 						items={formatItems}
 						selectedOptionFormat={options.format}
 						config={config}
+						onOpenColumns={(): void => setIsFieldsSelectorOpen(true)}
 					/>
 				</div>
 
@@ -261,6 +266,17 @@ function LiveLogsContainer({
 			</div>
 
 			<GoToTop />
+			{config.fieldsSelector && (
+				<FieldsSelector
+					isOpen={isFieldsSelectorOpen}
+					title="Edit columns"
+					fields={config.fieldsSelector.value}
+					onFieldsChange={config.fieldsSelector.onFieldsChange}
+					onClose={(): void => setIsFieldsSelectorOpen(false)}
+					signal={DataSource.LOGS}
+					requiredFields={LOGS_REQUIRED_COLUMNS}
+				/>
+			)}
 		</div>
 	);
 }

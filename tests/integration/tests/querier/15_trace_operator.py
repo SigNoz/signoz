@@ -25,13 +25,22 @@ returnSpansFrom="A"
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
+from typing import Any
 
 import pytest
 import requests
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
-from fixtures.querier import get_rows
+from fixtures.querier import (
+    assert_grouped_scalar,
+    assert_raw_row_subset,
+    assert_scalar_value,
+    format_timestamp,
+    generate_traces_with_corrupt_metadata,
+    get_rows,
+    make_query_request,
+)
 from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCode
 
 
@@ -434,3 +443,173 @@ def test_trace_operator(
     )
     assert response.status_code == HTTPStatus.OK, f"HTTP {response.status_code}: {response.text}"
     assert case["validate"](response), f"validation failed: {response.json()}"
+
+
+def _expected_trace_subset(trace: Traces) -> dict[str, Any]:
+    return {
+        "duration_nano": trace.duration_nano,
+        "name": trace.name,
+        "parent_span_id": trace.parent_span_id,
+        "span_id": trace.span_id,
+        "timestamp": format_timestamp(trace.timestamp),
+        "trace_id": trace.trace_id,
+    }
+
+
+@pytest.mark.parametrize(
+    "payload_factory,request_type,assert_result",
+    [
+        # Case 1: CTE filter uses the deprecated intrinsic field `durationNano`.
+        pytest.param(
+            lambda traces: [
+                {
+                    "type": "builder_query",
+                    "spec": {
+                        "name": "A",
+                        "signal": "traces",
+                        "filter": {"expression": 'durationNano = "3s"'},
+                    },
+                },
+                {
+                    "type": "builder_query",
+                    "spec": {
+                        "name": "B",
+                        "signal": "traces",
+                        "filter": {"expression": 'durationNano = "5s"'},
+                    },
+                },
+                {
+                    "type": "builder_trace_operator",
+                    "spec": {
+                        "name": "C",
+                        "expression": "A => B",
+                        "limit": 1,
+                    },
+                },
+            ],
+            "raw",
+            lambda response, traces: assert_raw_row_subset(response, "C", _expected_trace_subset(traces[0])),
+            id="deprecated-intrinsic-filter",
+        ),
+        # Case 2: CTE filter uses the deprecated calculated field `responseStatusCode`.
+        pytest.param(
+            lambda traces: [
+                {
+                    "type": "builder_query",
+                    "spec": {
+                        "name": "A",
+                        "signal": "traces",
+                        "filter": {"expression": 'responseStatusCode = "200"'},
+                    },
+                },
+                {
+                    "type": "builder_query",
+                    "spec": {
+                        "name": "B",
+                        "signal": "traces",
+                        "filter": {"expression": 'durationNano = "5s"'},
+                    },
+                },
+                {
+                    "type": "builder_trace_operator",
+                    "spec": {
+                        "name": "C",
+                        "expression": "A => B",
+                        "limit": 1,
+                    },
+                },
+            ],
+            "raw",
+            lambda response, traces: assert_raw_row_subset(response, "C", _expected_trace_subset(traces[0])),
+            id="deprecated-calculated-filter",
+        ),
+        # Case 3: order by uses `count_` with fieldContext `span`, which has
+        # to be rewritten to the aggregation alias `span.count_`.
+        pytest.param(
+            lambda traces: [
+                {
+                    "type": "builder_query",
+                    "spec": {
+                        "name": "A",
+                        "signal": "traces",
+                        "aggregations": [{"expression": "count()"}],
+                    },
+                },
+                {
+                    "type": "builder_trace_operator",
+                    "spec": {
+                        "name": "C",
+                        "expression": "A",
+                        "aggregations": [{"expression": "count()", "alias": "span.count_"}],
+                        "order": [{"key": {"name": "count_", "fieldContext": "span"}, "direction": "desc"}],
+                    },
+                },
+            ],
+            "scalar",
+            lambda response, traces: assert_scalar_value(response, "C", len(traces)),
+            id="context-prefixed-aggregation-alias-order",
+        ),
+        # Case 4: group by lists `cloud.provider` twice (once with a resource
+        # context, once without).
+        pytest.param(
+            lambda traces: [
+                {
+                    "type": "builder_query",
+                    "spec": {
+                        "name": "A",
+                        "signal": "traces",
+                        "disabled": True,
+                        "aggregations": [{"expression": "count()"}],
+                    },
+                },
+                {
+                    "type": "builder_trace_operator",
+                    "spec": {
+                        "name": "C",
+                        "expression": "A",
+                        "aggregations": [{"expression": "count()"}],
+                        "groupBy": [
+                            {"name": "cloud.provider", "fieldContext": "resource"},
+                            {"name": "cloud.provider"},
+                        ],
+                    },
+                },
+            ],
+            "scalar",
+            lambda response, traces: assert_grouped_scalar(response, "C", expected_groups=1, expected_columns=2, last_col_value=len(traces)),
+            id="duplicate-group-by-deduplicated",
+        ),
+    ],
+)
+def test_trace_operator_with_adjusted_keys(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_traces: Callable[[list[Traces]], None],
+    payload_factory: Callable[[list[Traces]], list[dict[str, Any]]],
+    request_type: str,
+    assert_result: Callable[[requests.Response, list[Traces]], None],
+) -> None:
+    """
+    Trace operators build a CTE per referenced builder query and an outer
+    query on top. Both layers need the same key adjustment as regular trace
+    queries, otherwise deprecated keys and context-prefixed aliases don't
+    resolve.
+    """
+    traces = generate_traces_with_corrupt_metadata()
+    insert_traces(traces)
+    payload = payload_factory(traces)
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    response = make_query_request(
+        signoz,
+        token,
+        start_ms=int((datetime.now(tz=UTC) - timedelta(minutes=5)).timestamp() * 1000),
+        end_ms=int(datetime.now(tz=UTC).timestamp() * 1000),
+        request_type=request_type,
+        queries=payload,
+    )
+
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert_result(response, traces)

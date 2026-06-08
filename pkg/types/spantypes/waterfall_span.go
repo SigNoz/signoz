@@ -54,6 +54,12 @@ type Event struct {
 	IsError      bool           `json:"isError,omitempty"`
 }
 
+type OtelSpanRef struct {
+	TraceId string `json:"traceId,omitempty"`
+	SpanId  string `json:"spanId,omitempty"`
+	RefType string `json:"refType,omitempty"`
+}
+
 // WaterfallSpan represents the span in waterfall response,
 // this uses snake_case keys for response as a special case since these
 // keys can be directly used to query spans and client need to know the actual fields.
@@ -74,6 +80,7 @@ type WaterfallSpan struct {
 	TimeUnix     uint64            `json:"time_unix"`
 	TraceID      string            `json:"trace_id"`
 	TraceState   string            `json:"trace_state"`
+	References   []OtelSpanRef     `json:"references" required:"true" nullable:"false"`
 
 	// Calculated fields https://signoz.io/docs/traces-management/guides/derived-fields-spans
 	DBName             string `json:"db_name,omitempty"`
@@ -128,6 +135,7 @@ type StorableSpan struct {
 	ExternalHTTPMethod string             `ch:"external_http_method"`
 	ExternalHTTPURL    string             `ch:"external_http_url"`
 	ResponseStatusCode string             `ch:"response_status_code"`
+	References         string             `ch:"references"`
 }
 
 // MinimalSpan with only the fields needed to build the parent-child tree.
@@ -285,6 +293,14 @@ func (item *StorableSpan) UnmarshalledEvents() []Event {
 	return events
 }
 
+func (item *StorableSpan) UnmarshalledRefs() []OtelSpanRef {
+	refs := []OtelSpanRef{}
+	if err := json.Unmarshal([]byte(item.References), &refs); err != nil {
+		return nil // skip malformed values
+	}
+	return refs
+}
+
 func (item *StorableSpan) ToWaterfallSpan(traceID string) *WaterfallSpan {
 	resources := make(map[string]string)
 	maps.Copy(resources, item.ResourcesString)
@@ -318,6 +334,7 @@ func (item *StorableSpan) ToWaterfallSpan(traceID string) *WaterfallSpan {
 		Children:           make([]*WaterfallSpan, 0),
 		TimeUnix:           uint64(item.StartTime.UnixNano()),
 		ServiceName:        item.ServiceName,
+		References:         item.UnmarshalledRefs(),
 	}
 }
 

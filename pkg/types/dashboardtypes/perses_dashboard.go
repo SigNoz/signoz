@@ -12,7 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/tagtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/perses/perses/pkg/model/api/v1/common"
+	"github.com/perses/spec/go/common"
 	"k8s.io/apimachinery/pkg/util/validation"
 )
 
@@ -60,6 +60,54 @@ type DashboardV2 struct {
 	Name string          `json:"name" required:"true"`
 	Tags []*tagtypes.Tag `json:"tags" required:"true"`
 	Spec DashboardSpec   `json:"spec" required:"true"`
+}
+
+func (d *DashboardV2) CanUpdate() error {
+	if d.Source == SourceIntegration {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardImmutable, "integration dashboards cannot be modified")
+	}
+	if d.Locked {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot update a locked dashboard, please unlock the dashboard to update")
+	}
+	return nil
+}
+
+func (d *DashboardV2) Update(updatable UpdatableDashboardV2, updatedBy string, resolvedTags []*tagtypes.Tag) error {
+	if err := d.CanUpdate(); err != nil {
+		return err
+	}
+	if updatable.Name != d.Name {
+		return errors.NewInvalidInputf(ErrCodeDashboardImmutable, "name is immutable; cannot change from %q to %q", d.Name, updatable.Name)
+	}
+	d.DashboardV2MetadataBase = updatable.DashboardV2MetadataBase
+	d.Tags = resolvedTags
+	d.Spec = updatable.Spec
+	d.UpdatedBy = updatedBy
+	d.UpdatedAt = time.Now()
+	return nil
+}
+
+func (d *DashboardV2) CanLockUnlock(isAdmin bool, updatedBy string) error {
+	if d.Source == SourceIntegration {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardImmutable, "integration dashboards cannot be locked or unlocked")
+	}
+	if d.Source == SourceSystem {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardImmutable, "system dashboards cannot be locked or unlocked")
+	}
+	if d.CreatedBy != updatedBy && !isAdmin {
+		return errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "you are not authorized to lock/unlock this dashboard")
+	}
+	return nil
+}
+
+func (d *DashboardV2) LockUnlock(lock bool, isAdmin bool, updatedBy string) error {
+	if err := d.CanLockUnlock(isAdmin, updatedBy); err != nil {
+		return err
+	}
+	d.Locked = lock
+	d.UpdatedBy = updatedBy
+	d.UpdatedAt = time.Now()
+	return nil
 }
 
 type DashboardV2MetadataBase struct {
@@ -126,7 +174,7 @@ func (p *PostableDashboardV2) Validate() error {
 	if err := p.validateName(); err != nil {
 		return err
 	}
-	if err := p.validateTags(); err != nil {
+	if err := validateDashboardTags(p.Tags); err != nil {
 		return err
 	}
 	return p.Spec.Validate()
@@ -193,11 +241,11 @@ func generateDashboardName(displayName string) string {
 	return prefix + "-" + string(suffix)
 }
 
-func (p *PostableDashboardV2) validateTags() error {
-	if len(p.Tags) > MaxTagsPerDashboard {
+func validateDashboardTags(tags []tagtypes.PostableTag) error {
+	if len(tags) > MaxTagsPerDashboard {
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "a dashboard can have at most %d tags", MaxTagsPerDashboard)
 	}
-	for _, tag := range p.Tags {
+	for _, tag := range tags {
 		if _, reserved := reservedDSLKeys[DSLKey(strings.ToLower(strings.TrimSpace(tag.Key)))]; reserved {
 			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "tag key %q is reserved", tag.Key)
 		}
@@ -262,6 +310,57 @@ func (s StorableDashboardV2Data) toStorableDashboardData() (StorableDashboardDat
 }
 
 type StorableDashboardV2Metadata = DashboardV2MetadataBase
+
+// ════════════════════════════════════════════════════════════════════════
+// Updatable
+// ════════════════════════════════════════════════════════════════════════
+
+type UpdatableDashboardV2 struct {
+	DashboardV2MetadataBase
+	Name string                 `json:"name" required:"true"`
+	Tags []tagtypes.PostableTag `json:"tags" required:"true"`
+	Spec DashboardSpec          `json:"spec" required:"true"`
+}
+
+func (u *UpdatableDashboardV2) UnmarshalJSON(data []byte) error {
+	dec := json.NewDecoder(bytes.NewReader(data))
+	dec.DisallowUnknownFields()
+	type alias UpdatableDashboardV2
+	var tmp alias
+	if err := dec.Decode(&tmp); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "%s", err.Error())
+	}
+	*u = UpdatableDashboardV2(tmp)
+	if u.Spec.Display == nil {
+		u.Spec.Display = &common.Display{}
+	}
+	if u.Spec.Display.Name == "" {
+		u.Spec.Display.Name = u.Name
+	}
+	return u.Validate()
+}
+
+func (u *UpdatableDashboardV2) Validate() error {
+	if u.SchemaVersion != SchemaVersion {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "schemaVersion must be %q, got %q", SchemaVersion, u.SchemaVersion)
+	}
+	if err := validateDashboardName(u.Name); err != nil {
+		return err
+	}
+	if err := validateDashboardTags(u.Tags); err != nil {
+		return err
+	}
+	return u.Spec.Validate()
+}
+
+func (d DashboardV2) toUpdatableDashboardV2() UpdatableDashboardV2 {
+	return UpdatableDashboardV2{
+		DashboardV2MetadataBase: d.DashboardV2MetadataBase,
+		Name:                    d.Name,
+		Tags:                    tagtypes.NewPostableTagsFromTags(d.Tags),
+		Spec:                    d.Spec,
+	}
+}
 
 // ════════════════════════════════════════════════════════════════════════
 // Convertors

@@ -9,11 +9,6 @@ import {
 
 import InviteTeamMembers from '../InviteTeamMembers';
 
-jest.mock('api/common/logEvent', () => ({
-	__esModule: true,
-	default: jest.fn(),
-}));
-
 const mockNotificationSuccess = jest.fn() as jest.MockedFunction<
 	(args: { message: string }) => void
 >;

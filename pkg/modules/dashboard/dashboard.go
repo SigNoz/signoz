@@ -60,6 +60,12 @@ type Module interface {
 	CreateV2(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, source dashboardtypes.Source, postable dashboardtypes.PostableDashboardV2) (*dashboardtypes.DashboardV2, error)
 
 	GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.DashboardV2, error)
+
+	UpdateV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, updatable dashboardtypes.UpdatableDashboardV2) (*dashboardtypes.DashboardV2, error)
+
+	LockUnlockV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, isAdmin bool, lock bool) error
+
+	PatchV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, patch dashboardtypes.PatchableDashboardV2) (*dashboardtypes.DashboardV2, error)
 }
 
 type Handler interface {
@@ -89,4 +95,12 @@ type Handler interface {
 	CreateV2(http.ResponseWriter, *http.Request)
 
 	GetV2(http.ResponseWriter, *http.Request)
+
+	UpdateV2(http.ResponseWriter, *http.Request)
+
+	LockV2(http.ResponseWriter, *http.Request)
+
+	UnlockV2(http.ResponseWriter, *http.Request)
+
+	PatchV2(http.ResponseWriter, *http.Request)
 }

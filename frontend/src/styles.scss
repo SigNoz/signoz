@@ -826,4 +826,10 @@ body.ai-assistant-panel-open {
 :root {
 	--input-focus-outline-width: 0;
 	--radius-2: 4px;
+
+	// @signozhq/ui dropdown content portals to body with a default z-index of 50,
+	// antd defines it at z-index of 1050. Keeping this till we have components from both
+	// design libraries.
+	--dropdown-menu-content-z-index: 1050;
+	--dropdown-menu-sub-content-z-index: 1050;
 }

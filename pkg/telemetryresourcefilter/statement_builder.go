@@ -116,10 +116,33 @@ func (b *resourceFilterStatementBuilder[T]) Build(
 		return nil, nil //nolint:nilnil
 	}
 
+	// Group by fingerprint instead of using DISTINCT; on ClickHouse GROUP BY
+	// parallelizes across multiple threads and is faster for deduplication.
+	q.GroupBy("fingerprint")
+
 	stmt, args := q.BuildWithFlavor(sqlbuilder.ClickHouse)
 	return &qbtypes.Statement{
 		Query: stmt,
 		Args:  args,
+	}, nil
+}
+
+// BuildCount returns a statement that counts the distinct fingerprints matching
+// the resource filter. Returns (nil, nil) when the filter is a no-op.
+func (b *resourceFilterStatementBuilder[T]) BuildCount(
+	ctx context.Context,
+	start uint64,
+	end uint64,
+	query qbtypes.QueryBuilderQuery[T],
+	variables map[string]qbtypes.VariableItem,
+) (*qbtypes.Statement, error) {
+	inner, err := b.Build(ctx, start, end, qbtypes.RequestTypeRaw, query, variables)
+	if err != nil || inner == nil {
+		return nil, err
+	}
+	return &qbtypes.Statement{
+		Query: fmt.Sprintf("SELECT count() FROM (%s)", inner.Query),
+		Args:  inner.Args,
 	}, nil
 }
 

@@ -1,7 +1,11 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom-v5-compat';
 import { Skeleton } from 'antd';
-import { useListServicesMetadata } from 'api/generated/services/cloudintegration';
+import {
+	useListAccounts,
+	useListAccountServicesMetadata,
+	useListServicesMetadata,
+} from 'api/generated/services/cloudintegration';
 import type { CloudintegrationtypesServiceMetadataDTO } from 'api/generated/services/sigNoz.schemas';
 import cx from 'classnames';
 import { IntegrationType } from 'container/Integrations/types';
@@ -20,17 +24,33 @@ function ServicesList({
 }: ServicesListProps): JSX.Element {
 	const urlQuery = useUrlQuery();
 	const navigate = useNavigate();
-	const hasValidCloudAccountId = Boolean(cloudAccountId);
-	const serviceQueryParams = hasValidCloudAccountId
-		? { cloud_integration_id: cloudAccountId }
-		: undefined;
+	const isAccountConnected = Boolean(cloudAccountId);
+	const { data: listAccountsResponse, isLoading: isAccountsLoading } =
+		useListAccounts({ cloudProvider: type });
+	const hasConnectedAccounts =
+		(listAccountsResponse?.data?.accounts?.length ?? 0) > 0;
 
-	const { data: servicesMetadata, isLoading } = useListServicesMetadata(
-		{
-			cloudProvider: type,
-		},
-		serviceQueryParams,
-	);
+	const { data: accountServicesMetadata, isLoading: isAccountServicesLoading } =
+		useListAccountServicesMetadata(
+			{ cloudProvider: type, id: cloudAccountId },
+			{ query: { enabled: isAccountConnected } },
+		);
+
+	const {
+		data: providerServicesMetadata,
+		isLoading: isProviderServicesLoading,
+	} = useListServicesMetadata({ cloudProvider: type }, undefined, {
+		query: { enabled: !isAccountsLoading && !hasConnectedAccounts },
+	});
+
+	const servicesMetadata = hasConnectedAccounts
+		? accountServicesMetadata
+		: providerServicesMetadata;
+	const isLoading =
+		isAccountsLoading ||
+		(hasConnectedAccounts
+			? isAccountServicesLoading || !isAccountConnected
+			: isProviderServicesLoading);
 
 	const awsServices = useMemo(
 		() => servicesMetadata?.data?.services ?? [],

@@ -6,7 +6,6 @@ import { Pin, PinOff } from '@signozhq/icons';
 import { SidebarItem } from '../sideNav.types';
 
 import './NavItem.styles.scss';
-import './NavItem.styles.scss';
 
 export default function NavItem({
 	item,
@@ -27,7 +26,7 @@ export default function NavItem({
 	showIcon?: boolean;
 	dataTestId?: string;
 }): JSX.Element {
-	const { label, icon, isBeta, isNew, isEarlyAccess } = item;
+	const { label, icon, isBeta, isNew, isEarlyAccess, tooltip } = item;
 
 	const handleTogglePinClick = (
 		event: React.MouseEvent<SVGSVGElement, MouseEvent>,
@@ -36,7 +35,7 @@ export default function NavItem({
 		onTogglePin?.(item);
 	};
 
-	return (
+	const navItem = (
 		<div
 			className={cx(
 				'nav-item',
@@ -106,6 +105,15 @@ export default function NavItem({
 				)}
 			</div>
 		</div>
+	);
+
+	// Only non-pinnable items set `tooltip`; it would nest with the pin tooltip.
+	return tooltip ? (
+		<Tooltip title={tooltip} placement="right">
+			{navItem}
+		</Tooltip>
+	) : (
+		navItem
 	);
 }
 
