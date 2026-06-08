@@ -275,7 +275,11 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 			server.logger.InfoContext(ctx, "skipping creation of receiver not referenced by any route", slog.String("receiver", rcv.Name))
 			continue
 		}
-		integrations, err := alertmanagernotify.NewReceiverIntegrations(rcv, server.tmpl, server.logger, server.templater)
+		extendedRcv, err := alertmanagerConfig.GetReceiver(rcv.Name)
+		if err != nil {
+			return err
+		}
+		integrations, err := alertmanagernotify.NewReceiverIntegrations(extendedRcv, server.tmpl, server.logger, server.templater)
 		if err != nil {
 			return err
 		}
@@ -350,7 +354,7 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 	return nil
 }
 
-func (server *Server) TestReceiver(ctx context.Context, receiver alertmanagertypes.Receiver) error {
+func (server *Server) TestReceiver(ctx context.Context, receiver *alertmanagertypes.Receiver) error {
 	testAlert := alertmanagertypes.NewTestAlert(receiver, time.Now(), time.Now())
 	return alertmanagertypes.TestReceiver(ctx, receiver, alertmanagernotify.NewReceiverIntegrations, server.alertmanagerConfig, server.tmpl, server.logger, server.templater, testAlert.Labels, testAlert)
 }

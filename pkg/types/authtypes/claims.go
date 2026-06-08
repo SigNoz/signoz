@@ -29,7 +29,7 @@ func NewContextWithClaims(ctx context.Context, claims Claims) context.Context {
 func ClaimsFromContext(ctx context.Context) (Claims, error) {
 	claims, ok := ctx.Value(claimsKey{}).(Claims)
 	if !ok {
-		return Claims{}, errors.New(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "unauthenticated")
+		return Claims{}, errors.NewUnauthenticatedf(errors.CodeUnauthenticated, "unauthenticated")
 	}
 
 	return claims, nil
@@ -42,7 +42,7 @@ func NewContextWithAccessToken(ctx context.Context, accessToken string) context.
 func AccessTokenFromContext(ctx context.Context) (string, error) {
 	accessToken, ok := ctx.Value(accessTokenKey{}).(string)
 	if !ok {
-		return "", errors.New(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "unauthenticated")
+		return "", errors.NewUnauthenticatedf(errors.CodeUnauthenticated, "unauthenticated")
 	}
 
 	return accessToken, nil
@@ -55,7 +55,7 @@ func NewContextWithAPIKey(ctx context.Context, apiKey string) context.Context {
 func APIKeyFromContext(ctx context.Context) (string, error) {
 	apiKey, ok := ctx.Value(apiKeyKey{}).(string)
 	if !ok {
-		return "", errors.New(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "unauthenticated")
+		return "", errors.NewUnauthenticatedf(errors.CodeUnauthenticated, "unauthenticated")
 	}
 
 	return apiKey, nil
@@ -77,7 +77,7 @@ func (c *Claims) IsSelfAccess(id string) error {
 		return nil
 	}
 
-	return errors.New(errors.TypeForbidden, errors.CodeForbidden, "only the user/admin can access their own resource")
+	return errors.NewForbiddenf(errors.CodeForbidden, "only the user/admin can access their own resource")
 }
 
 func (c *Claims) IdentityID() string {

@@ -1,14 +1,15 @@
 package dashboardtypes
 
 import (
+	"encoding/json"
 	"maps"
 	"slices"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	v1 "github.com/perses/perses/pkg/model/api/v1"
-	"github.com/perses/perses/pkg/model/api/v1/common"
-	"github.com/perses/perses/pkg/model/api/v1/dashboard"
-	"github.com/perses/perses/pkg/model/api/v1/variable"
+	qb "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/perses/spec/go/common"
+	"github.com/perses/spec/go/dashboard"
+	"github.com/perses/spec/go/dashboard/variable"
 	"github.com/swaggest/jsonschema-go"
 )
 
@@ -27,15 +28,36 @@ type DatasourceSpec struct {
 // ══════════════════════════════════════════════
 
 type Panel struct {
-	Kind string    `json:"kind"`
+	Kind PanelKind `json:"kind"`
 	Spec PanelSpec `json:"spec"`
 }
 
+// PanelKind is the panel envelope discriminator. Perses leaves it a free
+// string; SigNoz locks it to the single valid value.
+type PanelKind string
+
+const PanelKindPanel PanelKind = "Panel"
+
+// Enum surfaces the allowed value in the generated OpenAPI schema.
+func (PanelKind) Enum() []any { return []any{PanelKindPanel} }
+
+func (k *PanelKind) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid panel kind")
+	}
+	if PanelKind(s) != PanelKindPanel {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "unknown panel kind %q; allowed values: %s", s, allowedValuesForKind([]PanelKind{PanelKindPanel}))
+	}
+	*k = PanelKind(s)
+	return nil
+}
+
 type PanelSpec struct {
-	Display *v1.PanelDisplay `json:"display,omitempty"`
-	Plugin  PanelPlugin      `json:"plugin"`
-	Queries []Query          `json:"queries,omitempty"`
-	Links   []v1.Link        `json:"links,omitempty"`
+	Display *dashboard.PanelDisplay `json:"display,omitempty"`
+	Plugin  PanelPlugin             `json:"plugin"`
+	Queries []Query                 `json:"queries,omitempty"`
+	Links   []dashboard.Link        `json:"links,omitempty"`
 }
 
 // ══════════════════════════════════════════════
@@ -43,8 +65,8 @@ type PanelSpec struct {
 // ══════════════════════════════════════════════
 
 type Query struct {
-	Kind string    `json:"kind"`
-	Spec QuerySpec `json:"spec"`
+	Kind qb.RequestType `json:"kind"`
+	Spec QuerySpec      `json:"spec"`
 }
 
 type QuerySpec struct {

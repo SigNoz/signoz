@@ -2,7 +2,7 @@
 import React, { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from 'react-query';
-import type { TabItemProps } from '@signozhq/ui/tabs';
+import type { TabsProps } from 'antd';
 import {
 	Alert,
 	Button,
@@ -14,8 +14,8 @@ import {
 	Row,
 	Skeleton,
 	Space,
+	Tabs,
 } from 'antd';
-import { Tabs } from '@signozhq/ui/tabs';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import updateCreditCardApi from 'api/v1/checkout/create';
@@ -53,20 +53,20 @@ export default function WorkspaceBlocked(): JSX.Element {
 	const { t } = useTranslation(['workspaceLocked']);
 
 	useEffect((): void => {
-		logEvent('Workspace Blocked: Screen Viewed', {});
+		void logEvent('Workspace Blocked: Screen Viewed', {});
 	}, []);
 
 	const handleContactUsClick = (): void => {
-		logEvent('Workspace Blocked: Contact Us Clicked', {});
+		void logEvent('Workspace Blocked: Contact Us Clicked', {});
 	};
 
 	const handleTabClick = (key: string): void => {
-		logEvent('Workspace Blocked: Screen Tabs Clicked', { tabKey: key });
+		void logEvent('Workspace Blocked: Screen Tabs Clicked', { tabKey: key });
 	};
 
 	const handleCollapseChange = (key: string | string[]): void => {
 		const lastKey = Array.isArray(key) ? key.slice(-1)[0] : key;
-		logEvent('Workspace Blocked: Screen Tab FAQ Item Clicked', {
+		void logEvent('Workspace Blocked: Screen Tab FAQ Item Clicked', {
 			panelKey: lastKey,
 		});
 	};
@@ -109,7 +109,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 	);
 
 	const handleUpdateCreditCard = useCallback(async () => {
-		logEvent('Workspace Blocked: User Clicked Update Credit Card', {});
+		void logEvent('Workspace Blocked: User Clicked Update Credit Card', {});
 
 		updateCreditCard({
 			url: getBaseUrl(),
@@ -117,7 +117,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 	}, [updateCreditCard]);
 
 	const handleExtendTrial = (): void => {
-		logEvent('Workspace Blocked: User Clicked Extend Trial', {});
+		void logEvent('Workspace Blocked: User Clicked Extend Trial', {});
 
 		notifications.info({
 			message: t('extendTrial'),
@@ -133,7 +133,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 	};
 
 	const handleViewBilling = (e?: React.MouseEvent): void => {
-		logEvent('Workspace Blocked: User Clicked View Billing', {});
+		void logEvent('Workspace Blocked: User Clicked View Billing', {});
 
 		safeNavigate(ROUTES.BILLING, { newTab: !!e && isModifierKeyPressed(e) });
 	};
@@ -154,7 +154,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 				/>
 			));
 
-	const tabItems: TabItemProps[] = [
+	const tabItems: TabsProps['items'] = [
 		{
 			key: 'whyChooseSignoz',
 			label: t('whyChooseSignoz'),
@@ -300,7 +300,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 										View Billing
 									</Button>
 
-									<RefreshPaymentStatus btnShape="round" />
+									<RefreshPaymentStatus />
 								</Flex>
 							)}
 
@@ -398,8 +398,8 @@ export default function WorkspaceBlocked(): JSX.Element {
 							<div className="workspace-locked__tabs">
 								<Tabs
 									items={tabItems}
-									defaultValue="youAreInGoodCompany"
-									onChange={handleTabClick}
+									defaultActiveKey="youAreInGoodCompany"
+									onTabClick={handleTabClick}
 								/>
 							</div>
 						</>

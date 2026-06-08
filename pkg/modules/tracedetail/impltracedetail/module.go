@@ -7,21 +7,34 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/tracedetail"
 	"github.com/SigNoz/signoz/pkg/types/spantypes"
+	"go.opentelemetry.io/otel/metric"
 )
 
 type module struct {
 	store    spantypes.TraceStore
 	settings factory.ScopedProviderSettings
 	config   tracedetail.Config
+	metrics  *moduleMetrics
 }
 
 func NewModule(traceStore spantypes.TraceStore, providerSettings factory.ProviderSettings, cfg tracedetail.Config) *module {
 	scopedProviderSettings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/tracedetail/impltracedetail")
-	return &module{
+
+	metrics, err := newModuleMetrics(scopedProviderSettings.Meter())
+	if err != nil {
+		panic(err)
+	}
+
+	m := &module{
 		config:   cfg,
 		store:    traceStore,
 		settings: scopedProviderSettings,
+		metrics:  metrics,
 	}
+
+	m.metrics.waterfallSpanLimit.Record(context.Background(), int64(cfg.Waterfall.MaxLimitToSelectAllSpans), metric.WithAttributes(attrResponseType.String(attrResponseTypeWindowed)))
+
+	return m
 }
 
 func (m *module) GetWaterfall(ctx context.Context, traceID string, req *spantypes.PostableWaterfall) (*spantypes.GettableWaterfallTrace, error) {
@@ -80,6 +93,9 @@ func (m *module) GetWaterfallV4(ctx context.Context, traceID string, selectedSpa
 	}
 	effectiveLimit := min(selectAllLimit, m.config.Waterfall.MaxLimitToSelectAllSpans)
 	if summary.NumSpans > uint64(effectiveLimit) {
+		attrs := metric.WithAttributes(attrResponseType.String(attrResponseTypeWindowed))
+		m.metrics.waterfallRequestCount.Add(ctx, 1, attrs)
+		m.metrics.waterfallSpanCount.Add(ctx, int64(summary.NumSpans), attrs)
 		return m.getWindowedWaterfall(ctx, traceID, selectedSpanID, uncollapsedSpans, summary.Start, summary.End)
 	}
 	return m.getFullWaterfall(ctx, traceID, summary)
@@ -103,6 +119,49 @@ func (m *module) getFullWaterfall(ctx context.Context, traceID string, summary *
 	selectedSpans := waterfallTrace.GetAllSpans()
 
 	return spantypes.NewGettableWaterfallTrace(waterfallTrace, selectedSpans, nil, true, nil), nil
+}
+
+func (m *module) GetTraceAggregations(ctx context.Context, traceID string, req *spantypes.PostableTraceAggregations) (*spantypes.GettableTraceAggregations, error) {
+	summary, err := m.store.GetTraceSummary(ctx, traceID)
+	if err != nil {
+		return nil, err
+	}
+
+	traceDurationNs := uint64(summary.End.UnixNano()) - uint64(summary.Start.UnixNano())
+
+	results := make([]spantypes.SpanAggregationResult, 0, len(req.Aggregations))
+	for _, agg := range req.Aggregations {
+		result := spantypes.SpanAggregationResult{Field: agg.Field, Aggregation: agg.Aggregation}
+		switch agg.Aggregation {
+		case spantypes.SpanAggregationSpanCount:
+			result.Value, err = m.store.GetSpanCountByField(ctx, traceID, summary, agg.Field)
+			if err != nil {
+				return nil, err
+			}
+		case spantypes.SpanAggregationDuration:
+			durationNs, err2 := m.store.GetSpanDurationByField(ctx, traceID, summary, agg.Field)
+			if err2 != nil {
+				return nil, err2
+			}
+			result.Value = make(map[string]uint64, len(durationNs))
+			for k, ns := range durationNs {
+				result.Value[k] = ns / 1_000_000
+			}
+		case spantypes.SpanAggregationExecutionTimePercentage:
+			durationNs, err2 := m.store.GetSpanDurationByField(ctx, traceID, summary, agg.Field)
+			if err2 != nil {
+				return nil, err2
+			}
+			result.Value = make(map[string]uint64, len(durationNs))
+			if traceDurationNs > 0 {
+				for k, ns := range durationNs {
+					result.Value[k] = ns * 100 / traceDurationNs
+				}
+			}
+		}
+		results = append(results, result)
+	}
+	return &spantypes.GettableTraceAggregations{Aggregations: results}, nil
 }
 
 // getWindowedWaterfall builds the waterfall tree with minimal data and then returns only a window of full spans.

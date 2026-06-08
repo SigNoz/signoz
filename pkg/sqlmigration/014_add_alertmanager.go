@@ -15,6 +15,7 @@ import (
 	"github.com/tidwall/gjson"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
+	"gopkg.in/yaml.v2"
 )
 
 type addAlertmanager struct {
@@ -246,12 +247,38 @@ func (migration *addAlertmanager) Down(ctx context.Context, db *bun.DB) error {
 	return nil
 }
 
+// copy of alertmanagertypes.NewReceiver as it existed
+// when this migration was written.
+func newReceiver(input string) (config.Receiver, error) {
+	receiver := config.Receiver{}
+	err := json.Unmarshal([]byte(input), &receiver)
+	if err != nil {
+		return config.Receiver{}, err
+	}
+
+	bytes, err := yaml.Marshal(receiver)
+	if err != nil {
+		return config.Receiver{}, err
+	}
+
+	receiverWithDefaults := config.Receiver{}
+	if err := yaml.Unmarshal(bytes, &receiverWithDefaults); err != nil {
+		return config.Receiver{}, err
+	}
+
+	if err := receiverWithDefaults.UnmarshalYAML(func(i interface{}) error { return nil }); err != nil {
+		return config.Receiver{}, err
+	}
+
+	return receiverWithDefaults, nil
+}
+
 func (migration *addAlertmanager) msTeamsChannelToMSTeamsV2Channel(c *alertmanagertypes.Channel) error {
 	if c.Type != "msteams" {
 		return nil
 	}
 
-	receiver, err := alertmanagertypes.NewReceiver(c.Data)
+	receiver, err := newReceiver(c.Data)
 	if err != nil {
 		return err
 	}
@@ -269,7 +296,7 @@ func (migration *addAlertmanager) msTeamsChannelToMSTeamsV2Channel(c *alertmanag
 	return nil
 }
 
-func (migration *addAlertmanager) msTeamsReceiverToMSTeamsV2Receiver(receiver alertmanagertypes.Receiver) alertmanagertypes.Receiver {
+func (migration *addAlertmanager) msTeamsReceiverToMSTeamsV2Receiver(receiver config.Receiver) config.Receiver {
 	if receiver.MSTeamsConfigs == nil {
 		return receiver
 	}

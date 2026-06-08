@@ -1,4 +1,4 @@
-import { Tabs, TabItemProps } from '@signozhq/ui/tabs';
+import { Button, Tabs, Tooltip } from 'antd';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { Braces, Globe, Table } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
@@ -8,6 +8,8 @@ import { VariablesSettingsTabHandle } from '../DashboardDescription/types';
 import DashboardVariableSettings from './DashboardVariableSettings';
 import GeneralDashboardSettings from './General';
 import PublicDashboardSetting from './PublicDashboard';
+
+import './DashboardSettingsContent.styles.scss';
 
 function DashboardSettings({
 	variablesSettingsTabHandle,
@@ -19,26 +21,49 @@ function DashboardSettings({
 
 	const enablePublicDashboard = isCloudUser || isEnterpriseSelfHostedUser;
 
-	const publicDashboardItem: TabItemProps = {
+	const publicDashboardItem = {
+		label: (
+			<Tooltip
+				title={
+					user?.role !== USER_ROLES.ADMIN
+						? 'Only admins can publish / manage public dashboards'
+						: ''
+				}
+				placement="right"
+			>
+				<Button
+					type="text"
+					icon={<Globe size={14} />}
+					className={`public-dashboard-btn ${
+						user?.role !== USER_ROLES.ADMIN ? 'disabled-btn' : ''
+					}`}
+				>
+					Publish
+				</Button>
+			</Tooltip>
+		),
 		key: 'public-dashboard',
-		label: 'Publish',
-		prefixIcon: <Globe size={14} />,
 		children: <PublicDashboardSetting />,
 		disabled: user?.role !== USER_ROLES.ADMIN,
-		disabledReason: 'Only admins can publish / manage public dashboards',
 	};
 
-	const items: TabItemProps[] = [
+	const items = [
 		{
+			label: (
+				<Button type="text" icon={<Table size={14} />} className="overview-btn">
+					Overview
+				</Button>
+			),
 			key: 'general',
-			label: 'Overview',
-			prefixIcon: <Table size={14} />,
 			children: <GeneralDashboardSettings />,
 		},
 		{
+			label: (
+				<Button type="text" icon={<Braces size={14} />} className="variables-btn">
+					Variables
+				</Button>
+			),
 			key: 'variables',
-			label: 'Variables',
-			prefixIcon: <Braces size={14} />,
 			children: (
 				<DashboardVariableSettings
 					variablesSettingsTabHandle={variablesSettingsTabHandle}
@@ -48,7 +73,7 @@ function DashboardSettings({
 		...(enablePublicDashboard ? [publicDashboardItem] : []),
 	];
 
-	return <Tabs items={items} />;
+	return <Tabs items={items} animated className="settings-tabs" />;
 }
 
 export default DashboardSettings;

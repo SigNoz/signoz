@@ -22,7 +22,7 @@ func TestAddRuleIDToRoute(t *testing.T) {
 		{
 			name: "Simple",
 			route: func() *config.Route {
-				route, err := NewRouteFromReceiver(Receiver{Name: "test"})
+				route, err := NewRouteFromReceiver(&Receiver{Receiver: &config.Receiver{Name: "test"}})
 				require.NoError(t, err)
 
 				return route
@@ -33,7 +33,7 @@ func TestAddRuleIDToRoute(t *testing.T) {
 		{
 			name: "AlreadyExists",
 			route: func() *config.Route {
-				route, err := NewRouteFromReceiver(Receiver{Name: "test"})
+				route, err := NewRouteFromReceiver(&Receiver{Receiver: &config.Receiver{Name: "test"}})
 				require.NoError(t, err)
 
 				err = addRuleIDToRoute(route, "1")
@@ -84,7 +84,7 @@ func TestRemoveRuleIDFromRoute(t *testing.T) {
 		{
 			name: "Simple",
 			route: func() *config.Route {
-				route, err := NewRouteFromReceiver(Receiver{Name: "test"})
+				route, err := NewRouteFromReceiver(&Receiver{Receiver: &config.Receiver{Name: "test"}})
 				require.NoError(t, err)
 
 				err = addRuleIDToRoute(route, "1")
@@ -98,7 +98,7 @@ func TestRemoveRuleIDFromRoute(t *testing.T) {
 		{
 			name: "DoesNotExist",
 			route: func() *config.Route {
-				route, err := NewRouteFromReceiver(Receiver{Name: "test"})
+				route, err := NewRouteFromReceiver(&Receiver{Receiver: &config.Receiver{Name: "test"}})
 				require.NoError(t, err)
 
 				return route
@@ -109,7 +109,7 @@ func TestRemoveRuleIDFromRoute(t *testing.T) {
 		{
 			name: "DeleteMatcher",
 			route: func() *config.Route {
-				route, err := NewRouteFromReceiver(Receiver{Name: "test"})
+				route, err := NewRouteFromReceiver(&Receiver{Receiver: &config.Receiver{Name: "test"}})
 				require.NoError(t, err)
 
 				return route
