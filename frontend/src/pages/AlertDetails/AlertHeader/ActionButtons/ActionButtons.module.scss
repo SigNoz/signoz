@@ -1,0 +1,55 @@
+.alertActionButtons {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-6);
+	color: var(--l1-border);
+}
+
+.divider {
+	--divider-color: var(--l1-border);
+	--divider-vertical-margin: 0;
+}
+
+.dropdownTriggerWrapper {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.dropdownMenu {
+	border-radius: 4px;
+	box-shadow: none;
+	background: linear-gradient(
+		138.7deg,
+		color-mix(in srgb, var(--card) 80%, transparent) 0%,
+		color-mix(in srgb, var(--card) 90%, transparent) 98.68%
+	);
+}
+
+.dropdownDivider {
+	margin: 0;
+}
+
+.deleteButton {
+	border: none;
+	display: flex;
+	align-items: center;
+	width: 100%;
+	color: var(--bg-cherry-400);
+	font-size: var(--periscope-font-size-base);
+
+	&:hover {
+		background: var(--l1-border);
+		color: var(--bg-cherry-400);
+	}
+
+	span {
+		&:hover {
+			background: var(--l1-border);
+			color: var(--bg-cherry-400);
+		}
+
+		color: var(--bg-cherry-400);
+		font-size: var(--periscope-font-size-base);
+	}
+}
