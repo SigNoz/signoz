@@ -209,15 +209,17 @@ function ServiceAccountDrawer({
 	);
 	const keys = keysData?.data ?? [];
 
+	const keysMaxPage = Math.max(1, Math.ceil(keys.length / PAGE_SIZE));
+	const effectiveKeysPage = Math.min(keysPage, keysMaxPage);
+
 	useEffect(() => {
 		if (keysLoading) {
 			return;
 		}
-		const maxPage = Math.max(1, Math.ceil(keys.length / PAGE_SIZE));
-		if (keysPage > maxPage) {
-			void setKeysPage(maxPage);
+		if (keysPage > keysMaxPage) {
+			void setKeysPage(keysMaxPage);
 		}
-	}, [keysLoading, keys.length, keysPage, setKeysPage]);
+	}, [keysLoading, keysMaxPage, keysPage, setKeysPage]);
 
 	// the retry for this mutation is safe due to the api being idempotent on backend
 	const { mutateAsync: updateMutateAsync } = useUpdateServiceAccount();
@@ -514,7 +516,7 @@ function ServiceAccountDrawer({
 											isDisabled={isDeleted}
 											canUpdate={canUpdate}
 											accountId={selectedAccountId}
-											currentPage={keysPage}
+											currentPage={effectiveKeysPage}
 											pageSize={PAGE_SIZE}
 										/>
 									) : (
@@ -534,14 +536,14 @@ function ServiceAccountDrawer({
 					{keys.length > 0 && (
 						<div className="sa-drawer__pagination-count">
 							<span className="sa-drawer__pagination-range">
-								{(keysPage - 1) * PAGE_SIZE + 1} &#8212;{' '}
-								{Math.min(keysPage * PAGE_SIZE, keys.length)}
+								{(effectiveKeysPage - 1) * PAGE_SIZE + 1} &#8212;{' '}
+								{Math.min(effectiveKeysPage * PAGE_SIZE, keys.length)}
 							</span>
 							<span className="sa-drawer__pagination-total">of {keys.length}</span>
 						</div>
 					)}
 					<Pagination
-						current={keysPage}
+						current={effectiveKeysPage}
 						pageSize={PAGE_SIZE}
 						total={keys.length}
 						onPageChange={(page): void => {

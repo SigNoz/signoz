@@ -340,16 +340,18 @@ describe('ServiceAccountDrawer', () => {
 		await user.click(screen.getByRole('radio', { name: /Keys/i }));
 		await screen.findByText('Key 1');
 
-		// PAGE_SIZE=15, 3 keys on page 1 → "1 — 3 of 3"
+		// PAGE_SIZE=15, 3 keys on page 1 → range "1 — 3", total "of 3"
 		const countEl = document.querySelector('.sa-drawer__pagination-count');
 		expect(countEl).toBeInTheDocument();
-		expect(countEl?.textContent).toMatch(/of 3/);
 		expect(
-			countEl?.querySelector('.sa-drawer__pagination-range')?.textContent,
-		).toMatch(/1/);
+			countEl?.querySelector('.sa-drawer__pagination-total')?.textContent,
+		).toBe('of 3');
 		expect(
-			countEl?.querySelector('.sa-drawer__pagination-range')?.textContent,
-		).toMatch(/3/);
+			countEl
+				?.querySelector('.sa-drawer__pagination-range')
+				?.textContent?.replace(/\s+/g, ' ')
+				.trim(),
+		).toBe('1 — 3');
 	});
 
 	it('shows error state when account fetch fails', async () => {

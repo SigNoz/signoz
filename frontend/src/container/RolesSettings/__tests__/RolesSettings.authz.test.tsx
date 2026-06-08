@@ -231,12 +231,13 @@ describe('RolesSettings', () => {
 
 		await expect(screen.findByText('signoz-admin')).resolves.toBeInTheDocument();
 
-		// 5 roles total: numbers shows "1 — 5", total shows "of 5"
+		// 5 roles total: range shows "1 — 5", total shows "of 5"
 		const countEl = document.querySelector('.roles-table-count');
 		expect(countEl).toBeInTheDocument();
 		expect(countEl?.querySelector('.total')?.textContent).toBe('of 5');
-		expect(countEl?.querySelector('.numbers')?.textContent).toMatch(/1/);
-		expect(countEl?.querySelector('.numbers')?.textContent).toMatch(/5/);
+		expect(
+			countEl?.querySelector('.numbers')?.textContent?.replace(/\s+/g, ' ').trim(),
+		).toBe('1 — 5');
 	});
 
 	it('handles invalid dates gracefully by showing fallback', async () => {

@@ -117,20 +117,22 @@ function RolesListingTable({
 
 	const totalRoleCount = managedRoles.length + customRoles.length;
 
-	// Ensure current page is valid; if out of bounds, redirect to last available page
+	const maxPage = totalRoleCount > 0 ? Math.ceil(totalRoleCount / PAGE_SIZE) : 1;
+	const effectivePage = Math.min(currentPage, maxPage);
+
+	// Sync URL when currentPage is out of bounds after data changes
 	useEffect(() => {
 		if (isLoading || totalRoleCount === 0) {
 			return;
 		}
-		const maxPage = Math.ceil(totalRoleCount / PAGE_SIZE);
 		if (currentPage > maxPage) {
 			setCurrentPage(maxPage);
 		}
-	}, [isLoading, totalRoleCount, currentPage, setCurrentPage]);
+	}, [isLoading, totalRoleCount, currentPage, maxPage, setCurrentPage]);
 
 	// Paginate: count only role items, but include section headers contextually
 	const paginatedItems = useMemo((): DisplayItem[] => {
-		const startRole = (currentPage - 1) * PAGE_SIZE;
+		const startRole = (effectivePage - 1) * PAGE_SIZE;
 		const endRole = startRole + PAGE_SIZE;
 		let roleIndex = 0;
 		let lastSection: DisplayItem | null = null;
@@ -152,7 +154,7 @@ function RolesListingTable({
 			}
 		}
 		return result;
-	}, [displayList, currentPage]);
+	}, [displayList, effectivePage]);
 
 	if (!hasListPermission && listPerms !== null) {
 		return <PermissionDeniedFullPage permissionName="role:list" />;
@@ -276,14 +278,14 @@ function RolesListingTable({
 				{totalRoleCount > 0 && (
 					<div className="roles-table-count">
 						<span className="numbers">
-							{(currentPage - 1) * PAGE_SIZE + 1} &#8212;{' '}
-							{Math.min(currentPage * PAGE_SIZE, totalRoleCount)}
+							{(effectivePage - 1) * PAGE_SIZE + 1} &#8212;{' '}
+							{Math.min(effectivePage * PAGE_SIZE, totalRoleCount)}
 						</span>
 						<span className="total">of {totalRoleCount}</span>
 					</div>
 				)}
 				<Pagination
-					current={currentPage}
+					current={effectivePage}
 					pageSize={PAGE_SIZE}
 					total={totalRoleCount}
 					onPageChange={(page): void => setCurrentPage(page)}
