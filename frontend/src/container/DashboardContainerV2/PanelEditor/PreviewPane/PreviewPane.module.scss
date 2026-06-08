@@ -11,6 +11,7 @@
 
 .header {
 	width: 100%;
+	box-sizing: border-box;
 	padding: 16px;
 	display: flex;
 	align-items: center;
@@ -32,11 +33,13 @@
 	display: flex;
 	flex: 1;
 	padding: 2% 5% 5% 5%;
+	min-width: 0;
 	min-height: 0;
 }
 
 .surface {
 	flex: 1;
+	min-width: 0;
 	min-height: 0;
 	border: 1px solid var(--l2-border);
 	border-radius: 4px;

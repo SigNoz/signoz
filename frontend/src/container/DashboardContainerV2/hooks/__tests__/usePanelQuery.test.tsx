@@ -270,12 +270,27 @@ describe('usePanelQuery', () => {
 		expect(opts.queryKey).toStrictEqual(
 			expect.arrayContaining([
 				'p1',
-				DEFAULT_GLOBAL_TIME.minTime,
-				DEFAULT_GLOBAL_TIME.maxTime,
-				DEFAULT_GLOBAL_TIME.selectedTime,
+				// Redux time collapses to a single composite key segment.
+				`${DEFAULT_GLOBAL_TIME.minTime}-${DEFAULT_GLOBAL_TIME.maxTime}-${DEFAULT_GLOBAL_TIME.selectedTime}`,
 				'signoz/TimeSeriesPanel',
 				panel.spec?.queries,
 			]),
+		);
+	});
+
+	it('uses the time override (not Redux) for the request and cache key', () => {
+		const panel = builderPanel();
+		renderHook(() =>
+			usePanelQuery({
+				panel,
+				panelId: 'p1',
+				time: { selectedTime: 'GLOBAL_TIME', interval: '30m' },
+			}),
+		);
+		const [requestArg, , opts] = mockUseGetQueryRange.mock.calls[0];
+		expect(requestArg.globalSelectedInterval).toBe('30m');
+		expect(opts.queryKey).toStrictEqual(
+			expect.arrayContaining(['GLOBAL_TIME-30m-undefined-undefined']),
 		);
 	});
 

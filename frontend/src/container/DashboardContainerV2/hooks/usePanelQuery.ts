@@ -7,12 +7,26 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { fromPerses } from 'container/DashboardContainerV2/queryAdapter/fromPerses';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
+import type { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { AppState } from 'store/reducers';
 import type { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { getGraphType } from 'utils/getGraphType';
 
 import { PANEL_KIND_TO_PANEL_TYPE, type PanelKind } from '../Panels/types';
+
+/**
+ * Editor-local time window. When passed, the fetch ignores the global Redux
+ * time (so changing time in the panel editor doesn't touch the dashboard behind
+ * it). `interval` is the relative shorthand (e.g. `30m`); for a custom range
+ * pass `startTime`/`endTime` in seconds with `selectedTime: 'CUSTOM'`.
+ */
+export interface PanelQueryTimeOverride {
+	selectedTime: GetQueryResultsProps['selectedTime'];
+	interval: GetQueryResultsProps['globalSelectedInterval'];
+	startTime?: number;
+	endTime?: number;
+}
 
 export interface UsePanelQueryArgs {
 	panel: DashboardtypesPanelDTO | undefined;
@@ -26,6 +40,11 @@ export interface UsePanelQueryArgs {
 	 * callers don't need to compute that themselves.
 	 */
 	enabled?: boolean;
+	/**
+	 * Override the time window instead of reading global Redux time. Used by the
+	 * panel editor preview to stay isolated from the dashboard.
+	 */
+	time?: PanelQueryTimeOverride;
 }
 
 export interface UsePanelQueryResult {
@@ -61,6 +80,7 @@ export function usePanelQuery({
 	panel,
 	panelId,
 	enabled = true,
+	time,
 }: UsePanelQueryArgs): UsePanelQueryResult {
 	const fullKind = panel?.spec?.plugin?.kind;
 	// HISTOGRAM and BAR panels both bin/derive from raw time-series data
@@ -95,17 +115,22 @@ export function usePanelQuery({
 		{
 			query,
 			graphType,
-			selectedTime: 'GLOBAL_TIME',
-			globalSelectedInterval,
+			selectedTime: time?.selectedTime ?? 'GLOBAL_TIME',
+			globalSelectedInterval: time?.interval ?? globalSelectedInterval,
+			...(time?.startTime != null && time?.endTime != null
+				? { start: time.startTime, end: time.endTime }
+				: {}),
 		},
 		ENTITY_VERSION_V5,
 		{
 			queryKey: [
 				REACT_QUERY_KEY.DASHBOARD_GRID_CARD_QUERY_RANGE,
 				panelId,
-				minTime,
-				maxTime,
-				globalSelectedInterval,
+				// Editor passes an explicit window; the dashboard keys off Redux
+				// min/max. Keep both in the key so each refetches on its own time.
+				time
+					? `${time.selectedTime}-${time.interval}-${time.startTime}-${time.endTime}`
+					: `${minTime}-${maxTime}-${globalSelectedInterval}`,
 				fullKind,
 				panel?.spec?.queries,
 			],
