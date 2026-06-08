@@ -43,13 +43,12 @@ func NewModule(traceStore spantypes.TraceStore, providerSettings factory.Provide
 // For large traces (NumSpans > effectiveLimit) it uses a two-step fetch:
 // minimal fields for all spans to build the tree, then full fields for the
 // visible window only. Aggregations are not returned.
-func (m *module) GetWaterfallV4(ctx context.Context, traceID string, selectedSpanID string, uncollapsedSpans []string, selectAllLimit uint) (*spantypes.GettableWaterfallTrace, error) {
+func (m *module) GetWaterfallV4(ctx context.Context, traceID string, selectedSpanID string, uncollapsedSpans []string) (*spantypes.GettableWaterfallTrace, error) {
 	summary, err := m.store.GetTraceSummary(ctx, traceID)
 	if err != nil {
 		return nil, err
 	}
-	effectiveLimit := min(selectAllLimit, m.config.Waterfall.MaxLimitToSelectAllSpans)
-	if summary.NumSpans > uint64(effectiveLimit) {
+	if summary.NumSpans > uint64(m.config.Waterfall.MaxLimitToSelectAllSpans) {
 		attrs := metric.WithAttributes(attrResponseType.String(attrResponseTypeWindowed))
 		m.metrics.waterfallRequestCount.Add(ctx, 1, attrs)
 		m.metrics.waterfallSpanCount.Add(ctx, int64(summary.NumSpans), attrs)

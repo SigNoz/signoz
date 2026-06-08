@@ -25,7 +25,6 @@ var ErrTraceNotFound = errors.NewNotFoundf(errors.CodeNotFound, "trace not found
 type PostableWaterfall struct {
 	SelectedSpanID   string   `json:"selectedSpanId"`
 	UncollapsedSpans []string `json:"uncollapsedSpans"`
-	Limit            uint     `json:"limit"`
 }
 
 func (p *PostableWaterfall) Validate() error {
