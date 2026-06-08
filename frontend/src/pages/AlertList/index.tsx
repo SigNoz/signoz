@@ -15,7 +15,7 @@ import AlertDetails from 'pages/AlertDetails';
 
 import { AlertListSubTabs, AlertListTabs } from './types';
 
-import './AlertList.styles.scss';
+import styles from './AlertList.module.scss';
 
 function AllAlertList(): JSX.Element {
 	const urlQuery = useUrlQuery();
@@ -81,7 +81,7 @@ function AllAlertList(): JSX.Element {
 			),
 			key: AlertListTabs.ALERT_RULES,
 			children: (
-				<div className="alert-rules-container">
+				<div className={styles.alertRulesContainer}>
 					{isAlertHistory || isAlertOverview ? <AlertDetails /> : <AllAlertRules />}
 				</div>
 			),
@@ -119,9 +119,7 @@ function AllAlertList(): JSX.Element {
 
 				safeNavigate(`/alerts?${queryParams.toString()}`);
 			}}
-			className={`alerts-container ${
-				isAlertHistory || isAlertOverview ? 'alert-details-tabs' : ''
-			}`}
+			className={styles.alertsContainer}
 			tabBarExtraContent={
 				<HeaderRightSection
 					enableAnnouncements={false}

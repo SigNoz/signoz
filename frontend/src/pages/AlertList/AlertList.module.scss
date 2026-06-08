@@ -1,0 +1,36 @@
+.alertsContainer {
+	:global(.top-level-tab.periscope-tab) {
+		padding: var(--spacing-1) 0;
+	}
+
+	:global(.ant-tabs-nav) {
+		padding: 0 var(--spacing-4);
+		margin-bottom: 0 !important;
+
+		&::before {
+			border-bottom: 1px solid var(--l1-border) !important;
+		}
+	}
+
+	:global(.ant-tabs-tab) {
+		&[data-node-key='TriggeredAlerts'] {
+			margin-left: var(--spacing-8);
+		}
+
+		&:not(:first-of-type) {
+			margin-left: var(--spacing-10) !important;
+		}
+	}
+
+	:global(.ant-tabs-tab) [aria-selected='false'] :global(.periscope-tab) {
+		color: var(--l2-foreground);
+	}
+
+	:global(.configuration-tabs .ant-tabs-nav .ant-tabs-nav-wrap) {
+		padding: 0 var(--spacing-4);
+	}
+}
+
+.alertRulesContainer {
+	margin-top: var(--spacing-5);
+}
