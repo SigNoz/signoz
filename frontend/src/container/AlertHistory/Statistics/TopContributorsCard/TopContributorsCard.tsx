@@ -10,7 +10,7 @@ import TopContributorsContent from './TopContributorsContent';
 import { TopContributorsCardProps } from './types';
 import ViewAllDrawer from './ViewAllDrawer';
 
-import './TopContributorsCard.styles.scss';
+import styles from './TopContributorsCard.module.scss';
 
 function TopContributorsCard({
 	topContributorsData,
@@ -48,13 +48,17 @@ function TopContributorsCard({
 
 	return (
 		<>
-			<div className="top-contributors-card">
-				<div className="top-contributors-card__header">
-					<div className="title">top contributors</div>
+			<div className={styles.topContributorsCard}>
+				<div className={styles.topContributorsCardHeader}>
+					<div className={styles.title}>top contributors</div>
 					{topContributorsData.length > 3 && (
-						<Button type="text" className="view-all" onClick={toggleViewAllDrawer}>
-							<div className="label">View all</div>
-							<div className="icon">
+						<Button
+							type="text"
+							className={styles.viewAll}
+							onClick={toggleViewAllDrawer}
+						>
+							<div className={styles.label}>View all</div>
+							<div className={styles.icon}>
 								<ArrowRight
 									size={14}
 									color={isDarkMode ? Color.BG_VANILLA_400 : Color.BG_INK_400}

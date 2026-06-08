@@ -1,0 +1,27 @@
+.emptyContent {
+	margin: var(--spacing-8) var(--spacing-6);
+	padding: var(--spacing-20) 45px;
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-6);
+	border: 1px dashed var(--l1-border);
+	border-radius: 6px;
+}
+
+.emptyContentIcon {
+	font-family: var(--font-family-inter);
+	font-size: var(--font-size-xl);
+	line-height: 26px;
+	letter-spacing: -0.103px;
+}
+
+.emptyContentText {
+	color: var(--l2-foreground);
+	line-height: var(--line-height-18);
+}
+
+.topContributorsCardContent {
+	:global(.ant-table-cell) {
+		padding: var(--spacing-6) !important;
+	}
+}

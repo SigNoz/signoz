@@ -1,3 +1,4 @@
+import styles from './TopContributorsContent.module.scss';
 import TopContributorsRows from './TopContributorsRows';
 import { TopContributorsCardProps } from './types';
 
@@ -9,9 +10,9 @@ function TopContributorsContent({
 
 	if (isEmpty) {
 		return (
-			<div className="empty-content">
-				<div className="empty-content__icon">ℹ️</div>
-				<div className="empty-content__text">
+			<div className={styles.emptyContent}>
+				<div className={styles.emptyContentIcon}>ℹ️</div>
+				<div className={styles.emptyContentText}>
 					Top contributors highlight the most frequently triggering group-by
 					attributes in multi-dimensional alerts
 				</div>
@@ -20,7 +21,7 @@ function TopContributorsContent({
 	}
 
 	return (
-		<div className="top-contributors-card__content">
+		<div className={styles.topContributorsCardContent}>
 			<TopContributorsRows
 				topContributors={topContributorsData.slice(0, 3)}
 				totalCurrentTriggers={totalCurrentTriggers}

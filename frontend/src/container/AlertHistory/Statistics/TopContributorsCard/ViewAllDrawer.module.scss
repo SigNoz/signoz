@@ -1,0 +1,13 @@
+.topContributorsCardViewAll {
+	width: auto;
+}
+
+.topContributorsCardContent {
+	:global(.ant-table-cell) {
+		padding: var(--spacing-6) !important;
+	}
+}
+
+.viewAllDrawer {
+	border-radius: 4px;
+}

@@ -1,0 +1,45 @@
+.topContributorsCard {
+	width: 56.6%;
+	overflow: hidden;
+}
+
+.topContributorsCardHeader {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: var(--spacing-4) var(--spacing-6);
+	border-bottom: 1px solid var(--l1-border);
+}
+
+.title {
+	color: var(--l2-foreground);
+	font-size: var(--periscope-font-size-base);
+	font-weight: var(--font-weight-medium);
+	line-height: 22px;
+	letter-spacing: 0.52px;
+	text-transform: uppercase;
+}
+
+.viewAll {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-2);
+	cursor: pointer;
+	padding: 0;
+	height: var(--line-height-20);
+
+	&:hover {
+		background-color: transparent !important;
+	}
+}
+
+.label {
+	color: var(--l2-foreground);
+	font-size: var(--periscope-font-size-base);
+	line-height: var(--line-height-20);
+	letter-spacing: -0.07px;
+}
+
+.icon {
+	display: flex;
+}
