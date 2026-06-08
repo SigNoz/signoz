@@ -1,0 +1,19 @@
+.footer {
+	position: fixed;
+	bottom: 0;
+	left: 63px;
+	right: 0;
+	background-color: var(--l1-background);
+	border-top: 1px solid var(--l1-border);
+	padding: var(--spacing-6);
+	z-index: 1000;
+	box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.buttonGroup {
+	display: flex;
+	gap: var(--spacing-6);
+}
