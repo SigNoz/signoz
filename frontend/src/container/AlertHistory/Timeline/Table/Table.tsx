@@ -13,7 +13,7 @@ import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
 import { timelineTableColumns } from './useTimelineTable';
 
-import './Table.styles.scss';
+import styles from './Table.module.scss';
 
 function TimelineTable(): JSX.Element {
 	const [filters, setFilters] = useState<TagFilter>(initialFilters);
@@ -54,7 +54,7 @@ function TimelineTable(): JSX.Element {
 	});
 
 	return (
-		<div className="timeline-table">
+		<div className={styles.timelineTable}>
 			<Table
 				rowKey={(row): string => `${row.fingerprint}-${row.value}-${row.unixMilli}`}
 				columns={timelineTableColumns({
