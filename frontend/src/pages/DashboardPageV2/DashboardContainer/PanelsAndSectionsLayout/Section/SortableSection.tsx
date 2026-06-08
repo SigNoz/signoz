@@ -7,7 +7,7 @@ import type { DeletePanelArgs } from '../Panel/hooks/useDeletePanel';
 import type { MovePanelArgs } from '../Panel/hooks/useMovePanelToSection';
 import Section from './Section/Section';
 
-interface Props {
+interface SortableSectionProps {
 	section: DashboardSection;
 	sections: DashboardSection[];
 	onAddPanel: (args: AddPanelArgs) => void;
@@ -21,7 +21,7 @@ function SortableSection({
 	onAddPanel,
 	onMovePanel,
 	onDeletePanel,
-}: Props): JSX.Element {
+}: SortableSectionProps): JSX.Element {
 	const {
 		attributes,
 		listeners,
