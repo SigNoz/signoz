@@ -7,6 +7,8 @@ import { Info } from '@signozhq/icons';
 import { ALL_SELECTED_VALUE } from '../constants';
 import { useCreateAlertState } from '../context';
 
+import styles from './NotificationSettings.module.scss';
+
 function MultipleNotifications(): JSX.Element {
 	const { notificationSettings, setNotificationSettings } =
 		useCreateAlertState();
@@ -99,7 +101,7 @@ function MultipleNotifications(): JSX.Element {
 					data-testid="multiple-notifications-select"
 				/>
 				{isMultipleNotificationsEnabled && (
-					<Typography.Text className="multiple-notifications-select-description">
+					<Typography.Text className={styles.multipleNotificationsSelectDescription}>
 						{groupByDescription}
 					</Typography.Text>
 				)}
@@ -122,15 +124,15 @@ function MultipleNotifications(): JSX.Element {
 	]);
 
 	return (
-		<div className="multiple-notifications-container">
-			<div className="multiple-notifications-header">
-				<Typography.Text className="multiple-notifications-header-title">
+		<div className={styles.multipleNotificationsContainer}>
+			<div className={styles.multipleNotificationsHeader}>
+				<Typography.Text className={styles.multipleNotificationsHeaderTitle}>
 					Group alerts by{' '}
 					<Tooltip title="Group similar alerts together to reduce notification volume. Leave empty to combine all matching alerts into one notification without grouping.">
 						<Info size={16} />
 					</Tooltip>
 				</Typography.Text>
-				<Typography.Text className="multiple-notifications-header-description">
+				<Typography.Text className={styles.multipleNotificationsHeaderDescription}>
 					Combine alerts with the same field values into a single notification.
 				</Typography.Text>
 			</div>
