@@ -6,6 +6,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/audittypes"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/serviceaccounttypes"
@@ -60,6 +61,7 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 			Resource: coretypes.ResourceServiceAccount,
 			Verb:     coretypes.VerbList,
 			Selector: handler.WildcardSelector,
+			Category: audittypes.ActionCategoryAccessControl,
 		}),
 	)).Methods(http.MethodGet).GetError(); err != nil {
 		return err

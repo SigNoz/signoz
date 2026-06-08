@@ -119,22 +119,26 @@ func (middleware *Audit) emitAuditEvent(req *http.Request, writer responseCaptur
 		return
 	}
 
-	handler.FinalizeResponseIDs(*resolved, handler.ExtractorContext{Request: req, ResponseBody: writer.BodyBytes()})
+	extractorCtx := handler.ExtractorContext{
+		Request:      req,
+		ResponseBody: writer.BodyBytes(),
+	}
+	handler.FinalizeResponseIDs(*resolved, extractorCtx)
 
 	for _, entry := range *resolved {
 		resourceAttributes := audittypes.NewResourceAttributes(entry.Resource, entry.ID)
 		if entry.Related != nil {
-			resourceAttributes = audittypes.NewAttachResourceAttributes(entry.Resource, entry.ID, entry.Related.Resource, entry.Related.ID)
+			resourceAttributes = audittypes.NewRelatedResourceAttributes(entry.Resource, entry.ID, entry.Related.Resource, entry.Related.ID)
 		}
 
-		event := audittypes.NewAuditEvent(
+		event := audittypes.NewAuditEventFromHTTPRequest(
 			req,
 			routeTemplate,
 			statusCode,
 			span.SpanContext().TraceID(),
 			span.SpanContext().SpanID(),
 			entry.Verb,
-			audittypes.CategoryFor(entry.Resource),
+			entry.Category,
 			claims,
 			resourceAttributes,
 			errorType,

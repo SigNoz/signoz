@@ -89,7 +89,7 @@ func NewResourceAttributes(resource coretypes.Resource, resourceID string) Resou
 
 // NewAttachResourceAttributes builds resource attributes that additionally name
 // the target counterpart (used for attach/detach audit events).
-func NewAttachResourceAttributes(resource coretypes.Resource, resourceID string, targetResource coretypes.Resource, targetResourceID string) ResourceAttributes {
+func NewRelatedResourceAttributes(resource coretypes.Resource, resourceID string, targetResource coretypes.Resource, targetResourceID string) ResourceAttributes {
 	return ResourceAttributes{
 		Resource:         resource,
 		ResourceID:       resourceID,
@@ -98,29 +98,14 @@ func NewAttachResourceAttributes(resource coretypes.Resource, resourceID string,
 	}
 }
 
-// CategoryFor derives the audit ActionCategory from a resource's kind. Audit owns
-// this mapping so ResourceDef stays consumer-agnostic.
-func CategoryFor(resource coretypes.Resource) ActionCategory {
-	switch resource.Kind().String() {
-	case "role", "serviceaccount", "user", "auth-domain", "session", "factor-password", "factor-api-key":
-		return ActionCategoryAccessControl
-	default:
-		return ActionCategoryConfigurationChange
-	}
-}
-
 // PutResource writes the resource attributes to an OTel Resource's attribute map.
 // These are resource-level attributes (stored in the resource JSON column),
 // not event-level attributes (stored in attributes_string).
 func (attributes ResourceAttributes) PutResource(orgID valuer.UUID, dest pcommon.Map) {
-	if attributes.Resource != nil {
-		putStrIfNotEmpty(dest, "signoz.audit.resource.kind", attributes.Resource.Kind().String())
-		putStrIfNotEmpty(dest, "signoz.audit.resource.id", attributes.ResourceID)
-		if attributes.ResourceID != "" {
-			// The FGA object string — correlates with the authz Check() object on
-			// the same resource (id-keyed resources match exactly).
-			putStrIfNotEmpty(dest, "signoz.audit.resource.object", attributes.Resource.Object(orgID, attributes.ResourceID))
-		}
+	putStrIfNotEmpty(dest, "signoz.audit.resource.kind", attributes.Resource.Kind().String())
+	putStrIfNotEmpty(dest, "signoz.audit.resource.id", attributes.ResourceID)
+	if attributes.ResourceID != "" {
+		putStrIfNotEmpty(dest, "signoz.audit.resource.object", attributes.Resource.Object(orgID, attributes.ResourceID))
 	}
 
 	if attributes.TargetResource != nil {
@@ -234,19 +219,17 @@ func newBody(auditAttributes AuditAttributes, principalAttributes PrincipalAttri
 	}
 
 	// Resource: " kind (id)" or " kind".
-	if resourceAttributes.Resource != nil {
-		b.WriteString(" ")
-		b.WriteString(resourceAttributes.Resource.Kind().String())
-		if resourceAttributes.ResourceID != "" {
-			b.WriteString(" (")
-			b.WriteString(resourceAttributes.ResourceID)
-			b.WriteString(")")
-		}
+	b.WriteString(" ")
+	b.WriteString(resourceAttributes.Resource.Kind().String())
+	if resourceAttributes.ResourceID != "" {
+		b.WriteString(" (")
+		b.WriteString(resourceAttributes.ResourceID)
+		b.WriteString(")")
 	}
 
 	// Target (attach/detach context): " · target kind (id)" or " · target kind".
 	if resourceAttributes.TargetResource != nil {
-		b.WriteString(" · target ")
+		b.WriteString(" to ")
 		b.WriteString(resourceAttributes.TargetResource.Kind().String())
 		if resourceAttributes.TargetResourceID != "" {
 			b.WriteString(" (")

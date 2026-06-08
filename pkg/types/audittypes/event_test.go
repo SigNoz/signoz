@@ -71,7 +71,7 @@ func TestNewAuditEvent(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			req := httptest.NewRequest(testCase.method, testCase.path, nil)
 
-			event := NewAuditEvent(
+			event := NewAuditEventFromHTTPRequest(
 				req,
 				testCase.route,
 				testCase.statusCode,

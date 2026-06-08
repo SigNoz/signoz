@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types/audittypes"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/gorilla/mux"
@@ -134,6 +135,7 @@ type ResourceDef struct {
 	Verb     coretypes.Verb
 	ID       ResourceIDExtractor
 	Selector SelectorFunc
+	Category audittypes.ActionCategory
 	Related  *RelatedResource
 }
 
@@ -144,6 +146,7 @@ type ResourcesDef struct {
 	Verb     coretypes.Verb
 	IDs      ResourceIDsExtractor
 	Selector SelectorFunc
+	Category audittypes.ActionCategory
 	Related  *RelatedResource
 }
 
@@ -244,6 +247,7 @@ type ResolvedResource struct {
 	Verb       coretypes.Verb
 	ID         string
 	Selector   SelectorFunc
+	Category   audittypes.ActionCategory
 	Related    *ResolvedRelated
 	responseID ResourceIDExtractor
 }
