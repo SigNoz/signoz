@@ -45,6 +45,22 @@ type ResourceIDExtractor struct {
 	fn    func(ExtractorContext) (string, error)
 }
 
+// isPhase reports whether this extractor is runnable in the given phase.
+func (extractor ResourceIDExtractor) isPhase(phase extractPhase) bool {
+	return extractor.fn != nil && extractor.phase == phase
+}
+
+// runFor runs the extractor against ec when it belongs to phase, reporting
+// whether it ran.
+func (extractor ResourceIDExtractor) runFor(phase extractPhase, ec ExtractorContext) (string, bool) {
+	if !extractor.isPhase(phase) {
+		return "", false
+	}
+
+	id, _ := extractor.fn(ec)
+	return id, true
+}
+
 // ResourceIDsExtractor resolves multiple resource ids (fan-out). Always
 // request-phase — arrays come from the request body.
 type ResourceIDsExtractor struct {
@@ -163,9 +179,15 @@ func (ResourceDef) sealResourceSpec()  {}
 func (ResourcesDef) sealResourceSpec() {}
 
 func (d ResourceDef) resolveRequest(ec ExtractorContext) []*ResolvedResource {
-	resolved := &ResolvedResource{Resource: d.Resource, Verb: d.Verb, Selector: d.Selector, Category: d.Category}
-	resolved.ID, resolved.responseID = resolveID(d.ID, ec)
-	resolved.Related = resolveRelated(d.Related, ec)
+	resolved := &ResolvedResource{
+		Resource:    d.Resource,
+		Verb:        d.Verb,
+		Selector:    d.Selector,
+		Category:    d.Category,
+		idExtractor: d.ID,
+		Related:     newResolvedRelated(d.Related),
+	}
+	resolved.resolve(phaseRequest, ec)
 
 	return []*ResolvedResource{resolved}
 }
@@ -178,64 +200,65 @@ func (d ResourcesDef) resolveRequest(ec ExtractorContext) []*ResolvedResource {
 
 	resolved := make([]*ResolvedResource, 0, len(ids))
 	for _, id := range ids {
-		resolved = append(resolved, &ResolvedResource{
+		entry := &ResolvedResource{
 			Resource: d.Resource,
 			Verb:     d.Verb,
 			ID:       id,
 			Selector: d.Selector,
 			Category: d.Category,
-			Related:  resolveRelated(d.Related, ec),
-		})
+			Related:  newResolvedRelated(d.Related),
+		}
+		entry.resolve(phaseRequest, ec)
+		resolved = append(resolved, entry)
 	}
 
 	return resolved
 }
 
-// resolveID runs a request-phase extractor immediately and returns its value;
-// for a response-phase extractor it returns ("", extractor) so audit can run it
-// later.
-func resolveID(extractor ResourceIDExtractor, ec ExtractorContext) (string, ResourceIDExtractor) {
-	if extractor.fn == nil {
-		return "", ResourceIDExtractor{}
-	}
-
-	if extractor.phase == phaseResponse {
-		return "", extractor
-	}
-
-	id, _ := extractor.fn(ec)
-	return id, ResourceIDExtractor{}
-}
-
-func resolveRelated(related *RelatedResource, ec ExtractorContext) *ResolvedRelated {
+// newResolvedRelated wires a related counterpart's structure. Its id is resolved
+// later by ResolvedResource.resolve, in the extractor's declared phase.
+func newResolvedRelated(related *RelatedResource) *ResolvedRelated {
 	if related == nil {
 		return nil
 	}
 
-	resolved := &ResolvedRelated{Resource: related.Resource}
-	resolved.ID, resolved.responseID = resolveID(related.ID, ec)
-
-	return resolved
+	return &ResolvedRelated{Resource: related.Resource, idExtractor: related.ID}
 }
 
 // ResolvedResource is the uniform output of resolution (after fan-out). ID is a
 // resolved string: request-phase ids are filled by the resource middleware;
-// response-phase ids stay "" until FinalizeResponseIDs runs in the audit middleware.
+// response-phase ids stay "" until FinalizeResponseIDs runs in the audit
+// middleware. idExtractor is retained so resolve can run it in its phase.
 type ResolvedResource struct {
-	Resource   coretypes.Resource
-	Verb       coretypes.Verb
-	ID         string
-	Selector   SelectorFunc
-	Category   audittypes.ActionCategory
-	Related    *ResolvedRelated
-	responseID ResourceIDExtractor
+	Resource    coretypes.Resource
+	Verb        coretypes.Verb
+	ID          string
+	Selector    SelectorFunc
+	Category    audittypes.ActionCategory
+	Related     *ResolvedRelated
+	idExtractor ResourceIDExtractor
 }
 
 // ResolvedRelated is the resolved counterpart for audit context.
 type ResolvedRelated struct {
-	Resource   coretypes.Resource
-	ID         string
-	responseID ResourceIDExtractor
+	Resource    coretypes.Resource
+	ID          string
+	idExtractor ResourceIDExtractor
+}
+
+// resolve fills this entry's ids whose extractor belongs to phase. Called once
+// per phase: phaseRequest by the resource middleware, phaseResponse by the audit
+// middleware. An extractor from a different phase is left untouched.
+func (resolved *ResolvedResource) resolve(phase extractPhase, ec ExtractorContext) {
+	if id, ok := resolved.idExtractor.runFor(phase, ec); ok {
+		resolved.ID = id
+	}
+
+	if resolved.Related != nil {
+		if id, ok := resolved.Related.idExtractor.runFor(phase, ec); ok {
+			resolved.Related.ID = id
+		}
+	}
 }
 
 // resolvedKey is the context key under which the resolved resource list is stored.
@@ -277,13 +300,7 @@ func ResolveRequest(defs []ResourceSpec, ec ExtractorContext) []*ResolvedResourc
 // post-handler. Mutates the entries in place.
 func FinalizeResponseIDs(resolved []*ResolvedResource, ec ExtractorContext) {
 	for _, entry := range resolved {
-		if entry.responseID.fn != nil {
-			entry.ID, _ = entry.responseID.fn(ec)
-		}
-
-		if entry.Related != nil && entry.Related.responseID.fn != nil {
-			entry.Related.ID, _ = entry.Related.responseID.fn(ec)
-		}
+		entry.resolve(phaseResponse, ec)
 	}
 }
 
@@ -292,11 +309,11 @@ func FinalizeResponseIDs(resolved []*ResolvedResource, ec ExtractorContext) {
 // the success response body.
 func HasResponseIDs(resolved []*ResolvedResource) bool {
 	for _, entry := range resolved {
-		if entry.responseID.fn != nil {
+		if entry.idExtractor.isPhase(phaseResponse) {
 			return true
 		}
 
-		if entry.Related != nil && entry.Related.responseID.fn != nil {
+		if entry.Related != nil && entry.Related.idExtractor.isPhase(phaseResponse) {
 			return true
 		}
 	}
