@@ -1,0 +1,68 @@
+.routingPoliciesInfoBanner {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--spacing-4);
+	margin-top: var(--spacing-8);
+	background-color: color-mix(
+		in srgb,
+		var(--primary-background) 10%,
+		transparent
+	);
+	border: 1px solid var(--primary-background);
+	padding: var(--spacing-4) var(--spacing-8);
+
+	:global(.ant-typography) {
+		color: var(--accent-primary);
+	}
+}
+
+.routingPoliciesInfoBannerRight {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-4);
+}
+
+.viewRoutingPoliciesButton {
+	color: var(--accent-primary);
+	font-size: var(--periscope-font-size-small);
+	font-weight: 500;
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.tooltipContent {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: flex-start;
+}
+
+.tooltipExample {
+	margin-bottom: var(--spacing-4);
+	color: var(--l2-foreground);
+}
+
+.tooltipLink {
+	display: block;
+}
+
+.tooltipLinkText {
+	color: var(--accent-primary);
+	font-size: var(--periscope-font-size-small);
+	text-decoration: none;
+
+	&:hover {
+		text-decoration: underline;
+	}
+}
+
+.tooltipDescription {
+	margin-bottom: var(--spacing-4);
+
+	span {
+		font-weight: bold;
+		color: var(--bg-robin-400);
+	}
+}
