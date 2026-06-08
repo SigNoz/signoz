@@ -1,7 +1,7 @@
 import KeyValueLabel from 'periscope/components/KeyValueLabel';
 import SeeMore from 'periscope/components/SeeMore';
 
-import './AlertLabels.styles.scss';
+import styles from './AlertLabels.module.scss';
 
 export type AlertLabelsProps = {
 	labels: Record<string, any>;
@@ -13,7 +13,7 @@ function AlertLabels({
 	initialCount = 2,
 }: AlertLabelsProps): JSX.Element {
 	return (
-		<div className="alert-labels">
+		<div className={styles.alertLabels}>
 			<SeeMore initialCount={initialCount} moreLabel="More">
 				{Object.entries(labels).map(([key, value]) => (
 					<KeyValueLabel key={`label-${key}`} badgeKey={key} badgeValue={value} />
