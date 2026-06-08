@@ -10,14 +10,16 @@ import {
 } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
+import { useHistory } from 'react-router-dom';
+import { ArrowUp10, Minus } from '@signozhq/icons';
 import logEvent from 'api/common/logEvent';
 import DownloadOptionsMenu from 'components/DownloadOptionsMenu/DownloadOptionsMenu';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import ListViewOrderBy from 'components/OrderBy/ListViewOrderBy';
-import { ResizeTable } from 'components/ResizeTable';
+import TanStackTable from 'components/TanStackTableView';
+import { useTracesTableColumns } from 'components/Traces/TableView/useTracesTableColumns';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import EmptyLogsSearch from 'container/EmptyLogsSearch/EmptyLogsSearch';
@@ -28,23 +30,27 @@ import TraceExplorerControls from 'container/TracesExplorer/Controls';
 import { getListViewQuery } from 'container/TracesExplorer/explorerUtils';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { Pagination } from 'hooks/queryPagination';
-import { getDefaultPaginationConfig } from 'hooks/queryPagination/utils';
-import useUrlQueryData from 'hooks/useUrlQueryData';
-import { ArrowUp10, Minus } from '@signozhq/icons';
 import { useTimezone } from 'providers/Timezone';
 import { AppState } from 'store/reducers';
 import { Warning } from 'types/api';
 import APIError from 'types/api/error';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { getAbsoluteUrl } from 'utils/basePath';
 
 import { TracesLoading } from '../TraceLoading/TraceLoading';
-import { defaultSelectedColumns, PER_PAGE_OPTIONS } from './configs';
-import { Container, tableStyles } from './styles';
-import { getListColumns, transformDataWithDate } from './utils';
+import { Container } from './styles';
+import {
+	getTraceLink,
+	makeListFieldCol,
+	makeTimestampCol,
+	SpanRow,
+	transformSpanRows,
+} from './utils';
 
 import './ListView.styles.scss';
+
+const PAGE_SIZE = 50;
 
 interface ListViewProps {
 	isFilterApplied: boolean;
@@ -59,6 +65,7 @@ function ListView({
 	setIsLoadingQueries,
 	queryKeyRef,
 }: ListViewProps): JSX.Element {
+	const history = useHistory();
 	const { stagedQuery, panelType: panelTypeFromQueryBuilder } =
 		useQueryBuilder();
 
@@ -77,25 +84,22 @@ function ListView({
 		storageKey: LOCALSTORAGE.TRACES_LIST_OPTIONS,
 		dataSource: DataSource.TRACES,
 		aggregateOperator: 'count',
-		initialOptions: {
-			selectColumns: defaultSelectedColumns,
-		},
 	});
 
-	const { queryData: paginationQueryData } = useUrlQueryData<Pagination>(
-		QueryParams.pagination,
-	);
-	const paginationConfig =
-		paginationQueryData ?? getDefaultPaginationConfig(PER_PAGE_OPTIONS);
+	// Infinite-scroll state — owned by this view.
+	const [pagination, setPagination] = useState<{
+		offset: number;
+		limit: number;
+	}>({
+		offset: 0,
+		limit: PAGE_SIZE,
+	});
+	const [accumulatedRows, setAccumulatedRows] = useState<SpanRow[]>([]);
+	const [hasMore, setHasMore] = useState(true);
 
-	const requestQuery = useMemo(
-		() => getListViewQuery(stagedQuery || initialQueriesMap.traces, orderBy),
-		[stagedQuery, orderBy],
-	);
-
-	// TEMP — remove after traces moves to TanStack table.
+	// Stable sorted-name signature for the queryKey + reset trigger.
 	// - Drag updates selectColumns; raw queryKey would churn on reorder.
-	// - Trace API fetches only listed columns → add/remove must refetch.
+	// - Trace API fetches only listed columns → add/remove must refetch from scratch.
 	// - Sorted-name signature: stable on reorder, changes on add/remove.
 	const selectColumnsSignature = useMemo(
 		() =>
@@ -106,6 +110,25 @@ function ListView({
 		[options?.selectColumns],
 	);
 
+	// Reset accumulator + offset whenever the underlying query identity changes.
+	useEffect(() => {
+		setPagination({ offset: 0, limit: PAGE_SIZE });
+		setAccumulatedRows([]);
+		setHasMore(true);
+	}, [
+		stagedQuery?.id,
+		globalSelectedTime,
+		maxTime,
+		minTime,
+		orderBy,
+		selectColumnsSignature,
+	]);
+
+	const requestQuery = useMemo(
+		() => getListViewQuery(stagedQuery || initialQueriesMap.traces, orderBy),
+		[stagedQuery, orderBy],
+	);
+
 	const queryKey = useMemo(
 		() => [
 			REACT_QUERY_KEY.GET_QUERY_RANGE,
@@ -114,18 +137,18 @@ function ListView({
 			minTime,
 			stagedQuery,
 			panelType,
-			paginationConfig,
+			pagination,
 			selectColumnsSignature,
 			orderBy,
 		],
 		[
-			stagedQuery,
-			panelType,
 			globalSelectedTime,
-			paginationConfig,
-			selectColumnsSignature,
 			maxTime,
 			minTime,
+			stagedQuery,
+			panelType,
+			pagination,
+			selectColumnsSignature,
 			orderBy,
 		],
 	);
@@ -144,16 +167,14 @@ function ListView({
 				dataSource: 'traces',
 			},
 			tableParams: {
-				pagination: paginationConfig,
+				pagination,
 				selectColumns: options?.selectColumns,
 			},
 		},
-		// ENTITY_VERSION_V4,
 		ENTITY_VERSION_V5,
 		{
 			queryKey,
 			enabled:
-				// don't make api call while the time range state in redux is loading
 				!timeRangeUpdateLoading &&
 				!!stagedQuery &&
 				panelType === PANEL_TYPES.LIST &&
@@ -168,6 +189,19 @@ function ListView({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [data?.payload, data?.warning]);
 
+	// Append fetched page to accumulator (replace when offset === 0).
+	const responseResult = data?.payload?.data?.newResult?.data?.result;
+	useEffect(() => {
+		if (!responseResult) {
+			return;
+		}
+		const newRows = transformSpanRows(responseResult);
+		setAccumulatedRows((prev) =>
+			pagination.offset === 0 ? newRows : [...prev, ...newRows],
+		);
+		setHasMore(newRows.length >= pagination.limit);
+	}, [responseResult, pagination.offset, pagination.limit]);
+
 	useEffect(() => {
 		if (isLoading || isFetching) {
 			setIsLoadingQueries(true);
@@ -176,68 +210,50 @@ function ListView({
 		}
 	}, [isLoading, isFetching, setIsLoadingQueries]);
 
-	const dataLength =
-		data?.payload?.data?.newResult?.data?.result[0]?.list?.length;
-	const totalCount = useMemo(() => dataLength || 0, [dataLength]);
+	useEffect(() => {
+		if (!isLoading && !isFetching && !isError && accumulatedRows.length !== 0) {
+			void logEvent('Traces Explorer: Data present', { panelType });
+		}
+	}, [isLoading, isFetching, isError, accumulatedRows.length, panelType]);
 
-	const queryTableDataResult = data?.payload?.data?.newResult?.data?.result;
-	const queryTableData = useMemo(
-		() => queryTableDataResult || [],
-		[queryTableDataResult],
-	);
-
-	const { formatTimezoneAdjustedTimestamp } = useTimezone();
-
-	const columns = useMemo(
-		() =>
-			getListColumns(
-				options?.selectColumns || [],
-				formatTimezoneAdjustedTimestamp,
-			),
-		[options?.selectColumns, formatTimezoneAdjustedTimestamp],
-	);
-
-	const transformedQueryTableData = useMemo(
-		() => transformDataWithDate(queryTableData) || [],
-		[queryTableData],
-	);
-
-	const handleDragColumn = useCallback(
-		(fromIndex: number, toIndex: number): void => {
-			const reordered = [...columns];
-			const [moved] = reordered.splice(fromIndex, 1);
-			reordered.splice(toIndex, 0, moved);
-			// `key` is the composite (fieldContext.name) — disambiguates same-name fields.
-			const orderedIds = reordered
-				.map((c) => String(c.key || ('dataIndex' in c && c.dataIndex) || ''))
-				.filter(Boolean);
-			config?.addColumn?.onReorder(orderedIds);
-		},
-		[columns, config],
-	);
+	const handleEndReached = useCallback(() => {
+		if (!hasMore) {
+			return;
+		}
+		setPagination((p) => ({ ...p, offset: p.offset + p.limit }));
+	}, [hasMore]);
 
 	const handleOrderChange = useCallback((value: string) => {
 		setOrderBy(value);
 	}, []);
 
-	const isDataAbsent =
-		!isLoading &&
-		!isFetching &&
-		!isError &&
-		transformedQueryTableData.length === 0;
+	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
-	useEffect(() => {
-		if (
-			!isLoading &&
-			!isFetching &&
-			!isError &&
-			transformedQueryTableData.length !== 0
-		) {
-			logEvent('Traces Explorer: Data present', {
-				panelType,
-			});
-		}
-	}, [isLoading, isFetching, isError, transformedQueryTableData, panelType]);
+	const baseColumns = useMemo(
+		() => [
+			makeTimestampCol(formatTimezoneAdjustedTimestamp),
+			...(options?.selectColumns ?? []).map(makeListFieldCol),
+		],
+		[formatTimezoneAdjustedTimestamp, options?.selectColumns],
+	);
+
+	const tableColumns = useTracesTableColumns<SpanRow>({ baseColumns });
+
+	const handleRowClick = useCallback(
+		(row: SpanRow): void => {
+			history.push(getTraceLink(row));
+		},
+		[history],
+	);
+
+	const handleRowClickNewTab = useCallback((row: SpanRow): void => {
+		window.open(
+			getAbsoluteUrl(getTraceLink(row)),
+			'_blank',
+			'noopener,noreferrer',
+		);
+	}, []);
+
 	return (
 		<Container>
 			<div className="trace-explorer-controls">
@@ -258,39 +274,54 @@ function ListView({
 					selectedColumns={options?.selectColumns}
 				/>
 
-				<TraceExplorerControls
-					isLoading={isFetching}
-					totalCount={totalCount}
-					config={config}
-					perPageOptions={PER_PAGE_OPTIONS}
-				/>
+				<TraceExplorerControls config={config} />
 			</div>
 
 			{isError && error && <ErrorInPlace error={error as APIError} />}
 
-			{(isLoading || (isFetching && transformedQueryTableData.length === 0)) && (
+			{(isLoading || isFetching) && accumulatedRows.length === 0 && (
 				<TracesLoading />
 			)}
 
-			{isDataAbsent && !isFilterApplied && (
-				<NoLogs dataSource={DataSource.TRACES} />
-			)}
+			{!isLoading &&
+				!isFetching &&
+				!isError &&
+				!isFilterApplied &&
+				accumulatedRows.length === 0 && <NoLogs dataSource={DataSource.TRACES} />}
 
-			{isDataAbsent && isFilterApplied && (
-				<EmptyLogsSearch dataSource={DataSource.TRACES} panelType="LIST" />
-			)}
+			{!isLoading &&
+				!isFetching &&
+				accumulatedRows.length === 0 &&
+				!isError &&
+				isFilterApplied && (
+					<EmptyLogsSearch dataSource={DataSource.TRACES} panelType="LIST" />
+				)}
 
-			{!isError && transformedQueryTableData.length !== 0 && (
-				<ResizeTable
-					tableLayout="fixed"
-					pagination={false}
-					scroll={{ x: 'max-content' }}
-					loading={isFetching}
-					style={tableStyles}
-					dataSource={transformedQueryTableData}
-					columns={columns}
-					onDragColumn={handleDragColumn}
-				/>
+			{accumulatedRows.length !== 0 && (
+				<div
+					style={{
+						flex: 1,
+						minHeight: 0,
+						display: 'flex',
+						flexDirection: 'column',
+					}}
+				>
+					<TanStackTable<SpanRow>
+						data={accumulatedRows}
+						columns={tableColumns}
+						columnStorageKey={LOCALSTORAGE.TRACES_LIST_COLUMNS}
+						respectColumnOrder={false}
+						cellTypographySize="medium"
+						isLoading={isLoading || isFetching}
+						onEndReached={handleEndReached}
+						onColumnOrderChange={(cols): void =>
+							config?.addColumn?.onReorder(cols.map((c) => c.id))
+						}
+						onColumnRemove={config?.addColumn?.onRemove}
+						onRowClick={handleRowClick}
+						onRowClickNewTab={handleRowClickNewTab}
+					/>
+				</div>
 			)}
 		</Container>
 	);

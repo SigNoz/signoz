@@ -52,14 +52,20 @@ function OtherFields({
 		const normalizedSuggestions: TelemetryFieldKey[] = suggestions.map(
 			(attr) => ({
 				...attr,
-				key: buildCompositeKey(attr.name, attr.fieldContext as string),
+				key: buildCompositeKey(
+					attr.name,
+					attr.fieldContext as string,
+					attr.fieldDataType as string | undefined,
+				),
 				signal: attr.signal as SignalType,
 				fieldContext: attr.fieldContext as FieldContext,
 				fieldDataType: attr.fieldDataType as FieldDataType,
 			}),
 		);
 		const addedIds = new Set(
-			addedFields.map((f) => f.key ?? buildCompositeKey(f.name, f.fieldContext)),
+			addedFields.map(
+				(f) => f.key ?? buildCompositeKey(f.name, f.fieldContext, f.fieldDataType),
+			),
 		);
 		return normalizedSuggestions.filter(
 			(attr) => !addedIds.has(attr.key as string),

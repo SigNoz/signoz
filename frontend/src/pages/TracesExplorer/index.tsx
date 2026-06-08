@@ -24,7 +24,6 @@ import {
 	getQueryByPanelType,
 } from 'container/TracesExplorer/explorerUtils';
 import ListView from 'container/TracesExplorer/ListView';
-import { defaultSelectedColumns } from 'container/TracesExplorer/ListView/configs';
 import QuerySection from 'container/TracesExplorer/QuerySection';
 import TableView from 'container/TracesExplorer/TableView';
 import TracesView from 'container/TracesExplorer/TracesView';
@@ -80,9 +79,6 @@ function TracesExplorer(): JSX.Element {
 		storageKey: LOCALSTORAGE.TRACES_LIST_OPTIONS,
 		dataSource: DataSource.TRACES,
 		aggregateOperator: 'noop',
-		initialOptions: {
-			selectColumns: defaultSelectedColumns,
-		},
 	});
 
 	const [searchParams] = useSearchParams();

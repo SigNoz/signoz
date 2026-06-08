@@ -54,18 +54,17 @@ const renderListView = (
 	);
 };
 
-// Helper to verify all controls are visible
+// Helper to verify all controls are visible.
+// Pagination controls were removed in the TanStack-table migration (infinite
+// scroll replaces page-by-page navigation), so only the order-by combobox +
+// options trigger remain in the top toolbar.
 const verifyControlsVisibility = (): void => {
 	// Order by controls
 	expect(screen.getByText(/Order by/i)).toBeInTheDocument();
 
-	// Pagination controls
-	expect(screen.getByRole('button', { name: /previous/i })).toBeInTheDocument();
-	expect(screen.getByRole('button', { name: /next/i })).toBeInTheDocument();
-
-	// Items per page selector (there are multiple comboboxes, so we check for at least 2)
+	// At least one combobox (order-by); page-size selector is gone post-migration.
 	const comboboxes = screen.getAllByRole('combobox');
-	expect(comboboxes.length).toBeGreaterThanOrEqual(2);
+	expect(comboboxes.length).toBeGreaterThanOrEqual(1);
 
 	// Options menu (settings button) - check for translation key or actual text
 	expect(screen.getByText(/options_menu.options|options/i)).toBeInTheDocument();
@@ -152,15 +151,10 @@ describe('Traces ListView - Error and Empty States', () => {
 				expect(screen.getByText(/Order by/i)).toBeInTheDocument();
 			});
 
-			// Order by controls should be interactive
+			// Order-by combobox should be interactive (pagination buttons removed
+			// after the TanStack migration switched List view to infinite scroll).
 			const comboboxes = screen.getAllByRole('combobox');
-			expect(comboboxes.length).toBeGreaterThanOrEqual(2);
-
-			// Pagination controls should be present
-			const previousButton = screen.getByRole('button', { name: /previous/i });
-			const nextButton = screen.getByRole('button', { name: /next/i });
-			expect(previousButton).toBeInTheDocument();
-			expect(nextButton).toBeInTheDocument();
+			expect(comboboxes.length).toBeGreaterThanOrEqual(1);
 
 			// Options menu should be clickable
 			const optionsButton = screen.getByText(/options_menu.options|options/i);
@@ -175,9 +169,9 @@ describe('Traces ListView - Error and Empty States', () => {
 				expect(screen.getByText(/No traces yet/i)).toBeInTheDocument();
 			});
 
-			// All controls should be interactive
+			// At least the order-by combobox should be interactive.
 			const comboboxes = screen.getAllByRole('combobox');
-			expect(comboboxes.length).toBeGreaterThanOrEqual(2);
+			expect(comboboxes.length).toBeGreaterThanOrEqual(1);
 
 			// Options menu should be clickable
 			const optionsButton = screen.getByText(/options_menu.options|options/i);

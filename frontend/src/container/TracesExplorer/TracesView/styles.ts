@@ -9,7 +9,7 @@ export const Container = styled.div`
 	min-height: 400px;
 
 	// Row hover affordance
-	--row-hover-bg: var(--bg-ink-300);
+	--row-hover-bg: var(--l1-border);
 
 	// Breathing room before the first column so cell content doesn't hug the corner.
 	--tanstack-cell-padding-left-first-column: 12px;

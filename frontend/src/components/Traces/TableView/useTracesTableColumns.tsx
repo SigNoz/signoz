@@ -32,7 +32,7 @@ export function useTracesTableColumns<TRow>({
 
 function makeUserFieldCol<TRow>(f: TelemetryFieldKey): TableColumnDef<TRow> {
 	const col: TableColumnDef<Record<string, unknown>> = {
-		id: buildCompositeKey(f.name, f.fieldContext),
+		id: buildCompositeKey(f.name, f.fieldContext, f.fieldDataType),
 		header: f.name,
 		accessorFn: (row): unknown => row[f.name],
 		enableRemove: true,

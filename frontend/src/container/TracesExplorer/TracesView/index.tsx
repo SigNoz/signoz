@@ -70,11 +70,13 @@ function TracesView({
 		limit: PAGE_SIZE,
 	});
 	const [accumulatedRows, setAccumulatedRows] = useState<TraceRow[]>([]);
+	const [hasMore, setHasMore] = useState(true);
 
 	// Reset accumulator + offset whenever the underlying query identity changes.
 	useEffect(() => {
 		setPagination({ offset: 0, limit: PAGE_SIZE });
 		setAccumulatedRows([]);
+		setHasMore(true);
 	}, [stagedQuery?.id, globalSelectedTime, maxTime, minTime]);
 
 	const transformedQuery = useMemo(
@@ -138,7 +140,8 @@ function TracesView({
 		setAccumulatedRows((prev) =>
 			pagination.offset === 0 ? newRows : [...prev, ...newRows],
 		);
-	}, [responseList, pagination.offset]);
+		setHasMore(newRows.length >= pagination.limit);
+	}, [responseList, pagination.offset, pagination.limit]);
 
 	useEffect(() => {
 		if (isLoading || isFetching) {
@@ -157,8 +160,11 @@ function TracesView({
 	}, [isLoading, isFetching, isError, accumulatedRows.length]);
 
 	const handleEndReached = useCallback(() => {
+		if (!hasMore) {
+			return;
+		}
 		setPagination((p) => ({ ...p, offset: p.offset + p.limit }));
-	}, []);
+	}, [hasMore]);
 
 	const tableColumns = useTracesTableColumns<TraceRow>({ baseColumns });
 
