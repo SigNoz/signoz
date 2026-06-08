@@ -18,7 +18,7 @@ func Compile(query string, formatter sqlstore.SQLFormatter) (*Compiled, error) {
 	}
 
 	queryVisitor := newVisitor(formatter)
-	frag, syntaxErrs := queryVisitor.compile(query)
+	sql, args, syntaxErrs := queryVisitor.compile(query)
 
 	if len(syntaxErrs) > 0 {
 		return nil, errors.NewInvalidInputf(ErrCodeDashboardListFilterInvalid,
@@ -28,12 +28,12 @@ func Compile(query string, formatter sqlstore.SQLFormatter) (*Compiled, error) {
 		return nil, errors.NewInvalidInputf(ErrCodeDashboardListFilterInvalid,
 			"invalid filter query: %s", strings.Join(queryVisitor.errors, "; "))
 	}
-	if frag == nil || frag.sql == "" {
+	if sql == "" {
 		return nil, nil //nolint:nilnil
 	}
 
 	return &Compiled{
-		SQL:  frag.sql,
-		Args: frag.args,
+		SQL:  sql,
+		Args: args,
 	}, nil
 }

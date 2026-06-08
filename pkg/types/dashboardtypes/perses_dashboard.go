@@ -12,7 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/tagtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/perses/perses/pkg/model/api/v1/common"
+	"github.com/perses/spec/go/common"
 	"k8s.io/apimachinery/pkg/util/validation"
 )
 
@@ -31,7 +31,6 @@ const (
 	DSLKeyUpdatedAt   DSLKey = "updated_at"
 	DSLKeyCreatedBy   DSLKey = "created_by"
 	DSLKeyLocked      DSLKey = "locked"
-	DSLKeyPublic      DSLKey = "public"
 	DSLKeySource      DSLKey = "source"
 )
 
@@ -45,7 +44,6 @@ var reservedDSLKeys = map[DSLKey]struct{}{
 	DSLKeyUpdatedAt:   {},
 	DSLKeyCreatedBy:   {},
 	DSLKeyLocked:      {},
-	DSLKeyPublic:      {},
 	DSLKeySource:      {},
 }
 
@@ -109,6 +107,16 @@ func (d *DashboardV2) LockUnlock(lock bool, isAdmin bool, updatedBy string) erro
 	d.Locked = lock
 	d.UpdatedBy = updatedBy
 	d.UpdatedAt = time.Now()
+	return nil
+}
+
+func (d *DashboardV2) CanDelete() error {
+	if d.Locked {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot delete a locked dashboard, please unlock the dashboard to delete")
+	}
+	if d.Source == SourceSystem {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardImmutable, "system dashboards cannot be deleted")
+	}
 	return nil
 }
 

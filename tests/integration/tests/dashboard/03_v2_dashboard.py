@@ -28,15 +28,11 @@ def _url(signoz: SigNoz, path: str = "") -> str:
 
 
 def _create(signoz: SigNoz, token: str, body: dict) -> requests.Response:
-    return requests.post(
-        _url(signoz), json=body, headers=_headers(token), timeout=_TIMEOUT
-    )
+    return requests.post(_url(signoz), json=body, headers=_headers(token), timeout=_TIMEOUT)
 
 
 def _get(signoz: SigNoz, token: str, dashboard_id: str) -> requests.Response:
-    return requests.get(
-        _url(signoz, f"/{dashboard_id}"), headers=_headers(token), timeout=_TIMEOUT
-    )
+    return requests.get(_url(signoz, f"/{dashboard_id}"), headers=_headers(token), timeout=_TIMEOUT)
 
 
 def _list(signoz: SigNoz, token: str, **params: object) -> requests.Response:
@@ -48,9 +44,7 @@ def _list(signoz: SigNoz, token: str, **params: object) -> requests.Response:
     )
 
 
-def _update(
-    signoz: SigNoz, token: str, dashboard_id: str, body: dict
-) -> requests.Response:
+def _update(signoz: SigNoz, token: str, dashboard_id: str, body: dict) -> requests.Response:
     return requests.put(
         _url(signoz, f"/{dashboard_id}"),
         json=body,
@@ -60,14 +54,10 @@ def _update(
 
 
 def _delete(signoz: SigNoz, token: str, dashboard_id: str) -> requests.Response:
-    return requests.delete(
-        _url(signoz, f"/{dashboard_id}"), headers=_headers(token), timeout=_TIMEOUT
-    )
+    return requests.delete(_url(signoz, f"/{dashboard_id}"), headers=_headers(token), timeout=_TIMEOUT)
 
 
-def _lock(
-    signoz: SigNoz, token: str, dashboard_id: str, lock: bool
-) -> requests.Response:
+def _lock(signoz: SigNoz, token: str, dashboard_id: str, lock: bool) -> requests.Response:
     method = requests.put if lock else requests.delete
     return method(
         _url(signoz, f"/{dashboard_id}/lock"),
@@ -135,9 +125,7 @@ def test_create_rejects_non_dns_name(
 ):
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    response = _create(
-        signoz, token, _minimal_body(name="Not A Label", display="Not A Label")
-    )
+    response = _create(signoz, token, _minimal_body(name="Not A Label", display="Not A Label"))
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
     assert response.json()["error"]["code"] == "dashboard_invalid_input"
@@ -166,9 +154,7 @@ def test_create_rejects_reserved_tag_key(
 ):
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    body = _minimal_body(
-        "rejects-reserved", "Rejects Reserved", [{"key": "source", "value": "x"}]
-    )
+    body = _minimal_body("rejects-reserved", "Rejects Reserved", [{"key": "source", "value": "x"}])
     response = _create(signoz, token, body)
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
@@ -278,12 +264,22 @@ def _display_names(body: dict) -> list[str]:
     return [d["spec"]["display"]["name"] for d in body["data"]["dashboards"]]
 
 
+def _delete_suite(signoz: SigNoz, token: str, suite_filter: str) -> None:
+    response = _list(signoz, token, query=suite_filter, limit=500)
+    if response.status_code != HTTPStatus.OK:
+        return
+    for dashboard in response.json()["data"]["dashboards"]:
+        _delete(signoz, token, dashboard["id"])
+
+
 def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-statements
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
+    request: pytest.FixtureRequest,
 ):
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    request.addfinalizer(lambda: _delete_suite(signoz, token, _SUITE_FILTER))
 
     fixtures = [
         (
@@ -301,14 +297,35 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
             "Gamma Storage",
             [{"key": "team", "value": "storage"}, {"key": "env", "value": "prod"}],
         ),
+        (
+            "lc-delta",
+            "Delta Storage",
+            [
+                {"key": "team", "value": "storage"},
+                {"key": "env", "value": "dev"},
+                {"key": "tier", "value": "critical"},
+            ],
+        ),
+        (
+            "lc-epsilon",
+            "Epsilon Metrics",
+            [
+                {"key": "team", "value": "metrics"},
+                {"key": "env", "value": "staging"},
+                {"key": "tier", "value": "critical"},
+            ],
+        ),
+        (
+            "lc-zeta",
+            "Zeta Overview",
+            [{"key": "team", "value": "pulse"}, {"key": "env", "value": "staging"}],
+        ),
     ]
 
     # ── stage 1: create ──────────────────────────────────────────────────────
     ids: dict[str, str] = {}
     for name, display, tags in fixtures:
-        response = _create(
-            signoz, token, _minimal_body(name, display, [_SUITE_TAG, *tags])
-        )
+        response = _create(signoz, token, _minimal_body(name, display, [_SUITE_TAG, *tags]))
         assert response.status_code == HTTPStatus.CREATED, response.text
         ids[name] = response.json()["data"]["id"]
 
@@ -334,19 +351,115 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
     response = _list(signoz, token, query=_SUITE_FILTER, limit=200)
     assert response.status_code == HTTPStatus.OK, response.text
     body = response.json()
-    assert body["data"]["total"] == 3
+    assert body["data"]["total"] == 6
     assert set(_display_names(body)) == {
         "Alpha Overview",
         "Beta Overview",
         "Gamma Storage",
+        "Delta Storage",
+        "Epsilon Metrics",
+        "Zeta Overview",
     }
 
-    # ── stage 4: filter DSL (tag-key filters + display-name contains) ────────
+    # ── stage 4: filter DSL ──────────────────────────────────────────────────
     cases = [
-        ("team = 'pulse'", {"Alpha Overview", "Beta Overview"}),
-        ("env = 'prod'", {"Alpha Overview", "Gamma Storage"}),
-        ("name CONTAINS 'Overview'", {"Alpha Overview", "Beta Overview"}),
-        ("env IN ['dev', 'test']", {"Beta Overview"}),
+        (
+            "team = 'pulse'",
+            {"Alpha Overview", "Beta Overview", "Zeta Overview"},
+        ),
+        (
+            "env = 'prod'",
+            {"Alpha Overview", "Gamma Storage"},
+        ),
+        (
+            "name CONTAINS 'Overview'",
+            {"Alpha Overview", "Beta Overview", "Zeta Overview"},
+        ),
+        (
+            "env IN ['dev', 'test']",
+            {"Beta Overview", "Delta Storage"},
+        ),
+        (
+            "name LIKE 'Delta%'",
+            {"Delta Storage"},
+        ),
+        (
+            "team LIKE 'stor%'",
+            {"Gamma Storage", "Delta Storage"},
+        ),
+        (
+            "name ILIKE '%storage'",
+            {"Gamma Storage", "Delta Storage"},
+        ),
+        (
+            "name NOT CONTAINS 'Overview'",
+            {"Gamma Storage", "Delta Storage", "Epsilon Metrics"},
+        ),
+        (
+            "name NOT LIKE '%Storage'",
+            {
+                "Alpha Overview",
+                "Beta Overview",
+                "Epsilon Metrics",
+                "Zeta Overview",
+            },
+        ),
+        (
+            "name NOT ILIKE 'alpha%'",
+            {
+                "Beta Overview",
+                "Gamma Storage",
+                "Delta Storage",
+                "Epsilon Metrics",
+                "Zeta Overview",
+            },
+        ),
+        (
+            "team = 'pulse' AND env = 'prod'",
+            {"Alpha Overview"},
+        ),
+        (
+            "team = 'storage' OR env = 'staging'",
+            {
+                "Gamma Storage",
+                "Delta Storage",
+                "Epsilon Metrics",
+                "Zeta Overview",
+            },
+        ),
+        (
+            "tier EXISTS",
+            {"Delta Storage", "Epsilon Metrics"},
+        ),
+        (
+            "tier NOT EXISTS",
+            {
+                "Alpha Overview",
+                "Beta Overview",
+                "Gamma Storage",
+                "Zeta Overview",
+            },
+        ),
+        (
+            "NOT team = 'pulse'",
+            {"Gamma Storage", "Delta Storage", "Epsilon Metrics"},
+        ),
+        (
+            "(team = 'pulse' OR team = 'storage') AND env = 'prod'",
+            {"Alpha Overview", "Gamma Storage"},
+        ),
+        (
+            "NOT (team = 'storage' OR env = 'staging')",
+            {"Alpha Overview", "Beta Overview"},
+        ),
+        (
+            "team IN ['pulse', 'metrics'] AND tier EXISTS",
+            {"Epsilon Metrics"},
+        ),
+        (
+            "name CONTAINS 'Storage' AND env = 'dev'",
+            {"Delta Storage"},
+        ),
     ]
     for query, expected in cases:
         response = _list(signoz, token, query=_scoped(query), limit=200)
@@ -354,48 +467,43 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
         assert set(_display_names(response.json())) == expected, query
 
     # ── stage 5: name sort honours order ─────────────────────────────────────
-    response = _list(
-        signoz, token, query=_SUITE_FILTER, sort="name", order="asc", limit=200
-    )
+    response = _list(signoz, token, query=_SUITE_FILTER, sort="name", order="asc", limit=200)
     assert _display_names(response.json()) == [
         "Alpha Overview",
         "Beta Overview",
+        "Delta Storage",
+        "Epsilon Metrics",
         "Gamma Storage",
+        "Zeta Overview",
     ]
-    response = _list(
-        signoz, token, query=_SUITE_FILTER, sort="name", order="desc", limit=200
-    )
+    response = _list(signoz, token, query=_SUITE_FILTER, sort="name", order="desc", limit=200)
     assert _display_names(response.json()) == [
+        "Zeta Overview",
         "Gamma Storage",
+        "Epsilon Metrics",
+        "Delta Storage",
         "Beta Overview",
         "Alpha Overview",
     ]
 
     # ── stage 6: pinning floats a dashboard to the top of any ordering ───────
-    assert (
-        _pin(signoz, token, ids["lc-gamma"], pin=True).status_code
-        == HTTPStatus.NO_CONTENT
-    )
-    response = _list(
-        signoz, token, query=_SUITE_FILTER, sort="name", order="asc", limit=200
-    )
+    assert _pin(signoz, token, ids["lc-gamma"], pin=True).status_code == HTTPStatus.NO_CONTENT
+    response = _list(signoz, token, query=_SUITE_FILTER, sort="name", order="asc", limit=200)
     dashboards = response.json()["data"]["dashboards"]
     assert dashboards[0]["name"] == "lc-gamma"
     assert dashboards[0]["pinned"] is True
     assert all(d["pinned"] is False for d in dashboards[1:])
 
     # ── stage 7: unpinning restores the natural ordering ─────────────────────
-    assert (
-        _pin(signoz, token, ids["lc-gamma"], pin=False).status_code
-        == HTTPStatus.NO_CONTENT
-    )
-    response = _list(
-        signoz, token, query=_SUITE_FILTER, sort="name", order="asc", limit=200
-    )
+    assert _pin(signoz, token, ids["lc-gamma"], pin=False).status_code == HTTPStatus.NO_CONTENT
+    response = _list(signoz, token, query=_SUITE_FILTER, sort="name", order="asc", limit=200)
     assert _display_names(response.json()) == [
         "Alpha Overview",
         "Beta Overview",
+        "Delta Storage",
+        "Epsilon Metrics",
         "Gamma Storage",
+        "Zeta Overview",
     ]
 
     # ── stage 8: update mutates the spec but keeps the immutable name ────────
@@ -412,16 +520,10 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
     response = _update(signoz, token, ids["lc-alpha"], update_body)
     assert response.status_code == HTTPStatus.OK, response.text
     response = _get(signoz, token, ids["lc-alpha"])
-    assert (
-        response.json()["data"]["spec"]["display"]["description"]
-        == "now with a description"
-    )
+    assert response.json()["data"]["spec"]["display"]["description"] == "now with a description"
 
     # ── stage 9: a locked dashboard rejects updates until unlocked ───────────
-    assert (
-        _lock(signoz, token, ids["lc-beta"], lock=True).status_code
-        == HTTPStatus.NO_CONTENT
-    )
+    assert _lock(signoz, token, ids["lc-beta"], lock=True).status_code == HTTPStatus.NO_CONTENT
     beta_body = _minimal_body(
         "lc-beta",
         "Beta Overview",
@@ -429,17 +531,92 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
     )
     response = _update(signoz, token, ids["lc-beta"], beta_body)
     assert response.status_code == HTTPStatus.BAD_REQUEST
-    assert (
-        _lock(signoz, token, ids["lc-beta"], lock=False).status_code
-        == HTTPStatus.NO_CONTENT
-    )
-    assert (
-        _update(signoz, token, ids["lc-beta"], beta_body).status_code == HTTPStatus.OK
-    )
+    assert _lock(signoz, token, ids["lc-beta"], lock=False).status_code == HTTPStatus.NO_CONTENT
+    assert _update(signoz, token, ids["lc-beta"], beta_body).status_code == HTTPStatus.OK
 
     # ── stage 10: delete removes the dashboard from get and list ─────────────
     assert _delete(signoz, token, ids["lc-gamma"]).status_code == HTTPStatus.NO_CONTENT
     assert _get(signoz, token, ids["lc-gamma"]).status_code == HTTPStatus.NOT_FOUND
     response = _list(signoz, token, query=_SUITE_FILTER, limit=200)
-    assert response.json()["data"]["total"] == 2
-    assert set(_display_names(response.json())) == {"Alpha Overview", "Beta Overview"}
+    assert response.json()["data"]["total"] == 5
+    assert set(_display_names(response.json())) == {
+        "Alpha Overview",
+        "Beta Overview",
+        "Delta Storage",
+        "Epsilon Metrics",
+        "Zeta Overview",
+    }
+
+
+# ─── LIKE escaping ───────────────────────────────────────────────────────────
+# Backslash is the LIKE escape character, declared explicitly via ESCAPE '\' on
+# every emitted LIKE/ILIKE. Postgres defaults to backslash; sqlite has no default
+# escape, so without the clause the two dialects disagree on any pattern carrying
+# a backslash. Two ways a backslash shows up: CONTAINS injects its own to escape
+# the user's % and _ (so `50%` matches literally), and LIKE/ILIKE pass through a
+# user-supplied `\%` / `\_`. These cases assert literal-match semantics so a
+# dialect that drops the escape fails here. Backslash-bearing queries use raw
+# python strings so the backslash reaches the DSL verbatim.
+
+_ESCAPE_TAG = {"key": "suite", "value": "likeescape"}
+_ESCAPE_FILTER = "suite = 'likeescape'"
+
+
+def test_dashboard_v2_like_escaping(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    request: pytest.FixtureRequest,
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    request.addfinalizer(lambda: _delete_suite(signoz, token, _ESCAPE_FILTER))
+
+    fixtures = [
+        ("esc-pct", "Cost 50% Report"),
+        ("esc-pct-plain", "Cost 5000 Report"),
+        ("esc-underscore", "user_id panel"),
+        ("esc-underscore-wild", "userXid panel"),
+    ]
+    for name, display in fixtures:
+        response = _create(signoz, token, _minimal_body(name, display, [_ESCAPE_TAG]))
+        assert response.status_code == HTTPStatus.CREATED, response.text
+
+    cases = [
+        (
+            "name CONTAINS '50%'",
+            {"Cost 50% Report"},
+        ),
+        (
+            "name CONTAINS 'user_id'",
+            {"user_id panel"},
+        ),
+        (
+            "name NOT CONTAINS '50%'",
+            {"Cost 5000 Report", "user_id panel", "userXid panel"},
+        ),
+        (
+            r"name LIKE 'Cost 50\% Report'",
+            {"Cost 50% Report"},
+        ),
+        (
+            r"name ILIKE 'cost 50\% report'",
+            {"Cost 50% Report"},
+        ),
+        (
+            r"name LIKE 'user\_id panel'",
+            {"user_id panel"},
+        ),
+        (
+            r"name NOT LIKE 'user\_id panel'",
+            {"Cost 50% Report", "Cost 5000 Report", "userXid panel"},
+        ),
+    ]
+    for query, expected in cases:
+        response = _list(
+            signoz,
+            token,
+            query=f"({query}) AND {_ESCAPE_FILTER}",
+            limit=200,
+        )
+        assert response.status_code == HTTPStatus.OK, response.text
+        assert set(_display_names(response.json())) == expected, query

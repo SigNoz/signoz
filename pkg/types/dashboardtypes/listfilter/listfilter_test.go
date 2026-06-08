@@ -22,6 +22,11 @@ type compileCase struct {
 	expectedErrShouldContain string
 }
 
+// kindArg is the tag_relation.kind value bound into every tag EXISTS subquery
+// (stored double-encoded, hence the embedded quotes). It leads each tag
+// predicate's args, ahead of the tag key.
+const kindArg = `"dashboard"`
+
 func runCompileCases(t *testing.T, cases []compileCase) {
 	t.Helper()
 	for _, c := range cases {
@@ -88,19 +93,19 @@ func TestCompile_Name(t *testing.T) {
 		{
 			subtestName:       "name CONTAINS",
 			dslQueryToCompile: `name CONTAINS 'overview'`,
-			expectedSQL:       `json_extract("dashboard"."data", '$.spec.display.name') LIKE ?`,
+			expectedSQL:       `json_extract("dashboard"."data", '$.spec.display.name') LIKE ? ESCAPE '\'`,
 			expectedArgs:      []any{"%overview%"},
 		},
 		{
 			subtestName:       "name ILIKE — emitted as LOWER(col) LIKE LOWER(?) for dialect parity",
 			dslQueryToCompile: `name ILIKE 'Prod%'`,
-			expectedSQL:       `lower(json_extract("dashboard"."data", '$.spec.display.name')) LIKE LOWER(?)`,
+			expectedSQL:       `lower(json_extract("dashboard"."data", '$.spec.display.name')) LIKE LOWER(?) ESCAPE '\'`,
 			expectedArgs:      []any{"Prod%"},
 		},
 		{
 			subtestName:       "CONTAINS escapes % in user input",
 			dslQueryToCompile: `name CONTAINS '50%'`,
-			expectedSQL:       `json_extract("dashboard"."data", '$.spec.display.name') LIKE ?`,
+			expectedSQL:       `json_extract("dashboard"."data", '$.spec.display.name') LIKE ? ESCAPE '\'`,
 			expectedArgs:      []any{`%50\%%`},
 		},
 	})
@@ -111,7 +116,7 @@ func TestCompile_CreatedByLocked(t *testing.T) {
 		{
 			subtestName:       "created_by LIKE",
 			dslQueryToCompile: `created_by LIKE '%@signoz.io'`,
-			expectedSQL:       `dashboard.created_by LIKE ?`,
+			expectedSQL:       `dashboard.created_by LIKE ? ESCAPE '\'`,
 			expectedArgs:      []any{"%@signoz.io"},
 		},
 		{
@@ -120,14 +125,6 @@ func TestCompile_CreatedByLocked(t *testing.T) {
 			expectedSQL:       `dashboard.locked = ?`,
 			expectedArgs:      []any{true},
 		},
-	})
-}
-
-func TestCompile_Public(t *testing.T) {
-	runCompileCases(t, []compileCase{
-		{subtestName: "public = true", dslQueryToCompile: `public = true`, expectedSQL: `pd.id IS NOT NULL`},
-		{subtestName: "public = false", dslQueryToCompile: `public = false`, expectedSQL: `pd.id IS NULL`},
-		{subtestName: "public != true", dslQueryToCompile: `public != true`, expectedSQL: `pd.id IS NULL`},
 	})
 }
 
@@ -170,11 +167,11 @@ func TestCompile_Tag(t *testing.T) {
 				EXISTS (
 					SELECT 1 FROM tag_relation tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.kind = '"dashboard"' AND tr.resource_id = dashboard.id
+					WHERE tr.kind = ? AND tr.resource_id = dashboard.id
 					AND LOWER(t.key) = LOWER(?)
 					AND t.value = ?
 				)`,
-			expectedArgs: []any{"team", "pulse"},
+			expectedArgs: []any{kindArg, "team", "pulse"},
 		},
 		{
 			subtestName:       "tag = is just a regular tag-key filter",
@@ -183,11 +180,11 @@ func TestCompile_Tag(t *testing.T) {
 				EXISTS (
 					SELECT 1 FROM tag_relation tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.kind = '"dashboard"' AND tr.resource_id = dashboard.id
+					WHERE tr.kind = ? AND tr.resource_id = dashboard.id
 					AND LOWER(t.key) = LOWER(?)
 					AND t.value = ?
 				)`,
-			expectedArgs: []any{"tag", "database"},
+			expectedArgs: []any{kindArg, "tag", "database"},
 		},
 		{
 			subtestName:       "team != wraps in NOT EXISTS with positive inner",
@@ -196,11 +193,11 @@ func TestCompile_Tag(t *testing.T) {
 				NOT EXISTS (
 					SELECT 1 FROM tag_relation tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.kind = '"dashboard"' AND tr.resource_id = dashboard.id
+					WHERE tr.kind = ? AND tr.resource_id = dashboard.id
 					AND LOWER(t.key) = LOWER(?)
 					AND t.value = ?
 				)`,
-			expectedArgs: []any{"team", "pulse"},
+			expectedArgs: []any{kindArg, "team", "pulse"},
 		},
 		{
 			subtestName:       "team IN — inner is single placeholder list on t.value",
@@ -209,11 +206,11 @@ func TestCompile_Tag(t *testing.T) {
 				EXISTS (
 					SELECT 1 FROM tag_relation tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.kind = '"dashboard"' AND tr.resource_id = dashboard.id
+					WHERE tr.kind = ? AND tr.resource_id = dashboard.id
 					AND LOWER(t.key) = LOWER(?)
 					AND t.value IN (?, ?)
 				)`,
-			expectedArgs: []any{"team", "pulse", "events"},
+			expectedArgs: []any{kindArg, "team", "pulse", "events"},
 		},
 		{
 			subtestName:       "team NOT IN",
@@ -222,11 +219,11 @@ func TestCompile_Tag(t *testing.T) {
 				NOT EXISTS (
 					SELECT 1 FROM tag_relation tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.kind = '"dashboard"' AND tr.resource_id = dashboard.id
+					WHERE tr.kind = ? AND tr.resource_id = dashboard.id
 					AND LOWER(t.key) = LOWER(?)
 					AND t.value IN (?, ?)
 				)`,
-			expectedArgs: []any{"team", "pulse", "events"},
+			expectedArgs: []any{kindArg, "team", "pulse", "events"},
 		},
 		{
 			subtestName:       "team LIKE — wildcard on value",
@@ -235,11 +232,11 @@ func TestCompile_Tag(t *testing.T) {
 				EXISTS (
 					SELECT 1 FROM tag_relation tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.kind = '"dashboard"' AND tr.resource_id = dashboard.id
+					WHERE tr.kind = ? AND tr.resource_id = dashboard.id
 					AND LOWER(t.key) = LOWER(?)
-					AND t.value LIKE ?
+					AND t.value LIKE ? ESCAPE '\'
 				)`,
-			expectedArgs: []any{"team", "pulse%"},
+			expectedArgs: []any{kindArg, "team", "pulse%"},
 		},
 		{
 			subtestName:       "team NOT LIKE",
@@ -248,11 +245,11 @@ func TestCompile_Tag(t *testing.T) {
 				NOT EXISTS (
 					SELECT 1 FROM tag_relation tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.kind = '"dashboard"' AND tr.resource_id = dashboard.id
+					WHERE tr.kind = ? AND tr.resource_id = dashboard.id
 					AND LOWER(t.key) = LOWER(?)
-					AND t.value LIKE ?
+					AND t.value LIKE ? ESCAPE '\'
 				)`,
-			expectedArgs: []any{"team", "staging%"},
+			expectedArgs: []any{kindArg, "team", "staging%"},
 		},
 		{
 			subtestName:       "database EXISTS — asserts a tag with key=database is present",
@@ -261,10 +258,10 @@ func TestCompile_Tag(t *testing.T) {
 				EXISTS (
 					SELECT 1 FROM tag_relation tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.kind = '"dashboard"' AND tr.resource_id = dashboard.id
+					WHERE tr.kind = ? AND tr.resource_id = dashboard.id
 					AND LOWER(t.key) = LOWER(?)
 				)`,
-			expectedArgs: []any{"database"},
+			expectedArgs: []any{kindArg, "database"},
 		},
 		{
 			subtestName:       "database NOT EXISTS",
@@ -273,10 +270,10 @@ func TestCompile_Tag(t *testing.T) {
 				NOT EXISTS (
 					SELECT 1 FROM tag_relation tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.kind = '"dashboard"' AND tr.resource_id = dashboard.id
+					WHERE tr.kind = ? AND tr.resource_id = dashboard.id
 					AND LOWER(t.key) = LOWER(?)
 				)`,
-			expectedArgs: []any{"database"},
+			expectedArgs: []any{kindArg, "database"},
 		},
 		{
 			subtestName:       "tag-key matching is case-insensitive — TEAM lowercased",
@@ -285,11 +282,11 @@ func TestCompile_Tag(t *testing.T) {
 				EXISTS (
 					SELECT 1 FROM tag_relation tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.kind = '"dashboard"' AND tr.resource_id = dashboard.id
+					WHERE tr.kind = ? AND tr.resource_id = dashboard.id
 					AND LOWER(t.key) = LOWER(?)
 					AND t.value = ?
 				)`,
-			expectedArgs: []any{"team", "pulse"},
+			expectedArgs: []any{kindArg, "team", "pulse"},
 		},
 	})
 }
@@ -298,21 +295,21 @@ func TestCompile_BooleanComposition(t *testing.T) {
 	runCompileCases(t, []compileCase{
 		{
 			subtestName:       "AND chain — flat arg list",
-			dslQueryToCompile: `locked = true AND public = true`,
-			expectedSQL:       `dashboard.locked = ? AND pd.id IS NOT NULL`,
-			expectedArgs:      []any{true},
+			dslQueryToCompile: `locked = true AND created_by = 'a@b.com'`,
+			expectedSQL:       `dashboard.locked = ? AND dashboard.created_by = ?`,
+			expectedArgs:      []any{true, "a@b.com"},
 		},
 		{
 			subtestName:       "OR chain",
-			dslQueryToCompile: `locked = true OR public = true`,
-			expectedSQL:       `dashboard.locked = ? OR pd.id IS NOT NULL`,
-			expectedArgs:      []any{true},
+			dslQueryToCompile: `locked = true OR created_by = 'a@b.com'`,
+			expectedSQL:       `dashboard.locked = ? OR dashboard.created_by = ?`,
+			expectedArgs:      []any{true, "a@b.com"},
 		},
 		{
 			subtestName:       "parens preserve precedence",
-			dslQueryToCompile: `(locked = true OR public = true) AND created_by = 'a@b.com'`,
-			expectedSQL:       `(dashboard.locked = ? OR pd.id IS NOT NULL) AND dashboard.created_by = ?`,
-			expectedArgs:      []any{true, "a@b.com"},
+			dslQueryToCompile: `(locked = true OR locked = false) AND created_by = 'a@b.com'`,
+			expectedSQL:       `(dashboard.locked = ? OR dashboard.locked = ?) AND dashboard.created_by = ?`,
+			expectedArgs:      []any{true, false, "a@b.com"},
 		},
 	})
 }
@@ -342,14 +339,14 @@ func TestCompile_NOT(t *testing.T) {
 		},
 		{
 			subtestName:       "NOT around a parenthesized OR",
-			dslQueryToCompile: `NOT (locked = true OR public = true)`,
-			expectedSQL:       `NOT ((dashboard.locked = ? OR pd.id IS NOT NULL))`,
-			expectedArgs:      []any{true},
+			dslQueryToCompile: `NOT (locked = true OR created_by = 'a@b.com')`,
+			expectedSQL:       `NOT ((dashboard.locked = ? OR dashboard.created_by = ?))`,
+			expectedArgs:      []any{true, "a@b.com"},
 		},
 		{
 			subtestName:       "double NOT via parens",
 			dslQueryToCompile: `NOT (NOT name = 'foo')`,
-			expectedSQL:       `NOT ((NOT (json_extract("dashboard"."data", '$.spec.display.name') = ?)))`,
+			expectedSQL:       `NOT (NOT (json_extract("dashboard"."data", '$.spec.display.name') = ?))`,
 			expectedArgs:      []any{"foo"},
 		},
 		{
@@ -360,12 +357,12 @@ func TestCompile_NOT(t *testing.T) {
 					EXISTS (
 						SELECT 1 FROM tag_relation tr
 						JOIN tag t ON t.id = tr.tag_id
-						WHERE tr.kind = '"dashboard"' AND tr.resource_id = dashboard.id
+						WHERE tr.kind = ? AND tr.resource_id = dashboard.id
 						AND LOWER(t.key) = LOWER(?)
 						AND t.value = ?
 					)
 				)`,
-			expectedArgs: []any{"team", "pulse"},
+			expectedArgs: []any{kindArg, "team", "pulse"},
 		},
 		{
 			subtestName:       "NOT team = ... AND name = ...",
@@ -375,13 +372,13 @@ func TestCompile_NOT(t *testing.T) {
 					EXISTS (
 						SELECT 1 FROM tag_relation tr
 						JOIN tag t ON t.id = tr.tag_id
-						WHERE tr.kind = '"dashboard"' AND tr.resource_id = dashboard.id
+						WHERE tr.kind = ? AND tr.resource_id = dashboard.id
 						AND LOWER(t.key) = LOWER(?)
 						AND t.value = ?
 					)
 				)
 				AND json_extract("dashboard"."data", '$.spec.display.name') = ?`,
-			expectedArgs: []any{"team", "pulse", "overview"},
+			expectedArgs: []any{kindArg, "team", "pulse", "overview"},
 		},
 	})
 }
@@ -392,23 +389,23 @@ func TestCompile_ComplexExamples(t *testing.T) {
 			subtestName:       "name CONTAINS + tag LIKE + created_by + database =",
 			dslQueryToCompile: `name CONTAINS 'overview' AND tag LIKE 'prod%' AND created_by = 'naman.verma@signoz.io' AND database = 'mongo'`,
 			expectedSQL: `
-				json_extract("dashboard"."data", '$.spec.display.name') LIKE ?
+				json_extract("dashboard"."data", '$.spec.display.name') LIKE ? ESCAPE '\'
 				AND EXISTS (
 					SELECT 1 FROM tag_relation tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.kind = '"dashboard"' AND tr.resource_id = dashboard.id
+					WHERE tr.kind = ? AND tr.resource_id = dashboard.id
 					AND LOWER(t.key) = LOWER(?)
-					AND t.value LIKE ?
+					AND t.value LIKE ? ESCAPE '\'
 				)
 				AND dashboard.created_by = ?
 				AND EXISTS (
 					SELECT 1 FROM tag_relation tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.kind = '"dashboard"' AND tr.resource_id = dashboard.id
+					WHERE tr.kind = ? AND tr.resource_id = dashboard.id
 					AND LOWER(t.key) = LOWER(?)
 					AND t.value = ?
 				)`,
-			expectedArgs: []any{"%overview%", "tag", "prod%", "naman.verma@signoz.io", "database", "mongo"},
+			expectedArgs: []any{"%overview%", kindArg, "tag", "prod%", "naman.verma@signoz.io", kindArg, "database", "mongo"},
 		},
 		{
 			subtestName:       "team IN AND database EXISTS",
@@ -417,17 +414,17 @@ func TestCompile_ComplexExamples(t *testing.T) {
 				EXISTS (
 					SELECT 1 FROM tag_relation tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.kind = '"dashboard"' AND tr.resource_id = dashboard.id
+					WHERE tr.kind = ? AND tr.resource_id = dashboard.id
 					AND LOWER(t.key) = LOWER(?)
 					AND t.value IN (?, ?)
 				)
 				AND EXISTS (
 					SELECT 1 FROM tag_relation tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.kind = '"dashboard"' AND tr.resource_id = dashboard.id
+					WHERE tr.kind = ? AND tr.resource_id = dashboard.id
 					AND LOWER(t.key) = LOWER(?)
 				)`,
-			expectedArgs: []any{"team", "pulse", "events", "database"},
+			expectedArgs: []any{kindArg, "team", "pulse", "events", kindArg, "database"},
 		},
 		{
 			subtestName:       "nested OR / AND with parens",
@@ -437,23 +434,23 @@ func TestCompile_ComplexExamples(t *testing.T) {
 					EXISTS (
 						SELECT 1 FROM tag_relation tr
 						JOIN tag t ON t.id = tr.tag_id
-						WHERE tr.kind = '"dashboard"' AND tr.resource_id = dashboard.id
+						WHERE tr.kind = ? AND tr.resource_id = dashboard.id
 						AND LOWER(t.key) = LOWER(?)
 						AND t.value IN (?, ?, ?)
 					)
-					OR json_extract("dashboard"."data", '$.spec.display.name') LIKE ?
+					OR json_extract("dashboard"."data", '$.spec.display.name') LIKE ? ESCAPE '\'
 				)
 				AND (
 					EXISTS (
 						SELECT 1 FROM tag_relation tr
 						JOIN tag t ON t.id = tr.tag_id
-						WHERE tr.kind = '"dashboard"' AND tr.resource_id = dashboard.id
+						WHERE tr.kind = ? AND tr.resource_id = dashboard.id
 						AND LOWER(t.key) = LOWER(?)
 						AND t.value = ?
 					)
-					OR json_extract("dashboard"."data", '$.spec.display.name') LIKE ?
+					OR json_extract("dashboard"."data", '$.spec.display.name') LIKE ? ESCAPE '\'
 				)`,
-			expectedArgs: []any{"database", "sql", "redis", "mongo", "%database%", "team", "pulse", "%pulse%"},
+			expectedArgs: []any{kindArg, "database", "sql", "redis", "mongo", "%database%", kindArg, "team", "pulse", "%pulse%"},
 		},
 	})
 }

@@ -164,8 +164,8 @@ func (module *module) DeleteV2(ctx context.Context, orgID valuer.UUID, id valuer
 	if err != nil {
 		return err
 	}
-	if existing.Locked {
-		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot delete a locked dashboard, please unlock the dashboard to delete")
+	if err := existing.CanDelete(); err != nil {
+		return err
 	}
 
 	return module.store.RunInTx(ctx, func(ctx context.Context) error {

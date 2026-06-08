@@ -11,39 +11,40 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	qbtypesv5 "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/antlr4-go/antlr/v4"
+	sqlbuilder "github.com/huandu/go-sqlbuilder"
 )
 
-// fragment is one composable WHERE fragment. sql uses `?` placeholders;
-// args lines up positionally with the placeholders.
-type fragment struct {
-	sql  string
-	args []any
-}
-
-func newFragment(sql string, args ...any) *fragment {
-	return &fragment{sql: sql, args: args}
-}
+// bunPlaceholderFlavor is any flavor that renders `?` placeholders, which bun
+// re-binds to the actual backend (e.g. `$1` for Postgres) at query time.
+const bunPlaceholderFlavor = sqlbuilder.SQLite
 
 type visitor struct {
 	grammar.BaseFilterQueryVisitor
-	formatter sqlstore.SQLFormatter
-	errors    []string
+	selectBuilder *sqlbuilder.SelectBuilder
+	formatter     sqlstore.SQLFormatter
+	errors        []string
 }
 
 func newVisitor(formatter sqlstore.SQLFormatter) *visitor {
 	return &visitor{
-		formatter: formatter,
+		selectBuilder: sqlbuilder.NewSelectBuilder(),
+		formatter:     formatter,
 	}
 }
 
-// Emitted WHERE fragment uses aliases `dashboard` and `pd` (public_dashboard).
-func (v *visitor) compile(query string) (*fragment, []string) {
+// compile turns the parse tree into `?`-placeholder WHERE SQL + arguments for bun.
+func (v *visitor) compile(query string) (string, []any, []string) {
 	tree, _, collector := filterquery.Parse(query)
 	if len(collector.Errors) > 0 {
-		return nil, collector.Errors
+		return "", nil, collector.Errors
 	}
-	frag, _ := v.visit(tree).(*fragment)
-	return frag, nil
+	condition, _ := v.visit(tree).(string)
+	if condition == "" {
+		return "", nil, nil
+	}
+	whereExpression := stripOuterParens(condition)
+	sql, arguments := v.selectBuilder.Args.CompileWithFlavor(whereExpression, bunPlaceholderFlavor)
+	return sql, arguments, nil
 }
 
 func (v *visitor) visit(tree antlr.ParseTree) any {
@@ -67,52 +68,62 @@ func (v *visitor) VisitExpression(ctx *grammar.ExpressionContext) any {
 
 func (v *visitor) VisitOrExpression(ctx *grammar.OrExpressionContext) any {
 	parts := ctx.AllAndExpression()
-	frags := make([]*fragment, 0, len(parts))
-	for _, p := range parts {
-		if f, ok := v.visit(p).(*fragment); ok && f != nil {
-			frags = append(frags, f)
+	conditions := make([]string, 0, len(parts))
+	for _, part := range parts {
+		if condition, ok := v.visit(part).(string); ok && condition != "" {
+			conditions = append(conditions, condition)
 		}
 	}
-	return joinFragments(frags, "OR")
+	switch len(conditions) {
+	case 0:
+		return ""
+	case 1:
+		return conditions[0]
+	default:
+		return v.selectBuilder.Or(conditions...)
+	}
 }
 
 func (v *visitor) VisitAndExpression(ctx *grammar.AndExpressionContext) any {
 	parts := ctx.AllUnaryExpression()
-	frags := make([]*fragment, 0, len(parts))
-	for _, p := range parts {
-		if f, ok := v.visit(p).(*fragment); ok && f != nil {
-			frags = append(frags, f)
+	conditions := make([]string, 0, len(parts))
+	for _, part := range parts {
+		if condition, ok := v.visit(part).(string); ok && condition != "" {
+			conditions = append(conditions, condition)
 		}
 	}
-	return joinFragments(frags, "AND")
+	switch len(conditions) {
+	case 0:
+		return ""
+	case 1:
+		return conditions[0]
+	default:
+		return v.selectBuilder.And(conditions...)
+	}
 }
 
 func (v *visitor) VisitUnaryExpression(ctx *grammar.UnaryExpressionContext) any {
-	f, _ := v.visit(ctx.Primary()).(*fragment)
-	if f == nil {
-		return nil
+	condition, _ := v.visit(ctx.Primary()).(string)
+	if condition == "" {
+		return ""
 	}
 	if ctx.NOT() != nil {
-		return newFragment("NOT ("+f.sql+")", f.args...)
+		return fmt.Sprintf("NOT (%s)", condition)
 	}
-	return f
+	return condition
 }
 
 func (v *visitor) VisitPrimary(ctx *grammar.PrimaryContext) any {
 	if ctx.OrExpression() != nil {
-		f, _ := v.visit(ctx.OrExpression()).(*fragment)
-		if f == nil {
-			return nil
-		}
-		return newFragment("("+f.sql+")", f.args...)
+		return v.visit(ctx.OrExpression())
 	}
 	if ctx.Comparison() != nil {
 		return v.visit(ctx.Comparison())
 	}
 	// Bare keys, values, full text, and function calls are not part of the
 	// dashboard list DSL.
-	v.addErr("unsupported expression %q — every term must be of the form `key OP value`", ctx.GetText())
-	return nil
+	v.addError("unsupported expression %q — every term must be of the form `key OP value`", ctx.GetText())
+	return ""
 }
 
 // VisitComparison dispatches a single `key OP value` term. A key that matches
@@ -120,56 +131,59 @@ func (v *visitor) VisitPrimary(ctx *grammar.PrimaryContext) any {
 // predicate; any other identifier is treated as a tag key — the operator
 // applies to the tag's value, with a case-insensitive match on the tag's key.
 func (v *visitor) VisitComparison(ctx *grammar.ComparisonContext) any {
-	key, ok := v.parseKey(ctx)
+	key := strings.ToLower(strings.TrimSpace(ctx.Key().GetText()))
+
+	operation, ok := v.extractOperation(ctx)
 	if !ok {
-		return nil
+		return ""
 	}
 
-	op, ok := v.opFromContext(ctx)
-	if !ok {
-		return nil
+	if allowedOperations, isReserved := reservedOps[dashboardtypes.DSLKey(key)]; isReserved {
+		return v.visitComparisonForReservedKeys(ctx, operation, dashboardtypes.DSLKey(key), allowedOperations)
 	}
-
-	if reservedOpSet, isReserved := reservedOps[dashboardtypes.DSLKey(key)]; isReserved {
-		if _, allowed := reservedOpSet[op]; !allowed {
-			v.addErr("operator %s is not allowed for key %q", opName(op), key)
-			return nil
-		}
-		switch dashboardtypes.DSLKey(key) {
-		case dashboardtypes.DSLKeyName:
-			return v.emitJSONStringComparison(ctx, op, "$.spec.display.name")
-		case dashboardtypes.DSLKeyDescription:
-			return v.emitJSONStringComparison(ctx, op, "$.spec.display.description")
-		case dashboardtypes.DSLKeyCreatedAt:
-			return v.emitTimestampComparison(ctx, op, "dashboard.created_at")
-		case dashboardtypes.DSLKeyUpdatedAt:
-			return v.emitTimestampComparison(ctx, op, "dashboard.updated_at")
-		case dashboardtypes.DSLKeyCreatedBy:
-			return v.emitStringComparison(ctx, op, "dashboard.created_by")
-		case dashboardtypes.DSLKeyLocked:
-			return v.emitBoolComparison(ctx, op, "dashboard.locked")
-		case dashboardtypes.DSLKeyPublic:
-			return v.emitPublicComparison(ctx, op)
-		}
-	}
-
-	if _, allowed := tagKeyOps[op]; !allowed {
-		v.addErr("operator %s is not allowed on a tag-key filter", opName(op))
-		return nil
-	}
-	return v.emitTagComparison(ctx, op, key)
+	return v.visitComparisonForTags(ctx, operation, key)
 }
 
-func (v *visitor) parseKey(ctx *grammar.ComparisonContext) (string, bool) {
-	keyText := strings.ToLower(strings.TrimSpace(ctx.Key().GetText()))
-	if keyText == "" {
-		v.addErr("filter key cannot be empty")
-		return "", false
+func (v *visitor) visitComparisonForReservedKeys(ctx *grammar.ComparisonContext, operation qbtypesv5.FilterOperator, key dashboardtypes.DSLKey, allowedOperations map[qbtypesv5.FilterOperator]struct{}) string {
+	if _, allowed := allowedOperations[operation]; !allowed {
+		v.addError("operator %s is not allowed for key %q", operationName(operation), key)
+		return ""
 	}
-	return keyText, true
+	switch key {
+	case dashboardtypes.DSLKeyName:
+		return v.buildJSONStringComparison(ctx, operation, dashboardtypes.DSLKeyName, "$.spec.display.name")
+	case dashboardtypes.DSLKeyDescription:
+		return v.buildJSONStringComparison(ctx, operation, dashboardtypes.DSLKeyDescription, "$.spec.display.description")
+	case dashboardtypes.DSLKeyCreatedAt:
+		return v.buildTimestampComparison(ctx, operation, "dashboard.created_at")
+	case dashboardtypes.DSLKeyUpdatedAt:
+		return v.buildTimestampComparison(ctx, operation, "dashboard.updated_at")
+	case dashboardtypes.DSLKeyCreatedBy:
+		return v.buildStringComparison(ctx, operation, dashboardtypes.DSLKeyCreatedBy, "dashboard.created_by")
+	case dashboardtypes.DSLKeyLocked:
+		return v.buildBoolComparison(ctx, operation, "dashboard.locked")
+	}
+	v.addError("no handler for reserved key %q", key)
+	return ""
 }
 
-func (v *visitor) opFromContext(ctx *grammar.ComparisonContext) (qbtypesv5.FilterOperator, bool) {
+func (v *visitor) visitComparisonForTags(ctx *grammar.ComparisonContext, operation qbtypesv5.FilterOperator, tagKey string) string {
+	if _, allowed := tagKeyOps[operation]; !allowed {
+		v.addError("operator %s is not allowed on a tag-key filter", operationName(operation))
+		return ""
+	}
+	return v.buildTagComparison(ctx, operation, tagKey)
+}
+
+func (v *visitor) extractOperation(ctx *grammar.ComparisonContext) (qbtypesv5.FilterOperator, bool) {
+	// For operators that take an optional leading NOT, Inverse() maps each to
+	// its Not<X> counterpart.
+	maybeNot := func(operation qbtypesv5.FilterOperator) qbtypesv5.FilterOperator {
+		if ctx.NOT() != nil {
+			return operation.Inverse()
+		}
+		return operation
+	}
 	switch {
 	case ctx.EQUALS() != nil:
 		return qbtypesv5.FilterOperatorEqual, true
@@ -184,257 +198,283 @@ func (v *visitor) opFromContext(ctx *grammar.ComparisonContext) (qbtypesv5.Filte
 	case ctx.GE() != nil:
 		return qbtypesv5.FilterOperatorGreaterThanOrEq, true
 	case ctx.BETWEEN() != nil:
-		if ctx.NOT() != nil {
-			return qbtypesv5.FilterOperatorNotBetween, true
-		}
-		return qbtypesv5.FilterOperatorBetween, true
+		return maybeNot(qbtypesv5.FilterOperatorBetween), true
 	case ctx.LIKE() != nil:
-		if ctx.NOT() != nil {
-			return qbtypesv5.FilterOperatorNotLike, true
-		}
-		return qbtypesv5.FilterOperatorLike, true
+		return maybeNot(qbtypesv5.FilterOperatorLike), true
 	case ctx.ILIKE() != nil:
-		if ctx.NOT() != nil {
-			return qbtypesv5.FilterOperatorNotILike, true
-		}
-		return qbtypesv5.FilterOperatorILike, true
+		return maybeNot(qbtypesv5.FilterOperatorILike), true
 	case ctx.CONTAINS() != nil:
-		if ctx.NOT() != nil {
-			return qbtypesv5.FilterOperatorNotContains, true
-		}
-		return qbtypesv5.FilterOperatorContains, true
+		return maybeNot(qbtypesv5.FilterOperatorContains), true
 	case ctx.REGEXP() != nil:
-		if ctx.NOT() != nil {
-			return qbtypesv5.FilterOperatorNotRegexp, true
-		}
-		return qbtypesv5.FilterOperatorRegexp, true
+		return maybeNot(qbtypesv5.FilterOperatorRegexp), true
 	case ctx.InClause() != nil:
 		return qbtypesv5.FilterOperatorIn, true
 	case ctx.NotInClause() != nil:
 		return qbtypesv5.FilterOperatorNotIn, true
 	case ctx.EXISTS() != nil:
-		if ctx.NOT() != nil {
-			return qbtypesv5.FilterOperatorNotExists, true
-		}
-		return qbtypesv5.FilterOperatorExists, true
+		return maybeNot(qbtypesv5.FilterOperatorExists), true
 	}
-	v.addErr("could not determine operator in expression %q", ctx.GetText())
+	v.addError("could not determine operator in expression %q", ctx.GetText())
 	return qbtypesv5.FilterOperatorUnknown, false
 }
 
 // ─── per-key emitters ────────────────────────────────────────────────────────
 
-func (v *visitor) emitJSONStringComparison(ctx *grammar.ComparisonContext, op qbtypesv5.FilterOperator, jsonPath string) *fragment {
-	colExpr := string(v.formatter.JSONExtractString("dashboard.data", jsonPath))
-	return v.emitStringOp(ctx, op, colExpr, string(dashboardtypes.DSLKeyName))
+func (v *visitor) buildJSONStringComparison(ctx *grammar.ComparisonContext, operation qbtypesv5.FilterOperator, key dashboardtypes.DSLKey, jsonPath string) string {
+	columnExpression := string(v.formatter.JSONExtractString("dashboard.data", jsonPath))
+	return v.buildStringOperation(v.selectBuilder, ctx, operation, columnExpression, string(key))
 }
 
-func (v *visitor) emitStringComparison(ctx *grammar.ComparisonContext, op qbtypesv5.FilterOperator, colExpr string) *fragment {
-	return v.emitStringOp(ctx, op, colExpr, string(dashboardtypes.DSLKeyCreatedBy))
+func (v *visitor) buildStringComparison(ctx *grammar.ComparisonContext, operation qbtypesv5.FilterOperator, key dashboardtypes.DSLKey, columnExpression string) string {
+	return v.buildStringOperation(v.selectBuilder, ctx, operation, columnExpression, string(key))
 }
 
-// emitStringOp covers all the operators the spec allows on text-shaped keys
-// (name, description, created_by). Tag uses a separate emitter that wraps each
-// produced fragment in an EXISTS subquery.
-func (v *visitor) emitStringOp(ctx *grammar.ComparisonContext, op qbtypesv5.FilterOperator, colExpr, keyForErr string) *fragment {
-	switch op {
-	case qbtypesv5.FilterOperatorEqual, qbtypesv5.FilterOperatorNotEqual,
-		qbtypesv5.FilterOperatorLike, qbtypesv5.FilterOperatorNotLike:
-		val, ok := v.singleString(ctx, keyForErr)
+// buildStringOperation covers all the operators the spec allows on text-shaped keys
+// (name, description, created_by, and a tag's value). Placeholders are interned
+// into builder — the outer builder for column predicates, the subquery builder for
+// tag-value predicates — so nested EXISTS arguments thread correctly.
+func (v *visitor) buildStringOperation(builder *sqlbuilder.SelectBuilder, ctx *grammar.ComparisonContext, operation qbtypesv5.FilterOperator, columnExpression, keyForError string) string {
+	switch operation {
+	case qbtypesv5.FilterOperatorEqual:
+		val, ok := v.extractSingleStringValue(ctx, keyForError)
 		if !ok {
-			return nil
+			return ""
 		}
-		return newFragment(colExpr+" "+opName(op)+" ?", val)
-	case qbtypesv5.FilterOperatorILike, qbtypesv5.FilterOperatorNotILike:
-		val, ok := v.singleString(ctx, keyForErr)
+		return builder.Equal(columnExpression, val)
+	case qbtypesv5.FilterOperatorNotEqual:
+		val, ok := v.extractSingleStringValue(ctx, keyForError)
 		if !ok {
-			return nil
+			return ""
+		}
+		return builder.NotEqual(columnExpression, val)
+	case qbtypesv5.FilterOperatorLike, qbtypesv5.FilterOperatorNotLike:
+		val, ok := v.extractSingleStringValue(ctx, keyForError)
+		if !ok {
+			return ""
+		}
+		like := "LIKE"
+		if operation == qbtypesv5.FilterOperatorNotLike {
+			like = "NOT LIKE"
+		}
+		// The user's % and _ stay as wildcards; ESCAPE pins backslash as the escape
+		// char so a literal `\` in the pattern is read the same on both dialects —
+		// Postgres defaults to `\`, SQLite has no default escape.
+		return fmt.Sprintf("%s %s %s ESCAPE '\\'", columnExpression, like, builder.Var(val))
+	case qbtypesv5.FilterOperatorILike, qbtypesv5.FilterOperatorNotILike:
+		val, ok := v.extractSingleStringValue(ctx, keyForError)
+		if !ok {
+			return ""
 		}
 		// SQLite has no ILIKE keyword and Postgres LIKE is case-sensitive — emit
-		// LOWER(col) LIKE LOWER(?) so behavior is identical on both dialects.
-		lowerCol := string(v.formatter.LowerExpression(colExpr))
-		return newFragment(lowerCol+" "+opName(iLikeToLike(op))+" LOWER(?)", val)
+		// LOWER(col) LIKE LOWER(?) so behavior is identical on both dialects. ESCAPE
+		// pins backslash as the escape char (Postgres default; SQLite has none).
+		lowerColumn := string(v.formatter.LowerExpression(columnExpression))
+		like := "LIKE"
+		if operation == qbtypesv5.FilterOperatorNotILike {
+			like = "NOT LIKE"
+		}
+		return fmt.Sprintf("%s %s LOWER(%s) ESCAPE '\\'", lowerColumn, like, builder.Var(val))
 	case qbtypesv5.FilterOperatorContains, qbtypesv5.FilterOperatorNotContains:
-		val, ok := v.singleString(ctx, keyForErr)
+		val, ok := v.extractSingleStringValue(ctx, keyForError)
 		if !ok {
-			return nil
+			return ""
 		}
-		return newFragment(colExpr+" "+opName(containsToLike(op))+" ?", "%"+escapeLike(val)+"%")
+		like := "LIKE"
+		if operation == qbtypesv5.FilterOperatorNotContains {
+			like = "NOT LIKE"
+		}
+		// Escape the user's % and _ so they match literally, then wrap in wildcards.
+		// ESCAPE declares the backslash we just injected as the escape char — needed
+		// on SQLite (no default) and a harmless restatement of the Postgres default.
+		escaped := strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`).Replace(val)
+		return fmt.Sprintf("%s %s %s ESCAPE '\\'", columnExpression, like, builder.Var("%"+escaped+"%"))
 	case qbtypesv5.FilterOperatorRegexp, qbtypesv5.FilterOperatorNotRegexp:
-		v.addErr("REGEXP filtering on %q is not yet supported", keyForErr)
-		return nil
+		v.addError("REGEXP filtering on %q is not yet supported", keyForError)
+		return ""
 	case qbtypesv5.FilterOperatorIn, qbtypesv5.FilterOperatorNotIn:
-		vals, ok := v.stringList(ctx, keyForErr)
+		values, ok := v.extractStringValueList(ctx, keyForError)
 		if !ok {
-			return nil
+			return ""
 		}
-		return inFragment(colExpr, op, vals)
+		arguments := make([]any, len(values))
+		for i, s := range values {
+			arguments[i] = s
+		}
+		if operation == qbtypesv5.FilterOperatorNotIn {
+			return builder.NotIn(columnExpression, arguments...)
+		}
+		return builder.In(columnExpression, arguments...)
 	}
-	v.addErr("operator %s on %q is not implemented", opName(op), keyForErr)
-	return nil
+	v.addError("operator %s on %q is not implemented", operationName(operation), keyForError)
+	return ""
 }
 
-func (v *visitor) emitTimestampComparison(ctx *grammar.ComparisonContext, op qbtypesv5.FilterOperator, colExpr string) *fragment {
-	switch op {
+func (v *visitor) buildTimestampComparison(ctx *grammar.ComparisonContext, operation qbtypesv5.FilterOperator, columnExpression string) string {
+	switch operation {
 	case qbtypesv5.FilterOperatorEqual, qbtypesv5.FilterOperatorNotEqual,
 		qbtypesv5.FilterOperatorLessThan, qbtypesv5.FilterOperatorLessThanOrEq,
 		qbtypesv5.FilterOperatorGreaterThan, qbtypesv5.FilterOperatorGreaterThanOrEq:
-		t, ok := v.singleTimestamp(ctx)
+		t, ok := v.extractSingleTimestampValue(ctx)
 		if !ok {
-			return nil
+			return ""
 		}
-		return newFragment(colExpr+" "+opName(op)+" ?", t)
+		switch operation {
+		case qbtypesv5.FilterOperatorEqual:
+			return v.selectBuilder.Equal(columnExpression, t)
+		case qbtypesv5.FilterOperatorNotEqual:
+			return v.selectBuilder.NotEqual(columnExpression, t)
+		case qbtypesv5.FilterOperatorLessThan:
+			return v.selectBuilder.LessThan(columnExpression, t)
+		case qbtypesv5.FilterOperatorLessThanOrEq:
+			return v.selectBuilder.LessEqualThan(columnExpression, t)
+		case qbtypesv5.FilterOperatorGreaterThan:
+			return v.selectBuilder.GreaterThan(columnExpression, t)
+		case qbtypesv5.FilterOperatorGreaterThanOrEq:
+			return v.selectBuilder.GreaterEqualThan(columnExpression, t)
+		}
 	case qbtypesv5.FilterOperatorBetween, qbtypesv5.FilterOperatorNotBetween:
-		ts, ok := v.twoTimestamps(ctx)
+		timestamps, ok := v.extractTwoTimestampValues(ctx)
 		if !ok {
-			return nil
+			return ""
 		}
-		return newFragment(colExpr+" "+opName(op)+" ? AND ?", ts[0], ts[1])
-	}
-	v.addErr("operator %s on timestamp is not implemented", opName(op))
-	return nil
-}
-
-func (v *visitor) emitBoolComparison(ctx *grammar.ComparisonContext, op qbtypesv5.FilterOperator, colExpr string) *fragment {
-	b, ok := v.singleBool(ctx)
-	if !ok {
-		return nil
-	}
-	return newFragment(colExpr+" "+opName(op)+" ?", b)
-}
-
-// emitPublicComparison renders `public = true|false` against the LEFT-joined
-// public_dashboard alias `pd`. The spec says public is a virtual column whose
-// truthiness is the existence of a row in public_dashboard.
-func (v *visitor) emitPublicComparison(ctx *grammar.ComparisonContext, op qbtypesv5.FilterOperator) *fragment {
-	b, ok := v.singleBool(ctx)
-	if !ok {
-		return nil
-	}
-	want := b
-	if op == qbtypesv5.FilterOperatorNotEqual {
-		want = !b
-	}
-	if want {
-		return newFragment("pd.id IS NOT NULL")
-	}
-	return newFragment("pd.id IS NULL")
-}
-
-// TODO: drop the extra quotes once coretypes.Kind stops being double-encoded
-// in the tag_relation.kind column.
-const tagSubqueryPrefix = "SELECT 1 FROM tag_relation tr JOIN tag t ON t.id = tr.tag_id " +
-	`WHERE tr.kind = '"dashboard"' AND tr.resource_id = dashboard.id ` +
-	"AND LOWER(t.key) = LOWER(?)"
-
-// emitTagComparison wraps the inner predicate in EXISTS (or NOT EXISTS for the
-// negated operators). The inner predicate matches the tag's key
-// case-insensitively and applies the user's operator to the tag's value.
-// EXISTS / NOT EXISTS skip the value predicate — they assert the existence
-// (or absence) of any tag with the given key.
-func (v *visitor) emitTagComparison(ctx *grammar.ComparisonContext, op qbtypesv5.FilterOperator, key string) *fragment {
-	if op == qbtypesv5.FilterOperatorExists || op == qbtypesv5.FilterOperatorNotExists {
-		wrapper := "EXISTS"
-		if op == qbtypesv5.FilterOperatorNotExists {
-			wrapper = "NOT EXISTS"
+		if operation == qbtypesv5.FilterOperatorNotBetween {
+			return v.selectBuilder.NotBetween(columnExpression, timestamps[0], timestamps[1])
 		}
-		return newFragment(wrapper+" ("+tagSubqueryPrefix+")", key)
+		return v.selectBuilder.Between(columnExpression, timestamps[0], timestamps[1])
+	}
+	v.addError("operator %s on timestamp is not implemented", operationName(operation))
+	return ""
+}
+
+func (v *visitor) buildBoolComparison(ctx *grammar.ComparisonContext, operation qbtypesv5.FilterOperator, columnExpression string) string {
+	b, ok := v.extractSingleBoolValue(ctx)
+	if !ok {
+		return ""
+	}
+	if operation == qbtypesv5.FilterOperatorNotEqual {
+		return v.selectBuilder.NotEqual(columnExpression, b)
+	}
+	return v.selectBuilder.Equal(columnExpression, b)
+}
+
+func (v *visitor) buildTagComparison(ctx *grammar.ComparisonContext, operation qbtypesv5.FilterOperator, tagKey string) string {
+	subqueryBuilder := sqlbuilder.NewSelectBuilder()
+
+	if operation == qbtypesv5.FilterOperatorExists || operation == qbtypesv5.FilterOperatorNotExists {
+		buildSubqueryForTagKey(subqueryBuilder, tagKey)
+	} else {
+		// All other tag operators take the positive form of the value predicate
+		// and toggle the EXISTS wrapper for negation. Inverse() flips Not<X> → <X>.
+		positiveOperation := operation
+		if operation.IsNegativeOperator() {
+			positiveOperation = operation.Inverse()
+		}
+		valuePredicate := v.buildStringOperation(subqueryBuilder, ctx, positiveOperation, "t.value", tagKey)
+		if valuePredicate == "" {
+			return ""
+		}
+		buildSubqueryForTagKeyAndValue(subqueryBuilder, tagKey, valuePredicate)
 	}
 
-	// All other tag operators take the positive form of the value predicate
-	// and toggle the EXISTS wrapper for negation. Inverse() flips Not<X> → <X>.
-	negated := op.IsNegativeOperator()
-	posOp := op
-	if negated {
-		posOp = op.Inverse()
+	if operation.IsNegativeOperator() {
+		return v.selectBuilder.NotExists(subqueryBuilder)
 	}
-	inner := v.emitStringOp(ctx, posOp, "t.value", key)
-	if inner == nil {
-		return nil
-	}
-	wrapper := "EXISTS"
-	if negated {
-		wrapper = "NOT EXISTS"
-	}
-	args := append([]any{key}, inner.args...)
-	return newFragment(wrapper+" ("+tagSubqueryPrefix+" AND "+inner.sql+")", args...)
+	return v.selectBuilder.Exists(subqueryBuilder)
+}
+
+func buildSubqueryForTagKey(subqueryBuilder *sqlbuilder.SelectBuilder, tagKey string) *sqlbuilder.SelectBuilder {
+	const dashboardTagKind = `"dashboard"`
+
+	return subqueryBuilder.
+		Select("1").
+		From("tag_relation tr").
+		Join("tag t", "t.id = tr.tag_id").
+		Where(
+			subqueryBuilder.Equal("tr.kind", dashboardTagKind),
+			"tr.resource_id = dashboard.id",
+			"LOWER(t.key) = LOWER("+subqueryBuilder.Var(tagKey)+")",
+		)
+}
+
+func buildSubqueryForTagKeyAndValue(subqueryBuilder *sqlbuilder.SelectBuilder, tagKey, valuePredicate string) *sqlbuilder.SelectBuilder {
+	return buildSubqueryForTagKey(subqueryBuilder, tagKey).Where(valuePredicate)
 }
 
 // ─── value extraction helpers ───────────────────────────────────────────────
 
-func (v *visitor) addErr(format string, args ...any) {
-	v.errors = append(v.errors, fmt.Sprintf(format, args...))
+func (v *visitor) addError(format string, arguments ...any) {
+	v.errors = append(v.errors, fmt.Sprintf(format, arguments...))
 }
 
-func (v *visitor) singleString(ctx *grammar.ComparisonContext, keyForErr string) (string, bool) {
+func (v *visitor) extractSingleStringValue(ctx *grammar.ComparisonContext, keyForError string) (string, bool) {
 	values := ctx.AllValue()
 	if len(values) != 1 {
-		v.addErr("expected exactly one value for %q", keyForErr)
+		v.addError("expected exactly one value for %q", keyForError)
 		return "", false
 	}
-	return v.stringValue(values[0], keyForErr)
+	return v.extractStringValue(values[0], keyForError)
 }
 
-func (v *visitor) singleBool(ctx *grammar.ComparisonContext) (bool, bool) {
+func (v *visitor) extractSingleBoolValue(ctx *grammar.ComparisonContext) (bool, bool) {
 	values := ctx.AllValue()
 	if len(values) != 1 {
-		v.addErr("expected a single boolean (true/false)")
+		v.addError("expected a single boolean (true/false)")
 		return false, false
 	}
-	return v.boolValue(values[0])
+	return v.extractBoolValue(values[0])
 }
 
-func (v *visitor) singleTimestamp(ctx *grammar.ComparisonContext) (time.Time, bool) {
+func (v *visitor) extractSingleTimestampValue(ctx *grammar.ComparisonContext) (time.Time, bool) {
 	values := ctx.AllValue()
 	if len(values) != 1 {
-		v.addErr("expected a single RFC3339 timestamp")
+		v.addError("expected a single RFC3339 timestamp")
 		return time.Time{}, false
 	}
-	return v.timestampValue(values[0])
+	return v.extractTimestampValue(values[0])
 }
 
-func (v *visitor) twoTimestamps(ctx *grammar.ComparisonContext) ([2]time.Time, bool) {
+func (v *visitor) extractTwoTimestampValues(ctx *grammar.ComparisonContext) ([2]time.Time, bool) {
 	values := ctx.AllValue()
 	if len(values) != 2 {
-		v.addErr("BETWEEN expects two RFC3339 timestamps")
+		v.addError("BETWEEN expects two RFC3339 timestamps")
 		return [2]time.Time{}, false
 	}
-	a, ok1 := v.timestampValue(values[0])
-	b, ok2 := v.timestampValue(values[1])
+	a, ok1 := v.extractTimestampValue(values[0])
+	b, ok2 := v.extractTimestampValue(values[1])
 	if !ok1 || !ok2 {
 		return [2]time.Time{}, false
 	}
 	return [2]time.Time{a, b}, true
 }
 
-func (v *visitor) stringList(ctx *grammar.ComparisonContext, keyForErr string) ([]string, bool) {
+func (v *visitor) extractStringValueList(ctx *grammar.ComparisonContext, keyForError string) ([]string, bool) {
 	var valuesCtx []grammar.IValueContext
 	switch {
 	case ctx.InClause() != nil:
-		ic := ctx.InClause()
-		if ic.ValueList() != nil {
-			valuesCtx = ic.ValueList().AllValue()
+		inClause := ctx.InClause()
+		if inClause.ValueList() != nil {
+			valuesCtx = inClause.ValueList().AllValue()
 		} else {
-			valuesCtx = []grammar.IValueContext{ic.Value()}
+			valuesCtx = []grammar.IValueContext{inClause.Value()}
 		}
 	case ctx.NotInClause() != nil:
-		nc := ctx.NotInClause()
-		if nc.ValueList() != nil {
-			valuesCtx = nc.ValueList().AllValue()
+		notInClause := ctx.NotInClause()
+		if notInClause.ValueList() != nil {
+			valuesCtx = notInClause.ValueList().AllValue()
 		} else {
-			valuesCtx = []grammar.IValueContext{nc.Value()}
+			valuesCtx = []grammar.IValueContext{notInClause.Value()}
 		}
 	default:
-		v.addErr("IN clause is missing for %q", keyForErr)
+		v.addError("IN clause is missing for %q", keyForError)
 		return nil, false
 	}
 	if len(valuesCtx) == 0 {
-		v.addErr("IN list for %q is empty", keyForErr)
+		v.addError("IN list for %q is empty", keyForError)
 		return nil, false
 	}
 	out := make([]string, 0, len(valuesCtx))
-	for _, vc := range valuesCtx {
-		s, ok := v.stringValue(vc, keyForErr)
+	for _, valueContext := range valuesCtx {
+		s, ok := v.extractStringValue(valueContext, keyForError)
 		if !ok {
 			return nil, false
 		}
@@ -443,7 +483,7 @@ func (v *visitor) stringList(ctx *grammar.ComparisonContext, keyForErr string) (
 	return out, true
 }
 
-func (v *visitor) stringValue(ctx grammar.IValueContext, keyForErr string) (string, bool) {
+func (v *visitor) extractStringValue(ctx grammar.IValueContext, keyForError string) (string, bool) {
 	if ctx.QUOTED_TEXT() != nil {
 		return trimQuotes(ctx.QUOTED_TEXT().GetText()), true
 	}
@@ -452,67 +492,38 @@ func (v *visitor) stringValue(ctx grammar.IValueContext, keyForErr string) (stri
 		// treatment of unquoted identifiers on the value side.
 		return ctx.KEY().GetText(), true
 	}
-	v.addErr("expected a string value for %q, got %q", keyForErr, ctx.GetText())
+	v.addError("expected a string value for %q, got %q", keyForError, ctx.GetText())
 	return "", false
 }
 
-func (v *visitor) boolValue(ctx grammar.IValueContext) (bool, bool) {
+func (v *visitor) extractBoolValue(ctx grammar.IValueContext) (bool, bool) {
 	if ctx.BOOL() == nil {
-		v.addErr("expected a boolean (true/false), got %q", ctx.GetText())
+		v.addError("expected a boolean (true/false), got %q", ctx.GetText())
 		return false, false
 	}
 	return strings.EqualFold(ctx.BOOL().GetText(), "true"), true
 }
 
-func (v *visitor) timestampValue(ctx grammar.IValueContext) (time.Time, bool) {
+func (v *visitor) extractTimestampValue(ctx grammar.IValueContext) (time.Time, bool) {
 	if ctx.QUOTED_TEXT() == nil {
-		v.addErr("expected an RFC3339 timestamp string, got %q", ctx.GetText())
+		v.addError("expected an RFC3339 timestamp string, got %q", ctx.GetText())
 		return time.Time{}, false
 	}
 	raw := trimQuotes(ctx.QUOTED_TEXT().GetText())
 	t, err := time.Parse(time.RFC3339, raw)
 	if err != nil {
-		v.addErr("invalid RFC3339 timestamp %q: %s", raw, err.Error())
+		v.addError("invalid RFC3339 timestamp %q: %s", raw, err.Error())
 		return time.Time{}, false
 	}
 	return t, true
 }
 
-// ─── fragment helpers ────────────────────────────────────────────────────────
+// ─── operator spelling ───────────────────────────────────────────────────────
 
-func joinFragments(frags []*fragment, conn string) *fragment {
-	if len(frags) == 0 {
-		return nil
-	}
-	if len(frags) == 1 {
-		return frags[0]
-	}
-	parts := make([]string, len(frags))
-	args := make([]any, 0)
-	for i, f := range frags {
-		parts[i] = f.sql
-		args = append(args, f.args...)
-	}
-	return newFragment(strings.Join(parts, " "+conn+" "), args...)
-}
-
-func inFragment(colExpr string, op qbtypesv5.FilterOperator, vals []string) *fragment {
-	placeholders := strings.Repeat("?, ", len(vals))
-	placeholders = placeholders[:len(placeholders)-2]
-	args := make([]any, len(vals))
-	for i, s := range vals {
-		args[i] = s
-	}
-	return newFragment(colExpr+" "+opName(op)+" ("+placeholders+")", args...)
-}
-
-// opName returns the user-facing spelling of a FilterOperator. For the
-// operators we emit directly into SQL (=, !=, <, LIKE, IN, BETWEEN, …) the
-// spelling doubles as the SQL keyword. For the operators we don't emit
-// directly (ILIKE, CONTAINS, REGEXP, EXISTS, NOT EXISTS) it's only used in
-// error messages.
-func opName(op qbtypesv5.FilterOperator) string {
-	switch op {
+// operationName returns the user-facing spelling of a FilterOperator, used only in
+// error messages — go-sqlbuilder's Cond helpers emit the SQL keywords.
+func operationName(operation qbtypesv5.FilterOperator) string {
+	switch operation {
 	case qbtypesv5.FilterOperatorEqual:
 		return "="
 	case qbtypesv5.FilterOperatorNotEqual:
@@ -557,29 +568,6 @@ func opName(op qbtypesv5.FilterOperator) string {
 	return "?"
 }
 
-// iLikeToLike maps ILIKE → LIKE for the LOWER(col) LIKE LOWER(?) emission.
-func iLikeToLike(op qbtypesv5.FilterOperator) qbtypesv5.FilterOperator {
-	if op == qbtypesv5.FilterOperatorNotILike {
-		return qbtypesv5.FilterOperatorNotLike
-	}
-	return qbtypesv5.FilterOperatorLike
-}
-
-// containsToLike maps CONTAINS → LIKE for the LIKE '%val%' emission.
-func containsToLike(op qbtypesv5.FilterOperator) qbtypesv5.FilterOperator {
-	if op == qbtypesv5.FilterOperatorNotContains {
-		return qbtypesv5.FilterOperatorNotLike
-	}
-	return qbtypesv5.FilterOperatorLike
-}
-
-// escapeLike escapes the LIKE meta-characters % and _ in user input so that a
-// CONTAINS query of `50%` doesn't match every value containing `50`.
-func escapeLike(s string) string {
-	r := strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`)
-	return r.Replace(s)
-}
-
 func trimQuotes(s string) string {
 	if len(s) >= 2 {
 		if (s[0] == '"' && s[len(s)-1] == '"') || (s[0] == '\'' && s[len(s)-1] == '\'') {
@@ -589,4 +577,27 @@ func trimQuotes(s string) string {
 	s = strings.ReplaceAll(s, `\\`, `\`)
 	s = strings.ReplaceAll(s, `\'`, `'`)
 	return s
+}
+
+// stripOuterParens drops the single redundant enclosing pair that
+// go-sqlbuilder's top-level And/Or wraps the whole expression in, so the
+// emitted WHERE reads cleanly. It only strips when the first `(` matches the
+// final `)` — `NOT (...)` or `(a) AND (b)` are left untouched.
+func stripOuterParens(s string) string {
+	if len(s) < 2 || s[0] != '(' || s[len(s)-1] != ')' {
+		return s
+	}
+	depth := 0
+	for i := 0; i < len(s); i++ {
+		switch s[i] {
+		case '(':
+			depth++
+		case ')':
+			depth--
+			if depth == 0 && i != len(s)-1 {
+				return s
+			}
+		}
+	}
+	return s[1 : len(s)-1]
 }
