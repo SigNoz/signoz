@@ -10,25 +10,25 @@ import (
 	"github.com/uptrace/bun/migrate"
 )
 
-type addPinnedDashboard struct {
+type addUserDashboardPreference struct {
 	sqlstore  sqlstore.SQLStore
 	sqlschema sqlschema.SQLSchema
 }
 
-func NewAddPinnedDashboardFactory(sqlstore sqlstore.SQLStore, sqlschema sqlschema.SQLSchema) factory.ProviderFactory[SQLMigration, Config] {
-	return factory.NewProviderFactory(factory.MustNewName("add_pinned_dashboard"), func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
-		return &addPinnedDashboard{
+func NewAddUserDashboardPreferenceFactory(sqlstore sqlstore.SQLStore, sqlschema sqlschema.SQLSchema) factory.ProviderFactory[SQLMigration, Config] {
+	return factory.NewProviderFactory(factory.MustNewName("add_user_dashboard_preference"), func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
+		return &addUserDashboardPreference{
 			sqlstore:  sqlstore,
 			sqlschema: sqlschema,
 		}, nil
 	})
 }
 
-func (migration *addPinnedDashboard) Register(migrations *migrate.Migrations) error {
+func (migration *addUserDashboardPreference) Register(migrations *migrate.Migrations) error {
 	return migrations.Register(migration.Up, migration.Down)
 }
 
-func (migration *addPinnedDashboard) Up(ctx context.Context, db *bun.DB) error {
+func (migration *addUserDashboardPreference) Up(ctx context.Context, db *bun.DB) error {
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -36,12 +36,12 @@ func (migration *addPinnedDashboard) Up(ctx context.Context, db *bun.DB) error {
 	defer func() { _ = tx.Rollback() }()
 
 	sqls := migration.sqlschema.Operator().CreateTable(&sqlschema.Table{
-		Name: "pinned_dashboard",
+		Name: "user_dashboard_preference",
 		Columns: []*sqlschema.Column{
 			{Name: "user_id", DataType: sqlschema.DataTypeText, Nullable: false},
 			{Name: "dashboard_id", DataType: sqlschema.DataTypeText, Nullable: false},
 			{Name: "org_id", DataType: sqlschema.DataTypeText, Nullable: false},
-			{Name: "pinned_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false, Default: "current_timestamp"},
+			{Name: "is_pinned", DataType: sqlschema.DataTypeBoolean, Nullable: false, Default: "false"},
 		},
 		PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []sqlschema.ColumnName{"user_id", "dashboard_id"}},
 		ForeignKeyConstraints: []*sqlschema.ForeignKeyConstraint{
@@ -62,6 +62,6 @@ func (migration *addPinnedDashboard) Up(ctx context.Context, db *bun.DB) error {
 	return tx.Commit()
 }
 
-func (migration *addPinnedDashboard) Down(_ context.Context, _ *bun.DB) error {
+func (migration *addUserDashboardPreference) Down(_ context.Context, _ *bun.DB) error {
 	return nil
 }

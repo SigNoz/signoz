@@ -211,7 +211,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddDashboardNameFactory(sqlstore, sqlschema),
 		sqlmigration.NewFixChangelogOperationTypeFactory(sqlstore, sqlschema),
 		sqlmigration.NewCloudIntegrationRemoveCascadeDeleteFactory(sqlschema),
-		sqlmigration.NewAddPinnedDashboardFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddUserDashboardPreferenceFactory(sqlstore, sqlschema),
 	)
 }
 

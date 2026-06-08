@@ -121,8 +121,8 @@ type ListableDashboardV2 struct {
 }
 
 // DashboardListRow is the per-row shape Store.ListV2 returns. Bundles the
-// joined dashboard / pinned_dashboard data so the module layer can attach
-// tags and assemble the gettable view.
+// joined dashboard / user_dashboard_preference data so the module layer can
+// attach tags and assemble the gettable view.
 type DashboardListRow struct {
 	Dashboard *StorableDashboard
 	Pinned    bool

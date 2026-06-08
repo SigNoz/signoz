@@ -65,11 +65,11 @@ func (store *store) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) 
 	return storableDashboard, nil
 }
 
-// ListV2 emits the joined dashboard ⨝ pinned_dashboard query the spec calls
-// for. Aliases:
+// ListV2 emits the joined dashboard ⨝ user_dashboard_preference query the spec
+// calls for. Aliases:
 //
-//	dashboard         — the visitor expects this
-//	pinned_dashboard  AS pin  — only used inside this query
+//	dashboard                  — the visitor expects this
+//	user_dashboard_preference  AS preference  — only used inside this query
 //
 // Sort is "is_pinned DESC, <sort> <order>" so pinned dashboards float to the
 // top inside the requested ordering. Name-sort goes through the same
@@ -98,9 +98,9 @@ func (store *store) ListV2(
 		NewSelect().
 		Model(&rows).
 		ColumnExpr("dashboard.id, dashboard.org_id, dashboard.name, dashboard.data, dashboard.locked, dashboard.source, dashboard.created_at, dashboard.created_by, dashboard.updated_at, dashboard.updated_by").
-		ColumnExpr("CASE WHEN pin.user_id IS NOT NULL THEN 1 ELSE 0 END AS is_pinned").
+		ColumnExpr("CASE WHEN preference.is_pinned THEN 1 ELSE 0 END AS is_pinned").
 		ColumnExpr("COUNT(*) OVER () AS total").
-		Join("LEFT JOIN pinned_dashboard AS pin ON pin.user_id = ? AND pin.dashboard_id = dashboard.id", userID).
+		Join("LEFT JOIN user_dashboard_preference AS preference ON preference.user_id = ? AND preference.dashboard_id = dashboard.id", userID).
 		Where("dashboard.org_id = ?", orgID).
 		Where("dashboard.source != ?", dashboardtypes.SourceSystem)
 
@@ -312,27 +312,28 @@ func (store *store) RunInTx(ctx context.Context, cb func(ctx context.Context) er
 
 // PinForUser combines the count check, the existence check, and the upsert in
 // a single statement so the limit gate and the insert can't drift between two
-// round-trips.
+// round-trips. The count and existence checks gate on is_pinned = true so they
+// stay correct once the row carries preferences other than the pin.
 //
-//	pin exists? | count < 10? | WHERE passes?           | effect                            | rows
-//	------------|-------------|-------------------------|-----------------------------------|-----
-//	no          | yes         | yes (count branch)      | INSERT new row                    | 1
-//	no          | no          | no                      | nothing (limit hit)               | 0
-//	yes         | yes         | yes (count branch)      | INSERT → conflict → no-op UPDATE  | 1
-//	yes         | no          | yes (EXISTS OR branch)  | INSERT → conflict → no-op UPDATE  | 1
+//	pin exists? | pinned count < 10? | WHERE passes?           | effect                              | rows
+//	------------|--------------------|-------------------------|-------------------------------------|-----
+//	no          | yes                | yes (count branch)      | INSERT new pinned row               | 1
+//	no          | no                 | no                      | nothing (limit hit)                 | 0
+//	yes         | yes                | yes (count branch)      | INSERT → conflict → UPDATE is_pinned| 1
+//	yes         | no                 | yes (EXISTS OR branch)  | INSERT → conflict → UPDATE is_pinned| 1
 //
 // rows = 0 is the only signal of a real limit hit.
-func (store *store) PinForUser(ctx context.Context, pd *dashboardtypes.PinnedDashboard) error {
+func (store *store) PinForUser(ctx context.Context, preference *dashboardtypes.UserDashboardPreference) error {
 	res, err := store.sqlstore.BunDBCtx(ctx).NewRaw(`
-		INSERT INTO pinned_dashboard (user_id, dashboard_id, org_id, pinned_at)
-		SELECT ?, ?, ?, ?
-		WHERE (SELECT COUNT(*) FROM pinned_dashboard WHERE user_id = ?) < ?
-		   OR EXISTS (SELECT 1 FROM pinned_dashboard WHERE user_id = ? AND dashboard_id = ?)
-		ON CONFLICT (user_id, dashboard_id) DO UPDATE SET user_id = EXCLUDED.user_id
+		INSERT INTO user_dashboard_preference (user_id, dashboard_id, org_id, is_pinned)
+		SELECT ?, ?, ?, true
+		WHERE (SELECT COUNT(*) FROM user_dashboard_preference WHERE user_id = ? AND is_pinned = true) < ?
+		   OR EXISTS (SELECT 1 FROM user_dashboard_preference WHERE user_id = ? AND dashboard_id = ? AND is_pinned = true)
+		ON CONFLICT (user_id, dashboard_id) DO UPDATE SET is_pinned = true
 	`,
-		pd.UserID, pd.DashboardID, pd.OrgID, pd.PinnedAt,
-		pd.UserID, dashboardtypes.MaxPinnedDashboardsPerUser,
-		pd.UserID, pd.DashboardID,
+		preference.UserID, preference.DashboardID, preference.OrgID,
+		preference.UserID, dashboardtypes.MaxPinnedDashboardsPerUser,
+		preference.UserID, preference.DashboardID,
 	).Exec(ctx)
 	if err != nil {
 		return err
@@ -348,10 +349,13 @@ func (store *store) PinForUser(ctx context.Context, pd *dashboardtypes.PinnedDas
 	return nil
 }
 
+// UnpinForUser deletes the user's preference row. This is fine while is_pinned
+// is the only preference stored; once the row carries other preferences this
+// must become an UPDATE that clears is_pinned instead of dropping the row.
 func (store *store) UnpinForUser(ctx context.Context, userID valuer.UUID, dashboardID valuer.UUID) error {
 	_, err := store.sqlstore.BunDBCtx(ctx).
 		NewDelete().
-		Model((*dashboardtypes.PinnedDashboard)(nil)).
+		Model((*dashboardtypes.UserDashboardPreference)(nil)).
 		Where("user_id = ?", userID).
 		Where("dashboard_id = ?", dashboardID).
 		Exec(ctx)
