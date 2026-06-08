@@ -1,0 +1,11 @@
+.alertState {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-3);
+}
+
+.label {
+	font-size: var(--periscope-font-size-base);
+	line-height: 18px;
+	letter-spacing: -0.07px;
+}
