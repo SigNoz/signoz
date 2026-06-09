@@ -559,8 +559,11 @@ func (fe *FormulaEvaluator) evaluateForLabelSet(targetLabels []*Label, lookup *s
 	}
 	slices.Sort(timestamps)
 
-	// Evaluate formula at each timestamp
-	var resultValues []*TimeSeriesValue
+	// backing slab-allocates all values in one block; resultValues holds interior
+	// pointers into it. Fixed length and never appended to, so it never moves.
+	backing := make([]TimeSeriesValue, len(timestamps))
+	resultValues := make([]*TimeSeriesValue, 0, len(timestamps))
+	n := 0
 	values := fe.valuesPool.Get().(map[string]any)
 	defer fe.valuesPool.Put(values)
 
@@ -605,10 +608,12 @@ func (fe *FormulaEvaluator) evaluateForLabelSet(targetLabels []*Label, lookup *s
 			continue
 		}
 
-		resultValues = append(resultValues, &TimeSeriesValue{
+		backing[n] = TimeSeriesValue{
 			Timestamp: timestamp,
 			Value:     value,
-		})
+		}
+		resultValues = append(resultValues, &backing[n])
+		n++
 	}
 
 	if len(resultValues) == 0 {
