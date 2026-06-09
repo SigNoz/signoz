@@ -317,14 +317,36 @@ def test_namespaces_pod_phase_aggregation(
     }
 
 
-def test_namespaces_groupby_cluster(
+@pytest.mark.parametrize(
+    "group_key,expected_running",
+    [
+        # groupBy=[k8s.namespace.name]: one record per namespace, namespaceName
+        # populated (namespaces.go:27-30). Each namespace has 1 running pod.
+        pytest.param(
+            "k8s.namespace.name",
+            {"gb-ns-1": 1, "gb-ns-2": 1, "gb-ns-3": 1, "gb-ns-4": 1},
+            id="namespace_name",
+        ),
+        # groupBy=[k8s.cluster.name]: aggregated across each cluster's 2
+        # namespaces, namespaceName empty. Each cluster has 2 x 1 = 2 running pods.
+        pytest.param(
+            "k8s.cluster.name",
+            {"gb-cluster-a": 2, "gb-cluster-b": 2},
+            id="cluster",
+        ),
+    ],
+)
+def test_namespaces_groupby(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
+    group_key: str,
+    expected_running: dict,
 ) -> None:
-    """Explicit groupBy=[k8s.cluster.name]: 2 records, aggregated counts per cluster,
-    meta surfaces cluster.name. Each cluster has 2 namespaces with 1 running pod each."""
+    """groupBy returns one record per distinct group with aggregated pod-phase
+    counts. namespaceName is populated only when grouping by k8s.namespace.name
+    (namespaces.go:27-30 list-vs-grouped branch); meta surfaces the groupBy key."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
@@ -343,7 +365,7 @@ def test_namespaces_groupby_cluster(
             "limit": 50,
             "groupBy": [
                 {
-                    "name": "k8s.cluster.name",
+                    "name": group_key,
                     "fieldDataType": "string",
                     "fieldContext": "resource",
                 }
@@ -353,19 +375,21 @@ def test_namespaces_groupby_cluster(
     )
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()["data"]
-    assert data["total"] == 2
+    assert data["total"] == len(expected_running)
 
-    clusters_seen = set()
-    for rec in data["records"]:
-        # Per-row namespace identity is cleared; only the groupBy field surfaces.
-        assert rec["namespaceName"] == ""
-        # Each cluster has 2 namespaces x 1 pod = 2 running pods.
-        assert rec["podCountsByPhase"]["running"] == 2
+    group_of = lambda r: r["namespaceName"] if group_key == "k8s.namespace.name" else r["meta"][group_key]  # noqa: E731  # pylint: disable=unnecessary-lambda-assignment
+    by_group = {group_of(r): r for r in data["records"]}
+    assert set(by_group.keys()) == set(expected_running.keys())
+
+    for group, running in expected_running.items():
+        rec = by_group[group]
+        # namespaceName populated per namespace when grouping by k8s.namespace.name,
+        # empty otherwise.
+        assert rec["namespaceName"] == (group if group_key == "k8s.namespace.name" else "")
+        assert rec["podCountsByPhase"]["running"] == running
         for other in ("pending", "succeeded", "failed", "unknown"):
             assert rec["podCountsByPhase"][other] == 0
-        assert "k8s.cluster.name" in rec["meta"], rec["meta"]
-        clusters_seen.add(rec["meta"]["k8s.cluster.name"])
-    assert clusters_seen == {"gb-cluster-a", "gb-cluster-b"}
+        assert group_key in rec["meta"], rec["meta"]
 
 
 def test_namespaces_pagination(

@@ -480,14 +480,36 @@ def test_jobs_base_filter_drops_non_job_pods(
     assert all(r["jobName"] != "" for r in data["records"])
 
 
-def test_jobs_groupby_namespace(
+@pytest.mark.parametrize(
+    "group_key,expected_running",
+    [
+        # groupBy=[k8s.job.name]: one record per job, jobName populated
+        # (jobs.go:28-31). 1 running pod each.
+        pytest.param(
+            "k8s.job.name",
+            {"gb-job-a1": 1, "gb-job-a2": 1, "gb-job-b1": 1, "gb-job-b2": 1},
+            id="job_name",
+        ),
+        # groupBy=[k8s.namespace.name]: aggregated across each namespace's 2
+        # jobs, jobName cleared. 2 x 1 = 2 running pods each.
+        pytest.param(
+            "k8s.namespace.name",
+            {"gb-ns-a": 2, "gb-ns-b": 2},
+            id="namespace",
+        ),
+    ],
+)
+def test_jobs_groupby(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
+    group_key: str,
+    expected_running: dict,
 ) -> None:
-    """groupBy=[k8s.namespace.name]: 2 records, jobName cleared,
-    phase counts aggregate per namespace, meta surfaces k8s.namespace.name."""
+    """groupBy returns one record per distinct group with aggregated pod-phase
+    counts. jobName is populated only when grouping by k8s.job.name
+    (jobs.go:28-31 list-vs-grouped branch); meta surfaces the groupBy key."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
@@ -506,7 +528,7 @@ def test_jobs_groupby_namespace(
             "limit": 50,
             "groupBy": [
                 {
-                    "name": "k8s.namespace.name",
+                    "name": group_key,
                     "fieldDataType": "string",
                     "fieldContext": "resource",
                 }
@@ -516,19 +538,21 @@ def test_jobs_groupby_namespace(
     )
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()["data"]
-    assert data["total"] == 2
+    assert data["total"] == len(expected_running)
 
-    namespaces_seen = set()
-    for rec in data["records"]:
-        # Per-row job identity is cleared; only the groupBy field surfaces.
-        assert rec["jobName"] == ""
-        # Each ns has 2 jobs x 1 Running pod = 2 Running pods.
-        assert rec["podCountsByPhase"]["running"] == 2
+    is_job_group = group_key == "k8s.job.name"
+    group_of = lambda r: r["jobName"] if is_job_group else r["meta"][group_key]  # noqa: E731  # pylint: disable=unnecessary-lambda-assignment
+    by_group = {group_of(r): r for r in data["records"]}
+    assert set(by_group.keys()) == set(expected_running.keys())
+
+    for group, running in expected_running.items():
+        rec = by_group[group]
+        # jobName populated per job when grouping by it, empty otherwise.
+        assert rec["jobName"] == (group if is_job_group else "")
+        assert rec["podCountsByPhase"]["running"] == running
         for other in ("pending", "succeeded", "failed", "unknown"):
             assert rec["podCountsByPhase"][other] == 0
-        assert "k8s.namespace.name" in rec["meta"], rec["meta"]
-        namespaces_seen.add(rec["meta"]["k8s.namespace.name"])
-    assert namespaces_seen == {"gb-ns-a", "gb-ns-b"}
+        assert group_key in rec["meta"], rec["meta"]
 
 
 def test_jobs_pagination(
