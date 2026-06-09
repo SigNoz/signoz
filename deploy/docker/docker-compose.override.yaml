@@ -1,6 +1,0 @@
-services:
- signoz:
-  environment:
-   # Enable dashboard v2 (maps to flagger.config.boolean.use_dashboard_v2: true)
-   # Double underscore is the key separator; single underscore stays part of the key.
-   - SIGNOZ_FLAGGER__CONFIG__BOOLEAN__USE_DASHBOARD_V2=true
