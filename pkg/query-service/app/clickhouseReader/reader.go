@@ -159,9 +159,7 @@ type ClickHouseReader struct {
 	traceResourceTableV3 string
 	traceSummaryTable    string
 
-	fluxIntervalForTraceDetail time.Duration
-	cache                      cache.Cache
-	cacheForTraceDetail        cache.Cache
+	cache cache.Cache
 	metadataDB                 string
 	metadataTable              string
 }
@@ -173,8 +171,6 @@ func NewReader(
 	telemetryStore telemetrystore.TelemetryStore,
 	prometheus prometheus.Prometheus,
 	cluster string,
-	fluxIntervalForTraceDetail time.Duration,
-	cacheForTraceDetail cache.Cache,
 	cache cache.Cache,
 	options *Options,
 ) *ClickHouseReader {
@@ -222,9 +218,7 @@ func NewReader(
 		traceTableName:             traceTableName,
 		traceResourceTableV3:       options.primary.TraceResourceTableV3,
 		traceSummaryTable:          options.primary.TraceSummaryTable,
-		fluxIntervalForTraceDetail: fluxIntervalForTraceDetail,
-		cache:                      cache,
-		cacheForTraceDetail:        cacheForTraceDetail,
+		cache: cache,
 		metadataDB:                 options.primary.MetadataDB,
 		metadataTable:              options.primary.MetadataTable,
 	}
@@ -862,38 +856,6 @@ func (r *ClickHouseReader) GetUsage(ctx context.Context, queryParams *model.GetU
 	}
 
 	return &usageItems, nil
-}
-
-func (r *ClickHouseReader) GetSpansForTrace(ctx context.Context, traceID string, traceDetailsQuery string) ([]model.SpanItemV2, *model.ApiError) {
-
-	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
-		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalTraces.StringValue(),
-		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
-		instrumentationtypes.CodeFunctionName: "GetSpansForTrace",
-	})
-
-	var traceSummary model.TraceSummary
-	summaryQuery := fmt.Sprintf("SELECT trace_id, min(start) AS start, max(end) AS end, sum(num_spans) AS num_spans FROM %s.%s WHERE trace_id=$1 GROUP BY trace_id", r.TraceDB, r.traceSummaryTable)
-	err := r.db.QueryRow(ctx, summaryQuery, traceID).Scan(&traceSummary.TraceID, &traceSummary.Start, &traceSummary.End, &traceSummary.NumSpans)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return []model.SpanItemV2{}, nil
-		}
-		r.logger.Error("Error in processing trace summary sql query", errorsV2.Attr(err))
-		return nil, model.ExecutionError(fmt.Errorf("error in processing trace summary sql query: %w", err))
-	}
-
-	var searchScanResponses []model.SpanItemV2
-	queryStartTime := time.Now()
-	err = r.db.Select(ctx, &searchScanResponses, traceDetailsQuery, traceID, strconv.FormatInt(traceSummary.Start.Unix()-1800, 10), strconv.FormatInt(traceSummary.End.Unix(), 10))
-	r.logger.Info(traceDetailsQuery)
-	if err != nil {
-		r.logger.Error("Error in processing sql query", errorsV2.Attr(err))
-		return nil, model.ExecutionError(fmt.Errorf("error in processing trace data sql query: %w", err))
-	}
-	r.logger.Info("trace details query took: ", "duration", time.Since(queryStartTime), "traceID", traceID)
-
-	return searchScanResponses, nil
 }
 
 

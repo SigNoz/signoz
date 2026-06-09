@@ -1409,8 +1409,6 @@ func Test_querier_Traces_runWindowBasedListQueryDesc(t *testing.T) {
 				telemetryStore,
 				prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{Timeout: 2 * time.Minute}, telemetryStore),
 				"",
-				time.Duration(time.Second),
-				nil,
 				nil,
 				options,
 			)
@@ -1635,8 +1633,6 @@ func Test_querier_Traces_runWindowBasedListQueryAsc(t *testing.T) {
 				telemetryStore,
 				prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{Timeout: 2 * time.Minute}, telemetryStore),
 				"",
-				time.Duration(time.Second),
-				nil,
 				nil,
 				options,
 			)
@@ -1936,8 +1932,6 @@ func Test_querier_Logs_runWindowBasedListQueryDesc(t *testing.T) {
 				telemetryStore,
 				prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{Timeout: 2 * time.Minute}, telemetryStore),
 				"",
-				time.Duration(time.Second),
-				nil,
 				nil,
 				options,
 			)
@@ -2164,8 +2158,6 @@ func Test_querier_Logs_runWindowBasedListQueryAsc(t *testing.T) {
 				telemetryStore,
 				prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{Timeout: 2 * time.Minute}, telemetryStore),
 				"",
-				time.Duration(time.Second),
-				nil,
 				nil,
 				options,
 			)
