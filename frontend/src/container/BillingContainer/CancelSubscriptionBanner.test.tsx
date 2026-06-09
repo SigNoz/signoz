@@ -123,9 +123,17 @@ describe('CancelSubscriptionBanner', () => {
 		await user.type(screen.getByTestId('cancel-confirm-input'), 'cancel');
 		await user.click(screen.getByTestId('cancel-subscription-confirm-btn'));
 
-		expect(appendSpy).toHaveBeenCalled();
+		const appendedAnchor = appendSpy.mock.calls
+			.map(([node]) => node)
+			.find(
+				(node): node is HTMLAnchorElement =>
+					node instanceof HTMLAnchorElement && node.href.startsWith('mailto:'),
+			);
+		expect(appendedAnchor).toBeDefined();
 		expect(mockClick).toHaveBeenCalledTimes(1);
-		expect(removeSpy).toHaveBeenCalled();
+		expect(removeSpy.mock.calls.some(([node]) => node === appendedAnchor)).toBe(
+			true,
+		);
 
 		expect(
 			screen.getByText(/An email draft has been opened/i),
