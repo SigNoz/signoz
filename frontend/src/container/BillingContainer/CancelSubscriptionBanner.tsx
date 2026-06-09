@@ -108,6 +108,10 @@ function CancelSubscriptionBanner(): JSX.Element {
 	};
 
 	const handleCopyTemplate = (): void => {
+		void logEvent('Billing : Cancel Subscription Email Template Copied', {
+			user: pick(user, ['email', 'displayName', 'role', 'organization']),
+			role: user?.role,
+		});
 		copyToClipboard(buildEmailBody(orgName, userEmail));
 		setCopied(true);
 		if (copyTimerRef.current) {
@@ -117,6 +121,10 @@ function CancelSubscriptionBanner(): JSX.Element {
 	};
 
 	const handleRetryMailto = (): void => {
+		void logEvent('Billing : Cancel Subscription Email Client Reopened', {
+			user: pick(user, ['email', 'displayName', 'role', 'organization']),
+			role: user?.role,
+		});
 		openMailto(buildMailtoUri(orgName, userEmail));
 	};
 
