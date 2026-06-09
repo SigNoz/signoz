@@ -1,0 +1,2390 @@
+{
+  "description": "Out of the box dashboard for Azure Kubernetes Service Overview.",
+  "image": "data:image/svg+xml;base64,PHN2ZyBpZD0idXVpZC1jNmMzZjc1ZS01MzY5LTQ0OGUtYjg5NS0zZjk5ZmIxMWJlYmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgdmlld0JveD0iMCAwIDE4IDE4Ij48cGF0aCBkPSJNNy40NTYuNjA4Yy0uOTAyLS40MTEtMS45MDktLjU1OS0yLjg5OC0uNDE3LjA1My4wNDEuMDg2LjEwNy4wODIuMTc5bC0uMDgyLDEuNDA1Yy44NzktLjE4MywxLjgyNy0uMDQzLDIuNjUuNDY5LjMzOC4yMS42MzkuNDc0Ljg5Mi43ODEsMCwwLC4wMjQuMDI3LjA2MS4wNjkuMDkxLjEwNC4yNi4yOTkuMzM0LjQwMi4wMDYuMDMxLS4wMDQuMDYyLS4wMjYuMDg0LS4wMDEuMDAxLS4wMDIuMDAyLS4wMDMuMDA0bC0uMDUyLjA0OC0uNzY1LjY4MWMtLjAzOS4wMzUtLjA0Mi4wOTUtLjAwNy4xMzQuMDE3LjAxOS4wNC4wMy4wNjUuMDMxbDEuMTA3LjA2NSwxLjQwMi4wODJjLjA3Mi4wMDQuMTM4LS4wMjkuMTc5LS4wODMuMDI1LS4wMzMuMDQxLS4wNzMuMDQ0LS4xMTdsLjE0Ny0yLjUxM2MuMDAzLS4wNTItLjAzNy0uMDk3LS4wODktLjEtLjAyNS0uMDAxLS4wNDkuMDA3LS4wNjguMDI0bC0uNzY0LjY4MnYuMDAzYy0uMTA2LS4xNjQtLjIyLS4zMTktLjM0LS40NjctLjUxNi0uNjM2LTEuMTU5LTEuMTIyLTEuODY5LTEuNDQ1WiIgZmlsbD0iIzAwNzhkNCIvPjxwYXRoIGQ9Ik00LjQ0MS4xNDdMMS45MzIsMGMtLjA1Mi0uMDAzLS4wOTcuMDM3LS4xLjA5LS4wMDEuMDI1LjAwNy4wNDkuMDI0LjA2OGwuNjgxLjc2NmguMDAzYy0uMTU5LjEwNC0uMzExLjIxNC0uNDU1LjMzMS0uNjI5LjUwOS0xLjExMSwxLjE0My0xLjQzNiwxLjg0Mi0uNDI0LjkxMy0uNTc4LDEuOTM3LS40MzQsMi45NDIuMDQxLS4wNTMuMTA3LS4wODYuMTc5LS4wODJsMS40MDIuMDgyYy0uMTgzLS44ODEtLjA0My0xLjgzLjQ2OC0yLjY1NS4yMDktLjMzOC40NzMtLjY0Ljc4LS44OTMsMCwwLC4wMjktLjAyNi4wNzItLjA2NC4xMDQtLjA5Mi4yOTctLjI1OS4zOTktLjMzMi4wMzEtLjAwNi4wNjIuMDA0LjA4NC4wMjYuMDAxLjAwMS4wMDIuMDAyLjAwMy4wMDNsLjA0OC4wNTIuNjc5Ljc2NmMuMDM1LjAzOS4wOTUuMDQyLjEzNC4wMDguMDE5LS4wMTcuMDMtLjA0LjAzMS0uMDY1bC4wNjQtMS4xMDkuMDgyLTEuNDA1Yy4wMDQtLjA3Mi0uMDI5LS4xMzgtLjA4Mi0uMTc5LS4wMzMtLjAyNS0uMDczLS4wNDEtLjExNy0uMDQ0WiIgZmlsbD0iIzQ2YTBkZSIvPjxwYXRoIGQ9Ik0xMC40MTEsNS42MTFjLjAyNS0uMzYzLjAxMy0uNzMtLjAzOS0xLjA5NS0uMDQxLjA1My0uMTA3LjA4Ni0uMTc5LjA4MmwtMS40MDItLjA4MmMuMDM4LjE4Ni4wNjIuMzc0LjA3MS41NjRsMS41NS41M1oiIGZpbGw9IiMxNTVlYTEiLz48cGF0aCBkPSJNMy41NzYsOS42MDRsLjI3MS0uMDQ5LDEuODQ1LS4zNDNjLS4wOTUtLjA4NC0uMTU1LS4yMDYtLjE1NS0uMzR2LS4wMjVjLS43MzMuMDUxLTEuNDg3LS4xMTktMi4xNTktLjUzNi0uMzM4LS4yMS0uNjM5LS40NzQtLjg5Mi0uNzgxLDAsMC0uMDI0LS4wMjctLjA2MS0uMDY5LS4wOTEtLjEwNC0uMjYtLjI5OS0uMzM0LS40MDItLjAwNi0uMDMxLjAwNC0uMDYyLjAyNi0uMDg0LjAwMS0uMDAxLjAwMi0uMDAyLjAwMy0uMDA0bC4wNTItLjA0OC43NjUtLjY4MWMuMDM5LS4wMzUuMDQyLS4wOTUuMDA3LS4xMzQtLjAxNy0uMDE5LS4wNC0uMDMtLjA2NS0uMDMxbC0xLjEwNy0uMDY1LTEuNDAyLS4wODJjLS4wNzItLjAwNC0uMTM4LjAyOS0uMTc5LjA4My0uMDI1LjAzMy0uMDQxLjA3My0uMDQ0LjExN0wwLDguNjQ1Yy0uMDAzLjA1Mi4wMzcuMDk3LjA4OS4xLjAyNS4wMDEuMDQ5LS4wMDcuMDY4LS4wMjRsLjc2NC0uNjgydi0uMDAzYy4xMDYuMTY0LjIyLjMxOS4zNC40NjcuNTE2LjYzNiwxLjE1OSwxLjEyMiwxLjg2OSwxLjQ0NS4wMjYuMDEyLjA1My4wMjEuMDguMDMzLjAyOS0uMTg4LjE3My0uMzQyLjM2NS0uMzc2WiIgZmlsbD0iIzhkYzhlOCIvPjxnPjxwb2x5Z29uIHBvaW50cz0iOC4yNDEgNS4zNDMgNS45NjggNS43NjUgNS45NjggOC44NyA4LjI0MSA5LjM1NSAxMC41MjIgOC40NCAxMC41MjIgNi4xMjMgOC4yNDEgNS4zNDMiIGZpbGw9IiM4NjYxYzUiLz48cGF0aCBkPSJNOC4zMjgsOS4zMDdsMi4wODItLjg0NGMuMDQ4LS4wMTkuMDg0LS4wNjEuMDk1LS4xMTF2LTIuMTAyYy0uMDA0LS4wNjQtLjA0NC0uMTE5LS4xMDMtLjE0M2wtMi4xMDYtLjcxNmgtLjA5NWwtMi4wNjYuMzgyYy0uMDY2LjAxNy0uMTE0LjA3NS0uMTE5LjE0M3YyLjgxYy0uMDAyLjA3My4wNDguMTM2LjExOS4xNTFsMi4wOS40MzhjLjAzNS4wMDQuMDcuMDAyLjEwMy0uMDA4WiIgZmlsbD0ibm9uZSIvPjxwYXRoIGQ9Ik01Ljk2OCw1Ljc2NXYzLjEwNWwyLjI5Ny40ODZ2LTMuOThsLTIuMjk3LjM5Wk02LjkzOCw4LjYzMWwtLjY0NC0uMTI3di0yLjM4OGwuNjQ0LS4xMDN2Mi42MTlaTTcuOTM5LDguODE0bC0uNzM5LS4xMTl2LTIuNzNsLjczOS0uMTI3djIuOTc3WiIgZmlsbD0iIzU2NDA3ZiIvPjxwb2x5Z29uIHBvaW50cz0iMTMuMTYgNS4zODMgMTAuODg3IDUuODA1IDEwLjg4NyA4LjkwOSAxMy4xNiA5LjM5NSAxNS40MzMgOC40NzEgMTUuNDMzIDYuMTYzIDEzLjE2IDUuMzgzIiBmaWxsPSIjODY2MWM1Ii8+PHBhdGggZD0iTTEwLjg4Nyw1LjgwNXYzLjEwNWwyLjI4MS40ODZ2LTMuOThsLTIuMjgxLjM5Wk0xMS44NDksOC42N2wtLjY0NC0uMTI3di0yLjM4OGwuNjQ0LS4xMDN2Mi42MTlaTTEyLjg1LDguODU0bC0uNzM5LS4xMTl2LTIuNzNsLjczOS0uMTM1djIuOTg1WiIgZmlsbD0iIzU2NDA3ZiIvPjxwb2x5Z29uIHBvaW50cz0iNS45MTIgOS42MjYgMy42MzkgMTAuMDQ4IDMuNjM5IDEzLjE1MiA1LjkxMiAxMy42MzggOC4xOTMgMTIuNzIyIDguMTkzIDEwLjQwNiA1LjkxMiA5LjYyNiIgZmlsbD0iIzg2NjFjNSIvPjxwYXRoIGQ9Ik0zLjYzMiwxMC4wNDh2My4wODFsMi4yOTcuNDg2di0zLjk4bC0yLjI5Ny40MTRaTTQuNTkzLDEyLjkyMWwtLjY0NC0uMTM1di0yLjM4OGwuNjQ0LS4xMTF2Mi42MzVaTTUuNjAyLDEzLjEyOGwtLjczOS0uMTE5di0yLjc2MmwuNzM5LS4xMjd2My4wMDlaIiBmaWxsPSIjNTY0MDdmIi8+PHBvbHlnb24gcG9pbnRzPSIxMC44MTYgOS41OTQgOC41NDMgMTAuMDE2IDguNTQzIDEzLjEyIDEwLjgxNiAxMy42MTQgMTMuMDg5IDEyLjY5IDEzLjA4OSAxMC4zNzQgMTAuODE2IDkuNTk0IiBmaWxsPSIjODY2MWM1Ii8+PHBhdGggZD0iTTguNTQzLDEwLjAxNnYzLjExMmwyLjI4OS40ODZ2LTMuOThsLTIuMjg5LjM4MlpNOS41MDQsMTIuODg5bC0uNjQ0LS4xMzV2LTIuMzg4bC42NDQtLjExMXYyLjYzNVpNMTAuNTA2LDEzLjA2NWwtLjczOS0uMTE5di0yLjczbC43MzktLjEyN3YyLjk3N1oiIGZpbGw9IiM1NjQwN2YiLz48cG9seWdvbiBwb2ludHM9IjE1LjcxOSA5LjYzNCAxMy40NDYgMTAuMDU2IDEzLjQ0NiAxMy4xNiAxNS43MTkgMTMuNjQ2IDE4IDEyLjczIDE4IDEwLjQxNCAxNS43MTkgOS42MzQiIGZpbGw9IiM4NjYxYzUiLz48cGF0aCBkPSJNMTMuNDQ2LDEwLjA1NnYzLjA3M2wyLjI5Ny40ODZ2LTMuOThsLTIuMjk3LjQyMlpNMTQuNDE2LDEyLjkyOWwtLjY0NC0uMTM1di0yLjM4OGwuNjQ0LS4xMTF2Mi42MzVaTTE1LjQxNywxMy4xMDRsLS43MzktLjExOXYtMi43M2wuNzM5LS4xMjd2Mi45NzdaIiBmaWxsPSIjNTY0MDdmIi8+PHBvbHlnb24gcG9pbnRzPSI4LjE4NSAxMy45NTYgNS45MTIgMTQuMzcgNS45MTIgMTcuNDc1IDguMTg1IDE3Ljk2OCAxMC40NjYgMTcuMDQ1IDEwLjQ2NiAxNC43MzYgOC4xODUgMTMuOTU2IiBmaWxsPSIjODY2MWM1Ii8+PHBhdGggZD0iTTguMjczLDE3LjkwNGwyLjA3NC0uNzk2Yy4wNi0uMDIxLjA5OS0uMDguMDk1LS4xNDN2LTIuMDdjLjAxMi0uMDc2LS4wMzEtLjE0OS0uMTAzLS4xNzVsLTIuMDk4LS43MTZjLS4wMzEtLjAxMi0uMDY1LS4wMTItLjA5NSwwbC0yLjA2Ni4zNzRjLS4wNzQuMDEyLS4xMjguMDc2LS4xMjcuMTUxdjIuODE4Yy0uMDAyLjA3My4wNDguMTM2LjExOS4xNTFsMi4wOS40MDZjLjAzNi4wMTIuMDc1LjAxMi4xMTEsMFoiIGZpbGw9Im5vbmUiLz48cGF0aCBkPSJNNS45MTIsMTQuMzd2My4xMDVsMi4yOTcuNDk0di00LjA0NGwtMi4yOTcuNDQ2Wk02Ljg4MiwxNy4yNDRsLS42NDQtLjEzNXYtMi4zODhsLjY0NC0uMTExdjIuNjM1Wk03Ljg4MywxNy40MjdsLS43MzktLjExOXYtMi43MzhsLjczOS0uMTI3djIuOTg1WiIgZmlsbD0iIzU2NDA3ZiIvPjxwb2x5Z29uIHBvaW50cz0iMTMuMDk3IDEzLjk4OCAxMC44MjQgMTQuNDEgMTAuODI0IDE3LjUxNCAxMy4wOTcgMTggMTUuMzc3IDE3LjA4NSAxNS4zNzcgMTQuNzY4IDEzLjA5NyAxMy45ODgiIGZpbGw9IiM4NjYxYzUiLz48cGF0aCBkPSJNMTAuODI0LDE0LjQxdjMuMTA1bDIuMjk3LjQ4NnYtMy45OGwtMi4yOTcuMzlaTTExLjc5MywxNy4yODRsLS42NDQtLjEzNXYtMi4zODhsLjY0NC0uMTExdjIuNjM1Wk0xMi43OTUsMTcuNDU5bC0uNzM5LS4xMTl2LTIuNzNsLjczOS0uMTI3djIuOTc3WiIgZmlsbD0iIzU2NDA3ZiIvPjwvZz48L3N2Zz4=",
+  "layout": [
+    {
+      "h": 1,
+      "i": "0df5d304-24f4-4ff5-8489-b591704c5203",
+      "maxH": 1,
+      "minH": 1,
+      "minW": 12,
+      "moved": false,
+      "static": false,
+      "w": 12,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "h": 1,
+      "i": "7d01ae7a-637e-4ad6-a5e2-6c9ed6b5cf18",
+      "maxH": 1,
+      "minH": 1,
+      "minW": 12,
+      "moved": false,
+      "static": false,
+      "w": 12,
+      "x": 0,
+      "y": 1
+    },
+    {
+      "h": 1,
+      "i": "c36253f9-18bf-4ecd-ac62-ee80d4fbd816",
+      "maxH": 1,
+      "minH": 1,
+      "minW": 12,
+      "moved": false,
+      "static": false,
+      "w": 12,
+      "x": 0,
+      "y": 2
+    },
+    {
+      "h": 1,
+      "i": "11c8b5f7-3a17-41d2-8c44-4931141f731d",
+      "maxH": 1,
+      "minH": 1,
+      "minW": 12,
+      "moved": false,
+      "static": false,
+      "w": 12,
+      "x": 0,
+      "y": 15
+    },
+    {
+      "h": 1,
+      "i": "99e3f7df-274e-4506-a746-461db197efce",
+      "maxH": 1,
+      "minH": 1,
+      "minW": 12,
+      "moved": false,
+      "static": false,
+      "w": 12,
+      "x": 0,
+      "y": 34
+    }
+  ],
+  "panelMap": {
+    "0df5d304-24f4-4ff5-8489-b591704c5203": {
+      "collapsed": true,
+      "widgets": [
+        {
+          "h": 6,
+          "i": "187b5e6b-684d-477d-8451-ed8e6564aade",
+          "moved": false,
+          "static": false,
+          "w": 6,
+          "x": 0,
+          "y": 1
+        },
+        {
+          "h": 6,
+          "i": "c5a2e85d-4fcf-485b-b401-cb20ba337887",
+          "moved": false,
+          "static": false,
+          "w": 6,
+          "x": 6,
+          "y": 1
+        }
+      ]
+    },
+    "11c8b5f7-3a17-41d2-8c44-4931141f731d": {
+      "collapsed": true,
+      "widgets": [
+        {
+          "h": 6,
+          "i": "096cd019-c069-44da-b5a6-983349cb3f9d",
+          "moved": false,
+          "static": false,
+          "w": 6,
+          "x": 0,
+          "y": 16
+        },
+        {
+          "h": 6,
+          "i": "bef9ae79-3ca7-4ff3-bc75-a9abbe69ba0d",
+          "moved": false,
+          "static": false,
+          "w": 6,
+          "x": 6,
+          "y": 16
+        },
+        {
+          "h": 6,
+          "i": "5d27fb6a-36e7-45fb-875c-a129b0c01e33",
+          "moved": false,
+          "static": false,
+          "w": 6,
+          "x": 0,
+          "y": 22
+        },
+        {
+          "h": 6,
+          "i": "0562f446-ec2c-494d-a826-97e859afb12a",
+          "moved": false,
+          "static": false,
+          "w": 6,
+          "x": 6,
+          "y": 22
+        },
+        {
+          "h": 6,
+          "i": "0d00dc4c-6e0a-40cf-8c6e-c431fd53d77d",
+          "moved": false,
+          "static": false,
+          "w": 6,
+          "x": 0,
+          "y": 28
+        }
+      ]
+    },
+    "7d01ae7a-637e-4ad6-a5e2-6c9ed6b5cf18": {
+      "collapsed": true,
+      "widgets": [
+        {
+          "h": 6,
+          "i": "cc89f66b-6793-408e-ac96-48fff7b2c5cd",
+          "moved": false,
+          "static": false,
+          "w": 6,
+          "x": 0,
+          "y": 8
+        },
+        {
+          "h": 6,
+          "i": "0485b85f-353c-4d2e-8bf9-3f25e5193e52",
+          "moved": false,
+          "static": false,
+          "w": 6,
+          "x": 6,
+          "y": 8
+        },
+        {
+          "h": 6,
+          "i": "bc525de2-6e94-47f7-8dc6-6c3b994c55d1",
+          "moved": false,
+          "static": false,
+          "w": 6,
+          "x": 0,
+          "y": 14
+        }
+      ]
+    },
+    "99e3f7df-274e-4506-a746-461db197efce": {
+      "collapsed": true,
+      "widgets": [
+        {
+          "h": 6,
+          "i": "a241ba7b-0a9c-402c-afd7-dcdef8209775",
+          "moved": false,
+          "static": false,
+          "w": 6,
+          "x": 0,
+          "y": 35
+        }
+      ]
+    },
+    "c36253f9-18bf-4ecd-ac62-ee80d4fbd816": {
+      "collapsed": true,
+      "widgets": [
+        {
+          "h": 6,
+          "i": "77676a12-bb4b-49aa-a19f-75ccf91640dc",
+          "moved": false,
+          "static": false,
+          "w": 6,
+          "x": 0,
+          "y": 3
+        },
+        {
+          "h": 6,
+          "i": "3563fdb3-431c-4191-925b-752f3449c51e",
+          "moved": false,
+          "static": false,
+          "w": 6,
+          "x": 6,
+          "y": 3
+        },
+        {
+          "h": 6,
+          "i": "175b3ff4-027b-481c-bf99-e815b57a59d7",
+          "moved": false,
+          "static": false,
+          "w": 6,
+          "x": 0,
+          "y": 9
+        }
+      ]
+    }
+  },
+  "tags": [],
+  "title": "Azure Kubernetes Service (AKS) Overview",
+  "uploadedGrafana": false,
+  "uuid": "019eab5c-45ce-7b33-bcba-d919f5917a0d",
+  "variables": {
+    "azuremonitor.subscription_id": {
+      "allSelected": true,
+      "customValue": "",
+      "defaultValue": "",
+      "description": "Subscription ID for your Azure Account",
+      "dynamicVariablesAttribute": "azuremonitor.subscription_id",
+      "dynamicVariablesSource": "All telemetry",
+      "haveCustomValuesSelected": false,
+      "id": "c02cc0d0-11fb-44e2-b9f3-94f04bb84975",
+      "key": "c02cc0d0-11fb-44e2-b9f3-94f04bb84975",
+      "modificationUUID": "c3ac30a4-f0d6-4a2f-bd88-eeb882af83c9",
+      "multiSelect": false,
+      "name": "azuremonitor.subscription_id",
+      "order": 0,
+      "queryValue": "",
+      "showALLOption": true,
+      "sort": "DISABLED",
+      "textboxValue": "",
+      "type": "DYNAMIC"
+    },
+    "name": {
+      "allSelected": true,
+      "customValue": "",
+      "defaultValue": "",
+      "description": "Name of the AKS cluster",
+      "dynamicVariablesAttribute": "name",
+      "dynamicVariablesSource": "All telemetry",
+      "haveCustomValuesSelected": false,
+      "id": "0f42c222-6203-4955-b18d-138080829e96",
+      "key": "0f42c222-6203-4955-b18d-138080829e96",
+      "modificationUUID": "ef2a3689-51d6-4ab1-ae4e-1db7c828492f",
+      "multiSelect": false,
+      "name": "name",
+      "order": 1,
+      "queryValue": "",
+      "showALLOption": true,
+      "sort": "DISABLED",
+      "textboxValue": "",
+      "type": "DYNAMIC"
+    }
+  },
+  "version": "v5",
+  "widgets": [
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "contextLinks": {
+        "linksData": []
+      },
+      "customLegendColors": {},
+      "decimalPrecision": 2,
+      "description": "Maximum CPU percentage (based off current limit) used by API server pod across instances",
+      "fillMode": "none",
+      "fillSpans": false,
+      "id": "187b5e6b-684d-477d-8451-ed8e6564aade",
+      "isLogScale": false,
+      "legendPosition": "bottom",
+      "lineInterpolation": "spline",
+      "lineStyle": "solid",
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "azure_apiserver_cpu_usage_percentage_maximum",
+                  "reduceTo": "",
+                  "spaceAggregation": "avg",
+                  "temporality": "",
+                  "timeAggregation": "max"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND name = $name AND type = 'Microsoft.ContainerService/managedClusters' "
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "name--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "name",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{name}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "source": "",
+              "stepInterval": null
+            }
+          ],
+          "queryFormulas": [],
+          "queryTraceOperator": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "8a0fea35-1872-4ed4-901d-a80f4b6848d8",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder",
+        "unit": ""
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "timestamp",
+          "signal": "logs",
+          "type": "log"
+        },
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "body",
+          "signal": "logs",
+          "type": "log"
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "fieldContext": "resource",
+          "fieldDataType": "string",
+          "name": "service.name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "string",
+          "name": "name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "duration_nano",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "http_method",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "response_status_code",
+          "signal": "traces"
+        }
+      ],
+      "showPoints": false,
+      "softMax": 0,
+      "softMin": 0,
+      "spanGaps": true,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "API Server CPU Usage Percentage",
+      "yAxisUnit": "%"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "contextLinks": {
+        "linksData": []
+      },
+      "customLegendColors": {},
+      "decimalPrecision": 2,
+      "description": "Maximum memory percentage (based off current limit) used by API server pod across instances",
+      "fillMode": "none",
+      "fillSpans": false,
+      "id": "c5a2e85d-4fcf-485b-b401-cb20ba337887",
+      "isLogScale": false,
+      "legendPosition": "bottom",
+      "lineInterpolation": "spline",
+      "lineStyle": "solid",
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "azure_apiserver_memory_usage_percentage_maximum",
+                  "reduceTo": "",
+                  "spaceAggregation": "avg",
+                  "temporality": "",
+                  "timeAggregation": "max"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND name = $name AND type = 'Microsoft.ContainerService/managedClusters' "
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "name--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "name",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{name}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "source": "",
+              "stepInterval": null
+            }
+          ],
+          "queryFormulas": [],
+          "queryTraceOperator": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "8b68afb7-2e24-4712-b833-6ba3b240f5cb",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder",
+        "unit": ""
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "timestamp",
+          "signal": "logs",
+          "type": "log"
+        },
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "body",
+          "signal": "logs",
+          "type": "log"
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "fieldContext": "resource",
+          "fieldDataType": "string",
+          "name": "service.name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "string",
+          "name": "name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "duration_nano",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "http_method",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "response_status_code",
+          "signal": "traces"
+        }
+      ],
+      "showPoints": false,
+      "softMax": 0,
+      "softMin": 0,
+      "spanGaps": true,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "API Server Memory Usage Percentage",
+      "yAxisUnit": "%"
+    },
+    {
+      "description": "",
+      "id": "0df5d304-24f4-4ff5-8489-b591704c5203",
+      "panelTypes": "row",
+      "title": "API Server"
+    },
+    {
+      "description": "",
+      "id": "7d01ae7a-637e-4ad6-a5e2-6c9ed6b5cf18",
+      "panelTypes": "row",
+      "title": "ETCD"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "contextLinks": {
+        "linksData": []
+      },
+      "customLegendColors": {
+        "signoz-integration-test": "#18c29d"
+      },
+      "decimalPrecision": 2,
+      "description": "Maximum CPU percentage (based off current limit) used by ETCD pod across instances",
+      "fillMode": "none",
+      "fillSpans": false,
+      "id": "cc89f66b-6793-408e-ac96-48fff7b2c5cd",
+      "isLogScale": false,
+      "legendPosition": "bottom",
+      "lineInterpolation": "spline",
+      "lineStyle": "solid",
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "azure_etcd_cpu_usage_percentage_maximum",
+                  "reduceTo": "",
+                  "spaceAggregation": "avg",
+                  "temporality": "",
+                  "timeAggregation": "max"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND name = $name AND type = 'Microsoft.ContainerService/managedClusters' "
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "name--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "name",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{name}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "source": "",
+              "stepInterval": null
+            }
+          ],
+          "queryFormulas": [],
+          "queryTraceOperator": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "960f0691-6f43-47fb-9443-759e706c3c68",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder",
+        "unit": ""
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "timestamp",
+          "signal": "logs",
+          "type": "log"
+        },
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "body",
+          "signal": "logs",
+          "type": "log"
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "fieldContext": "resource",
+          "fieldDataType": "string",
+          "name": "service.name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "string",
+          "name": "name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "duration_nano",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "http_method",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "response_status_code",
+          "signal": "traces"
+        }
+      ],
+      "showPoints": false,
+      "softMax": 0,
+      "softMin": 0,
+      "spanGaps": true,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "ETCD CPU Usage Percentage",
+      "yAxisUnit": "%"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "contextLinks": {
+        "linksData": []
+      },
+      "customLegendColors": {
+        "signoz-integration-test": "#18c29d"
+      },
+      "decimalPrecision": 2,
+      "description": "Maximum utilization of the ETCD database across instances",
+      "fillMode": "none",
+      "fillSpans": false,
+      "id": "0485b85f-353c-4d2e-8bf9-3f25e5193e52",
+      "isLogScale": false,
+      "legendPosition": "bottom",
+      "lineInterpolation": "spline",
+      "lineStyle": "solid",
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "azure_etcd_database_usage_percentage_maximum",
+                  "reduceTo": "",
+                  "spaceAggregation": "avg",
+                  "temporality": "",
+                  "timeAggregation": "max"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND name = $name AND type = 'Microsoft.ContainerService/managedClusters' "
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "name--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "name",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{name}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "source": "",
+              "stepInterval": null
+            }
+          ],
+          "queryFormulas": [],
+          "queryTraceOperator": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "623d8580-67e4-4050-aaf1-d95f88647834",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder",
+        "unit": ""
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "timestamp",
+          "signal": "logs",
+          "type": "log"
+        },
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "body",
+          "signal": "logs",
+          "type": "log"
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "fieldContext": "resource",
+          "fieldDataType": "string",
+          "name": "service.name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "string",
+          "name": "name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "duration_nano",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "http_method",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "response_status_code",
+          "signal": "traces"
+        }
+      ],
+      "showPoints": false,
+      "softMax": 0,
+      "softMin": 0,
+      "spanGaps": true,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "ETCD Database Usage Percentage",
+      "yAxisUnit": "%"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "contextLinks": {
+        "linksData": []
+      },
+      "customLegendColors": {
+        "signoz-integration-test": "#18c29d"
+      },
+      "decimalPrecision": 2,
+      "description": "Maximum memory percentage (based off current limit) used by ETCD pod across instances",
+      "fillMode": "none",
+      "fillSpans": false,
+      "id": "bc525de2-6e94-47f7-8dc6-6c3b994c55d1",
+      "isLogScale": false,
+      "legendPosition": "bottom",
+      "lineInterpolation": "spline",
+      "lineStyle": "solid",
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "azure_etcd_memory_usage_percentage_maximum",
+                  "reduceTo": "",
+                  "spaceAggregation": "avg",
+                  "temporality": "",
+                  "timeAggregation": "max"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND name = $name AND type = 'Microsoft.ContainerService/managedClusters' "
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "name--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "name",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{name}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "source": "",
+              "stepInterval": null
+            }
+          ],
+          "queryFormulas": [],
+          "queryTraceOperator": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "cbd876e7-9329-4f89-9286-a7a0171ee2e2",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder",
+        "unit": ""
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "timestamp",
+          "signal": "logs",
+          "type": "log"
+        },
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "body",
+          "signal": "logs",
+          "type": "log"
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "fieldContext": "resource",
+          "fieldDataType": "string",
+          "name": "service.name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "string",
+          "name": "name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "duration_nano",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "http_method",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "response_status_code",
+          "signal": "traces"
+        }
+      ],
+      "showPoints": false,
+      "softMax": 0,
+      "softMin": 0,
+      "spanGaps": true,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "ETCD Memory Usage Percentage",
+      "yAxisUnit": "%"
+    },
+    {
+      "description": "",
+      "id": "c36253f9-18bf-4ecd-ac62-ee80d4fbd816",
+      "panelTypes": "row",
+      "title": "Nodes Overview"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "contextLinks": {
+        "linksData": []
+      },
+      "customLegendColors": {},
+      "decimalPrecision": 2,
+      "description": "Total number of available cpu cores in a managed cluster",
+      "fillMode": "none",
+      "fillSpans": false,
+      "id": "77676a12-bb4b-49aa-a19f-75ccf91640dc",
+      "isLogScale": false,
+      "legendPosition": "bottom",
+      "lineInterpolation": "spline",
+      "lineStyle": "solid",
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "azure_kube_node_status_allocatable_cpu_cores_total",
+                  "reduceTo": "",
+                  "spaceAggregation": "min",
+                  "temporality": "",
+                  "timeAggregation": "min"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND name = $name AND type = 'Microsoft.ContainerService/managedClusters' "
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "name--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "name",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{name}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "source": "",
+              "stepInterval": null
+            }
+          ],
+          "queryFormulas": [],
+          "queryTraceOperator": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "dcb34329-76a9-4b56-9eb1-ecec50b8ce22",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder",
+        "unit": ""
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "timestamp",
+          "signal": "logs",
+          "type": "log"
+        },
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "body",
+          "signal": "logs",
+          "type": "log"
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "fieldContext": "resource",
+          "fieldDataType": "string",
+          "name": "service.name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "string",
+          "name": "name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "duration_nano",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "http_method",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "response_status_code",
+          "signal": "traces"
+        }
+      ],
+      "showPoints": false,
+      "softMax": 0,
+      "softMin": 0,
+      "spanGaps": true,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Total number of available cpu cores in a managed cluster",
+      "yAxisUnit": "{count}"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "contextLinks": {
+        "linksData": []
+      },
+      "customLegendColors": {},
+      "decimalPrecision": 2,
+      "description": "Total amount of available memory in a managed cluster",
+      "fillMode": "none",
+      "fillSpans": false,
+      "id": "3563fdb3-431c-4191-925b-752f3449c51e",
+      "isLogScale": false,
+      "legendPosition": "bottom",
+      "lineInterpolation": "spline",
+      "lineStyle": "solid",
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "azure_kube_node_status_allocatable_memory_bytes_total",
+                  "reduceTo": "",
+                  "spaceAggregation": "min",
+                  "temporality": "",
+                  "timeAggregation": "min"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND name = $name AND type = 'Microsoft.ContainerService/managedClusters' "
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "name--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "name",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{name}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "source": "",
+              "stepInterval": null
+            }
+          ],
+          "queryFormulas": [],
+          "queryTraceOperator": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "4a1da96e-1a8c-4f57-ad01-b877956478c4",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder",
+        "unit": ""
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "timestamp",
+          "signal": "logs",
+          "type": "log"
+        },
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "body",
+          "signal": "logs",
+          "type": "log"
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "fieldContext": "resource",
+          "fieldDataType": "string",
+          "name": "service.name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "string",
+          "name": "name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "duration_nano",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "http_method",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "response_status_code",
+          "signal": "traces"
+        }
+      ],
+      "showPoints": false,
+      "softMax": 0,
+      "softMin": 0,
+      "spanGaps": true,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Total amount of available memory in a managed cluster",
+      "yAxisUnit": "By"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "contextLinks": {
+        "linksData": []
+      },
+      "customLegendColors": {},
+      "decimalPrecision": 2,
+      "description": "Statuses for various node conditions",
+      "fillMode": "none",
+      "fillSpans": false,
+      "id": "175b3ff4-027b-481c-bf99-e815b57a59d7",
+      "isLogScale": false,
+      "legendPosition": "bottom",
+      "lineInterpolation": "spline",
+      "lineStyle": "solid",
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "azure_kube_node_status_condition_total",
+                  "reduceTo": "",
+                  "spaceAggregation": "sum",
+                  "temporality": "",
+                  "timeAggregation": "max"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND name = $name AND type = 'Microsoft.ContainerService/managedClusters'"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "metadata_status2--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "metadata_status2",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{metadata_status2}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "source": "",
+              "stepInterval": 0
+            }
+          ],
+          "queryFormulas": [],
+          "queryTraceOperator": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "38706e8a-c8c0-4df8-b5ae-39172c6d7f6a",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder",
+        "unit": ""
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "timestamp",
+          "signal": "logs",
+          "type": "log"
+        },
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "body",
+          "signal": "logs",
+          "type": "log"
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "fieldContext": "resource",
+          "fieldDataType": "string",
+          "name": "service.name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "string",
+          "name": "name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "duration_nano",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "http_method",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "response_status_code",
+          "signal": "traces"
+        }
+      ],
+      "showPoints": false,
+      "softMax": 0,
+      "softMin": 0,
+      "spanGaps": true,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Count of nodes in various conditions",
+      "yAxisUnit": "{count}"
+    },
+    {
+      "description": "",
+      "id": "99e3f7df-274e-4506-a746-461db197efce",
+      "panelTypes": "row",
+      "title": "Pods"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "contextLinks": {
+        "linksData": []
+      },
+      "customLegendColors": {},
+      "decimalPrecision": 2,
+      "description": "Number of pods by phase",
+      "fillMode": "none",
+      "fillSpans": false,
+      "id": "a241ba7b-0a9c-402c-afd7-dcdef8209775",
+      "isLogScale": false,
+      "legendPosition": "bottom",
+      "lineInterpolation": "spline",
+      "lineStyle": "solid",
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "azure_kube_pod_status_phase_total",
+                  "reduceTo": "",
+                  "spaceAggregation": "sum",
+                  "temporality": "",
+                  "timeAggregation": "max"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND name = $name AND type = 'Microsoft.ContainerService/managedClusters'"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "metadata_phase--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "metadata_phase",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "metadata_namespace--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "metadata_namespace",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{metadata_phase}} - {{metadata_namespace}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "source": "",
+              "stepInterval": null
+            }
+          ],
+          "queryFormulas": [],
+          "queryTraceOperator": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "5062f963-784d-4ee6-bea7-9c22b3c5a0af",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder",
+        "unit": ""
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "timestamp",
+          "signal": "logs",
+          "type": "log"
+        },
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "body",
+          "signal": "logs",
+          "type": "log"
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "fieldContext": "resource",
+          "fieldDataType": "string",
+          "name": "service.name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "string",
+          "name": "name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "duration_nano",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "http_method",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "response_status_code",
+          "signal": "traces"
+        }
+      ],
+      "showPoints": false,
+      "softMax": 0,
+      "softMin": 0,
+      "spanGaps": true,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Number of pods by phase",
+      "yAxisUnit": "{count}"
+    },
+    {
+      "description": "",
+      "id": "11c8b5f7-3a17-41d2-8c44-4931141f731d",
+      "panelTypes": "row",
+      "title": "Enhanced Nodes Overview"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "contextLinks": {
+        "linksData": []
+      },
+      "customLegendColors": {},
+      "decimalPrecision": 2,
+      "description": "Aggregated average CPU utilization measured in percentage across the cluster",
+      "fillMode": "none",
+      "fillSpans": false,
+      "id": "096cd019-c069-44da-b5a6-983349cb3f9d",
+      "isLogScale": false,
+      "legendPosition": "bottom",
+      "lineInterpolation": "spline",
+      "lineStyle": "solid",
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "azure_node_cpu_usage_percentage_maximum",
+                  "reduceTo": "",
+                  "spaceAggregation": "max",
+                  "temporality": "",
+                  "timeAggregation": "avg"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND name = $name AND type = 'Microsoft.ContainerService/managedClusters'"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "",
+                  "id": "metadata_nodepool----",
+                  "key": "metadata_nodepool",
+                  "type": ""
+                },
+                {
+                  "dataType": "",
+                  "id": "metadata_node----",
+                  "key": "metadata_node",
+                  "type": ""
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{metadata_nodepool}} - {{metadata_node}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "source": "",
+              "stepInterval": null
+            }
+          ],
+          "queryFormulas": [],
+          "queryTraceOperator": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "b3dd096f-618e-4a60-8fc9-5e9e412d19ab",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder",
+        "unit": ""
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "timestamp",
+          "signal": "logs",
+          "type": "log"
+        },
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "body",
+          "signal": "logs",
+          "type": "log"
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "fieldContext": "resource",
+          "fieldDataType": "string",
+          "name": "service.name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "string",
+          "name": "name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "duration_nano",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "http_method",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "response_status_code",
+          "signal": "traces"
+        }
+      ],
+      "showPoints": false,
+      "softMax": 0,
+      "softMin": 0,
+      "spanGaps": true,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "CPU Usage Percentage",
+      "yAxisUnit": "%"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "contextLinks": {
+        "linksData": []
+      },
+      "customLegendColors": {},
+      "decimalPrecision": 2,
+      "description": "Container working set memory used in percent",
+      "fillMode": "none",
+      "fillSpans": false,
+      "id": "bef9ae79-3ca7-4ff3-bc75-a9abbe69ba0d",
+      "isLogScale": false,
+      "legendPosition": "bottom",
+      "lineInterpolation": "spline",
+      "lineStyle": "solid",
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "azure_node_memory_working_set_percentage_maximum",
+                  "reduceTo": "",
+                  "spaceAggregation": "max",
+                  "temporality": "",
+                  "timeAggregation": "avg"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND name = $name AND type = 'Microsoft.ContainerService/managedClusters'"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "",
+                  "id": "metadata_nodepool----",
+                  "key": "metadata_nodepool",
+                  "type": ""
+                },
+                {
+                  "dataType": "",
+                  "id": "metadata_node----",
+                  "key": "metadata_node",
+                  "type": ""
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{metadata_nodepool}} - {{metadata_node}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "source": "",
+              "stepInterval": null
+            }
+          ],
+          "queryFormulas": [],
+          "queryTraceOperator": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "fc5e69b4-debf-475e-9c9c-79d270b008a9",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder",
+        "unit": ""
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "timestamp",
+          "signal": "logs",
+          "type": "log"
+        },
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "body",
+          "signal": "logs",
+          "type": "log"
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "fieldContext": "resource",
+          "fieldDataType": "string",
+          "name": "service.name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "string",
+          "name": "name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "duration_nano",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "http_method",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "response_status_code",
+          "signal": "traces"
+        }
+      ],
+      "showPoints": false,
+      "softMax": 0,
+      "softMin": 0,
+      "spanGaps": true,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Memory Working Set Percentage",
+      "yAxisUnit": "%"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "contextLinks": {
+        "linksData": []
+      },
+      "customLegendColors": {},
+      "decimalPrecision": 2,
+      "description": "Disk space used in percent by device",
+      "fillMode": "none",
+      "fillSpans": false,
+      "id": "5d27fb6a-36e7-45fb-875c-a129b0c01e33",
+      "isLogScale": false,
+      "legendPosition": "bottom",
+      "lineInterpolation": "spline",
+      "lineStyle": "solid",
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "azure_node_disk_usage_percentage_maximum",
+                  "reduceTo": "",
+                  "spaceAggregation": "max",
+                  "temporality": "",
+                  "timeAggregation": "avg"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND name = $name AND type = 'Microsoft.ContainerService/managedClusters'"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "",
+                  "id": "metadata_nodepool----",
+                  "key": "metadata_nodepool",
+                  "type": ""
+                },
+                {
+                  "dataType": "",
+                  "id": "metadata_node----",
+                  "key": "metadata_node",
+                  "type": ""
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{metadata_nodepool}} - {{metadata_node}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "source": "",
+              "stepInterval": null
+            }
+          ],
+          "queryFormulas": [],
+          "queryTraceOperator": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "3ebdf817-ac2d-4d48-823d-b6a8f47070df",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder",
+        "unit": ""
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "timestamp",
+          "signal": "logs",
+          "type": "log"
+        },
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "body",
+          "signal": "logs",
+          "type": "log"
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "fieldContext": "resource",
+          "fieldDataType": "string",
+          "name": "service.name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "string",
+          "name": "name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "duration_nano",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "http_method",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "response_status_code",
+          "signal": "traces"
+        }
+      ],
+      "showPoints": false,
+      "softMax": 0,
+      "softMin": 0,
+      "spanGaps": true,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Disk Used Percentage",
+      "yAxisUnit": "%"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "contextLinks": {
+        "linksData": []
+      },
+      "customLegendColors": {},
+      "decimalPrecision": 2,
+      "description": "Network received bytes",
+      "fillMode": "none",
+      "fillSpans": false,
+      "id": "0562f446-ec2c-494d-a826-97e859afb12a",
+      "isLogScale": false,
+      "legendPosition": "bottom",
+      "lineInterpolation": "spline",
+      "lineStyle": "solid",
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "azure_node_network_in_bytes_maximum",
+                  "reduceTo": "",
+                  "spaceAggregation": "max",
+                  "temporality": "",
+                  "timeAggregation": "avg"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND name = $name AND type = 'Microsoft.ContainerService/managedClusters'"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "",
+                  "id": "metadata_nodepool----",
+                  "key": "metadata_nodepool",
+                  "type": ""
+                },
+                {
+                  "dataType": "",
+                  "id": "metadata_node----",
+                  "key": "metadata_node",
+                  "type": ""
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{metadata_nodepool}} - {{metadata_node}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "source": "",
+              "stepInterval": null
+            }
+          ],
+          "queryFormulas": [],
+          "queryTraceOperator": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "a3661d82-70de-4e8d-a3db-933a6fb2d8cc",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder",
+        "unit": ""
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "timestamp",
+          "signal": "logs",
+          "type": "log"
+        },
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "body",
+          "signal": "logs",
+          "type": "log"
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "fieldContext": "resource",
+          "fieldDataType": "string",
+          "name": "service.name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "string",
+          "name": "name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "duration_nano",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "http_method",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "response_status_code",
+          "signal": "traces"
+        }
+      ],
+      "showPoints": false,
+      "softMax": 0,
+      "softMin": 0,
+      "spanGaps": true,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Network In Bytes",
+      "yAxisUnit": "By"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "contextLinks": {
+        "linksData": []
+      },
+      "customLegendColors": {},
+      "decimalPrecision": 2,
+      "description": "Network transmitted bytes",
+      "fillMode": "none",
+      "fillSpans": false,
+      "id": "0d00dc4c-6e0a-40cf-8c6e-c431fd53d77d",
+      "isLogScale": false,
+      "legendPosition": "bottom",
+      "lineInterpolation": "spline",
+      "lineStyle": "solid",
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "azure_node_network_out_bytes_maximum",
+                  "reduceTo": "",
+                  "spaceAggregation": "avg",
+                  "temporality": "",
+                  "timeAggregation": "avg"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND name = $name AND type = 'Microsoft.ContainerService/managedClusters'"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "",
+                  "id": "metadata_nodepool----",
+                  "key": "metadata_nodepool",
+                  "type": ""
+                },
+                {
+                  "dataType": "",
+                  "id": "metadata_node----",
+                  "key": "metadata_node",
+                  "type": ""
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{metadata_nodepool}} - {{metadata_node}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "source": "",
+              "stepInterval": null
+            }
+          ],
+          "queryFormulas": [],
+          "queryTraceOperator": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "1bceac81-7dde-4ba2-810e-978f5b07a5e3",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder",
+        "unit": ""
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "timestamp",
+          "signal": "logs",
+          "type": "log"
+        },
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "body",
+          "signal": "logs",
+          "type": "log"
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "fieldContext": "resource",
+          "fieldDataType": "string",
+          "name": "service.name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "string",
+          "name": "name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "duration_nano",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "http_method",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "response_status_code",
+          "signal": "traces"
+        }
+      ],
+      "showPoints": false,
+      "softMax": 0,
+      "softMin": 0,
+      "spanGaps": true,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Network Out Bytes",
+      "yAxisUnit": "By"
+    }
+  ]
+}

@@ -376,14 +376,36 @@ def test_volumes_non_pvc_volume_filtered(
     assert rec["persistentVolumeClaimName"] == "np-real-pvc"
 
 
-def test_volumes_groupby_namespace(
+@pytest.mark.parametrize(
+    "group_key,expected_groups",
+    [
+        # groupBy=[k8s.persistentvolumeclaim.name]: one record per PVC,
+        # persistentVolumeClaimName populated (volumes.go:26-29).
+        pytest.param(
+            "k8s.persistentvolumeclaim.name",
+            {"gb-pvc-a1", "gb-pvc-a2", "gb-pvc-b1", "gb-pvc-b2"},
+            id="pvc_name",
+        ),
+        # groupBy=[k8s.namespace.name]: aggregated per namespace,
+        # persistentVolumeClaimName cleared (custom-groupBy branch).
+        pytest.param(
+            "k8s.namespace.name",
+            {"gb-ns-a", "gb-ns-b"},
+            id="namespace",
+        ),
+    ],
+)
+def test_volumes_groupby(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
+    group_key: str,
+    expected_groups: set,
 ) -> None:
-    """groupBy=[k8s.namespace.name]: 2 records, aggregated metrics per namespace,
-    persistentVolumeClaimName cleared, meta surfaces k8s.namespace.name."""
+    """groupBy returns one record per distinct group. persistentVolumeClaimName
+    is populated only when grouping by k8s.persistentvolumeclaim.name
+    (volumes.go:26-29 list-vs-grouped branch); meta surfaces the groupBy key."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
@@ -402,7 +424,7 @@ def test_volumes_groupby_namespace(
             "limit": 50,
             "groupBy": [
                 {
-                    "name": "k8s.namespace.name",
+                    "name": group_key,
                     "fieldDataType": "string",
                     "fieldContext": "resource",
                 }
@@ -412,15 +434,17 @@ def test_volumes_groupby_namespace(
     )
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()["data"]
-    assert data["total"] == 2
+    assert data["total"] == len(expected_groups)
 
-    namespaces_seen = set()
-    for rec in data["records"]:
-        # Per-row PVC identity is cleared; only the groupBy field surfaces.
-        assert rec["persistentVolumeClaimName"] == ""
-        assert "k8s.namespace.name" in rec["meta"], rec["meta"]
-        namespaces_seen.add(rec["meta"]["k8s.namespace.name"])
-    assert namespaces_seen == {"gb-ns-a", "gb-ns-b"}
+    is_pvc_group = group_key == "k8s.persistentvolumeclaim.name"
+    group_of = lambda r: r["persistentVolumeClaimName"] if is_pvc_group else r["meta"][group_key]  # noqa: E731  # pylint: disable=unnecessary-lambda-assignment
+    by_group = {group_of(r): r for r in data["records"]}
+    assert set(by_group.keys()) == expected_groups
+
+    for group, rec in by_group.items():
+        # persistentVolumeClaimName populated per PVC when grouping by it, empty otherwise.
+        assert rec["persistentVolumeClaimName"] == (group if is_pvc_group else "")
+        assert group_key in rec["meta"], rec["meta"]
 
 
 def test_volumes_pagination(
