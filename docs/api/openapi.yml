@@ -1360,6 +1360,10 @@ components:
       - sqs
       - storageaccountsblob
       - cdnprofile
+      - virtualmachine
+      - appservice
+      - containerapp
+      - aks
       type: string
     CloudintegrationtypesServiceMetadata:
       properties:
