@@ -1360,6 +1360,7 @@ components:
       - sqs
       - storageaccountsblob
       - cdnprofile
+      - appservice
       - containerapp
       - aks
       type: string
