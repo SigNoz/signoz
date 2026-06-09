@@ -36,7 +36,7 @@
       "static": false,
       "w": 12,
       "x": 0,
-      "y": 20
+      "y": 2
     },
     {
       "h": 1,
@@ -48,7 +48,7 @@
       "static": false,
       "w": 12,
       "x": 0,
-      "y": 21
+      "y": 15
     },
     {
       "h": 1,
@@ -60,7 +60,7 @@
       "static": false,
       "w": 12,
       "x": 0,
-      "y": 76
+      "y": 34
     }
   ],
   "panelMap": {
@@ -97,7 +97,7 @@
           "static": false,
           "w": 6,
           "x": 0,
-          "y": 22
+          "y": 16
         },
         {
           "h": 6,
@@ -106,7 +106,7 @@
           "static": false,
           "w": 6,
           "x": 6,
-          "y": 22
+          "y": 16
         },
         {
           "h": 6,
@@ -115,7 +115,7 @@
           "static": false,
           "w": 6,
           "x": 0,
-          "y": 28
+          "y": 22
         },
         {
           "h": 6,
@@ -124,7 +124,7 @@
           "static": false,
           "w": 6,
           "x": 6,
-          "y": 28
+          "y": 22
         },
         {
           "h": 6,
@@ -133,7 +133,7 @@
           "static": false,
           "w": 6,
           "x": 0,
-          "y": 34
+          "y": 28
         }
       ]
     },
@@ -179,7 +179,7 @@
           "static": false,
           "w": 6,
           "x": 0,
-          "y": 77
+          "y": 35
         }
       ]
     },
@@ -193,7 +193,7 @@
           "static": false,
           "w": 6,
           "x": 0,
-          "y": 21
+          "y": 3
         },
         {
           "h": 6,
@@ -202,7 +202,7 @@
           "static": false,
           "w": 6,
           "x": 6,
-          "y": 21
+          "y": 3
         },
         {
           "h": 6,
@@ -211,7 +211,7 @@
           "static": false,
           "w": 6,
           "x": 0,
-          "y": 27
+          "y": 9
         }
       ]
     }
@@ -219,7 +219,7 @@
   "tags": [],
   "title": "Azure Kubernetes Service (AKS) Overview",
   "uploadedGrafana": false,
-  "uuid": "019ea7e5-c6b5-7e6a-9b96-250e48f429d3",
+  "uuid": "019eab5c-45ce-7b33-bcba-d919f5917a0d",
   "variables": {
     "azuremonitor.subscription_id": {
       "allSelected": true,
@@ -1052,7 +1052,7 @@
                 {
                   "metricName": "azure_kube_node_status_allocatable_cpu_cores_total",
                   "reduceTo": "avg",
-                  "spaceAggregation": "avg",
+                  "spaceAggregation": "min",
                   "temporality": "",
                   "timeAggregation": "min"
                 }
@@ -1199,7 +1199,7 @@
                 {
                   "metricName": "azure_kube_node_status_allocatable_memory_bytes_total",
                   "reduceTo": "avg",
-                  "spaceAggregation": "avg",
+                  "spaceAggregation": "min",
                   "temporality": "",
                   "timeAggregation": "min"
                 }
@@ -1461,7 +1461,7 @@
       "stackedBarChart": false,
       "thresholds": [],
       "timePreferance": "GLOBAL_TIME",
-      "title": "Statuses for various node conditions",
+      "title": "Statuses total for various node conditions",
       "yAxisUnit": "{count}"
     },
     {
