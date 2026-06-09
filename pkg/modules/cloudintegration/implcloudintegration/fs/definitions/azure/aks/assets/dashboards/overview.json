@@ -292,7 +292,7 @@
               "aggregations": [
                 {
                   "metricName": "azure_apiserver_cpu_usage_percentage_maximum",
-                  "reduceTo": "avg",
+                  "reduceTo": "",
                   "spaceAggregation": "avg",
                   "temporality": "",
                   "timeAggregation": "max"
@@ -439,7 +439,7 @@
               "aggregations": [
                 {
                   "metricName": "azure_apiserver_memory_usage_percentage_maximum",
-                  "reduceTo": "avg",
+                  "reduceTo": "",
                   "spaceAggregation": "avg",
                   "temporality": "",
                   "timeAggregation": "max"
@@ -600,7 +600,7 @@
               "aggregations": [
                 {
                   "metricName": "azure_etcd_cpu_usage_percentage_maximum",
-                  "reduceTo": "avg",
+                  "reduceTo": "",
                   "spaceAggregation": "avg",
                   "temporality": "",
                   "timeAggregation": "max"
@@ -749,7 +749,7 @@
               "aggregations": [
                 {
                   "metricName": "azure_etcd_database_usage_percentage_maximum",
-                  "reduceTo": "avg",
+                  "reduceTo": "",
                   "spaceAggregation": "avg",
                   "temporality": "",
                   "timeAggregation": "max"
@@ -898,7 +898,7 @@
               "aggregations": [
                 {
                   "metricName": "azure_etcd_memory_usage_percentage_maximum",
-                  "reduceTo": "avg",
+                  "reduceTo": "",
                   "spaceAggregation": "avg",
                   "temporality": "",
                   "timeAggregation": "max"
@@ -1051,7 +1051,7 @@
               "aggregations": [
                 {
                   "metricName": "azure_kube_node_status_allocatable_cpu_cores_total",
-                  "reduceTo": "avg",
+                  "reduceTo": "",
                   "spaceAggregation": "min",
                   "temporality": "",
                   "timeAggregation": "min"
@@ -1198,7 +1198,7 @@
               "aggregations": [
                 {
                   "metricName": "azure_kube_node_status_allocatable_memory_bytes_total",
-                  "reduceTo": "avg",
+                  "reduceTo": "",
                   "spaceAggregation": "min",
                   "temporality": "",
                   "timeAggregation": "min"
@@ -1345,7 +1345,7 @@
               "aggregations": [
                 {
                   "metricName": "azure_kube_node_status_condition_total",
-                  "reduceTo": "avg",
+                  "reduceTo": "",
                   "spaceAggregation": "sum",
                   "temporality": "",
                   "timeAggregation": "max"
@@ -1498,7 +1498,7 @@
               "aggregations": [
                 {
                   "metricName": "azure_kube_pod_status_phase_total",
-                  "reduceTo": "avg",
+                  "reduceTo": "",
                   "spaceAggregation": "sum",
                   "temporality": "",
                   "timeAggregation": "max"
@@ -1659,7 +1659,7 @@
               "aggregations": [
                 {
                   "metricName": "azure_node_cpu_usage_percentage_maximum",
-                  "reduceTo": "avg",
+                  "reduceTo": "",
                   "spaceAggregation": "max",
                   "temporality": "",
                   "timeAggregation": "avg"
@@ -1810,7 +1810,7 @@
               "aggregations": [
                 {
                   "metricName": "azure_node_memory_working_set_percentage_maximum",
-                  "reduceTo": "avg",
+                  "reduceTo": "",
                   "spaceAggregation": "max",
                   "temporality": "",
                   "timeAggregation": "avg"
@@ -1961,7 +1961,7 @@
               "aggregations": [
                 {
                   "metricName": "azure_node_disk_usage_percentage_maximum",
-                  "reduceTo": "avg",
+                  "reduceTo": "",
                   "spaceAggregation": "max",
                   "temporality": "",
                   "timeAggregation": "avg"
@@ -2112,7 +2112,7 @@
               "aggregations": [
                 {
                   "metricName": "azure_node_network_in_bytes_maximum",
-                  "reduceTo": "avg",
+                  "reduceTo": "",
                   "spaceAggregation": "max",
                   "temporality": "",
                   "timeAggregation": "avg"
@@ -2263,7 +2263,7 @@
               "aggregations": [
                 {
                   "metricName": "azure_node_network_out_bytes_maximum",
-                  "reduceTo": "avg",
+                  "reduceTo": "",
                   "spaceAggregation": "avg",
                   "temporality": "",
                   "timeAggregation": "avg"
