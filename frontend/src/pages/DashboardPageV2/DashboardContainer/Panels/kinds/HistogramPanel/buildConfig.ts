@@ -2,8 +2,8 @@ import type { DashboardtypesHistogramPanelSpecDTO } from 'api/generated/services
 import { Timezone } from 'components/CustomTimePicker/timezoneUtils';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { PanelMode } from 'container/DashboardContainer/visualization/panels/types';
-import { buildBaseConfig } from 'pages/DashboardPageV2/DashboardContainer/Panels/shared/baseConfigBuilder';
-import { resolveSeriesLabel } from 'pages/DashboardPageV2/DashboardContainer/Panels/shared/resolveSeriesLabel';
+import { buildBaseConfig } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/baseConfigBuilder';
+import { resolveSeriesLabel } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/resolveSeriesLabel';
 import getLabelName from 'lib/getLabelName';
 import { DrawStyle } from 'lib/uPlotV2/config/types';
 import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';

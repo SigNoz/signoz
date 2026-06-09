@@ -8,10 +8,10 @@ import { IRenderTooltipFooterArgs } from 'lib/uPlotV2/components/types';
 import { useTimezone } from 'providers/Timezone';
 import type uPlot from 'uplot';
 
-import PanelStyles from '../../shared/panel.module.scss';
+import PanelStyles from '../../panel.module.scss';
 import { PanelRendererProps } from '../../types/rendererProps';
-import { resolveLegendPosition } from '../../shared/chartAppearanceMappings';
-import { getBuilderQueries } from '../../shared/getBuilderQueries';
+import { resolveLegendPosition } from '../../utils/chartAppearanceMappings';
+import { getBuilderQueries } from '../../utils/getBuilderQueries';
 
 import { buildHistogramConfig } from './buildConfig';
 import { prepareHistogramData } from './prepareData';

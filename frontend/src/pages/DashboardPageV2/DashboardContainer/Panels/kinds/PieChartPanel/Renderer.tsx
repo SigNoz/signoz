@@ -4,12 +4,12 @@ import Pie from 'container/DashboardContainer/visualization/charts/Pie/Pie';
 import type { PieSlice } from 'container/DashboardContainer/visualization/charts/types';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 
-import PanelStyles from '../../shared/panel.module.scss';
+import PanelStyles from '../../panel.module.scss';
 import { PanelRendererProps } from '../../types/rendererProps';
 import {
 	resolveDecimalPrecision,
 	resolveLegendPosition,
-} from '../../shared/chartAppearanceMappings';
+} from '../../utils/chartAppearanceMappings';
 
 import { preparePieData } from './prepareData';
 

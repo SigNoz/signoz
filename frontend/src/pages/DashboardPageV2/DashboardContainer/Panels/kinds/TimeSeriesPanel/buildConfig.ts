@@ -2,14 +2,14 @@ import type { DashboardtypesTimeSeriesPanelSpecDTO } from 'api/generated/service
 import { Timezone } from 'components/CustomTimePicker/timezoneUtils';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { PanelMode } from 'container/DashboardContainer/visualization/panels/types';
-import { buildBaseConfig } from 'pages/DashboardPageV2/DashboardContainer/Panels/shared/baseConfigBuilder';
+import { buildBaseConfig } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/baseConfigBuilder';
 import {
 	FILL_MODE_MAP,
 	LINE_INTERPOLATION_MAP,
 	LINE_STYLE_MAP,
 	resolveSpanGaps,
-} from 'pages/DashboardPageV2/DashboardContainer/Panels/shared/chartAppearanceMappings';
-import { resolveSeriesLabel } from 'pages/DashboardPageV2/DashboardContainer/Panels/shared/resolveSeriesLabel';
+} from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/chartAppearanceMappings';
+import { resolveSeriesLabel } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/resolveSeriesLabel';
 import getLabelName from 'lib/getLabelName';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
 import {

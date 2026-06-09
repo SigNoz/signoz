@@ -8,15 +8,15 @@ import { IRenderTooltipFooterArgs } from 'lib/uPlotV2/components/types';
 import { prepareChartData } from 'lib/uPlotV2/utils/dataUtils';
 import { useTimezone } from 'providers/Timezone';
 
-import { useGroupByPerQuery } from '../../shared/hooks/useGroupByPerQuery';
-import { useTimeScale } from '../../shared/hooks/useTimeScale';
-import PanelStyles from '../../shared/panel.module.scss';
+import { useGroupByPerQuery } from '../../hooks/useGroupByPerQuery';
+import { useTimeScale } from '../../hooks/useTimeScale';
+import PanelStyles from '../../panel.module.scss';
 import { PanelRendererProps } from '../../types/rendererProps';
 import {
 	resolveDecimalPrecision,
 	resolveLegendPosition,
-} from '../../shared/chartAppearanceMappings';
-import { getBuilderQueries } from '../../shared/getBuilderQueries';
+} from '../../utils/chartAppearanceMappings';
+import { getBuilderQueries } from '../../utils/getBuilderQueries';
 
 import { buildBarChartConfig } from './buildConfig';
 import { ChartClickData } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
