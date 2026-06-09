@@ -1,0 +1,86 @@
+.emptyState {
+	display: flex;
+	justify-content: center;
+	align-items: flex-start;
+	padding: 48px 16px;
+}
+
+.content {
+	display: flex;
+	flex-direction: column;
+	gap: 24px;
+	width: 100%;
+	max-width: 480px;
+}
+
+.heading {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+
+	.emoji {
+		height: 32px;
+		width: 32px;
+	}
+
+	.welcome {
+		color: var(--l1-foreground);
+		font-family: Inter;
+		font-size: 16px;
+		font-weight: 500;
+		line-height: 24px;
+		letter-spacing: -0.08px;
+	}
+
+	.welcomeInfo {
+		color: var(--l3-foreground);
+		font-family: Inter;
+		font-size: 13px;
+		font-weight: 400;
+		line-height: 18px;
+	}
+}
+
+.addPanel {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	padding: 16px;
+	border: 1px dashed var(--l1-border);
+	border-radius: 6px;
+}
+
+.addPanelText {
+	display: flex;
+	align-items: flex-start;
+	gap: 10px;
+
+	.icon {
+		height: 14px;
+		width: 14px;
+		margin-top: 2px;
+	}
+}
+
+.addPanelCopy {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.addPanelTitle {
+	color: var(--l1-foreground);
+	font-family: Inter;
+	font-size: 14px;
+	font-weight: 500;
+	line-height: 20px;
+}
+
+.addPanelInfo {
+	color: var(--l3-foreground);
+	font-family: Inter;
+	font-size: 13px;
+	font-weight: 400;
+	line-height: 18px;
+}
