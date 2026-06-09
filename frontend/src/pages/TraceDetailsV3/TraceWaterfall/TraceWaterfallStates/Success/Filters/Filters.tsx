@@ -20,6 +20,7 @@ import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { uniqBy } from 'lodash-es';
+import NozButton from 'pages/TraceDetailsV3/TraceDetailsHeader/NozButton';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import {
@@ -425,6 +426,8 @@ function Filters({
 						</div>
 					)}
 				</div>
+
+				<NozButton />
 
 				<div className={styles.highlightControl}>{highlightErrorsToggle}</div>
 			</div>

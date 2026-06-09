@@ -9,12 +9,16 @@ import (
 const (
 	attrResponseType         = attribute.Key("response_type")
 	attrResponseTypeWindowed = "windowed"
+	attrResponseTypeSampled  = "sampled"
 )
 
 type moduleMetrics struct {
 	waterfallSpanLimit    metric.Int64Gauge
 	waterfallRequestCount metric.Int64Counter
 	waterfallSpanCount    metric.Int64Counter
+
+	flamegraphSpanLimit    metric.Int64Gauge
+	flamegraphRequestCount metric.Int64Counter
 }
 
 func newModuleMetrics(meter metric.Meter) (*moduleMetrics, error) {
@@ -47,9 +51,30 @@ func newModuleMetrics(meter metric.Meter) (*moduleMetrics, error) {
 		errs = errors.Join(errs, err)
 	}
 
+	flamegraphSpanLimit, err := meter.Int64Gauge(
+		"signoz.traces.flamegraph.span.limit",
+		metric.WithDescription("The span count limit above which sampled flamegraph is returned instead of the full flamegraph."),
+		metric.WithUnit("{span}"),
+	)
+	if err != nil {
+		errs = errors.Join(errs, err)
+	}
+
+	flamegraphRequestCount, err := meter.Int64Counter(
+		"signoz.traces.flamegraph.request.count",
+		metric.WithDescription("Total number of flamegraph requests, by response_type."),
+		metric.WithUnit("{request}"),
+	)
+	if err != nil {
+		errs = errors.Join(errs, err)
+	}
+
 	return &moduleMetrics{
 		waterfallSpanLimit:    spanLimit,
 		waterfallRequestCount: requestCount,
 		waterfallSpanCount:    spanCount,
+
+		flamegraphSpanLimit:    flamegraphSpanLimit,
+		flamegraphRequestCount: flamegraphRequestCount,
 	}, errs
 }
