@@ -337,7 +337,13 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 
 		annotations := make(ruletypes.Labels, 0, len(r.annotations.Map()))
 		for name, value := range r.annotations.Map() {
-			annotations = append(annotations, ruletypes.Label{Name: name, Value: expand(value)})
+			// Skip expanding _title_template and _body_template as they need to be
+			// expanded later by the AlertManager with different template data
+			if name == ruletypes.AnnotationTitleTemplate || name == ruletypes.AnnotationBodyTemplate {
+				annotations = append(annotations, ruletypes.Label{Name: name, Value: value})
+			} else {
+				annotations = append(annotations, ruletypes.Label{Name: name, Value: expand(value)})
+			}
 		}
 		if smpl.IsMissing {
 			lb.Set(ruletypes.AlertNameLabel, "[No data] "+r.Name())
