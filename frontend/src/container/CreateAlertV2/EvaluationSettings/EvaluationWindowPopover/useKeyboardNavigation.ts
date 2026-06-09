@@ -21,9 +21,7 @@ export const useKeyboardNavigationForEvaluationWindowPopover = ({
 		}
 
 		return Array.from(
-			containerRef.current.querySelectorAll(
-				'.evaluation-window-content-list-item[tabindex="0"]',
-			),
+			containerRef.current.querySelectorAll('[data-section-id][tabindex="0"]'),
 		) as HTMLElement[];
 	}, []);
 
@@ -33,7 +31,7 @@ export const useKeyboardNavigationForEvaluationWindowPopover = ({
 		}
 
 		const detailsSection = containerRef.current.querySelector(
-			'.evaluation-window-details',
+			'[data-section="evaluation-window-details"]',
 		);
 		if (!detailsSection) {
 			return [];
@@ -84,7 +82,9 @@ export const useKeyboardNavigationForEvaluationWindowPopover = ({
 	const navigateBetweenSections = useCallback(
 		(direction: 'left' | 'right'): void => {
 			const activeElement = document.activeElement as HTMLElement;
-			const isInDetails = activeElement?.closest('.evaluation-window-details');
+			const isInDetails = activeElement?.closest(
+				'[data-section="evaluation-window-details"]',
+			);
 
 			if (isInDetails && direction === 'left') {
 				navigateBackToSection();

@@ -118,7 +118,10 @@ function EvaluationWindowDetails({
 
 	if (isCurrentHour) {
 		return (
-			<div className={styles.evaluationWindowDetails}>
+			<div
+				className={styles.evaluationWindowDetails}
+				data-section="evaluation-window-details"
+			>
 				<Typography.Text>
 					{getCumulativeWindowDescription(evaluationWindow.timeframe)}
 				</Typography.Text>
@@ -139,7 +142,10 @@ function EvaluationWindowDetails({
 
 	if (isCurrentDay) {
 		return (
-			<div className={styles.evaluationWindowDetails}>
+			<div
+				className={styles.evaluationWindowDetails}
+				data-section="evaluation-window-details"
+			>
 				<Typography.Text>
 					{getCumulativeWindowDescription(evaluationWindow.timeframe)}
 				</Typography.Text>
@@ -167,7 +173,10 @@ function EvaluationWindowDetails({
 
 	if (isCurrentMonth) {
 		return (
-			<div className={styles.evaluationWindowDetails}>
+			<div
+				className={styles.evaluationWindowDetails}
+				data-section="evaluation-window-details"
+			>
 				<Typography.Text>
 					{getCumulativeWindowDescription(evaluationWindow.timeframe)}
 				</Typography.Text>
@@ -204,7 +213,10 @@ function EvaluationWindowDetails({
 	}
 
 	return (
-		<div className={styles.evaluationWindowDetails}>
+		<div
+			className={styles.evaluationWindowDetails}
+			data-section="evaluation-window-details"
+		>
 			<Typography.Text>
 				{getRollingWindowDescription(evaluationWindow.timeframe)}
 			</Typography.Text>
