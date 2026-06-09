@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useRef } from 'react';
 import ChartLayout from 'container/DashboardContainer/visualization/layout/ChartLayout/ChartLayout';
-import Legend from 'lib/uPlotV2/components/Legend/Legend';
+import UPlotLegend from 'lib/uPlotV2/components/Legend/UPlotLegend';
 import {
 	LegendPosition,
 	TooltipRenderArgs,
@@ -47,7 +47,7 @@ export default function ChartWrapper({
 				return null;
 			}
 			return (
-				<Legend
+				<UPlotLegend
 					config={config}
 					position={legendConfig.position}
 					averageLegendWidth={averageLegendWidth}
