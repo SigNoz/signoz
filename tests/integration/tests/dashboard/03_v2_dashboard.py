@@ -18,12 +18,11 @@ from fixtures.types import Operation, SigNoz
 _BASE = "/api/v2/dashboards"
 _TIMEOUT = 5
 
-# Every dashboard created by this file's tests carries this marker so the
-# cleanup_suite fixture can delete them on teardown without touching dashboards
-# owned by other test files sharing the session DB.
-_SUITE_VALUE = "dashboardv2"
-_SUITE_TAG = {"key": "suite", "value": _SUITE_VALUE}
-_SUITE_FILTER = f"suite = '{_SUITE_VALUE}'"
+# This file's tests tag their dashboards with a `suite` marker so list queries
+# can be scoped server-side. Each test gets its own unique marker (the
+# suite_marker fixture) so tests stay isolated from each other and from leftovers
+# in the reused session DB.
+_SUITE_PREFIX = "dashboardv2"
 
 
 def _headers(token: str) -> dict:
@@ -75,11 +74,8 @@ def _lock(signoz: SigNoz, token: str, dashboard_id: str, lock: bool) -> requests
 
 def _pin(signoz: SigNoz, token: str, dashboard_id: str, pin: bool) -> requests.Response:
     method = requests.put if pin else requests.delete
-    return method(
-        _url(signoz, f"/{dashboard_id}/pins/me"),
-        headers=_headers(token),
-        timeout=_TIMEOUT,
-    )
+    url = signoz.self.host_configs["8080"].get(f"/api/v2/users/me/dashboards/{dashboard_id}/pins")
+    return method(url, headers=_headers(token), timeout=_TIMEOUT)
 
 
 def _minimal_body(name: str, display: str, tags: list[dict] | None = None) -> dict:
@@ -272,25 +268,31 @@ def _delete_suite(signoz: SigNoz, token: str, suite_filter: str) -> None:
         _delete(signoz, token, dashboard["id"])
 
 
-@pytest.fixture(name="cleanup_suite")
-def _cleanup_suite(
+@pytest.fixture(name="suite_marker")
+def _suite_marker(
     signoz: SigNoz,
     get_token: Callable[[str, str], str],
-) -> Iterator[None]:
-    """Deletes every dashboard carrying this file's suite marker (_SUITE_FILTER) on teardown."""
-    yield
+) -> Iterator[tuple[dict, str]]:
+    """Yields a per-test unique suite (tag, filter) and deletes its dashboards on teardown.
+    Unique per test so the tests stay isolated from each other and from reused-DB leftovers."""
+    value = f"{_SUITE_PREFIX}-{uuid.uuid4().hex[:8]}"
+    suite_tag = {"key": "suite", "value": value}
+    suite_filter = f"suite = '{value}'"
+    yield suite_tag, suite_filter
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    _delete_suite(signoz, token, _SUITE_FILTER)
+    _delete_suite(signoz, token, suite_filter)
 
 
 def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-statements
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    cleanup_suite: None,  # pylint: disable=unused-argument # teardown-only fixture
+    suite_marker: tuple[dict, str],
 ):
+    suite_tag, suite_filter = suite_marker
+
     def _scoped(query: str) -> str:
-        return f"({query}) AND {_SUITE_FILTER}"
+        return f"({query}) AND {suite_filter}"
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
@@ -338,7 +340,7 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
     # ── stage 1: create ──────────────────────────────────────────────────────
     ids: dict[str, str] = {}
     for name, display, tags in dashboard_requests:
-        response = _create(signoz, token, _minimal_body(name, display, [_SUITE_TAG, *tags]))
+        response = _create(signoz, token, _minimal_body(name, display, [suite_tag, *tags]))
         assert response.status_code == HTTPStatus.CREATED, response.text
         ids[name] = response.json()["data"]["id"]
 
@@ -361,7 +363,7 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
     assert {"key": "team", "value": "pulse"} in alpha["tags"]
 
     # ── stage 3: list everything in the suite ────────────────────────────────
-    response = _list(signoz, token, query=_SUITE_FILTER, limit=200)
+    response = _list(signoz, token, query=suite_filter, limit=200)
     assert response.status_code == HTTPStatus.OK, response.text
     body = response.json()
     assert body["data"]["total"] == 6
@@ -480,7 +482,7 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
         assert set(_display_names(response.json())) == expected, query
 
     # ── stage 5: name sort honours order ─────────────────────────────────────
-    response = _list(signoz, token, query=_SUITE_FILTER, sort="name", order="asc", limit=200)
+    response = _list(signoz, token, query=suite_filter, sort="name", order="asc", limit=200)
     assert _display_names(response.json()) == [
         "Alpha Overview",
         "Beta Overview",
@@ -489,7 +491,7 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
         "Gamma Storage",
         "Zeta Overview",
     ]
-    response = _list(signoz, token, query=_SUITE_FILTER, sort="name", order="desc", limit=200)
+    response = _list(signoz, token, query=suite_filter, sort="name", order="desc", limit=200)
     assert _display_names(response.json()) == [
         "Zeta Overview",
         "Gamma Storage",
@@ -501,7 +503,7 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
 
     # ── stage 6: pinning floats a dashboard to the top of any ordering ───────
     assert _pin(signoz, token, ids["lc-gamma"], pin=True).status_code == HTTPStatus.NO_CONTENT
-    response = _list(signoz, token, query=_SUITE_FILTER, sort="name", order="asc", limit=200)
+    response = _list(signoz, token, query=suite_filter, sort="name", order="asc", limit=200)
     dashboards = response.json()["data"]["dashboards"]
     assert dashboards[0]["name"] == "lc-gamma"
     assert dashboards[0]["pinned"] is True
@@ -509,7 +511,7 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
 
     # ── stage 7: unpinning restores the natural ordering ─────────────────────
     assert _pin(signoz, token, ids["lc-gamma"], pin=False).status_code == HTTPStatus.NO_CONTENT
-    response = _list(signoz, token, query=_SUITE_FILTER, sort="name", order="asc", limit=200)
+    response = _list(signoz, token, query=suite_filter, sort="name", order="asc", limit=200)
     assert _display_names(response.json()) == [
         "Alpha Overview",
         "Beta Overview",
@@ -524,7 +526,7 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
         "lc-alpha",
         "Alpha Overview",
         [
-            _SUITE_TAG,
+            suite_tag,
             {"key": "team", "value": "pulse"},
             {"key": "env", "value": "prod"},
         ],
@@ -540,7 +542,7 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
     beta_body = _minimal_body(
         "lc-beta",
         "Beta Overview",
-        [_SUITE_TAG, {"key": "team", "value": "pulse"}, {"key": "env", "value": "dev"}],
+        [suite_tag, {"key": "team", "value": "pulse"}, {"key": "env", "value": "dev"}],
     )
     response = _update(signoz, token, ids["lc-beta"], beta_body)
     assert response.status_code == HTTPStatus.BAD_REQUEST
@@ -550,7 +552,7 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
     # ── stage 10: delete removes the dashboard from get and list ─────────────
     assert _delete(signoz, token, ids["lc-gamma"]).status_code == HTTPStatus.NO_CONTENT
     assert _get(signoz, token, ids["lc-gamma"]).status_code == HTTPStatus.NOT_FOUND
-    response = _list(signoz, token, query=_SUITE_FILTER, limit=200)
+    response = _list(signoz, token, query=suite_filter, limit=200)
     assert response.json()["data"]["total"] == 5
     assert set(_display_names(response.json())) == {
         "Alpha Overview",
@@ -565,15 +567,16 @@ def test_dashboard_v2_pin_limit(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    cleanup_suite: None,  # pylint: disable=unused-argument # teardown-only fixture
+    suite_marker: tuple[dict, str],
 ):
+    suite_tag, _ = suite_marker
     max_pinned = 10
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     ids: list[str] = []
     for i in range(max_pinned + 1):
-        response = _create(signoz, token, _minimal_body(f"pl-{i}", f"Pin Limit {i}", [_SUITE_TAG]))
+        response = _create(signoz, token, _minimal_body(f"pl-{i}", f"Pin Limit {i}", [suite_tag]))
         assert response.status_code == HTTPStatus.CREATED, response.text
         ids.append(response.json()["data"]["id"])
 
@@ -609,8 +612,10 @@ def test_dashboard_v2_like_escaping(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    cleanup_suite: None,  # pylint: disable=unused-argument # teardown-only fixture
+    suite_marker: tuple[dict, str],
 ):
+    suite_tag, suite_filter = suite_marker
+
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     dashboard_requests = [
@@ -620,7 +625,7 @@ def test_dashboard_v2_like_escaping(
         ("esc-underscore-wild", "userXid panel"),
     ]
     for name, display in dashboard_requests:
-        response = _create(signoz, token, _minimal_body(name, display, [_SUITE_TAG]))
+        response = _create(signoz, token, _minimal_body(name, display, [suite_tag]))
         assert response.status_code == HTTPStatus.CREATED, response.text
 
     cases = [
@@ -657,7 +662,7 @@ def test_dashboard_v2_like_escaping(
         response = _list(
             signoz,
             token,
-            query=f"({query}) AND {_SUITE_FILTER}",
+            query=f"({query}) AND {suite_filter}",
             limit=200,
         )
         assert response.status_code == HTTPStatus.OK, response.text
