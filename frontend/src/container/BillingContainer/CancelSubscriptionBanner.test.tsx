@@ -166,8 +166,8 @@ describe('CancelSubscriptionBanner', () => {
 		);
 	});
 
-	it('retries mailto when Open email client is clicked in fallback view', async () => {
-		const { mockClick } = mockMailto();
+	it('retry link is a native anchor with correct mailto href in fallback view', async () => {
+		mockMailto();
 
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		render(<CancelSubscriptionBanner />);
@@ -178,8 +178,12 @@ describe('CancelSubscriptionBanner', () => {
 		await user.type(screen.getByTestId('cancel-confirm-input'), 'cancel');
 		await user.click(screen.getByTestId('cancel-subscription-confirm-btn'));
 
-		await user.click(screen.getByTestId('retry-mailto-btn'));
-		expect(mockClick).toHaveBeenCalledTimes(2);
+		const retryLink = screen.getByTestId('retry-mailto-btn');
+		expect(retryLink.tagName).toBe('A');
+		expect(retryLink).toHaveAttribute(
+			'href',
+			expect.stringContaining('mailto:cloud-support@signoz.io'),
+		);
 	});
 
 	it('closes fallback view when Close is clicked and resets state', async () => {

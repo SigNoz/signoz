@@ -125,7 +125,6 @@ function CancelSubscriptionBanner(): JSX.Element {
 			user: pick(user, ['email', 'displayName', 'role', 'organization']),
 			role: user?.role,
 		});
-		openMailto(buildMailtoUri(orgName, userEmail));
 	};
 
 	const handleClose = (): void => {
@@ -232,13 +231,21 @@ function CancelSubscriptionBanner(): JSX.Element {
 								{copied ? 'Copied!' : 'Copy email template'}
 							</Button>
 							<Button
+								asChild
 								variant="outlined"
 								color="secondary"
-								prefix={<MailOpen size={14} />}
-								onClick={handleRetryMailto}
 								data-testid="retry-mailto-btn"
 							>
-								Reopen email client
+								<a
+									href={buildMailtoUri(orgName, userEmail)}
+									onClick={handleRetryMailto}
+									className={styles.retryLink}
+									target="_blank"
+									rel="noopener noreferrer"
+								>
+									<MailOpen size={14} />
+									Reopen email client
+								</a>
 							</Button>
 						</div>
 					</div>
