@@ -1,9 +1,22 @@
-// Reserved query-builder keywords. Matched case-insensitively so we can canonicalise
-// them to lowercase — `a = 1 AND b = 2` and `a = 1 and b = 2` should dedup to the
-// same entry. \b boundaries prevent partial matches inside identifiers
-// (e.g. `OR` inside `originator`).
-const KEYWORDS_RE =
-	/\b(AND|OR|NOT|IN|LIKE|ILIKE|CONTAINS|EXISTS|BETWEEN|IS|NULL|TRUE|FALSE)\b/gi;
+import {
+	OPERATORS,
+	QUERY_BUILDER_FUNCTIONS,
+	TRACE_OPERATOR_OPERATORS,
+} from 'constants/antlrQueryConstants';
+
+// Reserved keywords sourced from the ANTLR grammar constants so this list stays
+// in sync with the parser. `\b` prevents partial matches inside identifiers
+// (e.g. `OR` inside `originator`). `TRUE`/`FALSE` are BOOL literals, included
+// so case variants of boolean values also dedup.
+const WORD_KEYWORDS = [
+	...Object.keys(OPERATORS).filter((k) => /^[A-Z]+$/.test(k)),
+	...Object.keys(TRACE_OPERATOR_OPERATORS).filter((k) => /^[A-Z]+$/.test(k)),
+	...Object.values(QUERY_BUILDER_FUNCTIONS),
+	'TRUE',
+	'FALSE',
+];
+
+const KEYWORDS_RE = new RegExp(`\\b(${WORD_KEYWORDS.join('|')})\\b`, 'gi');
 
 // Matches single- or double-quoted string literals, supporting escaped quotes
 // (e.g. `'it\'s'` or `"a \" b"`). We preserve quoted spans verbatim during

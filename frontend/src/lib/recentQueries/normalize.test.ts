@@ -25,6 +25,39 @@ describe('normalizeFilterExpression', () => {
 		);
 	});
 
+	it('lowercases REGEXP', () => {
+		expect(normalizeFilterExpression('path REGEXP "foo"')).toBe(
+			'pathregexp"foo"',
+		);
+		expect(normalizeFilterExpression('path REGEXP "foo"')).toBe(
+			normalizeFilterExpression('path regexp "foo"'),
+		);
+	});
+
+	it('lowercases HAS / HASANY / HASALL / HASTOKEN function names', () => {
+		expect(normalizeFilterExpression('HAS(tags, "x")')).toBe(
+			normalizeFilterExpression('has(tags, "x")'),
+		);
+		expect(normalizeFilterExpression('HASANY(tags, ["a","b"])')).toBe(
+			normalizeFilterExpression('hasAny(tags, ["a","b"])'),
+		);
+		expect(normalizeFilterExpression('HASALL(tags, ["a","b"])')).toBe(
+			normalizeFilterExpression('hasAll(tags, ["a","b"])'),
+		);
+		expect(normalizeFilterExpression('HASTOKEN(msg, "err")')).toBe(
+			normalizeFilterExpression('hasToken(msg, "err")'),
+		);
+	});
+
+	it('lowercases TRUE / FALSE boolean literals', () => {
+		expect(normalizeFilterExpression('active = TRUE')).toBe(
+			normalizeFilterExpression('active = true'),
+		);
+		expect(normalizeFilterExpression('active = FALSE')).toBe(
+			normalizeFilterExpression('active = false'),
+		);
+	});
+
 	it('preserves whitespace and casing inside single-quoted strings', () => {
 		expect(normalizeFilterExpression("a = 'X  Y'")).toBe("a='X  Y'");
 	});
