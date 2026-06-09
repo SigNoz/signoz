@@ -494,6 +494,23 @@ func TestCompile_Rejections(t *testing.T) {
 	})
 }
 
+// Every key in reservedOps must have a matching case in
+// visitComparisonForReservedKeys; a key that's reserved but unhandled falls
+// through to the "no handler for reserved key" error. Equal is accepted by all
+// reserved keys, so `key = 'x'` always reaches the dispatch switch — a missing
+// handler surfaces as that error regardless of whether the value type-checks.
+func TestCompileReservedKeysAllHandled(t *testing.T) {
+	for key := range reservedOps {
+		t.Run(string(key), func(t *testing.T) {
+			_, err := Compile(string(key)+` = 'x'`, formatter(t))
+			if err != nil {
+				assert.NotContains(t, err.Error(), "no handler for reserved key",
+					"reserved key %q has no handler in visitComparisonForReservedKeys", key)
+			}
+		})
+	}
+}
+
 func formatter(t *testing.T) sqlstore.SQLFormatter {
 	t.Helper()
 	p := sqlstoretest.New(sqlstore.Config{Provider: "sqlite"}, sqlmock.QueryMatcherEqual)

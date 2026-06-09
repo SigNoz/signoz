@@ -162,6 +162,8 @@ func (v *visitor) visitComparisonForReservedKeys(ctx *grammar.ComparisonContext,
 	case dashboardtypes.DSLKeyLocked:
 		return v.buildBoolComparison(ctx, operation, "dashboard.locked")
 	}
+	// Unreachable for real input: every reservedOps key has a case above, and
+	// TestCompileReservedKeysAllHandled guards that the two stay in sync.
 	v.addError("no handler for reserved key %q", key)
 	return ""
 }
