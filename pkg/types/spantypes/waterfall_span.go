@@ -164,6 +164,17 @@ func (item *MinimalSpan) ToWaterfallSpan(traceID string) *WaterfallSpan {
 	}
 }
 
+func (item *MinimalSpan) ToFlamegraphSpan() *FlamegraphSpan {
+	return &FlamegraphSpan{
+		SpanID:       item.SpanID,
+		ParentSpanID: item.ParentSpanID,
+		Timestamp:    uint64(item.StartTime.UnixNano()),
+		DurationNano: item.DurationNano,
+		HasError:     item.HasError,
+		Children:     make([]*FlamegraphSpan, 0),
+	}
+}
+
 // NewMissingWaterfallSpan creates a synthetic placeholder span for a parent that has no recorded data.
 func NewMissingWaterfallSpan(spanID, traceID string, timeUnixNano, durationNano uint64) *WaterfallSpan {
 	return &WaterfallSpan{
@@ -267,6 +278,19 @@ func (ws *WaterfallSpan) getPathToSelectedSpanID(selectedSpanID string) ([]strin
 	return nil, false
 }
 
+func (item *StorableSpan) AttributeValue(name string) any {
+	if v, ok := item.AttributesString[name]; ok {
+		return v
+	}
+	if v, ok := item.AttributesNumber[name]; ok {
+		return v
+	}
+	if v, ok := item.AttributesBool[name]; ok {
+		return v
+	}
+	return nil
+}
+
 func (item *StorableSpan) Attributes() map[string]any {
 	attributes := make(map[string]any, len(item.AttributesString)+len(item.AttributesNumber)+len(item.AttributesBool))
 	for k, v := range item.AttributesString {
@@ -296,7 +320,7 @@ func (item *StorableSpan) UnmarshalledEvents() []Event {
 func (item *StorableSpan) UnmarshalledRefs() []OtelSpanRef {
 	refs := []OtelSpanRef{}
 	if err := json.Unmarshal([]byte(item.References), &refs); err != nil {
-		return nil // skip malformed values
+		return []OtelSpanRef{} // skip malformed values
 	}
 	return refs
 }

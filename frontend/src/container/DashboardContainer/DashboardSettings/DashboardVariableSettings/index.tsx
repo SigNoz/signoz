@@ -18,10 +18,11 @@ import { convertVariablesToDbFormat } from 'container/DashboardContainer/Dashboa
 import { useAddDynamicVariableToPanels } from 'hooks/dashboard/useAddDynamicVariableToPanels';
 import { useDashboardVariables } from 'hooks/dashboard/useDashboardVariables';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
-import { useNotifications } from 'hooks/useNotifications';
+import { toast } from '@signozhq/ui/sonner';
 import { IDashboardVariables } from 'providers/Dashboard/store/dashboardVariables/dashboardVariablesStoreTypes';
 import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
+import { removeVariableReferencesFromDashboard } from './addTagFiltersToDashboard';
 
 import { TVariableMode } from './types';
 import VariableItem from './VariableItem/VariableItem';
@@ -91,8 +92,6 @@ function VariablesSettings({
 
 	const { dashboardData, setDashboardData } = useDashboardStore();
 	const { dashboardVariables } = useDashboardVariables();
-
-	const { notifications } = useNotifications();
 
 	const [variablesTableData, setVariablesTableData] = useState<any>([]);
 	const [variblesOrderArr, setVariablesOrderArr] = useState<number[]>([]);
@@ -201,9 +200,7 @@ function VariablesSettings({
 				onSuccess: (updatedDashboard) => {
 					if (updatedDashboard.data) {
 						setDashboardData(updatedDashboard.data);
-						notifications.success({
-							message: t('variable_updated_successfully'),
-						});
+						toast.success(t('variable_updated_successfully'));
 					}
 				},
 			},
@@ -256,6 +253,11 @@ function VariablesSettings({
 	};
 
 	const handleDeleteConfirm = (): void => {
+		if (!dashboardData || !variableToDelete.current) {
+			setDeleteVariableModal(false);
+			return;
+		}
+
 		const newVariablesArr = variablesTableData.filter(
 			(variable: IDashboardVariable) =>
 				variable.id !== variableToDelete?.current?.id,
@@ -263,7 +265,31 @@ function VariablesSettings({
 
 		const updatedVariables = convertVariablesToDbFormat(newVariablesArr);
 
-		updateVariables(updatedVariables);
+		const cleanedDashboard =
+			removeVariableReferencesFromDashboard(
+				dashboardData,
+				variableToDelete.current.name || '',
+			) || dashboardData;
+
+		updateMutation.mutateAsync(
+			{
+				id: dashboardData.id,
+
+				data: {
+					...cleanedDashboard.data,
+					variables: updatedVariables,
+				},
+			},
+			{
+				onSuccess: (updatedDashboard) => {
+					if (updatedDashboard.data) {
+						setDashboardData(updatedDashboard.data);
+						toast.success(t('variable_updated_successfully'));
+					}
+				},
+			},
+		);
+
 		variableToDelete.current = null;
 		setDeleteVariableModal(false);
 	};
@@ -476,6 +502,7 @@ function VariablesSettings({
 				open={deleteVariableModal}
 				onOk={handleDeleteConfirm}
 				onCancel={handleDeleteCancel}
+				okButtonProps={{ loading: updateMutation.isLoading }}
 			>
 				<Typography.Text>
 					Are you sure you want to delete variable{' '}

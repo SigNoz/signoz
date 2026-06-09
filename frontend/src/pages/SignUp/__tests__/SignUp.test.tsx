@@ -14,11 +14,6 @@ jest.mock('AppRoutes/utils', () => ({
 
 const mockAfterLogin = jest.mocked(afterLogin);
 
-jest.mock('api/common/logEvent', () => ({
-	__esModule: true,
-	default: jest.fn(),
-}));
-
 jest.mock('lib/history', () => ({
 	__esModule: true,
 	default: {

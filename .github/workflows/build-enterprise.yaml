@@ -69,6 +69,8 @@ jobs:
           echo 'VITE_APPCUES_APP_ID="${{ secrets.APPCUES_APP_ID }}"' >> frontend/.env
           echo 'VITE_PYLON_IDENTITY_SECRET="${{ secrets.PYLON_IDENTITY_SECRET }}"' >> frontend/.env
           echo 'VITE_DOCS_BASE_URL="https://signoz.io"' >> frontend/.env
+          echo 'VITE_ENVIRONMENT="production"' >> frontend/.env
+          echo 'VITE_VERSION="${{ steps.build-info.outputs.version }}"' >> frontend/.env
       - name: cache-dotenv
         uses: actions/cache@v4
         with:

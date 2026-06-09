@@ -108,7 +108,7 @@ func TestCreateRuleIDMatcher(t *testing.T) {
 			require.NoError(t, err)
 
 			for _, receiver := range tc.receivers {
-				err := cfg.CreateReceiver(receiver)
+				err := cfg.CreateReceiver(&Receiver{Receiver: &receiver})
 				require.NoError(t, err)
 			}
 
@@ -203,7 +203,7 @@ func TestDeleteRuleIDMatcher(t *testing.T) {
 			require.NoError(t, err)
 
 			for _, receiver := range tc.receivers {
-				err := cfg.CreateReceiver(receiver)
+				err := cfg.CreateReceiver(&Receiver{Receiver: &receiver})
 				require.NoError(t, err)
 			}
 
@@ -328,4 +328,59 @@ func TestSetGlobalConfigPreservesSMTPRequireTLS(t *testing.T) {
 			assert.Equal(t, tt.expect, c.alertmanagerConfig.Global.SMTPRequireTLS)
 		})
 	}
+}
+
+// Round-trip: create → serialize → reload → GetReceiver still has the configs.
+func TestConfigPreservesGoogleChatConfigs(t *testing.T) {
+	webhookURL, err := url.Parse("https://chat.googleapis.com/v1/spaces/test/messages")
+	require.NoError(t, err)
+
+	cfg, err := NewDefaultConfig(
+		GlobalConfig{SMTPSmarthost: config.HostPort{Host: "localhost", Port: "25"}, SMTPFrom: "test@example.com"},
+		RouteConfig{GroupInterval: time.Minute, GroupWait: time.Minute, RepeatInterval: time.Minute},
+		"1",
+	)
+	require.NoError(t, err)
+
+	receiver := &Receiver{
+		Receiver: &config.Receiver{Name: "googlechat-receiver"},
+		GoogleChatConfigs: []*GoogleChatReceiverConfig{
+			{
+				WebhookURL: &config.SecretURL{URL: webhookURL},
+				Title:      "Alert",
+				Text:       "Body",
+			},
+		},
+	}
+
+	require.NoError(t, cfg.CreateReceiver(receiver))
+
+	got, err := cfg.GetReceiver("googlechat-receiver")
+	require.NoError(t, err)
+	require.Len(t, got.GoogleChatConfigs, 1)
+	assert.Equal(t, "Alert", got.GoogleChatConfigs[0].Title)
+	assert.Equal(t, "Body", got.GoogleChatConfigs[0].Text)
+
+	// HTTPConfig threaded from Global by applyNativeDefaults.
+	require.NotNil(t, got.GoogleChatConfigs[0].HTTPConfig)
+	assert.Same(t, cfg.alertmanagerConfig.Global.HTTPConfig, got.GoogleChatConfigs[0].HTTPConfig)
+
+	reloaded, err := NewConfigFromStoreableConfig(cfg.StoreableConfig())
+	require.NoError(t, err)
+
+	reloadedReceiver, err := reloaded.GetReceiver("googlechat-receiver")
+	require.NoError(t, err)
+	require.Len(t, reloadedReceiver.GoogleChatConfigs, 1)
+	assert.Equal(t, "Alert", reloadedReceiver.GoogleChatConfigs[0].Title)
+	assert.Equal(t, "Body", reloadedReceiver.GoogleChatConfigs[0].Text)
+	assert.Equal(t, "https://chat.googleapis.com/v1/spaces/test/messages", reloadedReceiver.GoogleChatConfigs[0].WebhookURL.String())
+	require.NotNil(t, reloadedReceiver.GoogleChatConfigs[0].HTTPConfig)
+
+	receiver.GoogleChatConfigs[0].Title = "Updated"
+	require.NoError(t, cfg.UpdateReceiver(receiver))
+
+	updated, err := cfg.GetReceiver("googlechat-receiver")
+	require.NoError(t, err)
+	require.Len(t, updated.GoogleChatConfigs, 1)
+	assert.Equal(t, "Updated", updated.GoogleChatConfigs[0].Title)
 }

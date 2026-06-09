@@ -56,7 +56,7 @@ type Channel struct {
 
 // NewChannelFromReceiver creates a new Channel from a Receiver.
 // It can return nil if the receiver is the default receiver.
-func NewChannelFromReceiver(receiver config.Receiver, orgID string) (*Channel, error) {
+func NewChannelFromReceiver(receiver *Receiver, orgID string) (*Channel, error) {
 	if receiver.Name == DefaultReceiverName {
 		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeAlertmanagerChannelInvalid, "cannot use %s name as a channel name", receiver.Name)
 	}
@@ -74,51 +74,56 @@ func NewChannelFromReceiver(receiver config.Receiver, orgID string) (*Channel, e
 		OrgID: orgID,
 	}
 
-	// Use reflection to examine receiver struct fields
-	receiverType := reflect.TypeOf(receiver)
-	receiverVal := reflect.ValueOf(receiver)
-
-	// Iterate through fields looking for *Config fields
-	for i := 0; i < receiverType.NumField(); i++ {
-		field := receiverType.Field(i)
-		fieldVal := receiverVal.Field(i)
-
-		// Skip if not a slice or is empty
-		if fieldVal.Kind() != reflect.Slice || fieldVal.Len() == 0 {
-			continue
-		}
-
-		// Get channel type from yaml tag
-		yamlTag := field.Tag.Get("yaml")
-		if yamlTag == "" {
-			continue
-		}
-
-		// Extract the base type name (e.g., "email_configs" -> "email")
-		matches := receiverTypeRegex.FindStringSubmatch(yamlTag)
-		if len(matches) != 2 {
-			continue
-		}
-
-		channelType := matches[1]
-
-		// Marshal config data to JSON
-		configData, err := json.Marshal(receiver)
-		if err != nil {
-			continue
-		}
-
-		channel.Type = channelType
-		channel.Data = string(configData)
-		break
+	data, err := json.Marshal(receiver)
+	if err != nil {
+		return nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "marshal receiver")
 	}
+	channel.Data = string(data)
 
-	// If we were unable to find the channel type, return an error
+	channel.Type = receiverChannelType(receiver)
 	if channel.Type == "" {
 		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeAlertmanagerChannelInvalid, "channel '%s' must have at least one notification configuration (e.g., email_configs, webhook_configs, slack_configs)", receiver.Name)
 	}
 
 	return &channel, nil
+}
+
+// receiverChannelType returns the channel.Type discriminator. Walks
+// Receiver's own fields first (native), then the embed (upstream); first
+// non-empty *_configs slice wins.
+func receiverChannelType(receiver *Receiver) string {
+	if t := nonEmptyConfigsField(reflect.ValueOf(*receiver)); t != "" {
+		return t
+	}
+	if t := nonEmptyConfigsField(reflect.ValueOf(*receiver.Receiver)); t != "" {
+		return t
+	}
+	return ""
+}
+
+func nonEmptyConfigsField(v reflect.Value) string {
+	t := v.Type()
+	for i := 0; i < t.NumField(); i++ {
+		field := t.Field(i)
+		fieldVal := v.Field(i)
+
+		if fieldVal.Kind() != reflect.Slice || fieldVal.Len() == 0 {
+			continue
+		}
+
+		yamlTag := field.Tag.Get("yaml")
+		if yamlTag == "" {
+			continue
+		}
+
+		// Extract the base type name (e.g., "email_configs" -> "email").
+		matches := receiverTypeRegex.FindStringSubmatch(yamlTag)
+		if len(matches) != 2 {
+			continue
+		}
+		return matches[1]
+	}
+	return ""
 }
 
 func NewConfigFromChannels(globalConfig GlobalConfig, routeConfig RouteConfig, channels Channels, orgID string) (*Config, error) {
@@ -182,7 +187,7 @@ func NewStatsFromChannels(channels Channels) map[string]any {
 	return stats
 }
 
-func (c *Channel) Update(receiver Receiver) error {
+func (c *Channel) Update(receiver *Receiver) error {
 	channel, err := NewChannelFromReceiver(receiver, c.OrgID)
 	if err != nil {
 		return err
@@ -192,6 +197,7 @@ func (c *Channel) Update(receiver Receiver) error {
 		return errors.Newf(errors.TypeInvalidInput, ErrCodeAlertmanagerChannelNameMismatch, "cannot update channel name")
 	}
 
+	c.Type = channel.Type
 	c.Data = channel.Data
 	c.UpdatedAt = time.Now()
 
@@ -210,15 +216,19 @@ func (PostableChannel) JSONSchema() (jsonschema.Schema, error) {
 	schema.WithRequired("name")
 
 	var oneOf []jsonschema.SchemaOrBool
-	receiverType := reflect.TypeOf(Receiver{})
-	for i := 0; i < receiverType.NumField(); i++ {
-		jsonTag := strings.Split(receiverType.Field(i).Tag.Get("json"), ",")[0]
-		if !strings.HasSuffix(jsonTag, "_configs") {
-			continue
+	// Walk both halves: native fields on Receiver, upstream on the embed.
+	collect := func(t reflect.Type) {
+		for i := 0; i < t.NumField(); i++ {
+			jsonTag := strings.Split(t.Field(i).Tag.Get("json"), ",")[0]
+			if !strings.HasSuffix(jsonTag, "_configs") {
+				continue
+			}
+			branch := (&jsonschema.Schema{}).WithRequired(jsonTag)
+			oneOf = append(oneOf, branch.ToSchemaOrBool())
 		}
-		branch := (&jsonschema.Schema{}).WithRequired(jsonTag)
-		oneOf = append(oneOf, branch.ToSchemaOrBool())
 	}
+	collect(reflect.TypeOf(Receiver{}))
+	collect(reflect.TypeOf(config.Receiver{}))
 
 	schema.WithOneOf(oneOf...)
 
