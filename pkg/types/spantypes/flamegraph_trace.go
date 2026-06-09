@@ -40,6 +40,7 @@ func NewFlamegraphTraceFromStorable(spans []StorableSpan, selectFields []telemet
 	return t
 }
 
+// GetAllLevels return level wise spans using BFS on trace.
 func (t *FlamegraphTrace) GetAllLevels() [][]*FlamegraphSpan {
 	var result [][]*FlamegraphSpan
 	for _, root := range t.roots {
@@ -49,6 +50,7 @@ func (t *FlamegraphTrace) GetAllLevels() [][]*FlamegraphSpan {
 			for _, node := range currentLevel {
 				node.Level = depth
 				nextLevel = append(nextLevel, node.Children...)
+				node.Children = nil // release tree reference
 			}
 			result = append(result, currentLevel)
 			currentLevel = nextLevel
@@ -68,6 +70,7 @@ func (t *FlamegraphTrace) GetSelectedLevels(selectedSpanID string, levelLimit, s
 	beforeSelectedLevel := int(float64(levelLimit) * 0.4)
 	startLevel := max(0, selectedIndex-beforeSelectedLevel)
 	endLevel := min(len(allLevels), startLevel+levelLimit)
+	startLevel = max(0, endLevel-levelLimit) // utilize the page size if endLevel is clamped
 
 	result := make([]FlamegraphLevel, 0, endLevel-startLevel)
 	for i := startLevel; i < endLevel; i++ {
@@ -148,29 +151,44 @@ func (t *FlamegraphTrace) sampleLevel(spans []*FlamegraphSpan, selectedSpanID st
 		return sorted[i].DurationNano > sorted[j].DurationNano
 	})
 
-	topK := min(topLatencyCount, len(sorted))
-	sampled := make([]*FlamegraphSpan, topK, topK+1)
-	copy(sampled, sorted[:topK])
+	sampled := make(map[string]*FlamegraphSpan, topLatencyCount+1)
 
+	topK := min(topLatencyCount, len(sorted))
+	for _, span := range sorted[:topK] {
+		sampled[span.SpanID] = span
+	}
+
+	// include the selected span.
 	if isSelectedLevel {
 		for _, span := range sorted {
 			if span.SpanID == selectedSpanID {
-				sampled = append(sampled, span)
+				sampled[span.SpanID] = span
 				break
 			}
 		}
 	}
 
-	return append(sampled, t.bucketSampleSpans(sorted, bucketCount)...)
+	for _, span := range t.bucketSampleSpans(sorted, bucketCount, sampled) {
+		sampled[span.SpanID] = span
+	}
+
+	result := make([]*FlamegraphSpan, 0, len(sampled))
+	for _, span := range sampled {
+		result = append(result, span)
+	}
+	return result
 }
 
-func (t *FlamegraphTrace) bucketSampleSpans(sorted []*FlamegraphSpan, bucketCount int) []*FlamegraphSpan {
+func (t *FlamegraphTrace) bucketSampleSpans(sorted []*FlamegraphSpan, bucketCount int, exclude map[string]*FlamegraphSpan) []*FlamegraphSpan {
 	bucketSize := (t.endTime - t.startTime) / uint64(bucketCount)
 	if bucketSize == 0 {
 		bucketSize = 1
 	}
 	buckets := make([][]*FlamegraphSpan, bucketCount)
 	for _, span := range sorted {
+		if _, ok := exclude[span.SpanID]; ok {
+			continue
+		}
 		if span.Timestamp < t.startTime || span.Timestamp > t.endTime {
 			continue
 		}
