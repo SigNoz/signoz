@@ -42,8 +42,7 @@ func (v *visitor) compile(query string) (string, []any, []string) {
 	if condition == "" {
 		return "", nil, nil
 	}
-	whereExpression := stripOuterParens(condition)
-	sql, arguments := v.selectBuilder.Args.CompileWithFlavor(whereExpression, bunPlaceholderFlavor)
+	sql, arguments := v.selectBuilder.Args.CompileWithFlavor(condition, bunPlaceholderFlavor)
 	return sql, arguments, nil
 }
 
@@ -577,27 +576,4 @@ func trimQuotes(s string) string {
 	s = strings.ReplaceAll(s, `\\`, `\`)
 	s = strings.ReplaceAll(s, `\'`, `'`)
 	return s
-}
-
-// stripOuterParens drops the single redundant enclosing pair that
-// go-sqlbuilder's top-level And/Or wraps the whole expression in, so the
-// emitted WHERE reads cleanly. It only strips when the first `(` matches the
-// final `)` — `NOT (...)` or `(a) AND (b)` are left untouched.
-func stripOuterParens(s string) string {
-	if len(s) < 2 || s[0] != '(' || s[len(s)-1] != ')' {
-		return s
-	}
-	depth := 0
-	for i := 0; i < len(s); i++ {
-		switch s[i] {
-		case '(':
-			depth++
-		case ')':
-			depth--
-			if depth == 0 && i != len(s)-1 {
-				return s
-			}
-		}
-	}
-	return s[1 : len(s)-1]
 }

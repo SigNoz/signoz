@@ -296,19 +296,19 @@ func TestCompile_BooleanComposition(t *testing.T) {
 		{
 			subtestName:       "AND chain — flat arg list",
 			dslQueryToCompile: `locked = true AND created_by = 'a@b.com'`,
-			expectedSQL:       `dashboard.locked = ? AND dashboard.created_by = ?`,
+			expectedSQL:       `(dashboard.locked = ? AND dashboard.created_by = ?)`,
 			expectedArgs:      []any{true, "a@b.com"},
 		},
 		{
 			subtestName:       "OR chain",
 			dslQueryToCompile: `locked = true OR created_by = 'a@b.com'`,
-			expectedSQL:       `dashboard.locked = ? OR dashboard.created_by = ?`,
+			expectedSQL:       `(dashboard.locked = ? OR dashboard.created_by = ?)`,
 			expectedArgs:      []any{true, "a@b.com"},
 		},
 		{
 			subtestName:       "parens preserve precedence",
 			dslQueryToCompile: `(locked = true OR locked = false) AND created_by = 'a@b.com'`,
-			expectedSQL:       `(dashboard.locked = ? OR dashboard.locked = ?) AND dashboard.created_by = ?`,
+			expectedSQL:       `((dashboard.locked = ? OR dashboard.locked = ?) AND dashboard.created_by = ?)`,
 			expectedArgs:      []any{true, false, "a@b.com"},
 		},
 	})
@@ -328,13 +328,13 @@ func TestCompile_NOT(t *testing.T) {
 		{
 			subtestName:       "NOT binds tightly to its primary in an AND chain",
 			dslQueryToCompile: `NOT name = 'foo' AND created_by = 'alice'`,
-			expectedSQL:       `NOT (json_extract("dashboard"."data", '$.spec.display.name') = ?) AND dashboard.created_by = ?`,
+			expectedSQL:       `(NOT (json_extract("dashboard"."data", '$.spec.display.name') = ?) AND dashboard.created_by = ?)`,
 			expectedArgs:      []any{"foo", "alice"},
 		},
 		{
 			subtestName:       "NOT applied to the second term in an AND chain",
 			dslQueryToCompile: `locked = true AND NOT name = 'foo'`,
-			expectedSQL:       `dashboard.locked = ? AND NOT (json_extract("dashboard"."data", '$.spec.display.name') = ?)`,
+			expectedSQL:       `(dashboard.locked = ? AND NOT (json_extract("dashboard"."data", '$.spec.display.name') = ?))`,
 			expectedArgs:      []any{true, "foo"},
 		},
 		{
@@ -368,6 +368,7 @@ func TestCompile_NOT(t *testing.T) {
 			subtestName:       "NOT team = ... AND name = ...",
 			dslQueryToCompile: `NOT team = 'pulse' AND name = 'overview'`,
 			expectedSQL: `
+				(
 				NOT (
 					EXISTS (
 						SELECT 1 FROM tag_relation tr
@@ -377,7 +378,7 @@ func TestCompile_NOT(t *testing.T) {
 						AND t.value = ?
 					)
 				)
-				AND json_extract("dashboard"."data", '$.spec.display.name') = ?`,
+				AND json_extract("dashboard"."data", '$.spec.display.name') = ?)`,
 			expectedArgs: []any{kindArg, "team", "pulse", "overview"},
 		},
 	})
@@ -389,6 +390,7 @@ func TestCompile_ComplexExamples(t *testing.T) {
 			subtestName:       "name CONTAINS + tag LIKE + created_by + database =",
 			dslQueryToCompile: `name CONTAINS 'overview' AND tag LIKE 'prod%' AND created_by = 'naman.verma@signoz.io' AND database = 'mongo'`,
 			expectedSQL: `
+				(
 				json_extract("dashboard"."data", '$.spec.display.name') LIKE ? ESCAPE '\'
 				AND EXISTS (
 					SELECT 1 FROM tag_relation tr
@@ -404,13 +406,14 @@ func TestCompile_ComplexExamples(t *testing.T) {
 					WHERE tr.kind = ? AND tr.resource_id = dashboard.id
 					AND LOWER(t.key) = LOWER(?)
 					AND t.value = ?
-				)`,
+				))`,
 			expectedArgs: []any{"%overview%", kindArg, "tag", "prod%", "naman.verma@signoz.io", kindArg, "database", "mongo"},
 		},
 		{
 			subtestName:       "team IN AND database EXISTS",
 			dslQueryToCompile: `team IN ['pulse', 'events'] AND database EXISTS`,
 			expectedSQL: `
+				(
 				EXISTS (
 					SELECT 1 FROM tag_relation tr
 					JOIN tag t ON t.id = tr.tag_id
@@ -423,13 +426,14 @@ func TestCompile_ComplexExamples(t *testing.T) {
 					JOIN tag t ON t.id = tr.tag_id
 					WHERE tr.kind = ? AND tr.resource_id = dashboard.id
 					AND LOWER(t.key) = LOWER(?)
-				)`,
+				))`,
 			expectedArgs: []any{kindArg, "team", "pulse", "events", kindArg, "database"},
 		},
 		{
 			subtestName:       "nested OR / AND with parens",
 			dslQueryToCompile: `(database IN ['sql', 'redis', 'mongo'] OR name LIKE '%database%') AND (team = 'pulse' OR name LIKE '%pulse%')`,
 			expectedSQL: `
+				(
 				(
 					EXISTS (
 						SELECT 1 FROM tag_relation tr
@@ -449,7 +453,7 @@ func TestCompile_ComplexExamples(t *testing.T) {
 						AND t.value = ?
 					)
 					OR json_extract("dashboard"."data", '$.spec.display.name') LIKE ? ESCAPE '\'
-				)`,
+				))`,
 			expectedArgs: []any{kindArg, "database", "sql", "redis", "mongo", "%database%", kindArg, "team", "pulse", "%pulse%"},
 		},
 	})
