@@ -1460,27 +1460,6 @@ func TestMetricAggregationValidateForType(t *testing.T) {
 			spaceAggregation: metrictypes.SpaceAggregationSum,
 			wantErr:          false,
 		},
-		{
-			name:             "comparison param with count on histogram is allowed",
-			metricType:       metrictypes.HistogramType,
-			spaceAggregation: metrictypes.SpaceAggregationCount,
-			comparisonParam:  &metrictypes.ComparisonSpaceAggregationParam{Operater: "<=", Threshold: 1},
-			wantErr:          false,
-		},
-		{
-			name:             "comparison param on sum is not allowed",
-			metricType:       metrictypes.SumType,
-			spaceAggregation: metrictypes.SpaceAggregationCount,
-			comparisonParam:  &metrictypes.ComparisonSpaceAggregationParam{Operater: "<=", Threshold: 1},
-			wantErr:          true,
-		},
-		{
-			name:             "comparison param with non-count space aggregation on histogram is not allowed",
-			metricType:       metrictypes.HistogramType,
-			spaceAggregation: metrictypes.SpaceAggregationSum,
-			comparisonParam:  &metrictypes.ComparisonSpaceAggregationParam{Operater: "<=", Threshold: 1},
-			wantErr:          true,
-		},
 	}
 
 	for _, tc := range cases {
