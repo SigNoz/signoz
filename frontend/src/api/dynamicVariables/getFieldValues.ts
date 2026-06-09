@@ -11,6 +11,12 @@ import { FieldValueResponse } from 'types/api/dynamicVariables/getFieldValues';
  * @param name Name of the attribute for which values are being fetched
  * @param value Optional search text
  * @param existingQuery Optional existing query - across all present dynamic variables
+ *
+ * @deprecated Use the generated `useGetFieldsValues` hook (or `getFieldsValues` fetcher) from
+ * `api/generated/services/fields` instead. This hand-written client targets the
+ * same endpoint and will be removed once call sites migrate.
+ *
+ * Part of https://github.com/SigNoz/engineering-pod/issues/5289, add a comment or update when removing this method.
  */
 export const getFieldValues = async (
 	signal?: 'traces' | 'logs' | 'metrics',
