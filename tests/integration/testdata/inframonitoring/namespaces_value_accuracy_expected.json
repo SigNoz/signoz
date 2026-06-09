@@ -1,0 +1,16 @@
+{
+  "records": [
+    {
+      "namespaceName": "acc-ns-1",
+      "namespaceCPU": 1.0,
+      "namespaceMemory": 200000000.0,
+      "podCountsByPhase": {"pending": 0, "running": 2, "succeeded": 0, "failed": 0, "unknown": 0}
+    },
+    {
+      "namespaceName": "acc-ns-2",
+      "namespaceCPU": 2.25,
+      "namespaceMemory": 600000000.0,
+      "podCountsByPhase": {"pending": 0, "running": 3, "succeeded": 0, "failed": 0, "unknown": 0}
+    }
+  ]
+}

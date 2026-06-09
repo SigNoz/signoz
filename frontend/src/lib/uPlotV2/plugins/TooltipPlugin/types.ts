@@ -37,7 +37,7 @@ export interface TooltipViewState {
 	isHovering: boolean;
 	isPinned: boolean;
 	dismiss: () => void;
-	clickData: TooltipClickData | null;
+	clickData: ChartClickData | null;
 	contents?: ReactNode;
 }
 
@@ -59,17 +59,17 @@ export interface TooltipPluginProps {
 	/** Key that pins the tooltip while hovering. Defaults to DEFAULT_PIN_TOOLTIP_KEY ('l'). */
 	pinKey?: string;
 	/** Called when the user clicks the uPlot overlay. Receives resolved click data. */
-	onClick?: (clickData: TooltipClickData) => void;
+	onClick?: (clickData: ChartClickData) => void;
 	syncMode?: DashboardCursorSync;
 	syncKey?: string;
 	syncMetadata?: TooltipSyncMetadata;
 	render: (args: TooltipRenderArgs) => ReactNode;
-	pinnedTooltipElement?: (clickData: TooltipClickData) => ReactNode;
+	pinnedTooltipElement?: (clickData: ChartClickData) => ReactNode;
 	maxWidth?: number;
 	maxHeight?: number;
 }
 
-export interface TooltipClickData {
+export interface ChartClickData {
 	xValue: number;
 	yValue: number;
 	focusedSeries: {
@@ -101,7 +101,7 @@ export interface TooltipControllerState {
 	hoverActive: boolean;
 	isAnySeriesActive: boolean;
 	pinned: boolean;
-	clickData: TooltipClickData | null;
+	clickData: ChartClickData | null;
 	style: TooltipViewState['style'];
 	horizontalOffset: number;
 	verticalOffset: number;

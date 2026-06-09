@@ -5,26 +5,23 @@
 	gap: 6px;
 	align-items: center;
 	max-width: 80%;
+	padding-left: 8px;
 
-	.dashboardBtn {
-		display: flex;
-		align-items: center;
+	.linkToPreviousPage {
+		// Collapse the design-system Button's fixed-height/padding box so it hugs
+		// the label like inline text (the breadcrumb is text, not a chunky button).
+		--button-height: auto;
+		--button-padding: 0;
+		--button-gap: 4px;
 		color: var(--l2-foreground);
 		font-family: Inter;
 		font-size: 14px;
 		font-style: normal;
 		font-weight: 400;
-		line-height: 20px; /* 142.857% */
 		letter-spacing: -0.07px;
-		padding: 0px;
-		height: 20px;
 	}
 
-	.dashboardBtn:hover {
-		background-color: unset;
-	}
-
-	.idBtn {
+	.currentPage {
 		display: flex;
 		align-items: center;
 		gap: 4px;
@@ -46,12 +43,9 @@
 			overflow: hidden;
 			text-overflow: ellipsis;
 		}
-
-		:global(.ant-btn-icon) {
-			margin-inline-end: 4px;
-		}
 	}
-	.idBtn:hover {
+
+	.currentPage:hover {
 		background: color-mix(in srgb, var(--bg-robin-400) 10%, transparent);
 		color: var(--bg-robin-300);
 	}

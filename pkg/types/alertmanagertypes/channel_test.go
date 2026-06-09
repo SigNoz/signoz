@@ -285,7 +285,8 @@ func TestNewChannelFromReceiver(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			channel, err := NewChannelFromReceiver(testCase.receiver, "1")
+			receiver := testCase.receiver
+			channel, err := NewChannelFromReceiver(&Receiver{Receiver: &receiver}, "1")
 			if !testCase.pass {
 				assert.Error(t, err)
 				return
@@ -298,4 +299,32 @@ func TestNewChannelFromReceiver(t *testing.T) {
 		})
 	}
 
+}
+
+// Type and Data are derived from the native googlechat_configs field.
+func TestNewChannelFromReceiverGoogleChat(t *testing.T) {
+	webhookURL, err := url.Parse("https://chat.googleapis.com/v1/spaces/test/messages")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	receiver := &Receiver{
+		Receiver: &config.Receiver{Name: "googlechat-receiver"},
+		GoogleChatConfigs: []*GoogleChatReceiverConfig{
+			{
+				WebhookURL: &config.SecretURL{URL: webhookURL},
+				Title:      "Alert",
+				Text:       "Body",
+			},
+		},
+	}
+
+	channel, err := NewChannelFromReceiver(receiver, "1")
+	assert.NoError(t, err)
+	assert.Equal(t, "googlechat-receiver", channel.Name)
+	assert.Equal(t, "googlechat", channel.Type)
+	assert.JSONEq(t,
+		`{"name":"googlechat-receiver","googlechat_configs":[{"send_resolved":false,"webhook_url":"https://chat.googleapis.com/v1/spaces/test/messages","title":"Alert","text":"Body"}]}`,
+		channel.Data,
+	)
 }

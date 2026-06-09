@@ -1,0 +1,22 @@
+.grid {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	gap: 8px;
+}
+
+.typeButton {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 12px;
+	background: var(--bg-ink-400, #0b0c0e);
+	border: 1px solid var(--l1-border);
+	border-radius: 4px;
+	color: var(--l1-foreground);
+	cursor: pointer;
+	text-align: left;
+
+	&:hover {
+		border-color: var(--bg-robin-500);
+	}
+}

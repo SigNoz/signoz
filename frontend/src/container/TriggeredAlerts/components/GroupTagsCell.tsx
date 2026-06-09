@@ -44,6 +44,7 @@ export function GroupTagsCell({
 				prefix={
 					localIsExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />
 				}
+				testId="group-expand-toggle"
 			/>
 			<div className={styles.tagsContainer}>
 				{tags.map((tag) => (

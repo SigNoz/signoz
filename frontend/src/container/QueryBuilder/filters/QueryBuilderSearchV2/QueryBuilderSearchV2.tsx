@@ -966,6 +966,7 @@ function QueryBuilderSearchV2(
 				>
 					<Tooltip title={chipValue}>
 						<TypographyText
+							className="qb-tag-text"
 							$isInNin={isInNin}
 							$isEnabled={!!searchValue}
 							onClick={(): void => {
