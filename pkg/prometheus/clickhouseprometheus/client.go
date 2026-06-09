@@ -129,40 +129,56 @@ func (c *client) ReadMultiple(ctx context.Context, queries []*prompb.Query, sort
 func (client *client) queryToClickhouseQuery(_ context.Context, query *prompb.Query, metricName string, subQuery bool) (string, []any, error) {
 	var clickHouseQuery string
 	var conditions []string
-	var argCount = 0
 	var selectString = "fingerprint, any(labels)"
 	if subQuery {
-		argCount = 1
 		selectString = "fingerprint"
 	}
 
 	start, end, tableName := getStartAndEndAndTableName(query.StartTimestampMs, query.EndTimestampMs)
 
+	// nextArgIdx is 1-based. For subQuery=true, $1 is reserved by querySamples
+	// (prepended as metricName), so our args begin at $2.
+	nextArgIdx := 1
+	if subQuery {
+		nextArgIdx = 2
+	}
+
 	var args []any
-	conditions = append(conditions, fmt.Sprintf("metric_name = $%d", argCount+1))
+
+	// Only add a metric_name filter when __name__ was found in the matchers.
+	// Omitting this when metricName is empty prevents "metric_name = ''" which
+	// would match no rows for selectors like {k8s.container.name="coredns"}.
+	if metricName != "" {
+		conditions = append(conditions, fmt.Sprintf("metric_name = $%d", nextArgIdx))
+		args = append(args, metricName)
+		nextArgIdx++
+	}
 	conditions = append(conditions, "temporality IN ['Cumulative', 'Unspecified']")
 	conditions = append(conditions, fmt.Sprintf("unix_milli >= %d AND unix_milli < %d", start, end))
 
 	normalized := !constants.IsDotMetricsEnabled
-
 	conditions = append(conditions, fmt.Sprintf("__normalized = %v", normalized))
 
-	args = append(args, metricName)
 	for _, m := range query.Matchers {
+		if m.Name == "__name__" && m.Type == prompb.LabelMatcher_EQ {
+			// EQ __name__ is already handled via metric_name = $N above;
+			// skip the redundant JSONExtractString("__name__") condition.
+			continue
+		}
 		switch m.Type {
 		case prompb.LabelMatcher_EQ:
-			conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, $%d) = $%d", argCount+2, argCount+3))
+			conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, $%d) = $%d", nextArgIdx, nextArgIdx+1))
 		case prompb.LabelMatcher_NEQ:
-			conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, $%d) != $%d", argCount+2, argCount+3))
+			conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, $%d) != $%d", nextArgIdx, nextArgIdx+1))
 		case prompb.LabelMatcher_RE:
-			conditions = append(conditions, fmt.Sprintf("match(JSONExtractString(labels, $%d), $%d)", argCount+2, argCount+3))
+			conditions = append(conditions, fmt.Sprintf("match(JSONExtractString(labels, $%d), $%d)", nextArgIdx, nextArgIdx+1))
 		case prompb.LabelMatcher_NRE:
-			conditions = append(conditions, fmt.Sprintf("not match(JSONExtractString(labels, $%d), $%d)", argCount+2, argCount+3))
+			conditions = append(conditions, fmt.Sprintf("not match(JSONExtractString(labels, $%d), $%d)", nextArgIdx, nextArgIdx+1))
 		default:
 			return "", nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported or invalid matcher type: %s", m.Type.String())
 		}
 		args = append(args, m.Name, m.Value)
-		argCount += 2
+		nextArgIdx += 2
 	}
 
 	whereClause := strings.Join(conditions, " AND ")
