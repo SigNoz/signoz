@@ -4,7 +4,7 @@
 	height: 100%;
 	width: 100%;
 	background: var(--bg-ink-400, #0b0c0e);
-	border: 1px solid var(--bg-slate-400, #1d212d);
+	border: 1px solid var(--l1-border);
 	border-radius: 4px;
 	overflow: hidden;
 }
@@ -14,7 +14,7 @@
 	align-items: center;
 	justify-content: space-between;
 	padding: 8px 12px;
-	border-bottom: 1px solid var(--bg-slate-400, #1d212d);
+	border-bottom: 1px solid var(--l1-border);
 	cursor: grab;
 }
 
@@ -42,7 +42,7 @@
 	align-items: center;
 	justify-content: center;
 	padding: 12px;
-	color: var(--bg-vanilla-400, #8993ae);
+	color: var(--l2-foreground);
 	font-size: 12px;
 	text-align: center;
 }

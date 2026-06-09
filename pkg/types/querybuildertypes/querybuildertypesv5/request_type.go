@@ -1,9 +1,30 @@
 package querybuildertypesv5
 
-import "github.com/SigNoz/signoz/pkg/valuer"
+import (
+	"encoding/json"
+
+	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/valuer"
+)
 
 type RequestType struct {
 	valuer.String
+}
+
+// UnmarshalJSON rejects values that are not a known request type.
+func (r *RequestType) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid request type: must be a string")
+	}
+	v := RequestType{valuer.NewString(s)}
+	switch v {
+	case RequestTypeScalar, RequestTypeTimeSeries, RequestTypeRaw, RequestTypeRawStream, RequestTypeTrace, RequestTypeDistribution:
+		*r = v
+		return nil
+	default:
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "unknown request type %q; allowed values: %s", s, "`scalar`, `time_series`, `raw`, `raw_stream`, `trace`, `distribution`")
+	}
 }
 
 var (
