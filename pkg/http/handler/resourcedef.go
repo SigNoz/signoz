@@ -17,13 +17,6 @@ type ResourceDef struct {
 	Related  *RelatedResource
 }
 
-// RelatedResource is a counterpart named purely for audit clarity. It carries no
-// verb and no selector and is not authz-checked.
-type RelatedResource struct {
-	Resource coretypes.Resource
-	ID       ResourceIDExtractor
-}
-
 func (ResourceDef) sealResourceSpec() {}
 
 func (d ResourceDef) resolveRequest(ec ExtractorContext) []*ResolvedResource {
@@ -38,15 +31,4 @@ func (d ResourceDef) resolveRequest(ec ExtractorContext) []*ResolvedResource {
 	resolved.resolve(phaseRequest, ec)
 
 	return []*ResolvedResource{resolved}
-}
-
-// ResolveRequest resolves the request-phase ids for all specs (fan-out included)
-// against ec. Called by the resource middleware pre-handler.
-func ResolveRequest(defs []ResourceSpec, ec ExtractorContext) []*ResolvedResource {
-	var resolved []*ResolvedResource
-	for _, def := range defs {
-		resolved = append(resolved, def.resolveRequest(ec)...)
-	}
-
-	return resolved
 }
