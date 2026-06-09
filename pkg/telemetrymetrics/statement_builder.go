@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
@@ -118,16 +117,6 @@ func (b *MetricQueryStatementBuilder) buildPipelineStatement(
 		cteFragments []string
 		cteArgs      [][]any
 	)
-
-	if query.Aggregations[0].SpaceAggregation.IsPercentile() && !query.Aggregations[0].Type.IsPercentileSpaceAggregationAllowed() {
-		return nil, errors.Newf(
-			errors.TypeInvalidInput,
-			errors.CodeInvalidInput,
-			"invalid space aggregation `%s` for metric type `%s`, percentile space aggregations are only supported for [`histogram`, `exponentialhistogram`, `summary`] metric types",
-			query.Aggregations[0].SpaceAggregation.StringValue(),
-			query.Aggregations[0].Type.StringValue(),
-		)
-	}
 
 	origSpaceAgg := query.Aggregations[0].SpaceAggregation
 	origTimeAgg := query.Aggregations[0].TimeAggregation

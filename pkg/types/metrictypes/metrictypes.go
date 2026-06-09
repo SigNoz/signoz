@@ -137,7 +137,7 @@ func (t *Type) Scan(src interface{}) error {
 }
 
 func (t Type) IsPercentileSpaceAggregationAllowed() bool {
-	return t == HistogramType || t == ExpHistogramType || t == SummaryType
+	return t == HistogramType || t == ExpHistogramType
 }
 
 var (

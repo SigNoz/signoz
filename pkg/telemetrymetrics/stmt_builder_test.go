@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
@@ -217,25 +216,6 @@ func TestStatementBuilder(t *testing.T) {
 				Args:  []any{"http_server_duration_bucket", uint64(1747936800000), uint64(1747983420000), "cumulative", false, "http_server_duration_bucket", uint64(1747947360000), uint64(1747983420000), 0},
 			},
 			expectedErr: nil,
-		},
-		{
-			name:        "test_percentile_space_aggregation_on_non_histogram_type",
-			requestType: qbtypes.RequestTypeTimeSeries,
-			query: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
-				Signal:       telemetrytypes.SignalMetrics,
-				StepInterval: qbtypes.Step{Duration: 30 * time.Second},
-				Aggregations: []qbtypes.MetricAggregation{
-					{
-						MetricName:       "signoz_calls_total",
-						Type:             metrictypes.SumType,
-						Temporality:      metrictypes.Cumulative,
-						TimeAggregation:  metrictypes.TimeAggregationRate,
-						SpaceAggregation: metrictypes.SpaceAggregationPercentile95,
-					},
-				},
-				Limit: 10,
-			},
-			expectedErr: errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid space aggregation `p95` for metric type `sum`, percentile space aggregations are only supported for [`histogram`, `exponentialhistogram`, `summary`] metric types"),
 		},
 	}
 
