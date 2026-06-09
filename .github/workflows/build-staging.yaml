@@ -64,6 +64,10 @@ jobs:
         run: |
           mkdir -p frontend
           echo 'CI=1' > frontend/.env
+          echo 'VITE_SENTRY_AUTH_TOKEN="${{ secrets.SENTRY_AUTH_TOKEN }}"' >> frontend/.env
+          echo 'VITE_SENTRY_ORG="${{ secrets.SENTRY_ORG }}"' >> frontend/.env
+          echo 'VITE_SENTRY_PROJECT_ID="${{ secrets.SENTRY_PROJECT_ID }}"' >> frontend/.env
+          echo 'VITE_SENTRY_DSN="${{ secrets.SENTRY_DSN }}"' >> frontend/.env
           echo 'VITE_TUNNEL_URL="${{ secrets.NP_TUNNEL_URL }}"' >> frontend/.env
           echo 'VITE_TUNNEL_DOMAIN="${{ secrets.NP_TUNNEL_DOMAIN }}"' >> frontend/.env
           echo 'VITE_PYLON_APP_ID="${{ secrets.NP_PYLON_APP_ID }}"' >> frontend/.env
