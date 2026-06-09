@@ -3,13 +3,36 @@ import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 
+export interface DayBreakdownEntry {
+	timestamp: number;
+	total: number;
+	quantity: number;
+	count: number;
+	size: number;
+}
+
+export interface TierEntry {
+	quantity: number;
+	unitPrice: number;
+	tierCost: number;
+}
+
+export interface BreakdownEntry {
+	type: string;
+	unit: string;
+	dayWiseBreakdown: {
+		breakdown: DayBreakdownEntry[];
+	};
+	tiers?: TierEntry[];
+}
+
 export interface UsageResponsePayloadProps {
-	billingPeriodStart: Date;
-	billingPeriodEnd: Date;
+	billingPeriodStart: number;
+	billingPeriodEnd: number;
 	details: {
 		total: number;
 		baseFee: number;
-		breakdown: [];
+		breakdown: BreakdownEntry[];
 		billTotal: number;
 	};
 	discount: number;

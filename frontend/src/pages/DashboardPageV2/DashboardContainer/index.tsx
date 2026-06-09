@@ -2,6 +2,7 @@ import { useEffect, useMemo } from 'react';
 import { FullScreen, useFullScreenHandle } from 'react-full-screen';
 
 import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
+import PanelTypeSelectionModal from 'container/DashboardContainer/PanelTypeSelectionModal';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useAppContext } from 'providers/App/App';
 
@@ -10,12 +11,15 @@ import PanelsAndSectionsLayout from './PanelsAndSectionsLayout';
 import { useDashboardStore } from './store/useDashboardStore';
 import styles from './DashboardContainer.module.scss';
 
-interface Props {
+interface DashboardContainerProps {
 	dashboard: DashboardtypesGettableDashboardV2DTO;
 	refetch: () => void;
 }
 
-function DashboardContainer({ dashboard, refetch }: Props): JSX.Element {
+function DashboardContainer({
+	dashboard,
+	refetch,
+}: DashboardContainerProps): JSX.Element {
 	const fullScreenHandle = useFullScreenHandle();
 
 	const { user } = useAppContext();
@@ -43,6 +47,9 @@ function DashboardContainer({ dashboard, refetch }: Props): JSX.Element {
 				/>
 				<PanelsAndSectionsLayout layouts={layouts} panels={panels} />
 			</div>
+			{/* Shared panel-type picker (V1 component): opened from any "New Panel"
+			    trigger; navigates to the widget editor route on selection. */}
+			<PanelTypeSelectionModal />
 		</FullScreen>
 	);
 }

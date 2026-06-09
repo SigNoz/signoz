@@ -2,7 +2,7 @@ import { getFocusedSeriesAtPosition } from 'lib/uPlotLib/plugins/onClickPlugin';
 
 import {
 	TOOLTIP_OFFSET,
-	TooltipClickData,
+	ChartClickData,
 	TooltipLayoutInfo,
 	TooltipViewState,
 } from './types';
@@ -167,14 +167,11 @@ export function createLayoutObserver(
 }
 
 /**
- * Resolves a TooltipClickData snapshot from a MouseEvent (real or synthetic)
+ * Resolves a ChartClickData snapshot from a MouseEvent (real or synthetic)
  * and the current uPlot instance. Shared by the overlay click handler and the
  * keyboard-pin handler (which synthesises an event from the cursor position).
  */
-export function buildClickData(
-	event: MouseEvent,
-	plot: uPlot,
-): TooltipClickData {
+export function buildClickData(event: MouseEvent, plot: uPlot): ChartClickData {
 	const xValue = plot.posToVal(event.offsetX, 'x');
 	const yValue = plot.posToVal(event.offsetY, 'y');
 	const focusedSeries = getFocusedSeriesAtPosition(event, plot);
