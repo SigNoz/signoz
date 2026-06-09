@@ -2651,6 +2651,8 @@ export enum CloudintegrationtypesServiceIDDTO {
 	sqs = 'sqs',
 	storageaccountsblob = 'storageaccountsblob',
 	cdnprofile = 'cdnprofile',
+	containerapp = 'containerapp',
+	aks = 'aks',
 }
 export type CloudintegrationtypesCloudIntegrationServiceDTOAnyOf = {
 	/**
@@ -7864,6 +7866,77 @@ export enum SpantypesFieldContextDTO {
 	attribute = 'attribute',
 	resource = 'resource',
 }
+export type SpantypesFlamegraphSpanDTOAttributes = { [key: string]: unknown };
+
+export type SpantypesFlamegraphSpanDTOResource = { [key: string]: string };
+
+export interface SpantypesFlamegraphSpanDTO {
+	/**
+	 * @type object
+	 */
+	attributes: SpantypesFlamegraphSpanDTOAttributes;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	durationNano: number;
+	/**
+	 * @type array
+	 */
+	event: SpantypesEventDTO[];
+	/**
+	 * @type boolean
+	 */
+	hasError: boolean;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	level: number;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	parentSpanId: string;
+	/**
+	 * @type object
+	 */
+	resource: SpantypesFlamegraphSpanDTOResource;
+	/**
+	 * @type string
+	 */
+	spanId: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	timestamp: number;
+}
+
+export interface SpantypesGettableFlamegraphTraceDTO {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	endTimestampMillis: number;
+	/**
+	 * @type boolean
+	 */
+	hasMore: boolean;
+	/**
+	 * @type array
+	 */
+	spans: SpantypesFlamegraphSpanDTO[][];
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	startTimestampMillis: number;
+}
+
 export type SpantypesSpanMapperGroupConditionDTOAnyOf = {
 	/**
 	 * @type array,null
@@ -8163,6 +8236,17 @@ export interface SpantypesGettableWaterfallTraceDTO {
 	 * @type array,null
 	 */
 	uncollapsedSpans?: string[] | null;
+}
+
+export interface SpantypesPostableFlamegraphDTO {
+	/**
+	 * @type array
+	 */
+	selectFields?: TelemetrytypesTelemetryFieldKeyDTO[];
+	/**
+	 * @type string
+	 */
+	selectedSpanId?: string;
 }
 
 export enum SpantypesSpanMapperOperationDTO {
@@ -10556,6 +10640,17 @@ export type GetMyUser200 = {
 
 export type GetHosts200 = {
 	data: ZeustypesGettableHostDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetFlamegraphPathParameters = {
+	traceID: string;
+};
+export type GetFlamegraph200 = {
+	data: SpantypesGettableFlamegraphTraceDTO;
 	/**
 	 * @type string
 	 */

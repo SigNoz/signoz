@@ -96,14 +96,28 @@ function CreateOrEdit(props: CreateOrEditProps): JSX.Element {
 			return undefined;
 		}
 
-		const { domainToAdminEmailList, ...rest } = config;
+		const {
+			domainToAdminEmailList,
+			allowedGroups,
+			serviceAccountJson,
+			domainToAdminEmail: _domainToAdminEmail,
+			fetchTransitiveGroupMembership,
+			...rest
+		} = config;
 		const domainToAdminEmail = convertDomainMappingsToRecord(
 			domainToAdminEmailList,
 		);
 
 		return {
 			...rest,
-			domainToAdminEmail: domainToAdminEmail ?? {},
+			...(rest.fetchGroups
+				? {
+						allowedGroups,
+						serviceAccountJson,
+						domainToAdminEmail: domainToAdminEmail ?? {},
+						fetchTransitiveGroupMembership,
+					}
+				: { domainToAdminEmail: {} }),
 		};
 	}, [form]);
 
@@ -129,7 +143,7 @@ function CreateOrEdit(props: CreateOrEditProps): JSX.Element {
 
 		return {
 			...rest,
-			groupMappings: groupMappings ?? {},
+			groupMappings: rest.useRoleAttribute ? undefined : (groupMappings ?? {}),
 		};
 	}, [form]);
 
