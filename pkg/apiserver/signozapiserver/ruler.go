@@ -6,6 +6,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/gorilla/mux"
 )
@@ -116,73 +118,148 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/downtime_schedules", handler.New(provider.authzMiddleware.ViewAccess(provider.rulerHandler.ListDowntimeSchedules), handler.OpenAPIDef{
-		ID:                  "ListDowntimeSchedules",
-		Tags:                []string{"downtimeschedules"},
-		Summary:             "List downtime schedules",
-		Description:         "This endpoint lists all planned maintenance / downtime schedules",
-		RequestQuery:        new(alertmanagertypes.ListPlannedMaintenanceParams),
-		Response:            make([]*alertmanagertypes.PlannedMaintenance, 0),
-		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusOK,
-		SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-	})).Methods(http.MethodGet).GetError(); err != nil {
+	if err := router.Handle("/api/v1/downtime_schedules", handler.New(
+		provider.authzMiddleware.CheckResources(provider.rulerHandler.ListDowntimeSchedules, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
+		handler.OpenAPIDef{
+			ID:                  "ListDowntimeSchedules",
+			Tags:                []string{"downtimeschedules"},
+			Summary:             "List downtime schedules",
+			Description:         "This endpoint lists all planned maintenance / downtime schedules",
+			RequestQuery:        new(alertmanagertypes.ListPlannedMaintenanceParams),
+			Response:            make([]*alertmanagertypes.PlannedMaintenance, 0),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusOK,
+			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
+		},
+		handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourcePlannedMaintenance,
+			Verb:     coretypes.VerbList,
+			Category: coretypes.ActionCategoryDataAccess,
+			Selector: coretypes.WildcardSelector,
+		}),
+	)).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/downtime_schedules/{id}", handler.New(provider.authzMiddleware.ViewAccess(provider.rulerHandler.GetDowntimeScheduleByID), handler.OpenAPIDef{
-		ID:                  "GetDowntimeScheduleByID",
-		Tags:                []string{"downtimeschedules"},
-		Summary:             "Get downtime schedule by ID",
-		Description:         "This endpoint returns a downtime schedule by ID",
-		Response:            new(alertmanagertypes.PlannedMaintenance),
-		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusOK,
-		ErrorStatusCodes:    []int{http.StatusNotFound},
-		SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-	})).Methods(http.MethodGet).GetError(); err != nil {
+	if err := router.Handle("/api/v1/downtime_schedules/{id}", handler.New(
+		provider.authzMiddleware.CheckResources(provider.rulerHandler.GetDowntimeScheduleByID, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
+		handler.OpenAPIDef{
+			ID:                  "GetDowntimeScheduleByID",
+			Tags:                []string{"downtimeschedules"},
+			Summary:             "Get downtime schedule by ID",
+			Description:         "This endpoint returns a downtime schedule by ID",
+			Response:            new(alertmanagertypes.PlannedMaintenance),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusOK,
+			ErrorStatusCodes:    []int{http.StatusNotFound},
+			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
+		},
+		handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourcePlannedMaintenance,
+			Verb:     coretypes.VerbRead,
+			Category: coretypes.ActionCategoryConfigurationChange,
+			ID:       coretypes.PathParam("id"),
+			Selector: coretypes.IDSelector,
+		}),
+	)).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/downtime_schedules", handler.New(provider.authzMiddleware.EditAccess(provider.rulerHandler.CreateDowntimeSchedule), handler.OpenAPIDef{
-		ID:                  "CreateDowntimeSchedule",
-		Tags:                []string{"downtimeschedules"},
-		Summary:             "Create downtime schedule",
-		Description:         "This endpoint creates a new planned maintenance / downtime schedule",
-		Request:             new(alertmanagertypes.PostablePlannedMaintenance),
-		RequestContentType:  "application/json",
-		Response:            new(alertmanagertypes.PlannedMaintenance),
-		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusCreated,
-		ErrorStatusCodes:    []int{http.StatusBadRequest},
-		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
-	})).Methods(http.MethodPost).GetError(); err != nil {
+	if err := router.Handle("/api/v1/downtime_schedules", handler.New(
+		provider.authzMiddleware.CheckResources(provider.rulerHandler.CreateDowntimeSchedule, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName),
+		handler.OpenAPIDef{
+			ID:                  "CreateDowntimeSchedule",
+			Tags:                []string{"downtimeschedules"},
+			Summary:             "Create downtime schedule",
+			Description:         "This endpoint creates a new planned maintenance / downtime schedule",
+			Request:             new(alertmanagertypes.PostablePlannedMaintenance),
+			RequestContentType:  "application/json",
+			Response:            new(alertmanagertypes.PlannedMaintenance),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusCreated,
+			ErrorStatusCodes:    []int{http.StatusBadRequest},
+			SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
+		},
+		handler.WithResourceDefs(
+			handler.BasicResourceDef{
+				Resource: coretypes.ResourceMetaResourcePlannedMaintenance,
+				Verb:     coretypes.VerbCreate,
+				Category: coretypes.ActionCategoryConfigurationChange,
+				ID:       coretypes.ResponseJSONPath("data.id"),
+				Selector: coretypes.WildcardSelector,
+			},
+			// The schedule silences the rules in alertIds — a sibling attach, so
+			// both the schedule and each rule are authz-checked.
+			handler.AttachDetachSiblingResourceDef{
+				Verb:           coretypes.VerbAttach,
+				Category:       coretypes.ActionCategoryConfigurationChange,
+				SourceResource: coretypes.ResourceMetaResourcePlannedMaintenance,
+				SourceIDs:      coretypes.OneID(coretypes.ResponseJSONPath("data.id")),
+				SourceSelector: coretypes.WildcardSelector,
+				TargetResource: coretypes.ResourceMetaResourceRule,
+				TargetIDs:      coretypes.BodyJSONArray("alertIds"),
+				TargetSelector: coretypes.IDSelector,
+			},
+		),
+	)).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/downtime_schedules/{id}", handler.New(provider.authzMiddleware.EditAccess(provider.rulerHandler.UpdateDowntimeScheduleByID), handler.OpenAPIDef{
-		ID:                 "UpdateDowntimeScheduleByID",
-		Tags:               []string{"downtimeschedules"},
-		Summary:            "Update downtime schedule",
-		Description:        "This endpoint updates a downtime schedule by ID",
-		Request:            new(alertmanagertypes.PostablePlannedMaintenance),
-		RequestContentType: "application/json",
-		SuccessStatusCode:  http.StatusNoContent,
-		ErrorStatusCodes:   []int{http.StatusBadRequest, http.StatusNotFound},
-		SecuritySchemes:    newSecuritySchemes(types.RoleEditor),
-	})).Methods(http.MethodPut).GetError(); err != nil {
+	if err := router.Handle("/api/v1/downtime_schedules/{id}", handler.New(
+		provider.authzMiddleware.CheckResources(provider.rulerHandler.UpdateDowntimeScheduleByID, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName),
+		handler.OpenAPIDef{
+			ID:                 "UpdateDowntimeScheduleByID",
+			Tags:               []string{"downtimeschedules"},
+			Summary:            "Update downtime schedule",
+			Description:        "This endpoint updates a downtime schedule by ID",
+			Request:            new(alertmanagertypes.PostablePlannedMaintenance),
+			RequestContentType: "application/json",
+			SuccessStatusCode:  http.StatusNoContent,
+			ErrorStatusCodes:   []int{http.StatusBadRequest, http.StatusNotFound},
+			SecuritySchemes:    newSecuritySchemes(types.RoleEditor),
+		},
+		handler.WithResourceDefs(
+			handler.BasicResourceDef{
+				Resource: coretypes.ResourceMetaResourcePlannedMaintenance,
+				Verb:     coretypes.VerbUpdate,
+				Category: coretypes.ActionCategoryConfigurationChange,
+				ID:       coretypes.PathParam("id"),
+				Selector: coretypes.IDSelector,
+			},
+			handler.AttachDetachSiblingResourceDef{
+				Verb:           coretypes.VerbAttach,
+				Category:       coretypes.ActionCategoryConfigurationChange,
+				SourceResource: coretypes.ResourceMetaResourcePlannedMaintenance,
+				SourceIDs:      coretypes.OneID(coretypes.PathParam("id")),
+				SourceSelector: coretypes.IDSelector,
+				TargetResource: coretypes.ResourceMetaResourceRule,
+				TargetIDs:      coretypes.BodyJSONArray("alertIds"),
+				TargetSelector: coretypes.IDSelector,
+			},
+		),
+	)).Methods(http.MethodPut).GetError(); err != nil {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/downtime_schedules/{id}", handler.New(provider.authzMiddleware.EditAccess(provider.rulerHandler.DeleteDowntimeScheduleByID), handler.OpenAPIDef{
-		ID:                "DeleteDowntimeScheduleByID",
-		Tags:              []string{"downtimeschedules"},
-		Summary:           "Delete downtime schedule",
-		Description:       "This endpoint deletes a downtime schedule by ID",
-		SuccessStatusCode: http.StatusNoContent,
-		ErrorStatusCodes:  []int{http.StatusNotFound},
-		SecuritySchemes:   newSecuritySchemes(types.RoleEditor),
-	})).Methods(http.MethodDelete).GetError(); err != nil {
+	if err := router.Handle("/api/v1/downtime_schedules/{id}", handler.New(
+		provider.authzMiddleware.CheckResources(provider.rulerHandler.DeleteDowntimeScheduleByID, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName),
+		handler.OpenAPIDef{
+			ID:                "DeleteDowntimeScheduleByID",
+			Tags:              []string{"downtimeschedules"},
+			Summary:           "Delete downtime schedule",
+			Description:       "This endpoint deletes a downtime schedule by ID",
+			SuccessStatusCode: http.StatusNoContent,
+			ErrorStatusCodes:  []int{http.StatusNotFound},
+			SecuritySchemes:   newSecuritySchemes(types.RoleEditor),
+		},
+		handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourcePlannedMaintenance,
+			Verb:     coretypes.VerbDelete,
+			Category: coretypes.ActionCategoryConfigurationChange,
+			ID:       coretypes.PathParam("id"),
+			Selector: coretypes.IDSelector,
+		}),
+	)).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}
 

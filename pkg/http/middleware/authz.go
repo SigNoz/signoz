@@ -239,16 +239,21 @@ func (middleware *AuthZ) CheckResources(next http.HandlerFunc, roles ...string) 
 	})
 }
 
-// checkResource authz-checks each id of one resource (absolute, per-id). An
-// empty id list still produces a single check, letting the selector decide
-// (e.g. a wildcard for a create/list).
-func (middleware *AuthZ) checkResource(ctx context.Context, claims authtypes.Claims, orgID valuer.UUID, verb coretypes.Verb, resource coretypes.Resource, ids []string, selector coretypes.SelectorFunc, roleSelectors []coretypes.Selector) error {
+// checkResource authz-checks each of the resource's ids (absolute, per-id). The
+// resolved value supplies a single empty id for collection-level access, so the
+// selector always decides the scope (e.g. a wildcard for a create/list).
+func (middleware *AuthZ) checkResource(
+	ctx context.Context,
+	claims authtypes.Claims,
+	orgID valuer.UUID,
+	verb coretypes.Verb,
+	resource coretypes.Resource,
+	ids []string,
+	selector coretypes.SelectorFunc,
+	roleSelectors []coretypes.Selector,
+) error {
 	if selector == nil {
 		return errors.New(errors.TypeInternal, errors.CodeInternal, "resolved resource is missing a selector")
-	}
-
-	if len(ids) == 0 {
-		ids = []string{""}
 	}
 
 	for _, id := range ids {
@@ -257,19 +262,43 @@ func (middleware *AuthZ) checkResource(ctx context.Context, claims authtypes.Cla
 			return err
 		}
 
-		if err := middleware.authzService.CheckWithTupleCreation(ctx, claims, orgID, authtypes.Relation{Verb: verb}, resource, selectors, roleSelectors); err != nil {
-			if !errors.Asc(err, authtypes.ErrCodeAuthZForbidden) {
-				return err
-			}
-
-			middleware.logger.WarnContext(ctx, authzDeniedMessage, slog.Any("claims", claims))
-			principal := fmt.Sprintf("%s/%s", claims.Principal.StringValue(), claims.IdentityID())
-			if id != "" {
-				return errors.Newf(errors.TypeForbidden, authtypes.ErrCodeAuthZForbidden, "%s is not authorized to perform %s on resource %q", principal, resource.Scope(verb), id)
-			}
-
-			return errors.Newf(errors.TypeForbidden, authtypes.ErrCodeAuthZForbidden, "%s is not authorized to perform %s", principal, resource.Scope(verb))
+		err = middleware.authzService.CheckWithTupleCreation(
+			ctx,
+			claims,
+			orgID,
+			authtypes.Relation{Verb: verb},
+			resource,
+			selectors,
+			roleSelectors,
+		)
+		if err == nil {
+			continue
 		}
+
+		if !errors.Asc(err, authtypes.ErrCodeAuthZForbidden) {
+			return err
+		}
+
+		middleware.logger.WarnContext(ctx, authzDeniedMessage, slog.Any("claims", claims))
+		principal := fmt.Sprintf("%s/%s", claims.Principal.StringValue(), claims.IdentityID())
+		if id != "" {
+			return errors.Newf(
+				errors.TypeForbidden,
+				authtypes.ErrCodeAuthZForbidden,
+				"%s is not authorized to perform %s on resource %q",
+				principal,
+				resource.Scope(verb),
+				id,
+			)
+		}
+
+		return errors.Newf(
+			errors.TypeForbidden,
+			authtypes.ErrCodeAuthZForbidden,
+			"%s is not authorized to perform %s",
+			principal,
+			resource.Scope(verb),
+		)
 	}
 
 	return nil

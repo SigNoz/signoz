@@ -132,7 +132,12 @@ func (middleware *Audit) emitAuditEvent(req *http.Request, writer responseCaptur
 			// One event per (source, target) pair, capturing the relationship.
 			for _, sourceID := range typed.SourceIDs() {
 				for _, targetID := range typed.TargetIDs() {
-					attributes := audittypes.NewRelatedResourceAttributes(typed.SourceResource(), sourceID, typed.TargetResource(), targetID)
+					attributes := audittypes.NewRelatedResourceAttributes(
+						typed.SourceResource(),
+						sourceID,
+						typed.TargetResource(),
+						targetID,
+					)
 
 					middleware.auditor.Audit(req.Context(), audittypes.NewAuditEventFromHTTPRequest(
 						req,

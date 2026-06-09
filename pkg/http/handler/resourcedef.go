@@ -38,7 +38,14 @@ type BasicResourceDef struct {
 
 func (def BasicResourceDef) resolveRequest(ec coretypes.ExtractorContext) []coretypes.ResolvedResource {
 	return []coretypes.ResolvedResource{
-		coretypes.NewResolvedResource(def.Verb, def.Category, def.Resource, def.ID, def.Selector, ec),
+		coretypes.NewResolvedResource(
+			def.Verb,
+			def.Category,
+			def.Resource,
+			def.ID,
+			def.Selector,
+			ec,
+		),
 	}
 }
 
@@ -116,7 +123,13 @@ func (def TelemetryResourceDef) resolveRequest(ec coretypes.ExtractorContext) []
 
 	resolved := make([]coretypes.ResolvedResource, 0, len(refs))
 	for _, ref := range refs {
-		resolved = append(resolved, coretypes.NewResolvedResourceWithID(def.Verb, def.Category, ref.Resource, ref.ID, def.Selector))
+		resolved = append(resolved, coretypes.NewResolvedResourceWithID(
+			def.Verb,
+			def.Category,
+			ref.Resource,
+			ref.ID,
+			def.Selector,
+		))
 	}
 
 	return resolved

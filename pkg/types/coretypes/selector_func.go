@@ -25,7 +25,12 @@ var WildcardSelector SelectorFunc = func(_ context.Context, resource Resource, _
 // missing. Use for instance routes whose id is in the path/body.
 var IDSelector SelectorFunc = func(_ context.Context, resource Resource, id string, _ valuer.UUID) ([]Selector, error) {
 	if id == "" {
-		return nil, errors.Newf(errors.TypeInvalidInput, errCodeInvalidResourceID, "resource id is required for %s", resource.Kind().String())
+		return nil, errors.Newf(
+			errors.TypeInvalidInput,
+			errCodeInvalidResourceID,
+			"resource id is required for %s",
+			resource.Kind().String(),
+		)
 	}
 
 	selector, err := resource.Type().Selector(id)

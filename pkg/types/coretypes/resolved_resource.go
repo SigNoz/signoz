@@ -14,8 +14,21 @@ type resolvedResource struct {
 // NewResolvedResource builds a basic resolved value, filling its request-phase
 // id immediately. A response-phase id (e.g. a create) is filled later by
 // ResolveResponse.
-func NewResolvedResource(verb Verb, category ActionCategory, resource Resource, idExtractor ResourceIDExtractor, selector SelectorFunc, ec ExtractorContext) ResolvedResource {
-	resolved := &resolvedResource{verb: verb, category: category, resource: resource, selector: selector, idExtractor: idExtractor}
+func NewResolvedResource(
+	verb Verb,
+	category ActionCategory,
+	resource Resource,
+	idExtractor ResourceIDExtractor,
+	selector SelectorFunc,
+	ec ExtractorContext,
+) ResolvedResource {
+	resolved := &resolvedResource{
+		verb:        verb,
+		category:    category,
+		resource:    resource,
+		selector:    selector,
+		idExtractor: idExtractor,
+	}
 	resolved.fill(PhaseRequest, ec)
 
 	return resolved
@@ -24,8 +37,19 @@ func NewResolvedResource(verb Verb, category ActionCategory, resource Resource, 
 // NewResolvedResourceWithID builds a basic resolved value from an
 // already-known id (e.g. extracted per query while iterating), bypassing the
 // phased id extractor. An empty id means collection-level access.
-func NewResolvedResourceWithID(verb Verb, category ActionCategory, resource Resource, id string, selector SelectorFunc) ResolvedResource {
-	resolved := &resolvedResource{verb: verb, category: category, resource: resource, selector: selector}
+func NewResolvedResourceWithID(
+	verb Verb,
+	category ActionCategory,
+	resource Resource,
+	id string,
+	selector SelectorFunc,
+) ResolvedResource {
+	resolved := &resolvedResource{
+		verb:     verb,
+		category: category,
+		resource: resource,
+		selector: selector,
+	}
 	if id != "" {
 		resolved.ids = []string{id}
 	}
@@ -39,11 +63,33 @@ func (resolved *resolvedResource) fill(phase ExtractPhase, ec ExtractorContext) 
 	}
 }
 
-func (resolved *resolvedResource) Verb() Verb                   { return resolved.verb }
-func (resolved *resolvedResource) Category() ActionCategory     { return resolved.category }
-func (resolved *resolvedResource) SourceResource() Resource     { return resolved.resource }
-func (resolved *resolvedResource) SourceIDs() []string          { return resolved.ids }
-func (resolved *resolvedResource) SourceSelector() SelectorFunc { return resolved.selector }
+func (resolved *resolvedResource) Verb() Verb {
+	return resolved.verb
+}
+
+func (resolved *resolvedResource) Category() ActionCategory {
+	return resolved.category
+}
+
+func (resolved *resolvedResource) SourceResource() Resource {
+	return resolved.resource
+}
+
+// SourceIDs returns the resolved ids, or a single empty id when there are none
+// so consumers always have exactly one entry to act on — an empty id means
+// collection-level (the selector decides what that scopes to).
+func (resolved *resolvedResource) SourceIDs() []string {
+	if len(resolved.ids) == 0 {
+		return []string{""}
+	}
+
+	return resolved.ids
+}
+
+func (resolved *resolvedResource) SourceSelector() SelectorFunc {
+	return resolved.selector
+}
+
 func (resolved *resolvedResource) ResolveResponse(ec ExtractorContext) {
 	resolved.fill(PhaseResponse, ec)
 }

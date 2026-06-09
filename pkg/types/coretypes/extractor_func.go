@@ -15,7 +15,10 @@ func TelemetrySignalSource(queriesPath, idPath string) ResourceExtractor {
 
 		refs := make([]ResourceWithID, 0, len(queries))
 		for _, query := range queries {
-			resource, ok := TelemetryResourceForSignalSource(query.Get("spec.signal").String(), query.Get("spec.source").String())
+			resource, ok := TelemetryResourceForSignalSource(
+				query.Get("spec.signal").String(),
+				query.Get("spec.source").String(),
+			)
 			if !ok {
 				continue
 			}

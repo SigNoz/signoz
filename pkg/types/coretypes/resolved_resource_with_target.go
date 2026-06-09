@@ -62,19 +62,51 @@ func (resolved *resolvedResourceWithTarget) fill(phase ExtractPhase, ec Extracto
 	}
 }
 
-func (resolved *resolvedResourceWithTarget) Verb() Verb               { return resolved.verb }
-func (resolved *resolvedResourceWithTarget) Category() ActionCategory { return resolved.category }
-func (resolved *resolvedResourceWithTarget) SourceResource() Resource { return resolved.sourceResource }
-func (resolved *resolvedResourceWithTarget) SourceIDs() []string      { return resolved.sourceIDs }
+func (resolved *resolvedResourceWithTarget) Verb() Verb {
+	return resolved.verb
+}
+
+func (resolved *resolvedResourceWithTarget) Category() ActionCategory {
+	return resolved.category
+}
+
+func (resolved *resolvedResourceWithTarget) SourceResource() Resource {
+	return resolved.sourceResource
+}
+
+// SourceIDs / TargetIDs return a single empty id when there are none, so each
+// side always has exactly one entry; an empty id means collection-level.
+func (resolved *resolvedResourceWithTarget) SourceIDs() []string {
+	if len(resolved.sourceIDs) == 0 {
+		return []string{""}
+	}
+
+	return resolved.sourceIDs
+}
+
 func (resolved *resolvedResourceWithTarget) SourceSelector() SelectorFunc {
 	return resolved.sourceSelector
 }
-func (resolved *resolvedResourceWithTarget) TargetResource() Resource { return resolved.targetResource }
-func (resolved *resolvedResourceWithTarget) TargetIDs() []string      { return resolved.targetIDs }
+
+func (resolved *resolvedResourceWithTarget) TargetResource() Resource {
+	return resolved.targetResource
+}
+
+func (resolved *resolvedResourceWithTarget) TargetIDs() []string {
+	if len(resolved.targetIDs) == 0 {
+		return []string{""}
+	}
+
+	return resolved.targetIDs
+}
 func (resolved *resolvedResourceWithTarget) TargetSelector() SelectorFunc {
 	return resolved.targetSelector
 }
-func (resolved *resolvedResourceWithTarget) IsParentChild() bool { return resolved.parentChild }
+
+func (resolved *resolvedResourceWithTarget) IsParentChild() bool {
+	return resolved.parentChild
+}
+
 func (resolved *resolvedResourceWithTarget) ResolveResponse(ec ExtractorContext) {
 	resolved.fill(PhaseResponse, ec)
 }
