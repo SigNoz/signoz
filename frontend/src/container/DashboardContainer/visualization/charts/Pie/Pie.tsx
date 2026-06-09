@@ -66,27 +66,28 @@ export default function Pie({
 
 	// Reuse the uPlot chart/legend split so the donut + legend get the same area
 	// allocation (right column, or up-to-two bottom rows) as every other panel.
-	const dimensions = useMemo(
-		() =>
-			calculateChartDimensions({
-				containerWidth,
-				containerHeight,
-				legendConfig: { position },
-				seriesLabels: data.map((slice) => slice.label),
-			}),
-		[containerWidth, containerHeight, position, data],
-	);
+	const { width, height, legendWidth, legendHeight, averageLegendWidth } =
+		useMemo(
+			() =>
+				calculateChartDimensions({
+					containerWidth,
+					containerHeight,
+					legendConfig: { position },
+					seriesLabels: data.map((slice) => slice.label),
+				}),
+			[containerWidth, containerHeight, position, data],
+		);
 
 	// Donut geometry derived from the allocated chart box.
 	const { size, radius, innerRadius } = useMemo(() => {
-		const nextSize = Math.min(dimensions.width, dimensions.height);
+		const nextSize = Math.min(width, height);
 		const nextRadius = nextSize * 0.35;
 		return {
 			size: nextSize,
 			radius: nextRadius,
 			innerRadius: nextRadius * 0.6,
 		};
-	}, [dimensions.width, dimensions.height]);
+	}, [width, height]);
 
 	const totalValue = useMemo(
 		() => visibleData.reduce((sum, slice) => sum + slice.value, 0),
@@ -108,19 +109,12 @@ export default function Pie({
 					),
 					color: slice.color,
 				},
-				tooltipTop: centroidY + dimensions.height / 2,
-				tooltipLeft: centroidX + dimensions.width / 2,
+				tooltipTop: centroidY + height / 2,
+				tooltipLeft: centroidX + width / 2,
 			});
 			setActive(slice);
 		},
-		[
-			showTooltip,
-			setActive,
-			yAxisUnit,
-			decimalPrecision,
-			dimensions.height,
-			dimensions.width,
-		],
+		[showTooltip, setActive, yAxisUnit, decimalPrecision, height, width],
 	);
 
 	const handleSliceLeave = useCallback((): void => {
@@ -149,17 +143,10 @@ export default function Pie({
 			style={{ flexDirection: isRightLegend ? 'row' : 'column' }}
 			data-testid={testId}
 		>
-			<div
-				className={styles.pieChartContainer}
-				style={{ width: dimensions.width, height: dimensions.height }}
-			>
+			<div className={styles.pieChartContainer} style={{ width, height }}>
 				{size > 0 && (
-					<svg
-						width={dimensions.width}
-						height={dimensions.height}
-						ref={containerRef}
-					>
-						<Group top={dimensions.height / 2} left={dimensions.width / 2}>
+					<svg width={width} height={height} ref={containerRef}>
+						<Group top={height / 2} left={width / 2}>
 							<VisxPie
 								data={visibleData}
 								pieValue={(slice: PieSlice): number => slice.value}
@@ -229,14 +216,14 @@ export default function Pie({
 			<div
 				className={styles.pieChartLegend}
 				style={{
-					width: dimensions.legendWidth,
-					height: dimensions.legendHeight,
+					width: legendWidth,
+					height: legendHeight,
 				}}
 			>
 				<Legend
 					items={legendItems}
 					position={position}
-					averageLegendWidth={dimensions.averageLegendWidth}
+					averageLegendWidth={averageLegendWidth}
 					focusedSeriesIndex={focusedSeriesIndex}
 					onClick={onLegendClick}
 					onMouseMove={onLegendMouseMove}
