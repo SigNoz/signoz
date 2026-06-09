@@ -95,7 +95,7 @@ export default defineConfig(({ mode }): UserConfig => {
 				project: env.VITE_SENTRY_PROJECT_ID,
 				// Pin the sourcemap-upload release to the same value injected as
 				// process.env.VERSION so uploaded sourcemaps resolve. Ref: platform-pod#2393
-				release: { name: env.VITE_VERSION },
+				release: { name: env.VITE_VERSION, setCommits: { auto: true } },
 			}),
 		);
 	}
