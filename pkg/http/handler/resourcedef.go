@@ -6,13 +6,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 )
 
-// ResourceSpec is the sealed interface implemented by ResourceDef and
-// ResourcesDef. Only these two satisfy WithResourceDefs.
-type ResourceSpec interface {
-	sealResourceSpec()
-	resolveRequest(ec ExtractorContext) []*ResolvedResource
-}
-
 // ResourceDef declares one resource an operation acts on. For attach/detach,
 // Related names the counterpart for audit clarity only — it is never authz-checked.
 type ResourceDef struct {
