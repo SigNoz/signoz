@@ -11,16 +11,16 @@ import (
 type ResourcesDef struct {
 	Resource coretypes.Resource
 	Verb     coretypes.Verb
-	IDs      ResourceIDsExtractor
+	IDs      coretypes.ResourceIDsExtractor
 	Selector SelectorFunc
 	Category audittypes.ActionCategory
 	Related  *RelatedResource
 }
 
-func (d ResourcesDef) resolveRequest(ec ExtractorContext) []*ResolvedResource {
+func (d ResourcesDef) resolveRequest(ec coretypes.ExtractorContext) []*ResolvedResource {
 	var ids []string
-	if d.IDs.fn != nil {
-		ids, _ = d.IDs.fn(ec)
+	if d.IDs.Fn != nil {
+		ids, _ = d.IDs.Fn(ec)
 	}
 
 	resolved := make([]*ResolvedResource, 0, len(ids))
@@ -33,7 +33,7 @@ func (d ResourcesDef) resolveRequest(ec ExtractorContext) []*ResolvedResource {
 			Category: d.Category,
 			Related:  newResolvedRelated(d.Related),
 		}
-		entry.resolve(phaseRequest, ec)
+		entry.resolve(coretypes.PhaseRequest, ec)
 		resolved = append(resolved, entry)
 	}
 

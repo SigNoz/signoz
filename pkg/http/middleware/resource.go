@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/gorilla/mux"
 )
 
@@ -38,7 +39,7 @@ func (middleware *Resource) Wrap(next http.Handler) http.Handler {
 			req.Body = io.NopCloser(bytes.NewReader(body))
 		}
 
-		extractorCtx := handler.ExtractorContext{
+		extractorCtx := coretypes.ExtractorContext{
 			Request:     req,
 			RequestBody: body,
 		}

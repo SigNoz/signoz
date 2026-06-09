@@ -17,14 +17,14 @@ type ResolvedResource struct {
 	Selector    SelectorFunc
 	Category    audittypes.ActionCategory
 	Related     *ResolvedRelated
-	idExtractor ResourceIDExtractor
+	idExtractor coretypes.ResourceIDExtractor
 }
 
 // ResolvedRelated is the resolved counterpart for audit context.
 type ResolvedRelated struct {
 	Resource    coretypes.Resource
 	ID          string
-	idExtractor ResourceIDExtractor
+	idExtractor coretypes.ResourceIDExtractor
 }
 
 // newResolvedRelated wires a related counterpart's structure. Its id is resolved
@@ -38,15 +38,15 @@ func newResolvedRelated(related *RelatedResource) *ResolvedRelated {
 }
 
 // resolve fills this entry's ids whose extractor belongs to phase. Called once
-// per phase: phaseRequest by the resource middleware, phaseResponse by the audit
+// per phase: coretypes.PhaseRequest by the resource middleware, coretypes.PhaseResponse by the audit
 // middleware. An extractor from a different phase is left untouched.
-func (resolved *ResolvedResource) resolve(phase extractPhase, ec ExtractorContext) {
-	if id, ok := resolved.idExtractor.runFor(phase, ec); ok {
+func (resolved *ResolvedResource) resolve(phase coretypes.ExtractPhase, ec coretypes.ExtractorContext) {
+	if id, ok := resolved.idExtractor.RunFor(phase, ec); ok {
 		resolved.ID = id
 	}
 
 	if resolved.Related != nil {
-		if id, ok := resolved.Related.idExtractor.runFor(phase, ec); ok {
+		if id, ok := resolved.Related.idExtractor.RunFor(phase, ec); ok {
 			resolved.Related.ID = id
 		}
 	}
@@ -55,9 +55,9 @@ func (resolved *ResolvedResource) resolve(phase extractPhase, ec ExtractorContex
 // FinalizeResponseIDs runs the carried response-phase extractors against ec to
 // fill the ids that were unknown pre-handler. Called by the audit middleware
 // post-handler. Mutates the entries in place.
-func FinalizeResponseIDs(resolved []*ResolvedResource, ec ExtractorContext) {
+func FinalizeResponseIDs(resolved []*ResolvedResource, ec coretypes.ExtractorContext) {
 	for _, entry := range resolved {
-		entry.resolve(phaseResponse, ec)
+		entry.resolve(coretypes.PhaseResponse, ec)
 	}
 }
 
@@ -66,11 +66,11 @@ func FinalizeResponseIDs(resolved []*ResolvedResource, ec ExtractorContext) {
 // the success response body.
 func HasResponseIDs(resolved []*ResolvedResource) bool {
 	for _, entry := range resolved {
-		if entry.idExtractor.isPhase(phaseResponse) {
+		if entry.idExtractor.IsPhase(coretypes.PhaseResponse) {
 			return true
 		}
 
-		if entry.Related != nil && entry.Related.idExtractor.isPhase(phaseResponse) {
+		if entry.Related != nil && entry.Related.idExtractor.IsPhase(coretypes.PhaseResponse) {
 			return true
 		}
 	}

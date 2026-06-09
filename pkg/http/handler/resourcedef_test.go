@@ -55,7 +55,7 @@ func TestResolveRequestAndFinalize(t *testing.T) {
 		},
 	}
 
-	resolved := ResolveRequest(defs, ExtractorContext{Request: req, RequestBody: body})
+	resolved := ResolveRequest(defs, coretypes.ExtractorContext{Request: req, RequestBody: body})
 
 	// 1 service account + 1 create + 2 channels (fan-out).
 	require.Len(t, resolved, 4)
@@ -69,18 +69,18 @@ func TestResolveRequestAndFinalize(t *testing.T) {
 	assert.True(t, HasResponseIDs(resolved))
 
 	// Audit finalizes the response-phase id once the response body is present.
-	FinalizeResponseIDs(resolved, ExtractorContext{ResponseBody: []byte(`{"data":{"id":"key-9"}}`)})
+	FinalizeResponseIDs(resolved, coretypes.ExtractorContext{ResponseBody: []byte(`{"data":{"id":"key-9"}}`)})
 	assert.Equal(t, "key-9", resolved[1].ID)
 }
 
 func TestExtractorPhases(t *testing.T) {
-	assert.Equal(t, phaseRequest, PathParam("id").phase)
-	assert.Equal(t, phaseRequest, BodyJSONPath("id").phase)
-	assert.Equal(t, phaseRequest, BodyJSONArray("ids").phase)
-	assert.Equal(t, phaseResponse, ResponseJSONPath("data.id").phase)
+	assert.Equal(t, coretypes.PhaseRequest, PathParam("id").Phase)
+	assert.Equal(t, coretypes.PhaseRequest, BodyJSONPath("id").Phase)
+	assert.Equal(t, coretypes.PhaseRequest, BodyJSONArray("ids").Phase)
+	assert.Equal(t, coretypes.PhaseResponse, ResponseJSONPath("data.id").Phase)
 
 	// ResponseJSONPath yields "" when the response body is absent (pre-handler).
-	id, err := ResponseJSONPath("data.id").fn(ExtractorContext{})
+	id, err := ResponseJSONPath("data.id").Fn(coretypes.ExtractorContext{})
 	require.NoError(t, err)
 	assert.Equal(t, "", id)
 }

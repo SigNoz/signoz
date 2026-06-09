@@ -16,6 +16,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/types/audittypes"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 )
 
 const (
@@ -119,7 +120,7 @@ func (middleware *Audit) emitAuditEvent(req *http.Request, writer responseCaptur
 		return
 	}
 
-	extractorCtx := handler.ExtractorContext{
+	extractorCtx := coretypes.ExtractorContext{
 		Request:      req,
 		ResponseBody: writer.BodyBytes(),
 	}

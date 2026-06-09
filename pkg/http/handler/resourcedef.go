@@ -11,13 +11,13 @@ import (
 type ResourceDef struct {
 	Resource coretypes.Resource
 	Verb     coretypes.Verb
-	ID       ResourceIDExtractor
+	ID       coretypes.ResourceIDExtractor
 	Selector SelectorFunc
 	Category audittypes.ActionCategory
 	Related  *RelatedResource
 }
 
-func (d ResourceDef) resolveRequest(ec ExtractorContext) []*ResolvedResource {
+func (d ResourceDef) resolveRequest(ec coretypes.ExtractorContext) []*ResolvedResource {
 	resolved := &ResolvedResource{
 		Resource:    d.Resource,
 		Verb:        d.Verb,
@@ -26,7 +26,7 @@ func (d ResourceDef) resolveRequest(ec ExtractorContext) []*ResolvedResource {
 		idExtractor: d.ID,
 		Related:     newResolvedRelated(d.Related),
 	}
-	resolved.resolve(phaseRequest, ec)
+	resolved.resolve(coretypes.PhaseRequest, ec)
 
 	return []*ResolvedResource{resolved}
 }
