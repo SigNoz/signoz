@@ -39,6 +39,12 @@ css: {
 // GOOD: Direct camelCase
 .alertHistory { }
 .statsCard { }
+
+// GOOD: State classes with is-/has- prefix
+.isDisabled { }
+.isActive { }
+.hasError { }
+.isLoading { }
 ```
 
 ### Nesting
@@ -414,6 +420,28 @@ Components use data attributes for variants/states. Target them for state-specif
 }
 ```
 
+### Keyframes (Local Scoping)
+
+Without `:local()`, keyframe names are global and can clash across modules:
+
+```scss
+// BAD: Global keyframe - can conflict with other modules
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+// GOOD: Locally scoped keyframe
+:local(@keyframes fadeIn) {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal {
+  animation: fadeIn 200ms ease;
+}
+```
+
 ## JS Import Patterns
 
 ```tsx
@@ -435,12 +463,25 @@ import styles from './Component.module.scss';
 
 // BAD: String interpolation for class names
 <div className={`${styles.button}-active`}>  // won't work
+
+// BAD: Dynamic class lookup - can't be statically analyzed
+const cls = styles[`variant${props.type}`];  // Vite can't tree-shake or type-check
+
+// GOOD: Explicit map for dynamic variants
+const variantMap = {
+  primary: styles.variantPrimary,
+  secondary: styles.variantSecondary,
+  ghost: styles.variantGhost,
+};
+const cls = variantMap[props.type];
 ```
 
 ## Checklist Before Committing
 
 - [ ] All class names use camelCase in CSS
+- [ ] State classes use `is-`/`has-` prefix (e.g., `isActive`, `hasError`)
 - [ ] No bracket access (`styles['...']`) in JS unless verified
+- [ ] No dynamic class lookup - use explicit variant maps instead
 - [ ] No deep class nesting (max 3 class levels; pseudo-classes/elements and parent-reference selectors like `&.active`, `&#bar` are not counted)
 - [ ] No hardcoded colors - use `--l1/l2/l3-*` semantic tokens (not `--bg-*` primitives)
 - [ ] No magic numbers - use `--spacing-*` tokens
@@ -449,6 +490,7 @@ import styles from './Component.module.scss';
 - [ ] Global escapes only for third-party overrides
 - [ ] No ID selectors
 - [ ] No bare element selectors
+- [ ] Keyframes use `:local(@keyframes name)` to avoid global collisions
 
 ## Lint Rules
 
