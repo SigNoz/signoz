@@ -59,19 +59,19 @@ func (c Config) Validate() error {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "traces.waterfall.max_limit_to_select_all_spans must be positive")
 	}
 	if c.Flamegraph.MaxSelectedLevels <= 0 {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "traces.flamegraph.level_limit must be positive, got %d", c.Flamegraph.MaxSelectedLevels)
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "traces.flamegraph.max_selected_levels must be positive, got %d", c.Flamegraph.MaxSelectedLevels)
 	}
 	if c.Flamegraph.MaxSpansPerLevel <= 0 {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "traces.flamegraph.spans_per_level must be positive, got %d", c.Flamegraph.MaxSpansPerLevel)
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "traces.flamegraph.max_spans_per_level must be positive, got %d", c.Flamegraph.MaxSpansPerLevel)
 	}
 	if c.Flamegraph.SamplingTopLatencySpansCount < 0 {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "traces.flamegraph.top_latency_count cannot be negative, got %d", c.Flamegraph.SamplingTopLatencySpansCount)
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "traces.flamegraph.sampling_top_latency_count cannot be negative, got %d", c.Flamegraph.SamplingTopLatencySpansCount)
 	}
 	if c.Flamegraph.SamplingBucketCount <= 0 {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "traces.flamegraph.bucket_count must be positive, got %d", c.Flamegraph.SamplingBucketCount)
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "traces.flamegraph.sampling_bucket_count must be positive, got %d", c.Flamegraph.SamplingBucketCount)
 	}
 	if c.Flamegraph.SelectAllSpansLimit == 0 {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "traces.flamegraph.max_limit_to_select_all_spans must be positive")
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "traces.flamegraph.select_all_spans_limit must be positive")
 	}
 	return nil
 }
