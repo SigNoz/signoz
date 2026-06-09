@@ -17,8 +17,6 @@ type ResourceDef struct {
 	Related  *RelatedResource
 }
 
-func (ResourceDef) sealResourceSpec() {}
-
 func (d ResourceDef) resolveRequest(ec ExtractorContext) []*ResolvedResource {
 	resolved := &ResolvedResource{
 		Resource:    d.Resource,

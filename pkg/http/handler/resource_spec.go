@@ -6,7 +6,6 @@ import "github.com/SigNoz/signoz/pkg/types/coretypes"
 // ResourceSpec is the sealed interface implemented by ResourceDef and
 // ResourcesDef. Only these two satisfy WithResourceDefs.
 type ResourceSpec interface {
-	sealResourceSpec()
 	resolveRequest(ec ExtractorContext) []*ResolvedResource
 }
 

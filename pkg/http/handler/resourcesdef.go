@@ -17,8 +17,6 @@ type ResourcesDef struct {
 	Related  *RelatedResource
 }
 
-func (ResourcesDef) sealResourceSpec() {}
-
 func (d ResourcesDef) resolveRequest(ec ExtractorContext) []*ResolvedResource {
 	var ids []string
 	if d.IDs.fn != nil {
