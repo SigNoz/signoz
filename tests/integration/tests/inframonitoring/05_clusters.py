@@ -370,14 +370,45 @@ def test_clusters_pod_phase_aggregation(
     }
 
 
-def test_clusters_groupby_cloud_provider(
+@pytest.mark.parametrize(
+    "group_key,expected",
+    [
+        # groupBy=[k8s.cluster.name]: one record per cluster, clusterName
+        # populated (clusters.go:29-32). Each cluster has 1 ready node, 1 pod.
+        pytest.param(
+            "k8s.cluster.name",
+            {
+                "gb-gcp-1": {"readiness": {"ready": 1, "notReady": 0}, "running": 1},
+                "gb-gcp-2": {"readiness": {"ready": 1, "notReady": 0}, "running": 1},
+                "gb-aws-1": {"readiness": {"ready": 1, "notReady": 0}, "running": 1},
+                "gb-aws-2": {"readiness": {"ready": 1, "notReady": 0}, "running": 1},
+            },
+            id="cluster_name",
+        ),
+        # groupBy=[cloud.provider]: aggregated across each provider's 2 clusters,
+        # clusterName empty (custom-groupBy branch).
+        pytest.param(
+            "cloud.provider",
+            {
+                "gcp": {"readiness": {"ready": 2, "notReady": 0}, "running": 2},
+                "aws": {"readiness": {"ready": 2, "notReady": 0}, "running": 2},
+            },
+            id="cloud_provider",
+        ),
+    ],
+)
+def test_clusters_groupby(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
+    group_key: str,
+    expected: dict,
 ) -> None:
-    """groupBy=[cloud.provider]: 2 records (one per provider), aggregated counts,
-    meta surfaces cloud.provider. Each provider has 2 clusters x 1 node x 1 pod."""
+    """groupBy returns one record per distinct group with aggregated readiness
+    and pod-phase counts. clusterName is populated only when grouping by
+    k8s.cluster.name (clusters.go:29-32 list-vs-grouped branch); meta surfaces
+    the groupBy key."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
@@ -396,7 +427,7 @@ def test_clusters_groupby_cloud_provider(
             "limit": 50,
             "groupBy": [
                 {
-                    "name": "cloud.provider",
+                    "name": group_key,
                     "fieldDataType": "string",
                     "fieldContext": "resource",
                 }
@@ -406,21 +437,22 @@ def test_clusters_groupby_cloud_provider(
     )
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()["data"]
-    assert data["total"] == 2
+    assert data["total"] == len(expected)
 
-    providers_seen = set()
-    for rec in data["records"]:
-        # Per-row cluster identity is cleared; only the groupBy field surfaces.
-        assert rec["clusterName"] == ""
-        # Each provider has 2 clusters x 1 ready node -> {ready:2, notReady:0}
-        assert rec["nodeCountsByReadiness"] == {"ready": 2, "notReady": 0}
-        # 2 clusters x 1 running pod = 2 running.
-        assert rec["podCountsByPhase"]["running"] == 2
+    group_of = lambda r: r["clusterName"] if group_key == "k8s.cluster.name" else r["meta"][group_key]  # noqa: E731  # pylint: disable=unnecessary-lambda-assignment
+    by_group = {group_of(r): r for r in data["records"]}
+    assert set(by_group.keys()) == set(expected.keys())
+
+    for group, exp in expected.items():
+        rec = by_group[group]
+        # clusterName populated per cluster when grouping by k8s.cluster.name,
+        # empty otherwise.
+        assert rec["clusterName"] == (group if group_key == "k8s.cluster.name" else "")
+        assert rec["nodeCountsByReadiness"] == exp["readiness"]
+        assert rec["podCountsByPhase"]["running"] == exp["running"]
         for other in ("pending", "succeeded", "failed", "unknown"):
             assert rec["podCountsByPhase"][other] == 0
-        assert "cloud.provider" in rec["meta"], rec["meta"]
-        providers_seen.add(rec["meta"]["cloud.provider"])
-    assert providers_seen == {"gcp", "aws"}
+        assert group_key in rec["meta"], rec["meta"]
 
 
 def test_clusters_pagination(
