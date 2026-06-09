@@ -28,6 +28,8 @@ var (
 	AzureServiceStorageAccountsBlob = ServiceID{valuer.NewString("storageaccountsblob")}
 	AzureServiceCDNProfile          = ServiceID{valuer.NewString("cdnprofile")}
 	AzureServiceAppService          = ServiceID{valuer.NewString("appservice")}
+	AzureServiceContainerApp        = ServiceID{valuer.NewString("containerapp")}
+	AzureServiceAKS                 = ServiceID{valuer.NewString("aks")}
 )
 
 func (ServiceID) Enum() []any {
@@ -48,6 +50,8 @@ func (ServiceID) Enum() []any {
 		AzureServiceStorageAccountsBlob,
 		AzureServiceCDNProfile,
 		AzureServiceAppService,
+		AzureServiceContainerApp,
+		AzureServiceAKS,
 	}
 }
 
@@ -72,6 +76,8 @@ var SupportedServices = map[CloudProviderType][]ServiceID{
 		AzureServiceStorageAccountsBlob,
 		AzureServiceCDNProfile,
 		AzureServiceAppService,
+		AzureServiceContainerApp,
+		AzureServiceAKS,
 	},
 }
 

@@ -6,10 +6,12 @@ import (
 	"encoding/base64"
 	"encoding/pem"
 	"net/url"
+	"path"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/authn"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -24,14 +26,16 @@ const (
 var _ authn.CallbackAuthN = (*AuthN)(nil)
 
 type AuthN struct {
-	store     authtypes.AuthNStore
-	licensing licensing.Licensing
+	store        authtypes.AuthNStore
+	licensing    licensing.Licensing
+	globalConfig global.Config
 }
 
-func New(ctx context.Context, store authtypes.AuthNStore, licensing licensing.Licensing) (*AuthN, error) {
+func New(ctx context.Context, store authtypes.AuthNStore, licensing licensing.Licensing, globalConfig global.Config) (*AuthN, error) {
 	return &AuthN{
-		store:     store,
-		licensing: licensing,
+		store:        store,
+		licensing:    licensing,
+		globalConfig: globalConfig,
 	}, nil
 }
 
@@ -132,7 +136,7 @@ func (a *AuthN) serviceProvider(siteURL *url.URL, authDomain *authtypes.AuthDoma
 		return nil, err
 	}
 
-	acsURL := &url.URL{Scheme: siteURL.Scheme, Host: siteURL.Host, Path: redirectPath}
+	acsURL := &url.URL{Scheme: siteURL.Scheme, Host: siteURL.Host, Path: path.Join(a.globalConfig.ExternalPath(), redirectPath)}
 
 	// Note:
 	// The ServiceProviderIssuer is the client id in case of keycloak. Since we set it to the host here, we need to set the client id == host in keycloak.

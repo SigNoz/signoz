@@ -17,4 +17,4 @@ type Templater interface {
 
 // ReceiverIntegrationsFunc constructs the notify.Integration list for a
 // configured receiver.
-type ReceiverIntegrationsFunc = func(nc Receiver, tmpl *template.Template, logger *slog.Logger, templater Templater) ([]notify.Integration, error)
+type ReceiverIntegrationsFunc = func(nc *Receiver, tmpl *template.Template, logger *slog.Logger, templater Templater) ([]notify.Integration, error)

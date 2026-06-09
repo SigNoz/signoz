@@ -1,0 +1,54 @@
+import { useCallback } from 'react';
+
+import { patchDashboardV2 } from 'api/generated/services/dashboard';
+import { useErrorModal } from 'providers/ErrorModalProvider';
+import APIError from 'types/api/error';
+
+import { removePanelOp, replaceSectionItemsOp } from '../../../patchOps';
+import { useDashboardStore } from '../../../store/useDashboardStore';
+import type { DashboardSection } from '../../../utils';
+
+interface Params {
+	sections: DashboardSection[];
+}
+
+export interface DeletePanelArgs {
+	panelId: string;
+	layoutIndex: number;
+}
+
+/**
+ * Removes a panel: drops its item ref from the section's items and deletes the
+ * panel from `spec.panels`, as one atomic patch.
+ */
+export function useDeletePanel({
+	sections,
+}: Params): (args: DeletePanelArgs) => Promise<void> {
+	const dashboardId = useDashboardStore((s) => s.dashboardId);
+	const refetch = useDashboardStore((s) => s.refetch);
+	const { showErrorModal } = useErrorModal();
+
+	return useCallback(
+		async ({ panelId, layoutIndex }: DeletePanelArgs): Promise<void> => {
+			if (!dashboardId) {
+				return;
+			}
+			const section = sections.find((s) => s.layoutIndex === layoutIndex);
+			if (!section) {
+				return;
+			}
+
+			const nextItems = section.items.filter((i) => i.id !== panelId);
+			try {
+				await patchDashboardV2({ id: dashboardId }, [
+					replaceSectionItemsOp(layoutIndex, nextItems),
+					removePanelOp(panelId),
+				]);
+				refetch();
+			} catch (error) {
+				showErrorModal(error as APIError);
+			}
+		},
+		[sections, dashboardId, refetch, showErrorModal],
+	);
+}

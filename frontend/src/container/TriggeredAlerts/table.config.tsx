@@ -21,8 +21,11 @@ export function getAlertColumns(
 			width: { fixed: '100px' },
 			enableSort: false,
 			enableMove: false,
-			cell: ({ value }): JSX.Element => (
-				<AlertStatusTag state={String(value ?? '')} />
+			cell: ({ row, value }): JSX.Element => (
+				<AlertStatusTag
+					state={String(value ?? '')}
+					testId={`alert-row-${row.fingerprint ?? ''}-status`}
+				/>
 			),
 		},
 		{
@@ -32,8 +35,11 @@ export function getAlertColumns(
 			width: { default: '100%' },
 			enableSort: true,
 			enableMove: false,
-			cell: ({ value }): JSX.Element => (
-				<TanStackTable.Text title={value}>
+			cell: ({ row, value }): JSX.Element => (
+				<TanStackTable.Text
+					title={value}
+					data-testid={`alert-row-${row.fingerprint ?? ''}-name`}
+				>
 					{String(value ?? '-')}
 				</TanStackTable.Text>
 			),
@@ -45,15 +51,17 @@ export function getAlertColumns(
 			width: { fixed: '120px' },
 			enableSort: true,
 			enableMove: false,
-			cell: ({ value }): JSX.Element => {
+			cell: ({ row, value }): JSX.Element => {
 				const severity = String(value ?? '').toLowerCase();
+				const testId = `alert-row-${row.fingerprint ?? ''}-severity`;
 				if (!severity) {
-					return <TanStackTable.Text>-</TanStackTable.Text>;
+					return <TanStackTable.Text data-testid={testId}>-</TanStackTable.Text>;
 				}
 				return (
 					<Badge
 						color={SEVERITY_BADGE_COLORS[severity] ?? 'secondary'}
 						variant="outline"
+						testId={testId}
 					>
 						{severity}
 					</Badge>
