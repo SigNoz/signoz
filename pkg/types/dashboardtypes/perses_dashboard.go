@@ -114,7 +114,7 @@ func (d *DashboardV2) CanDelete() error {
 	if d.Locked {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot delete a locked dashboard, please unlock the dashboard to delete")
 	}
-	if d.Source == SourceSystem {
+	if d.Source.isUserDeletable() {
 		return errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardImmutable, "system dashboards cannot be deleted")
 	}
 	return nil
