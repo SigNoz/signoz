@@ -143,7 +143,7 @@ function WorkspaceSuspended(): JSX.Element {
 										>
 											{t('continueMyJourney')}
 										</Button>
-										<RefreshPaymentStatus btnShape="round" />
+										<RefreshPaymentStatus />
 									</Flex>
 								</Row>
 							)}
