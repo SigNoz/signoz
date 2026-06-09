@@ -1,4 +1,4 @@
-import type { SectionConfig } from '../types';
+import type { SectionConfig } from '../../types/sections';
 
 // Pie has no axes, thresholds, or stacking — just value formatting and a
 // legend. `mode` is omitted: the pie legend is always interactive swatches.

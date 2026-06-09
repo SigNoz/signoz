@@ -4,10 +4,8 @@ import { Typography } from '@signozhq/ui/typography';
 import { Loader, TriangleAlert } from '@signozhq/icons';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import { PanelMode } from 'container/DashboardContainer/visualization/panels/types';
-import type {
-	DashboardPreference,
-	RenderablePanelDefinition,
-} from 'pages/DashboardPageV2/DashboardContainer/Panels/types';
+import type { RenderablePanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelDefinition';
+import type { DashboardPreference } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/rendererProps';
 import type { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
 
 import styles from './Panel.module.scss';

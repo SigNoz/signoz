@@ -8,13 +8,13 @@ import { IRenderTooltipFooterArgs } from 'lib/uPlotV2/components/types';
 import { useTimezone } from 'providers/Timezone';
 import type uPlot from 'uplot';
 
-import PanelStyles from '../styles/panel.module.scss';
-import { PanelRendererProps } from '../types';
-import { resolveLegendPosition } from '../utils/chartAppearanceMappings';
-import { getBuilderQueries } from '../utils/getBuilderQueries';
+import PanelStyles from '../../shared/panel.module.scss';
+import { PanelRendererProps } from '../../types/rendererProps';
+import { resolveLegendPosition } from '../../shared/chartAppearanceMappings';
+import { getBuilderQueries } from '../../shared/getBuilderQueries';
 
-import { buildHistogramConfig } from './config';
-import { prepareHistogramData } from './data';
+import { buildHistogramConfig } from './buildConfig';
+import { prepareHistogramData } from './prepareData';
 import { ChartClickData } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 
 function HistogramPanelRenderer({

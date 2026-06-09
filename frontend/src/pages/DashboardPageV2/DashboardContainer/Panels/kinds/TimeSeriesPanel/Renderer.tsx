@@ -8,17 +8,17 @@ import { IRenderTooltipFooterArgs } from 'lib/uPlotV2/components/types';
 import { prepareChartData } from 'lib/uPlotV2/utils/dataUtils';
 import { useTimezone } from 'providers/Timezone';
 
-import { useGroupByPerQuery } from '../hooks/useGroupByPerQuery';
-import { useTimeScale } from '../hooks/useTimeScale';
-import PanelStyles from '../styles/panel.module.scss';
-import { PanelRendererProps } from '../types';
+import { useGroupByPerQuery } from '../../shared/hooks/useGroupByPerQuery';
+import { useTimeScale } from '../../shared/hooks/useTimeScale';
+import PanelStyles from '../../shared/panel.module.scss';
+import { PanelRendererProps } from '../../types/rendererProps';
 import {
 	resolveDecimalPrecision,
 	resolveLegendPosition,
-} from '../utils/chartAppearanceMappings';
-import { getBuilderQueries } from '../utils/getBuilderQueries';
+} from '../../shared/chartAppearanceMappings';
+import { getBuilderQueries } from '../../shared/getBuilderQueries';
 
-import { buildTimeSeriesConfig } from './config';
+import { buildTimeSeriesConfig } from './buildConfig';
 import { ChartClickData } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 
 function TimeSeriesPanelRenderer({

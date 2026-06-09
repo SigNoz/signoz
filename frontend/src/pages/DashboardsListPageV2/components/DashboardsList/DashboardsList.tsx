@@ -41,6 +41,10 @@ import SearchBar from '../SearchBar/SearchBar';
 import DashboardsListContent from './DashboardsListContent';
 
 import styles from './DashboardsList.module.scss';
+import {
+	DashboardtypesListOrderDTO,
+	DashboardtypesListSortDTO,
+} from 'api/generated/services/sigNoz.schemas';
 
 const PAGE_SIZE = 20;
 
@@ -82,8 +86,8 @@ function DashboardsList(): JSX.Element {
 	const listParams = useMemo(
 		() => ({
 			query: searchString.trim() || undefined,
-			sort: sortColumn,
-			order: sortOrder,
+			sort: sortColumn as DashboardtypesListSortDTO,
+			order: sortOrder as DashboardtypesListOrderDTO,
 			limit: PAGE_SIZE,
 			offset: (page - 1) * PAGE_SIZE,
 		}),

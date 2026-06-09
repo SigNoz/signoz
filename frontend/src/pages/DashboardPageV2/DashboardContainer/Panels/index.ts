@@ -1,57 +1,21 @@
-import { DataSource } from 'types/common/queryBuilder';
-
-import BarPanelRenderer from './BarPanel/Renderer';
-import { sections as barSections } from './BarPanel/sections';
-import HistogramPanelRenderer from './HistogramPanel/Renderer';
-import { sections as histogramSections } from './HistogramPanel/sections';
-import PiePanelRenderer from './PiePanel/Renderer';
-import { sections as pieSections } from './PiePanel/sections';
-import TimeSeriesRenderer from './TimeSeriesPanel/Renderer';
-import { sections as timeSeriesSections } from './TimeSeriesPanel/sections';
+import { definition as barChart } from './kinds/BarChartPanel/definition';
+import { definition as histogram } from './kinds/HistogramPanel/definition';
+import { definition as pieChart } from './kinds/PieChartPanel/definition';
+import { definition as timeSeries } from './kinds/TimeSeriesPanel/definition';
 import type {
-	PanelDefinition,
-	PanelKind,
 	PanelRegistry,
 	RenderablePanelDefinition,
-} from './types';
+} from './types/panelDefinition';
+import type { PanelKind } from './types/panelKind';
 
-const TimeSeriesPanelDef: PanelDefinition<'signoz/TimeSeriesPanel'> = {
-	kind: 'signoz/TimeSeriesPanel',
-	displayName: 'Time Series',
-	Renderer: TimeSeriesRenderer,
-	sections: timeSeriesSections,
-	supportedSignals: [DataSource.METRICS, DataSource.LOGS, DataSource.TRACES],
-};
-
-const BarChartPanelDef: PanelDefinition<'signoz/BarChartPanel'> = {
-	kind: 'signoz/BarChartPanel',
-	displayName: 'Bar Chart',
-	Renderer: BarPanelRenderer,
-	sections: barSections,
-	supportedSignals: [DataSource.METRICS, DataSource.LOGS, DataSource.TRACES],
-};
-
-const HistogramPanelDef: PanelDefinition<'signoz/HistogramPanel'> = {
-	kind: 'signoz/HistogramPanel',
-	displayName: 'Histogram',
-	Renderer: HistogramPanelRenderer,
-	sections: histogramSections,
-	supportedSignals: [DataSource.METRICS, DataSource.LOGS, DataSource.TRACES],
-};
-
-const PiePanelDef: PanelDefinition<'signoz/PieChartPanel'> = {
-	kind: 'signoz/PieChartPanel',
-	displayName: 'Pie Chart',
-	Renderer: PiePanelRenderer,
-	sections: pieSections,
-	supportedSignals: [DataSource.METRICS, DataSource.LOGS, DataSource.TRACES],
-};
-
+// Pure assembly: each kind owns its own PanelDefinition (see
+// `kinds/<Kind>/definition.ts`). Registering a new panel = add its folder and a
+// single entry below — no other central file needs editing.
 export const PANELS: PanelRegistry = {
-	'signoz/TimeSeriesPanel': TimeSeriesPanelDef,
-	'signoz/BarChartPanel': BarChartPanelDef,
-	'signoz/HistogramPanel': HistogramPanelDef,
-	'signoz/PieChartPanel': PiePanelDef,
+	[timeSeries.kind]: timeSeries,
+	[barChart.kind]: barChart,
+	[histogram.kind]: histogram,
+	[pieChart.kind]: pieChart,
 };
 
 export function getPanelDefinition(

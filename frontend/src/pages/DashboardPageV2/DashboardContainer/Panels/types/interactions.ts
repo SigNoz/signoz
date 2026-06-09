@@ -30,7 +30,7 @@ type DragSelect = (start: number, end: number) => void;
  * supports: chart panels get a chart-shaped `onClick`, time-axis charts add
  * `onDragSelect`, histograms have no drag-to-zoom, a NumberPanel has no
  * interactions at all. Keys mirror `PanelKind`; `PanelRendererProps<K>` in
- * types.ts indexes this map, so a missing kind is a compile error there.
+ * rendererProps.ts indexes this map, so a missing kind is a compile error there.
  */
 export interface PanelInteractionMap {
 	'signoz/TimeSeriesPanel': {

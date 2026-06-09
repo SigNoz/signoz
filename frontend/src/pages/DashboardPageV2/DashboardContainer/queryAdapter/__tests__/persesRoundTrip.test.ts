@@ -14,7 +14,7 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import {
 	PANEL_KIND_TO_PANEL_TYPE,
 	type PanelKind,
-} from 'pages/DashboardPageV2/DashboardContainer/Panels/types';
+} from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelKind';
 
 import { fromPerses } from '../fromPerses';
 import { toPerses } from '../toPerses';

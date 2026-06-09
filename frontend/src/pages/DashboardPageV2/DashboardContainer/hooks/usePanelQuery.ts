@@ -12,7 +12,10 @@ import type { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQuery
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { getGraphType } from 'utils/getGraphType';
 
-import { PANEL_KIND_TO_PANEL_TYPE, type PanelKind } from '../Panels/types';
+import {
+	PANEL_KIND_TO_PANEL_TYPE,
+	type PanelKind,
+} from '../Panels/types/panelKind';
 
 export interface UsePanelQueryArgs {
 	panel: DashboardtypesPanelDTO | undefined;
