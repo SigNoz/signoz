@@ -21,6 +21,18 @@ func NewResolvedResource(verb Verb, category ActionCategory, resource Resource, 
 	return resolved
 }
 
+// NewResolvedResourceWithID builds a basic resolved value from an
+// already-known id (e.g. extracted per query while iterating), bypassing the
+// phased id extractor. An empty id means collection-level access.
+func NewResolvedResourceWithID(verb Verb, category ActionCategory, resource Resource, id string, selector SelectorFunc) ResolvedResource {
+	resolved := &resolvedResource{verb: verb, category: category, resource: resource, selector: selector}
+	if id != "" {
+		resolved.ids = []string{id}
+	}
+
+	return resolved
+}
+
 func (resolved *resolvedResource) fill(phase ExtractPhase, ec ExtractorContext) {
 	if id, ok := resolved.idExtractor.RunFor(phase, ec); ok && id != "" {
 		resolved.ids = []string{id}

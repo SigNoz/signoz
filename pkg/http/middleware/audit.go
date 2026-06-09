@@ -125,13 +125,6 @@ func (middleware *Audit) emitAuditEvent(req *http.Request, writer responseCaptur
 		// Fill response-phase ids (e.g. a created resource's id) now that the
 		// response body is available.
 		resource.ResolveResponse(extractorCtx)
-
-		// Audit records state changes only — skip read/list verbs (they still
-		// exist on the def for authz).
-		if !resource.Verb().IsMutation() {
-			continue
-		}
-
 		verb, category := resource.Verb(), resource.Category()
 
 		switch typed := resource.(type) {

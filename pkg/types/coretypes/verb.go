@@ -53,14 +53,3 @@ func (Verb) Enum() []any {
 func (verb Verb) PastTense() string {
 	return verb.pastTense
 }
-
-// IsMutation reports whether the verb changes state (create/update/delete/
-// attach/detach) as opposed to a read (read/list/assignee).
-func (verb Verb) IsMutation() bool {
-	switch verb {
-	case VerbCreate, VerbUpdate, VerbDelete, VerbAttach, VerbDetach:
-		return true
-	default:
-		return false
-	}
-}

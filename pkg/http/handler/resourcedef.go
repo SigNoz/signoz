@@ -9,8 +9,9 @@ import "github.com/SigNoz/signoz/pkg/types/coretypes"
 // each into a coretypes.ResolvedResource.
 type ResourceDef interface {
 	// resolveRequest is unexported so the interface is sealed — only the defs
-	// declared in this package can satisfy it.
-	resolveRequest(ec coretypes.ExtractorContext) coretypes.ResolvedResource
+	// declared in this package can satisfy it. It returns a slice because a
+	// single def can fan out (e.g. a telemetry query touching multiple signals).
+	resolveRequest(ec coretypes.ExtractorContext) []coretypes.ResolvedResource
 }
 
 // ResolveRequest resolves every def's request-phase ids against ec. Called by
@@ -19,7 +20,7 @@ type ResourceDef interface {
 func ResolveRequest(defs []ResourceDef, ec coretypes.ExtractorContext) []coretypes.ResolvedResource {
 	resolved := make([]coretypes.ResolvedResource, 0, len(defs))
 	for _, def := range defs {
-		resolved = append(resolved, def.resolveRequest(ec))
+		resolved = append(resolved, def.resolveRequest(ec)...)
 	}
 
 	return resolved
@@ -35,8 +36,10 @@ type BasicResourceDef struct {
 	Selector coretypes.SelectorFunc
 }
 
-func (def BasicResourceDef) resolveRequest(ec coretypes.ExtractorContext) coretypes.ResolvedResource {
-	return coretypes.NewResolvedResource(def.Verb, def.Category, def.Resource, def.ID, def.Selector, ec)
+func (def BasicResourceDef) resolveRequest(ec coretypes.ExtractorContext) []coretypes.ResolvedResource {
+	return []coretypes.ResolvedResource{
+		coretypes.NewResolvedResource(def.Verb, def.Category, def.Resource, def.ID, def.Selector, ec),
+	}
 }
 
 // AttachDetachSiblingResourceDef checks an attach/detach between peer resources.
@@ -54,15 +57,17 @@ type AttachDetachSiblingResourceDef struct {
 	TargetSelector coretypes.SelectorFunc
 }
 
-func (def AttachDetachSiblingResourceDef) resolveRequest(ec coretypes.ExtractorContext) coretypes.ResolvedResource {
-	return coretypes.NewResolvedResourceWithTarget(
-		def.Verb,
-		def.Category,
-		def.SourceResource, def.SourceIDs, def.SourceSelector,
-		def.TargetResource, def.TargetIDs, def.TargetSelector,
-		false,
-		ec,
-	)
+func (def AttachDetachSiblingResourceDef) resolveRequest(ec coretypes.ExtractorContext) []coretypes.ResolvedResource {
+	return []coretypes.ResolvedResource{
+		coretypes.NewResolvedResourceWithTarget(
+			def.Verb,
+			def.Category,
+			def.SourceResource, def.SourceIDs, def.SourceSelector,
+			def.TargetResource, def.TargetIDs, def.TargetSelector,
+			false,
+			ec,
+		),
+	}
 }
 
 // AttachDetachParentChildResourceDef checks the PARENT's attach/detach only. The
@@ -78,13 +83,41 @@ type AttachDetachParentChildResourceDef struct {
 	ChildIDs       coretypes.ResourceIDsExtractor
 }
 
-func (def AttachDetachParentChildResourceDef) resolveRequest(ec coretypes.ExtractorContext) coretypes.ResolvedResource {
-	return coretypes.NewResolvedResourceWithTarget(
-		def.Verb,
-		def.Category,
-		def.ParentResource, OneID(def.ParentID), def.ParentSelector,
-		def.ChildResource, def.ChildIDs, nil,
-		true,
-		ec,
-	)
+func (def AttachDetachParentChildResourceDef) resolveRequest(ec coretypes.ExtractorContext) []coretypes.ResolvedResource {
+	return []coretypes.ResolvedResource{
+		coretypes.NewResolvedResourceWithTarget(
+			def.Verb,
+			def.Category,
+			def.ParentResource, coretypes.OneID(def.ParentID), def.ParentSelector,
+			def.ChildResource, def.ChildIDs, nil,
+			true,
+			ec,
+		),
+	}
+}
+
+// TelemetryResourceDef checks a verb against each resource its Resources
+// extractor pulls from the request — used for query-range, where the telemetry
+// resources come from the query signals/sources rather than a fixed
+// declaration. It fans out to one resolved resource per extracted resource.
+// Telemetry access is collection-level, so no id is resolved.
+type TelemetryResourceDef struct {
+	Verb      coretypes.Verb
+	Category  coretypes.ActionCategory
+	Selector  coretypes.SelectorFunc
+	Resources coretypes.ResourceExtractor
+}
+
+func (def TelemetryResourceDef) resolveRequest(ec coretypes.ExtractorContext) []coretypes.ResolvedResource {
+	var refs []coretypes.ResourceWithID
+	if def.Resources != nil {
+		refs, _ = def.Resources(ec)
+	}
+
+	resolved := make([]coretypes.ResolvedResource, 0, len(refs))
+	for _, ref := range refs {
+		resolved = append(resolved, coretypes.NewResolvedResourceWithID(def.Verb, def.Category, ref.Resource, ref.ID, def.Selector))
+	}
+
+	return resolved
 }

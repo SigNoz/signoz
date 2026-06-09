@@ -31,7 +31,7 @@ func (provider *provider) addRoleRoutes(router *mux.Router) error {
 			Resource: coretypes.ResourceRole,
 			Verb:     coretypes.VerbCreate,
 			Category: coretypes.ActionCategoryAccessControl,
-			ID:       handler.ResponseJSONPath("data.id"),
+			ID:       coretypes.ResponseJSONPath("data.id"),
 			Selector: coretypes.WildcardSelector,
 		}),
 	)).Methods(http.MethodPost).GetError(); err != nil {
@@ -84,7 +84,7 @@ func (provider *provider) addRoleRoutes(router *mux.Router) error {
 			Resource: coretypes.ResourceRole,
 			Verb:     coretypes.VerbRead,
 			Category: coretypes.ActionCategoryAccessControl,
-			ID:       handler.PathParam("id"),
+			ID:       coretypes.PathParam("id"),
 			Selector: provider.roleSelector,
 		}),
 	)).Methods(http.MethodGet).GetError(); err != nil {
@@ -111,7 +111,7 @@ func (provider *provider) addRoleRoutes(router *mux.Router) error {
 			Resource: coretypes.ResourceRole,
 			Verb:     coretypes.VerbRead,
 			Category: coretypes.ActionCategoryAccessControl,
-			ID:       handler.PathParam("id"),
+			ID:       coretypes.PathParam("id"),
 			Selector: provider.roleSelector,
 		}),
 	)).Methods(http.MethodGet).GetError(); err != nil {
@@ -138,7 +138,7 @@ func (provider *provider) addRoleRoutes(router *mux.Router) error {
 			Resource: coretypes.ResourceRole,
 			Verb:     coretypes.VerbUpdate,
 			Category: coretypes.ActionCategoryAccessControl,
-			ID:       handler.PathParam("id"),
+			ID:       coretypes.PathParam("id"),
 			Selector: provider.roleSelector,
 		}),
 	)).Methods(http.MethodPatch).GetError(); err != nil {
@@ -165,7 +165,7 @@ func (provider *provider) addRoleRoutes(router *mux.Router) error {
 			Resource: coretypes.ResourceRole,
 			Verb:     coretypes.VerbUpdate,
 			Category: coretypes.ActionCategoryAccessControl,
-			ID:       handler.PathParam("id"),
+			ID:       coretypes.PathParam("id"),
 			Selector: provider.roleSelector,
 		}),
 	)).Methods(http.MethodPatch).GetError(); err != nil {
@@ -192,7 +192,7 @@ func (provider *provider) addRoleRoutes(router *mux.Router) error {
 			Resource: coretypes.ResourceRole,
 			Verb:     coretypes.VerbDelete,
 			Category: coretypes.ActionCategoryAccessControl,
-			ID:       handler.PathParam("id"),
+			ID:       coretypes.PathParam("id"),
 			Selector: provider.roleSelector,
 		}),
 	)).Methods(http.MethodDelete).GetError(); err != nil {
