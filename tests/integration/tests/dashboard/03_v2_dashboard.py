@@ -265,7 +265,7 @@ def _display_names(body: dict) -> list[str]:
 
 
 def _delete_suite(signoz: SigNoz, token: str, suite_filter: str) -> None:
-    response = _list(signoz, token, query=suite_filter, limit=500)
+    response = _list(signoz, token, query=suite_filter, limit=200)
     if response.status_code != HTTPStatus.OK:
         return
     for dashboard in response.json()["data"]["dashboards"]:
