@@ -34,6 +34,7 @@ func NewModule(traceStore spantypes.TraceStore, providerSettings factory.Provide
 	}
 
 	m.metrics.waterfallSpanLimit.Record(context.Background(), int64(cfg.Waterfall.MaxLimitToSelectAllSpans), metric.WithAttributes(attrResponseType.String(attrResponseTypeWindowed)))
+	m.metrics.flamegraphSpanLimit.Record(context.Background(), int64(cfg.Flamegraph.SelectAllSpansLimit), metric.WithAttributes(attrResponseType.String(attrResponseTypeSampled)))
 
 	return m
 }
@@ -173,6 +174,7 @@ func (m *module) GetFlamegraph(ctx context.Context, traceID string, selectedSpan
 	if summary.NumSpans <= uint64(m.config.Flamegraph.SelectAllSpansLimit) {
 		return m.getFullFlamegraph(ctx, traceID, summary, selectFields)
 	}
+	m.metrics.flamegraphRequestCount.Add(ctx, 1, metric.WithAttributes(attrResponseType.String(attrResponseTypeSampled)))
 	return m.getWindowedFlamegraph(ctx, traceID, selectedSpanID, summary, selectFields)
 }
 
