@@ -19,14 +19,16 @@ function mockMailto(): {
 
 	// Create a real anchor so JSDOM's appendChild/removeChild accept it.
 	// Override its click() so no navigation occurs.
-	jest.spyOn(document, 'createElement').mockImplementation((tag: string) => {
-		if (tag === 'a') {
-			const anchor = realCreateElement('a') as HTMLAnchorElement;
-			anchor.click = mockClick;
-			return anchor;
-		}
-		return realCreateElement(tag);
-	});
+	jest
+		.spyOn(document, 'createElement')
+		.mockImplementation((tag: string, options?: ElementCreationOptions) => {
+			if (tag === 'a') {
+				const anchor = realCreateElement('a') as HTMLAnchorElement;
+				anchor.click = mockClick;
+				return anchor;
+			}
+			return realCreateElement(tag, options);
+		});
 
 	const appendSpy = jest.spyOn(document.body, 'appendChild');
 	const removeSpy = jest.spyOn(document.body, 'removeChild');
