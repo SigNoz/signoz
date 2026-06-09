@@ -424,14 +424,36 @@ def test_statefulsets_base_filter_drops_non_statefulset_pods(
     assert all(r["statefulSetName"] != "" for r in data["records"])
 
 
-def test_statefulsets_groupby_namespace(
+@pytest.mark.parametrize(
+    "group_key,expected_running",
+    [
+        # groupBy=[k8s.statefulset.name]: one record per statefulset,
+        # statefulSetName populated (statefulsets.go:28-31). 1 running pod each.
+        pytest.param(
+            "k8s.statefulset.name",
+            {"gb-ss-a1": 1, "gb-ss-a2": 1, "gb-ss-b1": 1, "gb-ss-b2": 1},
+            id="statefulset_name",
+        ),
+        # groupBy=[k8s.namespace.name]: aggregated across each namespace's 2
+        # statefulsets, statefulSetName cleared. 2 x 1 = 2 running pods each.
+        pytest.param(
+            "k8s.namespace.name",
+            {"gb-ns-a": 2, "gb-ns-b": 2},
+            id="namespace",
+        ),
+    ],
+)
+def test_statefulsets_groupby(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
+    group_key: str,
+    expected_running: dict,
 ) -> None:
-    """groupBy=[k8s.namespace.name]: 2 records, statefulSetName cleared,
-    phase counts aggregate per namespace, meta surfaces k8s.namespace.name."""
+    """groupBy returns one record per distinct group with aggregated pod-phase
+    counts. statefulSetName is populated only when grouping by k8s.statefulset.name
+    (statefulsets.go:28-31 list-vs-grouped branch); meta surfaces the groupBy key."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
@@ -450,7 +472,7 @@ def test_statefulsets_groupby_namespace(
             "limit": 50,
             "groupBy": [
                 {
-                    "name": "k8s.namespace.name",
+                    "name": group_key,
                     "fieldDataType": "string",
                     "fieldContext": "resource",
                 }
@@ -460,19 +482,21 @@ def test_statefulsets_groupby_namespace(
     )
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()["data"]
-    assert data["total"] == 2
+    assert data["total"] == len(expected_running)
 
-    namespaces_seen = set()
-    for rec in data["records"]:
-        # Per-row SS identity is cleared; only the groupBy field surfaces.
-        assert rec["statefulSetName"] == ""
-        # Each ns has 2 SS x 1 Running pod = 2 Running pods.
-        assert rec["podCountsByPhase"]["running"] == 2
+    is_ss_group = group_key == "k8s.statefulset.name"
+    group_of = lambda r: r["statefulSetName"] if is_ss_group else r["meta"][group_key]  # noqa: E731  # pylint: disable=unnecessary-lambda-assignment
+    by_group = {group_of(r): r for r in data["records"]}
+    assert set(by_group.keys()) == set(expected_running.keys())
+
+    for group, running in expected_running.items():
+        rec = by_group[group]
+        # statefulSetName populated per statefulset when grouping by it, empty otherwise.
+        assert rec["statefulSetName"] == (group if is_ss_group else "")
+        assert rec["podCountsByPhase"]["running"] == running
         for other in ("pending", "succeeded", "failed", "unknown"):
             assert rec["podCountsByPhase"][other] == 0
-        assert "k8s.namespace.name" in rec["meta"], rec["meta"]
-        namespaces_seen.add(rec["meta"]["k8s.namespace.name"])
-    assert namespaces_seen == {"gb-ns-a", "gb-ns-b"}
+        assert group_key in rec["meta"], rec["meta"]
 
 
 def test_statefulsets_pagination(
