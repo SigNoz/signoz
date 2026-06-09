@@ -1461,7 +1461,7 @@
       "stackedBarChart": false,
       "thresholds": [],
       "timePreferance": "GLOBAL_TIME",
-      "title": "Statuses total for various node conditions",
+      "title": "Count of nodes in various conditions",
       "yAxisUnit": "{count}"
     },
     {
