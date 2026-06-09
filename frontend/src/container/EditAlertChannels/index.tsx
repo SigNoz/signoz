@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Form } from 'antd';
+import editGoogleChat from 'api/channels/editGoogleChat';
 import editEmail from 'api/channels/editEmail';
 import editMsTeamsApi from 'api/channels/editMsTeams';
 import editOpsgenie from 'api/channels/editOpsgenie';
@@ -8,6 +9,7 @@ import editPagerApi from 'api/channels/editPager';
 import editSlackApi from 'api/channels/editSlack';
 import editWebhookApi from 'api/channels/editWebhook';
 import testEmail from 'api/channels/testEmail';
+import testGoogleChat from 'api/channels/testGoogleChat';
 import testMsTeamsApi from 'api/channels/testMsTeams';
 import testOpsgenie from 'api/channels/testOpsgenie';
 import testPagerApi from 'api/channels/testPager';
@@ -18,6 +20,7 @@ import ROUTES from 'constants/routes';
 import {
 	ChannelType,
 	EmailChannel,
+	GoogleChatChannel,
 	MsTeamsChannel,
 	OpsgenieChannel,
 	PagerChannel,
@@ -43,6 +46,7 @@ function EditAlertChannels({
 				WebhookChannel &
 				PagerChannel &
 				MsTeamsChannel &
+				GoogleChatChannel &
 				OpsgenieChannel &
 				EmailChannel
 		>
@@ -333,6 +337,56 @@ function EditAlertChannels({
 		[id, selectedConfig],
 	);
 
+	const prepareGoogleChatRequest = useCallback(
+		() => ({
+			webhook_url: selectedConfig?.webhook_url || '',
+			name: selectedConfig?.name || '',
+			send_resolved: selectedConfig?.send_resolved || false,
+			text: selectedConfig?.text || '',
+			title: selectedConfig?.title || '',
+			id,
+		}),
+		[id, selectedConfig],
+	);
+
+	const onGoogleChatEditHandler = useCallback(async () => {
+		setSavingState(true);
+
+		if (selectedConfig?.webhook_url === '') {
+			notifications.error({
+				message: 'Error',
+				description: t('googlechat_webhook_url_required'),
+			});
+			setSavingState(false);
+			return {
+				status: 'failed',
+				statusMessage: t('googlechat_webhook_url_required'),
+			};
+		}
+
+		try {
+			await editGoogleChat(prepareGoogleChatRequest());
+			notifications.success({
+				message: 'Success',
+				description: t('channel_edit_done'),
+			});
+			history.replace(ROUTES.ALL_CHANNELS);
+			return { status: 'success', statusMessage: t('channel_edit_done') };
+		} catch (error) {
+			notifications.error({
+				message: (error as APIError).getErrorCode(),
+				description: (error as APIError).getErrorMessage(),
+			});
+			return {
+				status: 'failed',
+				statusMessage:
+					(error as APIError).getErrorMessage() || t('channel_edit_failed'),
+			};
+		} finally {
+			setSavingState(false);
+		}
+	}, [prepareGoogleChatRequest, notifications, selectedConfig, t]);
+
 	const onMsTeamsEditHandler = useCallback(async () => {
 		setSavingState(true);
 
@@ -383,6 +437,8 @@ function EditAlertChannels({
 				result = await onOpsgenieEditHandler();
 			} else if (value === ChannelType.Email) {
 				result = await onEmailEditHandler();
+			} else if (value === ChannelType.GoogleChat) {
+				result = await onGoogleChatEditHandler();
 			}
 			logEvent('Alert Channel: Save channel', {
 				type: value,
@@ -401,6 +457,7 @@ function EditAlertChannels({
 			onMsTeamsEditHandler,
 			onOpsgenieEditHandler,
 			onEmailEditHandler,
+			onGoogleChatEditHandler,
 		],
 	);
 
@@ -440,6 +497,12 @@ function EditAlertChannels({
 						request = prepareEmailRequest();
 						if (request) {
 							await testEmail(request);
+						}
+						break;
+					case ChannelType.GoogleChat:
+						request = prepareGoogleChatRequest();
+						if (request) {
+							await testGoogleChat(request);
 						}
 						break;
 					default:
@@ -484,6 +547,7 @@ function EditAlertChannels({
 			preparePagerRequest,
 			prepareSlackRequest,
 			prepareMsTeamsRequest,
+			prepareGoogleChatRequest,
 			prepareOpsgenieRequest,
 			prepareEmailRequest,
 			notifications,

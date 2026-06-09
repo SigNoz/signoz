@@ -7,6 +7,7 @@ import get from 'api/channels/get';
 import Spinner from 'components/Spinner';
 import {
 	ChannelType,
+	GoogleChatChannel,
 	MsTeamsChannel,
 	PagerChannel,
 	SlackChannel,
@@ -56,9 +57,17 @@ function ChannelsEdit(): JSX.Element {
 
 	const prepChannelConfig = (): {
 		type: string;
-		channel: SlackChannel & WebhookChannel & PagerChannel & MsTeamsChannel;
+		channel: SlackChannel &
+			WebhookChannel &
+			PagerChannel &
+			MsTeamsChannel &
+			GoogleChatChannel;
 	} => {
-		let channel: SlackChannel & WebhookChannel & PagerChannel & MsTeamsChannel = {
+		let channel: SlackChannel &
+			WebhookChannel &
+			PagerChannel &
+			MsTeamsChannel &
+			GoogleChatChannel = {
 			name: '',
 		};
 		if (value && 'slack_configs' in value) {
@@ -75,6 +84,15 @@ function ChannelsEdit(): JSX.Element {
 			channel = msteamsConfig;
 			return {
 				type: ChannelType.MsTeams,
+				channel,
+			};
+		}
+
+		if (value && 'googlechat_configs' in value) {
+			const googleChatConfig = value.googlechat_configs[0];
+			channel = googleChatConfig;
+			return {
+				type: ChannelType.GoogleChat,
 				channel,
 			};
 		}
