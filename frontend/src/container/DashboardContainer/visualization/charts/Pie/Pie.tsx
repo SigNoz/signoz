@@ -11,7 +11,7 @@ import { LegendPosition } from 'lib/uPlotV2/components/types';
 import { PieChartProps, PieSlice } from '../types';
 import { calculateChartDimensions } from '../utils';
 
-import { usePieInteractions } from './hooks/usePieInteractions';
+import { usePieInteractions } from '../../hooks/usePieInteractions';
 import PieArc from './PieArc';
 import PieCenterLabel from './PieCenterLabel';
 import styles from './Pie.module.scss';
