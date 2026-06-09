@@ -302,8 +302,9 @@ func (r *ClickHouseReader) GetSeries(ctx context.Context, params *model.SeriesQu
 	seen := map[string]struct{}{}
 	result := []map[string]string{}
 
+	pql := parser.NewParser(parser.Options{})
 	for _, matchStr := range params.Matches {
-		matchers, err := parser.ParseMetricSelector(matchStr)
+		matchers, err := pql.ParseMetricSelector(matchStr)
 		if err != nil {
 			return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		}
@@ -359,8 +360,9 @@ func (r *ClickHouseReader) GetLabels(ctx context.Context, params *model.LabelQue
 
 	seen := map[string]struct{}{}
 	result := []string{}
+	pql := parser.NewParser(parser.Options{})
 	for _, matchStr := range params.Matches {
-		matchers, parseErr := parser.ParseMetricSelector(matchStr)
+		matchers, parseErr := pql.ParseMetricSelector(matchStr)
 		if parseErr != nil {
 			return nil, &model.ApiError{Typ: model.ErrorBadData, Err: parseErr}
 		}
@@ -399,8 +401,9 @@ func (r *ClickHouseReader) GetLabelValues(ctx context.Context, labelName string,
 
 	seen := map[string]struct{}{}
 	result := []string{}
+	pql := parser.NewParser(parser.Options{})
 	for _, matchStr := range params.Matches {
-		matchers, parseErr := parser.ParseMetricSelector(matchStr)
+		matchers, parseErr := pql.ParseMetricSelector(matchStr)
 		if parseErr != nil {
 			return nil, &model.ApiError{Typ: model.ErrorBadData, Err: parseErr}
 		}
