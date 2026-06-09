@@ -428,99 +428,109 @@ def test_nodes_condition_grouped_mode(
     assert rec["meta"].get("k8s.cluster.name") == "cluster-mixed"
 
 
-def test_nodes_pod_phase_counts_list_mode(
+@pytest.mark.parametrize(
+    "dataset,node_name,filter_expr,expected_counts",
+    [
+        # Node hosts 3 running + 2 failed pods: phase buckets aggregate correctly.
+        pytest.param(
+            "nodes_pod_phases.jsonl",
+            "pp-n1",
+            None,
+            {"pending": 0, "running": 3, "succeeded": 0, "failed": 2, "unknown": 0},
+            id="mixed_phases",
+        ),
+        # Node with no pods: all-zero buckets, node still appears. Filter on the
+        # node to ignore the carrier phantom (see test_nodes_condition_latest_wins).
+        pytest.param(
+            "nodes_no_pods.jsonl",
+            "no-pod-n",
+            "k8s.node.name = 'no-pod-n'",
+            {"pending": 0, "running": 0, "succeeded": 0, "failed": 0, "unknown": 0},
+            id="no_pods",
+        ),
+    ],
+)
+def test_nodes_pod_phase_counts(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
+    dataset: str,
+    node_name: str,
+    filter_expr,
+    expected_counts: dict,
 ) -> None:
-    """Node hosts 3 running + 2 failed pods: podCountsByPhase bucketed correctly.
-    Verifies the k8s.pod.phase join via k8s.node.name in labels."""
+    """podCountsByPhase per node aggregates the pods scheduled on it (k8s.pod.phase
+    joined via k8s.node.name). A node with no pods reports all-zero buckets and
+    still appears in the result."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
-            get_testdata_file_path("inframonitoring/nodes_pod_phases.jsonl"),
+            get_testdata_file_path(f"inframonitoring/{dataset}"),
             base_time=now - timedelta(minutes=4),
         )
     )
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    body = {
+        "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+        "end": int(now.timestamp() * 1000),
+        "limit": 50,
+    }
+    if filter_expr is not None:
+        body["filter"] = {"expression": filter_expr}
     response = requests.post(
         signoz.self.host_configs["8080"].get(ENDPOINT),
         headers={"authorization": f"Bearer {token}"},
-        json={
-            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "limit": 50,
-        },
+        json=body,
         timeout=5,
     )
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()["data"]
     assert data["total"] == 1
     rec = data["records"][0]
-    assert rec["nodeName"] == "pp-n1"
-    assert rec["podCountsByPhase"] == {
-        "pending": 0,
-        "running": 3,
-        "succeeded": 0,
-        "failed": 2,
-        "unknown": 0,
-    }
+    assert rec["nodeName"] == node_name
+    assert rec["podCountsByPhase"] == expected_counts
 
 
-def test_nodes_pod_phase_counts_no_pods_on_node(
+@pytest.mark.parametrize(
+    "group_key,expected",
+    [
+        # groupBy=[k8s.node.name]: one record per node, nodeName populated and
+        # condition derived per node (isNodeNameInGroupBy branch, nodes.go:69-76).
+        pytest.param(
+            "k8s.node.name",
+            {
+                "gb-a-us": {"condition": "ready", "readiness": {"ready": 1, "notReady": 0}, "running": 1},
+                "gb-a-eu": {"condition": "ready", "readiness": {"ready": 1, "notReady": 0}, "running": 1},
+                "gb-b-us": {"condition": "ready", "readiness": {"ready": 1, "notReady": 0}, "running": 1},
+                "gb-b-eu": {"condition": "ready", "readiness": {"ready": 1, "notReady": 0}, "running": 1},
+            },
+            id="node_name",
+        ),
+        # groupBy=[k8s.cluster.name]: aggregated across each cluster's 2 nodes,
+        # nodeName empty and condition stays no_data (custom-groupBy branch).
+        pytest.param(
+            "k8s.cluster.name",
+            {
+                "gb-cluster-a": {"condition": "no_data", "readiness": {"ready": 2, "notReady": 0}, "running": 2},
+                "gb-cluster-b": {"condition": "no_data", "readiness": {"ready": 2, "notReady": 0}, "running": 2},
+            },
+            id="cluster",
+        ),
+    ],
+)
+def test_nodes_groupby(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
+    group_key: str,
+    expected: dict,
 ) -> None:
-    """Node with no pods: podCountsByPhase all zeros, node still appears.
-    Filter on the specific node to ignore the carrier phantom (see
-    test_nodes_condition_latest_wins for the carrier explanation).
-    """
-    now = datetime.now(tz=UTC).replace(microsecond=0)
-    insert_metrics(
-        Metrics.load_from_file(
-            get_testdata_file_path("inframonitoring/nodes_no_pods.jsonl"),
-            base_time=now - timedelta(minutes=4),
-        )
-    )
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = requests.post(
-        signoz.self.host_configs["8080"].get(ENDPOINT),
-        headers={"authorization": f"Bearer {token}"},
-        json={
-            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "limit": 50,
-            "filter": {"expression": "k8s.node.name = 'no-pod-n'"},
-        },
-        timeout=5,
-    )
-    assert response.status_code == HTTPStatus.OK, response.text
-    data = response.json()["data"]
-    assert data["total"] == 1
-    rec = data["records"][0]
-    assert rec["nodeName"] == "no-pod-n"
-    assert rec["podCountsByPhase"] == {
-        "pending": 0,
-        "running": 0,
-        "succeeded": 0,
-        "failed": 0,
-        "unknown": 0,
-    }
-
-
-def test_nodes_groupby_cluster(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token,
-    insert_metrics,
-) -> None:
-    """Explicit groupBy=[k8s.cluster.name]: 2 records (one per cluster),
-    aggregated node + pod counts, meta surfaces cluster.name."""
+    """groupBy returns one record per distinct group with aggregated readiness
+    and pod-phase counts. nodeName is populated and condition is derived only
+    when grouping by k8s.node.name (nodes.go:69-76 list-vs-grouped branch)."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
@@ -539,7 +549,7 @@ def test_nodes_groupby_cluster(
             "limit": 50,
             "groupBy": [
                 {
-                    "name": "k8s.cluster.name",
+                    "name": group_key,
                     "fieldDataType": "string",
                     "fieldContext": "resource",
                 }
@@ -549,19 +559,20 @@ def test_nodes_groupby_cluster(
     )
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()["data"]
-    assert data["total"] == 2
+    assert data["total"] == len(expected)
 
-    clusters_seen = set()
-    for rec in data["records"]:
-        assert rec["nodeName"] == ""
-        assert rec["condition"] == "no_data"
-        # Each cluster has 2 nodes -> nodeCountsByReadiness {ready:2, notReady:0}
-        assert rec["nodeCountsByReadiness"] == {"ready": 2, "notReady": 0}
-        # Each cluster has 2 pods (1 per node).
-        assert rec["podCountsByPhase"]["running"] == 2
-        assert "k8s.cluster.name" in rec["meta"], rec["meta"]
-        clusters_seen.add(rec["meta"]["k8s.cluster.name"])
-    assert clusters_seen == {"gb-cluster-a", "gb-cluster-b"}
+    group_of = lambda r: r["nodeName"] if group_key == "k8s.node.name" else r["meta"][group_key]  # noqa: E731  # pylint: disable=unnecessary-lambda-assignment
+    by_group = {group_of(r): r for r in data["records"]}
+    assert set(by_group.keys()) == set(expected.keys())
+
+    for group, exp in expected.items():
+        rec = by_group[group]
+        # nodeName populated per node when grouping by k8s.node.name, empty otherwise.
+        assert rec["nodeName"] == (group if group_key == "k8s.node.name" else "")
+        assert rec["condition"] == exp["condition"]
+        assert rec["nodeCountsByReadiness"] == exp["readiness"]
+        assert rec["podCountsByPhase"]["running"] == exp["running"]
+        assert group_key in rec["meta"], rec["meta"]
 
 
 def test_nodes_pagination(
