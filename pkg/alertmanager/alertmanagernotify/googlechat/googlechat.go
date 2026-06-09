@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -24,6 +25,9 @@ import (
 
 const (
 	Integration = "googlechat"
+	// maxMessageBytes is the Google Chat API limit for message text
+	// https://developers.google.com/chat/api/guides/message-formats/basic#maximum_size
+	maxMessageBytes = 32000
 )
 
 // Notifier implements a Notifier for Google Chat notifications.
@@ -106,6 +110,10 @@ func (n *Notifier) Notify(ctx context.Context, alerts ...*types.Alert) (bool, er
 		finalText = result.Title + "\n" + result.Body
 	}
 
+	// Sanitize UTF-8 and enforce size limit
+	finalText = sanitizeUTF8(finalText)
+	finalText = truncateToByteLimit(finalText, maxMessageBytes)
+
 	msg := &Message{
 		Text: finalText,
 	}
@@ -181,4 +189,56 @@ type contentResult struct {
 	Title         string
 	Body          string
 	IsDefaultBody bool
+}
+
+// sanitizeUTF8 removes invalid UTF-8 characters from a string and replaces them
+func sanitizeUTF8(s string) string {
+	if utf8.ValidString(s) {
+		return s
+	}
+
+	// String contains invalid UTF-8, rebuild it with valid characters only
+	var buf strings.Builder
+	buf.Grow(len(s))
+
+	for _, r := range s {
+		if r == utf8.RuneError {
+			// Invalid UTF-8 byte sequence, replace with replacement character
+			buf.WriteRune('\uFFFD')
+		} else {
+			buf.WriteRune(r)
+		}
+	}
+
+	return buf.String()
+}
+
+// truncateToByteLimit truncates a string to fit within the specified byte limit
+func truncateToByteLimit(s string, maxBytes int) string {
+	if len(s) <= maxBytes {
+		return s
+	}
+
+	// Reserve space for ellipsis
+	const ellipsis = "..."
+	const ellipsisBytes = len(ellipsis)
+	targetBytes := maxBytes - ellipsisBytes
+
+	if targetBytes <= 0 {
+		// Edge case: limit is too small even for ellipsis
+		return ellipsis[:maxBytes]
+	}
+
+	// Truncate at UTF-8 character boundary
+	truncated := s
+	for len(truncated) > targetBytes {
+		// Remove one rune at a time from the end
+		_, size := utf8.DecodeLastRuneInString(truncated)
+		if size == 0 {
+			break
+		}
+		truncated = truncated[:len(truncated)-size]
+	}
+
+    return truncated + ellipsis
 }
