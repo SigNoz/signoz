@@ -9,7 +9,35 @@ jest.mock('utils/basePath', () => ({
 	getBaseUrl: (): string => 'https://test.signoz.io',
 }));
 
+function mockMailto(): {
+	mockClick: jest.Mock;
+	appendSpy: jest.SpyInstance;
+	removeSpy: jest.SpyInstance;
+} {
+	const mockClick = jest.fn();
+	const realCreateElement = document.createElement.bind(document);
+
+	// Create a real anchor so JSDOM's appendChild/removeChild accept it.
+	// Override its click() so no navigation occurs.
+	jest.spyOn(document, 'createElement').mockImplementation((tag: string) => {
+		if (tag === 'a') {
+			const anchor = realCreateElement('a') as HTMLAnchorElement;
+			anchor.click = mockClick;
+			return anchor;
+		}
+		return realCreateElement(tag);
+	});
+
+	const appendSpy = jest.spyOn(document.body, 'appendChild');
+	const removeSpy = jest.spyOn(document.body, 'removeChild');
+	return { mockClick, appendSpy, removeSpy };
+}
+
 describe('CancelSubscriptionBanner', () => {
+	afterEach(() => {
+		jest.restoreAllMocks();
+	});
+
 	it('renders banner with title and subtitle', () => {
 		render(<CancelSubscriptionBanner />);
 		expect(
@@ -35,12 +63,10 @@ describe('CancelSubscriptionBanner', () => {
 			screen.getByText(/Cancelling your subscription would stop your data/i),
 		).toBeInTheDocument();
 		expect(screen.getByText(/Type/i)).toBeInTheDocument();
-		expect(
-			screen.getByPlaceholderText(/Enter the word cancel/i),
-		).toBeInTheDocument();
+		expect(screen.getByTestId('cancel-confirm-input')).toBeInTheDocument();
 		expect(screen.getByRole('button', { name: /go back/i })).toBeInTheDocument();
 		expect(
-			screen.getByRole('button', { name: /cancel subscription/i }),
+			screen.getByTestId('cancel-subscription-confirm-btn'),
 		).toBeInTheDocument();
 	});
 
@@ -52,12 +78,10 @@ describe('CancelSubscriptionBanner', () => {
 			screen.getByRole('button', { name: /cancel subscription/i }),
 		);
 
-		const confirmButton = screen.getByRole('button', {
-			name: /cancel subscription/i,
-		});
+		const confirmButton = screen.getByTestId('cancel-subscription-confirm-btn');
 		expect(confirmButton).toBeDisabled();
 
-		const input = screen.getByPlaceholderText(/Enter the word cancel/i);
+		const input = screen.getByTestId('cancel-confirm-input');
 		await user.type(input, 'canc');
 		expect(confirmButton).toBeDisabled();
 
@@ -73,7 +97,7 @@ describe('CancelSubscriptionBanner', () => {
 			screen.getByRole('button', { name: /cancel subscription/i }),
 		);
 
-		const input = screen.getByPlaceholderText(/Enter the word cancel/i);
+		const input = screen.getByTestId('cancel-confirm-input');
 		await user.type(input, 'cancel');
 
 		await user.click(screen.getByRole('button', { name: /go back/i }));
@@ -84,19 +108,11 @@ describe('CancelSubscriptionBanner', () => {
 		await user.click(
 			screen.getByRole('button', { name: /cancel subscription/i }),
 		);
-		expect(screen.getByPlaceholderText(/Enter the word cancel/i)).toHaveValue('');
+		expect(screen.getByTestId('cancel-confirm-input')).toHaveValue('');
 	});
 
-	it('sends mailto to cloud-support with correct subject after typing "cancel"', async () => {
-		const realCreateElement = document.createElement.bind(document);
-		const mockClick = jest.fn();
-		const mockAnchor = { href: '', click: mockClick };
-		jest.spyOn(document, 'createElement').mockImplementation((tag: string) => {
-			if (tag === 'a') {
-				return mockAnchor as unknown as HTMLAnchorElement;
-			}
-			return realCreateElement(tag);
-		});
+	it('fires mailto via DOM-attached anchor and shows fallback view after confirming', async () => {
+		const { mockClick, appendSpy, removeSpy } = mockMailto();
 
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		render(<CancelSubscriptionBanner />);
@@ -104,18 +120,73 @@ describe('CancelSubscriptionBanner', () => {
 		await user.click(
 			screen.getByRole('button', { name: /cancel subscription/i }),
 		);
+		await user.type(screen.getByTestId('cancel-confirm-input'), 'cancel');
+		await user.click(screen.getByTestId('cancel-subscription-confirm-btn'));
 
-		const input = screen.getByPlaceholderText(/Enter the word cancel/i);
-		await user.type(input, 'cancel');
+		expect(appendSpy).toHaveBeenCalled();
+		expect(mockClick).toHaveBeenCalledTimes(1);
+		expect(removeSpy).toHaveBeenCalled();
+
+		expect(
+			screen.getByText(/An email draft has been opened/i),
+		).toBeInTheDocument();
+		expect(screen.getByText('cloud-support@signoz.io')).toBeInTheDocument();
+		expect(screen.getByTestId('copy-email-template-btn')).toBeInTheDocument();
+		expect(screen.getByTestId('retry-mailto-btn')).toBeInTheDocument();
+	});
+
+	it('copies email template to clipboard when Copy button is clicked', async () => {
+		mockMailto();
+
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		render(<CancelSubscriptionBanner />);
 
 		await user.click(
 			screen.getByRole('button', { name: /cancel subscription/i }),
 		);
+		await user.type(screen.getByTestId('cancel-confirm-input'), 'cancel');
+		await user.click(screen.getByTestId('cancel-subscription-confirm-btn'));
 
-		expect(mockAnchor.href).toContain('mailto:cloud-support@signoz.io');
-		expect(mockAnchor.href).toContain('Cancel%20My%20SigNoz%20Subscription');
-		expect(mockClick).toHaveBeenCalledTimes(1);
+		await user.click(screen.getByTestId('copy-email-template-btn'));
 
-		jest.restoreAllMocks();
+		await waitFor(() =>
+			expect(screen.getByTestId('copy-email-template-btn')).toHaveTextContent(
+				'Copied!',
+			),
+		);
+	});
+
+	it('retries mailto when Open email client is clicked in fallback view', async () => {
+		const { mockClick } = mockMailto();
+
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		render(<CancelSubscriptionBanner />);
+
+		await user.click(
+			screen.getByRole('button', { name: /cancel subscription/i }),
+		);
+		await user.type(screen.getByTestId('cancel-confirm-input'), 'cancel');
+		await user.click(screen.getByTestId('cancel-subscription-confirm-btn'));
+
+		await user.click(screen.getByTestId('retry-mailto-btn'));
+		expect(mockClick).toHaveBeenCalledTimes(2);
+	});
+
+	it('closes fallback view when Close is clicked and resets state', async () => {
+		mockMailto();
+
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		render(<CancelSubscriptionBanner />);
+
+		await user.click(
+			screen.getByRole('button', { name: /cancel subscription/i }),
+		);
+		await user.type(screen.getByTestId('cancel-confirm-input'), 'cancel');
+		await user.click(screen.getByTestId('cancel-subscription-confirm-btn'));
+
+		await user.click(screen.getByRole('button', { name: /close/i }));
+		await waitFor(() =>
+			expect(screen.queryByRole('dialog')).not.toBeInTheDocument(),
+		);
 	});
 });
