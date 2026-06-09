@@ -7,11 +7,12 @@ import {
 	within,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { TooltipProvider } from '@signozhq/ui/tooltip';
 import { LegendItem } from 'lib/uPlotV2/config/types';
 import useLegendsSync from 'lib/uPlotV2/hooks/useLegendsSync';
 
 import { useLegendActions } from '../../hooks/useLegendActions';
-import Legend from '../Legend/Legend';
+import UPlotLegend from '../Legend/UPlotLegend';
 import { LegendPosition } from '../types';
 
 const mockWriteText = jest.fn().mockResolvedValue(undefined);
@@ -47,7 +48,7 @@ const mockUseLegendActions = useLegendActions as jest.MockedFunction<
 	typeof useLegendActions
 >;
 
-describe('Legend', () => {
+describe('UPlotLegend', () => {
 	beforeAll(() => {
 		// JSDOM does not define navigator.clipboard; add it so we can spy on writeText
 		Object.defineProperty(navigator, 'clipboard', {
@@ -115,11 +116,13 @@ describe('Legend', () => {
 
 	const renderLegend = (position?: LegendPosition): RenderResult =>
 		render(
-			<Legend
-				position={position}
-				// config is not used directly in the component, it's consumed by the mocked hook
-				config={{} as any}
-			/>,
+			<TooltipProvider>
+				<UPlotLegend
+					position={position}
+					// config is consumed by the mocked useLegendsSync hook, not directly
+					config={{} as any}
+				/>
+			</TooltipProvider>,
 		);
 
 	describe('layout and position', () => {
