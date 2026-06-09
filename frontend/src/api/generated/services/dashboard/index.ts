@@ -1371,7 +1371,7 @@ export const unpinDashboardV2 = (
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<string>({
-		url: `/api/v2/dashboards/${id}/pins/me`,
+		url: `/api/v2/users/me/dashboards/${id}/pins`,
 		method: 'DELETE',
 		signal,
 	});
@@ -1450,7 +1450,7 @@ export const pinDashboardV2 = (
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<string>({
-		url: `/api/v2/dashboards/${id}/pins/me`,
+		url: `/api/v2/users/me/dashboards/${id}/pins`,
 		method: 'PUT',
 		signal,
 	});

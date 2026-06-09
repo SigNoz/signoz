@@ -9839,12 +9839,6 @@ export type UnlockDashboardV2PathParameters = {
 export type LockDashboardV2PathParameters = {
 	id: string;
 };
-export type UnpinDashboardV2PathParameters = {
-	id: string;
-};
-export type PinDashboardV2PathParameters = {
-	id: string;
-};
 export type GetFeatures200 = {
 	/**
 	 * @type array
@@ -10638,6 +10632,12 @@ export type GetMyUser200 = {
 	status: string;
 };
 
+export type UnpinDashboardV2PathParameters = {
+	id: string;
+};
+export type PinDashboardV2PathParameters = {
+	id: string;
+};
 export type GetHosts200 = {
 	data: ZeustypesGettableHostDTO;
 	/**

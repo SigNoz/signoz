@@ -159,7 +159,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 
 	// ViewAccess: pinning only mutates the calling user's pin list, not the
 	// dashboard itself — anyone who can view a dashboard can bookmark it.
-	if err := router.Handle("/api/v2/dashboards/{id}/pins/me", handler.New(provider.authzMiddleware.ViewAccess(provider.dashboardHandler.PinV2), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/users/me/dashboards/{id}/pins", handler.New(provider.authzMiddleware.ViewAccess(provider.dashboardHandler.PinV2), handler.OpenAPIDef{
 		ID:                  "PinDashboardV2",
 		Tags:                []string{"dashboard"},
 		Summary:             "Pin a dashboard for the current user (v2)",
@@ -176,7 +176,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/dashboards/{id}/pins/me", handler.New(provider.authzMiddleware.ViewAccess(provider.dashboardHandler.UnpinV2), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/users/me/dashboards/{id}/pins", handler.New(provider.authzMiddleware.ViewAccess(provider.dashboardHandler.UnpinV2), handler.OpenAPIDef{
 		ID:                  "UnpinDashboardV2",
 		Tags:                []string{"dashboard"},
 		Summary:             "Unpin a dashboard for the current user (v2)",
