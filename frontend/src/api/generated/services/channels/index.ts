@@ -19,7 +19,7 @@ import type {
 
 import type {
 	AlertmanagertypesPostableChannelDTO,
-	ConfigReceiverDTO,
+	AlertmanagertypesReceiverDTO,
 	CreateChannel201,
 	DeleteChannelByIDPathParameters,
 	GetChannelByID200,
@@ -385,14 +385,14 @@ export const invalidateGetChannelByID = async (
  */
 export const updateChannelByID = (
 	{ id }: UpdateChannelByIDPathParameters,
-	configReceiverDTO?: BodyType<ConfigReceiverDTO>,
+	alertmanagertypesReceiverDTO?: BodyType<AlertmanagertypesReceiverDTO>,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<void>({
 		url: `/api/v1/channels/${id}`,
 		method: 'PUT',
 		headers: { 'Content-Type': 'application/json' },
-		data: configReceiverDTO,
+		data: alertmanagertypesReceiverDTO,
 		signal,
 	});
 };
@@ -406,7 +406,7 @@ export const getUpdateChannelByIDMutationOptions = <
 		TError,
 		{
 			pathParams: UpdateChannelByIDPathParameters;
-			data?: BodyType<ConfigReceiverDTO>;
+			data?: BodyType<AlertmanagertypesReceiverDTO>;
 		},
 		TContext
 	>;
@@ -415,7 +415,7 @@ export const getUpdateChannelByIDMutationOptions = <
 	TError,
 	{
 		pathParams: UpdateChannelByIDPathParameters;
-		data?: BodyType<ConfigReceiverDTO>;
+		data?: BodyType<AlertmanagertypesReceiverDTO>;
 	},
 	TContext
 > => {
@@ -432,7 +432,7 @@ export const getUpdateChannelByIDMutationOptions = <
 		Awaited<ReturnType<typeof updateChannelByID>>,
 		{
 			pathParams: UpdateChannelByIDPathParameters;
-			data?: BodyType<ConfigReceiverDTO>;
+			data?: BodyType<AlertmanagertypesReceiverDTO>;
 		}
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
@@ -447,7 +447,7 @@ export type UpdateChannelByIDMutationResult = NonNullable<
 	Awaited<ReturnType<typeof updateChannelByID>>
 >;
 export type UpdateChannelByIDMutationBody =
-	| BodyType<ConfigReceiverDTO>
+	| BodyType<AlertmanagertypesReceiverDTO>
 	| undefined;
 export type UpdateChannelByIDMutationError = ErrorType<RenderErrorResponseDTO>;
 
@@ -463,7 +463,7 @@ export const useUpdateChannelByID = <
 		TError,
 		{
 			pathParams: UpdateChannelByIDPathParameters;
-			data?: BodyType<ConfigReceiverDTO>;
+			data?: BodyType<AlertmanagertypesReceiverDTO>;
 		},
 		TContext
 	>;
@@ -472,7 +472,7 @@ export const useUpdateChannelByID = <
 	TError,
 	{
 		pathParams: UpdateChannelByIDPathParameters;
-		data?: BodyType<ConfigReceiverDTO>;
+		data?: BodyType<AlertmanagertypesReceiverDTO>;
 	},
 	TContext
 > => {
@@ -483,14 +483,14 @@ export const useUpdateChannelByID = <
  * @summary Test notification channel
  */
 export const testChannel = (
-	configReceiverDTO?: BodyType<ConfigReceiverDTO>,
+	alertmanagertypesReceiverDTO?: BodyType<AlertmanagertypesReceiverDTO>,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<void>({
 		url: `/api/v1/channels/test`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
-		data: configReceiverDTO,
+		data: alertmanagertypesReceiverDTO,
 		signal,
 	});
 };
@@ -502,13 +502,13 @@ export const getTestChannelMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof testChannel>>,
 		TError,
-		{ data?: BodyType<ConfigReceiverDTO> },
+		{ data?: BodyType<AlertmanagertypesReceiverDTO> },
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof testChannel>>,
 	TError,
-	{ data?: BodyType<ConfigReceiverDTO> },
+	{ data?: BodyType<AlertmanagertypesReceiverDTO> },
 	TContext
 > => {
 	const mutationKey = ['testChannel'];
@@ -522,7 +522,7 @@ export const getTestChannelMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof testChannel>>,
-		{ data?: BodyType<ConfigReceiverDTO> }
+		{ data?: BodyType<AlertmanagertypesReceiverDTO> }
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -535,7 +535,9 @@ export const getTestChannelMutationOptions = <
 export type TestChannelMutationResult = NonNullable<
 	Awaited<ReturnType<typeof testChannel>>
 >;
-export type TestChannelMutationBody = BodyType<ConfigReceiverDTO> | undefined;
+export type TestChannelMutationBody =
+	| BodyType<AlertmanagertypesReceiverDTO>
+	| undefined;
 export type TestChannelMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -548,13 +550,13 @@ export const useTestChannel = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof testChannel>>,
 		TError,
-		{ data?: BodyType<ConfigReceiverDTO> },
+		{ data?: BodyType<AlertmanagertypesReceiverDTO> },
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof testChannel>>,
 	TError,
-	{ data?: BodyType<ConfigReceiverDTO> },
+	{ data?: BodyType<AlertmanagertypesReceiverDTO> },
 	TContext
 > => {
 	return useMutation(getTestChannelMutationOptions(options));
@@ -565,14 +567,14 @@ export const useTestChannel = <
  * @summary Test notification channel (deprecated)
  */
 export const testChannelDeprecated = (
-	configReceiverDTO?: BodyType<ConfigReceiverDTO>,
+	alertmanagertypesReceiverDTO?: BodyType<AlertmanagertypesReceiverDTO>,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<void>({
 		url: `/api/v1/testChannel`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
-		data: configReceiverDTO,
+		data: alertmanagertypesReceiverDTO,
 		signal,
 	});
 };
@@ -584,13 +586,13 @@ export const getTestChannelDeprecatedMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof testChannelDeprecated>>,
 		TError,
-		{ data?: BodyType<ConfigReceiverDTO> },
+		{ data?: BodyType<AlertmanagertypesReceiverDTO> },
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof testChannelDeprecated>>,
 	TError,
-	{ data?: BodyType<ConfigReceiverDTO> },
+	{ data?: BodyType<AlertmanagertypesReceiverDTO> },
 	TContext
 > => {
 	const mutationKey = ['testChannelDeprecated'];
@@ -604,7 +606,7 @@ export const getTestChannelDeprecatedMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof testChannelDeprecated>>,
-		{ data?: BodyType<ConfigReceiverDTO> }
+		{ data?: BodyType<AlertmanagertypesReceiverDTO> }
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -618,7 +620,7 @@ export type TestChannelDeprecatedMutationResult = NonNullable<
 	Awaited<ReturnType<typeof testChannelDeprecated>>
 >;
 export type TestChannelDeprecatedMutationBody =
-	| BodyType<ConfigReceiverDTO>
+	| BodyType<AlertmanagertypesReceiverDTO>
 	| undefined;
 export type TestChannelDeprecatedMutationError =
 	ErrorType<RenderErrorResponseDTO>;
@@ -634,13 +636,13 @@ export const useTestChannelDeprecated = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof testChannelDeprecated>>,
 		TError,
-		{ data?: BodyType<ConfigReceiverDTO> },
+		{ data?: BodyType<AlertmanagertypesReceiverDTO> },
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof testChannelDeprecated>>,
 	TError,
-	{ data?: BodyType<ConfigReceiverDTO> },
+	{ data?: BodyType<AlertmanagertypesReceiverDTO> },
 	TContext
 > => {
 	return useMutation(getTestChannelDeprecatedMutationOptions(options));

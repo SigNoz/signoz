@@ -3,12 +3,12 @@ import { isEmpty } from 'lodash-es';
 
 import styles from '../DashboardDescription.module.scss';
 
-interface Props {
+interface DashboardMetaProps {
 	tags: string[];
 	description: string;
 }
 
-function DashboardMeta({ tags, description }: Props): JSX.Element {
+function DashboardMeta({ tags, description }: DashboardMetaProps): JSX.Element {
 	return (
 		<>
 			{tags.length > 0 && (

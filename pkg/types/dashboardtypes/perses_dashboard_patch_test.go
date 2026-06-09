@@ -44,7 +44,7 @@ const basePostableJSON = `{
 					"plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
 					"queries": [
 						{
-							"kind": "TimeSeriesQuery",
+							"kind": "time_series",
 							"spec": {"plugin": {"kind": "signoz/BuilderQuery", "spec": {
 								"name": "A",
 								"signal": "metrics",
@@ -67,7 +67,7 @@ const basePostableJSON = `{
 					"plugin": {"kind": "signoz/NumberPanel", "spec": {}},
 					"queries": [
 						{
-							"kind": "TimeSeriesQuery",
+							"kind": "time_series",
 							"spec": {"plugin": {"kind": "signoz/BuilderQuery", "spec": {
 								"name": "X",
 								"signal": "metrics",
@@ -184,7 +184,7 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 				"spec": {
 					"plugin": {"kind": "signoz/TablePanel", "spec": {}},
 					"queries": [{
-						"kind": "TimeSeriesQuery",
+						"kind": "time_series",
 						"spec": {"plugin": {"kind": "signoz/BuilderQuery", "spec": {
 							"name": "A",
 							"signal": "logs",
@@ -218,7 +218,7 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 				"spec": {
 					"plugin": {"kind": "signoz/BarChartPanel", "spec": {}},
 					"queries": [{
-						"kind": "TimeSeriesQuery",
+						"kind": "time_series",
 						"spec": {"plugin": {"kind": "signoz/BuilderQuery", "spec": {
 							"name": "A",
 							"signal": "metrics",
@@ -275,7 +275,7 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 			"op": "replace",
 			"path": "/spec/panels/p1/spec/queries/0",
 			"value": {
-				"kind": "TimeSeriesQuery",
+				"kind": "time_series",
 				"spec": {"plugin": {"kind": "signoz/BuilderQuery", "spec": {
 					"name": "B",
 					"signal": "metrics",
@@ -344,7 +344,7 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 					"spec": {
 						"plugin": {"kind": "signoz/TablePanel", "spec": {}},
 						"queries": [{
-							"kind": "TimeSeriesQuery",
+							"kind": "time_series",
 							"spec": {"plugin": {"kind": "signoz/BuilderQuery", "spec": {
 								"name": "A",
 								"signal": "logs",
@@ -508,7 +508,7 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 				"kind": "Panel",
 				"spec": {
 					"plugin": {"kind": "signoz/ListPanel", "spec": {}},
-					"queries": [{"kind": "TimeSeriesQuery", "spec": {"plugin": {"kind": "signoz/PromQLQuery", "spec": {"name": "A", "query": "up"}}}}]
+					"queries": [{"kind": "time_series", "spec": {"plugin": {"kind": "signoz/PromQLQuery", "spec": {"name": "A", "query": "up"}}}}]
 				}
 			}
 		}]`).Apply(base)
@@ -534,11 +534,11 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 				"spec": {
 					"plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
 					"queries": [
-						{"kind": "TimeSeriesQuery", "spec": {"plugin": {"kind": "signoz/BuilderQuery", "spec": {
+						{"kind": "time_series", "spec": {"plugin": {"kind": "signoz/BuilderQuery", "spec": {
 							"name": "A", "signal": "metrics",
 							"aggregations": [{"metricName": "signoz_calls_total", "temporality": "cumulative", "timeAggregation": "rate", "spaceAggregation": "sum"}]
 						}}}},
-						{"kind": "TimeSeriesQuery", "spec": {"plugin": {"kind": "signoz/BuilderQuery", "spec": {
+						{"kind": "time_series", "spec": {"plugin": {"kind": "signoz/BuilderQuery", "spec": {
 							"name": "B", "signal": "metrics",
 							"aggregations": [{"metricName": "signoz_db_calls_total", "temporality": "cumulative", "timeAggregation": "rate", "spaceAggregation": "sum"}]
 						}}}}

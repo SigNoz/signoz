@@ -6,9 +6,21 @@ import { EllipsisVertical } from '@signozhq/icons';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import cx from 'classnames';
 
+import type { DashboardSection } from '../../utils';
+import type { DeletePanelArgs } from './hooks/useDeletePanel';
+import type { MovePanelArgs } from './hooks/useMovePanelToSection';
+import PanelActionsMenu from './PanelActionsMenu/PanelActionsMenu';
 import styles from './Panel.module.scss';
 
-interface Props {
+/** Panel action context — present together only in editable sectioned mode. */
+export interface PanelActionsConfig {
+	currentLayoutIndex: number;
+	sections: DashboardSection[];
+	onMovePanel: (args: MovePanelArgs) => void;
+	onDeletePanel: (args: DeletePanelArgs) => void;
+}
+
+interface PanelProps {
 	panel: DashboardtypesPanelDTO | undefined;
 	panelId: string;
 	/**
@@ -17,9 +29,16 @@ interface Props {
 	 * data. Currently unused on purpose.
 	 */
 	isVisible?: boolean;
+	/** Move/delete actions — present only in editable sectioned mode. */
+	panelActions?: PanelActionsConfig;
 }
 
-function Panel({ panel, panelId, isVisible }: Props): JSX.Element {
+function Panel({
+	panel,
+	panelId,
+	isVisible,
+	panelActions,
+}: PanelProps): JSX.Element {
 	const name = panel?.spec?.display?.name || `Panel ${panelId.slice(0, 6)}`;
 	const description = panel?.spec?.display?.description;
 	const kind = panel?.spec?.plugin?.kind?.replace(/^signoz\//, '') ?? 'unknown';
@@ -48,7 +67,17 @@ function Panel({ panel, panelId, isVisible }: Props): JSX.Element {
 					</Typography.Text>
 					<Badge className={styles.badge}>{kind}</Badge>
 				</div>
-				<EllipsisVertical size={14} />
+				{panelActions ? (
+					<PanelActionsMenu
+						panelId={panelId}
+						currentLayoutIndex={panelActions.currentLayoutIndex}
+						sections={panelActions.sections}
+						onMovePanel={panelActions.onMovePanel}
+						onDeletePanel={panelActions.onDeletePanel}
+					/>
+				) : (
+					<EllipsisVertical size={14} />
+				)}
 			</div>
 
 			<div className={styles.body}>
