@@ -1,5 +1,6 @@
 import { Input } from '@signozhq/ui/input';
 import React, { useEffect, useState } from 'react';
+import cx from 'classnames';
 
 import styles from './TimeInput.module.scss';
 
@@ -147,7 +148,7 @@ function TimeInput({
 	return (
 		<div
 			data-testid="time-input"
-			className={`${styles.timeInputContainer} ${className}`.trim()}
+			className={cx(styles.timeInputContainer, className)}
 		>
 			<Input
 				data-field="hours"

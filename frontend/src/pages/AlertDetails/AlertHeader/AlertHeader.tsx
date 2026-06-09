@@ -69,7 +69,7 @@ function AlertHeader({ alertDetails }: AlertHeaderProps): JSX.Element {
 	return (
 		<div className={styles.alertInfo}>
 			{isV2Alert ? <CreateAlertV2Header /> : CreateAlertV1Header}
-			<div className={styles.actionButtons}>
+			<div>
 				<AlertActionButtons
 					alertDetails={alertDetails}
 					ruleId={alertDetails?.id || ''}
