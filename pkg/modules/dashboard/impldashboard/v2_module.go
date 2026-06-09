@@ -204,3 +204,7 @@ func (module *module) PinV2(ctx context.Context, orgID valuer.UUID, userID value
 func (module *module) UnpinV2(ctx context.Context, userID valuer.UUID, id valuer.UUID) error {
 	return module.store.UnpinForUser(ctx, userID, id)
 }
+
+func (module *module) DeletePreferencesForUser(ctx context.Context, userID valuer.UUID) error {
+	return module.store.DeletePreferencesForUser(ctx, userID)
+}

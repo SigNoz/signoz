@@ -46,4 +46,6 @@ type Store interface {
 	UnpinForUser(ctx context.Context, userID valuer.UUID, dashboardID valuer.UUID) error
 
 	DeletePreferencesForDashboard(ctx context.Context, dashboardID valuer.UUID) error
+
+	DeletePreferencesForUser(ctx context.Context, userID valuer.UUID) error
 }

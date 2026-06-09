@@ -376,3 +376,15 @@ func (store *store) DeletePreferencesForDashboard(ctx context.Context, dashboard
 	}
 	return nil
 }
+
+func (store *store) DeletePreferencesForUser(ctx context.Context, userID valuer.UUID) error {
+	_, err := store.sqlstore.BunDBCtx(ctx).
+		NewDelete().
+		Model((*dashboardtypes.UserDashboardPreference)(nil)).
+		Where("user_id = ?", userID).
+		Exec(ctx)
+	if err != nil {
+		return errors.WrapInternalf(err, errors.CodeInternal, "couldn't delete dashboard preferences")
+	}
+	return nil
+}

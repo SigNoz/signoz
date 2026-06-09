@@ -74,6 +74,8 @@ type Module interface {
 	UnpinV2(ctx context.Context, userID valuer.UUID, id valuer.UUID) error
 
 	DeleteV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error
+
+	DeletePreferencesForUser(ctx context.Context, userID valuer.UUID) error
 }
 
 type Handler interface {
