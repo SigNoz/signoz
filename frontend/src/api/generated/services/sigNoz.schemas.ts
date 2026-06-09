@@ -2651,6 +2651,7 @@ export enum CloudintegrationtypesServiceIDDTO {
 	sqs = 'sqs',
 	storageaccountsblob = 'storageaccountsblob',
 	cdnprofile = 'cdnprofile',
+	virtualmachine = 'virtualmachine',
 	appservice = 'appservice',
 	containerapp = 'containerapp',
 	aks = 'aks',
