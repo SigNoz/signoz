@@ -40,14 +40,13 @@ func (migration *addUserDashboardPreference) Up(ctx context.Context, db *bun.DB)
 		Columns: []*sqlschema.Column{
 			{Name: "user_id", DataType: sqlschema.DataTypeText, Nullable: false},
 			{Name: "dashboard_id", DataType: sqlschema.DataTypeText, Nullable: false},
-			{Name: "org_id", DataType: sqlschema.DataTypeText, Nullable: false},
 			{Name: "is_pinned", DataType: sqlschema.DataTypeBoolean, Nullable: false, Default: "false"},
 		},
 		PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []sqlschema.ColumnName{"user_id", "dashboard_id"}},
 		ForeignKeyConstraints: []*sqlschema.ForeignKeyConstraint{
 			{
-				ReferencingColumnName: sqlschema.ColumnName("org_id"),
-				ReferencedTableName:   sqlschema.TableName("organizations"),
+				ReferencingColumnName: sqlschema.ColumnName("user_id"),
+				ReferencedTableName:   sqlschema.TableName("users"),
 				ReferencedColumnName:  sqlschema.ColumnName("id"),
 			},
 		},

@@ -198,7 +198,7 @@ func (module *module) PinV2(ctx context.Context, orgID valuer.UUID, userID value
 	if _, err := module.GetV2(ctx, orgID, id); err != nil {
 		return err
 	}
-	return module.store.PinForUser(ctx, dashboardtypes.NewUserDashboardPreference(orgID, userID, id))
+	return module.store.PinForUser(ctx, dashboardtypes.NewUserDashboardPreference(userID, id))
 }
 
 func (module *module) UnpinV2(ctx context.Context, userID valuer.UUID, id valuer.UUID) error {

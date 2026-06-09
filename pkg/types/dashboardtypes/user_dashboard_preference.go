@@ -16,15 +16,13 @@ type UserDashboardPreference struct {
 
 	UserID      valuer.UUID `bun:"user_id,pk,type:text"`
 	DashboardID valuer.UUID `bun:"dashboard_id,pk,type:text"`
-	OrgID       valuer.UUID `bun:"org_id,type:text,notnull"`
 	IsPinned    bool        `bun:"is_pinned,notnull,default:false"`
 }
 
-func NewUserDashboardPreference(orgID, userID, dashboardID valuer.UUID) *UserDashboardPreference {
+func NewUserDashboardPreference(userID, dashboardID valuer.UUID) *UserDashboardPreference {
 	return &UserDashboardPreference{
 		UserID:      userID,
 		DashboardID: dashboardID,
-		OrgID:       orgID,
 		IsPinned:    true,
 	}
 }

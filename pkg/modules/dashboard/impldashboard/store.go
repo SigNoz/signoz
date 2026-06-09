@@ -325,13 +325,13 @@ func (store *store) RunInTx(ctx context.Context, cb func(ctx context.Context) er
 // rows = 0 is the only signal of a real limit hit.
 func (store *store) PinForUser(ctx context.Context, preference *dashboardtypes.UserDashboardPreference) error {
 	res, err := store.sqlstore.BunDBCtx(ctx).NewRaw(`
-		INSERT INTO user_dashboard_preference (user_id, dashboard_id, org_id, is_pinned)
-		SELECT ?, ?, ?, true
+		INSERT INTO user_dashboard_preference (user_id, dashboard_id, is_pinned)
+		SELECT ?, ?, true
 		WHERE (SELECT COUNT(*) FROM user_dashboard_preference WHERE user_id = ? AND is_pinned = true) < ?
 		   OR EXISTS (SELECT 1 FROM user_dashboard_preference WHERE user_id = ? AND dashboard_id = ? AND is_pinned = true)
 		ON CONFLICT (user_id, dashboard_id) DO UPDATE SET is_pinned = true
 	`,
-		preference.UserID, preference.DashboardID, preference.OrgID,
+		preference.UserID, preference.DashboardID,
 		preference.UserID, dashboardtypes.MaxPinnedDashboardsPerUser,
 		preference.UserID, preference.DashboardID,
 	).Exec(ctx)
