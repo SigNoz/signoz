@@ -17,17 +17,6 @@ type ResourceDef struct {
 	Related  *RelatedResource
 }
 
-// ResourcesDef declares many resources of one kind (fan-out). One resolved
-// entry is produced per id.
-type ResourcesDef struct {
-	Resource coretypes.Resource
-	Verb     coretypes.Verb
-	IDs      ResourceIDsExtractor
-	Selector SelectorFunc
-	Category audittypes.ActionCategory
-	Related  *RelatedResource
-}
-
 // RelatedResource is a counterpart named purely for audit clarity. It carries no
 // verb and no selector and is not authz-checked.
 type RelatedResource struct {
@@ -35,8 +24,7 @@ type RelatedResource struct {
 	ID       ResourceIDExtractor
 }
 
-func (ResourceDef) sealResourceSpec()  {}
-func (ResourcesDef) sealResourceSpec() {}
+func (ResourceDef) sealResourceSpec() {}
 
 func (d ResourceDef) resolveRequest(ec ExtractorContext) []*ResolvedResource {
 	resolved := &ResolvedResource{
@@ -50,29 +38,6 @@ func (d ResourceDef) resolveRequest(ec ExtractorContext) []*ResolvedResource {
 	resolved.resolve(phaseRequest, ec)
 
 	return []*ResolvedResource{resolved}
-}
-
-func (d ResourcesDef) resolveRequest(ec ExtractorContext) []*ResolvedResource {
-	var ids []string
-	if d.IDs.fn != nil {
-		ids, _ = d.IDs.fn(ec)
-	}
-
-	resolved := make([]*ResolvedResource, 0, len(ids))
-	for _, id := range ids {
-		entry := &ResolvedResource{
-			Resource: d.Resource,
-			Verb:     d.Verb,
-			ID:       id,
-			Selector: d.Selector,
-			Category: d.Category,
-			Related:  newResolvedRelated(d.Related),
-		}
-		entry.resolve(phaseRequest, ec)
-		resolved = append(resolved, entry)
-	}
-
-	return resolved
 }
 
 // ResolveRequest resolves the request-phase ids for all specs (fan-out included)
