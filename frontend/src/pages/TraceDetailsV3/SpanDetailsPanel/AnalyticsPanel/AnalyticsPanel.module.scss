@@ -33,6 +33,15 @@
 	scrollbar-width: none;
 }
 
+.state {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex: 1;
+	min-height: 120px;
+	padding: 24px 12px;
+}
+
 .list {
 	display: grid;
 	grid-template-columns: auto auto 1fr;

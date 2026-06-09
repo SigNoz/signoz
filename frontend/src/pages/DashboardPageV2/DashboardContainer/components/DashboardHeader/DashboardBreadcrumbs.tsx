@@ -1,19 +1,23 @@
 import { useCallback } from 'react';
+import { LayoutGrid } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
+import { Typography } from '@signozhq/ui/typography';
 import getSessionStorageApi from 'api/browser/sessionstorage/get';
 import ROUTES from 'constants/routes';
 import { DASHBOARDS_LIST_QUERY_PARAMS_STORAGE_KEY } from 'hooks/dashboard/useDashboardsListQueryParams';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import { LayoutGrid } from '@signozhq/icons';
 
 import styles from './DashboardBreadcrumbs.module.scss';
 
-interface Props {
+interface DashboardBreadcrumbsProps {
 	title: string;
 	image: string;
 }
 
-function DashboardBreadcrumbs({ title, image }: Props): JSX.Element {
+function DashboardBreadcrumbs({
+	title,
+	image,
+}: DashboardBreadcrumbsProps): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
 
 	const goToListPage = useCallback(() => {
@@ -35,20 +39,23 @@ function DashboardBreadcrumbs({ title, image }: Props): JSX.Element {
 		<div className={styles.dashboardBreadcrumbs}>
 			<Button
 				variant="ghost"
+				color="secondary"
 				prefix={<LayoutGrid size={14} />}
-				className={styles.dashboardBtn}
 				onClick={goToListPage}
+				className={styles.linkToPreviousPage}
+				testId="dashboard-breadcrumb-list"
 			>
-				Dashboard /
+				Dashboard
 			</Button>
-			<Button variant="ghost" className={styles.idBtn}>
+			<div>/</div>
+			<div className={styles.currentPage}>
 				<img
 					src={image}
 					alt="dashboard-icon"
 					className={styles.dashboardIconImage}
 				/>
-				{title}
-			</Button>
+				<Typography.Text>{title}</Typography.Text>
+			</div>
 		</div>
 	);
 }

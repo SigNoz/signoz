@@ -12,6 +12,8 @@ import type {
 } from 'react-query';
 
 import type {
+	GetFlamegraph200,
+	GetFlamegraphPathParameters,
 	GetTraceAggregations200,
 	GetTraceAggregationsPathParameters,
 	GetWaterfall200,
@@ -19,6 +21,7 @@ import type {
 	GetWaterfallV4200,
 	GetWaterfallV4PathParameters,
 	RenderErrorResponseDTO,
+	SpantypesPostableFlamegraphDTO,
 	SpantypesPostableTraceAggregationsDTO,
 	SpantypesPostableWaterfallDTO,
 } from '../sigNoz.schemas';
@@ -125,6 +128,105 @@ export const useGetTraceAggregations = <
 	TContext
 > => {
 	return useMutation(getGetTraceAggregationsMutationOptions(options));
+};
+/**
+ * Returns the flamegraph view of spans for a given trace ID.
+ * @summary Get flamegraph view for a trace
+ */
+export const getFlamegraph = (
+	{ traceID }: GetFlamegraphPathParameters,
+	spantypesPostableFlamegraphDTO?: BodyType<SpantypesPostableFlamegraphDTO>,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<GetFlamegraph200>({
+		url: `/api/v3/traces/${traceID}/flamegraph`,
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		data: spantypesPostableFlamegraphDTO,
+		signal,
+	});
+};
+
+export const getGetFlamegraphMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof getFlamegraph>>,
+		TError,
+		{
+			pathParams: GetFlamegraphPathParameters;
+			data?: BodyType<SpantypesPostableFlamegraphDTO>;
+		},
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof getFlamegraph>>,
+	TError,
+	{
+		pathParams: GetFlamegraphPathParameters;
+		data?: BodyType<SpantypesPostableFlamegraphDTO>;
+	},
+	TContext
+> => {
+	const mutationKey = ['getFlamegraph'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof getFlamegraph>>,
+		{
+			pathParams: GetFlamegraphPathParameters;
+			data?: BodyType<SpantypesPostableFlamegraphDTO>;
+		}
+	> = (props) => {
+		const { pathParams, data } = props ?? {};
+
+		return getFlamegraph(pathParams, data);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type GetFlamegraphMutationResult = NonNullable<
+	Awaited<ReturnType<typeof getFlamegraph>>
+>;
+export type GetFlamegraphMutationBody =
+	| BodyType<SpantypesPostableFlamegraphDTO>
+	| undefined;
+export type GetFlamegraphMutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Get flamegraph view for a trace
+ */
+export const useGetFlamegraph = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof getFlamegraph>>,
+		TError,
+		{
+			pathParams: GetFlamegraphPathParameters;
+			data?: BodyType<SpantypesPostableFlamegraphDTO>;
+		},
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof getFlamegraph>>,
+	TError,
+	{
+		pathParams: GetFlamegraphPathParameters;
+		data?: BodyType<SpantypesPostableFlamegraphDTO>;
+	},
+	TContext
+> => {
+	return useMutation(getGetFlamegraphMutationOptions(options));
 };
 /**
  * Returns the waterfall view of spans for a given trace ID with tree structure, metadata, and windowed pagination

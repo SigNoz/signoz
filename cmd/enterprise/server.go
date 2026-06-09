@@ -107,17 +107,17 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 		sqlstoreProviderFactories(),
 		signoz.NewTelemetryStoreProviderFactories(),
 		func(ctx context.Context, providerSettings factory.ProviderSettings, store authtypes.AuthNStore, licensing licensing.Licensing) (map[authtypes.AuthNProvider]authn.AuthN, error) {
-			samlCallbackAuthN, err := samlcallbackauthn.New(ctx, store, licensing)
+			samlCallbackAuthN, err := samlcallbackauthn.New(ctx, store, licensing, config.Global)
 			if err != nil {
 				return nil, err
 			}
 
-			oidcCallbackAuthN, err := oidccallbackauthn.New(store, licensing, providerSettings)
+			oidcCallbackAuthN, err := oidccallbackauthn.New(store, licensing, providerSettings, config.Global)
 			if err != nil {
 				return nil, err
 			}
 
-			authNs, err := signoz.NewAuthNs(ctx, providerSettings, store, licensing)
+			authNs, err := signoz.NewAuthNs(ctx, providerSettings, store, licensing, config.Global)
 			if err != nil {
 				return nil, err
 			}

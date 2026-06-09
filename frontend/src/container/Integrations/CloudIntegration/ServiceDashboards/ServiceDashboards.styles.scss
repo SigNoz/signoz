@@ -53,6 +53,11 @@
 				}
 			}
 
+			&.aws-service-dashboard-item-disabled {
+				cursor: not-allowed;
+				opacity: 0.6;
+			}
+
 			.aws-service-dashboard-item-content {
 				display: flex;
 				flex-direction: column;
