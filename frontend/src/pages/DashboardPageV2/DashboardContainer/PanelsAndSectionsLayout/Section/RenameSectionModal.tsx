@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Modal } from 'antd';
 import { Input } from '@signozhq/ui/input';
 
-interface Props {
+interface RenameSectionModalProps {
 	open: boolean;
 	initialValue: string;
 	isSaving: boolean;
@@ -16,7 +16,7 @@ function RenameSectionModal({
 	isSaving,
 	onClose,
 	onSubmit,
-}: Props): JSX.Element {
+}: RenameSectionModalProps): JSX.Element {
 	const [value, setValue] = useState<string>(initialValue);
 
 	// Reseed the field each time the modal opens.

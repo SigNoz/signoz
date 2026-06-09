@@ -1,17 +1,17 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, Tooltip } from 'antd';
 import refreshPaymentStatus from 'api/v3/licenses/put';
-import cx from 'classnames';
+import { Button } from '@signozhq/ui/button';
+import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { RefreshCcw } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 
 function RefreshPaymentStatus({
-	btnShape,
 	type,
+	className,
 }: {
-	btnShape?: 'default' | 'round' | 'circle';
 	type?: 'button' | 'text' | 'tooltip';
+	className?: string;
 }): JSX.Element {
 	const { t } = useTranslation(['failedPayment']);
 	const { activeLicenseRefetch } = useAppContext();
@@ -31,26 +31,33 @@ function RefreshPaymentStatus({
 		setIsLoading(false);
 	};
 
+	const button = (
+		<Button
+			variant="link"
+			color={type === 'text' ? 'none' : 'secondary'}
+			size="md"
+			className={className}
+			onClick={handleRefreshPaymentStatus}
+			prefix={<RefreshCcw size={14} />}
+			loading={isLoading}
+		>
+			{type !== 'tooltip' ? t('refreshPaymentStatus') : ''}
+		</Button>
+	);
+
 	return (
 		<span className="refresh-payment-status-btn-wrapper">
-			<Tooltip title={type === 'tooltip' ? t('refreshPaymentStatus') : ''}>
-				<Button
-					type={type === 'text' ? 'text' : 'default'}
-					shape={btnShape}
-					className={cx('periscope-btn', { text: type === 'text' })}
-					onClick={handleRefreshPaymentStatus}
-					icon={<RefreshCcw size={14} />}
-					loading={isLoading}
-				>
-					{type !== 'tooltip' ? t('refreshPaymentStatus') : ''}
-				</Button>
-			</Tooltip>
+			{type === 'tooltip' ? (
+				<TooltipSimple title={t('refreshPaymentStatus')}>{button}</TooltipSimple>
+			) : (
+				button
+			)}
 		</span>
 	);
 }
 RefreshPaymentStatus.defaultProps = {
-	btnShape: 'default',
 	type: 'button',
+	className: undefined,
 };
 
 export default RefreshPaymentStatus;
