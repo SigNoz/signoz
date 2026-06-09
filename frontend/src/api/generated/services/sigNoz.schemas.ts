@@ -4685,61 +4685,6 @@ export interface DashboardtypesGettableDashboardV2DTO {
 	updatedBy?: string;
 }
 
-export interface DashboardtypesGettableDashboardWithPinDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt?: string;
-	/**
-	 * @type string
-	 */
-	createdBy?: string;
-	/**
-	 * @type string
-	 */
-	id: string;
-	/**
-	 * @type string
-	 */
-	image?: string;
-	/**
-	 * @type boolean
-	 */
-	locked: boolean;
-	/**
-	 * @type string
-	 */
-	name: string;
-	/**
-	 * @type string
-	 */
-	orgId: string;
-	/**
-	 * @type boolean
-	 */
-	pinned?: boolean;
-	/**
-	 * @type string
-	 */
-	schemaVersion: string;
-	source: DashboardtypesSourceDTO;
-	spec: DashboardtypesDashboardSpecDTO;
-	/**
-	 * @type array,null
-	 */
-	tags: TagtypesPostableTagDTO[] | null;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt?: string;
-	/**
-	 * @type string
-	 */
-	updatedBy?: string;
-}
-
 export interface DashboardtypesGettablePublicDasbhboardDTO {
 	/**
 	 * @type string
@@ -9717,42 +9662,6 @@ export type GetUserPreference200 = {
 export type UpdateUserPreferencePathParameters = {
 	name: string;
 };
-export type ListDashboardsV2Params = {
-	/**
-	 * @type string
-	 * @description undefined
-	 */
-	query?: string;
-	/**
-	 * @type string
-	 * @description undefined
-	 */
-	sort?: string;
-	/**
-	 * @type string
-	 * @description undefined
-	 */
-	order?: string;
-	/**
-	 * @type integer
-	 * @description undefined
-	 */
-	limit?: number;
-	/**
-	 * @type integer
-	 * @description undefined
-	 */
-	offset?: number;
-};
-
-export type ListDashboardsV2200 = {
-	data: DashboardtypesListableDashboardV2DTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
 export type CreateDashboardV2201 = {
 	data: DashboardtypesGettableDashboardV2DTO;
 	/**
