@@ -1,4 +1,4 @@
-package listfilter
+package impldashboard
 
 import (
 	"fmt"
@@ -137,7 +137,7 @@ func (v *visitor) VisitComparison(ctx *grammar.ComparisonContext) any {
 		return ""
 	}
 
-	if allowedOperations, isReserved := reservedOps[dashboardtypes.DSLKey(key)]; isReserved {
+	if allowedOperations, isReserved := dashboardtypes.ReservedOps[dashboardtypes.DSLKey(key)]; isReserved {
 		return v.visitComparisonForReservedKeys(ctx, operation, dashboardtypes.DSLKey(key), allowedOperations)
 	}
 	return v.visitComparisonForTags(ctx, operation, key)
@@ -162,14 +162,14 @@ func (v *visitor) visitComparisonForReservedKeys(ctx *grammar.ComparisonContext,
 	case dashboardtypes.DSLKeyLocked:
 		return v.buildBoolComparison(ctx, operation, "dashboard.locked")
 	}
-	// Unreachable for real input: every reservedOps key has a case above, and
+	// Unreachable for real input: every dashboardtypes.ReservedOps key has a case above, and
 	// TestCompileReservedKeysAllHandled guards that the two stay in sync.
 	v.addError("no handler for reserved key %q", key)
 	return ""
 }
 
 func (v *visitor) visitComparisonForTags(ctx *grammar.ComparisonContext, operation qbtypesv5.FilterOperator, tagKey string) string {
-	if _, allowed := tagKeyOps[operation]; !allowed {
+	if _, allowed := dashboardtypes.TagKeyOps[operation]; !allowed {
 		v.addError("operator %s is not allowed on a tag-key filter", operationName(operation))
 		return ""
 	}

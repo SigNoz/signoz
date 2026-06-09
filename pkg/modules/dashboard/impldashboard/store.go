@@ -6,7 +6,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/modules/dashboard/impldashboard/listfilter"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
@@ -80,7 +79,7 @@ func (store *store) ListV2(
 	userID valuer.UUID,
 	params *dashboardtypes.ListDashboardsV2Params,
 ) ([]*dashboardtypes.DashboardListRow, int64, error) {
-	compiled, err := listfilter.Compile(params.Query, store.sqlstore.Formatter())
+	compiled, err := Compile(params.Query, store.sqlstore.Formatter())
 	if err != nil {
 		return nil, 0, err
 	}
@@ -141,7 +140,7 @@ func (store *store) ListV2(
 
 // sortExprForListV2 maps a sort enum to the SQL expression to plug into
 // ORDER BY. Title-sort routes through the SQLFormatter so it stays
-// dialect-aware (matches what listfilter/visitor does for the name filter).
+// dialect-aware (matches what the filter visitor does for the name filter).
 func (store *store) sortExprForListV2(sort dashboardtypes.ListSort) (string, error) {
 	switch sort {
 	case dashboardtypes.ListSortUpdatedAt:

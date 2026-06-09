@@ -1,10 +1,11 @@
-package listfilter
+package impldashboard
 
 import (
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 )
 
 type Compiled struct {
@@ -21,11 +22,11 @@ func Compile(query string, formatter sqlstore.SQLFormatter) (*Compiled, error) {
 	sql, args, syntaxErrs := queryVisitor.compile(query)
 
 	if len(syntaxErrs) > 0 {
-		return nil, errors.NewInvalidInputf(ErrCodeDashboardListFilterInvalid,
+		return nil, errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardListFilterInvalid,
 			"invalid filter query: %s", strings.Join(syntaxErrs, "; "))
 	}
 	if len(queryVisitor.errors) > 0 {
-		return nil, errors.NewInvalidInputf(ErrCodeDashboardListFilterInvalid,
+		return nil, errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardListFilterInvalid,
 			"invalid filter query: %s", strings.Join(queryVisitor.errors, "; "))
 	}
 	if sql == "" {

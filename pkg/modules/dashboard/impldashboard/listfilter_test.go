@@ -1,4 +1,4 @@
-package listfilter
+package impldashboard
 
 import (
 	"strings"
@@ -11,6 +11,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/sqlstore/sqlstoretest"
+	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 )
 
 type compileCase struct {
@@ -494,13 +495,13 @@ func TestCompile_Rejections(t *testing.T) {
 	})
 }
 
-// Every key in reservedOps must have a matching case in
+// Every key in dashboardtypes.ReservedOps must have a matching case in
 // visitComparisonForReservedKeys; a key that's reserved but unhandled falls
 // through to the "no handler for reserved key" error. Equal is accepted by all
 // reserved keys, so `key = 'x'` always reaches the dispatch switch — a missing
 // handler surfaces as that error regardless of whether the value type-checks.
 func TestCompileReservedKeysAllHandled(t *testing.T) {
-	for key := range reservedOps {
+	for key := range dashboardtypes.ReservedOps {
 		t.Run(string(key), func(t *testing.T) {
 			_, err := Compile(string(key)+` = 'x'`, formatter(t))
 			if err != nil {
