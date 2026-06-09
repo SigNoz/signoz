@@ -72,7 +72,7 @@ export const deploymentWidgetInfo = [
 		yAxisUnit: '',
 	},
 	{
-		title: 'Memory usage, request, limits)',
+		title: 'Memory usage, request, limits',
 		yAxisUnit: 'bytes',
 	},
 	{

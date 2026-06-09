@@ -31,6 +31,8 @@ import type {
 	DisconnectAccountPathParameters,
 	GetAccount200,
 	GetAccountPathParameters,
+	GetAccountService200,
+	GetAccountServicePathParameters,
 	GetConnectionCredentials200,
 	GetConnectionCredentialsPathParameters,
 	GetService200,
@@ -737,6 +739,117 @@ export const invalidateListAccountServicesMetadata = async (
 ): Promise<QueryClient> => {
 	await queryClient.invalidateQueries(
 		{ queryKey: getListAccountServicesMetadataQueryKey({ cloudProvider, id }) },
+		options,
+	);
+
+	return queryClient;
+};
+
+/**
+ * This endpoint gets a service and its configuration for the specified cloud integration account
+ * @summary Get service for account
+ */
+export const getAccountService = (
+	{ cloudProvider, id, serviceId }: GetAccountServicePathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<GetAccountService200>({
+		url: `/api/v1/cloud_integrations/${cloudProvider}/accounts/${id}/services/${serviceId}`,
+		method: 'GET',
+		signal,
+	});
+};
+
+export const getGetAccountServiceQueryKey = ({
+	cloudProvider,
+	id,
+	serviceId,
+}: GetAccountServicePathParameters) => {
+	return [
+		`/api/v1/cloud_integrations/${cloudProvider}/accounts/${id}/services/${serviceId}`,
+	] as const;
+};
+
+export const getGetAccountServiceQueryOptions = <
+	TData = Awaited<ReturnType<typeof getAccountService>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ cloudProvider, id, serviceId }: GetAccountServicePathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getAccountService>>,
+			TError,
+			TData
+		>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ??
+		getGetAccountServiceQueryKey({ cloudProvider, id, serviceId });
+
+	const queryFn: QueryFunction<
+		Awaited<ReturnType<typeof getAccountService>>
+	> = ({ signal }) =>
+		getAccountService({ cloudProvider, id, serviceId }, signal);
+
+	return {
+		queryKey,
+		queryFn,
+		enabled: !!(cloudProvider && id && serviceId),
+		...queryOptions,
+	} as UseQueryOptions<
+		Awaited<ReturnType<typeof getAccountService>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type GetAccountServiceQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getAccountService>>
+>;
+export type GetAccountServiceQueryError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Get service for account
+ */
+
+export function useGetAccountService<
+	TData = Awaited<ReturnType<typeof getAccountService>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ cloudProvider, id, serviceId }: GetAccountServicePathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getAccountService>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getGetAccountServiceQueryOptions(
+		{ cloudProvider, id, serviceId },
+		options,
+	);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get service for account
+ */
+export const invalidateGetAccountService = async (
+	queryClient: QueryClient,
+	{ cloudProvider, id, serviceId }: GetAccountServicePathParameters,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getGetAccountServiceQueryKey({ cloudProvider, id, serviceId }) },
 		options,
 	);
 
