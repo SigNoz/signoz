@@ -132,7 +132,7 @@
                 ],
                 "queries": [
                     {
-                        "kind": "TimeSeriesQuery",
+                        "kind": "time_series",
                         "spec": {
                             "plugin": {
                                 "kind": "signoz/BuilderQuery",
@@ -191,7 +191,7 @@
                 },
                 "queries": [
                     {
-                        "kind": "TimeSeriesQuery",
+                        "kind": "time_series",
                         "spec": {
                             "plugin": {
                                 "kind": "signoz/CompositeQuery",
@@ -269,7 +269,7 @@
                 },
                 "queries": [
                     {
-                        "kind": "TimeSeriesQuery",
+                        "kind": "time_series",
                         "spec": {
                             "plugin": {
                                 "kind": "signoz/BuilderQuery",
@@ -334,7 +334,7 @@
                 },
                 "queries": [
                     {
-                        "kind": "TimeSeriesQuery",
+                        "kind": "time_series",
                         "spec": {
                             "plugin": {
                                 "kind": "signoz/BuilderQuery",
@@ -373,7 +373,7 @@
                 },
                 "queries": [
                     {
-                        "kind": "TimeSeriesQuery",
+                        "kind": "time_series",
                         "spec": {
                             "plugin": {
                                 "kind": "signoz/BuilderQuery",
@@ -418,7 +418,7 @@
                 },
                 "queries": [
                     {
-                        "kind": "TimeSeriesQuery",
+                        "kind": "time_series",
                         "spec": {
                             "plugin": {
                                 "kind": "signoz/BuilderQuery",
@@ -476,7 +476,7 @@
                 },
                 "queries": [
                     {
-                        "kind": "TimeSeriesQuery",
+                        "kind": "time_series",
                         "spec": {
                             "plugin": {
                                 "kind": "signoz/ClickHouseSQL",
@@ -517,7 +517,7 @@
                 },
                 "queries": [
                     {
-                        "kind": "LogQuery",
+                        "kind": "raw",
                         "spec": {
                             "plugin": {
                                 "kind": "signoz/BuilderQuery",
@@ -571,7 +571,7 @@
                 },
                 "queries": [
                     {
-                        "kind": "TimeSeriesQuery",
+                        "kind": "time_series",
                         "spec": {
                             "plugin": {
                                 "kind": "signoz/BuilderQuery",
@@ -610,7 +610,7 @@
                 },
                 "queries": [
                     {
-                        "kind": "TimeSeriesQuery",
+                        "kind": "time_series",
                         "spec": {
                             "plugin": {
                                 "kind": "signoz/CompositeQuery",
@@ -681,7 +681,7 @@
                 },
                 "queries": [
                     {
-                        "kind": "TimeSeriesQuery",
+                        "kind": "time_series",
                         "spec": {
                             "plugin": {
                                 "kind": "signoz/CompositeQuery",
@@ -722,7 +722,7 @@
                 },
                 "queries": [
                     {
-                        "kind": "TimeSeriesQuery",
+                        "kind": "time_series",
                         "spec": {
                             "plugin": {
                                 "kind": "signoz/PromQLQuery",

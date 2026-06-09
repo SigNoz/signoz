@@ -10,8 +10,8 @@ import (
 	"strings"
 	"testing"
 
-	v1 "github.com/perses/perses/pkg/model/api/v1"
-	"github.com/perses/perses/pkg/model/api/v1/dashboard"
+	"github.com/perses/spec/go/dashboard"
+	"github.com/perses/spec/go/datasource"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -22,12 +22,12 @@ func TestDashboardSpecMatchesPerses(t *testing.T) {
 		ours   reflect.Type
 		perses reflect.Type
 	}{
-		{"DashboardSpec", typeOf[DashboardSpec](), typeOf[v1.DashboardSpec]()},
-		{"Panel", typeOf[Panel](), typeOf[v1.Panel]()},
-		{"PanelSpec", typeOf[PanelSpec](), typeOf[v1.PanelSpec]()},
-		{"Query", typeOf[Query](), typeOf[v1.Query]()},
-		{"QuerySpec", typeOf[QuerySpec](), typeOf[v1.QuerySpec]()},
-		{"DatasourceSpec", typeOf[DatasourceSpec](), typeOf[v1.DatasourceSpec]()},
+		{"DashboardSpec", typeOf[DashboardSpec](), typeOf[dashboard.Spec]()},
+		{"Panel", typeOf[Panel](), typeOf[dashboard.Panel]()},
+		{"PanelSpec", typeOf[PanelSpec](), typeOf[dashboard.PanelSpec]()},
+		{"Query", typeOf[Query](), typeOf[dashboard.Query]()},
+		{"QuerySpec", typeOf[QuerySpec](), typeOf[dashboard.QuerySpec]()},
+		{"DatasourceSpec", typeOf[DatasourceSpec](), typeOf[datasource.Spec]()},
 		{"Variable", typeOf[Variable](), typeOf[dashboard.Variable]()},
 		{"ListVariableSpec", typeOf[ListVariableSpec](), typeOf[dashboard.ListVariableSpec]()},
 		{"Layout", typeOf[Layout](), typeOf[dashboard.Layout]()},

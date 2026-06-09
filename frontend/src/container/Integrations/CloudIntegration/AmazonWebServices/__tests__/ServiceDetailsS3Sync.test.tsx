@@ -64,7 +64,7 @@ describe('ServiceDetails for S3 Sync service', () => {
 				(_req, res, ctx) => res(ctx.json(accountsResponse)),
 			),
 			rest.get(
-				'http://localhost/api/v1/cloud_integrations/aws/services/:serviceId',
+				'http://localhost/api/v1/cloud_integrations/aws/accounts/:accountId/services/:serviceId',
 				(req, res, ctx) =>
 					res(
 						ctx.json(
