@@ -294,34 +294,35 @@ func (fe *FormulaEvaluator) EvaluateFormula(timeSeriesData map[string]*TimeSerie
 	// Find all unique label combinations across referenced series
 	uniqueLabelSets := fe.findUniqueLabelSets(lookup)
 
-	// Process each unique label set
-	var resultSeries []*TimeSeries
-	var wg sync.WaitGroup
+	// Work per label-set is cheap  enough that spawning a goroutine per item
+	// costs more in scheduler signaling  than it saves in parallelism.
+	const numWorkers = 4
+	workCh := make(chan []*Label, len(uniqueLabelSets))
 	resultChan := make(chan *TimeSeries, len(uniqueLabelSets))
-	maxSeries := make(chan struct{}, 4)
 
-	// For each candidate label set, evaluate the formula expression
-	// and store the result in the resultChan
-	for _, labelSet := range uniqueLabelSets {
-		wg.Add(1)
-		go func(labels []*Label) {
+	var wg sync.WaitGroup
+	wg.Add(numWorkers)
+	for range numWorkers {
+		go func() {
 			defer wg.Done()
-			maxSeries <- struct{}{}
-			defer func() { <-maxSeries }()
-
-			// main workhorse of the formula evaluation
-			series := fe.evaluateForLabelSet(labels, lookup)
-			if series != nil && len(series.Values) > 0 {
-				resultChan <- series
+			for labels := range workCh {
+				series := fe.evaluateForLabelSet(labels, lookup)
+				if series != nil && len(series.Values) > 0 {
+					resultChan <- series
+				}
 			}
-		}(labelSet)
+		}()
 	}
 
-	go func() {
-		wg.Wait()
-		close(resultChan)
-	}()
+	for _, labelSet := range uniqueLabelSets {
+		workCh <- labelSet
+	}
+	close(workCh)
 
+	wg.Wait()
+	close(resultChan)
+
+	resultSeries := make([]*TimeSeries, 0, len(uniqueLabelSets))
 	for series := range resultChan {
 		resultSeries = append(resultSeries, series)
 	}
