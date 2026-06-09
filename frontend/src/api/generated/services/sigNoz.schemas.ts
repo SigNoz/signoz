@@ -2651,6 +2651,7 @@ export enum CloudintegrationtypesServiceIDDTO {
 	sqs = 'sqs',
 	storageaccountsblob = 'storageaccountsblob',
 	cdnprofile = 'cdnprofile',
+	aks = 'aks',
 }
 export type CloudintegrationtypesCloudIntegrationServiceDTOAnyOf = {
 	/**
