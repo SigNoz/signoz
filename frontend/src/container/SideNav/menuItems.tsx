@@ -45,6 +45,7 @@ import {
 } from './sideNav.types';
 import { Style } from '@signozhq/design-tokens';
 import Noz from 'components/Noz/Noz';
+import { NOZ_TOOLTIP_TITLE } from 'components/Noz/Noz.constants';
 
 export const getStartedMenuItem = {
 	key: ROUTES.GET_STARTED,
@@ -97,6 +98,7 @@ export const aiAssistantMenuItem = {
 	icon: <Noz size={16} />,
 	itemKey: 'ai-assistant',
 	isEarlyAccess: true,
+	tooltip: NOZ_TOOLTIP_TITLE,
 };
 
 export const shortcutMenuItem = {

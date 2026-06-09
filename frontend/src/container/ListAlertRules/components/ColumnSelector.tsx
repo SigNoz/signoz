@@ -47,6 +47,7 @@ function ColumnSelector<TData>({
 					size="sm"
 					color="secondary"
 					prefix={<Columns3 size={14} />}
+					data-testid="alert-columns-button"
 				>
 					Columns
 				</Button>

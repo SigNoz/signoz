@@ -47,18 +47,10 @@
 		}
 
 		.ant-tabs-tab-active {
-			.overview-btn {
-				border-radius: 2px 0px 0px 2px;
-				background: var(--l1-border);
-			}
-
-			.variables-btn {
-				border-radius: 2px 0px 0px 2px;
-				background: var(--l1-border);
-			}
-
+			.overview-btn,
+			.variables-btn,
 			.public-dashboard-btn {
-				border-radius: 2px 0px 0px 2px;
+				color: var(--primary-background);
 				background: var(--l1-border);
 			}
 		}
