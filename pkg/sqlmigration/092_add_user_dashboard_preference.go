@@ -49,6 +49,11 @@ func (migration *addUserDashboardPreference) Up(ctx context.Context, db *bun.DB)
 				ReferencedTableName:   sqlschema.TableName("users"),
 				ReferencedColumnName:  sqlschema.ColumnName("id"),
 			},
+			{
+				ReferencingColumnName: sqlschema.ColumnName("dashboard_id"),
+				ReferencedTableName:   sqlschema.TableName("dashboard"),
+				ReferencedColumnName:  sqlschema.ColumnName("id"),
+			},
 		},
 	})
 
