@@ -1,8 +1,8 @@
-package audittypes
+package coretypes
 
 import "github.com/SigNoz/signoz/pkg/valuer"
 
-// ActionCategory classifies the audit event per IEC 62443.
+// ActionCategory classifies an audited action per IEC 62443.
 // See https://www.iec.ch/blog/understanding-iec-62443 for the standard reference.
 type ActionCategory struct{ valuer.String }
 

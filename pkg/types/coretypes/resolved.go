@@ -9,6 +9,7 @@ package coretypes
 // response-phase ids (e.g. a created resource's id).
 type ResolvedResource interface {
 	Verb() Verb
+	Category() ActionCategory
 	SourceResource() Resource
 	SourceIDs() []string
 	SourceSelector() SelectorFunc

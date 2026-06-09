@@ -5,6 +5,7 @@ package coretypes
 // selector; parentChild reports whether the target is authz-checked.
 type resolvedResourceWithTarget struct {
 	verb            Verb
+	category        ActionCategory
 	sourceResource  Resource
 	sourceSelector  SelectorFunc
 	sourceExtractor ResourceIDsExtractor
@@ -22,6 +23,7 @@ type resolvedResourceWithTarget struct {
 // (it is never authz-checked).
 func NewResolvedResourceWithTarget(
 	verb Verb,
+	category ActionCategory,
 	sourceResource Resource,
 	sourceExtractor ResourceIDsExtractor,
 	sourceSelector SelectorFunc,
@@ -33,6 +35,7 @@ func NewResolvedResourceWithTarget(
 ) ResolvedResourceWithTargetResource {
 	resolved := &resolvedResourceWithTarget{
 		verb:            verb,
+		category:        category,
 		sourceResource:  sourceResource,
 		sourceSelector:  sourceSelector,
 		sourceExtractor: sourceExtractor,
@@ -60,6 +63,7 @@ func (resolved *resolvedResourceWithTarget) fill(phase ExtractPhase, ec Extracto
 }
 
 func (resolved *resolvedResourceWithTarget) Verb() Verb               { return resolved.verb }
+func (resolved *resolvedResourceWithTarget) Category() ActionCategory { return resolved.category }
 func (resolved *resolvedResourceWithTarget) SourceResource() Resource { return resolved.sourceResource }
 func (resolved *resolvedResourceWithTarget) SourceIDs() []string      { return resolved.sourceIDs }
 func (resolved *resolvedResourceWithTarget) SourceSelector() SelectorFunc {

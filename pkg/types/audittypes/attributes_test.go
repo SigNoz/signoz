@@ -36,7 +36,7 @@ func TestNewAuditAttributesFromHTTP_OutcomeBoundary(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			attrs := NewAuditAttributesFromHTTP(testCase.statusCode, coretypes.VerbUpdate, ActionCategoryConfigurationChange, claims)
+			attrs := NewAuditAttributesFromHTTP(testCase.statusCode, coretypes.VerbUpdate, coretypes.ActionCategoryConfigurationChange, claims)
 			assert.Equal(t, testCase.expectedOutcome, attrs.Outcome)
 		})
 	}
@@ -55,7 +55,7 @@ func TestNewBody(t *testing.T) {
 			name: "Success_EmptyResourceID",
 			auditAttributes: AuditAttributes{
 				Action:         coretypes.VerbDelete,
-				ActionCategory: ActionCategoryConfigurationChange,
+				ActionCategory: coretypes.ActionCategoryConfigurationChange,
 				Outcome:        OutcomeSuccess,
 			},
 			principalAttributes: PrincipalAttributes{
@@ -73,7 +73,7 @@ func TestNewBody(t *testing.T) {
 			name: "Success_EmptyPrincipalEmail",
 			auditAttributes: AuditAttributes{
 				Action:         coretypes.VerbDelete,
-				ActionCategory: ActionCategoryConfigurationChange,
+				ActionCategory: coretypes.ActionCategoryConfigurationChange,
 				Outcome:        OutcomeSuccess,
 			},
 			principalAttributes: PrincipalAttributes{
@@ -91,7 +91,7 @@ func TestNewBody(t *testing.T) {
 			name: "Success_EmptyPrincipalIDandEmail",
 			auditAttributes: AuditAttributes{
 				Action:         coretypes.VerbDelete,
-				ActionCategory: ActionCategoryConfigurationChange,
+				ActionCategory: coretypes.ActionCategoryConfigurationChange,
 				Outcome:        OutcomeSuccess,
 			},
 			principalAttributes: PrincipalAttributes{
@@ -109,7 +109,7 @@ func TestNewBody(t *testing.T) {
 			name: "Success_AllPresent",
 			auditAttributes: AuditAttributes{
 				Action:         coretypes.VerbCreate,
-				ActionCategory: ActionCategoryConfigurationChange,
+				ActionCategory: coretypes.ActionCategoryConfigurationChange,
 				Outcome:        OutcomeSuccess,
 			},
 			principalAttributes: PrincipalAttributes{
@@ -127,7 +127,7 @@ func TestNewBody(t *testing.T) {
 			name: "Success_EmptyEverythingOptional",
 			auditAttributes: AuditAttributes{
 				Action:         coretypes.VerbUpdate,
-				ActionCategory: ActionCategoryConfigurationChange,
+				ActionCategory: coretypes.ActionCategoryConfigurationChange,
 				Outcome:        OutcomeSuccess,
 			},
 			principalAttributes: PrincipalAttributes{},
@@ -141,7 +141,7 @@ func TestNewBody(t *testing.T) {
 			name: "Failure_AllPresent",
 			auditAttributes: AuditAttributes{
 				Action:         coretypes.VerbUpdate,
-				ActionCategory: ActionCategoryConfigurationChange,
+				ActionCategory: coretypes.ActionCategoryConfigurationChange,
 				Outcome:        OutcomeFailure,
 			},
 			principalAttributes: PrincipalAttributes{

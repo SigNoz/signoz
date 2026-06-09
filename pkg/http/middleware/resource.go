@@ -45,12 +45,12 @@ func (middleware *Resource) Wrap(next http.Handler) http.Handler {
 		}
 		resolved := handler.ResolveRequest(defs, extractorCtx)
 
-		ctx := handler.NewContextWithResolvedResources(req.Context(), resolved)
+		ctx := coretypes.NewContextWithResolvedResources(req.Context(), resolved)
 		next.ServeHTTP(rw, req.WithContext(ctx))
 	})
 }
 
-func resourceDefsFromRequest(req *http.Request) []handler.ResourceSpec {
+func resourceDefsFromRequest(req *http.Request) []handler.ResourceDef {
 	route := mux.CurrentRoute(req)
 	if route == nil {
 		return nil

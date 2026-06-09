@@ -6,7 +6,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/audittypes"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/serviceaccounttypes"
@@ -31,12 +30,12 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 			Deprecated:          false,
 			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceServiceAccount.Scope(coretypes.VerbCreate)}),
 		},
-		handler.WithResourceDefs(handler.ResourceDef{
+		handler.WithResourceDefs(handler.BasicResourceDef{
 			Resource: coretypes.ResourceServiceAccount,
 			Verb:     coretypes.VerbCreate,
+			Category: coretypes.ActionCategoryAccessControl,
 			ID:       handler.ResponseJSONPath("data.id"),
-			Selector: handler.WildcardSelector,
-			Category: audittypes.ActionCategoryAccessControl,
+			Selector: coretypes.WildcardSelector,
 		}),
 	)).Methods(http.MethodPost).GetError(); err != nil {
 		return err
@@ -58,11 +57,11 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 			Deprecated:          false,
 			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceServiceAccount.Scope(coretypes.VerbList)}),
 		},
-		handler.WithResourceDefs(handler.ResourceDef{
+		handler.WithResourceDefs(handler.BasicResourceDef{
 			Resource: coretypes.ResourceServiceAccount,
 			Verb:     coretypes.VerbList,
-			Selector: handler.WildcardSelector,
-			Category: audittypes.ActionCategoryAccessControl,
+			Category: coretypes.ActionCategoryAccessControl,
+			Selector: coretypes.WildcardSelector,
 		}),
 	)).Methods(http.MethodGet).GetError(); err != nil {
 		return err
@@ -101,12 +100,12 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 			Deprecated:          false,
 			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceServiceAccount.Scope(coretypes.VerbRead)}),
 		},
-		handler.WithResourceDefs(handler.ResourceDef{
+		handler.WithResourceDefs(handler.BasicResourceDef{
 			Resource: coretypes.ResourceServiceAccount,
 			Verb:     coretypes.VerbRead,
+			Category: coretypes.ActionCategoryAccessControl,
 			ID:       handler.PathParam("id"),
-			Selector: handler.IDSelector,
-			Category: audittypes.ActionCategoryAccessControl,
+			Selector: coretypes.IDSelector,
 		}),
 	)).Methods(http.MethodGet).GetError(); err != nil {
 		return err
@@ -128,12 +127,12 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 			Deprecated:          false,
 			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceServiceAccount.Scope(coretypes.VerbRead)}),
 		},
-		handler.WithResourceDefs(handler.ResourceDef{
+		handler.WithResourceDefs(handler.BasicResourceDef{
 			Resource: coretypes.ResourceServiceAccount,
 			Verb:     coretypes.VerbRead,
+			Category: coretypes.ActionCategoryAccessControl,
 			ID:       handler.PathParam("id"),
-			Selector: handler.IDSelector,
-			Category: audittypes.ActionCategoryAccessControl,
+			Selector: coretypes.IDSelector,
 		}),
 	)).Methods(http.MethodGet).GetError(); err != nil {
 		return err
@@ -155,24 +154,16 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 			Deprecated:          false,
 			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceServiceAccount.Scope(coretypes.VerbAttach), coretypes.ResourceRole.Scope(coretypes.VerbAttach)}),
 		},
-		handler.WithResourceDefs(
-			handler.ResourceDef{
-				Resource: coretypes.ResourceServiceAccount,
-				Verb:     coretypes.VerbAttach,
-				ID:       handler.PathParam("id"),
-				Selector: handler.IDSelector,
-				Category: audittypes.ActionCategoryAccessControl,
-				Related:  &handler.RelatedResource{Resource: coretypes.ResourceRole, ID: handler.BodyJSONPath("id")},
-			},
-			handler.ResourceDef{
-				Resource: coretypes.ResourceRole,
-				Verb:     coretypes.VerbAttach,
-				ID:       handler.BodyJSONPath("id"),
-				Selector: provider.roleSelector,
-				Category: audittypes.ActionCategoryAccessControl,
-				Related:  &handler.RelatedResource{Resource: coretypes.ResourceServiceAccount, ID: handler.PathParam("id")},
-			},
-		),
+		handler.WithResourceDefs(handler.AttachDetachSiblingResourceDef{
+			Verb:           coretypes.VerbAttach,
+			Category:       coretypes.ActionCategoryAccessControl,
+			SourceResource: coretypes.ResourceServiceAccount,
+			SourceIDs:      handler.OneID(handler.PathParam("id")),
+			SourceSelector: coretypes.IDSelector,
+			TargetResource: coretypes.ResourceRole,
+			TargetIDs:      handler.OneID(handler.BodyJSONPath("id")),
+			TargetSelector: provider.roleSelector,
+		}),
 	)).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
@@ -193,24 +184,16 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 			Deprecated:          false,
 			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceServiceAccount.Scope(coretypes.VerbDetach), coretypes.ResourceRole.Scope(coretypes.VerbDetach)}),
 		},
-		handler.WithResourceDefs(
-			handler.ResourceDef{
-				Resource: coretypes.ResourceServiceAccount,
-				Verb:     coretypes.VerbDetach,
-				ID:       handler.PathParam("id"),
-				Selector: handler.IDSelector,
-				Category: audittypes.ActionCategoryAccessControl,
-				Related:  &handler.RelatedResource{Resource: coretypes.ResourceRole, ID: handler.PathParam("rid")},
-			},
-			handler.ResourceDef{
-				Resource: coretypes.ResourceRole,
-				Verb:     coretypes.VerbDetach,
-				ID:       handler.PathParam("rid"),
-				Selector: provider.roleSelector,
-				Category: audittypes.ActionCategoryAccessControl,
-				Related:  &handler.RelatedResource{Resource: coretypes.ResourceServiceAccount, ID: handler.PathParam("id")},
-			},
-		),
+		handler.WithResourceDefs(handler.AttachDetachSiblingResourceDef{
+			Verb:           coretypes.VerbDetach,
+			Category:       coretypes.ActionCategoryAccessControl,
+			SourceResource: coretypes.ResourceServiceAccount,
+			SourceIDs:      handler.OneID(handler.PathParam("id")),
+			SourceSelector: coretypes.IDSelector,
+			TargetResource: coretypes.ResourceRole,
+			TargetIDs:      handler.OneID(handler.PathParam("rid")),
+			TargetSelector: provider.roleSelector,
+		}),
 	)).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}
@@ -248,12 +231,12 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 			Deprecated:          false,
 			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceServiceAccount.Scope(coretypes.VerbUpdate)}),
 		},
-		handler.WithResourceDefs(handler.ResourceDef{
+		handler.WithResourceDefs(handler.BasicResourceDef{
 			Resource: coretypes.ResourceServiceAccount,
 			Verb:     coretypes.VerbUpdate,
+			Category: coretypes.ActionCategoryAccessControl,
 			ID:       handler.PathParam("id"),
-			Selector: handler.IDSelector,
-			Category: audittypes.ActionCategoryAccessControl,
+			Selector: coretypes.IDSelector,
 		}),
 	)).Methods(http.MethodPut).GetError(); err != nil {
 		return err
@@ -275,12 +258,12 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 			Deprecated:          false,
 			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceServiceAccount.Scope(coretypes.VerbDelete)}),
 		},
-		handler.WithResourceDefs(handler.ResourceDef{
+		handler.WithResourceDefs(handler.BasicResourceDef{
 			Resource: coretypes.ResourceServiceAccount,
 			Verb:     coretypes.VerbDelete,
+			Category: coretypes.ActionCategoryAccessControl,
 			ID:       handler.PathParam("id"),
-			Selector: handler.IDSelector,
-			Category: audittypes.ActionCategoryAccessControl,
+			Selector: coretypes.IDSelector,
 		}),
 	)).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
@@ -303,20 +286,21 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceFactorAPIKey.Scope(coretypes.VerbCreate), coretypes.ResourceServiceAccount.Scope(coretypes.VerbAttach)}),
 		},
 		handler.WithResourceDefs(
-			handler.ResourceDef{
+			handler.BasicResourceDef{
 				Resource: coretypes.ResourceMetaResourceFactorAPIKey,
 				Verb:     coretypes.VerbCreate,
+				Category: coretypes.ActionCategoryAccessControl,
 				ID:       handler.ResponseJSONPath("data.id"),
-				Selector: handler.WildcardSelector,
-				Category: audittypes.ActionCategoryAccessControl,
+				Selector: coretypes.WildcardSelector,
 			},
-			handler.ResourceDef{
-				Resource: coretypes.ResourceServiceAccount,
-				Verb:     coretypes.VerbAttach,
-				ID:       handler.PathParam("id"),
-				Selector: handler.IDSelector,
-				Category: audittypes.ActionCategoryAccessControl,
-				Related:  &handler.RelatedResource{Resource: coretypes.ResourceMetaResourceFactorAPIKey, ID: handler.ResponseJSONPath("data.id")},
+			handler.AttachDetachParentChildResourceDef{
+				Verb:           coretypes.VerbAttach,
+				Category:       coretypes.ActionCategoryAccessControl,
+				ParentResource: coretypes.ResourceServiceAccount,
+				ParentID:       handler.PathParam("id"),
+				ParentSelector: coretypes.IDSelector,
+				ChildResource:  coretypes.ResourceMetaResourceFactorAPIKey,
+				ChildIDs:       handler.OneID(handler.ResponseJSONPath("data.id")),
 			},
 		),
 	)).Methods(http.MethodPost).GetError(); err != nil {
@@ -339,11 +323,11 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 			Deprecated:          false,
 			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceFactorAPIKey.Scope(coretypes.VerbList)}),
 		},
-		handler.WithResourceDefs(handler.ResourceDef{
+		handler.WithResourceDefs(handler.BasicResourceDef{
 			Resource: coretypes.ResourceMetaResourceFactorAPIKey,
 			Verb:     coretypes.VerbList,
-			Selector: handler.WildcardSelector,
-			Category: audittypes.ActionCategoryAccessControl,
+			Category: coretypes.ActionCategoryAccessControl,
+			Selector: coretypes.WildcardSelector,
 		}),
 	)).Methods(http.MethodGet).GetError(); err != nil {
 		return err
@@ -365,12 +349,12 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 			Deprecated:          false,
 			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceFactorAPIKey.Scope(coretypes.VerbUpdate)}),
 		},
-		handler.WithResourceDefs(handler.ResourceDef{
+		handler.WithResourceDefs(handler.BasicResourceDef{
 			Resource: coretypes.ResourceMetaResourceFactorAPIKey,
 			Verb:     coretypes.VerbUpdate,
+			Category: coretypes.ActionCategoryAccessControl,
 			ID:       handler.PathParam("fid"),
-			Selector: handler.IDSelector,
-			Category: audittypes.ActionCategoryAccessControl,
+			Selector: coretypes.IDSelector,
 		}),
 	)).Methods(http.MethodPut).GetError(); err != nil {
 		return err
@@ -393,20 +377,21 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceFactorAPIKey.Scope(coretypes.VerbDelete), coretypes.ResourceServiceAccount.Scope(coretypes.VerbDetach)}),
 		},
 		handler.WithResourceDefs(
-			handler.ResourceDef{
+			handler.BasicResourceDef{
 				Resource: coretypes.ResourceMetaResourceFactorAPIKey,
 				Verb:     coretypes.VerbDelete,
+				Category: coretypes.ActionCategoryAccessControl,
 				ID:       handler.PathParam("fid"),
-				Selector: handler.IDSelector,
-				Category: audittypes.ActionCategoryAccessControl,
+				Selector: coretypes.IDSelector,
 			},
-			handler.ResourceDef{
-				Resource: coretypes.ResourceServiceAccount,
-				Verb:     coretypes.VerbDetach,
-				ID:       handler.PathParam("id"),
-				Selector: handler.IDSelector,
-				Category: audittypes.ActionCategoryAccessControl,
-				Related:  &handler.RelatedResource{Resource: coretypes.ResourceMetaResourceFactorAPIKey, ID: handler.PathParam("fid")},
+			handler.AttachDetachParentChildResourceDef{
+				Verb:           coretypes.VerbDetach,
+				Category:       coretypes.ActionCategoryAccessControl,
+				ParentResource: coretypes.ResourceServiceAccount,
+				ParentID:       handler.PathParam("id"),
+				ParentSelector: coretypes.IDSelector,
+				ChildResource:  coretypes.ResourceMetaResourceFactorAPIKey,
+				ChildIDs:       handler.OneID(handler.PathParam("fid")),
 			},
 		),
 	)).Methods(http.MethodDelete).GetError(); err != nil {
@@ -420,13 +405,13 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 // already extracted by the ResourceDef (path or body); this only does the
 // UUID -> name lookup the FGA object string requires. Shared by service account
 // and role routes.
-func (provider *provider) roleSelector(ctx context.Context, resource coretypes.Resource, id string, claims authtypes.Claims) ([]coretypes.Selector, error) {
+func (provider *provider) roleSelector(ctx context.Context, resource coretypes.Resource, id string, orgID valuer.UUID) ([]coretypes.Selector, error) {
 	roleID, err := valuer.NewUUID(id)
 	if err != nil {
 		return nil, err
 	}
 
-	role, err := provider.authzService.Get(ctx, valuer.MustNewUUID(claims.OrgID), roleID)
+	role, err := provider.authzService.Get(ctx, orgID, roleID)
 	if err != nil {
 		return nil, err
 	}

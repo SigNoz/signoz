@@ -12,7 +12,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/auditor"
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/types/audittypes"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
@@ -63,9 +62,10 @@ func (middleware *Audit) Wrap(next http.Handler) http.Handler {
 		responseBuffer := &byteBuffer{}
 		writer := newResponseCapture(rw, responseBuffer)
 
-		// If any resolved resource derives its id from the response, capture the
-		// success body (bounded) so the audit event can read it post-handler.
-		if resolved, err := handler.ResolvedResourcesFromContext(req.Context()); err == nil && handler.HasResponseIDs(resolved) {
+		// A resolved resource may derive its id from the response (e.g. a create),
+		// so capture the success body (bounded) for any route that declares
+		// resources; ResolveResponse reads it post-handler.
+		if _, err := coretypes.ResolvedResourcesFromContext(req.Context()); err == nil {
 			writer.EnableBodyCapture()
 		}
 
@@ -104,6 +104,11 @@ func (middleware *Audit) emitAuditEvent(req *http.Request, writer responseCaptur
 		return
 	}
 
+	resolved, err := coretypes.ResolvedResourcesFromContext(req.Context())
+	if err != nil || len(resolved) == 0 {
+		return
+	}
+
 	claims, _ := authtypes.ClaimsFromContext(req.Context())
 	statusCode := writer.StatusCode()
 	span := trace.SpanFromContext(req.Context())
@@ -114,44 +119,62 @@ func (middleware *Audit) emitAuditEvent(req *http.Request, writer responseCaptur
 		errorCode = render.ErrorCodeFromBody(writer.BodyBytes())
 	}
 
-	// Resources resolved by the Resource middleware — emit one event per entry.
-	resolved, err := handler.ResolvedResourcesFromContext(req.Context())
-	if err != nil || len(resolved) == 0 {
-		return
-	}
+	extractorCtx := coretypes.ExtractorContext{Request: req, ResponseBody: writer.BodyBytes()}
 
-	extractorCtx := coretypes.ExtractorContext{
-		Request:      req,
-		ResponseBody: writer.BodyBytes(),
-	}
-	handler.FinalizeResponseIDs(resolved, extractorCtx)
+	for _, resource := range resolved {
+		// Fill response-phase ids (e.g. a created resource's id) now that the
+		// response body is available.
+		resource.ResolveResponse(extractorCtx)
 
-	for _, entry := range resolved {
 		// Audit records state changes only — skip read/list verbs (they still
 		// exist on the def for authz).
-		if !entry.Verb.IsMutation() {
+		if !resource.Verb().IsMutation() {
 			continue
 		}
 
-		resourceAttributes := audittypes.NewResourceAttributes(entry.Resource, entry.ID)
-		if entry.Related != nil {
-			resourceAttributes = audittypes.NewRelatedResourceAttributes(entry.Resource, entry.ID, entry.Related.Resource, entry.Related.ID)
+		verb, category := resource.Verb(), resource.Category()
+
+		switch typed := resource.(type) {
+		case coretypes.ResolvedResourceWithTargetResource:
+			// One event per (source, target) pair, capturing the relationship.
+			for _, sourceID := range typed.SourceIDs() {
+				for _, targetID := range typed.TargetIDs() {
+					attributes := audittypes.NewRelatedResourceAttributes(typed.SourceResource(), sourceID, typed.TargetResource(), targetID)
+
+					middleware.auditor.Audit(req.Context(), audittypes.NewAuditEventFromHTTPRequest(
+						req,
+						routeTemplate,
+						statusCode,
+						span.SpanContext().TraceID(),
+						span.SpanContext().SpanID(),
+						verb,
+						category,
+						claims,
+						attributes,
+						errorType,
+						errorCode,
+					))
+				}
+			}
+		default:
+			// One event per resource id.
+			for _, id := range resource.SourceIDs() {
+				attributes := audittypes.NewResourceAttributes(resource.SourceResource(), id)
+
+				middleware.auditor.Audit(req.Context(), audittypes.NewAuditEventFromHTTPRequest(
+					req,
+					routeTemplate,
+					statusCode,
+					span.SpanContext().TraceID(),
+					span.SpanContext().SpanID(),
+					verb,
+					category,
+					claims,
+					attributes,
+					errorType,
+					errorCode,
+				))
+			}
 		}
-
-		event := audittypes.NewAuditEventFromHTTPRequest(
-			req,
-			routeTemplate,
-			statusCode,
-			span.SpanContext().TraceID(),
-			span.SpanContext().SpanID(),
-			entry.Verb,
-			entry.Category,
-			claims,
-			resourceAttributes,
-			errorType,
-			errorCode,
-		)
-
-		middleware.auditor.Audit(req.Context(), event)
 	}
 }

@@ -5,7 +5,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/audittypes"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/gorilla/mux"
@@ -28,12 +27,12 @@ func (provider *provider) addRoleRoutes(router *mux.Router) error {
 			Deprecated:          false,
 			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceRole.Scope(coretypes.VerbCreate)}),
 		},
-		handler.WithResourceDefs(handler.ResourceDef{
+		handler.WithResourceDefs(handler.BasicResourceDef{
 			Resource: coretypes.ResourceRole,
 			Verb:     coretypes.VerbCreate,
+			Category: coretypes.ActionCategoryAccessControl,
 			ID:       handler.ResponseJSONPath("data.id"),
-			Selector: handler.WildcardSelector,
-			Category: audittypes.ActionCategoryAccessControl,
+			Selector: coretypes.WildcardSelector,
 		}),
 	)).Methods(http.MethodPost).GetError(); err != nil {
 		return err
@@ -55,11 +54,11 @@ func (provider *provider) addRoleRoutes(router *mux.Router) error {
 			Deprecated:          false,
 			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceRole.Scope(coretypes.VerbList)}),
 		},
-		handler.WithResourceDefs(handler.ResourceDef{
+		handler.WithResourceDefs(handler.BasicResourceDef{
 			Resource: coretypes.ResourceRole,
 			Verb:     coretypes.VerbList,
-			Selector: handler.WildcardSelector,
-			Category: audittypes.ActionCategoryAccessControl,
+			Category: coretypes.ActionCategoryAccessControl,
+			Selector: coretypes.WildcardSelector,
 		}),
 	)).Methods(http.MethodGet).GetError(); err != nil {
 		return err
@@ -81,12 +80,12 @@ func (provider *provider) addRoleRoutes(router *mux.Router) error {
 			Deprecated:          false,
 			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceRole.Scope(coretypes.VerbRead)}),
 		},
-		handler.WithResourceDefs(handler.ResourceDef{
+		handler.WithResourceDefs(handler.BasicResourceDef{
 			Resource: coretypes.ResourceRole,
 			Verb:     coretypes.VerbRead,
+			Category: coretypes.ActionCategoryAccessControl,
 			ID:       handler.PathParam("id"),
 			Selector: provider.roleSelector,
-			Category: audittypes.ActionCategoryAccessControl,
 		}),
 	)).Methods(http.MethodGet).GetError(); err != nil {
 		return err
@@ -108,12 +107,12 @@ func (provider *provider) addRoleRoutes(router *mux.Router) error {
 			Deprecated:          false,
 			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceRole.Scope(coretypes.VerbRead)}),
 		},
-		handler.WithResourceDefs(handler.ResourceDef{
+		handler.WithResourceDefs(handler.BasicResourceDef{
 			Resource: coretypes.ResourceRole,
 			Verb:     coretypes.VerbRead,
+			Category: coretypes.ActionCategoryAccessControl,
 			ID:       handler.PathParam("id"),
 			Selector: provider.roleSelector,
-			Category: audittypes.ActionCategoryAccessControl,
 		}),
 	)).Methods(http.MethodGet).GetError(); err != nil {
 		return err
@@ -135,12 +134,12 @@ func (provider *provider) addRoleRoutes(router *mux.Router) error {
 			Deprecated:          false,
 			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceRole.Scope(coretypes.VerbUpdate)}),
 		},
-		handler.WithResourceDefs(handler.ResourceDef{
+		handler.WithResourceDefs(handler.BasicResourceDef{
 			Resource: coretypes.ResourceRole,
 			Verb:     coretypes.VerbUpdate,
+			Category: coretypes.ActionCategoryAccessControl,
 			ID:       handler.PathParam("id"),
 			Selector: provider.roleSelector,
-			Category: audittypes.ActionCategoryAccessControl,
 		}),
 	)).Methods(http.MethodPatch).GetError(); err != nil {
 		return err
@@ -162,12 +161,12 @@ func (provider *provider) addRoleRoutes(router *mux.Router) error {
 			Deprecated:          false,
 			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceRole.Scope(coretypes.VerbUpdate)}),
 		},
-		handler.WithResourceDefs(handler.ResourceDef{
+		handler.WithResourceDefs(handler.BasicResourceDef{
 			Resource: coretypes.ResourceRole,
 			Verb:     coretypes.VerbUpdate,
+			Category: coretypes.ActionCategoryAccessControl,
 			ID:       handler.PathParam("id"),
 			Selector: provider.roleSelector,
-			Category: audittypes.ActionCategoryAccessControl,
 		}),
 	)).Methods(http.MethodPatch).GetError(); err != nil {
 		return err
@@ -189,12 +188,12 @@ func (provider *provider) addRoleRoutes(router *mux.Router) error {
 			Deprecated:          false,
 			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceRole.Scope(coretypes.VerbDelete)}),
 		},
-		handler.WithResourceDefs(handler.ResourceDef{
+		handler.WithResourceDefs(handler.BasicResourceDef{
 			Resource: coretypes.ResourceRole,
 			Verb:     coretypes.VerbDelete,
+			Category: coretypes.ActionCategoryAccessControl,
 			ID:       handler.PathParam("id"),
 			Selector: provider.roleSelector,
-			Category: audittypes.ActionCategoryAccessControl,
 		}),
 	)).Methods(http.MethodDelete).GetError(); err != nil {
 		return err

@@ -26,7 +26,7 @@ func TestNewAuditEvent(t *testing.T) {
 		route           string
 		statusCode      int
 		action          coretypes.Verb
-		category        ActionCategory
+		category        coretypes.ActionCategory
 		claims          authtypes.Claims
 		resource        coretypes.Resource
 		resourceID      string
@@ -42,7 +42,7 @@ func TestNewAuditEvent(t *testing.T) {
 			route:           "/api/v1/dashboards",
 			statusCode:      http.StatusOK,
 			action:          coretypes.VerbCreate,
-			category:        ActionCategoryConfigurationChange,
+			category:        coretypes.ActionCategoryConfigurationChange,
 			claims:          authtypes.Claims{UserID: "019a1234-abcd-7000-8000-567800000001", Email: "alice@acme.com", OrgID: "019a-0000-0000-0001", IdentNProvider: authtypes.IdentNProviderTokenizer},
 			resource:        testDashboardResource,
 			resourceID:      "019b-5678-efgh-9012",
@@ -56,7 +56,7 @@ func TestNewAuditEvent(t *testing.T) {
 			route:           "/api/v1/dashboards/{id}",
 			statusCode:      http.StatusForbidden,
 			action:          coretypes.VerbUpdate,
-			category:        ActionCategoryConfigurationChange,
+			category:        coretypes.ActionCategoryConfigurationChange,
 			claims:          authtypes.Claims{UserID: "019aaaaa-bbbb-7000-8000-cccc00000002", Email: "viewer@acme.com", OrgID: "019a-0000-0000-0001", IdentNProvider: authtypes.IdentNProviderTokenizer},
 			resource:        testDashboardResource,
 			resourceID:      "019b-5678-efgh-9012",
@@ -108,7 +108,7 @@ func newTestEvent(resource coretypes.Resource, resourceID string, action coretyp
 		EventName: NewEventName(resource.Kind(), action),
 		AuditAttributes: AuditAttributes{
 			Action:         action,
-			ActionCategory: ActionCategoryConfigurationChange,
+			ActionCategory: coretypes.ActionCategoryConfigurationChange,
 			Outcome:        OutcomeSuccess,
 		},
 		ResourceAttributes: ResourceAttributes{

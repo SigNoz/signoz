@@ -1,12 +1,13 @@
 package middleware
 
 import (
+	"context"
+	"fmt"
 	"log/slog"
 	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -204,7 +205,7 @@ func (middleware *AuthZ) CheckResources(next http.HandlerFunc, roles ...string) 
 			return
 		}
 
-		resolved, err := handler.ResolvedResourcesFromContext(ctx)
+		resolved, err := coretypes.ResolvedResourcesFromContext(ctx)
 		if err != nil {
 			render.Error(rw, err)
 			return
@@ -217,38 +218,61 @@ func (middleware *AuthZ) CheckResources(next http.HandlerFunc, roles ...string) 
 			roleSelectors[idx] = coretypes.TypeRole.MustSelector(role)
 		}
 
-		for _, def := range resolved {
-			if def.Selector == nil {
-				render.Error(rw, errors.New(errors.TypeInternal, errors.CodeInternal, "resource def used with CheckResources must declare a Selector"))
-				return
-			}
-
-			selectors, err := def.Selector(ctx, def.Resource, def.ID, claims)
-			if err != nil {
+		for _, resource := range resolved {
+			// The source is always checked. The target is checked only for a
+			// sibling peer — a parent-child's child rides along for audit only.
+			if err := middleware.checkResource(ctx, claims, orgID, resource.Verb(), resource.SourceResource(), resource.SourceIDs(), resource.SourceSelector(), roleSelectors); err != nil {
 				render.Error(rw, err)
 				return
 			}
 
-			err = middleware.authzService.CheckWithTupleCreation(ctx, claims, orgID, authtypes.Relation{Verb: def.Verb}, def.Resource, selectors, roleSelectors)
-			if err != nil {
-				if errors.Asc(err, authtypes.ErrCodeAuthZForbidden) {
-					middleware.logger.WarnContext(ctx, authzDeniedMessage, slog.Any("claims", claims))
-					if def.ID != "" {
-						render.Error(rw, errors.Newf(errors.TypeForbidden, authtypes.ErrCodeAuthZForbidden, "you don't have %s access to %s %s", def.Verb.StringValue(), def.Resource.Kind().String(), def.ID))
-						return
-					}
-
-					render.Error(rw, errors.Newf(errors.TypeForbidden, authtypes.ErrCodeAuthZForbidden, "you don't have %s access to %s", def.Verb.StringValue(), def.Resource.Kind().String()))
+			target, ok := resource.(coretypes.ResolvedResourceWithTargetResource)
+			if ok && !target.IsParentChild() {
+				if err := middleware.checkResource(ctx, claims, orgID, target.Verb(), target.TargetResource(), target.TargetIDs(), target.TargetSelector(), roleSelectors); err != nil {
+					render.Error(rw, err)
 					return
 				}
-
-				render.Error(rw, err)
-				return
 			}
 		}
 
 		next(rw, req)
 	})
+}
+
+// checkResource authz-checks each id of one resource (absolute, per-id). An
+// empty id list still produces a single check, letting the selector decide
+// (e.g. a wildcard for a create/list).
+func (middleware *AuthZ) checkResource(ctx context.Context, claims authtypes.Claims, orgID valuer.UUID, verb coretypes.Verb, resource coretypes.Resource, ids []string, selector coretypes.SelectorFunc, roleSelectors []coretypes.Selector) error {
+	if selector == nil {
+		return errors.New(errors.TypeInternal, errors.CodeInternal, "resolved resource is missing a selector")
+	}
+
+	if len(ids) == 0 {
+		ids = []string{""}
+	}
+
+	for _, id := range ids {
+		selectors, err := selector(ctx, resource, id, orgID)
+		if err != nil {
+			return err
+		}
+
+		if err := middleware.authzService.CheckWithTupleCreation(ctx, claims, orgID, authtypes.Relation{Verb: verb}, resource, selectors, roleSelectors); err != nil {
+			if !errors.Asc(err, authtypes.ErrCodeAuthZForbidden) {
+				return err
+			}
+
+			middleware.logger.WarnContext(ctx, authzDeniedMessage, slog.Any("claims", claims))
+			principal := fmt.Sprintf("%s/%s", claims.Principal.StringValue(), claims.IdentityID())
+			if id != "" {
+				return errors.Newf(errors.TypeForbidden, authtypes.ErrCodeAuthZForbidden, "%s is not authorized to perform %s on resource %q", principal, resource.Scope(verb), id)
+			}
+
+			return errors.Newf(errors.TypeForbidden, authtypes.ErrCodeAuthZForbidden, "%s is not authorized to perform %s", principal, resource.Scope(verb))
+		}
+	}
+
+	return nil
 }
 
 func (middleware *AuthZ) CheckWithoutClaims(next http.HandlerFunc, relation authtypes.Relation, typeable coretypes.Resource, cb selectorCallbackWithoutClaimsFn, roles []string) http.HandlerFunc {
