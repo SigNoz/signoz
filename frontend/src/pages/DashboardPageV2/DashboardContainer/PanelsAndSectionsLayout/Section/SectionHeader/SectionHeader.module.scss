@@ -5,7 +5,7 @@
 	padding: 8px 12px;
 
 	&.headerOpen {
-		border-bottom: 1px solid var(--bg-slate-500);
+		border-bottom: 1px solid var(--l1-border);
 	}
 }
 
@@ -16,7 +16,7 @@
 	padding: 0;
 	background: transparent;
 	border: none;
-	color: var(--bg-vanilla-400, #8993ae);
+	color: var(--l2-foreground);
 	cursor: grab;
 
 	&:active {
@@ -33,7 +33,8 @@
 	padding: 0;
 	background: transparent;
 	border: none;
-	color: inherit;
+	// Muted chevron; the title below carries the prominent heading color.
+	color: var(--l2-foreground);
 	text-align: left;
 	cursor: pointer;
 	min-width: 0;
@@ -41,6 +42,8 @@
 
 .title {
 	margin-left: 4px;
+	color: var(--l1-foreground);
+	font-weight: 500;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;

@@ -1,0 +1,199 @@
+.billingContainer {
+	margin-bottom: var(--spacing-20);
+	padding-top: 36px;
+	width: 90%;
+	margin: 0 auto;
+
+	.pageHeader {
+		margin-bottom: var(--spacing-8);
+
+		.pageHeaderTitle {
+			font-weight: var(--label-medium-500-font-weight);
+			font-size: var(--label-medium-500-font-size);
+			line-height: 32px;
+			letter-spacing: -0.08px;
+			color: var(--l1-foreground);
+		}
+
+		.pageHeaderSubtitle {
+			font-size: var(--font-size-sm);
+			line-height: var(--line-height-20);
+			letter-spacing: -0.07px;
+			color: var(--l2-foreground);
+		}
+	}
+
+	.pageInfoTitle {
+		margin: 0;
+		font-size: var(--font-size-sm);
+		font-weight: var(--font-weight-medium);
+		line-height: var(--line-height-20);
+		letter-spacing: -0.07px;
+		color: var(--l1-foreground);
+	}
+
+	.pageInfoSubtitle {
+		margin: 0;
+		font-size: var(--font-size-sm);
+		font-weight: var(--font-weight-normal);
+		line-height: var(--line-height-18);
+		letter-spacing: -0.07px;
+		color: var(--l2-foreground);
+	}
+
+	.pageInfo {
+		:global(.ant-card) {
+			padding: var(--padding-3);
+		}
+
+		.billingManageBtn {
+			background: var(--l3-background);
+
+			&:hover {
+				background: var(--l3-background-hover);
+			}
+		}
+	}
+
+	.billingSummary {
+		margin: var(--spacing-12) var(--spacing-4);
+	}
+
+	.billingDetails {
+		margin: var(--spacing-12) 0;
+		border: 1px solid var(--l1-border);
+		border-radius: 2px;
+		overflow: hidden;
+
+		:global {
+			.ant-table {
+				background: var(--l2-background);
+			}
+
+			.ant-table-thead > tr > th {
+				height: 52px;
+				padding: 0 var(--padding-4);
+				color: var(--l3-foreground);
+				font-size: var(--font-size-xs);
+				font-weight: var(--font-weight-medium);
+				letter-spacing: 0.48px;
+				text-transform: uppercase;
+			}
+
+			.ant-table-tbody > tr > td {
+				height: 52px;
+				padding: 0 var(--padding-4);
+				background: var(--l2-background);
+				border-bottom: 1px solid var(--l1-border);
+				color: var(--l2-foreground);
+				font-size: var(--font-size-sm);
+
+				&:first-child {
+					color: var(--l1-foreground);
+				}
+
+				&:not(:first-child) {
+					font-feature-settings:
+						'zero' 1,
+						'lnum' 1,
+						'tnum' 1;
+				}
+			}
+
+			.ant-table-tbody > tr:last-child > td {
+				border-bottom: none;
+			}
+
+			.ant-table-tbody > tr:hover > td {
+				background: var(--l2-background) !important;
+			}
+		}
+
+		.billingDetailsHeaderCell {
+			position: relative;
+			background: var(--l2-background) !important;
+			border: none !important;
+			border-bottom: 1px solid var(--l1-border) !important;
+			box-shadow: none !important;
+
+			&::after {
+				content: '';
+				position: absolute;
+				inset-block: 0;
+				inset-inline-end: 0;
+				width: 2px;
+				background: var(--l2-background);
+				z-index: 1;
+			}
+		}
+	}
+
+	.upgradePlanBenefits {
+		margin: 0 var(--spacing-4);
+		border: 1px solid var(--l1-border);
+		border-radius: 5px;
+		padding: 0 var(--padding-12);
+
+		.planBenefits {
+			.planBenefit {
+				display: flex;
+				align-items: center;
+				gap: var(--spacing-8);
+				margin: var(--spacing-8) 0;
+			}
+		}
+	}
+
+	.billingGraphSection {
+		border: 1px solid var(--l1-border);
+		border-radius: 4px;
+		overflow: hidden;
+		margin-bottom: var(--spacing-4);
+
+		.billingGraphFooter {
+			display: flex;
+			gap: var(--spacing-4);
+			padding: var(--padding-3) var(--padding-4);
+			border-top: 1px solid var(--l1-border);
+			background: var(--l2-background);
+
+			.billingFooterBtn {
+				background: var(--l3-background);
+
+				&:hover {
+					background: var(--l3-background-hover);
+				}
+			}
+		}
+	}
+
+	.emptyGraphCard {
+		:global(.ant-card-body) {
+			height: 40vh;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+		}
+	}
+
+	.billingUpdateNote {
+		margin-top: var(--spacing-8);
+		font-family: var(--font-family-inter);
+		font-size: var(--font-size-sm);
+		font-style: normal;
+		font-weight: var(--font-weight-normal);
+		line-height: 22px;
+		letter-spacing: -0.07px;
+	}
+
+	:global {
+		.ant-skeleton.ant-skeleton-element.ant-skeleton-active {
+			width: 100%;
+			min-width: 100%;
+		}
+
+		.ant-skeleton.ant-skeleton-element .ant-skeleton-input {
+			min-width: 100% !important;
+		}
+	}
+}

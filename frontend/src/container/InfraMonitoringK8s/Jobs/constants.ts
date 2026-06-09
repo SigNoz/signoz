@@ -69,7 +69,7 @@ export const jobWidgetInfo = [
 		yAxisUnit: '',
 	},
 	{
-		title: 'Memory usage, request, limits',
+		title: 'Memory Usage',
 		yAxisUnit: 'bytes',
 	},
 	{
