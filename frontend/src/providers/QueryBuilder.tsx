@@ -36,10 +36,10 @@ import {
 import { OptionsQuery } from 'container/OptionsMenu/types';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
-import { useSaveRecentQuery } from 'hooks/recentQueries/useSaveRecentQuery';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
+import { saveRecentQuery } from 'lib/recentQueries/saveRecentQuery';
 import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderItemName';
 import { getOperatorsBySourceAndPanelType } from 'lib/newQueryBuilder/getOperatorsBySourceAndPanelType';
 import { replaceIncorrectObjectFields } from 'lib/replaceIncorrectObjectFields';
@@ -134,8 +134,6 @@ export function QueryBuilderProvider({
 	const [supersetQuery, setSupersetQuery] = useState<QueryState>(queryState);
 	const [lastUsedQuery, setLastUsedQuery] = useState<number | null>(0);
 	const [stagedQuery, setStagedQuery] = useState<Query | null>(null);
-
-	useSaveRecentQuery(stagedQuery);
 
 	const [queryType, setQueryType] = useState<EQueryType>(queryTypeParam);
 
@@ -1028,6 +1026,11 @@ export function QueryBuilderProvider({
 	);
 
 	const handleRunQuery = useCallback(() => {
+		// Save the run query to recent searches. Tied to the explicit Stage & Run
+		// gesture (not staged-query changes) so navigation and correlation redirects
+		// don't pollute recents.
+		saveRecentQuery(currentQuery);
+
 		const isExplorer =
 			location.pathname === ROUTES.LOGS_EXPLORER ||
 			location.pathname === ROUTES.TRACES_EXPLORER;

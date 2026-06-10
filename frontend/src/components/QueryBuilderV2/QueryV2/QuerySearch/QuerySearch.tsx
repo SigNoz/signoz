@@ -46,7 +46,7 @@ import {
 import { validateQuery } from 'utils/queryValidationUtils';
 import { unquote } from 'utils/stringUtils';
 
-import { useGetRecents } from 'hooks/recentQueries/useGetRecents';
+import { getRecentQueries } from 'lib/recentQueries/getRecentQueries';
 import type { SignalType } from 'types/api/v5/queryRange';
 
 import { queryExamples, SUGGESTIONS_SECTION } from './constants';
@@ -1258,13 +1258,15 @@ function QuerySearch({
 	}
 
 	const signal = dataSource as SignalType;
-	const getRecents = useGetRecents(signal, signalSource ?? '');
 
 	function combinedSuggestions(
 		context: CompletionContext,
 	): CompletionResult | null {
 		const fullDoc = context.state.doc.toString();
-		const recentOptions = getRecentOptions(getRecents(), fullDoc);
+		const recentOptions = getRecentOptions(
+			getRecentQueries(signal, signalSource ?? ''),
+			fullDoc,
+		);
 		const result = autoSuggestions(context);
 
 		const suggestionOptions = (result?.options || []).map((opt) => ({

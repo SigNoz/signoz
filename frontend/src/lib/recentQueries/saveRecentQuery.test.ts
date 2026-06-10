@@ -1,4 +1,3 @@
-import { renderHook } from '@testing-library/react';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 import type {
@@ -7,9 +6,8 @@ import type {
 } from 'types/api/queryBuilder/queryBuilderData';
 import { validateQuery } from 'utils/queryValidationUtils';
 
-import * as store from 'lib/recentQueries/recentQueriesStore';
-
-import { useSaveRecentQuery } from './useSaveRecentQuery';
+import * as store from './recentQueriesStore';
+import { saveRecentQuery } from './saveRecentQuery';
 
 jest.mock('utils/queryValidationUtils', () => ({
 	validateQuery: jest.fn(),
@@ -47,7 +45,7 @@ const buildQuery = (overrides: Partial<IBuilderQuery>[] = [{}]): Query => ({
 	},
 });
 
-describe('useSaveRecentQuery', () => {
+describe('saveRecentQuery', () => {
 	beforeEach(() => {
 		store.useRecentQueriesStore.setState({ buckets: {} });
 		localStorage.clear();
@@ -58,10 +56,8 @@ describe('useSaveRecentQuery', () => {
 		});
 	});
 
-	it('saves the staged query when validation passes', () => {
-		const stagedQuery = buildQuery();
-
-		renderHook(() => useSaveRecentQuery(stagedQuery));
+	it('saves the query when validation passes', () => {
+		saveRecentQuery(buildQuery());
 
 		const entries = store.list('logs');
 		expect(entries).toHaveLength(1);
@@ -74,75 +70,56 @@ describe('useSaveRecentQuery', () => {
 			message: 'bad',
 			errors: [],
 		});
-		const stagedQuery = buildQuery();
 
-		renderHook(() => useSaveRecentQuery(stagedQuery));
+		saveRecentQuery(buildQuery());
 
 		expect(store.list('logs')).toHaveLength(0);
 	});
 
 	it('does not save a builder query with an empty filter expression', () => {
-		const stagedQuery = buildQuery([{ filter: { expression: '' } }]);
-
-		renderHook(() => useSaveRecentQuery(stagedQuery));
+		saveRecentQuery(buildQuery([{ filter: { expression: '' } }]));
 
 		expect(store.list('logs')).toHaveLength(0);
 	});
 
 	it('saves each builder query in the composite separately', () => {
-		const stagedQuery = buildQuery([
-			{
-				dataSource: DataSource.LOGS,
-				filter: { expression: "service.name = 'frontend'" },
-			},
-			{
-				dataSource: DataSource.TRACES,
-				filter: { expression: "service.name = 'orders-api'" },
-			},
-		]);
-
-		renderHook(() => useSaveRecentQuery(stagedQuery));
+		saveRecentQuery(
+			buildQuery([
+				{
+					dataSource: DataSource.LOGS,
+					filter: { expression: "service.name = 'frontend'" },
+				},
+				{
+					dataSource: DataSource.TRACES,
+					filter: { expression: "service.name = 'orders-api'" },
+				},
+			]),
+		);
 
 		expect(store.list('logs')).toHaveLength(1);
 		expect(store.list('traces')).toHaveLength(1);
 	});
 
-	it('does not re-save when the staged query has not changed', () => {
-		const stagedQuery = buildQuery();
-
-		const { rerender } = renderHook(
-			({ q }: { q: Query }) => useSaveRecentQuery(q),
-			{ initialProps: { q: stagedQuery } },
-		);
-
-		const firstTimestamp = store.list('logs')[0].lastUsedAt;
-		rerender({ q: stagedQuery });
-
-		const second = store.list('logs');
-		expect(second).toHaveLength(1);
-		expect(second[0].lastUsedAt).toBe(firstTimestamp);
-	});
-
-	it('re-saves when the staged query filter changes', () => {
-		const initial = buildQuery([
-			{ filter: { expression: "severity_text = 'ERROR'" } },
-		]);
-		const changed = buildQuery([
-			{ filter: { expression: 'http.status_code >= 500' } },
-		]);
-
-		const { rerender } = renderHook(
-			({ q }: { q: Query }) => useSaveRecentQuery(q),
-			{ initialProps: { q: initial } },
-		);
+	it('keeps a single entry when the same query is run again', () => {
+		saveRecentQuery(buildQuery());
+		saveRecentQuery(buildQuery());
 
 		expect(store.list('logs')).toHaveLength(1);
-		rerender({ q: changed });
+	});
+
+	it('adds a second entry when the filter changes', () => {
+		saveRecentQuery(
+			buildQuery([{ filter: { expression: "severity_text = 'ERROR'" } }]),
+		);
+		saveRecentQuery(
+			buildQuery([{ filter: { expression: 'http.status_code >= 500' } }]),
+		);
+
 		expect(store.list('logs')).toHaveLength(2);
 	});
 
-	it('is a no-op when stagedQuery is null', () => {
-		renderHook(() => useSaveRecentQuery(null));
+	it('is a no-op when the query is null', () => {
+		saveRecentQuery(null);
 
 		expect(store.list('logs')).toHaveLength(0);
 	});
