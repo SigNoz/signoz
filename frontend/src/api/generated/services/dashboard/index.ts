@@ -1539,7 +1539,7 @@ export const useCreateDashboardView = <
 	return useMutation(getCreateDashboardViewMutationOptions(options));
 };
 /**
- * Removes a saved view. Saved views are shared org-wide; any user in the org may delete any view. Idempotent — deleting a non-existent view returns 404.
+ * Removes a saved view. Saved views are shared org-wide; any user in the org may delete any view. Deleting a non-existent view returns 404.
  * @summary Delete dashboard saved view
  */
 export const deleteDashboardView = (

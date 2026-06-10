@@ -29,7 +29,7 @@ type DashboardView struct {
 	types.TimeAuditable
 
 	Name  string            `bun:"name,type:text,notnull" json:"name" required:"true"`
-	Data  DashboardViewData `bun:"data,type:jsonb,notnull" json:"data" required:"true"`
+	Data  DashboardViewData `bun:"data,type:text,notnull" json:"data" required:"true"`
 	OrgID valuer.UUID       `bun:"org_id,type:text,notnull" json:"orgId" required:"true"`
 }
 
@@ -86,9 +86,11 @@ func (p *PostableDashboardView) UnmarshalJSON(data []byte) error {
 }
 
 func (p *PostableDashboardView) Validate() error {
-	if err := validateDashboardViewName(p.Name); err != nil {
+	name, err := trimAndValidateDashboardViewName(p.Name)
+	if err != nil {
 		return err
 	}
+	p.Name = name
 	return p.Data.Validate()
 }
 
@@ -127,14 +129,14 @@ type ListableDashboardView struct {
 // Helpers
 // ════════════════════════════════════════════════════════════════════════
 
-func validateDashboardViewName(name string) error {
+func trimAndValidateDashboardViewName(name string) (string, error) {
 	trimmed := strings.TrimSpace(name)
 	if trimmed == "" {
-		return errors.NewInvalidInputf(ErrCodeDashboardViewInvalidInput, "name is required")
+		return "", errors.NewInvalidInputf(ErrCodeDashboardViewInvalidInput, "name is required")
 	}
 	if len(trimmed) > MaxDashboardViewNameLen {
-		return errors.NewInvalidInputf(ErrCodeDashboardViewInvalidInput,
+		return "", errors.NewInvalidInputf(ErrCodeDashboardViewInvalidInput,
 			"name must be at most %d characters, got %d", MaxDashboardViewNameLen, len(trimmed))
 	}
-	return nil
+	return trimmed, nil
 }

@@ -71,7 +71,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		ID:                  "DeleteDashboardView",
 		Tags:                []string{"dashboard"},
 		Summary:             "Delete dashboard saved view",
-		Description:         "Removes a saved view. Saved views are shared org-wide; any user in the org may delete any view. Idempotent — deleting a non-existent view returns 404.",
+		Description:         "Removes a saved view. Saved views are shared org-wide; any user in the org may delete any view. Deleting a non-existent view returns 404.",
 		Request:             nil,
 		RequestContentType:  "",
 		Response:            nil,
