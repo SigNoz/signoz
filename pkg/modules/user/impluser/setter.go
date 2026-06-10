@@ -409,7 +409,7 @@ func (module *setter) DeleteUser(ctx context.Context, orgID valuer.UUID, id stri
 		return err
 	}
 
-	if err := module.dashboard.DeletePreferencesForUser(ctx, user.ID); err != nil {
+	if err := module.dashboard.DeletePreferencesForUser(ctx, orgID, user.ID); err != nil {
 		return err
 	}
 
