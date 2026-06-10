@@ -5780,6 +5780,33 @@ components:
           nullable: true
           type: array
       type: object
+    Querybuildertypesv5EstimateEntry:
+      properties:
+        database:
+          nullable: true
+          type: string
+        marks:
+          format: int64
+          nullable: true
+          type: integer
+        parts:
+          format: int64
+          nullable: true
+          type: integer
+        rows:
+          format: int64
+          nullable: true
+          type: integer
+        table:
+          nullable: true
+          type: string
+      required:
+      - database
+      - table
+      - parts
+      - rows
+      - marks
+      type: object
     Querybuildertypesv5ExecStats:
       description: Execution statistics for the query, including rows scanned, bytes
         scanned, and duration.
@@ -5850,6 +5877,32 @@ components:
       - anomaly
       - fillzero
       type: string
+    Querybuildertypesv5Granules:
+      nullable: true
+      properties:
+        initial:
+          format: int64
+          nullable: true
+          type: integer
+        reads:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5MergeTreeRead'
+          nullable: true
+          type: array
+        selected:
+          format: int64
+          nullable: true
+          type: integer
+        skipped:
+          format: int64
+          nullable: true
+          type: integer
+      required:
+      - initial
+      - selected
+      - skipped
+      - reads
+      type: object
     Querybuildertypesv5GroupByKey:
       properties:
         description:
@@ -5871,6 +5924,48 @@ components:
       properties:
         expression:
           type: string
+      type: object
+    Querybuildertypesv5IndexStep:
+      properties:
+        condition:
+          nullable: true
+          type: string
+        initialGranules:
+          format: int64
+          nullable: true
+          type: integer
+        initialParts:
+          format: int64
+          nullable: true
+          type: integer
+        keys:
+          items:
+            type: string
+          nullable: true
+          type: array
+        name:
+          nullable: true
+          type: string
+        selectedGranules:
+          format: int64
+          nullable: true
+          type: integer
+        selectedParts:
+          format: int64
+          nullable: true
+          type: integer
+        type:
+          nullable: true
+          type: string
+      required:
+      - type
+      - name
+      - keys
+      - condition
+      - initialParts
+      - selectedParts
+      - initialGranules
+      - selectedGranules
       type: object
     Querybuildertypesv5Label:
       properties:
@@ -5898,6 +5993,20 @@ components:
           type: string
         expression:
           type: string
+      type: object
+    Querybuildertypesv5MergeTreeRead:
+      properties:
+        steps:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5IndexStep'
+          nullable: true
+          type: array
+        table:
+          nullable: true
+          type: string
+      required:
+      - table
+      - steps
       type: object
     Querybuildertypesv5MetricAggregation:
       properties:
@@ -5943,6 +6052,28 @@ components:
       - asc
       - desc
       type: string
+    Querybuildertypesv5PreviewStatement:
+      properties:
+        db.statement.args:
+          items: {}
+          nullable: true
+          type: array
+        db.statement.query:
+          nullable: true
+          type: string
+        estimate:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5EstimateEntry'
+          nullable: true
+          type: array
+        granules:
+          $ref: '#/components/schemas/Querybuildertypesv5Granules'
+      required:
+      - db.statement.query
+      - db.statement.args
+      - estimate
+      - granules
+      type: object
     Querybuildertypesv5PromQuery:
       properties:
         disabled:
@@ -6262,6 +6393,43 @@ components:
           $ref: '#/components/schemas/Querybuildertypesv5QueryType'
       required:
       - type
+      type: object
+    Querybuildertypesv5QueryPreview:
+      properties:
+        error: {}
+        statements:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5PreviewStatement'
+          nullable: true
+          type: array
+        valid:
+          nullable: true
+          type: boolean
+        warnings:
+          items:
+            type: string
+          nullable: true
+          type: array
+      required:
+      - valid
+      - error
+      - warnings
+      - statements
+      type: object
+    Querybuildertypesv5QueryRangePreviewResponse:
+      description: Response from the v5 query range preview (dry-run) endpoint. For
+        each query in the composite query, returns the underlying ClickHouse statement(s)
+        it renders to without executing them (one per PromQL metric selector; exactly
+        one for builder/ClickHouse/trace-operator queries), with the optional EXPLAIN
+        ESTIMATE and granule analysis attached per statement when requested.
+      properties:
+        compositeQuery:
+          additionalProperties:
+            $ref: '#/components/schemas/Querybuildertypesv5QueryPreview'
+          nullable: true
+          type: object
+      required:
+      - compositeQuery
       type: object
     Querybuildertypesv5QueryRangeRequest:
       description: Request body for the v5 query range endpoint. Supports builder
@@ -22524,6 +22692,75 @@ paths:
       - tokenizer:
         - VIEWER
       summary: Query range
+      tags:
+      - querier
+  /api/v5/query_range/preview:
+    post:
+      deprecated: false
+      description: 'Validate a composite query without executing it. Accepts the same
+        payload as the query range endpoint. By default (verbose=true) returns, for
+        each query, the rendered underlying ClickHouse statement(s) with each statement''s
+        EXPLAIN ESTIMATE (per-table parts/rows/marks) and granule index analysis (candidate/surviving
+        granules and the per-index pruning funnel). Pass ?verbose=false for the lightweight
+        per-query verdict (valid/error/warnings) with no rendered SQL and no ClickHouse
+        round trips. Intended for agentic/dry-run consumption: per-query errors are
+        reported in the response rather than failing the whole request.'
+      operationId: QueryRangePreviewV5
+      parameters:
+      - in: query
+        name: verbose
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Querybuildertypesv5QueryRangeRequest'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Querybuildertypesv5QueryRangePreviewResponse'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Query range preview
       tags:
       - querier
   /api/v5/substitute_vars:

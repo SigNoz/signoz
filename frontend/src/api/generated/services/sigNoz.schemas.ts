@@ -7299,6 +7299,32 @@ export interface Querybuildertypesv5ColumnDescriptorDTO {
 	unit?: string;
 }
 
+export interface Querybuildertypesv5EstimateEntryDTO {
+	/**
+	 * @type string,null
+	 */
+	database: string | null;
+	/**
+	 * @type integer,null
+	 * @format int64
+	 */
+	marks: number | null;
+	/**
+	 * @type integer,null
+	 * @format int64
+	 */
+	parts: number | null;
+	/**
+	 * @type integer,null
+	 * @format int64
+	 */
+	rows: number | null;
+	/**
+	 * @type string,null
+	 */
+	table: string | null;
+}
+
 export type Querybuildertypesv5ExecStatsDTOStepIntervals = {
 	[key: string]: number;
 };
@@ -7337,6 +7363,100 @@ export interface Querybuildertypesv5FormatOptionsDTO {
 	 * @type boolean
 	 */
 	formatTableResultForUI?: boolean;
+}
+
+export interface Querybuildertypesv5IndexStepDTO {
+	/**
+	 * @type string,null
+	 */
+	condition: string | null;
+	/**
+	 * @type integer,null
+	 * @format int64
+	 */
+	initialGranules: number | null;
+	/**
+	 * @type integer,null
+	 * @format int64
+	 */
+	initialParts: number | null;
+	/**
+	 * @type array,null
+	 */
+	keys: string[] | null;
+	/**
+	 * @type string,null
+	 */
+	name: string | null;
+	/**
+	 * @type integer,null
+	 * @format int64
+	 */
+	selectedGranules: number | null;
+	/**
+	 * @type integer,null
+	 * @format int64
+	 */
+	selectedParts: number | null;
+	/**
+	 * @type string,null
+	 */
+	type: string | null;
+}
+
+export interface Querybuildertypesv5MergeTreeReadDTO {
+	/**
+	 * @type array,null
+	 */
+	steps: Querybuildertypesv5IndexStepDTO[] | null;
+	/**
+	 * @type string,null
+	 */
+	table: string | null;
+}
+
+export type Querybuildertypesv5GranulesDTOAnyOf = {
+	/**
+	 * @type integer,null
+	 * @format int64
+	 */
+	initial: number | null;
+	/**
+	 * @type array,null
+	 */
+	reads: Querybuildertypesv5MergeTreeReadDTO[] | null;
+	/**
+	 * @type integer,null
+	 * @format int64
+	 */
+	selected: number | null;
+	/**
+	 * @type integer,null
+	 * @format int64
+	 */
+	skipped: number | null;
+};
+
+/**
+ * @nullable
+ */
+export type Querybuildertypesv5GranulesDTO =
+	Querybuildertypesv5GranulesDTOAnyOf | null;
+
+export interface Querybuildertypesv5PreviewStatementDTO {
+	/**
+	 * @type array,null
+	 */
+	'db.statement.args': unknown[] | null;
+	/**
+	 * @type string,null
+	 */
+	'db.statement.query': string | null;
+	/**
+	 * @type array,null
+	 */
+	estimate: Querybuildertypesv5EstimateEntryDTO[] | null;
+	granules: Querybuildertypesv5GranulesDTO | null;
 }
 
 export interface Querybuildertypesv5TimeSeriesDataDTO {
@@ -7419,6 +7539,41 @@ export type Querybuildertypesv5QueryDataDTO =
 			 */
 			results?: unknown[] | null;
 	  });
+
+export interface Querybuildertypesv5QueryPreviewDTO {
+	error: unknown;
+	/**
+	 * @type array,null
+	 */
+	statements: Querybuildertypesv5PreviewStatementDTO[] | null;
+	/**
+	 * @type boolean,null
+	 */
+	valid: boolean | null;
+	/**
+	 * @type array,null
+	 */
+	warnings: string[] | null;
+}
+
+export type Querybuildertypesv5QueryRangePreviewResponseDTOCompositeQueryAnyOf =
+	{ [key: string]: Querybuildertypesv5QueryPreviewDTO };
+
+/**
+ * @nullable
+ */
+export type Querybuildertypesv5QueryRangePreviewResponseDTOCompositeQuery =
+	Querybuildertypesv5QueryRangePreviewResponseDTOCompositeQueryAnyOf | null;
+
+/**
+ * Response from the v5 query range preview (dry-run) endpoint. For each query in the composite query, returns the underlying ClickHouse statement(s) it renders to without executing them (one per PromQL metric selector; exactly one for builder/ClickHouse/trace-operator queries), with the optional EXPLAIN ESTIMATE and granule analysis attached per statement when requested.
+ */
+export interface Querybuildertypesv5QueryRangePreviewResponseDTO {
+	/**
+	 * @type object,null
+	 */
+	compositeQuery: Querybuildertypesv5QueryRangePreviewResponseDTOCompositeQuery;
+}
 
 export enum Querybuildertypesv5VariableTypeDTO {
 	query = 'query',
@@ -11176,6 +11331,22 @@ export type GetWaterfallV4200 = {
 
 export type QueryRangeV5200 = {
 	data: Querybuildertypesv5QueryRangeResponseDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type QueryRangePreviewV5Params = {
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	verbose?: string;
+};
+
+export type QueryRangePreviewV5200 = {
+	data: Querybuildertypesv5QueryRangePreviewResponseDTO;
 	/**
 	 * @type string
 	 */

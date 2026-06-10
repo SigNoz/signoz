@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/swaggest/jsonschema-go"
@@ -62,6 +63,103 @@ type QueryRangeResponse struct {
 	Warning *QueryWarnData `json:"warning,omitempty"`
 
 	QBEvent *QBEvent `json:"-"`
+}
+
+// QueryRangePreviewResponse is the dry-run output: one QueryPreview per query,
+// keyed by the request's query names.
+type QueryRangePreviewResponse struct {
+	CompositeQuery map[string]QueryPreview `json:"compositeQuery" required:"true" nullable:"true"`
+}
+
+// QueryRangePreviewOptions carries per-call options for the dry-run endpoint.
+type QueryRangePreviewOptions struct {
+	Verbose bool
+}
+
+// QueryRangePreviewParams are the query-string parameters of the dry-run endpoint.
+type QueryRangePreviewParams struct {
+	Verbose string `query:"verbose"`
+}
+
+// PrepareJSONSchema adds description to the QueryRangePreviewResponse schema.
+func (q *QueryRangePreviewResponse) PrepareJSONSchema(schema *jsonschema.Schema) error {
+	schema.WithDescription("Response from the v5 query range preview (dry-run) endpoint. For each query in the composite query, returns the underlying ClickHouse statement(s) it renders to without executing them (one per PromQL metric selector; exactly one for builder/ClickHouse/trace-operator queries), with the optional EXPLAIN ESTIMATE and granule analysis attached per statement when requested.")
+	return nil
+}
+
+// QueryPreview is the dry-run result for a single query.
+type QueryPreview struct {
+	Valid      bool               `json:"valid" required:"true" nullable:"true"`
+	Error      error              `json:"error" required:"true"`
+	Warnings   []string           `json:"warnings" required:"true" nullable:"true"`
+	Statements []PreviewStatement `json:"statements" required:"true" nullable:"true"`
+}
+
+// PreviewStatement is one rendered ClickHouse statement with its args and, when
+// requested, its EXPLAIN ESTIMATE and granule breakdown. The query/args JSON
+// keys follow the OpenTelemetry db.statement.* convention.
+type PreviewStatement struct {
+	Query    string          `json:"db.statement.query" required:"true" nullable:"true"`
+	Args     []any           `json:"db.statement.args" required:"true" nullable:"true"`
+	Estimate []EstimateEntry `json:"estimate" required:"true" nullable:"true"`
+	Granules *Granules       `json:"granules" required:"true" nullable:"true"`
+}
+
+// EstimateEntry is ClickHouse's EXPLAIN ESTIMATE for one table read: the
+// absolute parts, rows, and marks it estimates it will scan.
+type EstimateEntry struct {
+	Database string `json:"database" required:"true" nullable:"true"`
+	Table    string `json:"table" required:"true" nullable:"true"`
+	Parts    int64  `json:"parts" required:"true" nullable:"true"`
+	Rows     int64  `json:"rows" required:"true" nullable:"true"`
+	Marks    int64  `json:"marks" required:"true" nullable:"true"`
+}
+
+// Granules is the granule-skip breakdown for one statement, parsed from
+// `EXPLAIN json = 1, indexes = 1` and summed across every ReadFromMergeTree node.
+type Granules struct {
+	Initial  int64           `json:"initial" required:"true" nullable:"true"`
+	Selected int64           `json:"selected" required:"true" nullable:"true"`
+	Skipped  int64           `json:"skipped" required:"true" nullable:"true"`
+	Reads    []MergeTreeRead `json:"reads" required:"true" nullable:"true"`
+}
+
+// MergeTreeRead is the index-pruning funnel for one ReadFromMergeTree node. The
+// Steps run in sequence, so each step's Initial* matches the previous Selected*.
+type MergeTreeRead struct {
+	Table string      `json:"table" required:"true" nullable:"true"`
+	Steps []IndexStep `json:"steps" required:"true" nullable:"true"`
+}
+
+// IndexStep is one index applied during a MergeTree read, with the parts and
+// granules entering (Initial*) and surviving (Selected*) it. Type is the index
+// kind (MinMax, Partition, PrimaryKey, or Skip).
+type IndexStep struct {
+	Type             string   `json:"type" required:"true" nullable:"true"`
+	Name             string   `json:"name" required:"true" nullable:"true"`
+	Keys             []string `json:"keys" required:"true" nullable:"true"`
+	Condition        string   `json:"condition" required:"true" nullable:"true"`
+	InitialParts     int64    `json:"initialParts" required:"true" nullable:"true"`
+	SelectedParts    int64    `json:"selectedParts" required:"true" nullable:"true"`
+	InitialGranules  int64    `json:"initialGranules" required:"true" nullable:"true"`
+	SelectedGranules int64    `json:"selectedGranules" required:"true" nullable:"true"`
+}
+
+// MarshalJSON renders Error in its structured form (code/message/suggestions)
+// rather than the empty object a bare error produces.
+func (p QueryPreview) MarshalJSON() ([]byte, error) {
+	type alias QueryPreview
+	out := struct {
+		alias
+		Error *errors.JSON `json:"error"`
+	}{alias: alias(p)}
+	out.alias.Error = nil
+	// Derive the verdict so the two can't desync.
+	out.Valid = p.Error == nil
+	if p.Error != nil {
+		out.Error = errors.AsJSON(p.Error)
+	}
+	return json.Marshal(out)
 }
 
 var _ jsonschema.Preparer = &QueryRangeResponse{}

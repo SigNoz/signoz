@@ -575,6 +575,75 @@ func (r *QueryRangeRequest) Validate(opts ...ValidationOption) error {
 	return nil
 }
 
+// ValidateRequestScope validates request-level invariants without validating
+// individual query specs, returning the request type's ValidationOptions. The
+// dry-run path uses this so per-query errors can be attributed individually
+// (via QueryEnvelope.Validate) instead of failing fast the way Validate does.
+func (r *QueryRangeRequest) ValidateRequestScope() ([]ValidationOption, error) {
+	if r.RequestType != RequestTypeRawStream && r.Start >= r.End {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "start time must be before end time")
+	}
+
+	var opts []ValidationOption
+	switch r.RequestType {
+	case RequestTypeRaw, RequestTypeRawStream, RequestTypeTrace, RequestTypeTimeSeries, RequestTypeScalar:
+		opts = GetValidationOptions(r.RequestType)
+	default:
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid request type: %s", r.RequestType).
+			WithAdditional("Valid request types are: raw, timeseries, scalar")
+	}
+
+	if r.RequestType == RequestTypeRaw || r.RequestType == RequestTypeRawStream || r.RequestType == RequestTypeTrace {
+		for _, envelope := range r.CompositeQuery.Queries {
+			if envelope.GetSignal() == telemetrytypes.SignalMetrics {
+				return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "raw request type is not supported for metric queries")
+			}
+		}
+	}
+
+	if len(r.CompositeQuery.Queries) == 0 {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "at least one query is required")
+	}
+
+	// Builder query names must be unique across the composite query.
+	queryNames := make(map[string]bool)
+	for _, envelope := range r.CompositeQuery.Queries {
+		if envelope.Type == QueryTypeBuilder || envelope.Type == QueryTypeSubQuery {
+			name := envelope.GetQueryName()
+			if name != "" {
+				if queryNames[name] {
+					return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "duplicate query name '%s'", name)
+				}
+				queryNames[name] = true
+			}
+		}
+	}
+
+	if err := r.validateAllQueriesNotDisabled(); err != nil {
+		return nil, err
+	}
+
+	return opts, nil
+}
+
+// Validate parses the preview query-string parameters. Verbose defaults to true
+// and accepts true/1/false/0; any other value is rejected.
+func (p *QueryRangePreviewParams) Validate() (QueryRangePreviewOptions, error) {
+	switch strings.ToLower(strings.TrimSpace(p.Verbose)) {
+	case "", "true", "1":
+		return QueryRangePreviewOptions{Verbose: true}, nil
+	case "false", "0":
+		return QueryRangePreviewOptions{Verbose: false}, nil
+	}
+	return QueryRangePreviewOptions{}, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid verbose value %q (allowed: true, false)", p.Verbose)
+}
+
+// Validate validates a single query envelope's spec — the per-query counterpart
+// to ValidateRequestScope, used by the dry-run to report errors independently.
+func (e QueryEnvelope) Validate(opts ...ValidationOption) error {
+	return validateQueryEnvelope(e, opts...)
+}
+
 // validateAllQueriesNotDisabled validates that at least one query in the composite query is enabled.
 func (r *QueryRangeRequest) validateAllQueriesNotDisabled() error {
 	for _, envelope := range r.CompositeQuery.Queries {
