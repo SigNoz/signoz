@@ -23,7 +23,7 @@ func TestAuthDomainConfigWireRoundTrip(t *testing.T) {
 		{
 			name:     "saml",
 			provider: AuthNProviderSAML,
-			config: &SamlConfig{
+			config: &SAMLConfig{
 				SamlEntity: "https://idp.example.com",
 				SamlIdp:    "https://idp.example.com/sso",
 				SamlCert:   "cert-bytes",
@@ -60,7 +60,7 @@ func TestAuthDomainConfigWireRoundTrip(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			in := AuthDomainConfig{
 				SSOEnabled: true,
-				Provider:   AuthProviderEnvelop{Type: tt.provider, Config: tt.config},
+				Provider:   AuthProviderEnvelope{Type: tt.provider, Config: tt.config},
 			}
 
 			raw, err := json.Marshal(in)
@@ -118,9 +118,9 @@ func TestAuthDomainConfigUnmarshalRejects(t *testing.T) {
 func TestAuthDomainStorageRoundTrip(t *testing.T) {
 	cfg := AuthDomainConfig{
 		SSOEnabled: true,
-		Provider: AuthProviderEnvelop{
+		Provider: AuthProviderEnvelope{
 			Type:   AuthNProviderSAML,
-			Config: &SamlConfig{SamlEntity: "https://idp", SamlIdp: "https://idp/sso", SamlCert: "abc"},
+			Config: &SAMLConfig{SamlEntity: "https://idp", SamlIdp: "https://idp/sso", SamlCert: "abc"},
 		},
 	}
 

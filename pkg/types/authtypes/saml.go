@@ -6,7 +6,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 )
 
-type SamlConfig struct {
+type SAMLConfig struct {
 	// The entityID of the SAML identity provider. It can typically be found in the EntityID attribute of the EntityDescriptor element in the SAML metadata of the identity provider. Example: <md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" entityID="{samlEntity}">
 	SamlEntity string `json:"samlEntity"`
 
@@ -25,8 +25,8 @@ type SamlConfig struct {
 	AttributeMapping AttributeMapping `json:"attributeMapping"`
 }
 
-func (config *SamlConfig) UnmarshalJSON(data []byte) error {
-	type Alias SamlConfig
+func (config *SAMLConfig) UnmarshalJSON(data []byte) error {
+	type Alias SAMLConfig
 
 	var temp Alias
 	if err := json.Unmarshal(data, &temp); err != nil {
@@ -51,6 +51,6 @@ func (config *SamlConfig) UnmarshalJSON(data []byte) error {
 		}
 	}
 
-	*config = SamlConfig(temp)
+	*config = SAMLConfig(temp)
 	return nil
 }

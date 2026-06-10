@@ -58,32 +58,14 @@ type StorableAuthDomain struct {
 	types.TimeAuditable
 }
 
-// TODO: the oneOf emitted by JSONSchemaOneOf is not the shape OpenAPI wants
-// for a discriminated union. OpenAPI's discriminator requires every oneOf
-// branch to be a $ref to a named component and a sibling property whose value
-// selects the variant. ssoType is already discriminator-shaped, but the
-// variant payload lives in a sibling field (samlConfig / googleAuthConfig /
-// oidcConfig) instead of being the payload itself, so no discriminator can
-// be attached. Refactor AuthDomainConfig into an envelope (see
-// ruletypes.RuleThresholdData for the pattern) where the chosen config is
-// the payload and ssoType is the discriminator.
-// type AuthDomainConfig struct {
-// 	SSOEnabled    bool          `json:"ssoEnabled"`
-// 	AuthNProvider AuthNProvider `json:"ssoType"`
-// 	SAML          *SamlConfig   `json:"samlConfig"`
-// 	Google        *GoogleConfig `json:"googleAuthConfig"`
-// 	OIDC          *OIDCConfig   `json:"oidcConfig"`
-// 	RoleMapping   *RoleMapping  `json:"roleMapping"`
-// }
-
 type AuthDomainConfig struct {
-	SSOEnabled  bool                `json:"ssoEnabled"`
-	RoleMapping *RoleMapping        `json:"roleMapping,omitempty"`
-	Provider    AuthProviderEnvelop `json:"provider"`
+	SSOEnabled  bool                 `json:"ssoEnabled"`
+	RoleMapping *RoleMapping         `json:"roleMapping,omitempty"`
+	Provider    AuthProviderEnvelope `json:"provider"`
 }
 
-func (config AuthDomainConfig) Saml() *SamlConfig {
-	cfg, _ := config.Provider.Config.(*SamlConfig)
+func (config AuthDomainConfig) Saml() *SAMLConfig {
+	cfg, _ := config.Provider.Config.(*SAMLConfig)
 	return cfg
 }
 
@@ -97,7 +79,7 @@ func (config AuthDomainConfig) Oidc() *OIDCConfig {
 	return cfg
 }
 
-type AuthProviderEnvelop struct {
+type AuthProviderEnvelope struct {
 	Type   AuthNProvider `json:"type" required:"true"`
 	Config any           `json:"config" required:"true"` // this can be either of SamlConfig, OIDCConfig and GoogleConfig
 }
@@ -105,7 +87,7 @@ type AuthProviderEnvelop struct {
 // internal - drives the oneOf thing in open api spec
 type authProviderSAML struct {
 	Type   AuthNProvider `json:"type" required:"true"`
-	Config SamlConfig    `json:"config" required:"true"`
+	Config SAMLConfig    `json:"config" required:"true"`
 }
 
 type authProviderOIDC struct {
@@ -119,11 +101,11 @@ type authProviderGoogle struct {
 }
 
 var (
-	_ jsonschema.OneOfExposer = AuthProviderEnvelop{}
-	_ jsonschema.Preparer     = AuthProviderEnvelop{}
+	_ jsonschema.OneOfExposer = AuthProviderEnvelope{}
+	_ jsonschema.Preparer     = AuthProviderEnvelope{}
 )
 
-func (AuthProviderEnvelop) JSONSchemaOneOf() []any {
+func (AuthProviderEnvelope) JSONSchemaOneOf() []any {
 	return []any{
 		authProviderSAML{},
 		authProviderOIDC{},
@@ -131,7 +113,7 @@ func (AuthProviderEnvelop) JSONSchemaOneOf() []any {
 	}
 }
 
-func (AuthProviderEnvelop) PrepareJSONSchema(schema *jsonschema.Schema) error {
+func (AuthProviderEnvelope) PrepareJSONSchema(schema *jsonschema.Schema) error {
 	if schema.ExtraProperties == nil {
 		schema.ExtraProperties = map[string]any{}
 	}
@@ -148,7 +130,7 @@ func (AuthProviderEnvelop) PrepareJSONSchema(schema *jsonschema.Schema) error {
 	return nil
 }
 
-func (envelop *AuthProviderEnvelop) UnmarshalJSON(data []byte) error {
+func (envelop *AuthProviderEnvelope) UnmarshalJSON(data []byte) error {
 	var raw struct {
 		Type   AuthNProvider   `json:"type"`
 		Config json.RawMessage `json:"config"`
@@ -162,7 +144,7 @@ func (envelop *AuthProviderEnvelop) UnmarshalJSON(data []byte) error {
 
 	switch raw.Type {
 	case AuthNProviderSAML:
-		cfg := new(SamlConfig)
+		cfg := new(SAMLConfig)
 		if err := json.Unmarshal(raw.Config, cfg); err != nil {
 			return err
 		}
