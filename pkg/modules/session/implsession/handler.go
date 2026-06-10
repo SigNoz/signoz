@@ -4,9 +4,11 @@ import (
 	"context"
 	"net/http"
 	"net/url"
+	"path"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/session"
@@ -15,11 +17,12 @@ import (
 )
 
 type handler struct {
-	module session.Module
+	module       session.Module
+	globalConfig global.Config
 }
 
-func NewHandler(module session.Module) session.Handler {
-	return &handler{module: module}
+func NewHandler(module session.Module, globalConfig global.Config) session.Handler {
+	return &handler{module: module, globalConfig: globalConfig}
 }
 
 func (handler *handler) GetSessionContext(rw http.ResponseWriter, req *http.Request) {
@@ -158,13 +161,13 @@ func (handler *handler) DeleteSession(rw http.ResponseWriter, req *http.Request)
 	render.Success(rw, http.StatusNoContent, nil)
 }
 
-func (*handler) getRedirectURLFromErr(err error) string {
+func (handler *handler) getRedirectURLFromErr(err error) string {
 	values := errors.AsURLValues(err)
 	values.Add("callbackauthnerr", "true")
 
 	return (&url.URL{
 		// When UI is being served on a prefix, we need to redirect to the login page on the prefix.
-		Path:     "/login",
+		Path:     path.Join(handler.globalConfig.ExternalPath(), "/login"),
 		RawQuery: values.Encode(),
 	}).String()
 }

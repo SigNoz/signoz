@@ -36,9 +36,6 @@ export function useAddPanelToSection({
 
 	return useCallback(
 		async ({ layoutIndex, pluginKind }: AddPanelArgs): Promise<void> => {
-			if (!dashboardId) {
-				return;
-			}
 			const target = sections.find((s) => s.layoutIndex === layoutIndex);
 			if (!target) {
 				return;
