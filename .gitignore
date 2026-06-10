@@ -40,6 +40,8 @@ frontend/src/constants/env.ts
 **/__debug_bin
 
 .env
+# sqlite db created at repo root by `make go-run-community` / `make go-run-enterprise`
+/signoz.db
 pkg/query-service/signoz.db
 
 pkg/query-service/tests/test-deploy/data/

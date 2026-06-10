@@ -43,6 +43,7 @@ jobs:
           - callbackauthn
           - cloudintegrations
           - dashboard
+          - emptystate
           - ingestionkeys
           - inframonitoring
           - logspipelines

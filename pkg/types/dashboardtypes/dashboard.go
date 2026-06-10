@@ -168,6 +168,9 @@ func NewGettableDashboardFromDashboard(dashboard *Dashboard) (*GettableDashboard
 	}, nil
 }
 
+// StatKeyDashboardCount is the dashboard count stat key shared by the stats reporter and its API consumers.
+const StatKeyDashboardCount = "dashboard.count"
+
 func NewStatsFromStorableDashboards(dashboards []*StorableDashboard) map[string]any {
 	stats := make(map[string]any)
 	stats["dashboard.panels.count"] = int64(0)
@@ -178,7 +181,7 @@ func NewStatsFromStorableDashboards(dashboards []*StorableDashboard) map[string]
 		addStatsFromStorableDashboard(dashboard, stats)
 	}
 
-	stats["dashboard.count"] = int64(len(dashboards))
+	stats[StatKeyDashboardCount] = int64(len(dashboards))
 	return stats
 }
 

@@ -16,7 +16,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/statsreporter"
-	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/tokenizer"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
@@ -31,9 +30,6 @@ type provider struct {
 
 	// config
 	config statsreporter.Config
-
-	// used to get telemetry details. srikanthcvv to move this to the querier layer
-	telemetryStore telemetrystore.TelemetryStore
 
 	// a list of collectors, used to collect stats from across the codebase
 	collectors []statsreporter.StatsCollector
@@ -60,9 +56,9 @@ type provider struct {
 	stopC chan struct{}
 }
 
-func NewFactory(telemetryStore telemetrystore.TelemetryStore, collectors []statsreporter.StatsCollector, orgGetter organization.Getter, userGetter user.Getter, tokenizer tokenizer.Tokenizer, build version.Build, analyticsConfig analytics.Config) factory.ProviderFactory[statsreporter.StatsReporter, statsreporter.Config] {
+func NewFactory(collectors []statsreporter.StatsCollector, orgGetter organization.Getter, userGetter user.Getter, tokenizer tokenizer.Tokenizer, build version.Build, analyticsConfig analytics.Config) factory.ProviderFactory[statsreporter.StatsReporter, statsreporter.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("analytics"), func(ctx context.Context, settings factory.ProviderSettings, config statsreporter.Config) (statsreporter.StatsReporter, error) {
-		return New(ctx, settings, config, telemetryStore, collectors, orgGetter, userGetter, tokenizer, build, analyticsConfig)
+		return New(ctx, settings, config, collectors, orgGetter, userGetter, tokenizer, build, analyticsConfig)
 	})
 }
 
@@ -70,7 +66,6 @@ func New(
 	ctx context.Context,
 	providerSettings factory.ProviderSettings,
 	config statsreporter.Config,
-	telemetryStore telemetrystore.TelemetryStore,
 	collectors []statsreporter.StatsCollector,
 	orgGetter organization.Getter,
 	userGetter user.Getter,
@@ -86,17 +81,16 @@ func New(
 	}
 
 	return &provider{
-		settings:       settings,
-		config:         config,
-		telemetryStore: telemetryStore,
-		collectors:     collectors,
-		orgGetter:      orgGetter,
-		userGetter:     userGetter,
-		analytics:      analytics,
-		tokenizer:      tokenizer,
-		build:          build,
-		deployment:     deployment,
-		stopC:          make(chan struct{}),
+		settings:   settings,
+		config:     config,
+		collectors: collectors,
+		orgGetter:  orgGetter,
+		userGetter: userGetter,
+		analytics:  analytics,
+		tokenizer:  tokenizer,
+		build:      build,
+		deployment: deployment,
+		stopC:      make(chan struct{}),
 	}, nil
 }
 
@@ -234,45 +228,6 @@ func (provider *provider) collectOrg(ctx context.Context, orgID valuer.UUID) map
 		}(collector)
 	}
 	wg.Wait()
-
-	var traces uint64
-	if err := provider.telemetryStore.ClickhouseDB().QueryRow(ctx, "SELECT COUNT(*) FROM signoz_traces.distributed_signoz_index_v3").Scan(&traces); err == nil {
-		stats["telemetry.traces.count"] = traces
-	}
-
-	var logs uint64
-	if err := provider.telemetryStore.ClickhouseDB().QueryRow(ctx, "SELECT COUNT(*) FROM signoz_logs.distributed_logs_v2").Scan(&logs); err == nil {
-		stats["telemetry.logs.count"] = logs
-	}
-
-	var metrics uint64
-	if err := provider.telemetryStore.ClickhouseDB().QueryRow(ctx, "SELECT COUNT(*) FROM signoz_metrics.distributed_samples_v4").Scan(&metrics); err == nil {
-		stats["telemetry.metrics.count"] = metrics
-	}
-
-	var tracesLastSeenAt time.Time
-	if err := provider.telemetryStore.ClickhouseDB().QueryRow(ctx, "SELECT max(timestamp) FROM signoz_traces.distributed_signoz_index_v3").Scan(&tracesLastSeenAt); err == nil {
-		if tracesLastSeenAt.Unix() != 0 {
-			stats["telemetry.traces.last_observed.time"] = tracesLastSeenAt.UTC()
-			stats["telemetry.traces.last_observed.time_unix"] = tracesLastSeenAt.Unix()
-		}
-	}
-
-	var logsLastSeenAt time.Time
-	if err := provider.telemetryStore.ClickhouseDB().QueryRow(ctx, "SELECT fromUnixTimestamp64Nano(max(timestamp)) FROM signoz_logs.distributed_logs_v2").Scan(&logsLastSeenAt); err == nil {
-		if logsLastSeenAt.Unix() != 0 {
-			stats["telemetry.logs.last_observed.time"] = logsLastSeenAt.UTC()
-			stats["telemetry.logs.last_observed.time_unix"] = logsLastSeenAt.Unix()
-		}
-	}
-
-	var metricsLastSeenAt time.Time
-	if err := provider.telemetryStore.ClickhouseDB().QueryRow(ctx, "SELECT toDateTime(max(unix_milli) / 1000) FROM signoz_metrics.distributed_samples_v4").Scan(&metricsLastSeenAt); err == nil {
-		if metricsLastSeenAt.Unix() != 0 {
-			stats["telemetry.metrics.last_observed.time"] = metricsLastSeenAt.UTC()
-			stats["telemetry.metrics.last_observed.time_unix"] = metricsLastSeenAt.Unix()
-		}
-	}
 
 	return stats
 }

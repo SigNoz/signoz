@@ -22,6 +22,9 @@ type SavedView struct {
 	ExtraData  string `json:"extraData" bun:"extra_data,type:text"`
 }
 
+// StatKeySavedViewCount is the saved view count stat key shared by the stats reporter and its API consumers.
+const StatKeySavedViewCount = "savedview.count"
+
 func NewStatsFromSavedViews(savedViews []*SavedView) map[string]any {
 	stats := make(map[string]any)
 	for _, savedView := range savedViews {
@@ -33,6 +36,6 @@ func NewStatsFromSavedViews(savedViews []*SavedView) map[string]any {
 		}
 	}
 
-	stats["savedview.count"] = int64(len(savedViews))
+	stats[StatKeySavedViewCount] = int64(len(savedViews))
 	return stats
 }

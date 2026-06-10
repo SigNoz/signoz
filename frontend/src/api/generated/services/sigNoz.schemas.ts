@@ -4826,6 +4826,56 @@ export enum DashboardtypesVariablePluginKindDTO {
 	'signoz/QueryVariable' = 'signoz/QueryVariable',
 	'signoz/CustomVariable' = 'signoz/CustomVariable',
 }
+export interface EmptystatetypesLastIngestedAtDTO {
+	/**
+	 * @type string,null
+	 * @format date-time
+	 * @description Null when no logs were ingested in the last 7 days.
+	 */
+	logs: string | null;
+	/**
+	 * @type string,null
+	 * @format date-time
+	 * @description Null when no metrics were ingested in the last 7 days. Excludes span-generated metrics (signoz_ prefix), which only prove traces ingestion.
+	 */
+	metrics: string | null;
+	/**
+	 * @type string,null
+	 * @format date-time
+	 * @description Null when no traces were ingested in the last 7 days.
+	 */
+	traces: string | null;
+}
+
+export interface EmptystatetypesOrgContextDTO {
+	/**
+	 * @type integer
+	 */
+	alertsCount: number;
+	/**
+	 * @type integer
+	 */
+	dashboardsCount: number;
+	/**
+	 * @type boolean
+	 */
+	hasInfraMetrics: boolean;
+	/**
+	 * @type boolean
+	 */
+	hasIngestedData: boolean;
+	lastIngestedAt: EmptystatetypesLastIngestedAtDTO;
+	/**
+	 * @type string
+	 * @description Raw Zeus license state. Known values include DEFAULTED, ACTIVATED, EXPIRED, ISSUED, EVALUATING, EVALUATION_EXPIRED, TERMINATED, CANCELLED. UNKNOWN is emitted when no license state is available.
+	 */
+	licenseStatus: string;
+	/**
+	 * @type integer
+	 */
+	savedViewsCount: number;
+}
+
 export type FactoryResponseDTOServicesAnyOf = { [key: string]: string[] };
 
 /**
@@ -9042,6 +9092,14 @@ export type GetDowntimeScheduleByID200 = {
 export type UpdateDowntimeScheduleByIDPathParameters = {
 	id: string;
 };
+export type GetOrgContext200 = {
+	data: EmptystatetypesOrgContextDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type HandleExportRawDataPOSTParams = {
 	/**
 	 * @enum csv,jsonl

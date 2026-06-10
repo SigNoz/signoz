@@ -20,6 +20,9 @@ type StorableRule struct {
 	OrgID   string `bun:"org_id,type:text"`
 }
 
+// StatKeyRuleCount is the rule count stat key shared by the stats reporter and its API consumers.
+const StatKeyRuleCount = "rule.count"
+
 func NewStatsFromRules(rules []*StorableRule) map[string]any {
 	stats := make(map[string]any)
 	for _, rule := range rules {
@@ -43,7 +46,7 @@ func NewStatsFromRules(rules []*StorableRule) map[string]any {
 		}
 	}
 
-	stats["rule.count"] = int64(len(rules))
+	stats[StatKeyRuleCount] = int64(len(rules))
 	return stats
 }
 

@@ -3355,6 +3355,57 @@ components:
       - kind
       - spec
       type: object
+    EmptystatetypesLastIngestedAt:
+      properties:
+        logs:
+          description: Null when no logs were ingested in the last 7 days.
+          format: date-time
+          nullable: true
+          type: string
+        metrics:
+          description: Null when no metrics were ingested in the last 7 days. Excludes
+            span-generated metrics (signoz_ prefix), which only prove traces ingestion.
+          format: date-time
+          nullable: true
+          type: string
+        traces:
+          description: Null when no traces were ingested in the last 7 days.
+          format: date-time
+          nullable: true
+          type: string
+      required:
+      - logs
+      - traces
+      - metrics
+      type: object
+    EmptystatetypesOrgContext:
+      properties:
+        alertsCount:
+          type: integer
+        dashboardsCount:
+          type: integer
+        hasInfraMetrics:
+          type: boolean
+        hasIngestedData:
+          type: boolean
+        lastIngestedAt:
+          $ref: '#/components/schemas/EmptystatetypesLastIngestedAt'
+        licenseStatus:
+          description: Raw Zeus license state. Known values include DEFAULTED, ACTIVATED,
+            EXPIRED, ISSUED, EVALUATING, EVALUATION_EXPIRED, TERMINATED, CANCELLED.
+            UNKNOWN is emitted when no license state is available.
+          type: string
+        savedViewsCount:
+          type: integer
+      required:
+      - hasIngestedData
+      - lastIngestedAt
+      - hasInfraMetrics
+      - alertsCount
+      - dashboardsCount
+      - savedViewsCount
+      - licenseStatus
+      type: object
     ErrorsJSON:
       properties:
         code:
@@ -9509,6 +9560,53 @@ paths:
       summary: Update downtime schedule
       tags:
       - downtimeschedules
+  /api/v1/empty_state/org_context:
+    get:
+      deprecated: false
+      description: This endpoint returns raw org-level observability signals used
+        to render contextual empty states
+      operationId: GetOrgContext
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/EmptystatetypesOrgContext'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get org context for empty states
+      tags:
+      - emptystate
   /api/v1/export_raw_data:
     post:
       deprecated: false

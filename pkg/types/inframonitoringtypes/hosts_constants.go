@@ -22,6 +22,14 @@ func (HostStatus) Enum() []any {
 
 const HostNameAttrKey = "host.name"
 
+// HostsTableMetricNames drives host presence checks (infra monitoring, empty-state).
+var HostsTableMetricNames = []string{
+	"system.cpu.time",
+	"system.memory.usage",
+	"system.cpu.load_average.15m",
+	"system.filesystem.usage",
+}
+
 const (
 	HostsOrderByCPU       = "cpu"
 	HostsOrderByMemory    = "memory"

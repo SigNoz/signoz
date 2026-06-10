@@ -358,11 +358,14 @@ func NewLicenseFromStorableLicense(storableLicense *StorableLicense) (*License, 
 
 }
 
+// StatKeyLicenseStateName is the license state stat key shared by the stats reporter and its API consumers.
+const StatKeyLicenseStateName = "license.state.name"
+
 func NewStatsFromLicense(license *License) map[string]any {
 	return map[string]any{
 		"license.id":              license.ID.StringValue(),
 		"license.plan.name":       license.PlanName.StringValue(),
-		"license.state.name":      license.State,
+		StatKeyLicenseStateName:   license.State,
 		"license.free_until.time": license.FreeUntil.UTC(),
 	}
 }

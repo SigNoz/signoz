@@ -29,6 +29,16 @@ const (
 
 const NodeNameAttrKey = "k8s.node.name"
 
+// NodesTableMetricNames drives node presence checks; includes condition_ready and k8s.pod.phase.
+var NodesTableMetricNames = []string{
+	"k8s.node.cpu.usage",
+	"k8s.node.allocatable_cpu",
+	"k8s.node.memory.working_set",
+	"k8s.node.allocatable_memory",
+	"k8s.node.condition_ready",
+	"k8s.pod.phase",
+}
+
 const (
 	NodesOrderByCPU               = "cpu"
 	NodesOrderByCPUAllocatable    = "cpu_allocatable"
