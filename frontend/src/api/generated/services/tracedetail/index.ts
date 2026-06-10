@@ -16,8 +16,6 @@ import type {
 	GetFlamegraphPathParameters,
 	GetTraceAggregations200,
 	GetTraceAggregationsPathParameters,
-	GetWaterfall200,
-	GetWaterfallPathParameters,
 	GetWaterfallV4200,
 	GetWaterfallV4PathParameters,
 	RenderErrorResponseDTO,
@@ -227,105 +225,6 @@ export const useGetFlamegraph = <
 	TContext
 > => {
 	return useMutation(getGetFlamegraphMutationOptions(options));
-};
-/**
- * Returns the waterfall view of spans for a given trace ID with tree structure, metadata, and windowed pagination
- * @summary Get waterfall view for a trace
- */
-export const getWaterfall = (
-	{ traceID }: GetWaterfallPathParameters,
-	spantypesPostableWaterfallDTO?: BodyType<SpantypesPostableWaterfallDTO>,
-	signal?: AbortSignal,
-) => {
-	return GeneratedAPIInstance<GetWaterfall200>({
-		url: `/api/v3/traces/${traceID}/waterfall`,
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
-		data: spantypesPostableWaterfallDTO,
-		signal,
-	});
-};
-
-export const getGetWaterfallMutationOptions = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof getWaterfall>>,
-		TError,
-		{
-			pathParams: GetWaterfallPathParameters;
-			data?: BodyType<SpantypesPostableWaterfallDTO>;
-		},
-		TContext
-	>;
-}): UseMutationOptions<
-	Awaited<ReturnType<typeof getWaterfall>>,
-	TError,
-	{
-		pathParams: GetWaterfallPathParameters;
-		data?: BodyType<SpantypesPostableWaterfallDTO>;
-	},
-	TContext
-> => {
-	const mutationKey = ['getWaterfall'];
-	const { mutation: mutationOptions } = options
-		? options.mutation &&
-			'mutationKey' in options.mutation &&
-			options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey } };
-
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof getWaterfall>>,
-		{
-			pathParams: GetWaterfallPathParameters;
-			data?: BodyType<SpantypesPostableWaterfallDTO>;
-		}
-	> = (props) => {
-		const { pathParams, data } = props ?? {};
-
-		return getWaterfall(pathParams, data);
-	};
-
-	return { mutationFn, ...mutationOptions };
-};
-
-export type GetWaterfallMutationResult = NonNullable<
-	Awaited<ReturnType<typeof getWaterfall>>
->;
-export type GetWaterfallMutationBody =
-	| BodyType<SpantypesPostableWaterfallDTO>
-	| undefined;
-export type GetWaterfallMutationError = ErrorType<RenderErrorResponseDTO>;
-
-/**
- * @summary Get waterfall view for a trace
- */
-export const useGetWaterfall = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof getWaterfall>>,
-		TError,
-		{
-			pathParams: GetWaterfallPathParameters;
-			data?: BodyType<SpantypesPostableWaterfallDTO>;
-		},
-		TContext
-	>;
-}): UseMutationResult<
-	Awaited<ReturnType<typeof getWaterfall>>,
-	TError,
-	{
-		pathParams: GetWaterfallPathParameters;
-		data?: BodyType<SpantypesPostableWaterfallDTO>;
-	},
-	TContext
-> => {
-	return useMutation(getGetWaterfallMutationOptions(options));
 };
 /**
  * Returns the waterfall view of spans including all spans if total spans are under a limit, a max count otherwise. Aggregations are dropped compared to v3

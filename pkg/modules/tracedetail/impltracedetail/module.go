@@ -34,66 +34,21 @@ func NewModule(traceStore spantypes.TraceStore, providerSettings factory.Provide
 	}
 
 	m.metrics.waterfallSpanLimit.Record(context.Background(), int64(cfg.Waterfall.MaxLimitToSelectAllSpans), metric.WithAttributes(attrResponseType.String(attrResponseTypeWindowed)))
+	m.metrics.flamegraphSpanLimit.Record(context.Background(), int64(cfg.Flamegraph.SelectAllSpansLimit), metric.WithAttributes(attrResponseType.String(attrResponseTypeSampled)))
 
 	return m
-}
-
-func (m *module) GetWaterfall(ctx context.Context, traceID string, req *spantypes.PostableWaterfall) (*spantypes.GettableWaterfallTrace, error) {
-	waterfallTrace, err := m.getTraceData(ctx, traceID)
-	if err != nil {
-		return nil, err
-	}
-
-	selectedSpans, uncollapsedSpans, selectedAllSpans := waterfallTrace.GetWaterfallSpans(
-		req.UncollapsedSpans,
-		req.SelectedSpanID,
-		min(req.Limit, m.config.Waterfall.MaxLimitToSelectAllSpans),
-		m.config.Waterfall.SpanPageSize,
-		m.config.Waterfall.MaxDepthToAutoExpand,
-	)
-
-	aggregationResults := make([]spantypes.SpanAggregationResult, 0, len(req.Aggregations))
-	for _, a := range req.Aggregations {
-		aggregationResults = append(aggregationResults, waterfallTrace.GetSpanAggregation(a.Aggregation, a.Field))
-	}
-
-	return spantypes.NewGettableWaterfallTrace(waterfallTrace, selectedSpans, uncollapsedSpans, selectedAllSpans, aggregationResults), nil
-}
-
-// getTraceData fetches all spans for a trace and builds the WaterfallTrace.
-func (m *module) getTraceData(ctx context.Context, traceID string) (*spantypes.WaterfallTrace, error) {
-	summary, err := m.store.GetTraceSummary(ctx, traceID)
-	if err != nil {
-		return nil, err
-	}
-
-	spanItems, err := m.store.GetTraceSpans(ctx, traceID, summary)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(spanItems) == 0 {
-		return nil, spantypes.ErrTraceNotFound
-	}
-
-	nodes := make([]*spantypes.WaterfallSpan, len(spanItems))
-	for i := range spanItems {
-		nodes[i] = spanItems[i].ToWaterfallSpan(traceID)
-	}
-	return spantypes.NewWaterfallTraceFromSpans(nodes), nil
 }
 
 // GetWaterfallV4 is the OOM-safe V4 waterfall.
 // For large traces (NumSpans > effectiveLimit) it uses a two-step fetch:
 // minimal fields for all spans to build the tree, then full fields for the
 // visible window only. Aggregations are not returned.
-func (m *module) GetWaterfallV4(ctx context.Context, traceID string, selectedSpanID string, uncollapsedSpans []string, selectAllLimit uint) (*spantypes.GettableWaterfallTrace, error) {
+func (m *module) GetWaterfallV4(ctx context.Context, traceID string, selectedSpanID string, uncollapsedSpans []string) (*spantypes.GettableWaterfallTrace, error) {
 	summary, err := m.store.GetTraceSummary(ctx, traceID)
 	if err != nil {
 		return nil, err
 	}
-	effectiveLimit := min(selectAllLimit, m.config.Waterfall.MaxLimitToSelectAllSpans)
-	if summary.NumSpans > uint64(effectiveLimit) {
+	if summary.NumSpans > uint64(m.config.Waterfall.MaxLimitToSelectAllSpans) {
 		attrs := metric.WithAttributes(attrResponseType.String(attrResponseTypeWindowed))
 		m.metrics.waterfallRequestCount.Add(ctx, 1, attrs)
 		m.metrics.waterfallSpanCount.Add(ctx, int64(summary.NumSpans), attrs)
@@ -119,7 +74,7 @@ func (m *module) getFullWaterfall(ctx context.Context, traceID string, summary *
 	waterfallTrace := spantypes.NewWaterfallTraceFromSpans(nodes)
 	selectedSpans := waterfallTrace.GetAllSpans()
 
-	return spantypes.NewGettableWaterfallTrace(waterfallTrace, selectedSpans, nil, true, nil), nil
+	return spantypes.NewGettableWaterfallTrace(waterfallTrace, selectedSpans, nil, true), nil
 }
 
 func (m *module) GetTraceAggregations(ctx context.Context, traceID string, req *spantypes.PostableTraceAggregations) (*spantypes.GettableTraceAggregations, error) {
@@ -173,6 +128,7 @@ func (m *module) GetFlamegraph(ctx context.Context, traceID string, selectedSpan
 	if summary.NumSpans <= uint64(m.config.Flamegraph.SelectAllSpansLimit) {
 		return m.getFullFlamegraph(ctx, traceID, summary, selectFields)
 	}
+	m.metrics.flamegraphRequestCount.Add(ctx, 1, metric.WithAttributes(attrResponseType.String(attrResponseTypeSampled)))
 	return m.getWindowedFlamegraph(ctx, traceID, selectedSpanID, summary, selectFields)
 }
 
@@ -213,7 +169,7 @@ func (m *module) getWindowedWaterfall(ctx context.Context, traceID, selectedSpan
 	spantypes.EnrichSelectedSpans(selectedSpans, fullSpans)
 
 	return spantypes.NewGettableWaterfallTrace(
-		waterfallTrace, selectedSpans, uncollapsedSpans, false, nil,
+		waterfallTrace, selectedSpans, uncollapsedSpans, false,
 	), nil
 }
 
