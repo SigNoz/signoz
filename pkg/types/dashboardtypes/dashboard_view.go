@@ -35,24 +35,20 @@ func (d *DashboardViewData) Validate() error {
 			"version must be %q, got %q", DashboardViewSchemaVersion, d.Version)
 	}
 	if !d.Sort.IsZero() {
-		s := d.Sort
-		switch s {
+		switch d.Sort {
 		case ListSortUpdatedAt, ListSortCreatedAt, ListSortName:
 		default:
 			return errors.NewInvalidInputf(ErrCodeDashboardViewInvalidInput,
 				"invalid sort %q — expected one of: `updated_at`, `created_at`, `name`", d.Sort)
 		}
-		d.Sort = s
 	}
 	if !d.Order.IsZero() {
-		o := d.Order
-		switch o {
+		switch d.Order {
 		case ListOrderAsc, ListOrderDesc:
 		default:
 			return errors.NewInvalidInputf(ErrCodeDashboardViewInvalidInput,
 				"invalid order %q — expected `asc` or `desc`", d.Order)
 		}
-		d.Order = o
 	}
 	return nil
 }
