@@ -1,0 +1,43 @@
+.settingsContainerRoot {
+	:global(.ant-drawer-wrapper-body) {
+		border-left: 1px solid var(--l1-border);
+		background: var(--l2-background);
+		box-shadow: -4px 10px 16px 2px rgba(0, 0, 0, 0.2);
+
+		:global(.ant-drawer-header) {
+			height: 48px;
+			border-bottom: 1px solid var(--l1-border);
+			padding: 14px 14px 14px 11px;
+
+			:global(.ant-drawer-header-title) {
+				gap: 16px;
+
+				:global(.ant-drawer-title) {
+					color: var(--l2-foreground);
+					font-family: Inter;
+					font-size: 14px;
+					font-style: normal;
+					font-weight: 400;
+					line-height: 20px; /* 142.857% */
+					letter-spacing: -0.07px;
+					padding-left: 16px;
+					border-left: 1px solid var(--l1-border);
+				}
+
+				:global(.ant-drawer-close) {
+					height: 16px;
+					width: 16px;
+					margin-inline-end: 0px !important;
+				}
+			}
+		}
+
+		:global(.ant-drawer-body) {
+			padding: 16px;
+
+			&::-webkit-scrollbar {
+				width: 0.1rem;
+			}
+		}
+	}
+}

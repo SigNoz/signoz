@@ -16,10 +16,11 @@ func newFormatter(dialect schema.Dialect) sqlstore.SQLFormatter {
 }
 
 func (f *formatter) JSONExtractString(column, path string) []byte {
-	var sql []byte
-	sql = f.bunf.AppendIdent(sql, column)
-	sql = append(sql, f.convertJSONPathToPostgres(path)...)
-	return sql
+	ops := f.convertJSONPathToPostgres(path)
+	if len(ops) == 0 {
+		return f.bunf.AppendIdent(nil, column)
+	}
+	return append(f.TextToJsonColumn(column), ops...)
 }
 
 func (f *formatter) JSONType(column, path string) []byte {
