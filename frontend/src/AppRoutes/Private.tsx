@@ -106,6 +106,19 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		);
 	}
 
+	if (pathname.startsWith('/settings/channels/edit/')) {
+		const channelId = pathname.replace('/settings/channels/edit/', '');
+		return (
+			<Redirect
+				to={{
+					pathname: `/alerts/channels/edit/${channelId}`,
+					search: location.search,
+					hash: location.hash,
+				}}
+			/>
+		);
+	}
+
 	// Public dashboard - no redirect needed
 	const isPublicDashboard = currentRoute?.path === ROUTES.PUBLIC_DASHBOARD;
 	if (isPublicDashboard) {
