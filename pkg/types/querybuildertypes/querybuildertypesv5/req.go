@@ -149,7 +149,7 @@ func (q *QueryEnvelope) UnmarshalJSON(data []byte) error {
 			errors.CodeInvalidInput,
 			"unknown query type %q",
 			shadow.Type,
-		).WithSuggestions(enumReferencesSuggestion(QueryType{}.Enum()))
+		).WithSuggestions(errors.EnumReferences(QueryType{}.Enum()))
 	}
 
 	return nil
@@ -193,7 +193,7 @@ func UnmarshalBuilderQueryBySignal(data []byte) (any, error) {
 			errors.CodeInvalidInput,
 			"invalid signal %q",
 			header.Signal.StringValue(),
-		).WithSuggestions(enumReferencesSuggestion(telemetrytypes.Signal{}.Enum()))
+		).WithSuggestions(errors.EnumReferences(telemetrytypes.Signal{}.Enum()))
 	}
 }
 

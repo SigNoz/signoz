@@ -671,7 +671,7 @@ func validateQueryEnvelope(envelope QueryEnvelope, opts ...ValidationOption) err
 			errors.CodeInvalidInput,
 			"unknown query type: %s",
 			envelope.Type,
-		).WithSuggestions(enumReferencesSuggestion(QueryType{}.Enum()))
+		).WithSuggestions(errors.EnumReferences(QueryType{}.Enum()))
 	}
 }
 

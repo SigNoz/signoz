@@ -15,18 +15,6 @@ func UnmarshalJSONWithSuggestions(data []byte, target any) error {
 	return UnmarshalJSONWithContext(data, target, "")
 }
 
-// enumReferencesSuggestion renders an Enum() value list as a backtick-delimited
-// "valid references" suggestion string.
-func enumReferencesSuggestion(values []any) string {
-	refs := make([]string, 0, len(values))
-	for _, v := range values {
-		if sv, ok := v.(interface{ StringValue() string }); ok {
-			refs = append(refs, sv.StringValue())
-		}
-	}
-	return errors.ValidReferences(refs...)
-}
-
 // UnmarshalJSONWithContext unmarshals JSON with context information for better error messages.
 func UnmarshalJSONWithContext(data []byte, target any, context string) error {
 	// First, try to unmarshal with DisallowUnknownFields to catch unknown fields
