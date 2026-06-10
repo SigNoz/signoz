@@ -62,9 +62,16 @@ type DashboardV2 struct {
 	Spec DashboardSpec   `json:"spec" required:"true"`
 }
 
-func (d *DashboardV2) CanUpdate() error {
+func (d *DashboardV2) ErrIfNotMutable() error {
 	if d.Source == SourceIntegration {
 		return errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardImmutable, "integration dashboards cannot be modified")
+	}
+	return nil
+}
+
+func (d *DashboardV2) ErrIfNotUpdatable() error {
+	if err := d.ErrIfNotMutable(); err != nil {
+		return err
 	}
 	if d.Locked {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot update a locked dashboard, please unlock the dashboard to update")
@@ -73,7 +80,7 @@ func (d *DashboardV2) CanUpdate() error {
 }
 
 func (d *DashboardV2) Update(updatable UpdatableDashboardV2, updatedBy string, resolvedTags []*tagtypes.Tag) error {
-	if err := d.CanUpdate(); err != nil {
+	if err := d.ErrIfNotUpdatable(); err != nil {
 		return err
 	}
 	if updatable.Name != d.Name {
@@ -87,7 +94,7 @@ func (d *DashboardV2) Update(updatable UpdatableDashboardV2, updatedBy string, r
 	return nil
 }
 
-func (d *DashboardV2) CanLockUnlock(isAdmin bool, updatedBy string) error {
+func (d *DashboardV2) ErrIfNotLockable(isAdmin bool, updatedBy string) error {
 	if d.Source == SourceIntegration {
 		return errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardImmutable, "integration dashboards cannot be locked or unlocked")
 	}
@@ -101,7 +108,7 @@ func (d *DashboardV2) CanLockUnlock(isAdmin bool, updatedBy string) error {
 }
 
 func (d *DashboardV2) LockUnlock(lock bool, isAdmin bool, updatedBy string) error {
-	if err := d.CanLockUnlock(isAdmin, updatedBy); err != nil {
+	if err := d.ErrIfNotLockable(isAdmin, updatedBy); err != nil {
 		return err
 	}
 	d.Locked = lock
@@ -110,7 +117,7 @@ func (d *DashboardV2) LockUnlock(lock bool, isAdmin bool, updatedBy string) erro
 	return nil
 }
 
-func (d *DashboardV2) CanDelete() error {
+func (d *DashboardV2) ErrIfNotDeletable() error {
 	if d.Locked {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot delete a locked dashboard, please unlock the dashboard to delete")
 	}

@@ -119,7 +119,7 @@ func (module *module) UpdateV2(ctx context.Context, orgID valuer.UUID, id valuer
 		return nil, err
 	}
 	// Locked-dashboard / state gate — independent of tags, so run it before the tx.
-	if err := existing.CanUpdate(); err != nil {
+	if err := existing.ErrIfNotUpdatable(); err != nil {
 		return nil, err
 	}
 
@@ -154,7 +154,7 @@ func (module *module) PatchV2(ctx context.Context, orgID valuer.UUID, id valuer.
 		return nil, err
 	}
 	// Locked-dashboard / state gate — independent of tags, so run it before the tx.
-	if err := existing.CanUpdate(); err != nil {
+	if err := existing.ErrIfNotUpdatable(); err != nil {
 		return nil, err
 	}
 
@@ -193,7 +193,7 @@ func (module *module) DeleteV2(ctx context.Context, orgID valuer.UUID, id valuer
 	if err != nil {
 		return err
 	}
-	if err := existing.CanDelete(); err != nil {
+	if err := existing.ErrIfNotDeletable(); err != nil {
 		return err
 	}
 

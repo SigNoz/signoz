@@ -1,7 +1,10 @@
 package dashboardtypes
 
 import (
+	"time"
+
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 )
@@ -14,15 +17,20 @@ var ErrCodePinnedDashboardLimitHit = errors.MustNewCode("pinned_dashboard_limit_
 type UserDashboardPreference struct {
 	bun.BaseModel `bun:"table:user_dashboard_preference,alias:user_dashboard_preference"`
 
-	UserID      valuer.UUID `bun:"user_id,pk,type:text"`
-	DashboardID valuer.UUID `bun:"dashboard_id,pk,type:text"`
+	types.Identifiable
+	types.TimeAuditable
+	UserID      valuer.UUID `bun:"user_id,type:text"`
+	DashboardID valuer.UUID `bun:"dashboard_id,type:text"`
 	IsPinned    bool        `bun:"is_pinned,notnull,default:false"`
 }
 
 func NewUserDashboardPreference(userID, dashboardID valuer.UUID) *UserDashboardPreference {
+	now := time.Now()
 	return &UserDashboardPreference{
-		UserID:      userID,
-		DashboardID: dashboardID,
-		IsPinned:    true,
+		Identifiable:  types.Identifiable{ID: valuer.GenerateUUID()},
+		TimeAuditable: types.TimeAuditable{CreatedAt: now, UpdatedAt: now},
+		UserID:        userID,
+		DashboardID:   dashboardID,
+		IsPinned:      true,
 	}
 }
