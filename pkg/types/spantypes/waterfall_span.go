@@ -21,28 +21,13 @@ const (
 // ErrTraceNotFound is returned when a trace ID has no matching spans in ClickHouse.
 var ErrTraceNotFound = errors.NewNotFoundf(errors.CodeNotFound, "trace not found")
 
-// PostableWaterfall is the request body for the v3 waterfall API.
+// PostableWaterfall is the request body for the waterfall API.
 type PostableWaterfall struct {
-	SelectedSpanID   string            `json:"selectedSpanId"`
-	UncollapsedSpans []string          `json:"uncollapsedSpans"`
-	Limit            uint              `json:"limit"`
-	Aggregations     []SpanAggregation `json:"aggregations"`
+	SelectedSpanID   string   `json:"selectedSpanId"`
+	UncollapsedSpans []string `json:"uncollapsedSpans"`
 }
 
 func (p *PostableWaterfall) Validate() error {
-	if len(p.Aggregations) > maxAggregationItems {
-		return ErrTooManyAggregationItems
-	}
-	for _, a := range p.Aggregations {
-		if !a.Aggregation.isValid() {
-			return errors.NewInvalidInputf(errors.CodeInvalidInput, "unknown aggregation type: %q", a.Aggregation)
-		}
-		fc := a.Field.FieldContext
-		if fc != telemetrytypes.FieldContextResource && fc != telemetrytypes.FieldContextAttribute {
-			return errors.NewInvalidInputf(errors.CodeInvalidInput, "aggregation field context must be %q or %q, got %q",
-				telemetrytypes.FieldContextResource, telemetrytypes.FieldContextAttribute, fc)
-		}
-	}
 	return nil
 }
 
