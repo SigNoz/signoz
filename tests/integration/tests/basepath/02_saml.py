@@ -51,10 +51,10 @@ def test_create_auth_domain(
         signoz.self.host_configs["8080"].get("/signoz/api/v1/domains"),
         json={
             "name": "saml.basepath.test",
-            "config": {
-                "ssoEnabled": True,
-                "ssoType": "saml",
-                "samlConfig": {
+            "ssoEnabled": True,
+            "provider": {
+                "type": "saml",
+                "config": {
                     "samlEntity": settings["entityID"],
                     "samlIdp": settings["singleSignOnServiceLocation"],
                     "samlCert": settings["certificate"],

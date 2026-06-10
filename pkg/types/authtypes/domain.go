@@ -84,7 +84,7 @@ type AuthProviderEnvelope struct {
 	Config any           `json:"config" required:"true"` // this can be either of SamlConfig, OIDCConfig and GoogleConfig
 }
 
-// internal - drives the oneOf thing in open api spec
+// internal - drives the oneOf thing in open api spec.
 type authProviderSAML struct {
 	Type   AuthNProvider `json:"type" required:"true"`
 	Config SAMLConfig    `json:"config" required:"true"`
@@ -249,6 +249,10 @@ func (typ *PostableAuthDomain) UnmarshalJSON(data []byte) error {
 
 	if !authDomainNameRegex.MatchString(temp.Name) {
 		return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthDomainInvalidName, "invalid domain name %s", temp.Name)
+	}
+
+	if temp.Provider.Config == nil {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthDomainInvalidConfig, "provider config is required")
 	}
 
 	*typ = PostableAuthDomain(temp)

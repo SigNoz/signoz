@@ -53,10 +53,10 @@ def test_create_auth_domain(
         signoz.self.host_configs["8080"].get("/api/v1/domains"),
         json={
             "name": "saml.integration.test",
-            "config": {
-                "ssoEnabled": True,
-                "ssoType": "saml",
-                "samlConfig": {
+            "ssoEnabled": True,
+            "provider": {
+                "type": "saml",
+                "config": {
                     "samlEntity": settings["entityID"],
                     "samlIdp": settings["singleSignOnServiceLocation"],
                     "samlCert": settings["certificate"],
@@ -176,10 +176,10 @@ def test_saml_update_domain_with_group_mappings(
     response = requests.put(
         signoz.self.host_configs["8080"].get(f"/api/v1/domains/{domain['id']}"),
         json={
-            "config": {
-                "ssoEnabled": True,
-                "ssoType": "saml",
-                "samlConfig": {
+            "ssoEnabled": True,
+            "provider": {
+                "type": "saml",
+                "config": {
                     "samlEntity": settings["entityID"],
                     "samlIdp": settings["singleSignOnServiceLocation"],
                     "samlCert": settings["certificate"],
@@ -189,15 +189,15 @@ def test_saml_update_domain_with_group_mappings(
                         "role": "signoz_role",
                     },
                 },
-                "roleMapping": {
-                    "defaultRole": "VIEWER",
-                    "groupMappings": {
-                        "signoz-admins": "ADMIN",
-                        "signoz-editors": "EDITOR",
-                        "signoz-viewers": "VIEWER",
-                    },
-                    "useRoleAttribute": False,
+            },
+            "roleMapping": {
+                "defaultRole": "VIEWER",
+                "groupMappings": {
+                    "signoz-admins": "ADMIN",
+                    "signoz-editors": "EDITOR",
+                    "signoz-viewers": "VIEWER",
                 },
+                "useRoleAttribute": False,
             },
         },
         headers={"Authorization": f"Bearer {admin_token}"},
@@ -340,10 +340,10 @@ def test_saml_update_domain_with_use_role_claim(
     response = requests.put(
         signoz.self.host_configs["8080"].get(f"/api/v1/domains/{domain['id']}"),
         json={
-            "config": {
-                "ssoEnabled": True,
-                "ssoType": "saml",
-                "samlConfig": {
+            "ssoEnabled": True,
+            "provider": {
+                "type": "saml",
+                "config": {
                     "samlEntity": settings["entityID"],
                     "samlIdp": settings["singleSignOnServiceLocation"],
                     "samlCert": settings["certificate"],
@@ -353,14 +353,14 @@ def test_saml_update_domain_with_use_role_claim(
                         "role": "signoz_role",
                     },
                 },
-                "roleMapping": {
-                    "defaultRole": "VIEWER",
-                    "groupMappings": {
-                        "signoz-admins": "ADMIN",
-                        "signoz-editors": "EDITOR",
-                    },
-                    "useRoleAttribute": True,
+            },
+            "roleMapping": {
+                "defaultRole": "VIEWER",
+                "groupMappings": {
+                    "signoz-admins": "ADMIN",
+                    "signoz-editors": "EDITOR",
                 },
+                "useRoleAttribute": True,
             },
         },
         headers={"Authorization": f"Bearer {admin_token}"},

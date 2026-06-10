@@ -53,10 +53,10 @@ def test_create_auth_domain(
         signoz.self.host_configs["8080"].get("/signoz/api/v1/domains"),
         json={
             "name": "oidc.basepath.test",
-            "config": {
-                "ssoEnabled": True,
-                "ssoType": "oidc",
-                "oidcConfig": {
+            "ssoEnabled": True,
+            "provider": {
+                "type": "oidc",
+                "config": {
                     "clientId": settings["client_id"],
                     "clientSecret": settings["client_secret"],
                     # Change the hostname of the issuer to the internal resolvable hostname of the idp

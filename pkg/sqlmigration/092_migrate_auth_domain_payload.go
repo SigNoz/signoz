@@ -18,7 +18,7 @@ type authDomainPayloadRaw struct {
 	Data string `bun:"data"`
 }
 
-// auth config type -> old sso type
+// auth config type -> old sso type.
 var legacyConfigKeyByType = map[string]string{
 	"saml":        "samlConfig",
 	"oidc":        "oidcConfig",
@@ -59,7 +59,7 @@ func (migration *migrateAuthDomainPayload) Up(ctx context.Context, db *bun.DB) e
 			return err
 		}
 
-		// idempotency - we skip the ones which already migrated
+		// idempotency - we skip the ones which already migrated.
 		if _, hasProvider := oldData["provider"]; hasProvider {
 			continue
 		}
@@ -76,7 +76,7 @@ func (migration *migrateAuthDomainPayload) Up(ctx context.Context, db *bun.DB) e
 			"type": oldData["ssoType"],
 		}
 
-		// get from old data and set config in provider
+		// get from old data and set config in provider.
 		if configKey, ok := legacyConfigKeyByType[ssoType]; ok {
 			if cfg, ok := oldData[configKey]; ok {
 				provider["config"] = cfg

@@ -31,10 +31,10 @@ def test_create_and_get_domain(
         signoz.self.host_configs["8080"].get("/api/v1/domains"),
         json={
             "name": "domain-google.integration.test",
-            "config": {
-                "ssoEnabled": True,
-                "ssoType": "google_auth",
-                "googleAuthConfig": {
+            "ssoEnabled": True,
+            "provider": {
+                "type": "google_auth",
+                "config": {
                     "clientId": "client-id",
                     "clientSecret": "client-secret",
                     "redirectURI": "redirect-uri",
@@ -52,10 +52,10 @@ def test_create_and_get_domain(
         signoz.self.host_configs["8080"].get("/api/v1/domains"),
         json={
             "name": "domain-saml.integration.test",
-            "config": {
-                "ssoEnabled": True,
-                "ssoType": "saml",
-                "samlConfig": {
+            "ssoEnabled": True,
+            "provider": {
+                "type": "saml",
+                "config": {
                     "samlEntity": "saml-entity",
                     "samlIdp": "saml-idp",
                     "samlCert": "saml-cert",
@@ -86,7 +86,7 @@ def test_create_and_get_domain(
             "domain-google.integration.test",
             "domain-saml.integration.test",
         ]
-        assert domain["config"]["ssoType"] in ["google_auth", "saml"]
+        assert domain["provider"]["type"] in ["google_auth", "saml"]
 
 
 def test_create_invalid(
@@ -96,15 +96,16 @@ def test_create_invalid(
 ):
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    # Create a domain with type saml and body for oidc, this should fail because oidcConfig is not allowed for saml
+    # Create a domain with type saml but an oidc-shaped config; this should fail
+    # because the config is decoded as SAML and fails SAML validation.
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/domains"),
         json={
             "name": "domain.integration.test",
-            "config": {
-                "ssoEnabled": True,
-                "ssoType": "saml",
-                "oidcConfig": {
+            "ssoEnabled": True,
+            "provider": {
+                "type": "saml",
+                "config": {
                     "clientId": "client-id",
                     "clientSecret": "client-secret",
                     "issuer": "issuer",
@@ -122,10 +123,10 @@ def test_create_invalid(
         signoz.self.host_configs["8080"].get("/api/v1/domains"),
         json={
             "name": "$%^invalid",
-            "config": {
-                "ssoEnabled": True,
-                "ssoType": "saml",
-                "samlConfig": {
+            "ssoEnabled": True,
+            "provider": {
+                "type": "saml",
+                "config": {
                     "samlEntity": "saml-entity",
                     "samlIdp": "saml-idp",
                     "samlCert": "saml-cert",
@@ -142,15 +143,15 @@ def test_create_invalid(
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/domains"),
         json={
-            "config": {
-                "ssoEnabled": True,
-                "ssoType": "saml",
-                "samlConfig": {
+            "ssoEnabled": True,
+            "provider": {
+                "type": "saml",
+                "config": {
                     "samlEntity": "saml-entity",
                     "samlIdp": "saml-idp",
                     "samlCert": "saml-cert",
                 },
-            }
+            },
         },
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
@@ -158,7 +159,7 @@ def test_create_invalid(
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
 
-    # Create a domain with no config
+    # Create a domain with no provider
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/domains"),
         json={
@@ -184,17 +185,17 @@ def test_create_invalid_role_mapping(
         signoz.self.host_configs["8080"].get("/api/v1/domains"),
         json={
             "name": "invalid-role-test.integration.test",
-            "config": {
-                "ssoEnabled": True,
-                "ssoType": "saml",
-                "samlConfig": {
+            "ssoEnabled": True,
+            "provider": {
+                "type": "saml",
+                "config": {
                     "samlEntity": "saml-entity",
                     "samlIdp": "saml-idp",
                     "samlCert": "saml-cert",
                 },
-                "roleMapping": {
-                    "defaultRole": "SUPERADMIN",  # Invalid role
-                },
+            },
+            "roleMapping": {
+                "defaultRole": "SUPERADMIN",  # Invalid role
             },
         },
         headers={"Authorization": f"Bearer {admin_token}"},
@@ -208,19 +209,19 @@ def test_create_invalid_role_mapping(
         signoz.self.host_configs["8080"].get("/api/v1/domains"),
         json={
             "name": "invalid-group-role.integration.test",
-            "config": {
-                "ssoEnabled": True,
-                "ssoType": "saml",
-                "samlConfig": {
+            "ssoEnabled": True,
+            "provider": {
+                "type": "saml",
+                "config": {
                     "samlEntity": "saml-entity",
                     "samlIdp": "saml-idp",
                     "samlCert": "saml-cert",
                 },
-                "roleMapping": {
-                    "defaultRole": "VIEWER",
-                    "groupMappings": {
-                        "admins": "SUPERUSER",  # Invalid role
-                    },
+            },
+            "roleMapping": {
+                "defaultRole": "VIEWER",
+                "groupMappings": {
+                    "admins": "SUPERUSER",  # Invalid role
                 },
             },
         },
@@ -235,20 +236,20 @@ def test_create_invalid_role_mapping(
         signoz.self.host_configs["8080"].get("/api/v1/domains"),
         json={
             "name": "valid-role-mapping.integration.test",
-            "config": {
-                "ssoEnabled": True,
-                "ssoType": "saml",
-                "samlConfig": {
+            "ssoEnabled": True,
+            "provider": {
+                "type": "saml",
+                "config": {
                     "samlEntity": "saml-entity",
                     "samlIdp": "saml-idp",
                     "samlCert": "saml-cert",
                 },
-                "roleMapping": {
-                    "defaultRole": "VIEWER",
-                    "groupMappings": {
-                        "signoz-admins": "ADMIN",
-                        "signoz-editors": "EDITOR",
-                    },
+            },
+            "roleMapping": {
+                "defaultRole": "VIEWER",
+                "groupMappings": {
+                    "signoz-admins": "ADMIN",
+                    "signoz-editors": "EDITOR",
                 },
             },
         },
