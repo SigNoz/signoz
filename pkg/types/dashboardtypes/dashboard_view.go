@@ -116,13 +116,11 @@ func (v *DashboardView) Update(updateable UpdateableDashboardView) {
 }
 
 // ════════════════════════════════════════════════════════════════════════
-// Gettable
+// Listable
 // ════════════════════════════════════════════════════════════════════════
 
-type GettableDashboardView = DashboardView
-
 type ListableDashboardView struct {
-	Views []*GettableDashboardView `json:"views" required:"true" nullable:"false"`
+	Views []*DashboardView `json:"views" required:"true" nullable:"false"`
 }
 
 // ════════════════════════════════════════════════════════════════════════
