@@ -1,4 +1,20 @@
-# CSS Modules Guide for AI Agents
+# CSS Modules Guide
+
+## Checklist Before Committing
+
+- [ ] All class names use camelCase in CSS
+- [ ] State classes use `is-`/`has-` prefix (e.g., `isActive`, `hasError`)
+- [ ] No bracket access (`styles['...']`) in JS unless verified
+- [ ] No dynamic class lookup - use explicit variant maps instead
+- [ ] No deep class nesting (max 3 class levels; pseudo-classes/elements and parent-reference selectors like `&.active`, `&#bar` are not counted)
+- [ ] No hardcoded colors - use `--l1/l2/l3-*` semantic tokens (not `--bg-*` primitives)
+- [ ] No magic numbers - use `--spacing-*` tokens
+- [ ] Typography uses `--periscope-font-size-*` or `--font-size-*` tokens
+- [ ] @signozhq/ui overrides use CSS variables, not direct class overrides
+- [ ] Global escapes only for third-party overrides
+- [ ] No ID selectors
+- [ ] No bare element selectors
+- [ ] Keyframes use `:local(@keyframes name)` to avoid global collisions
 
 ## Config (vite.config.ts)
 
@@ -14,11 +30,11 @@ css: {
 
 ## Quick Reference
 
-| CSS Class | JS Access | Works? |
-|-----------|-----------|--------|
-| `.alertHistory` | `styles.alertHistory` | Yes |
-| `.alert-history` | `styles.alertHistory` | Yes |
-| `.alert-history` | `styles['alert-history']` | NO - undefined |
+| CSS Class | JS Access | Works? | Preferred?                 |
+|-----------|-----------|--------|----------------------------|
+| `.alertHistory` | `styles.alertHistory` | Yes | Yes                        |
+| `.alert-history` | `styles.alertHistory` | Yes | No, use `.alertHistory`    |
+| `.alert-history` | `styles['alert-history']` | NO - undefined | Never, use `.alertHistory` |
 
 ## Bad Patterns
 
@@ -475,22 +491,6 @@ const variantMap = {
 };
 const cls = variantMap[props.type];
 ```
-
-## Checklist Before Committing
-
-- [ ] All class names use camelCase in CSS
-- [ ] State classes use `is-`/`has-` prefix (e.g., `isActive`, `hasError`)
-- [ ] No bracket access (`styles['...']`) in JS unless verified
-- [ ] No dynamic class lookup - use explicit variant maps instead
-- [ ] No deep class nesting (max 3 class levels; pseudo-classes/elements and parent-reference selectors like `&.active`, `&#bar` are not counted)
-- [ ] No hardcoded colors - use `--l1/l2/l3-*` semantic tokens (not `--bg-*` primitives)
-- [ ] No magic numbers - use `--spacing-*` tokens
-- [ ] Typography uses `--periscope-font-size-*` or `--font-size-*` tokens
-- [ ] @signozhq/ui overrides use CSS variables, not direct class overrides
-- [ ] Global escapes only for third-party overrides
-- [ ] No ID selectors
-- [ ] No bare element selectors
-- [ ] Keyframes use `:local(@keyframes name)` to avoid global collisions
 
 ## Lint Rules
 

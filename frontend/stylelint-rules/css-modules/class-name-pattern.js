@@ -21,11 +21,11 @@ const ruleName = 'local/class-name-pattern';
 
 const messages = stylelint.utils.ruleMessages(ruleName, {
 	kebabCase: (className) =>
-		`Class "${className}" uses kebab-case. Use camelCase instead: "${toCamelCase(className)}".`,
+		`Class "${className}" is not on camelCase. Use instead: "${toCamelCase(className)}".`,
 	snakeCase: (className) =>
-		`Class "${className}" uses snake_case. Use camelCase instead: "${toCamelCase(className)}".`,
+		`Class "${className}" is not on camelCase. Use instead: "${toCamelCase(className)}".`,
 	pascalCase: (className) =>
-		`Class "${className}" uses PascalCase. Use camelCase instead: "${className.charAt(0).toLowerCase() + className.slice(1)}".`,
+		`Class "${className}" is not on camelCase. Use instead: "${className.charAt(0).toLowerCase() + className.slice(1)}".`,
 });
 
 function toCamelCase(str) {
