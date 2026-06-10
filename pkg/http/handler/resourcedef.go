@@ -1,22 +1,13 @@
-// The ResourceDef contract a route declares, its implementations, and the
-// request-phase resolver.
 package handler
 
 import "github.com/SigNoz/signoz/pkg/types/coretypes"
 
-// ResourceDef is implemented by the explicit declaration types below. A route
-// attaches one or more via WithResourceDefs; the resource middleware resolves
-// each into a coretypes.ResolvedResource.
 type ResourceDef interface {
-	// resolveRequest is unexported so the interface is sealed — only the defs
-	// declared in this package can satisfy it. It returns a slice because a
+	// resolveRequest is unexported to seal the interface. It returns a slice so a
 	// single def can fan out (e.g. a telemetry query touching multiple signals).
 	resolveRequest(ec coretypes.ExtractorContext) []coretypes.ResolvedResource
 }
 
-// ResolveRequest resolves every def's request-phase ids against ec. Called by
-// the resource middleware pre-handler; the audit middleware later finalizes
-// response-phase ids via ResolvedResource.ResolveResponse.
 func ResolveRequest(defs []ResourceDef, ec coretypes.ExtractorContext) []coretypes.ResolvedResource {
 	resolved := make([]coretypes.ResolvedResource, 0, len(defs))
 	for _, def := range defs {
@@ -26,8 +17,7 @@ func ResolveRequest(defs []ResourceDef, ec coretypes.ExtractorContext) []coretyp
 	return resolved
 }
 
-// BasicResourceDef checks a single resource for one verb. It covers the
-// create / read / update / delete / list cases on one resource.
+// BasicResourceDef checks a single resource for one verb.
 type BasicResourceDef struct {
 	Resource coretypes.Resource
 	Verb     coretypes.Verb
@@ -49,10 +39,8 @@ func (def BasicResourceDef) resolveRequest(ec coretypes.ExtractorContext) []core
 	}
 }
 
-// AttachDetachSiblingResourceDef checks an attach/detach between peer resources.
-// Both the source and the target are authz-checked (M+N absolute checks, not
-// M×N). Use OneID to feed a single-id side. The target also rides along on the
-// resolved value for audit context.
+// AttachDetachSiblingResourceDef checks an attach/detach between peer resources;
+// both source and target are authz-checked.
 type AttachDetachSiblingResourceDef struct {
 	Verb           coretypes.Verb
 	Category       coretypes.ActionCategory
@@ -77,9 +65,8 @@ func (def AttachDetachSiblingResourceDef) resolveRequest(ec coretypes.ExtractorC
 	}
 }
 
-// AttachDetachParentChildResourceDef checks the PARENT's attach/detach only. The
-// child rides along for audit context and is never authz-checked (its selector
-// is nil). The parent is a single resource; the child may be one or many.
+// AttachDetachParentChildResourceDef authz-checks only the parent; the child
+// rides along for audit context.
 type AttachDetachParentChildResourceDef struct {
 	Verb           coretypes.Verb
 	Category       coretypes.ActionCategory
@@ -101,36 +88,4 @@ func (def AttachDetachParentChildResourceDef) resolveRequest(ec coretypes.Extrac
 			ec,
 		),
 	}
-}
-
-// TelemetryResourceDef checks a verb against each resource its Resources
-// extractor pulls from the request — used for query-range, where the telemetry
-// resources come from the query signals/sources rather than a fixed
-// declaration. It fans out to one resolved resource per extracted resource.
-// Telemetry access is collection-level, so no id is resolved.
-type TelemetryResourceDef struct {
-	Verb      coretypes.Verb
-	Category  coretypes.ActionCategory
-	Selector  coretypes.SelectorFunc
-	Resources coretypes.ResourceExtractor
-}
-
-func (def TelemetryResourceDef) resolveRequest(ec coretypes.ExtractorContext) []coretypes.ResolvedResource {
-	var refs []coretypes.ResourceWithID
-	if def.Resources != nil {
-		refs, _ = def.Resources(ec)
-	}
-
-	resolved := make([]coretypes.ResolvedResource, 0, len(refs))
-	for _, ref := range refs {
-		resolved = append(resolved, coretypes.NewResolvedResourceWithID(
-			def.Verb,
-			def.Category,
-			ref.Resource,
-			ref.ID,
-			def.Selector,
-		))
-	}
-
-	return resolved
 }

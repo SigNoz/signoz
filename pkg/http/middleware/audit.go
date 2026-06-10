@@ -62,9 +62,7 @@ func (middleware *Audit) Wrap(next http.Handler) http.Handler {
 		responseBuffer := &byteBuffer{}
 		writer := newResponseCapture(rw, responseBuffer)
 
-		// A resolved resource may derive its id from the response (e.g. a create),
-		// so capture the success body (bounded) for any route that declares
-		// resources; ResolveResponse reads it post-handler.
+		// Capture the body so a response-derived id (e.g. a create) is available to ResolveResponse.
 		if _, err := coretypes.ResolvedResourcesFromContext(req.Context()); err == nil {
 			writer.EnableBodyCapture()
 		}
@@ -88,8 +86,6 @@ func (middleware *Audit) Wrap(next http.Handler) http.Handler {
 			fields = append(fields, errors.Attr(writeErr))
 			middleware.logger.ErrorContext(req.Context(), logMessage, fields...)
 		} else {
-			// Only log error bodies (status >= 400); a force-captured success
-			// body is for audit id extraction, not for logging.
 			if statusCode >= 400 && responseBuffer.Len() != 0 {
 				fields = append(fields, "response.body", responseBuffer.String())
 			}
@@ -122,40 +118,50 @@ func (middleware *Audit) emitAuditEvent(req *http.Request, writer responseCaptur
 	extractorCtx := coretypes.ExtractorContext{Request: req, ResponseBody: writer.BodyBytes()}
 
 	for _, resource := range resolved {
-		// Fill response-phase ids (e.g. a created resource's id) now that the
-		// response body is available.
 		resource.ResolveResponse(extractorCtx)
 		verb, category := resource.Verb(), resource.Category()
 
 		switch typed := resource.(type) {
 		case coretypes.ResolvedResourceWithTargetResource:
-			// One event per (source, target) pair, capturing the relationship.
 			for _, sourceID := range typed.SourceIDs() {
 				for _, targetID := range typed.TargetIDs() {
-					attributes := audittypes.NewRelatedResourceAttributes(
-						typed.SourceResource(),
-						sourceID,
-						typed.TargetResource(),
-						targetID,
-					)
+					attributesList := []audittypes.ResourceAttributes{
+						audittypes.NewRelatedResourceAttributes(
+							typed.SourceResource(),
+							sourceID,
+							typed.TargetResource(),
+							targetID,
+						),
+					}
 
-					middleware.auditor.Audit(req.Context(), audittypes.NewAuditEventFromHTTPRequest(
-						req,
-						routeTemplate,
-						statusCode,
-						span.SpanContext().TraceID(),
-						span.SpanContext().SpanID(),
-						verb,
-						category,
-						claims,
-						attributes,
-						errorType,
-						errorCode,
-					))
+					// Sibling peers are symmetric, so mirror the event from the target's side too.
+					if !typed.IsParentChild() {
+						attributesList = append(attributesList, audittypes.NewRelatedResourceAttributes(
+							typed.TargetResource(),
+							targetID,
+							typed.SourceResource(),
+							sourceID,
+						))
+					}
+
+					for _, attributes := range attributesList {
+						middleware.auditor.Audit(req.Context(), audittypes.NewAuditEventFromHTTPRequest(
+							req,
+							routeTemplate,
+							statusCode,
+							span.SpanContext().TraceID(),
+							span.SpanContext().SpanID(),
+							verb,
+							category,
+							claims,
+							attributes,
+							errorType,
+							errorCode,
+						))
+					}
 				}
 			}
 		default:
-			// One event per resource id.
 			for _, id := range resource.SourceIDs() {
 				attributes := audittypes.NewResourceAttributes(resource.SourceResource(), id)
 

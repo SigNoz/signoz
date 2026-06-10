@@ -5,14 +5,12 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/gorilla/mux"
 )
 
 func (provider *provider) addQuerierRoutes(router *mux.Router) error {
-	if err := router.Handle("/api/v5/query_range", handler.New(provider.authzMiddleware.CheckResources(provider.querierHandler.QueryRange, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName), handler.OpenAPIDef{
+	if err := router.Handle("/api/v5/query_range", handler.New(provider.authzMiddleware.ViewAccess(provider.querierHandler.QueryRange), handler.OpenAPIDef{
 		ID:                 "QueryRangeV5",
 		Tags:               []string{"querier"},
 		Summary:            "Query range",
@@ -449,16 +447,7 @@ func (provider *provider) addQuerierRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{http.StatusBadRequest},
 		SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-	},
-		handler.WithResourceDefs(handler.TelemetryResourceDef{
-			Verb:     coretypes.VerbRead,
-			Category: coretypes.ActionCategoryDataAccess,
-			Selector: coretypes.IDSelector,
-			// Demonstration only: one resource per query, keyed by the query's
-			// name as its id. The actual id field (idPath) is the owner's to pick.
-			Resources: coretypes.TelemetrySignalSource("compositeQuery.queries", "spec.name"),
-		}),
-	)).Methods(http.MethodPost).GetError(); err != nil {
+	})).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 

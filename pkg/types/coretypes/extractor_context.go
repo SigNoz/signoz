@@ -2,10 +2,8 @@ package coretypes
 
 import "net/http"
 
-// ExtractorContext carries everything an id extractor may read. The resource
-// middleware fills Request + RequestBody pre-handler; the audit middleware adds
-// ResponseBody post-handler. Each extractor is run exactly once, in the phase
-// whose data it needs.
+// ExtractorContext carries everything an extractor may read: Request + RequestBody
+// are filled pre-handler, ResponseBody post-handler.
 type ExtractorContext struct {
 	Request      *http.Request
 	RequestBody  []byte

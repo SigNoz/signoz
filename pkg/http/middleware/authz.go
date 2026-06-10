@@ -191,11 +191,8 @@ func (middleware *AuthZ) OpenAccess(next http.HandlerFunc) http.HandlerFunc {
 	})
 }
 
-// CheckResources authorizes every resolved ResourceDef for the route (AND across
-// defs). It reads the list placed by the Resource middleware. Each def's Selector
-// is the sole source of its FGA selectors; roles are the role names allowed
-// (consumed by the OSS role-gate, while the resource selectors drive the EE
-// resource check).
+// CheckResources authorizes every resolved resource for the route. roles are the
+// allowed role names (the OSS role-gate); the resource selectors drive the EE check.
 func (middleware *AuthZ) CheckResources(next http.HandlerFunc, roles ...string) http.HandlerFunc {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
@@ -219,8 +216,6 @@ func (middleware *AuthZ) CheckResources(next http.HandlerFunc, roles ...string) 
 		}
 
 		for _, resource := range resolved {
-			// The source is always checked. The target is checked only for a
-			// sibling peer — a parent-child's child rides along for audit only.
 			if err := middleware.checkResource(ctx, claims, orgID, resource.Verb(), resource.SourceResource(), resource.SourceIDs(), resource.SourceSelector(), roleSelectors); err != nil {
 				render.Error(rw, err)
 				return
@@ -239,9 +234,6 @@ func (middleware *AuthZ) CheckResources(next http.HandlerFunc, roles ...string) 
 	})
 }
 
-// checkResource authz-checks each of the resource's ids (absolute, per-id). The
-// resolved value supplies a single empty id for collection-level access, so the
-// selector always decides the scope (e.g. a wildcard for a create/list).
 func (middleware *AuthZ) checkResource(
 	ctx context.Context,
 	claims authtypes.Claims,

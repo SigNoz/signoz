@@ -1,8 +1,5 @@
 package coretypes
 
-// resolvedResourceWithTarget is the resolved value of an attach/detach def. It
-// implements ResolvedResourceWithTargetResource. Both sides carry their ids and
-// selector; parentChild reports whether the target is authz-checked.
 type resolvedResourceWithTarget struct {
 	verb            Verb
 	category        ActionCategory
@@ -17,10 +14,6 @@ type resolvedResourceWithTarget struct {
 	parentChild     bool
 }
 
-// NewResolvedResourceWithTarget builds a relationship resolved value, filling
-// request-phase ids immediately. Response-phase ids (e.g. a created child) are
-// filled later by ResolveResponse. A parent-child target carries a nil selector
-// (it is never authz-checked).
 func NewResolvedResourceWithTarget(
 	verb Verb,
 	category ActionCategory,
@@ -74,8 +67,7 @@ func (resolved *resolvedResourceWithTarget) SourceResource() Resource {
 	return resolved.sourceResource
 }
 
-// SourceIDs / TargetIDs return a single empty id when there are none, so each
-// side always has exactly one entry; an empty id means collection-level.
+// An empty id (when none resolved) means collection-level access.
 func (resolved *resolvedResourceWithTarget) SourceIDs() []string {
 	if len(resolved.sourceIDs) == 0 {
 		return []string{""}

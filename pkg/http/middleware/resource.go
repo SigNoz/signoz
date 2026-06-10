@@ -11,10 +11,8 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// Resource resolves a route's declared ResourceDefs (request-side) and stashes
-// the result in the request context. It is the OUTER of the resource-aware
-// middlewares (placed before Audit) and the single point that buffers the
-// request body. AuthZ (in the handler) and Audit (inner) read the resolved list.
+// Resource resolves a route's declared ResourceDefs and stashes the result in
+// the request context for authz and audit to read.
 type Resource struct {
 	logger *slog.Logger
 }
@@ -31,8 +29,7 @@ func (middleware *Resource) Wrap(next http.Handler) http.Handler {
 			return
 		}
 
-		// Buffer the request body once so request-side extractors can read it and
-		// the handler still sees a fresh reader. Single buffering point.
+		// Buffer the body once so extractors can read it and the handler still sees a fresh reader.
 		var body []byte
 		if req.Body != nil {
 			body, _ = io.ReadAll(req.Body)

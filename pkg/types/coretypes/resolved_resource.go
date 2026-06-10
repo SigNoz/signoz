@@ -1,7 +1,5 @@
 package coretypes
 
-// resolvedResource is the basic (single-resource) resolved value. It implements
-// ResolvedResource only — no target.
 type resolvedResource struct {
 	verb        Verb
 	category    ActionCategory
@@ -11,9 +9,6 @@ type resolvedResource struct {
 	ids         []string
 }
 
-// NewResolvedResource builds a basic resolved value, filling its request-phase
-// id immediately. A response-phase id (e.g. a create) is filled later by
-// ResolveResponse.
 func NewResolvedResource(
 	verb Verb,
 	category ActionCategory,
@@ -30,29 +25,6 @@ func NewResolvedResource(
 		idExtractor: idExtractor,
 	}
 	resolved.fill(PhaseRequest, ec)
-
-	return resolved
-}
-
-// NewResolvedResourceWithID builds a basic resolved value from an
-// already-known id (e.g. extracted per query while iterating), bypassing the
-// phased id extractor. An empty id means collection-level access.
-func NewResolvedResourceWithID(
-	verb Verb,
-	category ActionCategory,
-	resource Resource,
-	id string,
-	selector SelectorFunc,
-) ResolvedResource {
-	resolved := &resolvedResource{
-		verb:     verb,
-		category: category,
-		resource: resource,
-		selector: selector,
-	}
-	if id != "" {
-		resolved.ids = []string{id}
-	}
 
 	return resolved
 }
@@ -75,9 +47,7 @@ func (resolved *resolvedResource) SourceResource() Resource {
 	return resolved.resource
 }
 
-// SourceIDs returns the resolved ids, or a single empty id when there are none
-// so consumers always have exactly one entry to act on — an empty id means
-// collection-level (the selector decides what that scopes to).
+// An empty id (when none resolved) means collection-level access.
 func (resolved *resolvedResource) SourceIDs() []string {
 	if len(resolved.ids) == 0 {
 		return []string{""}
