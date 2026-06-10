@@ -371,10 +371,11 @@ def idp_login(driver: webdriver.Chrome) -> Callable[[str, str], None]:
 
         # Click the login button
         login_button = wait.until(EC.element_to_be_clickable((By.ID, "kc-login")))
+        current_url = driver.current_url
         login_button.click()
 
-        # Wait till kc-login element has vanished from the page, which means that a redirection is taking place.
-        wait.until(EC.invisibility_of_element((By.ID, "kc-login")))
+        # Wait till the page redirects away from the login form. We poll the URL.
+        wait.until(EC.url_changes(current_url))
 
     return _idp_login
 
