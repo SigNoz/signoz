@@ -56,7 +56,7 @@ function RenameModal({
 			title="Rename Alert"
 			onOk={onNameChangeHandler}
 			onCancel={handleClose}
-			rootClassName={styles.renameAlert}
+			rootClassName={styles.renameAlertContainer}
 			footer={
 				<div className={styles.alertRename}>
 					<Button
