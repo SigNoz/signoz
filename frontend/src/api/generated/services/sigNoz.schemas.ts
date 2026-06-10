@@ -3495,13 +3495,13 @@ export interface TelemetrytypesTelemetryFieldKeyDTO {
 	unit?: string;
 }
 
-export enum DashboardtypesLogBuilderQueryDTOSignal {
+export enum Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregationDTOSignal {
 	logs = 'logs',
 }
 export enum TelemetrytypesSourceDTO {
 	meter = 'meter',
 }
-export interface DashboardtypesLogBuilderQueryDTO {
+export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregationDTO {
 	/**
 	 * @type array
 	 */
@@ -3557,7 +3557,7 @@ export interface DashboardtypesLogBuilderQueryDTO {
 	 * @enum logs
 	 * @type string
 	 */
-	signal: DashboardtypesLogBuilderQueryDTOSignal;
+	signal: Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregationDTOSignal;
 	source?: TelemetrytypesSourceDTO;
 	stepInterval?: Querybuildertypesv5StepDTO;
 }
@@ -3623,10 +3623,10 @@ export interface Querybuildertypesv5MetricAggregationDTO {
 	timeAggregation?: MetrictypesTimeAggregationDTO;
 }
 
-export enum DashboardtypesMetricBuilderQueryDTOSignal {
+export enum Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTOSignal {
 	metrics = 'metrics',
 }
-export interface DashboardtypesMetricBuilderQueryDTO {
+export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTO {
 	/**
 	 * @type array
 	 */
@@ -3682,7 +3682,7 @@ export interface DashboardtypesMetricBuilderQueryDTO {
 	 * @enum metrics
 	 * @type string
 	 */
-	signal: DashboardtypesMetricBuilderQueryDTOSignal;
+	signal: Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTOSignal;
 	source?: TelemetrytypesSourceDTO;
 	stepInterval?: Querybuildertypesv5StepDTO;
 }
@@ -3698,10 +3698,10 @@ export interface Querybuildertypesv5TraceAggregationDTO {
 	expression?: string;
 }
 
-export enum DashboardtypesTraceBuilderQueryDTOSignal {
+export enum Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregationDTOSignal {
 	traces = 'traces',
 }
-export interface DashboardtypesTraceBuilderQueryDTO {
+export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregationDTO {
 	/**
 	 * @type array
 	 */
@@ -3757,15 +3757,15 @@ export interface DashboardtypesTraceBuilderQueryDTO {
 	 * @enum traces
 	 * @type string
 	 */
-	signal: DashboardtypesTraceBuilderQueryDTOSignal;
+	signal: Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregationDTOSignal;
 	source?: TelemetrytypesSourceDTO;
 	stepInterval?: Querybuildertypesv5StepDTO;
 }
 
 export type DashboardtypesBuilderQuerySpecDTO =
-	| DashboardtypesLogBuilderQueryDTO
-	| DashboardtypesMetricBuilderQueryDTO
-	| DashboardtypesTraceBuilderQueryDTO;
+	| Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregationDTO
+	| Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTO
+	| Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregationDTO;
 
 export enum DashboardtypesComparisonOperatorDTO {
 	above = 'above',
@@ -4155,63 +4155,6 @@ export interface DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDa
 export enum DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5CompositeQueryDTOKind {
 	'signoz/CompositeQuery' = 'signoz/CompositeQuery',
 }
-export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregationDTO {
-	/**
-	 * @type array
-	 */
-	aggregations?: Querybuildertypesv5TraceAggregationDTO[];
-	/**
-	 * @type string
-	 */
-	cursor?: string;
-	/**
-	 * @type boolean
-	 */
-	disabled?: boolean;
-	filter?: Querybuildertypesv5FilterDTO;
-	/**
-	 * @type array
-	 */
-	functions?: Querybuildertypesv5FunctionDTO[];
-	/**
-	 * @type array
-	 */
-	groupBy?: Querybuildertypesv5GroupByKeyDTO[];
-	having?: Querybuildertypesv5HavingDTO;
-	/**
-	 * @type string
-	 */
-	legend?: string;
-	/**
-	 * @type integer
-	 */
-	limit?: number;
-	limitBy?: Querybuildertypesv5LimitByDTO;
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type integer
-	 */
-	offset?: number;
-	/**
-	 * @type array
-	 */
-	order?: Querybuildertypesv5OrderByDTO[];
-	/**
-	 * @type array
-	 */
-	secondaryAggregations?: Querybuildertypesv5SecondaryAggregationDTO[];
-	/**
-	 * @type array
-	 */
-	selectFields?: TelemetrytypesTelemetryFieldKeyDTO[];
-	signal?: TelemetrytypesSignalDTO;
-	source?: TelemetrytypesSourceDTO;
-	stepInterval?: Querybuildertypesv5StepDTO;
-}
-
 export enum Querybuildertypesv5QueryTypeDTO {
 	builder_query = 'builder_query',
 	builder_formula = 'builder_formula',
@@ -4224,123 +4167,9 @@ export interface Querybuildertypesv5QueryEnvelopeBuilderTraceDTO {
 	type?: Querybuildertypesv5QueryTypeDTO;
 }
 
-export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregationDTO {
-	/**
-	 * @type array
-	 */
-	aggregations?: Querybuildertypesv5LogAggregationDTO[];
-	/**
-	 * @type string
-	 */
-	cursor?: string;
-	/**
-	 * @type boolean
-	 */
-	disabled?: boolean;
-	filter?: Querybuildertypesv5FilterDTO;
-	/**
-	 * @type array
-	 */
-	functions?: Querybuildertypesv5FunctionDTO[];
-	/**
-	 * @type array
-	 */
-	groupBy?: Querybuildertypesv5GroupByKeyDTO[];
-	having?: Querybuildertypesv5HavingDTO;
-	/**
-	 * @type string
-	 */
-	legend?: string;
-	/**
-	 * @type integer
-	 */
-	limit?: number;
-	limitBy?: Querybuildertypesv5LimitByDTO;
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type integer
-	 */
-	offset?: number;
-	/**
-	 * @type array
-	 */
-	order?: Querybuildertypesv5OrderByDTO[];
-	/**
-	 * @type array
-	 */
-	secondaryAggregations?: Querybuildertypesv5SecondaryAggregationDTO[];
-	/**
-	 * @type array
-	 */
-	selectFields?: TelemetrytypesTelemetryFieldKeyDTO[];
-	signal?: TelemetrytypesSignalDTO;
-	source?: TelemetrytypesSourceDTO;
-	stepInterval?: Querybuildertypesv5StepDTO;
-}
-
 export interface Querybuildertypesv5QueryEnvelopeBuilderLogDTO {
 	spec?: Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregationDTO;
 	type?: Querybuildertypesv5QueryTypeDTO;
-}
-
-export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTO {
-	/**
-	 * @type array
-	 */
-	aggregations?: Querybuildertypesv5MetricAggregationDTO[];
-	/**
-	 * @type string
-	 */
-	cursor?: string;
-	/**
-	 * @type boolean
-	 */
-	disabled?: boolean;
-	filter?: Querybuildertypesv5FilterDTO;
-	/**
-	 * @type array
-	 */
-	functions?: Querybuildertypesv5FunctionDTO[];
-	/**
-	 * @type array
-	 */
-	groupBy?: Querybuildertypesv5GroupByKeyDTO[];
-	having?: Querybuildertypesv5HavingDTO;
-	/**
-	 * @type string
-	 */
-	legend?: string;
-	/**
-	 * @type integer
-	 */
-	limit?: number;
-	limitBy?: Querybuildertypesv5LimitByDTO;
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type integer
-	 */
-	offset?: number;
-	/**
-	 * @type array
-	 */
-	order?: Querybuildertypesv5OrderByDTO[];
-	/**
-	 * @type array
-	 */
-	secondaryAggregations?: Querybuildertypesv5SecondaryAggregationDTO[];
-	/**
-	 * @type array
-	 */
-	selectFields?: TelemetrytypesTelemetryFieldKeyDTO[];
-	signal?: TelemetrytypesSignalDTO;
-	source?: TelemetrytypesSourceDTO;
-	stepInterval?: Querybuildertypesv5StepDTO;
 }
 
 export interface Querybuildertypesv5QueryEnvelopeBuilderMetricDTO {

@@ -94,42 +94,26 @@ func (b BuilderQuerySpec) MarshalJSON() ([]byte, error) {
 }
 
 // PrepareJSONSchema marks the envelope with x-signoz-discriminator keyed on
-// `signal`. Each variant pins `signal` to its one value (see JSONSchemaOneOf),
-// so the union resolves cleanly even though it doesn't carry a `kind`.
+// `signal`. Each QueryBuilderQuery[T] variant pins `signal` to its one value
+// (via its own PrepareJSONSchema in the qb package), so the union resolves
+// cleanly even though it doesn't carry a `kind`.
 func (BuilderQuerySpec) PrepareJSONSchema(s *jsonschema.Schema) error {
 	return markDiscriminator(s, "signal", map[string]string{
-		telemetrytypes.SignalLogs.StringValue():    schemaRef("DashboardtypesLogBuilderQuery"),
-		telemetrytypes.SignalMetrics.StringValue(): schemaRef("DashboardtypesMetricBuilderQuery"),
-		telemetrytypes.SignalTraces.StringValue():  schemaRef("DashboardtypesTraceBuilderQuery"),
+		telemetrytypes.SignalLogs.StringValue():    schemaRef("Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregation"),
+		telemetrytypes.SignalMetrics.StringValue(): schemaRef("Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregation"),
+		telemetrytypes.SignalTraces.StringValue():  schemaRef("Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregation"),
 	})
 }
 
 // JSONSchemaOneOf exposes the three signal-dispatched shapes a builder query
-// can take. Mirrors qb.UnmarshalBuilderQueryBySignal's runtime dispatch. The
-// variants are local named types so each can pin `signal` to a single value and
-// get a clean discriminator schema ref.
+// can take. Mirrors qb.UnmarshalBuilderQueryBySignal's runtime dispatch. Each
+// QueryBuilderQuery[T] pins its own `signal` enum (see its PrepareJSONSchema).
 func (BuilderQuerySpec) JSONSchemaOneOf() []any {
 	return []any{
-		logBuilderQuery{},
-		metricBuilderQuery{},
-		traceBuilderQuery{},
+		qb.QueryBuilderQuery[qb.LogAggregation]{},
+		qb.QueryBuilderQuery[qb.MetricAggregation]{},
+		qb.QueryBuilderQuery[qb.TraceAggregation]{},
 	}
-}
-
-type (
-	logBuilderQuery    qb.QueryBuilderQuery[qb.LogAggregation]
-	metricBuilderQuery qb.QueryBuilderQuery[qb.MetricAggregation]
-	traceBuilderQuery  qb.QueryBuilderQuery[qb.TraceAggregation]
-)
-
-func (logBuilderQuery) PrepareJSONSchema(s *jsonschema.Schema) error {
-	return restrictToOneValue(s, "signal", telemetrytypes.SignalLogs.StringValue())
-}
-func (metricBuilderQuery) PrepareJSONSchema(s *jsonschema.Schema) error {
-	return restrictToOneValue(s, "signal", telemetrytypes.SignalMetrics.StringValue())
-}
-func (traceBuilderQuery) PrepareJSONSchema(s *jsonschema.Schema) error {
-	return restrictToOneValue(s, "signal", telemetrytypes.SignalTraces.StringValue())
 }
 
 // ══════════════════════════════════════════════

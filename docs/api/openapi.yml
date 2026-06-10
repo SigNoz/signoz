@@ -2498,14 +2498,14 @@ components:
     DashboardtypesBuilderQuerySpec:
       discriminator:
         mapping:
-          logs: '#/components/schemas/DashboardtypesLogBuilderQuery'
-          metrics: '#/components/schemas/DashboardtypesMetricBuilderQuery'
-          traces: '#/components/schemas/DashboardtypesTraceBuilderQuery'
+          logs: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregation'
+          metrics: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregation'
+          traces: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregation'
         propertyName: signal
       oneOf:
-      - $ref: '#/components/schemas/DashboardtypesLogBuilderQuery'
-      - $ref: '#/components/schemas/DashboardtypesMetricBuilderQuery'
-      - $ref: '#/components/schemas/DashboardtypesTraceBuilderQuery'
+      - $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregation'
+      - $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregation'
+      - $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregation'
       type: object
     DashboardtypesComparisonOperator:
       enum:
@@ -2819,116 +2819,6 @@ components:
         sort:
           nullable: true
           type: string
-      type: object
-    DashboardtypesLogBuilderQuery:
-      properties:
-        aggregations:
-          items:
-            $ref: '#/components/schemas/Querybuildertypesv5LogAggregation'
-          type: array
-        cursor:
-          type: string
-        disabled:
-          type: boolean
-        filter:
-          $ref: '#/components/schemas/Querybuildertypesv5Filter'
-        functions:
-          items:
-            $ref: '#/components/schemas/Querybuildertypesv5Function'
-          type: array
-        groupBy:
-          items:
-            $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
-          type: array
-        having:
-          $ref: '#/components/schemas/Querybuildertypesv5Having'
-        legend:
-          type: string
-        limit:
-          type: integer
-        limitBy:
-          $ref: '#/components/schemas/Querybuildertypesv5LimitBy'
-        name:
-          type: string
-        offset:
-          type: integer
-        order:
-          items:
-            $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
-          type: array
-        secondaryAggregations:
-          items:
-            $ref: '#/components/schemas/Querybuildertypesv5SecondaryAggregation'
-          type: array
-        selectFields:
-          items:
-            $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
-          type: array
-        signal:
-          enum:
-          - logs
-          type: string
-        source:
-          $ref: '#/components/schemas/TelemetrytypesSource'
-        stepInterval:
-          $ref: '#/components/schemas/Querybuildertypesv5Step'
-      required:
-      - signal
-      type: object
-    DashboardtypesMetricBuilderQuery:
-      properties:
-        aggregations:
-          items:
-            $ref: '#/components/schemas/Querybuildertypesv5MetricAggregation'
-          type: array
-        cursor:
-          type: string
-        disabled:
-          type: boolean
-        filter:
-          $ref: '#/components/schemas/Querybuildertypesv5Filter'
-        functions:
-          items:
-            $ref: '#/components/schemas/Querybuildertypesv5Function'
-          type: array
-        groupBy:
-          items:
-            $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
-          type: array
-        having:
-          $ref: '#/components/schemas/Querybuildertypesv5Having'
-        legend:
-          type: string
-        limit:
-          type: integer
-        limitBy:
-          $ref: '#/components/schemas/Querybuildertypesv5LimitBy'
-        name:
-          type: string
-        offset:
-          type: integer
-        order:
-          items:
-            $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
-          type: array
-        secondaryAggregations:
-          items:
-            $ref: '#/components/schemas/Querybuildertypesv5SecondaryAggregation'
-          type: array
-        selectFields:
-          items:
-            $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
-          type: array
-        signal:
-          enum:
-          - metrics
-          type: string
-        source:
-          $ref: '#/components/schemas/TelemetrytypesSource'
-        stepInterval:
-          $ref: '#/components/schemas/Querybuildertypesv5Step'
-      required:
-      - signal
       type: object
     DashboardtypesNumberPanelSpec:
       properties:
@@ -3399,61 +3289,6 @@ components:
           type: boolean
         timePreference:
           $ref: '#/components/schemas/DashboardtypesTimePreference'
-      type: object
-    DashboardtypesTraceBuilderQuery:
-      properties:
-        aggregations:
-          items:
-            $ref: '#/components/schemas/Querybuildertypesv5TraceAggregation'
-          type: array
-        cursor:
-          type: string
-        disabled:
-          type: boolean
-        filter:
-          $ref: '#/components/schemas/Querybuildertypesv5Filter'
-        functions:
-          items:
-            $ref: '#/components/schemas/Querybuildertypesv5Function'
-          type: array
-        groupBy:
-          items:
-            $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
-          type: array
-        having:
-          $ref: '#/components/schemas/Querybuildertypesv5Having'
-        legend:
-          type: string
-        limit:
-          type: integer
-        limitBy:
-          $ref: '#/components/schemas/Querybuildertypesv5LimitBy'
-        name:
-          type: string
-        offset:
-          type: integer
-        order:
-          items:
-            $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
-          type: array
-        secondaryAggregations:
-          items:
-            $ref: '#/components/schemas/Querybuildertypesv5SecondaryAggregation'
-          type: array
-        selectFields:
-          items:
-            $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
-          type: array
-        signal:
-          enum:
-          - traces
-          type: string
-        source:
-          $ref: '#/components/schemas/TelemetrytypesSource'
-        stepInterval:
-          $ref: '#/components/schemas/Querybuildertypesv5Step'
-      required:
-      - signal
       type: object
     DashboardtypesUpdatableDashboardV2:
       properties:
@@ -5731,11 +5566,15 @@ components:
             $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
           type: array
         signal:
-          $ref: '#/components/schemas/TelemetrytypesSignal'
+          enum:
+          - logs
+          type: string
         source:
           $ref: '#/components/schemas/TelemetrytypesSource'
         stepInterval:
           $ref: '#/components/schemas/Querybuildertypesv5Step'
+      required:
+      - signal
       type: object
     Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregation:
       properties:
@@ -5782,11 +5621,15 @@ components:
             $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
           type: array
         signal:
-          $ref: '#/components/schemas/TelemetrytypesSignal'
+          enum:
+          - metrics
+          type: string
         source:
           $ref: '#/components/schemas/TelemetrytypesSource'
         stepInterval:
           $ref: '#/components/schemas/Querybuildertypesv5Step'
+      required:
+      - signal
       type: object
     Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregation:
       properties:
@@ -5833,11 +5676,15 @@ components:
             $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
           type: array
         signal:
-          $ref: '#/components/schemas/TelemetrytypesSignal'
+          enum:
+          - traces
+          type: string
         source:
           $ref: '#/components/schemas/TelemetrytypesSource'
         stepInterval:
           $ref: '#/components/schemas/Querybuildertypesv5Step'
+      required:
+      - signal
       type: object
     Querybuildertypesv5QueryBuilderTraceOperator:
       properties:
