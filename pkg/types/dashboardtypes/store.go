@@ -37,8 +37,11 @@ type Store interface {
 	// v2 dashboard methods
 	// ════════════════════════════════════════════════════════════════════════
 
-	// int64 return is the total row count for the filter (pre-limit/offset),
-	ListV2(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, params *ListDashboardsV2Params) ([]*DashboardListRow, int64, error)
+	// int64 return is the total row count for the filter (pre-limit/offset).
+	// ListV2 is the pure list; ListForUser additionally joins the caller's pins.
+	ListV2(ctx context.Context, orgID valuer.UUID, params *ListDashboardsV2Params) ([]*StorableDashboard, int64, error)
+
+	ListForUser(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, params *ListDashboardsV2Params) ([]*StorableDashboardWithPinInfo, int64, error)
 
 	// Returns ErrCodePinnedDashboardLimitHit when the user is at MaxPinnedDashboardsPerUser.
 	PinForUser(ctx context.Context, preference *UserDashboardPreference) error

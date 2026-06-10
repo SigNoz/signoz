@@ -242,8 +242,12 @@ func (module *module) LockUnlockV2(ctx context.Context, orgID valuer.UUID, id va
 	return module.pkgDashboardModule.LockUnlockV2(ctx, orgID, id, updatedBy, isAdmin, lock)
 }
 
-func (module *module) ListV2(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, params *dashboardtypes.ListDashboardsV2Params) (*dashboardtypes.ListableDashboardV2, error) {
-	return module.pkgDashboardModule.ListV2(ctx, orgID, userID, params)
+func (module *module) ListV2(ctx context.Context, orgID valuer.UUID, params *dashboardtypes.ListDashboardsV2Params) (*dashboardtypes.ListableDashboardV2, error) {
+	return module.pkgDashboardModule.ListV2(ctx, orgID, params)
+}
+
+func (module *module) ListForUserV2(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, params *dashboardtypes.ListDashboardsV2Params) (*dashboardtypes.ListableDashboardForUserV2, error) {
+	return module.pkgDashboardModule.ListForUserV2(ctx, orgID, userID, params)
 }
 
 func (module *module) PinV2(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, id valuer.UUID) error {

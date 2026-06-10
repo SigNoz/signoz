@@ -104,7 +104,6 @@ type listedDashboardV2 struct {
 	Source        Source                  `json:"source" required:"true"`
 	SchemaVersion string                  `json:"schemaVersion" required:"true"`
 	Name          string                  `json:"name" required:"true"`
-	Pinned        bool                    `json:"pinned" required:"true"`
 	Image         string                  `json:"image,omitempty"`
 	Tags          []*tagtypes.GettableTag `json:"tags" required:"true" nullable:"false"`
 	Spec          listedDashboardV2Spec   `json:"spec" required:"true"`
@@ -114,45 +113,79 @@ type listedDashboardV2Spec struct {
 	Display *common.Display `json:"display,omitempty"`
 }
 
+func newListedDashboardV2(v2 *DashboardV2) *listedDashboardV2 {
+	return &listedDashboardV2{
+		Identifiable:  v2.Identifiable,
+		TimeAuditable: v2.TimeAuditable,
+		UserAuditable: v2.UserAuditable,
+		OrgID:         v2.OrgID,
+		Locked:        v2.Locked,
+		Source:        v2.Source,
+		SchemaVersion: v2.SchemaVersion,
+		Name:          v2.Name,
+		Image:         v2.Image,
+		Tags:          tagtypes.NewGettableTagsFromTags(v2.Tags),
+		Spec:          listedDashboardV2Spec{Display: v2.Spec.Display},
+	}
+}
+
 type ListableDashboardV2 struct {
 	Dashboards []*listedDashboardV2    `json:"dashboards" required:"true" nullable:"false"`
 	Total      int64                   `json:"total" required:"true"`
 	Tags       []*tagtypes.GettableTag `json:"tags" required:"true" nullable:"false"`
 }
 
-// DashboardListRow is the per-row shape Store.ListV2 returns. Bundles the
-// joined dashboard / user_dashboard_preference data so the module layer can
-// attach tags and assemble the gettable view.
-type DashboardListRow struct {
+func NewListableDashboardV2(dashboards []*StorableDashboard, total int64, tagsByEntity map[valuer.UUID][]*tagtypes.Tag, allTags []*tagtypes.Tag) (*ListableDashboardV2, error) {
+	items := make([]*listedDashboardV2, len(dashboards))
+	for i, d := range dashboards {
+		v2, err := d.ToDashboardV2(tagsByEntity[d.ID])
+		if err != nil {
+			return nil, err
+		}
+		items[i] = newListedDashboardV2(v2)
+	}
+	return &ListableDashboardV2{
+		Dashboards: items,
+		Total:      total,
+		Tags:       tagtypes.NewGettableTagsFromTags(allTags),
+	}, nil
+}
+
+// listedDashboardForUserV2 is a listed dashboard plus the calling user's pin
+// state. Only the per-user list endpoint emits this; the pure list omits pins.
+type listedDashboardForUserV2 struct {
+	listedDashboardV2
+	Pinned bool `json:"pinned" required:"true"`
+}
+
+type ListableDashboardForUserV2 struct {
+	Dashboards []*listedDashboardForUserV2 `json:"dashboards" required:"true" nullable:"false"`
+	Total      int64                       `json:"total" required:"true"`
+	Tags       []*tagtypes.GettableTag     `json:"tags" required:"true" nullable:"false"`
+}
+
+// StorableDashboardWithPinInfo is the per-row shape Store.ListForUser returns: the dashboard
+// joined with the calling user's pin state, so the module layer can attach tags
+// and assemble the gettable view.
+type StorableDashboardWithPinInfo struct {
 	Dashboard *StorableDashboard
 	Pinned    bool
 }
 
-func NewListableDashboardV2(rows []*DashboardListRow, total int64, tagsByEntity map[valuer.UUID][]*tagtypes.Tag, allTags []*tagtypes.Tag) (*ListableDashboardV2, error) {
-	dashboards := make([]*listedDashboardV2, len(rows))
+func NewListableDashboardForUserV2(rows []*StorableDashboardWithPinInfo, total int64, tagsByEntity map[valuer.UUID][]*tagtypes.Tag, allTags []*tagtypes.Tag) (*ListableDashboardForUserV2, error) {
+	items := make([]*listedDashboardForUserV2, len(rows))
 	for i, r := range rows {
 		v2, err := r.Dashboard.ToDashboardV2(tagsByEntity[r.Dashboard.ID])
 		if err != nil {
 			return nil, err
 		}
-
-		dashboards[i] = &listedDashboardV2{
-			Identifiable:  v2.Identifiable,
-			TimeAuditable: v2.TimeAuditable,
-			UserAuditable: v2.UserAuditable,
-			OrgID:         v2.OrgID,
-			Locked:        v2.Locked,
-			Source:        v2.Source,
-			SchemaVersion: v2.SchemaVersion,
-			Name:          v2.Name,
-			Pinned:        r.Pinned,
-			Image:         v2.Image,
-			Tags:          tagtypes.NewGettableTagsFromTags(v2.Tags),
-			Spec:          listedDashboardV2Spec{Display: v2.Spec.Display},
+		items[i] = &listedDashboardForUserV2{
+			listedDashboardV2: *newListedDashboardV2(v2),
+			Pinned:            r.Pinned,
 		}
 	}
-	return &ListableDashboardV2{
-		Dashboards: dashboards,
+	return &ListableDashboardForUserV2{
+		Dashboards: items,
 		Total:      total,
 		Tags:       tagtypes.NewGettableTagsFromTags(allTags),
 	}, nil

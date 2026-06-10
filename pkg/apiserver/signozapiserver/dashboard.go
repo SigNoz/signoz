@@ -18,10 +18,27 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		ID:                  "ListDashboardsV2",
 		Tags:                []string{"dashboard"},
 		Summary:             "List dashboards (v2)",
-		Description:         "Returns a page of v2-shape dashboards for the calling user's org. Supports a filter DSL (`query`), sort (`updated_at`/`created_at`/`name`), order (`asc`/`desc`), and offset-based pagination (`limit`/`offset`).",
+		Description:         "Returns a page of v2-shape dashboards for the org. This is the pure, user-independent list — it carries no pin state. Use ListDashboardsForUserV2 for the personalized, pin-aware list. Supports a filter DSL (`query`), sort (`updated_at`/`created_at`/`name`), order (`asc`/`desc`), and offset-based pagination (`limit`/`offset`).",
 		Request:             new(dashboardtypes.ListDashboardsV2Params),
 		RequestContentType:  "application/json",
 		Response:            new(dashboardtypes.ListableDashboardV2),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{http.StatusBadRequest},
+		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
+	})).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v2/users/me/dashboards", handler.New(provider.authzMiddleware.ViewAccess(provider.dashboardHandler.ListForUserV2), handler.OpenAPIDef{
+		ID:                  "ListDashboardsForUserV2",
+		Tags:                []string{"dashboard"},
+		Summary:             "List dashboards for the current user (v2)",
+		Description:         "Same as ListDashboardsV2 but personalized for the calling user: each dashboard carries the caller's `pinned` state, and pinned dashboards float to the top of the requested ordering. Supports the same filter DSL, sort, order, and pagination.",
+		Request:             new(dashboardtypes.ListDashboardsV2Params),
+		RequestContentType:  "application/json",
+		Response:            new(dashboardtypes.ListableDashboardForUserV2),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{http.StatusBadRequest},

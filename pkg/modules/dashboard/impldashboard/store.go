@@ -64,8 +64,8 @@ func (store *store) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) 
 	return storableDashboard, nil
 }
 
-// ListV2 emits the joined dashboard ⨝ user_dashboard_preference query the spec
-// calls for. Aliases:
+// ListForUser emits the joined dashboard ⨝ user_dashboard_preference query the
+// spec calls for. Aliases:
 //
 //	dashboard                  — the visitor expects this
 //	user_dashboard_preference  AS preference  — only used inside this query
@@ -73,12 +73,12 @@ func (store *store) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) 
 // Sort is "is_pinned DESC, <sort> <order>" so pinned dashboards float to the
 // top inside the requested ordering. Name-sort goes through the same
 // JSONExtractString path the visitor uses for name/description filtering.
-func (store *store) ListV2(
+func (store *store) ListForUser(
 	ctx context.Context,
 	orgID valuer.UUID,
 	userID valuer.UUID,
 	params *dashboardtypes.ListDashboardsV2Params,
-) ([]*dashboardtypes.DashboardListRow, int64, error) {
+) ([]*dashboardtypes.StorableDashboardWithPinInfo, int64, error) {
 	compiled, err := Compile(params.Query, store.sqlstore.Formatter())
 	if err != nil {
 		return nil, 0, err
@@ -128,12 +128,71 @@ func (store *store) ListV2(
 		total = rows[0].Total
 	}
 
-	out := make([]*dashboardtypes.DashboardListRow, len(rows))
+	out := make([]*dashboardtypes.StorableDashboardWithPinInfo, len(rows))
 	for i, r := range rows {
-		out[i] = &dashboardtypes.DashboardListRow{
+		out[i] = &dashboardtypes.StorableDashboardWithPinInfo{
 			Dashboard: r.StorableDashboard,
 			Pinned:    r.IsPinned,
 		}
+	}
+	return out, total, nil
+}
+
+// ListV2 is the pure (user-independent) list: the same filter/sort/pagination as
+// ListForUser, but without the per-user pin join or pin-first ordering.
+func (store *store) ListV2(
+	ctx context.Context,
+	orgID valuer.UUID,
+	params *dashboardtypes.ListDashboardsV2Params,
+) ([]*dashboardtypes.StorableDashboard, int64, error) {
+	compiled, err := Compile(params.Query, store.sqlstore.Formatter())
+	if err != nil {
+		return nil, 0, err
+	}
+	type listedRow struct {
+		*dashboardtypes.StorableDashboard `bun:",extend"`
+
+		Total int64 `bun:"total"`
+	}
+
+	rows := make([]*listedRow, 0)
+
+	q := store.sqlstore.
+		BunDB().
+		NewSelect().
+		Model(&rows).
+		ColumnExpr("dashboard.id, dashboard.org_id, dashboard.name, dashboard.data, dashboard.locked, dashboard.source, dashboard.created_at, dashboard.created_by, dashboard.updated_at, dashboard.updated_by").
+		ColumnExpr("COUNT(*) OVER () AS total").
+		Where("dashboard.org_id = ?", orgID).
+		Where("dashboard.source != ?", dashboardtypes.SourceSystem)
+
+	if compiled != nil {
+		q = q.Where(compiled.SQL, compiled.Args...)
+	}
+
+	sortExpr, err := store.sortExprForListV2(params.Sort)
+	if err != nil {
+		return nil, 0, err
+	}
+	q = q.
+		OrderExpr(sortExpr + " " + strings.ToUpper(params.Order.StringValue())).
+		Limit(params.Limit).
+		Offset(params.Offset)
+
+	if err := q.Scan(ctx); err != nil {
+		return nil, 0, errors.WrapInternalf(err, errors.CodeInternal, "couldn't list dashboards")
+	}
+
+	// COUNT(*) OVER () is computed pre-LIMIT, so any returned row carries the
+	// full filter total. Empty result page => zero matches.
+	var total int64
+	if len(rows) > 0 {
+		total = rows[0].Total
+	}
+
+	out := make([]*dashboardtypes.StorableDashboard, len(rows))
+	for i, r := range rows {
+		out[i] = r.StorableDashboard
 	}
 	return out, total, nil
 }

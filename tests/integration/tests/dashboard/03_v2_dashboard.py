@@ -41,7 +41,20 @@ def _get(signoz: SigNoz, token: str, dashboard_id: str) -> requests.Response:
     return requests.get(_url(signoz, f"/{dashboard_id}"), headers=_headers(token), timeout=_TIMEOUT)
 
 
+# The tests exercise the per-user list (carries pin state); the pure list lives
+# at GET /api/v2/dashboards.
 def _list(signoz: SigNoz, token: str, **params: object) -> requests.Response:
+    url = signoz.self.host_configs["8080"].get("/api/v2/users/me/dashboards")
+    return requests.get(
+        url,
+        params={k: v for k, v in params.items() if v is not None},
+        headers=_headers(token),
+        timeout=_TIMEOUT,
+    )
+
+
+# The pure, user-independent list — no pin join, no pinned field.
+def _list_pure(signoz: SigNoz, token: str, **params: object) -> requests.Response:
     return requests.get(
         _url(signoz),
         params={k: v for k, v in params.items() if v is not None},
@@ -508,6 +521,19 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
     assert dashboards[0]["name"] == "lc-gamma"
     assert dashboards[0]["pinned"] is True
     assert all(d["pinned"] is False for d in dashboards[1:])
+
+    # the pure list is user-independent: the same pin neither reorders it (gamma
+    # stays in natural name order, not floated to the top) nor adds a pinned field.
+    response = _list_pure(signoz, token, query=suite_filter, sort="name", order="asc", limit=200)
+    assert _display_names(response.json()) == [
+        "Alpha Overview",
+        "Beta Overview",
+        "Delta Storage",
+        "Epsilon Metrics",
+        "Gamma Storage",
+        "Zeta Overview",
+    ]
+    assert all("pinned" not in d for d in response.json()["data"]["dashboards"])
 
     # ── stage 7: unpinning restores the natural ordering ─────────────────────
     assert _pin(signoz, token, ids["lc-gamma"], pin=False).status_code == HTTPStatus.NO_CONTENT
