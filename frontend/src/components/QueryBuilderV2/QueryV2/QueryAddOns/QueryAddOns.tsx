@@ -283,14 +283,14 @@ function QueryAddOns({
 
 	const handleChangeGroupByKeys = useCallback(
 		(value: IBuilderQuery['groupBy']) => {
-			handleChangeQueryData('groupBy', value);
+			handleChangeQueryData('groupBy', value, { runAfterUpdate: true });
 		},
 		[handleChangeQueryData],
 	);
 
 	const handleChangeOrderByKeys = useCallback(
 		(value: IBuilderQuery['orderBy']) => {
-			handleChangeQueryData('orderBy', value);
+			handleChangeQueryData('orderBy', value, { runAfterUpdate: true });
 		},
 		[handleChangeQueryData],
 	);

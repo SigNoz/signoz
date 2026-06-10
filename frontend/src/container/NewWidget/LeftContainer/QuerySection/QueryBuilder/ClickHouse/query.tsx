@@ -47,7 +47,9 @@ function ClickHouseQueryBuilder({
 			disabled: !queryData.disabled,
 		};
 
-		handleSetQueryItemData(queryIndex, EQueryType.CLICKHOUSE, newQuery);
+		handleSetQueryItemData(queryIndex, EQueryType.CLICKHOUSE, newQuery, {
+			runAfterUpdate: true,
+		});
 	}, [handleSetQueryItemData, queryData, queryIndex]);
 
 	const handleUpdateEditor = useCallback(

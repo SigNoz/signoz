@@ -45,6 +45,7 @@ import {
 import {
 	HandleChangeFormulaData,
 	HandleChangeQueryData,
+	HandleChangeQueryDataOptions,
 	HandleChangeQueryDataV5,
 	UseQueryOperations,
 } from 'types/common/operations.types';
@@ -76,6 +77,7 @@ export const useQueryOperations: UseQueryOperations = ({
 		currentQuery,
 		setLastUsedQuery,
 		redirectWithQueryBuilderData,
+		handleRunQuery,
 	} = useQueryBuilder();
 
 	const [operators, setOperators] = useState<SelectOption<string, string>[]>([]);
@@ -530,7 +532,7 @@ export const useQueryOperations: UseQueryOperations = ({
 
 	const handleChangeQueryData: HandleChangeQueryData | HandleChangeQueryDataV5 =
 		useCallback(
-			(key: string, value: any) => {
+			(key: string, value: any, options?: HandleChangeQueryDataOptions) => {
 				const newQuery = {
 					...query,
 					[key]:
@@ -541,8 +543,24 @@ export const useQueryOperations: UseQueryOperations = ({
 
 				if (isForTraceOperator) {
 					handleSetTraceOperatorData(index, newQuery);
-				} else {
-					handleSetQueryData(index, newQuery);
+					return;
+				}
+
+				handleSetQueryData(index, newQuery);
+
+				// `runAfterUpdate` lets callers stage-and-run inline. We pass the
+				// freshly-computed query straight to `handleRunQuery` because the
+				// setState above hasn't flushed yet.
+				if (options?.runAfterUpdate) {
+					handleRunQuery({
+						...currentQuery,
+						builder: {
+							...currentQuery.builder,
+							queryData: currentQuery.builder.queryData.map((item, i) =>
+								i === index ? newQuery : item,
+							),
+						},
+					});
 				}
 			},
 			[
@@ -551,6 +569,8 @@ export const useQueryOperations: UseQueryOperations = ({
 				handleSetQueryData,
 				handleSetTraceOperatorData,
 				isForTraceOperator,
+				handleRunQuery,
+				currentQuery,
 			],
 		);
 
