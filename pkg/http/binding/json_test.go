@@ -58,11 +58,16 @@ func TestJSONBinding_BindBodyErrors(t *testing.T) {
 			err := JSON.BindBody(strings.NewReader(testCase.body), testCase.obj, testCase.opts...)
 			assert.Error(t, err)
 
-			typ, c, m, _, _, a := errors.Unwrapb(err)
+			typ, c, m, _, _, _ := errors.Unwrapb(err)
 			assert.Equal(t, errors.TypeInvalidInput, typ)
 			assert.Equal(t, testCase.code, c)
 			assert.Equal(t, testCase.message, m)
-			assert.ElementsMatch(t, testCase.a, a)
+
+			messages := []string{}
+			for _, additional := range errors.AsJSON(err).Errors {
+				messages = append(messages, additional.Message)
+			}
+			assert.ElementsMatch(t, testCase.a, messages)
 		})
 	}
 }
