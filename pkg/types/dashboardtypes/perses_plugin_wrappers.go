@@ -338,17 +338,15 @@ func markDiscriminator(s *jsonschema.Schema, propertyName string, mapping map[st
 	return nil
 }
 
-// restrictKindToOneValue pins a variant's `kind` to one value, as an inline
-// single-value enum, and marks it required. For eg. the TimeSeriesPanel variant
-// restricts its `kind` to "signoz/TimeSeriesPanel".
+// restrictKindToOneValue ensures that the schema only allows one Kind value for a type.
+// For eg. PanelPluginVariant[TimeSeriesPanelSpec]{Kind: string(PanelKindTimeSeries)} should
+// only allow "signoz/TimeSeriesPanel" in its kind field.
 func restrictKindToOneValue(schema *jsonschema.Schema, kind string) error {
-	if _, ok := schema.Properties["kind"]; !ok {
+	kindProp, ok := schema.Properties["kind"]
+	if !ok || kindProp.TypeObject == nil {
 		return errors.NewInternalf(errors.CodeInternal, "variant schema missing `kind` property")
 	}
-	prop := (&jsonschema.Schema{}).WithType(jsonschema.String.Type()).WithEnum(kind)
-	schema.Properties["kind"] = prop.ToSchemaOrBool()
-	if !slices.Contains(schema.Required, "kind") {
-		schema.Required = append(schema.Required, "kind")
-	}
+	kindProp.TypeObject.WithEnum(kind)
+	schema.Properties["kind"] = kindProp
 	return nil
 }
