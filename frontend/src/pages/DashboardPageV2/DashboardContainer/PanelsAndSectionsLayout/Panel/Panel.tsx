@@ -77,9 +77,10 @@ function Panel({
 		>
 			<PanelHeader
 				title={headerTitle}
-				kind={kind}
 				panelId={panelId}
 				isFetching={isFetching}
+				error={error}
+				warning={data?.warning}
 				panelActions={panelActions}
 			/>
 			<PanelBody

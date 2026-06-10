@@ -3,8 +3,8 @@
 	flex-direction: column;
 	height: 100%;
 	width: 100%;
-	background: var(--bg-ink-400, #0b0c0e);
-	border: 1px solid var(--l1-border);
+	background: var(--l2-background);
+	border: 1px solid var(--l2-border);
 	border-radius: 4px;
 	overflow: hidden;
 }
@@ -14,7 +14,7 @@
 	align-items: center;
 	justify-content: space-between;
 	padding: 8px 12px;
-	border-bottom: 1px solid var(--l1-border);
+	border-bottom: 1px solid var(--l2-border);
 	cursor: grab;
 }
 
@@ -41,6 +41,7 @@
 .actions {
 	display: flex;
 	align-items: center;
+	gap: 4px;
 	cursor: default;
 }
 
@@ -87,7 +88,7 @@
 }
 
 .errorIcon {
-	color: var(--bg-cherry-500, #e5484d);
+	color: var(--bg-cherry-500);
 }
 
 .errorMessage {

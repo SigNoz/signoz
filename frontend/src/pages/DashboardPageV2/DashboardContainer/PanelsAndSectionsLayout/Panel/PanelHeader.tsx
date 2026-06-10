@@ -1,36 +1,54 @@
-import type { ReactNode } from 'react';
-import { Badge } from '@signozhq/ui/badge';
+import { useMemo, type ReactNode } from 'react';
 import { Typography } from '@signozhq/ui/typography';
-import { EllipsisVertical, Loader } from '@signozhq/icons';
+import { Loader } from '@signozhq/icons';
 import cx from 'classnames';
+import type { Warning } from 'types/api';
 
 import type { PanelActionsConfig } from './Panel';
 import PanelActionsMenu from './PanelActionsMenu/PanelActionsMenu';
+import PanelStatusPopover from './PanelStatus/PanelStatusPopover';
+import {
+	panelStatusFromError,
+	panelStatusFromWarning,
+} from './PanelStatus/utils';
 import styles from './Panel.module.scss';
 
 interface PanelHeaderProps {
 	title: ReactNode;
-	kind: string;
 	panelId: string;
 	/** Background refresh in flight — shows a subtle spinner without blinking the chart. */
 	isFetching: boolean;
+	/** Latest query error, if any — surfaced as a header error indicator. */
+	error?: Error | null;
+	/** Non-fatal query warning lifted from the response payload. */
+	warning?: Warning;
 	/** Move/delete actions — present only in editable sectioned mode. */
 	panelActions?: PanelActionsConfig;
 }
 
-/** Panel chrome: drag handle, title, kind badge, refetch indicator, actions. */
+/** Panel chrome: drag handle, title, refetch + status indicators, actions. */
 function PanelHeader({
 	title,
-	kind,
 	panelId,
 	isFetching,
+	error,
+	warning,
 	panelActions,
 }: PanelHeaderProps): JSX.Element {
+	const errorDetail = useMemo(
+		() => panelStatusFromError(error ?? null),
+		[error],
+	);
+
+	const warningDetail = useMemo(
+		() => panelStatusFromWarning(warning),
+		[warning],
+	);
+
 	return (
 		<div className={cx(styles.header, 'panel-drag-handle')}>
 			<div className={styles.headerLeft}>
 				<Typography.Text className={styles.headerTitle}>{title}</Typography.Text>
-				<Badge className={styles.badge}>{kind}</Badge>
 				{isFetching && (
 					<Loader
 						size={12}
@@ -42,7 +60,11 @@ function PanelHeader({
 			{/* `panel-no-drag` opts this region out of the grid drag handle so the
 			    actions menu is clickable instead of starting a panel drag. */}
 			<div className={cx('panel-no-drag', styles.actions)}>
-				{panelActions ? (
+				{errorDetail && <PanelStatusPopover variant="error" detail={errorDetail} />}
+				{warningDetail && (
+					<PanelStatusPopover variant="warning" detail={warningDetail} />
+				)}
+				{panelActions && (
 					<PanelActionsMenu
 						panelId={panelId}
 						currentLayoutIndex={panelActions.currentLayoutIndex}
@@ -50,8 +72,6 @@ function PanelHeader({
 						onMovePanel={panelActions.onMovePanel}
 						onDeletePanel={panelActions.onDeletePanel}
 					/>
-				) : (
-					<EllipsisVertical size={14} />
 				)}
 			</div>
 		</div>
