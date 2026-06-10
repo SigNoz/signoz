@@ -8096,10 +8096,6 @@ export interface SpantypesWaterfallSpanDTO {
 
 export interface SpantypesGettableWaterfallTraceDTO {
 	/**
-	 * @type array,null
-	 */
-	aggregations?: SpantypesSpanAggregationResultDTO[] | null;
-	/**
 	 * @type integer
 	 * @minimum 0
 	 */
@@ -8218,15 +8214,6 @@ export interface SpantypesPostableTraceAggregationsDTO {
 }
 
 export interface SpantypesPostableWaterfallDTO {
-	/**
-	 * @type array,null
-	 */
-	aggregations?: SpantypesSpanAggregationDTO[] | null;
-	/**
-	 * @type integer
-	 * @minimum 0
-	 */
-	limit?: number;
 	/**
 	 * @type string
 	 */
@@ -10515,17 +10502,6 @@ export type GetFlamegraphPathParameters = {
 };
 export type GetFlamegraph200 = {
 	data: SpantypesGettableFlamegraphTraceDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type GetWaterfallPathParameters = {
-	traceID: string;
-};
-export type GetWaterfall200 = {
-	data: SpantypesGettableWaterfallTraceDTO;
 	/**
 	 * @type string
 	 */
