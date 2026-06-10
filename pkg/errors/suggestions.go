@@ -93,6 +93,22 @@ func Suggestions(invalidInput string, validInputs []string) []string {
 
 	suggestions := make([]string, 0, 2)
 
+	if didYouMean, ok := DidYouMeanFrom(invalidInput, validInputs); ok {
+		suggestions = append(suggestions, didYouMean)
+	}
+
+	suggestions = append(suggestions, ValidReferences(validInputs...))
+
+	return suggestions
+}
+
+// DidYouMeanFrom returns a "did you mean: `x`" suggestion for the closest-match
+// correction to invalidInput among validInputs (when one is at least 75% similar),
+// and false when nothing is close enough. Use this — rather than Suggestions — when a
+// "valid references" enumeration would be unhelpful, e.g. field-not-found errors whose
+// candidate pool is only the fields the query already references plus intrinsics.
+func DidYouMeanFrom(invalidInput string, validInputs []string) (string, bool) {
+
 	var bestMatch string
 	bestSimilarity := 0.0
 
@@ -105,12 +121,22 @@ func Suggestions(invalidInput string, validInputs []string) []string {
 	}
 
 	if bestSimilarity >= typoSuggestionThreshold {
-		suggestions = append(suggestions, DidYouMean(bestMatch))
+		return DidYouMean(bestMatch), true
 	}
 
-	suggestions = append(suggestions, ValidReferences(validInputs...))
+	return "", false
+}
 
-	return suggestions
+// DidYouMeanSuggestions returns a one-element "did you mean: `x`" slice for the closest
+// match (or nil when none is close enough), suitable for WithSuggestions /
+// WithSuggestiveAdditional. Unlike Suggestions it omits the "valid references" list — use
+// it where that enumeration would be unhelpful (e.g. field-not-found on select/order/groupBy,
+// whose candidate pool is only the query's referenced fields plus intrinsics).
+func DidYouMeanSuggestions(invalidInput string, validInputs []string) []string {
+	if didYouMean, ok := DidYouMeanFrom(invalidInput, validInputs); ok {
+		return []string{didYouMean}
+	}
+	return nil
 }
 
 // DidYouMean formats a single closest-match correction as a suggestion string

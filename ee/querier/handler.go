@@ -49,7 +49,13 @@ func (h *handler) QueryRange(rw http.ResponseWriter, req *http.Request) {
 
 	var queryRangeRequest qbtypes.QueryRangeRequest
 	if err := json.NewDecoder(req.Body).Decode(&queryRangeRequest); err != nil {
-		render.Error(rw, errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to decode request body: %v", err))
+		// Preserve structured decode errors — they carry the field suggestions and
+		// hints produced while unmarshalling. Only opaque decoder errors (e.g.
+		// malformed JSON) get wrapped into a clean invalid-input message.
+		if !errors.Ast(err, errors.TypeInvalidInput) {
+			err = errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to decode request body: %v", err)
+		}
+		render.Error(rw, err)
 		return
 	}
 

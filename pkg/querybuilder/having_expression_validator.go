@@ -328,21 +328,22 @@ func (r *HavingExpressionRewriter) rewriteAndValidate(expression string) (string
 				msgs = append(msgs, m)
 			}
 		}
-		detail := strings.Join(msgs, "; ")
-		if detail == "" {
-			detail = "check the expression syntax"
-		}
-		additional := []string{detail}
-		// For single-error expressions, try to produce an actionable suggestion.
-		if len(allSyntaxErrors) == 1 {
-			if s := havingSuggestion(allSyntaxErrors[0], original); s != "" {
-				additional = append(additional, "Suggestion: `"+s+"`")
-			}
-		}
-		return "", errors.NewInvalidInputf(
+		havingErr := errors.NewInvalidInputf(
 			errors.CodeInvalidInput,
 			"Syntax error in `Having` expression",
-		).WithAdditional(additional...)
+		)
+
+		// A single syntax error can carry an actionable suggestion on the same detail;
+		// multiple errors are surfaced as one additional detail each. If the parser
+		// produced no message (rare), the top-level message stands on its own.
+		if len(allSyntaxErrors) == 1 && len(msgs) == 1 {
+			var suggestions []string
+			if s := havingSuggestion(allSyntaxErrors[0], original); s != "" {
+				suggestions = append(suggestions, errors.DidYouMean(s))
+			}
+			return "", havingErr.WithSuggestiveAdditional(msgs[0], suggestions...)
+		}
+		return "", havingErr.WithAdditional(msgs...)
 	}
 
 	return result, nil

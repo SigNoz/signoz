@@ -109,7 +109,7 @@ func (m *fieldMapper) ColumnExpressionFor(
 				field.FieldContext = telemetrytypes.FieldContextLog
 				fieldExpression, _ = m.FieldFor(ctx, tsStart, tsEnd, field)
 			} else {
-				wrappedErr := errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field `%s` not found", field.Name).WithSuggestions(errors.Suggestions(field.Name, maps.Keys(keys))...)
+				wrappedErr := errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field `%s` not found", field.Name).WithSuggestions(errors.DidYouMeanSuggestions(field.Name, maps.Keys(keys))...)
 				return "", wrappedErr
 			}
 		} else {
