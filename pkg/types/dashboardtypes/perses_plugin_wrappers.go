@@ -73,7 +73,7 @@ type PanelPluginVariant[S any] struct {
 }
 
 func (v PanelPluginVariant[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
-	return restrictToOneValue(s, "kind", v.Kind)
+	return restrictKindToOneValue(s, v.Kind)
 }
 
 // ══════════════════════════════════════════════
@@ -131,7 +131,7 @@ type QueryPluginVariant[S any] struct {
 }
 
 func (v QueryPluginVariant[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
-	return restrictToOneValue(s, "kind", v.Kind)
+	return restrictKindToOneValue(s, v.Kind)
 }
 
 // ══════════════════════════════════════════════
@@ -183,7 +183,7 @@ type VariablePluginVariant[S any] struct {
 }
 
 func (v VariablePluginVariant[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
-	return restrictToOneValue(s, "kind", v.Kind)
+	return restrictKindToOneValue(s, v.Kind)
 }
 
 // ══════════════════════════════════════════════
@@ -231,7 +231,7 @@ type DatasourcePluginVariant[S any] struct {
 }
 
 func (v DatasourcePluginVariant[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
-	return restrictToOneValue(s, "kind", v.Kind)
+	return restrictKindToOneValue(s, v.Kind)
 }
 
 // ══════════════════════════════════════════════
@@ -338,17 +338,17 @@ func markDiscriminator(s *jsonschema.Schema, propertyName string, mapping map[st
 	return nil
 }
 
-// restrictToOneValue pins a variant's discriminator property to one value, as an
-// inline single-value enum, and marks it required. For eg. the TimeSeriesPanel
-// variant restricts its `kind` to "signoz/TimeSeriesPanel".
-func restrictToOneValue(schema *jsonschema.Schema, property, value string) error {
-	if _, ok := schema.Properties[property]; !ok {
-		return errors.NewInternalf(errors.CodeInternal, "variant schema missing %q property", property)
+// restrictKindToOneValue pins a variant's `kind` to one value, as an inline
+// single-value enum, and marks it required. For eg. the TimeSeriesPanel variant
+// restricts its `kind` to "signoz/TimeSeriesPanel".
+func restrictKindToOneValue(schema *jsonschema.Schema, kind string) error {
+	if _, ok := schema.Properties["kind"]; !ok {
+		return errors.NewInternalf(errors.CodeInternal, "variant schema missing `kind` property")
 	}
-	prop := (&jsonschema.Schema{}).WithType(jsonschema.String.Type()).WithEnum(value)
-	schema.Properties[property] = prop.ToSchemaOrBool()
-	if !slices.Contains(schema.Required, property) {
-		schema.Required = append(schema.Required, property)
+	prop := (&jsonschema.Schema{}).WithType(jsonschema.String.Type()).WithEnum(kind)
+	schema.Properties["kind"] = prop.ToSchemaOrBool()
+	if !slices.Contains(schema.Required, "kind") {
+		schema.Required = append(schema.Required, "kind")
 	}
 	return nil
 }

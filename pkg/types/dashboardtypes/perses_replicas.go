@@ -132,7 +132,7 @@ type VariableEnvelope[S any] struct {
 }
 
 func (v VariableEnvelope[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
-	return restrictToOneValue(s, "kind", v.Kind)
+	return restrictKindToOneValue(s, v.Kind)
 }
 
 // ListVariableSpec mirrors dashboard.ListVariableSpec (variable.ListSpec
@@ -205,5 +205,5 @@ type LayoutEnvelope[S any] struct {
 }
 
 func (v LayoutEnvelope[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
-	return restrictToOneValue(s, "kind", v.Kind)
+	return restrictKindToOneValue(s, v.Kind)
 }
