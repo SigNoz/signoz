@@ -1,0 +1,55 @@
+.header {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	padding: 8px 12px;
+
+	&.headerOpen {
+		border-bottom: 1px solid var(--l1-border);
+	}
+}
+
+.dragHandle {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+	background: transparent;
+	border: none;
+	color: var(--l2-foreground);
+	cursor: grab;
+
+	&:active {
+		cursor: grabbing;
+	}
+}
+
+.toggle {
+	flex: 1;
+	display: flex;
+	align-items: center;
+	justify-content: flex-start;
+	gap: 4px;
+	padding: 0;
+	background: transparent;
+	border: none;
+	// Muted chevron; the title below carries the prominent heading color.
+	color: var(--l2-foreground);
+	text-align: left;
+	cursor: pointer;
+	min-width: 0;
+}
+
+.title {
+	margin-left: 4px;
+	color: var(--l1-foreground);
+	font-weight: 500;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.repeatBadge {
+	margin-left: 8px;
+	opacity: 0.6;
+}
