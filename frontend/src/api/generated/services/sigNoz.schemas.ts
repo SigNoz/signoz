@@ -4742,7 +4742,7 @@ export interface DashboardtypesListedDashboardV2SpecDTO {
 	display?: CommonDisplayDTO;
 }
 
-export interface DashboardtypesListedDashboardV2DTO {
+export interface DashboardtypesListedDashboardForUserV2DTO {
 	/**
 	 * @type string
 	 * @format date-time
@@ -4776,6 +4776,73 @@ export interface DashboardtypesListedDashboardV2DTO {
 	 * @type boolean
 	 */
 	pinned: boolean;
+	/**
+	 * @type string
+	 */
+	schemaVersion: string;
+	source: DashboardtypesSourceDTO;
+	spec: DashboardtypesListedDashboardV2SpecDTO;
+	/**
+	 * @type array
+	 */
+	tags: TagtypesGettableTagDTO[];
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: string;
+	/**
+	 * @type string
+	 */
+	updatedBy?: string;
+}
+
+export interface DashboardtypesListableDashboardForUserV2DTO {
+	/**
+	 * @type array
+	 */
+	dashboards: DashboardtypesListedDashboardForUserV2DTO[];
+	/**
+	 * @type array
+	 */
+	tags: TagtypesGettableTagDTO[];
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	total: number;
+}
+
+export interface DashboardtypesListedDashboardV2DTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: string;
+	/**
+	 * @type string
+	 */
+	createdBy?: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	image?: string;
+	/**
+	 * @type boolean
+	 */
+	locked: boolean;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	orgId: string;
 	/**
 	 * @type string
 	 */
@@ -10626,6 +10693,40 @@ export type RemoveUserRoleByUserIDAndRoleIDPathParameters = {
 };
 export type GetMyUser200 = {
 	data: AuthtypesUserWithRolesDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListDashboardsForUserV2Params = {
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	query?: string;
+	/**
+	 * @description undefined
+	 */
+	sort?: DashboardtypesListSortDTO;
+	/**
+	 * @description undefined
+	 */
+	order?: DashboardtypesListOrderDTO;
+	/**
+	 * @type integer
+	 * @description undefined
+	 */
+	limit?: number;
+	/**
+	 * @type integer
+	 * @description undefined
+	 */
+	offset?: number;
+};
+
+export type ListDashboardsForUserV2200 = {
+	data: DashboardtypesListableDashboardForUserV2DTO;
 	/**
 	 * @type string
 	 */
