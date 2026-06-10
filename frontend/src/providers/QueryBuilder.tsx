@@ -36,12 +36,12 @@ import {
 import { OptionsQuery } from 'container/OptionsMenu/types';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
-import { useSaveRecentQuery } from 'hooks/recentQueries/useSaveRecentQuery';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderItemName';
 import { getOperatorsBySourceAndPanelType } from 'lib/newQueryBuilder/getOperatorsBySourceAndPanelType';
+import { saveRecentQuery } from 'lib/recentQueries/saveRecentQuery';
 import { replaceIncorrectObjectFields } from 'lib/replaceIncorrectObjectFields';
 import { cloneDeep, get, isEqual, set } from 'lodash-es';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
@@ -134,8 +134,6 @@ export function QueryBuilderProvider({
 	const [supersetQuery, setSupersetQuery] = useState<QueryState>(queryState);
 	const [lastUsedQuery, setLastUsedQuery] = useState<number | null>(0);
 	const [stagedQuery, setStagedQuery] = useState<Query | null>(null);
-
-	useSaveRecentQuery(stagedQuery);
 
 	const [queryType, setQueryType] = useState<EQueryType>(queryTypeParam);
 
@@ -1034,6 +1032,8 @@ export function QueryBuilderProvider({
 		if (isExplorer) {
 			setCalledFromHandleRunQuery(true);
 		}
+		saveRecentQuery(currentQuery);
+
 		const currentQueryData = {
 			...currentQuery,
 			builder: {
