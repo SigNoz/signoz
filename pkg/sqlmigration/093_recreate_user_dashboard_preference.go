@@ -16,7 +16,7 @@ type recreateUserDashboardPreference struct {
 }
 
 func NewRecreateUserDashboardPreferenceFactory(sqlstore sqlstore.SQLStore, sqlschema sqlschema.SQLSchema) factory.ProviderFactory[SQLMigration, Config] {
-	return factory.NewProviderFactory(factory.MustNewName("recreate_user_dashboard_preference"), func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
+	return factory.NewProviderFactory(factory.MustNewName("recreate_user_dashboard_pref"), func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
 		return &recreateUserDashboardPreference{
 			sqlstore:  sqlstore,
 			sqlschema: sqlschema,
