@@ -38,7 +38,7 @@ func (handler *handler) Create(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	authDomain, err := authtypes.NewAuthDomainFromConfig(body.Name, &body.Config, valuer.MustNewUUID(claims.OrgID))
+	authDomain, err := authtypes.NewAuthDomainFromConfig(body.Name, &body.AuthDomainConfig, valuer.MustNewUUID(claims.OrgID))
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -154,7 +154,7 @@ func (handler *handler) Update(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = authDomain.Update(&body.Config)
+	err = authDomain.Update(&body.AuthDomainConfig)
 	if err != nil {
 		render.Error(rw, err)
 		return

@@ -9,6 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/swaggest/jsonschema-go"
 	"github.com/uptrace/bun"
 )
 
@@ -30,7 +31,7 @@ var (
 
 type GettableAuthDomain struct {
 	StorableAuthDomain
-	Config            AuthDomainConfig   `json:"config"`
+	AuthDomainConfig
 	AuthNProviderInfo *AuthNProviderInfo `json:"authNProviderInfo"`
 }
 
@@ -39,12 +40,12 @@ type AuthNProviderInfo struct {
 }
 
 type PostableAuthDomain struct {
-	Config AuthDomainConfig `json:"config"`
-	Name   string           `json:"name"`
+	Name string `json:"name"`
+	AuthDomainConfig
 }
 
 type UpdatableAuthDomain struct {
-	Config AuthDomainConfig `json:"config"`
+	AuthDomainConfig
 }
 
 type StorableAuthDomain struct {
@@ -66,13 +67,123 @@ type StorableAuthDomain struct {
 // be attached. Refactor AuthDomainConfig into an envelope (see
 // ruletypes.RuleThresholdData for the pattern) where the chosen config is
 // the payload and ssoType is the discriminator.
+// type AuthDomainConfig struct {
+// 	SSOEnabled    bool          `json:"ssoEnabled"`
+// 	AuthNProvider AuthNProvider `json:"ssoType"`
+// 	SAML          *SamlConfig   `json:"samlConfig"`
+// 	Google        *GoogleConfig `json:"googleAuthConfig"`
+// 	OIDC          *OIDCConfig   `json:"oidcConfig"`
+// 	RoleMapping   *RoleMapping  `json:"roleMapping"`
+// }
+
 type AuthDomainConfig struct {
-	SSOEnabled    bool          `json:"ssoEnabled"`
-	AuthNProvider AuthNProvider `json:"ssoType"`
-	SAML          *SamlConfig   `json:"samlConfig"`
-	Google        *GoogleConfig `json:"googleAuthConfig"`
-	OIDC          *OIDCConfig   `json:"oidcConfig"`
-	RoleMapping   *RoleMapping  `json:"roleMapping"`
+	SSOEnabled  bool                `json:"ssoEnabled"`
+	RoleMapping *RoleMapping        `json:"roleMapping,omitempty"`
+	Provider    AuthProviderEnvelop `json:"provider"`
+}
+
+func (config AuthDomainConfig) Saml() *SamlConfig {
+	cfg, _ := config.Provider.Config.(*SamlConfig)
+	return cfg
+}
+
+func (config AuthDomainConfig) Google() *GoogleConfig {
+	cfg, _ := config.Provider.Config.(*GoogleConfig)
+	return cfg
+}
+
+func (config AuthDomainConfig) Oidc() *OIDCConfig {
+	cfg, _ := config.Provider.Config.(*OIDCConfig)
+	return cfg
+}
+
+type AuthProviderEnvelop struct {
+	Type   AuthNProvider `json:"type" required:"true"`
+	Config any           `json:"config" required:"true"` // this can be either of SamlConfig, OIDCConfig and GoogleConfig
+}
+
+// internal - drives the oneOf thing in open api spec
+type authProviderSAML struct {
+	Type   AuthNProvider `json:"type" required:"true"`
+	Config SamlConfig    `json:"config" required:"true"`
+}
+
+type authProviderOIDC struct {
+	Type   AuthNProvider `json:"type" required:"true"`
+	Config OIDCConfig    `json:"config" required:"true"`
+}
+
+type authProviderGoogle struct {
+	Type   AuthNProvider `json:"type" required:"true"`
+	Config GoogleConfig  `json:"config" required:"true"`
+}
+
+var (
+	_ jsonschema.OneOfExposer = AuthProviderEnvelop{}
+	_ jsonschema.Preparer     = AuthProviderEnvelop{}
+)
+
+func (AuthProviderEnvelop) JSONSchemaOneOf() []any {
+	return []any{
+		authProviderSAML{},
+		authProviderOIDC{},
+		authProviderGoogle{},
+	}
+}
+
+func (AuthProviderEnvelop) PrepareJSONSchema(schema *jsonschema.Schema) error {
+	if schema.ExtraProperties == nil {
+		schema.ExtraProperties = map[string]any{}
+	}
+
+	schema.ExtraProperties["x-signoz-discriminator"] = map[string]any{
+		"propertyName": "type",
+		"mapping": map[string]string{
+			"saml":        "#/components/schemas/AuthtypesAuthProviderSAML",
+			"oidc":        "#/components/schemas/AuthtypesAuthProviderOIDC",
+			"google_auth": "#/components/schemas/AuthtypesAuthProviderGoogle",
+		},
+	}
+
+	return nil
+}
+
+func (envelop *AuthProviderEnvelop) UnmarshalJSON(data []byte) error {
+	var raw struct {
+		Type   AuthNProvider   `json:"type"`
+		Config json.RawMessage `json:"config"`
+	}
+
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to unmarshal auth provider: %v", err)
+	}
+
+	envelop.Type = raw.Type
+
+	switch raw.Type {
+	case AuthNProviderSAML:
+		cfg := new(SamlConfig)
+		if err := json.Unmarshal(raw.Config, cfg); err != nil {
+			return err
+		}
+		envelop.Config = cfg
+	case AuthNProviderOIDC:
+		cfg := new(OIDCConfig)
+		if err := json.Unmarshal(raw.Config, cfg); err != nil {
+			return err
+		}
+		envelop.Config = cfg
+	case AuthNProviderGoogleAuth:
+		cfg := new(GoogleConfig)
+		if err := json.Unmarshal(raw.Config, cfg); err != nil {
+			return err
+		}
+		envelop.Config = cfg
+	default:
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "unknown auth provider type: %s", raw.Type.StringValue())
+	}
+
+	return nil
 }
 
 type AuthDomain struct {
@@ -121,7 +232,7 @@ func NewAuthDomainFromStorableAuthDomain(storableAuthDomain *StorableAuthDomain)
 func NewGettableAuthDomainFromAuthDomain(authDomain *AuthDomain, authNProviderInfo *AuthNProviderInfo) *GettableAuthDomain {
 	return &GettableAuthDomain{
 		StorableAuthDomain: *authDomain.StorableAuthDomain(),
-		Config:             *authDomain.AuthDomainConfig(),
+		AuthDomainConfig:   *authDomain.AuthDomainConfig(),
 		AuthNProviderInfo:  authNProviderInfo,
 	}
 }
@@ -160,47 +271,6 @@ func (typ *PostableAuthDomain) UnmarshalJSON(data []byte) error {
 
 	*typ = PostableAuthDomain(temp)
 	return nil
-}
-
-func (typ *AuthDomainConfig) UnmarshalJSON(data []byte) error {
-	type Alias AuthDomainConfig
-
-	var temp Alias
-	if err := json.Unmarshal(data, &temp); err != nil {
-		return err
-	}
-
-	switch temp.AuthNProvider {
-	case AuthNProviderGoogleAuth:
-		if temp.Google == nil {
-			return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthDomainInvalidConfig, "google auth config is required")
-		}
-
-	case AuthNProviderSAML:
-		if temp.SAML == nil {
-			return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthDomainInvalidConfig, "saml config is required")
-		}
-
-	case AuthNProviderOIDC:
-		if temp.OIDC == nil {
-			return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthDomainInvalidConfig, "oidc config is required")
-		}
-
-	default:
-		return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthDomainInvalidConfig, "invalid authn provider %q", temp.AuthNProvider.StringValue())
-	}
-
-	*typ = AuthDomainConfig(temp)
-	return nil
-
-}
-
-func (AuthDomainConfig) JSONSchemaOneOf() []any {
-	return []any{
-		SamlConfig{},
-		GoogleConfig{},
-		OIDCConfig{},
-	}
 }
 
 type AuthDomainStore interface {

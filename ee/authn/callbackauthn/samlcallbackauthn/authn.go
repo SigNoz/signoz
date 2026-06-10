@@ -40,7 +40,7 @@ func New(ctx context.Context, store authtypes.AuthNStore, licensing licensing.Li
 }
 
 func (a *AuthN) LoginURL(ctx context.Context, siteURL *url.URL, authDomain *authtypes.AuthDomain) (string, error) {
-	if authDomain.AuthDomainConfig().AuthNProvider != authtypes.AuthNProviderSAML {
+	if authDomain.AuthDomainConfig().Provider.Type != authtypes.AuthNProviderSAML {
 		return "", errors.Newf(errors.TypeInternal, authtypes.ErrCodeAuthDomainMismatch, "saml: domain type is not saml")
 	}
 
@@ -101,19 +101,19 @@ func (a *AuthN) HandleCallback(ctx context.Context, formValues url.Values) (*aut
 	}
 
 	name := ""
-	if nameAttribute := authDomain.AuthDomainConfig().SAML.AttributeMapping.Name; nameAttribute != "" {
+	if nameAttribute := authDomain.AuthDomainConfig().Saml().AttributeMapping.Name; nameAttribute != "" {
 		if val := assertionInfo.Values.Get(nameAttribute); val != "" {
 			name = val
 		}
 	}
 
 	var groups []string
-	if groupAttribute := authDomain.AuthDomainConfig().SAML.AttributeMapping.Groups; groupAttribute != "" {
+	if groupAttribute := authDomain.AuthDomainConfig().Saml().AttributeMapping.Groups; groupAttribute != "" {
 		groups = assertionInfo.Values.GetAll(groupAttribute)
 	}
 
 	role := ""
-	if roleAttribute := authDomain.AuthDomainConfig().SAML.AttributeMapping.Role; roleAttribute != "" {
+	if roleAttribute := authDomain.AuthDomainConfig().Saml().AttributeMapping.Role; roleAttribute != "" {
 		if val := assertionInfo.Values.Get(roleAttribute); val != "" {
 			role = val
 		}
@@ -142,11 +142,11 @@ func (a *AuthN) serviceProvider(siteURL *url.URL, authDomain *authtypes.AuthDoma
 	// The ServiceProviderIssuer is the client id in case of keycloak. Since we set it to the host here, we need to set the client id == host in keycloak.
 	// For AWSSSO, this is the value of Application SAML audience.
 	return &saml2.SAMLServiceProvider{
-		IdentityProviderSSOURL:      authDomain.AuthDomainConfig().SAML.SamlIdp,
-		IdentityProviderIssuer:      authDomain.AuthDomainConfig().SAML.SamlEntity,
+		IdentityProviderSSOURL:      authDomain.AuthDomainConfig().Saml().SamlIdp,
+		IdentityProviderIssuer:      authDomain.AuthDomainConfig().Saml().SamlEntity,
 		ServiceProviderIssuer:       siteURL.Host,
 		AssertionConsumerServiceURL: acsURL.String(),
-		SignAuthnRequests:           !authDomain.AuthDomainConfig().SAML.InsecureSkipAuthNRequestsSigned,
+		SignAuthnRequests:           !authDomain.AuthDomainConfig().Saml().InsecureSkipAuthNRequestsSigned,
 		AllowMissingAttributes:      true,
 		IDPCertificateStore:         certStore,
 		SPKeyStore:                  dsig.RandomKeyStoreForTest(),
@@ -159,15 +159,15 @@ func (a *AuthN) getCertificateStore(authDomain *authtypes.AuthDomain) (dsig.X509
 	}
 
 	var certBytes []byte
-	if strings.Contains(authDomain.AuthDomainConfig().SAML.SamlCert, "-----BEGIN CERTIFICATE-----") {
-		block, _ := pem.Decode([]byte(authDomain.AuthDomainConfig().SAML.SamlCert))
+	if strings.Contains(authDomain.AuthDomainConfig().Saml().SamlCert, "-----BEGIN CERTIFICATE-----") {
+		block, _ := pem.Decode([]byte(authDomain.AuthDomainConfig().Saml().SamlCert))
 		if block == nil {
 			return certStore, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "no valid pem cert found")
 		}
 
 		certBytes = block.Bytes
 	} else {
-		certData, err := base64.StdEncoding.DecodeString(authDomain.AuthDomainConfig().SAML.SamlCert)
+		certData, err := base64.StdEncoding.DecodeString(authDomain.AuthDomainConfig().Saml().SamlCert)
 		if err != nil {
 			return certStore, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to read certificate: %s", err.Error())
 		}

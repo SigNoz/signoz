@@ -201,7 +201,7 @@ func (module *module) getOrgSessionContext(ctx context.Context, org *types.Organ
 		return authtypes.NewOrgSessionContext(org.ID, org.Name).AddPasswordAuthNSupport(authtypes.AuthNProviderEmailPassword), nil
 	}
 
-	provider, err := getProvider[authn.CallbackAuthN](authDomain.AuthDomainConfig().AuthNProvider, module.authNs)
+	provider, err := getProvider[authn.CallbackAuthN](authDomain.AuthDomainConfig().Provider.Type, module.authNs)
 	if err != nil {
 		return nil, err
 	}
@@ -211,7 +211,7 @@ func (module *module) getOrgSessionContext(ctx context.Context, org *types.Organ
 		return nil, err
 	}
 
-	return authtypes.NewOrgSessionContext(org.ID, org.Name).AddCallbackAuthNSupport(authDomain.AuthDomainConfig().AuthNProvider, loginURL), nil
+	return authtypes.NewOrgSessionContext(org.ID, org.Name).AddCallbackAuthNSupport(authDomain.AuthDomainConfig().Provider.Type, loginURL), nil
 }
 
 func getProvider[T authn.AuthN](authNProvider authtypes.AuthNProvider, authNs map[authtypes.AuthNProvider]authn.AuthN) (T, error) {

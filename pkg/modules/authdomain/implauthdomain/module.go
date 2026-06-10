@@ -27,7 +27,7 @@ func (module *module) Get(ctx context.Context, id valuer.UUID) (*authtypes.AuthD
 }
 
 func (module *module) GetAuthNProviderInfo(ctx context.Context, domain *authtypes.AuthDomain) *authtypes.AuthNProviderInfo {
-	if callbackAuthN, ok := module.authNs[domain.AuthDomainConfig().AuthNProvider].(authn.CallbackAuthN); ok {
+	if callbackAuthN, ok := module.authNs[domain.AuthDomainConfig().Provider.Type].(authn.CallbackAuthN); ok {
 		return callbackAuthN.ProviderInfo(ctx, domain)
 	}
 	return &authtypes.AuthNProviderInfo{}
@@ -62,7 +62,7 @@ func (module *module) Collect(ctx context.Context, orgID valuer.UUID) (map[strin
 	stats := make(map[string]any)
 
 	for _, domain := range domains {
-		key := "authdomain." + domain.AuthDomainConfig().AuthNProvider.StringValue() + ".count"
+		key := "authdomain." + domain.AuthDomainConfig().Provider.Type.StringValue() + ".count"
 		if value, ok := stats[key]; ok {
 			stats[key] = value.(int64) + 1
 		} else {

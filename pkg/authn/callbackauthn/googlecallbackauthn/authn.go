@@ -59,7 +59,7 @@ func (a *AuthN) LoginURL(ctx context.Context, siteURL *url.URL, authDomain *auth
 		return "", err
 	}
 
-	if authDomain.AuthDomainConfig().AuthNProvider != authtypes.AuthNProviderGoogleAuth {
+	if authDomain.AuthDomainConfig().Provider.Type != authtypes.AuthNProviderGoogleAuth {
 		return "", errors.Newf(errors.TypeInternal, authtypes.ErrCodeAuthDomainMismatch, "domain type is not google")
 	}
 
@@ -111,7 +111,7 @@ func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtype
 		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "google: no id_token in token response")
 	}
 
-	verifier := oidcProvider.Verifier(&oidc.Config{ClientID: authDomain.AuthDomainConfig().Google.ClientID})
+	verifier := oidcProvider.Verifier(&oidc.Config{ClientID: authDomain.AuthDomainConfig().Google().ClientID})
 	idToken, err := verifier.Verify(ctx, rawIDToken)
 	if err != nil {
 		a.settings.Logger().ErrorContext(ctx, "google: failed to verify token", errors.Attr(err))
@@ -135,7 +135,7 @@ func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtype
 		return nil, errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "google: unexpected hd claim")
 	}
 
-	if !authDomain.AuthDomainConfig().Google.InsecureSkipEmailVerified {
+	if !authDomain.AuthDomainConfig().Google().InsecureSkipEmailVerified {
 		if !claims.EmailVerified {
 			a.settings.Logger().ErrorContext(ctx, "google: email is not verified", slog.String("email", claims.Email))
 			return nil, errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "google: email is not verified")
@@ -148,14 +148,14 @@ func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtype
 	}
 
 	var groups []string
-	if authDomain.AuthDomainConfig().Google.FetchGroups {
-		groups, err = a.fetchGoogleWorkspaceGroups(ctx, claims.Email, authDomain.AuthDomainConfig().Google)
+	if authDomain.AuthDomainConfig().Google().FetchGroups {
+		groups, err = a.fetchGoogleWorkspaceGroups(ctx, claims.Email, authDomain.AuthDomainConfig().Google())
 		if err != nil {
 			a.settings.Logger().ErrorContext(ctx, "google: could not fetch groups", errors.Attr(err))
 			return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "google: could not fetch groups").WithAdditional(err.Error())
 		}
 
-		allowedGroups := authDomain.AuthDomainConfig().Google.AllowedGroups
+		allowedGroups := authDomain.AuthDomainConfig().Google().AllowedGroups
 		if len(allowedGroups) > 0 {
 			groups = filterGroups(groups, allowedGroups)
 			if len(groups) == 0 {
@@ -175,8 +175,8 @@ func (a *AuthN) ProviderInfo(ctx context.Context, authDomain *authtypes.AuthDoma
 
 func (a *AuthN) oauth2Config(siteURL *url.URL, authDomain *authtypes.AuthDomain, provider *oidc.Provider) *oauth2.Config {
 	return &oauth2.Config{
-		ClientID:     authDomain.AuthDomainConfig().Google.ClientID,
-		ClientSecret: authDomain.AuthDomainConfig().Google.ClientSecret,
+		ClientID:     authDomain.AuthDomainConfig().Google().ClientID,
+		ClientSecret: authDomain.AuthDomainConfig().Google().ClientSecret,
 		Endpoint:     provider.Endpoint(),
 		Scopes:       scopes,
 		RedirectURL: (&url.URL{
