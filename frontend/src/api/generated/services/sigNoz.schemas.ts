@@ -3495,6 +3495,9 @@ export interface TelemetrytypesTelemetryFieldKeyDTO {
 	unit?: string;
 }
 
+export enum Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregationDTOSignal {
+	logs = 'logs',
+}
 export enum TelemetrytypesSourceDTO {
 	meter = 'meter',
 }
@@ -3550,7 +3553,11 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	 * @type array
 	 */
 	selectFields?: TelemetrytypesTelemetryFieldKeyDTO[];
-	signal?: TelemetrytypesSignalDTO;
+	/**
+	 * @enum logs
+	 * @type string
+	 */
+	signal: Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregationDTOSignal;
 	source?: TelemetrytypesSourceDTO;
 	stepInterval?: Querybuildertypesv5StepDTO;
 }
@@ -3616,6 +3623,9 @@ export interface Querybuildertypesv5MetricAggregationDTO {
 	timeAggregation?: MetrictypesTimeAggregationDTO;
 }
 
+export enum Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTOSignal {
+	metrics = 'metrics',
+}
 export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTO {
 	/**
 	 * @type array
@@ -3668,7 +3678,11 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	 * @type array
 	 */
 	selectFields?: TelemetrytypesTelemetryFieldKeyDTO[];
-	signal?: TelemetrytypesSignalDTO;
+	/**
+	 * @enum metrics
+	 * @type string
+	 */
+	signal: Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTOSignal;
 	source?: TelemetrytypesSourceDTO;
 	stepInterval?: Querybuildertypesv5StepDTO;
 }
@@ -3684,6 +3698,9 @@ export interface Querybuildertypesv5TraceAggregationDTO {
 	expression?: string;
 }
 
+export enum Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregationDTOSignal {
+	traces = 'traces',
+}
 export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregationDTO {
 	/**
 	 * @type array
@@ -3736,7 +3753,11 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	 * @type array
 	 */
 	selectFields?: TelemetrytypesTelemetryFieldKeyDTO[];
-	signal?: TelemetrytypesSignalDTO;
+	/**
+	 * @enum traces
+	 * @type string
+	 */
+	signal: Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregationDTOSignal;
 	source?: TelemetrytypesSourceDTO;
 	stepInterval?: Querybuildertypesv5StepDTO;
 }

@@ -1,0 +1,40 @@
+{
+  "records": [
+    {
+      "statefulSetName": "acc-ss-1",
+      "statefulSetCPU": 1.0,
+      "statefulSetCPURequest": 0.5,
+      "statefulSetCPULimit": 0.4,
+      "statefulSetMemory": 300000000.0,
+      "statefulSetMemoryRequest": 0.5,
+      "statefulSetMemoryLimit": 0.4,
+      "desiredPods": 3,
+      "currentPods": 2,
+      "podCountsByPhase": {
+        "pending": 0,
+        "running": 2,
+        "succeeded": 0,
+        "failed": 0,
+        "unknown": 0
+      }
+    },
+    {
+      "statefulSetName": "acc-ss-2",
+      "statefulSetCPU": 1.2,
+      "statefulSetCPURequest": 0.4,
+      "statefulSetCPULimit": 0.3,
+      "statefulSetMemory": 600000000.0,
+      "statefulSetMemoryRequest": 0.4,
+      "statefulSetMemoryLimit": 0.3,
+      "desiredPods": 4,
+      "currentPods": 4,
+      "podCountsByPhase": {
+        "pending": 0,
+        "running": 3,
+        "succeeded": 0,
+        "failed": 0,
+        "unknown": 0
+      }
+    }
+  ]
+}
