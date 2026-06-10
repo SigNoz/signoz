@@ -43,12 +43,12 @@ func NewResolvedResourceWithTarget(
 }
 
 func (resolved *resolvedResourceWithTarget) fill(phase ExtractPhase, ec ExtractorContext) {
-	if resolved.sourceExtractor.Phase == phase && resolved.sourceExtractor.Fn != nil {
+	if resolved.sourceExtractor.IsPhase(phase) {
 		if ids, _ := resolved.sourceExtractor.Fn(ec); len(ids) > 0 {
 			resolved.sourceIDs = ids
 		}
 	}
-	if resolved.targetExtractor.Phase == phase && resolved.targetExtractor.Fn != nil {
+	if resolved.targetExtractor.IsPhase(phase) {
 		if ids, _ := resolved.targetExtractor.Fn(ec); len(ids) > 0 {
 			resolved.targetIDs = ids
 		}
@@ -101,4 +101,8 @@ func (resolved *resolvedResourceWithTarget) IsParentChild() bool {
 
 func (resolved *resolvedResourceWithTarget) ResolveResponse(ec ExtractorContext) {
 	resolved.fill(PhaseResponse, ec)
+}
+
+func (resolved *resolvedResourceWithTarget) hasResponsePhase() bool {
+	return resolved.sourceExtractor.IsPhase(PhaseResponse) || resolved.targetExtractor.IsPhase(PhaseResponse)
 }

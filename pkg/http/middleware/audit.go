@@ -62,8 +62,8 @@ func (middleware *Audit) Wrap(next http.Handler) http.Handler {
 		responseBuffer := &byteBuffer{}
 		writer := newResponseCapture(rw, responseBuffer)
 
-		// Capture the body so a response-derived id (e.g. a create) is available to ResolveResponse.
-		if _, err := coretypes.ResolvedResourcesFromContext(req.Context()); err == nil {
+		// Capture the body only when a resolved resource derives an id from it (e.g. a create).
+		if coretypes.ShouldCaptureResponseBody(req.Context()) {
 			writer.EnableBodyCapture()
 		}
 

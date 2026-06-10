@@ -63,3 +63,7 @@ func (resolved *resolvedResource) SourceSelector() SelectorFunc {
 func (resolved *resolvedResource) ResolveResponse(ec ExtractorContext) {
 	resolved.fill(PhaseResponse, ec)
 }
+
+func (resolved *resolvedResource) hasResponsePhase() bool {
+	return resolved.idExtractor.IsPhase(PhaseResponse)
+}
