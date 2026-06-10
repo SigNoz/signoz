@@ -27,9 +27,11 @@ import type {
 	ListSpanMapperGroupsParams,
 	ListSpanMappers200,
 	ListSpanMappersPathParameters,
+	PreviewSpanMapping200,
 	RenderErrorResponseDTO,
 	SpantypesPostableSpanMapperDTO,
 	SpantypesPostableSpanMapperGroupDTO,
+	SpantypesSpanMappingPreviewRequestDTO,
 	SpantypesUpdatableSpanMapperDTO,
 	SpantypesUpdatableSpanMapperGroupDTO,
 	UpdateSpanMapperGroupPathParameters,
@@ -779,4 +781,87 @@ export const useUpdateSpanMapper = <
 	TContext
 > => {
 	return useMutation(getUpdateSpanMapperMutationOptions(options));
+};
+/**
+ * Previews how attribute mappings would transform a sample span.
+ * @summary Preview span attribute mapping against a sample span
+ */
+export const previewSpanMapping = (
+	spantypesSpanMappingPreviewRequestDTO?: BodyType<SpantypesSpanMappingPreviewRequestDTO>,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<PreviewSpanMapping200>({
+		url: `/api/v1/span_mapper_groups/preview`,
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		data: spantypesSpanMappingPreviewRequestDTO,
+		signal,
+	});
+};
+
+export const getPreviewSpanMappingMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof previewSpanMapping>>,
+		TError,
+		{ data?: BodyType<SpantypesSpanMappingPreviewRequestDTO> },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof previewSpanMapping>>,
+	TError,
+	{ data?: BodyType<SpantypesSpanMappingPreviewRequestDTO> },
+	TContext
+> => {
+	const mutationKey = ['previewSpanMapping'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof previewSpanMapping>>,
+		{ data?: BodyType<SpantypesSpanMappingPreviewRequestDTO> }
+	> = (props) => {
+		const { data } = props ?? {};
+
+		return previewSpanMapping(data);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type PreviewSpanMappingMutationResult = NonNullable<
+	Awaited<ReturnType<typeof previewSpanMapping>>
+>;
+export type PreviewSpanMappingMutationBody =
+	| BodyType<SpantypesSpanMappingPreviewRequestDTO>
+	| undefined;
+export type PreviewSpanMappingMutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Preview span attribute mapping against a sample span
+ */
+export const usePreviewSpanMapping = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof previewSpanMapping>>,
+		TError,
+		{ data?: BodyType<SpantypesSpanMappingPreviewRequestDTO> },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof previewSpanMapping>>,
+	TError,
+	{ data?: BodyType<SpantypesSpanMappingPreviewRequestDTO> },
+	TContext
+> => {
+	return useMutation(getPreviewSpanMappingMutationOptions(options));
 };

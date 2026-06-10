@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/modules/spanmapper"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/types/opamptypes"
@@ -100,6 +101,97 @@ func (module *module) DeleteMapper(ctx context.Context, orgID, groupID, id value
 	}
 	agentConf.NotifyConfigUpdate(ctx)
 	return nil
+}
+
+// PreviewMapping resolves the mappings to preview (from the request body, a
+// saved group, or all enabled saved mappings) and returns the input span with
+// its "attributes" and "resource" maps transformed.
+func (module *module) PreviewMapping(ctx context.Context, orgID valuer.UUID, req *spantypes.SpanMappingPreviewRequest) (*spantypes.SpanMappingPreviewResponse, error) {
+	groups, err := module.resolvePreviewGroups(ctx, orgID, req)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(req.Span) == 0 {
+		return nil, errors.New(errors.TypeInvalidInput, spantypes.ErrCodeMappingInvalidInput, "'span' must be provided")
+	}
+
+	outResource, outSpan := spantypes.SimulateMappingForAttributes(groups, spanAttrMap(req.Span["resource"]), spanAttrMap(req.Span["attributes"]))
+
+	result := make(map[string]any, len(req.Span))
+	for k, v := range req.Span {
+		result[k] = v
+	}
+	setAttrMap(result, "attributes", req.Span, outSpan)
+	setAttrMap(result, "resource", req.Span, outResource)
+
+	return &spantypes.SpanMappingPreviewResponse{Span: result}, nil
+}
+
+func spanAttrMap(v any) map[string]any {
+	if m, ok := v.(map[string]any); ok {
+		return m
+	}
+	return nil
+}
+
+func setAttrMap(dst map[string]any, key string, in map[string]any, transformed map[string]any) {
+	if _, present := in[key]; present || len(transformed) > 0 {
+		dst[key] = transformed
+	}
+}
+
+// resolvePreviewGroups picks the mappings to preview against: the groups in the
+// request body, else a specific saved group (GroupID), else all of the org's
+// enabled saved mappings.
+func (module *module) resolvePreviewGroups(ctx context.Context, orgID valuer.UUID, req *spantypes.SpanMappingPreviewRequest) ([]*spantypes.SpanMapperGroupWithMappers, error) {
+	hasGroups := len(req.Groups) > 0
+	hasGroupID := req.GroupID != nil && *req.GroupID != ""
+
+	if hasGroups && hasGroupID {
+		return nil, errors.New(errors.TypeInvalidInput, spantypes.ErrCodeMappingInvalidInput, "provide either 'groups' or 'groupId', not both")
+	}
+
+	if hasGroups {
+		groups := make([]*spantypes.SpanMapperGroupWithMappers, 0, len(req.Groups))
+		for _, spec := range req.Groups {
+			group := &spantypes.SpanMapperGroup{
+				OrgID:     orgID,
+				Name:      spec.Group.Name,
+				Condition: spec.Group.Condition,
+				Enabled:   spec.Group.Enabled,
+			}
+			mappers := make([]*spantypes.SpanMapper, 0, len(spec.Mappers))
+			for _, pm := range spec.Mappers {
+				mappers = append(mappers, &spantypes.SpanMapper{
+					Name:         pm.Name,
+					FieldContext: pm.FieldContext,
+					Config:       pm.Config,
+					Enabled:      pm.Enabled,
+				})
+			}
+			groups = append(groups, &spantypes.SpanMapperGroupWithMappers{Group: group, Mappers: mappers})
+		}
+		return groups, nil
+	}
+
+	if hasGroupID {
+		id, err := valuer.NewUUID(*req.GroupID)
+		if err != nil {
+			return nil, errors.Wrapf(err, errors.TypeInvalidInput, spantypes.ErrCodeMappingInvalidInput, "group id is not a valid uuid")
+		}
+		group, err := module.store.GetGroup(ctx, orgID, id)
+		if err != nil {
+			return nil, err
+		}
+		mappers, err := module.store.ListMappers(ctx, orgID, id)
+		if err != nil {
+			return nil, err
+		}
+		return []*spantypes.SpanMapperGroupWithMappers{{Group: group, Mappers: mappers}}, nil
+	}
+
+	return module.listEnabledGroupsWithMappers(ctx, orgID)
 }
 
 func (module *module) AgentFeatureType() agentConf.AgentFeatureType {

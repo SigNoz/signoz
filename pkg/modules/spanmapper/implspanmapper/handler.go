@@ -273,6 +273,35 @@ func (h *handler) DeleteMapper(rw http.ResponseWriter, r *http.Request) {
 	render.Success(rw, http.StatusNoContent, nil)
 }
 
+// PreviewMapping handles POST /api/v1/span_mapper_groups/preview.
+// used to get preview of attributes/resources after remapping.
+func (h *handler) PreviewMapping(rw http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
+	req := new(spantypes.SpanMappingPreviewRequest)
+	if err := binding.JSON.BindBody(r.Body, req); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	result, err := h.module.PreviewMapping(ctx, orgID, req)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, result)
+}
+
 // groupIDFromPath extracts and validates the {id} or {groupId} path variable.
 func groupIDFromPath(r *http.Request) (valuer.UUID, error) {
 	vars := mux.Vars(r)
