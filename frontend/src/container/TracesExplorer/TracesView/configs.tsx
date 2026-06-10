@@ -49,7 +49,7 @@ export const columns: TableColumnDef<TraceRow>[] = [
 		cell: ({ value }): JSX.Element => (
 			<TanStackTable.Text>{getMs(String(value))}ms</TanStackTable.Text>
 		),
-		width: { min: 130 },
+		width: { min: 180 },
 	},
 	{
 		id: 'span_count',
@@ -58,7 +58,7 @@ export const columns: TableColumnDef<TraceRow>[] = [
 		cell: ({ value }): JSX.Element => (
 			<TanStackTable.Text>{String(value ?? '')}</TanStackTable.Text>
 		),
-		width: { min: 100 },
+		width: { min: 120 },
 	},
 	{
 		id: 'trace_id',
