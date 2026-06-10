@@ -5,14 +5,11 @@ import (
 	"encoding/json"
 
 	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
 )
 
-type migrateAuthDomainPayload struct {
-	sqlstore sqlstore.SQLStore
-}
+type migrateAuthDomainPayload struct{}
 
 type authDomainPayloadRaw struct {
 	bun.BaseModel `bun:"table:auth_domain"`
@@ -28,11 +25,11 @@ var legacyConfigKeyByType = map[string]string{
 	"google_auth": "googleAuthConfig",
 }
 
-func NewMigrateAuthDomainPayloadFactory(sqlstore sqlstore.SQLStore) factory.ProviderFactory[SQLMigration, Config] {
+func NewMigrateAuthDomainPayloadFactory() factory.ProviderFactory[SQLMigration, Config] {
 	return factory.NewProviderFactory(
 		factory.MustNewName("migrate_auth_domain_payload"),
 		func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
-			return &migrateAuthDomainPayload{sqlstore: sqlstore}, nil
+			return &migrateAuthDomainPayload{}, nil
 		},
 	)
 }
