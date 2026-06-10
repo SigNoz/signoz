@@ -121,29 +121,28 @@ func TestQueryRangeRequest_UnmarshalJSON_ErrorMessages(t *testing.T) {
 			// Check main error message
 			assert.Contains(t, err.Error(), tt.wantErrMsg)
 
-			// Check if it's an error from our package using Unwrapb
-			_, _, _, _, _, additionals := errors.Unwrapb(err)
+			// Inspect the structured error via its JSON representation.
+			j := errors.AsJSON(err)
 
-			// Check additional hints if we have any
-			if len(additionals) > 0 {
+			// Check additional hints (the messages on the errors array) if we have any.
+			if len(j.Errors) > 0 {
 				for _, hint := range tt.wantAdditionalHints {
 					found := false
-					for _, additional := range additionals {
-						if strings.Contains(additional, hint) {
+					for _, e := range j.Errors {
+						if strings.Contains(e.Message, hint) {
 							found = true
 							break
 						}
 					}
-					assert.True(t, found, "Expected to find hint '%s' in additionals: %v", hint, additionals)
+					assert.True(t, found, "Expected to find hint '%s' in additionals: %v", hint, j.Errors)
 				}
 			}
 
 			// Typo suggestions are surfaced as structured (machine-consumable)
 			// suggestions, not in the human-facing additional hints.
 			if len(tt.wantSuggestions) > 0 {
-				suggestions := errors.AsJSON(err).Suggestions
 				for _, want := range tt.wantSuggestions {
-					assert.Contains(t, suggestions, want, "Expected suggestion %q in %v", want, suggestions)
+					assert.Contains(t, j.Suggestions, want, "Expected suggestion %q in %v", want, j.Suggestions)
 				}
 			}
 		})

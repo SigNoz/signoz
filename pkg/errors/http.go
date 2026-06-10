@@ -21,7 +21,8 @@ type responseretryjson struct {
 }
 
 type responseerroradditional struct {
-	Message string `json:"message"`
+	Message     string   `json:"message,omitempty"`
+	Suggestions []string `json:"suggestions,omitempty"`
 }
 
 func AsJSON(cause error) *JSON {
@@ -30,7 +31,7 @@ func AsJSON(cause error) *JSON {
 
 	rea := make([]responseerroradditional, len(a))
 	for k, v := range a {
-		rea[k] = responseerroradditional{v}
+		rea[k] = responseerroradditional{Message: v.message, Suggestions: v.suggestions}
 	}
 
 	var retry *responseretryjson
@@ -55,7 +56,7 @@ func AsURLValues(cause error) url.Values {
 
 	rea := make([]responseerroradditional, len(a))
 	for k, v := range a {
-		rea[k] = responseerroradditional{v}
+		rea[k] = responseerroradditional{Message: v.message, Suggestions: v.suggestions}
 	}
 
 	errors, err := json.Marshal(rea)

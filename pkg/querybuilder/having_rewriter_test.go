@@ -18,6 +18,16 @@ func toTraceAggregations(logs []qbtypes.LogAggregation) []qbtypes.TraceAggregati
 	return out
 }
 
+// additionalMessages extracts the message of each additional detail on err, so tests
+// can compare against a plain []string.
+func additionalMessages(err error) []string {
+	var msgs []string
+	for _, e := range errors.AsJSON(err).Errors {
+		msgs = append(msgs, e.Message)
+	}
+	return msgs
+}
+
 type logsAndTracesTestCase struct {
 	name            string
 	expression      string
@@ -41,13 +51,11 @@ func runLogsAndTracesTests(t *testing.T, tests []logsAndTracesTestCase) {
 			if tt.wantErr {
 				require.Error(t, errLogs)
 				assert.ErrorContains(t, errLogs, tt.wantErrMsg)
-				_, _, _, _, _, additionalLogs := errors.Unwrapb(errLogs)
-				assert.Equal(t, tt.wantAdditional, additionalLogs)
+				assert.Equal(t, tt.wantAdditional, additionalMessages(errLogs))
 				assert.Equal(t, tt.wantSuggestions, errors.AsJSON(errLogs).Suggestions)
 				require.Error(t, errTraces)
 				assert.ErrorContains(t, errTraces, tt.wantErrMsg)
-				_, _, _, _, _, additionalTraces := errors.Unwrapb(errTraces)
-				assert.Equal(t, tt.wantAdditional, additionalTraces)
+				assert.Equal(t, tt.wantAdditional, additionalMessages(errTraces))
 				assert.Equal(t, tt.wantSuggestions, errors.AsJSON(errTraces).Suggestions)
 			} else {
 				require.NoError(t, errLogs)
@@ -1043,8 +1051,7 @@ func TestRewriteForMetrics(t *testing.T) {
 			if tt.wantErr {
 				require.Error(t, err)
 				assert.ErrorContains(t, err, tt.wantErrMsg)
-				_, _, _, _, _, additional := errors.Unwrapb(err)
-				assert.Equal(t, tt.wantAdditional, additional)
+				assert.Equal(t, tt.wantAdditional, additionalMessages(err))
 				assert.Equal(t, tt.wantSuggestions, errors.AsJSON(err).Suggestions)
 			} else {
 				require.NoError(t, err)

@@ -155,9 +155,10 @@ func wrapValidationError(err error, contextIdentifier string, errorFormat string
 		innerMsg,
 	)
 
-	// Carry over the structured context from the inner error.
+	// Carry over the structured context from the inner error: the additional
+	// details (which themselves may carry suggestions) and the error-wide suggestions.
 	if len(additionals) > 0 {
-		newErr = newErr.WithAdditional(additionals...)
+		newErr = newErr.WithAdditionals(additionals...)
 	}
 	if len(inner.Suggestions) > 0 {
 		newErr = newErr.WithSuggestions(inner.Suggestions...)

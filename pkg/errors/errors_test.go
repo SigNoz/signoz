@@ -48,7 +48,7 @@ func TestUnwrapb(t *testing.T) {
 	assert.Equal(t, "this is a base err", amessage)
 	assert.Equal(t, oerr, aerr)
 	assert.Equal(t, "https://docs", au)
-	assert.Equal(t, []string{"additional err"}, aa)
+	assert.Equal(t, []additional{{message: "additional err"}}, aa)
 
 	atyp, _, _, _, _, _ = Unwrapb(oerr)
 	assert.Equal(t, TypeInternal, atyp)
@@ -72,6 +72,19 @@ func TestWithSuggestions(t *testing.T) {
 	// Variadic form replaces with multiple entries.
 	err = err.WithSuggestions("first", "second")
 	assert.Equal(t, []string{"first", "second"}, suggestionsOf(err))
+}
+
+func TestWithSuggestiveAdditional(t *testing.T) {
+	// WithSuggestiveAdditional attaches suggestions to a specific detail (in the
+	// errors array), distinct from the error-wide WithSuggestions.
+	err := NewInvalidInputf(MustNewCode("bad_field"), "unknown field %q", "filed").
+		WithSuggestiveAdditional("field `filed` not found", "did you mean: `field`")
+
+	j := AsJSON(err)
+	assert.Equal(t, []responseerroradditional{
+		{Message: "field `filed` not found", Suggestions: []string{"did you mean: `field`"}},
+	}, j.Errors)
+	assert.Nil(t, j.Suggestions, "detail-scoped suggestions must not leak into the error-wide list")
 }
 
 func TestWithRetryAfter(t *testing.T) {
