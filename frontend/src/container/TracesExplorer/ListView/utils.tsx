@@ -5,11 +5,10 @@ import { Typography } from '@signozhq/ui/typography';
 import { TelemetryFieldKey } from 'api/v5/v5';
 import TanStackTable from 'components/TanStackTableView';
 import type { TableColumnDef } from 'components/TanStackTableView/types';
+import { getTraceLink } from 'components/Traces/TableView/getTraceLink';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
-import ROUTES from 'constants/routes';
 import { buildCompositeKey } from 'container/OptionsMenu/utils';
 import { getMs } from 'container/Trace/Filters/Panel/PanelBody/Duration/util';
-import { formUrlParams } from 'container/TraceDetail/utils';
 import { TimestampInput } from 'hooks/useTimezoneFormatter/useTimezoneFormatter';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import LineClampedText from 'periscope/components/LineClampedText/LineClampedText';
@@ -51,30 +50,9 @@ export const transformDataWithDate = (
 	data[0]?.list?.map(({ data, timestamp }) => ({ ...data, date: timestamp })) ||
 	[];
 
-/**
- * Reads camelCase OR snake_case at runtime — both legacy `RowData` and the new
- * `SpanRow` (each used by different ListView/utils consumers) satisfy
- * `Record<string, unknown>` because their named props are subtypes of `unknown`.
- */
-export const getTraceLink = (record: Record<string, unknown>): string => {
-	const traceId = readId(record.traceID) || readId(record.trace_id);
-	const spanId = readId(record.spanID) || readId(record.span_id);
-	return `${ROUTES.TRACE}/${traceId}${formUrlParams({
-		spanId,
-		levelUp: 0,
-		levelDown: 0,
-	})}`;
-};
-
-function readId(value: unknown): string {
-	if (typeof value === 'string') {
-		return value;
-	}
-	if (typeof value === 'number') {
-		return String(value);
-	}
-	return '';
-}
+// Re-export for legacy antd consumers (TracesTableComponent, EntityTraces) that
+// import from this path. New code should import from
+// `components/Traces/TableView/getTraceLink`.
 
 function stringifyCellValue(value: unknown): string {
 	if (value == null) {
@@ -197,10 +175,14 @@ export const transformSpanRows = (data: QueryDataV3[]): SpanRow[] => {
 	if (!list) {
 		return [];
 	}
-	return list.map((item) => ({
-		...(item.data as Record<string, unknown>),
-		timestamp: item.timestamp,
-	})) as unknown as SpanRow[];
+	return list.map((item) => {
+		const row = item.data as Record<string, unknown>;
+		return {
+			...row,
+			timestamp: item.timestamp,
+			id: row.span_id,
+		};
+	}) as unknown as SpanRow[];
 };
 
 // Field-name allowlists that drive signal-specific cell rendering (kept from the

@@ -16,6 +16,9 @@ export type TraceRow = {
 	duration_nano: number | string;
 	span_count: number | string;
 	trace_id: string;
+	// Mirror of trace_id used by TanStack's getRowId. Injected during response
+	// transform — without it, rows fall back to positional index.
+	id: string;
 };
 
 export const columns: TableColumnDef<TraceRow>[] = [

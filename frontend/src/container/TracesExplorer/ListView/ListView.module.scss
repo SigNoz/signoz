@@ -1,0 +1,14 @@
+.container {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	min-height: 0;
+	// Page chain (.trace-explorer-page → .trace-explorer → .traces-explorer-views)
+	// isn't a flex column, so anchor against the viewport.
+	height: calc(100vh - 240px);
+	min-height: 400px;
+
+	--traces-table-font: 'Space Mono', monospace;
+	--tanstack-cell-padding-left-first-column: 5px;
+	--tanstack-plain-body-line-clamp: 3;
+}
