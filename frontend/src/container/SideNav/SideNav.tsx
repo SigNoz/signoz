@@ -80,7 +80,7 @@ import signozBrandLogoUrl from '@/assets/Logos/signoz-brand-logo.svg';
 
 import { useCmdK } from '../../providers/cmdKProvider';
 import { routeConfig } from './config';
-import { getQueryString } from './helper';
+import { buildNavUrl, getQueryString } from './helper';
 import {
 	defaultMoreMenuItems,
 	getUserSettingsDropdownMenuItems,
@@ -486,12 +486,13 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 			const availableParams = routeConfig[key];
 
 			const queryString = getQueryString(availableParams || [], params);
+			const url = buildNavUrl(key, queryString);
 
 			if (pathname !== key) {
 				if (event && isModifierKeyPressed(event)) {
-					openInNewTab(`${key}?${queryString.join('&')}`);
+					openInNewTab(url);
 				} else {
-					history.push(`${key}?${queryString.join('&')}`, {
+					history.push(url, {
 						from: pathname,
 					});
 				}
