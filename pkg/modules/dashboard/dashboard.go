@@ -61,7 +61,9 @@ type Module interface {
 
 	GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.DashboardV2, error)
 
-	ListV2(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, params *dashboardtypes.ListDashboardsV2Params) (*dashboardtypes.ListableDashboardV2, error)
+	ListV2(ctx context.Context, orgID valuer.UUID, params *dashboardtypes.ListDashboardsV2Params) (*dashboardtypes.ListableDashboardV2, error)
+
+	ListForUserV2(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, params *dashboardtypes.ListDashboardsV2Params) (*dashboardtypes.ListableDashboardForUserV2, error)
 
 	UpdateV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, updatable dashboardtypes.UpdatableDashboardV2) (*dashboardtypes.DashboardV2, error)
 
@@ -74,6 +76,8 @@ type Module interface {
 	UnpinV2(ctx context.Context, userID valuer.UUID, id valuer.UUID) error
 
 	DeleteV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error
+
+	DeletePreferencesForUser(ctx context.Context, userID valuer.UUID) error
 
 	CreateView(ctx context.Context, orgID valuer.UUID, postable dashboardtypes.PostableDashboardView) (*dashboardtypes.DashboardView, error)
 
@@ -113,6 +117,8 @@ type Handler interface {
 	GetV2(http.ResponseWriter, *http.Request)
 
 	ListV2(http.ResponseWriter, *http.Request)
+
+	ListForUserV2(http.ResponseWriter, *http.Request)
 
 	UpdateV2(http.ResponseWriter, *http.Request)
 

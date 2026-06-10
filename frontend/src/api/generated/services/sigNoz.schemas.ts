@@ -2651,6 +2651,10 @@ export enum CloudintegrationtypesServiceIDDTO {
 	sqs = 'sqs',
 	storageaccountsblob = 'storageaccountsblob',
 	cdnprofile = 'cdnprofile',
+	virtualmachine = 'virtualmachine',
+	appservice = 'appservice',
+	containerapp = 'containerapp',
+	aks = 'aks',
 }
 export type CloudintegrationtypesCloudIntegrationServiceDTOAnyOf = {
 	/**
@@ -4779,7 +4783,7 @@ export interface DashboardtypesListedDashboardV2SpecDTO {
 	display?: CommonDisplayDTO;
 }
 
-export interface DashboardtypesListedDashboardV2DTO {
+export interface DashboardtypesListedDashboardForUserV2DTO {
 	/**
 	 * @type string
 	 * @format date-time
@@ -4813,6 +4817,73 @@ export interface DashboardtypesListedDashboardV2DTO {
 	 * @type boolean
 	 */
 	pinned: boolean;
+	/**
+	 * @type string
+	 */
+	schemaVersion: string;
+	source: DashboardtypesSourceDTO;
+	spec: DashboardtypesListedDashboardV2SpecDTO;
+	/**
+	 * @type array
+	 */
+	tags: TagtypesGettableTagDTO[];
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: string;
+	/**
+	 * @type string
+	 */
+	updatedBy?: string;
+}
+
+export interface DashboardtypesListableDashboardForUserV2DTO {
+	/**
+	 * @type array
+	 */
+	dashboards: DashboardtypesListedDashboardForUserV2DTO[];
+	/**
+	 * @type array
+	 */
+	tags: TagtypesGettableTagDTO[];
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	total: number;
+}
+
+export interface DashboardtypesListedDashboardV2DTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: string;
+	/**
+	 * @type string
+	 */
+	createdBy?: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	image?: string;
+	/**
+	 * @type boolean
+	 */
+	locked: boolean;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	orgId: string;
 	/**
 	 * @type string
 	 */
@@ -7918,6 +7989,77 @@ export enum SpantypesFieldContextDTO {
 	attribute = 'attribute',
 	resource = 'resource',
 }
+export type SpantypesFlamegraphSpanDTOAttributes = { [key: string]: unknown };
+
+export type SpantypesFlamegraphSpanDTOResource = { [key: string]: string };
+
+export interface SpantypesFlamegraphSpanDTO {
+	/**
+	 * @type object
+	 */
+	attributes: SpantypesFlamegraphSpanDTOAttributes;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	durationNano: number;
+	/**
+	 * @type array
+	 */
+	event: SpantypesEventDTO[];
+	/**
+	 * @type boolean
+	 */
+	hasError: boolean;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	level: number;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	parentSpanId: string;
+	/**
+	 * @type object
+	 */
+	resource: SpantypesFlamegraphSpanDTOResource;
+	/**
+	 * @type string
+	 */
+	spanId: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	timestamp: number;
+}
+
+export interface SpantypesGettableFlamegraphTraceDTO {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	endTimestampMillis: number;
+	/**
+	 * @type boolean
+	 */
+	hasMore: boolean;
+	/**
+	 * @type array
+	 */
+	spans: SpantypesFlamegraphSpanDTO[][];
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	startTimestampMillis: number;
+}
+
 export type SpantypesSpanMapperGroupConditionDTOAnyOf = {
 	/**
 	 * @type array,null
@@ -8170,10 +8312,6 @@ export interface SpantypesWaterfallSpanDTO {
 
 export interface SpantypesGettableWaterfallTraceDTO {
 	/**
-	 * @type array,null
-	 */
-	aggregations?: SpantypesSpanAggregationResultDTO[] | null;
-	/**
 	 * @type integer
 	 * @minimum 0
 	 */
@@ -8217,6 +8355,17 @@ export interface SpantypesGettableWaterfallTraceDTO {
 	 * @type array,null
 	 */
 	uncollapsedSpans?: string[] | null;
+}
+
+export interface SpantypesPostableFlamegraphDTO {
+	/**
+	 * @type array
+	 */
+	selectFields?: TelemetrytypesTelemetryFieldKeyDTO[];
+	/**
+	 * @type string
+	 */
+	selectedSpanId?: string;
 }
 
 export enum SpantypesSpanMapperOperationDTO {
@@ -8281,15 +8430,6 @@ export interface SpantypesPostableTraceAggregationsDTO {
 }
 
 export interface SpantypesPostableWaterfallDTO {
-	/**
-	 * @type array,null
-	 */
-	aggregations?: SpantypesSpanAggregationDTO[] | null;
-	/**
-	 * @type integer
-	 * @minimum 0
-	 */
-	limit?: number;
 	/**
 	 * @type string
 	 */
@@ -9809,12 +9949,6 @@ export type UnlockDashboardV2PathParameters = {
 export type LockDashboardV2PathParameters = {
 	id: string;
 };
-export type UnpinDashboardV2PathParameters = {
-	id: string;
-};
-export type PinDashboardV2PathParameters = {
-	id: string;
-};
 export type ListDashboardViews200 = {
 	data: DashboardtypesListableDashboardViewDTO;
 	/**
@@ -10638,6 +10772,46 @@ export type GetMyUser200 = {
 	status: string;
 };
 
+export type ListDashboardsForUserV2Params = {
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	query?: string;
+	/**
+	 * @description undefined
+	 */
+	sort?: DashboardtypesListSortDTO;
+	/**
+	 * @description undefined
+	 */
+	order?: DashboardtypesListOrderDTO;
+	/**
+	 * @type integer
+	 * @description undefined
+	 */
+	limit?: number;
+	/**
+	 * @type integer
+	 * @description undefined
+	 */
+	offset?: number;
+};
+
+export type ListDashboardsForUserV2200 = {
+	data: DashboardtypesListableDashboardForUserV2DTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type UnpinDashboardV2PathParameters = {
+	id: string;
+};
+export type PinDashboardV2PathParameters = {
+	id: string;
+};
 export type GetHosts200 = {
 	data: ZeustypesGettableHostDTO;
 	/**
@@ -10646,11 +10820,11 @@ export type GetHosts200 = {
 	status: string;
 };
 
-export type GetWaterfallPathParameters = {
+export type GetFlamegraphPathParameters = {
 	traceID: string;
 };
-export type GetWaterfall200 = {
-	data: SpantypesGettableWaterfallTraceDTO;
+export type GetFlamegraph200 = {
+	data: SpantypesGettableFlamegraphTraceDTO;
 	/**
 	 * @type string
 	 */

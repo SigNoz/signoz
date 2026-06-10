@@ -211,7 +211,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddDashboardNameFactory(sqlstore, sqlschema),
 		sqlmigration.NewFixChangelogOperationTypeFactory(sqlstore, sqlschema),
 		sqlmigration.NewCloudIntegrationRemoveCascadeDeleteFactory(sqlschema),
-		sqlmigration.NewAddPinnedDashboardFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddUserDashboardPreferenceFactory(sqlstore, sqlschema),
 		sqlmigration.NewAddDashboardViewFactory(sqlstore, sqlschema),
 	)
 }
@@ -277,14 +277,14 @@ func NewQuerierProviderFactories(telemetryStore telemetrystore.TelemetryStore, p
 	)
 }
 
-func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.AuthZ, modules Modules, handlers Handlers) factory.NamedMap[factory.ProviderFactory[apiserver.APIServer, apiserver.Config]] {
+func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.AuthZ, modules Modules, handlers Handlers, globalConfig global.Config) factory.NamedMap[factory.ProviderFactory[apiserver.APIServer, apiserver.Config]] {
 	return factory.MustNewNamedMap(
 		signozapiserver.NewFactory(
 			orgGetter,
 			authz,
 			implorganization.NewHandler(modules.OrgGetter, modules.OrgSetter),
 			impluser.NewHandler(modules.UserSetter, modules.UserGetter),
-			implsession.NewHandler(modules.Session),
+			implsession.NewHandler(modules.Session, globalConfig),
 			implauthdomain.NewHandler(modules.AuthDomain),
 			implpreference.NewHandler(modules.Preference),
 			handlers.Global,

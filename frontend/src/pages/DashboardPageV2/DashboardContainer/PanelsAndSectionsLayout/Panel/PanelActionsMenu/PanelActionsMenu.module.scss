@@ -6,11 +6,11 @@
 	background: transparent;
 	border: none;
 	border-radius: 2px;
-	color: var(--bg-vanilla-400, #8993ae);
+	color: var(--l2-foreground);
 	cursor: pointer;
 
 	&:hover {
-		color: var(--bg-vanilla-100, #fff);
-		background: var(--bg-slate-400, #1d212d);
+		color: var(--l1-foreground);
+		background: var(--l2-background);
 	}
 }

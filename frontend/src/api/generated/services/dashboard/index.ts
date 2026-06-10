@@ -40,6 +40,8 @@ import type {
 	GetPublicDashboardWidgetQueryRange200,
 	GetPublicDashboardWidgetQueryRangePathParameters,
 	ListDashboardViews200,
+	ListDashboardsForUserV2200,
+	ListDashboardsForUserV2Params,
 	ListDashboardsV2200,
 	ListDashboardsV2Params,
 	LockDashboardV2PathParameters,
@@ -653,7 +655,7 @@ export const invalidateGetPublicDashboardWidgetQueryRange = async (
 };
 
 /**
- * Returns a page of v2-shape dashboards for the calling user's org. Supports a filter DSL (`query`), sort (`updated_at`/`created_at`/`name`), order (`asc`/`desc`), and offset-based pagination (`limit`/`offset`).
+ * Returns a page of v2-shape dashboards for the org. This is the pure, user-independent list — it carries no pin state. Use ListDashboardsForUserV2 for the personalized, pin-aware list. Supports a filter DSL (`query`), sort (`updated_at`/`created_at`/`name`), order (`asc`/`desc`), and offset-based pagination (`limit`/`offset`).
  * @summary List dashboards (v2)
  */
 export const listDashboardsV2 = (
@@ -1369,164 +1371,6 @@ export const useLockDashboardV2 = <
 	return useMutation(getLockDashboardV2MutationOptions(options));
 };
 /**
- * Removes the pin for the calling user. Idempotent — unpinning a dashboard that wasn't pinned still returns 204.
- * @summary Unpin a dashboard for the current user (v2)
- */
-export const unpinDashboardV2 = (
-	{ id }: UnpinDashboardV2PathParameters,
-	signal?: AbortSignal,
-) => {
-	return GeneratedAPIInstance<string>({
-		url: `/api/v2/dashboards/${id}/pins/me`,
-		method: 'DELETE',
-		signal,
-	});
-};
-
-export const getUnpinDashboardV2MutationOptions = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof unpinDashboardV2>>,
-		TError,
-		{ pathParams: UnpinDashboardV2PathParameters },
-		TContext
-	>;
-}): UseMutationOptions<
-	Awaited<ReturnType<typeof unpinDashboardV2>>,
-	TError,
-	{ pathParams: UnpinDashboardV2PathParameters },
-	TContext
-> => {
-	const mutationKey = ['unpinDashboardV2'];
-	const { mutation: mutationOptions } = options
-		? options.mutation &&
-			'mutationKey' in options.mutation &&
-			options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey } };
-
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof unpinDashboardV2>>,
-		{ pathParams: UnpinDashboardV2PathParameters }
-	> = (props) => {
-		const { pathParams } = props ?? {};
-
-		return unpinDashboardV2(pathParams);
-	};
-
-	return { mutationFn, ...mutationOptions };
-};
-
-export type UnpinDashboardV2MutationResult = NonNullable<
-	Awaited<ReturnType<typeof unpinDashboardV2>>
->;
-
-export type UnpinDashboardV2MutationError = ErrorType<RenderErrorResponseDTO>;
-
-/**
- * @summary Unpin a dashboard for the current user (v2)
- */
-export const useUnpinDashboardV2 = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof unpinDashboardV2>>,
-		TError,
-		{ pathParams: UnpinDashboardV2PathParameters },
-		TContext
-	>;
-}): UseMutationResult<
-	Awaited<ReturnType<typeof unpinDashboardV2>>,
-	TError,
-	{ pathParams: UnpinDashboardV2PathParameters },
-	TContext
-> => {
-	return useMutation(getUnpinDashboardV2MutationOptions(options));
-};
-/**
- * Pins the dashboard for the calling user. A user can pin at most 10 dashboards; pinning when at the limit returns 409. Re-pinning an already-pinned dashboard is a no-op success.
- * @summary Pin a dashboard for the current user (v2)
- */
-export const pinDashboardV2 = (
-	{ id }: PinDashboardV2PathParameters,
-	signal?: AbortSignal,
-) => {
-	return GeneratedAPIInstance<string>({
-		url: `/api/v2/dashboards/${id}/pins/me`,
-		method: 'PUT',
-		signal,
-	});
-};
-
-export const getPinDashboardV2MutationOptions = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof pinDashboardV2>>,
-		TError,
-		{ pathParams: PinDashboardV2PathParameters },
-		TContext
-	>;
-}): UseMutationOptions<
-	Awaited<ReturnType<typeof pinDashboardV2>>,
-	TError,
-	{ pathParams: PinDashboardV2PathParameters },
-	TContext
-> => {
-	const mutationKey = ['pinDashboardV2'];
-	const { mutation: mutationOptions } = options
-		? options.mutation &&
-			'mutationKey' in options.mutation &&
-			options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey } };
-
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof pinDashboardV2>>,
-		{ pathParams: PinDashboardV2PathParameters }
-	> = (props) => {
-		const { pathParams } = props ?? {};
-
-		return pinDashboardV2(pathParams);
-	};
-
-	return { mutationFn, ...mutationOptions };
-};
-
-export type PinDashboardV2MutationResult = NonNullable<
-	Awaited<ReturnType<typeof pinDashboardV2>>
->;
-
-export type PinDashboardV2MutationError = ErrorType<RenderErrorResponseDTO>;
-
-/**
- * @summary Pin a dashboard for the current user (v2)
- */
-export const usePinDashboardV2 = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof pinDashboardV2>>,
-		TError,
-		{ pathParams: PinDashboardV2PathParameters },
-		TContext
-	>;
-}): UseMutationResult<
-	Awaited<ReturnType<typeof pinDashboardV2>>,
-	TError,
-	{ pathParams: PinDashboardV2PathParameters },
-	TContext
-> => {
-	return useMutation(getPinDashboardV2MutationOptions(options));
-};
-/**
  * Returns every saved view in the calling user's org. Saved views are shared org-wide; any user may read, create, edit, and delete any view.
  * @summary List dashboard saved views
  */
@@ -1873,4 +1717,261 @@ export const useUpdateDashboardView = <
 	TContext
 > => {
 	return useMutation(getUpdateDashboardViewMutationOptions(options));
+};
+/**
+ * Same as ListDashboardsV2 but personalized for the calling user: each dashboard carries the caller's `pinned` state, and pinned dashboards float to the top of the requested ordering. Supports the same filter DSL, sort, order, and pagination.
+ * @summary List dashboards for the current user (v2)
+ */
+export const listDashboardsForUserV2 = (
+	params?: ListDashboardsForUserV2Params,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<ListDashboardsForUserV2200>({
+		url: `/api/v2/users/me/dashboards`,
+		method: 'GET',
+		params,
+		signal,
+	});
+};
+
+export const getListDashboardsForUserV2QueryKey = (
+	params?: ListDashboardsForUserV2Params,
+) => {
+	return [`/api/v2/users/me/dashboards`, ...(params ? [params] : [])] as const;
+};
+
+export const getListDashboardsForUserV2QueryOptions = <
+	TData = Awaited<ReturnType<typeof listDashboardsForUserV2>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	params?: ListDashboardsForUserV2Params,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof listDashboardsForUserV2>>,
+			TError,
+			TData
+		>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ?? getListDashboardsForUserV2QueryKey(params);
+
+	const queryFn: QueryFunction<
+		Awaited<ReturnType<typeof listDashboardsForUserV2>>
+	> = ({ signal }) => listDashboardsForUserV2(params, signal);
+
+	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+		Awaited<ReturnType<typeof listDashboardsForUserV2>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type ListDashboardsForUserV2QueryResult = NonNullable<
+	Awaited<ReturnType<typeof listDashboardsForUserV2>>
+>;
+export type ListDashboardsForUserV2QueryError =
+	ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary List dashboards for the current user (v2)
+ */
+
+export function useListDashboardsForUserV2<
+	TData = Awaited<ReturnType<typeof listDashboardsForUserV2>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	params?: ListDashboardsForUserV2Params,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof listDashboardsForUserV2>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getListDashboardsForUserV2QueryOptions(params, options);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary List dashboards for the current user (v2)
+ */
+export const invalidateListDashboardsForUserV2 = async (
+	queryClient: QueryClient,
+	params?: ListDashboardsForUserV2Params,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getListDashboardsForUserV2QueryKey(params) },
+		options,
+	);
+
+	return queryClient;
+};
+
+/**
+ * Removes the pin for the calling user. Idempotent — unpinning a dashboard that wasn't pinned still returns 204.
+ * @summary Unpin a dashboard for the current user (v2)
+ */
+export const unpinDashboardV2 = (
+	{ id }: UnpinDashboardV2PathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<string>({
+		url: `/api/v2/users/me/dashboards/${id}/pins`,
+		method: 'DELETE',
+		signal,
+	});
+};
+
+export const getUnpinDashboardV2MutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof unpinDashboardV2>>,
+		TError,
+		{ pathParams: UnpinDashboardV2PathParameters },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof unpinDashboardV2>>,
+	TError,
+	{ pathParams: UnpinDashboardV2PathParameters },
+	TContext
+> => {
+	const mutationKey = ['unpinDashboardV2'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof unpinDashboardV2>>,
+		{ pathParams: UnpinDashboardV2PathParameters }
+	> = (props) => {
+		const { pathParams } = props ?? {};
+
+		return unpinDashboardV2(pathParams);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type UnpinDashboardV2MutationResult = NonNullable<
+	Awaited<ReturnType<typeof unpinDashboardV2>>
+>;
+
+export type UnpinDashboardV2MutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Unpin a dashboard for the current user (v2)
+ */
+export const useUnpinDashboardV2 = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof unpinDashboardV2>>,
+		TError,
+		{ pathParams: UnpinDashboardV2PathParameters },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof unpinDashboardV2>>,
+	TError,
+	{ pathParams: UnpinDashboardV2PathParameters },
+	TContext
+> => {
+	return useMutation(getUnpinDashboardV2MutationOptions(options));
+};
+/**
+ * Pins the dashboard for the calling user. A user can pin at most 10 dashboards; pinning when at the limit returns 409. Re-pinning an already-pinned dashboard is a no-op success.
+ * @summary Pin a dashboard for the current user (v2)
+ */
+export const pinDashboardV2 = (
+	{ id }: PinDashboardV2PathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<string>({
+		url: `/api/v2/users/me/dashboards/${id}/pins`,
+		method: 'PUT',
+		signal,
+	});
+};
+
+export const getPinDashboardV2MutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof pinDashboardV2>>,
+		TError,
+		{ pathParams: PinDashboardV2PathParameters },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof pinDashboardV2>>,
+	TError,
+	{ pathParams: PinDashboardV2PathParameters },
+	TContext
+> => {
+	const mutationKey = ['pinDashboardV2'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof pinDashboardV2>>,
+		{ pathParams: PinDashboardV2PathParameters }
+	> = (props) => {
+		const { pathParams } = props ?? {};
+
+		return pinDashboardV2(pathParams);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type PinDashboardV2MutationResult = NonNullable<
+	Awaited<ReturnType<typeof pinDashboardV2>>
+>;
+
+export type PinDashboardV2MutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Pin a dashboard for the current user (v2)
+ */
+export const usePinDashboardV2 = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof pinDashboardV2>>,
+		TError,
+		{ pathParams: PinDashboardV2PathParameters },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof pinDashboardV2>>,
+	TError,
+	{ pathParams: PinDashboardV2PathParameters },
+	TContext
+> => {
+	return useMutation(getPinDashboardV2MutationOptions(options));
 };

@@ -1,6 +1,7 @@
 import type { DraggableAttributes } from '@dnd-kit/core';
 import type { SyntheticListenerMap } from '@dnd-kit/core/dist/hooks/utilities';
 import { ChevronDown, ChevronRight, GripVertical } from '@signozhq/icons';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 
@@ -13,7 +14,14 @@ export interface SectionDragHandle {
 	setActivatorNodeRef: (element: HTMLElement | null) => void;
 }
 
-interface Props {
+/** Editable-mode section actions — present together or not at all. */
+export interface SectionHeaderActions {
+	onRename: () => void;
+	onAddPanel: () => void;
+	onDeleteSection: () => void;
+}
+
+interface SectionHeaderProps {
 	sectionId: string;
 	title: string;
 	open: boolean;
@@ -21,9 +29,8 @@ interface Props {
 	repeatVariable?: string;
 	/** Provided by SortableSection in sectioned mode; absent for untitled/free-flow. */
 	dragHandle?: SectionDragHandle;
-	onRename?: () => void;
-	onAddPanel?: () => void;
-	onDeleteSection?: () => void;
+	/** Present only in editable mode; absent (read-only) when locked/no-permission. */
+	actions?: SectionHeaderActions;
 }
 
 function SectionHeader({
@@ -33,16 +40,16 @@ function SectionHeader({
 	onToggle,
 	repeatVariable,
 	dragHandle,
-	onRename,
-	onAddPanel,
-	onDeleteSection,
-}: Props): JSX.Element {
-	const hasActions = !!(onAddPanel || onRename || onDeleteSection);
+	actions,
+}: SectionHeaderProps): JSX.Element {
 	return (
 		<div className={cx(styles.header, { [styles.headerOpen]: open })}>
 			{dragHandle ? (
-				<button
+				<Button
 					type="button"
+					variant="ghost"
+					color="secondary"
+					size="icon"
 					className={styles.dragHandle}
 					ref={dragHandle.setActivatorNodeRef}
 					aria-label="Drag to reorder section"
@@ -51,10 +58,12 @@ function SectionHeader({
 					{...dragHandle.listeners}
 				>
 					<GripVertical size={14} />
-				</button>
+				</Button>
 			) : null}
-			<button
+			<Button
 				type="button"
+				variant="ghost"
+				color="secondary"
 				className={styles.toggle}
 				onClick={onToggle}
 				data-testid={`dashboard-section-toggle-${sectionId}`}
@@ -66,13 +75,13 @@ function SectionHeader({
 						(repeats per ${repeatVariable})
 					</Typography.Text>
 				) : null}
-			</button>
-			{hasActions ? (
+			</Button>
+			{actions ? (
 				<SectionActionsMenu
 					sectionId={sectionId}
-					onAddPanel={onAddPanel}
-					onRename={onRename}
-					onDeleteSection={onDeleteSection}
+					onAddPanel={actions.onAddPanel}
+					onRename={actions.onRename}
+					onDeleteSection={actions.onDeleteSection}
 				/>
 			) : null}
 		</div>

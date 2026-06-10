@@ -242,8 +242,12 @@ func (module *module) LockUnlockV2(ctx context.Context, orgID valuer.UUID, id va
 	return module.pkgDashboardModule.LockUnlockV2(ctx, orgID, id, updatedBy, isAdmin, lock)
 }
 
-func (module *module) ListV2(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, params *dashboardtypes.ListDashboardsV2Params) (*dashboardtypes.ListableDashboardV2, error) {
-	return module.pkgDashboardModule.ListV2(ctx, orgID, userID, params)
+func (module *module) ListV2(ctx context.Context, orgID valuer.UUID, params *dashboardtypes.ListDashboardsV2Params) (*dashboardtypes.ListableDashboardV2, error) {
+	return module.pkgDashboardModule.ListV2(ctx, orgID, params)
+}
+
+func (module *module) ListForUserV2(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, params *dashboardtypes.ListDashboardsV2Params) (*dashboardtypes.ListableDashboardForUserV2, error) {
+	return module.pkgDashboardModule.ListForUserV2(ctx, orgID, userID, params)
 }
 
 func (module *module) PinV2(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, id valuer.UUID) error {
@@ -252,6 +256,10 @@ func (module *module) PinV2(ctx context.Context, orgID valuer.UUID, userID value
 
 func (module *module) UnpinV2(ctx context.Context, userID valuer.UUID, id valuer.UUID) error {
 	return module.pkgDashboardModule.UnpinV2(ctx, userID, id)
+}
+
+func (module *module) DeletePreferencesForUser(ctx context.Context, userID valuer.UUID) error {
+	return module.pkgDashboardModule.DeletePreferencesForUser(ctx, userID)
 }
 
 func (module *module) CreateView(ctx context.Context, orgID valuer.UUID, postable dashboardtypes.PostableDashboardView) (*dashboardtypes.DashboardView, error) {

@@ -53,6 +53,37 @@ func (handler *handler) ListV2(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	orgID := valuer.MustNewUUID(claims.OrgID)
+
+	params := new(dashboardtypes.ListDashboardsV2Params)
+	if err := binding.Query.BindQuery(r.URL.Query(), params); err != nil {
+		render.Error(rw, err)
+		return
+	}
+	if err := params.Validate(); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	out, err := handler.module.ListV2(ctx, orgID, params)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, out)
+}
+
+func (handler *handler) ListForUserV2(rw http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	orgID := valuer.MustNewUUID(claims.OrgID)
 	userID := valuer.MustNewUUID(claims.IdentityID())
 
 	params := new(dashboardtypes.ListDashboardsV2Params)
@@ -65,7 +96,7 @@ func (handler *handler) ListV2(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	out, err := handler.module.ListV2(ctx, orgID, userID, params)
+	out, err := handler.module.ListForUserV2(ctx, orgID, userID, params)
 	if err != nil {
 		render.Error(rw, err)
 		return

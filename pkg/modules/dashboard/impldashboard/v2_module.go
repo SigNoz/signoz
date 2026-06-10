@@ -2,11 +2,11 @@ package impldashboard
 
 import (
 	"context"
-	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
+	"github.com/SigNoz/signoz/pkg/types/tagtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -43,8 +43,27 @@ func (m *module) CreateV2(ctx context.Context, orgID valuer.UUID, createdBy stri
 	return dashboard, nil
 }
 
-func (module *module) ListV2(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, params *dashboardtypes.ListDashboardsV2Params) (*dashboardtypes.ListableDashboardV2, error) {
-	rows, total, err := module.store.ListV2(ctx, orgID, userID, params)
+func (module *module) ListV2(ctx context.Context, orgID valuer.UUID, params *dashboardtypes.ListDashboardsV2Params) (*dashboardtypes.ListableDashboardV2, error) {
+	dashboards, total, err := module.store.ListV2(ctx, orgID, params)
+	if err != nil {
+		return nil, err
+	}
+
+	dashboardIDs := make([]valuer.UUID, len(dashboards))
+	for i, d := range dashboards {
+		dashboardIDs[i] = d.ID
+	}
+
+	tagsByDashboard, allTags, err := module.fetchDashboardTags(ctx, orgID, dashboardIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	return dashboardtypes.NewListableDashboardV2(dashboards, total, tagsByDashboard, allTags)
+}
+
+func (module *module) ListForUserV2(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, params *dashboardtypes.ListDashboardsV2Params) (*dashboardtypes.ListableDashboardForUserV2, error) {
+	rows, total, err := module.store.ListForUser(ctx, orgID, userID, params)
 	if err != nil {
 		return nil, err
 	}
@@ -53,17 +72,27 @@ func (module *module) ListV2(ctx context.Context, orgID valuer.UUID, userID valu
 	for i, r := range rows {
 		dashboardIDs[i] = r.Dashboard.ID
 	}
-	tagsByDashboard, err := module.tagModule.ListForResources(ctx, orgID, coretypes.KindDashboard, dashboardIDs)
+
+	tagsByDashboard, allTags, err := module.fetchDashboardTags(ctx, orgID, dashboardIDs)
 	if err != nil {
 		return nil, err
+	}
+
+	return dashboardtypes.NewListableDashboardForUserV2(rows, total, tagsByDashboard, allTags)
+}
+
+func (module *module) fetchDashboardTags(ctx context.Context, orgID valuer.UUID, dashboardIDs []valuer.UUID) (map[valuer.UUID][]*tagtypes.Tag, []*tagtypes.Tag, error) {
+	tagsByDashboard, err := module.tagModule.ListForResources(ctx, orgID, coretypes.KindDashboard, dashboardIDs)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	allTags, err := module.tagModule.List(ctx, orgID, coretypes.KindDashboard)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return dashboardtypes.NewListableDashboardV2(rows, total, tagsByDashboard, allTags)
+	return tagsByDashboard, allTags, nil
 }
 
 func (module *module) GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.DashboardV2, error) {
@@ -173,6 +202,9 @@ func (module *module) DeleteV2(ctx context.Context, orgID valuer.UUID, id valuer
 		if _, err := module.tagModule.SyncTags(ctx, orgID, coretypes.KindDashboard, id, nil); err != nil {
 			return err
 		}
+		if err := module.store.DeletePreferencesForDashboard(ctx, id); err != nil {
+			return err
+		}
 		return module.store.Delete(ctx, orgID, id)
 	})
 }
@@ -196,14 +228,13 @@ func (module *module) PinV2(ctx context.Context, orgID valuer.UUID, userID value
 	if _, err := module.GetV2(ctx, orgID, id); err != nil {
 		return err
 	}
-	return module.store.PinForUser(ctx, &dashboardtypes.PinnedDashboard{
-		UserID:      userID,
-		DashboardID: id,
-		OrgID:       orgID,
-		PinnedAt:    time.Now(),
-	})
+	return module.store.PinForUser(ctx, dashboardtypes.NewUserDashboardPreference(userID, id))
 }
 
 func (module *module) UnpinV2(ctx context.Context, userID valuer.UUID, id valuer.UUID) error {
 	return module.store.UnpinForUser(ctx, userID, id)
+}
+
+func (module *module) DeletePreferencesForUser(ctx context.Context, userID valuer.UUID) error {
+	return module.store.DeletePreferencesForUser(ctx, userID)
 }
