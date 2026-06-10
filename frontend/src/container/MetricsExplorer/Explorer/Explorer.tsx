@@ -62,7 +62,6 @@ function Explorer(): JSX.Element {
 		handleSetQueryData,
 		redirectWithQueryBuilderData,
 	} = useQueryBuilder();
-
 	const { safeNavigate } = useSafeNavigate();
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
 	const isAIAssistantEnabled = useIsAIAssistantEnabled();
