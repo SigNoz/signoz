@@ -471,14 +471,15 @@ func (q *QueryBuilderQuery[T]) validateOrderByForAggregation() error {
 			}
 			slices.Sort(validKeys)
 
+			// Aggregation order-by keys are a small, exhaustive set (group-by keys,
+			// aggregation aliases/expressions, indices, __result), so a "valid references"
+			// list — unlike free-form field suggestions — is genuinely useful here.
 			return errors.NewInvalidInputf(
 				errors.CodeInvalidInput,
 				"invalid order by key '%s' for %s",
 				orderKey,
 				orderId,
-			).WithAdditional(
-				fmt.Sprintf("For aggregation queries, order by can only reference group by keys, aggregation aliases/expressions, or aggregation indices. Valid keys are: %s", strings.Join(validKeys, ", ")),
-			)
+			).WithSuggestions(errors.Suggestions(orderKey, validKeys)...)
 		}
 	}
 
