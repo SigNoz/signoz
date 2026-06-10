@@ -3257,6 +3257,10 @@ components:
       properties:
         message:
           type: string
+        suggestions:
+          items:
+            type: string
+          type: array
       type: object
     ErrorsResponseretryjson:
       properties:

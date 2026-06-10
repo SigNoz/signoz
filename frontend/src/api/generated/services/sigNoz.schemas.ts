@@ -2049,6 +2049,10 @@ export interface ErrorsResponseerroradditionalDTO {
 	 * @type string
 	 */
 	message?: string;
+	/**
+	 * @type array
+	 */
+	suggestions?: string[];
 }
 
 export interface ErrorsResponseretryjsonDTO {
