@@ -278,11 +278,20 @@ const useOptionsMenu = ({
 		[searchedAttributeKeys, selectedColumnKeys, preferences, updateColumns],
 	);
 
+	// Logs emits 2-part IDs (no `fieldDataType`); traces emits 3-part for
+	// `http.status_code`-style disambig. Tech debt — migrate logs to 3-part too
+	// and drop this gate.
+	const includeDataType = dataSource !== DataSource.LOGS;
+
 	const handleRemoveSelectedColumn = useCallback(
 		(columnKey: string) => {
 			const newSelectedColumns = preferences?.columns?.filter(
 				(f) =>
-					buildCompositeKey(f.name, f.fieldContext, f.fieldDataType) !== columnKey,
+					buildCompositeKey(
+						f.name,
+						f.fieldContext,
+						includeDataType ? f.fieldDataType : undefined,
+					) !== columnKey,
 			);
 
 			if (!newSelectedColumns?.length && dataSource !== DataSource.LOGS) {
@@ -366,7 +375,11 @@ const useOptionsMenu = ({
 			const current = preferences?.columns ?? [];
 			const byCompositeKey = new Map(
 				current.map((f) => [
-					buildCompositeKey(f.name, f.fieldContext, f.fieldDataType),
+					buildCompositeKey(
+						f.name,
+						f.fieldContext,
+						includeDataType ? f.fieldDataType : undefined,
+					),
 					f,
 				]),
 			);
@@ -375,7 +388,7 @@ const useOptionsMenu = ({
 				.filter((f): f is TelemetryFieldKey => f !== undefined);
 			updateColumns(reordered);
 		},
-		[preferences, updateColumns],
+		[preferences, updateColumns, includeDataType],
 	);
 
 	const handleFocus = (): void => {
