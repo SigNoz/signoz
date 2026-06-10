@@ -222,6 +222,18 @@ describe('toPerses (Phase 2 — bare signoz/BuilderQuery)', () => {
 		expect(result[0].kind).toBe(Querybuildertypesv5RequestTypeDTO.raw);
 		expect(getPlugin(result).kind).toBe('signoz/BuilderQuery');
 	});
+
+	it.each([PANEL_TYPES.VALUE, PANEL_TYPES.TABLE, PANEL_TYPES.PIE])(
+		'derives outer kind "scalar" for a %s panel',
+		(graphType) => {
+			const result = toPerses({
+				query: builderShell([metricsBuilderQuery()]),
+				graphType,
+			});
+			expect(result[0].kind).toBe(Querybuildertypesv5RequestTypeDTO.scalar);
+			expect(getPlugin(result).kind).toBe('signoz/BuilderQuery');
+		},
+	);
 });
 
 // ---- Phase 3: CompositeQuery wrapping --------------------------------------

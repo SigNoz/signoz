@@ -22,7 +22,8 @@ import type {
 } from 'types/api/v5/queryRange';
 import { EQueryType } from 'types/common/dashboard';
 
-import { makeEmptyV1Query, signalToDataSource } from './shared';
+import { makeEmptyV1Query } from './shared';
+import { DataSource } from 'types/common/queryBuilder';
 
 // IPromQLQuery and IClickHouseQuery are structurally identical
 // ({name, query, disabled, legend}). Both v5 PromQuery and ClickHouseQuery
@@ -174,7 +175,7 @@ function dispatchSubquery(sub: QueryEnvelope, result: Query): void {
 // the V1 in-memory IBuilderQuery shape. Fields the v5 spec doesn't carry come
 // from the signal-specific default in `initialQueryBuilderFormValuesMap`.
 function v5BuilderToV1(spec: BuilderQuery): IBuilderQuery {
-	const dataSource = signalToDataSource(spec.signal);
+	const dataSource = spec.signal as DataSource;
 	const base = initialQueryBuilderFormValuesMap[dataSource];
 	const name = spec.name ?? base.queryName;
 

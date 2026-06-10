@@ -7,45 +7,25 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import type { QueryEnvelope } from 'types/api/v5/queryRange';
 import { EQueryType } from 'types/common/dashboard';
-import { DataSource } from 'types/common/queryBuilder';
 
-// Outer envelope `kind` values used by the perses dashboard format. The Go
-// backend defines `Query.Kind` as a free-form string, but the only values
-// observed in `pkg/types/dashboardtypes/testdata` are these two.
-export type PersesOuterKind = 'TimeSeriesQuery' | 'LogQuery';
-
-// LIST panels (rows-oriented data — logs and traces alike) use LogQuery.
-// Every other panel type uses TimeSeriesQuery.
+// Maps a panel type to the v5 request kind its query envelope expects:
+// - LIST panels (rows-oriented data — logs and traces alike) request `raw`.
+// - VALUE / TABLE / PIE panels render a single aggregated figure, so they
+//   request `scalar`.
+// - Every other panel type requests `time_series`.
 export function deriveOuterKind(
 	graphType: PANEL_TYPES,
 ): Querybuildertypesv5RequestTypeDTO {
-	return graphType === PANEL_TYPES.LIST
-		? Querybuildertypesv5RequestTypeDTO.raw
-		: Querybuildertypesv5RequestTypeDTO.time_series;
-}
-
-// v5 builder query carries `signal` as a literal union; V1 in-memory uses the
-// DataSource enum. These two helpers bridge the two sides.
-export type V5Signal = 'logs' | 'metrics' | 'traces';
-
-export function signalToDataSource(signal: V5Signal): DataSource {
-	if (signal === 'logs') {
-		return DataSource.LOGS;
+	switch (graphType) {
+		case PANEL_TYPES.LIST:
+			return Querybuildertypesv5RequestTypeDTO.raw;
+		case PANEL_TYPES.VALUE:
+		case PANEL_TYPES.TABLE:
+		case PANEL_TYPES.PIE:
+			return Querybuildertypesv5RequestTypeDTO.scalar;
+		default:
+			return Querybuildertypesv5RequestTypeDTO.time_series;
 	}
-	if (signal === 'traces') {
-		return DataSource.TRACES;
-	}
-	return DataSource.METRICS;
-}
-
-export function dataSourceToSignal(dataSource: DataSource): V5Signal {
-	if (dataSource === DataSource.LOGS) {
-		return 'logs';
-	}
-	if (dataSource === DataSource.TRACES) {
-		return 'traces';
-	}
-	return 'metrics';
 }
 
 // fromPerses always returns this fully-inflated empty composite shape so the
