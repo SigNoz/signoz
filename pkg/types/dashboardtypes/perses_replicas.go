@@ -87,7 +87,10 @@ type Variable struct {
 }
 
 func (Variable) PrepareJSONSchema(s *jsonschema.Schema) error {
-	return clearOneOfParentShape(s)
+	return markDiscriminator(s, map[string]string{
+		string(variable.KindList): schemaRef("DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpec"),
+		string(variable.KindText): schemaRef("DashboardtypesVariableEnvelopeGithubComPersesSpecGoDashboardTextVariableSpec"),
+	})
 }
 
 func (v *Variable) UnmarshalJSON(data []byte) error {
@@ -167,7 +170,9 @@ var layoutSpecs = map[dashboard.LayoutKind]func() any{
 }
 
 func (Layout) PrepareJSONSchema(s *jsonschema.Schema) error {
-	return clearOneOfParentShape(s)
+	return markDiscriminator(s, map[string]string{
+		string(dashboard.KindGridLayout): schemaRef("DashboardtypesLayoutEnvelopeGithubComPersesSpecGoDashboardGridLayoutSpec"),
+	})
 }
 
 func (l *Layout) UnmarshalJSON(data []byte) error {
