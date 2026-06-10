@@ -26,7 +26,7 @@ type PanelPlugin struct {
 // signoz.attachDiscriminators promotes it to a real OpenAPI 3 discriminator
 // (and strips the duplicate parent properties) after reflection.
 func (PanelPlugin) PrepareJSONSchema(s *jsonschema.Schema) error {
-	return markDiscriminator(s, map[string]string{
+	return markDiscriminator(s, "kind", map[string]string{
 		string(PanelKindTimeSeries): schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpec"),
 		string(PanelKindBarChart):   schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBarChartPanelSpec"),
 		string(PanelKindNumber):     schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesNumberPanelSpec"),
@@ -73,7 +73,7 @@ type PanelPluginVariant[S any] struct {
 }
 
 func (v PanelPluginVariant[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
-	return restrictKindToOneValue(s, v.Kind)
+	return restrictToOneValue(s, "kind", v.Kind)
 }
 
 // ══════════════════════════════════════════════
@@ -86,7 +86,7 @@ type QueryPlugin struct {
 }
 
 func (QueryPlugin) PrepareJSONSchema(s *jsonschema.Schema) error {
-	return markDiscriminator(s, map[string]string{
+	return markDiscriminator(s, "kind", map[string]string{
 		string(QueryKindBuilder):       schemaRef("DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBuilderQuerySpec"),
 		string(QueryKindComposite):     schemaRef("DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5CompositeQuery"),
 		string(QueryKindFormula):       schemaRef("DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderFormula"),
@@ -131,7 +131,7 @@ type QueryPluginVariant[S any] struct {
 }
 
 func (v QueryPluginVariant[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
-	return restrictKindToOneValue(s, v.Kind)
+	return restrictToOneValue(s, "kind", v.Kind)
 }
 
 // ══════════════════════════════════════════════
@@ -144,7 +144,7 @@ type VariablePlugin struct {
 }
 
 func (VariablePlugin) PrepareJSONSchema(s *jsonschema.Schema) error {
-	return markDiscriminator(s, map[string]string{
+	return markDiscriminator(s, "kind", map[string]string{
 		string(VariableKindDynamic): schemaRef("DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDynamicVariableSpec"),
 		string(VariableKindQuery):   schemaRef("DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesQueryVariableSpec"),
 		string(VariableKindCustom):  schemaRef("DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesCustomVariableSpec"),
@@ -183,7 +183,7 @@ type VariablePluginVariant[S any] struct {
 }
 
 func (v VariablePluginVariant[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
-	return restrictKindToOneValue(s, v.Kind)
+	return restrictToOneValue(s, "kind", v.Kind)
 }
 
 // ══════════════════════════════════════════════
@@ -196,7 +196,7 @@ type DatasourcePlugin struct {
 }
 
 func (DatasourcePlugin) PrepareJSONSchema(s *jsonschema.Schema) error {
-	return markDiscriminator(s, map[string]string{
+	return markDiscriminator(s, "kind", map[string]string{
 		string(DatasourceKindSigNoz): schemaRef("DashboardtypesDatasourcePluginVariantStruct"),
 	})
 }
@@ -231,7 +231,7 @@ type DatasourcePluginVariant[S any] struct {
 }
 
 func (v DatasourcePluginVariant[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
-	return restrictKindToOneValue(s, v.Kind)
+	return restrictToOneValue(s, "kind", v.Kind)
 }
 
 // ══════════════════════════════════════════════
@@ -313,13 +313,6 @@ func decodeSpec(specJSON []byte, target any, kind string) (any, error) {
 	return target, nil
 }
 
-// clearOneOfParentShape drops Type and Properties on a schema that also has a JSONSchemaOneOf.
-func clearOneOfParentShape(s *jsonschema.Schema) error {
-	s.Type = nil
-	s.Properties = nil
-	return nil
-}
-
 // signozDiscriminatorKey is the extension key that signoz.attachDiscriminators
 // promotes into a native OpenAPI 3 discriminator after reflection.
 const signozDiscriminatorKey = "x-signoz-discriminator"
@@ -331,29 +324,31 @@ func schemaRef(name string) string {
 
 // markDiscriminator tags a oneOf envelope schema with x-signoz-discriminator so
 // signoz.attachDiscriminators promotes it to a real OpenAPI 3 discriminator,
-// keyed on the `kind` property, with the given kind -> schema-ref mapping. This
-// turns the union into a discriminated DTO (instead of an intersection) for
-// generated clients.
-func markDiscriminator(s *jsonschema.Schema, mapping map[string]string) error {
+// keyed on propertyName, with the given value -> schema-ref mapping. This turns
+// the union into a discriminated DTO (instead of an intersection) for generated
+// clients.
+func markDiscriminator(s *jsonschema.Schema, propertyName string, mapping map[string]string) error {
 	if s.ExtraProperties == nil {
 		s.ExtraProperties = map[string]any{}
 	}
 	s.ExtraProperties[signozDiscriminatorKey] = map[string]any{
-		"propertyName": "kind",
+		"propertyName": propertyName,
 		"mapping":      mapping,
 	}
 	return nil
 }
 
-// restrictKindToOneValue ensures that the schema only allows one Kind value for a type.
-// For eg. PanelPluginVariant[TimeSeriesPanelSpec]{Kind: string(PanelKindTimeSeries)} should
-// only allow "signoz/TimeSeriesPanel" in its kind field.
-func restrictKindToOneValue(schema *jsonschema.Schema, kind string) error {
-	kindProp, ok := schema.Properties["kind"]
-	if !ok || kindProp.TypeObject == nil {
-		return errors.NewInternalf(errors.CodeInternal, "variant schema missing `kind` property")
+// restrictToOneValue pins a variant's discriminator property to one value, as an
+// inline single-value enum, and marks it required. For eg. the TimeSeriesPanel
+// variant restricts its `kind` to "signoz/TimeSeriesPanel".
+func restrictToOneValue(schema *jsonschema.Schema, property, value string) error {
+	if _, ok := schema.Properties[property]; !ok {
+		return errors.NewInternalf(errors.CodeInternal, "variant schema missing %q property", property)
 	}
-	kindProp.TypeObject.WithEnum(kind)
-	schema.Properties["kind"] = kindProp
+	prop := (&jsonschema.Schema{}).WithType(jsonschema.String.Type()).WithEnum(value)
+	schema.Properties[property] = prop.ToSchemaOrBool()
+	if !slices.Contains(schema.Required, property) {
+		schema.Required = append(schema.Required, property)
+	}
 	return nil
 }

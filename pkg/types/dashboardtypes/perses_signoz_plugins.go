@@ -93,20 +93,43 @@ func (b BuilderQuerySpec) MarshalJSON() ([]byte, error) {
 	return json.Marshal(b.Spec)
 }
 
-// PrepareJSONSchema drops the reflected struct shape so only the
-// JSONSchemaOneOf result binds.
+// PrepareJSONSchema marks the envelope with x-signoz-discriminator keyed on
+// `signal`. Each variant pins `signal` to its one value (see JSONSchemaOneOf),
+// so the union resolves cleanly even though it doesn't carry a `kind`.
 func (BuilderQuerySpec) PrepareJSONSchema(s *jsonschema.Schema) error {
-	return clearOneOfParentShape(s)
+	return markDiscriminator(s, "signal", map[string]string{
+		telemetrytypes.SignalLogs.StringValue():    schemaRef("DashboardtypesLogBuilderQuery"),
+		telemetrytypes.SignalMetrics.StringValue(): schemaRef("DashboardtypesMetricBuilderQuery"),
+		telemetrytypes.SignalTraces.StringValue():  schemaRef("DashboardtypesTraceBuilderQuery"),
+	})
 }
 
 // JSONSchemaOneOf exposes the three signal-dispatched shapes a builder query
-// can take. Mirrors qb.UnmarshalBuilderQueryBySignal's runtime dispatch.
+// can take. Mirrors qb.UnmarshalBuilderQueryBySignal's runtime dispatch. The
+// variants are local named types so each can pin `signal` to a single value and
+// get a clean discriminator schema ref.
 func (BuilderQuerySpec) JSONSchemaOneOf() []any {
 	return []any{
-		qb.QueryBuilderQuery[qb.LogAggregation]{},
-		qb.QueryBuilderQuery[qb.MetricAggregation]{},
-		qb.QueryBuilderQuery[qb.TraceAggregation]{},
+		logBuilderQuery{},
+		metricBuilderQuery{},
+		traceBuilderQuery{},
 	}
+}
+
+type (
+	logBuilderQuery    qb.QueryBuilderQuery[qb.LogAggregation]
+	metricBuilderQuery qb.QueryBuilderQuery[qb.MetricAggregation]
+	traceBuilderQuery  qb.QueryBuilderQuery[qb.TraceAggregation]
+)
+
+func (logBuilderQuery) PrepareJSONSchema(s *jsonschema.Schema) error {
+	return restrictToOneValue(s, "signal", telemetrytypes.SignalLogs.StringValue())
+}
+func (metricBuilderQuery) PrepareJSONSchema(s *jsonschema.Schema) error {
+	return restrictToOneValue(s, "signal", telemetrytypes.SignalMetrics.StringValue())
+}
+func (traceBuilderQuery) PrepareJSONSchema(s *jsonschema.Schema) error {
+	return restrictToOneValue(s, "signal", telemetrytypes.SignalTraces.StringValue())
 }
 
 // ══════════════════════════════════════════════

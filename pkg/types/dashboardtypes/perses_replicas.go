@@ -87,7 +87,7 @@ type Variable struct {
 }
 
 func (Variable) PrepareJSONSchema(s *jsonschema.Schema) error {
-	return markDiscriminator(s, map[string]string{
+	return markDiscriminator(s, "kind", map[string]string{
 		string(variable.KindList): schemaRef("DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpec"),
 		string(variable.KindText): schemaRef("DashboardtypesVariableEnvelopeGithubComPersesSpecGoDashboardTextVariableSpec"),
 	})
@@ -132,7 +132,7 @@ type VariableEnvelope[S any] struct {
 }
 
 func (v VariableEnvelope[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
-	return restrictKindToOneValue(s, v.Kind)
+	return restrictToOneValue(s, "kind", v.Kind)
 }
 
 // ListVariableSpec mirrors dashboard.ListVariableSpec (variable.ListSpec
@@ -170,7 +170,7 @@ var layoutSpecs = map[dashboard.LayoutKind]func() any{
 }
 
 func (Layout) PrepareJSONSchema(s *jsonschema.Schema) error {
-	return markDiscriminator(s, map[string]string{
+	return markDiscriminator(s, "kind", map[string]string{
 		string(dashboard.KindGridLayout): schemaRef("DashboardtypesLayoutEnvelopeGithubComPersesSpecGoDashboardGridLayoutSpec"),
 	})
 }
@@ -205,5 +205,5 @@ type LayoutEnvelope[S any] struct {
 }
 
 func (v LayoutEnvelope[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
-	return restrictKindToOneValue(s, v.Kind)
+	return restrictToOneValue(s, "kind", v.Kind)
 }
