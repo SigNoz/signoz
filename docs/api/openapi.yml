@@ -6726,11 +6726,6 @@ components:
       type: object
     SpantypesGettableWaterfallTrace:
       properties:
-        aggregations:
-          items:
-            $ref: '#/components/schemas/SpantypesSpanAggregationResult'
-          nullable: true
-          type: array
         endTimestampMillis:
           minimum: 0
           type: integer
@@ -6818,14 +6813,6 @@ components:
       type: object
     SpantypesPostableWaterfall:
       properties:
-        aggregations:
-          items:
-            $ref: '#/components/schemas/SpantypesSpanAggregation'
-          nullable: true
-          type: array
-        limit:
-          minimum: 0
-          type: integer
         selectedSpanId:
           type: string
         uncollapsedSpans:
@@ -20679,76 +20666,6 @@ paths:
       - tokenizer:
         - VIEWER
       summary: Get flamegraph view for a trace
-      tags:
-      - tracedetail
-  /api/v3/traces/{traceID}/waterfall:
-    post:
-      deprecated: false
-      description: Returns the waterfall view of spans for a given trace ID with tree
-        structure, metadata, and windowed pagination
-      operationId: GetWaterfall
-      parameters:
-      - in: path
-        name: traceID
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SpantypesPostableWaterfall'
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    $ref: '#/components/schemas/SpantypesGettableWaterfallTrace'
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: OK
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Not Found
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - VIEWER
-      - tokenizer:
-        - VIEWER
-      summary: Get waterfall view for a trace
       tags:
       - tracedetail
   /api/v4/traces/{traceID}/waterfall:
