@@ -8,6 +8,10 @@ import {
 	createDashboardV2,
 	useListDashboardsV2,
 } from 'api/generated/services/dashboard';
+import {
+	DashboardtypesListOrderDTO,
+	DashboardtypesListSortDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import ROUTES from 'constants/routes';
 import { RequestDashboardBtn } from 'container/ListOfDashboard/RequestDashboardBtn';
 import useComponentPermission from 'hooks/useComponentPermission';
@@ -82,8 +86,10 @@ function DashboardsList(): JSX.Element {
 	const listParams = useMemo(
 		() => ({
 			query: searchString.trim() || undefined,
-			sort: sortColumn,
-			order: sortOrder,
+			// SortColumn/SortOrder string-literal unions mirror these generated
+			// enums 1:1 (identical values); cast to satisfy the client param.
+			sort: sortColumn as DashboardtypesListSortDTO,
+			order: sortOrder as DashboardtypesListOrderDTO,
 			limit: PAGE_SIZE,
 			offset: (page - 1) * PAGE_SIZE,
 		}),
