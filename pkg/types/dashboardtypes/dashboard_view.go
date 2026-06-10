@@ -22,6 +22,17 @@ var (
 	ErrCodeDashboardViewNotFound     = errors.MustNewCode("dashboard_view_not_found")
 )
 
+type DashboardView struct {
+	bun.BaseModel `bun:"table:dashboard_view,alias:dashboard_view"`
+
+	types.Identifiable
+	types.TimeAuditable
+
+	Name  string            `bun:"name,type:text,notnull" json:"name" required:"true"`
+	Data  DashboardViewData `bun:"data,type:jsonb,notnull" json:"data" required:"true"`
+	OrgID valuer.UUID       `bun:"org_id,type:text,notnull" json:"orgId" required:"true"`
+}
+
 type DashboardViewData struct {
 	Version string    `json:"version" required:"true"`
 	Query   string    `json:"query"`
@@ -51,17 +62,6 @@ func (d *DashboardViewData) Validate() error {
 		}
 	}
 	return nil
-}
-
-type DashboardView struct {
-	bun.BaseModel `bun:"table:dashboard_view,alias:dashboard_view"`
-
-	types.Identifiable
-	types.TimeAuditable
-
-	Name  string            `bun:"name,type:text,notnull" json:"name" required:"true"`
-	Data  DashboardViewData `bun:"data,type:jsonb,notnull" json:"data" required:"true"`
-	OrgID valuer.UUID       `bun:"org_id,type:text,notnull" json:"orgId" required:"true"`
 }
 
 // ════════════════════════════════════════════════════════════════════════
