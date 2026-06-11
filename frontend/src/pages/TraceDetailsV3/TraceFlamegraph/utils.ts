@@ -7,7 +7,7 @@ import {
 	generateColorPair,
 	RESERVED_ERROR,
 } from 'pages/TraceDetailsV3/utils/generateColorPair';
-import { FlamegraphSpan } from 'types/api/trace/getTraceFlamegraph';
+import { SpantypesFlamegraphSpanDTO as FlamegraphSpan } from 'api/generated/services/sigNoz.schemas';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 
 import {
@@ -74,34 +74,25 @@ export function getFlamegraphRowMetrics(
 
 /**
  * Resolve the displayed service.name for a flamegraph span. Used by tooltips
- * (service identity, independent of the active colour-by field). Prefers
- * `resource['service.name']` with legacy top-level `serviceName` fallback.
+ * (service identity, independent of the active colour-by field). Reads
+ * `resource['service.name']`.
  */
 export function getFlamegraphServiceName(
-	span: Pick<FlamegraphSpan, 'serviceName' | 'resource' | 'attributes'>,
+	span: Partial<Pick<FlamegraphSpan, 'resource' | 'attributes'>>,
 ): string {
-	return getSpanAttribute(span, 'service.name') || span.serviceName || '';
+	return getSpanAttribute(span, 'service.name') || '';
 }
 
 /**
  * Resolve the value used to bucket a flamegraph span by colour for the given
- * field. Prefers `resource[field.name]` (new contract from `selectFields`).
- * For `service.name`, falls back to the legacy top-level `serviceName` when
- * resource is empty (backward-compat with backends that haven't shipped
- * `selectFields` yet). For other fields, falls back to `'unknown'`.
+ * field. Prefers `resource[field.name]` (contract from `selectFields`), falling
+ * back to `'unknown'`.
  */
 export function getFlamegraphSpanGroupValue(
-	span: Pick<FlamegraphSpan, 'serviceName' | 'resource' | 'attributes'>,
+	span: Partial<Pick<FlamegraphSpan, 'resource' | 'attributes'>>,
 	field: TelemetryFieldKey,
 ): string {
-	const fromAttribute = getSpanAttribute(span, field.name);
-	if (fromAttribute) {
-		return fromAttribute;
-	}
-	if (field.name === 'service.name') {
-		return span.serviceName || 'unknown';
-	}
-	return 'unknown';
+	return getSpanAttribute(span, field.name) || 'unknown';
 }
 
 interface GetSpanColorArgs {
@@ -296,7 +287,7 @@ export function drawSpanBar(args: DrawSpanBarArgs): void {
 			return;
 		}
 
-		const eventTimeMs = event.timeUnixNano / 1e6;
+		const eventTimeMs = (event.timeUnixNano ?? 0) / 1e6;
 		const eventOffsetPercent =
 			((eventTimeMs - span.timestamp) / spanDurationMs) * 100;
 		const clampedOffset = clamp(eventOffsetPercent, 1, 99);
@@ -306,7 +297,11 @@ export function drawSpanBar(args: DrawSpanBarArgs): void {
 		// Event dots derive from the effective bar color so they track the
 		// light/dark variant the bar is rendered with.
 		const parentBarColor = isDarkMode ? color : colorDark;
-		const dotColor = getEventDotColor(parentBarColor, event.isError, isDarkMode);
+		const dotColor = getEventDotColor(
+			parentBarColor,
+			event.isError ?? false,
+			isDarkMode,
+		);
 		const eventKey = `${span.spanId}-${event.name}-${event.timeUnixNano}`;
 		const isEventHovered = hoveredEventKey === eventKey;
 		const dotSize = isEventHovered
