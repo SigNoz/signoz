@@ -13,7 +13,8 @@ interface VariablesBarProps {
  * dashboard variable; selections live in the store + URL (never the spec).
  */
 function VariablesBar({ dashboard }: VariablesBarProps): JSX.Element | null {
-	const { variables, selection, setSelection } = useVariableSelection(dashboard);
+	const { variables, dependencyData, selection, setSelection } =
+		useVariableSelection(dashboard);
 
 	if (variables.length === 0) {
 		return null;
@@ -25,6 +26,8 @@ function VariablesBar({ dashboard }: VariablesBarProps): JSX.Element | null {
 				<VariableSelector
 					key={variable.name}
 					variable={variable}
+					parents={dependencyData.parentGraph[variable.name] ?? []}
+					selections={selection}
 					selection={
 						selection[variable.name] ?? {
 							value: variable.multiSelect ? [] : '',
