@@ -31,7 +31,7 @@ const (
 	DSLKeyUpdatedAt   DSLKey = "updated_at"
 	DSLKeyCreatedBy   DSLKey = "created_by"
 	DSLKeyLocked      DSLKey = "locked"
-	DSLKeyPublic      DSLKey = "public"
+	DSLKeySource      DSLKey = "source"
 )
 
 // reservedDSLKeys are dashboard column-level filter names in the list-query DSL.
@@ -44,7 +44,7 @@ var reservedDSLKeys = map[DSLKey]struct{}{
 	DSLKeyUpdatedAt:   {},
 	DSLKeyCreatedBy:   {},
 	DSLKeyLocked:      {},
-	DSLKeyPublic:      {},
+	DSLKeySource:      {},
 }
 
 type DashboardV2 struct {
@@ -107,6 +107,16 @@ func (d *DashboardV2) LockUnlock(lock bool, isAdmin bool, updatedBy string) erro
 	d.Locked = lock
 	d.UpdatedBy = updatedBy
 	d.UpdatedAt = time.Now()
+	return nil
+}
+
+func (d *DashboardV2) CanDelete() error {
+	if d.Locked {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot delete a locked dashboard, please unlock the dashboard to delete")
+	}
+	if !d.Source.isUserDeletable() {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardImmutable, "%s dashboards cannot be deleted", d.Source)
+	}
 	return nil
 }
 

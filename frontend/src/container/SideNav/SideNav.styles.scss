@@ -119,6 +119,10 @@
 
 				border-radius: 0px 4px 4px 0px;
 				background: var(--l3-background);
+
+				&.version-container-standalone {
+					border-radius: 4px;
+				}
 			}
 
 			.version {

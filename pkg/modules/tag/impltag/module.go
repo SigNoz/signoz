@@ -67,6 +67,10 @@ func (m *module) syncLinksForResource(ctx context.Context, orgID valuer.UUID, ki
 	})
 }
 
+func (m *module) List(ctx context.Context, orgID valuer.UUID, kind coretypes.Kind) ([]*tagtypes.Tag, error) {
+	return m.store.List(ctx, orgID, kind)
+}
+
 func (m *module) ListForResource(ctx context.Context, orgID valuer.UUID, kind coretypes.Kind, resourceID valuer.UUID) ([]*tagtypes.Tag, error) {
 	return m.store.ListByResource(ctx, orgID, kind, resourceID)
 }
