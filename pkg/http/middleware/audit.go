@@ -12,10 +12,10 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/auditor"
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/types/audittypes"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 )
 
 const (
@@ -61,6 +61,12 @@ func (middleware *Audit) Wrap(next http.Handler) http.Handler {
 
 		responseBuffer := &byteBuffer{}
 		writer := newResponseCapture(rw, responseBuffer)
+
+		// Capture the body only when a resolved resource derives an id from it (e.g. a create).
+		if coretypes.ShouldCaptureResponseBody(req.Context()) {
+			writer.EnableBodyCapture()
+		}
+
 		next.ServeHTTP(writer, req)
 
 		statusCode, writeErr := writer.StatusCode(), writer.WriteError()
@@ -80,7 +86,7 @@ func (middleware *Audit) Wrap(next http.Handler) http.Handler {
 			fields = append(fields, errors.Attr(writeErr))
 			middleware.logger.ErrorContext(req.Context(), logMessage, fields...)
 		} else {
-			if responseBuffer.Len() != 0 {
+			if statusCode >= 400 && responseBuffer.Len() != 0 {
 				fields = append(fields, "response.body", responseBuffer.String())
 			}
 
@@ -94,76 +100,85 @@ func (middleware *Audit) emitAuditEvent(req *http.Request, writer responseCaptur
 		return
 	}
 
-	def := auditDefFromRequest(req)
-	if def == nil {
+	resolved, err := coretypes.ResolvedResourcesFromContext(req.Context())
+	if err != nil || len(resolved) == 0 {
 		return
 	}
 
-	// extract claims
 	claims, _ := authtypes.ClaimsFromContext(req.Context())
-
-	// extract status code
 	statusCode := writer.StatusCode()
-
-	// extract traces.
 	span := trace.SpanFromContext(req.Context())
 
-	// extract error details.
 	var errorType, errorCode string
 	if statusCode >= 400 {
 		errorType = render.ErrorTypeFromStatusCode(statusCode)
 		errorCode = render.ErrorCodeFromBody(writer.BodyBytes())
 	}
 
-	event := audittypes.NewAuditEventFromHTTPRequest(
-		req,
-		routeTemplate,
-		statusCode,
-		span.SpanContext().TraceID(),
-		span.SpanContext().SpanID(),
-		def.Action,
-		def.Category,
-		claims,
-		resourceIDFromRequest(req, def.ResourceIDParam),
-		def.ResourceKind,
-		errorType,
-		errorCode,
-	)
+	extractorCtx := coretypes.ExtractorContext{Request: req, ResponseBody: writer.BodyBytes()}
 
-	middleware.auditor.Audit(req.Context(), event)
-}
+	for _, resource := range resolved {
+		resource.ResolveResponse(extractorCtx)
+		verb, category := resource.Verb(), resource.Category()
 
-func auditDefFromRequest(req *http.Request) *handler.AuditDef {
-	route := mux.CurrentRoute(req)
-	if route == nil {
-		return nil
+		switch typed := resource.(type) {
+		case coretypes.ResolvedResourceWithTargetResource:
+			for _, sourceID := range typed.SourceIDs() {
+				for _, targetID := range typed.TargetIDs() {
+					attributesList := []audittypes.ResourceAttributes{
+						audittypes.NewRelatedResourceAttributes(
+							typed.SourceResource(),
+							sourceID,
+							typed.TargetResource(),
+							targetID,
+						),
+					}
+
+					// Sibling peers are symmetric, so mirror the event from the target's side too.
+					if !typed.IsParentChild() {
+						attributesList = append(attributesList, audittypes.NewRelatedResourceAttributes(
+							typed.TargetResource(),
+							targetID,
+							typed.SourceResource(),
+							sourceID,
+						))
+					}
+
+					for _, attributes := range attributesList {
+						middleware.auditor.Audit(req.Context(), audittypes.NewAuditEventFromHTTPRequest(
+							req,
+							routeTemplate,
+							statusCode,
+							span.SpanContext().TraceID(),
+							span.SpanContext().SpanID(),
+							verb,
+							category,
+							claims,
+							attributes,
+							errorType,
+							errorCode,
+						))
+					}
+				}
+			}
+		default:
+			for _, id := range resource.SourceIDs() {
+				attributes := audittypes.NewResourceAttributes(resource.SourceResource(), id)
+
+				middleware.auditor.Audit(req.Context(), audittypes.NewAuditEventFromHTTPRequest(
+					req,
+					routeTemplate,
+					statusCode,
+					span.SpanContext().TraceID(),
+					span.SpanContext().SpanID(),
+					verb,
+					category,
+					claims,
+					attributes,
+					errorType,
+					errorCode,
+				))
+			}
+		}
 	}
-
-	actualHandler := route.GetHandler()
-	if actualHandler == nil {
-		return nil
-	}
-
-	// The type assertion is necessary because route.GetHandler() returns
-	// http.Handler, and not every http.Handler on the mux is a handler.Handler
-	// (e.g. middleware wrappers, raw http.HandlerFunc registrations).
-	provider, ok := actualHandler.(handler.Handler)
-	if !ok {
-		return nil
-	}
-
-	return provider.AuditDef()
-}
-
-func resourceIDFromRequest(req *http.Request, param string) string {
-	if param == "" {
-		return ""
-	}
-
-	vars := mux.Vars(req)
-	if vars == nil {
-		return ""
-	}
-
-	return vars[param]
 }
