@@ -103,7 +103,7 @@ func (store *store) ListForUser(
 		Where("dashboard.org_id = ?", orgID).
 		Where("dashboard.source != ?", dashboardtypes.SourceSystem)
 
-	if compiled != nil {
+	if !compiled.IsEmpty() {
 		q = q.Where(compiled.SQL, compiled.Args...)
 	}
 
@@ -166,7 +166,7 @@ func (store *store) ListV2(
 		Where("dashboard.org_id = ?", orgID).
 		Where("dashboard.source != ?", dashboardtypes.SourceSystem)
 
-	if compiled != nil {
+	if !compiled.IsEmpty() {
 		q = q.Where(compiled.SQL, compiled.Args...)
 	}
 
