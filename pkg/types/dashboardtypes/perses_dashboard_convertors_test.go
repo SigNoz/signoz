@@ -8,10 +8,9 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
-	"github.com/SigNoz/signoz/pkg/types/tagtypes"
 	qb "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/types/tagtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/perses/spec/go/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -166,7 +165,7 @@ func TestPostableDashboardV2NewDashboardV2(t *testing.T) {
 			DashboardV2MetadataBase: DashboardV2MetadataBase{SchemaVersion: SchemaVersion},
 			GenerateName:            true,
 			Spec: DashboardSpec{
-				Display: &common.Display{Name: "My Dashboard!"},
+				Display: Display{Name: "My Dashboard!"},
 			},
 		}
 

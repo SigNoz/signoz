@@ -1,4 +1,8 @@
 import {
+	DashboardtypesListOrderDTO,
+	DashboardtypesListSortDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import {
 	parseAsInteger,
 	parseAsString,
 	parseAsStringLiteral,
@@ -7,26 +11,31 @@ import {
 	type UseQueryStateReturn,
 } from 'nuqs';
 
-export const SORT_COLUMNS = ['updated_at', 'created_at', 'name'] as const;
-export type SortColumn = (typeof SORT_COLUMNS)[number];
-
-export const SORT_ORDERS = ['asc', 'desc'] as const;
-export type SortOrder = (typeof SORT_ORDERS)[number];
+export const SORT_COLUMNS = Object.values(DashboardtypesListSortDTO);
+export const SORT_ORDERS = Object.values(DashboardtypesListOrderDTO);
 
 const opts: Options = { history: 'push' };
 
-export const useSortColumn = (): UseQueryStateReturn<SortColumn, SortColumn> =>
+export const useSortColumn = (): UseQueryStateReturn<
+	DashboardtypesListSortDTO,
+	DashboardtypesListSortDTO
+> =>
 	useQueryState(
 		'sort',
 		parseAsStringLiteral(SORT_COLUMNS)
-			.withDefault('updated_at')
+			.withDefault(DashboardtypesListSortDTO.updated_at)
 			.withOptions(opts),
 	);
 
-export const useSortOrder = (): UseQueryStateReturn<SortOrder, SortOrder> =>
+export const useSortOrder = (): UseQueryStateReturn<
+	DashboardtypesListOrderDTO,
+	DashboardtypesListOrderDTO
+> =>
 	useQueryState(
 		'order',
-		parseAsStringLiteral(SORT_ORDERS).withDefault('desc').withOptions(opts),
+		parseAsStringLiteral(SORT_ORDERS)
+			.withDefault(DashboardtypesListOrderDTO.desc)
+			.withOptions(opts),
 	);
 
 export const usePage = (): UseQueryStateReturn<number, number> =>
