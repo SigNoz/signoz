@@ -1,7 +1,9 @@
-import { SelectSimple } from '@signozhq/ui/select';
+import { useMemo } from 'react';
+import { CustomMultiSelect, CustomSelect } from 'components/NewSelect';
+import type { OptionData } from 'components/NewSelect/types';
+import { ALL_SELECT_VALUE } from 'container/DashboardContainer/utils';
 
 import type { VariableSelection } from '../selectionTypes';
-import { ALL_SELECTED } from '../useVariableSelection';
 import styles from '../VariablesBar.module.scss';
 
 interface ValueSelectorProps {
@@ -14,7 +16,11 @@ interface ValueSelectorProps {
 	testId?: string;
 }
 
-/** Single/multi value picker for Custom/Query/Dynamic variables (options injected). */
+/**
+ * Single/multi value picker for Custom/Query/Dynamic variables. Reuses the
+ * shared NewSelect components, which provide search, the "ALL" option and
+ * apply-on-close batching (so multi-select edits don't cascade per toggle).
+ */
 function ValueSelector({
 	options,
 	multiSelect,
@@ -24,43 +30,63 @@ function ValueSelector({
 	onChange,
 	testId,
 }: ValueSelectorProps): JSX.Element {
-	const items = [
-		...(showAllOption && multiSelect
-			? [{ label: 'ALL', value: ALL_SELECTED }]
-			: []),
-		...options.map((option) => ({ label: option, value: option })),
-	];
+	const optionData = useMemo<OptionData[]>(
+		() => options.map((option) => ({ label: option, value: option })),
+		[options],
+	);
 
-	let value: string | string[];
-	if (selection.allSelected) {
-		value = multiSelect ? [ALL_SELECTED] : '';
-	} else if (multiSelect) {
-		value = (Array.isArray(selection.value) ? selection.value : []).map(String);
-	} else {
-		value = selection.value == null ? '' : String(selection.value);
+	if (multiSelect) {
+		const value = selection.allSelected
+			? ALL_SELECT_VALUE
+			: (Array.isArray(selection.value) ? selection.value : []).map(String);
+		return (
+			<CustomMultiSelect
+				className={styles.select}
+				data-testid={testId}
+				options={optionData}
+				value={value}
+				loading={loading}
+				showSearch
+				placeholder="Select value"
+				enableAllSelection={showAllOption}
+				onChange={(next): void => {
+					const values = Array.isArray(next)
+						? next.map(String)
+						: next
+							? [String(next)]
+							: [];
+					if (values.length === 0) {
+						onChange({ value: [], allSelected: false });
+						return;
+					}
+					// CustomMultiSelect emits the full value set when ALL is picked.
+					const isAll =
+						showAllOption &&
+						options.length > 0 &&
+						options.every((option) => values.includes(option));
+					onChange({ value: values, allSelected: isAll });
+				}}
+				onClear={(): void => onChange({ value: [], allSelected: false })}
+			/>
+		);
 	}
 
-	const handleChange = (next: string | string[]): void => {
-		const picksAll =
-			next === ALL_SELECTED ||
-			(Array.isArray(next) && next.includes(ALL_SELECTED));
-		if (showAllOption && multiSelect && picksAll) {
-			onChange({ value: options, allSelected: true });
-			return;
-		}
-		onChange({ value: next, allSelected: false });
-	};
-
 	return (
-		<SelectSimple
+		<CustomSelect
 			className={styles.select}
-			items={items}
-			value={value}
-			multiple={multiSelect}
+			data-testid={testId}
+			options={optionData}
+			value={
+				selection.value == null || Array.isArray(selection.value)
+					? undefined
+					: String(selection.value)
+			}
 			loading={loading}
-			placeholder="Select"
-			onChange={handleChange}
-			testId={testId}
+			showSearch
+			placeholder="Select value"
+			onChange={(next): void =>
+				onChange({ value: next == null ? '' : String(next), allSelected: false })
+			}
 		/>
 	);
 }
