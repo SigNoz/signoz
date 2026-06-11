@@ -1,0 +1,149 @@
+{
+  "id": "sqldatabase",
+  "title": "Azure SQL Database",
+  "icon": "file://icon.svg",
+  "overview": "file://overview.md",
+  "supportedSignals": {
+    "metrics": true,
+    "logs": true
+  },
+  "dataCollected": {
+    "metrics": [
+      {
+        "name": "azure_cpu_percent_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Percentage of CPU used by the database workload, relative to its limit."
+      },
+      {
+        "name": "azure_sql_instance_cpu_percent_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Total CPU usage (user plus system) of the SQL instance, as a percentage."
+      },
+      {
+        "name": "azure_sql_instance_memory_percent_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Memory usage of the SQL instance, as a percentage of its limit."
+      },
+      {
+        "name": "azure_workers_percent_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Worker threads in use as a percentage of the limit."
+      },
+      {
+        "name": "azure_sessions_percent_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Active sessions as a percentage of the limit."
+      },
+      {
+        "name": "azure_sessions_count_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of active sessions."
+      },
+      {
+        "name": "azure_physical_data_read_percent_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Data file IO usage as a percentage of the limit."
+      },
+      {
+        "name": "azure_log_write_percent_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Transaction log write throughput as a percentage of the limit."
+      },
+      {
+        "name": "azure_storage_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Data space used by the database."
+      },
+      {
+        "name": "azure_storage_percent_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Data space used as a percentage of the maximum data size."
+      },
+      {
+        "name": "azure_allocated_data_storage_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Data space allocated to the database (includes unused space)."
+      },
+      {
+        "name": "azure_connection_successful_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Number of successful connections."
+      },
+      {
+        "name": "azure_connection_failed_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Number of failed connections caused by system errors."
+      },
+      {
+        "name": "azure_connection_failed_user_error_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Number of failed connections caused by user errors."
+      },
+      {
+        "name": "azure_blocked_by_firewall_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Number of connection attempts blocked by the firewall."
+      },
+      {
+        "name": "azure_deadlock_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Number of deadlocks."
+      },
+      {
+        "name": "azure_xtp_storage_percent_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "In-Memory OLTP storage used as a percentage of the limit."
+      },
+      {
+        "name": "azure_availability_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Database availability percentage."
+      }
+    ],
+    "logs": [
+      {
+        "name": "Resource ID",
+        "path": "resources.azure.resource.id",
+        "type": "string"
+      }
+    ]
+  },
+  "telemetryCollectionStrategy": {
+    "azure": {
+      "resourceProvider": "Microsoft.Sql",
+      "resourceType": "servers/databases",
+      "metrics": {},
+      "logs": {
+        "categoryGroups": ["allLogs"]
+      }
+    }
+  },
+  "assets": {
+    "dashboards": [
+      {
+        "id": "overview",
+        "title": "Azure SQL Database Overview",
+        "description": "Overview of Azure SQL Database metrics",
+        "definition": "file://assets/dashboards/overview.json"
+      }
+    ]
+  }
+}

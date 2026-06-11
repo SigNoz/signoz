@@ -31,6 +31,7 @@ var (
 	AzureServiceAppService          = ServiceID{valuer.NewString("appservice")}
 	AzureServiceContainerApp        = ServiceID{valuer.NewString("containerapp")}
 	AzureServiceAKS                 = ServiceID{valuer.NewString("aks")}
+	AzureServiceSQLDatabase         = ServiceID{valuer.NewString("sqldatabase")}
 )
 
 func (ServiceID) Enum() []any {
@@ -54,6 +55,7 @@ func (ServiceID) Enum() []any {
 		AzureServiceAppService,
 		AzureServiceContainerApp,
 		AzureServiceAKS,
+		AzureServiceSQLDatabase,
 	}
 }
 
@@ -81,6 +83,7 @@ var SupportedServices = map[CloudProviderType][]ServiceID{
 		AzureServiceAppService,
 		AzureServiceContainerApp,
 		AzureServiceAKS,
+		AzureServiceSQLDatabase,
 	},
 }
 
