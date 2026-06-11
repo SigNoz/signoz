@@ -45,7 +45,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusCreated,
 		ErrorStatusCodes:    []int{http.StatusBadRequest},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
+		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
 	})).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
@@ -62,7 +62,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
+		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
 	})).Methods(http.MethodPut).GetError(); err != nil {
 		return err
 	}
@@ -79,7 +79,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusNoContent,
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
+		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
 	})).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}

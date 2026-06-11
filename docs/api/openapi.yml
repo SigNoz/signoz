@@ -13970,9 +13970,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - EDITOR
       - tokenizer:
-        - VIEWER
+        - EDITOR
       summary: Create dashboard saved view
       tags:
       - dashboard
@@ -14027,9 +14027,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - EDITOR
       - tokenizer:
-        - VIEWER
+        - EDITOR
       summary: Delete dashboard saved view
       tags:
       - dashboard
@@ -14096,9 +14096,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - EDITOR
       - tokenizer:
-        - VIEWER
+        - EDITOR
       summary: Update dashboard saved view
       tags:
       - dashboard
