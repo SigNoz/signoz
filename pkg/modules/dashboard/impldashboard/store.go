@@ -103,7 +103,7 @@ func (store *store) ListForUser(
 		Where("dashboard.org_id = ?", orgID).
 		Where("dashboard.source != ?", dashboardtypes.SourceSystem)
 
-	if compiled != nil {
+	if !compiled.IsEmpty() {
 		q = q.Where(compiled.SQL, compiled.Args...)
 	}
 
@@ -166,7 +166,7 @@ func (store *store) ListV2(
 		Where("dashboard.org_id = ?", orgID).
 		Where("dashboard.source != ?", dashboardtypes.SourceSystem)
 
-	if compiled != nil {
+	if !compiled.IsEmpty() {
 		q = q.Where(compiled.SQL, compiled.Args...)
 	}
 
@@ -383,15 +383,16 @@ func (store *store) RunInTx(ctx context.Context, cb func(ctx context.Context) er
 // rows = 0 is the only signal of a real limit hit.
 func (store *store) PinForUser(ctx context.Context, preference *dashboardtypes.UserDashboardPreference) error {
 	res, err := store.sqlstore.BunDBCtx(ctx).NewRaw(`
-		INSERT INTO user_dashboard_preference (user_id, dashboard_id, is_pinned)
-		SELECT ?, ?, true
+		INSERT INTO user_dashboard_preference (id, user_id, dashboard_id, is_pinned, created_at, updated_at)
+		SELECT ?, ?, ?, true, ?, ?
 		WHERE (SELECT COUNT(*) FROM user_dashboard_preference WHERE user_id = ? AND is_pinned = true) < ?
 		   OR EXISTS (SELECT 1 FROM user_dashboard_preference WHERE user_id = ? AND dashboard_id = ? AND is_pinned = true)
-		ON CONFLICT (user_id, dashboard_id) DO UPDATE SET is_pinned = true
+		ON CONFLICT (user_id, dashboard_id) DO UPDATE SET is_pinned = true, updated_at = ?
 	`,
-		preference.UserID, preference.DashboardID,
+		preference.ID, preference.UserID, preference.DashboardID, preference.CreatedAt, preference.UpdatedAt,
 		preference.UserID, dashboardtypes.MaxPinnedDashboardsPerUser,
 		preference.UserID, preference.DashboardID,
+		preference.UpdatedAt,
 	).Exec(ctx)
 	if err != nil {
 		return errors.WrapInternalf(err, errors.CodeInternal, "couldn't pin dashboard for user")
@@ -410,12 +411,21 @@ func (store *store) PinForUser(ctx context.Context, preference *dashboardtypes.U
 // UnpinForUser deletes the user's preference row. This is fine while is_pinned
 // is the only preference stored; once the row carries other preferences this
 // must become an UPDATE that clears is_pinned instead of dropping the row.
-func (store *store) UnpinForUser(ctx context.Context, userID valuer.UUID, dashboardID valuer.UUID) error {
+func (store *store) UnpinForUser(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, dashboardID valuer.UUID) error {
+	// No org_id on the preference table, so scope by org via a subquery on the
+	// parent (DELETE-with-JOIN isn't portable across Postgres/SQLite).
+	dashboardIDsInOrgSubQuery := store.sqlstore.BunDBCtx(ctx).
+		NewSelect().
+		TableExpr("dashboard").
+		Column("id").
+		Where("org_id = ?", orgID)
+
 	_, err := store.sqlstore.BunDBCtx(ctx).
 		NewDelete().
 		Model((*dashboardtypes.UserDashboardPreference)(nil)).
 		Where("user_id = ?", userID).
 		Where("dashboard_id = ?", dashboardID).
+		Where("dashboard_id IN (?)", dashboardIDsInOrgSubQuery).
 		Exec(ctx)
 	if err != nil {
 		return errors.WrapInternalf(err, errors.CodeInternal, "couldn't unpin dashboard for user")
@@ -423,11 +433,19 @@ func (store *store) UnpinForUser(ctx context.Context, userID valuer.UUID, dashbo
 	return nil
 }
 
-func (store *store) DeletePreferencesForDashboard(ctx context.Context, dashboardID valuer.UUID) error {
+func (store *store) DeletePreferencesForDashboard(ctx context.Context, orgID valuer.UUID, dashboardID valuer.UUID) error {
+	// No org_id on the preference table, so scope by org via a subquery on the
+	// parent (DELETE-with-JOIN isn't portable across Postgres/SQLite).
+	dashboardIDsInOrgSubQuery := store.sqlstore.BunDBCtx(ctx).
+		NewSelect().
+		TableExpr("dashboard").
+		Column("id").
+		Where("org_id = ?", orgID)
 	_, err := store.sqlstore.BunDBCtx(ctx).
 		NewDelete().
 		Model((*dashboardtypes.UserDashboardPreference)(nil)).
 		Where("dashboard_id = ?", dashboardID).
+		Where("dashboard_id IN (?)", dashboardIDsInOrgSubQuery).
 		Exec(ctx)
 	if err != nil {
 		return errors.WrapInternalf(err, errors.CodeInternal, "couldn't delete dashboard preferences")
@@ -435,11 +453,19 @@ func (store *store) DeletePreferencesForDashboard(ctx context.Context, dashboard
 	return nil
 }
 
-func (store *store) DeletePreferencesForUser(ctx context.Context, userID valuer.UUID) error {
+func (store *store) DeletePreferencesForUser(ctx context.Context, orgID valuer.UUID, userID valuer.UUID) error {
+	// No org_id on the preference table, so scope by org via a subquery on the
+	// parent (DELETE-with-JOIN isn't portable across Postgres/SQLite).
+	userIDsInOrgSubQuery := store.sqlstore.BunDBCtx(ctx).
+		NewSelect().
+		TableExpr("users").
+		Column("id").
+		Where("org_id = ?", orgID)
 	_, err := store.sqlstore.BunDBCtx(ctx).
 		NewDelete().
 		Model((*dashboardtypes.UserDashboardPreference)(nil)).
 		Where("user_id = ?", userID).
+		Where("user_id IN (?)", userIDsInOrgSubQuery).
 		Exec(ctx)
 	if err != nil {
 		return errors.WrapInternalf(err, errors.CodeInternal, "couldn't delete dashboard preferences")

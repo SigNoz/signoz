@@ -2436,13 +2436,6 @@ components:
         url:
           type: string
       type: object
-    DashboardPanelDisplay:
-      properties:
-        description:
-          type: string
-        name:
-          type: string
-      type: object
     DashboardTextVariableSpec:
       properties:
         constant:
@@ -2570,13 +2563,12 @@ components:
             $ref: '#/components/schemas/DashboardtypesDatasourceSpec'
           type: object
         display:
-          $ref: '#/components/schemas/CommonDisplay'
+          $ref: '#/components/schemas/DashboardtypesDisplay'
         duration:
           type: string
         layouts:
           items:
             $ref: '#/components/schemas/DashboardtypesLayout'
-          nullable: true
           type: array
         links:
           items:
@@ -2585,7 +2577,6 @@ components:
         panels:
           additionalProperties:
             $ref: '#/components/schemas/DashboardtypesPanel'
-          nullable: true
           type: object
         refreshInterval:
           type: string
@@ -2593,6 +2584,11 @@ components:
           items:
             $ref: '#/components/schemas/DashboardtypesVariable'
           type: array
+      required:
+      - display
+      - variables
+      - panels
+      - layouts
       type: object
     DashboardtypesDashboardView:
       properties:
@@ -2662,6 +2658,15 @@ components:
           $ref: '#/components/schemas/CommonDisplay'
         plugin:
           $ref: '#/components/schemas/DashboardtypesDatasourcePlugin'
+      type: object
+    DashboardtypesDisplay:
+      properties:
+        description:
+          type: string
+        name:
+          type: string
+      required:
+      - name
       type: object
     DashboardtypesDynamicVariableSpec:
       properties:
@@ -2857,7 +2862,7 @@ components:
         defaultValue:
           $ref: '#/components/schemas/VariableDefaultValue'
         display:
-          $ref: '#/components/schemas/VariableDisplay'
+          $ref: '#/components/schemas/DashboardtypesDisplay'
         name:
           type: string
         plugin:
@@ -2865,6 +2870,8 @@ components:
         sort:
           nullable: true
           type: string
+      required:
+      - display
       type: object
     DashboardtypesListableDashboardForUserV2:
       properties:
@@ -3001,7 +3008,7 @@ components:
     DashboardtypesListedDashboardV2Spec:
       properties:
         display:
-          $ref: '#/components/schemas/CommonDisplay'
+          $ref: '#/components/schemas/DashboardtypesDisplay'
       type: object
     DashboardtypesNumberPanelSpec:
       properties:
@@ -3021,6 +3028,9 @@ components:
           $ref: '#/components/schemas/DashboardtypesPanelKind'
         spec:
           $ref: '#/components/schemas/DashboardtypesPanelSpec'
+      required:
+      - kind
+      - spec
       type: object
     DashboardtypesPanelFormatting:
       properties:
@@ -3150,7 +3160,7 @@ components:
     DashboardtypesPanelSpec:
       properties:
         display:
-          $ref: '#/components/schemas/DashboardPanelDisplay'
+          $ref: '#/components/schemas/DashboardtypesDisplay'
         links:
           items:
             $ref: '#/components/schemas/DashboardLink'
@@ -3160,7 +3170,12 @@ components:
         queries:
           items:
             $ref: '#/components/schemas/DashboardtypesQuery'
+          nullable: true
           type: array
+      required:
+      - display
+      - plugin
+      - queries
       type: object
     DashboardtypesPatchOp:
       enum:
@@ -3239,6 +3254,9 @@ components:
           $ref: '#/components/schemas/Querybuildertypesv5RequestType'
         spec:
           $ref: '#/components/schemas/DashboardtypesQuerySpec'
+      required:
+      - kind
+      - spec
       type: object
     DashboardtypesQueryPlugin:
       discriminator:
@@ -3345,6 +3363,8 @@ components:
           type: string
         plugin:
           $ref: '#/components/schemas/DashboardtypesQueryPlugin'
+      required:
+      - plugin
       type: object
     DashboardtypesQueryVariableSpec:
       properties:

@@ -46,11 +46,11 @@ type Store interface {
 	// Returns ErrCodePinnedDashboardLimitHit when the user is at MaxPinnedDashboardsPerUser.
 	PinForUser(ctx context.Context, preference *UserDashboardPreference) error
 
-	UnpinForUser(ctx context.Context, userID valuer.UUID, dashboardID valuer.UUID) error
+	UnpinForUser(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, dashboardID valuer.UUID) error
 
-	DeletePreferencesForDashboard(ctx context.Context, dashboardID valuer.UUID) error
+	DeletePreferencesForDashboard(ctx context.Context, orgID valuer.UUID, dashboardID valuer.UUID) error
 
-	DeletePreferencesForUser(ctx context.Context, userID valuer.UUID) error
+	DeletePreferencesForUser(ctx context.Context, orgID valuer.UUID, userID valuer.UUID) error
 
 	// ════════════════════════════════════════════════════════════════════════
 	// Dashboard saved view methods

@@ -13,7 +13,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/emailing"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	root "github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/tokenizer"
@@ -35,11 +34,11 @@ type setter struct {
 	analytics     analytics.Analytics
 	config        root.Config
 	getter        root.Getter
-	dashboard     dashboard.Module
+	onDeleteUser  []root.OnDeleteUser
 }
 
 // This module is a WIP, don't take inspiration from this.
-func NewSetter(store types.UserStore, tokenizer tokenizer.Tokenizer, emailing emailing.Emailing, providerSettings factory.ProviderSettings, orgSetter organization.Setter, authz authz.AuthZ, analytics analytics.Analytics, config root.Config, userRoleStore authtypes.UserRoleStore, getter root.Getter, dashboard dashboard.Module) root.Setter {
+func NewSetter(store types.UserStore, tokenizer tokenizer.Tokenizer, emailing emailing.Emailing, providerSettings factory.ProviderSettings, orgSetter organization.Setter, authz authz.AuthZ, analytics analytics.Analytics, config root.Config, userRoleStore authtypes.UserRoleStore, getter root.Getter, onDeleteUser []root.OnDeleteUser) root.Setter {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/user/impluser")
 	return &setter{
 		store:         store,
@@ -52,7 +51,7 @@ func NewSetter(store types.UserStore, tokenizer tokenizer.Tokenizer, emailing em
 		authz:         authz,
 		config:        config,
 		getter:        getter,
-		dashboard:     dashboard,
+		onDeleteUser:  onDeleteUser,
 	}
 }
 
@@ -409,8 +408,10 @@ func (module *setter) DeleteUser(ctx context.Context, orgID valuer.UUID, id stri
 		return err
 	}
 
-	if err := module.dashboard.DeletePreferencesForUser(ctx, user.ID); err != nil {
-		return err
+	for _, onDeleteUser := range module.onDeleteUser {
+		if err := onDeleteUser(ctx, orgID, user.ID); err != nil {
+			return err
+		}
 	}
 
 	traitsOrProperties := types.NewTraitsFromUser(user)
