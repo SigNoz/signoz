@@ -304,7 +304,7 @@ func (handler *handler) pinUnpinV2(rw http.ResponseWriter, r *http.Request, pin 
 	if pin {
 		err = handler.module.PinV2(ctx, orgID, userID, dashboardID)
 	} else {
-		err = handler.module.UnpinV2(ctx, userID, dashboardID)
+		err = handler.module.UnpinV2(ctx, orgID, userID, dashboardID)
 	}
 	if err != nil {
 		render.Error(rw, err)

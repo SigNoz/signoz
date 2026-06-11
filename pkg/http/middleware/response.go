@@ -23,9 +23,14 @@ type responseCapture interface {
 	// WriteError returns the error (if any) from the downstream Write call.
 	WriteError() error
 
-	// BodyBytes returns the captured response body bytes. Only populated
-	// for error responses (status >= 400).
+	// BodyBytes returns the captured response body bytes. Populated for error
+	// responses (status >= 400), or for any response once EnableBodyCapture is called.
 	BodyBytes() []byte
+
+	// EnableBodyCapture forces capture of the response body regardless of status
+	// code (still bounded by maxResponseBodyCapture). Must be called before the
+	// handler writes the response.
+	EnableBodyCapture()
 }
 
 func newResponseCapture(rw http.ResponseWriter, buffer *byteBuffer) responseCapture {
@@ -72,12 +77,13 @@ func (b *byteBuffer) String() string {
 }
 
 type nonFlushingResponseCapture struct {
-	rw            http.ResponseWriter
-	buffer        *byteBuffer
-	captureBody   bool
-	bodyBytesLeft int
-	statusCode    int
-	writeError    error
+	rw               http.ResponseWriter
+	buffer           *byteBuffer
+	captureBody      bool
+	forceCaptureBody bool
+	bodyBytesLeft    int
+	statusCode       int
+	writeError       error
 }
 
 type flushingResponseCapture struct {
@@ -98,11 +104,15 @@ func (writer *nonFlushingResponseCapture) Header() http.Header {
 // WriteHeader writes the HTTP response header.
 func (writer *nonFlushingResponseCapture) WriteHeader(statusCode int) {
 	writer.statusCode = statusCode
-	if statusCode >= 400 {
+	if statusCode >= 400 || writer.forceCaptureBody {
 		writer.captureBody = true
 	}
 
 	writer.rw.WriteHeader(statusCode)
+}
+
+func (writer *nonFlushingResponseCapture) EnableBodyCapture() {
+	writer.forceCaptureBody = true
 }
 
 // Write writes HTTP response data.

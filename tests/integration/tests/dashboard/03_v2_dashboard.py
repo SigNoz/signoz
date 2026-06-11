@@ -1,5 +1,5 @@
 import uuid
-from collections.abc import Callable, Iterator
+from collections.abc import Callable
 from http import HTTPStatus
 
 import pytest
@@ -8,96 +8,7 @@ import requests
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.types import Operation, SigNoz
 
-# The v2 dashboard API. Request shape (current):
-#   {"schemaVersion": "v6", "name": "<dns-1123-label>",
-#    "spec": {"display": {"name": "<human name>"}},
-#    "tags": [{"key": "...", "value": "..."}]}
-# `name` is a DNS-1123 label identifier and is immutable after create;
-# `spec.display.name` is the human-facing title used for name-sort/name-filter.
-
-_BASE = "/api/v2/dashboards"
-_TIMEOUT = 5
-
-# This file's tests tag their dashboards with a `suite` marker so list queries
-# can be scoped server-side. Each test gets its own unique marker (the
-# suite_marker fixture) so tests stay isolated from each other and from leftovers
-# in the reused session DB.
-_SUITE_PREFIX = "dashboardv2"
-
-
-def _headers(token: str) -> dict:
-    return {"Authorization": f"Bearer {token}"}
-
-
-def _url(signoz: SigNoz, path: str = "") -> str:
-    return signoz.self.host_configs["8080"].get(f"{_BASE}{path}")
-
-
-def _create(signoz: SigNoz, token: str, body: dict) -> requests.Response:
-    return requests.post(_url(signoz), json=body, headers=_headers(token), timeout=_TIMEOUT)
-
-
-def _get(signoz: SigNoz, token: str, dashboard_id: str) -> requests.Response:
-    return requests.get(_url(signoz, f"/{dashboard_id}"), headers=_headers(token), timeout=_TIMEOUT)
-
-
-# The tests exercise the per-user list (carries pin state); the pure list lives
-# at GET /api/v2/dashboards.
-def _list(signoz: SigNoz, token: str, **params: object) -> requests.Response:
-    url = signoz.self.host_configs["8080"].get("/api/v2/users/me/dashboards")
-    return requests.get(
-        url,
-        params={k: v for k, v in params.items() if v is not None},
-        headers=_headers(token),
-        timeout=_TIMEOUT,
-    )
-
-
-# The pure, user-independent list — no pin join, no pinned field.
-def _list_pure(signoz: SigNoz, token: str, **params: object) -> requests.Response:
-    return requests.get(
-        _url(signoz),
-        params={k: v for k, v in params.items() if v is not None},
-        headers=_headers(token),
-        timeout=_TIMEOUT,
-    )
-
-
-def _update(signoz: SigNoz, token: str, dashboard_id: str, body: dict) -> requests.Response:
-    return requests.put(
-        _url(signoz, f"/{dashboard_id}"),
-        json=body,
-        headers=_headers(token),
-        timeout=_TIMEOUT,
-    )
-
-
-def _delete(signoz: SigNoz, token: str, dashboard_id: str) -> requests.Response:
-    return requests.delete(_url(signoz, f"/{dashboard_id}"), headers=_headers(token), timeout=_TIMEOUT)
-
-
-def _lock(signoz: SigNoz, token: str, dashboard_id: str, lock: bool) -> requests.Response:
-    method = requests.put if lock else requests.delete
-    return method(
-        _url(signoz, f"/{dashboard_id}/lock"),
-        headers=_headers(token),
-        timeout=_TIMEOUT,
-    )
-
-
-def _pin(signoz: SigNoz, token: str, dashboard_id: str, pin: bool) -> requests.Response:
-    method = requests.put if pin else requests.delete
-    url = signoz.self.host_configs["8080"].get(f"/api/v2/users/me/dashboards/{dashboard_id}/pins")
-    return method(url, headers=_headers(token), timeout=_TIMEOUT)
-
-
-def _minimal_body(name: str, display: str, tags: list[dict] | None = None) -> dict:
-    return {
-        "schemaVersion": "v6",
-        "name": name,
-        "spec": {"display": {"name": display}},
-        "tags": tags or [],
-    }
+BASE_URL = "/api/v2/dashboards"
 
 
 # ─── failure cases (create no dashboards) ────────────────────────────────────
@@ -110,7 +21,12 @@ def test_create_rejects_wrong_schema_version(
 ):
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    response = _create(signoz, token, {})
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json={},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
     body = response.json()
@@ -126,7 +42,12 @@ def test_create_rejects_missing_name(
 ):
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    response = _create(signoz, token, {"schemaVersion": "v6"})
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json={"schemaVersion": "v6"},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
     body = response.json()
@@ -141,7 +62,17 @@ def test_create_rejects_non_dns_name(
 ):
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    response = _create(signoz, token, _minimal_body(name="Not A Label", display="Not A Label"))
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json={
+            "schemaVersion": "v6",
+            "name": "Not A Label",
+            "spec": {"display": {"name": "Not A Label"}},
+            "tags": [],
+        },
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
     assert response.json()["error"]["code"] == "dashboard_invalid_input"
@@ -154,9 +85,18 @@ def test_create_rejects_unknown_field(
 ):
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    body = _minimal_body("rejects-unknown", "Rejects Unknown")
-    body["unknownfield"] = "boom"
-    response = _create(signoz, token, body)
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json={
+            "schemaVersion": "v6",
+            "name": "rejects-unknown",
+            "spec": {"display": {"name": "Rejects Unknown"}},
+            "tags": [],
+            "unknownfield": "boom",
+        },
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
     assert response.json()["error"]["code"] == "dashboard_invalid_input"
@@ -170,8 +110,17 @@ def test_create_rejects_reserved_tag_key(
 ):
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    body = _minimal_body("rejects-reserved", "Rejects Reserved", [{"key": "source", "value": "x"}])
-    response = _create(signoz, token, body)
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json={
+            "schemaVersion": "v6",
+            "name": "rejects-reserved",
+            "spec": {"display": {"name": "Rejects Reserved"}},
+            "tags": [{"key": "source", "value": "x"}],
+        },
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
     assert response.json()["error"]["code"] == "dashboard_invalid_input"
@@ -185,7 +134,17 @@ def test_create_rejects_too_many_tags(
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     tags = [{"key": f"k{i}", "value": "v"} for i in range(11)]
-    response = _create(signoz, token, _minimal_body("too-many-tags", "Too Many", tags))
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json={
+            "schemaVersion": "v6",
+            "name": "too-many-tags",
+            "spec": {"display": {"name": "Too Many"}},
+            "tags": tags,
+        },
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
     assert response.json()["error"]["code"] == "dashboard_invalid_input"
@@ -208,7 +167,12 @@ def test_list_rejects_invalid_params(
 ):
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    response = _list(signoz, token, **params)
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v2/users/me/dashboards"),
+        params=params,
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
     assert response.json()["error"]["code"] == "dashboard_list_invalid"
@@ -221,7 +185,11 @@ def test_get_rejects_malformed_id(
 ):
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    response = _get(signoz, token, "not-a-uuid")
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(f"{BASE_URL}/not-a-uuid"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
 
@@ -233,7 +201,11 @@ def test_get_missing_dashboard_returns_not_found(
 ):
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    response = _get(signoz, token, str(uuid.uuid4()))
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(f"{BASE_URL}/{uuid.uuid4()}"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
 
     assert response.status_code == HTTPStatus.NOT_FOUND
 
@@ -245,7 +217,11 @@ def test_delete_missing_dashboard_returns_not_found(
 ):
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    response = _delete(signoz, token, str(uuid.uuid4()))
+    response = requests.delete(
+        signoz.self.host_configs["8080"].get(f"{BASE_URL}/{uuid.uuid4()}"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
 
     assert response.status_code == HTTPStatus.NOT_FOUND
 
@@ -257,57 +233,43 @@ def test_pin_missing_dashboard_returns_not_found(
 ):
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    response = _pin(signoz, token, str(uuid.uuid4()), pin=True)
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"/api/v2/users/me/dashboards/{uuid.uuid4()}/pins"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
 
     assert response.status_code == HTTPStatus.NOT_FOUND
 
 
 # ─── lifecycle ───────────────────────────────────────────────────────────────
 # A single end-to-end flow through create → get → list/filter/sort → pin →
-# update → lock → delete. Every fixture dashboard carries the shared suite marker
-# tag so list queries can be scoped server-side, isolating this test from any
-# other dashboards sharing the session DB.
-
-
-def _display_names(body: dict) -> list[str]:
-    return [d["spec"]["display"]["name"] for d in body["data"]["dashboards"]]
-
-
-def _delete_suite(signoz: SigNoz, token: str, suite_filter: str) -> None:
-    response = _list(signoz, token, query=suite_filter, limit=200)
-    if response.status_code != HTTPStatus.OK:
-        return
-    for dashboard in response.json()["data"]["dashboards"]:
-        _delete(signoz, token, dashboard["id"])
-
-
-@pytest.fixture(name="suite_marker")
-def _suite_marker(
-    signoz: SigNoz,
-    get_token: Callable[[str, str], str],
-) -> Iterator[tuple[dict, str]]:
-    """Yields a per-test unique suite (tag, filter) and deletes its dashboards on teardown.
-    Unique per test so the tests stay isolated from each other and from reused-DB leftovers."""
-    value = f"{_SUITE_PREFIX}-{uuid.uuid4().hex[:8]}"
-    suite_tag = {"key": "suite", "value": value}
-    suite_filter = f"suite = '{value}'"
-    yield suite_tag, suite_filter
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    _delete_suite(signoz, token, suite_filter)
+# update → lock → delete.
 
 
 def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-statements
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    suite_marker: tuple[dict, str],
 ):
-    suite_tag, suite_filter = suite_marker
-
-    def _scoped(query: str) -> str:
-        return f"({query}) AND {suite_filter}"
-
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    # The dashboard test files share this package's DB and it's reused across
+    # runs, so start from a clean slate: delete every dashboard (which also clears
+    # pins via the delete cascade). This test then owns the whole dashboard space
+    # and asserts on global counts.
+    existing = requests.get(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        params={"limit": 200},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    ).json()["data"]["dashboards"]
+    for dashboard in existing:
+        requests.delete(
+            signoz.self.host_configs["8080"].get(f"{BASE_URL}/{dashboard['id']}"),
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        )
 
     dashboard_requests = [
         (
@@ -353,18 +315,38 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
     # ── stage 1: create ──────────────────────────────────────────────────────
     ids: dict[str, str] = {}
     for name, display, tags in dashboard_requests:
-        response = _create(signoz, token, _minimal_body(name, display, [suite_tag, *tags]))
+        response = requests.post(
+            signoz.self.host_configs["8080"].get(BASE_URL),
+            json={
+                "schemaVersion": "v6",
+                "name": name,
+                "spec": {"display": {"name": display}},
+                "tags": tags,
+            },
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        )
         assert response.status_code == HTTPStatus.CREATED, response.text
         ids[name] = response.json()["data"]["id"]
 
     # TODO: re-enable once the dashboard name unique index lands — creating a
     # second dashboard with an existing name should conflict (409). Until the
     # index exists, duplicate names are silently allowed.
-    # response = _create(signoz, token, _minimal_body("lc-alpha", "Alpha Dupe"))
+    # response = requests.post(
+    #     signoz.self.host_configs["8080"].get(_BASE),
+    #     json={"schemaVersion": "v6", "name": "lc-alpha",
+    #           "spec": {"display": {"name": "Alpha Dupe"}}, "tags": []},
+    #     headers={"Authorization": f"Bearer {token}"},
+    #     timeout=5,
+    # )
     # assert response.status_code == HTTPStatus.CONFLICT, response.text
 
     # ── stage 2: get one and verify the round-tripped shape ──────────────────
-    response = _get(signoz, token, ids["lc-alpha"])
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(f"{BASE_URL}/{ids['lc-alpha']}"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
     assert response.status_code == HTTPStatus.OK, response.text
     alpha = response.json()["data"]
     assert alpha["id"] == ids["lc-alpha"]
@@ -375,12 +357,17 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
     assert alpha["locked"] is False
     assert {"key": "team", "value": "pulse"} in alpha["tags"]
 
-    # ── stage 3: list everything in the suite ────────────────────────────────
-    response = _list(signoz, token, query=suite_filter, limit=200)
+    # ── stage 3: list everything ─────────────────────────────────────────────
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v2/users/me/dashboards"),
+        params={"limit": 200},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
     assert response.status_code == HTTPStatus.OK, response.text
     body = response.json()
     assert body["data"]["total"] == 6
-    assert set(_display_names(body)) == {
+    assert {d["spec"]["display"]["name"] for d in body["data"]["dashboards"]} == {
         "Alpha Overview",
         "Beta Overview",
         "Gamma Storage",
@@ -490,13 +477,23 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
         ),
     ]
     for query, expected in cases:
-        response = _list(signoz, token, query=_scoped(query), limit=200)
+        response = requests.get(
+            signoz.self.host_configs["8080"].get("/api/v2/users/me/dashboards"),
+            params={"query": query, "limit": 200},
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        )
         assert response.status_code == HTTPStatus.OK, response.text
-        assert set(_display_names(response.json())) == expected, query
+        assert {d["spec"]["display"]["name"] for d in response.json()["data"]["dashboards"]} == expected, query
 
     # ── stage 5: name sort honours order ─────────────────────────────────────
-    response = _list(signoz, token, query=suite_filter, sort="name", order="asc", limit=200)
-    assert _display_names(response.json()) == [
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v2/users/me/dashboards"),
+        params={"sort": "name", "order": "asc", "limit": 200},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert [d["spec"]["display"]["name"] for d in response.json()["data"]["dashboards"]] == [
         "Alpha Overview",
         "Beta Overview",
         "Delta Storage",
@@ -504,8 +501,13 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
         "Gamma Storage",
         "Zeta Overview",
     ]
-    response = _list(signoz, token, query=suite_filter, sort="name", order="desc", limit=200)
-    assert _display_names(response.json()) == [
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v2/users/me/dashboards"),
+        params={"sort": "name", "order": "desc", "limit": 200},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert [d["spec"]["display"]["name"] for d in response.json()["data"]["dashboards"]] == [
         "Zeta Overview",
         "Gamma Storage",
         "Epsilon Metrics",
@@ -515,8 +517,20 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
     ]
 
     # ── stage 6: pinning floats a dashboard to the top of any ordering ───────
-    assert _pin(signoz, token, ids["lc-gamma"], pin=True).status_code == HTTPStatus.NO_CONTENT
-    response = _list(signoz, token, query=suite_filter, sort="name", order="asc", limit=200)
+    assert (
+        requests.put(
+            signoz.self.host_configs["8080"].get(f"/api/v2/users/me/dashboards/{ids['lc-gamma']}/pins"),
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        ).status_code
+        == HTTPStatus.NO_CONTENT
+    )
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v2/users/me/dashboards"),
+        params={"sort": "name", "order": "asc", "limit": 200},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
     dashboards = response.json()["data"]["dashboards"]
     assert dashboards[0]["name"] == "lc-gamma"
     assert dashboards[0]["pinned"] is True
@@ -524,8 +538,13 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
 
     # the pure list is user-independent: the same pin neither reorders it (gamma
     # stays in natural name order, not floated to the top) nor adds a pinned field.
-    response = _list_pure(signoz, token, query=suite_filter, sort="name", order="asc", limit=200)
-    assert _display_names(response.json()) == [
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        params={"sort": "name", "order": "asc", "limit": 200},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert [d["spec"]["display"]["name"] for d in response.json()["data"]["dashboards"]] == [
         "Alpha Overview",
         "Beta Overview",
         "Delta Storage",
@@ -536,9 +555,21 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
     assert all("pinned" not in d for d in response.json()["data"]["dashboards"])
 
     # ── stage 7: unpinning restores the natural ordering ─────────────────────
-    assert _pin(signoz, token, ids["lc-gamma"], pin=False).status_code == HTTPStatus.NO_CONTENT
-    response = _list(signoz, token, query=suite_filter, sort="name", order="asc", limit=200)
-    assert _display_names(response.json()) == [
+    assert (
+        requests.delete(
+            signoz.self.host_configs["8080"].get(f"/api/v2/users/me/dashboards/{ids['lc-gamma']}/pins"),
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        ).status_code
+        == HTTPStatus.NO_CONTENT
+    )
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v2/users/me/dashboards"),
+        params={"sort": "name", "order": "asc", "limit": 200},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert [d["spec"]["display"]["name"] for d in response.json()["data"]["dashboards"]] == [
         "Alpha Overview",
         "Beta Overview",
         "Delta Storage",
@@ -548,39 +579,95 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
     ]
 
     # ── stage 8: update mutates the spec but keeps the immutable name ────────
-    update_body = _minimal_body(
-        "lc-alpha",
-        "Alpha Overview",
-        [
-            suite_tag,
+    update_body = {
+        "schemaVersion": "v6",
+        "name": "lc-alpha",
+        "spec": {"display": {"name": "Alpha Overview"}},
+        "tags": [
             {"key": "team", "value": "pulse"},
             {"key": "env", "value": "prod"},
         ],
-    )
+    }
     update_body["spec"]["display"]["description"] = "now with a description"
-    response = _update(signoz, token, ids["lc-alpha"], update_body)
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"{BASE_URL}/{ids['lc-alpha']}"),
+        json=update_body,
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
     assert response.status_code == HTTPStatus.OK, response.text
-    response = _get(signoz, token, ids["lc-alpha"])
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(f"{BASE_URL}/{ids['lc-alpha']}"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
     assert response.json()["data"]["spec"]["display"]["description"] == "now with a description"
 
     # ── stage 9: a locked dashboard rejects updates until unlocked ───────────
-    assert _lock(signoz, token, ids["lc-beta"], lock=True).status_code == HTTPStatus.NO_CONTENT
-    beta_body = _minimal_body(
-        "lc-beta",
-        "Beta Overview",
-        [suite_tag, {"key": "team", "value": "pulse"}, {"key": "env", "value": "dev"}],
+    assert (
+        requests.put(
+            signoz.self.host_configs["8080"].get(f"{BASE_URL}/{ids['lc-beta']}/lock"),
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        ).status_code
+        == HTTPStatus.NO_CONTENT
     )
-    response = _update(signoz, token, ids["lc-beta"], beta_body)
+    beta_body = {
+        "schemaVersion": "v6",
+        "name": "lc-beta",
+        "spec": {"display": {"name": "Beta Overview"}},
+        "tags": [{"key": "team", "value": "pulse"}, {"key": "env", "value": "dev"}],
+    }
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"{BASE_URL}/{ids['lc-beta']}"),
+        json=beta_body,
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
     assert response.status_code == HTTPStatus.BAD_REQUEST
-    assert _lock(signoz, token, ids["lc-beta"], lock=False).status_code == HTTPStatus.NO_CONTENT
-    assert _update(signoz, token, ids["lc-beta"], beta_body).status_code == HTTPStatus.OK
+    assert (
+        requests.delete(
+            signoz.self.host_configs["8080"].get(f"{BASE_URL}/{ids['lc-beta']}/lock"),
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        ).status_code
+        == HTTPStatus.NO_CONTENT
+    )
+    assert (
+        requests.put(
+            signoz.self.host_configs["8080"].get(f"{BASE_URL}/{ids['lc-beta']}"),
+            json=beta_body,
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        ).status_code
+        == HTTPStatus.OK
+    )
 
     # ── stage 10: delete removes the dashboard from get and list ─────────────
-    assert _delete(signoz, token, ids["lc-gamma"]).status_code == HTTPStatus.NO_CONTENT
-    assert _get(signoz, token, ids["lc-gamma"]).status_code == HTTPStatus.NOT_FOUND
-    response = _list(signoz, token, query=suite_filter, limit=200)
+    assert (
+        requests.delete(
+            signoz.self.host_configs["8080"].get(f"{BASE_URL}/{ids['lc-gamma']}"),
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        ).status_code
+        == HTTPStatus.NO_CONTENT
+    )
+    assert (
+        requests.get(
+            signoz.self.host_configs["8080"].get(f"{BASE_URL}/{ids['lc-gamma']}"),
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        ).status_code
+        == HTTPStatus.NOT_FOUND
+    )
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v2/users/me/dashboards"),
+        params={"limit": 200},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
     assert response.json()["data"]["total"] == 5
-    assert set(_display_names(response.json())) == {
+    assert {d["spec"]["display"]["name"] for d in response.json()["data"]["dashboards"]} == {
         "Alpha Overview",
         "Beta Overview",
         "Delta Storage",
@@ -593,34 +680,89 @@ def test_dashboard_v2_pin_limit(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    suite_marker: tuple[dict, str],
 ):
-    suite_tag, _ = suite_marker
     max_pinned = 10
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
+    # Wipe the dashboard space (see lifecycle) so the per-user pin cap this test
+    # asserts against starts empty — deleting dashboards clears their pins.
+    existing = requests.get(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        params={"limit": 200},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    ).json()["data"]["dashboards"]
+    for dashboard in existing:
+        requests.delete(
+            signoz.self.host_configs["8080"].get(f"{BASE_URL}/{dashboard['id']}"),
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        )
+
     ids: list[str] = []
     for i in range(max_pinned + 1):
-        response = _create(signoz, token, _minimal_body(f"pl-{i}", f"Pin Limit {i}", [suite_tag]))
+        response = requests.post(
+            signoz.self.host_configs["8080"].get(BASE_URL),
+            json={
+                "schemaVersion": "v6",
+                "name": f"pl-{i}",
+                "spec": {"display": {"name": f"Pin Limit {i}"}},
+                "tags": [],
+            },
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        )
         assert response.status_code == HTTPStatus.CREATED, response.text
         ids.append(response.json()["data"]["id"])
 
     # pinning up to the limit succeeds
     for dashboard_id in ids[:max_pinned]:
-        assert _pin(signoz, token, dashboard_id, pin=True).status_code == HTTPStatus.NO_CONTENT
+        assert (
+            requests.put(
+                signoz.self.host_configs["8080"].get(f"/api/v2/users/me/dashboards/{dashboard_id}/pins"),
+                headers={"Authorization": f"Bearer {token}"},
+                timeout=5,
+            ).status_code
+            == HTTPStatus.NO_CONTENT
+        )
 
     # re-pinning an already-pinned dashboard is an idempotent no-op, even at the limit
-    assert _pin(signoz, token, ids[0], pin=True).status_code == HTTPStatus.NO_CONTENT
+    assert (
+        requests.put(
+            signoz.self.host_configs["8080"].get(f"/api/v2/users/me/dashboards/{ids[0]}/pins"),
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        ).status_code
+        == HTTPStatus.NO_CONTENT
+    )
 
     # the 11th distinct pin is rejected with the typed limit error
-    response = _pin(signoz, token, ids[max_pinned], pin=True)
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"/api/v2/users/me/dashboards/{ids[max_pinned]}/pins"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
     assert response.status_code == HTTPStatus.CONFLICT, response.text
     assert response.json()["error"]["code"] == "pinned_dashboard_limit_hit"
 
     # unpinning frees a slot, so the previously-rejected dashboard can now be pinned
-    assert _pin(signoz, token, ids[0], pin=False).status_code == HTTPStatus.NO_CONTENT
-    assert _pin(signoz, token, ids[max_pinned], pin=True).status_code == HTTPStatus.NO_CONTENT
+    assert (
+        requests.delete(
+            signoz.self.host_configs["8080"].get(f"/api/v2/users/me/dashboards/{ids[0]}/pins"),
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        ).status_code
+        == HTTPStatus.NO_CONTENT
+    )
+    assert (
+        requests.put(
+            signoz.self.host_configs["8080"].get(f"/api/v2/users/me/dashboards/{ids[max_pinned]}/pins"),
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        ).status_code
+        == HTTPStatus.NO_CONTENT
+    )
 
 
 # ─── LIKE escaping ───────────────────────────────────────────────────────────
@@ -638,11 +780,23 @@ def test_dashboard_v2_like_escaping(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    suite_marker: tuple[dict, str],
 ):
-    suite_tag, suite_filter = suite_marker
-
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    # Wipe the dashboard space (see lifecycle) so the filter assertions run
+    # against only the dashboards this test creates.
+    existing = requests.get(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        params={"limit": 200},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    ).json()["data"]["dashboards"]
+    for dashboard in existing:
+        requests.delete(
+            signoz.self.host_configs["8080"].get(f"{BASE_URL}/{dashboard['id']}"),
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        )
 
     dashboard_requests = [
         ("esc-pct", "Cost 50% Report"),
@@ -651,7 +805,17 @@ def test_dashboard_v2_like_escaping(
         ("esc-underscore-wild", "userXid panel"),
     ]
     for name, display in dashboard_requests:
-        response = _create(signoz, token, _minimal_body(name, display, [suite_tag]))
+        response = requests.post(
+            signoz.self.host_configs["8080"].get(BASE_URL),
+            json={
+                "schemaVersion": "v6",
+                "name": name,
+                "spec": {"display": {"name": display}},
+                "tags": [],
+            },
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        )
         assert response.status_code == HTTPStatus.CREATED, response.text
 
     cases = [
@@ -685,11 +849,11 @@ def test_dashboard_v2_like_escaping(
         ),
     ]
     for query, expected in cases:
-        response = _list(
-            signoz,
-            token,
-            query=f"({query}) AND {suite_filter}",
-            limit=200,
+        response = requests.get(
+            signoz.self.host_configs["8080"].get("/api/v2/users/me/dashboards"),
+            params={"query": query, "limit": 200},
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
         )
         assert response.status_code == HTTPStatus.OK, response.text
-        assert set(_display_names(response.json())) == expected, query
+        assert {d["spec"]["display"]["name"] for d in response.json()["data"]["dashboards"]} == expected, query
