@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 import { FullScreen, useFullScreenHandle } from 'react-full-screen';
 
 import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
@@ -6,11 +6,12 @@ import PanelTypeSelectionModal from 'container/DashboardContainer/PanelTypeSelec
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useAppContext } from 'providers/App/App';
 
-import DashboardDescription from './DashboardDescription';
+import DashboardPageToolbar from './DashboardPageToolbar';
 import PanelsAndSectionsLayout from './PanelsAndSectionsLayout';
 import { useDashboardStore } from './store/useDashboardStore';
-import VariablesBar from './VariablesBar/VariablesBar';
 import styles from './DashboardContainer.module.scss';
+import DashboardPageHeader from './components/DashboardPageHeader/DashboardPageHeader';
+import { Base64Icons } from './DashboardSettings/General/utils';
 
 interface DashboardContainerProps {
 	dashboard: DashboardtypesGettableDashboardV2DTO;
@@ -22,36 +23,48 @@ function DashboardContainer({
 	refetch,
 }: DashboardContainerProps): JSX.Element {
 	useEffect(() => {
-		document.title = dashboard.name
-	}, [dashboard.name])
+		document.title = dashboard.name;
+	}, [dashboard.name]);
 
 	const fullScreenHandle = useFullScreenHandle();
 
 	const { user } = useAppContext();
-	const [editDashboard] = useComponentPermission(['edit_dashboard'], user.role);
-	const isEditable = !dashboard.locked && editDashboard;
+	const [editDashboardPermission] = useComponentPermission(
+		['edit_dashboard'],
+		user.role,
+	);
 
 	// Publish edit context to the store so hooks/components read it from there
 	// instead of receiving dashboardId/isEditable/refetch as props down the tree.
 	const setEditContext = useDashboardStore((s) => s.setEditContext);
 	useEffect(() => {
-		setEditContext({ dashboardId: dashboard.id ?? '', isEditable, refetch });
-	}, [dashboard.id, isEditable, refetch, setEditContext]);
+		setEditContext({
+			dashboardId: dashboard.id,
+			isEditable: !dashboard.locked && editDashboardPermission,
+			refetch,
+		});
+	}, [
+		dashboard.id,
+		dashboard.locked,
+		editDashboardPermission,
+		refetch,
+		setEditContext,
+	]);
 
-	const { spec } = dashboard;
-	const layouts = useMemo(() => spec?.layouts ?? [], [spec?.layouts]);
-	const panels = useMemo(() => spec?.panels ?? {}, [spec?.panels]);
+	const spec = dashboard.spec;
+	const image = dashboard.image || Base64Icons[0];
+	const name = spec.display.name;
 
 	return (
 		<FullScreen handle={fullScreenHandle}>
 			<div className={styles.container}>
-				<DashboardDescription
+				<DashboardPageHeader title={name} image={image} />
+				<DashboardPageToolbar
 					dashboard={dashboard}
 					handle={fullScreenHandle}
 					refetch={refetch}
 				/>
-				<VariablesBar dashboard={dashboard} />
-				<PanelsAndSectionsLayout layouts={layouts} panels={panels} />
+				<PanelsAndSectionsLayout layouts={spec.layouts} panels={spec.panels} />
 			</div>
 			{/* Shared panel-type picker (V1 component): opened from any "New Panel"
 			    trigger; navigates to the widget editor route on selection. */}

@@ -6,14 +6,14 @@ import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 
-import styles from '../DashboardDescription.module.scss';
+import styles from '../DashboardPageToolbar.module.scss';
+import { useDashboardStore } from '../../store/useDashboardStore';
 
 interface DashboardTitleProps {
 	title: string;
 	image: string;
 	isPublicDashboard: boolean;
 	isDashboardLocked: boolean;
-	isEditable: boolean;
 	isEditing: boolean;
 	draft: string;
 	onDraftChange: (value: string) => void;
@@ -27,7 +27,6 @@ function DashboardTitle({
 	image,
 	isPublicDashboard,
 	isDashboardLocked,
-	isEditable,
 	isEditing,
 	draft,
 	onDraftChange,
@@ -35,7 +34,7 @@ function DashboardTitle({
 	onCommit,
 	onCancel,
 }: DashboardTitleProps): JSX.Element {
-	const canEdit = isEditable && !isDashboardLocked;
+	const canEdit = useDashboardStore((s) => s.isEditable);
 
 	const onKeyDown = (event: KeyboardEvent<HTMLInputElement>): void => {
 		if (event.key === 'Enter') {

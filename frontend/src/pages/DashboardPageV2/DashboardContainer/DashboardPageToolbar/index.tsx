@@ -1,6 +1,5 @@
 import { useCallback, useMemo } from 'react';
 import { FullScreenHandle } from 'react-full-screen';
-import { Card } from 'antd';
 import { toast } from '@signozhq/ui/sonner';
 import logEvent from 'api/common/logEvent';
 import {
@@ -13,34 +12,33 @@ import type {
 	DashboardtypesJSONPatchOperationDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { Base64Icons } from 'container/DashboardContainer/DashboardSettings/General/utils';
-import useComponentPermission from 'hooks/useComponentPermission';
 import { useAppContext } from 'providers/App/App';
 import { usePanelTypeSelectionModalStore } from 'providers/Dashboard/helpers/panelTypeSelectionModalHelper';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 
-import DashboardHeader from '../components/DashboardHeader/DashboardHeader';
 import DashboardActions from './DashboardActions/DashboardActions';
 import DashboardMeta from './DashboardMeta/DashboardMeta';
 import DashboardTitle from './DashboardTitle/DashboardTitle';
 import { useEditableTitle } from './DashboardTitle/useEditableTitle';
 
-import styles from './DashboardDescription.module.scss';
+import styles from './DashboardPageToolbar.module.scss';
+// import VariablesBar from '../VariablesBar/VariablesBar';
 
-interface DashboardDescriptionProps {
+interface DashboardPageToolbarProps {
 	dashboard: DashboardtypesGettableDashboardV2DTO;
 	handle: FullScreenHandle;
 	refetch: () => void;
 }
 
-function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
+function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 	const { dashboard, handle, refetch } = props;
 
 	const id = dashboard.id;
 	const isDashboardLocked = !!dashboard.locked;
 
-	const title = dashboard.spec?.display?.name ?? '';
-	const description = dashboard.spec?.display?.description ?? '';
+	const title = dashboard.spec.display.name;
+	const description = dashboard.spec.display.description ?? '';
 	const image = dashboard.image || Base64Icons[0];
 	const tags = useMemo(
 		() =>
@@ -51,7 +49,6 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 	);
 
 	const { user } = useAppContext();
-	const [editDashboard] = useComponentPermission(['edit_dashboard'], user.role);
 	const { showErrorModal } = useErrorModal();
 	const setIsPanelTypeSelectionModalOpen = usePanelTypeSelectionModalStore(
 		(s) => s.setIsPanelTypeSelectionModalOpen,
@@ -59,9 +56,6 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 
 	const isAuthor =
 		!!user?.email && !!dashboard.createdBy && dashboard.createdBy === user.email;
-	const addPanelPermission = !isDashboardLocked;
-	// V2 public dashboard wiring lives separately; treat as not-public for chrome.
-	const isPublicDashboard = false;
 
 	const handleLockDashboardToggle = useCallback(async (): Promise<void> => {
 		if (!id) {
@@ -118,15 +112,13 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 	}, [id, setIsPanelTypeSelectionModalOpen]);
 
 	return (
-		<Card className={styles.dashboardDescriptionContainer}>
-			<DashboardHeader title={title} image={image} />
+		<div className={styles.dashboardPageToolbarContainer}>
 			<section className={styles.dashboardDetails}>
 				<DashboardTitle
 					title={title}
 					image={image}
-					isPublicDashboard={isPublicDashboard}
+					isPublicDashboard={false}
 					isDashboardLocked={isDashboardLocked}
-					isEditable={editDashboard}
 					isEditing={isEditing}
 					draft={draft}
 					onDraftChange={setDraft}
@@ -138,17 +130,16 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 					dashboard={dashboard}
 					handle={handle}
 					isDashboardLocked={isDashboardLocked}
-					editDashboard={editDashboard}
 					isAuthor={isAuthor}
-					addPanelPermission={addPanelPermission}
 					onAddPanel={onEmptyWidgetHandler}
 					onLockToggle={handleLockDashboardToggle}
 					onOpenRename={startEdit}
 				/>
 			</section>
 			<DashboardMeta tags={tags} description={description} />
-		</Card>
+			{/* <VariablesBar dashboard={dashboard} /> */}
+		</div>
 	);
 }
 
-export default DashboardDescription;
+export default DashboardPageToolbar;

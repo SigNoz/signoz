@@ -1,7 +1,7 @@
 import { Badge } from '@signozhq/ui/badge';
 import { isEmpty } from 'lodash-es';
 
-import styles from '../DashboardDescription.module.scss';
+import styles from '../DashboardPageToolbar.module.scss';
 
 interface DashboardMetaProps {
 	tags: string[];

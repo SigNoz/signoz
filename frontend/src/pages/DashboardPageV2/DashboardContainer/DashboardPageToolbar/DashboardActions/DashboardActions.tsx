@@ -28,15 +28,14 @@ import { USER_ROLES } from 'types/roles';
 import ConfirmDeleteDialog from '../../components/ConfirmDeleteDialog/ConfirmDeleteDialog';
 import DashboardSettings from '../../DashboardSettings';
 import SettingsDrawer from '../SettingsDrawer';
-import styles from '../DashboardDescription.module.scss';
+import styles from '../DashboardPageToolbar.module.scss';
+import { useDashboardStore } from '../../store/useDashboardStore';
 
 interface DashboardActionsProps {
 	dashboard: DashboardtypesGettableDashboardV2DTO;
 	handle: FullScreenHandle;
 	isDashboardLocked: boolean;
-	editDashboard: boolean;
 	isAuthor: boolean;
-	addPanelPermission: boolean;
 	onAddPanel: () => void;
 	onLockToggle: () => void;
 	onOpenRename: () => void;
@@ -46,13 +45,12 @@ function DashboardActions({
 	dashboard,
 	handle,
 	isDashboardLocked,
-	editDashboard,
 	isAuthor,
-	addPanelPermission,
 	onAddPanel,
 	onLockToggle,
 	onOpenRename,
 }: DashboardActionsProps): JSX.Element {
+	const canEdit = useDashboardStore((s) => s.isEditable);
 	const { user } = useAppContext();
 	const { t } = useTranslation(['dashboard', 'common']);
 
@@ -103,7 +101,7 @@ function DashboardActions({
 
 	const menuItems = useMemo<MenuItem[]>(() => {
 		const editGroup: MenuItem[] = [];
-		if (!isDashboardLocked && editDashboard) {
+		if (canEdit) {
 			editGroup.push({
 				key: 'rename',
 				label: 'Rename',
@@ -159,7 +157,6 @@ function DashboardActions({
 			);
 	}, [
 		isDashboardLocked,
-		editDashboard,
 		isAuthor,
 		user.role,
 		dashboard.createdBy,
@@ -169,6 +166,7 @@ function DashboardActions({
 		exportJSON,
 		setCopy,
 		dashboardDataJSON,
+		canEdit,
 	]);
 
 	return (
@@ -184,7 +182,7 @@ function DashboardActions({
 					testId="options"
 				/>
 			</DropdownMenuSimple>
-			{!isDashboardLocked && editDashboard && (
+			{canEdit && (
 				<>
 					<Button
 						variant="solid"
@@ -205,7 +203,7 @@ function DashboardActions({
 					</SettingsDrawer>
 				</>
 			)}
-			{!isDashboardLocked && addPanelPermission && (
+			{!isDashboardLocked && (
 				<Button
 					variant="solid"
 					color="primary"
