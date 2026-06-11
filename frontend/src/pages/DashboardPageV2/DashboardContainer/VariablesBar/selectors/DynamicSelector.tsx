@@ -7,22 +7,32 @@ import type { AppState } from 'store/reducers';
 import type { GlobalReducer } from 'types/reducer/globalTime';
 
 import type { VariableFormModel } from '../../DashboardSettings/Variables/variableModel';
-import type { VariableSelection } from '../selectionTypes';
+import { buildExistingDynamicVariableQuery } from '../dynamicFilter';
+import type {
+	VariableSelection,
+	VariableSelectionMap,
+} from '../selectionTypes';
 import { useAutoSelect } from '../useAutoSelect';
 import ValueSelector from './ValueSelector';
 
 interface DynamicSelectorProps {
 	variable: VariableFormModel;
+	/** All variables + current selections, to scope options by sibling dynamics. */
+	variables: VariableFormModel[];
+	selections: VariableSelectionMap;
 	selection: VariableSelection;
 	onChange: (selection: VariableSelection) => void;
 }
 
 /**
  * Dynamic-variable options sourced from live telemetry field values for the
- * chosen signal + attribute. (Sibling-dynamic filtering is a later refinement.)
+ * chosen signal + attribute, scoped by the other dynamic variables' selections
+ * (so e.g. `pod` narrows to the chosen `namespace`).
  */
 function DynamicSelector({
 	variable,
+	variables,
+	selections,
 	selection,
 	onChange,
 }: DynamicSelectorProps): JSX.Element {
@@ -30,11 +40,17 @@ function DynamicSelector({
 		(state) => state.globalTime,
 	);
 
+	const existingQuery = useMemo(
+		() => buildExistingDynamicVariableQuery(variables, selections, variable.name),
+		[variables, selections, variable.name],
+	);
+
 	const { data, isFetching } = useGetFieldValues({
 		signal: variable.dynamicSignal,
 		name: variable.dynamicAttribute,
 		startUnixMilli: minTime,
 		endUnixMilli: maxTime,
+		existingQuery: existingQuery || undefined,
 		enabled: !!variable.dynamicAttribute,
 	});
 

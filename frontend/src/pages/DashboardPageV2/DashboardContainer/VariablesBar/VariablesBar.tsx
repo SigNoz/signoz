@@ -26,6 +26,7 @@ function VariablesBar({ dashboard }: VariablesBarProps): JSX.Element | null {
 				<VariableSelector
 					key={variable.name}
 					variable={variable}
+					variables={variables}
 					parents={dependencyData.parentGraph[variable.name] ?? []}
 					selections={selection}
 					selection={
