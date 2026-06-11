@@ -28,8 +28,6 @@ import {
 	useSearch,
 	useSortColumn,
 	useSortOrder,
-	type SortColumn,
-	type SortOrder,
 } from '../../hooks/useDashboardsListQueryParams';
 import type { DashboardListItem } from '../../utils';
 import ConfigureMetadataModal from '../ConfigureMetadataModal/ConfigureMetadataModal';
@@ -86,10 +84,8 @@ function DashboardsList(): JSX.Element {
 	const listParams = useMemo(
 		() => ({
 			query: searchString.trim() || undefined,
-			// SortColumn/SortOrder string-literal unions mirror these generated
-			// enums 1:1 (identical values); cast to satisfy the client param.
-			sort: sortColumn as DashboardtypesListSortDTO,
-			order: sortOrder as DashboardtypesListOrderDTO,
+			sort: sortColumn,
+			order: sortOrder,
 			limit: PAGE_SIZE,
 			offset: (page - 1) * PAGE_SIZE,
 		}),
@@ -156,7 +152,7 @@ function DashboardsList(): JSX.Element {
 	}, []);
 
 	const onSortChange = useCallback(
-		(column: SortColumn): void => {
+		(column: DashboardtypesListSortDTO): void => {
 			void setSortColumn(column);
 			void setPage(1);
 		},
@@ -164,7 +160,7 @@ function DashboardsList(): JSX.Element {
 	);
 
 	const onOrderChange = useCallback(
-		(order: SortOrder): void => {
+		(order: DashboardtypesListOrderDTO): void => {
 			void setSortOrder(order);
 			void setPage(1);
 		},
