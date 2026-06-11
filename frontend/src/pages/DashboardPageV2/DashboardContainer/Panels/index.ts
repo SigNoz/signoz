@@ -1,5 +1,6 @@
 import { definition as barChart } from './kinds/BarChartPanel/definition';
 import { definition as histogram } from './kinds/HistogramPanel/definition';
+import { definition as number } from './kinds/NumberPanel/definition';
 import { definition as pieChart } from './kinds/PieChartPanel/definition';
 import { definition as timeSeries } from './kinds/TimeSeriesPanel/definition';
 import type {
@@ -15,6 +16,7 @@ export const PANELS: PanelRegistry = {
 	[timeSeries.kind]: timeSeries,
 	[barChart.kind]: barChart,
 	[histogram.kind]: histogram,
+	[number.kind]: number,
 	[pieChart.kind]: pieChart,
 };
 
