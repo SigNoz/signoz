@@ -13,9 +13,16 @@ type Compiled struct {
 	Args []any
 }
 
+func (c Compiled) IsEmpty() bool {
+	return c.SQL == ""
+}
+
+// Compile always returns a non-nil *Compiled. An empty query (or one that
+// produces no SQL) yields a Compiled with an empty SQL — callers gate on
+// SQL != "" rather than a nil check.
 func Compile(query string, formatter sqlstore.SQLFormatter) (*Compiled, error) {
 	if len(query) == 0 {
-		return nil, nil //nolint:nilnil
+		return &Compiled{}, nil
 	}
 
 	queryVisitor := newVisitor(formatter)
@@ -28,9 +35,6 @@ func Compile(query string, formatter sqlstore.SQLFormatter) (*Compiled, error) {
 	if len(queryVisitor.errors) > 0 {
 		return nil, errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardListFilterInvalid,
 			"invalid filter query: %s", strings.Join(queryVisitor.errors, "; "))
-	}
-	if sql == "" {
-		return nil, nil //nolint:nilnil
 	}
 
 	return &Compiled{
