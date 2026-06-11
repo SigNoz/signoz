@@ -81,7 +81,7 @@ describe('RouteTab component', () => {
 				<RouteTab history={history} routes={testRoutes} activeKey="Tab1" />
 			</Router>,
 		);
-		const tabContent = container.querySelector('.ant-tabs-content-holder');
+		const tabContent = container.querySelector('.ant-tabs-content');
 		expect(tabContent).not.toHaveClass('ant-tabs-content-animated');
 	});
 
