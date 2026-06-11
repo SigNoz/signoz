@@ -333,6 +333,50 @@ func (Step) JSONSchema() (jsonschema.Schema, error) {
 }
 ```
 
+### `oneOf` with a discriminator
+
+For a sum type whose variants are keyed by a property (e.g. `kind`), expose the variants via `JSONSchemaOneOf()` and add a discriminator. Without it, code generators intersect the variants (`A & B & C`) instead of producing a clean discriminated union (`A | B | C`).
+
+The parent keeps its `JSONSchemaOneOf()` (the `oneOf` itself) and *additionally* tags it via `PrepareJSONSchema` with the `x-signoz-discriminator` extension; `signoz.attachDiscriminators` then promotes that marker to a real OpenAPI 3 `discriminator` (and strips the duplicate parent properties) after reflection.
+
+```go
+// On the parent: expose the oneOf variants...
+func (Plugin) JSONSchemaOneOf() []any {
+    return []any{FooVariant{}}
+}
+
+// ...and tag that same oneOf with the discriminator marker.
+func (Plugin) PrepareJSONSchema(s *jsonschema.Schema) error {
+    if s.ExtraProperties == nil {
+        s.ExtraProperties = map[string]any{}
+    }
+    s.ExtraProperties["x-signoz-discriminator"] = map[string]any{
+        "propertyName": "kind",
+        "mapping": map[string]string{
+            "signoz/Foo": "#/components/schemas/FooVariant",
+        },
+    }
+    return nil
+}
+```
+
+Each variant must declare the discriminator property (`kind`) and mark it `required`. 
+
+This produces the following in the generated OpenAPI spec:
+
+```yaml
+Plugin:
+  discriminator:
+    propertyName: kind
+    mapping:
+      signoz/Foo: '#/components/schemas/FooVariant'
+  oneOf:
+  - $ref: '#/components/schemas/FooVariant'
+  type: object
+```
+
+Note the discriminator property lives in the variants, not on the parent — the parent is only the union.
+
 
 ## What should I remember?
 
