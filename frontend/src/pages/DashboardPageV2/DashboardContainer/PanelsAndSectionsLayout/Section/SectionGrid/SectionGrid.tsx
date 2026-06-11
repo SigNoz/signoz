@@ -54,6 +54,7 @@ function SectionGrid({
 			useCSSTransforms
 			layout={rglLayout}
 			draggableHandle=".panel-drag-handle"
+			draggableCancel=".panel-no-drag"
 			isDraggable={isEditable}
 			isResizable={isEditable}
 			onDragStop={handleLayoutChange}
