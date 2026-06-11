@@ -136,6 +136,7 @@ function DashboardsList(): JSX.Element {
 					layouts: [],
 					panels: {},
 					variables: [],
+					// TODO(@AshwinBhatkal): duration and refresh interval need to be integrated
 				},
 			});
 			safeNavigate(
