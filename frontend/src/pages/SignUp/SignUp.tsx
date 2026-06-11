@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { Callout } from '@signozhq/ui/callout';
 import { Input } from '@signozhq/ui/input';
@@ -11,6 +11,7 @@ import afterLogin from 'AppRoutes/utils';
 import AuthError from 'components/AuthError/AuthError';
 import AuthPageContainer from 'components/AuthPageContainer';
 import { useNotifications } from 'hooks/useNotifications';
+import useUrlQuery from 'hooks/useUrlQuery';
 import { ArrowRight } from '@signozhq/icons';
 import APIError from 'types/api/error';
 
@@ -36,6 +37,25 @@ function SignUp(): JSX.Element {
 	const [formError, setFormError] = useState<APIError | null>();
 
 	const { notifications } = useNotifications();
+	const urlQuery = useUrlQuery();
+	const inviteToken = urlQuery.get('token');
+
+	useEffect(() => {
+		if (!inviteToken) {
+			setFormError(
+				new APIError({
+					httpStatusCode: 400,
+					error: {
+						code: 'missing_invite_token',
+						message:
+							'No invite token found. Please ask your admin to send you a valid invite link.',
+						url: '',
+						errors: [],
+					},
+				}),
+			);
+		}
+	}, [inviteToken]);
 	const [form] = Form.useForm<FormValues>();
 
 	// Watch form values for reactive validation
@@ -50,17 +70,43 @@ function SignUp(): JSX.Element {
 				email,
 				orgDisplayName: organizationName,
 				password,
+				...(inviteToken ? { token: inviteToken } : {}),
 			});
 
-			const token = await passwordAuthNContext({
+			const authToken = await passwordAuthNContext({
 				email,
 				password,
 				orgId: user.data.orgId,
 			});
 
-			await afterLogin(token.data.accessToken, token.data.refreshToken);
+			await afterLogin(authToken.data.accessToken, authToken.data.refreshToken);
 		} catch (error) {
-			setFormError(error as APIError);
+			const apiError = error as APIError;
+			const errorMessage = apiError?.getErrorMessage?.() || '';
+			const httpStatus = apiError?.getHttpStatusCode?.() || 0;
+
+			const isTokenError =
+				httpStatus === 400 ||
+				httpStatus === 401 ||
+				httpStatus === 403 ||
+				/invalid|token|expired|invite/i.test(errorMessage);
+
+			if (isTokenError) {
+				setFormError(
+					new APIError({
+						httpStatusCode: httpStatus || 400,
+						error: {
+							code: 'invalid_invite_token',
+							message:
+								'This invite link is invalid or has expired. Please ask your admin for a new invite link.',
+							url: '',
+							errors: [],
+						},
+					}),
+				);
+			} else {
+				setFormError(apiError);
+			}
 		}
 	};
 
@@ -190,7 +236,7 @@ function SignUp(): JSX.Element {
 							color="primary"
 							type="submit"
 							data-attr="signup"
-							disabled={!isValidForm}
+							disabled={!isValidForm || !inviteToken}
 							className="signup-submit-button"
 							suffix={<ArrowRight size={16} />}
 						>
