@@ -86,9 +86,9 @@ export const k8sVolumesColumnsConfig: TableColumnDef<K8sVolumesData>[] = [
 	},
 	{
 		id: 'capacity',
-		header: 'Volume Capacity',
+		header: 'Capacity',
 		accessorFn: (row): number => row.volumeCapacity,
-		width: { min: 220 },
+		width: { min: 140 },
 		enableSort: true,
 		cell: ({ value }): React.ReactNode => {
 			const capacity = value as number;
@@ -105,9 +105,9 @@ export const k8sVolumesColumnsConfig: TableColumnDef<K8sVolumesData>[] = [
 	},
 	{
 		id: 'usage',
-		header: 'Volume Utilization',
+		header: 'Utilization',
 		accessorFn: (row): number => row.volumeUsage,
-		width: { min: 220 },
+		width: { min: 140 },
 		enableSort: true,
 		cell: ({ value }): React.ReactNode => {
 			const usage = value as number;
@@ -124,9 +124,9 @@ export const k8sVolumesColumnsConfig: TableColumnDef<K8sVolumesData>[] = [
 	},
 	{
 		id: 'available',
-		header: 'Volume Available',
+		header: 'Available',
 		accessorFn: (row): number => row.volumeAvailable,
-		width: { min: 220 },
+		width: { min: 140 },
 		enableSort: true,
 		cell: ({ value }): React.ReactNode => {
 			const available = value as number;
