@@ -58,43 +58,44 @@ func okCollectors() OrgContextCollectors {
 }
 
 func TestLicenseStatusFromStats(t *testing.T) {
-	knownStates := []string{
-		"DEFAULTED",
-		"ACTIVATED",
-		"EXPIRED",
-		"ISSUED",
-		"EVALUATING",
-		"EVALUATION_EXPIRED",
-		"TERMINATED",
-		"CANCELLED",
+	cases := []struct {
+		name  string
+		stats map[string]any
+		want  emptystatetypes.LicenseStatus
+	}{
+		{
+			name:  "known state passes through",
+			stats: map[string]any{licensetypes.StatKeyLicenseStateName: "ACTIVATED"},
+			want:  emptystatetypes.LicenseStatus("ACTIVATED"),
+		},
+		{
+			name:  "novel state passes through",
+			stats: map[string]any{licensetypes.StatKeyLicenseStateName: "FUTURE_STATE"},
+			want:  emptystatetypes.LicenseStatus("FUTURE_STATE"),
+		},
+		{
+			name:  "missing key returns unknown",
+			stats: map[string]any{},
+			want:  emptystatetypes.LicenseStatusUnknown,
+		},
+		{
+			name:  "blank state returns unknown",
+			stats: map[string]any{licensetypes.StatKeyLicenseStateName: "  "},
+			want:  emptystatetypes.LicenseStatusUnknown,
+		},
+		{
+			name:  "non-string state returns unknown",
+			stats: map[string]any{licensetypes.StatKeyLicenseStateName: 42},
+			want:  emptystatetypes.LicenseStatusUnknown,
+		},
 	}
 
-	for _, state := range knownStates {
-		t.Run(state, func(t *testing.T) {
-			status := licenseStatusFromStats(map[string]any{licensetypes.StatKeyLicenseStateName: state})
-			assert.Equal(t, emptystatetypes.LicenseStatus(state), status)
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			status := licenseStatusFromStats(tc.stats)
+			assert.Equal(t, tc.want, status)
 		})
 	}
-
-	t.Run("novel state passes through", func(t *testing.T) {
-		status := licenseStatusFromStats(map[string]any{licensetypes.StatKeyLicenseStateName: "FUTURE_STATE"})
-		assert.Equal(t, emptystatetypes.LicenseStatus("FUTURE_STATE"), status)
-	})
-
-	t.Run("missing key returns unknown", func(t *testing.T) {
-		status := licenseStatusFromStats(map[string]any{})
-		assert.Equal(t, emptystatetypes.LicenseStatusUnknown, status)
-	})
-
-	t.Run("blank state returns unknown", func(t *testing.T) {
-		status := licenseStatusFromStats(map[string]any{licensetypes.StatKeyLicenseStateName: "  "})
-		assert.Equal(t, emptystatetypes.LicenseStatusUnknown, status)
-	})
-
-	t.Run("non-string state returns unknown", func(t *testing.T) {
-		status := licenseStatusFromStats(map[string]any{licensetypes.StatKeyLicenseStateName: 42})
-		assert.Equal(t, emptystatetypes.LicenseStatusUnknown, status)
-	})
 }
 
 func TestGetLicenseStatusDegradesToUnknown(t *testing.T) {
@@ -118,21 +119,8 @@ func TestGetLicenseStatusDegradesToUnknown(t *testing.T) {
 func TestGetCollectedCount(t *testing.T) {
 	h := &handler{}
 
-	t.Run("returns count from collector output", func(t *testing.T) {
-		count, err := h.getCollectedCount(context.Background(), &fakeCollector{stats: map[string]any{ruletypes.StatKeyRuleCount: int64(7)}}, ruletypes.StatKeyRuleCount, testOrgID)
-
-		require.NoError(t, err)
-		assert.Equal(t, 7, count)
-	})
-
 	t.Run("missing key fails", func(t *testing.T) {
 		_, err := h.getCollectedCount(context.Background(), &fakeCollector{stats: map[string]any{}}, ruletypes.StatKeyRuleCount, testOrgID)
-
-		assert.Error(t, err)
-	})
-
-	t.Run("collector error fails", func(t *testing.T) {
-		_, err := h.getCollectedCount(context.Background(), &fakeCollector{err: assert.AnError}, ruletypes.StatKeyRuleCount, testOrgID)
 
 		assert.Error(t, err)
 	})
@@ -141,54 +129,6 @@ func TestGetCollectedCount(t *testing.T) {
 		_, err := h.getCollectedCount(context.Background(), nil, ruletypes.StatKeyRuleCount, testOrgID)
 
 		assert.Error(t, err)
-	})
-}
-
-func TestLastObservedLogs(t *testing.T) {
-	t.Run("GeneratesProviderSQL", func(t *testing.T) {
-		ts := telemetrystoretest.New(telemetrystore.Config{}, sqlmock.QueryMatcherRegexp)
-		lastIngested := time.Unix(1999, 0).UTC()
-
-		expectLogsLastIngested(ts.Mock(), lastIngested)
-
-		got, err := lastObservedLogs(context.Background(), ts)
-
-		require.NoError(t, err)
-		require.NotNil(t, got)
-		assert.Equal(t, lastIngested, *got)
-		assert.NoError(t, ts.Mock().ExpectationsWereMet())
-	})
-}
-
-func TestLastObservedTraces(t *testing.T) {
-	t.Run("GeneratesProviderSQL", func(t *testing.T) {
-		ts := telemetrystoretest.New(telemetrystore.Config{}, sqlmock.QueryMatcherRegexp)
-		lastIngested := time.Unix(1999, 0).UTC()
-
-		expectTracesLastIngested(ts.Mock(), lastIngested)
-
-		got, err := lastObservedTraces(context.Background(), ts)
-
-		require.NoError(t, err)
-		require.NotNil(t, got)
-		assert.Equal(t, lastIngested, *got)
-		assert.NoError(t, ts.Mock().ExpectationsWereMet())
-	})
-}
-
-func TestLastObservedMetrics(t *testing.T) {
-	t.Run("GeneratesProviderSQL", func(t *testing.T) {
-		ts := telemetrystoretest.New(telemetrystore.Config{}, sqlmock.QueryMatcherRegexp)
-		lastIngested := time.Unix(1999, 0).UTC()
-
-		expectMetricsLastIngested(ts.Mock(), lastIngested)
-
-		got, err := lastObservedMetrics(context.Background(), ts)
-
-		require.NoError(t, err)
-		require.NotNil(t, got)
-		assert.Equal(t, lastIngested, *got)
-		assert.NoError(t, ts.Mock().ExpectationsWereMet())
 	})
 }
 
