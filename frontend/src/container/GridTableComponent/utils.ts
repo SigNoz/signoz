@@ -29,8 +29,11 @@ function evaluateCondition(
 			return value >= thresholdValue;
 		case '<=':
 			return value <= thresholdValue;
+		case '=':
 		case '==':
 			return value === thresholdValue;
+		case '!=':
+			return value !== thresholdValue;
 		default:
 			return false;
 	}

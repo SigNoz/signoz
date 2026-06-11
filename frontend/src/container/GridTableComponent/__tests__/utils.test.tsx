@@ -2,6 +2,7 @@ import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import {
 	createColumnsAndDataSource,
+	evaluateThresholdWithConvertedValue,
 	getQueryLegend,
 	sortFunction,
 } from '../utils';
@@ -223,5 +224,32 @@ describe('Table Panel utils with QB v5 aggregations', () => {
 				item,
 			),
 		).toBe(0);
+	});
+});
+
+// No units passed, so `convertUnit` is a no-op and the comparison runs against
+// the raw value — exercising `evaluateCondition`'s operator switch directly.
+describe('evaluateThresholdWithConvertedValue operators', () => {
+	it('handles ordering operators', () => {
+		expect(evaluateThresholdWithConvertedValue(5, 3, '>')).toBe(true);
+		expect(evaluateThresholdWithConvertedValue(2, 3, '>')).toBe(false);
+		expect(evaluateThresholdWithConvertedValue(2, 3, '<')).toBe(true);
+		expect(evaluateThresholdWithConvertedValue(3, 3, '>=')).toBe(true);
+		expect(evaluateThresholdWithConvertedValue(3, 3, '<=')).toBe(true);
+	});
+
+	it('treats = and == as equality', () => {
+		expect(evaluateThresholdWithConvertedValue(3, 3, '=')).toBe(true);
+		expect(evaluateThresholdWithConvertedValue(3, 3, '==')).toBe(true);
+		expect(evaluateThresholdWithConvertedValue(4, 3, '=')).toBe(false);
+	});
+
+	it('handles != as inequality', () => {
+		expect(evaluateThresholdWithConvertedValue(4, 3, '!=')).toBe(true);
+		expect(evaluateThresholdWithConvertedValue(3, 3, '!=')).toBe(false);
+	});
+
+	it('returns false for an unknown operator', () => {
+		expect(evaluateThresholdWithConvertedValue(3, 3, '~')).toBe(false);
 	});
 });

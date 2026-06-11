@@ -6,6 +6,8 @@ export const operatorOptions: DefaultOptionType[] = [
 	{ value: '>=', label: '>=' },
 	{ value: '<', label: '<' },
 	{ value: '<=', label: '<=' },
+	{ value: '=', label: '=' },
+	{ value: '!=', label: '≠' },
 ];
 
 export const showAsOptions: DefaultOptionType[] = [
