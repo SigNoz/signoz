@@ -21,10 +21,7 @@ export interface VariableSelectionSlice {
 		selection: VariableSelection,
 	) => void;
 	/** Bulk set (used to seed from URL/localStorage/defaults on load). */
-	setVariableValues: (
-		dashboardId: string,
-		values: VariableSelectionMap,
-	) => void;
+	setVariableValues: (dashboardId: string, values: VariableSelectionMap) => void;
 }
 
 export const createVariableSelectionSlice: StateCreator<
