@@ -3358,18 +3358,17 @@ components:
     EmptystatetypesLastIngestedAt:
       properties:
         logs:
-          description: Null when no logs were ingested in the last 7 days.
+          description: Null when no logs have been ingested.
           format: date-time
           nullable: true
           type: string
         metrics:
-          description: Null when no metrics were ingested in the last 7 days. Excludes
-            span-generated metrics (signoz_ prefix), which only prove traces ingestion.
+          description: Null when no metrics have been ingested.
           format: date-time
           nullable: true
           type: string
         traces:
-          description: Null when no traces were ingested in the last 7 days.
+          description: Null when no traces have been ingested.
           format: date-time
           nullable: true
           type: string

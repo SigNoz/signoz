@@ -3,7 +3,6 @@ package statsreporter
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/huandu/go-sqlbuilder"
 
@@ -47,27 +46,21 @@ func (collector *telemetryStatsCollector) Collect(ctx context.Context, _ valuer.
 	}
 	stats["telemetry.metrics.count"] = metrics
 
-	// The epoch-to-now window preserves all-time last-observed semantics.
-	now := time.Now()
-
-	if tracesLastSeenAt, err := lastObservedTraces(ctx, collector.telemetryStore, time.Unix(0, 0), now); err != nil {
+	if tracesLastSeenAt, err := lastObservedTraces(ctx, collector.telemetryStore); err != nil {
 		return nil, err
 	} else if tracesLastSeenAt != nil {
 		stats["telemetry.traces.last_observed.time"] = tracesLastSeenAt.UTC()
 		stats["telemetry.traces.last_observed.time_unix"] = tracesLastSeenAt.Unix()
 	}
 
-	if logsLastSeenAt, err := lastObservedLogs(ctx, collector.telemetryStore, time.Unix(0, 0), now); err != nil {
+	if logsLastSeenAt, err := lastObservedLogs(ctx, collector.telemetryStore); err != nil {
 		return nil, err
 	} else if logsLastSeenAt != nil {
 		stats["telemetry.logs.last_observed.time"] = logsLastSeenAt.UTC()
 		stats["telemetry.logs.last_observed.time_unix"] = logsLastSeenAt.Unix()
 	}
 
-	// Sourced from the attributes metadata table (cheaper than scanning
-	// samples_v4) and excludes span-generated metrics, which only prove traces
-	// ingestion.
-	if metricsLastSeenAt, err := lastObservedMetrics(ctx, collector.telemetryStore, time.Unix(0, 0), now); err != nil {
+	if metricsLastSeenAt, err := lastObservedMetrics(ctx, collector.telemetryStore); err != nil {
 		return nil, err
 	} else if metricsLastSeenAt != nil {
 		stats["telemetry.metrics.last_observed.time"] = metricsLastSeenAt.UTC()

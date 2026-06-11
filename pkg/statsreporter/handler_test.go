@@ -29,9 +29,9 @@ var testOrgID = valuer.MustNewUUID("00000000-0000-0000-0000-000000000001")
 // Exact SQL the query builders must generate; mock expectations match on these
 // so any change to the statements fails the suite.
 const (
-	logsLastObservedSQL    = "SELECT fromUnixTimestamp64Nano(max(timestamp)) FROM signoz_logs.distributed_logs_v2 WHERE ts_bucket_start >= ? AND ts_bucket_start <= ? AND timestamp >= ? AND timestamp <= ?"
-	tracesLastObservedSQL  = "SELECT max(timestamp) FROM signoz_traces.distributed_signoz_index_v3 WHERE ts_bucket_start >= ? AND ts_bucket_start <= ? AND timestamp >= ? AND timestamp <= ?"
-	metricsLastObservedSQL = "SELECT max(last_reported_unix_milli) FROM signoz_metrics.distributed_metadata WHERE last_reported_unix_milli >= ? AND last_reported_unix_milli <= ? AND metric_name NOT LIKE ?"
+	logsLastObservedSQL    = "SELECT fromUnixTimestamp64Nano(max(timestamp)) FROM signoz_logs.distributed_logs_v2"
+	tracesLastObservedSQL  = "SELECT max(timestamp) FROM signoz_traces.distributed_signoz_index_v3"
+	metricsLastObservedSQL = "SELECT toDateTime(max(unix_milli) / 1000) FROM signoz_metrics.distributed_samples_v4"
 )
 
 func infraMetricsProbeSQL() string {
@@ -145,14 +145,13 @@ func TestGetCollectedCount(t *testing.T) {
 }
 
 func TestLastObservedLogs(t *testing.T) {
-	t.Run("BoundedWindow_GeneratesExpectedSQL", func(t *testing.T) {
+	t.Run("GeneratesProviderSQL", func(t *testing.T) {
 		ts := telemetrystoretest.New(telemetrystore.Config{}, sqlmock.QueryMatcherRegexp)
-		now := time.Unix(2000, 0)
 		lastIngested := time.Unix(1999, 0).UTC()
 
 		expectLogsLastIngested(ts.Mock(), lastIngested)
 
-		got, err := lastObservedLogs(context.Background(), ts, now.Add(-time.Hour), now)
+		got, err := lastObservedLogs(context.Background(), ts)
 
 		require.NoError(t, err)
 		require.NotNil(t, got)
@@ -162,14 +161,13 @@ func TestLastObservedLogs(t *testing.T) {
 }
 
 func TestLastObservedTraces(t *testing.T) {
-	t.Run("BoundedWindow_GeneratesExpectedSQL", func(t *testing.T) {
+	t.Run("GeneratesProviderSQL", func(t *testing.T) {
 		ts := telemetrystoretest.New(telemetrystore.Config{}, sqlmock.QueryMatcherRegexp)
-		now := time.Unix(2000, 0)
 		lastIngested := time.Unix(1999, 0).UTC()
 
 		expectTracesLastIngested(ts.Mock(), lastIngested)
 
-		got, err := lastObservedTraces(context.Background(), ts, now.Add(-time.Hour), now)
+		got, err := lastObservedTraces(context.Background(), ts)
 
 		require.NoError(t, err)
 		require.NotNil(t, got)
@@ -179,20 +177,17 @@ func TestLastObservedTraces(t *testing.T) {
 }
 
 func TestLastObservedMetrics(t *testing.T) {
-	t.Run("SpanGeneratedMetricsExcluded_GeneratesExpectedSQL", func(t *testing.T) {
+	t.Run("GeneratesProviderSQL", func(t *testing.T) {
 		ts := telemetrystoretest.New(telemetrystore.Config{}, sqlmock.QueryMatcherRegexp)
-		now := time.Unix(2000, 0)
 		lastIngested := time.Unix(1999, 0).UTC()
 
-		expectMetricsLastIngested(ts.Mock(), lastIngested.UnixMilli())
+		expectMetricsLastIngested(ts.Mock(), lastIngested)
 
-		got, err := lastObservedMetrics(context.Background(), ts, now.Add(-time.Hour), now)
+		got, err := lastObservedMetrics(context.Background(), ts)
 
 		require.NoError(t, err)
 		require.NotNil(t, got)
 		assert.Equal(t, lastIngested, *got)
-		// LIKE-escaped so the underscore matches literally, not as a wildcard.
-		assert.Equal(t, `signoz\_%`, spanGeneratedMetricsLikePattern)
 		assert.NoError(t, ts.Mock().ExpectationsWereMet())
 	})
 }
@@ -253,9 +248,9 @@ func TestGetOrgContextDerivesAggregates(t *testing.T) {
 				expectTracesLastIngested(chMock, time.Time{})
 			}
 			if tc.metrics {
-				expectMetricsLastIngested(chMock, lastIngested.UnixMilli())
+				expectMetricsLastIngested(chMock, lastIngested)
 			} else {
-				expectMetricsLastIngested(chMock, 0)
+				expectMetricsLastIngested(chMock, time.Time{})
 			}
 			expectInfraMetrics(chMock, false)
 
@@ -322,7 +317,7 @@ func TestGetOrgContextClickHouseErrorFails(t *testing.T) {
 		WillReturnRow(cmock.NewRow([]cmock.ColumnType{{Name: "max(timestamp)", Type: "DateTime64(9)"}}, nil)).
 		WillReturnError(assert.AnError)
 	expectTracesLastIngested(chMock, time.Time{})
-	expectMetricsLastIngested(chMock, 0)
+	expectMetricsLastIngested(chMock, time.Time{})
 	expectInfraMetrics(chMock, false)
 
 	orgContext, err := h.getOrgContext(context.Background(), testOrgID)
@@ -346,7 +341,7 @@ func newOrgContextTestHandler(t *testing.T, collectors OrgContextCollectors) (*h
 func expectTelemetryQuiet(mock cmock.ClickConnMockCommon) {
 	expectLogsLastIngested(mock, time.Time{})
 	expectTracesLastIngested(mock, time.Time{})
-	expectMetricsLastIngested(mock, 0)
+	expectMetricsLastIngested(mock, time.Time{})
 	expectInfraMetrics(mock, false)
 }
 
@@ -360,9 +355,9 @@ func expectTracesLastIngested(mock cmock.ClickConnMockCommon, lastIngestedAt tim
 		WillReturnRow(cmock.NewRow([]cmock.ColumnType{{Name: "max(timestamp)", Type: "DateTime64(9)"}}, []any{lastIngestedAt}))
 }
 
-func expectMetricsLastIngested(mock cmock.ClickConnMockCommon, lastIngestedMilli int64) {
+func expectMetricsLastIngested(mock cmock.ClickConnMockCommon, lastIngestedAt time.Time) {
 	mock.ExpectQueryRow(regexp.QuoteMeta(metricsLastObservedSQL)).
-		WillReturnRow(cmock.NewRow([]cmock.ColumnType{{Name: "max(last_reported_unix_milli)", Type: "Int64"}}, []any{lastIngestedMilli}))
+		WillReturnRow(cmock.NewRow([]cmock.ColumnType{{Name: "toDateTime(divide(max(unix_milli), 1000))", Type: "DateTime"}}, []any{lastIngestedAt}))
 }
 
 func expectInfraMetrics(mock cmock.ClickConnMockCommon, exists bool) {

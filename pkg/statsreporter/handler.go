@@ -75,7 +75,7 @@ func (h *handler) getOrgContext(ctx context.Context, orgID valuer.UUID) (*emptys
 	g, gCtx := errgroup.WithContext(ctx)
 
 	g.Go(func() error {
-		lastIngestedAt, err := lastObservedLogs(gCtx, h.telemetryStore, now.Add(-emptystatetypes.LastIngestedLookback), now)
+		lastIngestedAt, err := lastObservedLogs(gCtx, h.telemetryStore)
 		if err != nil {
 			return err
 		}
@@ -85,7 +85,7 @@ func (h *handler) getOrgContext(ctx context.Context, orgID valuer.UUID) (*emptys
 	})
 
 	g.Go(func() error {
-		lastIngestedAt, err := lastObservedTraces(gCtx, h.telemetryStore, now.Add(-emptystatetypes.LastIngestedLookback), now)
+		lastIngestedAt, err := lastObservedTraces(gCtx, h.telemetryStore)
 		if err != nil {
 			return err
 		}
@@ -95,7 +95,7 @@ func (h *handler) getOrgContext(ctx context.Context, orgID valuer.UUID) (*emptys
 	})
 
 	g.Go(func() error {
-		lastIngestedAt, err := lastObservedMetrics(gCtx, h.telemetryStore, now.Add(-emptystatetypes.LastIngestedLookback), now)
+		lastIngestedAt, err := lastObservedMetrics(gCtx, h.telemetryStore)
 		if err != nil {
 			return err
 		}

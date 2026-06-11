@@ -35,7 +35,7 @@ func TestTelemetryStatsCollectorCollect(t *testing.T) {
 	expectTelemetryCount(chMock, metricsCountSQL, 9)
 	expectTracesLastIngested(chMock, tracesAt)
 	expectLogsLastIngested(chMock, logsAt)
-	expectMetricsLastIngested(chMock, metricsAt.UnixMilli())
+	expectMetricsLastIngested(chMock, metricsAt)
 
 	stats, err := collector.Collect(context.Background(), testOrgID)
 
@@ -59,7 +59,7 @@ func TestTelemetryStatsCollectorOmitsQuietLastObserved(t *testing.T) {
 	expectTelemetryCount(chMock, metricsCountSQL, 0)
 	expectTracesLastIngested(chMock, time.Time{})
 	expectLogsLastIngested(chMock, time.Time{})
-	expectMetricsLastIngested(chMock, 0)
+	expectMetricsLastIngested(chMock, time.Time{})
 
 	stats, err := collector.Collect(context.Background(), testOrgID)
 

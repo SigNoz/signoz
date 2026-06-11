@@ -4830,19 +4830,19 @@ export interface EmptystatetypesLastIngestedAtDTO {
 	/**
 	 * @type string,null
 	 * @format date-time
-	 * @description Null when no logs were ingested in the last 7 days.
+	 * @description Null when no logs have been ingested.
 	 */
 	logs: string | null;
 	/**
 	 * @type string,null
 	 * @format date-time
-	 * @description Null when no metrics were ingested in the last 7 days. Excludes span-generated metrics (signoz_ prefix), which only prove traces ingestion.
+	 * @description Null when no metrics have been ingested.
 	 */
 	metrics: string | null;
 	/**
 	 * @type string,null
 	 * @format date-time
-	 * @description Null when no traces were ingested in the last 7 days.
+	 * @description Null when no traces have been ingested.
 	 */
 	traces: string | null;
 }

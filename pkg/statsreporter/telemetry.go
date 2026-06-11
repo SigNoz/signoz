@@ -11,12 +11,10 @@ import (
 	"github.com/huandu/go-sqlbuilder"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrytraces"
-	"github.com/SigNoz/signoz/pkg/types/emptystatetypes"
 	"github.com/SigNoz/signoz/pkg/types/inframonitoringtypes"
 )
 
@@ -26,9 +24,7 @@ var infraMetricNames = withUnderscoreMetricNames(slices.Concat(
 	inframonitoringtypes.NodesTableMetricNames,
 ))
 
-// Span-derived metrics (signoz_calls_total, signoz_latency, ...) come from the
-// collector's spanmetrics processor, so they must not count as metrics ingestion.
-const spanGeneratedMetricsLikePattern = `signoz\_%`
+const infraMetricLookback = 7 * 24 * time.Hour
 
 // Probe both dot-form and underscore-normalized names (dot_metrics_enabled).
 func withUnderscoreMetricNames(metricNames []string) []string {
@@ -49,72 +45,21 @@ func withUnderscoreMetricNames(metricNames []string) []string {
 	return normalized
 }
 
-// Last-observed queries are shared by the telemetry stats collector
-// (epoch-to-now window, 6h reporting cadence) and the org-context handler
-// (a bounded lookback window, per request). They are deployment-scoped
-// (telemetry tables have no org_id) and bounded on both sides so future-dated
-// rows cannot surface as last observed.
-
-func lastObservedLogs(ctx context.Context, telemetryStore telemetrystore.TelemetryStore, from time.Time, to time.Time) (*time.Time, error) {
-	sb := sqlbuilder.NewSelectBuilder()
-	sb.Select("fromUnixTimestamp64Nano(max(timestamp))")
-	sb.From(fmt.Sprintf("%s.%s", telemetrylogs.DBName, telemetrylogs.LogsV2TableName))
-	sb.Where(
-		sb.GE("ts_bucket_start", max(from.Unix()-querybuilder.BucketAdjustment, 0)),
-		sb.LE("ts_bucket_start", to.Unix()),
-		sb.GE("timestamp", fmt.Sprintf("%d", from.UnixNano())),
-		sb.LE("timestamp", fmt.Sprintf("%d", to.UnixNano())),
-	)
-
-	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-	return scanLastObserved(ctx, telemetryStore, "logs", query, args...)
+// Last-observed queries match the previous analytics provider queries. They are
+// deployment-scoped since telemetry tables have no org column.
+func lastObservedLogs(ctx context.Context, telemetryStore telemetrystore.TelemetryStore) (*time.Time, error) {
+	query := fmt.Sprintf("SELECT fromUnixTimestamp64Nano(max(timestamp)) FROM %s.%s", telemetrylogs.DBName, telemetrylogs.LogsV2TableName)
+	return scanLastObserved(ctx, telemetryStore, "logs", query)
 }
 
-func lastObservedTraces(ctx context.Context, telemetryStore telemetrystore.TelemetryStore, from time.Time, to time.Time) (*time.Time, error) {
-	sb := sqlbuilder.NewSelectBuilder()
-	sb.Select("max(timestamp)")
-	sb.From(fmt.Sprintf("%s.%s", telemetrytraces.DBName, telemetrytraces.SpanIndexV3TableName))
-	sb.Where(
-		sb.GE("ts_bucket_start", max(from.Unix()-querybuilder.BucketAdjustment, 0)),
-		sb.LE("ts_bucket_start", to.Unix()),
-		sb.GE("timestamp", fmt.Sprintf("%d", from.UnixNano())),
-		sb.LE("timestamp", fmt.Sprintf("%d", to.UnixNano())),
-	)
-
-	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-	return scanLastObserved(ctx, telemetryStore, "traces", query, args...)
+func lastObservedTraces(ctx context.Context, telemetryStore telemetrystore.TelemetryStore) (*time.Time, error) {
+	query := fmt.Sprintf("SELECT max(timestamp) FROM %s.%s", telemetrytraces.DBName, telemetrytraces.SpanIndexV3TableName)
+	return scanLastObserved(ctx, telemetryStore, "traces", query)
 }
 
-// lastObservedMetrics reads the attributes metadata table, a maintained
-// per-metric last-seen that is far cheaper than scanning samples.
-func lastObservedMetrics(ctx context.Context, telemetryStore telemetrystore.TelemetryStore, from time.Time, to time.Time) (*time.Time, error) {
-	sb := sqlbuilder.NewSelectBuilder()
-	sb.Select("max(last_reported_unix_milli)")
-	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.AttributesMetadataTableName))
-	sb.Where(
-		sb.GE("last_reported_unix_milli", from.UnixMilli()),
-		sb.LE("last_reported_unix_milli", to.UnixMilli()),
-		sb.NotLike("metric_name", spanGeneratedMetricsLikePattern),
-	)
-
-	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-
-	var lastObservedMilli sql.NullInt64
-	err := telemetryStore.ClickhouseDB().QueryRow(ctx, query, args...).Scan(&lastObservedMilli)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil //nolint:nilnil
-		}
-
-		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to check metrics last observed")
-	}
-
-	if !lastObservedMilli.Valid || lastObservedMilli.Int64 == 0 {
-		return nil, nil //nolint:nilnil
-	}
-
-	lastObservedAt := time.UnixMilli(lastObservedMilli.Int64).UTC()
-	return &lastObservedAt, nil
+func lastObservedMetrics(ctx context.Context, telemetryStore telemetrystore.TelemetryStore) (*time.Time, error) {
+	query := fmt.Sprintf("SELECT toDateTime(max(unix_milli) / 1000) FROM %s.%s", telemetrymetrics.DBName, telemetrymetrics.SamplesV4TableName)
+	return scanLastObserved(ctx, telemetryStore, "metrics", query)
 }
 
 func scanLastObserved(ctx context.Context, telemetryStore telemetrystore.TelemetryStore, signal string, query string, args ...any) (*time.Time, error) {
@@ -137,7 +82,7 @@ func scanLastObserved(ctx context.Context, telemetryStore telemetrystore.Telemet
 }
 
 func (h *handler) getHasInfraMetrics(ctx context.Context, now time.Time) (bool, error) {
-	cutoff := now.Add(-emptystatetypes.LastIngestedLookback)
+	cutoff := now.Add(-infraMetricLookback)
 
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select("1")
