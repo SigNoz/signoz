@@ -1,0 +1,256 @@
+.model-cost-drawer {
+	.ant-drawer-body {
+		padding: 20px 24px;
+		display: flex;
+		flex-direction: column;
+		gap: 18px;
+	}
+
+	&__title {
+		h3 {
+			margin: 0;
+			font-size: 16px;
+			font-weight: 600;
+		}
+
+		p {
+			margin: 4px 0 0;
+			color: var(--bg-vanilla-400);
+			font-size: 12px;
+		}
+	}
+
+	&__footer {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 12px 16px;
+		border-top: 1px solid var(--bg-slate-300);
+
+		&-right {
+			display: flex;
+			gap: 8px;
+			margin-left: auto;
+		}
+	}
+
+	.drawer-section {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+
+		label,
+		.field-label {
+			font-size: 12px;
+			font-weight: 600;
+			color: var(--bg-vanilla-200);
+		}
+
+		.help {
+			margin: 0;
+			font-size: 11px;
+		}
+	}
+
+	.muted {
+		color: var(--bg-vanilla-400);
+	}
+
+	.required {
+		color: var(--bg-cherry-400);
+	}
+
+	.full-width {
+		width: 100%;
+	}
+
+	.drawer-surface {
+		padding: 14px;
+		border-radius: 6px;
+		background: rgba(255, 255, 255, 0.02);
+		border: 1px solid var(--bg-slate-300);
+
+		&__head {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			margin-bottom: 10px;
+
+			h4 {
+				margin: 0;
+				font-size: 13px;
+				font-weight: 600;
+				text-transform: uppercase;
+				letter-spacing: 0.04em;
+				color: var(--bg-vanilla-300);
+			}
+		}
+	}
+
+	.managed-label {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+		font-size: 11px;
+		color: var(--bg-vanilla-400);
+	}
+
+	.pattern-chips {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 6px;
+		min-height: 28px;
+	}
+
+	.pattern-chip {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+
+		&__remove {
+			background: transparent;
+			border: none;
+			padding: 0;
+			margin-left: 2px;
+			cursor: pointer;
+			color: inherit;
+			display: inline-flex;
+			align-items: center;
+
+			&:hover {
+				color: var(--bg-cherry-400);
+			}
+		}
+	}
+
+	.pattern-add {
+		display: flex;
+		gap: 6px;
+	}
+
+	.pattern-test {
+		display: flex;
+		gap: 10px;
+		align-items: center;
+		flex-wrap: wrap;
+		margin-top: 6px;
+
+		&__result {
+			font-size: 12px;
+
+			&--match {
+				color: var(--bg-forest-400);
+			}
+
+			&--no-match {
+				color: var(--bg-cherry-400);
+			}
+		}
+	}
+
+	.source-radio-group {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		width: 100%;
+	}
+
+	.source-radio {
+		display: flex;
+		align-items: flex-start;
+		gap: 8px;
+		padding: 10px 12px;
+		border-radius: 4px;
+		border: 1px solid transparent;
+		background: rgba(255, 255, 255, 0.02);
+		margin: 0;
+		width: 100%;
+
+		&__title {
+			font-weight: 600;
+			font-size: 13px;
+		}
+
+		&__desc {
+			font-size: 12px;
+			color: var(--bg-vanilla-400);
+		}
+
+		&.ant-radio-wrapper-checked.source-radio--auto {
+			background: rgba(78, 116, 248, 0.1);
+			border-color: rgba(78, 116, 248, 0.3);
+		}
+
+		&.ant-radio-wrapper-checked.source-radio--override {
+			background: rgba(245, 175, 25, 0.1);
+			border-color: rgba(245, 175, 25, 0.3);
+		}
+	}
+
+	.reset-confirm {
+		margin-top: 12px;
+		padding: 12px;
+		border-radius: 4px;
+		background: rgba(78, 116, 248, 0.06);
+		border: 1px solid rgba(78, 116, 248, 0.2);
+
+		p {
+			margin: 0 0 10px;
+			font-size: 12px;
+		}
+
+		&__actions {
+			display: flex;
+			gap: 8px;
+			justify-content: flex-end;
+		}
+	}
+
+	.pricing-grid {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 12px;
+	}
+
+	.pricing-field {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+
+		.ant-input-number {
+			width: 100%;
+		}
+	}
+
+	.cache-mode-field {
+		margin-top: 10px;
+	}
+
+	.extras-divider {
+		margin-top: 14px;
+		margin-bottom: 6px;
+		font-size: 11px;
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+		color: var(--bg-vanilla-400);
+	}
+
+	.cost-preview {
+		&__line {
+			font-family: var(--code-font-family, monospace);
+			font-size: 12px;
+
+			strong {
+				margin-left: 4px;
+			}
+		}
+	}
+
+	.drawer-error {
+		padding: 10px 12px;
+		border-radius: 4px;
+		background: rgba(255, 90, 90, 0.08);
+		color: var(--bg-cherry-400);
+		font-size: 12px;
+	}
+}
