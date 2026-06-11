@@ -22,10 +22,19 @@ type PanelPlugin struct {
 	Spec any             `json:"spec" required:"true"`
 }
 
-// PrepareJSONSchema drops the reflected struct shape (type: object, properties)
-// from the envelope so that only the JSONSchemaOneOf result binds.
+// PrepareJSONSchema marks the envelope with x-signoz-discriminator;
+// signoz.attachDiscriminators promotes it to a real OpenAPI 3 discriminator
+// (and strips the duplicate parent properties) after reflection.
 func (PanelPlugin) PrepareJSONSchema(s *jsonschema.Schema) error {
-	return clearOneOfParentShape(s)
+	return markDiscriminator(s, "kind", map[string]string{
+		string(PanelKindTimeSeries): schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpec"),
+		string(PanelKindBarChart):   schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBarChartPanelSpec"),
+		string(PanelKindNumber):     schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesNumberPanelSpec"),
+		string(PanelKindPieChart):   schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesPieChartPanelSpec"),
+		string(PanelKindTable):      schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTablePanelSpec"),
+		string(PanelKindHistogram):  schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHistogramPanelSpec"),
+		string(PanelKindList):       schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpec"),
+	})
 }
 
 func (p *PanelPlugin) UnmarshalJSON(data []byte) error {
@@ -77,7 +86,14 @@ type QueryPlugin struct {
 }
 
 func (QueryPlugin) PrepareJSONSchema(s *jsonschema.Schema) error {
-	return clearOneOfParentShape(s)
+	return markDiscriminator(s, "kind", map[string]string{
+		string(QueryKindBuilder):       schemaRef("DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBuilderQuerySpec"),
+		string(QueryKindComposite):     schemaRef("DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5CompositeQuery"),
+		string(QueryKindFormula):       schemaRef("DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderFormula"),
+		string(QueryKindPromQL):        schemaRef("DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5PromQuery"),
+		string(QueryKindClickHouseSQL): schemaRef("DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5ClickHouseQuery"),
+		string(QueryKindTraceOperator): schemaRef("DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderTraceOperator"),
+	})
 }
 
 func (p *QueryPlugin) UnmarshalJSON(data []byte) error {
@@ -128,7 +144,11 @@ type VariablePlugin struct {
 }
 
 func (VariablePlugin) PrepareJSONSchema(s *jsonschema.Schema) error {
-	return clearOneOfParentShape(s)
+	return markDiscriminator(s, "kind", map[string]string{
+		string(VariableKindDynamic): schemaRef("DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDynamicVariableSpec"),
+		string(VariableKindQuery):   schemaRef("DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesQueryVariableSpec"),
+		string(VariableKindCustom):  schemaRef("DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesCustomVariableSpec"),
+	})
 }
 
 func (p *VariablePlugin) UnmarshalJSON(data []byte) error {
@@ -176,7 +196,9 @@ type DatasourcePlugin struct {
 }
 
 func (DatasourcePlugin) PrepareJSONSchema(s *jsonschema.Schema) error {
-	return clearOneOfParentShape(s)
+	return markDiscriminator(s, "kind", map[string]string{
+		string(DatasourceKindSigNoz): schemaRef("DashboardtypesDatasourcePluginVariantStruct"),
+	})
 }
 
 func (p *DatasourcePlugin) UnmarshalJSON(data []byte) error {
@@ -291,10 +313,28 @@ func decodeSpec(specJSON []byte, target any, kind string) (any, error) {
 	return target, nil
 }
 
-// clearOneOfParentShape drops Type and Properties on a schema that also has a JSONSchemaOneOf.
-func clearOneOfParentShape(s *jsonschema.Schema) error {
-	s.Type = nil
-	s.Properties = nil
+// signozDiscriminatorKey is the extension key that signoz.attachDiscriminators
+// promotes into a native OpenAPI 3 discriminator after reflection.
+const signozDiscriminatorKey = "x-signoz-discriminator"
+
+// schemaRef builds a local component schema reference for a discriminator mapping.
+func schemaRef(name string) string {
+	return "#/components/schemas/" + name
+}
+
+// markDiscriminator tags a oneOf envelope schema with x-signoz-discriminator so
+// signoz.attachDiscriminators promotes it to a real OpenAPI 3 discriminator,
+// keyed on propertyName, with the given value -> schema-ref mapping. This turns
+// the union into a discriminated DTO (instead of an intersection) for generated
+// clients.
+func markDiscriminator(s *jsonschema.Schema, propertyName string, mapping map[string]string) error {
+	if s.ExtraProperties == nil {
+		s.ExtraProperties = map[string]any{}
+	}
+	s.ExtraProperties[signozDiscriminatorKey] = map[string]any{
+		"propertyName": propertyName,
+		"mapping":      mapping,
+	}
 	return nil
 }
 

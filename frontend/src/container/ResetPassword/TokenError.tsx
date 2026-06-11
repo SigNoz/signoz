@@ -1,7 +1,10 @@
-import { CircleAlert } from '@signozhq/icons';
+import { ArrowLeft, CircleAlert } from '@signozhq/icons';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import AuthError from 'components/AuthError/AuthError';
 import AuthPageContainer from 'components/AuthPageContainer';
+import ROUTES from 'constants/routes';
+import history from 'lib/history';
 import APIError from 'types/api/error';
 
 import './ResetPassword.styles.scss';
@@ -59,6 +62,16 @@ function TokenError({ error }: TokenErrorProps): JSX.Element {
 					</Typography.Text>
 				</div>
 				{error && <AuthError error={error} />}
+				<div className="reset-password-back-action">
+					<Button
+						variant="solid"
+						data-testid="back-to-login"
+						prefix={<ArrowLeft size={12} />}
+						onClick={(): void => history.push(ROUTES.LOGIN)}
+					>
+						Back to login
+					</Button>
+				</div>
 			</div>
 		</AuthPageContainer>
 	);

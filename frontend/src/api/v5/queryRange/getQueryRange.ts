@@ -8,6 +8,13 @@ import {
 	QueryRangePayloadV5,
 } from 'types/api/v5/queryRange';
 
+/**
+ * @deprecated Use the generated `useQueryRangeV5` hook (or `queryRangeV5` fetcher) from
+ * `api/generated/services/querier` instead. This hand-written client targets the
+ * same endpoint and will be removed once call sites migrate.
+ *
+ * Part of https://github.com/SigNoz/engineering-pod/issues/5289, add a comment or update when removing this method.
+ */
 export const getQueryRangeV5 = async (
 	props: QueryRangePayloadV5,
 	version: string,
