@@ -1,0 +1,40 @@
+{
+  "records": [
+    {
+      "deploymentName": "acc-dep-1",
+      "deploymentCPU": 1.0,
+      "deploymentCPURequest": 0.5,
+      "deploymentCPULimit": 0.4,
+      "deploymentMemory": 300000000.0,
+      "deploymentMemoryRequest": 0.5,
+      "deploymentMemoryLimit": 0.4,
+      "desiredPods": 3,
+      "availablePods": 2,
+      "podCountsByPhase": {
+        "pending": 0,
+        "running": 2,
+        "succeeded": 0,
+        "failed": 0,
+        "unknown": 0
+      }
+    },
+    {
+      "deploymentName": "acc-dep-2",
+      "deploymentCPU": 1.2,
+      "deploymentCPURequest": 0.4,
+      "deploymentCPULimit": 0.3,
+      "deploymentMemory": 600000000.0,
+      "deploymentMemoryRequest": 0.4,
+      "deploymentMemoryLimit": 0.3,
+      "desiredPods": 4,
+      "availablePods": 4,
+      "podCountsByPhase": {
+        "pending": 0,
+        "running": 3,
+        "succeeded": 0,
+        "failed": 0,
+        "unknown": 0
+      }
+    }
+  ]
+}

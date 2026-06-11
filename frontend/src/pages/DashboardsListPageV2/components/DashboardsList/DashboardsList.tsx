@@ -8,6 +8,10 @@ import {
 	createDashboardV2,
 	useListDashboardsV2,
 } from 'api/generated/services/dashboard';
+import {
+	DashboardtypesListOrderDTO,
+	DashboardtypesListSortDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import ROUTES from 'constants/routes';
 import { RequestDashboardBtn } from 'container/ListOfDashboard/RequestDashboardBtn';
 import useComponentPermission from 'hooks/useComponentPermission';
@@ -24,8 +28,6 @@ import {
 	useSearch,
 	useSortColumn,
 	useSortOrder,
-	type SortColumn,
-	type SortOrder,
 } from '../../hooks/useDashboardsListQueryParams';
 import type { DashboardListItem } from '../../utils';
 import ConfigureMetadataModal from '../ConfigureMetadataModal/ConfigureMetadataModal';
@@ -131,6 +133,10 @@ function DashboardsList(): JSX.Element {
 				tags: null,
 				spec: {
 					display: { name: t('new_dashboard_title', { ns: 'dashboard' }) },
+					layouts: [],
+					panels: {},
+					variables: [],
+					// TODO(@AshwinBhatkal): duration and refresh interval need to be integrated
 				},
 			});
 			safeNavigate(
@@ -150,7 +156,7 @@ function DashboardsList(): JSX.Element {
 	}, []);
 
 	const onSortChange = useCallback(
-		(column: SortColumn): void => {
+		(column: DashboardtypesListSortDTO): void => {
 			void setSortColumn(column);
 			void setPage(1);
 		},
@@ -158,7 +164,7 @@ function DashboardsList(): JSX.Element {
 	);
 
 	const onOrderChange = useCallback(
-		(order: SortOrder): void => {
+		(order: DashboardtypesListOrderDTO): void => {
 			void setSortOrder(order);
 			void setPage(1);
 		},
