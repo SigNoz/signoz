@@ -1,6 +1,8 @@
 package telemetrytraces
 
-import "github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+import (
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+)
 
 var (
 	IntrinsicFields = map[string]telemetrytypes.TelemetryFieldKey{

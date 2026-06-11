@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { Switch } from 'antd';
+import { Switch } from '@signozhq/ui/switch';
 import logEvent from 'api/common/logEvent';
 import { Delete } from '@signozhq/icons';
 import { useTimezone } from 'providers/Timezone';
@@ -49,10 +49,10 @@ function TimezoneAdaptation(): JSX.Element {
 			<div className="timezone-adaption__header">
 				<h2 className="timezone-adaption__title">Adapt to my timezone</h2>
 				<Switch
-					checked={isAdaptationEnabled}
+					value={isAdaptationEnabled}
 					onChange={handleSwitchChange}
 					style={getSwitchStyles()}
-					data-testid="timezone-adaptation-switch"
+					testId="timezone-adaptation-switch"
 				/>
 			</div>
 

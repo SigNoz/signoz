@@ -1,7 +1,9 @@
 import { ReactNode } from 'react';
 import { Badge } from '@signozhq/ui/badge';
+import ExpandableValue from 'periscope/components/ExpandableValue';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
 
+import styles from './SpanDetailsPanel.module.scss';
 import { TraceIdField } from './TraceIdField';
 
 interface HighlightedOption {
@@ -17,7 +19,7 @@ export const HIGHLIGHTED_OPTIONS: HighlightedOption[] = [
 		render: (span): ReactNode | null =>
 			span['service.name'] ? (
 				<Badge color="vanilla">
-					<span className="span-details-panel__service-dot" />
+					<span className={styles.serviceDot} />
 					{span['service.name']}
 				</Badge>
 			) : null,
@@ -47,7 +49,15 @@ export const HIGHLIGHTED_OPTIONS: HighlightedOption[] = [
 		label: 'STATUS MESSAGE',
 		render: (span): ReactNode | null =>
 			span.status_message ? (
-				<Badge color="vanilla">{span.status_message}</Badge>
+				<ExpandableValue value={span.status_message} title="Status message">
+					<Badge
+						color="vanilla"
+						textEllipsis="end"
+						className={styles.statusMessageBadge}
+					>
+						{span.status_message}
+					</Badge>
+				</ExpandableValue>
 			) : null,
 	},
 ];

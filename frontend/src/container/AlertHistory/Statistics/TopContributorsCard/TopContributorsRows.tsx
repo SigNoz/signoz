@@ -1,6 +1,7 @@
 import { HTMLAttributes } from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { Progress, Table, TableColumnsType as ColumnsType } from 'antd';
+import { Table, TableColumnsType as ColumnsType } from 'antd';
+import { Progress } from '@signozhq/ui/progress';
 import logEvent from 'api/common/logEvent';
 import { ConditionalAlertPopover } from 'container/AlertHistory/AlertPopover/AlertPopover';
 import AlertLabels from 'pages/AlertDetails/AlertHeader/AlertLabels/AlertLabels';
@@ -51,8 +52,8 @@ function TopContributorsRows({
 					<Progress
 						percent={(count / totalCurrentTriggers) * 100}
 						showInfo={false}
-						trailColor="rgba(255, 255, 255, 0)"
 						strokeColor={Color.BG_ROBIN_500}
+						className="top-contributors-progress"
 					/>
 				</ConditionalAlertPopover>
 			),

@@ -1,39 +1,42 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Button } from '@signozhq/ui/button';
 import {
-	Tooltip,
+	TooltipRoot,
 	TooltipContent,
 	TooltipProvider,
 	TooltipTrigger,
 } from '@signozhq/ui/tooltip';
 import { Skeleton } from 'antd';
 import setLocalStorageKey from 'api/browser/localstorage/set';
+import cx from 'classnames';
+import FieldsSelector from 'components/FieldsSelector';
 import HttpStatusBadge from 'components/HttpStatusBadge/HttpStatusBadge';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
 import dayjs from 'dayjs';
-import history from 'lib/history';
+import history, { hasInAppHistory } from 'lib/history';
 import {
 	ArrowLeft,
 	CalendarClock,
 	ChartPie,
+	CornerUpLeft,
 	Server,
 	Timer,
 } from '@signozhq/icons';
-import { FloatingPanel } from 'periscope/components/FloatingPanel';
 import KeyValueLabel from 'periscope/components/KeyValueLabel';
 import { TraceDetailV2URLProps } from 'types/api/trace/getTraceV2';
 import { DataSource } from 'types/common/queryBuilder';
 
-import FieldsSettings from '../components/FieldsSettings/FieldsSettings';
+import { TraceDetailEventKeys, TraceDetailEvents } from '../events';
+import { useTraceDetailLogEvent } from '../hooks/useTraceDetailLogEvent';
 import { useTraceStore } from '../stores/traceStore';
 import AnalyticsPanel from '../SpanDetailsPanel/AnalyticsPanel/AnalyticsPanel';
 import Filters from '../TraceWaterfall/TraceWaterfallStates/Success/Filters/Filters';
 import TraceOptionsMenu from './TraceOptionsMenu';
 
-import './TraceDetailsHeader.styles.scss';
+import styles from './TraceDetailsHeader.module.scss';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 
 interface FilterMetadata {
@@ -68,7 +71,7 @@ function DetailsLoader(): JSX.Element {
 					key={i}
 					active
 					size="small"
-					className="trace-details-header__skeleton"
+					className={styles.skeleton}
 				/>
 			))}
 		</>
@@ -89,20 +92,38 @@ function TraceDetailsHeader({
 	const previewFields = useTraceStore((s) => s.previewFields);
 	const setPreviewFields = useTraceStore((s) => s.setPreviewFields);
 
+	const logTraceEvent = useTraceDetailLogEvent('v3', traceID || '');
+	const pageLoadedAtRef = useRef(Date.now());
+
 	const handleSwitchToOldView = useCallback((): void => {
+		logTraceEvent(TraceDetailEvents.ViewSwitched, {
+			[TraceDetailEventKeys.From]: 'v3',
+			[TraceDetailEventKeys.To]: 'v2',
+			[TraceDetailEventKeys.DwellMs]: Date.now() - pageLoadedAtRef.current,
+		});
 		setLocalStorageKey(LOCALSTORAGE.TRACE_DETAILS_PREFER_OLD_VIEW, 'true');
 		const oldUrl = `/trace-old/${traceID}${window.location.search}`;
 		history.replace(oldUrl);
-	}, [traceID]);
+	}, [traceID, logTraceEvent]);
+
+	const handleToggleAnalytics = useCallback((): void => {
+		logTraceEvent(TraceDetailEvents.AnalyticsPanelToggled, {
+			[TraceDetailEventKeys.Open]: !isAnalyticsOpen,
+		});
+		setIsAnalyticsOpen((prev) => !prev);
+	}, [logTraceEvent, isAnalyticsOpen]);
+
+	const handleAnalyticsTabChange = useCallback(
+		(tab: string): void => {
+			logTraceEvent(TraceDetailEvents.AnalyticsTabChanged, {
+				[TraceDetailEventKeys.Tab]: tab,
+			});
+		},
+		[logTraceEvent],
+	);
 
 	const handlePreviousBtnClick = useCallback((): void => {
-		const isSpaNavigate =
-			document.referrer &&
-			// oxlint-disable-next-line signoz/no-raw-absolute-path
-			new URL(document.referrer).origin === window.location.origin;
-		const hasBackHistory = window.history.length > 1;
-
-		if (isSpaNavigate && hasBackHistory) {
+		if (hasInAppHistory()) {
 			history.goBack();
 		} else {
 			history.push(ROUTES.TRACES_EXPLORER);
@@ -120,16 +141,17 @@ function TraceDetailsHeader({
 		convertTimeToRelevantUnit(durationMs);
 
 	return (
-		<div className="trace-details-header-wrapper">
-			<div className="trace-details-header">
+		<div className={styles.wrapper}>
+			<div className={styles.header}>
 				{!isFilterExpanded && (
-					<>
+					<div className={styles.traceIdSection}>
 						<Button
 							variant="solid"
 							color="secondary"
 							size="md"
-							className="trace-details-header__back-btn"
+							className={styles.backBtn}
 							onClick={handlePreviousBtnClick}
+							aria-label="Back"
 						>
 							<ArrowLeft size={14} />
 						</Button>
@@ -138,39 +160,57 @@ function TraceDetailsHeader({
 							badgeValue={traceID || ''}
 							maxCharacters={100}
 						/>
-					</>
+					</div>
 				)}
 				{isDataLoaded && (
-					<>
+					<div
+						className={cx(
+							styles.filterSection,
+							isFilterExpanded && styles.isExpanded,
+						)}
+					>
 						{!isFilterExpanded && (
-							<>
-								<TooltipProvider>
-									<Tooltip>
+							<TooltipProvider>
+								<div className={styles.headerActions}>
+									<TooltipRoot>
 										<TooltipTrigger asChild>
 											<Button
 												variant="ghost"
 												size="icon"
 												color="secondary"
-												className="trace-details-header__analytics-btn"
-												onClick={(): void => setIsAnalyticsOpen((prev) => !prev)}
+												aria-label="Switch to legacy trace view"
+												onClick={handleSwitchToOldView}
+											>
+												<CornerUpLeft size={14} />
+											</Button>
+										</TooltipTrigger>
+										<TooltipContent>Switch to legacy trace view</TooltipContent>
+									</TooltipRoot>
+									<TooltipRoot>
+										<TooltipTrigger asChild>
+											<Button
+												variant="ghost"
+												size="icon"
+												color="secondary"
+												aria-label="Analytics"
+												onClick={handleToggleAnalytics}
 											>
 												<ChartPie size={14} />
 											</Button>
 										</TooltipTrigger>
 										<TooltipContent>Analytics</TooltipContent>
-									</Tooltip>
-								</TooltipProvider>
-								<TraceOptionsMenu
-									showTraceDetails={showTraceDetails}
-									onToggleTraceDetails={handleToggleTraceDetails}
-									onOpenPreviewFields={(): void => setIsPreviewFieldsOpen(true)}
-								/>
-							</>
+									</TooltipRoot>
+									<TraceOptionsMenu
+										showTraceDetails={showTraceDetails}
+										onToggleTraceDetails={handleToggleTraceDetails}
+										onOpenPreviewFields={(): void => setIsPreviewFieldsOpen(true)}
+									/>
+								</div>
+							</TooltipProvider>
 						)}
 						<div
-							className={`trace-details-header__filter${
-								isFilterExpanded ? ' trace-details-header__filter--expanded' : ''
-							}`}
+							key="filter"
+							className={cx(styles.filter, isFilterExpanded && styles.isExpanded)}
 						>
 							<Filters
 								startTime={filterMetadata.startTime}
@@ -182,38 +222,27 @@ function TraceDetailsHeader({
 								onCollapse={(): void => setIsFilterExpanded(false)}
 							/>
 						</div>
-						{!isFilterExpanded && (
-							<Button
-								variant="solid"
-								color="secondary"
-								size="sm"
-								className="trace-details-header__old-view-btn"
-								onClick={handleSwitchToOldView}
-							>
-								Legacy View
-							</Button>
-						)}
-					</>
+					</div>
 				)}
 			</div>
 
 			{showTraceDetails && (
-				<div className="trace-details-header__sub-header">
+				<div className={styles.subHeader}>
 					{traceMetadata ? (
 						<>
-							<span className="trace-details-header__sub-item">
+							<span className={styles.subItem}>
 								<Server size={13} />
 								{traceMetadata.rootServiceName}
-								<span className="trace-details-header__separator">—</span>
-								<span className="trace-details-header__entry-point-badge">
+								<span className={styles.separator}>—</span>
+								<span className={styles.entryPointBadge}>
 									{traceMetadata.rootServiceEntryPoint}
 								</span>
 							</span>
-							<span className="trace-details-header__sub-item">
+							<span className={styles.subItem}>
 								<Timer size={13} />
 								{parseFloat(formattedDuration.toFixed(2))} {timeUnitName}
 							</span>
-							<span className="trace-details-header__sub-item">
+							<span className={styles.subItem}>
 								<CalendarClock size={13} />
 								{dayjs(traceMetadata.startTimestampMillis).format(
 									DATE_TIME_FORMATS.DD_MMM_YYYY_HH_MM_SS,
@@ -229,30 +258,20 @@ function TraceDetailsHeader({
 				</div>
 			)}
 
-			{isPreviewFieldsOpen && (
-				<FloatingPanel
-					isOpen
-					width={350}
-					height={window.innerHeight - 100}
-					defaultPosition={{
-						x: window.innerWidth - 350 - 100,
-						y: 50,
-					}}
-					enableResizing={false}
-				>
-					<FieldsSettings
-						title="Preview fields"
-						fields={previewFields}
-						onFieldsChange={setPreviewFields}
-						onClose={(): void => setIsPreviewFieldsOpen(false)}
-						dataSource={DataSource.TRACES}
-					/>
-				</FloatingPanel>
-			)}
+			<FieldsSelector
+				isOpen={isPreviewFieldsOpen}
+				title="Preview fields"
+				fields={previewFields}
+				onFieldsChange={setPreviewFields}
+				onClose={(): void => setIsPreviewFieldsOpen(false)}
+				signal={DataSource.TRACES}
+				maxFields={10}
+			/>
 
 			<AnalyticsPanel
 				isOpen={isAnalyticsOpen}
 				onClose={(): void => setIsAnalyticsOpen(false)}
+				onTabChange={handleAnalyticsTabChange}
 			/>
 		</div>
 	);

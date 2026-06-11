@@ -2,6 +2,8 @@ package envprovider
 
 import (
 	"context"
+	"os"
+	"strings"
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/config"
@@ -9,7 +11,21 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// clearSignozEnv unsets all existing SIGNOZ_* env vars for the duration of the test.
+func clearSignozEnv(t *testing.T) {
+	t.Helper()
+	for _, kv := range os.Environ() {
+		if strings.HasPrefix(kv, prefix) {
+			key := strings.SplitN(kv, "=", 2)[0]
+			orig, _ := os.LookupEnv(key)
+			os.Unsetenv(key)
+			t.Cleanup(func() { os.Setenv(key, orig) })
+		}
+	}
+}
+
 func TestGetWithStrings(t *testing.T) {
+	clearSignozEnv(t)
 	t.Setenv("SIGNOZ_K1_K2", "string")
 	t.Setenv("SIGNOZ_K3__K4", "string")
 	t.Setenv("SIGNOZ_K5__K6_K7__K8", "string")
@@ -31,6 +47,7 @@ func TestGetWithStrings(t *testing.T) {
 }
 
 func TestGetWithNoPrefix(t *testing.T) {
+	clearSignozEnv(t)
 	t.Setenv("K1_K2", "string")
 	t.Setenv("K3_K4", "string")
 	expected := map[string]any{}
@@ -43,6 +60,7 @@ func TestGetWithNoPrefix(t *testing.T) {
 }
 
 func TestGetWithGoTypes(t *testing.T) {
+	clearSignozEnv(t)
 	t.Setenv("SIGNOZ_BOOL", "true")
 	t.Setenv("SIGNOZ_STRING", "string")
 	t.Setenv("SIGNOZ_INT", "1")

@@ -13,6 +13,7 @@ import { Events } from 'constants/events';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { getBasePath } from 'utils/basePath';
 import { eventEmitter } from 'utils/getEventEmitter';
+import { getIsNoAuthMode } from 'utils/noAuthMode';
 
 import apiV1, { apiAlertManager, apiV2, apiV3, apiV4, apiV5 } from './apiV1';
 import { Logout } from './utils';
@@ -108,7 +109,10 @@ export const interceptorRejected = async (
 		if (axios.isAxiosError(value) && value.response) {
 			const { response } = value;
 
+			const isNoAuthMode = getIsNoAuthMode();
+
 			if (
+				!isNoAuthMode &&
 				response.status === 401 &&
 				// if the session rotate call or the create session errors out with 401 or the delete sessions call returns 401 then we do not retry!
 				response.config.url !== '/sessions/rotate' &&
@@ -116,7 +120,8 @@ export const interceptorRejected = async (
 				!(
 					response.config.url === '/sessions' && response.config.method === 'delete'
 				) &&
-				response.config.url !== '/authz/check'
+				response.config.url !== '/authz/check' &&
+				response.config.url !== '/api/v2/reset_password_tokens/verify'
 			) {
 				try {
 					const accessToken = getLocalStorageApi(LOCALSTORAGE.AUTH_TOKEN);
@@ -140,16 +145,20 @@ export const interceptorRejected = async (
 						return await Promise.resolve(reResponse);
 					} catch (error) {
 						if ((error as AxiosError)?.response?.status === 401) {
-							Logout();
+							void Logout();
 						}
 					}
 				} catch (error) {
-					Logout();
+					void Logout();
 				}
 			}
 
-			if (response.status === 401 && response.config.url === '/sessions/rotate') {
-				Logout();
+			if (
+				!isNoAuthMode &&
+				response.status === 401 &&
+				response.config.url === '/sessions/rotate'
+			) {
+				void Logout();
 			}
 		}
 		return await Promise.reject(value);

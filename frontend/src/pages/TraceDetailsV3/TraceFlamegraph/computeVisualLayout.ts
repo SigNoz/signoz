@@ -18,6 +18,82 @@ export interface VisualLayout {
 	totalVisualRows: number;
 }
 
+// Above this many siblings under one parent, the connector-avoidance refinement
+// (Checks 2 & 3) is both visually meaningless — the row is already a dense wall —
+// and quadratic: every child deposits a connector point on each intermediate row,
+// which pushes later children even higher, which deposits more points. That
+// feedback loop inflates a layout needing ~50 rows to thousands and never
+// finishes on wide traces. Past the threshold we pack by overlap only.
+// Exported so the regression tests stay anchored to the real gate value.
+export const WIDE_GROUP_THRESHOLD = 512;
+
+/**
+ * Segment tree over rows that answers "lowest row index >= `from` whose smallest
+ * span start-time is >= `end`" in O(log rows). Used to place a large group of
+ * leaf siblings by overlap only: because siblings are processed in descending
+ * start order, every already-placed span on a row starts at or after the current
+ * one, so [start, end] overlaps a row iff some span there starts before `end` —
+ * i.e. the row is free iff its minimum start >= end. Each node stores the max of
+ * its subtree's per-row minimum starts so a free row can be found by descent.
+ */
+class LowestFreeRow {
+	private readonly size: number;
+
+	private readonly tree: Float64Array;
+
+	constructor(rows: number) {
+		let size = 1;
+		while (size < rows) {
+			size *= 2;
+		}
+		this.size = size;
+		this.tree = new Float64Array(size * 2).fill(Infinity);
+	}
+
+	place(row: number, start: number): void {
+		let i = row + this.size;
+		// A row's key is the minimum start among its spans. Children are processed
+		// in descending start order so a leaf's start is the new minimum, but a
+		// non-leaf subtree's descendant can land on a row out of order — take min.
+		if (start >= this.tree[i]) {
+			return;
+		}
+		this.tree[i] = start;
+		for (i >>= 1; i >= 1; i >>= 1) {
+			const next = Math.max(this.tree[2 * i], this.tree[2 * i + 1]);
+			if (this.tree[i] === next) {
+				break;
+			}
+			this.tree[i] = next;
+		}
+	}
+
+	lowestFrom(from: number, end: number): number {
+		return this.descend(1, 0, this.size - 1, from, end);
+	}
+
+	private descend(
+		node: number,
+		lo: number,
+		hi: number,
+		from: number,
+		end: number,
+	): number {
+		if (hi < from || this.tree[node] < end) {
+			return -1;
+		}
+		if (lo === hi) {
+			return lo;
+		}
+		const mid = (lo + hi) >> 1;
+		const left = this.descend(2 * node, lo, mid, from, end);
+		if (left !== -1) {
+			return left;
+		}
+		return this.descend(2 * node + 1, mid + 1, hi, from, end);
+	}
+}
+
 /**
  * Computes an overlap-safe visual layout for flamegraph spans using DFS ordering.
  *
@@ -214,7 +290,53 @@ export function computeVisualLayout(spans: FlamegraphSpan[][]): VisualLayout {
 		arr.push(point);
 	}
 
+	// Fast path for a parent with a very large group of children: pack by overlap
+	// only (descending greedy), skipping the quadratic connector-avoidance that
+	// spirals at this scale. Leaf children — the bulk of a wide trace — are placed
+	// in O(log rows) via the segment tree; the rare non-leaf subtree falls back to
+	// findPlacement against the shared interval map. Both structures are kept in
+	// sync so each placement sees all prior occupancy. Same ShapeEntry[] contract.
+	function computeWideShape(
+		rootSpan: FlamegraphSpan,
+		children: FlamegraphSpan[],
+	): ShapeEntry[] {
+		const shape: ShapeEntry[] = [{ span: rootSpan, relativeRow: 0 }];
+		const localIntervals = new Map<number, Array<[number, number]>>();
+		// Children occupy relative rows 1..children.length in the worst case.
+		const finder = new LowestFreeRow(children.length + 2);
+
+		const occupy = (row: number, span: FlamegraphSpan): void => {
+			const s = span.timestamp;
+			const e = span.timestamp + span.durationNano / 1e6;
+			shape.push({ span, relativeRow: row });
+			addIntervalTo(localIntervals, row, s, e);
+			finder.place(row, s);
+		};
+
+		for (const child of children) {
+			if (childrenMap.has(child.spanId)) {
+				// Non-leaf: place its whole subtree shape as a unit via findPlacement.
+				const childShape = computeSubtreeShape(child);
+				const offset = findPlacement(childShape, 1, localIntervals);
+				for (const entry of childShape) {
+					occupy(entry.relativeRow + offset, entry.span);
+				}
+			} else {
+				const end = child.timestamp + child.durationNano / 1e6;
+				occupy(finder.lowestFrom(1, end), child);
+			}
+		}
+
+		return shape;
+	}
+
 	function computeSubtreeShape(rootSpan: FlamegraphSpan): ShapeEntry[] {
+		const children = childrenMap.get(rootSpan.spanId);
+
+		if (children && children.length > WIDE_GROUP_THRESHOLD) {
+			return computeWideShape(rootSpan, children);
+		}
+
 		const localIntervals = new Map<number, Array<[number, number]>>();
 		const localConnectorPoints = new Map<number, number[]>();
 		const shape: ShapeEntry[] = [];
@@ -225,7 +347,6 @@ export function computeVisualLayout(spans: FlamegraphSpan[][]): VisualLayout {
 		shape.push({ span: rootSpan, relativeRow: 0 });
 		addIntervalTo(localIntervals, 0, rootStart, rootEnd);
 
-		const children = childrenMap.get(rootSpan.spanId);
 		if (children) {
 			for (const child of children) {
 				const childShape = computeSubtreeShape(child);

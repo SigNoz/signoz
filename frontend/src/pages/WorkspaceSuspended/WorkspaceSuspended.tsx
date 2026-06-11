@@ -6,14 +6,12 @@ import { Typography } from '@signozhq/ui/typography';
 import manageCreditCardApi from 'api/v1/portal/create';
 import RefreshPaymentStatus from 'components/RefreshPaymentStatus/RefreshPaymentStatus';
 import ROUTES from 'constants/routes';
-import dayjs from 'dayjs';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { useAppContext } from 'providers/App/App';
 import APIError from 'types/api/error';
 import { LicensePlatform, LicenseState } from 'types/api/licensesV3/getActive';
 import { getBaseUrl } from 'utils/basePath';
-import { getFormattedDateWithMinutes } from 'utils/timeUtils';
 
 import featureGraphicCorrelationUrl from '@/assets/Images/feature-graphic-correlation.svg';
 
@@ -109,15 +107,6 @@ function WorkspaceSuspended(): JSX.Element {
 										</Typography.Title>
 										<Typography.Text className="workspace-suspended__details">
 											{t('actionDescription')}
-											<br />
-											{t('yourDataIsSafe')}{' '}
-											<span className="workspace-suspended__details__highlight">
-												{getFormattedDateWithMinutes(
-													dayjs(activeLicense?.event_queue?.scheduled_at).unix() ||
-														Date.now(),
-												)}
-											</span>{' '}
-											{t('actNow')}
 										</Typography.Text>
 									</Space>
 								</Col>
@@ -154,7 +143,7 @@ function WorkspaceSuspended(): JSX.Element {
 										>
 											{t('continueMyJourney')}
 										</Button>
-										<RefreshPaymentStatus btnShape="round" />
+										<RefreshPaymentStatus />
 									</Flex>
 								</Row>
 							)}

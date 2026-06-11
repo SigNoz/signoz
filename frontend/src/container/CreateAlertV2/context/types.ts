@@ -28,15 +28,15 @@ export interface ICreateAlertContextProps {
 	isCreatingAlertRule: boolean;
 	createAlertRule: UseMutateFunction<
 		CreateRule201,
-		ErrorType<unknown>,
-		{ data: BodyType<RuletypesPostableRuleDTO> },
+		ErrorType<RenderErrorResponseDTO>,
+		{ data?: BodyType<RuletypesPostableRuleDTO> },
 		unknown
 	>;
 	isTestingAlertRule: boolean;
 	testAlertRule: UseMutateFunction<
 		TestRule200,
-		ErrorType<unknown>,
-		{ data: BodyType<RuletypesPostableRuleDTO> },
+		ErrorType<RenderErrorResponseDTO>,
+		{ data?: BodyType<RuletypesPostableRuleDTO> },
 		unknown
 	>;
 	discardAlertRule: () => void;
@@ -48,7 +48,7 @@ export interface ICreateAlertContextProps {
 		ErrorType<RenderErrorResponseDTO>,
 		{
 			pathParams: UpdateRuleByIDPathParameters;
-			data: BodyType<RuletypesPostableRuleDTO>;
+			data?: BodyType<RuletypesPostableRuleDTO>;
 		},
 		unknown
 	>;

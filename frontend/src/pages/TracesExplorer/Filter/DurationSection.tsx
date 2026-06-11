@@ -7,8 +7,8 @@ import {
 	useMemo,
 	useState,
 } from 'react';
-import { Input, Slider } from 'antd';
-import type { SliderRangeProps } from 'antd/es/slider';
+import { Input } from 'antd';
+import { Slider } from '@signozhq/ui/slider';
 import { getMs } from 'container/Trace/Filters/Panel/PanelBody/Duration/util';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 
@@ -88,16 +88,15 @@ export function DurationSection(props: DurationProps): JSX.Element {
 		debouncedFunction(min, max);
 	};
 
-	const onRangeHandler: SliderRangeProps['onChange'] = ([min, max]) => {
+	const onRangeHandler = (value: number | number[]): void => {
+		const [min, max] = value as number[];
 		updateDurationFilter(min.toString(), max.toString());
 	};
 
-	const TipComponent = useCallback((value: undefined | number) => {
-		if (value === undefined) {
-			return <div />;
-		}
-		return <div>{`${value?.toString()}ms`}</div>;
-	}, []);
+	const TipComponent = useCallback(
+		(value: number) => <div>{`${value.toString()}ms`}</div>,
+		[],
+	);
 
 	return (
 		<div>
@@ -123,13 +122,14 @@ export function DurationSection(props: DurationProps): JSX.Element {
 					addonAfter="ms"
 				/>
 			</div>
-			<div>
+			<div className="duration-input-slider">
 				<Slider
 					min={0}
 					max={100000}
 					range
 					tooltip={{ formatter: TipComponent }}
-					onChange={([min, max]): void => {
+					onChange={(value): void => {
+						const [min, max] = value as number[];
 						onRangeSliderHandler([String(min), String(max)]);
 					}}
 					onAfterChange={onRangeHandler}

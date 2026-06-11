@@ -1,4 +1,6 @@
 import React, { useEffect } from 'react';
+import cx from 'classnames';
+import { useLocation } from 'react-router-dom';
 import {
 	CommandDialog,
 	CommandEmpty,
@@ -9,7 +11,17 @@ import {
 	CommandShortcut,
 } from '@signozhq/ui/command';
 import logEvent from 'api/common/logEvent';
+import {
+	AIAssistantEvents,
+	AIAssistantOpenSource,
+} from 'container/AIAssistant/events';
+import { normalizePage } from 'container/AIAssistant/hooks/useAIAssistantAnalyticsContext';
+import {
+	openAIAssistantModal,
+	useAIAssistantStore,
+} from 'container/AIAssistant/store/useAIAssistantStore';
 import { useThemeMode } from 'hooks/useDarkMode';
+import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
 import history from 'lib/history';
 import { ROLES as UserRole } from 'types/roles';
 
@@ -37,6 +49,11 @@ export function CmdKPalette({
 	const { open, setOpen } = useCmdK();
 
 	const { setAutoSwitch, setTheme, theme } = useThemeMode();
+	const location = useLocation();
+	const isAIAssistantEnabled = useIsAIAssistantEnabled();
+	const startNewConversation = useAIAssistantStore(
+		(s) => s.startNewConversation,
+	);
 
 	// toggle palette with ⌘/Ctrl+K
 	function handleGlobalCmdK(
@@ -78,9 +95,21 @@ export function CmdKPalette({
 		history.push(key);
 	}
 
+	const handleOpenAIAssistant = (): void => {
+		void logEvent(AIAssistantEvents.Opened, {
+			source: AIAssistantOpenSource.Cmdk,
+			currentPage: normalizePage(location.pathname),
+		});
+		startNewConversation();
+		openAIAssistantModal();
+	};
+
 	const actions = createShortcutActions({
 		navigate: onClickHandler,
 		handleThemeChange,
+		aiAssistant: isAIAssistantEnabled
+			? { open: handleOpenAIAssistant }
+			: undefined,
 	});
 
 	// RBAC filter: show action if no roles set OR current user role is included
@@ -134,7 +163,11 @@ export function CmdKPalette({
 								value={it.name}
 								className={theme === 'light' ? 'cmdk-item-light' : 'cmdk-item'}
 							>
-								<span className="cmd-item-icon">{it.icon}</span>
+								<span
+									className={cx('cmd-item-icon', it.id === 'ai-assistant' && 'noz-icon')}
+								>
+									{it.icon}
+								</span>
 								{it.name}
 								{it.shortcut && it.shortcut.length > 0 && (
 									<CommandShortcut>{it.shortcut.join(' • ')}</CommandShortcut>

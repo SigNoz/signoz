@@ -27,6 +27,8 @@ const (
 	NodeConditionNumNotReady = 0
 )
 
+const NodeNameAttrKey = "k8s.node.name"
+
 const (
 	NodesOrderByCPU               = "cpu"
 	NodesOrderByCPUAllocatable    = "cpu_allocatable"
@@ -39,4 +41,5 @@ var NodesValidOrderByKeys = []string{
 	NodesOrderByCPUAllocatable,
 	NodesOrderByMemory,
 	NodesOrderByMemoryAllocatable,
+	NodeNameAttrKey,
 }

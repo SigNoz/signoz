@@ -12,10 +12,10 @@ import (
 )
 
 var (
-	testDashboardKind = coretypes.MustNewKind("dashboard")
+	testDashboardResource = coretypes.ResourceMetaResourceDashboard
 )
 
-func TestNewAuditEventFromHTTPRequest(t *testing.T) {
+func TestNewAuditEvent(t *testing.T) {
 	traceID := oteltrace.TraceID{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}
 	spanID := oteltrace.SpanID{1, 2, 3, 4, 5, 6, 7, 8}
 
@@ -26,10 +26,10 @@ func TestNewAuditEventFromHTTPRequest(t *testing.T) {
 		route           string
 		statusCode      int
 		action          coretypes.Verb
-		category        ActionCategory
+		category        coretypes.ActionCategory
 		claims          authtypes.Claims
+		resource        coretypes.Resource
 		resourceID      string
-		resourceKind    coretypes.Kind
 		errorType       string
 		errorCode       string
 		expectedOutcome Outcome
@@ -42,10 +42,10 @@ func TestNewAuditEventFromHTTPRequest(t *testing.T) {
 			route:           "/api/v1/dashboards",
 			statusCode:      http.StatusOK,
 			action:          coretypes.VerbCreate,
-			category:        ActionCategoryConfigurationChange,
+			category:        coretypes.ActionCategoryConfigurationChange,
 			claims:          authtypes.Claims{UserID: "019a1234-abcd-7000-8000-567800000001", Email: "alice@acme.com", OrgID: "019a-0000-0000-0001", IdentNProvider: authtypes.IdentNProviderTokenizer},
+			resource:        testDashboardResource,
 			resourceID:      "019b-5678-efgh-9012",
-			resourceKind:    testDashboardKind,
 			expectedOutcome: OutcomeSuccess,
 			expectedBody:    "alice@acme.com (019a1234-abcd-7000-8000-567800000001) created dashboard (019b-5678-efgh-9012)",
 		},
@@ -56,10 +56,10 @@ func TestNewAuditEventFromHTTPRequest(t *testing.T) {
 			route:           "/api/v1/dashboards/{id}",
 			statusCode:      http.StatusForbidden,
 			action:          coretypes.VerbUpdate,
-			category:        ActionCategoryConfigurationChange,
+			category:        coretypes.ActionCategoryConfigurationChange,
 			claims:          authtypes.Claims{UserID: "019aaaaa-bbbb-7000-8000-cccc00000002", Email: "viewer@acme.com", OrgID: "019a-0000-0000-0001", IdentNProvider: authtypes.IdentNProviderTokenizer},
+			resource:        testDashboardResource,
 			resourceID:      "019b-5678-efgh-9012",
-			resourceKind:    testDashboardKind,
 			errorType:       "forbidden",
 			errorCode:       "authz_forbidden",
 			expectedOutcome: OutcomeFailure,
@@ -80,15 +80,14 @@ func TestNewAuditEventFromHTTPRequest(t *testing.T) {
 				testCase.action,
 				testCase.category,
 				testCase.claims,
-				testCase.resourceID,
-				testCase.resourceKind,
+				NewResourceAttributes(testCase.resource, testCase.resourceID),
 				testCase.errorType,
 				testCase.errorCode,
 			)
 
 			assert.Equal(t, testCase.expectedOutcome, event.AuditAttributes.Outcome)
 			assert.Equal(t, testCase.expectedBody, event.Body)
-			assert.Equal(t, testCase.resourceKind, event.ResourceAttributes.ResourceKind)
+			assert.Equal(t, testCase.resource.Kind(), event.ResourceAttributes.Resource.Kind())
 			assert.Equal(t, testCase.resourceID, event.ResourceAttributes.ResourceID)
 			assert.Equal(t, testCase.action, event.AuditAttributes.Action)
 			assert.Equal(t, testCase.category, event.AuditAttributes.ActionCategory)
@@ -103,18 +102,18 @@ func TestNewAuditEventFromHTTPRequest(t *testing.T) {
 	}
 }
 
-func newTestEvent(resourceKind coretypes.Kind, resourceID string, action coretypes.Verb) AuditEvent {
+func newTestEvent(resource coretypes.Resource, resourceID string, action coretypes.Verb) AuditEvent {
 	return AuditEvent{
-		Body:      resourceKind.String() + "." + action.PastTense(),
-		EventName: NewEventName(resourceKind, action),
+		Body:      resource.Kind().String() + "." + action.PastTense(),
+		EventName: NewEventName(resource.Kind(), action),
 		AuditAttributes: AuditAttributes{
 			Action:         action,
-			ActionCategory: ActionCategoryConfigurationChange,
+			ActionCategory: coretypes.ActionCategoryConfigurationChange,
 			Outcome:        OutcomeSuccess,
 		},
 		ResourceAttributes: ResourceAttributes{
-			ResourceKind: resourceKind,
-			ResourceID:   resourceID,
+			Resource:   resource,
+			ResourceID: resourceID,
 		},
 	}
 }
@@ -136,7 +135,7 @@ func TestNewPLogsFromAuditEvents(t *testing.T) {
 		{
 			name: "SingleEvent",
 			events: []AuditEvent{
-				newTestEvent(testDashboardKind, "d-001", coretypes.VerbCreate),
+				newTestEvent(testDashboardResource, "d-001", coretypes.VerbCreate),
 			},
 			expectedResourceLogs:    1,
 			expectedResourceKinds:   []string{"dashboard"},
@@ -146,9 +145,9 @@ func TestNewPLogsFromAuditEvents(t *testing.T) {
 		{
 			name: "SameResource_MultipleEvents",
 			events: []AuditEvent{
-				newTestEvent(testDashboardKind, "d-001", coretypes.VerbCreate),
-				newTestEvent(testDashboardKind, "d-001", coretypes.VerbUpdate),
-				newTestEvent(testDashboardKind, "d-001", coretypes.VerbDelete),
+				newTestEvent(testDashboardResource, "d-001", coretypes.VerbCreate),
+				newTestEvent(testDashboardResource, "d-001", coretypes.VerbUpdate),
+				newTestEvent(testDashboardResource, "d-001", coretypes.VerbDelete),
 			},
 			expectedResourceLogs:    1,
 			expectedResourceKinds:   []string{"dashboard"},
@@ -158,8 +157,8 @@ func TestNewPLogsFromAuditEvents(t *testing.T) {
 		{
 			name: "DifferentResources_SeparateGroups",
 			events: []AuditEvent{
-				newTestEvent(testDashboardKind, "d-001", coretypes.VerbUpdate),
-				newTestEvent(coretypes.MustNewKind("user"), "u-001", coretypes.VerbDelete),
+				newTestEvent(testDashboardResource, "d-001", coretypes.VerbUpdate),
+				newTestEvent(coretypes.ResourceUser, "u-001", coretypes.VerbDelete),
 			},
 			expectedResourceLogs:    2,
 			expectedResourceKinds:   []string{"dashboard", "user"},
@@ -169,8 +168,8 @@ func TestNewPLogsFromAuditEvents(t *testing.T) {
 		{
 			name: "SameKind_DifferentIDs_SeparateGroups",
 			events: []AuditEvent{
-				newTestEvent(testDashboardKind, "d-001", coretypes.VerbUpdate),
-				newTestEvent(testDashboardKind, "d-002", coretypes.VerbDelete),
+				newTestEvent(testDashboardResource, "d-001", coretypes.VerbUpdate),
+				newTestEvent(testDashboardResource, "d-002", coretypes.VerbDelete),
 			},
 			expectedResourceLogs:    2,
 			expectedResourceKinds:   []string{"dashboard", "dashboard"},
@@ -180,11 +179,11 @@ func TestNewPLogsFromAuditEvents(t *testing.T) {
 		{
 			name: "InterleavedResources_GroupedCorrectly",
 			events: []AuditEvent{
-				newTestEvent(testDashboardKind, "d-001", coretypes.VerbCreate),
-				newTestEvent(coretypes.MustNewKind("user"), "u-001", coretypes.VerbUpdate),
-				newTestEvent(testDashboardKind, "d-001", coretypes.VerbUpdate),
-				newTestEvent(coretypes.MustNewKind("user"), "u-001", coretypes.VerbDelete),
-				newTestEvent(testDashboardKind, "d-001", coretypes.VerbDelete),
+				newTestEvent(testDashboardResource, "d-001", coretypes.VerbCreate),
+				newTestEvent(coretypes.ResourceUser, "u-001", coretypes.VerbUpdate),
+				newTestEvent(testDashboardResource, "d-001", coretypes.VerbUpdate),
+				newTestEvent(coretypes.ResourceUser, "u-001", coretypes.VerbDelete),
+				newTestEvent(testDashboardResource, "d-001", coretypes.VerbDelete),
 			},
 			expectedResourceLogs:    2,
 			expectedResourceKinds:   []string{"dashboard", "user"},
@@ -203,7 +202,6 @@ func TestNewPLogsFromAuditEvents(t *testing.T) {
 				resourceLogs := logs.ResourceLogs().At(i)
 				resourceAttrs := resourceLogs.Resource().Attributes()
 
-				// Verify service resource attributes
 				serviceName, exists := resourceAttrs.Get("service.name")
 				assert.True(t, exists)
 				assert.Equal(t, "signoz", serviceName.Str())
@@ -212,7 +210,6 @@ func TestNewPLogsFromAuditEvents(t *testing.T) {
 				assert.True(t, exists)
 				assert.Equal(t, "0.90.0", serviceVersion.Str())
 
-				// Verify audit resource attributes on Resource (not event attributes)
 				kind, exists := resourceAttrs.Get("signoz.audit.resource.kind")
 				assert.True(t, exists)
 				assert.Equal(t, testCase.expectedResourceKinds[i], kind.Str())
@@ -221,14 +218,11 @@ func TestNewPLogsFromAuditEvents(t *testing.T) {
 				assert.True(t, exists)
 				assert.Equal(t, testCase.expectedResourceIDs[i], id.Str())
 
-				// Verify scope
 				assert.Equal(t, 1, resourceLogs.ScopeLogs().Len())
 				assert.Equal(t, "signoz.audit", resourceLogs.ScopeLogs().At(0).Scope().Name())
 
-				// Verify log record count per group
 				assert.Equal(t, testCase.expectedLogRecordCounts[i], resourceLogs.ScopeLogs().At(0).LogRecords().Len())
 
-				// Verify resource attrs are NOT in log record event attributes
 				for j := 0; j < resourceLogs.ScopeLogs().At(0).LogRecords().Len(); j++ {
 					recordAttrs := resourceLogs.ScopeLogs().At(0).LogRecords().At(j).Attributes()
 					_, hasKind := recordAttrs.Get("signoz.audit.resource.kind")
