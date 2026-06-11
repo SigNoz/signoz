@@ -414,6 +414,7 @@ func (r *ClickHouseReader) GetLabels(ctx context.Context, params *model.LabelQue
 func (r *ClickHouseReader) GetLabelValues(ctx context.Context, labelName string, params *model.LabelQueryParams) ([]string, *model.ApiError) {
 	// Direct ClickHouse queries are used here because the remote-read querier's
 	// LabelValues method is not implemented in Prometheus v0.311.3 (issue #3351).
+	labelName = unescapePromLabelName(labelName)
 	mintMs := params.Start.UnixMilli()
 	maxtMs := params.End.UnixMilli()
 	normalized := !constants.IsDotMetricsEnabled
@@ -489,6 +490,55 @@ func (r *ClickHouseReader) GetLabelValues(ctx context.Context, labelName string,
 	return result, nil
 }
 
+// unescapePromLabelName converts a Prometheus value-encoded label name back to
+// its original UTF-8 form. Value-encoded names start with "U__" and use _XX_
+// (lowercase hex) for non-legacy characters, and __ for a literal underscore.
+// See https://prometheus.io/docs/instrumenting/escaping_schemes/
+func unescapePromLabelName(name string) string {
+	if len(name) < 3 || name[:3] != "U__" {
+		return name
+	}
+	enc := name[3:]
+	var b strings.Builder
+	b.Grow(len(enc))
+	for i := 0; i < len(enc); {
+		if enc[i] != '_' {
+			b.WriteByte(enc[i])
+			i++
+			continue
+		}
+		if i+1 < len(enc) && enc[i+1] == '_' {
+			b.WriteByte('_')
+			i += 2
+			continue
+		}
+		if i+3 < len(enc) && enc[i+3] == '_' {
+			hi, hiOk := promHexVal(enc[i+1])
+			lo, loOk := promHexVal(enc[i+2])
+			if hiOk && loOk {
+				b.WriteByte(hi<<4 | lo)
+				i += 4
+				continue
+			}
+		}
+		b.WriteByte('_')
+		i++
+	}
+	return b.String()
+}
+
+func promHexVal(c byte) (byte, bool) {
+	switch {
+	case c >= '0' && c <= '9':
+		return c - '0', true
+	case c >= 'a' && c <= 'f':
+		return c - 'a' + 10, true
+	case c >= 'A' && c <= 'F':
+		return c - 'A' + 10, true
+	}
+	return 0, false
+}
+
 // matchersToClickhouse translates a slice of Prometheus label matchers to
 // ClickHouse SQL condition fragments and the corresponding query arguments.
 // argIdx is the 1-based positional index of the first placeholder to emit.
@@ -519,22 +569,23 @@ func matchersToClickhouse(matchers []*labels.Matcher, argIdx int) ([]string, []i
 				argIdx++
 			}
 		} else {
+			labelName := unescapePromLabelName(m.Name)
 			switch m.Type {
 			case labels.MatchEqual:
 				cond = fmt.Sprintf("JSONExtractString(labels, $%d) = $%d", argIdx, argIdx+1)
-				mArgs = []interface{}{m.Name, m.Value}
+				mArgs = []interface{}{labelName, m.Value}
 				argIdx += 2
 			case labels.MatchNotEqual:
 				cond = fmt.Sprintf("JSONExtractString(labels, $%d) != $%d", argIdx, argIdx+1)
-				mArgs = []interface{}{m.Name, m.Value}
+				mArgs = []interface{}{labelName, m.Value}
 				argIdx += 2
 			case labels.MatchRegexp:
 				cond = fmt.Sprintf("match(JSONExtractString(labels, $%d), $%d)", argIdx, argIdx+1)
-				mArgs = []interface{}{m.Name, m.Value}
+				mArgs = []interface{}{labelName, m.Value}
 				argIdx += 2
 			case labels.MatchNotRegexp:
 				cond = fmt.Sprintf("NOT match(JSONExtractString(labels, $%d), $%d)", argIdx, argIdx+1)
-				mArgs = []interface{}{m.Name, m.Value}
+				mArgs = []interface{}{labelName, m.Value}
 				argIdx += 2
 			}
 		}
