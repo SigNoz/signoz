@@ -17,7 +17,14 @@ var nodeNameGroupByKey = qbtypes.GroupByKey{
 	},
 }
 
-var nodesTableMetricNamesList = inframonitoringtypes.NodesTableMetricNames
+var nodesTableMetricNamesList = []string{
+	"k8s.node.cpu.usage",
+	"k8s.node.allocatable_cpu",
+	"k8s.node.memory.working_set",
+	"k8s.node.allocatable_memory",
+	"k8s.node.condition_ready",
+	"k8s.pod.phase",
+}
 
 var nodeAttrKeysForMetadata = []string{
 	"k8s.node.uid",

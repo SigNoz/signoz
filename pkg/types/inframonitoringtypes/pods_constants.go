@@ -38,17 +38,6 @@ const (
 
 const PodNameAttrKey = "k8s.pod.name"
 
-// PodsTableMetricNames drives pod presence checks (infra monitoring, empty-state).
-var PodsTableMetricNames = []string{
-	"k8s.pod.cpu.usage",
-	"k8s.pod.cpu_request_utilization",
-	"k8s.pod.cpu_limit_utilization",
-	"k8s.pod.memory.working_set",
-	"k8s.pod.memory_request_utilization",
-	"k8s.pod.memory_limit_utilization",
-	"k8s.pod.phase",
-}
-
 const (
 	PodsOrderByCPU           = "cpu"
 	PodsOrderByCPURequest    = "cpu_request"

@@ -49,6 +49,7 @@ func TestTelemetryStatsCollectorCollect(t *testing.T) {
 	assert.Equal(t, logsAt.Unix(), stats["telemetry.logs.last_observed.time_unix"])
 	assert.Equal(t, metricsAt, stats["telemetry.metrics.last_observed.time"])
 	assert.Equal(t, metricsAt.Unix(), stats["telemetry.metrics.last_observed.time_unix"])
+	assert.NoError(t, chMock.ExpectationsWereMet())
 }
 
 func TestTelemetryStatsCollectorOmitsQuietLastObserved(t *testing.T) {

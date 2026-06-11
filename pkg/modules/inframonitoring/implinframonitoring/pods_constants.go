@@ -21,7 +21,15 @@ var podUIDGroupByKey = qbtypes.GroupByKey{
 	},
 }
 
-var podsTableMetricNamesList = inframonitoringtypes.PodsTableMetricNames
+var podsTableMetricNamesList = []string{
+	"k8s.pod.cpu.usage",
+	"k8s.pod.cpu_request_utilization",
+	"k8s.pod.cpu_limit_utilization",
+	"k8s.pod.memory.working_set",
+	"k8s.pod.memory_request_utilization",
+	"k8s.pod.memory_limit_utilization",
+	"k8s.pod.phase",
+}
 
 var podAttrKeysForMetadata = []string{
 	"k8s.pod.uid",

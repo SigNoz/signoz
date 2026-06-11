@@ -61,12 +61,9 @@ func (h *handler) GetOrgContext(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (h *handler) getOrgContext(ctx context.Context, orgID valuer.UUID) (*emptystatetypes.OrgContext, error) {
-	now := time.Now()
-
 	var logsLastIngestedAt *time.Time
 	var tracesLastIngestedAt *time.Time
 	var metricsLastIngestedAt *time.Time
-	var hasInfraMetrics bool
 	var alertsCount int
 	var dashboardsCount int
 	var savedViewsCount int
@@ -101,16 +98,6 @@ func (h *handler) getOrgContext(ctx context.Context, orgID valuer.UUID) (*emptys
 		}
 
 		metricsLastIngestedAt = lastIngestedAt
-		return nil
-	})
-
-	g.Go(func() error {
-		var err error
-		hasInfraMetrics, err = h.getHasInfraMetrics(gCtx, now)
-		if err != nil {
-			return err
-		}
-
 		return nil
 	})
 
@@ -162,7 +149,6 @@ func (h *handler) getOrgContext(ctx context.Context, orgID valuer.UUID) (*emptys
 	return &emptystatetypes.OrgContext{
 		HasIngestedData: lastIngestedAt.Logs != nil || lastIngestedAt.Traces != nil || lastIngestedAt.Metrics != nil,
 		LastIngestedAt:  lastIngestedAt,
-		HasInfraMetrics: hasInfraMetrics,
 		AlertsCount:     alertsCount,
 		DashboardsCount: dashboardsCount,
 		SavedViewsCount: savedViewsCount,

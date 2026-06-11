@@ -3383,8 +3383,6 @@ components:
           type: integer
         dashboardsCount:
           type: integer
-        hasInfraMetrics:
-          type: boolean
         hasIngestedData:
           type: boolean
         lastIngestedAt:
@@ -3399,7 +3397,6 @@ components:
       required:
       - hasIngestedData
       - lastIngestedAt
-      - hasInfraMetrics
       - alertsCount
       - dashboardsCount
       - savedViewsCount

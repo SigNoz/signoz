@@ -4859,10 +4859,6 @@ export interface EmptystatetypesOrgContextDTO {
 	/**
 	 * @type boolean
 	 */
-	hasInfraMetrics: boolean;
-	/**
-	 * @type boolean
-	 */
 	hasIngestedData: boolean;
 	lastIngestedAt: EmptystatetypesLastIngestedAtDTO;
 	/**

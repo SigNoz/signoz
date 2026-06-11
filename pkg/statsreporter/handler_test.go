@@ -2,9 +2,7 @@ package statsreporter
 
 import (
 	"context"
-	"fmt"
 	"regexp"
-	"strings"
 	"testing"
 	"time"
 
@@ -17,7 +15,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/types/emptystatetypes"
-	"github.com/SigNoz/signoz/pkg/types/inframonitoringtypes"
 	"github.com/SigNoz/signoz/pkg/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/types/savedviewtypes"
@@ -33,11 +30,6 @@ const (
 	tracesLastObservedSQL  = "SELECT max(timestamp) FROM signoz_traces.distributed_signoz_index_v3"
 	metricsLastObservedSQL = "SELECT toDateTime(max(unix_milli) / 1000) FROM signoz_metrics.distributed_samples_v4"
 )
-
-func infraMetricsProbeSQL() string {
-	placeholders := strings.TrimSuffix(strings.Repeat("?, ", len(infraMetricNames)), ", ")
-	return fmt.Sprintf("SELECT 1 FROM signoz_metrics.distributed_metadata WHERE last_reported_unix_milli >= ? AND last_reported_unix_milli <= ? AND metric_name IN (%s) LIMIT ?", placeholders)
-}
 
 type fakeCollector struct {
 	stats map[string]any
@@ -132,27 +124,6 @@ func TestGetCollectedCount(t *testing.T) {
 	})
 }
 
-func TestGetHasInfraMetrics(t *testing.T) {
-	t.Run("InfraMetricNamesProbe_GeneratesExpectedSQL", func(t *testing.T) {
-		ts := telemetrystoretest.New(telemetrystore.Config{}, sqlmock.QueryMatcherRegexp)
-		h := &handler{telemetryStore: ts}
-		now := time.Unix(2000, 0)
-
-		expectInfraMetrics(ts.Mock(), true)
-
-		hasInfraMetrics, err := h.getHasInfraMetrics(context.Background(), now)
-
-		require.NoError(t, err)
-		assert.True(t, hasInfraMetrics)
-		// The probe list spans host/pod/node tables in both dot and underscore forms.
-		assert.Contains(t, infraMetricNames, "k8s.node.cpu.usage")
-		assert.Contains(t, infraMetricNames, "k8s_node_cpu_usage")
-		assert.Contains(t, infraMetricNames, "k8s.pod.cpu.usage")
-		assert.Contains(t, infraMetricNames, inframonitoringtypes.HostsTableMetricNames[0])
-		assert.NoError(t, ts.Mock().ExpectationsWereMet())
-	})
-}
-
 func TestGetOrgContextDerivesAggregates(t *testing.T) {
 	lastIngested := time.Unix(5000, 0).UTC()
 
@@ -192,7 +163,6 @@ func TestGetOrgContextDerivesAggregates(t *testing.T) {
 			} else {
 				expectMetricsLastIngested(chMock, time.Time{})
 			}
-			expectInfraMetrics(chMock, false)
 
 			orgContext, err := h.getOrgContext(context.Background(), testOrgID)
 
@@ -201,7 +171,6 @@ func TestGetOrgContextDerivesAggregates(t *testing.T) {
 			assertLastIngested(t, tc.logs, orgContext.LastIngestedAt.Logs, lastIngested)
 			assertLastIngested(t, tc.traces, orgContext.LastIngestedAt.Traces, lastIngested)
 			assertLastIngested(t, tc.metrics, orgContext.LastIngestedAt.Metrics, lastIngested)
-			assert.False(t, orgContext.HasInfraMetrics)
 			assert.Equal(t, 2, orgContext.AlertsCount)
 			assert.Equal(t, 1, orgContext.DashboardsCount)
 			assert.Equal(t, 3, orgContext.SavedViewsCount)
@@ -258,7 +227,6 @@ func TestGetOrgContextClickHouseErrorFails(t *testing.T) {
 		WillReturnError(assert.AnError)
 	expectTracesLastIngested(chMock, time.Time{})
 	expectMetricsLastIngested(chMock, time.Time{})
-	expectInfraMetrics(chMock, false)
 
 	orgContext, err := h.getOrgContext(context.Background(), testOrgID)
 
@@ -282,7 +250,6 @@ func expectTelemetryQuiet(mock cmock.ClickConnMockCommon) {
 	expectLogsLastIngested(mock, time.Time{})
 	expectTracesLastIngested(mock, time.Time{})
 	expectMetricsLastIngested(mock, time.Time{})
-	expectInfraMetrics(mock, false)
 }
 
 func expectLogsLastIngested(mock cmock.ClickConnMockCommon, lastIngestedAt time.Time) {
@@ -298,13 +265,4 @@ func expectTracesLastIngested(mock cmock.ClickConnMockCommon, lastIngestedAt tim
 func expectMetricsLastIngested(mock cmock.ClickConnMockCommon, lastIngestedAt time.Time) {
 	mock.ExpectQueryRow(regexp.QuoteMeta(metricsLastObservedSQL)).
 		WillReturnRow(cmock.NewRow([]cmock.ColumnType{{Name: "toDateTime(divide(max(unix_milli), 1000))", Type: "DateTime"}}, []any{lastIngestedAt}))
-}
-
-func expectInfraMetrics(mock cmock.ClickConnMockCommon, exists bool) {
-	row := cmock.NewRow([]cmock.ColumnType{{Name: "exists", Type: "UInt8"}}, nil)
-	if exists {
-		row = cmock.NewRow([]cmock.ColumnType{{Name: "exists", Type: "UInt8"}}, []any{uint8(1)})
-	}
-
-	mock.ExpectQueryRow(regexp.QuoteMeta(infraMetricsProbeSQL())).WillReturnRow(row)
 }

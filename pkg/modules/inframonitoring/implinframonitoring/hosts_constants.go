@@ -16,7 +16,12 @@ var hostNameGroupByKey = qbtypes.GroupByKey{
 	},
 }
 
-var hostsTableMetricNamesList = inframonitoringtypes.HostsTableMetricNames
+var hostsTableMetricNamesList = []string{
+	"system.cpu.time",
+	"system.memory.usage",
+	"system.cpu.load_average.15m",
+	"system.filesystem.usage",
+}
 
 var hostAttrKeysForMetadata = []string{
 	"os.type",

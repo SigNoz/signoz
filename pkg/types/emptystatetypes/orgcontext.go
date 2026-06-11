@@ -13,7 +13,6 @@ func (status LicenseStatus) StringValue() string {
 type OrgContext struct {
 	HasIngestedData bool           `json:"hasIngestedData" required:"true"`
 	LastIngestedAt  LastIngestedAt `json:"lastIngestedAt" required:"true"`
-	HasInfraMetrics bool           `json:"hasInfraMetrics" required:"true"`
 	AlertsCount     int            `json:"alertsCount" required:"true"`
 	DashboardsCount int            `json:"dashboardsCount" required:"true"`
 	SavedViewsCount int            `json:"savedViewsCount" required:"true"`

@@ -4,46 +4,14 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"slices"
-	"strings"
 	"time"
-
-	"github.com/huandu/go-sqlbuilder"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrytraces"
-	"github.com/SigNoz/signoz/pkg/types/inframonitoringtypes"
 )
-
-var infraMetricNames = withUnderscoreMetricNames(slices.Concat(
-	inframonitoringtypes.HostsTableMetricNames,
-	inframonitoringtypes.PodsTableMetricNames,
-	inframonitoringtypes.NodesTableMetricNames,
-))
-
-const infraMetricLookback = 7 * 24 * time.Hour
-
-// Probe both dot-form and underscore-normalized names (dot_metrics_enabled).
-func withUnderscoreMetricNames(metricNames []string) []string {
-	seen := make(map[string]struct{}, len(metricNames)*2)
-	normalized := make([]string, 0, len(metricNames)*2)
-
-	for _, metricName := range metricNames {
-		for _, candidate := range []string{metricName, strings.ReplaceAll(metricName, ".", "_")} {
-			if _, ok := seen[candidate]; ok {
-				continue
-			}
-
-			seen[candidate] = struct{}{}
-			normalized = append(normalized, candidate)
-		}
-	}
-
-	return normalized
-}
 
 // Last-observed queries match the previous analytics provider queries. They are
 // deployment-scoped since telemetry tables have no org column.
@@ -79,32 +47,4 @@ func scanLastObserved(ctx context.Context, telemetryStore telemetrystore.Telemet
 
 	lastObservedAt := lastObserved.UTC()
 	return &lastObservedAt, nil
-}
-
-func (h *handler) getHasInfraMetrics(ctx context.Context, now time.Time) (bool, error) {
-	cutoff := now.Add(-infraMetricLookback)
-
-	sb := sqlbuilder.NewSelectBuilder()
-	sb.Select("1")
-	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.AttributesMetadataTableName))
-	sb.Where(
-		sb.GE("last_reported_unix_milli", cutoff.UnixMilli()),
-		sb.LE("last_reported_unix_milli", now.UnixMilli()),
-		sb.In("metric_name", sqlbuilder.List(infraMetricNames)),
-	)
-	sb.Limit(1)
-
-	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-
-	var exists uint8
-	err := h.telemetryStore.ClickhouseDB().QueryRow(ctx, query, args...).Scan(&exists)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return false, nil
-		}
-
-		return false, errors.WrapInternalf(err, errors.CodeInternal, "failed to check infra metrics presence")
-	}
-
-	return true, nil
 }

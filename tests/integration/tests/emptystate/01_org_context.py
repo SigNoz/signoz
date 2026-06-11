@@ -39,7 +39,6 @@ def test_get_org_context_without_license(
 
     data = response.json()["data"]
     assert isinstance(data["hasIngestedData"], bool)
-    assert isinstance(data["hasInfraMetrics"], bool)
     # Fresh stack has no telemetry, so every last-ingested timestamp is null.
     assert data["lastIngestedAt"]["logs"] is None
     assert data["lastIngestedAt"]["traces"] is None
