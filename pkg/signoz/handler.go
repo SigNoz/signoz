@@ -50,6 +50,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/ruler"
 	"github.com/SigNoz/signoz/pkg/ruler/signozruler"
 	"github.com/SigNoz/signoz/pkg/statsreporter"
+	"github.com/SigNoz/signoz/pkg/statsreporter/signozstatsreporterapi"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/zeus"
@@ -129,7 +130,7 @@ func NewHandlers(
 		TraceDetail:             impltracedetail.NewHandler(modules.TraceDetail),
 		RulerHandler:            signozruler.NewHandler(rulerService),
 		LLMPricingRuleHandler:   impllmpricingrule.NewHandler(modules.LLMPricingRule),
-		StatsReporter: statsreporter.NewHandler(telemetryStore, statsreporter.OrgContextCollectors{
+		StatsReporter: signozstatsreporterapi.NewHandler(telemetryStore, statsreporter.OrgContextCollectors{
 			Rules:      rulerService,
 			Dashboards: modules.Dashboard,
 			SavedViews: modules.SavedView,

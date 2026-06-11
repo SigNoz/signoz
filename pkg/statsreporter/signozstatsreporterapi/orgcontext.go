@@ -1,17 +1,16 @@
-package statsreporter
+package signozstatsreporterapi
 
 import (
 	"context"
-	"net/http"
 	"strings"
 	"time"
 
 	"golang.org/x/sync/errgroup"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/http/render"
+	"github.com/SigNoz/signoz/pkg/statsreporter"
+	"github.com/SigNoz/signoz/pkg/statsreporter/telemetrystatscollector"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/types/emptystatetypes"
 	"github.com/SigNoz/signoz/pkg/types/licensetypes"
@@ -20,47 +19,20 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-type Handler interface {
-	GetOrgContext(rw http.ResponseWriter, req *http.Request)
-}
-
-// OrgContextCollectors are the collectors the org context signals are sourced from.
-type OrgContextCollectors struct {
-	Rules      StatsCollector
-	Dashboards StatsCollector
-	SavedViews StatsCollector
-	Licensing  StatsCollector
-}
-
-type handler struct {
+// orgContext computes the org context signals served by the handler.
+type orgContext struct {
 	telemetryStore telemetrystore.TelemetryStore
-	collectors     OrgContextCollectors
+	collectors     statsreporter.OrgContextCollectors
 }
 
-func NewHandler(telemetryStore telemetrystore.TelemetryStore, collectors OrgContextCollectors) Handler {
-	return &handler{
+func newOrgContext(telemetryStore telemetrystore.TelemetryStore, collectors statsreporter.OrgContextCollectors) *orgContext {
+	return &orgContext{
 		telemetryStore: telemetryStore,
 		collectors:     collectors,
 	}
 }
 
-func (h *handler) GetOrgContext(rw http.ResponseWriter, req *http.Request) {
-	claims, err := authtypes.ClaimsFromContext(req.Context())
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	orgContext, err := h.getOrgContext(req.Context(), valuer.MustNewUUID(claims.OrgID))
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	render.Success(rw, http.StatusOK, orgContext)
-}
-
-func (h *handler) getOrgContext(ctx context.Context, orgID valuer.UUID) (*emptystatetypes.OrgContext, error) {
+func (c *orgContext) Get(ctx context.Context, orgID valuer.UUID) (*emptystatetypes.OrgContext, error) {
 	var logsLastIngestedAt *time.Time
 	var tracesLastIngestedAt *time.Time
 	var metricsLastIngestedAt *time.Time
@@ -72,7 +44,7 @@ func (h *handler) getOrgContext(ctx context.Context, orgID valuer.UUID) (*emptys
 	g, gCtx := errgroup.WithContext(ctx)
 
 	g.Go(func() error {
-		lastIngestedAt, err := lastObservedLogs(gCtx, h.telemetryStore)
+		lastIngestedAt, err := telemetrystatscollector.LastObservedLogs(gCtx, c.telemetryStore)
 		if err != nil {
 			return err
 		}
@@ -82,7 +54,7 @@ func (h *handler) getOrgContext(ctx context.Context, orgID valuer.UUID) (*emptys
 	})
 
 	g.Go(func() error {
-		lastIngestedAt, err := lastObservedTraces(gCtx, h.telemetryStore)
+		lastIngestedAt, err := telemetrystatscollector.LastObservedTraces(gCtx, c.telemetryStore)
 		if err != nil {
 			return err
 		}
@@ -92,7 +64,7 @@ func (h *handler) getOrgContext(ctx context.Context, orgID valuer.UUID) (*emptys
 	})
 
 	g.Go(func() error {
-		lastIngestedAt, err := lastObservedMetrics(gCtx, h.telemetryStore)
+		lastIngestedAt, err := telemetrystatscollector.LastObservedMetrics(gCtx, c.telemetryStore)
 		if err != nil {
 			return err
 		}
@@ -103,7 +75,7 @@ func (h *handler) getOrgContext(ctx context.Context, orgID valuer.UUID) (*emptys
 
 	g.Go(func() error {
 		var err error
-		alertsCount, err = h.getCollectedCount(gCtx, h.collectors.Rules, ruletypes.StatKeyRuleCount, orgID)
+		alertsCount, err = c.getCollectedCount(gCtx, c.collectors.Rules, ruletypes.StatKeyRuleCount, orgID)
 		if err != nil {
 			return err
 		}
@@ -113,7 +85,7 @@ func (h *handler) getOrgContext(ctx context.Context, orgID valuer.UUID) (*emptys
 
 	g.Go(func() error {
 		var err error
-		dashboardsCount, err = h.getCollectedCount(gCtx, h.collectors.Dashboards, dashboardtypes.StatKeyDashboardCount, orgID)
+		dashboardsCount, err = c.getCollectedCount(gCtx, c.collectors.Dashboards, dashboardtypes.StatKeyDashboardCount, orgID)
 		if err != nil {
 			return err
 		}
@@ -123,7 +95,7 @@ func (h *handler) getOrgContext(ctx context.Context, orgID valuer.UUID) (*emptys
 
 	g.Go(func() error {
 		var err error
-		savedViewsCount, err = h.getCollectedCount(gCtx, h.collectors.SavedViews, savedviewtypes.StatKeySavedViewCount, orgID)
+		savedViewsCount, err = c.getCollectedCount(gCtx, c.collectors.SavedViews, savedviewtypes.StatKeySavedViewCount, orgID)
 		if err != nil {
 			return err
 		}
@@ -132,7 +104,7 @@ func (h *handler) getOrgContext(ctx context.Context, orgID valuer.UUID) (*emptys
 	})
 
 	g.Go(func() error {
-		licenseStatus = h.getLicenseStatus(gCtx, orgID)
+		licenseStatus = c.getLicenseStatus(gCtx, orgID)
 		return nil
 	})
 
@@ -156,7 +128,7 @@ func (h *handler) getOrgContext(ctx context.Context, orgID valuer.UUID) (*emptys
 	}, nil
 }
 
-func (h *handler) getCollectedCount(ctx context.Context, collector StatsCollector, key string, orgID valuer.UUID) (int, error) {
+func (c *orgContext) getCollectedCount(ctx context.Context, collector statsreporter.StatsCollector, key string, orgID valuer.UUID) (int, error) {
 	if collector == nil {
 		return 0, errors.NewInternalf(errors.CodeInternal, "collector for %q is not configured", key)
 	}
@@ -176,12 +148,12 @@ func (h *handler) getCollectedCount(ctx context.Context, collector StatsCollecto
 
 // License stats degrade to UNKNOWN: community wires nooplicensing (empty stats)
 // and a licensing outage must not fail the endpoint.
-func (h *handler) getLicenseStatus(ctx context.Context, orgID valuer.UUID) emptystatetypes.LicenseStatus {
-	if h.collectors.Licensing == nil {
+func (c *orgContext) getLicenseStatus(ctx context.Context, orgID valuer.UUID) emptystatetypes.LicenseStatus {
+	if c.collectors.Licensing == nil {
 		return emptystatetypes.LicenseStatusUnknown
 	}
 
-	stats, err := h.collectors.Licensing.Collect(ctx, orgID)
+	stats, err := c.collectors.Licensing.Collect(ctx, orgID)
 	if err != nil {
 		return emptystatetypes.LicenseStatusUnknown
 	}

@@ -9556,53 +9556,6 @@ paths:
       summary: Update downtime schedule
       tags:
       - downtimeschedules
-  /api/v1/empty_state/org_context:
-    get:
-      deprecated: false
-      description: This endpoint returns raw org-level observability signals used
-        to render contextual empty states
-      operationId: GetOrgContext
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    $ref: '#/components/schemas/EmptystatetypesOrgContext'
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: OK
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - VIEWER
-      - tokenizer:
-        - VIEWER
-      summary: Get org context for empty states
-      tags:
-      - emptystate
   /api/v1/export_raw_data:
     post:
       deprecated: false
@@ -10540,6 +10493,53 @@ paths:
       summary: Update org preference
       tags:
       - preferences
+  /api/v1/orgs/me/empty_state:
+    get:
+      deprecated: false
+      description: This endpoint returns raw org-level observability signals used
+        to render contextual empty states
+      operationId: GetOrgContext
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/EmptystatetypesOrgContext'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get org context for empty states
+      tags:
+      - emptystate
   /api/v1/public/dashboards/{id}:
     get:
       deprecated: false

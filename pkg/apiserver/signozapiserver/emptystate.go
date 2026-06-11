@@ -11,7 +11,7 @@ import (
 )
 
 func (provider *provider) addEmptyStateRoutes(router *mux.Router) error {
-	if err := router.Handle("/api/v1/empty_state/org_context", handler.New(
+	if err := router.Handle("/api/v1/orgs/me/empty_state", handler.New(
 		provider.authzMiddleware.ViewAccess(provider.statsReporterHandler.GetOrgContext),
 		handler.OpenAPIDef{
 			ID:                  "GetOrgContext",

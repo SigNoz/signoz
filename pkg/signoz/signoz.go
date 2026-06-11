@@ -46,6 +46,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlschema"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/statsreporter"
+	"github.com/SigNoz/signoz/pkg/statsreporter/telemetrystatscollector"
 	"github.com/SigNoz/signoz/pkg/telemetryaudit"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
 	"github.com/SigNoz/signoz/pkg/telemetrymetadata"
@@ -499,7 +500,7 @@ func New(
 		serviceAccount,
 		cloudIntegrationModule,
 		modules.LogsPipeline,
-		statsreporter.NewTelemetryStatsCollector(telemetrystore),
+		telemetrystatscollector.New(telemetrystore),
 	}
 
 	// Initialize stats reporter from the available stats reporter provider factories

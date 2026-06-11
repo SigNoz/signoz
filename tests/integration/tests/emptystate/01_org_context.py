@@ -6,7 +6,7 @@ import requests
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 
-ORG_CONTEXT_PATH = "/api/v1/empty_state/org_context"
+ORG_CONTEXT_PATH = "/api/v1/orgs/me/empty_state"
 
 
 def test_get_org_context_unauthenticated(

@@ -9088,14 +9088,6 @@ export type GetDowntimeScheduleByID200 = {
 export type UpdateDowntimeScheduleByIDPathParameters = {
 	id: string;
 };
-export type GetOrgContext200 = {
-	data: EmptystatetypesOrgContextDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
 export type HandleExportRawDataPOSTParams = {
 	/**
 	 * @enum csv,jsonl
@@ -9335,6 +9327,14 @@ export type GetOrgPreference200 = {
 export type UpdateOrgPreferencePathParameters = {
 	name: string;
 };
+export type GetOrgContext200 = {
+	data: EmptystatetypesOrgContextDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type GetPublicDashboardDataPathParameters = {
 	id: string;
 };

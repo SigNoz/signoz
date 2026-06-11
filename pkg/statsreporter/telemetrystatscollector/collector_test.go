@@ -1,4 +1,4 @@
-package statsreporter
+package telemetrystatscollector
 
 import (
 	"context"
@@ -11,20 +11,29 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-// Exact SQL the count queries must generate; see the matching last-observed
-// constants in handler_test.go.
+var testOrgID = valuer.MustNewUUID("00000000-0000-0000-0000-000000000001")
+
+// Exact SQL the query builders must generate; mock expectations match on these
+// so any change to the statements fails the suite. The last-observed trio is
+// mirrored in signozstatsreporterapi/orgcontext_test.go.
 const (
 	tracesCountSQL  = "SELECT COUNT(*) FROM signoz_traces.distributed_signoz_index_v3"
 	logsCountSQL    = "SELECT COUNT(*) FROM signoz_logs.distributed_logs_v2"
 	metricsCountSQL = "SELECT COUNT(*) FROM signoz_metrics.distributed_samples_v4"
+
+	logsLastObservedSQL    = "SELECT fromUnixTimestamp64Nano(max(timestamp)) FROM signoz_logs.distributed_logs_v2"
+	tracesLastObservedSQL  = "SELECT max(timestamp) FROM signoz_traces.distributed_signoz_index_v3"
+	metricsLastObservedSQL = "SELECT toDateTime(max(unix_milli) / 1000) FROM signoz_metrics.distributed_samples_v4"
 )
 
 func TestTelemetryStatsCollectorCollect(t *testing.T) {
-	collector, chMock := newTelemetryStatsCollectorTest(t)
+	collector, chMock := newCollectorTest(t)
 
 	tracesAt := time.Date(2026, 6, 10, 10, 0, 0, 0, time.UTC)
 	logsAt := time.Date(2026, 6, 10, 11, 0, 0, 0, time.UTC)
@@ -53,7 +62,7 @@ func TestTelemetryStatsCollectorCollect(t *testing.T) {
 }
 
 func TestTelemetryStatsCollectorOmitsQuietLastObserved(t *testing.T) {
-	collector, chMock := newTelemetryStatsCollectorTest(t)
+	collector, chMock := newCollectorTest(t)
 
 	expectTelemetryCount(chMock, tracesCountSQL, 0)
 	expectTelemetryCount(chMock, logsCountSQL, 0)
@@ -74,7 +83,7 @@ func TestTelemetryStatsCollectorOmitsQuietLastObserved(t *testing.T) {
 }
 
 func TestTelemetryStatsCollectorCountErrorOmitsOnlyFailedKey(t *testing.T) {
-	collector, chMock := newTelemetryStatsCollectorTest(t)
+	collector, chMock := newCollectorTest(t)
 	tracesAt := time.Date(2026, 6, 10, 10, 0, 0, 0, time.UTC)
 
 	chMock.ExpectQueryRow(regexp.QuoteMeta(tracesCountSQL)).
@@ -97,7 +106,7 @@ func TestTelemetryStatsCollectorCountErrorOmitsOnlyFailedKey(t *testing.T) {
 }
 
 func TestTelemetryStatsCollectorLastObservedErrorOmitsOnlyFailedKeys(t *testing.T) {
-	collector, chMock := newTelemetryStatsCollectorTest(t)
+	collector, chMock := newCollectorTest(t)
 	logsAt := time.Date(2026, 6, 10, 11, 0, 0, 0, time.UTC)
 	metricsAt := time.Date(2026, 6, 10, 12, 0, 0, 0, time.UTC)
 
@@ -123,16 +132,31 @@ func TestTelemetryStatsCollectorLastObservedErrorOmitsOnlyFailedKeys(t *testing.
 	assert.NoError(t, chMock.ExpectationsWereMet())
 }
 
-func newTelemetryStatsCollectorTest(t *testing.T) (StatsCollector, cmock.ClickConnMockCommon) {
+func newCollectorTest(t *testing.T) (statsreporter.StatsCollector, cmock.ClickConnMockCommon) {
 	t.Helper()
 
 	ts := telemetrystoretest.New(telemetrystore.Config{}, sqlmock.QueryMatcherRegexp)
 	ts.Mock().MatchExpectationsInOrder(false)
 
-	return NewTelemetryStatsCollector(ts), ts.Mock()
+	return New(ts), ts.Mock()
 }
 
 func expectTelemetryCount(mock cmock.ClickConnMockCommon, query string, count uint64) {
 	mock.ExpectQueryRow(regexp.QuoteMeta(query)).
 		WillReturnRow(cmock.NewRow([]cmock.ColumnType{{Name: "count()", Type: "UInt64"}}, []any{count}))
+}
+
+func expectLogsLastIngested(mock cmock.ClickConnMockCommon, lastIngestedAt time.Time) {
+	mock.ExpectQueryRow(regexp.QuoteMeta(logsLastObservedSQL)).
+		WillReturnRow(cmock.NewRow([]cmock.ColumnType{{Name: "max(timestamp)", Type: "DateTime64(9)"}}, []any{lastIngestedAt}))
+}
+
+func expectTracesLastIngested(mock cmock.ClickConnMockCommon, lastIngestedAt time.Time) {
+	mock.ExpectQueryRow(regexp.QuoteMeta(tracesLastObservedSQL)).
+		WillReturnRow(cmock.NewRow([]cmock.ColumnType{{Name: "max(timestamp)", Type: "DateTime64(9)"}}, []any{lastIngestedAt}))
+}
+
+func expectMetricsLastIngested(mock cmock.ClickConnMockCommon, lastIngestedAt time.Time) {
+	mock.ExpectQueryRow(regexp.QuoteMeta(metricsLastObservedSQL)).
+		WillReturnRow(cmock.NewRow([]cmock.ColumnType{{Name: "toDateTime(divide(max(unix_milli), 1000))", Type: "DateTime"}}, []any{lastIngestedAt}))
 }

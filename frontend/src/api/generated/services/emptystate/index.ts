@@ -28,14 +28,14 @@ import type { ErrorType } from '../../../generatedAPIInstance';
  */
 export const getOrgContext = (signal?: AbortSignal) => {
 	return GeneratedAPIInstance<GetOrgContext200>({
-		url: `/api/v1/empty_state/org_context`,
+		url: `/api/v1/orgs/me/empty_state`,
 		method: 'GET',
 		signal,
 	});
 };
 
 export const getGetOrgContextQueryKey = () => {
-	return [`/api/v1/empty_state/org_context`] as const;
+	return [`/api/v1/orgs/me/empty_state`] as const;
 };
 
 export const getGetOrgContextQueryOptions = <

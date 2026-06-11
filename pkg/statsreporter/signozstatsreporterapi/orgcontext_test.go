@@ -1,4 +1,4 @@
-package statsreporter
+package signozstatsreporterapi
 
 import (
 	"context"
@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
@@ -23,8 +24,8 @@ import (
 
 var testOrgID = valuer.MustNewUUID("00000000-0000-0000-0000-000000000001")
 
-// Exact SQL the query builders must generate; mock expectations match on these
-// so any change to the statements fails the suite.
+// Exact SQL telemetrystatscollector must generate; mirrored in its
+// collector_test.go so any change to the statements fails both suites.
 const (
 	logsLastObservedSQL    = "SELECT fromUnixTimestamp64Nano(max(timestamp)) FROM signoz_logs.distributed_logs_v2"
 	tracesLastObservedSQL  = "SELECT max(timestamp) FROM signoz_traces.distributed_signoz_index_v3"
@@ -40,8 +41,8 @@ func (f *fakeCollector) Collect(context.Context, valuer.UUID) (map[string]any, e
 	return f.stats, f.err
 }
 
-func okCollectors() OrgContextCollectors {
-	return OrgContextCollectors{
+func okCollectors() statsreporter.OrgContextCollectors {
+	return statsreporter.OrgContextCollectors{
 		Rules:      &fakeCollector{stats: map[string]any{ruletypes.StatKeyRuleCount: int64(0)}},
 		Dashboards: &fakeCollector{stats: map[string]any{dashboardtypes.StatKeyDashboardCount: int64(0)}},
 		SavedViews: &fakeCollector{stats: map[string]any{savedviewtypes.StatKeySavedViewCount: int64(0)}},
@@ -92,33 +93,33 @@ func TestLicenseStatusFromStats(t *testing.T) {
 
 func TestGetLicenseStatusDegradesToUnknown(t *testing.T) {
 	t.Run("collector error", func(t *testing.T) {
-		h := &handler{collectors: OrgContextCollectors{Licensing: &fakeCollector{err: assert.AnError}}}
+		c := &orgContext{collectors: statsreporter.OrgContextCollectors{Licensing: &fakeCollector{err: assert.AnError}}}
 
-		status := h.getLicenseStatus(context.Background(), testOrgID)
+		status := c.getLicenseStatus(context.Background(), testOrgID)
 
 		assert.Equal(t, emptystatetypes.LicenseStatusUnknown, status)
 	})
 
 	t.Run("nil collector", func(t *testing.T) {
-		h := &handler{}
+		c := &orgContext{}
 
-		status := h.getLicenseStatus(context.Background(), testOrgID)
+		status := c.getLicenseStatus(context.Background(), testOrgID)
 
 		assert.Equal(t, emptystatetypes.LicenseStatusUnknown, status)
 	})
 }
 
 func TestGetCollectedCount(t *testing.T) {
-	h := &handler{}
+	c := &orgContext{}
 
 	t.Run("missing key fails", func(t *testing.T) {
-		_, err := h.getCollectedCount(context.Background(), &fakeCollector{stats: map[string]any{}}, ruletypes.StatKeyRuleCount, testOrgID)
+		_, err := c.getCollectedCount(context.Background(), &fakeCollector{stats: map[string]any{}}, ruletypes.StatKeyRuleCount, testOrgID)
 
 		assert.Error(t, err)
 	})
 
 	t.Run("nil collector fails", func(t *testing.T) {
-		_, err := h.getCollectedCount(context.Background(), nil, ruletypes.StatKeyRuleCount, testOrgID)
+		_, err := c.getCollectedCount(context.Background(), nil, ruletypes.StatKeyRuleCount, testOrgID)
 
 		assert.Error(t, err)
 	})
@@ -141,7 +142,7 @@ func TestGetOrgContextDerivesAggregates(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			h, chMock := newOrgContextTestHandler(t, OrgContextCollectors{
+			c, chMock := newOrgContextTest(t, statsreporter.OrgContextCollectors{
 				Rules:      &fakeCollector{stats: map[string]any{ruletypes.StatKeyRuleCount: int64(2)}},
 				Dashboards: &fakeCollector{stats: map[string]any{dashboardtypes.StatKeyDashboardCount: int64(1)}},
 				SavedViews: &fakeCollector{stats: map[string]any{savedviewtypes.StatKeySavedViewCount: int64(3)}},
@@ -164,7 +165,7 @@ func TestGetOrgContextDerivesAggregates(t *testing.T) {
 				expectMetricsLastIngested(chMock, time.Time{})
 			}
 
-			orgContext, err := h.getOrgContext(context.Background(), testOrgID)
+			orgContext, err := c.Get(context.Background(), testOrgID)
 
 			require.NoError(t, err)
 			assert.Equal(t, tc.logs || tc.traces || tc.metrics, orgContext.HasIngestedData)
@@ -195,11 +196,11 @@ func assertLastIngested(t *testing.T, ingested bool, got *time.Time, want time.T
 func TestGetOrgContextLicenseErrorDoesNotFail(t *testing.T) {
 	collectors := okCollectors()
 	collectors.Licensing = &fakeCollector{err: assert.AnError}
-	h, chMock := newOrgContextTestHandler(t, collectors)
+	c, chMock := newOrgContextTest(t, collectors)
 
 	expectTelemetryQuiet(chMock)
 
-	orgContext, err := h.getOrgContext(context.Background(), testOrgID)
+	orgContext, err := c.Get(context.Background(), testOrgID)
 
 	require.NoError(t, err)
 	assert.Equal(t, emptystatetypes.LicenseStatusUnknown, orgContext.LicenseStatus)
@@ -209,18 +210,18 @@ func TestGetOrgContextLicenseErrorDoesNotFail(t *testing.T) {
 func TestGetOrgContextCollectorErrorFails(t *testing.T) {
 	collectors := okCollectors()
 	collectors.Rules = &fakeCollector{err: assert.AnError}
-	h, chMock := newOrgContextTestHandler(t, collectors)
+	c, chMock := newOrgContextTest(t, collectors)
 
 	expectTelemetryQuiet(chMock)
 
-	orgContext, err := h.getOrgContext(context.Background(), testOrgID)
+	orgContext, err := c.Get(context.Background(), testOrgID)
 
 	assert.Error(t, err)
 	assert.Nil(t, orgContext)
 }
 
 func TestGetOrgContextClickHouseErrorFails(t *testing.T) {
-	h, chMock := newOrgContextTestHandler(t, okCollectors())
+	c, chMock := newOrgContextTest(t, okCollectors())
 
 	chMock.ExpectQueryRow(regexp.QuoteMeta(logsLastObservedSQL)).
 		WillReturnRow(cmock.NewRow([]cmock.ColumnType{{Name: "max(timestamp)", Type: "DateTime64(9)"}}, nil)).
@@ -228,22 +229,19 @@ func TestGetOrgContextClickHouseErrorFails(t *testing.T) {
 	expectTracesLastIngested(chMock, time.Time{})
 	expectMetricsLastIngested(chMock, time.Time{})
 
-	orgContext, err := h.getOrgContext(context.Background(), testOrgID)
+	orgContext, err := c.Get(context.Background(), testOrgID)
 
 	assert.Error(t, err)
 	assert.Nil(t, orgContext)
 }
 
-func newOrgContextTestHandler(t *testing.T, collectors OrgContextCollectors) (*handler, cmock.ClickConnMockCommon) {
+func newOrgContextTest(t *testing.T, collectors statsreporter.OrgContextCollectors) (*orgContext, cmock.ClickConnMockCommon) {
 	t.Helper()
 
 	ts := telemetrystoretest.New(telemetrystore.Config{}, sqlmock.QueryMatcherRegexp)
 	ts.Mock().MatchExpectationsInOrder(false)
 
-	return &handler{
-		telemetryStore: ts,
-		collectors:     collectors,
-	}, ts.Mock()
+	return newOrgContext(ts, collectors), ts.Mock()
 }
 
 func expectTelemetryQuiet(mock cmock.ClickConnMockCommon) {
