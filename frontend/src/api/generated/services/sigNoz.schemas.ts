@@ -4756,7 +4756,7 @@ export enum DashboardtypesListSortDTO {
 	name = 'name',
 }
 export interface DashboardtypesListedDashboardV2SpecDTO {
-	display?: CommonDisplayDTO;
+	display?: DashboardtypesDisplayDTO;
 }
 
 export interface DashboardtypesListedDashboardForUserV2DTO {
