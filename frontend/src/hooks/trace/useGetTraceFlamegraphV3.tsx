@@ -11,6 +11,7 @@ export interface GetTraceFlamegraphV3Props {
 	traceId: string;
 	selectedSpanId?: string;
 	selectFields?: TelemetryFieldKey[];
+	enabled?: boolean;
 }
 
 const useGetTraceFlamegraphV3 = (
@@ -41,7 +42,7 @@ const useGetTraceFlamegraphV3 = (
 			props.selectedSpanId,
 			props.selectFields,
 		],
-		enabled: !!props.traceId,
+		enabled: props.enabled,
 		keepPreviousData: true,
 		refetchOnWindowFocus: false,
 	});

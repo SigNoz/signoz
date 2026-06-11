@@ -53,6 +53,9 @@ function TraceFlamegraph({
 	);
 
 	const previewFields = useTraceStore((s) => s.previewFields);
+	// Gate the fetch until prefs load, else selectFields (in the query key)
+	// repopulates and triggers a second fetch.
+	const userPrefsReady = useTraceStore((s) => s.userPreferences !== null);
 
 	// Color-by fields baseline + user-picked preview fields. De-duped by `name`,
 	// color-by entries first so their canonical metadata wins on collision.
@@ -74,6 +77,7 @@ function TraceFlamegraph({
 		traceId,
 		selectedSpanId: selectedSpanIdForFetch,
 		selectFields: flamegraphSelectFields,
+		enabled: !!traceId && userPrefsReady,
 	});
 
 	const spans = useMemo(() => data?.spans || [], [data?.spans]);
