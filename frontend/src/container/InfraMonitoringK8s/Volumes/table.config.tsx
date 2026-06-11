@@ -141,4 +141,61 @@ export const k8sVolumesColumnsConfig: TableColumnDef<K8sVolumesData>[] = [
 			);
 		},
 	},
+	{
+		id: 'inodes',
+		header: 'Inodes',
+		accessorFn: (row): number => row.volumeInodes,
+		width: { min: 140 },
+		enableSort: true,
+		cell: ({ value }): React.ReactNode => {
+			const inodes = value as number;
+			return (
+				<ValidateColumnValueWrapper
+					value={inodes}
+					entity={InfraMonitoringEntity.VOLUMES}
+					attribute="inodes metric"
+				>
+					<TanStackTable.Text>{inodes}</TanStackTable.Text>
+				</ValidateColumnValueWrapper>
+			);
+		},
+	},
+	{
+		id: 'inodesUsed',
+		header: 'Inodes Used',
+		accessorFn: (row): number => row.volumeInodesUsed,
+		width: { min: 160 },
+		enableSort: true,
+		cell: ({ value }): React.ReactNode => {
+			const inodesUsed = value as number;
+			return (
+				<ValidateColumnValueWrapper
+					value={inodesUsed}
+					entity={InfraMonitoringEntity.VOLUMES}
+					attribute="inodes used metric"
+				>
+					<TanStackTable.Text>{inodesUsed}</TanStackTable.Text>
+				</ValidateColumnValueWrapper>
+			);
+		},
+	},
+	{
+		id: 'inodesFree',
+		header: 'Inodes Free',
+		accessorFn: (row): number => row.volumeInodesFree,
+		width: { min: 160 },
+		enableSort: true,
+		cell: ({ value }): React.ReactNode => {
+			const inodesFree = value as number;
+			return (
+				<ValidateColumnValueWrapper
+					value={inodesFree}
+					entity={InfraMonitoringEntity.VOLUMES}
+					attribute="inodes free metric"
+				>
+					<TanStackTable.Text>{inodesFree}</TanStackTable.Text>
+				</ValidateColumnValueWrapper>
+			);
+		},
+	},
 ];
