@@ -2,15 +2,9 @@ package statsreporter
 
 import (
 	"context"
-	"fmt"
-
-	"github.com/huandu/go-sqlbuilder"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/telemetrylogs"
-	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
-	"github.com/SigNoz/signoz/pkg/telemetrytraces"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -28,19 +22,19 @@ func NewTelemetryStatsCollector(telemetryStore telemetrystore.TelemetryStore) St
 func (collector *telemetryStatsCollector) Collect(ctx context.Context, _ valuer.UUID) (map[string]any, error) {
 	stats := make(map[string]any)
 
-	traces, err := collector.countRows(ctx, telemetrytraces.DBName, telemetrytraces.SpanIndexV3TableName, "traces")
+	traces, err := collector.countRows(ctx, "SELECT COUNT(*) FROM signoz_traces.distributed_signoz_index_v3", "traces")
 	if err != nil {
 		return nil, err
 	}
 	stats["telemetry.traces.count"] = traces
 
-	logs, err := collector.countRows(ctx, telemetrylogs.DBName, telemetrylogs.LogsV2TableName, "logs")
+	logs, err := collector.countRows(ctx, "SELECT COUNT(*) FROM signoz_logs.distributed_logs_v2", "logs")
 	if err != nil {
 		return nil, err
 	}
 	stats["telemetry.logs.count"] = logs
 
-	metrics, err := collector.countRows(ctx, telemetrymetrics.DBName, telemetrymetrics.SamplesV4TableName, "metrics")
+	metrics, err := collector.countRows(ctx, "SELECT COUNT(*) FROM signoz_metrics.distributed_samples_v4", "metrics")
 	if err != nil {
 		return nil, err
 	}
@@ -70,15 +64,9 @@ func (collector *telemetryStatsCollector) Collect(ctx context.Context, _ valuer.
 	return stats, nil
 }
 
-func (collector *telemetryStatsCollector) countRows(ctx context.Context, dbName string, tableName string, signal string) (uint64, error) {
-	sb := sqlbuilder.NewSelectBuilder()
-	sb.Select("COUNT(*)")
-	sb.From(fmt.Sprintf("%s.%s", dbName, tableName))
-
-	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-
+func (collector *telemetryStatsCollector) countRows(ctx context.Context, query string, signal string) (uint64, error) {
 	var count uint64
-	if err := collector.telemetryStore.ClickhouseDB().QueryRow(ctx, query, args...).Scan(&count); err != nil {
+	if err := collector.telemetryStore.ClickhouseDB().QueryRow(ctx, query).Scan(&count); err != nil {
 		return 0, errors.WrapInternalf(err, errors.CodeInternal, "failed to count %s", signal)
 	}
 
