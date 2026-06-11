@@ -297,7 +297,7 @@ func (r *ClickHouseReader) GetSeries(ctx context.Context, params *model.SeriesQu
 			return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		}
 
-		querier, err := r.prometheus.Storage().Querier(mintMs, maxtMs)
+		querier, err := r.prometheus.Querier(mintMs, maxtMs)
 		if err != nil {
 			return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 		}
@@ -313,9 +313,7 @@ func (r *ClickHouseReader) GetSeries(ctx context.Context, params *model.SeriesQu
 			seen[key] = struct{}{}
 			m := make(map[string]string, lbls.Len())
 			lbls.Range(func(l labels.Label) {
-				if l.Name != prometheus.FingerprintAsPromLabelName {
-					m[l.Name] = l.Value
-				}
+				m[l.Name] = l.Value
 			})
 			result = append(result, m)
 			if len(result) >= limit {
@@ -337,46 +335,33 @@ func (r *ClickHouseReader) GetSeries(ctx context.Context, params *model.SeriesQu
 }
 
 func (r *ClickHouseReader) GetLabels(ctx context.Context, params *model.LabelQueryParams) ([]string, *model.ApiError) {
-	// Direct ClickHouse queries are used here because the remote-read querier's
-	// LabelNames method is not implemented in Prometheus v0.311.3 (issue #3351).
 	mintMs := params.Start.UnixMilli()
 	maxtMs := params.End.UnixMilli()
-	normalized := !constants.IsDotMetricsEnabled
 
 	seen := map[string]struct{}{}
 	var result []string
 
-	execQuery := func(matcherConditions string, args []interface{}) *model.ApiError {
-		query := fmt.Sprintf(
-			`SELECT distinctLabel FROM (
-				SELECT arrayJoin(JSONExtractKeys(labels)) AS distinctLabel
-				FROM %s.%s
-				WHERE unix_milli >= $1 AND unix_milli <= $2 AND __normalized = $3%s
-			) WHERE distinctLabel != $4 GROUP BY distinctLabel ORDER BY distinctLabel`,
-			signozMetricDBName, signozTSTableNameV41Day, matcherConditions,
-		)
-		rows, err := r.db.Query(ctx, query, args...)
+	run := func(matchers []*labels.Matcher) *model.ApiError {
+		querier, err := r.prometheus.Querier(mintMs, maxtMs)
+		if err != nil {
+			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+		}
+		defer querier.Close()
+		names, _, err := querier.LabelNames(ctx, nil, matchers...)
 		if err != nil {
 			return &model.ApiError{Typ: model.ErrorExec, Err: err}
 		}
-		defer rows.Close()
-		for rows.Next() {
-			var lbl string
-			if scanErr := rows.Scan(&lbl); scanErr != nil {
-				return &model.ApiError{Typ: model.ErrorExec, Err: scanErr}
-			}
-			if _, ok := seen[lbl]; !ok {
-				seen[lbl] = struct{}{}
-				result = append(result, lbl)
+		for _, name := range names {
+			if _, ok := seen[name]; !ok {
+				seen[name] = struct{}{}
+				result = append(result, name)
 			}
 		}
-		return rowsApiError(rows.Err())
+		return nil
 	}
 
-	baseArgs := []interface{}{mintMs, maxtMs, normalized, prometheus.FingerprintAsPromLabelName}
-
 	if len(params.Matches) == 0 {
-		if apiErr := execQuery("", baseArgs); apiErr != nil {
+		if apiErr := run(nil); apiErr != nil {
 			return nil, apiErr
 		}
 		sort.Strings(result)
@@ -388,13 +373,7 @@ func (r *ClickHouseReader) GetLabels(ctx context.Context, params *model.LabelQue
 		if parseErr != nil {
 			return nil, &model.ApiError{Typ: model.ErrorBadData, Err: parseErr}
 		}
-		conditions, extraArgs, _ := matchersToClickhouse(matchers, 5)
-		var condStr string
-		if len(conditions) > 0 {
-			condStr = " AND " + strings.Join(conditions, " AND ")
-		}
-		args := append(append([]interface{}{}, baseArgs...), extraArgs...)
-		if apiErr := execQuery(condStr, args); apiErr != nil {
+		if apiErr := run(matchers); apiErr != nil {
 			return nil, apiErr
 		}
 	}
@@ -403,58 +382,33 @@ func (r *ClickHouseReader) GetLabels(ctx context.Context, params *model.LabelQue
 }
 
 func (r *ClickHouseReader) GetLabelValues(ctx context.Context, labelName string, params *model.LabelQueryParams) ([]string, *model.ApiError) {
-	// Direct ClickHouse queries are used here because the remote-read querier's
-	// LabelValues method is not implemented in Prometheus v0.311.3 (issue #3351).
 	mintMs := params.Start.UnixMilli()
 	maxtMs := params.End.UnixMilli()
-	normalized := !constants.IsDotMetricsEnabled
 
 	seen := map[string]struct{}{}
 	var result []string
 
-	// Use metric_name column directly for __name__ — more efficient than JSON extraction.
-	var valueExpr string
-	var baseArgIdx int
-	var baseArgs []interface{}
-	if labelName == labels.MetricName {
-		valueExpr = "metric_name"
-		baseArgIdx = 4
-		baseArgs = []interface{}{mintMs, maxtMs, normalized}
-	} else {
-		valueExpr = "JSONExtractString(labels, $4)"
-		baseArgIdx = 5
-		baseArgs = []interface{}{mintMs, maxtMs, normalized, labelName}
-	}
-
-	execQuery := func(matcherConditions string, args []interface{}) *model.ApiError {
-		query := fmt.Sprintf(
-			`SELECT DISTINCT lv FROM (
-				SELECT %s AS lv
-				FROM %s.%s
-				WHERE unix_milli >= $1 AND unix_milli <= $2 AND __normalized = $3%s
-			) WHERE lv != '' ORDER BY lv`,
-			valueExpr, signozMetricDBName, signozTSTableNameV41Day, matcherConditions,
-		)
-		rows, err := r.db.Query(ctx, query, args...)
+	run := func(matchers []*labels.Matcher) *model.ApiError {
+		querier, err := r.prometheus.Querier(mintMs, maxtMs)
+		if err != nil {
+			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+		}
+		defer querier.Close()
+		values, _, err := querier.LabelValues(ctx, labelName, nil, matchers...)
 		if err != nil {
 			return &model.ApiError{Typ: model.ErrorExec, Err: err}
 		}
-		defer rows.Close()
-		for rows.Next() {
-			var v string
-			if scanErr := rows.Scan(&v); scanErr != nil {
-				return &model.ApiError{Typ: model.ErrorExec, Err: scanErr}
-			}
+		for _, v := range values {
 			if _, ok := seen[v]; !ok {
 				seen[v] = struct{}{}
 				result = append(result, v)
 			}
 		}
-		return rowsApiError(rows.Err())
+		return nil
 	}
 
 	if len(params.Matches) == 0 {
-		if apiErr := execQuery("", baseArgs); apiErr != nil {
+		if apiErr := run(nil); apiErr != nil {
 			return nil, apiErr
 		}
 		sort.Strings(result)
@@ -466,83 +420,12 @@ func (r *ClickHouseReader) GetLabelValues(ctx context.Context, labelName string,
 		if parseErr != nil {
 			return nil, &model.ApiError{Typ: model.ErrorBadData, Err: parseErr}
 		}
-		conditions, extraArgs, _ := matchersToClickhouse(matchers, baseArgIdx)
-		var condStr string
-		if len(conditions) > 0 {
-			condStr = " AND " + strings.Join(conditions, " AND ")
-		}
-		args := append(append([]interface{}{}, baseArgs...), extraArgs...)
-		if apiErr := execQuery(condStr, args); apiErr != nil {
+		if apiErr := run(matchers); apiErr != nil {
 			return nil, apiErr
 		}
 	}
 	sort.Strings(result)
 	return result, nil
-}
-
-// matchersToClickhouse translates a slice of Prometheus label matchers to
-// ClickHouse SQL condition fragments and the corresponding query arguments.
-// argIdx is the 1-based positional index of the first placeholder to emit.
-// Returns (conditions, args, nextArgIdx).
-func matchersToClickhouse(matchers []*labels.Matcher, argIdx int) ([]string, []interface{}, int) {
-	var conditions []string
-	var args []interface{}
-	for _, m := range matchers {
-		var cond string
-		var mArgs []interface{}
-		if m.Name == labels.MetricName {
-			switch m.Type {
-			case labels.MatchEqual:
-				cond = fmt.Sprintf("metric_name = $%d", argIdx)
-				mArgs = []interface{}{m.Value}
-				argIdx++
-			case labels.MatchNotEqual:
-				cond = fmt.Sprintf("metric_name != $%d", argIdx)
-				mArgs = []interface{}{m.Value}
-				argIdx++
-			case labels.MatchRegexp:
-				cond = fmt.Sprintf("match(metric_name, $%d)", argIdx)
-				mArgs = []interface{}{m.Value}
-				argIdx++
-			case labels.MatchNotRegexp:
-				cond = fmt.Sprintf("NOT match(metric_name, $%d)", argIdx)
-				mArgs = []interface{}{m.Value}
-				argIdx++
-			}
-		} else {
-			switch m.Type {
-			case labels.MatchEqual:
-				cond = fmt.Sprintf("JSONExtractString(labels, $%d) = $%d", argIdx, argIdx+1)
-				mArgs = []interface{}{m.Name, m.Value}
-				argIdx += 2
-			case labels.MatchNotEqual:
-				cond = fmt.Sprintf("JSONExtractString(labels, $%d) != $%d", argIdx, argIdx+1)
-				mArgs = []interface{}{m.Name, m.Value}
-				argIdx += 2
-			case labels.MatchRegexp:
-				cond = fmt.Sprintf("match(JSONExtractString(labels, $%d), $%d)", argIdx, argIdx+1)
-				mArgs = []interface{}{m.Name, m.Value}
-				argIdx += 2
-			case labels.MatchNotRegexp:
-				cond = fmt.Sprintf("NOT match(JSONExtractString(labels, $%d), $%d)", argIdx, argIdx+1)
-				mArgs = []interface{}{m.Name, m.Value}
-				argIdx += 2
-			}
-		}
-		if cond != "" {
-			conditions = append(conditions, cond)
-			args = append(args, mArgs...)
-		}
-	}
-	return conditions, args, argIdx
-}
-
-// rowsApiError wraps a rows.Err() result in an *model.ApiError, returning nil if err is nil.
-func rowsApiError(err error) *model.ApiError {
-	if err == nil {
-		return nil
-	}
-	return &model.ApiError{Typ: model.ErrorExec, Err: err}
 }
 
 func (r *ClickHouseReader) GetServicesList(ctx context.Context) (*[]string, error) {
