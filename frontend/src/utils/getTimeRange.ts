@@ -1,8 +1,7 @@
 import { UseQueryResult } from 'react-query';
 import getStartEndRangeTime from 'lib/getStartEndRangeTime';
 import store from 'store';
-import { SuccessResponse } from 'types/api';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
 import { QueryRangeRequestV5 } from 'types/api/v5/queryRange';
 
 export const getTimeRangeFromQueryRangeRequest = (
@@ -28,13 +27,9 @@ export const getTimeRangeFromQueryRangeRequest = (
 };
 
 export const getTimeRange = (
-	widgetQueryRange?: UseQueryResult<
-		SuccessResponse<MetricRangePayloadProps, unknown>,
-		Error
-	>,
+	widgetQueryRange?: UseQueryResult<MetricQueryRangeSuccessResponse, Error>,
 ): Record<string, number> => {
-	const widgetParams =
-		(widgetQueryRange?.data?.params as QueryRangeRequestV5) || null;
+	const widgetParams = widgetQueryRange?.data?.params;
 
 	return getTimeRangeFromQueryRangeRequest(widgetParams);
 };

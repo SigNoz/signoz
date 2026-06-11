@@ -17,11 +17,6 @@ jest.mock('react-redux', () => ({
 	useSelector: jest.fn(),
 }));
 
-jest.mock('api/common/logEvent', () => ({
-	__esModule: true,
-	default: jest.fn(),
-}));
-
 jest.mock('api/dashboard/substitute_vars', () => ({
 	getSubstituteVars: jest.fn(),
 }));

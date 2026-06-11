@@ -332,22 +332,6 @@ func (s *FlamegraphSpan) SetRequestedFields(item SpanItemV2, fields []telemetryt
 	}
 }
 
-type GetWaterfallSpansForTraceWithMetadataResponse struct {
-	StartTimestampMillis          uint64            `json:"startTimestampMillis"`
-	EndTimestampMillis            uint64            `json:"endTimestampMillis"`
-	DurationNano                  uint64            `json:"durationNano"`
-	RootServiceName               string            `json:"rootServiceName"`
-	RootServiceEntryPoint         string            `json:"rootServiceEntryPoint"`
-	TotalSpansCount               uint64            `json:"totalSpansCount"`
-	TotalErrorSpansCount          uint64            `json:"totalErrorSpansCount"`
-	ServiceNameToTotalDurationMap map[string]uint64 `json:"serviceNameToTotalDurationMap"`
-	Spans                         []*Span           `json:"spans"`
-	HasMissingSpans               bool              `json:"hasMissingSpans"`
-	// this is needed for frontend and query service sync
-	UncollapsedSpans []string `json:"uncollapsedSpans"`
-	HasMore          bool     `json:"hasMore"`
-}
-
 type GetFlamegraphSpansForTraceResponse struct {
 	StartTimestampMillis uint64              `json:"startTimestampMillis"`
 	EndTimestampMillis   uint64              `json:"endTimestampMillis"`

@@ -2,7 +2,7 @@ import { Logout } from 'api/utils';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import { createErrorResponse, rest, server } from 'mocks-server/server';
-import { render, screen, waitFor } from 'tests/test-utils';
+import { render, screen, waitFor, fireEvent } from 'tests/test-utils';
 
 import ResetPassword from '../index';
 
@@ -103,6 +103,7 @@ describe('ResetPassword Page', () => {
 			expect(
 				screen.getByText(/reset password token does not exist/i),
 			).toBeInTheDocument();
+			expect(screen.getByTestId('back-to-login')).toBeInTheDocument();
 		});
 
 		it('shows "token is expired" when token is expired (401) without redirecting to login', async () => {
@@ -137,6 +138,32 @@ describe('ResetPassword Page', () => {
 			// 401 from this endpoint must NOT trigger logout/redirect
 			expect(mockHistoryPush).not.toHaveBeenCalledWith(ROUTES.LOGIN);
 			expect(Logout).not.toHaveBeenCalled();
+			expect(screen.getByTestId('back-to-login')).toBeInTheDocument();
+		});
+
+		it('navigates to login when "Back to login" is clicked on error screen', async () => {
+			server.use(
+				rest.post(
+					VERIFY_TOKEN_ENDPOINT,
+					createErrorResponse(
+						404,
+						'reset_password_token_not_found',
+						'reset password token does not exist',
+					),
+				),
+			);
+
+			window.history.pushState({}, '', '/password-reset?token=invalid-token');
+			render(<ResetPassword />, undefined, {
+				initialRoute: '/password-reset?token=invalid-token',
+			});
+
+			await waitFor(() => {
+				expect(screen.getByTestId('back-to-login')).toBeInTheDocument();
+			});
+
+			fireEvent.click(screen.getByTestId('back-to-login'));
+			expect(mockHistoryPush).toHaveBeenCalledWith(ROUTES.LOGIN);
 		});
 
 		it('redirects to login when no token is in the URL', async () => {

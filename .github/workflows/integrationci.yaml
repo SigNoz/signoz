@@ -39,10 +39,12 @@ jobs:
       matrix:
         suite:
           - alerts
+          - basepath
           - callbackauthn
           - cloudintegrations
           - dashboard
           - ingestionkeys
+          - inframonitoring
           - logspipelines
           - passwordauthn
           - preference
@@ -83,7 +85,7 @@ jobs:
         run: |
           cd tests && uv sync
       - name: webdriver
-        if: matrix.suite == 'callbackauthn'
+        if: matrix.suite == 'callbackauthn' || matrix.suite == 'basepath'
         run: |
           wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
           echo "deb http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee -a /etc/apt/sources.list.d/google-chrome.list

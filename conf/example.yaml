@@ -432,7 +432,7 @@ cloudintegration:
     version: v0.0.8
 
 ##################### Trace Detail #####################
-tracedetail:
+traces:
   waterfall:
     # Number of spans returned per request when the trace is too large to show all at once.
     span_page_size: 500
@@ -440,6 +440,17 @@ tracedetail:
     max_depth_to_auto_expand: 5
     # Threshold below which all spans are returned without windowing.
     max_limit_to_select_all_spans: 10000
+  flamegraph:
+    # Maximum number of BFS depth levels included in a windowed response.
+    max_selected_levels: 50
+    # Maximum spans per level before sampling is applied.
+    max_spans_per_level: 100
+    # Number of highest-latency spans always included when sampling a level.
+    sampling_top_latency_count: 5
+    # Number of timestamp buckets used for uniform sampling within a level.
+    sampling_bucket_count: 50
+    # Threshold below which all spans are returned without windowing or sampling.
+    select_all_spans_limit: 100000
 
 ##################### Authz #################################
 authz:
