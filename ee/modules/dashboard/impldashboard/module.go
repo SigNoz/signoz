@@ -254,12 +254,12 @@ func (module *module) PinV2(ctx context.Context, orgID valuer.UUID, userID value
 	return module.pkgDashboardModule.PinV2(ctx, orgID, userID, id)
 }
 
-func (module *module) UnpinV2(ctx context.Context, userID valuer.UUID, id valuer.UUID) error {
-	return module.pkgDashboardModule.UnpinV2(ctx, userID, id)
+func (module *module) UnpinV2(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, id valuer.UUID) error {
+	return module.pkgDashboardModule.UnpinV2(ctx, orgID, userID, id)
 }
 
-func (module *module) DeletePreferencesForUser(ctx context.Context, userID valuer.UUID) error {
-	return module.pkgDashboardModule.DeletePreferencesForUser(ctx, userID)
+func (module *module) DeletePreferencesForUser(ctx context.Context, orgID valuer.UUID, userID valuer.UUID) error {
+	return module.pkgDashboardModule.DeletePreferencesForUser(ctx, orgID, userID)
 }
 
 func (module *module) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.Dashboard, error) {

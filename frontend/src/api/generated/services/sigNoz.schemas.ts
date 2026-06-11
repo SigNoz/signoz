@@ -3146,17 +3146,6 @@ export interface DashboardLinkDTO {
 	url?: string;
 }
 
-export interface DashboardPanelDisplayDTO {
-	/**
-	 * @type string
-	 */
-	description?: string;
-	/**
-	 * @type string
-	 */
-	name?: string;
-}
-
 export interface VariableDisplayDTO {
 	/**
 	 * @type string
@@ -3882,6 +3871,17 @@ export type DashboardtypesDashboardSpecDTODatasources = {
 export enum DashboardtypesPanelKindDTO {
 	Panel = 'Panel',
 }
+export interface DashboardtypesDisplayDTO {
+	/**
+	 * @type string
+	 */
+	description?: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+}
+
 export enum DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpecDTOKind {
 	'signoz/TimeSeriesPanel' = 'signoz/TimeSeriesPanel',
 }
@@ -4430,41 +4430,35 @@ export interface DashboardtypesQuerySpecDTO {
 	 * @type string
 	 */
 	name?: string;
-	plugin?: DashboardtypesQueryPluginDTO;
+	plugin: DashboardtypesQueryPluginDTO;
 }
 
 export interface DashboardtypesQueryDTO {
-	kind?: Querybuildertypesv5RequestTypeDTO;
-	spec?: DashboardtypesQuerySpecDTO;
+	kind: Querybuildertypesv5RequestTypeDTO;
+	spec: DashboardtypesQuerySpecDTO;
 }
 
 export interface DashboardtypesPanelSpecDTO {
-	display?: DashboardPanelDisplayDTO;
+	display: DashboardtypesDisplayDTO;
 	/**
 	 * @type array
 	 */
 	links?: DashboardLinkDTO[];
-	plugin?: DashboardtypesPanelPluginDTO;
+	plugin: DashboardtypesPanelPluginDTO;
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	queries?: DashboardtypesQueryDTO[];
+	queries: DashboardtypesQueryDTO[] | null;
 }
 
 export interface DashboardtypesPanelDTO {
-	kind?: DashboardtypesPanelKindDTO;
-	spec?: DashboardtypesPanelSpecDTO;
+	kind: DashboardtypesPanelKindDTO;
+	spec: DashboardtypesPanelSpecDTO;
 }
 
-export type DashboardtypesDashboardSpecDTOPanelsAnyOf = {
+export type DashboardtypesDashboardSpecDTOPanels = {
 	[key: string]: DashboardtypesPanelDTO;
 };
-
-/**
- * @nullable
- */
-export type DashboardtypesDashboardSpecDTOPanels =
-	DashboardtypesDashboardSpecDTOPanelsAnyOf | null;
 
 export enum DashboardtypesLayoutEnvelopeGithubComPersesSpecGoDashboardGridLayoutSpecDTOKind {
 	Grid = 'Grid',
@@ -4562,7 +4556,7 @@ export interface DashboardtypesListVariableSpecDTO {
 	 */
 	customAllValue?: string;
 	defaultValue?: VariableDefaultValueDTO;
-	display?: VariableDisplayDTO;
+	display: DashboardtypesDisplayDTO;
 	/**
 	 * @type string
 	 */
@@ -4604,23 +4598,23 @@ export interface DashboardtypesDashboardSpecDTO {
 	 * @type object
 	 */
 	datasources?: DashboardtypesDashboardSpecDTODatasources;
-	display?: CommonDisplayDTO;
+	display: DashboardtypesDisplayDTO;
 	/**
 	 * @type string
 	 */
 	duration?: string;
 	/**
-	 * @type array,null
+	 * @type array
 	 */
-	layouts?: DashboardtypesLayoutDTO[] | null;
+	layouts: DashboardtypesLayoutDTO[];
 	/**
 	 * @type array
 	 */
 	links?: DashboardLinkDTO[];
 	/**
-	 * @type object,null
+	 * @type object
 	 */
-	panels?: DashboardtypesDashboardSpecDTOPanels;
+	panels: DashboardtypesDashboardSpecDTOPanels;
 	/**
 	 * @type string
 	 */
@@ -4628,7 +4622,7 @@ export interface DashboardtypesDashboardSpecDTO {
 	/**
 	 * @type array
 	 */
-	variables?: DashboardtypesVariableDTO[];
+	variables: DashboardtypesVariableDTO[];
 }
 
 export enum DashboardtypesDatasourcePluginKindDTO {
@@ -4752,7 +4746,7 @@ export enum DashboardtypesListSortDTO {
 	name = 'name',
 }
 export interface DashboardtypesListedDashboardV2SpecDTO {
-	display?: CommonDisplayDTO;
+	display?: DashboardtypesDisplayDTO;
 }
 
 export interface DashboardtypesListedDashboardForUserV2DTO {

@@ -7,7 +7,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/tagtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/perses/spec/go/common"
 )
 
 const (
@@ -110,7 +109,7 @@ type listedDashboardV2 struct {
 }
 
 type listedDashboardV2Spec struct {
-	Display *common.Display `json:"display,omitempty"`
+	Display Display `json:"display,omitempty"`
 }
 
 func newListedDashboardV2(v2 *DashboardV2) *listedDashboardV2 {

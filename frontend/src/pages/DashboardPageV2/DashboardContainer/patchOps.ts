@@ -4,7 +4,7 @@ import type {
 	DashboardtypesLayoutDTO,
 	DashboardtypesPanelDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { DashboardtypesJSONPatchOperationDTOOp } from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesPatchOpDTO } from 'api/generated/services/sigNoz.schemas';
 
 import type { GridItem } from './utils';
 
@@ -16,7 +16,7 @@ import type { GridItem } from './utils';
  * patches in DashboardSettings/General and DashboardDescription).
  */
 
-const { add, replace, remove } = DashboardtypesJSONPatchOperationDTOOp;
+const { add, replace, remove } = DashboardtypesPatchOpDTO;
 
 const PANEL_REF_PREFIX = '#/spec/panels/';
 
