@@ -1,0 +1,48 @@
+.dashboardTitleContainer {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	width: 30%;
+
+	@media (min-width: 1280px) {
+		width: 40%;
+	}
+}
+
+.dashboardImage {
+	flex-shrink: 0;
+}
+
+.dashboardTitle {
+	flex: 1;
+	min-width: 0;
+	max-width: fit-content;
+	color: var(--l1-foreground);
+	font-size: 18px;
+	font-weight: 500;
+
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.dashboardTitleHover {
+	cursor: text !important;
+}
+
+.dashboardTitleEditor {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	flex: 1;
+	min-width: 0;
+}
+
+.dashboardTitleInput {
+	flex: 1;
+	min-width: 0;
+}
+
+.dashboardTitleActionButton {
+	flex-shrink: 0;
+}

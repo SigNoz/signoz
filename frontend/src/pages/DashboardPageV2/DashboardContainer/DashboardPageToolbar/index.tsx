@@ -18,11 +18,11 @@ import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 
 import DashboardActions from './DashboardActions/DashboardActions';
-import DashboardMeta from './DashboardMeta/DashboardMeta';
 import DashboardTitle from './DashboardTitle/DashboardTitle';
 import { useEditableTitle } from './DashboardTitle/useEditableTitle';
 
 import styles from './DashboardPageToolbar.module.scss';
+import DashboardMeta from './DashboardMeta/DashboardMeta';
 // import VariablesBar from '../VariablesBar/VariablesBar';
 
 interface DashboardPageToolbarProps {
@@ -112,34 +112,39 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 	}, [id, setIsPanelTypeSelectionModalOpen]);
 
 	return (
-		<div className={styles.dashboardPageToolbarContainer}>
-			<section className={styles.dashboardDetails}>
-				<DashboardTitle
-					title={title}
-					image={image}
-					isPublicDashboard={false}
-					isDashboardLocked={isDashboardLocked}
-					isEditing={isEditing}
-					draft={draft}
-					onDraftChange={setDraft}
-					onStartEdit={startEdit}
-					onCommit={commit}
-					onCancel={cancel}
-				/>
-				<DashboardActions
-					dashboard={dashboard}
-					handle={handle}
-					isDashboardLocked={isDashboardLocked}
-					isAuthor={isAuthor}
-					onAddPanel={onEmptyWidgetHandler}
-					onLockToggle={handleLockDashboardToggle}
-					onOpenRename={startEdit}
-				/>
-			</section>
+		<section className={styles.dashboardPageToolbarContainer}>
+			<div>
+				<div className={styles.dashboardPageTitleWithActions}>
+					<DashboardTitle
+						title={title}
+						image={image}
+						isPublicDashboard={false}
+						isDashboardLocked={isDashboardLocked}
+						isEditing={isEditing}
+						draft={draft}
+						onDraftChange={setDraft}
+						onStartEdit={startEdit}
+						onCommit={commit}
+						onCancel={cancel}
+					/>
+					<DashboardActions
+						title={title}
+						dashboard={dashboard}
+						handle={handle}
+						isDashboardLocked={isDashboardLocked}
+						isAuthor={isAuthor}
+						onAddPanel={onEmptyWidgetHandler}
+						onLockToggle={handleLockDashboardToggle}
+						onOpenRename={startEdit}
+					/>
+				</div>
+			</div>
 			<DashboardMeta tags={tags} description={description} />
-			{/* <VariablesBar dashboard={dashboard} /> */}
-		</div>
+		</section>
 	);
 }
 
+{
+	/* <VariablesBar dashboard={dashboard} /> */
+}
 export default DashboardPageToolbar;

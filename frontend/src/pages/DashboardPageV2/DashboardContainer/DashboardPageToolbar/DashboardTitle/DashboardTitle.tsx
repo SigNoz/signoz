@@ -6,7 +6,7 @@ import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 
-import styles from '../DashboardPageToolbar.module.scss';
+import styles from './DashboardTitle.module.scss';
 import { useDashboardStore } from '../../store/useDashboardStore';
 
 interface DashboardTitleProps {
@@ -46,24 +46,25 @@ function DashboardTitle({
 	};
 
 	return (
-		<div className={styles.leftSection}>
-			<img src={image} alt="dashboard-img" className={styles.dashboardImg} />
+		<div className={styles.dashboardTitleContainer}>
+			<img src={image} alt="dashboard-image" className={styles.dashboardImage} />
 			{isEditing ? (
-				<div className={styles.titleEdit}>
+				<div className={styles.dashboardTitleEditor}>
 					<Input
 						autoFocus
 						value={draft}
 						testId="dashboard-title-input"
 						maxLength={120}
-						className={styles.titleInput}
+						className={styles.dashboardTitleInput}
 						onChange={(e): void => onDraftChange(e.target.value)}
 						onKeyDown={onKeyDown}
 					/>
 					<Button
 						type="button"
 						variant="outlined"
+						color="primary"
 						size="icon"
-						className={cx(styles.titleEditActionButton, styles.titleSaveActionButton)}
+						className={styles.dashboardTitleActionButton}
 						aria-label="Save title"
 						testId="dashboard-title-save"
 						onClick={onCommit}
@@ -73,9 +74,9 @@ function DashboardTitle({
 					<Button
 						type="button"
 						variant="outlined"
-						color="destructive"
+						color="secondary"
 						size="icon"
-						className={styles.titleEditActionButton}
+						className={styles.dashboardTitleActionButton}
 						aria-label="Cancel title edit"
 						testId="dashboard-title-cancel"
 						onClick={onCancel}
@@ -84,10 +85,10 @@ function DashboardTitle({
 					</Button>
 				</div>
 			) : (
-				<TooltipSimple title={title.length > 30 ? title : ''}>
+				<TooltipSimple title={title}>
 					<Typography.Text
 						className={cx(styles.dashboardTitle, {
-							[styles.clickableTitle]: canEdit,
+							[styles.dashboardTitleHover]: canEdit,
 						})}
 						data-testid="dashboard-title"
 						onClick={canEdit ? onStartEdit : undefined}
@@ -99,7 +100,7 @@ function DashboardTitle({
 
 			{isPublicDashboard && (
 				<TooltipSimple title="This dashboard is publicly accessible">
-					<Globe size={14} className={styles.publicDashboardIcon} />
+					<Globe size={14} />
 				</TooltipSimple>
 			)}
 
