@@ -27,15 +27,7 @@ const useGetTraceFlamegraphV3 = (
 					// the literal-union vs enum nominal types differ
 					selectFields: props.selectFields as TelemetrytypesTelemetryFieldKeyDTO[],
 				},
-			).then((res) => ({
-				...res.data,
-				// v3 returns span.timestamp in nanoseconds, but the flamegraph render
-				// pipeline (and the shared v2 page) treat it as milliseconds, matching
-				// startTimestampMillis. Normalise once here at the data boundary.
-				spans: (res.data.spans ?? []).map((level) =>
-					level.map((span) => ({ ...span, timestamp: span.timestamp / 1e6 })),
-				),
-			})),
+			),
 		queryKey: [
 			REACT_QUERY_KEY.GET_TRACE_V3_FLAMEGRAPH,
 			props.traceId,
