@@ -1,0 +1,310 @@
+/* Faithful reproduction of the V1 VariableItem layout, scoped as a module and
+   built on @signozhq components where possible. antd is retained only for the
+   monaco Editor, multiline TextArea, Collapse, and searchable Selects. */
+
+.container {
+	display: flex;
+	flex-direction: column;
+	border: 1px solid var(--l1-border);
+	border-radius: 3px;
+}
+
+.allVariables {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 10px 16px;
+	border-bottom: 1px solid var(--l1-border);
+}
+
+.allVariablesBtn {
+	--button-height: 24px;
+	--button-padding: 0;
+	color: var(--muted-foreground);
+}
+
+.content {
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+	padding: 12px 16px 20px;
+}
+
+/* VariableItemRow */
+.row {
+	display: flex;
+	gap: 1rem;
+	margin-bottom: 0;
+}
+
+/* LabelContainer */
+.labelContainer {
+	width: 200px;
+}
+
+.label {
+	color: var(--l2-foreground);
+	font-family: Inter;
+	font-size: 14px;
+	font-weight: 400;
+	line-height: 20px;
+}
+
+.column {
+	flex-direction: column;
+	gap: 8px;
+}
+
+.input,
+.textarea,
+.defaultInput {
+	padding: 6px 6px 6px 8px;
+	border: 1px solid var(--l1-border);
+	border-radius: 2px;
+	background: var(--l3-background);
+}
+
+.input,
+.textarea {
+	width: 100%;
+}
+
+.defaultInput {
+	width: 342px;
+}
+
+.errorText {
+	font-size: 12px;
+	color: var(--bg-amber-500);
+}
+
+/* Variable type segmented group */
+.typeSection {
+	align-items: center;
+	justify-content: space-between;
+}
+
+.typeLabelContainer {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	width: auto;
+}
+
+.typeBtnGroup {
+	display: grid;
+	grid-template-columns: repeat(4, max-content);
+	height: 32px;
+	flex-shrink: 0;
+	border: 1px solid var(--l1-border);
+	border-radius: 2px;
+	background: var(--l2-background);
+	box-shadow: 0 0 8px 0 rgba(0, 0, 0, 0.1);
+}
+
+.typeBtn {
+	--button-height: 32px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 4px;
+	min-width: 114px;
+	border-radius: 0;
+	color: var(--l2-foreground);
+
+	& + & {
+		border-left: 1px solid var(--l1-border);
+	}
+}
+
+.typeBtnSelected {
+	background: var(--l1-border);
+	color: var(--l1-foreground);
+}
+
+.betaTag {
+	margin-left: 4px;
+}
+
+/* Query */
+.queryContainer {
+	display: flex;
+	flex-flow: column wrap;
+	gap: 1rem;
+	min-width: 0;
+	margin-bottom: 0;
+}
+
+.editorWrap {
+	height: 240px;
+	overflow: hidden;
+	border: 1px solid var(--l1-border);
+	border-radius: 2px;
+}
+
+.testRow {
+	display: flex;
+	margin-top: 8px;
+}
+
+/* Custom — antd Collapse */
+.customSection {
+	margin-bottom: 0;
+}
+
+.customSection :global(.custom-collapse) {
+	width: 100%;
+	border: 1px solid var(--l1-border);
+	border-radius: 3px 3px 0 0;
+
+	:global(.ant-collapse-item) {
+		border-bottom: none;
+	}
+
+	:global(.ant-collapse-header) {
+		align-items: center;
+		gap: 8px;
+		height: 38px;
+		padding: 12px;
+		background: var(--l3-background);
+		border-radius: 3px 3px 0 0;
+	}
+
+	:global(.ant-collapse-header-text) {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		padding: 1px 2px;
+		color: var(--bg-robin-400);
+		font-family: 'Space Mono';
+		font-size: 14px;
+		line-height: 18px;
+		border-radius: 2px;
+		background: color-mix(in srgb, var(--bg-robin-400) 8%, transparent);
+	}
+
+	:global(.ant-collapse-content-box) {
+		padding: 0;
+	}
+
+	:global(.comma-input) {
+		height: 109px;
+		border: none;
+	}
+}
+
+/* Textbox */
+.textboxSection {
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 0;
+}
+
+/* Preview strip */
+.previewSection {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	min-height: 88px;
+	margin-bottom: 0;
+	padding-bottom: 8px;
+	border: 1px solid var(--l1-border);
+	border-radius: 3px;
+}
+
+.previewLabel {
+	align-self: flex-start;
+	display: inline-flex;
+	align-items: center;
+	gap: 10px;
+	padding: 4px 8px;
+	color: var(--bg-robin-400);
+	font-family: 'Space Mono';
+	font-size: 14px;
+	line-height: 18px;
+	border-radius: 3px 0 2px;
+	background: color-mix(in srgb, var(--bg-robin-400) 8%, transparent);
+}
+
+.previewValues {
+	display: flex;
+	flex-flow: wrap;
+	gap: 8px;
+	padding: 4.5px 11px;
+	overflow-y: auto;
+}
+
+.previewValues [data-slot='badge'] {
+	height: 30px;
+	align-items: center;
+	color: var(--l1-foreground);
+	font-family: 'Space Mono';
+	font-size: 14px;
+	border: 1px solid var(--l1-border);
+	border-radius: 2px;
+}
+
+.previewError {
+	color: var(--bg-amber-500);
+}
+
+/* Sort / multi / all / default rows */
+.sortSection,
+.multiSection,
+.allOptionSection,
+.dynamicSection {
+	align-items: flex-start;
+	justify-content: space-between;
+	margin-bottom: 0;
+}
+
+.sortSection {
+	align-items: center;
+}
+
+.rowLabel {
+	width: 339px;
+	color: var(--l2-foreground);
+	font-family: Inter;
+	font-size: 14px;
+	line-height: 20px;
+	letter-spacing: -0.07px;
+}
+
+.sortSelect {
+	width: 192px;
+}
+
+.defaultValueSection {
+	display: grid;
+	grid-template-columns: max-content 1fr;
+	gap: 1rem;
+	align-items: center;
+	margin-bottom: 0;
+}
+
+.defaultValueSection .label {
+	display: block;
+	margin-bottom: 2px;
+}
+
+.defaultValueDesc {
+	display: block;
+	color: var(--l2-foreground);
+	font-family: Inter;
+	font-size: 11px;
+	line-height: 18px;
+	letter-spacing: -0.06px;
+}
+
+.searchSelect {
+	width: 100%;
+}
+
+/* Footer */
+.footer {
+	display: flex;
+	justify-content: flex-end;
+	gap: 1rem;
+	margin-top: 12px;
+}
