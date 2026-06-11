@@ -9,6 +9,7 @@ import { useAppContext } from 'providers/App/App';
 import DashboardDescription from './DashboardDescription';
 import PanelsAndSectionsLayout from './PanelsAndSectionsLayout';
 import { useDashboardStore } from './store/useDashboardStore';
+import VariablesBar from './VariablesBar/VariablesBar';
 import styles from './DashboardContainer.module.scss';
 
 interface DashboardContainerProps {
@@ -45,6 +46,7 @@ function DashboardContainer({
 					handle={fullScreenHandle}
 					refetch={refetch}
 				/>
+				<VariablesBar dashboard={dashboard} />
 				<PanelsAndSectionsLayout layouts={layouts} panels={panels} />
 			</div>
 			{/* Shared panel-type picker (V1 component): opened from any "New Panel"

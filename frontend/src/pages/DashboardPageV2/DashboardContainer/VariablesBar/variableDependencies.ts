@@ -41,7 +41,9 @@ function getDependents(
 }
 
 /** variable name → its direct dependents (children). */
-export function buildDependencies(variables: VariableFormModel[]): VariableGraph {
+export function buildDependencies(
+	variables: VariableFormModel[],
+): VariableGraph {
 	const graph: VariableGraph = {};
 	variables.forEach((v) => {
 		if (v.name) {
