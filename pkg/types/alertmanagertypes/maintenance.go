@@ -179,7 +179,6 @@ func (m *PlannedMaintenance) IsActive(now time.Time) bool {
 		return false
 	}
 
-	now = now.In(loc)
 	switch m.Schedule.Recurrence.RepeatType {
 	case RepeatTypeDaily:
 		return m.checkDaily(now, loc)
@@ -195,6 +194,7 @@ func (m *PlannedMaintenance) IsActive(now time.Time) bool {
 // checkDaily rebases the recurrence start to today (or yesterday if needed)
 // and returns true if currentTime is within [candidate, candidate+Duration].
 func (m *PlannedMaintenance) checkDaily(currentTime time.Time, loc *time.Location) bool {
+	currentTime = currentTime.In(loc)
 	candidate := time.Date(
 		currentTime.Year(), currentTime.Month(), currentTime.Day(),
 		m.Schedule.StartTime.Hour(), m.Schedule.StartTime.Minute(), 0, 0,
@@ -210,6 +210,7 @@ func (m *PlannedMaintenance) checkDaily(currentTime time.Time, loc *time.Locatio
 // time-of-day onto the allowed weekday. It does this for each allowed day and returns true
 // if the current time falls within the candidate window.
 func (m *PlannedMaintenance) checkWeekly(currentTime time.Time, loc *time.Location) bool {
+	currentTime = currentTime.In(loc)
 	rec := m.Schedule.Recurrence
 
 	// If no days specified, treat as every day (like daily).
@@ -244,6 +245,7 @@ func (m *PlannedMaintenance) checkWeekly(currentTime time.Time, loc *time.Locati
 // checkMonthly rebases the candidate occurrence using the recurrence's day-of-month.
 // If the candidate for the current month is in the future, it uses the previous month.
 func (m *PlannedMaintenance) checkMonthly(currentTime time.Time, loc *time.Location) bool {
+	currentTime = currentTime.In(loc)
 	startTime := m.Schedule.StartTime
 	refDay := startTime.Day()
 	year, month, _ := currentTime.Date()
