@@ -33,7 +33,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/dashboards/views", handler.New(provider.authzMiddleware.ViewAccess(provider.dashboardHandler.CreateView), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/dashboards/views", handler.New(provider.authzMiddleware.EditAccess(provider.dashboardHandler.CreateView), handler.OpenAPIDef{
 		ID:                  "CreateDashboardView",
 		Tags:                []string{"dashboard"},
 		Summary:             "Create dashboard saved view",
@@ -50,7 +50,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/dashboards/views/{id}", handler.New(provider.authzMiddleware.ViewAccess(provider.dashboardHandler.UpdateView), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/dashboards/views/{id}", handler.New(provider.authzMiddleware.EditAccess(provider.dashboardHandler.UpdateView), handler.OpenAPIDef{
 		ID:                  "UpdateDashboardView",
 		Tags:                []string{"dashboard"},
 		Summary:             "Update dashboard saved view",
@@ -67,7 +67,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/dashboards/views/{id}", handler.New(provider.authzMiddleware.ViewAccess(provider.dashboardHandler.DeleteView), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/dashboards/views/{id}", handler.New(provider.authzMiddleware.EditAccess(provider.dashboardHandler.DeleteView), handler.OpenAPIDef{
 		ID:                  "DeleteDashboardView",
 		Tags:                []string{"dashboard"},
 		Summary:             "Delete dashboard saved view",
