@@ -15,6 +15,7 @@ import (
 const (
 	DashboardViewSchemaVersion = "v1"
 	MaxDashboardViewNameLen    = 32
+	MaxQueryLen                = 1024
 )
 
 var (
@@ -44,6 +45,9 @@ func (d *DashboardViewData) Validate() error {
 	if d.Version != DashboardViewSchemaVersion {
 		return errors.NewInvalidInputf(ErrCodeDashboardViewInvalidInput,
 			"version must be %q, got %q", DashboardViewSchemaVersion, d.Version)
+	}
+	if len(d.Query) > MaxQueryLen {
+		return errors.NewInvalidInputf(ErrCodeDashboardViewInvalidInput, "query length cannot be more than %d characters, received a query of length %d", MaxQueryLen, len(d.Query))
 	}
 	if !d.Sort.IsZero() {
 		switch d.Sort {
