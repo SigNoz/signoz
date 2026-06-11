@@ -22,7 +22,7 @@ type DashboardSpec struct {
 	Variables       []Variable                 `json:"variables" required:"true" nullable:"false"`
 	Panels          map[string]*Panel          `json:"panels" required:"true" nullable:"false"`
 	Layouts         []Layout                   `json:"layouts" required:"true" nullable:"false"`
-	Duration        common.DurationString      `json:"duration"  required:"true" nullable:"false"`
+	Duration        common.DurationString      `json:"duration,omitempty"`
 	RefreshInterval common.DurationString      `json:"refreshInterval,omitempty"`
 	Links           []dashboard.Link           `json:"links,omitempty"`
 }

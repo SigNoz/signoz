@@ -4612,7 +4612,7 @@ export interface DashboardtypesDashboardSpecDTO {
 	/**
 	 * @type string
 	 */
-	duration: string;
+	duration?: string;
 	/**
 	 * @type array
 	 */

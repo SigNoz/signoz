@@ -133,6 +133,9 @@ function DashboardsList(): JSX.Element {
 				tags: null,
 				spec: {
 					display: { name: t('new_dashboard_title', { ns: 'dashboard' }) },
+					layouts: [],
+					panels: {},
+					variables: [],
 				},
 			});
 			safeNavigate(

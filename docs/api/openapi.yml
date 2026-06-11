@@ -2589,7 +2589,6 @@ components:
       - variables
       - panels
       - layouts
-      - duration
       type: object
     DashboardtypesDatasourcePlugin:
       discriminator:
