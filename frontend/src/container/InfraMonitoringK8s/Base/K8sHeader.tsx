@@ -15,13 +15,15 @@ import { QueryParams } from 'constants/query';
 import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryBtn';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { SlidersHorizontal } from '@signozhq/icons';
 import { v4 as uuid } from 'uuid';
-import { useGlobalTimeStore } from 'store/globalTime';
+import {
+	useGlobalTimeQueryInvalidate,
+	useGlobalTimeStore,
+} from 'store/globalTime';
 import { NANO_SECOND_MULTIPLIER } from 'store/globalTime/utils';
-import { useGlobalTimeQueryInvalidate } from 'store/globalTime/useGlobalTimeQueryInvalidate';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 import {
@@ -83,7 +85,7 @@ function K8sHeader<TData>({
 			const currentExpression =
 				currentQuery.builder.queryData[0]?.filter?.expression || '';
 			const finalExpression = newExpression ?? currentExpression;
-			setCurrentPage(1);
+			void setCurrentPage(1);
 
 			const updatedQuery = {
 				...currentQuery,
@@ -110,7 +112,7 @@ function K8sHeader<TData>({
 			);
 
 			safeNavigate(`${location.pathname}?${newUrlQuery.toString()}`);
-			invalidateQueries();
+			void invalidateQueries();
 
 			if (finalExpression?.trim()) {
 				logEvent(InfraMonitoringEvents.FilterApplied, {
@@ -143,8 +145,6 @@ function K8sHeader<TData>({
 	const startUnixMilli = Math.floor(minTime / NANO_SECOND_MULTIPLIER);
 	const endUnixMilli = Math.floor(maxTime / NANO_SECOND_MULTIPLIER);
 
-	const expression = currentQuery.builder.queryData[0]?.filter?.expression || '';
-
 	const { data: groupByFiltersData, isLoading: isLoadingGroupByFilters } =
 		useGetFieldsKeys(
 			{
@@ -154,17 +154,12 @@ function K8sHeader<TData>({
 				startUnixMilli,
 				endUnixMilli,
 				fieldContext: TelemetrytypesFieldContextDTO.resource,
-				searchText: expression,
+				// the search text is intentionally not included
+				// searchText: expression,
 			},
 			{
 				query: {
-					queryKey: [
-						'getFieldsKeys',
-						entity,
-						startUnixMilli,
-						endUnixMilli,
-						expression,
-					],
+					queryKey: ['getFieldsKeys', entity, startUnixMilli, endUnixMilli],
 				},
 			},
 		);
@@ -200,10 +195,10 @@ function K8sHeader<TData>({
 
 	const handleGroupByChange = useCallback(
 		(value: string[]) => {
-			setCurrentPage(1);
-			setGroupBy(value);
+			void setCurrentPage(1);
+			void setGroupBy(value);
 
-			logEvent(InfraMonitoringEvents.GroupByChanged, {
+			void logEvent(InfraMonitoringEvents.GroupByChanged, {
 				entity: InfraMonitoringEvents.K8sEntity,
 				page: InfraMonitoringEvents.ListPage,
 				category: InfraMonitoringEvents.Pod,
@@ -275,9 +270,10 @@ function K8sHeader<TData>({
 					dataSource={DataSource.METRICS}
 					onChange={NOOP}
 					onRun={handleRunQuery}
-					signalSource="meter"
+					signalSource=""
 					showFilterSuggestionsWithoutMetric
 					placeholder={ENTITY_FILTER_PLACEHOLDERS[entity]}
+					metricNamespace={METRIC_NAMESPACE_BY_ENTITY[entity]}
 				/>
 			</div>
 
