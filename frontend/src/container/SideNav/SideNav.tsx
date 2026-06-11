@@ -1010,7 +1010,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 								<img src={signozBrandLogoUrl} alt="SigNoz" />
 							</div>
 
-							{licenseTag && (
+							{(licenseTag || currentVersion) && (
 								<div
 									className={cx(
 										'brand-title-section',
@@ -1021,7 +1021,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 											'version-update-notification',
 									)}
 								>
-									<span className="license-type"> {licenseTag} </span>
+									{licenseTag && <span className="license-type"> {licenseTag} </span>}
 
 									{currentVersion && (
 										<Tooltip
@@ -1043,7 +1043,12 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 												)
 											}
 										>
-											<div className="version-container">
+											<div
+												className={cx(
+													'version-container',
+													!licenseTag && 'version-container-standalone',
+												)}
+											>
 												<span
 													className={cx('version', changelog && 'version-clickable')}
 													onClick={onClickVersionHandler}

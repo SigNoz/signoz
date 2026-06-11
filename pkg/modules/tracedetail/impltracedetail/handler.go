@@ -18,27 +18,6 @@ func NewHandler(module tracedetail.Module) tracedetail.Handler {
 	return &handler{module: module}
 }
 
-func (h *handler) GetWaterfall(rw http.ResponseWriter, r *http.Request) {
-	req := new(spantypes.PostableWaterfall)
-	if err := binding.JSON.BindBody(r.Body, req); err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	if err := req.Validate(); err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	result, err := h.module.GetWaterfall(r.Context(), mux.Vars(r)["traceID"], req)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	render.Success(rw, http.StatusOK, result)
-}
-
 func (h *handler) GetWaterfallV4(rw http.ResponseWriter, r *http.Request) {
 	req := new(spantypes.PostableWaterfall)
 	if err := binding.JSON.BindBody(r.Body, req); err != nil {
@@ -51,7 +30,7 @@ func (h *handler) GetWaterfallV4(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := h.module.GetWaterfallV4(r.Context(), mux.Vars(r)["traceID"], req.SelectedSpanID, req.UncollapsedSpans, req.Limit)
+	result, err := h.module.GetWaterfallV4(r.Context(), mux.Vars(r)["traceID"], req.SelectedSpanID, req.UncollapsedSpans)
 	if err != nil {
 		render.Error(rw, err)
 		return
