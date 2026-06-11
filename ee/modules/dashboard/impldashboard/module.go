@@ -270,7 +270,7 @@ func (module *module) ListViews(ctx context.Context, orgID valuer.UUID) (*dashbo
 	return module.pkgDashboardModule.ListViews(ctx, orgID)
 }
 
-func (module *module) UpdateView(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updateable dashboardtypes.UpdateableDashboardView) (*dashboardtypes.DashboardView, error) {
+func (module *module) UpdateView(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updateable dashboardtypes.UpdatableDashboardView) (*dashboardtypes.DashboardView, error) {
 	return module.pkgDashboardModule.UpdateView(ctx, orgID, id, updateable)
 }
 

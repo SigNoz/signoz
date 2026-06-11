@@ -134,7 +134,7 @@ func TestDashboardViewUpdate(t *testing.T) {
 	}.NewDashboardView(orgID)
 	createdAt := view.CreatedAt
 
-	view.Update(UpdateableDashboardView{
+	view.Update(UpdatableDashboardView{
 		Name: "renamed",
 		Data: DashboardViewData{Version: DashboardViewSchemaVersion, Sort: ListSortCreatedAt, Order: ListOrderDesc},
 	})

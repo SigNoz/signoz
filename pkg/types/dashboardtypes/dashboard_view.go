@@ -113,9 +113,9 @@ func (p PostableDashboardView) NewDashboardView(orgID valuer.UUID) *DashboardVie
 // Updateable
 // ════════════════════════════════════════════════════════════════════════
 
-type UpdateableDashboardView = PostableDashboardView
+type UpdatableDashboardView = PostableDashboardView
 
-func (v *DashboardView) Update(updateable UpdateableDashboardView) {
+func (v *DashboardView) Update(updateable UpdatableDashboardView) {
 	v.Name = updateable.Name
 	v.Data = updateable.Data
 	v.UpdatedAt = time.Now()

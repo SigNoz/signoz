@@ -85,7 +85,7 @@ func (handler *handler) UpdateView(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req dashboardtypes.UpdateableDashboardView
+	var req dashboardtypes.UpdatableDashboardView
 	if err := binding.JSON.BindBody(r.Body, &req); err != nil {
 		render.Error(rw, err)
 		return

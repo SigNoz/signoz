@@ -251,7 +251,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		Tags:                []string{"dashboard"},
 		Summary:             "Update dashboard saved view",
 		Description:         "Replaces a saved view's name and data. Saved views are shared org-wide.",
-		Request:             new(dashboardtypes.UpdateableDashboardView),
+		Request:             new(dashboardtypes.UpdatableDashboardView),
 		RequestContentType:  "application/json",
 		Response:            new(dashboardtypes.DashboardView),
 		ResponseContentType: "application/json",

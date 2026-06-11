@@ -26,7 +26,7 @@ func (module *module) ListViews(ctx context.Context, orgID valuer.UUID) (*dashbo
 	return &dashboardtypes.ListableDashboardView{Views: views}, nil
 }
 
-func (module *module) UpdateView(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updateable dashboardtypes.UpdateableDashboardView) (*dashboardtypes.DashboardView, error) {
+func (module *module) UpdateView(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updateable dashboardtypes.UpdatableDashboardView) (*dashboardtypes.DashboardView, error) {
 	if err := updateable.Validate(); err != nil {
 		return nil, err
 	}

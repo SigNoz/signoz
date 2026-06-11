@@ -83,7 +83,7 @@ type Module interface {
 
 	ListViews(ctx context.Context, orgID valuer.UUID) (*dashboardtypes.ListableDashboardView, error)
 
-	UpdateView(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updateable dashboardtypes.UpdateableDashboardView) (*dashboardtypes.DashboardView, error)
+	UpdateView(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updateable dashboardtypes.UpdatableDashboardView) (*dashboardtypes.DashboardView, error)
 
 	DeleteView(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error
 }
