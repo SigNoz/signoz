@@ -9880,6 +9880,36 @@ export type GetUserPreference200 = {
 export type UpdateUserPreferencePathParameters = {
 	name: string;
 };
+export type ListDashboardViews200 = {
+	data: DashboardtypesListableDashboardViewDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type CreateDashboardView201 = {
+	data: DashboardtypesDashboardViewDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type DeleteDashboardViewPathParameters = {
+	id: string;
+};
+export type UpdateDashboardViewPathParameters = {
+	id: string;
+};
+export type UpdateDashboardView200 = {
+	data: DashboardtypesDashboardViewDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type ListDashboardsV2Params = {
 	/**
 	 * @type string
@@ -9964,36 +9994,6 @@ export type UnlockDashboardV2PathParameters = {
 export type LockDashboardV2PathParameters = {
 	id: string;
 };
-export type ListDashboardViews200 = {
-	data: DashboardtypesListableDashboardViewDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type CreateDashboardView201 = {
-	data: DashboardtypesDashboardViewDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type DeleteDashboardViewPathParameters = {
-	id: string;
-};
-export type UpdateDashboardViewPathParameters = {
-	id: string;
-};
-export type UpdateDashboardView200 = {
-	data: DashboardtypesDashboardViewDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
 export type GetFeatures200 = {
 	/**
 	 * @type array
