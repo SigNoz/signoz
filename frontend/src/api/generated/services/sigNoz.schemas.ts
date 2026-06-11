@@ -2656,6 +2656,7 @@ export enum CloudintegrationtypesServiceIDDTO {
 	containerapp = 'containerapp',
 	aks = 'aks',
 	sqldatabase = 'sqldatabase',
+	sqldatabasemi = 'sqldatabasemi',
 }
 export type CloudintegrationtypesCloudIntegrationServiceDTOAnyOf = {
 	/**

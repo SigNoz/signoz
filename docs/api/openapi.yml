@@ -1365,6 +1365,7 @@ components:
       - containerapp
       - aks
       - sqldatabase
+      - sqldatabasemi
       type: string
     CloudintegrationtypesServiceMetadata:
       properties:
