@@ -2,12 +2,14 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Form } from 'antd';
 import createEmail from 'api/channels/createEmail';
+import createJsmOps from 'api/channels/createJsmOps';
 import createMsTeamsApi from 'api/channels/createMsTeams';
 import createOpsgenie from 'api/channels/createOpsgenie';
 import createPagerApi from 'api/channels/createPager';
 import createSlackApi from 'api/channels/createSlack';
 import createWebhookApi from 'api/channels/createWebhook';
 import testEmail from 'api/channels/testEmail';
+import testJsmOps from 'api/channels/testJsmOps';
 import testMsTeamsApi from 'api/channels/testMsTeams';
 import testOpsGenie from 'api/channels/testOpsgenie';
 import testPagerApi from 'api/channels/testPager';
@@ -24,6 +26,7 @@ import APIError from 'types/api/error';
 import {
 	ChannelType,
 	EmailChannel,
+	JsmOpsChannel,
 	MsTeamsChannel,
 	OpsgenieChannel,
 	PagerChannel,
@@ -33,6 +36,7 @@ import {
 } from './config';
 import {
 	EmailInitialConfig,
+	JsmOpsInitialConfig,
 	OpsgenieInitialConfig,
 	PagerInitialConfig,
 } from './defaults';
@@ -59,6 +63,7 @@ function CreateAlertChannels({
 				WebhookChannel &
 				PagerChannel &
 				MsTeamsChannel &
+				JsmOpsChannel &
 				OpsgenieChannel &
 				EmailChannel
 		>
@@ -119,6 +124,14 @@ function CreateAlertChannels({
 				setSelectedConfig((selectedConfig) => ({
 					...selectedConfig,
 					...EmailInitialConfig,
+				}));
+			}
+
+			// reset config to JSM Ops defaults
+			if (value === ChannelType.JsmOps && currentType !== value) {
+				setSelectedConfig((selectedConfig) => ({
+					...selectedConfig,
+					...JsmOpsInitialConfig,
 				}));
 			}
 		},
@@ -374,6 +387,22 @@ function CreateAlertChannels({
 		[selectedConfig],
 	);
 
+	const prepareJsmOpsRequest = useCallback(
+		() => ({
+			name: selectedConfig?.name || '',
+			send_resolved: selectedConfig?.send_resolved || false,
+			email: selectedConfig?.email || '',
+			api_token: selectedConfig?.api_token || '',
+			cloud_id: selectedConfig?.cloud_id || '',
+			responders: selectedConfig?.responders || '',
+			message: selectedConfig?.message || '',
+			description: selectedConfig?.description || '',
+			tags: selectedConfig?.tags || '',
+			priority: selectedConfig?.priority || '',
+		}),
+		[selectedConfig],
+	);
+
 	const onMsTeamsHandler = useCallback(async () => {
 		if (!selectedConfig.webhook_url) {
 			notifications.error({
@@ -407,6 +436,63 @@ function CreateAlertChannels({
 		showErrorModal,
 	]);
 
+	const onJsmOpsHandler = useCallback(async () => {
+		if (!selectedConfig.email) {
+			notifications.error({
+				message: 'Error',
+				description: t('jsmops_email_required'),
+			});
+			return;
+		}
+		if (!selectedConfig.api_token) {
+			notifications.error({
+				message: 'Error',
+				description: t('jsmops_api_token_required'),
+			});
+			return;
+		}
+		if (!selectedConfig.cloud_id) {
+			notifications.error({
+				message: 'Error',
+				description: t('jsmops_cloud_id_required'),
+			});
+			return;
+		}
+		if (!selectedConfig.message) {
+			notifications.error({
+				message: 'Error',
+				description: t('jsmops_message_required'),
+			});
+			return;
+		}
+
+		setSavingState(true);
+
+		try {
+			await createJsmOps(prepareJsmOpsRequest());
+			notifications.success({
+				message: 'Success',
+				description: t('channel_creation_done'),
+			});
+			history.replace(ROUTES.ALL_CHANNELS);
+			return { status: 'success', statusMessage: t('channel_creation_done') };
+		} catch (error) {
+			showErrorModal(error as APIError);
+			return { status: 'failed', statusMessage: t('channel_creation_failed') };
+		} finally {
+			setSavingState(false);
+		}
+	}, [
+		selectedConfig.email,
+		selectedConfig.api_token,
+		selectedConfig.cloud_id,
+		selectedConfig.message,
+		notifications,
+		t,
+		prepareJsmOpsRequest,
+		showErrorModal,
+	]);
+
 	const onSaveHandler = useCallback(
 		async (value: ChannelType) => {
 			if (!selectedConfig.name) {
@@ -424,6 +510,7 @@ function CreateAlertChannels({
 				[ChannelType.Opsgenie]: onOpsgenieHandler,
 				[ChannelType.MsTeams]: onMsTeamsHandler,
 				[ChannelType.Email]: onEmailHandler,
+				[ChannelType.JsmOps]: onJsmOpsHandler,
 			};
 
 			if (isChannelType(value)) {
@@ -455,6 +542,7 @@ function CreateAlertChannels({
 			onOpsgenieHandler,
 			onMsTeamsHandler,
 			onEmailHandler,
+			onJsmOpsHandler,
 			notifications,
 			t,
 		],
@@ -491,6 +579,10 @@ function CreateAlertChannels({
 					case ChannelType.Email:
 						request = prepareEmailRequest();
 						await testEmail(request);
+						break;
+					case ChannelType.JsmOps:
+						request = prepareJsmOpsRequest();
+						await testJsmOps(request);
 						break;
 					default:
 						notifications.error({
@@ -534,6 +626,7 @@ function CreateAlertChannels({
 			prepareOpsgenieRequest,
 			prepareSlackRequest,
 			prepareMsTeamsRequest,
+			prepareJsmOpsRequest,
 			prepareEmailRequest,
 			notifications,
 		],
@@ -565,6 +658,7 @@ function CreateAlertChannels({
 						...PagerInitialConfig,
 						...OpsgenieInitialConfig,
 						...EmailInitialConfig,
+						...JsmOpsInitialConfig,
 					},
 				}}
 			/>

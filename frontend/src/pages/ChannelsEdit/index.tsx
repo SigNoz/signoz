@@ -7,6 +7,7 @@ import get from 'api/channels/get';
 import Spinner from 'components/Spinner';
 import {
 	ChannelType,
+	JsmOpsChannel,
 	MsTeamsChannel,
 	PagerChannel,
 	SlackChannel,
@@ -56,9 +57,17 @@ function ChannelsEdit(): JSX.Element {
 
 	const prepChannelConfig = (): {
 		type: string;
-		channel: SlackChannel & WebhookChannel & PagerChannel & MsTeamsChannel;
+		channel: SlackChannel &
+			WebhookChannel &
+			PagerChannel &
+			MsTeamsChannel &
+			JsmOpsChannel;
 	} => {
-		let channel: SlackChannel & WebhookChannel & PagerChannel & MsTeamsChannel = {
+		let channel: SlackChannel &
+			WebhookChannel &
+			PagerChannel &
+			MsTeamsChannel &
+			JsmOpsChannel = {
 			name: '',
 		};
 		if (value && 'slack_configs' in value) {
@@ -103,6 +112,18 @@ function ChannelsEdit(): JSX.Element {
 			channel = emailConfig;
 			return {
 				type: ChannelType.Email,
+				channel,
+			};
+		}
+
+		if (value && 'jsmops_configs' in value) {
+			const jsmopsConfig = value.jsmops_configs[0];
+			channel = jsmopsConfig;
+			// Convert arrays to comma-separated strings for the form
+			channel.responders = jsmopsConfig.responders?.join(', ') || '';
+			channel.tags = jsmopsConfig.tags?.join(', ') || '';
+			return {
+				type: ChannelType.JsmOps,
 				channel,
 			};
 		}

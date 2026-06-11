@@ -332,5 +332,49 @@ describe('Create Alert Channel (Normal User)', () => {
 				).toBeDisabled();
 			});
 		});
+		describe('JSM Ops', () => {
+			beforeEach(() => {
+				render(<CreateAlertChannels preType={ChannelType.JsmOps} />);
+			});
+
+			it('Should check if the selected item in the type dropdown has text "JSM Ops"', () => {
+				expect(screen.getByText('JSM Ops')).toBeInTheDocument();
+			});
+
+			it('Should check if Email label and input are displayed properly', () => {
+				testLabelInputAndHelpValue({
+					labelText: 'field_jsmops_email',
+					testId: 'jsmops-email-textbox',
+				});
+			});
+
+			it('Should check if API Token label and input are displayed properly', () => {
+				testLabelInputAndHelpValue({
+					labelText: 'field_jsmops_api_token',
+					testId: 'jsmops-api-token-textbox',
+				});
+			});
+
+			it('Should check if Cloud ID label and input are displayed properly', () => {
+				testLabelInputAndHelpValue({
+					labelText: 'field_jsmops_cloud_id',
+					testId: 'jsmops-cloud-id-textbox',
+				});
+			});
+
+			it('Should check if Message label and text area are displayed properly', () => {
+				testLabelInputAndHelpValue({
+					labelText: 'field_jsmops_message',
+					testId: 'jsmops-message-textarea',
+				});
+			});
+
+			it('Should check if Description label and text area are displayed properly', () => {
+				testLabelInputAndHelpValue({
+					labelText: 'field_jsmops_description',
+					testId: 'jsmops-description-textarea',
+				});
+			});
+		});
 	});
 });

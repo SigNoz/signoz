@@ -104,6 +104,7 @@ export enum ChannelType {
 	Pagerduty = 'pagerduty',
 	Opsgenie = 'opsgenie',
 	MsTeams = 'msteams',
+	JsmOps = 'jsmops',
 }
 
 // LabelFilterStatement will be used for preparing filter conditions / matchers
@@ -124,4 +125,15 @@ export interface MsTeamsChannel extends Channel {
 	webhook_url?: string;
 	title?: string;
 	text?: string;
+}
+
+export interface JsmOpsChannel extends Channel {
+	email?: string;
+	api_token?: string;
+	cloud_id?: string;
+	responders?: string;
+	message?: string;
+	description?: string;
+	tags?: string;
+	priority?: string;
 }
