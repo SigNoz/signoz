@@ -71,14 +71,18 @@ func (s *Schedule) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
+	if aux.Timezone == "" {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "missing timezone")
+	}
+
 	loc, err := time.LoadLocation(aux.Timezone)
 	if err != nil {
-		return err
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, `invalid timezone "%s"`, aux.Timezone)
 	}
 
 	startTime, err := time.Parse(time.RFC3339, aux.StartTime)
 	if err != nil {
-		return err
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, `invalid start time "%s"`, aux.StartTime)
 	}
 	startTime = startTime.In(loc)
 
@@ -86,7 +90,7 @@ func (s *Schedule) UnmarshalJSON(data []byte) error {
 	if aux.EndTime != "" {
 		endTime, err = time.Parse(time.RFC3339, aux.EndTime)
 		if err != nil {
-			return err
+			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, `invalid end time "%s"`, aux.EndTime)
 		}
 		if !endTime.IsZero() {
 			endTime = endTime.In(loc)

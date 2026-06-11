@@ -100,17 +100,6 @@ func (p *PostablePlannedMaintenance) Validate() error {
 	if p.Schedule == nil {
 		return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "missing schedule in the payload")
 	}
-	if p.Schedule.Timezone == "" {
-		return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "missing timezone in the payload")
-	}
-
-	if _, err := time.LoadLocation(p.Schedule.Timezone); err != nil {
-		return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "invalid timezone in the payload")
-	}
-
-	if p.Schedule.StartTime.IsZero() {
-		return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "missing start time in the payload")
-	}
 
 	if !p.Schedule.EndTime.IsZero() && p.Schedule.StartTime.After(p.Schedule.EndTime) {
 		return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "start time cannot be after end time")
@@ -311,18 +300,6 @@ func (m *PlannedMaintenance) Validate() error {
 	if m.Schedule == nil {
 		return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "missing schedule in the payload")
 	}
-	if m.Schedule.Timezone == "" {
-		return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "missing timezone in the payload")
-	}
-
-	if _, err := time.LoadLocation(m.Schedule.Timezone); err != nil {
-		return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "invalid timezone in the payload")
-	}
-
-	if m.Schedule.StartTime.IsZero() {
-		return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "missing start time in the payload")
-	}
-
 	if !m.Schedule.EndTime.IsZero() && m.Schedule.StartTime.After(m.Schedule.EndTime) {
 		return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "start time cannot be after end time")
 	}
