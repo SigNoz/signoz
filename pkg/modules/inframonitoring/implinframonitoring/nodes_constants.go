@@ -17,6 +17,8 @@ var nodeNameGroupByKey = qbtypes.GroupByKey{
 	},
 }
 
+// nodesTableMetricNamesList drives the existence/retention check.
+// Includes condition_ready and pod.phase also.
 var nodesTableMetricNamesList = []string{
 	"k8s.node.cpu.usage",
 	"k8s.node.allocatable_cpu",
