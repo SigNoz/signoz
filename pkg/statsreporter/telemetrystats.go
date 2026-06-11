@@ -3,7 +3,6 @@ package statsreporter
 import (
 	"context"
 
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -22,41 +21,29 @@ func NewTelemetryStatsCollector(telemetryStore telemetrystore.TelemetryStore) St
 func (collector *telemetryStatsCollector) Collect(ctx context.Context, _ valuer.UUID) (map[string]any, error) {
 	stats := make(map[string]any)
 
-	traces, err := collector.countRows(ctx, "SELECT COUNT(*) FROM signoz_traces.distributed_signoz_index_v3", "traces")
-	if err != nil {
-		return nil, err
+	if traces, err := collector.countRows(ctx, "SELECT COUNT(*) FROM signoz_traces.distributed_signoz_index_v3"); err == nil {
+		stats["telemetry.traces.count"] = traces
 	}
-	stats["telemetry.traces.count"] = traces
 
-	logs, err := collector.countRows(ctx, "SELECT COUNT(*) FROM signoz_logs.distributed_logs_v2", "logs")
-	if err != nil {
-		return nil, err
+	if logs, err := collector.countRows(ctx, "SELECT COUNT(*) FROM signoz_logs.distributed_logs_v2"); err == nil {
+		stats["telemetry.logs.count"] = logs
 	}
-	stats["telemetry.logs.count"] = logs
 
-	metrics, err := collector.countRows(ctx, "SELECT COUNT(*) FROM signoz_metrics.distributed_samples_v4", "metrics")
-	if err != nil {
-		return nil, err
+	if metrics, err := collector.countRows(ctx, "SELECT COUNT(*) FROM signoz_metrics.distributed_samples_v4"); err == nil {
+		stats["telemetry.metrics.count"] = metrics
 	}
-	stats["telemetry.metrics.count"] = metrics
 
-	if tracesLastSeenAt, err := lastObservedTraces(ctx, collector.telemetryStore); err != nil {
-		return nil, err
-	} else if tracesLastSeenAt != nil {
+	if tracesLastSeenAt, err := lastObservedTraces(ctx, collector.telemetryStore); err == nil && tracesLastSeenAt != nil {
 		stats["telemetry.traces.last_observed.time"] = tracesLastSeenAt.UTC()
 		stats["telemetry.traces.last_observed.time_unix"] = tracesLastSeenAt.Unix()
 	}
 
-	if logsLastSeenAt, err := lastObservedLogs(ctx, collector.telemetryStore); err != nil {
-		return nil, err
-	} else if logsLastSeenAt != nil {
+	if logsLastSeenAt, err := lastObservedLogs(ctx, collector.telemetryStore); err == nil && logsLastSeenAt != nil {
 		stats["telemetry.logs.last_observed.time"] = logsLastSeenAt.UTC()
 		stats["telemetry.logs.last_observed.time_unix"] = logsLastSeenAt.Unix()
 	}
 
-	if metricsLastSeenAt, err := lastObservedMetrics(ctx, collector.telemetryStore); err != nil {
-		return nil, err
-	} else if metricsLastSeenAt != nil {
+	if metricsLastSeenAt, err := lastObservedMetrics(ctx, collector.telemetryStore); err == nil && metricsLastSeenAt != nil {
 		stats["telemetry.metrics.last_observed.time"] = metricsLastSeenAt.UTC()
 		stats["telemetry.metrics.last_observed.time_unix"] = metricsLastSeenAt.Unix()
 	}
@@ -64,11 +51,8 @@ func (collector *telemetryStatsCollector) Collect(ctx context.Context, _ valuer.
 	return stats, nil
 }
 
-func (collector *telemetryStatsCollector) countRows(ctx context.Context, query string, signal string) (uint64, error) {
+func (collector *telemetryStatsCollector) countRows(ctx context.Context, query string) (uint64, error) {
 	var count uint64
-	if err := collector.telemetryStore.ClickhouseDB().QueryRow(ctx, query).Scan(&count); err != nil {
-		return 0, errors.WrapInternalf(err, errors.CodeInternal, "failed to count %s", signal)
-	}
-
-	return count, nil
+	err := collector.telemetryStore.ClickhouseDB().QueryRow(ctx, query).Scan(&count)
+	return count, err
 }

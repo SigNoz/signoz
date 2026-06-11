@@ -73,21 +73,33 @@ func TestTelemetryStatsCollectorOmitsQuietLastObserved(t *testing.T) {
 	assert.NoError(t, chMock.ExpectationsWereMet())
 }
 
-func TestTelemetryStatsCollectorCountErrorFails(t *testing.T) {
+func TestTelemetryStatsCollectorCountErrorOmitsOnlyFailedKey(t *testing.T) {
 	collector, chMock := newTelemetryStatsCollectorTest(t)
+	tracesAt := time.Date(2026, 6, 10, 10, 0, 0, 0, time.UTC)
 
 	chMock.ExpectQueryRow(regexp.QuoteMeta(tracesCountSQL)).
 		WillReturnRow(cmock.NewRow([]cmock.ColumnType{{Name: "count()", Type: "UInt64"}}, nil)).
 		WillReturnError(assert.AnError)
+	expectTelemetryCount(chMock, logsCountSQL, 7)
+	expectTelemetryCount(chMock, metricsCountSQL, 9)
+	expectTracesLastIngested(chMock, tracesAt)
+	expectLogsLastIngested(chMock, time.Time{})
+	expectMetricsLastIngested(chMock, time.Time{})
 
 	stats, err := collector.Collect(context.Background(), testOrgID)
 
-	assert.Error(t, err)
-	assert.Nil(t, stats)
+	require.NoError(t, err)
+	assert.NotContains(t, stats, "telemetry.traces.count")
+	assert.Equal(t, uint64(7), stats["telemetry.logs.count"])
+	assert.Equal(t, uint64(9), stats["telemetry.metrics.count"])
+	assert.Equal(t, tracesAt, stats["telemetry.traces.last_observed.time"])
+	assert.NoError(t, chMock.ExpectationsWereMet())
 }
 
-func TestTelemetryStatsCollectorLastObservedErrorFails(t *testing.T) {
+func TestTelemetryStatsCollectorLastObservedErrorOmitsOnlyFailedKeys(t *testing.T) {
 	collector, chMock := newTelemetryStatsCollectorTest(t)
+	logsAt := time.Date(2026, 6, 10, 11, 0, 0, 0, time.UTC)
+	metricsAt := time.Date(2026, 6, 10, 12, 0, 0, 0, time.UTC)
 
 	expectTelemetryCount(chMock, tracesCountSQL, 1)
 	expectTelemetryCount(chMock, logsCountSQL, 1)
@@ -95,11 +107,20 @@ func TestTelemetryStatsCollectorLastObservedErrorFails(t *testing.T) {
 	chMock.ExpectQueryRow(regexp.QuoteMeta(tracesLastObservedSQL)).
 		WillReturnRow(cmock.NewRow([]cmock.ColumnType{{Name: "max(timestamp)", Type: "DateTime64(9)"}}, nil)).
 		WillReturnError(assert.AnError)
+	expectLogsLastIngested(chMock, logsAt)
+	expectMetricsLastIngested(chMock, metricsAt)
 
 	stats, err := collector.Collect(context.Background(), testOrgID)
 
-	assert.Error(t, err)
-	assert.Nil(t, stats)
+	require.NoError(t, err)
+	assert.Equal(t, uint64(1), stats["telemetry.traces.count"])
+	assert.Equal(t, uint64(1), stats["telemetry.logs.count"])
+	assert.Equal(t, uint64(1), stats["telemetry.metrics.count"])
+	assert.NotContains(t, stats, "telemetry.traces.last_observed.time")
+	assert.NotContains(t, stats, "telemetry.traces.last_observed.time_unix")
+	assert.Equal(t, logsAt, stats["telemetry.logs.last_observed.time"])
+	assert.Equal(t, metricsAt, stats["telemetry.metrics.last_observed.time"])
+	assert.NoError(t, chMock.ExpectationsWereMet())
 }
 
 func newTelemetryStatsCollectorTest(t *testing.T) (StatsCollector, cmock.ClickConnMockCommon) {
