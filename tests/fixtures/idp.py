@@ -687,6 +687,8 @@ def perform_saml_login(
     url = session_context["orgs"][0]["authNSupport"]["callback"][0]["url"]
     driver.get(url)
     idp_login(email, password)
+    # wait until the browser lands back on SigNoz
+    WebDriverWait(driver, 15).until(lambda d: d.current_url.startswith(signoz.self.host_configs["8080"].base()))
 
 
 def delete_keycloak_client(idp: types.TestContainerIDP, client_id: str) -> None:
