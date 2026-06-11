@@ -36,7 +36,7 @@ func TestNewAuditAttributesFromHTTP_OutcomeBoundary(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			attrs := NewAuditAttributesFromHTTP(testCase.statusCode, coretypes.VerbUpdate, ActionCategoryConfigurationChange, claims)
+			attrs := NewAuditAttributesFromHTTP(testCase.statusCode, coretypes.VerbUpdate, coretypes.ActionCategoryConfigurationChange, claims)
 			assert.Equal(t, testCase.expectedOutcome, attrs.Outcome)
 		})
 	}
@@ -55,7 +55,7 @@ func TestNewBody(t *testing.T) {
 			name: "Success_EmptyResourceID",
 			auditAttributes: AuditAttributes{
 				Action:         coretypes.VerbDelete,
-				ActionCategory: ActionCategoryConfigurationChange,
+				ActionCategory: coretypes.ActionCategoryConfigurationChange,
 				Outcome:        OutcomeSuccess,
 			},
 			principalAttributes: PrincipalAttributes{
@@ -63,8 +63,8 @@ func TestNewBody(t *testing.T) {
 				PrincipalEmail: valuer.MustNewEmail("test@acme.com"),
 			},
 			resourceAttributes: ResourceAttributes{
-				ResourceID:   "",
-				ResourceKind: coretypes.MustNewKind("dashboard"),
+				ResourceID: "",
+				Resource:   coretypes.ResourceMetaResourceDashboard,
 			},
 			errorAttributes: ErrorAttributes{},
 			expectedBody:    "test@acme.com (019a1234-abcd-7000-8000-567800000001) deleted dashboard",
@@ -73,7 +73,7 @@ func TestNewBody(t *testing.T) {
 			name: "Success_EmptyPrincipalEmail",
 			auditAttributes: AuditAttributes{
 				Action:         coretypes.VerbDelete,
-				ActionCategory: ActionCategoryConfigurationChange,
+				ActionCategory: coretypes.ActionCategoryConfigurationChange,
 				Outcome:        OutcomeSuccess,
 			},
 			principalAttributes: PrincipalAttributes{
@@ -81,8 +81,8 @@ func TestNewBody(t *testing.T) {
 				PrincipalEmail: valuer.Email{},
 			},
 			resourceAttributes: ResourceAttributes{
-				ResourceID:   "abd",
-				ResourceKind: coretypes.MustNewKind("dashboard"),
+				ResourceID: "abd",
+				Resource:   coretypes.ResourceMetaResourceDashboard,
 			},
 			errorAttributes: ErrorAttributes{},
 			expectedBody:    "019a1234-abcd-7000-8000-567800000001 deleted dashboard (abd)",
@@ -91,7 +91,7 @@ func TestNewBody(t *testing.T) {
 			name: "Success_EmptyPrincipalIDandEmail",
 			auditAttributes: AuditAttributes{
 				Action:         coretypes.VerbDelete,
-				ActionCategory: ActionCategoryConfigurationChange,
+				ActionCategory: coretypes.ActionCategoryConfigurationChange,
 				Outcome:        OutcomeSuccess,
 			},
 			principalAttributes: PrincipalAttributes{
@@ -99,8 +99,8 @@ func TestNewBody(t *testing.T) {
 				PrincipalEmail: valuer.Email{},
 			},
 			resourceAttributes: ResourceAttributes{
-				ResourceID:   "abd",
-				ResourceKind: coretypes.MustNewKind("dashboard"),
+				ResourceID: "abd",
+				Resource:   coretypes.ResourceMetaResourceDashboard,
 			},
 			errorAttributes: ErrorAttributes{},
 			expectedBody:    "deleted dashboard (abd)",
@@ -109,7 +109,7 @@ func TestNewBody(t *testing.T) {
 			name: "Success_AllPresent",
 			auditAttributes: AuditAttributes{
 				Action:         coretypes.VerbCreate,
-				ActionCategory: ActionCategoryConfigurationChange,
+				ActionCategory: coretypes.ActionCategoryConfigurationChange,
 				Outcome:        OutcomeSuccess,
 			},
 			principalAttributes: PrincipalAttributes{
@@ -117,8 +117,8 @@ func TestNewBody(t *testing.T) {
 				PrincipalEmail: valuer.MustNewEmail("alice@acme.com"),
 			},
 			resourceAttributes: ResourceAttributes{
-				ResourceID:   "019b-5678",
-				ResourceKind: coretypes.MustNewKind("dashboard"),
+				ResourceID: "019b-5678",
+				Resource:   coretypes.ResourceMetaResourceDashboard,
 			},
 			errorAttributes: ErrorAttributes{},
 			expectedBody:    "alice@acme.com (019a1234-abcd-7000-8000-567800000001) created dashboard (019b-5678)",
@@ -127,21 +127,21 @@ func TestNewBody(t *testing.T) {
 			name: "Success_EmptyEverythingOptional",
 			auditAttributes: AuditAttributes{
 				Action:         coretypes.VerbUpdate,
-				ActionCategory: ActionCategoryConfigurationChange,
+				ActionCategory: coretypes.ActionCategoryConfigurationChange,
 				Outcome:        OutcomeSuccess,
 			},
 			principalAttributes: PrincipalAttributes{},
 			resourceAttributes: ResourceAttributes{
-				ResourceKind: coretypes.MustNewKind("alert-rule"),
+				Resource: coretypes.ResourceMetaResourceRule,
 			},
 			errorAttributes: ErrorAttributes{},
-			expectedBody:    "updated alert-rule",
+			expectedBody:    "updated rule",
 		},
 		{
 			name: "Failure_AllPresent",
 			auditAttributes: AuditAttributes{
 				Action:         coretypes.VerbUpdate,
-				ActionCategory: ActionCategoryConfigurationChange,
+				ActionCategory: coretypes.ActionCategoryConfigurationChange,
 				Outcome:        OutcomeFailure,
 			},
 			principalAttributes: PrincipalAttributes{
@@ -149,8 +149,8 @@ func TestNewBody(t *testing.T) {
 				PrincipalEmail: valuer.MustNewEmail("viewer@acme.com"),
 			},
 			resourceAttributes: ResourceAttributes{
-				ResourceID:   "019b-5678",
-				ResourceKind: coretypes.MustNewKind("dashboard"),
+				ResourceID: "019b-5678",
+				Resource:   coretypes.ResourceMetaResourceDashboard,
 			},
 			errorAttributes: ErrorAttributes{
 				ErrorType: "forbidden",
@@ -169,7 +169,7 @@ func TestNewBody(t *testing.T) {
 				PrincipalEmail: valuer.MustNewEmail("test@acme.com"),
 			},
 			resourceAttributes: ResourceAttributes{
-				ResourceKind: coretypes.MustNewKind("user"),
+				Resource: coretypes.ResourceUser,
 			},
 			errorAttributes: ErrorAttributes{
 				ErrorType: "not-found",
@@ -187,8 +187,8 @@ func TestNewBody(t *testing.T) {
 				PrincipalEmail: valuer.MustNewEmail("test@acme.com"),
 			},
 			resourceAttributes: ResourceAttributes{
-				ResourceID:   "019b-5678",
-				ResourceKind: coretypes.MustNewKind("dashboard"),
+				ResourceID: "019b-5678",
+				Resource:   coretypes.ResourceMetaResourceDashboard,
 			},
 			errorAttributes: ErrorAttributes{},
 			expectedBody:    "test@acme.com (019a1234-abcd-7000-8000-567800000001) failed to create dashboard (019b-5678)",

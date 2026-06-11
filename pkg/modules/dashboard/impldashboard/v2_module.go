@@ -119,7 +119,7 @@ func (module *module) UpdateV2(ctx context.Context, orgID valuer.UUID, id valuer
 		return nil, err
 	}
 	// Locked-dashboard / state gate — independent of tags, so run it before the tx.
-	if err := existing.CanUpdate(); err != nil {
+	if err := existing.ErrIfNotUpdatable(); err != nil {
 		return nil, err
 	}
 
@@ -154,7 +154,7 @@ func (module *module) PatchV2(ctx context.Context, orgID valuer.UUID, id valuer.
 		return nil, err
 	}
 	// Locked-dashboard / state gate — independent of tags, so run it before the tx.
-	if err := existing.CanUpdate(); err != nil {
+	if err := existing.ErrIfNotUpdatable(); err != nil {
 		return nil, err
 	}
 
@@ -193,7 +193,7 @@ func (module *module) DeleteV2(ctx context.Context, orgID valuer.UUID, id valuer
 	if err != nil {
 		return err
 	}
-	if err := existing.CanDelete(); err != nil {
+	if err := existing.ErrIfNotDeletable(); err != nil {
 		return err
 	}
 
@@ -202,7 +202,7 @@ func (module *module) DeleteV2(ctx context.Context, orgID valuer.UUID, id valuer
 		if _, err := module.tagModule.SyncTags(ctx, orgID, coretypes.KindDashboard, id, nil); err != nil {
 			return err
 		}
-		if err := module.store.DeletePreferencesForDashboard(ctx, id); err != nil {
+		if err := module.store.DeletePreferencesForDashboard(ctx, orgID, id); err != nil {
 			return err
 		}
 		return module.store.Delete(ctx, orgID, id)
@@ -231,10 +231,10 @@ func (module *module) PinV2(ctx context.Context, orgID valuer.UUID, userID value
 	return module.store.PinForUser(ctx, dashboardtypes.NewUserDashboardPreference(userID, id))
 }
 
-func (module *module) UnpinV2(ctx context.Context, userID valuer.UUID, id valuer.UUID) error {
-	return module.store.UnpinForUser(ctx, userID, id)
+func (module *module) UnpinV2(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, id valuer.UUID) error {
+	return module.store.UnpinForUser(ctx, orgID, userID, id)
 }
 
-func (module *module) DeletePreferencesForUser(ctx context.Context, userID valuer.UUID) error {
-	return module.store.DeletePreferencesForUser(ctx, userID)
+func (module *module) DeletePreferencesForUser(ctx context.Context, orgID valuer.UUID, userID valuer.UUID) error {
+	return module.store.DeletePreferencesForUser(ctx, orgID, userID)
 }
