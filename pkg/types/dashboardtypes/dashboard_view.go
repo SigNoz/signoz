@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -15,7 +16,6 @@ import (
 const (
 	DashboardViewSchemaVersion = "v1"
 	MaxDashboardViewNameLen    = 32
-	MaxQueryLen                = 1024
 )
 
 var (
@@ -35,10 +35,8 @@ type DashboardView struct {
 }
 
 type DashboardViewData struct {
-	Version string    `json:"version" required:"true"`
-	Query   string    `json:"query"`
-	Sort    ListSort  `json:"sort"`
-	Order   ListOrder `json:"order"`
+	Version string `json:"version" required:"true"`
+	ListFilter
 }
 
 func (d *DashboardViewData) Validate() error {
@@ -46,26 +44,7 @@ func (d *DashboardViewData) Validate() error {
 		return errors.NewInvalidInputf(ErrCodeDashboardViewInvalidInput,
 			"version must be %q, got %q", DashboardViewSchemaVersion, d.Version)
 	}
-	if len(d.Query) > MaxQueryLen {
-		return errors.NewInvalidInputf(ErrCodeDashboardViewInvalidInput, "query length cannot be more than %d characters, received a query of length %d", MaxQueryLen, len(d.Query))
-	}
-	if !d.Sort.IsZero() {
-		switch d.Sort {
-		case ListSortUpdatedAt, ListSortCreatedAt, ListSortName:
-		default:
-			return errors.NewInvalidInputf(ErrCodeDashboardViewInvalidInput,
-				"invalid sort %q — expected one of: `updated_at`, `created_at`, `name`", d.Sort)
-		}
-	}
-	if !d.Order.IsZero() {
-		switch d.Order {
-		case ListOrderAsc, ListOrderDesc:
-		default:
-			return errors.NewInvalidInputf(ErrCodeDashboardViewInvalidInput,
-				"invalid order %q — expected `asc` or `desc`", d.Order)
-		}
-	}
-	return nil
+	return d.ListFilter.Validate()
 }
 
 // ════════════════════════════════════════════════════════════════════════
@@ -138,9 +117,9 @@ func trimAndValidateDashboardViewName(name string) (string, error) {
 	if trimmed == "" {
 		return "", errors.NewInvalidInputf(ErrCodeDashboardViewInvalidInput, "name is required")
 	}
-	if len(trimmed) > MaxDashboardViewNameLen {
+	if n := utf8.RuneCountInString(trimmed); n > MaxDashboardViewNameLen {
 		return "", errors.NewInvalidInputf(ErrCodeDashboardViewInvalidInput,
-			"name must be at most %d characters, got %d", MaxDashboardViewNameLen, len(trimmed))
+			"name must be at most %d characters, got %d", MaxDashboardViewNameLen, n)
 	}
 	return trimmed, nil
 }

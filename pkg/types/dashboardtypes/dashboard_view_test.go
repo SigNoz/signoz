@@ -18,8 +18,13 @@ func TestDashboardViewDataValidate(t *testing.T) {
 	}{
 		{
 			description: "valid with all fields set",
-			data:        DashboardViewData{Version: DashboardViewSchemaVersion, Query: "name=foo", Sort: ListSortName, Order: ListOrderAsc},
+			data:        DashboardViewData{Version: DashboardViewSchemaVersion, ListFilter: ListFilter{Query: "name=foo", Sort: ListSortName, Order: ListOrderAsc}},
 			expectError: false,
+		},
+		{
+			description: "query over the cap is rejected",
+			data:        DashboardViewData{Version: DashboardViewSchemaVersion, ListFilter: ListFilter{Query: strings.Repeat("x", MaxListQueryLen+1)}},
+			expectError: true,
 		},
 		{
 			description: "valid with zero sort and order",
@@ -38,12 +43,12 @@ func TestDashboardViewDataValidate(t *testing.T) {
 		},
 		{
 			description: "unknown sort is rejected",
-			data:        DashboardViewData{Version: DashboardViewSchemaVersion, Sort: ListSort{valuer.NewString("bogus")}},
+			data:        DashboardViewData{Version: DashboardViewSchemaVersion, ListFilter: ListFilter{Sort: ListSort{valuer.NewString("bogus")}}},
 			expectError: true,
 		},
 		{
 			description: "unknown order is rejected",
-			data:        DashboardViewData{Version: DashboardViewSchemaVersion, Order: ListOrder{valuer.NewString("sideways")}},
+			data:        DashboardViewData{Version: DashboardViewSchemaVersion, ListFilter: ListFilter{Order: ListOrder{valuer.NewString("sideways")}}},
 			expectError: true,
 		},
 	}
@@ -113,7 +118,7 @@ func TestPostableDashboardViewNewDashboardView(t *testing.T) {
 	orgID := valuer.GenerateUUID()
 	postable := PostableDashboardView{
 		Name: "my view",
-		Data: DashboardViewData{Version: DashboardViewSchemaVersion, Sort: ListSortName, Order: ListOrderAsc},
+		Data: DashboardViewData{Version: DashboardViewSchemaVersion, ListFilter: ListFilter{Sort: ListSortName, Order: ListOrderAsc}},
 	}
 
 	view := postable.NewDashboardView(orgID)
@@ -130,13 +135,13 @@ func TestDashboardViewUpdate(t *testing.T) {
 	orgID := valuer.GenerateUUID()
 	view := PostableDashboardView{
 		Name: "original",
-		Data: DashboardViewData{Version: DashboardViewSchemaVersion, Sort: ListSortName, Order: ListOrderAsc},
+		Data: DashboardViewData{Version: DashboardViewSchemaVersion, ListFilter: ListFilter{Sort: ListSortName, Order: ListOrderAsc}},
 	}.NewDashboardView(orgID)
 	createdAt := view.CreatedAt
 
 	view.Update(UpdatableDashboardView{
 		Name: "renamed",
-		Data: DashboardViewData{Version: DashboardViewSchemaVersion, Sort: ListSortCreatedAt, Order: ListOrderDesc},
+		Data: DashboardViewData{Version: DashboardViewSchemaVersion, ListFilter: ListFilter{Sort: ListSortCreatedAt, Order: ListOrderDesc}},
 	})
 
 	assert.Equal(t, "renamed", view.Name)
