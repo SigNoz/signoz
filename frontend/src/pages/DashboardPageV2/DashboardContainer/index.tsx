@@ -21,6 +21,10 @@ function DashboardContainer({
 	dashboard,
 	refetch,
 }: DashboardContainerProps): JSX.Element {
+	useEffect(() => {
+		document.title = dashboard.name
+	}, [dashboard.name])
+
 	const fullScreenHandle = useFullScreenHandle();
 
 	const { user } = useAppContext();
