@@ -25,13 +25,14 @@ var (
 	AWSServiceSQS         = ServiceID{valuer.NewString("sqs")}
 
 	// Azure services.
-	AzureServiceStorageAccountsBlob = ServiceID{valuer.NewString("storageaccountsblob")}
-	AzureServiceCDNProfile          = ServiceID{valuer.NewString("cdnprofile")}
-	AzureServiceVirtualMachine      = ServiceID{valuer.NewString("virtualmachine")}
-	AzureServiceAppService          = ServiceID{valuer.NewString("appservice")}
-	AzureServiceContainerApp        = ServiceID{valuer.NewString("containerapp")}
-	AzureServiceAKS                 = ServiceID{valuer.NewString("aks")}
-	AzureServiceSQLDatabase         = ServiceID{valuer.NewString("sqldatabase")}
+	AzureServiceStorageAccountsBlob        = ServiceID{valuer.NewString("storageaccountsblob")}
+	AzureServiceCDNProfile                 = ServiceID{valuer.NewString("cdnprofile")}
+	AzureServiceVirtualMachine             = ServiceID{valuer.NewString("virtualmachine")}
+	AzureServiceAppService                 = ServiceID{valuer.NewString("appservice")}
+	AzureServiceContainerApp               = ServiceID{valuer.NewString("containerapp")}
+	AzureServiceAKS                        = ServiceID{valuer.NewString("aks")}
+	AzureServiceSQLDatabase                = ServiceID{valuer.NewString("sqldatabase")}
+	AzureServiceSQLDatabaseManagedInstance = ServiceID{valuer.NewString("sqldatabasemi")}
 )
 
 func (ServiceID) Enum() []any {
@@ -56,6 +57,7 @@ func (ServiceID) Enum() []any {
 		AzureServiceContainerApp,
 		AzureServiceAKS,
 		AzureServiceSQLDatabase,
+		AzureServiceSQLDatabaseManagedInstance,
 	}
 }
 
@@ -84,6 +86,7 @@ var SupportedServices = map[CloudProviderType][]ServiceID{
 		AzureServiceContainerApp,
 		AzureServiceAKS,
 		AzureServiceSQLDatabase,
+		AzureServiceSQLDatabaseManagedInstance,
 	},
 }
 
