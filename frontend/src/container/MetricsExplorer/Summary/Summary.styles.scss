@@ -58,6 +58,7 @@
 	}
 
 	.metrics-table-container {
+		overflow-x: auto;
 		.ant-table {
 			margin-left: -16px;
 			margin-right: -16px;
