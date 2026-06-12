@@ -284,11 +284,6 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 			}
 			annotations = append(annotations, ruletypes.Label{Name: name, Value: expand(value)})
 		}
-		// Add values to be used in notifier layer for notification templates
-		annotations = append(annotations, ruletypes.Label{Name: ruletypes.AnnotationValue, Value: value})
-		annotations = append(annotations, ruletypes.Label{Name: ruletypes.AnnotationThresholdValue, Value: threshold})
-		annotations = append(annotations, ruletypes.Label{Name: ruletypes.AnnotationCompareOp, Value: smpl.CompareOperator.Literal()})
-		annotations = append(annotations, ruletypes.Label{Name: ruletypes.AnnotationMatchType, Value: smpl.MatchType.Literal()})
 
 		if smpl.IsMissing {
 			lb.Set(ruletypes.AlertNameLabel, "[No data] "+r.Name())
