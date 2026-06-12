@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { useParams } from 'react-router-dom';
 import { Modal } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
@@ -22,9 +22,9 @@ function DashboardPage(): JSX.Element {
 
 	const dashboardTitle = useDashboardStore((s) => s.dashboardData?.data.title);
 
-	useEffect(() => {
-		document.title = dashboardTitle || document.title;
-	}, [dashboardTitle]);
+	const pageTitle = dashboardTitle
+		? `SigNoz | ${dashboardTitle}`
+		: undefined;
 
 	const errorMessage = isError
 		? (error as AxiosError<{ errorType: string }>)?.response?.data?.errorType
@@ -44,6 +44,11 @@ function DashboardPage(): JSX.Element {
 
 	return (
 		<>
+			{pageTitle && (
+				<Helmet>
+					<title>{pageTitle}</title>
+				</Helmet>
+			)}
 			{Content}
 			<DashboardContainer />
 		</>

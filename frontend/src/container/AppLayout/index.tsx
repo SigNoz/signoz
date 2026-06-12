@@ -88,7 +88,7 @@ import {
 } from 'utils/timeUtils';
 
 import { ChildrenContainer, Layout, LayoutContent } from './styles';
-import { getRouteKey } from './utils';
+import { getRouteMatch } from './utils';
 
 import './AppLayout.styles.scss';
 
@@ -403,8 +403,23 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 	const isToDisplayLayout = isLoggedIn;
 
-	const routeKey = useMemo(() => getRouteKey(pathname), [pathname]);
-	const pageTitle = t(routeKey);
+	const routeMatch = useMemo(() => getRouteMatch(pathname), [pathname]);
+	const routeKey = routeMatch.key;
+
+	const pageTitle = useMemo(() => {
+		const baseTitle = t(routeKey);
+		// Build dynamic titles for routes with URL params
+		const { servicename } = routeMatch.params;
+		if (servicename) {
+			if (routeKey === 'SERVICE_METRICS') {
+				return `SigNoz | ${servicename} - Service Metrics`;
+			}
+			if (routeKey === 'SERVICE_TOP_LEVEL_OPERATIONS') {
+				return `SigNoz | ${servicename} - Operations`;
+			}
+		}
+		return baseTitle;
+	}, [routeKey, routeMatch.params, t]);
 
 	const isPublicDashboard = pathname.startsWith('/public/dashboard/');
 	const isAIAssistantPage = pathname.startsWith('/ai-assistant/');

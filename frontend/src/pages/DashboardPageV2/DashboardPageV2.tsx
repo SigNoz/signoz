@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+import { useMemo } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { useParams } from 'react-router-dom';
 
 import { Typography } from '@signozhq/ui/typography';
@@ -18,11 +19,10 @@ function DashboardPageV2(): JSX.Element {
 	const dashboard = data?.data;
 	const name = dashboard?.spec?.display?.name;
 
-	useEffect(() => {
-		if (name) {
-			document.title = name;
-		}
-	}, [name]);
+	const pageTitle = useMemo(
+		() => (name ? `SigNoz | ${name}` : undefined),
+		[name],
+	);
 
 	if (isLoading) {
 		return <Spinner tip="Loading dashboard..." />;
@@ -37,7 +37,16 @@ function DashboardPageV2(): JSX.Element {
 		);
 	}
 
-	return <DashboardContainer dashboard={dashboard} refetch={refetch} />;
+	return (
+		<>
+			{pageTitle && (
+				<Helmet>
+					<title>{pageTitle}</title>
+				</Helmet>
+			)}
+			<DashboardContainer dashboard={dashboard} refetch={refetch} />
+		</>
+	);
 }
 
 export default DashboardPageV2;
