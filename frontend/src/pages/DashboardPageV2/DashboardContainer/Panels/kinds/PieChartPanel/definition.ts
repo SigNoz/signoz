@@ -10,4 +10,5 @@ export const definition: PanelDefinition<'signoz/PieChartPanel'> = {
 	Renderer,
 	sections,
 	supportedSignals: [DataSource.METRICS, DataSource.LOGS, DataSource.TRACES],
+	actions: { view: true, edit: true, download: false, createAlert: true },
 };

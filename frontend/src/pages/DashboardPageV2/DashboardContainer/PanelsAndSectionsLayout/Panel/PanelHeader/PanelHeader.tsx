@@ -1,8 +1,8 @@
 import { useMemo, type ReactNode } from 'react';
 import { Typography } from '@signozhq/ui/typography';
+import type { Querybuildertypesv5QueryWarnDataDTO as WarningDTO } from 'api/generated/services/sigNoz.schemas';
 import { Loader } from '@signozhq/icons';
 import cx from 'classnames';
-import type { Warning } from 'types/api';
 
 import type { PanelActionsConfig } from '../Panel';
 import PanelActionsMenu from '../PanelActionsMenu/PanelActionsMenu';
@@ -16,13 +16,15 @@ import styles from './PanelHeader.module.scss';
 interface PanelHeaderProps {
 	title: ReactNode;
 	panelId: string;
+	/** Full plugin kind — drives kind-gated menu actions; undefined when absent. */
+	panelKind: string | undefined;
 	/** Background refresh in flight — shows a subtle spinner without blinking the chart. */
 	isFetching: boolean;
 	/** Latest query error, if any — surfaced as a header error indicator. */
 	error?: Error | null;
 	/** Non-fatal query warning lifted from the response payload. */
-	warning?: Warning;
-	/** Move/delete actions — present only in editable sectioned mode. */
+	warning?: WarningDTO;
+	/** Layout context for move/delete — absent outside editable sectioned mode. */
 	panelActions?: PanelActionsConfig;
 }
 
@@ -30,6 +32,7 @@ interface PanelHeaderProps {
 function PanelHeader({
 	title,
 	panelId,
+	panelKind,
 	isFetching,
 	error,
 	warning,
@@ -61,15 +64,12 @@ function PanelHeader({
 				{warningDetail && (
 					<PanelStatusPopover variant="warning" detail={warningDetail} />
 				)}
-				{panelActions && (
-					<PanelActionsMenu
-						panelId={panelId}
-						currentLayoutIndex={panelActions.currentLayoutIndex}
-						sections={panelActions.sections}
-						onMovePanel={panelActions.onMovePanel}
-						onDeletePanel={panelActions.onDeletePanel}
-					/>
-				)}
+				{/* Renders nothing when no action survives its gates (kind/role/context). */}
+				<PanelActionsMenu
+					panelId={panelId}
+					panelKind={panelKind}
+					panelActions={panelActions}
+				/>
 			</div>
 		</div>
 	);

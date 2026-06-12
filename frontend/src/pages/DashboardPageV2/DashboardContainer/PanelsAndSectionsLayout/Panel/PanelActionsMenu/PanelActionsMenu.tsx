@@ -1,81 +1,37 @@
-import { useMemo } from 'react';
-import { EllipsisVertical, FolderInput, Trash2 } from '@signozhq/icons';
+import { EllipsisVertical } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { DropdownMenuSimple } from '@signozhq/ui/dropdown-menu';
-import type { MenuItem } from '@signozhq/ui/dropdown-menu';
 
-import type { DashboardSection } from '../../../utils';
-import type { DeletePanelArgs } from '../hooks/useDeletePanel';
-import type { MovePanelArgs } from '../hooks/useMovePanelToSection';
+import type { PanelActionsConfig } from '../Panel';
+import { usePanelActionItems } from './usePanelActionItems';
 import styles from './PanelActionsMenu.module.scss';
 
 interface PanelActionsMenuProps {
 	panelId: string;
-	currentLayoutIndex: number;
-	sections: DashboardSection[];
-	onMovePanel?: (args: MovePanelArgs) => void;
-	onDeletePanel?: (args: DeletePanelArgs) => void;
+	/** Full plugin kind (e.g. `signoz/TimeSeriesPanel`); undefined when absent. */
+	panelKind: string | undefined;
+	/** Layout context for move/delete — absent outside editable sectioned mode. */
+	panelActions?: PanelActionsConfig;
 }
 
+/**
+ * Purely presentational: the trigger button + dropdown. Which items appear —
+ * and whether the menu renders at all — is owned by `usePanelActionItems`
+ * (kind ∧ role ∧ context gating per action).
+ */
 function PanelActionsMenu({
 	panelId,
-	currentLayoutIndex,
-	sections,
-	onMovePanel,
-	onDeletePanel,
-}: PanelActionsMenuProps): JSX.Element {
-	const items = useMemo<MenuItem[]>(() => {
-		const result: MenuItem[] = [];
+	panelKind,
+	panelActions,
+}: PanelActionsMenuProps): JSX.Element | null {
+	const items = usePanelActionItems({ panelId, panelKind, panelActions });
 
-		if (onMovePanel) {
-			const targets = sections.filter(
-				(s) => s.title && s.layoutIndex !== currentLayoutIndex,
-			);
-			if (targets.length === 0) {
-				result.push({
-					key: 'move',
-					label: 'Move to section',
-					icon: <FolderInput size={14} />,
-					disabled: true,
-				});
-			} else {
-				result.push({
-					key: 'move',
-					label: 'Move to section',
-					icon: <FolderInput size={14} />,
-					children: targets.map((s) => ({
-						key: `move-${s.layoutIndex}`,
-						label: s.title,
-						onClick: (): void =>
-							onMovePanel({
-								panelId,
-								fromLayoutIndex: currentLayoutIndex,
-								toLayoutIndex: s.layoutIndex,
-							}),
-					})),
-				});
-			}
-		}
-
-		if (onDeletePanel) {
-			if (result.length > 0) {
-				result.push({ type: 'divider' });
-			}
-			result.push({
-				key: 'delete-panel',
-				danger: true,
-				icon: <Trash2 size={14} />,
-				label: 'Delete panel',
-				onClick: (): void =>
-					onDeletePanel({ panelId, layoutIndex: currentLayoutIndex }),
-			});
-		}
-
-		return result;
-	}, [sections, currentLayoutIndex, panelId, onMovePanel, onDeletePanel]);
+	if (items.length === 0) {
+		return null;
+	}
 
 	return (
-		<DropdownMenuSimple menu={{ items }}>
+		<DropdownMenuSimple menu={{ items }} align="end">
 			<Button
 				type="button"
 				variant="ghost"

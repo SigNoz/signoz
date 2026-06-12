@@ -10,9 +10,19 @@ import PanelHeader from '../PanelHeader/PanelHeader';
 const renderWithProvider = (ui: ReactElement): ReturnType<typeof render> =>
 	render(<TooltipProvider>{ui}</TooltipProvider>);
 
+// The actions menu has its own gating logic (kind/role/context) and its own
+// tests; stub it so this test exercises only the header's status indicators.
+jest.mock(
+	'../PanelActionsMenu/PanelActionsMenu',
+	() =>
+		function MockPanelActionsMenu(): null {
+			return null;
+		},
+);
+
 const baseProps = {
 	title: 'My panel',
-	kind: 'TimeSeries',
+	panelKind: 'signoz/TimeSeriesPanel',
 	panelId: 'panel-1',
 	isFetching: false,
 };

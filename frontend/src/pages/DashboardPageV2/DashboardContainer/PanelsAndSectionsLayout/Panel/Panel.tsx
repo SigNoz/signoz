@@ -3,24 +3,24 @@ import { TooltipSimple } from '@signozhq/ui/tooltip';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import { getPanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Panels/registry';
 import { usePanelQuery } from 'pages/DashboardPageV2/DashboardContainer/hooks/usePanelQuery';
-import type { Warning } from 'types/api';
 import type { DashboardtypesPanelPluginKindDTO as PanelKind } from 'api/generated/services/sigNoz.schemas';
 
 import type { DashboardSection } from '../../utils';
-import type { DeletePanelArgs } from './hooks/useDeletePanel';
 import { usePanelInteractions } from './hooks/usePanelInteractions';
-import type { MovePanelArgs } from './hooks/useMovePanelToSection';
 import PanelBody from './PanelBody/PanelBody';
 import UnsupportedPanelBody from './PanelBody/UnsupportedPanelBody';
 import PanelHeader from './PanelHeader/PanelHeader';
 import styles from './Panel.module.scss';
 
-/** Panel action context — present together only in editable sectioned mode. */
+/**
+ * Layout context for the panel actions menu — pure data, present only in
+ * editable mode. No callbacks: the menu resolves its own mutations from
+ * store-backed hooks (useDeletePanel / useMovePanelToSection), and edit is
+ * URL-driven (useOpenPanelEditor).
+ */
 export interface PanelActionsConfig {
 	currentLayoutIndex: number;
 	sections: DashboardSection[];
-	onMovePanel: (args: MovePanelArgs) => void;
-	onDeletePanel: (args: DeletePanelArgs) => void;
 }
 
 interface PanelProps {
@@ -81,12 +81,10 @@ function Panel({
 			<PanelHeader
 				title={headerTitle}
 				panelId={panelId}
+				panelKind={fullKind}
 				isFetching={isFetching}
 				error={error}
-				// The V5 response `warning` is the same object the legacy chain
-				// surfaced as `Warning` — passed through untouched; the cast is the
-				// generated-DTO → hand-written-type boundary.
-				warning={data.response?.data?.warning as Warning | undefined}
+				warning={data.response?.data?.warning}
 				panelActions={panelActions}
 			/>
 			{panelDefinition ? (
