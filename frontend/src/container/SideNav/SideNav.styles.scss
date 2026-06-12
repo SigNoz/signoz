@@ -1135,17 +1135,9 @@
 
 .settings-dropdown,
 .help-support-dropdown {
-	.ant-dropdown-menu-item {
-		min-height: 32px;
-
-		.ant-dropdown-menu-title-content {
-			color: var(--l1-foreground) !important;
-		}
-
-		.user-settings-dropdown-logout-section {
-			color: var(--danger-background);
-			pointer-events: auto;
-		}
+	.user-settings-dropdown-logout-section {
+		color: var(--danger-background);
+		pointer-events: auto;
 	}
 }
 
