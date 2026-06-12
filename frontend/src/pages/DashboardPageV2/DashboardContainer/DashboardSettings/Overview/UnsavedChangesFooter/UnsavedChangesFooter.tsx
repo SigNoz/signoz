@@ -3,7 +3,7 @@ import { Button } from '@signozhq/ui/button';
 import { Check, X } from '@signozhq/icons';
 import { Typography } from '@signozhq/ui/typography';
 
-import styles from '../GeneralSettings.module.scss';
+import styles from './UnsavedChangesFooter.module.scss';
 
 interface UnsavedChangesFooterProps {
 	count: number;
@@ -29,13 +29,14 @@ function UnsavedChangesFooter({
 					{count > 1 && 's'}
 				</Typography.Text>
 			</div>
-			<div className={styles.footerActionBtns}>
+			<div className={styles.footerActionButtons}>
 				<Button
 					variant="ghost"
+					color="secondary"
 					disabled={isSaving}
 					prefix={<X size={14} />}
 					onClick={onDiscard}
-					className={styles.discardBtn}
+					className={styles.discardButton}
 				>
 					Discard
 				</Button>
@@ -47,7 +48,7 @@ function UnsavedChangesFooter({
 					prefix={<Check size={14} />}
 					testId="save-dashboard-config"
 					onClick={onSave}
-					className={styles.saveBtn}
+					className={styles.saveButton}
 				>
 					{t('save')}
 				</Button>

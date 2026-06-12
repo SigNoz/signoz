@@ -1,0 +1,12 @@
+.overviewContent {
+	display: flex;
+	flex-direction: column;
+	gap: 24px;
+}
+
+// shared "settings card" wrapper, used by the dashboard-info form and cross-panel sync
+.overviewSettings {
+	padding: 16px;
+	border-radius: 3px;
+	border: 1px solid var(--l2-border);
+}

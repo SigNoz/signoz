@@ -103,7 +103,7 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 			onSave: onNameSave,
 		});
 
-	const onEmptyWidgetHandler = useCallback((): void => {
+	const onAddPanel = useCallback((): void => {
 		void logEvent('Dashboard Detail V2: Add new panel clicked', {
 			dashboardId: id,
 		});
@@ -133,7 +133,7 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 					handle={handle}
 					isDashboardLocked={isDashboardLocked}
 					isAuthor={isAuthor}
-					onAddPanel={onEmptyWidgetHandler}
+					onAddPanel={onAddPanel}
 					onLockToggle={handleLockDashboardToggle}
 					onOpenRename={startEdit}
 				/>

@@ -31,6 +31,7 @@ function CrossPanelSync({ dashboardId }: CrossPanelSyncProps): JSX.Element {
 				<Typography.Text className={styles.crossPanelSyncSectionTitle}>
 					Cross-Panel Sync
 				</Typography.Text>
+
 				<Tooltip
 					title={
 						<div className={styles.crossPanelSyncTooltipContent}>
@@ -57,6 +58,7 @@ function CrossPanelSync({ dashboardId }: CrossPanelSyncProps): JSX.Element {
 					<SolidInfoCircle size="md" className={styles.crossPanelSyncInfoIcon} />
 				</Tooltip>
 			</div>
+
 			<div className={styles.crossPanelSyncRow}>
 				<div className={styles.crossPanelSyncInfo}>
 					<Typography.Text className={styles.crossPanelSyncTitle}>
@@ -79,6 +81,7 @@ function CrossPanelSync({ dashboardId }: CrossPanelSyncProps): JSX.Element {
 					<Radio.Button value={DashboardCursorSync.Tooltip}>Tooltip</Radio.Button>
 				</Radio.Group>
 			</div>
+
 			{cursorSyncMode === DashboardCursorSync.Tooltip && (
 				<div className={styles.crossPanelSyncRow}>
 					<div className={styles.crossPanelSyncInfo}>
@@ -90,6 +93,7 @@ function CrossPanelSync({ dashboardId }: CrossPanelSyncProps): JSX.Element {
 							matching ones highlighted
 						</Typography.Text>
 					</div>
+
 					<Radio.Group
 						value={syncTooltipFilterMode}
 						onChange={(e): void => {

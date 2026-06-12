@@ -11,7 +11,7 @@ import PanelsAndSectionsLayout from './PanelsAndSectionsLayout';
 import { useDashboardStore } from './store/useDashboardStore';
 import styles from './DashboardContainer.module.scss';
 import DashboardPageHeader from './components/DashboardPageHeader/DashboardPageHeader';
-import { Base64Icons } from './DashboardSettings/General/utils';
+import { Base64Icons } from './DashboardSettings/Overview/utils';
 
 interface DashboardContainerProps {
 	dashboard: DashboardtypesGettableDashboardV2DTO;
