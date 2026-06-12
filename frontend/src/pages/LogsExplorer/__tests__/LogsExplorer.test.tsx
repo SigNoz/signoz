@@ -177,6 +177,8 @@ describe('Logs Explorer Tests', () => {
 			>
 				<QueryBuilderContext.Provider
 					value={{
+						mode: 'url',
+						committedQuery: null,
 						isDefaultQuery: (): boolean => false,
 						currentQuery: {
 							...initialQueriesMap.metrics,
