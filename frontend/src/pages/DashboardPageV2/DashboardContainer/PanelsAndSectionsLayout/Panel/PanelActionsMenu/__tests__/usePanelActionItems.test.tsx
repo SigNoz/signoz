@@ -1,4 +1,4 @@
-import { renderHook } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 import type { ROLES } from 'types/roles';
 
 import type { DashboardSection } from '../../../../utils';
@@ -21,6 +21,11 @@ jest.mock('../../hooks/useMovePanelToSection', () => ({
 const mockDeletePanel = jest.fn();
 jest.mock('../../hooks/useDeletePanel', () => ({
 	useDeletePanel: (): jest.Mock => mockDeletePanel,
+}));
+
+const mockClonePanel = jest.fn();
+jest.mock('../../hooks/useClonePanel', () => ({
+	useClonePanel: (): jest.Mock => mockClonePanel,
 }));
 
 // Role is the only thing read off the app context; useComponentPermission runs
@@ -53,8 +58,8 @@ const baseArgs = {
 	panelActions: { currentLayoutIndex: 0, sections: TWO_TITLED_SECTIONS },
 };
 
-function itemKeys(items: ReturnType<typeof usePanelActionItems>): unknown[] {
-	return items.map((item) =>
+function itemKeys(result: ReturnType<typeof usePanelActionItems>): unknown[] {
+	return result.items.map((item) =>
 		'key' in item && item.key !== undefined ? item.key : item.type,
 	);
 }
@@ -138,20 +143,24 @@ describe('usePanelActionItems', () => {
 				},
 			}),
 		);
-		const move = result.current.find((i) => 'key' in i && i.key === 'move');
+		const move = result.current.items.find((i) => 'key' in i && i.key === 'move');
 		expect(move).toMatchObject({ disabled: true });
 	});
 
 	it('edit opens the panel editor for this panel', () => {
 		const { result } = renderHook(() => usePanelActionItems(baseArgs));
-		const edit = result.current.find((i) => 'key' in i && i.key === 'edit-panel');
+		const edit = result.current.items.find(
+			(i) => 'key' in i && i.key === 'edit-panel',
+		);
 		(edit as { onClick: () => void }).onClick();
 		expect(mockOpenEditor).toHaveBeenCalledWith('panel-1');
 	});
 
 	it('move targets call the mutation with from/to layout indexes', () => {
 		const { result } = renderHook(() => usePanelActionItems(baseArgs));
-		const move = result.current.find((i) => 'key' in i && i.key === 'move') as {
+		const move = result.current.items.find(
+			(i) => 'key' in i && i.key === 'move',
+		) as {
 			children: { key: string; onClick: () => void }[];
 		};
 		expect(move.children).toHaveLength(1);
@@ -163,30 +172,54 @@ describe('usePanelActionItems', () => {
 		});
 	});
 
-	it('delete calls the mutation with the panel and its layout index', () => {
+	it('delete defers to a confirmation: the item opens the dialog, confirm runs the mutation', async () => {
 		const { result } = renderHook(() => usePanelActionItems(baseArgs));
-		const del = result.current.find(
+		const del = result.current.items.find(
 			(i) => 'key' in i && i.key === 'delete-panel',
 		);
-		(del as { onClick: () => void }).onClick();
+
+		// Clicking the menu item only opens the dialog — no mutation yet.
+		expect(result.current.deleteConfirm.open).toBe(false);
+		act(() => {
+			(del as { onClick: () => void }).onClick();
+		});
+		expect(result.current.deleteConfirm.open).toBe(true);
+		expect(mockDeletePanel).not.toHaveBeenCalled();
+
+		// Confirming runs the delete and closes the dialog.
+		await act(async () => {
+			await result.current.deleteConfirm.confirm();
+		});
 		expect(mockDeletePanel).toHaveBeenCalledWith({
+			panelId: 'panel-1',
+			layoutIndex: 0,
+		});
+		expect(result.current.deleteConfirm.open).toBe(false);
+	});
+
+	it('clone calls the clone mutation with the panel and its layout index', () => {
+		const { result } = renderHook(() => usePanelActionItems(baseArgs));
+		const clone = result.current.items.find(
+			(i) => 'key' in i && i.key === 'clone-panel',
+		);
+		(clone as { onClick: () => void }).onClick();
+		expect(mockClonePanel).toHaveBeenCalledWith({
 			panelId: 'panel-1',
 			layoutIndex: 0,
 		});
 	});
 
-	it('not-yet-implemented actions (view/clone/create-alert) fire the placeholder alert with the feature name', () => {
+	it('not-yet-implemented actions (view/create-alert) fire the placeholder alert with the feature name', () => {
 		const alertSpy = jest.spyOn(window, 'alert').mockImplementation(() => {});
 		const { result } = renderHook(() => usePanelActionItems(baseArgs));
 
-		['view-panel', 'clone-panel', 'create-alert'].forEach((key) => {
-			const item = result.current.find((i) => 'key' in i && i.key === key);
+		['view-panel', 'create-alert'].forEach((key) => {
+			const item = result.current.items.find((i) => 'key' in i && i.key === key);
 			(item as { onClick: () => void }).onClick();
 		});
 
-		expect(alertSpy).toHaveBeenCalledTimes(3);
+		expect(alertSpy).toHaveBeenCalledTimes(2);
 		expect(alertSpy).toHaveBeenCalledWith('View option clicked');
-		expect(alertSpy).toHaveBeenCalledWith('Clone option clicked');
 		expect(alertSpy).toHaveBeenCalledWith('Create Alerts option clicked');
 		alertSpy.mockRestore();
 	});

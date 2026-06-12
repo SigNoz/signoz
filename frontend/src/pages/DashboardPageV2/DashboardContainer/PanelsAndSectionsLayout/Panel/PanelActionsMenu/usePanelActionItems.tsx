@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import {
 	Bell,
 	CloudDownload,
@@ -10,6 +10,10 @@ import {
 } from '@signozhq/icons';
 import type { MenuItem } from '@signozhq/ui/dropdown-menu';
 import useComponentPermission from 'hooks/useComponentPermission';
+import {
+	type ConfirmableAction,
+	useConfirmableAction,
+} from 'hooks/useConfirmableAction';
 import { getPanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Panels';
 import { useOpenPanelEditor } from 'pages/DashboardPageV2/DashboardContainer/hooks/useOpenPanelEditor';
 import { useDashboardStore } from 'pages/DashboardPageV2/DashboardContainer/store/useDashboardStore';
@@ -17,6 +21,7 @@ import { useAppContext } from 'providers/App/App';
 
 import type { DashboardSection } from '../../../utils';
 import type { PanelActionsConfig } from '../Panel';
+import { useClonePanel } from '../hooks/useClonePanel';
 import { useDeletePanel } from '../hooks/useDeletePanel';
 import { useMovePanelToSection } from '../hooks/useMovePanelToSection';
 import { PANEL_ACTION_META } from './panelActionMeta';
@@ -40,6 +45,16 @@ interface UsePanelActionItemsArgs {
 	panelActions?: PanelActionsConfig;
 }
 
+export interface PanelActionItems {
+	items: MenuItem[];
+	/**
+	 * Two-step confirm flow for the destructive Delete action — the menu defers
+	 * to it instead of deleting on click. The presentational menu renders
+	 * ConfirmDeleteDialog from this.
+	 */
+	deleteConfirm: ConfirmableAction;
+}
+
 /**
  * Resolves the panel actions menu items (the V1 WidgetHeader action set plus
  * V2's "Move to section"). Every action passes three gates before it appears:
@@ -58,7 +73,7 @@ export function usePanelActionItems({
 	panelId,
 	panelKind,
 	panelActions,
-}: UsePanelActionItemsArgs): MenuItem[] {
+}: UsePanelActionItemsArgs): PanelActionItems {
 	const { user } = useAppContext();
 	const [canEditWidget, canMove, canDelete] = useComponentPermission(
 		[
@@ -79,10 +94,28 @@ export function usePanelActionItems({
 	const sections = panelActions?.sections ?? EMPTY_SECTIONS;
 	const movePanel = useMovePanelToSection({ sections });
 	const deletePanel = useDeletePanel({ sections });
+	const clonePanel = useClonePanel({ sections });
 
 	const kindActions = getPanelDefinition(panelKind)?.actions;
 
-	return useMemo<MenuItem[]>(() => {
+	// Delete is destructive, so the menu item opens a confirmation prompt rather
+	// than deleting on click; the actual mutation runs on confirm.
+	const deleteConfirm = useConfirmableAction(
+		useCallback(async (): Promise<void> => {
+			if (!panelActions) {
+				return;
+			}
+			await deletePanel({
+				panelId,
+				layoutIndex: panelActions.currentLayoutIndex,
+			});
+		}, [deletePanel, panelActions, panelId]),
+	);
+	// Stable opener — used in the items memo without rebuilding it when the
+	// dialog's open/pending state changes.
+	const { request: requestDelete } = deleteConfirm;
+
+	const items = useMemo<MenuItem[]>(() => {
 		// Group 1 — open/author the panel: View, Edit, Clone.
 		const panelGroup: MenuItem[] = [];
 		if (kindActions?.view) {
@@ -101,12 +134,18 @@ export function usePanelActionItems({
 				onClick: (): void => openPanelEditor(panelId),
 			});
 		}
-		if (isEditable && canEditWidget) {
+		// Clone needs the section context (source spec + dimensions) to place the
+		// copy, so — unlike Edit — it requires panelActions.
+		if (isEditable && canEditWidget && panelActions) {
 			panelGroup.push({
 				key: 'clone-panel',
 				label: 'Clone',
 				icon: <Copy size={14} />,
-				onClick: (): void => notImplementedYet('Clone'),
+				onClick: (): void =>
+					void clonePanel({
+						panelId,
+						layoutIndex: panelActions.currentLayoutIndex,
+					}),
 			});
 		}
 
@@ -165,11 +204,7 @@ export function usePanelActionItems({
 							danger: true,
 							icon: <Trash2 size={14} />,
 							label: 'Delete panel',
-							onClick: (): void =>
-								void deletePanel({
-									panelId,
-									layoutIndex: panelActions.currentLayoutIndex,
-								}),
+							onClick: (): void => requestDelete(),
 						},
 					]
 				: [];
@@ -190,6 +225,9 @@ export function usePanelActionItems({
 		panelId,
 		openPanelEditor,
 		movePanel,
-		deletePanel,
+		clonePanel,
+		requestDelete,
 	]);
+
+	return { items, deleteConfirm };
 }
