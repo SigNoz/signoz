@@ -8,7 +8,6 @@ import { LlmpricingruletypesLLMPricingRuleCacheModeDTO as CacheModeDTO } from 'a
 import {
 	CACHE_MODE_OPTIONS,
 	computeCostPreview,
-	matchesAnyPattern,
 	PROVIDER_OPTIONS,
 	validateDraft,
 	type DrawerDraft,
@@ -42,16 +41,11 @@ function ModelCostDrawer({
 	saveError,
 }: ModelCostDrawerProps): JSX.Element {
 	const [patternInput, setPatternInput] = useState<string>('');
-	const [testInput, setTestInput] = useState<string>('');
 	const [showResetConfirm, setShowResetConfirm] = useState<boolean>(false);
 	const isReadOnly = !draft.isOverride;
 
 	const validation = validateDraft(draft, mode);
 	const preview = useMemo(() => computeCostPreview(draft), [draft]);
-	const testMatch = useMemo(
-		() => (testInput ? matchesAnyPattern(testInput, draft.patterns) : null),
-		[testInput, draft.patterns],
-	);
 
 	const update = (patch: Partial<DrawerDraft>): void => {
 		setDraft({ ...draft, ...patch });
@@ -147,7 +141,7 @@ function ModelCostDrawer({
 					id="billing-model-id"
 					placeholder="e.g. openai:gpt-4o"
 					value={draft.modelName}
-					disabled={mode === 'edit'}
+					disabled={mode === 'edit' || isReadOnly}
 					onChange={(e): void => update({ modelName: e.target.value })}
 					data-testid="drawer-model-id-input"
 				/>
@@ -160,7 +154,7 @@ function ModelCostDrawer({
 					value={draft.provider}
 					onChange={(value): void => update({ provider: value })}
 					options={PROVIDER_OPTIONS}
-					disabled={isReadOnly}
+					disabled={mode === 'edit'}
 					className="full-width"
 					data-testid="drawer-provider-select"
 				/>
@@ -170,67 +164,48 @@ function ModelCostDrawer({
 				<span className="field-label">
 					Model name patterns <span className="muted">(prefix match)</span>
 				</span>
-				<div className="pattern-chips">
-					{draft.patterns.map((pattern) => (
-						<Badge
-							key={pattern}
-							color="forest"
-							variant="outline"
-							className="pattern-chip"
-						>
-							{pattern}*
-							{!isReadOnly && (
-								<button
-									type="button"
-									aria-label={`Remove pattern ${pattern}`}
-									className="pattern-chip__remove"
-									onClick={(): void => removePattern(pattern)}
-								>
-									<X size={10} />
-								</button>
-							)}
-						</Badge>
-					))}
-				</div>
-				{!isReadOnly && (
-					<div className="pattern-add">
-						<Input
-							placeholder="Add pattern…"
-							value={patternInput}
-							onChange={(e): void => setPatternInput(e.target.value)}
-							onPressEnter={addPattern}
-							data-testid="drawer-pattern-input"
-						/>
-						<Button onClick={addPattern} data-testid="drawer-pattern-add-btn">
-							+ Add
-						</Button>
-					</div>
-				)}
-				<p className="muted help">
-					Each pattern uses prefix matching against gen_ai.request.model.
-				</p>
-				{!isReadOnly && (
-					<div className="pattern-test">
-						<Input
-							placeholder="Test: type a model name…"
-							value={testInput}
-							onChange={(e): void => setTestInput(e.target.value)}
-							data-testid="drawer-pattern-test-input"
-						/>
-						{testInput && (
-							<span
-								className={`pattern-test__result ${
-									testMatch
-										? 'pattern-test__result--match'
-										: 'pattern-test__result--no-match'
-								}`}
-								data-testid="drawer-pattern-test-result"
+				<div className="pattern-box">
+					<div className="pattern-chips">
+						{draft.patterns.map((pattern) => (
+							<Badge
+								key={pattern}
+								color="vanilla"
+								variant="outline"
+								className="pattern-chip"
 							>
-								{testMatch ? `Matched: ${testMatch}*` : 'No matching pattern'}
-							</span>
-						)}
+								{pattern}*
+								{!isReadOnly && (
+									<button
+										type="button"
+										aria-label={`Remove pattern ${pattern}`}
+										className="pattern-chip__remove"
+										onClick={(): void => removePattern(pattern)}
+									>
+										<X size={10} />
+									</button>
+								)}
+							</Badge>
+						))}
 					</div>
-				)}
+					{!isReadOnly && (
+						<div className="pattern-add">
+							<Input
+								placeholder="Add pattern…"
+								value={patternInput}
+								onChange={(e): void => setPatternInput(e.target.value)}
+								onPressEnter={addPattern}
+								data-testid="drawer-pattern-input"
+							/>
+							<Button onClick={addPattern} data-testid="drawer-pattern-add-btn">
+								+ Add
+							</Button>
+						</div>
+					)}
+				</div>
+				<p className="muted help">
+					Each pattern uses <strong>prefix matching</strong> against{' '}
+					<code>gen_ai.request.model</code>.
+				</p>
 			</div>
 
 			<div className="drawer-section drawer-surface">
@@ -252,17 +227,15 @@ function ModelCostDrawer({
 				>
 					<RadioGroupItem
 						value="auto"
-						className="source-radio source-radio--auto"
+						containerClassName="source-radio source-radio--auto"
 						testId="drawer-source-auto"
 					>
 						<div className="source-radio__title">Auto-populated</div>
-						<div className="source-radio__desc">
-							Default pricing from SigNoz. Updated automatically.
-						</div>
+						<div className="source-radio__desc">Default pricing from SigNoz.</div>
 					</RadioGroupItem>
 					<RadioGroupItem
 						value="override"
-						className="source-radio source-radio--override"
+						containerClassName="source-radio source-radio--override"
 						testId="drawer-source-override"
 					>
 						<div className="source-radio__title">User override</div>

@@ -50,45 +50,65 @@ describe('ModelCostDrawer', () => {
 		expect(screen.getByText('gpt-4o-mini*')).toBeInTheDocument();
 	});
 
-	it('shows a match result when the test input matches an existing pattern', () => {
+	it('disables pricing fields when isOverride is false', () => {
 		render(
 			<Harness
+				mode="edit"
 				initialDraft={{
 					...EMPTY_DRAFT,
+					id: 'rule-1',
 					modelName: 'gpt-4o',
-					patterns: ['gpt-4o'],
-					isOverride: true,
+					provider: 'OpenAI',
+					isOverride: false,
 				}}
 			/>,
 		);
 
-		fireEvent.change(screen.getByTestId('drawer-pattern-test-input'), {
-			target: { value: 'gpt-4o-2024-08-06' },
-		});
-
-		expect(screen.getByTestId('drawer-pattern-test-result')).toHaveTextContent(
-			/matched: gpt-4o\*/i,
-		);
+		expect(screen.getByTestId('drawer-input-cost')).toBeDisabled();
+		expect(screen.getByTestId('drawer-output-cost')).toBeDisabled();
 	});
 
-	it('shows a no-match result when nothing matches', () => {
+	it('enables pricing fields when isOverride is true', () => {
 		render(
 			<Harness
+				mode="edit"
 				initialDraft={{
 					...EMPTY_DRAFT,
+					id: 'rule-1',
 					modelName: 'gpt-4o',
-					patterns: ['gpt-4o'],
+					provider: 'OpenAI',
 					isOverride: true,
 				}}
 			/>,
 		);
 
-		fireEvent.change(screen.getByTestId('drawer-pattern-test-input'), {
-			target: { value: 'claude' },
-		});
+		expect(screen.getByTestId('drawer-input-cost')).not.toBeDisabled();
+		expect(screen.getByTestId('drawer-output-cost')).not.toBeDisabled();
+	});
 
-		expect(screen.getByTestId('drawer-pattern-test-result')).toHaveTextContent(
-			/no matching pattern/i,
+	it('disables the Provider select in Edit mode but allows it in Add mode', () => {
+		const { unmount } = render(<Harness mode="add" />);
+
+		expect(screen.getByTestId('drawer-provider-select')).not.toHaveClass(
+			'ant-select-disabled',
+		);
+		unmount();
+
+		render(
+			<Harness
+				mode="edit"
+				initialDraft={{
+					...EMPTY_DRAFT,
+					id: 'rule-1',
+					modelName: 'gpt-4o',
+					provider: 'OpenAI',
+					isOverride: true,
+				}}
+			/>,
+		);
+
+		expect(screen.getByTestId('drawer-provider-select')).toHaveClass(
+			'ant-select-disabled',
 		);
 	});
 

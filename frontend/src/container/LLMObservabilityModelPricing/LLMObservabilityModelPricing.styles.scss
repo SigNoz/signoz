@@ -71,12 +71,25 @@
 }
 
 .model-costs-table {
+	.ant-table-thead > tr > th {
+		color: var(--bg-vanilla-400) !important;
+		font-size: 11px;
+		font-weight: 600;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+	}
+
+	.ant-table-tbody > tr > td {
+		color: var(--bg-vanilla-400);
+	}
+
 	.model-cell {
 		display: flex;
 		flex-direction: column;
 		gap: 2px;
 
 		&__name {
+			color: var(--bg-vanilla-100);
 			font-weight: 600;
 		}
 
@@ -89,6 +102,7 @@
 
 	.price-cell {
 		font-family: var(--code-font-family, monospace);
+		color: var(--bg-vanilla-400);
 	}
 
 	.extra-buckets {

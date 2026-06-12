@@ -95,6 +95,16 @@
 		color: var(--bg-vanilla-400);
 	}
 
+	.pattern-box {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+		padding: 12px;
+		border-radius: 6px;
+		background: rgba(255, 255, 255, 0.02);
+		border: 1px solid var(--bg-slate-300);
+	}
+
 	.pattern-chips {
 		display: flex;
 		flex-wrap: wrap;
@@ -128,23 +138,13 @@
 		gap: 6px;
 	}
 
-	.pattern-test {
-		display: flex;
-		gap: 10px;
-		align-items: center;
-		flex-wrap: wrap;
-		margin-top: 6px;
-
-		&__result {
-			font-size: 12px;
-
-			&--match {
-				color: var(--bg-forest-400);
-			}
-
-			&--no-match {
-				color: var(--bg-cherry-400);
-			}
+	.help {
+		code {
+			padding: 1px 4px;
+			border-radius: 3px;
+			background: rgba(255, 255, 255, 0.06);
+			font-family: var(--code-font-family, monospace);
+			font-size: 10px;
 		}
 	}
 
@@ -158,32 +158,49 @@
 	.source-radio {
 		display: flex;
 		align-items: flex-start;
-		gap: 8px;
+		gap: 10px;
 		padding: 10px 12px;
 		border-radius: 4px;
 		border: 1px solid transparent;
 		background: rgba(255, 255, 255, 0.02);
 		margin: 0;
 		width: 100%;
+		cursor: pointer;
+		transition:
+			background-color 0.12s ease,
+			border-color 0.12s ease;
+
+		label {
+			cursor: pointer;
+			flex: 1;
+		}
 
 		&__title {
 			font-weight: 600;
 			font-size: 13px;
+			color: var(--bg-vanilla-100);
 		}
 
 		&__desc {
+			margin-top: 2px;
 			font-size: 12px;
 			color: var(--bg-vanilla-400);
 		}
 
-		&.ant-radio-wrapper-checked.source-radio--auto {
+		// Radix RadioGroupItem renders <button data-state="checked|unchecked">.
+		// Use :has() to highlight the wrapper card when its inner button is checked.
+		&.source-radio--auto:has(button[data-state='checked']) {
 			background: rgba(78, 116, 248, 0.1);
 			border-color: rgba(78, 116, 248, 0.3);
 		}
 
-		&.ant-radio-wrapper-checked.source-radio--override {
+		&.source-radio--override:has(button[data-state='checked']) {
 			background: rgba(245, 175, 25, 0.1);
 			border-color: rgba(245, 175, 25, 0.3);
+		}
+
+		&:hover {
+			background: rgba(255, 255, 255, 0.04);
 		}
 	}
 
