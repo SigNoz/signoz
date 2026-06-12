@@ -21,7 +21,7 @@ import { useGetAggregateValues } from 'hooks/queryBuilder/useGetAggregateValues'
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useGetQueryKeyValueSuggestions } from 'hooks/querySuggestions/useGetQueryKeyValueSuggestions';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
-import { cloneDeep, isArray, isFunction } from 'lodash-es';
+import { cloneDeep, isArray } from 'lodash-es';
 import { ChevronDown, ChevronRight } from '@signozhq/icons';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
@@ -303,7 +303,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 			},
 		};
 
-		if (onFilterChange && isFunction(onFilterChange)) {
+		if (onFilterChange && typeof onFilterChange === 'function') {
 			onFilterChange(preparedQuery);
 		} else {
 			redirectWithQueryBuilderData(preparedQuery);
@@ -557,7 +557,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 			},
 		};
 
-		if (onFilterChange && isFunction(onFilterChange)) {
+		if (onFilterChange && typeof onFilterChange === 'function') {
 			onFilterChange(finalQuery);
 		} else {
 			redirectWithQueryBuilderData(finalQuery);

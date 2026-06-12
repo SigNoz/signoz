@@ -26,7 +26,6 @@ import { LOCALSTORAGE } from 'constants/localStorage';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useApiMonitoringParams } from 'container/ApiMonitoring/queryParams';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { isFunction, isNull } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { USER_ROLES } from 'types/roles';
@@ -108,7 +107,7 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 		const localStorageValue = getLocalStorageKey(
 			LOCALSTORAGE.QUICK_FILTERS_SETTINGS_ANNOUNCEMENT,
 		);
-		if (!isNull(localStorageValue)) {
+		if (localStorageValue !== null) {
 			return !(localStorageValue === 'false');
 		}
 		return true;
@@ -156,7 +155,7 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 			},
 		};
 
-		if (onFilterChange && isFunction(onFilterChange)) {
+		if (onFilterChange && typeof onFilterChange === 'function') {
 			onFilterChange(preparedQuery);
 		} else {
 			redirectWithQueryBuilderData(preparedQuery);

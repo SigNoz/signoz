@@ -13,7 +13,6 @@ import { getLegend } from 'lib/dashboard/getQueryResults';
 import { convertValue } from 'lib/getConvertedValue';
 import getLabelName from 'lib/getLabelName';
 import { cloneDeep, isUndefined } from 'lodash-es';
-import _noop from 'lodash-es/noop';
 import { LegendPosition } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -193,7 +192,7 @@ export const getUPlotChartOptions = ({
 	decimalPrecision,
 	minTimeScale,
 	maxTimeScale,
-	onClickHandler = _noop,
+	onClickHandler = () => {},
 	graphsVisibilityStates,
 	setGraphsVisibilityStates,
 	thresholds,

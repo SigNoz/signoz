@@ -24,7 +24,7 @@ import {
 	useHandleExplorerTabChange,
 } from 'hooks/useHandleExplorerTabChange';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
-import { defaultTo, isEmpty, isNull } from 'lodash-es';
+import { defaultTo, isEmpty } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { EventSourceProvider } from 'providers/EventSource';
 import { Warning } from 'types/api';
@@ -58,7 +58,7 @@ function LogsExplorer(): JSX.Element {
 		const localStorageValue = getLocalStorageKey(
 			LOCALSTORAGE.SHOW_LOGS_QUICK_FILTERS,
 		);
-		if (!isNull(localStorageValue)) {
+		if (localStorageValue !== null) {
 			return localStorageValue === 'true';
 		}
 		return true;

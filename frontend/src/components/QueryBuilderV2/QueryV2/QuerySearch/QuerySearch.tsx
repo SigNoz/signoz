@@ -30,7 +30,7 @@ import {
 import { useDashboardVariablesByType } from 'hooks/dashboard/useDashboardVariablesByType';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useDebounce from 'hooks/useDebounce';
-import { debounce, isNull } from 'lodash-es';
+import { debounce } from 'lodash-es';
 import {
 	IDetailedError,
 	IQueryContext,
@@ -769,7 +769,7 @@ function QuerySearch({
 									pair.valuesPosition,
 									cursorPos.ch,
 								);
-								if (!isNull(idx)) {
+								if (idx !== null) {
 									const { start, end } = pair.valuesPosition[idx];
 									if (
 										typeof start === 'number' &&
@@ -855,7 +855,7 @@ function QuerySearch({
 			) {
 				const { valuesPosition, valueList } = queryContext.currentPair;
 				const idx = getCurrentValueIndexAtCursor(valuesPosition, cursorPos.ch);
-				searchText = isNull(idx)
+				searchText = (idx === null)
 					? ''
 					: unquote(valueList[idx]).toLowerCase().trim();
 			}

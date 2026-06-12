@@ -1,7 +1,5 @@
-import { isNumber } from 'lodash-es';
-
 export function formatNumericValue(value: number | string): string {
-	if (isNumber(value)) {
+	if (typeof value === 'number') {
 		return value.toString();
 	}
 	return (typeof value === 'string' ? parseFloat(value) : value).toFixed(3);

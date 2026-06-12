@@ -1,5 +1,5 @@
 import dayjs from 'dayjs';
-import { isNull, isUndefined } from 'lodash-es';
+import { isUndefined } from 'lodash-es';
 
 import { ConnectionStates } from './TestConnection';
 
@@ -27,12 +27,12 @@ export function getConnectionStatesFromConnectionStatus(
 			| undefined;
 	},
 ): ConnectionStates {
-	if (isNull(installation) || isUndefined(installation)) {
+	if (installation === null || isUndefined(installation)) {
 		return ConnectionStates.NotInstalled;
 	}
 	if (
-		(isNull(connection_status.logs) || isUndefined(connection_status.logs)) &&
-		(isNull(connection_status.metrics) || isUndefined(connection_status.metrics))
+		(connection_status.logs === null || isUndefined(connection_status.logs)) &&
+		(connection_status.metrics === null || isUndefined(connection_status.metrics))
 	) {
 		const installationDate = dayjs(installation.installed_at);
 		if (installationDate.isBefore(dayjs().subtract(7, 'days'))) {

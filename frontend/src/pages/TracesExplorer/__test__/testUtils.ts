@@ -3,7 +3,6 @@ import {
 	initialQueryBuilderFormValues,
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
-import { noop } from 'lodash-es';
 import { screen, waitFor } from 'tests/test-utils';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -175,22 +174,22 @@ export const qbProviderValue = {
 	stagedQuery: initialQueriesMap.traces,
 	initialDataSource: null,
 	isEnabledQuery: false,
-	handleSetQueryData: noop,
-	handleSetFormulaData: noop,
-	handleSetQueryItemData: noop,
-	handleSetConfig: noop,
-	removeQueryBuilderEntityByIndex: noop,
-	removeQueryTypeItemByIndex: noop,
-	addNewBuilderQuery: noop,
-	cloneQuery: noop,
-	addNewFormula: noop,
-	addNewQueryItem: noop,
-	handleRunQuery: noop,
-	resetQuery: noop,
+	handleSetQueryData: () => {},
+	handleSetFormulaData: () => {},
+	handleSetQueryItemData: () => {},
+	handleSetConfig: () => {},
+	removeQueryBuilderEntityByIndex: () => {},
+	removeQueryTypeItemByIndex: () => {},
+	addNewBuilderQuery: () => {},
+	cloneQuery: () => {},
+	addNewFormula: () => {},
+	addNewQueryItem: () => {},
+	handleRunQuery: () => {},
+	resetQuery: () => {},
 	updateAllQueriesOperators: (): Query => initialQueriesMap.traces,
 	updateQueriesData: (): Query => initialQueriesMap.traces,
-	initQueryBuilderData: noop,
-	handleOnUnitsChange: noop,
+	initQueryBuilderData: () => {},
+	handleOnUnitsChange: () => {},
 	isStagedQueryUpdated: (): boolean => false,
 } as any;
 

@@ -3,7 +3,6 @@ import { VirtuosoMockContext } from 'react-virtuoso';
 import { ENVIRONMENT } from 'constants/env';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
-import { noop } from 'lodash-es';
 import { PAGE_SIZE } from 'mocks-server/__mockdata__/logs_query_range';
 import { logsresponse } from 'mocks-server/__mockdata__/query_range';
 import { server } from 'mocks-server/server';
@@ -396,23 +395,23 @@ function LogsExplorerWithMockContext({
 			initialDataSource: null,
 			panelType: PANEL_TYPES.LIST,
 			lastUsedQuery: 0,
-			setLastUsedQuery: noop,
-			handleSetQueryData: noop,
-			handleSetFormulaData: noop,
-			handleSetQueryItemData: noop,
-			handleSetConfig: noop,
-			removeQueryBuilderEntityByIndex: noop,
-			removeQueryTypeItemByIndex: noop,
-			addNewBuilderQuery: noop,
-			cloneQuery: noop,
-			addNewFormula: noop,
-			addNewQueryItem: noop,
+			setLastUsedQuery: () => {},
+			handleSetQueryData: () => {},
+			handleSetFormulaData: () => {},
+			handleSetQueryItemData: () => {},
+			handleSetConfig: () => {},
+			removeQueryBuilderEntityByIndex: () => {},
+			removeQueryTypeItemByIndex: () => {},
+			addNewBuilderQuery: () => {},
+			cloneQuery: () => {},
+			addNewFormula: () => {},
+			addNewQueryItem: () => {},
 			handleRunQuery,
-			resetQuery: noop,
+			resetQuery: () => {},
 			updateAllQueriesOperators: (): Query => initialQueriesMap.logs,
 			updateQueriesData: (): Query => initialQueriesMap.logs,
-			initQueryBuilderData: noop,
-			handleOnUnitsChange: noop,
+			initQueryBuilderData: () => {},
+			handleOnUnitsChange: () => {},
 			isStagedQueryUpdated: (): boolean => false,
 		}),
 		[currentQuery, stagedQuery, handleRunQuery],

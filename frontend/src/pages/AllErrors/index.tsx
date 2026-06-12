@@ -17,7 +17,6 @@ import ResourceAttributesFilterV2 from 'container/ResourceAttributeFilterV2/Reso
 import Toolbar from 'container/Toolbar/Toolbar';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import history from 'lib/history';
-import { isNull } from 'lodash-es';
 
 import { routes } from './config';
 import { useAllErrorsQueryState } from './QueryStateContext';
@@ -41,7 +40,7 @@ function AllErrors(): JSX.Element {
 		const localStorageValue = getLocalStorageKey(
 			LOCALSTORAGE.SHOW_EXCEPTIONS_QUICK_FILTERS,
 		);
-		if (!isNull(localStorageValue)) {
+		if (localStorageValue !== null) {
 			return localStorageValue === 'true';
 		}
 		return true;

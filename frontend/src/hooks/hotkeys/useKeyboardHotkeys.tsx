@@ -8,7 +8,7 @@ import {
 	useMemo,
 	useRef,
 } from 'react';
-import { noop, unset } from 'lodash-es';
+import { unset } from 'lodash-es';
 
 import { useCmdK } from '../../providers/cmdKProvider';
 
@@ -29,8 +29,8 @@ interface KeyboardHotkeysContextReturnValue {
 
 const KeyboardHotkeysContext = createContext<KeyboardHotkeysContextReturnValue>(
 	{
-		registerShortcut: noop,
-		deregisterShortcut: noop,
+		registerShortcut: () => {},
+		deregisterShortcut: () => {},
 	},
 );
 

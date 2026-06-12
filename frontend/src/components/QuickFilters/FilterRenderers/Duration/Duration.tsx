@@ -8,7 +8,7 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import { getMs } from 'container/Trace/Filters/Panel/PanelBody/Duration/util';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { cloneDeep, isArray, isEqual, isFunction } from 'lodash-es';
+import { cloneDeep, isArray, isEqual } from 'lodash-es';
 import { DurationSection } from 'pages/TracesExplorer/Filter/DurationSection';
 import {
 	AllTraceFilterKeys,
@@ -250,7 +250,7 @@ function Duration({
 			) {
 				return;
 			}
-			if (onFilterChange && isFunction(onFilterChange)) {
+			if (onFilterChange && typeof onFilterChange === 'function') {
 				onFilterChange(preparedQuery);
 			} else {
 				redirectWithQueryBuilderData(preparedQuery);

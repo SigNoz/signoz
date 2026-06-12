@@ -15,7 +15,7 @@ import { stepsMap } from 'container/OnboardingContainer/constants/stepsConfig';
 import { DataSourceType } from 'container/OnboardingContainer/Steps/DataSource/DataSource';
 import { hasFrameworks } from 'container/OnboardingContainer/utils/dataSourceUtils';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import { isEmpty, isNull } from 'lodash-es';
+import { isEmpty } from 'lodash-es';
 import { isModifierKeyPressed } from 'utils/app';
 
 import signozBrandLogoUrl from '@/assets/Logos/signoz-brand-logo.svg';
@@ -97,7 +97,7 @@ export default function ModuleStepsContainer({
 
 		if (
 			step.id === environmentDetailsStep &&
-			(selectedEnvironment === '' || isNull(selectedEnvironment))
+			(selectedEnvironment === '' || selectedEnvironment === null)
 		) {
 			updateErrorDetails('Please select environment');
 			return false;

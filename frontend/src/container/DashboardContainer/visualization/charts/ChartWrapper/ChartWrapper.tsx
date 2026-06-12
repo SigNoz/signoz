@@ -8,7 +8,6 @@ import {
 import UPlotChart from 'lib/uPlotV2/components/UPlotChart/UPlotChart';
 import { PlotContextProvider } from 'lib/uPlotV2/context/PlotContext';
 import TooltipPlugin from 'lib/uPlotV2/plugins/TooltipPlugin/TooltipPlugin';
-import noop from 'lodash-es/noop';
 import uPlot from 'uplot';
 
 import { ChartProps } from '../types';
@@ -30,7 +29,7 @@ export default function ChartWrapper({
 	syncMode,
 	syncKey,
 	syncFilterMode,
-	onDestroy = noop,
+	onDestroy = () => {},
 	children,
 	layoutChildren,
 	yAxisUnit,

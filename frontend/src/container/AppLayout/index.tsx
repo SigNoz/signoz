@@ -50,7 +50,6 @@ import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
 import { useNotifications } from 'hooks/useNotifications';
 import useTabVisibility from 'hooks/useTabFocus';
 import history from 'lib/history';
-import { isNull } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { useAppContext } from 'providers/App/App';
 // eslint-disable-next-line no-restricted-imports
@@ -453,7 +452,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	useEffect(() => {
 		if (
 			!isFetchingActiveLicense &&
-			!isNull(activeLicense) &&
+			activeLicense !== null &&
 			activeLicense?.event_queue?.event === LicenseEvent.DEFAULT
 		) {
 			setShowPaymentFailedWarning(true);

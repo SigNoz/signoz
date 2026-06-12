@@ -17,7 +17,7 @@ import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 // hooks
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { FlatLogData } from 'lib/logs/flatLogData';
-import { isEmpty, isNumber, isUndefined } from 'lodash-es';
+import { isEmpty, isUndefined } from 'lodash-es';
 import { useTimezone } from 'providers/Timezone';
 
 import LogLinesActionButtons from '../LogLinesActionButtons/LogLinesActionButtons';
@@ -63,7 +63,7 @@ function RawLogView({
 		.map((field) => flattenLogData[field.name])
 		.filter((attribute) => {
 			// loadash isEmpty doesnot work with numbers
-			if (isNumber(attribute)) {
+			if (typeof attribute === 'number') {
 				return true;
 			}
 
