@@ -3,9 +3,9 @@ import { useEffect, useState } from 'react';
 import { TelemetryFieldKey } from 'api/v5/v5';
 import {
 	defaultLogsSelectedColumns,
+	defaultTraceSelectedColumns,
 	ensureLogsRequiredColumns,
 } from 'container/OptionsMenu/constants';
-import { defaultSelectedColumns as defaultTracesSelectedColumns } from 'container/TracesExplorer/ListView/configs';
 import { useGetAllViews } from 'hooks/saveViews/useGetAllViews';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -69,7 +69,7 @@ export function usePreferenceSync({
 			};
 		}
 		if (dataSource === DataSource.TRACES) {
-			columns = parsedExtraData?.selectColumns || defaultTracesSelectedColumns;
+			columns = parsedExtraData?.selectColumns || defaultTraceSelectedColumns;
 		}
 		setSavedViewPreferences({ columns, formatting });
 	}, [viewsData, dataSource, savedViewId, mode]);

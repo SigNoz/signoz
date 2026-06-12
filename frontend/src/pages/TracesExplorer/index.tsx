@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import * as Sentry from '@sentry/react';
-import { Card } from 'antd';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
@@ -24,7 +23,6 @@ import {
 	getQueryByPanelType,
 } from 'container/TracesExplorer/explorerUtils';
 import ListView from 'container/TracesExplorer/ListView';
-import { defaultSelectedColumns } from 'container/TracesExplorer/ListView/configs';
 import QuerySection from 'container/TracesExplorer/QuerySection';
 import TableView from 'container/TracesExplorer/TableView';
 import TracesView from 'container/TracesExplorer/TracesView';
@@ -80,9 +78,6 @@ function TracesExplorer(): JSX.Element {
 		storageKey: LOCALSTORAGE.TRACES_LIST_OPTIONS,
 		dataSource: DataSource.TRACES,
 		aggregateOperator: 'noop',
-		initialOptions: {
-			selectColumns: defaultSelectedColumns,
-		},
 	});
 
 	const [searchParams] = useSearchParams();
@@ -250,16 +245,18 @@ function TracesExplorer(): JSX.Element {
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<div className="trace-explorer-page">
-				<Card className="filter" hidden={!isOpen}>
-					<QuickFilters
-						className="qf-traces-explorer"
-						source={QuickFiltersSource.TRACES_EXPLORER}
-						signal={SignalType.TRACES}
-						handleFilterVisibilityChange={(): void => {
-							setOpen(!isOpen);
-						}}
-					/>
-				</Card>
+				{isOpen && (
+					<section className="filter">
+						<QuickFilters
+							className="qf-traces-explorer"
+							source={QuickFiltersSource.TRACES_EXPLORER}
+							signal={SignalType.TRACES}
+							handleFilterVisibilityChange={(): void => {
+								setOpen(!isOpen);
+							}}
+						/>
+					</section>
+				)}
 				<div
 					className={cx('trace-explorer', {
 						'filters-expanded': isOpen,

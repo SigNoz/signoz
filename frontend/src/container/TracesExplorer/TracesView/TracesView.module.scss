@@ -1,0 +1,18 @@
+.container {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	min-height: 0;
+	// Page chain isn't a flex column; anchor against the viewport.
+	height: calc(100vh - 240px);
+	min-height: 400px;
+
+	--tanstack-cell-padding-left-first-column: 12px;
+}
+
+.actionsContainer {
+	display: flex;
+	padding-bottom: 8px;
+	justify-content: space-between;
+	align-items: center;
+}

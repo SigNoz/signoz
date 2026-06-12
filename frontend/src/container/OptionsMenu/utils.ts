@@ -15,8 +15,15 @@ export const getOptionsFromKeys = (
 	);
 };
 
-// Composite identity for a column. Disambiguates same-name fields across
-// different fieldContexts (e.g. resource.service.name vs attribute.service.name).
-// Falls back to bare name when context is missing.
-export const buildCompositeKey = (name: string, context?: string): string =>
-	context ? `${context}.${name}` : name;
+// Composite column id. Disambiguates same-name fields by `context` and `dataType`
+// (e.g. attribute.http.status_code ships as both number and string). Each arg
+// is appended only when truthy. `dataType` is optional — logs callers stay on
+// the 2-arg form until parity lands.
+export const buildCompositeKey = (
+	name: string,
+	context?: string,
+	dataType?: string,
+): string => {
+	const withContext = context ? `${context}.${name}` : name;
+	return dataType ? `${withContext}.${dataType}` : withContext;
+};

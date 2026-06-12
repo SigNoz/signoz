@@ -3,10 +3,8 @@ import { Badge } from '@signozhq/ui/badge';
 import { Typography } from '@signozhq/ui/typography';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { getMs } from 'container/Trace/Filters/Panel/PanelBody/Duration/util';
-import {
-	BlockLink,
-	getTraceLink,
-} from 'container/TracesExplorer/ListView/utils';
+import { getTraceLink } from 'components/Traces/TableView/getTraceLink';
+import { BlockLink } from 'container/TracesExplorer/ListView/utils';
 import dayjs from 'dayjs';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';

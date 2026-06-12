@@ -192,7 +192,7 @@ function FieldsSelector({
 		() =>
 			fields.map((f) => ({
 				...f,
-				key: f.key ?? buildCompositeKey(f.name, f.fieldContext),
+				key: f.key ?? buildCompositeKey(f.name, f.fieldContext, f.fieldDataType),
 			})),
 		[fields],
 	);

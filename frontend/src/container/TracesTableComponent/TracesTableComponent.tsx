@@ -11,12 +11,12 @@ import { UseQueryResult } from 'react-query';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { ResizeTable } from 'components/ResizeTable';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
+import { getTraceLink } from 'components/Traces/TableView/getTraceLink';
 import Controls from 'container/Controls';
 import { PER_PAGE_OPTIONS } from 'container/TracesExplorer/ListView/configs';
 import { tableStyles } from 'container/TracesExplorer/ListView/styles';
 import {
 	getListColumns,
-	getTraceLink,
 	transformDataWithDate,
 } from 'container/TracesExplorer/ListView/utils';
 import { Pagination } from 'hooks/queryPagination';
