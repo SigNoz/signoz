@@ -499,10 +499,11 @@ func New(
 		serviceAccount,
 		cloudIntegrationModule,
 		modules.LogsPipeline,
+		querier,
 	}
 
 	// Initialize the stats aggregator (always-on, independent of whether reporting is enabled)
-	statsAggregator := statsreporter.NewAggregator(providerSettings, telemetrystore, statsCollectors)
+	statsAggregator := statsreporter.NewAggregator(providerSettings, statsCollectors)
 
 	// Initialize stats reporter from the available stats reporter provider factories
 	statsReporter, err := factory.NewProviderFromNamedMap(
