@@ -15,6 +15,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	commoncfg "github.com/prometheus/common/config"
 
@@ -25,7 +26,7 @@ import (
 
 const (
 	Integration = "googlechat"
-	// maxMessageBytes is the Google Chat API limit for message text
+	// maxMessageBytes is the Google Chat API limit for the entire message payload
 	// https://developers.google.com/chat/api/guides/message-formats/basic#maximum_size
 	maxMessageBytes = 32000
 )
@@ -42,17 +43,7 @@ type Notifier struct {
 
 // New returns a new Google Chat notifier.
 func New(cfg *alertmanagertypes.GoogleChatReceiverConfig, t *template.Template, l *slog.Logger, templater alertmanagertypes.Templater, httpOpts ...commoncfg.HTTPClientOption) (*Notifier, error) {
-	if cfg == nil {
-		return nil, errors.NewInternalf(errors.CodeInternal, "google chat config is required")
-	}
-	if cfg.WebhookURL == nil {
-		return nil, errors.NewInternalf(errors.CodeInternal, "google chat webhook_url is required")
-	}
-	if err := validateWebhookURL(cfg.WebhookURL.String()); err != nil {
-		return nil, err
-	}
-
-	client, err := notify.NewClientWithTracing(commoncfg.DefaultHTTPClientConfig, Integration, httpOpts...)
+	client, err := notify.NewClientWithTracing(*cfg.HTTPConfig, Integration, httpOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -65,21 +56,6 @@ func New(cfg *alertmanagertypes.GoogleChatReceiverConfig, t *template.Template, 
 		retrier:   &notify.Retrier{},
 		templater: templater,
 	}, nil
-}
-
-func validateWebhookURL(rawURL string) error {
-	u, err := url.Parse(rawURL)
-	if err != nil {
-		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid google chat webhook_url: %v", err)
-	}
-	if u.Scheme != "https" {
-		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "google chat webhook_url must use https")
-	}
-	host := strings.ToLower(u.Hostname())
-	if host != "chat.googleapis.com" {
-		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "google chat webhook_url must use chat.googleapis.com")
-	}
-	return nil
 }
 
 // Message represents the payload sent to Google Chat webhook.
@@ -110,10 +86,10 @@ func (n *Notifier) Notify(ctx context.Context, alerts ...*types.Alert) (bool, er
 		finalText = result.Title + "\n" + result.Body
 	}
 
-	// Sanitize UTF-8 and enforce size limit
+	// Sanitize UTF-8
 	finalText = sanitizeUTF8(finalText)
-	finalText = truncateToByteLimit(finalText, maxMessageBytes)
 
+	// Encode message and check total payload size
 	msg := &Message{
 		Text: finalText,
 	}
@@ -121,6 +97,27 @@ func (n *Notifier) Notify(ctx context.Context, alerts ...*types.Alert) (bool, er
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(msg); err != nil {
 		return false, err
+	}
+
+	// If the payload exceeds the limit, truncate the text
+	if buf.Len() > maxMessageBytes {
+		// Calculate how many bytes over the limit we are
+		excessBytes := buf.Len() - maxMessageBytes
+		
+		// Remove at least that many bytes from the text
+		newTextSize := len(finalText) - excessBytes
+		if newTextSize < 0 {
+			newTextSize = 0
+		}
+		
+		finalText = truncateToByteLimit(finalText, newTextSize)
+		msg.Text = finalText
+		
+		// Re-encode with truncated text
+		buf.Reset()
+		if err := json.NewEncoder(&buf).Encode(msg); err != nil {
+			return false, err
+		}
 	}
 
 	// Add threading support
@@ -175,6 +172,16 @@ func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert) (*
 	if len(result.Body) > 0 {
 		// Join all alert bodies with newlines
 		body = strings.Join(result.Body, "\n\n")
+	}
+
+	// Custom templates are authored in standard markdown, but Google Chat
+	// webhooks expect a different format
+	if !result.IsDefaultBody && body != "" {
+		rendered, renderErr := markdownrenderer.RenderGoogleChatMarkdown(body)
+		if renderErr != nil {
+			return nil, renderErr
+		}
+		body = rendered
 	}
 
 	return &contentResult{

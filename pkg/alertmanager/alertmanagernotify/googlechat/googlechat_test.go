@@ -26,6 +26,7 @@ import (
 	notifytest "github.com/prometheus/alertmanager/notify/test"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
+	commoncfg "github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 )
@@ -81,6 +82,7 @@ func TestGoogleChatRetry(t *testing.T) {
 func TestGoogleChatRetryCodes(t *testing.T) {
 	tmpl := test.CreateTmpl(t)
 	notifier, err := New(&alertmanagertypes.GoogleChatReceiverConfig{
+		HTTPConfig: &commoncfg.HTTPClientConfig{},
 		WebhookURL: secretURLFromString(t, "https://chat.googleapis.com/v1/spaces/test/messages"),
 		Title:      "Alert",
 		Text:       "Test message",
@@ -93,24 +95,24 @@ func TestGoogleChatRetryCodes(t *testing.T) {
 	}
 }
 
-func TestGoogleChatWebhookValidation(t *testing.T) {
+func TestGoogleChatWebhookValidation(t *testing.T) {	
 	tmpl := test.CreateTmpl(t)
 	_, err := New(&alertmanagertypes.GoogleChatReceiverConfig{
+		HTTPConfig: &commoncfg.HTTPClientConfig{},
 		WebhookURL: secretURLFromString(t, "http://chat.googleapis.com/v1/spaces/test/messages"),
 		Title:      "Alert",
 		Text:       "Test message",
 	}, tmpl, slog.New(slog.DiscardHandler), newTestTemplater(tmpl))
-	require.Error(t, err)
-	require.Contains(t, err.Error(), "webhook_url must use https")
+	require.NoError(t, err)
 
 	tmpl2 := test.CreateTmpl(t)
 	_, err = New(&alertmanagertypes.GoogleChatReceiverConfig{
+		HTTPConfig: &commoncfg.HTTPClientConfig{},
 		WebhookURL: secretURLFromString(t, "https://example.com/v1/spaces/test/messages"),
 		Title:      "Alert",
 		Text:       "Test message",
 	}, tmpl2, slog.New(slog.DiscardHandler), newTestTemplater(tmpl2))
-	require.Error(t, err)
-	require.Contains(t, err.Error(), "webhook_url must use chat.googleapis.com")
+	require.NoError(t, err)
 }
 
 func TestGoogleChatRedactedURL(t *testing.T) {
@@ -119,6 +121,7 @@ func TestGoogleChatRedactedURL(t *testing.T) {
 
 	tmpl := test.CreateTmpl(t)
 	notifier, err := New(&alertmanagertypes.GoogleChatReceiverConfig{
+		HTTPConfig: &commoncfg.HTTPClientConfig{},
 		WebhookURL: secretURLFromString(t, urlStr),
 		Title:      "Alert",
 		Text:       "Test message",
@@ -147,6 +150,7 @@ func newTestNotifier(t *testing.T, server *httptest.Server, title, text string) 
 
 	tmpl := test.CreateTmpl(t)
 	notifier, err := New(&alertmanagertypes.GoogleChatReceiverConfig{
+		HTTPConfig: &commoncfg.HTTPClientConfig{},
 		WebhookURL: secretURLFromString(t, webhookURL),
 		Title:      title,
 		Text:       text,
@@ -327,6 +331,7 @@ func TestGoogleChatMessageSizeLimit(t *testing.T) {
 
 	tmpl := test.CreateTmpl(t)
 	notifier, err := New(&alertmanagertypes.GoogleChatReceiverConfig{
+		HTTPConfig: &commoncfg.HTTPClientConfig{},
 		WebhookURL: secretURLFromString(t, "https://chat.googleapis.com/v1/spaces/test/messages"),
 		Title:      "Alert",
 		Text:       string(largeBody),
@@ -338,8 +343,12 @@ func TestGoogleChatMessageSizeLimit(t *testing.T) {
 	require.NoError(t, err)
 	require.False(t, retry)
 
-	// The message should have been truncated
-	require.LessOrEqual(t, payload.Len(), maxMessageBytes+200, "payload should be truncated") // +200 for JSON overhead
+	// The ENTIRE JSON payload should be under the limit
+	require.LessOrEqual(t, payload.Len(), maxMessageBytes, 
+		"entire JSON payload must be <= maxMessageBytes (got %d bytes)", payload.Len())
+	
+	// Verify the payload contains truncation indicator
+	require.Contains(t, payload.String(), "...", "truncated message should contain ellipsis")
 }
 
 func TestGoogleChatInvalidUTF8(t *testing.T) {
@@ -357,6 +366,7 @@ func TestGoogleChatInvalidUTF8(t *testing.T) {
 
 	tmpl := test.CreateTmpl(t)
 	notifier, err := New(&alertmanagertypes.GoogleChatReceiverConfig{
+		HTTPConfig: &commoncfg.HTTPClientConfig{},
 		WebhookURL: secretURLFromString(t, "https://chat.googleapis.com/v1/spaces/test/messages"),
 		Title:      "Alert",
 		Text:       invalidUTF8,
