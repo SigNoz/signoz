@@ -284,7 +284,7 @@ func (r *HavingExpressionRewriter) rewriteAndValidate(expression string) (string
 		return "", errors.NewInvalidInputf(
 			errors.CodeInvalidInput,
 			"`Having` expression contains string literals",
-		).WithAdditional("Aggregator results are numeric")
+		).WithSuggestions("Aggregator results are numeric")
 	}
 
 	if len(v.invalid) > 0 {
@@ -300,15 +300,15 @@ func (r *HavingExpressionRewriter) rewriteAndValidate(expression string) (string
 		var suggestions []string
 		if len(v.invalid) == 1 {
 			inv := v.invalid[0]
-			// Only suggest for plain identifier typos, not for unresolved function
-			// calls: a function call will appear as "name(" in the expression, and
-			// the closest valid key may itself contain "(" (e.g. "sum(a)"), making
-			// a simple string substitution produce a corrupt expression.
-			isFuncCall := strings.Contains(original, inv+"(")
-			if match, dist := closestMatch(inv, validKeys); !isFuncCall && !strings.Contains(match, "(") && dist <= 3 {
-				suggestions = append(suggestions, errors.DidYouMean(strings.ReplaceAll(original, inv, match)))
-			}
+			suggestions = errors.SuggestionsFromFunc(func() string {
+				match, ok := errors.ClosestLevenshteinMatch(inv, validKeys)
+				if !ok || strings.Contains(original, inv+"(") || strings.Contains(match, "(") {
+					return ""
+				}
+				return strings.ReplaceAll(original, inv, match)
+			})
 		}
+
 		suggestions = append(suggestions, errors.ValidReferences(validKeys...))
 		havingErr := errors.NewInvalidInputf(
 			errors.CodeInvalidInput,
@@ -337,10 +337,10 @@ func (r *HavingExpressionRewriter) rewriteAndValidate(expression string) (string
 		// multiple errors are surfaced as one additional detail each. If the parser
 		// produced no message (rare), the top-level message stands on its own.
 		if len(allSyntaxErrors) == 1 && len(msgs) == 1 {
-			var suggestions []string
-			if s := havingSuggestion(allSyntaxErrors[0], original); s != "" {
-				suggestions = append(suggestions, errors.DidYouMean(s))
-			}
+			suggestions := errors.SuggestionsFromFunc(func() string {
+				return havingSuggestion(allSyntaxErrors[0], original)
+			})
+
 			return "", havingErr.WithSuggestiveAdditional(msgs[0], suggestions...)
 		}
 		return "", havingErr.WithAdditional(msgs...)
@@ -451,42 +451,6 @@ func hasUnclosedBracket(s string) bool {
 		}
 	}
 	return count > 0
-}
-
-// closestMatch returns the element of candidates with the smallest Levenshtein
-// distance to query, along with that distance.
-func closestMatch(query string, candidates []string) (string, int) {
-	best, bestDist := "", -1
-	for _, c := range candidates {
-		if d := levenshtein(query, c); bestDist < 0 || d < bestDist {
-			best, bestDist = c, d
-		}
-	}
-	return best, bestDist
-}
-
-// levenshtein computes the edit distance between a and b.
-func levenshtein(a, b string) int {
-	ra, rb := []rune(a), []rune(b)
-	la, lb := len(ra), len(rb)
-	row := make([]int, lb+1)
-	for j := range row {
-		row[j] = j
-	}
-	for i := 1; i <= la; i++ {
-		prev := row[0]
-		row[0] = i
-		for j := 1; j <= lb; j++ {
-			tmp := row[j]
-			if ra[i-1] == rb[j-1] {
-				row[j] = prev
-			} else {
-				row[j] = 1 + min(prev, min(row[j], row[j-1]))
-			}
-			prev = tmp
-		}
-	}
-	return row[lb]
 }
 
 // endsWithComparisonOp reports whether s ends with a comparison operator token

@@ -890,9 +890,9 @@ func TestRewriteForLogsAndTraces_ErrorSyntax(t *testing.T) {
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "sum(bytes)"},
 			},
-			wantErr:        true,
-			wantErrMsg:     "`Having` expression contains string literals",
-			wantAdditional: []string{"Aggregator results are numeric"},
+			wantErr:         true,
+			wantErrMsg:      "`Having` expression contains string literals",
+			wantSuggestions: []string{"Aggregator results are numeric"},
 		},
 		{
 			name:       "double-quoted string literal as comparison value",
@@ -900,9 +900,9 @@ func TestRewriteForLogsAndTraces_ErrorSyntax(t *testing.T) {
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "count()", Alias: "total"},
 			},
-			wantErr:        true,
-			wantErrMsg:     "`Having` expression contains string literals",
-			wantAdditional: []string{"Aggregator results are numeric"},
+			wantErr:         true,
+			wantErrMsg:      "`Having` expression contains string literals",
+			wantSuggestions: []string{"Aggregator results are numeric"},
 		},
 	})
 }
@@ -1031,9 +1031,9 @@ func TestRewriteForMetrics(t *testing.T) {
 					SpaceAggregation: metrictypes.SpaceAggregationUnspecified,
 				},
 			},
-			wantErr:        true,
-			wantErrMsg:     "`Having` expression contains string literals",
-			wantAdditional: []string{"Aggregator results are numeric"},
+			wantErr:         true,
+			wantErrMsg:      "`Having` expression contains string literals",
+			wantSuggestions: []string{"Aggregator results are numeric"},
 		},
 		// --- Error: bare operand (no comparison) ---
 		{

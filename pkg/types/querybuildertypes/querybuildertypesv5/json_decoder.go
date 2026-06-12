@@ -45,7 +45,7 @@ func UnmarshalJSONWithContext(data []byte, target any, context string) error {
 				errors.CodeInvalidInput,
 				errorMsg,
 				unknownField,
-			).WithSuggestions(errors.Suggestions(unknownField, validFields)...)
+			).WithSuggestions(errors.SuggestionsOnLevenshteinDistance(unknownField, validFields)...)
 		}
 	}
 

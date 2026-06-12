@@ -479,7 +479,7 @@ func (q *QueryBuilderQuery[T]) validateOrderByForAggregation() error {
 				"invalid order by key '%s' for %s",
 				orderKey,
 				orderId,
-			).WithSuggestions(errors.Suggestions(orderKey, validKeys)...)
+			).WithSuggestions(errors.SuggestionsOnLevenshteinDistance(orderKey, validKeys)...)
 		}
 	}
 

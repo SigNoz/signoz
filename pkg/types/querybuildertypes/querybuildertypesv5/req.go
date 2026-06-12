@@ -238,7 +238,7 @@ func (c *CompositeQuery) UnmarshalJSON(data []byte) error {
 				errors.CodeInvalidInput,
 				"unknown field %q in composite query",
 				field,
-			).WithSuggestions(errors.Suggestions(field, fieldNames)...)
+			).WithSuggestions(errors.SuggestionsOnLevenshteinDistance(field, fieldNames)...)
 			return unknownFieldErr
 		}
 	}
@@ -563,7 +563,7 @@ func (r *QueryRangeRequest) UnmarshalJSON(data []byte) error {
 				errors.CodeInvalidInput,
 				"unknown field %q",
 				field,
-			).WithSuggestions(errors.Suggestions(field, fieldNames)...)
+			).WithSuggestions(errors.SuggestionsOnLevenshteinDistance(field, fieldNames)...)
 			return unknownFieldErr
 		}
 	}

@@ -13,33 +13,51 @@ const (
 	maxValidReferences = 20
 )
 
-// Suggestions returns a "did you mean" correction (only when a close match at
-// least typoSuggestionThreshold similar exists) followed by the valid-references
-// list.
-func Suggestions(invalidInput string, validInputs []string) []string {
-	var bestMatch string
-	bestSimilarity := 0.0
-
-	for _, validInput := range validInputs {
-		sim := similarity(invalidInput, validInput)
-
-		if sim > bestSimilarity && sim >= typoSuggestionThreshold {
-			bestSimilarity = sim
-			bestMatch = validInput
-		}
-	}
-
+// SuggestionsOnLevenshteinDistance returns a "did you mean" correction (only
+// when a close match at least typoSuggestionThreshold similar exists) followed
+// by the valid-references list.
+func SuggestionsOnLevenshteinDistance(invalidInput string, validInputs []string) []string {
 	suggestions := make([]string, 0, 2)
-	if bestSimilarity >= typoSuggestionThreshold {
-		suggestions = append(suggestions, DidYouMean(bestMatch))
+
+	if match, ok := ClosestLevenshteinMatch(invalidInput, validInputs); ok {
+		suggestions = append(suggestions, didYouMean(match))
 	}
 
 	return append(suggestions, ValidReferences(validInputs...))
 }
 
-// DidYouMean formats a correction as "did you mean: `x`".
-func DidYouMean(match string) string {
-	return "did you mean: `" + match + "`"
+// ClosestLevenshteinMatch returns the candidate most similar to input that is at least
+// typoSuggestionThreshold similar, or false when nothing is close enough.
+func ClosestLevenshteinMatch(input string, candidates []string) (string, bool) {
+	var bestMatch string
+	bestSimilarity := 0.0
+
+	for _, candidate := range candidates {
+		sim := similarity(input, candidate)
+
+		if sim > bestSimilarity && sim >= typoSuggestionThreshold {
+			bestSimilarity = sim
+			bestMatch = candidate
+		}
+	}
+
+	if bestSimilarity >= typoSuggestionThreshold {
+		return bestMatch, true
+	}
+
+	return "", false
+}
+
+// SuggestionFromFunc formats the string produce returns as a one-element
+// "did you mean: `x`" slice, or nil when it returns the empty string (so callers
+// with their own matching strategy compose into a suggestions list cleanly).
+func SuggestionFromFunc(produce func() string) []string {
+	s := produce()
+	if s == "" {
+		return nil
+	}
+
+	return []string{didYouMean(s)}
 }
 
 // ValidReferences formats values as "valid references: `a`, `b`", capped at
@@ -142,4 +160,9 @@ func min(a, b, c int) int {
 		return b
 	}
 	return c
+}
+
+// didYouMean formats a correction as "did you mean: `x`".
+func didYouMean(match string) string {
+	return "did you mean: `" + match + "`"
 }
