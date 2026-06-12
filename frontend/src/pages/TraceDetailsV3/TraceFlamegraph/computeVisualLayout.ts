@@ -1,11 +1,10 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-import { FlamegraphSpan } from 'types/api/trace/getTraceFlamegraph';
+import { SpantypesFlamegraphSpanDTO as FlamegraphSpan } from 'api/generated/services/sigNoz.schemas';
 
 export interface ConnectorLine {
 	parentRow: number;
 	childRow: number;
 	timestampMs: number;
-	serviceName: string;
 	// Snapshot of the child span's resource so draw-time can resolve the
 	// `colorByField` group value without crossing the worker boundary.
 	resource?: Record<string, string>;
@@ -159,24 +158,8 @@ export function computeVisualLayout(spans: FlamegraphSpan[][]): VisualLayout {
 		}
 	}
 
-	// Extract parentSpanId — the field may be missing at runtime when the API
-	// returns `references` instead.  Fall back to the first CHILD_OF reference.
 	function getParentId(span: FlamegraphSpan): string {
-		if (span.parentSpanId) {
-			return span.parentSpanId;
-		}
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const refs = (span as any).references as
-			| Array<{ spanId?: string; refType?: string }>
-			| undefined;
-		if (refs) {
-			for (const ref of refs) {
-				if (ref.refType === 'CHILD_OF' && ref.spanId) {
-					return ref.spanId;
-				}
-			}
-		}
-		return '';
+		return span.parentSpanId || '';
 	}
 
 	// Build children map and identify roots
@@ -480,7 +463,6 @@ export function computeVisualLayout(spans: FlamegraphSpan[][]): VisualLayout {
 				parentRow,
 				childRow,
 				timestampMs: child.timestamp,
-				serviceName: child.serviceName,
 				resource: child.resource,
 			});
 		}
