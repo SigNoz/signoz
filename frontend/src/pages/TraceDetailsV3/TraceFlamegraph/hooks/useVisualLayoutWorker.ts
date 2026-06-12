@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { FlamegraphSpan } from 'types/api/trace/getTraceFlamegraph';
+import { SpantypesFlamegraphSpanDTO as FlamegraphSpan } from 'api/generated/services/sigNoz.schemas';
 
 import { computeVisualLayout, VisualLayout } from '../computeVisualLayout';
 import { LayoutWorkerResponse } from '../visualLayoutWorkerTypes';
