@@ -31,7 +31,6 @@ export function dtoToFormModel(
 		...base,
 		name: dto.spec?.name ?? display?.name ?? '',
 		description: display?.description ?? '',
-		hidden: display?.hidden ?? false,
 	};
 
 	// Text variable — a distinct envelope (no list plugin).
