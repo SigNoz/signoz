@@ -1,4 +1,4 @@
-import { FlamegraphSpan } from 'types/api/trace/getTraceFlamegraph';
+import { SpantypesFlamegraphSpanDTO as FlamegraphSpan } from 'api/generated/services/sigNoz.schemas';
 
 import {
 	computeVisualLayout,
@@ -14,12 +14,12 @@ function makeSpan(
 ): FlamegraphSpan {
 	return {
 		parentSpanId: '',
-		traceId: 'trace-1',
 		hasError: false,
-		serviceName: 'svc',
 		name: 'op',
 		level: 0,
 		event: [],
+		resource: {},
+		attributes: {},
 		...overrides,
 	};
 }
