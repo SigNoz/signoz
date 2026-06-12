@@ -121,9 +121,9 @@ function DashboardInfo({
 				)}
 			</div>
 
-			{!hasTags && (
+			{hasTags && (
 				<div className={styles.dashboardTags}>
-					{['afvsarevre', 'ASDASDASD'].map((tag) => (
+					{tags.map((tag) => (
 						<Badge key={tag} color="warning" variant="outline">
 							{tag}
 						</Badge>
@@ -131,10 +131,8 @@ function DashboardInfo({
 				</div>
 			)}
 
-			{!hasDescription && (
-				<Typography.Text color="muted">
-					{description || 'asdadasdasdasdcszdafga'}
-				</Typography.Text>
+			{hasDescription && (
+				<Typography.Text color="muted">{description}</Typography.Text>
 			)}
 		</div>
 	);

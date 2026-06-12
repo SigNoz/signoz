@@ -1,15 +1,21 @@
 import { Dispatch, SetStateAction } from 'react';
-// eslint-disable-next-line signoz/no-antd-components -- TODO: migrate Select/Input to @signozhq/ui
-import { Col, Input, Select, Space } from 'antd';
+import { Input } from '@signozhq/ui/input';
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+} from '@signozhq/ui/select';
 import { Typography } from '@signozhq/ui/typography';
+// eslint-disable-next-line signoz/no-antd-components -- multiline TextArea has no @signozhq/ui equivalent yet
+import { Input as AntdInput } from 'antd';
 import AddTags from 'container/DashboardContainer/DashboardSettings/General/AddBadges';
 
 import { Base64Icons } from '../utils';
-import styles from '../GeneralSettings.module.scss';
+import overviewStyles from '../Overview.module.scss';
+import styles from './DashboardInfoForm.module.scss';
 
-const { Option } = Select;
-
-interface GeneralFormProps {
+interface DashboardInfoFormProps {
 	title: string;
 	description: string;
 	image: string;
@@ -20,7 +26,7 @@ interface GeneralFormProps {
 	onTagsChange: Dispatch<SetStateAction<string[]>>;
 }
 
-function GeneralForm({
+function DashboardInfoForm({
 	title,
 	description,
 	image,
@@ -29,33 +35,40 @@ function GeneralForm({
 	onDescriptionChange,
 	onImageChange,
 	onTagsChange,
-}: GeneralFormProps): JSX.Element {
+}: DashboardInfoFormProps): JSX.Element {
 	return (
-		<Col className={styles.overviewSettings}>
-			<Space direction="vertical" className={styles.formSpace}>
-				<div>
-					<Typography className={styles.dashboardName}>Dashboard Name</Typography>
+		<div className={overviewStyles.overviewSettings}>
+			<div className={styles.formSpace}>
+				<div className={styles.infoItemContainer}>
+					<Typography className={styles.infoTitle}>Dashboard Name</Typography>
 					<section className={styles.nameIconInput}>
 						<Select
-							defaultActiveFirstOption
-							data-testid="dashboard-image"
-							suffixIcon={null}
-							rootClassName={styles.dashboardImageInput}
 							value={image}
-							onChange={onImageChange}
+							onChange={(value): void => onImageChange(value as string)}
 						>
-							{Base64Icons.map((icon) => (
-								<Option value={icon} key={icon}>
-									<img
-										src={icon}
-										alt="dashboard-icon"
-										className={styles.listItemImage}
-									/>
-								</Option>
-							))}
+							<SelectTrigger className={styles.dashboardImageInput} />
+							<SelectContent
+								className={styles.dashboardImageOptions}
+								withPortal={false}
+							>
+								{Base64Icons.map((icon) => (
+									<SelectItem
+										key={icon}
+										value={icon}
+										className={styles.dashboardImageSelectItem}
+									>
+										<img
+											src={icon}
+											alt="dashboard-icon"
+											className={styles.listItemImage}
+										/>
+									</SelectItem>
+								))}
+							</SelectContent>
 						</Select>
+
 						<Input
-							data-testid="dashboard-name"
+							testId="dashboard-name"
 							className={styles.dashboardNameInput}
 							value={title}
 							onChange={(e): void => onTitleChange(e.target.value)}
@@ -63,9 +76,9 @@ function GeneralForm({
 					</section>
 				</div>
 
-				<div>
-					<Typography className={styles.dashboardName}>Description</Typography>
-					<Input.TextArea
+				<div className={styles.infoItemContainer}>
+					<Typography className={styles.infoTitle}>Description</Typography>
+					<AntdInput.TextArea
 						data-testid="dashboard-desc"
 						rows={6}
 						value={description}
@@ -73,13 +86,16 @@ function GeneralForm({
 						onChange={(e): void => onDescriptionChange(e.target.value)}
 					/>
 				</div>
-				<div>
-					<Typography className={styles.dashboardName}>Tags</Typography>
-					<AddTags tags={tags} setTags={onTagsChange} />
+
+				<div className={styles.infoItemContainer}>
+					<Typography className={styles.infoTitle}>Tags</Typography>
+					<div className={styles.tagsField}>
+						<AddTags tags={tags} setTags={onTagsChange} />
+					</div>
 				</div>
-			</Space>
-		</Col>
+			</div>
+		</div>
 	);
 }
 
-export default GeneralForm;
+export default DashboardInfoForm;

@@ -3,11 +3,9 @@
 	justify-content: space-between;
 	align-items: center;
 	width: -webkit-fill-available;
-	padding: 12px 16px 12px 0px;
+	padding: 12px 16px 12px 16px;
 	position: fixed;
 	bottom: 0;
-	height: 32px;
-	border-top: 1px solid var(--l2-border);
 	background: var(--l2-background);
 }
 
@@ -38,25 +36,4 @@
 .footerActionButtons {
 	display: flex;
 	gap: 8px;
-}
-
-.discardButton {
-	display: flex;
-	align-items: center;
-	color: var(--l1-foreground);
-	font-family: Inter;
-	font-size: 12px;
-	font-weight: 500;
-	line-height: 24px;
-}
-
-.saveButton {
-	display: flex;
-	align-items: center;
-	margin: 0px !important;
-	color: var(--l1-foreground);
-	font-family: Inter;
-	font-size: 12px;
-	font-weight: 500;
-	line-height: 24px;
 }

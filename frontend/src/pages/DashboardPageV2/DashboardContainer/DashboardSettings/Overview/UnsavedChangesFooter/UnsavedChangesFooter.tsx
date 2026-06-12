@@ -36,7 +36,6 @@ function UnsavedChangesFooter({
 					disabled={isSaving}
 					prefix={<X size={14} />}
 					onClick={onDiscard}
-					className={styles.discardButton}
 				>
 					Discard
 				</Button>
@@ -48,7 +47,6 @@ function UnsavedChangesFooter({
 					prefix={<Check size={14} />}
 					testId="save-dashboard-config"
 					onClick={onSave}
-					className={styles.saveButton}
 				>
 					{t('save')}
 				</Button>

@@ -64,7 +64,7 @@ function Overview({ dashboard }: OverviewProps): JSX.Element {
 			value,
 		});
 
-		if (updatedTitle !== title) {
+		if (updatedTitle !== title && updatedTitle !== '') {
 			ops.push(replace('/spec/display/name', updatedTitle));
 		}
 		if (updatedDescription !== description) {
@@ -89,9 +89,6 @@ function Overview({ dashboard }: OverviewProps): JSX.Element {
 	]);
 
 	const onSaveHandler = useCallback(async (): Promise<void> => {
-		if (!id) {
-			return;
-		}
 		const ops = buildPatch();
 		if (ops.length === 0) {
 			return;

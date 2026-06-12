@@ -1,6 +1,5 @@
-// eslint-disable-next-line signoz/no-antd-components -- TODO: migrate Radio to @signozhq/ui/radio-group
-import { Col, Radio, Tooltip } from 'antd';
 import { ExternalLink, SolidInfoCircle } from '@signozhq/icons';
+import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { Events } from 'constants/events';
@@ -13,7 +12,9 @@ import {
 import { getAbsoluteUrl } from 'utils/basePath';
 import cx from 'classnames';
 
-import styles from '../GeneralSettings.module.scss';
+import SegmentedControl from '../SegmentedControl/SegmentedControl';
+import overviewStyles from '../Overview.module.scss';
+import styles from './CrossPanelSync.module.scss';
 
 interface CrossPanelSyncProps {
 	dashboardId: string;
@@ -26,13 +27,17 @@ function CrossPanelSync({ dashboardId }: CrossPanelSyncProps): JSX.Element {
 		useSyncTooltipFilterMode(dashboardId);
 
 	return (
-		<Col className={cx(styles.overviewSettings, styles.crossPanelSyncGroup)}>
+		<div
+			className={cx(overviewStyles.overviewSettings, styles.crossPanelSyncGroup)}
+		>
 			<div className={styles.crossPanelSyncSectionHeader}>
-				<Typography.Text className={styles.crossPanelSyncSectionTitle}>
+				<Typography.Text className={styles.crossPanelsSyncSectionTitle}>
 					Cross-Panel Sync
 				</Typography.Text>
 
-				<Tooltip
+				<TooltipSimple
+					side="top"
+					withPortal={false}
 					title={
 						<div className={styles.crossPanelSyncTooltipContent}>
 							<strong className={styles.crossPanelSyncTooltipTitle}>
@@ -41,7 +46,7 @@ function CrossPanelSync({ dashboardId }: CrossPanelSyncProps): JSX.Element {
 							<span className={styles.crossPanelSyncTooltipDescription}>
 								Sync crosshair and tooltip across all the dashboard panels
 							</span>
-							<a
+							<Typography.Link
 								href="https://signoz.io/docs/dashboards/interactivity/#cross-panel-sync"
 								target="_blank"
 								rel="noopener noreferrer"
@@ -49,14 +54,12 @@ function CrossPanelSync({ dashboardId }: CrossPanelSyncProps): JSX.Element {
 							>
 								Learn more
 								<ExternalLink size={12} />
-							</a>
+							</Typography.Link>
 						</div>
 					}
-					placement="top"
-					mouseEnterDelay={0.5}
 				>
 					<SolidInfoCircle size="md" className={styles.crossPanelSyncInfoIcon} />
-				</Tooltip>
+				</TooltipSimple>
 			</div>
 
 			<div className={styles.crossPanelSyncRow}>
@@ -68,18 +71,16 @@ function CrossPanelSync({ dashboardId }: CrossPanelSyncProps): JSX.Element {
 						Sync crosshair and tooltip across all the dashboard panels
 					</Typography.Text>
 				</div>
-				<Radio.Group
+				<SegmentedControl
+					testId="cursor-sync-mode"
 					value={cursorSyncMode}
-					onChange={(e): void => {
-						setCursorSyncMode(e.target.value as DashboardCursorSync);
-					}}
-				>
-					<Radio.Button value={DashboardCursorSync.None}>No Sync</Radio.Button>
-					<Radio.Button value={DashboardCursorSync.Crosshair}>
-						Crosshair
-					</Radio.Button>
-					<Radio.Button value={DashboardCursorSync.Tooltip}>Tooltip</Radio.Button>
-				</Radio.Group>
+					onChange={setCursorSyncMode}
+					options={[
+						{ label: 'No Sync', value: DashboardCursorSync.None },
+						{ label: 'Crosshair', value: DashboardCursorSync.Crosshair },
+						{ label: 'Tooltip', value: DashboardCursorSync.Tooltip },
+					]}
+				/>
 			</div>
 
 			{cursorSyncMode === DashboardCursorSync.Tooltip && (
@@ -94,24 +95,24 @@ function CrossPanelSync({ dashboardId }: CrossPanelSyncProps): JSX.Element {
 						</Typography.Text>
 					</div>
 
-					<Radio.Group
+					<SegmentedControl
+						testId="sync-tooltip-filter-mode"
 						value={syncTooltipFilterMode}
-						onChange={(e): void => {
+						onChange={(value): void => {
 							void logEvent(Events.TOOLTIP_SYNC_MODE_CHANGED, {
 								path: getAbsoluteUrl(window.location.pathname),
-								mode: e.target.value,
+								mode: value,
 							});
-							setSyncTooltipFilterMode(e.target.value as SyncTooltipFilterMode);
+							setSyncTooltipFilterMode(value);
 						}}
-					>
-						<Radio.Button value={SyncTooltipFilterMode.All}>All</Radio.Button>
-						<Radio.Button value={SyncTooltipFilterMode.Filtered}>
-							Filtered
-						</Radio.Button>
-					</Radio.Group>
+						options={[
+							{ label: 'All', value: SyncTooltipFilterMode.All },
+							{ label: 'Filtered', value: SyncTooltipFilterMode.Filtered },
+						]}
+					/>
 				</div>
 			)}
-		</Col>
+		</div>
 	);
 }
 

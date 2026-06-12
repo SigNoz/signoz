@@ -17,6 +17,8 @@ import { useAppContext } from 'providers/App/App';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { USER_ROLES } from 'types/roles';
 
+import styles from './DashboardSettings.module.scss';
+
 interface DashboardSettingsProps {
 	dashboard: DashboardtypesGettableDashboardV2DTO;
 }
@@ -77,7 +79,7 @@ function DashboardSettings({ dashboard }: DashboardSettingsProps): JSX.Element {
 			</TabsList>
 
 			{items.map((item) => (
-				<TabsContent value={item.key} key={item.key}>
+				<TabsContent value={item.key} key={item.key} className={styles.tabsContent}>
 					{item.children}
 				</TabsContent>
 			))}
