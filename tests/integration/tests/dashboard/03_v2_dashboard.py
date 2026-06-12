@@ -258,12 +258,14 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
     # runs, so start from a clean slate: delete every dashboard (which also clears
     # pins via the delete cascade). This test then owns the whole dashboard space
     # and asserts on global counts.
-    existing = requests.get(
+    response = requests.get(
         signoz.self.host_configs["8080"].get(BASE_URL),
         params={"limit": 200},
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
-    ).json()["data"]["dashboards"]
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    existing = response.json()["data"]["dashboards"]
     for dashboard in existing:
         requests.delete(
             signoz.self.host_configs["8080"].get(f"{BASE_URL}/{dashboard['id']}"),
@@ -687,12 +689,14 @@ def test_dashboard_v2_pin_limit(
 
     # Wipe the dashboard space (see lifecycle) so the per-user pin cap this test
     # asserts against starts empty — deleting dashboards clears their pins.
-    existing = requests.get(
+    response = requests.get(
         signoz.self.host_configs["8080"].get(BASE_URL),
         params={"limit": 200},
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
-    ).json()["data"]["dashboards"]
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    existing = response.json()["data"]["dashboards"]
     for dashboard in existing:
         requests.delete(
             signoz.self.host_configs["8080"].get(f"{BASE_URL}/{dashboard['id']}"),
@@ -785,12 +789,14 @@ def test_dashboard_v2_like_escaping(
 
     # Wipe the dashboard space (see lifecycle) so the filter assertions run
     # against only the dashboards this test creates.
-    existing = requests.get(
+    response = requests.get(
         signoz.self.host_configs["8080"].get(BASE_URL),
         params={"limit": 200},
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
-    ).json()["data"]["dashboards"]
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    existing = response.json()["data"]["dashboards"]
     for dashboard in existing:
         requests.delete(
             signoz.self.host_configs["8080"].get(f"{BASE_URL}/{dashboard['id']}"),
