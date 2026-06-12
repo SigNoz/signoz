@@ -20,7 +20,7 @@ function PanelStatusContent({ detail }: PanelStatusContentProps): JSX.Element {
 		<section className={styles.content} data-testid="panel-status-content">
 			<header className={styles.summary}>
 				<div className={styles.summaryText}>
-					<h2 className={styles.code}>{code}</h2>
+					{code && <h2 className={styles.code}>{code}</h2>}
 					<p className={styles.message}>{message}</p>
 				</div>
 				{docsUrl && (
