@@ -9,6 +9,28 @@ from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.types import Operation, SigNoz
 
 BASE_URL = "/api/v2/dashboards"
+# v1 list returns every dashboard regardless of schema. v2 list converts each row
+# to the perses schema and 501s if any stored dashboard isn't perses-schema, so
+# listing for cleanup against a shared DB must go through v1.
+V1_BASE_URL = "/api/v1/dashboards"
+
+
+def _wipe_all_dashboards(signoz: SigNoz, token: str) -> None:
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(V1_BASE_URL),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    for dashboard in response.json()["data"]:
+        metadata = (dashboard.get("data") or {}).get("metadata") or {}
+        base = BASE_URL if metadata.get("schemaVersion") == "v6" else V1_BASE_URL
+        del_res = requests.delete(
+            signoz.self.host_configs["8080"].get(f"{base}/{dashboard['id']}"),
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        )
+        assert del_res.status_code == HTTPStatus.NO_CONTENT, del_res.text
 
 
 # ─── failure cases (create no dashboards) ────────────────────────────────────
@@ -258,20 +280,7 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
     # runs, so start from a clean slate: delete every dashboard (which also clears
     # pins via the delete cascade). This test then owns the whole dashboard space
     # and asserts on global counts.
-    response = requests.get(
-        signoz.self.host_configs["8080"].get(BASE_URL),
-        params={"limit": 200},
-        headers={"Authorization": f"Bearer {token}"},
-        timeout=5,
-    )
-    assert response.status_code == HTTPStatus.OK, response.text
-    existing = response.json()["data"]["dashboards"]
-    for dashboard in existing:
-        requests.delete(
-            signoz.self.host_configs["8080"].get(f"{BASE_URL}/{dashboard['id']}"),
-            headers={"Authorization": f"Bearer {token}"},
-            timeout=5,
-        )
+    _wipe_all_dashboards(signoz, token)
 
     dashboard_requests = [
         (
@@ -689,20 +698,7 @@ def test_dashboard_v2_pin_limit(
 
     # Wipe the dashboard space (see lifecycle) so the per-user pin cap this test
     # asserts against starts empty — deleting dashboards clears their pins.
-    response = requests.get(
-        signoz.self.host_configs["8080"].get(BASE_URL),
-        params={"limit": 200},
-        headers={"Authorization": f"Bearer {token}"},
-        timeout=5,
-    )
-    assert response.status_code == HTTPStatus.OK, response.text
-    existing = response.json()["data"]["dashboards"]
-    for dashboard in existing:
-        requests.delete(
-            signoz.self.host_configs["8080"].get(f"{BASE_URL}/{dashboard['id']}"),
-            headers={"Authorization": f"Bearer {token}"},
-            timeout=5,
-        )
+    _wipe_all_dashboards(signoz, token)
 
     ids: list[str] = []
     for i in range(max_pinned + 1):
@@ -789,20 +785,7 @@ def test_dashboard_v2_like_escaping(
 
     # Wipe the dashboard space (see lifecycle) so the filter assertions run
     # against only the dashboards this test creates.
-    response = requests.get(
-        signoz.self.host_configs["8080"].get(BASE_URL),
-        params={"limit": 200},
-        headers={"Authorization": f"Bearer {token}"},
-        timeout=5,
-    )
-    assert response.status_code == HTTPStatus.OK, response.text
-    existing = response.json()["data"]["dashboards"]
-    for dashboard in existing:
-        requests.delete(
-            signoz.self.host_configs["8080"].get(f"{BASE_URL}/{dashboard['id']}"),
-            headers={"Authorization": f"Bearer {token}"},
-            timeout=5,
-        )
+    _wipe_all_dashboards(signoz, token)
 
     dashboard_requests = [
         ("esc-pct", "Cost 50% Report"),
