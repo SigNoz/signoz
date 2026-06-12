@@ -48,10 +48,10 @@ func ClosestLevenshteinMatch(input string, candidates []string) (string, bool) {
 	return "", false
 }
 
-// SuggestionFromFunc formats the string produce returns as a one-element
+// SuggestionsFromFunc formats the string produce returns as a one-element
 // "did you mean: `x`" slice, or nil when it returns the empty string (so callers
 // with their own matching strategy compose into a suggestions list cleanly).
-func SuggestionFromFunc(produce func() string) []string {
+func SuggestionsFromFunc(produce func() string) []string {
 	s := produce()
 	if s == "" {
 		return nil
