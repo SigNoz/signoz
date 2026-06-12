@@ -81,10 +81,7 @@ func CollisionHandledFinalExpr(
 			// - it is not a static field
 			// - the next best thing to do is see if there is a typo
 			// and suggest a correction
-			// Only a "did you mean" correction is useful here: the candidate pool is just
-			// the query's already-referenced fields plus intrinsics, so a "valid references"
-			// enumeration would be misleading.
-			wrappedErr := errors.WithSuggestiveAdditionalf(fieldForErr, errors.DidYouMeanSuggestions(field.Name, maps.Keys(keys)), "field `%s` not found", field.Name)
+			wrappedErr := errors.WithSuggestiveAdditionalf(fieldForErr, errors.Suggestions(field.Name, maps.Keys(keys)), "field `%s` not found", field.Name)
 			return "", nil, wrappedErr
 		} else {
 			for _, key := range keysForField {
