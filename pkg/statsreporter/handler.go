@@ -34,11 +34,7 @@ func (handler *handler) Get(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	stats, err := handler.aggregator.Aggregate(ctx, orgID)
 	if err != nil {
