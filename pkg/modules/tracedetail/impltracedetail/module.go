@@ -182,7 +182,7 @@ func (m *module) getFullFlamegraph(ctx context.Context, traceID string, summary 
 		return nil, spantypes.ErrTraceNotFound
 	}
 	flamegraphTrace := spantypes.NewFlamegraphTraceFromStorable(fullSpans, selectFields)
-	return spantypes.NewGettableFlamegraphTrace(flamegraphTrace.GetAllLevels(), summary.Start.UnixMilli(), summary.End.UnixMilli(), false), nil
+	return spantypes.NewGettableFlamegraphTrace(flamegraphTrace.GetAllLevels(), summary.Start, summary.End, false), nil
 }
 
 // getWindowedFlamegraph returns a window of a max levels and max sampled spans per level around the selected span.
@@ -209,10 +209,6 @@ func (m *module) getWindowedFlamegraph(ctx context.Context, traceID, selectedSpa
 		return nil, err
 	}
 
-	return spantypes.NewGettableFlamegraphTrace(
-		flamegraphTrace.EnrichSelectedSpans(selectedSpans, fullSpans, selectFields),
-		summary.Start.UnixMilli(),
-		summary.End.UnixMilli(),
-		true,
-	), nil
+	enrichedSpans := flamegraphTrace.EnrichSelectedSpans(selectedSpans, fullSpans, selectFields)
+	return spantypes.NewGettableFlamegraphTrace(enrichedSpans, summary.Start, summary.End, true), nil
 }
