@@ -13,7 +13,7 @@ import { getAbsoluteUrl } from 'utils/basePath';
 import cx from 'classnames';
 
 import SegmentedControl from '../SegmentedControl/SegmentedControl';
-import overviewStyles from '../Overview.module.scss';
+import settingsStyles from '../../DashboardSettings.module.scss';
 import styles from './CrossPanelSync.module.scss';
 
 interface CrossPanelSyncProps {
@@ -27,9 +27,7 @@ function CrossPanelSync({ dashboardId }: CrossPanelSyncProps): JSX.Element {
 		useSyncTooltipFilterMode(dashboardId);
 
 	return (
-		<div
-			className={cx(overviewStyles.overviewSettings, styles.crossPanelSyncGroup)}
-		>
+		<div className={cx(settingsStyles.settingsCard, styles.crossPanelSyncGroup)}>
 			<div className={styles.crossPanelSyncSectionHeader}>
 				<Typography.Text className={styles.crossPanelsSyncSectionTitle}>
 					Cross-Panel Sync

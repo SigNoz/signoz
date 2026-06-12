@@ -14,3 +14,10 @@
 	line-height: 1;
 	padding-top: 4px;
 }
+
+// shared "settings card" wrapper, used by the dashboard-info form and cross-panel sync
+.settingsCard {
+	padding: 24px 16px;
+	border-radius: 3px;
+	border: 1px solid var(--l2-border);
+}

@@ -18,6 +18,7 @@
 
 .nameIconInput {
 	display: flex;
+	gap: 4px;
 
 	[data-radix-popper-content-wrapper] {
 		z-index: 1100 !important;
@@ -33,7 +34,6 @@
 	justify-content: center;
 	align-items: center;
 	border-radius: 2px 0px 0px 2px;
-	border: 1px solid var(--l1-border);
 	background: var(--l3-background);
 
 	// icon-only trigger: drop the dropdown chevron, keep just the selected icon

@@ -12,7 +12,7 @@ import { Input as AntdInput } from 'antd';
 import AddTags from 'container/DashboardContainer/DashboardSettings/General/AddBadges';
 
 import { Base64Icons } from '../utils';
-import overviewStyles from '../Overview.module.scss';
+import settingsStyles from '../../DashboardSettings.module.scss';
 import styles from './DashboardInfoForm.module.scss';
 
 interface DashboardInfoFormProps {
@@ -37,7 +37,7 @@ function DashboardInfoForm({
 	onTagsChange,
 }: DashboardInfoFormProps): JSX.Element {
 	return (
-		<div className={overviewStyles.overviewSettings}>
+		<div className={settingsStyles.settingsCard}>
 			<div className={styles.formSpace}>
 				<div className={styles.infoItemContainer}>
 					<Typography className={styles.infoTitle}>Dashboard Name</Typography>
