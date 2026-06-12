@@ -65,37 +65,25 @@ describe('Presentation / Styling Utils', () => {
 	describe('getFlamegraphSpanGroupValue', () => {
 		it('returns resource[field.name] when present', () => {
 			const value = getFlamegraphSpanGroupValue(
-				{
-					serviceName: 'legacy',
-					resource: { 'service.name': 'svc-from-resource' },
-				},
+				{ resource: { 'service.name': 'svc-from-resource' } },
 				SERVICE_FIELD,
 			);
 			expect(value).toBe('svc-from-resource');
 		});
 
-		it('falls back to top-level serviceName for service.name when resource is empty', () => {
-			const value = getFlamegraphSpanGroupValue(
-				{ serviceName: 'svc-legacy', resource: {} },
-				SERVICE_FIELD,
-			);
-			expect(value).toBe('svc-legacy');
+		it('returns "unknown" for service.name when resource is empty', () => {
+			const value = getFlamegraphSpanGroupValue({ resource: {} }, SERVICE_FIELD);
+			expect(value).toBe('unknown');
 		});
 
 		it('returns "unknown" for non-service fields when resource is missing', () => {
-			const value = getFlamegraphSpanGroupValue(
-				{ serviceName: 'svc', resource: {} },
-				HOST_FIELD,
-			);
+			const value = getFlamegraphSpanGroupValue({ resource: {} }, HOST_FIELD);
 			expect(value).toBe('unknown');
 		});
 
 		it('reads host.name from resource when present', () => {
 			const value = getFlamegraphSpanGroupValue(
-				{
-					serviceName: 'svc',
-					resource: { 'host.name': 'host-1' },
-				},
+				{ resource: { 'host.name': 'host-1' } },
 				HOST_FIELD,
 			);
 			expect(value).toBe('host-1');
