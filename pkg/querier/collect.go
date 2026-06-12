@@ -12,10 +12,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-// Collect implements statsreporter.StatsCollector. It returns telemetry counts and last-observed
-// times for traces, logs and metrics. orgID is unused because the underlying tables are
-// cluster-global. Collection is best-effort: a failing query is logged and its key omitted rather
-// than failing the whole collection.
 func (q *querier) Collect(ctx context.Context, _ valuer.UUID) (map[string]any, error) {
 	stats := make(map[string]any)
 
