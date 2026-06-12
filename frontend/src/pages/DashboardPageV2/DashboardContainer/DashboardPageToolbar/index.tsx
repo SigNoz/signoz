@@ -18,11 +18,10 @@ import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 
 import DashboardActions from './DashboardActions/DashboardActions';
-import DashboardTitle from './DashboardTitle/DashboardTitle';
-import { useEditableTitle } from './DashboardTitle/useEditableTitle';
+import DashboardInfo from './DashboardInfo/DashboardInfo';
+import { useEditableTitle } from './DashboardInfo/useEditableTitle';
 
 import styles from './DashboardPageToolbar.module.scss';
-import DashboardMeta from './DashboardMeta/DashboardMeta';
 // import VariablesBar from '../VariablesBar/VariablesBar';
 
 interface DashboardPageToolbarProps {
@@ -113,33 +112,32 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 
 	return (
 		<section className={styles.dashboardPageToolbarContainer}>
-			<div>
-				<div className={styles.dashboardPageTitleWithActions}>
-					<DashboardTitle
-						title={title}
-						image={image}
-						isPublicDashboard={false}
-						isDashboardLocked={isDashboardLocked}
-						isEditing={isEditing}
-						draft={draft}
-						onDraftChange={setDraft}
-						onStartEdit={startEdit}
-						onCommit={commit}
-						onCancel={cancel}
-					/>
-					<DashboardActions
-						title={title}
-						dashboard={dashboard}
-						handle={handle}
-						isDashboardLocked={isDashboardLocked}
-						isAuthor={isAuthor}
-						onAddPanel={onEmptyWidgetHandler}
-						onLockToggle={handleLockDashboardToggle}
-						onOpenRename={startEdit}
-					/>
-				</div>
+			<div className={styles.dashboardInfoWithActions}>
+				<DashboardInfo
+					title={title}
+					image={image}
+					tags={tags}
+					description={description}
+					isPublicDashboard={false}
+					isDashboardLocked={isDashboardLocked}
+					isEditing={isEditing}
+					draft={draft}
+					onDraftChange={setDraft}
+					onStartEdit={startEdit}
+					onCommit={commit}
+					onCancel={cancel}
+				/>
+				<DashboardActions
+					title={title}
+					dashboard={dashboard}
+					handle={handle}
+					isDashboardLocked={isDashboardLocked}
+					isAuthor={isAuthor}
+					onAddPanel={onEmptyWidgetHandler}
+					onLockToggle={handleLockDashboardToggle}
+					onOpenRename={startEdit}
+				/>
 			</div>
-			<DashboardMeta tags={tags} description={description} />
 		</section>
 	);
 }

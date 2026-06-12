@@ -1,12 +1,19 @@
+.dashboardInfo {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	width: 40%;
+
+	@media (min-width: 1280px) {
+		width: 30%;
+	}
+}
+
 .dashboardTitleContainer {
 	display: flex;
 	align-items: center;
 	gap: 8px;
-	width: 30%;
-
-	@media (min-width: 1280px) {
-		width: 40%;
-	}
+	width: 100%;
 }
 
 .dashboardImage {
@@ -45,4 +52,10 @@
 
 .dashboardTitleActionButton {
 	flex-shrink: 0;
+}
+
+.dashboardTags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
 }
