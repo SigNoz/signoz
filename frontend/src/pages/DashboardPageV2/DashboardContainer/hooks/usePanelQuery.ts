@@ -28,6 +28,25 @@ export interface UsePanelQueryArgs {
 	 * queries — callers don't need to compute that themselves.
 	 */
 	enabled?: boolean;
+	/**
+	 * Override the time window instead of reading global Redux time. Used by the
+	 * panel editor preview to stay isolated from the dashboard — changing the
+	 * preview time neither touches nor re-runs the dashboard behind the overlay.
+	 */
+	time?: PanelQueryTimeOverride;
+}
+
+/**
+ * Editor-local time window in epoch milliseconds (the V5 request native unit).
+ * The caller resolves its selection — relative or custom — to an absolute
+ * window so the fetch can ignore global Redux time entirely. Fractional ms are
+ * floored before the request: the V1 time helpers some callers resolve through
+ * (e.g. getStartEndRangeTime → getMicroSeconds) divide without truncating, and
+ * the V5 start/end are int64 — a float breaks the API call.
+ */
+export interface PanelQueryTimeOverride {
+	startMs: number;
+	endMs: number;
 }
 
 export interface UsePanelQueryResult {
@@ -66,6 +85,7 @@ export function usePanelQuery({
 	panel,
 	panelId,
 	enabled = true,
+	time,
 }: UsePanelQueryArgs): UsePanelQueryResult {
 	const fullKind = panel?.spec?.plugin?.kind;
 	const panelType =
@@ -78,9 +98,13 @@ export function usePanelQuery({
 		minTime,
 	} = useSelector<AppState, GlobalReducer>((state) => state.globalTime);
 
-	// Redux global time is in nanoseconds; the V5 API takes epoch ms.
-	const startMs = Math.floor(minTime / 1e6);
-	const endMs = Math.floor(maxTime / 1e6);
+	// Redux global time is in nanoseconds; the V5 API takes epoch ms. An editor
+	// time override (already in ms) wins so the preview fetch is independent of
+	// the dashboard's global selection. Floor both paths: start/end are int64
+	// on the wire, and override values can carry fractional ms (see
+	// PanelQueryTimeOverride).
+	const startMs = Math.floor(time ? time.startMs : minTime / 1e6);
+	const endMs = Math.floor(time ? time.endMs : maxTime / 1e6);
 
 	const requestPayload = useMemo(
 		() =>
@@ -102,9 +126,13 @@ export function usePanelQuery({
 		queryKey: [
 			REACT_QUERY_KEY.DASHBOARD_GRID_CARD_QUERY_RANGE,
 			panelId,
-			minTime,
-			maxTime,
-			globalSelectedInterval,
+			// Dashboard keys off Redux min/max + interval; the editor passes an
+			// explicit ms window. Keep each distinct so they refetch on their own
+			// time without colliding in the react-query cache. The floored values
+			// key the cache so it matches what was actually requested.
+			...(time
+				? [`override-${startMs}-${endMs}`]
+				: [minTime, maxTime, globalSelectedInterval]),
 			fullKind,
 			queries,
 		],

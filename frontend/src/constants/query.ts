@@ -1,5 +1,6 @@
 export enum QueryParams {
 	interval = 'interval',
+	editPanelId = 'editPanelId',
 	startTime = 'startTime',
 	endTime = 'endTime',
 	service = 'service',

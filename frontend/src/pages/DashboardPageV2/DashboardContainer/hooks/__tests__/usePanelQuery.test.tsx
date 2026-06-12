@@ -237,6 +237,49 @@ describe('usePanelQuery', () => {
 		);
 	});
 
+	it('uses the time override (not redux) for the request window and cache key', () => {
+		const panel = builderPanel();
+		renderHook(() =>
+			usePanelQuery({
+				panel,
+				panelId: 'p1',
+				time: { startMs: 1_700_000_000_000, endMs: 1_700_000_600_000 },
+			}),
+		);
+		const [{ requestPayload, queryKey }] = mockUseGetQueryRangeV5.mock.calls[0];
+		// Window comes from the override, not the redux nanosecond time.
+		expect(requestPayload.start).toBe(1_700_000_000_000);
+		expect(requestPayload.end).toBe(1_700_000_600_000);
+		// Cache key keys off the override so the preview refetches independently
+		// of the dashboard and never collides with its redux-keyed entry.
+		expect(queryKey).toStrictEqual(
+			expect.arrayContaining([
+				'p1',
+				'override-1700000000000-1700000600000',
+				'signoz/TimeSeriesPanel',
+				panel.spec?.queries,
+			]),
+		);
+		expect(queryKey).not.toContain(DEFAULT_GLOBAL_TIME.minTime);
+	});
+
+	it('floors fractional override ms — V1 time helpers emit floats but start/end are int64', () => {
+		renderHook(() =>
+			usePanelQuery({
+				panel: builderPanel(),
+				panelId: 'p1',
+				time: { startMs: 1_700_000_000_000.546, endMs: 1_700_000_600_000.999 },
+			}),
+		);
+		const [{ requestPayload, queryKey }] = mockUseGetQueryRangeV5.mock.calls[0];
+		expect(requestPayload.start).toBe(1_700_000_000_000);
+		expect(requestPayload.end).toBe(1_700_000_600_000);
+		// The cache key carries the floored values so it matches the request.
+		expect(queryKey).toStrictEqual(
+			expect.arrayContaining(['override-1700000000000-1700000600000']),
+		);
+	});
+
 	it('builds an empty composite and disables the fetch when panel is undefined (no crash)', () => {
 		renderHook(() => usePanelQuery({ panel: undefined, panelId: 'p-none' }));
 		const [{ requestPayload, enabled }] = mockUseGetQueryRangeV5.mock.calls[0];
