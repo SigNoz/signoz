@@ -869,7 +869,7 @@ function NewWidget({
 						defaultSize={80}
 						className="resizable-panel-left-container"
 					>
-						<OverlayScrollbar>
+						<OverlayScrollbar className="left-panel-scrollbar">
 							{selectedWidget && (
 								<LeftContainer
 									dashboardData={dashboardData}
@@ -896,7 +896,8 @@ function NewWidget({
 						defaultSize={20}
 						className="resizable-panel-right-container"
 					>
-						<RightContainer
+						<OverlayScrollbar className="right-panel-scrollbar">
+							<RightContainer
 							setGraphHandler={setGraphHandler}
 							title={title}
 							setTitle={setTitle}
@@ -954,6 +955,7 @@ function NewWidget({
 							enableDrillDown={enableDrillDown}
 							isNewDashboard={isNewDashboard}
 						/>
+						</OverlayScrollbar>
 					</ResizablePanel>
 				</ResizablePanelGroup>
 			</PanelContainer>
