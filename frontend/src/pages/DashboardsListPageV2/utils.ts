@@ -1,8 +1,8 @@
 import dayjs from 'dayjs';
 import { isEmpty } from 'lodash-es';
-import type { DashboardtypesGettableDashboardWithPinDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesListedDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
 
-export type DashboardListItem = DashboardtypesGettableDashboardWithPinDTO;
+export type DashboardListItem = DashboardtypesListedDashboardV2DTO;
 
 export const tagsToStrings = (
 	tags: { key: string; value: string }[] | null | undefined,
