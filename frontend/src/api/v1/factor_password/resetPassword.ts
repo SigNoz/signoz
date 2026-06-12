@@ -4,6 +4,13 @@ import { AxiosError } from 'axios';
 import { ErrorV2Resp, SuccessResponseV2 } from 'types/api';
 import { PayloadProps, Props } from 'types/api/user/resetPassword';
 
+/**
+ * @deprecated Use the generated `useResetPassword` hook (or `resetPassword` fetcher) from
+ * `api/generated/services/users` instead. This hand-written client targets the
+ * same endpoint and will be removed once call sites migrate.
+ *
+ * Part of https://github.com/SigNoz/engineering-pod/issues/5289, add a comment or update when removing this method.
+ */
 const resetPassword = async (
 	props: Props,
 ): Promise<SuccessResponseV2<PayloadProps>> => {

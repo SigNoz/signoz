@@ -317,6 +317,19 @@ func (q *QueryBuilderQuery[T]) validateAggregations(cfg validationConfig) error 
 	return nil
 }
 
+func (m MetricAggregation) ValidateForType() error {
+	if m.SpaceAggregation.IsPercentile() && !m.Type.IsPercentileSpaceAggregationAllowed() {
+		return errors.Newf(
+			errors.TypeInvalidInput,
+			errors.CodeInvalidInput,
+			"invalid space aggregation `%s` for metric type `%s`, percentile space aggregations are only supported for `histogram`, `exponentialhistogram` metric types",
+			m.SpaceAggregation.StringValue(),
+			m.Type.StringValue(),
+		)
+	}
+	return nil
+}
+
 func (q *QueryBuilderQuery[T]) validateLimitAndPagination(cfg validationConfig) error {
 	if cfg.skipLimitOffsetValidation {
 		return nil
