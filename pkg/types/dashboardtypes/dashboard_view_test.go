@@ -73,10 +73,15 @@ func TestPostableDashboardViewUnmarshalJSON(t *testing.T) {
 		expectedName string
 	}{
 		{
-			description:  "valid body trims surrounding whitespace in name",
-			body:         `{"name":"  my view  ","data":{"version":"v1","sort":"name","order":"asc"}}`,
+			description:  "valid body keeps name as-is",
+			body:         `{"name":"my view","data":{"version":"v1","sort":"name","order":"asc"}}`,
 			expectError:  false,
 			expectedName: "my view",
+		},
+		{
+			description: "name with surrounding whitespace is rejected",
+			body:        `{"name":"  my view  ","data":{"version":"v1","sort":"name","order":"asc"}}`,
+			expectError: true,
 		},
 		{
 			description: "unknown field is rejected",

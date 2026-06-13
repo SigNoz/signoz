@@ -69,11 +69,9 @@ func (p *PostableDashboardView) UnmarshalJSON(data []byte) error {
 }
 
 func (p *PostableDashboardView) Validate() error {
-	name, err := trimAndValidateDashboardViewName(p.Name)
-	if err != nil {
+	if err := validateDashboardViewName(p.Name); err != nil {
 		return err
 	}
-	p.Name = name
 	return p.Data.Validate()
 }
 
@@ -112,14 +110,16 @@ type ListableDashboardView struct {
 // Helpers
 // ════════════════════════════════════════════════════════════════════════
 
-func trimAndValidateDashboardViewName(name string) (string, error) {
-	trimmed := strings.TrimSpace(name)
-	if trimmed == "" {
-		return "", errors.NewInvalidInputf(ErrCodeDashboardViewInvalidInput, "name is required")
+func validateDashboardViewName(name string) error {
+	if name == "" {
+		return errors.NewInvalidInputf(ErrCodeDashboardViewInvalidInput, "name is required")
 	}
-	if n := utf8.RuneCountInString(trimmed); n > MaxDashboardViewNameLen {
-		return "", errors.NewInvalidInputf(ErrCodeDashboardViewInvalidInput,
+	if name != strings.TrimSpace(name) {
+		return errors.NewInvalidInputf(ErrCodeDashboardViewInvalidInput, "name must not have leading or trailing whitespace")
+	}
+	if n := utf8.RuneCountInString(name); n > MaxDashboardViewNameLen {
+		return errors.NewInvalidInputf(ErrCodeDashboardViewInvalidInput,
 			"name must be at most %d characters, got %d", MaxDashboardViewNameLen, n)
 	}
-	return trimmed, nil
+	return nil
 }
