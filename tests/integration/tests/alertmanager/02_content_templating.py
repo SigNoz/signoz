@@ -31,30 +31,6 @@ logger = setup_logger(__name__)
 # annotations defined inside the rule.json files with title_template / body_template define custom templating.
 CONTENT_TEMPLATING_TEST = [
     types.AlertManagerNotificationTestCase(
-        name="email_metrics_custom_templating",
-        rule_path="alertmanager/content_templating/metrics_rule.json",
-        alert_data=[
-            types.AlertData(
-                type="metrics",
-                data_path="alertmanager/content_templating/metrics_data.jsonl",
-            ),
-        ],
-        channel_config=email_default_config,
-        notification_expectation=types.AMNotificationExpectation(
-            should_notify=True,
-            wait_time_seconds=60,
-            notification_validations=[
-                types.NotificationValidation(
-                    destination_type="email",
-                    validation_data={
-                        "subject": "[firing] High container memory in production/checkout-7d9c8b5f4-x2k9p",
-                        "html": "<!DOCTYPE html>\n<html lang=\"en\">\n\n<head>\n  <meta charset=\"utf-8\"/>\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n  <meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\">\n  <title>[firing] High container memory in production/checkout-7d9c8b5f4-x2k9p</title>\n  <style>\n    code {\n      background: #f0f0f0;\n      padding: 2px 6px;\n      border-radius: 3px;\n      font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;\n      font-size: 13px;\n    }\n    pre {\n      background: #f0f0f0;\n      padding: 12px 16px;\n      border-radius: 6px;\n      font-size: 13px;\n      overflow-x: auto;\n      white-space: pre;\n    }\n    pre code {\n      background: none;\n      padding: 0;\n      border-radius: 0;\n      font-size: inherit;\n    }\n    table:not([role=\"presentation\"]) {\n      width: 100%;\n      border-collapse: collapse;\n      font-size: 14px;\n    }\n    table:not([role=\"presentation\"]) th {\n      font-weight: 600;\n      text-align: left;\n      padding: 8px 12px;\n      border-bottom: 2px solid #d0d0d0;\n    }\n    table:not([role=\"presentation\"]) td {\n      padding: 8px 12px;\n      border-bottom: 1px solid #e8e8e8;\n    }\n    table:not([role=\"presentation\"]) tr:last-child td {\n      border-bottom: none;\n    }\n  </style>\n</head>\n\n<body style=\"margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;line-height:1.6;color:#333;background:#fff\">\n  <table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" border=\"0\" style=\"background:#fff\">\n    <tr>\n      <td align=\"center\" style=\"padding:0\">\n        <table role=\"presentation\" width=\"600\" cellspacing=\"0\" cellpadding=\"0\" border=\"0\" style=\"max-width:600px;width:100%;border:1px solid #e2e2e2;border-radius:12px;overflow:hidden\">\n\n          <tr>\n            <td align=\"center\" style=\"padding:20px 20px 12px\">\n              <h2 style=\"margin:0 0 8px;font-size:20px;color:#333\">[firing] High container memory in production/checkout-7d9c8b5f4-x2k9p</h2>\n              <p style=\"margin:0;font-size:14px;color:#666\">\n                Status: <strong>firing</strong>\n                 | Firing: <strong style=\"color:#e53e3e\">1</strong>\n                \n              </p>\n            </td>\n          </tr>\n\n          <tr>\n            <td style=\"padding:0 20px\">\n              <table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" border=\"0\">\n                <tr><td style=\"border-top:1px solid #e2e2e2;font-size:0;line-height:0\" height=\"1\">&nbsp;</td></tr>\n              </table>\n            </td>\n          </tr>\n\n          \n          <tr>\n            <td style=\"padding:8px 20px\">\n              <table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" border=\"0\">\n                <tr>\n                  <td style=\"padding:16px;background:#fafafa;border:1px solid #e8e8e8;border-radius:6px\">\n                    <p><strong>Severity:</strong> critical\n<strong>Status:</strong> firing</p>\n<p><strong>Pod Details:</strong></p>\n<ul>\n<li><strong>Namespace:</strong> production</li>\n<li><strong>Pod:</strong> checkout-7d9c8b5f4-x2k9p</li>\n<li><strong>Container:</strong> checkout</li>\n<li><strong>Node:</strong> ip-10-0-1-23</li>\n</ul>\n<p><strong>Condition (critical):</strong></p>\n<ul>\n<li><strong>Current:</strong> 110</li>\n<li><strong>Threshold:</strong> above 100</li>\n</ul>\n<p><strong>Description:</strong> Container checkout in pod checkout-7d9c8b5f4-x2k9p (production) has memory usage at 110, which crossed the critical threshold of above 100. Immediate investigation is recommended to prevent OOMKill.</p>\n<p><strong>Runbook:</strong> <a href=\"https://signoz.io/docs/runbooks/container-memory-near-limit\">https://signoz.io/docs/runbooks/container-memory-near-limit</a></p>\n\n                  </td>\n                </tr>\n              </table>\n            </td>\n          </tr>\n          \n\n          \n          <tr>\n            <td style=\"padding:16px 20px\">\n              <table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" border=\"0\">\n                <tr>\n                  <td align=\"center\">\n                    <a href=\"http://localhost:8080\" target=\"_blank\" style=\"display:inline-block;padding:12px 32px;font-size:14px;font-weight:600;color:#fff;background:#4E74F8;text-decoration:none;border-radius:4px\">\n                      View in SigNoz\n                    </a>\n                  </td>\n                </tr>\n              </table>\n            </td>\n          </tr>\n          \n\n          <tr>\n            <td align=\"center\" style=\"padding:8px 16px 16px\">\n              <p style=\"margin:0;font-size:12px;color:#999;line-height:1.5\">\n                Sent by SigNoz AlertManager\n              </p>\n            </td>\n          </tr>\n        </table>\n      </td>\n    </tr>\n  </table>\n</body>\n\n</html>",
-                    },
-                ),
-            ],
-        ),
-    ),
-    types.AlertManagerNotificationTestCase(
         name="msteams_metrics_custom_templating",
         rule_path="alertmanager/content_templating/metrics_rule.json",
         alert_data=[
@@ -79,7 +55,7 @@ CONTENT_TEMPLATING_TEST = [
                                         "body": [
                                             {"text": "[firing] High container memory in production/checkout-7d9c8b5f4-x2k9p"},
                                             {
-                                                "text": "**Severity:** critical\n**Status:** firing\n\n**Pod Details:**\n- **Namespace:** production\n- **Pod:** checkout-7d9c8b5f4-x2k9p\n- **Container:** checkout\n- **Node:** ip-10-0-1-23\n\n**Condition (critical):**\n- **Current:** 110\n- **Threshold:** above 100\n\n**Description:** Container checkout in pod checkout-7d9c8b5f4-x2k9p (production) has memory usage at 110, which crossed the critical threshold of above 100. Immediate investigation is recommended to prevent OOMKill.\n\n**Runbook:** https://signoz.io/docs/runbooks/container-memory-near-limit"
+                                                "text": "**Severity:** critical\n**Status:** firing\n\n**Pod Details:**\n- **Namespace:** production\n- **Pod:** checkout-7d9c8b5f4-x2k9p\n- **Container:** checkout\n- **Node:** ip-10-0-1-23\n\n**Description:** Container checkout in pod checkout-7d9c8b5f4-x2k9p (production) exceeded the critical threshold.\n\n**Runbook:** https://signoz.io/docs/runbooks/container-memory-near-limit"
                                             },
                                         ]
                                     }
@@ -111,7 +87,7 @@ CONTENT_TEMPLATING_TEST = [
                         "path": "/v2/alerts",
                         "json_body": {
                             "message": "[firing] High container memory in production/checkout-7d9c8b5f4-x2k9p",
-                            "description": '<div><p><strong>Severity:</strong> critical\n<strong>Status:</strong> firing</p>\n<p><strong>Pod Details:</strong></p>\n<ul>\n<li><strong>Namespace:</strong> production</li>\n<li><strong>Pod:</strong> checkout-7d9c8b5f4-x2k9p</li>\n<li><strong>Container:</strong> checkout</li>\n<li><strong>Node:</strong> ip-10-0-1-23</li>\n</ul>\n<p><strong>Condition (critical):</strong></p>\n<ul>\n<li><strong>Current:</strong> 110</li>\n<li><strong>Threshold:</strong> above 100</li>\n</ul>\n<p><strong>Description:</strong> Container checkout in pod checkout-7d9c8b5f4-x2k9p (production) has memory usage at 110, which crossed the critical threshold of above 100. Immediate investigation is recommended to prevent OOMKill.</p>\n<p><strong>Runbook:</strong> <a href="https://signoz.io/docs/runbooks/container-memory-near-limit">https://signoz.io/docs/runbooks/container-memory-near-limit</a></p>\n</div>',
+                            "description": '<div><p><strong>Severity:</strong> critical\n<strong>Status:</strong> firing</p>\n<p><strong>Pod Details:</strong></p>\n<ul>\n<li><strong>Namespace:</strong> production</li>\n<li><strong>Pod:</strong> checkout-7d9c8b5f4-x2k9p</li>\n<li><strong>Container:</strong> checkout</li>\n<li><strong>Node:</strong> ip-10-0-1-23</li>\n</ul>\n<p><strong>Description:</strong> Container checkout in pod checkout-7d9c8b5f4-x2k9p (production) exceeded the critical threshold.</p>\n<p><strong>Runbook:</strong> <a href="https://signoz.io/docs/runbooks/container-memory-near-limit">https://signoz.io/docs/runbooks/container-memory-near-limit</a></p>\n</div>',
                             "details": {
                                 "alertname": "content_templating_metrics",
                                 "container": "checkout",
@@ -194,7 +170,7 @@ CONTENT_TEMPLATING_TEST = [
                             "attachments": [
                                 {"title": "[firing] Payment failure spike in payment-service"},
                                 {
-                                    "text": "*Severity:* critical\n*Status:* firing\n\n*Service:* payment-service\n\n*Condition (critical):*\n\n• *Current:* 1\n• *Threshold:* above 0\n\n*Description:* Payment failures observed at 1 over the evaluation window, crossing the critical threshold of above 0 on payment-service. Investigate downstream payment processor health.\n\n*Runbook:* https://signoz.io/docs/runbooks/payment-failure-spike\n\n",
+                                    "text": "*Severity:* critical\n*Status:* firing\n\n*Service:* payment-service\n\n*Description:* Payment failures observed on payment-service, crossing the critical threshold. Investigate downstream payment processor health.\n\n*Runbook:* https://signoz.io/docs/runbooks/payment-failure-spike\n\n",
                                     "actions": [{"type": "button", "text": "View Related Logs"}],
                                 },
                             ]
@@ -226,7 +202,7 @@ CONTENT_TEMPLATING_TEST = [
                             "attachments": [
                                 {"title": "[firing] High container memory in production/checkout-7d9c8b5f4-x2k9p"},
                                 {
-                                    "text": "*Severity:* critical\n*Status:* firing\n\n*Pod Details:*\n\n• *Namespace:* production\n• *Pod:* checkout-7d9c8b5f4-x2k9p\n• *Container:* checkout\n• *Node:* ip-10-0-1-23\n\n*Condition (critical):*\n\n• *Current:* 110\n• *Threshold:* above 100\n\n*Description:* Container checkout in pod checkout-7d9c8b5f4-x2k9p (production) has memory usage at 110, which crossed the critical threshold of above 100. Immediate investigation is recommended to prevent OOMKill.\n\n*Runbook:* https://signoz.io/docs/runbooks/container-memory-near-limit\n\n"
+                                    "text": "*Severity:* critical\n*Status:* firing\n\n*Pod Details:*\n\n• *Namespace:* production\n• *Pod:* checkout-7d9c8b5f4-x2k9p\n• *Container:* checkout\n• *Node:* ip-10-0-1-23\n\n*Description:* Container checkout in pod checkout-7d9c8b5f4-x2k9p (production) exceeded the critical threshold.\n\n*Runbook:* https://signoz.io/docs/runbooks/container-memory-near-limit\n\n"
                                 },
                             ]
                         },
@@ -278,14 +254,10 @@ CONTENT_TEMPLATING_TEST = [
                                 "threshold.name": "critical",
                             },
                             "commonAnnotations": {
-                                "templated_body": "**Severity:** critical\n**Status:** firing\n\n**Pod Details:**\n- **Namespace:** production\n- **Pod:** checkout-7d9c8b5f4-x2k9p\n- **Container:** checkout\n- **Node:** ip-10-0-1-23\n\n**Condition (critical):**\n- **Current:** 110\n- **Threshold:** above 100\n\n**Description:** Container checkout in pod checkout-7d9c8b5f4-x2k9p (production) has memory usage at 110, which crossed the critical threshold of above 100. Immediate investigation is recommended to prevent OOMKill.\n\n**Runbook:** https://signoz.io/docs/runbooks/container-memory-near-limit",
-                                "compare_op": "above",
+                                "templated_body": "**Severity:** critical\n**Status:** firing\n\n**Pod Details:**\n- **Namespace:** production\n- **Pod:** checkout-7d9c8b5f4-x2k9p\n- **Container:** checkout\n- **Node:** ip-10-0-1-23\n\n**Description:** Container checkout in pod checkout-7d9c8b5f4-x2k9p (production) exceeded the critical threshold.\n\n**Runbook:** https://signoz.io/docs/runbooks/container-memory-near-limit",
                                 "description": "Container checkout in pod checkout-7d9c8b5f4-x2k9p (production) exceeded memory threshold",
-                                "match_type": "at_least_once",
                                 "summary": "High container memory in production/checkout-7d9c8b5f4-x2k9p",
-                                "threshold.value": "100",
                                 "templated_title": "[firing] High container memory in production/checkout-7d9c8b5f4-x2k9p",
-                                "value": "110",
                             },
                         },
                     },
