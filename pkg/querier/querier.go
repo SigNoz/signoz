@@ -361,6 +361,10 @@ func (q *querier) resolveMetricMetadata(ctx context.Context, queries []qbtypes.Q
 				missingMetrics = append(missingMetrics, spec.Aggregations[i].MetricName)
 				continue
 			}
+			// Type is resolved now; validate aggregation compatibility against it.
+			if err := spec.Aggregations[i].ValidateForType(); err != nil {
+				return nil, "", err
+			}
 			presentAggregations = append(presentAggregations, spec.Aggregations[i])
 		}
 		if len(presentAggregations) == 0 {
