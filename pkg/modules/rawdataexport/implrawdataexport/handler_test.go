@@ -97,48 +97,29 @@ func TestValidateAndApplyDefaultExportLimits(t *testing.T) {
 		checkQueries  func(t *testing.T, queries []qbtypes.QueryEnvelope)
 	}{
 		{
-			name:    "single log query, zero limit gets default",
+			name:    "zero limit kept as-is (unlimited)",
 			queries: makeRequest(logQuery(0)).CompositeQuery.Queries,
 			checkQueries: func(t *testing.T, q []qbtypes.QueryEnvelope) {
-				assert.Equal(t, DefaultExportRowCountLimit, q[0].GetLimit())
+				assert.Equal(t, 0, q[0].GetLimit())
 			},
 		},
 		{
-			name:    "single log query, valid limit kept",
+			name:    "positive limit kept",
 			queries: makeRequest(logQuery(1000)).CompositeQuery.Queries,
 			checkQueries: func(t *testing.T, q []qbtypes.QueryEnvelope) {
 				assert.Equal(t, 1000, q[0].GetLimit())
 			},
 		},
 		{
-			name:    "single log query, max limit kept",
-			queries: makeRequest(logQuery(MaxExportRowCountLimit)).CompositeQuery.Queries,
-			checkQueries: func(t *testing.T, q []qbtypes.QueryEnvelope) {
-				assert.Equal(t, MaxExportRowCountLimit, q[0].GetLimit())
-			},
-		},
-		{
-			name:          "single log query, limit exceeds max",
-			queries:       makeRequest(logQuery(MaxExportRowCountLimit + 1)).CompositeQuery.Queries,
-			expectedError: true,
-		},
-		{
-			name:          "single log query, negative limit",
+			name:          "negative limit rejected",
 			queries:       makeRequest(logQuery(-1)).CompositeQuery.Queries,
 			expectedError: true,
 		},
 		{
-			name:    "single trace query, zero limit gets default",
-			queries: makeRequest(traceQuery(0)).CompositeQuery.Queries,
+			name:    "large trace limit kept",
+			queries: makeRequest(traceQuery(2_000_000)).CompositeQuery.Queries,
 			checkQueries: func(t *testing.T, q []qbtypes.QueryEnvelope) {
-				assert.Equal(t, DefaultExportRowCountLimit, q[0].GetLimit())
-			},
-		},
-		{
-			name:    "trace operator alone, zero limit gets default",
-			queries: makeRequest(traceOperatorQuery(0)).CompositeQuery.Queries,
-			checkQueries: func(t *testing.T, q []qbtypes.QueryEnvelope) {
-				assert.Equal(t, DefaultExportRowCountLimit, q[0].GetLimit())
+				assert.Equal(t, 2_000_000, q[0].GetLimit())
 			},
 		},
 	}

@@ -19,7 +19,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/exporttypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -106,33 +105,11 @@ func validateSpecForExport(req *qbtypes.QueryRangeRequest) error {
 
 func validateAndApplyDefaultExportLimits(queries []qbtypes.QueryEnvelope) error {
 	for idx := range queries {
-		limit := queries[idx].GetLimit()
-		maxLimit := maxLimitForQuery(queries[idx])
-		if limit == 0 {
-			limit = DefaultExportRowCountLimit
-		} else if limit < 0 {
-			return errors.NewInvalidInputf(errors.CodeInvalidInput, "limit must be positive")
-		} else if limit > maxLimit {
-			return errors.NewInvalidInputf(errors.CodeInvalidInput, "limit cannot be more than %d", maxLimit)
+		if queries[idx].GetLimit() < 0 {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "limit must be non-negative (0 = unlimited)")
 		}
-		queries[idx].SetLimit(limit)
 	}
 	return nil
-}
-
-// maxLimitForQuery returns the per-signal export ceiling. Traces use a higher
-// cap because exhaustive full-trace downloads need every span; logs/metrics
-// keep the original conservative cap.
-func maxLimitForQuery(q qbtypes.QueryEnvelope) int {
-	switch spec := q.Spec.(type) {
-	case qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]:
-		if spec.Signal == telemetrytypes.SignalTraces {
-			return MaxExportRowCountLimitTraces
-		}
-	case qbtypes.QueryBuilderTraceOperator:
-		return MaxExportRowCountLimitTraces
-	}
-	return MaxExportRowCountLimit
 }
 
 // setExportResponseHeaders sets common HTTP headers for export responses.

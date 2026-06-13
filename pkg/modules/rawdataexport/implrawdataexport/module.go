@@ -69,7 +69,7 @@ func (m *Module) ExportRawData(ctx context.Context, orgID valuer.UUID, rangeRequ
 func exportRawDataForSingleQuery(querier querier.Querier, ctx context.Context, orgID valuer.UUID, rangeRequest *qbtypes.QueryRangeRequest, rowChan chan *qbtypes.RawRow, errChan chan error, doneChan chan any, queryIndex int) {
 
 	queries := rangeRequest.CompositeQuery.Queries
-	rowCountLimit := queries[queryIndex].GetLimit()
+	clientLimit := queries[queryIndex].GetLimit() // 0 means unlimited
 	rowCount := 0
 
 	// Page using the querier's cursor. At large offsets ClickHouse still has to
@@ -78,8 +78,16 @@ func exportRawDataForSingleQuery(querier querier.Querier, ctx context.Context, o
 	queries[queryIndex].SetOffset(0)
 	cursor := ""
 
-	for rowCount < rowCountLimit {
-		chunkSize := min(ChunkSize, rowCountLimit-rowCount)
+	for {
+		chunkSize := ChunkSize
+		if clientLimit > 0 {
+			remaining := clientLimit - rowCount
+			if remaining <= 0 {
+				return
+			}
+			chunkSize = min(ChunkSize, remaining)
+		}
+
 		queries[queryIndex].SetLimit(chunkSize)
 		queries[queryIndex].SetCursor(cursor)
 
@@ -116,6 +124,7 @@ func exportRawDataForSingleQuery(querier querier.Querier, ctx context.Context, o
 
 		rowCount += newRowsCount
 
+		// Stop when the querier returns no cursor (last page) or a short chunk.
 		if nextCursor == "" || newRowsCount < chunkSize {
 			return
 		}
