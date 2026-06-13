@@ -133,19 +133,6 @@ NOTIFIERS_TEST = [
                                                 "text": "",
                                                 "facts": [
                                                     {
-                                                        "title": "threshold.value",
-                                                        "value": "10",
-                                                    },
-                                                    {
-                                                        "title": "compare_op",
-                                                        "value": "above",
-                                                    },
-                                                    {
-                                                        "title": "match_type",
-                                                        "value": "at_least_once",
-                                                    },
-                                                    {"title": "value", "value": "15"},
-                                                    {
                                                         "title": "description",
                                                         "value": "This alert is fired when the defined metric (current value: 15) crosses the threshold (10)",
                                                     },
@@ -196,11 +183,7 @@ NOTIFIERS_TEST = [
                                 "custom_details": {
                                     "firing": {
                                         "Annotations": [
-                                            "compare_op = above",
                                             {"description = This alert is fired when the defined metric (current value": "15) crosses the threshold (10)"},
-                                            "match_type = at_least_once",
-                                            "threshold.value = 10",
-                                            "value = 15",
                                         ],
                                         "Labels": [
                                             "alertname = threshold_above_at_least_once",
@@ -238,7 +221,7 @@ NOTIFIERS_TEST = [
                         "path": "/v2/alerts",
                         "json_body": {
                             "message": "threshold_above_at_least_once",
-                            "description": "Alerts Firing:\r\n\t\r\n\t - Message: This alert is fired when the defined metric (current value: 15) crosses the threshold (10)\r\n\tLabels:\r\n\t   - alertname = threshold_above_at_least_once\r\n\t   - severity = critical\r\n\t   - threshold.name = critical\r\n\t   Annotations:\r\n\t   - compare_op = above\r\n\t   - description = This alert is fired when the defined metric (current value: 15) crosses the threshold (10)\r\n\t   - match_type = at_least_once\r\n\t   - summary = This alert is fired when the defined metric (current value: 15) crosses the threshold (10)\r\n\t   - threshold.value = 10\r\n\t   - value = 15\r\n\t   Source: \r\n\t\r\n",
+                            "description": "Alerts Firing:\r\n\t\r\n\t - Message: This alert is fired when the defined metric (current value: 15) crosses the threshold (10)\r\n\tLabels:\r\n\t   - alertname = threshold_above_at_least_once\r\n\t   - severity = critical\r\n\t   - threshold.name = critical\r\n\t   Annotations:\r\n\t   - description = This alert is fired when the defined metric (current value: 15) crosses the threshold (10)\r\n\t   - summary = This alert is fired when the defined metric (current value: 15) crosses the threshold (10)\r\n\t   Source: \r\n\t\r\n",
                             "details": {
                                 "alertname": "threshold_above_at_least_once",
                                 "severity": "critical",
@@ -280,12 +263,8 @@ NOTIFIERS_TEST = [
                                         "threshold.name": "critical",
                                     },
                                     "annotations": {
-                                        "compare_op": "above",
                                         "description": "This alert is fired when the defined metric (current value: 15) crosses the threshold (10)",
-                                        "match_type": "at_least_once",
                                         "summary": "This alert is fired when the defined metric (current value: 15) crosses the threshold (10)",
-                                        "threshold.value": "10",
-                                        "value": "15",
                                     },
                                 }
                             ],
@@ -295,12 +274,8 @@ NOTIFIERS_TEST = [
                                 "threshold.name": "critical",
                             },
                             "commonAnnotations": {
-                                "compare_op": "above",
                                 "description": "This alert is fired when the defined metric (current value: 15) crosses the threshold (10)",
-                                "match_type": "at_least_once",
                                 "summary": "This alert is fired when the defined metric (current value: 15) crosses the threshold (10)",
-                                "threshold.value": "10",
-                                "value": "15",
                             },
                         },
                     },

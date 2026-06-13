@@ -55,7 +55,7 @@
     "description": "Payment failure spike detected on $service_name",
     "summary": "Payment failures elevated on $service_name",
     "_title_template": "[$alert.status] Payment failure spike in $labels.service.name",
-    "_body_template": "**Severity:** $rule.severity\n**Status:** $alert.status\n\n**Service:** $labels.service.name\n\n**Condition ($labels.threshold.name):**\n- **Current:** $alert.value\n- **Threshold:** $rule.threshold.op $rule.threshold.value\n\n**Description:** Payment failures observed at $alert.value over the evaluation window, crossing the $labels.threshold.name threshold of $rule.threshold.op $rule.threshold.value on $labels.service.name. Investigate downstream payment processor health.\n\n**Runbook:** https://signoz.io/docs/runbooks/payment-failure-spike"
+    "_body_template": "**Severity:** $rule.severity\n**Status:** $alert.status\n\n**Service:** $labels.service.name\n\n**Description:** Payment failures observed on $labels.service.name, crossing the $labels.threshold.name threshold. Investigate downstream payment processor health.\n\n**Runbook:** https://signoz.io/docs/runbooks/payment-failure-spike"
   },
   "notificationSettings": {
     "groupBy": [],

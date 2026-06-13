@@ -277,14 +277,8 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 
 		annotations := make(ruletypes.Labels, 0, len(r.Annotations().Map()))
 		for name, value := range r.Annotations().Map() {
-			// no need to expand custom templating annotations — they get expanded in the notifier layer
-			if ruletypes.IsCustomTemplatingAnnotation(name) {
-				annotations = append(annotations, ruletypes.Label{Name: name, Value: value})
-				continue
-			}
 			annotations = append(annotations, ruletypes.Label{Name: name, Value: expand(value)})
 		}
-
 		if smpl.IsMissing {
 			lb.Set(ruletypes.AlertNameLabel, "[No data] "+r.Name())
 			lb.Set(ruletypes.NoDataLabel, "true")
