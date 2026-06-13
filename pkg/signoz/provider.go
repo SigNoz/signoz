@@ -213,6 +213,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewCloudIntegrationRemoveCascadeDeleteFactory(sqlschema),
 		sqlmigration.NewAddUserDashboardPreferenceFactory(sqlstore, sqlschema),
 		sqlmigration.NewRecreateUserDashboardPreferenceFactory(sqlstore, sqlschema),
+		sqlmigration.NewMigrateRecurrenceBoundsFactory(sqlstore),
 	)
 }
 
