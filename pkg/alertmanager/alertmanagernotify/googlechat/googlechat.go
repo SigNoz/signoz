@@ -173,19 +173,29 @@ func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert) (*
 		// Join all alert bodies with newlines
 		body = strings.Join(result.Body, "\n\n")
 	}
-
+	
 	// Custom templates are authored in standard markdown, but Google Chat
 	// webhooks expect a different format
-	if !result.IsDefaultBody && body != "" {
-		rendered, renderErr := markdownrenderer.RenderGoogleChatMarkdown(body)
-		if renderErr != nil {
-			return nil, renderErr
+	title := result.Title
+	if !result.IsDefaultBody {
+		if body != "" {
+			rendered, renderErr := markdownrenderer.RenderGoogleChatMarkdown(body)
+			if renderErr != nil {
+				return nil, renderErr
+			}
+			body = rendered
 		}
-		body = rendered
+		if title != "" {
+			rendered, renderErr := markdownrenderer.RenderGoogleChatMarkdown(title)
+			if renderErr != nil {
+				return nil, renderErr
+			}
+			title = rendered
+		}
 	}
 
 	return &contentResult{
-		Title:         result.Title,
+		Title:         title,
 		Body:          body,
 		IsDefaultBody: result.IsDefaultBody,
 	}, nil
