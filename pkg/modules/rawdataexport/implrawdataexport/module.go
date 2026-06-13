@@ -72,10 +72,16 @@ func exportRawDataForSingleQuery(querier querier.Querier, ctx context.Context, o
 	rowCountLimit := queries[queryIndex].GetLimit()
 	rowCount := 0
 
+	// Page using the querier's cursor. At large offsets ClickHouse still has to
+	// scan and discard every prior row on each chunk. The cursor lets us
+	// advance the time window directly.
+	queries[queryIndex].SetOffset(0)
+	cursor := ""
+
 	for rowCount < rowCountLimit {
 		chunkSize := min(ChunkSize, rowCountLimit-rowCount)
 		queries[queryIndex].SetLimit(chunkSize)
-		queries[queryIndex].SetOffset(rowCount)
+		queries[queryIndex].SetCursor(cursor)
 
 		response, err := querier.QueryRange(ctx, orgID, rangeRequest)
 		if err != nil {
@@ -84,6 +90,7 @@ func exportRawDataForSingleQuery(querier querier.Querier, ctx context.Context, o
 		}
 
 		newRowsCount := 0
+		nextCursor := ""
 		for _, result := range response.Data.Results {
 			resultData, ok := result.(*qbtypes.RawData)
 			if !ok {
@@ -91,6 +98,9 @@ func exportRawDataForSingleQuery(querier querier.Querier, ctx context.Context, o
 				return
 			}
 
+			if resultData.NextCursor != "" {
+				nextCursor = resultData.NextCursor
+			}
 			newRowsCount += len(resultData.Rows)
 			for _, row := range resultData.Rows {
 				select {
@@ -106,9 +116,9 @@ func exportRawDataForSingleQuery(querier querier.Querier, ctx context.Context, o
 
 		rowCount += newRowsCount
 
-		// Stop if we received fewer rows than requested — no more data available
-		if newRowsCount < chunkSize {
+		if nextCursor == "" || newRowsCount < chunkSize {
 			return
 		}
+		cursor = nextCursor
 	}
 }
