@@ -1,5 +1,5 @@
 import { Check } from '@signozhq/icons';
-import { Tag } from 'antd';
+import { Badge } from '@signozhq/ui/badge';
 import styled from 'styled-components';
 
 export const TypographyText = styled.span<{
@@ -22,11 +22,12 @@ export const StyledCheckOutlined = styled(Check)`
 	float: right;
 `;
 
-export const TagContainer = styled(Tag)`
+export const TagContainer = styled(Badge).attrs({
+	color: 'secondary',
+	variant: 'outline',
+})`
 	&&& {
-		display: inline-block;
-		border-radius: 3px;
-		padding: 0.1rem 0.2rem;
+		display: flex;
 		font-weight: 300;
 		font-size: 0.6rem;
 	}
@@ -38,4 +39,5 @@ export const TagLabel = styled.span`
 
 export const TagValue = styled.span`
 	text-transform: capitalize;
+	font-weight: 400;
 `;

@@ -74,7 +74,7 @@ func (module *getter) ListDeprecatedUsersByOrgID(ctx context.Context, orgID valu
 		roleNames := userIDToRoleNames[user.ID]
 
 		if len(roleNames) == 0 {
-			return nil, errors.Newf(errors.TypeUnexpected, authtypes.ErrCodeUserRolesNotFound, "no user roles entries found for user: %s", user.ID.String())
+			return nil, errors.Newf(errors.TypeInternal, authtypes.ErrCodeUserRolesNotFound, "no user roles entries found for user: %s", user.ID.String())
 		}
 
 		role := authtypes.SigNozManagedRoleToExistingLegacyRole[roleNames[0]]
@@ -113,11 +113,11 @@ func (module *getter) GetDeprecatedUserByOrgIDAndID(ctx context.Context, orgID v
 	}
 
 	if len(userRoles) == 0 {
-		return nil, errors.New(errors.TypeUnexpected, authtypes.ErrCodeUserRolesNotFound, "no user roles entries found")
+		return nil, errors.New(errors.TypeInternal, authtypes.ErrCodeUserRolesNotFound, "no user roles entries found")
 	}
 
 	if userRoles[0].Role == nil {
-		return nil, errors.New(errors.TypeUnexpected, authtypes.ErrCodeRoleNotFound, "role not found for user role entry")
+		return nil, errors.New(errors.TypeInternal, authtypes.ErrCodeRoleNotFound, "role not found for user role entry")
 	}
 
 	role := authtypes.SigNozManagedRoleToExistingLegacyRole[userRoles[0].Role.Name]
@@ -141,11 +141,11 @@ func (module *getter) Get(ctx context.Context, id valuer.UUID) (*types.Deprecate
 	}
 
 	if len(userRoles) == 0 {
-		return nil, errors.New(errors.TypeUnexpected, authtypes.ErrCodeUserRolesNotFound, "no user roles entries found")
+		return nil, errors.New(errors.TypeInternal, authtypes.ErrCodeUserRolesNotFound, "no user roles entries found")
 	}
 
 	if userRoles[0].Role == nil {
-		return nil, errors.New(errors.TypeUnexpected, authtypes.ErrCodeRoleNotFound, "role not found for user role entry")
+		return nil, errors.New(errors.TypeInternal, authtypes.ErrCodeRoleNotFound, "role not found for user role entry")
 	}
 
 	role := authtypes.SigNozManagedRoleToExistingLegacyRole[userRoles[0].Role.Name]
@@ -211,7 +211,7 @@ func (module *getter) GetRolesByUserID(ctx context.Context, userID valuer.UUID) 
 
 	for _, ur := range userRoles {
 		if ur.Role == nil {
-			return nil, errors.New(errors.TypeUnexpected, authtypes.ErrCodeRoleNotFound, "role not found for user role entry")
+			return nil, errors.New(errors.TypeInternal, authtypes.ErrCodeRoleNotFound, "role not found for user role entry")
 		}
 	}
 
@@ -224,6 +224,19 @@ func (module *getter) GetResetPasswordTokenByOrgIDAndUserID(ctx context.Context,
 
 func (module *getter) GetUsersByOrgIDAndRoleID(ctx context.Context, orgID valuer.UUID, roleID valuer.UUID) ([]*types.User, error) {
 	return module.store.GetUsersByOrgIDAndRoleID(ctx, orgID, roleID)
+}
+
+func (module *getter) VerifyResetPasswordToken(ctx context.Context, token string) error {
+	resetPasswordToken, err := module.store.GetResetPasswordToken(ctx, token)
+	if err != nil {
+		return err
+	}
+
+	if resetPasswordToken.IsExpired() {
+		return errors.New(errors.TypeUnauthenticated, types.ErrCodeResetPasswordTokenExpired, "reset password token has expired")
+	}
+
+	return nil
 }
 
 func (module *getter) OnBeforeRoleDelete(ctx context.Context, orgID valuer.UUID, roleID valuer.UUID) error {

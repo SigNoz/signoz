@@ -160,8 +160,8 @@ describe('getChartManagerColumns', () => {
 		expect(renderFn).toBeDefined();
 		const { container } = render(renderFn!(null, tableDataSet[1], 1));
 
-		const checkbox = container.querySelector('input[type="checkbox"]');
+		const checkbox = container.querySelector('[role="checkbox"]');
 		expect(checkbox).toBeInTheDocument();
-		expect(checkbox).toBeChecked(); // graphVisibilityState[1] is true
+		expect(checkbox).toHaveAttribute('data-state', 'checked'); // graphVisibilityState[1] is true
 	});
 });

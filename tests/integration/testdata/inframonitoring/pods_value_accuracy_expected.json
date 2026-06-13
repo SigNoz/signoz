@@ -1,0 +1,26 @@
+{
+  "records": [
+    {
+      "podName": "acc-p1",
+      "podCPU": 0.5,
+      "podCPURequest": 0.25,
+      "podCPULimit": 0.5,
+      "podMemory": 524288000.0,
+      "podMemoryRequest": 0.5,
+      "podMemoryLimit": 0.25,
+      "podPhase": "running",
+      "podCountsByPhase": {"pending": 0, "running": 1, "succeeded": 0, "failed": 0, "unknown": 0}
+    },
+    {
+      "podName": "acc-p2",
+      "podCPU": 1.5,
+      "podCPURequest": 0.75,
+      "podCPULimit": 1.0,
+      "podMemory": 1073741824.0,
+      "podMemoryRequest": 0.75,
+      "podMemoryLimit": 0.5,
+      "podPhase": "running",
+      "podCountsByPhase": {"pending": 0, "running": 1, "succeeded": 0, "failed": 0, "unknown": 0}
+    }
+  ]
+}

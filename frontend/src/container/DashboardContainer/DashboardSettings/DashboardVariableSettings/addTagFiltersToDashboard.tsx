@@ -1,6 +1,8 @@
 import {
 	convertFiltersToExpressionWithExistingQuery,
+	createVariablePlaceholderRegExp,
 	removeKeysFromExpression,
+	removeVariableFromExpression,
 } from 'components/QueryBuilderV2/utils';
 import { cloneDeep, isArray, isEmpty } from 'lodash-es';
 import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
@@ -155,6 +157,139 @@ const updateAfterRemoval = (
 			},
 		},
 	};
+};
+
+const removeVariablePlaceholders = (
+	text: string | undefined,
+	variableName: string,
+): string => {
+	if (!text) {
+		return '';
+	}
+
+	const tokenPattern = createVariablePlaceholderRegExp(variableName);
+
+	// Step 1: attempt clause-aware removal for SQL WHERE patterns.
+	// Strips the entire `key op $var` unit plus its adjacent AND/OR so we
+	// never leave a dangling `key = ` in unquoted ClickHouse SQL clauses.
+	// Handles three shapes:
+	//   (a) preceding conjunction:  AND key = $var
+	//   (b) following conjunction:  key = $var AND
+	//   (c) standalone clause:      key = $var  (end of expression)
+	const escapedToken = tokenPattern.source;
+	const clausePattern = new RegExp(
+		// (a) conjunction before the clause
+		`\\s*\\b(?:AND|OR)\\b\\s+[\\w."'\\[\\]]+\\s*(?:=|!=|<>|LIKE|ILIKE|IN|NOT\\s+IN)\\s*'?${escapedToken}'?` +
+			// (b)+(c) clause first, optional conjunction after
+			`|[\\w."'\\[\\]]+\\s*(?:=|!=|<>|LIKE|ILIKE|IN|NOT\\s+IN)\\s*'?${escapedToken}'?(?:\\s*\\b(?:AND|OR)\\b)?`,
+		'gi',
+	);
+
+	const withClauseRemoval = text.replace(clausePattern, '');
+	if (withClauseRemoval !== text) {
+		return withClauseRemoval
+			.replace(/\s{2,}/g, ' ')
+			.replace(/\bWHERE\s*$/i, '')
+			.trim();
+	}
+
+	// Step 2: fallback — bare variable usage outside a key-op-value pattern
+	// (e.g. SELECT $metric, LIMIT $n). Token-only removal is correct here.
+	return text
+		.replace(tokenPattern, '')
+		.replace(/\s{2,}/g, ' ')
+		.trim();
+};
+
+const removeVariableReferencesFromQueryData = (
+	queryData: IBuilderQuery,
+	variableName: string,
+): IBuilderQuery => {
+	const updatedFilter = queryData.filter?.expression
+		? {
+				...queryData.filter,
+				expression: removeVariableFromExpression(
+					queryData.filter.expression,
+					variableName,
+				),
+			}
+		: queryData.filter;
+
+	return { ...queryData, filter: updatedFilter };
+};
+
+const removeVariableReferencesFromWidget = (
+	widget: Widgets,
+	variableName: string,
+): Widgets => {
+	let updatedWidget = { ...widget };
+
+	if (updatedWidget.query?.builder?.queryData) {
+		updatedWidget = {
+			...updatedWidget,
+			query: {
+				...updatedWidget.query,
+				builder: {
+					...updatedWidget.query.builder,
+					queryData: updatedWidget.query.builder.queryData.map((queryData) =>
+						removeVariableReferencesFromQueryData(queryData, variableName),
+					),
+				},
+			},
+		};
+	}
+
+	if (updatedWidget.query?.promql) {
+		updatedWidget = {
+			...updatedWidget,
+			query: {
+				...updatedWidget.query,
+				promql: updatedWidget.query.promql.map((promqlQuery) => ({
+					...promqlQuery,
+					query: removeVariablePlaceholders(promqlQuery.query, variableName),
+				})),
+			},
+		};
+	}
+
+	if (updatedWidget.query?.clickhouse_sql) {
+		updatedWidget = {
+			...updatedWidget,
+			query: {
+				...updatedWidget.query,
+				clickhouse_sql: updatedWidget.query.clickhouse_sql.map((sqlQuery) => ({
+					...sqlQuery,
+					query: removeVariablePlaceholders(sqlQuery.query, variableName),
+				})),
+			},
+		};
+	}
+
+	return updatedWidget;
+};
+
+export const removeVariableReferencesFromDashboard = (
+	dashboard: Dashboard | undefined,
+	variableName: string,
+): Dashboard | undefined => {
+	if (!dashboard || !variableName) {
+		return dashboard;
+	}
+
+	const updatedDashboard = cloneDeep(dashboard);
+
+	if (updatedDashboard.data.widgets) {
+		updatedDashboard.data.widgets = updatedDashboard.data.widgets.map(
+			(widget) => {
+				if ('query' in widget) {
+					return removeVariableReferencesFromWidget(widget as Widgets, variableName);
+				}
+				return widget;
+			},
+		);
+	}
+
+	return updatedDashboard;
 };
 
 /**

@@ -8,6 +8,7 @@ import (
 	"github.com/prometheus/common/model"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerserver"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerstore/sqlalertmanagerstore"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -110,7 +111,7 @@ func (provider *provider) PutAlerts(ctx context.Context, orgID string, alerts al
 	return provider.service.PutAlerts(ctx, orgID, alerts)
 }
 
-func (provider *provider) TestReceiver(ctx context.Context, orgID string, receiver alertmanagertypes.Receiver) error {
+func (provider *provider) TestReceiver(ctx context.Context, orgID string, receiver *alertmanagertypes.Receiver) error {
 	return provider.service.TestReceiver(ctx, orgID, receiver)
 }
 
@@ -151,7 +152,7 @@ func (provider *provider) GetChannelByID(ctx context.Context, orgID string, chan
 	return provider.configStore.GetChannelByID(ctx, orgID, channelID)
 }
 
-func (provider *provider) UpdateChannelByReceiverAndID(ctx context.Context, orgID string, receiver alertmanagertypes.Receiver, id valuer.UUID) error {
+func (provider *provider) UpdateChannelByReceiverAndID(ctx context.Context, orgID string, receiver *alertmanagertypes.Receiver, id valuer.UUID) error {
 	channel, err := provider.configStore.GetChannelByID(ctx, orgID, id)
 	if err != nil {
 		return err
@@ -210,7 +211,7 @@ func (provider *provider) DeleteChannelByID(ctx context.Context, orgID string, c
 	}))
 }
 
-func (provider *provider) CreateChannel(ctx context.Context, orgID string, receiver alertmanagertypes.Receiver) (*alertmanagertypes.Channel, error) {
+func (provider *provider) CreateChannel(ctx context.Context, orgID string, receiver *alertmanagertypes.Receiver) (*alertmanagertypes.Channel, error) {
 	config, err := provider.configStore.Get(ctx, orgID)
 	if err != nil {
 		return nil, err
@@ -233,6 +234,10 @@ func (provider *provider) CreateChannel(ctx context.Context, orgID string, recei
 	}
 
 	return channel, nil
+}
+
+func (provider *provider) Config() alertmanagerserver.Config {
+	return provider.config.Signoz.Config
 }
 
 func (provider *provider) SetConfig(ctx context.Context, config *alertmanagertypes.Config) error {

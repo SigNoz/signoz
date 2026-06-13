@@ -13,6 +13,65 @@ import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryData } from 'types/api/widgets/getQuery';
 import { v4 } from 'uuid';
 
+const DEFAULT_STEP_INTERVAL_SECONDS = 60;
+const MIN_TRACES_TIME_RANGE_MINUTES = 5;
+
+export function getMinStepIntervalFromApiResponse(
+	apiResponse: MetricRangePayloadProps,
+): number {
+	const stepIntervals: ExecStats['stepIntervals'] = get(
+		apiResponse,
+		'data.newResult.meta.stepIntervals',
+		{},
+	);
+	const values = Object.values(stepIntervals).filter(
+		(value): value is number =>
+			typeof value === 'number' && Number.isFinite(value),
+	);
+
+	if (values.length === 0) {
+		return DEFAULT_STEP_INTERVAL_SECONDS;
+	}
+
+	return Math.min(...values);
+}
+
+export function getStepIntervalForQuery(
+	apiResponse: MetricRangePayloadProps,
+	queryName?: string,
+): number {
+	const minStepInterval = getMinStepIntervalFromApiResponse(apiResponse);
+
+	if (!queryName) {
+		return minStepInterval;
+	}
+
+	const stepIntervals: ExecStats['stepIntervals'] = get(
+		apiResponse,
+		'data.newResult.meta.stepIntervals',
+		{},
+	);
+
+	return get(stepIntervals, queryName, minStepInterval) ?? minStepInterval;
+}
+
+export function getTracesTimeRangeFromStepInterval(
+	xValue: number,
+	stepIntervalSeconds: number,
+): { start: number; end: number } {
+	const rangeMinutes = Math.max(
+		stepIntervalSeconds / 60,
+		MIN_TRACES_TIME_RANGE_MINUTES,
+	);
+	const rangeMs = rangeMinutes * 60 * 1000;
+	const start = Math.floor(xValue * 1000);
+
+	return {
+		start,
+		end: Math.ceil(start + rangeMs),
+	};
+}
+
 export const prepareStatusCodeBarChartsConfig = ({
 	timezone,
 	isDarkMode,
@@ -41,7 +100,7 @@ export const prepareStatusCodeBarChartsConfig = ({
 		'data.newResult.meta.stepIntervals',
 		{},
 	);
-	const minStepInterval = Math.min(...Object.values(stepIntervals));
+	const minStepInterval = getMinStepIntervalFromApiResponse(apiResponse);
 
 	const config = buildBaseConfig({
 		id: v4(),

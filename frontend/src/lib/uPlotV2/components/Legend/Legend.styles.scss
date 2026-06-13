@@ -171,17 +171,18 @@
 	}
 
 	.legend-copy-button {
-		display: none;
-		align-items: center;
-		justify-content: center;
+		// Always laid out (space reserved) but transparent, so revealing it on
+		// hover fades the icon in without reflowing the row / shifting the label.
+		// Shrink the shared icon Button (defaults to a 2rem square) to the
+		// compact legend row via its size tokens.
+		--button-height: auto;
+		--button-width: auto;
+		--button-padding: 2px;
+
+		opacity: 0;
 		flex-shrink: 0;
-		padding: 2px;
-		margin: 0;
-		border: none;
 		color: var(--l2-foreground);
-		cursor: pointer;
 		border-radius: 4px;
-		opacity: 1;
 		transition:
 			opacity 0.15s ease,
 			color 0.15s ease;
@@ -192,9 +193,8 @@
 	}
 
 	&:hover {
-		background: color-mix(in srgb, var(--l1-foreground) 5%, transparent);
+		background: var(--l3-background);
 		.legend-copy-button {
-			display: flex;
 			opacity: 1;
 		}
 	}

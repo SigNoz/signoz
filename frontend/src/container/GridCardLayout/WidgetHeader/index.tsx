@@ -15,7 +15,8 @@ import {
 	X,
 } from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Dropdown, Input, MenuProps, Tooltip } from 'antd';
+import { Button, Input, Tooltip } from 'antd';
+import { DropdownMenuSimple } from '@signozhq/ui/dropdown-menu';
 import { Typography } from '@signozhq/ui/typography';
 import ErrorContent from 'components/ErrorModal/components/ErrorContent';
 import ErrorPopover from 'components/ErrorPopover/ErrorPopover';
@@ -128,7 +129,7 @@ function WidgetHeader({
 		],
 	);
 
-	const onMenuItemSelectHandler: MenuProps['onClick'] = useCallback(
+	const onMenuItemSelectHandler = useCallback(
 		({ key }: { key: string }): void => {
 			if (isTWidgetOptions(key)) {
 				const functionToCall = keyMethodMapping[key];
@@ -188,18 +189,8 @@ function WidgetHeader({
 			{
 				key: MenuItemKeys.CreateAlerts,
 				icon: <Bell size="md" />,
-				label: (
-					<span
-						style={{
-							display: 'flex',
-							alignItems: 'baseline',
-							justifyContent: 'space-between',
-						}}
-					>
-						{MENUITEM_KEYS_VS_LABELS[MenuItemKeys.CreateAlerts]}
-						<SquareArrowOutUpRight size={10} />
-					</span>
-				),
+				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.CreateAlerts],
+				rightIcon: <SquareArrowOutUpRight size="lg" />,
 				isVisible: headerMenuList?.includes(MenuItemKeys.CreateAlerts) || false,
 				disabled: false,
 			},
@@ -221,8 +212,10 @@ function WidgetHeader({
 
 	const menu = useMemo(
 		() => ({
-			items: updatedMenuList,
-			onClick: onMenuItemSelectHandler,
+			items: updatedMenuList.map((item) => ({
+				...item,
+				onClick: onMenuItemSelectHandler,
+			})),
 		}),
 		[updatedMenuList, onMenuItemSelectHandler],
 	);
@@ -321,7 +314,12 @@ function WidgetHeader({
 							/>
 						)}
 						{menu && Array.isArray(menu.items) && menu.items.length > 0 && (
-							<Dropdown menu={menu} trigger={['hover']} placement="bottomRight">
+							<DropdownMenuSimple
+								menu={menu}
+								side="bottom"
+								align="end"
+								className="widget-header-dropdown"
+							>
 								<Button
 									data-testid="widget-header-options"
 									className={`widget-header-more-options ${
@@ -329,7 +327,7 @@ function WidgetHeader({
 									}`}
 									icon={<EllipsisVertical size="md" />}
 								/>
-							</Dropdown>
+							</DropdownMenuSimple>
 						)}
 					</div>
 				</>

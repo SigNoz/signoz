@@ -355,26 +355,32 @@ func (module *module) GetService(ctx context.Context, orgID valuer.UUID, service
 
 	var integrationService *cloudintegrationtypes.CloudIntegrationService
 
-	if !cloudIntegrationID.IsZero() {
-		storedService, err := module.store.GetServiceByServiceID(ctx, cloudIntegrationID, serviceID)
-		if err != nil && !errors.Ast(err, errors.TypeNotFound) {
-			return nil, err
-		}
-		if storedService != nil {
-			serviceConfig, err := cloudintegrationtypes.NewServiceConfigFromJSON(provider, storedService.Config)
-			if err != nil {
-				return nil, err
-			}
-
-			integrationService = cloudintegrationtypes.NewCloudIntegrationServiceFromStorable(storedService, serviceConfig)
-		}
-
-		if err := module.enrichDashboardIDs(ctx, orgID, provider, serviceID, serviceDefinition); err != nil {
-			return nil, err
-		}
+	if cloudIntegrationID.IsZero() {
+		return cloudintegrationtypes.NewService(provider, serviceDefinition, nil, nil), nil
 	}
 
-	return cloudintegrationtypes.NewService(*serviceDefinition, integrationService), nil
+	storedService, err := module.store.GetServiceByServiceID(ctx, cloudIntegrationID, serviceID)
+	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
+		return nil, err
+	}
+	if storedService == nil {
+		return cloudintegrationtypes.NewService(provider, serviceDefinition, nil, nil), nil
+	}
+
+	serviceConfig, err := cloudintegrationtypes.NewServiceConfigFromJSON(provider, storedService.Config)
+	if err != nil {
+		return nil, err
+	}
+
+	integrationService = cloudintegrationtypes.NewCloudIntegrationServiceFromStorable(storedService, serviceConfig)
+
+	slugPrefix := cloudintegrationtypes.CloudIntegrationDashboardSlugPrefix(provider, serviceID)
+	integrationDashboards, err := module.store.ListIntegrationDashboardsBySlugPrefix(ctx, orgID, cloudintegrationtypes.IntegrationDashboardProviderCloudIntegration, slugPrefix)
+	if err != nil {
+		return nil, err
+	}
+
+	return cloudintegrationtypes.NewService(provider, serviceDefinition, integrationService, integrationDashboards), nil
 }
 
 func (module *module) CreateService(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, service *cloudintegrationtypes.CloudIntegrationService, provider cloudintegrationtypes.CloudProviderType) error {
@@ -535,7 +541,7 @@ func (module *module) getOrCreateAPIKey(ctx context.Context, orgID valuer.UUID, 
 func (module *module) provisionDashboards(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, provider cloudintegrationtypes.CloudProviderType, service *cloudintegrationtypes.CloudIntegrationService, serviceDefinition *cloudintegrationtypes.ServiceDefinition) error {
 	// TODO: DB calls are in for loop, can be optimized later.
 	for _, dashboard := range serviceDefinition.Assets.Dashboards {
-		slug := cloudintegrationtypes.IntegrationDashboardSlug(provider, service.Type, dashboard.ID)
+		slug := cloudintegrationtypes.CloudIntegrationDashboardSlug(provider, service.Type, dashboard.ID)
 
 		existing, err := module.store.GetIntegrationDashboardBySlug(ctx, orgID, cloudintegrationtypes.IntegrationDashboardProviderCloudIntegration, slug)
 		if err != nil && !errors.Ast(err, errors.TypeNotFound) {
@@ -562,7 +568,7 @@ func (module *module) provisionDashboards(ctx context.Context, orgID valuer.UUID
 // deprovisionDashboards deletes all dashboard and integration_dashboard rows for the given service.
 // make sure to call this within a transaction.
 func (module *module) deprovisionDashboards(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType, serviceID cloudintegrationtypes.ServiceID) error {
-	slugPrefix := cloudintegrationtypes.IntegrationDashboardSlugPrefix(provider, serviceID)
+	slugPrefix := cloudintegrationtypes.CloudIntegrationDashboardSlugPrefix(provider, serviceID)
 	rows, err := module.store.ListIntegrationDashboardsBySlugPrefix(ctx, orgID, cloudintegrationtypes.IntegrationDashboardProviderCloudIntegration, slugPrefix)
 	if err != nil {
 		return err
@@ -580,23 +586,6 @@ func (module *module) deprovisionDashboards(ctx context.Context, orgID valuer.UU
 		if err := module.dashboardModule.DeleteUnsafe(ctx, orgID, dashID); err != nil {
 			return err
 		}
-	}
-	return nil
-}
-
-// enrichDashboardIDs replaces the raw dashboard name in each Dashboard.ID with the provisioned UUID.
-// TODO: remove this hack and send idiomatic response to client.
-func (module *module) enrichDashboardIDs(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType, serviceID cloudintegrationtypes.ServiceID, serviceDefinition *cloudintegrationtypes.ServiceDefinition) error {
-	for i, d := range serviceDefinition.Assets.Dashboards {
-		slug := cloudintegrationtypes.IntegrationDashboardSlug(provider, serviceID, d.ID)
-		row, err := module.store.GetIntegrationDashboardBySlug(ctx, orgID, cloudintegrationtypes.IntegrationDashboardProviderCloudIntegration, slug)
-		if err != nil {
-			if errors.Ast(err, errors.TypeNotFound) {
-				continue
-			}
-			return err
-		}
-		serviceDefinition.Assets.Dashboards[i].ID = row.DashboardID
 	}
 	return nil
 }

@@ -1,6 +1,8 @@
 import type { Config } from '@jest/types';
 
-const USE_SAFE_NAVIGATE_MOCK_PATH = '<rootDir>/__mocks__/useSafeNavigate.ts';
+const USE_SAFE_NAVIGATE_MOCK_PATH =
+	'<rootDir>/src/__tests__/safeNavigateMock.ts';
+const LOG_EVENT_MOCK_PATH = '<rootDir>/src/__tests__/logEventMock.ts';
 
 const config: Config.InitialOptions = {
 	silent: true,
@@ -22,6 +24,8 @@ const config: Config.InitialOptions = {
 		'^hooks/useSafeNavigate$': USE_SAFE_NAVIGATE_MOCK_PATH,
 		'^src/hooks/useSafeNavigate$': USE_SAFE_NAVIGATE_MOCK_PATH,
 		'^.*/useSafeNavigate$': USE_SAFE_NAVIGATE_MOCK_PATH,
+		'^api/common/logEvent$': LOG_EVENT_MOCK_PATH,
+		'^src/api/common/logEvent$': LOG_EVENT_MOCK_PATH,
 		'^constants/env$': '<rootDir>/__mocks__/env.ts',
 		'^src/constants/env$': '<rootDir>/__mocks__/env.ts',
 		'^@signozhq/icons$': '<rootDir>/__mocks__/signozhqIconsMock.tsx',

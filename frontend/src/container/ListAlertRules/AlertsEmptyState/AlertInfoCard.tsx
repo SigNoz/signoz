@@ -2,6 +2,8 @@ import { ArrowRight } from '@signozhq/icons';
 import { Typography } from '@signozhq/ui/typography';
 import { openInNewTab } from 'utils/navigation';
 
+import styles from './AlertsEmptyState.module.scss';
+
 interface AlertInfoCardProps {
 	header: string;
 	subheader: string;
@@ -17,17 +19,17 @@ function AlertInfoCard({
 }: AlertInfoCardProps): JSX.Element {
 	return (
 		<div
-			className="alert-info-card"
+			className={styles.alertInfoCard}
 			onClick={(): void => {
 				onClick();
 				openInNewTab(link);
 			}}
 		>
-			<div className="alert-card-text">
-				<Typography.Text className="alert-card-text-header">
+			<div className={styles.alertCardText}>
+				<Typography.Text className={styles.alertCardTextHeader}>
 					{header}
 				</Typography.Text>
-				<Typography.Text className="alert-card-text-subheader">
+				<Typography.Text className={styles.alertCardTextSubheader}>
 					{subheader}
 				</Typography.Text>
 			</div>
