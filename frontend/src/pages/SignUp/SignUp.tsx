@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { Callout } from '@signozhq/ui/callout';
 import { Input } from '@signozhq/ui/input';
@@ -13,6 +13,8 @@ import AuthPageContainer from 'components/AuthPageContainer';
 import { useNotifications } from 'hooks/useNotifications';
 import { ArrowRight } from '@signozhq/icons';
 import APIError from 'types/api/error';
+import { useLocation, useHistory } from 'react-router-dom';
+import getInvite from 'api/v1/invite/get';
 
 import tvUrl from '@/assets/svgs/tv.svg';
 
@@ -43,6 +45,31 @@ function SignUp(): JSX.Element {
 	const password = Form.useWatch('password', form);
 	const confirmPassword = Form.useWatch('confirmPassword', form);
 
+	// Token validation
+	const location = useLocation();
+	const history = useHistory();
+	const searchParams = new URLSearchParams(location.search);
+	const inviteToken = searchParams.get('token');
+	const [isInvalidToken, setIsInvalidToken] = useState(false);
+	const [isValidatingToken, setIsValidatingToken] = useState(false);
+	useEffect(() => {
+		// No token = first admin signup, skip validation
+		if (!inviteToken) {
+			return;
+		}
+
+		setIsValidatingToken(true);
+		getInvite(inviteToken)
+			.then(() => {
+				// token is valid, do nothing
+			})
+			.catch(() => {
+				setIsInvalidToken(true);
+			})
+			.finally(() => {
+				setIsValidatingToken(false);
+			});
+	}, [inviteToken]);
 	const signUp = async (values: FormValues): Promise<void> => {
 		try {
 			const { organizationName, password, email } = values;
@@ -100,7 +127,63 @@ function SignUp(): JSX.Element {
 			password === confirmPassword,
 		[loading, email, password, confirmPassword],
 	);
+	if (isValidatingToken) {
+		return (
+			<AuthPageContainer>
+				<div className="signup-card">
+					<div className="signup-form-header">
+						<Typography.Text className="signup-header-subtitle">
+							Validating your invite link...
+						</Typography.Text>
+					</div>
+				</div>
+			</AuthPageContainer>
+		);
+	}
 
+	if (isInvalidToken) {
+		return (
+			<AuthPageContainer>
+				<div className="signup-card">
+					<div className="signup-form-header">
+						<div className="signup-header-icon">
+							<img src={tvUrl} alt="TV" width="32" height="32" />
+						</div>
+						<Typography.Title level={4} className="signup-header-title">
+							Invalid Invite Link
+						</Typography.Title>
+						<Typography.Text className="signup-header-subtitle">
+							This invitation link is invalid or has expired. Please contact your
+							administrator for a new invite.
+						</Typography.Text>
+					</div>
+					<Callout
+						type="error"
+						size="small"
+						showIcon
+						className="signup-info-callout"
+					>
+						Need access? Ask your SigNoz admin to send you a new invite link from
+						Settings → Org Settings.
+					</Callout>
+					<div className="signup-form-actions">
+						<Button
+							variant="solid"
+							color="primary"
+							type="submit"
+							className="signup-submit-button"
+							suffix={<ArrowRight size={16} />}
+							onClick={(): void => {
+								history.push('/login');
+							}}
+						>
+							Go to Login
+						</Button>
+					</div>
+				</div>
+			</AuthPageContainer>
+		);
+	}
 	return (
 		<AuthPageContainer>
 			<div className="signup-card">
@@ -177,10 +260,17 @@ function SignUp(): JSX.Element {
 						</div>
 					</div>
 
-					<Callout type="info" size="small" showIcon className="signup-info-callout">
-						This will create an admin account. If you are not an admin, please ask
-						your admin for an invite link
-					</Callout>
+					{!inviteToken && (
+						<Callout
+							type="info"
+							size="small"
+							showIcon
+							className="signup-info-callout"
+						>
+							This will create an admin account. If you are not an admin, please ask
+							your admin for an invite link
+						</Callout>
+					)}
 
 					{formError && <AuthError error={formError} />}
 
