@@ -111,7 +111,7 @@ type ListableDashboardView struct {
 // ════════════════════════════════════════════════════════════════════════
 
 func validateDashboardViewName(name string) error {
-	if name == "" {
+	if strings.TrimSpace(name) == "" {
 		return errors.NewInvalidInputf(ErrCodeDashboardViewInvalidInput, "name is required")
 	}
 	if name != strings.TrimSpace(name) {

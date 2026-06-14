@@ -67,10 +67,11 @@ func TestDashboardViewDataValidate(t *testing.T) {
 
 func TestPostableDashboardViewUnmarshalJSON(t *testing.T) {
 	cases := []struct {
-		description  string
-		body         string
-		expectError  bool
-		expectedName string
+		description    string
+		body           string
+		expectError    bool
+		expectedErrMsg string
+		expectedName   string
 	}{
 		{
 			description:  "valid body keeps name as-is",
@@ -79,9 +80,10 @@ func TestPostableDashboardViewUnmarshalJSON(t *testing.T) {
 			expectedName: "my view",
 		},
 		{
-			description: "name with surrounding whitespace is rejected",
-			body:        `{"name":"  my view  ","data":{"version":"v1","sort":"name","order":"asc"}}`,
-			expectError: true,
+			description:    "name with surrounding whitespace is rejected",
+			body:           `{"name":"  my view  ","data":{"version":"v1","sort":"name","order":"asc"}}`,
+			expectError:    true,
+			expectedErrMsg: "name must not have leading or trailing whitespace",
 		},
 		{
 			description: "unknown field is rejected",
@@ -89,14 +91,16 @@ func TestPostableDashboardViewUnmarshalJSON(t *testing.T) {
 			expectError: true,
 		},
 		{
-			description: "blank name is rejected",
-			body:        `{"name":"   ","data":{"version":"v1"}}`,
-			expectError: true,
+			description:    "blank name is rejected",
+			body:           `{"name":"   ","data":{"version":"v1"}}`,
+			expectError:    true,
+			expectedErrMsg: "name is required",
 		},
 		{
-			description: "name over max length is rejected",
-			body:        `{"name":"` + strings.Repeat("x", MaxDashboardViewNameLen+1) + `","data":{"version":"v1"}}`,
-			expectError: true,
+			description:    "name over max length is rejected",
+			body:           `{"name":"` + strings.Repeat("x", MaxDashboardViewNameLen+1) + `","data":{"version":"v1"}}`,
+			expectError:    true,
+			expectedErrMsg: "name must be at most",
 		},
 		{
 			description: "invalid data version is rejected",
@@ -111,6 +115,9 @@ func TestPostableDashboardViewUnmarshalJSON(t *testing.T) {
 			err := json.Unmarshal([]byte(c.body), &p)
 			if c.expectError {
 				assert.Error(t, err)
+				if c.expectedErrMsg != "" {
+					assert.ErrorContains(t, err, c.expectedErrMsg)
+				}
 				return
 			}
 			require.NoError(t, err)
