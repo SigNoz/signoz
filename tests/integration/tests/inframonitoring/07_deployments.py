@@ -424,22 +424,101 @@ def test_deployments_base_filter_drops_non_deployment_pods(
     assert all(r["deploymentName"] != "" for r in data["records"])
 
 
+# Float record fields compared with tolerance; everything else compared with ==.
+_GROUPBY_FLOAT_FIELDS = {
+    "deploymentCPU",
+    "deploymentCPURequest",
+    "deploymentCPULimit",
+    "deploymentMemory",
+    "deploymentMemoryRequest",
+    "deploymentMemoryLimit",
+}
+
+
+def _phase(pending=0, running=0, succeeded=0, failed=0, unknown=0) -> dict:
+    return {"pending": pending, "running": running, "succeeded": succeeded, "failed": failed, "unknown": unknown}
+
+
 @pytest.mark.parametrize(
-    "group_key,expected_running",
+    "scenario",
     [
-        # groupBy=[k8s.deployment.name]: one record per deployment,
-        # deploymentName populated (deployments.go:28-31). 1 running pod each.
+        # Explicit groupBy=[k8s.deployment.name]: one record per deployment,
+        # deploymentName populated (deployments.go:28-31), response grouped_list.
+        # 1 running pod each.
         pytest.param(
-            "k8s.deployment.name",
-            {"gb-dep-a1": 1, "gb-dep-a2": 1, "gb-dep-b1": 1, "gb-dep-b2": 1},
+            {
+                "fixture": "deployments_groupby.jsonl",
+                "group_by": "k8s.deployment.name",
+                "filter": None,
+                "group_meta_key": "k8s.deployment.name",
+                "expected_type": "grouped_list",
+                "groups": {
+                    "gb-dep-a1": {"deploymentName": "gb-dep-a1", "podCountsByPhase": _phase(running=1)},
+                    "gb-dep-a2": {"deploymentName": "gb-dep-a2", "podCountsByPhase": _phase(running=1)},
+                    "gb-dep-b1": {"deploymentName": "gb-dep-b1", "podCountsByPhase": _phase(running=1)},
+                    "gb-dep-b2": {"deploymentName": "gb-dep-b2", "podCountsByPhase": _phase(running=1)},
+                },
+            },
             id="deployment_name",
         ),
-        # groupBy=[k8s.namespace.name]: aggregated across each namespace's 2
-        # deployments, deploymentName cleared. 2 x 1 = 2 running pods each.
+        # Explicit groupBy=[k8s.namespace.name]: aggregated across each namespace's
+        # 2 deployments, deploymentName cleared, response grouped_list. 2 running each.
         pytest.param(
-            "k8s.namespace.name",
-            {"gb-ns-a": 2, "gb-ns-b": 2},
+            {
+                "fixture": "deployments_groupby.jsonl",
+                "group_by": "k8s.namespace.name",
+                "filter": None,
+                "group_meta_key": "k8s.namespace.name",
+                "expected_type": "grouped_list",
+                "groups": {
+                    "gb-ns-a": {"deploymentName": "", "podCountsByPhase": _phase(running=2)},
+                    "gb-ns-b": {"deploymentName": "", "podCountsByPhase": _phase(running=2)},
+                },
+            },
             id="namespace",
+        ),
+        # Default groupBy (no groupBy in request) => [k8s.deployment.name,
+        # k8s.namespace.name] (module.go ListDeployments), response list. Two
+        # deployments sharing a name across namespaces must NOT collapse: each row
+        # keeps its per-namespace metrics/replicas/phase. Single pod per (dep, ns)
+        # => SpaceAggregationSum == Avg == seeded value, so exact expectations.
+        # Regression guard for namespace-scoped k8s name uniqueness; fails on the
+        # pre-change name-only default (would yield 1 summed row).
+        pytest.param(
+            {
+                "fixture": "deployments_same_name_across_namespaces.jsonl",
+                "group_by": None,
+                "filter": "k8s.deployment.name = 'dup-dep'",
+                "group_meta_key": "k8s.namespace.name",
+                "expected_type": "list",
+                "groups": {
+                    "ns-x": {
+                        "deploymentName": "dup-dep",
+                        "deploymentCPU": 0.3,
+                        "deploymentCPURequest": 0.6,
+                        "deploymentCPULimit": 0.7,
+                        "deploymentMemory": 100000000.0,
+                        "deploymentMemoryRequest": 0.6,
+                        "deploymentMemoryLimit": 0.7,
+                        "desiredPods": 2,
+                        "availablePods": 2,
+                        "podCountsByPhase": _phase(running=1),
+                    },
+                    "ns-y": {
+                        "deploymentName": "dup-dep",
+                        "deploymentCPU": 0.9,
+                        "deploymentCPURequest": 0.2,
+                        "deploymentCPULimit": 0.3,
+                        "deploymentMemory": 500000000.0,
+                        "deploymentMemoryRequest": 0.2,
+                        "deploymentMemoryLimit": 0.3,
+                        "desiredPods": 3,
+                        "availablePods": 1,
+                        "podCountsByPhase": _phase(failed=1),
+                    },
+                },
+            },
+            id="default_disambiguates_ns",
         ),
     ],
 )
@@ -448,55 +527,60 @@ def test_deployments_groupby(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
-    group_key: str,
-    expected_running: dict,
+    scenario: dict,
 ) -> None:
-    """groupBy returns one record per distinct group with aggregated pod-phase
-    counts. deploymentName is populated only when grouping by k8s.deployment.name
-    (deployments.go:28-31 list-vs-grouped branch); meta surfaces the groupBy key."""
+    """groupBy determines row identity. Explicit groupBy returns one grouped_list
+    record per distinct group (deploymentName populated only when grouping by
+    k8s.deployment.name; deployments.go:28-31). With no groupBy the default is
+    [k8s.deployment.name, k8s.namespace.name] (module.go ListDeployments), so
+    same-named deployments across namespaces stay as separate, un-collapsed list
+    rows. meta always surfaces the grouping key(s)."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
-            get_testdata_file_path("inframonitoring/deployments_groupby.jsonl"),
+            get_testdata_file_path(f"inframonitoring/{scenario['fixture']}"),
             base_time=now - timedelta(minutes=4),
         )
     )
+
+    body: dict = {
+        "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+        "end": int(now.timestamp() * 1000),
+        "limit": 50,
+    }
+    if scenario["group_by"] is not None:
+        body["groupBy"] = [
+            {"name": scenario["group_by"], "fieldDataType": "string", "fieldContext": "resource"}
+        ]
+    if scenario["filter"] is not None:
+        body["filter"] = {"expression": scenario["filter"]}
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     response = requests.post(
         signoz.self.host_configs["8080"].get(ENDPOINT),
         headers={"authorization": f"Bearer {token}"},
-        json={
-            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "limit": 50,
-            "groupBy": [
-                {
-                    "name": group_key,
-                    "fieldDataType": "string",
-                    "fieldContext": "resource",
-                }
-            ],
-        },
+        json=body,
         timeout=5,
     )
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()["data"]
-    assert data["total"] == len(expected_running)
 
-    is_dep_group = group_key == "k8s.deployment.name"
-    group_of = lambda r: r["deploymentName"] if is_dep_group else r["meta"][group_key]  # noqa: E731  # pylint: disable=unnecessary-lambda-assignment
-    by_group = {group_of(r): r for r in data["records"]}
-    assert set(by_group.keys()) == set(expected_running.keys())
+    groups = scenario["groups"]
+    meta_key = scenario["group_meta_key"]
+    assert data["type"] == scenario["expected_type"]
+    assert data["total"] == len(groups)
 
-    for group, running in expected_running.items():
-        rec = by_group[group]
-        # deploymentName populated per deployment when grouping by it, empty otherwise.
-        assert rec["deploymentName"] == (group if is_dep_group else "")
-        assert rec["podCountsByPhase"]["running"] == running
-        for other in ("pending", "succeeded", "failed", "unknown"):
-            assert rec["podCountsByPhase"][other] == 0
-        assert group_key in rec["meta"], rec["meta"]
+    by_group = {r["meta"][meta_key]: r for r in data["records"]}
+    assert set(by_group.keys()) == set(groups.keys())
+
+    for gid, exp in groups.items():
+        rec = by_group[gid]
+        assert meta_key in rec["meta"], rec["meta"]
+        for field, val in exp.items():
+            if field in _GROUPBY_FLOAT_FIELDS:
+                assert compare_values(rec[field], val, 1e-6), f"{gid}.{field}: got {rec[field]}, expected {val}"
+            else:
+                assert rec[field] == val, f"{gid}.{field}: got {rec[field]}, expected {val}"
 
 
 def test_deployments_pagination(

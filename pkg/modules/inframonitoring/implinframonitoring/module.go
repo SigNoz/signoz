@@ -620,7 +620,7 @@ func (m *module) ListDeployments(ctx context.Context, orgID valuer.UUID, req *in
 	}
 
 	if len(req.GroupBy) == 0 {
-		req.GroupBy = []qbtypes.GroupByKey{deploymentNameGroupByKey}
+		req.GroupBy = []qbtypes.GroupByKey{deploymentNameGroupByKey, namespaceNameGroupByKey}
 		resp.Type = inframonitoringtypes.ResponseTypeList
 	} else {
 		resp.Type = inframonitoringtypes.ResponseTypeGroupedList
