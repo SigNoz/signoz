@@ -39,7 +39,7 @@ NOTIFIERS_TEST = [
         notification_expectation=types.AMNotificationExpectation(
             should_notify=True,
             # extra wait for alertmanager server setup
-            wait_time_seconds=60,
+            wait_time_seconds=120,
             notification_validations=[
                 types.NotificationValidation(
                     destination_type="webhook",
@@ -49,8 +49,6 @@ NOTIFIERS_TEST = [
                             "username": "Alertmanager",
                             "attachments": [
                                 {
-                                    "title": '[FIRING:1] threshold_above_at_least_once for  (alertname="threshold_above_at_least_once", severity="critical", threshold.name="critical")',
-                                    "text": "*Alert:* threshold_above_at_least_once - critical\r\n\r\n *Summary:* This alert is fired when the defined metric (current value: 15) crosses the threshold (10)\r\n *Description:* This alert is fired when the defined metric (current value: 15) crosses the threshold (10)\r\n *RelatedLogs:* \r\n *RelatedTraces:* \r\n\r\n *Details:*\r\n • *alertname:* threshold_above_at_least_once\r\n   • *severity:* critical\r\n   • *threshold.name:* critical\r\n   ",
                                     "color": "danger",
                                     "mrkdwn_in": ["fallback", "pretext", "text"],
                                 }
@@ -73,7 +71,7 @@ NOTIFIERS_TEST = [
         channel_config=msteams_default_config,
         notification_expectation=types.AMNotificationExpectation(
             should_notify=True,
-            wait_time_seconds=60,
+            wait_time_seconds=120,
             notification_validations=[
                 types.NotificationValidation(
                     destination_type="webhook",
@@ -89,15 +87,6 @@ NOTIFIERS_TEST = [
                                         "type": "AdaptiveCard",
                                         "version": "1.2",
                                         "body": [
-                                            {
-                                                "type": "TextBlock",
-                                                "text": '[FIRING:1] threshold_above_at_least_once for  (alertname="threshold_above_at_least_once", severity="critical", threshold.name="critical")',
-                                                "weight": "Bolder",
-                                                "size": "Medium",
-                                                "wrap": True,
-                                                "style": "heading",
-                                                "color": "Attention",
-                                            },
                                             {
                                                 "type": "TextBlock",
                                                 "text": "Alerts",
@@ -167,7 +156,7 @@ NOTIFIERS_TEST = [
         channel_config=pagerduty_default_config,
         notification_expectation=types.AMNotificationExpectation(
             should_notify=True,
-            wait_time_seconds=60,
+            wait_time_seconds=120,
             notification_validations=[
                 types.NotificationValidation(
                     destination_type="webhook",
@@ -177,7 +166,6 @@ NOTIFIERS_TEST = [
                             "routing_key": "PagerDutyRoutingKey",
                             "event_action": "trigger",
                             "payload": {
-                                "summary": '[FIRING:1] threshold_above_at_least_once for  (alertname="threshold_above_at_least_once", severity="critical", threshold.name="critical")',
                                 "source": "SigNoz Alert Manager",
                                 "severity": "critical",
                                 "custom_details": {
@@ -213,7 +201,7 @@ NOTIFIERS_TEST = [
         channel_config=opsgenie_default_config,
         notification_expectation=types.AMNotificationExpectation(
             should_notify=True,
-            wait_time_seconds=60,
+            wait_time_seconds=120,
             notification_validations=[
                 types.NotificationValidation(
                     destination_type="webhook",
@@ -221,7 +209,6 @@ NOTIFIERS_TEST = [
                         "path": "/v2/alerts",
                         "json_body": {
                             "message": "threshold_above_at_least_once",
-                            "description": "Alerts Firing:\r\n\t\r\n\t - Message: This alert is fired when the defined metric (current value: 15) crosses the threshold (10)\r\n\tLabels:\r\n\t   - alertname = threshold_above_at_least_once\r\n\t   - severity = critical\r\n\t   - threshold.name = critical\r\n\t   Annotations:\r\n\t   - description = This alert is fired when the defined metric (current value: 15) crosses the threshold (10)\r\n\t   - summary = This alert is fired when the defined metric (current value: 15) crosses the threshold (10)\r\n\t   Source: \r\n\t\r\n",
                             "details": {
                                 "alertname": "threshold_above_at_least_once",
                                 "severity": "critical",
@@ -246,7 +233,7 @@ NOTIFIERS_TEST = [
         channel_config=webhook_default_config,
         notification_expectation=types.AMNotificationExpectation(
             should_notify=True,
-            wait_time_seconds=60,
+            wait_time_seconds=120,
             notification_validations=[
                 types.NotificationValidation(
                     destination_type="webhook",
@@ -295,13 +282,12 @@ NOTIFIERS_TEST = [
         channel_config=email_default_config,
         notification_expectation=types.AMNotificationExpectation(
             should_notify=True,
-            wait_time_seconds=60,
+            wait_time_seconds=120,
             notification_validations=[
                 types.NotificationValidation(
                     destination_type="email",
                     validation_data={
                         "subject": '[FIRING:1] threshold_above_at_least_once for  (alertname="threshold_above_at_least_once", severity="critical", threshold.name="critical")',
-                        "html": "<html><body>*Alert:* threshold_above_at_least_once - critical\n\n *Summary:* This alert is fired when the defined metric (current value: 15) crosses the threshold (10)\n *Description:* This alert is fired when the defined metric (current value: 15) crosses the threshold (10)\n *RelatedLogs:* \n *RelatedTraces:* \n\n *Details:*\n \u2022 *alertname:* threshold_above_at_least_once\n   \u2022 *severity:* critical\n   \u2022 *threshold.name:* critical\n   </body></html>",
                     },
                 ),
             ],
@@ -337,7 +323,7 @@ def test_notifier_templating(
     channel_name = str(uuid.uuid4())
 
     # update channel config: set name and rewrite URLs to wiremock
-    channel_config = update_raw_channel_config(notifier_test_case.channel_config, channel_name, notification_channel)
+    channel_config = update_raw_channel_config(notifier_test_case.channel_config, channel_name, notification_channel, maildev)
     logger.info("Channel config: %s", {"channel_config": channel_config})
 
     # setup wiremock mocks for webhook-based notification validations

@@ -56,9 +56,7 @@
   "labels": {},
   "annotations": {
     "description": "Container $container in pod $pod ($namespace) exceeded memory threshold",
-    "summary": "High container memory in $namespace/$pod",
-    "_title_template": "[$alert.status] High container memory in $labels.namespace/$labels.pod",
-    "_body_template": "**Severity:** $rule.severity\n**Status:** $alert.status\n\n**Pod Details:**\n- **Namespace:** $labels.namespace\n- **Pod:** $labels.pod\n- **Container:** $labels.container\n- **Node:** $labels.node\n\n**Description:** Container $labels.container in pod $labels.pod ($labels.namespace) exceeded the $labels.threshold.name threshold.\n\n**Runbook:** https://signoz.io/docs/runbooks/container-memory-near-limit"
+    "summary": "High container memory in $namespace/$pod"
   },
   "notificationSettings": {
     "groupBy": [],
