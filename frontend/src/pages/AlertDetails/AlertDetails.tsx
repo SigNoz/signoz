@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { useLocation } from 'react-router-dom';
 import { Divider } from '@signozhq/ui/divider';
 import logEvent from 'api/common/logEvent';
@@ -37,23 +38,19 @@ function AlertDetails(): JSX.Element {
 		return params.get(QueryParams.isTestAlert) === 'true';
 	}, [params]);
 
-	const getDocumentTitle = useMemo(() => {
+	const pageTitle = useMemo(() => {
 		const alertTitle = alertRuleName ?? alertDetailsResponse?.data?.alert;
 		if (alertTitle) {
-			return alertTitle;
+			return `SigNoz | ${alertTitle}`;
 		}
 		if (isTestAlert) {
-			return 'Test Alert';
+			return 'SigNoz | Test Alert';
 		}
 		if (isLoading) {
-			return document.title;
+			return undefined;
 		}
-		return 'Alert Not Found';
+		return 'SigNoz | Alert Not Found';
 	}, [alertRuleName, alertDetailsResponse?.data?.alert, isTestAlert, isLoading]);
-
-	useEffect(() => {
-		document.title = getDocumentTitle;
-	}, [getDocumentTitle]);
 
 	const alertRuleDetails = useMemo(
 		() =>
@@ -92,6 +89,11 @@ function AlertDetails(): JSX.Element {
 			initialAlertType={alertRuleDetails?.alertType as AlertTypes}
 			initialAlertState={initialAlertState}
 		>
+			{pageTitle && (
+				<Helmet>
+					<title>{pageTitle}</title>
+				</Helmet>
+			)}
 			<div
 				className={classNames('alert-details', { 'alert-details-v2': isV2Alert })}
 			>

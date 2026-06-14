@@ -30,3 +30,55 @@ export function getRouteKey(pathname: string): string {
 
 	return dynamic?.[0] ?? 'DEFAULT';
 }
+
+/**
+ * Extracts route params from a dynamic route template and pathname.
+ * E.g. template='/services/:servicename', pathname='/services/frontend'
+ *      returns { servicename: 'frontend' }
+ */
+export function extractRouteParams(
+	template: string,
+	pathname: string,
+): Record<string, string> {
+	const templateParts = template.split('/');
+	const pathParts = pathname.split('/');
+	const params: Record<string, string> = {};
+
+	templateParts.forEach((part, i) => {
+		if (part.startsWith(':') && pathParts[i]) {
+			params[part.slice(1)] = decodeURIComponent(pathParts[i]);
+		}
+	});
+
+	return params;
+}
+
+interface RouteMatch {
+	key: string;
+	params: Record<string, string>;
+}
+
+/**
+ * Like getRouteKey but also returns extracted URL params.
+ */
+export function getRouteMatch(pathname: string): RouteMatch {
+	const entries = Object.entries(ROUTES);
+
+	const exact = entries.find(([, value]) => value === pathname);
+	if (exact) {
+		return { key: exact[0], params: {} };
+	}
+
+	const dynamic = entries.find(
+		([, value]) => value.includes(':') && templateToRegex(value).test(pathname),
+	);
+
+	if (dynamic) {
+		return {
+			key: dynamic[0],
+			params: extractRouteParams(dynamic[1], pathname),
+		};
+	}
+
+	return { key: 'DEFAULT', params: {} };
+}
