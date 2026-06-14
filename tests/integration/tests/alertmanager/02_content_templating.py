@@ -16,7 +16,6 @@ from fixtures.alerts import (
 from fixtures.logger import setup_logger
 from fixtures.maildev import delete_all_mails
 from fixtures.notification_channel import (
-    email_default_config,
     msteams_default_config,
     opsgenie_default_config,
     pagerduty_default_config,
