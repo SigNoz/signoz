@@ -1,6 +1,6 @@
 {
   "id": "sqldatabase",
-  "title": "Azure SQL Database",
+  "title": "SQL Database",
   "icon": "file://icon.svg",
   "overview": "file://overview.md",
   "supportedSignals": {

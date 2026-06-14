@@ -33,6 +33,12 @@ var (
 	AzureServiceAKS                        = ServiceID{valuer.NewString("aks")}
 	AzureServiceSQLDatabase                = ServiceID{valuer.NewString("sqldatabase")}
 	AzureServiceSQLDatabaseManagedInstance = ServiceID{valuer.NewString("sqldatabasemi")}
+	AzureServiceMySQLFlexibleServer        = ServiceID{valuer.NewString("mysqlflexibleserver")}
+	AzureServicePostgreSQLFlexibleServer   = ServiceID{valuer.NewString("postgresqlflexibleserver")}
+	AzureServiceMongoDB                    = ServiceID{valuer.NewString("mongodb")}
+	AzureServiceCosmosDB                   = ServiceID{valuer.NewString("cosmosdb")}
+	AzureServiceCassandraDB                = ServiceID{valuer.NewString("cassandradb")}
+	AzureServiceRedis                      = ServiceID{valuer.NewString("redis")}
 )
 
 func (ServiceID) Enum() []any {
@@ -58,6 +64,12 @@ func (ServiceID) Enum() []any {
 		AzureServiceAKS,
 		AzureServiceSQLDatabase,
 		AzureServiceSQLDatabaseManagedInstance,
+		AzureServiceMySQLFlexibleServer,
+		AzureServicePostgreSQLFlexibleServer,
+		AzureServiceMongoDB,
+		AzureServiceCosmosDB,
+		AzureServiceCassandraDB,
+		AzureServiceRedis,
 	}
 }
 
@@ -87,6 +99,12 @@ var SupportedServices = map[CloudProviderType][]ServiceID{
 		AzureServiceAKS,
 		AzureServiceSQLDatabase,
 		AzureServiceSQLDatabaseManagedInstance,
+		AzureServiceMySQLFlexibleServer,
+		AzureServicePostgreSQLFlexibleServer,
+		AzureServiceMongoDB,
+		AzureServiceCosmosDB,
+		AzureServiceCassandraDB,
+		AzureServiceRedis,
 	},
 }
 

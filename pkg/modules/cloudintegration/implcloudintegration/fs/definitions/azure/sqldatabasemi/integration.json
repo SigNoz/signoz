@@ -1,6 +1,6 @@
 {
   "id": "sqldatabasemi",
-  "title": "Azure SQL Database Managed Instance",
+  "title": "SQL Database Managed Instance",
   "icon": "file://icon.svg",
   "overview": "file://overview.md",
   "supportedSignals": {
