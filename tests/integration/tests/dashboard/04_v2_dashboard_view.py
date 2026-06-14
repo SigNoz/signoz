@@ -70,10 +70,7 @@ def test_create_rejects_whitespace_name(
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
     assert response.json()["error"]["code"] == "dashboard_view_invalid_input"
-    assert (
-        response.json()["error"]["message"]
-        == "name must not have leading or trailing whitespace"
-    )
+    assert response.json()["error"]["message"] == "name must not have leading or trailing whitespace"
 
 
 def test_create_rejects_name_too_long(
