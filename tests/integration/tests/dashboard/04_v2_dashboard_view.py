@@ -54,6 +54,28 @@ def test_create_rejects_blank_name(
     assert response.json()["error"]["message"] == "name is required"
 
 
+def test_create_rejects_whitespace_name(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json={"name": "  Storage  ", "data": {"version": "v1"}},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.json()["error"]["code"] == "dashboard_view_invalid_input"
+    assert (
+        response.json()["error"]["message"]
+        == "name must not have leading or trailing whitespace"
+    )
+
+
 def test_create_rejects_name_too_long(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
@@ -275,10 +297,9 @@ def test_dashboard_view_lifecycle(
     assert created["data"]["version"] == "v1"
     assert created["data"]["query"] == "team = 'pulse' AND env = 'prod'"
 
-    # leading/trailing whitespace in the name is trimmed on create
     response = requests.post(
         signoz.self.host_configs["8080"].get(BASE_URL),
-        json={"name": "  Storage  ", "data": {"version": "v1", "query": "team = 'storage'"}},
+        json={"name": "Storage", "data": {"version": "v1", "query": "team = 'storage'"}},
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
