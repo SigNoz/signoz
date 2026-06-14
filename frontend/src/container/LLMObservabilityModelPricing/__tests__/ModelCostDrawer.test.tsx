@@ -172,6 +172,24 @@ describe('ModelCostDrawer', () => {
 		expect(screen.getByTestId('drawer-delete-btn')).toBeInTheDocument();
 	});
 
+	it('disables the provider select in Edit mode', () => {
+		render(
+			<Harness
+				mode="edit"
+				initialDraft={{
+					...EMPTY_DRAFT,
+					id: 'rule-1',
+					modelName: 'gpt-4o',
+					provider: 'OpenAI',
+					isOverride: true,
+				}}
+			/>,
+		);
+
+		const providerNode = screen.getByTestId('drawer-provider-select');
+		expect(providerNode.className).toMatch(/ant-select-disabled/);
+	});
+
 	it('calls onSave when the Save button is clicked', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		const onSave = jest.fn();
