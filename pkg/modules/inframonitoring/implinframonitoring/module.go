@@ -710,7 +710,7 @@ func (m *module) ListStatefulSets(ctx context.Context, orgID valuer.UUID, req *i
 	}
 
 	if len(req.GroupBy) == 0 {
-		req.GroupBy = []qbtypes.GroupByKey{statefulSetNameGroupByKey}
+		req.GroupBy = []qbtypes.GroupByKey{statefulSetNameGroupByKey, namespaceNameGroupByKey}
 		resp.Type = inframonitoringtypes.ResponseTypeList
 	} else {
 		resp.Type = inframonitoringtypes.ResponseTypeGroupedList
