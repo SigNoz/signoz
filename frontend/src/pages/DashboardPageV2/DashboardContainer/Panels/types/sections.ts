@@ -1,8 +1,17 @@
+import type {
+	DashboardLinkDTO,
+	DashboardtypesAxesDTO,
+	DashboardtypesHistogramBucketsDTO,
+	DashboardtypesLegendDTO,
+	DashboardtypesPanelFormattingDTO,
+	DashboardtypesThresholdWithLabelDTO,
+	DashboardtypesTimeSeriesChartAppearanceDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import {
 	BarChart,
-	Columns3,
 	Hash,
-	ListEnd,
+	Layers,
+	Link,
 	Palette,
 	Ruler,
 	SlidersHorizontal,
@@ -18,38 +27,93 @@ export interface SectionMetadata {
 	description?: string;
 }
 
-// Per-kind control toggles (type-only — runtime metadata is in SECTIONS).
-// Section components type their controls prop via `SectionControls['axes']`.
-export type SectionControls = {
+/**
+ * The single source of truth for sections: each section ↔ exactly one slice of the
+ * panel spec it edits. The slice type is uniform across every panel kind that shows
+ * the section, so a section editor is written once and reused everywhere.
+ *
+ * Most slices live under the plugin spec (`spec.plugin.spec.<key>`); a few are
+ * panel-level (`contextLinks` → `spec.links`). The section registry's lens (see
+ * `ConfigPane/sectionRegistry`) abstracts over both, so this map stays purely about
+ * "what shape does this section edit".
+ *
+ * `SectionKind` is derived below as `ControlledSectionKind | AtomicSectionKind`; the
+ * `satisfies Record<SectionKind, …>` checks on `SectionControls` + `SECTION_METADATA`
+ * keep all three structures covering the exact same set of kinds.
+ */
+export interface SectionSpecMap {
+	formatting: DashboardtypesPanelFormattingDTO; // spec.plugin.spec.formatting
+	axes: DashboardtypesAxesDTO; // spec.plugin.spec.axes
+	legend: DashboardtypesLegendDTO; // spec.plugin.spec.legend
+	chartAppearance: DashboardtypesTimeSeriesChartAppearanceDTO; // spec.plugin.spec.chartAppearance
+	buckets: DashboardtypesHistogramBucketsDTO; // spec.plugin.spec.histogramBuckets
+	thresholds: DashboardtypesThresholdWithLabelDTO[]; // spec.plugin.spec.thresholds
+	contextLinks: DashboardLinkDTO[]; // spec.links (PANEL-level)
+}
+
+/**
+ * (1) CONTROLLED sections — those with multiple independently-pickable sub-features.
+ * The per-kind bag lets a kind expose a SUBSET of the section's controls (the V2
+ * analogue of V1's `allowSoftMinMax` / `allowLegendColors` flags). Every key here
+ * corresponds to a real, editable field on the section's spec slice.
+ */
+export interface SectionControls {
 	formatting: { unit?: boolean; decimals?: boolean };
-	axes: { minMax?: boolean; unit?: boolean; logScale?: boolean };
-	legend: { position?: boolean; mode?: boolean };
-	thresholds: { list?: boolean };
+	axes: { minMax?: boolean; logScale?: boolean }; // minMax → softMin/softMax
+	legend: { position?: boolean; colors?: boolean }; // colors → customColors
 	chartAppearance: {
 		lineStyle?: boolean;
-		fillOpacity?: boolean;
-		stacked?: boolean;
+		lineInterpolation?: boolean;
+		fillMode?: boolean;
+		showPoints?: boolean;
+		spanGaps?: boolean;
 	};
-	columnUnits: { perColumnUnit?: boolean };
-	buckets: { count?: boolean; min?: boolean; max?: boolean };
-};
+	buckets: { count?: boolean; width?: boolean; mergeQueries?: boolean };
+}
 
-// Source of truth for sections. Its keys define SectionKind; its values are the
-// runtime UI metadata (consumed by PanelEditor in 1.8). Adding a new section =
-// one entry here + one entry in SectionControls.
-export const SECTIONS = {
+export type ControlledSectionKind = keyof SectionControls;
+
+/**
+ * (2) ATOMIC sections — no sub-controls; a kind either shows them or not. Thresholds
+ * and Context Links are each just a list editor, so there is nothing to subset.
+ */
+export type AtomicSectionKind = 'thresholds' | 'contextLinks';
+
+export type SectionKind = ControlledSectionKind | AtomicSectionKind;
+
+/**
+ * What a panel kind declares in `kinds/<Kind>/sections.ts`. A controlled section is
+ * declared with its `controls` subset; an atomic section is declared bare (`{ kind }`).
+ *
+ * Whether a kind ALLOWS a section at all is governed entirely by whether it appears in
+ * the kind's `sections` array — e.g. Pie/Histogram omit `thresholds`, so it never shows.
+ */
+export type SectionConfig =
+	| {
+			[K in ControlledSectionKind]: { kind: K; controls: SectionControls[K] };
+	  }[ControlledSectionKind]
+	| { kind: AtomicSectionKind };
+
+// Runtime UI metadata per section (title + sidebar icon). Pure data — no component
+// coupling. The editor component + spec lens live in the ConfigPane section registry.
+export const SECTION_METADATA = {
 	formatting: { title: 'Formatting', icon: Hash },
 	axes: { title: 'Axes', icon: Ruler },
-	legend: { title: 'Legend', icon: ListEnd },
-	thresholds: { title: 'Thresholds', icon: SlidersHorizontal },
+	legend: { title: 'Legend', icon: Layers },
 	chartAppearance: { title: 'Chart appearance', icon: Palette },
-	columnUnits: { title: 'Column units', icon: Columns3 },
 	buckets: { title: 'Buckets', icon: BarChart },
-} as const satisfies Record<string, SectionMetadata>;
+	thresholds: { title: 'Thresholds', icon: SlidersHorizontal },
+	contextLinks: { title: 'Context Links', icon: Link },
+} as const satisfies Record<SectionKind, SectionMetadata>;
 
-export type SectionKind = keyof typeof SECTIONS;
-
-// Discriminated union derived from SectionControls — kept in lockstep automatically.
-export type SectionConfig = {
-	[K in SectionKind]: { kind: K; controls: SectionControls[K] };
-}[SectionKind];
+/**
+ * Props every section editor receives — exactly its slice type (`value`), an
+ * `onChange` to write the next slice, and (controlled sections only) the per-kind
+ * `controls` subset. Atomic editors omit `controls`.
+ */
+export type SectionEditorProps<K extends SectionKind> = {
+	value: SectionSpecMap[K] | undefined;
+	onChange: (next: SectionSpecMap[K]) => void;
+} & (K extends ControlledSectionKind
+	? { controls: SectionControls[K] }
+	: unknown);

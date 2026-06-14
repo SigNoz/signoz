@@ -4,5 +4,6 @@ import type { SectionConfig } from '../../types/sections';
 // formatting and thresholds that recolor the value/background.
 export const sections: SectionConfig[] = [
 	{ kind: 'formatting', controls: { unit: true, decimals: true } },
-	{ kind: 'thresholds', controls: { list: true } },
+	{ kind: 'thresholds' },
+	{ kind: 'contextLinks' },
 ];
