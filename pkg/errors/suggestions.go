@@ -23,7 +23,11 @@ func SuggestionsOnLevenshteinDistance(invalidInput string, validInputs []string)
 		suggestions = append(suggestions, didYouMean(match))
 	}
 
-	return append(suggestions, ValidReferences(validInputs...))
+	if refs := ValidReferences(validInputs...); refs != "" {
+		suggestions = append(suggestions, refs)
+	}
+
+	return suggestions
 }
 
 // ClosestLevenshteinMatch returns the candidate most similar to input that is at least
@@ -63,7 +67,13 @@ func SuggestionsFromFunc(produce func() string) []string {
 // ValidReferences formats values as "valid references: `a`, `b`", capped at
 // maxValidReferences with a "(+N more)" suffix. Each value is rendered as its
 // own string, an Enum() element's StringValue(), or fmt.Sprint as a fallback.
+// It returns "" when there are no values, so callers don't surface a bare
+// "valid references: " with nothing after it.
 func ValidReferences[T any](values ...T) string {
+	if len(values) == 0 {
+		return ""
+	}
+
 	refs := make([]string, 0, len(values))
 	for _, v := range values {
 		switch t := any(v).(type) {
@@ -147,19 +157,6 @@ func similarity(s1, s2 string) float64 {
 
 	distance := levenshteinDistance(s1, s2)
 	return 1.0 - float64(distance)/float64(maxLen)
-}
-
-func min(a, b, c int) int {
-	if a < b {
-		if a < c {
-			return a
-		}
-		return c
-	}
-	if b < c {
-		return b
-	}
-	return c
 }
 
 // didYouMean formats a correction as "did you mean: `x`".
