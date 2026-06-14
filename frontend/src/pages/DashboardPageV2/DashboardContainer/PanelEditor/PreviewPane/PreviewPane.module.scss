@@ -3,7 +3,8 @@
 	flex-direction: column;
 	flex: 1;
 	min-height: 0;
-	gap: 8px;
+	gap: 16px;
+	padding: 24px;
 	background-image: radial-gradient(var(--l2-border) 1px, transparent 0);
 	background-size: 20px 20px;
 	border-bottom: 1px solid var(--l2-border);
@@ -12,7 +13,6 @@
 .header {
 	width: 100%;
 	box-sizing: border-box;
-	padding: 16px;
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
@@ -32,7 +32,6 @@
 .container {
 	display: flex;
 	flex: 1;
-	padding: 2% 5% 5% 5%;
 	min-width: 0;
 	min-height: 0;
 }
