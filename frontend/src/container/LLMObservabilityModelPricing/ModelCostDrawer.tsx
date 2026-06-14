@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { InputNumber } from 'antd';
 import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
@@ -12,7 +12,6 @@ import { LlmpricingruletypesLLMPricingRuleCacheModeDTO as CacheModeDTO } from 'a
 
 import {
 	CACHE_MODE_OPTIONS,
-	computeCostPreview,
 	PROVIDER_OPTIONS,
 	validateDraft,
 	type DrawerDraft,
@@ -50,7 +49,6 @@ function ModelCostDrawer({
 	const isReadOnly = !draft.isOverride;
 
 	const validation = validateDraft(draft, mode);
-	const preview = useMemo(() => computeCostPreview(draft), [draft]);
 
 	const update = (patch: Partial<DrawerDraft>): void => {
 		setDraft({ ...draft, ...patch });
@@ -396,19 +394,6 @@ function ModelCostDrawer({
 					</div>
 				)}
 				<p className="muted help">Image tokens may be priced differently (v2).</p>
-			</div>
-
-			<div className="drawer-section drawer-surface cost-preview">
-				<div className="drawer-surface__head">
-					<h4>Cost preview</h4>
-				</div>
-				<div className="cost-preview__line">
-					{preview.breakdown.map((part) => part.label).join(' + ')} ={' '}
-					<strong>≈ ${preview.total.toFixed(4)}</strong>
-				</div>
-				<p className="muted help">
-					Write-time attribution. Changes only affect new spans.
-				</p>
 			</div>
 
 			{saveError && (

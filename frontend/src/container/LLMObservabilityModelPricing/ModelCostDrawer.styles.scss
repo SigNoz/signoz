@@ -25,7 +25,6 @@
 		align-items: center;
 		justify-content: space-between;
 		padding: 12px 16px;
-		border-top: 1px solid var(--bg-slate-300);
 
 		&-right {
 			display: flex;
@@ -149,58 +148,91 @@
 	}
 
 	.source-radio-group {
+		// @signozhq/ui's RadioGroupItem defaults its unchecked border to
+		// --l3-background, which matches the drawer surface and makes the dot
+		// invisible. Override with a contrasting border so users can see the
+		// unchecked state.
+		--radio-group-item-border-color: var(--bg-slate-200);
+
 		display: flex;
 		flex-direction: column;
 		gap: 8px;
 		width: 100%;
-	}
 
-	.source-radio {
-		display: flex;
-		align-items: flex-start;
-		gap: 10px;
-		padding: 10px 12px;
-		border-radius: 4px;
-		border: 1px solid transparent;
-		background: rgba(255, 255, 255, 0.02);
-		margin: 0;
-		width: 100%;
-		cursor: pointer;
-		transition:
-			background-color 0.12s ease,
-			border-color 0.12s ease;
-
-		label {
+		// Layout overrides for @signozhq/ui's RadioGroupItem wrapper. The
+		// library injects single-class CSS at runtime (after our bundled
+		// stylesheet loads), so we use a two-class selector to win the
+		// cascade and force the wrapper to lay the dot on the left with the
+		// label text flush beside it.
+		.source-radio {
+			display: flex;
+			flex-direction: row;
+			align-items: flex-start;
+			justify-content: flex-start;
+			gap: 10px;
+			padding: 10px 12px;
+			border-radius: 4px;
+			border: 1px solid transparent;
+			background: rgba(255, 255, 255, 0.02);
+			margin: 0;
+			width: 100%;
 			cursor: pointer;
-			flex: 1;
-		}
+			transition:
+				background-color 0.12s ease,
+				border-color 0.12s ease;
 
-		&__title {
-			font-weight: 600;
-			font-size: 13px;
-			color: var(--bg-vanilla-100);
-		}
+			// The radio button itself: keep it fixed-size and aligned with
+			// the title baseline (margin-top compensates for align-items:
+			// flex-start vs the title's line-box).
+			> button[role='radio'] {
+				flex: 0 0 16px;
+				width: 16px;
+				height: 16px;
+				margin-top: 3px;
+			}
 
-		&__desc {
-			margin-top: 2px;
-			font-size: 12px;
-			color: var(--bg-vanilla-400);
-		}
+			// The library wraps children in a <label>. Make it grow into the
+			// remaining width and reset the .drawer-section label typography
+			// leak (set earlier in this file) so the title/desc divs use
+			// their own styles.
+			> label {
+				flex: 1 1 auto;
+				min-width: 0;
+				display: block;
+				text-align: left;
+				cursor: pointer;
+				font-size: inherit;
+				font-weight: inherit;
+				color: inherit;
+			}
 
-		// Radix RadioGroupItem renders <button data-state="checked|unchecked">.
-		// Use :has() to highlight the wrapper card when its inner button is checked.
-		&.source-radio--auto:has(button[data-state='checked']) {
-			background: rgba(78, 116, 248, 0.1);
-			border-color: rgba(78, 116, 248, 0.3);
-		}
+			&__title {
+				font-weight: 600;
+				font-size: 13px;
+				color: var(--bg-vanilla-100);
+			}
 
-		&.source-radio--override:has(button[data-state='checked']) {
-			background: rgba(245, 175, 25, 0.1);
-			border-color: rgba(245, 175, 25, 0.3);
-		}
+			&__desc {
+				margin-top: 2px;
+				font-size: 12px;
+				color: var(--bg-vanilla-400);
+			}
 
-		&:hover {
-			background: rgba(255, 255, 255, 0.04);
+			// Radix RadioGroupItem renders <button data-state="checked|unchecked">.
+			// Use :has() to highlight the wrapper card when its inner button is checked.
+			&.source-radio--auto:has(button[data-state='checked']) {
+				background: rgba(78, 116, 248, 0.1);
+				border-color: rgba(78, 116, 248, 0.3);
+			}
+
+			&.source-radio--override:has(button[data-state='checked']) {
+				background: rgba(245, 175, 25, 0.1);
+				border-color: rgba(245, 175, 25, 0.3);
+			}
+
+			&:hover {
+				background: rgba(255, 255, 255, 0.04);
+			}
 		}
 	}
 
