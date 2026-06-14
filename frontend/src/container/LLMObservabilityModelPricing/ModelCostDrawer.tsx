@@ -1,7 +1,12 @@
 import { useMemo, useState } from 'react';
-import { Button, Drawer, Input, InputNumber, Select, Tooltip } from 'antd';
+import { InputNumber } from 'antd';
 import { Badge } from '@signozhq/ui/badge';
+import { Button } from '@signozhq/ui/button';
+import { DrawerWrapper } from '@signozhq/ui/drawer';
+import { Input } from '@signozhq/ui/input';
 import { RadioGroup, RadioGroupItem } from '@signozhq/ui/radio-group';
+import { SelectSimple } from '@signozhq/ui/select';
+import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Lock, Trash2, X } from '@signozhq/icons';
 import { LlmpricingruletypesLLMPricingRuleCacheModeDTO as CacheModeDTO } from 'api/generated/services/sigNoz.schemas';
 
@@ -87,53 +92,72 @@ function ModelCostDrawer({
 	const hasCacheBucket =
 		draft.pricing.cacheRead !== null || draft.pricing.cacheWrite !== null;
 
-	return (
-		<Drawer
-			width={520}
-			open={isOpen}
-			onClose={onClose}
-			placement="right"
-			className="model-cost-drawer"
-			destroyOnClose
-			closeIcon={<X size={16} />}
-			title={
-				<div className="model-cost-drawer__title">
-					<h3>{mode === 'edit' ? 'Edit model cost' : 'Add model cost'}</h3>
-					<p>Pricing computes gen_ai.estimated_total_cost at ingest.</p>
-				</div>
-			}
-			footer={
-				<div className="model-cost-drawer__footer">
-					{mode === 'edit' && (
+	const footer = (
+		<div className="model-cost-drawer__footer">
+			{mode === 'edit' && (
+				<Button
+					variant="ghost"
+					color="destructive"
+					prefix={<Trash2 size={14} />}
+					onClick={onDelete}
+					loading={isDeleting}
+					testId="drawer-delete-btn"
+				>
+					Delete
+				</Button>
+			)}
+			<div className="model-cost-drawer__footer-right">
+				<Button
+					variant="outlined"
+					color="secondary"
+					onClick={onClose}
+					testId="drawer-cancel-btn"
+				>
+					Cancel
+				</Button>
+				{!validation.ok && validation.message ? (
+					<TooltipSimple title={validation.message} withPortal={false}>
 						<Button
-							danger
-							type="text"
-							icon={<Trash2 size={14} />}
-							onClick={onDelete}
-							loading={isDeleting}
-							data-testid="drawer-delete-btn"
+							variant="solid"
+							color="primary"
+							onClick={onSave}
+							loading={isSaving}
+							disabled
+							testId="drawer-save-btn"
 						>
-							Delete
+							Save
 						</Button>
-					)}
-					<div className="model-cost-drawer__footer-right">
-						<Button onClick={onClose} data-testid="drawer-cancel-btn">
-							Cancel
-						</Button>
-						<Tooltip title={validation.ok ? '' : validation.message}>
-							<Button
-								type="primary"
-								onClick={onSave}
-								loading={isSaving}
-								disabled={!validation.ok}
-								data-testid="drawer-save-btn"
-							>
-								Save
-							</Button>
-						</Tooltip>
-					</div>
-				</div>
-			}
+					</TooltipSimple>
+				) : (
+					<Button
+						variant="solid"
+						color="primary"
+						onClick={onSave}
+						loading={isSaving}
+						testId="drawer-save-btn"
+					>
+						Save
+					</Button>
+				)}
+			</div>
+		</div>
+	);
+
+	return (
+		<DrawerWrapper
+			open={isOpen}
+			onOpenChange={(open): void => {
+				if (!open) {
+					onClose();
+				}
+			}}
+			direction="right"
+			width="base"
+			className="model-cost-drawer"
+			footer={footer}
+			title={mode === 'edit' ? 'Edit model cost' : 'Add model cost'}
+			subTitle="Pricing computes gen_ai.estimated_total_cost at ingest."
+			drawerHeaderProps={{ className: 'model-cost-drawer__title' }}
 		>
 			<div className="drawer-section">
 				<label htmlFor="billing-model-id">Billing model ID</label>
@@ -143,20 +167,20 @@ function ModelCostDrawer({
 					value={draft.modelName}
 					disabled={mode === 'edit' || isReadOnly}
 					onChange={(e): void => update({ modelName: e.target.value })}
-					data-testid="drawer-model-id-input"
+					testId="drawer-model-id-input"
 				/>
 			</div>
 
 			<div className="drawer-section">
 				<label htmlFor="provider-select">Provider</label>
-				<Select
+				<SelectSimple
 					id="provider-select"
 					value={draft.provider}
-					onChange={(value): void => update({ provider: value })}
-					options={PROVIDER_OPTIONS}
+					onChange={(value): void => update({ provider: value as string })}
+					items={PROVIDER_OPTIONS}
 					disabled={mode === 'edit'}
 					className="full-width"
-					data-testid="drawer-provider-select"
+					testId="drawer-provider-select"
 				/>
 			</div>
 
@@ -193,10 +217,20 @@ function ModelCostDrawer({
 								placeholder="Add pattern…"
 								value={patternInput}
 								onChange={(e): void => setPatternInput(e.target.value)}
-								onPressEnter={addPattern}
-								data-testid="drawer-pattern-input"
+								onKeyDown={(e): void => {
+									if (e.key === 'Enter') {
+										e.preventDefault();
+										addPattern();
+									}
+								}}
+								testId="drawer-pattern-input"
 							/>
-							<Button onClick={addPattern} data-testid="drawer-pattern-add-btn">
+							<Button
+								variant="outlined"
+								color="secondary"
+								onClick={addPattern}
+								testId="drawer-pattern-add-btn"
+							>
 								+ Add
 							</Button>
 						</div>
@@ -253,15 +287,18 @@ function ModelCostDrawer({
 						<p>Reset to default pricing? Custom values will be discarded.</p>
 						<div className="reset-confirm__actions">
 							<Button
+								variant="outlined"
+								color="secondary"
 								onClick={(): void => setShowResetConfirm(false)}
-								data-testid="drawer-reset-keep-btn"
+								testId="drawer-reset-keep-btn"
 							>
 								Keep
 							</Button>
 							<Button
-								type="primary"
+								variant="solid"
+								color="primary"
 								onClick={confirmReset}
-								data-testid="drawer-reset-confirm-btn"
+								testId="drawer-reset-confirm-btn"
 							>
 								Reset
 							</Button>
@@ -347,14 +384,14 @@ function ModelCostDrawer({
 				{hasCacheBucket && (
 					<div className="pricing-field cache-mode-field">
 						<label htmlFor="cache-mode">Cache mode</label>
-						<Select
+						<SelectSimple
 							id="cache-mode"
 							value={draft.pricing.cacheMode}
-							options={CACHE_MODE_OPTIONS}
+							items={CACHE_MODE_OPTIONS}
 							onChange={(v): void => updatePricing({ cacheMode: v as CacheModeDTO })}
 							disabled={isReadOnly}
 							className="full-width"
-							data-testid="drawer-cache-mode"
+							testId="drawer-cache-mode"
 						/>
 					</div>
 				)}
@@ -379,7 +416,7 @@ function ModelCostDrawer({
 					{saveError}
 				</div>
 			)}
-		</Drawer>
+		</DrawerWrapper>
 	);
 }
 

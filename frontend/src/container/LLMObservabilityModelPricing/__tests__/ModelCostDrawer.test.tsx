@@ -89,8 +89,8 @@ describe('ModelCostDrawer', () => {
 	it('disables the Provider select in Edit mode but allows it in Add mode', () => {
 		const { unmount } = render(<Harness mode="add" />);
 
-		expect(screen.getByTestId('drawer-provider-select')).not.toHaveClass(
-			'ant-select-disabled',
+		expect(screen.getByTestId('drawer-provider-select')).not.toHaveAttribute(
+			'data-disabled',
 		);
 		unmount();
 
@@ -107,8 +107,8 @@ describe('ModelCostDrawer', () => {
 			/>,
 		);
 
-		expect(screen.getByTestId('drawer-provider-select')).toHaveClass(
-			'ant-select-disabled',
+		expect(screen.getByTestId('drawer-provider-select')).toHaveAttribute(
+			'data-disabled',
 		);
 	});
 

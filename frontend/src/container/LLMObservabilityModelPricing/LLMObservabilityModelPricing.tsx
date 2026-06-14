@@ -1,5 +1,8 @@
 import { useMemo, useState } from 'react';
-import { Button, Input, Select, Tabs } from 'antd';
+import { Button } from '@signozhq/ui/button';
+import { Input } from '@signozhq/ui/input';
+import { SelectSimple } from '@signozhq/ui/select';
+import { Tabs } from '@signozhq/ui/tabs';
 import { Plus, Search } from '@signozhq/icons';
 import { useListLLMPricingRules } from 'api/generated/services/llmpricingrules';
 
@@ -57,13 +60,14 @@ function LLMObservabilityModelPricing(): JSX.Element {
 
 			<Tabs
 				className="page-tabs"
-				defaultActiveKey="model-costs"
+				defaultValue="model-costs"
 				items={[
-					{ key: 'model-costs', label: 'Model costs' },
+					{ key: 'model-costs', label: 'Model costs', children: null },
 					{
 						key: 'unpriced-models',
 						label: 'Unpriced models',
 						disabled: true,
+						children: null,
 					},
 				]}
 			/>
@@ -75,29 +79,29 @@ function LLMObservabilityModelPricing(): JSX.Element {
 					prefix={<Search size={14} />}
 					value={search}
 					onChange={(event): void => setSearch(event.target.value)}
-					data-testid="search-input"
-					allowClear
+					testId="search-input"
 				/>
-				<Select<SourceFilter>
+				<SelectSimple
 					className="filters-bar__source"
 					value={source}
-					onChange={(value): void => setSource(value)}
-					options={SOURCE_OPTIONS}
-					data-testid="source-select"
+					onChange={(value): void => setSource(value as SourceFilter)}
+					items={SOURCE_OPTIONS}
+					testId="source-select"
 				/>
-				<Select<string>
+				<SelectSimple
 					className="filters-bar__currency"
 					value={currency}
-					onChange={(value): void => setCurrency(value)}
-					options={CURRENCY_OPTIONS}
-					data-testid="currency-select"
+					onChange={(value): void => setCurrency(value as string)}
+					items={CURRENCY_OPTIONS}
+					testId="currency-select"
 				/>
 				<Button
-					type="primary"
+					variant="solid"
+					color="primary"
 					className="filters-bar__add"
-					icon={<Plus size={14} />}
+					prefix={<Plus size={14} />}
 					onClick={(): void => drawer.openForAdd()}
-					data-testid="add-model-cost-btn"
+					testId="add-model-cost-btn"
 				>
 					Add model cost
 				</Button>

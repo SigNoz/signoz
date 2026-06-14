@@ -1,5 +1,6 @@
-import { Button, Table, type TableColumnsType } from 'antd';
+import { Table, type TableColumnsType } from 'antd';
 import { Badge } from '@signozhq/ui/badge';
+import { Button } from '@signozhq/ui/button';
 import { ChevronDown } from '@signozhq/icons';
 
 import {
@@ -115,13 +116,14 @@ function ModelCostsTable({
 			width: 80,
 			render: (_value, rule): JSX.Element => (
 				<Button
-					type="text"
-					size="small"
-					data-testid={`edit-rule-${rule.id}`}
+					variant="ghost"
+					color="secondary"
+					size="sm"
+					suffix={<ChevronDown size={14} />}
+					testId={`edit-rule-${rule.id}`}
 					onClick={(): void => onEdit(rule)}
 				>
 					Edit
-					<ChevronDown size={14} />
 				</Button>
 			),
 		},
