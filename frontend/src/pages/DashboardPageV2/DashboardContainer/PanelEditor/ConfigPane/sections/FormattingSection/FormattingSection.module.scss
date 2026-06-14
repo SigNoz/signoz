@@ -1,0 +1,11 @@
+.field {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.unitSelector {
+	:global(.ant-select) {
+		width: 100%;
+	}
+}

@@ -1,0 +1,21 @@
+/**
+ * The panel editor renders as a full-screen overlay (`PanelEditor.module.scss` `.root`,
+ * z-index: 1000). The editor's own floating UI (Select dropdowns) is rendered inside the
+ * overlay (withPortal={false}), so it needs no z-index help.
+ *
+ * The ⌘K command palette, however, is a global component mounted at the app root that
+ * portals to <body> as a sibling of the overlay — so without a higher z-index its dialog
+ * paints behind. This rule lifts it above the overlay. It must be global (the dialog lives
+ * at the <body> root) but is gated on the `panel-editor-open` body class the editor toggles
+ * while mounted, and scoped via :has([cmdk-root]) so no other dialog is affected.
+ */
+
+body.panel-editor-open {
+	[data-slot='dialog-content']:has([cmdk-root]) {
+		z-index: 1100;
+	}
+
+	[data-slot='dialog-overlay']:has(+ [data-slot='dialog-content'] [cmdk-root]) {
+		z-index: 1099;
+	}
+}

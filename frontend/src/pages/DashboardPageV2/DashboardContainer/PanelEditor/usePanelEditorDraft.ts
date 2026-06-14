@@ -1,5 +1,9 @@
 import { useCallback, useMemo, useState } from 'react';
-import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import type {
+	DashboardtypesPanelDTO,
+	DashboardtypesPanelSpecDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import { isEqual } from 'lodash-es';
 
 import type { PanelDisplayDraft, PanelEditorDraftApi } from './types';
 
@@ -35,18 +39,30 @@ export function usePanelEditorDraft(
 		}));
 	}, []);
 
+	const setSpec = useCallback((next: DashboardtypesPanelSpecDTO): void => {
+		setDraft((prev) => ({ ...prev, spec: next }));
+	}, []);
+
 	const reset = useCallback((): void => {
 		setDraft(initialPanel);
 	}, [initialPanel]);
 
 	const display = useMemo(() => readDisplay(draft), [draft]);
 
-	const isDirty = useMemo(() => {
-		const initial = readDisplay(initialPanel);
-		return (
-			initial.name !== display.name || initial.description !== display.description
-		);
-	}, [initialPanel, display]);
+	// Deep compare: any divergence from the loaded panel (display OR spec slices like
+	// formatting/axes/thresholds/links) marks the draft dirty, not just name/description.
+	const isDirty = useMemo(
+		() => !isEqual(draft, initialPanel),
+		[draft, initialPanel],
+	);
 
-	return { draft, display, setDisplay, isDirty, reset };
+	return {
+		draft,
+		display,
+		setDisplay,
+		spec: draft.spec,
+		setSpec,
+		isDirty,
+		reset,
+	};
 }

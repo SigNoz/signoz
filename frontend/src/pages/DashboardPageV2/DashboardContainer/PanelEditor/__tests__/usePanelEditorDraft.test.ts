@@ -59,4 +59,46 @@ describe('usePanelEditorDraft', () => {
 
 		expect(result.current.display).toStrictEqual({ name: '', description: '' });
 	});
+
+	it('exposes the panel spec and flags dirty on a spec (non-display) edit', () => {
+		const { result } = renderHook(() => usePanelEditorDraft(panel()));
+
+		expect(result.current.spec).toBe(result.current.draft.spec);
+
+		act(() =>
+			result.current.setSpec({
+				...result.current.spec,
+				plugin: {
+					kind: 'signoz/TimeSeriesPanel',
+					spec: { formatting: { unit: 'bytes' } },
+				},
+			} as typeof result.current.spec),
+		);
+
+		expect(result.current.isDirty).toBe(true);
+		expect(
+			(
+				result.current.draft.spec?.plugin?.spec as {
+					formatting?: { unit?: string };
+				}
+			)?.formatting?.unit,
+		).toBe('bytes');
+	});
+
+	it('reset restores the spec and clears dirty after a spec edit', () => {
+		const { result } = renderHook(() => usePanelEditorDraft(panel()));
+
+		act(() =>
+			result.current.setSpec({
+				...result.current.spec,
+				plugin: {
+					kind: 'signoz/TimeSeriesPanel',
+					spec: { formatting: { unit: 'ms' } },
+				},
+			} as typeof result.current.spec),
+		);
+		act(() => result.current.reset());
+
+		expect(result.current.isDirty).toBe(false);
+	});
 });

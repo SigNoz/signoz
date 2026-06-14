@@ -1,15 +1,38 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
 
 import ConfigPane from '../ConfigPane/ConfigPane';
 
+function spec(unit?: string): DashboardtypesPanelSpecDTO {
+	return {
+		display: { name: 'CPU', description: 'usage' },
+		plugin: {
+			kind: 'signoz/TimeSeriesPanel',
+			spec: unit ? { formatting: { unit } } : {},
+		},
+		queries: [],
+	} as unknown as DashboardtypesPanelSpecDTO;
+}
+
+function renderConfigPane(
+	overrides: Partial<React.ComponentProps<typeof ConfigPane>> = {},
+): React.ComponentProps<typeof ConfigPane> {
+	const props: React.ComponentProps<typeof ConfigPane> = {
+		display: { name: 'CPU', description: 'usage' },
+		onChangeDisplay: jest.fn(),
+		panelKind: 'signoz/TimeSeriesPanel',
+		spec: spec(),
+		onChangeSpec: jest.fn(),
+		legendSeries: [],
+		...overrides,
+	};
+	render(<ConfigPane {...props} />);
+	return props;
+}
+
 describe('ConfigPane', () => {
 	it('renders the seeded title and description', () => {
-		render(
-			<ConfigPane
-				display={{ name: 'CPU', description: 'usage' }}
-				onChangeDisplay={jest.fn()}
-			/>,
-		);
+		renderConfigPane();
 
 		expect(screen.getByTestId('panel-editor-v2-title')).toHaveValue('CPU');
 		expect(screen.getByTestId('panel-editor-v2-description')).toHaveValue(
@@ -18,18 +41,25 @@ describe('ConfigPane', () => {
 	});
 
 	it('reports title edits via onChangeDisplay', () => {
-		const onChangeDisplay = jest.fn();
-		render(
-			<ConfigPane
-				display={{ name: 'CPU', description: 'usage' }}
-				onChangeDisplay={onChangeDisplay}
-			/>,
-		);
+		const { onChangeDisplay } = renderConfigPane();
 
 		fireEvent.change(screen.getByTestId('panel-editor-v2-title'), {
 			target: { value: 'Memory' },
 		});
 
 		expect(onChangeDisplay).toHaveBeenCalledWith({ name: 'Memory' });
+	});
+
+	it('renders the Formatting section for a kind that declares it', () => {
+		renderConfigPane();
+		// The TimeSeries kind declares a Formatting section; its collapsible header shows.
+		expect(screen.getByTestId('config-section-Formatting')).toBeInTheDocument();
+	});
+
+	it('omits the Formatting section for an unknown kind', () => {
+		renderConfigPane({ panelKind: 'signoz/UnknownPanel' });
+		expect(
+			screen.queryByTestId('config-section-Formatting'),
+		).not.toBeInTheDocument();
 	});
 });

@@ -1,22 +1,86 @@
 .config {
 	display: flex;
 	flex-direction: column;
-	height: 100%;
-	padding: 16px;
-	gap: 16px;
-	background-color: var(--l2-background);
+	flex: 1;
+	padding: 18px 18px 44px;
+	background-color: var(--l2-background-60);
 	border-left: 1px solid var(--l2-border);
 	overflow-y: auto;
+	overflow-x: hidden;
+
+	// Thin, unobtrusive scrollbar (replaces the chunky native bar).
+	$thumb: color-mix(in srgb, var(--bg-vanilla-100) 16%, transparent);
+
+	scrollbar-width: thin;
+	scrollbar-color: $thumb transparent;
+
+	&::-webkit-scrollbar {
+		width: 8px;
+	}
+
+	&::-webkit-scrollbar-track {
+		background: transparent;
+	}
+
+	&::-webkit-scrollbar-thumb {
+		background: $thumb;
+		border-radius: 999px;
+		border: 2px solid transparent;
+		background-clip: padding-box;
+	}
 }
 
-.section {
+.heading {
+	margin-bottom: 18px;
+}
+
+.title {
+	display: flex;
+	align-items: baseline;
+	gap: 9px;
+	white-space: nowrap;
+}
+
+.kind {
+	font-family: var(--font-mono, monospace);
+	font-size: 12px;
+	color: var(--text-vanilla-400);
+}
+
+.subtitle {
+	font-size: 12px;
+	color: var(--text-vanilla-400);
+}
+
+.eyebrow {
+	display: block;
+	margin: 0 2px 10px;
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--text-vanilla-400);
+}
+
+.group {
 	display: flex;
 	flex-direction: column;
-	gap: 8px;
+	gap: 16px;
 }
 
 .field {
 	display: flex;
 	flex-direction: column;
-	gap: 4px;
+	gap: 8px;
+}
+
+.divider {
+	height: 1px;
+	background: var(--l2-border);
+	margin: 18px 0;
+}
+
+.sections {
+	display: flex;
+	flex-direction: column;
 }
