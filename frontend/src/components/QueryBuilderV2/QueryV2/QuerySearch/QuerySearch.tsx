@@ -14,7 +14,8 @@ import { Color } from '@signozhq/design-tokens';
 import { copilot } from '@uiw/codemirror-theme-copilot';
 import { githubLight } from '@uiw/codemirror-theme-github';
 import CodeMirror, { EditorView, keymap, Prec } from '@uiw/react-codemirror';
-import { Button, Card, Collapse, Popover, Tag, Tooltip } from 'antd';
+import { Button, Card, Collapse, Popover, Tooltip } from 'antd';
+import { Badge } from '@signozhq/ui/badge';
 import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
 import { getValueSuggestions } from 'api/querySuggestions/getValueSuggestion';
 import cx from 'classnames';
@@ -45,8 +46,15 @@ import {
 import { validateQuery } from 'utils/queryValidationUtils';
 import { unquote } from 'utils/stringUtils';
 
-import { queryExamples } from './constants';
-import { combineInitialAndUserExpression } from './utils';
+import { getRecentQueries } from 'lib/recentQueries/getRecentQueries';
+import type { SignalType } from 'types/api/v5/queryRange';
+
+import { queryExamples, SUGGESTIONS_SECTION } from './constants';
+import {
+	combineInitialAndUserExpression,
+	getRecentOptions,
+	renderRecentDeleteButton,
+} from './utils';
 
 import './QuerySearch.styles.scss';
 
@@ -664,26 +672,26 @@ function QuerySearch({
 	// Helper function to render a badge for the current context mode
 	const renderContextBadge = (): JSX.Element => {
 		if (!editingMode) {
-			return <Tag>Unknown</Tag>;
+			return <Badge color="vanilla">Unknown</Badge>;
 		}
 
 		switch (editingMode) {
 			case 'key':
-				return <Tag color="blue">Key</Tag>;
+				return <Badge color="robin">Key</Badge>;
 			case 'operator':
-				return <Tag color="purple">Operator</Tag>;
+				return <Badge color="sakura">Operator</Badge>;
 			case 'value':
-				return <Tag color="green">Value</Tag>;
+				return <Badge color="forest">Value</Badge>;
 			case 'conjunction':
-				return <Tag color="orange">Conjunction</Tag>;
+				return <Badge color="amber">Conjunction</Badge>;
 			case 'function':
-				return <Tag color="cyan">Function</Tag>;
+				return <Badge color="aqua">Function</Badge>;
 			case 'parenthesis':
-				return <Tag color="magenta">Parenthesis</Tag>;
+				return <Badge color="sakura">Parenthesis</Badge>;
 			case 'bracketList':
-				return <Tag color="red">Bracket List</Tag>;
+				return <Badge color="cherry">Bracket List</Badge>;
 			default:
-				return <Tag>Unknown</Tag>;
+				return <Badge color="vanilla">Unknown</Badge>;
 		}
 	};
 
@@ -1249,6 +1257,41 @@ function QuerySearch({
 		};
 	}
 
+	const signal = dataSource as SignalType;
+
+	function combinedSuggestions(
+		context: CompletionContext,
+	): CompletionResult | null {
+		const fullDoc = context.state.doc.toString();
+		const recentOptions = getRecentOptions(
+			getRecentQueries(signal, signalSource ?? ''),
+			fullDoc,
+		);
+		const result = autoSuggestions(context);
+
+		const suggestionOptions = (result?.options || []).map((opt) => ({
+			...opt,
+			section: SUGGESTIONS_SECTION,
+		}));
+
+		if (recentOptions.length === 0 && suggestionOptions.length === 0) {
+			return result;
+		}
+
+		if (!result) {
+			return {
+				from: 0,
+				to: fullDoc.length,
+				options: recentOptions,
+			};
+		}
+
+		return {
+			...result,
+			options: [...recentOptions, ...suggestionOptions],
+		};
+	}
+
 	// Effect to handle focus state and trigger suggestions
 	useEffect(() => {
 		const clearTimeout = toggleSuggestions(10);
@@ -1304,34 +1347,37 @@ function QuerySearch({
 					Currently editing: {renderContextBadge()}
 					{queryContext?.keyToken && (
 						<span className="triplet-info">
-							Key: <Tag>{queryContext.keyToken}</Tag>
+							Key: <Badge color="vanilla">{queryContext.keyToken}</Badge>
 						</span>
 					)}
 					{queryContext?.operatorToken && (
 						<span className="triplet-info">
-							Operator: <Tag>{queryContext.operatorToken}</Tag>
+							Operator: <Badge color="vanilla">{queryContext.operatorToken}</Badge>
 						</span>
 					)}
 					{queryContext?.valueToken && (
 						<span className="triplet-info">
-							Value: <Tag>{queryContext.valueToken}</Tag>
+							Value: <Badge color="vanilla">{queryContext.valueToken}</Badge>
 						</span>
 					)}
 					{queryContext?.currentPair && (
 						<span className="triplet-info query-pair-info">
-							Current pair: <Tag color="blue">{queryContext.currentPair.key}</Tag>
-							<Tag color="purple">{queryContext.currentPair.operator}</Tag>
+							Current pair: <Badge color="robin">{queryContext.currentPair.key}</Badge>
+							<Badge color="sakura">{queryContext.currentPair.operator}</Badge>
 							{queryContext.currentPair.value && (
-								<Tag color="green">{queryContext.currentPair.value}</Tag>
+								<Badge color="forest">{queryContext.currentPair.value}</Badge>
 							)}
-							<Tag color={queryContext.currentPair.isComplete ? 'success' : 'warning'}>
+							<Badge
+								color={queryContext.currentPair.isComplete ? 'success' : 'warning'}
+							>
 								{queryContext.currentPair.isComplete ? 'Complete' : 'Incomplete'}
-							</Tag>
+							</Badge>
 						</span>
 					)}
 					{queryContext?.queryPairs && queryContext.queryPairs.length > 0 && (
 						<span className="triplet-info">
-							Total pairs: <Tag color="blue">{queryContext.queryPairs.length}</Tag>
+							Total pairs:{' '}
+							<Badge color="robin">{queryContext.queryPairs.length}</Badge>
 						</span>
 					)}
 				</div>
@@ -1394,11 +1440,12 @@ function QuerySearch({
 					})}
 					extensions={[
 						autocompletion({
-							override: [autoSuggestions],
+							override: [combinedSuggestions],
 							defaultKeymap: true,
 							closeOnBlur: true,
 							activateOnTyping: true,
 							maxRenderedOptions: 50,
+							addToOptions: [{ render: renderRecentDeleteButton, position: 100 }],
 						}),
 						javascript({ jsx: false, typescript: false }),
 						EditorView.lineWrapping,

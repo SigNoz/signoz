@@ -21,28 +21,13 @@ const (
 // ErrTraceNotFound is returned when a trace ID has no matching spans in ClickHouse.
 var ErrTraceNotFound = errors.NewNotFoundf(errors.CodeNotFound, "trace not found")
 
-// PostableWaterfall is the request body for the v3 waterfall API.
+// PostableWaterfall is the request body for the waterfall API.
 type PostableWaterfall struct {
-	SelectedSpanID   string            `json:"selectedSpanId"`
-	UncollapsedSpans []string          `json:"uncollapsedSpans"`
-	Limit            uint              `json:"limit"`
-	Aggregations     []SpanAggregation `json:"aggregations"`
+	SelectedSpanID   string   `json:"selectedSpanId"`
+	UncollapsedSpans []string `json:"uncollapsedSpans"`
 }
 
 func (p *PostableWaterfall) Validate() error {
-	if len(p.Aggregations) > maxAggregationItems {
-		return ErrTooManyAggregationItems
-	}
-	for _, a := range p.Aggregations {
-		if !a.Aggregation.isValid() {
-			return errors.NewInvalidInputf(errors.CodeInvalidInput, "unknown aggregation type: %q", a.Aggregation)
-		}
-		fc := a.Field.FieldContext
-		if fc != telemetrytypes.FieldContextResource && fc != telemetrytypes.FieldContextAttribute {
-			return errors.NewInvalidInputf(errors.CodeInvalidInput, "aggregation field context must be %q or %q, got %q",
-				telemetrytypes.FieldContextResource, telemetrytypes.FieldContextAttribute, fc)
-		}
-	}
 	return nil
 }
 
@@ -52,6 +37,12 @@ type Event struct {
 	TimeUnixNano uint64         `json:"timeUnixNano,omitempty"`
 	AttributeMap map[string]any `json:"attributeMap,omitempty"`
 	IsError      bool           `json:"isError,omitempty"`
+}
+
+type OtelSpanRef struct {
+	TraceId string `json:"traceId,omitempty"`
+	SpanId  string `json:"spanId,omitempty"`
+	RefType string `json:"refType,omitempty"`
 }
 
 // WaterfallSpan represents the span in waterfall response,
@@ -74,6 +65,7 @@ type WaterfallSpan struct {
 	TimeUnix     uint64            `json:"time_unix"`
 	TraceID      string            `json:"trace_id"`
 	TraceState   string            `json:"trace_state"`
+	References   []OtelSpanRef     `json:"references" required:"true" nullable:"false"`
 
 	// Calculated fields https://signoz.io/docs/traces-management/guides/derived-fields-spans
 	DBName             string `json:"db_name,omitempty"`
@@ -103,12 +95,10 @@ type StorableSpan struct {
 	StartTime          time.Time          `ch:"timestamp"`
 	DurationNano       uint64             `ch:"duration_nano"`
 	SpanID             string             `ch:"span_id"`
-	TraceID            string             `ch:"trace_id"`
 	HasError           bool               `ch:"has_error"`
 	Kind               int8               `ch:"kind"`
 	ServiceName        string             `ch:"resource_string_service$$name"`
 	Name               string             `ch:"name"`
-	References         string             `ch:"references"`
 	AttributesString   map[string]string  `ch:"attributes_string"`
 	AttributesNumber   map[string]float64 `ch:"attributes_number"`
 	AttributesBool     map[string]bool    `ch:"attributes_bool"`
@@ -130,6 +120,44 @@ type StorableSpan struct {
 	ExternalHTTPMethod string             `ch:"external_http_method"`
 	ExternalHTTPURL    string             `ch:"external_http_url"`
 	ResponseStatusCode string             `ch:"response_status_code"`
+	References         string             `ch:"references"`
+}
+
+// MinimalSpan with only the fields needed to build the parent-child tree.
+type MinimalSpan struct {
+	SpanID       string    `ch:"span_id"`
+	ParentSpanID string    `ch:"parent_span_id"`
+	StartTime    time.Time `ch:"timestamp"`
+	DurationNano uint64    `ch:"duration_nano"`
+	HasError     bool      `ch:"has_error"`
+	ServiceName  string    `ch:"resource_string_service$$name"`
+}
+
+func (item *MinimalSpan) ToWaterfallSpan(traceID string) *WaterfallSpan {
+	return &WaterfallSpan{
+		SpanID:       item.SpanID,
+		TraceID:      traceID,
+		ParentSpanID: item.ParentSpanID,
+		TimeUnix:     uint64(item.StartTime.UnixNano()),
+		DurationNano: item.DurationNano,
+		HasError:     item.HasError,
+		ServiceName:  item.ServiceName,
+		Resource:     map[string]string{"service.name": item.ServiceName},
+		Children:     make([]*WaterfallSpan, 0),
+		Attributes:   make(map[string]any),
+		Events:       make([]Event, 0),
+	}
+}
+
+func (item *MinimalSpan) ToFlamegraphSpan() *FlamegraphSpan {
+	return &FlamegraphSpan{
+		SpanID:       item.SpanID,
+		ParentSpanID: item.ParentSpanID,
+		Timestamp:    uint64(item.StartTime.UnixNano()),
+		DurationNano: item.DurationNano,
+		HasError:     item.HasError,
+		Children:     make([]*FlamegraphSpan, 0),
+	}
 }
 
 // NewMissingWaterfallSpan creates a synthetic placeholder span for a parent that has no recorded data.
@@ -235,6 +263,19 @@ func (ws *WaterfallSpan) getPathToSelectedSpanID(selectedSpanID string) ([]strin
 	return nil, false
 }
 
+func (item *StorableSpan) AttributeValue(name string) any {
+	if v, ok := item.AttributesString[name]; ok {
+		return v
+	}
+	if v, ok := item.AttributesNumber[name]; ok {
+		return v
+	}
+	if v, ok := item.AttributesBool[name]; ok {
+		return v
+	}
+	return nil
+}
+
 func (item *StorableSpan) Attributes() map[string]any {
 	attributes := make(map[string]any, len(item.AttributesString)+len(item.AttributesNumber)+len(item.AttributesBool))
 	for k, v := range item.AttributesString {
@@ -261,7 +302,15 @@ func (item *StorableSpan) UnmarshalledEvents() []Event {
 	return events
 }
 
-func (item *StorableSpan) ToWaterfallSpan() *WaterfallSpan {
+func (item *StorableSpan) UnmarshalledRefs() []OtelSpanRef {
+	refs := []OtelSpanRef{}
+	if err := json.Unmarshal([]byte(item.References), &refs); err != nil {
+		return []OtelSpanRef{} // skip malformed values
+	}
+	return refs
+}
+
+func (item *StorableSpan) ToWaterfallSpan(traceID string) *WaterfallSpan {
 	resources := make(map[string]string)
 	maps.Copy(resources, item.ResourcesString)
 
@@ -289,11 +338,30 @@ func (item *StorableSpan) ToWaterfallSpan() *WaterfallSpan {
 		StatusCode:         item.StatusCode,
 		StatusCodeString:   item.StatusCodeString,
 		StatusMessage:      item.StatusMessage,
-		TraceID:            item.TraceID,
+		TraceID:            traceID,
 		TraceState:         item.TraceState,
 		Children:           make([]*WaterfallSpan, 0),
 		TimeUnix:           uint64(item.StartTime.UnixNano()),
 		ServiceName:        item.ServiceName,
+		References:         item.UnmarshalledRefs(),
+	}
+}
+
+func EnrichSelectedSpans(window []*WaterfallSpan, fullSpans []StorableSpan) {
+	fullByID := make(map[string]*StorableSpan, len(fullSpans))
+	for i := range fullSpans {
+		fullByID[fullSpans[i].SpanID] = &fullSpans[i]
+	}
+	for i, ws := range window {
+		full, ok := fullByID[ws.SpanID]
+		if !ok {
+			continue // synthesized MissingSpan — keep empty shell
+		}
+		newWS := full.ToWaterfallSpan(ws.TraceID)
+		newWS.Level = ws.Level
+		newWS.HasChildren = ws.HasChildren
+		newWS.SubTreeNodeCount = ws.SubTreeNodeCount
+		window[i] = newWS
 	}
 }
 

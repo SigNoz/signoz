@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Button } from '@signozhq/ui/button';
 import {
@@ -21,6 +21,7 @@ import {
 	ArrowLeft,
 	CalendarClock,
 	ChartPie,
+	CornerUpLeft,
 	Server,
 	Timer,
 } from '@signozhq/icons';
@@ -28,6 +29,8 @@ import KeyValueLabel from 'periscope/components/KeyValueLabel';
 import { TraceDetailV2URLProps } from 'types/api/trace/getTraceV2';
 import { DataSource } from 'types/common/queryBuilder';
 
+import { TraceDetailEventKeys, TraceDetailEvents } from '../events';
+import { useTraceDetailLogEvent } from '../hooks/useTraceDetailLogEvent';
 import { useTraceStore } from '../stores/traceStore';
 import AnalyticsPanel from '../SpanDetailsPanel/AnalyticsPanel/AnalyticsPanel';
 import Filters from '../TraceWaterfall/TraceWaterfallStates/Success/Filters/Filters';
@@ -89,11 +92,35 @@ function TraceDetailsHeader({
 	const previewFields = useTraceStore((s) => s.previewFields);
 	const setPreviewFields = useTraceStore((s) => s.setPreviewFields);
 
+	const logTraceEvent = useTraceDetailLogEvent('v3', traceID || '');
+	const pageLoadedAtRef = useRef(Date.now());
+
 	const handleSwitchToOldView = useCallback((): void => {
+		logTraceEvent(TraceDetailEvents.ViewSwitched, {
+			[TraceDetailEventKeys.From]: 'v3',
+			[TraceDetailEventKeys.To]: 'v2',
+			[TraceDetailEventKeys.DwellMs]: Date.now() - pageLoadedAtRef.current,
+		});
 		setLocalStorageKey(LOCALSTORAGE.TRACE_DETAILS_PREFER_OLD_VIEW, 'true');
 		const oldUrl = `/trace-old/${traceID}${window.location.search}`;
 		history.replace(oldUrl);
-	}, [traceID]);
+	}, [traceID, logTraceEvent]);
+
+	const handleToggleAnalytics = useCallback((): void => {
+		logTraceEvent(TraceDetailEvents.AnalyticsPanelToggled, {
+			[TraceDetailEventKeys.Open]: !isAnalyticsOpen,
+		});
+		setIsAnalyticsOpen((prev) => !prev);
+	}, [logTraceEvent, isAnalyticsOpen]);
+
+	const handleAnalyticsTabChange = useCallback(
+		(tab: string): void => {
+			logTraceEvent(TraceDetailEvents.AnalyticsTabChanged, {
+				[TraceDetailEventKeys.Tab]: tab,
+			});
+		},
+		[logTraceEvent],
+	);
 
 	const handlePreviousBtnClick = useCallback((): void => {
 		if (hasInAppHistory()) {
@@ -117,7 +144,7 @@ function TraceDetailsHeader({
 		<div className={styles.wrapper}>
 			<div className={styles.header}>
 				{!isFilterExpanded && (
-					<>
+					<div className={styles.traceIdSection}>
 						<Button
 							variant="solid"
 							color="secondary"
@@ -133,36 +160,58 @@ function TraceDetailsHeader({
 							badgeValue={traceID || ''}
 							maxCharacters={100}
 						/>
-					</>
+					</div>
 				)}
 				{isDataLoaded && (
-					<>
+					<div
+						className={cx(
+							styles.filterSection,
+							isFilterExpanded && styles.isExpanded,
+						)}
+					>
 						{!isFilterExpanded && (
-							<>
-								<TooltipProvider>
+							<TooltipProvider>
+								<div className={styles.headerActions}>
 									<TooltipRoot>
 										<TooltipTrigger asChild>
 											<Button
 												variant="ghost"
 												size="icon"
 												color="secondary"
-												className={styles.analyticsBtn}
-												onClick={(): void => setIsAnalyticsOpen((prev) => !prev)}
+												aria-label="Switch to legacy trace view"
+												onClick={handleSwitchToOldView}
+											>
+												<CornerUpLeft size={14} />
+											</Button>
+										</TooltipTrigger>
+										<TooltipContent>Switch to legacy trace view</TooltipContent>
+									</TooltipRoot>
+									<TooltipRoot>
+										<TooltipTrigger asChild>
+											<Button
+												variant="ghost"
+												size="icon"
+												color="secondary"
+												aria-label="Analytics"
+												onClick={handleToggleAnalytics}
 											>
 												<ChartPie size={14} />
 											</Button>
 										</TooltipTrigger>
 										<TooltipContent>Analytics</TooltipContent>
 									</TooltipRoot>
-								</TooltipProvider>
-								<TraceOptionsMenu
-									showTraceDetails={showTraceDetails}
-									onToggleTraceDetails={handleToggleTraceDetails}
-									onOpenPreviewFields={(): void => setIsPreviewFieldsOpen(true)}
-								/>
-							</>
+									<TraceOptionsMenu
+										showTraceDetails={showTraceDetails}
+										onToggleTraceDetails={handleToggleTraceDetails}
+										onOpenPreviewFields={(): void => setIsPreviewFieldsOpen(true)}
+									/>
+								</div>
+							</TooltipProvider>
 						)}
-						<div className={cx(styles.filter, isFilterExpanded && styles.isExpanded)}>
+						<div
+							key="filter"
+							className={cx(styles.filter, isFilterExpanded && styles.isExpanded)}
+						>
 							<Filters
 								startTime={filterMetadata.startTime}
 								endTime={filterMetadata.endTime}
@@ -173,18 +222,7 @@ function TraceDetailsHeader({
 								onCollapse={(): void => setIsFilterExpanded(false)}
 							/>
 						</div>
-						{!isFilterExpanded && (
-							<Button
-								variant="solid"
-								color="secondary"
-								size="sm"
-								className={styles.oldViewBtn}
-								onClick={handleSwitchToOldView}
-							>
-								Legacy View
-							</Button>
-						)}
-					</>
+					</div>
 				)}
 			</div>
 
@@ -233,6 +271,7 @@ function TraceDetailsHeader({
 			<AnalyticsPanel
 				isOpen={isAnalyticsOpen}
 				onClose={(): void => setIsAnalyticsOpen(false)}
+				onTabChange={handleAnalyticsTabChange}
 			/>
 		</div>
 	);

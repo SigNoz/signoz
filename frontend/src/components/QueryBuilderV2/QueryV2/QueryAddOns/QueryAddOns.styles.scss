@@ -2,6 +2,13 @@
 
 .query-add-ons {
 	width: 100%;
+
+	.add-on-tab-title {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: var(--margin-2);
+	}
 }
 
 .add-ons-list {
@@ -25,7 +32,7 @@
 			color: var(--l2-foreground);
 		}
 
-		.tab {
+		> button {
 			border: 1px solid var(--l1-border);
 			border-left: none;
 			min-width: 120px;
@@ -35,21 +42,21 @@
 			&:first-child {
 				border-left: 1px solid var(--l1-border);
 			}
-		}
 
-		.tab::before {
-			background: var(--l1-border);
-		}
+			&::before {
+				background: var(--l1-border);
+			}
 
-		.selected-view {
-			color: var(--text-robin-500);
-			border: 1px solid var(--l1-border);
+			&[data-state='on'] {
+				color: var(--text-robin-500);
+				border: 1px solid var(--l1-border);
 
-			display: none;
-		}
+				display: none;
 
-		.selected-view::before {
-			background: var(--l1-border);
+				&::before {
+					background: var(--l1-border);
+				}
+			}
 		}
 	}
 
@@ -259,6 +266,14 @@
 			border-left: transparent;
 			border-top-left-radius: 0px;
 			border-bottom-left-radius: 0px;
+
+			&:focus:not(:focus-visible),
+			&.ant-btn:focus:not(:focus-visible) {
+				border-color: var(--l2-border);
+				border-left-color: transparent;
+				outline: none;
+				box-shadow: none;
+			}
 		}
 	}
 }
@@ -283,6 +298,22 @@
 		position: relative;
 		.cm-placeholder {
 			font-size: 12px !important;
+		}
+
+		$add-on-row-height: 38px;
+
+		.periscope-input-with-label {
+			.input {
+				.ant-select {
+					height: $add-on-row-height;
+				}
+			}
+		}
+
+		.input-with-label {
+			.input {
+				height: $add-on-row-height;
+			}
 		}
 	}
 }

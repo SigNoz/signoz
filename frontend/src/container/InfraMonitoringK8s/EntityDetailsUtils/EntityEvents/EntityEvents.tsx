@@ -40,6 +40,7 @@ import { K8S_ENTITY_EVENTS_EXPRESSION_KEY, useEntityEvents } from './hooks';
 import { getEntityEventsQueryPayload, isEventsKeyNotFoundError } from './utils';
 
 import styles from './EntityEvents.module.scss';
+import { useTimezone } from 'providers/Timezone';
 
 interface EventDataType {
 	key: string;
@@ -167,17 +168,25 @@ function EntityEventsContent({
 		[events],
 	);
 
-	const columns: TableColumnsType<EventDataType> = [
-		{ title: 'Severity', dataIndex: 'severity', key: 'severity', width: 100 },
-		{
-			title: 'Timestamp',
-			dataIndex: 'timestamp',
-			width: 240,
-			ellipsis: true,
-			key: 'timestamp',
-		},
-		{ title: 'Body', dataIndex: 'body', key: 'body' },
-	];
+	const { formatTimezoneAdjustedTimestamp } = useTimezone();
+	const columns: TableColumnsType<EventDataType> = useMemo(
+		() => [
+			{ title: 'Severity', dataIndex: 'severity', key: 'severity', width: 100 },
+			{
+				title: 'Timestamp',
+				dataIndex: 'timestamp',
+				width: 240,
+				ellipsis: true,
+				key: 'timestamp',
+				render: (value: string | number): string =>
+					formatTimezoneAdjustedTimestamp(
+						typeof value === 'string' ? value : value / 1e6,
+					),
+			},
+			{ title: 'Body', dataIndex: 'body', key: 'body' },
+		],
+		[formatTimezoneAdjustedTimestamp],
+	);
 
 	const handleExpandRowIcon = ({
 		expanded,

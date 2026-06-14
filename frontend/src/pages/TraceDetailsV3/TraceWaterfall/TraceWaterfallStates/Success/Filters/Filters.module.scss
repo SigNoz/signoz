@@ -3,12 +3,6 @@
 	align-items: center;
 	gap: 12px;
 
-	// QuerySearch child sets `query-builder-search-v2` globally; size it to the
-	// search container by reaching into the descendant.
-	:global(.query-builder-search-v2) {
-		width: 100%;
-	}
-
 	// ToggleGroup children use generated class names; nest the global selectors
 	// under the local row so they only apply inside this filter row.
 	:global([class*='toggle-group']) {
@@ -20,13 +14,67 @@
 	}
 }
 
+// Expanded-mode root: grows to fill .filter wrapper, and lets the search
+// input flex within. In collapsed mode none of these grow — the whole
+// Filters region is content-sized (just the pill + result + toggle).
 .isExpanded {
 	flex: 1;
+
+	.searchInput {
+		flex: 1;
+	}
+
+	.searchAndNav {
+		flex: 1;
+	}
+}
+
+.categoryControls {
+	display: flex;
+	align-items: center;
+	flex-shrink: 0;
+}
+
+.searchInput {
+	display: flex;
+	align-items: center;
+	min-width: 0;
+}
+
+.searchPill {
+	display: flex;
+	align-items: center;
+	flex-shrink: 0;
+}
+
+.searchAndNav {
+	display: flex;
+	align-items: center;
+	min-width: 0;
 }
 
 .searchContainer {
 	flex: 1;
 	min-width: 0;
+}
+
+.resultActions {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	flex-shrink: 0;
+}
+
+.expandedActions {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+}
+
+.highlightControl {
+	display: flex;
+	align-items: center;
+	flex-shrink: 0;
 }
 
 .pill {
@@ -85,52 +133,10 @@
 	border-radius: 4px;
 }
 
-.collapseBtn {
-	flex-shrink: 0;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	box-shadow: none;
-}
-
 .highlightErrorsToggle {
 	display: flex;
 	align-items: center;
 	gap: 8px;
 	flex-shrink: 0;
 	white-space: nowrap;
-}
-
-.preNextToggle {
-	display: flex;
-	flex-shrink: 0;
-	gap: 12px;
-}
-
-.preNextCount {
-	display: flex;
-	align-items: center;
-	margin: auto;
-	color: var(--l2-foreground);
-	font-family: 'Geist Mono';
-	font-size: 12px;
-	font-weight: 400;
-	line-height: 18px;
-}
-
-.filterStatus {
-	display: flex;
-	align-items: center;
-	gap: 6px;
-	flex-shrink: 0;
-	color: var(--l2-foreground);
-	font-family: 'Geist Mono';
-	font-size: 12px;
-	font-weight: 400;
-	line-height: 18px;
-}
-
-.hasError {
-	color: var(--destructive);
-	cursor: help;
 }

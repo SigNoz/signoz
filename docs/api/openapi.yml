@@ -96,6 +96,19 @@ components:
       - createdAt
       - updatedAt
       type: object
+    AlertmanagertypesGoogleChatReceiverConfig:
+      properties:
+        http_config:
+          $ref: '#/components/schemas/ConfigHTTPClientConfig'
+        send_resolved:
+          type: boolean
+        text:
+          type: string
+        title:
+          type: string
+        webhook_url:
+          $ref: '#/components/schemas/ConfigSecretURL'
+      type: object
     AlertmanagertypesMaintenanceKind:
       enum:
       - fixed
@@ -148,6 +161,8 @@ components:
     AlertmanagertypesPostableChannel:
       oneOf:
       - required:
+        - googlechat_configs
+      - required:
         - discord_configs
       - required:
         - email_configs
@@ -191,6 +206,10 @@ components:
         email_configs:
           items:
             $ref: '#/components/schemas/ConfigEmailConfig'
+          type: array
+        googlechat_configs:
+          items:
+            $ref: '#/components/schemas/AlertmanagertypesGoogleChatReceiverConfig'
           type: array
         incidentio_configs:
           items:
@@ -305,13 +324,90 @@ components:
       - channels
       - name
       type: object
+    AlertmanagertypesReceiver:
+      properties:
+        discord_configs:
+          items:
+            $ref: '#/components/schemas/ConfigDiscordConfig'
+          type: array
+        email_configs:
+          items:
+            $ref: '#/components/schemas/ConfigEmailConfig'
+          type: array
+        googlechat_configs:
+          items:
+            $ref: '#/components/schemas/AlertmanagertypesGoogleChatReceiverConfig'
+          type: array
+        incidentio_configs:
+          items:
+            $ref: '#/components/schemas/ConfigIncidentioConfig'
+          type: array
+        jira_configs:
+          items:
+            $ref: '#/components/schemas/ConfigJiraConfig'
+          type: array
+        mattermost_configs:
+          items:
+            $ref: '#/components/schemas/ConfigMattermostConfig'
+          type: array
+        msteams_configs:
+          items:
+            $ref: '#/components/schemas/ConfigMSTeamsConfig'
+          type: array
+        msteamsv2_configs:
+          items:
+            $ref: '#/components/schemas/ConfigMSTeamsV2Config'
+          type: array
+        name:
+          type: string
+        opsgenie_configs:
+          items:
+            $ref: '#/components/schemas/ConfigOpsGenieConfig'
+          type: array
+        pagerduty_configs:
+          items:
+            $ref: '#/components/schemas/ConfigPagerdutyConfig'
+          type: array
+        pushover_configs:
+          items:
+            $ref: '#/components/schemas/ConfigPushoverConfig'
+          type: array
+        rocketchat_configs:
+          items:
+            $ref: '#/components/schemas/ConfigRocketchatConfig'
+          type: array
+        slack_configs:
+          items:
+            $ref: '#/components/schemas/ConfigSlackConfig'
+          type: array
+        sns_configs:
+          items:
+            $ref: '#/components/schemas/ConfigSNSConfig'
+          type: array
+        telegram_configs:
+          items:
+            $ref: '#/components/schemas/ConfigTelegramConfig'
+          type: array
+        victorops_configs:
+          items:
+            $ref: '#/components/schemas/ConfigVictorOpsConfig'
+          type: array
+        webex_configs:
+          items:
+            $ref: '#/components/schemas/ConfigWebexConfig'
+          type: array
+        webhook_configs:
+          items:
+            $ref: '#/components/schemas/ConfigWebhookConfig'
+          type: array
+        wechat_configs:
+          items:
+            $ref: '#/components/schemas/ConfigWechatConfig'
+          type: array
+      type: object
     AlertmanagertypesRecurrence:
       properties:
         duration:
-          type: string
-        endTime:
-          format: date-time
-          nullable: true
           type: string
         repeatOn:
           items:
@@ -320,11 +416,7 @@ components:
           type: array
         repeatType:
           $ref: '#/components/schemas/AlertmanagertypesRepeatType'
-        startTime:
-          format: date-time
-          type: string
       required:
-      - startTime
       - duration
       - repeatType
       type: object
@@ -358,6 +450,7 @@ components:
           type: string
       required:
       - timezone
+      - startTime
       type: object
     AuthtypesAttributeMapping:
       properties:
@@ -870,14 +963,6 @@ components:
       - timestampMillis
       - data
       type: object
-    CloudintegrationtypesAssets:
-      properties:
-        dashboards:
-          items:
-            $ref: '#/components/schemas/CloudintegrationtypesDashboard'
-          nullable: true
-          type: array
-      type: object
     CloudintegrationtypesAzureAccountConfig:
       properties:
         deploymentRegion:
@@ -1024,17 +1109,6 @@ components:
       - sigNozApiKey
       - ingestionUrl
       - ingestionKey
-      type: object
-    CloudintegrationtypesDashboard:
-      properties:
-        definition:
-          $ref: '#/components/schemas/DashboardtypesStorableDashboardData'
-        description:
-          type: string
-        id:
-          type: string
-        title:
-          type: string
       type: object
     CloudintegrationtypesDataCollected:
       properties:
@@ -1209,7 +1283,7 @@ components:
     CloudintegrationtypesService:
       properties:
         assets:
-          $ref: '#/components/schemas/CloudintegrationtypesAssets'
+          $ref: '#/components/schemas/CloudintegrationtypesServiceAssets'
         cloudIntegrationService:
           $ref: '#/components/schemas/CloudintegrationtypesCloudIntegrationService'
         dataCollected:
@@ -1222,8 +1296,6 @@ components:
           type: string
         supportedSignals:
           $ref: '#/components/schemas/CloudintegrationtypesSupportedSignals'
-        telemetryCollectionStrategy:
-          $ref: '#/components/schemas/CloudintegrationtypesTelemetryCollectionStrategy'
         title:
           type: string
       required:
@@ -1234,8 +1306,16 @@ components:
       - assets
       - supportedSignals
       - dataCollected
-      - telemetryCollectionStrategy
       - cloudIntegrationService
+      type: object
+    CloudintegrationtypesServiceAssets:
+      properties:
+        dashboards:
+          items:
+            $ref: '#/components/schemas/CloudintegrationtypesServiceDashboard'
+          type: array
+      required:
+      - dashboards
       type: object
     CloudintegrationtypesServiceConfig:
       properties:
@@ -1243,6 +1323,18 @@ components:
           $ref: '#/components/schemas/CloudintegrationtypesAWSServiceConfig'
         azure:
           $ref: '#/components/schemas/CloudintegrationtypesAzureServiceConfig'
+      type: object
+    CloudintegrationtypesServiceDashboard:
+      properties:
+        description:
+          type: string
+        integrationDashboard:
+          $ref: '#/components/schemas/CloudintegrationtypesStorableIntegrationDashboard'
+        title:
+          type: string
+      required:
+      - title
+      - description
       type: object
     CloudintegrationtypesServiceID:
       enum:
@@ -1261,6 +1353,10 @@ components:
       - sqs
       - storageaccountsblob
       - cdnprofile
+      - virtualmachine
+      - appservice
+      - containerapp
+      - aks
       type: string
     CloudintegrationtypesServiceMetadata:
       properties:
@@ -1278,19 +1374,36 @@ components:
       - icon
       - enabled
       type: object
+    CloudintegrationtypesStorableIntegrationDashboard:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        dashboardId:
+          type: string
+        id:
+          type: string
+        provider:
+          type: string
+        slug:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      required:
+      - id
+      - dashboardId
+      - provider
+      - slug
+      - createdAt
+      - updatedAt
+      type: object
     CloudintegrationtypesSupportedSignals:
       properties:
         logs:
           type: boolean
         metrics:
           type: boolean
-      type: object
-    CloudintegrationtypesTelemetryCollectionStrategy:
-      properties:
-        aws:
-          $ref: '#/components/schemas/CloudintegrationtypesAWSTelemetryCollectionStrategy'
-        azure:
-          $ref: '#/components/schemas/CloudintegrationtypesAzureTelemetryCollectionStrategy'
       type: object
     CloudintegrationtypesUpdatableAccount:
       properties:
@@ -1321,6 +1434,18 @@ components:
           $ref: '#/components/schemas/CloudintegrationtypesServiceConfig'
       required:
       - config
+      type: object
+    CommonDisplay:
+      properties:
+        description:
+          type: string
+        name:
+          type: string
+      type: object
+    CommonJSONRef:
+      properties:
+        $ref:
+          type: string
       type: object
     ConfigAuthorization:
       properties:
@@ -1837,83 +1962,6 @@ components:
         user_key_file:
           type: string
       type: object
-    ConfigReceiver:
-      properties:
-        discord_configs:
-          items:
-            $ref: '#/components/schemas/ConfigDiscordConfig'
-          type: array
-        email_configs:
-          items:
-            $ref: '#/components/schemas/ConfigEmailConfig'
-          type: array
-        incidentio_configs:
-          items:
-            $ref: '#/components/schemas/ConfigIncidentioConfig'
-          type: array
-        jira_configs:
-          items:
-            $ref: '#/components/schemas/ConfigJiraConfig'
-          type: array
-        mattermost_configs:
-          items:
-            $ref: '#/components/schemas/ConfigMattermostConfig'
-          type: array
-        msteams_configs:
-          items:
-            $ref: '#/components/schemas/ConfigMSTeamsConfig'
-          type: array
-        msteamsv2_configs:
-          items:
-            $ref: '#/components/schemas/ConfigMSTeamsV2Config'
-          type: array
-        name:
-          type: string
-        opsgenie_configs:
-          items:
-            $ref: '#/components/schemas/ConfigOpsGenieConfig'
-          type: array
-        pagerduty_configs:
-          items:
-            $ref: '#/components/schemas/ConfigPagerdutyConfig'
-          type: array
-        pushover_configs:
-          items:
-            $ref: '#/components/schemas/ConfigPushoverConfig'
-          type: array
-        rocketchat_configs:
-          items:
-            $ref: '#/components/schemas/ConfigRocketchatConfig'
-          type: array
-        slack_configs:
-          items:
-            $ref: '#/components/schemas/ConfigSlackConfig'
-          type: array
-        sns_configs:
-          items:
-            $ref: '#/components/schemas/ConfigSNSConfig'
-          type: array
-        telegram_configs:
-          items:
-            $ref: '#/components/schemas/ConfigTelegramConfig'
-          type: array
-        victorops_configs:
-          items:
-            $ref: '#/components/schemas/ConfigVictorOpsConfig'
-          type: array
-        webex_configs:
-          items:
-            $ref: '#/components/schemas/ConfigWebexConfig'
-          type: array
-        webhook_configs:
-          items:
-            $ref: '#/components/schemas/ConfigWebhookConfig'
-          type: array
-        wechat_configs:
-          items:
-            $ref: '#/components/schemas/ConfigWechatConfig'
-          type: array
-      type: object
     ConfigRocketchatAttachmentAction:
       properties:
         image_url:
@@ -2331,6 +2379,153 @@ components:
       - metaresource
       - telemetryresource
       type: string
+    DashboardGridItem:
+      properties:
+        content:
+          $ref: '#/components/schemas/CommonJSONRef'
+        height:
+          type: integer
+        width:
+          type: integer
+        x:
+          type: integer
+        "y":
+          type: integer
+      type: object
+    DashboardGridLayoutCollapse:
+      properties:
+        open:
+          type: boolean
+      type: object
+    DashboardGridLayoutDisplay:
+      properties:
+        collapse:
+          $ref: '#/components/schemas/DashboardGridLayoutCollapse'
+        title:
+          type: string
+      type: object
+    DashboardGridLayoutSpec:
+      properties:
+        display:
+          $ref: '#/components/schemas/DashboardGridLayoutDisplay'
+        items:
+          items:
+            $ref: '#/components/schemas/DashboardGridItem'
+          nullable: true
+          type: array
+        repeatVariable:
+          type: string
+      type: object
+    DashboardLink:
+      properties:
+        name:
+          type: string
+        renderVariables:
+          type: boolean
+        targetBlank:
+          type: boolean
+        tooltip:
+          type: string
+        url:
+          type: string
+      type: object
+    DashboardTextVariableSpec:
+      properties:
+        constant:
+          type: boolean
+        display:
+          $ref: '#/components/schemas/VariableDisplay'
+        name:
+          type: string
+        value:
+          type: string
+      type: object
+    DashboardtypesAxes:
+      properties:
+        isLogScale:
+          type: boolean
+        softMax:
+          nullable: true
+          type: number
+        softMin:
+          nullable: true
+          type: number
+      type: object
+    DashboardtypesBarChartPanelSpec:
+      properties:
+        axes:
+          $ref: '#/components/schemas/DashboardtypesAxes'
+        formatting:
+          $ref: '#/components/schemas/DashboardtypesPanelFormatting'
+        legend:
+          $ref: '#/components/schemas/DashboardtypesLegend'
+        thresholds:
+          items:
+            $ref: '#/components/schemas/DashboardtypesThresholdWithLabel'
+          nullable: true
+          type: array
+        visualization:
+          $ref: '#/components/schemas/DashboardtypesBarChartVisualization'
+      type: object
+    DashboardtypesBarChartVisualization:
+      properties:
+        fillSpans:
+          type: boolean
+        stackedBarChart:
+          type: boolean
+        timePreference:
+          $ref: '#/components/schemas/DashboardtypesTimePreference'
+      type: object
+    DashboardtypesBasicVisualization:
+      properties:
+        timePreference:
+          $ref: '#/components/schemas/DashboardtypesTimePreference'
+      type: object
+    DashboardtypesBuilderQuerySpec:
+      discriminator:
+        mapping:
+          logs: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregation'
+          metrics: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregation'
+          traces: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregation'
+        propertyName: signal
+      oneOf:
+      - $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregation'
+      - $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregation'
+      - $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregation'
+      type: object
+    DashboardtypesComparisonOperator:
+      enum:
+      - above
+      - below
+      - above_or_equal
+      - below_or_equal
+      - equal
+      - not_equal
+      type: string
+    DashboardtypesComparisonThreshold:
+      properties:
+        color:
+          type: string
+        format:
+          $ref: '#/components/schemas/DashboardtypesThresholdFormat'
+        operator:
+          $ref: '#/components/schemas/DashboardtypesComparisonOperator'
+        unit:
+          type: string
+        value:
+          format: double
+          type: number
+      required:
+      - value
+      - color
+      type: object
+    DashboardtypesCustomVariableSpec:
+      properties:
+        customValue:
+          type: string
+      required:
+      - customValue
+      type: object
     DashboardtypesDashboard:
       properties:
         createdAt:
@@ -2354,6 +2549,141 @@ components:
         updatedBy:
           type: string
       type: object
+    DashboardtypesDashboardSpec:
+      properties:
+        datasources:
+          additionalProperties:
+            $ref: '#/components/schemas/DashboardtypesDatasourceSpec'
+          type: object
+        display:
+          $ref: '#/components/schemas/DashboardtypesDisplay'
+        duration:
+          type: string
+        layouts:
+          items:
+            $ref: '#/components/schemas/DashboardtypesLayout'
+          type: array
+        links:
+          items:
+            $ref: '#/components/schemas/DashboardLink'
+          type: array
+        panels:
+          additionalProperties:
+            $ref: '#/components/schemas/DashboardtypesPanel'
+          type: object
+        refreshInterval:
+          type: string
+        variables:
+          items:
+            $ref: '#/components/schemas/DashboardtypesVariable'
+          type: array
+      required:
+      - display
+      - variables
+      - panels
+      - layouts
+      type: object
+    DashboardtypesDatasourcePlugin:
+      discriminator:
+        mapping:
+          signoz/Datasource: '#/components/schemas/DashboardtypesDatasourcePluginVariantStruct'
+        propertyName: kind
+      oneOf:
+      - $ref: '#/components/schemas/DashboardtypesDatasourcePluginVariantStruct'
+      type: object
+    DashboardtypesDatasourcePluginKind:
+      enum:
+      - signoz/Datasource
+      type: string
+    DashboardtypesDatasourcePluginVariantStruct:
+      properties:
+        kind:
+          enum:
+          - signoz/Datasource
+          type: string
+        spec:
+          nullable: true
+          type: object
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesDatasourceSpec:
+      properties:
+        default:
+          type: boolean
+        display:
+          $ref: '#/components/schemas/CommonDisplay'
+        plugin:
+          $ref: '#/components/schemas/DashboardtypesDatasourcePlugin'
+      type: object
+    DashboardtypesDisplay:
+      properties:
+        description:
+          type: string
+        name:
+          type: string
+      required:
+      - name
+      type: object
+    DashboardtypesDynamicVariableSpec:
+      properties:
+        name:
+          type: string
+        signal:
+          $ref: '#/components/schemas/TelemetrytypesSignal'
+      required:
+      - name
+      type: object
+    DashboardtypesFillMode:
+      enum:
+      - solid
+      - gradient
+      - none
+      type: string
+    DashboardtypesGettableDashboardV2:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        createdBy:
+          type: string
+        id:
+          type: string
+        image:
+          type: string
+        locked:
+          type: boolean
+        name:
+          type: string
+        orgId:
+          type: string
+        schemaVersion:
+          type: string
+        source:
+          $ref: '#/components/schemas/DashboardtypesSource'
+        spec:
+          $ref: '#/components/schemas/DashboardtypesDashboardSpec'
+        tags:
+          items:
+            $ref: '#/components/schemas/TagtypesGettableTag'
+          nullable: true
+          type: array
+        updatedAt:
+          format: date-time
+          type: string
+        updatedBy:
+          type: string
+      required:
+      - id
+      - orgId
+      - locked
+      - source
+      - schemaVersion
+      - name
+      - tags
+      - spec
+      type: object
     DashboardtypesGettablePublicDasbhboard:
       properties:
         defaultTimeRange:
@@ -2370,6 +2700,477 @@ components:
         publicDashboard:
           $ref: '#/components/schemas/DashboardtypesGettablePublicDasbhboard'
       type: object
+    DashboardtypesHistogramBuckets:
+      properties:
+        bucketCount:
+          nullable: true
+          type: number
+        bucketWidth:
+          nullable: true
+          type: number
+        mergeAllActiveQueries:
+          type: boolean
+      type: object
+    DashboardtypesHistogramPanelSpec:
+      properties:
+        histogramBuckets:
+          $ref: '#/components/schemas/DashboardtypesHistogramBuckets'
+        legend:
+          $ref: '#/components/schemas/DashboardtypesLegend'
+      type: object
+    DashboardtypesJSONPatchOperation:
+      properties:
+        from:
+          description: Source JSON Pointer for move/copy ops; ignored for other ops.
+          type: string
+        op:
+          $ref: '#/components/schemas/DashboardtypesPatchOp'
+        path:
+          description: JSON Pointer (RFC 6901) into the dashboard's postable shape
+            — e.g. /spec/display/name, /spec/panels/<id>, /spec/panels/<id>/spec/queries/0,
+            /tags/-.
+          type: string
+        value:
+          description: 'Value to add/replace/test against. The expected type depends
+            on the path. Common shapes (see referenced schemas for the exact field
+            set): /spec/panels/<id> takes a DashboardtypesPanel; /spec/panels/<id>/spec/queries/N
+            (or /-) takes a DashboardtypesQuery; /spec/variables/N takes a DashboardtypesVariable;
+            /spec/layouts/N takes a DashboardtypesLayout; /tags/N (or /-) takes a
+            TagtypesPostableTag; /spec/display/name and other leaf string fields take
+            a string. Required for add/replace/test; ignored for remove/move/copy.'
+      required:
+      - op
+      - path
+      type: object
+    DashboardtypesLayout:
+      discriminator:
+        mapping:
+          Grid: '#/components/schemas/DashboardtypesLayoutEnvelopeGithubComPersesSpecGoDashboardGridLayoutSpec'
+        propertyName: kind
+      oneOf:
+      - $ref: '#/components/schemas/DashboardtypesLayoutEnvelopeGithubComPersesSpecGoDashboardGridLayoutSpec'
+      type: object
+    DashboardtypesLayoutEnvelopeGithubComPersesSpecGoDashboardGridLayoutSpec:
+      properties:
+        kind:
+          enum:
+          - Grid
+          type: string
+        spec:
+          $ref: '#/components/schemas/DashboardGridLayoutSpec'
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesLegend:
+      properties:
+        customColors:
+          additionalProperties:
+            type: string
+          nullable: true
+          type: object
+        position:
+          $ref: '#/components/schemas/DashboardtypesLegendPosition'
+      type: object
+    DashboardtypesLegendPosition:
+      enum:
+      - bottom
+      - right
+      type: string
+    DashboardtypesLineInterpolation:
+      enum:
+      - linear
+      - spline
+      - step_after
+      - step_before
+      type: string
+    DashboardtypesLineStyle:
+      enum:
+      - solid
+      - dashed
+      type: string
+    DashboardtypesListOrder:
+      enum:
+      - asc
+      - desc
+      type: string
+    DashboardtypesListPanelSpec:
+      properties:
+        selectFields:
+          items:
+            $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+          type: array
+      type: object
+    DashboardtypesListSort:
+      enum:
+      - updated_at
+      - created_at
+      - name
+      type: string
+    DashboardtypesListVariableSpec:
+      properties:
+        allowAllValue:
+          type: boolean
+        allowMultiple:
+          type: boolean
+        capturingRegexp:
+          type: string
+        customAllValue:
+          type: string
+        defaultValue:
+          $ref: '#/components/schemas/VariableDefaultValue'
+        display:
+          $ref: '#/components/schemas/DashboardtypesDisplay'
+        name:
+          type: string
+        plugin:
+          $ref: '#/components/schemas/DashboardtypesVariablePlugin'
+        sort:
+          nullable: true
+          type: string
+      required:
+      - display
+      type: object
+    DashboardtypesListableDashboardForUserV2:
+      properties:
+        dashboards:
+          items:
+            $ref: '#/components/schemas/DashboardtypesListedDashboardForUserV2'
+          type: array
+        tags:
+          items:
+            $ref: '#/components/schemas/TagtypesGettableTag'
+          type: array
+        total:
+          format: int64
+          type: integer
+      required:
+      - dashboards
+      - total
+      - tags
+      type: object
+    DashboardtypesListableDashboardV2:
+      properties:
+        dashboards:
+          items:
+            $ref: '#/components/schemas/DashboardtypesListedDashboardV2'
+          type: array
+        tags:
+          items:
+            $ref: '#/components/schemas/TagtypesGettableTag'
+          type: array
+        total:
+          format: int64
+          type: integer
+      required:
+      - dashboards
+      - total
+      - tags
+      type: object
+    DashboardtypesListedDashboardForUserV2:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        createdBy:
+          type: string
+        id:
+          type: string
+        image:
+          type: string
+        locked:
+          type: boolean
+        name:
+          type: string
+        orgId:
+          type: string
+        pinned:
+          type: boolean
+        schemaVersion:
+          type: string
+        source:
+          $ref: '#/components/schemas/DashboardtypesSource'
+        spec:
+          $ref: '#/components/schemas/DashboardtypesListedDashboardV2Spec'
+        tags:
+          items:
+            $ref: '#/components/schemas/TagtypesGettableTag'
+          type: array
+        updatedAt:
+          format: date-time
+          type: string
+        updatedBy:
+          type: string
+      required:
+      - id
+      - orgId
+      - locked
+      - source
+      - schemaVersion
+      - name
+      - tags
+      - spec
+      - pinned
+      type: object
+    DashboardtypesListedDashboardV2:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        createdBy:
+          type: string
+        id:
+          type: string
+        image:
+          type: string
+        locked:
+          type: boolean
+        name:
+          type: string
+        orgId:
+          type: string
+        schemaVersion:
+          type: string
+        source:
+          $ref: '#/components/schemas/DashboardtypesSource'
+        spec:
+          $ref: '#/components/schemas/DashboardtypesListedDashboardV2Spec'
+        tags:
+          items:
+            $ref: '#/components/schemas/TagtypesGettableTag'
+          type: array
+        updatedAt:
+          format: date-time
+          type: string
+        updatedBy:
+          type: string
+      required:
+      - id
+      - orgId
+      - locked
+      - source
+      - schemaVersion
+      - name
+      - tags
+      - spec
+      type: object
+    DashboardtypesListedDashboardV2Spec:
+      properties:
+        display:
+          $ref: '#/components/schemas/DashboardtypesDisplay'
+      type: object
+    DashboardtypesNumberPanelSpec:
+      properties:
+        formatting:
+          $ref: '#/components/schemas/DashboardtypesPanelFormatting'
+        thresholds:
+          items:
+            $ref: '#/components/schemas/DashboardtypesComparisonThreshold'
+          nullable: true
+          type: array
+        visualization:
+          $ref: '#/components/schemas/DashboardtypesBasicVisualization'
+      type: object
+    DashboardtypesPanel:
+      properties:
+        kind:
+          $ref: '#/components/schemas/DashboardtypesPanelKind'
+        spec:
+          $ref: '#/components/schemas/DashboardtypesPanelSpec'
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesPanelFormatting:
+      properties:
+        decimalPrecision:
+          $ref: '#/components/schemas/DashboardtypesPrecisionOption'
+        unit:
+          type: string
+      type: object
+    DashboardtypesPanelKind:
+      enum:
+      - Panel
+      type: string
+    DashboardtypesPanelPlugin:
+      discriminator:
+        mapping:
+          signoz/BarChartPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBarChartPanelSpec'
+          signoz/HistogramPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHistogramPanelSpec'
+          signoz/ListPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpec'
+          signoz/NumberPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesNumberPanelSpec'
+          signoz/PieChartPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesPieChartPanelSpec'
+          signoz/TablePanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTablePanelSpec'
+          signoz/TimeSeriesPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpec'
+        propertyName: kind
+      oneOf:
+      - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpec'
+      - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBarChartPanelSpec'
+      - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesNumberPanelSpec'
+      - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesPieChartPanelSpec'
+      - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTablePanelSpec'
+      - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHistogramPanelSpec'
+      - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpec'
+      type: object
+    DashboardtypesPanelPluginKind:
+      enum:
+      - signoz/TimeSeriesPanel
+      - signoz/BarChartPanel
+      - signoz/NumberPanel
+      - signoz/PieChartPanel
+      - signoz/TablePanel
+      - signoz/HistogramPanel
+      - signoz/ListPanel
+      type: string
+    DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBarChartPanelSpec:
+      properties:
+        kind:
+          enum:
+          - signoz/BarChartPanel
+          type: string
+        spec:
+          $ref: '#/components/schemas/DashboardtypesBarChartPanelSpec'
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHistogramPanelSpec:
+      properties:
+        kind:
+          enum:
+          - signoz/HistogramPanel
+          type: string
+        spec:
+          $ref: '#/components/schemas/DashboardtypesHistogramPanelSpec'
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpec:
+      properties:
+        kind:
+          enum:
+          - signoz/ListPanel
+          type: string
+        spec:
+          $ref: '#/components/schemas/DashboardtypesListPanelSpec'
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesNumberPanelSpec:
+      properties:
+        kind:
+          enum:
+          - signoz/NumberPanel
+          type: string
+        spec:
+          $ref: '#/components/schemas/DashboardtypesNumberPanelSpec'
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesPieChartPanelSpec:
+      properties:
+        kind:
+          enum:
+          - signoz/PieChartPanel
+          type: string
+        spec:
+          $ref: '#/components/schemas/DashboardtypesPieChartPanelSpec'
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTablePanelSpec:
+      properties:
+        kind:
+          enum:
+          - signoz/TablePanel
+          type: string
+        spec:
+          $ref: '#/components/schemas/DashboardtypesTablePanelSpec'
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpec:
+      properties:
+        kind:
+          enum:
+          - signoz/TimeSeriesPanel
+          type: string
+        spec:
+          $ref: '#/components/schemas/DashboardtypesTimeSeriesPanelSpec'
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesPanelSpec:
+      properties:
+        display:
+          $ref: '#/components/schemas/DashboardtypesDisplay'
+        links:
+          items:
+            $ref: '#/components/schemas/DashboardLink'
+          type: array
+        plugin:
+          $ref: '#/components/schemas/DashboardtypesPanelPlugin'
+        queries:
+          items:
+            $ref: '#/components/schemas/DashboardtypesQuery'
+          nullable: true
+          type: array
+      required:
+      - display
+      - plugin
+      - queries
+      type: object
+    DashboardtypesPatchOp:
+      enum:
+      - add
+      - remove
+      - replace
+      - move
+      - copy
+      - test
+      type: string
+    DashboardtypesPatchableDashboardV2:
+      items:
+        $ref: '#/components/schemas/DashboardtypesJSONPatchOperation'
+      nullable: true
+      type: array
+    DashboardtypesPieChartPanelSpec:
+      properties:
+        formatting:
+          $ref: '#/components/schemas/DashboardtypesPanelFormatting'
+        legend:
+          $ref: '#/components/schemas/DashboardtypesLegend'
+        visualization:
+          $ref: '#/components/schemas/DashboardtypesBasicVisualization'
+      type: object
+    DashboardtypesPostableDashboardV2:
+      properties:
+        generateName:
+          type: boolean
+        image:
+          type: string
+        name:
+          type: string
+        schemaVersion:
+          type: string
+        spec:
+          $ref: '#/components/schemas/DashboardtypesDashboardSpec'
+        tags:
+          items:
+            $ref: '#/components/schemas/TagtypesPostableTag'
+          nullable: true
+          type: array
+      required:
+      - schemaVersion
+      - tags
+      - spec
+      type: object
     DashboardtypesPostablePublicDashboard:
       properties:
         defaultTimeRange:
@@ -2377,14 +3178,290 @@ components:
         timeRangeEnabled:
           type: boolean
       type: object
+    DashboardtypesPrecisionOption:
+      enum:
+      - "0"
+      - "1"
+      - "2"
+      - "3"
+      - "4"
+      - full
+      type: string
+    DashboardtypesQuery:
+      properties:
+        kind:
+          $ref: '#/components/schemas/Querybuildertypesv5RequestType'
+        spec:
+          $ref: '#/components/schemas/DashboardtypesQuerySpec'
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesQueryPlugin:
+      discriminator:
+        mapping:
+          signoz/BuilderQuery: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBuilderQuerySpec'
+          signoz/ClickHouseSQL: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5ClickHouseQuery'
+          signoz/CompositeQuery: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5CompositeQuery'
+          signoz/Formula: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderFormula'
+          signoz/PromQLQuery: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5PromQuery'
+          signoz/TraceOperator: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderTraceOperator'
+        propertyName: kind
+      oneOf:
+      - $ref: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBuilderQuerySpec'
+      - $ref: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5CompositeQuery'
+      - $ref: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderFormula'
+      - $ref: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5PromQuery'
+      - $ref: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5ClickHouseQuery'
+      - $ref: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderTraceOperator'
+      type: object
+    DashboardtypesQueryPluginKind:
+      enum:
+      - signoz/BuilderQuery
+      - signoz/CompositeQuery
+      - signoz/Formula
+      - signoz/PromQLQuery
+      - signoz/ClickHouseSQL
+      - signoz/TraceOperator
+      type: string
+    DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBuilderQuerySpec:
+      properties:
+        kind:
+          enum:
+          - signoz/BuilderQuery
+          type: string
+        spec:
+          $ref: '#/components/schemas/DashboardtypesBuilderQuerySpec'
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5ClickHouseQuery:
+      properties:
+        kind:
+          enum:
+          - signoz/ClickHouseSQL
+          type: string
+        spec:
+          $ref: '#/components/schemas/Querybuildertypesv5ClickHouseQuery'
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5CompositeQuery:
+      properties:
+        kind:
+          enum:
+          - signoz/CompositeQuery
+          type: string
+        spec:
+          $ref: '#/components/schemas/Querybuildertypesv5CompositeQuery'
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5PromQuery:
+      properties:
+        kind:
+          enum:
+          - signoz/PromQLQuery
+          type: string
+        spec:
+          $ref: '#/components/schemas/Querybuildertypesv5PromQuery'
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderFormula:
+      properties:
+        kind:
+          enum:
+          - signoz/Formula
+          type: string
+        spec:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderFormula'
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderTraceOperator:
+      properties:
+        kind:
+          enum:
+          - signoz/TraceOperator
+          type: string
+        spec:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderTraceOperator'
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesQuerySpec:
+      properties:
+        name:
+          type: string
+        plugin:
+          $ref: '#/components/schemas/DashboardtypesQueryPlugin'
+      required:
+      - plugin
+      type: object
+    DashboardtypesQueryVariableSpec:
+      properties:
+        queryValue:
+          type: string
+      required:
+      - queryValue
+      type: object
     DashboardtypesSource:
       enum:
       - user
       - system
       - integration
       type: object
+    DashboardtypesSpanGaps:
+      properties:
+        fillLessThan:
+          type: string
+        fillOnlyBelow:
+          type: boolean
+      type: object
     DashboardtypesStorableDashboardData:
       additionalProperties: {}
+      type: object
+    DashboardtypesTableFormatting:
+      properties:
+        columnUnits:
+          additionalProperties:
+            type: string
+          nullable: true
+          type: object
+        decimalPrecision:
+          $ref: '#/components/schemas/DashboardtypesPrecisionOption'
+      type: object
+    DashboardtypesTablePanelSpec:
+      properties:
+        formatting:
+          $ref: '#/components/schemas/DashboardtypesTableFormatting'
+        thresholds:
+          items:
+            $ref: '#/components/schemas/DashboardtypesTableThreshold'
+          nullable: true
+          type: array
+        visualization:
+          $ref: '#/components/schemas/DashboardtypesBasicVisualization'
+      type: object
+    DashboardtypesTableThreshold:
+      properties:
+        color:
+          type: string
+        columnName:
+          type: string
+        format:
+          $ref: '#/components/schemas/DashboardtypesThresholdFormat'
+        operator:
+          $ref: '#/components/schemas/DashboardtypesComparisonOperator'
+        unit:
+          type: string
+        value:
+          format: double
+          type: number
+      required:
+      - value
+      - color
+      - columnName
+      type: object
+    DashboardtypesThresholdFormat:
+      enum:
+      - text
+      - background
+      type: string
+    DashboardtypesThresholdWithLabel:
+      properties:
+        color:
+          type: string
+        label:
+          type: string
+        unit:
+          type: string
+        value:
+          format: double
+          type: number
+      required:
+      - value
+      - color
+      - label
+      type: object
+    DashboardtypesTimePreference:
+      enum:
+      - global_time
+      - last_5_min
+      - last_15_min
+      - last_30_min
+      - last_1_hr
+      - last_6_hr
+      - last_1_day
+      - last_3_days
+      - last_1_week
+      - last_1_month
+      type: string
+    DashboardtypesTimeSeriesChartAppearance:
+      properties:
+        fillMode:
+          $ref: '#/components/schemas/DashboardtypesFillMode'
+        lineInterpolation:
+          $ref: '#/components/schemas/DashboardtypesLineInterpolation'
+        lineStyle:
+          $ref: '#/components/schemas/DashboardtypesLineStyle'
+        showPoints:
+          type: boolean
+        spanGaps:
+          $ref: '#/components/schemas/DashboardtypesSpanGaps'
+      type: object
+    DashboardtypesTimeSeriesPanelSpec:
+      properties:
+        axes:
+          $ref: '#/components/schemas/DashboardtypesAxes'
+        chartAppearance:
+          $ref: '#/components/schemas/DashboardtypesTimeSeriesChartAppearance'
+        formatting:
+          $ref: '#/components/schemas/DashboardtypesPanelFormatting'
+        legend:
+          $ref: '#/components/schemas/DashboardtypesLegend'
+        thresholds:
+          items:
+            $ref: '#/components/schemas/DashboardtypesThresholdWithLabel'
+          nullable: true
+          type: array
+        visualization:
+          $ref: '#/components/schemas/DashboardtypesTimeSeriesVisualization'
+      type: object
+    DashboardtypesTimeSeriesVisualization:
+      properties:
+        fillSpans:
+          type: boolean
+        timePreference:
+          $ref: '#/components/schemas/DashboardtypesTimePreference'
+      type: object
+    DashboardtypesUpdatableDashboardV2:
+      properties:
+        image:
+          type: string
+        name:
+          type: string
+        schemaVersion:
+          type: string
+        spec:
+          $ref: '#/components/schemas/DashboardtypesDashboardSpec'
+        tags:
+          items:
+            $ref: '#/components/schemas/TagtypesPostableTag'
+          nullable: true
+          type: array
+      required:
+      - schemaVersion
+      - name
+      - tags
+      - spec
       type: object
     DashboardtypesUpdatablePublicDashboard:
       properties:
@@ -2392,6 +3469,94 @@ components:
           type: string
         timeRangeEnabled:
           type: boolean
+      type: object
+    DashboardtypesVariable:
+      discriminator:
+        mapping:
+          ListVariable: '#/components/schemas/DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpec'
+          TextVariable: '#/components/schemas/DashboardtypesVariableEnvelopeGithubComPersesSpecGoDashboardTextVariableSpec'
+        propertyName: kind
+      oneOf:
+      - $ref: '#/components/schemas/DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpec'
+      - $ref: '#/components/schemas/DashboardtypesVariableEnvelopeGithubComPersesSpecGoDashboardTextVariableSpec'
+      type: object
+    DashboardtypesVariableEnvelopeGithubComPersesSpecGoDashboardTextVariableSpec:
+      properties:
+        kind:
+          enum:
+          - TextVariable
+          type: string
+        spec:
+          $ref: '#/components/schemas/DashboardTextVariableSpec'
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpec:
+      properties:
+        kind:
+          enum:
+          - ListVariable
+          type: string
+        spec:
+          $ref: '#/components/schemas/DashboardtypesListVariableSpec'
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesVariablePlugin:
+      discriminator:
+        mapping:
+          signoz/CustomVariable: '#/components/schemas/DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesCustomVariableSpec'
+          signoz/DynamicVariable: '#/components/schemas/DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDynamicVariableSpec'
+          signoz/QueryVariable: '#/components/schemas/DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesQueryVariableSpec'
+        propertyName: kind
+      oneOf:
+      - $ref: '#/components/schemas/DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDynamicVariableSpec'
+      - $ref: '#/components/schemas/DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesQueryVariableSpec'
+      - $ref: '#/components/schemas/DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesCustomVariableSpec'
+      type: object
+    DashboardtypesVariablePluginKind:
+      enum:
+      - signoz/DynamicVariable
+      - signoz/QueryVariable
+      - signoz/CustomVariable
+      type: string
+    DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesCustomVariableSpec:
+      properties:
+        kind:
+          enum:
+          - signoz/CustomVariable
+          type: string
+        spec:
+          $ref: '#/components/schemas/DashboardtypesCustomVariableSpec'
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDynamicVariableSpec:
+      properties:
+        kind:
+          enum:
+          - signoz/DynamicVariable
+          type: string
+        spec:
+          $ref: '#/components/schemas/DashboardtypesDynamicVariableSpec'
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesQueryVariableSpec:
+      properties:
+        kind:
+          enum:
+          - signoz/QueryVariable
+          type: string
+        spec:
+          $ref: '#/components/schemas/DashboardtypesQueryVariableSpec'
+      required:
+      - kind
+      - spec
       type: object
     ErrorsJSON:
       properties:
@@ -2401,7 +3566,19 @@ components:
           items:
             $ref: '#/components/schemas/ErrorsResponseerroradditional'
           type: array
+        invalidReferences:
+          items:
+            type: string
+          type: array
         message:
+          type: string
+        retry:
+          $ref: '#/components/schemas/ErrorsResponseretryjson'
+        suggestions:
+          items:
+            type: string
+          type: array
+        type:
           type: string
         url:
           type: string
@@ -2413,6 +3590,11 @@ components:
       properties:
         message:
           type: string
+      type: object
+    ErrorsResponseretryjson:
+      properties:
+        delay:
+          $ref: '#/components/schemas/TimeDuration'
       type: object
     FactoryResponse:
       properties:
@@ -4536,11 +5718,15 @@ components:
             $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
           type: array
         signal:
-          $ref: '#/components/schemas/TelemetrytypesSignal'
+          enum:
+          - logs
+          type: string
         source:
           $ref: '#/components/schemas/TelemetrytypesSource'
         stepInterval:
           $ref: '#/components/schemas/Querybuildertypesv5Step'
+      required:
+      - signal
       type: object
     Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregation:
       properties:
@@ -4587,11 +5773,15 @@ components:
             $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
           type: array
         signal:
-          $ref: '#/components/schemas/TelemetrytypesSignal'
+          enum:
+          - metrics
+          type: string
         source:
           $ref: '#/components/schemas/TelemetrytypesSource'
         stepInterval:
           $ref: '#/components/schemas/Querybuildertypesv5Step'
+      required:
+      - signal
       type: object
     Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregation:
       properties:
@@ -4638,11 +5828,15 @@ components:
             $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
           type: array
         signal:
-          $ref: '#/components/schemas/TelemetrytypesSignal'
+          enum:
+          - traces
+          type: string
         source:
           $ref: '#/components/schemas/TelemetrytypesSource'
         stepInterval:
           $ref: '#/components/schemas/Querybuildertypesv5Step'
+      required:
+      - signal
       type: object
     Querybuildertypesv5QueryBuilderTraceOperator:
       properties:
@@ -5663,6 +6857,70 @@ components:
       - attribute
       - resource
       type: string
+    SpantypesFlamegraphSpan:
+      properties:
+        attributes:
+          additionalProperties: {}
+          type: object
+        durationNano:
+          minimum: 0
+          type: integer
+        event:
+          items:
+            $ref: '#/components/schemas/SpantypesEvent'
+          type: array
+        hasError:
+          type: boolean
+        level:
+          format: int64
+          type: integer
+        name:
+          type: string
+        parentSpanId:
+          type: string
+        resource:
+          additionalProperties:
+            type: string
+          type: object
+        spanId:
+          type: string
+        timestamp:
+          minimum: 0
+          type: integer
+      required:
+      - spanId
+      - parentSpanId
+      - timestamp
+      - durationNano
+      - hasError
+      - name
+      - level
+      - event
+      - attributes
+      - resource
+      type: object
+    SpantypesGettableFlamegraphTrace:
+      properties:
+        endTimestampMillis:
+          format: int64
+          type: integer
+        hasMore:
+          type: boolean
+        spans:
+          items:
+            items:
+              $ref: '#/components/schemas/SpantypesFlamegraphSpan'
+            type: array
+          type: array
+        startTimestampMillis:
+          format: int64
+          type: integer
+      required:
+      - spans
+      - startTimestampMillis
+      - endTimestampMillis
+      - hasMore
+      type: object
     SpantypesGettableSpanMapperGroups:
       properties:
         items:
@@ -5672,13 +6930,17 @@ components:
       required:
       - items
       type: object
-    SpantypesGettableWaterfallTrace:
+    SpantypesGettableTraceAggregations:
       properties:
         aggregations:
           items:
             $ref: '#/components/schemas/SpantypesSpanAggregationResult'
-          nullable: true
           type: array
+      required:
+      - aggregations
+      type: object
+    SpantypesGettableWaterfallTrace:
+      properties:
         endTimestampMillis:
           minimum: 0
           type: integer
@@ -5710,6 +6972,24 @@ components:
           nullable: true
           type: array
       type: object
+    SpantypesOtelSpanRef:
+      properties:
+        refType:
+          type: string
+        spanId:
+          type: string
+        traceId:
+          type: string
+      type: object
+    SpantypesPostableFlamegraph:
+      properties:
+        selectFields:
+          items:
+            $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+          type: array
+        selectedSpanId:
+          type: string
+      type: object
     SpantypesPostableSpanMapper:
       properties:
         config:
@@ -5737,16 +7017,17 @@ components:
       - name
       - condition
       type: object
-    SpantypesPostableWaterfall:
+    SpantypesPostableTraceAggregations:
       properties:
         aggregations:
           items:
             $ref: '#/components/schemas/SpantypesSpanAggregation'
-          nullable: true
           type: array
-        limit:
-          minimum: 0
-          type: integer
+      required:
+      - aggregations
+      type: object
+    SpantypesPostableWaterfall:
+      properties:
         selectedSpanId:
           type: string
         uncollapsedSpans:
@@ -5761,6 +7042,9 @@ components:
           $ref: '#/components/schemas/SpantypesSpanAggregationType'
         field:
           $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+      required:
+      - field
+      - aggregation
       type: object
     SpantypesSpanAggregationResult:
       properties:
@@ -5774,6 +7058,10 @@ components:
             type: integer
           nullable: true
           type: object
+      required:
+      - field
+      - aggregation
+      - value
       type: object
     SpantypesSpanAggregationType:
       enum:
@@ -5957,6 +7245,10 @@ components:
           type: string
         parent_span_id:
           type: string
+        references:
+          items:
+            $ref: '#/components/schemas/SpantypesOtelSpanRef'
+          type: array
         resource:
           additionalProperties:
             type: string
@@ -5982,6 +7274,28 @@ components:
           type: string
         trace_state:
           type: string
+      required:
+      - references
+      type: object
+    TagtypesGettableTag:
+      properties:
+        key:
+          type: string
+        value:
+          type: string
+      required:
+      - key
+      - value
+      type: object
+    TagtypesPostableTag:
+      properties:
+        key:
+          type: string
+        value:
+          type: string
+      required:
+      - key
+      - value
       type: object
     TelemetrytypesFieldContext:
       enum:
@@ -6222,6 +7536,13 @@ components:
       required:
       - name
       type: object
+    TypesPostableVerifyResetPasswordToken:
+      properties:
+        token:
+          type: string
+      required:
+      - token
+      type: object
     TypesResetPasswordToken:
       properties:
         expiresAt:
@@ -6265,6 +7586,17 @@ components:
           type: string
       required:
       - id
+      type: object
+    VariableDefaultValue:
+      type: object
+    VariableDisplay:
+      properties:
+        description:
+          type: string
+        hidden:
+          type: boolean
+        name:
+          type: string
       type: object
     ZeustypesGettableHost:
       properties:
@@ -6671,7 +8003,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ConfigReceiver'
+              $ref: '#/components/schemas/AlertmanagertypesReceiver'
       responses:
         "204":
           description: No Content
@@ -6722,7 +8054,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ConfigReceiver'
+              $ref: '#/components/schemas/AlertmanagertypesReceiver'
       responses:
         "204":
           description: No Content
@@ -7087,7 +8419,139 @@ paths:
       summary: Update account
       tags:
       - cloudintegration
+  /api/v1/cloud_integrations/{cloud_provider}/accounts/{id}/services:
+    get:
+      deprecated: false
+      description: This endpoint lists the services metadata for the specified account
+        and cloud provider
+      operationId: ListAccountServicesMetadata
+      parameters:
+      - in: path
+        name: cloud_provider
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CloudintegrationtypesGettableServicesMetadata'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: List account services metadata
+      tags:
+      - cloudintegration
   /api/v1/cloud_integrations/{cloud_provider}/accounts/{id}/services/{service_id}:
+    get:
+      deprecated: false
+      description: This endpoint gets a service and its configuration for the specified
+        cloud integration account
+      operationId: GetAccountService
+      parameters:
+      - in: path
+        name: cloud_provider
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: service_id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CloudintegrationtypesService'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Get service for account
+      tags:
+      - cloudintegration
     put:
       deprecated: false
       description: This endpoint updates a service for the specified cloud provider
@@ -11328,7 +12792,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ConfigReceiver'
+              $ref: '#/components/schemas/AlertmanagertypesReceiver'
       responses:
         "204":
           description: No Content
@@ -11364,6 +12828,75 @@ paths:
       summary: Test notification channel (deprecated)
       tags:
       - channels
+  /api/v1/traces/{traceID}/aggregations:
+    post:
+      deprecated: false
+      description: Computes span aggregations grouped by requested field.
+      operationId: GetTraceAggregations
+      parameters:
+      - in: path
+        name: traceID
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpantypesPostableTraceAggregations'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SpantypesGettableTraceAggregations'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get aggregations for a trace
+      tags:
+      - tracedetail
   /api/v1/user:
     get:
       deprecated: false
@@ -11788,6 +13321,516 @@ paths:
       summary: Update user preference
       tags:
       - preferences
+  /api/v2/dashboards:
+    get:
+      deprecated: false
+      description: Returns a page of v2-shape dashboards for the org. This is the
+        pure, user-independent list — it carries no pin state. Use ListDashboardsForUserV2
+        for the personalized, pin-aware list. Supports a filter DSL (`query`), sort
+        (`updated_at`/`created_at`/`name`), order (`asc`/`desc`), and offset-based
+        pagination (`limit`/`offset`).
+      operationId: ListDashboardsV2
+      parameters:
+      - in: query
+        name: query
+        schema:
+          type: string
+      - in: query
+        name: sort
+        schema:
+          $ref: '#/components/schemas/DashboardtypesListSort'
+      - in: query
+        name: order
+        schema:
+          $ref: '#/components/schemas/DashboardtypesListOrder'
+      - in: query
+        name: limit
+        schema:
+          type: integer
+      - in: query
+        name: offset
+        schema:
+          type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DashboardtypesListableDashboardV2'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: List dashboards (v2)
+      tags:
+      - dashboard
+    post:
+      deprecated: false
+      description: This endpoint creates a dashboard in the v2 format that follows
+        Perses spec.
+      operationId: CreateDashboardV2
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DashboardtypesPostableDashboardV2'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DashboardtypesGettableDashboardV2'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - EDITOR
+      - tokenizer:
+        - EDITOR
+      summary: Create dashboard (v2)
+      tags:
+      - dashboard
+  /api/v2/dashboards/{id}:
+    delete:
+      deprecated: false
+      description: This endpoint deletes a v2-shape dashboard along with its tag relations.
+        Locked dashboards are rejected.
+      operationId: DeleteDashboardV2
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - EDITOR
+      - tokenizer:
+        - EDITOR
+      summary: Delete dashboard (v2)
+      tags:
+      - dashboard
+    get:
+      deprecated: false
+      description: This endpoint returns a v2-shape dashboard.
+      operationId: GetDashboardV2
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DashboardtypesGettableDashboardV2'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get dashboard (v2)
+      tags:
+      - dashboard
+    patch:
+      deprecated: false
+      description: 'This endpoint applies an RFC 6902 JSON Patch to a v2-shape dashboard.
+        The patch is applied against the postable view of the dashboard (metadata,
+        data, tags), so individual panels, queries, variables, layouts, or tags can
+        be updated without re-sending the rest of the dashboard. Apply is lenient:
+        `remove` on a missing path is a no-op (idempotent) and `add` creates any missing
+        parent objects, rather than failing as strict RFC 6902 would. The resulting
+        dashboard is still validated. Locked dashboards are rejected.'
+      operationId: PatchDashboardV2
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DashboardtypesPatchableDashboardV2'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DashboardtypesGettableDashboardV2'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - EDITOR
+      - tokenizer:
+        - EDITOR
+      summary: Patch dashboard (v2)
+      tags:
+      - dashboard
+    put:
+      deprecated: false
+      description: This endpoint updates a v2-shape dashboard's metadata, data, and
+        tag set. Locked dashboards are rejected.
+      operationId: UpdateDashboardV2
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DashboardtypesUpdatableDashboardV2'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DashboardtypesGettableDashboardV2'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - EDITOR
+      - tokenizer:
+        - EDITOR
+      summary: Update dashboard (v2)
+      tags:
+      - dashboard
+  /api/v2/dashboards/{id}/lock:
+    delete:
+      deprecated: false
+      description: This endpoint unlocks a v2-shape dashboard. Only the dashboard's
+        creator or an org admin may lock or unlock.
+      operationId: UnlockDashboardV2
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - EDITOR
+      - tokenizer:
+        - EDITOR
+      summary: Unlock dashboard (v2)
+      tags:
+      - dashboard
+    put:
+      deprecated: false
+      description: This endpoint locks a v2-shape dashboard. Only the dashboard's
+        creator or an org admin may lock or unlock.
+      operationId: LockDashboardV2
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - EDITOR
+      - tokenizer:
+        - EDITOR
+      summary: Lock dashboard (v2)
+      tags:
+      - dashboard
   /api/v2/factor_password/forgot:
     post:
       deprecated: false
@@ -13868,6 +15911,41 @@ paths:
       summary: Readiness check
       tags:
       - health
+  /api/v2/reset_password_tokens/verify:
+    post:
+      deprecated: false
+      description: This endpoint verifies whether a reset password token exists and
+        is not expired
+      operationId: VerifyResetPasswordToken
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TypesPostableVerifyResetPasswordToken'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      summary: Verify a reset password token
+      tags:
+      - users
   /api/v2/roles/{id}/users:
     get:
       deprecated: false
@@ -18656,6 +20734,196 @@ paths:
       summary: Update my user v2
       tags:
       - users
+  /api/v2/users/me/dashboards:
+    get:
+      deprecated: false
+      description: 'Same as ListDashboardsV2 but personalized for the calling user:
+        each dashboard carries the caller''s `pinned` state, and pinned dashboards
+        float to the top of the requested ordering. Supports the same filter DSL,
+        sort, order, and pagination.'
+      operationId: ListDashboardsForUserV2
+      parameters:
+      - in: query
+        name: query
+        schema:
+          type: string
+      - in: query
+        name: sort
+        schema:
+          $ref: '#/components/schemas/DashboardtypesListSort'
+      - in: query
+        name: order
+        schema:
+          $ref: '#/components/schemas/DashboardtypesListOrder'
+      - in: query
+        name: limit
+        schema:
+          type: integer
+      - in: query
+        name: offset
+        schema:
+          type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DashboardtypesListableDashboardForUserV2'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: List dashboards for the current user (v2)
+      tags:
+      - dashboard
+  /api/v2/users/me/dashboards/{id}/pins:
+    delete:
+      deprecated: false
+      description: Removes the pin for the calling user. Idempotent — unpinning a
+        dashboard that wasn't pinned still returns 204.
+      operationId: UnpinDashboardV2
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Unpin a dashboard for the current user (v2)
+      tags:
+      - dashboard
+    put:
+      deprecated: false
+      description: Pins the dashboard for the calling user. A user can pin at most
+        10 dashboards; pinning when at the limit returns 409. Re-pinning an already-pinned
+        dashboard is a no-op success.
+      operationId: PinDashboardV2
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Conflict
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Pin a dashboard for the current user (v2)
+      tags:
+      - dashboard
   /api/v2/users/me/factor_password:
     put:
       deprecated: false
@@ -18878,12 +21146,82 @@ paths:
       summary: Put profile in Zeus for a deployment.
       tags:
       - zeus
-  /api/v3/traces/{traceID}/waterfall:
+  /api/v3/traces/{traceID}/flamegraph:
     post:
       deprecated: false
-      description: Returns the waterfall view of spans for a given trace ID with tree
-        structure, metadata, and windowed pagination
-      operationId: GetWaterfall
+      description: Returns the flamegraph view of spans for a given trace ID.
+      operationId: GetFlamegraph
+      parameters:
+      - in: path
+        name: traceID
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpantypesPostableFlamegraph'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SpantypesGettableFlamegraphTrace'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get flamegraph view for a trace
+      tags:
+      - tracedetail
+  /api/v4/traces/{traceID}/waterfall:
+    post:
+      deprecated: false
+      description: Returns the waterfall view of spans including all spans if total
+        spans are under a limit, a max count otherwise. Aggregations are dropped compared
+        to v3
+      operationId: GetWaterfallV4
       parameters:
       - in: path
         name: traceID

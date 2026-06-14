@@ -1,0 +1,92 @@
+.container {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+	height: calc(100vh - 62px);
+	min-height: 400px;
+}
+
+.header {
+	position: relative;
+	z-index: 10;
+	display: flex;
+	justify-content: flex-end;
+	gap: 1rem;
+	flex-shrink: 0;
+	padding: 0 var(--spacing-8);
+}
+
+.refreshRow {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.filtersRow {
+	position: relative;
+	z-index: 10;
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+	flex-shrink: 0;
+	padding: 0 var(--spacing-8);
+
+	--combobox-trigger-height: 2rem;
+}
+
+.searchInput {
+	min-width: 250px;
+}
+
+.filterSelect {
+	min-width: 300px;
+	flex: 1;
+}
+
+.tableContainer {
+	flex: 1;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+
+	--tanstack-table-header-cell-bg: var(--l2-background);
+	--tanstack-table-header-cell-color: var(--l2-foreground);
+	--tanstack-table-cell-bg: var(--l2-background);
+	--tanstack-table-cell-color: var(--l2-foreground);
+	--tanstack-table-row-hover-bg: var(--l2-background-hover);
+	--tanstack-table-row-active-bg: var(--l2-background-active);
+	--tanstack-table-resize-handle-bg: var(--l2-background);
+	--tanstack-table-resize-handle-hover-bg: var(--l2-border);
+	--tanstack-table-row-height: 42px;
+
+	--tanstack-cell-padding-top-override: 5px;
+	--tanstack-cell-padding-bottom-override: 5px;
+	--tanstack-cell-padding-left-override: 16px;
+	--tanstack-cell-padding-right-override: 16px;
+
+	--tanstack-table-row-odd-bg: color-mix(
+		in srgb,
+		var(--l1-foreground) 2%,
+		transparent
+	);
+	--tanstack-table-row-even-bg: color-mix(
+		in srgb,
+		var(--l1-foreground) 1%,
+		transparent
+	);
+	--badge-cursor: pointer;
+}
+
+.searchIcon {
+	color: var(--l2-foreground);
+}
+
+.actionsColumn {
+	display: flex;
+	justify-content: flex-end;
+}
+
+.paginationContainer {
+	padding-right: var(--spacing-12);
+	height: 62px;
+}

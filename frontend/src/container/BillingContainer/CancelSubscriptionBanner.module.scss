@@ -67,3 +67,40 @@
 	background: var(--secondary-background);
 	border: 1px solid var(--l1-border);
 }
+
+.fallbackBody {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-4);
+}
+
+.fallbackHint {
+	font-size: var(--paragraph-base-400-font-size);
+	font-weight: var(--paragraph-base-400-font-weight);
+	line-height: var(--paragraph-base-400-line-height);
+	color: var(--l2-foreground);
+	margin: 0;
+}
+
+.fallbackEmail {
+	font-size: var(--paragraph-base-500-font-size);
+	font-weight: var(--paragraph-base-500-font-weight);
+	color: var(--l1-foreground);
+	word-break: break-all;
+}
+
+.fallbackActions {
+	display: flex;
+	gap: var(--spacing-3);
+	flex-wrap: wrap;
+	padding-top: var(--padding-4);
+}
+
+.retryLink {
+	box-sizing: border-box;
+	text-decoration: none;
+
+	&:hover {
+		text-decoration: none;
+	}
+}

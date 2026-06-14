@@ -10,11 +10,6 @@ jest.mock('components/MarkdownRenderer/MarkdownRenderer', () => ({
 		children,
 }));
 
-jest.mock('api/common/logEvent', () => ({
-	__esModule: true,
-	default: jest.fn(),
-}));
-
 jest.mock('lib/history', () => ({
 	push: jest.fn(),
 	listen: jest.fn(() => jest.fn()),
