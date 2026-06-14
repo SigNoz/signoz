@@ -17,7 +17,7 @@ import (
 type compileCase struct {
 	subtestName              string
 	dslQueryToCompile        string
-	nilExpected              bool
+	emptyQueryExpected       bool
 	expectedSQL              string
 	expectedArgs             []any
 	expectedErrShouldContain string
@@ -41,8 +41,8 @@ func runCompileCases(t *testing.T, cases []compileCase) {
 			}
 
 			require.NoError(t, err)
-			if c.nilExpected {
-				assert.Nil(t, out)
+			if c.emptyQueryExpected {
+				assert.True(t, out.IsEmpty())
 				return
 			}
 			require.NotNil(t, out)
@@ -71,7 +71,7 @@ func runCompileCases(t *testing.T, cases []compileCase) {
 
 func TestCompile_Empty(t *testing.T) {
 	runCompileCases(t, []compileCase{
-		{subtestName: "empty query yields nil", dslQueryToCompile: "", nilExpected: true},
+		{subtestName: "empty query yields nil", dslQueryToCompile: "", emptyQueryExpected: true},
 	})
 }
 

@@ -1366,7 +1366,7 @@ export const getPodMetricsQueryPayload = (
 							orderBy: [],
 							queryName: 'B',
 							reduceTo: ReduceOperators.AVG,
-							spaceAggregation: 'avg',
+							spaceAggregation: 'sum',
 							stepInterval: 60,
 							timeAggregation: 'avg',
 						},
