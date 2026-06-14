@@ -10,34 +10,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
-// getQueryIdentifier returns a friendly identifier for a query based on its type and name/content.
-func getQueryIdentifier(envelope QueryEnvelope, index int) string {
-	name := envelope.GetQueryName()
-
-	var typeLabel string
-	switch envelope.Type {
-	case QueryTypeBuilder, QueryTypeSubQuery:
-		typeLabel = "query"
-	case QueryTypeFormula:
-		typeLabel = "formula"
-	case QueryTypeTraceOperator:
-		typeLabel = "trace operator"
-	case QueryTypeJoin:
-		typeLabel = "join"
-	case QueryTypePromQL:
-		typeLabel = "PromQL query"
-	case QueryTypeClickHouseSQL:
-		typeLabel = "ClickHouse query"
-	default:
-		typeLabel = "query"
-	}
-
-	if name != "" {
-		return fmt.Sprintf("%s '%s'", typeLabel, name)
-	}
-	return fmt.Sprintf("%s at position %d", typeLabel, index+1)
-}
-
 const (
 	// Maximum limit for query results.
 	MaxQueryLimit = 10000
@@ -54,14 +26,6 @@ type validationConfig struct {
 	skipSelectFieldValidation      bool
 	skipGroupByValidation          bool
 	withTimestampGroupByValidation bool
-}
-
-func applyValidationOptions(opts []ValidationOption) validationConfig {
-	cfg := validationConfig{}
-	for _, opt := range opts {
-		opt(&cfg)
-	}
-	return cfg
 }
 
 // SkipLimitOffsetValidation returns a ValidationOption that skips the limit and offset range checks.
@@ -119,6 +83,19 @@ func WithTimestampGroupByValidation() ValidationOption {
 	}
 }
 
+func GetValidationOptions(requestType RequestType) []ValidationOption {
+	switch requestType {
+	case RequestTypeTimeSeries:
+		return []ValidationOption{WithSkipSelectFieldValidation(), WithTimestampGroupByValidation()}
+	case RequestTypeScalar:
+		return []ValidationOption{WithSkipSelectFieldValidation()}
+	case RequestTypeRaw, RequestTypeRawStream, RequestTypeTrace:
+		return []ValidationOption{WithSkipAggregationValidation(), WithSkipHavingValidation(), WithSkipAggregationOrderBy(), WithSkipGroupByValidation()}
+	default:
+		return []ValidationOption{}
+	}
+}
+
 // Validate performs preliminary validation on QueryBuilderQuery.
 func (q *QueryBuilderQuery[T]) Validate(opts ...ValidationOption) error {
 	cfg := applyValidationOptions(opts)
@@ -156,6 +133,153 @@ func (q *QueryBuilderQuery[T]) Validate(opts ...ValidationOption) error {
 	}
 
 	return nil
+}
+
+// Validate validates the entire query range request.
+func (r *QueryRangeRequest) Validate(opts ...ValidationOption) error {
+	// Validate time range
+	if r.RequestType != RequestTypeRawStream && r.Start >= r.End {
+		return errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"start time must be before end time",
+		)
+	}
+
+	// Validate request type
+	switch r.RequestType {
+	case RequestTypeRaw, RequestTypeRawStream, RequestTypeTrace, RequestTypeTimeSeries, RequestTypeScalar:
+		opts = append(opts, GetValidationOptions(r.RequestType)...)
+	default:
+		return errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"invalid request type: %s",
+			r.RequestType,
+		).WithAdditional(
+			"Valid request types are: raw, timeseries, scalar",
+		)
+	}
+
+	// raw/trace request types don't support metric queries;
+	// metrics are always aggregated and there is no raw form.
+	if r.RequestType == RequestTypeRaw || r.RequestType == RequestTypeRawStream || r.RequestType == RequestTypeTrace {
+		for _, envelope := range r.CompositeQuery.Queries {
+			if envelope.GetSignal() == telemetrytypes.SignalMetrics {
+				return errors.NewInvalidInputf(
+					errors.CodeInvalidInput,
+					"raw request type is not supported for metric queries",
+				)
+			}
+		}
+	}
+
+	// Validate composite query
+	if err := r.CompositeQuery.Validate(opts...); err != nil {
+		return err
+	}
+
+	// Check if all queries are disabled
+	if err := r.validateAllQueriesNotDisabled(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Validate performs validation on CompositeQuery.
+func (c *CompositeQuery) Validate(opts ...ValidationOption) error {
+	if len(c.Queries) == 0 {
+		return errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"at least one query is required",
+		)
+	}
+
+	// Track query names for uniqueness (only for builder queries)
+	queryNames := make(map[string]bool)
+
+	for i, envelope := range c.Queries {
+		if err := validateQueryEnvelope(envelope, opts...); err != nil {
+			queryId := getQueryIdentifier(envelope, i)
+			return wrapValidationError(err, queryId, "invalid %s: %s")
+		}
+
+		// Check name uniqueness for builder queries
+		if envelope.Type == QueryTypeBuilder || envelope.Type == QueryTypeSubQuery {
+			name := envelope.GetQueryName()
+			if name != "" {
+				if queryNames[name] {
+					return errors.NewInvalidInputf(
+						errors.CodeInvalidInput,
+						"duplicate query name '%s'",
+						name,
+					)
+				}
+				queryNames[name] = true
+			}
+		}
+	}
+
+	return nil
+}
+
+func applyValidationOptions(opts []ValidationOption) validationConfig {
+	cfg := validationConfig{}
+	for _, opt := range opts {
+		opt(&cfg)
+	}
+	return cfg
+}
+
+// getQueryIdentifier returns a friendly identifier for a query based on its type and name/content.
+func getQueryIdentifier(envelope QueryEnvelope, index int) string {
+	name := envelope.GetQueryName()
+
+	var typeLabel string
+	switch envelope.Type {
+	case QueryTypeBuilder, QueryTypeSubQuery:
+		typeLabel = "query"
+	case QueryTypeFormula:
+		typeLabel = "formula"
+	case QueryTypeTraceOperator:
+		typeLabel = "trace operator"
+	case QueryTypeJoin:
+		typeLabel = "join"
+	case QueryTypePromQL:
+		typeLabel = "PromQL query"
+	case QueryTypeClickHouseSQL:
+		typeLabel = "ClickHouse query"
+	default:
+		typeLabel = "query"
+	}
+
+	if name != "" {
+		return fmt.Sprintf("%s '%s'", typeLabel, name)
+	}
+	return fmt.Sprintf("%s at position %d", typeLabel, index+1)
+}
+
+// wrapValidationError rewraps a validation failure as errorFormat % (contextIdentifier,
+// innerMsg), carrying the inner error's additionals and suggestions onto the new error so
+// the structured hints survive the rewrap.
+func wrapValidationError(cause error, contextIdentifier string, errorFormat string) error {
+	if cause == nil {
+		return nil
+	}
+
+	_, _, innerMsg, _, _, additionals := errors.Unwrapb(cause)
+	inner := errors.AsJSON(cause)
+
+	newErr := errors.NewInvalidInputf(errors.CodeInvalidInput, errorFormat, contextIdentifier, innerMsg)
+
+	if len(additionals) > 0 {
+		newErr = newErr.WithAdditionals(additionals...)
+	}
+
+	if len(inner.Suggestions) > 0 {
+		newErr = newErr.WithSuggestions(inner.Suggestions...)
+	}
+
+	return newErr
 }
 
 func (q *QueryBuilderQuery[T]) validateSelectFields(cfg validationConfig) error {
@@ -486,57 +610,6 @@ func (q *QueryBuilderQuery[T]) validateOrderByForAggregation() error {
 	return nil
 }
 
-// Validate validates the entire query range request.
-func (r *QueryRangeRequest) Validate(opts ...ValidationOption) error {
-	// Validate time range
-	if r.RequestType != RequestTypeRawStream && r.Start >= r.End {
-		return errors.NewInvalidInputf(
-			errors.CodeInvalidInput,
-			"start time must be before end time",
-		)
-	}
-
-	// Validate request type
-	switch r.RequestType {
-	case RequestTypeRaw, RequestTypeRawStream, RequestTypeTrace, RequestTypeTimeSeries, RequestTypeScalar:
-		opts = append(opts, GetValidationOptions(r.RequestType)...)
-	default:
-		return errors.NewInvalidInputf(
-			errors.CodeInvalidInput,
-			"invalid request type: %s",
-			r.RequestType,
-		).WithAdditional(
-			"Valid request types are: raw, timeseries, scalar",
-		)
-	}
-
-	// raw/trace request types don't support metric queries;
-	// metrics are always aggregated and there is no raw form.
-	if r.RequestType == RequestTypeRaw || r.RequestType == RequestTypeRawStream || r.RequestType == RequestTypeTrace {
-		for _, envelope := range r.CompositeQuery.Queries {
-			if envelope.GetSignal() == telemetrytypes.SignalMetrics {
-				return errors.NewInvalidInputf(
-					errors.CodeInvalidInput,
-					"raw request type is not supported for metric queries",
-				)
-			}
-		}
-	}
-
-	// Validate composite query
-	if err := r.CompositeQuery.Validate(opts...); err != nil {
-		return err
-	}
-
-	// Check if all queries are disabled
-	if err := r.validateAllQueriesNotDisabled(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// validateAllQueriesNotDisabled validates that at least one query in the composite query is enabled.
 func (r *QueryRangeRequest) validateAllQueriesNotDisabled() error {
 	for _, envelope := range r.CompositeQuery.Queries {
 		if !envelope.IsDisabled() {
@@ -548,43 +621,6 @@ func (r *QueryRangeRequest) validateAllQueriesNotDisabled() error {
 		errors.CodeInvalidInput,
 		"all queries are disabled - at least one query must be enabled",
 	)
-}
-
-// Validate performs validation on CompositeQuery.
-func (c *CompositeQuery) Validate(opts ...ValidationOption) error {
-	if len(c.Queries) == 0 {
-		return errors.NewInvalidInputf(
-			errors.CodeInvalidInput,
-			"at least one query is required",
-		)
-	}
-
-	// Track query names for uniqueness (only for builder queries)
-	queryNames := make(map[string]bool)
-
-	for i, envelope := range c.Queries {
-		if err := validateQueryEnvelope(envelope, opts...); err != nil {
-			queryId := getQueryIdentifier(envelope, i)
-			return wrapValidationError(err, queryId, "invalid %s: %s")
-		}
-
-		// Check name uniqueness for builder queries
-		if envelope.Type == QueryTypeBuilder || envelope.Type == QueryTypeSubQuery {
-			name := envelope.GetQueryName()
-			if name != "" {
-				if queryNames[name] {
-					return errors.NewInvalidInputf(
-						errors.CodeInvalidInput,
-						"duplicate query name '%s'",
-						name,
-					)
-				}
-				queryNames[name] = true
-			}
-		}
-	}
-
-	return nil
 }
 
 func validateQueryEnvelope(envelope QueryEnvelope, opts ...ValidationOption) error {
@@ -672,18 +708,5 @@ func validateQueryEnvelope(envelope QueryEnvelope, opts ...ValidationOption) err
 			"unknown query type: %s",
 			envelope.Type,
 		).WithSuggestions(errors.ValidReferences(QueryType{}.Enum()...))
-	}
-}
-
-func GetValidationOptions(requestType RequestType) []ValidationOption {
-	switch requestType {
-	case RequestTypeTimeSeries:
-		return []ValidationOption{WithSkipSelectFieldValidation(), WithTimestampGroupByValidation()}
-	case RequestTypeScalar:
-		return []ValidationOption{WithSkipSelectFieldValidation()}
-	case RequestTypeRaw, RequestTypeRawStream, RequestTypeTrace:
-		return []ValidationOption{WithSkipAggregationValidation(), WithSkipHavingValidation(), WithSkipAggregationOrderBy(), WithSkipGroupByValidation()}
-	default:
-		return []ValidationOption{}
 	}
 }
