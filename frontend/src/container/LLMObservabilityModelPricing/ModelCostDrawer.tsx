@@ -160,7 +160,7 @@ function ModelCostDrawer({
 					value={draft.provider}
 					onChange={(value): void => update({ provider: value })}
 					options={PROVIDER_OPTIONS}
-					disabled={isReadOnly}
+					disabled={mode === 'edit' || isReadOnly}
 					className="full-width"
 					data-testid="drawer-provider-select"
 				/>
