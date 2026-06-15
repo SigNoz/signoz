@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"strconv"
 	"time"
 
 	tracesV3 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v3"
@@ -226,7 +227,7 @@ func PrepareFilters(labels map[string]string, whereClauseItems []v3.FilterItem, 
 	return filterItems
 }
 
-func PrepareLinksToTracesV5(start, end time.Time, whereClause string) string {
+func PrepareParamsForTracesV5(start, end time.Time, whereClause string) url.Values {
 
 	// Traces list view expects time in nanoseconds
 	tr := URLShareableTimeRange{
@@ -238,7 +239,6 @@ func PrepareLinksToTracesV5(start, end time.Time, whereClause string) string {
 	options := URLShareableOptions{}
 
 	period, _ := json.Marshal(tr)
-	urlEncodedTimeRange := url.QueryEscape(string(period))
 
 	linkQuery := LinkQuery{
 		BuilderQuery: v3.BuilderQuery{
@@ -265,15 +265,20 @@ func PrepareLinksToTracesV5(start, end time.Time, whereClause string) string {
 	}
 
 	data, _ := json.Marshal(urlData)
-	compositeQuery := url.QueryEscape(url.QueryEscape(string(data)))
+	compositeQuery := url.QueryEscape(string(data))
 
 	optionsData, _ := json.Marshal(options)
-	urlEncodedOptions := url.QueryEscape(string(optionsData))
 
-	return fmt.Sprintf("compositeQuery=%s&timeRange=%s&startTime=%d&endTime=%d&options=%s", compositeQuery, urlEncodedTimeRange, tr.Start, tr.End, urlEncodedOptions)
+	params := url.Values{}
+	params.Set("compositeQuery", compositeQuery)
+	params.Set("timeRange", string(period))
+	params.Set("startTime", strconv.FormatInt(tr.Start, 10))
+	params.Set("endTime", strconv.FormatInt(tr.End, 10))
+	params.Set("options", string(optionsData))
+	return params
 }
 
-func PrepareLinksToLogsV5(start, end time.Time, whereClause string) string {
+func PrepareParamsForLogsV5(start, end time.Time, whereClause string) url.Values {
 
 	// Logs list view expects time in milliseconds
 	tr := URLShareableTimeRange{
@@ -285,7 +290,6 @@ func PrepareLinksToLogsV5(start, end time.Time, whereClause string) string {
 	options := URLShareableOptions{}
 
 	period, _ := json.Marshal(tr)
-	urlEncodedTimeRange := url.QueryEscape(string(period))
 
 	linkQuery := LinkQuery{
 		BuilderQuery: v3.BuilderQuery{
@@ -312,10 +316,15 @@ func PrepareLinksToLogsV5(start, end time.Time, whereClause string) string {
 	}
 
 	data, _ := json.Marshal(urlData)
-	compositeQuery := url.QueryEscape(url.QueryEscape(string(data)))
+	compositeQuery := url.QueryEscape(string(data))
 
 	optionsData, _ := json.Marshal(options)
-	urlEncodedOptions := url.QueryEscape(string(optionsData))
 
-	return fmt.Sprintf("compositeQuery=%s&timeRange=%s&startTime=%d&endTime=%d&options=%s", compositeQuery, urlEncodedTimeRange, tr.Start, tr.End, urlEncodedOptions)
+	params := url.Values{}
+	params.Set("compositeQuery", compositeQuery)
+	params.Set("timeRange", string(period))
+	params.Set("startTime", strconv.FormatInt(tr.Start, 10))
+	params.Set("endTime", strconv.FormatInt(tr.End, 10))
+	params.Set("options", string(optionsData))
+	return params
 }

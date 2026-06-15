@@ -64,6 +64,19 @@
 	gap: 4px;
 }
 
+// Mirrors `.field` for the multi_select group, but resets the browser's
+// default `<fieldset>` border/padding/margin so the visual matches the
+// `<div>`-based field rows.
+.multiSelectFieldset {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	min-width: 0;
+}
+
 .label {
 	font-size: 12px;
 	font-weight: 500;

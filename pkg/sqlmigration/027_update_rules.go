@@ -11,7 +11,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
@@ -57,15 +56,15 @@ type newRule struct {
 
 type existingMaintenance struct {
 	bun.BaseModel `bun:"table:planned_maintenance"`
-	ID            int                 `bun:"id,pk,autoincrement"`
-	Name          string              `bun:"name,type:text,notnull"`
-	Description   string              `bun:"description,type:text"`
-	AlertIDs      *AlertIds           `bun:"alert_ids,type:text"`
-	Schedule      *alertmanagertypes.Schedule `bun:"schedule,type:text,notnull"`
-	CreatedAt     time.Time           `bun:"created_at,type:datetime,notnull"`
-	CreatedBy     string              `bun:"created_by,type:text,notnull"`
-	UpdatedAt     time.Time           `bun:"updated_at,type:datetime,notnull"`
-	UpdatedBy     string              `bun:"updated_by,type:text,notnull"`
+	ID            int       `bun:"id,pk,autoincrement"`
+	Name          string    `bun:"name,type:text,notnull"`
+	Description   string    `bun:"description,type:text"`
+	AlertIDs      *AlertIds `bun:"alert_ids,type:text"`
+	Schedule      *schedule `bun:"schedule,type:text,notnull"`
+	CreatedAt     time.Time `bun:"created_at,type:datetime,notnull"`
+	CreatedBy     string    `bun:"created_by,type:text,notnull"`
+	UpdatedAt     time.Time `bun:"updated_at,type:datetime,notnull"`
+	UpdatedBy     string    `bun:"updated_by,type:text,notnull"`
 }
 
 type newMaintenance struct {
@@ -73,10 +72,10 @@ type newMaintenance struct {
 	types.Identifiable
 	types.TimeAuditable
 	types.UserAuditable
-	Name        string              `bun:"name,type:text,notnull"`
-	Description string              `bun:"description,type:text"`
-	Schedule    *alertmanagertypes.Schedule `bun:"schedule,type:text,notnull"`
-	OrgID       string              `bun:"org_id,type:text"`
+	Name        string    `bun:"name,type:text,notnull"`
+	Description string    `bun:"description,type:text"`
+	Schedule    *schedule `bun:"schedule,type:text,notnull"`
+	OrgID       string    `bun:"org_id,type:text"`
 }
 
 type storablePlannedMaintenanceRule struct {
@@ -90,6 +89,21 @@ type ruleHistory struct {
 	bun.BaseModel `bun:"table:rule_history"`
 	RuleID        int         `bun:"rule_id"`
 	RuleUUID      valuer.UUID `bun:"rule_uuid"`
+}
+
+type schedule struct {
+	Timezone   string      `json:"timezone"`
+	StartTime  time.Time   `json:"startTime"`
+	EndTime    time.Time   `json:"endTime,omitzero"`
+	Recurrence *recurrence `json:"recurrence"`
+}
+
+type recurrence struct {
+	StartTime  time.Time           `json:"startTime"`
+	EndTime    time.Time           `json:"endTime,omitzero"`
+	Duration   valuer.TextDuration `json:"duration"`
+	RepeatType string              `json:"repeatType"`
+	RepeatOn   []string            `json:"repeatOn"`
 }
 
 func NewUpdateRulesFactory(sqlstore sqlstore.SQLStore) factory.ProviderFactory[SQLMigration, Config] {

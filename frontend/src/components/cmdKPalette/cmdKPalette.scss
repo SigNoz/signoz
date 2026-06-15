@@ -76,4 +76,19 @@
 
 .cmd-item-icon {
 	margin-right: 8px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+
+	svg {
+		height: 16px !important;
+		width: 16px !important;
+	}
+
+	&.noz-icon {
+		svg {
+			height: 20px !important;
+			width: 20px !important;
+		}
+	}
 }

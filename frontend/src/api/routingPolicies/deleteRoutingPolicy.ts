@@ -8,6 +8,13 @@ export interface DeleteRoutingPolicyResponse {
 	message: string;
 }
 
+/**
+ * @deprecated Use the generated `useDeleteRoutePolicyByID` hook (or `deleteRoutePolicyByID` fetcher) from
+ * `api/generated/services/routepolicies` instead. This hand-written client targets the
+ * same endpoint and will be removed once call sites migrate.
+ *
+ * Part of https://github.com/SigNoz/engineering-pod/issues/5289, add a comment or update when removing this method.
+ */
 const deleteRoutingPolicy = async (
 	routingPolicyId: string,
 ): Promise<

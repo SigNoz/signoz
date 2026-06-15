@@ -331,13 +331,6 @@ type SearchTracesParams struct {
 	MaxSpansInTrace  int    `json:"maxSpansInTrace"`
 }
 
-type GetWaterfallSpansForTraceWithMetadataParams struct {
-	SelectedSpanID              string   `json:"selectedSpanId"`
-	IsSelectedSpanIDUnCollapsed bool     `json:"isSelectedSpanIDUnCollapsed"`
-	UncollapsedSpans            []string `json:"uncollapsedSpans"`
-	Limit                       uint     `json:"limit"`
-}
-
 type GetFlamegraphSpansForTraceParams struct {
 	SelectedSpanID  string                             `json:"selectedSpanId"`
 	Limit           uint                               `json:"limit"`

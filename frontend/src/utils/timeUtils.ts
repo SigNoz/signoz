@@ -2,6 +2,7 @@ import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import duration from 'dayjs/plugin/duration';
+import relativeTime from 'dayjs/plugin/relativeTime';
 import timezone from 'dayjs/plugin/timezone';
 import utc from 'dayjs/plugin/utc';
 
@@ -9,6 +10,7 @@ dayjs.extend(utc);
 dayjs.extend(customParseFormat);
 dayjs.extend(duration);
 dayjs.extend(timezone);
+dayjs.extend(relativeTime);
 
 export function toUTCEpoch(time: number): number {
 	const x = new Date();
@@ -170,6 +172,24 @@ export const normalizeTimeToMs = (timestamp: number | string): number => {
 
 	return isNanoSeconds ? Math.floor(ts / 1_000_000) : ts;
 };
+
+/**
+ * Calculates milliseconds elapsed since the given timestamp.
+ * Returns 0 for undefined/invalid timestamps.
+ */
+export function getElapsedMs(startsAt: Date | string | undefined): number {
+	if (!startsAt) {
+		return 0;
+	}
+	const timestamp =
+		typeof startsAt === 'string'
+			? new Date(startsAt).getTime()
+			: startsAt.getTime();
+	if (Number.isNaN(timestamp)) {
+		return 0;
+	}
+	return Date.now() - timestamp;
+}
 
 export const hasDatePassed = (expiresAt: string): boolean => {
 	const date = dayjs(expiresAt);

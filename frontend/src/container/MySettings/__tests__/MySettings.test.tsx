@@ -1,5 +1,6 @@
 import userEvent from '@testing-library/user-event';
 import MySettingsContainer from 'container/MySettings';
+import { logEventMock } from '__tests__/logEventMock';
 import {
 	act,
 	fireEvent,
@@ -12,7 +13,6 @@ import APIError from 'types/api/error';
 import { toast } from '@signozhq/ui/sonner';
 
 const toggleThemeFunction = jest.fn();
-const logEventFunction = jest.fn();
 const copyToClipboardFn = jest.fn();
 const editUserFn = jest.fn();
 const updateMyPasswordFn = jest.fn();
@@ -60,11 +60,6 @@ jest.mock('hooks/useDarkMode', () => ({
 		autoSwitch: false,
 		setAutoSwitch: jest.fn(),
 	})),
-}));
-
-jest.mock('api/common/logEvent', () => ({
-	__esModule: true,
-	default: jest.fn((eventName, data) => logEventFunction(eventName, data)),
 }));
 
 const errorNotification = jest.fn();
@@ -119,23 +114,23 @@ describe('MySettings Flows', () => {
 
 		it('Should have Dark theme selected by default', async () => {
 			const themeSelector = screen.getByTestId(THEME_SELECTOR_TEST_ID);
-			const darkOption = themeSelector.querySelector(
-				'input[value="dark"]',
-			) as HTMLInputElement;
+			const darkOption = within(themeSelector).getByRole('radio', {
+				name: /Dark/,
+			});
 			expect(darkOption).toBeChecked();
 		});
 
 		it('Should switch theme and log event when Light theme is selected', async () => {
 			const themeSelector = screen.getByTestId(THEME_SELECTOR_TEST_ID);
-			const lightOption = themeSelector.querySelector(
-				'input[value="light"]',
-			) as HTMLInputElement;
+			const lightOption = within(themeSelector).getByRole('radio', {
+				name: /Light/,
+			});
 
 			fireEvent.click(lightOption);
 
 			await waitFor(() => {
 				expect(toggleThemeFunction).toHaveBeenCalled();
-				expect(logEventFunction).toHaveBeenCalledWith(
+				expect(logEventMock).toHaveBeenCalledWith(
 					'Account Settings: Theme Changed',
 					{
 						theme: 'light',

@@ -21,6 +21,7 @@ var (
 	ErrCodeDashboardInvalidWidgetQuery = errors.MustNewCode("dashboard_invalid_widget_query")
 	ErrCodeDashboardInvalidSource      = errors.MustNewCode("dashboard_invalid_source")
 	ErrCodeDashboardImmutable          = errors.MustNewCode("dashboard_immutable")
+	ErrCodeDashboardInvalidPatch       = errors.MustNewCode("dashboard_invalid_patch")
 )
 
 type StorableDashboard struct {
@@ -33,6 +34,7 @@ type StorableDashboard struct {
 	Locked bool                  `bun:"locked,notnull,default:false"`
 	OrgID  valuer.UUID           `bun:"org_id,notnull"`
 	Source Source                `bun:"source,type:text,notnull"`
+	Name   string                `bun:"name,type:text,notnull"`
 }
 
 type Dashboard struct {
