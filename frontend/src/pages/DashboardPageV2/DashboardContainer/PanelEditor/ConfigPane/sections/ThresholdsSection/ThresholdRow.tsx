@@ -6,6 +6,7 @@ import { Typography } from '@signozhq/ui/typography';
 import type { DashboardtypesThresholdWithLabelDTO } from 'api/generated/services/sigNoz.schemas';
 import YAxisUnitSelector from 'components/YAxisUnitSelector';
 import { YAxisSource } from 'components/YAxisUnitSelector/types';
+import { formatPanelValue } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/formatPanelValue';
 
 import ThresholdColorSelect from './ThresholdColorSelect';
 import {
@@ -59,8 +60,7 @@ function ThresholdRow({
 			<div className={styles.viewRow}>
 				<span className={styles.dot} style={{ backgroundColor: threshold.color }} />
 				<span className={styles.viewValue}>
-					{threshold.value}
-					{threshold.unit ? ` ${threshold.unit}` : ''}
+					{formatPanelValue(threshold.value, threshold.unit)}
 				</span>
 				{threshold.label && (
 					<span className={styles.viewLabel}>{threshold.label}</span>

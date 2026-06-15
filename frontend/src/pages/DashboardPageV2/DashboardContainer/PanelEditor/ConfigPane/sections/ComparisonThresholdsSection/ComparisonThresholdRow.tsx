@@ -10,6 +10,7 @@ import type {
 } from 'api/generated/services/sigNoz.schemas';
 import YAxisUnitSelector from 'components/YAxisUnitSelector';
 import { YAxisSource } from 'components/YAxisUnitSelector/types';
+import { formatPanelValue } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/formatPanelValue';
 
 import ConfigSelect from '../../controls/ConfigSelect/ConfigSelect';
 import ThresholdColorSelect from '../ThresholdsSection/ThresholdColorSelect';
@@ -71,8 +72,7 @@ function ComparisonThresholdRow({
 			<div className={styles.viewRow}>
 				<span className={styles.dot} style={{ backgroundColor: threshold.color }} />
 				<span className={styles.viewValue}>
-					{symbol} {threshold.value}
-					{threshold.unit ? ` ${threshold.unit}` : ''}
+					{symbol} {formatPanelValue(threshold.value, threshold.unit)}
 				</span>
 				<div className={styles.spacer} />
 				<Button

@@ -58,6 +58,27 @@ describe('ComparisonThresholdsSection', () => {
 		).not.toBeInTheDocument();
 	});
 
+	it('formats the view-mode value through its unit (e.g. currency symbol)', () => {
+		render(
+			<ComparisonThresholdsSection
+				value={[
+					{
+						value: 3100,
+						color: '#F5B225',
+						operator: DashboardtypesComparisonOperatorDTO.below,
+						unit: 'currencyUSD',
+					},
+				]}
+				onChange={jest.fn()}
+			/>,
+		);
+
+		const row = screen.getByTestId('comparison-threshold-edit-0').closest('div');
+		// Unit-aware: shows the currency symbol, never the raw unit id.
+		expect(row).toHaveTextContent('$');
+		expect(row).not.toHaveTextContent('currencyUSD');
+	});
+
 	it('edits a threshold value and commits it on Save', () => {
 		const onChange = jest.fn();
 		render(
