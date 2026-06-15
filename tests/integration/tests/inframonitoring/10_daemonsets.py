@@ -451,7 +451,7 @@ def _phase(pending=0, running=0, succeeded=0, failed=0, unknown=0) -> dict:
                 "fixture": "daemonsets_groupby.jsonl",
                 "group_by": "k8s.daemonset.name",
                 "filter": None,
-                "group_meta_key": "k8s.daemonset.name",
+                "group_meta_keys": ["k8s.daemonset.name"],
                 "expected_type": "grouped_list",
                 "groups": {
                     "gb-ds-a1": {"daemonSetName": "gb-ds-a1", "podCountsByPhase": _phase(running=1)},
@@ -469,7 +469,7 @@ def _phase(pending=0, running=0, succeeded=0, failed=0, unknown=0) -> dict:
                 "fixture": "daemonsets_groupby.jsonl",
                 "group_by": "k8s.namespace.name",
                 "filter": None,
-                "group_meta_key": "k8s.namespace.name",
+                "group_meta_keys": ["k8s.namespace.name"],
                 "expected_type": "grouped_list",
                 "groups": {
                     "gb-ns-a": {"daemonSetName": "", "podCountsByPhase": _phase(running=2)},
@@ -479,47 +479,53 @@ def _phase(pending=0, running=0, succeeded=0, failed=0, unknown=0) -> dict:
             id="namespace",
         ),
         # Default groupBy (no groupBy in request) => [k8s.daemonset.name,
-        # k8s.namespace.name] (module.go ListDaemonSets), response list. Two
-        # daemonsets sharing a name across namespaces must NOT collapse: each row
-        # keeps its per-namespace metrics/node counts/phase. Single pod per (ds, ns)
-        # => SpaceAggregationSum == Avg == seeded value, so exact expectations.
-        # Regression guard for namespace-scoped k8s name uniqueness; fails on the
-        # pre-change name-only default (would yield 1 summed row).
+        # k8s.namespace.name, k8s.cluster.name] (module.go ListDaemonSets),
+        # response list. Same workload name must NOT collapse across namespaces OR
+        # clusters; the empty-cluster group (k8s.cluster.name label absent on the
+        # source pods) must appear as its own row with real metrics, not be dropped.
+        # Single pod per group => SpaceAggregationSum == Avg == seeded value.
+        # Fails on the pre-cluster default (name+ns) — the three ns-x groups would
+        # collapse into one summed row.
         pytest.param(
             {
-                "fixture": "daemonsets_same_name_across_namespaces.jsonl",
+                "fixture": "daemonsets_same_name_across_ns_and_clusters.jsonl",
                 "group_by": None,
                 "filter": "k8s.daemonset.name = 'dup-ds'",
-                "group_meta_key": "k8s.namespace.name",
+                "group_meta_keys": ["k8s.daemonset.name", "k8s.namespace.name", "k8s.cluster.name"],
                 "expected_type": "list",
                 "groups": {
-                    "ns-x": {
+                    ("dup-ds", "ns-x", "cluster-a"): {
                         "daemonSetName": "dup-ds",
-                        "daemonSetCPU": 0.3,
-                        "daemonSetCPURequest": 0.6,
-                        "daemonSetCPULimit": 0.7,
-                        "daemonSetMemory": 100000000.0,
-                        "daemonSetMemoryRequest": 0.6,
-                        "daemonSetMemoryLimit": 0.7,
-                        "desiredNodes": 2,
-                        "currentNodes": 2,
+                        "daemonSetCPU": 0.3, "daemonSetCPURequest": 0.6, "daemonSetCPULimit": 0.7,
+                        "daemonSetMemory": 100000000.0, "daemonSetMemoryRequest": 0.6, "daemonSetMemoryLimit": 0.7,
+                        "desiredNodes": 2, "currentNodes": 2,
                         "podCountsByPhase": _phase(running=1),
                     },
-                    "ns-y": {
+                    ("dup-ds", "ns-y", "cluster-a"): {
                         "daemonSetName": "dup-ds",
-                        "daemonSetCPU": 0.9,
-                        "daemonSetCPURequest": 0.2,
-                        "daemonSetCPULimit": 0.3,
-                        "daemonSetMemory": 500000000.0,
-                        "daemonSetMemoryRequest": 0.2,
-                        "daemonSetMemoryLimit": 0.3,
-                        "desiredNodes": 3,
-                        "currentNodes": 1,
+                        "daemonSetCPU": 0.9, "daemonSetCPURequest": 0.2, "daemonSetCPULimit": 0.3,
+                        "daemonSetMemory": 500000000.0, "daemonSetMemoryRequest": 0.2, "daemonSetMemoryLimit": 0.3,
+                        "desiredNodes": 3, "currentNodes": 1,
                         "podCountsByPhase": _phase(failed=1),
+                    },
+                    ("dup-ds", "ns-x", "cluster-b"): {
+                        "daemonSetName": "dup-ds",
+                        "daemonSetCPU": 0.5, "daemonSetCPURequest": 0.4, "daemonSetCPULimit": 0.5,
+                        "daemonSetMemory": 300000000.0, "daemonSetMemoryRequest": 0.4, "daemonSetMemoryLimit": 0.5,
+                        "desiredNodes": 4, "currentNodes": 4,
+                        "podCountsByPhase": _phase(running=1),
+                    },
+                    # empty-cluster group: k8s.cluster.name label absent on the source pods.
+                    ("dup-ds", "ns-x", ""): {
+                        "daemonSetName": "dup-ds",
+                        "daemonSetCPU": 0.1, "daemonSetCPURequest": 0.1, "daemonSetCPULimit": 0.1,
+                        "daemonSetMemory": 200000000.0, "daemonSetMemoryRequest": 0.1, "daemonSetMemoryLimit": 0.1,
+                        "desiredNodes": 1, "currentNodes": 0,
+                        "podCountsByPhase": _phase(pending=1),
                     },
                 },
             },
-            id="default_disambiguates_ns",
+            id="default_disambiguates_ns_and_cluster",
         ),
     ],
 )
@@ -567,16 +573,21 @@ def test_daemonsets_groupby(
     data = response.json()["data"]
 
     groups = scenario["groups"]
-    meta_key = scenario["group_meta_key"]
+    meta_keys = scenario["group_meta_keys"]
     assert data["type"] == scenario["expected_type"]
     assert data["total"] == len(groups)
 
-    by_group = {r["meta"][meta_key]: r for r in data["records"]}
+    def _gid(rec: dict):
+        vals = [rec["meta"][k] for k in meta_keys]
+        return vals[0] if len(vals) == 1 else tuple(vals)
+
+    by_group = {_gid(r): r for r in data["records"]}
     assert set(by_group.keys()) == set(groups.keys())
 
     for gid, exp in groups.items():
         rec = by_group[gid]
-        assert meta_key in rec["meta"], rec["meta"]
+        for k in meta_keys:
+            assert k in rec["meta"], rec["meta"]
         for field, val in exp.items():
             if field in _GROUPBY_FLOAT_FIELDS:
                 assert compare_values(rec[field], val, 1e-6), f"{gid}.{field}: got {rec[field]}, expected {val}"

@@ -505,7 +505,7 @@ def _phase(pending=0, running=0, succeeded=0, failed=0, unknown=0) -> dict:
                 "fixture": "jobs_groupby.jsonl",
                 "group_by": "k8s.job.name",
                 "filter": None,
-                "group_meta_key": "k8s.job.name",
+                "group_meta_keys": ["k8s.job.name"],
                 "expected_type": "grouped_list",
                 "groups": {
                     "gb-job-a1": {"jobName": "gb-job-a1", "podCountsByPhase": _phase(running=1)},
@@ -523,7 +523,7 @@ def _phase(pending=0, running=0, succeeded=0, failed=0, unknown=0) -> dict:
                 "fixture": "jobs_groupby.jsonl",
                 "group_by": "k8s.namespace.name",
                 "filter": None,
-                "group_meta_key": "k8s.namespace.name",
+                "group_meta_keys": ["k8s.namespace.name"],
                 "expected_type": "grouped_list",
                 "groups": {
                     "gb-ns-a": {"jobName": "", "podCountsByPhase": _phase(running=2)},
@@ -533,51 +533,53 @@ def _phase(pending=0, running=0, succeeded=0, failed=0, unknown=0) -> dict:
             id="namespace",
         ),
         # Default groupBy (no groupBy in request) => [k8s.job.name,
-        # k8s.namespace.name] (module.go ListJobs), response list. Two jobs sharing
-        # a name across namespaces must NOT collapse: each row keeps its
-        # per-namespace metrics/replica counts/phase. Single pod per (job, ns) =>
-        # SpaceAggregationSum == Avg == seeded value, so exact expectations.
-        # Regression guard for namespace-scoped k8s name uniqueness; fails on the
-        # pre-change name-only default (would yield 1 summed row).
+        # k8s.namespace.name, k8s.cluster.name] (module.go ListJobs), response
+        # list. Same workload name must NOT collapse across namespaces OR clusters;
+        # the empty-cluster group (k8s.cluster.name label absent on the source pods)
+        # must appear as its own row with real metrics, not be dropped. Single pod
+        # per group => SpaceAggregationSum == Avg == seeded value. Fails on the
+        # pre-cluster default (name+ns) — the three ns-x groups would collapse into
+        # one summed row.
         pytest.param(
             {
-                "fixture": "jobs_same_name_across_namespaces.jsonl",
+                "fixture": "jobs_same_name_across_ns_and_clusters.jsonl",
                 "group_by": None,
                 "filter": "k8s.job.name = 'dup-job'",
-                "group_meta_key": "k8s.namespace.name",
+                "group_meta_keys": ["k8s.job.name", "k8s.namespace.name", "k8s.cluster.name"],
                 "expected_type": "list",
                 "groups": {
-                    "ns-x": {
+                    ("dup-job", "ns-x", "cluster-a"): {
                         "jobName": "dup-job",
-                        "jobCPU": 0.3,
-                        "jobCPURequest": 0.6,
-                        "jobCPULimit": 0.7,
-                        "jobMemory": 100000000.0,
-                        "jobMemoryRequest": 0.6,
-                        "jobMemoryLimit": 0.7,
-                        "desiredSuccessfulPods": 2,
-                        "activePods": 2,
-                        "failedPods": 0,
-                        "successfulPods": 0,
+                        "jobCPU": 0.3, "jobCPURequest": 0.6, "jobCPULimit": 0.7,
+                        "jobMemory": 100000000.0, "jobMemoryRequest": 0.6, "jobMemoryLimit": 0.7,
+                        "desiredSuccessfulPods": 2, "activePods": 2, "failedPods": 0, "successfulPods": 0,
                         "podCountsByPhase": _phase(running=1),
                     },
-                    "ns-y": {
+                    ("dup-job", "ns-y", "cluster-a"): {
                         "jobName": "dup-job",
-                        "jobCPU": 0.9,
-                        "jobCPURequest": 0.2,
-                        "jobCPULimit": 0.3,
-                        "jobMemory": 500000000.0,
-                        "jobMemoryRequest": 0.2,
-                        "jobMemoryLimit": 0.3,
-                        "desiredSuccessfulPods": 3,
-                        "activePods": 1,
-                        "failedPods": 1,
-                        "successfulPods": 1,
+                        "jobCPU": 0.9, "jobCPURequest": 0.2, "jobCPULimit": 0.3,
+                        "jobMemory": 500000000.0, "jobMemoryRequest": 0.2, "jobMemoryLimit": 0.3,
+                        "desiredSuccessfulPods": 3, "activePods": 1, "failedPods": 1, "successfulPods": 1,
                         "podCountsByPhase": _phase(failed=1),
+                    },
+                    ("dup-job", "ns-x", "cluster-b"): {
+                        "jobName": "dup-job",
+                        "jobCPU": 0.5, "jobCPURequest": 0.4, "jobCPULimit": 0.5,
+                        "jobMemory": 300000000.0, "jobMemoryRequest": 0.4, "jobMemoryLimit": 0.5,
+                        "desiredSuccessfulPods": 4, "activePods": 2, "failedPods": 1, "successfulPods": 1,
+                        "podCountsByPhase": _phase(running=1),
+                    },
+                    # empty-cluster group: k8s.cluster.name label absent on the source pods.
+                    ("dup-job", "ns-x", ""): {
+                        "jobName": "dup-job",
+                        "jobCPU": 0.1, "jobCPURequest": 0.1, "jobCPULimit": 0.1,
+                        "jobMemory": 200000000.0, "jobMemoryRequest": 0.1, "jobMemoryLimit": 0.1,
+                        "desiredSuccessfulPods": 1, "activePods": 1, "failedPods": 0, "successfulPods": 0,
+                        "podCountsByPhase": _phase(pending=1),
                     },
                 },
             },
-            id="default_disambiguates_ns",
+            id="default_disambiguates_ns_and_cluster",
         ),
     ],
 )
@@ -624,16 +626,21 @@ def test_jobs_groupby(
     data = response.json()["data"]
 
     groups = scenario["groups"]
-    meta_key = scenario["group_meta_key"]
+    meta_keys = scenario["group_meta_keys"]
     assert data["type"] == scenario["expected_type"]
     assert data["total"] == len(groups)
 
-    by_group = {r["meta"][meta_key]: r for r in data["records"]}
+    def _gid(rec: dict):
+        vals = [rec["meta"][k] for k in meta_keys]
+        return vals[0] if len(vals) == 1 else tuple(vals)
+
+    by_group = {_gid(r): r for r in data["records"]}
     assert set(by_group.keys()) == set(groups.keys())
 
     for gid, exp in groups.items():
         rec = by_group[gid]
-        assert meta_key in rec["meta"], rec["meta"]
+        for k in meta_keys:
+            assert k in rec["meta"], rec["meta"]
         for field, val in exp.items():
             if field in _GROUPBY_FLOAT_FIELDS:
                 assert compare_values(rec[field], val, 1e-6), f"{gid}.{field}: got {rec[field]}, expected {val}"

@@ -299,6 +299,37 @@ func TestCompositeKeyFromLabels(t *testing.T) {
 			groupBy:  []qbtypes.GroupByKey{jobNameGroupByKey, namespaceNameGroupByKey},
 			expected: "web-1\x00ns-x",
 		},
+		{
+			// daemonsets default group identity: (daemonset, namespace).
+			name: "daemonset and namespace group-by",
+			labels: map[string]string{
+				"k8s.daemonset.name": "web-1",
+				"k8s.namespace.name":  "ns-x",
+			},
+			groupBy:  []qbtypes.GroupByKey{daemonSetNameGroupByKey, namespaceNameGroupByKey},
+			expected: "web-1\x00ns-x",
+		},
+		{
+			// workload default group identity with cluster: (name, namespace, cluster).
+			name: "name, namespace and cluster group-by",
+			labels: map[string]string{
+				"k8s.deployment.name": "web-1",
+				"k8s.namespace.name":  "ns-x",
+				"k8s.cluster.name":    "cluster-a",
+			},
+			groupBy:  []qbtypes.GroupByKey{deploymentNameGroupByKey, namespaceNameGroupByKey, clusterNameGroupByKey},
+			expected: "web-1\x00ns-x\x00cluster-a",
+		},
+		{
+			// absent cluster label -> empty trailing segment (Helm-less / self-configured collector).
+			name: "missing cluster label yields empty trailing segment",
+			labels: map[string]string{
+				"k8s.deployment.name": "web-1",
+				"k8s.namespace.name":  "ns-x",
+			},
+			groupBy:  []qbtypes.GroupByKey{deploymentNameGroupByKey, namespaceNameGroupByKey, clusterNameGroupByKey},
+			expected: "web-1\x00ns-x\x00",
+		},
 	}
 
 	for _, tt := range tests {
