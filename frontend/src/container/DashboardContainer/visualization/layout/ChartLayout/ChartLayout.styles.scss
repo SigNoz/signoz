@@ -7,15 +7,10 @@
 
 	&--legend-right {
 		flex-direction: row;
-
-		.chart-layout__legend-wrapper {
-			padding-left: 0 !important;
-		}
 	}
 
 	&__legend-wrapper {
 		padding-left: 12px;
 		padding-bottom: 12px;
-		overflow: auto;
 	}
 }

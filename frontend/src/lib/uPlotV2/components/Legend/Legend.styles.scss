@@ -108,6 +108,10 @@
 	align-items: center;
 	gap: 6px;
 	padding: 4px 8px;
+	// Include padding within the width so a full-width row (legend-item-right) fits its
+	// column instead of overflowing by the 16px horizontal padding — there is no global
+	// border-box reset, so the default content-box would make it overflow.
+	box-sizing: border-box;
 	max-width: 100%;
 	overflow: hidden;
 	border-radius: 4px;
