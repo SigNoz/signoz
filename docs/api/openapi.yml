@@ -11666,10 +11666,6 @@ paths:
           type: string
       responses:
         "204":
-          content:
-            application/json:
-              schema:
-                type: string
           description: No Content
         "401":
           content:
@@ -11777,10 +11773,6 @@ paths:
               $ref: '#/components/schemas/ServiceaccounttypesPostableServiceAccount'
       responses:
         "204":
-          content:
-            application/json:
-              schema:
-                type: string
           description: No Content
         "400":
           content:
@@ -11962,10 +11954,6 @@ paths:
           type: string
       responses:
         "204":
-          content:
-            application/json:
-              schema:
-                type: string
           description: No Content
         "401":
           content:
@@ -12023,10 +12011,6 @@ paths:
               $ref: '#/components/schemas/ServiceaccounttypesUpdatableFactorAPIKey'
       responses:
         "204":
-          content:
-            application/json:
-              schema:
-                type: string
           description: No Content
         "400":
           content:
@@ -12209,10 +12193,6 @@ paths:
           type: string
       responses:
         "204":
-          content:
-            application/json:
-              schema:
-                type: string
           description: No Content
         "401":
           content:
@@ -12288,10 +12268,6 @@ paths:
               $ref: '#/components/schemas/ServiceaccounttypesPostableServiceAccount'
       responses:
         "204":
-          content:
-            application/json:
-              schema:
-                type: string
           description: No Content
         "404":
           content:
