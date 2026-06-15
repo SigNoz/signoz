@@ -25,6 +25,7 @@ interface UseGroupFormDrawerResult {
 	close: () => void;
 	save: () => Promise<void>;
 	deleteGroup: () => Promise<void>;
+	removeGroup: (groupId: string) => Promise<void>;
 	toggleEnabled: (group: MapperGroup, enabled: boolean) => Promise<void>;
 	isSaving: boolean;
 	isDeleting: boolean;
@@ -100,20 +101,27 @@ export function useGroupFormDrawer(): UseGroupFormDrawerResult {
 		[updateGroup, invalidateList],
 	);
 
+	const removeGroup = useCallback(
+		async (groupId: string): Promise<void> => {
+			await deleteGroupApi({ pathParams: { groupId } });
+			await invalidateList();
+		},
+		[deleteGroupApi, invalidateList],
+	);
+
 	const deleteGroup = useCallback(async (): Promise<void> => {
 		if (!draft.id) {
 			return;
 		}
 		setSaveError(null);
 		try {
-			await deleteGroupApi({ pathParams: { groupId: draft.id } });
-			await invalidateList();
+			await removeGroup(draft.id);
 			setIsOpen(false);
 		} catch (error) {
 			const message = error instanceof Error ? error.message : 'Delete failed';
 			setSaveError(message);
 		}
-	}, [draft.id, deleteGroupApi, invalidateList]);
+	}, [draft.id, removeGroup]);
 
 	return {
 		isOpen,
@@ -125,6 +133,7 @@ export function useGroupFormDrawer(): UseGroupFormDrawerResult {
 		close,
 		save,
 		deleteGroup,
+		removeGroup,
 		toggleEnabled,
 		isSaving: isCreating || isUpdating,
 		isDeleting,

@@ -1,6 +1,4 @@
 import { useMemo } from 'react';
-import { Button } from '@signozhq/ui/button';
-import { Plus } from '@signozhq/icons';
 import { useListSpanMapperGroups } from 'api/generated/services/spanmapper';
 
 import GroupFormDrawer from './GroupFormDrawer';
@@ -26,15 +24,6 @@ function LLMObservabilityAttributeMapping(): JSX.Element {
 					<h1>Attribute Mapping</h1>
 					<p>Configure source-to-target attribute remapping for LLM traces</p>
 				</div>
-				<Button
-					variant="solid"
-					color="primary"
-					prefix={<Plus size={14} />}
-					onClick={drawer.openForAdd}
-					testId="add-group-btn"
-				>
-					Add group
-				</Button>
 			</header>
 
 			{isError && (
@@ -47,6 +36,8 @@ function LLMObservabilityAttributeMapping(): JSX.Element {
 				groups={groups}
 				isLoading={isLoading}
 				onEdit={drawer.openForEdit}
+				onAdd={drawer.openForAdd}
+				onDelete={drawer.removeGroup}
 				onToggleEnabled={drawer.toggleEnabled}
 			/>
 

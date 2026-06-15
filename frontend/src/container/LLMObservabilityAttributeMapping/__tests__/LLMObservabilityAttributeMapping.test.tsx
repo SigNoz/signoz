@@ -46,7 +46,7 @@ describe('LLMObservabilityAttributeMapping', () => {
 		render(<LLMObservabilityAttributeMapping />);
 
 		await screen.findByTestId('group-name-group-openai');
-		fireEvent.click(screen.getByTestId('add-group-btn'));
+		fireEvent.click(screen.getByTestId('add-group-row'));
 
 		const input = (await screen.findByTestId(
 			'group-form-name',

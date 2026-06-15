@@ -25,6 +25,7 @@ interface UseMapperFormDrawerResult {
 	close: () => void;
 	save: () => Promise<void>;
 	deleteMapper: () => Promise<void>;
+	removeMapper: (mapperId: string) => Promise<void>;
 	toggleEnabled: (mapper: Mapper, enabled: boolean) => Promise<void>;
 	isSaving: boolean;
 	isDeleting: boolean;
@@ -107,22 +108,27 @@ export function useMapperFormDrawer(
 		[groupId, updateMapper, invalidateList],
 	);
 
+	const removeMapper = useCallback(
+		async (mapperId: string): Promise<void> => {
+			await deleteMapperApi({ pathParams: { groupId, mapperId } });
+			await invalidateList();
+		},
+		[groupId, deleteMapperApi, invalidateList],
+	);
+
 	const deleteMapper = useCallback(async (): Promise<void> => {
 		if (!draft.id) {
 			return;
 		}
 		setSaveError(null);
 		try {
-			await deleteMapperApi({
-				pathParams: { groupId, mapperId: draft.id },
-			});
-			await invalidateList();
+			await removeMapper(draft.id);
 			setIsOpen(false);
 		} catch (error) {
 			const message = error instanceof Error ? error.message : 'Delete failed';
 			setSaveError(message);
 		}
-	}, [draft.id, groupId, deleteMapperApi, invalidateList]);
+	}, [draft.id, removeMapper]);
 
 	return {
 		isOpen,
@@ -134,6 +140,7 @@ export function useMapperFormDrawer(
 		close,
 		save,
 		deleteMapper,
+		removeMapper,
 		toggleEnabled,
 		isSaving: isCreating || isUpdating,
 		isDeleting,
