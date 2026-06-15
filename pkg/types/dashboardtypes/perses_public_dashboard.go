@@ -3,6 +3,7 @@ package dashboardtypes
 import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	qb "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/types/tagtypes"
 )
 
 // GettablePublicDashboardDataV2 is the anonymous-facing payload of a v2 dashboard.
@@ -20,10 +21,15 @@ func NewPublicDashboardDataFromDashboardV2(dashboard *DashboardV2, publicDashboa
 	spec := dashboard.Spec
 	redactPanelQueries(&spec)
 
-	// Mirror v1: populate only the body, leaving identity/audit fields zero-valued.
+	// Mirror v1: return the body-equivalent fields that v1 carried in its data blob
+	// (name, metadata, tags, spec). Identity/audit fields (orgId, source, locked,
+	// timestamps, createdBy) were never in v1's data and stay zero-valued.
 	return &GettablePublicDashboardDataV2{
 		Dashboard: &GettableDashboardV2{
-			Spec: spec,
+			DashboardV2MetadataBase: dashboard.DashboardV2MetadataBase,
+			Name:                    dashboard.Name,
+			Tags:                    tagtypes.NewGettableTagsFromTags(dashboard.Tags),
+			Spec:                    spec,
 		},
 		PublicDashboard: &GettablePublicDasbhboard{
 			TimeRangeEnabled: publicDashboard.TimeRangeEnabled,

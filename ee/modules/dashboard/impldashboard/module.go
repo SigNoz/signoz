@@ -29,6 +29,7 @@ type module struct {
 	settings           factory.ScopedProviderSettings
 	querier            querier.Querier
 	licensing          licensing.Licensing
+	tagModule          tag.Module
 }
 
 func NewModule(store dashboardtypes.Store, settings factory.ProviderSettings, analytics analytics.Analytics, orgGetter organization.Getter, queryParser queryparser.QueryParser, querier querier.Querier, licensing licensing.Licensing, tagModule tag.Module) dashboard.Module {
@@ -41,6 +42,7 @@ func NewModule(store dashboardtypes.Store, settings factory.ProviderSettings, an
 		settings:           scopedProviderSettings,
 		querier:            querier,
 		licensing:          licensing,
+		tagModule:          tagModule,
 	}
 }
 
@@ -138,8 +140,12 @@ func (module *module) GetDashboardByPublicIDV2(ctx context.Context, id valuer.UU
 		return nil, err
 	}
 
-	// Tags are not part of the anonymous public view, so they are not loaded here.
-	return storableDashboard.ToDashboardV2(nil)
+	tags, err := module.tagModule.ListForResource(ctx, storableDashboard.OrgID, coretypes.KindDashboard, storableDashboard.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return storableDashboard.ToDashboardV2(tags)
 }
 
 func (module *module) GetPublicWidgetQueryRangeV2(ctx context.Context, id valuer.UUID, panelKey, startTimeRaw, endTimeRaw string) (*querybuildertypesv5.QueryRangeResponse, error) {
