@@ -3,18 +3,15 @@ import { Typography } from '@signozhq/ui/typography';
 import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
 import { getPanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Panels';
 
-import type { PanelDisplayDraft } from '../types';
 import type { LegendSeries } from '../useLegendSeries';
 import SectionSlot from './SectionSlot/SectionSlot';
 
 import styles from './ConfigPane.module.scss';
 
 interface ConfigPaneProps {
-	display: PanelDisplayDraft;
-	onChangeDisplay: (next: Partial<PanelDisplayDraft>) => void;
 	/** Full plugin kind (e.g. `signoz/TimeSeriesPanel`); drives which sections show. */
 	panelKind: string | undefined;
-	/** The panel spec the section editors read/write through the registry lens. */
+	/** The panel spec — the single editing surface (title/description + section slices). */
 	spec: DashboardtypesPanelSpecDTO;
 	onChangeSpec: (next: DashboardtypesPanelSpecDTO) => void;
 	/** Panel's resolved series, provided to sections that need them (legend colors). */
@@ -28,8 +25,6 @@ interface ConfigPaneProps {
  * generically via the section registry — only sections with a built editor appear.
  */
 function ConfigPane({
-	display,
-	onChangeDisplay,
 	panelKind,
 	spec,
 	onChangeSpec,
@@ -37,6 +32,11 @@ function ConfigPane({
 }: ConfigPaneProps): JSX.Element {
 	const definition = getPanelDefinition(panelKind);
 	const sections = definition?.sections ?? [];
+
+	// Title/description are just a slice of the spec — edit them through the same
+	// onChangeSpec path the sections use, so there's a single editing surface.
+	const setDisplayField = (field: 'name' | 'description', value: string): void =>
+		onChangeSpec({ ...spec, display: { ...spec.display, [field]: value } });
 
 	return (
 		<div className={styles.config}>
@@ -49,9 +49,9 @@ function ConfigPane({
 					<Typography.Text>Title</Typography.Text>
 					<Input
 						data-testid="panel-editor-v2-title"
-						value={display.name}
+						value={spec.display?.name ?? ''}
 						placeholder="Panel title"
-						onChange={(e): void => onChangeDisplay({ name: e.target.value })}
+						onChange={(e): void => setDisplayField('name', e.target.value)}
 					/>
 				</div>
 
@@ -59,10 +59,10 @@ function ConfigPane({
 					<Typography.Text>Description</Typography.Text>
 					<Input.TextArea
 						data-testid="panel-editor-v2-description"
-						value={display.description}
+						value={spec.display?.description ?? ''}
 						placeholder="Add a description"
 						rows={3}
-						onChange={(e): void => onChangeDisplay({ description: e.target.value })}
+						onChange={(e): void => setDisplayField('description', e.target.value)}
 					/>
 				</div>
 			</div>

@@ -6,10 +6,9 @@ import {
 } from 'api/generated/services/dashboard';
 import {
 	type DashboardtypesJSONPatchOperationDTO,
+	type DashboardtypesPanelSpecDTO,
 	DashboardtypesPatchOpDTO,
 } from 'api/generated/services/sigNoz.schemas';
-
-import type { PanelDisplayDraft } from './types';
 
 interface UsePanelEditorSaveArgs {
 	dashboardId: string;
@@ -17,7 +16,7 @@ interface UsePanelEditorSaveArgs {
 }
 
 interface UsePanelEditorSaveApi {
-	save: (display: PanelDisplayDraft) => Promise<void>;
+	save: (spec: DashboardtypesPanelSpecDTO) => Promise<void>;
 	isSaving: boolean;
 	error: Error | null;
 }
@@ -25,11 +24,13 @@ interface UsePanelEditorSaveApi {
 /**
  * Persists panel edits for the V2 editor via RFC-6902 JSON Patch.
  *
- * Milestone 1 only touches the panel's display (title/description), so it emits
- * a single `add` op against `/spec/panels/{panelId}/spec/display`. `add` doubles
- * as create-or-replace for the display object, so panels that loaded without a
- * display are handled without a separate existence check. Later milestones add
- * ops for queries and the per-kind plugin spec.
+ * Replaces the whole panel spec in one `add` op against `/spec/panels/{panelId}/spec`
+ * with the editor's draft spec — so every edit the config pane makes (display,
+ * formatting/axes/legend/chart-appearance under `plugin.spec`, `legend.customColors`,
+ * context links) is persisted, not just the title/description. `add` doubles as
+ * create-or-replace, so panels that loaded without a sub-object are handled without a
+ * separate existence check. The draft carries `queries` unchanged until the V2 query
+ * builder lands, so replacing the whole spec is safe.
  */
 export function usePanelEditorSave({
 	dashboardId,
@@ -39,12 +40,12 @@ export function usePanelEditorSave({
 	const { mutateAsync, isLoading, error } = usePatchDashboardV2();
 
 	const save = useCallback(
-		async (display: PanelDisplayDraft): Promise<void> => {
+		async (spec: DashboardtypesPanelSpecDTO): Promise<void> => {
 			const ops: DashboardtypesJSONPatchOperationDTO[] = [
 				{
 					op: DashboardtypesPatchOpDTO.add,
-					path: `/spec/panels/${panelId}/spec/display`,
-					value: { name: display.name, description: display.description },
+					path: `/spec/panels/${panelId}/spec`,
+					value: spec,
 				},
 			];
 

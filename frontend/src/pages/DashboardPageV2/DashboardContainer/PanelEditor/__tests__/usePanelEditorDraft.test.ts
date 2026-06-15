@@ -15,55 +15,30 @@ function panel(name = 'CPU', description = 'usage'): DashboardtypesPanelDTO {
 }
 
 describe('usePanelEditorDraft', () => {
-	it('seeds display from the initial panel and starts clean', () => {
-		const { result } = renderHook(() => usePanelEditorDraft(panel()));
-
-		expect(result.current.display).toStrictEqual({
-			name: 'CPU',
-			description: 'usage',
-		});
-		expect(result.current.isDirty).toBe(false);
-	});
-
-	it('updates display and flags the draft dirty', () => {
-		const { result } = renderHook(() => usePanelEditorDraft(panel()));
-
-		act(() => result.current.setDisplay({ name: 'Memory' }));
-
-		expect(result.current.display.name).toBe('Memory');
-		expect(result.current.display.description).toBe('usage');
-		expect(result.current.isDirty).toBe(true);
-		// draft stays in perses shape so preview + save consume it directly
-		expect(result.current.draft.spec?.display?.name).toBe('Memory');
-	});
-
-	it('reset restores the originally-loaded display', () => {
-		const { result } = renderHook(() => usePanelEditorDraft(panel()));
-
-		act(() => result.current.setDisplay({ name: 'Memory', description: 'new' }));
-		act(() => result.current.reset());
-
-		expect(result.current.display).toStrictEqual({
-			name: 'CPU',
-			description: 'usage',
-		});
-		expect(result.current.isDirty).toBe(false);
-	});
-
-	it('treats a panel without display as empty strings', () => {
-		const bare = {
-			kind: 'Panel',
-			spec: { plugin: { kind: 'signoz/PieChartPanel' } },
-		} as unknown as DashboardtypesPanelDTO;
-		const { result } = renderHook(() => usePanelEditorDraft(bare));
-
-		expect(result.current.display).toStrictEqual({ name: '', description: '' });
-	});
-
-	it('exposes the panel spec and flags dirty on a spec (non-display) edit', () => {
+	it('exposes the panel spec and starts clean', () => {
 		const { result } = renderHook(() => usePanelEditorDraft(panel()));
 
 		expect(result.current.spec).toBe(result.current.draft.spec);
+		expect(result.current.spec.display?.name).toBe('CPU');
+		expect(result.current.isDirty).toBe(false);
+	});
+
+	it('flags dirty and writes through on a display (title) edit via setSpec', () => {
+		const { result } = renderHook(() => usePanelEditorDraft(panel()));
+
+		act(() =>
+			result.current.setSpec({
+				...result.current.spec,
+				display: { ...result.current.spec.display, name: 'Memory' },
+			}),
+		);
+
+		expect(result.current.isDirty).toBe(true);
+		expect(result.current.draft.spec?.display?.name).toBe('Memory');
+	});
+
+	it('flags dirty on a plugin-spec (non-display) edit', () => {
+		const { result } = renderHook(() => usePanelEditorDraft(panel()));
 
 		act(() =>
 			result.current.setSpec({
@@ -85,7 +60,7 @@ describe('usePanelEditorDraft', () => {
 		).toBe('bytes');
 	});
 
-	it('reset restores the spec and clears dirty after a spec edit', () => {
+	it('reset restores the spec and clears dirty after an edit', () => {
 		const { result } = renderHook(() => usePanelEditorDraft(panel()));
 
 		act(() =>
@@ -100,5 +75,6 @@ describe('usePanelEditorDraft', () => {
 		act(() => result.current.reset());
 
 		expect(result.current.isDirty).toBe(false);
+		expect(result.current.spec.display?.name).toBe('CPU');
 	});
 });

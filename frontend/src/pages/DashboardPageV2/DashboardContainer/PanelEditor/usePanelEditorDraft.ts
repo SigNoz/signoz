@@ -5,39 +5,23 @@ import type {
 } from 'api/generated/services/sigNoz.schemas';
 import { isEqual } from 'lodash-es';
 
-import type { PanelDisplayDraft, PanelEditorDraftApi } from './types';
-
-function readDisplay(panel: DashboardtypesPanelDTO): PanelDisplayDraft {
-	return {
-		name: panel.spec?.display?.name ?? '',
-		description: panel.spec?.display?.description ?? '',
-	};
-}
+import type { PanelEditorDraftApi } from './types';
 
 /**
  * Owns the editable draft of a single panel. Seeded once from the loaded panel
  * (`useState` initializer), then mutated locally until the user saves. Keeping
  * the draft in the perses `DashboardtypesPanelDTO` shape lets the preview pane
  * render it through the same renderer registry the dashboard uses, and lets the
- * save hook diff/patch it without any conversion.
+ * save hook patch it without any conversion.
+ *
+ * Everything the config pane edits — title/description, the per-kind plugin spec
+ * (formatting, axes, …), legend colors, context links — flows through the single
+ * `spec`/`setSpec` pair (the ConfigPane registry lens), so there is one editing path.
  */
 export function usePanelEditorDraft(
 	initialPanel: DashboardtypesPanelDTO,
 ): PanelEditorDraftApi {
 	const [draft, setDraft] = useState<DashboardtypesPanelDTO>(initialPanel);
-
-	const setDisplay = useCallback((next: Partial<PanelDisplayDraft>): void => {
-		setDraft((prev) => ({
-			...prev,
-			spec: {
-				...prev.spec,
-				display: {
-					...prev.spec?.display,
-					...next,
-				},
-			},
-		}));
-	}, []);
 
 	const setSpec = useCallback((next: DashboardtypesPanelSpecDTO): void => {
 		setDraft((prev) => ({ ...prev, spec: next }));
@@ -47,10 +31,8 @@ export function usePanelEditorDraft(
 		setDraft(initialPanel);
 	}, [initialPanel]);
 
-	const display = useMemo(() => readDisplay(draft), [draft]);
-
 	// Deep compare: any divergence from the loaded panel (display OR spec slices like
-	// formatting/axes/thresholds/links) marks the draft dirty, not just name/description.
+	// formatting/axes/thresholds/links) marks the draft dirty.
 	const isDirty = useMemo(
 		() => !isEqual(draft, initialPanel),
 		[draft, initialPanel],
@@ -58,8 +40,6 @@ export function usePanelEditorDraft(
 
 	return {
 		draft,
-		display,
-		setDisplay,
 		spec: draft.spec,
 		setSpec,
 		isDirty,

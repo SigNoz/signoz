@@ -46,8 +46,7 @@ function PanelEditorContainer({
 	onClose,
 	onSaved,
 }: PanelEditorContainerProps): JSX.Element {
-	const { draft, display, setDisplay, spec, setSpec, isDirty } =
-		usePanelEditorDraft(panel);
+	const { draft, spec, setSpec, isDirty } = usePanelEditorDraft(panel);
 	const { save, isSaving } = usePanelEditorSave({ dashboardId, panelId });
 	const { defaultLayout, onLayoutChanged } = useDefaultLayout({
 		id: 'panel-editor-v2',
@@ -74,14 +73,14 @@ function PanelEditorContainer({
 
 	const onSave = useCallback(async (): Promise<void> => {
 		try {
-			await save(display);
+			await save(draft.spec);
 			toast.success('Panel saved');
 			onSaved();
 			onClose();
 		} catch {
 			toast.error('Failed to save panel');
 		}
-	}, [save, display, onSaved, onClose]);
+	}, [save, draft.spec, onSaved, onClose]);
 
 	// Portal to <body> so the fixed overlay escapes the dashboard content's
 	// stacking context (AppLayout pins `.app-content` at `z-index: 0`, which
@@ -123,8 +122,6 @@ function PanelEditorContainer({
 					className={styles.right}
 				>
 					<ConfigPane
-						display={display}
-						onChangeDisplay={setDisplay}
 						panelKind={draft.spec?.plugin?.kind}
 						spec={spec}
 						onChangeSpec={setSpec}

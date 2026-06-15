@@ -18,8 +18,6 @@ function renderConfigPane(
 	overrides: Partial<React.ComponentProps<typeof ConfigPane>> = {},
 ): React.ComponentProps<typeof ConfigPane> {
 	const props: React.ComponentProps<typeof ConfigPane> = {
-		display: { name: 'CPU', description: 'usage' },
-		onChangeDisplay: jest.fn(),
 		panelKind: 'signoz/TimeSeriesPanel',
 		spec: spec(),
 		onChangeSpec: jest.fn(),
@@ -40,14 +38,18 @@ describe('ConfigPane', () => {
 		);
 	});
 
-	it('reports title edits via onChangeDisplay', () => {
-		const { onChangeDisplay } = renderConfigPane();
+	it('reports title edits through onChangeSpec (into spec.display)', () => {
+		const { onChangeSpec } = renderConfigPane();
 
 		fireEvent.change(screen.getByTestId('panel-editor-v2-title'), {
 			target: { value: 'Memory' },
 		});
 
-		expect(onChangeDisplay).toHaveBeenCalledWith({ name: 'Memory' });
+		expect(onChangeSpec).toHaveBeenCalledWith(
+			expect.objectContaining({
+				display: { name: 'Memory', description: 'usage' },
+			}),
+		);
 	});
 
 	it('renders the Formatting section for a kind that declares it', () => {
