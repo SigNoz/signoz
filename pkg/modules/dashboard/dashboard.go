@@ -78,6 +78,12 @@ type Module interface {
 	DeleteV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error
 
 	DeletePreferencesForUser(ctx context.Context, orgID valuer.UUID, userID valuer.UUID) error
+
+	// get the v2 dashboard data by public dashboard id
+	GetDashboardByPublicIDV2(context.Context, valuer.UUID) (*dashboardtypes.DashboardV2, error)
+
+	// gets the query results by panel key and public shared id for a v2 dashboard
+	GetPublicWidgetQueryRangeV2(ctx context.Context, id valuer.UUID, panelKey string, startTime, endTime uint64) (*querybuildertypesv5.QueryRangeResponse, error)
 }
 
 type Handler interface {
@@ -88,6 +94,10 @@ type Handler interface {
 	GetPublicData(http.ResponseWriter, *http.Request)
 
 	GetPublicWidgetQueryRange(http.ResponseWriter, *http.Request)
+
+	GetPublicDataV2(http.ResponseWriter, *http.Request)
+
+	GetPublicWidgetQueryRangeV2(http.ResponseWriter, *http.Request)
 
 	UpdatePublic(http.ResponseWriter, *http.Request)
 

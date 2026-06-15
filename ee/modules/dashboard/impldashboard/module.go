@@ -132,6 +132,34 @@ func (module *module) GetPublicWidgetQueryRange(ctx context.Context, id valuer.U
 	return module.querier.QueryRange(ctx, dashboard.OrgID, query)
 }
 
+func (module *module) GetDashboardByPublicIDV2(ctx context.Context, id valuer.UUID) (*dashboardtypes.DashboardV2, error) {
+	storableDashboard, err := module.store.GetDashboardByPublicID(ctx, id.StringValue())
+	if err != nil {
+		return nil, err
+	}
+
+	// Tags are not part of the anonymous public view, so they are not loaded here.
+	return storableDashboard.ToDashboardV2(nil)
+}
+
+func (module *module) GetPublicWidgetQueryRangeV2(ctx context.Context, id valuer.UUID, panelKey string, startTime, endTime uint64) (*querybuildertypesv5.QueryRangeResponse, error) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "dashboard",
+		instrumentationtypes.CodeFunctionName: "GetPublicWidgetQueryRangeV2",
+	})
+	dashboard, err := module.GetDashboardByPublicIDV2(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	query, err := dashboard.GetPanelQuery(startTime, endTime, panelKey)
+	if err != nil {
+		return nil, err
+	}
+
+	return module.querier.QueryRange(ctx, dashboard.OrgID, query)
+}
+
 func (module *module) UpdatePublic(ctx context.Context, orgID valuer.UUID, publicDashboard *dashboardtypes.PublicDashboard) error {
 	_, err := module.licensing.GetActive(ctx, orgID)
 	if err != nil {
