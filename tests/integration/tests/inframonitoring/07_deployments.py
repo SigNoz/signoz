@@ -495,31 +495,51 @@ def _phase(pending=0, running=0, succeeded=0, failed=0, unknown=0) -> dict:
                 "groups": {
                     ("dup-dep", "ns-x", "cluster-a"): {
                         "deploymentName": "dup-dep",
-                        "deploymentCPU": 0.3, "deploymentCPURequest": 0.6, "deploymentCPULimit": 0.7,
-                        "deploymentMemory": 100000000.0, "deploymentMemoryRequest": 0.6, "deploymentMemoryLimit": 0.7,
-                        "desiredPods": 2, "availablePods": 2,
+                        "deploymentCPU": 0.3,
+                        "deploymentCPURequest": 0.6,
+                        "deploymentCPULimit": 0.7,
+                        "deploymentMemory": 100000000.0,
+                        "deploymentMemoryRequest": 0.6,
+                        "deploymentMemoryLimit": 0.7,
+                        "desiredPods": 2,
+                        "availablePods": 2,
                         "podCountsByPhase": _phase(running=1),
                     },
                     ("dup-dep", "ns-y", "cluster-a"): {
                         "deploymentName": "dup-dep",
-                        "deploymentCPU": 0.9, "deploymentCPURequest": 0.2, "deploymentCPULimit": 0.3,
-                        "deploymentMemory": 500000000.0, "deploymentMemoryRequest": 0.2, "deploymentMemoryLimit": 0.3,
-                        "desiredPods": 3, "availablePods": 1,
+                        "deploymentCPU": 0.9,
+                        "deploymentCPURequest": 0.2,
+                        "deploymentCPULimit": 0.3,
+                        "deploymentMemory": 500000000.0,
+                        "deploymentMemoryRequest": 0.2,
+                        "deploymentMemoryLimit": 0.3,
+                        "desiredPods": 3,
+                        "availablePods": 1,
                         "podCountsByPhase": _phase(failed=1),
                     },
                     ("dup-dep", "ns-x", "cluster-b"): {
                         "deploymentName": "dup-dep",
-                        "deploymentCPU": 0.5, "deploymentCPURequest": 0.4, "deploymentCPULimit": 0.5,
-                        "deploymentMemory": 300000000.0, "deploymentMemoryRequest": 0.4, "deploymentMemoryLimit": 0.5,
-                        "desiredPods": 4, "availablePods": 4,
+                        "deploymentCPU": 0.5,
+                        "deploymentCPURequest": 0.4,
+                        "deploymentCPULimit": 0.5,
+                        "deploymentMemory": 300000000.0,
+                        "deploymentMemoryRequest": 0.4,
+                        "deploymentMemoryLimit": 0.5,
+                        "desiredPods": 4,
+                        "availablePods": 4,
                         "podCountsByPhase": _phase(running=1),
                     },
                     # empty-cluster group: k8s.cluster.name label absent on the source pods.
                     ("dup-dep", "ns-x", ""): {
                         "deploymentName": "dup-dep",
-                        "deploymentCPU": 0.1, "deploymentCPURequest": 0.1, "deploymentCPULimit": 0.1,
-                        "deploymentMemory": 200000000.0, "deploymentMemoryRequest": 0.1, "deploymentMemoryLimit": 0.1,
-                        "desiredPods": 1, "availablePods": 0,
+                        "deploymentCPU": 0.1,
+                        "deploymentCPURequest": 0.1,
+                        "deploymentCPULimit": 0.1,
+                        "deploymentMemory": 200000000.0,
+                        "deploymentMemoryRequest": 0.1,
+                        "deploymentMemoryLimit": 0.1,
+                        "desiredPods": 1,
+                        "availablePods": 0,
                         "podCountsByPhase": _phase(pending=1),
                     },
                 },
@@ -556,9 +576,7 @@ def test_deployments_groupby(
         "limit": 50,
     }
     if scenario["group_by"] is not None:
-        body["groupBy"] = [
-            {"name": scenario["group_by"], "fieldDataType": "string", "fieldContext": "resource"}
-        ]
+        body["groupBy"] = [{"name": scenario["group_by"], "fieldDataType": "string", "fieldContext": "resource"}]
     if scenario["filter"] is not None:
         body["filter"] = {"expression": scenario["filter"]}
 

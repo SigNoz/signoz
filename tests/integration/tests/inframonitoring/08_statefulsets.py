@@ -495,31 +495,51 @@ def _phase(pending=0, running=0, succeeded=0, failed=0, unknown=0) -> dict:
                 "groups": {
                     ("dup-ss", "ns-x", "cluster-a"): {
                         "statefulSetName": "dup-ss",
-                        "statefulSetCPU": 0.3, "statefulSetCPURequest": 0.6, "statefulSetCPULimit": 0.7,
-                        "statefulSetMemory": 100000000.0, "statefulSetMemoryRequest": 0.6, "statefulSetMemoryLimit": 0.7,
-                        "desiredPods": 2, "currentPods": 2,
+                        "statefulSetCPU": 0.3,
+                        "statefulSetCPURequest": 0.6,
+                        "statefulSetCPULimit": 0.7,
+                        "statefulSetMemory": 100000000.0,
+                        "statefulSetMemoryRequest": 0.6,
+                        "statefulSetMemoryLimit": 0.7,
+                        "desiredPods": 2,
+                        "currentPods": 2,
                         "podCountsByPhase": _phase(running=1),
                     },
                     ("dup-ss", "ns-y", "cluster-a"): {
                         "statefulSetName": "dup-ss",
-                        "statefulSetCPU": 0.9, "statefulSetCPURequest": 0.2, "statefulSetCPULimit": 0.3,
-                        "statefulSetMemory": 500000000.0, "statefulSetMemoryRequest": 0.2, "statefulSetMemoryLimit": 0.3,
-                        "desiredPods": 3, "currentPods": 1,
+                        "statefulSetCPU": 0.9,
+                        "statefulSetCPURequest": 0.2,
+                        "statefulSetCPULimit": 0.3,
+                        "statefulSetMemory": 500000000.0,
+                        "statefulSetMemoryRequest": 0.2,
+                        "statefulSetMemoryLimit": 0.3,
+                        "desiredPods": 3,
+                        "currentPods": 1,
                         "podCountsByPhase": _phase(failed=1),
                     },
                     ("dup-ss", "ns-x", "cluster-b"): {
                         "statefulSetName": "dup-ss",
-                        "statefulSetCPU": 0.5, "statefulSetCPURequest": 0.4, "statefulSetCPULimit": 0.5,
-                        "statefulSetMemory": 300000000.0, "statefulSetMemoryRequest": 0.4, "statefulSetMemoryLimit": 0.5,
-                        "desiredPods": 4, "currentPods": 4,
+                        "statefulSetCPU": 0.5,
+                        "statefulSetCPURequest": 0.4,
+                        "statefulSetCPULimit": 0.5,
+                        "statefulSetMemory": 300000000.0,
+                        "statefulSetMemoryRequest": 0.4,
+                        "statefulSetMemoryLimit": 0.5,
+                        "desiredPods": 4,
+                        "currentPods": 4,
                         "podCountsByPhase": _phase(running=1),
                     },
                     # empty-cluster group: k8s.cluster.name label absent on the source pods.
                     ("dup-ss", "ns-x", ""): {
                         "statefulSetName": "dup-ss",
-                        "statefulSetCPU": 0.1, "statefulSetCPURequest": 0.1, "statefulSetCPULimit": 0.1,
-                        "statefulSetMemory": 200000000.0, "statefulSetMemoryRequest": 0.1, "statefulSetMemoryLimit": 0.1,
-                        "desiredPods": 1, "currentPods": 0,
+                        "statefulSetCPU": 0.1,
+                        "statefulSetCPURequest": 0.1,
+                        "statefulSetCPULimit": 0.1,
+                        "statefulSetMemory": 200000000.0,
+                        "statefulSetMemoryRequest": 0.1,
+                        "statefulSetMemoryLimit": 0.1,
+                        "desiredPods": 1,
+                        "currentPods": 0,
                         "podCountsByPhase": _phase(pending=1),
                     },
                 },
@@ -555,9 +575,7 @@ def test_statefulsets_groupby(
         "limit": 50,
     }
     if scenario["group_by"] is not None:
-        body["groupBy"] = [
-            {"name": scenario["group_by"], "fieldDataType": "string", "fieldContext": "resource"}
-        ]
+        body["groupBy"] = [{"name": scenario["group_by"], "fieldDataType": "string", "fieldContext": "resource"}]
     if scenario["filter"] is not None:
         body["filter"] = {"expression": scenario["filter"]}
 

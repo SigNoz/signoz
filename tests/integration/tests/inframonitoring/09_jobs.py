@@ -550,31 +550,59 @@ def _phase(pending=0, running=0, succeeded=0, failed=0, unknown=0) -> dict:
                 "groups": {
                     ("dup-job", "ns-x", "cluster-a"): {
                         "jobName": "dup-job",
-                        "jobCPU": 0.3, "jobCPURequest": 0.6, "jobCPULimit": 0.7,
-                        "jobMemory": 100000000.0, "jobMemoryRequest": 0.6, "jobMemoryLimit": 0.7,
-                        "desiredSuccessfulPods": 2, "activePods": 2, "failedPods": 0, "successfulPods": 0,
+                        "jobCPU": 0.3,
+                        "jobCPURequest": 0.6,
+                        "jobCPULimit": 0.7,
+                        "jobMemory": 100000000.0,
+                        "jobMemoryRequest": 0.6,
+                        "jobMemoryLimit": 0.7,
+                        "desiredSuccessfulPods": 2,
+                        "activePods": 2,
+                        "failedPods": 0,
+                        "successfulPods": 0,
                         "podCountsByPhase": _phase(running=1),
                     },
                     ("dup-job", "ns-y", "cluster-a"): {
                         "jobName": "dup-job",
-                        "jobCPU": 0.9, "jobCPURequest": 0.2, "jobCPULimit": 0.3,
-                        "jobMemory": 500000000.0, "jobMemoryRequest": 0.2, "jobMemoryLimit": 0.3,
-                        "desiredSuccessfulPods": 3, "activePods": 1, "failedPods": 1, "successfulPods": 1,
+                        "jobCPU": 0.9,
+                        "jobCPURequest": 0.2,
+                        "jobCPULimit": 0.3,
+                        "jobMemory": 500000000.0,
+                        "jobMemoryRequest": 0.2,
+                        "jobMemoryLimit": 0.3,
+                        "desiredSuccessfulPods": 3,
+                        "activePods": 1,
+                        "failedPods": 1,
+                        "successfulPods": 1,
                         "podCountsByPhase": _phase(failed=1),
                     },
                     ("dup-job", "ns-x", "cluster-b"): {
                         "jobName": "dup-job",
-                        "jobCPU": 0.5, "jobCPURequest": 0.4, "jobCPULimit": 0.5,
-                        "jobMemory": 300000000.0, "jobMemoryRequest": 0.4, "jobMemoryLimit": 0.5,
-                        "desiredSuccessfulPods": 4, "activePods": 2, "failedPods": 1, "successfulPods": 1,
+                        "jobCPU": 0.5,
+                        "jobCPURequest": 0.4,
+                        "jobCPULimit": 0.5,
+                        "jobMemory": 300000000.0,
+                        "jobMemoryRequest": 0.4,
+                        "jobMemoryLimit": 0.5,
+                        "desiredSuccessfulPods": 4,
+                        "activePods": 2,
+                        "failedPods": 1,
+                        "successfulPods": 1,
                         "podCountsByPhase": _phase(running=1),
                     },
                     # empty-cluster group: k8s.cluster.name label absent on the source pods.
                     ("dup-job", "ns-x", ""): {
                         "jobName": "dup-job",
-                        "jobCPU": 0.1, "jobCPURequest": 0.1, "jobCPULimit": 0.1,
-                        "jobMemory": 200000000.0, "jobMemoryRequest": 0.1, "jobMemoryLimit": 0.1,
-                        "desiredSuccessfulPods": 1, "activePods": 1, "failedPods": 0, "successfulPods": 0,
+                        "jobCPU": 0.1,
+                        "jobCPURequest": 0.1,
+                        "jobCPULimit": 0.1,
+                        "jobMemory": 200000000.0,
+                        "jobMemoryRequest": 0.1,
+                        "jobMemoryLimit": 0.1,
+                        "desiredSuccessfulPods": 1,
+                        "activePods": 1,
+                        "failedPods": 0,
+                        "successfulPods": 0,
                         "podCountsByPhase": _phase(pending=1),
                     },
                 },
@@ -609,9 +637,7 @@ def test_jobs_groupby(
         "limit": 50,
     }
     if scenario["group_by"] is not None:
-        body["groupBy"] = [
-            {"name": scenario["group_by"], "fieldDataType": "string", "fieldContext": "resource"}
-        ]
+        body["groupBy"] = [{"name": scenario["group_by"], "fieldDataType": "string", "fieldContext": "resource"}]
     if scenario["filter"] is not None:
         body["filter"] = {"expression": scenario["filter"]}
 

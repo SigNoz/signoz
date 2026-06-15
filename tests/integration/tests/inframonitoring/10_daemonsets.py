@@ -496,31 +496,51 @@ def _phase(pending=0, running=0, succeeded=0, failed=0, unknown=0) -> dict:
                 "groups": {
                     ("dup-ds", "ns-x", "cluster-a"): {
                         "daemonSetName": "dup-ds",
-                        "daemonSetCPU": 0.3, "daemonSetCPURequest": 0.6, "daemonSetCPULimit": 0.7,
-                        "daemonSetMemory": 100000000.0, "daemonSetMemoryRequest": 0.6, "daemonSetMemoryLimit": 0.7,
-                        "desiredNodes": 2, "currentNodes": 2,
+                        "daemonSetCPU": 0.3,
+                        "daemonSetCPURequest": 0.6,
+                        "daemonSetCPULimit": 0.7,
+                        "daemonSetMemory": 100000000.0,
+                        "daemonSetMemoryRequest": 0.6,
+                        "daemonSetMemoryLimit": 0.7,
+                        "desiredNodes": 2,
+                        "currentNodes": 2,
                         "podCountsByPhase": _phase(running=1),
                     },
                     ("dup-ds", "ns-y", "cluster-a"): {
                         "daemonSetName": "dup-ds",
-                        "daemonSetCPU": 0.9, "daemonSetCPURequest": 0.2, "daemonSetCPULimit": 0.3,
-                        "daemonSetMemory": 500000000.0, "daemonSetMemoryRequest": 0.2, "daemonSetMemoryLimit": 0.3,
-                        "desiredNodes": 3, "currentNodes": 1,
+                        "daemonSetCPU": 0.9,
+                        "daemonSetCPURequest": 0.2,
+                        "daemonSetCPULimit": 0.3,
+                        "daemonSetMemory": 500000000.0,
+                        "daemonSetMemoryRequest": 0.2,
+                        "daemonSetMemoryLimit": 0.3,
+                        "desiredNodes": 3,
+                        "currentNodes": 1,
                         "podCountsByPhase": _phase(failed=1),
                     },
                     ("dup-ds", "ns-x", "cluster-b"): {
                         "daemonSetName": "dup-ds",
-                        "daemonSetCPU": 0.5, "daemonSetCPURequest": 0.4, "daemonSetCPULimit": 0.5,
-                        "daemonSetMemory": 300000000.0, "daemonSetMemoryRequest": 0.4, "daemonSetMemoryLimit": 0.5,
-                        "desiredNodes": 4, "currentNodes": 4,
+                        "daemonSetCPU": 0.5,
+                        "daemonSetCPURequest": 0.4,
+                        "daemonSetCPULimit": 0.5,
+                        "daemonSetMemory": 300000000.0,
+                        "daemonSetMemoryRequest": 0.4,
+                        "daemonSetMemoryLimit": 0.5,
+                        "desiredNodes": 4,
+                        "currentNodes": 4,
                         "podCountsByPhase": _phase(running=1),
                     },
                     # empty-cluster group: k8s.cluster.name label absent on the source pods.
                     ("dup-ds", "ns-x", ""): {
                         "daemonSetName": "dup-ds",
-                        "daemonSetCPU": 0.1, "daemonSetCPURequest": 0.1, "daemonSetCPULimit": 0.1,
-                        "daemonSetMemory": 200000000.0, "daemonSetMemoryRequest": 0.1, "daemonSetMemoryLimit": 0.1,
-                        "desiredNodes": 1, "currentNodes": 0,
+                        "daemonSetCPU": 0.1,
+                        "daemonSetCPURequest": 0.1,
+                        "daemonSetCPULimit": 0.1,
+                        "daemonSetMemory": 200000000.0,
+                        "daemonSetMemoryRequest": 0.1,
+                        "daemonSetMemoryLimit": 0.1,
+                        "desiredNodes": 1,
+                        "currentNodes": 0,
                         "podCountsByPhase": _phase(pending=1),
                     },
                 },
@@ -556,9 +576,7 @@ def test_daemonsets_groupby(
         "limit": 50,
     }
     if scenario["group_by"] is not None:
-        body["groupBy"] = [
-            {"name": scenario["group_by"], "fieldDataType": "string", "fieldContext": "resource"}
-        ]
+        body["groupBy"] = [{"name": scenario["group_by"], "fieldDataType": "string", "fieldContext": "resource"}]
     if scenario["filter"] is not None:
         body["filter"] = {"expression": scenario["filter"]}
 
