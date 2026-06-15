@@ -1,0 +1,43 @@
+.alertInfo {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+	padding: 0 var(--spacing-8);
+}
+
+.alertHeader {
+	flex: 1;
+}
+
+.infoWrapper {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-4);
+	height: 54px;
+	flex: 1;
+}
+
+.topSection {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.alertTitleWrapper {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-4);
+}
+
+.alertTitle {
+	font-size: var(--periscope-font-size-medium);
+	font-weight: var(--font-weight-medium);
+	color: var(--l1-foreground);
+	line-height: var(--line-height-24);
+}
+
+.bottomSection {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-10);
+}

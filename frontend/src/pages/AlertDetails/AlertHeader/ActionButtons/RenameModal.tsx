@@ -3,7 +3,7 @@ import { Button, Input, InputRef, Modal } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { Check, X } from '@signozhq/icons';
 
-import './RenameModal.styles.scss';
+import styles from './RenameModal.module.scss';
 
 type Props = {
 	isOpen: boolean;
@@ -56,13 +56,13 @@ function RenameModal({
 			title="Rename Alert"
 			onOk={onNameChangeHandler}
 			onCancel={handleClose}
-			rootClassName="rename-alert"
+			rootClassName={styles.renameAlertContainer}
 			footer={
-				<div className="alert-rename">
+				<div className={styles.alertRename}>
 					<Button
 						type="primary"
 						icon={<Check size={14} />}
-						className="rename-btn"
+						className={styles.renameBtn}
 						onClick={onNameChangeHandler}
 						disabled={isLoading}
 					>
@@ -71,7 +71,7 @@ function RenameModal({
 					<Button
 						type="text"
 						icon={<X size={14} />}
-						className="cancel-btn"
+						className={styles.cancelBtn}
 						onClick={handleClose}
 					>
 						Cancel
@@ -79,12 +79,14 @@ function RenameModal({
 				</div>
 			}
 		>
-			<div className="alert-content">
-				<Typography.Text className="name-text">Enter a new name</Typography.Text>
+			<div className={styles.alertContent}>
+				<Typography.Text className={styles.nameText}>
+					Enter a new name
+				</Typography.Text>
 				<Input
 					ref={inputRef}
 					data-testid="alert-name"
-					className="alert-name-input"
+					className={styles.alertNameInput}
 					value={intermediateName}
 					onChange={(e): void => setIntermediateName(e.target.value)}
 				/>

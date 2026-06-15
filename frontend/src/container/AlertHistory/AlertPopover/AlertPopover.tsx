@@ -7,7 +7,7 @@ import ROUTES from 'constants/routes';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { DraftingCompass } from '@signozhq/icons';
 
-import './AlertPopover.styles.scss';
+import styles from './AlertPopover.module.scss';
 
 type Props = {
 	children: React.ReactNode;
@@ -24,30 +24,30 @@ function PopoverContent({
 }): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	return (
-		<div className="contributor-row-popover-buttons">
+		<div className={styles.contributorRowPopoverButtons}>
 			{!!relatedLogsLink && (
 				<Link
 					to={`${ROUTES.LOGS_EXPLORER}?${relatedLogsLink}`}
-					className="contributor-row-popover-buttons__button"
+					className={styles.contributorRowPopoverButtonsButton}
 				>
-					<div className="icon">
+					<div>
 						<LogsIcon />
 					</div>
-					<div className="text">View Logs</div>
+					<div>View Logs</div>
 				</Link>
 			)}
 			{!!relatedTracesLink && (
 				<Link
 					to={`${ROUTES.TRACES_EXPLORER}?${relatedTracesLink}`}
-					className="contributor-row-popover-buttons__button"
+					className={styles.contributorRowPopoverButtonsButton}
 				>
-					<div className="icon">
+					<div>
 						<DraftingCompass
 							size={14}
 							color={isDarkMode ? Color.BG_VANILLA_400 : Color.TEXT_INK_400}
 						/>
 					</div>
-					<div className="text">View Traces</div>
+					<div>View Traces</div>
 				</Link>
 			)}
 		</div>
@@ -64,13 +64,13 @@ function AlertPopover({
 	relatedLogsLink,
 }: Props): JSX.Element {
 	return (
-		<div className="alert-popover-trigger-action">
+		<div className={styles.alertPopoverTriggerAction}>
 			<Popover
 				showArrow={false}
 				placement="bottom"
 				color="linear-gradient(139deg, rgba(18, 19, 23, 1) 0%, rgba(18, 19, 23, 1) 98.68%)"
 				destroyTooltipOnHide
-				rootClassName="alert-history-popover"
+				rootClassName={styles.alertHistoryPopover}
 				content={
 					<PopoverContent
 						relatedTracesLink={relatedTracesLink}
@@ -112,4 +112,3 @@ export function ConditionalAlertPopover({
 	}
 	return <div>{children}</div>;
 }
-export default AlertPopover;

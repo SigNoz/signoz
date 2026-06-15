@@ -5,27 +5,27 @@ import SeverityErrorIcon from 'assets/AlertHistory/SeverityErrorIcon';
 import SeverityInfoIcon from 'assets/AlertHistory/SeverityInfoIcon';
 import SeverityWarningIcon from 'assets/AlertHistory/SeverityWarningIcon';
 
-import './AlertSeverity.styles.scss';
+import styles from './AlertSeverity.module.scss';
 
 const severityConfig: Record<string, Record<string, string | JSX.Element>> = {
 	critical: {
 		text: 'Critical',
-		className: 'alert-severity--critical',
+		className: styles.critical,
 		icon: <SeverityCriticalIcon />,
 	},
 	error: {
 		text: 'Error',
-		className: 'alert-severity--error',
+		className: styles.error,
 		icon: <SeverityErrorIcon />,
 	},
 	warning: {
 		text: 'Warning',
-		className: 'alert-severity--warning',
+		className: styles.warning,
 		icon: <SeverityWarningIcon />,
 	},
 	info: {
 		text: 'Info',
-		className: 'alert-severity--info',
+		className: styles.info,
 		icon: <SeverityInfoIcon />,
 	},
 };
@@ -47,14 +47,14 @@ export default function AlertSeverity({
 
 		return {
 			text: severity,
-			className: 'alert-severity--info',
+			className: styles.info,
 			icon: <SeverityInfoIcon />,
 		};
 	}, [severity]);
 	return (
-		<div className={`alert-severity ${severityDetails.className}`}>
-			<div className="alert-severity__icon">{severityDetails.icon}</div>
-			<div className="alert-severity__text">{severityDetails.text}</div>
+		<div className={`${styles.alertSeverity} ${severityDetails.className}`}>
+			<div className={styles.icon}>{severityDetails.icon}</div>
+			<div className={styles.text}>{severityDetails.text}</div>
 		</div>
 	);
 }

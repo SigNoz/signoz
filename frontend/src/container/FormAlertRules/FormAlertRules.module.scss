@@ -1,0 +1,177 @@
+.createAlertModal {
+	:global(.ant-modal-content) {
+		background-color: var(--l3-background);
+
+		:global(.ant-modal-confirm-title) {
+			color: var(--l1-foreground);
+		}
+
+		:global(.ant-modal-confirm-content) {
+			:global(.ant-typography) {
+				color: var(--l1-foreground);
+			}
+		}
+
+		:global(.ant-modal-confirm-btns) {
+			button:nth-of-type(1) {
+				background-color: var(--l1-border);
+				border: none;
+				color: var(--l1-foreground);
+			}
+		}
+	}
+}
+
+.formAlertRulesContainer {
+	&.createMode {
+		padding: var(--spacing-8);
+	}
+}
+
+.triggeredAlertsContainer {
+	padding: var(--spacing-4);
+}
+
+.alertRulesListContainer {
+	padding: var(--spacing-4);
+}
+
+.plannedDowntimeContainer {
+	padding: var(--spacing-4);
+}
+
+.stepsContainer {
+	width: 80%;
+}
+
+.qbChartPreviewContainer {
+	margin-bottom: 1rem;
+	display: flex;
+	flex-direction: row;
+	gap: 1rem;
+}
+
+.overviewHeader {
+	margin-bottom: 1rem;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.alertTypeContainer {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: var(--spacing-4);
+
+	:global(.ant-typography) {
+		margin: 0;
+	}
+}
+
+.alertTypeTitle {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: var(--spacing-4);
+}
+
+.chartPreviewContainer {
+	position: relative;
+	display: flex;
+	flex-direction: row;
+	gap: 1rem;
+
+	:global(.ant-card) {
+		flex: 1;
+	}
+}
+
+.detectionMethodContainer {
+	margin: var(--spacing-12) 0;
+
+	:global(.ant-tabs-nav) {
+		margin-bottom: 0;
+
+		:global(.ant-tabs-tab) {
+			padding: var(--spacing-6) 0;
+		}
+	}
+}
+
+.detectionMethodDescription {
+	padding: var(--spacing-4) 0;
+	font-size: var(--periscope-font-size-small);
+}
+
+.infoHelpBtns {
+	display: grid;
+	grid-template-columns: auto auto;
+	gap: var(--spacing-6);
+	margin-top: var(--spacing-10);
+}
+
+.docRedirectionBtn {
+	color: var(--bg-aqua-500) !important;
+	border-color: var(--bg-aqua-500) !important;
+}
+
+.facingIssueBtn {
+	width: 100% !important;
+}
+
+.createNotificationBtn {
+	box-shadow: none;
+}
+
+.formAlertContainerBasic {
+	:global(.ant-input-number-group-addon) {
+		background-color: var(--l3-background);
+		border: 1px solid var(--l3-border);
+		color: var(--l2-foreground);
+	}
+
+	:global(.ant-input),
+	:global(.ant-input-number) {
+		background-color: var(--l3-background);
+		border: 1px solid var(--l3-border);
+		color: var(--l2-foreground);
+		min-height: 32px;
+
+		&::placeholder {
+			font-family: 'Space Mono';
+		}
+
+		&:hover {
+			border-color: var(--internal-ant-border-color-hover);
+		}
+
+		&:focus {
+			border-color: var(--internal-ant-border-color-focus);
+		}
+	}
+
+	:global(.ant-select) {
+		:global(.ant-select-selector) {
+			background-color: var(--l3-background);
+			border: 1px solid var(--l3-border);
+			color: var(--muted-foreground);
+
+			&:hover {
+				border-color: var(--internal-ant-border-color-hover);
+			}
+
+			&:focus {
+				border-color: var(--internal-ant-border-color-focus);
+			}
+		}
+
+		:global(.ant-select-selection-item) {
+			color: var(--l1-foreground);
+		}
+
+		:global(.ant-select-arrow) {
+			color: var(--muted-foreground);
+		}
+	}
+}

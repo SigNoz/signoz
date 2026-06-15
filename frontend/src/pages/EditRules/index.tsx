@@ -25,7 +25,7 @@ import {
 	fromRuleDTOToPostableRuleV2,
 } from 'types/api/alerts/convert';
 
-import './EditRules.styles.scss';
+import styles from './EditRules.module.scss';
 
 function EditRules(): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
@@ -79,10 +79,10 @@ function EditRules(): JSX.Element {
 	) {
 		const errorMsg = apiError?.getErrorMessage() || '';
 		return (
-			<div className="edit-rules-container edit-rules-container--error">
-				<Card size="small" className="edit-rules-card">
-					<p className="content">{errorMsg || t('something_went_wrong')}</p>
-					<div className="btn-container">
+			<div className={styles.editRulesContainerError}>
+				<Card size="small" className={styles.editRulesCard}>
+					<p className={styles.content}>{errorMsg || t('something_went_wrong')}</p>
+					<div className={styles.btnContainer}>
 						<Button type="default" size="large" onClick={clickHandler}>
 							Return to Alerts Page
 						</Button>
@@ -102,7 +102,7 @@ function EditRules(): JSX.Element {
 	}
 
 	return (
-		<div className="edit-rules-container">
+		<div className={styles.editRulesContainer}>
 			<EditRulesContainer
 				ruleId={ruleId || ''}
 				initialValue={fromRuleDTOToAlertDef(ruleData)}

@@ -1,0 +1,66 @@
+.alertConditionContainer {
+	margin: 0 var(--spacing-8);
+	margin-top: var(--spacing-12);
+}
+
+.alertCondition {
+	display: flex;
+	align-items: center;
+	margin-left: var(--spacing-6);
+	margin-top: var(--spacing-12);
+}
+
+.alertConditionTabs {
+	display: flex;
+	border-radius: 2px;
+	border: 1px solid var(--l2-border);
+	background: var(--l2-background);
+	flex-direction: row;
+	border-bottom: none;
+	margin-bottom: -1px;
+}
+
+.explorerViewOption {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-direction: row;
+	border: none;
+	padding: 9px;
+	box-shadow: none;
+	border-radius: 0;
+	border-left: 0.5px solid var(--l2-border);
+	border-bottom: 0.5px solid var(--l2-border);
+	width: 120px;
+	height: 36px;
+	gap: var(--spacing-4);
+
+	&:first-child {
+		border-left: 1px solid transparent;
+	}
+
+	&:hover {
+		background-color: transparent !important;
+		border-left: 1px solid transparent !important;
+		color: var(--l3-foreground);
+	}
+
+	&:disabled {
+		background-color: var(--l2-background);
+		opacity: 0.6;
+	}
+}
+
+.activeTab {
+	background-color: var(--l2-background);
+	border-bottom: none;
+
+	&:hover {
+		background-color: var(--l2-background-hover) !important;
+	}
+}
+
+.condensedAdvancedOptionsContainer {
+	margin-top: var(--spacing-8);
+	width: fit-parent;
+}

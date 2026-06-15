@@ -1,0 +1,85 @@
+.alertThresholdContainer {
+	padding: var(--spacing-12);
+	padding-right: 72px;
+	background-color: var(--l2-background);
+	border: 1px solid var(--l2-border);
+	width: 100%;
+}
+
+.alertConditionSentences {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-6);
+}
+
+.alertConditionSentence {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-8);
+	flex-wrap: wrap;
+
+	:global(.ant-select) {
+		width: 240px;
+
+		:global(.ant-select-selector) {
+			background-color: var(--l3-background);
+			border: 1px solid var(--l3-border);
+			color: var(--muted-foreground);
+			font-family: 'Space Mono';
+
+			&:hover {
+				border-color: var(--l1-border);
+			}
+
+			&:focus {
+				border-color: var(--l1-border);
+				box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+			}
+		}
+
+		:global(.ant-select-selection-item) {
+			color: var(--l1-foreground);
+		}
+
+		:global(.ant-select-arrow) {
+			color: var(--muted-foreground);
+		}
+	}
+}
+
+.sentenceText {
+	color: var(--l2-foreground);
+	font-size: var(--periscope-font-size-base);
+	line-height: 1.5;
+	--typography-text-display: flex;
+	align-items: center;
+	gap: var(--spacing-4);
+}
+
+.thresholdsSection {
+	margin-top: var(--spacing-8);
+	margin-left: var(--spacing-12);
+}
+
+.addThresholdBtn {
+	margin-top: var(--spacing-4);
+	border: 1px dashed var(--l3-border);
+	color: var(--l2-foreground);
+	background-color: transparent;
+	border-radius: 4px;
+	height: 32px;
+	padding: 0 var(--spacing-8);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	box-shadow: none;
+
+	&:hover {
+		border-color: var(--l2-border);
+		color: var(--l3-foreground);
+	}
+
+	:global(.anticon) {
+		margin-right: var(--spacing-4);
+	}
+}

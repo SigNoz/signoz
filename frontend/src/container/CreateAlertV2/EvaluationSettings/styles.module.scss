@@ -1,0 +1,303 @@
+.evaluationSettingsContainer {
+	margin: var(--spacing-8);
+}
+
+.evaluateAlertConditionsContainer {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-8);
+	background-color: var(--l2-background);
+	padding: var(--spacing-8);
+	border-radius: 4px;
+	border: 1px solid var(--l1-border);
+	margin-bottom: var(--spacing-8);
+
+	:global(.ant-typography) {
+		color: var(--l2-foreground);
+		font-size: var(--periscope-font-size-base);
+	}
+
+	:global(.ant-btn) {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		background-color: var(--l2-background);
+		border: 1px solid var(--l1-border);
+	}
+}
+
+.evaluateAlertConditionsSeparator {
+	flex: 1;
+	height: 1px;
+	border-top: 1px dashed var(--l1-border);
+}
+
+.evaluateAlertConditionsButtonLeft {
+	color: var(--l2-foreground);
+	font-size: 12px;
+	padding-right: var(--spacing-8);
+}
+
+.evaluateAlertConditionsButtonRight {
+	display: flex;
+	align-items: center;
+	color: var(--muted-foreground);
+	gap: var(--spacing-4);
+}
+
+.evaluateAlertConditionsButtonRightText {
+	font-size: 12px;
+	font-weight: var(--font-weight-medium);
+	background-color: var(--l2-background);
+	padding: 1px var(--spacing-2);
+}
+
+.advancedOptionsContainer {
+	:global(.ant-collapse) {
+		:global(.ant-collapse-item) {
+			:global(.ant-collapse-header) {
+				background-color: var(--card);
+				border: 1px solid var(--l1-border);
+
+				:global(.ant-collapse-header-text) {
+					color: var(--muted-foreground);
+					font-family: Inter;
+				}
+			}
+
+			:global(.ant-collapse-content) {
+				:global(.ant-collapse-content-box) {
+					background-color: var(--card);
+				}
+			}
+		}
+	}
+}
+
+.condensedEvaluationSettingsContainer {
+	:global(.ant-btn) {
+		display: flex;
+		align-items: center;
+		min-width: 240px;
+		width: auto;
+		justify-content: space-between;
+		background-color: var(--l3-background);
+		border: 1px solid var(--l3-border);
+		box-shadow: none;
+	}
+}
+
+.evaluateAlertConditionsButtonLeft {
+	color: var(--l2-foreground);
+	font-size: var(--periscope-font-size-small);
+	flex-shrink: 0;
+}
+
+.evaluateAlertConditionsButtonRight {
+	display: flex;
+	align-items: center;
+	color: var(--l2-foreground);
+	gap: var(--spacing-4);
+	flex-shrink: 0;
+}
+
+.evaluateAlertConditionsButtonRightText {
+	font-size: var(--periscope-font-size-small);
+	font-weight: 500;
+	background-color: var(--l3-border);
+	padding: 1px 4px;
+}
+
+:global(.evaluation-window-popover-overlay) {
+	:global(.ant-popover-arrow) {
+		display: none !important;
+	}
+
+	:global(.ant-popover-content) {
+		background-color: var(--card);
+		border: 1px solid var(--l1-border);
+		border-radius: 4px;
+		padding: 0;
+		margin: 10px;
+	}
+
+	:global(.ant-popover-inner) {
+		background-color: var(--l2-background);
+		border: none;
+		padding: 0;
+	}
+}
+
+.evaluationWindowPopover {
+	min-width: 500px;
+}
+
+.evaluationWindowContent {
+	display: flex;
+}
+
+.evaluationWindowContentItem {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-4);
+	border-right: 1px solid var(--l1-border);
+	padding: var(--spacing-6) var(--spacing-8);
+	min-width: 250px;
+	min-height: 300px;
+}
+
+.evaluationWindowContentItemLabel {
+	color: var(--muted-foreground);
+	font-size: var(--periscope-font-size-small);
+	line-height: 18px;
+	font-weight: var(--font-weight-medium);
+}
+
+.evaluationWindowContentList {
+	display: flex;
+	flex-direction: column;
+}
+
+.evaluationWindowContentListItem {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin: 0 calc(-1 * var(--spacing-8));
+	padding: var(--spacing-2) var(--spacing-8);
+
+	:global(.ant-typography) {
+		color: var(--muted-foreground);
+		font-weight: 400;
+	}
+
+	&:hover {
+		cursor: pointer;
+		background-color: var(--l1-background);
+	}
+}
+
+.evaluationWindowContentListItemActive {
+	background-color: var(--l1-background);
+	border-left: 2px solid var(--bg-robin-500);
+
+	:global(.ant-typography) {
+		font-weight: var(--font-weight-medium);
+		color: var(--l1-foreground);
+	}
+}
+
+.selectionContent {
+	padding: var(--spacing-8);
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-8);
+	width: 400px;
+
+	:global(.ant-typography) {
+		color: var(--muted-foreground);
+	}
+
+	:global(.ant-btn) {
+		width: fit-content;
+	}
+}
+
+.evaluationWindowFooter {
+	display: flex;
+	justify-content: flex-end;
+	gap: var(--spacing-4);
+	background-color: var(--l2-background);
+	border-top: 1px solid var(--l1-border);
+	padding: var(--spacing-8);
+
+	:global(.ant-btn) {
+		background-color: var(--l3-background);
+		border: 1px solid var(--l1-border);
+		color: var(--l2-foreground);
+		font-size: var(--periscope-font-size-base);
+	}
+}
+
+.evaluationWindowDetails {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-8);
+	width: 400px;
+	min-height: 300px;
+	padding: var(--spacing-8);
+
+	:global(.ant-typography) {
+		color: var(--l2-foreground);
+		font-size: var(--periscope-font-size-base);
+		font-weight: var(--font-weight-medium);
+	}
+
+	:global(.ant-select) {
+		width: 60%;
+		background-color: var(--l2-background);
+		border: 1px solid var(--l1-border);
+		color: var(--l1-foreground);
+		height: 32px;
+
+		:global(.ant-select-selector) {
+			background-color: var(--l2-background);
+			border: 1px solid var(--l1-border);
+			color: var(--l1-foreground);
+			height: 32px;
+
+			&:hover {
+				border-color: var(--l1-border);
+			}
+
+			&:focus {
+				border-color: var(--l1-border);
+			}
+		}
+
+		&:hover {
+			border-color: var(--l1-border);
+		}
+	}
+}
+
+.selectGroup {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+
+	:global(.ant-typography) {
+		color: var(--l3-foreground);
+		font-size: var(--periscope-font-size-small);
+		line-height: 18px;
+		font-weight: var(--font-weight-medium);
+	}
+
+	:global(.ant-input) {
+		background-color: var(--l2-background);
+		border: 1px solid var(--l1-border);
+		color: var(--l1-foreground);
+		height: 32px;
+		width: 60%;
+	}
+}
+
+.timeSelectGroup {
+	:global(.ant-input-group) {
+		flex-direction: row;
+		gap: var(--spacing-4);
+
+		:global(.ant-select) {
+			width: 40px;
+
+			:global(.ant-select-selector) {
+				&:hover {
+					border-color: var(--l1-border);
+				}
+
+				&:focus {
+					border-color: var(--l1-border);
+				}
+			}
+		}
+	}
+}

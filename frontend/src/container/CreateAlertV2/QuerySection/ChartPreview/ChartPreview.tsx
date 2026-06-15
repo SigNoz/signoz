@@ -3,6 +3,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import YAxisUnitSelector from 'components/YAxisUnitSelector';
+
+import styles from './ChartPreview.module.scss';
 import { YAxisSource } from 'components/YAxisUnitSelector/types';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { QueryParams } from 'constants/query';
@@ -71,7 +73,7 @@ function ChartPreview({
 	}, [initialYAxisUnit, setAlertState, shouldUpdateYAxisUnit]);
 
 	const headline = (
-		<div className="chart-preview-headline">
+		<div className={styles.chartPreviewHeadline}>
 			<PlotTag
 				queryType={currentQuery.queryType}
 				panelType={panelType || PANEL_TYPES.TIME_SERIES}
@@ -119,7 +121,10 @@ function ChartPreview({
 	);
 
 	return (
-		<div className="chart-preview-container">
+		<div
+			className={styles.chartPreviewContainer}
+			data-testid="chart-preview-container"
+		>
 			{currentQuery.queryType === EQueryType.QUERY_BUILDER &&
 				renderQBChartPreview()}
 			{currentQuery.queryType === EQueryType.PROM &&

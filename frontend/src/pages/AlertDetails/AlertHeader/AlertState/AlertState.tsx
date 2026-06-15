@@ -2,7 +2,7 @@ import { Color } from '@signozhq/design-tokens';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { BellOff, CircleCheck, CircleOff, Flame } from '@signozhq/icons';
 
-import './AlertState.styles.scss';
+import styles from './AlertState.module.scss';
 
 type AlertStateProps = {
 	state: string;
@@ -62,8 +62,8 @@ export default function AlertState({
 	}
 
 	return (
-		<div className="alert-state">
-			{icon} {showLabel && <div className="alert-state__label">{label}</div>}
+		<div className={styles.alertState}>
+			{icon} {showLabel && <div className={styles.label}>{label}</div>}
 		</div>
 	);
 }

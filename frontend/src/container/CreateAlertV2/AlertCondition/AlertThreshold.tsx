@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { Button, Select, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
-import classNames from 'classnames';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import getRandomColor from 'lib/getRandomColor';
 import { Plus } from '@signozhq/icons';
@@ -32,8 +31,7 @@ import {
 	RoutingPolicyBanner,
 } from './utils';
 
-import './styles.scss';
-import '../EvaluationSettings/styles.scss';
+import styles from './AlertThreshold.module.scss';
 
 function AlertThreshold({
 	channels,
@@ -219,16 +217,11 @@ function AlertThreshold({
 	};
 
 	return (
-		<div
-			className={classNames(
-				'alert-threshold-container',
-				'condensed-alert-threshold-container',
-			)}
-		>
+		<div className={styles.alertThresholdContainer}>
 			{/* Main condition sentence */}
-			<div className="alert-condition-sentences">
-				<div className="alert-condition-sentence">
-					<Typography.Text className="sentence-text">
+			<div className={styles.alertConditionSentences}>
+				<div className={styles.alertConditionSentence}>
+					<Typography.Text className={styles.sentenceText}>
 						Send a notification when
 					</Typography.Text>
 					<Select
@@ -238,7 +231,7 @@ function AlertThreshold({
 						options={queryNames}
 						data-testid="alert-threshold-query-select"
 					/>
-					<Typography.Text className="sentence-text">is</Typography.Text>
+					<Typography.Text className={styles.sentenceText}>is</Typography.Text>
 					<Select
 						value={
 							(normalizeOperator(thresholdState.operator) ??
@@ -254,7 +247,7 @@ function AlertThreshold({
 						options={THRESHOLD_OPERATOR_OPTIONS}
 						data-testid="alert-threshold-operator-select"
 					/>
-					<Typography.Text className="sentence-text">
+					<Typography.Text className={styles.sentenceText}>
 						the threshold(s)
 					</Typography.Text>
 					<Select
@@ -272,13 +265,13 @@ function AlertThreshold({
 						options={matchTypeOptionsWithTooltips}
 						data-testid="alert-threshold-match-type-select"
 					/>
-					<Typography.Text className="sentence-text">
+					<Typography.Text className={styles.sentenceText}>
 						during the <EvaluationSettings />
 					</Typography.Text>
 				</div>
 			</div>
 
-			<div className="thresholds-section">
+			<div className={styles.thresholdsSection}>
 				{thresholdState.thresholds.map((threshold, index) => (
 					<ThresholdItem
 						key={threshold.id}
@@ -297,7 +290,7 @@ function AlertThreshold({
 					type="dashed"
 					icon={<Plus size={16} />}
 					onClick={addThreshold}
-					className="add-threshold-btn"
+					className={styles.addThresholdBtn}
 					data-testid="add-threshold-button"
 				>
 					Add Threshold

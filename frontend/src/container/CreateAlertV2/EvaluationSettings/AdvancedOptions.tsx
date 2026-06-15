@@ -4,13 +4,15 @@ import { Typography } from '@signozhq/ui/typography';
 
 import { useCreateAlertState } from '../context';
 import AdvancedOptionItem from './AdvancedOptionItem';
+import advancedOptionStyles from './AdvancedOptionItem/styles.module.scss';
 import EvaluationCadence from './EvaluationCadence';
+import styles from './styles.module.scss';
 
 function AdvancedOptions(): JSX.Element {
 	const { advancedOptions, setAdvancedOptions } = useCreateAlertState();
 
 	return (
-		<div className="advanced-options-container">
+		<div className={styles.advancedOptionsContainer}>
 			<Collapse bordered={false}>
 				<Collapse.Panel header="ADVANCED OPTIONS" key="1">
 					<EvaluationCadence />
@@ -19,7 +21,7 @@ function AdvancedOptions(): JSX.Element {
 						description="Send notification if no data is received for a specified time period."
 						tooltipText="Useful for monitoring data pipelines or services that should continuously send data. For example, alert if no logs are received for 10 minutes"
 						input={
-							<div className="advanced-option-item-input-group">
+							<div className={advancedOptionStyles.advancedOptionItemInputGroup}>
 								<Input
 									placeholder="Enter tolerance limit..."
 									type="number"
@@ -52,7 +54,7 @@ function AdvancedOptions(): JSX.Element {
 						description="Only trigger alert when there are enough data points to make a reliable decision."
 						tooltipText="Prevents false alarms when there's insufficient data. For example, require at least 5 data points before checking if CPU usage is above 80%."
 						input={
-							<div className="advanced-option-item-input-group">
+							<div className={advancedOptionStyles.advancedOptionItemInputGroup}>
 								<Input
 									placeholder="Enter minimum datapoints..."
 									style={{ width: 100 }}

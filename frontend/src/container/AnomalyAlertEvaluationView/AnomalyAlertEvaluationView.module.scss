@@ -1,0 +1,183 @@
+.anomalyAlertEvaluationView {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	gap: var(--spacing-4);
+	width: 100%;
+	height: 100%;
+
+	:global(.uplot-tooltip) {
+		background-color: rgb(0 0 0 / 90%);
+		box-shadow: 0 2px 4px rgb(0 0 0 / 10%);
+		color: #ddd;
+		font-size: var(--periscope-font-size-base);
+		line-height: 1.4;
+		padding: var(--spacing-4) var(--spacing-6);
+		pointer-events: none;
+		position: absolute;
+		z-index: 100;
+		max-height: 500px;
+		width: 280px;
+		overflow-y: auto;
+		display: none;
+
+		&::-webkit-scrollbar {
+			width: 0.3rem;
+		}
+
+		&::-webkit-scrollbar-corner {
+			background: transparent;
+		}
+
+		&::-webkit-scrollbar-thumb {
+			background: rgb(136 136 136);
+			border-radius: 0.625rem;
+		}
+
+		&::-webkit-scrollbar-track {
+			background: transparent;
+		}
+	}
+
+	:global(.uplot-tooltip-title) {
+		font-weight: var(--font-weight-semibold);
+		margin-bottom: var(--spacing-2);
+	}
+
+	:global(.uplot-tooltip-series) {
+		display: flex;
+		gap: var(--spacing-2);
+		padding: var(--spacing-2) 0;
+		align-items: center;
+	}
+
+	:global(.uplot-tooltip-series-name) {
+		margin-right: var(--spacing-2);
+	}
+
+	:global(.uplot-tooltip-band) {
+		font-style: italic;
+		color: #666;
+	}
+
+	:global(.uplot-tooltip-marker) {
+		display: inline-block;
+		width: 6px;
+		height: 6px;
+		border-radius: 50%;
+		margin-right: var(--spacing-4);
+		vertical-align: middle;
+	}
+
+	:global(.uplot) {
+		:global(.u-title) {
+			text-align: center;
+			font-size: var(--periscope-font-size-base);
+			font-weight: var(--font-weight-normal);
+			display: flex;
+			height: 40px;
+			align-items: center;
+		}
+
+		:global(.u-legend) {
+			display: flex;
+			margin-top: var(--spacing-8);
+
+			tbody {
+				width: 100%;
+
+				:global(.u-series) {
+					display: inline-flex;
+				}
+			}
+		}
+	}
+}
+
+.chartSection {
+	height: 100%;
+	width: 100%;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.chartSectionMultiSeries {
+	composes: chartSection;
+	width: calc(100% - 240px);
+}
+
+.noDataContainer {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	gap: var(--spacing-4);
+}
+
+.seriesSelection {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-4);
+	width: 240px;
+	padding: 0 var(--spacing-4);
+	height: 100%;
+}
+
+.seriesList {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-4);
+	height: 100%;
+}
+
+.seriesListSearch {
+	margin-bottom: var(--spacing-8);
+}
+
+.seriesListTitle {
+	margin-top: var(--spacing-6);
+	font-size: var(--periscope-font-size-base);
+	font-weight: var(--font-weight-normal);
+}
+
+.seriesListItems {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-4);
+	height: 100%;
+	overflow-y: auto;
+
+	&::-webkit-scrollbar {
+		width: 0.1rem;
+	}
+
+	&::-webkit-scrollbar-corner {
+		background: transparent;
+	}
+
+	&::-webkit-scrollbar-thumb {
+		background: rgb(136 136 136);
+		border-radius: 0.625rem;
+	}
+
+	&::-webkit-scrollbar-track {
+		background: transparent;
+	}
+}
+
+.seriesListItem {
+	display: flex;
+	flex-direction: row;
+	gap: var(--spacing-4);
+	cursor: pointer;
+}
+
+.seriesListItemColor {
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	display: inline-flex;
+	margin-right: var(--spacing-4);
+	vertical-align: middle;
+}

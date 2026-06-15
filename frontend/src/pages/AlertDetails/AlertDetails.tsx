@@ -22,7 +22,7 @@ import AlertHeader from './AlertHeader/AlertHeader';
 import AlertNotFound from './AlertNotFound';
 import { useGetAlertRuleDetails, useRouteTabUtils } from './hooks';
 
-import './AlertDetails.styles.scss';
+import styles from './AlertDetails.module.scss';
 
 function AlertDetails(): JSX.Element {
 	const { pathname } = useLocation();
@@ -93,10 +93,12 @@ function AlertDetails(): JSX.Element {
 			initialAlertState={initialAlertState}
 		>
 			<div
-				className={classNames('alert-details', { 'alert-details-v2': isV2Alert })}
+				className={classNames(styles.alertDetails, {
+					[styles.alertDetailsV2]: isV2Alert,
+				})}
 			>
 				<AlertBreadcrumb
-					className="alert-details__breadcrumb"
+					className={styles.alertDetailsBreadcrumb}
 					items={[
 						{ title: 'Alert Rules', route: ROUTES.LIST_ALL_ALERT },
 						{ title: ruleId, isLast: true },
@@ -104,8 +106,8 @@ function AlertDetails(): JSX.Element {
 				/>
 
 				{alertRuleDetails && <AlertHeader alertDetails={alertRuleDetails} />}
-				<Divider className="alert-details__divider" />
-				<div className="tabs-and-filters">
+				<Divider className={styles.alertDetailsDivider} />
+				<div className={styles.tabsAndFilters}>
 					<RouteTab
 						routes={routes}
 						activeKey={pathname}

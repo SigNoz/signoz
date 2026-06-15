@@ -13,9 +13,12 @@ jest.spyOn(alertState, 'useCreateAlertState').mockReturnValue(
 
 const ALERT_WHEN_DATA_STOPS_COMING_TEXT = 'Alert when data stops coming';
 const MINIMUM_DATA_REQUIRED_TEXT = 'Minimum data required';
-const ACCOUNT_FOR_DATA_DELAY_TEXT = 'Account for data delay';
-const ADVANCED_OPTION_ITEM_CLASS = '.advanced-option-item';
+// const ACCOUNT_FOR_DATA_DELAY_TEXT = 'Account for data delay';
 const SWITCH_ROLE_SELECTOR = '[role="switch"]';
+const SEND_NOTIFICATION_TEST_ID =
+	'send-notification-if-data-is-missing-container';
+const ENFORCE_MINIMUM_DATAPOINTS_TEST_ID =
+	'enforce-minimum-datapoints-container';
 
 describe('AdvancedOptions', () => {
 	it('should render evaluation cadence and the advanced options minimized by default', () => {
@@ -64,9 +67,9 @@ describe('AdvancedOptions', () => {
 		const collapse = screen.getByRole('button', { name: /ADVANCED OPTIONS/i });
 		fireEvent.click(collapse);
 
-		const alertWhenDataStopsComingContainer = screen
-			.getByText(ALERT_WHEN_DATA_STOPS_COMING_TEXT)
-			.closest(ADVANCED_OPTION_ITEM_CLASS);
+		const alertWhenDataStopsComingContainer = screen.getByTestId(
+			SEND_NOTIFICATION_TEST_ID,
+		);
 		const alertWhenDataStopsComingSwitch =
 			alertWhenDataStopsComingContainer?.querySelector(
 				SWITCH_ROLE_SELECTOR,
@@ -94,9 +97,9 @@ describe('AdvancedOptions', () => {
 		const collapse = screen.getByRole('button', { name: /ADVANCED OPTIONS/i });
 		fireEvent.click(collapse);
 
-		const minimumDataRequiredContainer = screen
-			.getByText(MINIMUM_DATA_REQUIRED_TEXT)
-			.closest(ADVANCED_OPTION_ITEM_CLASS);
+		const minimumDataRequiredContainer = screen.getByTestId(
+			ENFORCE_MINIMUM_DATAPOINTS_TEST_ID,
+		);
 		const minimumDataRequiredSwitch = minimumDataRequiredContainer?.querySelector(
 			SWITCH_ROLE_SELECTOR,
 		) as HTMLElement;
@@ -116,15 +119,17 @@ describe('AdvancedOptions', () => {
 		});
 	});
 
+	// TODO: Update when account for data delay is implemented - will need a data-testid
 	it.skip('"Account for data delay" works as expected', () => {
 		render(<AdvancedOptions />);
 
 		const collapse = screen.getByRole('button', { name: /ADVANCED OPTIONS/i });
 		fireEvent.click(collapse);
 
-		const accountForDataDelayContainer = screen
-			.getByText(ACCOUNT_FOR_DATA_DELAY_TEXT)
-			.closest(ADVANCED_OPTION_ITEM_CLASS);
+		// This test needs a data-testid on the account for data delay component
+		const accountForDataDelayContainer = screen.getByTestId(
+			'account-for-data-delay-container',
+		);
 		const accountForDataDelaySwitch = accountForDataDelayContainer?.querySelector(
 			SWITCH_ROLE_SELECTOR,
 		) as HTMLElement;

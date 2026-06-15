@@ -1,0 +1,47 @@
+.alertSeverity {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-4);
+	overflow: hidden;
+}
+
+.icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 14px;
+	width: 14px;
+	border-radius: 3.5px;
+}
+
+.text {
+	color: var(--text-sakura-400);
+	font-size: var(--periscope-font-size-base);
+	line-height: 18px;
+}
+
+.critical .icon,
+.error .icon {
+	background: color-mix(in srgb, var(--bg-sakura-400) 20%, transparent);
+}
+
+.critical .text,
+.error .text {
+	color: var(--text-sakura-400);
+}
+
+.warning .icon {
+	background: color-mix(in srgb, var(--bg-amber-400) 20%, transparent);
+}
+
+.warning .text {
+	color: var(--text-amber-400);
+}
+
+.info .icon {
+	background: color-mix(in srgb, var(--bg-robin-400) 20%, transparent);
+}
+
+.info .text {
+	color: var(--text-robin-400);
+}

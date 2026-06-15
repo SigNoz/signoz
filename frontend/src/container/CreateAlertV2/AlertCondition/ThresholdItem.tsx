@@ -11,6 +11,8 @@ import { normalizeOperator } from '../utils';
 import { ThresholdItemProps } from './types';
 import { NotificationChannelsNotFoundContent } from './utils';
 
+import styles from './ThresholdItem.module.scss';
+
 function ThresholdItem({
 	threshold,
 	updateThreshold,
@@ -82,15 +84,16 @@ function ThresholdItem({
 	};
 
 	return (
-		<div key={threshold.id} className="threshold-item">
-			<div className="threshold-row">
-				<div className="threshold-indicator">
+		<div key={threshold.id} className={styles.thresholdItem}>
+			<div className={styles.thresholdRow}>
+				<div className={styles.thresholdIndicator}>
 					<div
-						className="threshold-dot"
+						className={styles.thresholdDot}
 						style={{ backgroundColor: threshold.color }}
+						data-testid="threshold-dot"
 					/>
 				</div>
-				<div className="threshold-controls">
+				<div className={styles.thresholdControls}>
 					<Input
 						placeholder="Enter threshold name"
 						value={threshold.label}
@@ -100,8 +103,10 @@ function ThresholdItem({
 						style={{ width: 200 }}
 						data-testid="threshold-name-input"
 					/>
-					<Typography.Text className="sentence-text">on value</Typography.Text>
-					<Typography.Text className="sentence-text highlighted-text">
+					<Typography.Text className={styles.sentenceText}>on value</Typography.Text>
+					<Typography.Text
+						className={`${styles.sentenceText} ${styles.highlightedText}`}
+					>
 						{getOperatorSymbol()}
 					</Typography.Text>
 					<Input
@@ -117,7 +122,9 @@ function ThresholdItem({
 					{yAxisUnitSelect}
 					{!notificationSettings.routingPolicies && (
 						<>
-							<Typography.Text className="sentence-text">send to</Typography.Text>
+							<Typography.Text className={styles.sentenceText}>
+								send to
+							</Typography.Text>
 							<Select
 								value={threshold.channels}
 								onChange={(value): void =>
@@ -154,7 +161,9 @@ function ThresholdItem({
 					)}
 					{showRecoveryThreshold && (
 						<>
-							<Typography.Text className="sentence-text">recover on</Typography.Text>
+							<Typography.Text className={styles.sentenceText}>
+								recover on
+							</Typography.Text>
 							<Input
 								placeholder="Enter recovery threshold value"
 								value={threshold.recoveryThresholdValue ?? ''}
@@ -170,7 +179,7 @@ function ThresholdItem({
 									type="default"
 									icon={<Trash size={16} />}
 									onClick={removeRecoveryThreshold}
-									className="icon-btn"
+									className={styles.iconBtn}
 									data-testid="remove-recovery-threshold-button"
 								/>
 							</Tooltip>
@@ -194,7 +203,7 @@ function ThresholdItem({
 									type="default"
 									icon={<CircleX size={16} />}
 									onClick={(): void => removeThreshold(threshold.id)}
-									className="icon-btn"
+									className={styles.iconBtn}
 									data-testid="remove-threshold-button"
 								/>
 							</Tooltip>

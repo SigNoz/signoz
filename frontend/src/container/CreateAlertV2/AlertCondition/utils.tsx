@@ -22,6 +22,8 @@ import { openInNewTab } from 'utils/navigation';
 import { ROUTING_POLICIES_ROUTE } from './constants';
 import { RoutingPolicyBannerProps } from './types';
 
+import styles from './utils.module.scss';
+
 export function getQueryNames(currentQuery: Query): BaseOptionType[] {
 	const involvedQueriesInTraceOperator = getInvolvedQueriesInTraceOperator(
 		currentQuery.builder.queryTraceOperator,
@@ -183,7 +185,7 @@ function TooltipContent({
 					handleTooltipClick(e);
 				}
 			}}
-			className="tooltip-content"
+			className={styles.tooltipContent}
 		>
 			{children}
 		</div>
@@ -204,7 +206,7 @@ function TooltipExample({
 	matchType: AlertThresholdMatchType;
 }): JSX.Element {
 	return (
-		<div className="tooltip-example">
+		<div className={styles.tooltipExample}>
 			<strong>Example:</strong>
 			<br />
 			Say, For a 5-minute window (configured in Evaluation settings), 1 min
@@ -220,12 +222,12 @@ function TooltipExample({
 
 function TooltipLink(): JSX.Element {
 	return (
-		<div className="tooltip-link">
+		<div className={styles.tooltipLink}>
 			<a
 				href="https://signoz.io/docs"
 				target="_blank"
 				rel="noopener noreferrer"
-				className="tooltip-link-text"
+				className={styles.tooltipLinkText}
 			>
 				Learn more
 			</a>
@@ -261,7 +263,7 @@ export const getMatchTypeTooltip = (
 		case AlertThresholdMatchType.AT_LEAST_ONCE:
 			return (
 				<TooltipContent>
-					<div className="tooltip-description">
+					<div className={styles.tooltipDescription}>
 						Data is aggregated at each interval within your evaluation window,
 						creating multiple data points. This option triggers if <span>ANY</span> of
 						those aggregated data points crosses the threshold.
@@ -282,7 +284,7 @@ export const getMatchTypeTooltip = (
 		case AlertThresholdMatchType.ALL_THE_TIME:
 			return (
 				<TooltipContent>
-					<div className="tooltip-description">
+					<div className={styles.tooltipDescription}>
 						Data is aggregated at each interval within your evaluation window,
 						creating multiple data points. This option triggers if <span>ALL</span>{' '}
 						aggregated data points cross the threshold.
@@ -306,7 +308,7 @@ export const getMatchTypeTooltip = (
 			).toFixed(1);
 			return (
 				<TooltipContent>
-					<div className="tooltip-description">
+					<div className={styles.tooltipDescription}>
 						Data is aggregated at each interval within your evaluation window,
 						creating multiple data points. This option triggers if the{' '}
 						<span>AVERAGE</span> of all aggregated data points crosses the threshold.
@@ -328,7 +330,7 @@ export const getMatchTypeTooltip = (
 			const total = dataPoints.reduce((a, b) => a + b, 0);
 			return (
 				<TooltipContent>
-					<div className="tooltip-description">
+					<div className={styles.tooltipDescription}>
 						Data is aggregated at each interval within your evaluation window,
 						creating multiple data points. This option triggers if the{' '}
 						<span>SUM</span> of all aggregated data points crosses the threshold.
@@ -350,7 +352,7 @@ export const getMatchTypeTooltip = (
 			const lastPoint = dataPoints[dataPoints.length - 1];
 			return (
 				<TooltipContent>
-					<div className="tooltip-description">
+					<div className={styles.tooltipDescription}>
 						Data is aggregated at each interval within your evaluation window,
 						creating multiple data points. This option triggers based on the{' '}
 						<span>MOST RECENT</span> aggregated data point only.
@@ -414,11 +416,11 @@ export function RoutingPolicyBanner({
 }: RoutingPolicyBannerProps): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
 	return (
-		<div className="routing-policies-info-banner">
+		<div className={styles.routingPoliciesInfoBanner}>
 			<Typography.Text>
 				Use <strong>Routing Policies</strong> for dynamic routing
 			</Typography.Text>
-			<div className="routing-policies-info-banner-right">
+			<div className={styles.routingPoliciesInfoBannerRight}>
 				<Switch
 					value={notificationSettings.routingPolicies}
 					testId="routing-policies-switch"
@@ -431,7 +433,7 @@ export function RoutingPolicyBanner({
 				/>
 				<Button
 					type="link"
-					className="view-routing-policies-button"
+					className={styles.viewRoutingPoliciesButton}
 					data-testid="view-routing-policies-button"
 					onClick={(): void => safeNavigate(ROUTING_POLICIES_ROUTE)}
 				>

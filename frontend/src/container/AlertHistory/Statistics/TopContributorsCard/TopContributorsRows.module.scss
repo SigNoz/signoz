@@ -1,0 +1,28 @@
+.contributorsRow {
+	height: 80px;
+	background: var(--l1-background);
+
+	td {
+		border: none !important;
+	}
+
+	&:not(:last-of-type) td {
+		border-bottom: 1px solid var(--l1-border) !important;
+	}
+}
+
+.topContributorsProgress {
+	--progress-background: transparent;
+}
+
+.totalContribution {
+	color: var(--primary-foreground);
+	font-family: var(--periscope-font-family-mono);
+	font-size: var(--periscope-font-size-small);
+	font-weight: var(--font-weight-medium);
+	letter-spacing: -0.06px;
+	padding: var(--spacing-2) var(--spacing-4);
+	background: color-mix(in srgb, var(--primary-background) 10%, transparent);
+	border-radius: 50px;
+	width: max-content;
+}

@@ -15,7 +15,7 @@ import uPlot from 'uplot';
 import tooltipPlugin from './tooltipPlugin';
 
 import 'uplot/dist/uPlot.min.css';
-import './AnomalyAlertEvaluationView.styles.scss';
+import styles from './AnomalyAlertEvaluationView.module.scss';
 
 const { Search } = Input;
 
@@ -284,11 +284,11 @@ function AnomalyAlertEvaluationView({
 	}, 300);
 
 	return (
-		<div className="anomaly-alert-evaluation-view">
+		<div className={styles.anomalyAlertEvaluationView}>
 			<div
-				className={`anomaly-alert-evaluation-view-chart-section ${
-					allSeries.length > 1 ? 'has-multi-series-data' : ''
-				}`}
+				className={
+					allSeries.length > 1 ? styles.chartSectionMultiSeries : styles.chartSection
+				}
 				ref={graphRef}
 			>
 				{allSeries.length > 0 ? (
@@ -298,7 +298,7 @@ function AnomalyAlertEvaluationView({
 						chartRef={chartRef}
 					/>
 				) : (
-					<div className="anomaly-alert-evaluation-view-no-data-container">
+					<div className={styles.noDataContainer}>
 						<ChartLine size={48} strokeWidth={0.5} />
 
 						<Typography>No Data</Typography>
@@ -307,20 +307,20 @@ function AnomalyAlertEvaluationView({
 			</div>
 
 			{allSeries.length > 1 && (
-				<div className="anomaly-alert-evaluation-view-series-selection">
+				<div className={styles.seriesSelection}>
 					{allSeries.length > 1 && (
-						<div className="anomaly-alert-evaluation-view-series-list">
+						<div className={styles.seriesList}>
 							<Search
-								className="anomaly-alert-evaluation-view-series-list-search"
+								className={styles.seriesListSearch}
 								placeholder="Search a series"
 								allowClear
 								onChange={handleSearchValueChange}
 							/>
 
-							<div className="anomaly-alert-evaluation-view-series-list-items">
+							<div className={styles.seriesListItems}>
 								{filteredSeriesKeys.length > 0 && (
 									<Checkbox
-										className="anomaly-alert-evaluation-view-series-list-item"
+										className={styles.seriesListItem}
 										name="series"
 										value={selectedSeries === null}
 										onChange={(): void => handleSeriesChange(null)}
@@ -332,14 +332,14 @@ function AnomalyAlertEvaluationView({
 								{filteredSeriesKeys.map((seriesKey) => (
 									<div key={seriesKey}>
 										<Checkbox
-											className="anomaly-alert-evaluation-view-series-list-item"
+											className={styles.seriesListItem}
 											key={seriesKey}
 											name="series"
 											value={selectedSeries === seriesKey}
 											onChange={(): void => handleSeriesChange(seriesKey)}
 										>
 											<div
-												className="anomaly-alert-evaluation-view-series-list-item-color"
+												className={styles.seriesListItemColor}
 												style={{ backgroundColor: seriesData[seriesKey].color }}
 											/>
 

@@ -35,7 +35,7 @@ import {
 	VerticalLine,
 } from './styles';
 
-import './RuleOptions.styles.scss';
+import styles from './RuleOptions.module.scss';
 
 function RuleOptions({
 	alertDef,
@@ -321,7 +321,7 @@ function RuleOptions({
 
 	const renderAnomalyRuleOpts = (): JSX.Element => (
 		<Form.Item>
-			<Typography.Text className="rule-definition">
+			<Typography.Text className={styles.ruleDefinition}>
 				{t('text_condition1_anomaly')}
 				<InlineSelect
 					getPopupContainer={popupContainer}
@@ -375,7 +375,7 @@ function RuleOptions({
 	return (
 		<>
 			<StepHeading>{t('alert_form_step3', { step: step3Label })}</StepHeading>
-			<FormContainer>
+			<FormContainer className={styles.formContainer}>
 				{queryCategory === EQueryType.PROM && renderPromRuleOptions()}
 				{queryCategory !== EQueryType.PROM &&
 					ruleType === AlertDetectionTypes.ANOMALY_DETECTION_ALERT && (
@@ -401,7 +401,7 @@ function RuleOptions({
 
 							<Form.Item noStyle>
 								<Select
-									className="rule-unit-selector"
+									className={styles.ruleUnitSelector}
 									getPopupContainer={popupContainer}
 									allowClear
 									showSearch

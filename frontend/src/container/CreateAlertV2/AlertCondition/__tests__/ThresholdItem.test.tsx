@@ -126,8 +126,8 @@ describe('ThresholdItem', () => {
 	it('renders threshold indicator with correct color', () => {
 		renderThresholdItem();
 
-		// Find the threshold dot by its class
-		const thresholdDot = document.querySelector('.threshold-dot');
+		// Find the threshold dot by data-testid
+		const thresholdDot = screen.getByTestId('threshold-dot');
 		expect(thresholdDot).toHaveStyle('background-color: #ff0000');
 	});
 

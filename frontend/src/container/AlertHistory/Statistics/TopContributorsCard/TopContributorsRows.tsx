@@ -12,6 +12,8 @@ import {
 	AlertRuleTopContributors,
 } from 'types/api/alerts/def';
 
+import styles from './TopContributorsRows.module.scss';
+
 function TopContributorsRows({
 	topContributors,
 	totalCurrentTriggers,
@@ -53,7 +55,7 @@ function TopContributorsRows({
 						percent={(count / totalCurrentTriggers) * 100}
 						showInfo={false}
 						strokeColor={Color.BG_ROBIN_500}
-						className="top-contributors-progress"
+						className={styles.topContributorsProgress}
 					/>
 				</ConditionalAlertPopover>
 			),
@@ -68,7 +70,7 @@ function TopContributorsRows({
 					relatedTracesLink={record.relatedTracesLink}
 					relatedLogsLink={record.relatedLogsLink}
 				>
-					<div className="total-contribution">
+					<div className={styles.totalContribution}>
 						{count}/{totalCurrentTriggers}
 					</div>
 				</ConditionalAlertPopover>
@@ -88,7 +90,7 @@ function TopContributorsRows({
 
 	return (
 		<Table
-			rowClassName="contributors-row"
+			rowClassName={styles.contributorsRow}
 			rowKey={(row): string => `top-contributor-${row.fingerprint}`}
 			onRow={handleRowClick}
 			columns={columns}

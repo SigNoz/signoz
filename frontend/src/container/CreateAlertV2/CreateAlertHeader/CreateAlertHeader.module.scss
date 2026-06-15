@@ -1,0 +1,134 @@
+.alertHeader {
+	background-color: var(--l1-background);
+	font-family: inherit;
+	color: var(--l1-foreground);
+	padding: var(--spacing-6) var(--spacing-8);
+
+	--input-background: var(--l2-background);
+	--input-hover-background: var(--l2-background);
+	--input-focus-background: var(--l2-background);
+	--input-border-color: var(--l2-border);
+	--input-hover-border-color: var(--internal-ant-border-color-hover);
+	--input-focus-border-color: var(--internal-ant-border-color-hover);
+}
+
+.editAlertHeader {
+	flex: 1;
+}
+
+.tabBar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.tab {
+	display: flex;
+	align-items: center;
+	background-color: var(--l1-background);
+	height: 32px;
+	font-size: var(--periscope-font-size-base);
+	color: var(--l1-foreground);
+
+	&::before {
+		content: '•';
+		margin-right: var(--spacing-3);
+		font-size: var(--periscope-font-size-base);
+		color: var(--l3-foreground);
+	}
+}
+
+.content {
+	padding: var(--spacing-4) 0;
+	background: var(--l1-background);
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-4);
+	min-width: 300px;
+	flex: 1;
+}
+
+.inputTitle {
+	background-color: transparent;
+	background: var(--l2-background);
+	color: var(--l2-foreground);
+	width: 100%;
+	min-width: 300px;
+
+	&:hover {
+		background: var(--l2-background);
+	}
+}
+
+.inputDescription {
+	font-size: var(--periscope-font-size-base);
+	background-color: transparent;
+	color: var(--l2-foreground);
+}
+
+.labelsInput {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-4);
+}
+
+.labelsInputAddButton {
+	width: fit-content;
+	font-size: var(--periscope-font-size-base);
+	color: var(--l2-foreground);
+	background-color: var(--l3-background);
+	border: 1px solid var(--l3-border);
+	cursor: pointer;
+	padding: var(--spacing-2) var(--spacing-4);
+	border-radius: 4px;
+
+	&:hover {
+		border-color: var(--internal-ant-border-color-hover);
+	}
+}
+
+.labelsInputExistingLabels {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--spacing-4);
+}
+
+.labelsInputLabelPill {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-3);
+	background-color: #ad7f581a;
+	color: var(--bg-sienna-400);
+	padding: var(--spacing-2) var(--spacing-4);
+	border-radius: 16px;
+	font-size: var(--periscope-font-size-small);
+	border: 1px solid var(--bg-sienna-500);
+	font-family: 'Geist Mono';
+}
+
+.labelsInputRemoveButton {
+	background: none;
+	border: none;
+	color: var(--bg-sienna-400);
+	cursor: pointer;
+	padding: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 10px;
+
+	&:hover {
+		color: var(--l1-foreground);
+	}
+}
+
+.labelsInputInputContainer {
+	display: flex;
+	align-items: center;
+	background-color: transparent;
+	border: none;
+}
+
+.labelsInputInput {
+	flex: 1;
+}

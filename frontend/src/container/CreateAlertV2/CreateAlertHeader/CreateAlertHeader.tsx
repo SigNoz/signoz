@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import logEvent from 'api/common/logEvent';
-import classNames from 'classnames';
+import cx from 'classnames';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -14,8 +14,7 @@ import { Labels } from 'types/api/alerts/def';
 
 import { useCreateAlertState } from '../context';
 import LabelsInput from './LabelsInput';
-
-import './styles.scss';
+import styles from './CreateAlertHeader.module.scss';
 
 function CreateAlertHeader(): JSX.Element {
 	const { alertState, setAlertState, isEditMode } = useCreateAlertState();
@@ -56,11 +55,11 @@ function CreateAlertHeader(): JSX.Element {
 
 	return (
 		<div
-			className={classNames('alert-header', { 'edit-alert-header': isEditMode })}
+			className={cx(styles.alertHeader, { [styles.editAlertHeader]: isEditMode })}
 		>
 			{!isEditMode && (
-				<div className="alert-header__tab-bar">
-					<div className="alert-header__tab">New Alert Rule</div>
+				<div className={styles.tabBar}>
+					<div className={styles.tab}>New Alert Rule</div>
 					<Button
 						prefix={<RotateCcw size={12} />}
 						onClick={handleSwitchToClassicExperience}
@@ -72,7 +71,7 @@ function CreateAlertHeader(): JSX.Element {
 					</Button>
 				</div>
 			)}
-			<div className="alert-header__content">
+			<div className={styles.content}>
 				<Input
 					type="text"
 					value={alertState.name}
@@ -83,7 +82,7 @@ function CreateAlertHeader(): JSX.Element {
 							alertRuleContext.setAlertRuleName(newName);
 						}
 					}}
-					className="alert-header__input title"
+					className={styles.inputTitle}
 					placeholder="Enter alert rule name"
 					data-testid="alert-name-input"
 				/>

@@ -7,6 +7,7 @@ import { getRandomColor } from 'container/ExplorerOptions/utils';
 import { PostableAlertRuleV2 } from 'types/api/alerts/alertTypesV2';
 import { v4 } from 'uuid';
 
+import styles from './CreateAlertV2.module.scss';
 import { useCreateAlertState } from './context';
 import {
 	INITIAL_ADVANCED_OPTIONS_STATE,
@@ -35,7 +36,7 @@ export function Spinner(): JSX.Element | null {
 	}
 
 	return createPortal(
-		<div className="sticky-page-spinner">
+		<div className={styles.stickyPageSpinner}>
 			<Spin size="large" spinning />
 		</div>,
 		document.body,

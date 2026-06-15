@@ -3,6 +3,7 @@ import { Drawer } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { AlertRuleStats, AlertRuleTopContributors } from 'types/api/alerts/def';
 
+import styles from './ViewAllDrawer.module.scss';
 import TopContributorsRows from './TopContributorsRows';
 
 function ViewAllDrawer({
@@ -24,15 +25,15 @@ function ViewAllDrawer({
 			onClose={toggleViewAllDrawer}
 			placement="right"
 			width="50%"
-			className="view-all-drawer"
+			className={styles.viewAllDrawer}
 			style={{
 				overscrollBehavior: 'contain',
 				background: isDarkMode ? Color.BG_INK_400 : Color.BG_VANILLA_100,
 			}}
 			title="Viewing All Contributors"
 		>
-			<div className="top-contributors-card--view-all">
-				<div className="top-contributors-card__content">
+			<div className={styles.topContributorsCardViewAll}>
+				<div className={styles.topContributorsCardContent}>
 					<TopContributorsRows
 						topContributors={topContributorsData}
 						totalCurrentTriggers={totalCurrentTriggers}

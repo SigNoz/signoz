@@ -1,0 +1,98 @@
+.alertTabs {
+	padding: 0 var(--spacing-4);
+
+	:global(.ant-tabs-tab) {
+		border: none !important;
+		margin-left: 0 !important;
+		padding: 0 !important;
+		border-radius: 0 !important;
+
+		:global(.ant-btn-default) {
+			border-color: transparent;
+			box-shadow: none;
+			border-radius: 0;
+		}
+	}
+
+	:global(.ant-tabs-tab-active) {
+		.navBtns {
+			background: var(--l3-border) !important;
+			border-radius: 0;
+		}
+	}
+
+	:global(.ant-tabs-nav) {
+		margin: 0;
+		margin-bottom: 0.5rem;
+
+		&::before {
+			border-bottom: none !important;
+		}
+	}
+
+	:global(.ant-tabs-nav-list) {
+		border: 1px solid var(--l3-border);
+	}
+
+	:global(.ant-tabs-tab + .ant-tabs-tab) {
+		border-left: 1px solid var(--l3-border) !important;
+	}
+
+	:global(.ant-tabs-tab-btn) {
+		padding: 0 !important;
+	}
+}
+
+.navBtns {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--spacing-4);
+}
+
+.alertQuerySectionContainer {
+	border-color: var(--l1-border);
+
+	--query-builder-v2-color: var(--l2-foreground);
+	--query-builder-v2-background-color: var(--l3-background);
+	--query-builder-v2-border-color: var(--l3-border);
+	--query-builder-v2-selection-background-color: var(--l2-background);
+	--query-builder-v2-chip-decorator-background-color: var(--l2-background);
+	--query-builder-v2-placeholder-color: var(--l3-foreground);
+	--query-builder-v2-selected-background-color: var(--l3-foreground);
+	--query-search-background-color: var(--l3-background);
+	--query-search-background-color-selection: var(--l3-background);
+	--input-with-label-border-color: var(--l3-border);
+	--input-with-label-background-color: var(--l3-background);
+	--input-with-label-color: var(--l2-foreground);
+	--query-builder-v2-toggle-group-background-color: var(--l3-background);
+	--query-builder-v2-toggle-group-border-color: var(--l3-border);
+	--query-builder-v2-toggle-group-active-background-color: var(--l2-background);
+	--query-builder-v2-toggle-group-background-color-hover: var(--l3-background);
+	--input-height: 36px;
+	--input-hover-background: var(--l3-background);
+	--input-hover-border-color: var(--internal-ant-border-color-hover);
+
+	:global(.ant-card-body) {
+		padding: 0;
+		background-color: var(--l2-background);
+
+		.alertTabs {
+			padding: 0;
+
+			:global(.ant-tabs) {
+				:global(.ant-tabs-nav) {
+					padding: var(--spacing-4) 0;
+
+					:global(.ant-tabs-nav-wrap) {
+						padding: 0;
+					}
+				}
+
+				:global(.ant-tabs-extra-content) {
+					padding: 0;
+				}
+			}
+		}
+	}
+}

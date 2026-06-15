@@ -4,6 +4,8 @@ import { Info } from '@signozhq/icons';
 
 import { useCreateAlertState } from '../context';
 
+import styles from './NotificationSettings.module.scss';
+
 function NotificationMessage(): JSX.Element {
 	const { notificationSettings, setNotificationSettings } =
 		useCreateAlertState();
@@ -50,21 +52,21 @@ function NotificationMessage(): JSX.Element {
 	// );
 
 	return (
-		<div className="notification-message-container">
-			<div className="notification-message-header">
-				<div className="notification-message-header-content">
-					<Typography.Text className="notification-message-header-title">
+		<div className={styles.notificationMessageContainer}>
+			<div className={styles.notificationMessageHeader}>
+				<div className={styles.notificationMessageHeaderContent}>
+					<Typography.Text className={styles.notificationMessageHeaderTitle}>
 						Notification Message
 						<Tooltip title="Customize the message content sent in alert notifications. Template variables like {{alertname}}, {{value}}, and {{threshold}} will be replaced with actual values when the alert fires.">
 							<Info size={16} />
 						</Tooltip>
 					</Typography.Text>
-					<Typography.Text className="notification-message-header-description">
+					<Typography.Text className={styles.notificationMessageHeaderDescription}>
 						Custom message content for alert notifications. Use template variables to
 						include dynamic information.
 					</Typography.Text>
 				</div>
-				<div className="notification-message-header-actions">
+				<div className={styles.notificationMessageHeaderActions}>
 					{/* TODO: Add back when the functionality is implemented */}
 					{/* <Popover content={templateVariableContent}>
 						<Button type="text">

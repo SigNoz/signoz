@@ -15,7 +15,7 @@ import AlertThreshold from './AlertThreshold';
 import AnomalyThreshold from './AnomalyThreshold';
 import { ANOMALY_TAB_TOOLTIP, THRESHOLD_TAB_TOOLTIP } from './constants';
 
-import './styles.scss';
+import styles from './AlertCondition.module.scss';
 
 function AlertCondition(): JSX.Element {
 	const { alertType, setAlertType } = useCreateAlertState();
@@ -67,15 +67,15 @@ function AlertCondition(): JSX.Element {
 	};
 
 	return (
-		<div className="alert-condition-container">
+		<div className={styles.alertConditionContainer}>
 			<Stepper stepNumber={2} label="Set alert conditions" />
-			<div className="alert-condition">
-				<div className="alert-condition-tabs">
+			<div className={styles.alertCondition}>
+				<div className={styles.alertConditionTabs}>
 					{tabs.map((tab) => (
 						<Tooltip key={tab.value} title={getTabTooltip(tab)}>
 							<Button
-								className={classNames('list-view-tab', 'explorer-view-option', {
-									'active-tab': alertType === tab.value,
+								className={classNames(styles.explorerViewOption, {
+									[styles.activeTab]: alertType === tab.value,
 								})}
 								onClick={(): void => {
 									if (alertType !== tab.value) {
@@ -106,7 +106,7 @@ function AlertCondition(): JSX.Element {
 					refreshChannels={refreshChannels}
 				/>
 			)}
-			<div className="condensed-advanced-options-container">
+			<div className={styles.condensedAdvancedOptionsContainer}>
 				<AdvancedOptions />
 			</div>
 		</div>

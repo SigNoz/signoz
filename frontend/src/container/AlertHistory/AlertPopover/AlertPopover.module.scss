@@ -1,0 +1,40 @@
+.alertPopoverTriggerAction {
+	cursor: pointer;
+}
+
+.alertHistoryPopover {
+	:global(.ant-popover-inner) {
+		border: 1px solid var(--l1-border);
+		background: var(--l1-background) !important;
+		padding: 0 !important;
+	}
+
+	:global(.ant-popover-arrow) {
+		&::before {
+			background: var(--l1-background);
+		}
+	}
+}
+
+.contributorRowPopoverButtons {
+	display: flex;
+	flex-direction: column;
+}
+
+.contributorRowPopoverButtonsButton {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-3);
+	padding: var(--spacing-6) var(--spacing-7);
+	color: var(--l2-foreground);
+	font-size: var(--periscope-font-size-base);
+	letter-spacing: 0.14px;
+	width: 160px;
+	cursor: pointer;
+	background: var(--l1-background);
+	border-color: var(--l1-border);
+
+	&:hover {
+		background: var(--l2-background);
+	}
+}

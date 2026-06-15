@@ -1,6 +1,8 @@
-import React, { useEffect, useState } from 'react';
 import { Input } from '@signozhq/ui/input';
-import './TimeInput.scss';
+import React, { useEffect, useState } from 'react';
+import cx from 'classnames';
+
+import styles from './TimeInput.module.scss';
 
 export interface TimeInputProps {
 	value?: string; // Format: "HH:MM:SS"
@@ -144,7 +146,10 @@ function TimeInput({
 	};
 
 	return (
-		<div data-testid="time-input" className={`time-input-container ${className}`}>
+		<div
+			data-testid="time-input"
+			className={cx(styles.timeInputContainer, className)}
+		>
 			<Input
 				data-field="hours"
 				value={hours}
@@ -153,11 +158,11 @@ function TimeInput({
 				onKeyDown={(e): void => handleKeyDown(e, 'hours')}
 				disabled={disabled}
 				maxLength={2}
-				className="time-input-field"
+				className={styles.timeInputField}
 				placeholder="00"
 				data-testid="time-input-hours"
 			/>
-			<span className="time-input-separator">:</span>
+			<span className={styles.timeInputSeparator}>:</span>
 			<Input
 				data-field="minutes"
 				value={minutes}
@@ -166,11 +171,11 @@ function TimeInput({
 				onKeyDown={(e): void => handleKeyDown(e, 'minutes')}
 				disabled={disabled}
 				maxLength={2}
-				className="time-input-field"
+				className={styles.timeInputField}
 				placeholder="00"
 				data-testid="time-input-minutes"
 			/>
-			<span className="time-input-separator">:</span>
+			<span className={styles.timeInputSeparator}>:</span>
 			<Input
 				data-field="seconds"
 				value={seconds}
@@ -179,7 +184,7 @@ function TimeInput({
 				onKeyDown={(e): void => handleKeyDown(e, 'seconds')}
 				disabled={disabled}
 				maxLength={2}
-				className="time-input-field"
+				className={styles.timeInputField}
 				placeholder="00"
 				data-testid="time-input-seconds"
 			/>

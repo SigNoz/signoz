@@ -30,7 +30,7 @@ import {
 	TextareaMedium,
 } from './styles';
 
-import './FormAlertRules.styles.scss';
+import styles from './FormAlertRules.module.scss';
 
 const { Option } = Select;
 
@@ -110,7 +110,7 @@ function BasicInfo({
 	return (
 		<>
 			<StepHeading> {t('alert_form_step4')} </StepHeading>
-			<FormContainer>
+			<FormContainer className={styles.formAlertContainerBasic}>
 				<Form.Item
 					label={t('field_severity')}
 					labelAlign="left"
@@ -255,7 +255,7 @@ function BasicInfo({
 					>
 						<Button
 							onClick={handleCreateNewChannels}
-							className="create-notification-btn"
+							className={styles.createNotificationBtn}
 							disabled={!addNewChannelPermission}
 						>
 							<Flex align="center" justify="center">

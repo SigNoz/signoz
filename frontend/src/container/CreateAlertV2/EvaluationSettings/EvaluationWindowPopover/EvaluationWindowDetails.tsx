@@ -12,6 +12,7 @@ import {
 import TimeInput from '../TimeInput';
 import { IEvaluationWindowDetailsProps } from '../types';
 import { getCumulativeWindowTimeframeText } from '../utils';
+import styles from '../styles.module.scss';
 
 function EvaluationWindowDetails({
 	evaluationWindow,
@@ -117,12 +118,15 @@ function EvaluationWindowDetails({
 
 	if (isCurrentHour) {
 		return (
-			<div className="evaluation-window-details">
+			<div
+				className={styles.evaluationWindowDetails}
+				data-section="evaluation-window-details"
+			>
 				<Typography.Text>
 					{getCumulativeWindowDescription(evaluationWindow.timeframe)}
 				</Typography.Text>
 				<Typography.Text>{displayText}</Typography.Text>
-				<div className="select-group">
+				<div className={styles.selectGroup}>
 					<Typography.Text>STARTING AT MINUTE</Typography.Text>
 					<Select
 						options={currentHourOptions}
@@ -138,19 +142,22 @@ function EvaluationWindowDetails({
 
 	if (isCurrentDay) {
 		return (
-			<div className="evaluation-window-details">
+			<div
+				className={styles.evaluationWindowDetails}
+				data-section="evaluation-window-details"
+			>
 				<Typography.Text>
 					{getCumulativeWindowDescription(evaluationWindow.timeframe)}
 				</Typography.Text>
 				<Typography.Text>{displayText}</Typography.Text>
-				<div className="select-group time-select-group">
+				<div className={`${styles.selectGroup} ${styles.timeSelectGroup}`}>
 					<Typography.Text>STARTING AT</Typography.Text>
 					<TimeInput
 						value={evaluationWindow.startingAt.time}
 						onChange={handleTimeChange}
 					/>
 				</div>
-				<div className="select-group">
+				<div className={styles.selectGroup}>
 					<Typography.Text>SELECT TIMEZONE</Typography.Text>
 					<Select
 						options={TIMEZONE_DATA}
@@ -166,12 +173,15 @@ function EvaluationWindowDetails({
 
 	if (isCurrentMonth) {
 		return (
-			<div className="evaluation-window-details">
+			<div
+				className={styles.evaluationWindowDetails}
+				data-section="evaluation-window-details"
+			>
 				<Typography.Text>
 					{getCumulativeWindowDescription(evaluationWindow.timeframe)}
 				</Typography.Text>
 				<Typography.Text>{displayText}</Typography.Text>
-				<div className="select-group">
+				<div className={styles.selectGroup}>
 					<Typography.Text>STARTING ON DAY</Typography.Text>
 					<Select
 						options={currentMonthOptions}
@@ -181,14 +191,14 @@ function EvaluationWindowDetails({
 						data-testid="evaluation-window-details-starting-at-select"
 					/>
 				</div>
-				<div className="select-group time-select-group">
+				<div className={`${styles.selectGroup} ${styles.timeSelectGroup}`}>
 					<Typography.Text>STARTING AT</Typography.Text>
 					<TimeInput
 						value={evaluationWindow.startingAt.time}
 						onChange={handleTimeChange}
 					/>
 				</div>
-				<div className="select-group">
+				<div className={styles.selectGroup}>
 					<Typography.Text>SELECT TIMEZONE</Typography.Text>
 					<Select
 						options={TIMEZONE_DATA}
@@ -203,13 +213,16 @@ function EvaluationWindowDetails({
 	}
 
 	return (
-		<div className="evaluation-window-details">
+		<div
+			className={styles.evaluationWindowDetails}
+			data-section="evaluation-window-details"
+		>
 			<Typography.Text>
 				{getRollingWindowDescription(evaluationWindow.timeframe)}
 			</Typography.Text>
 			<Typography.Text>Specify custom duration</Typography.Text>
 			<Typography.Text>{displayText}</Typography.Text>
-			<div className="select-group">
+			<div className={styles.selectGroup}>
 				<Typography.Text>VALUE</Typography.Text>
 				<Input
 					name="value"
@@ -220,7 +233,7 @@ function EvaluationWindowDetails({
 					data-testid="evaluation-window-details-custom-rolling-window-duration-input"
 				/>
 			</div>
-			<div className="select-group time-select-group">
+			<div className={`${styles.selectGroup} ${styles.timeSelectGroup}`}>
 				<Typography.Text>UNIT</Typography.Text>
 				<Select
 					options={ADVANCED_OPTIONS_TIME_UNIT_OPTIONS}

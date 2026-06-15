@@ -12,14 +12,14 @@ import Stepper from '../Stepper';
 import MultipleNotifications from './MultipleNotifications';
 import NotificationMessage from './NotificationMessage';
 
-import './styles.scss';
+import styles from './NotificationSettings.module.scss';
 
 function NotificationSettings(): JSX.Element {
 	const { notificationSettings, setNotificationSettings } =
 		useCreateAlertState();
 
 	const repeatNotificationsInput = (
-		<div className="repeat-notifications-input">
+		<div className={styles.repeatNotificationsInput}>
 			<Typography.Text>Every</Typography.Text>
 			<Input
 				value={notificationSettings.reNotification.value}
@@ -81,10 +81,10 @@ function NotificationSettings(): JSX.Element {
 	);
 
 	return (
-		<div className="notification-settings-container">
+		<div className={styles.notificationSettingsContainer}>
 			<Stepper stepNumber={3} label="Notification settings" />
 			<NotificationMessage />
-			<div className="notification-settings-content">
+			<div className={styles.notificationSettingsContent}>
 				<MultipleNotifications />
 				<AdvancedOptionItem
 					title="Repeat notifications"

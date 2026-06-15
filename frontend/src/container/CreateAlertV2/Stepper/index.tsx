@@ -1,4 +1,4 @@
-import './styles.scss';
+import styles from './Stepper.module.scss';
 
 interface StepperProps {
 	stepNumber: number;
@@ -7,10 +7,10 @@ interface StepperProps {
 
 function Stepper({ stepNumber, label }: StepperProps): JSX.Element {
 	return (
-		<div className="stepper-container">
-			<div className="step-number">{stepNumber}</div>
-			<div className="step-label">{label}</div>
-			<div className="dotted-line" />
+		<div className={styles.stepperContainer}>
+			<div className={styles.stepNumber}>{stepNumber}</div>
+			<div className={styles.stepLabel}>{label}</div>
+			<div className={styles.dottedLine} />
 		</div>
 	);
 }

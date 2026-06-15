@@ -6,13 +6,13 @@ import history from 'lib/history';
 import { Info } from '@signozhq/icons';
 import Tabs2 from 'periscope/components/Tabs2';
 
-import './TabsAndFilters.styles.scss';
+import styles from './TabsAndFilters.module.scss';
 
 function ComingSoon(): JSX.Element {
 	return (
-		<div className="coming-soon">
-			<div className="coming-soon__text">Coming Soon</div>
-			<div className="coming-soon__icon">
+		<div className={styles.comingSoon}>
+			<div className={styles.comingSoonText}>Coming Soon</div>
+			<div className={styles.comingSoonIcon}>
 				<Info size={10} color={Color.BG_SIENNA_400} />
 			</div>
 		</div>
@@ -27,7 +27,7 @@ function TimelineTabs(): JSX.Element {
 		{
 			value: TimelineTab.TOP_5_CONTRIBUTORS,
 			label: (
-				<div className="top-5-contributors">
+				<div className={styles.top5Contributors}>
 					Top 5 Contributors
 					<ComingSoon />
 				</div>
@@ -80,7 +80,7 @@ function TimelineFilters(): JSX.Element {
 
 function TabsAndFilters(): JSX.Element {
 	return (
-		<div className="timeline-tabs-and-filters">
+		<div className={styles.timelineTabsAndFilters}>
 			<TimelineTabs />
 			<TimelineFilters />
 		</div>

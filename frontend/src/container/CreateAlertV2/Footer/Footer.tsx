@@ -19,7 +19,7 @@ import {
 	validateCreateAlertState,
 } from './utils';
 
-import './styles.scss';
+import styles from './Footer.module.scss';
 import {
 	invalidateGetRuleByID,
 	invalidateListRules,
@@ -243,7 +243,7 @@ function Footer(): JSX.Element {
 	]);
 
 	return (
-		<div className="create-alert-v2-footer">
+		<div className={styles.footer}>
 			<Button
 				variant="solid"
 				color="secondary"
@@ -252,7 +252,7 @@ function Footer(): JSX.Element {
 			>
 				<X size={14} /> Discard
 			</Button>
-			<div className="button-group">
+			<div className={styles.buttonGroup}>
 				{testAlertButton}
 				{saveAlertButton}
 			</div>

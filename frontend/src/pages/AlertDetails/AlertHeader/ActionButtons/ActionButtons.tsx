@@ -20,7 +20,7 @@ import { AlertDef } from 'types/api/alerts/def';
 import { AlertHeaderProps } from '../AlertHeader';
 import RenameModal from './RenameModal';
 
-import './ActionButtons.styles.scss';
+import styles from './ActionButtons.module.scss';
 
 function AlertActionButtons({
 	ruleId,
@@ -114,7 +114,7 @@ function AlertActionButtons({
 
 	return (
 		<>
-			<div className="alert-action-buttons">
+			<div className={styles.alertActionButtons}>
 				<Tooltip title={isAlertRuleDisabled ? 'Enable alert' : 'Disable alert'}>
 					{isAlertRuleDisabled !== undefined && (
 						<Switch onChange={toggleAlertRule} value={!isAlertRuleDisabled} />
@@ -122,10 +122,10 @@ function AlertActionButtons({
 				</Tooltip>
 				<CopyToClipboard textToCopy={window.location.href} />
 
-				<Divider type="vertical" className="alert-action-buttons__divider" />
+				<Divider type="vertical" className={styles.divider} />
 
 				<DropdownMenuSimple menu={{ items: menuItems }}>
-					<span className="dropdown-trigger-wrapper">
+					<span className={styles.dropdownTriggerWrapper}>
 						<Tooltip title="More options">
 							<Button
 								type="text"

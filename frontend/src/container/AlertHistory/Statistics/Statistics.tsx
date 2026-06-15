@@ -3,7 +3,7 @@ import { AlertRuleStats } from 'types/api/alerts/def';
 import StatsCardsRenderer from './StatsCardsRenderer/StatsCardsRenderer';
 import TopContributorsRenderer from './TopContributorsRenderer/TopContributorsRenderer';
 
-import './Statistics.styles.scss';
+import styles from './Statistics.module.scss';
 
 function Statistics({
 	setTotalCurrentTriggers,
@@ -13,7 +13,7 @@ function Statistics({
 	totalCurrentTriggers: AlertRuleStats['totalCurrentTriggers'];
 }): JSX.Element {
 	return (
-		<div className="statistics">
+		<div className={styles.statistics}>
 			<StatsCardsRenderer setTotalCurrentTriggers={setTotalCurrentTriggers} />
 			<TopContributorsRenderer totalCurrentTriggers={totalCurrentTriggers} />
 		</div>

@@ -1,0 +1,69 @@
+.querySection {
+	margin: 0 var(--spacing-8);
+
+	:global {
+		[class*='alertQuerySectionContainer'] {
+			margin: 0;
+			background-color: var(--l1-background);
+			border: 1px solid var(--l1-border);
+		}
+	}
+}
+
+.querySectionTabs {
+	display: flex;
+	align-items: center;
+	margin-left: var(--spacing-4);
+	margin-top: var(--spacing-12);
+}
+
+.querySectionQueryActions {
+	display: flex;
+	border-radius: 2px;
+	border: 1px solid var(--l1-border);
+	background: var(--l2-background);
+	flex-direction: row;
+	border-bottom: none;
+	margin-bottom: -1px;
+}
+
+.explorerViewOption {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-direction: row;
+	border: none;
+	padding: 9px;
+	box-shadow: none;
+	border-radius: 0;
+	border-left: 0.5px solid var(--l1-border);
+	border-bottom: 0.5px solid var(--l1-border);
+	width: 120px;
+	height: 36px;
+	gap: var(--spacing-4);
+
+	&:first-child {
+		border-left: 1px solid transparent;
+	}
+
+	&:hover {
+		background-color: transparent !important;
+		border-left: 1px solid transparent !important;
+		color: var(--l1-foreground);
+	}
+
+	&:disabled {
+		background-color: var(--l2-background);
+		opacity: 0.6;
+	}
+}
+
+.explorerViewOptionActive {
+	composes: explorerViewOption;
+	background-color: var(--l3-background);
+	border-bottom: none;
+
+	&:hover {
+		background-color: var(--l3-background) !important;
+	}
+}

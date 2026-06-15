@@ -1,0 +1,8 @@
+.statistics {
+	display: flex;
+	justify-content: space-between;
+	height: 280px;
+	border: 1px solid var(--l1-border);
+	border-radius: 4px;
+	margin: 0 var(--spacing-8);
+}

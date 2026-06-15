@@ -1,0 +1,32 @@
+.alertChartContainer {
+	height: 57vh;
+	width: 100%;
+
+	:global(.ant-card-body) {
+		padding: var(--spacing-6);
+	}
+}
+
+.chartPreviewHeader {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-4);
+}
+
+.thresholdAlertUplotChartContainer {
+	height: calc(100% - 24px);
+}
+
+.anomalyAlertEvaluationViewLoadingContainer {
+	height: 100%;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.anomalyAlertEvaluationViewErrorContainer {
+	height: 100%;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}

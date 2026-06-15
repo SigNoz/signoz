@@ -6,6 +6,8 @@ import { INITIAL_ADVANCED_OPTIONS_STATE } from 'container/CreateAlertV2/context/
 import { IEditCustomScheduleProps } from 'container/CreateAlertV2/EvaluationSettings/types';
 import { Calendar1, Pencil, Trash } from '@signozhq/icons';
 
+import styles from './styles.module.scss';
+
 function EditCustomSchedule({
 	setIsEvaluationCadenceDetailsVisible,
 	setIsPreviewVisible,
@@ -17,7 +19,7 @@ function EditCustomSchedule({
 			return (
 				<Typography.Text>
 					<Typography.Text>Every</Typography.Text>
-					<Typography.Text className="highlight">
+					<Typography.Text className={styles.highlight}>
 						{advancedOptions.evaluationCadence.custom.repeatEvery
 							.charAt(0)
 							.toUpperCase() +
@@ -26,7 +28,7 @@ function EditCustomSchedule({
 					{advancedOptions.evaluationCadence.custom.repeatEvery !== 'day' && (
 						<>
 							<Typography.Text>on</Typography.Text>
-							<Typography.Text className="highlight">
+							<Typography.Text className={styles.highlight}>
 								{advancedOptions.evaluationCadence.custom.occurence
 									.map(
 										(occurence) => occurence.charAt(0).toUpperCase() + occurence.slice(1),
@@ -36,7 +38,7 @@ function EditCustomSchedule({
 						</>
 					)}
 					<Typography.Text>at</Typography.Text>
-					<Typography.Text className="highlight">
+					<Typography.Text className={styles.highlight}>
 						{advancedOptions.evaluationCadence.custom.startAt}
 					</Typography.Text>
 				</Typography.Text>
@@ -45,11 +47,11 @@ function EditCustomSchedule({
 		return (
 			<Typography.Text>
 				<Typography.Text>Starting on</Typography.Text>
-				<Typography.Text className="highlight">
+				<Typography.Text className={styles.highlight}>
 					{advancedOptions.evaluationCadence.rrule.date?.format('DD/MM/YYYY')}
 				</Typography.Text>
 				<Typography.Text>at</Typography.Text>
-				<Typography.Text className="highlight">
+				<Typography.Text className={styles.highlight}>
 					{advancedOptions.evaluationCadence.rrule.startAt}
 				</Typography.Text>
 			</Typography.Text>
@@ -77,9 +79,9 @@ function EditCustomSchedule({
 	};
 
 	return (
-		<div className="edit-custom-schedule">
+		<div className={styles.editCustomSchedule} data-testid="edit-custom-schedule">
 			{displayText}
-			<div className="button-row">
+			<div>
 				<Button.Group>
 					<Button type="default" onClick={handleEdit}>
 						<Pencil size={12} />

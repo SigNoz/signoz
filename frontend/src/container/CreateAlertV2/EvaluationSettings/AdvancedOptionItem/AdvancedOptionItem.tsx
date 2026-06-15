@@ -5,8 +5,7 @@ import { Typography } from '@signozhq/ui/typography';
 import { Info } from '@signozhq/icons';
 
 import { IAdvancedOptionItemProps } from '../types';
-
-import './styles.scss';
+import styles from './styles.module.scss';
 
 function AdvancedOptionItem({
 	title,
@@ -29,9 +28,9 @@ function AdvancedOptionItem({
 	};
 
 	return (
-		<div className="advanced-option-item" data-testid={dataTestId}>
-			<div className="advanced-option-item-left-content">
-				<Typography.Text className="advanced-option-item-title">
+		<div className={styles.advancedOptionItem} data-testid={dataTestId}>
+			<div className={styles.advancedOptionItemLeftContent}>
+				<Typography.Text className={styles.advancedOptionItemTitle}>
 					{title}
 					{tooltipText && (
 						<Tooltip title={tooltipText}>
@@ -39,13 +38,13 @@ function AdvancedOptionItem({
 						</Tooltip>
 					)}
 				</Typography.Text>
-				<Typography.Text className="advanced-option-item-description">
+				<Typography.Text className={styles.advancedOptionItemDescription}>
 					{description}
 				</Typography.Text>
 			</div>
-			<div className="advanced-option-item-right-content">
+			<div className={styles.advancedOptionItemRightContent}>
 				<div
-					className="advanced-option-item-input"
+					className={styles.advancedOptionItemInput}
 					style={{ display: showInput ? 'block' : 'none' }}
 				>
 					{input}

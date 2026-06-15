@@ -8,9 +8,8 @@ import { ADVANCED_OPTIONS_TIME_UNIT_OPTIONS } from '../../context/constants';
 import EditCustomSchedule from './EditCustomSchedule';
 import EvaluationCadenceDetails from './EvaluationCadenceDetails';
 import EvaluationCadencePreview from './EvaluationCadencePreview';
-
-import './styles.scss';
-import '../AdvancedOptionItem/styles.scss';
+import advancedOptionStyles from '../AdvancedOptionItem/styles.module.scss';
+import styles from './styles.module.scss';
 
 function EvaluationCadence(): JSX.Element {
 	const { advancedOptions, setAdvancedOptions } = useCreateAlertState();
@@ -41,25 +40,31 @@ function EvaluationCadence(): JSX.Element {
 	// };
 
 	return (
-		<div className="evaluation-cadence-container">
-			<div className="advanced-option-item evaluation-cadence-item">
-				<div className="advanced-option-item-left-content">
-					<Typography.Text className="advanced-option-item-title">
+		<div className={styles.evaluationCadenceContainer}>
+			<div
+				className={`${advancedOptionStyles.advancedOptionItem} ${styles.evaluationCadenceItem}`}
+			>
+				<div className={advancedOptionStyles.advancedOptionItemLeftContent}>
+					<Typography.Text className={advancedOptionStyles.advancedOptionItemTitle}>
 						How often to check
 						<Tooltip title="Controls how frequently the alert evaluates your conditions. For most alerts, 1-5 minutes is sufficient.">
 							<Info data-testid="evaluation-cadence-tooltip-icon" size={16} />
 						</Tooltip>
 					</Typography.Text>
-					<Typography.Text className="advanced-option-item-description">
+					<Typography.Text
+						className={advancedOptionStyles.advancedOptionItemDescription}
+					>
 						How frequently this alert checks your data. Default: Every 1 minute
 					</Typography.Text>
 				</div>
 				{isCustomScheduleButtonVisible && (
 					<div
-						className="advanced-option-item-right-content"
+						className={advancedOptionStyles.advancedOptionItemRightContent}
 						data-testid="evaluation-cadence-input-group"
 					>
-						<Input.Group className="advanced-option-item-input-group">
+						<Input.Group
+							className={advancedOptionStyles.advancedOptionItemInputGroup}
+						>
 							<Input
 								type="number"
 								placeholder="Enter time"

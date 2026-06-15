@@ -12,7 +12,7 @@ import QuerySection from './QuerySection';
 import { CreateAlertV2Props } from './types';
 import { Spinner } from './utils';
 
-import './CreateAlertV2.styles.scss';
+import styles from './CreateAlertV2.module.scss';
 
 function CreateAlertV2({ alertType }: CreateAlertV2Props): JSX.Element {
 	const queryToRedirect = buildInitialAlertDef(alertType);
@@ -25,7 +25,7 @@ function CreateAlertV2({ alertType }: CreateAlertV2Props): JSX.Element {
 	return (
 		<CreateAlertProvider initialAlertType={alertType}>
 			<Spinner />
-			<div className="create-alert-v2-container">
+			<div className={styles.createAlertV2Container}>
 				<CreateAlertHeader />
 				<QuerySection />
 				<AlertCondition />

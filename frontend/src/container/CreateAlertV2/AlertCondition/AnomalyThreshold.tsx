@@ -24,6 +24,8 @@ import {
 	RoutingPolicyBanner,
 } from './utils';
 
+import styles from './AnomalyThreshold.module.scss';
+
 function AnomalyThreshold({
 	channels,
 	isLoadingChannels,
@@ -64,11 +66,14 @@ function AnomalyThreshold({
 	};
 
 	return (
-		<div className="anomaly-threshold-container">
-			<div className="alert-condition-sentences">
+		<div className={styles.anomalyThresholdContainer}>
+			<div className={styles.alertConditionSentences}>
 				{/* Sentence 1 */}
-				<div className="alert-condition-sentence">
-					<Typography.Text data-testid="notification-text" className="sentence-text">
+				<div className={styles.alertConditionSentence}>
+					<Typography.Text
+						data-testid="notification-text"
+						className={styles.sentenceText}
+					>
 						Send notification when the observed value for
 					</Typography.Text>
 					<Select
@@ -84,7 +89,7 @@ function AnomalyThreshold({
 					/>
 					<Typography.Text
 						data-testid="evaluation-window-text"
-						className="sentence-text"
+						className={styles.sentenceText}
 					>
 						during the last
 					</Typography.Text>
@@ -100,9 +105,12 @@ function AnomalyThreshold({
 						options={ANOMALY_TIME_DURATION_OPTIONS}
 					/>
 				</div>
-				<div className="alert-condition-sentence">
+				<div className={styles.alertConditionSentence}>
 					{/* Sentence 2 */}
-					<Typography.Text data-testid="threshold-text" className="sentence-text">
+					<Typography.Text
+						data-testid="threshold-text"
+						className={styles.sentenceText}
+					>
 						is
 					</Typography.Text>
 					<Select
@@ -117,7 +125,10 @@ function AnomalyThreshold({
 						}}
 						options={deviationOptions}
 					/>
-					<Typography.Text data-testid="deviations-text" className="sentence-text">
+					<Typography.Text
+						data-testid="deviations-text"
+						className={styles.sentenceText}
+					>
 						deviations
 					</Typography.Text>
 					<Select
@@ -136,7 +147,7 @@ function AnomalyThreshold({
 					/>
 					<Typography.Text
 						data-testid="predicted-data-text"
-						className="sentence-text"
+						className={styles.sentenceText}
 					>
 						the predicted data
 					</Typography.Text>
@@ -156,8 +167,11 @@ function AnomalyThreshold({
 					/>
 				</div>
 				{/* Sentence 3 */}
-				<div className="alert-condition-sentence">
-					<Typography.Text data-testid="using-the-text" className="sentence-text">
+				<div className={styles.alertConditionSentence}>
+					<Typography.Text
+						data-testid="using-the-text"
+						className={styles.sentenceText}
+					>
 						using the
 					</Typography.Text>
 					<Select
@@ -173,7 +187,7 @@ function AnomalyThreshold({
 					/>
 					<Typography.Text
 						data-testid="algorithm-with-text"
-						className="sentence-text"
+						className={styles.sentenceText}
 					>
 						algorithm with
 					</Typography.Text>
@@ -192,7 +206,7 @@ function AnomalyThreshold({
 						<>
 							<Typography.Text
 								data-testid="seasonality-text"
-								className="sentence-text"
+								className={styles.sentenceText}
 							>
 								seasonality to
 							</Typography.Text>
@@ -228,7 +242,10 @@ function AnomalyThreshold({
 							/>
 						</>
 					) : (
-						<Typography.Text data-testid="seasonality-text" className="sentence-text">
+						<Typography.Text
+							data-testid="seasonality-text"
+							className={styles.sentenceText}
+						>
 							seasonality
 						</Typography.Text>
 					)}

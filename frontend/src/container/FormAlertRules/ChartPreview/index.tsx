@@ -51,7 +51,7 @@ import ChartContent from './ChartContent';
 import { ChartContainer } from './styles';
 import { getThresholds } from './utils';
 
-import './ChartPreview.styles.scss';
+import styles from './ChartPreview.module.scss';
 import { prepareChartData } from 'lib/uPlotV2/utils/dataUtils';
 
 // Height reserved for the `.chart-preview-header` strip rendered above the chart.
@@ -304,16 +304,16 @@ function ChartPreview({
 		: 0;
 
 	return (
-		<div className="alert-chart-container" ref={graphRef}>
+		<div className={styles.alertChartContainer} ref={graphRef}>
 			<ChartContainer>
-				<div className="chart-preview-header">
+				<div className={styles.chartPreviewHeader}>
 					{headline}
 					{isWarning && (
 						<WarningPopover warningData={queryResponse.data?.warning as Warning} />
 					)}
 				</div>
 
-				<div className="threshold-alert-uplot-chart-container">
+				<div className={styles.thresholdAlertUplotChartContainer}>
 					{queryResponse.isLoading && (
 						<Spinner size="large" tip="Loading..." height="100%" />
 					)}

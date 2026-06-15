@@ -1,0 +1,54 @@
+.timeInputContainer {
+	display: flex;
+	align-items: center;
+	gap: 0;
+}
+
+// Compound + descendant selector keeps specificity above
+// parent `.selectGroup :global(.ant-input)` override so the
+// 40px field width is not clobbered to 60%.
+.timeInputContainer :global(.ant-input).timeInputField {
+	width: 40px;
+	height: 32px;
+	background-color: var(--l2-background);
+	border: 1px solid var(--l1-border);
+	color: var(--l1-foreground);
+	font-family: 'Space Mono', monospace;
+	font-size: 13px;
+	font-weight: 600;
+	text-align: center;
+	border-radius: 4px;
+
+	&::placeholder {
+		color: var(--l2-foreground);
+		font-family: 'Space Mono', monospace;
+	}
+
+	&:hover {
+		border-color: var(--l1-border);
+	}
+
+	&:focus {
+		border-color: var(--l1-border);
+		box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+		outline: none;
+	}
+
+	&:disabled {
+		background-color: var(--l2-background);
+		color: var(--l2-foreground);
+		cursor: not-allowed;
+
+		&:hover {
+			border-color: var(--l1-border);
+		}
+	}
+}
+
+.timeInputSeparator {
+	color: var(--l2-foreground);
+	font-size: 13px;
+	font-weight: 600;
+	margin: 0 4px;
+	user-select: none;
+}

@@ -1,8 +1,10 @@
 import React, { useCallback, useState } from 'react';
 import { X } from '@signozhq/icons';
 import { useNotifications } from 'hooks/useNotifications';
+import { Input } from '@signozhq/ui/input';
 
 import { LabelInputState, LabelsInputProps } from './types';
+import styles from './CreateAlertHeader.module.scss';
 
 function LabelsInput({
 	labels,
@@ -120,19 +122,19 @@ function LabelsInput({
 	}, [inputState]);
 
 	return (
-		<div className="labels-input">
+		<div className={styles.labelsInput}>
 			{Object.keys(labels).length > 0 && (
-				<div className="labels-input__existing-labels">
+				<div className={styles.labelsInputExistingLabels}>
 					{Object.entries(labels).map(([key, value]) => (
 						<span
 							key={key}
-							className="labels-input__label-pill"
+							className={styles.labelsInputLabelPill}
 							data-testid={`label-pill-${key}-${value}`}
 						>
 							{key}: {value}
 							<button
 								type="button"
-								className="labels-input__remove-button"
+								className={styles.labelsInputRemoveButton}
 								aria-label={`Remove label ${key}`}
 								onClick={(): void => handleRemoveLabel(key)}
 							>
@@ -145,7 +147,7 @@ function LabelsInput({
 
 			{!isAdding ? (
 				<button
-					className="labels-input__add-button"
+					className={styles.labelsInputAddButton}
 					type="button"
 					onClick={handleAddLabelsClick}
 					data-testid="alert-add-label-button"
@@ -153,15 +155,15 @@ function LabelsInput({
 					+ Add labels
 				</button>
 			) : (
-				<div className="labels-input__input-container">
-					<input
+				<div className={styles.labelsInputInputContainer}>
+					<Input
 						autoFocus
 						type="text"
 						value={inputState.isKeyInput ? inputState.key : inputState.value}
 						onChange={handleInputChange}
 						onKeyDown={handleKeyDown}
 						onBlur={handleBlur}
-						className="labels-input__input"
+						className={styles.labelsInputInput}
 						placeholder={inputState.isKeyInput ? 'Enter key' : 'Enter value'}
 						data-testid="alert-add-label-input"
 					/>

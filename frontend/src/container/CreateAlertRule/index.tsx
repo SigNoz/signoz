@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo } from 'react';
+import cx from 'classnames';
 import { Form, Tabs, TabsProps } from 'antd';
 import logEvent from 'api/common/logEvent';
 import ConfigureIcon from 'assets/AlertHistory/ConfigureIcon';
@@ -22,7 +23,7 @@ import { ALERT_TYPE_VS_SOURCE_MAPPING } from './config';
 import { ALERTS_VALUES_MAP, ALERT_TYPE_BREADCRUMB_TITLE } from './defaults';
 import SelectAlertType from './SelectAlertType';
 
-import './CreateAlertRule.styles.scss';
+import styles from './CreateAlertRule.module.scss';
 
 function CreateRules(): JSX.Element {
 	const [formInstance] = Form.useForm();
@@ -143,9 +144,9 @@ function CreateRules(): JSX.Element {
 			),
 			key: AlertListTabs.ALERT_RULES,
 			children: (
-				<div className="create-alert-wrapper">
+				<div className={styles.createAlertWrapper}>
 					<AlertBreadcrumb
-						className="create-alert__breadcrumb"
+						className={styles.createAlertBreadcrumb}
 						items={
 							isTypeSelectionMode
 								? [
@@ -190,9 +191,9 @@ function CreateRules(): JSX.Element {
 			items={items}
 			activeKey={AlertListTabs.ALERT_RULES}
 			onChange={handleTabChange}
-			className="alerts-container create-alert-tabs"
+			className={cx(styles.alertsContainer, 'create-alert-tabs')}
 			tabBarExtraContent={
-				<div className="create-alert-tabs__extra">
+				<div className={styles.createAlertTabsExtra}>
 					<DateTimeSelector showAutoRefresh />
 					<HeaderRightSection
 						enableAnnouncements={false}

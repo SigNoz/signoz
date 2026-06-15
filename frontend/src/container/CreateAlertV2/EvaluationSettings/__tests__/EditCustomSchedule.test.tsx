@@ -16,7 +16,7 @@ jest.spyOn(alertState, 'useCreateAlertState').mockReturnValue(
 const mockSetIsEvaluationCadenceDetailsVisible = jest.fn();
 const mockSetIsPreviewVisible = jest.fn();
 
-const EDIT_CUSTOM_SCHEDULE_TEST_ID = '.edit-custom-schedule';
+const EDIT_CUSTOM_SCHEDULE_TEST_ID = 'edit-custom-schedule';
 
 describe('EditCustomSchedule', () => {
 	it('should render the correct display text for custom mode with daily occurrence', () => {
@@ -47,9 +47,7 @@ describe('EditCustomSchedule', () => {
 		);
 
 		// Use textContent to verify the complete text across multiple Typography components
-		const container = screen
-			.getByText('Every')
-			.closest(EDIT_CUSTOM_SCHEDULE_TEST_ID);
+		const container = screen.getByTestId(EDIT_CUSTOM_SCHEDULE_TEST_ID);
 		expect(container).toHaveTextContent('EveryDayat00:00:00');
 	});
 
@@ -81,9 +79,7 @@ describe('EditCustomSchedule', () => {
 			/>,
 		);
 
-		const container = screen
-			.getByText('Every')
-			.closest(EDIT_CUSTOM_SCHEDULE_TEST_ID);
+		const container = screen.getByTestId(EDIT_CUSTOM_SCHEDULE_TEST_ID);
 		expect(container).toHaveTextContent(
 			'EveryWeekonMonday, Tuesday, Wednesday, Thursday, Fridayat00:00:00',
 		);
@@ -117,9 +113,7 @@ describe('EditCustomSchedule', () => {
 			/>,
 		);
 
-		const container = screen
-			.getByText('Every')
-			.closest(EDIT_CUSTOM_SCHEDULE_TEST_ID);
+		const container = screen.getByTestId(EDIT_CUSTOM_SCHEDULE_TEST_ID);
 		expect(container).toHaveTextContent('EveryMonthon1at00:00:00');
 	});
 
