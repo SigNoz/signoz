@@ -6,6 +6,7 @@ import type { SectionConfig } from '../../types/sections';
 // recolors the displayed number — distinct from the value+label line thresholds the
 // `thresholds` section edits, so it has its own `comparisonThresholds` section.
 export const sections: SectionConfig[] = [
+	{ kind: 'visualization', controls: { timePreference: true } },
 	{ kind: 'formatting', controls: { unit: true, decimals: true } },
 	{ kind: 'comparisonThresholds' },
 	{ kind: 'contextLinks' },

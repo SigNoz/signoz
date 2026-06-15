@@ -1,6 +1,7 @@
 import type {
 	DashboardLinkDTO,
 	DashboardtypesAxesDTO,
+	DashboardtypesBarChartVisualizationDTO,
 	DashboardtypesComparisonThresholdDTO,
 	DashboardtypesHistogramBucketsDTO,
 	DashboardtypesLegendDTO,
@@ -13,6 +14,7 @@ import {
 	BarChart,
 	Hash,
 	Layers,
+	LayoutDashboard,
 	Link,
 	Palette,
 	Ruler,
@@ -49,6 +51,11 @@ export interface SectionSpecMap {
 	legend: DashboardtypesLegendDTO; // spec.plugin.spec.legend
 	chartAppearance: DashboardtypesTimeSeriesChartAppearanceDTO; // spec.plugin.spec.chartAppearance
 	buckets: DashboardtypesHistogramBucketsDTO; // spec.plugin.spec.histogramBuckets
+	// spec.plugin.spec.visualization. Typed as the Bar shape because it's the widest
+	// superset (stackedBarChart + fillSpans + timePreference); other kinds' visualization
+	// DTOs are subsets. The per-kind `controls` bag gates which fields each editor writes,
+	// so a kind never writes a field its real DTO lacks (cast localized in the registry).
+	visualization: DashboardtypesBarChartVisualizationDTO;
 	thresholds: DashboardtypesThresholdWithLabelDTO[]; // spec.plugin.spec.thresholds
 	// Number panels store thresholds in a comparison-operator shape (value crosses an
 	// operator → recolor), distinct from the value+label lines above. Same spec key
@@ -75,6 +82,13 @@ export interface SectionControls {
 		spanGaps?: boolean;
 	};
 	buckets: { count?: boolean; width?: boolean; mergeQueries?: boolean };
+	// timePreference → per-panel time scope (all kinds); stacking → stackedBarChart (Bar);
+	// fillSpans → fill data gaps with 0 (TimeSeries). Each kind exposes only its subset.
+	visualization: {
+		timePreference?: boolean;
+		stacking?: boolean;
+		fillSpans?: boolean;
+	};
 }
 
 export type ControlledSectionKind = keyof SectionControls;
@@ -123,6 +137,7 @@ export const SECTION_METADATA = {
 	axes: { title: 'Axes', icon: Ruler },
 	legend: { title: 'Legend', icon: Layers },
 	chartAppearance: { title: 'Chart appearance', icon: Palette },
+	visualization: { title: 'Visualization', icon: LayoutDashboard },
 	buckets: { title: 'Histogram / Buckets', icon: BarChart },
 	thresholds: { title: 'Thresholds', icon: SlidersHorizontal },
 	comparisonThresholds: { title: 'Thresholds', icon: SlidersHorizontal },

@@ -2,6 +2,7 @@ import type { ComponentType } from 'react';
 import type {
 	DashboardLinkDTO,
 	DashboardtypesAxesDTO,
+	DashboardtypesBarChartVisualizationDTO,
 	DashboardtypesComparisonThresholdDTO,
 	DashboardtypesHistogramBucketsDTO,
 	DashboardtypesLegendDTO,
@@ -24,6 +25,7 @@ import ContextLinksSection from './sections/ContextLinksSection/ContextLinksSect
 import FormattingSection from './sections/FormattingSection/FormattingSection';
 import LegendSection from './sections/LegendSection/LegendSection';
 import ThresholdsSection from './sections/ThresholdsSection/ThresholdsSection';
+import VisualizationSection from './sections/VisualizationSection/VisualizationSection';
 
 type PanelSpec = DashboardtypesPanelSpecDTO;
 
@@ -99,6 +101,16 @@ export const SECTION_REGISTRY: {
 			),
 		write: (spec, chartAppearance): PanelSpec =>
 			writePluginSlice(spec, 'chartAppearance', chartAppearance),
+	},
+	visualization: {
+		Component: VisualizationSection,
+		read: (spec): DashboardtypesBarChartVisualizationDTO | undefined =>
+			readPluginSlice<DashboardtypesBarChartVisualizationDTO>(
+				spec,
+				'visualization',
+			),
+		write: (spec, visualization): PanelSpec =>
+			writePluginSlice(spec, 'visualization', visualization),
 	},
 	buckets: {
 		Component: BucketsSection,

@@ -1,7 +1,10 @@
 import { useMemo } from 'react';
 // eslint-disable-next-line no-restricted-imports -- TODO: migrate global time selector off redux
 import { useSelector } from 'react-redux';
-import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import type {
+	DashboardtypesPanelDTO,
+	DashboardtypesTimePreferenceDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { AppState } from 'store/reducers';
@@ -13,7 +16,10 @@ import {
 	hasRunnableQueries,
 } from '../queryV5/buildQueryRangeRequest';
 import type { PanelQueryData } from '../queryV5/types';
-import { PANEL_KIND_TO_PANEL_TYPE } from '../Panels/types/panelKind';
+import {
+	PANEL_KIND_TO_PANEL_TYPE,
+} from '../Panels/types/panelKind';
+import { resolvePanelTimeWindow } from './resolvePanelTimeWindow';
 import { useGetQueryRangeV5 } from './useGetQueryRangeV5';
 
 export interface UsePanelQueryArgs {
@@ -98,13 +104,26 @@ export function usePanelQuery({
 		minTime,
 	} = useSelector<AppState, GlobalReducer>((state) => state.globalTime);
 
-	// Redux global time is in nanoseconds; the V5 API takes epoch ms. An editor
-	// time override (already in ms) wins so the preview fetch is independent of
-	// the dashboard's global selection. Floor both paths: start/end are int64
-	// on the wire, and override values can carry fractional ms (see
-	// PanelQueryTimeOverride).
-	const startMs = Math.floor(time ? time.startMs : minTime / 1e6);
-	const endMs = Math.floor(time ? time.endMs : maxTime / 1e6);
+	// Per-panel time preference (`visualization.timePreference`) pins the panel to a
+	// fixed relative window regardless of the dashboard's selection. The plugin spec is
+	// a discriminated union; `visualization` is common to every variant, so a localized
+	// cast reads it without narrowing on kind.
+	const timePreference = (
+		panel?.spec?.plugin?.spec as
+			| { visualization?: { timePreference?: DashboardtypesTimePreferenceDTO } }
+			| undefined
+	)?.visualization?.timePreference;
+
+	// Redux global time is in nanoseconds; the V5 API takes epoch ms. Precedence: an
+	// editor time override (already in ms) wins so the preview stays independent of the
+	// dashboard, then the panel's time preference, then the global window. See
+	// resolvePanelTimeWindow for the flooring/anchoring rationale.
+	const { startMs, endMs } = resolvePanelTimeWindow({
+		timePreference,
+		globalStartMs: minTime / 1e6,
+		globalEndMs: maxTime / 1e6,
+		override: time,
+	});
 
 	const requestPayload = useMemo(
 		() =>
@@ -129,10 +148,13 @@ export function usePanelQuery({
 			// Dashboard keys off Redux min/max + interval; the editor passes an
 			// explicit ms window. Keep each distinct so they refetch on their own
 			// time without colliding in the react-query cache. The floored values
-			// key the cache so it matches what was actually requested.
+			// key the cache so it matches what was actually requested. The panel time
+			// preference participates too: it changes the resolved window off the same
+			// global min/max, so the key must distinguish it (else a preference switch
+			// would read a stale cache entry).
 			...(time
 				? [`override-${startMs}-${endMs}`]
-				: [minTime, maxTime, globalSelectedInterval]),
+				: [minTime, maxTime, globalSelectedInterval, timePreference]),
 			fullKind,
 			queries,
 		],
