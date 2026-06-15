@@ -11,22 +11,22 @@ import APIError from 'types/api/error';
 
 import { useDashboardStore } from '../../store/useDashboardStore';
 import CrossPanelSync from './CrossPanelSync/CrossPanelSync';
-import GeneralForm from './GeneralForm/GeneralForm';
+import DashboardInfoForm from './DashboardInfoForm/DashboardInfoForm';
 import UnsavedChangesFooter from './UnsavedChangesFooter/UnsavedChangesFooter';
 import { Base64Icons, stringsToTags, tagsToStrings } from './utils';
-import styles from './GeneralSettings.module.scss';
+import styles from './Overview.module.scss';
 
-interface GeneralSettingsProps {
+interface OverviewProps {
 	dashboard: DashboardtypesGettableDashboardV2DTO;
 }
 
-function GeneralSettings({ dashboard }: GeneralSettingsProps): JSX.Element {
+function Overview({ dashboard }: OverviewProps): JSX.Element {
 	const id = dashboard.id;
 
 	const refetch = useDashboardStore((s) => s.refetch);
 
-	const title = dashboard.spec?.display?.name ?? '';
-	const description = dashboard.spec?.display?.description ?? '';
+	const title = dashboard.spec.display.name;
+	const description = dashboard.spec.display.description ?? '';
 	const image = dashboard.image || Base64Icons[0];
 	const tagsAsStrings = useMemo(
 		() => tagsToStrings(dashboard.tags ?? []),
@@ -64,7 +64,7 @@ function GeneralSettings({ dashboard }: GeneralSettingsProps): JSX.Element {
 			value,
 		});
 
-		if (updatedTitle !== title) {
+		if (updatedTitle !== title && updatedTitle !== '') {
 			ops.push(replace('/spec/display/name', updatedTitle));
 		}
 		if (updatedDescription !== description) {
@@ -89,9 +89,6 @@ function GeneralSettings({ dashboard }: GeneralSettingsProps): JSX.Element {
 	]);
 
 	const onSaveHandler = useCallback(async (): Promise<void> => {
-		if (!id) {
-			return;
-		}
 		const ops = buildPatch();
 		if (ops.length === 0) {
 			return;
@@ -110,7 +107,7 @@ function GeneralSettings({ dashboard }: GeneralSettingsProps): JSX.Element {
 	}, [id, buildPatch, refetch, showErrorModal]);
 
 	useEffect(() => {
-		let n = 0;
+		let numberOfUnsavedChanges = 0;
 		const initialValues = [title, description, tagsAsStrings, image];
 		const updatedValues = [
 			updatedTitle,
@@ -120,10 +117,10 @@ function GeneralSettings({ dashboard }: GeneralSettingsProps): JSX.Element {
 		];
 		initialValues.forEach((val, index) => {
 			if (!isEqual(val, updatedValues[index])) {
-				n += 1;
+				numberOfUnsavedChanges += 1;
 			}
 		});
-		setNumberOfUnsavedChanges(n);
+		setNumberOfUnsavedChanges(numberOfUnsavedChanges);
 	}, [
 		description,
 		image,
@@ -144,7 +141,7 @@ function GeneralSettings({ dashboard }: GeneralSettingsProps): JSX.Element {
 
 	return (
 		<div className={styles.overviewContent}>
-			<GeneralForm
+			<DashboardInfoForm
 				title={updatedTitle}
 				description={updatedDescription}
 				image={updatedImage}
@@ -167,4 +164,4 @@ function GeneralSettings({ dashboard }: GeneralSettingsProps): JSX.Element {
 	);
 }
 
-export default GeneralSettings;
+export default Overview;
