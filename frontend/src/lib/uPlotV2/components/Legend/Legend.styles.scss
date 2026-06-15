@@ -15,6 +15,10 @@
 	gap: 12px;
 	height: 100%;
 	width: 100%;
+	// Allow the flex children to shrink below their content height so the
+	// virtualized grid scrolls within the capped legend height instead of
+	// overflowing the wrapper (default min-height:auto would block the shrink).
+	min-height: 0;
 
 	&:has(.legend-item-focused) .legend-item {
 		opacity: 0.3;
@@ -33,6 +37,11 @@
 	}
 
 	.legend-virtuoso-container {
+		// flex:1 + min-height:0 pins the scroller to the space left after the
+		// search box (RIGHT legend) and lets it scroll instead of growing to fit
+		// every row — without this the grid overflows a BOTTOM legend's fixed height.
+		flex: 1;
+		min-height: 0;
 		height: 100%;
 		width: 100%;
 
