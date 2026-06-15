@@ -1233,9 +1233,6 @@ def test_message_searches(
             "validate": lambda r: len(get_rows(r)) == 2 and all("Payment" in b.get("message", "") for b in _get_bodies(r)) and r.json().get("data", {}).get("warning") is not None,
         },
         # ── Full Text Search: search() explicit function ──────────────────────────────────────
-        # search("Payment") is equivalent to the bare-text '"Payment"' FTS:
-        # both fan out a case-insensitive match across severity_text, trace_id,
-        # span_id, body JSON values, attribute values, and resource values.
         {
             "name": "msg.search_quoted",
             "requestType": "raw",
@@ -1243,7 +1240,7 @@ def test_message_searches(
             "aggregation": "count()",
             "validate": lambda r: len(get_rows(r)) == 2 and set(_body_messages(r)) == payment_messages and r.json().get("data", {}).get("warning") is not None,
         },
-        # NOT search("Payment") — inverted FTS: logs that do NOT have "payment"
+        # NOT search("Payment") — inverted FullTextSearch: logs that do NOT have "payment"
         # in any field are returned.  control_log (db-service) and no_msg_log
         # (metrics-service) have no "payment" anywhere → 2 results.
         {

@@ -183,7 +183,7 @@ def test_fts_across_contexts(
         {
             "name": "fts.free_text/non_body_token_returns_zero",
             "expression": f'"{TOK_SEV}"',
-            "validate": lambda r: get_rows(r) == [],
+            "validate": lambda r: len(get_rows(r)) == 0,
         },
         # ── Full Text Search (search()) ───────────────────────────────────────
         # severity_text — only reachable via search(), not bare/quoted Free Text Search
@@ -252,8 +252,17 @@ def test_fts_across_contexts(
             "expression": f'NOT search("{TOK_SEV}")',
             "validate": lambda r, n=not_search_count: len(get_rows(r)) == n and "severity-text-svc" not in {row["data"]["resources_string"].get("service.name") for row in get_rows(r)},
         },
+        # search combined with attribute key-value filter (AND):
+        # search("xfts_") matches all 7 logs that carry any xfts_ token;
+        # ANDing with attribute.some_attr = TOK_ASVAL narrows to the single
+        # log that has that exact attribute — demonstrating AND reduces row count.
+        {
+            "name": "fts.search_and_attr_filter",
+            "expression": f'search("xfts_") AND attribute.some_attr = "{TOK_ASVAL}"',
+            "validate": lambda r: len(get_rows(r)) == 1 and get_rows(r)[0]["data"]["resources_string"].get("service.name") == "attr-str-val-svc",
+        },
         # no-match guard: a token that exists nowhere must return 0 rows
-        {"name": "fts.no_match", "expression": '"xfts_nonexistent_zzz_999"', "validate": lambda r: get_rows(r) == []},
+        {"name": "fts.no_match", "expression": '"xfts_nonexistent_zzz_999"', "validate": lambda r: len(get_rows(r)) == 0},
     ]
 
     for case in cases:
