@@ -16,10 +16,11 @@ import Header from './Header/Header';
 import layoutStorage from './layoutStorage';
 import PreviewPane from './PreviewPane/PreviewPane';
 import QueryBuilderPlaceholder from './QueryBuilderPlaceholder/QueryBuilderPlaceholder';
-import { useLegendSeries } from './useLegendSeries';
-import { usePanelEditorDraft } from './usePanelEditorDraft';
-import { usePanelEditorSave } from './usePanelEditorSave';
-import { usePreviewQuery } from './usePreviewQuery';
+import { useLegendSeries } from './hooks/useLegendSeries';
+import { usePanelEditorDraft } from './hooks/usePanelEditorDraft';
+import { usePanelEditorSave } from './hooks/usePanelEditorSave';
+import { usePreviewQuery } from './hooks/usePreviewQuery';
+import { useTableColumns } from './hooks/useTableColumns';
 
 import './PanelEditor.globals.scss';
 import styles from './PanelEditor.module.scss';
@@ -64,6 +65,7 @@ function PanelEditorContainer({
 			enabled: !!panelDef,
 		});
 	const legendSeries = useLegendSeries(draft, data);
+	const tableColumns = useTableColumns(draft, data);
 
 	// Flags the document while the editor overlay is mounted so the global stylesheet can
 	// lift body-portaled floating UI (Select dropdowns, the ⌘K palette) above the overlay.
@@ -159,6 +161,7 @@ function PanelEditorContainer({
 							spec={spec}
 							onChangeSpec={setSpec}
 							legendSeries={legendSeries}
+							tableColumns={tableColumns}
 						/>
 					</ResizablePanel>
 				</ResizablePanelGroup>

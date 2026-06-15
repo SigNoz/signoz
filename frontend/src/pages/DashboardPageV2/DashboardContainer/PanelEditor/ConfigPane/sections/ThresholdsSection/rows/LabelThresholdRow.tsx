@@ -3,49 +3,38 @@ import { Check, Pencil, Trash2, X } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import { Input } from 'antd';
-import type {
-	DashboardtypesComparisonOperatorDTO,
-	DashboardtypesComparisonThresholdDTO,
-	DashboardtypesThresholdFormatDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesThresholdWithLabelDTO } from 'api/generated/services/sigNoz.schemas';
 import YAxisUnitSelector from 'components/YAxisUnitSelector';
 import { YAxisSource } from 'components/YAxisUnitSelector/types';
 import { formatPanelValue } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/formatPanelValue';
 
-import ConfigSelect from '../../controls/ConfigSelect/ConfigSelect';
-import ThresholdColorSelect from '../ThresholdsSection/ThresholdColorSelect';
+import ThresholdColorSelect from '../ThresholdColorSelect';
 import {
 	isThresholdUnitIncompatible,
 	thresholdUnitCategories,
-} from '../ThresholdsSection/thresholdUnitCategories';
-import {
-	FORMAT_OPTIONS,
-	OPERATOR_OPTIONS,
-	OPERATOR_SYMBOL,
-} from './comparisonThresholdOptions';
+} from '../thresholdUnitCategories';
 
-import styles from '../ThresholdsSection/ThresholdsSection.module.scss';
+import styles from '../ThresholdsSection.module.scss';
 
-interface ComparisonThresholdRowProps {
+interface LabelThresholdRowProps {
 	index: number;
-	threshold: DashboardtypesComparisonThresholdDTO;
+	threshold: DashboardtypesThresholdWithLabelDTO;
 	/** Panel formatting unit — scopes the unit picker to its category (V1 parity). */
 	yAxisUnit?: string;
 	isEditing: boolean;
 	onEdit: () => void;
-	onSave: (next: DashboardtypesComparisonThresholdDTO) => void;
+	onSave: (next: DashboardtypesThresholdWithLabelDTO) => void;
 	onDiscard: () => void;
 	onRemove: () => void;
 }
 
 /**
- * One Number-panel comparison threshold ("If value > 80 → red") with V1-style
- * view/edit modes. View mode is a compact summary (color · operator value+unit ·
- * display); edit mode is a labelled form — condition (operator), value, unit (scoped to
- * the y-axis unit's category), color, and display (text/background) — editing a local
- * draft committed only on Save. Discard drops it.
+ * One threshold rule with V1-style view/edit modes. View mode shows a compact summary
+ * (color · value+unit · label) with Edit + Delete. Edit mode is a labelled form — color
+ * (preset/custom), value, unit (scoped to the y-axis unit's category), label — editing a
+ * local draft that's only committed on Save; Discard drops it.
  */
-function ComparisonThresholdRow({
+function LabelThresholdRow({
 	index,
 	threshold,
 	yAxisUnit,
@@ -54,7 +43,7 @@ function ComparisonThresholdRow({
 	onSave,
 	onDiscard,
 	onRemove,
-}: ComparisonThresholdRowProps): JSX.Element {
+}: LabelThresholdRowProps): JSX.Element {
 	const [draft, setDraft] = useState(threshold);
 
 	// Snapshot the saved threshold into the draft each time we (re)enter edit mode, so
@@ -67,13 +56,15 @@ function ComparisonThresholdRow({
 	}, [isEditing]);
 
 	if (!isEditing) {
-		const symbol = threshold.operator ? OPERATOR_SYMBOL[threshold.operator] : '';
 		return (
 			<div className={styles.viewRow}>
 				<span className={styles.dot} style={{ backgroundColor: threshold.color }} />
 				<span className={styles.viewValue}>
-					{symbol} {formatPanelValue(threshold.value, threshold.unit)}
+					{formatPanelValue(threshold.value, threshold.unit)}
 				</span>
+				{threshold.label && (
+					<span className={styles.viewLabel}>{threshold.label}</span>
+				)}
 				<div className={styles.spacer} />
 				<Button
 					type="button"
@@ -81,7 +72,7 @@ function ComparisonThresholdRow({
 					color="secondary"
 					size="icon"
 					aria-label={`Edit threshold ${index + 1}`}
-					data-testid={`comparison-threshold-edit-${index}`}
+					data-testid={`threshold-edit-${index}`}
 					onClick={onEdit}
 				>
 					<Pencil size={14} />
@@ -92,7 +83,7 @@ function ComparisonThresholdRow({
 					color="destructive"
 					size="icon"
 					aria-label={`Remove threshold ${index + 1}`}
-					data-testid={`comparison-threshold-remove-${index}`}
+					data-testid={`threshold-remove-${index}`}
 					onClick={onRemove}
 				>
 					<Trash2 size={14} />
@@ -109,25 +100,18 @@ function ComparisonThresholdRow({
 	return (
 		<div className={styles.editRow}>
 			<div className={styles.field}>
-				<Typography.Text className={styles.fieldLabel}>If value is</Typography.Text>
-				<ConfigSelect
-					testId={`comparison-threshold-operator-${index}`}
-					placeholder="Select condition"
-					value={draft.operator}
-					items={OPERATOR_OPTIONS}
-					onChange={(operator): void =>
-						setDraft((d) => ({
-							...d,
-							operator: operator as DashboardtypesComparisonOperatorDTO,
-						}))
-					}
+				<Typography.Text className={styles.fieldLabel}>Color</Typography.Text>
+				<ThresholdColorSelect
+					value={draft.color}
+					testId={`threshold-color-${index}`}
+					onChange={(color): void => setDraft((d) => ({ ...d, color }))}
 				/>
 			</div>
 
 			<div className={styles.field}>
 				<Typography.Text className={styles.fieldLabel}>Value</Typography.Text>
 				<Input
-					data-testid={`comparison-threshold-value-${index}`}
+					data-testid={`threshold-value-${index}`}
 					type="number"
 					placeholder="Value"
 					value={draft.value}
@@ -139,7 +123,7 @@ function ComparisonThresholdRow({
 				<Typography.Text className={styles.fieldLabel}>Unit</Typography.Text>
 				<YAxisUnitSelector
 					containerClassName={styles.unitSelector}
-					data-testid={`comparison-threshold-unit-${index}`}
+					data-testid={`threshold-unit-${index}`}
 					placeholder="Select unit"
 					source={YAxisSource.DASHBOARDS}
 					categoriesOverride={thresholdUnitCategories(yAxisUnit)}
@@ -149,7 +133,7 @@ function ComparisonThresholdRow({
 				{isThresholdUnitIncompatible(draft.unit, yAxisUnit) && (
 					<Typography.Text
 						className={styles.invalidUnit}
-						data-testid={`comparison-threshold-unit-invalid-${index}`}
+						data-testid={`threshold-unit-invalid-${index}`}
 					>
 						Threshold unit ({draft.unit}) is not valid with the y-axis unit (
 						{yAxisUnit})
@@ -158,27 +142,12 @@ function ComparisonThresholdRow({
 			</div>
 
 			<div className={styles.field}>
-				<Typography.Text className={styles.fieldLabel}>Color</Typography.Text>
-				<ThresholdColorSelect
-					value={draft.color}
-					testId={`comparison-threshold-color-${index}`}
-					onChange={(color): void => setDraft((d) => ({ ...d, color }))}
-				/>
-			</div>
-
-			<div className={styles.field}>
-				<Typography.Text className={styles.fieldLabel}>Display</Typography.Text>
-				<ConfigSelect
-					testId={`comparison-threshold-format-${index}`}
-					placeholder="Select display"
-					value={draft.format}
-					items={FORMAT_OPTIONS}
-					onChange={(format): void =>
-						setDraft((d) => ({
-							...d,
-							format: format as DashboardtypesThresholdFormatDTO,
-						}))
-					}
+				<Typography.Text className={styles.fieldLabel}>Label</Typography.Text>
+				<Input
+					data-testid={`threshold-label-${index}`}
+					placeholder="Optional"
+					value={draft.label ?? ''}
+					onChange={(e): void => setDraft((d) => ({ ...d, label: e.target.value }))}
 				/>
 			</div>
 
@@ -188,7 +157,7 @@ function ComparisonThresholdRow({
 					variant="outlined"
 					color="secondary"
 					prefix={<X size={14} />}
-					data-testid={`comparison-threshold-discard-${index}`}
+					data-testid={`threshold-discard-${index}`}
 					onClick={onDiscard}
 				>
 					Discard
@@ -198,7 +167,7 @@ function ComparisonThresholdRow({
 					variant="solid"
 					color="primary"
 					prefix={<Check size={14} />}
-					data-testid={`comparison-threshold-save-${index}`}
+					data-testid={`threshold-save-${index}`}
 					onClick={(): void => onSave(draft)}
 				>
 					Save
@@ -208,4 +177,4 @@ function ComparisonThresholdRow({
 	);
 }
 
-export default ComparisonThresholdRow;
+export default LabelThresholdRow;

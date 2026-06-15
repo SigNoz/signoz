@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import type { DashboardtypesThresholdWithLabelDTO } from 'api/generated/services/sigNoz.schemas';
+import type { AnyThreshold } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/sections';
 
 import ThresholdsSection from '../ThresholdsSection';
 
@@ -8,9 +9,10 @@ const THRESHOLDS: DashboardtypesThresholdWithLabelDTO[] = [
 	{ value: 80, color: '#F5B225', label: 'High', unit: 'percent' },
 ];
 
-// Stateful harness for flows that depend on the value updating (add/discard).
+// Stateful harness for flows that depend on the value updating (add/discard). No
+// `controls` is passed, exercising the default `label` variant.
 function Harness({ yAxisUnit }: { yAxisUnit?: string }): JSX.Element {
-	const [value, setValue] = useState<DashboardtypesThresholdWithLabelDTO[]>([]);
+	const [value, setValue] = useState<AnyThreshold[]>([]);
 	return (
 		<ThresholdsSection value={value} onChange={setValue} yAxisUnit={yAxisUnit} />
 	);

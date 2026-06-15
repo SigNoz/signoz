@@ -3,7 +3,8 @@ import { Typography } from '@signozhq/ui/typography';
 import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
 import { getPanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Panels';
 
-import type { LegendSeries } from '../useLegendSeries';
+import type { LegendSeries } from '../hooks/useLegendSeries';
+import type { TableColumnOption } from '../hooks/useTableColumns';
 import SectionSlot from './SectionSlot/SectionSlot';
 
 import styles from './ConfigPane.module.scss';
@@ -16,6 +17,8 @@ interface ConfigPaneProps {
 	onChangeSpec: (next: DashboardtypesPanelSpecDTO) => void;
 	/** Panel's resolved series, provided to sections that need them (legend colors). */
 	legendSeries: LegendSeries[];
+	/** Table panel's resolved value columns, for the table-only editors. */
+	tableColumns: TableColumnOption[];
 }
 
 /**
@@ -29,6 +32,7 @@ function ConfigPane({
 	spec,
 	onChangeSpec,
 	legendSeries,
+	tableColumns,
 }: ConfigPaneProps): JSX.Element {
 	const definition = getPanelDefinition(panelKind);
 	const sections = definition?.sections ?? [];
@@ -79,6 +83,7 @@ function ConfigPane({
 								spec={spec}
 								onChangeSpec={onChangeSpec}
 								legendSeries={legendSeries}
+								tableColumns={tableColumns}
 							/>
 						))}
 					</div>

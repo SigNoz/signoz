@@ -3,15 +3,14 @@ import type {
 	DashboardLinkDTO,
 	DashboardtypesAxesDTO,
 	DashboardtypesBarChartVisualizationDTO,
-	DashboardtypesComparisonThresholdDTO,
 	DashboardtypesHistogramBucketsDTO,
 	DashboardtypesLegendDTO,
-	DashboardtypesPanelFormattingDTO,
 	DashboardtypesPanelSpecDTO,
-	DashboardtypesThresholdWithLabelDTO,
 	DashboardtypesTimeSeriesChartAppearanceDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import type {
+	AnyThreshold,
+	PanelFormattingSlice,
 	SectionEditorProps,
 	SectionKind,
 	SectionSpecMap,
@@ -20,7 +19,6 @@ import type {
 import AxesSection from './sections/AxesSection/AxesSection';
 import BucketsSection from './sections/BucketsSection/BucketsSection';
 import ChartAppearanceSection from './sections/ChartAppearanceSection/ChartAppearanceSection';
-import ComparisonThresholdsSection from './sections/ComparisonThresholdsSection/ComparisonThresholdsSection';
 import ContextLinksSection from './sections/ContextLinksSection/ContextLinksSection';
 import FormattingSection from './sections/FormattingSection/FormattingSection';
 import LegendSection from './sections/LegendSection/LegendSection';
@@ -75,8 +73,8 @@ export const SECTION_REGISTRY: {
 } = {
 	formatting: {
 		Component: FormattingSection,
-		read: (spec): DashboardtypesPanelFormattingDTO | undefined =>
-			readPluginSlice<DashboardtypesPanelFormattingDTO>(spec, 'formatting'),
+		read: (spec): PanelFormattingSlice | undefined =>
+			readPluginSlice<PanelFormattingSlice>(spec, 'formatting'),
 		write: (spec, formatting): PanelSpec =>
 			writePluginSlice(spec, 'formatting', formatting),
 	},
@@ -125,18 +123,13 @@ export const SECTION_REGISTRY: {
 		read: (spec): DashboardLinkDTO[] | undefined => spec.links,
 		write: (spec, links): PanelSpec => ({ ...spec, links }),
 	},
+	// One editor for every threshold variant (label / comparison / table); the kind's
+	// `controls.variant` picks the row editor + element shape. All persist to the same
+	// plugin.spec.thresholds key.
 	thresholds: {
 		Component: ThresholdsSection,
-		read: (spec): DashboardtypesThresholdWithLabelDTO[] | undefined =>
-			readPluginSlice<DashboardtypesThresholdWithLabelDTO[]>(spec, 'thresholds'),
-		write: (spec, thresholds): PanelSpec =>
-			writePluginSlice(spec, 'thresholds', thresholds),
-	},
-	// Same plugin.spec.thresholds key, but Number's comparison-operator element shape.
-	comparisonThresholds: {
-		Component: ComparisonThresholdsSection,
-		read: (spec): DashboardtypesComparisonThresholdDTO[] | undefined =>
-			readPluginSlice<DashboardtypesComparisonThresholdDTO[]>(spec, 'thresholds'),
+		read: (spec): AnyThreshold[] | undefined =>
+			readPluginSlice<AnyThreshold[]>(spec, 'thresholds'),
 		write: (spec, thresholds): PanelSpec =>
 			writePluginSlice(spec, 'thresholds', thresholds),
 	},
@@ -159,6 +152,9 @@ export interface ErasedSectionDescriptor {
 		legendSeries?: unknown;
 		// The panel's formatting unit; read by editors that scope to it (thresholds).
 		yAxisUnit?: unknown;
+		// The Table panel's resolved value columns; read by the table-only editors
+		// (column units, per-column thresholds) to offer real columns.
+		tableColumns?: unknown;
 	}>;
 	read: (spec: PanelSpec) => unknown;
 	write: (spec: PanelSpec, value: unknown) => PanelSpec;

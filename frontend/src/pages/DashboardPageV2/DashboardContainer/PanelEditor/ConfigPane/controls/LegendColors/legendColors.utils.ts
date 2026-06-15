@@ -1,6 +1,6 @@
 import type { DashboardtypesLegendDTOCustomColors } from 'api/generated/services/sigNoz.schemas';
 
-import type { LegendSeries } from '../../../useLegendSeries';
+import type { LegendSeries } from '../../../hooks/useLegendSeries';
 
 /** Case-insensitive substring filter over series labels. Empty query → all series. */
 export function filterLegendSeries(

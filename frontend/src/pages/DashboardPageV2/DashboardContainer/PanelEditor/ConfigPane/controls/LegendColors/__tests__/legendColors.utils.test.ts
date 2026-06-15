@@ -1,4 +1,4 @@
-import type { LegendSeries } from '../../../../useLegendSeries';
+import type { LegendSeries } from '../../../../hooks/useLegendSeries';
 import {
 	clearSeriesColor,
 	filterLegendSeries,

@@ -8,6 +8,6 @@ export const sections: SectionConfig[] = [
 	{ kind: 'formatting', controls: { unit: true, decimals: true } },
 	{ kind: 'axes', controls: { minMax: true, logScale: true } },
 	{ kind: 'legend', controls: { position: true } },
-	{ kind: 'thresholds' },
+	{ kind: 'thresholds', controls: { variant: 'label' } },
 	{ kind: 'contextLinks' },
 ];

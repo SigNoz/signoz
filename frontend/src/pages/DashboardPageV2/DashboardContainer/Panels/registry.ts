@@ -3,6 +3,7 @@ import { definition as Histogram } from './kinds/HistogramPanel/definition';
 import { definition as NumberValue } from './kinds/NumberPanel/definition';
 import { definition as PieChart } from './kinds/PieChartPanel/definition';
 import { definition as TimeSeries } from './kinds/TimeSeriesPanel/definition';
+import { definition as Table } from './kinds/TablePanel/definition';
 import type {
 	PanelRegistry,
 	RenderablePanelDefinition,
@@ -18,6 +19,7 @@ export const PANELS: PanelRegistry = {
 	[Histogram.kind]: Histogram,
 	[NumberValue.kind]: NumberValue,
 	[PieChart.kind]: PieChart,
+	[Table.kind]: Table,
 };
 
 export function getPanelDefinition(

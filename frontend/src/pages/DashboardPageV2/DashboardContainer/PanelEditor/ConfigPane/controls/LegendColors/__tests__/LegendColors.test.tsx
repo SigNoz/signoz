@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 
-import type { LegendSeries } from '../../../../useLegendSeries';
+import type { LegendSeries } from '../../../../hooks/useLegendSeries';
 import LegendColors from '../LegendColors';
 
 const SERIES: LegendSeries[] = [

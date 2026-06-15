@@ -4,7 +4,7 @@ import type { SectionEditorProps } from 'pages/DashboardPageV2/DashboardContaine
 
 import ConfigSegmented from '../../controls/ConfigSegmented/ConfigSegmented';
 import LegendColors from '../../controls/LegendColors/LegendColors';
-import type { LegendSeries } from '../../../useLegendSeries';
+import type { LegendSeries } from '../../../hooks/useLegendSeries';
 
 import styles from './LegendSection.module.scss';
 

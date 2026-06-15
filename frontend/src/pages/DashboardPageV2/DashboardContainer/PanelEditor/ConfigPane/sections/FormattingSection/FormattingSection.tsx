@@ -4,9 +4,16 @@ import YAxisUnitSelector from 'components/YAxisUnitSelector';
 import { YAxisSource } from 'components/YAxisUnitSelector/types';
 import type { SectionEditorProps } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/sections';
 
+import type { TableColumnOption } from '../../../hooks/useTableColumns';
 import ConfigSelect from '../../controls/ConfigSelect/ConfigSelect';
+import ColumnUnits from './ColumnUnits';
 
 import styles from './FormattingSection.module.scss';
+
+type FormattingSectionProps = SectionEditorProps<'formatting'> & {
+	/** Table panel's resolved value columns; required for the column-units editor. */
+	tableColumns?: TableColumnOption[];
+};
 
 // `full` means "show the raw value, no rounding"; the digits round to that many places.
 const DECIMAL_OPTIONS: {
@@ -30,7 +37,8 @@ function FormattingSection({
 	value,
 	controls,
 	onChange,
-}: SectionEditorProps<'formatting'>): JSX.Element {
+	tableColumns = [],
+}: FormattingSectionProps): JSX.Element {
 	return (
 		<>
 			{controls.unit && (
@@ -60,6 +68,17 @@ function FormattingSection({
 								decimalPrecision: next as DashboardtypesPrecisionOptionDTO,
 							})
 						}
+					/>
+				</div>
+			)}
+
+			{controls.columnUnits && (
+				<div className={styles.field}>
+					<Typography.Text>Column units</Typography.Text>
+					<ColumnUnits
+						columns={tableColumns}
+						value={value?.columnUnits ?? {}}
+						onChange={(columnUnits): void => onChange({ ...value, columnUnits })}
 					/>
 				</div>
 			)}

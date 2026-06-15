@@ -15,6 +15,6 @@ export const sections: SectionConfig[] = [
 			spanGaps: true,
 		},
 	},
-	{ kind: 'thresholds' },
+	{ kind: 'thresholds', controls: { variant: 'label' } },
 	{ kind: 'contextLinks' },
 ];

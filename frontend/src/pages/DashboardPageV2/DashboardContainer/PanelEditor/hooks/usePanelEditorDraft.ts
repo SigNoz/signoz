@@ -5,7 +5,7 @@ import type {
 } from 'api/generated/services/sigNoz.schemas';
 import { isEqual } from 'lodash-es';
 
-import type { PanelEditorDraftApi } from './types';
+import type { PanelEditorDraftApi } from '../types';
 
 /**
  * Owns the editable draft of a single panel. Seeded once from the loaded panel

@@ -12,7 +12,7 @@ import { EQueryType } from 'types/common/dashboard';
 import type {
 	PreviewTimeRange,
 	UsePreviewQueryResult,
-} from '../usePreviewQuery';
+} from '../hooks/usePreviewQuery';
 
 import styles from './PreviewPane.module.scss';
 

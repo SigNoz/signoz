@@ -7,6 +7,8 @@ import type {
 	DashboardtypesLegendDTO,
 	DashboardtypesPanelFormattingDTO,
 	DashboardtypesPanelSpecDTO,
+	DashboardtypesTableFormattingDTO,
+	DashboardtypesTableThresholdDTO,
 	DashboardtypesThresholdWithLabelDTO,
 	DashboardtypesTimeSeriesChartAppearanceDTO,
 } from 'api/generated/services/sigNoz.schemas';
@@ -32,6 +34,22 @@ export interface SectionMetadata {
 }
 
 /**
+ * Which threshold editor a kind uses. All three variants persist to the same
+ * `plugin.spec.thresholds` key but with different element shapes, so one section
+ * (`thresholds`) drives all of them, discriminated by this variant:
+ * - `label` — value + color + label lines (TimeSeries / Bar)
+ * - `comparison` — value crosses an operator → recolor (Number)
+ * - `table` — per-column comparison (Table)
+ */
+export type ThresholdVariant = 'label' | 'comparison' | 'table';
+
+/** Union of every threshold element shape stored under `plugin.spec.thresholds`. */
+export type AnyThreshold =
+	| DashboardtypesThresholdWithLabelDTO
+	| DashboardtypesComparisonThresholdDTO
+	| DashboardtypesTableThresholdDTO;
+
+/**
  * The single source of truth for sections: each section ↔ exactly one slice of the
  * panel spec it edits. The slice type is uniform across every panel kind that shows
  * the section, so a section editor is written once and reused everywhere.
@@ -45,8 +63,15 @@ export interface SectionMetadata {
  * `satisfies Record<SectionKind, …>` checks on `SectionControls` + `SECTION_METADATA`
  * keep all three structures covering the exact same set of kinds.
  */
+// Formatting slice spans the union of every kind's formatting DTO: a single `unit`
+// + `decimalPrecision` (most kinds) plus Table's per-column `columnUnits`. The
+// per-kind `controls` bag gates which fields each editor writes, so a kind never
+// writes a field its real DTO lacks (cast localized in the registry).
+export type PanelFormattingSlice = DashboardtypesPanelFormattingDTO &
+	Pick<DashboardtypesTableFormattingDTO, 'columnUnits'>;
+
 export interface SectionSpecMap {
-	formatting: DashboardtypesPanelFormattingDTO; // spec.plugin.spec.formatting
+	formatting: PanelFormattingSlice; // spec.plugin.spec.formatting
 	axes: DashboardtypesAxesDTO; // spec.plugin.spec.axes
 	legend: DashboardtypesLegendDTO; // spec.plugin.spec.legend
 	chartAppearance: DashboardtypesTimeSeriesChartAppearanceDTO; // spec.plugin.spec.chartAppearance
@@ -56,11 +81,10 @@ export interface SectionSpecMap {
 	// DTOs are subsets. The per-kind `controls` bag gates which fields each editor writes,
 	// so a kind never writes a field its real DTO lacks (cast localized in the registry).
 	visualization: DashboardtypesBarChartVisualizationDTO;
-	thresholds: DashboardtypesThresholdWithLabelDTO[]; // spec.plugin.spec.thresholds
-	// Number panels store thresholds in a comparison-operator shape (value crosses an
-	// operator → recolor), distinct from the value+label lines above. Same spec key
-	// (plugin.spec.thresholds), different element type — its own section + editor.
-	comparisonThresholds: DashboardtypesComparisonThresholdDTO[]; // spec.plugin.spec.thresholds (Number)
+	// spec.plugin.spec.thresholds. One slice, three element shapes (see ThresholdVariant);
+	// the per-kind `variant` control picks the editor, so a kind only ever reads/writes the
+	// shape its spec actually stores.
+	thresholds: AnyThreshold[];
 	contextLinks: DashboardLinkDTO[]; // spec.links (PANEL-level)
 }
 
@@ -71,7 +95,7 @@ export interface SectionSpecMap {
  * corresponds to a real, editable field on the section's spec slice.
  */
 export interface SectionControls {
-	formatting: { unit?: boolean; decimals?: boolean };
+	formatting: { unit?: boolean; decimals?: boolean; columnUnits?: boolean };
 	axes: { minMax?: boolean; logScale?: boolean }; // minMax → softMin/softMax
 	legend: { position?: boolean; colors?: boolean }; // colors → customColors
 	chartAppearance: {
@@ -89,6 +113,9 @@ export interface SectionControls {
 		stacking?: boolean;
 		fillSpans?: boolean;
 	};
+	// Not a spec field but the editor discriminator: which threshold variant a kind edits
+	// (label / comparison / table). All three persist to plugin.spec.thresholds.
+	thresholds: { variant?: ThresholdVariant };
 }
 
 export type ControlledSectionKind = keyof SectionControls;
@@ -97,10 +124,7 @@ export type ControlledSectionKind = keyof SectionControls;
  * (2) ATOMIC sections — no sub-controls; a kind either shows them or not. Thresholds
  * and Context Links are each just a list editor, so there is nothing to subset.
  */
-export type AtomicSectionKind =
-	| 'thresholds'
-	| 'comparisonThresholds'
-	| 'contextLinks';
+export type AtomicSectionKind = 'contextLinks';
 
 export type SectionKind = ControlledSectionKind | AtomicSectionKind;
 
@@ -140,7 +164,6 @@ export const SECTION_METADATA = {
 	visualization: { title: 'Visualization', icon: LayoutDashboard },
 	buckets: { title: 'Histogram / Buckets', icon: BarChart },
 	thresholds: { title: 'Thresholds', icon: SlidersHorizontal },
-	comparisonThresholds: { title: 'Thresholds', icon: SlidersHorizontal },
 	contextLinks: { title: 'Context Links', icon: Link },
 } as const satisfies Record<SectionKind, SectionMetadata>;
 

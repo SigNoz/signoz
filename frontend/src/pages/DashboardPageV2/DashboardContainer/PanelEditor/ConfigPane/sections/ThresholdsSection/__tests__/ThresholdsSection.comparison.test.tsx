@@ -5,8 +5,26 @@ import {
 	type DashboardtypesComparisonThresholdDTO,
 	DashboardtypesThresholdFormatDTO,
 } from 'api/generated/services/sigNoz.schemas';
+import type { AnyThreshold } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/sections';
 
-import ComparisonThresholdsSection from '../ComparisonThresholdsSection';
+import UnifiedThresholdsSection from '../ThresholdsSection';
+
+// The comparison editor is the unified ThresholdsSection in its `comparison` variant;
+// this wrapper pins the variant so the suite reads as the comparison editor's spec.
+function ComparisonThresholdsSection(props: {
+	value: DashboardtypesComparisonThresholdDTO[] | undefined;
+	onChange: (next: DashboardtypesComparisonThresholdDTO[]) => void;
+	yAxisUnit?: string;
+}): JSX.Element {
+	return (
+		<UnifiedThresholdsSection
+			value={props.value}
+			onChange={props.onChange as (next: AnyThreshold[]) => void}
+			yAxisUnit={props.yAxisUnit}
+			controls={{ variant: 'comparison' }}
+		/>
+	);
+}
 
 const THRESHOLDS: DashboardtypesComparisonThresholdDTO[] = [
 	{

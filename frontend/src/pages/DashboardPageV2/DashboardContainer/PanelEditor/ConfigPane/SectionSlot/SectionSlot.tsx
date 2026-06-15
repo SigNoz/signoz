@@ -4,7 +4,8 @@ import {
 	type SectionConfig,
 } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/sections';
 
-import type { LegendSeries } from '../../useLegendSeries';
+import type { LegendSeries } from '../../hooks/useLegendSeries';
+import type { TableColumnOption } from '../../hooks/useTableColumns';
 import { resolveSectionEditor } from '../sectionRegistry';
 import SettingsSection from '../SettingsSection/SettingsSection';
 
@@ -14,6 +15,8 @@ interface SectionSlotProps {
 	onChangeSpec: (next: DashboardtypesPanelSpecDTO) => void;
 	/** Resolved series, forwarded to editors that need them (legend colors). */
 	legendSeries: LegendSeries[];
+	/** Table panel's resolved value columns, for the table-only editors. */
+	tableColumns: TableColumnOption[];
 }
 
 /**
@@ -27,6 +30,7 @@ function SectionSlot({
 	spec,
 	onChangeSpec,
 	legendSeries,
+	tableColumns,
 }: SectionSlotProps): JSX.Element | null {
 	// A kind can hide a section based on current spec state (e.g. Histogram legend once
 	// queries are merged) — skip it before resolving the editor.
@@ -57,6 +61,7 @@ function SectionSlot({
 				onChange={(next): void => onChangeSpec(write(spec, next))}
 				legendSeries={legendSeries}
 				yAxisUnit={yAxisUnit}
+				tableColumns={tableColumns}
 			/>
 		</SettingsSection>
 	);

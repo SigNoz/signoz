@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
 
-import ConfigPane from '../ConfigPane/ConfigPane';
+import ConfigPane from '../ConfigPane';
 
 function spec(unit?: string): DashboardtypesPanelSpecDTO {
 	return {
@@ -22,6 +22,7 @@ function renderConfigPane(
 		spec: spec(),
 		onChangeSpec: jest.fn(),
 		legendSeries: [],
+		tableColumns: [],
 		...overrides,
 	};
 	render(<ConfigPane {...props} />);
