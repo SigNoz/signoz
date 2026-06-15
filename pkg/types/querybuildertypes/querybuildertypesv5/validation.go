@@ -603,6 +603,8 @@ func (q *QueryBuilderQuery[T]) validateOrderByForAggregation() error {
 				"invalid order by key '%s' for %s",
 				orderKey,
 				orderId,
+			).WithAdditional(
+				fmt.Sprintf("For aggregation queries, order by can only reference group by keys, aggregation aliases/expressions, or aggregation indices. Valid keys are: %s", strings.Join(validKeys, ", ")),
 			).WithSuggestions(errors.SuggestionsOnLevenshteinDistance(orderKey, validKeys)...)
 		}
 	}
@@ -707,6 +709,8 @@ func validateQueryEnvelope(envelope QueryEnvelope, opts ...ValidationOption) err
 			errors.CodeInvalidInput,
 			"unknown query type: %s",
 			envelope.Type,
+		).WithAdditional(
+			"Valid query types are: builder_query, builder_sub_query, builder_formula, builder_join, promql, clickhouse_sql, trace_operator",
 		).WithSuggestions(errors.ValidReferences(QueryType{}.Enum()...))
 	}
 }

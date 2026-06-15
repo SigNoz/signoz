@@ -284,7 +284,7 @@ func (r *HavingExpressionRewriter) rewriteAndValidate(expression string) (string
 		return "", errors.NewInvalidInputf(
 			errors.CodeInvalidInput,
 			"`Having` expression contains string literals",
-		).WithSuggestions("Aggregator results are numeric")
+		).WithAdditional("Aggregator results are numeric")
 	}
 
 	if len(v.invalid) > 0 {
@@ -314,6 +314,8 @@ func (r *HavingExpressionRewriter) rewriteAndValidate(expression string) (string
 			errors.CodeInvalidInput,
 			"Invalid references in `Having` expression: [%s]",
 			strings.Join(v.invalid, ", "),
+		).WithAdditional(
+			"Valid references are: [" + strings.Join(validKeys, ", ") + "]",
 		).WithSuggestions(suggestions...)
 		return "", havingErr
 	}

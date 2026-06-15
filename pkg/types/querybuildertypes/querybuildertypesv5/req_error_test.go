@@ -83,8 +83,9 @@ func TestQueryRangeRequest_UnmarshalJSON_ErrorMessages(t *testing.T) {
 					"queries": []
 				}
 			}`,
-			wantErrMsg:      `unknown field "compositeQueries"`,
-			wantSuggestions: []string{"did you mean: `compositeQuery`"},
+			wantErrMsg:          `unknown field "compositeQueries"`,
+			wantAdditionalHints: []string{"Valid fields are:"},
+			wantSuggestions:     []string{"did you mean: `compositeQuery`"},
 		},
 		{
 			name: "unknown field with no good suggestion",
