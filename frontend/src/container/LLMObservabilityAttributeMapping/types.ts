@@ -44,3 +44,25 @@ export interface GroupDraft {
 	attributes: string[];
 	enabled: boolean;
 }
+
+// Working-copy node for a mapper. `localId` is a stable client key (the server
+// id once persisted, or a temporary id for not-yet-saved rows). `serverId` is
+// null until the row has been persisted.
+export interface DraftMapper {
+	localId: string;
+	serverId: string | null;
+	name: string;
+	sources: string[];
+	enabled: boolean;
+}
+
+// Working-copy node for a group, holding its mappers inline so the whole tree
+// can be staged locally and diffed against the server snapshot on save.
+export interface DraftGroup {
+	localId: string;
+	serverId: string | null;
+	name: string;
+	attributes: string[];
+	enabled: boolean;
+	mappers: DraftMapper[];
+}

@@ -1,61 +1,74 @@
-import { useMemo } from 'react';
-import { useListSpanMapperGroups } from 'api/generated/services/spanmapper';
+import { useCallback } from 'react';
 
+import AttributeMappingHeader from './AttributeMappingHeader';
 import GroupFormDrawer from './GroupFormDrawer';
 import MapperGroupsTable from './MapperGroupsTable';
-import { MapperGroup } from './types';
+import { useAttributeMappingStore } from './useAttributeMappingStore';
 import { useGroupFormDrawer } from './useGroupFormDrawer';
 
 import './LLMObservabilityAttributeMapping.styles.scss';
 
 function LLMObservabilityAttributeMapping(): JSX.Element {
-	const { data, isLoading, isError } = useListSpanMapperGroups();
-	const drawer = useGroupFormDrawer();
+	const store = useAttributeMappingStore();
+	const groupDrawer = useGroupFormDrawer();
 
-	const groups: MapperGroup[] = useMemo(() => data?.data?.items ?? [], [data]);
+	const handleGroupSave = useCallback((): void => {
+		store.upsertGroup(groupDrawer.draft);
+		groupDrawer.close();
+	}, [store, groupDrawer]);
+
+	const handleGroupDelete = useCallback((): void => {
+		if (groupDrawer.draft.id) {
+			store.removeGroup(groupDrawer.draft.id);
+		}
+		groupDrawer.close();
+	}, [store, groupDrawer]);
 
 	return (
 		<div
 			className="llm-observability-attribute-mapping"
 			data-testid="llm-observability-attribute-mapping-page"
 		>
-			<header className="page-header">
-				<div className="page-header__title">
-					<h1>Attribute Mapping</h1>
-					<p>Configure source-to-target attribute remapping for LLM traces</p>
-				</div>
-			</header>
+			<AttributeMappingHeader
+				isDirty={store.isDirty}
+				isSaving={store.isSaving}
+				onDiscard={store.discard}
+				onSave={store.save}
+			/>
 
-			{isError && (
+			{store.saveError && (
+				<div className="page-error" role="alert">
+					{store.saveError}
+				</div>
+			)}
+
+			{store.isError && (
 				<div className="page-error" role="alert">
 					Failed to load mapping groups. Please try again.
 				</div>
 			)}
 
 			<MapperGroupsTable
-				groups={groups}
-				isLoading={isLoading}
-				onEdit={drawer.openForEdit}
-				onAdd={drawer.openForAdd}
-				onDelete={drawer.removeGroup}
-				onToggleEnabled={drawer.toggleEnabled}
+				store={store}
+				onEditGroup={groupDrawer.openForEdit}
+				onAddGroup={groupDrawer.openForAdd}
 			/>
 
 			<footer className="page-footer">
-				Showing {groups.length} group{groups.length === 1 ? '' : 's'}
+				Showing {store.groups.length} group{store.groups.length === 1 ? '' : 's'}
 			</footer>
 
 			<GroupFormDrawer
-				isOpen={drawer.isOpen}
-				mode={drawer.mode}
-				draft={drawer.draft}
-				setDraft={drawer.setDraft}
-				onClose={drawer.close}
-				onSave={drawer.save}
-				onDelete={drawer.deleteGroup}
-				isSaving={drawer.isSaving}
-				isDeleting={drawer.isDeleting}
-				saveError={drawer.saveError}
+				isOpen={groupDrawer.isOpen}
+				mode={groupDrawer.mode}
+				draft={groupDrawer.draft}
+				setDraft={groupDrawer.setDraft}
+				onClose={groupDrawer.close}
+				onSave={handleGroupSave}
+				onDelete={handleGroupDelete}
+				isSaving={false}
+				isDeleting={false}
+				saveError={null}
 			/>
 		</div>
 	);

@@ -5,9 +5,12 @@ import {
 	SpantypesUpdatableSpanMapperGroupDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import dayjs from 'dayjs';
+import { v4 as uuid } from 'uuid';
 
 import {
 	ConditionFilter,
+	DraftGroup,
+	DraftMapper,
 	FieldContext,
 	GroupDraft,
 	Mapper,
@@ -15,6 +18,12 @@ import {
 	MapperGroup,
 	MapperOperation,
 } from './types';
+
+// Client-side id for not-yet-persisted rows. Prefixed so it never collides
+// with a server UUID and is easy to spot in logs.
+export function genLocalId(prefix: 'group' | 'mapper'): string {
+	return `local-${prefix}-${uuid()}`;
+}
 
 // Trimmed, de-duplicated, non-empty keys preserving input order.
 export function cleanKeys(keys: string[]): string[] {
@@ -30,23 +39,12 @@ export function cleanKeys(keys: string[]): string[] {
 	return result;
 }
 
-// Flattens a group's condition into display clauses. The backend matches a
-// group when any span attribute OR resource key CONTAINS one of these
-// substrings, so each entry is shown as a "contains" filter.
-export function getConditionFilters(group: MapperGroup): ConditionFilter[] {
-	const condition = group.condition;
-	if (!condition) {
-		return [];
-	}
-
-	const attributeFilters: ConditionFilter[] = (condition.attributes ?? []).map(
-		(key) => ({ context: 'attribute', key }),
-	);
-	const resourceFilters: ConditionFilter[] = (condition.resource ?? []).map(
-		(key) => ({ context: 'resource', key }),
-	);
-
-	return [...attributeFilters, ...resourceFilters];
+// Display clauses for a draft group's staged attribute keys. The draft model
+// only edits span-attribute keys, so every clause has 'attribute' context.
+export function conditionFiltersFromAttributes(
+	attributes: string[],
+): ConditionFilter[] {
+	return attributes.map((key) => ({ context: 'attribute', key }));
 }
 
 // Source attribute keys for a mapper, highest priority first (first match
@@ -71,16 +69,6 @@ export const EMPTY_MAPPER_DRAFT: MapperDraft = {
 	sources: [''],
 	enabled: true,
 };
-
-export function draftFromMapper(mapper: Mapper): MapperDraft {
-	const sources = getMapperSourceKeys(mapper);
-	return {
-		id: mapper.id,
-		name: mapper.name,
-		sources: sources.length > 0 ? sources : [''],
-		enabled: mapper.enabled,
-	};
-}
 
 // Trimmed, de-duplicated, non-empty source keys in draft (priority) order.
 export function getCleanSourceKeys(draft: MapperDraft): string[] {
@@ -134,16 +122,6 @@ export const EMPTY_GROUP_DRAFT: GroupDraft = {
 	enabled: true,
 };
 
-export function draftFromGroup(group: MapperGroup): GroupDraft {
-	const attributes = group.condition?.attributes ?? [];
-	return {
-		id: group.id,
-		name: group.name,
-		attributes: attributes.length > 0 ? attributes : [''],
-		enabled: group.enabled,
-	};
-}
-
 export function isGroupDraftValid(draft: GroupDraft): boolean {
 	return draft.name.trim().length > 0;
 }
@@ -166,4 +144,79 @@ export function buildUpdatableGroup(
 	draft: GroupDraft,
 ): SpantypesUpdatableSpanMapperGroupDTO {
 	return buildPostableGroup(draft);
+}
+
+// ---- working-copy (draft tree) helpers ----
+
+export function buildDraftMapper(mapper: Mapper): DraftMapper {
+	return {
+		localId: mapper.id,
+		serverId: mapper.id,
+		name: mapper.name,
+		sources: getMapperSourceKeys(mapper),
+		enabled: mapper.enabled,
+	};
+}
+
+export function buildDraftGroup(
+	group: MapperGroup,
+	mappers: Mapper[],
+): DraftGroup {
+	return {
+		localId: group.id,
+		serverId: group.id,
+		name: group.name,
+		attributes: group.condition?.attributes ?? [],
+		enabled: group.enabled,
+		mappers: mappers.map(buildDraftMapper),
+	};
+}
+
+// DraftGroup -> editable form state (id carries the localId).
+export function groupDraftFromNode(group: DraftGroup): GroupDraft {
+	return {
+		id: group.localId,
+		name: group.name,
+		attributes: group.attributes.length > 0 ? group.attributes : [''],
+		enabled: group.enabled,
+	};
+}
+
+// DraftMapper -> editable form state (id carries the localId).
+export function mapperDraftFromNode(mapper: DraftMapper): MapperDraft {
+	return {
+		id: mapper.localId,
+		name: mapper.name,
+		sources: mapper.sources.length > 0 ? mapper.sources : [''],
+		enabled: mapper.enabled,
+	};
+}
+
+// Form state -> working-copy node. Reuses cleanKeys/getCleanSourceKeys so the
+// staged tree already holds normalized values.
+export function nodeFromGroupDraft(
+	draft: GroupDraft,
+	existing?: DraftGroup,
+): DraftGroup {
+	return {
+		localId: existing?.localId ?? genLocalId('group'),
+		serverId: existing?.serverId ?? null,
+		name: draft.name.trim(),
+		attributes: cleanKeys(draft.attributes),
+		enabled: draft.enabled,
+		mappers: existing?.mappers ?? [],
+	};
+}
+
+export function nodeFromMapperDraft(
+	draft: MapperDraft,
+	existing?: DraftMapper,
+): DraftMapper {
+	return {
+		localId: existing?.localId ?? genLocalId('mapper'),
+		serverId: existing?.serverId ?? null,
+		name: draft.name.trim(),
+		sources: getCleanSourceKeys(draft),
+		enabled: draft.enabled,
+	};
 }

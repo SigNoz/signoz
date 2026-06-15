@@ -23,6 +23,17 @@
 				color: var(--bg-vanilla-400);
 			}
 		}
+
+		&__actions {
+			display: flex;
+			align-items: center;
+			gap: 12px;
+		}
+
+		&__unsaved {
+			font-size: 13px;
+			color: var(--bg-amber-400);
+		}
 	}
 
 	.page-error {

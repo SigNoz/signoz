@@ -1,18 +1,28 @@
-import { FieldContext, Mapper, MapperGroup, MapperOperation } from '../types';
 import {
+	DraftGroup,
+	FieldContext,
+	Mapper,
+	MapperGroup,
+	MapperOperation,
+} from '../types';
+import {
+	buildDraftGroup,
+	buildDraftMapper,
 	buildPostableGroup,
 	buildPostableMapper,
 	buildUpdatableMapper,
 	cleanKeys,
-	draftFromGroup,
-	draftFromMapper,
+	conditionFiltersFromAttributes,
 	EMPTY_GROUP_DRAFT,
 	EMPTY_MAPPER_DRAFT,
 	formatTimestamp,
-	getConditionFilters,
 	getMapperSourceKeys,
+	groupDraftFromNode,
 	isGroupDraftValid,
 	isMapperDraftValid,
+	mapperDraftFromNode,
+	nodeFromGroupDraft,
+	nodeFromMapperDraft,
 } from '../utils';
 
 const mapper: Mapper = {
@@ -50,7 +60,7 @@ const group: MapperGroup = {
 	orgId: 'org1',
 	name: 'OpenAI',
 	enabled: true,
-	condition: { attributes: ['gen_ai.', 'llm.'], resource: ['service.name'] },
+	condition: { attributes: ['gen_ai.', 'llm.'], resource: [] },
 };
 
 describe('attribute-mapping utils', () => {
@@ -72,17 +82,12 @@ describe('attribute-mapping utils', () => {
 		});
 	});
 
-	describe('getConditionFilters', () => {
-		it('flattens attribute and resource keys into typed clauses', () => {
-			expect(getConditionFilters(group)).toStrictEqual([
+	describe('conditionFiltersFromAttributes', () => {
+		it('maps each attribute key to an attribute-context clause', () => {
+			expect(conditionFiltersFromAttributes(['gen_ai.', 'llm.'])).toStrictEqual([
 				{ context: 'attribute', key: 'gen_ai.' },
 				{ context: 'attribute', key: 'llm.' },
-				{ context: 'resource', key: 'service.name' },
 			]);
-		});
-
-		it('returns empty array when condition is null', () => {
-			expect(getConditionFilters({ ...group, condition: null })).toStrictEqual([]);
 		});
 	});
 
@@ -92,17 +97,94 @@ describe('attribute-mapping utils', () => {
 		});
 	});
 
-	describe('mapper drafts', () => {
-		it('builds a draft from a mapper with priority-ordered sources', () => {
-			expect(draftFromMapper(mapper)).toStrictEqual({
-				id: 'm1',
+	describe('draft-tree builders', () => {
+		it('builds a draft mapper node carrying the server id', () => {
+			expect(buildDraftMapper(mapper)).toStrictEqual({
+				localId: 'm1',
+				serverId: 'm1',
 				name: 'gen_ai.request.model',
 				sources: ['high', 'mid', 'low'],
 				enabled: true,
 			});
 		});
 
-		it('validates name and at least one source', () => {
+		it('builds a draft group node with nested mappers', () => {
+			const node = buildDraftGroup(group, [mapper]);
+			expect(node.localId).toBe('g1');
+			expect(node.serverId).toBe('g1');
+			expect(node.attributes).toStrictEqual(['gen_ai.', 'llm.']);
+			expect(node.mappers).toHaveLength(1);
+			expect(node.mappers[0].localId).toBe('m1');
+		});
+	});
+
+	describe('node <-> form conversions', () => {
+		const node: DraftGroup = {
+			localId: 'g1',
+			serverId: 'g1',
+			name: 'OpenAI',
+			attributes: ['gen_ai.'],
+			enabled: true,
+			mappers: [],
+		};
+
+		it('builds a form draft from a group node', () => {
+			expect(groupDraftFromNode(node)).toStrictEqual({
+				id: 'g1',
+				name: 'OpenAI',
+				attributes: ['gen_ai.'],
+				enabled: true,
+			});
+		});
+
+		it('updates an existing node, preserving its ids and mappers', () => {
+			const existing = { ...node, mappers: [buildDraftMapper(mapper)] };
+			const updated = nodeFromGroupDraft(
+				{
+					id: 'g1',
+					name: '  Renamed  ',
+					attributes: ['a', '', 'a'],
+					enabled: false,
+				},
+				existing,
+			);
+			expect(updated.localId).toBe('g1');
+			expect(updated.serverId).toBe('g1');
+			expect(updated.name).toBe('Renamed');
+			expect(updated.attributes).toStrictEqual(['a']);
+			expect(updated.enabled).toBe(false);
+			expect(updated.mappers).toHaveLength(1);
+		});
+
+		it('creates a new node with a temp localId and null serverId', () => {
+			const created = nodeFromGroupDraft({
+				id: null,
+				name: 'New',
+				attributes: [],
+				enabled: true,
+			});
+			expect(created.serverId).toBeNull();
+			expect(created.localId).toMatch(/^local-group-/);
+			expect(created.mappers).toStrictEqual([]);
+		});
+
+		it('builds a mapper form draft and round-trips through a node', () => {
+			const draftMapper = mapperDraftFromNode(buildDraftMapper(mapper));
+			expect(draftMapper.id).toBe('m1');
+			const created = nodeFromMapperDraft({
+				id: null,
+				name: 'target',
+				sources: ['a', '', 'a', 'b'],
+				enabled: true,
+			});
+			expect(created.serverId).toBeNull();
+			expect(created.localId).toMatch(/^local-mapper-/);
+			expect(created.sources).toStrictEqual(['a', 'b']);
+		});
+	});
+
+	describe('validation', () => {
+		it('validates a mapper draft (name + at least one source)', () => {
 			expect(isMapperDraftValid(EMPTY_MAPPER_DRAFT)).toBe(false);
 			expect(
 				isMapperDraftValid({ id: null, name: 'x', sources: [' '], enabled: true }),
@@ -112,6 +194,15 @@ describe('attribute-mapping utils', () => {
 			).toBe(true);
 		});
 
+		it('validates a group draft (name only)', () => {
+			expect(isGroupDraftValid(EMPTY_GROUP_DRAFT)).toBe(false);
+			expect(
+				isGroupDraftValid({ id: null, name: 'g', attributes: [], enabled: true }),
+			).toBe(true);
+		});
+	});
+
+	describe('API payload builders', () => {
 		it('derives descending priorities from source order', () => {
 			const payload = buildPostableMapper({
 				id: null,
@@ -143,7 +234,7 @@ describe('attribute-mapping utils', () => {
 			]);
 		});
 
-		it('omits name on the update payload (immutable target)', () => {
+		it('omits name on the mapper update payload (immutable target)', () => {
 			const payload = buildUpdatableMapper({
 				id: 'm1',
 				name: 'target',
@@ -152,24 +243,6 @@ describe('attribute-mapping utils', () => {
 			});
 			expect(payload).not.toHaveProperty('name');
 			expect(payload.enabled).toBe(false);
-		});
-	});
-
-	describe('group drafts', () => {
-		it('builds a draft from a group', () => {
-			expect(draftFromGroup(group)).toStrictEqual({
-				id: 'g1',
-				name: 'OpenAI',
-				attributes: ['gen_ai.', 'llm.'],
-				enabled: true,
-			});
-		});
-
-		it('validates name only (condition may be empty)', () => {
-			expect(isGroupDraftValid(EMPTY_GROUP_DRAFT)).toBe(false);
-			expect(
-				isGroupDraftValid({ id: null, name: 'g', attributes: [], enabled: true }),
-			).toBe(true);
 		});
 
 		it('builds a postable group with empty resource keys', () => {

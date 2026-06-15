@@ -41,6 +41,21 @@
 		gap: 6px;
 	}
 
+	&__source-handle {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		padding: 4px;
+		border: none;
+		background: transparent;
+		color: var(--bg-vanilla-400);
+		cursor: grab;
+
+		&:active {
+			cursor: grabbing;
+		}
+	}
+
 	&__source-index {
 		width: 20px;
 		text-align: center;

@@ -5,6 +5,7 @@ import { fireEvent, render, screen } from 'tests/test-utils';
 import LLMObservabilityAttributeMapping from '../LLMObservabilityAttributeMapping';
 
 const GROUPS_ENDPOINT = '*/api/v1/span_mapper_groups';
+const MAPPERS_ENDPOINT = '*/api/v1/span_mapper_groups/:groupId/span_mappers';
 
 const mockGroups: SpantypesSpanMapperGroupDTO[] = [
 	{
@@ -21,6 +22,9 @@ const mockGroups: SpantypesSpanMapperGroupDTO[] = [
 describe('LLMObservabilityAttributeMapping', () => {
 	beforeEach(() => {
 		server.use(
+			rest.get(MAPPERS_ENDPOINT, (_, res, ctx) =>
+				res(ctx.status(200), ctx.json({ status: 'success', data: { items: [] } })),
+			),
 			rest.get(GROUPS_ENDPOINT, (_, res, ctx) =>
 				res(
 					ctx.status(200),

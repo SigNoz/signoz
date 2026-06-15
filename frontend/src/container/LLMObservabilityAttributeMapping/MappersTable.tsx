@@ -1,6 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useCallback } from 'react';
 import { Button } from '@signozhq/ui/button';
-import { ConfirmDialog } from '@signozhq/ui/dialog';
 import { Switch } from '@signozhq/ui/switch';
 import {
 	Table,
@@ -11,34 +10,33 @@ import {
 	TableRow,
 } from '@signozhq/ui/table';
 import { Pencil, Plus, Trash2 } from '@signozhq/icons';
-import { useListSpanMappers } from 'api/generated/services/spanmapper';
 
 import IndexBadge from './IndexBadge';
 import MapperFormDrawer from './MapperFormDrawer';
-import { Mapper } from './types';
+import { DraftGroup, DraftMapper } from './types';
+import { AttributeMappingStore } from './useAttributeMappingStore';
 import { useMapperFormDrawer } from './useMapperFormDrawer';
-import { getMapperSourceKeys } from './utils';
 
 const MAX_VISIBLE_SOURCES = 3;
 const COLUMN_COUNT = 4;
 
 interface MappersTableProps {
-	groupId: string;
+	group: DraftGroup;
+	store: AttributeMappingStore;
 }
 
-function SourcesCell({ mapper }: { mapper: Mapper }): JSX.Element {
-	const keys = getMapperSourceKeys(mapper);
-	if (keys.length === 0) {
+function SourcesCell({ mapper }: { mapper: DraftMapper }): JSX.Element {
+	if (mapper.sources.length === 0) {
 		return <span className="muted">—</span>;
 	}
 
-	const visible = keys.slice(0, MAX_VISIBLE_SOURCES);
-	const remaining = keys.length - visible.length;
+	const visible = mapper.sources.slice(0, MAX_VISIBLE_SOURCES);
+	const remaining = mapper.sources.length - visible.length;
 
 	return (
 		<span
 			className="mappers-table__sources"
-			data-testid={`mapper-sources-${mapper.id}`}
+			data-testid={`mapper-sources-${mapper.localId}`}
 		>
 			{visible.join(', ')}
 			{remaining > 0 && <span className="muted"> +{remaining} more</span>}
@@ -47,29 +45,29 @@ function SourcesCell({ mapper }: { mapper: Mapper }): JSX.Element {
 }
 
 interface MapperRowProps {
-	mapper: Mapper;
+	mapper: DraftMapper;
 	index: number;
-	onEdit: (mapper: Mapper) => void;
-	onRequestDelete: (mapper: Mapper) => void;
-	onToggleEnabled: (mapper: Mapper, enabled: boolean) => void;
+	onEdit: (mapper: DraftMapper) => void;
+	onDelete: (mapperLocalId: string) => void;
+	onToggle: (mapperLocalId: string, enabled: boolean) => void;
 }
 
 function MapperRow({
 	mapper,
 	index,
 	onEdit,
-	onRequestDelete,
-	onToggleEnabled,
+	onDelete,
+	onToggle,
 }: MapperRowProps): JSX.Element {
 	return (
-		<TableRow data-testid={`mapper-row-${mapper.id}`}>
+		<TableRow data-testid={`mapper-row-${mapper.localId}`}>
 			<TableCell>
 				<IndexBadge index={index} />
 			</TableCell>
 			<TableCell>
 				<span
 					className="mappers-table__target"
-					data-testid={`mapper-target-${mapper.id}`}
+					data-testid={`mapper-target-${mapper.localId}`}
 				>
 					{mapper.name}
 				</span>
@@ -85,7 +83,7 @@ function MapperRow({
 						size="icon"
 						aria-label="Edit mapping"
 						onClick={(): void => onEdit(mapper)}
-						testId={`mapper-edit-${mapper.id}`}
+						testId={`mapper-edit-${mapper.localId}`}
 					>
 						<Pencil size={14} />
 					</Button>
@@ -94,15 +92,15 @@ function MapperRow({
 						color="destructive"
 						size="icon"
 						aria-label="Delete mapping"
-						onClick={(): void => onRequestDelete(mapper)}
-						testId={`mapper-delete-${mapper.id}`}
+						onClick={(): void => onDelete(mapper.localId)}
+						testId={`mapper-delete-${mapper.localId}`}
 					>
 						<Trash2 size={14} />
 					</Button>
 					<Switch
 						value={mapper.enabled}
-						onChange={(checked): void => onToggleEnabled(mapper, checked)}
-						testId={`mapper-enabled-${mapper.id}`}
+						onChange={(checked): void => onToggle(mapper.localId, checked)}
+						testId={`mapper-enabled-${mapper.localId}`}
 					/>
 				</div>
 			</TableCell>
@@ -110,30 +108,24 @@ function MapperRow({
 	);
 }
 
-function MappersTable({ groupId }: MappersTableProps): JSX.Element {
-	const { data, isLoading, isError } = useListSpanMappers({ groupId });
-	const drawer = useMapperFormDrawer(groupId);
-	const [pendingDelete, setPendingDelete] = useState<Mapper | null>(null);
+function MappersTable({ group, store }: MappersTableProps): JSX.Element {
+	const drawer = useMapperFormDrawer();
 
-	// NOTE: the generated client mistypes this response as a list of groups
-	// (backend OpenAPI def reuses GettableSpanMapperGroups). The runtime
-	// payload is a list of mappers, so we re-assert the element type here.
-	const mappers = useMemo(
-		() => (data?.data?.items ?? []) as unknown as Mapper[],
-		[data],
-	);
+	const handleSave = useCallback((): void => {
+		store.upsertMapper(group.localId, drawer.draft);
+		drawer.close();
+	}, [store, group.localId, drawer]);
 
-	if (isError) {
-		return (
-			<div className="mappers-table__error" role="alert">
-				Failed to load attribute mappings for this group.
-			</div>
-		);
-	}
+	const handleDelete = useCallback((): void => {
+		if (drawer.draft.id) {
+			store.removeMapper(group.localId, drawer.draft.id);
+		}
+		drawer.close();
+	}, [store, group.localId, drawer]);
 
 	return (
 		<div className="mappers-table__wrapper">
-			<Table testId={`mappers-table-${groupId}`} className="am-table">
+			<Table testId={`mappers-table-${group.localId}`} className="am-table">
 				<TableHeader>
 					<TableRow>
 						<TableHead>#</TableHead>
@@ -143,28 +135,23 @@ function MappersTable({ groupId }: MappersTableProps): JSX.Element {
 					</TableRow>
 				</TableHeader>
 				<TableBody>
-					{isLoading && mappers.length === 0 && (
-						<TableRow>
-							<TableCell colSpan={COLUMN_COUNT} className="am-table__empty">
-								Loading mappings…
-							</TableCell>
-						</TableRow>
-					)}
-					{!isLoading && mappers.length === 0 && (
+					{group.mappers.length === 0 && (
 						<TableRow>
 							<TableCell colSpan={COLUMN_COUNT} className="am-table__empty">
 								No mappings in this group yet.
 							</TableCell>
 						</TableRow>
 					)}
-					{mappers.map((mapper, index) => (
+					{group.mappers.map((mapper, index) => (
 						<MapperRow
-							key={mapper.id}
+							key={mapper.localId}
 							mapper={mapper}
 							index={index}
 							onEdit={drawer.openForEdit}
-							onRequestDelete={setPendingDelete}
-							onToggleEnabled={drawer.toggleEnabled}
+							onDelete={(localId): void => store.removeMapper(group.localId, localId)}
+							onToggle={(localId, enabled): void =>
+								store.toggleMapper(group.localId, localId, enabled)
+							}
 						/>
 					))}
 				</TableBody>
@@ -177,7 +164,7 @@ function MappersTable({ groupId }: MappersTableProps): JSX.Element {
 				prefix={<Plus size={14} />}
 				className="am-add-row"
 				onClick={drawer.openForAdd}
-				testId={`add-mapper-${groupId}`}
+				testId={`add-mapper-${group.localId}`}
 			>
 				Add mapping
 			</Button>
@@ -188,36 +175,12 @@ function MappersTable({ groupId }: MappersTableProps): JSX.Element {
 				draft={drawer.draft}
 				setDraft={drawer.setDraft}
 				onClose={drawer.close}
-				onSave={drawer.save}
-				onDelete={drawer.deleteMapper}
-				isSaving={drawer.isSaving}
-				isDeleting={drawer.isDeleting}
-				saveError={drawer.saveError}
+				onSave={handleSave}
+				onDelete={handleDelete}
+				isSaving={false}
+				isDeleting={false}
+				saveError={null}
 			/>
-
-			<ConfirmDialog
-				open={pendingDelete !== null}
-				onOpenChange={(open): void => {
-					if (!open) {
-						setPendingDelete(null);
-					}
-				}}
-				title="Delete mapping?"
-				confirmText="Delete mapping"
-				confirmColor="destructive"
-				cancelText="Cancel"
-				testId={`mapper-delete-confirm-${groupId}`}
-				onConfirm={async (): Promise<boolean> => {
-					if (pendingDelete) {
-						await drawer.removeMapper(pendingDelete.id);
-						setPendingDelete(null);
-					}
-					return true;
-				}}
-			>
-				This removes the <strong>{pendingDelete?.name}</strong> mapping. This
-				can&apos;t be undone.
-			</ConfirmDialog>
 		</div>
 	);
 }

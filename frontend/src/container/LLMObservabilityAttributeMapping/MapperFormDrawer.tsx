@@ -1,8 +1,23 @@
 import { Button } from '@signozhq/ui/button';
 import { DrawerWrapper } from '@signozhq/ui/drawer';
 import { Input } from '@signozhq/ui/input';
-import { ArrowDown, ArrowUp, Plus, Trash2, X } from '@signozhq/icons';
+import {
+	closestCenter,
+	DndContext,
+	DragEndEvent,
+	PointerSensor,
+	useSensor,
+	useSensors,
+} from '@dnd-kit/core';
+import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
+import {
+	arrayMove,
+	SortableContext,
+	verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { Plus, Trash2 } from '@signozhq/icons';
 
+import SourceAttributeRow from './SourceAttributeRow';
 import { MapperDraft, MapperDraftMode } from './types';
 import { isMapperDraftValid } from './utils';
 
@@ -36,6 +51,11 @@ function MapperFormDrawer({
 	const isEdit = mode === 'edit';
 	const isValid = isMapperDraftValid(draft);
 
+	// 5px activation distance so clicking into the input never starts a drag.
+	const sensors = useSensors(
+		useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+	);
+
 	const updateSource = (index: number, value: string): void => {
 		const sources = [...draft.sources];
 		sources[index] = value;
@@ -51,14 +71,15 @@ function MapperFormDrawer({
 		setDraft({ ...draft, sources: sources.length > 0 ? sources : [''] });
 	};
 
-	const moveSource = (index: number, direction: -1 | 1): void => {
-		const target = index + direction;
-		if (target < 0 || target >= draft.sources.length) {
+	const handleDragEnd = (event: DragEndEvent): void => {
+		const { active, over } = event;
+		if (!over || active.id === over.id) {
 			return;
 		}
-		const sources = [...draft.sources];
-		[sources[index], sources[target]] = [sources[target], sources[index]];
-		setDraft({ ...draft, sources });
+		setDraft({
+			...draft,
+			sources: arrayMove(draft.sources, Number(active.id), Number(over.id)),
+		});
 	};
 
 	return (
@@ -131,54 +152,38 @@ function MapperFormDrawer({
 				<div className="mapper-form__field">
 					<span className="mapper-form__label">
 						Source attributes
-						<span className="mapper-form__label-hint"> · priority: top → bottom</span>
+						<span className="mapper-form__label-hint">
+							{' '}
+							· priority: top → bottom · drag to reorder
+						</span>
 					</span>
 
-					<div className="mapper-form__sources">
-						{draft.sources.map((source, index) => (
-							// eslint-disable-next-line react/no-array-index-key
-							<div className="mapper-form__source" key={index}>
-								<span className="mapper-form__source-index">{index + 1}</span>
-								<Input
-									className="mapper-form__source-input"
-									placeholder="Source attribute key"
-									value={source}
-									onChange={(event): void => updateSource(index, event.target.value)}
-									testId={`mapper-form-source-${index}`}
-								/>
-								<Button
-									variant="ghost"
-									color="secondary"
-									size="sm"
-									disabled={index === 0}
-									onClick={(): void => moveSource(index, -1)}
-									testId={`mapper-form-source-up-${index}`}
-								>
-									<ArrowUp size={14} />
-								</Button>
-								<Button
-									variant="ghost"
-									color="secondary"
-									size="sm"
-									disabled={index === draft.sources.length - 1}
-									onClick={(): void => moveSource(index, 1)}
-									testId={`mapper-form-source-down-${index}`}
-								>
-									<ArrowDown size={14} />
-								</Button>
-								<Button
-									variant="ghost"
-									color="secondary"
-									size="sm"
-									disabled={draft.sources.length === 1}
-									onClick={(): void => removeSource(index)}
-									testId={`mapper-form-source-remove-${index}`}
-								>
-									<X size={14} />
-								</Button>
+					<DndContext
+						sensors={sensors}
+						collisionDetection={closestCenter}
+						modifiers={[restrictToVerticalAxis]}
+						onDragEnd={handleDragEnd}
+					>
+						<SortableContext
+							items={draft.sources.map((_, index) => String(index))}
+							strategy={verticalListSortingStrategy}
+						>
+							<div className="mapper-form__sources">
+								{draft.sources.map((source, index) => (
+									<SourceAttributeRow
+										// eslint-disable-next-line react/no-array-index-key
+										key={index}
+										id={String(index)}
+										index={index}
+										value={source}
+										canRemove={draft.sources.length > 1}
+										onChange={updateSource}
+										onRemove={removeSource}
+									/>
+								))}
 							</div>
-						))}
-					</div>
+						</SortableContext>
+					</DndContext>
 
 					<Button
 						variant="dashed"
