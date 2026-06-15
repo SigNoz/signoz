@@ -3,7 +3,7 @@ import { Skeleton } from 'antd';
 import { AxiosError } from 'axios';
 import Spinner from 'components/Spinner';
 import { ErrorResponse, SuccessResponse } from 'types/api';
-import { GetTraceV3SuccessResponse, SpanV3 } from 'types/api/trace/getTraceV3';
+import { GetTraceV4SuccessResponse, SpanV3 } from 'types/api/trace/getTraceV3';
 
 import { TraceWaterfallStates } from './constants';
 import Error from './TraceWaterfallStates/Error/Error';
@@ -13,7 +13,7 @@ import { getVisibleSpans } from './utils';
 
 import { IInterestedSpan } from './types';
 
-import './TraceWaterfall.styles.scss';
+import styles from './TraceWaterfall.module.scss';
 
 interface ITraceWaterfallProps {
 	traceId: string;
@@ -22,7 +22,7 @@ interface ITraceWaterfallProps {
 	localUncollapsedNodes: Set<string>;
 	setLocalUncollapsedNodes: Dispatch<SetStateAction<Set<string>>>;
 	traceData:
-		| SuccessResponse<GetTraceV3SuccessResponse, unknown>
+		| SuccessResponse<GetTraceV4SuccessResponse, unknown>
 		| ErrorResponse
 		| undefined;
 	isFetchingTraceData: boolean;
@@ -100,7 +100,7 @@ function TraceWaterfall(props: ITraceWaterfallProps): JSX.Element {
 		switch (traceWaterfallState) {
 			case TraceWaterfallStates.LOADING:
 				return (
-					<div className="loading-skeleton">
+					<div className={styles.loadingSkeleton}>
 						<Skeleton active paragraph={{ rows: 6 }} />
 					</div>
 				);
@@ -158,7 +158,7 @@ function TraceWaterfall(props: ITraceWaterfallProps): JSX.Element {
 		uncollapsedNodes,
 	]);
 
-	return <div className="trace-waterfall">{getContent}</div>;
+	return <div className={styles.root}>{getContent}</div>;
 }
 
 export default TraceWaterfall;

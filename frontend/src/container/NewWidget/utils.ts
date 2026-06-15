@@ -1,5 +1,4 @@
 import { Layout } from 'react-grid-layout';
-import { omitIdFromQuery } from 'components/ExplorerCard/utils';
 import { PrecisionOptionsEnum } from 'components/Graph/types';
 import { YAxisCategoryNames } from 'components/YAxisUnitSelector/constants';
 import {
@@ -26,16 +25,84 @@ import { DataSource } from 'types/common/queryBuilder';
 
 import { getCategoryName } from './RightContainer/dataFormatCategories';
 
+// Asks "would saving the current panel change the persisted widget spec?".
+//
+// `adjustQueryForV5` is deliberately not reused here: in addition to stripping
+// the legacy v4 fields, it also resurrects them onto each metric
+// `aggregations[i]`. That migration step is correct on save but bleeds
+// asymmetrically across a comparator — the live query still carries the
+// legacy defaults from `initialQueryBuilderFormValuesMap` while a previously
+// saved widget had them stripped.
+const stripQueryDataForCompare = (
+	queryData: IBuilderQuery,
+): Record<string, unknown> => {
+	const {
+		aggregateAttribute: _aggregateAttribute,
+		aggregateOperator: _aggregateOperator,
+		timeAggregation: _timeAggregation,
+		spaceAggregation: _spaceAggregation,
+		reduceTo: _reduceTo,
+		filters: _filters,
+		...retained
+	} = queryData ?? ({} as IBuilderQuery);
+
+	const groupBy = (retained.groupBy ?? []).map((entry) => {
+		const { id: _id, ...rest } = entry;
+		return rest;
+	});
+
+	return {
+		...retained,
+		groupBy,
+		source: retained.source || '',
+	};
+};
+
+const normalizeForDirtyCheck = (query: Query): Record<string, unknown> => {
+	const { id: _id, unit, builder, ...rest } = query;
+	return {
+		...rest,
+		// `id` is regenerated on every Stage and Run; `unit` flips between ''
+		// and undefined depending on whether the user has touched the selector.
+		unit: unit || '',
+		builder: {
+			...builder,
+			queryData: (builder?.queryData ?? []).map(stripQueryDataForCompare),
+		},
+	};
+};
+
+// `lodash.isEqual` distinguishes `{a: undefined}` from `{}`; for the dirty
+// check those are the same. Initial-values spreads on the live query
+// frequently leave such explicit-undefined keys.
+const stripUndefined = (value: unknown): unknown => {
+	if (Array.isArray(value)) {
+		return value.map(stripUndefined);
+	}
+	if (value && typeof value === 'object') {
+		const out: Record<string, unknown> = {};
+		Object.entries(value as Record<string, unknown>).forEach(([k, v]) => {
+			if (v === undefined) {
+				return;
+			}
+			out[k] = stripUndefined(v);
+		});
+		return out;
+	}
+	return value;
+};
+
 export const getIsQueryModified = (
 	currentQuery: Query,
-	stagedQuery: Query | null,
+	baselineQuery: Query | null | undefined,
 ): boolean => {
-	if (!stagedQuery) {
+	if (!baselineQuery) {
 		return false;
 	}
-	const omitIdFromStageQuery = omitIdFromQuery(stagedQuery);
-	const omitIdFromCurrentQuery = omitIdFromQuery(currentQuery);
-	return !isEqual(omitIdFromStageQuery, omitIdFromCurrentQuery);
+	return !isEqual(
+		stripUndefined(normalizeForDirtyCheck(baselineQuery)),
+		stripUndefined(normalizeForDirtyCheck(currentQuery)),
+	);
 };
 
 export type PartialPanelTypes = {

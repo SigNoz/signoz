@@ -2,15 +2,10 @@
 import { useLocation } from 'react-router-dom';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import logEvent from 'api/common/logEvent';
+import { logEventMock } from '__tests__/logEventMock';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 
 import HeaderRightSection from '../HeaderRightSection';
-
-jest.mock('api/common/logEvent', () => ({
-	__esModule: true,
-	default: jest.fn(),
-}));
 
 jest.mock('react-router-dom', () => ({
 	...jest.requireActual('react-router-dom'),
@@ -50,7 +45,6 @@ jest.mock('hooks/useIsAIAssistantEnabled', () => ({
 	useIsAIAssistantEnabled: (): boolean => false,
 }));
 
-const mockLogEvent = logEvent as jest.Mock;
 const mockUseLocation = useLocation as jest.Mock;
 const mockUseGetTenantLicense = useGetTenantLicense as jest.Mock;
 
@@ -120,7 +114,7 @@ describe('HeaderRightSection', () => {
 
 		await user.click(feedbackButton!);
 
-		expect(mockLogEvent).toHaveBeenCalledWith('Feedback: Clicked', {
+		expect(logEventMock).toHaveBeenCalledWith('Feedback: Clicked', {
 			page: mockLocation.pathname,
 		});
 		expect(screen.getByTestId('feedback-modal')).toBeInTheDocument();
@@ -133,7 +127,7 @@ describe('HeaderRightSection', () => {
 		const shareButton = screen.getByRole('button', { name: /share/i });
 		await user.click(shareButton);
 
-		expect(mockLogEvent).toHaveBeenCalledWith('Share: Clicked', {
+		expect(logEventMock).toHaveBeenCalledWith('Share: Clicked', {
 			page: mockLocation.pathname,
 		});
 		expect(screen.getByTestId('share-modal')).toBeInTheDocument();
@@ -150,7 +144,7 @@ describe('HeaderRightSection', () => {
 
 		await user.click(announcementsButton!);
 
-		expect(mockLogEvent).toHaveBeenCalledWith('Announcements: Clicked', {
+		expect(logEventMock).toHaveBeenCalledWith('Announcements: Clicked', {
 			page: mockLocation.pathname,
 		});
 	});

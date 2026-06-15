@@ -1,6 +1,8 @@
 /* eslint-disable sonarjs/no-identical-functions */
 import { Fragment, useMemo, useState } from 'react';
-import { Button, Checkbox, Input, Skeleton } from 'antd';
+import { Input } from '@signozhq/ui/input';
+import { Button, Skeleton } from 'antd';
+import { Checkbox } from '@signozhq/ui/checkbox';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import { removeKeysFromExpression } from 'components/QueryBuilderV2/utils';
@@ -32,9 +34,23 @@ import { isKeyMatch } from './utils';
 import './Checkbox.styles.scss';
 
 const SELECTED_OPERATORS = [OPERATORS['='], 'in'];
-const NON_SELECTED_OPERATORS = [OPERATORS['!='], 'not in'];
+const NON_SELECTED_OPERATORS = [OPERATORS['!='], 'not in', 'nin'];
 
 const SOURCES_WITH_EMPTY_STATE_ENABLED = [QuickFiltersSource.LOGS_EXPLORER];
+
+// Sources that use backend APIs expecting short operator format (e.g., 'nin' instead of 'not in')
+const SOURCES_WITH_SHORT_OPERATORS = [QuickFiltersSource.INFRA_MONITORING];
+
+/**
+ * Returns the correct NOT_IN operator value based on source.
+ * InfraMonitoring backend expects 'nin', others expect 'not in'.
+ */
+function getNotInOperator(source: QuickFiltersSource): string {
+	if (SOURCES_WITH_SHORT_OPERATORS.includes(source)) {
+		return 'nin';
+	}
+	return getOperatorValue('NOT_IN');
+}
 
 function setDefaultValues(
 	values: string[],
@@ -401,6 +417,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 								}
 							}
 							break;
+						case 'nin':
 						case 'not in':
 							// if the current running operator is NIN then when unchecking the value it gets
 							// added to the clause like key NIN [value1 , currentUnselectedValue]
@@ -495,7 +512,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 							if (!checked) {
 								const newFilter = {
 									...currentFilter,
-									op: getOperatorValue('NOT_IN'),
+									op: getNotInOperator(source),
 									value: [currentFilter.value as string, value],
 								};
 								query.filters.items = query.filters.items.map((item) => {
@@ -518,7 +535,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 				// case  - when there is no filter for the current key that means all are selected right now.
 				const newFilterItem: TagFilterItem = {
 					id: uuid(),
-					op: getOperatorValue('NOT_IN'),
+					op: getNotInOperator(source),
 					key: filter.attributeKey,
 					value,
 				};
@@ -619,10 +636,12 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 									)}
 									<div className="value">
 										<Checkbox
-											onChange={(e): void => onChange(value, e.target.checked, false)}
-											checked={currentFilterState[value]}
+											onChange={(checked): void =>
+												onChange(value, checked === true, false)
+											}
+											value={currentFilterState[value]}
 											disabled={isFilterDisabled}
-											rootClassName="check-box"
+											className="check-box"
 										/>
 
 										<div

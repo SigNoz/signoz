@@ -17,10 +17,11 @@ import { useTimezone } from 'providers/Timezone';
 import uPlot from 'uplot';
 import { getTimeRange } from 'utils/getTimeRange';
 
-import { prepareChartData, prepareUPlotConfig } from '../TimeSeriesPanel/utils';
+import { prepareUPlotConfig } from '../TimeSeriesPanel/utils';
 
 import '../Panel.styles.scss';
 import TooltipFooter from '../components/TooltipFooter';
+import { prepareChartData } from 'lib/uPlotV2/utils/dataUtils';
 
 function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 	const {
@@ -31,6 +32,7 @@ function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 		isFullViewMode,
 		onToggleModelHandler,
 		groupByPerQuery,
+		enableDrillDown = false,
 	} = props;
 	const graphRef = useRef<HTMLDivElement>(null);
 	const [minTimeScale, setMinTimeScale] = useState<number>();
@@ -60,6 +62,7 @@ function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 	} = usePanelContextMenu({
 		widget,
 		queryResponse,
+		enableDrillDown,
 	});
 
 	const chartData = useMemo(() => {

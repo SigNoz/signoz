@@ -4,7 +4,7 @@ import (
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
-	cmock "github.com/srikanthccv/ClickHouse-go-mock"
+	cmock "github.com/SigNoz/clickhouse-go-mock"
 )
 
 var _ telemetrystore.TelemetryStore = (*Provider)(nil)

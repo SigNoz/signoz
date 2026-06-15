@@ -2,7 +2,11 @@ import { ReactNode, useState } from 'react';
 import MEditor, { EditorProps, Monaco } from '@monaco-editor/react';
 import { Color } from '@signozhq/design-tokens';
 import { Button } from '@signozhq/ui/button';
-import { Collapse, Divider, Input, Switch, Tag } from 'antd';
+import { Input } from '@signozhq/ui/input';
+import { Switch } from '@signozhq/ui/switch';
+import { Collapse } from 'antd';
+import { Divider } from '@signozhq/ui/divider';
+import { Badge } from '@signozhq/ui/badge';
 import { Typography } from '@signozhq/ui/typography';
 import { AddToQueryHOCProps } from 'components/Logs/AddToQueryHOC';
 import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
@@ -14,7 +18,7 @@ import { ILog } from 'types/api/logs/log';
 
 import { ActionItemProps } from './ActionItem';
 import TableView from './TableView';
-import { removeEscapeCharacters } from './utils';
+import { getBodyDisplayString, removeEscapeCharacters } from './utils';
 
 import './Overview.styles.scss';
 
@@ -103,16 +107,16 @@ function Overview({
 					{
 						key: '1',
 						label: (
-							<Tag bordered={false}>
+							<Badge color="vanilla">
 								<Typography.Text style={{ color: Color.BG_ROBIN_400 }}>
 									body
 								</Typography.Text>
-							</Tag>
+							</Badge>
 						),
 						children: (
 							<div className="logs-body-content">
 								<MEditor
-									value={removeEscapeCharacters(logData.body)}
+									value={removeEscapeCharacters(getBodyDisplayString(logData.body))}
 									language="json"
 									options={options}
 									onChange={(): void => {}}
@@ -136,12 +140,12 @@ function Overview({
 								<div className="log-switch">
 									<div className="wrap-word-switch">
 										<Typography.Text>Wrap text</Typography.Text>
-										<Switch checked={isWrapWord} onChange={handleWrapWord} size="small" />
+										<Switch value={isWrapWord} onChange={handleWrapWord} />
 									</div>
 								</div>
 							</div>
 						),
-						// extra: <Tag className="tag">JSON</Tag>,
+						// extra: <Badge className="tag" color="vanilla">JSON</Badge>,
 						className: 'collapse-content',
 					},
 				]}
@@ -162,11 +166,11 @@ function Overview({
 								className="attribute-tab-header"
 								onClick={toogleAttributePanelOpenState}
 							>
-								<Tag bordered={false}>
+								<Badge color="vanilla">
 									<Typography.Text style={{ color: Color.BG_ROBIN_400 }}>
 										Attributes
 									</Typography.Text>
-								</Tag>
+								</Badge>
 
 								{isAttributesExpanded && (
 									<Button

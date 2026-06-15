@@ -15,6 +15,18 @@ jest.mock('react-router-dom', () => ({
 	}),
 }));
 
+jest.mock('react-router-dom-v5-compat', () => ({
+	...jest.requireActual('react-router-dom-v5-compat'),
+	useNavigationType: jest.fn(() => 'PUSH'),
+	useLocation: jest.fn(() => ({
+		pathname: '/alerts/new',
+		search: 'ruleType=anomaly_rule',
+		hash: '',
+		state: null,
+	})),
+	useSearchParams: jest.fn(() => [new URLSearchParams(), jest.fn()]),
+}));
+
 window.ResizeObserver =
 	window.ResizeObserver ||
 	jest.fn().mockImplementation(() => ({

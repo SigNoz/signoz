@@ -1,10 +1,11 @@
 import { useCallback } from 'react';
 import { useHistory } from 'react-router-dom';
 import { Button } from '@signozhq/ui/button';
-import { Tooltip } from '@signozhq/ui/tooltip';
+import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Drawer } from 'antd';
 import ROUTES from 'constants/routes';
-import { Maximize2, MessageSquare, Plus, X } from '@signozhq/icons';
+import { Maximize2, Plus, X } from '@signozhq/icons';
+import Noz from 'components/Noz/Noz';
 
 import ConversationView from '../ConversationView';
 import { useAIAssistantStore } from '../store/useAIAssistantStore';
@@ -46,13 +47,13 @@ export default function AIAssistantDrawer(): JSX.Element {
 			closeIcon={null}
 			title={
 				<div>
-					<div>
-						<MessageSquare size={16} />
-						<span>AI Assistant</span>
+					<div className="noz-wave">
+						<Noz size={16} />
+						<span>Noz</span>
 					</div>
 
 					<div>
-						<Tooltip title="New conversation">
+						<TooltipSimple title="New conversation">
 							<Button
 								variant="ghost"
 								size="icon"
@@ -62,9 +63,9 @@ export default function AIAssistantDrawer(): JSX.Element {
 							>
 								<Plus size={16} />
 							</Button>
-						</Tooltip>
+						</TooltipSimple>
 
-						<Tooltip title="Open full screen">
+						<TooltipSimple title="Open full screen">
 							<Button
 								variant="ghost"
 								size="icon"
@@ -75,9 +76,9 @@ export default function AIAssistantDrawer(): JSX.Element {
 							>
 								<Maximize2 size={16} />
 							</Button>
-						</Tooltip>
+						</TooltipSimple>
 
-						<Tooltip title="Close">
+						<TooltipSimple title="Close">
 							<Button
 								variant="ghost"
 								size="icon"
@@ -87,7 +88,7 @@ export default function AIAssistantDrawer(): JSX.Element {
 							>
 								<X size={16} />
 							</Button>
-						</Tooltip>
+						</TooltipSimple>
 					</div>
 				</div>
 			}

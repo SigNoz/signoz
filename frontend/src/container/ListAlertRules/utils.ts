@@ -1,59 +1,92 @@
 import logEvent from 'api/common/logEvent';
 import type { RuletypesRuleDTO } from 'api/generated/services/sigNoz.schemas';
+import { sortByColumn } from 'components/Alerts/utils';
+import type { SortState } from 'components/TanStackTableView/types';
 import { dataSourceForAlertType } from 'constants/alerts';
 
-export const filterAlerts = (
-	allAlertRules: RuletypesRuleDTO[],
-	filter: string,
-): RuletypesRuleDTO[] => {
-	if (!filter.trim()) {
-		return allAlertRules;
-	}
+import type { AlertRule } from './types';
 
-	const value = filter.trim().toLowerCase();
-	return allAlertRules.filter((alert) => {
-		const alertName = alert.alert.toLowerCase();
-		const severity = alert.labels?.severity?.toLowerCase();
+export const ALERT_RULES_REFRESH_INTERVAL = 30_000;
 
-		// Create a string of all label keys and values for searching
-		const labelSearchString = Object.entries(alert.labels || {})
-			.map(([key, val]) => `${key} ${val}`)
-			.join(' ')
-			.toLowerCase();
+export const ALERT_ACTIONS = {
+	TOGGLE: 'toggle',
+	EDIT: 'edit',
+	CLONE: 'clone',
+	DELETE: 'delete',
+} as const;
 
-		return (
-			alertName.includes(value) ||
-			severity?.includes(value) ||
-			labelSearchString.includes(value)
-		);
-	});
+const ACTION_LABELS: Record<string, string> = {
+	[ALERT_ACTIONS.TOGGLE]: 'Enable/Disable',
+	[ALERT_ACTIONS.EDIT]: 'Edit',
+	[ALERT_ACTIONS.CLONE]: 'Clone',
+	[ALERT_ACTIONS.DELETE]: 'Delete',
 };
 
 export const alertActionLogEvent = (
 	action: string,
 	record: RuletypesRuleDTO,
 ): void => {
-	let actionValue = '';
-	switch (action) {
-		case '0':
-			actionValue = 'Enable/Disable';
-			break;
-		case '1':
-			actionValue = 'Edit';
-			break;
-		case '2':
-			actionValue = 'Clone';
-			break;
-		case '3':
-			actionValue = 'Delete';
-			break;
-		default:
-			break;
-	}
-	logEvent('Alert: Action', {
+	const actionValue = ACTION_LABELS[action] ?? action;
+	void logEvent('Alert: Action', {
 		ruleId: record.id,
 		dataSource: dataSourceForAlertType(record.alertType),
 		name: record.alert,
 		action: actionValue,
 	});
 };
+
+export function getAlertSortValue(
+	rule: AlertRule,
+	columnName: string,
+): string | number {
+	switch (columnName) {
+		case 'state':
+			return rule.state ?? '';
+		case 'name':
+			return rule.alert ?? '';
+		case 'severity':
+			return rule.labels?.severity ?? '';
+		case 'createdAt':
+			return rule.createdAt ? new Date(rule.createdAt).getTime() : 0;
+		case 'updatedAt':
+			return rule.updatedAt ? new Date(rule.updatedAt).getTime() : 0;
+		default:
+			return '';
+	}
+}
+
+export function sortRules(
+	rules: AlertRule[],
+	orderBy: SortState | null,
+): AlertRule[] {
+	return sortByColumn(rules, orderBy, getAlertSortValue);
+}
+
+export function filterRulesByFilters(
+	rules: AlertRule[],
+	filters: string[],
+): AlertRule[] {
+	if (filters.length === 0) {
+		return rules;
+	}
+
+	const stateFilters = filters
+		.filter((f) => f.startsWith('state:'))
+		.map((f) => f.replace('state:', '').toLowerCase());
+
+	const severityFilters = filters
+		.filter((f) => f.startsWith('severity:'))
+		.map((f) => f.replace('severity:', '').toLowerCase());
+
+	return rules.filter((rule) => {
+		const state = rule.state?.toLowerCase() ?? '';
+		const severity = rule.labels?.severity?.toLowerCase() ?? '';
+
+		const matchesState =
+			stateFilters.length === 0 || stateFilters.includes(state);
+		const matchesSeverity =
+			severityFilters.length === 0 || severityFilters.includes(severity);
+
+		return matchesState && matchesSeverity;
+	});
+}

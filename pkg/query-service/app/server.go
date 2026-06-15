@@ -21,7 +21,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/licensing/nooplicensing"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader"
-	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/logparsingpipeline"
 	"github.com/SigNoz/signoz/pkg/query-service/app/opamp"
@@ -56,12 +55,7 @@ type Server struct {
 
 // NewServer creates and initializes Server
 func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
-	integrationsController, err := integrations.NewController(signoz.SQLStore)
-	if err != nil {
-		return nil, err
-	}
-
-	cloudIntegrationsController, err := cloudintegrations.NewController(signoz.SQLStore)
+	integrationsController, err := integrations.NewController(signoz.SQLStore, signoz.Modules.Dashboard)
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +96,6 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 	apiHandler, err := NewAPIHandler(APIHandlerOpts{
 		Reader:                        reader,
 		IntegrationsController:        integrationsController,
-		CloudIntegrationsController:   cloudIntegrationsController,
 		LogsParsingPipelineController: logParsingPipelineController,
 		FluxInterval:                  config.Querier.FluxInterval,
 		LicensingAPI:                  nooplicensing.NewLicenseAPI(),
@@ -176,6 +169,7 @@ func (s *Server) createPublicServer(api *APIHandler, web web.Web) (*http.Server,
 		s.config.APIServer.Timeout.Default,
 		s.config.APIServer.Timeout.Max,
 	).Wrap)
+	r.Use(middleware.NewResource(s.signoz.Instrumentation.Logger()).Wrap)
 	r.Use(middleware.NewAudit(s.signoz.Instrumentation.Logger(), s.config.APIServer.Logging.ExcludedRoutes, s.signoz.Auditor).Wrap)
 	r.Use(middleware.NewComment().Wrap)
 
@@ -184,7 +178,6 @@ func (s *Server) createPublicServer(api *APIHandler, web web.Web) (*http.Server,
 	api.RegisterRoutes(r, am)
 	api.RegisterLogsRoutes(r, am)
 	api.RegisterIntegrationRoutes(r, am)
-	api.RegisterCloudIntegrationsRoutes(r, am)
 	api.RegisterQueryRangeV3Routes(r, am)
 	api.RegisterInfraMetricsRoutes(r, am)
 	api.RegisterWebSocketPaths(r, am)

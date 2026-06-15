@@ -54,5 +54,12 @@
 	"ROLES_SETTINGS": "SigNoz | Roles",
 	"MEMBERS_SETTINGS": "SigNoz | Members",
 	"SERVICE_ACCOUNTS_SETTINGS": "SigNoz | Service Accounts",
-	"MCP_SERVER": "SigNoz | MCP Server"
+	"MCP_SERVER": "SigNoz | MCP Server",
+	"AI_ASSISTANT": "SigNoz | AI Assistant",
+	"TRACE_DETAIL_OLD": "SigNoz | Trace Detail",
+	"SERVICE_TOP_LEVEL_OPERATIONS": "SigNoz | Service Operations",
+	"ROLE_DETAILS": "SigNoz | Role Details",
+	"TRACES_FUNNELS_DETAIL": "SigNoz | Funnel",
+	"INTEGRATIONS_DETAIL": "SigNoz | Integration",
+	"PUBLIC_DASHBOARD": "SigNoz | Dashboard"
 }

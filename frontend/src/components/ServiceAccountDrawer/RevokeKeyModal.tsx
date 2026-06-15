@@ -1,6 +1,11 @@
 import { useQueryClient } from 'react-query';
 import { Trash2, X } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
+import AuthZTooltip from 'components/AuthZTooltip/AuthZTooltip';
+import {
+	buildAPIKeyDeletePermission,
+	buildSADetachPermission,
+} from 'hooks/useAuthZ/permissions/service-account.permissions';
 import { DialogWrapper } from '@signozhq/ui/dialog';
 import { toast } from '@signozhq/ui/sonner';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
@@ -23,12 +28,16 @@ export interface RevokeKeyFooterProps {
 	isRevoking: boolean;
 	onCancel: () => void;
 	onConfirm: () => void;
+	accountId?: string;
+	keyId?: string;
 }
 
 export function RevokeKeyFooter({
 	isRevoking,
 	onCancel,
 	onConfirm,
+	accountId,
+	keyId,
 }: RevokeKeyFooterProps): JSX.Element {
 	return (
 		<>
@@ -36,15 +45,23 @@ export function RevokeKeyFooter({
 				<X size={12} />
 				Cancel
 			</Button>
-			<Button
-				variant="solid"
-				color="destructive"
-				loading={isRevoking}
-				onClick={onConfirm}
+			<AuthZTooltip
+				checks={[
+					buildAPIKeyDeletePermission(keyId ?? ''),
+					buildSADetachPermission(accountId ?? ''),
+				]}
+				enabled={!!accountId && !!keyId}
 			>
-				<Trash2 size={12} />
-				Revoke Key
-			</Button>
+				<Button
+					variant="solid"
+					color="destructive"
+					loading={isRevoking}
+					onClick={onConfirm}
+				>
+					<Trash2 size={12} />
+					Revoke Key
+				</Button>
+			</AuthZTooltip>
 		</>
 	);
 }
@@ -115,6 +132,8 @@ function RevokeKeyModal(): JSX.Element {
 					isRevoking={isRevoking}
 					onCancel={handleCancel}
 					onConfirm={handleConfirm}
+					accountId={accountId ?? undefined}
+					keyId={revokeKeyId || undefined}
 				/>
 			}
 		>

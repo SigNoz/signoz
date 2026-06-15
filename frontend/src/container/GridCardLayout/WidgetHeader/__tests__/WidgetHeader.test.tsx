@@ -467,6 +467,7 @@ describe('WidgetHeader', () => {
 
 	describe('Create Alerts Menu Item', () => {
 		it('renders Create Alerts menu item with external link icon when included in headerMenuList', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
 			render(
 				<WidgetHeader
 					title={TEST_WIDGET_TITLE}
@@ -483,7 +484,7 @@ describe('WidgetHeader', () => {
 
 			const moreOptionsIcon = await screen.findByTestId(WIDGET_HEADER_OPTIONS_ID);
 			expect(moreOptionsIcon).toBeInTheDocument();
-			await userEvent.hover(moreOptionsIcon);
+			await user.click(moreOptionsIcon);
 
 			await screen.findByText(CREATE_ALERTS_TEXT);
 
@@ -494,6 +495,7 @@ describe('WidgetHeader', () => {
 		});
 
 		it('Create Alerts menu item is enabled and clickable', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
 			const mockCreateAlertsHandler = jest.fn();
 			const useCreateAlerts = jest.requireMock(
 				'hooks/queryBuilder/useCreateAlerts',
@@ -517,12 +519,12 @@ describe('WidgetHeader', () => {
 			expect(useCreateAlerts).toHaveBeenCalledWith(mockWidget, 'dashboardView');
 
 			const moreOptionsIcon = await screen.findByTestId(WIDGET_HEADER_OPTIONS_ID);
-			await userEvent.hover(moreOptionsIcon);
+			await user.click(moreOptionsIcon);
 
 			const createAlertsMenuItem = await screen.findByText(CREATE_ALERTS_TEXT);
 
 			// Verify the menu item is clickable by actually clicking it
-			await userEvent.click(createAlertsMenuItem);
+			await user.click(createAlertsMenuItem);
 			expect(mockCreateAlertsHandler).toHaveBeenCalledTimes(1);
 		});
 	});

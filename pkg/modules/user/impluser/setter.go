@@ -3,7 +3,6 @@ package impluser
 import (
 	"context"
 	"log/slog"
-	"slices"
 	"strings"
 	"time"
 
@@ -21,7 +20,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/emailtypes"
-	"github.com/SigNoz/signoz/pkg/types/integrationtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -36,10 +34,11 @@ type setter struct {
 	analytics     analytics.Analytics
 	config        root.Config
 	getter        root.Getter
+	onDeleteUser  []root.OnDeleteUser
 }
 
 // This module is a WIP, don't take inspiration from this.
-func NewSetter(store types.UserStore, tokenizer tokenizer.Tokenizer, emailing emailing.Emailing, providerSettings factory.ProviderSettings, orgSetter organization.Setter, authz authz.AuthZ, analytics analytics.Analytics, config root.Config, userRoleStore authtypes.UserRoleStore, getter root.Getter) root.Setter {
+func NewSetter(store types.UserStore, tokenizer tokenizer.Tokenizer, emailing emailing.Emailing, providerSettings factory.ProviderSettings, orgSetter organization.Setter, authz authz.AuthZ, analytics analytics.Analytics, config root.Config, userRoleStore authtypes.UserRoleStore, getter root.Getter, onDeleteUser []root.OnDeleteUser) root.Setter {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/user/impluser")
 	return &setter{
 		store:         store,
@@ -52,6 +51,7 @@ func NewSetter(store types.UserStore, tokenizer tokenizer.Tokenizer, emailing em
 		authz:         authz,
 		config:        config,
 		getter:        getter,
+		onDeleteUser:  onDeleteUser,
 	}
 }
 
@@ -371,10 +371,6 @@ func (module *setter) DeleteUser(ctx context.Context, orgID valuer.UUID, id stri
 		return errors.WithAdditionalf(err, "cannot delete already deleted user")
 	}
 
-	if slices.Contains(integrationtypes.AllIntegrationUserEmails, integrationtypes.IntegrationUserEmail(user.Email.String())) {
-		return errors.New(errors.TypeForbidden, errors.CodeForbidden, "integration user cannot be deleted")
-	}
-
 	deleter, err := module.store.GetUser(ctx, valuer.MustNewUUID(deletedBy))
 	if err != nil {
 		return err
@@ -410,6 +406,12 @@ func (module *setter) DeleteUser(ctx context.Context, orgID valuer.UUID, id stri
 	// for now we are only soft deleting users
 	if err := module.store.SoftDeleteUser(ctx, orgID.String(), user.ID.StringValue()); err != nil {
 		return err
+	}
+
+	for _, onDeleteUser := range module.onDeleteUser {
+		if err := onDeleteUser(ctx, orgID, user.ID); err != nil {
+			return err
+		}
 	}
 
 	traitsOrProperties := types.NewTraitsFromUser(user)
@@ -543,7 +545,7 @@ func (module *setter) UpdatePasswordByResetPasswordToken(ctx context.Context, to
 	}
 
 	if resetPasswordToken.IsExpired() {
-		return errors.New(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "reset password token has expired")
+		return errors.New(errors.TypeUnauthenticated, types.ErrCodeResetPasswordTokenExpired, "reset password token has expired")
 	}
 
 	password, err := module.store.GetPassword(ctx, resetPasswordToken.PasswordID)
@@ -874,45 +876,22 @@ func (module *setter) AddUserRole(ctx context.Context, orgID, userID valuer.UUID
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "role name not found: %s", roleName)
 	}
 
-	// check if user already has this role
-	existingUserRoles, err := module.getter.GetRolesByUserID(ctx, existingUser.ID)
-	if err != nil {
-		return err
-	}
-
-	existingRoles := make([]string, len(existingUserRoles))
-	for idx, role := range existingUserRoles {
-		existingRoles[idx] = role.Role.Name
-	}
-
-	// grant via authz (idempotent)
-	if err := module.authz.ModifyGrant(
+	// grant via authz (additive, idempotent — OpenFGA uses OnDuplicate: "ignore")
+	if err := module.authz.Grant(
 		ctx,
 		orgID,
-		existingRoles,
 		[]string{roleName},
 		authtypes.MustNewSubject(coretypes.NewResourceUser(), existingUser.ID.StringValue(), existingUser.OrgID, nil),
 	); err != nil {
 		return err
 	}
 
-	// create user_role entry
+	// create user_role entry (swallow AlreadyExists for idempotency — DB has unique constraint on user_id+role_id)
 	userRoles := authtypes.NewUserRoles(userID, foundRoles)
-	err = module.store.RunInTx(ctx, func(ctx context.Context) error {
-		err = module.userRoleStore.DeleteUserRoles(ctx, existingUser.ID)
-		if err != nil {
+	if err := module.userRoleStore.CreateUserRoles(ctx, userRoles); err != nil {
+		if !errors.Ast(err, errors.TypeAlreadyExists) {
 			return err
 		}
-
-		err := module.userRoleStore.CreateUserRoles(ctx, userRoles)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	})
-	if err != nil {
-		return err
 	}
 
 	return module.tokenizer.DeleteIdentity(ctx, userID)

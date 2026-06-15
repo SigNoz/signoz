@@ -196,10 +196,10 @@ describe('Panel Management Tests', () => {
 			expect(allOption).toHaveClass('selected');
 
 			const allCheckbox = allOption.querySelector(
-				'input[type="checkbox"]',
-			) as HTMLInputElement;
+				'[role="checkbox"]',
+			) as HTMLElement;
 			expect(allCheckbox).toBeInTheDocument();
-			expect(allCheckbox.checked).toBe(true);
+			expect(allCheckbox).toHaveAttribute('data-state', 'checked');
 		});
 	});
 

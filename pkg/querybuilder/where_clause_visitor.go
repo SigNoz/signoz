@@ -96,8 +96,12 @@ type PreparedWhereClause struct {
 	WarningsDocURL string
 }
 
+func (p PreparedWhereClause) IsEmpty() bool {
+	return p.WhereClause == nil
+}
+
 // PrepareWhereClause generates a ClickHouse compatible WHERE clause from the filter query.
-func PrepareWhereClause(query string, opts FilterExprVisitorOpts) (*PreparedWhereClause, error) {
+func PrepareWhereClause(query string, opts FilterExprVisitorOpts) (PreparedWhereClause, error) {
 
 	// Setup the ANTLR parsing pipeline
 	input := antlr.NewInputStream(query)
@@ -148,7 +152,7 @@ func PrepareWhereClause(query string, opts FilterExprVisitorOpts) (*PreparedWher
 			}
 		}
 
-		return nil, combinedErrors.WithAdditional(additionals...).WithUrl(searchTroubleshootingGuideURL)
+		return PreparedWhereClause{}, combinedErrors.WithAdditional(additionals...).WithUrl(searchTroubleshootingGuideURL)
 	}
 
 	// Visit the parse tree with our ClickHouse visitor
@@ -166,18 +170,17 @@ func PrepareWhereClause(query string, opts FilterExprVisitorOpts) (*PreparedWher
 		if url == "" {
 			url = searchTroubleshootingGuideURL
 		}
-		return nil, combinedErrors.WithAdditional(visitor.errors...).WithUrl(url)
+		return PreparedWhereClause{}, combinedErrors.WithAdditional(visitor.errors...).WithUrl(url)
 	}
 
-	// Return nil so callers can skip the
-	// entire CTE/subquery rather than emitting WHERE clause that select all the rows
+	// Return empty where clause so callers can skip the WHERE clause
 	if cond == "" || cond == SkipConditionLiteral {
-		return nil, nil //nolint:nilnil
+		return PreparedWhereClause{WhereClause: nil, Warnings: visitor.warnings, WarningsDocURL: visitor.mainWarnURL}, nil
 	}
 
 	whereClause := sqlbuilder.NewWhereClause().AddWhereExpr(visitor.builder.Args, cond)
 
-	return &PreparedWhereClause{WhereClause: whereClause, Warnings: visitor.warnings, WarningsDocURL: visitor.mainWarnURL}, nil
+	return PreparedWhereClause{WhereClause: whereClause, Warnings: visitor.warnings, WarningsDocURL: visitor.mainWarnURL}, nil
 }
 
 // Visit dispatches to the specific visit method based on node type.

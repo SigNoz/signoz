@@ -15,7 +15,9 @@ import (
 	"os"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/alecthomas/units"
 	commoncfg "github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
@@ -40,21 +42,22 @@ const (
 
 // Notifier implements a Notifier for PagerDuty notifications.
 type Notifier struct {
-	conf    *config.PagerdutyConfig
-	tmpl    *template.Template
-	logger  *slog.Logger
-	apiV1   string // for tests.
-	client  *http.Client
-	retrier *notify.Retrier
+	conf      *config.PagerdutyConfig
+	tmpl      *template.Template
+	logger    *slog.Logger
+	apiV1     string // for tests.
+	client    *http.Client
+	retrier   *notify.Retrier
+	templater alertmanagertypes.Templater
 }
 
 // New returns a new PagerDuty notifier.
-func New(c *config.PagerdutyConfig, t *template.Template, l *slog.Logger, httpOpts ...commoncfg.HTTPClientOption) (*Notifier, error) {
+func New(c *config.PagerdutyConfig, t *template.Template, l *slog.Logger, templater alertmanagertypes.Templater, httpOpts ...commoncfg.HTTPClientOption) (*Notifier, error) {
 	client, err := notify.NewClientWithTracing(*c.HTTPConfig, Integration, httpOpts...)
 	if err != nil {
 		return nil, err
 	}
-	n := &Notifier{conf: c, tmpl: t, logger: l, client: client}
+	n := &Notifier{conf: c, tmpl: t, logger: l, client: client, templater: templater}
 	if c.ServiceKey != "" || c.ServiceKeyFile != "" {
 		n.apiV1 = "https://events.pagerduty.com/generic/2010-04-15/create_event.json"
 		// Retrying can solve the issue on 403 (rate limiting) and 5xx response codes.
@@ -143,11 +146,12 @@ func (n *Notifier) notifyV1(
 	key notify.Key,
 	data *template.Data,
 	details map[string]any,
+	title string,
 ) (bool, error) {
 	var tmplErr error
 	tmpl := notify.TmplText(n.tmpl, data, &tmplErr)
 
-	description, truncated := notify.TruncateInRunes(tmpl(n.conf.Description), maxV1DescriptionLenRunes)
+	description, truncated := notify.TruncateInRunes(title, maxV1DescriptionLenRunes)
 	if truncated {
 		n.logger.WarnContext(ctx, "Truncated description", slog.Any("key", key), slog.Int("max_runes", maxV1DescriptionLenRunes))
 	}
@@ -203,6 +207,7 @@ func (n *Notifier) notifyV2(
 	key notify.Key,
 	data *template.Data,
 	details map[string]any,
+	title string,
 ) (bool, error) {
 	var tmplErr error
 	tmpl := notify.TmplText(n.tmpl, data, &tmplErr)
@@ -211,7 +216,7 @@ func (n *Notifier) notifyV2(
 		n.conf.Severity = "error"
 	}
 
-	summary, truncated := notify.TruncateInRunes(tmpl(n.conf.Description), maxV2SummaryLenRunes)
+	summary, truncated := notify.TruncateInRunes(title, maxV2SummaryLenRunes)
 	if truncated {
 		n.logger.WarnContext(ctx, "Truncated summary", slog.Any("key", key), slog.Int("max_runes", maxV2SummaryLenRunes))
 	}
@@ -294,6 +299,22 @@ func (n *Notifier) notifyV2(
 	return retry, err
 }
 
+// prepareTitle expands the notification title. PagerDuty has no body surface
+// we care about — the description/summary field is what users see as the
+// incident headline, so we feed the configured Description as the default
+// title template and ignore any custom body_template entirely.
+func (n *Notifier) prepareTitle(ctx context.Context, alerts []*types.Alert) (string, error) {
+	customTitle, _ := alertmanagertemplate.ExtractTemplatesFromAnnotations(alerts)
+	result, err := n.templater.Expand(ctx, alertmanagertypes.ExpandRequest{
+		TitleTemplate:        customTitle,
+		DefaultTitleTemplate: n.conf.Description,
+	}, alerts)
+	if err != nil {
+		return "", err
+	}
+	return result.Title, nil
+}
+
 // Notify implements the Notifier interface.
 func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 	key, err := notify.ExtractGroupKey(ctx)
@@ -301,6 +322,12 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 		return false, err
 	}
 	logger := n.logger.With(slog.Any("group_key", key))
+
+	title, err := n.prepareTitle(ctx, as)
+	if err != nil {
+		n.logger.ErrorContext(ctx, "failed to prepare notification content", errors.Attr(err))
+		return false, err
+	}
 
 	var (
 		alerts    = types.Alerts(as...)
@@ -329,7 +356,7 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 	if n.apiV1 != "" {
 		nf = n.notifyV1
 	}
-	retry, err := nf(ctx, eventType, key, data, details)
+	retry, err := nf(ctx, eventType, key, data, details, title)
 	if err != nil {
 		if ctx.Err() != nil {
 			err = errors.WrapInternalf(err, errors.CodeInternal, "failed to notify PagerDuty: %v", context.Cause(ctx))

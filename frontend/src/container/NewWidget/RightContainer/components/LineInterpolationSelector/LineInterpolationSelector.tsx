@@ -1,4 +1,4 @@
-import { ToggleGroup, ToggleGroupItem } from '@signozhq/ui/toggle-group';
+import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
 import { Typography } from '@signozhq/ui/typography';
 import { LineInterpolation } from 'lib/uPlotV2/config/types';
 
@@ -18,88 +18,98 @@ export default function LineInterpolationSelector({
 			<Typography.Text className="section-heading">
 				Line interpolation
 			</Typography.Text>
-			<ToggleGroup
+			<ToggleGroupSimple
 				type="single"
 				value={value}
 				size="lg"
-				onChange={(newValue): void => {
+				onChange={(newValue: string): void => {
 					if (newValue) {
 						onChange(newValue as LineInterpolation);
 					}
 				}}
-			>
-				<ToggleGroupItem value={LineInterpolation.Linear} aria-label="Linear">
-					<svg
-						className="line-interpolation-icon"
-						viewBox="0 0 48 48"
-						fill="none"
-						stroke="#888"
-						strokeWidth="2"
-						strokeLinecap="round"
-						strokeLinejoin="round"
-					>
-						<circle cx="8" cy="32" r="3" fill="#888" />
-						<circle cx="24" cy="16" r="3" fill="#888" />
-						<circle cx="40" cy="32" r="3" fill="#888" />
-						<path d="M8 32 L24 16 L40 32" stroke="#888" />
-					</svg>
-				</ToggleGroupItem>
-				<ToggleGroupItem value={LineInterpolation.Spline} aria-label="Spline">
-					<svg
-						className="line-interpolation-icon"
-						viewBox="0 0 48 48"
-						fill="none"
-						stroke="#888"
-						strokeWidth="2"
-						strokeLinecap="round"
-						strokeLinejoin="round"
-					>
-						<circle cx="8" cy="32" r="3" fill="#888" />
-						<circle cx="24" cy="16" r="3" fill="#888" />
-						<circle cx="40" cy="32" r="3" fill="#888" />
-						<path d="M8 32 C16 8, 32 8, 40 32" />
-					</svg>
-				</ToggleGroupItem>
-				<ToggleGroupItem
-					value={LineInterpolation.StepAfter}
-					aria-label="Step After"
-				>
-					<svg
-						className="line-interpolation-icon"
-						viewBox="0 0 48 48"
-						fill="none"
-						stroke="#888"
-						strokeWidth="2"
-						strokeLinecap="round"
-						strokeLinejoin="round"
-					>
-						<circle cx="8" cy="32" r="3" fill="#888" />
-						<circle cx="24" cy="16" r="3" fill="#888" />
-						<circle cx="40" cy="32" r="3" fill="#888" />
-						<path d="M8 32 V16 H24 V32 H40" />
-					</svg>
-				</ToggleGroupItem>
-
-				<ToggleGroupItem
-					value={LineInterpolation.StepBefore}
-					aria-label="Step Before"
-				>
-					<svg
-						className="line-interpolation-icon"
-						viewBox="0 0 48 48"
-						fill="none"
-						stroke="#888"
-						strokeWidth="2"
-						strokeLinecap="round"
-						strokeLinejoin="round"
-					>
-						<circle cx="8" cy="32" r="3" fill="#888" />
-						<circle cx="24" cy="16" r="3" fill="#888" />
-						<circle cx="40" cy="32" r="3" fill="#888" />
-						<path d="M8 32 H24 V16 H40 V32" />
-					</svg>
-				</ToggleGroupItem>
-			</ToggleGroup>
+				items={[
+					{
+						value: LineInterpolation.Linear,
+						'aria-label': 'Linear',
+						label: (
+							<svg
+								className="line-interpolation-icon"
+								viewBox="0 0 48 48"
+								fill="none"
+								stroke="#888"
+								strokeWidth="2"
+								strokeLinecap="round"
+								strokeLinejoin="round"
+							>
+								<circle cx="8" cy="32" r="3" fill="#888" />
+								<circle cx="24" cy="16" r="3" fill="#888" />
+								<circle cx="40" cy="32" r="3" fill="#888" />
+								<path d="M8 32 L24 16 L40 32" stroke="#888" />
+							</svg>
+						),
+					},
+					{
+						value: LineInterpolation.Spline,
+						'aria-label': 'Spline',
+						label: (
+							<svg
+								className="line-interpolation-icon"
+								viewBox="0 0 48 48"
+								fill="none"
+								stroke="#888"
+								strokeWidth="2"
+								strokeLinecap="round"
+								strokeLinejoin="round"
+							>
+								<circle cx="8" cy="32" r="3" fill="#888" />
+								<circle cx="24" cy="16" r="3" fill="#888" />
+								<circle cx="40" cy="32" r="3" fill="#888" />
+								<path d="M8 32 C16 8, 32 8, 40 32" />
+							</svg>
+						),
+					},
+					{
+						value: LineInterpolation.StepAfter,
+						'aria-label': 'Step After',
+						label: (
+							<svg
+								className="line-interpolation-icon"
+								viewBox="0 0 48 48"
+								fill="none"
+								stroke="#888"
+								strokeWidth="2"
+								strokeLinecap="round"
+								strokeLinejoin="round"
+							>
+								<circle cx="8" cy="32" r="3" fill="#888" />
+								<circle cx="24" cy="16" r="3" fill="#888" />
+								<circle cx="40" cy="32" r="3" fill="#888" />
+								<path d="M8 32 V16 H24 V32 H40" />
+							</svg>
+						),
+					},
+					{
+						value: LineInterpolation.StepBefore,
+						'aria-label': 'Step Before',
+						label: (
+							<svg
+								className="line-interpolation-icon"
+								viewBox="0 0 48 48"
+								fill="none"
+								stroke="#888"
+								strokeWidth="2"
+								strokeLinecap="round"
+								strokeLinejoin="round"
+							>
+								<circle cx="8" cy="32" r="3" fill="#888" />
+								<circle cx="24" cy="16" r="3" fill="#888" />
+								<circle cx="40" cy="32" r="3" fill="#888" />
+								<path d="M8 32 H24 V16 H40 V32" />
+							</svg>
+						),
+					},
+				]}
+			/>
 		</section>
 	);
 }

@@ -56,11 +56,18 @@ def _login(signoz: types.SigNoz, email: str, password: str) -> str:
     return login.json()["data"]["accessToken"]
 
 
-@pytest.fixture(name="create_user_admin", scope="package")
-def create_user_admin(signoz: types.SigNoz, request: pytest.FixtureRequest, pytestconfig: pytest.Config) -> types.Operation:
-    def create() -> None:
+def register_admin(
+    signoz: types.SigNoz,
+    request: pytest.FixtureRequest,
+    pytestconfig: pytest.Config,
+    cache_key: str = "create_user_admin",
+    base_path: str = "",
+) -> types.Operation:
+    """Register the first admin (creates the org), under base_path. Reuse-wrapped."""
+
+    def create() -> types.Operation:
         response = requests.post(
-            signoz.self.host_configs["8080"].get("/api/v1/register"),
+            signoz.self.host_configs["8080"].get(f"{base_path}/api/v1/register"),
             json={
                 "name": USER_ADMIN_NAME,
                 "orgName": "",
@@ -83,7 +90,7 @@ def create_user_admin(signoz: types.SigNoz, request: pytest.FixtureRequest, pyte
     return reuse.wrap(
         request,
         pytestconfig,
-        "create_user_admin",
+        cache_key,
         lambda: types.Operation(name=""),
         create,
         delete,
@@ -91,86 +98,86 @@ def create_user_admin(signoz: types.SigNoz, request: pytest.FixtureRequest, pyte
     )
 
 
-@pytest.fixture(name="get_session_context", scope="function")
-def get_session_context(signoz: types.SigNoz) -> Callable[[str, str], str]:
-    def _get_session_context(email: str) -> str:
+@pytest.fixture(name="create_user_admin", scope="package")
+def create_user_admin(signoz: types.SigNoz, request: pytest.FixtureRequest, pytestconfig: pytest.Config) -> types.Operation:
+    return register_admin(signoz, request, pytestconfig)
+
+
+def session_context_getter(signoz: types.SigNoz, base_path: str = "") -> Callable[[str], dict]:
+    """Build a callable that fetches the session context for an email (under base_path)."""
+
+    def fetch_session_context(email: str) -> dict:
         response = requests.get(
-            signoz.self.host_configs["8080"].get("/api/v2/sessions/context"),
-            params={
-                "email": email,
-                "ref": f"{signoz.self.host_configs['8080'].base()}",
-            },
+            signoz.self.host_configs["8080"].get(f"{base_path}/api/v2/sessions/context"),
+            params={"email": email, "ref": f"{signoz.self.host_configs['8080'].base()}"},
             timeout=5,
         )
-
         assert response.status_code == HTTPStatus.OK
         return response.json()["data"]
 
-    return _get_session_context
+    return fetch_session_context
+
+
+@pytest.fixture(name="get_session_context", scope="function")
+def get_session_context(signoz: types.SigNoz) -> Callable[[str], dict]:
+    return session_context_getter(signoz)
+
+
+def token_getter(signoz: types.SigNoz, base_path: str = "") -> Callable[[str, str], str]:
+    """Build a callable that logs in (email/password) and returns the access token (under base_path)."""
+
+    def fetch_token(email: str, password: str) -> str:
+        context = requests.get(
+            signoz.self.host_configs["8080"].get(f"{base_path}/api/v2/sessions/context"),
+            params={"email": email, "ref": f"{signoz.self.host_configs['8080'].base()}"},
+            timeout=5,
+        )
+        assert context.status_code == HTTPStatus.OK
+        org_id = context.json()["data"]["orgs"][0]["id"]
+
+        login = requests.post(
+            signoz.self.host_configs["8080"].get(f"{base_path}/api/v2/sessions/email_password"),
+            json={"email": email, "password": password, "orgId": org_id},
+            timeout=5,
+        )
+        assert login.status_code == HTTPStatus.OK
+        return login.json()["data"]["accessToken"]
+
+    return fetch_token
 
 
 @pytest.fixture(name="get_token", scope="function")
 def get_token(signoz: types.SigNoz) -> Callable[[str, str], str]:
-    def _get_token(email: str, password: str) -> str:
-        response = requests.get(
-            signoz.self.host_configs["8080"].get("/api/v2/sessions/context"),
-            params={
-                "email": email,
-                "ref": f"{signoz.self.host_configs['8080'].base()}",
-            },
+    return token_getter(signoz)
+
+
+def tokens_getter(signoz: types.SigNoz, base_path: str = "") -> Callable[[str, str], tuple[str, str]]:
+    """Build a callable that logs in and returns the (access, refresh) token pair (under base_path)."""
+
+    def fetch_tokens(email: str, password: str) -> tuple[str, str]:
+        context = requests.get(
+            signoz.self.host_configs["8080"].get(f"{base_path}/api/v2/sessions/context"),
+            params={"email": email, "ref": f"{signoz.self.host_configs['8080'].base()}"},
             timeout=5,
         )
+        assert context.status_code == HTTPStatus.OK
+        org_id = context.json()["data"]["orgs"][0]["id"]
 
-        assert response.status_code == HTTPStatus.OK
-        org_id = response.json()["data"]["orgs"][0]["id"]
-
-        response = requests.post(
-            signoz.self.host_configs["8080"].get("/api/v2/sessions/email_password"),
-            json={
-                "email": email,
-                "password": password,
-                "orgId": org_id,
-            },
+        login = requests.post(
+            signoz.self.host_configs["8080"].get(f"{base_path}/api/v2/sessions/email_password"),
+            json={"email": email, "password": password, "orgId": org_id},
             timeout=5,
         )
+        assert login.status_code == HTTPStatus.OK
+        data = login.json()["data"]
+        return data["accessToken"], data["refreshToken"]
 
-        assert response.status_code == HTTPStatus.OK
-        return response.json()["data"]["accessToken"]
-
-    return _get_token
+    return fetch_tokens
 
 
 @pytest.fixture(name="get_tokens", scope="function")
 def get_tokens(signoz: types.SigNoz) -> Callable[[str, str], tuple[str, str]]:
-    def _get_tokens(email: str, password: str) -> str:
-        response = requests.get(
-            signoz.self.host_configs["8080"].get("/api/v2/sessions/context"),
-            params={
-                "email": email,
-                "ref": f"{signoz.self.host_configs['8080'].base()}",
-            },
-            timeout=5,
-        )
-
-        assert response.status_code == HTTPStatus.OK
-        org_id = response.json()["data"]["orgs"][0]["id"]
-
-        response = requests.post(
-            signoz.self.host_configs["8080"].get("/api/v2/sessions/email_password"),
-            json={
-                "email": email,
-                "password": password,
-                "orgId": org_id,
-            },
-            timeout=5,
-        )
-
-        assert response.status_code == HTTPStatus.OK
-        access_token = response.json()["data"]["accessToken"]
-        refresh_token = response.json()["data"]["refreshToken"]
-        return access_token, refresh_token
-
-    return _get_tokens
+    return tokens_getter(signoz)
 
 
 @pytest.fixture(name="apply_license", scope="package")
@@ -270,6 +277,7 @@ def add_license(
     signoz: types.SigNoz,
     make_http_mocks: Callable[[types.TestContainerDocker, list[Mapping]], None],
     get_token: Callable[[str, str], str],  # pylint: disable=redefined-outer-name
+    base_path: str = "",
 ) -> None:
     make_http_mocks(
         signoz.zeus,
@@ -308,7 +316,7 @@ def add_license(
     access_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     response = requests.post(
-        url=signoz.self.host_configs["8080"].get("/api/v3/licenses"),
+        url=signoz.self.host_configs["8080"].get(f"{base_path}/api/v3/licenses"),
         json={"key": "secret-key"},
         headers={"Authorization": "Bearer " + access_token},
         timeout=5,

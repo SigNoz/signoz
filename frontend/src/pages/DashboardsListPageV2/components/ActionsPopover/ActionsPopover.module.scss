@@ -1,0 +1,28 @@
+.content {
+	display: flex;
+	flex-direction: column;
+}
+
+// Make signoz ghost-Button rows fill the popover and left-align their label.
+.menuItem {
+	width: 100%;
+	justify-content: flex-start;
+}
+
+:global(.dashboardActionsPopover) {
+	:global(.ant-popover-inner) {
+		width: 200px;
+		height: auto;
+		flex-shrink: 0;
+		border-radius: 4px;
+		border: 1px solid var(--l1-border);
+		background: linear-gradient(
+			139deg,
+			color-mix(in srgb, var(--card) 80%, transparent) 0%,
+			color-mix(in srgb, var(--card) 90%, transparent) 98.68%
+		);
+		box-shadow: 4px 10px 16px 2px rgba(0, 0, 0, 0.2);
+		backdrop-filter: blur(20px);
+		padding: 0px;
+	}
+}

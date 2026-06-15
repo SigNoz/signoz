@@ -10,11 +10,6 @@ jest.mock('components/MarkdownRenderer/MarkdownRenderer', () => ({
 		children,
 }));
 
-jest.mock('api/common/logEvent', () => ({
-	__esModule: true,
-	default: jest.fn(),
-}));
-
 jest.mock('lib/history', () => ({
 	push: jest.fn(),
 	listen: jest.fn(() => jest.fn()),
@@ -78,11 +73,14 @@ describe('SettingsPage nav sections', () => {
 			});
 		});
 
-		it.each(['workspace', 'account'])('renders "%s" element', (id) => {
-			expect(screen.getByTestId(id)).toBeInTheDocument();
-		});
+		it.each(['workspace', 'account', 'roles', 'service-accounts'])(
+			'renders "%s" element',
+			(id) => {
+				expect(screen.getByTestId(id)).toBeInTheDocument();
+			},
+		);
 
-		it.each(['billing', 'roles'])('does not render "%s" element', (id) => {
+		it.each(['billing'])('does not render "%s" element', (id) => {
 			expect(screen.queryByTestId(id)).not.toBeInTheDocument();
 		});
 

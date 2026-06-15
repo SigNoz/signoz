@@ -41,6 +41,20 @@ describe('dashboardVariablesStoreUtils', () => {
 			expect(result).toStrictEqual([]);
 		});
 
+		it('should return empty array when variables is undefined', () => {
+			const result = buildSortedVariablesArray(
+				undefined as unknown as IDashboardVariables,
+			);
+			expect(result).toStrictEqual([]);
+		});
+
+		it('should return empty array when variables is null', () => {
+			const result = buildSortedVariablesArray(
+				null as unknown as IDashboardVariables,
+			);
+			expect(result).toStrictEqual([]);
+		});
+
 		it('should create copies of variables (not references)', () => {
 			const original = createVariable({ name: 'a', order: 0 });
 			const variables: IDashboardVariables = { a: original };
