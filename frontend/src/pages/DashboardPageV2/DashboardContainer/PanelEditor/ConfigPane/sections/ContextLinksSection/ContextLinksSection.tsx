@@ -1,8 +1,8 @@
 import { Plus, Trash2 } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { Input } from '@signozhq/ui/input';
 import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
+import { Input } from 'antd';
 import type { DashboardLinkDTO } from 'api/generated/services/sigNoz.schemas';
 import type { SectionEditorProps } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/sections';
 
@@ -38,13 +38,13 @@ function ContextLinksSection({
 				// eslint-disable-next-line react/no-array-index-key
 				<div className={styles.row} key={index}>
 					<Input
-						testId={`context-link-label-${index}`}
+						data-testid={`context-link-label-${index}`}
 						placeholder="Label"
 						value={link.name ?? ''}
 						onChange={(e): void => updateAt(index, { name: e.target.value })}
 					/>
 					<Input
-						testId={`context-link-url-${index}`}
+						data-testid={`context-link-url-${index}`}
 						placeholder="https://… or /path?var=$variable"
 						value={link.url ?? ''}
 						onChange={(e): void => updateAt(index, { url: e.target.value })}

@@ -1,8 +1,8 @@
 import { type ChangeEvent, useEffect, useState } from 'react';
 import { Check, Pencil, Trash2, X } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { Input } from '@signozhq/ui/input';
 import { Typography } from '@signozhq/ui/typography';
+import { Input } from 'antd';
 import type {
 	DashboardtypesComparisonOperatorDTO,
 	DashboardtypesComparisonThresholdDTO,
@@ -127,7 +127,7 @@ function ComparisonThresholdRow({
 			<div className={styles.field}>
 				<Typography.Text className={styles.fieldLabel}>Value</Typography.Text>
 				<Input
-					testId={`comparison-threshold-value-${index}`}
+					data-testid={`comparison-threshold-value-${index}`}
 					type="number"
 					placeholder="Value"
 					value={draft.value}

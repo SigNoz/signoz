@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Search } from '@signozhq/icons';
-import { Input } from '@signozhq/ui/input';
 import { Typography } from '@signozhq/ui/typography';
+import { Input } from 'antd';
 import type { DashboardtypesLegendDTOCustomColors } from 'api/generated/services/sigNoz.schemas';
 import { Virtuoso } from 'react-virtuoso';
 
@@ -50,7 +50,7 @@ function LegendColors({
 	return (
 		<div className={styles.container} data-testid="panel-editor-v2-legend-colors">
 			<Input
-				testId="panel-editor-v2-legend-search"
+				data-testid="panel-editor-v2-legend-search"
 				placeholder="Search series…"
 				value={query}
 				prefix={<Search size={14} />}

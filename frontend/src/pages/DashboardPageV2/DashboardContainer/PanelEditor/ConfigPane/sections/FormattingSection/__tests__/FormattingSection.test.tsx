@@ -3,10 +3,12 @@ import userEvent from '@testing-library/user-event';
 
 import FormattingSection from '../FormattingSection';
 
-// Open the Decimals select and pick the option with the given visible label.
+// Open the Decimals select (clicking its antd selector) and pick the option with the
+// given visible label.
 async function pickDecimal(label: string): Promise<void> {
 	const user = userEvent.setup();
-	await user.click(screen.getByTestId('panel-editor-v2-decimals'));
+	const trigger = screen.getByTestId('panel-editor-v2-decimals');
+	await user.click(trigger.querySelector('.ant-select-selector') as HTMLElement);
 	await user.click(await screen.findByRole('option', { name: label }));
 }
 

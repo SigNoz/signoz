@@ -1,6 +1,6 @@
 import type { ChangeEvent } from 'react';
-import { Input } from '@signozhq/ui/input';
 import { Typography } from '@signozhq/ui/typography';
+import { Input } from 'antd';
 import {
 	DashboardtypesFillModeDTO,
 	DashboardtypesLineInterpolationDTO,
@@ -149,7 +149,7 @@ function ChartAppearanceSection({
 				<div className={styles.field}>
 					<Typography.Text>Connect gaps shorter than (s)</Typography.Text>
 					<Input
-						testId="panel-editor-v2-span-gaps"
+						data-testid="panel-editor-v2-span-gaps"
 						type="number"
 						placeholder="All gaps"
 						value={value?.spanGaps?.fillLessThan ?? ''}

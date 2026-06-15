@@ -1,9 +1,6 @@
-// Match the dropdown width to its trigger. Radix always exposes the trigger width as
-// `--radix-select-trigger-width` on the popper content (mirrors --radix-popper-anchor-width),
-// so binding `width` to it keeps the menu the same width as the closed select.
-.content {
-	width: var(--radix-select-trigger-width);
-	min-width: var(--radix-select-trigger-width);
+// Fill the section field so the select lines up with the other full-width controls.
+.select {
+	width: 100%;
 }
 
 .item {

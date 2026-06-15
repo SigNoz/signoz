@@ -1,9 +1,4 @@
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-} from '@signozhq/ui/select';
+import { Select } from 'antd';
 
 import { SegmentIcon, type SegmentIconName } from '../segmentIcons';
 
@@ -24,10 +19,9 @@ interface ConfigSelectProps {
 }
 
 /**
- * Single-select dropdown for the panel editor's config sections. Renders the menu
- * inside the editor overlay (`withPortal={false}`) so it isn't trapped behind the
- * overlay — Radix positions it with strategy:"fixed" so the surrounding `overflow:auto`
- * pane doesn't clip it — and sizes the menu to the trigger width.
+ * Single-select dropdown for the panel editor's config sections. Built on antd's
+ * `Select` so it matches the rest of the editor's antd controls; the menu portals to
+ * `document.body` (antd default) so the surrounding `overflow:auto` pane can't clip it.
  */
 function ConfigSelect({
 	testId,
@@ -37,30 +31,25 @@ function ConfigSelect({
 	onChange,
 }: ConfigSelectProps): JSX.Element {
 	return (
-		<Select
+		<Select<string>
+			className={styles.select}
+			data-testid={testId}
 			value={value}
-			onChange={(next): void => {
-				if (typeof next === 'string') {
-					onChange(next);
-				}
-			}}
-		>
-			<SelectTrigger testId={testId} placeholder={placeholder} />
-			<SelectContent withPortal={false} className={styles.content}>
-				{items.map((item) => (
-					<SelectItem key={item.value} value={item.value}>
-						{item.icon ? (
-							<span className={styles.item}>
-								<SegmentIcon name={item.icon} />
-								{item.label}
-							</span>
-						) : (
-							item.label
-						)}
-					</SelectItem>
-				))}
-			</SelectContent>
-		</Select>
+			placeholder={placeholder}
+			onChange={onChange}
+			virtual={false}
+			options={items.map((item) => ({
+				value: item.value,
+				label: item.icon ? (
+					<span className={styles.item}>
+						<SegmentIcon name={item.icon} />
+						{item.label}
+					</span>
+				) : (
+					item.label
+				),
+			}))}
+		/>
 	);
 }
 

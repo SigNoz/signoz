@@ -1,6 +1,6 @@
 import type { ChangeEvent } from 'react';
-import { Input } from '@signozhq/ui/input';
 import { Typography } from '@signozhq/ui/typography';
+import { Input } from 'antd';
 import type { SectionEditorProps } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/sections';
 
 import ConfigSwitch from '../../controls/ConfigSwitch/ConfigSwitch';
@@ -35,7 +35,7 @@ function BucketsSection({
 				<div className={styles.field}>
 					<Typography.Text>Bucket count</Typography.Text>
 					<Input
-						testId="panel-editor-v2-bucket-count"
+						data-testid="panel-editor-v2-bucket-count"
 						type="number"
 						placeholder="Auto"
 						value={value?.bucketCount ?? ''}
@@ -48,7 +48,7 @@ function BucketsSection({
 				<div className={styles.field}>
 					<Typography.Text>Bucket width</Typography.Text>
 					<Input
-						testId="panel-editor-v2-bucket-width"
+						data-testid="panel-editor-v2-bucket-width"
 						type="number"
 						placeholder="Auto"
 						value={value?.bucketWidth ?? ''}

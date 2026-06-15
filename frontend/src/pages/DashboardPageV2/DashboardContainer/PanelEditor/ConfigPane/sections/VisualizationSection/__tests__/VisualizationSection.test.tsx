@@ -4,9 +4,11 @@ import { DashboardtypesTimePreferenceDTO } from 'api/generated/services/sigNoz.s
 
 import VisualizationSection from '../VisualizationSection';
 
+// Open the antd Select by clicking its selector, then pick the option by label.
 async function pickOption(triggerTestId: string, label: string): Promise<void> {
 	const user = userEvent.setup();
-	await user.click(screen.getByTestId(triggerTestId));
+	const trigger = screen.getByTestId(triggerTestId);
+	await user.click(trigger.querySelector('.ant-select-selector') as HTMLElement);
 	await user.click(await screen.findByRole('option', { name: label }));
 }
 

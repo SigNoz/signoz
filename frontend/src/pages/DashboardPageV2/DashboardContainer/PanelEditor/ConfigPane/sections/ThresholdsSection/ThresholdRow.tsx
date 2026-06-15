@@ -1,8 +1,8 @@
 import { type ChangeEvent, useEffect, useState } from 'react';
 import { Check, Pencil, Trash2, X } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { Input } from '@signozhq/ui/input';
 import { Typography } from '@signozhq/ui/typography';
+import { Input } from 'antd';
 import type { DashboardtypesThresholdWithLabelDTO } from 'api/generated/services/sigNoz.schemas';
 import YAxisUnitSelector from 'components/YAxisUnitSelector';
 import { YAxisSource } from 'components/YAxisUnitSelector/types';
@@ -111,7 +111,7 @@ function ThresholdRow({
 			<div className={styles.field}>
 				<Typography.Text className={styles.fieldLabel}>Value</Typography.Text>
 				<Input
-					testId={`threshold-value-${index}`}
+					data-testid={`threshold-value-${index}`}
 					type="number"
 					placeholder="Value"
 					value={draft.value}
@@ -144,7 +144,7 @@ function ThresholdRow({
 			<div className={styles.field}>
 				<Typography.Text className={styles.fieldLabel}>Label</Typography.Text>
 				<Input
-					testId={`threshold-label-${index}`}
+					data-testid={`threshold-label-${index}`}
 					placeholder="Optional"
 					value={draft.label ?? ''}
 					onChange={(e): void => setDraft((d) => ({ ...d, label: e.target.value }))}

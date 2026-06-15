@@ -1,6 +1,6 @@
 import type { ChangeEvent } from 'react';
-import { Input } from '@signozhq/ui/input';
 import { Typography } from '@signozhq/ui/typography';
+import { Input } from 'antd';
 import type { SectionEditorProps } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/sections';
 
 import ConfigSegmented from '../../controls/ConfigSegmented/ConfigSegmented';
@@ -40,7 +40,7 @@ function AxesSection({
 					<div className={styles.field}>
 						<Typography.Text>Soft min</Typography.Text>
 						<Input
-							testId="panel-editor-v2-soft-min"
+							data-testid="panel-editor-v2-soft-min"
 							type="number"
 							placeholder="Auto"
 							value={value?.softMin ?? ''}
@@ -50,7 +50,7 @@ function AxesSection({
 					<div className={styles.field}>
 						<Typography.Text>Soft max</Typography.Text>
 						<Input
-							testId="panel-editor-v2-soft-max"
+							data-testid="panel-editor-v2-soft-max"
 							type="number"
 							placeholder="Auto"
 							value={value?.softMax ?? ''}
