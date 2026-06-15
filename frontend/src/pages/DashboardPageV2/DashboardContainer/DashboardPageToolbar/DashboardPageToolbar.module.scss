@@ -1,0 +1,20 @@
+.dashboardPageToolbarContainer {
+	position: sticky;
+	top: 0;
+	z-index: 10;
+	color: var(--l2-foreground);
+	background-color: var(--l1-background);
+	padding: 16px;
+	box-shadow: 0 2px 2px 0px var(--l2-border);
+}
+
+.dashboardPageToolbarSubContainer {
+	width: 100%;
+}
+
+.dashboardInfoWithActions {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	width: 100%;
+}

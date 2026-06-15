@@ -1,0 +1,3 @@
+{"metric_name":"k8s.node.cpu.usage","labels":{"k8s.node.name":"miss-n","k8s.node.uid":"miss-n-uid","k8s.cluster.name":"miss-cluster"},"timestamp":"2025-01-10T10:00:00+00:00","value":0.5,"temporality":"Unspecified","type_":"Gauge","is_monotonic":false}
+{"metric_name":"k8s.node.cpu.usage","labels":{"k8s.node.name":"miss-n","k8s.node.uid":"miss-n-uid","k8s.cluster.name":"miss-cluster"},"timestamp":"2025-01-10T10:02:00+00:00","value":0.5,"temporality":"Unspecified","type_":"Gauge","is_monotonic":false}
+{"metric_name":"k8s.node.cpu.usage","labels":{"k8s.node.name":"miss-n","k8s.node.uid":"miss-n-uid","k8s.cluster.name":"miss-cluster"},"timestamp":"2025-01-10T10:04:00+00:00","value":0.5,"temporality":"Unspecified","type_":"Gauge","is_monotonic":false}
