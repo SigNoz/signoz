@@ -386,25 +386,7 @@ func (handler *handler) GetPublicWidgetQueryRangeV2(rw http.ResponseWriter, r *h
 		return
 	}
 
-	dashboard, err := handler.module.GetDashboardByPublicIDV2(ctx, id)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	publicDashboard, err := handler.module.GetPublic(ctx, dashboard.OrgID, dashboard.ID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	startTime, endTime, err := publicDashboard.ResolveTimeRange(r.URL.Query().Get("startTime"), r.URL.Query().Get("endTime"))
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	queryRangeResults, err := handler.module.GetPublicWidgetQueryRangeV2(ctx, id, panelKey, startTime, endTime)
+	queryRangeResults, err := handler.module.GetPublicWidgetQueryRangeV2(ctx, id, panelKey, r.URL.Query().Get("startTime"), r.URL.Query().Get("endTime"))
 	if err != nil {
 		render.Error(rw, err)
 		return

@@ -142,12 +142,23 @@ func (module *module) GetDashboardByPublicIDV2(ctx context.Context, id valuer.UU
 	return storableDashboard.ToDashboardV2(nil)
 }
 
-func (module *module) GetPublicWidgetQueryRangeV2(ctx context.Context, id valuer.UUID, panelKey string, startTime, endTime uint64) (*querybuildertypesv5.QueryRangeResponse, error) {
+func (module *module) GetPublicWidgetQueryRangeV2(ctx context.Context, id valuer.UUID, panelKey, startTimeRaw, endTimeRaw string) (*querybuildertypesv5.QueryRangeResponse, error) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.CodeNamespace:    "dashboard",
 		instrumentationtypes.CodeFunctionName: "GetPublicWidgetQueryRangeV2",
 	})
+
 	dashboard, err := module.GetDashboardByPublicIDV2(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	publicDashboard, err := module.GetPublic(ctx, dashboard.OrgID, dashboard.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	startTime, endTime, err := publicDashboard.ResolveTimeRange(startTimeRaw, endTimeRaw)
 	if err != nil {
 		return nil, err
 	}

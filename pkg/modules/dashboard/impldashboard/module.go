@@ -251,7 +251,7 @@ func (module *module) GetDashboardByPublicIDV2(_ context.Context, _ valuer.UUID)
 	return nil, errors.Newf(errors.TypeUnsupported, dashboardtypes.ErrCodePublicDashboardUnsupported, "not implemented")
 }
 
-func (module *module) GetPublicWidgetQueryRangeV2(context.Context, valuer.UUID, string, uint64, uint64) (*qbtypes.QueryRangeResponse, error) {
+func (module *module) GetPublicWidgetQueryRangeV2(context.Context, valuer.UUID, string, string, string) (*qbtypes.QueryRangeResponse, error) {
 	return nil, errors.Newf(errors.TypeUnsupported, dashboardtypes.ErrCodePublicDashboardUnsupported, "not implemented")
 }
 

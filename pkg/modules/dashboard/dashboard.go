@@ -83,7 +83,7 @@ type Module interface {
 	GetDashboardByPublicIDV2(context.Context, valuer.UUID) (*dashboardtypes.DashboardV2, error)
 
 	// gets the query results by panel key and public shared id for a v2 dashboard
-	GetPublicWidgetQueryRangeV2(ctx context.Context, id valuer.UUID, panelKey string, startTime, endTime uint64) (*querybuildertypesv5.QueryRangeResponse, error)
+	GetPublicWidgetQueryRangeV2(ctx context.Context, id valuer.UUID, panelKey, startTimeRaw, endTimeRaw string) (*querybuildertypesv5.QueryRangeResponse, error)
 }
 
 type Handler interface {
