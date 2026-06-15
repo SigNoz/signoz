@@ -3,13 +3,16 @@ import { Loader, Spline } from '@signozhq/icons';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import { PanelMode } from 'container/DashboardContainer/visualization/panels/types';
 import QueryTypeTag from 'container/NewWidget/LeftContainer/QueryTypeTag';
+import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
+import { DEFAULT_TIME_RANGE } from 'container/TopNav/DateTimeSelectionV2/constants';
 import type { RenderablePanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelDefinition';
 import type { PanelQueryData } from 'pages/DashboardPageV2/DashboardContainer/queryV5/types';
 import { EQueryType } from 'types/common/dashboard';
 
-import PreviewTimePicker, {
-	type PreviewTime,
-} from '../PreviewTimePicker/PreviewTimePicker';
+import type {
+	PreviewTimeRange,
+	UsePreviewQueryResult,
+} from '../usePreviewQuery';
 
 import styles from './PreviewPane.module.scss';
 
@@ -21,8 +24,10 @@ interface PreviewPaneProps {
 	data: PanelQueryData;
 	isLoading: boolean;
 	error: Error | null;
-	previewTime: PreviewTime;
-	onChangePreviewTime: (next: PreviewTime) => void;
+	/** Editor-local time selection (never touches global Redux time or the URL). */
+	selectedInterval: UsePreviewQueryResult['selectedInterval'];
+	timeRange: PreviewTimeRange;
+	onTimeChange: UsePreviewQueryResult['onTimeChange'];
 }
 
 /**
@@ -39,8 +44,9 @@ function PreviewPane({
 	data,
 	isLoading,
 	error,
-	previewTime,
-	onChangePreviewTime,
+	selectedInterval,
+	timeRange,
+	onTimeChange,
 }: PreviewPaneProps): JSX.Element {
 	return (
 		<div className={styles.preview}>
@@ -49,7 +55,20 @@ function PreviewPane({
 					<Spline size={14} />
 					Plotted with <QueryTypeTag queryType={EQueryType.QUERY_BUILDER} />
 				</div>
-				<PreviewTimePicker value={previewTime} onChange={onChangePreviewTime} />
+				{/* Shared time picker in modal mode: edits a local window via onTimeChange
+				    and never touches global Redux time or the URL (disableUrlSync). */}
+				<DateTimeSelectionV2
+					showAutoRefresh
+					showRefreshText={false}
+					hideShareModal
+					disableUrlSync
+					isModalTimeSelection
+					defaultRelativeTime={DEFAULT_TIME_RANGE}
+					onTimeChange={onTimeChange}
+					modalSelectedInterval={selectedInterval}
+					modalInitialStartTime={timeRange.startMs}
+					modalInitialEndTime={timeRange.endMs}
+				/>
 			</div>
 			<div className={styles.container}>
 				<div className={styles.surface}>

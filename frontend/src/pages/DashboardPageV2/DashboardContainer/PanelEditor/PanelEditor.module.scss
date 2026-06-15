@@ -1,12 +1,86 @@
+@keyframes panel-editor-backdrop-in {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+@keyframes panel-editor-backdrop-out {
+	from {
+		opacity: 1;
+	}
+	to {
+		opacity: 0;
+	}
+}
+
+@keyframes panel-editor-modal-in {
+	from {
+		opacity: 0;
+		transform: translateY(8px) scale(0.98);
+	}
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+@keyframes panel-editor-modal-out {
+	from {
+		opacity: 1;
+		transform: none;
+	}
+	to {
+		opacity: 0;
+		transform: translateY(8px) scale(0.98);
+	}
+}
+
 .root {
 	position: fixed;
 	inset: 0;
 	z-index: 1000;
 	display: flex;
+	// Inset the modal from every edge so the dimmed backdrop shows around it.
+	padding: 18px;
+	background: rgba(0, 0, 0, 0.55);
+	animation: panel-editor-backdrop-in 160ms ease-out;
+}
+
+// The modal surface: a bordered, rounded card that fills the padded backdrop.
+.modal {
+	display: flex;
+	flex: 1;
 	flex-direction: column;
-	height: 100%;
-	width: 100%;
+	min-height: 0;
+	overflow: hidden;
 	background: var(--l1-background);
+	border: 1px solid var(--l2-border);
+	border-radius: 4px;
+	box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+	animation: panel-editor-modal-in 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+// Closing: play the reverse keyframes and hold the end frame (`forwards`) so the
+// overlay stays faded out until `onAnimationEnd` unmounts it.
+.closing {
+	animation: panel-editor-backdrop-out 180ms ease-in forwards;
+
+	.modal {
+		animation: panel-editor-modal-out 180ms ease-in forwards;
+	}
+}
+
+// Respect reduced-motion: snap in/out with no transform or fade choreography.
+@media (prefers-reduced-motion: reduce) {
+	.root,
+	.modal,
+	.closing,
+	.closing .modal {
+		animation: none;
+	}
 }
 
 .left {
