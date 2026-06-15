@@ -13,7 +13,7 @@ import type { GridItem } from './utils';
  * intentionally side-effect-free (no React, no network) so they can be unit
  * tested and reused by the layout hooks. JSON pointers target the postable
  * shape: `/spec/layouts/...`, `/spec/panels/...` (matches the existing V2
- * patches in DashboardSettings/General and DashboardDescription).
+ * patches in DashboardSettings/Overview and DashboardDescription).
  */
 
 const { add, replace, remove } = DashboardtypesPatchOpDTO;
