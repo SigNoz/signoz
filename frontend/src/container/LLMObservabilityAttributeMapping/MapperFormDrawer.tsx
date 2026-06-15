@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { DrawerWrapper } from '@signozhq/ui/drawer';
-import { Input } from '@signozhq/ui/input';
 import { SelectSimple } from '@signozhq/ui/select';
 import {
 	closestCenter,
@@ -20,6 +19,7 @@ import {
 import { Plus, Trash2 } from '@signozhq/icons';
 import { v4 as uuid } from 'uuid';
 
+import KeySearchInput from './KeySearchInput';
 import SourceAttributeRow from './SourceAttributeRow';
 import {
 	FieldContext,
@@ -137,6 +137,7 @@ function MapperFormDrawer({
 			}}
 			title={isEdit ? 'Edit mapping' : 'New custom mapping'}
 			subTitle="Map source attributes onto a canonical target attribute"
+			width="wide"
 			testId="mapper-form-drawer"
 			footer={
 				<div className="mapper-form__footer">
@@ -178,13 +179,12 @@ function MapperFormDrawer({
 			<div className="mapper-form">
 				<div className="mapper-form__field">
 					<span className="mapper-form__label">Target attribute</span>
-					<Input
+					<KeySearchInput
 						placeholder="e.g. gen_ai.content.prompt"
 						value={draft.name}
+						fieldContext={draft.fieldContext}
 						disabled={isEdit}
-						onChange={(event): void =>
-							setDraft({ ...draft, name: event.target.value })
-						}
+						onChange={(name): void => setDraft({ ...draft, name })}
 						testId="mapper-form-target"
 					/>
 					{isEdit && (

@@ -1,6 +1,8 @@
 import { Button } from '@signozhq/ui/button';
-import { Input } from '@signozhq/ui/input';
 import { Plus, X } from '@signozhq/icons';
+
+import KeySearchInput from './KeySearchInput';
+import { FieldContextValue } from './types';
 
 interface ConditionKeyListProps {
 	label: string;
@@ -9,6 +11,7 @@ interface ConditionKeyListProps {
 	placeholder: string;
 	addLabel: string;
 	testIdPrefix: string;
+	fieldContext: FieldContextValue;
 	onChange: (keys: string[]) => void;
 }
 
@@ -21,6 +24,7 @@ function ConditionKeyList({
 	placeholder,
 	addLabel,
 	testIdPrefix,
+	fieldContext,
 	onChange,
 }: ConditionKeyListProps): JSX.Element {
 	const updateKey = (index: number, value: string): void => {
@@ -47,11 +51,12 @@ function ConditionKeyList({
 					{keys.map((key, index) => (
 						// eslint-disable-next-line react/no-array-index-key
 						<div className="group-form__key" key={index}>
-							<Input
+							<KeySearchInput
 								className="group-form__key-input"
 								placeholder={placeholder}
 								value={key}
-								onChange={(event): void => updateKey(index, event.target.value)}
+								fieldContext={fieldContext}
+								onChange={(next): void => updateKey(index, next)}
 								testId={`${testIdPrefix}-${index}`}
 							/>
 							<Button

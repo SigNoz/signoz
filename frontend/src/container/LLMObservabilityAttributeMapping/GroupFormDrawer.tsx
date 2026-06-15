@@ -5,7 +5,7 @@ import { Switch } from '@signozhq/ui/switch';
 import { Trash2 } from '@signozhq/icons';
 
 import ConditionKeyList from './ConditionKeyList';
-import { GroupDraft, MapperDraftMode } from './types';
+import { FieldContext, GroupDraft, MapperDraftMode } from './types';
 import { isGroupDraftValid } from './utils';
 
 import './GroupFormDrawer.styles.scss';
@@ -48,6 +48,7 @@ function GroupFormDrawer({
 			}}
 			title={isEdit ? 'Edit group' : 'New group'}
 			subTitle="A group gates which spans its mappings run on"
+			width="wide"
 			testId="group-form-drawer"
 			footer={
 				<div className="group-form__footer">
@@ -115,6 +116,7 @@ function GroupFormDrawer({
 					placeholder="e.g. gen_ai."
 					addLabel="Add attribute key"
 					testIdPrefix="group-form-attribute"
+					fieldContext={FieldContext.attribute}
 					onChange={(attributes): void => setDraft({ ...draft, attributes })}
 				/>
 
@@ -125,6 +127,7 @@ function GroupFormDrawer({
 					placeholder="e.g. service.name"
 					addLabel="Add resource key"
 					testIdPrefix="group-form-resource"
+					fieldContext={FieldContext.resource}
 					onChange={(resource): void => setDraft({ ...draft, resource })}
 				/>
 

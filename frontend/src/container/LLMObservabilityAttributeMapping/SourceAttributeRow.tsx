@@ -1,10 +1,10 @@
 import { Button } from '@signozhq/ui/button';
-import { Input } from '@signozhq/ui/input';
 import { SelectSimple } from '@signozhq/ui/select';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, X } from '@signozhq/icons';
 
+import KeySearchInput from './KeySearchInput';
 import {
 	FieldContext,
 	FieldContextValue,
@@ -69,11 +69,12 @@ function SourceAttributeRow({
 				<GripVertical size={14} />
 			</div>
 			<span className="mapper-form__source-index">{index + 1}</span>
-			<Input
+			<KeySearchInput
 				className="mapper-form__source-input"
 				placeholder="Source attribute key"
 				value={value.key}
-				onChange={(event): void => onChange(index, { key: event.target.value })}
+				fieldContext={value.context}
+				onChange={(key): void => onChange(index, { key })}
 				testId={`mapper-form-source-${index}`}
 			/>
 			<SelectSimple
