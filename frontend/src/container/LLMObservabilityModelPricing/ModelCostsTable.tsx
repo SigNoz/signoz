@@ -32,8 +32,18 @@ function ModelCostsTable({
 			key: 'model',
 			render: (_value, rule): JSX.Element => (
 				<div className="model-cell">
-					<div className="model-cell__name">{rule.modelName}</div>
-					<div className="model-cell__canonical-id">{getCanonicalId(rule)}</div>
+					<div
+						className="model-cell__name"
+						data-testid={`model-cell-name-${rule.id}`}
+					>
+						{rule.modelName}
+					</div>
+					<div
+						className="model-cell__canonical-id"
+						data-testid={`model-cell-canonical-id-${rule.id}`}
+					>
+						{getCanonicalId(rule)}
+					</div>
 				</div>
 			),
 		},
@@ -46,7 +56,7 @@ function ModelCostsTable({
 			title: 'Input / 1M',
 			key: 'input',
 			render: (_value, rule): JSX.Element => (
-				<span className="price-cell">
+				<span className="price-cell" data-testid={`price-cell-input-${rule.id}`}>
 					{formatPricePerMillion(rule.pricing?.input)}
 				</span>
 			),
@@ -55,7 +65,7 @@ function ModelCostsTable({
 			title: 'Output / 1M',
 			key: 'output',
 			render: (_value, rule): JSX.Element => (
-				<span className="price-cell">
+				<span className="price-cell" data-testid={`price-cell-output-${rule.id}`}>
 					{formatPricePerMillion(rule.pricing?.output)}
 				</span>
 			),

@@ -244,7 +244,7 @@ function ModelCostDrawer({
 				<div className="drawer-surface__head">
 					<h4>Source</h4>
 					{isReadOnly && (
-						<span className="managed-label">
+						<span className="managed-label" data-testid="drawer-managed-label">
 							<Lock size={12} />
 							Managed by SigNoz
 						</span>
@@ -309,7 +309,7 @@ function ModelCostDrawer({
 				<div className="drawer-surface__head">
 					<h4>Pricing (per 1M tokens, USD)</h4>
 					{isReadOnly && (
-						<span className="managed-label">
+						<span className="managed-label" data-testid="drawer-readonly-label">
 							<Lock size={12} />
 							Read-only
 						</span>
