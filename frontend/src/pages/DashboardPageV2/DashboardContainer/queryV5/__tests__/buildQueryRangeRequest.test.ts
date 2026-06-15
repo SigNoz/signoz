@@ -164,6 +164,17 @@ describe('buildQueryRangeRequest', () => {
 		expect(request.formatOptions?.formatTableResultForUI).toBe(true);
 	});
 
+	it('passes through fillGaps into formatOptions', () => {
+		const request = buildQueryRangeRequest({
+			queries: bareBuilderQuery({ name: 'A' }),
+			panelType: PANEL_TYPES.TIME_SERIES,
+			startMs: START_MS,
+			endMs: START_MS + HOUR_MS,
+			fillGaps: true,
+		});
+		expect(request.formatOptions?.fillGaps).toBe(true);
+	});
+
 	it('injects the range-derived stepInterval into BAR builder queries without one', () => {
 		const request = buildQueryRangeRequest({
 			queries: bareBuilderQuery({ name: 'A', signal: 'metrics' }),

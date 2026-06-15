@@ -104,15 +104,20 @@ export function usePanelQuery({
 		minTime,
 	} = useSelector<AppState, GlobalReducer>((state) => state.globalTime);
 
-	// Per-panel time preference (`visualization.timePreference`) pins the panel to a
-	// fixed relative window regardless of the dashboard's selection. The plugin spec is
-	// a discriminated union; `visualization` is common to every variant, so a localized
-	// cast reads it without narrowing on kind.
-	const timePreference = (
-		panel?.spec?.plugin?.spec as
-			| { visualization?: { timePreference?: DashboardtypesTimePreferenceDTO } }
-			| undefined
-	)?.visualization?.timePreference;
+	// `visualization` is common to every plugin-spec variant of the discriminated union,
+	// so a single localized cast reads its panel-level options without narrowing on kind:
+	//   - timePreference pins the panel to a fixed relative window (see below);
+	//   - fillSpans backend-fills missing points with 0 (→ formatOptions.fillGaps).
+	const visualization = panel?.spec?.plugin?.spec as
+		| {
+				visualization?: {
+					timePreference?: DashboardtypesTimePreferenceDTO;
+					fillSpans?: boolean;
+				};
+		  }
+		| undefined;
+	const timePreference = visualization?.visualization?.timePreference;
+	const fillGaps = visualization?.visualization?.fillSpans ?? false;
 
 	// Redux global time is in nanoseconds; the V5 API takes epoch ms. Precedence: an
 	// editor time override (already in ms) wins so the preview stays independent of the
@@ -132,8 +137,9 @@ export function usePanelQuery({
 				panelType,
 				startMs,
 				endMs,
+				fillGaps,
 			}),
-		[queries, panelType, startMs, endMs],
+		[queries, panelType, startMs, endMs, fillGaps],
 	);
 
 	const legendMap = useMemo(() => extractLegendMap(queries ?? []), [queries]);
@@ -155,6 +161,9 @@ export function usePanelQuery({
 			...(time
 				? [`override-${startMs}-${endMs}`]
 				: [minTime, maxTime, globalSelectedInterval, timePreference]),
+			// fillGaps changes the request payload (formatOptions), so it must key the
+			// cache too — otherwise toggling it would read a stale response.
+			fillGaps,
 			fullKind,
 			queries,
 		],

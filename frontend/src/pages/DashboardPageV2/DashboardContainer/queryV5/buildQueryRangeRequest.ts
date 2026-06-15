@@ -161,6 +161,11 @@ export interface BuildQueryRangeRequestArgs {
 	startMs: number;
 	/** Epoch milliseconds. */
 	endMs: number;
+	/**
+	 * Backend-fill missing data points with 0 (the panel's `visualization.fillSpans`).
+	 * Maps to `formatOptions.fillGaps`, mirroring V1's `fillGaps: widget.fillSpans`.
+	 */
+	fillGaps?: boolean;
 }
 
 /**
@@ -176,6 +181,7 @@ export function buildQueryRangeRequest({
 	panelType,
 	startMs,
 	endMs,
+	fillGaps = false,
 }: BuildQueryRangeRequestArgs): Querybuildertypesv5QueryRangeRequestDTO {
 	let envelopes = toQueryEnvelopes(queries);
 	if (panelType === PANEL_TYPES.BAR) {
@@ -190,7 +196,7 @@ export function buildQueryRangeRequest({
 		compositeQuery: { queries: envelopes },
 		formatOptions: {
 			formatTableResultForUI: panelType === PANEL_TYPES.TABLE,
-			fillGaps: false,
+			fillGaps,
 		},
 		variables: {},
 	};
