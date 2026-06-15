@@ -138,9 +138,6 @@ func redactBuilderQuery[T any](q qb.QueryBuilderQuery[T]) qb.QueryBuilderQuery[T
 // Panel query
 // ════════════════════════════════════════════════════════════════════════
 
-// GetPanelQuery builds a v5 QueryRangeRequest for the given panel. v2 panel queries
-// are already native v5 shapes, so the request is assembled directly: a composite is
-// used as-is, every other kind becomes a single-envelope composite.
 func (d *DashboardV2) GetPanelQuery(startTime, endTime uint64, panelKey string) (*qb.QueryRangeRequest, error) {
 	panel, ok := d.Spec.Panels[panelKey]
 	if !ok || panel == nil {
@@ -152,7 +149,7 @@ func (d *DashboardV2) GetPanelQuery(startTime, endTime uint64, panelKey string) 
 	}
 
 	query := panel.Spec.Queries[0]
-	composite, err := compositeQueryFromPlugin(query.Spec.Plugin)
+	composite, err := buildV5CompositeQueryFromPlugin(query.Spec.Plugin)
 	if err != nil {
 		return nil, err
 	}
@@ -169,9 +166,7 @@ func (d *DashboardV2) GetPanelQuery(startTime, endTime uint64, panelKey string) 
 	}, nil
 }
 
-// compositeQueryFromPlugin turns a panel's single query plugin into a v5 composite
-// query. The plugin spec is already a typed v5 value, so no JSON round-trip is needed.
-func compositeQueryFromPlugin(plugin QueryPlugin) (qb.CompositeQuery, error) {
+func buildV5CompositeQueryFromPlugin(plugin QueryPlugin) (qb.CompositeQuery, error) {
 	switch spec := plugin.Spec.(type) {
 	case *qb.CompositeQuery:
 		if spec == nil {
