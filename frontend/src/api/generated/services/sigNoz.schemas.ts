@@ -2143,6 +2143,10 @@ export interface ErrorsResponseerroradditionalDTO {
 	 * @type string
 	 */
 	message?: string;
+	/**
+	 * @type array
+	 */
+	suggestions?: string[];
 }
 
 export interface ErrorsResponseretryjsonDTO {
@@ -2158,10 +2162,6 @@ export interface ErrorsJSONDTO {
 	 * @type array
 	 */
 	errors?: ErrorsResponseerroradditionalDTO[];
-	/**
-	 * @type array
-	 */
-	invalidReferences?: string[];
 	/**
 	 * @type string
 	 */

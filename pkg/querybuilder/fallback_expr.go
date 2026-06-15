@@ -32,7 +32,7 @@ func CollisionHandledFinalExpr(
 
 	if requiredDataType != telemetrytypes.FieldDataTypeString &&
 		requiredDataType != telemetrytypes.FieldDataTypeFloat64 {
-		return "", nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "unsupported data type %s", requiredDataType)
+		return "", nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported data type %s", requiredDataType)
 	}
 
 	var dummyValue any
@@ -81,14 +81,8 @@ func CollisionHandledFinalExpr(
 			// - it is not a static field
 			// - the next best thing to do is see if there is a typo
 			// and suggest a correction
-			correction, found := telemetrytypes.SuggestCorrection(field.Name, maps.Keys(keys))
-			if found {
-				// we found a close match, in the error message send the suggestion
-				return "", nil, errors.WithAdditionalf(fieldForErr, "%s", correction)
-			} else {
-				// not even a close match, return an error
-				return "", nil, errors.WithAdditionalf(fieldForErr, "field `%s` not found", field.Name)
-			}
+			wrappedErr := errors.WithSuggestiveAdditionalf(fieldForErr, errors.SuggestionsOnLevenshteinDistance(field.Name, maps.Keys(keys)), "field `%s` not found", field.Name)
+			return "", nil, wrappedErr
 		} else {
 			for _, key := range keysForField {
 				err := addCondition(key)

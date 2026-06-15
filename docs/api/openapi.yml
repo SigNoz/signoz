@@ -3566,10 +3566,6 @@ components:
           items:
             $ref: '#/components/schemas/ErrorsResponseerroradditional'
           type: array
-        invalidReferences:
-          items:
-            type: string
-          type: array
         message:
           type: string
         retry:
@@ -3590,6 +3586,10 @@ components:
       properties:
         message:
           type: string
+        suggestions:
+          items:
+            type: string
+          type: array
       type: object
     ErrorsResponseretryjson:
       properties:
