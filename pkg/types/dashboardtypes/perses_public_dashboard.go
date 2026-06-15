@@ -7,23 +7,17 @@ import (
 )
 
 // GettablePublicDashboardDataV2 is the anonymous-facing payload of a v2 dashboard.
-// Like v1, the dashboard carries only its (redacted) body; audit/org fields are
-// left at zero values rather than populated.
 type GettablePublicDashboardDataV2 struct {
 	Dashboard       *GettableDashboardV2      `json:"dashboard"`
 	PublicDashboard *GettablePublicDasbhboard `json:"publicDashboard"`
 }
 
-// NewPublicDashboardDataFromDashboardV2 builds the anonymous payload for a v2
-// dashboard, redacting each panel query so filters and raw queries stay private.
-// Unlike v1, construction is pure typed assembly, so it cannot fail.
+// NewPublicDashboardDataFromDashboardV2 builds the anonymous v2 payload: panel queries
+// are redacted, and only the body fields v1 exposed (name, metadata, tags, spec) are set.
 func NewPublicDashboardDataFromDashboardV2(dashboard *DashboardV2, publicDashboard *PublicDashboard) *GettablePublicDashboardDataV2 {
 	spec := dashboard.Spec
 	redactPanelQueries(&spec)
 
-	// Mirror v1: return the body-equivalent fields that v1 carried in its data blob
-	// (name, metadata, tags, spec). Identity/audit fields (orgId, source, locked,
-	// timestamps, createdBy) were never in v1's data and stay zero-valued.
 	return &GettablePublicDashboardDataV2{
 		Dashboard: &GettableDashboardV2{
 			DashboardV2MetadataBase: dashboard.DashboardV2MetadataBase,
