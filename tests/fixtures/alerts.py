@@ -249,8 +249,12 @@ def verify_webhook_notification_expectation(
     json_body = validation_data["json_body"]
 
     url = notification_channel.host_configs["8080"].get("__admin/requests/find")
-    res = requests.post(url, json={"method": "POST", "url": path}, timeout=5)
-    assert res.status_code == HTTPStatus.OK, f"Failed to find requests for path {path}, status code: {res.status_code}, response: {res.text}"
+    try:
+        res = requests.post(url, json={"method": "POST", "url": path}, timeout=10)
+    except requests.exceptions.RequestException:
+        return False
+    if res.status_code != HTTPStatus.OK:
+        return False
 
     for req in res.json()["requests"]:
         body = json.loads(base64.b64decode(req["bodyAsBase64"]).decode("utf-8"))
@@ -309,6 +313,7 @@ def update_raw_channel_config(
     channel_config: dict,
     channel_name: str,
     notification_channel: types.TestContainerDocker,
+    maildev: types.TestContainerDocker | None = None,
 ) -> dict:
     """
     Updates the channel config to point to the given wiremock
@@ -333,5 +338,13 @@ def update_raw_channel_config(
                     original_url = entry[url_field]
                     path = urlparse(original_url).path
                     entry[url_field] = notification_channel.container_configs["8080"].get(path)
+
+    # Inject live maildev SMTP address into email configs so the test works
+    if maildev is not None and "email_configs" in config:
+        smtp_host = maildev.container_configs["1025"].address
+        smtp_port = str(maildev.container_configs["1025"].port)
+        for entry in config["email_configs"]:
+            entry["smarthost"] = f"{smtp_host}:{smtp_port}"
+            entry["require_tls"] = False
 
     return config

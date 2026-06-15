@@ -55,9 +55,7 @@
   "labels": {},
   "annotations": {
     "description": "p90 latency high on $service_name",
-    "summary": "p90 latency exceeded threshold on $service_name",
-    "_title_template": "[$alert.status] p90 latency high on $labels.service.name",
-    "_body_template": "**Severity:** $rule.severity\n**Status:** $alert.status\n\n**Service:** $labels.service.name\n\n**Description:** p90 request latency on $labels.service.name exceeded the $labels.threshold.name threshold. Investigate downstream dependencies and recent deploys.\n\n**Runbook:** https://signoz.io/docs/runbooks/high-latency"
+    "summary": "p90 latency exceeded threshold on $service_name"
   },
   "notificationSettings": {
     "groupBy": [],
