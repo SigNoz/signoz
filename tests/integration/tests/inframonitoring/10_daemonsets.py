@@ -425,22 +425,101 @@ def test_daemonsets_base_filter_drops_non_daemonset_pods(
     assert all(r["daemonSetName"] != "" for r in data["records"])
 
 
+# Float record fields compared with tolerance; everything else compared with ==.
+_GROUPBY_FLOAT_FIELDS = {
+    "daemonSetCPU",
+    "daemonSetCPURequest",
+    "daemonSetCPULimit",
+    "daemonSetMemory",
+    "daemonSetMemoryRequest",
+    "daemonSetMemoryLimit",
+}
+
+
+def _phase(pending=0, running=0, succeeded=0, failed=0, unknown=0) -> dict:
+    return {"pending": pending, "running": running, "succeeded": succeeded, "failed": failed, "unknown": unknown}
+
+
 @pytest.mark.parametrize(
-    "group_key,expected_running",
+    "scenario",
     [
-        # groupBy=[k8s.daemonset.name]: one record per daemonset,
-        # daemonSetName populated (daemonsets.go:28-31). 1 running pod each.
+        # Explicit groupBy=[k8s.daemonset.name]: one record per daemonset,
+        # daemonSetName populated (daemonsets.go:28-31), response grouped_list.
+        # 1 running pod each.
         pytest.param(
-            "k8s.daemonset.name",
-            {"gb-ds-a1": 1, "gb-ds-a2": 1, "gb-ds-b1": 1, "gb-ds-b2": 1},
+            {
+                "fixture": "daemonsets_groupby.jsonl",
+                "group_by": "k8s.daemonset.name",
+                "filter": None,
+                "group_meta_key": "k8s.daemonset.name",
+                "expected_type": "grouped_list",
+                "groups": {
+                    "gb-ds-a1": {"daemonSetName": "gb-ds-a1", "podCountsByPhase": _phase(running=1)},
+                    "gb-ds-a2": {"daemonSetName": "gb-ds-a2", "podCountsByPhase": _phase(running=1)},
+                    "gb-ds-b1": {"daemonSetName": "gb-ds-b1", "podCountsByPhase": _phase(running=1)},
+                    "gb-ds-b2": {"daemonSetName": "gb-ds-b2", "podCountsByPhase": _phase(running=1)},
+                },
+            },
             id="daemonset_name",
         ),
-        # groupBy=[k8s.namespace.name]: aggregated across each namespace's 2
-        # daemonsets, daemonSetName cleared. 2 x 1 = 2 running pods each.
+        # Explicit groupBy=[k8s.namespace.name]: aggregated across each namespace's
+        # 2 daemonsets, daemonSetName cleared, response grouped_list. 2 running each.
         pytest.param(
-            "k8s.namespace.name",
-            {"gb-ns-a": 2, "gb-ns-b": 2},
+            {
+                "fixture": "daemonsets_groupby.jsonl",
+                "group_by": "k8s.namespace.name",
+                "filter": None,
+                "group_meta_key": "k8s.namespace.name",
+                "expected_type": "grouped_list",
+                "groups": {
+                    "gb-ns-a": {"daemonSetName": "", "podCountsByPhase": _phase(running=2)},
+                    "gb-ns-b": {"daemonSetName": "", "podCountsByPhase": _phase(running=2)},
+                },
+            },
             id="namespace",
+        ),
+        # Default groupBy (no groupBy in request) => [k8s.daemonset.name,
+        # k8s.namespace.name] (module.go ListDaemonSets), response list. Two
+        # daemonsets sharing a name across namespaces must NOT collapse: each row
+        # keeps its per-namespace metrics/node counts/phase. Single pod per (ds, ns)
+        # => SpaceAggregationSum == Avg == seeded value, so exact expectations.
+        # Regression guard for namespace-scoped k8s name uniqueness; fails on the
+        # pre-change name-only default (would yield 1 summed row).
+        pytest.param(
+            {
+                "fixture": "daemonsets_same_name_across_namespaces.jsonl",
+                "group_by": None,
+                "filter": "k8s.daemonset.name = 'dup-ds'",
+                "group_meta_key": "k8s.namespace.name",
+                "expected_type": "list",
+                "groups": {
+                    "ns-x": {
+                        "daemonSetName": "dup-ds",
+                        "daemonSetCPU": 0.3,
+                        "daemonSetCPURequest": 0.6,
+                        "daemonSetCPULimit": 0.7,
+                        "daemonSetMemory": 100000000.0,
+                        "daemonSetMemoryRequest": 0.6,
+                        "daemonSetMemoryLimit": 0.7,
+                        "desiredNodes": 2,
+                        "currentNodes": 2,
+                        "podCountsByPhase": _phase(running=1),
+                    },
+                    "ns-y": {
+                        "daemonSetName": "dup-ds",
+                        "daemonSetCPU": 0.9,
+                        "daemonSetCPURequest": 0.2,
+                        "daemonSetCPULimit": 0.3,
+                        "daemonSetMemory": 500000000.0,
+                        "daemonSetMemoryRequest": 0.2,
+                        "daemonSetMemoryLimit": 0.3,
+                        "desiredNodes": 3,
+                        "currentNodes": 1,
+                        "podCountsByPhase": _phase(failed=1),
+                    },
+                },
+            },
+            id="default_disambiguates_ns",
         ),
     ],
 )
@@ -449,55 +528,60 @@ def test_daemonsets_groupby(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
-    group_key: str,
-    expected_running: dict,
+    scenario: dict,
 ) -> None:
-    """groupBy returns one record per distinct group with aggregated pod-phase
-    counts. daemonSetName is populated only when grouping by k8s.daemonset.name
-    (daemonsets.go:28-31 list-vs-grouped branch); meta surfaces the groupBy key."""
+    """groupBy determines row identity. Explicit groupBy returns one grouped_list
+    record per distinct group (daemonSetName populated only when grouping by
+    k8s.daemonset.name; daemonsets.go:28-31). With no groupBy the default is
+    [k8s.daemonset.name, k8s.namespace.name] (module.go ListDaemonSets), so
+    same-named daemonsets across namespaces stay as separate, un-collapsed list
+    rows. meta always surfaces the grouping key(s)."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
-            get_testdata_file_path("inframonitoring/daemonsets_groupby.jsonl"),
+            get_testdata_file_path(f"inframonitoring/{scenario['fixture']}"),
             base_time=now - timedelta(minutes=4),
         )
     )
+
+    body: dict = {
+        "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+        "end": int(now.timestamp() * 1000),
+        "limit": 50,
+    }
+    if scenario["group_by"] is not None:
+        body["groupBy"] = [
+            {"name": scenario["group_by"], "fieldDataType": "string", "fieldContext": "resource"}
+        ]
+    if scenario["filter"] is not None:
+        body["filter"] = {"expression": scenario["filter"]}
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     response = requests.post(
         signoz.self.host_configs["8080"].get(ENDPOINT),
         headers={"authorization": f"Bearer {token}"},
-        json={
-            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "limit": 50,
-            "groupBy": [
-                {
-                    "name": group_key,
-                    "fieldDataType": "string",
-                    "fieldContext": "resource",
-                }
-            ],
-        },
+        json=body,
         timeout=5,
     )
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()["data"]
-    assert data["total"] == len(expected_running)
 
-    is_ds_group = group_key == "k8s.daemonset.name"
-    group_of = lambda r: r["daemonSetName"] if is_ds_group else r["meta"][group_key]  # noqa: E731  # pylint: disable=unnecessary-lambda-assignment
-    by_group = {group_of(r): r for r in data["records"]}
-    assert set(by_group.keys()) == set(expected_running.keys())
+    groups = scenario["groups"]
+    meta_key = scenario["group_meta_key"]
+    assert data["type"] == scenario["expected_type"]
+    assert data["total"] == len(groups)
 
-    for group, running in expected_running.items():
-        rec = by_group[group]
-        # daemonSetName populated per daemonset when grouping by it, empty otherwise.
-        assert rec["daemonSetName"] == (group if is_ds_group else "")
-        assert rec["podCountsByPhase"]["running"] == running
-        for other in ("pending", "succeeded", "failed", "unknown"):
-            assert rec["podCountsByPhase"][other] == 0
-        assert group_key in rec["meta"], rec["meta"]
+    by_group = {r["meta"][meta_key]: r for r in data["records"]}
+    assert set(by_group.keys()) == set(groups.keys())
+
+    for gid, exp in groups.items():
+        rec = by_group[gid]
+        assert meta_key in rec["meta"], rec["meta"]
+        for field, val in exp.items():
+            if field in _GROUPBY_FLOAT_FIELDS:
+                assert compare_values(rec[field], val, 1e-6), f"{gid}.{field}: got {rec[field]}, expected {val}"
+            else:
+                assert rec[field] == val, f"{gid}.{field}: got {rec[field]}, expected {val}"
 
 
 def test_daemonsets_pagination(
