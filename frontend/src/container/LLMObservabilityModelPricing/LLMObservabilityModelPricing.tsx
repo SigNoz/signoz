@@ -5,6 +5,8 @@ import { SelectSimple } from '@signozhq/ui/select';
 import { Tabs } from '@signozhq/ui/tabs';
 import { Plus, Search } from '@signozhq/icons';
 import { useListLLMPricingRules } from 'api/generated/services/llmpricingrules';
+import useComponentPermission from 'hooks/useComponentPermission';
+import { useAppContext } from 'providers/App/App';
 
 import ModelCostDrawer from './ModelCostDrawer';
 import ModelCostsTable from './ModelCostsTable';
@@ -36,6 +38,12 @@ function LLMObservabilityModelPricing(): JSX.Element {
 		offset: 0,
 		limit: PAGE_SIZE,
 	});
+
+	const { user } = useAppContext();
+	const [canManagePricing] = useComponentPermission(
+		['manage_llm_pricing'],
+		user.role,
+	);
 
 	const rules: PricingRule[] = useMemo(() => data?.data?.items || [], [data]);
 
@@ -95,16 +103,18 @@ function LLMObservabilityModelPricing(): JSX.Element {
 					items={CURRENCY_OPTIONS}
 					testId="currency-select"
 				/>
-				<Button
-					variant="solid"
-					color="primary"
-					className="filters-bar__add"
-					prefix={<Plus size={14} />}
-					onClick={(): void => drawer.openForAdd()}
-					testId="add-model-cost-btn"
-				>
-					Add model cost
-				</Button>
+				{canManagePricing && (
+					<Button
+						variant="solid"
+						color="primary"
+						className="filters-bar__add"
+						prefix={<Plus size={14} />}
+						onClick={(): void => drawer.openForAdd()}
+						testId="add-model-cost-btn"
+					>
+						Add model cost
+					</Button>
+				)}
 			</div>
 
 			{isError && (
@@ -117,6 +127,7 @@ function LLMObservabilityModelPricing(): JSX.Element {
 				rules={filteredRules}
 				isLoading={isLoading}
 				selectedRuleId={drawer.selectedRuleId}
+				canManage={canManagePricing}
 				onEdit={drawer.openForEdit}
 			/>
 
@@ -136,6 +147,7 @@ function LLMObservabilityModelPricing(): JSX.Element {
 				isSaving={drawer.isSaving}
 				isDeleting={drawer.isDeleting}
 				saveError={drawer.saveError}
+				canManage={canManagePricing}
 			/>
 		</div>
 	);

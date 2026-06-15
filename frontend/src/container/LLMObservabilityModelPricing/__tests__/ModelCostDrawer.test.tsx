@@ -8,6 +8,7 @@ import ModelCostDrawer from '../ModelCostDrawer';
 interface HarnessProps {
 	initialDraft?: DrawerDraft;
 	mode?: 'add' | 'edit';
+	canManage?: boolean;
 	onSave?: () => void;
 	onDelete?: () => void;
 }
@@ -15,6 +16,7 @@ interface HarnessProps {
 function Harness({
 	initialDraft = { ...EMPTY_DRAFT, modelName: 'gpt-4o' },
 	mode = 'add',
+	canManage = true,
 	onSave = jest.fn(),
 	onDelete = jest.fn(),
 }: HarnessProps): JSX.Element {
@@ -31,6 +33,7 @@ function Harness({
 			isSaving={false}
 			isDeleting={false}
 			saveError={null}
+			canManage={canManage}
 		/>
 	);
 }
@@ -157,5 +160,24 @@ describe('ModelCostDrawer', () => {
 
 		await user.click(screen.getByTestId('drawer-save-btn'));
 		expect(onSave).toHaveBeenCalledTimes(1);
+	});
+
+	it('is read-only when the user cannot manage pricing (hides Save/Delete)', () => {
+		render(
+			<Harness
+				mode="edit"
+				canManage={false}
+				initialDraft={{
+					...EMPTY_DRAFT,
+					id: 'rule-1',
+					modelName: 'gpt-4o',
+					isOverride: true,
+				}}
+			/>,
+		);
+
+		expect(screen.queryByTestId('drawer-save-btn')).not.toBeInTheDocument();
+		expect(screen.queryByTestId('drawer-delete-btn')).not.toBeInTheDocument();
+		expect(screen.getByTestId('drawer-model-id-input')).toBeDisabled();
 	});
 });

@@ -105,4 +105,13 @@ describe('LLMObservabilityModelPricing', () => {
 		expect(input).toBeInTheDocument();
 		expect(input.value).toBe('gpt-4o');
 	});
+
+	it('hides the Add button for non-admin users (write APIs are Admin-only)', async () => {
+		render(<LLMObservabilityModelPricing />, {}, { role: 'VIEWER' });
+
+		await screen.findByText('gpt-4o');
+		expect(screen.queryByTestId('add-model-cost-btn')).not.toBeInTheDocument();
+		// rows still open in read-only "View" mode
+		expect(screen.getByTestId('edit-rule-rule-gpt4o')).toHaveTextContent('View');
+	});
 });

@@ -36,12 +36,18 @@ test.describe('LLM Pricing — Source radio behaviour', () => {
 		// Click Auto — should trigger the reset-confirm dialog
 		await page.getByTestId('drawer-source-auto').click();
 
-		const resetDialog = page.locator('[role="dialog"][aria-label="Reset to default pricing"]');
+		const resetDialog = page.locator(
+			'[role="dialog"][aria-label="Reset to default pricing"]',
+		);
 		await expect(resetDialog).toBeVisible();
-		await expect(
-			resetDialog.getByText('Reset to default pricing? Custom values will be discarded.'),
-		).toBeVisible();
-		await expect(page.getByTestId('drawer-reset-keep-btn')).toBeVisible();
+		(await expect(
+			resetDialog
+				.getByText(
+					'Reset to default pricing? Custom values will be discarded. it might take 24 hours for changes to take effect..',
+				)
+				.toBeVisible(),
+		),
+			await expect(page.getByTestId('drawer-reset-keep-btn')).toBeVisible());
 		await expect(page.getByTestId('drawer-reset-confirm-btn')).toBeVisible();
 
 		// While confirm is showing, the switch has NOT been applied yet
@@ -82,7 +88,9 @@ test.describe('LLM Pricing — Source radio behaviour', () => {
 		await page.locator('[data-testid="drawer-input-cost"] input').fill('25');
 
 		await page.getByTestId('drawer-source-auto').click();
-		const resetDialog = page.locator('[role="dialog"][aria-label="Reset to default pricing"]');
+		const resetDialog = page.locator(
+			'[role="dialog"][aria-label="Reset to default pricing"]',
+		);
 		await expect(resetDialog).toBeVisible();
 
 		await page.getByTestId('drawer-reset-confirm-btn').click();
@@ -146,7 +154,10 @@ test.describe('LLM Pricing — Source radio behaviour', () => {
 				page.locator('[data-testid="drawer-input-cost"] input'),
 			).toBeEnabled();
 		} finally {
-			await page.getByTestId('drawer-cancel-btn').click().catch(() => undefined);
+			await page
+				.getByTestId('drawer-cancel-btn')
+				.click()
+				.catch(() => undefined);
 			const token = await authToken(page);
 			await deletePricingRuleViaApi(page.request, ruleId, token);
 		}
@@ -169,20 +180,26 @@ test.describe('LLM Pricing — Source radio behaviour', () => {
 
 			// Override card is checked — its border-color must be non-transparent
 			const overrideCard = page.locator('.source-radio--override');
-			await expect(overrideCard.locator('button[data-state="checked"]')).toBeVisible();
+			await expect(
+				overrideCard.locator('button[data-state="checked"]'),
+			).toBeVisible();
 			const overrideBorder = await overrideCard.evaluate(getBorderColor);
 			expect(overrideBorder).not.toBe('transparent');
 			expect(overrideBorder).not.toBe('rgba(0, 0, 0, 0)');
 
 			// Auto card is unchecked — its border-color should be transparent
 			const autoCard = page.locator('.source-radio--auto');
-			await expect(autoCard.locator('button[data-state="unchecked"]')).toBeVisible();
+			await expect(
+				autoCard.locator('button[data-state="unchecked"]'),
+			).toBeVisible();
 			const autoBorder = await autoCard.evaluate(getBorderColor);
 			expect(autoBorder).toBe('rgba(0, 0, 0, 0)');
 
 			// Switch to Auto and confirm reset
 			await page.getByTestId('drawer-source-auto').click();
-			const resetDialog = page.locator('[role="dialog"][aria-label="Reset to default pricing"]');
+			const resetDialog = page.locator(
+				'[role="dialog"][aria-label="Reset to default pricing"]',
+			);
 			await expect(resetDialog).toBeVisible();
 			await page.getByTestId('drawer-reset-confirm-btn').click();
 			await expect(resetDialog).not.toBeVisible();
@@ -195,7 +212,10 @@ test.describe('LLM Pricing — Source radio behaviour', () => {
 			const overrideBorderAfter = await overrideCard.evaluate(getBorderColor);
 			expect(overrideBorderAfter).toBe('rgba(0, 0, 0, 0)');
 		} finally {
-			await page.getByTestId('drawer-cancel-btn').click().catch(() => undefined);
+			await page
+				.getByTestId('drawer-cancel-btn')
+				.click()
+				.catch(() => undefined);
 			const token = await authToken(page);
 			await deletePricingRuleViaApi(page.request, ruleId, token);
 		}

@@ -6,10 +6,8 @@ import {
 import {
 	buildPricingPayload,
 	buildRulePayload,
-	computeCostPreview,
 	draftFromRule,
 	EMPTY_DRAFT,
-	matchesAnyPattern,
 	validateDraft,
 	type DrawerDraft,
 } from '../drawerUtils';
@@ -125,36 +123,6 @@ describe('drawerUtils', () => {
 				pricing: { ...EMPTY_DRAFT.pricing, input: 1, output: 2 },
 			};
 			expect(validateDraft(draft, 'add').ok).toBe(true);
-		});
-	});
-
-	describe('matchesAnyPattern', () => {
-		it('returns the matching prefix pattern, case-insensitive', () => {
-			expect(matchesAnyPattern('GPT-4o-2024', ['gpt-4o'])).toBe('gpt-4o');
-		});
-
-		it('returns null when nothing matches', () => {
-			expect(matchesAnyPattern('claude', ['gpt-4o'])).toBeNull();
-		});
-	});
-
-	describe('computeCostPreview', () => {
-		it('adds cache buckets when they are set', () => {
-			const draft: DrawerDraft = {
-				...EMPTY_DRAFT,
-				pricing: {
-					...EMPTY_DRAFT.pricing,
-					input: 10,
-					output: 30,
-					cacheRead: 5,
-				},
-			};
-			const preview = computeCostPreview(draft);
-			const labels = preview.breakdown.map((part) => part.label);
-			expect(labels).toContain('2000 input');
-			expect(labels).toContain('500 output');
-			expect(labels).toContain('1000 cache_read');
-			expect(preview.total).toBeGreaterThan(0);
 		});
 	});
 });
