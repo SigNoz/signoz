@@ -1,0 +1,80 @@
+.formSpace {
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+}
+
+.infoItemContainer {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.infoTitle {
+	color: var(--l2-foreground);
+	font-family: Inter;
+	font-size: 14px;
+}
+
+.nameIconInput {
+	display: flex;
+	gap: 4px;
+
+	[data-radix-popper-content-wrapper] {
+		z-index: 1100 !important;
+	}
+}
+
+.dashboardImageInput {
+	display: flex;
+	width: 32px;
+	min-width: 32px;
+	height: 32px;
+	padding: 6px;
+	justify-content: center;
+	align-items: center;
+	border-radius: 2px 0px 0px 2px;
+	background: var(--l3-background);
+
+	// icon-only trigger: drop the dropdown chevron, keep just the selected icon
+	svg {
+		display: none;
+	}
+}
+
+.dashboardImageOptions {
+	min-width: min-content;
+}
+
+.dashboardImageSelectItem {
+	width: min-content;
+
+	span {
+		vertical-align: middle;
+	}
+}
+
+.listItemImage {
+	height: 16px;
+	width: 16px;
+}
+
+.dashboardNameInput {
+	border-radius: 0px 2px 2px 0px;
+	border: 1px solid var(--l2-border);
+}
+
+.descriptionTextArea {
+	border-radius: 2px;
+	border: 1px solid var(--l2-border);
+}
+
+// the V1 tags input ships borderless; give the field a visible box to match
+.tagsField {
+	display: flex;
+	align-items: center;
+	padding: 6px 8px;
+	border-radius: 2px;
+	border: 1px solid var(--l2-border);
+	// background: var(--l3-background);
+}
