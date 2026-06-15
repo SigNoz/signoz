@@ -114,4 +114,36 @@ describe('LLMObservabilityModelPricing', () => {
 		// rows still open in read-only "View" mode
 		expect(screen.getByTestId('edit-rule-rule-gpt4o')).toHaveTextContent('View');
 	});
+
+	it('paginates server-side: selecting page 2 requests the next offset', async () => {
+		const requestedOffsets: number[] = [];
+		server.use(
+			rest.get(ENDPOINT, (req, res, ctx) => {
+				const offset = Number(req.url.searchParams.get('offset') ?? '0');
+				requestedOffsets.push(offset);
+				return res(
+					ctx.status(200),
+					ctx.json({
+						status: 'success',
+						data: {
+							items: [
+								{ ...mockRules[0], id: `rule-${offset}`, modelName: `model-${offset}` },
+							],
+							limit: 20,
+							offset,
+							total: 25,
+						},
+					}),
+				);
+			}),
+		);
+
+		render(<LLMObservabilityModelPricing />);
+
+		await screen.findByText('model-0');
+		fireEvent.click(screen.getByRole('button', { name: '2' }));
+
+		await screen.findByText('model-20');
+		expect(requestedOffsets).toContain(20);
+	});
 });

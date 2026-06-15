@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { toast } from '@signozhq/ui/sonner';
 import { useQueryClient } from 'react-query';
 import {
 	getListLLMPricingRulesQueryKey,
@@ -85,11 +86,12 @@ export function useModelCostDrawer(): UseModelCostDrawerResult {
 			await invalidateList();
 			setIsOpen(false);
 			setSelectedRuleId(null);
+			toast.success(mode === 'edit' ? 'Model cost updated' : 'Model cost added');
 		} catch (error) {
 			const message = error instanceof Error ? error.message : 'Save failed';
 			setSaveError(message);
 		}
-	}, [createOrUpdate, draft, invalidateList]);
+	}, [createOrUpdate, draft, invalidateList, mode]);
 
 	const deleteRule = useCallback(async (): Promise<void> => {
 		if (!draft.id) {
@@ -101,6 +103,7 @@ export function useModelCostDrawer(): UseModelCostDrawerResult {
 			await invalidateList();
 			setIsOpen(false);
 			setSelectedRuleId(null);
+			toast.success('Model cost deleted');
 		} catch (error) {
 			const message = error instanceof Error ? error.message : 'Delete failed';
 			setSaveError(message);

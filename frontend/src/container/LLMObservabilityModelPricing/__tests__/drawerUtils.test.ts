@@ -124,5 +124,27 @@ describe('drawerUtils', () => {
 			};
 			expect(validateDraft(draft, 'add').ok).toBe(true);
 		});
+
+		it('rejects zero input/output cost for overrides', () => {
+			const draft: DrawerDraft = {
+				...EMPTY_DRAFT,
+				modelName: 'gpt-4o',
+				isOverride: true,
+				pricing: { ...EMPTY_DRAFT.pricing, input: 0, output: 5 },
+			};
+			const result = validateDraft(draft, 'add');
+			expect(result.ok).toBe(false);
+			expect(result.message).toMatch(/input cost must be greater than 0/i);
+		});
+
+		it('skips pricing validation for auto-populated (non-override) rules', () => {
+			const draft: DrawerDraft = {
+				...EMPTY_DRAFT,
+				modelName: 'gpt-4o',
+				isOverride: false,
+				pricing: { ...EMPTY_DRAFT.pricing, input: 0, output: 0 },
+			};
+			expect(validateDraft(draft, 'edit').ok).toBe(true);
+		});
 	});
 });

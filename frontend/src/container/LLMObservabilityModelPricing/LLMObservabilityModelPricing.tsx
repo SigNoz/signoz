@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
+import { Pagination } from '@signozhq/ui/pagination';
 import { SelectSimple } from '@signozhq/ui/select';
 import { Tabs } from '@signozhq/ui/tabs';
 import { Plus, Search } from '@signozhq/icons';
@@ -27,15 +28,16 @@ const CURRENCY_OPTIONS = [
 	{ value: 'INR', label: 'INR', disabled: true },
 ];
 
-const PAGE_SIZE = 100;
+const PAGE_SIZE = 20;
 
 function LLMObservabilityModelPricing(): JSX.Element {
 	const [search, setSearch] = useState<string>('');
 	const [source, setSource] = useState<SourceFilter>('all');
 	const [currency, setCurrency] = useState<string>('USD');
+	const [page, setPage] = useState<number>(1);
 
 	const { data, isLoading, isError } = useListLLMPricingRules({
-		offset: 0,
+		offset: (page - 1) * PAGE_SIZE,
 		limit: PAGE_SIZE,
 	});
 
@@ -46,6 +48,7 @@ function LLMObservabilityModelPricing(): JSX.Element {
 	);
 
 	const rules: PricingRule[] = useMemo(() => data?.data?.items || [], [data]);
+	const total = data?.data?.total ?? 0;
 
 	const filteredRules = useMemo(
 		() => filterRules(rules, search, source),
@@ -53,6 +56,10 @@ function LLMObservabilityModelPricing(): JSX.Element {
 	);
 
 	const drawer = useModelCostDrawer();
+
+	// Search/source filter the current page client-side (the list endpoint only
+	// supports offset/limit), so reset to the first page when they change.
+	const resetToFirstPage = (): void => setPage(1);
 
 	return (
 		<div
@@ -86,13 +93,19 @@ function LLMObservabilityModelPricing(): JSX.Element {
 					placeholder="Search by model or provider…"
 					prefix={<Search size={14} />}
 					value={search}
-					onChange={(event): void => setSearch(event.target.value)}
+					onChange={(event): void => {
+						setSearch(event.target.value);
+						resetToFirstPage();
+					}}
 					testId="search-input"
 				/>
 				<SelectSimple
 					className="filters-bar__source"
 					value={source}
-					onChange={(value): void => setSource(value as SourceFilter)}
+					onChange={(value): void => {
+						setSource(value as SourceFilter);
+						resetToFirstPage();
+					}}
 					items={SOURCE_OPTIONS}
 					testId="source-select"
 				/>
@@ -131,8 +144,18 @@ function LLMObservabilityModelPricing(): JSX.Element {
 				onEdit={drawer.openForEdit}
 			/>
 
+			{total > PAGE_SIZE && (
+				<Pagination
+					className="page-pagination"
+					total={total}
+					pageSize={PAGE_SIZE}
+					current={page}
+					onPageChange={setPage}
+				/>
+			)}
+
 			<footer className="page-footer">
-				Showing {filteredRules.length} model{filteredRules.length === 1 ? '' : 's'}
+				Showing {filteredRules.length} of {total} model{total === 1 ? '' : 's'}
 				{' · '}All prices per 1M tokens (USD)
 			</footer>
 

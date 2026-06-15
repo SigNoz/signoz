@@ -124,11 +124,11 @@ function PricingFields({
 						onChange={(v): void => onChange({ cacheMode: v as CacheModeDTO })}
 						disabled={isReadOnly}
 						className="full-width"
+						withPortal={false}
 						testId="drawer-cache-mode"
 					/>
 				</div>
 			)}
-			<p className="muted help">Image tokens may be priced differently (v2).</p>
 		</div>
 	);
 }

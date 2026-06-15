@@ -64,6 +64,12 @@
 		font-size: 13px;
 	}
 
+	.page-pagination {
+		display: flex;
+		justify-content: flex-end;
+		margin-top: 8px;
+	}
+
 	.page-footer {
 		color: var(--bg-vanilla-400);
 		font-size: 12px;
@@ -87,10 +93,22 @@
 		display: flex;
 		flex-direction: column;
 		gap: 2px;
+		// Allow the flex children to shrink below their content width so the
+		// table's fixed-layout / nowrap cells truncate instead of overflowing
+		// into the Provider column.
+		min-width: 0;
 
 		&__name {
 			color: var(--bg-vanilla-100);
 			font-weight: 600;
+		}
+
+		&__name,
+		&__canonical-id {
+			max-width: 100%;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
 		}
 
 		&__canonical-id {

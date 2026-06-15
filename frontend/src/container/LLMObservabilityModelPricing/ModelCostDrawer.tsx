@@ -43,9 +43,12 @@ function ModelCostDrawer({
 	saveError,
 	canManage,
 }: ModelCostDrawerProps): JSX.Element {
-	// Read-only when the user can't manage pricing (write APIs are Admin-only)
-	// or when the rule is auto-populated by SigNoz.
-	const isReadOnly = !canManage || !draft.isOverride;
+	// Metadata (model id / provider / patterns / source) is editable by any
+	// manager. Pricing fields are editable only once the user picks "User
+	// override" — auto-populated pricing is managed by SigNoz. Write APIs are
+	// Admin-only, so non-managers can't edit anything.
+	const metadataReadOnly = !canManage;
+	const pricingReadOnly = !canManage || !draft.isOverride;
 
 	const validation = validateDraft(draft, mode);
 	const showValidationTooltip =
@@ -124,7 +127,7 @@ function ModelCostDrawer({
 					id="billing-model-id"
 					placeholder="e.g. openai:gpt-4o"
 					value={draft.modelName}
-					disabled={mode === 'edit' || isReadOnly}
+					disabled={mode === 'edit' || metadataReadOnly}
 					onChange={(e): void => update({ modelName: e.target.value })}
 					testId="drawer-model-id-input"
 				/>
@@ -137,27 +140,28 @@ function ModelCostDrawer({
 					value={draft.provider}
 					onChange={(value): void => update({ provider: value as string })}
 					items={PROVIDER_OPTIONS}
-					disabled={mode === 'edit' || isReadOnly}
+					disabled={mode === 'edit' || metadataReadOnly}
 					className="full-width"
+					withPortal={false}
 					testId="drawer-provider-select"
 				/>
 			</div>
 
 			<PatternEditor
 				patterns={draft.patterns}
-				isReadOnly={isReadOnly}
+				isReadOnly={metadataReadOnly}
 				onChange={(patterns): void => update({ patterns })}
 			/>
 
 			<SourceSelector
 				isOverride={draft.isOverride}
-				isReadOnly={isReadOnly}
+				isReadOnly={metadataReadOnly}
 				onChange={(isOverride): void => update({ isOverride })}
 			/>
 
 			<PricingFields
 				pricing={draft.pricing}
-				isReadOnly={isReadOnly}
+				isReadOnly={pricingReadOnly}
 				onChange={(patch): void =>
 					setDraft({ ...draft, pricing: { ...draft.pricing, ...patch } })
 				}

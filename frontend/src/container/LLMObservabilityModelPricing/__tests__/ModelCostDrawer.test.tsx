@@ -14,7 +14,11 @@ interface HarnessProps {
 }
 
 function Harness({
-	initialDraft = { ...EMPTY_DRAFT, modelName: 'gpt-4o' },
+	initialDraft = {
+		...EMPTY_DRAFT,
+		modelName: 'gpt-4o',
+		pricing: { ...EMPTY_DRAFT.pricing, input: 1, output: 1 },
+	},
 	mode = 'add',
 	canManage = true,
 	onSave = jest.fn(),
@@ -113,6 +117,20 @@ describe('ModelCostDrawer', () => {
 		expect(screen.getByTestId('drawer-provider-select')).toHaveAttribute(
 			'data-disabled',
 		);
+	});
+
+	it('keeps metadata editable but locks pricing when source is auto-populated', () => {
+		render(
+			<Harness
+				mode="add"
+				initialDraft={{ ...EMPTY_DRAFT, modelName: 'gpt-4o', isOverride: false }}
+			/>,
+		);
+
+		// Metadata stays editable while the rule is auto-populated…
+		expect(screen.getByTestId('drawer-model-id-input')).not.toBeDisabled();
+		// …but pricing is read-only until "User override" is chosen.
+		expect(screen.getByTestId('drawer-input-cost')).toBeDisabled();
 	});
 
 	it('shows a reset confirmation when switching from Override to Auto', async () => {

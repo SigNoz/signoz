@@ -1,10 +1,24 @@
 .model-cost-drawer {
-	.ant-drawer-body {
-		padding: 20px 24px;
+	// Uniform horizontal padding across header / body / footer. The header and
+	// footer read these dialog vars; the body (rendered in drawer-description)
+	// is set directly below.
+	--dialog-header-padding: 20px 24px;
+	--dialog-footer-padding: 16px 24px;
+
+	// The drawer body — children render inside [data-slot='drawer-description']
+	// (this is the @signozhq drawer, not antd, so .ant-drawer-body was a no-op).
+	[data-slot='drawer-description'] {
 		display: flex;
 		flex-direction: column;
 		gap: 18px;
+		padding: 20px 24px;
 	}
+
+	[data-slot='select-content'] {
+		width: var(--radix-select-trigger-width);
+	}
+	display: flex;
+	overflow-y: auto;
 
 	&__title {
 		h3 {
@@ -24,7 +38,9 @@
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		padding: 12px 16px;
+		// Horizontal padding is provided by the drawer-footer slot var above.
+		padding: 0;
+		width: 100%;
 
 		&-right {
 			display: flex;
@@ -176,6 +192,9 @@
 			background: rgba(255, 255, 255, 0.02);
 			margin: 0;
 			width: 100%;
+			// Include padding + border in the 100% width so the card fits inside
+			// the SOURCE surface instead of overflowing its right edge.
+			box-sizing: border-box;
 			cursor: pointer;
 			transition:
 				background-color 0.12s ease,
@@ -266,7 +285,7 @@
 		flex-direction: column;
 		gap: 4px;
 
-		.ant-input-number {
+		input {
 			width: 100%;
 		}
 	}
@@ -282,17 +301,6 @@
 		text-transform: uppercase;
 		letter-spacing: 0.04em;
 		color: var(--bg-vanilla-400);
-	}
-
-	.cost-preview {
-		&__line {
-			font-family: var(--code-font-family, monospace);
-			font-size: 12px;
-
-			strong {
-				margin-left: 4px;
-			}
-		}
 	}
 
 	.drawer-error {

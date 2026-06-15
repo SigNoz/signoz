@@ -140,8 +140,21 @@ export const validateDraft = (
 	if (!draft.provider.trim()) {
 		return { ok: false, message: 'Provider is required.' };
 	}
-	if (draft.pricing.input < 0 || draft.pricing.output < 0) {
-		return { ok: false, message: 'Pricing values must be non-negative.' };
+	// Pricing is only user-entered for overrides; auto-populated rules are
+	// managed by SigNoz (and may legitimately be 0 for self-hosted models).
+	if (draft.isOverride) {
+		if (!(draft.pricing.input > 0)) {
+			return { ok: false, message: 'Input cost must be greater than 0.' };
+		}
+		if (!(draft.pricing.output > 0)) {
+			return { ok: false, message: 'Output cost must be greater than 0.' };
+		}
+		if (
+			(draft.pricing.cacheRead !== null && draft.pricing.cacheRead < 0) ||
+			(draft.pricing.cacheWrite !== null && draft.pricing.cacheWrite < 0)
+		) {
+			return { ok: false, message: 'Cache costs must be non-negative.' };
+		}
 	}
 	return { ok: true };
 };
