@@ -185,6 +185,7 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler, web web.Web) (*h
 		s.config.APIServer.Timeout.Default,
 		s.config.APIServer.Timeout.Max,
 	).Wrap)
+	r.Use(middleware.NewResource(s.signoz.Instrumentation.Logger()).Wrap)
 	r.Use(middleware.NewAudit(s.signoz.Instrumentation.Logger(), s.config.APIServer.Logging.ExcludedRoutes, s.signoz.Auditor).Wrap)
 	r.Use(middleware.NewComment().Wrap)
 

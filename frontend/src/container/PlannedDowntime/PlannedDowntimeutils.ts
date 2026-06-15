@@ -6,7 +6,7 @@ import type {
 	DeleteDowntimeScheduleByIDPathParameters,
 	RenderErrorResponseDTO,
 	AlertmanagertypesPlannedMaintenanceDTO,
-	AlertmanagertypesRecurrenceDTO,
+	AlertmanagertypesScheduleDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import type { ErrorType } from 'api/generatedAPIInstance';
 import { AxiosError } from 'axios';
@@ -66,14 +66,17 @@ export const getAlertOptionsFromIds = (
 	);
 
 export const recurrenceInfo = (
-	recurrence?: AlertmanagertypesRecurrenceDTO | null,
-	timezone?: string,
+	schedule?: AlertmanagertypesScheduleDTO | null,
 ): string => {
+	if (!schedule) {
+		return 'No';
+	}
+	const { startTime, endTime, timezone, recurrence } = schedule;
 	if (!recurrence) {
 		return 'No';
 	}
 
-	const { startTime, duration, repeatOn, repeatType, endTime } = recurrence;
+	const { duration, repeatOn, repeatType } = recurrence;
 
 	const formattedStartTime = startTime
 		? formatDateTime(startTime, timezone)
@@ -95,7 +98,7 @@ export const defaultInitialValues: Partial<AlertmanagertypesPlannedMaintenanceDT
 			timezone: '',
 			endTime: undefined,
 			recurrence: undefined,
-			startTime: undefined,
+			startTime: '',
 		},
 		alertIds: [],
 		createdAt: undefined,

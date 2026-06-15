@@ -1421,3 +1421,62 @@ func TestNonAggregationFieldsSkipped(t *testing.T) {
 		}
 	})
 }
+
+func TestMetricAggregationValidateForType(t *testing.T) {
+	cases := []struct {
+		name             string
+		metricType       metrictypes.Type
+		spaceAggregation metrictypes.SpaceAggregation
+		comparisonParam  *metrictypes.ComparisonSpaceAggregationParam
+		wantErr          bool
+	}{
+		{
+			name:             "percentile on histogram is allowed",
+			metricType:       metrictypes.HistogramType,
+			spaceAggregation: metrictypes.SpaceAggregationPercentile95,
+			wantErr:          false,
+		},
+		{
+			name:             "percentile on exponential histogram is allowed",
+			metricType:       metrictypes.ExpHistogramType,
+			spaceAggregation: metrictypes.SpaceAggregationPercentile99,
+			wantErr:          false,
+		},
+		{
+			name:             "percentile on summary is not allowed",
+			metricType:       metrictypes.SummaryType,
+			spaceAggregation: metrictypes.SpaceAggregationPercentile95,
+			wantErr:          true,
+		},
+		{
+			name:             "percentile on sum is not allowed",
+			metricType:       metrictypes.SumType,
+			spaceAggregation: metrictypes.SpaceAggregationPercentile95,
+			wantErr:          true,
+		},
+		{
+			name:             "non-percentile space aggregation on sum is allowed",
+			metricType:       metrictypes.SumType,
+			spaceAggregation: metrictypes.SpaceAggregationSum,
+			wantErr:          false,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			agg := MetricAggregation{
+				MetricName:                      "test_metric",
+				Type:                            tc.metricType,
+				SpaceAggregation:                tc.spaceAggregation,
+				ComparisonSpaceAggregationParam: tc.comparisonParam,
+			}
+			err := agg.ValidateForType()
+			if tc.wantErr && err == nil {
+				t.Errorf("expected error, got nil")
+			}
+			if !tc.wantErr && err != nil {
+				t.Errorf("expected no error, got: %v", err)
+			}
+		})
+	}
+}

@@ -219,19 +219,7 @@ func (m *module) GetStats(ctx context.Context, orgID valuer.UUID, req *metricsex
 		return nil, err
 	}
 
-	filterWhereClause, err := m.buildFilterClause(ctx, req.Filter, req.Start, req.End)
-	if err != nil {
-		return nil, err
-	}
-
-	// Single query to get stats with samples, timeseries counts in required sorting order
-	metricStats, total, err := m.fetchMetricsStatsWithSamples(
-		ctx,
-		req,
-		filterWhereClause,
-		false,
-		req.OrderBy,
-	)
+	metricStats, total, err := m.fetchMetricsStatsWithSamples(ctx, req, false)
 	if err != nil {
 		return nil, err
 	}
@@ -268,21 +256,16 @@ func (m *module) GetTreemap(ctx context.Context, orgID valuer.UUID, req *metrics
 		return nil, err
 	}
 
-	filterWhereClause, err := m.buildFilterClause(ctx, req.Filter, req.Start, req.End)
-	if err != nil {
-		return nil, err
-	}
-
 	resp := &metricsexplorertypes.TreemapResponse{}
 	switch req.Mode {
 	case metricsexplorertypes.TreemapModeSamples:
-		entries, err := m.computeSamplesTreemap(ctx, req, filterWhereClause)
+		entries, err := m.computeSamplesTreemap(ctx, req)
 		if err != nil {
 			return nil, err
 		}
 		resp.Samples = entries
 	default: // TreemapModeTimeSeries
-		entries, err := m.computeTimeseriesTreemap(ctx, req, filterWhereClause)
+		entries, err := m.computeTimeseriesTreemap(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -974,15 +957,23 @@ func (m *module) buildFilterClause(ctx context.Context, filter *qbtypes.Filter, 
 func (m *module) fetchMetricsStatsWithSamples(
 	ctx context.Context,
 	req *metricsexplorertypes.StatsRequest,
-	filterWhereClause *sqlbuilder.WhereClause,
 	normalized bool,
-	orderBy *qbtypes.OrderBy,
 ) ([]metricsexplorertypes.Stat, uint64, error) {
 	ctx = m.withMetricsExplorerContext(ctx, "fetchMetricsStatsWithSamples")
 
+	hasFilter := req.Filter != nil && strings.TrimSpace(req.Filter.Expression) != ""
+	var filterWhereClause *sqlbuilder.WhereClause
+	if hasFilter {
+		var err error
+		filterWhereClause, err = m.buildFilterClause(ctx, req.Filter, req.Start, req.End)
+		if err != nil {
+			return nil, 0, err
+		}
+	}
+
 	start, end, distributedTsTable, localTsTable := telemetrymetrics.WhichTSTableToUse(uint64(req.Start), uint64(req.End), nil)
-	samplesTable, _ := telemetrymetrics.WhichSamplesTableToUse(uint64(req.Start), uint64(req.End), metrictypes.UnspecifiedType, metrictypes.TimeAggregationUnspecified, nil)
-	countExp := telemetrymetrics.CountExpressionForSamplesTable(samplesTable)
+	distributedSamplesTable, _ := telemetrymetrics.WhichSamplesTableToUse(uint64(req.Start), uint64(req.End), metrictypes.UnspecifiedType, metrictypes.TimeAggregationUnspecified, nil)
+	countExp := telemetrymetrics.CountExpressionForSamplesTable(distributedSamplesTable)
 
 	// Timeseries counts per metric
 	tsSB := sqlbuilder.NewSelectBuilder()
@@ -1005,7 +996,7 @@ func (m *module) fetchMetricsStatsWithSamples(
 		"metric_name",
 		fmt.Sprintf("%s AS samples", countExp),
 	)
-	samplesSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, samplesTable))
+	samplesSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, distributedSamplesTable))
 	samplesSB.Where(samplesSB.Between("unix_milli", req.Start, req.End))
 	samplesSB.Where("NOT startsWith(metric_name, 'signoz')")
 
@@ -1013,6 +1004,8 @@ func (m *module) fetchMetricsStatsWithSamples(
 		sqlbuilder.CTEQuery("__time_series_counts").As(tsSB),
 	}
 
+	// Narrow samples scan. With filter: fingerprint IN (per-fingerprint label preds can't fold to metric_name).
+	// No filter (fast path): metric_name IN — aligns with samples table's leading sort key, orders of magnitude cheaper.
 	if filterWhereClause != nil {
 		fingerprintSB := sqlbuilder.NewSelectBuilder()
 		fingerprintSB.Select("fingerprint")
@@ -1025,6 +1018,15 @@ func (m *module) fetchMetricsStatsWithSamples(
 
 		ctes = append(ctes, sqlbuilder.CTEQuery("__filtered_fingerprints").As(fingerprintSB))
 		samplesSB.Where("fingerprint IN (SELECT fingerprint FROM __filtered_fingerprints)")
+	} else {
+		metricNamesSB := sqlbuilder.NewSelectBuilder()
+		metricNamesSB.Select("DISTINCT metric_name")
+		metricNamesSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, localTsTable))
+		metricNamesSB.Where(metricNamesSB.Between("unix_milli", start, end))
+		metricNamesSB.Where("NOT startsWith(metric_name, 'signoz')")
+		metricNamesSB.Where(metricNamesSB.E("__normalized", normalized))
+
+		samplesSB.Where(fmt.Sprintf("metric_name IN (%s)", samplesSB.Var(metricNamesSB)))
 	}
 	samplesSB.GroupBy("metric_name")
 
@@ -1041,7 +1043,7 @@ func (m *module) fetchMetricsStatsWithSamples(
 	finalSB.JoinWithOption(sqlbuilder.FullOuterJoin, "__sample_counts s", "ts.metric_name = s.metric_name")
 	finalSB.Where("(COALESCE(ts.timeseries, 0) > 0 OR COALESCE(s.samples, 0) > 0)")
 
-	orderByColumn, orderDirection, err := getStatsOrderByColumn(orderBy)
+	orderByColumn, orderDirection, err := getStatsOrderByColumn(req.OrderBy)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -1085,8 +1087,18 @@ func (m *module) fetchMetricsStatsWithSamples(
 	return metricStats, total, nil
 }
 
-func (m *module) computeTimeseriesTreemap(ctx context.Context, req *metricsexplorertypes.TreemapRequest, filterWhereClause *sqlbuilder.WhereClause) ([]metricsexplorertypes.TreemapEntry, error) {
+func (m *module) computeTimeseriesTreemap(ctx context.Context, req *metricsexplorertypes.TreemapRequest) ([]metricsexplorertypes.TreemapEntry, error) {
 	ctx = m.withMetricsExplorerContext(ctx, "computeTimeseriesTreemap")
+
+	hasFilter := req.Filter != nil && strings.TrimSpace(req.Filter.Expression) != ""
+	var filterWhereClause *sqlbuilder.WhereClause
+	if hasFilter {
+		var err error
+		filterWhereClause, err = m.buildFilterClause(ctx, req.Filter, req.Start, req.End)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	start, end, distributedTsTable, _ := telemetrymetrics.WhichTSTableToUse(uint64(req.Start), uint64(req.End), nil)
 
@@ -1151,12 +1163,22 @@ func (m *module) computeTimeseriesTreemap(ctx context.Context, req *metricsexplo
 	return entries, nil
 }
 
-func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsexplorertypes.TreemapRequest, filterWhereClause *sqlbuilder.WhereClause) ([]metricsexplorertypes.TreemapEntry, error) {
+func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsexplorertypes.TreemapRequest) ([]metricsexplorertypes.TreemapEntry, error) {
 	ctx = m.withMetricsExplorerContext(ctx, "computeSamplesTreemap")
 
+	hasFilter := req.Filter != nil && strings.TrimSpace(req.Filter.Expression) != ""
+	var filterWhereClause *sqlbuilder.WhereClause
+	if hasFilter {
+		var err error
+		filterWhereClause, err = m.buildFilterClause(ctx, req.Filter, req.Start, req.End)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	start, end, distributedTsTable, localTsTable := telemetrymetrics.WhichTSTableToUse(uint64(req.Start), uint64(req.End), nil)
-	samplesTable, _ := telemetrymetrics.WhichSamplesTableToUse(uint64(req.Start), uint64(req.End), metrictypes.UnspecifiedType, metrictypes.TimeAggregationUnspecified, nil)
-	countExp := telemetrymetrics.CountExpressionForSamplesTable(samplesTable)
+	distributedSamplesTable, _ := telemetrymetrics.WhichSamplesTableToUse(uint64(req.Start), uint64(req.End), metrictypes.UnspecifiedType, metrictypes.TimeAggregationUnspecified, nil)
+	countExp := telemetrymetrics.CountExpressionForSamplesTable(distributedSamplesTable)
 
 	candidateLimit := req.Limit + 50
 
@@ -1179,7 +1201,7 @@ func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsexplorer
 
 	totalSamplesSB := sqlbuilder.NewSelectBuilder()
 	totalSamplesSB.Select(fmt.Sprintf("%s AS total_samples", countExp))
-	totalSamplesSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, samplesTable))
+	totalSamplesSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, distributedSamplesTable))
 	totalSamplesSB.Where(totalSamplesSB.Between("unix_milli", req.Start, req.End))
 
 	sampleCountsSB := sqlbuilder.NewSelectBuilder()
@@ -1187,7 +1209,7 @@ func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsexplorer
 		"metric_name",
 		fmt.Sprintf("%s AS samples", countExp),
 	)
-	sampleCountsSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, samplesTable))
+	sampleCountsSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, distributedSamplesTable))
 	sampleCountsSB.Where(sampleCountsSB.Between("unix_milli", req.Start, req.End))
 	sampleCountsSB.Where("metric_name GLOBAL IN (SELECT metric_name FROM __metric_candidates)")
 

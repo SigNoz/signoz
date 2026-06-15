@@ -119,6 +119,10 @@
 
 				border-radius: 0px 4px 4px 0px;
 				background: var(--l3-background);
+
+				&.version-container-standalone {
+					border-radius: 4px;
+				}
 			}
 
 			.version {
@@ -1131,17 +1135,9 @@
 
 .settings-dropdown,
 .help-support-dropdown {
-	.ant-dropdown-menu-item {
-		min-height: 32px;
-
-		.ant-dropdown-menu-title-content {
-			color: var(--l1-foreground) !important;
-		}
-
-		.user-settings-dropdown-logout-section {
-			color: var(--danger-background);
-			pointer-events: auto;
-		}
+	.user-settings-dropdown-logout-section {
+		color: var(--danger-background);
+		pointer-events: auto;
 	}
 }
 
