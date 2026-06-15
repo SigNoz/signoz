@@ -239,6 +239,67 @@ func TestDashboardV2GetPanelQuery(t *testing.T) {
 		assert.True(t, req.FormatOptions.FormatTableResultForUI)
 	})
 
+	t.Run("sets FillGaps from the panel visualization", func(t *testing.T) {
+		cases := []struct {
+			description      string
+			panelPlugin      PanelPlugin
+			expectedFillGaps bool
+		}{
+			{
+				description:      "timeseries with fillSpans enabled",
+				panelPlugin:      PanelPlugin{Kind: PanelKindTimeSeries, Spec: &TimeSeriesPanelSpec{Visualization: TimeSeriesVisualization{FillSpans: true}}},
+				expectedFillGaps: true,
+			},
+			{
+				description:      "timeseries with fillSpans disabled",
+				panelPlugin:      PanelPlugin{Kind: PanelKindTimeSeries, Spec: &TimeSeriesPanelSpec{Visualization: TimeSeriesVisualization{FillSpans: false}}},
+				expectedFillGaps: false,
+			},
+			{
+				description:      "bar chart with fillSpans enabled",
+				panelPlugin:      PanelPlugin{Kind: PanelKindBarChart, Spec: &BarChartPanelSpec{Visualization: BarChartVisualization{FillSpans: true}}},
+				expectedFillGaps: true,
+			},
+			{
+				description:      "table panel has no fillSpans",
+				panelPlugin:      PanelPlugin{Kind: PanelKindTable, Spec: &TablePanelSpec{}},
+				expectedFillGaps: false,
+			},
+		}
+
+		for _, tc := range cases {
+			t.Run(tc.description, func(t *testing.T) {
+				dashboard := &DashboardV2{
+					Spec: DashboardSpec{
+						Panels: map[string]*Panel{
+							"panel-1": {
+								Spec: PanelSpec{
+									Plugin: tc.panelPlugin,
+									Queries: []Query{
+										{
+											Kind: qb.RequestTypeTimeSeries,
+											Spec: QuerySpec{
+												Plugin: QueryPlugin{
+													Kind: QueryKindBuilder,
+													Spec: &BuilderQuerySpec{Spec: qb.QueryBuilderQuery[qb.MetricAggregation]{Name: "A"}},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				}
+
+				req, err := dashboard.GetPanelQuery(1, 2, "panel-1")
+				require.NoError(t, err)
+				require.NotNil(t, req.FormatOptions)
+				assert.Equal(t, tc.expectedFillGaps, req.FormatOptions.FillGaps)
+			})
+		}
+	})
+
 	t.Run("returns error for an unsupported plugin spec", func(t *testing.T) {
 		dashboard := &DashboardV2{
 			Spec: DashboardSpec{

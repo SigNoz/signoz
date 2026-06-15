@@ -154,6 +154,19 @@ func (d *DashboardV2) GetPanelQuery(startTime, endTime uint64, panelKey string) 
 		return nil, err
 	}
 
+	// fillGaps lives on the panel visualization; only timeseries and bar chart carry it.
+	fillGaps := false
+	switch panelSpec := panel.Spec.Plugin.Spec.(type) {
+	case *TimeSeriesPanelSpec:
+		if panelSpec != nil {
+			fillGaps = panelSpec.Visualization.FillSpans
+		}
+	case *BarChartPanelSpec:
+		if panelSpec != nil {
+			fillGaps = panelSpec.Visualization.FillSpans
+		}
+	}
+
 	return &qb.QueryRangeRequest{
 		SchemaVersion:  "v1",
 		Start:          startTime,
@@ -161,6 +174,7 @@ func (d *DashboardV2) GetPanelQuery(startTime, endTime uint64, panelKey string) 
 		RequestType:    query.Kind,
 		CompositeQuery: composite,
 		FormatOptions: &qb.FormatOptions{
+			FillGaps:               fillGaps,
 			FormatTableResultForUI: panel.Spec.Plugin.Kind == PanelKindTable,
 		},
 	}, nil
