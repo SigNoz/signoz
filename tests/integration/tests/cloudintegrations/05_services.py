@@ -86,6 +86,49 @@ def test_list_services_with_account(
         assert svc["enabled"] is False, f"Service {svc['id']} should be disabled before any config is set"
 
 
+EC2_SERVICE_ID = "ec2"
+
+
+def test_list_account_services(
+    signoz: types.SigNoz,
+    create_user_admin: types.Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    create_cloud_integration_account: Callable,
+) -> None:
+    """ListAccountServicesMetadata reflects enabled state after enabling a service."""
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    account = create_cloud_integration_account(admin_token, CLOUD_PROVIDER)
+    account_id = account["id"]
+
+    checkin = simulate_agent_checkin(signoz, admin_token, CLOUD_PROVIDER, account_id, str(uuid.uuid4()))
+    assert checkin.status_code == HTTPStatus.OK, f"Check-in failed: {checkin.text}"
+
+    put_response = requests.put(
+        signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/accounts/{account_id}/services/{EC2_SERVICE_ID}"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        json={"config": {"aws": {"metrics": {"enabled": True}, "logs": {"enabled": True}}}},
+        timeout=10,
+    )
+    assert put_response.status_code == HTTPStatus.NO_CONTENT, f"Enable ec2 failed: {put_response.status_code}: {put_response.text}"
+
+    list_response = requests.get(
+        signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/accounts/{account_id}/services"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=10,
+    )
+    assert list_response.status_code == HTTPStatus.OK, f"Expected 200, got {list_response.status_code}"
+
+    data = list_response.json()["data"]
+    assert "services" in data, "Response should contain 'services' field"
+    assert isinstance(data["services"], list), "services should be a list"
+    assert len(data["services"]) > 0, "services list should be non-empty"
+
+    ec2_service = next((s for s in data["services"] if s["id"] == EC2_SERVICE_ID), None)
+    assert ec2_service is not None, f"EC2 service '{EC2_SERVICE_ID}' not found in services list"
+    assert ec2_service["enabled"] is True, f"EC2 service should be enabled, got: {ec2_service['enabled']}"
+
+
 def test_get_service_details_without_account(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
@@ -108,7 +151,6 @@ def test_get_service_details_without_account(
     assert "overview" in data, "Service should have 'overview' (markdown)"
     assert "assets" in data, "Service should have 'assets'"
     assert isinstance(data["assets"]["dashboards"], list), "assets.dashboards should be a list"
-    assert "telemetryCollectionStrategy" in data, "Service should have 'telemetryCollectionStrategy'"
     assert data["cloudIntegrationService"] is None, "cloudIntegrationService should be null without account context"
 
 
@@ -138,6 +180,34 @@ def test_get_service_details_with_account(
     data = response.json()["data"]
     assert data["id"] == SERVICE_ID
     assert data["cloudIntegrationService"] is None, "cloudIntegrationService should be null before any service config is set"
+
+
+def test_get_account_service(
+    signoz: types.SigNoz,
+    create_user_admin: types.Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    create_cloud_integration_account: Callable,
+) -> None:
+    """Get service for a specific account — all disabled by default."""
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    account = create_cloud_integration_account(admin_token, CLOUD_PROVIDER)
+    account_id = account["id"]
+
+    checkin = simulate_agent_checkin(signoz, admin_token, CLOUD_PROVIDER, account_id, str(uuid.uuid4()))
+    assert checkin.status_code == HTTPStatus.OK, f"Check-in failed: {checkin.text}"
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/accounts/{account_id}/services/{SERVICE_ID}"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=10,
+    )
+
+    assert response.status_code == HTTPStatus.OK, f"Expected 200, got {response.status_code}"
+
+    data = response.json()["data"]
+    assert data["id"] == SERVICE_ID, f"id should be '{SERVICE_ID}'"
+    assert data["cloudIntegrationService"] is None, "cloudIntegrationService should be null before any config is set"
 
 
 def test_get_service_not_found(
@@ -413,12 +483,12 @@ def test_enable_metrics_provisions_dashboards(
     assert isinstance(dashboards_in_service, list) and len(dashboards_in_service) > 0, "assets.dashboards should be non-empty after enabling metrics"
     provisioned_ids = set()
     for dash in dashboards_in_service:
-        assert "id" in dash, f"Dashboard entry missing 'id': {dash}"
+        assert "integrationDashboard" in dash, "Integration dashboard entry missing"
         try:
-            uuid.UUID(dash["id"])
+            uuid.UUID(dash["integrationDashboard"]["id"])
         except ValueError as err:
-            raise AssertionError(f"Dashboard id '{dash['id']}' is not a UUID — dashboard was not provisioned") from err
-        provisioned_ids.add(dash["id"])
+            raise AssertionError(f"Dashboard id '{dash['integrationDashboard']['id']}' is not a UUID — dashboard was not provisioned") from err
+        provisioned_ids.add(dash["integrationDashboard"]["dashboardId"])
 
     # Assertion 2: Provisioned dashboard IDs are present in the DB
     with signoz.sqlstore.conn.connect() as conn:
@@ -468,7 +538,7 @@ def test_disable_metrics_deprovisions_dashboards(
         timeout=10,
     )
     assert get_svc_response.status_code == HTTPStatus.OK
-    provisioned_ids = {d["id"] for d in get_svc_response.json()["data"]["assets"]["dashboards"]}
+    provisioned_ids = {d["integrationDashboard"]["dashboardId"] for d in get_svc_response.json()["data"]["assets"]["dashboards"]}
     assert len(provisioned_ids) > 0, "Expected dashboards to be provisioned after enabling metrics"
 
     # Disable metrics

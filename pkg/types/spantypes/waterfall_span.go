@@ -21,28 +21,13 @@ const (
 // ErrTraceNotFound is returned when a trace ID has no matching spans in ClickHouse.
 var ErrTraceNotFound = errors.NewNotFoundf(errors.CodeNotFound, "trace not found")
 
-// PostableWaterfall is the request body for the v3 waterfall API.
+// PostableWaterfall is the request body for the waterfall API.
 type PostableWaterfall struct {
-	SelectedSpanID   string            `json:"selectedSpanId"`
-	UncollapsedSpans []string          `json:"uncollapsedSpans"`
-	Limit            uint              `json:"limit"`
-	Aggregations     []SpanAggregation `json:"aggregations"`
+	SelectedSpanID   string   `json:"selectedSpanId"`
+	UncollapsedSpans []string `json:"uncollapsedSpans"`
 }
 
 func (p *PostableWaterfall) Validate() error {
-	if len(p.Aggregations) > maxAggregationItems {
-		return ErrTooManyAggregationItems
-	}
-	for _, a := range p.Aggregations {
-		if !a.Aggregation.isValid() {
-			return errors.NewInvalidInputf(errors.CodeInvalidInput, "unknown aggregation type: %q", a.Aggregation)
-		}
-		fc := a.Field.FieldContext
-		if fc != telemetrytypes.FieldContextResource && fc != telemetrytypes.FieldContextAttribute {
-			return errors.NewInvalidInputf(errors.CodeInvalidInput, "aggregation field context must be %q or %q, got %q",
-				telemetrytypes.FieldContextResource, telemetrytypes.FieldContextAttribute, fc)
-		}
-	}
 	return nil
 }
 
@@ -164,6 +149,17 @@ func (item *MinimalSpan) ToWaterfallSpan(traceID string) *WaterfallSpan {
 	}
 }
 
+func (item *MinimalSpan) ToFlamegraphSpan() *FlamegraphSpan {
+	return &FlamegraphSpan{
+		SpanID:       item.SpanID,
+		ParentSpanID: item.ParentSpanID,
+		Timestamp:    uint64(item.StartTime.UnixNano()),
+		DurationNano: item.DurationNano,
+		HasError:     item.HasError,
+		Children:     make([]*FlamegraphSpan, 0),
+	}
+}
+
 // NewMissingWaterfallSpan creates a synthetic placeholder span for a parent that has no recorded data.
 func NewMissingWaterfallSpan(spanID, traceID string, timeUnixNano, durationNano uint64) *WaterfallSpan {
 	return &WaterfallSpan{
@@ -267,6 +263,19 @@ func (ws *WaterfallSpan) getPathToSelectedSpanID(selectedSpanID string) ([]strin
 	return nil, false
 }
 
+func (item *StorableSpan) AttributeValue(name string) any {
+	if v, ok := item.AttributesString[name]; ok {
+		return v
+	}
+	if v, ok := item.AttributesNumber[name]; ok {
+		return v
+	}
+	if v, ok := item.AttributesBool[name]; ok {
+		return v
+	}
+	return nil
+}
+
 func (item *StorableSpan) Attributes() map[string]any {
 	attributes := make(map[string]any, len(item.AttributesString)+len(item.AttributesNumber)+len(item.AttributesBool))
 	for k, v := range item.AttributesString {
@@ -296,7 +305,7 @@ func (item *StorableSpan) UnmarshalledEvents() []Event {
 func (item *StorableSpan) UnmarshalledRefs() []OtelSpanRef {
 	refs := []OtelSpanRef{}
 	if err := json.Unmarshal([]byte(item.References), &refs); err != nil {
-		return nil // skip malformed values
+		return []OtelSpanRef{} // skip malformed values
 	}
 	return refs
 }

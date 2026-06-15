@@ -21,9 +21,12 @@ import type {
 	CreateDashboardV2201,
 	CreatePublicDashboard201,
 	CreatePublicDashboardPathParameters,
+	DashboardtypesPatchableDashboardV2DTO,
 	DashboardtypesPostableDashboardV2DTO,
 	DashboardtypesPostablePublicDashboardDTO,
+	DashboardtypesUpdatableDashboardV2DTO,
 	DashboardtypesUpdatablePublicDashboardDTO,
+	DeleteDashboardV2PathParameters,
 	DeletePublicDashboardPathParameters,
 	GetDashboardV2200,
 	GetDashboardV2PathParameters,
@@ -33,7 +36,19 @@ import type {
 	GetPublicDashboardPathParameters,
 	GetPublicDashboardWidgetQueryRange200,
 	GetPublicDashboardWidgetQueryRangePathParameters,
+	ListDashboardsForUserV2200,
+	ListDashboardsForUserV2Params,
+	ListDashboardsV2200,
+	ListDashboardsV2Params,
+	LockDashboardV2PathParameters,
+	PatchDashboardV2200,
+	PatchDashboardV2PathParameters,
+	PinDashboardV2PathParameters,
 	RenderErrorResponseDTO,
+	UnlockDashboardV2PathParameters,
+	UnpinDashboardV2PathParameters,
+	UpdateDashboardV2200,
+	UpdateDashboardV2PathParameters,
 	UpdatePublicDashboardPathParameters,
 } from '../sigNoz.schemas';
 
@@ -634,6 +649,103 @@ export const invalidateGetPublicDashboardWidgetQueryRange = async (
 };
 
 /**
+ * Returns a page of v2-shape dashboards for the org. This is the pure, user-independent list — it carries no pin state. Use ListDashboardsForUserV2 for the personalized, pin-aware list. Supports a filter DSL (`query`), sort (`updated_at`/`created_at`/`name`), order (`asc`/`desc`), and offset-based pagination (`limit`/`offset`).
+ * @summary List dashboards (v2)
+ */
+export const listDashboardsV2 = (
+	params?: ListDashboardsV2Params,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<ListDashboardsV2200>({
+		url: `/api/v2/dashboards`,
+		method: 'GET',
+		params,
+		signal,
+	});
+};
+
+export const getListDashboardsV2QueryKey = (
+	params?: ListDashboardsV2Params,
+) => {
+	return [`/api/v2/dashboards`, ...(params ? [params] : [])] as const;
+};
+
+export const getListDashboardsV2QueryOptions = <
+	TData = Awaited<ReturnType<typeof listDashboardsV2>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	params?: ListDashboardsV2Params,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof listDashboardsV2>>,
+			TError,
+			TData
+		>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey = queryOptions?.queryKey ?? getListDashboardsV2QueryKey(params);
+
+	const queryFn: QueryFunction<Awaited<ReturnType<typeof listDashboardsV2>>> = ({
+		signal,
+	}) => listDashboardsV2(params, signal);
+
+	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+		Awaited<ReturnType<typeof listDashboardsV2>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type ListDashboardsV2QueryResult = NonNullable<
+	Awaited<ReturnType<typeof listDashboardsV2>>
+>;
+export type ListDashboardsV2QueryError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary List dashboards (v2)
+ */
+
+export function useListDashboardsV2<
+	TData = Awaited<ReturnType<typeof listDashboardsV2>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	params?: ListDashboardsV2Params,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof listDashboardsV2>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getListDashboardsV2QueryOptions(params, options);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary List dashboards (v2)
+ */
+export const invalidateListDashboardsV2 = async (
+	queryClient: QueryClient,
+	params?: ListDashboardsV2Params,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getListDashboardsV2QueryKey(params) },
+		options,
+	);
+
+	return queryClient;
+};
+
+/**
  * This endpoint creates a dashboard in the v2 format that follows Perses spec.
  * @summary Create dashboard (v2)
  */
@@ -715,6 +827,85 @@ export const useCreateDashboardV2 = <
 	TContext
 > => {
 	return useMutation(getCreateDashboardV2MutationOptions(options));
+};
+/**
+ * This endpoint deletes a v2-shape dashboard along with its tag relations. Locked dashboards are rejected.
+ * @summary Delete dashboard (v2)
+ */
+export const deleteDashboardV2 = (
+	{ id }: DeleteDashboardV2PathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<string>({
+		url: `/api/v2/dashboards/${id}`,
+		method: 'DELETE',
+		signal,
+	});
+};
+
+export const getDeleteDashboardV2MutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof deleteDashboardV2>>,
+		TError,
+		{ pathParams: DeleteDashboardV2PathParameters },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof deleteDashboardV2>>,
+	TError,
+	{ pathParams: DeleteDashboardV2PathParameters },
+	TContext
+> => {
+	const mutationKey = ['deleteDashboardV2'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof deleteDashboardV2>>,
+		{ pathParams: DeleteDashboardV2PathParameters }
+	> = (props) => {
+		const { pathParams } = props ?? {};
+
+		return deleteDashboardV2(pathParams);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteDashboardV2MutationResult = NonNullable<
+	Awaited<ReturnType<typeof deleteDashboardV2>>
+>;
+
+export type DeleteDashboardV2MutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Delete dashboard (v2)
+ */
+export const useDeleteDashboardV2 = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof deleteDashboardV2>>,
+		TError,
+		{ pathParams: DeleteDashboardV2PathParameters },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof deleteDashboardV2>>,
+	TError,
+	{ pathParams: DeleteDashboardV2PathParameters },
+	TContext
+> => {
+	return useMutation(getDeleteDashboardV2MutationOptions(options));
 };
 /**
  * This endpoint returns a v2-shape dashboard.
@@ -815,4 +1006,618 @@ export const invalidateGetDashboardV2 = async (
 	);
 
 	return queryClient;
+};
+
+/**
+ * This endpoint applies an RFC 6902 JSON Patch to a v2-shape dashboard. The patch is applied against the postable view of the dashboard (metadata, data, tags), so individual panels, queries, variables, layouts, or tags can be updated without re-sending the rest of the dashboard. Apply is lenient: `remove` on a missing path is a no-op (idempotent) and `add` creates any missing parent objects, rather than failing as strict RFC 6902 would. The resulting dashboard is still validated. Locked dashboards are rejected.
+ * @summary Patch dashboard (v2)
+ */
+export const patchDashboardV2 = (
+	{ id }: PatchDashboardV2PathParameters,
+	dashboardtypesPatchableDashboardV2DTONull?: BodyType<DashboardtypesPatchableDashboardV2DTO | null> | null,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<PatchDashboardV2200>({
+		url: `/api/v2/dashboards/${id}`,
+		method: 'PATCH',
+		headers: { 'Content-Type': 'application/json' },
+		data: dashboardtypesPatchableDashboardV2DTONull,
+		signal,
+	});
+};
+
+export const getPatchDashboardV2MutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof patchDashboardV2>>,
+		TError,
+		{
+			pathParams: PatchDashboardV2PathParameters;
+			data?: BodyType<DashboardtypesPatchableDashboardV2DTO | null>;
+		},
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof patchDashboardV2>>,
+	TError,
+	{
+		pathParams: PatchDashboardV2PathParameters;
+		data?: BodyType<DashboardtypesPatchableDashboardV2DTO | null>;
+	},
+	TContext
+> => {
+	const mutationKey = ['patchDashboardV2'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof patchDashboardV2>>,
+		{
+			pathParams: PatchDashboardV2PathParameters;
+			data?: BodyType<DashboardtypesPatchableDashboardV2DTO | null>;
+		}
+	> = (props) => {
+		const { pathParams, data } = props ?? {};
+
+		return patchDashboardV2(pathParams, data);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type PatchDashboardV2MutationResult = NonNullable<
+	Awaited<ReturnType<typeof patchDashboardV2>>
+>;
+export type PatchDashboardV2MutationBody =
+	| BodyType<DashboardtypesPatchableDashboardV2DTO | null>
+	| undefined;
+export type PatchDashboardV2MutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Patch dashboard (v2)
+ */
+export const usePatchDashboardV2 = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof patchDashboardV2>>,
+		TError,
+		{
+			pathParams: PatchDashboardV2PathParameters;
+			data?: BodyType<DashboardtypesPatchableDashboardV2DTO | null>;
+		},
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof patchDashboardV2>>,
+	TError,
+	{
+		pathParams: PatchDashboardV2PathParameters;
+		data?: BodyType<DashboardtypesPatchableDashboardV2DTO | null>;
+	},
+	TContext
+> => {
+	return useMutation(getPatchDashboardV2MutationOptions(options));
+};
+/**
+ * This endpoint updates a v2-shape dashboard's metadata, data, and tag set. Locked dashboards are rejected.
+ * @summary Update dashboard (v2)
+ */
+export const updateDashboardV2 = (
+	{ id }: UpdateDashboardV2PathParameters,
+	dashboardtypesUpdatableDashboardV2DTO?: BodyType<DashboardtypesUpdatableDashboardV2DTO>,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<UpdateDashboardV2200>({
+		url: `/api/v2/dashboards/${id}`,
+		method: 'PUT',
+		headers: { 'Content-Type': 'application/json' },
+		data: dashboardtypesUpdatableDashboardV2DTO,
+		signal,
+	});
+};
+
+export const getUpdateDashboardV2MutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof updateDashboardV2>>,
+		TError,
+		{
+			pathParams: UpdateDashboardV2PathParameters;
+			data?: BodyType<DashboardtypesUpdatableDashboardV2DTO>;
+		},
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof updateDashboardV2>>,
+	TError,
+	{
+		pathParams: UpdateDashboardV2PathParameters;
+		data?: BodyType<DashboardtypesUpdatableDashboardV2DTO>;
+	},
+	TContext
+> => {
+	const mutationKey = ['updateDashboardV2'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof updateDashboardV2>>,
+		{
+			pathParams: UpdateDashboardV2PathParameters;
+			data?: BodyType<DashboardtypesUpdatableDashboardV2DTO>;
+		}
+	> = (props) => {
+		const { pathParams, data } = props ?? {};
+
+		return updateDashboardV2(pathParams, data);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateDashboardV2MutationResult = NonNullable<
+	Awaited<ReturnType<typeof updateDashboardV2>>
+>;
+export type UpdateDashboardV2MutationBody =
+	| BodyType<DashboardtypesUpdatableDashboardV2DTO>
+	| undefined;
+export type UpdateDashboardV2MutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Update dashboard (v2)
+ */
+export const useUpdateDashboardV2 = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof updateDashboardV2>>,
+		TError,
+		{
+			pathParams: UpdateDashboardV2PathParameters;
+			data?: BodyType<DashboardtypesUpdatableDashboardV2DTO>;
+		},
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof updateDashboardV2>>,
+	TError,
+	{
+		pathParams: UpdateDashboardV2PathParameters;
+		data?: BodyType<DashboardtypesUpdatableDashboardV2DTO>;
+	},
+	TContext
+> => {
+	return useMutation(getUpdateDashboardV2MutationOptions(options));
+};
+/**
+ * This endpoint unlocks a v2-shape dashboard. Only the dashboard's creator or an org admin may lock or unlock.
+ * @summary Unlock dashboard (v2)
+ */
+export const unlockDashboardV2 = (
+	{ id }: UnlockDashboardV2PathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<string>({
+		url: `/api/v2/dashboards/${id}/lock`,
+		method: 'DELETE',
+		signal,
+	});
+};
+
+export const getUnlockDashboardV2MutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof unlockDashboardV2>>,
+		TError,
+		{ pathParams: UnlockDashboardV2PathParameters },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof unlockDashboardV2>>,
+	TError,
+	{ pathParams: UnlockDashboardV2PathParameters },
+	TContext
+> => {
+	const mutationKey = ['unlockDashboardV2'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof unlockDashboardV2>>,
+		{ pathParams: UnlockDashboardV2PathParameters }
+	> = (props) => {
+		const { pathParams } = props ?? {};
+
+		return unlockDashboardV2(pathParams);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type UnlockDashboardV2MutationResult = NonNullable<
+	Awaited<ReturnType<typeof unlockDashboardV2>>
+>;
+
+export type UnlockDashboardV2MutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Unlock dashboard (v2)
+ */
+export const useUnlockDashboardV2 = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof unlockDashboardV2>>,
+		TError,
+		{ pathParams: UnlockDashboardV2PathParameters },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof unlockDashboardV2>>,
+	TError,
+	{ pathParams: UnlockDashboardV2PathParameters },
+	TContext
+> => {
+	return useMutation(getUnlockDashboardV2MutationOptions(options));
+};
+/**
+ * This endpoint locks a v2-shape dashboard. Only the dashboard's creator or an org admin may lock or unlock.
+ * @summary Lock dashboard (v2)
+ */
+export const lockDashboardV2 = (
+	{ id }: LockDashboardV2PathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<string>({
+		url: `/api/v2/dashboards/${id}/lock`,
+		method: 'PUT',
+		signal,
+	});
+};
+
+export const getLockDashboardV2MutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof lockDashboardV2>>,
+		TError,
+		{ pathParams: LockDashboardV2PathParameters },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof lockDashboardV2>>,
+	TError,
+	{ pathParams: LockDashboardV2PathParameters },
+	TContext
+> => {
+	const mutationKey = ['lockDashboardV2'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof lockDashboardV2>>,
+		{ pathParams: LockDashboardV2PathParameters }
+	> = (props) => {
+		const { pathParams } = props ?? {};
+
+		return lockDashboardV2(pathParams);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type LockDashboardV2MutationResult = NonNullable<
+	Awaited<ReturnType<typeof lockDashboardV2>>
+>;
+
+export type LockDashboardV2MutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Lock dashboard (v2)
+ */
+export const useLockDashboardV2 = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof lockDashboardV2>>,
+		TError,
+		{ pathParams: LockDashboardV2PathParameters },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof lockDashboardV2>>,
+	TError,
+	{ pathParams: LockDashboardV2PathParameters },
+	TContext
+> => {
+	return useMutation(getLockDashboardV2MutationOptions(options));
+};
+/**
+ * Same as ListDashboardsV2 but personalized for the calling user: each dashboard carries the caller's `pinned` state, and pinned dashboards float to the top of the requested ordering. Supports the same filter DSL, sort, order, and pagination.
+ * @summary List dashboards for the current user (v2)
+ */
+export const listDashboardsForUserV2 = (
+	params?: ListDashboardsForUserV2Params,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<ListDashboardsForUserV2200>({
+		url: `/api/v2/users/me/dashboards`,
+		method: 'GET',
+		params,
+		signal,
+	});
+};
+
+export const getListDashboardsForUserV2QueryKey = (
+	params?: ListDashboardsForUserV2Params,
+) => {
+	return [`/api/v2/users/me/dashboards`, ...(params ? [params] : [])] as const;
+};
+
+export const getListDashboardsForUserV2QueryOptions = <
+	TData = Awaited<ReturnType<typeof listDashboardsForUserV2>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	params?: ListDashboardsForUserV2Params,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof listDashboardsForUserV2>>,
+			TError,
+			TData
+		>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ?? getListDashboardsForUserV2QueryKey(params);
+
+	const queryFn: QueryFunction<
+		Awaited<ReturnType<typeof listDashboardsForUserV2>>
+	> = ({ signal }) => listDashboardsForUserV2(params, signal);
+
+	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+		Awaited<ReturnType<typeof listDashboardsForUserV2>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type ListDashboardsForUserV2QueryResult = NonNullable<
+	Awaited<ReturnType<typeof listDashboardsForUserV2>>
+>;
+export type ListDashboardsForUserV2QueryError =
+	ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary List dashboards for the current user (v2)
+ */
+
+export function useListDashboardsForUserV2<
+	TData = Awaited<ReturnType<typeof listDashboardsForUserV2>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	params?: ListDashboardsForUserV2Params,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof listDashboardsForUserV2>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getListDashboardsForUserV2QueryOptions(params, options);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary List dashboards for the current user (v2)
+ */
+export const invalidateListDashboardsForUserV2 = async (
+	queryClient: QueryClient,
+	params?: ListDashboardsForUserV2Params,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getListDashboardsForUserV2QueryKey(params) },
+		options,
+	);
+
+	return queryClient;
+};
+
+/**
+ * Removes the pin for the calling user. Idempotent — unpinning a dashboard that wasn't pinned still returns 204.
+ * @summary Unpin a dashboard for the current user (v2)
+ */
+export const unpinDashboardV2 = (
+	{ id }: UnpinDashboardV2PathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<string>({
+		url: `/api/v2/users/me/dashboards/${id}/pins`,
+		method: 'DELETE',
+		signal,
+	});
+};
+
+export const getUnpinDashboardV2MutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof unpinDashboardV2>>,
+		TError,
+		{ pathParams: UnpinDashboardV2PathParameters },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof unpinDashboardV2>>,
+	TError,
+	{ pathParams: UnpinDashboardV2PathParameters },
+	TContext
+> => {
+	const mutationKey = ['unpinDashboardV2'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof unpinDashboardV2>>,
+		{ pathParams: UnpinDashboardV2PathParameters }
+	> = (props) => {
+		const { pathParams } = props ?? {};
+
+		return unpinDashboardV2(pathParams);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type UnpinDashboardV2MutationResult = NonNullable<
+	Awaited<ReturnType<typeof unpinDashboardV2>>
+>;
+
+export type UnpinDashboardV2MutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Unpin a dashboard for the current user (v2)
+ */
+export const useUnpinDashboardV2 = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof unpinDashboardV2>>,
+		TError,
+		{ pathParams: UnpinDashboardV2PathParameters },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof unpinDashboardV2>>,
+	TError,
+	{ pathParams: UnpinDashboardV2PathParameters },
+	TContext
+> => {
+	return useMutation(getUnpinDashboardV2MutationOptions(options));
+};
+/**
+ * Pins the dashboard for the calling user. A user can pin at most 10 dashboards; pinning when at the limit returns 409. Re-pinning an already-pinned dashboard is a no-op success.
+ * @summary Pin a dashboard for the current user (v2)
+ */
+export const pinDashboardV2 = (
+	{ id }: PinDashboardV2PathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<string>({
+		url: `/api/v2/users/me/dashboards/${id}/pins`,
+		method: 'PUT',
+		signal,
+	});
+};
+
+export const getPinDashboardV2MutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof pinDashboardV2>>,
+		TError,
+		{ pathParams: PinDashboardV2PathParameters },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof pinDashboardV2>>,
+	TError,
+	{ pathParams: PinDashboardV2PathParameters },
+	TContext
+> => {
+	const mutationKey = ['pinDashboardV2'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof pinDashboardV2>>,
+		{ pathParams: PinDashboardV2PathParameters }
+	> = (props) => {
+		const { pathParams } = props ?? {};
+
+		return pinDashboardV2(pathParams);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type PinDashboardV2MutationResult = NonNullable<
+	Awaited<ReturnType<typeof pinDashboardV2>>
+>;
+
+export type PinDashboardV2MutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Pin a dashboard for the current user (v2)
+ */
+export const usePinDashboardV2 = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof pinDashboardV2>>,
+		TError,
+		{ pathParams: PinDashboardV2PathParameters },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof pinDashboardV2>>,
+	TError,
+	{ pathParams: PinDashboardV2PathParameters },
+	TContext
+> => {
+	return useMutation(getPinDashboardV2MutationOptions(options));
 };

@@ -16,6 +16,22 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// detailContains reports whether any additional detail on err (its message or one
+// of its suggestions) contains sub.
+func detailContains(err error, sub string) bool {
+	for _, e := range errors.AsJSON(err).Errors {
+		if strings.Contains(e.Message, sub) {
+			return true
+		}
+		for _, s := range e.Suggestions {
+			if strings.Contains(s, sub) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // TestFilterExprLogs tests a comprehensive set of query patterns for logs search.
 func TestFilterExprLogs(t *testing.T) {
 	fl := flaggertest.New(t)
@@ -2415,15 +2431,7 @@ func TestFilterExprLogs(t *testing.T) {
 				require.Equal(t, tc.expectedArgs, args)
 			} else {
 				require.Error(t, err, "Expected error for query: %s", tc.query)
-				_, _, _, _, _, a := errors.Unwrapb(err)
-				contains := false
-				for _, warn := range a {
-					if strings.Contains(warn, tc.expectedErrorContains) {
-						contains = true
-						break
-					}
-				}
-				require.True(t, contains)
+				require.True(t, detailContains(err, tc.expectedErrorContains))
 			}
 		})
 	}
@@ -2536,15 +2544,7 @@ func TestFilterExprLogsConflictNegation(t *testing.T) {
 				require.Equal(t, tc.expectedArgs, args)
 			} else {
 				require.Error(t, err, "Expected error for query: %s", tc.query)
-				_, _, _, _, _, a := errors.Unwrapb(err)
-				contains := false
-				for _, warn := range a {
-					if strings.Contains(warn, tc.expectedErrorContains) {
-						contains = true
-						break
-					}
-				}
-				require.True(t, contains)
+				require.True(t, detailContains(err, tc.expectedErrorContains))
 			}
 		})
 	}

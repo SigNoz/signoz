@@ -27,6 +27,10 @@ var (
 	// Azure services.
 	AzureServiceStorageAccountsBlob = ServiceID{valuer.NewString("storageaccountsblob")}
 	AzureServiceCDNProfile          = ServiceID{valuer.NewString("cdnprofile")}
+	AzureServiceVirtualMachine      = ServiceID{valuer.NewString("virtualmachine")}
+	AzureServiceAppService          = ServiceID{valuer.NewString("appservice")}
+	AzureServiceContainerApp        = ServiceID{valuer.NewString("containerapp")}
+	AzureServiceAKS                 = ServiceID{valuer.NewString("aks")}
 )
 
 func (ServiceID) Enum() []any {
@@ -46,6 +50,10 @@ func (ServiceID) Enum() []any {
 		AWSServiceSQS,
 		AzureServiceStorageAccountsBlob,
 		AzureServiceCDNProfile,
+		AzureServiceVirtualMachine,
+		AzureServiceAppService,
+		AzureServiceContainerApp,
+		AzureServiceAKS,
 	}
 }
 
@@ -69,14 +77,27 @@ var SupportedServices = map[CloudProviderType][]ServiceID{
 	CloudProviderTypeAzure: {
 		AzureServiceStorageAccountsBlob,
 		AzureServiceCDNProfile,
+		AzureServiceVirtualMachine,
+		AzureServiceAppService,
+		AzureServiceContainerApp,
+		AzureServiceAKS,
 	},
 }
 
 func NewServiceID(provider CloudProviderType, service string) (ServiceID, error) {
-	for _, s := range SupportedServices[provider] {
+	// The valid set is provider-scoped (AWS and Azure expose different
+	// services), so surface it as a structured suggestion along with a
+	// closest-match correction for typos.
+	supported := SupportedServices[provider]
+	validServices := make([]string, 0, len(supported))
+	for _, s := range supported {
 		if s.StringValue() == service {
 			return s, nil
 		}
+		validServices = append(validServices, s.StringValue())
 	}
-	return ServiceID{}, errors.NewInvalidInputf(ErrCodeInvalidServiceID, "invalid service id %q for %s cloud provider", service, provider.StringValue())
+
+	return ServiceID{}, errors.NewInvalidInputf(ErrCodeInvalidServiceID,
+		"invalid service id %q for %s cloud provider", service, provider.StringValue()).
+		WithSuggestions(errors.SuggestionsOnLevenshteinDistance(service, validServices)...)
 }

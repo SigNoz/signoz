@@ -5,17 +5,12 @@ import { matchPath, useLocation } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import logEvent from 'api/common/logEvent';
+import { logEventMock } from '__tests__/logEventMock';
 import ROUTES from 'constants/routes';
 import useUrlQuery from 'hooks/useUrlQuery';
 import GetMinMax from 'lib/getMinMax';
 
 import ShareURLModal from '../ShareURLModal';
-
-jest.mock('api/common/logEvent', () => ({
-	__esModule: true,
-	default: jest.fn(),
-}));
 
 jest.mock('react-router-dom', () => ({
 	...jest.requireActual('react-router-dom'),
@@ -53,7 +48,6 @@ Object.defineProperty(window, 'location', {
 	writable: true,
 });
 
-const mockLogEvent = logEvent as jest.Mock;
 const mockUseLocation = useLocation as jest.Mock;
 const mockUseUrlQuery = useUrlQuery as jest.Mock;
 const mockUseSelector = useSelector as jest.Mock;
@@ -125,7 +119,7 @@ describe('ShareURLModal', () => {
 		await user.click(copyButton);
 
 		expect(mockHandleCopyToClipboard).toHaveBeenCalled();
-		expect(mockLogEvent).toHaveBeenCalledWith('Share: Copy link clicked', {
+		expect(logEventMock).toHaveBeenCalledWith('Share: Copy link clicked', {
 			page: TEST_PATH,
 			URL: expect.any(String),
 		});

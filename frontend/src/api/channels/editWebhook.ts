@@ -4,6 +4,13 @@ import { AxiosError } from 'axios';
 import { ErrorV2Resp, SuccessResponseV2 } from 'types/api';
 import { PayloadProps, Props } from 'types/api/channels/editWebhook';
 
+/**
+ * @deprecated Use the generated `useUpdateChannelByID` hook (or `updateChannelByID` fetcher) from
+ * `api/generated/services/channels` instead. This hand-written client targets the
+ * same endpoint and will be removed once call sites migrate.
+ *
+ * Part of https://github.com/SigNoz/engineering-pod/issues/5289, add a comment or update when removing this method.
+ */
 const editWebhook = async (
 	props: Props,
 ): Promise<SuccessResponseV2<PayloadProps>> => {
