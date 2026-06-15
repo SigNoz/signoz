@@ -3208,6 +3208,10 @@ export interface DashboardtypesPanelFormattingDTO {
 	unit?: string;
 }
 
+export enum DashboardtypesLegendModeDTO {
+	list = 'list',
+	table = 'table',
+}
 export enum DashboardtypesLegendPositionDTO {
 	bottom = 'bottom',
 	right = 'right',
@@ -3227,6 +3231,7 @@ export interface DashboardtypesLegendDTO {
 	 * @type object,null
 	 */
 	customColors?: DashboardtypesLegendDTOCustomColors;
+	mode?: DashboardtypesLegendModeDTO;
 	position?: DashboardtypesLegendPositionDTO;
 }
 
@@ -3238,7 +3243,7 @@ export interface DashboardtypesThresholdWithLabelDTO {
 	/**
 	 * @type string
 	 */
-	label: string;
+	label?: string;
 	/**
 	 * @type string
 	 */
@@ -3903,10 +3908,12 @@ export enum DashboardtypesLineStyleDTO {
 export interface DashboardtypesSpanGapsDTO {
 	/**
 	 * @type string
+	 * @description The maximum gap size to connect when fillOnlyBelow is true. Gaps larger than this duration are left disconnected.
 	 */
 	fillLessThan?: string;
 	/**
 	 * @type boolean
+	 * @description Controls whether lines connect across null values. When false (default), all gaps are connected. When true, only gaps smaller than fillLessThan are connected.
 	 */
 	fillOnlyBelow?: boolean;
 }

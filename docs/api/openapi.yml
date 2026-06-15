@@ -2769,9 +2769,16 @@ components:
             type: string
           nullable: true
           type: object
+        mode:
+          $ref: '#/components/schemas/DashboardtypesLegendMode'
         position:
           $ref: '#/components/schemas/DashboardtypesLegendPosition'
       type: object
+    DashboardtypesLegendMode:
+      enum:
+      - list
+      - table
+      type: string
     DashboardtypesLegendPosition:
       enum:
       - bottom
@@ -3321,8 +3328,13 @@ components:
     DashboardtypesSpanGaps:
       properties:
         fillLessThan:
+          description: The maximum gap size to connect when fillOnlyBelow is true.
+            Gaps larger than this duration are left disconnected.
           type: string
         fillOnlyBelow:
+          description: Controls whether lines connect across null values. When false
+            (default), all gaps are connected. When true, only gaps smaller than fillLessThan
+            are connected.
           type: boolean
       type: object
     DashboardtypesStorableDashboardData:
@@ -3389,7 +3401,6 @@ components:
       required:
       - value
       - color
-      - label
       type: object
     DashboardtypesTimePreference:
       enum:

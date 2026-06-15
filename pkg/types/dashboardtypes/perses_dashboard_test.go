@@ -570,6 +570,24 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 			wantContain: "legend position",
 		},
 		{
+			name: "bad legend mode",
+			data: `{
+				"panels": {
+					"p1": {
+						"kind": "Panel",
+						"spec": {
+							"plugin": {
+								"kind": "signoz/BarChartPanel",
+								"spec": {"legend": {"mode": "grid"}}
+							}
+						}
+					}
+				},
+				"layouts": []
+			}`,
+			wantContain: "legend mode",
+		},
+		{
 			name: "bad threshold format",
 			data: `{
 				"panels": {
@@ -630,6 +648,39 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 			_, err := unmarshalDashboard([]byte(tt.data))
 			require.Error(t, err, "expected error containing %q, got nil", tt.wantContain)
 			require.Contains(t, err.Error(), tt.wantContain, "error should mention %q", tt.wantContain)
+		})
+	}
+}
+
+// Label on ThresholdWithLabel is optional — the backend never reads it, so a
+// threshold with an omitted or empty label must validate cleanly.
+func TestThresholdLabelOptional(t *testing.T) {
+	for _, tt := range []struct {
+		name      string
+		threshold string
+	}{
+		{name: "label omitted", threshold: `{"value": 100, "color": "Red"}`},
+		{name: "label empty", threshold: `{"value": 100, "color": "Red", "label": ""}`},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			data := []byte(`{
+				"panels": {
+					"p1": {
+						"kind": "Panel",
+						"spec": {
+							"plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {"thresholds": [` + tt.threshold + `]}},
+							"queries": [{"kind": "time_series", "spec": {"plugin": {"kind": "signoz/PromQLQuery", "spec": {"name": "A", "query": "up"}}}}]
+						}
+					}
+				},
+				"layouts": []
+			}`)
+			d, err := unmarshalDashboard(data)
+			require.NoError(t, err, "threshold without a label should validate")
+
+			spec := d.Panels["p1"].Spec.Plugin.Spec.(*TimeSeriesPanelSpec)
+			require.Len(t, spec.Thresholds, 1)
+			require.Empty(t, spec.Thresholds[0].Label, "label should remain empty")
 		})
 	}
 }
@@ -750,11 +801,6 @@ func TestValidateRequiredFields(t *testing.T) {
 			wantContain: "Color",
 		},
 		{
-			name:        "ThresholdWithLabel missing label",
-			data:        wrapPanel("signoz/TimeSeriesPanel", `{"thresholds": [{"value": 100, "color": "Red", "label": ""}]}`),
-			wantContain: "Label",
-		},
-		{
 			name:        "ComparisonThreshold missing value",
 			data:        wrapPanel("signoz/NumberPanel", `{"thresholds": [{"operator": "above", "format": "text", "color": "Red"}]}`),
 			wantContain: "Value",
@@ -811,10 +857,11 @@ func TestTimeSeriesPanelDefaults(t *testing.T) {
 	require.Equal(t, "2", spec.Formatting.DecimalPrecision.ValueOrDefault(), "expected DecimalPrecision default 2")
 	require.Equal(t, "spline", spec.ChartAppearance.LineInterpolation.ValueOrDefault(), "expected LineInterpolation default spline")
 	require.Equal(t, "solid", spec.ChartAppearance.LineStyle.ValueOrDefault(), "expected LineStyle default solid")
-	require.Equal(t, "solid", spec.ChartAppearance.FillMode.ValueOrDefault(), "expected FillMode default solid")
+	require.Equal(t, "none", spec.ChartAppearance.FillMode.ValueOrDefault(), "expected FillMode default none")
 	require.False(t, spec.ChartAppearance.SpanGaps.FillOnlyBelow, "expected SpanGaps.FillOnlyBelow default false")
 	require.Equal(t, "global_time", spec.Visualization.TimePreference.ValueOrDefault(), "expected TimePreference default global_time")
 	require.Equal(t, "bottom", spec.Legend.Position.ValueOrDefault(), "expected LegendPosition default bottom")
+	require.Equal(t, "list", spec.Legend.Mode.ValueOrDefault(), "expected LegendMode default list")
 
 	// Re-marshal the full dashboard (what we'd store in DB / return in API response)
 	// and verify the output contains the default values.
@@ -825,9 +872,10 @@ func TestTimeSeriesPanelDefaults(t *testing.T) {
 		"decimalPrecision":  `"2"`,
 		"lineInterpolation": `"spline"`,
 		"lineStyle":         `"solid"`,
-		"fillMode":          `"solid"`,
+		"fillMode":          `"none"`,
 		"timePreference":    `"global_time"`,
 		"position":          `"bottom"`,
+		"mode":              `"list"`,
 	} {
 		assert.Contains(t, outputStr, `"`+field+`":`+want, "expected stored/response JSON to contain %s:%s", field, want)
 	}
@@ -930,7 +978,7 @@ func TestStorageRoundTrip(t *testing.T) {
 	assert.Equal(t, "2", tsSpec.Formatting.DecimalPrecision.ValueOrDefault())
 	assert.Equal(t, "spline", tsSpec.ChartAppearance.LineInterpolation.ValueOrDefault())
 	assert.Equal(t, "solid", tsSpec.ChartAppearance.LineStyle.ValueOrDefault())
-	assert.Equal(t, "solid", tsSpec.ChartAppearance.FillMode.ValueOrDefault())
+	assert.Equal(t, "none", tsSpec.ChartAppearance.FillMode.ValueOrDefault())
 	assert.Equal(t, "global_time", tsSpec.Visualization.TimePreference.ValueOrDefault())
 	assert.Equal(t, "bottom", tsSpec.Legend.Position.ValueOrDefault())
 	numSpec := d.Panels["p2"].Spec.Plugin.Spec.(*NumberPanelSpec)
@@ -950,7 +998,7 @@ func TestStorageRoundTrip(t *testing.T) {
 	assert.Equal(t, "2", tsLoaded.Formatting.DecimalPrecision.ValueOrDefault(), "after load")
 	assert.Equal(t, "spline", tsLoaded.ChartAppearance.LineInterpolation.ValueOrDefault(), "after load")
 	assert.Equal(t, "solid", tsLoaded.ChartAppearance.LineStyle.ValueOrDefault(), "after load")
-	assert.Equal(t, "solid", tsLoaded.ChartAppearance.FillMode.ValueOrDefault(), "after load")
+	assert.Equal(t, "none", tsLoaded.ChartAppearance.FillMode.ValueOrDefault(), "after load")
 	assert.Equal(t, "global_time", tsLoaded.Visualization.TimePreference.ValueOrDefault(), "after load")
 	assert.Equal(t, "bottom", tsLoaded.Legend.Position.ValueOrDefault(), "after load")
 	numLoaded := loaded.Panels["p2"].Spec.Plugin.Spec.(*NumberPanelSpec)
@@ -966,7 +1014,7 @@ func TestStorageRoundTrip(t *testing.T) {
 		"decimalPrecision":  `"2"`,
 		"lineInterpolation": `"spline"`,
 		"lineStyle":         `"solid"`,
-		"fillMode":          `"solid"`,
+		"fillMode":          `"none"`,
 		"timePreference":    `"global_time"`,
 		"position":          `"bottom"`,
 		"format":            `"text"`,
