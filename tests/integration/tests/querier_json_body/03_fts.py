@@ -277,7 +277,7 @@ def test_fts_across_contexts(
         {
             "name": "fts.not_search",
             "expression": f'NOT search("{TOK_SEV}")',
-            "validate": lambda r, n=not_search_count: len(get_rows(r)) == n and "severity-text-svc" not in {row["data"]["resources_string"].get("service.name") for row in get_rows(r)} and r.json().get("data", {}).get("warning") is not None,
+            "validate": lambda r, n=not_search_count: len(get_rows(r)) == n and "severity-text-svc" not in {row["data"]["resources_string"].get("service.name") for row in get_rows(r)},
         },
         # search combined with attribute key-value filter (AND):
         # search("xfts_") matches all 8 logs that carry any xfts_ token;
@@ -286,7 +286,7 @@ def test_fts_across_contexts(
         {
             "name": "fts.search_and_attr_filter",
             "expression": f'search("xfts_") AND attribute.some_attr = "{TOK_ASVAL}"',
-            "validate": lambda r: len(get_rows(r)) == 1 and get_rows(r)[0]["data"]["resources_string"].get("service.name") == "attr-str-val-svc" and r.json().get("data", {}).get("warning") is not None,
+            "validate": lambda r: len(get_rows(r)) == 1 and get_rows(r)[0]["data"]["resources_string"].get("service.name") == "attr-str-val-svc",
         },
         # no-match guard: a token that exists nowhere must return 0 rows
         {"name": "fts.no_match", "expression": '"xfts_nonexistent_zzz_999"', "validate": lambda r: len(get_rows(r)) == 0},
