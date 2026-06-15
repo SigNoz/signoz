@@ -1,13 +1,31 @@
-import type { LlmpricingruletypesLLMPricingRuleDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	LlmpricingruletypesLLMPricingRuleCacheModeDTO as CacheModeDTO,
+	LlmpricingruletypesLLMPricingRuleUnitDTO as UnitDTO,
+	type LlmpricingruletypesLLMPricingCacheCostsDTO,
+	type LlmpricingruletypesLLMRulePricingDTO,
+	type LlmpricingruletypesUpdatableLLMPricingRuleDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime';
 
-export type PricingRule = LlmpricingruletypesLLMPricingRuleDTO;
+import type {
+	DrawerDraft,
+	DrawerMode,
+	ExtraBucket,
+	PricingRule,
+	SourceFilter,
+	ValidationResult,
+} from './types';
 
-export type SourceFilter = 'all' | 'auto' | 'override';
+// Idempotent — relativeTime is also extended globally in utils/timeUtils.
+dayjs.extend(relativeTime);
 
-export interface ExtraBucket {
-	key: string;
-	pricePerMillion: number;
-}
+const lc = (value: string): string => value.toLowerCase();
+
+const hasCacheValue = (value: number | null): boolean =>
+	typeof value === 'number' && value > 0;
+
+// ─── Display helpers ─────────────────────────────────────────────────────────
 
 export const formatPricePerMillion = (value: number | undefined): string => {
 	if (value === undefined || value === null || Number.isNaN(value)) {
@@ -34,42 +52,11 @@ export const getExtraBuckets = (rule: PricingRule): ExtraBucket[] => {
 export const getSourceLabel = (rule: PricingRule): 'Auto' | 'User override' =>
 	rule.isOverride ? 'User override' : 'Auto';
 
-const MINUTE = 60;
-const HOUR = 60 * MINUTE;
-const DAY = 24 * HOUR;
-const MONTH = 30 * DAY;
-const YEAR = 365 * DAY;
-
 export const getRelativeLastSeen = (rule: PricingRule): string => {
 	const ts = rule.updatedAt || rule.syncedAt || rule.createdAt;
-	if (!ts) {
-		return '—';
-	}
-	const now = Date.now();
-	const target = new Date(ts).getTime();
-	if (Number.isNaN(target)) {
-		return '—';
-	}
-	const seconds = Math.max(0, Math.round((now - target) / 1000));
-	if (seconds < MINUTE) {
-		return 'just now';
-	}
-	if (seconds < HOUR) {
-		return `${Math.floor(seconds / MINUTE)} min ago`;
-	}
-	if (seconds < DAY) {
-		return `${Math.floor(seconds / HOUR)} hr ago`;
-	}
-	if (seconds < MONTH) {
-		return `${Math.floor(seconds / DAY)} days ago`;
-	}
-	if (seconds < YEAR) {
-		return `${Math.floor(seconds / MONTH)} mo ago`;
-	}
-	return `${Math.floor(seconds / YEAR)} yr ago`;
+	const parsed = ts ? dayjs(ts) : null;
+	return parsed?.isValid() ? parsed.fromNow() : '—';
 };
-
-const lc = (value: string): string => value.toLowerCase();
 
 export const filterRules = (
 	rules: PricingRule[],
@@ -98,4 +85,91 @@ export const filterRules = (
 export const getCanonicalId = (rule: PricingRule): string => {
 	const provider = rule.provider?.trim() || 'unknown';
 	return `${lc(provider)}:${rule.modelName}`;
+};
+
+// ─── Drawer draft <-> API helpers ────────────────────────────────────────────
+
+export const draftFromRule = (rule: PricingRule): DrawerDraft => ({
+	id: rule.id,
+	sourceId: rule.sourceId ?? null,
+	modelName: rule.modelName,
+	provider: rule.provider || 'OpenAI',
+	patterns: rule.modelPattern || [],
+	isOverride: !!rule.isOverride,
+	pricing: {
+		input: rule.pricing?.input ?? 0,
+		output: rule.pricing?.output ?? 0,
+		cacheMode: rule.pricing?.cache?.mode ?? CacheModeDTO.unknown,
+		cacheRead: rule.pricing?.cache?.read ?? null,
+		cacheWrite: rule.pricing?.cache?.write ?? null,
+	},
+});
+
+export const buildPricingPayload = (
+	draft: DrawerDraft,
+): LlmpricingruletypesLLMRulePricingDTO => {
+	const pricing: LlmpricingruletypesLLMRulePricingDTO = {
+		input: draft.pricing.input,
+		output: draft.pricing.output,
+	};
+	if (
+		hasCacheValue(draft.pricing.cacheRead) ||
+		hasCacheValue(draft.pricing.cacheWrite)
+	) {
+		const cache: LlmpricingruletypesLLMPricingCacheCostsDTO = {
+			mode: draft.pricing.cacheMode,
+		};
+		if (hasCacheValue(draft.pricing.cacheRead)) {
+			cache.read = draft.pricing.cacheRead as number;
+		}
+		if (hasCacheValue(draft.pricing.cacheWrite)) {
+			cache.write = draft.pricing.cacheWrite as number;
+		}
+		pricing.cache = cache;
+	}
+	return pricing;
+};
+
+export const buildRulePayload = (
+	draft: DrawerDraft,
+): LlmpricingruletypesUpdatableLLMPricingRuleDTO => ({
+	id: draft.id || undefined,
+	sourceId: draft.sourceId || undefined,
+	modelName: draft.modelName.trim(),
+	provider: draft.provider.trim(),
+	modelPattern:
+		draft.patterns.length > 0 ? draft.patterns : [draft.modelName.trim()],
+	isOverride: draft.isOverride,
+	enabled: true,
+	unit: UnitDTO.per_million_tokens,
+	pricing: buildPricingPayload(draft),
+});
+
+export const validateDraft = (
+	draft: DrawerDraft,
+	mode: DrawerMode,
+): ValidationResult => {
+	if (mode === 'add' && !draft.modelName.trim()) {
+		return { ok: false, message: 'Billing model ID is required.' };
+	}
+	if (!draft.provider.trim()) {
+		return { ok: false, message: 'Provider is required.' };
+	}
+	// Pricing is only user-entered for overrides; auto-populated rules are
+	// managed by SigNoz (and may legitimately be 0 for self-hosted models).
+	if (draft.isOverride) {
+		if (!(draft.pricing.input > 0)) {
+			return { ok: false, message: 'Input cost must be greater than 0.' };
+		}
+		if (!(draft.pricing.output > 0)) {
+			return { ok: false, message: 'Output cost must be greater than 0.' };
+		}
+		if (
+			(draft.pricing.cacheRead !== null && draft.pricing.cacheRead < 0) ||
+			(draft.pricing.cacheWrite !== null && draft.pricing.cacheWrite < 0)
+		) {
+			return { ok: false, message: 'Cache costs must be non-negative.' };
+		}
+	}
+	return { ok: true };
 };

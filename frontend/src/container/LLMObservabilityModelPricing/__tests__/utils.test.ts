@@ -3,6 +3,7 @@ import {
 	LlmpricingruletypesLLMPricingRuleUnitDTO as UnitDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
+import type { PricingRule } from '../types';
 import {
 	filterRules,
 	formatPricePerMillion,
@@ -10,7 +11,6 @@ import {
 	getExtraBuckets,
 	getRelativeLastSeen,
 	getSourceLabel,
-	type PricingRule,
 } from '../utils';
 
 const makeRule = (overrides: Partial<PricingRule> = {}): PricingRule => ({
@@ -81,10 +81,10 @@ describe('utils', () => {
 			expect(getRelativeLastSeen(makeRule())).toBe('—');
 		});
 
-		it('formats minutes-old timestamps', () => {
+		it('formats minutes-old timestamps via dayjs fromNow', () => {
 			const recent = new Date(Date.now() - 5 * 60 * 1000).toISOString();
 			expect(getRelativeLastSeen(makeRule({ updatedAt: recent }))).toMatch(
-				/min ago/,
+				/minutes? ago/,
 			);
 		});
 	});

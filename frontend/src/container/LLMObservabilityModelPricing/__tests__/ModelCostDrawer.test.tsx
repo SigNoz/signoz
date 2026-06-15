@@ -2,7 +2,8 @@ import { useState } from 'react';
 import userEvent from '@testing-library/user-event';
 import { fireEvent, render, screen } from 'tests/test-utils';
 
-import { EMPTY_DRAFT, type DrawerDraft } from '../drawerUtils';
+import { EMPTY_DRAFT } from '../constants';
+import type { DrawerDraft } from '../types';
 import ModelCostDrawer from '../ModelCostDrawer';
 
 interface HarnessProps {

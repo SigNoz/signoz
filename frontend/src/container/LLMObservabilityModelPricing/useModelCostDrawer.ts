@@ -7,14 +7,9 @@ import {
 	useDeleteLLMPricingRule,
 } from 'api/generated/services/llmpricingrules';
 
-import {
-	buildRulePayload,
-	draftFromRule,
-	EMPTY_DRAFT,
-	type DrawerDraft,
-	type DrawerMode,
-} from './drawerUtils';
-import type { PricingRule } from './utils';
+import { EMPTY_DRAFT } from './constants';
+import type { DrawerDraft, DrawerMode, PricingRule } from './types';
+import { buildRulePayload, draftFromRule } from './utils';
 
 interface UseModelCostDrawerResult {
 	isOpen: boolean;

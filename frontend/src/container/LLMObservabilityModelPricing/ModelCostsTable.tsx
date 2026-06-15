@@ -12,13 +12,13 @@ import { ChevronDown } from '@signozhq/icons';
 import cx from 'classnames';
 import { startCase } from 'lodash-es';
 
+import type { PricingRule } from './types';
 import {
 	formatPricePerMillion,
 	getCanonicalId,
 	getExtraBuckets,
 	getRelativeLastSeen,
 	getSourceLabel,
-	type PricingRule,
 } from './utils';
 
 const COLUMN_COUNT = 8;

@@ -3,7 +3,8 @@ import { SelectSimple } from '@signozhq/ui/select';
 import { Lock } from '@signozhq/icons';
 import { LlmpricingruletypesLLMPricingRuleCacheModeDTO as CacheModeDTO } from 'api/generated/services/sigNoz.schemas';
 
-import { CACHE_MODE_OPTIONS, type DrawerDraft } from './drawerUtils';
+import { CACHE_MODE_OPTIONS } from './constants';
+import type { DrawerDraft } from './types';
 
 type Pricing = DrawerDraft['pricing'];
 

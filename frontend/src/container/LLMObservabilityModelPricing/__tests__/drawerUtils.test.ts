@@ -3,15 +3,14 @@ import {
 	LlmpricingruletypesLLMPricingRuleUnitDTO as UnitDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
+import { EMPTY_DRAFT } from '../constants';
+import type { DrawerDraft, PricingRule } from '../types';
 import {
 	buildPricingPayload,
 	buildRulePayload,
 	draftFromRule,
-	EMPTY_DRAFT,
 	validateDraft,
-	type DrawerDraft,
-} from '../drawerUtils';
-import type { PricingRule } from '../utils';
+} from '../utils';
 
 const makeRule = (overrides: Partial<PricingRule> = {}): PricingRule => ({
 	id: 'rule-1',
@@ -26,7 +25,7 @@ const makeRule = (overrides: Partial<PricingRule> = {}): PricingRule => ({
 	...overrides,
 });
 
-describe('drawerUtils', () => {
+describe('drawer draft utils', () => {
 	describe('draftFromRule', () => {
 		it('maps a rule to a draft with cache values when present', () => {
 			const rule = makeRule({

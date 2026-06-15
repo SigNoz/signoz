@@ -12,7 +12,8 @@ import { useAppContext } from 'providers/App/App';
 import ModelCostDrawer from './ModelCostDrawer';
 import ModelCostsTable from './ModelCostsTable';
 import { useModelCostDrawer } from './useModelCostDrawer';
-import { filterRules, type PricingRule, type SourceFilter } from './utils';
+import type { PricingRule, SourceFilter } from './types';
+import { filterRules } from './utils';
 
 import './LLMObservabilityModelPricing.styles.scss';
 

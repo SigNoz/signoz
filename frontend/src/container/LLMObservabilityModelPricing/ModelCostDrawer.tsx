@@ -8,12 +8,9 @@ import { Trash2 } from '@signozhq/icons';
 import PatternEditor from './PatternEditor';
 import PricingFields from './PricingFields';
 import SourceSelector from './SourceSelector';
-import {
-	PROVIDER_OPTIONS,
-	validateDraft,
-	type DrawerDraft,
-	type DrawerMode,
-} from './drawerUtils';
+import { PROVIDER_OPTIONS } from './constants';
+import { validateDraft } from './utils';
+import type { DrawerDraft, DrawerMode } from './types';
 import './ModelCostDrawer.styles.scss';
 
 interface ModelCostDrawerProps {
