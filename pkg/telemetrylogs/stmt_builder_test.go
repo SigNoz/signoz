@@ -1270,15 +1270,15 @@ func TestStmtBuilderTextSearch(t *testing.T) {
 			q, err := statementBuilder.Build(context.Background(), startMs, endMs, c.requestType, c.query, nil)
 			if c.expectedErr != "" {
 				require.Error(t, err)
-				_, _, _, _, _, a := errors.Unwrapb(err)
+				errAsJSON := errors.AsJSON(err)
 				found := false
-				for _, msg := range a {
-					if strings.Contains(msg, c.expectedErr) {
+				for _, e := range errAsJSON.Errors {
+					if strings.Contains(e.Message, c.expectedErr) {
 						found = true
 						break
 					}
 				}
-				require.True(t, found, "expected additionals to contain %q, got %v", c.expectedErr, a)
+				require.True(t, found, "expected additionals to contain %q, got %v", c.expectedErr, errAsJSON.Errors)
 			} else {
 				require.NoError(t, err)
 				if c.expected.Query != "" {
