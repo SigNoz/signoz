@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { DrawerWrapper } from '@signozhq/ui/drawer';
 import { Input } from '@signozhq/ui/input';
@@ -17,6 +18,7 @@ import {
 	verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { Plus, Trash2 } from '@signozhq/icons';
+import { v4 as uuid } from 'uuid';
 
 import SourceAttributeRow from './SourceAttributeRow';
 import {
@@ -63,6 +65,26 @@ function MapperFormDrawer({
 	const isEdit = mode === 'edit';
 	const isValid = isMapperDraftValid(draft);
 
+	// Stable per-row ids for the sortable list. These are UI-only (never sent to
+	// the API and excluded from the draft), so dnd-kit can track rows reliably
+	// even though sources are stored as a plain array. Re-seeded each time the
+	// drawer opens; kept in lockstep with the sources array on add/remove/drag.
+	const [rowIds, setRowIds] = useState<string[]>([]);
+	const wasOpen = useRef(false);
+
+	useEffect(() => {
+		if (isOpen && !wasOpen.current) {
+			setRowIds(draft.sources.map(() => uuid()));
+		}
+		wasOpen.current = isOpen;
+		// Only re-seed on the closed→open transition.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [isOpen]);
+
+	const sourceIds = draft.sources.map(
+		(_, index) => rowIds[index] ?? `pending-${index}`,
+	);
+
 	// 5px activation distance so clicking into the input never starts a drag.
 	const sensors = useSensors(
 		useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -77,14 +99,18 @@ function MapperFormDrawer({
 
 	const addSource = (): void => {
 		setDraft({ ...draft, sources: [...draft.sources, createEmptySource()] });
+		setRowIds((prev) => [...prev, uuid()]);
 	};
 
 	const removeSource = (index: number): void => {
 		const sources = draft.sources.filter((_, i) => i !== index);
-		setDraft({
-			...draft,
-			sources: sources.length > 0 ? sources : [createEmptySource()],
-		});
+		if (sources.length === 0) {
+			setDraft({ ...draft, sources: [createEmptySource()] });
+			setRowIds([uuid()]);
+			return;
+		}
+		setDraft({ ...draft, sources });
+		setRowIds((prev) => prev.filter((_, i) => i !== index));
 	};
 
 	const handleDragEnd = (event: DragEndEvent): void => {
@@ -92,10 +118,13 @@ function MapperFormDrawer({
 		if (!over || active.id === over.id) {
 			return;
 		}
-		setDraft({
-			...draft,
-			sources: arrayMove(draft.sources, Number(active.id), Number(over.id)),
-		});
+		const from = sourceIds.indexOf(String(active.id));
+		const to = sourceIds.indexOf(String(over.id));
+		if (from === -1 || to === -1) {
+			return;
+		}
+		setDraft({ ...draft, sources: arrayMove(draft.sources, from, to) });
+		setRowIds((prev) => arrayMove(prev, from, to));
 	};
 
 	return (
@@ -197,16 +226,12 @@ function MapperFormDrawer({
 						modifiers={[restrictToVerticalAxis]}
 						onDragEnd={handleDragEnd}
 					>
-						<SortableContext
-							items={draft.sources.map((_, index) => String(index))}
-							strategy={verticalListSortingStrategy}
-						>
+						<SortableContext items={sourceIds} strategy={verticalListSortingStrategy}>
 							<div className="mapper-form__sources">
 								{draft.sources.map((source, index) => (
 									<SourceAttributeRow
-										// eslint-disable-next-line react/no-array-index-key
-										key={index}
-										id={String(index)}
+										key={sourceIds[index]}
+										id={sourceIds[index]}
 										index={index}
 										value={source}
 										canRemove={draft.sources.length > 1}
