@@ -51,15 +51,19 @@ export function usePublicDashboard(
 	const [, copyToClipboard] = useCopyToClipboard();
 
 	const [timeRangeEnabled, setTimeRangeEnabled] = useState<boolean>(true);
-	const [defaultTimeRange, setDefaultTimeRange] = useState<string>(
-		DEFAULT_TIME_RANGE,
-	);
+	const [defaultTimeRange, setDefaultTimeRange] =
+		useState<string>(DEFAULT_TIME_RANGE);
 
-	const { data, isLoading: isLoadingMeta, isFetching, error, refetch } =
-		useGetPublicDashboard(
-			{ id: dashboardId },
-			{ query: { enabled: !!dashboardId, retry: false } },
-		);
+	const {
+		data,
+		isLoading: isLoadingMeta,
+		isFetching,
+		error,
+		refetch,
+	} = useGetPublicDashboard(
+		{ id: dashboardId },
+		{ query: { enabled: !!dashboardId, retry: false } },
+	);
 
 	// react-query retains the last successful `data` even after a refetch errors, so
 	// after unpublishing (the refetch 404s) `data` still holds the old publicPath.
@@ -104,35 +108,29 @@ export function usePublicDashboard(
 		[queryClient, dashboardId, refetch],
 	);
 
-	const {
-		mutate: createPublicDashboard,
-		isLoading: isPublishing,
-	} = useCreatePublicDashboard({
-		mutation: {
-			onSuccess: () => handleSuccess('Dashboard published successfully'),
-			onError: handleError,
-		},
-	});
+	const { mutate: createPublicDashboard, isLoading: isPublishing } =
+		useCreatePublicDashboard({
+			mutation: {
+				onSuccess: () => handleSuccess('Dashboard published successfully'),
+				onError: handleError,
+			},
+		});
 
-	const {
-		mutate: updatePublicDashboard,
-		isLoading: isUpdating,
-	} = useUpdatePublicDashboard({
-		mutation: {
-			onSuccess: () => handleSuccess('Public dashboard updated successfully'),
-			onError: handleError,
-		},
-	});
+	const { mutate: updatePublicDashboard, isLoading: isUpdating } =
+		useUpdatePublicDashboard({
+			mutation: {
+				onSuccess: () => handleSuccess('Public dashboard updated successfully'),
+				onError: handleError,
+			},
+		});
 
-	const {
-		mutate: deletePublicDashboard,
-		isLoading: isUnpublishing,
-	} = useDeletePublicDashboard({
-		mutation: {
-			onSuccess: () => handleSuccess('Dashboard unpublished successfully'),
-			onError: handleError,
-		},
-	});
+	const { mutate: deletePublicDashboard, isLoading: isUnpublishing } =
+		useDeletePublicDashboard({
+			mutation: {
+				onSuccess: () => handleSuccess('Dashboard unpublished successfully'),
+				onError: handleError,
+			},
+		});
 
 	const onPublish = useCallback((): void => {
 		if (!dashboardId) {
@@ -176,11 +174,7 @@ export function usePublicDashboard(
 	}, [publicUrl]);
 
 	const isLoading =
-		isLoadingMeta ||
-		isFetching ||
-		isPublishing ||
-		isUpdating ||
-		isUnpublishing;
+		isLoadingMeta || isFetching || isPublishing || isUpdating || isUnpublishing;
 
 	return {
 		isPublic,

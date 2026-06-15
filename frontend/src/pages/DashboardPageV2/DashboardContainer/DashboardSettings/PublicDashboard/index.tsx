@@ -49,11 +49,7 @@ function PublicDashboardSettings({
 			/>
 
 			{isPublic && (
-				<PublicDashboardUrl
-					url={publicUrl}
-					onCopy={onCopyUrl}
-					onOpen={onOpenUrl}
-				/>
+				<PublicDashboardUrl url={publicUrl} onCopy={onCopyUrl} onOpen={onOpenUrl} />
 			)}
 
 			<PublicDashboardCallout />
