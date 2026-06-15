@@ -53,7 +53,8 @@ var (
 	LLMPricingRuleCacheModeSubtract = LLMPricingRuleCacheMode{valuer.NewString("subtract")}
 	// LLMPricingRuleCacheModeAdditive: cached tokens are reported separately (Anthropic-style).
 	LLMPricingRuleCacheModeAdditive = LLMPricingRuleCacheMode{valuer.NewString("additive")}
-	// LLMPricingRuleCacheModeUnknown: provider behaviour is unknown; falls back to subtract.
+	// LLMPricingRuleCacheModeUnknown: provider behaviour is unknown. buildProcessorConfig
+	// normalizes this to an empty mode in the collector config.
 	LLMPricingRuleCacheModeUnknown = LLMPricingRuleCacheMode{valuer.NewString("unknown")}
 )
 

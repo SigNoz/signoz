@@ -33,16 +33,16 @@ type LLMPricingRuleProcessorDefaultPricing struct {
 
 // LLMPricingRuleProcessor is a single pricing rule inside the processor config.
 type LLMPricingRuleProcessor struct {
-	Name    string                       `yaml:"name" json:"name"`
-	Pattern []string                     `yaml:"pattern" json:"pattern"`
-	Cache   LLMPricingRuleProcessorCache `yaml:"cache" json:"cache"`
-	In      float64                      `yaml:"in" json:"in"`
-	Out     float64                      `yaml:"out" json:"out"`
+	Name    string                        `yaml:"name" json:"name"`
+	Pattern []string                      `yaml:"pattern" json:"pattern"`
+	Cache   *LLMPricingRuleProcessorCache `yaml:"cache,omitempty" json:"cache,omitempty"`
+	In      float64                       `yaml:"in" json:"in"`
+	Out     float64                       `yaml:"out" json:"out"`
 }
 
 // LLMPricingRuleProcessorCache describes how cached tokens are accounted for.
 type LLMPricingRuleProcessorCache struct {
-	Mode  string  `yaml:"mode" json:"mode"`
+	Mode  string  `yaml:"mode,omitempty" json:"mode,omitempty"`
 	Read  float64 `yaml:"read" json:"read"`
 	Write float64 `yaml:"write" json:"write"`
 }
@@ -60,10 +60,14 @@ type LLMPricingRuleProcessorOutputAttrs struct {
 func buildProcessorConfig(rules []*LLMPricingRule) *LLMPricingRuleProcessorConfig {
 	pricingRules := make([]LLMPricingRuleProcessor, 0, len(rules))
 	for _, r := range rules {
-		var cache LLMPricingRuleProcessorCache
+		var cache *LLMPricingRuleProcessorCache
 		if r.Pricing.Cache != nil {
-			cache = LLMPricingRuleProcessorCache{
-				Mode:  r.Pricing.Cache.Mode.StringValue(),
+			mode := r.Pricing.Cache.Mode.StringValue()
+			if mode != LLMPricingRuleCacheModeSubtract.StringValue() && mode != LLMPricingRuleCacheModeAdditive.StringValue() {
+				mode = ""
+			}
+			cache = &LLMPricingRuleProcessorCache{
+				Mode:  mode,
 				Read:  r.Pricing.Cache.Read,
 				Write: r.Pricing.Cache.Write,
 			}
