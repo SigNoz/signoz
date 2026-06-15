@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
 import { Switch } from '@signozhq/ui/switch';
 import {
@@ -13,12 +14,12 @@ import { Pencil, Plus, Trash2 } from '@signozhq/icons';
 
 import IndexBadge from './IndexBadge';
 import MapperFormDrawer from './MapperFormDrawer';
-import { DraftGroup, DraftMapper } from './types';
+import { DraftGroup, DraftMapper, FieldContext } from './types';
 import { AttributeMappingStore } from './useAttributeMappingStore';
 import { useMapperFormDrawer } from './useMapperFormDrawer';
 
 const MAX_VISIBLE_SOURCES = 3;
-const COLUMN_COUNT = 4;
+const COLUMN_COUNT = 5;
 
 interface MappersTableProps {
 	group: DraftGroup;
@@ -38,7 +39,7 @@ function SourcesCell({ mapper }: { mapper: DraftMapper }): JSX.Element {
 			className="mappers-table__sources"
 			data-testid={`mapper-sources-${mapper.localId}`}
 		>
-			{visible.join(', ')}
+			{visible.map((source) => source.key).join(', ')}
 			{remaining > 0 && <span className="muted"> +{remaining} more</span>}
 		</span>
 	);
@@ -74,6 +75,14 @@ function MapperRow({
 			</TableCell>
 			<TableCell>
 				<SourcesCell mapper={mapper} />
+			</TableCell>
+			<TableCell>
+				<Badge
+					color={mapper.fieldContext === FieldContext.resource ? 'amber' : 'robin'}
+					variant="outline"
+				>
+					{mapper.fieldContext}
+				</Badge>
 			</TableCell>
 			<TableCell>
 				<div className="am-row-actions">
@@ -131,6 +140,7 @@ function MappersTable({ group, store }: MappersTableProps): JSX.Element {
 						<TableHead>#</TableHead>
 						<TableHead>Target</TableHead>
 						<TableHead>Sources</TableHead>
+						<TableHead>Writes to</TableHead>
 						<TableHead>Actions</TableHead>
 					</TableRow>
 				</TableHeader>

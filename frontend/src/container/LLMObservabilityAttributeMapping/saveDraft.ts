@@ -5,7 +5,7 @@ import {
 	SpantypesUpdatableSpanMapperGroupDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
-import { DraftGroup, DraftMapper } from './types';
+import { DraftGroup, DraftMapper, SourceConfig } from './types';
 import {
 	buildPostableGroup,
 	buildPostableMapper,
@@ -38,18 +38,32 @@ function arraysEqual(a: string[], b: string[]): boolean {
 	return a.length === b.length && a.every((value, index) => value === b[index]);
 }
 
+function sourcesEqual(a: SourceConfig[], b: SourceConfig[]): boolean {
+	return (
+		a.length === b.length &&
+		a.every(
+			(source, index) =>
+				source.key === b[index].key &&
+				source.context === b[index].context &&
+				source.operation === b[index].operation,
+		)
+	);
+}
+
 function groupChanged(snapshot: DraftGroup, draft: DraftGroup): boolean {
 	return (
 		snapshot.name !== draft.name ||
 		snapshot.enabled !== draft.enabled ||
-		!arraysEqual(snapshot.attributes, draft.attributes)
+		!arraysEqual(snapshot.attributes, draft.attributes) ||
+		!arraysEqual(snapshot.resource, draft.resource)
 	);
 }
 
 function mapperChanged(snapshot: DraftMapper, draft: DraftMapper): boolean {
 	return (
 		snapshot.enabled !== draft.enabled ||
-		!arraysEqual(snapshot.sources, draft.sources)
+		snapshot.fieldContext !== draft.fieldContext ||
+		!sourcesEqual(snapshot.sources, draft.sources)
 	);
 }
 
@@ -60,6 +74,7 @@ function groupDraftOf(
 		id: node.serverId,
 		name: node.name,
 		attributes: node.attributes,
+		resource: node.resource,
 		enabled: node.enabled,
 	};
 }
@@ -70,6 +85,7 @@ function mapperDraftOf(
 	return {
 		id: node.serverId,
 		name: node.name,
+		fieldContext: node.fieldContext,
 		sources: node.sources,
 		enabled: node.enabled,
 	};

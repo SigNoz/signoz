@@ -1,21 +1,40 @@
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
+import { SelectSimple } from '@signozhq/ui/select';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, X } from '@signozhq/icons';
 
+import {
+	FieldContext,
+	FieldContextValue,
+	MapperOperation,
+	MapperOperationValue,
+	SourceConfig,
+} from './types';
+
+const CONTEXT_OPTIONS = [
+	{ value: FieldContext.attribute, label: 'Attribute' },
+	{ value: FieldContext.resource, label: 'Resource' },
+];
+
+const OPERATION_OPTIONS = [
+	{ value: MapperOperation.move, label: 'Move' },
+	{ value: MapperOperation.copy, label: 'Copy' },
+];
+
 interface SourceAttributeRowProps {
 	id: string;
 	index: number;
-	value: string;
+	value: SourceConfig;
 	canRemove: boolean;
-	onChange: (index: number, value: string) => void;
+	onChange: (index: number, patch: Partial<SourceConfig>) => void;
 	onRemove: (index: number) => void;
 }
 
-// A single draggable source-attribute row. Order = priority (top wins), so
-// dragging reorders priority. Only the grip is a drag handle, leaving the
-// input freely clickable.
+// A single draggable source row. Order = priority (top wins). Each source can
+// be read from a span attribute or the resource, and moved (delete source) or
+// copied (keep source). Only the grip is a drag handle.
 function SourceAttributeRow({
 	id,
 	index,
@@ -41,23 +60,41 @@ function SourceAttributeRow({
 
 	return (
 		<div className="mapper-form__source" ref={setNodeRef} style={style}>
-			<button
-				type="button"
+			<div
 				className="mapper-form__source-handle"
-				aria-label="Reorder source"
 				data-testid={`mapper-form-source-handle-${index}`}
 				{...attributes}
 				{...listeners}
 			>
 				<GripVertical size={14} />
-			</button>
+			</div>
 			<span className="mapper-form__source-index">{index + 1}</span>
 			<Input
 				className="mapper-form__source-input"
 				placeholder="Source attribute key"
-				value={value}
-				onChange={(event): void => onChange(index, event.target.value)}
+				value={value.key}
+				onChange={(event): void => onChange(index, { key: event.target.value })}
 				testId={`mapper-form-source-${index}`}
+			/>
+			<SelectSimple
+				className="mapper-form__source-select"
+				items={CONTEXT_OPTIONS}
+				value={value.context}
+				withPortal={false}
+				onChange={(next): void =>
+					onChange(index, { context: next as FieldContextValue })
+				}
+				testId={`mapper-form-source-context-${index}`}
+			/>
+			<SelectSimple
+				className="mapper-form__source-select"
+				items={OPERATION_OPTIONS}
+				value={value.operation}
+				withPortal={false}
+				onChange={(next): void =>
+					onChange(index, { operation: next as MapperOperationValue })
+				}
+				testId={`mapper-form-source-operation-${index}`}
 			/>
 			<Button
 				variant="ghost"

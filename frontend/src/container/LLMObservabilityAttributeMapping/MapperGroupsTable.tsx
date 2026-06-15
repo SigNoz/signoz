@@ -22,7 +22,7 @@ import IndexBadge from './IndexBadge';
 import MappersTable from './MappersTable';
 import { DraftGroup } from './types';
 import { AttributeMappingStore } from './useAttributeMappingStore';
-import { conditionFiltersFromAttributes } from './utils';
+import { conditionFiltersFromGroup } from './utils';
 
 const COLUMN_COUNT = 6;
 
@@ -33,7 +33,7 @@ interface MapperGroupsTableProps {
 }
 
 function FiltersCell({ group }: { group: DraftGroup }): JSX.Element {
-	const filters = conditionFiltersFromAttributes(group.attributes);
+	const filters = conditionFiltersFromGroup(group);
 	if (filters.length === 0) {
 		return <span className="muted">No condition · always runs</span>;
 	}
@@ -44,8 +44,14 @@ function FiltersCell({ group }: { group: DraftGroup }): JSX.Element {
 			data-testid={`group-filters-${group.localId}`}
 		>
 			{filters.map((filter) => (
-				<div className="groups-table__filter" key={filter.key}>
-					<Badge color="robin" variant="outline">
+				<div
+					className="groups-table__filter"
+					key={`${filter.context}:${filter.key}`}
+				>
+					<Badge
+						color={filter.context === 'resource' ? 'amber' : 'robin'}
+						variant="outline"
+					>
 						{filter.context}
 					</Badge>
 					<span className="groups-table__filter-key">contains {filter.key}</span>

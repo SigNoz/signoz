@@ -50,6 +50,8 @@
 		background: transparent;
 		color: var(--bg-vanilla-400);
 		cursor: grab;
+		touch-action: none;
+		user-select: none;
 
 		&:active {
 			cursor: grabbing;
@@ -65,7 +67,17 @@
 
 	&__source-input {
 		flex: 1;
+		min-width: 0;
 		font-family: 'Geist Mono', monospace;
+	}
+
+	&__source-select {
+		flex: 0 0 auto;
+		width: 120px;
+	}
+
+	&__field-context {
+		width: 200px;
 	}
 
 	&__error {

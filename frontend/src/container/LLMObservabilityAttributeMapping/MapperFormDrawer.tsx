@@ -1,6 +1,7 @@
 import { Button } from '@signozhq/ui/button';
 import { DrawerWrapper } from '@signozhq/ui/drawer';
 import { Input } from '@signozhq/ui/input';
+import { SelectSimple } from '@signozhq/ui/select';
 import {
 	closestCenter,
 	DndContext,
@@ -18,10 +19,21 @@ import {
 import { Plus, Trash2 } from '@signozhq/icons';
 
 import SourceAttributeRow from './SourceAttributeRow';
-import { MapperDraft, MapperDraftMode } from './types';
-import { isMapperDraftValid } from './utils';
+import {
+	FieldContext,
+	FieldContextValue,
+	MapperDraft,
+	MapperDraftMode,
+	SourceConfig,
+} from './types';
+import { createEmptySource, isMapperDraftValid } from './utils';
 
 import './MapperFormDrawer.styles.scss';
+
+const FIELD_CONTEXT_OPTIONS = [
+	{ value: FieldContext.attribute, label: 'Span attribute' },
+	{ value: FieldContext.resource, label: 'Resource' },
+];
 
 interface MapperFormDrawerProps {
 	isOpen: boolean;
@@ -56,19 +68,23 @@ function MapperFormDrawer({
 		useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
 	);
 
-	const updateSource = (index: number, value: string): void => {
-		const sources = [...draft.sources];
-		sources[index] = value;
+	const updateSource = (index: number, patch: Partial<SourceConfig>): void => {
+		const sources = draft.sources.map((source, i) =>
+			i === index ? { ...source, ...patch } : source,
+		);
 		setDraft({ ...draft, sources });
 	};
 
 	const addSource = (): void => {
-		setDraft({ ...draft, sources: [...draft.sources, ''] });
+		setDraft({ ...draft, sources: [...draft.sources, createEmptySource()] });
 	};
 
 	const removeSource = (index: number): void => {
 		const sources = draft.sources.filter((_, i) => i !== index);
-		setDraft({ ...draft, sources: sources.length > 0 ? sources : [''] });
+		setDraft({
+			...draft,
+			sources: sources.length > 0 ? sources : [createEmptySource()],
+		});
 	};
 
 	const handleDragEnd = (event: DragEndEvent): void => {
@@ -147,6 +163,23 @@ function MapperFormDrawer({
 							The target attribute can&apos;t be changed after creation.
 						</span>
 					)}
+				</div>
+
+				<div className="mapper-form__field">
+					<span className="mapper-form__label">Write target to</span>
+					<SelectSimple
+						className="mapper-form__field-context"
+						items={FIELD_CONTEXT_OPTIONS}
+						value={draft.fieldContext}
+						withPortal={false}
+						onChange={(next): void =>
+							setDraft({ ...draft, fieldContext: next as FieldContextValue })
+						}
+						testId="mapper-form-field-context"
+					/>
+					<span className="mapper-form__hint">
+						Where the standardized attribute is written.
+					</span>
 				</div>
 
 				<div className="mapper-form__field">

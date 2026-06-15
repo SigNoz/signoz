@@ -1,12 +1,15 @@
 import { persistDraft, SaveMutations } from '../saveDraft';
-import { DraftGroup, DraftMapper } from '../types';
+import { DraftGroup, DraftMapper, FieldContext, MapperOperation } from '../types';
 
 function mapper(over: Partial<DraftMapper>): DraftMapper {
 	return {
 		localId: 'm',
 		serverId: 'm',
 		name: 'm',
-		sources: ['x'],
+		fieldContext: FieldContext.attribute,
+		sources: [
+			{ key: 'x', context: FieldContext.attribute, operation: MapperOperation.move },
+		],
 		enabled: true,
 		...over,
 	};
@@ -18,6 +21,7 @@ function group(over: Partial<DraftGroup>): DraftGroup {
 		serverId: 'g',
 		name: 'g',
 		attributes: [],
+		resource: [],
 		enabled: true,
 		mappers: [],
 		...over,

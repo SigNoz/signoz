@@ -17,6 +17,7 @@ import {
 	MapperDraft,
 	MapperGroup,
 	MapperOperation,
+	SourceConfig,
 } from './types';
 
 // Client-side id for not-yet-persisted rows. Prefixed so it never collides
@@ -39,21 +40,39 @@ export function cleanKeys(keys: string[]): string[] {
 	return result;
 }
 
-// Display clauses for a draft group's staged attribute keys. The draft model
-// only edits span-attribute keys, so every clause has 'attribute' context.
-export function conditionFiltersFromAttributes(
-	attributes: string[],
-): ConditionFilter[] {
-	return attributes.map((key) => ({ context: 'attribute', key }));
+// Display clauses for a group's staged condition keys (span attribute keys
+// first, then resource keys).
+export function conditionFiltersFromGroup(group: {
+	attributes: string[];
+	resource: string[];
+}): ConditionFilter[] {
+	return [
+		...group.attributes.map((key) => ({ context: 'attribute' as const, key })),
+		...group.resource.map((key) => ({ context: 'resource' as const, key })),
+	];
 }
 
-// Source attribute keys for a mapper, highest priority first (first match
-// wins at evaluation time).
-export function getMapperSourceKeys(mapper: Mapper): string[] {
+// Source configs for a mapper, highest priority first (first match wins at
+// evaluation time).
+export function getMapperSources(mapper: Mapper): SourceConfig[] {
 	const sources = mapper.config?.sources ?? [];
 	return [...sources]
 		.sort((a, b) => b.priority - a.priority)
-		.map((source) => source.key);
+		.map((source) => ({
+			key: source.key,
+			context: source.context,
+			operation: source.operation,
+		}));
+}
+
+// A blank source row. New sources default to `move` so the original key is
+// removed once standardized (the PRD default — minimizes duplication).
+export function createEmptySource(): SourceConfig {
+	return {
+		key: '',
+		context: FieldContext.attribute,
+		operation: MapperOperation.move,
+	};
 }
 
 export function formatTimestamp(iso?: string): string {
@@ -66,30 +85,40 @@ export function formatTimestamp(iso?: string): string {
 export const EMPTY_MAPPER_DRAFT: MapperDraft = {
 	id: null,
 	name: '',
-	sources: [''],
+	fieldContext: FieldContext.attribute,
+	sources: [createEmptySource()],
 	enabled: true,
 };
 
-// Trimmed, de-duplicated, non-empty source keys in draft (priority) order.
-export function getCleanSourceKeys(draft: MapperDraft): string[] {
-	return cleanKeys(draft.sources);
+// Trimmed, de-duplicated (by key), non-empty sources in priority order,
+// preserving each source's context and operation.
+export function getCleanSources(draft: MapperDraft): SourceConfig[] {
+	const seen = new Set<string>();
+	const result: SourceConfig[] = [];
+	draft.sources.forEach((source) => {
+		const key = source.key.trim();
+		if (key && !seen.has(key)) {
+			seen.add(key);
+			result.push({ ...source, key });
+		}
+	});
+	return result;
 }
 
 export function isMapperDraftValid(draft: MapperDraft): boolean {
-	return draft.name.trim().length > 0 && getCleanSourceKeys(draft).length > 0;
+	return draft.name.trim().length > 0 && getCleanSources(draft).length > 0;
 }
 
-// For MVP every source is copied from a span attribute; priority is derived
-// from list order so the first row wins.
+// Priority is derived from list order so the first row wins.
 function buildSources(
 	draft: MapperDraft,
 ): SpantypesPostableSpanMapperDTO['config']['sources'] {
-	const keys = getCleanSourceKeys(draft);
-	return keys.map((key, index) => ({
-		key,
-		context: FieldContext.attribute,
-		operation: MapperOperation.copy,
-		priority: keys.length - index,
+	const sources = getCleanSources(draft);
+	return sources.map((source, index) => ({
+		key: source.key,
+		context: source.context,
+		operation: source.operation,
+		priority: sources.length - index,
 	}));
 }
 
@@ -98,7 +127,7 @@ export function buildPostableMapper(
 ): SpantypesPostableSpanMapperDTO {
 	return {
 		name: draft.name.trim(),
-		fieldContext: FieldContext.attribute,
+		fieldContext: draft.fieldContext,
 		enabled: draft.enabled,
 		config: { sources: buildSources(draft) },
 	};
@@ -109,7 +138,7 @@ export function buildUpdatableMapper(
 	draft: MapperDraft,
 ): SpantypesUpdatableSpanMapperDTO {
 	return {
-		fieldContext: FieldContext.attribute,
+		fieldContext: draft.fieldContext,
 		enabled: draft.enabled,
 		config: { sources: buildSources(draft) },
 	};
@@ -119,6 +148,7 @@ export const EMPTY_GROUP_DRAFT: GroupDraft = {
 	id: null,
 	name: '',
 	attributes: [''],
+	resource: [],
 	enabled: true,
 };
 
@@ -126,15 +156,16 @@ export function isGroupDraftValid(draft: GroupDraft): boolean {
 	return draft.name.trim().length > 0;
 }
 
-// Resource keys are left empty for the LLM use case; only span-attribute keys
-// gate the group.
 export function buildPostableGroup(
 	draft: GroupDraft,
 ): SpantypesPostableSpanMapperGroupDTO {
 	return {
 		name: draft.name.trim(),
 		enabled: draft.enabled,
-		condition: { attributes: cleanKeys(draft.attributes), resource: [] },
+		condition: {
+			attributes: cleanKeys(draft.attributes),
+			resource: cleanKeys(draft.resource),
+		},
 	};
 }
 
@@ -153,7 +184,8 @@ export function buildDraftMapper(mapper: Mapper): DraftMapper {
 		localId: mapper.id,
 		serverId: mapper.id,
 		name: mapper.name,
-		sources: getMapperSourceKeys(mapper),
+		fieldContext: mapper.fieldContext,
+		sources: getMapperSources(mapper),
 		enabled: mapper.enabled,
 	};
 }
@@ -167,6 +199,7 @@ export function buildDraftGroup(
 		serverId: group.id,
 		name: group.name,
 		attributes: group.condition?.attributes ?? [],
+		resource: group.condition?.resource ?? [],
 		enabled: group.enabled,
 		mappers: mappers.map(buildDraftMapper),
 	};
@@ -178,6 +211,7 @@ export function groupDraftFromNode(group: DraftGroup): GroupDraft {
 		id: group.localId,
 		name: group.name,
 		attributes: group.attributes.length > 0 ? group.attributes : [''],
+		resource: group.resource,
 		enabled: group.enabled,
 	};
 }
@@ -187,7 +221,11 @@ export function mapperDraftFromNode(mapper: DraftMapper): MapperDraft {
 	return {
 		id: mapper.localId,
 		name: mapper.name,
-		sources: mapper.sources.length > 0 ? mapper.sources : [''],
+		fieldContext: mapper.fieldContext,
+		sources:
+			mapper.sources.length > 0
+				? mapper.sources.map((source) => ({ ...source }))
+				: [createEmptySource()],
 		enabled: mapper.enabled,
 	};
 }
@@ -203,6 +241,7 @@ export function nodeFromGroupDraft(
 		serverId: existing?.serverId ?? null,
 		name: draft.name.trim(),
 		attributes: cleanKeys(draft.attributes),
+		resource: cleanKeys(draft.resource),
 		enabled: draft.enabled,
 		mappers: existing?.mappers ?? [],
 	};
@@ -216,7 +255,8 @@ export function nodeFromMapperDraft(
 		localId: existing?.localId ?? genLocalId('mapper'),
 		serverId: existing?.serverId ?? null,
 		name: draft.name.trim(),
-		sources: getCleanSourceKeys(draft),
+		fieldContext: draft.fieldContext,
+		sources: getCleanSources(draft),
 		enabled: draft.enabled,
 	};
 }

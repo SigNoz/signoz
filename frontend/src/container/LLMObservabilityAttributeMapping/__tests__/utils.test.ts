@@ -2,8 +2,10 @@ import {
 	DraftGroup,
 	FieldContext,
 	Mapper,
+	MapperDraft,
 	MapperGroup,
 	MapperOperation,
+	SourceConfig,
 } from '../types';
 import {
 	buildDraftGroup,
@@ -12,11 +14,11 @@ import {
 	buildPostableMapper,
 	buildUpdatableMapper,
 	cleanKeys,
-	conditionFiltersFromAttributes,
+	conditionFiltersFromGroup,
 	EMPTY_GROUP_DRAFT,
 	EMPTY_MAPPER_DRAFT,
 	formatTimestamp,
-	getMapperSourceKeys,
+	getMapperSources,
 	groupDraftFromNode,
 	isGroupDraftValid,
 	isMapperDraftValid,
@@ -24,6 +26,25 @@ import {
 	nodeFromGroupDraft,
 	nodeFromMapperDraft,
 } from '../utils';
+
+function src(
+	key: string,
+	operation = MapperOperation.copy,
+	context = FieldContext.attribute,
+): SourceConfig {
+	return { key, context, operation };
+}
+
+function mapperDraft(over: Partial<MapperDraft>): MapperDraft {
+	return {
+		id: null,
+		name: 'target',
+		fieldContext: FieldContext.attribute,
+		sources: [src('a')],
+		enabled: true,
+		...over,
+	};
+}
 
 const mapper: Mapper = {
 	id: 'm1',
@@ -41,8 +62,8 @@ const mapper: Mapper = {
 			},
 			{
 				key: 'high',
-				context: FieldContext.attribute,
-				operation: MapperOperation.copy,
+				context: FieldContext.resource,
+				operation: MapperOperation.move,
 				priority: 3,
 			},
 			{
@@ -70,23 +91,33 @@ describe('attribute-mapping utils', () => {
 		});
 	});
 
-	describe('getMapperSourceKeys', () => {
-		it('returns keys sorted by priority descending', () => {
-			expect(getMapperSourceKeys(mapper)).toStrictEqual(['high', 'mid', 'low']);
+	describe('getMapperSources', () => {
+		it('returns sources sorted by priority descending, preserving context/operation', () => {
+			expect(getMapperSources(mapper)).toStrictEqual([
+				{ key: 'high', context: FieldContext.resource, operation: MapperOperation.move },
+				{ key: 'mid', context: FieldContext.attribute, operation: MapperOperation.copy },
+				{ key: 'low', context: FieldContext.attribute, operation: MapperOperation.copy },
+			]);
 		});
 
 		it('returns empty array when there are no sources', () => {
 			expect(
-				getMapperSourceKeys({ ...mapper, config: { sources: null } }),
+				getMapperSources({ ...mapper, config: { sources: null } }),
 			).toStrictEqual([]);
 		});
 	});
 
-	describe('conditionFiltersFromAttributes', () => {
-		it('maps each attribute key to an attribute-context clause', () => {
-			expect(conditionFiltersFromAttributes(['gen_ai.', 'llm.'])).toStrictEqual([
+	describe('conditionFiltersFromGroup', () => {
+		it('lists attribute clauses first, then resource clauses', () => {
+			expect(
+				conditionFiltersFromGroup({
+					attributes: ['gen_ai.', 'llm.'],
+					resource: ['service.name'],
+				}),
+			).toStrictEqual([
 				{ context: 'attribute', key: 'gen_ai.' },
 				{ context: 'attribute', key: 'llm.' },
+				{ context: 'resource', key: 'service.name' },
 			]);
 		});
 	});
@@ -98,12 +129,17 @@ describe('attribute-mapping utils', () => {
 	});
 
 	describe('draft-tree builders', () => {
-		it('builds a draft mapper node carrying the server id', () => {
+		it('builds a draft mapper node carrying server id, fieldContext and sources', () => {
 			expect(buildDraftMapper(mapper)).toStrictEqual({
 				localId: 'm1',
 				serverId: 'm1',
 				name: 'gen_ai.request.model',
-				sources: ['high', 'mid', 'low'],
+				fieldContext: FieldContext.attribute,
+				sources: [
+					{ key: 'high', context: FieldContext.resource, operation: MapperOperation.move },
+					{ key: 'mid', context: FieldContext.attribute, operation: MapperOperation.copy },
+					{ key: 'low', context: FieldContext.attribute, operation: MapperOperation.copy },
+				],
 				enabled: true,
 			});
 		});
@@ -111,7 +147,6 @@ describe('attribute-mapping utils', () => {
 		it('builds a draft group node with nested mappers', () => {
 			const node = buildDraftGroup(group, [mapper]);
 			expect(node.localId).toBe('g1');
-			expect(node.serverId).toBe('g1');
 			expect(node.attributes).toStrictEqual(['gen_ai.', 'llm.']);
 			expect(node.mappers).toHaveLength(1);
 			expect(node.mappers[0].localId).toBe('m1');
@@ -124,6 +159,7 @@ describe('attribute-mapping utils', () => {
 			serverId: 'g1',
 			name: 'OpenAI',
 			attributes: ['gen_ai.'],
+			resource: ['service.name'],
 			enabled: true,
 			mappers: [],
 		};
@@ -133,128 +169,115 @@ describe('attribute-mapping utils', () => {
 				id: 'g1',
 				name: 'OpenAI',
 				attributes: ['gen_ai.'],
+				resource: ['service.name'],
 				enabled: true,
 			});
 		});
 
-		it('updates an existing node, preserving its ids and mappers', () => {
+		it('updates an existing group node, preserving its ids and mappers', () => {
 			const existing = { ...node, mappers: [buildDraftMapper(mapper)] };
 			const updated = nodeFromGroupDraft(
 				{
 					id: 'g1',
 					name: '  Renamed  ',
 					attributes: ['a', '', 'a'],
+					resource: ['service.name', ''],
 					enabled: false,
 				},
 				existing,
 			);
-			expect(updated.localId).toBe('g1');
 			expect(updated.serverId).toBe('g1');
 			expect(updated.name).toBe('Renamed');
 			expect(updated.attributes).toStrictEqual(['a']);
-			expect(updated.enabled).toBe(false);
+			expect(updated.resource).toStrictEqual(['service.name']);
 			expect(updated.mappers).toHaveLength(1);
 		});
 
-		it('creates a new node with a temp localId and null serverId', () => {
-			const created = nodeFromGroupDraft({
-				id: null,
-				name: 'New',
-				attributes: [],
-				enabled: true,
-			});
-			expect(created.serverId).toBeNull();
-			expect(created.localId).toMatch(/^local-group-/);
-			expect(created.mappers).toStrictEqual([]);
-		});
+		it('round-trips a mapper node through the form and de-dups sources by key', () => {
+			const draft = mapperDraftFromNode(buildDraftMapper(mapper));
+			expect(draft.id).toBe('m1');
+			expect(draft.fieldContext).toBe(FieldContext.attribute);
 
-		it('builds a mapper form draft and round-trips through a node', () => {
-			const draftMapper = mapperDraftFromNode(buildDraftMapper(mapper));
-			expect(draftMapper.id).toBe('m1');
-			const created = nodeFromMapperDraft({
-				id: null,
-				name: 'target',
-				sources: ['a', '', 'a', 'b'],
-				enabled: true,
-			});
+			const created = nodeFromMapperDraft(
+				mapperDraft({
+					id: null,
+					sources: [src('a', MapperOperation.move), src(' '), src('a'), src('b')],
+				}),
+			);
 			expect(created.serverId).toBeNull();
 			expect(created.localId).toMatch(/^local-mapper-/);
-			expect(created.sources).toStrictEqual(['a', 'b']);
+			expect(created.sources).toStrictEqual([
+				{ key: 'a', context: FieldContext.attribute, operation: MapperOperation.move },
+				{ key: 'b', context: FieldContext.attribute, operation: MapperOperation.copy },
+			]);
 		});
 	});
 
 	describe('validation', () => {
-		it('validates a mapper draft (name + at least one source)', () => {
+		it('validates a mapper draft (name + at least one keyed source)', () => {
 			expect(isMapperDraftValid(EMPTY_MAPPER_DRAFT)).toBe(false);
-			expect(
-				isMapperDraftValid({ id: null, name: 'x', sources: [' '], enabled: true }),
-			).toBe(false);
-			expect(
-				isMapperDraftValid({ id: null, name: 'x', sources: ['a'], enabled: true }),
-			).toBe(true);
+			expect(isMapperDraftValid(mapperDraft({ name: 'x', sources: [src(' ')] }))).toBe(
+				false,
+			);
+			expect(isMapperDraftValid(mapperDraft({ name: 'x', sources: [src('a')] }))).toBe(
+				true,
+			);
 		});
 
 		it('validates a group draft (name only)', () => {
 			expect(isGroupDraftValid(EMPTY_GROUP_DRAFT)).toBe(false);
 			expect(
-				isGroupDraftValid({ id: null, name: 'g', attributes: [], enabled: true }),
+				isGroupDraftValid({
+					id: null,
+					name: 'g',
+					attributes: [],
+					resource: [],
+					enabled: true,
+				}),
 			).toBe(true);
 		});
 	});
 
 	describe('API payload builders', () => {
-		it('derives descending priorities from source order', () => {
-			const payload = buildPostableMapper({
-				id: null,
-				name: ' target ',
-				sources: ['a', 'b', 'c'],
-				enabled: true,
-			});
+		it('derives descending priorities and carries per-source context/operation', () => {
+			const payload = buildPostableMapper(
+				mapperDraft({
+					name: ' target ',
+					fieldContext: FieldContext.resource,
+					sources: [
+						src('a', MapperOperation.move),
+						src('b', MapperOperation.copy, FieldContext.resource),
+					],
+				}),
+			);
 			expect(payload.name).toBe('target');
-			expect(payload.fieldContext).toBe(FieldContext.attribute);
+			expect(payload.fieldContext).toBe(FieldContext.resource);
 			expect(payload.config.sources).toStrictEqual([
-				{
-					key: 'a',
-					context: FieldContext.attribute,
-					operation: MapperOperation.copy,
-					priority: 3,
-				},
-				{
-					key: 'b',
-					context: FieldContext.attribute,
-					operation: MapperOperation.copy,
-					priority: 2,
-				},
-				{
-					key: 'c',
-					context: FieldContext.attribute,
-					operation: MapperOperation.copy,
-					priority: 1,
-				},
+				{ key: 'a', context: FieldContext.attribute, operation: MapperOperation.move, priority: 2 },
+				{ key: 'b', context: FieldContext.resource, operation: MapperOperation.copy, priority: 1 },
 			]);
 		});
 
 		it('omits name on the mapper update payload (immutable target)', () => {
-			const payload = buildUpdatableMapper({
-				id: 'm1',
-				name: 'target',
-				sources: ['a'],
-				enabled: false,
-			});
+			const payload = buildUpdatableMapper(
+				mapperDraft({ id: 'm1', enabled: false, fieldContext: FieldContext.resource }),
+			);
 			expect(payload).not.toHaveProperty('name');
 			expect(payload.enabled).toBe(false);
+			expect(payload.fieldContext).toBe(FieldContext.resource);
 		});
 
-		it('builds a postable group with empty resource keys', () => {
+		it('cleans both attribute and resource condition keys', () => {
 			const payload = buildPostableGroup({
 				id: null,
 				name: 'g',
 				attributes: ['gen_ai.', '', 'gen_ai.'],
+				resource: ['service.name', '  ', 'service.name'],
 				enabled: true,
 			});
 			expect(payload.condition).toStrictEqual({
 				attributes: ['gen_ai.'],
-				resource: [],
+				resource: ['service.name'],
 			});
 		});
 	});

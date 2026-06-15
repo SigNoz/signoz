@@ -2,8 +2,9 @@ import { Button } from '@signozhq/ui/button';
 import { DrawerWrapper } from '@signozhq/ui/drawer';
 import { Input } from '@signozhq/ui/input';
 import { Switch } from '@signozhq/ui/switch';
-import { Plus, Trash2, X } from '@signozhq/icons';
+import { Trash2 } from '@signozhq/icons';
 
+import ConditionKeyList from './ConditionKeyList';
 import { GroupDraft, MapperDraftMode } from './types';
 import { isGroupDraftValid } from './utils';
 
@@ -36,21 +37,6 @@ function GroupFormDrawer({
 }: GroupFormDrawerProps): JSX.Element {
 	const isEdit = mode === 'edit';
 	const isValid = isGroupDraftValid(draft);
-
-	const updateAttribute = (index: number, value: string): void => {
-		const attributes = [...draft.attributes];
-		attributes[index] = value;
-		setDraft({ ...draft, attributes });
-	};
-
-	const addAttribute = (): void => {
-		setDraft({ ...draft, attributes: [...draft.attributes, ''] });
-	};
-
-	const removeAttribute = (index: number): void => {
-		const attributes = draft.attributes.filter((_, i) => i !== index);
-		setDraft({ ...draft, attributes: attributes.length > 0 ? attributes : [''] });
-	};
 
 	return (
 		<DrawerWrapper
@@ -122,53 +108,29 @@ function GroupFormDrawer({
 					/>
 				</div>
 
-				<div className="group-form__field">
-					<span className="group-form__label">
-						Condition · attribute keys
-						<span className="group-form__label-hint">
-							{' '}
-							· group runs when a span attribute contains any of these
-						</span>
-					</span>
+				<ConditionKeyList
+					label="Condition · span attribute keys"
+					labelHint="· runs when a span attribute key contains any of these"
+					keys={draft.attributes}
+					placeholder="e.g. gen_ai."
+					addLabel="Add attribute key"
+					testIdPrefix="group-form-attribute"
+					onChange={(attributes): void => setDraft({ ...draft, attributes })}
+				/>
 
-					<div className="group-form__keys">
-						{draft.attributes.map((attribute, index) => (
-							// eslint-disable-next-line react/no-array-index-key
-							<div className="group-form__key" key={index}>
-								<Input
-									className="group-form__key-input"
-									placeholder="e.g. gen_ai."
-									value={attribute}
-									onChange={(event): void => updateAttribute(index, event.target.value)}
-									testId={`group-form-attribute-${index}`}
-								/>
-								<Button
-									variant="ghost"
-									color="secondary"
-									size="sm"
-									disabled={draft.attributes.length === 1}
-									onClick={(): void => removeAttribute(index)}
-									testId={`group-form-attribute-remove-${index}`}
-								>
-									<X size={14} />
-								</Button>
-							</div>
-						))}
-					</div>
+				<ConditionKeyList
+					label="Condition · resource keys"
+					labelHint="· or when a resource key contains any of these"
+					keys={draft.resource}
+					placeholder="e.g. service.name"
+					addLabel="Add resource key"
+					testIdPrefix="group-form-resource"
+					onChange={(resource): void => setDraft({ ...draft, resource })}
+				/>
 
-					<Button
-						variant="dashed"
-						color="secondary"
-						prefix={<Plus size={14} />}
-						onClick={addAttribute}
-						testId="group-form-add-attribute"
-					>
-						Add attribute key
-					</Button>
-					<span className="group-form__hint">
-						Leave empty to run this group on every span.
-					</span>
-				</div>
+				<span className="group-form__hint">
+					Leave both empty to run this group on every span.
+				</span>
 
 				{saveError && (
 					<div className="group-form__error" role="alert">
