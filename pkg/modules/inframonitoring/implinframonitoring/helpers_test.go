@@ -289,6 +289,16 @@ func TestCompositeKeyFromLabels(t *testing.T) {
 			groupBy:  []qbtypes.GroupByKey{statefulSetNameGroupByKey, namespaceNameGroupByKey},
 			expected: "web-1\x00ns-x",
 		},
+		{
+			// jobs default group identity: (job, namespace).
+			name: "job and namespace group-by",
+			labels: map[string]string{
+				"k8s.job.name":       "web-1",
+				"k8s.namespace.name": "ns-x",
+			},
+			groupBy:  []qbtypes.GroupByKey{jobNameGroupByKey, namespaceNameGroupByKey},
+			expected: "web-1\x00ns-x",
+		},
 	}
 
 	for _, tt := range tests {

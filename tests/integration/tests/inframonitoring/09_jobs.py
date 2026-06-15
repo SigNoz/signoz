@@ -480,22 +480,104 @@ def test_jobs_base_filter_drops_non_job_pods(
     assert all(r["jobName"] != "" for r in data["records"])
 
 
+# Float record fields compared with tolerance; everything else compared with ==.
+_GROUPBY_FLOAT_FIELDS = {
+    "jobCPU",
+    "jobCPURequest",
+    "jobCPULimit",
+    "jobMemory",
+    "jobMemoryRequest",
+    "jobMemoryLimit",
+}
+
+
+def _phase(pending=0, running=0, succeeded=0, failed=0, unknown=0) -> dict:
+    return {"pending": pending, "running": running, "succeeded": succeeded, "failed": failed, "unknown": unknown}
+
+
 @pytest.mark.parametrize(
-    "group_key,expected_running",
+    "scenario",
     [
-        # groupBy=[k8s.job.name]: one record per job, jobName populated
-        # (jobs.go:28-31). 1 running pod each.
+        # Explicit groupBy=[k8s.job.name]: one record per job, jobName populated
+        # (jobs.go:28-31), response grouped_list. 1 running pod each.
         pytest.param(
-            "k8s.job.name",
-            {"gb-job-a1": 1, "gb-job-a2": 1, "gb-job-b1": 1, "gb-job-b2": 1},
+            {
+                "fixture": "jobs_groupby.jsonl",
+                "group_by": "k8s.job.name",
+                "filter": None,
+                "group_meta_key": "k8s.job.name",
+                "expected_type": "grouped_list",
+                "groups": {
+                    "gb-job-a1": {"jobName": "gb-job-a1", "podCountsByPhase": _phase(running=1)},
+                    "gb-job-a2": {"jobName": "gb-job-a2", "podCountsByPhase": _phase(running=1)},
+                    "gb-job-b1": {"jobName": "gb-job-b1", "podCountsByPhase": _phase(running=1)},
+                    "gb-job-b2": {"jobName": "gb-job-b2", "podCountsByPhase": _phase(running=1)},
+                },
+            },
             id="job_name",
         ),
-        # groupBy=[k8s.namespace.name]: aggregated across each namespace's 2
-        # jobs, jobName cleared. 2 x 1 = 2 running pods each.
+        # Explicit groupBy=[k8s.namespace.name]: aggregated across each namespace's
+        # 2 jobs, jobName cleared, response grouped_list. 2 running each.
         pytest.param(
-            "k8s.namespace.name",
-            {"gb-ns-a": 2, "gb-ns-b": 2},
+            {
+                "fixture": "jobs_groupby.jsonl",
+                "group_by": "k8s.namespace.name",
+                "filter": None,
+                "group_meta_key": "k8s.namespace.name",
+                "expected_type": "grouped_list",
+                "groups": {
+                    "gb-ns-a": {"jobName": "", "podCountsByPhase": _phase(running=2)},
+                    "gb-ns-b": {"jobName": "", "podCountsByPhase": _phase(running=2)},
+                },
+            },
             id="namespace",
+        ),
+        # Default groupBy (no groupBy in request) => [k8s.job.name,
+        # k8s.namespace.name] (module.go ListJobs), response list. Two jobs sharing
+        # a name across namespaces must NOT collapse: each row keeps its
+        # per-namespace metrics/replica counts/phase. Single pod per (job, ns) =>
+        # SpaceAggregationSum == Avg == seeded value, so exact expectations.
+        # Regression guard for namespace-scoped k8s name uniqueness; fails on the
+        # pre-change name-only default (would yield 1 summed row).
+        pytest.param(
+            {
+                "fixture": "jobs_same_name_across_namespaces.jsonl",
+                "group_by": None,
+                "filter": "k8s.job.name = 'dup-job'",
+                "group_meta_key": "k8s.namespace.name",
+                "expected_type": "list",
+                "groups": {
+                    "ns-x": {
+                        "jobName": "dup-job",
+                        "jobCPU": 0.3,
+                        "jobCPURequest": 0.6,
+                        "jobCPULimit": 0.7,
+                        "jobMemory": 100000000.0,
+                        "jobMemoryRequest": 0.6,
+                        "jobMemoryLimit": 0.7,
+                        "desiredSuccessfulPods": 2,
+                        "activePods": 2,
+                        "failedPods": 0,
+                        "successfulPods": 0,
+                        "podCountsByPhase": _phase(running=1),
+                    },
+                    "ns-y": {
+                        "jobName": "dup-job",
+                        "jobCPU": 0.9,
+                        "jobCPURequest": 0.2,
+                        "jobCPULimit": 0.3,
+                        "jobMemory": 500000000.0,
+                        "jobMemoryRequest": 0.2,
+                        "jobMemoryLimit": 0.3,
+                        "desiredSuccessfulPods": 3,
+                        "activePods": 1,
+                        "failedPods": 1,
+                        "successfulPods": 1,
+                        "podCountsByPhase": _phase(failed=1),
+                    },
+                },
+            },
+            id="default_disambiguates_ns",
         ),
     ],
 )
@@ -504,55 +586,59 @@ def test_jobs_groupby(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
-    group_key: str,
-    expected_running: dict,
+    scenario: dict,
 ) -> None:
-    """groupBy returns one record per distinct group with aggregated pod-phase
-    counts. jobName is populated only when grouping by k8s.job.name
-    (jobs.go:28-31 list-vs-grouped branch); meta surfaces the groupBy key."""
+    """groupBy determines row identity. Explicit groupBy returns one grouped_list
+    record per distinct group (jobName populated only when grouping by k8s.job.name;
+    jobs.go:28-31). With no groupBy the default is [k8s.job.name, k8s.namespace.name]
+    (module.go ListJobs), so same-named jobs across namespaces stay as separate,
+    un-collapsed list rows. meta always surfaces the grouping key(s)."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
-            get_testdata_file_path("inframonitoring/jobs_groupby.jsonl"),
+            get_testdata_file_path(f"inframonitoring/{scenario['fixture']}"),
             base_time=now - timedelta(minutes=4),
         )
     )
+
+    body: dict = {
+        "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+        "end": int(now.timestamp() * 1000),
+        "limit": 50,
+    }
+    if scenario["group_by"] is not None:
+        body["groupBy"] = [
+            {"name": scenario["group_by"], "fieldDataType": "string", "fieldContext": "resource"}
+        ]
+    if scenario["filter"] is not None:
+        body["filter"] = {"expression": scenario["filter"]}
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     response = requests.post(
         signoz.self.host_configs["8080"].get(ENDPOINT),
         headers={"authorization": f"Bearer {token}"},
-        json={
-            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "limit": 50,
-            "groupBy": [
-                {
-                    "name": group_key,
-                    "fieldDataType": "string",
-                    "fieldContext": "resource",
-                }
-            ],
-        },
+        json=body,
         timeout=5,
     )
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()["data"]
-    assert data["total"] == len(expected_running)
 
-    is_job_group = group_key == "k8s.job.name"
-    group_of = lambda r: r["jobName"] if is_job_group else r["meta"][group_key]  # noqa: E731  # pylint: disable=unnecessary-lambda-assignment
-    by_group = {group_of(r): r for r in data["records"]}
-    assert set(by_group.keys()) == set(expected_running.keys())
+    groups = scenario["groups"]
+    meta_key = scenario["group_meta_key"]
+    assert data["type"] == scenario["expected_type"]
+    assert data["total"] == len(groups)
 
-    for group, running in expected_running.items():
-        rec = by_group[group]
-        # jobName populated per job when grouping by it, empty otherwise.
-        assert rec["jobName"] == (group if is_job_group else "")
-        assert rec["podCountsByPhase"]["running"] == running
-        for other in ("pending", "succeeded", "failed", "unknown"):
-            assert rec["podCountsByPhase"][other] == 0
-        assert group_key in rec["meta"], rec["meta"]
+    by_group = {r["meta"][meta_key]: r for r in data["records"]}
+    assert set(by_group.keys()) == set(groups.keys())
+
+    for gid, exp in groups.items():
+        rec = by_group[gid]
+        assert meta_key in rec["meta"], rec["meta"]
+        for field, val in exp.items():
+            if field in _GROUPBY_FLOAT_FIELDS:
+                assert compare_values(rec[field], val, 1e-6), f"{gid}.{field}: got {rec[field]}, expected {val}"
+            else:
+                assert rec[field] == val, f"{gid}.{field}: got {rec[field]}, expected {val}"
 
 
 def test_jobs_pagination(

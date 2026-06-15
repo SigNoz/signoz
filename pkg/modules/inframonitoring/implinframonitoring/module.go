@@ -802,7 +802,7 @@ func (m *module) ListJobs(ctx context.Context, orgID valuer.UUID, req *inframoni
 	}
 
 	if len(req.GroupBy) == 0 {
-		req.GroupBy = []qbtypes.GroupByKey{jobNameGroupByKey}
+		req.GroupBy = []qbtypes.GroupByKey{jobNameGroupByKey, namespaceNameGroupByKey}
 		resp.Type = inframonitoringtypes.ResponseTypeList
 	} else {
 		resp.Type = inframonitoringtypes.ResponseTypeGroupedList
