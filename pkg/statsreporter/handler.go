@@ -1,4 +1,4 @@
-package flagger
+package statsreporter
 
 import (
 	"context"
@@ -7,25 +7,24 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type Handler interface {
-	GetFeatures(http.ResponseWriter, *http.Request)
+	Get(http.ResponseWriter, *http.Request)
 }
 
 type handler struct {
-	flagger Flagger
+	aggregator Aggregator
 }
 
-func NewHandler(flagger Flagger) Handler {
+func NewHandler(aggregator Aggregator) Handler {
 	return &handler{
-		flagger: flagger,
+		aggregator: aggregator,
 	}
 }
 
-func (handler *handler) GetFeatures(rw http.ResponseWriter, r *http.Request) {
+func (handler *handler) Get(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
@@ -37,13 +36,11 @@ func (handler *handler) GetFeatures(rw http.ResponseWriter, r *http.Request) {
 
 	orgID := valuer.MustNewUUID(claims.OrgID)
 
-	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
-
-	features, err := handler.flagger.List(ctx, evalCtx)
+	stats, err := handler.aggregator.Aggregate(ctx, orgID)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	render.Success(rw, http.StatusOK, features)
+	render.Success(rw, http.StatusOK, stats)
 }

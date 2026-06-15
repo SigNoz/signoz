@@ -21,18 +21,25 @@ type base struct {
 	e error
 	// u denotes the url for the documentation (if present) for the error.
 	u string
-	// a denotes any additional error messages (if present).
-	a []string
+	// a denotes any additional error details (if present). Each detail carries an
+	// optional message and any user-facing suggestions closely related to it.
+	a []additional
 	// s contains the stacktrace captured at error creation time.
 	s fmt.Stringer
 	// r is the retry strategy for the error, if applicable.
 	r *retry
-	// suggestions is a list of user-facing suggestions related to the error, if present.
-	// For example, narrow the time range window or typo suggestion
+	// suggestions is a list of user-facing suggestions related to the error as a
+	// whole (not tied to a specific detail in a), if present. For example,
+	// "narrow the time range window". For a suggestion tied to a specific detail,
+	// use the suggestions field on additional instead.
 	suggestions []string
-	// invalidReferences is a list of references that were invalid and contributed to the error, if present.
-	// For example, a typo from user avg(sum), we return invalidRefences: ['sum']
-	invalidReferences []string
+}
+
+// additional is a single supplementary error detail: a message plus any
+// user-facing suggestions (e.g. "did you mean: `x`") closely related to it.
+type additional struct {
+	message     string
+	suggestions []string
 }
 
 // Stacktrace returns the stacktrace captured at error creation time, formatted as a string.
@@ -47,16 +54,15 @@ func (b *base) Stacktrace() string {
 // and returns a new base error.
 func (b *base) WithStacktrace(s string) *base {
 	return &base{
-		t:                 b.t,
-		c:                 b.c,
-		m:                 b.m,
-		e:                 b.e,
-		u:                 b.u,
-		a:                 b.a,
-		s:                 rawStacktrace(s),
-		r:                 b.r,
-		suggestions:       b.suggestions,
-		invalidReferences: b.invalidReferences,
+		t:           b.t,
+		c:           b.c,
+		m:           b.m,
+		e:           b.e,
+		u:           b.u,
+		a:           b.a,
+		s:           rawStacktrace(s),
+		r:           b.r,
+		suggestions: b.suggestions,
 	}
 }
 
@@ -77,7 +83,7 @@ func New(t typ, code Code, message string) *base {
 		m: message,
 		e: nil,
 		u: "",
-		a: []string{},
+		a: []additional{},
 		s: newStackTrace(),
 	}
 }
@@ -96,127 +102,144 @@ func Newf(t typ, code Code, format string, args ...any) *base {
 // Wrapf returns a new error by formatting the error message with the supplied format specifier
 // and wrapping another error with base.
 func Wrapf(cause error, t typ, code Code, format string, args ...any) *base {
-	return &base{
+	b := &base{
 		t: t,
 		c: code,
 		m: fmt.Sprintf(format, args...),
 		e: cause,
 		s: newStackTrace(),
 	}
+
+	// Carry the user-facing hints forward from the wrapped cause. Otherwise
+	// wrapping a structured error (e.g. one returned from an UnmarshalJSON) would
+	// silently drop its suggestions / invalid references from the response.
+	// Propagation is transitive: each Wrapf copies from its immediate cause, so
+	// the hints survive arbitrarily deep wrapping as long as it goes through Wrapf.
+	if inner, ok := cause.(*base); ok {
+		b.r = inner.r
+		b.a = inner.a
+		b.suggestions = inner.suggestions
+	}
+
+	return b
 }
 
 // Wrap returns a new error by wrapping another error with base.
 func Wrap(cause error, t typ, code Code, message string) *base {
-	return &base{
+	b := &base{
 		t: t,
 		c: code,
 		m: message,
 		e: cause,
 		s: newStackTrace(),
 	}
+
+	// Carry the user-facing hints forward from the wrapped cause. Otherwise
+	// wrapping a structured error (e.g. one returned from an UnmarshalJSON) would
+	// silently drop its suggestions / invalid references from the response.
+	// Propagation is transitive: each Wrapf copies from its immediate cause, so
+	// the hints survive arbitrarily deep wrapping as long as it goes through Wrapf.
+	if inner, ok := cause.(*base); ok {
+		b.r = inner.r
+		b.a = inner.a
+		b.suggestions = inner.suggestions
+	}
+
+	return b
 }
 
 // WithAdditionalf adds an additional error message to the existing error.
 func WithAdditionalf(cause error, format string, args ...any) *base {
-	t, c, m, e, u, a := Unwrapb(cause)
-	var s fmt.Stringer
-	if original, ok := cause.(*base); ok {
-		s = original.s
-	}
-	b := &base{
-		t:                 t,
-		c:                 c,
-		m:                 m,
-		e:                 e,
-		u:                 u,
-		a:                 a,
-		s:                 s,
-		r:                 retryOf(cause),
-		suggestions:       suggestionsOf(cause),
-		invalidReferences: invalidReferencesOf(cause),
+	if b, ok := cause.(*base); ok {
+		return b.WithAdditional(fmt.Sprintf(format, args...))
 	}
 
-	return b.WithAdditional(append(a, fmt.Sprintf(format, args...))...)
+	t, c, m, e, u, a := Unwrapb(cause)
+	b := &base{t: t, c: c, m: m, e: e, u: u, a: a, s: newStackTrace(), r: retryOf(cause)}
+	return b.WithAdditional(fmt.Sprintf(format, args...))
+}
+
+// WithSuggestiveAdditionalf appends a detail whose message is built from the format
+// specifier and which carries the given user-facing suggestions closely related to
+// it, returning a new base error.
+func WithSuggestiveAdditionalf(cause error, suggestions []string, format string, args ...any) *base {
+	if b, ok := cause.(*base); ok {
+		return b.WithSuggestiveAdditional(fmt.Sprintf(format, args...), suggestions...)
+	}
+
+	t, c, m, e, u, a := Unwrapb(cause)
+	b := &base{t: t, c: c, m: m, e: e, u: u, a: a, s: newStackTrace(), r: retryOf(cause)}
+	return b.WithSuggestiveAdditional(fmt.Sprintf(format, args...), suggestions...)
 }
 
 // WithUrl adds a url to the base error and returns a new base error.
 func (b *base) WithUrl(u string) *base {
 	return &base{
-		t:                 b.t,
-		c:                 b.c,
-		m:                 b.m,
-		e:                 b.e,
-		u:                 u,
-		a:                 b.a,
-		s:                 b.s,
-		r:                 b.r,
-		suggestions:       b.suggestions,
-		invalidReferences: b.invalidReferences,
+		t:           b.t,
+		c:           b.c,
+		m:           b.m,
+		e:           b.e,
+		u:           u,
+		a:           b.a,
+		s:           b.s,
+		r:           b.r,
+		suggestions: b.suggestions,
 	}
 }
 
-// WithAdditional adds additional messages to the base error and returns a new base error.
-func (b *base) WithAdditional(a ...string) *base {
-	return &base{
-		t:                 b.t,
-		c:                 b.c,
-		m:                 b.m,
-		e:                 b.e,
-		u:                 b.u,
-		a:                 a,
-		s:                 b.s,
-		r:                 b.r,
-		suggestions:       b.suggestions,
-		invalidReferences: b.invalidReferences,
+// WithAdditional appends one or more message-only details and returns a new base error.
+func (b *base) WithAdditional(messages ...string) *base {
+	extra := make([]additional, len(messages))
+	for i, m := range messages {
+		extra[i] = additional{message: m}
 	}
+	return b.WithAdditionals(extra...)
+}
+
+// WithAdditionals appends the given details and returns a new base error. It is also
+// the way to re-attach details previously pulled out via Unwrapb.
+func (b *base) WithAdditionals(additionals ...additional) *base {
+	nb := *b
+	nb.a = append(append([]additional{}, b.a...), additionals...)
+	return &nb
 }
 
 // withRetry adds retry metadata to the base error and returns a new base error.
 func (b *base) withRetry(r retry) *base {
 	return &base{
-		t:                 b.t,
-		c:                 b.c,
-		m:                 b.m,
-		e:                 b.e,
-		u:                 b.u,
-		a:                 b.a,
-		s:                 b.s,
-		r:                 &r,
-		suggestions:       b.suggestions,
-		invalidReferences: b.invalidReferences,
+		t:           b.t,
+		c:           b.c,
+		m:           b.m,
+		e:           b.e,
+		u:           b.u,
+		a:           b.a,
+		s:           b.s,
+		r:           &r,
+		suggestions: b.suggestions,
 	}
 }
 
-// WithSuggestions replaces the list of suggestions on the base error.
+// WithSuggestions replaces the error-wide suggestions and returns a new base error.
+// These relate to the error as a whole; for a suggestion tied to a specific detail,
+// use WithSuggestiveAdditional.
 func (b *base) WithSuggestions(suggestions ...string) *base {
 	return &base{
-		t:                 b.t,
-		c:                 b.c,
-		m:                 b.m,
-		e:                 b.e,
-		u:                 b.u,
-		a:                 b.a,
-		s:                 b.s,
-		r:                 b.r,
-		suggestions:       suggestions,
-		invalidReferences: b.invalidReferences,
+		t:           b.t,
+		c:           b.c,
+		m:           b.m,
+		e:           b.e,
+		u:           b.u,
+		a:           b.a,
+		s:           b.s,
+		r:           b.r,
+		suggestions: suggestions,
 	}
 }
 
-// WithInvalidReferences replaces the list of invalid references on the base error.
-func (b *base) WithInvalidReferences(invalidReferences ...string) *base {
-	return &base{
-		t:                 b.t,
-		c:                 b.c,
-		m:                 b.m,
-		e:                 b.e,
-		u:                 b.u,
-		a:                 b.a,
-		s:                 b.s,
-		r:                 b.r,
-		suggestions:       b.suggestions,
-		invalidReferences: invalidReferences,
-	}
+// WithSuggestiveAdditional appends a detail carrying a message together with the
+// user-facing suggestions closely related to it, and returns a new base error.
+func (b *base) WithSuggestiveAdditional(message string, suggestions ...string) *base {
+	return b.WithAdditionals(additional{message: message, suggestions: suggestions})
 }
 
 // WithRetryAfter sets the retry delay on the base error and returns a new base error.
@@ -231,13 +254,13 @@ func (b *base) WithRetryAfter(delay time.Duration) *base {
 // and the error itself.
 //
 //nolint:staticcheck // ST1008: intentional return order matching struct field order (TCMEUA)
-func Unwrapb(cause error) (typ, Code, string, error, string, []string) {
+func Unwrapb(cause error) (typ, Code, string, error, string, []additional) {
 	base, ok := cause.(*base)
 	if ok {
 		return base.t, base.c, base.m, base.e, base.u, base.a
 	}
 
-	return TypeInternal, CodeUnknown, cause.Error(), cause, "", []string{}
+	return TypeInternal, CodeUnknown, cause.Error(), cause, "", []additional{}
 }
 
 // Ast checks if the provided error matches the specified custom error type.
@@ -368,14 +391,6 @@ func suggestionsOf(err error) []string {
 	base, ok := err.(*base)
 	if ok {
 		return base.suggestions
-	}
-	return nil
-}
-
-func invalidReferencesOf(err error) []string {
-	base, ok := err.(*base)
-	if ok {
-		return base.invalidReferences
 	}
 	return nil
 }

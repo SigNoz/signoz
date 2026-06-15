@@ -20,6 +20,7 @@ var (
 type bindBodyOptions struct {
 	DisallowUnknownFields bool
 	UseNumber             bool
+	UnknownFieldContext   string
 }
 
 type BindBodyOption func(*bindBodyOptions)
@@ -27,6 +28,12 @@ type BindBodyOption func(*bindBodyOptions)
 func WithDisallowUnknownFields(disallowUnknownFields bool) BindBodyOption {
 	return func(options *bindBodyOptions) {
 		options.DisallowUnknownFields = disallowUnknownFields
+	}
+}
+
+func WithUnknownFieldContext(context string) BindBodyOption {
+	return func(options *bindBodyOptions) {
+		options.UnknownFieldContext = context
 	}
 }
 
