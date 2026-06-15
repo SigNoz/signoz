@@ -6,6 +6,10 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/tagtypes"
 )
 
+// ════════════════════════════════════════════════════════════════════════
+// Gettable
+// ════════════════════════════════════════════════════════════════════════
+
 // GettablePublicDashboardDataV2 is the anonymous-facing payload of a v2 dashboard.
 type GettablePublicDashboardDataV2 struct {
 	Dashboard       *GettableDashboardV2      `json:"dashboard"`
@@ -33,8 +37,10 @@ func NewPublicDashboardDataFromDashboardV2(dashboard *DashboardV2, publicDashboa
 	}
 }
 
-// redactPanelQueries rebuilds the panel map with each query redacted, leaving the
-// source spec untouched.
+// ════════════════════════════════════════════════════════════════════════
+// Redaction
+// ════════════════════════════════════════════════════════════════════════
+
 func redactPanelQueries(spec *DashboardSpec) {
 	panels := make(map[string]*Panel, len(spec.Panels))
 	for key, panel := range spec.Panels {
@@ -45,7 +51,7 @@ func redactPanelQueries(spec *DashboardSpec) {
 		redacted := *panel
 		queries := make([]Query, len(redacted.Spec.Queries))
 		for i, query := range redacted.Spec.Queries {
-			query.Spec.Plugin.Spec = redactQueryPluginSpec(query.Spec.Plugin.Kind, query.Spec.Plugin.Spec)
+			query.Spec.Plugin.Spec = redactQuery(query.Spec.Plugin.Spec)
 			queries[i] = query
 		}
 		redacted.Spec.Queries = queries
@@ -54,55 +60,44 @@ func redactPanelQueries(spec *DashboardSpec) {
 	spec.Panels = panels
 }
 
-// redactQueryPluginSpec redacts a single panel query plugin spec. Composite specs
-// hold their sub-queries as values; promql/clickhouse/formula/trace specs are pointers.
-func redactQueryPluginSpec(kind QueryPluginKind, spec any) any {
-	switch kind {
-	case QueryKindComposite:
-		composite, ok := spec.(*qb.CompositeQuery)
-		if !ok || composite == nil {
+func redactQuery(spec any) any {
+	switch s := spec.(type) {
+	case *qb.CompositeQuery:
+		if s == nil {
 			return spec
 		}
-		queries := make([]qb.QueryEnvelope, len(composite.Queries))
-		for i, envelope := range composite.Queries {
-			envelope.Spec = redactQuery(envelope.Spec)
+		queries := make([]qb.QueryEnvelope, len(s.Queries))
+		for i, envelope := range s.Queries {
+			envelope.Spec = redactLeafQuery(envelope.Spec)
 			queries[i] = envelope
 		}
 		return &qb.CompositeQuery{Queries: queries}
-	case QueryKindBuilder:
-		builder, ok := spec.(*BuilderQuerySpec)
-		if !ok || builder == nil {
+	case *BuilderQuerySpec:
+		if s == nil {
 			return spec
 		}
-		return &BuilderQuerySpec{Spec: redactQuery(builder.Spec)}
-	case QueryKindPromQL:
-		if s, ok := spec.(*qb.PromQuery); ok {
-			redacted := redactQuery(*s).(qb.PromQuery)
-			return &redacted
-		}
-	case QueryKindClickHouseSQL:
-		if s, ok := spec.(*qb.ClickHouseQuery); ok {
-			redacted := redactQuery(*s).(qb.ClickHouseQuery)
-			return &redacted
-		}
-	case QueryKindFormula:
-		if s, ok := spec.(*qb.QueryBuilderFormula); ok {
-			redacted := redactQuery(*s).(qb.QueryBuilderFormula)
-			return &redacted
-		}
-	case QueryKindTraceOperator:
-		if s, ok := spec.(*qb.QueryBuilderTraceOperator); ok {
-			redacted := redactQuery(*s).(qb.QueryBuilderTraceOperator)
-			return &redacted
-		}
+		return &BuilderQuerySpec{Spec: redactLeafQuery(s.Spec)}
+	case *qb.PromQuery:
+		return redactQueryPtr(s)
+	case *qb.ClickHouseQuery:
+		return redactQueryPtr(s)
+	case *qb.QueryBuilderFormula:
+		return redactQueryPtr(s)
+	case *qb.QueryBuilderTraceOperator:
+		return redactQueryPtr(s)
 	}
 	return spec
 }
 
-// redactQuery returns a copy of a query value carrying only public-safe fields.
-// Building up an allowlist (rather than clearing fields) fails closed: any new
-// field is excluded until explicitly added here.
-func redactQuery(spec any) any {
+func redactQueryPtr[T any](s *T) any {
+	if s == nil {
+		return s
+	}
+	redacted := redactLeafQuery(*s).(T)
+	return &redacted
+}
+
+func redactLeafQuery(spec any) any {
 	switch s := spec.(type) {
 	case qb.QueryBuilderQuery[qb.LogAggregation]:
 		return redactBuilderQuery(s)
@@ -111,27 +106,23 @@ func redactQuery(spec any) any {
 	case qb.QueryBuilderQuery[qb.TraceAggregation]:
 		return redactBuilderQuery(s)
 	case qb.PromQuery:
-		return qb.PromQuery{Name: s.Name, Step: s.Step, Disabled: s.Disabled, Legend: s.Legend}
+		return qb.PromQuery{Name: s.Name, Legend: s.Legend}
 	case qb.ClickHouseQuery:
-		return qb.ClickHouseQuery{Name: s.Name, Disabled: s.Disabled, Legend: s.Legend}
+		return qb.ClickHouseQuery{Name: s.Name, Legend: s.Legend}
 	case qb.QueryBuilderFormula:
-		return qb.QueryBuilderFormula{Name: s.Name, Expression: s.Expression, Disabled: s.Disabled, Legend: s.Legend}
+		return qb.QueryBuilderFormula{Name: s.Name, Expression: s.Expression, Legend: s.Legend}
 	case qb.QueryBuilderTraceOperator:
 		return qb.QueryBuilderTraceOperator{
 			Name:         s.Name,
 			Expression:   s.Expression,
 			Aggregations: s.Aggregations,
 			GroupBy:      s.GroupBy,
-			StepInterval: s.StepInterval,
-			Disabled:     s.Disabled,
 			Legend:       s.Legend,
 		}
 	}
 	return spec
 }
 
-// redactBuilderQuery keeps only display-relevant fields, dropping filter, having,
-// order, limit, and any other query internals.
 func redactBuilderQuery[T any](q qb.QueryBuilderQuery[T]) qb.QueryBuilderQuery[T] {
 	return qb.QueryBuilderQuery[T]{
 		Name:         q.Name,
@@ -139,11 +130,13 @@ func redactBuilderQuery[T any](q qb.QueryBuilderQuery[T]) qb.QueryBuilderQuery[T
 		Source:       q.Source,
 		Aggregations: q.Aggregations,
 		GroupBy:      q.GroupBy,
-		StepInterval: q.StepInterval,
-		Disabled:     q.Disabled,
 		Legend:       q.Legend,
 	}
 }
+
+// ════════════════════════════════════════════════════════════════════════
+// Panel query
+// ════════════════════════════════════════════════════════════════════════
 
 // GetPanelQuery builds a v5 QueryRangeRequest for the given panel. v2 panel queries
 // are already native v5 shapes, so the request is assembled directly: a composite is
