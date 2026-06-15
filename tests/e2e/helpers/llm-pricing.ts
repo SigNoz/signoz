@@ -1,6 +1,6 @@
 import type { APIRequestContext, Page } from '@playwright/test';
 
-export const LLM_PRICING_PATH = '/llm-observability/model-pricing';
+export const LLM_PRICING_PATH = '/llm-observability/settings/model-pricing';
 
 // ─── Auth ────────────────────────────────────────────────────────────────────
 
@@ -83,9 +83,12 @@ export async function createPricingRuleViaApi(
 	}
 
 	// PUT returns void — fetch the list to find the newly-created rule's id.
-	const getRes = await page.request.get('/api/v1/llm_pricing_rules?offset=0&limit=200', {
-		headers: { Authorization: `Bearer ${token}` },
-	});
+	const getRes = await page.request.get(
+		'/api/v1/llm_pricing_rules?offset=0&limit=200',
+		{
+			headers: { Authorization: `Bearer ${token}` },
+		},
+	);
 	if (!getRes.ok()) {
 		throw new Error(
 			`GET /api/v1/llm_pricing_rules ${getRes.status()}: ${await getRes.text()}`,
