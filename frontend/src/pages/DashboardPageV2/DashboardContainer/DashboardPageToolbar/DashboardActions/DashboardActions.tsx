@@ -28,43 +28,40 @@ import { USER_ROLES } from 'types/roles';
 import ConfirmDeleteDialog from '../../components/ConfirmDeleteDialog/ConfirmDeleteDialog';
 import DashboardSettings from '../../DashboardSettings';
 import SettingsDrawer from '../SettingsDrawer';
-import styles from '../DashboardDescription.module.scss';
+import styles from './DashboardActions.module.scss';
+import { useDashboardStore } from '../../store/useDashboardStore';
 
 interface DashboardActionsProps {
+	title: string;
 	dashboard: DashboardtypesGettableDashboardV2DTO;
 	handle: FullScreenHandle;
 	isDashboardLocked: boolean;
-	editDashboard: boolean;
 	isAuthor: boolean;
-	addPanelPermission: boolean;
 	onAddPanel: () => void;
 	onLockToggle: () => void;
 	onOpenRename: () => void;
 }
 
 function DashboardActions({
+	title,
 	dashboard,
 	handle,
 	isDashboardLocked,
-	editDashboard,
 	isAuthor,
-	addPanelPermission,
 	onAddPanel,
 	onLockToggle,
 	onOpenRename,
 }: DashboardActionsProps): JSX.Element {
+	const canEdit = useDashboardStore((s) => s.isEditable);
 	const { user } = useAppContext();
 	const { t } = useTranslation(['dashboard', 'common']);
-
-	const id = dashboard.id ?? '';
-	const title = dashboard.spec?.display?.name ?? '';
 
 	const [isSettingsDrawerOpen, setIsSettingsDrawerOpen] =
 		useState<boolean>(false);
 
 	const [state, setCopy] = useCopyToClipboard();
 	const [isDeleteOpen, setIsDeleteOpen] = useState<boolean>(false);
-	const deleteDashboardMutation = useDeleteDashboard(id);
+	const deleteDashboardMutation = useDeleteDashboard(dashboard.id);
 
 	useEffect(() => {
 		if (state.error) {
@@ -103,7 +100,7 @@ function DashboardActions({
 
 	const menuItems = useMemo<MenuItem[]>(() => {
 		const editGroup: MenuItem[] = [];
-		if (!isDashboardLocked && editDashboard) {
+		if (canEdit) {
 			editGroup.push({
 				key: 'rename',
 				label: 'Rename',
@@ -159,7 +156,6 @@ function DashboardActions({
 			);
 	}, [
 		isDashboardLocked,
-		editDashboard,
 		isAuthor,
 		user.role,
 		dashboard.createdBy,
@@ -169,58 +165,60 @@ function DashboardActions({
 		exportJSON,
 		setCopy,
 		dashboardDataJSON,
+		canEdit,
 	]);
 
 	return (
-		<div className={styles.rightSection}>
+		<div className={styles.dashboardActionsContainer}>
 			<DateTimeSelectionV2 showAutoRefresh hideShareModal />
-			<DropdownMenuSimple menu={{ items: menuItems }}>
-				<Button
-					variant="ghost"
-					color="secondary"
-					size="icon"
-					prefix={<Ellipsis size={14} />}
-					className={styles.icons}
-					testId="options"
-				/>
-			</DropdownMenuSimple>
-			{!isDashboardLocked && editDashboard && (
-				<>
+			<div className={styles.dashboardActionsSecondary}>
+				<DropdownMenuSimple menu={{ items: menuItems }}>
 					<Button
 						variant="solid"
 						color="secondary"
-						prefix={<Configure size="md" />}
-						testId="show-drawer"
-						onClick={(): void => setIsSettingsDrawerOpen(true)}
+						size="icon"
+						prefix={<Ellipsis size="md" />}
+						testId="options"
+					/>
+				</DropdownMenuSimple>
+				{canEdit && (
+					<>
+						<Button
+							variant="solid"
+							color="secondary"
+							prefix={<Configure size="md" />}
+							testId="show-drawer"
+							onClick={(): void => setIsSettingsDrawerOpen(true)}
+							size="md"
+						>
+							Configure
+						</Button>
+						<SettingsDrawer
+							drawerTitle="Dashboard Configuration"
+							isOpen={isSettingsDrawerOpen}
+							onClose={(): void => setIsSettingsDrawerOpen(false)}
+						>
+							<DashboardSettings dashboard={dashboard} />
+						</SettingsDrawer>
+					</>
+				)}
+				{!isDashboardLocked && (
+					<Button
+						variant="solid"
+						color="primary"
+						onClick={onAddPanel}
+						prefix={<Plus size="md" />}
+						testId="add-panel-header"
 						size="md"
 					>
-						Configure
+						New Panel
 					</Button>
-					<SettingsDrawer
-						drawerTitle="Dashboard Configuration"
-						isOpen={isSettingsDrawerOpen}
-						onClose={(): void => setIsSettingsDrawerOpen(false)}
-					>
-						<DashboardSettings dashboard={dashboard} />
-					</SettingsDrawer>
-				</>
-			)}
-			{!isDashboardLocked && addPanelPermission && (
-				<Button
-					variant="solid"
-					color="primary"
-					onClick={onAddPanel}
-					prefix={<Plus size="md" />}
-					testId="add-panel-header"
-					size="md"
-				>
-					New Panel
-				</Button>
-			)}
+				)}
+			</div>
 			<ConfirmDeleteDialog
 				open={isDeleteOpen}
-				title={`Delete dashboard "${title}"?`}
-				description="This action cannot be undone."
+				title={`Delete dashboard"?`}
+				description={`Are you sure you want to delete this dashboard - "${title}"? This action cannot be undone.`}
 				isLoading={deleteDashboardMutation.isLoading}
 				onConfirm={handleConfirmDelete}
 				onClose={(): void => setIsDeleteOpen(false)}
