@@ -63,7 +63,7 @@ export const deletePublicDashboard = (
 	{ id }: DeletePublicDashboardPathParameters,
 	signal?: AbortSignal,
 ) => {
-	return GeneratedAPIInstance<string>({
+	return GeneratedAPIInstance<void>({
 		url: `/api/v1/dashboards/${id}/public`,
 		method: 'DELETE',
 		signal,
@@ -346,7 +346,7 @@ export const updatePublicDashboard = (
 	dashboardtypesUpdatablePublicDashboardDTO?: BodyType<DashboardtypesUpdatablePublicDashboardDTO>,
 	signal?: AbortSignal,
 ) => {
-	return GeneratedAPIInstance<string>({
+	return GeneratedAPIInstance<void>({
 		url: `/api/v1/dashboards/${id}/public`,
 		method: 'PUT',
 		headers: { 'Content-Type': 'application/json' },
@@ -836,7 +836,7 @@ export const deleteDashboardV2 = (
 	{ id }: DeleteDashboardV2PathParameters,
 	signal?: AbortSignal,
 ) => {
-	return GeneratedAPIInstance<string>({
+	return GeneratedAPIInstance<void>({
 		url: `/api/v2/dashboards/${id}`,
 		method: 'DELETE',
 		signal,
@@ -1214,7 +1214,7 @@ export const unlockDashboardV2 = (
 	{ id }: UnlockDashboardV2PathParameters,
 	signal?: AbortSignal,
 ) => {
-	return GeneratedAPIInstance<string>({
+	return GeneratedAPIInstance<void>({
 		url: `/api/v2/dashboards/${id}/lock`,
 		method: 'DELETE',
 		signal,
@@ -1293,7 +1293,7 @@ export const lockDashboardV2 = (
 	{ id }: LockDashboardV2PathParameters,
 	signal?: AbortSignal,
 ) => {
-	return GeneratedAPIInstance<string>({
+	return GeneratedAPIInstance<void>({
 		url: `/api/v2/dashboards/${id}/lock`,
 		method: 'PUT',
 		signal,
@@ -1471,7 +1471,7 @@ export const unpinDashboardV2 = (
 	{ id }: UnpinDashboardV2PathParameters,
 	signal?: AbortSignal,
 ) => {
-	return GeneratedAPIInstance<string>({
+	return GeneratedAPIInstance<void>({
 		url: `/api/v2/users/me/dashboards/${id}/pins`,
 		method: 'DELETE',
 		signal,
@@ -1550,7 +1550,7 @@ export const pinDashboardV2 = (
 	{ id }: PinDashboardV2PathParameters,
 	signal?: AbortSignal,
 ) => {
-	return GeneratedAPIInstance<string>({
+	return GeneratedAPIInstance<void>({
 		url: `/api/v2/users/me/dashboards/${id}/pins`,
 		method: 'PUT',
 		signal,

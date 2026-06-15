@@ -1,0 +1,44 @@
+{
+  "records": [
+    {
+      "jobName": "acc-job-1",
+      "jobCPU": 1.0,
+      "jobCPURequest": 0.5,
+      "jobCPULimit": 0.4,
+      "jobMemory": 300000000.0,
+      "jobMemoryRequest": 0.5,
+      "jobMemoryLimit": 0.4,
+      "desiredSuccessfulPods": 2,
+      "activePods": 1,
+      "failedPods": 0,
+      "successfulPods": 1,
+      "podCountsByPhase": {
+        "pending": 0,
+        "running": 2,
+        "succeeded": 0,
+        "failed": 0,
+        "unknown": 0
+      }
+    },
+    {
+      "jobName": "acc-job-2",
+      "jobCPU": 1.2,
+      "jobCPURequest": 0.4,
+      "jobCPULimit": 0.3,
+      "jobMemory": 600000000.0,
+      "jobMemoryRequest": 0.4,
+      "jobMemoryLimit": 0.3,
+      "desiredSuccessfulPods": 5,
+      "activePods": 3,
+      "failedPods": 1,
+      "successfulPods": 2,
+      "podCountsByPhase": {
+        "pending": 0,
+        "running": 3,
+        "succeeded": 0,
+        "failed": 0,
+        "unknown": 0
+      }
+    }
+  ]
+}

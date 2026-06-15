@@ -222,7 +222,7 @@ export const deleteServiceAccount = (
 	{ id }: DeleteServiceAccountPathParameters,
 	signal?: AbortSignal,
 ) => {
-	return GeneratedAPIInstance<string>({
+	return GeneratedAPIInstance<void>({
 		url: `/api/v1/service_accounts/${id}`,
 		method: 'DELETE',
 		signal,
@@ -405,7 +405,7 @@ export const updateServiceAccount = (
 	serviceaccounttypesPostableServiceAccountDTO?: BodyType<ServiceaccounttypesPostableServiceAccountDTO>,
 	signal?: AbortSignal,
 ) => {
-	return GeneratedAPIInstance<string>({
+	return GeneratedAPIInstance<void>({
 		url: `/api/v1/service_accounts/${id}`,
 		method: 'PUT',
 		headers: { 'Content-Type': 'application/json' },
@@ -707,7 +707,7 @@ export const revokeServiceAccountKey = (
 	{ id, fid }: RevokeServiceAccountKeyPathParameters,
 	signal?: AbortSignal,
 ) => {
-	return GeneratedAPIInstance<string>({
+	return GeneratedAPIInstance<void>({
 		url: `/api/v1/service_accounts/${id}/keys/${fid}`,
 		method: 'DELETE',
 		signal,
@@ -788,7 +788,7 @@ export const updateServiceAccountKey = (
 	serviceaccounttypesUpdatableFactorAPIKeyDTO?: BodyType<ServiceaccounttypesUpdatableFactorAPIKeyDTO>,
 	signal?: AbortSignal,
 ) => {
-	return GeneratedAPIInstance<string>({
+	return GeneratedAPIInstance<void>({
 		url: `/api/v1/service_accounts/${id}/keys/${fid}`,
 		method: 'PUT',
 		headers: { 'Content-Type': 'application/json' },
@@ -1090,7 +1090,7 @@ export const deleteServiceAccountRole = (
 	{ id, rid }: DeleteServiceAccountRolePathParameters,
 	signal?: AbortSignal,
 ) => {
-	return GeneratedAPIInstance<string>({
+	return GeneratedAPIInstance<void>({
 		url: `/api/v1/service_accounts/${id}/roles/${rid}`,
 		method: 'DELETE',
 		signal,
@@ -1254,7 +1254,7 @@ export const updateMyServiceAccount = (
 	serviceaccounttypesPostableServiceAccountDTO?: BodyType<ServiceaccounttypesPostableServiceAccountDTO>,
 	signal?: AbortSignal,
 ) => {
-	return GeneratedAPIInstance<string>({
+	return GeneratedAPIInstance<void>({
 		url: `/api/v1/service_accounts/me`,
 		method: 'PUT',
 		headers: { 'Content-Type': 'application/json' },
