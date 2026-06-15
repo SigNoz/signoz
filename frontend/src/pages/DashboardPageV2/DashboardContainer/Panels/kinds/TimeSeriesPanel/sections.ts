@@ -4,7 +4,6 @@ export const sections: SectionConfig[] = [
 	{ kind: 'formatting', controls: { unit: true, decimals: true } },
 	{ kind: 'axes', controls: { minMax: true, logScale: true } },
 	{ kind: 'legend', controls: { position: true, colors: true } },
-	{ kind: 'thresholds' },
 	{
 		kind: 'chartAppearance',
 		controls: {
@@ -15,5 +14,6 @@ export const sections: SectionConfig[] = [
 			spanGaps: true,
 		},
 	},
+	{ kind: 'thresholds' },
 	{ kind: 'contextLinks' },
 ];

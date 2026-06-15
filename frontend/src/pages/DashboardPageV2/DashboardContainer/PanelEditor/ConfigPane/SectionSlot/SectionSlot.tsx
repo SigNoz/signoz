@@ -28,6 +28,12 @@ function SectionSlot({
 	onChangeSpec,
 	legendSeries,
 }: SectionSlotProps): JSX.Element | null {
+	// A kind can hide a section based on current spec state (e.g. Histogram legend once
+	// queries are merged) — skip it before resolving the editor.
+	if (config.isHidden?.(spec)) {
+		return null;
+	}
+
 	const editor = resolveSectionEditor(config.kind);
 	if (!editor) {
 		return null;
@@ -37,6 +43,11 @@ function SectionSlot({
 	const { Component, read, write } = editor;
 	// Atomic sections carry no `controls`; controlled ones do.
 	const controls = 'controls' in config ? config.controls : undefined;
+	// The panel's formatting unit, forwarded to editors that scope to it (thresholds
+	// restrict their unit picker to this unit's category, as in V1).
+	const yAxisUnit = (
+		spec.plugin?.spec as { formatting?: { unit?: string } } | undefined
+	)?.formatting?.unit;
 
 	return (
 		<SettingsSection title={title} icon={<Icon size={15} />}>
@@ -45,6 +56,7 @@ function SectionSlot({
 				controls={controls}
 				onChange={(next): void => onChangeSpec(write(spec, next))}
 				legendSeries={legendSeries}
+				yAxisUnit={yAxisUnit}
 			/>
 		</SettingsSection>
 	);

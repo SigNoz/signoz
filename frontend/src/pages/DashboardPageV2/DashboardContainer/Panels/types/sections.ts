@@ -1,9 +1,11 @@
 import type {
 	DashboardLinkDTO,
 	DashboardtypesAxesDTO,
+	DashboardtypesComparisonThresholdDTO,
 	DashboardtypesHistogramBucketsDTO,
 	DashboardtypesLegendDTO,
 	DashboardtypesPanelFormattingDTO,
+	DashboardtypesPanelSpecDTO,
 	DashboardtypesThresholdWithLabelDTO,
 	DashboardtypesTimeSeriesChartAppearanceDTO,
 } from 'api/generated/services/sigNoz.schemas';
@@ -48,6 +50,10 @@ export interface SectionSpecMap {
 	chartAppearance: DashboardtypesTimeSeriesChartAppearanceDTO; // spec.plugin.spec.chartAppearance
 	buckets: DashboardtypesHistogramBucketsDTO; // spec.plugin.spec.histogramBuckets
 	thresholds: DashboardtypesThresholdWithLabelDTO[]; // spec.plugin.spec.thresholds
+	// Number panels store thresholds in a comparison-operator shape (value crosses an
+	// operator → recolor), distinct from the value+label lines above. Same spec key
+	// (plugin.spec.thresholds), different element type — its own section + editor.
+	comparisonThresholds: DashboardtypesComparisonThresholdDTO[]; // spec.plugin.spec.thresholds (Number)
 	contextLinks: DashboardLinkDTO[]; // spec.links (PANEL-level)
 }
 
@@ -77,7 +83,10 @@ export type ControlledSectionKind = keyof SectionControls;
  * (2) ATOMIC sections — no sub-controls; a kind either shows them or not. Thresholds
  * and Context Links are each just a list editor, so there is nothing to subset.
  */
-export type AtomicSectionKind = 'thresholds' | 'contextLinks';
+export type AtomicSectionKind =
+	| 'thresholds'
+	| 'comparisonThresholds'
+	| 'contextLinks';
 
 export type SectionKind = ControlledSectionKind | AtomicSectionKind;
 
@@ -88,11 +97,24 @@ export type SectionKind = ControlledSectionKind | AtomicSectionKind;
  * Whether a kind ALLOWS a section at all is governed entirely by whether it appears in
  * the kind's `sections` array — e.g. Pie/Histogram omit `thresholds`, so it never shows.
  */
+/**
+ * Optional predicate to hide a section based on the current panel spec — for
+ * cross-section rules (e.g. the Histogram legend is irrelevant once its queries are
+ * merged into one distribution). Returning true removes the section from the pane.
+ */
+export type SectionVisibilityPredicate = (
+	spec: DashboardtypesPanelSpecDTO,
+) => boolean;
+
 export type SectionConfig =
 	| {
-			[K in ControlledSectionKind]: { kind: K; controls: SectionControls[K] };
+			[K in ControlledSectionKind]: {
+				kind: K;
+				controls: SectionControls[K];
+				isHidden?: SectionVisibilityPredicate;
+			};
 	  }[ControlledSectionKind]
-	| { kind: AtomicSectionKind };
+	| { kind: AtomicSectionKind; isHidden?: SectionVisibilityPredicate };
 
 // Runtime UI metadata per section (title + sidebar icon). Pure data — no component
 // coupling. The editor component + spec lens live in the ConfigPane section registry.
@@ -101,8 +123,9 @@ export const SECTION_METADATA = {
 	axes: { title: 'Axes', icon: Ruler },
 	legend: { title: 'Legend', icon: Layers },
 	chartAppearance: { title: 'Chart appearance', icon: Palette },
-	buckets: { title: 'Buckets', icon: BarChart },
+	buckets: { title: 'Histogram / Buckets', icon: BarChart },
 	thresholds: { title: 'Thresholds', icon: SlidersHorizontal },
+	comparisonThresholds: { title: 'Thresholds', icon: SlidersHorizontal },
 	contextLinks: { title: 'Context Links', icon: Link },
 } as const satisfies Record<SectionKind, SectionMetadata>;
 
