@@ -145,11 +145,16 @@ func (h *handler) GetMetricMetadata(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	metricName, err := extractMetricName(req)
-	if err != nil {
+	var in metricsexplorertypes.MetricNameQuery
+	if err := binding.Query.BindQuery(req.URL.Query(), &in); err != nil {
 		render.Error(rw, err)
 		return
 	}
+	if err := in.Validate(); err != nil {
+		render.Error(rw, err)
+		return
+	}
+	metricName := in.MetricName
 
 	orgID := valuer.MustNewUUID(claims.OrgID)
 

@@ -260,6 +260,22 @@ type MetricHighlightsResponse struct {
 	ActiveTimeSeries uint64 `json:"activeTimeSeries" required:"true"`
 }
 
+// MetricNameQuery represents the query parameters for endpoints that take a metric name.
+type MetricNameQuery struct {
+	MetricName string `query:"metricName" required:"true"`
+}
+
+// Validate ensures MetricNameQuery contains acceptable values.
+func (q *MetricNameQuery) Validate() error {
+	if q == nil {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
+	}
+	if q.MetricName == "" {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "metricName is required")
+	}
+	return nil
+}
+
 // MetricAttributesRequest represents the query parameters for the metric attributes endpoint.
 type MetricAttributesRequest struct {
 	MetricName string `json:"-"`

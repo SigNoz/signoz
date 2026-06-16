@@ -88,7 +88,7 @@ func (provider *provider) addMetricsExplorerRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/metrics/{metric_name}/metadata", handler.New(
+	if err := router.Handle("/api/v2/metrics/metadata", handler.New(
 		provider.authzMiddleware.ViewAccess(provider.metricsExplorerHandler.GetMetricMetadata),
 		handler.OpenAPIDef{
 			ID:                  "GetMetricMetadata",
@@ -96,6 +96,7 @@ func (provider *provider) addMetricsExplorerRoutes(router *mux.Router) error {
 			Summary:             "Get metric metadata",
 			Description:         "This endpoint returns metadata information like metric description, unit, type, temporality, monotonicity for a specified metric",
 			Request:             nil,
+			RequestQuery:        new(metricsexplorertypes.MetricNameQuery),
 			RequestContentType:  "",
 			Response:            new(metricsexplorertypes.MetricMetadata),
 			ResponseContentType: "application/json",
