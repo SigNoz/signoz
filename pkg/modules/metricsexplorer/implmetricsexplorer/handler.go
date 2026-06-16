@@ -264,19 +264,11 @@ func (h *handler) GetMetricAttributes(rw http.ResponseWriter, req *http.Request)
 		return
 	}
 
-	metricName, err := extractMetricName(req)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
 	var in metricsexplorertypes.MetricAttributesRequest
 	if err := binding.Query.BindQuery(req.URL.Query(), &in); err != nil {
 		render.Error(rw, err)
 		return
 	}
-
-	in.MetricName = metricName
 
 	if err := in.Validate(); err != nil {
 		render.Error(rw, err)
@@ -285,7 +277,7 @@ func (h *handler) GetMetricAttributes(rw http.ResponseWriter, req *http.Request)
 
 	orgID := valuer.MustNewUUID(claims.OrgID)
 
-	if err := h.checkMetricExists(req.Context(), orgID, metricName); err != nil {
+	if err := h.checkMetricExists(req.Context(), orgID, in.MetricName); err != nil {
 		render.Error(rw, err)
 		return
 	}

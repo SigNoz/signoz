@@ -278,7 +278,7 @@ func (q *MetricNameQuery) Validate() error {
 
 // MetricAttributesRequest represents the query parameters for the metric attributes endpoint.
 type MetricAttributesRequest struct {
-	MetricName string `json:"-"`
+	MetricName string `query:"metricName" required:"true"`
 	Start      *int64 `query:"start"`
 	End        *int64 `query:"end"`
 }
@@ -287,6 +287,10 @@ type MetricAttributesRequest struct {
 func (req *MetricAttributesRequest) Validate() error {
 	if req == nil {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
+	}
+
+	if req.MetricName == "" {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "metricName is required")
 	}
 
 	if req.Start != nil && req.End != nil {

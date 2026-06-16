@@ -15230,81 +15230,6 @@ paths:
       summary: Get metric alerts
       tags:
       - metrics
-  /api/v2/metrics/{metric_name}/attributes:
-    get:
-      deprecated: false
-      description: This endpoint returns attribute keys and their unique values for
-        a specified metric
-      operationId: GetMetricAttributes
-      parameters:
-      - in: query
-        name: start
-        schema:
-          nullable: true
-          type: integer
-      - in: query
-        name: end
-        schema:
-          nullable: true
-          type: integer
-      - in: path
-        name: metric_name
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    $ref: '#/components/schemas/MetricsexplorertypesMetricAttributesResponse'
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: OK
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Not Found
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - VIEWER
-      - tokenizer:
-        - VIEWER
-      summary: Get metric attributes
-      tags:
-      - metrics
   /api/v2/metrics/{metric_name}/dashboards:
     get:
       deprecated: false
@@ -15432,6 +15357,81 @@ paths:
       - tokenizer:
         - VIEWER
       summary: Get metric highlights
+      tags:
+      - metrics
+  /api/v2/metrics/attributes:
+    get:
+      deprecated: false
+      description: This endpoint returns attribute keys and their unique values for
+        a specified metric
+      operationId: GetMetricAttributes
+      parameters:
+      - in: query
+        name: metricName
+        required: true
+        schema:
+          type: string
+      - in: query
+        name: start
+        schema:
+          nullable: true
+          type: integer
+      - in: query
+        name: end
+        schema:
+          nullable: true
+          type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/MetricsexplorertypesMetricAttributesResponse'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get metric attributes
       tags:
       - metrics
   /api/v2/metrics/inspect:

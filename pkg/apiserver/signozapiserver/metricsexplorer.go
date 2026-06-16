@@ -68,7 +68,7 @@ func (provider *provider) addMetricsExplorerRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/metrics/{metric_name}/attributes", handler.New(
+	if err := router.Handle("/api/v2/metrics/attributes", handler.New(
 		provider.authzMiddleware.ViewAccess(provider.metricsExplorerHandler.GetMetricAttributes),
 		handler.OpenAPIDef{
 			ID:                  "GetMetricAttributes",
