@@ -221,6 +221,20 @@ describe('buildExplorerNavigationUrl', () => {
 		expect(url).toContain(`${QueryParams.compositeQuery}=`);
 		expect(url).toContain(`${QueryParams.viewKey}=`);
 	});
+
+	// Regression guard for the apply_filter view bug: the panel type must land
+	// on the URL JSON-encoded the way `useGetPanelTypesQueryParam` reads it
+	// (`JSON.parse` of the param), i.e. as the quoted string `"table"` ->
+	// `panelTypes=%22table%22`. Without this the explorer falls back to LIST.
+	it('JSON-encodes panelTypes so the explorer opens the right view', () => {
+		const url = buildExplorerNavigationUrl(
+			ROUTES.LOGS_EXPLORER,
+			{ queryType: 'builder' } as never,
+			{ [QueryParams.panelTypes]: PANEL_TYPES.TABLE },
+		);
+
+		expect(url).toContain(`${QueryParams.panelTypes}=%22table%22`);
+	});
 });
 
 describe('openSavedView', () => {
