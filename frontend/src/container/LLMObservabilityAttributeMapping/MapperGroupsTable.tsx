@@ -18,13 +18,12 @@ import {
 	Trash2,
 } from '@signozhq/icons';
 
-import IndexBadge from './IndexBadge';
 import MappersTable from './MappersTable';
 import { DraftGroup } from './types';
 import { AttributeMappingStore } from './useAttributeMappingStore';
 import { conditionFiltersFromGroup } from './utils';
 
-const COLUMN_COUNT = 6;
+const COLUMN_COUNT = 5;
 
 interface MapperGroupsTableProps {
 	store: AttributeMappingStore;
@@ -63,7 +62,6 @@ function FiltersCell({ group }: { group: DraftGroup }): JSX.Element {
 
 interface GroupRowProps {
 	group: DraftGroup;
-	index: number;
 	store: AttributeMappingStore;
 	isExpanded: boolean;
 	onToggleExpand: (localId: string) => void;
@@ -72,7 +70,6 @@ interface GroupRowProps {
 
 function GroupRow({
 	group,
-	index,
 	store,
 	isExpanded,
 	onToggleExpand,
@@ -92,9 +89,6 @@ function GroupRow({
 					>
 						{isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
 					</Button>
-				</TableCell>
-				<TableCell>
-					<IndexBadge index={index} />
 				</TableCell>
 				<TableCell>
 					<span
@@ -168,7 +162,6 @@ function MapperGroupsTable({
 				<TableHeader>
 					<TableRow>
 						<TableHead aria-label="Expand" />
-						<TableHead>#</TableHead>
 						<TableHead>Group name</TableHead>
 						<TableHead>Filters</TableHead>
 						<TableHead>Mappings</TableHead>
@@ -190,11 +183,10 @@ function MapperGroupsTable({
 							</TableCell>
 						</TableRow>
 					)}
-					{store.groups.map((group, index) => (
+					{store.groups.map((group) => (
 						<GroupRow
 							key={group.localId}
 							group={group}
-							index={index}
 							store={store}
 							isExpanded={expandedId === group.localId}
 							onToggleExpand={toggleExpand}
