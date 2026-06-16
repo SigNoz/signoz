@@ -29,9 +29,12 @@ func AsJSON(cause error) *JSON {
 	// See if this is an instance of the base error or not
 	t, c, m, _, u, a := Unwrapb(cause)
 
-	rea := make([]responseerroradditional, len(a))
-	for k, v := range a {
-		rea[k] = responseerroradditional{Message: v.message, Suggestions: v.suggestions}
+	var rea []responseerroradditional
+	if len(a) > 0 {
+		rea = make([]responseerroradditional, len(a))
+		for k, v := range a {
+			rea[k] = responseerroradditional{Message: v.message, Suggestions: v.suggestions}
+		}
 	}
 
 	var retry *responseretryjson
@@ -54,9 +57,12 @@ func AsURLValues(cause error) url.Values {
 	// See if this is an instance of the base error or not
 	_, c, m, _, u, a := Unwrapb(cause)
 
-	rea := make([]responseerroradditional, len(a))
-	for k, v := range a {
-		rea[k] = responseerroradditional{Message: v.message, Suggestions: v.suggestions}
+	var rea []responseerroradditional
+	if len(a) > 0 {
+		rea = make([]responseerroradditional, len(a))
+		for k, v := range a {
+			rea[k] = responseerroradditional{Message: v.message, Suggestions: v.suggestions}
+		}
 	}
 
 	errors, err := json.Marshal(rea)
