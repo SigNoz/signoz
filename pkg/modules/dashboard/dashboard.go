@@ -60,6 +60,24 @@ type Module interface {
 	CreateV2(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, source dashboardtypes.Source, postable dashboardtypes.PostableDashboardV2) (*dashboardtypes.DashboardV2, error)
 
 	GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.DashboardV2, error)
+
+	ListV2(ctx context.Context, orgID valuer.UUID, params *dashboardtypes.ListDashboardsV2Params) (*dashboardtypes.ListableDashboardV2, error)
+
+	ListForUserV2(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, params *dashboardtypes.ListDashboardsV2Params) (*dashboardtypes.ListableDashboardForUserV2, error)
+
+	UpdateV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, updatable dashboardtypes.UpdatableDashboardV2) (*dashboardtypes.DashboardV2, error)
+
+	LockUnlockV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, isAdmin bool, lock bool) error
+
+	PatchV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, patch dashboardtypes.PatchableDashboardV2) (*dashboardtypes.DashboardV2, error)
+
+	PinV2(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, id valuer.UUID) error
+
+	UnpinV2(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, id valuer.UUID) error
+
+	DeleteV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error
+
+	DeletePreferencesForUser(ctx context.Context, orgID valuer.UUID, userID valuer.UUID) error
 }
 
 type Handler interface {
@@ -89,4 +107,22 @@ type Handler interface {
 	CreateV2(http.ResponseWriter, *http.Request)
 
 	GetV2(http.ResponseWriter, *http.Request)
+
+	ListV2(http.ResponseWriter, *http.Request)
+
+	ListForUserV2(http.ResponseWriter, *http.Request)
+
+	UpdateV2(http.ResponseWriter, *http.Request)
+
+	LockV2(http.ResponseWriter, *http.Request)
+
+	UnlockV2(http.ResponseWriter, *http.Request)
+
+	PatchV2(http.ResponseWriter, *http.Request)
+
+	PinV2(http.ResponseWriter, *http.Request)
+
+	UnpinV2(http.ResponseWriter, *http.Request)
+
+	DeleteV2(http.ResponseWriter, *http.Request)
 }

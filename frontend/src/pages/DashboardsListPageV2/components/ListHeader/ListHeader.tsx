@@ -7,18 +7,18 @@ import {
 	HdmiPort,
 } from '@signozhq/icons';
 
-import type {
-	SortColumn,
-	SortOrder,
-} from '../../hooks/useDashboardsListQueryParams';
+import {
+	DashboardtypesListOrderDTO,
+	DashboardtypesListSortDTO,
+} from 'api/generated/services/sigNoz.schemas';
 
 import styles from './ListHeader.module.scss';
 
 interface Props {
-	sortColumn: SortColumn;
-	onSortChange: (column: SortColumn) => void;
-	sortOrder: SortOrder;
-	onOrderChange: (order: SortOrder) => void;
+	sortColumn: DashboardtypesListSortDTO;
+	onSortChange: (column: DashboardtypesListSortDTO) => void;
+	sortOrder: DashboardtypesListOrderDTO;
+	onOrderChange: (order: DashboardtypesListOrderDTO) => void;
 	onConfigureMetadata: () => void;
 }
 
@@ -44,49 +44,57 @@ function ListHeader({
 								<Button
 									type="text"
 									className={styles.sortButton}
-									onClick={(): void => onSortChange('name')}
+									onClick={(): void => onSortChange(DashboardtypesListSortDTO.name)}
 									data-testid="sort-by-name"
 								>
 									Name
-									{sortColumn === 'name' && <Check size={14} />}
+									{sortColumn === DashboardtypesListSortDTO.name && <Check size={14} />}
 								</Button>
 								<Button
 									type="text"
 									className={styles.sortButton}
-									onClick={(): void => onSortChange('created_at')}
+									onClick={(): void =>
+										onSortChange(DashboardtypesListSortDTO.created_at)
+									}
 									data-testid="sort-by-last-created"
 								>
 									Last created
-									{sortColumn === 'created_at' && <Check size={14} />}
+									{sortColumn === DashboardtypesListSortDTO.created_at && (
+										<Check size={14} />
+									)}
 								</Button>
 								<Button
 									type="text"
 									className={styles.sortButton}
-									onClick={(): void => onSortChange('updated_at')}
+									onClick={(): void =>
+										onSortChange(DashboardtypesListSortDTO.updated_at)
+									}
 									data-testid="sort-by-last-updated"
 								>
 									Last updated
-									{sortColumn === 'updated_at' && <Check size={14} />}
+									{sortColumn === DashboardtypesListSortDTO.updated_at && (
+										<Check size={14} />
+									)}
 								</Button>
 								<div className={styles.sortDivider} />
 								<Typography.Text className={styles.sortHeading}>Order</Typography.Text>
 								<Button
 									type="text"
 									className={styles.sortButton}
-									onClick={(): void => onOrderChange('asc')}
+									onClick={(): void => onOrderChange(DashboardtypesListOrderDTO.asc)}
 									data-testid="sort-order-asc"
 								>
 									Ascending
-									{sortOrder === 'asc' && <Check size={14} />}
+									{sortOrder === DashboardtypesListOrderDTO.asc && <Check size={14} />}
 								</Button>
 								<Button
 									type="text"
 									className={styles.sortButton}
-									onClick={(): void => onOrderChange('desc')}
+									onClick={(): void => onOrderChange(DashboardtypesListOrderDTO.desc)}
 									data-testid="sort-order-desc"
 								>
 									Descending
-									{sortOrder === 'desc' && <Check size={14} />}
+									{sortOrder === DashboardtypesListOrderDTO.desc && <Check size={14} />}
 								</Button>
 							</div>
 						}

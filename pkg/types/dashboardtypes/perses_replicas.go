@@ -1,16 +1,22 @@
 package dashboardtypes
 
 import (
+	"encoding/json"
 	"maps"
 	"slices"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	v1 "github.com/perses/perses/pkg/model/api/v1"
-	"github.com/perses/perses/pkg/model/api/v1/common"
-	"github.com/perses/perses/pkg/model/api/v1/dashboard"
-	"github.com/perses/perses/pkg/model/api/v1/variable"
+	qb "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/perses/spec/go/common"
+	"github.com/perses/spec/go/dashboard"
+	"github.com/perses/spec/go/dashboard/variable"
 	"github.com/swaggest/jsonschema-go"
 )
+
+type Display struct {
+	Name        string `json:"name" required:"true"`
+	Description string `json:"description,omitempty"`
+}
 
 // ══════════════════════════════════════════════
 // Datasource
@@ -27,15 +33,36 @@ type DatasourceSpec struct {
 // ══════════════════════════════════════════════
 
 type Panel struct {
-	Kind string    `json:"kind"`
-	Spec PanelSpec `json:"spec"`
+	Kind PanelKind `json:"kind" required:"true"`
+	Spec PanelSpec `json:"spec" required:"true"`
+}
+
+// PanelKind is the panel envelope discriminator. Perses leaves it a free
+// string; SigNoz locks it to the single valid value.
+type PanelKind string
+
+const PanelKindPanel PanelKind = "Panel"
+
+// Enum surfaces the allowed value in the generated OpenAPI schema.
+func (PanelKind) Enum() []any { return []any{PanelKindPanel} }
+
+func (k *PanelKind) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid panel kind")
+	}
+	if PanelKind(s) != PanelKindPanel {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "unknown panel kind %q; allowed values: %s", s, allowedValuesForKind([]PanelKind{PanelKindPanel}))
+	}
+	*k = PanelKind(s)
+	return nil
 }
 
 type PanelSpec struct {
-	Display *v1.PanelDisplay `json:"display,omitempty"`
-	Plugin  PanelPlugin      `json:"plugin"`
-	Queries []Query          `json:"queries,omitempty"`
-	Links   []v1.Link        `json:"links,omitempty"`
+	Display Display          `json:"display" required:"true"`
+	Plugin  PanelPlugin      `json:"plugin" required:"true"`
+	Queries []Query          `json:"queries" required:"true"`
+	Links   []dashboard.Link `json:"links,omitempty"`
 }
 
 // ══════════════════════════════════════════════
@@ -43,13 +70,13 @@ type PanelSpec struct {
 // ══════════════════════════════════════════════
 
 type Query struct {
-	Kind string    `json:"kind"`
-	Spec QuerySpec `json:"spec"`
+	Kind qb.RequestType `json:"kind" required:"true"`
+	Spec QuerySpec      `json:"spec" required:"true"`
 }
 
 type QuerySpec struct {
 	Name   string      `json:"name,omitempty"`
-	Plugin QueryPlugin `json:"plugin"`
+	Plugin QueryPlugin `json:"plugin" required:"true"`
 }
 
 // ══════════════════════════════════════════════
@@ -60,12 +87,15 @@ type QuerySpec struct {
 // *dashboard.TextVariableSpec by UnmarshalJSON based on Kind. The schema is a
 // discriminated oneOf (see JSONSchemaOneOf).
 type Variable struct {
-	Kind variable.Kind `json:"kind"`
-	Spec any           `json:"spec"`
+	Kind variable.Kind `json:"kind" required:"true"`
+	Spec any           `json:"spec" required:"true"`
 }
 
 func (Variable) PrepareJSONSchema(s *jsonschema.Schema) error {
-	return clearOneOfParentShape(s)
+	return markDiscriminator(s, "kind", map[string]string{
+		string(variable.KindList): schemaRef("DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpec"),
+		string(variable.KindText): schemaRef("DashboardtypesVariableEnvelopeGithubComPersesSpecGoDashboardTextVariableSpec"),
+	})
 }
 
 func (v *Variable) UnmarshalJSON(data []byte) error {
@@ -113,7 +143,7 @@ func (v VariableEnvelope[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
 // ListVariableSpec mirrors dashboard.ListVariableSpec (variable.ListSpec
 // fields + Name) but with a typed VariablePlugin replacing common.Plugin.
 type ListVariableSpec struct {
-	Display         *variable.Display      `json:"display,omitempty"`
+	Display         Display                `json:"display" required:"true"`
 	DefaultValue    *variable.DefaultValue `json:"defaultValue,omitempty"`
 	AllowAllValue   bool                   `json:"allowAllValue"`
 	AllowMultiple   bool                   `json:"allowMultiple"`
@@ -133,8 +163,8 @@ type ListVariableSpec struct {
 // based on Kind. No plugin is involved, so we reuse the Perses spec types as
 // leaf imports.
 type Layout struct {
-	Kind dashboard.LayoutKind `json:"kind"`
-	Spec any                  `json:"spec"`
+	Kind dashboard.LayoutKind `json:"kind" required:"true"`
+	Spec any                  `json:"spec" required:"true"`
 }
 
 // layoutSpecs is the layout sum type factory. Perses only defines
@@ -145,7 +175,9 @@ var layoutSpecs = map[dashboard.LayoutKind]func() any{
 }
 
 func (Layout) PrepareJSONSchema(s *jsonschema.Schema) error {
-	return clearOneOfParentShape(s)
+	return markDiscriminator(s, "kind", map[string]string{
+		string(dashboard.KindGridLayout): schemaRef("DashboardtypesLayoutEnvelopeGithubComPersesSpecGoDashboardGridLayoutSpec"),
+	})
 }
 
 func (l *Layout) UnmarshalJSON(data []byte) error {
