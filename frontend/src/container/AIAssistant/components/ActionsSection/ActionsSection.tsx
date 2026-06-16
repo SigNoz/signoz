@@ -47,7 +47,14 @@ import { AIAssistantEvents, SuggestedPromptCategory } from '../../events';
 import { useAIAssistantAnalyticsContext } from '../../hooks/useAIAssistantAnalyticsContext';
 import { useAIAssistantStore } from '../../store/useAIAssistantStore';
 
-import { openSavedViewByKey } from './utils/openSavedView';
+import {
+	getPanelTypeForRequestType,
+	requestTypeFromActionQuery,
+} from './utils/applyFilterPanelType';
+import {
+	buildExplorerNavigationUrl,
+	openSavedViewByKey,
+} from './utils/openSavedView';
 import {
 	isSavedViewOpenAction,
 	resolveOpenResourceType,
@@ -323,48 +330,41 @@ function withDerivedFilterExpressions(query: Query): Query {
  *     the new URL on mount.
  */
 function applyFilter(action: MessageActionDTO, deps: ApplyFilterDeps): void {
-	// eslint-disable-next-line no-console
-	console.log('[apply_filter] enter', {
-		signal: action.signal,
-		query: action.query,
-		pathname: deps.pathname,
-	});
 	if (!action.signal || !action.query) {
-		// eslint-disable-next-line no-console
-		console.warn('[apply_filter] bail: missing signal or query', action);
 		return;
 	}
 	const urlQuery = toUrlCompositeQuery(action.query as Record<string, unknown>);
 	if (!urlQuery) {
-		// eslint-disable-next-line no-console
-		console.warn(
-			'[apply_filter] bail: toUrlCompositeQuery returned null — agent payload shape unrecognized',
-			action.query,
-		);
 		return;
 	}
+	// `requestType` lives on the request envelope, which `toUrlCompositeQuery`
+	// drops — read it off the raw action query and translate it into the
+	// explorer panel type so a grouped/aggregated query opens as a table/graph
+	// instead of the default raw-log List view.
+	const panelType = getPanelTypeForRequestType(
+		requestTypeFromActionQuery(action.query as Record<string, unknown>),
+	);
 	const normalized = withDerivedFilterExpressions(urlQuery as unknown as Query);
-	// eslint-disable-next-line no-console
-	console.log('[apply_filter] normalized', normalized);
 	if (signalMatchesPathname(action.signal, deps.pathname)) {
-		// eslint-disable-next-line no-console
-		console.log('[apply_filter] on-page → handleSetQueryData + redirect');
 		normalized.builder.queryData.forEach((q, i) => {
 			deps.handleSetQueryData(i, q);
 		});
-		deps.redirectWithQueryBuilderData(normalized);
+		deps.redirectWithQueryBuilderData(normalized, {
+			[QueryParams.panelTypes]: panelType,
+		});
 		return;
 	}
 	const base = explorerRouteForSignal(action.signal);
 	if (!base) {
-		// eslint-disable-next-line no-console
-		console.warn('[apply_filter] bail: no route for signal', action.signal);
 		return;
 	}
-	// eslint-disable-next-line no-console
-	console.log('[apply_filter] off-page → history.push', base);
-	const encoded = encodeURIComponent(JSON.stringify(normalized));
-	deps.history.push(`${base}?${QueryParams.compositeQuery}=${encoded}`);
+	// Reuse the saved-view URL builder so the encoding (double-encoded
+	// compositeQuery + JSON-stringified panelTypes) matches what the explorer's
+	// URL parser expects — see useGetCompositeQueryParam / useGetPanelTypesQueryParam.
+	const url = buildExplorerNavigationUrl(base, normalized, {
+		[QueryParams.panelTypes]: panelType,
+	});
+	deps.history.push(url);
 }
 
 /** Picks the right rollback API call for a given action kind. */
