@@ -26,28 +26,27 @@ function PiePanelRenderer({
 
 	// The registry guarantees this Renderer only runs when
 	// `panel.spec.plugin.kind === 'signoz/PieChartPanel'`, so the cast is a
-	// documented boundary narrowing. Memoized so the `?? {}` fallback doesn't
-	// produce a fresh object on each render.
+	// documented boundary narrowing.
 	const spec = useMemo<DashboardtypesPieChartPanelSpecDTO>(
-		() => (panel?.spec?.plugin?.spec ?? {}) as DashboardtypesPieChartPanelSpecDTO,
-		[panel?.spec?.plugin?.spec],
+		() => panel.spec.plugin.spec as DashboardtypesPieChartPanelSpecDTO,
+		[panel.spec.plugin.spec],
 	);
 
 	const slices = useMemo(
 		() =>
 			preparePieData({
 				tables: prepareScalarTables({
-					results: getScalarResults(data?.response),
-					legendMap: data?.legendMap ?? {},
-					requestPayload: data?.requestPayload,
+					results: getScalarResults(data.response),
+					legendMap: data.legendMap ?? {},
+					requestPayload: data.requestPayload,
 				}),
 				customColors: spec.legend?.customColors,
 				isDarkMode,
 			}),
 		[
-			data?.response,
-			data?.legendMap,
-			data?.requestPayload,
+			data.response,
+			data.legendMap,
+			data.requestPayload,
 			spec.legend?.customColors,
 			isDarkMode,
 		],

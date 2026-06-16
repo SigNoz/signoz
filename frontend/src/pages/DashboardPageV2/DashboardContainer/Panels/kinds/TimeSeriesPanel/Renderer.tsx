@@ -47,14 +47,13 @@ function TimeSeriesPanelRenderer({
 	// documented boundary narrowing — not a blind assertion. Memoized so the
 	// `?? {}` fallback doesn't produce a fresh object on each render.
 	const spec = useMemo<DashboardtypesTimeSeriesPanelSpecDTO>(
-		() =>
-			(panel?.spec?.plugin?.spec ?? {}) as DashboardtypesTimeSeriesPanelSpecDTO,
-		[panel?.spec?.plugin?.spec],
+		() => (panel.spec.plugin.spec ?? {}) as DashboardtypesTimeSeriesPanelSpecDTO,
+		[panel.spec.plugin.spec],
 	);
 
 	const builderQueries = useMemo(
-		() => getBuilderQueries(panel?.spec?.queries),
-		[panel?.spec?.queries],
+		() => getBuilderQueries(panel.spec.queries),
+		[panel.spec.queries],
 	);
 
 	// X-scale clamps come from the request that produced the data, so each
@@ -65,20 +64,17 @@ function TimeSeriesPanelRenderer({
 	// the cast is the documented boundary.
 	const { minTimeScale, maxTimeScale } = useMemo(() => {
 		const { startTime, endTime } = getTimeRangeFromQueryRangeRequest(
-			data?.requestPayload as unknown as QueryRangeRequestV5 | undefined,
+			data.requestPayload as unknown as QueryRangeRequestV5 | undefined,
 		);
 		return { minTimeScale: startTime, maxTimeScale: endTime };
-	}, [data?.requestPayload]);
+	}, [data.requestPayload]);
 
 	const groupByPerQuery = useGroupByPerQuery(builderQueries);
 
 	const flatSeries = useMemo(
 		() =>
-			flattenTimeSeries(
-				getTimeSeriesResults(data?.response),
-				data?.legendMap ?? {},
-			),
-		[data?.response, data?.legendMap],
+			flattenTimeSeries(getTimeSeriesResults(data.response), data.legendMap ?? {}),
+		[data.response, data.legendMap],
 	);
 
 	const config = useMemo(
@@ -88,7 +84,7 @@ function TimeSeriesPanelRenderer({
 				spec,
 				builderQueries,
 				series: flatSeries,
-				stepIntervals: getExecStats(data?.response)?.stepIntervals,
+				stepIntervals: getExecStats(data.response)?.stepIntervals,
 				isDarkMode,
 				timezone,
 				panelMode,
@@ -101,7 +97,7 @@ function TimeSeriesPanelRenderer({
 			spec,
 			builderQueries,
 			flatSeries,
-			data?.response,
+			data.response,
 			isDarkMode,
 			timezone,
 			panelMode,

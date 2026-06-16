@@ -13,10 +13,7 @@ import {
 	hasRunnableQueries,
 } from '../queryV5/buildQueryRangeRequest';
 import type { PanelQueryData } from '../queryV5/types';
-import {
-	PANEL_KIND_TO_PANEL_TYPE,
-	type PanelKind,
-} from '../Panels/types/panelKind';
+import { PANEL_KIND_TO_PANEL_TYPE } from '../Panels/types/panelKind';
 import { useGetQueryRangeV5 } from './useGetQueryRangeV5';
 
 export interface UsePanelQueryArgs {
@@ -72,8 +69,7 @@ export function usePanelQuery({
 }: UsePanelQueryArgs): UsePanelQueryResult {
 	const fullKind = panel?.spec?.plugin?.kind;
 	const panelType =
-		(fullKind && PANEL_KIND_TO_PANEL_TYPE[fullKind as PanelKind]) ??
-		PANEL_TYPES.TIME_SERIES;
+		(fullKind && PANEL_KIND_TO_PANEL_TYPE[fullKind]) ?? PANEL_TYPES.TIME_SERIES;
 	const queries = panel?.spec?.queries;
 
 	const {

@@ -4,6 +4,7 @@ import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schem
 import { getPanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Panels/registry';
 import { usePanelQuery } from 'pages/DashboardPageV2/DashboardContainer/hooks/usePanelQuery';
 import type { Warning } from 'types/api';
+import type { DashboardtypesPanelPluginKindDTO as PanelKind } from 'api/generated/services/sigNoz.schemas';
 
 import type { DashboardSection } from '../../utils';
 import type { DeletePanelArgs } from './hooks/useDeletePanel';
@@ -45,18 +46,18 @@ function Panel({
 }: PanelProps): JSX.Element {
 	const name = panel.spec.display?.name;
 	const description = panel.spec.display?.description;
-	const fullKind = panel.spec.plugin?.kind;
+	const fullKind = panel.spec.plugin?.kind as unknown as PanelKind;
 	const kind = fullKind?.replace(/^signoz\//, '') ?? 'unknown';
 	const queryCount = panel.spec.queries?.length ?? 0;
 
-	const panelDef = getPanelDefinition(fullKind);
+	const panelDefinition = getPanelDefinition(fullKind);
 
 	const { data, isLoading, isFetching, error, refetch } = usePanelQuery({
 		panel,
 		panelId,
 		// Lazy: only fetch once the section is on screen (undefined → treat as
 		// visible) and a renderer exists for the kind.
-		enabled: !!panelDef && isVisible !== false,
+		enabled: !!panelDefinition && isVisible !== false,
 	});
 
 	const { onDragSelect, dashboardPreference } = usePanelInteractions();
@@ -88,9 +89,9 @@ function Panel({
 				warning={data.response?.data?.warning as Warning | undefined}
 				panelActions={panelActions}
 			/>
-			{panelDef ? (
+			{panelDefinition ? (
 				<PanelBody
-					panelDef={panelDef}
+					panelDefinition={panelDefinition}
 					panel={panel}
 					panelId={panelId}
 					data={data}
@@ -101,6 +102,7 @@ function Panel({
 					dashboardPreference={dashboardPreference}
 				/>
 			) : (
+				// TODO: remove this after all panel kinds are supported
 				<UnsupportedPanelBody kind={kind} queryCount={queryCount} />
 			)}
 		</div>

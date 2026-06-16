@@ -7,7 +7,7 @@ import type {
 	PanelRegistry,
 	RenderablePanelDefinition,
 } from './types/panelDefinition';
-import type { PanelKind } from './types/panelKind';
+import type { DashboardtypesPanelPluginKindDTO as PanelKind } from 'api/generated/services/sigNoz.schemas';
 
 // Pure assembly: each kind owns its own PanelDefinition (see
 // `kinds/<Kind>/definition.ts`). Registering a new panel = add its folder and a
@@ -21,7 +21,7 @@ export const PANELS: PanelRegistry = {
 };
 
 export function getPanelDefinition(
-	kind: string | undefined,
+	kind: PanelKind,
 ): RenderablePanelDefinition | undefined {
 	if (!kind) {
 		return undefined;
@@ -30,7 +30,5 @@ export function getPanelDefinition(
 	// every kind's exactly-typed definition. The renderer cannot be validated
 	// against that union at the JSX boundary, so widen to the kind-agnostic
 	// surface here — the single, intentional cast for the whole panel system.
-	return PANELS[kind as PanelKind] as unknown as
-		| RenderablePanelDefinition
-		| undefined;
+	return PANELS[kind] as unknown as RenderablePanelDefinition | undefined;
 }

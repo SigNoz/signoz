@@ -13,7 +13,7 @@ import styles from './PanelBody.module.scss';
 interface PanelBodyProps {
 	/** Resolved renderer for the panel kind — always present (`Panel` renders the
 	 * unsupported fallback itself when no renderer is registered). */
-	panelDef: RenderablePanelDefinition;
+	panelDefinition: RenderablePanelDefinition;
 	panel: DashboardtypesPanelDTO;
 	panelId: string;
 	data: PanelQueryData;
@@ -35,7 +35,7 @@ interface PanelBodyProps {
  *               keeps stale data mounted during background refetches)
  */
 function PanelBody({
-	panelDef,
+	panelDefinition,
 	panel,
 	panelId,
 	data,
@@ -77,7 +77,7 @@ function PanelBody({
 
 	return (
 		<div className={styles.chartContainer}>
-			<panelDef.Renderer
+			<panelDefinition.Renderer
 				panelId={panelId}
 				panel={panel}
 				data={data}

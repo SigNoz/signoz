@@ -19,23 +19,22 @@ function NumberPanelRenderer({
 }: PanelRendererProps<'signoz/NumberPanel'>): JSX.Element {
 	// The registry guarantees this Renderer only runs when
 	// `panel.spec.plugin.kind === 'signoz/NumberPanel'`, so the cast is a
-	// documented boundary narrowing. Memoized so the `?? {}` fallback doesn't
-	// produce a fresh object on each render.
+	// documented boundary narrowing.
 	const spec = useMemo<DashboardtypesNumberPanelSpecDTO>(
-		() => (panel?.spec?.plugin?.spec ?? {}) as DashboardtypesNumberPanelSpecDTO,
-		[panel?.spec?.plugin?.spec],
+		() => panel.spec.plugin.spec as DashboardtypesNumberPanelSpecDTO,
+		[panel.spec.plugin.spec],
 	);
 
 	const value = useMemo(
 		() =>
 			prepareNumberData(
 				prepareScalarTables({
-					results: getScalarResults(data?.response),
-					legendMap: data?.legendMap ?? {},
-					requestPayload: data?.requestPayload,
+					results: getScalarResults(data.response),
+					legendMap: data.legendMap ?? {},
+					requestPayload: data.requestPayload,
 				}),
 			),
-		[data?.response, data?.legendMap, data?.requestPayload],
+		[data.response, data.legendMap, data.requestPayload],
 	);
 
 	const thresholds = useMemo(

@@ -38,23 +38,19 @@ function HistogramPanelRenderer({
 	// `panel.spec.plugin.kind === 'signoz/HistogramPanel'`, so the cast is a
 	// documented boundary narrowing.
 	const spec = useMemo<DashboardtypesHistogramPanelSpecDTO>(
-		() =>
-			(panel?.spec?.plugin?.spec ?? {}) as DashboardtypesHistogramPanelSpecDTO,
-		[panel?.spec?.plugin?.spec],
+		() => panel.spec.plugin.spec as DashboardtypesHistogramPanelSpecDTO,
+		[panel.spec.plugin.spec],
 	);
 
 	const builderQueries = useMemo(
-		() => getBuilderQueries(panel?.spec?.queries),
-		[panel?.spec?.queries],
+		() => getBuilderQueries(panel.spec.queries),
+		[panel.spec.queries],
 	);
 
 	const flatSeries = useMemo(
 		() =>
-			flattenTimeSeries(
-				getTimeSeriesResults(data?.response),
-				data?.legendMap ?? {},
-			),
-		[data?.response, data?.legendMap],
+			flattenTimeSeries(getTimeSeriesResults(data.response), data.legendMap ?? {}),
+		[data.response, data.legendMap],
 	);
 
 	const config = useMemo(

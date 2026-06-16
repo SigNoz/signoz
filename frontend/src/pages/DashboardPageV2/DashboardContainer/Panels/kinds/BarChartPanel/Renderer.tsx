@@ -44,16 +44,15 @@ function BarPanelRenderer({
 
 	// The registry guarantees this Renderer only runs when
 	// `panel.spec.plugin.kind === 'signoz/BarChartPanel'`, so the cast is a
-	// documented boundary narrowing. Memoized so the `?? {}` fallback doesn't
-	// produce a fresh object on each render.
+	// documented boundary narrowing.
 	const spec = useMemo<DashboardtypesBarChartPanelSpecDTO>(
-		() => (panel?.spec?.plugin?.spec ?? {}) as DashboardtypesBarChartPanelSpecDTO,
-		[panel?.spec?.plugin?.spec],
+		() => panel.spec.plugin.spec as DashboardtypesBarChartPanelSpecDTO,
+		[panel.spec.plugin.spec],
 	);
 
 	const builderQueries = useMemo(
-		() => getBuilderQueries(panel?.spec?.queries),
-		[panel?.spec?.queries],
+		() => getBuilderQueries(panel.spec.queries),
+		[panel.spec.queries],
 	);
 
 	// X-scale clamps come from the request that produced the data (falls back
@@ -61,20 +60,17 @@ function BarPanelRenderer({
 	// structurally the hand-written V5 request; the cast is the boundary.
 	const { minTimeScale, maxTimeScale } = useMemo(() => {
 		const { startTime, endTime } = getTimeRangeFromQueryRangeRequest(
-			data?.requestPayload as unknown as QueryRangeRequestV5 | undefined,
+			data.requestPayload as unknown as QueryRangeRequestV5 | undefined,
 		);
 		return { minTimeScale: startTime, maxTimeScale: endTime };
-	}, [data?.requestPayload]);
+	}, [data.requestPayload]);
 
 	const groupByPerQuery = useGroupByPerQuery(builderQueries);
 
 	const flatSeries = useMemo(
 		() =>
-			flattenTimeSeries(
-				getTimeSeriesResults(data?.response),
-				data?.legendMap ?? {},
-			),
-		[data?.response, data?.legendMap],
+			flattenTimeSeries(getTimeSeriesResults(data.response), data.legendMap ?? {}),
+		[data.response, data.legendMap],
 	);
 
 	const config = useMemo(
@@ -84,7 +80,7 @@ function BarPanelRenderer({
 				spec,
 				builderQueries,
 				series: flatSeries,
-				stepIntervals: getExecStats(data?.response)?.stepIntervals,
+				stepIntervals: getExecStats(data.response)?.stepIntervals,
 				isDarkMode,
 				timezone,
 				panelMode,
@@ -97,7 +93,7 @@ function BarPanelRenderer({
 			spec,
 			builderQueries,
 			flatSeries,
-			data?.response,
+			data.response,
 			isDarkMode,
 			timezone,
 			panelMode,
