@@ -14,7 +14,7 @@ import {
 	type ConfirmableAction,
 	useConfirmableAction,
 } from 'hooks/useConfirmableAction';
-import { getPanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Panels';
+import { getPanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Panels/registry';
 import { useOpenPanelEditor } from 'pages/DashboardPageV2/DashboardContainer/hooks/useOpenPanelEditor';
 import { useDashboardStore } from 'pages/DashboardPageV2/DashboardContainer/store/useDashboardStore';
 import { useAppContext } from 'providers/App/App';

@@ -9,7 +9,7 @@ import {
 } from '@signozhq/ui/resizable';
 import { toast } from '@signozhq/ui/sonner';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
-import { getPanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Panels';
+import { getPanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Panels/registry';
 
 import ConfigPane from './ConfigPane/ConfigPane';
 import Header from './Header/Header';

@@ -65,7 +65,7 @@ function renderPanel(
 	const baseProps: BaseRendererProps = {
 		panelId: 'panel-1',
 		panel: panelWith({}),
-		data: undefined,
+		data: emptyData,
 		isLoading: false,
 		error: null,
 		panelMode: PanelMode.DASHBOARD_VIEW,
@@ -91,12 +91,14 @@ describe('TablePanelRenderer', () => {
 	it('renders No Data when the response has no scalar results', () => {
 		const { getByTestId } = renderPanel({ data: emptyData });
 
-		expect(getByTestId('table-panel-no-data')).toBeInTheDocument();
+		expect(getByTestId('panel-no-data')).toBeInTheDocument();
 	});
 
 	it('renders No Data when the response is absent', () => {
-		const { getByTestId } = renderPanel({ data: undefined });
+		const { getByTestId } = renderPanel({
+			data: { response: undefined, requestPayload: undefined, legendMap: {} },
+		});
 
-		expect(getByTestId('table-panel-no-data')).toBeInTheDocument();
+		expect(getByTestId('panel-no-data')).toBeInTheDocument();
 	});
 });

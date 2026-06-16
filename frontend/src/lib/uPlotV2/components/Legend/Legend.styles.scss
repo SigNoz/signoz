@@ -1,3 +1,5 @@
+@use '../../../../styles/scrollbar' as *;
+
 .legend-search-container {
 	flex-shrink: 0;
 	width: 100%;
@@ -76,18 +78,7 @@
 			}
 		}
 
-		&::-webkit-scrollbar {
-			width: 0.3rem;
-		}
-
-		&::-webkit-scrollbar-track {
-			background: transparent;
-		}
-
-		&::-webkit-scrollbar-thumb {
-			background: var(--l3-background);
-			border-radius: 0.5rem;
-		}
+		@include custom-scrollbar;
 	}
 }
 

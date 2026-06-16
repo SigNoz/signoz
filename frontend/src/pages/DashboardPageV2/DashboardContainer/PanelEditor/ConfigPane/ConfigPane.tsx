@@ -1,7 +1,7 @@
 import { Input } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
-import { getPanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Panels';
+import { getPanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Panels/registry';
 
 import type { LegendSeries } from '../hooks/useLegendSeries';
 import type { TableColumnOption } from '../hooks/useTableColumns';

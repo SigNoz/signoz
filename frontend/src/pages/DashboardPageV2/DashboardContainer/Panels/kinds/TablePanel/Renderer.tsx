@@ -1,6 +1,5 @@
 import { useMemo, useRef } from 'react';
 import { Table } from 'antd';
-import { Typography } from '@signozhq/ui/typography';
 import type { DashboardtypesTablePanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { prepareScalarTables } from 'pages/DashboardPageV2/DashboardContainer/queryV5/prepareScalarTables';
@@ -8,7 +7,8 @@ import { getScalarResults } from 'pages/DashboardPageV2/DashboardContainer/query
 
 import PanelStyles from '../../panel.module.scss';
 import { PanelRendererProps } from '../../types/rendererProps';
-import { resolveDecimalPrecision } from '../../utils/chartAppearanceMappings';
+import { resolveDecimalPrecision } from '../../utils/chartAppearance/resolvers';
+import NoData from '../../components/NoData/NoData';
 
 import { buildTableColumns, mapTableThresholds } from './tableColumns';
 import { computeTableLayout } from './utils';
@@ -35,8 +35,8 @@ function TablePanelRenderer({
 	// documented boundary narrowing. Memoized so the `?? {}` fallback doesn't
 	// produce a fresh object on each render.
 	const spec = useMemo<DashboardtypesTablePanelSpecDTO>(
-		() => (panel?.spec?.plugin?.spec ?? {}) as DashboardtypesTablePanelSpecDTO,
-		[panel?.spec?.plugin?.spec],
+		() => (panel.spec.plugin.spec ?? {}) as DashboardtypesTablePanelSpecDTO,
+		[panel.spec.plugin.spec],
 	);
 
 	// V5 joins every query into a single scalar result, so the first non-empty
@@ -45,10 +45,10 @@ function TablePanelRenderer({
 		() =>
 			prepareScalarTables({
 				results: getScalarResults(data?.response),
-				legendMap: data?.legendMap ?? {},
-				requestPayload: data?.requestPayload,
+				legendMap: data.legendMap ?? {},
+				requestPayload: data.requestPayload,
 			}).find((candidate) => candidate.columns.length > 0),
-		[data?.response, data?.legendMap, data?.requestPayload],
+		[data.response, data.legendMap, data.requestPayload],
 	);
 
 	const decimalPrecision = useMemo(
@@ -87,9 +87,7 @@ function TablePanelRenderer({
 			className={PanelStyles.panelContainer}
 		>
 			{!table || dataSource.length === 0 ? (
-				<Typography.Text className={styles.empty} data-testid="table-panel-no-data">
-					No Data
-				</Typography.Text>
+				<NoData />
 			) : (
 				<div className={styles.container}>
 					<Table
