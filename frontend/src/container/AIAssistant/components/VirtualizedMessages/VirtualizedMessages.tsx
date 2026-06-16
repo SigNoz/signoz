@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { Button } from '@signozhq/ui/button';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import Noz from 'components/Noz/Noz';
 
@@ -157,13 +156,11 @@ export default function VirtualizedMessages({
 				<p className={styles.emptySubtitle}>
 					Ask questions about your traces, logs, metrics, and infrastructure.
 				</p>
-				<div className={styles.emptySuggestions}>
+				<div className={styles.suggestions}>
 					{emptyStateChips.map((chip) => (
-						<Button
+						<div
 							key={chip.id}
-							variant="outlined"
-							color="secondary"
-							className={styles.emptyChip}
+							className={styles.suggestion}
 							onClick={(): void => {
 								void logEvent(AIAssistantEvents.SuggestedPromptClicked, {
 									promptId: chip.id,
@@ -174,7 +171,7 @@ export default function VirtualizedMessages({
 							data-testid={`empty-state-chip-${chip.id}`}
 						>
 							{chip.text}
-						</Button>
+						</div>
 					))}
 				</div>
 			</div>
