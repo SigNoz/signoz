@@ -63,6 +63,50 @@ describe('getAutoContexts', () => {
 		]);
 	});
 
+	it('resolves alert list tabs on /alerts', () => {
+		expect(getAutoContexts(ROUTES.LIST_ALL_ALERT, '')).toStrictEqual([
+			{
+				source: 'auto',
+				type: 'alert',
+				resourceId: null,
+				metadata: { page: 'alert_list' },
+			},
+		]);
+
+		expect(
+			getAutoContexts(ROUTES.LIST_ALL_ALERT, '?tab=AlertRules'),
+		).toStrictEqual([
+			{
+				source: 'auto',
+				type: 'alert',
+				resourceId: null,
+				metadata: { page: 'alert_list' },
+			},
+		]);
+
+		expect(
+			getAutoContexts(ROUTES.LIST_ALL_ALERT, '?tab=TriggeredAlerts'),
+		).toStrictEqual([
+			{
+				source: 'auto',
+				type: 'alert',
+				resourceId: null,
+				metadata: { page: 'alerts_triggered' },
+			},
+		]);
+
+		expect(
+			getAutoContexts(ROUTES.LIST_ALL_ALERT, '?tab=Configuration'),
+		).toStrictEqual([
+			{
+				source: 'auto',
+				type: 'alert',
+				resourceId: null,
+				metadata: { page: 'alert_list' },
+			},
+		]);
+	});
+
 	it('returns dashboard detail context on dashboard page', () => {
 		const dashboardId = 'dash-123';
 		const pathname = ROUTES.DASHBOARD.replace(':dashboardId', dashboardId);
@@ -85,5 +129,22 @@ describe('getAutoContexts', () => {
 		const contexts = getAutoContexts(ROUTES.ALERT_OVERVIEW, '');
 
 		expect(contexts).toStrictEqual([]);
+	});
+
+	it('emits no auto-context on /home (no attachable resource)', () => {
+		expect(getAutoContexts(ROUTES.HOME, '')).toStrictEqual([]);
+	});
+
+	it('emits no auto-context on infrastructure monitoring routes', () => {
+		expect(
+			getAutoContexts(ROUTES.INFRASTRUCTURE_MONITORING_BASE, ''),
+		).toStrictEqual([]);
+
+		expect(
+			getAutoContexts(
+				ROUTES.INFRASTRUCTURE_MONITORING_HOSTS,
+				'?selectedItem=host-1',
+			),
+		).toStrictEqual([]);
 	});
 });
