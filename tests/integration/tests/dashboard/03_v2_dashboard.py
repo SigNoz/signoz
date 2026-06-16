@@ -711,6 +711,7 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
     assert response.status_code == HTTPStatus.OK, response.text
     assert response.json()["data"]["id"] == clone["id"]
 
+
 def test_dashboard_v2_pin_limit(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
@@ -826,11 +827,7 @@ def test_dashboard_v2_clone_integration_source(
         # A locked, integration-source v6 dashboard — the state the API can't produce.
         with signoz.sqlstore.conn.begin() as conn:
             conn.execute(
-                sql.text(
-                    "INSERT INTO dashboard "
-                    "(id, created_at, updated_at, created_by, updated_by, data, locked, org_id, source, name) "
-                    "VALUES (:id, :created_at, :updated_at, :created_by, :updated_by, :data, :locked, :org_id, :source, :name)"
-                ),
+                sql.text("INSERT INTO dashboard (id, created_at, updated_at, created_by, updated_by, data, locked, org_id, source, name) VALUES (:id, :created_at, :updated_at, :created_by, :updated_by, :data, :locked, :org_id, :source, :name)"),
                 {
                     "id": integration_id,
                     "created_at": now,
