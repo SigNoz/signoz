@@ -84,8 +84,8 @@ function DashboardsList(): JSX.Element {
 	const listParams = useMemo(
 		() => ({
 			query: searchString.trim() || undefined,
-			sort: sortColumn as DashboardtypesListSortDTO,
-			order: sortOrder as DashboardtypesListOrderDTO,
+			sort: sortColumn,
+			order: sortOrder,
 			limit: PAGE_SIZE,
 			offset: (page - 1) * PAGE_SIZE,
 		}),
