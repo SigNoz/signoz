@@ -68,6 +68,23 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		return err
 	}
 
+	if err := router.Handle("/api/v2/dashboards/{id}/clone", handler.New(provider.authzMiddleware.EditAccess(provider.dashboardHandler.CloneV2), handler.OpenAPIDef{
+		ID:                  "CloneDashboardV2",
+		Tags:                []string{"dashboard"},
+		Summary:             "Clone dashboard (v2)",
+		Description:         "This endpoint clones an existing v2-shape dashboard. Only user dashboards can be cloned; system and integration dashboards are rejected. The clone keeps the source's display name, panels, and tags, but gets a freshly generated unique internal name and is always created as an unlocked user dashboard owned by the caller.",
+		Request:             nil,
+		RequestContentType:  "",
+		Response:            new(dashboardtypes.GettableDashboardV2),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusCreated,
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
+	})).Methods(http.MethodPost).GetError(); err != nil {
+		return err
+	}
+
 	if err := router.Handle("/api/v2/dashboards/{id}", handler.New(provider.authzMiddleware.ViewAccess(provider.dashboardHandler.GetV2), handler.OpenAPIDef{
 		ID:                  "GetDashboardV2",
 		Tags:                []string{"dashboard"},
