@@ -109,6 +109,20 @@ func (h *handler) CreateThing(rw http.ResponseWriter, req *http.Request) {
 }
 ```
 
+When you need an ID from `claims` as a `valuer.UUID` (for example to pass it to a module), derive it with the `Must*` constructor instead of `NewUUID` plus an error check. Claims are validated by the auth middleware, so the conversion cannot fail and the error branch would be dead code:
+
+```go
+// Good — claims are pre-validated, the conversion cannot fail.
+orgID := valuer.MustNewUUID(claims.OrgID)
+
+// Avoid — the error path is unreachable.
+orgID, err := valuer.NewUUID(claims.OrgID)
+if err != nil {
+    render.Error(rw, err)
+    return
+}
+```
+
 ### 3. Register the handler in `signozapiserver`
 
 In `pkg/apiserver/signozapiserver`, add a route in the appropriate `add*Routes` function (`addUserRoutes`, `addSessionRoutes`, `addOrgRoutes`, etc.). The pattern is:
@@ -387,3 +401,4 @@ Note the discriminator property lives in the variants, not on the parent — the
 - **Add `nullable:"true"`** on fields that can be `null`. Pay special attention to slices and maps -- in Go these default to `nil` which serializes to `null`. If the field should always be an array, initialize it and do not mark it nullable.
 - **Implement `Enum()`** on every type that has a fixed set of acceptable values so the JSON schema generates proper `enum` constraints.
 - **Add request examples** via `RequestExamples` in `OpenAPIDef` for any non-trivial endpoint. See `pkg/apiserver/signozapiserver/querier.go` for reference.
+- **Derive IDs from `claims` with `valuer.MustNewUUID`** (e.g. `claims.OrgID`, `claims.UserID`). Claims are pre-validated by the auth middleware, so use the `Must*` constructor — don't write `NewUUID` followed by an `if err != nil { render.Error(...); return }` block.

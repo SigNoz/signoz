@@ -2143,6 +2143,10 @@ export interface ErrorsResponseerroradditionalDTO {
 	 * @type string
 	 */
 	message?: string;
+	/**
+	 * @type array
+	 */
+	suggestions?: string[];
 }
 
 export interface ErrorsResponseretryjsonDTO {
@@ -2158,10 +2162,6 @@ export interface ErrorsJSONDTO {
 	 * @type array
 	 */
 	errors?: ErrorsResponseerroradditionalDTO[];
-	/**
-	 * @type array
-	 */
-	invalidReferences?: string[];
 	/**
 	 * @type string
 	 */
@@ -9741,6 +9741,19 @@ export type UpdateSpanMapperPathParameters = {
 	groupId: string;
 	mapperId: string;
 };
+export type GetStats200Data = { [key: string]: unknown };
+
+export type GetStats200 = {
+	/**
+	 * @type object
+	 */
+	data: GetStats200Data;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type GetTraceAggregationsPathParameters = {
 	traceID: string;
 };
