@@ -147,7 +147,7 @@ func (provider *provider) addMetricsExplorerRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/metrics/{metric_name}/alerts", handler.New(
+	if err := router.Handle("/api/v2/metrics/alerts", handler.New(
 		provider.authzMiddleware.ViewAccess(provider.metricsExplorerHandler.GetMetricAlerts),
 		handler.OpenAPIDef{
 			ID:                  "GetMetricAlerts",
@@ -155,6 +155,7 @@ func (provider *provider) addMetricsExplorerRoutes(router *mux.Router) error {
 			Summary:             "Get metric alerts",
 			Description:         "This endpoint returns associated alerts for a specified metric",
 			Request:             nil,
+			RequestQuery:        new(metricsexplorertypes.MetricNameQuery),
 			RequestContentType:  "",
 			Response:            new(metricsexplorertypes.MetricAlertsResponse),
 			ResponseContentType: "application/json",
