@@ -535,7 +535,7 @@ func (m *module) ListVolumes(ctx context.Context, orgID valuer.UUID, req *infram
 	}
 
 	if len(req.GroupBy) == 0 {
-		req.GroupBy = []qbtypes.GroupByKey{pvcNameGroupByKey}
+		req.GroupBy = []qbtypes.GroupByKey{pvcNameGroupByKey, namespaceNameGroupByKey, clusterNameGroupByKey}
 		resp.Type = inframonitoringtypes.ResponseTypeList
 	} else {
 		resp.Type = inframonitoringtypes.ResponseTypeGroupedList
