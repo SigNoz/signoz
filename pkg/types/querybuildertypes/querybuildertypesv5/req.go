@@ -8,6 +8,7 @@ import (
 	"github.com/SigNoz/govaluate"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/binding"
+	"github.com/SigNoz/signoz/pkg/reflectutil"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -152,7 +153,7 @@ func (q *QueryEnvelope) UnmarshalJSON(data []byte) error {
 			shadow.Type,
 		).WithAdditional(
 			"Valid query types are: builder_query, builder_sub_query, builder_formula, builder_join, builder_trace_operator, promql, clickhouse_sql",
-		).WithSuggestions(errors.ValidReferences(QueryType{}.Enum()...))
+		).WithSuggestions(errors.NewValidReferences(errors.NounQueryTypes, QueryType{}.Enum()...))
 	}
 
 	return nil
@@ -196,7 +197,7 @@ func UnmarshalBuilderQueryBySignal(data []byte) (any, error) {
 			errors.CodeInvalidInput,
 			"invalid signal %q",
 			header.Signal.StringValue(),
-		).WithSuggestions(errors.ValidReferences(telemetrytypes.Signal{}.Enum()...))
+		).WithSuggestions(errors.NewValidReferences(errors.NounSignals, telemetrytypes.Signal{}.Enum()...))
 	}
 }
 
@@ -229,7 +230,7 @@ func (c *CompositeQuery) UnmarshalJSON(data []byte) error {
 
 	// Valid field names are derived from the struct itself so this stays in
 	// sync with the schema (and the generated OpenAPI spec) automatically.
-	fieldNames := binding.JSONFieldNames((*CompositeQuery)(nil))
+	fieldNames := reflectutil.JSONFieldNames((*CompositeQuery)(nil))
 	validFields := make(map[string]bool, len(fieldNames))
 	for _, f := range fieldNames {
 		validFields[f] = true
@@ -243,7 +244,7 @@ func (c *CompositeQuery) UnmarshalJSON(data []byte) error {
 				field,
 			).WithAdditional(
 				"Valid fields are: " + strings.Join(fieldNames, ", "),
-			).WithSuggestions(errors.SuggestionsOnLevenshteinDistance(field, fieldNames)...)
+			).WithSuggestions(errors.NewSuggestionsOnLevenshteinDistance(field, errors.NounFields, fieldNames)...)
 			return unknownFieldErr
 		}
 	}
@@ -556,7 +557,7 @@ func (r *QueryRangeRequest) UnmarshalJSON(data []byte) error {
 
 	// Valid field names are derived from the struct itself so this stays in
 	// sync with the schema (and the generated OpenAPI spec) automatically.
-	fieldNames := binding.JSONFieldNames((*QueryRangeRequest)(nil))
+	fieldNames := reflectutil.JSONFieldNames((*QueryRangeRequest)(nil))
 	validFields := make(map[string]bool, len(fieldNames))
 	for _, f := range fieldNames {
 		validFields[f] = true
@@ -570,7 +571,7 @@ func (r *QueryRangeRequest) UnmarshalJSON(data []byte) error {
 				field,
 			).WithAdditional(
 				"Valid fields are: " + strings.Join(fieldNames, ", "),
-			).WithSuggestions(errors.SuggestionsOnLevenshteinDistance(field, fieldNames)...)
+			).WithSuggestions(errors.NewSuggestionsOnLevenshteinDistance(field, errors.NounFields, fieldNames)...)
 			return unknownFieldErr
 		}
 	}

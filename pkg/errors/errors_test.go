@@ -84,7 +84,7 @@ func TestWithSuggestiveAdditional(t *testing.T) {
 	assert.Equal(t, []responseerroradditional{
 		{Message: "field `filed` not found", Suggestions: []string{"did you mean: `field`"}},
 	}, j.Errors)
-	assert.Nil(t, j.Suggestions, "detail-scoped suggestions must not leak into the error-wide list")
+	assert.Empty(t, j.Suggestions, "detail-scoped suggestions must not leak into the error-wide list")
 }
 
 func TestWithRetryAfter(t *testing.T) {
@@ -106,7 +106,12 @@ func TestAsJSONBaseError(t *testing.T) {
 	assert.Equal(t, "bad_input", j.Code)
 	assert.Equal(t, "field foo is bad", j.Message)
 	assert.Equal(t, "https://docs/bad_input", j.Url)
-	assert.Equal(t, []responseerroradditional{{Message: "hint1"}, {Message: "hint2"}}, j.Errors)
+	// A detail with no suggestions carries a nil slice (the suggestions field is
+	// nullable, so it marshals to null rather than []).
+	assert.Equal(t, []responseerroradditional{
+		{Message: "hint1"},
+		{Message: "hint2"},
+	}, j.Errors)
 
 	// InvalidInput auto-applies the after_fix policy via NewInvalidInputf — but
 	// New (bare constructor) does not. The retry block should reflect that.
@@ -157,9 +162,13 @@ func TestAsJSONRetryBlock(t *testing.T) {
 	})
 }
 
-func TestAsJSONOptionalFieldsOmittedWhenEmpty(t *testing.T) {
+func TestAsJSONEmptyWhenNoneSet(t *testing.T) {
+	// errors and suggestions are nullable in the OpenAPI spec, so AsJSON leaves
+	// them empty when the error carries none (they marshal to null / []).
 	j := AsJSON(New(TypeInternal, MustNewCode("boom"), "boom"))
-	assert.Nil(t, j.Suggestions, "no suggestions set => Suggestions must be nil so json omitempty drops it")
+
+	assert.Empty(t, j.Suggestions)
+	assert.Empty(t, j.Errors)
 }
 
 func TestWithStacktrace(t *testing.T) {

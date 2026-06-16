@@ -7,22 +7,22 @@ import (
 )
 
 type JSON struct {
-	Type        string                    `json:"type,omitempty"`
+	Type        string                    `json:"type" required:"true"`
 	Code        string                    `json:"code" required:"true"`
 	Message     string                    `json:"message" required:"true"`
-	Url         string                    `json:"url,omitempty"`
-	Errors      []responseerroradditional `json:"errors,omitempty"`
-	Retry       *responseretryjson        `json:"retry,omitempty"`
-	Suggestions []string                  `json:"suggestions,omitempty"`
+	Url         string                    `json:"url" required:"true" nullable:"true"`
+	Errors      []responseerroradditional `json:"errors" required:"true" nullable:"true"`
+	Retry       *responseretryjson        `json:"retry" required:"true" nullable:"true"`
+	Suggestions []string                  `json:"suggestions" required:"true" nullable:"true"`
 }
 
 type responseretryjson struct {
-	Delay time.Duration `json:"delay"`
+	Delay time.Duration `json:"delay" required:"true" nullable:"false"`
 }
 
 type responseerroradditional struct {
-	Message     string   `json:"message,omitempty"`
-	Suggestions []string `json:"suggestions,omitempty"`
+	Message     string   `json:"message" required:"true"`
+	Suggestions []string `json:"suggestions" required:"true" nullable:"true"`
 }
 
 func AsJSON(cause error) *JSON {
