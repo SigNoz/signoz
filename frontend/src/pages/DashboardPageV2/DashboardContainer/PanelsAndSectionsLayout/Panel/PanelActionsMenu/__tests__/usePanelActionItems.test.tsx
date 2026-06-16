@@ -4,6 +4,7 @@ import type { ROLES } from 'types/roles';
 import type { DashboardSection } from '../../../../utils';
 import { useDashboardStore } from '../../../../store/useDashboardStore';
 import { usePanelActionItems } from '../usePanelActionItems';
+import { PanelKind } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelKind';
 
 const mockOpenEditor = jest.fn();
 jest.mock(
@@ -54,7 +55,7 @@ const TWO_TITLED_SECTIONS = [section(0, 'Overview'), section(1, 'Latency')];
 
 const baseArgs = {
 	panelId: 'panel-1',
-	panelKind: 'signoz/TimeSeriesPanel',
+	panelKind: 'signoz/TimeSeriesPanel' as PanelKind,
 	panelActions: { currentLayoutIndex: 0, sections: TWO_TITLED_SECTIONS },
 };
 
@@ -116,7 +117,10 @@ describe('usePanelActionItems', () => {
 		const { result } = renderHook(() =>
 			// A kind with no registered definition — exercises the "unsupported kind"
 			// branch (kinds V2 can't render still expose only chrome actions).
-			usePanelActionItems({ ...baseArgs, panelKind: 'signoz/UnsupportedPanel' }),
+			usePanelActionItems({
+				...baseArgs,
+				panelKind: 'signoz/UnsupportedPanel' as PanelKind,
+			}),
 		);
 		expect(itemKeys(result.current)).toStrictEqual([
 			'clone-panel',

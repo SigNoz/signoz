@@ -6,11 +6,12 @@ import ConfirmDeleteDialog from '../../../components/ConfirmDeleteDialog/Confirm
 import type { PanelActionsConfig } from '../Panel';
 import { usePanelActionItems } from './usePanelActionItems';
 import styles from './PanelActionsMenu.module.scss';
+import { PanelKind } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelKind';
 
 interface PanelActionsMenuProps {
 	panelId: string;
-	/** Full plugin kind (e.g. `signoz/TimeSeriesPanel`); undefined when absent. */
-	panelKind: string | undefined;
+	/** Full plugin kind (e.g. `signoz/TimeSeriesPanel`);*/
+	panelKind: PanelKind;
 	/** Layout context for move/delete — absent outside editable sectioned mode. */
 	panelActions?: PanelActionsConfig;
 }

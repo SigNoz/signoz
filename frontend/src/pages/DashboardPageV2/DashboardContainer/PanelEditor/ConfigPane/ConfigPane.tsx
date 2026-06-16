@@ -8,10 +8,11 @@ import type { TableColumnOption } from '../hooks/useTableColumns';
 import SectionSlot from './SectionSlot/SectionSlot';
 
 import styles from './ConfigPane.module.scss';
+import { PanelKind } from '../../Panels/types/panelKind';
 
 interface ConfigPaneProps {
 	/** Full plugin kind (e.g. `signoz/TimeSeriesPanel`); drives which sections show. */
-	panelKind: string | undefined;
+	panelKind: PanelKind;
 	/** The panel spec — the single editing surface (title/description + section slices). */
 	spec: DashboardtypesPanelSpecDTO;
 	onChangeSpec: (next: DashboardtypesPanelSpecDTO) => void;

@@ -25,6 +25,7 @@ import { useClonePanel } from '../hooks/useClonePanel';
 import { useDeletePanel } from '../hooks/useDeletePanel';
 import { useMovePanelToSection } from '../hooks/useMovePanelToSection';
 import { PANEL_ACTION_META } from './panelActionMeta';
+import { PanelKind } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelKind';
 
 // Stable fallback so renders without layout context don't churn the mutation
 // hooks' deps (a fresh [] each render would re-create their callbacks).
@@ -39,8 +40,8 @@ function notImplementedYet(feature: string): void {
 
 interface UsePanelActionItemsArgs {
 	panelId: string;
-	/** Full plugin kind (e.g. `signoz/TimeSeriesPanel`); undefined when absent. */
-	panelKind: string | undefined;
+	/** Full plugin kind (e.g. `signoz/TimeSeriesPanel`); */
+	panelKind: PanelKind;
 	/** Layout context for move/delete — absent outside editable mode. */
 	panelActions?: PanelActionsConfig;
 }
