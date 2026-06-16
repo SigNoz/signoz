@@ -1,7 +1,6 @@
 import type { MessageContext } from 'api/ai-assistant/chat';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
-import { INFRA_MONITORING_K8S_PARAMS_KEYS } from 'container/InfraMonitoringK8s/constants';
 import { AlertListTabs } from 'pages/AlertList/types';
 import { matchPath } from 'react-router-dom';
 
@@ -300,43 +299,12 @@ export function getAutoContexts(
 		];
 	}
 
-	// ── Homepage ────────────────────────────────────────────────────────────
-
-	if (matchPath(pathname, { path: ROUTES.HOME, exact: true })) {
-		return [
-			{
-				source: 'auto',
-				type: 'metrics_explorer',
-				resourceId: null,
-				metadata: { page: 'homepage' },
-			},
-		];
-	}
-
-	// ── Infrastructure monitoring ───────────────────────────────────────────
-
-	if (
-		matchPath(pathname, {
-			path: ROUTES.INFRASTRUCTURE_MONITORING_BASE,
-			exact: false,
-		})
-	) {
-		const selectedItem = params.get(
-			INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM,
-		);
-		return [
-			{
-				source: 'auto',
-				type: 'metrics_explorer',
-				resourceId: selectedItem,
-				metadata: {
-					page: 'infra_entity_detail',
-					...(selectedItem ? { selectedItem } : {}),
-					...sharedMetadata,
-				},
-			},
-		];
-	}
+	// NOTE: Homepage (`/home`) and infrastructure monitoring
+	// (`/infrastructure-monitoring/*`) intentionally emit no auto-context here.
+	// They have no resource that maps to `MessageContextDTOType`, so attaching
+	// a chip would misrepresent the page (e.g. a bogus "metrics_explorer"
+	// context). Their `page_type` for empty-state chips is resolved directly
+	// from the route in `resolvePageType`.
 
 	return [];
 }

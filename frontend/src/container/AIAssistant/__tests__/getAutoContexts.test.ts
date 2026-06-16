@@ -131,46 +131,20 @@ describe('getAutoContexts', () => {
 		expect(contexts).toStrictEqual([]);
 	});
 
-	it('returns homepage context on /home', () => {
-		const contexts = getAutoContexts(ROUTES.HOME, '');
-
-		expect(contexts).toStrictEqual([
-			{
-				source: 'auto',
-				type: 'metrics_explorer',
-				resourceId: null,
-				metadata: { page: 'homepage' },
-			},
-		]);
+	it('emits no auto-context on /home (no attachable resource)', () => {
+		expect(getAutoContexts(ROUTES.HOME, '')).toStrictEqual([]);
 	});
 
-	it('returns infra entity detail context on infrastructure monitoring routes', () => {
+	it('emits no auto-context on infrastructure monitoring routes', () => {
 		expect(
 			getAutoContexts(ROUTES.INFRASTRUCTURE_MONITORING_BASE, ''),
-		).toStrictEqual([
-			{
-				source: 'auto',
-				type: 'metrics_explorer',
-				resourceId: null,
-				metadata: { page: 'infra_entity_detail' },
-			},
-		]);
+		).toStrictEqual([]);
 
 		expect(
 			getAutoContexts(
 				ROUTES.INFRASTRUCTURE_MONITORING_HOSTS,
 				'?selectedItem=host-1',
 			),
-		).toStrictEqual([
-			{
-				source: 'auto',
-				type: 'metrics_explorer',
-				resourceId: 'host-1',
-				metadata: {
-					page: 'infra_entity_detail',
-					selectedItem: 'host-1',
-				},
-			},
-		]);
+		).toStrictEqual([]);
 	});
 });
