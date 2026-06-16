@@ -414,20 +414,10 @@ export interface AlertmanagertypesRecurrenceDTO {
 	 */
 	duration: string;
 	/**
-	 * @type string,null
-	 * @format date-time
-	 */
-	endTime?: string | null;
-	/**
 	 * @type array,null
 	 */
 	repeatOn?: AlertmanagertypesRepeatOnDTO[] | null;
 	repeatType: AlertmanagertypesRepeatTypeDTO;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	startTime: string;
 }
 
 export interface AlertmanagertypesScheduleDTO {
@@ -441,7 +431,7 @@ export interface AlertmanagertypesScheduleDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	startTime?: string;
+	startTime: string;
 	/**
 	 * @type string
 	 */
@@ -2153,6 +2143,10 @@ export interface ErrorsResponseerroradditionalDTO {
 	 * @type string
 	 */
 	message?: string;
+	/**
+	 * @type array
+	 */
+	suggestions?: string[];
 }
 
 export interface ErrorsResponseretryjsonDTO {
@@ -2168,10 +2162,6 @@ export interface ErrorsJSONDTO {
 	 * @type array
 	 */
 	errors?: ErrorsResponseerroradditionalDTO[];
-	/**
-	 * @type array
-	 */
-	invalidReferences?: string[];
 	/**
 	 * @type string
 	 */
@@ -2655,6 +2645,14 @@ export enum CloudintegrationtypesServiceIDDTO {
 	appservice = 'appservice',
 	containerapp = 'containerapp',
 	aks = 'aks',
+	sqldatabase = 'sqldatabase',
+	sqldatabasemi = 'sqldatabasemi',
+	mysqlflexibleserver = 'mysqlflexibleserver',
+	postgresqlflexibleserver = 'postgresqlflexibleserver',
+	mongodb = 'mongodb',
+	cosmosdb = 'cosmosdb',
+	cassandradb = 'cassandradb',
+	redis = 'redis',
 }
 export type CloudintegrationtypesCloudIntegrationServiceDTOAnyOf = {
 	/**
@@ -9746,6 +9744,19 @@ export type UpdateSpanMapperPathParameters = {
 	groupId: string;
 	mapperId: string;
 };
+export type GetStats200Data = { [key: string]: unknown };
+
+export type GetStats200 = {
+	/**
+	 * @type object
+	 */
+	data: GetStats200Data;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type GetTraceAggregationsPathParameters = {
 	traceID: string;
 };

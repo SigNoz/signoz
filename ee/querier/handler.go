@@ -3,13 +3,13 @@ package querier
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"io"
 	"net/http"
 
 	anomalyV2 "github.com/SigNoz/signoz/ee/anomaly"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
@@ -48,8 +48,8 @@ func (h *handler) QueryRange(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	var queryRangeRequest qbtypes.QueryRangeRequest
-	if err := json.NewDecoder(req.Body).Decode(&queryRangeRequest); err != nil {
-		render.Error(rw, errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to decode request body: %v", err))
+	if err := binding.JSON.BindBody(req.Body, &queryRangeRequest); err != nil {
+		render.Error(rw, err)
 		return
 	}
 

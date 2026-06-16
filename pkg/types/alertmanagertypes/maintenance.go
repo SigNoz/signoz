@@ -3,6 +3,7 @@ package alertmanagertypes
 import (
 	"context"
 	"encoding/json"
+	"slices"
 	"time"
 
 	"github.com/expr-lang/expr"
@@ -59,11 +60,11 @@ type StorablePlannedMaintenance struct {
 	types.Identifiable
 	types.TimeAuditable
 	types.UserAuditable
-	Name        string    `bun:"name,type:text,notnull"`
-	Description string    `bun:"description,type:text"`
-	Schedule    *Schedule `bun:"schedule,type:text,notnull"`
-	OrgID       string    `bun:"org_id,type:text"`
-	Scope       string    `bun:"scope,type:text"`
+	Name        string `bun:"name,type:text,notnull"`
+	Description string `bun:"description,type:text"`
+	Schedule    string `bun:"schedule,type:text,notnull"`
+	OrgID       string `bun:"org_id,type:text"`
+	Scope       string `bun:"scope,type:text"`
 }
 
 type PlannedMaintenance struct {
@@ -99,18 +100,9 @@ func (p *PostablePlannedMaintenance) Validate() error {
 	if p.Schedule == nil {
 		return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "missing schedule in the payload")
 	}
-	if p.Schedule.Timezone == "" {
-		return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "missing timezone in the payload")
-	}
 
-	if _, err := time.LoadLocation(p.Schedule.Timezone); err != nil {
-		return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "invalid timezone in the payload")
-	}
-
-	if !p.Schedule.StartTime.IsZero() && !p.Schedule.EndTime.IsZero() {
-		if p.Schedule.StartTime.After(p.Schedule.EndTime) {
-			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "start time cannot be after end time")
-		}
+	if !p.Schedule.EndTime.IsZero() && p.Schedule.StartTime.After(p.Schedule.EndTime) {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "start time cannot be after end time")
 	}
 
 	if p.Schedule.Recurrence != nil {
@@ -119,9 +111,6 @@ func (p *PostablePlannedMaintenance) Validate() error {
 		}
 		if p.Schedule.Recurrence.Duration.IsZero() {
 			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "missing duration in the payload")
-		}
-		if p.Schedule.Recurrence.EndTime != nil && p.Schedule.Recurrence.EndTime.Before(p.Schedule.Recurrence.StartTime) {
-			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "end time cannot be before start time")
 		}
 	}
 	if p.Scope != "" {
@@ -148,57 +137,21 @@ type PlannedMaintenanceWithRules struct {
 	Rules                       []*StorablePlannedMaintenanceRule `bun:"rel:has-many,join:id=planned_maintenance_id"`
 }
 
-// HasScheduleRecurrenceBoundsMismatch reports whether a recurring maintenance
-// has different start/end bounds in Schedule and Schedule.Recurrence.
-//
-// This is used to detect if there are any entries with recurrence that don't
-// have the same timestamps stored at the schedule-level.
-// UI payloads duplicated those values in both places, but direct API users may
-// have stored bounds that are missing from, or different than, the schedule-level bounds.
-// We need to observe these before we can safely drop Recurrence.StartTime and
-// Recurrence.EndTime.
-func (m *PlannedMaintenance) HasScheduleRecurrenceBoundsMismatch() bool {
-	recurrence := m.Schedule.Recurrence
-	if recurrence == nil {
-		return false
-	}
-
-	return !recurrence.StartTime.Equal(m.Schedule.StartTime) ||
-		(recurrence.EndTime == nil && !m.Schedule.EndTime.IsZero()) ||
-		(recurrence.EndTime != nil && !recurrence.EndTime.Equal(m.Schedule.EndTime))
+// AppliesTo reports whether this maintenance applies to the given rule.
+// An empty RuleIDs set means the maintenance applies to all rules.
+func (m *PlannedMaintenance) AppliesTo(ruleID string) bool {
+	return len(m.RuleIDs) == 0 || slices.Contains(m.RuleIDs, ruleID)
 }
 
 func (m *PlannedMaintenance) ShouldSkip(ruleID string, now time.Time, lset model.LabelSet) (bool, error) {
-	// Check if the alert ID is in the maintenance window
-	found := false
-	if len(m.RuleIDs) > 0 {
-		for _, alertID := range m.RuleIDs {
-			if alertID == ruleID {
-				found = true
-				break
-			}
-		}
-	}
-	// If no alert ids, then skip all alerts
-	if len(m.RuleIDs) == 0 {
-		found = true
-	}
-
-	if !found {
-		return false, nil
-	}
-
-	if !m.IsActive(now) {
+	if !m.AppliesTo(ruleID) || !m.IsActive(now) {
 		return false, nil
 	}
 
 	if m.Scope != "" {
-		result, err := EvalScopeExpression(m.Scope, lset)
-		if err != nil {
+		skip, err := EvalScopeExpression(m.Scope, lset)
+		if err != nil || !skip {
 			return false, err
-		}
-		if !result {
-			return false, nil
 		}
 	}
 	return true, nil
@@ -206,76 +159,63 @@ func (m *PlannedMaintenance) ShouldSkip(ruleID string, now time.Time, lset model
 
 // IsActive reports whether [now] falls inside the maintenance window's schedule.
 func (m *PlannedMaintenance) IsActive(now time.Time) bool {
-	// If alert is found, we check if it should be skipped based on the schedule
+	// Check if maintenance window has not started yet
+	if now.Before(m.Schedule.StartTime) {
+		return false
+	}
+
+	// Check if maintenance window has expired
+	if !m.Schedule.EndTime.IsZero() && now.After(m.Schedule.EndTime) {
+		return false
+	}
+
+	// Fixed schedule
+	if m.Schedule.Recurrence == nil {
+		return true
+	}
+
 	loc, err := time.LoadLocation(m.Schedule.Timezone)
 	if err != nil {
 		return false
 	}
 
-	startTime := m.Schedule.StartTime
-	endTime := m.Schedule.EndTime
-	recurrence := m.Schedule.Recurrence
-
-	// fixed schedule — only when no recurrence is configured.
-	// When recurrence is set, the recurring check below handles everything;
-	// falling through here would cause the window to match the absolute
-	// StartTime–EndTime range instead of the daily/weekly/monthly pattern.
-	if recurrence == nil && !startTime.IsZero() && !endTime.IsZero() {
-		if now.Equal(startTime) || now.Equal(endTime) ||
-			(now.After(startTime) && now.Before(endTime)) {
-			return true
-		}
+	switch m.Schedule.Recurrence.RepeatType {
+	case RepeatTypeDaily:
+		return m.checkDaily(now, loc)
+	case RepeatTypeWeekly:
+		return m.checkWeekly(now, loc)
+	case RepeatTypeMonthly:
+		return m.checkMonthly(now, loc)
+	default:
+		return false
 	}
-
-	// recurring schedule
-	if recurrence != nil {
-		// Make sure the recurrence has started
-		if now.Before(recurrence.StartTime) {
-			return false
-		}
-
-		// Check if recurrence has expired
-		if recurrence.EndTime != nil {
-			if !recurrence.EndTime.IsZero() && now.After(*recurrence.EndTime) {
-				return false
-			}
-		}
-
-		currentTime := now.In(loc)
-		switch recurrence.RepeatType {
-		case RepeatTypeDaily:
-			return m.checkDaily(currentTime, recurrence, loc)
-		case RepeatTypeWeekly:
-			return m.checkWeekly(currentTime, recurrence, loc)
-		case RepeatTypeMonthly:
-			return m.checkMonthly(currentTime, recurrence, loc)
-		}
-	}
-
-	return false
 }
 
 // checkDaily rebases the recurrence start to today (or yesterday if needed)
 // and returns true if currentTime is within [candidate, candidate+Duration].
-func (m *PlannedMaintenance) checkDaily(currentTime time.Time, rec *Recurrence, loc *time.Location) bool {
+func (m *PlannedMaintenance) checkDaily(currentTime time.Time, loc *time.Location) bool {
+	currentTime = currentTime.In(loc)
 	candidate := time.Date(
 		currentTime.Year(), currentTime.Month(), currentTime.Day(),
-		rec.StartTime.Hour(), rec.StartTime.Minute(), 0, 0,
+		m.Schedule.StartTime.Hour(), m.Schedule.StartTime.Minute(), 0, 0,
 		loc,
 	)
 	if candidate.After(currentTime) {
 		candidate = candidate.AddDate(0, 0, -1)
 	}
-	return currentTime.Sub(candidate) <= rec.Duration.Duration()
+	return currentTime.Sub(candidate) <= m.Schedule.Recurrence.Duration.Duration()
 }
 
 // checkWeekly finds the most recent allowed occurrence by rebasing the recurrence’s
 // time-of-day onto the allowed weekday. It does this for each allowed day and returns true
 // if the current time falls within the candidate window.
-func (m *PlannedMaintenance) checkWeekly(currentTime time.Time, rec *Recurrence, loc *time.Location) bool {
+func (m *PlannedMaintenance) checkWeekly(currentTime time.Time, loc *time.Location) bool {
+	currentTime = currentTime.In(loc)
+	rec := m.Schedule.Recurrence
+
 	// If no days specified, treat as every day (like daily).
 	if len(rec.RepeatOn) == 0 {
-		return m.checkDaily(currentTime, rec, loc)
+		return m.checkDaily(currentTime, loc)
 	}
 
 	for _, day := range rec.RepeatOn {
@@ -288,7 +228,7 @@ func (m *PlannedMaintenance) checkWeekly(currentTime time.Time, rec *Recurrence,
 		// Build a candidate occurrence by rebasing today's date to the allowed weekday.
 		candidate := time.Date(
 			currentTime.Year(), currentTime.Month(), currentTime.Day(),
-			rec.StartTime.Hour(), rec.StartTime.Minute(), 0, 0,
+			m.Schedule.StartTime.Hour(), m.Schedule.StartTime.Minute(), 0, 0,
 			loc,
 		).AddDate(0, 0, delta)
 		// If the candidate is in the future, subtract 7 days.
@@ -304,8 +244,10 @@ func (m *PlannedMaintenance) checkWeekly(currentTime time.Time, rec *Recurrence,
 
 // checkMonthly rebases the candidate occurrence using the recurrence's day-of-month.
 // If the candidate for the current month is in the future, it uses the previous month.
-func (m *PlannedMaintenance) checkMonthly(currentTime time.Time, rec *Recurrence, loc *time.Location) bool {
-	refDay := rec.StartTime.Day()
+func (m *PlannedMaintenance) checkMonthly(currentTime time.Time, loc *time.Location) bool {
+	currentTime = currentTime.In(loc)
+	startTime := m.Schedule.StartTime
+	refDay := startTime.Day()
 	year, month, _ := currentTime.Date()
 	lastDay := time.Date(year, month+1, 0, 0, 0, 0, 0, loc).Day()
 	day := refDay
@@ -313,7 +255,7 @@ func (m *PlannedMaintenance) checkMonthly(currentTime time.Time, rec *Recurrence
 		day = lastDay
 	}
 	candidate := time.Date(year, month, day,
-		rec.StartTime.Hour(), rec.StartTime.Minute(), rec.StartTime.Second(), rec.StartTime.Nanosecond(),
+		startTime.Hour(), startTime.Minute(), startTime.Second(), startTime.Nanosecond(),
 		loc,
 	)
 	if candidate.After(currentTime) {
@@ -323,33 +265,30 @@ func (m *PlannedMaintenance) checkMonthly(currentTime time.Time, rec *Recurrence
 		lastDayPrev := time.Date(y, m+1, 0, 0, 0, 0, 0, loc).Day()
 		if refDay > lastDayPrev {
 			candidate = time.Date(y, m, lastDayPrev,
-				rec.StartTime.Hour(), rec.StartTime.Minute(), rec.StartTime.Second(), rec.StartTime.Nanosecond(),
+				startTime.Hour(), startTime.Minute(), startTime.Second(), startTime.Nanosecond(),
 				loc,
 			)
 		} else {
 			candidate = time.Date(y, m, refDay,
-				rec.StartTime.Hour(), rec.StartTime.Minute(), rec.StartTime.Second(), rec.StartTime.Nanosecond(),
+				startTime.Hour(), startTime.Minute(), startTime.Second(), startTime.Nanosecond(),
 				loc,
 			)
 		}
 	}
-	return currentTime.Sub(candidate) <= rec.Duration.Duration()
+	return currentTime.Sub(candidate) <= m.Schedule.Recurrence.Duration.Duration()
 }
 
 func (m *PlannedMaintenance) IsUpcoming() bool {
-	loc, err := time.LoadLocation(m.Schedule.Timezone)
-	if err != nil {
-		return false
-	}
-	now := time.Now().In(loc)
+	now := time.Now()
 
-	if !m.Schedule.StartTime.IsZero() && !m.Schedule.EndTime.IsZero() {
-		return now.Before(m.Schedule.StartTime)
+	if m.IsRecurring() {
+		// Note: this would return true even if the maintenance is active.
+		// This isn't an issue right now because the only usage happens after the `IsActive` check.
+		return m.Schedule.EndTime.IsZero() || now.Before(m.Schedule.EndTime)
 	}
-	if m.Schedule.Recurrence != nil {
-		return now.Before(m.Schedule.Recurrence.StartTime)
-	}
-	return false
+
+	// Fixed schedule
+	return now.Before(m.Schedule.StartTime)
 }
 
 func (m *PlannedMaintenance) IsRecurring() bool {
@@ -363,19 +302,8 @@ func (m *PlannedMaintenance) Validate() error {
 	if m.Schedule == nil {
 		return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "missing schedule in the payload")
 	}
-	if m.Schedule.Timezone == "" {
-		return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "missing timezone in the payload")
-	}
-
-	_, err := time.LoadLocation(m.Schedule.Timezone)
-	if err != nil {
-		return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "invalid timezone in the payload")
-	}
-
-	if !m.Schedule.StartTime.IsZero() && !m.Schedule.EndTime.IsZero() {
-		if m.Schedule.StartTime.After(m.Schedule.EndTime) {
-			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "start time cannot be after end time")
-		}
+	if !m.Schedule.EndTime.IsZero() && m.Schedule.StartTime.After(m.Schedule.EndTime) {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "start time cannot be after end time")
 	}
 
 	if m.Schedule.Recurrence != nil {
@@ -385,28 +313,31 @@ func (m *PlannedMaintenance) Validate() error {
 		if m.Schedule.Recurrence.Duration.IsZero() {
 			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "missing duration in the payload")
 		}
-		if m.Schedule.Recurrence.EndTime != nil && m.Schedule.Recurrence.EndTime.Before(m.Schedule.Recurrence.StartTime) {
-			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "end time cannot be before start time")
+	}
+	if m.Scope != "" {
+		if _, err := expr.Compile(m.Scope, expr.AllowUndefinedVariables(), expr.AsBool()); err != nil {
+			err := errors.Newf(
+				errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload,
+				"invalid scope: %s", err.Error(),
+			)
+			return err.WithUrl(scopeDocUrl)
 		}
 	}
 	return nil
 }
 
 func (m PlannedMaintenance) MarshalJSON() ([]byte, error) {
-	now := time.Now().In(time.FixedZone(m.Schedule.Timezone, 0))
 	var status MaintenanceStatus
-	if m.IsActive(now) {
+	if m.IsActive(time.Now()) {
 		status = MaintenanceStatusActive
 	} else if m.IsUpcoming() {
 		status = MaintenanceStatusUpcoming
 	} else {
 		status = MaintenanceStatusExpired
 	}
-	var kind MaintenanceKind
 
-	if !m.Schedule.StartTime.IsZero() && !m.Schedule.EndTime.IsZero() && m.Schedule.EndTime.After(m.Schedule.StartTime) {
-		kind = MaintenanceKindFixed
-	} else {
+	kind := MaintenanceKindFixed
+	if m.Schedule.Recurrence != nil {
 		kind = MaintenanceKindRecurring
 	}
 
@@ -439,26 +370,29 @@ func (m PlannedMaintenance) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (m *PlannedMaintenanceWithRules) ToPlannedMaintenance() *PlannedMaintenance {
-	ruleIDs := []string{}
-	if m.Rules != nil {
-		for _, storableMaintenanceRule := range m.Rules {
-			ruleIDs = append(ruleIDs, storableMaintenanceRule.RuleID.StringValue())
-		}
+func (m *PlannedMaintenanceWithRules) ToPlannedMaintenance() (*PlannedMaintenance, error) {
+	schedule := &Schedule{}
+	if err := json.Unmarshal([]byte(m.Schedule), &schedule); err != nil {
+		return nil, err
+	}
+
+	ruleIDs := make([]string, 0, len(m.Rules))
+	for _, storableMaintenanceRule := range m.Rules {
+		ruleIDs = append(ruleIDs, storableMaintenanceRule.RuleID.StringValue())
 	}
 
 	return &PlannedMaintenance{
 		ID:          m.ID,
 		Name:        m.Name,
 		Description: m.Description,
-		Schedule:    m.Schedule,
+		Schedule:    schedule,
 		RuleIDs:     ruleIDs,
 		Scope:       m.Scope,
 		CreatedAt:   m.CreatedAt,
 		UpdatedAt:   m.UpdatedAt,
 		CreatedBy:   m.CreatedBy,
 		UpdatedBy:   m.UpdatedBy,
-	}
+	}, nil
 }
 
 type ListPlannedMaintenanceParams struct {

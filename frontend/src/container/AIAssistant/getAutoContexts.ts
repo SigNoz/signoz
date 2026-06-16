@@ -99,6 +99,30 @@ export function getAutoContexts(
 
 	// ── Alerts ────────────────────────────────────────────────────────────────
 
+	// Alert detail (overview / per-rule history) — `/alerts/overview?ruleId=…`
+	// or `/alerts/history?ruleId=…`. Mirrors dashboard_detail: resourceId is the
+	// rule id and shared metadata carries the URL time range when present.
+	if (
+		matchPath(pathname, { path: ROUTES.ALERT_OVERVIEW, exact: true }) ||
+		matchPath(pathname, { path: ROUTES.ALERT_HISTORY, exact: true })
+	) {
+		const ruleId = params.get(QueryParams.ruleId);
+		if (ruleId) {
+			return [
+				{
+					source: 'auto',
+					type: 'alert',
+					resourceId: ruleId,
+					metadata: {
+						page: 'alert_detail',
+						ruleId,
+						...sharedMetadata,
+					},
+				},
+			];
+		}
+	}
+
 	// Alert edit — `/alerts/edit?ruleId=…`.
 	if (matchPath(pathname, { path: ROUTES.EDIT_ALERTS, exact: true })) {
 		const ruleId = params.get(QueryParams.ruleId);
@@ -108,7 +132,7 @@ export function getAutoContexts(
 					source: 'auto',
 					type: 'alert',
 					resourceId: ruleId,
-					metadata: { page: 'alert_edit' },
+					metadata: { page: 'alert_edit', ruleId },
 				},
 			];
 		}
@@ -125,6 +149,7 @@ export function getAutoContexts(
 		];
 	}
 
+	// Triggered-alerts index — `/alerts/history` without a rule id.
 	if (matchPath(pathname, { path: ROUTES.ALERT_HISTORY, exact: true })) {
 		return [
 			{

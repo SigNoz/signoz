@@ -409,10 +409,6 @@ components:
       properties:
         duration:
           type: string
-        endTime:
-          format: date-time
-          nullable: true
-          type: string
         repeatOn:
           items:
             $ref: '#/components/schemas/AlertmanagertypesRepeatOn'
@@ -420,11 +416,7 @@ components:
           type: array
         repeatType:
           $ref: '#/components/schemas/AlertmanagertypesRepeatType'
-        startTime:
-          format: date-time
-          type: string
       required:
-      - startTime
       - duration
       - repeatType
       type: object
@@ -458,6 +450,7 @@ components:
           type: string
       required:
       - timezone
+      - startTime
       type: object
     AuthtypesAttributeMapping:
       properties:
@@ -1364,6 +1357,14 @@ components:
       - appservice
       - containerapp
       - aks
+      - sqldatabase
+      - sqldatabasemi
+      - mysqlflexibleserver
+      - postgresqlflexibleserver
+      - mongodb
+      - cosmosdb
+      - cassandradb
+      - redis
       type: string
     CloudintegrationtypesServiceMetadata:
       properties:
@@ -3573,10 +3574,6 @@ components:
           items:
             $ref: '#/components/schemas/ErrorsResponseerroradditional'
           type: array
-        invalidReferences:
-          items:
-            type: string
-          type: array
         message:
           type: string
         retry:
@@ -3597,6 +3594,10 @@ components:
       properties:
         message:
           type: string
+        suggestions:
+          items:
+            type: string
+          type: array
       type: object
     ErrorsResponseretryjson:
       properties:
@@ -9011,10 +9012,6 @@ paths:
           type: string
       responses:
         "204":
-          content:
-            application/json:
-              schema:
-                type: string
           description: No Content
         "401":
           content:
@@ -9167,10 +9164,6 @@ paths:
               $ref: '#/components/schemas/DashboardtypesUpdatablePublicDashboard'
       responses:
         "204":
-          content:
-            application/json:
-              schema:
-                type: string
           description: No Content
         "401":
           content:
@@ -9765,10 +9758,6 @@ paths:
               $ref: '#/components/schemas/Querybuildertypesv5QueryRangeRequest'
       responses:
         "200":
-          content:
-            application/json:
-              schema:
-                type: string
           description: OK
         "400":
           content:
@@ -10953,10 +10942,6 @@ paths:
           type: string
       responses:
         "204":
-          content:
-            application/json:
-              schema:
-                type: string
           description: No Content
         "401":
           content:
@@ -11070,10 +11055,6 @@ paths:
               $ref: '#/components/schemas/AuthtypesPatchableRole'
       responses:
         "204":
-          content:
-            application/json:
-              schema:
-                type: string
           description: No Content
         "401":
           content:
@@ -11220,10 +11201,6 @@ paths:
               $ref: '#/components/schemas/CoretypesPatchableObjects'
       responses:
         "204":
-          content:
-            application/json:
-              schema:
-                type: string
           description: No Content
         "400":
           content:
@@ -11673,10 +11650,6 @@ paths:
           type: string
       responses:
         "204":
-          content:
-            application/json:
-              schema:
-                type: string
           description: No Content
         "401":
           content:
@@ -11784,10 +11757,6 @@ paths:
               $ref: '#/components/schemas/ServiceaccounttypesPostableServiceAccount'
       responses:
         "204":
-          content:
-            application/json:
-              schema:
-                type: string
           description: No Content
         "400":
           content:
@@ -11969,10 +11938,6 @@ paths:
           type: string
       responses:
         "204":
-          content:
-            application/json:
-              schema:
-                type: string
           description: No Content
         "401":
           content:
@@ -12030,10 +11995,6 @@ paths:
               $ref: '#/components/schemas/ServiceaccounttypesUpdatableFactorAPIKey'
       responses:
         "204":
-          content:
-            application/json:
-              schema:
-                type: string
           description: No Content
         "400":
           content:
@@ -12216,10 +12177,6 @@ paths:
           type: string
       responses:
         "204":
-          content:
-            application/json:
-              schema:
-                type: string
           description: No Content
         "401":
           content:
@@ -12295,10 +12252,6 @@ paths:
               $ref: '#/components/schemas/ServiceaccounttypesPostableServiceAccount'
       responses:
         "204":
-          content:
-            application/json:
-              schema:
-                type: string
           description: No Content
         "404":
           content:
@@ -12790,6 +12743,53 @@ paths:
       summary: Update a span mapper
       tags:
       - spanmapper
+  /api/v1/stats:
+    get:
+      deprecated: false
+      description: This endpoint returns the collected stats for the organization
+      operationId: GetStats
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    additionalProperties: {}
+                    type: object
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get stats
+      tags:
+      - stats
   /api/v1/testChannel:
     post:
       deprecated: true
@@ -13476,10 +13476,6 @@ paths:
           type: string
       responses:
         "204":
-          content:
-            application/json:
-              schema:
-                type: string
           description: No Content
         "400":
           content:
@@ -13739,10 +13735,6 @@ paths:
           type: string
       responses:
         "204":
-          content:
-            application/json:
-              schema:
-                type: string
           description: No Content
         "400":
           content:
@@ -13795,10 +13787,6 @@ paths:
           type: string
       responses:
         "204":
-          content:
-            application/json:
-              schema:
-                type: string
           description: No Content
         "400":
           content:
@@ -15529,10 +15517,6 @@ paths:
               $ref: '#/components/schemas/MetricsexplorertypesUpdateMetricMetadataRequest'
       responses:
         "200":
-          content:
-            application/json:
-              schema:
-                type: string
           description: OK
         "400":
           content:
@@ -20831,10 +20815,6 @@ paths:
           type: string
       responses:
         "204":
-          content:
-            application/json:
-              schema:
-                type: string
           description: No Content
         "400":
           content:
@@ -20882,10 +20862,6 @@ paths:
           type: string
       responses:
         "204":
-          content:
-            application/json:
-              schema:
-                type: string
           description: No Content
         "400":
           content:

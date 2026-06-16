@@ -49,6 +49,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/ruler"
 	"github.com/SigNoz/signoz/pkg/ruler/signozruler"
+	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/zeus"
 )
@@ -80,6 +81,7 @@ type Handlers struct {
 	TraceDetail             tracedetail.Handler
 	RulerHandler            ruler.Handler
 	LLMPricingRuleHandler   llmpricingrule.Handler
+	StatsHandler            statsreporter.Handler
 }
 
 func NewHandlers(
@@ -97,6 +99,7 @@ func NewHandlers(
 	registryHandler factory.Handler,
 	alertmanagerService alertmanager.Alertmanager,
 	rulerService ruler.Ruler,
+	statsAggregator statsreporter.Aggregator,
 ) Handlers {
 	return Handlers{
 		SavedView:               implsavedview.NewHandler(modules.SavedView),
@@ -125,5 +128,6 @@ func NewHandlers(
 		TraceDetail:             impltracedetail.NewHandler(modules.TraceDetail),
 		RulerHandler:            signozruler.NewHandler(rulerService),
 		LLMPricingRuleHandler:   impllmpricingrule.NewHandler(modules.LLMPricingRule),
+		StatsHandler:            statsreporter.NewHandler(statsAggregator),
 	}
 }
