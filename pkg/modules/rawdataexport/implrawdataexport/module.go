@@ -69,25 +69,20 @@ func (m *Module) ExportRawData(ctx context.Context, orgID valuer.UUID, rangeRequ
 func exportRawDataForSingleQuery(querier querier.Querier, ctx context.Context, orgID valuer.UUID, rangeRequest *qbtypes.QueryRangeRequest, rowChan chan *qbtypes.RawRow, errChan chan error, doneChan chan any, queryIndex int) {
 
 	queries := rangeRequest.CompositeQuery.Queries
-	clientLimit := queries[queryIndex].GetLimit() // 0 means unlimited
+	rowCountLimit := queries[queryIndex].GetLimit() // 0 means no limit
 	rowCount := 0
 
-	// Page using the querier's cursor. At large offsets ClickHouse still has to
-	// scan and discard every prior row on each chunk. The cursor lets us
-	// advance the time window directly.
 	queries[queryIndex].SetOffset(0)
 	cursor := ""
 
 	for {
 		chunkSize := ChunkSize
-		if clientLimit > 0 {
-			remaining := clientLimit - rowCount
-			if remaining <= 0 {
-				return
-			}
-			chunkSize = min(ChunkSize, remaining)
+		if rowCountLimit > 0 {
+			chunkSize = min(ChunkSize, rowCountLimit-rowCount)
 		}
-
+		if chunkSize <= 0 {
+			return
+		}
 		queries[queryIndex].SetLimit(chunkSize)
 		queries[queryIndex].SetCursor(cursor)
 
@@ -124,7 +119,6 @@ func exportRawDataForSingleQuery(querier querier.Querier, ctx context.Context, o
 
 		rowCount += newRowsCount
 
-		// Stop when the querier returns no cursor (last page) or a short chunk.
 		if nextCursor == "" || newRowsCount < chunkSize {
 			return
 		}
