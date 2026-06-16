@@ -1,6 +1,4 @@
-import { type AnimationEvent, useCallback, useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
-import cx from 'classnames';
+import { useCallback } from 'react';
 import {
 	ResizableHandle,
 	ResizablePanel,
@@ -9,37 +7,42 @@ import {
 } from '@signozhq/ui/resizable';
 import { toast } from '@signozhq/ui/sonner';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { getPanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Panels/registry';
+import {
+	PANEL_KIND_TO_PANEL_TYPE,
+	type PanelKind,
+} from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelKind';
 
 import ConfigPane from './ConfigPane/ConfigPane';
 import Header from './Header/Header';
 import layoutStorage from './layoutStorage';
+import PanelEditorQueryBuilder from './PanelEditorQueryBuilder/PanelEditorQueryBuilder';
 import PreviewPane from './PreviewPane/PreviewPane';
-import QueryBuilderPlaceholder from './QueryBuilderPlaceholder/QueryBuilderPlaceholder';
 import { useLegendSeries } from './hooks/useLegendSeries';
+import { usePanelQuery } from '../hooks/usePanelQuery';
 import { usePanelEditorDraft } from './hooks/usePanelEditorDraft';
+import { usePanelEditorQuerySync } from './hooks/usePanelEditorQuerySync';
 import { usePanelEditorSave } from './hooks/usePanelEditorSave';
-import { usePreviewQuery } from './hooks/usePreviewQuery';
 import { useTableColumns } from './hooks/useTableColumns';
 
-import './PanelEditor.globals.scss';
 import styles from './PanelEditor.module.scss';
 
 interface PanelEditorContainerProps {
 	dashboardId: string;
 	panelId: string;
 	panel: DashboardtypesPanelDTO;
-	/** Dismiss the editor overlay (clears the `editPanelId` query param). */
+	/** Leave the editor (navigate back to the dashboard) without saving. */
 	onClose: () => void;
-	/** Called after a successful save so the dashboard can refetch. */
+	/** Called after a successful save — navigates back to the dashboard. */
 	onSaved: () => void;
 }
 
 /**
- * V2 panel editor rendered as a full-screen overlay on top of the dashboard
- * view (the dashboard stays mounted underneath). A resizable split holds the
- * live preview + query builder on the left and the configuration pane on the
- * right. Owns the draft state and the save round-trip.
+ * V2 panel editor page body. Rendered by the `DASHBOARD_PANEL_EDITOR` route
+ * (`PanelEditorPage`) as a full page — a resizable split holds the live preview
+ * + query builder on the left and the configuration pane on the right. Owns the
+ * draft state and the save round-trip.
  */
 function PanelEditorContainer({
 	dashboardId,
@@ -55,119 +58,113 @@ function PanelEditorContainer({
 		storage: layoutStorage,
 	});
 
+	const {
+		defaultLayout: mainDefaultLayout,
+		onLayoutChanged: onMainLayoutChanged,
+	} = useDefaultLayout({
+		id: 'panel-editor-v2-main',
+		storage: layoutStorage,
+	});
+
+	// Panel kind → V1 panel type (drives the query builder + preview).
+	const fullKind = draft.spec?.plugin?.kind;
+	const panelType =
+		(fullKind && PANEL_KIND_TO_PANEL_TYPE[fullKind as PanelKind]) ??
+		PANEL_TYPES.TIME_SERIES;
+
 	// One shared query result for the whole editor: the preview renders it and the config
 	// pane derives the panel's series from it (e.g. for the legend-colors control).
 	const panelDef = getPanelDefinition(draft.spec?.plugin?.kind);
-	const { data, isLoading, error, selectedInterval, timeRange, onTimeChange } =
-		usePreviewQuery({
+	const { data, isLoading, isFetching, error, cancelQuery, refetch } =
+		usePanelQuery({
 			panel: draft,
 			panelId,
 			enabled: !!panelDef,
 		});
+
+	// Seed the shared query builder from the draft and expose the Stage-&-Run
+	// action (writes the query into the draft → preview re-fetches, or forces a
+	// re-fetch when unchanged).
+	const { runQuery } = usePanelEditorQuerySync({
+		draft,
+		panelType,
+		setSpec,
+		refetch,
+	});
 	const legendSeries = useLegendSeries(draft, data);
 	const tableColumns = useTableColumns(draft, data);
-
-	// Flags the document while the editor overlay is mounted so the global stylesheet can
-	// lift body-portaled floating UI (Select dropdowns, the ⌘K palette) above the overlay.
-	useEffect(() => {
-		document.body.classList.add('panel-editor-open');
-		return (): void => document.body.classList.remove('panel-editor-open');
-	}, []);
-
-	// Dismiss is deferred until the exit animation finishes: `requestClose` flips the
-	// overlay into its closing state (playing the reverse keyframes), and the modal's
-	// `onAnimationEnd` then calls the real `onClose`, which unmounts the editor.
-	const [closing, setClosing] = useState(false);
-	const requestClose = useCallback(() => setClosing(true), []);
-	const onExitAnimationEnd = useCallback(
-		(event: AnimationEvent<HTMLDivElement>): void => {
-			// Only the modal's own exit animation should unmount — ignore animations that
-			// bubble up from descendants (e.g. the loading spinner).
-			if (closing && event.target === event.currentTarget) {
-				onClose();
-			}
-		},
-		[closing, onClose],
-	);
-
-	// Safety net: `prefers-reduced-motion` disables the exit animation, so
-	// `onAnimationEnd` never fires. Fall back to a timer (slightly longer than the
-	// animation) so the editor always unmounts once closing. `onClose` is idempotent.
-	useEffect(() => {
-		if (!closing) {
-			return undefined;
-		}
-		const timer = setTimeout(onClose, 240);
-		return (): void => clearTimeout(timer);
-	}, [closing, onClose]);
 
 	const onSave = useCallback(async (): Promise<void> => {
 		try {
 			await save(draft.spec);
 			toast.success('Panel saved');
 			onSaved();
-			requestClose();
 		} catch {
 			toast.error('Failed to save panel');
 		}
-	}, [save, draft.spec, onSaved, requestClose]);
+	}, [save, draft.spec, onSaved]);
 
-	// Portal to <body> so the fixed overlay escapes the dashboard content's
-	// stacking context (AppLayout pins `.app-content` at `z-index: 0`, which
-	// would otherwise trap the overlay below the side nav).
-	return createPortal(
-		<div
-			className={cx(styles.root, { [styles.closing]: closing })}
-			data-testid="panel-editor-v2"
-		>
-			<div className={styles.modal} onAnimationEnd={onExitAnimationEnd}>
-				<Header
-					isDirty={isDirty}
-					isSaving={isSaving}
-					onSave={onSave}
-					onClose={requestClose}
-				/>
-				<ResizablePanelGroup
-					id="panel-editor-v2"
-					orientation="horizontal"
-					defaultLayout={defaultLayout}
-					onLayoutChanged={onLayoutChanged}
+	return (
+		<div className={styles.page} data-testid="panel-editor-v2">
+			<Header
+				isDirty={isDirty}
+				isSaving={isSaving}
+				onSave={onSave}
+				onClose={onClose}
+			/>
+			<ResizablePanelGroup
+				id="panel-editor-v2"
+				orientation="horizontal"
+				defaultLayout={defaultLayout}
+				onLayoutChanged={onLayoutChanged}
+			>
+				<ResizablePanel minSize="75%" maxSize="80%" defaultSize="80%">
+					<div className={styles.left}>
+						<ResizablePanelGroup
+							id="panel-editor-v2-main"
+							orientation="vertical"
+							defaultLayout={mainDefaultLayout}
+							onLayoutChanged={onMainLayoutChanged}
+						>
+							<ResizablePanel minSize="55%" maxSize="65%" defaultSize="60%">
+								<PreviewPane
+									panelId={panelId}
+									panel={draft}
+									panelDef={panelDef}
+									data={data}
+									isLoading={isLoading}
+									error={error}
+								/>
+							</ResizablePanel>
+							<ResizableHandle withHandle className={styles.handle} />
+							<ResizablePanel minSize="35%" maxSize="45%" defaultSize="40%">
+								<PanelEditorQueryBuilder
+									panelType={panelType}
+									isLoadingQueries={isFetching}
+									onStageRunQuery={runQuery}
+									onCancelQuery={cancelQuery}
+								/>
+							</ResizablePanel>
+						</ResizablePanelGroup>
+					</div>
+				</ResizablePanel>
+				<ResizableHandle withHandle className={styles.handle} />
+				<ResizablePanel
+					minSize="20%"
+					maxSize="25%"
+					defaultSize="20%"
+					className={styles.right}
 				>
-					<ResizablePanel minSize="75%" maxSize="80%" defaultSize="80%">
-						<div className={styles.left}>
-							<PreviewPane
-								panelId={panelId}
-								panel={draft}
-								panelDef={panelDef}
-								data={data}
-								isLoading={isLoading}
-								error={error}
-								selectedInterval={selectedInterval}
-								timeRange={timeRange}
-								onTimeChange={onTimeChange}
-							/>
-							<QueryBuilderPlaceholder />
-						</div>
-					</ResizablePanel>
-					<ResizableHandle withHandle />
-					<ResizablePanel
-						minSize="20%"
-						maxSize="25%"
-						defaultSize="20%"
-						className={styles.right}
-					>
-						<ConfigPane
-							panelKind={draft.spec?.plugin?.kind}
-							spec={spec}
-							onChangeSpec={setSpec}
-							legendSeries={legendSeries}
-							tableColumns={tableColumns}
-						/>
-					</ResizablePanel>
-				</ResizablePanelGroup>
-			</div>
-		</div>,
-		document.body,
+					<ConfigPane
+						panelKind={draft.spec?.plugin?.kind}
+						spec={spec}
+						onChangeSpec={setSpec}
+						legendSeries={legendSeries}
+						tableColumns={tableColumns}
+					/>
+				</ResizablePanel>
+			</ResizablePanelGroup>
+		</div>
 	);
 }
 

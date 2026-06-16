@@ -10,6 +10,14 @@ jest.mock('react-redux', () => ({
 	useSelector: jest.fn(),
 }));
 
+// usePanelQuery reads the query client only to cancel in-flight fetches; the
+// fetch hook itself is mocked, so a stub client is enough.
+jest.mock('react-query', () => ({
+	useQueryClient: (): { cancelQueries: jest.Mock } => ({
+		cancelQueries: jest.fn(),
+	}),
+}));
+
 jest.mock('../useGetQueryRangeV5', () => ({
 	useGetQueryRangeV5: jest.fn(),
 }));

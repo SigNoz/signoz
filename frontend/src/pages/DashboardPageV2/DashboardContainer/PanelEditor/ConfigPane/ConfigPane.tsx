@@ -74,18 +74,20 @@ function ConfigPane({
 			{sections.length > 0 && (
 				<>
 					<div className={styles.divider} />
-					<span className={styles.eyebrow}>Display</span>
-					<div className={styles.sections}>
-						{sections.map((config) => (
-							<SectionSlot
-								key={config.kind}
-								config={config}
-								spec={spec}
-								onChangeSpec={onChangeSpec}
-								legendSeries={legendSeries}
-								tableColumns={tableColumns}
-							/>
-						))}
+					<div className={styles.sectionsContainer}>
+						<span className={styles.eyebrow}>Display</span>
+						<div className={styles.sections}>
+							{sections.map((config) => (
+								<SectionSlot
+									key={config.kind}
+									config={config}
+									spec={spec}
+									onChangeSpec={onChangeSpec}
+									legendSeries={legendSeries}
+									tableColumns={tableColumns}
+								/>
+							))}
+						</div>
 					</div>
 				</>
 			)}

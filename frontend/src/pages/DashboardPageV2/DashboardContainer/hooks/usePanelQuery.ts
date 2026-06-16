@@ -1,4 +1,5 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
+import { useQueryClient } from 'react-query';
 // eslint-disable-next-line no-restricted-imports -- TODO: migrate global time selector off redux
 import { useSelector } from 'react-redux';
 import type {
@@ -65,6 +66,8 @@ export interface UsePanelQueryResult {
 	error: Error | null;
 	/** Re-run the query (e.g. a retry button on the error state). */
 	refetch: () => void;
+	/** Abort the in-flight fetch (e.g. the editor's Stage & Run cancel). */
+	cancelQuery: () => void;
 }
 
 /**
@@ -146,9 +149,8 @@ export function usePanelQuery({
 
 	const runnable = useMemo(() => hasRunnableQueries(queries ?? []), [queries]);
 
-	const response = useGetQueryRangeV5({
-		requestPayload,
-		queryKey: [
+	const queryKey = useMemo(
+		() => [
 			REACT_QUERY_KEY.DASHBOARD_GRID_CARD_QUERY_RANGE,
 			panelId,
 			// Dashboard keys off Redux min/max + interval; the editor passes an
@@ -167,8 +169,31 @@ export function usePanelQuery({
 			fullKind,
 			queries,
 		],
+		[
+			panelId,
+			time,
+			startMs,
+			endMs,
+			minTime,
+			maxTime,
+			globalSelectedInterval,
+			timePreference,
+			fillGaps,
+			fullKind,
+			queries,
+		],
+	);
+
+	const response = useGetQueryRangeV5({
+		requestPayload,
+		queryKey,
 		enabled: enabled && runnable,
 	});
+
+	const queryClient = useQueryClient();
+	const cancelQuery = useCallback((): void => {
+		void queryClient.cancelQueries(queryKey);
+	}, [queryClient, queryKey]);
 
 	const data = useMemo<PanelQueryData>(
 		() => ({ response: response.data, requestPayload, legendMap }),
@@ -184,5 +209,6 @@ export function usePanelQuery({
 		// "no error" sentinel.
 		error: (response.error as Error | null) ?? null,
 		refetch: response.refetch,
+		cancelQuery,
 	};
 }

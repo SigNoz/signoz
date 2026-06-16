@@ -1,27 +1,27 @@
 import { useCallback } from 'react';
-import { useLocation } from 'react-router-dom';
-import { QueryParams } from 'constants/query';
+import { generatePath } from 'react-router-dom';
+import ROUTES from 'constants/routes';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import useUrlQuery from 'hooks/useUrlQuery';
+
+import { useDashboardStore } from '../store/useDashboardStore';
 
 /**
- * Returns a callback that opens the V2 panel editor overlay for a panel by
- * setting the `editPanelId` query param on the current dashboard URL.
- * DashboardContainer reads the param and renders the editor — the dashboard
- * stays mounted underneath. URL-driven so any entry point (panel actions menu,
- * future title interactions, empty states) can open the editor without
- * threading callbacks through the layout tree.
+ * Returns a callback that opens the V2 panel editor for a panel by navigating
+ * to its dedicated route (`/dashboard/:dashboardId/panel/:panelId`). The editor
+ * is a full page (not a modal), mirroring the V1 widget-editor flow. The
+ * dashboard id comes from the edit-context store (set by DashboardContainer),
+ * so any entry point can open the editor with just the panel id.
  */
 export function useOpenPanelEditor(): (panelId: string) => void {
-	const { pathname } = useLocation();
 	const { safeNavigate } = useSafeNavigate();
-	const urlQuery = useUrlQuery();
+	const dashboardId = useDashboardStore((s) => s.dashboardId);
 
 	return useCallback(
 		(panelId: string): void => {
-			urlQuery.set(QueryParams.editPanelId, panelId);
-			safeNavigate(`${pathname}?${urlQuery.toString()}`);
+			safeNavigate(
+				generatePath(ROUTES.DASHBOARD_PANEL_EDITOR, { dashboardId, panelId }),
+			);
 		},
-		[urlQuery, safeNavigate, pathname],
+		[safeNavigate, dashboardId],
 	);
 }

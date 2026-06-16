@@ -1,13 +1,12 @@
 .preview {
 	display: flex;
 	flex-direction: column;
-	flex: 1;
-	min-height: 0;
+	height: 100%;
 	gap: 16px;
 	padding: 24px;
 	background-image: radial-gradient(var(--l2-border) 1px, transparent 0);
 	background-size: 20px 20px;
-	border-bottom: 1px solid var(--l2-border);
+	border-bottom: 1px solid var(--l1-border);
 }
 
 .header {
@@ -54,7 +53,7 @@
 	align-items: center;
 	justify-content: center;
 	padding: 24px;
-	color: var(--bg-vanilla-400, #8993ae);
+	color: var(--l2-forground);
 	font-size: 13px;
 	text-align: center;
 }
