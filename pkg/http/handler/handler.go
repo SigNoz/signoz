@@ -113,9 +113,11 @@ func (handler *handler) ServeOpenAPI(opCtx openapi.OperationContext) {
 			openapi.WithHTTPStatus(handler.openAPIDef.SuccessStatusCode),
 		)
 	} else {
+		// No response body (e.g. 204 No Content): omit the content type so the
+		// spec doesn't declare a body for a bodyless response, which would make
+		// clients try to decode an empty payload.
 		opCtx.AddRespStructure(
 			nil,
-			openapi.WithContentType(handler.openAPIDef.ResponseContentType),
 			openapi.WithHTTPStatus(handler.openAPIDef.SuccessStatusCode),
 		)
 	}

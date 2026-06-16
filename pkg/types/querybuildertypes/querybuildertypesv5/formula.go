@@ -1,6 +1,7 @@
 package querybuildertypesv5
 
 import (
+	"bytes"
 	"fmt"
 	"math"
 	"strconv"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/SigNoz/govaluate"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/http/binding"
 )
 
 type QueryBuilderFormula struct {
@@ -66,7 +68,7 @@ func (f QueryBuilderFormula) Copy() QueryBuilderFormula {
 func (f *QueryBuilderFormula) UnmarshalJSON(data []byte) error {
 	type Alias QueryBuilderFormula
 	var temp Alias
-	if err := UnmarshalJSONWithContext(data, &temp, "formula spec"); err != nil {
+	if err := binding.JSON.BindBody(bytes.NewReader(data), &temp, binding.WithDisallowUnknownFields(true), binding.WithUnknownFieldContext("formula spec")); err != nil {
 		return err
 	}
 	*f = QueryBuilderFormula(temp)

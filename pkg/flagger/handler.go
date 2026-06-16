@@ -35,11 +35,7 @@ func (handler *handler) GetFeatures(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
 
