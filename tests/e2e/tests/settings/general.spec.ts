@@ -10,7 +10,8 @@ import { SETTINGS_ROUTES } from '../../helpers/settings';
 
 async function gotoWorkspace(page: Page): Promise<void> {
 	await page.goto(SETTINGS_ROUTES.WORKSPACE);
-	await expect(page.locator('.retention-controls-container')).toBeVisible();
+	// Retention data is fetched server-side; allow margin for the API response.
+	await expect(page.locator('.retention-controls-container')).toBeVisible({ timeout: 15_000 });
 }
 
 function retentionRow(page: Page, signal: string) {

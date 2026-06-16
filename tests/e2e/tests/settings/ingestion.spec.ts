@@ -15,11 +15,12 @@ test.describe.configure({ mode: 'serial' });
 
 async function gotoIngestion(page: Page): Promise<void> {
 	await page.goto(SETTINGS_ROUTES.INGESTION);
+	// Ingestion keys/settings are fetched server-side; allow margin for the API response.
 	await expect(
 		page
 			.locator('.ingestion-key-container, .ingestion-settings-container')
 			.first(),
-	).toBeVisible();
+	).toBeVisible({ timeout: 15_000 });
 }
 
 test.describe('Settings — Ingestion page', () => {

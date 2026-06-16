@@ -16,7 +16,8 @@ const SEARCH_PLACEHOLDER = 'Search by name or email...';
 
 async function gotoMembers(page: Page): Promise<void> {
 	await page.goto(SETTINGS_ROUTES.MEMBERS);
-	await expect(page.locator('.members-table-wrapper')).toBeVisible();
+	// Members list is fetched server-side; allow margin for the API response.
+	await expect(page.locator('.members-table-wrapper')).toBeVisible({ timeout: 15_000 });
 }
 
 test.describe('Settings — Members page', () => {
