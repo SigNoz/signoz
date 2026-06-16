@@ -2,6 +2,7 @@ import { generatePath } from 'react-router-dom';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import { serialize } from 'lib/compositeQuery/serializer';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 type GenerateExportToDashboardLinkParams = {
@@ -21,6 +22,4 @@ export const generateExportToDashboardLink = ({
 		dashboardId,
 	})}/new?${QueryParams.graphType}=${panelType}&${
 		QueryParams.widgetId
-	}=${widgetId}&${QueryParams.compositeQuery}=${encodeURIComponent(
-		JSON.stringify(query),
-	)}`;
+	}=${widgetId}&${serialize(query).toString()}`;

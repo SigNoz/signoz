@@ -38,6 +38,10 @@ import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQue
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
+import {
+	applySerializedParams,
+	serialize,
+} from 'lib/compositeQuery/serializer';
 import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderItemName';
 import { getOperatorsBySourceAndPanelType } from 'lib/newQueryBuilder/getOperatorsBySourceAndPanelType';
@@ -990,10 +994,7 @@ export function QueryBuilderProvider({
 				);
 			}
 
-			urlQuery.set(
-				QueryParams.compositeQuery,
-				encodeURIComponent(JSON.stringify(currentGeneratedQuery)),
-			);
+			applySerializedParams(serialize(currentGeneratedQuery), urlQuery);
 
 			if (searchParams) {
 				Object.keys(searchParams).forEach((param) =>

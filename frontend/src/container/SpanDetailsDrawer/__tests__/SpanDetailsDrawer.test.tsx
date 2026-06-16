@@ -3,6 +3,7 @@ import getUserPreference from 'api/v1/user/preferences/name/get';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { SPAN_ATTRIBUTES } from 'container/ApiMonitoring/Explorer/Domains/DomainDetails/constants';
+import { deserialize } from 'lib/compositeQuery/serializer';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { server } from 'mocks-server/server';
 import { QueryBuilderContext } from 'providers/QueryBuilder';
@@ -545,14 +546,13 @@ describe('SpanDetailsDrawer', () => {
 			expect(urlParams.get(QueryParams.endTime)).toBe('1640995560000'); // traceEndTime + 5 minutes
 
 			// Verify composite query includes both trace_id and span_id filters
-			const compositeQuery = JSON.parse(
-				urlParams.get(QueryParams.compositeQuery) || '{}',
-			);
-			const { filter } = compositeQuery.builder.queryData[0];
+			const compositeQuery = deserialize(urlParams);
+			expect(compositeQuery).not.toBeNull();
+			const filter = compositeQuery?.builder.queryData[0]?.filter;
 
 			// Check that the filter expression contains trace_id
 			// Note: Current behavior uses only trace_id filter for navigation
-			expect(filter.expression).toContain("trace_id = 'test-trace-id'");
+			expect(filter?.expression).toContain("trace_id = 'test-trace-id'");
 
 			// Verify mockSafeNavigate was NOT called
 			expect(mockSafeNavigate).not.toHaveBeenCalled();
@@ -595,16 +595,16 @@ describe('SpanDetailsDrawer', () => {
 
 			expect(urlParams.get(QueryParams.activeLogId)).toBe('"context-log-before"');
 
-			// Verify composite query includes only trace_id filter (no span_id for context logs)
-			const compositeQuery = JSON.parse(
-				urlParams.get(QueryParams.compositeQuery) || '{}',
-			);
-			const { filter } = compositeQuery.builder.queryData[0];
+			// Verify composite query filters by trace_id and the context log's own span_id
+			const compositeQuery = deserialize(urlParams);
+			expect(compositeQuery).not.toBeNull();
+			const filter = compositeQuery?.builder.queryData[0]?.filter;
 
-			// Check that the filter expression contains trace_id but not span_id for context logs
-			expect(filter.expression).toContain("trace_id = 'test-trace-id'");
-			// Context logs should not have span_id filter
-			expect(filter.expression).not.toContain('span_id');
+			// Check that the filter expression contains trace_id
+			expect(filter?.expression).toContain("trace_id = 'test-trace-id'");
+			// Context logs use their own span id, not the currently selected span id
+			expect(filter?.expression).toContain("span_id = 'different-span-id'");
+			expect(filter?.expression).not.toContain('test-span-id');
 
 			// Verify mockSafeNavigate was NOT called
 			expect(mockSafeNavigate).not.toHaveBeenCalled();

@@ -247,16 +247,12 @@ function Application(): JSX.Element {
 				const avialableParams = routeConfig[ROUTES.TRACE];
 				const queryString = getQueryString(avialableParams, urlParams);
 
-				const JSONCompositeQuery = encodeURIComponent(
-					JSON.stringify(apmToTraceQuery),
-				);
-
 				const newPath = generateExplorerPath(
 					isViewLogsClicked,
 					urlParams,
 					servicename,
 					selectedTraceTags,
-					JSONCompositeQuery,
+					apmToTraceQuery,
 					queryString,
 				);
 

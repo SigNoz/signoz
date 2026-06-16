@@ -1,5 +1,7 @@
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
+import { serialize } from 'lib/compositeQuery/serializer';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { getAutoContexts } from '../getAutoContexts';
 
@@ -146,5 +148,25 @@ describe('getAutoContexts', () => {
 				'?selectedItem=host-1',
 			),
 		).toStrictEqual([]);
+	});
+
+	it('decodes the serialized composite query into metadata.query', () => {
+		const query = { builder: { queryData: [] } } as unknown as Query;
+		const search = `?${serialize(query).toString()}`;
+
+		const [context] = getAutoContexts(ROUTES.LOGS_EXPLORER, search);
+
+		expect(context.metadata?.query).toStrictEqual(query);
+	});
+
+	it('omits metadata.query when no serialized query is in the URL', () => {
+		// Detection no longer gates on the `compositeQuery` key — it routes
+		// through `deserialize`/the adapter list — so non-query params (time
+		// range, etc.) must not be mistaken for a query.
+		const search = `?${QueryParams.startTime}=1700000000000&${QueryParams.endTime}=1700003600000`;
+
+		const [context] = getAutoContexts(ROUTES.LOGS_EXPLORER, search);
+
+		expect(context.metadata).not.toHaveProperty('query');
 	});
 });

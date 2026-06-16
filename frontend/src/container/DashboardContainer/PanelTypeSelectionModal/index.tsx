@@ -2,8 +2,8 @@ import { memo } from 'react';
 import { Card, Modal } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
-import { QueryParams } from 'constants/query';
 import { PANEL_TYPES, PANEL_TYPES_INITIAL_QUERY } from 'constants/queryBuilder';
+import { serializeToParams } from 'lib/compositeQuery/serializer';
 import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
 import { usePanelTypeSelectionModalStore } from 'providers/Dashboard/helpers/panelTypeSelectionModalHelper';
@@ -28,9 +28,7 @@ function PanelTypeSelectionModal(): JSX.Element {
 		const queryParams = {
 			graphType: name,
 			widgetId: id,
-			[QueryParams.compositeQuery]: JSON.stringify(
-				PANEL_TYPES_INITIAL_QUERY[name],
-			),
+			...serializeToParams(PANEL_TYPES_INITIAL_QUERY[name]),
 		};
 
 		history.push(
