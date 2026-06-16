@@ -1,5 +1,6 @@
-import { Tooltip } from 'antd';
 import { TableColumnDef } from 'components/TanStackTableView';
+import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { InframonitoringtypesVolumeRecordDTO } from 'api/generated/services/sigNoz.schemas';
 import TanStackTable from 'components/TanStackTableView';
 import { ExpandButtonWrapper } from 'container/InfraMonitoringK8s/components';
 
@@ -7,23 +8,31 @@ import EntityGroupHeader from '../Base/EntityGroupHeader';
 import K8sGroupCell from '../Base/K8sGroupCell';
 import { formatBytes } from '../commonUtils';
 import { ValidateColumnValueWrapper } from '../components';
-import { InfraMonitoringEntity } from '../constants';
-import { K8sVolumesData } from './api';
+import {
+	INFRA_MONITORING_ATTR_KEYS,
+	InfraMonitoringEntity,
+} from '../constants';
 import { HardDrive } from '@signozhq/icons';
 
-export function getK8sVolumeRowKey(volume: K8sVolumesData): string {
+export function getK8sVolumeRowKey(
+	volume: InframonitoringtypesVolumeRecordDTO,
+): string {
 	return (
 		volume.persistentVolumeClaimName ||
-		volume.meta.k8s_persistentvolumeclaim_name ||
+		volume.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_PERSISTENT_VOLUME_CLAIM_NAME] ||
 		''
 	);
 }
 
-export function getK8sVolumeItemKey(volume: K8sVolumesData): string {
+export function getK8sVolumeItemKey(
+	volume: InframonitoringtypesVolumeRecordDTO,
+): string {
 	return volume.persistentVolumeClaimName;
 }
 
-export const k8sVolumesColumnsConfig: TableColumnDef<K8sVolumesData>[] = [
+export type VolumeTableColumnConfig =
+	TableColumnDef<InframonitoringtypesVolumeRecordDTO>;
+export const k8sVolumesColumnsConfig: VolumeTableColumnConfig[] = [
 	{
 		id: 'volumeGroup',
 		header: (): React.ReactNode => <EntityGroupHeader title="VOLUME GROUP" />,
@@ -63,24 +72,25 @@ export const k8sVolumesColumnsConfig: TableColumnDef<K8sVolumesData>[] = [
 		cell: ({ value }): React.ReactNode => {
 			const pvcName = value as string;
 			return (
-				<Tooltip title={pvcName}>
+				<TooltipSimple title={pvcName}>
 					<TanStackTable.Text>{pvcName}</TanStackTable.Text>
-				</Tooltip>
+				</TooltipSimple>
 			);
 		},
 	},
 	{
 		id: 'namespaceName',
 		header: 'Namespace Name',
-		accessorFn: (row): string => row.meta.k8s_namespace_name || '',
+		accessorFn: (row): string =>
+			row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
 		width: { min: 220 },
 		enableSort: false,
 		cell: ({ value }): React.ReactNode => {
 			const namespaceName = value as string;
 			return (
-				<Tooltip title={namespaceName}>
+				<TooltipSimple title={namespaceName}>
 					<TanStackTable.Text>{namespaceName}</TanStackTable.Text>
-				</Tooltip>
+				</TooltipSimple>
 			);
 		},
 	},
