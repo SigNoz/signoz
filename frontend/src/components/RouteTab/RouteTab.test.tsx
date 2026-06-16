@@ -90,4 +90,20 @@ describe('RouteTab component', () => {
 		fireEvent.click(screen.getByRole('tab', { name: 'Tab2' }));
 		expect(onChangeHandler).toHaveBeenCalled();
 	});
+
+	it('unmounts inactive tab pane content after switching', () => {
+		const history = createMemoryHistory({ initialEntries: ['/tab1'] });
+		render(
+			<Router history={history}>
+				<RouteTab history={history} routes={testRoutes} activeKey="Tab1" />
+			</Router>,
+		);
+
+		expect(screen.getByText('Dummy Component 1')).toBeInTheDocument();
+
+		fireEvent.click(screen.getByRole('tab', { name: 'Tab2' }));
+
+		expect(screen.queryByText('Dummy Component 1')).not.toBeInTheDocument();
+		expect(screen.getByText('Dummy Component 2')).toBeInTheDocument();
+	});
 });
