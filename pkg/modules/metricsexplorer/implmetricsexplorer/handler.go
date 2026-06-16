@@ -11,16 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/metricsexplorertypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/gorilla/mux"
 )
-
-func extractMetricName(req *http.Request) (string, error) {
-	metricName := mux.Vars(req)["metric_name"]
-	if metricName == "" {
-		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "metric_name is required in URL path")
-	}
-	return metricName, nil
-}
 
 type handler struct {
 	module metricsexplorer.Module
@@ -212,20 +203,24 @@ func (h *handler) GetMetricDashboards(rw http.ResponseWriter, req *http.Request)
 		return
 	}
 
-	metricName, err := extractMetricName(req)
-	if err != nil {
+	var in metricsexplorertypes.MetricNameQuery
+	if err := binding.Query.BindQuery(req.URL.Query(), &in); err != nil {
+		render.Error(rw, err)
+		return
+	}
+	if err := in.Validate(); err != nil {
 		render.Error(rw, err)
 		return
 	}
 
 	orgID := valuer.MustNewUUID(claims.OrgID)
 
-	if err := h.checkMetricExists(req.Context(), orgID, metricName); err != nil {
+	if err := h.checkMetricExists(req.Context(), orgID, in.MetricName); err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	out, err := h.module.GetMetricDashboards(req.Context(), orgID, metricName)
+	out, err := h.module.GetMetricDashboards(req.Context(), orgID, in.MetricName)
 	if err != nil {
 		render.Error(rw, err)
 		return

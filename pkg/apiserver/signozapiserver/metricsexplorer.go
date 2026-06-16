@@ -167,7 +167,7 @@ func (provider *provider) addMetricsExplorerRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/metrics/{metric_name}/dashboards", handler.New(
+	if err := router.Handle("/api/v2/metrics/dashboards", handler.New(
 		provider.authzMiddleware.ViewAccess(provider.metricsExplorerHandler.GetMetricDashboards),
 		handler.OpenAPIDef{
 			ID:                  "GetMetricDashboards",
@@ -175,6 +175,7 @@ func (provider *provider) addMetricsExplorerRoutes(router *mux.Router) error {
 			Summary:             "Get metric dashboards",
 			Description:         "This endpoint returns associated dashboards for a specified metric",
 			Request:             nil,
+			RequestQuery:        new(metricsexplorertypes.MetricNameQuery),
 			RequestContentType:  "",
 			Response:            new(metricsexplorertypes.MetricDashboardsResponse),
 			ResponseContentType: "application/json",

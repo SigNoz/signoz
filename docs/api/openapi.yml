@@ -15166,70 +15166,6 @@ paths:
       summary: List metric names
       tags:
       - metrics
-  /api/v2/metrics/{metric_name}/dashboards:
-    get:
-      deprecated: false
-      description: This endpoint returns associated dashboards for a specified metric
-      operationId: GetMetricDashboards
-      parameters:
-      - in: path
-        name: metric_name
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    $ref: '#/components/schemas/MetricsexplorertypesMetricDashboardsResponse'
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: OK
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Not Found
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - VIEWER
-      - tokenizer:
-        - VIEWER
-      summary: Get metric dashboards
-      tags:
-      - metrics
   /api/v2/metrics/alerts:
     get:
       deprecated: false
@@ -15367,6 +15303,70 @@ paths:
       - tokenizer:
         - VIEWER
       summary: Get metric attributes
+      tags:
+      - metrics
+  /api/v2/metrics/dashboards:
+    get:
+      deprecated: false
+      description: This endpoint returns associated dashboards for a specified metric
+      operationId: GetMetricDashboards
+      parameters:
+      - in: query
+        name: metricName
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/MetricsexplorertypesMetricDashboardsResponse'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get metric dashboards
       tags:
       - metrics
   /api/v2/metrics/highlights:
