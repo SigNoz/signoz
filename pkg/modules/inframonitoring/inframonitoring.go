@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/types/inframonitoringtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -22,6 +23,7 @@ type Handler interface {
 }
 
 type Module interface {
+	statsreporter.StatsCollector
 	ListHosts(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableHosts) (*inframonitoringtypes.Hosts, error)
 	ListPods(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostablePods) (*inframonitoringtypes.Pods, error)
 	ListNodes(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableNodes) (*inframonitoringtypes.Nodes, error)

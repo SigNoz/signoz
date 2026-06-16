@@ -304,7 +304,7 @@ func TestCompositeKeyFromLabels(t *testing.T) {
 			name: "daemonset and namespace group-by",
 			labels: map[string]string{
 				"k8s.daemonset.name": "web-1",
-				"k8s.namespace.name":  "ns-x",
+				"k8s.namespace.name": "ns-x",
 			},
 			groupBy:  []qbtypes.GroupByKey{daemonSetNameGroupByKey, namespaceNameGroupByKey},
 			expected: "web-1\x00ns-x",

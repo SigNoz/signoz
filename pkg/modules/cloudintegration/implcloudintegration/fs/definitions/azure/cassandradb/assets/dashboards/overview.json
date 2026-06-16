@@ -1,0 +1,1866 @@
+{
+  "description": "Overview of Azure Managed Instance for Apache Cassandra",
+  "image": "data:image/svg+xml;base64,PHN2ZyBpZD0iYmE3ZTNjODMtNGVhNi00MGQ1LTgyMGYtNzQ2Y2NlZGI4MTU2IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOCAxOCI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJlNzRkZGYyMy1mZTc0LTRmODktOWE0OS1jN2YyZTIyYmUyODQiIHgxPSIzLjcwNyIgeTE9IjUuMTIzIiB4Mj0iMy43MDciIHkyPSIyLjA2MSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iIzAwNzhkNCIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzVlYTBlZiIvPjwvbGluZWFyR3JhZGllbnQ+PGxpbmVhckdyYWRpZW50IGlkPSJiY2NlM2I5NC02YjgzLTQ0YzUtOWJmNy1hODlkNjY2ZjNkMWUiIHgxPSIxMi43NDEiIHkxPSIxMC41NTgiIHgyPSIxMi43NDEiIHkyPSI1LjE2MSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iIzAwNzhkNCIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzVlYTBlZiIvPjwvbGluZWFyR3JhZGllbnQ+PGxpbmVhckdyYWRpZW50IGlkPSJmOWIwODAzZi00MWU1LTQxNjUtOTIzMC1lMjIwNDI3ZWM0NzUiIHgxPSIzLjcwNyIgeTE9IjEzLjcyMyIgeDI9IjMuNzA3IiB5Mj0iMTAuMzc4IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjMDA3OGQ0Ii8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjNWVhMGVmIi8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+PGc+PGc+PHJlY3QgeD0iNy45MjMiIHk9IjEuOTIyIiB3aWR0aD0iMC45OCIgaGVpZ2h0PSI2LjE4MyIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMC4wMTMgMTAuMDQ4KSByb3RhdGUoLTYxLjcyNSkiIGZpbGw9IiMwMDMwNjciLz48cGF0aCBkPSJNNy4wODEsNC4yVjEuNUguMzN2Mi43aDB2MGMwLC43MTYsMS41MTEsMS4zLDMuMzc2LDEuM3MzLjM3Ni0uNTgsMy4zNzYtMS4zWiIgZmlsbD0idXJsKCNlNzRkZGYyMy1mZTc0LTRmODktOWE0OS1jN2YyZTIyYmUyODQpIi8+PGVsbGlwc2UgY3g9IjMuNzA3IiBjeT0iMS41NDYiIHJ4PSIzLjM3NiIgcnk9IjEuMjk2IiBmaWxsPSIjODNiOWY5Ii8+PHBhdGggZD0iTTE2LjExNSw4LjYxNnYtMi43SDkuMzY1djIuN2gwdjBjMCwuNzE2LDEuNTExLDEuMywzLjM3NiwxLjNzMy4zNzYtLjU4LDMuMzc2LTEuM1oiIGZpbGw9InVybCgjYmNjZTNiOTQtNmI4My00NGM1LTliZjctYTg5ZDY2NmYzZDFlKSIvPjxlbGxpcHNlIGN4PSIxMi43NDEiIGN5PSI1Ljk2IiByeD0iMy4zNzYiIHJ5PSIxLjI5NiIgZmlsbD0iIzgzYjlmOSIvPjxyZWN0IHg9IjMuMjIiIHk9IjQuMTY4IiB3aWR0aD0iMC45OCIgaGVpZ2h0PSI3Ljk2MiIgZmlsbD0iIzAwMzA2NyIvPjxjaXJjbGUgY3g9IjMuNzUiIGN5PSIzLjMzNyIgcj0iMS4xNTciIGZpbGw9IiNjM2YxZmYiLz48cGF0aCBkPSJNNy4wODEsMTIuODI0di0yLjdILjMzdjIuN2gwdjBjMCwuNzE2LDEuNTExLDEuMywzLjM3NiwxLjNzMy4zNzYtLjU4LDMuMzc2LTEuM1oiIGZpbGw9InVybCgjZjliMDgwM2YtNDFlNS00MTY1LTkyMzAtZTIyMDQyN2VjNDc1KSIvPjxlbGxpcHNlIGN4PSIzLjcwNyIgY3k9IjEwLjE2NyIgcng9IjMuMzc2IiByeT0iMS4yOTYiIGZpbGw9IiM4M2I5ZjkiLz48cmVjdCB4PSIzLjcwOCIgeT0iOS4xNjQiIHdpZHRoPSI5Ljc0MSIgaGVpZ2h0PSIwLjk4IiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMy4zNzYgNC43NjcpIHJvdGF0ZSgtMjYuMTQpIiBmaWxsPSIjMDAzMDY3Ii8+PGNpcmNsZSBjeD0iMy43MDEiIGN5PSIxMS45MzkiIHI9IjEuMTU3IiBmaWxsPSIjYzNmMWZmIi8+PGNpcmNsZSBjeD0iMTIuNzQzIiBjeT0iNy41NDgiIHI9IjEuMTU3IiBmaWxsPSIjYzNmMWZmIi8+PC9nPjxnPjxwYXRoIGQ9Ik0xNy4xNjYsMTUuNWgwYS4yNTUuMjU1LDAsMCwwLS4xLS4xODVBMTcsMTcsMCwwLDAsMTUuNTYzLDE0YTMuNTYzLDMuNTYzLDAsMCwwLTIuNjM4LS43MDYsNS41MTUsNS41MTUsMCwwLDAtMy4zMzksMi4wNjYuMjI0LjIyNCwwLDAsMC0uMDU4LjE0aDB2MGgwYS4yNi4yNiwwLDAsMCwuMS4xODYsMTcuMzE5LDE3LjMxOSwwLDAsMCwxLjUwNywxLjMxNSwzLjU2OCwzLjU2OCwwLDAsMCwyLjYzNy43MDYsNS41MTcsNS41MTcsMCwwLDAsMy4zMzktMi4wNjYuMjI5LjIyOSwwLDAsMCwuMDU5LS4xNDFoMFoiIGZpbGw9IiMwMDMwNjciLz48Y2lyY2xlIGN4PSIxMy4zODEiIGN5PSIxNS41MDEiIHI9IjEuODQ2IiBmaWxsPSIjYzNmMWZmIi8+PHBhdGggZD0iTTEzLjM4OSwxNC40NzhhLjg3NS44NzUsMCwwLDAtLjE0NC4wMjkuNTM3LjUzNywwLDAsMSwuMS4yOTIuNTU5LjU1OSwwLDAsMS0uNTU5LjU1OC41NDguNTQ4LDAsMCwxLS4zNjgtLjE0NS45ODUuOTg1LDAsMCwwLS4wNjIuMywxLjAzOCwxLjAzOCwwLDEsMCwxLjAzOC0xLjAzN1oiIGZpbGw9IiMwMDMwNjciLz48cGF0aCBkPSJNMTcuNTI5LDEzLjQ3MkE2LjU4Miw2LjU4MiwwLDAsMCwxNS42LDEyLjI0MWwuNDM3LS43NzZhLjQ1OC40NTgsMCwwLDAsLjA0NC0uMzQuNDQxLjQ0MSwwLDAsMC0uODA2LS4xMDZsLS41MzUuOTUyYTUuNzYyLDUuNzYyLDAsMCwwLS45MTQtLjE0M3YtLjk3NWEuNDQyLjQ0MiwwLDAsMC0uODgzLDB2Ljk3NGE1Ljg3OSw1Ljg3OSwwLDAsMC0uOTM0LjE0NGwtLjUzNi0uOTUyYS40NDIuNDQyLDAsMCwwLS42LS4xNTguNDUuNDUsMCwwLDAtLjE1OS42cS4yMTkuMzg3LjQzNy43NzZhNi41ODIsNi41ODIsMCwwLDAtMS45MzEsMS4yMzFjLS40MjIuMzgyLjIsMSwuNjI0LjYyNGE1LjE4Myw1LjE4MywwLDAsMSw3LjA2NywwQzE3LjMyNiwxNC40NzYsMTcuOTUxLDEzLjg1NCwxNy41MjksMTMuNDcyWiIgZmlsbD0iIzAwMzA2NyIvPjwvZz48L2c+PHJlY3QgeD0iLTQuOTM0IiB5PSItMy42OTEiIHdpZHRoPSIyOS4zMzEiIGhlaWdodD0iMzQuMjYxIiBmaWxsPSJub25lIiBzdHJva2U9IiNiMzFiMWIiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIvPjwvc3ZnPg==",
+  "layout": [
+    {
+      "h": 6,
+      "i": "6ace8bce-dee7-854b-f2c4-9aba8cf84e7f",
+      "w": 6,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "h": 6,
+      "i": "eff9620d-0b4e-9a9a-11b3-680b95ee204e",
+      "w": 6,
+      "x": 6,
+      "y": 0
+    },
+    {
+      "h": 6,
+      "i": "6c709d5d-bfd8-a401-39ca-b71e77b91f43",
+      "w": 6,
+      "x": 0,
+      "y": 6
+    },
+    {
+      "h": 6,
+      "i": "f826e3c1-661d-b4e6-1367-6ead14857a3b",
+      "w": 6,
+      "x": 6,
+      "y": 6
+    },
+    {
+      "h": 6,
+      "i": "a40e069f-c7ce-3250-52f9-0c01e89861ea",
+      "w": 6,
+      "x": 0,
+      "y": 12
+    },
+    {
+      "h": 6,
+      "i": "2be62160-4daf-83d2-14d6-f385bb635189",
+      "w": 6,
+      "x": 6,
+      "y": 12
+    },
+    {
+      "h": 6,
+      "i": "f6353acf-bf27-7fde-58df-47665fc080f4",
+      "w": 6,
+      "x": 0,
+      "y": 18
+    },
+    {
+      "h": 6,
+      "i": "546421fa-5fb0-5eea-e335-0dd28386bb7f",
+      "w": 6,
+      "x": 6,
+      "y": 18
+    },
+    {
+      "h": 6,
+      "i": "c26f845a-c2e3-56a3-c97c-f4731a0c56d0",
+      "w": 6,
+      "x": 0,
+      "y": 24
+    },
+    {
+      "h": 6,
+      "i": "8fb81f18-75c9-b004-8ae9-7e0c3e156913",
+      "w": 6,
+      "x": 6,
+      "y": 24
+    },
+    {
+      "h": 6,
+      "i": "93e1b49e-3178-d61b-27ab-e2154926063c",
+      "w": 6,
+      "x": 0,
+      "y": 30
+    }
+  ],
+  "tags": [],
+  "title": "Azure Cassandra DB Overview",
+  "uploadedGrafana": false,
+  "variables": {
+    "35d81192-f5fe-606d-9388-5cba25690be9": {
+      "allSelected": false,
+      "customValue": "",
+      "defaultValue": "",
+      "description": "Subscription ID for your Azure Account",
+      "dynamicVariablesAttribute": "azuremonitor.subscription_id",
+      "dynamicVariablesSource": "All telemetry",
+      "id": "35d81192-f5fe-606d-9388-5cba25690be9",
+      "key": "35d81192-f5fe-606d-9388-5cba25690be9",
+      "modificationUUID": "d6424d2f-a843-e236-52a4-f5148db3da35",
+      "multiSelect": false,
+      "name": "azuremonitor.subscription_id",
+      "order": 0,
+      "queryValue": "",
+      "showALLOption": true,
+      "sort": "DISABLED",
+      "textboxValue": "",
+      "type": "DYNAMIC"
+    },
+    "89256325-689f-7f2b-a515-8513ae314766": {
+      "allSelected": false,
+      "customValue": "",
+      "defaultValue": "",
+      "description": "Azure Cassandra cluster name",
+      "dynamicVariablesAttribute": "name",
+      "dynamicVariablesSource": "All telemetry",
+      "haveCustomValuesSelected": false,
+      "id": "89256325-689f-7f2b-a515-8513ae314766",
+      "modificationUUID": "bfb0bb54-e427-b8d7-e17a-001553b87990",
+      "multiSelect": false,
+      "name": "name",
+      "order": 1,
+      "queryValue": "",
+      "showALLOption": true,
+      "sort": "DISABLED",
+      "textboxValue": "",
+      "type": "DYNAMIC"
+    }
+  },
+  "version": "v5",
+  "widgets": [
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "contextLinks": {
+        "linksData": []
+      },
+      "customLegendColors": {},
+      "decimalPrecision": 2,
+      "description": "CPU usage (active).",
+      "fillMode": "none",
+      "fillSpans": false,
+      "id": "6ace8bce-dee7-854b-f2c4-9aba8cf84e7f",
+      "isLogScale": false,
+      "legendPosition": "bottom",
+      "lineInterpolation": "spline",
+      "lineStyle": "solid",
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "azure_cpu_maximum",
+                  "reduceTo": "",
+                  "spaceAggregation": "max",
+                  "temporality": "",
+                  "timeAggregation": "max"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DocumentDB/cassandraClusters' AND name = $name "
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "name--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "name",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "metadata_address--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "metadata_address",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{metadata_address}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "source": "",
+              "stepInterval": null
+            }
+          ],
+          "queryFormulas": [],
+          "queryTraceOperator": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "ffb2bbb1-ba19-33a5-b8aa-bb35c7472bdb",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder",
+        "unit": ""
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "timestamp",
+          "signal": "logs",
+          "type": "log"
+        },
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "body",
+          "signal": "logs",
+          "type": "log"
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "fieldContext": "resource",
+          "fieldDataType": "string",
+          "name": "service.name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "string",
+          "name": "name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "duration_nano",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "http_method",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "response_status_code",
+          "signal": "traces"
+        }
+      ],
+      "showPoints": false,
+      "softMax": 0,
+      "softMin": 0,
+      "spanGaps": true,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "CPU Usage (Active)",
+      "yAxisUnit": "%"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "contextLinks": {
+        "linksData": []
+      },
+      "customLegendColors": {},
+      "decimalPrecision": 2,
+      "description": "Average CPU usage (active) across all CPUs.",
+      "fillMode": "none",
+      "fillSpans": false,
+      "id": "eff9620d-0b4e-9a9a-11b3-680b95ee204e",
+      "isLogScale": false,
+      "legendPosition": "bottom",
+      "lineInterpolation": "spline",
+      "lineStyle": "solid",
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "azure_total_cpu_maximum",
+                  "reduceTo": "",
+                  "spaceAggregation": "max",
+                  "temporality": "",
+                  "timeAggregation": "max"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DocumentDB/cassandraClusters' AND name = $name "
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "name--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "name",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "metadata_address--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "metadata_address",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{metadata_address}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "source": "",
+              "stepInterval": null
+            }
+          ],
+          "queryFormulas": [],
+          "queryTraceOperator": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "e53e5400-307b-de6b-5217-6abd10994f2d",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder",
+        "unit": ""
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "timestamp",
+          "signal": "logs",
+          "type": "log"
+        },
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "body",
+          "signal": "logs",
+          "type": "log"
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "fieldContext": "resource",
+          "fieldDataType": "string",
+          "name": "service.name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "string",
+          "name": "name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "duration_nano",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "http_method",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "response_status_code",
+          "signal": "traces"
+        }
+      ],
+      "showPoints": false,
+      "softMax": 0,
+      "softMin": 0,
+      "spanGaps": true,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Average CPU Usage Across CPUs",
+      "yAxisUnit": "%"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "contextLinks": {
+        "linksData": []
+      },
+      "customLegendColors": {},
+      "decimalPrecision": 2,
+      "description": "Memory utilization rate.",
+      "fillMode": "none",
+      "fillSpans": false,
+      "id": "6c709d5d-bfd8-a401-39ca-b71e77b91f43",
+      "isLogScale": false,
+      "legendPosition": "bottom",
+      "lineInterpolation": "spline",
+      "lineStyle": "solid",
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "azure_percent_mem_maximum",
+                  "reduceTo": "",
+                  "spaceAggregation": "max",
+                  "temporality": "",
+                  "timeAggregation": "max"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DocumentDB/cassandraClusters' AND name = $name "
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "name--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "name",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "metadata_address--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "metadata_address",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{metadata_address}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "source": "",
+              "stepInterval": null
+            }
+          ],
+          "queryFormulas": [],
+          "queryTraceOperator": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "851d9607-4043-c035-3160-be4a422ee74b",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder",
+        "unit": ""
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "timestamp",
+          "signal": "logs",
+          "type": "log"
+        },
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "body",
+          "signal": "logs",
+          "type": "log"
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "fieldContext": "resource",
+          "fieldDataType": "string",
+          "name": "service.name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "string",
+          "name": "name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "duration_nano",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "http_method",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "response_status_code",
+          "signal": "traces"
+        }
+      ],
+      "showPoints": false,
+      "softMax": 0,
+      "softMin": 0,
+      "spanGaps": true,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Memory Utilization",
+      "yAxisUnit": "%"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "contextLinks": {
+        "linksData": []
+      },
+      "customLegendColors": {},
+      "decimalPrecision": 2,
+      "description": "Disk utilization rate.",
+      "fillMode": "none",
+      "fillSpans": false,
+      "id": "f826e3c1-661d-b4e6-1367-6ead14857a3b",
+      "isLogScale": false,
+      "legendPosition": "bottom",
+      "lineInterpolation": "spline",
+      "lineStyle": "solid",
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "azure_disk_utilization_maximum",
+                  "reduceTo": "",
+                  "spaceAggregation": "max",
+                  "temporality": "",
+                  "timeAggregation": "max"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DocumentDB/cassandraClusters' AND name = $name "
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "name--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "name",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "metadata_address--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "metadata_address",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{metadata_address}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "source": "",
+              "stepInterval": null
+            }
+          ],
+          "queryFormulas": [],
+          "queryTraceOperator": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "d3daa86e-e2b8-8b06-8a98-eba408613adc",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder",
+        "unit": ""
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "timestamp",
+          "signal": "logs",
+          "type": "log"
+        },
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "body",
+          "signal": "logs",
+          "type": "log"
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "fieldContext": "resource",
+          "fieldDataType": "string",
+          "name": "service.name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "string",
+          "name": "name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "duration_nano",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "http_method",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "response_status_code",
+          "signal": "traces"
+        }
+      ],
+      "showPoints": false,
+      "softMax": 0,
+      "softMin": 0,
+      "spanGaps": true,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Disk Utilization",
+      "yAxisUnit": "%"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "contextLinks": {
+        "linksData": []
+      },
+      "customLegendColors": {},
+      "decimalPrecision": 2,
+      "description": "I/O operations and bytes per second.",
+      "fillMode": "none",
+      "fillSpans": false,
+      "id": "a40e069f-c7ce-3250-52f9-0c01e89861ea",
+      "isLogScale": false,
+      "legendPosition": "bottom",
+      "lineInterpolation": "spline",
+      "lineStyle": "solid",
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "azure_iops_maximum",
+                  "reduceTo": "",
+                  "spaceAggregation": "max",
+                  "temporality": "",
+                  "timeAggregation": "max"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DocumentDB/cassandraClusters' AND name = $name "
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "name--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "name",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "metadata_address--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "metadata_address",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "metadata_kind--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "metadata_kind",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{metadata_address}} {{metadata_kind}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "source": "",
+              "stepInterval": null
+            }
+          ],
+          "queryFormulas": [],
+          "queryTraceOperator": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "7cd385f7-f9a9-f9b3-26f1-f728001718ed",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder",
+        "unit": ""
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "timestamp",
+          "signal": "logs",
+          "type": "log"
+        },
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "body",
+          "signal": "logs",
+          "type": "log"
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "fieldContext": "resource",
+          "fieldDataType": "string",
+          "name": "service.name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "string",
+          "name": "name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "duration_nano",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "http_method",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "response_status_code",
+          "signal": "traces"
+        }
+      ],
+      "showPoints": false,
+      "softMax": 0,
+      "softMin": 0,
+      "spanGaps": true,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "IOPS",
+      "yAxisUnit": ""
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "contextLinks": {
+        "linksData": []
+      },
+      "customLegendColors": {},
+      "decimalPrecision": 2,
+      "description": "p99 client request latency (microseconds).",
+      "fillMode": "none",
+      "fillSpans": false,
+      "id": "2be62160-4daf-83d2-14d6-f385bb635189",
+      "isLogScale": false,
+      "legendPosition": "bottom",
+      "lineInterpolation": "spline",
+      "lineStyle": "solid",
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "azure_cassandra_client_request_latency_p99_average",
+                  "reduceTo": "",
+                  "spaceAggregation": "max",
+                  "temporality": "",
+                  "timeAggregation": "max"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DocumentDB/cassandraClusters' AND name = $name "
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "name--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "name",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "metadata_cassandra_node--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "metadata_cassandra_node",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "metadata_request_type--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "metadata_request_type",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{metadata_cassandra_node}} {{metadata_request_type}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "source": "",
+              "stepInterval": null
+            }
+          ],
+          "queryFormulas": [],
+          "queryTraceOperator": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "c6360c5d-eaeb-5391-4e2f-34933a0c02cf",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder",
+        "unit": ""
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "timestamp",
+          "signal": "logs",
+          "type": "log"
+        },
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "body",
+          "signal": "logs",
+          "type": "log"
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "fieldContext": "resource",
+          "fieldDataType": "string",
+          "name": "service.name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "string",
+          "name": "name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "duration_nano",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "http_method",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "response_status_code",
+          "signal": "traces"
+        }
+      ],
+      "showPoints": false,
+      "softMax": 0,
+      "softMin": 0,
+      "spanGaps": true,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Client Request Latency p99 (microseconds)",
+      "yAxisUnit": ""
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "contextLinks": {
+        "linksData": []
+      },
+      "customLegendColors": {},
+      "decimalPrecision": 2,
+      "description": "Cumulative number of transaction failures encountered.",
+      "fillMode": "none",
+      "fillSpans": false,
+      "id": "f6353acf-bf27-7fde-58df-47665fc080f4",
+      "isLogScale": false,
+      "legendPosition": "bottom",
+      "lineInterpolation": "spline",
+      "lineStyle": "solid",
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "azure_cassandra_client_request_failures3_maximum",
+                  "reduceTo": "",
+                  "spaceAggregation": "max",
+                  "temporality": "",
+                  "timeAggregation": "max"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DocumentDB/cassandraClusters' AND name = $name "
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "name--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "name",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "metadata_cassandra_node--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "metadata_cassandra_node",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "metadata_request_type--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "metadata_request_type",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{metadata_cassandra_node}} {{metadata_request_type}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "source": "",
+              "stepInterval": null
+            }
+          ],
+          "queryFormulas": [],
+          "queryTraceOperator": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "201cf621-3d8b-a556-36ba-c23e3a392afd",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder",
+        "unit": ""
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "timestamp",
+          "signal": "logs",
+          "type": "log"
+        },
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "body",
+          "signal": "logs",
+          "type": "log"
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "fieldContext": "resource",
+          "fieldDataType": "string",
+          "name": "service.name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "string",
+          "name": "name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "duration_nano",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "http_method",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "response_status_code",
+          "signal": "traces"
+        }
+      ],
+      "showPoints": false,
+      "softMax": 0,
+      "softMin": 0,
+      "spanGaps": true,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Client Request Failures",
+      "yAxisUnit": ""
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "contextLinks": {
+        "linksData": []
+      },
+      "customLegendColors": {},
+      "decimalPrecision": 2,
+      "description": "Cumulative number of timeouts encountered in client requests.",
+      "fillMode": "none",
+      "fillSpans": false,
+      "id": "546421fa-5fb0-5eea-e335-0dd28386bb7f",
+      "isLogScale": false,
+      "legendPosition": "bottom",
+      "lineInterpolation": "spline",
+      "lineStyle": "solid",
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "azure_cassandra_client_request_timeouts3_maximum",
+                  "reduceTo": "",
+                  "spaceAggregation": "max",
+                  "temporality": "",
+                  "timeAggregation": "max"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DocumentDB/cassandraClusters' AND name = $name "
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "name--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "name",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "metadata_cassandra_node--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "metadata_cassandra_node",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "metadata_request_type--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "metadata_request_type",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{metadata_cassandra_node}} {{metadata_request_type}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "source": "",
+              "stepInterval": null
+            }
+          ],
+          "queryFormulas": [],
+          "queryTraceOperator": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "2f05e6b5-9d7a-b9af-a1cc-3c98f3ee9c33",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder",
+        "unit": ""
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "timestamp",
+          "signal": "logs",
+          "type": "log"
+        },
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "body",
+          "signal": "logs",
+          "type": "log"
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "fieldContext": "resource",
+          "fieldDataType": "string",
+          "name": "service.name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "string",
+          "name": "name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "duration_nano",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "http_method",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "response_status_code",
+          "signal": "traces"
+        }
+      ],
+      "showPoints": false,
+      "softMax": 0,
+      "softMin": 0,
+      "spanGaps": true,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Client Request Timeouts",
+      "yAxisUnit": ""
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "contextLinks": {
+        "linksData": []
+      },
+      "customLegendColors": {},
+      "decimalPrecision": 2,
+      "description": "Number of connected native clients.",
+      "fillMode": "none",
+      "fillSpans": false,
+      "id": "c26f845a-c2e3-56a3-c97c-f4731a0c56d0",
+      "isLogScale": false,
+      "legendPosition": "bottom",
+      "lineInterpolation": "spline",
+      "lineStyle": "solid",
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "azure_cassandra_client_connected_native_clients_minimum",
+                  "reduceTo": "",
+                  "spaceAggregation": "min",
+                  "temporality": "",
+                  "timeAggregation": "min"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DocumentDB/cassandraClusters' AND name = $name "
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "name--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "name",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "metadata_cassandra_node--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "metadata_cassandra_node",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{metadata_cassandra_node}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "source": "",
+              "stepInterval": null
+            }
+          ],
+          "queryFormulas": [],
+          "queryTraceOperator": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "9665e48b-1af5-a515-d642-6c6d9c129a43",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder",
+        "unit": ""
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "timestamp",
+          "signal": "logs",
+          "type": "log"
+        },
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "body",
+          "signal": "logs",
+          "type": "log"
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "fieldContext": "resource",
+          "fieldDataType": "string",
+          "name": "service.name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "string",
+          "name": "name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "duration_nano",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "http_method",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "response_status_code",
+          "signal": "traces"
+        }
+      ],
+      "showPoints": false,
+      "softMax": 0,
+      "softMin": 0,
+      "spanGaps": true,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Connected Native Clients",
+      "yAxisUnit": ""
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "contextLinks": {
+        "linksData": []
+      },
+      "customLegendColors": {},
+      "decimalPrecision": 2,
+      "description": "Total number of non-prepared statements executed.",
+      "fillMode": "none",
+      "fillSpans": false,
+      "id": "8fb81f18-75c9-b004-8ae9-7e0c3e156913",
+      "isLogScale": false,
+      "legendPosition": "bottom",
+      "lineInterpolation": "spline",
+      "lineStyle": "solid",
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "azure_cassandra_cql_regular_statements_executed_maximum",
+                  "reduceTo": "",
+                  "spaceAggregation": "sum",
+                  "temporality": "",
+                  "timeAggregation": "max"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DocumentDB/cassandraClusters' AND name = $name "
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "name--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "name",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "metadata_cassandra_node--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "metadata_cassandra_node",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{metadata_cassandra_node}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "source": "",
+              "stepInterval": null
+            }
+          ],
+          "queryFormulas": [],
+          "queryTraceOperator": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "f7d82d91-4bde-216b-67e5-7f9ec089ebdb",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder",
+        "unit": ""
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "timestamp",
+          "signal": "logs",
+          "type": "log"
+        },
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "body",
+          "signal": "logs",
+          "type": "log"
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "fieldContext": "resource",
+          "fieldDataType": "string",
+          "name": "service.name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "string",
+          "name": "name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "duration_nano",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "http_method",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "response_status_code",
+          "signal": "traces"
+        }
+      ],
+      "showPoints": false,
+      "softMax": 0,
+      "softMin": 0,
+      "spanGaps": true,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Regular Statements Executed",
+      "yAxisUnit": ""
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "contextLinks": {
+        "linksData": []
+      },
+      "customLegendColors": {},
+      "decimalPrecision": 2,
+      "description": "Total number of prepared statements executed.",
+      "fillMode": "none",
+      "fillSpans": false,
+      "id": "93e1b49e-3178-d61b-27ab-e2154926063c",
+      "isLogScale": false,
+      "legendPosition": "bottom",
+      "lineInterpolation": "spline",
+      "lineStyle": "solid",
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "azure_cassandra_cql_prepared_statements_executed_maximum",
+                  "reduceTo": "",
+                  "spaceAggregation": "sum",
+                  "temporality": "",
+                  "timeAggregation": "max"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DocumentDB/cassandraClusters' AND name = $name "
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "name--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "name",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "metadata_cassandra_node--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "metadata_cassandra_node",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{metadata_cassandra_node}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "source": "",
+              "stepInterval": null
+            }
+          ],
+          "queryFormulas": [],
+          "queryTraceOperator": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "1b0b459c-71a6-0898-3024-824e98db8e18",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder",
+        "unit": ""
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "timestamp",
+          "signal": "logs",
+          "type": "log"
+        },
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "body",
+          "signal": "logs",
+          "type": "log"
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "fieldContext": "resource",
+          "fieldDataType": "string",
+          "name": "service.name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "string",
+          "name": "name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "duration_nano",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "http_method",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "response_status_code",
+          "signal": "traces"
+        }
+      ],
+      "showPoints": false,
+      "softMax": 0,
+      "softMin": 0,
+      "spanGaps": true,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Prepared Statements Executed",
+      "yAxisUnit": ""
+    }
+  ]
+}

@@ -294,24 +294,30 @@ func (r *HavingExpressionRewriter) rewriteAndValidate(expression string) (string
 			validKeys = append(validKeys, k)
 		}
 		sort.Strings(validKeys)
-		additional := []string{"Valid references are: [" + strings.Join(validKeys, ", ") + "]"}
+		// Each suggestion is a self-describing string prefixed with either
+		// "did you mean: " (the full corrected expression) or "valid references: "
+		// (the set of valid references).
+		var suggestions []string
 		if len(v.invalid) == 1 {
 			inv := v.invalid[0]
-			// Only suggest for plain identifier typos, not for unresolved function
-			// calls: a function call will appear as "name(" in the expression, and
-			// the closest valid key may itself contain "(" (e.g. "sum(a)"), making
-			// a simple string substitution produce a corrupt expression.
-			isFuncCall := strings.Contains(original, inv+"(")
-			if match, dist := closestMatch(inv, validKeys); !isFuncCall && !strings.Contains(match, "(") && dist <= 3 {
-				corrected := strings.ReplaceAll(original, inv, match)
-				additional = append(additional, "Suggestion: `"+corrected+"`")
-			}
+			suggestions = errors.SuggestionsFromFunc(func() string {
+				match, ok := errors.ClosestLevenshteinMatch(inv, validKeys)
+				if !ok || strings.Contains(original, inv+"(") || strings.Contains(match, "(") {
+					return ""
+				}
+				return strings.ReplaceAll(original, inv, match)
+			})
 		}
-		return "", errors.NewInvalidInputf(
+
+		suggestions = append(suggestions, errors.ValidReferences(validKeys...))
+		havingErr := errors.NewInvalidInputf(
 			errors.CodeInvalidInput,
 			"Invalid references in `Having` expression: [%s]",
 			strings.Join(v.invalid, ", "),
-		).WithAdditional(additional...)
+		).WithAdditional(
+			"Valid references are: [" + strings.Join(validKeys, ", ") + "]",
+		).WithSuggestions(suggestions...)
+		return "", havingErr
 	}
 
 	// Layer 3 – ANTLR syntax errors. We parse the original expression, so error messages
@@ -324,21 +330,22 @@ func (r *HavingExpressionRewriter) rewriteAndValidate(expression string) (string
 				msgs = append(msgs, m)
 			}
 		}
-		detail := strings.Join(msgs, "; ")
-		if detail == "" {
-			detail = "check the expression syntax"
-		}
-		additional := []string{detail}
-		// For single-error expressions, try to produce an actionable suggestion.
-		if len(allSyntaxErrors) == 1 {
-			if s := havingSuggestion(allSyntaxErrors[0], original); s != "" {
-				additional = append(additional, "Suggestion: `"+s+"`")
-			}
-		}
-		return "", errors.NewInvalidInputf(
+		havingErr := errors.NewInvalidInputf(
 			errors.CodeInvalidInput,
 			"Syntax error in `Having` expression",
-		).WithAdditional(additional...)
+		)
+
+		// A single syntax error can carry an actionable suggestion on the same detail;
+		// multiple errors are surfaced as one additional detail each. If the parser
+		// produced no message (rare), the top-level message stands on its own.
+		if len(allSyntaxErrors) == 1 && len(msgs) == 1 {
+			suggestions := errors.SuggestionsFromFunc(func() string {
+				return havingSuggestion(allSyntaxErrors[0], original)
+			})
+
+			return "", havingErr.WithSuggestiveAdditional(msgs[0], suggestions...)
+		}
+		return "", havingErr.WithAdditional(msgs...)
 	}
 
 	return result, nil
@@ -446,42 +453,6 @@ func hasUnclosedBracket(s string) bool {
 		}
 	}
 	return count > 0
-}
-
-// closestMatch returns the element of candidates with the smallest Levenshtein
-// distance to query, along with that distance.
-func closestMatch(query string, candidates []string) (string, int) {
-	best, bestDist := "", -1
-	for _, c := range candidates {
-		if d := levenshtein(query, c); bestDist < 0 || d < bestDist {
-			best, bestDist = c, d
-		}
-	}
-	return best, bestDist
-}
-
-// levenshtein computes the edit distance between a and b.
-func levenshtein(a, b string) int {
-	ra, rb := []rune(a), []rune(b)
-	la, lb := len(ra), len(rb)
-	row := make([]int, lb+1)
-	for j := range row {
-		row[j] = j
-	}
-	for i := 1; i <= la; i++ {
-		prev := row[0]
-		row[0] = i
-		for j := 1; j <= lb; j++ {
-			tmp := row[j]
-			if ra[i-1] == rb[j-1] {
-				row[j] = prev
-			} else {
-				row[j] = 1 + min(prev, min(row[j], row[j-1]))
-			}
-			prev = tmp
-		}
-	}
-	return row[lb]
 }
 
 // endsWithComparisonOp reports whether s ends with a comparison operator token
