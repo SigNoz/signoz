@@ -7,14 +7,13 @@ import (
 )
 
 type JSON struct {
-	Type              string                    `json:"type,omitempty"`
-	Code              string                    `json:"code" required:"true"`
-	Message           string                    `json:"message" required:"true"`
-	Url               string                    `json:"url,omitempty"`
-	Errors            []responseerroradditional `json:"errors,omitempty"`
-	Retry             *responseretryjson        `json:"retry,omitempty"`
-	Suggestions       []string                  `json:"suggestions,omitempty"`
-	InvalidReferences []string                  `json:"invalidReferences,omitempty"`
+	Type        string                    `json:"type,omitempty"`
+	Code        string                    `json:"code" required:"true"`
+	Message     string                    `json:"message" required:"true"`
+	Url         string                    `json:"url,omitempty"`
+	Errors      []responseerroradditional `json:"errors,omitempty"`
+	Retry       *responseretryjson        `json:"retry,omitempty"`
+	Suggestions []string                  `json:"suggestions,omitempty"`
 }
 
 type responseretryjson struct {
@@ -22,7 +21,8 @@ type responseretryjson struct {
 }
 
 type responseerroradditional struct {
-	Message string `json:"message"`
+	Message     string   `json:"message,omitempty"`
+	Suggestions []string `json:"suggestions,omitempty"`
 }
 
 func AsJSON(cause error) *JSON {
@@ -31,7 +31,7 @@ func AsJSON(cause error) *JSON {
 
 	rea := make([]responseerroradditional, len(a))
 	for k, v := range a {
-		rea[k] = responseerroradditional{v}
+		rea[k] = responseerroradditional{Message: v.message, Suggestions: v.suggestions}
 	}
 
 	var retry *responseretryjson
@@ -40,14 +40,13 @@ func AsJSON(cause error) *JSON {
 	}
 
 	return &JSON{
-		Type:              t.String(),
-		Code:              c.String(),
-		Message:           m,
-		Url:               u,
-		Errors:            rea,
-		Retry:             retry,
-		Suggestions:       suggestionsOf(cause),
-		InvalidReferences: invalidReferencesOf(cause),
+		Type:        t.String(),
+		Code:        c.String(),
+		Message:     m,
+		Url:         u,
+		Errors:      rea,
+		Retry:       retry,
+		Suggestions: suggestionsOf(cause),
 	}
 }
 
@@ -57,7 +56,7 @@ func AsURLValues(cause error) url.Values {
 
 	rea := make([]responseerroradditional, len(a))
 	for k, v := range a {
-		rea[k] = responseerroradditional{v}
+		rea[k] = responseerroradditional{Message: v.message, Suggestions: v.suggestions}
 	}
 
 	errors, err := json.Marshal(rea)

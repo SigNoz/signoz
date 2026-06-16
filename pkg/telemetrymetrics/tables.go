@@ -324,8 +324,7 @@ func AggregationColumnForSamplesTable(
 		}
 	}
 	if aggregationColumn == "" {
-		return "", errors.Newf(
-			errors.TypeInvalidInput,
+		return "", errors.NewInvalidInputf(
 			errors.CodeInvalidInput,
 			"invalid time aggregation, should be one of the following: [`latest`, `sum`, `avg`, `min`, `max`, `count`, `rate`, `increase`]",
 		)
@@ -335,7 +334,7 @@ func AggregationColumnForSamplesTable(
 
 func AggregationQueryForHistogramCountWithParams(param *metrictypes.ComparisonSpaceAggregationParam) (string, error) {
 	if param == nil {
-		return "", errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "no aggregation param provided for histogram count")
+		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "no aggregation param provided for histogram count")
 	}
 	histogramCountThreshold := param.Threshold
 
@@ -345,7 +344,7 @@ func AggregationQueryForHistogramCountWithParams(param *metrictypes.ComparisonSp
 	case ">":
 		return fmt.Sprintf("argMax(value, toFloat64(le)) - (argMaxIf(value, toFloat64(le), toFloat64(le) <= %f) + (argMinIf(value, toFloat64(le), toFloat64(le) > %f) - argMaxIf(value, toFloat64(le), toFloat64(le) <= %f)) * (%f - maxIf(toFloat64(le), toFloat64(le) <= %f)) / (minIf(toFloat64(le), toFloat64(le) > %f) - maxIf(toFloat64(le), toFloat64(le) <= %f))) AS value", histogramCountThreshold, histogramCountThreshold, histogramCountThreshold, histogramCountThreshold, histogramCountThreshold, histogramCountThreshold, histogramCountThreshold), nil
 	default:
-		return "", errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid space aggregation operator, should be one of the following: [`<=`, `>`]")
+		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid space aggregation operator, should be one of the following: [`<=`, `>`]")
 	}
 
 }
