@@ -64,6 +64,12 @@ export interface BaseRendererProps {
 	 * resolving these; the renderer just consumes them.
 	 */
 	dashboardPreference?: DashboardPreference;
+	/**
+	 * Free-text filter from the header search box, owned by the shell and
+	 * applied client-side by the renderer. Only meaningful for kinds that
+	 * declare `headerControls.search`; other renderers ignore it.
+	 */
+	searchTerm?: string;
 }
 
 // Renderer props for a specific panel kind: the shared base plus that kind's

@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Table } from 'antd';
 import type { DashboardtypesTablePanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
 import { useResizeObserver } from 'hooks/useDimensions';
@@ -11,7 +11,7 @@ import { resolveDecimalPrecision } from '../../utils/chartAppearance/resolvers';
 import NoData from '../../components/NoData/NoData';
 
 import { buildTableColumns, mapTableThresholds } from './tableColumns';
-import { computeTableLayout } from './utils';
+import { computeTableLayout, filterTableRows } from './utils';
 
 import styles from './TablePanel.module.scss';
 
@@ -20,6 +20,7 @@ type TableRowData = Record<string, unknown> & { key: number };
 function TablePanelRenderer({
 	panel,
 	data,
+	searchTerm = '',
 }: PanelRendererProps<'signoz/TablePanel'>): JSX.Element {
 	// Measure the panel so each page roughly fills it (min 10 rows) and the
 	// header stays pinned while the body scrolls.
@@ -80,6 +81,18 @@ function TablePanelRenderer({
 		[table],
 	);
 
+	// Header search filters rows client-side (V1 parity). Falls back to the full
+	// set when the term is empty, so non-searching tables pay nothing.
+	const filteredDataSource = useMemo(
+		() => filterTableRows(dataSource, searchTerm),
+		[dataSource, searchTerm],
+	);
+
+	// Keep pagination in range as the filtered set shrinks: a new term snaps back
+	// to the first page so the user never lands on a now-empty page.
+	const [page, setPage] = useState(1);
+	useEffect(() => setPage(1), [searchTerm]);
+
 	return (
 		<div
 			ref={containerRef}
@@ -93,8 +106,14 @@ function TablePanelRenderer({
 					<Table
 						size="small"
 						columns={columns}
-						dataSource={dataSource}
-						pagination={{ pageSize, hideOnSinglePage: true, size: 'small' }}
+						dataSource={filteredDataSource}
+						pagination={{
+							current: page,
+							pageSize,
+							hideOnSinglePage: true,
+							size: 'small',
+							onChange: setPage,
+						}}
 						scroll={{ x: 'max-content', y: scrollY }}
 					/>
 				</div>

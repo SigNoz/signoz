@@ -29,3 +29,25 @@ export function computeTableLayout(height: number): TableLayout {
 		scrollY: body,
 	};
 }
+
+/**
+ * Client-side row filter for the header search box (V1 parity): keeps a row when
+ * any cell's stringified value contains `term`, case-insensitively. The synthetic
+ * antd `key` is skipped so row indices never match. An empty term is a no-op and
+ * returns the original array (stable reference for memoization).
+ */
+export function filterTableRows<T extends Record<string, unknown>>(
+	rows: T[],
+	term: string,
+): T[] {
+	const needle = term.trim().toLowerCase();
+	if (!needle) {
+		return rows;
+	}
+	return rows.filter((row) =>
+		Object.entries(row).some(
+			([key, value]) =>
+				key !== 'key' && String(value).toLowerCase().includes(needle),
+		),
+	);
+}

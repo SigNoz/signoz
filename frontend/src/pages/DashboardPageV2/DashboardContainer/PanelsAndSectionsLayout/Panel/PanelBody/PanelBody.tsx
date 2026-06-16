@@ -22,6 +22,8 @@ interface PanelBodyProps {
 	refetch: () => void;
 	onDragSelect: (start: number, end: number) => void;
 	dashboardPreference: DashboardPreference;
+	/** Header search term — only consumed by kinds that declare header search. */
+	searchTerm?: string;
 }
 
 /**
@@ -44,6 +46,7 @@ function PanelBody({
 	refetch,
 	onDragSelect,
 	dashboardPreference,
+	searchTerm,
 }: PanelBodyProps): JSX.Element {
 	// Surface a hard failure only when there's no (stale) data to show; otherwise
 	// keep the last-good chart and let the header indicate the refresh.
@@ -87,6 +90,7 @@ function PanelBody({
 				panelMode={PanelMode.DASHBOARD_VIEW}
 				enableDrillDown={false}
 				dashboardPreference={dashboardPreference}
+				searchTerm={searchTerm}
 			/>
 		</div>
 	);

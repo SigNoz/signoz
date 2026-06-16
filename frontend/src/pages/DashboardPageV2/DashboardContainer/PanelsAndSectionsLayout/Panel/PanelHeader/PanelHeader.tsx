@@ -7,18 +7,21 @@ import type { PanelTimePreferenceLabel } from 'pages/DashboardPageV2/DashboardCo
 
 import type { PanelActionsConfig } from '../Panel';
 import PanelActionsMenu from '../PanelActionsMenu/PanelActionsMenu';
+import PanelHeaderSearch from './PanelHeaderSearch';
 import PanelStatusPopover from '../PanelStatus/PanelStatusPopover';
 import {
 	panelStatusFromError,
 	panelStatusFromWarning,
 } from '../PanelStatus/utils';
 import styles from './PanelHeader.module.scss';
+import { PanelKind } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelKind';
+import { TooltipSimple } from '@signozhq/ui/tooltip';
 
 interface PanelHeaderProps {
 	title: ReactNode;
 	panelId: string;
-	/** Full plugin kind — drives kind-gated menu actions; undefined when absent. */
-	panelKind: string | undefined;
+	/** Full plugin kind — drives kind-gated menu actions; */
+	panelKind: PanelKind;
 	/** Background refresh in flight — shows a subtle spinner without blinking the chart. */
 	isFetching: boolean;
 	/** Latest query error, if any — surfaced as a header error indicator. */
@@ -29,6 +32,12 @@ interface PanelHeaderProps {
 	timeLabel?: PanelTimePreferenceLabel | null;
 	/** Layout context for move/delete — absent outside editable sectioned mode. */
 	panelActions?: PanelActionsConfig;
+	/** Kind declares header search (`headerControls.search`) — renders the box. */
+	searchable?: boolean;
+	/** Current search term; the shell owns it, the renderer applies the filter. */
+	searchTerm?: string;
+	/** Pushes a new search term up to the shell. */
+	onSearchChange?: (value: string) => void;
 }
 
 /** Panel chrome: drag handle, title, refetch + status indicators, actions. */
@@ -41,6 +50,9 @@ function PanelHeader({
 	warning,
 	timeLabel,
 	panelActions,
+	searchable,
+	searchTerm,
+	onSearchChange,
 }: PanelHeaderProps): JSX.Element {
 	const errorDetail = useMemo(() => panelStatusFromError(error), [error]);
 
@@ -64,14 +76,18 @@ function PanelHeader({
 			{/* `panel-no-drag` opts this region out of the grid drag handle so the
 			    actions menu is clickable instead of starting a panel drag. */}
 			<div className={cx('panel-no-drag', styles.actions)}>
+				{searchable && onSearchChange && (
+					<PanelHeaderSearch
+						value={searchTerm ?? ''}
+						onChange={onSearchChange}
+					/>
+				)}
 				{timeLabel && (
-					<span
-						className={styles.timePill}
-						title={timeLabel.full}
-						data-testid="panel-time-preference"
-					>
-						{timeLabel.short}
-					</span>
+					<TooltipSimple title={timeLabel.full} arrow>
+						<span className={styles.timePill} data-testid="panel-time-preference">
+							{timeLabel.short}
+						</span>
+					</TooltipSimple>
 				)}
 				{errorDetail && <PanelStatusPopover variant="error" detail={errorDetail} />}
 				{warningDetail && (

@@ -11,4 +11,5 @@ export const definition: PanelDefinition<'signoz/BarChartPanel'> = {
 	sections,
 	supportedSignals: [DataSource.METRICS, DataSource.LOGS, DataSource.TRACES],
 	actions: { view: true, edit: true, download: false, createAlert: true },
+	headerControls: { search: false },
 };

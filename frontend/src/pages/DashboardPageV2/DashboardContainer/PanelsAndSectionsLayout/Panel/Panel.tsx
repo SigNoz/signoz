@@ -1,13 +1,13 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
 import type {
 	DashboardtypesPanelDTO,
 	DashboardtypesTimePreferenceDTO,
+	DashboardtypesPanelPluginKindDTO as PanelKind,
 } from 'api/generated/services/sigNoz.schemas';
 import { getPanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Panels/registry';
 import { panelTimePreferenceLabel } from 'pages/DashboardPageV2/DashboardContainer/hooks/resolvePanelTimeWindow';
 import { usePanelQuery } from 'pages/DashboardPageV2/DashboardContainer/hooks/usePanelQuery';
-import type { DashboardtypesPanelPluginKindDTO as PanelKind } from 'api/generated/services/sigNoz.schemas';
 
 import type { DashboardSection } from '../../utils';
 import { usePanelInteractions } from './hooks/usePanelInteractions';
@@ -66,6 +66,12 @@ function Panel({
 
 	const panelDefinition = getPanelDefinition(fullKind);
 
+	// Header search: only kinds that declare it (e.g. tables) render the box; the
+	// term is owned here and threaded to both the header (input) and the renderer
+	// (filter), the two being siblings under this orchestrator.
+	const searchable = !!panelDefinition?.headerControls.search;
+	const [searchTerm, setSearchTerm] = useState('');
+
 	const { data, isLoading, isFetching, error, refetch } = usePanelQuery({
 		panel,
 		panelId,
@@ -101,6 +107,9 @@ function Panel({
 				warning={data.response?.data?.warning}
 				timeLabel={timeLabel}
 				panelActions={panelActions}
+				searchable={searchable}
+				searchTerm={searchTerm}
+				onSearchChange={setSearchTerm}
 			/>
 			{panelDefinition ? (
 				<PanelBody
@@ -113,6 +122,7 @@ function Panel({
 					refetch={refetch}
 					onDragSelect={onDragSelect}
 					dashboardPreference={dashboardPreference}
+					searchTerm={searchable ? searchTerm : undefined}
 				/>
 			) : (
 				// TODO: remove this after all panel kinds are supported

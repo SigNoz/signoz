@@ -101,4 +101,27 @@ describe('TablePanelRenderer', () => {
 
 		expect(getByTestId('panel-no-data')).toBeInTheDocument();
 	});
+
+	it('filters rows to those matching the search term (case-insensitive)', () => {
+		const { getByText, queryByText } = renderPanel({
+			data: dataWith([
+				['frontend', 1234],
+				['cartservice', 5678],
+			]),
+			searchTerm: 'CART',
+		});
+
+		expect(getByText('cartservice')).toBeInTheDocument();
+		expect(queryByText('frontend')).not.toBeInTheDocument();
+	});
+
+	it('keeps the table mounted (not No Data) when the search matches no rows', () => {
+		const { getByTestId, queryByText } = renderPanel({
+			data: dataWith([['frontend', 1234]]),
+			searchTerm: 'no-such-row',
+		});
+
+		expect(getByTestId('table-panel-renderer')).toBeInTheDocument();
+		expect(queryByText('frontend')).not.toBeInTheDocument();
+	});
 });

@@ -1,9 +1,10 @@
 import { TooltipProvider } from '@signozhq/ui/tooltip';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import type { ReactElement } from 'react';
 import type { Warning } from 'types/api';
 
 import PanelHeader from '../PanelHeader/PanelHeader';
+import { PanelKind } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelKind';
 
 // PanelHeader's status indicators render a radix tooltip, which needs a
 // TooltipProvider ancestor (supplied globally by AppLayout at runtime).
@@ -22,7 +23,7 @@ jest.mock(
 
 const baseProps = {
 	title: 'My panel',
-	panelKind: 'signoz/TimeSeriesPanel',
+	panelKind: 'signoz/TimeSeriesPanel' as PanelKind,
 	panelId: 'panel-1',
 	isFetching: false,
 };
@@ -52,9 +53,56 @@ describe('PanelHeader status indicators', () => {
 	});
 });
 
+describe('PanelHeader search', () => {
+	it('renders no search affordance when the panel is not searchable', () => {
+		renderWithProvider(<PanelHeader {...baseProps} />);
+		expect(
+			screen.queryByTestId('panel-header-search-trigger'),
+		).not.toBeInTheDocument();
+	});
+
+	it('expands the collapsed trigger into an input and reports changes', () => {
+		const onSearchChange = jest.fn();
+		renderWithProvider(
+			<PanelHeader
+				{...baseProps}
+				searchable
+				searchTerm=""
+				onSearchChange={onSearchChange}
+			/>,
+		);
+
+		fireEvent.click(screen.getByTestId('panel-header-search-trigger'));
+
+		const input = screen.getByTestId('panel-header-search-input');
+		fireEvent.change(input, { target: { value: 'frontend' } });
+		expect(onSearchChange).toHaveBeenCalledWith('frontend');
+	});
+
+	it('clears the term and collapses when the clear button is pressed', () => {
+		const onSearchChange = jest.fn();
+		renderWithProvider(
+			<PanelHeader
+				{...baseProps}
+				searchable
+				searchTerm="frontend"
+				onSearchChange={onSearchChange}
+			/>,
+		);
+
+		fireEvent.click(screen.getByTestId('panel-header-search-trigger'));
+		fireEvent.click(screen.getByTestId('panel-header-search-clear'));
+
+		expect(onSearchChange).toHaveBeenCalledWith('');
+		expect(
+			screen.getByTestId('panel-header-search-trigger'),
+		).toBeInTheDocument();
+	});
+});
+
 describe('PanelHeader time-preference pill', () => {
 	it('shows the pill with the short label when the panel overrides the dashboard time', () => {
-		render(
+		renderWithProvider(
 			<PanelHeader
 				{...baseProps}
 				timeLabel={{ short: '6h', full: 'Last 6 hr' }}
@@ -64,7 +112,7 @@ describe('PanelHeader time-preference pill', () => {
 	});
 
 	it('renders no pill when the panel follows the dashboard time', () => {
-		render(<PanelHeader {...baseProps} timeLabel={null} />);
+		renderWithProvider(<PanelHeader {...baseProps} timeLabel={null} />);
 		expect(screen.queryByTestId('panel-time-preference')).not.toBeInTheDocument();
 	});
 });

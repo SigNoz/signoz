@@ -30,6 +30,22 @@ export interface PanelActionCapabilities {
 	createAlert: boolean;
 }
 
+/**
+ * Kind-level header controls: chrome the panel header renders for THIS kind,
+ * beyond the universal title / status / actions. Declared per-kind so the
+ * header stays generic and never branches on kind. Required, mirroring
+ * `actions`, so registering a new kind forces an explicit decision for every
+ * control.
+ */
+export interface PanelHeaderControls {
+	/**
+	 * Header carries a collapsible search box that filters the rendered rows
+	 * client-side. V1 parity: only tabular panels expose it. The kind's renderer
+	 * must consume `searchTerm` (see BaseRendererProps) to apply the filter.
+	 */
+	search: boolean;
+}
+
 export interface PanelDefinition<K extends PanelKind = PanelKind> {
 	kind: K;
 	displayName: string;
@@ -37,6 +53,7 @@ export interface PanelDefinition<K extends PanelKind = PanelKind> {
 	sections: SectionConfig[];
 	supportedSignals: DataSource[];
 	actions: PanelActionCapabilities;
+	headerControls: PanelHeaderControls;
 }
 
 // Keyed registry that preserves the kind ↔ definition correlation: indexing
