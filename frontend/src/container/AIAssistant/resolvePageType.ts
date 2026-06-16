@@ -18,6 +18,8 @@ const PAGE_METADATA_TO_DTO: Record<string, PageTypeDTO> = {
 	alert_list: PageTypeDTO.alert_list,
 	alert_new: PageTypeDTO.alert_new,
 	alerts_triggered: PageTypeDTO.alerts_triggered,
+	homepage: PageTypeDTO.homepage,
+	infra_entity_detail: PageTypeDTO.infra_entity_detail,
 };
 
 interface ResolvePageTypeOptions {

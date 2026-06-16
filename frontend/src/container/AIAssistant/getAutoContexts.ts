@@ -1,6 +1,8 @@
 import type { MessageContext } from 'api/ai-assistant/chat';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
+import { INFRA_MONITORING_K8S_PARAMS_KEYS } from 'container/InfraMonitoringK8s/constants';
+import { AlertListTabs } from 'pages/AlertList/types';
 import { matchPath } from 'react-router-dom';
 
 /**
@@ -164,13 +166,18 @@ export function getAutoContexts(
 		];
 	}
 
+	// Alerts index — `/alerts` with tab query param (defaults to Alert Rules).
 	if (matchPath(pathname, { path: ROUTES.LIST_ALL_ALERT, exact: true })) {
+		const page = resolveAlertsIndexPage(params.get(QueryParams.tab));
 		return [
 			{
 				source: 'auto',
 				type: 'alert',
 				resourceId: null,
-				metadata: { page: 'alert_list' },
+				metadata: {
+					page,
+					...(page === 'alerts_triggered' ? sharedMetadata : {}),
+				},
 			},
 		];
 	}
@@ -276,8 +283,9 @@ export function getAutoContexts(
 
 	// ── Metrics ───────────────────────────────────────────────────────────────
 
+	// Metrics explorer — `/metrics-explorer` and sub-routes (summary, explorer, views).
 	if (
-		matchPath(pathname, { path: ROUTES.METRICS_EXPLORER_EXPLORER, exact: false })
+		matchPath(pathname, { path: ROUTES.METRICS_EXPLORER_BASE, exact: false })
 	) {
 		return [
 			{
@@ -292,7 +300,54 @@ export function getAutoContexts(
 		];
 	}
 
+	// ── Homepage ────────────────────────────────────────────────────────────
+
+	if (matchPath(pathname, { path: ROUTES.HOME, exact: true })) {
+		return [
+			{
+				source: 'auto',
+				type: 'metrics_explorer',
+				resourceId: null,
+				metadata: { page: 'homepage' },
+			},
+		];
+	}
+
+	// ── Infrastructure monitoring ───────────────────────────────────────────
+
+	if (
+		matchPath(pathname, {
+			path: ROUTES.INFRASTRUCTURE_MONITORING_BASE,
+			exact: false,
+		})
+	) {
+		const selectedItem = params.get(
+			INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM,
+		);
+		return [
+			{
+				source: 'auto',
+				type: 'metrics_explorer',
+				resourceId: selectedItem,
+				metadata: {
+					page: 'infra_entity_detail',
+					...(selectedItem ? { selectedItem } : {}),
+					...sharedMetadata,
+				},
+			},
+		];
+	}
+
 	return [];
+}
+
+type AlertsIndexPage = 'alert_list' | 'alerts_triggered';
+
+function resolveAlertsIndexPage(tab: string | null): AlertsIndexPage {
+	if (tab === AlertListTabs.TRIGGERED_ALERTS) {
+		return 'alerts_triggered';
+	}
+	return 'alert_list';
 }
 
 /**

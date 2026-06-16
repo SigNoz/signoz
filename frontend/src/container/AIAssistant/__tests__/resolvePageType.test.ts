@@ -23,6 +23,21 @@ describe('resolvePageType', () => {
 		);
 	});
 
+	it('resolves alert list tabs on /alerts', () => {
+		expect(resolvePageType(ROUTES.LIST_ALL_ALERT, '')).toBe(
+			PageTypeDTO.alert_list,
+		);
+		expect(resolvePageType(ROUTES.LIST_ALL_ALERT, '?tab=AlertRules')).toBe(
+			PageTypeDTO.alert_list,
+		);
+		expect(resolvePageType(ROUTES.LIST_ALL_ALERT, '?tab=TriggeredAlerts')).toBe(
+			PageTypeDTO.alerts_triggered,
+		);
+		expect(resolvePageType(ROUTES.LIST_ALL_ALERT, '?tab=Configuration')).toBe(
+			PageTypeDTO.alert_list,
+		);
+	});
+
 	it('returns log_detail when logs explorer has activeLogId', () => {
 		const search = `?${QueryParams.activeLogId}=log-1`;
 
@@ -35,7 +50,38 @@ describe('resolvePageType', () => {
 		expect(resolvePageType(ROUTES.ALERT_OVERVIEW, '')).toBe(PageTypeDTO.other);
 	});
 
-	it('returns other for the app home route (no contextual mapping)', () => {
+	it('returns other for the app root route (no contextual mapping)', () => {
 		expect(resolvePageType(ROUTES.HOME_PAGE, '')).toBe(PageTypeDTO.other);
+	});
+
+	it('returns homepage on /home', () => {
+		expect(resolvePageType(ROUTES.HOME, '')).toBe(PageTypeDTO.homepage);
+	});
+
+	it('returns infra_entity_detail on infrastructure monitoring routes', () => {
+		expect(resolvePageType(ROUTES.INFRASTRUCTURE_MONITORING_BASE, '')).toBe(
+			PageTypeDTO.infra_entity_detail,
+		);
+		expect(resolvePageType(ROUTES.INFRASTRUCTURE_MONITORING_HOSTS, '')).toBe(
+			PageTypeDTO.infra_entity_detail,
+		);
+		expect(resolvePageType(ROUTES.INFRASTRUCTURE_MONITORING_KUBERNETES, '')).toBe(
+			PageTypeDTO.infra_entity_detail,
+		);
+	});
+
+	it('returns metrics_explorer on all metrics explorer routes', () => {
+		expect(resolvePageType(ROUTES.METRICS_EXPLORER_BASE, '')).toBe(
+			PageTypeDTO.metrics_explorer,
+		);
+		expect(resolvePageType(ROUTES.METRICS_EXPLORER, '')).toBe(
+			PageTypeDTO.metrics_explorer,
+		);
+		expect(resolvePageType(ROUTES.METRICS_EXPLORER_EXPLORER, '')).toBe(
+			PageTypeDTO.metrics_explorer,
+		);
+		expect(resolvePageType(ROUTES.METRICS_EXPLORER_VIEWS, '')).toBe(
+			PageTypeDTO.metrics_explorer,
+		);
 	});
 });
