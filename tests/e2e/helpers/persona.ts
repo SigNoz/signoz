@@ -2,7 +2,11 @@ import type { Page } from '@playwright/test';
 
 import { authToken } from './dashboards';
 
-export type Tier = 'cloud' | 'enterprise' | 'community' | 'community-enterprise';
+export type Tier =
+	| 'cloud'
+	| 'enterprise'
+	| 'community'
+	| 'community-enterprise';
 export type Role = 'ADMIN' | 'EDITOR' | 'VIEWER' | 'ANONYMOUS';
 
 export interface Persona {
@@ -53,7 +57,9 @@ function parseOverride(): Persona | null {
 }
 
 async function detectTier(page: Page, token: string): Promise<Tier> {
-	const res = await page.request.get(LICENSE_URL, { headers: authHeaders(token) });
+	const res = await page.request.get(LICENSE_URL, {
+		headers: authHeaders(token),
+	});
 	if (res.status() === 404) {
 		return 'community-enterprise';
 	}
@@ -108,7 +114,9 @@ export async function detectPersona(page: Page): Promise<Persona> {
 
 export async function detectSettingsEnv(page: Page): Promise<SettingsEnv> {
 	const token = await authToken(page);
-	const res = await page.request.get(FEATURES_URL, { headers: authHeaders(token) });
+	const res = await page.request.get(FEATURES_URL, {
+		headers: authHeaders(token),
+	});
 	const body = await res.json();
 	const flags: FeatureFlag[] = body?.data ?? [];
 	const gateway = flags.find((f) => f?.name === 'gateway');

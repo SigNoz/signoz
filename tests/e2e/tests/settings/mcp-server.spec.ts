@@ -78,10 +78,14 @@ test.describe('Settings — MCP Server page', () => {
 		const tabsRoot = page.locator('.mcp-client-tabs-root');
 		await expect(tabsRoot).toBeVisible();
 		await expect(tabsRoot.getByRole('tab', { name: /cursor/i })).toBeVisible();
-		await expect(tabsRoot.getByRole('tab', { name: /claude code/i })).toBeVisible();
+		await expect(
+			tabsRoot.getByRole('tab', { name: /claude code/i }),
+		).toBeVisible();
 		await expect(tabsRoot.getByRole('tab', { name: /vs code/i })).toBeVisible();
 
-		await expect(page.locator('.mcp-client-tabs__snippet-pre').first()).toBeVisible();
+		await expect(
+			page.locator('.mcp-client-tabs__snippet-pre').first(),
+		).toBeVisible();
 
 		await expect(
 			page.getByRole('button', { name: /copy cursor config/i }),
@@ -93,25 +97,25 @@ test.describe('Settings — MCP Server page', () => {
 			'Authenticate from your client',
 		);
 
-		await expect(authCard.locator('.mcp-auth-card__field-label').first()).toContainText(
-			'SigNoz Instance URL',
-		);
+		await expect(
+			authCard.locator('.mcp-auth-card__field-label').first(),
+		).toContainText('SigNoz Instance URL');
 		await expect(
 			authCard.getByRole('button', { name: /copy signoz instance url/i }),
 		).toBeVisible();
 
-		await expect(authCard.locator('.mcp-auth-card__field-label').nth(1)).toContainText(
-			'API Key',
-		);
+		await expect(
+			authCard.locator('.mcp-auth-card__field-label').nth(1),
+		).toContainText('API Key');
 		await expect(
 			authCard.getByRole('button', { name: /create service account/i }),
 		).toBeVisible();
 
 		const useCasesCard = page.locator('.mcp-use-cases-card');
 		await expect(useCasesCard).toBeVisible();
-		await expect(useCasesCard.locator('.mcp-use-cases-card__title')).toContainText(
-			'What you can do with it',
-		);
+		await expect(
+			useCasesCard.locator('.mcp-use-cases-card__title'),
+		).toContainText('What you can do with it');
 		await expect(useCasesCard.locator('.mcp-use-cases-card__list')).toBeVisible();
 
 		await expect(

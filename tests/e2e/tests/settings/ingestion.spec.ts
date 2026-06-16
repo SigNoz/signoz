@@ -1,7 +1,10 @@
 import type { Page } from '@playwright/test';
 
 import { expect, test } from '../../fixtures/auth';
-import { personaSkipReason, tierSkipReason } from '../../helpers/settingsAccess';
+import {
+	personaSkipReason,
+	tierSkipReason,
+} from '../../helpers/settingsAccess';
 import { SETTINGS_ROUTES } from '../../helpers/settings';
 
 // Ingestion page, two variants gated by env.isGatewayEnabled / tier:
@@ -34,11 +37,18 @@ test.describe('Settings — Ingestion page', () => {
 			personaSkipReason(persona, env, SETTINGS_ROUTES.INGESTION) ?? undefined,
 		);
 		test.skip(
-			!!tierSkipReason(persona, ['cloud', 'enterprise'], 'MultiIngestionSettings (gateway)') ||
-				!env.isGatewayEnabled,
+			!!tierSkipReason(
+				persona,
+				['cloud', 'enterprise'],
+				'MultiIngestionSettings (gateway)',
+			) || !env.isGatewayEnabled,
 			!env.isGatewayEnabled
 				? 'PERSONA_SKIP: gateway feature flag is OFF — MultiIngestionSettings does not render'
-				: (tierSkipReason(persona, ['cloud', 'enterprise'], 'MultiIngestionSettings (gateway)') ?? undefined),
+				: (tierSkipReason(
+						persona,
+						['cloud', 'enterprise'],
+						'MultiIngestionSettings (gateway)',
+					) ?? undefined),
 		);
 
 		await gotoIngestion(page);
@@ -85,7 +95,8 @@ test.describe('Settings — Ingestion page', () => {
 		);
 		test.skip(
 			!!tierSkipReason(persona, ['cloud'], 'IngestionSettings read-only table'),
-			tierSkipReason(persona, ['cloud'], 'IngestionSettings read-only table') ?? undefined,
+			tierSkipReason(persona, ['cloud'], 'IngestionSettings read-only table') ??
+				undefined,
 		);
 
 		await gotoIngestion(page);

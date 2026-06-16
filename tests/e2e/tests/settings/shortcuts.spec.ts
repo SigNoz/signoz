@@ -54,7 +54,9 @@ test.describe('Settings — Keyboard Shortcuts page', () => {
 
 		// "shift+d" chosen as it is stable across OS variants (no cmd/ctrl).
 		const globalTable = page.locator('.shortcut-section-table').nth(0);
-		await expect(globalTable.getByRole('cell', { name: 'shift+d' })).toBeVisible();
+		await expect(
+			globalTable.getByRole('cell', { name: 'shift+d' }),
+		).toBeVisible();
 		await expect(
 			globalTable.getByRole('cell', { name: 'Navigate to Dashboards List' }),
 		).toBeVisible();

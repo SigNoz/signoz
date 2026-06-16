@@ -1,8 +1,15 @@
 import type { Persona, SettingsEnv } from '../../helpers/persona';
 
 import { expect, test } from '../../fixtures/auth';
-import { registeredRoutes, visibleNavItems } from '../../helpers/settingsAccess';
-import { NAV_TESTID, SETTINGS_ROUTES, gotoSettings } from '../../helpers/settings';
+import {
+	registeredRoutes,
+	visibleNavItems,
+} from '../../helpers/settingsAccess';
+import {
+	NAV_TESTID,
+	SETTINGS_ROUTES,
+	gotoSettings,
+} from '../../helpers/settings';
 
 // Branching lives in module-level helpers, not test bodies — the repo's
 // playwright/no-conditional-in-test rule forbids `if` inside `test()`.

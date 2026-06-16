@@ -17,7 +17,9 @@ const SEARCH_PLACEHOLDER = 'Search by name or email...';
 async function gotoMembers(page: Page): Promise<void> {
 	await page.goto(SETTINGS_ROUTES.MEMBERS);
 	// Members list is fetched server-side; allow margin for the API response.
-	await expect(page.locator('.members-table-wrapper')).toBeVisible({ timeout: 15_000 });
+	await expect(page.locator('.members-table-wrapper')).toBeVisible({
+		timeout: 15_000,
+	});
 }
 
 test.describe('Settings — Members page', () => {
@@ -96,7 +98,10 @@ test.describe('Settings — Members page', () => {
 
 		await page.locator('.members-filter-trigger').click();
 		await expect(page.getByRole('menu')).toBeVisible();
-		await page.getByRole('menu').getByText(/^deleted/i).click();
+		await page
+			.getByRole('menu')
+			.getByText(/^deleted/i)
+			.click();
 
 		await expect(page.locator('.members-empty-state')).toBeVisible();
 		await expect(
@@ -105,7 +110,10 @@ test.describe('Settings — Members page', () => {
 
 		await page.locator('.members-filter-trigger').click();
 		await expect(page.getByRole('menu')).toBeVisible();
-		await page.getByRole('menu').getByText(/all members/i).click();
+		await page
+			.getByRole('menu')
+			.getByText(/all members/i)
+			.click();
 
 		await expect(
 			page.locator('.member-email', { hasText: ADMIN_EMAIL }),
@@ -136,9 +144,9 @@ test.describe('Settings — Members page', () => {
 		await searchInput.fill('xyznonexistentuser999@nowhere.invalid');
 		await expect(page.locator('.members-empty-state')).toBeVisible();
 		await expect(
-			page.locator('.members-empty-state__text').getByText(
-				'xyznonexistentuser999@nowhere.invalid',
-			),
+			page
+				.locator('.members-empty-state__text')
+				.getByText('xyznonexistentuser999@nowhere.invalid'),
 		).toBeVisible();
 		await expect(
 			page.locator('.member-email', { hasText: ADMIN_EMAIL }),
@@ -169,7 +177,9 @@ test.describe('Settings — Members page', () => {
 		const modal = page.getByRole('dialog');
 		await expect(modal).toBeVisible();
 
-		await expect(modal.getByRole('heading', { name: 'Invite Team Members' })).toBeVisible();
+		await expect(
+			modal.getByRole('heading', { name: 'Invite Team Members' }),
+		).toBeVisible();
 
 		// Header cells scoped to class selectors to avoid matching input placeholders.
 		await expect(modal.locator('.email-header')).toBeVisible();

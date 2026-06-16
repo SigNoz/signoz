@@ -1,7 +1,10 @@
 import type { Page } from '@playwright/test';
 
 import { expect, test } from '../../fixtures/auth';
-import { personaSkipReason, tierSkipReason } from '../../helpers/settingsAccess';
+import {
+	personaSkipReason,
+	tierSkipReason,
+} from '../../helpers/settingsAccess';
 import { SETTINGS_ROUTES } from '../../helpers/settings';
 
 // Workspace (/settings) has two views: cloud (retention inputs disabled, no Save,
@@ -11,7 +14,9 @@ import { SETTINGS_ROUTES } from '../../helpers/settings';
 async function gotoWorkspace(page: Page): Promise<void> {
 	await page.goto(SETTINGS_ROUTES.WORKSPACE);
 	// Retention data is fetched server-side; allow margin for the API response.
-	await expect(page.locator('.retention-controls-container')).toBeVisible({ timeout: 15_000 });
+	await expect(page.locator('.retention-controls-container')).toBeVisible({
+		timeout: 15_000,
+	});
 }
 
 function retentionRow(page: Page, signal: string) {
@@ -28,7 +33,11 @@ function saveButton(page: Page, signal: string) {
 
 // Tier sets for the two Workspace content variants.
 const CLOUD_TIERS = ['cloud'] as const;
-const SELF_HOSTED_TIERS = ['enterprise', 'community', 'community-enterprise'] as const;
+const SELF_HOSTED_TIERS = [
+	'enterprise',
+	'community',
+	'community-enterprise',
+] as const;
 
 test.describe('Settings — Workspace / General page', () => {
 	test('TC-01 page renders retention controls and license-key row', async ({
@@ -44,7 +53,9 @@ test.describe('Settings — Workspace / General page', () => {
 		await gotoWorkspace(page);
 
 		// Scoped to avoid strict-mode conflict with the sidenav item.
-		await expect(page.locator('.general-settings-title')).toContainText('Workspace');
+		await expect(page.locator('.general-settings-title')).toContainText(
+			'Workspace',
+		);
 		await expect(page.locator('.general-settings-subtitle')).toContainText(
 			'Manage your workspace settings.',
 		);
@@ -74,7 +85,8 @@ test.describe('Settings — Workspace / General page', () => {
 		);
 		test.skip(
 			!!tierSkipReason(persona, [...CLOUD_TIERS], 'cloud retention view'),
-			tierSkipReason(persona, [...CLOUD_TIERS], 'cloud retention view') ?? undefined,
+			tierSkipReason(persona, [...CLOUD_TIERS], 'cloud retention view') ??
+				undefined,
 		);
 
 		await gotoWorkspace(page);
@@ -103,9 +115,16 @@ test.describe('Settings — Workspace / General page', () => {
 			personaSkipReason(persona, env, SETTINGS_ROUTES.WORKSPACE) ?? undefined,
 		);
 		test.skip(
-			!!tierSkipReason(persona, [...SELF_HOSTED_TIERS], 'self-hosted retention controls'),
-			tierSkipReason(persona, [...SELF_HOSTED_TIERS], 'self-hosted retention controls') ??
-				undefined,
+			!!tierSkipReason(
+				persona,
+				[...SELF_HOSTED_TIERS],
+				'self-hosted retention controls',
+			),
+			tierSkipReason(
+				persona,
+				[...SELF_HOSTED_TIERS],
+				'self-hosted retention controls',
+			) ?? undefined,
 		);
 
 		await gotoWorkspace(page);

@@ -18,7 +18,8 @@ export const SETTINGS_ROUTES = {
 	INTEGRATIONS: '/integrations',
 } as const;
 
-export type SettingsRoute = (typeof SETTINGS_ROUTES)[keyof typeof SETTINGS_ROUTES];
+export type SettingsRoute =
+	(typeof SETTINGS_ROUTES)[keyof typeof SETTINGS_ROUTES];
 
 // Sidenav item data-testid == itemKey in menuItems.tsx settingsNavSections.
 export const NAV_TESTID: Record<string, string> = {

@@ -79,9 +79,7 @@ test.describe('My Settings — Account page', () => {
 		).toBeVisible();
 
 		await expect(page.getByTestId('theme-selector')).toBeVisible();
-		await expect(
-			page.getByTestId('timezone-adaptation-switch'),
-		).toBeVisible();
+		await expect(page.getByTestId('timezone-adaptation-switch')).toBeVisible();
 		await expect(page.getByTestId('side-nav-pinned-switch')).toBeVisible();
 
 		// License copy button renders because bootstrap issues an enterprise license on cloud.
@@ -209,7 +207,10 @@ test.describe('My Settings — Account page', () => {
 		await expect(submitBtn).toBeEnabled();
 
 		// Close via × button — Ant Modal's Escape handler can race with input focus in headless mode.
-		await page.locator('.update-name-modal').getByRole('button', { name: 'Close' }).click();
+		await page
+			.locator('.update-name-modal')
+			.getByRole('button', { name: 'Close' })
+			.click();
 		await expect(nameInput).not.toBeVisible();
 	});
 
@@ -226,7 +227,10 @@ test.describe('My Settings — Account page', () => {
 		await gotoMySettings(page);
 
 		// The button that OPENS the modal has no testid; reset-password-btn is the SUBMIT button inside.
-		await page.getByRole('button', { name: /reset password/i }).first().click();
+		await page
+			.getByRole('button', { name: /reset password/i })
+			.first()
+			.click();
 
 		const currentPasswordInput = page.getByTestId('current-password-textbox');
 		const newPasswordInput = page.getByTestId('new-password-textbox');
@@ -242,16 +246,17 @@ test.describe('My Settings — Account page', () => {
 
 		// Same value → passwords match → validation error + disabled
 		await newPasswordInput.fill('somepassword');
-		await expect(
-			page.getByText(/new password must be different/i),
-		).toBeVisible();
+		await expect(page.getByText(/new password must be different/i)).toBeVisible();
 		await expect(submitBtn).toBeDisabled();
 
 		// Stop at enabled — clicking would rotate the admin password and break every other worker.
 		await newPasswordInput.fill('differentpassword!1');
 		await expect(submitBtn).toBeEnabled();
 
-		await page.locator('.reset-password-modal').getByRole('button', { name: 'Close' }).click();
+		await page
+			.locator('.reset-password-modal')
+			.getByRole('button', { name: 'Close' })
+			.click();
 		await expect(currentPasswordInput).not.toBeVisible();
 	});
 });

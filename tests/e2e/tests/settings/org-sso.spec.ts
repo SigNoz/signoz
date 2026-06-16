@@ -32,16 +32,12 @@ test.describe('Organization Settings — SSO & Org page', () => {
 		await gotoOrgSettings(page);
 
 		await expect(page.getByLabel('Display name')).toBeVisible();
-		await expect(
-			page.getByRole('button', { name: 'Submit' }),
-		).toBeVisible();
+		await expect(page.getByRole('button', { name: 'Submit' })).toBeVisible();
 
 		await expect(
 			page.getByRole('heading', { name: 'Authenticated Domains' }),
 		).toBeVisible();
-		await expect(
-			page.getByRole('button', { name: 'Add Domain' }),
-		).toBeVisible();
+		await expect(page.getByRole('button', { name: 'Add Domain' })).toBeVisible();
 	});
 
 	// note: root_user_operation_unsupported on save (see header) — never clicks Submit; value restored in finally.

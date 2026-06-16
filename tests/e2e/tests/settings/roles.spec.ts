@@ -50,25 +50,23 @@ test.describe('Settings — Roles page', () => {
 
 		await gotoRolesList(page);
 
-		await expect(
-			page.locator('.roles-settings-header-title'),
-		).toContainText('Roles');
+		await expect(page.locator('.roles-settings-header-title')).toContainText(
+			'Roles',
+		);
 		await expect(
 			page.locator('.roles-settings-header-description'),
 		).toContainText('Create and manage custom roles for your team.');
 
-		await expect(
-			page.locator('input[type="search"]'),
-		).toBeVisible();
+		await expect(page.locator('input[type="search"]')).toBeVisible();
 		await expect(
 			page.locator('input[placeholder="Search for roles..."]'),
 		).toBeVisible();
 
 		const table = page.locator('.roles-listing-table');
 		await expect(table).toBeVisible();
-		await expect(
-			table.locator('.roles-table-header-cell--name'),
-		).toContainText('Name');
+		await expect(table.locator('.roles-table-header-cell--name')).toContainText(
+			'Name',
+		);
 		await expect(
 			table.locator('.roles-table-header-cell--description'),
 		).toContainText('Description');
@@ -148,7 +146,9 @@ test.describe('Settings — Roles page', () => {
 		const detailPage = page.locator('.role-details-page');
 		await expect(detailPage).toBeVisible();
 		await expect(detailPage.locator('.role-details-title')).toBeVisible();
-		await expect(detailPage.locator('.role-details-title')).toContainText('Role —');
+		await expect(detailPage.locator('.role-details-title')).toContainText(
+			'Role —',
+		);
 
 		await expect(
 			detailPage.getByText(
@@ -161,7 +161,9 @@ test.describe('Settings — Roles page', () => {
 		).toHaveCount(0);
 
 		await expect(
-			detailPage.locator('.role-details-section-label', { hasText: 'Permissions' }),
+			detailPage.locator('.role-details-section-label', {
+				hasText: 'Permissions',
+			}),
 		).toBeVisible();
 
 		await page.goto(SETTINGS_ROUTES.ROLES);
