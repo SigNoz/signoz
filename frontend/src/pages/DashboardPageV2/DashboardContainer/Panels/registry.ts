@@ -7,7 +7,7 @@ import type {
 	PanelRegistry,
 	RenderablePanelDefinition,
 } from './types/panelDefinition';
-import type { PanelKind } from './types/panelKind';
+import type { DashboardtypesPanelPluginKindDTO as PanelKind } from 'api/generated/services/sigNoz.schemas';
 
 // Pure assembly: each kind owns its own PanelDefinition (see
 // `kinds/<Kind>/definition.ts`). Registering a new panel = add its folder and a
