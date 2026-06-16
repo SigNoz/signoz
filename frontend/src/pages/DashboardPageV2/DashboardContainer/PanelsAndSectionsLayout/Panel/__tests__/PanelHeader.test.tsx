@@ -1,7 +1,14 @@
+import { TooltipProvider } from '@signozhq/ui/tooltip';
 import { render, screen } from '@testing-library/react';
+import type { ReactElement } from 'react';
 import type { Warning } from 'types/api';
 
 import PanelHeader from '../PanelHeader/PanelHeader';
+
+// PanelHeader's status indicators render a radix tooltip, which needs a
+// TooltipProvider ancestor (supplied globally by AppLayout at runtime).
+const renderWithProvider = (ui: ReactElement): ReturnType<typeof render> =>
+	render(<TooltipProvider>{ui}</TooltipProvider>);
 
 const baseProps = {
 	title: 'My panel',
@@ -19,17 +26,17 @@ const warning: Warning = {
 
 describe('PanelHeader status indicators', () => {
 	it('shows the error indicator whenever an error is present', () => {
-		render(<PanelHeader {...baseProps} error={new Error('boom')} />);
+		renderWithProvider(<PanelHeader {...baseProps} error={new Error('boom')} />);
 		expect(screen.getByTestId('panel-status-error')).toBeInTheDocument();
 	});
 
 	it('shows the warning indicator whenever a warning is present', () => {
-		render(<PanelHeader {...baseProps} warning={warning} />);
+		renderWithProvider(<PanelHeader {...baseProps} warning={warning} />);
 		expect(screen.getByTestId('panel-status-warning')).toBeInTheDocument();
 	});
 
 	it('renders no status indicators when there is no error or warning', () => {
-		render(<PanelHeader {...baseProps} />);
+		renderWithProvider(<PanelHeader {...baseProps} />);
 		expect(screen.queryByTestId('panel-status-error')).not.toBeInTheDocument();
 		expect(screen.queryByTestId('panel-status-warning')).not.toBeInTheDocument();
 	});

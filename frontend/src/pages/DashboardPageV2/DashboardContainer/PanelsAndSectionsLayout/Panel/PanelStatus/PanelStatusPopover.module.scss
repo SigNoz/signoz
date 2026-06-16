@@ -39,8 +39,9 @@
 }
 
 .docsLink {
-	display: inline-flex;
+	display: flex !important;
 	align-items: center;
+	justify-content: center;
 	gap: 4px;
 	flex-shrink: 0;
 	font-size: 12px;

@@ -32,7 +32,7 @@ function PanelStatusContent({ detail }: PanelStatusContentProps): JSX.Element {
 						data-testid="panel-status-docs"
 					>
 						<BookOpenText size={14} />
-						Open Docs
+						<span>Open Docs</span>
 					</Typography.Link>
 				)}
 			</header>
