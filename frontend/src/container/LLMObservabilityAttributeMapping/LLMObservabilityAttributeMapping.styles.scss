@@ -97,8 +97,10 @@
 			font-weight: 600;
 		}
 
-		&__expand-cell {
-			width: 48px;
+		&__name-cell {
+			display: flex;
+			align-items: center;
+			gap: 8px;
 		}
 
 		&__sub-row > td {

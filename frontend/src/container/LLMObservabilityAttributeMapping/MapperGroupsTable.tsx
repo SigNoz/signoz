@@ -23,7 +23,7 @@ import { DraftGroup } from './types';
 import { AttributeMappingStore } from './useAttributeMappingStore';
 import { conditionFiltersFromGroup } from './utils';
 
-const COLUMN_COUNT = 5;
+const COLUMN_COUNT = 4;
 
 interface MapperGroupsTableProps {
 	store: AttributeMappingStore;
@@ -78,25 +78,25 @@ function GroupRow({
 	return (
 		<>
 			<TableRow data-testid={`group-row-${group.localId}`}>
-				<TableCell className="groups-table__expand-cell">
-					<Button
-						variant="ghost"
-						color="secondary"
-						size="icon"
-						aria-label={isExpanded ? 'Collapse group' : 'Expand group'}
-						onClick={(): void => onToggleExpand(group.localId)}
-						testId={`group-expand-${group.localId}`}
-					>
-						{isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-					</Button>
-				</TableCell>
 				<TableCell>
-					<span
-						className="groups-table__name"
-						data-testid={`group-name-${group.localId}`}
-					>
-						{group.name}
-					</span>
+					<div className="groups-table__name-cell">
+						<Button
+							variant="ghost"
+							color="secondary"
+							size="icon"
+							aria-label={isExpanded ? 'Collapse group' : 'Expand group'}
+							onClick={(): void => onToggleExpand(group.localId)}
+							testId={`group-expand-${group.localId}`}
+						>
+							{isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+						</Button>
+						<span
+							className="groups-table__name"
+							data-testid={`group-name-${group.localId}`}
+						>
+							{group.name}
+						</span>
+					</div>
 				</TableCell>
 				<TableCell>
 					<FiltersCell group={group} />
@@ -161,7 +161,6 @@ function MapperGroupsTable({
 			<Table testId="mapper-groups-table" className="am-table">
 				<TableHeader>
 					<TableRow>
-						<TableHead aria-label="Expand" />
 						<TableHead>Group name</TableHead>
 						<TableHead>Filters</TableHead>
 						<TableHead>Mappings</TableHead>
