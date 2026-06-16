@@ -127,8 +127,8 @@ func (d *DashboardV2) ErrIfNotDeletable() error {
 }
 
 func (d *DashboardV2) ErrIfNotClonable() error {
-	if d.Source != SourceUser {
-		return errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardImmutable, "only user dashboards can be cloned, %s dashboards cannot be cloned", d.Source)
+	if !d.Source.isClonable() {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardImmutable, "%s dashboards cannot be cloned", d.Source)
 	}
 	return nil
 }

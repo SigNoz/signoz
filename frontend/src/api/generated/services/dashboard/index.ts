@@ -1209,7 +1209,7 @@ export const useUpdateDashboardV2 = <
 	return useMutation(getUpdateDashboardV2MutationOptions(options));
 };
 /**
- * This endpoint clones an existing v2-shape dashboard. Only user dashboards can be cloned; system and integration dashboards are rejected. The clone keeps the source's display name, panels, and tags, but gets a freshly generated unique internal name and is always created as an unlocked user dashboard owned by the caller.
+ * This endpoint clones an existing v2-shape dashboard. User and integration dashboards can be cloned; system dashboards are rejected. The clone keeps the source's display name, panels, and tags, but gets a freshly generated unique internal name and is always created as an unlocked user dashboard owned by the caller.
  * @summary Clone dashboard (v2)
  */
 export const cloneDashboardV2 = (
