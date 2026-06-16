@@ -1,9 +1,12 @@
+import datetime
+import json
 import uuid
 from collections.abc import Callable
 from http import HTTPStatus
 
 import pytest
 import requests
+from sqlalchemy import sql
 
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.types import Operation, SigNoz
@@ -784,6 +787,91 @@ def test_dashboard_v2_pin_limit(
         ).status_code
         == HTTPStatus.NO_CONTENT
     )
+
+
+# ─── clone an integration dashboard ──────────────────────────────────────────
+# Integration-source dashboards aren't creatable through the API — the create
+# endpoint hardcodes the user source, and the integrations installer writes v1
+# dashboards, not perses dashboards. Until the migration is done, seed a perses
+# integration dashboard straight into the DB to exercise the one branch that's
+# otherwise unreachable: cloning an integration dashboard give a user dashboard.
+
+
+def test_dashboard_v2_clone_integration_source(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    _wipe_all_dashboards(signoz, token)
+
+    roles_response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/roles"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert roles_response.status_code == HTTPStatus.OK, roles_response.text
+    org_id = roles_response.json()["data"][0]["orgId"]
+
+    integration_id = str(uuid.uuid4())
+    now = datetime.datetime.now(datetime.UTC)
+    data = json.dumps(
+        {
+            "metadata": {"schemaVersion": "v6"},
+            "spec": {"display": {"name": "Integration Source Dash"}, "panels": {}, "layouts": []},
+        }
+    )
+
+    try:
+        # A locked, integration-source v6 dashboard — the state the API can't produce.
+        with signoz.sqlstore.conn.begin() as conn:
+            conn.execute(
+                sql.text(
+                    "INSERT INTO dashboard "
+                    "(id, created_at, updated_at, created_by, updated_by, data, locked, org_id, source, name) "
+                    "VALUES (:id, :created_at, :updated_at, :created_by, :updated_by, :data, :locked, :org_id, :source, :name)"
+                ),
+                {
+                    "id": integration_id,
+                    "created_at": now,
+                    "updated_at": now,
+                    "created_by": USER_ADMIN_EMAIL,
+                    "updated_by": USER_ADMIN_EMAIL,
+                    "data": data,
+                    "locked": True,
+                    "org_id": org_id,
+                    "source": "integration",
+                    "name": "integration-source-dash",
+                },
+            )
+
+        response = requests.post(
+            signoz.self.host_configs["8080"].get(f"{BASE_URL}/{integration_id}/clone"),
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        )
+        assert response.status_code == HTTPStatus.CREATED, response.text
+        clone = response.json()["data"]
+        assert clone["id"] != integration_id
+        assert clone["source"] == "user"  # the clone of an integration dashboard is a user dashboard
+        assert clone["locked"] is False  # and it is unlocked, regardless of the source's lock state
+        assert clone["spec"]["display"]["name"] == "Integration Source Dash"  # display name preserved
+
+        response = requests.get(
+            signoz.self.host_configs["8080"].get(f"{BASE_URL}/{clone['id']}"),
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        )
+        assert response.status_code == HTTPStatus.OK, response.text
+        assert response.json()["data"]["id"] == clone["id"]
+    finally:
+        # The API can't delete a locked integration dashboard, so a leftover would
+        # break the next test's wipe — remove the seed directly.
+        with signoz.sqlstore.conn.begin() as conn:
+            conn.execute(
+                sql.text("DELETE FROM dashboard WHERE id = :id"),
+                {"id": integration_id},
+            )
 
 
 # ─── LIKE escaping ───────────────────────────────────────────────────────────
