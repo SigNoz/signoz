@@ -499,6 +499,7 @@ func New(
 		serviceAccount,
 		cloudIntegrationModule,
 		modules.LogsPipeline,
+		modules.InfraMonitoring,
 		querier,
 	}
 
