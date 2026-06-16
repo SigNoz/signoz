@@ -35,13 +35,23 @@ function SourcesCell({ mapper }: { mapper: DraftMapper }): JSX.Element {
 	const remaining = mapper.sources.length - visible.length;
 
 	return (
-		<span
+		<div
 			className="mappers-table__sources"
 			data-testid={`mapper-sources-${mapper.localId}`}
 		>
-			{visible.map((source) => source.key).join(', ')}
-			{remaining > 0 && <span className="muted"> +{remaining} more</span>}
-		</span>
+			{visible.map((source) => (
+				<span
+					className="mappers-table__source-chip"
+					key={`${source.context}:${source.key}`}
+					title={source.key}
+				>
+					{source.key}
+				</span>
+			))}
+			{remaining > 0 && (
+				<span className="mappers-table__source-more muted">+{remaining} more</span>
+			)}
+		</div>
 	);
 }
 

@@ -146,8 +146,30 @@
 		}
 
 		&__sources {
+			display: flex;
+			flex-wrap: wrap;
+			align-items: center;
+			gap: 6px;
+		}
+
+		&__source-chip {
+			display: inline-flex;
+			align-items: center;
+			max-width: 220px;
+			padding: 2px 8px;
+			border: 1px solid var(--bg-slate-400, rgba(255, 255, 255, 0.12));
+			border-radius: 6px;
+			background: var(--bg-ink-300, rgba(255, 255, 255, 0.04));
 			font-family: 'Geist Mono', monospace;
 			font-size: 12px;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+
+		&__source-more {
+			font-size: 12px;
+			white-space: nowrap;
 		}
 
 		&__error {
