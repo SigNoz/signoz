@@ -823,8 +823,8 @@ function NewWidget({
 				<div className="right-header">
 					<HeaderRightSection
 						enableAnnouncements={false}
-						enableShare
-						enableFeedback
+						enableShare={false}
+						enableFeedback={false}
 					/>
 					{showSwitchToViewModeButton && (
 						<Button
