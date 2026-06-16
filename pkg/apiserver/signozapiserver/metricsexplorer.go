@@ -127,7 +127,7 @@ func (provider *provider) addMetricsExplorerRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/metrics/{metric_name}/highlights", handler.New(
+	if err := router.Handle("/api/v2/metrics/highlights", handler.New(
 		provider.authzMiddleware.ViewAccess(provider.metricsExplorerHandler.GetMetricHighlights),
 		handler.OpenAPIDef{
 			ID:                  "GetMetricHighlights",
@@ -135,6 +135,7 @@ func (provider *provider) addMetricsExplorerRoutes(router *mux.Router) error {
 			Summary:             "Get metric highlights",
 			Description:         "This endpoint returns highlights like number of datapoints, totaltimeseries, active time series, last received time for a specified metric",
 			Request:             nil,
+			RequestQuery:        new(metricsexplorertypes.MetricNameQuery),
 			RequestContentType:  "",
 			Response:            new(metricsexplorertypes.MetricHighlightsResponse),
 			ResponseContentType: "application/json",
