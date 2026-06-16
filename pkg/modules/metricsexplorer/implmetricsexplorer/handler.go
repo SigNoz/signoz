@@ -116,23 +116,17 @@ func (h *handler) UpdateMetricMetadata(rw http.ResponseWriter, req *http.Request
 		return
 	}
 
-	// Extract metric_name from URL path
-	vars := mux.Vars(req)
-	metricName := vars["metric_name"]
-
-	if metricName == "" {
-		render.Error(rw, errors.NewInvalidInputf(errors.CodeInvalidInput, "metric_name is required in URL path"))
-		return
-	}
-
 	var in metricsexplorertypes.UpdateMetricMetadataRequest
 	if err := binding.JSON.BindBody(req.Body, &in); err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	// Set metric name from URL path
-	in.MetricName = metricName
+	if in.MetricName == "" {
+		render.Error(rw, errors.NewInvalidInputf(errors.CodeInvalidInput, "metricName is required"))
+		return
+	}
+
 	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	err = h.module.UpdateMetricMetadata(req.Context(), orgID, &in)
