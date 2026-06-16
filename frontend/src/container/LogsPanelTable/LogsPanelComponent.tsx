@@ -4,19 +4,21 @@ import {
 	SetStateAction,
 	useCallback,
 	useMemo,
-	useState,
 } from 'react';
 import { UseQueryResult } from 'react-query';
 import LogDetail from 'components/LogDetail';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { ResizeTable } from 'components/ResizeTable';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
+import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import Controls from 'container/Controls';
 import { PER_PAGE_OPTIONS } from 'container/TracesExplorer/ListView/configs';
 import { tableStyles } from 'container/TracesExplorer/ListView/styles';
 import useLogDetailHandlers from 'hooks/logs/useLogDetailHandlers';
+import { Pagination } from 'hooks/queryPagination';
 import { useLogsData } from 'hooks/useLogsData';
+import useUrlQueryData from 'hooks/useUrlQueryData';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { FlatLogData } from 'lib/logs/flatLogData';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
@@ -29,18 +31,26 @@ import { getLogPanelColumnsList } from './utils';
 
 import './LogsPanelComponent.styles.scss';
 
+// Pagination is persisted in the URL (keyed per widget so multiple list panels
+// on the same dashboard don't collide) rather than in component-local state,
+// which would be lost when the panel briefly unmounts during a refetch.
+const DEFAULT_PAGINATION_CONFIG: Pagination = { offset: 0, limit: 10 };
+
 function LogsPanelComponent({
 	widget,
 	setRequestData,
 	queryResponse,
 	onColumnWidthsChange,
 }: LogsPanelComponentProps): JSX.Element {
-	const [pageSize, setPageSize] = useState<number>(10);
-	const [offset, setOffset] = useState<number>(0);
+	const { queryData: paginationQueryData, redirectWithQuery } = useUrlQueryData<
+		Pagination
+	>(`${QueryParams.pagination}-${widget.id}`);
+	const pagination = paginationQueryData ?? DEFAULT_PAGINATION_CONFIG;
+	const pageSize = pagination.limit;
+	const offset = pagination.offset;
 
 	const handleChangePageSize = (value: number): void => {
-		setPageSize(value);
-		setOffset(0);
+		redirectWithQuery({ offset: 0, limit: value });
 		setRequestData((prev) => {
 			const newQueryData = {
 				...prev.query,
@@ -111,13 +121,14 @@ function LogsPanelComponent({
 	);
 
 	const handleRequestData = (newOffset: number): void => {
-		setOffset(newOffset);
+		const nextOffset = newOffset < 0 ? 0 : newOffset;
+		redirectWithQuery({ offset: nextOffset, limit: pageSize });
 		setRequestData((prev) => ({
 			...prev,
 			tableParams: {
 				pagination: {
 					limit: widget.query?.builder?.queryData[0]?.limit || 0,
-					offset: newOffset < 0 ? 0 : newOffset,
+					offset: nextOffset,
 				},
 			},
 		}));

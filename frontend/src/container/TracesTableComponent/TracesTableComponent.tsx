@@ -5,12 +5,12 @@ import {
 	useCallback,
 	useEffect,
 	useMemo,
-	useState,
 } from 'react';
 import { UseQueryResult } from 'react-query';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { ResizeTable } from 'components/ResizeTable';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
+import { QueryParams } from 'constants/query';
 import Controls from 'container/Controls';
 import { PER_PAGE_OPTIONS } from 'container/TracesExplorer/ListView/configs';
 import { tableStyles } from 'container/TracesExplorer/ListView/styles';
@@ -20,7 +20,7 @@ import {
 	transformDataWithDate,
 } from 'container/TracesExplorer/ListView/utils';
 import { Pagination } from 'hooks/queryPagination';
-import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import useUrlQueryData from 'hooks/useUrlQueryData';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import history from 'lib/history';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
@@ -32,17 +32,21 @@ import { openInNewTab } from 'utils/navigation';
 
 import './TracesTableComponent.styles.scss';
 
+// Pagination is persisted in the URL (keyed per widget so multiple list panels
+// on the same dashboard don't collide) rather than in component-local state,
+// which would be lost when the panel briefly unmounts during a refetch.
+const DEFAULT_PAGINATION_CONFIG: Pagination = { offset: 0, limit: 10 };
+
 function TracesTableComponent({
 	widget,
 	queryResponse,
 	setRequestData,
 	onColumnWidthsChange,
 }: TracesTableComponentProps): JSX.Element {
-	const [pagination, setPagination] = useState<Pagination>({
-		offset: 0,
-		limit: 10,
-	});
-	const { safeNavigate } = useSafeNavigate();
+	const { queryData: paginationQueryData, redirectWithQuery } = useUrlQueryData<
+		Pagination
+	>(`${QueryParams.pagination}-${widget.id}`);
+	const pagination = paginationQueryData ?? DEFAULT_PAGINATION_CONFIG;
 
 	useEffect(() => {
 		setRequestData((prev) => ({
@@ -99,21 +103,9 @@ function TracesTableComponent({
 
 	const handlePaginationChange = useCallback(
 		(newPagination: Pagination) => {
-			const urlQuery = new URLSearchParams(window.location.search);
-
-			// Update URL with new pagination values
-			urlQuery.set('offset', newPagination.offset.toString());
-			urlQuery.set('limit', newPagination.limit.toString());
-
-			// Update URL without page reload
-			safeNavigate({
-				search: urlQuery.toString(),
-			});
-
-			// Update component state
-			setPagination(newPagination);
+			redirectWithQuery(newPagination);
 		},
-		[safeNavigate],
+		[redirectWithQuery],
 	);
 
 	if (queryResponse.isError) {
