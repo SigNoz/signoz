@@ -58,11 +58,89 @@ func TestJSONBinding_BindBodyErrors(t *testing.T) {
 			err := JSON.BindBody(strings.NewReader(testCase.body), testCase.obj, testCase.opts...)
 			assert.Error(t, err)
 
-			typ, c, m, _, _, a := errors.Unwrapb(err)
+			typ, c, m, _, _, _ := errors.Unwrapb(err)
 			assert.Equal(t, errors.TypeInvalidInput, typ)
 			assert.Equal(t, testCase.code, c)
 			assert.Equal(t, testCase.message, m)
-			assert.ElementsMatch(t, testCase.a, a)
+
+			messages := []string{}
+			for _, additional := range errors.AsJSON(err).Errors {
+				messages = append(messages, additional.Message)
+			}
+			assert.ElementsMatch(t, testCase.a, messages)
 		})
 	}
+}
+
+type widget struct {
+	Name  string `json:"name"`
+	Color string `json:"color"`
+}
+
+func TestJSONBinding_BindBody_UnknownFieldSuggestions(t *testing.T) {
+	testCases := []struct {
+		name        string
+		body        string
+		opts        []BindBodyOption
+		message     string
+		suggestions []string
+	}{
+		{
+			name:        "NoNearMatch",
+			body:        `{"shape":"round"}`,
+			opts:        []BindBodyOption{WithDisallowUnknownFields(true)},
+			message:     `unknown field "shape"`,
+			suggestions: []string{"valid references: `name`, `color`"},
+		},
+		{
+			name:        "WithContext",
+			body:        `{"shape":"round"}`,
+			opts:        []BindBodyOption{WithDisallowUnknownFields(true), WithUnknownFieldContext("widget spec")},
+			message:     `unknown field "shape" in widget spec`,
+			suggestions: []string{"valid references: `name`, `color`"},
+		},
+		{
+			name:        "NearMatch",
+			body:        `{"nam":"x"}`,
+			opts:        []BindBodyOption{WithDisallowUnknownFields(true)},
+			message:     `unknown field "nam"`,
+			suggestions: []string{"did you mean: `name`", "valid references: `name`, `color`"},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			err := JSON.BindBody(strings.NewReader(testCase.body), &widget{}, testCase.opts...)
+			assert.Error(t, err)
+
+			_, c, m, _, _, _ := errors.Unwrapb(err)
+
+			if testCase.message != "" {
+				assert.Equal(t, errors.CodeInvalidInput, c)
+				assert.Equal(t, testCase.message, m)
+			}
+
+			assert.Equal(t, testCase.suggestions, errors.AsJSON(err).Suggestions)
+		})
+	}
+}
+
+type structuredUnknownField struct{}
+
+func (*structuredUnknownField) UnmarshalJSON([]byte) error {
+	return errors.
+		NewInvalidInputf(errors.CodeInvalidInput, "unknown field %q in inner spec", "foo").
+		WithSuggestions("did you mean: `bar`")
+}
+
+// A non-strict BindBody must pass through an already-structured "unknown field"
+// error returned by a nested UnmarshalJSON, not re-wrap it with the outer field set.
+func TestJSONBinding_BindBody_PassesThroughStructuredUnknownField(t *testing.T) {
+	err := JSON.BindBody(strings.NewReader(`{}`), &structuredUnknownField{})
+	assert.Error(t, err)
+
+	_, c, m, _, _, _ := errors.Unwrapb(err)
+	assert.Equal(t, errors.CodeInvalidInput, c)
+	assert.Equal(t, `unknown field "foo" in inner spec`, m)
+	assert.Equal(t, []string{"did you mean: `bar`"}, errors.AsJSON(err).Suggestions)
 }
