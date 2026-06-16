@@ -1,4 +1,5 @@
 import { BookOpenText } from '@signozhq/icons';
+import { Typography } from '@signozhq/ui/typography';
 
 import type { PanelStatusDetail } from './types';
 import styles from './PanelStatusPopover.module.scss';
@@ -23,7 +24,7 @@ function PanelStatusContent({ detail }: PanelStatusContentProps): JSX.Element {
 					<p className={styles.message}>{message}</p>
 				</div>
 				{docsUrl && (
-					<a
+					<Typography.Link
 						className={styles.docsLink}
 						href={docsUrl}
 						target="_blank"
@@ -32,7 +33,7 @@ function PanelStatusContent({ detail }: PanelStatusContentProps): JSX.Element {
 					>
 						<BookOpenText size={14} />
 						Open Docs
-					</a>
+					</Typography.Link>
 				)}
 			</header>
 			{messages.length > 0 && (

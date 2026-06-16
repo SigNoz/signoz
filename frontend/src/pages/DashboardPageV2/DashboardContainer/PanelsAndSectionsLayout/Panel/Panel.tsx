@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
-import { getPanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Panels';
+import { getPanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Panels/registry';
 import { usePanelQuery } from 'pages/DashboardPageV2/DashboardContainer/hooks/usePanelQuery';
 import type { Warning } from 'types/api';
 
@@ -9,8 +9,9 @@ import type { DashboardSection } from '../../utils';
 import type { DeletePanelArgs } from './hooks/useDeletePanel';
 import { usePanelInteractions } from './hooks/usePanelInteractions';
 import type { MovePanelArgs } from './hooks/useMovePanelToSection';
-import PanelBody from './PanelBody';
-import PanelHeader from './PanelHeader';
+import PanelBody from './PanelBody/PanelBody';
+import UnsupportedPanelBody from './PanelBody/UnsupportedPanelBody';
+import PanelHeader from './PanelHeader/PanelHeader';
 import styles from './Panel.module.scss';
 
 /** Panel action context — present together only in editable sectioned mode. */
@@ -22,7 +23,7 @@ export interface PanelActionsConfig {
 }
 
 interface PanelProps {
-	panel: DashboardtypesPanelDTO | undefined;
+	panel: DashboardtypesPanelDTO;
 	panelId: string;
 	/** True once this panel's section enters the viewport — gates the fetch. */
 	isVisible?: boolean;
@@ -42,11 +43,11 @@ function Panel({
 	isVisible,
 	panelActions,
 }: PanelProps): JSX.Element {
-	const name = panel?.spec?.display?.name || `Panel ${panelId.slice(0, 6)}`;
-	const description = panel?.spec?.display?.description;
-	const fullKind = panel?.spec?.plugin?.kind;
+	const name = panel.spec.display?.name;
+	const description = panel.spec.display?.description;
+	const fullKind = panel.spec.plugin?.kind;
 	const kind = fullKind?.replace(/^signoz\//, '') ?? 'unknown';
-	const queryCount = panel?.spec?.queries?.length ?? 0;
+	const queryCount = panel.spec.queries?.length ?? 0;
 
 	const panelDef = getPanelDefinition(fullKind);
 
@@ -87,19 +88,21 @@ function Panel({
 				warning={data.response?.data?.warning as Warning | undefined}
 				panelActions={panelActions}
 			/>
-			<PanelBody
-				panelDef={panelDef}
-				panel={panel}
-				panelId={panelId}
-				kind={kind}
-				queryCount={queryCount}
-				data={data}
-				isLoading={isLoading}
-				error={error}
-				refetch={refetch}
-				onDragSelect={onDragSelect}
-				dashboardPreference={dashboardPreference}
-			/>
+			{panelDef ? (
+				<PanelBody
+					panelDef={panelDef}
+					panel={panel}
+					panelId={panelId}
+					data={data}
+					isLoading={isLoading}
+					error={error}
+					refetch={refetch}
+					onDragSelect={onDragSelect}
+					dashboardPreference={dashboardPreference}
+				/>
+			) : (
+				<UnsupportedPanelBody kind={kind} queryCount={queryCount} />
+			)}
 		</div>
 	);
 }

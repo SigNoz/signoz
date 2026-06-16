@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import type { Warning } from 'types/api';
 
-import PanelHeader from '../PanelHeader';
+import PanelHeader from '../PanelHeader/PanelHeader';
 
 const baseProps = {
 	title: 'My panel',

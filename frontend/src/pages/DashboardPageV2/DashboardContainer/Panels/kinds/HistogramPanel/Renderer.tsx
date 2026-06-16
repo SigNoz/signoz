@@ -12,12 +12,13 @@ import {
 import { useTimezone } from 'providers/Timezone';
 import type uPlot from 'uplot';
 
+import NoData from '../../components/NoData/NoData';
 import PanelStyles from '../../panel.module.scss';
 import { PanelRendererProps } from '../../types/rendererProps';
-import { resolveLegendPosition } from '../../utils/chartAppearanceMappings';
+import { resolveLegendPosition } from '../../utils/chartAppearance/resolvers';
 import { getBuilderQueries } from '../../utils/getBuilderQueries';
 
-import { buildHistogramConfig } from './buildConfig';
+import { buildHistogramConfig } from './utils/buildConfig';
 import { prepareHistogramData } from './prepareData';
 import { ChartClickData } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 
@@ -118,20 +119,23 @@ function HistogramPanelRenderer({
 			data-testid="histogram-panel-renderer"
 			className={PanelStyles.panelContainer}
 		>
-			{containerDimensions.width > 0 && containerDimensions.height > 0 && (
-				<Histogram
-					key={panelId}
-					config={config}
-					data={chartData as uPlot.AlignedData}
-					legendConfig={{ position: legendPosition }}
-					canPinTooltip
-					isQueriesMerged={isQueriesMerged}
-					width={containerDimensions.width}
-					height={containerDimensions.height}
-					renderTooltipFooter={renderTooltipFooter}
-					onClick={handleChartClick}
-				/>
-			)}
+			{flatSeries.length === 0 && <NoData />}
+			{flatSeries.length > 0 &&
+				containerDimensions.width > 0 &&
+				containerDimensions.height > 0 && (
+					<Histogram
+						key={panelId}
+						config={config}
+						data={chartData as uPlot.AlignedData}
+						legendConfig={{ position: legendPosition }}
+						canPinTooltip
+						isQueriesMerged={isQueriesMerged}
+						width={containerDimensions.width}
+						height={containerDimensions.height}
+						renderTooltipFooter={renderTooltipFooter}
+						onClick={handleChartClick}
+					/>
+				)}
 		</div>
 	);
 }

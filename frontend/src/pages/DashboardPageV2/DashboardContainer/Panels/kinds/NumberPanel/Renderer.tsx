@@ -1,13 +1,13 @@
 import { useMemo } from 'react';
-import { Typography } from '@signozhq/ui/typography';
 import type { DashboardtypesNumberPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
 import { prepareScalarTables } from 'pages/DashboardPageV2/DashboardContainer/queryV5/prepareScalarTables';
 import { getScalarResults } from 'pages/DashboardPageV2/DashboardContainer/queryV5/v5ResponseData';
 
+import NoData from '../../components/NoData/NoData';
 import PanelStyles from '../../panel.module.scss';
 import { PanelRendererProps } from '../../types/rendererProps';
 import { formatPanelValue } from '../../utils/formatPanelValue';
-import { resolveDecimalPrecision } from '../../utils/chartAppearanceMappings';
+import { resolveDecimalPrecision } from '../../utils/chartAppearance/resolvers';
 
 import { prepareNumberData } from './prepareData';
 import { mapNumberThresholds } from './utils';
@@ -63,9 +63,7 @@ function NumberPanelRenderer({
 			className={PanelStyles.panelContainer}
 		>
 			{value === null ? (
-				<Typography.Text data-testid="number-panel-no-data">
-					No Data
-				</Typography.Text>
+				<NoData data-testid="number-panel-no-data" />
 			) : (
 				<ValueDisplay
 					value={formattedValue}

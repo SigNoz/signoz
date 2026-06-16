@@ -6,12 +6,13 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { prepareScalarTables } from 'pages/DashboardPageV2/DashboardContainer/queryV5/prepareScalarTables';
 import { getScalarResults } from 'pages/DashboardPageV2/DashboardContainer/queryV5/v5ResponseData';
 
+import NoData from '../../components/NoData/NoData';
 import PanelStyles from '../../panel.module.scss';
 import { PanelRendererProps } from '../../types/rendererProps';
 import {
 	resolveDecimalPrecision,
 	resolveLegendPosition,
-} from '../../utils/chartAppearanceMappings';
+} from '../../utils/chartAppearance/resolvers';
 
 import { preparePieData } from './prepareData';
 
@@ -71,16 +72,20 @@ function PiePanelRenderer({
 
 	return (
 		<div data-testid="pie-panel-renderer" className={PanelStyles.panelContainer}>
-			<Pie
-				data={slices}
-				yAxisUnit={spec.formatting?.unit}
-				decimalPrecision={decimalPrecision}
-				isDarkMode={isDarkMode}
-				position={legendPosition}
-				id={panelId}
-				onSliceClick={handleSliceClick}
-				data-testid="pie-chart"
-			/>
+			{slices.length === 0 ? (
+				<NoData />
+			) : (
+				<Pie
+					data={slices}
+					yAxisUnit={spec.formatting?.unit}
+					decimalPrecision={decimalPrecision}
+					isDarkMode={isDarkMode}
+					position={legendPosition}
+					id={panelId}
+					onSliceClick={handleSliceClick}
+					data-testid="pie-chart"
+				/>
+			)}
 		</div>
 	);
 }

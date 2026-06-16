@@ -8,13 +8,18 @@ import type {
 import { MAX_QUERY_RETRIES } from 'constants/reactQuery';
 
 export interface UseGetQueryRangeV5Args {
-	requestPayload: Querybuildertypesv5QueryRangeRequestDTO | undefined;
+	requestPayload: Querybuildertypesv5QueryRangeRequestDTO;
 	queryKey: unknown[];
 	enabled: boolean;
 }
 
 // 4xx responses are deterministic (bad query, auth) — retrying re-sends a
 // request that will fail identically. Same policy as V1's useGetQueryRange.
+// react-query hands the retry callback the *raw* thrown value, which on this
+// path is the AxiosError the generated client rejects with (it is not yet
+// normalized to APIError) — so we inspect it at the axios level for the cancel
+// signal and the HTTP status. Normalization to APIError happens later, at the
+// display boundary (see PanelStatus `panelStatusFromError`).
 function retryUnlessClientError(failureCount: number, error: Error): boolean {
 	if (isAxiosError(error)) {
 		if (error.code === 'ERR_CANCELED') {
@@ -43,7 +48,7 @@ export function useGetQueryRangeV5({
 	return useQuery<QueryRangeV5200, Error>({
 		queryKey,
 		queryFn: ({ signal }) => queryRangeV5(requestPayload, signal),
-		enabled: enabled && !!requestPayload,
+		enabled,
 		retry: retryUnlessClientError,
 	});
 }

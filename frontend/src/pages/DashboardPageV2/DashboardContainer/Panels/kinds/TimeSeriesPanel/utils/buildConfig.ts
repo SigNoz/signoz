@@ -7,8 +7,8 @@ import {
 	FILL_MODE_MAP,
 	LINE_INTERPOLATION_MAP,
 	LINE_STYLE_MAP,
-	resolveSpanGaps,
-} from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/chartAppearanceMappings';
+} from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/chartAppearance/enumMaps';
+import { resolveSpanGaps } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/chartAppearance/resolvers';
 import { resolveSeriesLabelV5 } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/resolveSeriesLabel';
 import type { PanelSeries } from 'pages/DashboardPageV2/DashboardContainer/queryV5/types';
 import {

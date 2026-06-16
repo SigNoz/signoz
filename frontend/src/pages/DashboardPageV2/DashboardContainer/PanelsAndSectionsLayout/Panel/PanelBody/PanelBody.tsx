@@ -8,15 +8,14 @@ import type { RenderablePanelDefinition } from 'pages/DashboardPageV2/DashboardC
 import type { DashboardPreference } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/rendererProps';
 import type { PanelQueryData } from 'pages/DashboardPageV2/DashboardContainer/queryV5/types';
 
-import styles from './Panel.module.scss';
+import styles from './PanelBody.module.scss';
 
 interface PanelBodyProps {
-	/** Resolved renderer for the panel kind; undefined when the kind is unknown. */
-	panelDef: RenderablePanelDefinition | undefined;
-	panel: DashboardtypesPanelDTO | undefined;
+	/** Resolved renderer for the panel kind — always present (`Panel` renders the
+	 * unsupported fallback itself when no renderer is registered). */
+	panelDef: RenderablePanelDefinition;
+	panel: DashboardtypesPanelDTO;
 	panelId: string;
-	kind: string;
-	queryCount: number;
 	data: PanelQueryData;
 	isLoading: boolean;
 	error: Error | null;
@@ -26,10 +25,10 @@ interface PanelBodyProps {
 }
 
 /**
- * Renders the panel content as an explicit state machine so each state is
- * handled deliberately (no implicit fall-through):
+ * Renders the content of a panel whose kind has a registered renderer, as an
+ * explicit state machine so each state is handled deliberately (no implicit
+ * fall-through):
  *
- *   unknown-kind → unsupported fallback
  *   error + no data → error message with retry
  *   first load (no data) → loading indicator
  *   otherwise → the kind's renderer (which owns its own "No Data" state, and
@@ -39,8 +38,6 @@ function PanelBody({
 	panelDef,
 	panel,
 	panelId,
-	kind,
-	queryCount,
 	data,
 	isLoading,
 	error,
@@ -48,20 +45,6 @@ function PanelBody({
 	onDragSelect,
 	dashboardPreference,
 }: PanelBodyProps): JSX.Element {
-	if (!panelDef) {
-		return (
-			<div className={styles.body} data-testid="panel-unknown-kind-fallback">
-				<div>
-					<div className={styles.bodyKind}>{kind} panel</div>
-					<div>
-						{queryCount} {queryCount === 1 ? 'query' : 'queries'} · not yet supported
-						in V2
-					</div>
-				</div>
-			</div>
-		);
-	}
-
 	// Surface a hard failure only when there's no (stale) data to show; otherwise
 	// keep the last-good chart and let the header indicate the refresh.
 	// react-query keeps the previous response during background refetches, so
@@ -93,7 +76,7 @@ function PanelBody({
 	}
 
 	return (
-		<div className={styles.chartBody}>
+		<div className={styles.chartContainer}>
 			<panelDef.Renderer
 				panelId={panelId}
 				panel={panel}

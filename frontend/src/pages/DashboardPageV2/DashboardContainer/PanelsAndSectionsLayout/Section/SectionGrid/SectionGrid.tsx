@@ -62,22 +62,27 @@ function SectionGrid({
 			margin={[8, 8]}
 		>
 			{items.map((item) => (
+				// A layout item can reference a panel id that no longer exists in the
+				// panels map (orphan); render an empty grid cell for it rather than a
+				// panel with no content.
 				<div key={item.id}>
-					<Panel
-						panel={item.panel}
-						panelId={item.id}
-						isVisible={isVisible}
-						panelActions={
-							isEditable && onMovePanel && onDeletePanel
-								? {
-										currentLayoutIndex: layoutIndex,
-										sections: sections ?? [],
-										onMovePanel,
-										onDeletePanel,
-									}
-								: undefined
-						}
-					/>
+					{item.panel && (
+						<Panel
+							panel={item.panel}
+							panelId={item.id}
+							isVisible={isVisible}
+							panelActions={
+								isEditable && onMovePanel && onDeletePanel
+									? {
+											currentLayoutIndex: layoutIndex,
+											sections: sections ?? [],
+											onMovePanel,
+											onDeletePanel,
+										}
+									: undefined
+							}
+						/>
+					)}
 				</div>
 			))}
 		</ResponsiveGridLayout>

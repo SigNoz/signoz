@@ -1,5 +1,7 @@
 import type { ChartClickData } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 
+import type { PanelKind } from './panelKind';
+
 /**
  * Source-tagged click events. The three uPlot panels share `ChartClickEvent`;
  * each non-chart kind carries the context its drill-down needs. The `source`
@@ -32,7 +34,7 @@ type DragSelect = (start: number, end: number) => void;
  * interactions at all. Keys mirror `PanelKind`; `PanelRendererProps<K>` in
  * rendererProps.ts indexes this map, so a missing kind is a compile error there.
  */
-export interface PanelInteractionMap {
+export type PanelInteractionMap = Record<PanelKind, object> & {
 	'signoz/TimeSeriesPanel': {
 		onClick?: (event: ChartClickEvent) => void;
 		onDragSelect?: DragSelect;
@@ -46,7 +48,7 @@ export interface PanelInteractionMap {
 	'signoz/ListPanel': { onClick?: (event: ListClickEvent) => void };
 	'signoz/PieChartPanel': { onClick?: (event: PieClickEvent) => void };
 	'signoz/NumberPanel': Record<string, never>;
-}
+};
 
 /**
  * Widest interaction surface — used where the panel kind is not known

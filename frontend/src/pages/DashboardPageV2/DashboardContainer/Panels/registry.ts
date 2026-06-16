@@ -1,8 +1,8 @@
-import { definition as barChart } from './kinds/BarChartPanel/definition';
-import { definition as histogram } from './kinds/HistogramPanel/definition';
-import { definition as number } from './kinds/NumberPanel/definition';
-import { definition as pieChart } from './kinds/PieChartPanel/definition';
-import { definition as timeSeries } from './kinds/TimeSeriesPanel/definition';
+import { definition as BarChart } from './kinds/BarChartPanel/definition';
+import { definition as Histogram } from './kinds/HistogramPanel/definition';
+import { definition as NumberValue } from './kinds/NumberPanel/definition';
+import { definition as PieChart } from './kinds/PieChartPanel/definition';
+import { definition as TimeSeries } from './kinds/TimeSeriesPanel/definition';
 import type {
 	PanelRegistry,
 	RenderablePanelDefinition,
@@ -13,11 +13,11 @@ import type { PanelKind } from './types/panelKind';
 // `kinds/<Kind>/definition.ts`). Registering a new panel = add its folder and a
 // single entry below — no other central file needs editing.
 export const PANELS: PanelRegistry = {
-	[timeSeries.kind]: timeSeries,
-	[barChart.kind]: barChart,
-	[histogram.kind]: histogram,
-	[number.kind]: number,
-	[pieChart.kind]: pieChart,
+	[TimeSeries.kind]: TimeSeries,
+	[BarChart.kind]: BarChart,
+	[Histogram.kind]: Histogram,
+	[NumberValue.kind]: NumberValue,
+	[PieChart.kind]: PieChart,
 };
 
 export function getPanelDefinition(

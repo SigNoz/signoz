@@ -84,7 +84,7 @@ function renderPanel(
 	const baseProps: BaseRendererProps = {
 		panelId: 'panel-1',
 		panel: panelWith({}),
-		data: undefined,
+		data: emptyData,
 		isLoading: false,
 		error: null,
 		panelMode: PanelMode.DASHBOARD_VIEW,

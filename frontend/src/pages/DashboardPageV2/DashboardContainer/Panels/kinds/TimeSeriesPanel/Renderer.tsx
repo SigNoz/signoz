@@ -15,16 +15,17 @@ import { useTimezone } from 'providers/Timezone';
 import type { QueryRangeRequestV5 } from 'types/api/v5/queryRange';
 import { getTimeRangeFromQueryRangeRequest } from 'utils/getTimeRange';
 
+import NoData from '../../components/NoData/NoData';
 import { useGroupByPerQuery } from '../../hooks/useGroupByPerQuery';
 import PanelStyles from '../../panel.module.scss';
 import { PanelRendererProps } from '../../types/rendererProps';
 import {
 	resolveDecimalPrecision,
 	resolveLegendPosition,
-} from '../../utils/chartAppearanceMappings';
+} from '../../utils/chartAppearance/resolvers';
 import { getBuilderQueries } from '../../utils/getBuilderQueries';
 
-import { buildTimeSeriesConfig } from './buildConfig';
+import { buildTimeSeriesConfig } from './utils/buildConfig';
 import { ChartClickData } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 
 function TimeSeriesPanelRenderer({
@@ -154,25 +155,28 @@ function TimeSeriesPanelRenderer({
 			data-testid="time-series-renderer"
 			className={PanelStyles.panelContainer}
 		>
-			{containerDimensions.width > 0 && containerDimensions.height > 0 && (
-				<TimeSeries
-					key={key}
-					config={config}
-					data={chartData}
-					legendConfig={{ position: legendPosition }}
-					groupByPerQuery={groupByPerQuery}
-					canPinTooltip
-					timezone={timezone}
-					yAxisUnit={spec.formatting?.unit}
-					decimalPrecision={decimalPrecision}
-					width={containerDimensions.width}
-					height={containerDimensions.height}
-					syncMode={dashboardPreference?.syncMode}
-					syncFilterMode={dashboardPreference?.syncFilterMode}
-					renderTooltipFooter={renderTooltipFooter}
-					onClick={handleChartClick}
-				/>
-			)}
+			{flatSeries.length === 0 && <NoData />}
+			{flatSeries.length > 0 &&
+				containerDimensions.width > 0 &&
+				containerDimensions.height > 0 && (
+					<TimeSeries
+						key={key}
+						config={config}
+						data={chartData}
+						legendConfig={{ position: legendPosition }}
+						groupByPerQuery={groupByPerQuery}
+						canPinTooltip
+						timezone={timezone}
+						yAxisUnit={spec.formatting?.unit}
+						decimalPrecision={decimalPrecision}
+						width={containerDimensions.width}
+						height={containerDimensions.height}
+						syncMode={dashboardPreference?.syncMode}
+						syncFilterMode={dashboardPreference?.syncFilterMode}
+						renderTooltipFooter={renderTooltipFooter}
+						onClick={handleChartClick}
+					/>
+				)}
 		</div>
 	);
 }

@@ -13,16 +13,15 @@ import type { PanelKind } from './panelKind';
  * Dashboard-wide rendering preferences propagated down to every panel renderer
  * on the same dashboard. Lets the shell push cross-panel concerns (cursor
  * sync, tooltip filter mode, dashboard id for scoped state) without each
- * renderer rediscovering them via hooks. All fields are optional — non-
- * dashboard render contexts (PanelEditor preview, standalone view) can pass
- * an empty object and the renderer will fall back to sensible defaults.
+ * renderer rediscovering them via hooks.
  */
 export interface DashboardPreference {
 	/**
 	 * Cursor-sync mode for the dashboard. Drives the uPlot tooltip plugin so
 	 * hovering one panel highlights the corresponding x on every other panel.
+	 * Always present — `DashboardCursorSync.None` is the off state.
 	 */
-	syncMode?: DashboardCursorSync;
+	syncMode: DashboardCursorSync;
 	/**
 	 * Filter applied to the synced tooltip across panels (e.g. only show series
 	 * whose label matches the hovered series).
@@ -44,10 +43,12 @@ export interface BaseRendererProps {
 	 * The whole perses panel — renderers derive their concrete `spec` and the
 	 * perses-shaped `queries` from this. Passing the full panel keeps the prop
 	 * surface stable as new panel-level fields are added to the wire format.
+	 * Required: the render boundary (`Panel`) only mounts a renderer once the
+	 * panel and its kind are resolved, so a renderer never sees an absent panel.
 	 */
-	panel: DashboardtypesPanelDTO | undefined;
+	panel: DashboardtypesPanelDTO;
 	/** Raw V5 fetch result — response + the request that produced it. */
-	data?: PanelQueryData;
+	data: PanelQueryData;
 	isLoading: boolean;
 	error: Error | null;
 	/** Gate for the drill-down right-click menu. Off by default in V2. */

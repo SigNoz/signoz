@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { CircleX, TriangleAlert } from '@signozhq/icons';
 import { Popover } from 'antd';
@@ -32,14 +31,9 @@ function PanelStatusPopover({
 	const { color, ariaLabel } = VARIANT_CONFIG[variant];
 	const Icon = variant === 'error' ? CircleX : TriangleAlert;
 
-	const content = useMemo(
-		() => <PanelStatusContent detail={detail} />,
-		[detail],
-	);
-
 	return (
 		<Popover
-			content={content}
+			content={<PanelStatusContent detail={detail} />}
 			overlayInnerStyle={{ padding: 0 }}
 			autoAdjustOverflow
 		>

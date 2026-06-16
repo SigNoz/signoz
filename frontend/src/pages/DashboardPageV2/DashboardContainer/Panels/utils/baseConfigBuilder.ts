@@ -8,14 +8,16 @@ import { PanelMode } from 'container/DashboardContainer/visualization/panels/typ
 import onClickPlugin, {
 	OnClickPluginOpts,
 } from 'lib/uPlotLib/plugins/onClickPlugin';
-import {
-	DistributionType,
-	SelectionPreferencesSource,
-} from 'lib/uPlotV2/config/types';
+import { DistributionType } from 'lib/uPlotV2/config/types';
 import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
 import { ThresholdsDrawHookOptions } from 'lib/uPlotV2/hooks/types';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import uPlot from 'uplot';
+
+import {
+	resolveSelectionPreferencesSource,
+	shouldSaveSelectionPreference,
+} from './selectionPreferences';
 
 /**
  * Inputs for the shared V2 chart pipeline. Mirrors the V1 helper of the same
@@ -89,7 +91,7 @@ export function buildBaseConfig({
 		id: panelId,
 		onDragSelect,
 		tzDate: makeTzDate(timezone),
-		shouldSaveSelectionPreference: panelMode === PanelMode.DASHBOARD_VIEW,
+		shouldSaveSelectionPreference: shouldSaveSelectionPreference(panelMode),
 		selectionPreferencesSource: resolveSelectionPreferencesSource(panelMode),
 		stepInterval: stepIntervals ? minStepInterval(stepIntervals) : undefined,
 	});
@@ -161,15 +163,6 @@ function makeTzDate(
 	}
 	return (timestamp: number): Date =>
 		uPlot.tzDate(new Date(timestamp * 1e3), timezone.value);
-}
-
-function resolveSelectionPreferencesSource(
-	panelMode: PanelMode,
-): SelectionPreferencesSource {
-	return panelMode === PanelMode.DASHBOARD_VIEW ||
-		panelMode === PanelMode.STANDALONE_VIEW
-		? SelectionPreferencesSource.LOCAL_STORAGE
-		: SelectionPreferencesSource.IN_MEMORY;
 }
 
 // Perses-shape thresholds → the draw-hook shape uPlotV2 consumes. Exported so

@@ -4,14 +4,14 @@ import { Loader } from '@signozhq/icons';
 import cx from 'classnames';
 import type { Warning } from 'types/api';
 
-import type { PanelActionsConfig } from './Panel';
-import PanelActionsMenu from './PanelActionsMenu/PanelActionsMenu';
-import PanelStatusPopover from './PanelStatus/PanelStatusPopover';
+import type { PanelActionsConfig } from '../Panel';
+import PanelActionsMenu from '../PanelActionsMenu/PanelActionsMenu';
+import PanelStatusPopover from '../PanelStatus/PanelStatusPopover';
 import {
 	panelStatusFromError,
 	panelStatusFromWarning,
-} from './PanelStatus/utils';
-import styles from './Panel.module.scss';
+} from '../PanelStatus/utils';
+import styles from './PanelHeader.module.scss';
 
 interface PanelHeaderProps {
 	title: ReactNode;
@@ -35,10 +35,7 @@ function PanelHeader({
 	warning,
 	panelActions,
 }: PanelHeaderProps): JSX.Element {
-	const errorDetail = useMemo(
-		() => panelStatusFromError(error ?? null),
-		[error],
-	);
+	const errorDetail = useMemo(() => panelStatusFromError(error), [error]);
 
 	const warningDetail = useMemo(
 		() => panelStatusFromWarning(warning),

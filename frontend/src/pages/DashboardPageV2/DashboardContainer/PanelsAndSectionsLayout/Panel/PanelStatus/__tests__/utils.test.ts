@@ -1,26 +1,35 @@
-import type { Warning } from 'types/api';
-import APIError from 'types/api/error';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import type { AxiosError } from 'axios';
 import { StatusCodes } from 'http-status-codes';
+import type { Warning } from 'types/api';
 
 import { panelStatusFromError, panelStatusFromWarning } from '../utils';
+
+// The query layer rejects with the raw AxiosError from the generated client
+// (it is not pre-converted to APIError), so the tests mirror that wire shape.
+function axiosErrorWith(
+	error: RenderErrorResponseDTO['error'],
+	status: number = StatusCodes.BAD_REQUEST,
+): AxiosError<RenderErrorResponseDTO> {
+	return {
+		response: { status, data: { error } },
+	} as AxiosError<RenderErrorResponseDTO>;
+}
 
 describe('panelStatusFromError', () => {
 	it('returns null when there is no error', () => {
 		expect(panelStatusFromError(null)).toBeNull();
 	});
 
-	it('maps a structured APIError to code/message/docs/sub-messages', () => {
-		const apiError = new APIError({
-			httpStatusCode: StatusCodes.BAD_REQUEST,
-			error: {
-				code: 'invalid_query',
-				message: 'Query is invalid',
-				url: 'https://docs/err',
-				errors: [{ message: 'missing aggregation' }, { message: 'bad filter' }],
-			},
+	it('maps a structured API error to code/message/docs/sub-messages', () => {
+		const error = axiosErrorWith({
+			code: 'invalid_query',
+			message: 'Query is invalid',
+			url: 'https://docs/err',
+			errors: [{ message: 'missing aggregation' }, { message: 'bad filter' }],
 		});
 
-		expect(panelStatusFromError(apiError)).toStrictEqual({
+		expect(panelStatusFromError(error)).toStrictEqual({
 			code: 'invalid_query',
 			message: 'Query is invalid',
 			docsUrl: 'https://docs/err',
@@ -28,21 +37,22 @@ describe('panelStatusFromError', () => {
 		});
 	});
 
-	it('falls back to a generic 500 for a plain Error', () => {
+	it('falls back to the error message when there is no structured body', () => {
 		expect(panelStatusFromError(new Error('boom'))).toStrictEqual({
-			code: '500',
+			code: 'unknown_error',
 			message: 'boom',
+			docsUrl: undefined,
 			messages: [],
 		});
 	});
 
 	it('omits docsUrl when the API error has no url', () => {
-		const apiError = new APIError({
-			httpStatusCode: StatusCodes.INTERNAL_SERVER_ERROR,
-			error: { code: 'x', message: 'y', url: '', errors: [] },
-		});
+		const error = axiosErrorWith(
+			{ code: 'x', message: 'y', url: '', errors: [] },
+			StatusCodes.INTERNAL_SERVER_ERROR,
+		);
 
-		expect(panelStatusFromError(apiError)?.docsUrl).toBeUndefined();
+		expect(panelStatusFromError(error)?.docsUrl).toBeUndefined();
 	});
 });
 
