@@ -22,6 +22,7 @@ import {
 	IntegrationsDetailsPage,
 	LicensePage,
 	ListAllALertsPage,
+	LLMObservabilityAttributeMappingPage,
 	LLMObservabilityModelPricingPage,
 	LiveLogs,
 	Login,
@@ -513,6 +514,13 @@ const routes: AppRoutes[] = [
 		exact: true,
 		component: LLMObservabilityModelPricingPage,
 		key: 'LLM_OBSERVABILITY_MODEL_PRICING',
+		isPrivate: true,
+	},
+	{
+		path: ROUTES.LLM_OBSERVABILITY_ATTRIBUTE_MAPPING,
+		exact: true,
+		component: LLMObservabilityAttributeMappingPage,
+		key: 'LLM_OBSERVABILITY_ATTRIBUTE_MAPPING',
 		isPrivate: true,
 	},
 ];
