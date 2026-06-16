@@ -3,6 +3,7 @@ import { Typography } from '@signozhq/ui/typography';
 import type { Querybuildertypesv5QueryWarnDataDTO as WarningDTO } from 'api/generated/services/sigNoz.schemas';
 import { Loader } from '@signozhq/icons';
 import cx from 'classnames';
+import type { PanelTimePreferenceLabel } from 'pages/DashboardPageV2/DashboardContainer/hooks/resolvePanelTimeWindow';
 
 import type { PanelActionsConfig } from '../Panel';
 import PanelActionsMenu from '../PanelActionsMenu/PanelActionsMenu';
@@ -24,6 +25,8 @@ interface PanelHeaderProps {
 	error?: Error | null;
 	/** Non-fatal query warning lifted from the response payload. */
 	warning?: WarningDTO;
+	/** Per-panel relative time-preference label; null when it follows the dashboard window. */
+	timeLabel?: PanelTimePreferenceLabel | null;
 	/** Layout context for move/delete — absent outside editable sectioned mode. */
 	panelActions?: PanelActionsConfig;
 }
@@ -36,6 +39,7 @@ function PanelHeader({
 	isFetching,
 	error,
 	warning,
+	timeLabel,
 	panelActions,
 }: PanelHeaderProps): JSX.Element {
 	const errorDetail = useMemo(() => panelStatusFromError(error), [error]);
@@ -60,6 +64,15 @@ function PanelHeader({
 			{/* `panel-no-drag` opts this region out of the grid drag handle so the
 			    actions menu is clickable instead of starting a panel drag. */}
 			<div className={cx('panel-no-drag', styles.actions)}>
+				{timeLabel && (
+					<span
+						className={styles.timePill}
+						title={timeLabel.full}
+						data-testid="panel-time-preference"
+					>
+						{timeLabel.short}
+					</span>
+				)}
 				{errorDetail && <PanelStatusPopover variant="error" detail={errorDetail} />}
 				{warningDetail && (
 					<PanelStatusPopover variant="warning" detail={warningDetail} />

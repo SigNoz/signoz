@@ -28,7 +28,7 @@ export interface LegendSeries {
  */
 export function useLegendSeries(
 	panel: DashboardtypesPanelDTO,
-	data: PanelQueryData | undefined,
+	data: PanelQueryData,
 ): LegendSeries[] {
 	const isDarkMode = useIsDarkMode();
 
@@ -38,7 +38,7 @@ export function useLegendSeries(
 			: themeColors.lightModeColor;
 		const series = flattenTimeSeries(
 			getTimeSeriesResults(data?.response),
-			data?.legendMap ?? {},
+			data.legendMap,
 		);
 		const builderQueries = getBuilderQueries(panel?.spec?.queries);
 
@@ -55,5 +55,5 @@ export function useLegendSeries(
 			label,
 			defaultColor,
 		}));
-	}, [panel?.spec?.queries, data?.response, data?.legendMap, isDarkMode]);
+	}, [panel.spec.queries, data.response, data.legendMap, isDarkMode]);
 }

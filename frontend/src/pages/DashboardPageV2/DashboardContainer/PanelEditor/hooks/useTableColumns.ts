@@ -48,7 +48,7 @@ function resolveColumnUnit(
  */
 export function useTableColumns(
 	panel: DashboardtypesPanelDTO,
-	data: PanelQueryData | undefined,
+	data: PanelQueryData,
 ): TableColumnOption[] {
 	return useMemo(() => {
 		if (panel?.spec?.plugin?.kind !== 'signoz/TablePanel') {
@@ -79,10 +79,10 @@ export function useTableColumns(
 				};
 			});
 	}, [
-		panel?.spec?.plugin?.kind,
-		panel?.spec?.plugin?.spec,
+		panel.spec.plugin.kind,
+		panel.spec.plugin.spec,
 		data?.response,
-		data?.legendMap,
+		data.legendMap,
 		data?.requestPayload,
 	]);
 }

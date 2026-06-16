@@ -1,7 +1,11 @@
 import { useMemo } from 'react';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
-import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import type {
+	DashboardtypesPanelDTO,
+	DashboardtypesTimePreferenceDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { getPanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Panels/registry';
+import { panelTimePreferenceLabel } from 'pages/DashboardPageV2/DashboardContainer/hooks/resolvePanelTimeWindow';
 import { usePanelQuery } from 'pages/DashboardPageV2/DashboardContainer/hooks/usePanelQuery';
 import type { DashboardtypesPanelPluginKindDTO as PanelKind } from 'api/generated/services/sigNoz.schemas';
 
@@ -50,6 +54,16 @@ function Panel({
 	const kind = fullKind?.replace(/^signoz\//, '') ?? 'unknown';
 	const queryCount = panel.spec.queries?.length ?? 0;
 
+	// A per-panel relative time preference (anything other than global_time) is
+	// surfaced as a pill in the header. `visualization` is common to every
+	// plugin-spec variant — localized cast reads it without narrowing on kind.
+	const timePreference = (
+		panel.spec.plugin?.spec as
+			| { visualization?: { timePreference?: DashboardtypesTimePreferenceDTO } }
+			| undefined
+	)?.visualization?.timePreference;
+	const timeLabel = panelTimePreferenceLabel(timePreference);
+
 	const panelDefinition = getPanelDefinition(fullKind);
 
 	const { data, isLoading, isFetching, error, refetch } = usePanelQuery({
@@ -85,6 +99,7 @@ function Panel({
 				isFetching={isFetching}
 				error={error}
 				warning={data.response?.data?.warning}
+				timeLabel={timeLabel}
 				panelActions={panelActions}
 			/>
 			{panelDefinition ? (

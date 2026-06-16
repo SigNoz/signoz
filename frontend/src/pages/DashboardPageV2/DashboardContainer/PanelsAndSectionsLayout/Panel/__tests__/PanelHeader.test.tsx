@@ -51,3 +51,20 @@ describe('PanelHeader status indicators', () => {
 		expect(screen.queryByTestId('panel-status-warning')).not.toBeInTheDocument();
 	});
 });
+
+describe('PanelHeader time-preference pill', () => {
+	it('shows the pill with the short label when the panel overrides the dashboard time', () => {
+		render(
+			<PanelHeader
+				{...baseProps}
+				timeLabel={{ short: '6h', full: 'Last 6 hr' }}
+			/>,
+		);
+		expect(screen.getByTestId('panel-time-preference')).toHaveTextContent('6h');
+	});
+
+	it('renders no pill when the panel follows the dashboard time', () => {
+		render(<PanelHeader {...baseProps} timeLabel={null} />);
+		expect(screen.queryByTestId('panel-time-preference')).not.toBeInTheDocument();
+	});
+});

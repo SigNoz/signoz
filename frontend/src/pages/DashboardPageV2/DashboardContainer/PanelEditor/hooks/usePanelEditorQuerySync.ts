@@ -1,12 +1,14 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import type {
 	DashboardtypesPanelDTO,
 	DashboardtypesPanelSpecDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { getIsQueryModified } from 'container/NewWidget/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { isEqual } from 'lodash-es';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { fromPerses, toPerses } from '../../queryV5/persesQueryAdapters';
 
@@ -14,29 +16,20 @@ interface UsePanelEditorQuerySyncArgs {
 	draft: DashboardtypesPanelDTO;
 	panelType: PANEL_TYPES;
 	setSpec: (next: DashboardtypesPanelSpecDTO) => void;
-	/** Force a re-fetch of the preview when the query is unchanged. */
+	/** Re-fetch the preview when the query is unchanged. */
 	refetch: () => void;
 }
 
 interface UsePanelEditorQuerySyncApi {
-	/** Run the current builder query: writes it into the draft (re-fetching the
-	 *  preview) or, when unchanged, forces a re-fetch. Wired to Stage & Run / ⌘↵. */
+	/** Run the current query (Stage & Run / ⌘↵). */
 	runQuery: () => void;
 }
 
 /**
- * Bridges the shared query builder (which reads/writes the global
- * `QueryBuilderProvider` + the URL `compositeQuery` param) and the V2 panel
- * editor draft (perses `spec.queries`):
- *
- *  - on mount, seeds the builder from the panel's queries (`fromPerses` →
- *    `useShareBuilderUrl`, which writes the URL only when absent so a
- *    refresh / deep link keeps an in-progress query);
- *  - exposes `runQuery` for Stage & Run / ⌘↵: it stages the query (V1
- *    `handleRunQuery` — URL sync, recent query, step interval) and converts the
- *    live query to perses. A changed query is written into the draft (the
- *    preview re-fetches off the new `spec.queries`); an unchanged query just
- *    forces a `refetch`, so the same query can be re-run repeatedly.
+ * Connects the shared query builder (global `QueryBuilderProvider`, URL-synced)
+ * to the V2 editor draft: seeds the builder from the panel on mount, and commits
+ * the active query into `draft.spec.queries` (what the preview fetches) on a
+ * query-type switch or Stage & Run.
  */
 export function usePanelEditorQuerySync({
 	draft,
@@ -44,53 +37,65 @@ export function usePanelEditorQuerySync({
 	setSpec,
 	refetch,
 }: UsePanelEditorQuerySyncArgs): UsePanelEditorQuerySyncApi {
-	const { currentQuery, handleRunQuery } = useQueryBuilder();
+	const { currentQuery, stagedQuery, handleRunQuery } = useQueryBuilder();
 
-	// Mount-only: the draft's queries are seeded once by usePanelEditorDraft.
+	// Saved queries verbatim + their V1 form used to seed the builder. Captured
+	// once — the draft itself is seeded by usePanelEditorDraft.
+	// eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only
+	const savedQueries = useMemo(() => draft.spec?.queries ?? [], []);
 	const seedQuery = useMemo(
-		() => fromPerses(draft.spec?.queries || [], panelType),
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[],
+		() => fromPerses(savedQueries, panelType),
+		[savedQueries, panelType],
 	);
 	useShareBuilderUrl({ defaultValue: seedQuery });
 
-	// The saved query's normalized perses form. Running an unchanged query yields
-	// this; comparing against it (not the stored, un-normalized queries) avoids
-	// marking the draft dirty just for running.
-	const seedPerses = useMemo(
-		() => toPerses(seedQuery, panelType),
-		[seedQuery, panelType],
+	// Change-detection baseline: the provider's normalized form of the saved
+	// query, published as the first `stagedQuery` on this route (cleared on route
+	// change, so never stale). Comparing against this — not the raw `fromPerses`
+	// seed — stops provider normalization from reading as an edit.
+	const baselineRef = useRef<Query | null>(null);
+	if (!baselineRef.current && stagedQuery) {
+		baselineRef.current = stagedQuery;
+	}
+
+	// Write `query` into the draft, or restore the saved queries when it isn't a
+	// genuine edit (so opening / re-running doesn't dirty the draft). Returns
+	// whether the draft changed.
+	const commitQuery = useCallback(
+		(query: Query): boolean => {
+			const baseline = baselineRef.current;
+			const next =
+				baseline && getIsQueryModified(query, baseline)
+					? toPerses(query, panelType)
+					: savedQueries;
+			if (isEqual(next, draft.spec?.queries ?? [])) {
+				return false;
+			}
+			setSpec({ ...draft.spec, queries: next });
+			return true;
+		},
+		[panelType, savedQueries, draft.spec, setSpec],
 	);
 
+	// Commit on a query-type switch so the preview matches the selected tab. Refs
+	// read the latest query/commit while the effect fires only on a type change.
+	const commitRef = useRef(commitQuery);
+	commitRef.current = commitQuery;
+	const queryRef = useRef(currentQuery);
+	queryRef.current = currentQuery;
+	useEffect(() => {
+		commitRef.current(queryRef.current);
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- type change only
+	}, [currentQuery.queryType]);
+
+	// Stage & Run / ⌘↵: stage (V1 URL + step-interval semantics), commit, and
+	// re-fetch when unchanged so the same query can be re-run.
 	const runQuery = useCallback((): void => {
-		// Keep the V1 staging semantics (URL/compositeQuery sync, recent query,
-		// step-interval normalization).
 		handleRunQuery();
-
-		const queries = toPerses(currentQuery, panelType);
-
-		// Unchanged from the saved panel → re-run without dirtying the draft.
-		if (isEqual(queries, seedPerses)) {
-			refetch();
-			return;
-		}
-		// Changed → update the draft; the preview re-fetches off the new
-		// `spec.queries`. Otherwise it's the same query already in the draft, so
-		// force a re-run.
-		if (!isEqual(queries, draft.spec?.queries || [])) {
-			setSpec({ ...draft.spec, queries });
-		} else {
+		if (!commitQuery(currentQuery)) {
 			refetch();
 		}
-	}, [
-		handleRunQuery,
-		currentQuery,
-		panelType,
-		seedPerses,
-		draft.spec,
-		setSpec,
-		refetch,
-	]);
+	}, [handleRunQuery, commitQuery, currentQuery, refetch]);
 
 	return { runQuery };
 }

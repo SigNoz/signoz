@@ -18,6 +18,8 @@ interface PreviewPaneProps {
 	data: PanelQueryData;
 	isLoading: boolean;
 	error: Error | null;
+	/** Drag-to-zoom on a time-axis chart → updates the (URL-synced) time window. */
+	onDragSelect: (start: number, end: number) => void;
 }
 
 /**
@@ -34,6 +36,7 @@ function PreviewPane({
 	data,
 	isLoading,
 	error,
+	onDragSelect,
 }: PreviewPaneProps): JSX.Element {
 	return (
 		<div className={styles.preview}>
@@ -64,6 +67,7 @@ function PreviewPane({
 							error={error}
 							panelMode={PanelMode.DASHBOARD_EDIT}
 							enableDrillDown={false}
+							onDragSelect={onDragSelect}
 						/>
 					)}
 				</div>

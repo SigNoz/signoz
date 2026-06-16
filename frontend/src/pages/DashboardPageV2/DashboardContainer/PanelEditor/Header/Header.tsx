@@ -1,5 +1,7 @@
-import { X } from '@signozhq/icons';
+import { useCallback, useState } from 'react';
+import { SolidAlertTriangle, X } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
+import { ConfirmDialog } from '@signozhq/ui/dialog';
 import { Divider } from '@signozhq/ui/divider';
 import { Typography } from '@signozhq/ui/typography';
 
@@ -18,6 +20,18 @@ function Header({
 	onSave,
 	onClose,
 }: HeaderProps): JSX.Element {
+	const [isDiscardOpen, setIsDiscardOpen] = useState(false);
+
+	// Closing with unsaved edits prompts for confirmation; a pristine panel closes
+	// straight away.
+	const handleCloseClick = useCallback((): void => {
+		if (isDirty) {
+			setIsDiscardOpen(true);
+		} else {
+			onClose();
+		}
+	}, [isDirty, onClose]);
+
 	return (
 		<div className={styles.header}>
 			<div className={styles.title}>
@@ -27,7 +41,7 @@ function Header({
 					size="icon"
 					suffix={<X size={14} />}
 					data-testid="panel-editor-v2-close"
-					onClick={onClose}
+					onClick={handleCloseClick}
 				/>
 				<Divider type="vertical" />
 				<Typography.Text>Configure panel</Typography.Text>
@@ -44,6 +58,25 @@ function Header({
 					Save changes
 				</Button>
 			</div>
+
+			<ConfirmDialog
+				open={isDiscardOpen}
+				onOpenChange={(next): void => {
+					if (!next) {
+						setIsDiscardOpen(false);
+					}
+				}}
+				title="Discard changes?"
+				titleIcon={<SolidAlertTriangle size={14} color="#fdd600" />}
+				confirmText="Discard"
+				confirmColor="destructive"
+				cancelText="Keep editing"
+				onConfirm={onClose}
+				onCancel={(): void => setIsDiscardOpen(false)}
+				data-testid="panel-editor-v2-discard-modal"
+			>
+				<Typography>Your unsaved edits to this panel will be lost.</Typography>
+			</ConfirmDialog>
 		</div>
 	);
 }

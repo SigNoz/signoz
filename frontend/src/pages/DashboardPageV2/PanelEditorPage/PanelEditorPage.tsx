@@ -8,6 +8,7 @@ import {
 import { Typography } from '@signozhq/ui/typography';
 import { useGetDashboardV2 } from 'api/generated/services/dashboard';
 import Spinner from 'components/Spinner';
+import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 
@@ -39,7 +40,21 @@ function PanelEditorPage(): JSX.Element {
 	const panel = dashboard?.spec.panels[panelId];
 
 	const backToDashboard = useCallback((): void => {
-		safeNavigate(`${generatePath(ROUTES.DASHBOARD, { dashboardId })}${search}`);
+		// Carry only dashboard-relevant params back; drop editor-only URL state —
+		// chiefly `compositeQuery` (the query builder's URL sync) — so it doesn't
+		// leak into the dashboard view. Mirrors V1's navigateToDashboardPage. Time
+		// lives in Redux, so it survives the navigation without being in the URL.
+		const params = new URLSearchParams();
+		const variables = new URLSearchParams(search).get(QueryParams.variables);
+		if (variables) {
+			params.set(QueryParams.variables, variables);
+		}
+		const query = params.toString();
+		safeNavigate(
+			`${generatePath(ROUTES.DASHBOARD, { dashboardId })}${
+				query ? `?${query}` : ''
+			}`,
+		);
 	}, [safeNavigate, dashboardId, search]);
 
 	if (isLoading) {

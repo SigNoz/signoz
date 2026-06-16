@@ -14,6 +14,7 @@ import {
 	type PanelKind,
 } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelKind';
 
+import { usePanelInteractions } from '../PanelsAndSectionsLayout/Panel/hooks/usePanelInteractions';
 import ConfigPane from './ConfigPane/ConfigPane';
 import Header from './Header/Header';
 import layoutStorage from './layoutStorage';
@@ -91,6 +92,9 @@ function PanelEditorContainer({
 		setSpec,
 		refetch,
 	});
+	// Drag-to-zoom on the preview chart updates the (URL-synced) time window,
+	// exactly as on the dashboard.
+	const { onDragSelect } = usePanelInteractions();
 	const legendSeries = useLegendSeries(draft, data);
 	const tableColumns = useTableColumns(draft, data);
 
@@ -134,6 +138,7 @@ function PanelEditorContainer({
 									data={data}
 									isLoading={isLoading}
 									error={error}
+									onDragSelect={onDragSelect}
 								/>
 							</ResizablePanel>
 							<ResizableHandle withHandle className={styles.handle} />

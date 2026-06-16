@@ -25,6 +25,76 @@ const PRESET_SPAN_MS: Partial<Record<DashboardtypesTimePreferenceDTO, number>> =
 		[DashboardtypesTimePreferenceDTO.last_1_month]: 30 * 24 * 60 * MINUTE_MS,
 	};
 
+/**
+ * Short + full labels for each relative preference, for the panel header time
+ * pill. `global_time` is absent — a panel that follows the dashboard window
+ * shows no pill.
+ */
+const TIME_PREFERENCE_LABEL: Partial<
+	Record<DashboardtypesTimePreferenceDTO, { short: string; full: string }>
+> = {
+	[DashboardtypesTimePreferenceDTO.last_5_min]: {
+		short: '5m',
+		full: 'Last 5 min',
+	},
+	[DashboardtypesTimePreferenceDTO.last_15_min]: {
+		short: '15m',
+		full: 'Last 15 min',
+	},
+	[DashboardtypesTimePreferenceDTO.last_30_min]: {
+		short: '30m',
+		full: 'Last 30 min',
+	},
+	[DashboardtypesTimePreferenceDTO.last_1_hr]: {
+		short: '1h',
+		full: 'Last 1 hr',
+	},
+	[DashboardtypesTimePreferenceDTO.last_6_hr]: {
+		short: '6h',
+		full: 'Last 6 hr',
+	},
+	[DashboardtypesTimePreferenceDTO.last_1_day]: {
+		short: '1d',
+		full: 'Last 1 day',
+	},
+	[DashboardtypesTimePreferenceDTO.last_3_days]: {
+		short: '3d',
+		full: 'Last 3 days',
+	},
+	[DashboardtypesTimePreferenceDTO.last_1_week]: {
+		short: '1w',
+		full: 'Last 1 week',
+	},
+	[DashboardtypesTimePreferenceDTO.last_1_month]: {
+		short: '1mo',
+		full: 'Last 1 month',
+	},
+};
+
+export interface PanelTimePreferenceLabel {
+	/** Compact pill label, e.g. `6h`. */
+	short: string;
+	/** Full label for the pill's tooltip, e.g. `Last 6 hr`. */
+	full: string;
+}
+
+/**
+ * Display labels for a panel's relative time preference, or `null` when the
+ * panel follows the dashboard window (`global_time` / unset) and so needs no
+ * pill.
+ */
+export function panelTimePreferenceLabel(
+	timePreference: DashboardtypesTimePreferenceDTO | undefined,
+): PanelTimePreferenceLabel | null {
+	if (
+		!timePreference ||
+		timePreference === DashboardtypesTimePreferenceDTO.global_time
+	) {
+		return null;
+	}
+	return TIME_PREFERENCE_LABEL[timePreference] ?? null;
+}
+
 interface ResolvePanelTimeWindowArgs {
 	/** The panel's saved per-panel time preference (`visualization.timePreference`). */
 	timePreference: DashboardtypesTimePreferenceDTO | undefined;
