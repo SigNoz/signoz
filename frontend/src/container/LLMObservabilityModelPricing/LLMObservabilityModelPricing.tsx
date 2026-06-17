@@ -4,16 +4,21 @@ import { SelectSimple } from '@signozhq/ui/select';
 import { Tabs } from '@signozhq/ui/tabs';
 import { useListLLMPricingRules } from 'api/generated/services/llmpricingrules';
 import { type ListLLMPricingRulesParams } from 'api/generated/services/sigNoz.schemas';
+import { parseAsInteger, useQueryState } from 'nuqs';
 
-import { CURRENCY_OPTIONS, PAGE_SIZE } from './constants';
+import { CURRENCY_OPTIONS, PAGE_KEY, PAGE_SIZE } from './constants';
 import ModelCostsTable from './ModelCostsTable';
-import { useModelPricingFilters } from './useModelPricingFilters';
 import type { PricingRule } from './types';
 
 import './LLMObservabilityModelPricing.styles.scss';
 
 function LLMObservabilityModelPricing(): JSX.Element {
-	const { page, setPage } = useModelPricingFilters();
+	// Page lives in the URL (shareable/reload-safe); replace mode keeps paging
+	// out of the back-stack, and withDefault(1) omits ?page=1.
+	const [page, setPage] = useQueryState(
+		PAGE_KEY,
+		parseAsInteger.withDefault(1).withOptions({ history: 'replace' }),
+	);
 	const [currency, setCurrency] = useState<string>('USD');
 
 	// Search + source filters are intentionally omitted for now — the list API
