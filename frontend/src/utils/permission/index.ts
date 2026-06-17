@@ -43,7 +43,7 @@ export const componentPermission: Record<ComponentTypes, ROLES[]> = {
 	page_pipelines: ['ADMIN', 'EDITOR'],
 	edit_locked_dashboard: ['ADMIN', 'AUTHOR'],
 	add_panel_locked_dashboard: ['ADMIN', 'AUTHOR'],
-	manage_llm_pricing: ['ADMIN', 'EDITOR', 'AUTHOR'],
+	manage_llm_pricing: ['ADMIN'],
 };
 
 export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {
