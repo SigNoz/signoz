@@ -47,7 +47,7 @@ import {
 	SomethingWentWrong,
 	StatusPage,
 	SupportPage,
-	TraceDetail,
+	TraceDetailOldRedirect,
 	TraceDetailV3,
 	TraceFilter,
 	TracesExplorer,
@@ -139,13 +139,11 @@ const routes: AppRoutes[] = [
 		exact: true,
 		key: 'LOGS_SAVE_VIEWS',
 	},
-	// V3 trace details is gated until release: /trace serves V2 (public),
-	// /trace-old serves V3 (URL-only access). Flip the two `component`
-	// values back to release V3.
+	// Legacy /trace-old/:id redirects to the current /trace/:id view.
 	{
 		path: ROUTES.TRACE_DETAIL_OLD,
 		exact: true,
-		component: TraceDetail,
+		component: TraceDetailOldRedirect,
 		isPrivate: true,
 		key: 'TRACE_DETAIL_OLD',
 	},

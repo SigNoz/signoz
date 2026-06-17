@@ -11,7 +11,7 @@ import {
 import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
 
 import Overview from './Overview';
-import { SettingsTabPlaceholder } from './utils';
+import PublicDashboardSettings from './PublicDashboard';
 import VariablesSettings from './Variables';
 import { useAppContext } from 'providers/App/App';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
@@ -52,15 +52,14 @@ function DashboardSettings({ dashboard }: DashboardSettingsProps): JSX.Element {
 				key: TabKeys.VARIABLES,
 				label: TabKeys.VARIABLES,
 				children: <VariablesSettings dashboard={dashboard} />,
+				prefixIcon: <Braces size={14} />,
 			},
 			...(enablePublicDashboard
 				? [
 						{
 							key: TabKeys.PUBLISH,
 							label: TabKeys.PUBLISH,
-							children: (
-								<SettingsTabPlaceholder message="V2 public dashboard publishing coming next." />
-							),
+							children: <PublicDashboardSettings dashboard={dashboard} />,
 							disabled: user?.role !== USER_ROLES.ADMIN,
 						},
 					]

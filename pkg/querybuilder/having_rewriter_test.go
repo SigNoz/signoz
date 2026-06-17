@@ -18,14 +18,39 @@ func toTraceAggregations(logs []qbtypes.LogAggregation) []qbtypes.TraceAggregati
 	return out
 }
 
+// additionalMessages extracts the message of each additional detail on err, so tests
+// can compare against a plain []string.
+func additionalMessages(err error) []string {
+	var msgs []string
+	for _, e := range errors.AsJSON(err).Errors {
+		msgs = append(msgs, e.Message)
+	}
+	return msgs
+}
+
+// allSuggestions collects suggestions from both the error-wide list and every additional
+// detail, so tests can assert suggestions regardless of where they are attached.
+func allSuggestions(err error) []string {
+	j := errors.AsJSON(err)
+	s := append([]string{}, j.Suggestions...)
+	for _, e := range j.Errors {
+		s = append(s, e.Suggestions...)
+	}
+	if len(s) == 0 {
+		return nil
+	}
+	return s
+}
+
 type logsAndTracesTestCase struct {
-	name           string
-	expression     string
-	aggregations   []qbtypes.LogAggregation
-	wantExpression string
-	wantErr        bool
-	wantErrMsg     string
-	wantAdditional []string
+	name            string
+	expression      string
+	aggregations    []qbtypes.LogAggregation
+	wantExpression  string
+	wantErr         bool
+	wantErrMsg      string
+	wantAdditional  []string
+	wantSuggestions []string
 }
 
 func runLogsAndTracesTests(t *testing.T, tests []logsAndTracesTestCase) {
@@ -40,12 +65,12 @@ func runLogsAndTracesTests(t *testing.T, tests []logsAndTracesTestCase) {
 			if tt.wantErr {
 				require.Error(t, errLogs)
 				assert.ErrorContains(t, errLogs, tt.wantErrMsg)
-				_, _, _, _, _, additionalLogs := errors.Unwrapb(errLogs)
-				assert.Equal(t, tt.wantAdditional, additionalLogs)
+				assert.Equal(t, tt.wantAdditional, additionalMessages(errLogs))
+				assert.Equal(t, tt.wantSuggestions, allSuggestions(errLogs))
 				require.Error(t, errTraces)
 				assert.ErrorContains(t, errTraces, tt.wantErrMsg)
-				_, _, _, _, _, additionalTraces := errors.Unwrapb(errTraces)
-				assert.Equal(t, tt.wantAdditional, additionalTraces)
+				assert.Equal(t, tt.wantAdditional, additionalMessages(errTraces))
+				assert.Equal(t, tt.wantSuggestions, allSuggestions(errTraces))
 			} else {
 				require.NoError(t, errLogs)
 				assert.Equal(t, tt.wantExpression, gotLogs)
@@ -290,9 +315,10 @@ func TestRewriteForLogsAndTraces_BooleanOperators(t *testing.T) {
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "count()", Alias: "total_logs"},
 			},
-			wantErr:        true,
-			wantErrMsg:     "Syntax error in `Having` expression",
-			wantAdditional: []string{"line 1:20 expecting one of {'*', '+', '-', (, ), AND, IDENTIFIER, NOT, number, string} but got EOF", "Suggestion: `total_logs > 100`"},
+			wantErr:         true,
+			wantErrMsg:      "Syntax error in `Having` expression",
+			wantAdditional:  []string{"line 1:20 expecting one of {'*', '+', '-', (, ), AND, IDENTIFIER, NOT, number, string} but got EOF"},
+			wantSuggestions: []string{"did you mean: `total_logs > 100`"},
 		},
 		{
 			name:       "dangling OR at start",
@@ -300,9 +326,10 @@ func TestRewriteForLogsAndTraces_BooleanOperators(t *testing.T) {
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "count()", Alias: "total_logs"},
 			},
-			wantErr:        true,
-			wantErrMsg:     "Syntax error in `Having` expression",
-			wantAdditional: []string{"line 1:0 expecting one of {'*', '+', '-', (, ), AND, IDENTIFIER, NOT, number, string} but got 'OR'", "Suggestion: `total_logs > 100`"},
+			wantErr:         true,
+			wantErrMsg:      "Syntax error in `Having` expression",
+			wantAdditional:  []string{"line 1:0 expecting one of {'*', '+', '-', (, ), AND, IDENTIFIER, NOT, number, string} but got 'OR'"},
+			wantSuggestions: []string{"did you mean: `total_logs > 100`"},
 		},
 		{
 			name:       "dangling OR at end",
@@ -310,9 +337,10 @@ func TestRewriteForLogsAndTraces_BooleanOperators(t *testing.T) {
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "count()", Alias: "total"},
 			},
-			wantErr:        true,
-			wantErrMsg:     "Syntax error in `Having` expression",
-			wantAdditional: []string{"line 1:14 expecting one of {'*', '+', '-', (, ), AND, IDENTIFIER, NOT, number, string} but got EOF", "Suggestion: `total > 100`"},
+			wantErr:         true,
+			wantErrMsg:      "Syntax error in `Having` expression",
+			wantAdditional:  []string{"line 1:14 expecting one of {'*', '+', '-', (, ), AND, IDENTIFIER, NOT, number, string} but got EOF"},
+			wantSuggestions: []string{"did you mean: `total > 100`"},
 		},
 		{
 			name:       "consecutive AND operators",
@@ -562,9 +590,10 @@ func TestRewriteForLogsAndTraces_InOperator(t *testing.T) {
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "count()", Alias: "total"},
 			},
-			wantErr:        true,
-			wantErrMsg:     "Invalid references in `Having` expression: [ghost]",
-			wantAdditional: []string{"Valid references are: [__result, __result0, count(), total]"},
+			wantErr:         true,
+			wantErrMsg:      "Invalid references in `Having` expression: [ghost]",
+			wantAdditional:  []string{"Valid references are: [__result, __result0, count(), total]"},
+			wantSuggestions: []string{"valid references: `__result`, `__result0`, `count()`, `total`"},
 		},
 		{
 			name:       "IN with end bracked missing",
@@ -572,9 +601,10 @@ func TestRewriteForLogsAndTraces_InOperator(t *testing.T) {
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "count()"},
 			},
-			wantErr:        true,
-			wantErrMsg:     "Syntax error in `Having` expression",
-			wantAdditional: []string{"line 1:19 expecting one of {]} but got EOF", "Suggestion: `count() IN [1, 2, 3]`"},
+			wantErr:         true,
+			wantErrMsg:      "Syntax error in `Having` expression",
+			wantAdditional:  []string{"line 1:19 expecting one of {]} but got EOF"},
+			wantSuggestions: []string{"did you mean: `count() IN [1, 2, 3]`"},
 		},
 		{
 			name:       "IN with end paran missing",
@@ -582,9 +612,10 @@ func TestRewriteForLogsAndTraces_InOperator(t *testing.T) {
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "count()"},
 			},
-			wantErr:        true,
-			wantErrMsg:     "Syntax error in `Having` expression",
-			wantAdditional: []string{"line 1:19 expecting one of {)} but got EOF", "Suggestion: `count() IN (1, 2, 3)`"},
+			wantErr:         true,
+			wantErrMsg:      "Syntax error in `Having` expression",
+			wantAdditional:  []string{"line 1:19 expecting one of {)} but got EOF"},
+			wantSuggestions: []string{"did you mean: `count() IN (1, 2, 3)`"},
 		},
 	})
 }
@@ -621,9 +652,10 @@ func TestRewriteForLogsAndTraces_ErrorInvalidReferences(t *testing.T) {
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "count()", Alias: "total"},
 			},
-			wantErr:        true,
-			wantErrMsg:     "Invalid references in `Having` expression: [unknown_alias]",
-			wantAdditional: []string{"Valid references are: [__result, __result0, count(), total]"},
+			wantErr:         true,
+			wantErrMsg:      "Invalid references in `Having` expression: [unknown_alias]",
+			wantAdditional:  []string{"Valid references are: [__result, __result0, count(), total]"},
+			wantSuggestions: []string{"valid references: `__result`, `__result0`, `count()`, `total`"},
 		},
 		{
 			name:       "typo in identifier suggests closest match",
@@ -631,9 +663,10 @@ func TestRewriteForLogsAndTraces_ErrorInvalidReferences(t *testing.T) {
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "count()", Alias: "total"},
 			},
-			wantErr:        true,
-			wantErrMsg:     "Invalid references in `Having` expression: [totol]",
-			wantAdditional: []string{"Valid references are: [__result, __result0, count(), total]", "Suggestion: `total > 100`"},
+			wantErr:         true,
+			wantErrMsg:      "Invalid references in `Having` expression: [totol]",
+			wantAdditional:  []string{"Valid references are: [__result, __result0, count(), total]"},
+			wantSuggestions: []string{"did you mean: `total > 100`", "valid references: `__result`, `__result0`, `count()`, `total`"},
 		},
 		{
 			name:       "expression not in column map",
@@ -641,9 +674,10 @@ func TestRewriteForLogsAndTraces_ErrorInvalidReferences(t *testing.T) {
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "count()"},
 			},
-			wantErr:        true,
-			wantErrMsg:     "Invalid references in `Having` expression: [sum]",
-			wantAdditional: []string{"Valid references are: [__result, __result0, count()]"},
+			wantErr:         true,
+			wantErrMsg:      "Invalid references in `Having` expression: [sum]",
+			wantAdditional:  []string{"Valid references are: [__result, __result0, count()]"},
+			wantSuggestions: []string{"valid references: `__result`, `__result0`, `count()`"},
 		},
 		{
 			name:       "one valid one invalid reference",
@@ -651,9 +685,10 @@ func TestRewriteForLogsAndTraces_ErrorInvalidReferences(t *testing.T) {
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "count()", Alias: "total"},
 			},
-			wantErr:        true,
-			wantErrMsg:     "Invalid references in `Having` expression: [ghost]",
-			wantAdditional: []string{"Valid references are: [__result, __result0, count(), total]"},
+			wantErr:         true,
+			wantErrMsg:      "Invalid references in `Having` expression: [ghost]",
+			wantAdditional:  []string{"Valid references are: [__result, __result0, count(), total]"},
+			wantSuggestions: []string{"valid references: `__result`, `__result0`, `count()`, `total`"},
 		},
 		{
 			name:       "__result ambiguous with multiple aggregations",
@@ -662,9 +697,10 @@ func TestRewriteForLogsAndTraces_ErrorInvalidReferences(t *testing.T) {
 				{Expression: "count()"},
 				{Expression: "sum(bytes)"},
 			},
-			wantErr:        true,
-			wantErrMsg:     "Invalid references in `Having` expression: [__result]",
-			wantAdditional: []string{"Valid references are: [__result0, __result1, count(), sum(bytes)]", "Suggestion: `__result0 > 100`"},
+			wantErr:         true,
+			wantErrMsg:      "Invalid references in `Having` expression: [__result]",
+			wantAdditional:  []string{"Valid references are: [__result0, __result1, count(), sum(bytes)]"},
+			wantSuggestions: []string{"did you mean: `__result0 > 100`", "valid references: `__result0`, `__result1`, `count()`, `sum(bytes)`"},
 		},
 		{
 			name:       "out-of-range __result_N index",
@@ -672,9 +708,10 @@ func TestRewriteForLogsAndTraces_ErrorInvalidReferences(t *testing.T) {
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "count()"},
 			},
-			wantErr:        true,
-			wantErrMsg:     "Invalid references in `Having` expression: [__result_9]",
-			wantAdditional: []string{"Valid references are: [__result, __result0, count()]", "Suggestion: `__result > 100`"},
+			wantErr:         true,
+			wantErrMsg:      "Invalid references in `Having` expression: [__result_9]",
+			wantAdditional:  []string{"Valid references are: [__result, __result0, count()]"},
+			wantSuggestions: []string{"did you mean: `__result > 100`", "valid references: `__result`, `__result0`, `count()`"},
 		},
 		{
 			name:       "__result_1 out of range for single aggregation",
@@ -682,9 +719,10 @@ func TestRewriteForLogsAndTraces_ErrorInvalidReferences(t *testing.T) {
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "count()"},
 			},
-			wantErr:        true,
-			wantErrMsg:     "Invalid references in `Having` expression: [__result_1]",
-			wantAdditional: []string{"Valid references are: [__result, __result0, count()]", "Suggestion: `__result > 100`"},
+			wantErr:         true,
+			wantErrMsg:      "Invalid references in `Having` expression: [__result_1]",
+			wantAdditional:  []string{"Valid references are: [__result, __result0, count()]"},
+			wantSuggestions: []string{"did you mean: `__result > 100`", "valid references: `__result`, `__result0`, `count()`"},
 		},
 		{
 			name:       "cascaded function calls",
@@ -692,9 +730,10 @@ func TestRewriteForLogsAndTraces_ErrorInvalidReferences(t *testing.T) {
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "count()"},
 			},
-			wantErr:        true,
-			wantErrMsg:     "Invalid references in `Having` expression: [sum]",
-			wantAdditional: []string{"Valid references are: [__result, __result0, count()]"},
+			wantErr:         true,
+			wantErrMsg:      "Invalid references in `Having` expression: [sum]",
+			wantAdditional:  []string{"Valid references are: [__result, __result0, count()]"},
+			wantSuggestions: []string{"valid references: `__result`, `__result0`, `count()`"},
 		},
 		{
 			name:       "function call with multiple args not in column map",
@@ -702,9 +741,10 @@ func TestRewriteForLogsAndTraces_ErrorInvalidReferences(t *testing.T) {
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "sum(a)"},
 			},
-			wantErr:        true,
-			wantErrMsg:     "Invalid references in `Having` expression: [sum]",
-			wantAdditional: []string{"Valid references are: [__result, __result0, sum(a)]"},
+			wantErr:         true,
+			wantErrMsg:      "Invalid references in `Having` expression: [sum]",
+			wantAdditional:  []string{"Valid references are: [__result, __result0, sum(a)]"},
+			wantSuggestions: []string{"valid references: `__result`, `__result0`, `sum(a)`"},
 		},
 		{
 			name:       "unquoted string value treated as unknown identifier",
@@ -712,9 +752,10 @@ func TestRewriteForLogsAndTraces_ErrorInvalidReferences(t *testing.T) {
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "sum(bytes)"},
 			},
-			wantErr:        true,
-			wantErrMsg:     "Invalid references in `Having` expression: [xyz]",
-			wantAdditional: []string{"Valid references are: [__result, __result0, sum(bytes)]"},
+			wantErr:         true,
+			wantErrMsg:      "Invalid references in `Having` expression: [xyz]",
+			wantAdditional:  []string{"Valid references are: [__result, __result0, sum(bytes)]"},
+			wantSuggestions: []string{"valid references: `__result`, `__result0`, `sum(bytes)`"},
 		},
 	})
 }
@@ -731,9 +772,10 @@ func TestRewriteForLogsAndTraces_ErrorSyntax(t *testing.T) {
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "count()", Alias: "total_logs"},
 			},
-			wantErr:        true,
-			wantErrMsg:     "Syntax error in `Having` expression",
-			wantAdditional: []string{"line 1:7 expecting one of {'*', '+', '-', (, ), IDENTIFIER, number, string} but got EOF", "Suggestion: `count() > 0`"},
+			wantErr:         true,
+			wantErrMsg:      "Syntax error in `Having` expression",
+			wantAdditional:  []string{"line 1:7 expecting one of {'*', '+', '-', (, ), IDENTIFIER, number, string} but got EOF"},
+			wantSuggestions: []string{"did you mean: `count() > 0`"},
 		},
 		{
 			name:       "bare identifier without comparison",
@@ -741,9 +783,10 @@ func TestRewriteForLogsAndTraces_ErrorSyntax(t *testing.T) {
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "count()", Alias: "total_logs"},
 			},
-			wantErr:        true,
-			wantErrMsg:     "Syntax error in `Having` expression",
-			wantAdditional: []string{"line 1:10 expecting one of {'*', '+', '-', (, ), IDENTIFIER, number, string} but got EOF", "Suggestion: `total_logs > 0`"},
+			wantErr:         true,
+			wantErrMsg:      "Syntax error in `Having` expression",
+			wantAdditional:  []string{"line 1:10 expecting one of {'*', '+', '-', (, ), IDENTIFIER, number, string} but got EOF"},
+			wantSuggestions: []string{"did you mean: `total_logs > 0`"},
 		},
 		// Parenthesis mismatches
 		{
@@ -752,9 +795,10 @@ func TestRewriteForLogsAndTraces_ErrorSyntax(t *testing.T) {
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "count()", Alias: "total_logs"},
 			},
-			wantErr:        true,
-			wantErrMsg:     "Syntax error in `Having` expression",
-			wantAdditional: []string{"line 1:35 expecting one of {)} but got EOF", "Suggestion: `(total_logs > 100 AND count() < 500)`"},
+			wantErr:         true,
+			wantErrMsg:      "Syntax error in `Having` expression",
+			wantAdditional:  []string{"line 1:35 expecting one of {)} but got EOF"},
+			wantSuggestions: []string{"did you mean: `(total_logs > 100 AND count() < 500)`"},
 		},
 		{
 			name:       "unexpected closing parenthesis",
@@ -805,7 +849,7 @@ func TestRewriteForLogsAndTraces_ErrorSyntax(t *testing.T) {
 			},
 			wantErr:        true,
 			wantErrMsg:     "Syntax error in `Having` expression",
-			wantAdditional: []string{"line 1:0 expecting one of {'*', '+', '-', (, ), AND, IDENTIFIER, NOT, number, string} but got '>'; line 1:5 expecting one of {'*', '+', '-', (, ), IDENTIFIER, number, string} but got EOF"},
+			wantAdditional: []string{"line 1:0 expecting one of {'*', '+', '-', (, ), AND, IDENTIFIER, NOT, number, string} but got '>'", "line 1:5 expecting one of {'*', '+', '-', (, ), IDENTIFIER, number, string} but got EOF"},
 		},
 		{
 			name:       "missing right operand",
@@ -813,9 +857,10 @@ func TestRewriteForLogsAndTraces_ErrorSyntax(t *testing.T) {
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "count()"},
 			},
-			wantErr:        true,
-			wantErrMsg:     "Syntax error in `Having` expression",
-			wantAdditional: []string{"line 1:9 expecting one of {'*', '+', '-', (, ), IDENTIFIER, number, string} but got EOF", "Suggestion: `count() > 0`"},
+			wantErr:         true,
+			wantErrMsg:      "Syntax error in `Having` expression",
+			wantAdditional:  []string{"line 1:9 expecting one of {'*', '+', '-', (, ), IDENTIFIER, number, string} but got EOF"},
+			wantSuggestions: []string{"did you mean: `count() > 0`"},
 		},
 		{
 			name:       "missing comparison operator",
@@ -875,13 +920,14 @@ func TestRewriteForLogsAndTraces_ErrorSyntax(t *testing.T) {
 
 func TestRewriteForMetrics(t *testing.T) {
 	tests := []struct {
-		name           string
-		expression     string
-		aggregations   []qbtypes.MetricAggregation
-		wantExpression string
-		wantErr        bool
-		wantErrMsg     string
-		wantAdditional []string
+		name            string
+		expression      string
+		aggregations    []qbtypes.MetricAggregation
+		wantExpression  string
+		wantErr         bool
+		wantErrMsg      string
+		wantAdditional  []string
+		wantSuggestions []string
 	}{
 		// --- Happy path: reference types (time/space aggregation, __result, bare metric) ---
 		{
@@ -981,9 +1027,10 @@ func TestRewriteForMetrics(t *testing.T) {
 					SpaceAggregation: metrictypes.SpaceAggregationUnspecified,
 				},
 			},
-			wantErr:        true,
-			wantErrMsg:     "Invalid references in `Having` expression: [wrong_metric]",
-			wantAdditional: []string{"Valid references are: [__result, __result0, sum(cpu_usage)]"},
+			wantErr:         true,
+			wantErrMsg:      "Invalid references in `Having` expression: [wrong_metric]",
+			wantAdditional:  []string{"Valid references are: [__result, __result0, sum(cpu_usage)]"},
+			wantSuggestions: []string{"valid references: `__result`, `__result0`, `sum(cpu_usage)`"},
 		},
 		// --- Error: string literal (not allowed in HAVING) ---
 		{
@@ -1011,9 +1058,10 @@ func TestRewriteForMetrics(t *testing.T) {
 					SpaceAggregation: metrictypes.SpaceAggregationUnspecified,
 				},
 			},
-			wantErr:        true,
-			wantErrMsg:     "Syntax error in `Having` expression",
-			wantAdditional: []string{"line 1:9 expecting one of {'*', '+', '-', (, ), IDENTIFIER, number, string} but got EOF", "Suggestion: `cpu_usage > 0`"},
+			wantErr:         true,
+			wantErrMsg:      "Syntax error in `Having` expression",
+			wantAdditional:  []string{"line 1:9 expecting one of {'*', '+', '-', (, ), IDENTIFIER, number, string} but got EOF"},
+			wantSuggestions: []string{"did you mean: `cpu_usage > 0`"},
 		},
 		// --- Error: aggregation not in column map ---
 		{
@@ -1026,9 +1074,10 @@ func TestRewriteForMetrics(t *testing.T) {
 					SpaceAggregation: metrictypes.SpaceAggregationUnspecified,
 				},
 			},
-			wantErr:        true,
-			wantErrMsg:     "Invalid references in `Having` expression: [count]",
-			wantAdditional: []string{"Valid references are: [__result, __result0, sum(cpu_usage)]"},
+			wantErr:         true,
+			wantErrMsg:      "Invalid references in `Having` expression: [count]",
+			wantAdditional:  []string{"Valid references are: [__result, __result0, sum(cpu_usage)]"},
+			wantSuggestions: []string{"valid references: `__result`, `__result0`, `sum(cpu_usage)`"},
 		},
 	}
 
@@ -1039,8 +1088,8 @@ func TestRewriteForMetrics(t *testing.T) {
 			if tt.wantErr {
 				require.Error(t, err)
 				assert.ErrorContains(t, err, tt.wantErrMsg)
-				_, _, _, _, _, additional := errors.Unwrapb(err)
-				assert.Equal(t, tt.wantAdditional, additional)
+				assert.Equal(t, tt.wantAdditional, additionalMessages(err))
+				assert.Equal(t, tt.wantSuggestions, allSuggestions(err))
 			} else {
 				require.NoError(t, err)
 				assert.Equal(t, tt.wantExpression, got)
