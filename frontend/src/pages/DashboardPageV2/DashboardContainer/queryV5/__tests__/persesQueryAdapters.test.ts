@@ -77,6 +77,17 @@ describe('persesQueryAdapters', () => {
 			);
 			expect(result[0].kind).toBe('scalar');
 		});
+
+		it('emits a bare signoz/BuilderQuery for a List panel (not a CompositeQuery)', () => {
+			const result = toPerses(
+				initialQueriesMap[DataSource.LOGS],
+				PANEL_TYPES.LIST,
+			);
+
+			expect(result).toHaveLength(1);
+			expect(result[0].kind).toBe('raw');
+			expect(result[0].spec.plugin.kind).toBe('signoz/BuilderQuery');
+		});
 	});
 
 	describe('round-trip', () => {
@@ -96,6 +107,16 @@ describe('persesQueryAdapters', () => {
 			expect(restored.builder.queryData[0].queryName).toBe(
 				original.builder.queryData[0].queryName,
 			);
+		});
+
+		it('preserves a List builder query through toPerses → fromPerses', () => {
+			const original: Query = initialQueriesMap[DataSource.LOGS];
+
+			const perses = toPerses(original, PANEL_TYPES.LIST);
+			const restored = fromPerses(perses, PANEL_TYPES.LIST);
+
+			expect(restored.queryType).toBe(EQueryType.QUERY_BUILDER);
+			expect(restored.builder.queryData[0].dataSource).toBe(DataSource.LOGS);
 		});
 	});
 });

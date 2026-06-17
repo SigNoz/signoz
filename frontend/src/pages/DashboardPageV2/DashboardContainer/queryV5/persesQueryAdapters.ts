@@ -1,9 +1,11 @@
 import type {
+	DashboardtypesBuilderQuerySpecDTO,
 	DashboardtypesQueryDTO,
 	Querybuildertypesv5CompositeQueryDTO,
 	Querybuildertypesv5QueryEnvelopeDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import {
+	DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBuilderQuerySpecDTOKind as BuilderQueryPluginKind,
 	DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5CompositeQueryDTOKind as CompositeQueryPluginKind,
 	Querybuildertypesv5QueryTypeDTO,
 } from 'api/generated/services/sigNoz.schemas';
@@ -86,6 +88,10 @@ export function fromPerses(
  * (via `compositeQueryToQueryEnvelope`); we wrap it in a single
  * `signoz/CompositeQuery` perses query — the backend invariant
  * (`panel.queries.length === 1`) `toQueryEnvelopes` reads back verbatim.
+ *
+ * Exception: the List panel only runs the query builder (a single builder query,
+ * no formulas) and the backend rejects a `signoz/CompositeQuery` for it, so its
+ * one builder query is emitted as a bare `signoz/BuilderQuery` plugin instead.
  */
 export function toPerses(
 	query: Query,
@@ -94,6 +100,29 @@ export function toPerses(
 	const composite = mapCompositeQueryFromQuery(query, panelType);
 	const envelopes = (composite.queries ??
 		[]) as unknown as Querybuildertypesv5QueryEnvelopeDTO[];
+
+	if (panelType === PANEL_TYPES.LIST) {
+		const builder = envelopes.find(
+			(envelope) =>
+				envelope.type === Querybuildertypesv5QueryTypeDTO.builder_query,
+		);
+		if (!builder) {
+			return [];
+		}
+		return [
+			{
+				kind: panelTypeToRequestType(panelType),
+				spec: {
+					plugin: {
+						kind: BuilderQueryPluginKind['signoz/BuilderQuery'],
+						// Envelope spec is erased to `unknown` by Orval; it is the builder
+						// query spec — cast at this generated-DTO boundary.
+						spec: builder.spec as DashboardtypesBuilderQuerySpecDTO,
+					},
+				},
+			},
+		];
+	}
 
 	const spec: Querybuildertypesv5CompositeQueryDTO = { queries: envelopes };
 
