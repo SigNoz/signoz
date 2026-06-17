@@ -639,7 +639,7 @@ def test_non_existent_metrics_returns_warning(
 
     data = response.json()
     warnings = get_all_warnings(data)
-    assert any("whatevergoennnsgoeshere" in w and "has never been received" in w for w in warnings), f"expected never-seen metric warning, got: {warnings}"
+    assert any("whatevergoennnsgoeshere" in w["message"] and "has never been received" in w["message"] for w in warnings), f"expected never-seen metric warning, got: {warnings}"
 
 
 def test_non_existent_internal_metrics_returns_no_warning(
