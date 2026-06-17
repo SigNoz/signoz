@@ -165,7 +165,17 @@ def create_notification_channel(
             timeout=5,
         )
         assert response.status_code == HTTPStatus.CREATED, f"Failed to create channel, Response: {response.text} Response status: {response.status_code}"
-        return response.json()["data"]["id"]
+        channel_id = response.json()["data"]["id"]
+
+        # Force the running alertmanager to load the new channel into its live config by hitting the sync endpoint
+        sync_response = requests.post(
+            signoz.self.host_configs["8080"].get("/api/v1/channels/sync"),
+            headers={"Authorization": f"Bearer {admin_token}"},
+            timeout=10,
+        )
+        assert sync_response.status_code == HTTPStatus.NO_CONTENT, f"Failed to sync channels, Response: {sync_response.text} Response status: {sync_response.status_code}"
+
+        return channel_id
 
     return _create_notification_channel
 

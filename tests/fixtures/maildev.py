@@ -1,4 +1,5 @@
 import json
+import re
 from http import HTTPStatus
 
 import docker
@@ -102,13 +103,16 @@ def get_all_mails(_maildev: types.TestContainerDocker) -> list[dict]:
 def verify_email_received(_maildev: types.TestContainerDocker, filters: dict) -> bool:
     """
     Checks if any email in MailDev matches all the given filters.
-    Filters are matched with exact equality against the email fields (subject, html, text).
+    Filter values may be exact strings or re.Pattern objects for pattern matching.
     Returns True if at least one matching email is found.
     """
     emails = get_all_mails(_maildev)
     for email in emails:
         logger.info("Email: %s", json.dumps(email, indent=2))
-        if all(key in email and filter_value == email[key] for key, filter_value in filters.items()):
+        if all(
+            key in email and (bool(filter_value.search(email[key])) if isinstance(filter_value, re.Pattern) else filter_value == email[key])
+            for key, filter_value in filters.items()
+        ):
             return True
     return False
 

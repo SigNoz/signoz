@@ -58,6 +58,9 @@ type Alertmanager interface {
 	// GetConfig gets the config for the organization.
 	GetConfig(context.Context, string) (*alertmanagertypes.Config, error)
 
+	// SyncConfig forces the running alertmanager to pick up the latest stored config.
+	SyncConfig(context.Context) error
+
 	// SetDefaultConfig sets the default config for the organization.
 	SetDefaultConfig(context.Context, string) error
 
