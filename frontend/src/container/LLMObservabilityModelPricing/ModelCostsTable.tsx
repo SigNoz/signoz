@@ -1,5 +1,6 @@
 import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
+import { Skeleton } from 'antd';
 import {
 	Table,
 	TableBody,
@@ -12,7 +13,7 @@ import { ChevronDown } from '@signozhq/icons';
 import cx from 'classnames';
 import { startCase } from 'lodash-es';
 
-import { COLUMN_COUNT } from './constants';
+import { COLUMN_COUNT, SKELETON_ROW_COUNT } from './constants';
 import type { PricingRule } from './types';
 import {
 	formatPricePerMillion,
@@ -147,13 +148,39 @@ function ModelCostsTable({
 				</TableRow>
 			</TableHeader>
 			<TableBody>
-				{isLoading && rules.length === 0 && (
-					<TableRow>
-						<TableCell colSpan={COLUMN_COUNT} className="model-costs-table__empty">
-							Loading pricing rules…
-						</TableCell>
-					</TableRow>
-				)}
+				{isLoading &&
+					rules.length === 0 &&
+					Array.from({ length: SKELETON_ROW_COUNT }, (_, i) => (
+						<TableRow key={`skeleton-row-${i}`} data-testid="model-cost-skeleton-row">
+							<TableCell>
+								<div className="model-cell">
+									<Skeleton.Input active block size="small" />
+									<Skeleton.Input active size="small" style={{ width: '60%' }} />
+								</div>
+							</TableCell>
+							<TableCell>
+								<Skeleton.Input active block size="small" />
+							</TableCell>
+							<TableCell>
+								<Skeleton.Input active block size="small" />
+							</TableCell>
+							<TableCell>
+								<Skeleton.Input active block size="small" />
+							</TableCell>
+							<TableCell>
+								<Skeleton.Input active block size="small" />
+							</TableCell>
+							<TableCell>
+								<Skeleton.Input active block size="small" />
+							</TableCell>
+							<TableCell>
+								<Skeleton.Input active block size="small" />
+							</TableCell>
+							<TableCell>
+								<Skeleton.Button active size="small" />
+							</TableCell>
+						</TableRow>
+					))}
 				{!isLoading && rules.length === 0 && (
 					<TableRow>
 						<TableCell colSpan={COLUMN_COUNT} className="model-costs-table__empty">
