@@ -159,9 +159,9 @@ type ClickHouseReader struct {
 	traceResourceTableV3 string
 	traceSummaryTable    string
 
-	cache cache.Cache
-	metadataDB                 string
-	metadataTable              string
+	cache         cache.Cache
+	metadataDB    string
+	metadataTable string
 }
 
 // NewTraceReader returns a TraceReader for the database
@@ -184,43 +184,43 @@ func NewReader(
 	traceLocalTableName := options.primary.TraceLocalTableNameV3
 
 	return &ClickHouseReader{
-		db:                         telemetryStore.ClickhouseDB(),
-		logger:                     logger,
-		prometheus:                 prometheus,
-		sqlDB:                      sqlDB,
-		TraceDB:                    options.primary.TraceDB,
-		operationsTable:            options.primary.OperationsTable,
-		indexTable:                 options.primary.IndexTable,
-		errorTable:                 options.primary.ErrorTable,
-		usageExplorerTable:         options.primary.UsageExplorerTable,
-		durationTable:              options.primary.DurationTable,
-		SpansTable:                 options.primary.SpansTable,
-		spanAttributeTableV2:       options.primary.SpanAttributeTableV2,
-		spanAttributesKeysTable:    options.primary.SpanAttributeKeysTable,
-		dependencyGraphTable:       options.primary.DependencyGraphTable,
-		topLevelOperationsTable:    options.primary.TopLevelOperationsTable,
-		logsDB:                     options.primary.LogsDB,
-		logsTable:                  options.primary.LogsTable,
-		logsLocalTable:             options.primary.LogsLocalTable,
-		logsAttributeKeys:          options.primary.LogsAttributeKeysTable,
-		logsResourceKeys:           options.primary.LogsResourceKeysTable,
-		logsTagAttributeTableV2:    options.primary.LogsTagAttributeTableV2,
-		liveTailRefreshSeconds:     options.primary.LiveTailRefreshSeconds,
-		cluster:                    cluster,
-		queryProgressTracker:       queryprogress.NewQueryProgressTracker(logger),
-		logsTableV2:                options.primary.LogsTableV2,
-		logsLocalTableV2:           options.primary.LogsLocalTableV2,
-		logsResourceTableV2:        options.primary.LogsResourceTableV2,
-		logsResourceLocalTableV2:   options.primary.LogsResourceLocalTableV2,
-		logsTableName:              logsTableName,
-		logsLocalTableName:         logsLocalTableName,
-		traceLocalTableName:        traceLocalTableName,
-		traceTableName:             traceTableName,
-		traceResourceTableV3:       options.primary.TraceResourceTableV3,
-		traceSummaryTable:          options.primary.TraceSummaryTable,
-		cache: cache,
-		metadataDB:                 options.primary.MetadataDB,
-		metadataTable:              options.primary.MetadataTable,
+		db:                       telemetryStore.ClickhouseDB(),
+		logger:                   logger,
+		prometheus:               prometheus,
+		sqlDB:                    sqlDB,
+		TraceDB:                  options.primary.TraceDB,
+		operationsTable:          options.primary.OperationsTable,
+		indexTable:               options.primary.IndexTable,
+		errorTable:               options.primary.ErrorTable,
+		usageExplorerTable:       options.primary.UsageExplorerTable,
+		durationTable:            options.primary.DurationTable,
+		SpansTable:               options.primary.SpansTable,
+		spanAttributeTableV2:     options.primary.SpanAttributeTableV2,
+		spanAttributesKeysTable:  options.primary.SpanAttributeKeysTable,
+		dependencyGraphTable:     options.primary.DependencyGraphTable,
+		topLevelOperationsTable:  options.primary.TopLevelOperationsTable,
+		logsDB:                   options.primary.LogsDB,
+		logsTable:                options.primary.LogsTable,
+		logsLocalTable:           options.primary.LogsLocalTable,
+		logsAttributeKeys:        options.primary.LogsAttributeKeysTable,
+		logsResourceKeys:         options.primary.LogsResourceKeysTable,
+		logsTagAttributeTableV2:  options.primary.LogsTagAttributeTableV2,
+		liveTailRefreshSeconds:   options.primary.LiveTailRefreshSeconds,
+		cluster:                  cluster,
+		queryProgressTracker:     queryprogress.NewQueryProgressTracker(logger),
+		logsTableV2:              options.primary.LogsTableV2,
+		logsLocalTableV2:         options.primary.LogsLocalTableV2,
+		logsResourceTableV2:      options.primary.LogsResourceTableV2,
+		logsResourceLocalTableV2: options.primary.LogsResourceLocalTableV2,
+		logsTableName:            logsTableName,
+		logsLocalTableName:       logsLocalTableName,
+		traceLocalTableName:      traceLocalTableName,
+		traceTableName:           traceTableName,
+		traceResourceTableV3:     options.primary.TraceResourceTableV3,
+		traceSummaryTable:        options.primary.TraceSummaryTable,
+		cache:                    cache,
+		metadataDB:               options.primary.MetadataDB,
+		metadataTable:            options.primary.MetadataTable,
 	}
 }
 
@@ -857,7 +857,6 @@ func (r *ClickHouseReader) GetUsage(ctx context.Context, queryParams *model.GetU
 
 	return &usageItems, nil
 }
-
 
 func (r *ClickHouseReader) GetDependencyGraph(ctx context.Context, queryParams *model.GetServicesParams) (*[]model.ServiceMapDependencyResponseItem, error) {
 
