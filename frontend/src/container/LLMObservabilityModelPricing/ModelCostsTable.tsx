@@ -133,8 +133,14 @@ function ModelCostsTable({
 	canManage,
 	onEdit,
 }: ModelCostsTableProps): JSX.Element {
+	const isInitialLoading = isLoading && rules.length === 0;
+
 	return (
-		<Table className="model-costs-table" testId="model-costs-table">
+		<Table
+			className="model-costs-table"
+			testId="model-costs-table"
+			aria-busy={isInitialLoading}
+		>
 			<TableHeader>
 				<TableRow>
 					<TableHead>Model</TableHead>
@@ -148,8 +154,7 @@ function ModelCostsTable({
 				</TableRow>
 			</TableHeader>
 			<TableBody>
-				{isLoading &&
-					rules.length === 0 &&
+				{isInitialLoading &&
 					Array.from({ length: SKELETON_ROW_COUNT }, (_, i) => (
 						<TableRow key={`skeleton-row-${i}`} data-testid="model-cost-skeleton-row">
 							<TableCell>

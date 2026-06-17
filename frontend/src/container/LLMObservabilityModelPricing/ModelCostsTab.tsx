@@ -38,6 +38,7 @@ function ModelCostsTab(): JSX.Element {
 					className="filters-bar__currency"
 					value="USD"
 					disabled
+					items={[]}
 					testId="currency-select"
 				/>
 			</div>

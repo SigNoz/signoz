@@ -5,8 +5,6 @@ import type { ExtraBucket, PricingRule } from './types';
 
 dayjs.extend(relativeTime);
 
-const lc = (value: string): string => value.toLowerCase();
-
 // Relative, human-readable distance from now (e.g. "2 days ago"); "—" for
 // missing/invalid timestamps.
 const getRelativeTime = (
@@ -49,7 +47,10 @@ export const getSourceLabel = (rule: PricingRule): 'Auto' | 'User override' =>
 export const getRelativeLastSeen = (rule: PricingRule): string =>
 	getRelativeTime(rule.updatedAt || rule.syncedAt || rule.createdAt);
 
+// Canonical id shown under the model name, e.g. "openai:gpt-4o". Both segments
+// are lower-cased so the id is consistently normalised (providers/models can
+// arrive with mixed casing).
 export const getCanonicalId = (rule: PricingRule): string => {
-	const provider = rule.provider?.trim() || 'unknown';
-	return `${lc(provider)}:${rule.modelName}`;
+	const provider = rule.provider?.trim().toLowerCase() || 'unknown';
+	return `${provider}:${rule.modelName.toLowerCase()}`;
 };
