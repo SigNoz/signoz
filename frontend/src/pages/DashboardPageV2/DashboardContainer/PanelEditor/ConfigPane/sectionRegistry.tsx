@@ -7,6 +7,7 @@ import type {
 	DashboardtypesLegendDTO,
 	DashboardtypesPanelSpecDTO,
 	DashboardtypesTimeSeriesChartAppearanceDTO,
+	TelemetrytypesTelemetryFieldKeyDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import type {
 	AnyThreshold,
@@ -19,6 +20,7 @@ import type {
 import AxesSection from './sections/AxesSection/AxesSection';
 import BucketsSection from './sections/BucketsSection/BucketsSection';
 import ChartAppearanceSection from './sections/ChartAppearanceSection/ChartAppearanceSection';
+import ColumnsSection from './sections/ColumnsSection/ColumnsSection';
 import ContextLinksSection from './sections/ContextLinksSection/ContextLinksSection';
 import FormattingSection from './sections/FormattingSection/FormattingSection';
 import LegendSection from './sections/LegendSection/LegendSection';
@@ -121,6 +123,14 @@ export const SECTION_REGISTRY: {
 		// Panel-level slice (spec.links), not under the plugin spec — no cast needed.
 		get: (spec): DashboardLinkDTO[] | undefined => spec.links,
 		update: (spec, links): PanelSpec => ({ ...spec, links }),
+	},
+	// List panel columns → plugin.spec.selectFields.
+	columns: {
+		Component: ColumnsSection,
+		read: (spec): TelemetrytypesTelemetryFieldKeyDTO[] | undefined =>
+			readPluginSlice<TelemetrytypesTelemetryFieldKeyDTO[]>(spec, 'selectFields'),
+		write: (spec, columns): PanelSpec =>
+			writePluginSlice(spec, 'selectFields', columns),
 	},
 	// One editor for every threshold variant (label / comparison / table); the kind's
 	// `controls.variant` picks the row editor + element shape. All persist to the same
