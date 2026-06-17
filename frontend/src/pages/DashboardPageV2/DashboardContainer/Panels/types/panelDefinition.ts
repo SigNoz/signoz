@@ -21,6 +21,8 @@ export interface PanelActionCapabilities {
 	view: boolean;
 	/** Kind is editable in the V2 panel editor — gates the "Edit panel" action. */
 	edit: boolean;
+	/** Kind can be cloned — gates the "Clone" action. */
+	clone: boolean;
 	/**
 	 * Kind's data can be exported as CSV — gates "Download as CSV". V1 parity:
 	 * only table panels carry tabular data worth exporting.

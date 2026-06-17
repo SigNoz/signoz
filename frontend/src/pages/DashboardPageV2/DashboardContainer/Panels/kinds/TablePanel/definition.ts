@@ -11,7 +11,13 @@ export const definition: PanelDefinition<'signoz/TablePanel'> = {
 	sections,
 	supportedSignals: [DataSource.METRICS, DataSource.LOGS, DataSource.TRACES],
 	// Tables carry tabular data worth exporting (V1 parity: download is table-only).
-	actions: { view: true, edit: true, download: true, createAlert: true },
+	actions: {
+		view: true,
+		edit: true,
+		clone: true,
+		download: true,
+		createAlert: false,
+	},
 	// V1 parity: only tables expose the header search box.
 	headerControls: { search: true },
 };

@@ -137,7 +137,7 @@ export function usePanelActionItems({
 		}
 		// Clone needs the section context (source spec + dimensions) to place the
 		// copy, so — unlike Edit — it requires panelActions.
-		if (isEditable && canEditWidget && panelActions) {
+		if (isEditable && canEditWidget && panelActions && kindActions?.clone) {
 			panelGroup.push({
 				key: 'clone-panel',
 				label: 'Clone',
