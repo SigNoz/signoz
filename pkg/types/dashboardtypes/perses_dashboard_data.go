@@ -61,11 +61,16 @@ func (d *DashboardSpec) Validate() error {
 func (d *DashboardSpec) validateVariables() error {
 	seen := make(map[string]struct{}, len(d.Variables))
 	for i, v := range d.Variables {
-		if v.Spec == nil {
+		var name string
+		switch s := v.Spec.(type) {
+		case *ListVariableSpec:
+			name = s.Name
+		case *dashboard.TextVariableSpec:
+			name = s.Name
+		default:
 			// Unreachable via UnmarshalJSON; reaching here means a Go caller broke the Kind/Spec pairing.
-			return errors.NewInternalf(errors.CodeInternal, "spec.variables[%d].spec: variable spec must not be nil", i)
+			return errors.NewInternalf(errors.CodeInternal, "spec.variables[%d].spec: unexpected variable spec type %T", i, v.Spec)
 		}
-		name := v.Spec.GetName()
 		if _, dup := seen[name]; dup {
 			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.variables[%d]: duplicate variable name %q", i, name)
 		}
@@ -76,6 +81,9 @@ func (d *DashboardSpec) validateVariables() error {
 
 func (d *DashboardSpec) validatePanels() error {
 	for key, panel := range d.Panels {
+		if err := common.ValidateID(key); err != nil {
+			return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "spec.panels: %s", err.Error())
+		}
 		if panel == nil {
 			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.panels.%s: panel must not be null", key)
 		}

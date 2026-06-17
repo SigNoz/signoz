@@ -139,6 +139,102 @@ func TestInvalidateDuplicateVariableNames(t *testing.T) {
 	require.Contains(t, err.Error(), `duplicate variable name "env"`)
 }
 
+func TestInvalidateVariableNameWithInvalidChars(t *testing.T) {
+	listVarWithName := func(name string) []byte {
+		return []byte(`{
+			"variables": [
+				{
+					"kind": "ListVariable",
+					"spec": {
+						"name": "` + name + `",
+						"allowAllValue": false,
+						"allowMultiple": false,
+						"plugin": {
+							"kind": "signoz/DynamicVariable",
+							"spec": {"name": "service.name", "signal": "metrics"}
+						}
+					}
+				}
+			],
+			"layouts": []
+		}`)
+	}
+	for _, name := range []string{"my var", "cost$", "bad!", "a/b"} {
+		t.Run(name, func(t *testing.T) {
+			_, err := unmarshalDashboard(listVarWithName(name))
+			require.Error(t, err, "expected error for invalid variable name %q", name)
+			require.Contains(t, err.Error(), "is not a correct name")
+		})
+	}
+	for _, name := range []string{"service", "my_var", "MY_VAR", "MixedCase9", "with-hyphen", "with.dot"} {
+		t.Run(name, func(t *testing.T) {
+			_, err := unmarshalDashboard(listVarWithName(name))
+			require.NoError(t, err, "expected valid variable name %q", name)
+		})
+	}
+}
+
+func TestInvalidatePanelKey(t *testing.T) {
+	data := []byte(`{
+		"panels": {
+			"bad key!": {
+				"kind": "Panel",
+				"spec": {
+					"plugin": {"kind": "signoz/TablePanel", "spec": {}},
+					"queries": [{
+						"kind": "time_series",
+						"spec": {"plugin": {"kind": "signoz/BuilderQuery", "spec": {
+							"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]
+						}}}
+					}]
+				}
+			}
+		},
+		"layouts": []
+	}`)
+	_, err := unmarshalDashboard(data)
+	require.Error(t, err, "expected error for invalid panel key")
+	require.Contains(t, err.Error(), "is not a correct name")
+}
+
+func TestInvalidateListVariableCrossFields(t *testing.T) {
+	listVar := func(specFields string) []byte {
+		return []byte(`{
+			"variables": [
+				{
+					"kind": "ListVariable",
+					"spec": {
+						"name": "service",
+						` + specFields + `
+						"plugin": {
+							"kind": "signoz/DynamicVariable",
+							"spec": {"name": "service.name", "signal": "metrics"}
+						}
+					}
+				}
+			],
+			"layouts": []
+		}`)
+	}
+
+	t.Run("customAllValue without allowAllValue", func(t *testing.T) {
+		_, err := unmarshalDashboard(listVar(`"allowAllValue": false, "allowMultiple": false, "customAllValue": "*",`))
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "customAllValue cannot be set")
+	})
+
+	t.Run("list defaultValue without allowMultiple", func(t *testing.T) {
+		_, err := unmarshalDashboard(listVar(`"allowAllValue": false, "allowMultiple": false, "defaultValue": ["a", "b"],`))
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "allowMultiple")
+	})
+
+	t.Run("single-element list default coerces when allowMultiple false", func(t *testing.T) {
+		_, err := unmarshalDashboard(listVar(`"allowAllValue": false, "allowMultiple": false, "defaultValue": ["only"],`))
+		require.NoError(t, err, "single-element list default should be coerced, not rejected")
+	})
+}
+
 func TestInvalidateUnknownPluginKind(t *testing.T) {
 	tests := []struct {
 		name        string

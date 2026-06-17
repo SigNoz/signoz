@@ -297,7 +297,6 @@ func extractKindAndSpec(data []byte) (string, []byte, error) {
 	return head.Kind, head.Spec, nil
 }
 
-// decodeSpec strict-decodes a spec JSON into target and runs struct-tag validation (go-playground/validator).
 func decodeSpec[T any](specJSON []byte, target T, kind string) (*T, error) {
 	if len(specJSON) == 0 {
 		return nil, errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "kind %q: spec is required", kind)
@@ -309,6 +308,11 @@ func decodeSpec[T any](specJSON []byte, target T, kind string) (*T, error) {
 	}
 	if err := validator.New().Struct(target); err != nil {
 		return nil, errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "kind %q: spec failed validation", kind)
+	}
+	if v, ok := any(target).(interface{ validate() error }); ok {
+		if err := v.validate(); err != nil {
+			return nil, errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "kind %q: %s", kind, err.Error())
+		}
 	}
 	return &target, nil
 }

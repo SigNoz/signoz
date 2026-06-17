@@ -88,11 +88,7 @@ type QuerySpec struct {
 // discriminated oneOf (see JSONSchemaOneOf).
 type Variable struct {
 	Kind variable.Kind `json:"kind" required:"true"`
-	Spec VariableSpec  `json:"spec" required:"true"`
-}
-
-type VariableSpec interface {
-	GetName() string
+	Spec any           `json:"spec" required:"true"`
 }
 
 func (Variable) PrepareJSONSchema(s *jsonschema.Schema) error {
@@ -109,7 +105,7 @@ func (v *Variable) UnmarshalJSON(data []byte) error {
 	}
 	switch kind {
 	case string(variable.KindList):
-		spec, err := decodeSpec[VariableSpec](specJSON, new(ListVariableSpec), kind)
+		spec, err := decodeSpec(specJSON, new(ListVariableSpec), kind)
 		if err != nil {
 			return err
 		}
@@ -158,8 +154,23 @@ type ListVariableSpec struct {
 	Name            string                 `json:"name"`
 }
 
-func (s ListVariableSpec) GetName() string {
-	return s.Name
+// validate mirrors perses ListVariableSpec validation; run by decodeSpec on unmarshal.
+func (s *ListVariableSpec) validate() error {
+	if err := common.ValidateID(s.Name); err != nil {
+		return err
+	}
+	if s.CustomAllValue != "" && !s.AllowAllValue {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "customAllValue cannot be set if allowAllValue is not set to true")
+	}
+	if s.DefaultValue != nil && len(s.DefaultValue.SliceValues) > 0 && !s.AllowMultiple {
+		if len(s.DefaultValue.SliceValues) == 1 {
+			s.DefaultValue.SingleValue = s.DefaultValue.SliceValues[0]
+			s.DefaultValue.SliceValues = nil
+			return nil
+		}
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "defaultValue cannot be a list if allowMultiple is not set to true")
+	}
+	return nil
 }
 
 // ══════════════════════════════════════════════
