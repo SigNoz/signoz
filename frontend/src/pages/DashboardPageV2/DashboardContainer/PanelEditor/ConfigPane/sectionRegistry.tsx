@@ -155,6 +155,9 @@ export interface ErasedSectionDescriptor {
 		// The Table panel's resolved value columns; read by the table-only editors
 		// (column units, per-column thresholds) to offer real columns.
 		tableColumns?: unknown;
+		// The panel's telemetry signal; read by editors that fetch field-key
+		// suggestions scoped to it (List column picker).
+		signal?: unknown;
 	}>;
 	read: (spec: PanelSpec) => unknown;
 	write: (spec: PanelSpec, value: unknown) => PanelSpec;

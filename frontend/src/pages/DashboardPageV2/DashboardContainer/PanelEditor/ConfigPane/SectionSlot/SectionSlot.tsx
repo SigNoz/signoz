@@ -1,4 +1,7 @@
-import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
+import type {
+	DashboardtypesPanelSpecDTO,
+	TelemetrytypesSignalDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import {
 	SECTION_METADATA,
 	type SectionConfig,
@@ -17,6 +20,8 @@ interface SectionSlotProps {
 	legendSeries: LegendSeries[];
 	/** Table panel's resolved value columns, for the table-only editors. */
 	tableColumns: TableColumnOption[];
+	/** Panel's telemetry signal, for editors that fetch field suggestions (List columns). */
+	signal?: TelemetrytypesSignalDTO;
 }
 
 /**
@@ -31,6 +36,7 @@ function SectionSlot({
 	onChangeSpec,
 	legendSeries,
 	tableColumns,
+	signal,
 }: SectionSlotProps): JSX.Element | null {
 	// A kind can hide a section based on current spec state (e.g. Histogram legend once
 	// queries are merged) — skip it before resolving the editor.
@@ -62,6 +68,7 @@ function SectionSlot({
 				legendSeries={legendSeries}
 				yAxisUnit={yAxisUnit}
 				tableColumns={tableColumns}
+				signal={signal}
 			/>
 		</SettingsSection>
 	);

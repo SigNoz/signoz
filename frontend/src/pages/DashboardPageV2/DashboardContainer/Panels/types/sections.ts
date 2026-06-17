@@ -11,9 +11,11 @@ import type {
 	DashboardtypesTableThresholdDTO,
 	DashboardtypesThresholdWithLabelDTO,
 	DashboardtypesTimeSeriesChartAppearanceDTO,
+	TelemetrytypesTelemetryFieldKeyDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import {
 	BarChart,
+	Columns3,
 	Hash,
 	Layers,
 	LayoutDashboard,
@@ -86,6 +88,7 @@ export interface SectionSpecMap {
 	// shape its spec actually stores.
 	thresholds: AnyThreshold[];
 	contextLinks: DashboardLinkDTO[]; // spec.links (PANEL-level)
+	columns: TelemetrytypesTelemetryFieldKeyDTO[]; // spec.plugin.spec.selectFields (List)
 }
 
 /**
@@ -124,7 +127,7 @@ export type ControlledSectionKind = keyof SectionControls;
  * (2) ATOMIC sections — no sub-controls; a kind either shows them or not. Thresholds
  * and Context Links are each just a list editor, so there is nothing to subset.
  */
-export type AtomicSectionKind = 'contextLinks';
+export type AtomicSectionKind = 'contextLinks' | 'columns';
 
 export type SectionKind = ControlledSectionKind | AtomicSectionKind;
 
@@ -165,6 +168,7 @@ export const SECTION_METADATA = {
 	buckets: { title: 'Histogram / Buckets', icon: BarChart },
 	thresholds: { title: 'Thresholds', icon: SlidersHorizontal },
 	contextLinks: { title: 'Context Links', icon: Link },
+	columns: { title: 'Columns', icon: Columns3 },
 } as const satisfies Record<SectionKind, SectionMetadata>;
 
 /**
