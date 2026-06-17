@@ -37,7 +37,7 @@ func (m *mockMetricStmtBuilder) Build(_ context.Context, _, _ uint64, _ qbtypes.
 
 func TestQueryRange_MetricTypeMissing(t *testing.T) {
 	// When a metric has UnspecifiedType and is not found in the metadata store,
-	// the querier should return a not-found error, even if the request provides a temporality
+	// the querier should return an empty result with a warning instead of an error.
 	providerSettings := instrumentationtest.New().ToProviderSettings()
 	metadataStore := telemetrytypestest.NewMockMetadataStore()
 
@@ -80,9 +80,19 @@ func TestQueryRange_MetricTypeMissing(t *testing.T) {
 		},
 	}
 
-	_, err := q.QueryRange(context.Background(), valuer.GenerateUUID(), req)
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "could not find the metric unknown_metric")
+	resp, err := q.QueryRange(context.Background(), valuer.GenerateUUID(), req)
+	require.NoError(t, err)
+	require.NotNil(t, resp)
+	require.NotNil(t, resp.Warning)
+
+	found := false
+	for _, w := range resp.Warning.Warnings {
+		if assert.ObjectsAreEqual("metric unknown_metric has never been received. Check the metric name and instrumentation", w.Message) {
+			found = true
+			break
+		}
+	}
+	assert.True(t, found, "expected never-seen metric warning, got: %v", resp.Warning.Warnings)
 }
 
 func TestQueryRange_MetricTypeFromStore(t *testing.T) {
