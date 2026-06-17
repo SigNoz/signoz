@@ -6,7 +6,10 @@ import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schem
 import { PanelMode } from 'container/DashboardContainer/visualization/panels/types';
 import type { RenderablePanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelDefinition';
 import type { DashboardPreference } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/rendererProps';
-import type { PanelQueryData } from 'pages/DashboardPageV2/DashboardContainer/queryV5/types';
+import type {
+	PanelPagination,
+	PanelQueryData,
+} from 'pages/DashboardPageV2/DashboardContainer/queryV5/types';
 
 import styles from './PanelBody.module.scss';
 
@@ -22,6 +25,10 @@ interface PanelBodyProps {
 	refetch: () => void;
 	onDragSelect: (start: number, end: number) => void;
 	dashboardPreference: DashboardPreference;
+	/** Header search term — only consumed by kinds that declare header search. */
+	searchTerm?: string;
+	/** Server-side paging handles — only consumed by raw/list renderers. */
+	pagination?: PanelPagination;
 }
 
 /**
@@ -44,6 +51,8 @@ function PanelBody({
 	refetch,
 	onDragSelect,
 	dashboardPreference,
+	searchTerm,
+	pagination,
 }: PanelBodyProps): JSX.Element {
 	// Surface a hard failure only when there's no (stale) data to show; otherwise
 	// keep the last-good chart and let the header indicate the refresh.
@@ -67,7 +76,7 @@ function PanelBody({
 
 	// First load only — background refetches keep the response populated so the
 	// chart stays mounted instead of blinking.
-	if (isLoading && !hasData) {
+	if (isLoading) {
 		return (
 			<div className={styles.body} data-testid="panel-loading">
 				<Spin indicator={<Loader size={14} className="animate-spin" />} />
@@ -87,6 +96,8 @@ function PanelBody({
 				panelMode={PanelMode.DASHBOARD_VIEW}
 				enableDrillDown={false}
 				dashboardPreference={dashboardPreference}
+				searchTerm={searchTerm}
+				pagination={pagination}
 			/>
 		</div>
 	);

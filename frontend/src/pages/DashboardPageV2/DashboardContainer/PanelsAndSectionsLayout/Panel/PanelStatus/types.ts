@@ -8,8 +8,8 @@ export type PanelStatusVariant = 'error' | 'warning';
  * per-item messages).
  */
 export interface PanelStatusDetail {
-	/** Short status code (e.g. an error/warning code) shown as the heading. */
-	code: string;
+	/** Short status code (e.g. an error/warning code) shown as the heading. Only present in error cases. */
+	code?: string;
 	/** Human-readable summary line. */
 	message: string;
 	/** Optional docs link; renders an "Open Docs" action when present. */
