@@ -4,9 +4,10 @@ import {
 	CompositeQueryAdapter,
 } from 'lib/compositeQuery/types';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { qsAliasAdapter } from 'lib/compositeQuery/adapters/qsAlias';
 
 // Order matters for decode: most-specific (tagged) adapters first
-const ADAPTERS: CompositeQueryAdapter[] = [jsonAdapter];
+const ADAPTERS: CompositeQueryAdapter[] = [qsAliasAdapter, jsonAdapter];
 
 // Pick the adapter that owns a given URL. json's `matches` is always true, so
 // it serves as the final fallback when no tagged adapter claims the params.
