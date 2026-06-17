@@ -13721,6 +13721,74 @@ paths:
       summary: Update dashboard (v2)
       tags:
       - dashboard
+  /api/v2/dashboards/{id}/clone:
+    post:
+      deprecated: false
+      description: This endpoint clones an existing v2-shape dashboard. User and integration
+        dashboards can be cloned; system dashboards are rejected. The clone keeps
+        the source's display name, panels, and tags, but gets a freshly generated
+        unique internal name and is always created as an unlocked user dashboard owned
+        by the caller.
+      operationId: CloneDashboardV2
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DashboardtypesGettableDashboardV2'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - EDITOR
+      - tokenizer:
+        - EDITOR
+      summary: Clone dashboard (v2)
+      tags:
+      - dashboard
   /api/v2/dashboards/{id}/lock:
     delete:
       deprecated: false

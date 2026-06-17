@@ -9915,6 +9915,17 @@ export type UpdateDashboardV2200 = {
 	status: string;
 };
 
+export type CloneDashboardV2PathParameters = {
+	id: string;
+};
+export type CloneDashboardV2201 = {
+	data: DashboardtypesGettableDashboardV2DTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type UnlockDashboardV2PathParameters = {
 	id: string;
 };
