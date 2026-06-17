@@ -4,7 +4,6 @@ import ROUTES from 'constants/routes';
 import LiveLogsPauseResume from 'container/LiveLogs/LiveLogsPauseResume/LiveLogsPauseResume';
 import NewExplorerCTA from 'container/NewExplorerCTA';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
-import { noop } from 'lodash-es';
 
 import './Toolbar.styles.scss';
 
@@ -72,6 +71,6 @@ Toolbar.defaultProps = {
 	showOldCTA: false,
 	warningElement: <div />,
 	showLiveLogs: false,
-	onGoLive: (): void => noop(),
+	onGoLive: (): void => {},
 	onExitLiveLogs: (): void => {},
 };

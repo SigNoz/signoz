@@ -12,7 +12,6 @@ import cx from 'classnames';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import ROUTES from 'constants/routes';
 import { useNotifications } from 'hooks/useNotifications';
-import { isNumber } from 'lodash-es';
 import {
 	convertToTitleCase,
 	MessagingQueuesViewType,
@@ -134,7 +133,7 @@ export function getColumns(
 			}
 
 			if (column === 'breach_percentage' && text) {
-				if (!isNumber(text)) {
+				if (typeof text !== 'number') {
 					return <Typography.Text>{text.toString()}</Typography.Text>;
 				}
 				return (

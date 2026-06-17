@@ -22,7 +22,7 @@ import dayjs from 'dayjs';
 import { useZoomOut } from 'hooks/useZoomOut';
 import { isValidShortHandDateTimeFormat } from 'lib/getMinMax';
 import { isZoomOutDisabled } from 'lib/zoomOutUtils';
-import { defaultTo, isFunction, noop } from 'lodash-es';
+import { defaultTo } from 'lodash-es';
 import { ChevronDown, ChevronUp, ZoomOut } from '@signozhq/icons';
 import { useTimezone } from 'providers/Timezone';
 import { getTimeDifference, validateEpochRange } from 'utils/epochUtils';
@@ -346,7 +346,7 @@ function CustomTimePicker({
 					code: 'TIME_LESS_THAN_MAX_ALLOWED_TIME_IN_MONTHS',
 					description: `Please enter time less than ${maxAllowedMinTimeInMonths} months`,
 				});
-				if (isFunction(onCustomTimeStatusUpdate)) {
+				if (typeof onCustomTimeStatusUpdate === 'function') {
 					onCustomTimeStatusUpdate(true);
 				}
 			} else {
@@ -562,13 +562,13 @@ function CustomTimePicker({
 							<CustomTimePickerPopoverContent
 								isLiveLogsEnabled={!!showLiveLogs}
 								setIsOpen={setOpen}
-								setCustomDTPickerVisible={defaultTo(setCustomDTPickerVisible, noop)}
+								setCustomDTPickerVisible={defaultTo(setCustomDTPickerVisible, () => {})}
 								customDateTimeVisible={defaultTo(customDateTimeVisible, false)}
-								onCustomDateHandler={defaultTo(onCustomDateHandler, noop)}
+								onCustomDateHandler={defaultTo(onCustomDateHandler, () => {})}
 								onSelectHandler={handleSelect}
 								onTimezoneChange={handleTimezoneChange}
-								onGoLive={defaultTo(onGoLive, noop)}
-								onExitLiveLogs={defaultTo(onExitLiveLogs, noop)}
+								onGoLive={defaultTo(onGoLive, () => {})}
+								onExitLiveLogs={defaultTo(onExitLiveLogs, () => {})}
 								options={items}
 								selectedTime={selectedTime}
 								activeView={activeView}
@@ -675,11 +675,11 @@ export default CustomTimePicker;
 CustomTimePicker.defaultProps = {
 	newPopover: false,
 	customDateTimeVisible: false,
-	setCustomDTPickerVisible: noop,
-	onCustomDateHandler: noop,
-	onGoLive: noop,
-	onCustomTimeStatusUpdate: noop,
-	onExitLiveLogs: noop,
+	setCustomDTPickerVisible: () => {},
+	onCustomDateHandler: () => {},
+	onGoLive: () => {},
+	onCustomTimeStatusUpdate: () => {},
+	onExitLiveLogs: () => {},
 	showLiveLogs: false,
 	showRecentlyUsed: true,
 };

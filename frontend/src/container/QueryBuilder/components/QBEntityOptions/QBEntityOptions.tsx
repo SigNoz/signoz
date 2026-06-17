@@ -3,8 +3,6 @@ import { Button, Col, Tooltip } from 'antd';
 import cx from 'classnames';
 import ROUTES from 'constants/routes';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { isFunction } from 'lodash-es';
-import noop from 'lodash-es/noop';
 import {
 	ChevronDown,
 	ChevronRight,
@@ -67,7 +65,7 @@ export default function QBEntityOptions({
 	onChangeDataSource,
 }: QBEntityOptionsProps): JSX.Element {
 	const handleCloneEntity = (): void => {
-		if (isFunction(onCloneQuery)) {
+		if (typeof onCloneQuery === 'function') {
 			onCloneQuery(entityType, entityData);
 		}
 	};
@@ -184,13 +182,13 @@ QBEntityOptions.defaultProps = {
 	isMetricsDataSource: false,
 	onQueryFunctionsUpdates: undefined,
 	showFunctions: false,
-	onCloneQuery: noop,
+	onCloneQuery: () => {},
 	index: 0,
-	onDelete: noop,
+	onDelete: () => {},
 	showDeleteButton: false,
 	showCloneOption: true,
 	queryVariant: 'static',
-	onChangeDataSource: noop,
+	onChangeDataSource: () => {},
 	hasTraceOperator: false,
 	showTraceOperator: false,
 };

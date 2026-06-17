@@ -4,7 +4,6 @@ import { ThresholdsDrawHookOptions } from 'lib/uPlotV2/hooks/types';
 import { thresholdsDrawHook } from 'lib/uPlotV2/hooks/useThresholdsDrawHook';
 import { resolveSeriesVisibility } from 'lib/uPlotV2/utils/seriesVisibility';
 import { merge } from 'lodash-es';
-import noop from 'lodash-es/noop';
 import uPlot, { Cursor, Hooks, Options } from 'uplot';
 
 import {
@@ -107,7 +106,7 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 			this.stepInterval = stepInterval;
 		}
 
-		this.onDragSelect = noop;
+		this.onDragSelect = () => {};
 		if (onDragSelect) {
 			this.onDragSelect = onDragSelect;
 			this.addHook('setSelect', (self: uPlot): void => {
