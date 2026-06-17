@@ -8,16 +8,19 @@ import { getScalarResults } from 'pages/DashboardPageV2/DashboardContainer/query
 import PanelStyles from '../../panel.module.scss';
 import { PanelRendererProps } from '../../types/rendererProps';
 import { resolveDecimalPrecision } from '../../utils/chartAppearance/resolvers';
+import { useResizableColumns } from '../../hooks/useResizableColumns';
 import NoData from '../../components/NoData/NoData';
 
+import { computeTableLayout, filterTableRows } from '../../utils/recordTable';
+
 import { buildTableColumns, mapTableThresholds } from './tableColumns';
-import { computeTableLayout, filterTableRows } from './utils';
 
 import styles from './TablePanel.module.scss';
 
 type TableRowData = Record<string, unknown> & { key: number };
 
 function TablePanelRenderer({
+	panelId,
 	panel,
 	data,
 	searchTerm = '',
@@ -75,6 +78,12 @@ function TablePanelRenderer({
 		[table, spec.formatting?.columnUnits, decimalPrecision, thresholdsByColumn],
 	);
 
+	// User-resizable columns, persisted per panel to localStorage.
+	const { columns: resizableColumns, components } = useResizableColumns({
+		panelId,
+		columns: columns ?? [],
+	});
+
 	const dataSource = useMemo<TableRowData[]>(
 		() =>
 			table ? table.rows.map((row, index) => ({ key: index, ...row.data })) : [],
@@ -105,7 +114,8 @@ function TablePanelRenderer({
 				<div className={styles.container}>
 					<Table
 						size="small"
-						columns={columns}
+						columns={resizableColumns}
+						components={components}
 						dataSource={filteredDataSource}
 						pagination={{
 							current: page,

@@ -1,3 +1,8 @@
+// Shared chrome for the antd-table panel kinds (Table, List): page-size/scroll
+// sizing from the measured panel, and the header search-box row filter. Both
+// kinds render record rows in an antd Table, so this lives here rather than in
+// any one kind's folder.
+
 // antd small-table row / header / pagination heights (px), used to estimate how
 // many rows fit the panel so each page roughly fills the available space.
 const ROW_HEIGHT = 39;
