@@ -1,7 +1,7 @@
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
 import type { AxiosError } from 'axios';
-import type { Warning } from 'types/api';
+import type { Querybuildertypesv5QueryWarnDataDTO as WarningDTO } from 'api/generated/services/sigNoz.schemas';
 
 import type { PanelStatusDetail } from './types';
 
@@ -41,16 +41,17 @@ export function panelStatusFromError(
 
 /** Adapts a query warning into the normalized status shape. */
 export function panelStatusFromWarning(
-	warning: Warning | null | undefined,
+	warning: WarningDTO | undefined,
 ): PanelStatusDetail | null {
 	if (!warning) {
 		return null;
 	}
 
 	return {
-		code: warning.code,
-		message: warning.message,
+		message: warning.message || 'Warning',
 		docsUrl: warning.url || undefined,
-		messages: (warning.warnings ?? []).map((w) => w.message),
+		messages: (warning.warnings ?? [])
+			.map((w) => w.message)
+			.filter((message): message is string => Boolean(message)),
 	};
 }
