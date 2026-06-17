@@ -1,21 +1,10 @@
 import { Tabs } from '@signozhq/ui/tabs';
-import { parseAsStringLiteral, useQueryState } from 'nuqs';
 
-import { TAB_KEYS, TAB_QUERY_KEY } from './constants';
 import ModelCostsTab from './ModelCostsTab';
-import type { TabKey } from './types';
 
 import './LLMObservabilityModelPricing.styles.scss';
 
 function LLMObservabilityModelPricing(): JSX.Element {
-	// Active tab lives in the URL so the view is shareable/reload-safe.
-	const [tab, setTab] = useQueryState(
-		TAB_QUERY_KEY,
-		parseAsStringLiteral(TAB_KEYS).withDefault('model-costs').withOptions({
-			history: 'replace',
-		}),
-	);
-
 	return (
 		<div
 			className="llm-observability-model-pricing"
@@ -30,10 +19,9 @@ function LLMObservabilityModelPricing(): JSX.Element {
 
 			<Tabs
 				className="page-tabs"
-				value={tab}
-				onChange={(key): void => {
-					void setTab(key as TabKey);
-				}}
+				// Model costs is the only enabled tab for now, so default to it. When
+				// the unpriced-models tab lands, this can become a URL-backed param.
+				defaultValue="model-costs"
 				items={[
 					{
 						key: 'model-costs',

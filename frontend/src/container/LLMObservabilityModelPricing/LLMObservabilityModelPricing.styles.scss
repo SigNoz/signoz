@@ -31,7 +31,8 @@
 		align-items: center;
 
 		&__currency {
-			min-width: 160px;
+			// Fixed width — the trigger otherwise stretches to fill the bar.
+			width: 160px;
 		}
 	}
 
