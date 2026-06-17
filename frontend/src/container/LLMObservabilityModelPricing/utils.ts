@@ -24,6 +24,18 @@ const lc = (value: string): string => value.toLowerCase();
 const hasCacheValue = (value: number | null): boolean =>
 	typeof value === 'number' && value > 0;
 
+// ─── Input helpers ───────────────────────────────────────────────────────────
+
+// Parses a price input's raw string. Empty → null (used by optional buckets),
+// otherwise a finite number (NaN coerced to 0).
+export const parsePricingAmount = (raw: string): number | null => {
+	if (raw.trim() === '') {
+		return null;
+	}
+	const value = Number(raw);
+	return Number.isFinite(value) ? value : 0;
+};
+
 // ─── Display helpers ─────────────────────────────────────────────────────────
 
 export const formatPricePerMillion = (value: number | undefined): string => {

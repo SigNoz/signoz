@@ -23,6 +23,16 @@ export interface ExtraBucket {
 
 export type DrawerMode = 'add' | 'edit';
 
+// Optional pricing buckets the user can add/remove. Keyed by the matching
+// DrawerDraft['pricing'] field.
+export type CacheBucketKey = 'cacheRead' | 'cacheWrite';
+
+export interface CacheBucketDef {
+	key: CacheBucketKey;
+	label: string;
+	testId: string;
+}
+
 export interface DrawerDraft {
 	id: string | null;
 	sourceId: string | null;

@@ -94,6 +94,84 @@ describe('ModelCostDrawer', () => {
 		expect(screen.getByTestId('drawer-output-cost')).not.toBeDisabled();
 	});
 
+	it('shows only the Add pricing bucket button when no extra buckets are set', () => {
+		render(<Harness mode="add" />);
+
+		expect(screen.getByTestId('drawer-add-bucket-btn')).toBeInTheDocument();
+		expect(
+			screen.queryByTestId('drawer-cache-read-cost'),
+		).not.toBeInTheDocument();
+		expect(
+			screen.queryByTestId('drawer-cache-write-cost'),
+		).not.toBeInTheDocument();
+	});
+
+	it('adds a cache bucket from the picker', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		render(<Harness mode="add" />);
+
+		await user.click(screen.getByTestId('drawer-add-bucket-btn'));
+
+		// Picker offers both cache buckets…
+		expect(
+			screen.getByTestId('drawer-add-bucket-cache-read'),
+		).toBeInTheDocument();
+		expect(
+			screen.getByTestId('drawer-add-bucket-cache-write'),
+		).toBeInTheDocument();
+
+		await user.click(screen.getByTestId('drawer-add-bucket-cache-read'));
+
+		// …and picking one reveals its price input.
+		expect(screen.getByTestId('drawer-cache-read-cost')).toBeInTheDocument();
+	});
+
+	it('removes an existing cache bucket', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		render(
+			<Harness
+				mode="edit"
+				initialDraft={{
+					...EMPTY_DRAFT,
+					id: 'rule-1',
+					modelName: 'gpt-4o',
+					isOverride: true,
+					pricing: { ...EMPTY_DRAFT.pricing, input: 1, output: 1, cacheRead: 0.5 },
+				}}
+			/>,
+		);
+
+		expect(screen.getByTestId('drawer-cache-read-cost')).toBeInTheDocument();
+
+		await user.click(screen.getByTestId('drawer-remove-cache-read'));
+
+		expect(
+			screen.queryByTestId('drawer-cache-read-cost'),
+		).not.toBeInTheDocument();
+	});
+
+	it('hides bucket add/remove controls in read-only mode but shows set buckets', () => {
+		render(
+			<Harness
+				mode="edit"
+				canManage={false}
+				initialDraft={{
+					...EMPTY_DRAFT,
+					id: 'rule-1',
+					modelName: 'gpt-4o',
+					isOverride: true,
+					pricing: { ...EMPTY_DRAFT.pricing, cacheRead: 0.5 },
+				}}
+			/>,
+		);
+
+		expect(screen.getByTestId('drawer-cache-read-cost')).toBeDisabled();
+		expect(screen.queryByTestId('drawer-add-bucket-btn')).not.toBeInTheDocument();
+		expect(
+			screen.queryByTestId('drawer-remove-cache-read'),
+		).not.toBeInTheDocument();
+	});
+
 	it('disables the Provider select in Edit mode but allows it in Add mode', () => {
 		const { unmount } = render(<Harness mode="add" />);
 
