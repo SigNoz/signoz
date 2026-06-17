@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import { Skeleton } from 'antd';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import { FeatureKeys } from 'constants/features';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -124,24 +123,14 @@ function ServiceOverview({
 			/>
 			<Card data-testid="service_latency">
 				<GraphContainer>
-					{topLevelOperationsIsLoading && (
-						<Skeleton
-							style={{
-								height: '100%',
-								padding: '16px',
-							}}
-						/>
-					)}
-					{!topLevelOperationsIsLoading && (
-						<Graph
-							onDragSelect={onDragSelect}
-							widget={latencyWidget}
-							onClickHandler={handleGraphClick('Service')}
-							isQueryEnabled={isQueryEnabled}
-							version={ENTITY_VERSION_V4}
-							enableDrillDown={SERVICE_DETAIL_DRILLDOWN_ENABLED}
-						/>
-					)}
+					<Graph
+						onDragSelect={onDragSelect}
+						widget={latencyWidget}
+						onClickHandler={handleGraphClick('Service')}
+						isQueryEnabled={isQueryEnabled}
+						version={ENTITY_VERSION_V4}
+						enableDrillDown={SERVICE_DETAIL_DRILLDOWN_ENABLED}
+					/>
 				</GraphContainer>
 			</Card>
 		</>
