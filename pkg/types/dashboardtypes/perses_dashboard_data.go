@@ -48,6 +48,13 @@ func (d *DashboardSpec) UnmarshalJSON(data []byte) error {
 // ══════════════════════════════════════════════
 
 func (d *DashboardSpec) Validate() error {
+	if err := d.validatePanels(); err != nil {
+		return err
+	}
+	return d.validateLayouts()
+}
+
+func (d *DashboardSpec) validatePanels() error {
 	for key, panel := range d.Panels {
 		if panel == nil {
 			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.panels.%s: panel must not be null", key)
@@ -65,7 +72,42 @@ func (d *DashboardSpec) Validate() error {
 			}
 		}
 	}
-	return d.validateLayouts()
+	return nil
+}
+
+func validateQueryAllowedForPanel(plugin QueryPlugin, allowed []QueryPluginKind, panelKind PanelPluginKind, path string) error {
+	compositeSubQueryTypeToPluginKind := map[qb.QueryType]QueryPluginKind{
+		qb.QueryTypeBuilder:       QueryKindBuilder,
+		qb.QueryTypeFormula:       QueryKindFormula,
+		qb.QueryTypeTraceOperator: QueryKindTraceOperator,
+		qb.QueryTypePromQL:        QueryKindPromQL,
+		qb.QueryTypeClickHouseSQL: QueryKindClickHouseSQL,
+	}
+	if !slices.Contains(allowed, plugin.Kind) {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput,
+			"%s: query kind %q is not supported by panel kind %q", path, plugin.Kind, panelKind)
+	}
+
+	if plugin.Kind != QueryKindComposite {
+		return nil
+	}
+	composite, ok := plugin.Spec.(*CompositeQuerySpec)
+	if !ok || composite == nil {
+		// Unreachable via UnmarshalJSON; reaching here means a Go caller broke the Kind/Spec pairing.
+		return errors.NewInternalf(errors.CodeInternal, "%s: composite query plugin has unexpected spec type %T", path, plugin.Spec)
+	}
+	for si, sub := range composite.Queries {
+		subKind, ok := compositeSubQueryTypeToPluginKind[sub.Type]
+		if !ok {
+			continue
+		}
+		if !slices.Contains(allowed, subKind) {
+			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput,
+				"%s.spec.queries[%d]: sub-query type %q is not supported by panel kind %q",
+				path, si, sub.Type, panelKind)
+		}
+	}
+	return nil
 }
 
 // validateLayouts rejects grid items referencing a panel that doesn't exist.
@@ -100,41 +142,3 @@ func panelKeyFromRef(refPath []string, ref string, path string) (string, error) 
 	}
 	return refPath[2], nil
 }
-
-func validateQueryAllowedForPanel(plugin QueryPlugin, allowed []QueryPluginKind, panelKind PanelPluginKind, path string) error {
-	if !slices.Contains(allowed, plugin.Kind) {
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput,
-			"%s: query kind %q is not supported by panel kind %q", path, plugin.Kind, panelKind)
-	}
-
-	if plugin.Kind != QueryKindComposite {
-		return nil
-	}
-	composite, ok := plugin.Spec.(*CompositeQuerySpec)
-	if !ok || composite == nil {
-		// Unreachable via UnmarshalJSON; reaching here means a Go caller broke the Kind/Spec pairing.
-		return errors.NewInternalf(errors.CodeInternal, "%s: composite query plugin has unexpected spec type %T", path, plugin.Spec)
-	}
-	for si, sub := range composite.Queries {
-		subKind, ok := compositeSubQueryTypeToPluginKind[sub.Type]
-		if !ok {
-			continue
-		}
-		if !slices.Contains(allowed, subKind) {
-			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput,
-				"%s.spec.queries[%d]: sub-query type %q is not supported by panel kind %q",
-				path, si, sub.Type, panelKind)
-		}
-	}
-	return nil
-}
-
-var (
-	compositeSubQueryTypeToPluginKind = map[qb.QueryType]QueryPluginKind{
-		qb.QueryTypeBuilder:       QueryKindBuilder,
-		qb.QueryTypeFormula:       QueryKindFormula,
-		qb.QueryTypeTraceOperator: QueryKindTraceOperator,
-		qb.QueryTypePromQL:        QueryKindPromQL,
-		qb.QueryTypeClickHouseSQL: QueryKindClickHouseSQL,
-	}
-)
