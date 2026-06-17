@@ -686,6 +686,28 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
         "Zeta Overview",
     }
 
+    # ── stage 11: clone keeps the display name but mints a new, retrievable one ─
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(f"{BASE_URL}/{ids['lc-alpha']}/clone"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    clone = response.json()["data"]
+    assert clone["id"] != ids["lc-alpha"]
+    assert clone["name"] != "lc-alpha"  # internal name is regenerated
+    assert clone["spec"]["display"]["name"] == "Alpha Overview"  # display name preserved
+    assert clone["source"] == "user"
+    assert clone["locked"] is False
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(f"{BASE_URL}/{clone['id']}"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert response.json()["data"]["id"] == clone["id"]
+
 
 def test_dashboard_v2_pin_limit(
     signoz: SigNoz,
@@ -763,6 +785,12 @@ def test_dashboard_v2_pin_limit(
         ).status_code
         == HTTPStatus.NO_CONTENT
     )
+
+
+# TODO: add an integration test that clones an integration-source dashboard once
+# integration dashboards adopt the v2 (perses) flow. Today they're created via the
+# v1 path, and the v2 clone endpoint only operates on v6 dashboards — so the
+# integration-source branch of clone is unreachable through the API.
 
 
 # ─── LIKE escaping ───────────────────────────────────────────────────────────

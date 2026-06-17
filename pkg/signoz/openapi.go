@@ -36,6 +36,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/ruler"
+	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/zeus"
 	"github.com/swaggest/jsonschema-go"
@@ -83,6 +84,7 @@ func NewOpenAPI(ctx context.Context, instrumentation instrumentation.Instrumenta
 		struct{ llmpricingrule.Handler }{},
 		struct{ tracedetail.Handler }{},
 		struct{ ruler.Handler }{},
+		struct{ statsreporter.Handler }{},
 	).New(ctx, instrumentation.ToProviderSettings(), apiserver.Config{})
 	if err != nil {
 		return nil, err

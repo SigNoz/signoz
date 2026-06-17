@@ -101,6 +101,8 @@ function autoContextLabel(ctx: MessageContext): string {
 			return 'Panel (fullscreen)';
 		case 'dashboard_list':
 			return 'Dashboards';
+		case 'alert_detail':
+			return 'Current alert';
 		case 'alert_edit':
 			return 'Editing alert';
 		case 'alert_new':
