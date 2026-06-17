@@ -3,8 +3,6 @@ import relativeTime from 'dayjs/plugin/relativeTime';
 
 import type { ExtraBucket, PricingRule } from './types';
 
-// Idempotent — relativeTime is also extended globally in utils/timeUtils, but
-// we extend here too so this module is self-sufficient (incl. in unit tests).
 dayjs.extend(relativeTime);
 
 const lc = (value: string): string => value.toLowerCase();
@@ -20,8 +18,11 @@ const getRelativeTime = (
 
 // ─── Display helpers ─────────────────────────────────────────────────────────
 
+// Pricing fields are typed as required numbers, but guard null/undefined
+// anyway — API responses don't always honour the spec, and toFixed() on a
+// missing value would crash the row instead of showing "—".
 export const formatPricePerMillion = (value: number | undefined): string => {
-	if (value === undefined || value === null || Number.isNaN(value)) {
+	if (value === undefined || value === null) {
 		return '—';
 	}
 	return `$${value.toFixed(2)}`;
