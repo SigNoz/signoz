@@ -94,7 +94,9 @@ describe('PanelHeader search', () => {
 		fireEvent.click(screen.getByTestId('panel-header-search-clear'));
 
 		expect(onSearchChange).toHaveBeenCalledWith('');
-		expect(screen.getByTestId('panel-header-search-trigger')).toBeInTheDocument();
+		expect(
+			screen.getByTestId('panel-header-search-trigger'),
+		).toBeInTheDocument();
 	});
 });
 
