@@ -1,0 +1,106 @@
+// settings card wrapper — mirrors the V1 public dashboard treatment
+.publicDashboardCard {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 16px;
+	border-radius: 3px;
+	border: 1px solid var(--l2-border);
+}
+
+.statusTitle {
+	margin-bottom: 16px;
+	color: var(--l1-foreground);
+	font-family: Inter;
+	font-size: 14px;
+	font-weight: 500;
+	line-height: 20px;
+}
+
+.checkbox {
+	margin-bottom: 8px;
+}
+
+.timeRangeSelectGroup {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	margin-bottom: 8px;
+}
+
+.timeRangeSelectLabel {
+	color: var(--l2-foreground);
+	font-family: Inter;
+	font-size: 12px;
+	font-weight: 500;
+	line-height: 18px;
+}
+
+.timeRangeSelect {
+	width: 200px;
+}
+
+.urlGroup {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.urlLabel {
+	color: var(--l2-foreground);
+	font-family: Inter;
+	font-size: 12px;
+	font-weight: 500;
+	line-height: 18px;
+}
+
+.urlContainer {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 0 4px;
+	border-radius: 4px;
+	border: 1px solid var(--l1-border);
+	background: var(--l3-background);
+}
+
+.urlText {
+	flex: 1;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	color: var(--l2-foreground);
+	font-family: Inter;
+	font-size: 13px;
+	line-height: 32px;
+}
+
+.callout {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-top: 12px;
+	padding: 12px 8px;
+	border-radius: 3px;
+	background: color-mix(in srgb, var(--primary-background) 10%, transparent);
+}
+
+.calloutIcon {
+	flex-shrink: 0;
+	color: var(--text-robin-300);
+}
+
+.calloutText {
+	color: var(--text-robin-300);
+	font-family: Inter;
+	font-size: 11px;
+	font-weight: 400;
+	line-height: 16px;
+}
+
+.actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 8px;
+	margin-top: 32px;
+}

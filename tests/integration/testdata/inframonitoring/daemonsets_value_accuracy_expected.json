@@ -1,0 +1,40 @@
+{
+  "records": [
+    {
+      "daemonSetName": "acc-ds-1",
+      "daemonSetCPU": 1.0,
+      "daemonSetCPURequest": 0.5,
+      "daemonSetCPULimit": 0.4,
+      "daemonSetMemory": 300000000.0,
+      "daemonSetMemoryRequest": 0.5,
+      "daemonSetMemoryLimit": 0.4,
+      "desiredNodes": 3,
+      "currentNodes": 2,
+      "podCountsByPhase": {
+        "pending": 0,
+        "running": 2,
+        "succeeded": 0,
+        "failed": 0,
+        "unknown": 0
+      }
+    },
+    {
+      "daemonSetName": "acc-ds-2",
+      "daemonSetCPU": 1.2,
+      "daemonSetCPURequest": 0.4,
+      "daemonSetCPULimit": 0.3,
+      "daemonSetMemory": 600000000.0,
+      "daemonSetMemoryRequest": 0.4,
+      "daemonSetMemoryLimit": 0.3,
+      "desiredNodes": 4,
+      "currentNodes": 4,
+      "podCountsByPhase": {
+        "pending": 0,
+        "running": 3,
+        "succeeded": 0,
+        "failed": 0,
+        "unknown": 0
+      }
+    }
+  ]
+}
