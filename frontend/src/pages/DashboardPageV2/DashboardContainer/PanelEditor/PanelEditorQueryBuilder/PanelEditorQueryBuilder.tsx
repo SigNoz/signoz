@@ -1,4 +1,9 @@
-import { type KeyboardEvent, useCallback, useMemo } from 'react';
+import {
+	type KeyboardEvent,
+	type ReactNode,
+	useCallback,
+	useMemo,
+} from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Atom, Terminal } from '@signozhq/icons';
 import { Tabs } from 'antd';
@@ -26,6 +31,8 @@ interface PanelEditorQueryBuilderProps {
 	onStageRunQuery: () => void;
 	/** Abort the in-flight preview fetch (the button's cancel action). */
 	onCancelQuery: () => void;
+	/** Optional content pinned below the builder (e.g. the List columns editor). */
+	footer?: ReactNode;
 }
 
 /**
@@ -41,6 +48,7 @@ function PanelEditorQueryBuilder({
 	isLoadingQueries,
 	onStageRunQuery,
 	onCancelQuery,
+	footer,
 }: PanelEditorQueryBuilderProps): JSX.Element {
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
 	const isDarkMode = useIsDarkMode();
@@ -133,25 +141,28 @@ function PanelEditorQueryBuilder({
 			onKeyDownCapture={handleKeyDownCapture}
 			role="presentation"
 		>
-			<Tabs
-				type="card"
-				className={styles.tabsContainer}
-				activeKey={currentQuery.queryType}
-				onChange={handleQueryCategoryChange}
-				tabBarExtraContent={
-					<span className={styles.runQueryBtnContainer}>
-						<TextToolTip text="This will temporarily save the current query and graph state. This will persist across tab change" />
-						<RunQueryBtn
-							className="run-query-dashboard-btn"
-							label="Stage & Run Query"
-							onStageRunQuery={onStageRunQuery}
-							isLoadingQueries={isLoadingQueries}
-							handleCancelQuery={onCancelQuery}
-						/>
-					</span>
-				}
-				items={items}
-			/>
+			<div className={styles.scrollArea}>
+				<Tabs
+					type="card"
+					className={styles.tabsContainer}
+					activeKey={currentQuery.queryType}
+					onChange={handleQueryCategoryChange}
+					tabBarExtraContent={
+						<span className={styles.runQueryBtnContainer}>
+							<TextToolTip text="This will temporarily save the current query and graph state. This will persist across tab change" />
+							<RunQueryBtn
+								className="run-query-dashboard-btn"
+								label="Stage & Run Query"
+								onStageRunQuery={onStageRunQuery}
+								isLoadingQueries={isLoadingQueries}
+								handleCancelQuery={onCancelQuery}
+							/>
+						</span>
+					}
+					items={items}
+				/>
+			</div>
+			{footer}
 		</div>
 	);
 }
