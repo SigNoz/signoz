@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/transition"
 	qb "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
@@ -20,10 +19,10 @@ import (
 //   - exactly one builder query   → signoz/BuilderQuery   (PanelKindList only)
 //   - everything else             → signoz/CompositeQuery wrapping all envelopes
 //
-// Builder queries are routed through transition.WrapInV5Envelope, which
-// translates v4 builder-field names (orderBy/selectColumns/dataSource) into
-// their v5 equivalents and adds the `signal` field required by
-// BuilderQuerySpec's per-signal dispatch.
+// Builder queries are routed through qb.WrapInV5Envelope, which translates v4
+// builder-field names (orderBy/selectColumns/dataSource) into their v5
+// equivalents and adds the `signal` field required by BuilderQuerySpec's
+// per-signal dispatch.
 func convertV1WidgetQuery(widget map[string]any, panelKind PanelPluginKind) []Query {
 	envelopes, signal := collectV1QueryEnvelopes(widget)
 	if len(envelopes) == 0 {
@@ -124,21 +123,20 @@ func collectV1QueryEnvelopes(widget map[string]any) ([]map[string]any, telemetry
 		}
 		var out []map[string]any
 		var signal telemetrytypes.Signal
-		wrap := transition.NewMigrateCommon(nil)
 		for _, q := range readSliceOfMaps(builder["queryData"]) {
 			name := valueAt[string](q, "queryName")
-			out = append(out, wrap.WrapInV5Envelope(name, q, string(qb.QueryTypeBuilder.StringValue())))
+			out = append(out, qb.WrapInV5Envelope(name, q, string(qb.QueryTypeBuilder.StringValue())))
 			if signal.IsZero() {
 				signal = signalFromDataSource(q["dataSource"])
 			}
 		}
 		for _, f := range readSliceOfMaps(builder["queryFormulas"]) {
 			name := valueAt[string](f, "queryName")
-			out = append(out, wrap.WrapInV5Envelope(name, f, string(qb.QueryTypeFormula.StringValue())))
+			out = append(out, qb.WrapInV5Envelope(name, f, string(qb.QueryTypeFormula.StringValue())))
 		}
 		for _, op := range readSliceOfMaps(builder["queryTraceOperator"]) {
 			name := valueAt[string](op, "queryName")
-			out = append(out, wrap.WrapInV5Envelope(name, op, string(qb.QueryTypeTraceOperator.StringValue())))
+			out = append(out, qb.WrapInV5Envelope(name, op, string(qb.QueryTypeTraceOperator.StringValue())))
 		}
 		return out, signal
 	}
