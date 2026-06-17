@@ -1,13 +1,18 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import { Pagination } from '@signozhq/ui/pagination';
 import { SelectSimple } from '@signozhq/ui/select';
 import { Tabs } from '@signozhq/ui/tabs';
-import { Search } from '@signozhq/icons';
+import { Plus, Search } from '@signozhq/icons';
 import { useListLLMPricingRules } from 'api/generated/services/llmpricingrules';
+import useComponentPermission from 'hooks/useComponentPermission';
 import useDebounce from 'hooks/useDebounce';
+import { useAppContext } from 'providers/App/App';
 
+import ModelCostDrawer from './ModelCostDrawer';
 import ModelCostsTable from './ModelCostsTable';
+import { useModelCostDrawer } from './useModelCostDrawer';
 import { useModelPricingFilters } from './useModelPricingFilters';
 import type {
 	ListModelPricingParams,
@@ -57,8 +62,16 @@ function LLMObservabilityModelPricing(): JSX.Element {
 
 	const { data, isLoading, isError } = useListLLMPricingRules(listParams);
 
+	const { user } = useAppContext();
+	const [canManagePricing] = useComponentPermission(
+		['manage_llm_pricing'],
+		user.role,
+	);
+
 	const rules: PricingRule[] = useMemo(() => data?.data?.items || [], [data]);
 	const total = data?.data?.total ?? 0;
+
+	const drawer = useModelCostDrawer();
 
 	return (
 		<div
@@ -109,6 +122,18 @@ function LLMObservabilityModelPricing(): JSX.Element {
 					items={CURRENCY_OPTIONS}
 					testId="currency-select"
 				/>
+				{canManagePricing && (
+					<Button
+						variant="solid"
+						color="primary"
+						className="filters-bar__add"
+						prefix={<Plus size={14} />}
+						onClick={(): void => drawer.openForAdd()}
+						testId="add-model-cost-btn"
+					>
+						Add model cost
+					</Button>
+				)}
 			</div>
 
 			{isError && (
@@ -117,13 +142,12 @@ function LLMObservabilityModelPricing(): JSX.Element {
 				</div>
 			)}
 
-			{/* Read-only listing. Edit/Add wiring + the drawer land in the next PR. */}
 			<ModelCostsTable
 				rules={rules}
 				isLoading={isLoading}
-				selectedRuleId={null}
-				canManage={false}
-				onEdit={(): void => undefined}
+				selectedRuleId={drawer.selectedRuleId}
+				canManage={canManagePricing}
+				onEdit={drawer.openForEdit}
 			/>
 
 			{total > PAGE_SIZE && (
@@ -140,6 +164,20 @@ function LLMObservabilityModelPricing(): JSX.Element {
 				Showing {rules.length} of {total} model{total === 1 ? '' : 's'}
 				{' · '}All prices per 1M tokens (USD)
 			</footer>
+
+			<ModelCostDrawer
+				isOpen={drawer.isOpen}
+				mode={drawer.mode}
+				draft={drawer.draft}
+				setDraft={drawer.setDraft}
+				onClose={drawer.close}
+				onSave={drawer.save}
+				onDelete={drawer.deleteRule}
+				isSaving={drawer.isSaving}
+				isDeleting={drawer.isDeleting}
+				saveError={drawer.saveError}
+				canManage={canManagePricing}
+			/>
 		</div>
 	);
 }
