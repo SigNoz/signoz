@@ -9,22 +9,17 @@ import {
 	IQuickFiltersConfig,
 	QuickFiltersSource,
 } from 'components/QuickFilters/types';
-import { PANEL_TYPES } from 'constants/queryBuilder';
 import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
-import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
-import { isFunction } from 'lodash-es';
 import { ChevronDown, ChevronRight } from '@signozhq/icons';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
-import {
-	applyCheckboxToggle,
-	clearFilterFromQuery,
-	deriveCheckboxState,
-} from './checkboxFilterQuery';
 import LogsQuickFilterEmptyState from './LogsQuickFilterEmptyState';
+import useActiveQueryIndex from './useActiveQueryIndex';
+import useCheckboxDisclosure from './useCheckboxDisclosure';
+import useCheckboxFilterActions from './useCheckboxFilterActions';
+import useCheckboxFilterState from './useCheckboxFilterState';
 import useCheckboxFilterValues from './useCheckboxFilterValues';
-import { isKeyMatch } from './utils';
 
 import './Checkbox.styles.scss';
 
@@ -40,58 +35,16 @@ interface ICheckboxProps {
 export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 	const { source, filter, onFilterChange } = props;
 	const [searchText, setSearchText] = useState<string>('');
-	// null = no user action, true = user opened, false = user closed
-	const [userToggleState, setUserToggleState] = useState<boolean | null>(null);
-	const [visibleItemsCount, setVisibleItemsCount] = useState<number>(10);
+
+	const activeQueryIndex = useActiveQueryIndex(source);
 
 	const {
-		lastUsedQuery,
-		currentQuery,
-		redirectWithQueryBuilderData,
-		panelType,
-	} = useQueryBuilder();
-
-	// Determine if we're in ListView mode
-	const isListView = panelType === PANEL_TYPES.LIST;
-	// In ListView mode, use index 0 for most sources; for TRACES_EXPLORER, use lastUsedQuery
-	// Otherwise use lastUsedQuery for non-ListView modes
-	const activeQueryIndex = useMemo(() => {
-		if (isListView) {
-			return source === QuickFiltersSource.TRACES_EXPLORER
-				? lastUsedQuery || 0
-				: 0;
-		}
-		return lastUsedQuery || 0;
-	}, [isListView, source, lastUsedQuery]);
-
-	// Check if this filter has active filters in the query
-	const isSomeFilterPresentForCurrentAttribute = useMemo(
-		() =>
-			currentQuery.builder.queryData?.[activeQueryIndex]?.filters?.items?.some(
-				(item) => isKeyMatch(item.key?.key, filter.attributeKey.key),
-			),
-		[currentQuery.builder.queryData, activeQueryIndex, filter.attributeKey.key],
-	);
-
-	// Derive isOpen from filter state + user action
-	const isOpen = useMemo(() => {
-		// If user explicitly toggled, respect that
-		if (userToggleState !== null) {
-			return userToggleState;
-		}
-
-		// Auto-open if this filter has active filters in the query
-		if (isSomeFilterPresentForCurrentAttribute) {
-			return true;
-		}
-
-		// Otherwise use default behavior (first 2 filters open)
-		return filter.defaultOpen;
-	}, [
-		userToggleState,
+		isOpen,
 		isSomeFilterPresentForCurrentAttribute,
-		filter.defaultOpen,
-	]);
+		visibleItemsCount,
+		onToggleOpen,
+		onShowMore,
+	} = useCheckboxDisclosure({ filter, activeQueryIndex });
 
 	const { attributeValues, isLoading } = useCheckboxFilterValues({
 		filter,
@@ -100,42 +53,20 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 		isOpen,
 	});
 
+	const { currentFilterState, isFilterDisabled, isMultipleValuesTrueForTheKey } =
+		useCheckboxFilterState({ filter, attributeValues, activeQueryIndex });
+
+	const { onChange, onClear } = useCheckboxFilterActions({
+		filter,
+		source,
+		attributeValues,
+		activeQueryIndex,
+		onFilterChange,
+	});
+
 	const setSearchTextDebounced = useDebouncedFn((...args) => {
 		setSearchText(args[0] as string);
 	}, DEBOUNCE_DELAY);
-
-	// derive the state of each filter key here in the renderer itself and keep it in sync with current query
-	const currentFilterState = useMemo(
-		() =>
-			deriveCheckboxState({
-				attributeValues,
-				filterItems:
-					currentQuery?.builder.queryData?.[activeQueryIndex]?.filters?.items,
-				filterKey: filter.attributeKey.key,
-			}),
-		[
-			attributeValues,
-			currentQuery?.builder.queryData,
-			filter.attributeKey,
-			activeQueryIndex,
-		],
-	);
-
-	// disable the filter when there are multiple entries of the same attribute key present in the filter bar
-	const isFilterDisabled = useMemo(
-		() =>
-			(currentQuery?.builder?.queryData?.[
-				activeQueryIndex
-			]?.filters?.items?.filter((item) =>
-				isKeyMatch(item.key?.key, filter.attributeKey.key),
-			)?.length || 0) > 1,
-
-		[currentQuery?.builder?.queryData, activeQueryIndex, filter.attributeKey],
-	);
-
-	// variable to check if the current filter has multiple values to its name in the key op value section
-	const isMultipleValuesTrueForTheKey =
-		Object.values(currentFilterState).filter((val) => val).length > 1;
 
 	// Sort checked items to the top, then unchecked items
 	const currentAttributeKeys = useMemo(() => {
@@ -154,43 +85,6 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 		[currentAttributeKeys, currentFilterState],
 	);
 
-	const handleClearFilterAttribute = (): void => {
-		const preparedQuery = clearFilterFromQuery({
-			currentQuery,
-			filter,
-			activeQueryIndex,
-		});
-
-		if (onFilterChange && isFunction(onFilterChange)) {
-			onFilterChange(preparedQuery);
-		} else {
-			redirectWithQueryBuilderData(preparedQuery);
-		}
-	};
-
-	const onChange = (
-		value: string,
-		checked: boolean,
-		isOnlyOrAllClicked: boolean,
-	): void => {
-		const finalQuery = applyCheckboxToggle({
-			currentQuery,
-			activeQueryIndex,
-			filter,
-			source,
-			attributeValues,
-			value,
-			checked,
-			isOnlyOrAllClicked,
-		});
-
-		if (onFilterChange && isFunction(onFilterChange)) {
-			onFilterChange(finalQuery);
-		} else {
-			redirectWithQueryBuilderData(finalQuery);
-		}
-	};
-
 	const isEmptyStateWithDocsEnabled =
 		SOURCES_WITH_EMPTY_STATE_ENABLED.includes(source) &&
 		!searchText &&
@@ -198,17 +92,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 
 	return (
 		<div className="checkbox-filter">
-			<section
-				className="filter-header-checkbox"
-				onClick={(): void => {
-					if (isOpen) {
-						setUserToggleState(false);
-						setVisibleItemsCount(10);
-					} else {
-						setUserToggleState(true);
-					}
-				}}
-			>
+			<section className="filter-header-checkbox" onClick={onToggleOpen}>
 				<section className="left-action">
 					{isOpen ? (
 						<ChevronDown size={13} cursor="pointer" />
@@ -224,7 +108,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 							onClick={(e): void => {
 								e.stopPropagation();
 								e.preventDefault();
-								handleClearFilterAttribute();
+								onClear();
 							}}
 						>
 							Clear All
@@ -313,10 +197,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 					)}
 					{visibleItemsCount < attributeValues?.length && (
 						<section className="show-more">
-							<Typography.Text
-								className="show-more-text"
-								onClick={(): void => setVisibleItemsCount((prev) => prev + 10)}
-							>
+							<Typography.Text className="show-more-text" onClick={onShowMore}>
 								Show More...
 							</Typography.Text>
 						</section>
