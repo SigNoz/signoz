@@ -48,10 +48,30 @@ func (d *DashboardSpec) UnmarshalJSON(data []byte) error {
 // ══════════════════════════════════════════════
 
 func (d *DashboardSpec) Validate() error {
+	if err := d.validateVariables(); err != nil {
+		return err
+	}
 	if err := d.validatePanels(); err != nil {
 		return err
 	}
 	return d.validateLayouts()
+}
+
+// validateVariables rejects two variables sharing the same name.
+func (d *DashboardSpec) validateVariables() error {
+	seen := make(map[string]struct{}, len(d.Variables))
+	for i, v := range d.Variables {
+		if v.Spec == nil {
+			// Unreachable via UnmarshalJSON; reaching here means a Go caller broke the Kind/Spec pairing.
+			return errors.NewInternalf(errors.CodeInternal, "spec.variables[%d].spec: variable spec must not be nil", i)
+		}
+		name := v.Spec.GetName()
+		if _, dup := seen[name]; dup {
+			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.variables[%d]: duplicate variable name %q", i, name)
+		}
+		seen[name] = struct{}{}
+	}
+	return nil
 }
 
 func (d *DashboardSpec) validatePanels() error {

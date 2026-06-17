@@ -88,7 +88,11 @@ type QuerySpec struct {
 // discriminated oneOf (see JSONSchemaOneOf).
 type Variable struct {
 	Kind variable.Kind `json:"kind" required:"true"`
-	Spec any           `json:"spec" required:"true"`
+	Spec VariableSpec  `json:"spec" required:"true"`
+}
+
+type VariableSpec interface {
+	GetName() string
 }
 
 func (Variable) PrepareJSONSchema(s *jsonschema.Schema) error {
@@ -105,19 +109,19 @@ func (v *Variable) UnmarshalJSON(data []byte) error {
 	}
 	switch kind {
 	case string(variable.KindList):
-		spec, err := decodeSpec(specJSON, new(ListVariableSpec), kind)
+		spec, err := decodeSpec[VariableSpec](specJSON, new(ListVariableSpec), kind)
 		if err != nil {
 			return err
 		}
 		v.Kind = variable.KindList
-		v.Spec = spec
+		v.Spec = *spec
 	case string(variable.KindText):
 		spec, err := decodeSpec(specJSON, new(dashboard.TextVariableSpec), kind)
 		if err != nil {
 			return err
 		}
 		v.Kind = variable.KindText
-		v.Spec = spec
+		v.Spec = *spec
 	default:
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "unknown variable kind %q; allowed values: %s", kind, allowedValuesForKind([]variable.Kind{variable.KindList, variable.KindText}))
 	}
@@ -152,6 +156,10 @@ type ListVariableSpec struct {
 	Sort            *variable.Sort         `json:"sort,omitempty"`
 	Plugin          VariablePlugin         `json:"plugin"`
 	Name            string                 `json:"name"`
+}
+
+func (s ListVariableSpec) GetName() string {
+	return s.Name
 }
 
 // ══════════════════════════════════════════════
@@ -194,7 +202,7 @@ func (l *Layout) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	l.Kind = dashboard.LayoutKind(kind)
-	l.Spec = spec
+	l.Spec = *spec
 	return nil
 }
 

@@ -112,6 +112,33 @@ func TestValidateOnlyVariables(t *testing.T) {
 	require.NoError(t, err, "expected valid")
 }
 
+func TestInvalidateDuplicateVariableNames(t *testing.T) {
+	data := []byte(`{
+		"variables": [
+			{
+				"kind": "TextVariable",
+				"spec": {"name": "env", "value": "prod"}
+			},
+			{
+				"kind": "ListVariable",
+				"spec": {
+					"name": "env",
+					"allowAllValue": false,
+					"allowMultiple": false,
+					"plugin": {
+						"kind": "signoz/DynamicVariable",
+						"spec": {"name": "service.name", "signal": "metrics"}
+					}
+				}
+			}
+		],
+		"layouts": []
+	}`)
+	_, err := unmarshalDashboard(data)
+	require.Error(t, err, "expected error for duplicate variable name")
+	require.Contains(t, err.Error(), `duplicate variable name "env"`)
+}
+
 func TestInvalidateUnknownPluginKind(t *testing.T) {
 	tests := []struct {
 		name        string
