@@ -1,19 +1,18 @@
 /* eslint-disable sonarjs/no-identical-functions */
 import { Fragment, useMemo, useState } from 'react';
 import { Input } from '@signozhq/ui/input';
-import { Button, Skeleton } from 'antd';
-import { Checkbox } from '@signozhq/ui/checkbox';
+import { Skeleton } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
-import cx from 'classnames';
 import {
 	IQuickFiltersConfig,
 	QuickFiltersSource,
 } from 'components/QuickFilters/types';
 import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
-import { ChevronDown, ChevronRight } from '@signozhq/icons';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
+import CheckboxFilterHeader from './CheckboxFilterHeader';
+import CheckboxValueRow from './CheckboxValueRow';
 import LogsQuickFilterEmptyState from './LogsQuickFilterEmptyState';
 import useActiveQueryIndex from './useActiveQueryIndex';
 import useCheckboxDisclosure from './useCheckboxDisclosure';
@@ -92,30 +91,13 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 
 	return (
 		<div className="checkbox-filter">
-			<section className="filter-header-checkbox" onClick={onToggleOpen}>
-				<section className="left-action">
-					{isOpen ? (
-						<ChevronDown size={13} cursor="pointer" />
-					) : (
-						<ChevronRight size={13} cursor="pointer" />
-					)}
-					<Typography.Text className="title">{filter.title}</Typography.Text>
-				</section>
-				<section className="right-action">
-					{isOpen && !!attributeValues.length && (
-						<Typography.Text
-							className="clear-all"
-							onClick={(e): void => {
-								e.stopPropagation();
-								e.preventDefault();
-								onClear();
-							}}
-						>
-							Clear All
-						</Typography.Text>
-					)}
-				</section>
-			</section>
+			<CheckboxFilterHeader
+				title={filter.title}
+				isOpen={isOpen}
+				showClearAll={!!attributeValues.length}
+				onToggleOpen={onToggleOpen}
+				onClear={onClear}
+			/>
 			{isOpen && isLoading && !attributeValues.length && (
 				<section className="loading">
 					<Skeleton paragraph={{ rows: 4 }} />
@@ -143,48 +125,24 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 											data-testid="filter-separator"
 										/>
 									)}
-									<div className="value">
-										<Checkbox
-											onChange={(checked): void =>
-												onChange(value, checked === true, false)
-											}
-											value={currentFilterState[value]}
-											disabled={isFilterDisabled}
-											className="check-box"
-										/>
-
-										<div
-											className={cx(
-												'checkbox-value-section',
-												isFilterDisabled ? 'filter-disabled' : '',
-											)}
-											onClick={(): void => {
-												if (isFilterDisabled) {
-													return;
-												}
-												onChange(value, currentFilterState[value], true);
-											}}
-										>
-											<div className={`${filter.title} label-${value}`} />
-											{filter.customRendererForValue ? (
-												filter.customRendererForValue(value)
-											) : (
-												<Typography.Text className="value-string" truncate={1}>
-													{String(value)}
-												</Typography.Text>
-											)}
-											<Button type="text" className="only-btn">
-												{isSomeFilterPresentForCurrentAttribute
-													? currentFilterState[value] && !isMultipleValuesTrueForTheKey
-														? 'All'
-														: 'Only'
-													: 'Only'}
-											</Button>
-											<Button type="text" className="toggle-btn">
-												Toggle
-											</Button>
-										</div>
-									</div>
+									<CheckboxValueRow
+										value={value}
+										checked={currentFilterState[value]}
+										disabled={isFilterDisabled}
+										title={filter.title}
+										onlyButtonLabel={
+											isSomeFilterPresentForCurrentAttribute
+												? currentFilterState[value] && !isMultipleValuesTrueForTheKey
+													? 'All'
+													: 'Only'
+												: 'Only'
+										}
+										customRendererForValue={filter.customRendererForValue}
+										onCheckboxChange={(checked): void => onChange(value, checked, false)}
+										onOnlyOrAllClick={(): void =>
+											onChange(value, currentFilterState[value], true)
+										}
+									/>
 								</Fragment>
 							))}
 						</section>
