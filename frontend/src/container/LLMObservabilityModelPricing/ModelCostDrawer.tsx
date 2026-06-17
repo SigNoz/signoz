@@ -47,6 +47,15 @@ function ModelCostDrawer({
 	const metadataReadOnly = !canManage;
 	const pricingReadOnly = !canManage || !draft.isOverride;
 
+	// Non-managers can only view (write APIs are Admin-only), so the drawer is a
+	// read-only "View" rather than "Edit"/"Add".
+	let drawerTitle = 'Add model cost';
+	if (!canManage) {
+		drawerTitle = 'View model cost';
+	} else if (mode === 'edit') {
+		drawerTitle = 'Edit model cost';
+	}
+
 	const validation = validateDraft(draft, mode);
 	const showValidationTooltip =
 		canManage && !validation.ok && !!validation.message;
@@ -114,7 +123,7 @@ function ModelCostDrawer({
 			width="base"
 			className="model-cost-drawer"
 			footer={footer}
-			title={mode === 'edit' ? 'Edit model cost' : 'Add model cost'}
+			title={drawerTitle}
 			subTitle="Pricing computes gen_ai.estimated_total_cost at ingest."
 			drawerHeaderProps={{ className: 'model-cost-drawer__title' }}
 		>
@@ -150,12 +159,16 @@ function ModelCostDrawer({
 				onChange={(patterns): void => update({ patterns })}
 			/>
 
-			<SourceSelector
-				isOverride={draft.isOverride}
-				isReadOnly={metadataReadOnly}
-				disableAuto={mode === 'add'}
-				onChange={(isOverride): void => update({ isOverride })}
-			/>
+			{/* Source is auto vs. override — a choice only a manager can make, so
+			    there's nothing to show a read-only viewer. */}
+			{canManage && (
+				<SourceSelector
+					isOverride={draft.isOverride}
+					isReadOnly={metadataReadOnly}
+					disableAuto={mode === 'add'}
+					onChange={(isOverride): void => update({ isOverride })}
+				/>
+			)}
 
 			<PricingFields
 				pricing={draft.pricing}
