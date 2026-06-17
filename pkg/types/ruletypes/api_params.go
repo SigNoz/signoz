@@ -338,7 +338,7 @@ func isValidLabelValue(v string) bool {
 // validate runs during UnmarshalJSON (read + write path).
 // Preserves the original pre-existing checks only so that stored rules
 // continue to load without errors.
-// TODO(srikanthccv): remove this once v1 is deprecated and removed
+// TODO(srikanthccv): remove this once v1 is deprecated and removed.
 func (r *PostableRule) validate() error {
 	var errs []error
 
