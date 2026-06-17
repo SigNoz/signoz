@@ -5,7 +5,7 @@ import { useListLLMPricingRules } from 'api/generated/services/llmpricingrules';
 import { type ListLLMPricingRulesParams } from 'api/generated/services/sigNoz.schemas';
 import { parseAsInteger, useQueryState } from 'nuqs';
 
-import { CURRENCY_OPTIONS, PAGE_KEY, PAGE_SIZE } from './constants';
+import { PAGE_KEY, PAGE_SIZE } from './constants';
 import ModelCostsTable from './ModelCostsTable';
 import type { PricingRule } from './types';
 
@@ -38,7 +38,6 @@ function ModelCostsTab(): JSX.Element {
 					className="filters-bar__currency"
 					value="USD"
 					disabled
-					items={CURRENCY_OPTIONS}
 					testId="currency-select"
 				/>
 			</div>
