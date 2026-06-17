@@ -3,10 +3,20 @@ import relativeTime from 'dayjs/plugin/relativeTime';
 
 import type { ExtraBucket, PricingRule } from './types';
 
-// Idempotent — relativeTime is also extended globally in utils/timeUtils.
+// Idempotent — relativeTime is also extended globally in utils/timeUtils, but
+// we extend here too so this module is self-sufficient (incl. in unit tests).
 dayjs.extend(relativeTime);
 
 const lc = (value: string): string => value.toLowerCase();
+
+// Relative, human-readable distance from now (e.g. "2 days ago"); "—" for
+// missing/invalid timestamps.
+const getRelativeTime = (
+	timestamp: string | number | Date | null | undefined,
+): string => {
+	const parsed = timestamp != null ? dayjs(timestamp) : null;
+	return parsed?.isValid() ? parsed.fromNow() : '—';
+};
 
 // ─── Display helpers ─────────────────────────────────────────────────────────
 
@@ -35,11 +45,8 @@ export const getExtraBuckets = (rule: PricingRule): ExtraBucket[] => {
 export const getSourceLabel = (rule: PricingRule): 'Auto' | 'User override' =>
 	rule.isOverride ? 'User override' : 'Auto';
 
-export const getRelativeLastSeen = (rule: PricingRule): string => {
-	const ts = rule.updatedAt || rule.syncedAt || rule.createdAt;
-	const parsed = ts ? dayjs(ts) : null;
-	return parsed?.isValid() ? parsed.fromNow() : '—';
-};
+export const getRelativeLastSeen = (rule: PricingRule): string =>
+	getRelativeTime(rule.updatedAt || rule.syncedAt || rule.createdAt);
 
 export const getCanonicalId = (rule: PricingRule): string => {
 	const provider = rule.provider?.trim() || 'unknown';
