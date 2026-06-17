@@ -84,3 +84,26 @@ export interface PanelTable {
 	columns: PanelTableColumn[];
 	rows: PanelTableRow[];
 }
+
+/**
+ * Server-side paging handles for raw/list panels. Owned by `usePanelQuery`
+ * (where the fetch lives) and threaded to the renderer for prev/next controls.
+ * Offset-based: each page re-fetches with a new `offset`. `canNext` is a
+ * heuristic — a full page or a `nextCursor` on the response implies more rows.
+ */
+export interface PanelPagination {
+	/** Zero-based page index (`offset / pageSize`). */
+	pageIndex: number;
+	/** A previous page exists (`offset > 0`). */
+	canPrev: boolean;
+	/** Another page likely exists. */
+	canNext: boolean;
+	goPrev: () => void;
+	goNext: () => void;
+	/** Current page size (rows per page). */
+	pageSize: number;
+	/** Selectable page sizes for the size picker. */
+	pageSizeOptions: number[];
+	/** Change the page size; restarts paging from the first page. */
+	setPageSize: (size: number) => void;
+}

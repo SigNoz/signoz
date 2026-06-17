@@ -1,6 +1,6 @@
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { renderHook } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 
 import { usePanelQuery } from '../usePanelQuery';
@@ -172,10 +172,26 @@ describe('usePanelQuery', () => {
 		expect(result.current.error?.message).toBe('boom');
 	});
 
-	it('combines isLoading and isFetching into a single isLoading flag', () => {
+	it('exposes isLoading (first fetch) and isFetching (any fetch) as distinct flags', () => {
+		// A background refetch (data present elsewhere) is in flight: isFetching is
+		// true but isLoading stays false so the panel keeps showing its data.
 		mockUseGetQueryRangeV5.mockReturnValue({
 			data: undefined,
 			isLoading: false,
+			isFetching: true,
+			error: null,
+		});
+		const { result } = renderHook(() =>
+			usePanelQuery({ panel: builderPanel(), panelId: 'p1' }),
+		);
+		expect(result.current.isLoading).toBe(false);
+		expect(result.current.isFetching).toBe(true);
+	});
+
+	it('reports isLoading on the first fetch (no cached data yet)', () => {
+		mockUseGetQueryRangeV5.mockReturnValue({
+			data: undefined,
+			isLoading: true,
 			isFetching: true,
 			error: null,
 		});
@@ -293,5 +309,45 @@ describe('usePanelQuery', () => {
 		const [{ requestPayload, enabled }] = mockUseGetQueryRangeV5.mock.calls[0];
 		expect(requestPayload.compositeQuery.queries).toStrictEqual([]);
 		expect(enabled).toBe(false);
+	});
+
+	describe('list pagination', () => {
+		const listPanel = (
+			querySpec: Record<string, unknown>,
+		): DashboardtypesPanelDTO =>
+			panelWith('signoz/ListPanel', { name: 'A', signal: 'logs', ...querySpec });
+
+		it('exposes server paging at the default page size when the query has no limit', () => {
+			const { result } = renderHook(() =>
+				usePanelQuery({ panel: listPanel({}), panelId: 'p1' }),
+			);
+			expect(result.current.pagination).toBeDefined();
+			expect(result.current.pagination?.pageSize).toBe(25);
+			expect(result.current.pagination?.pageSizeOptions).toStrictEqual([
+				10, 25, 50, 100, 200,
+			]);
+		});
+
+		it('disables the server pager when the query has an explicit limit (V1 parity)', () => {
+			const { result } = renderHook(() =>
+				usePanelQuery({ panel: listPanel({ limit: 100 }), panelId: 'p1' }),
+			);
+			expect(result.current.pagination).toBeUndefined();
+		});
+
+		it('changes the page size (and re-requests with the new limit) via setPageSize', () => {
+			const { result } = renderHook(() =>
+				usePanelQuery({ panel: listPanel({}), panelId: 'p1' }),
+			);
+
+			act(() => result.current.pagination?.setPageSize(50));
+
+			expect(result.current.pagination?.pageSize).toBe(50);
+			const lastCall = mockUseGetQueryRangeV5.mock.calls.at(-1) as [
+				{ queryKey: unknown[] },
+			];
+			// Page size participates in the cache key so each size is its own entry.
+			expect(lastCall[0].queryKey).toStrictEqual(expect.arrayContaining([50]));
+		});
 	});
 });

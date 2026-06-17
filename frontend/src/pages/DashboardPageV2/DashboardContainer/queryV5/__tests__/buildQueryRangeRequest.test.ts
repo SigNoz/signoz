@@ -175,6 +175,22 @@ describe('buildQueryRangeRequest', () => {
 		expect(request.formatOptions?.fillGaps).toBe(true);
 	});
 
+	it('stamps offset/limit onto builder queries when pagination is given', () => {
+		const request = buildQueryRangeRequest({
+			queries: bareBuilderQuery({ name: 'A', signal: 'logs' }),
+			panelType: PANEL_TYPES.LIST,
+			startMs: START_MS,
+			endMs: START_MS + HOUR_MS,
+			pagination: { offset: 100, limit: 50 },
+		});
+		expect(request.compositeQuery?.queries?.[0]?.spec).toStrictEqual({
+			name: 'A',
+			signal: 'logs',
+			offset: 100,
+			limit: 50,
+		});
+	});
+
 	it('injects the range-derived stepInterval into BAR builder queries without one', () => {
 		const request = buildQueryRangeRequest({
 			queries: bareBuilderQuery({ name: 'A', signal: 'metrics' }),

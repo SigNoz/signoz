@@ -154,6 +154,23 @@ function withBarStepInterval(
 	});
 }
 
+// Stamps offset/limit onto every builder-query envelope — server-side paging for
+// raw/list panels. Other envelope kinds (promql, clickhouse) are passed through.
+function withPagination(
+	envelopes: Querybuildertypesv5QueryEnvelopeDTO[],
+	{ offset, limit }: { offset: number; limit: number },
+): Querybuildertypesv5QueryEnvelopeDTO[] {
+	return envelopes.map((envelope) => {
+		if (envelope.type !== Querybuildertypesv5QueryTypeDTO.builder_query) {
+			return envelope;
+		}
+		return {
+			...envelope,
+			spec: { ...(envelope.spec as Record<string, unknown>), offset, limit },
+		};
+	});
+}
+
 export interface BuildQueryRangeRequestArgs {
 	queries: DashboardtypesQueryDTO[];
 	panelType: PANEL_TYPES;
@@ -166,6 +183,11 @@ export interface BuildQueryRangeRequestArgs {
 	 * Maps to `formatOptions.fillGaps`, mirroring V1's `fillGaps: widget.fillSpans`.
 	 */
 	fillGaps?: boolean;
+	/**
+	 * Server-side paging for raw/list panels — written onto the builder queries'
+	 * `offset`/`limit`. Absent for non-paginated panels.
+	 */
+	pagination?: { offset: number; limit: number };
 }
 
 /**
@@ -182,10 +204,14 @@ export function buildQueryRangeRequest({
 	startMs,
 	endMs,
 	fillGaps = false,
+	pagination,
 }: BuildQueryRangeRequestArgs): Querybuildertypesv5QueryRangeRequestDTO {
 	let envelopes = toQueryEnvelopes(queries);
 	if (panelType === PANEL_TYPES.BAR) {
 		envelopes = withBarStepInterval(envelopes, startMs, endMs);
+	}
+	if (pagination) {
+		envelopes = withPagination(envelopes, pagination);
 	}
 
 	return {

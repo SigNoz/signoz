@@ -4,7 +4,10 @@ import type {
 	SyncTooltipFilterMode,
 } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 import { PanelMode } from 'container/DashboardContainer/visualization/panels/types';
-import type { PanelQueryData } from 'pages/DashboardPageV2/DashboardContainer/queryV5/types';
+import type {
+	PanelPagination,
+	PanelQueryData,
+} from 'pages/DashboardPageV2/DashboardContainer/queryV5/types';
 
 import type { PanelInteractionMap } from './interactions';
 import type { PanelKind } from './panelKind';
@@ -70,6 +73,11 @@ export interface BaseRendererProps {
 	 * declare `headerControls.search`; other renderers ignore it.
 	 */
 	searchTerm?: string;
+	/**
+	 * Server-side paging handles, owned by `usePanelQuery`. Present only for
+	 * raw/list panels; other renderers ignore it.
+	 */
+	pagination?: PanelPagination;
 }
 
 // Renderer props for a specific panel kind: the shared base plus that kind's

@@ -1,11 +1,8 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
 // eslint-disable-next-line no-restricted-imports -- TODO: migrate global time selector off redux
 import { useSelector } from 'react-redux';
-import type {
-	DashboardtypesPanelDTO,
-	DashboardtypesTimePreferenceDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { AppState } from 'store/reducers';
@@ -16,12 +13,16 @@ import {
 	extractLegendMap,
 	hasRunnableQueries,
 } from '../queryV5/buildQueryRangeRequest';
-import type { PanelQueryData } from '../queryV5/types';
-import {
-	PANEL_KIND_TO_PANEL_TYPE,
-} from '../Panels/types/panelKind';
+import type { PanelPagination, PanelQueryData } from '../queryV5/types';
+import { getRawResults } from '../queryV5/v5ResponseData';
+import { getBuilderQueries } from '../Panels/utils/getBuilderQueries';
+import { PANEL_KIND_TO_PANEL_TYPE } from '../Panels/types/panelKind';
 import { resolvePanelTimeWindow } from './resolvePanelTimeWindow';
 import { useGetQueryRangeV5 } from './useGetQueryRangeV5';
+
+// V1 list page-size choices (PER_PAGE_OPTIONS); default mirrors V1's list views.
+const LIST_PAGE_SIZE_OPTIONS = [10, 25, 50, 100, 200];
+const DEFAULT_LIST_PAGE_SIZE = 25;
 
 export interface UsePanelQueryArgs {
 	panel: DashboardtypesPanelDTO | undefined;
@@ -59,15 +60,24 @@ export interface PanelQueryTimeOverride {
 export interface UsePanelQueryResult {
 	/** Raw V5 fetch result — response + the request that produced it. */
 	data: PanelQueryData;
-	/** Combines `isLoading` (first fetch) and `isFetching` (background refresh). */
+	/**
+	 * First fetch only — a request is in flight and there's no cached data yet.
+	 * Drives the full-panel loader (nothing to show). A background refetch with
+	 * data already present does NOT set this — watch `isFetching` for that.
+	 */
 	isLoading: boolean;
-	/** Background refresh in flight while data is already present. */
+	/**
+	 * Any request in flight, including a background refetch while stale data is
+	 * still displayed. Drives a subtle "refreshing" affordance, never a blank panel.
+	 */
 	isFetching: boolean;
 	error: Error | null;
 	/** Re-run the query (e.g. a retry button on the error state). */
 	refetch: () => void;
 	/** Abort the in-flight fetch (e.g. the editor's Stage & Run cancel). */
 	cancelQuery: () => void;
+	/** Server-side paging handles — present only for raw/list panels. */
+	pagination?: PanelPagination;
 }
 
 /**
@@ -101,26 +111,44 @@ export function usePanelQuery({
 		(fullKind && PANEL_KIND_TO_PANEL_TYPE[fullKind]) ?? PANEL_TYPES.TIME_SERIES;
 	const queries = panel?.spec?.queries;
 
+	// A list query with its own explicit `limit` caps results and shows them
+	// without a server pager (V1 parity: Controls render is gated on no limit).
+	// Without a limit, the list pages server-side at a user-selectable page size.
+	const hasExplicitLimit = useMemo(
+		() => !!getBuilderQueries(queries ?? [])[0]?.limit,
+		[queries],
+	);
+	const isPaginated = panelType === PANEL_TYPES.LIST && !hasExplicitLimit;
+
+	const [pageSize, setPageSize] = useState(DEFAULT_LIST_PAGE_SIZE);
+	const [offset, setOffset] = useState(0);
+
+	// Changing page size restarts paging from the first page.
+	const handleSetPageSize = useCallback((size: number): void => {
+		setPageSize(size);
+		setOffset(0);
+	}, []);
+
 	const {
 		selectedTime: globalSelectedInterval,
 		maxTime,
 		minTime,
 	} = useSelector<AppState, GlobalReducer>((state) => state.globalTime);
 
-	// `visualization` is common to every plugin-spec variant of the discriminated union,
-	// so a single localized cast reads its panel-level options without narrowing on kind:
-	//   - timePreference pins the panel to a fixed relative window (see below);
-	//   - fillSpans backend-fills missing points with 0 (→ formatOptions.fillGaps).
-	const visualization = panel?.spec?.plugin?.spec as
-		| {
-				visualization?: {
-					timePreference?: DashboardtypesTimePreferenceDTO;
-					fillSpans?: boolean;
-				};
-		  }
-		| undefined;
-	const timePreference = visualization?.visualization?.timePreference;
-	const fillGaps = visualization?.visualization?.fillSpans ?? false;
+	// `visualization` carries panel-level options but only on the variants that
+	// declare it — read it via `in` narrowing over the generated union (no cast).
+	// `timePreference` pins the panel to a fixed relative window (every visualization
+	// variant has it); `fillSpans` backend-fills missing points with 0 and exists
+	// only on TimeSeries/Bar (→ formatOptions.fillGaps).
+	const pluginSpec = panel?.spec?.plugin?.spec;
+	const visualization =
+		pluginSpec && 'visualization' in pluginSpec
+			? pluginSpec.visualization
+			: undefined;
+	const timePreference = visualization?.timePreference;
+	const fillGaps = Boolean(
+		visualization && 'fillSpans' in visualization && visualization.fillSpans,
+	);
 
 	// Redux global time is in nanoseconds; the V5 API takes epoch ms. Precedence: an
 	// editor time override (already in ms) wins so the preview stays independent of the
@@ -133,6 +161,12 @@ export function usePanelQuery({
 		override: time,
 	});
 
+	// A new query or time window invalidates the current page — snap back to the
+	// first page so we never request an offset past a now-shorter result set.
+	useEffect(() => {
+		setOffset(0);
+	}, [queries, startMs, endMs]);
+
 	const requestPayload = useMemo(
 		() =>
 			buildQueryRangeRequest({
@@ -141,8 +175,9 @@ export function usePanelQuery({
 				startMs,
 				endMs,
 				fillGaps,
+				pagination: isPaginated ? { offset, limit: pageSize } : undefined,
 			}),
-		[queries, panelType, startMs, endMs, fillGaps],
+		[queries, panelType, startMs, endMs, fillGaps, isPaginated, offset, pageSize],
 	);
 
 	const legendMap = useMemo(() => extractLegendMap(queries ?? []), [queries]);
@@ -168,6 +203,10 @@ export function usePanelQuery({
 			fillGaps,
 			fullKind,
 			queries,
+			// Offset + page size key the cache so each page is its own entry (0/default
+			// for non-paged kinds).
+			offset,
+			pageSize,
 		],
 		[
 			panelId,
@@ -181,6 +220,8 @@ export function usePanelQuery({
 			fillGaps,
 			fullKind,
 			queries,
+			offset,
+			pageSize,
 		],
 	);
 
@@ -200,15 +241,53 @@ export function usePanelQuery({
 		[response.data, requestPayload, legendMap],
 	);
 
+	const goPrev = useCallback(
+		() => setOffset((current) => Math.max(0, current - pageSize)),
+		[pageSize],
+	);
+	const goNext = useCallback(
+		() => setOffset((current) => current + pageSize),
+		[pageSize],
+	);
+
+	// Paging handles for raw/list panels. `canNext` is a heuristic: a full page
+	// or a response `nextCursor` implies more rows (no total count on the wire).
+	const pagination = useMemo<PanelPagination | undefined>(() => {
+		if (!isPaginated) {
+			return undefined;
+		}
+		const result = getRawResults(response.data)[0];
+		const rowCount = result?.rows?.length ?? 0;
+		return {
+			pageIndex: pageSize > 0 ? Math.floor(offset / pageSize) : 0,
+			canPrev: offset > 0,
+			canNext: !!result?.nextCursor || rowCount === pageSize,
+			goPrev,
+			goNext,
+			pageSize,
+			pageSizeOptions: LIST_PAGE_SIZE_OPTIONS,
+			setPageSize: handleSetPageSize,
+		};
+	}, [
+		isPaginated,
+		response.data,
+		offset,
+		pageSize,
+		goPrev,
+		goNext,
+		handleSetPageSize,
+	]);
+
 	return {
 		data,
-		isLoading: response.isLoading || response.isFetching,
+		isLoading: response.isLoading,
 		isFetching: response.isFetching,
 		// Coerce undefined → null so the contract is `Error | null`, not
 		// `Error | null | undefined`. Consumers can rely on a single
 		// "no error" sentinel.
-		error: (response.error as Error | null) ?? null,
+		error: response.error ?? null,
 		refetch: response.refetch,
 		cancelQuery,
+		pagination,
 	};
 }

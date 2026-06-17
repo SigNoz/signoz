@@ -72,13 +72,14 @@ function Panel({
 	const searchable = !!panelDefinition?.headerControls.search;
 	const [searchTerm, setSearchTerm] = useState('');
 
-	const { data, isLoading, isFetching, error, refetch } = usePanelQuery({
-		panel,
-		panelId,
-		// Lazy: only fetch once the section is on screen (undefined → treat as
-		// visible) and a renderer exists for the kind.
-		enabled: !!panelDefinition && isVisible !== false,
-	});
+	const { data, isLoading, isFetching, error, refetch, pagination } =
+		usePanelQuery({
+			panel,
+			panelId,
+			// Lazy: only fetch once the section is on screen (undefined → treat as
+			// visible) and a renderer exists for the kind.
+			enabled: !!panelDefinition && isVisible !== false,
+		});
 
 	const { onDragSelect, dashboardPreference } = usePanelInteractions();
 
@@ -123,6 +124,7 @@ function Panel({
 					onDragSelect={onDragSelect}
 					dashboardPreference={dashboardPreference}
 					searchTerm={searchable ? searchTerm : undefined}
+					pagination={pagination}
 				/>
 			) : (
 				// TODO: remove this after all panel kinds are supported
