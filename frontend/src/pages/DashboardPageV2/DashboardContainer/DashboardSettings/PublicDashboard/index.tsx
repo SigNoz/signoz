@@ -1,10 +1,10 @@
 import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
 
-import PublicDashboardActions from './PublicDashboardActions';
-import PublicDashboardCallout from './PublicDashboardCallout';
-import PublicDashboardSettingsForm from './PublicDashboardSettingsForm';
-import PublicDashboardStatus from './PublicDashboardStatus';
-import PublicDashboardUrl from './PublicDashboardUrl';
+import PublicDashboardActions from './PublicDashboardActions/PublicDashboardActions';
+import PublicDashboardCallout from './PublicDashboardCallout/PublicDashboardCallout';
+import PublicDashboardSettingsForm from './PublicDashboardSettingsForm/PublicDashboardSettingsForm';
+import PublicDashboardStatus from './PublicDashboardStatus/PublicDashboardStatus';
+import PublicDashboardUrl from './PublicDashboardUrl/PublicDashboardUrl';
 import { usePublicDashboard } from './usePublicDashboard';
 import styles from './PublicDashboard.module.scss';
 
@@ -37,20 +37,25 @@ function PublicDashboardSettings({
 	const controlsDisabled = isLoading || !isAdmin;
 
 	return (
-		<div className={styles.publicDashboardCard}>
-			<PublicDashboardStatus isPublic={isPublic} />
+		<div className={styles.publishTab}>
+			<div className={styles.content}>
+				<PublicDashboardStatus isPublic={isPublic} />
 
-			<PublicDashboardSettingsForm
-				timeRangeEnabled={timeRangeEnabled}
-				defaultTimeRange={defaultTimeRange}
-				disabled={controlsDisabled}
-				onTimeRangeEnabledChange={setTimeRangeEnabled}
-				onDefaultTimeRangeChange={setDefaultTimeRange}
-			/>
+				<PublicDashboardUrl
+					isPublic={isPublic}
+					url={publicUrl}
+					onCopy={onCopyUrl}
+					onOpen={onOpenUrl}
+				/>
 
-			{isPublic && (
-				<PublicDashboardUrl url={publicUrl} onCopy={onCopyUrl} onOpen={onOpenUrl} />
-			)}
+				<PublicDashboardSettingsForm
+					timeRangeEnabled={timeRangeEnabled}
+					defaultTimeRange={defaultTimeRange}
+					disabled={controlsDisabled}
+					onTimeRangeEnabledChange={setTimeRangeEnabled}
+					onDefaultTimeRangeChange={setDefaultTimeRange}
+				/>
+			</div>
 
 			<PublicDashboardCallout />
 
