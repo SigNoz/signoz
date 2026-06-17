@@ -41,7 +41,6 @@
 
 .statusTitle {
 	color: var(--l1-foreground);
-	font-family: Inter;
 	font-size: 14px;
 	font-weight: 600;
 	line-height: 1.2;
@@ -50,9 +49,7 @@
 .statusSubtitle {
 	margin-top: 2px;
 	color: var(--l3-foreground);
-	font-family: Inter;
 	font-size: 13px;
-	font-weight: 400;
 	line-height: 1.35;
 }
 

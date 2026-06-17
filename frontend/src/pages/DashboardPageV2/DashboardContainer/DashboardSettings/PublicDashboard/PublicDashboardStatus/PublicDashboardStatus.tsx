@@ -13,7 +13,9 @@ function PublicDashboardStatus({
 	isPublic,
 }: PublicDashboardStatusProps): JSX.Element {
 	return (
-		<div className={cx(styles.statusStrip, { [styles.statusStripLive]: isPublic })}>
+		<div
+			className={cx(styles.statusStrip, { [styles.statusStripLive]: isPublic })}
+		>
 			<span
 				className={cx(styles.statusMedallion, {
 					[styles.statusMedallionLive]: isPublic,

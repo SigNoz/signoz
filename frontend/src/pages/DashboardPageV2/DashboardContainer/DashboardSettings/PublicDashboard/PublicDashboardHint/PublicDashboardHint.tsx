@@ -1,9 +1,9 @@
 import { Info } from '@signozhq/icons';
 import { Typography } from '@signozhq/ui/typography';
 
-import styles from './PublicDashboardCallout.module.scss';
+import styles from './PublicDashboardHint.module.scss';
 
-function PublicDashboardCallout(): JSX.Element {
+function PublicDashboardHint(): JSX.Element {
 	return (
 		<div className={styles.hint}>
 			<Info size={14} className={styles.hintIcon} />
@@ -14,4 +14,4 @@ function PublicDashboardCallout(): JSX.Element {
 	);
 }
 
-export default PublicDashboardCallout;
+export default PublicDashboardHint;

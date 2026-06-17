@@ -1,7 +1,7 @@
 import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
 
 import PublicDashboardActions from './PublicDashboardActions/PublicDashboardActions';
-import PublicDashboardCallout from './PublicDashboardCallout/PublicDashboardCallout';
+import PublicDashboardHint from './PublicDashboardHint/PublicDashboardHint';
 import PublicDashboardSettingsForm from './PublicDashboardSettingsForm/PublicDashboardSettingsForm';
 import PublicDashboardStatus from './PublicDashboardStatus/PublicDashboardStatus';
 import PublicDashboardUrl from './PublicDashboardUrl/PublicDashboardUrl';
@@ -57,7 +57,7 @@ function PublicDashboardSettings({
 				/>
 			</div>
 
-			<PublicDashboardCallout />
+			<PublicDashboardHint />
 
 			<PublicDashboardActions
 				isPublic={isPublic}
