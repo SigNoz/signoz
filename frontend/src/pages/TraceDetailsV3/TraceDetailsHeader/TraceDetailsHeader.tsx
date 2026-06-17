@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Button } from '@signozhq/ui/button';
 import {
@@ -8,11 +8,9 @@ import {
 	TooltipTrigger,
 } from '@signozhq/ui/tooltip';
 import { Skeleton } from 'antd';
-import setLocalStorageKey from 'api/browser/localstorage/set';
 import cx from 'classnames';
 import FieldsSelector from 'components/FieldsSelector';
 import HttpStatusBadge from 'components/HttpStatusBadge/HttpStatusBadge';
-import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
 import dayjs from 'dayjs';
@@ -21,7 +19,6 @@ import {
 	ArrowLeft,
 	CalendarClock,
 	ChartPie,
-	CornerUpLeft,
 	Server,
 	Timer,
 } from '@signozhq/icons';
@@ -93,18 +90,6 @@ function TraceDetailsHeader({
 	const setPreviewFields = useTraceStore((s) => s.setPreviewFields);
 
 	const logTraceEvent = useTraceDetailLogEvent('v3', traceID || '');
-	const pageLoadedAtRef = useRef(Date.now());
-
-	const handleSwitchToOldView = useCallback((): void => {
-		logTraceEvent(TraceDetailEvents.ViewSwitched, {
-			[TraceDetailEventKeys.From]: 'v3',
-			[TraceDetailEventKeys.To]: 'v2',
-			[TraceDetailEventKeys.DwellMs]: Date.now() - pageLoadedAtRef.current,
-		});
-		setLocalStorageKey(LOCALSTORAGE.TRACE_DETAILS_PREFER_OLD_VIEW, 'true');
-		const oldUrl = `/trace-old/${traceID}${window.location.search}`;
-		history.replace(oldUrl);
-	}, [traceID, logTraceEvent]);
 
 	const handleToggleAnalytics = useCallback((): void => {
 		logTraceEvent(TraceDetailEvents.AnalyticsPanelToggled, {
@@ -172,20 +157,6 @@ function TraceDetailsHeader({
 						{!isFilterExpanded && (
 							<TooltipProvider>
 								<div className={styles.headerActions}>
-									<TooltipRoot>
-										<TooltipTrigger asChild>
-											<Button
-												variant="ghost"
-												size="icon"
-												color="secondary"
-												aria-label="Switch to legacy trace view"
-												onClick={handleSwitchToOldView}
-											>
-												<CornerUpLeft size={14} />
-											</Button>
-										</TooltipTrigger>
-										<TooltipContent>Switch to legacy trace view</TooltipContent>
-									</TooltipRoot>
 									<TooltipRoot>
 										<TooltipTrigger asChild>
 											<Button

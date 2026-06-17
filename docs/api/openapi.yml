@@ -1357,6 +1357,14 @@ components:
       - appservice
       - containerapp
       - aks
+      - sqldatabase
+      - sqldatabasemi
+      - mysqlflexibleserver
+      - postgresqlflexibleserver
+      - mongodb
+      - cosmosdb
+      - cassandradb
+      - redis
       type: string
     CloudintegrationtypesServiceMetadata:
       properties:
@@ -3620,10 +3628,6 @@ components:
           items:
             $ref: '#/components/schemas/ErrorsResponseerroradditional'
           type: array
-        invalidReferences:
-          items:
-            type: string
-          type: array
         message:
           type: string
         retry:
@@ -3644,6 +3648,10 @@ components:
       properties:
         message:
           type: string
+        suggestions:
+          items:
+            type: string
+          type: array
       type: object
     ErrorsResponseretryjson:
       properties:
@@ -9058,10 +9066,6 @@ paths:
           type: string
       responses:
         "204":
-          content:
-            application/json:
-              schema:
-                type: string
           description: No Content
         "401":
           content:
@@ -9214,10 +9218,6 @@ paths:
               $ref: '#/components/schemas/DashboardtypesUpdatablePublicDashboard'
       responses:
         "204":
-          content:
-            application/json:
-              schema:
-                type: string
           description: No Content
         "401":
           content:
@@ -9812,10 +9812,6 @@ paths:
               $ref: '#/components/schemas/Querybuildertypesv5QueryRangeRequest'
       responses:
         "200":
-          content:
-            application/json:
-              schema:
-                type: string
           description: OK
         "400":
           content:
@@ -11000,10 +10996,6 @@ paths:
           type: string
       responses:
         "204":
-          content:
-            application/json:
-              schema:
-                type: string
           description: No Content
         "401":
           content:
@@ -11117,10 +11109,6 @@ paths:
               $ref: '#/components/schemas/AuthtypesPatchableRole'
       responses:
         "204":
-          content:
-            application/json:
-              schema:
-                type: string
           description: No Content
         "401":
           content:
@@ -11267,10 +11255,6 @@ paths:
               $ref: '#/components/schemas/CoretypesPatchableObjects'
       responses:
         "204":
-          content:
-            application/json:
-              schema:
-                type: string
           description: No Content
         "400":
           content:
@@ -11720,10 +11704,6 @@ paths:
           type: string
       responses:
         "204":
-          content:
-            application/json:
-              schema:
-                type: string
           description: No Content
         "401":
           content:
@@ -11831,10 +11811,6 @@ paths:
               $ref: '#/components/schemas/ServiceaccounttypesPostableServiceAccount'
       responses:
         "204":
-          content:
-            application/json:
-              schema:
-                type: string
           description: No Content
         "400":
           content:
@@ -12016,10 +11992,6 @@ paths:
           type: string
       responses:
         "204":
-          content:
-            application/json:
-              schema:
-                type: string
           description: No Content
         "401":
           content:
@@ -12077,10 +12049,6 @@ paths:
               $ref: '#/components/schemas/ServiceaccounttypesUpdatableFactorAPIKey'
       responses:
         "204":
-          content:
-            application/json:
-              schema:
-                type: string
           description: No Content
         "400":
           content:
@@ -12263,10 +12231,6 @@ paths:
           type: string
       responses:
         "204":
-          content:
-            application/json:
-              schema:
-                type: string
           description: No Content
         "401":
           content:
@@ -12342,10 +12306,6 @@ paths:
               $ref: '#/components/schemas/ServiceaccounttypesPostableServiceAccount'
       responses:
         "204":
-          content:
-            application/json:
-              schema:
-                type: string
           description: No Content
         "404":
           content:
@@ -12837,6 +12797,53 @@ paths:
       summary: Update a span mapper
       tags:
       - spanmapper
+  /api/v1/stats:
+    get:
+      deprecated: false
+      description: This endpoint returns the collected stats for the organization
+      operationId: GetStats
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    additionalProperties: {}
+                    type: object
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get stats
+      tags:
+      - stats
   /api/v1/testChannel:
     post:
       deprecated: true
@@ -13752,10 +13759,6 @@ paths:
           type: string
       responses:
         "204":
-          content:
-            application/json:
-              schema:
-                type: string
           description: No Content
         "400":
           content:
@@ -14001,6 +14004,74 @@ paths:
       summary: Update dashboard (v2)
       tags:
       - dashboard
+  /api/v2/dashboards/{id}/clone:
+    post:
+      deprecated: false
+      description: This endpoint clones an existing v2-shape dashboard. User and integration
+        dashboards can be cloned; system dashboards are rejected. The clone keeps
+        the source's display name, panels, and tags, but gets a freshly generated
+        unique internal name and is always created as an unlocked user dashboard owned
+        by the caller.
+      operationId: CloneDashboardV2
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DashboardtypesGettableDashboardV2'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - EDITOR
+      - tokenizer:
+        - EDITOR
+      summary: Clone dashboard (v2)
+      tags:
+      - dashboard
   /api/v2/dashboards/{id}/lock:
     delete:
       deprecated: false
@@ -14015,10 +14086,6 @@ paths:
           type: string
       responses:
         "204":
-          content:
-            application/json:
-              schema:
-                type: string
           description: No Content
         "400":
           content:
@@ -14071,10 +14138,6 @@ paths:
           type: string
       responses:
         "204":
-          content:
-            application/json:
-              schema:
-                type: string
           description: No Content
         "400":
           content:
@@ -15805,10 +15868,6 @@ paths:
               $ref: '#/components/schemas/MetricsexplorertypesUpdateMetricMetadataRequest'
       responses:
         "200":
-          content:
-            application/json:
-              schema:
-                type: string
           description: OK
         "400":
           content:
@@ -21107,10 +21166,6 @@ paths:
           type: string
       responses:
         "204":
-          content:
-            application/json:
-              schema:
-                type: string
           description: No Content
         "400":
           content:
@@ -21158,10 +21213,6 @@ paths:
           type: string
       responses:
         "204":
-          content:
-            application/json:
-              schema:
-                type: string
           description: No Content
         "400":
           content:
