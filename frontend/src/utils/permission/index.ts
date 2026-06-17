@@ -20,7 +20,8 @@ export type ComponentTypes =
 	| 'add_panel'
 	| 'page_pipelines'
 	| 'edit_locked_dashboard'
-	| 'add_panel_locked_dashboard';
+	| 'add_panel_locked_dashboard'
+	| 'manage_llm_pricing';
 
 export const componentPermission: Record<ComponentTypes, ROLES[]> = {
 	current_org_settings: ['ADMIN'],
@@ -42,6 +43,7 @@ export const componentPermission: Record<ComponentTypes, ROLES[]> = {
 	page_pipelines: ['ADMIN', 'EDITOR'],
 	edit_locked_dashboard: ['ADMIN', 'AUTHOR'],
 	add_panel_locked_dashboard: ['ADMIN', 'AUTHOR'],
+	manage_llm_pricing: ['ADMIN', 'EDITOR', 'AUTHOR'],
 };
 
 export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {

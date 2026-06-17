@@ -1,17 +1,24 @@
 import { useMemo } from 'react';
+import { Button } from '@signozhq/ui/button';
 import { Pagination } from '@signozhq/ui/pagination';
 import { SelectSimple } from '@signozhq/ui/select';
+import { Plus } from '@signozhq/icons';
 import { useListLLMPricingRules } from 'api/generated/services/llmpricingrules';
 import { type ListLLMPricingRulesParams } from 'api/generated/services/sigNoz.schemas';
+import useComponentPermission from 'hooks/useComponentPermission';
 import { parseAsInteger, useQueryState } from 'nuqs';
+import { useAppContext } from 'providers/App/App';
 
 import { PAGE_KEY, PAGE_SIZE } from './constants';
+import ModelCostDrawer from './ModelCostDrawer';
 import ModelCostsTable from './ModelCostsTable';
+import { useModelCostDrawer } from './useModelCostDrawer';
 import type { PricingRule } from './types';
 
-// "Model costs" tab: the priced-model listing, its currency control and
-// pagination. Page lives in the URL (shareable/reload-safe); replace mode
-// keeps paging out of the back-stack, and withDefault(1) omits ?page=1.
+// "Model costs" tab: the priced-model listing, its currency control,
+// pagination, and the add/edit drawer. Page lives in the URL (shareable/
+// reload-safe); replace mode keeps paging out of the back-stack, and
+// withDefault(1) omits ?page=1.
 function ModelCostsTab(): JSX.Element {
 	const [page, setPage] = useQueryState(
 		PAGE_KEY,
@@ -27,8 +34,16 @@ function ModelCostsTab(): JSX.Element {
 
 	const { data, isLoading, isError } = useListLLMPricingRules(listParams);
 
+	const { user } = useAppContext();
+	const [canManagePricing] = useComponentPermission(
+		['manage_llm_pricing'],
+		user.role,
+	);
+
 	const rules: PricingRule[] = useMemo(() => data?.data?.items || [], [data]);
 	const total = data?.data?.total ?? 0;
+
+	const drawer = useModelCostDrawer();
 
 	return (
 		<>
@@ -40,6 +55,18 @@ function ModelCostsTab(): JSX.Element {
 					disabled
 					testId="currency-select"
 				/>
+				{canManagePricing && (
+					<Button
+						variant="solid"
+						color="primary"
+						className="filters-bar__add"
+						prefix={<Plus size={14} />}
+						onClick={(): void => drawer.openForAdd()}
+						testId="add-model-cost-btn"
+					>
+						Add model cost
+					</Button>
+				)}
 			</div>
 
 			{isError && (
@@ -48,13 +75,12 @@ function ModelCostsTab(): JSX.Element {
 				</div>
 			)}
 
-			{/* Read-only listing. Edit/Add wiring + the drawer land in the next PR. */}
 			<ModelCostsTable
 				rules={rules}
 				isLoading={isLoading}
-				selectedRuleId={null}
-				canManage={false}
-				onEdit={(): void => undefined}
+				selectedRuleId={drawer.selectedRuleId}
+				canManage={canManagePricing}
+				onEdit={drawer.openForEdit}
 			/>
 
 			{total > PAGE_SIZE && (
@@ -71,6 +97,20 @@ function ModelCostsTab(): JSX.Element {
 				Showing {rules.length} of {total} model{total === 1 ? '' : 's'}
 				{' · '}All prices per 1M tokens (USD)
 			</footer>
+
+			<ModelCostDrawer
+				isOpen={drawer.isOpen}
+				mode={drawer.mode}
+				draft={drawer.draft}
+				setDraft={drawer.setDraft}
+				onClose={drawer.close}
+				onSave={drawer.save}
+				onDelete={drawer.deleteRule}
+				isSaving={drawer.isSaving}
+				isDeleting={drawer.isDeleting}
+				saveError={drawer.saveError}
+				canManage={canManagePricing}
+			/>
 		</>
 	);
 }
