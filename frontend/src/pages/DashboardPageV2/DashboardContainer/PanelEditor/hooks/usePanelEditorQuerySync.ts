@@ -16,7 +16,7 @@ interface UsePanelEditorQuerySyncArgs {
 	draft: DashboardtypesPanelDTO;
 	panelType: PANEL_TYPES;
 	setSpec: (next: DashboardtypesPanelSpecDTO) => void;
-	/** Re-fetch the preview when the query is unchanged. */
+	/** Re-fetch the preview when the query is unchanged (Stage & Run on a no-op). */
 	refetch: () => void;
 }
 
@@ -26,10 +26,10 @@ interface UsePanelEditorQuerySyncApi {
 }
 
 /**
- * Connects the shared query builder (global `QueryBuilderProvider`, URL-synced)
- * to the V2 editor draft: seeds the builder from the panel on mount, and commits
- * the active query into `draft.spec.queries` (what the preview fetches) on a
- * query-type switch or Stage & Run.
+ * Bridges the shared query builder (global `QueryBuilderProvider`, URL-synced) and
+ * the V2 editor draft: seeds the builder from the saved panel, then commits the
+ * active query into `draft.spec.queries` (what the preview fetches) on a query-type
+ * or datasource switch and on Stage & Run.
  */
 export function usePanelEditorQuerySync({
 	draft,
@@ -37,59 +37,75 @@ export function usePanelEditorQuerySync({
 	setSpec,
 	refetch,
 }: UsePanelEditorQuerySyncArgs): UsePanelEditorQuerySyncApi {
-	const { currentQuery, stagedQuery, handleRunQuery } = useQueryBuilder();
+	const { currentQuery, handleRunQuery } = useQueryBuilder();
 
-	// Saved queries verbatim + their V1 form used to seed the builder. Captured
-	// once — the draft itself is seeded by usePanelEditorDraft.
-	// eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only
+	// Saved queries, captured once: seed the builder and serve as the restore target.
+	// eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only snapshot
 	const savedQueries = useMemo(() => draft.spec?.queries ?? [], []);
 	const seedQuery = useMemo(
 		() => fromPerses(savedQueries, panelType),
 		[savedQueries, panelType],
 	);
-	useShareBuilderUrl({ defaultValue: seedQuery });
+	// Open the builder from the SAVED panel, discarding any stale URL query left by
+	// a prior edit/refresh — otherwise the QB shows the URL query while the preview
+	// keeps fetching the saved one, and the dirty baseline gets captured from the URL
+	// (so switching back to that datasource reads as "unchanged" and never commits).
+	// Force-reset on the first render only; after that the URL syncs normally.
+	const isInitialRenderRef = useRef(true);
+	useShareBuilderUrl({
+		defaultValue: seedQuery,
+		forceReset: isInitialRenderRef.current,
+	});
+	useEffect(() => {
+		isInitialRenderRef.current = false;
+	}, []);
 
-	// Change-detection baseline: the provider's normalized form of the saved
-	// query, published as the first `stagedQuery` on this route (cleared on route
-	// change, so never stale). Comparing against this — not the raw `fromPerses`
-	// seed — stops provider normalization from reading as an edit.
-	const baselineRef = useRef<Query | null>(null);
-	if (!baselineRef.current && stagedQuery) {
-		baselineRef.current = stagedQuery;
-	}
-
-	// Write `query` into the draft, or restore the saved queries when it isn't a
-	// genuine edit (so opening / re-running doesn't dirty the draft). Returns
-	// whether the draft changed.
+	// Commit the live query into the draft (what the preview fetches). The dirty
+	// check compares against the SAVED query (`seedQuery`), not the URL-synced
+	// staged query — a staged query can carry stale state across a refresh, which
+	// would make a real datasource switch read as "unchanged" and silently revert.
+	// Unchanged from saved → restore the saved queries (don't dirty the draft);
+	// changed → commit the live query. Returns whether the draft changed.
 	const commitQuery = useCallback(
 		(query: Query): boolean => {
-			const baseline = baselineRef.current;
-			const next =
-				baseline && getIsQueryModified(query, baseline)
-					? toPerses(query, panelType)
-					: savedQueries;
+			const next = getIsQueryModified(query, seedQuery)
+				? toPerses(query, panelType)
+				: savedQueries;
 			if (isEqual(next, draft.spec?.queries ?? [])) {
 				return false;
 			}
 			setSpec({ ...draft.spec, queries: next });
 			return true;
 		},
-		[panelType, savedQueries, draft.spec, setSpec],
+		[seedQuery, panelType, savedQueries, draft.spec, setSpec],
 	);
 
-	// Commit on a query-type switch so the preview matches the selected tab. Refs
-	// read the latest query/commit while the effect fires only on a type change.
+	// Latest query/commit, read by the structural-change effect without re-subscribing.
 	const commitRef = useRef(commitQuery);
 	commitRef.current = commitQuery;
 	const queryRef = useRef(currentQuery);
 	queryRef.current = currentQuery;
-	useEffect(() => {
-		commitRef.current(queryRef.current);
-		// eslint-disable-next-line react-hooks/exhaustive-deps -- type change only
-	}, [currentQuery.queryType]);
 
-	// Stage & Run / ⌘↵: stage (V1 URL + step-interval semantics), commit, and
-	// re-fetch when unchanged so the same query can be re-run.
+	// Re-commit on a query-type or datasource switch so the preview refetches the
+	// structurally-changed query. Skip mount: the draft already holds the saved
+	// queries and the builder is being force-reset to them.
+	const dataSourceSignature = useMemo(
+		() =>
+			(currentQuery.builder?.queryData ?? []).map((q) => q.dataSource).join(','),
+		[currentQuery.builder],
+	);
+	const didMountRef = useRef(false);
+	useEffect(() => {
+		if (!didMountRef.current) {
+			didMountRef.current = true;
+			return;
+		}
+		commitRef.current(queryRef.current);
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- structural change only
+	}, [currentQuery.queryType, dataSourceSignature]);
+
+	// Stage & Run / ⌘↵: stage, commit, and re-fetch when unchanged so the same query
+	// can be re-run.
 	const runQuery = useCallback((): void => {
 		handleRunQuery();
 		if (!commitQuery(currentQuery)) {

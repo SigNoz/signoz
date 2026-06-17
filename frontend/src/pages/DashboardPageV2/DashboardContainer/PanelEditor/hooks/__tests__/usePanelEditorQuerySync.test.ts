@@ -110,7 +110,7 @@ describe('usePanelEditorQuerySync', () => {
 		return { result, setSpec, refetch, rerender };
 	}
 
-	it('seeds the builder from the saved queries via the URL', () => {
+	it('force-resets the builder to the saved queries on mount (discards stale URL)', () => {
 		setup();
 		expect(mockFromPerses).toHaveBeenCalledWith(
 			SAVED_QUERIES,
@@ -118,6 +118,7 @@ describe('usePanelEditorQuerySync', () => {
 		);
 		expect(mockUseShareBuilderUrl).toHaveBeenCalledWith({
 			defaultValue: SEED_V1,
+			forceReset: true,
 		});
 	});
 
@@ -128,14 +129,16 @@ describe('usePanelEditorQuerySync', () => {
 		expect(refetch).not.toHaveBeenCalled();
 	});
 
-	it('compares the live query against the provider baseline (first stagedQuery)', () => {
+	it('compares the live query against the saved query (seed), not the staged query', () => {
 		const currentQuery = { id: 'current', queryType: 'builder' } as Query;
 		mockUseQueryBuilder.mockReturnValue(builderState({ currentQuery }));
 
 		const { result } = setup();
 		result.current.runQuery();
 
-		expect(mockGetIsQueryModified).toHaveBeenCalledWith(currentQuery, STAGED_V1);
+		// Baseline is the saved seed — a stale staged/URL query must not be the
+		// reference, or a real datasource switch would read as "unchanged".
+		expect(mockGetIsQueryModified).toHaveBeenCalledWith(currentQuery, SEED_V1);
 	});
 
 	describe('runQuery', () => {
@@ -170,6 +173,23 @@ describe('usePanelEditorQuerySync', () => {
 
 			expect(setSpec).not.toHaveBeenCalled();
 			expect(refetch).toHaveBeenCalledTimes(1);
+		});
+
+		it('commits a datasource switch even when the staged query is stale (no revert to saved)', () => {
+			// A stale staged query (e.g. URL-restored after refresh) must not be used
+			// as the baseline; the switch is detected against the saved seed and the
+			// live query is committed so the preview fetches it.
+			mockUseQueryBuilder.mockReturnValue(builderState({ stagedQuery: null }));
+			mockGetIsQueryModified.mockReturnValue(true);
+			const { result, setSpec, refetch } = setup();
+
+			result.current.runQuery();
+
+			expect(setSpec).toHaveBeenCalledWith({
+				...makeDraft().spec,
+				queries: CONVERTED_QUERIES,
+			});
+			expect(refetch).not.toHaveBeenCalled();
 		});
 	});
 
@@ -206,6 +226,48 @@ describe('usePanelEditorQuerySync', () => {
 
 			// Same query type, different object → effect must not re-fire.
 			state.currentQuery = { id: 'b', queryType: 'builder' } as Query;
+			rerender();
+
+			expect(setSpec).not.toHaveBeenCalled();
+		});
+	});
+
+	describe('datasource switch', () => {
+		const withSource = (id: string, dataSource: string): Query =>
+			({
+				id,
+				queryType: 'builder',
+				builder: { queryData: [{ dataSource }] },
+			}) as unknown as Query;
+
+		it('commits the active query when a query datasource changes', () => {
+			const state = builderState({ currentQuery: withSource('a', 'logs') });
+			mockUseQueryBuilder.mockImplementation(() => state);
+			mockGetIsQueryModified.mockReturnValue(true);
+
+			const { setSpec, rerender } = setup();
+			setSpec.mockClear();
+
+			// Switch datasource logs → traces → the effect should commit (→ refetch).
+			state.currentQuery = withSource('b', 'traces');
+			rerender();
+
+			expect(setSpec).toHaveBeenCalledWith({
+				...makeDraft().spec,
+				queries: CONVERTED_QUERIES,
+			});
+		});
+
+		it('does not commit when the datasource is unchanged', () => {
+			const state = builderState({ currentQuery: withSource('a', 'logs') });
+			mockUseQueryBuilder.mockImplementation(() => state);
+			mockGetIsQueryModified.mockReturnValue(true);
+
+			const { setSpec, rerender } = setup();
+			setSpec.mockClear();
+
+			// Same datasource, different object → effect must not re-fire.
+			state.currentQuery = withSource('b', 'logs');
 			rerender();
 
 			expect(setSpec).not.toHaveBeenCalled();
