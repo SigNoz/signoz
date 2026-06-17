@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import { Pagination } from '@signozhq/ui/pagination';
@@ -7,13 +7,18 @@ import { Tabs } from '@signozhq/ui/tabs';
 import { Plus, Search } from '@signozhq/icons';
 import { useListLLMPricingRules } from 'api/generated/services/llmpricingrules';
 import useComponentPermission from 'hooks/useComponentPermission';
+import useDebounce from 'hooks/useDebounce';
 import { useAppContext } from 'providers/App/App';
 
 import ModelCostDrawer from './ModelCostDrawer';
 import ModelCostsTable from './ModelCostsTable';
 import { useModelCostDrawer } from './useModelCostDrawer';
-import type { PricingRule, SourceFilter } from './types';
-import { filterRules } from './utils';
+import { useModelPricingFilters } from './useModelPricingFilters';
+import type {
+	ListModelPricingParams,
+	PricingRule,
+	SourceFilter,
+} from './types';
 
 import './LLMObservabilityModelPricing.styles.scss';
 
@@ -32,15 +37,30 @@ const CURRENCY_OPTIONS = [
 const PAGE_SIZE = 20;
 
 function LLMObservabilityModelPricing(): JSX.Element {
-	const [search, setSearch] = useState<string>('');
-	const [source, setSource] = useState<SourceFilter>('all');
+	const { search, source, page, setSearch, setSource, setPage } =
+		useModelPricingFilters();
 	const [currency, setCurrency] = useState<string>('USD');
-	const [page, setPage] = useState<number>(1);
 
-	const { data, isLoading, isError } = useListLLMPricingRules({
+	// Controlled locally for instant typing feedback; the URL `q` param (which
+	// drives the request) is updated on a debounce so we don't fire a request
+	// per keystroke.
+	const [searchInput, setSearchInput] = useState<string>(search);
+	const debouncedSearch = useDebounce(searchInput, 400);
+
+	useEffect(() => {
+		if (debouncedSearch.trim() !== search) {
+			setSearch(debouncedSearch);
+		}
+	}, [debouncedSearch, search, setSearch]);
+
+	const listParams: ListModelPricingParams = {
 		offset: (page - 1) * PAGE_SIZE,
 		limit: PAGE_SIZE,
-	});
+		...(search ? { q: search } : {}),
+		...(source !== 'all' ? { source } : {}),
+	};
+
+	const { data, isLoading, isError } = useListLLMPricingRules(listParams);
 
 	const { user } = useAppContext();
 	const [canManagePricing] = useComponentPermission(
@@ -51,16 +71,7 @@ function LLMObservabilityModelPricing(): JSX.Element {
 	const rules: PricingRule[] = useMemo(() => data?.data?.items || [], [data]);
 	const total = data?.data?.total ?? 0;
 
-	const filteredRules = useMemo(
-		() => filterRules(rules, search, source),
-		[rules, search, source],
-	);
-
 	const drawer = useModelCostDrawer();
-
-	// Search/source filter the current page client-side (the list endpoint only
-	// supports offset/limit), so reset to the first page when they change.
-	const resetToFirstPage = (): void => setPage(1);
 
 	return (
 		<div
@@ -93,20 +104,14 @@ function LLMObservabilityModelPricing(): JSX.Element {
 					className="filters-bar__search"
 					placeholder="Search by model or provider…"
 					prefix={<Search size={14} />}
-					value={search}
-					onChange={(event): void => {
-						setSearch(event.target.value);
-						resetToFirstPage();
-					}}
+					value={searchInput}
+					onChange={(event): void => setSearchInput(event.target.value)}
 					testId="search-input"
 				/>
 				<SelectSimple
 					className="filters-bar__source"
 					value={source}
-					onChange={(value): void => {
-						setSource(value as SourceFilter);
-						resetToFirstPage();
-					}}
+					onChange={(value): void => setSource(value as SourceFilter)}
 					items={SOURCE_OPTIONS}
 					testId="source-select"
 				/>
@@ -138,7 +143,7 @@ function LLMObservabilityModelPricing(): JSX.Element {
 			)}
 
 			<ModelCostsTable
-				rules={filteredRules}
+				rules={rules}
 				isLoading={isLoading}
 				selectedRuleId={drawer.selectedRuleId}
 				canManage={canManagePricing}
@@ -156,7 +161,7 @@ function LLMObservabilityModelPricing(): JSX.Element {
 			)}
 
 			<footer className="page-footer">
-				Showing {filteredRules.length} of {total} model{total === 1 ? '' : 's'}
+				Showing {rules.length} of {total} model{total === 1 ? '' : 's'}
 				{' · '}All prices per 1M tokens (USD)
 			</footer>
 

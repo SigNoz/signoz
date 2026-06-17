@@ -5,7 +5,6 @@ import {
 
 import type { PricingRule } from '../types';
 import {
-	filterRules,
 	formatPricePerMillion,
 	getCanonicalId,
 	getExtraBuckets,
@@ -86,34 +85,6 @@ describe('utils', () => {
 			expect(getRelativeLastSeen(makeRule({ updatedAt: recent }))).toMatch(
 				/minutes? ago/,
 			);
-		});
-	});
-
-	describe('filterRules', () => {
-		const auto = makeRule({ id: 'r1', modelName: 'gpt-4o', isOverride: false });
-		const override = makeRule({
-			id: 'r2',
-			modelName: 'llama-3',
-			provider: 'Self-hosted',
-			modelPattern: ['llama-3'],
-			isOverride: true,
-		});
-
-		it('returns everything when no filters are applied', () => {
-			expect(filterRules([auto, override], '', 'all')).toHaveLength(2);
-		});
-
-		it('narrows by source = override', () => {
-			expect(filterRules([auto, override], '', 'override')).toStrictEqual([
-				override,
-			]);
-		});
-
-		it('narrows by free-text search across model and provider', () => {
-			expect(filterRules([auto, override], 'self', 'all')).toStrictEqual([
-				override,
-			]);
-			expect(filterRules([auto, override], 'gpt-4', 'all')).toStrictEqual([auto]);
 		});
 	});
 });

@@ -13,7 +13,6 @@ import type {
 	DrawerMode,
 	ExtraBucket,
 	PricingRule,
-	SourceFilter,
 	ValidationResult,
 } from './types';
 
@@ -56,30 +55,6 @@ export const getRelativeLastSeen = (rule: PricingRule): string => {
 	const ts = rule.updatedAt || rule.syncedAt || rule.createdAt;
 	const parsed = ts ? dayjs(ts) : null;
 	return parsed?.isValid() ? parsed.fromNow() : '—';
-};
-
-export const filterRules = (
-	rules: PricingRule[],
-	search: string,
-	source: SourceFilter,
-): PricingRule[] => {
-	const normalized = lc(search.trim());
-	return rules.filter((rule) => {
-		if (source === 'auto' && rule.isOverride) {
-			return false;
-		}
-		if (source === 'override' && !rule.isOverride) {
-			return false;
-		}
-		if (!normalized) {
-			return true;
-		}
-		return (
-			lc(rule.modelName).includes(normalized) ||
-			lc(rule.provider).includes(normalized) ||
-			(rule.modelPattern || []).some((pattern) => lc(pattern).includes(normalized))
-		);
-	});
 };
 
 export const getCanonicalId = (rule: PricingRule): string => {

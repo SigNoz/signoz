@@ -3,7 +3,7 @@ import {
 	type LlmpricingruletypesLLMPricingRuleDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { rest, server } from 'mocks-server/server';
-import { fireEvent, render, screen } from 'tests/test-utils';
+import { fireEvent, render, screen, waitFor } from 'tests/test-utils';
 
 import LLMObservabilityModelPricing from '../LLMObservabilityModelPricing';
 
@@ -67,7 +67,21 @@ describe('LLMObservabilityModelPricing', () => {
 		expect(screen.getByText('openai:gpt-4o')).toBeInTheDocument();
 	});
 
-	it('filters rules by the search input', async () => {
+	it('search is server-driven: typing sends the q param to the list request', async () => {
+		const requestedQ: (string | null)[] = [];
+		server.use(
+			rest.get(ENDPOINT, (req, res, ctx) => {
+				requestedQ.push(req.url.searchParams.get('q'));
+				return res(
+					ctx.status(200),
+					ctx.json({
+						status: 'success',
+						data: { items: mockRules, limit: 20, offset: 0, total: mockRules.length },
+					}),
+				);
+			}),
+		);
+
 		render(<LLMObservabilityModelPricing />);
 
 		await screen.findByText('gpt-4o');
@@ -76,8 +90,39 @@ describe('LLMObservabilityModelPricing', () => {
 			target: { value: 'llama' },
 		});
 
-		expect(screen.queryByText('gpt-4o')).not.toBeInTheDocument();
-		expect(screen.getByText('llama-3.1-70b')).toBeInTheDocument();
+		// Debounced, so the request fires shortly after typing stops.
+		await waitFor(() => expect(requestedQ).toContain('llama'));
+	});
+
+	// TODO: drive this through the actual source <SelectSimple> UI (open the
+	// dropdown + click "User override") instead of seeding the URL. The radix
+	// Select popover doesn't open under jsdom, so for now we assert the wiring
+	// via the URL param. Fix once we have a reliable way to interact with the
+	// Select in tests.
+	it('source filter is server-driven: the URL source param is sent to the list request', async () => {
+		const requestedSource: (string | null)[] = [];
+		server.use(
+			rest.get(ENDPOINT, (req, res, ctx) => {
+				requestedSource.push(req.url.searchParams.get('source'));
+				return res(
+					ctx.status(200),
+					ctx.json({
+						status: 'success',
+						data: { items: mockRules, limit: 20, offset: 0, total: mockRules.length },
+					}),
+				);
+			}),
+		);
+
+		render(
+			<LLMObservabilityModelPricing />,
+			{},
+			{ initialRoute: '/?source=override' },
+		);
+
+		await screen.findByText('gpt-4o');
+
+		await waitFor(() => expect(requestedSource).toContain('override'));
 	});
 
 	it('opens the drawer in Add mode when the Add button is clicked', async () => {
