@@ -9,7 +9,7 @@ const (
 	MaxExportBytesLimit = 10 * 1024 * 1024 * 1024 // 10 GB
 
 	// Query Limits.
-	ChunkSize                         = 5_000 // 5k
+	ChunkSize                         = 10_000
 	ClickhouseExportRawDataMaxThreads = 2
 	ClickhouseExportRawDataTimeout    = 10 * time.Minute
 )
