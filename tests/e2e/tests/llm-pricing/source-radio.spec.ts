@@ -19,102 +19,119 @@ test.describe('LLM Pricing — Source radio behaviour', () => {
 	test('TC-15 Override → Auto triggers reset-confirm; Keep cancels it', async ({
 		authedPage: page,
 	}) => {
-		await gotoLlmPricingPage(page);
-		await page.getByTestId('add-model-cost-btn').click();
-		await expect(page.getByText('Add model cost').first()).toBeVisible();
+		// Auto-populated is disabled in Add mode, so the Override→Auto switch is
+		// only reachable when editing an existing override rule.
+		const ruleId = await createPricingRuleViaApi(page, {
+			modelName: 'e2e-src-switch',
+			provider: 'OpenAI',
+			isOverride: true,
+			inputCost: 25,
+			outputCost: 75,
+		});
+		try {
+			await gotoLlmPricingPage(page);
+			await page.getByTestId(`edit-rule-${ruleId}`).click();
+			await expect(page.getByText('Edit model cost').first()).toBeVisible();
 
-		await page.getByTestId('drawer-model-id-input').fill('e2e-src-switch');
-		await page.locator('[data-testid="drawer-input-cost"] input').fill('25');
-		await page.locator('[data-testid="drawer-output-cost"] input').fill('75');
+			// Confirm starting state: Override checked
+			await expect(page.getByTestId('drawer-source-override')).toHaveAttribute(
+				'data-state',
+				'checked',
+			);
 
-		// Confirm starting state: Override checked
-		await expect(page.getByTestId('drawer-source-override')).toHaveAttribute(
-			'data-state',
-			'checked',
-		);
+			// Click Auto — should trigger the reset-confirm dialog
+			await page.getByTestId('drawer-source-auto').click();
 
-		// Click Auto — should trigger the reset-confirm dialog
-		await page.getByTestId('drawer-source-auto').click();
+			const resetDialog = page.locator(
+				'[role="dialog"][aria-label="Reset to default pricing"]',
+			);
+			await expect(resetDialog).toBeVisible();
+			await expect(page.getByTestId('drawer-reset-keep-btn')).toBeVisible();
+			await expect(page.getByTestId('drawer-reset-confirm-btn')).toBeVisible();
 
-		const resetDialog = page.locator(
-			'[role="dialog"][aria-label="Reset to default pricing"]',
-		);
-		await expect(resetDialog).toBeVisible();
-		(await expect(
-			resetDialog
-				.getByText(
-					'Reset to default pricing? Custom values will be discarded. it might take 24 hours for changes to take effect..',
-				)
-				.toBeVisible(),
-		),
-			await expect(page.getByTestId('drawer-reset-keep-btn')).toBeVisible());
-		await expect(page.getByTestId('drawer-reset-confirm-btn')).toBeVisible();
+			// While confirm is showing, the switch has NOT been applied yet
+			await expect(page.getByTestId('drawer-source-auto')).toHaveAttribute(
+				'data-state',
+				'unchecked',
+			);
+			await expect(page.getByTestId('drawer-source-override')).toHaveAttribute(
+				'data-state',
+				'checked',
+			);
 
-		// While confirm is showing, the switch has NOT been applied yet
-		await expect(page.getByTestId('drawer-source-auto')).toHaveAttribute(
-			'data-state',
-			'unchecked',
-		);
-		await expect(page.getByTestId('drawer-source-override')).toHaveAttribute(
-			'data-state',
-			'checked',
-		);
-
-		// Click Keep — dialog dismisses without changing the radio
-		await page.getByTestId('drawer-reset-keep-btn').click();
-		await expect(resetDialog).not.toBeVisible();
-		await expect(page.getByTestId('drawer-source-override')).toHaveAttribute(
-			'data-state',
-			'checked',
-		);
-		await expect(
-			page.locator('[data-testid="drawer-input-cost"] input'),
-		).toHaveValue('25');
-		await expect(
-			page.locator('[data-testid="drawer-output-cost"] input'),
-		).toHaveValue('75');
-
-		await page.getByTestId('drawer-cancel-btn').click();
+			// Click Keep — dialog dismisses without changing the radio
+			await page.getByTestId('drawer-reset-keep-btn').click();
+			await expect(resetDialog).not.toBeVisible();
+			await expect(page.getByTestId('drawer-source-override')).toHaveAttribute(
+				'data-state',
+				'checked',
+			);
+			await expect(
+				page.locator('[data-testid="drawer-input-cost"] input'),
+			).toHaveValue('25');
+			await expect(
+				page.locator('[data-testid="drawer-output-cost"] input'),
+			).toHaveValue('75');
+		} finally {
+			await page
+				.getByTestId('drawer-cancel-btn')
+				.click()
+				.catch(() => undefined);
+			const token = await authToken(page);
+			await deletePricingRuleViaApi(page.request, ruleId, token);
+		}
 	});
 
 	test('TC-16 Override → Auto then Reset clears values and switches to auto mode', async ({
 		authedPage: page,
 	}) => {
-		await gotoLlmPricingPage(page);
-		await page.getByTestId('add-model-cost-btn').click();
-		await expect(page.getByText('Add model cost').first()).toBeVisible();
+		// Reachable only in Edit mode (Auto is disabled when adding a new model).
+		const ruleId = await createPricingRuleViaApi(page, {
+			modelName: 'e2e-src-reset',
+			provider: 'OpenAI',
+			isOverride: true,
+			inputCost: 25,
+			outputCost: 75,
+		});
+		try {
+			await gotoLlmPricingPage(page);
+			await page.getByTestId(`edit-rule-${ruleId}`).click();
+			await expect(page.getByText('Edit model cost').first()).toBeVisible();
 
-		await page.getByTestId('drawer-model-id-input').fill('e2e-src-reset');
-		await page.locator('[data-testid="drawer-input-cost"] input').fill('25');
+			await page.getByTestId('drawer-source-auto').click();
+			const resetDialog = page.locator(
+				'[role="dialog"][aria-label="Reset to default pricing"]',
+			);
+			await expect(resetDialog).toBeVisible();
 
-		await page.getByTestId('drawer-source-auto').click();
-		const resetDialog = page.locator(
-			'[role="dialog"][aria-label="Reset to default pricing"]',
-		);
-		await expect(resetDialog).toBeVisible();
+			await page.getByTestId('drawer-reset-confirm-btn').click();
+			await expect(resetDialog).not.toBeVisible();
 
-		await page.getByTestId('drawer-reset-confirm-btn').click();
-		await expect(resetDialog).not.toBeVisible();
+			// Radio has switched to Auto
+			await expect(page.getByTestId('drawer-source-auto')).toHaveAttribute(
+				'data-state',
+				'checked',
+			);
+			await expect(page.getByTestId('drawer-source-override')).toHaveAttribute(
+				'data-state',
+				'unchecked',
+			);
 
-		// Radio has switched to Auto
-		await expect(page.getByTestId('drawer-source-auto')).toHaveAttribute(
-			'data-state',
-			'checked',
-		);
-		await expect(page.getByTestId('drawer-source-override')).toHaveAttribute(
-			'data-state',
-			'unchecked',
-		);
-
-		// Pricing inputs are now read-only
-		await expect(
-			page.locator('[data-testid="drawer-input-cost"] input'),
-		).toBeDisabled();
-		await expect(
-			page.locator('[data-testid="drawer-output-cost"] input'),
-		).toBeDisabled();
-
-		await page.getByTestId('drawer-cancel-btn').click();
+			// Pricing inputs are now read-only
+			await expect(
+				page.locator('[data-testid="drawer-input-cost"] input'),
+			).toBeDisabled();
+			await expect(
+				page.locator('[data-testid="drawer-output-cost"] input'),
+			).toBeDisabled();
+		} finally {
+			await page
+				.getByTestId('drawer-cancel-btn')
+				.click()
+				.catch(() => undefined);
+			const token = await authToken(page);
+			await deletePricingRuleViaApi(page.request, ruleId, token);
+		}
 	});
 
 	test('TC-17 Auto → Override switching works without confirm', async ({

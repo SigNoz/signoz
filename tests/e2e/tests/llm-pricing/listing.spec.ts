@@ -118,54 +118,90 @@ test.describe('LLM Pricing — Listing', () => {
 		await expect(page.getByTestId(`edit-rule-${ruleBId}`)).toBeVisible();
 	});
 
-	test('TC-03 search filters rows by model name and provider', async ({
+	// NOTE: search/source filtering is now backend-driven — the FE sends `q` /
+	// `source` on the list request and the backend does the filtering (support
+	// pending). These tests therefore assert the request is wired correctly
+	// rather than that rows are filtered client-side. Once the BE honours the
+	// params, add row-level assertions back (rows hidden, "Showing N models").
+	const isListGet = (url: string): boolean => url.includes('llm_pricing_rules');
+
+	test('TC-03 search is server-driven — typing sends the q param to the list request', async ({
 		authedPage: page,
 	}) => {
 		await gotoLlmPricingPage(page);
 
-		// Search by model name prefix
+		// Search text (debounced) is wired into the request as `q`.
+		const byModelReq = page.waitForRequest(
+			(r) =>
+				isListGet(r.url()) &&
+				r.method() === 'GET' &&
+				new URL(r.url()).searchParams.get('q') === 'e2e-gpt',
+		);
 		await page.getByTestId('search-input').fill('e2e-gpt');
-		await expect(page.getByTestId(`model-cell-name-${ruleAId}`)).toBeVisible();
-		await expect(page.getByTestId(`model-cell-name-${ruleBId}`)).not.toBeVisible();
-		await expect(page.getByText(/Showing 1 model[^s]/)).toBeVisible();
+		expect(new URL((await byModelReq).url()).searchParams.get('q')).toBe('e2e-gpt');
 
-		// Search by provider (case-insensitive)
+		// A different term is passed through verbatim.
+		const byProviderReq = page.waitForRequest(
+			(r) =>
+				isListGet(r.url()) &&
+				r.method() === 'GET' &&
+				new URL(r.url()).searchParams.get('q') === 'anthropic',
+		);
 		await page.getByTestId('search-input').fill('anthropic');
-		await expect(page.getByTestId(`model-cell-name-${ruleBId}`)).toBeVisible();
-		await expect(page.getByTestId(`model-cell-name-${ruleAId}`)).not.toBeVisible();
-		await expect(page.getByText(/Showing 1 model[^s]/)).toBeVisible();
+		expect(new URL((await byProviderReq).url()).searchParams.get('q')).toBe(
+			'anthropic',
+		);
 
-		// Clear search restores both rows
+		// Clearing the search drops the `q` param.
+		const clearedReq = page.waitForRequest(
+			(r) =>
+				isListGet(r.url()) &&
+				r.method() === 'GET' &&
+				!new URL(r.url()).searchParams.has('q'),
+		);
 		await page.getByTestId('search-input').fill('');
-		await expect(page.getByTestId(`model-cell-name-${ruleAId}`)).toBeVisible();
-		await expect(page.getByTestId(`model-cell-name-${ruleBId}`)).toBeVisible();
-		await expect(page.getByText(/Showing 2 models/)).toBeVisible();
+		expect(new URL((await clearedReq).url()).searchParams.has('q')).toBe(false);
 	});
 
-	test('TC-04 source filter narrows the table to auto-only or override-only', async ({
+	test('TC-04 source filter is server-driven — selecting a source sends the source param', async ({
 		authedPage: page,
 	}) => {
 		await gotoLlmPricingPage(page);
 
-		// Filter to auto-populated only
+		// Auto-populated → source=auto
+		const autoReq = page.waitForRequest(
+			(r) =>
+				isListGet(r.url()) &&
+				r.method() === 'GET' &&
+				new URL(r.url()).searchParams.get('source') === 'auto',
+		);
 		await page.getByTestId('source-select').click();
 		await page.getByText('Auto-populated').click();
-		await expect(page.getByTestId(`model-cell-name-${ruleAId}`)).toBeVisible();
-		await expect(page.getByTestId(`model-cell-name-${ruleBId}`)).not.toBeVisible();
-		await expect(page.getByText(/Showing 1 model[^s]/)).toBeVisible();
+		expect(new URL((await autoReq).url()).searchParams.get('source')).toBe('auto');
 
-		// Filter to user override only
+		// User override → source=override
+		const overrideReq = page.waitForRequest(
+			(r) =>
+				isListGet(r.url()) &&
+				r.method() === 'GET' &&
+				new URL(r.url()).searchParams.get('source') === 'override',
+		);
 		await page.getByTestId('source-select').click();
 		await page.getByText('User override').click();
-		await expect(page.getByTestId(`model-cell-name-${ruleBId}`)).toBeVisible();
-		await expect(page.getByTestId(`model-cell-name-${ruleAId}`)).not.toBeVisible();
-		await expect(page.getByText(/Showing 1 model[^s]/)).toBeVisible();
+		expect(new URL((await overrideReq).url()).searchParams.get('source')).toBe(
+			'override',
+		);
 
-		// Reset to all
+		// Source: All → the source param is omitted (default kept out of the URL)
+		const allReq = page.waitForRequest(
+			(r) =>
+				isListGet(r.url()) &&
+				r.method() === 'GET' &&
+				!new URL(r.url()).searchParams.has('source'),
+		);
 		await page.getByTestId('source-select').click();
 		await page.getByText('Source: All').click();
-		await expect(page.getByTestId(`model-cell-name-${ruleAId}`)).toBeVisible();
-		await expect(page.getByTestId(`model-cell-name-${ruleBId}`)).toBeVisible();
+		expect(new URL((await allReq).url()).searchParams.has('source')).toBe(false);
 	});
 });
 

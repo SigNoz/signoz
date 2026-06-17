@@ -56,12 +56,14 @@ function ExtraPricingBuckets({
 						type="number"
 						min={0}
 						step={0.01}
-						value={pricing[bucket.key] ?? ''}
+						value={pricing[bucket.key] ?? 0}
 						placeholder="0.00"
 						disabled={isReadOnly}
 						onChange={(e): void =>
+							// Empty coerces to 0 (not null) so editing never makes the row
+							// vanish — removal is explicit via the trash button.
 							onChange({
-								[bucket.key]: parsePricingAmount(e.target.value),
+								[bucket.key]: parsePricingAmount(e.target.value) ?? 0,
 							} as Partial<Pricing>)
 						}
 						testId={`drawer-${bucket.testId}-cost`}

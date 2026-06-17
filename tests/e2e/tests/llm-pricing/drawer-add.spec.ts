@@ -33,6 +33,9 @@ test.describe('LLM Pricing — Add drawer', () => {
 			'data-state',
 			'unchecked',
 		);
+		// Auto-populated is disabled in Add mode — there's no SigNoz default to
+		// fall back to for a brand-new model.
+		await expect(page.getByTestId('drawer-source-auto')).toBeDisabled();
 
 		// Pricing defaults to 0 (Ant InputNumber wraps a real <input>)
 		await expect(
@@ -166,7 +169,7 @@ test.describe('LLM Pricing — Add drawer', () => {
 		await deletePricingRuleViaApi(page.request, createdId, token);
 	});
 
-	test('TC-10 cache-mode select appears only when cache bucket has a value', async ({
+	test('TC-10 cache bucket adds via the picker, toggles cache-mode, and removes via trash', async ({
 		authedPage: page,
 	}) => {
 		await gotoLlmPricingPage(page);
@@ -175,29 +178,32 @@ test.describe('LLM Pricing — Add drawer', () => {
 
 		await page.getByTestId('drawer-model-id-input').fill('e2e-cache-test');
 
-		// Cache mode is hidden before any cache bucket value is set
+		// No bucket yet → its input and the cache-mode select are hidden; only the
+		// "Add pricing bucket" button shows.
+		await expect(page.getByTestId('drawer-cache-read-cost')).not.toBeVisible();
 		await expect(page.getByTestId('drawer-cache-mode')).not.toBeVisible();
+		await expect(page.getByTestId('drawer-add-bucket-btn')).toBeVisible();
 
-		// Set cache_read → cache-mode select must appear
-		await page.locator('[data-testid="drawer-cache-read-cost"] input').fill('0.30');
-		await page.locator('[data-testid="drawer-cache-read-cost"] input').press('Tab');
+		// Add cache_read from the picker
+		await page.getByTestId('drawer-add-bucket-btn').click();
+		await page.getByTestId('drawer-add-bucket-cache-read').click();
+
+		// The bucket input and cache-mode select appear; cache mode defaults to "Unknown"
+		await expect(page.getByTestId('drawer-cache-read-cost')).toBeVisible();
 		await expect(page.getByTestId('drawer-cache-mode')).toBeVisible();
-
-		// Cache mode defaults to "Unknown"
 		await expect(page.getByTestId('drawer-cache-mode')).toContainText('Unknown');
+
+		// Set the cache_read price
+		await page.locator('[data-testid="drawer-cache-read-cost"] input').fill('0.30');
 
 		// Change to Subtract
 		await page.getByTestId('drawer-cache-mode').click();
 		await page.getByText('Subtract (OpenAI style)').click();
 		await expect(page.getByTestId('drawer-cache-mode')).toContainText('Subtract');
 
-		// Clearing cache_read hides the select again (Ant InputNumber: Ctrl+A then Delete)
-		const cacheInput = page.locator('[data-testid="drawer-cache-read-cost"] input');
-		await cacheInput.click();
-		await cacheInput.press('Control+a');
-		await cacheInput.press('Delete');
-		// Ant InputNumber fires onChange with null on clear — click elsewhere to commit
-		await page.locator('[data-testid="drawer-output-cost"] input').click();
+		// Removing the bucket via trash hides both the input and the cache-mode select
+		await page.getByTestId('drawer-remove-cache-read').click();
+		await expect(page.getByTestId('drawer-cache-read-cost')).not.toBeVisible();
 		await expect(page.getByTestId('drawer-cache-mode')).not.toBeVisible();
 
 		await page.getByTestId('drawer-cancel-btn').click();
