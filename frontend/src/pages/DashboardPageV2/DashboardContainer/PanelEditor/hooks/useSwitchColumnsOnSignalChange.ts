@@ -8,17 +8,25 @@ import {
 	defaultTraceSelectedColumns,
 } from 'container/OptionsMenu/constants';
 
+import { sanitizeSelectFields } from '../ListColumnsEditor/selectFields';
+
 // The datasource's default List columns (V1 parity): logs → timestamp/body,
 // traces → service.name/name/duration_nano/http_method/response_status_code.
-// Other signals (metrics) don't produce a list, so they clear the selection.
+// Sanitized to the field-key DTO — the V1 constants carry extra keys (isIndexed)
+// the save contract rejects. Other signals (metrics) don't produce a list, so
+// they clear the selection.
 function defaultColumnsForSignal(
 	signal: string,
 ): TelemetrytypesTelemetryFieldKeyDTO[] {
 	if (signal === 'logs') {
-		return defaultLogsSelectedColumns as TelemetrytypesTelemetryFieldKeyDTO[];
+		return sanitizeSelectFields(
+			defaultLogsSelectedColumns as TelemetrytypesTelemetryFieldKeyDTO[],
+		);
 	}
 	if (signal === 'traces') {
-		return defaultTraceSelectedColumns as TelemetrytypesTelemetryFieldKeyDTO[];
+		return sanitizeSelectFields(
+			defaultTraceSelectedColumns as TelemetrytypesTelemetryFieldKeyDTO[],
+		);
 	}
 	return [];
 }

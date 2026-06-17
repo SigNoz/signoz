@@ -6,7 +6,10 @@ import {
 	useDefaultLayout,
 } from '@signozhq/ui/resizable';
 import { toast } from '@signozhq/ui/sonner';
-import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import type {
+	DashboardtypesPanelDTO,
+	TelemetrytypesSignalDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { getPanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Panels/registry';
 import {
@@ -28,6 +31,7 @@ import { usePanelEditorQuerySync } from './hooks/usePanelEditorQuerySync';
 import { usePanelEditorSave } from './hooks/usePanelEditorSave';
 import { useSwitchColumnsOnSignalChange } from './hooks/useSwitchColumnsOnSignalChange';
 import { useTableColumns } from './hooks/useTableColumns';
+import ListColumnsEditor from './ListColumnsEditor/ListColumnsEditor';
 
 import styles from './PanelEditor.module.scss';
 
@@ -105,14 +109,24 @@ function PanelEditorContainer({
 	// Dirty = an edited config slice (display/plugin spec) OR an edited query. The
 	// two are tracked independently so query re-serialization never false-dirties.
 	const isDirty = isSpecDirty || isQueryDirty;
+	// The List panel edits its columns below the query builder (V1 parity), so the
+	// editor container resolves the committed query's signal once and shares it
+	// with both the columns control and the datasource-switch effect below.
+	const isListPanel = fullKind === 'signoz/ListPanel';
+	// The builder-query `signal` literal matches the TelemetrytypesSignalDTO enum
+	// values; cast at this boundary (as ConfigPane does) so the columns editor's
+	// field-key lookup is typed.
+	const listSignal = getBuilderQueries(spec.queries)[0]?.signal as
+		| TelemetrytypesSignalDTO
+		| undefined;
 
 	// When the List panel's datasource changes, swap its columns to the new
 	// source's defaults (V1 kept a per-datasource field list; V2 has one
 	// `selectFields`). Driven by the committed query's signal, so it lives in the
 	// editor container alongside the query sync — ConfigPane stays presentational.
 	useSwitchColumnsOnSignalChange({
-		enabled: fullKind === 'signoz/ListPanel',
-		signal: getBuilderQueries(spec.queries)[0]?.signal,
+		enabled: isListPanel,
+		signal: listSignal,
 		spec,
 		onChangeSpec: setSpec,
 	});
@@ -175,6 +189,15 @@ function PanelEditorContainer({
 									isLoadingQueries={isFetching}
 									onStageRunQuery={runQuery}
 									onCancelQuery={cancelQuery}
+									footer={
+										isListPanel ? (
+											<ListColumnsEditor
+												spec={spec}
+												onChangeSpec={setSpec}
+												signal={listSignal}
+											/>
+										) : undefined
+									}
 								/>
 							</ResizablePanel>
 						</ResizablePanelGroup>

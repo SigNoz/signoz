@@ -1,11 +1,24 @@
 import { renderHook } from '@testing-library/react';
-import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
+import type {
+	DashboardtypesPanelSpecDTO,
+	TelemetrytypesTelemetryFieldKeyDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import {
 	defaultLogsSelectedColumns,
 	defaultTraceSelectedColumns,
 } from 'container/OptionsMenu/constants';
 
+import { sanitizeSelectFields } from '../../ListColumnsEditor/selectFields';
 import { useSwitchColumnsOnSignalChange } from '../useSwitchColumnsOnSignalChange';
+
+// The hook applies the datasource defaults reduced to the field-key DTO (the V1
+// constants carry extra keys like `isIndexed`); assertions mirror that.
+const expectedLogs = sanitizeSelectFields(
+	defaultLogsSelectedColumns as TelemetrytypesTelemetryFieldKeyDTO[],
+);
+const expectedTraces = sanitizeSelectFields(
+	defaultTraceSelectedColumns as TelemetrytypesTelemetryFieldKeyDTO[],
+);
 
 function makeSpec(
 	selectFields: { name: string }[],
@@ -50,7 +63,7 @@ describe('useSwitchColumnsOnSignalChange', () => {
 
 		expect(onChangeSpec).toHaveBeenCalledTimes(1);
 		expect(selectFieldsOf(onChangeSpec.mock.calls[0][0])).toStrictEqual(
-			defaultTraceSelectedColumns,
+			expectedTraces,
 		);
 	});
 
@@ -67,7 +80,7 @@ describe('useSwitchColumnsOnSignalChange', () => {
 		rerender({ enabled: true, signal: 'logs', spec, onChangeSpec });
 
 		expect(selectFieldsOf(onChangeSpec.mock.calls[0][0])).toStrictEqual(
-			defaultLogsSelectedColumns,
+			expectedLogs,
 		);
 	});
 
