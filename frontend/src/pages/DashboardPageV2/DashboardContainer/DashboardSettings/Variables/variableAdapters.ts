@@ -1,5 +1,5 @@
 import {
-	DashboardtypesVariableEnvelopeGithubComPersesSpecGoDashboardTextVariableSpecDTOKind as TextEnvelopeKind,
+	DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesTextVariableSpecDTOKind as TextEnvelopeKind,
 	DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpecDTOKind as ListEnvelopeKind,
 	DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesCustomVariableSpecDTOKind as CustomPluginKind,
 	DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDynamicVariableSpecDTOKind as DynamicPluginKind,
@@ -10,7 +10,7 @@ import type {
 	DashboardtypesListVariableSpecDTO,
 	DashboardtypesVariableDTO,
 	DashboardtypesVariablePluginDTO,
-	DashboardTextVariableSpecDTO,
+	DashboardtypesTextVariableSpecDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
 import {
@@ -35,7 +35,7 @@ export function dtoToFormModel(
 
 	// Text variable — a distinct envelope (no list plugin).
 	if (dto.kind === TextEnvelopeKind.TextVariable) {
-		const spec = dto.spec as DashboardTextVariableSpecDTO;
+		const spec = dto.spec as DashboardtypesTextVariableSpecDTO;
 		return {
 			...common,
 			type: 'TEXT',

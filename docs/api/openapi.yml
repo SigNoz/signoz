@@ -2437,17 +2437,6 @@ components:
         url:
           type: string
       type: object
-    DashboardTextVariableSpec:
-      properties:
-        constant:
-          type: boolean
-        display:
-          $ref: '#/components/schemas/VariableDisplay'
-        name:
-          type: string
-        value:
-          type: string
-      type: object
     DashboardtypesAxes:
       properties:
         isLogScale:
@@ -2837,6 +2826,7 @@ components:
         display:
           $ref: '#/components/schemas/DashboardtypesDisplay'
         name:
+          minLength: 1
           type: string
         plugin:
           $ref: '#/components/schemas/DashboardtypesVariablePlugin'
@@ -2844,7 +2834,7 @@ components:
           nullable: true
           type: string
       required:
-      - display
+      - name
       type: object
     DashboardtypesListableDashboardForUserV2:
       properties:
@@ -3390,6 +3380,20 @@ components:
       - color
       - columnName
       type: object
+    DashboardtypesTextVariableSpec:
+      properties:
+        constant:
+          type: boolean
+        display:
+          $ref: '#/components/schemas/DashboardtypesDisplay'
+        name:
+          minLength: 1
+          type: string
+        value:
+          type: string
+      required:
+      - name
+      type: object
     DashboardtypesThresholdFormat:
       enum:
       - text
@@ -3493,23 +3497,11 @@ components:
       discriminator:
         mapping:
           ListVariable: '#/components/schemas/DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpec'
-          TextVariable: '#/components/schemas/DashboardtypesVariableEnvelopeGithubComPersesSpecGoDashboardTextVariableSpec'
+          TextVariable: '#/components/schemas/DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesTextVariableSpec'
         propertyName: kind
       oneOf:
       - $ref: '#/components/schemas/DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpec'
-      - $ref: '#/components/schemas/DashboardtypesVariableEnvelopeGithubComPersesSpecGoDashboardTextVariableSpec'
-      type: object
-    DashboardtypesVariableEnvelopeGithubComPersesSpecGoDashboardTextVariableSpec:
-      properties:
-        kind:
-          enum:
-          - TextVariable
-          type: string
-        spec:
-          $ref: '#/components/schemas/DashboardTextVariableSpec'
-      required:
-      - kind
-      - spec
+      - $ref: '#/components/schemas/DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesTextVariableSpec'
       type: object
     DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpec:
       properties:
@@ -3519,6 +3511,18 @@ components:
           type: string
         spec:
           $ref: '#/components/schemas/DashboardtypesListVariableSpec'
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesTextVariableSpec:
+      properties:
+        kind:
+          enum:
+          - TextVariable
+          type: string
+        spec:
+          $ref: '#/components/schemas/DashboardtypesTextVariableSpec'
       required:
       - kind
       - spec
@@ -7607,15 +7611,6 @@ components:
       - id
       type: object
     VariableDefaultValue:
-      type: object
-    VariableDisplay:
-      properties:
-        description:
-          type: string
-        hidden:
-          type: boolean
-        name:
-          type: string
       type: object
     ZeustypesGettableHost:
       properties:

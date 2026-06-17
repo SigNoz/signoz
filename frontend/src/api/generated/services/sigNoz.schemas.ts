@@ -3154,37 +3154,6 @@ export interface DashboardLinkDTO {
 	url?: string;
 }
 
-export interface VariableDisplayDTO {
-	/**
-	 * @type string
-	 */
-	description?: string;
-	/**
-	 * @type boolean
-	 */
-	hidden?: boolean;
-	/**
-	 * @type string
-	 */
-	name?: string;
-}
-
-export interface DashboardTextVariableSpecDTO {
-	/**
-	 * @type boolean
-	 */
-	constant?: boolean;
-	display?: VariableDisplayDTO;
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type string
-	 */
-	value?: string;
-}
-
 export interface DashboardtypesAxesDTO {
 	/**
 	 * @type boolean
@@ -4571,11 +4540,12 @@ export interface DashboardtypesListVariableSpecDTO {
 	 */
 	customAllValue?: string;
 	defaultValue?: VariableDefaultValueDTO;
-	display: DashboardtypesDisplayDTO;
+	display?: DashboardtypesDisplayDTO;
 	/**
 	 * @type string
+	 * @minLength 1
 	 */
-	name?: string;
+	name: string;
 	plugin?: DashboardtypesVariablePluginDTO;
 	/**
 	 * @type string,null
@@ -4592,21 +4562,38 @@ export interface DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDash
 	spec: DashboardtypesListVariableSpecDTO;
 }
 
-export enum DashboardtypesVariableEnvelopeGithubComPersesSpecGoDashboardTextVariableSpecDTOKind {
+export enum DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesTextVariableSpecDTOKind {
 	TextVariable = 'TextVariable',
 }
-export interface DashboardtypesVariableEnvelopeGithubComPersesSpecGoDashboardTextVariableSpecDTO {
+export interface DashboardtypesTextVariableSpecDTO {
+	/**
+	 * @type boolean
+	 */
+	constant?: boolean;
+	display?: DashboardtypesDisplayDTO;
+	/**
+	 * @type string
+	 * @minLength 1
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	value?: string;
+}
+
+export interface DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesTextVariableSpecDTO {
 	/**
 	 * @enum TextVariable
 	 * @type string
 	 */
-	kind: DashboardtypesVariableEnvelopeGithubComPersesSpecGoDashboardTextVariableSpecDTOKind;
-	spec: DashboardTextVariableSpecDTO;
+	kind: DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesTextVariableSpecDTOKind;
+	spec: DashboardtypesTextVariableSpecDTO;
 }
 
 export type DashboardtypesVariableDTO =
 	| DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpecDTO
-	| DashboardtypesVariableEnvelopeGithubComPersesSpecGoDashboardTextVariableSpecDTO;
+	| DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesTextVariableSpecDTO;
 
 export interface DashboardtypesDashboardSpecDTO {
 	/**

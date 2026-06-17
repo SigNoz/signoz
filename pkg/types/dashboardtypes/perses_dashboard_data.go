@@ -65,7 +65,7 @@ func (d *DashboardSpec) validateVariables() error {
 		switch s := v.Spec.(type) {
 		case *ListVariableSpec:
 			name = s.Name
-		case *dashboard.TextVariableSpec:
+		case *TextVariableSpec:
 			name = s.Name
 		default:
 			// Unreachable via UnmarshalJSON; reaching here means a Go caller broke the Kind/Spec pairing.

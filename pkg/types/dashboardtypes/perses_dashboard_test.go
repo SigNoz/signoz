@@ -172,6 +172,11 @@ func TestInvalidateVariableNameWithInvalidChars(t *testing.T) {
 			require.NoError(t, err, "expected valid variable name %q", name)
 		})
 	}
+	t.Run("digits only", func(t *testing.T) {
+		_, err := unmarshalDashboard(listVarWithName("123"))
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "cannot contain only digits")
+	})
 }
 
 func TestInvalidatePanelKey(t *testing.T) {
@@ -233,6 +238,34 @@ func TestInvalidateListVariableCrossFields(t *testing.T) {
 		_, err := unmarshalDashboard(listVar(`"allowAllValue": false, "allowMultiple": false, "defaultValue": ["only"],`))
 		require.NoError(t, err, "single-element list default should be coerced, not rejected")
 	})
+}
+
+func TestInvalidateEmptyVariableName(t *testing.T) {
+	cases := map[string][]byte{
+		"text variable": []byte(`{
+			"variables": [{"kind": "TextVariable", "spec": {"name": "", "value": "x"}}],
+			"layouts": []
+		}`),
+		"list variable": []byte(`{
+			"variables": [{
+				"kind": "ListVariable",
+				"spec": {
+					"name": "",
+					"allowAllValue": false,
+					"allowMultiple": false,
+					"plugin": {"kind": "signoz/DynamicVariable", "spec": {"name": "service.name", "signal": "metrics"}}
+				}
+			}],
+			"layouts": []
+		}`),
+	}
+	for name, data := range cases {
+		t.Run(name, func(t *testing.T) {
+			_, err := unmarshalDashboard(data)
+			require.Error(t, err, "expected error for empty variable name")
+			require.Contains(t, err.Error(), "name cannot be empty")
+		})
+	}
 }
 
 func TestInvalidateUnknownPluginKind(t *testing.T) {

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"maps"
 	"slices"
+	"strconv"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	qb "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -84,7 +85,7 @@ type QuerySpec struct {
 // ══════════════════════════════════════════════
 
 // Variable is the list/text sum type. Spec is set to *ListVariableSpec or
-// *dashboard.TextVariableSpec by UnmarshalJSON based on Kind. The schema is a
+// *TextVariableSpec by UnmarshalJSON based on Kind. The schema is a
 // discriminated oneOf (see JSONSchemaOneOf).
 type Variable struct {
 	Kind variable.Kind `json:"kind" required:"true"`
@@ -94,7 +95,7 @@ type Variable struct {
 func (Variable) PrepareJSONSchema(s *jsonschema.Schema) error {
 	return markDiscriminator(s, "kind", map[string]string{
 		string(variable.KindList): schemaRef("DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpec"),
-		string(variable.KindText): schemaRef("DashboardtypesVariableEnvelopeGithubComPersesSpecGoDashboardTextVariableSpec"),
+		string(variable.KindText): schemaRef("DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesTextVariableSpec"),
 	})
 }
 
@@ -112,7 +113,7 @@ func (v *Variable) UnmarshalJSON(data []byte) error {
 		v.Kind = variable.KindList
 		v.Spec = *spec
 	case string(variable.KindText):
-		spec, err := decodeSpec(specJSON, new(dashboard.TextVariableSpec), kind)
+		spec, err := decodeSpec(specJSON, new(TextVariableSpec), kind)
 		if err != nil {
 			return err
 		}
@@ -127,7 +128,7 @@ func (v *Variable) UnmarshalJSON(data []byte) error {
 func (Variable) JSONSchemaOneOf() []any {
 	return []any{
 		VariableEnvelope[ListVariableSpec]{Kind: string(variable.KindList)},
-		VariableEnvelope[dashboard.TextVariableSpec]{Kind: string(variable.KindText)},
+		VariableEnvelope[TextVariableSpec]{Kind: string(variable.KindText)},
 	}
 }
 
@@ -143,7 +144,7 @@ func (v VariableEnvelope[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
 // ListVariableSpec mirrors dashboard.ListVariableSpec (variable.ListSpec
 // fields + Name) but with a typed VariablePlugin replacing common.Plugin.
 type ListVariableSpec struct {
-	Display         Display                `json:"display" required:"true"`
+	Display         *Display               `json:"display,omitempty"`
 	DefaultValue    *variable.DefaultValue `json:"defaultValue,omitempty"`
 	AllowAllValue   bool                   `json:"allowAllValue"`
 	AllowMultiple   bool                   `json:"allowMultiple"`
@@ -151,13 +152,17 @@ type ListVariableSpec struct {
 	CapturingRegexp string                 `json:"capturingRegexp,omitempty"`
 	Sort            *variable.Sort         `json:"sort,omitempty"`
 	Plugin          VariablePlugin         `json:"plugin"`
-	Name            string                 `json:"name"`
+	Name            string                 `json:"name" required:"true" minLength:"1"`
 }
 
-// validate mirrors perses ListVariableSpec validation; run by decodeSpec on unmarshal.
+// validate mirrors perses ListVariableSpec validation (plus the digits-only name
+// check perses only applies to text variables); run by decodeSpec on unmarshal.
 func (s *ListVariableSpec) validate() error {
 	if err := common.ValidateID(s.Name); err != nil {
 		return err
+	}
+	if _, err := strconv.Atoi(s.Name); err == nil {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "variable name cannot contain only digits")
 	}
 	if s.CustomAllValue != "" && !s.AllowAllValue {
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "customAllValue cannot be set if allowAllValue is not set to true")
@@ -169,6 +174,29 @@ func (s *ListVariableSpec) validate() error {
 			return nil
 		}
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "defaultValue cannot be a list if allowMultiple is not set to true")
+	}
+	return nil
+}
+
+// TextVariableSpec replicates dashboard.TextVariableSpec so name can carry the
+// required/non-empty schema tags perses leaves off.
+type TextVariableSpec struct {
+	Display  *Display `json:"display,omitempty"`
+	Value    string   `json:"value"`
+	Constant bool     `json:"constant,omitempty"`
+	Name     string   `json:"name" required:"true" minLength:"1"`
+}
+
+// validate mirrors perses TextVariableSpec validation; run by decodeSpec on unmarshal.
+func (s *TextVariableSpec) validate() error {
+	if err := common.ValidateID(s.Name); err != nil {
+		return err
+	}
+	if _, err := strconv.Atoi(s.Name); err == nil {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "variable name cannot contain only digits")
+	}
+	if s.Value == "" && s.Constant {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "value for a constant text variable cannot be empty")
 	}
 	return nil
 }
