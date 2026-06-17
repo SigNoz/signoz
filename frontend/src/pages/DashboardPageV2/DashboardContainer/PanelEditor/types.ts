@@ -19,8 +19,12 @@ export interface PanelEditorDraftApi {
 	spec: DashboardtypesPanelSpecDTO;
 	/** Replace the whole panel spec (the registry lens returns a new one per edit). */
 	setSpec: (next: DashboardtypesPanelSpecDTO) => void;
-	/** True when the draft diverges from the originally-loaded panel. */
-	isDirty: boolean;
+	/**
+	 * True when the draft's display/plugin-spec slices diverge from the loaded
+	 * panel. Excludes `spec.queries` — the query is owned by the shared builder and
+	 * its dirtiness is tracked there (`usePanelEditorQuerySync.isQueryDirty`).
+	 */
+	isSpecDirty: boolean;
 	/** Restore the draft to the originally-loaded panel. */
 	reset: () => void;
 }

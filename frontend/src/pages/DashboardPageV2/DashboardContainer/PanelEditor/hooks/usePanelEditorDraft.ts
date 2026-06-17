@@ -31,10 +31,18 @@ export function usePanelEditorDraft(
 		setDraft(initialPanel);
 	}, [initialPanel]);
 
-	// Deep compare: any divergence from the loaded panel (display OR spec slices like
-	// formatting/axes/thresholds/links) marks the draft dirty.
-	const isDirty = useMemo(
-		() => !isEqual(draft, initialPanel),
+	// Deep compare, ignoring `spec.queries`: the live query is owned by the shared
+	// query builder and re-serialized into the draft purely as a preview cache, so
+	// its representation drifts (builder-filled defaults, regenerated ids, wrapper
+	// kind) without a real edit. Query dirtiness is tracked separately against the
+	// builder; here we only flag divergence in display + plugin spec slices
+	// (formatting, axes, thresholds, links, list columns, …).
+	const isSpecDirty = useMemo(
+		() =>
+			!isEqual(
+				{ ...draft, spec: { ...draft.spec, queries: null } },
+				{ ...initialPanel, spec: { ...initialPanel.spec, queries: null } },
+			),
 		[draft, initialPanel],
 	);
 
@@ -42,7 +50,7 @@ export function usePanelEditorDraft(
 		draft,
 		spec: draft.spec,
 		setSpec,
-		isDirty,
+		isSpecDirty,
 		reset,
 	};
 }

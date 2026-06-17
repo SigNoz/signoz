@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type {
 	DashboardtypesPanelDTO,
 	DashboardtypesPanelSpecDTO,
@@ -10,6 +10,7 @@ import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { isEqual } from 'lodash-es';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
+import { toQueryEnvelopes } from '../../queryV5/buildQueryRangeRequest';
 import { fromPerses, toPerses } from '../../queryV5/persesQueryAdapters';
 
 interface UsePanelEditorQuerySyncArgs {
@@ -23,6 +24,19 @@ interface UsePanelEditorQuerySyncArgs {
 interface UsePanelEditorQuerySyncApi {
 	/** Run the current query (Stage & Run / ⌘↵). */
 	runQuery: () => void;
+	/**
+	 * True when the live builder query differs from the saved query. Compared
+	 * builder-normalized vs builder-normalized (against the builder's own baseline),
+	 * so re-serialization noise never reads as an edit.
+	 */
+	isQueryDirty: boolean;
+	/**
+	 * Bake the live query into a spec for saving — so unstaged edits still persist.
+	 * Returns the spec untouched when the query is unchanged from saved.
+	 */
+	buildSaveSpec: (
+		spec: DashboardtypesPanelSpecDTO,
+	) => DashboardtypesPanelSpecDTO;
 }
 
 /**
@@ -37,7 +51,7 @@ export function usePanelEditorQuerySync({
 	setSpec,
 	refetch,
 }: UsePanelEditorQuerySyncArgs): UsePanelEditorQuerySyncApi {
-	const { currentQuery, handleRunQuery } = useQueryBuilder();
+	const { currentQuery, stagedQuery, handleRunQuery } = useQueryBuilder();
 
 	// Saved queries, captured once: seed the builder and serve as the restore target.
 	// eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only snapshot
@@ -71,7 +85,12 @@ export function usePanelEditorQuerySync({
 			const next = getIsQueryModified(query, seedQuery)
 				? toPerses(query, panelType)
 				: savedQueries;
-			if (isEqual(next, draft.spec?.queries ?? [])) {
+			// No-op guard at the V5 envelope level: an unchanged query re-serialized
+			// to a different but equivalent wrapper (a bare `signoz/BuilderQuery` vs a
+			// `signoz/CompositeQuery`) unwraps to the same envelopes — comparing the
+			// wrappers structurally would falsely dirty the draft on Stage & Run.
+			const current = draft.spec?.queries ?? [];
+			if (isEqual(toQueryEnvelopes(next), toQueryEnvelopes(current))) {
 				return false;
 			}
 			setSpec({ ...draft.spec, queries: next });
@@ -113,5 +132,30 @@ export function usePanelEditorQuerySync({
 		}
 	}, [handleRunQuery, commitQuery, currentQuery, refetch]);
 
-	return { runQuery };
+	// Dirty baseline for the query: the builder's OWN normalized form of the saved
+	// query — the first non-null `stagedQuery` the builder produces after the mount
+	// force-reset. Capturing it (instead of the raw `seedQuery`) makes the dirty
+	// check builder-normalized vs builder-normalized, immune to the serialization
+	// drift that otherwise reads an untouched query as modified. Held in state (not
+	// a ref) so capturing it re-renders and `isQueryDirty` recomputes; captured once
+	// and never moved by Stage & Run, so it stays anchored to the saved query.
+	const [queryBaseline, setQueryBaseline] = useState<Query | null>(null);
+	useEffect(() => {
+		if (queryBaseline === null && stagedQuery) {
+			setQueryBaseline(stagedQuery);
+		}
+	}, [queryBaseline, stagedQuery]);
+
+	const isQueryDirty =
+		queryBaseline !== null && getIsQueryModified(currentQuery, queryBaseline);
+
+	const buildSaveSpec = useCallback(
+		(spec: DashboardtypesPanelSpecDTO): DashboardtypesPanelSpecDTO =>
+			isQueryDirty
+				? { ...spec, queries: toPerses(currentQuery, panelType) }
+				: spec,
+		[isQueryDirty, currentQuery, panelType],
+	);
+
+	return { runQuery, isQueryDirty, buildSaveSpec };
 }
