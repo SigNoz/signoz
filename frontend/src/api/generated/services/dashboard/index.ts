@@ -832,7 +832,7 @@ export const deleteDashboardView = (
 	{ id }: DeleteDashboardViewPathParameters,
 	signal?: AbortSignal,
 ) => {
-	return GeneratedAPIInstance<string>({
+	return GeneratedAPIInstance<void>({
 		url: `/api/v2/dashboard_views/${id}`,
 		method: 'DELETE',
 		signal,
