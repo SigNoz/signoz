@@ -1,3 +1,7 @@
+// URL query-param key backing the active tab, and the tab keys themselves.
+export const TAB_QUERY_KEY = 'tab';
+export const TAB_KEYS = ['model-costs', 'unpriced-models'] as const;
+
 // Page size for the model-cost list request / pagination.
 export const PAGE_SIZE = 20;
 

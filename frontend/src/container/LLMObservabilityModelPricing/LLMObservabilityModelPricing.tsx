@@ -1,36 +1,20 @@
-import { useMemo } from 'react';
-import { Pagination } from '@signozhq/ui/pagination';
-import { SelectSimple } from '@signozhq/ui/select';
 import { Tabs } from '@signozhq/ui/tabs';
-import { useListLLMPricingRules } from 'api/generated/services/llmpricingrules';
-import { type ListLLMPricingRulesParams } from 'api/generated/services/sigNoz.schemas';
-import { parseAsInteger, useQueryState } from 'nuqs';
+import { parseAsStringLiteral, useQueryState } from 'nuqs';
 
-import { CURRENCY_OPTIONS, PAGE_KEY, PAGE_SIZE } from './constants';
-import ModelCostsTable from './ModelCostsTable';
-import type { PricingRule } from './types';
+import { TAB_KEYS, TAB_QUERY_KEY } from './constants';
+import ModelCostsTab from './ModelCostsTab';
+import type { TabKey } from './types';
 
 import './LLMObservabilityModelPricing.styles.scss';
 
 function LLMObservabilityModelPricing(): JSX.Element {
-	// Page lives in the URL (shareable/reload-safe); replace mode keeps paging
-	// out of the back-stack, and withDefault(1) omits ?page=1.
-	const [page, setPage] = useQueryState(
-		PAGE_KEY,
-		parseAsInteger.withDefault(1).withOptions({ history: 'replace' }),
+	// Active tab lives in the URL so the view is shareable/reload-safe.
+	const [tab, setTab] = useQueryState(
+		TAB_QUERY_KEY,
+		parseAsStringLiteral(TAB_KEYS).withDefault('model-costs').withOptions({
+			history: 'replace',
+		}),
 	);
-
-	// Search + source filters are intentionally omitted for now — the list API
-	// doesn't honour them yet. They'll be reintroduced here once it does.
-	const listParams: ListLLMPricingRulesParams = {
-		offset: (page - 1) * PAGE_SIZE,
-		limit: PAGE_SIZE,
-	};
-
-	const { data, isLoading, isError } = useListLLMPricingRules(listParams);
-
-	const rules: PricingRule[] = useMemo(() => data?.data?.items || [], [data]);
-	const total = data?.data?.total ?? 0;
 
 	return (
 		<div
@@ -46,10 +30,18 @@ function LLMObservabilityModelPricing(): JSX.Element {
 
 			<Tabs
 				className="page-tabs"
-				defaultValue="model-costs"
+				value={tab}
+				onChange={(key): void => {
+					void setTab(key as TabKey);
+				}}
 				items={[
-					{ key: 'model-costs', label: 'Model costs', children: null },
 					{
+						key: 'model-costs',
+						label: 'Model costs',
+						children: <ModelCostsTab />,
+					},
+					{
+						// Unpriced-models tab lands in a later PR.
 						key: 'unpriced-models',
 						label: 'Unpriced models',
 						disabled: true,
@@ -57,47 +49,6 @@ function LLMObservabilityModelPricing(): JSX.Element {
 					},
 				]}
 			/>
-
-			<div className="filters-bar">
-				{/* Only USD is priced today — disabled until other currencies land. */}
-				<SelectSimple
-					className="filters-bar__currency"
-					value="USD"
-					disabled
-					items={CURRENCY_OPTIONS}
-					testId="currency-select"
-				/>
-			</div>
-
-			{isError && (
-				<div className="page-error" role="alert">
-					Failed to load pricing rules. Please try again.
-				</div>
-			)}
-
-			{/* Read-only listing. Edit/Add wiring + the drawer land in the next PR. */}
-			<ModelCostsTable
-				rules={rules}
-				isLoading={isLoading}
-				selectedRuleId={null}
-				canManage={false}
-				onEdit={(): void => undefined}
-			/>
-
-			{total > PAGE_SIZE && (
-				<Pagination
-					className="page-pagination"
-					total={total}
-					pageSize={PAGE_SIZE}
-					current={page}
-					onPageChange={setPage}
-				/>
-			)}
-
-			<footer className="page-footer">
-				Showing {rules.length} of {total} model{total === 1 ? '' : 's'}
-				{' · '}All prices per 1M tokens (USD)
-			</footer>
 		</div>
 	);
 }
