@@ -13,6 +13,7 @@ import {
 	PANEL_KIND_TO_PANEL_TYPE,
 	type PanelKind,
 } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelKind';
+import { getBuilderQueries } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/getBuilderQueries';
 
 import { usePanelInteractions } from '../PanelsAndSectionsLayout/Panel/hooks/usePanelInteractions';
 import ConfigPane from './ConfigPane/ConfigPane';
@@ -25,6 +26,7 @@ import { usePanelQuery } from '../hooks/usePanelQuery';
 import { usePanelEditorDraft } from './hooks/usePanelEditorDraft';
 import { usePanelEditorQuerySync } from './hooks/usePanelEditorQuerySync';
 import { usePanelEditorSave } from './hooks/usePanelEditorSave';
+import { useSwitchColumnsOnSignalChange } from './hooks/useSwitchColumnsOnSignalChange';
 import { useTableColumns } from './hooks/useTableColumns';
 
 import styles from './PanelEditor.module.scss';
@@ -104,6 +106,16 @@ function PanelEditorContainer({
 	// two are tracked independently so query re-serialization never false-dirties.
 	const isDirty = isSpecDirty || isQueryDirty;
 
+	// When the List panel's datasource changes, swap its columns to the new
+	// source's defaults (V1 kept a per-datasource field list; V2 has one
+	// `selectFields`). Driven by the committed query's signal, so it lives in the
+	// editor container alongside the query sync — ConfigPane stays presentational.
+	useSwitchColumnsOnSignalChange({
+		enabled: fullKind === 'signoz/ListPanel',
+		signal: getBuilderQueries(spec.queries)[0]?.signal,
+		spec,
+		onChangeSpec: setSpec,
+	});
 	// Drag-to-zoom on the preview chart updates the (URL-synced) time window,
 	// exactly as on the dashboard.
 	const { onDragSelect } = usePanelInteractions();

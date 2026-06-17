@@ -1,0 +1,14 @@
+.section {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.select {
+	width: 100%;
+}
+
+.hint {
+	font-size: 11px;
+	color: var(--l3-foreground);
+}
