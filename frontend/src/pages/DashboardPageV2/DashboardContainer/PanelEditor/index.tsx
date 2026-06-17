@@ -132,8 +132,8 @@ function PanelEditorContainer({
 	// `selectFields`). Driven by the committed query's signal, so it lives in the
 	// editor container alongside the query sync — ConfigPane stays presentational.
 	useSwitchColumnsOnSignalChange({
-		enabled: fullKind === 'signoz/ListPanel',
-		signal: getBuilderQueries(spec.queries)[0]?.signal,
+		enabled: isListPanel,
+		signal: listSignal,
 		spec,
 		onChangeSpec: setSpec,
 	});
