@@ -23,17 +23,6 @@
 				font-size: 13px;
 			}
 		}
-
-		&__actions {
-			display: flex;
-			gap: 8px;
-		}
-	}
-
-	.page-tabs {
-		.ant-tabs-nav {
-			margin-bottom: 0;
-		}
 	}
 
 	.filters-bar {
@@ -41,18 +30,8 @@
 		gap: 12px;
 		align-items: center;
 
-		&__search {
-			flex: 1;
-			max-width: 360px;
-		}
-
-		&__source,
 		&__currency {
 			min-width: 160px;
-		}
-
-		&__add {
-			margin-left: auto;
 		}
 	}
 
@@ -77,15 +56,17 @@
 }
 
 .model-costs-table {
-	.ant-table-thead > tr > th {
-		color: var(--bg-vanilla-400) !important;
+	// @signozhq/ui Table renders semantic th/td tagged with data-slot — target
+	// those (it is not an antd table, so .ant-table-* would never match).
+	[data-slot='table-head'] {
+		color: var(--bg-vanilla-400);
 		font-size: 11px;
 		font-weight: 600;
 		letter-spacing: 0.08em;
 		text-transform: uppercase;
 	}
 
-	.ant-table-tbody > tr > td {
+	[data-slot='table-cell'] {
 		color: var(--bg-vanilla-400);
 	}
 
@@ -152,18 +133,6 @@
 
 	.source-badge {
 		margin: 0;
-
-		&--auto {
-			background: rgba(78, 116, 248, 0.12);
-			color: var(--bg-robin-400);
-			border-color: rgba(78, 116, 248, 0.24);
-		}
-
-		&--override {
-			background: rgba(245, 175, 25, 0.12);
-			color: var(--bg-amber-400);
-			border-color: rgba(245, 175, 25, 0.24);
-		}
 	}
 
 	&__row--selected {
