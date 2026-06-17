@@ -49,7 +49,7 @@ function PanelEditorContainer({
 	onClose,
 	onSaved,
 }: PanelEditorContainerProps): JSX.Element {
-	const { draft, setSpec, isDirty } = usePanelEditorDraft(panel);
+	const { draft, setSpec, isSpecDirty } = usePanelEditorDraft(panel);
 	const { save, isSaving } = usePanelEditorSave({ dashboardId, panelId });
 	const { defaultLayout, onLayoutChanged } = useDefaultLayout({
 		id: 'panel-editor-v2',
@@ -82,25 +82,31 @@ function PanelEditorContainer({
 	// Seed the shared query builder from the draft and expose the Stage-&-Run
 	// action (writes the query into the draft → preview re-fetches, or forces a
 	// re-fetch when unchanged).
-	const { runQuery } = usePanelEditorQuerySync({
+	const { runQuery, isQueryDirty, buildSaveSpec } = usePanelEditorQuerySync({
 		draft,
 		panelType,
 		setSpec,
 		refetch,
 	});
+
+	// Dirty = an edited config slice (display/plugin spec) OR an edited query. The
+	// two are tracked independently so query re-serialization never false-dirties.
+	const isDirty = isSpecDirty || isQueryDirty;
+
 	// Drag-to-zoom on the preview chart updates the (URL-synced) time window,
 	// exactly as on the dashboard.
 	const { onDragSelect } = usePanelInteractions();
 
 	const onSave = useCallback(async (): Promise<void> => {
 		try {
-			await save(draft.spec);
+			// Bake the live query into the spec so unstaged edits are saved too.
+			await save(buildSaveSpec(draft.spec));
 			toast.success('Panel saved');
 			onSaved();
 		} catch {
 			toast.error('Failed to save panel');
 		}
-	}, [save, draft.spec, onSaved]);
+	}, [save, buildSaveSpec, draft.spec, onSaved]);
 
 	return (
 		<div className={styles.page} data-testid="panel-editor-v2">

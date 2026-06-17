@@ -20,7 +20,7 @@ describe('usePanelEditorDraft', () => {
 
 		expect(result.current.spec).toBe(result.current.draft.spec);
 		expect(result.current.spec.display?.name).toBe('CPU');
-		expect(result.current.isDirty).toBe(false);
+		expect(result.current.isSpecDirty).toBe(false);
 	});
 
 	it('flags dirty and writes through on a display (title) edit via setSpec', () => {
@@ -33,7 +33,7 @@ describe('usePanelEditorDraft', () => {
 			}),
 		);
 
-		expect(result.current.isDirty).toBe(true);
+		expect(result.current.isSpecDirty).toBe(true);
 		expect(result.current.draft.spec?.display?.name).toBe('Memory');
 	});
 
@@ -50,7 +50,7 @@ describe('usePanelEditorDraft', () => {
 			} as typeof result.current.spec),
 		);
 
-		expect(result.current.isDirty).toBe(true);
+		expect(result.current.isSpecDirty).toBe(true);
 		expect(
 			(
 				result.current.draft.spec?.plugin?.spec as {
@@ -58,6 +58,19 @@ describe('usePanelEditorDraft', () => {
 				}
 			)?.formatting?.unit,
 		).toBe('bytes');
+	});
+
+	it('does not flag spec-dirty when only spec.queries changes (owned by the builder)', () => {
+		const { result } = renderHook(() => usePanelEditorDraft(panel()));
+
+		act(() =>
+			result.current.setSpec({
+				...result.current.spec,
+				queries: [{ id: 'committed-by-builder' }],
+			} as unknown as typeof result.current.spec),
+		);
+
+		expect(result.current.isSpecDirty).toBe(false);
 	});
 
 	it('reset restores the spec and clears dirty after an edit', () => {
@@ -74,7 +87,7 @@ describe('usePanelEditorDraft', () => {
 		);
 		act(() => result.current.reset());
 
-		expect(result.current.isDirty).toBe(false);
+		expect(result.current.isSpecDirty).toBe(false);
 		expect(result.current.spec.display?.name).toBe('CPU');
 	});
 });

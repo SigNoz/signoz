@@ -25,6 +25,12 @@ jest.mock('../../../queryV5/persesQueryAdapters', () => ({
 	fromPerses: jest.fn(),
 	toPerses: jest.fn(),
 }));
+// commitQuery's no-op guard compares queries at the envelope level; with the
+// adapters mocked, unwrap identity-style so the opaque fixtures stay distinct
+// (CONVERTED vs SAVED) and the commit decisions are what's under test.
+jest.mock('../../../queryV5/buildQueryRangeRequest', () => ({
+	toQueryEnvelopes: jest.fn((queries: unknown) => queries),
+}));
 
 const mockUseQueryBuilder = useQueryBuilder as unknown as jest.Mock;
 const mockUseShareBuilderUrl = useShareBuilderUrl as unknown as jest.Mock;
@@ -91,7 +97,15 @@ describe('usePanelEditorQuerySync', () => {
 			refetch?: jest.Mock;
 		} = {},
 	): {
-		result: { current: { runQuery: () => void } };
+		result: {
+			current: {
+				runQuery: () => void;
+				isQueryDirty: boolean;
+				buildSaveSpec: (
+					spec: DashboardtypesPanelSpecDTO,
+				) => DashboardtypesPanelSpecDTO;
+			};
+		};
 		setSpec: jest.Mock;
 		refetch: jest.Mock;
 		rerender: () => void;
@@ -271,6 +285,47 @@ describe('usePanelEditorQuerySync', () => {
 			rerender();
 
 			expect(setSpec).not.toHaveBeenCalled();
+		});
+	});
+
+	describe('query dirty + save', () => {
+		it('compares the live query against the builder baseline (first staged query), not the raw seed', () => {
+			mockGetIsQueryModified.mockReturnValue(true);
+			const { result } = setup();
+
+			// Baseline is the builder's own normalized staged query — immune to the
+			// raw-seed vs builder-normalized serialization drift.
+			expect(mockGetIsQueryModified).toHaveBeenCalledWith(
+				expect.anything(),
+				STAGED_V1,
+			);
+			expect(result.current.isQueryDirty).toBe(true);
+		});
+
+		it('is not query-dirty when the live query matches the baseline', () => {
+			mockGetIsQueryModified.mockReturnValue(false);
+			const { result } = setup();
+
+			expect(result.current.isQueryDirty).toBe(false);
+		});
+
+		it('buildSaveSpec bakes the live query in when dirty', () => {
+			mockGetIsQueryModified.mockReturnValue(true);
+			const { result } = setup();
+			const { spec } = makeDraft();
+
+			expect(result.current.buildSaveSpec(spec)).toStrictEqual({
+				...spec,
+				queries: CONVERTED_QUERIES,
+			});
+		});
+
+		it('buildSaveSpec returns the spec untouched when the query is unchanged', () => {
+			mockGetIsQueryModified.mockReturnValue(false);
+			const { result } = setup();
+			const { spec } = makeDraft();
+
+			expect(result.current.buildSaveSpec(spec)).toBe(spec);
 		});
 	});
 });
