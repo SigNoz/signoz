@@ -10,6 +10,16 @@ export interface ScaledFontSizeArgs {
 	innerRadius: number;
 }
 
+/** Donut sizing for a given chart box: the outer/inner radii and the square it spans. */
+export interface DonutGeometry {
+	/** Outer diameter — feeds the visx Pie width/height and the render guard. */
+	size: number;
+	/** Outer radius of the donut ring. */
+	radius: number;
+	/** Inner radius (the hole) — also bounds the centre-total font. */
+	innerRadius: number;
+}
+
 export interface ArcGeometry {
 	/** Outer point where the leader label sits. */
 	labelX: number;

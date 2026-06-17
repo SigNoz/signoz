@@ -266,6 +266,22 @@ func (module *module) DeletePreferencesForUser(ctx context.Context, orgID valuer
 	return module.pkgDashboardModule.DeletePreferencesForUser(ctx, orgID, userID)
 }
 
+func (module *module) CreateView(ctx context.Context, orgID valuer.UUID, postable dashboardtypes.PostableDashboardView) (*dashboardtypes.DashboardView, error) {
+	return module.pkgDashboardModule.CreateView(ctx, orgID, postable)
+}
+
+func (module *module) ListViews(ctx context.Context, orgID valuer.UUID) (*dashboardtypes.ListableDashboardView, error) {
+	return module.pkgDashboardModule.ListViews(ctx, orgID)
+}
+
+func (module *module) UpdateView(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updateable dashboardtypes.UpdatableDashboardView) (*dashboardtypes.DashboardView, error) {
+	return module.pkgDashboardModule.UpdateView(ctx, orgID, id, updateable)
+}
+
+func (module *module) DeleteView(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {
+	return module.pkgDashboardModule.DeleteView(ctx, orgID, id)
+}
+
 func (module *module) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.Dashboard, error) {
 	return module.pkgDashboardModule.Get(ctx, orgID, id)
 }

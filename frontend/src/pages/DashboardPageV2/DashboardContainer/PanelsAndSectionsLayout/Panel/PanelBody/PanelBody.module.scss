@@ -1,0 +1,48 @@
+// Generic centred body — used by the loading indicator and the
+// unsupported-kind fallback.
+.body {
+	flex: 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 12px;
+	color: var(--l2-foreground);
+	font-size: 12px;
+	text-align: center;
+}
+
+.bodyKind {
+	margin-bottom: 6px;
+}
+
+// Container for the rendered chart — fills the panel below the header and lets
+// the chart shrink (min-* 0) so it resizes with the grid cell.
+.chartContainer {
+	flex: 1;
+	display: flex;
+	min-height: 0;
+	min-width: 0;
+}
+
+// Error state — shown only when there's no stale data to fall back to.
+.error {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	padding: 12px;
+	text-align: center;
+}
+
+.errorIcon {
+	color: var(--bg-cherry-500);
+}
+
+.errorMessage {
+	color: var(--l2-foreground);
+	font-size: 12px;
+	max-width: 90%;
+	overflow-wrap: anywhere;
+}
