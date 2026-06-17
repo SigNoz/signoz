@@ -85,14 +85,9 @@ func TestQueryRange_MetricTypeMissing(t *testing.T) {
 	require.NotNil(t, resp)
 	require.NotNil(t, resp.Warning)
 
-	found := false
-	for _, w := range resp.Warning.Warnings {
-		if assert.ObjectsAreEqual("metric unknown_metric has never been received. Check the metric name and instrumentation", w.Message) {
-			found = true
-			break
-		}
-	}
-	assert.True(t, found, "expected never-seen metric warning, got: %v", resp.Warning.Warnings)
+	require.Len(t, resp.Warning.Warnings, 1)
+	assert.Contains(t, resp.Warning.Warnings[0].Message, "unknown_metric")
+	assert.Contains(t, resp.Warning.Warnings[0].Message, "has never been received")
 }
 
 func TestQueryRange_MetricTypeFromStore(t *testing.T) {
