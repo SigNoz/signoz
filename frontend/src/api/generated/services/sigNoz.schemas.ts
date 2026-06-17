@@ -2645,6 +2645,14 @@ export enum CloudintegrationtypesServiceIDDTO {
 	appservice = 'appservice',
 	containerapp = 'containerapp',
 	aks = 'aks',
+	sqldatabase = 'sqldatabase',
+	sqldatabasemi = 'sqldatabasemi',
+	mysqlflexibleserver = 'mysqlflexibleserver',
+	postgresqlflexibleserver = 'postgresqlflexibleserver',
+	mongodb = 'mongodb',
+	cosmosdb = 'cosmosdb',
+	cassandradb = 'cassandradb',
+	redis = 'redis',
 }
 export type CloudintegrationtypesCloudIntegrationServiceDTOAnyOf = {
 	/**
@@ -9905,6 +9913,17 @@ export type UpdateDashboardV2PathParameters = {
 	id: string;
 };
 export type UpdateDashboardV2200 = {
+	data: DashboardtypesGettableDashboardV2DTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type CloneDashboardV2PathParameters = {
+	id: string;
+};
+export type CloneDashboardV2201 = {
 	data: DashboardtypesGettableDashboardV2DTO;
 	/**
 	 * @type string

@@ -59,6 +59,8 @@ type Module interface {
 
 	CreateV2(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, source dashboardtypes.Source, postable dashboardtypes.PostableDashboardV2) (*dashboardtypes.DashboardV2, error)
 
+	CloneV2(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, id valuer.UUID) (*dashboardtypes.DashboardV2, error)
+
 	GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.DashboardV2, error)
 
 	ListV2(ctx context.Context, orgID valuer.UUID, params *dashboardtypes.ListDashboardsV2Params) (*dashboardtypes.ListableDashboardV2, error)
@@ -115,6 +117,8 @@ type Handler interface {
 	// v2 dashboard methods
 	// ════════════════════════════════════════════════════════════════════════
 	CreateV2(http.ResponseWriter, *http.Request)
+
+	CloneV2(http.ResponseWriter, *http.Request)
 
 	GetV2(http.ResponseWriter, *http.Request)
 

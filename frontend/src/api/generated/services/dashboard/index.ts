@@ -18,6 +18,8 @@ import type {
 } from 'react-query';
 
 import type {
+	CloneDashboardV2201,
+	CloneDashboardV2PathParameters,
 	CreateDashboardV2201,
 	CreatePublicDashboard201,
 	CreatePublicDashboardPathParameters,
@@ -1209,6 +1211,85 @@ export const useUpdateDashboardV2 = <
 	TContext
 > => {
 	return useMutation(getUpdateDashboardV2MutationOptions(options));
+};
+/**
+ * This endpoint clones an existing v2-shape dashboard. User and integration dashboards can be cloned; system dashboards are rejected. The clone keeps the source's display name, panels, and tags, but gets a freshly generated unique internal name and is always created as an unlocked user dashboard owned by the caller.
+ * @summary Clone dashboard (v2)
+ */
+export const cloneDashboardV2 = (
+	{ id }: CloneDashboardV2PathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<CloneDashboardV2201>({
+		url: `/api/v2/dashboards/${id}/clone`,
+		method: 'POST',
+		signal,
+	});
+};
+
+export const getCloneDashboardV2MutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof cloneDashboardV2>>,
+		TError,
+		{ pathParams: CloneDashboardV2PathParameters },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof cloneDashboardV2>>,
+	TError,
+	{ pathParams: CloneDashboardV2PathParameters },
+	TContext
+> => {
+	const mutationKey = ['cloneDashboardV2'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof cloneDashboardV2>>,
+		{ pathParams: CloneDashboardV2PathParameters }
+	> = (props) => {
+		const { pathParams } = props ?? {};
+
+		return cloneDashboardV2(pathParams);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type CloneDashboardV2MutationResult = NonNullable<
+	Awaited<ReturnType<typeof cloneDashboardV2>>
+>;
+
+export type CloneDashboardV2MutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Clone dashboard (v2)
+ */
+export const useCloneDashboardV2 = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof cloneDashboardV2>>,
+		TError,
+		{ pathParams: CloneDashboardV2PathParameters },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof cloneDashboardV2>>,
+	TError,
+	{ pathParams: CloneDashboardV2PathParameters },
+	TContext
+> => {
+	return useMutation(getCloneDashboardV2MutationOptions(options));
 };
 /**
  * This endpoint unlocks a v2-shape dashboard. Only the dashboard's creator or an org admin may lock or unlock.

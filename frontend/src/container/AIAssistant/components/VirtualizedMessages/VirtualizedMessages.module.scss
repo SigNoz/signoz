@@ -45,7 +45,7 @@
 	line-height: 1.45;
 }
 
-.emptySuggestions {
+.suggestions {
 	display: flex;
 	flex-direction: column;
 	gap: 6px;
@@ -53,11 +53,8 @@
 	max-width: 360px;
 }
 
-.emptyChip {
-	display: flex;
-	align-items: center;
-	justify-content: flex-start !important;
-	gap: 8px;
+.suggestion {
+	width: 100%;
 	padding: 10px 14px;
 	border: 1px solid var(--l2-border);
 	border-radius: var(--radius-2);
@@ -66,21 +63,16 @@
 	font-size: 12.5px;
 	text-align: left;
 	cursor: pointer;
-	transition: all 0.15s ease;
+	transition:
+		background 0.15s ease,
+		border-color 0.15s ease,
+		color 0.15s ease;
 	line-height: 1.35;
+	overflow-wrap: anywhere;
 
 	&:hover {
 		background: var(--l2-background);
 		border-color: var(--l3-border);
 		color: var(--l1-foreground);
-	}
-
-	svg {
-		flex-shrink: 0;
-		color: var(--l3-foreground);
-	}
-
-	&:hover svg {
-		color: var(--accent-primary);
 	}
 }
