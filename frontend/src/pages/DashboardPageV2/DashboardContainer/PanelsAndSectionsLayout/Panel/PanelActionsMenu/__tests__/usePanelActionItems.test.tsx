@@ -113,18 +113,17 @@ describe('usePanelActionItems', () => {
 		]);
 	});
 
-	it('unknown panel kind hides all kind-gated actions but keeps the chrome ones (clone/move/delete)', () => {
+	it('unknown panel kind hides all kind-gated actions (incl. clone), keeping only move/delete', () => {
 		const { result } = renderHook(() =>
 			// A kind with no registered definition — exercises the "unsupported kind"
-			// branch (kinds V2 can't render still expose only chrome actions).
+			// branch. Clone is kind-gated (needs the kind to declare actions.clone),
+			// so it drops too; only the kind-agnostic layout actions remain.
 			usePanelActionItems({
 				...baseArgs,
 				panelKind: 'signoz/UnsupportedPanel' as PanelKind,
 			}),
 		);
 		expect(itemKeys(result.current)).toStrictEqual([
-			'clone-panel',
-			'divider',
 			'move',
 			'divider',
 			'delete-panel',

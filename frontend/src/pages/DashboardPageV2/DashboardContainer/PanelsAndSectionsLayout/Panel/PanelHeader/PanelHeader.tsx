@@ -77,10 +77,7 @@ function PanelHeader({
 			    actions menu is clickable instead of starting a panel drag. */}
 			<div className={cx('panel-no-drag', styles.actions)}>
 				{searchable && onSearchChange && (
-					<PanelHeaderSearch
-						value={searchTerm ?? ''}
-						onChange={onSearchChange}
-					/>
+					<PanelHeaderSearch value={searchTerm ?? ''} onChange={onSearchChange} />
 				)}
 				{timeLabel && (
 					<TooltipSimple title={timeLabel.full} arrow>
