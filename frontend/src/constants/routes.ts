@@ -91,6 +91,7 @@ const ROUTES = {
 	AI_ASSISTANT_BASE: '/ai-assistant',
 	AI_ASSISTANT_ICON_PREVIEW: '/ai-assistant-icon-preview',
 	MCP_SERVER: '/settings/mcp-server',
+	LLM_OBSERVABILITY_MODEL_PRICING: '/llm-observability/settings/model-pricing',
 } as const;
 
 export default ROUTES;
