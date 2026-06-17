@@ -76,6 +76,14 @@ const emptyData: PanelQueryData = {
 	legendMap: {},
 };
 
+// `data` is always present per the renderer contract; an absent fetch surfaces
+// as a missing `response`, not a missing `data`.
+const absentResponseData: PanelQueryData = {
+	response: undefined,
+	requestPayload: undefined,
+	legendMap: {},
+};
+
 // NumberPanel adds no interaction props (its interaction map is
 // `Record<string, never>`), so the base renderer props fully describe it.
 function renderPanel(
@@ -124,7 +132,7 @@ describe('NumberPanelRenderer', () => {
 	});
 
 	it('renders No Data when the response is absent', () => {
-		const { getByTestId } = renderPanel({ data: undefined });
+		const { getByTestId } = renderPanel({ data: absentResponseData });
 
 		expect(getByTestId('number-panel-no-data')).toBeInTheDocument();
 	});
