@@ -15,14 +15,17 @@ import {
 } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelKind';
 
 import { usePanelInteractions } from '../PanelsAndSectionsLayout/Panel/hooks/usePanelInteractions';
+import ConfigPane from './ConfigPane/ConfigPane';
 import Header from './Header/Header';
 import layoutStorage from './layoutStorage';
 import PanelEditorQueryBuilder from './PanelEditorQueryBuilder/PanelEditorQueryBuilder';
 import PreviewPane from './PreviewPane/PreviewPane';
+import { useLegendSeries } from './hooks/useLegendSeries';
 import { usePanelQuery } from '../hooks/usePanelQuery';
 import { usePanelEditorDraft } from './hooks/usePanelEditorDraft';
 import { usePanelEditorQuerySync } from './hooks/usePanelEditorQuerySync';
 import { usePanelEditorSave } from './hooks/usePanelEditorSave';
+import { useTableColumns } from './hooks/useTableColumns';
 
 import styles from './PanelEditor.module.scss';
 
@@ -49,7 +52,7 @@ function PanelEditorContainer({
 	onClose,
 	onSaved,
 }: PanelEditorContainerProps): JSX.Element {
-	const { draft, setSpec, isSpecDirty } = usePanelEditorDraft(panel);
+	const { draft, spec, setSpec, isSpecDirty } = usePanelEditorDraft(panel);
 	const { save, isSaving } = usePanelEditorSave({ dashboardId, panelId });
 	const { defaultLayout, onLayoutChanged } = useDefaultLayout({
 		id: 'panel-editor-v2',
@@ -70,7 +73,8 @@ function PanelEditorContainer({
 		(fullKind && PANEL_KIND_TO_PANEL_TYPE[fullKind as PanelKind]) ??
 		PANEL_TYPES.TIME_SERIES;
 
-	// One shared query result for the whole editor: the preview renders it.
+	// One shared query result for the whole editor: the preview renders it and the config
+	// pane derives the panel's series from it (e.g. for the legend-colors control).
 	const panelDef = getPanelDefinition(draft.spec?.plugin?.kind);
 	const {
 		data,
@@ -103,6 +107,8 @@ function PanelEditorContainer({
 	// Drag-to-zoom on the preview chart updates the (URL-synced) time window,
 	// exactly as on the dashboard.
 	const { onDragSelect } = usePanelInteractions();
+	const legendSeries = useLegendSeries(draft, data);
+	const tableColumns = useTableColumns(draft, data);
 
 	const onSave = useCallback(async (): Promise<void> => {
 		try {
@@ -168,7 +174,15 @@ function PanelEditorContainer({
 					maxSize="25%"
 					defaultSize="20%"
 					className={styles.right}
-				/>
+				>
+					<ConfigPane
+						panelKind={draft.spec?.plugin?.kind}
+						spec={spec}
+						onChangeSpec={setSpec}
+						legendSeries={legendSeries}
+						tableColumns={tableColumns}
+					/>
+				</ResizablePanel>
 			</ResizablePanelGroup>
 		</div>
 	);
