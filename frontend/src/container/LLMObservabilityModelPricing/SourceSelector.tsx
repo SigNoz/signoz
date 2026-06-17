@@ -6,6 +6,7 @@ import { Lock } from '@signozhq/icons';
 interface SourceSelectorProps {
 	isOverride: boolean;
 	isReadOnly: boolean;
+	disableAuto?: boolean;
 	onChange: (isOverride: boolean) => void;
 }
 
@@ -14,6 +15,7 @@ interface SourceSelectorProps {
 function SourceSelector({
 	isOverride,
 	isReadOnly,
+	disableAuto = false,
 	onChange,
 }: SourceSelectorProps): JSX.Element {
 	const [showResetConfirm, setShowResetConfirm] = useState<boolean>(false);
@@ -53,9 +55,14 @@ function SourceSelector({
 					value="auto"
 					containerClassName="source-radio source-radio--auto"
 					testId="drawer-source-auto"
+					disabled={disableAuto}
 				>
 					<div className="source-radio__title">Auto-populated</div>
-					<div className="source-radio__desc">Default pricing from SigNoz.</div>
+					<div className="source-radio__desc">
+						{disableAuto
+							? 'Available once SigNoz has default pricing for this model.'
+							: 'Default pricing from SigNoz.'}
+					</div>
 				</RadioGroupItem>
 				<RadioGroupItem
 					value="override"

@@ -153,6 +153,7 @@ function ModelCostDrawer({
 			<SourceSelector
 				isOverride={draft.isOverride}
 				isReadOnly={metadataReadOnly}
+				disableAuto={mode === 'add'}
 				onChange={(isOverride): void => update({ isOverride })}
 			/>
 

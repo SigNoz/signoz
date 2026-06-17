@@ -138,8 +138,10 @@ describe('ModelCostDrawer', () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		render(
 			<Harness
+				mode="edit"
 				initialDraft={{
 					...EMPTY_DRAFT,
+					id: 'rule-1',
 					modelName: 'gpt-4o',
 					isOverride: true,
 				}}
@@ -150,6 +152,26 @@ describe('ModelCostDrawer', () => {
 
 		expect(screen.getByTestId('drawer-reset-confirm-btn')).toBeInTheDocument();
 		expect(screen.getByTestId('drawer-reset-keep-btn')).toBeInTheDocument();
+	});
+
+	it('disables the Auto-populated source option in Add mode', () => {
+		render(<Harness mode="add" />);
+		expect(screen.getByTestId('drawer-source-auto')).toBeDisabled();
+	});
+
+	it('enables the Auto-populated source option in Edit mode', () => {
+		render(
+			<Harness
+				mode="edit"
+				initialDraft={{
+					...EMPTY_DRAFT,
+					id: 'rule-1',
+					modelName: 'gpt-4o',
+					isOverride: true,
+				}}
+			/>,
+		);
+		expect(screen.getByTestId('drawer-source-auto')).not.toBeDisabled();
 	});
 
 	it('hides the Delete action in Add mode', () => {
