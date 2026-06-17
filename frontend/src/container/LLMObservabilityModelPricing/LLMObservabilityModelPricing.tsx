@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Pagination } from '@signozhq/ui/pagination';
 import { SelectSimple } from '@signozhq/ui/select';
 import { Tabs } from '@signozhq/ui/tabs';
@@ -19,7 +19,6 @@ function LLMObservabilityModelPricing(): JSX.Element {
 		PAGE_KEY,
 		parseAsInteger.withDefault(1).withOptions({ history: 'replace' }),
 	);
-	const [currency, setCurrency] = useState<string>('USD');
 
 	// Search + source filters are intentionally omitted for now — the list API
 	// doesn't honour them yet. They'll be reintroduced here once it does.
@@ -60,10 +59,11 @@ function LLMObservabilityModelPricing(): JSX.Element {
 			/>
 
 			<div className="filters-bar">
+				{/* Only USD is priced today — disabled until other currencies land. */}
 				<SelectSimple
 					className="filters-bar__currency"
-					value={currency}
-					onChange={(value): void => setCurrency(value as string)}
+					value="USD"
+					disabled
 					items={CURRENCY_OPTIONS}
 					testId="currency-select"
 				/>
