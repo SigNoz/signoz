@@ -1,9 +1,11 @@
+@use '../../../../../styles/scrollbar' as *;
 .container {
-	flex: 1;
+	height: 100%;
 	min-height: 0;
 	overflow: auto;
 	padding: 12px;
 	background-color: var(--l1-background);
+	@include custom-scrollbar;
 }
 
 .tabsContainer {
