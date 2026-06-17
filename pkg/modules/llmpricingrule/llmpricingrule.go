@@ -17,6 +17,7 @@ type Module interface {
 	Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*llmpricingruletypes.LLMPricingRule, error)
 	CreateOrUpdate(ctx context.Context, orgID valuer.UUID, userEmail string, rules []*llmpricingruletypes.UpdatableLLMPricingRule) (err error)
 	Delete(ctx context.Context, orgID, id valuer.UUID) error
+	ListUnmappedModels(ctx context.Context, orgID valuer.UUID) ([]*llmpricingruletypes.UnmappedModel, error)
 }
 
 // Handler defines the HTTP handler interface for pricing rule endpoints.
@@ -25,4 +26,5 @@ type Handler interface {
 	Get(rw http.ResponseWriter, r *http.Request)
 	CreateOrUpdate(rw http.ResponseWriter, r *http.Request)
 	Delete(rw http.ResponseWriter, r *http.Request)
+	ListUnmappedModels(rw http.ResponseWriter, r *http.Request)
 }

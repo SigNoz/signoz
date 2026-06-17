@@ -3,22 +3,30 @@ package impllmpricingrule
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/modules/llmpricingrule"
+	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/types/llmpricingruletypes"
 	"github.com/SigNoz/signoz/pkg/types/opamptypes"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
+// unmappedModelsLookback is the trace data window scanned to discover models in use.
+const unmappedModelsLookback = time.Hour
+
 type module struct {
-	store llmpricingruletypes.Store
+	store   llmpricingruletypes.Store
+	querier querier.Querier
 }
 
-func NewModule(store llmpricingruletypes.Store) llmpricingrule.Module {
-	return &module{store: store}
+func NewModule(store llmpricingruletypes.Store, querier querier.Querier) llmpricingrule.Module {
+	return &module{store: store, querier: querier}
 }
 
 func (module *module) List(ctx context.Context, orgID valuer.UUID, offset, limit int) ([]*llmpricingruletypes.LLMPricingRule, int, error) {
@@ -27,6 +35,28 @@ func (module *module) List(ctx context.Context, orgID valuer.UUID, offset, limit
 
 func (module *module) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*llmpricingruletypes.LLMPricingRule, error) {
 	return module.store.Get(ctx, orgID, id)
+}
+
+// ListUnmappedModels discovers the models present in the last hour of trace data
+// (gen_ai.request.model) and returns the ones that no pricing rule pattern matches.
+func (module *module) ListUnmappedModels(ctx context.Context, orgID valuer.UUID) ([]*llmpricingruletypes.UnmappedModel, error) {
+	models, err := module.discoverModels(ctx, orgID)
+	if err != nil {
+		return nil, err
+	}
+
+	rules, _, err := module.store.List(ctx, orgID, 0, 10000)
+	if err != nil {
+		return nil, err
+	}
+
+	unmapped := make([]*llmpricingruletypes.UnmappedModel, 0, len(models))
+	for _, m := range models {
+		if !llmpricingruletypes.ModelMatchesAnyRule(m.ModelName, rules) {
+			unmapped = append(unmapped, m)
+		}
+	}
+	return unmapped, nil
 }
 
 // CreateOrUpdate applies a batch of pricing rule changes:
@@ -133,5 +163,110 @@ func (module *module) findExisting(ctx context.Context, orgID valuer.UUID, u *ll
 		return module.store.GetBySourceID(ctx, orgID, *u.SourceID)
 	default:
 		return nil, errors.Newf(errors.TypeNotFound, llmpricingruletypes.ErrCodePricingRuleNotFound, "rule has neither id nor sourceId")
+	}
+}
+
+// discoverModels runs a QBv5 traces aggregation grouped by gen_ai.request.model
+// over the lookback window and returns each distinct model with its span count.
+func (module *module) discoverModels(ctx context.Context, orgID valuer.UUID) ([]*llmpricingruletypes.UnmappedModel, error) {
+	now := time.Now()
+	req := &qbtypes.QueryRangeRequest{
+		Start:       uint64(now.Add(-unmappedModelsLookback).UnixMilli()),
+		End:         uint64(now.UnixMilli()),
+		RequestType: qbtypes.RequestTypeScalar,
+		CompositeQuery: qbtypes.CompositeQuery{
+			Queries: []qbtypes.QueryEnvelope{
+				{
+					Type: qbtypes.QueryTypeBuilder,
+					Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+						Name:   "A",
+						Signal: telemetrytypes.SignalTraces,
+						Filter: &qbtypes.Filter{Expression: fmt.Sprintf("%s EXISTS", llmpricingruletypes.GenAIRequestModel)},
+						Aggregations: []qbtypes.TraceAggregation{
+							{Expression: "count()", Alias: "spanCount"},
+						},
+						GroupBy: []qbtypes.GroupByKey{
+							{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+								Name:          llmpricingruletypes.GenAIRequestModel,
+								FieldContext:  telemetrytypes.FieldContextSpan,
+								FieldDataType: telemetrytypes.FieldDataTypeString,
+							}},
+							{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+								Name:          llmpricingruletypes.GenAIProviderName,
+								FieldContext:  telemetrytypes.FieldContextSpan,
+								FieldDataType: telemetrytypes.FieldDataTypeString,
+							}},
+						},
+						Limit: 1000,
+					},
+				},
+			},
+		},
+	}
+
+	resp, err := module.querier.QueryRange(ctx, orgID, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return parseModels(resp), nil
+}
+
+// parseModels extracts the grouped model names and their span counts from a scalar response.
+func parseModels(resp *qbtypes.QueryRangeResponse) []*llmpricingruletypes.UnmappedModel {
+	if resp == nil || len(resp.Data.Results) == 0 {
+		return nil
+	}
+	sd, ok := resp.Data.Results[0].(*qbtypes.ScalarData)
+	if !ok || sd == nil {
+		return nil
+	}
+
+	modelIdx, providerIdx, countIdx := -1, -1, -1
+	for i, c := range sd.Columns {
+		switch c.Type {
+		case qbtypes.ColumnTypeGroup:
+			switch c.Name {
+			case llmpricingruletypes.GenAIRequestModel:
+				modelIdx = i
+			case llmpricingruletypes.GenAIProviderName:
+				providerIdx = i
+			}
+		case qbtypes.ColumnTypeAggregation:
+			countIdx = i
+		}
+	}
+	if modelIdx == -1 {
+		return nil
+	}
+
+	models := make([]*llmpricingruletypes.UnmappedModel, 0, len(sd.Data))
+	for _, row := range sd.Data {
+		name, _ := row[modelIdx].(string)
+		if name == "" {
+			continue
+		}
+		provider := ""
+		if providerIdx != -1 {
+			provider, _ = row[providerIdx].(string)
+		}
+		models = append(models, &llmpricingruletypes.UnmappedModel{ModelName: name, Provider: provider, SpanCount: toUint64(row, countIdx)})
+	}
+	return models
+}
+
+func toUint64(row []any, idx int) uint64 {
+	if idx < 0 || idx >= len(row) {
+		return 0
+	}
+	switch v := row[idx].(type) {
+	case uint64:
+		return v
+	case int64:
+		return uint64(v)
+	case float64:
+		return uint64(v)
+	default:
+		return 0
 	}
 }

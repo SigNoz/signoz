@@ -6537,6 +6537,33 @@ export interface LlmpricingruletypesGettablePricingRulesDTO {
 	total: number;
 }
 
+export interface LlmpricingruletypesUnmappedModelDTO {
+	/**
+	 * @type string
+	 */
+	modelName: string;
+	/**
+	 * @type string
+	 */
+	provider?: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	spanCount: number;
+}
+
+export interface LlmpricingruletypesGettableUnmappedModelsDTO {
+	/**
+	 * @type array,null
+	 */
+	items: LlmpricingruletypesUnmappedModelDTO[] | null;
+	/**
+	 * @type integer
+	 */
+	total: number;
+}
+
 export interface LlmpricingruletypesUpdatableLLMPricingRuleDTO {
 	/**
 	 * @type boolean
@@ -9468,6 +9495,14 @@ export type GetLLMPricingRulePathParameters = {
 };
 export type GetLLMPricingRule200 = {
 	data: LlmpricingruletypesLLMPricingRuleDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListUnmappedLLMModels200 = {
+	data: LlmpricingruletypesGettableUnmappedModelsDTO;
 	/**
 	 * @type string
 	 */

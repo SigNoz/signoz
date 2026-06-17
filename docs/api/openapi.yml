@@ -4889,6 +4889,19 @@ components:
       - offset
       - limit
       type: object
+    LlmpricingruletypesGettableUnmappedModels:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/LlmpricingruletypesUnmappedModel'
+          nullable: true
+          type: array
+        total:
+          type: integer
+      required:
+      - items
+      - total
+      type: object
     LlmpricingruletypesLLMPricingCacheCosts:
       properties:
         mode:
@@ -4978,6 +4991,19 @@ components:
         type: string
       nullable: true
       type: array
+    LlmpricingruletypesUnmappedModel:
+      properties:
+        modelName:
+          type: string
+        provider:
+          type: string
+        spanCount:
+          minimum: 0
+          type: integer
+      required:
+      - modelName
+      - spanCount
+      type: object
     LlmpricingruletypesUpdatableLLMPricingRule:
       properties:
         enabled:
@@ -10449,6 +10475,60 @@ paths:
       - tokenizer:
         - VIEWER
       summary: Get a pricing rule
+      tags:
+      - llmpricingrules
+  /api/v1/llm_pricing_rules/unmapped_models:
+    get:
+      deprecated: false
+      description: Returns models seen in the last hour of trace data (gen_ai.request.model)
+        that no pricing rule pattern matches, so the user can add them to an existing
+        rule or create a new one.
+      operationId: ListUnmappedLLMModels
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/LlmpricingruletypesGettableUnmappedModels'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: List unmapped models
       tags:
       - llmpricingrules
   /api/v1/logs/promote_paths:

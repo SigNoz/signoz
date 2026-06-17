@@ -3,6 +3,7 @@ package llmpricingruletypes
 import (
 	"database/sql/driver"
 	"encoding/json"
+	"path"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -16,6 +17,7 @@ const (
 	LLMCostFeatureType agentConf.AgentFeatureType = "llm_pricing"
 
 	GenAIRequestModel                  = "gen_ai.request.model"
+	GenAIProviderName                  = "gen_ai.provider.name"
 	GenAIUsageInputTokens              = "gen_ai.usage.input_tokens"
 	GenAIUsageOutputTokens             = "gen_ai.usage.output_tokens"
 	GenAIUsageCacheReadInputTokens     = "gen_ai.usage.cache_read.input_tokens"
@@ -136,6 +138,32 @@ type GettablePricingRules struct {
 	Limit  int                       `json:"limit"  required:"true"`
 }
 
+// UnmappedModel is a model observed in trace data (gen_ai.request.model) that
+// no pricing rule pattern matches, so no cost is being computed for it.
+type UnmappedModel struct {
+	ModelName string `json:"modelName" required:"true"`
+	Provider  string `json:"provider"`
+	SpanCount uint64 `json:"spanCount" required:"true"`
+}
+
+type GettableUnmappedModels struct {
+	Items []*UnmappedModel `json:"items" required:"true"`
+	Total int              `json:"total" required:"true"`
+}
+
+// ModelMatchesAnyRule reports whether model matches any rule's glob pattern,
+// mirroring the path.Match semantics the signozllmpricing OTel processor uses.
+func ModelMatchesAnyRule(model string, rules []*LLMPricingRule) bool {
+	for _, r := range rules {
+		for _, pattern := range r.ModelPattern {
+			if ok, err := path.Match(pattern, model); err == nil && ok {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 func (LLMPricingRuleUnit) Enum() []any {
 	return []any{UnitPerMillionTokens}
 }
@@ -201,6 +229,13 @@ func NewGettableLLMPricingRulesFromLLMPricingRules(items []*LLMPricingRule, tota
 		Total:  total,
 		Offset: offset,
 		Limit:  limit,
+	}
+}
+
+func NewGettableUnmappedModels(items []*UnmappedModel) *GettableUnmappedModels {
+	return &GettableUnmappedModels{
+		Items: items,
+		Total: len(items),
 	}
 }
 
