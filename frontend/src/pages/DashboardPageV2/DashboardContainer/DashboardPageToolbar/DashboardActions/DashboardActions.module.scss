@@ -1,0 +1,11 @@
+.dashboardActionsContainer {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: flex-end;
+	gap: 12px;
+}
+
+.dashboardActionsSecondary {
+	display: flex;
+	gap: 12px;
+}

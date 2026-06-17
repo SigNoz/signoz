@@ -680,7 +680,7 @@ export const updateMetricMetadata = (
 	metricsexplorertypesUpdateMetricMetadataRequestDTO?: BodyType<MetricsexplorertypesUpdateMetricMetadataRequestDTO>,
 	signal?: AbortSignal,
 ) => {
-	return GeneratedAPIInstance<string>({
+	return GeneratedAPIInstance<void>({
 		url: `/api/v2/metrics/${metricName}/metadata`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },

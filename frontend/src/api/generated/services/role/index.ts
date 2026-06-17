@@ -203,7 +203,7 @@ export const deleteRole = (
 	{ id }: DeleteRolePathParameters,
 	signal?: AbortSignal,
 ) => {
-	return GeneratedAPIInstance<string>({
+	return GeneratedAPIInstance<void>({
 		url: `/api/v1/roles/${id}`,
 		method: 'DELETE',
 		signal,
@@ -372,7 +372,7 @@ export const patchRole = (
 	authtypesPatchableRoleDTO?: BodyType<AuthtypesPatchableRoleDTO>,
 	signal?: AbortSignal,
 ) => {
-	return GeneratedAPIInstance<string>({
+	return GeneratedAPIInstance<void>({
 		url: `/api/v1/roles/${id}`,
 		method: 'PATCH',
 		headers: { 'Content-Type': 'application/json' },
@@ -572,7 +572,7 @@ export const patchObjects = (
 	coretypesPatchableObjectsDTO?: BodyType<CoretypesPatchableObjectsDTO>,
 	signal?: AbortSignal,
 ) => {
-	return GeneratedAPIInstance<string>({
+	return GeneratedAPIInstance<void>({
 		url: `/api/v1/roles/${id}/relations/${relation}/objects`,
 		method: 'PATCH',
 		headers: { 'Content-Type': 'application/json' },

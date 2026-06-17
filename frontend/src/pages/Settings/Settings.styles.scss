@@ -1,8 +1,12 @@
 .settings-page {
-	max-height: 100vh;
+	flex: 1;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
 	overflow: hidden;
 
 	.settings-page-header {
+		flex-shrink: 0;
 		border-bottom: 1px solid var(--l1-border);
 		background: var(--l1-background);
 		backdrop-filter: blur(20px);
@@ -24,13 +28,14 @@
 	}
 
 	.settings-page-content-container {
+		flex: 1;
+		min-height: 0;
 		display: flex;
 		flex-direction: row;
-		align-items: flex-start;
+		align-items: stretch;
 
 		.settings-page-sidenav {
 			width: 240px;
-			height: calc(100vh - 48px);
 			border-right: 1px solid var(--l1-border);
 			background: var(--l1-background);
 			padding-top: var(--padding-1);
@@ -74,7 +79,6 @@
 
 		.settings-page-content {
 			flex: 1;
-			height: calc(100vh - 48px);
 			background: var(--l1-background);
 			padding: 10px 8px;
 			overflow-y: auto;
