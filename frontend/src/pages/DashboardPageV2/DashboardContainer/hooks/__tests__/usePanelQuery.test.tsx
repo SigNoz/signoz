@@ -432,4 +432,44 @@ describe('usePanelQuery', () => {
 			expect(result.current.pagination?.pageIndex).toBe(0);
 		});
 	});
+
+	describe('list pagination', () => {
+		const listPanel = (
+			querySpec: Record<string, unknown>,
+		): DashboardtypesPanelDTO =>
+			panelWith('signoz/ListPanel', { name: 'A', signal: 'logs', ...querySpec });
+
+		it('exposes server paging at the default page size when the query has no limit', () => {
+			const { result } = renderHook(() =>
+				usePanelQuery({ panel: listPanel({}), panelId: 'p1' }),
+			);
+			expect(result.current.pagination).toBeDefined();
+			expect(result.current.pagination?.pageSize).toBe(25);
+			expect(result.current.pagination?.pageSizeOptions).toStrictEqual([
+				10, 25, 50, 100, 200,
+			]);
+		});
+
+		it('disables the server pager when the query has an explicit limit (V1 parity)', () => {
+			const { result } = renderHook(() =>
+				usePanelQuery({ panel: listPanel({ limit: 100 }), panelId: 'p1' }),
+			);
+			expect(result.current.pagination).toBeUndefined();
+		});
+
+		it('changes the page size (and re-requests with the new limit) via setPageSize', () => {
+			const { result } = renderHook(() =>
+				usePanelQuery({ panel: listPanel({}), panelId: 'p1' }),
+			);
+
+			act(() => result.current.pagination?.setPageSize(50));
+
+			expect(result.current.pagination?.pageSize).toBe(50);
+			const lastCall = mockUseGetQueryRangeV5.mock.calls.at(-1) as [
+				{ queryKey: unknown[] },
+			];
+			// Page size participates in the cache key so each size is its own entry.
+			expect(lastCall[0].queryKey).toStrictEqual(expect.arrayContaining([50]));
+		});
+	});
 });
