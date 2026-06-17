@@ -19,6 +19,8 @@ type Handler interface {
 
 	DeleteChannelByID(http.ResponseWriter, *http.Request)
 
+	SyncConfig(http.ResponseWriter, *http.Request)
+
 	GetAllRoutePolicies(http.ResponseWriter, *http.Request)
 
 	GetRoutePolicyByID(http.ResponseWriter, *http.Request)

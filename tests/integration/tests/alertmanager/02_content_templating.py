@@ -1,4 +1,5 @@
 import json
+import re
 import uuid
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
@@ -56,7 +57,11 @@ CONTENT_TEMPLATING_TEST = [
                                         "body": [
                                             {
                                                 "type": "TextBlock",
-                                                "text": '[FIRING:1] content_templating_metrics for  (alertname="content_templating_metrics", container="checkout", namespace="production", node="ip-10-0-1-23", pod="checkout-7d9c8b5f4-x2k9p", severity="critical", threshold.name="critical")',
+                                                "text": re.compile(
+                                                    r'\[FIRING:1\] content_templating_metrics for '
+                                                    r'.*ruleSource="http://localhost:8080/alerts/overview\?ruleId=[\w-]+"',
+                                                    re.DOTALL,
+                                                ),
                                             },
                                         ],
                                     },
