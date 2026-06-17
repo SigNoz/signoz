@@ -270,6 +270,60 @@ func TestInvalidateOneInvalidPanel(t *testing.T) {
 	require.Contains(t, err.Error(), "FakePanel", "error should mention FakePanel")
 }
 
+func TestInvalidateLayoutPanelReferences(t *testing.T) {
+	validPanels := `"panels": {
+		"p1": {
+			"kind": "Panel",
+			"spec": {
+				"plugin": {"kind": "signoz/TablePanel", "spec": {}},
+				"queries": [{
+					"kind": "time_series",
+					"spec": {"plugin": {"kind": "signoz/BuilderQuery", "spec": {
+						"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]
+					}}}
+				}]
+			}
+		}
+	}`
+	layout := func(items string) []byte {
+		return []byte(`{` + validPanels + `, "layouts": [{"kind": "Grid", "spec": {"items": [` + items + `]}}]}`)
+	}
+
+	tests := []struct {
+		name        string
+		data        []byte
+		wantContain string
+	}{
+		{
+			name:        "reference to unknown panel",
+			data:        layout(`{"x": 0, "y": 0, "width": 6, "height": 6, "content": {"$ref": "#/spec/panels/ghost"}}`),
+			wantContain: `references unknown panel "ghost"`,
+		},
+		{
+			name:        "reference not pointing at a panel",
+			data:        layout(`{"x": 0, "y": 0, "width": 6, "height": 6, "content": {"$ref": "#/spec/variables/p1"}}`),
+			wantContain: "must reference a panel",
+		},
+		{
+			name:        "valid reference",
+			data:        layout(`{"x": 0, "y": 0, "width": 6, "height": 6, "content": {"$ref": "#/spec/panels/p1"}}`),
+			wantContain: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := unmarshalDashboard(tt.data)
+			if tt.wantContain == "" {
+				require.NoError(t, err)
+				return
+			}
+			require.Error(t, err)
+			require.Contains(t, err.Error(), tt.wantContain)
+		})
+	}
+}
+
 func TestRejectUnknownFieldsInPluginSpec(t *testing.T) {
 	tests := []struct {
 		name        string
