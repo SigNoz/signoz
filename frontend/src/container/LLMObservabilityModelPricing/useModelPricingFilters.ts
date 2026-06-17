@@ -2,12 +2,8 @@ import { useCallback } from 'react';
 import { useHistory } from 'react-router-dom';
 import useUrlQuery from 'hooks/useUrlQuery';
 
-const PAGE_KEY = 'page';
-
-export interface ModelPricingFilters {
-	page: number;
-	setPage: (value: number) => void;
-}
+import { PAGE_KEY } from './constants';
+import type { ModelPricingFilters } from './types';
 
 // Keeps the model-cost list pagination in the URL so the view is shareable and
 // reload-safe. Search/source filters were removed for now — they'll return here

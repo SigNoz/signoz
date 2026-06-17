@@ -12,6 +12,7 @@ import { ChevronDown } from '@signozhq/icons';
 import cx from 'classnames';
 import { startCase } from 'lodash-es';
 
+import { COLUMN_COUNT } from './constants';
 import type { PricingRule } from './types';
 import {
 	formatPricePerMillion,
@@ -20,8 +21,6 @@ import {
 	getRelativeLastSeen,
 	getSourceLabel,
 } from './utils';
-
-const COLUMN_COUNT = 8;
 
 interface ModelCostsTableProps {
 	rules: PricingRule[];

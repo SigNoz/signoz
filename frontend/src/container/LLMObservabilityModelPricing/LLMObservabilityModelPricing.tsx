@@ -5,19 +5,12 @@ import { Tabs } from '@signozhq/ui/tabs';
 import { useListLLMPricingRules } from 'api/generated/services/llmpricingrules';
 import { type ListLLMPricingRulesParams } from 'api/generated/services/sigNoz.schemas';
 
+import { CURRENCY_OPTIONS, PAGE_SIZE } from './constants';
 import ModelCostsTable from './ModelCostsTable';
 import { useModelPricingFilters } from './useModelPricingFilters';
 import type { PricingRule } from './types';
 
 import './LLMObservabilityModelPricing.styles.scss';
-
-const CURRENCY_OPTIONS = [
-	{ value: 'USD', label: 'USD' },
-	{ value: 'EUR', label: 'EUR', disabled: true },
-	{ value: 'INR', label: 'INR', disabled: true },
-];
-
-const PAGE_SIZE = 20;
 
 function LLMObservabilityModelPricing(): JSX.Element {
 	const { page, setPage } = useModelPricingFilters();

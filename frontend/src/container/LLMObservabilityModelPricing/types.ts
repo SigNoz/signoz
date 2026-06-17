@@ -6,3 +6,8 @@ export interface ExtraBucket {
 	key: string;
 	pricePerMillion: number;
 }
+
+export interface ModelPricingFilters {
+	page: number;
+	setPage: (value: number) => void;
+}
