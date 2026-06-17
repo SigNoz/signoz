@@ -1,7 +1,8 @@
 import { Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { Badge } from '@signozhq/ui/badge';
-import { CalendarClock } from '@signozhq/icons';
+import { CalendarClock, Star } from '@signozhq/icons';
+import cx from 'classnames';
 import logEvent from 'api/common/logEvent';
 import { generatePath } from 'react-router-dom';
 import { Base64Icons } from 'container/DashboardContainer/DashboardSettings/General/utils';
@@ -11,6 +12,7 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { useTimezone } from 'providers/Timezone';
 import { isModifierKeyPressed } from 'utils/app';
 
+import { useDashboardViewsStore } from '../../store/useDashboardViewsStore';
 import type { DashboardListItem } from '../../utils';
 import { lastUpdatedLabel, tagsToStrings } from '../../utils';
 import ActionsPopover from '../ActionsPopover/ActionsPopover';
@@ -35,6 +37,12 @@ function DashboardRow({
 	const { safeNavigate } = useSafeNavigate();
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
+	const isFavorite = useDashboardViewsStore((s) =>
+		s.favorites.includes(dashboard.id),
+	);
+	const toggleFavorite = useDashboardViewsStore((s) => s.toggleFavorite);
+	const markViewed = useDashboardViewsStore((s) => s.markViewed);
+
 	const id = dashboard.id;
 	const name = dashboard.spec?.display?.name ?? '';
 	const image = dashboard.image || Base64Icons[0];
@@ -53,11 +61,17 @@ function DashboardRow({
 
 	const onClickHandler = (event: React.MouseEvent<HTMLElement>): void => {
 		event.stopPropagation();
+		markViewed(id);
 		safeNavigate(link, { newTab: isModifierKeyPressed(event) });
 		logEvent('Dashboard List: Clicked on dashboard', {
 			dashboardId: id,
 			dashboardName: name,
 		});
+	};
+
+	const onToggleFavorite = (event: React.MouseEvent<HTMLElement>): void => {
+		event.stopPropagation();
+		toggleFavorite(id);
 	};
 
 	return (
@@ -97,6 +111,17 @@ function DashboardRow({
 						</div>
 					)}
 				</div>
+
+				<button
+					type="button"
+					className={cx(styles.favBtn, { [styles.favBtnOn]: isFavorite })}
+					aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+					title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+					data-testid={`dashboard-favorite-${index}`}
+					onClick={onToggleFavorite}
+				>
+					<Star size={14} />
+				</button>
 
 				{canAct && (
 					<ActionsPopover
