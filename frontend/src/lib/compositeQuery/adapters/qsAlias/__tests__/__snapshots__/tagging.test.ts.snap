@@ -1,0 +1,277 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`qsAliasAdapter tagging encode tags by dataSource logs → QAl: url 1`] = `"_t=QAl&id=test-stable-id&query0.aggOp=count&query0.source="`;
+
+exports[`qsAliasAdapter tagging encode tags by dataSource metrics → QAm: url 1`] = `"_t=QAm&id=test-stable-id&query0.aggOp=count&query0.source="`;
+
+exports[`qsAliasAdapter tagging encode tags by dataSource traces → QAt: url 1`] = `"_t=QAt&id=test-stable-id&query0.aggOp=count&query0.source="`;
+
+exports[`qsAliasAdapter tagging tag-only decode returns the baseline QAl decodes to the logs baseline: decoded-QAl 1`] = `
+{
+  "builder": {
+    "queryData": [
+      {
+        "aggregateAttribute": {
+          "dataType": "",
+          "id": "----",
+          "key": "",
+          "type": "",
+        },
+        "aggregateOperator": null,
+        "aggregations": [
+          {
+            "expression": "count() ",
+          },
+        ],
+        "dataSource": "logs",
+        "disabled": false,
+        "expression": "A",
+        "filter": {
+          "expression": "",
+        },
+        "filters": {
+          "items": [],
+          "op": "AND",
+        },
+        "functions": [],
+        "groupBy": [],
+        "having": [],
+        "legend": "",
+        "limit": null,
+        "orderBy": [],
+        "queryName": "A",
+        "reduceTo": "avg",
+        "source": null,
+        "spaceAggregation": "sum",
+        "stepInterval": null,
+        "timeAggregation": "rate",
+      },
+    ],
+    "queryFormulas": [],
+    "queryTraceOperator": [],
+  },
+  "clickhouse_sql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "id": "test-stable-id",
+  "promql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "queryType": "builder",
+  "unit": "",
+}
+`;
+
+exports[`qsAliasAdapter tagging tag-only decode returns the baseline QAm decodes to the metrics baseline: decoded-QAm 1`] = `
+{
+  "builder": {
+    "queryData": [
+      {
+        "aggregateAttribute": {
+          "dataType": "",
+          "id": "----",
+          "key": "",
+          "type": "",
+        },
+        "aggregateOperator": "noop",
+        "aggregations": [
+          {
+            "metricName": "",
+            "reduceTo": "avg",
+            "spaceAggregation": "sum",
+            "temporality": "",
+            "timeAggregation": "avg",
+          },
+        ],
+        "dataSource": "metrics",
+        "disabled": false,
+        "expression": "A",
+        "filter": {
+          "expression": "",
+        },
+        "filters": {
+          "items": [],
+          "op": "AND",
+        },
+        "functions": [],
+        "groupBy": [],
+        "having": [],
+        "legend": "",
+        "limit": null,
+        "orderBy": [],
+        "queryName": "A",
+        "reduceTo": "avg",
+        "source": null,
+        "spaceAggregation": "sum",
+        "stepInterval": null,
+        "timeAggregation": "rate",
+      },
+    ],
+    "queryFormulas": [],
+    "queryTraceOperator": [],
+  },
+  "clickhouse_sql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "id": "test-stable-id",
+  "promql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "queryType": "builder",
+  "unit": "",
+}
+`;
+
+exports[`qsAliasAdapter tagging tag-only decode returns the baseline QAt decodes to the traces baseline: decoded-QAt 1`] = `
+{
+  "builder": {
+    "queryData": [
+      {
+        "aggregateAttribute": {
+          "dataType": "",
+          "id": "----",
+          "key": "",
+          "type": "",
+        },
+        "aggregateOperator": null,
+        "aggregations": [
+          {
+            "expression": "count() ",
+          },
+        ],
+        "dataSource": "traces",
+        "disabled": false,
+        "expression": "A",
+        "filter": {
+          "expression": "",
+        },
+        "filters": {
+          "items": [],
+          "op": "AND",
+        },
+        "functions": [],
+        "groupBy": [],
+        "having": [],
+        "legend": "",
+        "limit": null,
+        "orderBy": [],
+        "queryName": "A",
+        "reduceTo": "avg",
+        "source": null,
+        "spaceAggregation": "sum",
+        "stepInterval": null,
+        "timeAggregation": "rate",
+      },
+    ],
+    "queryFormulas": [],
+    "queryTraceOperator": [],
+  },
+  "clickhouse_sql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "id": "test-stable-id",
+  "promql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "queryType": "builder",
+  "unit": "",
+}
+`;
+
+exports[`qsAliasAdapter tagging tag-only decode returns the baseline round-trips the baseline with no extra params: decoded 1`] = `
+{
+  "builder": {
+    "queryData": [
+      {
+        "aggregateAttribute": {
+          "dataType": "",
+          "id": "----",
+          "key": "",
+          "type": "",
+        },
+        "aggregateOperator": "count",
+        "aggregations": [
+          {
+            "expression": "count() ",
+          },
+        ],
+        "dataSource": "logs",
+        "disabled": false,
+        "expression": "A",
+        "filter": {
+          "expression": "",
+        },
+        "filters": {
+          "items": [],
+          "op": "AND",
+        },
+        "functions": [],
+        "groupBy": [],
+        "having": [],
+        "legend": "",
+        "limit": null,
+        "orderBy": [],
+        "queryName": "A",
+        "reduceTo": "avg",
+        "source": "",
+        "spaceAggregation": "sum",
+        "stepInterval": null,
+        "timeAggregation": "rate",
+      },
+    ],
+    "queryFormulas": [],
+    "queryTraceOperator": [],
+  },
+  "clickhouse_sql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "id": "test-stable-id",
+  "promql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "queryType": "builder",
+  "unit": "",
+}
+`;
+
+exports[`qsAliasAdapter tagging tag-only decode returns the baseline round-trips the baseline with no extra params: url 1`] = `"_t=QAl&id=test-stable-id&query0.aggOp=count&query0.source="`;
