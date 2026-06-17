@@ -6,12 +6,56 @@ import type { AnyPanelInteractionProps } from './interactions';
 import type { PanelKind } from './panelKind';
 import type { BaseRendererProps, PanelRendererProps } from './rendererProps';
 
+/**
+ * Kind-level action capabilities: which panel actions THIS kind supports.
+ * Declared per-kind in `kinds/<Kind>/definition.ts` — the field is required,
+ * so registering a new kind forces an explicit decision for every action
+ * (mirroring how PanelInteractionMap forces per-kind interaction coverage).
+ *
+ * Chrome actions (move to section, clone, delete) are dashboard-layout
+ * concerns, available for every panel — including kinds V2 can't render —
+ * and are intentionally not declarable here.
+ */
+export interface PanelActionCapabilities {
+	/** Kind has a full-screen view — gates the "View" action. */
+	view: boolean;
+	/** Kind is editable in the V2 panel editor — gates the "Edit panel" action. */
+	edit: boolean;
+	/** Kind can be cloned — gates the "Clone" action. */
+	clone: boolean;
+	/**
+	 * Kind's data can be exported as CSV — gates "Download as CSV". V1 parity:
+	 * only table panels carry tabular data worth exporting.
+	 */
+	download: boolean;
+	/** Kind's query can seed a new alert — gates "Create Alerts". */
+	createAlert: boolean;
+}
+
+/**
+ * Kind-level header controls: chrome the panel header renders for THIS kind,
+ * beyond the universal title / status / actions. Declared per-kind so the
+ * header stays generic and never branches on kind. Required, mirroring
+ * `actions`, so registering a new kind forces an explicit decision for every
+ * control.
+ */
+export interface PanelHeaderControls {
+	/**
+	 * Header carries a collapsible search box that filters the rendered rows
+	 * client-side. V1 parity: only tabular panels expose it. The kind's renderer
+	 * must consume `searchTerm` (see BaseRendererProps) to apply the filter.
+	 */
+	search: boolean;
+}
+
 export interface PanelDefinition<K extends PanelKind = PanelKind> {
 	kind: K;
 	displayName: string;
 	Renderer: ComponentType<PanelRendererProps<K>>;
 	sections: SectionConfig[];
 	supportedSignals: DataSource[];
+	actions: PanelActionCapabilities;
+	headerControls: PanelHeaderControls;
 }
 
 // Keyed registry that preserves the kind ↔ definition correlation: indexing
