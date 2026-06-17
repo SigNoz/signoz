@@ -305,6 +305,11 @@ func TestInvalidateLayoutPanelReferences(t *testing.T) {
 			wantContain: "must reference a panel",
 		},
 		{
+			name:        "reference missing spec prefix",
+			data:        layout(`{"x": 0, "y": 0, "width": 6, "height": 6, "content": {"$ref": "#/panels/p1"}}`),
+			wantContain: "must reference a panel",
+		},
+		{
 			name:        "valid reference",
 			data:        layout(`{"x": 0, "y": 0, "width": 6, "height": 6, "content": {"$ref": "#/spec/panels/p1"}}`),
 			wantContain: "",
