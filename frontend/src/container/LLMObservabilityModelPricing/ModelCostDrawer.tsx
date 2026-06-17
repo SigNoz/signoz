@@ -4,22 +4,23 @@ import { Input } from '@signozhq/ui/input';
 import { SelectSimple } from '@signozhq/ui/select';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Trash2 } from '@signozhq/icons';
+import { useEffect } from 'react';
+import { Controller, useForm } from 'react-hook-form';
 
 import PatternEditor from './PatternEditor';
 import PricingFields from './PricingFields';
 import SourceSelector from './SourceSelector';
 import { PROVIDER_OPTIONS } from './constants';
-import { validateDraft } from './utils';
+import { validateModelName, validatePricing, validateProvider } from './utils';
 import type { DrawerDraft, DrawerMode } from './types';
 import './ModelCostDrawer.styles.scss';
 
 interface ModelCostDrawerProps {
 	isOpen: boolean;
 	mode: DrawerMode;
-	draft: DrawerDraft;
-	setDraft: (next: DrawerDraft) => void;
+	initialDraft: DrawerDraft;
 	onClose: () => void;
-	onSave: () => void;
+	onSave: (draft: DrawerDraft) => void;
 	onDelete: () => void;
 	isSaving: boolean;
 	isDeleting: boolean;
@@ -30,8 +31,7 @@ interface ModelCostDrawerProps {
 function ModelCostDrawer({
 	isOpen,
 	mode,
-	draft,
-	setDraft,
+	initialDraft,
 	onClose,
 	onSave,
 	onDelete,
@@ -40,12 +40,35 @@ function ModelCostDrawer({
 	saveError,
 	canManage,
 }: ModelCostDrawerProps): JSX.Element {
+	const {
+		control,
+		handleSubmit,
+		watch,
+		reset,
+		formState: { isValid, errors },
+	} = useForm<DrawerDraft>({
+		mode: 'onChange',
+		defaultValues: initialDraft,
+	});
+
+	// The drawer stays mounted while closed, so re-seed the form whenever it
+	// reopens — otherwise edit shows stale data and values leak between opens.
+	// reset() under mode: 'onChange' also recomputes isValid, so the Save button's
+	// disabled state is correct from the first render.
+	useEffect(() => {
+		if (isOpen) {
+			reset(initialDraft);
+		}
+	}, [isOpen, initialDraft, reset]);
+
+	const isOverride = watch('isOverride');
+
 	// Metadata (model id / provider / patterns / source) is editable by any
 	// manager. Pricing fields are editable only once the user picks "User
 	// override" — auto-populated pricing is managed by SigNoz. Write APIs are
 	// Admin-only, so non-managers can't edit anything.
 	const metadataReadOnly = !canManage;
-	const pricingReadOnly = !canManage || !draft.isOverride;
+	const pricingReadOnly = !canManage || !isOverride;
 
 	// Non-managers can only view (write APIs are Admin-only), so the drawer is a
 	// read-only "View" rather than "Edit"/"Add".
@@ -56,13 +79,12 @@ function ModelCostDrawer({
 		drawerTitle = 'Edit model cost';
 	}
 
-	const validation = validateDraft(draft, mode);
-	const showValidationTooltip =
-		canManage && !validation.ok && !!validation.message;
-
-	const update = (patch: Partial<DrawerDraft>): void => {
-		setDraft({ ...draft, ...patch });
-	};
+	// Surface the first failing field (in form order) on the disabled Save button.
+	const validationMessage =
+		errors.modelName?.message ||
+		errors.provider?.message ||
+		errors.pricing?.message;
+	const showValidationTooltip = canManage && !isValid && !!validationMessage;
 
 	const footer = (
 		<div className="model-cost-drawer__footer">
@@ -89,7 +111,7 @@ function ModelCostDrawer({
 				</Button>
 				{canManage && (
 					<TooltipSimple
-						title={showValidationTooltip ? validation.message : ''}
+						title={showValidationTooltip ? validationMessage : ''}
 						withPortal={false}
 					>
 						{/* span wrapper so the tooltip fires even when the button is disabled */}
@@ -97,9 +119,9 @@ function ModelCostDrawer({
 							<Button
 								variant="solid"
 								color="primary"
-								onClick={onSave}
+								onClick={handleSubmit(onSave)}
 								loading={isSaving}
-								disabled={!validation.ok}
+								disabled={!isValid}
 								testId="drawer-save-btn"
 							>
 								Save
@@ -129,53 +151,92 @@ function ModelCostDrawer({
 		>
 			<div className="drawer-section">
 				<label htmlFor="billing-model-id">Billing model ID</label>
-				<Input
-					id="billing-model-id"
-					placeholder="e.g. openai:gpt-4o"
-					value={draft.modelName}
-					disabled={mode === 'edit' || metadataReadOnly}
-					onChange={(e): void => update({ modelName: e.target.value })}
-					testId="drawer-model-id-input"
+				<Controller
+					name="modelName"
+					control={control}
+					rules={{
+						validate: (value): true | string => validateModelName(value, mode),
+					}}
+					render={({ field }): JSX.Element => (
+						<Input
+							id="billing-model-id"
+							placeholder="e.g. openai:gpt-4o"
+							value={field.value}
+							disabled={mode === 'edit' || metadataReadOnly}
+							onChange={(e): void => field.onChange(e.target.value)}
+							testId="drawer-model-id-input"
+						/>
+					)}
 				/>
 			</div>
 
 			<div className="drawer-section">
 				<label htmlFor="provider-select">Provider</label>
-				<SelectSimple
-					id="provider-select"
-					value={draft.provider}
-					onChange={(value): void => update({ provider: value as string })}
-					items={PROVIDER_OPTIONS}
-					disabled={mode === 'edit' || metadataReadOnly}
-					className="full-width"
-					withPortal={false}
-					testId="drawer-provider-select"
+				<Controller
+					name="provider"
+					control={control}
+					rules={{ validate: validateProvider }}
+					render={({ field }): JSX.Element => (
+						<SelectSimple
+							id="provider-select"
+							value={field.value}
+							onChange={(value): void => field.onChange(value as string)}
+							items={PROVIDER_OPTIONS}
+							disabled={mode === 'edit' || metadataReadOnly}
+							className="full-width"
+							withPortal={false}
+							testId="drawer-provider-select"
+						/>
+					)}
 				/>
 			</div>
 
-			<PatternEditor
-				patterns={draft.patterns}
-				isReadOnly={metadataReadOnly}
-				onChange={(patterns): void => update({ patterns })}
+			<Controller
+				name="patterns"
+				control={control}
+				render={({ field }): JSX.Element => (
+					<PatternEditor
+						patterns={field.value}
+						isReadOnly={metadataReadOnly}
+						onChange={field.onChange}
+					/>
+				)}
 			/>
 
 			{/* Source is auto vs. override — a choice only a manager can make, so
 			    there's nothing to show a read-only viewer. */}
 			{canManage && (
-				<SourceSelector
-					isOverride={draft.isOverride}
-					isReadOnly={metadataReadOnly}
-					disableAuto={mode === 'add'}
-					onChange={(isOverride): void => update({ isOverride })}
+				<Controller
+					name="isOverride"
+					control={control}
+					// Pricing requirements depend on this toggle, so re-validate pricing
+					// whenever the source changes (keeps the Save button in sync).
+					rules={{ deps: ['pricing'] }}
+					render={({ field }): JSX.Element => (
+						<SourceSelector
+							isOverride={field.value}
+							isReadOnly={metadataReadOnly}
+							disableAuto={mode === 'add'}
+							onChange={field.onChange}
+						/>
+					)}
 				/>
 			)}
 
-			<PricingFields
-				pricing={draft.pricing}
-				isReadOnly={pricingReadOnly}
-				onChange={(patch): void =>
-					setDraft({ ...draft, pricing: { ...draft.pricing, ...patch } })
-				}
+			<Controller
+				name="pricing"
+				control={control}
+				rules={{
+					validate: (value, values): true | string =>
+						validatePricing(value, values.isOverride),
+				}}
+				render={({ field }): JSX.Element => (
+					<PricingFields
+						pricing={field.value}
+						isReadOnly={pricingReadOnly}
+						onChange={(patch): void => field.onChange({ ...field.value, ...patch })}
+					/>
+				)}
 			/>
 
 			{saveError && (

@@ -101,8 +101,7 @@ function ModelCostsTab(): JSX.Element {
 			<ModelCostDrawer
 				isOpen={drawer.isOpen}
 				mode={drawer.mode}
-				draft={drawer.draft}
-				setDraft={drawer.setDraft}
+				initialDraft={drawer.initialDraft}
 				onClose={drawer.close}
 				onSave={drawer.save}
 				onDelete={drawer.deleteRule}

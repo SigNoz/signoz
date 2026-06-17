@@ -37,8 +37,3 @@ export interface DrawerDraft {
 		cacheWrite: number | null;
 	};
 }
-
-export interface ValidationResult {
-	ok: boolean;
-	message?: string;
-}

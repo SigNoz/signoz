@@ -13,7 +13,6 @@ import type {
 	DrawerMode,
 	ExtraBucket,
 	PricingRule,
-	ValidationResult,
 } from './types';
 
 dayjs.extend(relativeTime);
@@ -102,29 +101,29 @@ export const draftFromRule = (rule: PricingRule): DrawerDraft => ({
 	},
 });
 
+const buildCacheCosts = (
+	pricing: DrawerDraft['pricing'],
+): LlmpricingruletypesLLMPricingCacheCostsDTO | undefined => {
+	const { cacheMode, cacheRead, cacheWrite } = pricing;
+	if (!hasCacheValue(cacheRead) && !hasCacheValue(cacheWrite)) {
+		return undefined;
+	}
+	return {
+		mode: cacheMode,
+		...(hasCacheValue(cacheRead) && { read: cacheRead as number }),
+		...(hasCacheValue(cacheWrite) && { write: cacheWrite as number }),
+	};
+};
+
 export const buildPricingPayload = (
 	draft: DrawerDraft,
 ): LlmpricingruletypesLLMRulePricingDTO => {
-	const pricing: LlmpricingruletypesLLMRulePricingDTO = {
+	const cache = buildCacheCosts(draft.pricing);
+	return {
 		input: draft.pricing.input,
 		output: draft.pricing.output,
+		...(cache && { cache }),
 	};
-	if (
-		hasCacheValue(draft.pricing.cacheRead) ||
-		hasCacheValue(draft.pricing.cacheWrite)
-	) {
-		const cache: LlmpricingruletypesLLMPricingCacheCostsDTO = {
-			mode: draft.pricing.cacheMode,
-		};
-		if (hasCacheValue(draft.pricing.cacheRead)) {
-			cache.read = draft.pricing.cacheRead as number;
-		}
-		if (hasCacheValue(draft.pricing.cacheWrite)) {
-			cache.write = draft.pricing.cacheWrite as number;
-		}
-		pricing.cache = cache;
-	}
-	return pricing;
 };
 
 export const buildRulePayload = (
@@ -142,31 +141,38 @@ export const buildRulePayload = (
 	pricing: buildPricingPayload(draft),
 });
 
-export const validateDraft = (
-	draft: DrawerDraft,
+// Field validators follow react-hook-form's `validate` convention: return
+// `true` when valid, or the error message string when invalid.
+
+// Billing model ID is only user-entered when adding; in edit mode it's
+// immutable, so there's nothing to require.
+export const validateModelName = (
+	modelName: string,
 	mode: DrawerMode,
-): ValidationResult => {
-	if (mode === 'add' && !draft.modelName.trim()) {
-		return { ok: false, message: 'Billing model ID is required.' };
+): true | string =>
+	mode === 'add' && !modelName.trim() ? 'Billing model ID is required.' : true;
+
+export const validateProvider = (provider: string): true | string =>
+	provider.trim() ? true : 'Provider is required.';
+
+// Pricing is only user-entered for overrides; auto-populated rules are managed
+// by SigNoz (and may legitimately be 0 for self-hosted models). `!(x > 0)`
+// (rather than `x <= 0`) so NaN counts as invalid.
+export const validatePricing = (
+	pricing: DrawerDraft['pricing'],
+	isOverride: boolean,
+): true | string => {
+	if (!isOverride) {
+		return true;
 	}
-	if (!draft.provider.trim()) {
-		return { ok: false, message: 'Provider is required.' };
+	if (!(pricing.input > 0)) {
+		return 'Input cost must be greater than 0.';
 	}
-	// Pricing is only user-entered for overrides; auto-populated rules are
-	// managed by SigNoz (and may legitimately be 0 for self-hosted models).
-	if (draft.isOverride) {
-		if (!(draft.pricing.input > 0)) {
-			return { ok: false, message: 'Input cost must be greater than 0.' };
-		}
-		if (!(draft.pricing.output > 0)) {
-			return { ok: false, message: 'Output cost must be greater than 0.' };
-		}
-		if (
-			(draft.pricing.cacheRead !== null && draft.pricing.cacheRead < 0) ||
-			(draft.pricing.cacheWrite !== null && draft.pricing.cacheWrite < 0)
-		) {
-			return { ok: false, message: 'Cache costs must be non-negative.' };
-		}
+	if (!(pricing.output > 0)) {
+		return 'Output cost must be greater than 0.';
 	}
-	return { ok: true };
+	if ((pricing.cacheRead ?? 0) < 0 || (pricing.cacheWrite ?? 0) < 0) {
+		return 'Cache costs must be non-negative.';
+	}
+	return true;
 };
