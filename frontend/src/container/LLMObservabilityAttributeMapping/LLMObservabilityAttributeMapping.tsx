@@ -1,13 +1,27 @@
+import { Tabs } from '@signozhq/ui/tabs';
+
 import AttributeMappingHeader from './AttributeMappingHeader';
-import MapperGroupsTable from './MapperGroupsTable';
-import { useAttributeMappingStore } from './useAttributeMappingStore';
+import AttributeMappingsTab from './AttributeMappingsTab';
 
 import './LLMObservabilityAttributeMapping.styles.scss';
 
 const noop = (): void => undefined;
 
 function LLMObservabilityAttributeMapping(): JSX.Element {
-	const store = useAttributeMappingStore();
+	const tabItems = [
+		{
+			key: 'attribute-mappings',
+			label: 'Attribute mappings',
+			children: <AttributeMappingsTab />,
+		},
+		{
+			key: 'test',
+			label: 'Test',
+			disabled: true,
+			disabledReason: 'Coming soon',
+			children: null,
+		},
+	];
 
 	return (
 		<div
@@ -21,17 +35,11 @@ function LLMObservabilityAttributeMapping(): JSX.Element {
 				onSave={noop}
 			/>
 
-			{store.isError && (
-				<div className="page-error" role="alert">
-					Failed to load mapping groups. Please try again.
-				</div>
-			)}
-
-			<MapperGroupsTable store={store} />
-
-			<footer className="page-footer">
-				Showing {store.groups.length} group{store.groups.length === 1 ? '' : 's'}
-			</footer>
+			<Tabs
+				testId="attribute-mapping-tabs"
+				defaultValue="attribute-mappings"
+				items={tabItems}
+			/>
 		</div>
 	);
 }
