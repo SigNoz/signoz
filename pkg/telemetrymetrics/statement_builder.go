@@ -101,9 +101,29 @@ func (b *MetricQueryStatementBuilder) Build(
 		return nil, err
 	}
 
+	var pairFallbackWarnings []string
+	for _, sel := range keySelectors {
+		if _, ok := keys[sel.Name]; !ok {
+			keys[sel.Name] = []*telemetrytypes.TelemetryFieldKey{{
+				Name:          sel.Name,
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+				Signal:        telemetrytypes.SignalMetrics,
+			}}
+			pairFallbackWarnings = append(pairFallbackWarnings,
+				fmt.Sprintf("key `%s` not found on metric %s", sel.Name, query.Aggregations[0].MetricName),
+			)
+		}
+	}
+
 	start, end = querybuilder.AdjustedMetricTimeRange(start, end, uint64(query.StepInterval.Seconds()), query)
 
-	return b.buildPipelineStatement(ctx, start, end, query, keys, variables)
+	stmt, err := b.buildPipelineStatement(ctx, start, end, query, keys, variables)
+	if err != nil {
+		return nil, err
+	}
+	stmt.Warnings = append(stmt.Warnings, pairFallbackWarnings...)
+	return stmt, nil
 }
 
 func (b *MetricQueryStatementBuilder) buildPipelineStatement(
