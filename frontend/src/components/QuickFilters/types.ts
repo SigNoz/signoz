@@ -61,3 +61,19 @@ export enum QuickFiltersSource {
 	EXCEPTIONS = 'exceptions',
 	METER_EXPLORER = 'meter',
 }
+
+/**
+ * Opt-in: fetch values from the /v1/fields/values API instead of /v3/autocomplete/attribute_values
+ */
+export type QuickFilterCheckboxUseFieldApis = {
+	startUnixMilli: number;
+	endUnixMilli: number;
+	/**
+	 * If you didn't specify a string, we automatically try to extract this from the currentQuery,
+	 * from the filter.expression or filter.items.
+	 *
+	 * Use null to ignore/disable this behavior.
+	 */
+	existingQuery?: string | null;
+	metricNamespace?: string;
+};
