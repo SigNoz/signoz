@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
+import { Switch } from '@signozhq/ui/switch';
 import {
 	Table,
 	TableBody,
@@ -9,7 +10,13 @@ import {
 	TableHeader,
 	TableRow,
 } from '@signozhq/ui/table';
-import { ChevronDown, ChevronRight } from '@signozhq/icons';
+import {
+	ChevronDown,
+	ChevronRight,
+	Pencil,
+	Plus,
+	Trash2,
+} from '@signozhq/icons';
 
 import MappersTable from './MappersTable';
 import { DraftGroup } from './types';
@@ -20,6 +27,8 @@ const COLUMN_COUNT = 4;
 
 interface MapperGroupsTableProps {
 	store: AttributeMappingStore;
+	onEditGroup: (group: DraftGroup) => void;
+	onAddGroup: () => void;
 }
 
 function FiltersCell({ group }: { group: DraftGroup }): JSX.Element {
@@ -53,14 +62,18 @@ function FiltersCell({ group }: { group: DraftGroup }): JSX.Element {
 
 interface GroupRowProps {
 	group: DraftGroup;
+	store: AttributeMappingStore;
 	isExpanded: boolean;
 	onToggleExpand: (localId: string) => void;
+	onEditGroup: (group: DraftGroup) => void;
 }
 
 function GroupRow({
 	group,
+	store,
 	isExpanded,
 	onToggleExpand,
+	onEditGroup,
 }: GroupRowProps): JSX.Element {
 	return (
 		<>
@@ -92,9 +105,33 @@ function GroupRow({
 					<span className="muted">{group.mappers.length} mappings</span>
 				</TableCell>
 				<TableCell>
-					<Badge color={group.enabled ? 'forest' : 'vanilla'} variant="outline">
-						{group.enabled ? 'Enabled' : 'Disabled'}
-					</Badge>
+					<div className="am-row-actions">
+						<Button
+							variant="ghost"
+							color="secondary"
+							size="icon"
+							aria-label="Edit group"
+							onClick={(): void => onEditGroup(group)}
+							testId={`group-edit-${group.localId}`}
+						>
+							<Pencil size={14} />
+						</Button>
+						<Button
+							variant="ghost"
+							color="destructive"
+							size="icon"
+							aria-label="Delete group"
+							onClick={(): void => store.removeGroup(group.localId)}
+							testId={`group-delete-${group.localId}`}
+						>
+							<Trash2 size={14} />
+						</Button>
+						<Switch
+							value={group.enabled}
+							onChange={(checked): void => store.toggleGroup(group.localId, checked)}
+							testId={`group-enabled-${group.localId}`}
+						/>
+					</div>
 				</TableCell>
 			</TableRow>
 			{isExpanded && (
@@ -108,7 +145,11 @@ function GroupRow({
 	);
 }
 
-function MapperGroupsTable({ store }: MapperGroupsTableProps): JSX.Element {
+function MapperGroupsTable({
+	store,
+	onEditGroup,
+	onAddGroup,
+}: MapperGroupsTableProps): JSX.Element {
 	const [expandedId, setExpandedId] = useState<string | null>(null);
 
 	const toggleExpand = (localId: string): void => {
@@ -123,7 +164,7 @@ function MapperGroupsTable({ store }: MapperGroupsTableProps): JSX.Element {
 						<TableHead>Group name</TableHead>
 						<TableHead>Filters</TableHead>
 						<TableHead>Mappings</TableHead>
-						<TableHead>Status</TableHead>
+						<TableHead>Actions</TableHead>
 					</TableRow>
 				</TableHeader>
 				<TableBody>
@@ -145,12 +186,25 @@ function MapperGroupsTable({ store }: MapperGroupsTableProps): JSX.Element {
 						<GroupRow
 							key={group.localId}
 							group={group}
+							store={store}
 							isExpanded={expandedId === group.localId}
 							onToggleExpand={toggleExpand}
+							onEditGroup={onEditGroup}
 						/>
 					))}
 				</TableBody>
 			</Table>
+
+			<Button
+				variant="ghost"
+				color="primary"
+				prefix={<Plus size={14} />}
+				className="am-add-row"
+				onClick={onAddGroup}
+				testId="add-group-row"
+			>
+				Add a new group
+			</Button>
 		</div>
 	);
 }

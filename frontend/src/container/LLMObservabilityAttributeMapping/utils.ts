@@ -1,11 +1,38 @@
 import {
+	SpantypesPostableSpanMapperGroupDTO,
+	SpantypesUpdatableSpanMapperGroupDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import { v4 as uuid } from 'uuid';
+
+import {
 	ConditionFilter,
 	DraftGroup,
 	DraftMapper,
+	GroupDraft,
 	Mapper,
 	MapperGroup,
 	SourceConfig,
 } from './types';
+
+// Client-side id for not-yet-persisted rows. Prefixed so it never collides
+// with a server UUID and is easy to spot in logs.
+export function genLocalId(prefix: 'group' | 'mapper'): string {
+	return `local-${prefix}-${uuid()}`;
+}
+
+// Trimmed, de-duplicated, non-empty keys preserving input order.
+export function cleanKeys(keys: string[]): string[] {
+	const seen = new Set<string>();
+	const result: string[] = [];
+	keys.forEach((raw) => {
+		const key = raw.trim();
+		if (key && !seen.has(key)) {
+			seen.add(key);
+			result.push(key);
+		}
+	});
+	return result;
+}
 
 // Display clauses for a group's condition keys (span attribute keys first,
 // then resource keys).
@@ -30,6 +57,41 @@ export function getMapperSources(mapper: Mapper): SourceConfig[] {
 			context: source.context,
 			operation: source.operation,
 		}));
+}
+
+// ---- group form helpers ----
+
+export const EMPTY_GROUP_DRAFT: GroupDraft = {
+	id: null,
+	name: '',
+	attributes: [''],
+	resource: [],
+	enabled: true,
+};
+
+export function isGroupDraftValid(draft: GroupDraft): boolean {
+	return draft.name.trim().length > 0;
+}
+
+export function buildPostableGroup(
+	draft: GroupDraft,
+): SpantypesPostableSpanMapperGroupDTO {
+	return {
+		name: draft.name.trim(),
+		enabled: draft.enabled,
+		condition: {
+			attributes: cleanKeys(draft.attributes),
+			resource: cleanKeys(draft.resource),
+		},
+	};
+}
+
+// A full group payload is also a valid partial-update payload (all updatable
+// fields are present), so we reuse the postable builder.
+export function buildUpdatableGroup(
+	draft: GroupDraft,
+): SpantypesUpdatableSpanMapperGroupDTO {
+	return buildPostableGroup(draft);
 }
 
 // ---- working-copy (draft tree) helpers ----
@@ -57,5 +119,33 @@ export function buildDraftGroup(
 		resource: group.condition?.resource ?? [],
 		enabled: group.enabled,
 		mappers: mappers.map(buildDraftMapper),
+	};
+}
+
+// DraftGroup -> editable form state (id carries the localId).
+export function groupDraftFromNode(group: DraftGroup): GroupDraft {
+	return {
+		id: group.localId,
+		name: group.name,
+		attributes: group.attributes.length > 0 ? group.attributes : [''],
+		resource: group.resource,
+		enabled: group.enabled,
+	};
+}
+
+// Form state -> working-copy node. Reuses cleanKeys so the staged tree already
+// holds normalized values.
+export function nodeFromGroupDraft(
+	draft: GroupDraft,
+	existing?: DraftGroup,
+): DraftGroup {
+	return {
+		localId: existing?.localId ?? genLocalId('group'),
+		serverId: existing?.serverId ?? null,
+		name: draft.name.trim(),
+		attributes: cleanKeys(draft.attributes),
+		resource: cleanKeys(draft.resource),
+		enabled: draft.enabled,
+		mappers: existing?.mappers ?? [],
 	};
 }
