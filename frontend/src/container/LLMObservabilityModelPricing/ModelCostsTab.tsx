@@ -18,10 +18,14 @@ function ModelCostsTab(): JSX.Element {
 		parseAsInteger.withDefault(1).withOptions({ history: 'replace' }),
 	);
 
+	// A crafted/edited URL (?page=0 or negative) parses to a valid integer that
+	// skips withDefault(1), so clamp before deriving the offset / display.
+	const safePage = Math.max(1, page);
+
 	// Search + source filters are intentionally omitted for now — the list API
 	// doesn't honour them yet. They'll be reintroduced here once it does.
 	const listParams: ListLLMPricingRulesParams = {
-		offset: (page - 1) * PAGE_SIZE,
+		offset: (safePage - 1) * PAGE_SIZE,
 		limit: PAGE_SIZE,
 	};
 
@@ -62,7 +66,7 @@ function ModelCostsTab(): JSX.Element {
 					className="page-pagination"
 					total={total}
 					pageSize={PAGE_SIZE}
-					current={page}
+					current={safePage}
 					onPageChange={setPage}
 				/>
 			)}
