@@ -1,10 +1,14 @@
 import AttributeMappingHeader from './AttributeMappingHeader';
+import MapperGroupsTable from './MapperGroupsTable';
+import { useAttributeMappingStore } from './useAttributeMappingStore';
 
 import './LLMObservabilityAttributeMapping.styles.scss';
 
 const noop = (): void => undefined;
 
 function LLMObservabilityAttributeMapping(): JSX.Element {
+	const store = useAttributeMappingStore();
+
 	return (
 		<div
 			className="llm-observability-attribute-mapping"
@@ -17,9 +21,17 @@ function LLMObservabilityAttributeMapping(): JSX.Element {
 				onSave={noop}
 			/>
 
-			<div className="am-table__empty" data-testid="attribute-mapping-empty">
-				No mapping groups configured yet.
-			</div>
+			{store.isError && (
+				<div className="page-error" role="alert">
+					Failed to load mapping groups. Please try again.
+				</div>
+			)}
+
+			<MapperGroupsTable store={store} />
+
+			<footer className="page-footer">
+				Showing {store.groups.length} group{store.groups.length === 1 ? '' : 's'}
+			</footer>
 		</div>
 	);
 }
