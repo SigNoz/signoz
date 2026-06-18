@@ -116,13 +116,23 @@
 
 		&__filter {
 			display: flex;
-			align-items: center;
+			align-items: flex-start;
 			gap: var(--spacing-4);
 			font-size: var(--periscope-font-size-base);
+			min-width: 0;
+
+			// Keep the context badge at full width; only the key text flexes.
+			> *:first-child {
+				flex-shrink: 0;
+			}
 		}
 
 		&__filter-key {
+			min-width: 0;
 			font-family: 'Geist Mono', monospace;
+			// Break long dotted keys (e.g. llm.output_messages.0.message.content.0)
+			// instead of overflowing and clipping the badge.
+			overflow-wrap: anywhere;
 		}
 
 		&__edited {
