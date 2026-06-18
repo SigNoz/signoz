@@ -1,9 +1,9 @@
-import { Checkbox } from '@signozhq/ui/checkbox';
 import { SelectSimple } from '@signozhq/ui/select';
+import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
+import { RelativeDurationOptions } from 'container/TopNav/DateTimeSelectionV2/constants';
 
-import { TIME_RANGE_PRESETS_OPTIONS } from './constants';
-import styles from './PublicDashboard.module.scss';
+import styles from './PublicDashboardSettingsForm.module.scss';
 
 interface PublicDashboardSettingsFormProps {
 	timeRangeEnabled: boolean;
@@ -22,28 +22,29 @@ function PublicDashboardSettingsForm({
 }: PublicDashboardSettingsFormProps): JSX.Element {
 	return (
 		<>
-			<Checkbox
-				id="public-dashboard-enable-time-range"
-				className={styles.checkbox}
-				testId="public-dashboard-time-range-toggle"
-				value={timeRangeEnabled}
-				disabled={disabled}
-				onChange={(checked): void => onTimeRangeEnabledChange(checked === true)}
-			>
-				Enable time range
-			</Checkbox>
+			<div className={styles.switchRow}>
+				<Switch
+					testId="public-dashboard-time-range-toggle"
+					value={timeRangeEnabled}
+					disabled={disabled}
+					onChange={onTimeRangeEnabledChange}
+				>
+					Enable time range
+				</Switch>
+			</div>
 
-			<div className={styles.timeRangeSelectGroup}>
-				<Typography.Text className={styles.timeRangeSelectLabel}>
+			<div className={styles.fieldGroup}>
+				<Typography.Text className={styles.fieldLabel}>
 					Default time range
 				</Typography.Text>
 				<SelectSimple
 					className={styles.timeRangeSelect}
 					testId="public-dashboard-default-time-range"
 					placeholder="Select default time range"
-					items={TIME_RANGE_PRESETS_OPTIONS}
+					items={RelativeDurationOptions}
 					value={defaultTimeRange}
 					disabled={disabled}
+					withPortal={false}
 					onChange={(value): void => onDefaultTimeRangeChange(value as string)}
 				/>
 			</div>
