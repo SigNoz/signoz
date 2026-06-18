@@ -58,7 +58,7 @@ function LabelThresholdRow({
 			isEditing={isEditing}
 			summary={summary}
 			onEdit={onEdit}
-			onSave={(): void => onSave(draft)}
+			onSave={(): void => onSave({ ...draft, label: draft.label ?? '' })}
 			onDiscard={onDiscard}
 			onRemove={onRemove}
 		>
