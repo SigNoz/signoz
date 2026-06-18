@@ -8,6 +8,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	qb "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/perses/spec/go/common"
 	"github.com/perses/spec/go/dashboard"
 	"github.com/perses/spec/go/dashboard/variable"
@@ -150,7 +151,7 @@ type ListVariableSpec struct {
 	AllowMultiple   bool                   `json:"allowMultiple"`
 	CustomAllValue  string                 `json:"customAllValue,omitempty"`
 	CapturingRegexp string                 `json:"capturingRegexp,omitempty"`
-	Sort            *variable.Sort         `json:"sort,omitempty"`
+	Sort            ListVariableSpecSort   `json:"sort,omitzero"`
 	Plugin          VariablePlugin         `json:"plugin"`
 	Name            string                 `json:"name" required:"true" minLength:"1"`
 }
@@ -175,6 +176,56 @@ func (s *ListVariableSpec) validate() error {
 		}
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "defaultValue cannot be a list if allowMultiple is not set to true")
 	}
+	return nil
+}
+
+// ListVariableSpecSort is the value-list sort method, mirrored from Perses as a
+// stable enum so the allowed values surface in the generated OpenAPI schema.
+type ListVariableSpecSort struct{ valuer.String }
+
+var (
+	SortNone                            = ListVariableSpecSort{valuer.NewString("none")}
+	SortAlphabeticalAsc                 = ListVariableSpecSort{valuer.NewString("alphabetical-asc")}
+	SortAlphabeticalDesc                = ListVariableSpecSort{valuer.NewString("alphabetical-desc")}
+	SortNumericalAsc                    = ListVariableSpecSort{valuer.NewString("numerical-asc")}
+	SortNumericalDesc                   = ListVariableSpecSort{valuer.NewString("numerical-desc")}
+	SortAlphabeticalCaseInsensitiveAsc  = ListVariableSpecSort{valuer.NewString("alphabetical-ci-asc")}
+	SortAlphabeticalCaseInsensitiveDesc = ListVariableSpecSort{valuer.NewString("alphabetical-ci-desc")}
+)
+
+func (ListVariableSpecSort) Enum() []any {
+	return []any{
+		SortNone,
+		SortAlphabeticalAsc,
+		SortAlphabeticalDesc,
+		SortNumericalAsc,
+		SortNumericalDesc,
+		SortAlphabeticalCaseInsensitiveAsc,
+		SortAlphabeticalCaseInsensitiveDesc,
+	}
+}
+
+func (s ListVariableSpecSort) IsValid() bool {
+	return slices.ContainsFunc(s.Enum(), func(v any) bool { return v == s })
+}
+
+// UnmarshalJSON validates against the enum on decode (valuer.String alone
+// accepts any string). An empty value is allowed and means "no sort", matching
+// Perses.
+func (s *ListVariableSpecSort) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid sort: must be a string, one of `none`, `alphabetical-asc`, `alphabetical-desc`, `numerical-asc`, `numerical-desc`, `alphabetical-ci-asc`, or `alphabetical-ci-desc`")
+	}
+	if v == "" {
+		*s = ListVariableSpecSort{}
+		return nil
+	}
+	sort := ListVariableSpecSort{valuer.NewString(v)}
+	if !sort.IsValid() {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "unknown sort %q: must be `none`, `alphabetical-asc`, `alphabetical-desc`, `numerical-asc`, `numerical-desc`, `alphabetical-ci-asc`, or `alphabetical-ci-desc`", v)
+	}
+	*s = sort
 	return nil
 }
 

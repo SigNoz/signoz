@@ -238,6 +238,17 @@ func TestInvalidateListVariableCrossFields(t *testing.T) {
 		_, err := unmarshalDashboard(listVar(`"allowAllValue": false, "allowMultiple": false, "defaultValue": ["only"],`))
 		require.NoError(t, err, "single-element list default should be coerced, not rejected")
 	})
+
+	t.Run("valid sort is accepted", func(t *testing.T) {
+		_, err := unmarshalDashboard(listVar(`"sort": "alphabetical-asc",`))
+		require.NoError(t, err)
+	})
+
+	t.Run("unknown sort is rejected", func(t *testing.T) {
+		_, err := unmarshalDashboard(listVar(`"sort": "bogus",`))
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "unknown sort")
+	})
 }
 
 func TestInvalidateEmptyVariableName(t *testing.T) {

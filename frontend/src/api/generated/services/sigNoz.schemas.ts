@@ -4522,6 +4522,15 @@ export type DashboardtypesVariablePluginDTO =
 	| DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesQueryVariableSpecDTO
 	| DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesCustomVariableSpecDTO;
 
+export enum DashboardtypesSortDTO {
+	none = 'none',
+	'alphabetical-asc' = 'alphabetical-asc',
+	'alphabetical-desc' = 'alphabetical-desc',
+	'numerical-asc' = 'numerical-asc',
+	'numerical-desc' = 'numerical-desc',
+	'alphabetical-ci-asc' = 'alphabetical-ci-asc',
+	'alphabetical-ci-desc' = 'alphabetical-ci-desc',
+}
 export interface DashboardtypesListVariableSpecDTO {
 	/**
 	 * @type boolean
@@ -4547,10 +4556,7 @@ export interface DashboardtypesListVariableSpecDTO {
 	 */
 	name: string;
 	plugin?: DashboardtypesVariablePluginDTO;
-	/**
-	 * @type string,null
-	 */
-	sort?: string | null;
+	sort?: DashboardtypesSortDTO;
 }
 
 export interface DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpecDTO {

@@ -2866,8 +2866,7 @@ components:
         plugin:
           $ref: '#/components/schemas/DashboardtypesVariablePlugin'
         sort:
-          nullable: true
-          type: string
+          $ref: '#/components/schemas/DashboardtypesSort'
       required:
       - name
       type: object
@@ -3371,6 +3370,16 @@ components:
       required:
       - queryValue
       type: object
+    DashboardtypesSort:
+      enum:
+      - none
+      - alphabetical-asc
+      - alphabetical-desc
+      - numerical-asc
+      - numerical-desc
+      - alphabetical-ci-asc
+      - alphabetical-ci-desc
+      type: string
     DashboardtypesSource:
       enum:
       - user

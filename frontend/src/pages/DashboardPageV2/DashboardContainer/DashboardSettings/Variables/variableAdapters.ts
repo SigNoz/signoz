@@ -4,6 +4,7 @@ import {
 	DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesCustomVariableSpecDTOKind as CustomPluginKind,
 	DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDynamicVariableSpecDTOKind as DynamicPluginKind,
 	DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesQueryVariableSpecDTOKind as QueryPluginKind,
+	DashboardtypesSortDTO,
 	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import type {
@@ -20,6 +21,33 @@ import {
 	type VariableFormModel,
 	type VariableSort,
 } from './variableModel';
+
+/** Map the form's 3-value sort to/from the backend's Perses sort enum. */
+function dtoToFormSort(sort: DashboardtypesSortDTO | undefined): VariableSort {
+	switch (sort) {
+		case DashboardtypesSortDTO['alphabetical-asc']:
+		case DashboardtypesSortDTO['numerical-asc']:
+		case DashboardtypesSortDTO['alphabetical-ci-asc']:
+			return 'ASC';
+		case DashboardtypesSortDTO['alphabetical-desc']:
+		case DashboardtypesSortDTO['numerical-desc']:
+		case DashboardtypesSortDTO['alphabetical-ci-desc']:
+			return 'DESC';
+		default:
+			return 'DISABLED';
+	}
+}
+
+function formToDtoSort(sort: VariableSort): DashboardtypesSortDTO {
+	switch (sort) {
+		case 'ASC':
+			return DashboardtypesSortDTO['alphabetical-asc'];
+		case 'DESC':
+			return DashboardtypesSortDTO['alphabetical-desc'];
+		default:
+			return DashboardtypesSortDTO.none;
+	}
+}
 
 /** DTO envelope → flat form model (for display / editing). */
 export function dtoToFormModel(
@@ -50,7 +78,7 @@ export function dtoToFormModel(
 		...common,
 		multiSelect: spec.allowMultiple ?? false,
 		showAllOption: spec.allowAllValue ?? false,
-		sort: (spec.sort as VariableSort) ?? 'DISABLED',
+		sort: dtoToFormSort(spec.sort),
 		defaultValue: spec.defaultValue,
 	};
 	const plugin = spec.plugin;
@@ -136,7 +164,7 @@ export function formModelToDto(
 			display,
 			allowMultiple: model.multiSelect,
 			allowAllValue: model.showAllOption,
-			sort: model.sort,
+			sort: formToDtoSort(model.sort),
 			defaultValue: model.defaultValue,
 			plugin: buildPlugin(model),
 		},
