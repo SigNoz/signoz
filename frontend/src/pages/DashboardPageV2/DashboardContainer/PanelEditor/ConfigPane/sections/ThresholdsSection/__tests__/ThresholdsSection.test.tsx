@@ -54,6 +54,21 @@ describe('ThresholdsSection', () => {
 		]);
 	});
 
+	it('persists an empty-string label when none is provided', () => {
+		const onChange = jest.fn();
+		// A threshold whose label is absent (e.g. from a spec that predates the
+		// field); the spec requires a string, so saving must send '' not undefined.
+		const noLabel = [{ value: 50, color: '#F1575F' }] as AnyThreshold[];
+		render(<ThresholdsSection value={noLabel} onChange={onChange} />);
+
+		fireEvent.click(screen.getByTestId('threshold-edit-0'));
+		fireEvent.click(screen.getByTestId('threshold-save-0'));
+
+		expect(onChange).toHaveBeenCalledWith([
+			{ value: 50, color: '#F1575F', label: '' },
+		]);
+	});
+
 	it('does not commit edits when Discard is clicked', () => {
 		const onChange = jest.fn();
 		render(<ThresholdsSection value={THRESHOLDS} onChange={onChange} />);
