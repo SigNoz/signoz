@@ -198,6 +198,7 @@ function MapperGroupsTable({
 				className="am-add-row"
 				onClick={onAddGroup}
 				testId="add-group-row"
+				disabled={store.isLoading}
 			>
 				Add a new group
 			</Button>
