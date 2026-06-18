@@ -1,8 +1,9 @@
 import { useCallback } from 'react';
+import { Tabs } from '@signozhq/ui/tabs';
 
 import AttributeMappingHeader from './AttributeMappingHeader';
+import AttributeMappingsTab from './AttributeMappingsTab';
 import GroupFormDrawer from './GroupFormDrawer';
-import MapperGroupsTable from './MapperGroupsTable';
 import { useAttributeMappingStore } from './useAttributeMappingStore';
 import { useGroupFormDrawer } from './useGroupFormDrawer';
 
@@ -24,6 +25,27 @@ function LLMObservabilityAttributeMapping(): JSX.Element {
 		groupDrawer.close();
 	}, [store, groupDrawer]);
 
+	const tabItems = [
+		{
+			key: 'attribute-mappings',
+			label: 'Attribute mappings',
+			children: (
+				<AttributeMappingsTab
+					store={store}
+					onEditGroup={groupDrawer.openForEdit}
+					onAddGroup={groupDrawer.openForAdd}
+				/>
+			),
+		},
+		{
+			key: 'test',
+			label: 'Test',
+			disabled: true,
+			disabledReason: 'Coming soon',
+			children: null,
+		},
+	];
+
 	return (
 		<div
 			className="llm-observability-attribute-mapping"
@@ -42,21 +64,11 @@ function LLMObservabilityAttributeMapping(): JSX.Element {
 				</div>
 			)}
 
-			{store.isError && (
-				<div className="page-error" role="alert">
-					Failed to load mapping groups. Please try again.
-				</div>
-			)}
-
-			<MapperGroupsTable
-				store={store}
-				onEditGroup={groupDrawer.openForEdit}
-				onAddGroup={groupDrawer.openForAdd}
+			<Tabs
+				testId="attribute-mapping-tabs"
+				defaultValue="attribute-mappings"
+				items={tabItems}
 			/>
-
-			<footer className="page-footer">
-				Showing {store.groups.length} group{store.groups.length === 1 ? '' : 's'}
-			</footer>
 
 			<GroupFormDrawer
 				isOpen={groupDrawer.isOpen}

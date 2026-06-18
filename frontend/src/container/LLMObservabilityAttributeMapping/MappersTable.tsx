@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Badge } from '@signozhq/ui/badge';
 import {
 	Table,
@@ -7,9 +8,11 @@ import {
 	TableHeader,
 	TableRow,
 } from '@signozhq/ui/table';
+import { useListSpanMappers } from 'api/generated/services/spanmapper';
 
 import IndexBadge from './IndexBadge';
-import { DraftGroup, DraftMapper, FieldContext } from './types';
+import { DraftGroup, DraftMapper, FieldContext, Mapper } from './types';
+import { buildDraftMapper } from './utils';
 
 const MAX_VISIBLE_SOURCES = 3;
 const COLUMN_COUNT = 5;
@@ -88,6 +91,21 @@ function MapperRow({
 }
 
 function MappersTable({ group }: MappersTableProps): JSX.Element {
+	// This component only mounts when its group row is expanded, so the fetch is
+	// lazy by construction — a group's mappers load on first open and are then
+	// cached by react-query. New (unsaved) groups have no serverId, so skip.
+	const { data, isLoading, isError } = useListSpanMappers(
+		{ groupId: group.serverId ?? '' },
+		{ query: { enabled: group.serverId !== null } },
+	);
+
+	const mappers = useMemo<DraftMapper[]>(() => {
+		// The generated schema mis-types this list response with the groups DTO;
+		// the runtime payload is mappers.
+		const items = (data?.data?.items ?? []) as unknown as Mapper[];
+		return items.map(buildDraftMapper);
+	}, [data]);
+
 	return (
 		<div className="mappers-table__wrapper">
 			<Table testId={`mappers-table-${group.localId}`} className="am-table">
@@ -101,16 +119,32 @@ function MappersTable({ group }: MappersTableProps): JSX.Element {
 					</TableRow>
 				</TableHeader>
 				<TableBody>
-					{group.mappers.length === 0 && (
+					{isLoading && (
+						<TableRow>
+							<TableCell colSpan={COLUMN_COUNT} className="am-table__empty">
+								Loading mappings…
+							</TableCell>
+						</TableRow>
+					)}
+					{!isLoading && isError && (
+						<TableRow>
+							<TableCell colSpan={COLUMN_COUNT} className="am-table__empty">
+								Failed to load mappings. Please try again.
+							</TableCell>
+						</TableRow>
+					)}
+					{!isLoading && !isError && mappers.length === 0 && (
 						<TableRow>
 							<TableCell colSpan={COLUMN_COUNT} className="am-table__empty">
 								No mappings in this group yet.
 							</TableCell>
 						</TableRow>
 					)}
-					{group.mappers.map((mapper, index) => (
-						<MapperRow key={mapper.localId} mapper={mapper} index={index} />
-					))}
+					{!isLoading &&
+						!isError &&
+						mappers.map((mapper, index) => (
+							<MapperRow key={mapper.localId} mapper={mapper} index={index} />
+						))}
 				</TableBody>
 			</Table>
 		</div>
