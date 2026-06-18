@@ -26,6 +26,11 @@ export enum SignalType {
 	METER_EXPLORER = 'meter',
 }
 
+/**
+ * Missing export from signozhq/ui/checkbox, TODO(H4ad): Add and remove this type definition
+ */
+export type CheckedState = 'checked' | 'unchecked' | 'indeterminate';
+
 export interface IQuickFiltersConfig {
 	type: FiltersType;
 	title: string;
