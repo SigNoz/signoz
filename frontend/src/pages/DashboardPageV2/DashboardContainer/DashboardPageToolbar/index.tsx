@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { FullScreenHandle } from 'react-full-screen';
 import { toast } from '@signozhq/ui/sonner';
 import logEvent from 'api/common/logEvent';
@@ -14,10 +14,11 @@ import type {
 import { Base64Icons } from 'container/DashboardContainer/DashboardSettings/General/utils';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { useAppContext } from 'providers/App/App';
-import { usePanelTypeSelectionModalStore } from 'providers/Dashboard/helpers/panelTypeSelectionModalHelper';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 
+import { useCreatePanel } from '../hooks/useCreatePanel';
+import PanelTypeSelectionModal from '../PanelsAndSectionsLayout/Panel/PanelTypeSelectionModal/PanelTypeSelectionModal';
 import DashboardActions from './DashboardActions/DashboardActions';
 import DashboardInfo from './DashboardInfo/DashboardInfo';
 import { useEditableTitle } from './DashboardInfo/useEditableTitle';
@@ -50,9 +51,8 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 
 	const { user } = useAppContext();
 	const { showErrorModal } = useErrorModal();
-	const setIsPanelTypeSelectionModalOpen = usePanelTypeSelectionModalStore(
-		(s) => s.setIsPanelTypeSelectionModalOpen,
-	);
+	const createPanel = useCreatePanel();
+	const [isAddingPanel, setIsAddingPanel] = useState(false);
 
 	const isAuthor =
 		!!user?.email && !!dashboard.createdBy && dashboard.createdBy === user.email;
@@ -108,8 +108,8 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 		void logEvent('Dashboard Detail V2: Add new panel clicked', {
 			dashboardId: id,
 		});
-		setIsPanelTypeSelectionModalOpen(true);
-	}, [id, setIsPanelTypeSelectionModalOpen]);
+		setIsAddingPanel(true);
+	}, [id]);
 
 	return (
 		<section className={styles.dashboardPageToolbarContainer}>
@@ -149,6 +149,14 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 				</div>
 				<VariablesBar dashboard={dashboard} />
 			</div>
+			<PanelTypeSelectionModal
+				open={isAddingPanel}
+				onClose={(): void => setIsAddingPanel(false)}
+				onSelect={(pluginKind): void => {
+					setIsAddingPanel(false);
+					createPanel({ pluginKind });
+				}}
+			/>
 		</section>
 	);
 }

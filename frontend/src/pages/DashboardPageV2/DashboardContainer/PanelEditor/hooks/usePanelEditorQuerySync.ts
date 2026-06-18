@@ -3,12 +3,13 @@ import type {
 	DashboardtypesPanelDTO,
 	DashboardtypesPanelSpecDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { getIsQueryModified } from 'container/NewWidget/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { isEqual } from 'lodash-es';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { DataSource } from 'types/common/queryBuilder';
 
 import { toQueryEnvelopes } from '../../queryV5/buildQueryRangeRequest';
 import { fromPerses, toPerses } from '../../queryV5/persesQueryAdapters';
@@ -19,6 +20,19 @@ interface UsePanelEditorQuerySyncArgs {
 	setSpec: (next: DashboardtypesPanelSpecDTO) => void;
 	/** Re-fetch the preview when the query is unchanged (Stage & Run on a no-op). */
 	refetch: () => void;
+	/**
+	 * Always serialize the live query into the saved spec, even when it reads as
+	 * unchanged. Set for a brand-new panel: its seed query is the builder's
+	 * default (not a real saved query), so it must be serialized for the panel's
+	 * kind on save rather than left as the empty seed.
+	 */
+	alwaysSerializeQuery?: boolean;
+	/**
+	 * Datasource to seed the builder with when the panel has no saved query (a
+	 * new panel). Should be the panel kind's first supported signal — e.g. a List
+	 * panel supports only logs/traces, so it must not seed the metrics default.
+	 */
+	defaultDataSource?: DataSource;
 }
 
 interface UsePanelEditorQuerySyncApi {
@@ -42,15 +56,23 @@ export function usePanelEditorQuerySync({
 	panelType,
 	setSpec,
 	refetch,
+	alwaysSerializeQuery = false,
+	defaultDataSource,
 }: UsePanelEditorQuerySyncArgs): UsePanelEditorQuerySyncApi {
 	const { currentQuery, stagedQuery, handleRunQuery } = useQueryBuilder();
 
 	// Saved queries, captured once: seed the builder and serve as the restore target.
 	// eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only snapshot
 	const savedQueries = useMemo(() => draft.spec?.queries ?? [], []);
+	// A new panel has no saved query: seed the builder from the panel kind's first
+	// supported signal (e.g. logs for a List panel) instead of letting `fromPerses`
+	// fall back to the metrics default, which List doesn't support.
 	const seedQuery = useMemo(
-		() => fromPerses(savedQueries, panelType),
-		[savedQueries, panelType],
+		() =>
+			savedQueries.length === 0 && defaultDataSource
+				? initialQueriesMap[defaultDataSource]
+				: fromPerses(savedQueries, panelType),
+		[savedQueries, panelType, defaultDataSource],
 	);
 	// Force-reset the builder to the SAVED panel on first render only, discarding any
 	// stale URL query from a prior edit — otherwise the QB and preview diverge and the
@@ -135,10 +157,10 @@ export function usePanelEditorQuerySync({
 
 	const buildSaveSpec = useCallback(
 		(spec: DashboardtypesPanelSpecDTO): DashboardtypesPanelSpecDTO =>
-			isQueryDirty
+			isQueryDirty || alwaysSerializeQuery
 				? { ...spec, queries: toPerses(currentQuery, panelType) }
 				: spec,
-		[isQueryDirty, currentQuery, panelType],
+		[isQueryDirty, alwaysSerializeQuery, currentQuery, panelType],
 	);
 
 	return { runQuery, isQueryDirty, buildSaveSpec };

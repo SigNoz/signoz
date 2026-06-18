@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import {
 	generatePath,
 	Redirect,
@@ -13,6 +13,11 @@ import ROUTES from 'constants/routes';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 
 import PanelEditorContainer from '../DashboardContainer/PanelEditor';
+import {
+	parseNewPanelKind,
+	parseNewPanelLayoutIndex,
+} from '../DashboardContainer/PanelEditor/newPanelRoute';
+import { createDefaultPanel } from '../DashboardContainer/patchOps';
 import styles from './PanelEditorPage.module.scss';
 
 /**
@@ -33,7 +38,19 @@ function PanelEditorPage(): JSX.Element {
 		id: dashboardId,
 	});
 	const dashboard = data?.data;
-	const panel = dashboard?.spec.panels[panelId];
+
+	// A `panel/new?panelKind=…` route means "create": seed a default panel of that
+	// kind instead of looking one up. The panel is persisted (with a real id) only
+	// on save, so cancelling leaves the dashboard untouched.
+	const newKind = parseNewPanelKind(panelId, search);
+	const existingPanel = dashboard?.spec.panels[panelId];
+	const panel = useMemo(
+		() => (newKind ? createDefaultPanel(newKind) : existingPanel),
+		[newKind, existingPanel],
+	);
+
+	// Target section for a newly-created panel (set by the "Add panel" trigger).
+	const layoutIndex = parseNewPanelLayoutIndex(search);
 
 	const backToDashboard = useCallback((): void => {
 		// Carry only dashboard params back; drop editor-only URL state (chiefly
@@ -65,7 +82,8 @@ function PanelEditorPage(): JSX.Element {
 		);
 	}
 
-	// Stale/deleted panel ref: redirect to the dashboard rather than render an empty editor.
+	// No panel to show: either a stale/deleted panel id, or a `new_<Kind>` token
+	// naming an unknown kind — send the user back instead of an empty editor.
 	if (!panel) {
 		return (
 			<Redirect
@@ -79,6 +97,8 @@ function PanelEditorPage(): JSX.Element {
 			dashboardId={dashboardId}
 			panelId={panelId}
 			panel={panel}
+			isNew={!!newKind}
+			layoutIndex={layoutIndex}
 			onClose={backToDashboard}
 			onSaved={backToDashboard}
 		/>

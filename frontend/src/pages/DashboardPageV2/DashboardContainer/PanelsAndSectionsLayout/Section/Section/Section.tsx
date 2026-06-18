@@ -3,11 +3,11 @@ import { Plus } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 
 import { useIntersectionObserver } from 'hooks/useIntersectionObserver';
-import { usePanelTypeSelectionModalStore } from 'providers/Dashboard/helpers/panelTypeSelectionModalHelper';
 
 import ConfirmDeleteDialog from '../../../components/ConfirmDeleteDialog/ConfirmDeleteDialog';
+import { useCreatePanel } from '../../../hooks/useCreatePanel';
+import type { PanelKind } from '../../../Panels/types/panelKind';
 import type { DashboardSection } from '../../../utils';
-import type { AddPanelArgs } from '../../Panel/hooks/useAddPanelToSection';
 import PanelTypeSelectionModal from '../../Panel/PanelTypeSelectionModal/PanelTypeSelectionModal';
 import { useDashboardStore } from '../../../store/useDashboardStore';
 import { useDeleteSection } from '../hooks/useDeleteSection';
@@ -22,24 +22,15 @@ import styles from './Section.module.scss';
 
 interface SectionProps {
 	section: DashboardSection;
-	/** Adds a panel to this section; present only in editable sectioned mode. */
-	onAddPanel?: (args: AddPanelArgs) => void;
 	/** All sections — layout context for the panel menu's move/delete actions. */
 	sections?: DashboardSection[];
 	/** Provided by SortableSection in sectioned mode; absent for untitled/free-flow. */
 	dragHandle?: SectionDragHandle;
 }
 
-function Section({
-	section,
-	onAddPanel,
-	sections,
-	dragHandle,
-}: SectionProps): JSX.Element {
+function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
 	const isEditable = useDashboardStore((s) => s.isEditable);
-	const setIsPanelTypeSelectionModalOpen = usePanelTypeSelectionModalStore(
-		(s) => s.setIsPanelTypeSelectionModalOpen,
-	);
+	const createPanel = useCreatePanel();
 	const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 	const containerRef = useRef<HTMLDivElement>(null);
 	// Placeholder signal for lazy panel query-loading (consumed in a later PR):
@@ -67,11 +58,11 @@ function Section({
 
 	const [isAddingPanel, setIsAddingPanel] = useState(false);
 	const handleSelectPanelType = useCallback(
-		(pluginKind: string): void => {
-			onAddPanel?.({ layoutIndex: section.layoutIndex, pluginKind });
+		(pluginKind: PanelKind): void => {
 			setIsAddingPanel(false);
+			createPanel({ pluginKind, layoutIndex: section.layoutIndex });
 		},
-		[onAddPanel, section.layoutIndex],
+		[createPanel, section.layoutIndex],
 	);
 
 	const { deleteSection } = useDeleteSection({ section });
@@ -138,7 +129,7 @@ function Section({
 								variant="dashed"
 								color="secondary"
 								prefix={<Plus size="md" />}
-								onClick={(): void => setIsPanelTypeSelectionModalOpen(true)}
+								onClick={(): void => setIsAddingPanel(true)}
 								testId={`section-add-panel-${section.id}`}
 							>
 								New Panel

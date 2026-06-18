@@ -3,9 +3,14 @@ import type {
 	DashboardtypesJSONPatchOperationDTO,
 	DashboardtypesLayoutDTO,
 	DashboardtypesPanelDTO,
+	DashboardtypesPanelPluginDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { DashboardtypesPatchOpDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	DashboardtypesPanelKindDTO,
+	DashboardtypesPatchOpDTO,
+} from 'api/generated/services/sigNoz.schemas';
 
+import type { PanelKind } from './Panels/types/panelKind';
 import type { GridItem } from './utils';
 
 /**
@@ -25,29 +30,25 @@ export function panelRef(panelId: string): string {
 }
 
 /**
- * Builds a minimal, backend-valid panel for a given plugin kind. The spec
- * requires exactly one query whose plugin kind is allowed for the panel;
- * `signoz/BuilderQuery` is allowed for every panel kind and its contents are not
- * validated, so an empty builder query is the safe default. The real query is
- * filled in once the panel editor lands.
+ * Builds a fresh panel of the given kind to seed the editor when creating a new
+ * panel. Queries start empty: the editor's query builder falls back to its
+ * default query (see `fromPerses`), and the editor re-serializes the live query
+ * for the panel's kind on save — so the persisted panel always carries a
+ * kind-valid query, and the seed needs no hand-built query envelope.
  */
-export function createDefaultPanel(pluginKind: string): DashboardtypesPanelDTO {
-	// The DTO types plugin/query kinds as large generated enum unions; the kind
-	// here is chosen dynamically by the user, so we build the structurally-valid
-	// shape and assert the type.
+export function createDefaultPanel(
+	pluginKind: PanelKind,
+): DashboardtypesPanelDTO {
 	return {
-		kind: 'Panel',
+		kind: DashboardtypesPanelKindDTO.Panel,
 		spec: {
 			display: { name: 'New panel' },
-			plugin: { kind: pluginKind, spec: {} },
-			queries: [
-				{
-					kind: 'TimeSeriesQuery',
-					spec: { plugin: { kind: 'signoz/BuilderQuery', spec: { name: 'A' } } },
-				},
-			],
+			// `plugin` is a discriminated union keyed by a per-kind enum; the kind is
+			// chosen at runtime, so assert the variant at this one boundary.
+			plugin: { kind: pluginKind, spec: {} } as DashboardtypesPanelPluginDTO,
+			queries: [],
 		},
-	} as unknown as DashboardtypesPanelDTO;
+	};
 }
 
 /** Converts a UI grid item back into the spec's grid-item DTO shape. */
@@ -113,6 +114,66 @@ export function addPanelToSectionOps({
 		{ op: add, path: `/spec/panels/${panelId}`, value: panel },
 		{ op: add, path: `/spec/layouts/${layoutIndex}/spec/items/-`, value: item },
 	];
+}
+
+interface CreatePanelOpsArgs {
+	/** Current sections, used to resolve the target and the next free row. */
+	layouts: DashboardtypesLayoutDTO[];
+	/** Preferred section (from the "Add panel" trigger); falls back to the last. */
+	layoutIndex: number | undefined;
+	panelId: string;
+	panel: DashboardtypesPanelDTO;
+}
+
+const NEW_PANEL_SIZE = { width: 6, height: 6 };
+
+/**
+ * Ops to create a brand-new panel: resolve the target section (the requested
+ * index when valid, else the last section, else a freshly-created one when the
+ * dashboard has no sections) and drop the panel at the bottom of it. Used by the
+ * editor's save path when persisting a draft panel.
+ */
+export function createPanelOps({
+	layouts,
+	layoutIndex,
+	panelId,
+	panel,
+}: CreatePanelOpsArgs): DashboardtypesJSONPatchOperationDTO[] {
+	const ops: DashboardtypesJSONPatchOperationDTO[] = [];
+
+	// Prefer the requested section; if it's missing/out of range, use the last.
+	const requested =
+		layoutIndex !== undefined && layouts[layoutIndex] !== undefined
+			? layoutIndex
+			: layouts.length - 1;
+
+	let targetIndex = requested;
+	let items: DashboardGridItemDTO[] = layouts[requested]?.spec.items ?? [];
+	if (targetIndex < 0) {
+		// No sections yet — create one (free-flowing, untitled) and target it.
+		ops.push(addSectionOp(''));
+		targetIndex = 0;
+		items = [];
+	}
+
+	const nextY = items.reduce(
+		(max, i) => Math.max(max, (i.y ?? 0) + (i.height ?? 0)),
+		0,
+	);
+	ops.push(
+		...addPanelToSectionOps({
+			panelId,
+			panel,
+			layoutIndex: targetIndex,
+			item: {
+				x: 0,
+				y: nextY,
+				...NEW_PANEL_SIZE,
+				content: { $ref: panelRef(panelId) },
+			},
+		}),
+	);
+	return ops;
 }
 
 interface MovePanelArgs {

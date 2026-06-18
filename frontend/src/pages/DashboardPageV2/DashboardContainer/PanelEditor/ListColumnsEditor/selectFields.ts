@@ -3,6 +3,10 @@ import type {
 	DashboardtypesPanelSpecDTO,
 	TelemetrytypesTelemetryFieldKeyDTO,
 } from 'api/generated/services/sigNoz.schemas';
+import {
+	defaultLogsSelectedColumns,
+	defaultTraceSelectedColumns,
+} from 'container/OptionsMenu/constants';
 
 /**
  * The field-key suggestions API and the default-column constants carry extra
@@ -31,10 +35,30 @@ export function sanitizeSelectFields(
 }
 
 /**
- * `spec.plugin.spec` is a discriminated union over every panel kind; these helpers
- * run only for the List panel, so it's narrowed to the List variant with a single
- * localized cast at the boundary.
+ * The datasource's default List columns (V1 parity): logs → timestamp/body,
+ * traces → service.name/name/duration_nano/http_method/response_status_code.
+ * Sanitized to the field-key DTO — the V1 constants carry extra keys (isIndexed)
+ * the save contract rejects. Other signals (metrics) don't produce a list.
  */
+export function defaultColumnsForSignal(
+	signal: string,
+): TelemetrytypesTelemetryFieldKeyDTO[] {
+	if (signal === 'logs') {
+		return sanitizeSelectFields(
+			defaultLogsSelectedColumns as TelemetrytypesTelemetryFieldKeyDTO[],
+		);
+	}
+	if (signal === 'traces') {
+		return sanitizeSelectFields(
+			defaultTraceSelectedColumns as TelemetrytypesTelemetryFieldKeyDTO[],
+		);
+	}
+	return [];
+}
+
+// `spec.plugin.spec` is a discriminated union over every panel kind. These
+// helpers run only for the List panel, so the spec is narrowed to the List
+// variant with a single localized cast at the boundary.
 export function readSelectFields(
 	spec: DashboardtypesPanelSpecDTO,
 ): TelemetrytypesTelemetryFieldKeyDTO[] {
