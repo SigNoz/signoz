@@ -27,12 +27,10 @@ export const PANELS: PanelRegistry = {
 export function getPanelDefinition(
 	kind: PanelKind,
 ): RenderablePanelDefinition | undefined {
-	if (!kind) {
-		return undefined;
-	}
-	// The registry is correlated by kind, so a string lookup yields a union over
-	// every kind's exactly-typed definition. The renderer cannot be validated
-	// against that union at the JSX boundary, so widen to the kind-agnostic
-	// surface here — the single, intentional cast for the whole panel system.
-	return PANELS[kind] as unknown as RenderablePanelDefinition | undefined;
+	// Indexing yields this kind's exactly-typed definition (or undefined for an
+	// unregistered kind). Widen the per-kind Renderer to the kind-agnostic prop
+	// surface: a renderer typed for one kind's interactions can't be statically
+	// validated against the union the render boundary calls it with, so this is
+	// the single, intentional cast for the whole panel system.
+	return PANELS[kind] as RenderablePanelDefinition | undefined;
 }
