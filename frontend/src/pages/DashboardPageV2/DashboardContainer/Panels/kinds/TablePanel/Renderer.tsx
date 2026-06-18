@@ -34,12 +34,10 @@ function TablePanelRenderer({
 		[height],
 	);
 
-	// The registry guarantees this Renderer only runs when
-	// `panel.spec.plugin.kind === 'signoz/TablePanel'`, so the cast is a
-	// documented boundary narrowing. Memoized so the `?? {}` fallback doesn't
-	// produce a fresh object on each render.
+	// `panel` is narrowed to this kind by PanelRendererProps, so `spec` is this
+	// kind's exact spec DTO — no cast needed.
 	const spec = useMemo<DashboardtypesTablePanelSpecDTO>(
-		() => (panel.spec.plugin.spec ?? {}) as DashboardtypesTablePanelSpecDTO,
+		() => panel.spec.plugin.spec,
 		[panel.spec.plugin.spec],
 	);
 

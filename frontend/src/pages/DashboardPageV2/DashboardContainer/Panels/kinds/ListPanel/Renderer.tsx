@@ -40,10 +40,10 @@ function ListPanelRenderer({
 	const { height } = useResizeObserver(containerRef);
 	const { scrollY } = useMemo(() => computeTableLayout(height), [height]);
 
-	// The registry guarantees this Renderer only runs for `signoz/ListPanel`, so
-	// the cast is a documented boundary narrowing.
+	// `panel` is narrowed to this kind by PanelRendererProps, so `spec` is this
+	// kind's exact spec DTO — no cast needed.
 	const spec = useMemo<DashboardtypesListPanelSpecDTO>(
-		() => (panel.spec.plugin.spec ?? {}) as DashboardtypesListPanelSpecDTO,
+		() => panel.spec.plugin.spec,
 		[panel.spec.plugin.spec],
 	);
 
