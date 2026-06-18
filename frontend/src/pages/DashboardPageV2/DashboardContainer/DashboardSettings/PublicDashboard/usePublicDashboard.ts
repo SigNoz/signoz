@@ -6,7 +6,6 @@ import {
 	invalidateGetPublicDashboard,
 	useCreatePublicDashboard,
 	useDeletePublicDashboard,
-	useGetPublicDashboard,
 	useUpdatePublicDashboard,
 } from 'api/generated/services/dashboard';
 import { DEFAULT_TIME_RANGE } from 'container/TopNav/DateTimeSelectionV2/constants';
@@ -16,6 +15,8 @@ import APIError from 'types/api/error';
 import { USER_ROLES } from 'types/roles';
 import { getAbsoluteUrl } from 'utils/basePath';
 import { openInNewTab } from 'utils/navigation';
+
+import { usePublicDashboardMeta } from './usePublicDashboardMeta';
 
 export interface UsePublicDashboardReturn {
 	isPublic: boolean;
@@ -54,22 +55,16 @@ export function usePublicDashboard(
 	const [defaultTimeRange, setDefaultTimeRange] =
 		useState<string>(DEFAULT_TIME_RANGE);
 
+	// Read the shared public-meta cache — the GET is owned globally (toolbar), so the
+	// drawer reuses it rather than issuing its own request.
 	const {
-		data,
+		publicMeta,
+		isPublic,
 		isLoading: isLoadingMeta,
 		isFetching,
 		error,
 		refetch,
-	} = useGetPublicDashboard(
-		{ id: dashboardId },
-		{ query: { enabled: !!dashboardId, retry: false } },
-	);
-
-	// react-query retains the last successful `data` even after a refetch errors, so
-	// after unpublishing (the refetch 404s) `data` still holds the old publicPath.
-	// Gate on `!error` so the UI flips back to the private state.
-	const publicMeta = error ? undefined : data?.data;
-	const isPublic = !!publicMeta?.publicPath;
+	} = usePublicDashboardMeta(dashboardId);
 
 	// Seed form state from the server config when published.
 	useEffect(() => {
@@ -103,7 +98,7 @@ export function usePublicDashboard(
 		(message: string): void => {
 			toast.success(message);
 			void invalidateGetPublicDashboard(queryClient, { id: dashboardId });
-			void refetch();
+			refetch();
 		},
 		[queryClient, dashboardId, refetch],
 	);
