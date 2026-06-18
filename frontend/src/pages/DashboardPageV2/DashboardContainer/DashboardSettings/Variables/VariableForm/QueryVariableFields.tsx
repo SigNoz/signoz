@@ -2,15 +2,16 @@ import { useState } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import dashboardVariablesQuery from 'api/dashboard/variables/dashboardVariablesQuery';
+import { DashboardtypesListVariableSpecSortDTO as VariableSortDTO } from 'api/generated/services/sigNoz.schemas';
 import Editor from 'components/Editor';
 import sortValues from 'lib/dashboardVariables/sortVariableValues';
 
-import type { VariableSort } from '../variableModel';
+import { sortDirectionOf } from '../variableModel';
 import styles from './VariableForm.module.scss';
 
 interface QueryVariableFieldsProps {
 	queryValue: string;
-	sort: VariableSort;
+	sort: VariableSortDTO;
 	onChange: (queryValue: string) => void;
 	onPreview: (values: (string | number)[]) => void;
 	onError: (message: string | null) => void;
@@ -36,7 +37,10 @@ function QueryVariableFields({
 			});
 			if (res.statusCode === 200 && res.payload) {
 				onPreview(
-					sortValues(res.payload.variableValues ?? [], sort) as (string | number)[],
+					sortValues(res.payload.variableValues ?? [], sortDirectionOf(sort)) as (
+						| string
+						| number
+					)[],
 				);
 			} else {
 				onError(res.error || 'Failed to run query');

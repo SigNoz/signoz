@@ -12,10 +12,12 @@ import { Collapse, Input as AntdInput, Select } from 'antd';
 import { commaValuesParser } from 'lib/dashboardVariables/customCommaValuesParser';
 import sortValues from 'lib/dashboardVariables/sortVariableValues';
 
+import { DashboardtypesListVariableSpecSortDTO as VariableSortDTO } from 'api/generated/services/sigNoz.schemas';
+
 import {
+	sortDirectionOf,
 	VARIABLE_SORTS,
 	type VariableFormModel,
-	type VariableSort,
 	type VariableType,
 } from '../variableModel';
 import DynamicVariableFields from './DynamicVariableFields';
@@ -23,10 +25,16 @@ import QueryVariableFields from './QueryVariableFields';
 import VariableTypeSelector from './VariableTypeSelector';
 import styles from './VariableForm.module.scss';
 
-const SORT_LABEL: Record<VariableSort, string> = {
-	DISABLED: 'Disabled',
-	ASC: 'Ascending',
-	DESC: 'Descending',
+const SORT_LABEL: Record<VariableSortDTO, string> = {
+	[VariableSortDTO.none]: 'Disabled',
+	[VariableSortDTO['alphabetical-asc']]: 'Alphabetical (asc)',
+	[VariableSortDTO['alphabetical-desc']]: 'Alphabetical (desc)',
+	[VariableSortDTO['numerical-asc']]: 'Numerical (asc)',
+	[VariableSortDTO['numerical-desc']]: 'Numerical (desc)',
+	[VariableSortDTO['alphabetical-ci-asc']]:
+		'Alphabetical, case-insensitive (asc)',
+	[VariableSortDTO['alphabetical-ci-desc']]:
+		'Alphabetical, case-insensitive (desc)',
 };
 
 function getNameError(name: string, existingNames: string[]): string | null {
@@ -91,7 +99,10 @@ function VariableForm({
 	const onCustomChange = (value: string): void => {
 		set({ customValue: value });
 		setPreviewValues(
-			sortValues(commaValuesParser(value), model.sort) as (string | number)[],
+			sortValues(commaValuesParser(value), sortDirectionOf(model.sort)) as (
+				| string
+				| number
+			)[],
 		);
 	};
 
@@ -259,7 +270,7 @@ function VariableForm({
 										label: SORT_LABEL[sort],
 										value: sort,
 									}))}
-									onChange={(value): void => set({ sort: value as VariableSort })}
+									onChange={(value): void => set({ sort: value as VariableSortDTO })}
 									testId="variable-sort-select"
 								/>
 							</div>

@@ -1,4 +1,6 @@
+import { DashboardtypesListVariableSpecSortDTO as VariableSortDTO } from 'api/generated/services/sigNoz.schemas';
 import type { VariableDefaultValueDTO } from 'api/generated/services/sigNoz.schemas';
+import type { TSortVariableValuesType } from 'types/api/dashboard/getAll';
 
 /**
  * Flat, UI-friendly representation of a V2 dashboard variable. The wire format
@@ -7,8 +9,6 @@ import type { VariableDefaultValueDTO } from 'api/generated/services/sigNoz.sche
  */
 
 export type VariableType = 'QUERY' | 'CUSTOM' | 'TEXT' | 'DYNAMIC';
-
-export type VariableSort = 'DISABLED' | 'ASC' | 'DESC';
 
 export type TelemetrySignal = 'traces' | 'logs' | 'metrics';
 
@@ -24,7 +24,20 @@ export const PLUGIN_KIND = {
 	DYNAMIC: 'signoz/DynamicVariable',
 } as const;
 
-export const VARIABLE_SORTS: VariableSort[] = ['DISABLED', 'ASC', 'DESC'];
+export const VARIABLE_SORTS: VariableSortDTO[] = Object.values(VariableSortDTO);
+
+/** Direction the preview sorter should apply for a given wire sort value. */
+export function sortDirectionOf(
+	sort: VariableSortDTO,
+): TSortVariableValuesType {
+	if (sort.endsWith('-asc')) {
+		return 'ASC';
+	}
+	if (sort.endsWith('-desc')) {
+		return 'DESC';
+	}
+	return 'DISABLED';
+}
 
 export const TELEMETRY_SIGNALS: TelemetrySignal[] = [
 	'traces',
@@ -42,7 +55,7 @@ export interface VariableFormModel {
 	// List-variable common fields (Query / Custom / Dynamic).
 	multiSelect: boolean;
 	showAllOption: boolean;
-	sort: VariableSort;
+	sort: VariableSortDTO;
 
 	// Type-specific.
 	queryValue: string; // QUERY
@@ -67,7 +80,7 @@ export function emptyVariableFormModel(): VariableFormModel {
 		type: 'QUERY',
 		multiSelect: false,
 		showAllOption: false,
-		sort: 'DISABLED',
+		sort: VariableSortDTO.none,
 		queryValue: '',
 		customValue: '',
 		textValue: '',
