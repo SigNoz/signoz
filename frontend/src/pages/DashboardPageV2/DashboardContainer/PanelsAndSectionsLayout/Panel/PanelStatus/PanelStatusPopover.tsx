@@ -32,9 +32,13 @@ function PanelStatusPopover({
 	const Icon = variant === 'error' ? CircleX : TriangleAlert;
 
 	return (
-		<TooltipSimple title={<PanelStatusContent detail={detail} />} arrow>
-			{/* Wrapping span gives a ref-able, hoverable trigger (icon
-			    components don't forward refs) and a stable testid anchor. */}
+		<TooltipSimple
+			title={<PanelStatusContent variant={variant} detail={detail} />}
+			side="top"
+			align="end"
+			arrow
+			tooltipContentProps={{ className: styles.tooltipContent }}
+		>
 			<span
 				className={styles.trigger}
 				aria-label={ariaLabel}
