@@ -133,9 +133,9 @@
 		&__filter-key {
 			min-width: 0;
 			font-family: 'Geist Mono', monospace;
-			// Break long dotted keys (e.g. llm.output_messages.0.message.content.0)
-			// instead of overflowing and clipping the badge.
-			overflow-wrap: anywhere;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
 		}
 
 		&__edited {
