@@ -155,13 +155,11 @@ export async function persistDraft(
 			.map((group) => group.serverId as string),
 	);
 
-	// Deleted groups (cascades mappers server-side).
-	await Promise.all(
-		snapshot
-			.filter((group) => group.serverId && !draftServerIds.has(group.serverId))
-			.map((group) => m.deleteGroup(group.serverId as string)),
-	);
-
+	// Apply additive work (creates/updates) before deletes, so a failure here
+	// leaves at worst an incomplete set of additions rather than groups that
+	// were deleted with no replacement persisted. Deletes are irreversible
+	// (they cascade mappers server-side), so we do them last, once everything
+	// else has succeeded.
 	for (const group of draft) {
 		if (!group.serverId) {
 			// eslint-disable-next-line no-await-in-loop
@@ -182,4 +180,11 @@ export async function persistDraft(
 		// eslint-disable-next-line no-await-in-loop
 		await persistMappers(group.serverId, snap?.mappers ?? [], group.mappers, m);
 	}
+
+	// Deleted groups (cascades mappers server-side).
+	await Promise.all(
+		snapshot
+			.filter((group) => group.serverId && !draftServerIds.has(group.serverId))
+			.map((group) => m.deleteGroup(group.serverId as string)),
+	);
 }

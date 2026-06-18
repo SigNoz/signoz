@@ -6,6 +6,7 @@ import {
 	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import cx from 'classnames';
+import Spinner from 'components/Spinner';
 import useDebounce from 'hooks/useDebounce';
 
 import { FieldContext, FieldContextValue } from './types';
@@ -102,7 +103,7 @@ function KeySearchInput({
 			)}
 			{isOpen && isFetching && suggestions.length === 0 && (
 				<div className="key-search__dropdown key-search__dropdown--empty">
-					Searching…
+					<Spinner size="small" height="auto" />
 				</div>
 			)}
 		</div>
