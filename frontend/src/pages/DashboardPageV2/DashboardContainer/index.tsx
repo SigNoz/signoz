@@ -2,7 +2,6 @@ import { useEffect } from 'react';
 import { FullScreen, useFullScreenHandle } from 'react-full-screen';
 
 import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
-import PanelTypeSelectionModal from 'container/DashboardContainer/PanelTypeSelectionModal';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useAppContext } from 'providers/App/App';
 
@@ -66,9 +65,6 @@ function DashboardContainer({
 				/>
 				<PanelsAndSectionsLayout layouts={spec.layouts} panels={spec.panels} />
 			</div>
-			{/* Shared panel-type picker (V1 component): opened from any "New Panel"
-			    trigger; navigates to the widget editor route on selection. */}
-			<PanelTypeSelectionModal />
 		</FullScreen>
 	);
 }

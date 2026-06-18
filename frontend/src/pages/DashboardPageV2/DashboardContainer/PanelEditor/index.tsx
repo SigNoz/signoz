@@ -29,6 +29,7 @@ import { usePanelQuery } from '../hooks/usePanelQuery';
 import { usePanelEditorDraft } from './hooks/usePanelEditorDraft';
 import { usePanelEditorQuerySync } from './hooks/usePanelEditorQuerySync';
 import { usePanelEditorSave } from './hooks/usePanelEditorSave';
+import { useSeedNewListColumns } from './hooks/useSeedNewListColumns';
 import { useSwitchColumnsOnSignalChange } from './hooks/useSwitchColumnsOnSignalChange';
 import { useTableColumns } from './hooks/useTableColumns';
 import ListColumnsEditor from './ListColumnsEditor/ListColumnsEditor';
@@ -39,6 +40,10 @@ interface PanelEditorContainerProps {
 	dashboardId: string;
 	panelId: string;
 	panel: DashboardtypesPanelDTO;
+	/** Creating a new panel (seeded default) vs editing an existing one. */
+	isNew?: boolean;
+	/** Target section for a new panel; falls back to the last/new section. */
+	layoutIndex?: number;
 	/** Leave the editor (navigate back to the dashboard) without saving. */
 	onClose: () => void;
 	/** Called after a successful save — navigates back to the dashboard. */
@@ -55,11 +60,18 @@ function PanelEditorContainer({
 	dashboardId,
 	panelId,
 	panel,
+	isNew = false,
+	layoutIndex,
 	onClose,
 	onSaved,
 }: PanelEditorContainerProps): JSX.Element {
 	const { draft, spec, setSpec, isSpecDirty } = usePanelEditorDraft(panel);
-	const { save, isSaving } = usePanelEditorSave({ dashboardId, panelId });
+	const { save, isSaving } = usePanelEditorSave({
+		dashboardId,
+		panelId,
+		isNew,
+		layoutIndex,
+	});
 	const { defaultLayout, onLayoutChanged } = useDefaultLayout({
 		id: 'panel-editor-v2',
 		storage: layoutStorage,
@@ -96,6 +108,10 @@ function PanelEditorContainer({
 		enabled: !!panelDef,
 	});
 
+	// A new panel defaults to its kind's first supported signal (e.g. List → logs);
+	// drives both the seed query's datasource and the seed of its default columns.
+	const defaultDataSource = panelDef?.supportedSignals[0];
+
 	// Seed the shared query builder from the draft and expose the Stage-&-Run
 	// action (writes the query into the draft → preview re-fetches, or forces a
 	// re-fetch when unchanged).
@@ -104,11 +120,17 @@ function PanelEditorContainer({
 		panelType,
 		setSpec,
 		refetch,
+		// A new panel's seed query is the builder default, not a real saved query —
+		// always serialize it for the panel's kind on save.
+		alwaysSerializeQuery: isNew,
+		// Seed a new panel with a datasource the panel actually supports.
+		defaultDataSource,
 	});
 
 	// Dirty = an edited config slice (display/plugin spec) OR an edited query. The
 	// two are tracked independently so query re-serialization never false-dirties.
-	const isDirty = isSpecDirty || isQueryDirty;
+	// A new panel is always savable (you're creating it), even before any edit.
+	const isDirty = isNew || isSpecDirty || isQueryDirty;
 	// The List panel edits its columns below the query builder (V1 parity), so the
 	// editor container resolves the committed query's signal once and shares it
 	// with both the columns control and the datasource-switch effect below.
@@ -127,6 +149,14 @@ function PanelEditorContainer({
 	useSwitchColumnsOnSignalChange({
 		enabled: isListPanel,
 		signal: listSignal,
+		spec,
+		onChangeSpec: setSpec,
+	});
+	// A brand-new List panel starts with no columns; seed the default signal's
+	// columns once so the Columns control isn't empty on first open (V1 parity).
+	useSeedNewListColumns({
+		enabled: isNew && isListPanel,
+		signal: defaultDataSource,
 		spec,
 		onChangeSpec: setSpec,
 	});

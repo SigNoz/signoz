@@ -1,13 +1,14 @@
 import { Modal } from 'antd';
 import { Button } from '@signozhq/ui/button';
 
+import type { PanelKind } from '../../../Panels/types/panelKind';
 import { PANEL_TYPES } from './constants';
 import styles from './PanelTypeSelectionModal.module.scss';
 
 interface PanelTypeSelectionModalProps {
 	open: boolean;
 	onClose: () => void;
-	onSelect: (pluginKind: string) => void;
+	onSelect: (pluginKind: PanelKind) => void;
 }
 
 function PanelTypeSelectionModal({

@@ -1,35 +1,7 @@
 import { useEffect, useRef } from 'react';
-import type {
-	DashboardtypesPanelSpecDTO,
-	TelemetrytypesTelemetryFieldKeyDTO,
-} from 'api/generated/services/sigNoz.schemas';
-import {
-	defaultLogsSelectedColumns,
-	defaultTraceSelectedColumns,
-} from 'container/OptionsMenu/constants';
+import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
 
-import { sanitizeSelectFields } from '../ListColumnsEditor/selectFields';
-
-// The datasource's default List columns (V1 parity): logs → timestamp/body,
-// traces → service.name/name/duration_nano/http_method/response_status_code.
-// Sanitized to the field-key DTO — the V1 constants carry extra keys (isIndexed)
-// the save contract rejects. Other signals (metrics) don't produce a list, so
-// they clear the selection.
-function defaultColumnsForSignal(
-	signal: string,
-): TelemetrytypesTelemetryFieldKeyDTO[] {
-	if (signal === 'logs') {
-		return sanitizeSelectFields(
-			defaultLogsSelectedColumns as TelemetrytypesTelemetryFieldKeyDTO[],
-		);
-	}
-	if (signal === 'traces') {
-		return sanitizeSelectFields(
-			defaultTraceSelectedColumns as TelemetrytypesTelemetryFieldKeyDTO[],
-		);
-	}
-	return [];
-}
+import { defaultColumnsForSignal } from '../ListColumnsEditor/selectFields';
 
 interface UseSwitchColumnsOnSignalChangeArgs {
 	/** Gate so the switch only runs for the List kind (the only one with columns). */

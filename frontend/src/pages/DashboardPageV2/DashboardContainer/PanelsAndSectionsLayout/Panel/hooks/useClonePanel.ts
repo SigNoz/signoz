@@ -22,7 +22,7 @@ export interface ClonePanelArgs {
  * Duplicates a panel: deep-copies the source panel's spec under a fresh id and
  * drops a new grid item — same dimensions as the source — at the bottom of the
  * same section, as one atomic patch. Mirrors V1's clone (verbatim spec copy, no
- * rename) and reuses the same add-panel op builder as useAddPanelToSection.
+ * rename) and reuses the shared `addPanelToSectionOps` patch builder.
  */
 export function useClonePanel({
 	sections,
