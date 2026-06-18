@@ -2669,6 +2669,8 @@ components:
       type: object
     DashboardtypesFillMode:
       enum:
+      - solid
+      - gradient
       - none
       type: string
     DashboardtypesGettableDashboardV2:
@@ -2815,11 +2817,15 @@ components:
       type: string
     DashboardtypesLineInterpolation:
       enum:
+      - linear
       - spline
+      - step_after
+      - step_before
       type: string
     DashboardtypesLineStyle:
       enum:
       - solid
+      - dashed
       type: string
     DashboardtypesListOrder:
       enum:

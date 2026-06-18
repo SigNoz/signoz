@@ -3867,13 +3867,19 @@ export enum DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboa
 	'signoz/TimeSeriesPanel' = 'signoz/TimeSeriesPanel',
 }
 export enum DashboardtypesFillModeDTO {
+	solid = 'solid',
+	gradient = 'gradient',
 	none = 'none',
 }
 export enum DashboardtypesLineInterpolationDTO {
+	linear = 'linear',
 	spline = 'spline',
+	step_after = 'step_after',
+	step_before = 'step_before',
 }
 export enum DashboardtypesLineStyleDTO {
 	solid = 'solid',
+	dashed = 'dashed',
 }
 export interface DashboardtypesSpanGapsDTO {
 	/**

@@ -499,7 +499,7 @@ var (
 )
 
 func (LineInterpolation) Enum() []any {
-	return []any{LineInterpolationSpline} // others are not supported in UI yet
+	return []any{LineInterpolationLinear, LineInterpolationSpline, LineInterpolationStepAfter, LineInterpolationStepBefore}
 }
 
 func (li LineInterpolation) ValueOrDefault() string {
@@ -540,7 +540,7 @@ var (
 )
 
 func (LineStyle) Enum() []any {
-	return []any{LineStyleSolid} // others are not supported in UI yet
+	return []any{LineStyleSolid, LineStyleDashed}
 }
 
 func (ls LineStyle) ValueOrDefault() string {
@@ -582,7 +582,7 @@ var (
 )
 
 func (FillMode) Enum() []any {
-	return []any{FillModeNone} // others are not supported in UI yet
+	return []any{FillModeSolid, FillModeGradient, FillModeNone}
 }
 
 func (fm FillMode) ValueOrDefault() string {
