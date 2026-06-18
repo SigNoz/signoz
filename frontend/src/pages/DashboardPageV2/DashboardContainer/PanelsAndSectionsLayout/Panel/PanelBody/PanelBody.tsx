@@ -11,6 +11,7 @@ import type {
 	PanelQueryData,
 } from 'pages/DashboardPageV2/DashboardContainer/queryV5/types';
 
+import { panelStatusFromError } from '../PanelStatus/utils';
 import styles from './PanelBody.module.scss';
 
 interface PanelBodyProps {
@@ -24,7 +25,10 @@ interface PanelBodyProps {
 	error: Error | null;
 	refetch: () => void;
 	onDragSelect: (start: number, end: number) => void;
-	dashboardPreference: DashboardPreference;
+	/** Dashboard-wide preferences (cursor sync, …); absent in the editor preview. */
+	dashboardPreference?: DashboardPreference;
+	/** Render context — defaults to the dashboard view; the editor preview passes EDIT. */
+	panelMode?: PanelMode;
 	/** Header search term — only consumed by kinds that declare header search. */
 	searchTerm?: string;
 	/** Server-side paging handles — only consumed by raw/list renderers. */
@@ -51,6 +55,7 @@ function PanelBody({
 	refetch,
 	onDragSelect,
 	dashboardPreference,
+	panelMode = PanelMode.DASHBOARD_VIEW,
 	searchTerm,
 	pagination,
 }: PanelBodyProps): JSX.Element {
@@ -61,11 +66,14 @@ function PanelBody({
 	const hasData = !!data.response;
 
 	if (error && !hasData) {
+		// Parse the API error the same way the header status popover does, so the
+		// body shows the backend's message (not the raw axios "status code 4xx").
+		const errorDetail = panelStatusFromError(error);
 		return (
 			<div className={styles.error} data-testid="panel-error">
 				<TriangleAlert size={20} className={styles.errorIcon} />
 				<Typography.Text className={styles.errorMessage}>
-					{error.message || 'Failed to load panel data'}
+					{errorDetail?.message || 'Failed to load panel data'}
 				</Typography.Text>
 				<Button variant="outlined" color="secondary" onClick={refetch}>
 					Retry
@@ -93,7 +101,7 @@ function PanelBody({
 				isLoading={isLoading}
 				error={error}
 				onDragSelect={onDragSelect}
-				panelMode={PanelMode.DASHBOARD_VIEW}
+				panelMode={panelMode}
 				enableDrillDown={false}
 				dashboardPreference={dashboardPreference}
 				searchTerm={searchTerm}

@@ -72,12 +72,19 @@ function PanelEditorContainer({
 
 	// One shared query result for the whole editor: the preview renders it.
 	const panelDef = getPanelDefinition(draft.spec?.plugin?.kind);
-	const { data, isLoading, isFetching, error, cancelQuery, refetch } =
-		usePanelQuery({
-			panel: draft,
-			panelId,
-			enabled: !!panelDef,
-		});
+	const {
+		data,
+		isLoading,
+		isFetching,
+		error,
+		cancelQuery,
+		refetch,
+		pagination,
+	} = usePanelQuery({
+		panel: draft,
+		panelId,
+		enabled: !!panelDef,
+	});
 
 	// Seed the shared query builder from the draft and expose the Stage-&-Run
 	// action (writes the query into the draft → preview re-fetches, or forces a
@@ -138,7 +145,9 @@ function PanelEditorContainer({
 									data={data}
 									isLoading={isLoading}
 									error={error}
+									refetch={refetch}
 									onDragSelect={onDragSelect}
+									pagination={pagination}
 								/>
 							</ResizablePanel>
 							<ResizableHandle withHandle className={styles.handle} />
