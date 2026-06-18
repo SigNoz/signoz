@@ -69,19 +69,20 @@ function LLMObservabilityAttributeMapping(): JSX.Element {
 				defaultValue="attribute-mappings"
 				items={tabItems}
 			/>
-
-			<GroupFormDrawer
-				isOpen={groupDrawer.isOpen}
-				mode={groupDrawer.mode}
-				draft={groupDrawer.draft}
-				setDraft={groupDrawer.setDraft}
-				onClose={groupDrawer.close}
-				onSave={handleGroupSave}
-				onDelete={handleGroupDelete}
-				isSaving={false}
-				isDeleting={false}
-				saveError={null}
-			/>
+			{groupDrawer.isOpen && (
+				<GroupFormDrawer
+					isOpen={groupDrawer.isOpen}
+					mode={groupDrawer.mode}
+					draft={groupDrawer.draft}
+					setDraft={groupDrawer.setDraft}
+					onClose={groupDrawer.close}
+					onSave={handleGroupSave}
+					onDelete={handleGroupDelete}
+					isSaving={false}
+					isDeleting={false}
+					saveError={null}
+				/>
+			)}
 		</div>
 	);
 }

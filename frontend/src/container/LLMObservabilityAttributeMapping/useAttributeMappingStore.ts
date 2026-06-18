@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from '@signozhq/ui/sonner';
-import { useQueries, useQueryClient } from 'react-query';
+import { useQueryClient } from 'react-query';
 import {
-	getListSpanMappersQueryOptions,
 	useCreateSpanMapperGroup,
 	useDeleteSpanMapperGroup,
 	useListSpanMapperGroups,
@@ -10,7 +9,7 @@ import {
 } from 'api/generated/services/spanmapper';
 
 import { persistDraft, SaveMutations } from './saveDraft';
-import { DraftGroup, GroupDraft, Mapper, MapperGroup } from './types';
+import { DraftGroup, GroupDraft, MapperGroup } from './types';
 import { buildDraftGroup, nodeFromGroupDraft } from './utils';
 
 const GROUPS_KEY_PREFIX = '/api/v1/span_mapper_groups';
@@ -42,35 +41,18 @@ export function useAttributeMappingStore(): AttributeMappingStore {
 		[groupsQuery.data],
 	);
 
-	const mapperQueries = useQueries(
-		serverGroups.map((group) =>
-			getListSpanMappersQueryOptions({ groupId: group.id }),
-		),
-	);
+	const ready = !groupsQuery.isLoading;
 
-	const mappersReady = mapperQueries.every((query) => !query.isLoading);
-	const ready = !groupsQuery.isLoading && mappersReady;
-
-	// Stable signature so the snapshot only rebuilds when server data changes.
-	const dataSignature = useMemo(
-		() =>
-			JSON.stringify(serverGroups) +
-			JSON.stringify(mapperQueries.map((query) => query.data?.data?.items ?? [])),
-		[serverGroups, mapperQueries],
-	);
-
+	// Groups only: a group's mappers are fetched lazily when its row is expanded
+	// (see MappersTable), so page load is a single request rather than an N+1
+	// fan-out across every group. Group edits (name/condition/enabled, create/
+	// delete) don't touch mappers; mapper reconciliation lands in a later PR.
 	const snapshot = useMemo<DraftGroup[]>(() => {
 		if (!ready) {
 			return [];
 		}
-		return serverGroups.map((group, index) =>
-			buildDraftGroup(
-				group,
-				(mapperQueries[index]?.data?.data?.items ?? []) as unknown as Mapper[],
-			),
-		);
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [ready, dataSignature]);
+		return serverGroups.map((group) => buildDraftGroup(group, []));
+	}, [ready, serverGroups]);
 
 	const [draft, setDraft] = useState<DraftGroup[] | null>(null);
 

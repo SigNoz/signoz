@@ -23,7 +23,7 @@ import { DraftGroup } from './types';
 import { AttributeMappingStore } from './useAttributeMappingStore';
 import { conditionFiltersFromGroup } from './utils';
 
-const COLUMN_COUNT = 4;
+const COLUMN_COUNT = 3;
 
 interface MapperGroupsTableProps {
 	store: AttributeMappingStore;
@@ -102,9 +102,6 @@ function GroupRow({
 					<FiltersCell group={group} />
 				</TableCell>
 				<TableCell>
-					<span className="muted">{group.mappers.length} mappings</span>
-				</TableCell>
-				<TableCell>
 					<div className="am-row-actions">
 						<Button
 							variant="ghost"
@@ -163,7 +160,6 @@ function MapperGroupsTable({
 					<TableRow>
 						<TableHead>Group name</TableHead>
 						<TableHead>Filters</TableHead>
-						<TableHead>Mappings</TableHead>
 						<TableHead>Actions</TableHead>
 					</TableRow>
 				</TableHeader>
