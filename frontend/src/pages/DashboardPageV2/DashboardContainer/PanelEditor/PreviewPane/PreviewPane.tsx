@@ -1,11 +1,14 @@
-import { Spin } from 'antd';
-import { Loader, Spline } from '@signozhq/icons';
+import { Spline } from '@signozhq/icons';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import { PanelMode } from 'container/DashboardContainer/visualization/panels/types';
 import QueryTypeTag from 'container/NewWidget/LeftContainer/QueryTypeTag';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
+import PanelBody from 'pages/DashboardPageV2/DashboardContainer/PanelsAndSectionsLayout/Panel/PanelBody/PanelBody';
 import type { RenderablePanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelDefinition';
-import type { PanelQueryData } from 'pages/DashboardPageV2/DashboardContainer/queryV5/types';
+import type {
+	PanelPagination,
+	PanelQueryData,
+} from 'pages/DashboardPageV2/DashboardContainer/queryV5/types';
 import { EQueryType } from 'types/common/dashboard';
 
 import styles from './PreviewPane.module.scss';
@@ -18,16 +21,20 @@ interface PreviewPaneProps {
 	data: PanelQueryData;
 	isLoading: boolean;
 	error: Error | null;
+	/** Re-run the query (drives PanelBody's error-state retry). */
+	refetch: () => void;
 	/** Drag-to-zoom on a time-axis chart → updates the (URL-synced) time window. */
 	onDragSelect: (start: number, end: number) => void;
+	/** Server-side pager for raw/list panels; absent for non-paginated panels. */
+	pagination?: PanelPagination;
 }
 
 /**
- * Live preview for the panel editor. Presentational: the draft panel renders through the
- * same registry the dashboard grid uses (`panelDef.Renderer`), so the preview is the
- * production renderer — only `panelMode` differs (DASHBOARD_EDIT). The query result is
- * owned by the editor root (`usePanelQuery`) and passed in, so the same result is shared
- * with the config pane.
+ * Live preview for the panel editor. Presentational: the draft panel renders
+ * through `PanelBody` — the very same body the dashboard grid uses — so the
+ * preview is the production render path (loading / error-retry / renderer), with
+ * `panelMode={DASHBOARD_EDIT}` the only difference. The query result is owned by
+ * the editor root (`usePanelQuery`) and passed in, shared with the config pane.
  */
 function PreviewPane({
 	panelId,
@@ -36,7 +43,9 @@ function PreviewPane({
 	data,
 	isLoading,
 	error,
+	refetch,
 	onDragSelect,
+	pagination,
 }: PreviewPaneProps): JSX.Element {
 	return (
 		<div className={styles.preview}>
@@ -49,26 +58,23 @@ function PreviewPane({
 			</div>
 			<div className={styles.container}>
 				<div className={styles.surface}>
-					{/* eslint-disable-next-line no-nested-ternary -- 3-way branch on render state */}
-					{!panelDef ? (
-						<div className={styles.state} data-testid="panel-editor-v2-unknown-kind">
-							This panel type is not yet supported in V2.
-						</div>
-					) : isLoading && !data.response ? (
-						<div className={styles.state} data-testid="panel-editor-v2-loading">
-							<Spin indicator={<Loader size={14} className="animate-spin" />} />
-						</div>
-					) : (
-						<panelDef.Renderer
-							panelId={panelId}
+					{panelDef ? (
+						<PanelBody
+							panelDefinition={panelDef}
 							panel={panel}
+							panelId={panelId}
 							data={data}
 							isLoading={isLoading}
 							error={error}
-							panelMode={PanelMode.DASHBOARD_EDIT}
-							enableDrillDown={false}
+							refetch={refetch}
 							onDragSelect={onDragSelect}
+							panelMode={PanelMode.DASHBOARD_EDIT}
+							pagination={pagination}
 						/>
+					) : (
+						<div className={styles.state} data-testid="panel-editor-v2-unknown-kind">
+							This panel type is not yet supported in V2.
+						</div>
 					)}
 				</div>
 			</div>
