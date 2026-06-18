@@ -137,7 +137,7 @@ function GroupRow({
 			{isExpanded && (
 				<TableRow className="groups-table__sub-row">
 					<TableCell colSpan={COLUMN_COUNT}>
-						<MappersTable group={group} />
+						<MappersTable group={group} store={store} />
 					</TableCell>
 				</TableRow>
 			)}
