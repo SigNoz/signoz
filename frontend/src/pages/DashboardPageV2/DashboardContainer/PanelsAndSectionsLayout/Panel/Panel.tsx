@@ -3,7 +3,6 @@ import { TooltipSimple } from '@signozhq/ui/tooltip';
 import type {
 	DashboardtypesPanelDTO,
 	DashboardtypesTimePreferenceDTO,
-	DashboardtypesPanelPluginKindDTO as PanelKind,
 } from 'api/generated/services/sigNoz.schemas';
 import { getPanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Panels/registry';
 import { panelTimePreferenceLabel } from 'pages/DashboardPageV2/DashboardContainer/hooks/resolvePanelTimeWindow';
@@ -12,7 +11,6 @@ import { usePanelQuery } from 'pages/DashboardPageV2/DashboardContainer/hooks/us
 import type { DashboardSection } from '../../utils';
 import { usePanelInteractions } from './hooks/usePanelInteractions';
 import PanelBody from './PanelBody/PanelBody';
-import UnsupportedPanelBody from './PanelBody/UnsupportedPanelBody';
 import PanelHeader from './PanelHeader/PanelHeader';
 import styles from './Panel.module.scss';
 
@@ -50,15 +48,15 @@ function Panel({
 }: PanelProps): JSX.Element {
 	const name = panel.spec.display?.name;
 	const description = panel.spec.display?.description;
-	const fullKind = panel.spec.plugin?.kind as unknown as PanelKind;
-	const kind = fullKind?.replace(/^signoz\//, '') ?? 'unknown';
-	const queryCount = panel.spec.queries?.length ?? 0;
+	// `spec.plugin.kind` is a union of the per-variant kind enums, each a string
+	// literal that lands in the `PanelKind` union — assignable directly, no cast.
+	const fullKind = panel.spec.plugin.kind;
 
 	// A per-panel relative time preference (anything other than global_time) is
 	// surfaced as a pill in the header. `visualization` is common to every
 	// plugin-spec variant — localized cast reads it without narrowing on kind.
 	const timePreference = (
-		panel.spec.plugin?.spec as
+		panel.spec.plugin.spec as
 			| { visualization?: { timePreference?: DashboardtypesTimePreferenceDTO } }
 			| undefined
 	)?.visualization?.timePreference;
@@ -112,7 +110,7 @@ function Panel({
 				searchTerm={searchTerm}
 				onSearchChange={setSearchTerm}
 			/>
-			{panelDefinition ? (
+			{panelDefinition && (
 				<PanelBody
 					panelDefinition={panelDefinition}
 					panel={panel}
@@ -126,9 +124,6 @@ function Panel({
 					searchTerm={searchable ? searchTerm : undefined}
 					pagination={pagination}
 				/>
-			) : (
-				// TODO: remove this after all panel kinds are supported
-				<UnsupportedPanelBody kind={kind} queryCount={queryCount} />
 			)}
 		</div>
 	);

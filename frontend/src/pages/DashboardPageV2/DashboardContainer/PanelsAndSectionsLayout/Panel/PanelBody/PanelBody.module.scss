@@ -1,5 +1,4 @@
-// Generic centred body — used by the loading indicator and the
-// unsupported-kind fallback.
+// Generic centred body — used by the loading indicator.
 .body {
 	flex: 1;
 	display: flex;
@@ -9,10 +8,6 @@
 	color: var(--l2-foreground);
 	font-size: 12px;
 	text-align: center;
-}
-
-.bodyKind {
-	margin-bottom: 6px;
 }
 
 // Container for the rendered chart — fills the panel below the header and lets
