@@ -8,13 +8,13 @@ and currently are in `signoz/deploy` folder.
 If you don't have docker set up, please follow [this guide](https://docs.docker.com/engine/install/)
 to set up docker before proceeding with the next steps.
 
-### Using Install Script
-
-Now run the following command to install:
-
-```sh
-./install.sh
-```
+> **Note:** The `install.sh` script has been deprecated and is no longer maintained.
+> SigNoz now installs and runs through [Foundry](https://signoz.io/docs/install/docker/).
+> Please follow the latest installation instructions at
+> [signoz.io/docs/install/docker](https://signoz.io/docs/install/docker/).
+>
+> Already running SigNoz via Docker Compose? See the [Migration Guide](./MIGRATION.md)
+> to transition your existing deployment to Foundry.
 
 ### Using Docker Compose
 
