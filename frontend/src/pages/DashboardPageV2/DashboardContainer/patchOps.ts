@@ -127,11 +127,48 @@ interface CreatePanelOpsArgs {
 
 const NEW_PANEL_SIZE = { width: 6, height: 6 };
 
+/** Columns in the section grid — mirrors `cols` on SectionGrid's GridLayout. */
+const GRID_COLS = 12;
+
+/**
+ * Placement for a new grid item: if the last row has horizontal room to the
+ * right of its panels, drop the new panel there; otherwise wrap to a fresh row
+ * at the bottom. Only the last row is considered (gaps in earlier rows are left
+ * alone). The last row is the set of items sharing the greatest top-y; its right
+ * edge is the furthest `x + width` among them. Matches the 12-col grid +
+ * vertical compaction in SectionGrid.
+ */
+function findFreeSlot(
+	items: DashboardGridItemDTO[],
+	width: number,
+): { x: number; y: number } {
+	const w = Math.min(width, GRID_COLS);
+	if (items.length === 0) {
+		return { x: 0, y: 0 };
+	}
+
+	const bottom = items.reduce(
+		(max, it) => Math.max(max, (it.y ?? 0) + (it.height ?? 0)),
+		0,
+	);
+	const lastRowY = items.reduce((max, it) => Math.max(max, it.y ?? 0), 0);
+	const lastRowRightEdge = items
+		.filter((it) => (it.y ?? 0) === lastRowY)
+		.reduce((max, it) => Math.max(max, (it.x ?? 0) + (it.width ?? 0)), 0);
+
+	// Room in the last row → sit to the right of it; else start a new row.
+	if (lastRowRightEdge + w <= GRID_COLS) {
+		return { x: lastRowRightEdge, y: lastRowY };
+	}
+	return { x: 0, y: bottom };
+}
+
 /**
  * Ops to create a brand-new panel: resolve the target section (the requested
  * index when valid, else the last section, else a freshly-created one when the
- * dashboard has no sections) and drop the panel at the bottom of it. Used by the
- * editor's save path when persisting a draft panel.
+ * dashboard has no sections) and drop the panel into the last row when it has
+ * room, otherwise a new row. Used by the editor's save path when persisting a
+ * draft panel.
  */
 export function createPanelOps({
 	layouts,
@@ -156,18 +193,15 @@ export function createPanelOps({
 		items = [];
 	}
 
-	const nextY = items.reduce(
-		(max, i) => Math.max(max, (i.y ?? 0) + (i.height ?? 0)),
-		0,
-	);
+	const { x, y } = findFreeSlot(items, NEW_PANEL_SIZE.width);
 	ops.push(
 		...addPanelToSectionOps({
 			panelId,
 			panel,
 			layoutIndex: targetIndex,
 			item: {
-				x: 0,
-				y: nextY,
+				x,
+				y,
 				...NEW_PANEL_SIZE,
 				content: { $ref: panelRef(panelId) },
 			},
