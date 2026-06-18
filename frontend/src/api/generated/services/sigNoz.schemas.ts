@@ -3187,7 +3187,6 @@ export interface DashboardtypesPanelFormattingDTO {
 
 export enum DashboardtypesLegendModeDTO {
 	list = 'list',
-	table = 'table',
 }
 export enum DashboardtypesLegendPositionDTO {
 	bottom = 'bottom',
@@ -3868,19 +3867,13 @@ export enum DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboa
 	'signoz/TimeSeriesPanel' = 'signoz/TimeSeriesPanel',
 }
 export enum DashboardtypesFillModeDTO {
-	solid = 'solid',
-	gradient = 'gradient',
 	none = 'none',
 }
 export enum DashboardtypesLineInterpolationDTO {
-	linear = 'linear',
 	spline = 'spline',
-	step_after = 'step_after',
-	step_before = 'step_before',
 }
 export enum DashboardtypesLineStyleDTO {
 	solid = 'solid',
-	dashed = 'dashed',
 }
 export interface DashboardtypesSpanGapsDTO {
 	/**
@@ -4522,7 +4515,7 @@ export type DashboardtypesVariablePluginDTO =
 	| DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesQueryVariableSpecDTO
 	| DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesCustomVariableSpecDTO;
 
-export enum DashboardtypesSortDTO {
+export enum DashboardtypesListVariableSpecSortDTO {
 	none = 'none',
 	'alphabetical-asc' = 'alphabetical-asc',
 	'alphabetical-desc' = 'alphabetical-desc',
@@ -4556,7 +4549,7 @@ export interface DashboardtypesListVariableSpecDTO {
 	 */
 	name: string;
 	plugin?: DashboardtypesVariablePluginDTO;
-	sort?: DashboardtypesSortDTO;
+	sort?: DashboardtypesListVariableSpecSortDTO;
 }
 
 export interface DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpecDTO {

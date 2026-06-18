@@ -2669,8 +2669,6 @@ components:
       type: object
     DashboardtypesFillMode:
       enum:
-      - solid
-      - gradient
       - none
       type: string
     DashboardtypesGettableDashboardV2:
@@ -2809,7 +2807,6 @@ components:
     DashboardtypesLegendMode:
       enum:
       - list
-      - table
       type: string
     DashboardtypesLegendPosition:
       enum:
@@ -2818,15 +2815,11 @@ components:
       type: string
     DashboardtypesLineInterpolation:
       enum:
-      - linear
       - spline
-      - step_after
-      - step_before
       type: string
     DashboardtypesLineStyle:
       enum:
       - solid
-      - dashed
       type: string
     DashboardtypesListOrder:
       enum:
@@ -2866,10 +2859,20 @@ components:
         plugin:
           $ref: '#/components/schemas/DashboardtypesVariablePlugin'
         sort:
-          $ref: '#/components/schemas/DashboardtypesSort'
+          $ref: '#/components/schemas/DashboardtypesListVariableSpecSort'
       required:
       - name
       type: object
+    DashboardtypesListVariableSpecSort:
+      enum:
+      - none
+      - alphabetical-asc
+      - alphabetical-desc
+      - numerical-asc
+      - numerical-desc
+      - alphabetical-ci-asc
+      - alphabetical-ci-desc
+      type: string
     DashboardtypesListableDashboardForUserV2:
       properties:
         dashboards:
@@ -3370,16 +3373,6 @@ components:
       required:
       - queryValue
       type: object
-    DashboardtypesSort:
-      enum:
-      - none
-      - alphabetical-asc
-      - alphabetical-desc
-      - numerical-asc
-      - numerical-desc
-      - alphabetical-ci-asc
-      - alphabetical-ci-desc
-      type: string
     DashboardtypesSource:
       enum:
       - user
