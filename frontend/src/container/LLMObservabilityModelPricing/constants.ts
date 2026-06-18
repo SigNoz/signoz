@@ -45,8 +45,8 @@ export const EMPTY_DRAFT: DrawerDraft = {
 	patterns: [],
 	isOverride: true,
 	pricing: {
-		input: 0,
-		output: 0,
+		input: null,
+		output: null,
 		cacheMode: CacheModeDTO.unknown,
 		cacheRead: null,
 		cacheWrite: null,

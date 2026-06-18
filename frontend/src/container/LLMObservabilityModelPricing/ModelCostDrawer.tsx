@@ -3,7 +3,6 @@ import { DrawerWrapper } from '@signozhq/ui/drawer';
 import { Input } from '@signozhq/ui/input';
 import { SelectSimple } from '@signozhq/ui/select';
 import { Trash2 } from '@signozhq/icons';
-import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 
 import PatternEditor from './PatternEditor';
@@ -42,18 +41,9 @@ function ModelCostDrawer({
 	// Default mode validates on submit, then re-validates on change — so we don't
 	// flag empty fields before the user has tried to save, but errors clear live
 	// once they start fixing them.
-	const { control, handleSubmit, watch, reset } = useForm<DrawerDraft>({
+	const { control, handleSubmit, watch } = useForm<DrawerDraft>({
 		defaultValues: initialDraft,
 	});
-
-	// The drawer stays mounted while closed, so re-seed the form whenever it
-	// reopens — otherwise edit shows stale data and values leak between opens.
-	// reset() also clears any errors from the previous open.
-	useEffect(() => {
-		if (isOpen) {
-			reset(initialDraft);
-		}
-	}, [isOpen, initialDraft, reset]);
 
 	const isOverride = watch('isOverride');
 
@@ -126,7 +116,6 @@ function ModelCostDrawer({
 			className="model-cost-drawer"
 			footer={footer}
 			title={drawerTitle}
-			subTitle="Pricing computes gen_ai.estimated_total_cost at ingest."
 			drawerHeaderProps={{ className: 'model-cost-drawer__title' }}
 		>
 			<div className="drawer-section">

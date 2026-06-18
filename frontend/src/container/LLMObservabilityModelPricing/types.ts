@@ -30,8 +30,8 @@ export interface DrawerDraft {
 	patterns: string[];
 	isOverride: boolean;
 	pricing: {
-		input: number;
-		output: number;
+		input: number | null;
+		output: number | null;
 		cacheMode: CacheModeDTO;
 		cacheRead: number | null;
 		cacheWrite: number | null;

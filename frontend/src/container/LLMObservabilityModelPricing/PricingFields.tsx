@@ -37,12 +37,12 @@ function PricingFields({
 					<Input
 						id="input-cost"
 						type="number"
-						min={0}
 						step={0.01}
-						value={pricing.input}
+						value={pricing.input ?? ''}
+						placeholder="1.00"
 						disabled={isReadOnly}
 						onChange={(e): void =>
-							onChange({ input: parsePricingAmount(e.target.value) ?? 0 })
+							onChange({ input: parsePricingAmount(e.target.value) })
 						}
 						testId="drawer-input-cost"
 					/>
@@ -54,12 +54,12 @@ function PricingFields({
 					<Input
 						id="output-cost"
 						type="number"
-						min={0}
 						step={0.01}
-						value={pricing.output}
+						value={pricing.output ?? ''}
+						placeholder="1.00"
 						disabled={isReadOnly}
 						onChange={(e): void =>
-							onChange({ output: parsePricingAmount(e.target.value) ?? 0 })
+							onChange({ output: parsePricingAmount(e.target.value) })
 						}
 						testId="drawer-output-cost"
 					/>

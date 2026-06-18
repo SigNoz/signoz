@@ -97,19 +97,20 @@ function ModelCostsTab(): JSX.Element {
 				Showing {rules.length} of {total} model{total === 1 ? '' : 's'}
 				{' · '}All prices per 1M tokens (USD)
 			</footer>
-
-			<ModelCostDrawer
-				isOpen={drawer.isOpen}
-				mode={drawer.mode}
-				initialDraft={drawer.initialDraft}
-				onClose={drawer.close}
-				onSave={drawer.save}
-				onDelete={drawer.deleteRule}
-				isSaving={drawer.isSaving}
-				isDeleting={drawer.isDeleting}
-				saveError={drawer.saveError}
-				canManage={canManagePricing}
-			/>
+			{drawer.isOpen && (
+				<ModelCostDrawer
+					isOpen={drawer.isOpen}
+					mode={drawer.mode}
+					initialDraft={drawer.initialDraft}
+					onClose={drawer.close}
+					onSave={drawer.save}
+					onDelete={drawer.deleteRule}
+					isSaving={drawer.isSaving}
+					isDeleting={drawer.isDeleting}
+					saveError={drawer.saveError}
+					canManage={canManagePricing}
+				/>
+			)}
 		</>
 	);
 }

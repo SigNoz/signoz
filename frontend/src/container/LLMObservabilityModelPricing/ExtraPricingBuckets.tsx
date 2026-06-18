@@ -25,24 +25,41 @@ function ExtraPricingBuckets({
 	isReadOnly,
 	onChange,
 }: ExtraPricingBucketsProps): JSX.Element {
-	const [isPicking, setIsPicking] = useState<boolean>(false);
+	const [isExtraPricingBucketOpen, setIsExtraPricingBucketOpen] =
+		useState<boolean>(false);
 
-	const addedBuckets = CACHE_BUCKETS.filter((b) => pricing[b.key] !== null);
-	const availableBuckets = CACHE_BUCKETS.filter((b) => pricing[b.key] === null);
+	// Track which buckets are shown separately from their value, so a freshly
+	// added bucket can start blank (value null) instead of being seeded to 0.
+	// Seeded from buckets that already carry a value (edit mode).
+	const [addedKeys, setAddedKeys] = useState<Set<CacheBucketKey>>(
+		() =>
+			new Set(
+				CACHE_BUCKETS.filter((b) => pricing[b.key] !== null).map((b) => b.key),
+			),
+	);
+
+	const addedBuckets = CACHE_BUCKETS.filter((b) => addedKeys.has(b.key));
+	const availableBuckets = CACHE_BUCKETS.filter((b) => !addedKeys.has(b.key));
 	const patchBucket = (key: CacheBucketKey, value: number | null): void => {
 		const patch: Partial<Pricing> = { [key]: value };
 		onChange(patch);
 	};
 
 	const addBucket = (key: CacheBucketKey): void => {
-		patchBucket(key, 0);
+		// Leave the value null so the field renders blank until the user types.
+		setAddedKeys((prev) => new Set(prev).add(key));
 		// Close the picker once nothing is left to add.
 		if (availableBuckets.length <= 1) {
-			setIsPicking(false);
+			setIsExtraPricingBucketOpen(false);
 		}
 	};
 
 	const removeBucket = (key: CacheBucketKey): void => {
+		setAddedKeys((prev) => {
+			const next = new Set(prev);
+			next.delete(key);
+			return next;
+		});
 		patchBucket(key, null);
 	};
 
@@ -60,13 +77,14 @@ function ExtraPricingBuckets({
 						type="number"
 						min={0}
 						step={0.01}
-						value={pricing[bucket.key] ?? 0}
-						placeholder="0.00"
+						value={pricing[bucket.key] ?? ''}
+						placeholder="1.00"
 						disabled={isReadOnly}
 						onChange={(e): void =>
-							// Empty coerces to 0 (not null) so editing never makes the row
-							// vanish — removal is explicit via the trash button.
-							patchBucket(bucket.key, parsePricingAmount(e.target.value) ?? 0)
+							// Clearing the field is allowed — the row stays mounted because
+							// presence is tracked in `addedKeys`, not the value. Removal is
+							// explicit via the trash button.
+							patchBucket(bucket.key, parsePricingAmount(e.target.value))
 						}
 						testId={`drawer-${bucket.testId}-cost`}
 					/>
@@ -101,20 +119,20 @@ function ExtraPricingBuckets({
 				</div>
 			)}
 
-			{!isReadOnly && !isPicking && availableBuckets.length > 0 && (
+			{!isReadOnly && !isExtraPricingBucketOpen && availableBuckets.length > 0 && (
 				<Button
 					variant="dashed"
 					color="secondary"
 					className="bucket-add-btn"
 					prefix={<Plus size={14} />}
-					onClick={(): void => setIsPicking(true)}
+					onClick={(): void => setIsExtraPricingBucketOpen(true)}
 					testId="drawer-add-bucket-btn"
 				>
 					Add pricing bucket
 				</Button>
 			)}
 
-			{!isReadOnly && isPicking && (
+			{!isReadOnly && isExtraPricingBucketOpen && (
 				<div className="bucket-picker" data-testid="drawer-bucket-picker">
 					<div className="bucket-picker__title">Add a pricing bucket</div>
 					<div className="bucket-picker__chips">
@@ -136,7 +154,7 @@ function ExtraPricingBuckets({
 						variant="ghost"
 						color="secondary"
 						size="sm"
-						onClick={(): void => setIsPicking(false)}
+						onClick={(): void => setIsExtraPricingBucketOpen(false)}
 						testId="drawer-add-bucket-cancel"
 					>
 						Cancel

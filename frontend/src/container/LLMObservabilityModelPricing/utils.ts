@@ -120,8 +120,8 @@ export const buildPricingPayload = (
 ): LlmpricingruletypesLLMRulePricingDTO => {
 	const cache = buildCacheCosts(draft.pricing);
 	return {
-		input: draft.pricing.input,
-		output: draft.pricing.output,
+		input: draft.pricing.input ?? 0,
+		output: draft.pricing.output ?? 0,
 		...(cache && { cache }),
 	};
 };
@@ -165,10 +165,10 @@ export const validatePricing = (
 	if (!isOverride) {
 		return true;
 	}
-	if (!(pricing.input > 0)) {
+	if (pricing.input === null || pricing.input <= 0) {
 		return 'Input cost must be greater than 0.';
 	}
-	if (!(pricing.output > 0)) {
+	if (pricing.output === null || pricing.output <= 0) {
 		return 'Output cost must be greater than 0.';
 	}
 	if ((pricing.cacheRead ?? 0) < 0 || (pricing.cacheWrite ?? 0) < 0) {
