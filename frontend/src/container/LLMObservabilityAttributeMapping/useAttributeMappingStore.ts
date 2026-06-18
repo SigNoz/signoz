@@ -1,11 +1,7 @@
 import { useMemo } from 'react';
-import { useQueries } from 'react-query';
-import {
-	getListSpanMappersQueryOptions,
-	useListSpanMapperGroups,
-} from 'api/generated/services/spanmapper';
+import { useListSpanMapperGroups } from 'api/generated/services/spanmapper';
 
-import { DraftGroup, Mapper, MapperGroup } from './types';
+import { DraftGroup, MapperGroup } from './types';
 import { buildDraftGroup } from './utils';
 
 export interface AttributeMappingStore {
@@ -14,49 +10,23 @@ export interface AttributeMappingStore {
 	isError: boolean;
 }
 
-// Read-only store for the listing view: loads the server groups and their
-// mappers and exposes them as a flat draft tree. Editing (draft mutations,
-// save/discard) is layered on in a later PR.
+// Read-only store for the listing view: loads the server groups only. Each
+// group's mappers are fetched lazily when its row is expanded (see
+// MappersTable), so page load is a single request instead of an N+1 fan-out
+// across every group. Editing (draft mutations, save/discard) is layered on in
+// a later PR.
 export function useAttributeMappingStore(): AttributeMappingStore {
 	const groupsQuery = useListSpanMapperGroups();
-	const serverGroups: MapperGroup[] = useMemo(
-		() => groupsQuery.data?.data?.items ?? [],
-		[groupsQuery.data],
-	);
-
-	const mapperQueries = useQueries(
-		serverGroups.map((group) =>
-			getListSpanMappersQueryOptions({ groupId: group.id }),
-		),
-	);
-
-	const mappersReady = mapperQueries.every((query) => !query.isLoading);
-	const ready = !groupsQuery.isLoading && mappersReady;
-
-	// Stable signature so the tree only rebuilds when server data changes.
-	const dataSignature = useMemo(
-		() =>
-			JSON.stringify(serverGroups) +
-			JSON.stringify(mapperQueries.map((query) => query.data?.data?.items ?? [])),
-		[serverGroups, mapperQueries],
-	);
 
 	const groups = useMemo<DraftGroup[]>(() => {
-		if (!ready) {
-			return [];
-		}
-		return serverGroups.map((group, index) =>
-			buildDraftGroup(
-				group,
-				(mapperQueries[index]?.data?.data?.items ?? []) as unknown as Mapper[],
-			),
-		);
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [ready, dataSignature]);
+		const serverGroups: MapperGroup[] = groupsQuery.data?.data?.items ?? [];
+		// Mappers load lazily per group, so seed the tree with empty mappers.
+		return serverGroups.map((group) => buildDraftGroup(group, []));
+	}, [groupsQuery.data]);
 
 	return {
 		groups,
-		isLoading: !ready,
+		isLoading: groupsQuery.isLoading,
 		isError: groupsQuery.isError,
 	};
 }

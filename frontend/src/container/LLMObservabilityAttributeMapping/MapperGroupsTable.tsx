@@ -89,9 +89,6 @@ function GroupRow({
 					<FiltersCell group={group} />
 				</TableCell>
 				<TableCell>
-					<span className="muted">{group.mappers.length} mappings</span>
-				</TableCell>
-				<TableCell>
 					<Badge color={group.enabled ? 'forest' : 'vanilla'} variant="outline">
 						{group.enabled ? 'Enabled' : 'Disabled'}
 					</Badge>
@@ -122,7 +119,6 @@ function MapperGroupsTable({ store }: MapperGroupsTableProps): JSX.Element {
 					<TableRow>
 						<TableHead>Group name</TableHead>
 						<TableHead>Filters</TableHead>
-						<TableHead>Mappings</TableHead>
 						<TableHead>Status</TableHead>
 					</TableRow>
 				</TableHeader>
