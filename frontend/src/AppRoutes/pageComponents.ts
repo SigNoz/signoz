@@ -330,3 +330,10 @@ export const LLMObservabilityModelPricingPage = Loadable(
 			/* webpackChunkName: "LLM Observability Model Pricing Page" */ 'pages/LLMObservabilityModelPricing'
 		),
 );
+
+export const LLMObservabilityAttributeMappingPage = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "LLM Observability Attribute Mapping Page" */ 'pages/LLMObservabilityAttributeMapping'
+		),
+);
