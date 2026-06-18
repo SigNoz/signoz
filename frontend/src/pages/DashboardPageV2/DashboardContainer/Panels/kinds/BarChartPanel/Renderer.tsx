@@ -42,9 +42,8 @@ function BarPanelRenderer({
 	const isDarkMode = useIsDarkMode();
 	const { timezone } = useTimezone();
 
-	// The registry guarantees the kind, so the cast is a boundary narrowing.
 	const spec = useMemo<DashboardtypesBarChartPanelSpecDTO>(
-		() => panel.spec.plugin.spec as DashboardtypesBarChartPanelSpecDTO,
+		() => panel.spec.plugin.spec,
 		[panel.spec.plugin.spec],
 	);
 

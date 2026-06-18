@@ -34,9 +34,8 @@ function HistogramPanelRenderer({
 	const isDarkMode = useIsDarkMode();
 	const { timezone } = useTimezone();
 
-	// The registry guarantees the kind, so the cast is a boundary narrowing.
 	const spec = useMemo<DashboardtypesHistogramPanelSpecDTO>(
-		() => panel.spec.plugin.spec as DashboardtypesHistogramPanelSpecDTO,
+		() => panel.spec.plugin.spec,
 		[panel.spec.plugin.spec],
 	);
 

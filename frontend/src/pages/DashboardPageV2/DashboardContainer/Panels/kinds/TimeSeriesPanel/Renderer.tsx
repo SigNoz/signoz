@@ -42,10 +42,8 @@ function TimeSeriesPanelRenderer({
 	const isDarkMode = useIsDarkMode();
 	const { timezone } = useTimezone();
 
-	// The registry guarantees the kind, so the cast is a boundary narrowing.
-	// Memoized so the `?? {}` fallback doesn't produce a fresh object each render.
 	const spec = useMemo<DashboardtypesTimeSeriesPanelSpecDTO>(
-		() => (panel.spec.plugin.spec ?? {}) as DashboardtypesTimeSeriesPanelSpecDTO,
+		() => panel.spec.plugin.spec,
 		[panel.spec.plugin.spec],
 	);
 

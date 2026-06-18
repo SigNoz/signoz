@@ -24,9 +24,8 @@ function PiePanelRenderer({
 }: PanelRendererProps<'signoz/PieChartPanel'>): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 
-	// The registry guarantees the kind, so the cast is a boundary narrowing.
 	const spec = useMemo<DashboardtypesPieChartPanelSpecDTO>(
-		() => panel.spec.plugin.spec as DashboardtypesPieChartPanelSpecDTO,
+		() => panel.spec.plugin.spec,
 		[panel.spec.plugin.spec],
 	);
 
