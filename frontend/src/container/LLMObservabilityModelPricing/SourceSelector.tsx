@@ -80,7 +80,7 @@ function SourceSelector({
 					aria-label="Reset to default pricing"
 				>
 					<p>
-						Reset to default pricing? Custom values will be discarded. it might take
+						Reset to default pricing? Custom values will be discarded. It might take
 						24 hours for changes to take effect.
 					</p>
 					<div className="reset-confirm__actions">
