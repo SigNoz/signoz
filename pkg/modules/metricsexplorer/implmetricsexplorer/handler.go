@@ -230,6 +230,34 @@ func (h *handler) GetMetricDashboards(rw http.ResponseWriter, req *http.Request)
 	render.Success(rw, http.StatusOK, out)
 }
 
+func (h *handler) GetMetricDashboardsV2(rw http.ResponseWriter, req *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(req.Context())
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	metricName, err := extractMetricName(req)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
+	if err := h.checkMetricExists(req.Context(), orgID, metricName); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	out, err := h.module.GetMetricDashboardsV2(req.Context(), orgID, metricName)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+	render.Success(rw, http.StatusOK, out)
+}
+
 func (h *handler) GetMetricHighlights(rw http.ResponseWriter, req *http.Request) {
 	claims, err := authtypes.ClaimsFromContext(req.Context())
 	if err != nil {

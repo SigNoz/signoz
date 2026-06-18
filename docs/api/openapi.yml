@@ -21476,6 +21476,71 @@ paths:
       summary: Put profile in Zeus for a deployment.
       tags:
       - zeus
+  /api/v3/metrics/{metric_name}/dashboards:
+    get:
+      deprecated: false
+      description: This endpoint returns associated v2 dashboards for a specified
+        metric
+      operationId: GetMetricDashboardsV2
+      parameters:
+      - in: path
+        name: metric_name
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/MetricsexplorertypesMetricDashboardsResponse'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get metric dashboards (v2)
+      tags:
+      - metrics
   /api/v3/traces/{traceID}/flamegraph:
     post:
       deprecated: false

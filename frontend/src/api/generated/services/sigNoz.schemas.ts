@@ -10857,6 +10857,17 @@ export type GetHosts200 = {
 	status: string;
 };
 
+export type GetMetricDashboardsV2PathParameters = {
+	metricName: string;
+};
+export type GetMetricDashboardsV2200 = {
+	data: MetricsexplorertypesMetricDashboardsResponseDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type GetFlamegraphPathParameters = {
 	traceID: string;
 };

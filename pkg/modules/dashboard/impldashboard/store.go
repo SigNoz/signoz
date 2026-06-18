@@ -213,6 +213,26 @@ func (store *store) sortExprForListV2(sort dashboardtypes.ListSort) (string, err
 		"unsupported sort field %q", sort)
 }
 
+func (store *store) ListByDataContains(ctx context.Context, orgID valuer.UUID, search string) ([]*dashboardtypes.StorableDashboard, error) {
+	// LIKE wildcards (`%`, `_`, `\`) in the search are escaped so it matches literally.
+	escaped := strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`).Replace(search)
+
+	storableDashboards := make([]*dashboardtypes.StorableDashboard, 0)
+	err := store.
+		sqlstore.
+		BunDB().
+		NewSelect().
+		Model(&storableDashboards).
+		Where("org_id = ?", orgID).
+		Where("data LIKE ? ESCAPE '\\'", "%"+escaped+"%").
+		Scan(ctx)
+	if err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "couldn't list dashboards by data")
+	}
+
+	return storableDashboards, nil
+}
+
 func (store *store) GetPublic(ctx context.Context, dashboardID string) (*dashboardtypes.StorablePublicDashboard, error) {
 	storable := new(dashboardtypes.StorablePublicDashboard)
 	err := store.

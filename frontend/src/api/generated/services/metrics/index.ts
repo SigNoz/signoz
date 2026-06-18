@@ -25,6 +25,8 @@ import type {
 	GetMetricAttributesPathParameters,
 	GetMetricDashboards200,
 	GetMetricDashboardsPathParameters,
+	GetMetricDashboardsV2200,
+	GetMetricDashboardsV2PathParameters,
 	GetMetricHighlights200,
 	GetMetricHighlightsPathParameters,
 	GetMetricMetadata200,
@@ -1105,4 +1107,108 @@ export const useGetMetricsTreemap = <
 	TContext
 > => {
 	return useMutation(getGetMetricsTreemapMutationOptions(options));
+};
+/**
+ * This endpoint returns associated v2 dashboards for a specified metric
+ * @summary Get metric dashboards (v2)
+ */
+export const getMetricDashboardsV2 = (
+	{ metricName }: GetMetricDashboardsV2PathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<GetMetricDashboardsV2200>({
+		url: `/api/v3/metrics/${metricName}/dashboards`,
+		method: 'GET',
+		signal,
+	});
+};
+
+export const getGetMetricDashboardsV2QueryKey = ({
+	metricName,
+}: GetMetricDashboardsV2PathParameters) => {
+	return [`/api/v3/metrics/${metricName}/dashboards`] as const;
+};
+
+export const getGetMetricDashboardsV2QueryOptions = <
+	TData = Awaited<ReturnType<typeof getMetricDashboardsV2>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ metricName }: GetMetricDashboardsV2PathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getMetricDashboardsV2>>,
+			TError,
+			TData
+		>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ?? getGetMetricDashboardsV2QueryKey({ metricName });
+
+	const queryFn: QueryFunction<
+		Awaited<ReturnType<typeof getMetricDashboardsV2>>
+	> = ({ signal }) => getMetricDashboardsV2({ metricName }, signal);
+
+	return {
+		queryKey,
+		queryFn,
+		enabled: !!metricName,
+		...queryOptions,
+	} as UseQueryOptions<
+		Awaited<ReturnType<typeof getMetricDashboardsV2>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type GetMetricDashboardsV2QueryResult = NonNullable<
+	Awaited<ReturnType<typeof getMetricDashboardsV2>>
+>;
+export type GetMetricDashboardsV2QueryError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Get metric dashboards (v2)
+ */
+
+export function useGetMetricDashboardsV2<
+	TData = Awaited<ReturnType<typeof getMetricDashboardsV2>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ metricName }: GetMetricDashboardsV2PathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getMetricDashboardsV2>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getGetMetricDashboardsV2QueryOptions(
+		{ metricName },
+		options,
+	);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get metric dashboards (v2)
+ */
+export const invalidateGetMetricDashboardsV2 = async (
+	queryClient: QueryClient,
+	{ metricName }: GetMetricDashboardsV2PathParameters,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getGetMetricDashboardsV2QueryKey({ metricName }) },
+		options,
+	);
+
+	return queryClient;
 };
