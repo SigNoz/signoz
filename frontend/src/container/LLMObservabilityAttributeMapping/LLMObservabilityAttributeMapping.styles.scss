@@ -1,25 +1,25 @@
 .llm-observability-attribute-mapping {
-	padding: 24px;
+	padding: var(--padding-6);
 	display: flex;
 	flex-direction: column;
-	gap: 16px;
+	gap: var(--spacing-8);
 
 	.page-header {
 		display: flex;
 		align-items: flex-start;
 		justify-content: space-between;
-		gap: 16px;
+		gap: var(--spacing-8);
 
 		&__title {
 			h1 {
 				margin: 0;
-				font-size: 18px;
-				font-weight: 600;
+				font-size: var(--font-size-lg);
+				font-weight: var(--font-weight-semibold);
 			}
 
 			p {
-				margin: 4px 0 0;
-				font-size: 13px;
+				margin: var(--margin-1) 0 0;
+				font-size: var(--periscope-font-size-base);
 				color: var(--bg-vanilla-400);
 			}
 		}
@@ -27,25 +27,25 @@
 		&__actions {
 			display: flex;
 			align-items: center;
-			gap: 12px;
+			gap: var(--spacing-6);
 		}
 
 		&__unsaved {
-			font-size: 13px;
+			font-size: var(--periscope-font-size-base);
 			color: var(--bg-amber-400);
 		}
 	}
 
 	.page-error {
-		padding: 12px 16px;
-		border-radius: 4px;
+		padding: var(--padding-3) var(--padding-4);
+		border-radius: var(--radius-2);
 		background: var(--bg-cherry-500-opacity-10, rgba(229, 72, 77, 0.1));
 		color: var(--bg-cherry-400);
-		font-size: 13px;
+		font-size: var(--periscope-font-size-base);
 	}
 
 	.page-footer {
-		font-size: 12px;
+		font-size: var(--font-size-xs);
 		color: var(--bg-vanilla-400);
 	}
 
@@ -63,14 +63,14 @@
 		border-radius: 999px;
 		background: var(--bg-robin-500);
 		color: var(--bg-vanilla-100);
-		font-size: 12px;
-		font-weight: 600;
+		font-size: var(--font-size-xs);
+		font-weight: var(--font-weight-semibold);
 	}
 
 	.am-row-actions {
 		display: flex;
 		align-items: center;
-		gap: 6px;
+		gap: var(--spacing-3);
 	}
 
 	.am-add-row {
@@ -80,45 +80,45 @@
 	.groups-table__wrapper {
 		display: flex;
 		flex-direction: column;
-		gap: 8px;
+		gap: var(--spacing-4);
 	}
 
 	.am-table {
 		&__empty {
-			padding: 24px 12px;
+			padding: var(--padding-6) var(--padding-3);
 			text-align: center;
 			color: var(--bg-vanilla-400);
-			font-size: 13px;
+			font-size: var(--periscope-font-size-base);
 		}
 	}
 
 	.groups-table {
 		&__name {
-			font-weight: 600;
+			font-weight: var(--font-weight-semibold);
 		}
 
 		&__name-cell {
 			display: flex;
 			align-items: center;
-			gap: 8px;
+			gap: var(--spacing-4);
 		}
 
 		&__sub-row > td {
-			padding: 0 16px 12px;
+			padding: 0 var(--padding-4) var(--padding-3);
 			background: var(--bg-ink-400, rgba(255, 255, 255, 0.02));
 		}
 
 		&__filters {
 			display: flex;
 			flex-direction: column;
-			gap: 6px;
+			gap: var(--spacing-3);
 		}
 
 		&__filter {
 			display: flex;
 			align-items: center;
-			gap: 8px;
-			font-size: 13px;
+			gap: var(--spacing-4);
+			font-size: var(--periscope-font-size-base);
 		}
 
 		&__filter-key {
@@ -128,55 +128,55 @@
 		&__edited {
 			display: flex;
 			flex-direction: column;
-			font-size: 12px;
+			font-size: var(--font-size-xs);
 		}
 	}
 
 	.mappers-table__wrapper {
 		display: flex;
 		flex-direction: column;
-		gap: 8px;
-		margin: 4px 0;
+		gap: var(--spacing-4);
+		margin: var(--margin-1) 0;
 	}
 
 	.mappers-table {
-		margin: 4px 0;
+		margin: var(--margin-1) 0;
 
 		&__target {
 			font-family: 'Geist Mono', monospace;
-			font-weight: 600;
+			font-weight: var(--font-weight-semibold);
 		}
 
 		&__sources {
 			display: flex;
 			flex-wrap: wrap;
 			align-items: center;
-			gap: 6px;
+			gap: var(--spacing-3);
 		}
 
 		&__source-chip {
 			display: inline-flex;
 			align-items: center;
 			max-width: 220px;
-			padding: 2px 8px;
+			padding: 2px var(--padding-2);
 			border: 1px solid var(--bg-slate-400, rgba(255, 255, 255, 0.12));
 			border-radius: 6px;
 			background: var(--bg-ink-300, rgba(255, 255, 255, 0.04));
 			font-family: 'Geist Mono', monospace;
-			font-size: 12px;
+			font-size: var(--font-size-xs);
 			white-space: nowrap;
 			overflow: hidden;
 			text-overflow: ellipsis;
 		}
 
 		&__source-more {
-			font-size: 12px;
+			font-size: var(--font-size-xs);
 			white-space: nowrap;
 		}
 
 		&__error {
-			padding: 12px;
-			font-size: 13px;
+			padding: var(--padding-3);
+			font-size: var(--periscope-font-size-base);
 			color: var(--bg-cherry-400);
 		}
 	}
