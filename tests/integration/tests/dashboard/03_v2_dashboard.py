@@ -232,6 +232,66 @@ def test_get_missing_dashboard_returns_not_found(
     assert response.status_code == HTTPStatus.NOT_FOUND
 
 
+def test_update_rejects_malformed_id(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"{BASE_URL}/not-a-uuid"),
+        json={
+            "schemaVersion": "v6",
+            "name": "malformed-id",
+            "spec": {"display": {"name": "Malformed Id"}},
+            "tags": [],
+        },
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+
+
+def test_update_missing_dashboard_returns_not_found(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"{BASE_URL}/{uuid.uuid4()}"),
+        json={
+            "schemaVersion": "v6",
+            "name": "missing-dashboard",
+            "spec": {"display": {"name": "Missing Dashboard"}},
+            "tags": [],
+        },
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+
+
+def test_delete_rejects_malformed_id(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    response = requests.delete(
+        signoz.self.host_configs["8080"].get(f"{BASE_URL}/not-a-uuid"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+
+
 def test_delete_missing_dashboard_returns_not_found(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument

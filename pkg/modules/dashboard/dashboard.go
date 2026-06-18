@@ -86,6 +86,14 @@ type Module interface {
 
 	// gets the query results by panel key and public shared id for a v2 dashboard
 	GetPublicWidgetQueryRangeV2(ctx context.Context, id valuer.UUID, panelKey, startTimeRaw, endTimeRaw string) (*querybuildertypesv5.QueryRangeResponse, error)
+
+	CreateView(ctx context.Context, orgID valuer.UUID, postable dashboardtypes.PostableDashboardView) (*dashboardtypes.DashboardView, error)
+
+	ListViews(ctx context.Context, orgID valuer.UUID) (*dashboardtypes.ListableDashboardView, error)
+
+	UpdateView(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updateable dashboardtypes.UpdatableDashboardView) (*dashboardtypes.DashboardView, error)
+
+	DeleteView(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error
 }
 
 type Handler interface {
@@ -139,4 +147,12 @@ type Handler interface {
 	UnpinV2(http.ResponseWriter, *http.Request)
 
 	DeleteV2(http.ResponseWriter, *http.Request)
+
+	CreateView(http.ResponseWriter, *http.Request)
+
+	ListViews(http.ResponseWriter, *http.Request)
+
+	UpdateView(http.ResponseWriter, *http.Request)
+
+	DeleteView(http.ResponseWriter, *http.Request)
 }
