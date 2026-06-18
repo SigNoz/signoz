@@ -16,6 +16,7 @@ import ValueDisplay from './components/ValueDisplay/ValueDisplay';
 function NumberPanelRenderer({
 	panel,
 	data,
+	refetch,
 }: PanelRendererProps<'signoz/NumberPanel'>): JSX.Element {
 	// `panel` is narrowed to this kind by PanelRendererProps, so `spec` is this
 	// kind's exact spec DTO — no cast needed.
@@ -61,7 +62,7 @@ function NumberPanelRenderer({
 			className={PanelStyles.panelContainer}
 		>
 			{value === null ? (
-				<NoData data-testid="number-panel-no-data" />
+				<NoData data-testid="number-panel-no-data" onRetry={refetch} />
 			) : (
 				<ValueDisplay
 					value={formattedValue}

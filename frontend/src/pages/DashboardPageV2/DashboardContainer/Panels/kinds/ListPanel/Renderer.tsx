@@ -31,6 +31,7 @@ function ListPanelRenderer({
 	panelId,
 	panel,
 	data,
+	refetch,
 	searchTerm = '',
 	pagination,
 }: PanelRendererProps<'signoz/ListPanel'>): JSX.Element {
@@ -127,7 +128,7 @@ function ListPanelRenderer({
 			className={PanelStyles.panelContainer}
 		>
 			{!table || dataSource.length === 0 ? (
-				<NoData />
+				<NoData onRetry={refetch} />
 			) : (
 				<>
 					<div

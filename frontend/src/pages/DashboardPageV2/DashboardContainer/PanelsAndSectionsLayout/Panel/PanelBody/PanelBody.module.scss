@@ -18,26 +18,3 @@
 	min-height: 0;
 	min-width: 0;
 }
-
-// Error state — shown only when there's no stale data to fall back to.
-.error {
-	flex: 1;
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-	gap: 8px;
-	padding: 12px;
-	text-align: center;
-}
-
-.errorIcon {
-	color: var(--bg-cherry-500);
-}
-
-.errorMessage {
-	color: var(--l2-foreground);
-	font-size: 12px;
-	max-width: 90%;
-	overflow-wrap: anywhere;
-}

@@ -58,6 +58,12 @@ export interface BaseRendererProps {
 	data: PanelQueryData;
 	isLoading: boolean;
 	error: Error | null;
+	/**
+	 * Re-run the panel query. Owned by `usePanelQuery` and threaded through
+	 * `PanelBody`; renderers wire it to the no-data Retry affordance. Optional so
+	 * standalone renderer call sites (e.g. the editor preview) can omit it.
+	 */
+	refetch?: () => void;
 	/** Gate for the drill-down right-click menu. Off by default in V2. */
 	enableDrillDown?: boolean;
 	/**

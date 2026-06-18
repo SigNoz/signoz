@@ -23,6 +23,7 @@ function TablePanelRenderer({
 	panelId,
 	panel,
 	data,
+	refetch,
 	searchTerm = '',
 }: PanelRendererProps<'signoz/TablePanel'>): JSX.Element {
 	// Measure the panel so each page roughly fills it (min 10 rows) and the
@@ -107,7 +108,7 @@ function TablePanelRenderer({
 			className={PanelStyles.panelContainer}
 		>
 			{!table || dataSource.length === 0 ? (
-				<NoData />
+				<NoData onRetry={refetch} />
 			) : (
 				<div className={styles.container}>
 					<Table
