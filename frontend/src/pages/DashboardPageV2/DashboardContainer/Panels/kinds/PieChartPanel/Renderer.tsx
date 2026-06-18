@@ -20,6 +20,7 @@ function PiePanelRenderer({
 	panelId,
 	panel,
 	data,
+	refetch,
 	onClick,
 }: PanelRendererProps<'signoz/PieChartPanel'>): JSX.Element {
 	const isDarkMode = useIsDarkMode();
@@ -69,7 +70,7 @@ function PiePanelRenderer({
 	return (
 		<div data-testid="pie-panel-renderer" className={PanelStyles.panelContainer}>
 			{slices.length === 0 ? (
-				<NoData />
+				<NoData onRetry={refetch} />
 			) : (
 				<Pie
 					data={slices}

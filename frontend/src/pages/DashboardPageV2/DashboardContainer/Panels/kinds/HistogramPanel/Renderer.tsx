@@ -26,6 +26,7 @@ function HistogramPanelRenderer({
 	panelId,
 	panel,
 	data,
+	refetch,
 	panelMode,
 	onClick,
 }: PanelRendererProps<'signoz/HistogramPanel'>): JSX.Element {
@@ -112,7 +113,7 @@ function HistogramPanelRenderer({
 			data-testid="histogram-panel-renderer"
 			className={PanelStyles.panelContainer}
 		>
-			{flatSeries.length === 0 && <NoData />}
+			{flatSeries.length === 0 && <NoData onRetry={refetch} />}
 			{flatSeries.length > 0 &&
 				containerDimensions.width > 0 &&
 				containerDimensions.height > 0 && (
