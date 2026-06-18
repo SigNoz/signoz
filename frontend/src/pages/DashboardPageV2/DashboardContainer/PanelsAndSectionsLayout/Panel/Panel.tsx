@@ -1,5 +1,4 @@
-import { useMemo, useState } from 'react';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { useState } from 'react';
 import type {
 	DashboardtypesPanelDTO,
 	DashboardtypesTimePreferenceDTO,
@@ -46,7 +45,7 @@ function Panel({
 	isVisible,
 	panelActions,
 }: PanelProps): JSX.Element {
-	const name = panel.spec.display?.name;
+	const name = panel.spec.display.name;
 	const description = panel.spec.display?.description;
 	// `spec.plugin.kind` is a union of the per-variant kind enums, each a string
 	// literal that lands in the `PanelKind` union — assignable directly, no cast.
@@ -81,24 +80,14 @@ function Panel({
 
 	const { onDragSelect, dashboardPreference } = usePanelInteractions();
 
-	const headerTitle = useMemo(() => {
-		if (!description) {
-			return name;
-		}
-		return (
-			<TooltipSimple title={description}>
-				<span>{name}</span>
-			</TooltipSimple>
-		);
-	}, [name, description]);
-
 	return (
 		<div
 			className={styles.panel}
 			data-panel-visible={isVisible ? 'true' : 'false'}
 		>
 			<PanelHeader
-				title={headerTitle}
+				name={name}
+				description={description}
 				panelId={panelId}
 				panelKind={fullKind}
 				isFetching={isFetching}
@@ -116,7 +105,7 @@ function Panel({
 					panel={panel}
 					panelId={panelId}
 					data={data}
-					isLoading={isLoading}
+					isLoading={isLoading || isFetching}
 					error={error}
 					refetch={refetch}
 					onDragSelect={onDragSelect}

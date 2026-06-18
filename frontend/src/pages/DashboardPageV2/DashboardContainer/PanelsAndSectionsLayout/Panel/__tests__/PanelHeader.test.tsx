@@ -23,7 +23,7 @@ jest.mock(
 );
 
 const baseProps = {
-	title: 'My panel',
+	name: 'My panel',
 	panelKind: 'signoz/TimeSeriesPanel' as PanelKind,
 	panelId: 'panel-1',
 	isFetching: false,
@@ -35,6 +35,27 @@ const warning: Warning = {
 	url: '',
 	warnings: [],
 };
+
+describe('PanelHeader title and description', () => {
+	it('renders the panel name', () => {
+		renderWithProvider(<PanelHeader {...baseProps} />);
+		expect(screen.getByText('My panel')).toBeInTheDocument();
+	});
+
+	it('shows the description info icon when a description is provided', () => {
+		renderWithProvider(
+			<PanelHeader {...baseProps} description="What this panel measures" />,
+		);
+		expect(screen.getByTestId('panel-header-info-icon')).toBeInTheDocument();
+	});
+
+	it('renders no description info icon when there is no description', () => {
+		renderWithProvider(<PanelHeader {...baseProps} />);
+		expect(
+			screen.queryByTestId('panel-header-info-icon'),
+		).not.toBeInTheDocument();
+	});
+});
 
 describe('PanelHeader status indicators', () => {
 	it('shows the error indicator whenever an error is present', () => {

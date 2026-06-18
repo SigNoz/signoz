@@ -1,4 +1,5 @@
-import { useMemo, type ReactNode } from 'react';
+import { useMemo } from 'react';
+import { Info } from '@signozhq/icons';
 import { Typography } from '@signozhq/ui/typography';
 import type { Querybuildertypesv5QueryWarnDataDTO as WarningDTO } from 'api/generated/services/sigNoz.schemas';
 import { Loader } from '@signozhq/icons';
@@ -18,7 +19,8 @@ import { PanelKind } from 'pages/DashboardPageV2/DashboardContainer/Panels/types
 import { TooltipSimple } from '@signozhq/ui/tooltip';
 
 interface PanelHeaderProps {
-	title: ReactNode;
+	name: string;
+	description?: string;
 	panelId: string;
 	/** Full plugin kind — drives kind-gated menu actions; */
 	panelKind: PanelKind;
@@ -42,7 +44,8 @@ interface PanelHeaderProps {
 
 /** Panel chrome: drag handle, title, refetch + status indicators, actions. */
 function PanelHeader({
-	title,
+	name,
+	description,
 	panelId,
 	panelKind,
 	isFetching,
@@ -64,7 +67,20 @@ function PanelHeader({
 	return (
 		<div className={cx(styles.header, 'panel-drag-handle')}>
 			<div className={styles.headerLeft}>
-				<Typography.Text className={styles.headerTitle}>{title}</Typography.Text>
+				<Typography.Text className={styles.headerTitle}>{name}</Typography.Text>
+				{description && (
+					<TooltipSimple
+						title={description}
+						arrow
+						tooltipContentProps={{ className: styles.descriptionTooltip }}
+					>
+						<Info
+							className={styles.headerInfoIcon}
+							size={14}
+							data-testid="panel-header-info-icon"
+						/>
+					</TooltipSimple>
+				)}
 				{isFetching && (
 					<Loader
 						size={12}
