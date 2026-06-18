@@ -385,4 +385,11 @@
 		color: var(--bg-cherry-400);
 		font-size: 12px;
 	}
+
+	// Inline validation message rendered under an invalid field.
+	.field-error {
+		margin: 4px 0 0;
+		color: var(--bg-cherry-400);
+		font-size: 12px;
+	}
 }

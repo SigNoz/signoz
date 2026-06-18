@@ -2,7 +2,6 @@ import { Button } from '@signozhq/ui/button';
 import { DrawerWrapper } from '@signozhq/ui/drawer';
 import { Input } from '@signozhq/ui/input';
 import { SelectSimple } from '@signozhq/ui/select';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Trash2 } from '@signozhq/icons';
 import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
@@ -40,21 +39,16 @@ function ModelCostDrawer({
 	saveError,
 	canManage,
 }: ModelCostDrawerProps): JSX.Element {
-	const {
-		control,
-		handleSubmit,
-		watch,
-		reset,
-		formState: { isValid, errors },
-	} = useForm<DrawerDraft>({
-		mode: 'onChange',
+	// Default mode validates on submit, then re-validates on change — so we don't
+	// flag empty fields before the user has tried to save, but errors clear live
+	// once they start fixing them.
+	const { control, handleSubmit, watch, reset } = useForm<DrawerDraft>({
 		defaultValues: initialDraft,
 	});
 
 	// The drawer stays mounted while closed, so re-seed the form whenever it
 	// reopens — otherwise edit shows stale data and values leak between opens.
-	// reset() under mode: 'onChange' also recomputes isValid, so the Save button's
-	// disabled state is correct from the first render.
+	// reset() also clears any errors from the previous open.
 	useEffect(() => {
 		if (isOpen) {
 			reset(initialDraft);
@@ -78,13 +72,6 @@ function ModelCostDrawer({
 	} else if (mode === 'edit') {
 		drawerTitle = 'Edit model cost';
 	}
-
-	// Surface the first failing field (in form order) on the disabled Save button.
-	const validationMessage =
-		errors.modelName?.message ||
-		errors.provider?.message ||
-		errors.pricing?.message;
-	const showValidationTooltip = canManage && !isValid && !!validationMessage;
 
 	const footer = (
 		<div className="model-cost-drawer__footer">
@@ -110,24 +97,17 @@ function ModelCostDrawer({
 					{canManage ? 'Cancel' : 'Close'}
 				</Button>
 				{canManage && (
-					<TooltipSimple
-						title={showValidationTooltip ? validationMessage : ''}
-						withPortal={false}
+					// Always enabled — clicking with invalid input surfaces inline field
+					// errors via handleSubmit rather than silently disabling Save.
+					<Button
+						variant="solid"
+						color="primary"
+						onClick={handleSubmit(onSave)}
+						loading={isSaving}
+						testId="drawer-save-btn"
 					>
-						{/* span wrapper so the tooltip fires even when the button is disabled */}
-						<span className="model-cost-drawer__save-wrap">
-							<Button
-								variant="solid"
-								color="primary"
-								onClick={handleSubmit(onSave)}
-								loading={isSaving}
-								disabled={!isValid}
-								testId="drawer-save-btn"
-							>
-								Save
-							</Button>
-						</span>
-					</TooltipSimple>
+						Save
+					</Button>
 				)}
 			</div>
 		</div>
@@ -157,15 +137,23 @@ function ModelCostDrawer({
 					rules={{
 						validate: (value): true | string => validateModelName(value, mode),
 					}}
-					render={({ field }): JSX.Element => (
-						<Input
-							id="billing-model-id"
-							placeholder="e.g. openai:gpt-4o"
-							value={field.value}
-							disabled={mode === 'edit' || metadataReadOnly}
-							onChange={(e): void => field.onChange(e.target.value)}
-							testId="drawer-model-id-input"
-						/>
+					render={({ field, fieldState }): JSX.Element => (
+						<>
+							<Input
+								id="billing-model-id"
+								placeholder="e.g. openai:gpt-4o"
+								value={field.value}
+								disabled={mode === 'edit' || metadataReadOnly}
+								aria-invalid={!!fieldState.error}
+								onChange={(e): void => field.onChange(e.target.value)}
+								testId="drawer-model-id-input"
+							/>
+							{fieldState.error && (
+								<p className="field-error" role="alert">
+									{fieldState.error.message}
+								</p>
+							)}
+						</>
 					)}
 				/>
 			</div>
@@ -176,17 +164,24 @@ function ModelCostDrawer({
 					name="provider"
 					control={control}
 					rules={{ validate: validateProvider }}
-					render={({ field }): JSX.Element => (
-						<SelectSimple
-							id="provider-select"
-							value={field.value}
-							onChange={(value): void => field.onChange(value as string)}
-							items={PROVIDER_OPTIONS}
-							disabled={mode === 'edit' || metadataReadOnly}
-							className="full-width"
-							withPortal={false}
-							testId="drawer-provider-select"
-						/>
+					render={({ field, fieldState }): JSX.Element => (
+						<>
+							<SelectSimple
+								id="provider-select"
+								value={field.value}
+								onChange={(value): void => field.onChange(value as string)}
+								items={PROVIDER_OPTIONS}
+								disabled={mode === 'edit' || metadataReadOnly}
+								className="full-width"
+								withPortal={false}
+								testId="drawer-provider-select"
+							/>
+							{fieldState.error && (
+								<p className="field-error" role="alert">
+									{fieldState.error.message}
+								</p>
+							)}
+						</>
 					)}
 				/>
 			</div>
@@ -210,7 +205,7 @@ function ModelCostDrawer({
 					name="isOverride"
 					control={control}
 					// Pricing requirements depend on this toggle, so re-validate pricing
-					// whenever the source changes (keeps the Save button in sync).
+					// whenever the source changes (clears/sets the pricing error).
 					rules={{ deps: ['pricing'] }}
 					render={({ field }): JSX.Element => (
 						<SourceSelector
@@ -230,12 +225,19 @@ function ModelCostDrawer({
 					validate: (value, values): true | string =>
 						validatePricing(value, values.isOverride),
 				}}
-				render={({ field }): JSX.Element => (
-					<PricingFields
-						pricing={field.value}
-						isReadOnly={pricingReadOnly}
-						onChange={(patch): void => field.onChange({ ...field.value, ...patch })}
-					/>
+				render={({ field, fieldState }): JSX.Element => (
+					<>
+						<PricingFields
+							pricing={field.value}
+							isReadOnly={pricingReadOnly}
+							onChange={(patch): void => field.onChange({ ...field.value, ...patch })}
+						/>
+						{fieldState.error && (
+							<p className="field-error" role="alert">
+								{fieldState.error.message}
+							</p>
+						)}
+					</>
 				)}
 			/>
 
