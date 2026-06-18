@@ -82,7 +82,7 @@
 	.drawer-surface {
 		padding: 14px;
 		border-radius: 6px;
-		background: rgba(255, 255, 255, 0.02);
+		background: color-mix(in srgb, var(--bg-vanilla-100) 2%, transparent);
 		border: 1px solid var(--bg-slate-300);
 
 		&__head {
@@ -116,7 +116,7 @@
 		gap: 12px;
 		padding: 12px;
 		border-radius: 6px;
-		background: rgba(255, 255, 255, 0.02);
+		background: color-mix(in srgb, var(--bg-vanilla-100) 2%, transparent);
 		border: 1px solid var(--bg-slate-300);
 	}
 
@@ -157,7 +157,7 @@
 		code {
 			padding: 1px 4px;
 			border-radius: 3px;
-			background: rgba(255, 255, 255, 0.06);
+			background: color-mix(in srgb, var(--bg-vanilla-100) 6%, transparent);
 			font-family: var(--code-font-family, monospace);
 			font-size: 10px;
 		}
@@ -189,7 +189,7 @@
 			padding: 10px 12px;
 			border-radius: 4px;
 			border: 1px solid transparent;
-			background: rgba(255, 255, 255, 0.02);
+			background: color-mix(in srgb, var(--bg-vanilla-100) 2%, transparent);
 			margin: 0;
 			width: 100%;
 			// Include padding + border in the 100% width so the card fits inside
@@ -240,17 +240,17 @@
 			// Radix RadioGroupItem renders <button data-state="checked|unchecked">.
 			// Use :has() to highlight the wrapper card when its inner button is checked.
 			&.source-radio--auto:has(button[data-state='checked']) {
-				background: rgba(78, 116, 248, 0.1);
-				border-color: rgba(78, 116, 248, 0.3);
+				background: color-mix(in srgb, var(--bg-robin-400) 10%, transparent);
+				border-color: color-mix(in srgb, var(--bg-robin-400) 30%, transparent);
 			}
 
 			&.source-radio--override:has(button[data-state='checked']) {
-				background: rgba(245, 175, 25, 0.1);
-				border-color: rgba(245, 175, 25, 0.3);
+				background: color-mix(in srgb, var(--bg-amber-400) 10%, transparent);
+				border-color: color-mix(in srgb, var(--bg-amber-400) 30%, transparent);
 			}
 
 			&:hover {
-				background: rgba(255, 255, 255, 0.04);
+				background: color-mix(in srgb, var(--bg-vanilla-100) 4%, transparent);
 			}
 		}
 	}
@@ -259,8 +259,8 @@
 		margin-top: 12px;
 		padding: 12px;
 		border-radius: 4px;
-		background: rgba(78, 116, 248, 0.06);
-		border: 1px solid rgba(78, 116, 248, 0.2);
+		background: color-mix(in srgb, var(--bg-robin-400) 6%, transparent);
+		border: 1px solid color-mix(in srgb, var(--bg-robin-400) 20%, transparent);
 
 		p {
 			margin: 0 0 10px;
@@ -361,7 +361,7 @@
 		gap: 10px;
 		padding: 12px;
 		border-radius: 6px;
-		background: rgba(255, 255, 255, 0.02);
+		background: color-mix(in srgb, var(--bg-vanilla-100) 2%, transparent);
 		border: 1px solid var(--bg-slate-300);
 
 		&__title {
@@ -381,7 +381,7 @@
 	.drawer-error {
 		padding: 10px 12px;
 		border-radius: 4px;
-		background: rgba(255, 90, 90, 0.08);
+		background: color-mix(in srgb, var(--bg-cherry-400) 8%, transparent);
 		color: var(--bg-cherry-400);
 		font-size: 12px;
 	}
