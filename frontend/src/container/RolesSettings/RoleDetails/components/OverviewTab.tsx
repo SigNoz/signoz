@@ -2,6 +2,7 @@ import { Callout } from '@signozhq/ui/callout';
 
 import { PermissionType, TimestampBadge } from '../../utils';
 import PermissionItem from './PermissionItem';
+import { AuthtypesRelationDTO } from 'api/generated/services/sigNoz.schemas';
 
 interface OverviewTabProps {
 	role: {
@@ -55,18 +56,28 @@ function OverviewTab({
 			<div className="role-details-permissions">
 				<div className="role-details-permissions-header">
 					<span className="role-details-section-label">Permissions</span>
+					<a
+						href="https://signoz.io/docs/manage/administrator-guide/iam/permissions/"
+						target="_blank"
+						rel="noopener noreferrer"
+						className="role-details-permissions-learn-more"
+					>
+						Learn more
+					</a>
 					<hr className="role-details-permissions-divider" />
 				</div>
 
 				<div className="role-details-permission-list">
-					{permissionTypes.map((permissionType) => (
-						<PermissionItem
-							key={permissionType.key}
-							permissionType={permissionType}
-							isManaged={isManaged}
-							onPermissionClick={onPermissionClick}
-						/>
-					))}
+					{permissionTypes
+						.filter((p) => p.key !== AuthtypesRelationDTO.assignee)
+						.map((permissionType) => (
+							<PermissionItem
+								key={permissionType.key}
+								permissionType={permissionType}
+								isManaged={isManaged}
+								onPermissionClick={onPermissionClick}
+							/>
+						))}
 				</div>
 			</div>
 		</div>

@@ -14,7 +14,6 @@ import {
 	k8sNodeGetEntityName,
 	k8sNodeGetSelectedItemFilters,
 	k8sNodeInitialEventsFilter,
-	k8sNodeInitialFilters,
 	k8sNodeInitialLogTracesFilter,
 	nodeWidgetInfo,
 } from './constants';
@@ -106,7 +105,6 @@ function K8sNodesList({
 				getEntityName={k8sNodeGetEntityName}
 				getInitialLogTracesFilters={k8sNodeInitialLogTracesFilter}
 				getInitialEventsFilters={k8sNodeInitialEventsFilter}
-				primaryFilterKeys={k8sNodeInitialFilters}
 				metadataConfig={k8sNodeDetailsMetadataConfig}
 				entityWidgetInfo={nodeWidgetInfo}
 				getEntityQueryPayload={getNodeMetricsQueryPayload}

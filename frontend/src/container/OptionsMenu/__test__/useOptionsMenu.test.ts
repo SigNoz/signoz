@@ -232,4 +232,159 @@ describe('useOptionsMenu', () => {
 		expect(optionNames).toContain('level');
 		expect(optionNames).toContain('timestamp');
 	});
+
+	describe('reorderSelectColumns / handleRemoveSelectedColumn — composite ID lookup', () => {
+		const baseFormatting = {
+			format: 'table',
+			maxLines: 1,
+			fontSize: 'small',
+		};
+
+		// Two entries share the same `name` but differ in `fieldContext` — the
+		// exact case composite IDs are meant to disambiguate.
+		const seedColumns = [
+			{
+				name: 'body',
+				fieldContext: 'log',
+				fieldDataType: 'string',
+				signal: 'logs',
+			},
+			{
+				name: 'service.name',
+				fieldContext: 'resource',
+				fieldDataType: 'string',
+				signal: 'logs',
+			},
+			{
+				name: 'service.name',
+				fieldContext: 'attribute',
+				fieldDataType: 'string',
+				signal: 'logs',
+			},
+			{
+				name: 'timestamp',
+				fieldContext: 'log',
+				fieldDataType: '',
+				signal: 'logs',
+			},
+		];
+
+		beforeEach(() => {
+			(useGetQueryKeySuggestions as jest.Mock).mockReturnValue({
+				data: { data: { data: { keys: {} } } },
+				isFetching: false,
+			});
+			(usePreferenceContext as jest.Mock).mockReturnValue({
+				traces: {
+					preferences: { columns: [], formatting: baseFormatting },
+					updateColumns: mockUpdateColumns,
+					updateFormatting: mockUpdateFormatting,
+				},
+				logs: {
+					preferences: { columns: seedColumns, formatting: baseFormatting },
+					updateColumns: mockUpdateColumns,
+					updateFormatting: mockUpdateFormatting,
+				},
+			});
+		});
+
+		it('reorders by composite IDs — preserves both same-name variants distinctly', () => {
+			const { result } = renderHook(() =>
+				useOptionsMenu({
+					dataSource: DataSource.LOGS,
+					aggregateOperator: 'count',
+				}),
+			);
+
+			// New order: [attribute.service.name, log.body, resource.service.name, log.timestamp]
+			result.current.config.addColumn?.onReorder([
+				'attribute.service.name',
+				'log.body',
+				'resource.service.name',
+				'log.timestamp',
+			]);
+
+			expect(mockUpdateColumns).toHaveBeenCalledTimes(1);
+			const reordered = mockUpdateColumns.mock.calls[0][0];
+			expect(
+				reordered.map(
+					(c: { name: string; fieldContext: string }) =>
+						`${c.fieldContext}.${c.name}`,
+				),
+			).toStrictEqual([
+				'attribute.service.name',
+				'log.body',
+				'resource.service.name',
+				'log.timestamp',
+			]);
+		});
+
+		it('reorder ignores ids that are not columns (e.g. state-indicator) and skips unknown ids', () => {
+			const { result } = renderHook(() =>
+				useOptionsMenu({
+					dataSource: DataSource.LOGS,
+					aggregateOperator: 'count',
+				}),
+			);
+
+			result.current.config.addColumn?.onReorder([
+				'state-indicator',
+				'log.timestamp',
+				'unknown.composite',
+				'log.body',
+				'resource.service.name',
+				'attribute.service.name',
+			]);
+
+			const reordered = mockUpdateColumns.mock.calls[0][0];
+			// state-indicator + unknown.composite filtered; rest preserved in given order.
+			expect(
+				reordered.map(
+					(c: { name: string; fieldContext: string }) =>
+						`${c.fieldContext}.${c.name}`,
+				),
+			).toStrictEqual([
+				'log.timestamp',
+				'log.body',
+				'resource.service.name',
+				'attribute.service.name',
+			]);
+		});
+
+		it('removes only the variant whose composite ID matches', () => {
+			const { result } = renderHook(() =>
+				useOptionsMenu({
+					dataSource: DataSource.LOGS,
+					aggregateOperator: 'count',
+				}),
+			);
+
+			// Removing 'resource.service.name' should drop ONLY the resource variant.
+			result.current.config.addColumn?.onRemove('resource.service.name');
+
+			expect(mockUpdateColumns).toHaveBeenCalledTimes(1);
+			const remaining = mockUpdateColumns.mock.calls[0][0];
+			expect(
+				remaining.map(
+					(c: { name: string; fieldContext: string }) =>
+						`${c.fieldContext}.${c.name}`,
+				),
+			).toStrictEqual(['log.body', 'attribute.service.name', 'log.timestamp']);
+		});
+
+		it('removing by a non-matching composite ID is a no-op (filter returns the full list)', () => {
+			const { result } = renderHook(() =>
+				useOptionsMenu({
+					dataSource: DataSource.LOGS,
+					aggregateOperator: 'count',
+				}),
+			);
+
+			result.current.config.addColumn?.onRemove('unknown.composite');
+
+			const remaining = mockUpdateColumns.mock.calls[0][0];
+			// No entries match → full list preserved.
+			expect(remaining).toHaveLength(seedColumns.length);
+		});
+	});
 });

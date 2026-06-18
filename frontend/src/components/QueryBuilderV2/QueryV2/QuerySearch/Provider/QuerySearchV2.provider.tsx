@@ -1,14 +1,14 @@
-import { ReactNode, useCallback, useEffect, useMemo, useRef } from 'react';
+import { ReactNode, useEffect, useRef } from 'react';
 import { parseAsString, useQueryState } from 'nuqs';
 import { useStore } from 'zustand';
 
-import {
-	combineInitialAndUserExpression,
-	getUserExpressionFromCombined,
-} from '../utils';
+import { getUserExpressionFromCombined } from '../utils';
 import { QuerySearchV2Context } from './context';
-import type { QuerySearchV2ContextValue } from './QuerySearchV2.store';
-import { createExpressionStore } from './QuerySearchV2.store';
+import {
+	createExpressionStore,
+	QuerySearchV2Store,
+} from './QuerySearchV2.store';
+import type { StoreApi } from 'zustand';
 
 export interface QuerySearchV2ProviderProps {
 	queryParamKey: string;
@@ -22,7 +22,7 @@ export interface QuerySearchV2ProviderProps {
 
 /**
  * Provider component that creates a scoped zustand store and exposes
- * expression state to children via context.
+ * the store via context. Handles URL synchronization.
  */
 export function QuerySearchV2Provider({
 	initialExpression = '',
@@ -30,7 +30,10 @@ export function QuerySearchV2Provider({
 	queryParamKey,
 	children,
 }: QuerySearchV2ProviderProps): JSX.Element {
-	const storeRef = useRef(createExpressionStore());
+	const storeRef = useRef<StoreApi<QuerySearchV2Store> | null>(null);
+	if (!storeRef.current) {
+		storeRef.current = createExpressionStore();
+	}
 	const store = storeRef.current;
 
 	const [urlExpression, setUrlExpression] = useQueryState(
@@ -39,10 +42,10 @@ export function QuerySearchV2Provider({
 	);
 
 	const committedExpression = useStore(store, (s) => s.committedExpression);
-	const setInputExpression = useStore(store, (s) => s.setInputExpression);
-	const commitExpression = useStore(store, (s) => s.commitExpression);
-	const initializeFromUrl = useStore(store, (s) => s.initializeFromUrl);
-	const resetExpression = useStore(store, (s) => s.resetExpression);
+
+	useEffect(() => {
+		store.getState().setInitialExpression(initialExpression);
+	}, [initialExpression, store]);
 
 	const isInitialized = useRef(false);
 	useEffect(() => {
@@ -51,10 +54,10 @@ export function QuerySearchV2Provider({
 				initialExpression,
 				urlExpression,
 			);
-			initializeFromUrl(cleanedExpression);
+			store.getState().initializeFromUrl(cleanedExpression);
 			isInitialized.current = true;
 		}
-	}, [urlExpression, initialExpression, initializeFromUrl]);
+	}, [urlExpression, initialExpression, store]);
 
 	useEffect(() => {
 		if (isInitialized.current || !urlExpression) {
@@ -66,60 +69,13 @@ export function QuerySearchV2Provider({
 		return (): void => {
 			if (!persistOnUnmount) {
 				setUrlExpression(null);
-				resetExpression();
+				store.getState().resetExpression();
 			}
 		};
-	}, [persistOnUnmount, setUrlExpression, resetExpression]);
-
-	const handleChange = useCallback(
-		(expression: string): void => {
-			const userOnly = getUserExpressionFromCombined(
-				initialExpression,
-				expression,
-			);
-			setInputExpression(userOnly);
-		},
-		[initialExpression, setInputExpression],
-	);
-
-	const handleRun = useCallback(
-		(expression: string): void => {
-			const userOnly = getUserExpressionFromCombined(
-				initialExpression,
-				expression,
-			);
-			commitExpression(userOnly);
-		},
-		[initialExpression, commitExpression],
-	);
-
-	const combinedExpression = useMemo(
-		() => combineInitialAndUserExpression(initialExpression, committedExpression),
-		[initialExpression, committedExpression],
-	);
-
-	const contextValue = useMemo<QuerySearchV2ContextValue>(
-		() => ({
-			expression: combinedExpression,
-			userExpression: committedExpression,
-			initialExpression,
-			querySearchProps: {
-				initialExpression: initialExpression.trim() ? initialExpression : undefined,
-				onChange: handleChange,
-				onRun: handleRun,
-			},
-		}),
-		[
-			combinedExpression,
-			committedExpression,
-			initialExpression,
-			handleChange,
-			handleRun,
-		],
-	);
+	}, [persistOnUnmount, setUrlExpression, store]);
 
 	return (
-		<QuerySearchV2Context.Provider value={contextValue}>
+		<QuerySearchV2Context.Provider value={store}>
 			{children}
 		</QuerySearchV2Context.Provider>
 	);

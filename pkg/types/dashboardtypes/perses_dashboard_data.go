@@ -8,38 +8,38 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	qb "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	v1 "github.com/perses/perses/pkg/model/api/v1"
-	"github.com/perses/perses/pkg/model/api/v1/common"
+	"github.com/perses/spec/go/common"
+	"github.com/perses/spec/go/dashboard"
 )
 
-// DashboardData is the SigNoz dashboard v2 spec shape. It mirrors
-// v1.DashboardSpec (Perses) field-for-field, except every common.Plugin
+// DashboardSpec is the SigNoz dashboard v2 spec shape. It mirrors
+// dashboard.Spec (Perses) field-for-field, except every common.Plugin
 // occurrence is replaced with a typed SigNoz plugin whose OpenAPI schema is a
 // per-site discriminated oneOf.
-type DashboardData struct {
-	Display         *common.Display            `json:"display,omitempty"`
+type DashboardSpec struct {
+	Display         Display                    `json:"display" required:"true"`
 	Datasources     map[string]*DatasourceSpec `json:"datasources,omitempty"`
-	Variables       []Variable                 `json:"variables,omitempty"`
-	Panels          map[string]*Panel          `json:"panels"`
-	Layouts         []Layout                   `json:"layouts"`
-	Duration        common.DurationString      `json:"duration"`
+	Variables       []Variable                 `json:"variables" required:"true" nullable:"false"`
+	Panels          map[string]*Panel          `json:"panels" required:"true" nullable:"false"`
+	Layouts         []Layout                   `json:"layouts" required:"true" nullable:"false"`
+	Duration        common.DurationString      `json:"duration,omitempty"`
 	RefreshInterval common.DurationString      `json:"refreshInterval,omitempty"`
-	Links           []v1.Link                  `json:"links,omitempty"`
+	Links           []dashboard.Link           `json:"links,omitempty"`
 }
 
 // ══════════════════════════════════════════════
 // Unmarshal + validate entry point
 // ══════════════════════════════════════════════
 
-func (d *DashboardData) UnmarshalJSON(data []byte) error {
+func (d *DashboardSpec) UnmarshalJSON(data []byte) error {
 	dec := json.NewDecoder(bytes.NewReader(data))
 	dec.DisallowUnknownFields()
-	type alias DashboardData
+	type alias DashboardSpec
 	var tmp alias
 	if err := dec.Decode(&tmp); err != nil {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid dashboard spec")
 	}
-	*d = DashboardData(tmp)
+	*d = DashboardSpec(tmp)
 	return d.Validate()
 }
 
@@ -47,7 +47,7 @@ func (d *DashboardData) UnmarshalJSON(data []byte) error {
 // Cross-field validation
 // ══════════════════════════════════════════════
 
-func (d *DashboardData) Validate() error {
+func (d *DashboardSpec) Validate() error {
 	for key, panel := range d.Panels {
 		if panel == nil {
 			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.panels.%s: panel must not be null", key)

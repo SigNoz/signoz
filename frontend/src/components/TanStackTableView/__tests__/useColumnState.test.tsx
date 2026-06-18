@@ -168,6 +168,53 @@ describe('useColumnState', () => {
 				'a',
 			]);
 		});
+
+		it('ignores stored columnOrder when respectColumnOrder=false', () => {
+			const columns = [col('a'), col('b'), col('c')];
+
+			act(() => {
+				useColumnStore.getState().initializeFromDefaults(TEST_KEY, columns);
+				useColumnStore.getState().setColumnOrder(TEST_KEY, ['c', 'a', 'b']);
+			});
+
+			const { result } = renderHook(() =>
+				useColumnState({
+					storageKey: TEST_KEY,
+					columns,
+					respectColumnOrder: false,
+				}),
+			);
+
+			// Falls through to natural columns-array order; stored order is ignored.
+			expect(result.current.sortedColumns.map((c) => c.id)).toStrictEqual([
+				'a',
+				'b',
+				'c',
+			]);
+		});
+
+		it('honors stored columnOrder when respectColumnOrder=true (default)', () => {
+			const columns = [col('a'), col('b'), col('c')];
+
+			act(() => {
+				useColumnStore.getState().initializeFromDefaults(TEST_KEY, columns);
+				useColumnStore.getState().setColumnOrder(TEST_KEY, ['c', 'a', 'b']);
+			});
+
+			const { result } = renderHook(() =>
+				useColumnState({
+					storageKey: TEST_KEY,
+					columns,
+					respectColumnOrder: true,
+				}),
+			);
+
+			expect(result.current.sortedColumns.map((c) => c.id)).toStrictEqual([
+				'c',
+				'a',
+				'b',
+			]);
+		});
 	});
 
 	describe('actions', () => {

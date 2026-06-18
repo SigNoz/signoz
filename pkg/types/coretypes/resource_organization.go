@@ -33,3 +33,7 @@ func (resourceOrganization *resourceOrganization) Object(orgID valuer.UUID, sele
 func (resourceOrganization *resourceOrganization) Scope(verb Verb) string {
 	return resourceOrganization.Kind().String() + ":" + verb.StringValue()
 }
+
+func (*resourceOrganization) AllowedVerbs() []Verb {
+	return TypeOrganization.AllowedVerbs()
+}

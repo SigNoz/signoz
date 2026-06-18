@@ -109,9 +109,7 @@ export function useListLLMPricingRules<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
@@ -135,13 +133,15 @@ export const invalidateListLLMPricingRules = async (
  * @summary Create or update pricing rules
  */
 export const createOrUpdateLLMPricingRules = (
-	llmpricingruletypesUpdatableLLMPricingRulesDTO: BodyType<LlmpricingruletypesUpdatableLLMPricingRulesDTO>,
+	llmpricingruletypesUpdatableLLMPricingRulesDTO?: BodyType<LlmpricingruletypesUpdatableLLMPricingRulesDTO>,
+	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<void>({
 		url: `/api/v1/llm_pricing_rules`,
 		method: 'PUT',
 		headers: { 'Content-Type': 'application/json' },
 		data: llmpricingruletypesUpdatableLLMPricingRulesDTO,
+		signal,
 	});
 };
 
@@ -152,13 +152,13 @@ export const getCreateOrUpdateLLMPricingRulesMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createOrUpdateLLMPricingRules>>,
 		TError,
-		{ data: BodyType<LlmpricingruletypesUpdatableLLMPricingRulesDTO> },
+		{ data?: BodyType<LlmpricingruletypesUpdatableLLMPricingRulesDTO> },
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof createOrUpdateLLMPricingRules>>,
 	TError,
-	{ data: BodyType<LlmpricingruletypesUpdatableLLMPricingRulesDTO> },
+	{ data?: BodyType<LlmpricingruletypesUpdatableLLMPricingRulesDTO> },
 	TContext
 > => {
 	const mutationKey = ['createOrUpdateLLMPricingRules'];
@@ -172,7 +172,7 @@ export const getCreateOrUpdateLLMPricingRulesMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof createOrUpdateLLMPricingRules>>,
-		{ data: BodyType<LlmpricingruletypesUpdatableLLMPricingRulesDTO> }
+		{ data?: BodyType<LlmpricingruletypesUpdatableLLMPricingRulesDTO> }
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -186,7 +186,8 @@ export type CreateOrUpdateLLMPricingRulesMutationResult = NonNullable<
 	Awaited<ReturnType<typeof createOrUpdateLLMPricingRules>>
 >;
 export type CreateOrUpdateLLMPricingRulesMutationBody =
-	BodyType<LlmpricingruletypesUpdatableLLMPricingRulesDTO>;
+	| BodyType<LlmpricingruletypesUpdatableLLMPricingRulesDTO>
+	| undefined;
 export type CreateOrUpdateLLMPricingRulesMutationError =
 	ErrorType<RenderErrorResponseDTO>;
 
@@ -200,30 +201,29 @@ export const useCreateOrUpdateLLMPricingRules = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createOrUpdateLLMPricingRules>>,
 		TError,
-		{ data: BodyType<LlmpricingruletypesUpdatableLLMPricingRulesDTO> },
+		{ data?: BodyType<LlmpricingruletypesUpdatableLLMPricingRulesDTO> },
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof createOrUpdateLLMPricingRules>>,
 	TError,
-	{ data: BodyType<LlmpricingruletypesUpdatableLLMPricingRulesDTO> },
+	{ data?: BodyType<LlmpricingruletypesUpdatableLLMPricingRulesDTO> },
 	TContext
 > => {
-	const mutationOptions =
-		getCreateOrUpdateLLMPricingRulesMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getCreateOrUpdateLLMPricingRulesMutationOptions(options));
 };
 /**
  * Hard-deletes a pricing rule. If auto-synced, it will be recreated on the next sync cycle.
  * @summary Delete a pricing rule
  */
-export const deleteLLMPricingRule = ({
-	id,
-}: DeleteLLMPricingRulePathParameters) => {
+export const deleteLLMPricingRule = (
+	{ id }: DeleteLLMPricingRulePathParameters,
+	signal?: AbortSignal,
+) => {
 	return GeneratedAPIInstance<void>({
 		url: `/api/v1/llm_pricing_rules/${id}`,
 		method: 'DELETE',
+		signal,
 	});
 };
 
@@ -290,9 +290,7 @@ export const useDeleteLLMPricingRule = <
 	{ pathParams: DeleteLLMPricingRulePathParameters },
 	TContext
 > => {
-	const mutationOptions = getDeleteLLMPricingRuleMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getDeleteLLMPricingRuleMutationOptions(options));
 };
 /**
  * Returns a single LLM pricing rule by ID.
@@ -377,9 +375,7 @@ export function useGetLLMPricingRule<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**

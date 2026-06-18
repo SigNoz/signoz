@@ -5,7 +5,6 @@ import {
 	AIAssistantPage,
 	AlertHistory,
 	AlertOverview,
-	AlertTypeSelectionPage,
 	AllAlertChannels,
 	AllErrors,
 	ApiMonitoring,
@@ -48,7 +47,7 @@ import {
 	SomethingWentWrong,
 	StatusPage,
 	SupportPage,
-	TraceDetail,
+	TraceDetailOldRedirect,
 	TraceDetailV3,
 	TraceFilter,
 	TracesExplorer,
@@ -140,22 +139,20 @@ const routes: AppRoutes[] = [
 		exact: true,
 		key: 'LOGS_SAVE_VIEWS',
 	},
-	// V3 trace details is gated until release: /trace serves V2 (public),
-	// /trace-old serves V3 (URL-only access). Flip the two `component`
-	// values back to release V3.
-	{
-		path: ROUTES.TRACE_DETAIL,
-		exact: true,
-		component: TraceDetail,
-		isPrivate: true,
-		key: 'TRACE_DETAIL',
-	},
+	// Legacy /trace-old/:id redirects to the current /trace/:id view.
 	{
 		path: ROUTES.TRACE_DETAIL_OLD,
 		exact: true,
-		component: TraceDetailV3,
+		component: TraceDetailOldRedirect,
 		isPrivate: true,
 		key: 'TRACE_DETAIL_OLD',
+	},
+	{
+		path: ROUTES.TRACE_DETAIL,
+		exact: true,
+		component: TraceDetailV3,
+		isPrivate: true,
+		key: 'TRACE_DETAIL',
 	},
 	{
 		path: ROUTES.SETTINGS,
@@ -212,13 +209,6 @@ const routes: AppRoutes[] = [
 		component: ListAllALertsPage,
 		isPrivate: true,
 		key: 'LIST_ALL_ALERT',
-	},
-	{
-		path: ROUTES.ALERT_TYPE_SELECTION,
-		exact: true,
-		component: AlertTypeSelectionPage,
-		isPrivate: true,
-		key: 'ALERT_TYPE_SELECTION',
 	},
 	{
 		path: ROUTES.ALERTS_NEW,
@@ -509,7 +499,7 @@ const routes: AppRoutes[] = [
 		isPrivate: true,
 	},
 	{
-		path: ROUTES.AI_ASSISTANT,
+		path: [ROUTES.AI_ASSISTANT_BASE, ROUTES.AI_ASSISTANT],
 		exact: true,
 		component: AIAssistantPage,
 		key: 'AI_ASSISTANT',
@@ -533,18 +523,6 @@ export const LIST_LICENSES: AppRoutes = {
 	key: 'LIST_LICENSES',
 };
 
-export const oldRoutes = [
-	'/pipelines',
-	'/logs-explorer',
-	'/logs-explorer/live',
-	'/logs-save-views',
-	'/traces-save-views',
-	'/settings/access-tokens',
-	'/settings/api-keys',
-	'/messaging-queues',
-	'/alerts/edit',
-];
-
 export const oldNewRoutesMapping: Record<string, string> = {
 	'/pipelines': '/logs/pipelines',
 	'/logs-explorer': '/logs/logs-explorer',
@@ -555,7 +533,9 @@ export const oldNewRoutesMapping: Record<string, string> = {
 	'/settings/api-keys': '/settings/service-accounts',
 	'/messaging-queues': '/messaging-queues/overview',
 	'/alerts/edit': '/alerts/overview',
+	'/alerts/type-selection': '/alerts/new',
 };
+export const oldRoutes = Object.keys(oldNewRoutesMapping);
 
 export const ROUTES_NOT_TO_BE_OVERRIDEN: string[] = [
 	ROUTES.WORKSPACE_LOCKED,

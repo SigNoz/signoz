@@ -10,7 +10,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/inframonitoringtypes"
+	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -122,6 +124,8 @@ func (m *module) GetOnboarding(ctx context.Context, orgID valuer.UUID, req *infr
 }
 
 func (m *module) ListHosts(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableHosts) (*inframonitoringtypes.Hosts, error) {
+	ctx = m.withInfraMonitoringContext(ctx, "ListHosts")
+
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
@@ -174,7 +178,7 @@ func (m *module) ListHosts(ctx context.Context, orgID valuer.UUID, req *inframon
 	// Determine active hosts: those with metrics reported in the last 10 minutes.
 	// Compute the cutoff once so every downstream query/subquery agrees on what "active" means.
 	sinceUnixMilli := time.Now().Add(-10 * time.Minute).UTC().UnixMilli()
-	activeHostsMap, err := m.getActiveHosts(ctx, hostsTableMetricNamesList, hostNameAttrKey, sinceUnixMilli)
+	activeHostsMap, err := m.getActiveHosts(ctx, hostsTableMetricNamesList, inframonitoringtypes.HostNameAttrKey, sinceUnixMilli)
 	if err != nil {
 		return nil, err
 	}
@@ -220,7 +224,7 @@ func (m *module) ListHosts(ctx context.Context, orgID valuer.UUID, req *inframon
 	// When host.name is not in groupBy, we need to run an additional query to get the counts per group for the current page,
 	// using the same filter expression as the main query (including user filters + page groups IN clause).
 	hostCounts := make(map[string]groupHostStatusCounts)
-	isHostNameInGroupBy := isKeyInGroupByAttrs(req.GroupBy, hostNameAttrKey)
+	isHostNameInGroupBy := isKeyInGroupByAttrs(req.GroupBy, inframonitoringtypes.HostNameAttrKey)
 	if !isHostNameInGroupBy {
 		hostCounts, err = m.getPerGroupHostStatusCounts(ctx, req, hostsTableMetricNamesList, pageGroups, sinceUnixMilli)
 		if err != nil {
@@ -235,6 +239,8 @@ func (m *module) ListHosts(ctx context.Context, orgID valuer.UUID, req *inframon
 }
 
 func (m *module) ListPods(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostablePods) (*inframonitoringtypes.Pods, error) {
+	ctx = m.withInfraMonitoringContext(ctx, "ListPods")
+
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
@@ -305,7 +311,7 @@ func (m *module) ListPods(ctx context.Context, orgID valuer.UUID, req *inframoni
 		return nil, err
 	}
 
-	phaseCounts, err := m.getPerGroupPodPhaseCounts(ctx, req, pageGroups)
+	phaseCounts, err := m.getPerGroupPodPhaseCounts(ctx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
 	if err != nil {
 		return nil, err
 	}
@@ -318,6 +324,8 @@ func (m *module) ListPods(ctx context.Context, orgID valuer.UUID, req *inframoni
 }
 
 func (m *module) ListNodes(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableNodes) (*inframonitoringtypes.Nodes, error) {
+	ctx = m.withInfraMonitoringContext(ctx, "ListNodes")
+
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
@@ -388,24 +396,17 @@ func (m *module) ListNodes(ctx context.Context, orgID valuer.UUID, req *inframon
 		return nil, err
 	}
 
-	nodeConditionCounts, err := m.getPerGroupNodeConditionCounts(ctx, req, pageGroups)
+	nodeConditionCounts, err := m.getPerGroupNodeConditionCounts(ctx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
 	if err != nil {
 		return nil, err
 	}
 
-	// Reuse the pods phase-counts CTE function via a temp struct — it reads only
-	// Start/End/Filter/GroupBy from PostablePods.
-	podPhaseCounts, err := m.getPerGroupPodPhaseCounts(ctx, &inframonitoringtypes.PostablePods{
-		Start:   req.Start,
-		End:     req.End,
-		Filter:  req.Filter,
-		GroupBy: req.GroupBy,
-	}, pageGroups)
+	podPhaseCounts, err := m.getPerGroupPodPhaseCounts(ctx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
 	if err != nil {
 		return nil, err
 	}
 
-	isNodeNameInGroupBy := isKeyInGroupByAttrs(req.GroupBy, nodeNameAttrKey)
+	isNodeNameInGroupBy := isKeyInGroupByAttrs(req.GroupBy, inframonitoringtypes.NodeNameAttrKey)
 	resp.Records = buildNodeRecords(isNodeNameInGroupBy, queryResp, pageGroups, req.GroupBy, metadataMap, nodeConditionCounts, podPhaseCounts)
 	resp.Warning = queryResp.Warning
 
@@ -413,6 +414,8 @@ func (m *module) ListNodes(ctx context.Context, orgID valuer.UUID, req *inframon
 }
 
 func (m *module) ListNamespaces(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableNamespaces) (*inframonitoringtypes.Namespaces, error) {
+	ctx = m.withInfraMonitoringContext(ctx, "ListNamespaces")
+
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
@@ -483,14 +486,7 @@ func (m *module) ListNamespaces(ctx context.Context, orgID valuer.UUID, req *inf
 		return nil, err
 	}
 
-	// Reuse the pods phase-counts CTE function via a temp struct — it reads only
-	// Start/End/Filter/GroupBy from PostablePods.
-	phaseCounts, err := m.getPerGroupPodPhaseCounts(ctx, &inframonitoringtypes.PostablePods{
-		Start:   req.Start,
-		End:     req.End,
-		Filter:  req.Filter,
-		GroupBy: req.GroupBy,
-	}, pageGroups)
+	phaseCounts, err := m.getPerGroupPodPhaseCounts(ctx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
 	if err != nil {
 		return nil, err
 	}
@@ -502,6 +498,8 @@ func (m *module) ListNamespaces(ctx context.Context, orgID valuer.UUID, req *inf
 }
 
 func (m *module) ListClusters(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableClusters) (*inframonitoringtypes.Clusters, error) {
+	ctx = m.withInfraMonitoringContext(ctx, "ListClusters")
+
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
@@ -572,27 +570,14 @@ func (m *module) ListClusters(ctx context.Context, orgID valuer.UUID, req *infra
 		return nil, err
 	}
 
-	// Reuse the nodes condition-counts CTE function via a temp struct — it reads only
-	// Start/End/Filter/GroupBy from PostableNodes. With default groupBy
-	// [k8s.cluster.name], counts are bucketed per cluster; with a custom groupBy,
-	// they aggregate across clusters in that group.
-	nodeConditionCountsMap, err := m.getPerGroupNodeConditionCounts(ctx, &inframonitoringtypes.PostableNodes{
-		Start:   req.Start,
-		End:     req.End,
-		Filter:  req.Filter,
-		GroupBy: req.GroupBy,
-	}, pageGroups)
+	// With default groupBy [k8s.cluster.name], counts are bucketed per cluster;
+	// with a custom groupBy, they aggregate across clusters in that group.
+	nodeConditionCountsMap, err := m.getPerGroupNodeConditionCounts(ctx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
 	if err != nil {
 		return nil, err
 	}
 
-	// Same pattern for pod phase counts via PostablePods shim.
-	podPhaseCountsMap, err := m.getPerGroupPodPhaseCounts(ctx, &inframonitoringtypes.PostablePods{
-		Start:   req.Start,
-		End:     req.End,
-		Filter:  req.Filter,
-		GroupBy: req.GroupBy,
-	}, pageGroups)
+	podPhaseCountsMap, err := m.getPerGroupPodPhaseCounts(ctx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
 	if err != nil {
 		return nil, err
 	}
@@ -604,6 +589,8 @@ func (m *module) ListClusters(ctx context.Context, orgID valuer.UUID, req *infra
 }
 
 func (m *module) ListVolumes(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableVolumes) (*inframonitoringtypes.Volumes, error) {
+	ctx = m.withInfraMonitoringContext(ctx, "ListVolumes")
+
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
@@ -687,6 +674,8 @@ func (m *module) ListVolumes(ctx context.Context, orgID valuer.UUID, req *infram
 }
 
 func (m *module) ListDeployments(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableDeployments) (*inframonitoringtypes.Deployments, error) {
+	ctx = m.withInfraMonitoringContext(ctx, "ListDeployments")
+
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
@@ -705,7 +694,7 @@ func (m *module) ListDeployments(ctx context.Context, orgID valuer.UUID, req *in
 	}
 
 	if len(req.GroupBy) == 0 {
-		req.GroupBy = []qbtypes.GroupByKey{deploymentNameGroupByKey}
+		req.GroupBy = []qbtypes.GroupByKey{deploymentNameGroupByKey, namespaceNameGroupByKey, clusterNameGroupByKey}
 		resp.Type = inframonitoringtypes.ResponseTypeList
 	} else {
 		resp.Type = inframonitoringtypes.ResponseTypeGroupedList
@@ -763,14 +752,7 @@ func (m *module) ListDeployments(ctx context.Context, orgID valuer.UUID, req *in
 		return nil, err
 	}
 
-	// Reuse the pods phase-counts CTE function via a temp struct — it reads only
-	// Start/End/Filter/GroupBy from PostablePods.
-	phaseCounts, err := m.getPerGroupPodPhaseCounts(ctx, &inframonitoringtypes.PostablePods{
-		Start:   req.Start,
-		End:     req.End,
-		Filter:  req.Filter,
-		GroupBy: req.GroupBy,
-	}, pageGroups)
+	phaseCounts, err := m.getPerGroupPodPhaseCounts(ctx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
 	if err != nil {
 		return nil, err
 	}
@@ -782,6 +764,8 @@ func (m *module) ListDeployments(ctx context.Context, orgID valuer.UUID, req *in
 }
 
 func (m *module) ListStatefulSets(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableStatefulSets) (*inframonitoringtypes.StatefulSets, error) {
+	ctx = m.withInfraMonitoringContext(ctx, "ListStatefulSets")
+
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
@@ -800,7 +784,7 @@ func (m *module) ListStatefulSets(ctx context.Context, orgID valuer.UUID, req *i
 	}
 
 	if len(req.GroupBy) == 0 {
-		req.GroupBy = []qbtypes.GroupByKey{statefulSetNameGroupByKey}
+		req.GroupBy = []qbtypes.GroupByKey{statefulSetNameGroupByKey, namespaceNameGroupByKey, clusterNameGroupByKey}
 		resp.Type = inframonitoringtypes.ResponseTypeList
 	} else {
 		resp.Type = inframonitoringtypes.ResponseTypeGroupedList
@@ -858,16 +842,9 @@ func (m *module) ListStatefulSets(ctx context.Context, orgID valuer.UUID, req *i
 		return nil, err
 	}
 
-	// Reuse the pods phase-counts CTE function via a temp struct — it reads only
-	// Start/End/Filter/GroupBy from PostablePods. Pods owned by a StatefulSet carry
-	// k8s.statefulset.name as a resource attribute, so default-groupBy gives
-	// per-statefulset phase counts automatically.
-	phaseCounts, err := m.getPerGroupPodPhaseCounts(ctx, &inframonitoringtypes.PostablePods{
-		Start:   req.Start,
-		End:     req.End,
-		Filter:  req.Filter,
-		GroupBy: req.GroupBy,
-	}, pageGroups)
+	// Pods owned by a StatefulSet carry k8s.statefulset.name as a resource attribute,
+	// so default-groupBy gives per-statefulset phase counts automatically.
+	phaseCounts, err := m.getPerGroupPodPhaseCounts(ctx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
 	if err != nil {
 		return nil, err
 	}
@@ -876,4 +853,197 @@ func (m *module) ListStatefulSets(ctx context.Context, orgID valuer.UUID, req *i
 	resp.Warning = queryResp.Warning
 
 	return resp, nil
+}
+
+func (m *module) ListJobs(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableJobs) (*inframonitoringtypes.Jobs, error) {
+	ctx = m.withInfraMonitoringContext(ctx, "ListJobs")
+
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
+	resp := &inframonitoringtypes.Jobs{}
+
+	if req.OrderBy == nil {
+		req.OrderBy = &qbtypes.OrderBy{
+			Key: qbtypes.OrderByKey{
+				TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+					Name: inframonitoringtypes.JobsOrderByCPU,
+				},
+			},
+			Direction: qbtypes.OrderDirectionDesc,
+		}
+	}
+
+	if len(req.GroupBy) == 0 {
+		req.GroupBy = []qbtypes.GroupByKey{jobNameGroupByKey, namespaceNameGroupByKey, clusterNameGroupByKey}
+		resp.Type = inframonitoringtypes.ResponseTypeList
+	} else {
+		resp.Type = inframonitoringtypes.ResponseTypeGroupedList
+	}
+
+	// Bake the jobs base filter into req.Filter so all downstream helpers pick it up.
+	if req.Filter == nil {
+		req.Filter = &qbtypes.Filter{}
+	}
+	req.Filter.Expression = mergeFilterExpressions(jobsBaseFilterExpr, req.Filter.Expression)
+
+	missingMetrics, minFirstReportedUnixMilli, err := m.getMetricsExistenceAndEarliestTime(ctx, jobsTableMetricNamesList)
+	if err != nil {
+		return nil, err
+	}
+	if len(missingMetrics) > 0 {
+		resp.RequiredMetricsCheck = inframonitoringtypes.RequiredMetricsCheck{MissingMetrics: missingMetrics}
+		resp.Records = []inframonitoringtypes.JobRecord{}
+		resp.Total = 0
+		return resp, nil
+	}
+	if req.End < int64(minFirstReportedUnixMilli) {
+		resp.EndTimeBeforeRetention = true
+		resp.Records = []inframonitoringtypes.JobRecord{}
+		resp.Total = 0
+		return resp, nil
+	}
+	resp.RequiredMetricsCheck = inframonitoringtypes.RequiredMetricsCheck{MissingMetrics: []string{}}
+
+	metadataMap, err := m.getJobsTableMetadata(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	resp.Total = len(metadataMap)
+
+	pageGroups, err := m.getTopJobGroups(ctx, orgID, req, metadataMap)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(pageGroups) == 0 {
+		resp.Records = []inframonitoringtypes.JobRecord{}
+		return resp, nil
+	}
+
+	filterExpr := ""
+	if req.Filter != nil {
+		filterExpr = req.Filter.Expression
+	}
+
+	fullQueryReq := buildFullQueryRequest(req.Start, req.End, filterExpr, req.GroupBy, pageGroups, m.newJobsTableListQuery())
+	queryResp, err := m.querier.QueryRange(ctx, orgID, fullQueryReq)
+	if err != nil {
+		return nil, err
+	}
+
+	// Pods owned by a Job carry k8s.job.name as a resource attribute, so default-groupBy
+	// gives per-job phase counts automatically.
+	phaseCounts, err := m.getPerGroupPodPhaseCounts(ctx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+	if err != nil {
+		return nil, err
+	}
+
+	resp.Records = buildJobRecords(queryResp, pageGroups, req.GroupBy, metadataMap, phaseCounts)
+	resp.Warning = queryResp.Warning
+
+	return resp, nil
+}
+
+func (m *module) ListDaemonSets(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableDaemonSets) (*inframonitoringtypes.DaemonSets, error) {
+	ctx = m.withInfraMonitoringContext(ctx, "ListDaemonSets")
+
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
+	resp := &inframonitoringtypes.DaemonSets{}
+
+	if req.OrderBy == nil {
+		req.OrderBy = &qbtypes.OrderBy{
+			Key: qbtypes.OrderByKey{
+				TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+					Name: inframonitoringtypes.DaemonSetsOrderByCPU,
+				},
+			},
+			Direction: qbtypes.OrderDirectionDesc,
+		}
+	}
+
+	if len(req.GroupBy) == 0 {
+		req.GroupBy = []qbtypes.GroupByKey{daemonSetNameGroupByKey, namespaceNameGroupByKey, clusterNameGroupByKey}
+		resp.Type = inframonitoringtypes.ResponseTypeList
+	} else {
+		resp.Type = inframonitoringtypes.ResponseTypeGroupedList
+	}
+
+	// Bake the workload base filter into req.Filter so all downstream helpers pick it up.
+	if req.Filter == nil {
+		req.Filter = &qbtypes.Filter{}
+	}
+	req.Filter.Expression = mergeFilterExpressions(daemonSetsBaseFilterExpr, req.Filter.Expression)
+
+	missingMetrics, minFirstReportedUnixMilli, err := m.getMetricsExistenceAndEarliestTime(ctx, daemonSetsTableMetricNamesList)
+	if err != nil {
+		return nil, err
+	}
+	if len(missingMetrics) > 0 {
+		resp.RequiredMetricsCheck = inframonitoringtypes.RequiredMetricsCheck{MissingMetrics: missingMetrics}
+		resp.Records = []inframonitoringtypes.DaemonSetRecord{}
+		resp.Total = 0
+		return resp, nil
+	}
+	if req.End < int64(minFirstReportedUnixMilli) {
+		resp.EndTimeBeforeRetention = true
+		resp.Records = []inframonitoringtypes.DaemonSetRecord{}
+		resp.Total = 0
+		return resp, nil
+	}
+	resp.RequiredMetricsCheck = inframonitoringtypes.RequiredMetricsCheck{MissingMetrics: []string{}}
+
+	metadataMap, err := m.getDaemonSetsTableMetadata(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	resp.Total = len(metadataMap)
+
+	pageGroups, err := m.getTopDaemonSetGroups(ctx, orgID, req, metadataMap)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(pageGroups) == 0 {
+		resp.Records = []inframonitoringtypes.DaemonSetRecord{}
+		return resp, nil
+	}
+
+	filterExpr := ""
+	if req.Filter != nil {
+		filterExpr = req.Filter.Expression
+	}
+
+	fullQueryReq := buildFullQueryRequest(req.Start, req.End, filterExpr, req.GroupBy, pageGroups, m.newDaemonSetsTableListQuery())
+	queryResp, err := m.querier.QueryRange(ctx, orgID, fullQueryReq)
+	if err != nil {
+		return nil, err
+	}
+
+	// Pods owned by a DaemonSet carry k8s.daemonset.name as a resource attribute,
+	// so default-groupBy gives per-daemonset phase counts automatically.
+	phaseCounts, err := m.getPerGroupPodPhaseCounts(ctx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+	if err != nil {
+		return nil, err
+	}
+
+	resp.Records = buildDaemonSetRecords(queryResp, pageGroups, req.GroupBy, metadataMap, phaseCounts)
+	resp.Warning = queryResp.Warning
+
+	return resp, nil
+}
+
+func (m *module) withInfraMonitoringContext(ctx context.Context, functionName string) context.Context {
+	comments := map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
+		instrumentationtypes.CodeNamespace:    "infra-monitoring",
+		instrumentationtypes.CodeFunctionName: functionName,
+	}
+	return ctxtypes.NewContextWithCommentVals(ctx, comments)
 }

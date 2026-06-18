@@ -6,8 +6,8 @@ import {
 	useMemo,
 	useState,
 } from 'react';
-import { Button, Card, Checkbox, Input, Tooltip } from 'antd';
-import type { CheckboxChangeEvent } from 'antd/es/checkbox';
+import { Button, Card, Input, Tooltip } from 'antd';
+import { Checkbox } from '@signozhq/ui/checkbox';
 import { ParaGraph } from 'container/Trace/Filters/Panel/PanelBody/Common/styles';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { isArray, isEmpty } from 'lodash-es';
@@ -87,8 +87,11 @@ export function SectionBody(props: SectionBodyProps): JSX.Element {
 		[results, searchFilter, type, visibleItemsCount],
 	);
 
-	const onCheckHandler = (event: CheckboxChangeEvent, value: string): void => {
-		const { checked } = event.target;
+	const onCheckHandler = (
+		checkedState: boolean | 'indeterminate',
+		value: string,
+	): void => {
+		const checked = checkedState === true;
 		let newValue = value;
 		if (type === 'hasError') {
 			newValue = String(value === 'Error');
@@ -147,9 +150,9 @@ export function SectionBody(props: SectionBodyProps): JSX.Element {
 							<Checkbox
 								className="submenu-checkbox"
 								key={`${type}-${item}`}
-								onChange={(e): void => onCheckHandler(e, item)}
-								checked={checkboxMatcher(item)}
-								data-testid={`${type}-${item}`}
+								onChange={(checked): void => onCheckHandler(checked, item)}
+								value={checkboxMatcher(item)}
+								testId={`${type}-${item}`}
 							>
 								<div className="checkbox-label">
 									<div className={labelClassname(item)} />

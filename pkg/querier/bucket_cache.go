@@ -679,21 +679,7 @@ func (bc *bucketCache) mergeAndDeduplicateBuckets(existing, fresh []*qbtypes.Cac
 
 // deduplicateWarnings removes duplicate warnings.
 func (bc *bucketCache) deduplicateWarnings(warnings []string) []string {
-	if len(warnings) == 0 {
-		return nil
-	}
-
-	seen := make(map[string]bool, len(warnings))
-	unique := make([]string, 0, len(warnings)) // Pre-allocate capacity
-
-	for _, warning := range warnings {
-		if !seen[warning] {
-			seen[warning] = true
-			unique = append(unique, warning)
-		}
-	}
-
-	return unique
+	return dedupeWarnings(warnings)
 }
 
 // trimResultToFluxBoundary trims the result to exclude data points beyond the flux boundary.

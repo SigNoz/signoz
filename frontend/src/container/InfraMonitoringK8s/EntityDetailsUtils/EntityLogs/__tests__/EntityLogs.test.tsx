@@ -1,10 +1,7 @@
 import { VirtuosoMockContext } from 'react-virtuoso';
-import { ENVIRONMENT } from 'constants/env';
+import { mockQueryRangeV5WithLogsResponse } from '__tests__/query_range_v5.util';
 import { InfraMonitoringEntity } from 'container/InfraMonitoringK8s/constants';
-import { verifyFiltersAndOrderBy } from 'container/LogsExplorerViews/tests/verifyFiltersAndOrderBy';
-import { logsPaginationQueryRangeSuccessResponse } from 'mocks-server/__mockdata__/logs_query_range';
-import { server } from 'mocks-server/server';
-import { rest } from 'msw';
+import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import {
 	act,
 	fireEvent,
@@ -13,36 +10,33 @@ import {
 	screen,
 	waitFor,
 } from 'tests/test-utils';
-import { QueryRangePayload } from 'types/api/metrics/getQueryRange';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import { QueryRangePayloadV5 } from 'types/api/v5/queryRange';
 
 import EntityLogs from '../EntityLogs';
+import { K8S_ENTITY_LOGS_EXPRESSION_KEY } from '../hooks';
 
-// Custom verifyPayload function for EntityLogs that works with the correct payload structure
-const verifyEntityLogsPayload = ({
+function verifyEntityLogsV5Request({
 	payload,
 	expectedOffset,
 	initialTimeRange,
 }: {
-	payload: QueryRangePayload;
+	payload: QueryRangePayloadV5;
 	expectedOffset: number;
 	initialTimeRange?: { start: number; end: number };
-}): IBuilderQuery => {
-	// Extract the builder query data from the correct path
-	const queryData = payload?.compositeQuery?.builderQueries?.A as IBuilderQuery;
-
-	expect(queryData).toBeDefined();
-	// Assert that the offset in the payload matches the expected offset
-	expect(queryData.offset).toBe(expectedOffset);
-
-	// If initial time range is provided, assert that the payload start and end match
+}): void {
+	const spec = payload.compositeQuery.queries[0]?.spec as {
+		offset?: number;
+		order?: Array<{ key: { name: string }; direction: string }>;
+	};
+	expect(spec.offset).toBe(expectedOffset);
 	if (initialTimeRange) {
 		expect(payload.start).toBe(initialTimeRange.start);
 		expect(payload.end).toBe(initialTimeRange.end);
 	}
-
-	return queryData;
-};
+	const orderKeys = spec.order?.map((o) => o.key.name) ?? [];
+	expect(orderKeys).toContain('timestamp');
+	expect(orderKeys).toContain('id');
+}
 
 jest.mock(
 	'components/OverlayScrollbar/OverlayScrollbar',
@@ -56,32 +50,38 @@ jest.mock(
 		},
 );
 
+jest.mock('container/TopNav/DateTimeSelectionV2/index.tsx', () => ({
+	__esModule: true,
+	default: ({
+		onTimeChange,
+	}: {
+		onTimeChange?: (interval: string, dateTimeRange?: [number, number]) => void;
+	}): JSX.Element => (
+		<button
+			type="button"
+			data-testid="mock-datetime-selection"
+			onClick={(): void => {
+				onTimeChange?.('5m');
+			}}
+		>
+			Select Time
+		</button>
+	),
+}));
+
 describe('EntityLogs', () => {
-	let capturedQueryRangePayloads: QueryRangePayload[] = [];
+	let capturedQueryRangePayloads: QueryRangePayloadV5[] = [];
 	const itemHeight = 100;
 
 	beforeEach(() => {
-		server.use(
-			rest.post(
-				`${ENVIRONMENT.baseURL}/api/v3/query_range`,
-				async (req, res, ctx) => {
-					capturedQueryRangePayloads.push(await req.json());
-
-					const lastPayload =
-						capturedQueryRangePayloads[capturedQueryRangePayloads.length - 1];
-
-					const queryData = (lastPayload as any)?.compositeQuery?.builderQueries
-						?.A as IBuilderQuery;
-
-					const offset = queryData?.offset ?? 0;
-					return res(
-						ctx.status(200),
-						ctx.json(logsPaginationQueryRangeSuccessResponse({ offset })),
-					);
-				},
-			),
-		);
 		capturedQueryRangePayloads = [];
+		mockQueryRangeV5WithLogsResponse({
+			onReceiveRequest: async (req) => {
+				const body = (await req.json()) as QueryRangePayloadV5;
+				capturedQueryRangePayloads.push(body);
+				return {};
+			},
+		});
 	});
 	it('should check if k8s logs pagination flows work properly', async () => {
 		let renderResult: RenderResult;
@@ -89,15 +89,21 @@ describe('EntityLogs', () => {
 
 		act(() => {
 			renderResult = render(
-				<VirtuosoMockContext.Provider value={{ viewportHeight: 500, itemHeight }}>
-					<EntityLogs
-						timeRange={{ startTime: 1, endTime: 2 }}
-						filters={{ items: [], op: 'AND' }}
-						queryKey="test"
-						category={InfraMonitoringEntity.PODS}
-						queryKeyFilters={[]}
-					/>
-				</VirtuosoMockContext.Provider>,
+				<NuqsTestingAdapter
+					searchParams={`${K8S_ENTITY_LOGS_EXPRESSION_KEY}=k8s.pod.name+%3D+%22x%22`}
+				>
+					<VirtuosoMockContext.Provider value={{ viewportHeight: 500, itemHeight }}>
+						<EntityLogs
+							timeRange={{ startTime: 1, endTime: 2 }}
+							isModalTimeSelection={false}
+							handleTimeChange={jest.fn()}
+							selectedInterval="5m"
+							queryKey="test"
+							category={InfraMonitoringEntity.PODS}
+							initialExpression='k8s.pod.name = "x"'
+						/>
+					</VirtuosoMockContext.Provider>
+				</NuqsTestingAdapter>,
 			);
 		});
 
@@ -112,16 +118,13 @@ describe('EntityLogs', () => {
 		});
 
 		await waitFor(async () => {
-			// Find the Virtuoso scroller element by its data-test-id
 			scrollableElement = renderResult.container.querySelector(
 				'[data-test-id="virtuoso-scroller"]',
 			) as HTMLElement;
 
-			// Ensure the element exists
 			expect(scrollableElement).not.toBeNull();
 
 			if (scrollableElement) {
-				// Set the scrollTop property to simulate scrolling to the calculated end position
 				scrollableElement.scrollTop = 99 * itemHeight;
 
 				act(() => {
@@ -135,36 +138,31 @@ describe('EntityLogs', () => {
 		});
 
 		const firstPayload = capturedQueryRangePayloads[0];
-		verifyEntityLogsPayload({
+		verifyEntityLogsV5Request({
 			payload: firstPayload,
 			expectedOffset: 0,
 		});
 
-		// Store the time range from the first payload, which should be consistent in subsequent requests
 		const initialTimeRange = {
 			start: firstPayload.start,
 			end: firstPayload.end,
 		};
 
 		const secondPayload = capturedQueryRangePayloads[1];
-		const secondQueryData = verifyEntityLogsPayload({
+		verifyEntityLogsV5Request({
 			payload: secondPayload,
 			expectedOffset: 100,
 			initialTimeRange,
 		});
-		verifyFiltersAndOrderBy(secondQueryData);
 
 		await waitFor(async () => {
-			// Find the Virtuoso scroller element by its data-test-id
 			scrollableElement = renderResult.container.querySelector(
 				'[data-test-id="virtuoso-scroller"]',
 			) as HTMLElement;
 
-			// Ensure the element exists
 			expect(scrollableElement).not.toBeNull();
 
 			if (scrollableElement) {
-				// Set the scrollTop property to simulate scrolling to the calculated end position
 				scrollableElement.scrollTop = 199 * itemHeight;
 
 				act(() => {
@@ -178,11 +176,10 @@ describe('EntityLogs', () => {
 		});
 
 		const thirdPayload = capturedQueryRangePayloads[2];
-		const thirdQueryData = verifyEntityLogsPayload({
+		verifyEntityLogsV5Request({
 			payload: thirdPayload,
 			expectedOffset: 200,
 			initialTimeRange,
 		});
-		verifyFiltersAndOrderBy(thirdQueryData);
 	});
 });

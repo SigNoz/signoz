@@ -1,6 +1,7 @@
 import { ChangeEvent, useEffect, useMemo, useState } from 'react';
 import { Button } from '@signozhq/ui/button';
-import { Input, Spin } from 'antd';
+import { Input } from '@signozhq/ui/input';
+import { Spin } from 'antd';
 import cx from 'classnames';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import SignozModal from 'components/SignozModal/SignozModal';
@@ -22,7 +23,7 @@ import { filterFunnelsByQuery } from 'pages/TracesFunnels/utils';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
 import { FunnelData } from 'types/api/traceFunnels';
 
-import './AddSpanToFunnelModal.styles.scss';
+import styles from './AddSpanToFunnelModal.module.scss';
 
 enum ModalView {
 	LIST = 'list',
@@ -62,7 +63,7 @@ function FunnelDetailsView({
 	}, [triggerDiscard, funnel.steps, handleRestoreSteps]);
 
 	return (
-		<div className="add-span-to-funnel-modal__details">
+		<div className={styles.detailsView}>
 			<FunnelListItem
 				funnel={funnel}
 				shouldRedirectToTracesListOnDeleteSuccess={false}
@@ -161,11 +162,11 @@ function AddSpanToFunnelModal({
 	};
 
 	const renderListView = (): JSX.Element => (
-		<div className="add-span-to-funnel-modal">
+		<div className={styles.root}>
 			{!!filteredData?.length && (
-				<div className="add-span-to-funnel-modal__search">
+				<div className={styles.search}>
 					<Input
-						className="add-span-to-funnel-modal__search-input"
+						className={styles.searchInput}
 						placeholder="Search by name, description, or tags..."
 						prefix={<Search size={12} />}
 						value={searchQuery}
@@ -173,7 +174,7 @@ function AddSpanToFunnelModal({
 					/>
 				</div>
 			)}
-			<div className="add-span-to-funnel-modal__list">
+			<div className={styles.list}>
 				<OverlayScrollbar>
 					<TracesFunnelsContentRenderer
 						isError={isError}
@@ -201,11 +202,11 @@ function AddSpanToFunnelModal({
 	);
 
 	const renderDetailsView = ({ span }: { span: SpanV3 }): JSX.Element => (
-		<div className="add-span-to-funnel-modal add-span-to-funnel-modal--details">
+		<div className={cx(styles.root, styles.isDetails)}>
 			<Button
 				variant="ghost"
 				color="secondary"
-				className="add-span-to-funnel-modal__back-button"
+				className={styles.backButton}
 				onClick={handleBack}
 				prefix={<ArrowLeft size={14} />}
 			>
@@ -214,7 +215,7 @@ function AddSpanToFunnelModal({
 			<div className="traces-funnel-details">
 				<div className="traces-funnel-details__steps-config">
 					<Spin
-						className="add-span-to-funnel-modal__loading-spinner"
+						className={styles.loadingSpinner}
 						spinning={isFunnelDetailsLoading || isFunnelDetailsFetching}
 						indicator={<LoaderCircle size={14} className="animate-spin" />}
 					>
@@ -245,10 +246,7 @@ function AddSpanToFunnelModal({
 			onCancel={onClose}
 			width={570}
 			title="Add span to funnel"
-			className={cx('add-span-to-funnel-modal-container', {
-				'add-span-to-funnel-modal-container--details':
-					activeView === ModalView.DETAILS,
-			})}
+			className={styles.container}
 			footer={
 				activeView === ModalView.DETAILS
 					? [
@@ -257,7 +255,7 @@ function AddSpanToFunnelModal({
 								color="secondary"
 								key="discard"
 								onClick={handleDiscard}
-								className="add-span-to-funnel-modal__discard-button"
+								className={styles.discardButton}
 								disabled={!isUnsavedChanges}
 							>
 								Discard
@@ -266,7 +264,7 @@ function AddSpanToFunnelModal({
 								key="save"
 								variant="solid"
 								color="primary"
-								className="add-span-to-funnel-modal__save-button"
+								className={styles.saveButton}
 								onClick={handleSaveFunnel}
 								disabled={!isUnsavedChanges}
 								prefix={<Check size={14} />}
@@ -279,7 +277,7 @@ function AddSpanToFunnelModal({
 								key="create"
 								variant="outlined"
 								color="secondary"
-								className="add-span-to-funnel-modal__create-button"
+								className={styles.createButton}
 								onClick={handleCreateNewClick}
 								prefix={<Plus size={14} />}
 							>

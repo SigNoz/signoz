@@ -46,11 +46,6 @@ export const k8sVolumeDetailsMetadataConfig: K8sDetailsMetadataConfig<K8sVolumes
 		},
 	];
 
-export const k8sVolumeInitialFilters = [
-	QUERY_KEYS.K8S_PERSISTENT_VOLUME_CLAIM_NAME,
-	QUERY_KEYS.K8S_NAMESPACE_NAME,
-];
-
 export const k8sVolumeInitialEventsFilter = (
 	item: K8sVolumesData,
 ): ReturnType<typeof createFilterItem>[] => [
@@ -322,9 +317,9 @@ export const getVolumeMetricsQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
-								id: 'k8s_volume_inodes_used--float64----true',
+								id: 'k8s_volume_inodes_used--float64--Gauge--true',
 								key: k8sVolumeInodesUsedKey,
-								type: '',
+								type: 'Gauge',
 							},
 							aggregateOperator: 'avg',
 							dataSource: DataSource.METRICS,
@@ -414,9 +409,9 @@ export const getVolumeMetricsQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
-								id: 'k8s_volume_inodes--float64----true',
+								id: 'k8s_volume_inodes--float64--Gauge--true',
 								key: k8sVolumeInodesKey,
-								type: '',
+								type: 'Gauge',
 							},
 							aggregateOperator: 'avg',
 							dataSource: DataSource.METRICS,
@@ -506,9 +501,9 @@ export const getVolumeMetricsQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
-								id: 'k8s_volume_inodes_free--float64----true',
+								id: 'k8s_volume_inodes_free--float64--Gauge--true',
 								key: k8sVolumeInodesFreeKey,
-								type: '',
+								type: 'Gauge',
 							},
 							aggregateOperator: 'avg',
 							dataSource: DataSource.METRICS,

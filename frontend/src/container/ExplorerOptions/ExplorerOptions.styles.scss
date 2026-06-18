@@ -23,6 +23,10 @@
 			}
 		}
 	}
+
+	&__divider {
+		--divider-vertical-margin: 0;
+	}
 }
 
 .hide-update {
@@ -54,12 +58,6 @@
 
 	.hidden {
 		display: none;
-	}
-
-	.ant-divider {
-		margin: 0;
-		height: 28px;
-		border: 1px solid var(--l1-border);
 	}
 }
 

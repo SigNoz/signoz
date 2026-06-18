@@ -88,6 +88,8 @@ func newProvider(
 		traceAggExprRewriter,
 		telemetryStore,
 		flagger,
+		cfg.SkipResourceFingerprint.Enabled,
+		cfg.SkipResourceFingerprint.Threshold,
 	)
 
 	// Create trace operator statement builder
@@ -121,6 +123,9 @@ func newProvider(
 		telemetrylogs.DefaultFullTextColumn,
 		telemetrylogs.GetBodyJSONKey,
 		flagger,
+		telemetryStore,
+		cfg.SkipResourceFingerprint.Enabled,
+		cfg.SkipResourceFingerprint.Threshold,
 	)
 
 	// Create audit statement builder
@@ -186,5 +191,6 @@ func newProvider(
 		meterStmtBuilder,
 		traceOperatorStmtBuilder,
 		bucketCache,
+		flagger,
 	), nil
 }

@@ -23,6 +23,22 @@ function devBasePathPlugin(basePath: string): Plugin {
 	};
 }
 
+function devBootDataPlugin(env: Record<string, string>): Plugin {
+	return {
+		name: 'dev-boot-data',
+		apply: 'serve',
+		transformIndexHtml(html): string {
+			const settings = {
+				posthog: { enabled: env.VITE_POSTHOG_ENABLED !== 'false' },
+				appcues: { enabled: env.VITE_APPCUES_ENABLED !== 'false' },
+				sentry: { enabled: env.VITE_SENTRY_ENABLED !== 'false' },
+				pylon: { enabled: env.VITE_PYLON_ENABLED !== 'false' },
+			};
+			return html.replaceAll('[[.Settings]]', JSON.stringify(settings));
+		},
+	};
+}
+
 function rawMarkdownPlugin(): Plugin {
 	return {
 		name: 'raw-markdown',
@@ -47,6 +63,7 @@ export default defineConfig(({ mode }): UserConfig => {
 		tsconfigPaths(),
 		rawMarkdownPlugin(),
 		devBasePathPlugin(basePath),
+		devBootDataPlugin(env),
 		react(),
 		createHtmlPlugin({
 			inject: {
@@ -65,11 +82,25 @@ export default defineConfig(({ mode }): UserConfig => {
 	];
 
 	if (env.VITE_SENTRY_AUTH_TOKEN) {
+		if (!env.VITE_SENTRY_ORG || !env.VITE_SENTRY_PROJECT_ID) {
+			throw new Error(
+				'VITE_SENTRY_ORG and VITE_SENTRY_PROJECT_ID must be defined when VITE_SENTRY_AUTH_TOKEN is present.',
+			);
+		}
+		// Refuse to upload sourcemaps without an explicit version.
+		if (!env.VITE_VERSION) {
+			throw new Error(
+				'VITE_VERSION must be set to upload sourcemaps to Sentry; refusing to upload without a matching release.',
+			);
+		}
 		plugins.push(
 			sentryVitePlugin({
 				authToken: env.VITE_SENTRY_AUTH_TOKEN,
 				org: env.VITE_SENTRY_ORG,
 				project: env.VITE_SENTRY_PROJECT_ID,
+				// Pin the sourcemap-upload release to the same value injected as
+				// process.env.VERSION so uploaded sourcemaps resolve. Ref: platform-pod#2393
+				release: { name: env.VITE_VERSION, setCommits: { auto: true } },
 			}),
 		);
 	}
@@ -138,6 +169,8 @@ export default defineConfig(({ mode }): UserConfig => {
 			'process.env.TUNNEL_URL': JSON.stringify(env.VITE_TUNNEL_URL),
 			'process.env.TUNNEL_DOMAIN': JSON.stringify(env.VITE_TUNNEL_DOMAIN),
 			'process.env.DOCS_BASE_URL': JSON.stringify(env.VITE_DOCS_BASE_URL),
+			'process.env.ENVIRONMENT': JSON.stringify(env.VITE_ENVIRONMENT),
+			'process.env.VERSION': JSON.stringify(env.VITE_VERSION),
 		},
 		// In production, use relative paths so assets work with any base path injected by the backend.
 		// In dev, use the configured base path for proper HMR and routing.

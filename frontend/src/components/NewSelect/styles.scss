@@ -109,6 +109,16 @@ $custom-border-color: #2c3044;
 		color: color-mix(in srgb, var(--l2-foreground) 45%, transparent);
 	}
 
+	.ant-select-clear {
+		background-color: var(--l2-background);
+		color: var(--l2-foreground);
+		font-size: 12px;
+
+		&:hover {
+			color: var(--l1-foreground);
+		}
+	}
+
 	// Customize tags in multiselect (dark mode by default)
 	.ant-select-selection-item {
 		background-color: var(--l1-border);
@@ -392,7 +402,9 @@ $custom-border-color: #2c3044;
 // Custom dropdown styles for multi-select
 .custom-multiselect-dropdown {
 	padding: 8px 0 0 0;
-	max-height: 350px;
+	// Tall enough to hold the react-virtuoso list (<=300px) + header/footer
+	// so only the list scrolls (avoids a second scrollbar on this container).
+	max-height: 410px;
 	overflow-y: auto;
 	overflow-x: hidden;
 	scrollbar-width: thin;
@@ -483,8 +495,12 @@ $custom-border-color: #2c3044;
 		.option-checkbox {
 			width: 100%;
 
-			> span:not(.ant-checkbox) {
-				width: 100%;
+			// @signozhq/ui Checkbox renders children inside a <label> that is
+			// content-sized by default. Make it fill the row (min-width: 0 lets it
+			// shrink) so the option text below can truncate instead of overflowing.
+			> label {
+				flex: 1 1 auto;
+				min-width: 0;
 			}
 
 			.all-option-text {
@@ -501,7 +517,12 @@ $custom-border-color: #2c3044;
 				width: 100%;
 
 				.option-label-text {
+					flex: 1 1 auto;
+					min-width: 0;
 					margin-bottom: 0;
+					overflow: hidden;
+					white-space: nowrap;
+					text-overflow: ellipsis;
 				}
 
 				.option-badge {
@@ -514,26 +535,30 @@ $custom-border-color: #2c3044;
 				}
 			}
 
-			.only-btn {
-				display: none;
-			}
+			// Size the buttons to the row's resting content height (20px) and fully
+			// override antd's default 32px Button box, so revealing them on hover
+			// never changes the row height.
+			.only-btn,
 			.toggle-btn {
 				display: none;
-			}
+				align-items: center;
+				justify-content: center;
+				height: 18px;
+				min-height: 0;
+				padding: 0 6px;
+				font-size: 12px;
+				line-height: 1;
+				border: none;
+				box-shadow: none;
 
-			.only-btn:hover {
-				background-color: unset;
-			}
-			.toggle-btn:hover {
-				background-color: unset;
+				&:hover {
+					background-color: unset;
+				}
 			}
 
 			.option-content:hover {
 				.only-btn {
 					display: flex;
-					align-items: center;
-					justify-content: center;
-					height: 21px;
 				}
 				.toggle-btn {
 					display: none;
@@ -548,9 +573,6 @@ $custom-border-color: #2c3044;
 		.option-checkbox:hover {
 			.toggle-btn {
 				display: flex;
-				align-items: center;
-				justify-content: center;
-				height: 21px;
 			}
 			.option-badge {
 				display: none;

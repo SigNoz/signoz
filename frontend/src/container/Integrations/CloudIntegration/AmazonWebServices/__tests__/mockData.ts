@@ -32,7 +32,7 @@ const accountsResponse: ListAccounts200 = {
 	},
 };
 
-/** Response shape for GET /cloud_integrations/aws/services/:serviceId (used by ServiceDetails). */
+/** Response shape for GET /cloud_integrations/aws/accounts/:accountId/services/:serviceId (used by ServiceDetails). */
 const buildServiceDetailsResponse = (
 	serviceId: string,
 	initialConfigLogsS3Buckets: Record<string, string[]> = {},
@@ -55,7 +55,6 @@ const buildServiceDetailsResponse = (
 				},
 			},
 		},
-		telemetryCollectionStrategy: { aws: {} },
 	},
 });
 

@@ -1,4 +1,4 @@
-import type { HTMLAttributes, ReactNode } from 'react';
+import { forwardRef, type HTMLAttributes, type ReactNode } from 'react';
 import cx from 'classnames';
 
 import tableStyles from './TanStackTable.module.scss';
@@ -22,21 +22,19 @@ type WithDangerousHtml = BaseProps & {
 
 export type TanStackTableTextProps = WithChildren | WithDangerousHtml;
 
-function TanStackTableText({
-	children,
-	className,
-	dangerouslySetInnerHTML,
-	...rest
-}: TanStackTableTextProps): JSX.Element {
-	return (
+const TanStackTableText = forwardRef<HTMLSpanElement, TanStackTableTextProps>(
+	({ children, className, dangerouslySetInnerHTML, ...rest }, ref) => (
 		<span
+			ref={ref}
 			className={cx(tableStyles.tableCellText, className)}
 			dangerouslySetInnerHTML={dangerouslySetInnerHTML}
 			{...rest}
 		>
 			{children}
 		</span>
-	);
-}
+	),
+);
+
+TanStackTableText.displayName = 'TanStackTableText';
 
 export default TanStackTableText;

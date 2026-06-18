@@ -1,11 +1,12 @@
+import { QueryRangeRequestV5 } from 'api/v5/v5';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Column, QueryData, QueryDataV3 } from 'types/api/widgets/getQuery';
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export function populateMultipleResults(
-	responseData: SuccessResponse<MetricRangePayloadProps, unknown>,
-): SuccessResponse<MetricRangePayloadProps, unknown> {
+	responseData: SuccessResponse<MetricRangePayloadProps, QueryRangeRequestV5>,
+): SuccessResponse<MetricRangePayloadProps, QueryRangeRequestV5> {
 	const queryResults = responseData?.payload?.data?.newResult?.data?.result;
 	const allFormattedResults: QueryData[] = [];
 
@@ -66,17 +67,19 @@ export function populateMultipleResults(
 	}
 
 	// Create a copy instead of mutating the original
-	const updatedResponseData: SuccessResponse<MetricRangePayloadProps, unknown> =
-		{
-			...responseData,
-			payload: {
-				...responseData.payload,
-				data: {
-					...responseData.payload.data,
-					result: allFormattedResults,
-				},
+	const updatedResponseData: SuccessResponse<
+		MetricRangePayloadProps,
+		QueryRangeRequestV5
+	> = {
+		...responseData,
+		payload: {
+			...responseData.payload,
+			data: {
+				...responseData.payload.data,
+				result: allFormattedResults,
 			},
-		};
+		},
+	};
 
 	return updatedResponseData;
 }

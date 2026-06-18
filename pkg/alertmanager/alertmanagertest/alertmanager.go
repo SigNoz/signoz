@@ -6,7 +6,9 @@ package alertmanagertest
 
 import (
 	"context"
+	"net/http"
 
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerserver"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/prometheus/alertmanager/config"
@@ -108,8 +110,52 @@ func (_c *MockAlertmanager_Collect_Call) RunAndReturn(run func(context1 context.
 	return _c
 }
 
+// Config provides a mock function for the type MockAlertmanager
+func (_mock *MockAlertmanager) Config() alertmanagerserver.Config {
+	ret := _mock.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for Config")
+	}
+
+	var r0 alertmanagerserver.Config
+	if returnFunc, ok := ret.Get(0).(func() alertmanagerserver.Config); ok {
+		r0 = returnFunc()
+	} else {
+		r0 = ret.Get(0).(alertmanagerserver.Config)
+	}
+	return r0
+}
+
+// MockAlertmanager_Config_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Config'
+type MockAlertmanager_Config_Call struct {
+	*mock.Call
+}
+
+// Config is a helper method to define mock.On call
+func (_e *MockAlertmanager_Expecter) Config() *MockAlertmanager_Config_Call {
+	return &MockAlertmanager_Config_Call{Call: _e.mock.On("Config")}
+}
+
+func (_c *MockAlertmanager_Config_Call) Run(run func()) *MockAlertmanager_Config_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *MockAlertmanager_Config_Call) Return(config alertmanagerserver.Config) *MockAlertmanager_Config_Call {
+	_c.Call.Return(config)
+	return _c
+}
+
+func (_c *MockAlertmanager_Config_Call) RunAndReturn(run func() alertmanagerserver.Config) *MockAlertmanager_Config_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // CreateChannel provides a mock function for the type MockAlertmanager
-func (_mock *MockAlertmanager) CreateChannel(context1 context.Context, s string, v alertmanagertypes.Receiver) (*alertmanagertypes.Channel, error) {
+func (_mock *MockAlertmanager) CreateChannel(context1 context.Context, s string, v *alertmanagertypes.Receiver) (*alertmanagertypes.Channel, error) {
 	ret := _mock.Called(context1, s, v)
 
 	if len(ret) == 0 {
@@ -118,17 +164,17 @@ func (_mock *MockAlertmanager) CreateChannel(context1 context.Context, s string,
 
 	var r0 *alertmanagertypes.Channel
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, alertmanagertypes.Receiver) (*alertmanagertypes.Channel, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, *alertmanagertypes.Receiver) (*alertmanagertypes.Channel, error)); ok {
 		return returnFunc(context1, s, v)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, alertmanagertypes.Receiver) *alertmanagertypes.Channel); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, *alertmanagertypes.Receiver) *alertmanagertypes.Channel); ok {
 		r0 = returnFunc(context1, s, v)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*alertmanagertypes.Channel)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string, alertmanagertypes.Receiver) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, *alertmanagertypes.Receiver) error); ok {
 		r1 = returnFunc(context1, s, v)
 	} else {
 		r1 = ret.Error(1)
@@ -144,12 +190,12 @@ type MockAlertmanager_CreateChannel_Call struct {
 // CreateChannel is a helper method to define mock.On call
 //   - context1 context.Context
 //   - s string
-//   - v alertmanagertypes.Receiver
+//   - v *alertmanagertypes.Receiver
 func (_e *MockAlertmanager_Expecter) CreateChannel(context1 interface{}, s interface{}, v interface{}) *MockAlertmanager_CreateChannel_Call {
 	return &MockAlertmanager_CreateChannel_Call{Call: _e.mock.On("CreateChannel", context1, s, v)}
 }
 
-func (_c *MockAlertmanager_CreateChannel_Call) Run(run func(context1 context.Context, s string, v alertmanagertypes.Receiver)) *MockAlertmanager_CreateChannel_Call {
+func (_c *MockAlertmanager_CreateChannel_Call) Run(run func(context1 context.Context, s string, v *alertmanagertypes.Receiver)) *MockAlertmanager_CreateChannel_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -159,9 +205,9 @@ func (_c *MockAlertmanager_CreateChannel_Call) Run(run func(context1 context.Con
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
-		var arg2 alertmanagertypes.Receiver
+		var arg2 *alertmanagertypes.Receiver
 		if args[2] != nil {
-			arg2 = args[2].(alertmanagertypes.Receiver)
+			arg2 = args[2].(*alertmanagertypes.Receiver)
 		}
 		run(
 			arg0,
@@ -177,7 +223,7 @@ func (_c *MockAlertmanager_CreateChannel_Call) Return(channel *alertmanagertypes
 	return _c
 }
 
-func (_c *MockAlertmanager_CreateChannel_Call) RunAndReturn(run func(context1 context.Context, s string, v alertmanagertypes.Receiver) (*alertmanagertypes.Channel, error)) *MockAlertmanager_CreateChannel_Call {
+func (_c *MockAlertmanager_CreateChannel_Call) RunAndReturn(run func(context1 context.Context, s string, v *alertmanagertypes.Receiver) (*alertmanagertypes.Channel, error)) *MockAlertmanager_CreateChannel_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1578,7 +1624,7 @@ func (_c *MockAlertmanager_TestAlert_Call) RunAndReturn(run func(ctx context.Con
 }
 
 // TestReceiver provides a mock function for the type MockAlertmanager
-func (_mock *MockAlertmanager) TestReceiver(context1 context.Context, s string, v alertmanagertypes.Receiver) error {
+func (_mock *MockAlertmanager) TestReceiver(context1 context.Context, s string, v *alertmanagertypes.Receiver) error {
 	ret := _mock.Called(context1, s, v)
 
 	if len(ret) == 0 {
@@ -1586,7 +1632,7 @@ func (_mock *MockAlertmanager) TestReceiver(context1 context.Context, s string, 
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, alertmanagertypes.Receiver) error); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, *alertmanagertypes.Receiver) error); ok {
 		r0 = returnFunc(context1, s, v)
 	} else {
 		r0 = ret.Error(0)
@@ -1602,12 +1648,12 @@ type MockAlertmanager_TestReceiver_Call struct {
 // TestReceiver is a helper method to define mock.On call
 //   - context1 context.Context
 //   - s string
-//   - v alertmanagertypes.Receiver
+//   - v *alertmanagertypes.Receiver
 func (_e *MockAlertmanager_Expecter) TestReceiver(context1 interface{}, s interface{}, v interface{}) *MockAlertmanager_TestReceiver_Call {
 	return &MockAlertmanager_TestReceiver_Call{Call: _e.mock.On("TestReceiver", context1, s, v)}
 }
 
-func (_c *MockAlertmanager_TestReceiver_Call) Run(run func(context1 context.Context, s string, v alertmanagertypes.Receiver)) *MockAlertmanager_TestReceiver_Call {
+func (_c *MockAlertmanager_TestReceiver_Call) Run(run func(context1 context.Context, s string, v *alertmanagertypes.Receiver)) *MockAlertmanager_TestReceiver_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -1617,9 +1663,9 @@ func (_c *MockAlertmanager_TestReceiver_Call) Run(run func(context1 context.Cont
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
-		var arg2 alertmanagertypes.Receiver
+		var arg2 *alertmanagertypes.Receiver
 		if args[2] != nil {
-			arg2 = args[2].(alertmanagertypes.Receiver)
+			arg2 = args[2].(*alertmanagertypes.Receiver)
 		}
 		run(
 			arg0,
@@ -1635,7 +1681,7 @@ func (_c *MockAlertmanager_TestReceiver_Call) Return(err error) *MockAlertmanage
 	return _c
 }
 
-func (_c *MockAlertmanager_TestReceiver_Call) RunAndReturn(run func(context1 context.Context, s string, v alertmanagertypes.Receiver) error) *MockAlertmanager_TestReceiver_Call {
+func (_c *MockAlertmanager_TestReceiver_Call) RunAndReturn(run func(context1 context.Context, s string, v *alertmanagertypes.Receiver) error) *MockAlertmanager_TestReceiver_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1704,7 +1750,7 @@ func (_c *MockAlertmanager_UpdateAllRoutePoliciesByRuleId_Call) RunAndReturn(run
 }
 
 // UpdateChannelByReceiverAndID provides a mock function for the type MockAlertmanager
-func (_mock *MockAlertmanager) UpdateChannelByReceiverAndID(context1 context.Context, s string, v alertmanagertypes.Receiver, uUID valuer.UUID) error {
+func (_mock *MockAlertmanager) UpdateChannelByReceiverAndID(context1 context.Context, s string, v *alertmanagertypes.Receiver, uUID valuer.UUID) error {
 	ret := _mock.Called(context1, s, v, uUID)
 
 	if len(ret) == 0 {
@@ -1712,7 +1758,7 @@ func (_mock *MockAlertmanager) UpdateChannelByReceiverAndID(context1 context.Con
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, alertmanagertypes.Receiver, valuer.UUID) error); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, *alertmanagertypes.Receiver, valuer.UUID) error); ok {
 		r0 = returnFunc(context1, s, v, uUID)
 	} else {
 		r0 = ret.Error(0)
@@ -1728,13 +1774,13 @@ type MockAlertmanager_UpdateChannelByReceiverAndID_Call struct {
 // UpdateChannelByReceiverAndID is a helper method to define mock.On call
 //   - context1 context.Context
 //   - s string
-//   - v alertmanagertypes.Receiver
+//   - v *alertmanagertypes.Receiver
 //   - uUID valuer.UUID
 func (_e *MockAlertmanager_Expecter) UpdateChannelByReceiverAndID(context1 interface{}, s interface{}, v interface{}, uUID interface{}) *MockAlertmanager_UpdateChannelByReceiverAndID_Call {
 	return &MockAlertmanager_UpdateChannelByReceiverAndID_Call{Call: _e.mock.On("UpdateChannelByReceiverAndID", context1, s, v, uUID)}
 }
 
-func (_c *MockAlertmanager_UpdateChannelByReceiverAndID_Call) Run(run func(context1 context.Context, s string, v alertmanagertypes.Receiver, uUID valuer.UUID)) *MockAlertmanager_UpdateChannelByReceiverAndID_Call {
+func (_c *MockAlertmanager_UpdateChannelByReceiverAndID_Call) Run(run func(context1 context.Context, s string, v *alertmanagertypes.Receiver, uUID valuer.UUID)) *MockAlertmanager_UpdateChannelByReceiverAndID_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -1744,9 +1790,9 @@ func (_c *MockAlertmanager_UpdateChannelByReceiverAndID_Call) Run(run func(conte
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
-		var arg2 alertmanagertypes.Receiver
+		var arg2 *alertmanagertypes.Receiver
 		if args[2] != nil {
-			arg2 = args[2].(alertmanagertypes.Receiver)
+			arg2 = args[2].(*alertmanagertypes.Receiver)
 		}
 		var arg3 valuer.UUID
 		if args[3] != nil {
@@ -1767,7 +1813,7 @@ func (_c *MockAlertmanager_UpdateChannelByReceiverAndID_Call) Return(err error) 
 	return _c
 }
 
-func (_c *MockAlertmanager_UpdateChannelByReceiverAndID_Call) RunAndReturn(run func(context1 context.Context, s string, v alertmanagertypes.Receiver, uUID valuer.UUID) error) *MockAlertmanager_UpdateChannelByReceiverAndID_Call {
+func (_c *MockAlertmanager_UpdateChannelByReceiverAndID_Call) RunAndReturn(run func(context1 context.Context, s string, v *alertmanagertypes.Receiver, uUID valuer.UUID) error) *MockAlertmanager_UpdateChannelByReceiverAndID_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1843,5 +1889,630 @@ func (_c *MockAlertmanager_UpdateRoutePolicyByID_Call) Return(gettableRoutePolic
 
 func (_c *MockAlertmanager_UpdateRoutePolicyByID_Call) RunAndReturn(run func(ctx context.Context, routeID string, route *alertmanagertypes.PostableRoutePolicy) (*alertmanagertypes.GettableRoutePolicy, error)) *MockAlertmanager_UpdateRoutePolicyByID_Call {
 	_c.Call.Return(run)
+	return _c
+}
+
+// NewMockHandler creates a new instance of MockHandler. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
+// The first argument is typically a *testing.T value.
+func NewMockHandler(t interface {
+	mock.TestingT
+	Cleanup(func())
+}) *MockHandler {
+	mock := &MockHandler{}
+	mock.Mock.Test(t)
+
+	t.Cleanup(func() { mock.AssertExpectations(t) })
+
+	return mock
+}
+
+// MockHandler is an autogenerated mock type for the Handler type
+type MockHandler struct {
+	mock.Mock
+}
+
+type MockHandler_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *MockHandler) EXPECT() *MockHandler_Expecter {
+	return &MockHandler_Expecter{mock: &_m.Mock}
+}
+
+// CreateChannel provides a mock function for the type MockHandler
+func (_mock *MockHandler) CreateChannel(responseWriter http.ResponseWriter, request *http.Request) {
+	_mock.Called(responseWriter, request)
+	return
+}
+
+// MockHandler_CreateChannel_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateChannel'
+type MockHandler_CreateChannel_Call struct {
+	*mock.Call
+}
+
+// CreateChannel is a helper method to define mock.On call
+//   - responseWriter http.ResponseWriter
+//   - request *http.Request
+func (_e *MockHandler_Expecter) CreateChannel(responseWriter interface{}, request interface{}) *MockHandler_CreateChannel_Call {
+	return &MockHandler_CreateChannel_Call{Call: _e.mock.On("CreateChannel", responseWriter, request)}
+}
+
+func (_c *MockHandler_CreateChannel_Call) Run(run func(responseWriter http.ResponseWriter, request *http.Request)) *MockHandler_CreateChannel_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 http.ResponseWriter
+		if args[0] != nil {
+			arg0 = args[0].(http.ResponseWriter)
+		}
+		var arg1 *http.Request
+		if args[1] != nil {
+			arg1 = args[1].(*http.Request)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockHandler_CreateChannel_Call) Return() *MockHandler_CreateChannel_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *MockHandler_CreateChannel_Call) RunAndReturn(run func(responseWriter http.ResponseWriter, request *http.Request)) *MockHandler_CreateChannel_Call {
+	_c.Run(run)
+	return _c
+}
+
+// CreateRoutePolicy provides a mock function for the type MockHandler
+func (_mock *MockHandler) CreateRoutePolicy(responseWriter http.ResponseWriter, request *http.Request) {
+	_mock.Called(responseWriter, request)
+	return
+}
+
+// MockHandler_CreateRoutePolicy_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateRoutePolicy'
+type MockHandler_CreateRoutePolicy_Call struct {
+	*mock.Call
+}
+
+// CreateRoutePolicy is a helper method to define mock.On call
+//   - responseWriter http.ResponseWriter
+//   - request *http.Request
+func (_e *MockHandler_Expecter) CreateRoutePolicy(responseWriter interface{}, request interface{}) *MockHandler_CreateRoutePolicy_Call {
+	return &MockHandler_CreateRoutePolicy_Call{Call: _e.mock.On("CreateRoutePolicy", responseWriter, request)}
+}
+
+func (_c *MockHandler_CreateRoutePolicy_Call) Run(run func(responseWriter http.ResponseWriter, request *http.Request)) *MockHandler_CreateRoutePolicy_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 http.ResponseWriter
+		if args[0] != nil {
+			arg0 = args[0].(http.ResponseWriter)
+		}
+		var arg1 *http.Request
+		if args[1] != nil {
+			arg1 = args[1].(*http.Request)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockHandler_CreateRoutePolicy_Call) Return() *MockHandler_CreateRoutePolicy_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *MockHandler_CreateRoutePolicy_Call) RunAndReturn(run func(responseWriter http.ResponseWriter, request *http.Request)) *MockHandler_CreateRoutePolicy_Call {
+	_c.Run(run)
+	return _c
+}
+
+// DeleteChannelByID provides a mock function for the type MockHandler
+func (_mock *MockHandler) DeleteChannelByID(responseWriter http.ResponseWriter, request *http.Request) {
+	_mock.Called(responseWriter, request)
+	return
+}
+
+// MockHandler_DeleteChannelByID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteChannelByID'
+type MockHandler_DeleteChannelByID_Call struct {
+	*mock.Call
+}
+
+// DeleteChannelByID is a helper method to define mock.On call
+//   - responseWriter http.ResponseWriter
+//   - request *http.Request
+func (_e *MockHandler_Expecter) DeleteChannelByID(responseWriter interface{}, request interface{}) *MockHandler_DeleteChannelByID_Call {
+	return &MockHandler_DeleteChannelByID_Call{Call: _e.mock.On("DeleteChannelByID", responseWriter, request)}
+}
+
+func (_c *MockHandler_DeleteChannelByID_Call) Run(run func(responseWriter http.ResponseWriter, request *http.Request)) *MockHandler_DeleteChannelByID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 http.ResponseWriter
+		if args[0] != nil {
+			arg0 = args[0].(http.ResponseWriter)
+		}
+		var arg1 *http.Request
+		if args[1] != nil {
+			arg1 = args[1].(*http.Request)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockHandler_DeleteChannelByID_Call) Return() *MockHandler_DeleteChannelByID_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *MockHandler_DeleteChannelByID_Call) RunAndReturn(run func(responseWriter http.ResponseWriter, request *http.Request)) *MockHandler_DeleteChannelByID_Call {
+	_c.Run(run)
+	return _c
+}
+
+// DeleteRoutePolicyByID provides a mock function for the type MockHandler
+func (_mock *MockHandler) DeleteRoutePolicyByID(responseWriter http.ResponseWriter, request *http.Request) {
+	_mock.Called(responseWriter, request)
+	return
+}
+
+// MockHandler_DeleteRoutePolicyByID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteRoutePolicyByID'
+type MockHandler_DeleteRoutePolicyByID_Call struct {
+	*mock.Call
+}
+
+// DeleteRoutePolicyByID is a helper method to define mock.On call
+//   - responseWriter http.ResponseWriter
+//   - request *http.Request
+func (_e *MockHandler_Expecter) DeleteRoutePolicyByID(responseWriter interface{}, request interface{}) *MockHandler_DeleteRoutePolicyByID_Call {
+	return &MockHandler_DeleteRoutePolicyByID_Call{Call: _e.mock.On("DeleteRoutePolicyByID", responseWriter, request)}
+}
+
+func (_c *MockHandler_DeleteRoutePolicyByID_Call) Run(run func(responseWriter http.ResponseWriter, request *http.Request)) *MockHandler_DeleteRoutePolicyByID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 http.ResponseWriter
+		if args[0] != nil {
+			arg0 = args[0].(http.ResponseWriter)
+		}
+		var arg1 *http.Request
+		if args[1] != nil {
+			arg1 = args[1].(*http.Request)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockHandler_DeleteRoutePolicyByID_Call) Return() *MockHandler_DeleteRoutePolicyByID_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *MockHandler_DeleteRoutePolicyByID_Call) RunAndReturn(run func(responseWriter http.ResponseWriter, request *http.Request)) *MockHandler_DeleteRoutePolicyByID_Call {
+	_c.Run(run)
+	return _c
+}
+
+// GetAlerts provides a mock function for the type MockHandler
+func (_mock *MockHandler) GetAlerts(responseWriter http.ResponseWriter, request *http.Request) {
+	_mock.Called(responseWriter, request)
+	return
+}
+
+// MockHandler_GetAlerts_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAlerts'
+type MockHandler_GetAlerts_Call struct {
+	*mock.Call
+}
+
+// GetAlerts is a helper method to define mock.On call
+//   - responseWriter http.ResponseWriter
+//   - request *http.Request
+func (_e *MockHandler_Expecter) GetAlerts(responseWriter interface{}, request interface{}) *MockHandler_GetAlerts_Call {
+	return &MockHandler_GetAlerts_Call{Call: _e.mock.On("GetAlerts", responseWriter, request)}
+}
+
+func (_c *MockHandler_GetAlerts_Call) Run(run func(responseWriter http.ResponseWriter, request *http.Request)) *MockHandler_GetAlerts_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 http.ResponseWriter
+		if args[0] != nil {
+			arg0 = args[0].(http.ResponseWriter)
+		}
+		var arg1 *http.Request
+		if args[1] != nil {
+			arg1 = args[1].(*http.Request)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockHandler_GetAlerts_Call) Return() *MockHandler_GetAlerts_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *MockHandler_GetAlerts_Call) RunAndReturn(run func(responseWriter http.ResponseWriter, request *http.Request)) *MockHandler_GetAlerts_Call {
+	_c.Run(run)
+	return _c
+}
+
+// GetAllRoutePolicies provides a mock function for the type MockHandler
+func (_mock *MockHandler) GetAllRoutePolicies(responseWriter http.ResponseWriter, request *http.Request) {
+	_mock.Called(responseWriter, request)
+	return
+}
+
+// MockHandler_GetAllRoutePolicies_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAllRoutePolicies'
+type MockHandler_GetAllRoutePolicies_Call struct {
+	*mock.Call
+}
+
+// GetAllRoutePolicies is a helper method to define mock.On call
+//   - responseWriter http.ResponseWriter
+//   - request *http.Request
+func (_e *MockHandler_Expecter) GetAllRoutePolicies(responseWriter interface{}, request interface{}) *MockHandler_GetAllRoutePolicies_Call {
+	return &MockHandler_GetAllRoutePolicies_Call{Call: _e.mock.On("GetAllRoutePolicies", responseWriter, request)}
+}
+
+func (_c *MockHandler_GetAllRoutePolicies_Call) Run(run func(responseWriter http.ResponseWriter, request *http.Request)) *MockHandler_GetAllRoutePolicies_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 http.ResponseWriter
+		if args[0] != nil {
+			arg0 = args[0].(http.ResponseWriter)
+		}
+		var arg1 *http.Request
+		if args[1] != nil {
+			arg1 = args[1].(*http.Request)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockHandler_GetAllRoutePolicies_Call) Return() *MockHandler_GetAllRoutePolicies_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *MockHandler_GetAllRoutePolicies_Call) RunAndReturn(run func(responseWriter http.ResponseWriter, request *http.Request)) *MockHandler_GetAllRoutePolicies_Call {
+	_c.Run(run)
+	return _c
+}
+
+// GetChannelByID provides a mock function for the type MockHandler
+func (_mock *MockHandler) GetChannelByID(responseWriter http.ResponseWriter, request *http.Request) {
+	_mock.Called(responseWriter, request)
+	return
+}
+
+// MockHandler_GetChannelByID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetChannelByID'
+type MockHandler_GetChannelByID_Call struct {
+	*mock.Call
+}
+
+// GetChannelByID is a helper method to define mock.On call
+//   - responseWriter http.ResponseWriter
+//   - request *http.Request
+func (_e *MockHandler_Expecter) GetChannelByID(responseWriter interface{}, request interface{}) *MockHandler_GetChannelByID_Call {
+	return &MockHandler_GetChannelByID_Call{Call: _e.mock.On("GetChannelByID", responseWriter, request)}
+}
+
+func (_c *MockHandler_GetChannelByID_Call) Run(run func(responseWriter http.ResponseWriter, request *http.Request)) *MockHandler_GetChannelByID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 http.ResponseWriter
+		if args[0] != nil {
+			arg0 = args[0].(http.ResponseWriter)
+		}
+		var arg1 *http.Request
+		if args[1] != nil {
+			arg1 = args[1].(*http.Request)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockHandler_GetChannelByID_Call) Return() *MockHandler_GetChannelByID_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *MockHandler_GetChannelByID_Call) RunAndReturn(run func(responseWriter http.ResponseWriter, request *http.Request)) *MockHandler_GetChannelByID_Call {
+	_c.Run(run)
+	return _c
+}
+
+// GetRoutePolicyByID provides a mock function for the type MockHandler
+func (_mock *MockHandler) GetRoutePolicyByID(responseWriter http.ResponseWriter, request *http.Request) {
+	_mock.Called(responseWriter, request)
+	return
+}
+
+// MockHandler_GetRoutePolicyByID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetRoutePolicyByID'
+type MockHandler_GetRoutePolicyByID_Call struct {
+	*mock.Call
+}
+
+// GetRoutePolicyByID is a helper method to define mock.On call
+//   - responseWriter http.ResponseWriter
+//   - request *http.Request
+func (_e *MockHandler_Expecter) GetRoutePolicyByID(responseWriter interface{}, request interface{}) *MockHandler_GetRoutePolicyByID_Call {
+	return &MockHandler_GetRoutePolicyByID_Call{Call: _e.mock.On("GetRoutePolicyByID", responseWriter, request)}
+}
+
+func (_c *MockHandler_GetRoutePolicyByID_Call) Run(run func(responseWriter http.ResponseWriter, request *http.Request)) *MockHandler_GetRoutePolicyByID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 http.ResponseWriter
+		if args[0] != nil {
+			arg0 = args[0].(http.ResponseWriter)
+		}
+		var arg1 *http.Request
+		if args[1] != nil {
+			arg1 = args[1].(*http.Request)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockHandler_GetRoutePolicyByID_Call) Return() *MockHandler_GetRoutePolicyByID_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *MockHandler_GetRoutePolicyByID_Call) RunAndReturn(run func(responseWriter http.ResponseWriter, request *http.Request)) *MockHandler_GetRoutePolicyByID_Call {
+	_c.Run(run)
+	return _c
+}
+
+// ListAllChannels provides a mock function for the type MockHandler
+func (_mock *MockHandler) ListAllChannels(responseWriter http.ResponseWriter, request *http.Request) {
+	_mock.Called(responseWriter, request)
+	return
+}
+
+// MockHandler_ListAllChannels_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListAllChannels'
+type MockHandler_ListAllChannels_Call struct {
+	*mock.Call
+}
+
+// ListAllChannels is a helper method to define mock.On call
+//   - responseWriter http.ResponseWriter
+//   - request *http.Request
+func (_e *MockHandler_Expecter) ListAllChannels(responseWriter interface{}, request interface{}) *MockHandler_ListAllChannels_Call {
+	return &MockHandler_ListAllChannels_Call{Call: _e.mock.On("ListAllChannels", responseWriter, request)}
+}
+
+func (_c *MockHandler_ListAllChannels_Call) Run(run func(responseWriter http.ResponseWriter, request *http.Request)) *MockHandler_ListAllChannels_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 http.ResponseWriter
+		if args[0] != nil {
+			arg0 = args[0].(http.ResponseWriter)
+		}
+		var arg1 *http.Request
+		if args[1] != nil {
+			arg1 = args[1].(*http.Request)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockHandler_ListAllChannels_Call) Return() *MockHandler_ListAllChannels_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *MockHandler_ListAllChannels_Call) RunAndReturn(run func(responseWriter http.ResponseWriter, request *http.Request)) *MockHandler_ListAllChannels_Call {
+	_c.Run(run)
+	return _c
+}
+
+// ListChannels provides a mock function for the type MockHandler
+func (_mock *MockHandler) ListChannels(responseWriter http.ResponseWriter, request *http.Request) {
+	_mock.Called(responseWriter, request)
+	return
+}
+
+// MockHandler_ListChannels_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListChannels'
+type MockHandler_ListChannels_Call struct {
+	*mock.Call
+}
+
+// ListChannels is a helper method to define mock.On call
+//   - responseWriter http.ResponseWriter
+//   - request *http.Request
+func (_e *MockHandler_Expecter) ListChannels(responseWriter interface{}, request interface{}) *MockHandler_ListChannels_Call {
+	return &MockHandler_ListChannels_Call{Call: _e.mock.On("ListChannels", responseWriter, request)}
+}
+
+func (_c *MockHandler_ListChannels_Call) Run(run func(responseWriter http.ResponseWriter, request *http.Request)) *MockHandler_ListChannels_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 http.ResponseWriter
+		if args[0] != nil {
+			arg0 = args[0].(http.ResponseWriter)
+		}
+		var arg1 *http.Request
+		if args[1] != nil {
+			arg1 = args[1].(*http.Request)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockHandler_ListChannels_Call) Return() *MockHandler_ListChannels_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *MockHandler_ListChannels_Call) RunAndReturn(run func(responseWriter http.ResponseWriter, request *http.Request)) *MockHandler_ListChannels_Call {
+	_c.Run(run)
+	return _c
+}
+
+// TestReceiver provides a mock function for the type MockHandler
+func (_mock *MockHandler) TestReceiver(responseWriter http.ResponseWriter, request *http.Request) {
+	_mock.Called(responseWriter, request)
+	return
+}
+
+// MockHandler_TestReceiver_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'TestReceiver'
+type MockHandler_TestReceiver_Call struct {
+	*mock.Call
+}
+
+// TestReceiver is a helper method to define mock.On call
+//   - responseWriter http.ResponseWriter
+//   - request *http.Request
+func (_e *MockHandler_Expecter) TestReceiver(responseWriter interface{}, request interface{}) *MockHandler_TestReceiver_Call {
+	return &MockHandler_TestReceiver_Call{Call: _e.mock.On("TestReceiver", responseWriter, request)}
+}
+
+func (_c *MockHandler_TestReceiver_Call) Run(run func(responseWriter http.ResponseWriter, request *http.Request)) *MockHandler_TestReceiver_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 http.ResponseWriter
+		if args[0] != nil {
+			arg0 = args[0].(http.ResponseWriter)
+		}
+		var arg1 *http.Request
+		if args[1] != nil {
+			arg1 = args[1].(*http.Request)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockHandler_TestReceiver_Call) Return() *MockHandler_TestReceiver_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *MockHandler_TestReceiver_Call) RunAndReturn(run func(responseWriter http.ResponseWriter, request *http.Request)) *MockHandler_TestReceiver_Call {
+	_c.Run(run)
+	return _c
+}
+
+// UpdateChannelByID provides a mock function for the type MockHandler
+func (_mock *MockHandler) UpdateChannelByID(responseWriter http.ResponseWriter, request *http.Request) {
+	_mock.Called(responseWriter, request)
+	return
+}
+
+// MockHandler_UpdateChannelByID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateChannelByID'
+type MockHandler_UpdateChannelByID_Call struct {
+	*mock.Call
+}
+
+// UpdateChannelByID is a helper method to define mock.On call
+//   - responseWriter http.ResponseWriter
+//   - request *http.Request
+func (_e *MockHandler_Expecter) UpdateChannelByID(responseWriter interface{}, request interface{}) *MockHandler_UpdateChannelByID_Call {
+	return &MockHandler_UpdateChannelByID_Call{Call: _e.mock.On("UpdateChannelByID", responseWriter, request)}
+}
+
+func (_c *MockHandler_UpdateChannelByID_Call) Run(run func(responseWriter http.ResponseWriter, request *http.Request)) *MockHandler_UpdateChannelByID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 http.ResponseWriter
+		if args[0] != nil {
+			arg0 = args[0].(http.ResponseWriter)
+		}
+		var arg1 *http.Request
+		if args[1] != nil {
+			arg1 = args[1].(*http.Request)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockHandler_UpdateChannelByID_Call) Return() *MockHandler_UpdateChannelByID_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *MockHandler_UpdateChannelByID_Call) RunAndReturn(run func(responseWriter http.ResponseWriter, request *http.Request)) *MockHandler_UpdateChannelByID_Call {
+	_c.Run(run)
+	return _c
+}
+
+// UpdateRoutePolicy provides a mock function for the type MockHandler
+func (_mock *MockHandler) UpdateRoutePolicy(responseWriter http.ResponseWriter, request *http.Request) {
+	_mock.Called(responseWriter, request)
+	return
+}
+
+// MockHandler_UpdateRoutePolicy_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateRoutePolicy'
+type MockHandler_UpdateRoutePolicy_Call struct {
+	*mock.Call
+}
+
+// UpdateRoutePolicy is a helper method to define mock.On call
+//   - responseWriter http.ResponseWriter
+//   - request *http.Request
+func (_e *MockHandler_Expecter) UpdateRoutePolicy(responseWriter interface{}, request interface{}) *MockHandler_UpdateRoutePolicy_Call {
+	return &MockHandler_UpdateRoutePolicy_Call{Call: _e.mock.On("UpdateRoutePolicy", responseWriter, request)}
+}
+
+func (_c *MockHandler_UpdateRoutePolicy_Call) Run(run func(responseWriter http.ResponseWriter, request *http.Request)) *MockHandler_UpdateRoutePolicy_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 http.ResponseWriter
+		if args[0] != nil {
+			arg0 = args[0].(http.ResponseWriter)
+		}
+		var arg1 *http.Request
+		if args[1] != nil {
+			arg1 = args[1].(*http.Request)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockHandler_UpdateRoutePolicy_Call) Return() *MockHandler_UpdateRoutePolicy_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *MockHandler_UpdateRoutePolicy_Call) RunAndReturn(run func(responseWriter http.ResponseWriter, request *http.Request)) *MockHandler_UpdateRoutePolicy_Call {
+	_c.Run(run)
 	return _c
 }
