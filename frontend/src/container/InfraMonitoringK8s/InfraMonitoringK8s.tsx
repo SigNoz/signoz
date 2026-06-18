@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as Sentry from '@sentry/react';
-import { Button, CollapseProps } from 'antd';
-import { Collapse, Tooltip } from 'antd';
+import { Button, Collapse, CollapseProps, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
-import { QuickFiltersSource } from 'components/QuickFilters/types';
+import {
+	QuickFilterCheckboxUseFieldApis,
+	QuickFiltersSource,
+} from 'components/QuickFilters/types';
 import { InfraMonitoringEvents } from 'constants/events';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
@@ -23,6 +25,8 @@ import {
 	Workflow,
 } from '@signozhq/icons';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
+import { useGlobalTimeStore } from 'store/globalTime';
+import { NANO_SECOND_MULTIPLIER } from 'store/globalTime/utils';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { FeatureKeys } from '../../constants/features';
@@ -38,7 +42,9 @@ import {
 	GetPodsQuickFiltersConfig,
 	GetStatefulsetsQuickFiltersConfig,
 	GetVolumesQuickFiltersConfig,
+	InfraMonitoringEntity,
 	K8sCategories,
+	METRIC_NAMESPACE_BY_ENTITY,
 } from './constants';
 import K8sDaemonSetsList from './DaemonSets/K8sDaemonSetsList';
 import K8sDeploymentsList from './Deployments/K8sDeploymentsList';
@@ -98,6 +104,26 @@ export default function InfraMonitoringK8s(): JSX.Element {
 		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
 			?.active || false;
 
+	const selectedTime = useGlobalTimeStore((state) => state.selectedTime);
+	const getMinMaxTime = useGlobalTimeStore((state) => state.getMinMaxTime);
+	const { startUnixMilli, endUnixMilli } = useMemo(() => {
+		const { minTime, maxTime } = getMinMaxTime();
+		return {
+			startUnixMilli: Math.floor(minTime / NANO_SECOND_MULTIPLIER),
+			endUnixMilli: Math.floor(maxTime / NANO_SECOND_MULTIPLIER),
+		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [selectedTime, getMinMaxTime]);
+
+	const getUseFieldApis = useCallback(
+		(entity: InfraMonitoringEntity): QuickFilterCheckboxUseFieldApis => ({
+			metricNamespace: METRIC_NAMESPACE_BY_ENTITY[entity],
+			startUnixMilli,
+			endUnixMilli,
+		}),
+		[startUnixMilli, endUnixMilli],
+	);
+
 	const handleFilterChange = (query: Query): void => {
 		// update the current query with the new filters
 		// in infra monitoring k8s, we are using only one query, hence updating the 0th index of queryData
@@ -139,6 +165,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 					config={GetPodsQuickFiltersConfig(dotMetricsEnabled)}
 					handleFilterVisibilityChange={handleFilterVisibilityChange}
 					onFilterChange={handleFilterChange}
+					useFieldApis={getUseFieldApis(InfraMonitoringEntity.PODS)}
 				/>
 			),
 		},
@@ -155,6 +182,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 					config={GetNodesQuickFiltersConfig(dotMetricsEnabled)}
 					handleFilterVisibilityChange={handleFilterVisibilityChange}
 					onFilterChange={handleFilterChange}
+					useFieldApis={getUseFieldApis(InfraMonitoringEntity.NODES)}
 				/>
 			),
 		},
@@ -171,6 +199,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 					config={GetNamespaceQuickFiltersConfig(dotMetricsEnabled)}
 					handleFilterVisibilityChange={handleFilterVisibilityChange}
 					onFilterChange={handleFilterChange}
+					useFieldApis={getUseFieldApis(InfraMonitoringEntity.NAMESPACES)}
 				/>
 			),
 		},
@@ -187,6 +216,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 					config={GetClustersQuickFiltersConfig(dotMetricsEnabled)}
 					handleFilterVisibilityChange={handleFilterVisibilityChange}
 					onFilterChange={handleFilterChange}
+					useFieldApis={getUseFieldApis(InfraMonitoringEntity.CLUSTERS)}
 				/>
 			),
 		},
@@ -203,6 +233,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 					config={GetDeploymentsQuickFiltersConfig(dotMetricsEnabled)}
 					handleFilterVisibilityChange={handleFilterVisibilityChange}
 					onFilterChange={handleFilterChange}
+					useFieldApis={getUseFieldApis(InfraMonitoringEntity.DEPLOYMENTS)}
 				/>
 			),
 		},
@@ -219,6 +250,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 					config={GetJobsQuickFiltersConfig(dotMetricsEnabled)}
 					handleFilterVisibilityChange={handleFilterVisibilityChange}
 					onFilterChange={handleFilterChange}
+					useFieldApis={getUseFieldApis(InfraMonitoringEntity.JOBS)}
 				/>
 			),
 		},
@@ -235,6 +267,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 					config={GetDaemonsetsQuickFiltersConfig(dotMetricsEnabled)}
 					handleFilterVisibilityChange={handleFilterVisibilityChange}
 					onFilterChange={handleFilterChange}
+					useFieldApis={getUseFieldApis(InfraMonitoringEntity.DAEMONSETS)}
 				/>
 			),
 		},
@@ -251,6 +284,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 					config={GetStatefulsetsQuickFiltersConfig(dotMetricsEnabled)}
 					handleFilterVisibilityChange={handleFilterVisibilityChange}
 					onFilterChange={handleFilterChange}
+					useFieldApis={getUseFieldApis(InfraMonitoringEntity.STATEFULSETS)}
 				/>
 			),
 		},
@@ -267,6 +301,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 					config={GetVolumesQuickFiltersConfig(dotMetricsEnabled)}
 					handleFilterVisibilityChange={handleFilterVisibilityChange}
 					onFilterChange={handleFilterChange}
+					useFieldApis={getUseFieldApis(InfraMonitoringEntity.VOLUMES)}
 				/>
 			),
 		},

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
@@ -9,7 +9,10 @@ import { FeatureKeys } from 'constants/features';
 import K8sBaseDetails from 'container/InfraMonitoringK8s/Base/K8sBaseDetails';
 import { K8sBaseList } from 'container/InfraMonitoringK8s/Base/K8sBaseList';
 import { K8sBaseFilters } from 'container/InfraMonitoringK8s/Base/types';
-import { InfraMonitoringEntity } from 'container/InfraMonitoringK8s/constants';
+import {
+	InfraMonitoringEntity,
+	METRIC_NAMESPACE_BY_ENTITY,
+} from 'container/InfraMonitoringK8s/constants';
 import {
 	useInfraMonitoringFiltersK8s,
 	useInfraMonitoringPageListing,
@@ -17,6 +20,8 @@ import {
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { useAppContext } from 'providers/App/App';
+import { useGlobalTimeStore } from 'store/globalTime';
+import { NANO_SECOND_MULTIPLIER } from 'store/globalTime/utils';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import {
@@ -56,6 +61,17 @@ function Hosts(): JSX.Element {
 		query: currentQuery.builder.queryData[0],
 		entityVersion: '',
 	});
+
+	const selectedTime = useGlobalTimeStore((state) => state.selectedTime);
+	const getMinMaxTime = useGlobalTimeStore((state) => state.getMinMaxTime);
+	const { startUnixMilli, endUnixMilli } = useMemo(() => {
+		const { minTime, maxTime } = getMinMaxTime();
+		return {
+			startUnixMilli: Math.floor(minTime / NANO_SECOND_MULTIPLIER),
+			endUnixMilli: Math.floor(maxTime / NANO_SECOND_MULTIPLIER),
+		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [selectedTime, getMinMaxTime]);
 
 	// Track previous urlFilters to only sync when the value actually changes
 	// (not when handleChangeQueryData changes due to query updates)
@@ -155,6 +171,12 @@ function Hosts(): JSX.Element {
 								config={getHostsQuickFiltersConfig(dotMetricsEnabled)}
 								handleFilterVisibilityChange={handleFilterVisibilityChange}
 								onFilterChange={handleQuickFiltersChange}
+								useFieldApis={{
+									metricNamespace:
+										METRIC_NAMESPACE_BY_ENTITY[InfraMonitoringEntity.HOSTS],
+									startUnixMilli,
+									endUnixMilli,
+								}}
 							/>
 						</div>
 					)}
