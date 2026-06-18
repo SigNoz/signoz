@@ -169,11 +169,6 @@ func (s *ListVariableSpec) validate() error {
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "customAllValue cannot be set if allowAllValue is not set to true")
 	}
 	if s.DefaultValue != nil && len(s.DefaultValue.SliceValues) > 0 && !s.AllowMultiple {
-		if len(s.DefaultValue.SliceValues) == 1 {
-			s.DefaultValue.SingleValue = s.DefaultValue.SliceValues[0]
-			s.DefaultValue.SliceValues = nil
-			return nil
-		}
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "defaultValue cannot be a list if allowMultiple is not set to true")
 	}
 	return nil

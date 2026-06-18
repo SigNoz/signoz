@@ -234,9 +234,10 @@ func TestInvalidateListVariableCrossFields(t *testing.T) {
 		require.Contains(t, err.Error(), "allowMultiple")
 	})
 
-	t.Run("single-element list default coerces when allowMultiple false", func(t *testing.T) {
+	t.Run("single-element list default without allowMultiple", func(t *testing.T) {
 		_, err := unmarshalDashboard(listVar(`"allowAllValue": false, "allowMultiple": false, "defaultValue": ["only"],`))
-		require.NoError(t, err, "single-element list default should be coerced, not rejected")
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "allowMultiple")
 	})
 
 	t.Run("valid sort is accepted", func(t *testing.T) {
