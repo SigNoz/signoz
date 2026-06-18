@@ -1,0 +1,33 @@
+.header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	cursor: pointer;
+}
+
+.leftAction {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-3);
+}
+
+.title {
+	color: var(--l2-foreground);
+	font-size: 14px;
+	font-weight: 400;
+	line-height: 18px;
+	letter-spacing: -0.07px;
+	text-transform: capitalize;
+}
+
+.rightAction {
+	display: flex;
+	align-items: center;
+	min-width: 48px;
+}
+
+.clearAll {
+	font-size: 12px;
+	color: var(--accent-primary);
+	cursor: pointer;
+}
