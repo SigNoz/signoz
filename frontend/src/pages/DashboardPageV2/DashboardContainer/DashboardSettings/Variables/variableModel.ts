@@ -1,3 +1,4 @@
+import { sortBy } from 'lodash-es';
 import type { VariableDefaultValueDTO } from 'api/generated/services/sigNoz.schemas';
 
 /**
@@ -75,4 +76,27 @@ export function emptyVariableFormModel(): VariableFormModel {
 		dynamicAttribute: '',
 		dynamicSignal: 'traces',
 	};
+}
+
+/** Maps the dynamic-variable signal to the field-values API signal. */
+export function signalForApi(
+	signal: TelemetrySignal,
+): TelemetrySignal | undefined {
+	return signal;
+}
+
+type SortableValues = (string | number | boolean)[];
+
+/** Sorts option/preview values by the variable's chosen order (no-op when disabled). */
+export function sortValuesByOrder(
+	values: SortableValues,
+	sort: VariableSort,
+): SortableValues {
+	if (sort === 'ASC') {
+		return sortBy(values);
+	}
+	if (sort === 'DESC') {
+		return sortBy(values).reverse();
+	}
+	return values;
 }
