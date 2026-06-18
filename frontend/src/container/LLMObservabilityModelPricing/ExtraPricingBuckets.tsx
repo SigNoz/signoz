@@ -29,9 +29,13 @@ function ExtraPricingBuckets({
 
 	const addedBuckets = CACHE_BUCKETS.filter((b) => pricing[b.key] !== null);
 	const availableBuckets = CACHE_BUCKETS.filter((b) => pricing[b.key] === null);
+	const patchBucket = (key: CacheBucketKey, value: number | null): void => {
+		const patch: Partial<Pricing> = { [key]: value };
+		onChange(patch);
+	};
 
 	const addBucket = (key: CacheBucketKey): void => {
-		onChange({ [key]: 0 } as Partial<Pricing>);
+		patchBucket(key, 0);
 		// Close the picker once nothing is left to add.
 		if (availableBuckets.length <= 1) {
 			setIsPicking(false);
@@ -39,7 +43,7 @@ function ExtraPricingBuckets({
 	};
 
 	const removeBucket = (key: CacheBucketKey): void => {
-		onChange({ [key]: null } as Partial<Pricing>);
+		patchBucket(key, null);
 	};
 
 	return (
@@ -62,9 +66,7 @@ function ExtraPricingBuckets({
 						onChange={(e): void =>
 							// Empty coerces to 0 (not null) so editing never makes the row
 							// vanish — removal is explicit via the trash button.
-							onChange({
-								[bucket.key]: parsePricingAmount(e.target.value) ?? 0,
-							} as Partial<Pricing>)
+							patchBucket(bucket.key, parsePricingAmount(e.target.value) ?? 0)
 						}
 						testId={`drawer-${bucket.testId}-cost`}
 					/>
