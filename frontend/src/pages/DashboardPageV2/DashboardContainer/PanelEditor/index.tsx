@@ -206,7 +206,7 @@ function PanelEditorContainer({
 									panel={draft}
 									panelDef={panelDef}
 									data={data}
-									isLoading={isLoading}
+									isLoading={isLoading || isFetching}
 									error={error}
 									refetch={refetch}
 									onDragSelect={onDragSelect}
