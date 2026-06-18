@@ -37,7 +37,7 @@ import {
  */
 
 /** Which query-builder tab the perses queries belong to. */
-function deriveQueryType(
+export function deriveQueryType(
 	envelopes: Querybuildertypesv5QueryEnvelopeDTO[],
 ): EQueryType {
 	if (envelopes.some((e) => e.type === Querybuildertypesv5QueryTypeDTO.promql)) {
