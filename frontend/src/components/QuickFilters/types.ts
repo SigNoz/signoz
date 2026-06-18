@@ -51,6 +51,7 @@ export interface IQuickFiltersProps {
 	className?: string;
 	showFilterCollapse?: boolean;
 	showQueryName?: boolean;
+	useFieldApis?: QuickFilterCheckboxUseFieldApis;
 }
 
 export enum QuickFiltersSource {
