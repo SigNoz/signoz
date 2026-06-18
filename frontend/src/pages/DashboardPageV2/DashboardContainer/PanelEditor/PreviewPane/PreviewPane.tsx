@@ -1,16 +1,16 @@
-import { Spline } from '@signozhq/icons';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import { PanelMode } from 'container/DashboardContainer/visualization/panels/types';
-import QueryTypeTag from 'container/NewWidget/LeftContainer/QueryTypeTag';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import PanelBody from 'pages/DashboardPageV2/DashboardContainer/PanelsAndSectionsLayout/Panel/PanelBody/PanelBody';
 import type { RenderablePanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelDefinition';
+import { PANEL_KIND_TO_PANEL_TYPE } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelKind';
+import { getPanelQueryType } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/getPanelQueryType';
 import type {
 	PanelPagination,
 	PanelQueryData,
 } from 'pages/DashboardPageV2/DashboardContainer/queryV5/types';
-import { EQueryType } from 'types/common/dashboard';
 
+import PlotTag from './PlotTag';
 import styles from './PreviewPane.module.scss';
 
 interface PreviewPaneProps {
@@ -45,14 +45,20 @@ function PreviewPane({
 	onDragSelect,
 	pagination,
 }: PreviewPaneProps): JSX.Element {
+	const panelType = PANEL_KIND_TO_PANEL_TYPE[panel.spec.plugin.kind];
+	const queryType = getPanelQueryType(panel);
+
 	return (
 		<div className={styles.preview}>
 			<div className={styles.header}>
-				<div className={styles.queryType}>
-					<Spline size={14} />
-					Plotted with <QueryTypeTag queryType={EQueryType.QUERY_BUILDER} />
+				<PlotTag
+					queryType={queryType}
+					panelType={panelType}
+					className={styles.queryType}
+				/>
+				<div className={styles.dateTimeSelector}>
+					<DateTimeSelectionV2 showAutoRefresh hideShareModal />
 				</div>
-				<DateTimeSelectionV2 showAutoRefresh hideShareModal />
 			</div>
 			<div className={styles.container}>
 				<div className={styles.surface}>
