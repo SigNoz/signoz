@@ -32,6 +32,7 @@ To stay up to date on new installation platforms and patterns, please refer to [
 
 ```yaml
 apiVersion: v1alpha1
+kind: Installation
 metadata:
   name: signoz
 spec:
