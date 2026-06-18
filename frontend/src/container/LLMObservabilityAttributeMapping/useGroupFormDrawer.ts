@@ -3,7 +3,7 @@ import { useCallback, useState } from 'react';
 import { DraftGroup, GroupDraft, MapperDraftMode } from './types';
 import { EMPTY_GROUP_DRAFT, groupDraftFromNode } from './utils';
 
-interface UseGroupFormDrawerResult {
+interface UseGroupFormDrawer {
 	isOpen: boolean;
 	mode: MapperDraftMode;
 	draft: GroupDraft;
@@ -15,7 +15,7 @@ interface UseGroupFormDrawerResult {
 
 // Form state for the group drawer. Persistence is staged through the store,
 // so this hook only owns open/draft/mode.
-export function useGroupFormDrawer(): UseGroupFormDrawerResult {
+export function useGroupFormDrawer(): UseGroupFormDrawer {
 	const [isOpen, setIsOpen] = useState<boolean>(false);
 	const [mode, setMode] = useState<MapperDraftMode>('add');
 	const [draft, setDraft] = useState<GroupDraft>(EMPTY_GROUP_DRAFT);
