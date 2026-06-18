@@ -282,9 +282,6 @@ export function usePanelQuery({
 		data,
 		isLoading: response.isLoading,
 		isFetching: response.isFetching,
-		// Coerce undefined → null so the contract is `Error | null`, not
-		// `Error | null | undefined`. Consumers can rely on a single
-		// "no error" sentinel.
 		error: response.error ?? null,
 		refetch: response.refetch,
 		cancelQuery,
