@@ -472,3 +472,92 @@ func (store *store) DeletePreferencesForUser(ctx context.Context, orgID valuer.U
 	}
 	return nil
 }
+
+func (store *store) CreateDashboardView(ctx context.Context, view *dashboardtypes.DashboardView) error {
+	_, err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewInsert().
+		Model(view).
+		Exec(ctx)
+	if err != nil {
+		return store.sqlstore.WrapAlreadyExistsErrf(err, errors.CodeAlreadyExists, "dashboard view with id %s already exists", view.ID)
+	}
+	return nil
+}
+
+func (store *store) GetDashboardView(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.DashboardView, error) {
+	view := new(dashboardtypes.DashboardView)
+	err := store.
+		sqlstore.
+		BunDB().
+		NewSelect().
+		Model(view).
+		Where("id = ?", id).
+		Where("org_id = ?", orgID).
+		Scan(ctx)
+	if err != nil {
+		return nil, store.sqlstore.WrapNotFoundErrf(err, dashboardtypes.ErrCodeDashboardViewNotFound, "dashboard view with id %s doesn't exist", id)
+	}
+	return view, nil
+}
+
+func (store *store) ListDashboardViews(ctx context.Context, orgID valuer.UUID) ([]*dashboardtypes.DashboardView, error) {
+	views := make([]*dashboardtypes.DashboardView, 0)
+	err := store.
+		sqlstore.
+		BunDB().
+		NewSelect().
+		Model(&views).
+		Where("org_id = ?", orgID).
+		OrderExpr("updated_at DESC").
+		Scan(ctx)
+	if err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "couldn't list dashboard views")
+	}
+	return views, nil
+}
+
+func (store *store) UpdateDashboardView(ctx context.Context, view *dashboardtypes.DashboardView) error {
+	res, err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewUpdate().
+		Model(view).
+		WherePK().
+		Where("org_id = ?", view.OrgID).
+		Exec(ctx)
+	if err != nil {
+		return errors.WrapInternalf(err, errors.CodeInternal, "couldn't update dashboard view")
+	}
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return errors.WrapInternalf(err, errors.CodeInternal, "couldn't read dashboard view update result")
+	}
+	if rows == 0 {
+		return errors.Newf(errors.TypeNotFound, dashboardtypes.ErrCodeDashboardViewNotFound, "dashboard view with id %s doesn't exist", view.ID)
+	}
+	return nil
+}
+
+func (store *store) DeleteDashboardView(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {
+	res, err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewDelete().
+		Model(new(dashboardtypes.DashboardView)).
+		Where("id = ?", id).
+		Where("org_id = ?", orgID).
+		Exec(ctx)
+	if err != nil {
+		return errors.WrapInternalf(err, errors.CodeInternal, "couldn't delete dashboard view")
+	}
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return errors.WrapInternalf(err, errors.CodeInternal, "couldn't read dashboard view delete result")
+	}
+	if rows == 0 {
+		return errors.Newf(errors.TypeNotFound, dashboardtypes.ErrCodeDashboardViewNotFound, "dashboard view with id %s doesn't exist", id)
+	}
+	return nil
+}

@@ -10,7 +10,6 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux"
 	"go.opentelemetry.io/otel/propagation"
 
-	"github.com/SigNoz/signoz/pkg/cache/memorycache"
 	"github.com/SigNoz/signoz/pkg/errors"
 
 	"github.com/gorilla/handlers"
@@ -20,7 +19,6 @@ import (
 
 	"github.com/SigNoz/signoz/ee/query-service/app/api"
 	"github.com/SigNoz/signoz/ee/query-service/usage"
-	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/web"
@@ -59,25 +57,12 @@ type Server struct {
 
 // NewServer creates and initializes Server
 func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
-	cacheForTraceDetail, err := memorycache.New(context.TODO(), signoz.Instrumentation.ToProviderSettings(), cache.Config{
-		Provider: "memory",
-		Memory: cache.Memory{
-			NumCounters: 10 * 10000,
-			MaxCost:     1 << 27, // 128 MB
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-
 	reader := clickhouseReader.NewReader(
 		signoz.Instrumentation.Logger(),
 		signoz.SQLStore,
 		signoz.TelemetryStore,
 		signoz.Prometheus,
 		signoz.TelemetryStore.Cluster(),
-		config.Querier.FluxInterval,
-		cacheForTraceDetail,
 		signoz.Cache,
 		nil,
 	)

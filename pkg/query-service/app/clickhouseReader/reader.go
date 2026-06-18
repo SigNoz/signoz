@@ -18,7 +18,6 @@ import (
 	"github.com/uptrace/bun"
 
 	"github.com/SigNoz/signoz/pkg/prometheus"
-	"github.com/SigNoz/signoz/pkg/query-service/utils/timestamp"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -47,7 +46,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/resource"
 	"github.com/SigNoz/signoz/pkg/query-service/app/services"
 	"github.com/SigNoz/signoz/pkg/query-service/app/traces/smart"
-	"github.com/SigNoz/signoz/pkg/query-service/app/traces/tracedetail"
 	"github.com/SigNoz/signoz/pkg/query-service/common"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 
@@ -161,11 +159,9 @@ type ClickHouseReader struct {
 	traceResourceTableV3 string
 	traceSummaryTable    string
 
-	fluxIntervalForTraceDetail time.Duration
-	cache                      cache.Cache
-	cacheForTraceDetail        cache.Cache
-	metadataDB                 string
-	metadataTable              string
+	cache         cache.Cache
+	metadataDB    string
+	metadataTable string
 }
 
 // NewTraceReader returns a TraceReader for the database
@@ -175,8 +171,6 @@ func NewReader(
 	telemetryStore telemetrystore.TelemetryStore,
 	prometheus prometheus.Prometheus,
 	cluster string,
-	fluxIntervalForTraceDetail time.Duration,
-	cacheForTraceDetail cache.Cache,
 	cache cache.Cache,
 	options *Options,
 ) *ClickHouseReader {
@@ -190,45 +184,43 @@ func NewReader(
 	traceLocalTableName := options.primary.TraceLocalTableNameV3
 
 	return &ClickHouseReader{
-		db:                         telemetryStore.ClickhouseDB(),
-		logger:                     logger,
-		prometheus:                 prometheus,
-		sqlDB:                      sqlDB,
-		TraceDB:                    options.primary.TraceDB,
-		operationsTable:            options.primary.OperationsTable,
-		indexTable:                 options.primary.IndexTable,
-		errorTable:                 options.primary.ErrorTable,
-		usageExplorerTable:         options.primary.UsageExplorerTable,
-		durationTable:              options.primary.DurationTable,
-		SpansTable:                 options.primary.SpansTable,
-		spanAttributeTableV2:       options.primary.SpanAttributeTableV2,
-		spanAttributesKeysTable:    options.primary.SpanAttributeKeysTable,
-		dependencyGraphTable:       options.primary.DependencyGraphTable,
-		topLevelOperationsTable:    options.primary.TopLevelOperationsTable,
-		logsDB:                     options.primary.LogsDB,
-		logsTable:                  options.primary.LogsTable,
-		logsLocalTable:             options.primary.LogsLocalTable,
-		logsAttributeKeys:          options.primary.LogsAttributeKeysTable,
-		logsResourceKeys:           options.primary.LogsResourceKeysTable,
-		logsTagAttributeTableV2:    options.primary.LogsTagAttributeTableV2,
-		liveTailRefreshSeconds:     options.primary.LiveTailRefreshSeconds,
-		cluster:                    cluster,
-		queryProgressTracker:       queryprogress.NewQueryProgressTracker(logger),
-		logsTableV2:                options.primary.LogsTableV2,
-		logsLocalTableV2:           options.primary.LogsLocalTableV2,
-		logsResourceTableV2:        options.primary.LogsResourceTableV2,
-		logsResourceLocalTableV2:   options.primary.LogsResourceLocalTableV2,
-		logsTableName:              logsTableName,
-		logsLocalTableName:         logsLocalTableName,
-		traceLocalTableName:        traceLocalTableName,
-		traceTableName:             traceTableName,
-		traceResourceTableV3:       options.primary.TraceResourceTableV3,
-		traceSummaryTable:          options.primary.TraceSummaryTable,
-		fluxIntervalForTraceDetail: fluxIntervalForTraceDetail,
-		cache:                      cache,
-		cacheForTraceDetail:        cacheForTraceDetail,
-		metadataDB:                 options.primary.MetadataDB,
-		metadataTable:              options.primary.MetadataTable,
+		db:                       telemetryStore.ClickhouseDB(),
+		logger:                   logger,
+		prometheus:               prometheus,
+		sqlDB:                    sqlDB,
+		TraceDB:                  options.primary.TraceDB,
+		operationsTable:          options.primary.OperationsTable,
+		indexTable:               options.primary.IndexTable,
+		errorTable:               options.primary.ErrorTable,
+		usageExplorerTable:       options.primary.UsageExplorerTable,
+		durationTable:            options.primary.DurationTable,
+		SpansTable:               options.primary.SpansTable,
+		spanAttributeTableV2:     options.primary.SpanAttributeTableV2,
+		spanAttributesKeysTable:  options.primary.SpanAttributeKeysTable,
+		dependencyGraphTable:     options.primary.DependencyGraphTable,
+		topLevelOperationsTable:  options.primary.TopLevelOperationsTable,
+		logsDB:                   options.primary.LogsDB,
+		logsTable:                options.primary.LogsTable,
+		logsLocalTable:           options.primary.LogsLocalTable,
+		logsAttributeKeys:        options.primary.LogsAttributeKeysTable,
+		logsResourceKeys:         options.primary.LogsResourceKeysTable,
+		logsTagAttributeTableV2:  options.primary.LogsTagAttributeTableV2,
+		liveTailRefreshSeconds:   options.primary.LiveTailRefreshSeconds,
+		cluster:                  cluster,
+		queryProgressTracker:     queryprogress.NewQueryProgressTracker(logger),
+		logsTableV2:              options.primary.LogsTableV2,
+		logsLocalTableV2:         options.primary.LogsLocalTableV2,
+		logsResourceTableV2:      options.primary.LogsResourceTableV2,
+		logsResourceLocalTableV2: options.primary.LogsResourceLocalTableV2,
+		logsTableName:            logsTableName,
+		logsLocalTableName:       logsLocalTableName,
+		traceLocalTableName:      traceLocalTableName,
+		traceTableName:           traceTableName,
+		traceResourceTableV3:     options.primary.TraceResourceTableV3,
+		traceSummaryTable:        options.primary.TraceSummaryTable,
+		cache:                    cache,
+		metadataDB:               options.primary.MetadataDB,
+		metadataTable:            options.primary.MetadataTable,
 	}
 }
 
@@ -864,206 +856,6 @@ func (r *ClickHouseReader) GetUsage(ctx context.Context, queryParams *model.GetU
 	}
 
 	return &usageItems, nil
-}
-
-func (r *ClickHouseReader) GetSpansForTrace(ctx context.Context, traceID string, traceDetailsQuery string) ([]model.SpanItemV2, *model.ApiError) {
-
-	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
-		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalTraces.StringValue(),
-		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
-		instrumentationtypes.CodeFunctionName: "GetSpansForTrace",
-	})
-
-	var traceSummary model.TraceSummary
-	summaryQuery := fmt.Sprintf("SELECT trace_id, min(start) AS start, max(end) AS end, sum(num_spans) AS num_spans FROM %s.%s WHERE trace_id=$1 GROUP BY trace_id", r.TraceDB, r.traceSummaryTable)
-	err := r.db.QueryRow(ctx, summaryQuery, traceID).Scan(&traceSummary.TraceID, &traceSummary.Start, &traceSummary.End, &traceSummary.NumSpans)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return []model.SpanItemV2{}, nil
-		}
-		r.logger.Error("Error in processing trace summary sql query", errorsV2.Attr(err))
-		return nil, model.ExecutionError(fmt.Errorf("error in processing trace summary sql query: %w", err))
-	}
-
-	var searchScanResponses []model.SpanItemV2
-	queryStartTime := time.Now()
-	err = r.db.Select(ctx, &searchScanResponses, traceDetailsQuery, traceID, strconv.FormatInt(traceSummary.Start.Unix()-1800, 10), strconv.FormatInt(traceSummary.End.Unix(), 10))
-	r.logger.Info(traceDetailsQuery)
-	if err != nil {
-		r.logger.Error("Error in processing sql query", errorsV2.Attr(err))
-		return nil, model.ExecutionError(fmt.Errorf("error in processing trace data sql query: %w", err))
-	}
-	r.logger.Info("trace details query took: ", "duration", time.Since(queryStartTime), "traceID", traceID)
-
-	return searchScanResponses, nil
-}
-
-
-func (r *ClickHouseReader) GetFlamegraphSpansForTraceCache(ctx context.Context, orgID valuer.UUID, traceID string) (*model.GetFlamegraphSpansForTraceCache, error) {
-	cachedTraceData := new(model.GetFlamegraphSpansForTraceCache)
-	err := r.cacheForTraceDetail.Get(ctx, orgID, strings.Join([]string{"getFlamegraphSpansForTrace", traceID}, "-"), cachedTraceData)
-	if err != nil {
-		r.logger.Debug("error in retrieving getFlamegraphSpansForTrace cache", errorsV2.Attr(err), "traceID", traceID)
-		return nil, err
-	}
-
-	if time.Since(time.UnixMilli(int64(cachedTraceData.EndTime))) < r.fluxIntervalForTraceDetail {
-		r.logger.Info("the trace end time falls under the flux interval, skipping getFlamegraphSpansForTrace cache", "traceID", traceID)
-		return nil, errors.Errorf("the trace end time falls under the flux interval, skipping getFlamegraphSpansForTrace cache, traceID: %s", traceID)
-	}
-
-	r.logger.Info("cache is successfully hit, applying cache for getFlamegraphSpansForTrace", "traceID", traceID)
-	return cachedTraceData, nil
-}
-
-func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, orgID valuer.UUID, traceID string, req *model.GetFlamegraphSpansForTraceParams) (*model.GetFlamegraphSpansForTraceResponse, error) {
-	trace := new(model.GetFlamegraphSpansForTraceResponse)
-	var startTime, endTime, durationNano uint64
-	var spanIdToSpanNodeMap = map[string]*model.FlamegraphSpan{}
-	// map[traceID][level]span
-	var selectedSpans = [][]*model.FlamegraphSpan{}
-	var traceRoots []*model.FlamegraphSpan
-
-	// get the trace tree from cache!
-	cachedTraceData, err := r.GetFlamegraphSpansForTraceCache(ctx, orgID, traceID)
-
-	if err == nil {
-		startTime = cachedTraceData.StartTime
-		endTime = cachedTraceData.EndTime
-		durationNano = cachedTraceData.DurationNano
-		selectedSpans = cachedTraceData.SelectedSpans
-		traceRoots = cachedTraceData.TraceRoots
-	}
-
-	if err != nil {
-		r.logger.Info("cache miss for getFlamegraphSpansForTrace", "traceID", traceID)
-
-		selectCols := "timestamp, duration_nano, span_id, trace_id, has_error, links as references, resource_string_service$$name, name, events"
-		if len(req.SelectFields) > 0 {
-			selectCols += ", attributes_string, attributes_number, attributes_bool, resources_string"
-		}
-		flamegraphQuery := fmt.Sprintf("SELECT %s FROM %s.%s WHERE trace_id=$1 and ts_bucket_start>=$2 and ts_bucket_start<=$3 ORDER BY timestamp ASC, name ASC", selectCols, r.TraceDB, r.traceTableName)
-
-		searchScanResponses, err := r.GetSpansForTrace(ctx, traceID, flamegraphQuery)
-		if err != nil {
-			return nil, err
-		}
-		if len(searchScanResponses) == 0 {
-			return trace, nil
-		}
-
-		for _, item := range searchScanResponses {
-			ref := []model.OtelSpanRef{}
-			err := json.Unmarshal([]byte(item.References), &ref)
-			if err != nil {
-				r.logger.Error("Error unmarshalling references", errorsV2.Attr(err))
-				return nil, errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "getFlamegraphSpansForTrace: error in unmarshalling references %s", err.Error())
-			}
-
-			events := make([]model.Event, 0)
-			for _, event := range item.Events {
-				var eventMap model.Event
-				err = json.Unmarshal([]byte(event), &eventMap)
-				if err != nil {
-					r.logger.Error("Error unmarshalling events", errorsV2.Attr(err))
-					return nil, errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "getFlamegraphSpansForTrace: error in unmarshalling events %s", err.Error())
-				}
-				events = append(events, eventMap)
-			}
-
-			jsonItem := model.FlamegraphSpan{
-				SpanID:       item.SpanID,
-				TraceID:      item.TraceID,
-				ServiceName:  item.ServiceName,
-				Name:         item.Name,
-				DurationNano: item.DurationNano,
-				HasError:     item.HasError,
-				References:   ref,
-				Events:       events,
-				Children:     make([]*model.FlamegraphSpan, 0),
-			}
-
-			if len(req.SelectFields) > 0 {
-				jsonItem.SetRequestedFields(item, req.SelectFields)
-			}
-
-			// metadata calculation
-			startTimeUnixNano := uint64(item.TimeUnixNano.UnixNano())
-			if startTime == 0 || startTimeUnixNano < startTime {
-				startTime = startTimeUnixNano
-			}
-			if endTime == 0 || (startTimeUnixNano+jsonItem.DurationNano) > endTime {
-				endTime = (startTimeUnixNano + jsonItem.DurationNano)
-			}
-			if durationNano == 0 || jsonItem.DurationNano > durationNano {
-				durationNano = jsonItem.DurationNano
-			}
-
-			jsonItem.TimeUnixNano = uint64(item.TimeUnixNano.UnixNano() / 1000000)
-			spanIdToSpanNodeMap[jsonItem.SpanID] = &jsonItem
-		}
-
-		// traverse through the map and append each node to the children array of the parent node
-		// and add missing spans
-		for _, spanNode := range spanIdToSpanNodeMap {
-			hasParentSpanNode := false
-			for _, reference := range spanNode.References {
-				if reference.RefType == "CHILD_OF" && reference.SpanId != "" {
-					hasParentSpanNode = true
-					if parentNode, exists := spanIdToSpanNodeMap[reference.SpanId]; exists {
-						parentNode.Children = append(parentNode.Children, spanNode)
-					} else {
-						// insert the missing spans
-						missingSpan := model.FlamegraphSpan{
-							SpanID:       reference.SpanId,
-							TraceID:      spanNode.TraceID,
-							ServiceName:  "",
-							Name:         "Missing Span",
-							TimeUnixNano: spanNode.TimeUnixNano,
-							DurationNano: spanNode.DurationNano,
-							HasError:     false,
-							Events:       make([]model.Event, 0),
-							Children:     make([]*model.FlamegraphSpan, 0),
-						}
-						missingSpan.Children = append(missingSpan.Children, spanNode)
-						spanIdToSpanNodeMap[missingSpan.SpanID] = &missingSpan
-						traceRoots = append(traceRoots, &missingSpan)
-					}
-				}
-			}
-			if !hasParentSpanNode && !tracedetail.ContainsFlamegraphSpan(traceRoots, spanNode) {
-				traceRoots = append(traceRoots, spanNode)
-			}
-		}
-
-		selectedSpans = tracedetail.GetAllSpansForFlamegraph(traceRoots, spanIdToSpanNodeMap)
-
-		// TODO: set the trace data (model.GetFlamegraphSpansForTraceCache) in cache here
-		// removed existing cache usage since it was not getting used due to this bug https://github.com/SigNoz/engineering-pod/issues/4648
-		// and was causing out of memory issues https://github.com/SigNoz/engineering-pod/issues/4638
-	}
-
-	processingPostCache := time.Now()
-	selectedSpansForRequest := selectedSpans
-	clientLimit := min(req.Limit, tracedetail.MaxLimitWithoutSampling)
-	totalSpanCount := tracedetail.GetTotalSpanCount(selectedSpans)
-	if totalSpanCount > uint64(clientLimit) {
-		// using trace start and end time if boundary ts are set to zero (or not set)
-		boundaryStart := max(timestamp.MilliToNano(req.BoundaryStartTS), startTime)
-		boundaryEnd := timestamp.MilliToNano(req.BoundaryEndTS)
-		if boundaryEnd == 0 {
-			boundaryEnd = endTime
-		}
-
-		selectedSpansForRequest = tracedetail.GetSelectedSpansForFlamegraphForRequest(req.SelectedSpanID, selectedSpans, boundaryStart, boundaryEnd)
-	}
-	r.logger.Debug("getFlamegraphSpansForTrace: processing post cache", "duration", time.Since(processingPostCache), "traceID", traceID, "totalSpans", totalSpanCount, "limit", clientLimit)
-
-	trace.Spans = selectedSpansForRequest
-	trace.StartTimestampMillis = startTime / 1000000
-	trace.EndTimestampMillis = endTime / 1000000
-	trace.HasMore = totalSpanCount > uint64(clientLimit)
-	return trace, nil
 }
 
 func (r *ClickHouseReader) GetDependencyGraph(ctx context.Context, queryParams *model.GetServicesParams) (*[]model.ServiceMapDependencyResponseItem, error) {
