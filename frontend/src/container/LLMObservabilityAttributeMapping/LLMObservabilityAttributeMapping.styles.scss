@@ -36,19 +36,6 @@
 		}
 	}
 
-	.page-error {
-		padding: 12px 16px;
-		border-radius: 4px;
-		background: var(--bg-cherry-500-opacity-10, rgba(229, 72, 77, 0.1));
-		color: var(--bg-cherry-400);
-		font-size: 13px;
-	}
-
-	.page-footer {
-		font-size: 12px;
-		color: var(--bg-vanilla-400);
-	}
-
 	.am-table {
 		&__empty {
 			padding: 24px 12px;
