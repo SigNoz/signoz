@@ -16,7 +16,7 @@ import { DraftGroup } from './types';
 import { AttributeMappingStore } from './useAttributeMappingStore';
 import { conditionFiltersFromGroup } from './utils';
 
-const COLUMN_COUNT = 4;
+const COLUMN_COUNT = 3;
 
 interface MapperGroupsTableProps {
 	store: AttributeMappingStore;
