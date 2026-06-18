@@ -133,8 +133,8 @@ export const buildRulePayload = (
 	sourceId: draft.sourceId || undefined,
 	modelName: draft.modelName.trim(),
 	provider: draft.provider.trim(),
-	modelPattern:
-		draft.patterns.length > 0 ? draft.patterns : [draft.modelName.trim()],
+	// need to check this with BE onces
+	modelPattern: draft.patterns.length > 0 ? draft.patterns : [],
 	isOverride: draft.isOverride,
 	enabled: true,
 	unit: UnitDTO.per_million_tokens,

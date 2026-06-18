@@ -39,7 +39,6 @@ function PricingFields({
 						type="number"
 						step={0.01}
 						value={pricing.input ?? ''}
-						placeholder="1.00"
 						disabled={isReadOnly}
 						onChange={(e): void =>
 							onChange({ input: parsePricingAmount(e.target.value) })
@@ -56,7 +55,6 @@ function PricingFields({
 						type="number"
 						step={0.01}
 						value={pricing.output ?? ''}
-						placeholder="1.00"
 						disabled={isReadOnly}
 						onChange={(e): void =>
 							onChange({ output: parsePricingAmount(e.target.value) })

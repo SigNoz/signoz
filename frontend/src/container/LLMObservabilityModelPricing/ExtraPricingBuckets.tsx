@@ -78,7 +78,6 @@ function ExtraPricingBuckets({
 						min={0}
 						step={0.01}
 						value={pricing[bucket.key] ?? ''}
-						placeholder="1.00"
 						disabled={isReadOnly}
 						onChange={(e): void =>
 							// Clearing the field is allowed — the row stays mounted because
