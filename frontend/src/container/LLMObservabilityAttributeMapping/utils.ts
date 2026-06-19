@@ -71,7 +71,7 @@ export function createEmptySource(): SourceConfig {
 	return {
 		key: '',
 		context: FieldContext.attribute,
-		operation: MapperOperation.move,
+		operation: MapperOperation.copy,
 	};
 }
 

@@ -228,18 +228,20 @@ function MappersTable({ group, store }: MappersTableProps): JSX.Element {
 				Add mapping
 			</Button>
 
-			<MapperFormDrawer
-				isOpen={drawer.isOpen}
-				mode={drawer.mode}
-				draft={drawer.draft}
-				setDraft={drawer.setDraft}
-				onClose={drawer.close}
-				onSave={handleSave}
-				onDelete={handleDelete}
-				isSaving={false}
-				isDeleting={false}
-				saveError={null}
-			/>
+			{drawer.isOpen && (
+				<MapperFormDrawer
+					isOpen={drawer.isOpen}
+					mode={drawer.mode}
+					draft={drawer.draft}
+					setDraft={drawer.setDraft}
+					onClose={drawer.close}
+					onSave={handleSave}
+					onDelete={handleDelete}
+					isSaving={false}
+					isDeleting={false}
+					saveError={null}
+				/>
+			)}
 		</div>
 	);
 }

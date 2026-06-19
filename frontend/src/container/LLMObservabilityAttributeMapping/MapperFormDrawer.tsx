@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { DrawerWrapper } from '@signozhq/ui/drawer';
 import { SelectSimple } from '@signozhq/ui/select';
@@ -69,18 +69,9 @@ function MapperFormDrawer({
 	// the API and excluded from the draft), so dnd-kit can track rows reliably
 	// even though sources are stored as a plain array. Re-seeded each time the
 	// drawer opens; kept in lockstep with the sources array on add/remove/drag.
-	const [rowIds, setRowIds] = useState<string[]>([]);
-	const wasOpen = useRef(false);
-
-	useEffect(() => {
-		if (isOpen && !wasOpen.current) {
-			setRowIds(draft.sources.map(() => uuid()));
-		}
-		wasOpen.current = isOpen;
-		// Only re-seed on the closed→open transition.
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [isOpen]);
-
+	const [rowIds, setRowIds] = useState<string[]>(() =>
+		draft.sources.map(() => uuid()),
+	);
 	const sourceIds = draft.sources.map(
 		(_, index) => rowIds[index] ?? `pending-${index}`,
 	);
