@@ -33,7 +33,16 @@ func (storable StorableDashboard) IsV2() bool {
 	return version == SchemaVersion
 }
 
-func (storable StorableDashboard) ConvertV1ToV2() (*DashboardV2, error) {
+func (storable StorableDashboard) ConvertV1ToV2() (result *DashboardV2, err error) {
+	// Legacy v1 data can be arbitrarily malformed. The accessors degrade
+	// gracefully, but recover from any unforeseen panic so one bad dashboard
+	// surfaces as an error (to be logged and skipped) rather than crashing the run.
+	defer func() {
+		if r := recover(); r != nil {
+			result, err = nil, errors.Newf(errors.TypeInternal, ErrCodeDashboardInvalidData, "panic converting dashboard %s: %v", storable.ID, r)
+		}
+	}()
+
 	if storable.IsV2() {
 		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardInvalidData, "dashboard %s is already in %s schema", storable.ID, SchemaVersion)
 	}
