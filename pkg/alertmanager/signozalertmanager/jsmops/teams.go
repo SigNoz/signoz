@@ -54,7 +54,7 @@ func fetchTeams(ctx context.Context, accessToken, cloudID string) ([]Team, error
 	req.Header.Set("Authorization", "Bearer "+accessToken)
 	req.Header.Set("Accept", "application/json")
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}

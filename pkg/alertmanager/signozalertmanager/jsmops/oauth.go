@@ -22,6 +22,9 @@ import (
 	"github.com/gorilla/mux"
 )
 
+// httpClient is used for all outbound Atlassian calls.
+var httpClient = &http.Client{Timeout: 30 * time.Second}
+
 type Handler struct {
 	alertmanager alertmanager.Alertmanager
 }
@@ -160,7 +163,8 @@ type tokenResponse struct {
 
 // OAuthCallback completes the Atlassian OAuth flow.
 func (h *Handler) OAuthCallback(rw http.ResponseWriter, req *http.Request) {
-	ctx := req.Context()
+	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
+	defer cancel()
 	code := req.URL.Query().Get("code")
 	state := req.URL.Query().Get("state")
 	errorParam := req.URL.Query().Get("error")
@@ -189,13 +193,13 @@ func (h *Handler) OAuthCallback(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	tokens, err := exchangeCodeForTokens(oauth, code)
+	tokens, err := exchangeCodeForTokens(ctx, oauth, code)
 	if err != nil {
 		h.bridgeError(rw, openerOrigin, "token_exchange_failed")
 		return
 	}
 
-	cloudID, siteURL, err := fetchSiteForJSM(tokens.AccessToken)
+	cloudID, siteURL, err := fetchSiteForJSM(ctx, tokens.AccessToken)
 	if err != nil {
 		h.bridgeError(rw, openerOrigin, "site_lookup_failed")
 		return
@@ -369,7 +373,7 @@ func (h *Handler) teamsForConnection(ctx context.Context, orgID, connectionID st
 		return teams, err
 	}
 
-	tokens, err := RefreshAccessToken(h.alertmanager.JSMOpsOAuthConfig(), conn.RefreshToken)
+	tokens, err := RefreshAccessToken(ctx, h.alertmanager.JSMOpsOAuthConfig(), conn.RefreshToken)
 	if err != nil {
 		return nil, err
 	}
@@ -406,8 +410,14 @@ func (h *Handler) teamsForChannel(ctx context.Context, orgID, channelID string) 
 }
 
 // postTokenRequest performs an OAuth token endpoint exchange and parses the response.
-func postTokenRequest(data url.Values) (*tokenResponse, error) {
-	resp, err := http.PostForm("https://auth.atlassian.com/oauth/token", data)
+func postTokenRequest(ctx context.Context, data url.Values) (*tokenResponse, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, "https://auth.atlassian.com/oauth/token", strings.NewReader(data.Encode()))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -426,7 +436,7 @@ func postTokenRequest(data url.Values) (*tokenResponse, error) {
 	return &tokens, nil
 }
 
-func exchangeCodeForTokens(oauth alertmanager.JSMOpsOAuthConfig, code string) (*tokenResponse, error) {
+func exchangeCodeForTokens(ctx context.Context, oauth alertmanager.JSMOpsOAuthConfig, code string) (*tokenResponse, error) {
 	data := url.Values{}
 	data.Set("grant_type", "authorization_code")
 	data.Set("client_id", oauth.ClientID)
@@ -434,7 +444,7 @@ func exchangeCodeForTokens(oauth alertmanager.JSMOpsOAuthConfig, code string) (*
 	data.Set("code", code)
 	data.Set("redirect_uri", oauth.RedirectURI)
 
-	return postTokenRequest(data)
+	return postTokenRequest(ctx, data)
 }
 
 type accessibleResource struct {
@@ -443,15 +453,15 @@ type accessibleResource struct {
 }
 
 // fetchSiteForJSM returns the cloud ID and URL of the Atlassian site.
-func fetchSiteForJSM(accessToken string) (cloudID string, siteURL string, err error) {
-	req, err := http.NewRequest("GET", "https://api.atlassian.com/oauth/token/accessible-resources", nil)
+func fetchSiteForJSM(ctx context.Context, accessToken string) (cloudID string, siteURL string, err error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://api.atlassian.com/oauth/token/accessible-resources", nil)
 	if err != nil {
 		return "", "", err
 	}
 	req.Header.Set("Authorization", "Bearer "+accessToken)
 	req.Header.Set("Accept", "application/json")
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return "", "", err
 	}
@@ -477,7 +487,7 @@ func fetchSiteForJSM(accessToken string) (cloudID string, siteURL string, err er
 }
 
 // RefreshAccessToken exchanges a refresh token for a new access token.
-func RefreshAccessToken(oauth alertmanager.JSMOpsOAuthConfig, refreshToken string) (*tokenResponse, error) {
+func RefreshAccessToken(ctx context.Context, oauth alertmanager.JSMOpsOAuthConfig, refreshToken string) (*tokenResponse, error) {
 	if !oauth.Enabled() {
 		return nil, fmt.Errorf("JSM Ops OAuth is not configured")
 	}
@@ -488,5 +498,5 @@ func RefreshAccessToken(oauth alertmanager.JSMOpsOAuthConfig, refreshToken strin
 	data.Set("client_secret", oauth.ClientSecret)
 	data.Set("refresh_token", refreshToken)
 
-	return postTokenRequest(data)
+	return postTokenRequest(ctx, data)
 }

@@ -42,7 +42,7 @@ func (r *connectionResolver) GetTokens(ctx context.Context, orgID, connectionID 
 
 // Refresh exchanges staleRefreshToken for a fresh access/refresh pair at Atlassian.
 func (r *connectionResolver) Refresh(ctx context.Context, staleRefreshToken string) (string, string, error) {
-	tokens, err := RefreshAccessToken(r.oauth, staleRefreshToken)
+	tokens, err := RefreshAccessToken(ctx, r.oauth, staleRefreshToken)
 	if err != nil {
 		return "", "", err
 	}

@@ -47,7 +47,3 @@ export const opsGeniePriorityDefaultValue =
 
 export const pagerDutySeverityTextDefaultValue =
 	'{{ (index .Alerts 0).Labels.severity }}';
-
-export const jsmOpsMessageDefaultValue = `[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}`;
-
-export const jsmOpsDescriptionDefaultValue = `{{ range .Alerts -}} Alert: {{ .Labels.alertname }}{{ if .Labels.severity }} Severity: {{ .Labels.severity }}{{ end }}{{ if .Annotations.summary }} Summary: {{ .Annotations.summary }}{{ end }}{{ if .Annotations.description }} Description: {{ .Annotations.description }}{{ end }} {{ end }}`;

@@ -37,9 +37,9 @@ type JSMOpsConfig struct {
 
 // JSMOpsOAuthConfig holds the Atlassian OAuth 2.0 app credentials.
 type JSMOpsOAuthConfig struct {
-	ClientID     string `mapstructure:"client_id" yaml:"client_id"`
-	ClientSecret string `mapstructure:"client_secret" yaml:"client_secret"`
-	RedirectURI  string `mapstructure:"redirect_uri" yaml:"redirect_uri"`
+	ClientID             string   `mapstructure:"client_id" yaml:"client_id"`
+	ClientSecret         string   `mapstructure:"client_secret" yaml:"client_secret"`
+	RedirectURI          string   `mapstructure:"redirect_uri" yaml:"redirect_uri"`
 	AllowedOpenerOrigins []string `mapstructure:"allowed_opener_origins" yaml:"allowed_opener_origins"`
 }
 
