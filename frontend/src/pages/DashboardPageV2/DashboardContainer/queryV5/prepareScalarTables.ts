@@ -45,15 +45,41 @@ export function extractAggregationsPerQuery(
 }
 
 /**
+ * Names of the request's clickhouse_sql queries. These have no aggregation
+ * metadata, but their value columns carry the user's real SQL alias in the
+ * response `col.name` — so columns of these queries are named/keyed by that
+ * alias rather than collapsing onto the query name. Builder/formula/promql use
+ * placeholder names (`__result`/`__result_N`) and are excluded here.
+ */
+export function extractClickhouseQueryNames(
+	requestPayload: Querybuildertypesv5QueryRangeRequestDTO | undefined,
+): Set<string> {
+	const names = new Set<string>();
+	(requestPayload?.compositeQuery?.queries ?? []).forEach((envelope) => {
+		if (envelope.type !== Querybuildertypesv5QueryTypeDTO.clickhouse_sql) {
+			return;
+		}
+		const spec = envelope.spec as { name?: string };
+		if (spec?.name) {
+			names.add(spec.name);
+		}
+	});
+	return names;
+}
+
+/**
  * Column display name. Group columns keep their field name; aggregation
  * columns resolve alias > legend > expression > queryName — with the legend
  * skipped when the query has multiple aggregations, because one legend can't
- * label several value columns. (Port of V1 `getColName`.)
+ * label several value columns. clickhouse_sql columns have no aggregation
+ * metadata, so their value columns are named by the real SQL alias the
+ * response carries in `col.name`. (Port of V1 `getColName`.)
  */
 function getColName(
 	col: Querybuildertypesv5ColumnDescriptorDTO,
 	legendMap: Record<string, string>,
 	aggregationsPerQuery: AggregationsPerQuery,
+	clickhouseQueryNames: Set<string>,
 ): string {
 	if (col.columnType === 'group') {
 		return col.name;
@@ -74,6 +100,13 @@ function getColName(
 		return alias || expression || queryName;
 	}
 
+	// clickhouse_sql value columns carry their real SQL alias in col.name — use
+	// it so each value column keeps its own header instead of collapsing onto
+	// the query name. Formulas/promql use placeholder names, so they fall back
+	// to legend || queryName.
+	if (clickhouseQueryNames.has(queryName)) {
+		return col.name;
+	}
 	return legend || queryName;
 }
 
@@ -85,15 +118,23 @@ function getColName(
 function getColId(
 	col: Querybuildertypesv5ColumnDescriptorDTO,
 	aggregationsPerQuery: AggregationsPerQuery,
+	clickhouseQueryNames: Set<string>,
 ): string {
 	if (col.columnType === 'group') {
 		return col.name;
 	}
 
 	const queryName = col.queryName ?? '';
+
+	// clickhouse_sql value columns are keyed by their real SQL alias so multiple
+	// value columns stay unique instead of all collapsing onto the query name
+	// (which would overwrite every cell in the row with the last column's value).
+	if (clickhouseQueryNames.has(queryName)) {
+		return col.name;
+	}
+
 	const aggregations = aggregationsPerQuery[queryName];
 	const expression = aggregations?.[col.aggregationIndex ?? 0]?.expression || '';
-
 	if ((aggregations?.length || 0) > 1 && expression) {
 		return `${queryName}.${expression}`;
 	}
@@ -119,6 +160,7 @@ export function prepareScalarTables({
 	requestPayload,
 }: PrepareScalarTablesArgs): PanelTable[] {
 	const aggregationsPerQuery = extractAggregationsPerQuery(requestPayload);
+	const clickhouseQueryNames = extractClickhouseQueryNames(requestPayload);
 
 	return results.map((scalarData) => {
 		if (!scalarData) {
@@ -132,10 +174,10 @@ export function prepareScalarTables({
 		const queryName = scalarData.columns?.[0]?.queryName ?? '';
 
 		const columns: PanelTableColumn[] = (scalarData.columns ?? []).map((col) => ({
-			name: getColName(col, legendMap, aggregationsPerQuery),
+			name: getColName(col, legendMap, aggregationsPerQuery, clickhouseQueryNames),
 			queryName: col.queryName ?? '',
 			isValueColumn: col.columnType === 'aggregation',
-			id: getColId(col, aggregationsPerQuery),
+			id: getColId(col, aggregationsPerQuery, clickhouseQueryNames),
 		}));
 
 		const rows = (scalarData.data ?? []).map((dataRow) => {
