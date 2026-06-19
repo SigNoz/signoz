@@ -37,6 +37,18 @@ func NewTransaction(relation Relation, object coretypes.Object) (*Transaction, e
 	return &Transaction{ID: valuer.GenerateUUID(), Relation: relation, Object: object}, nil
 }
 
+func NewTransactionGroup(relation Relation, objectGroup coretypes.ObjectGroup) (*TransactionGroup, error) {
+	if err := coretypes.ErrIfVerbNotValidForResource(relation.Verb, objectGroup.Resource); err != nil {
+		return nil, err
+	}
+
+	if _, err := coretypes.NewObjectsFromObjectGroup(objectGroup); err != nil {
+		return nil, err
+	}
+
+	return &TransactionGroup{Relation: relation, ObjectGroup: objectGroup}, nil
+}
+
 func NewGettableTransaction(results []*TransactionWithAuthorization) []*GettableTransaction {
 	gettableTransactions := make([]*GettableTransaction, len(results))
 	for i, result := range results {
@@ -67,6 +79,26 @@ func (transaction *Transaction) UnmarshalJSON(data []byte) error {
 	}
 
 	*transaction = *txn
+	return nil
+}
+
+func (transactionGroup *TransactionGroup) UnmarshalJSON(data []byte) error {
+	var shadow = struct {
+		Relation    Relation
+		ObjectGroup coretypes.ObjectGroup
+	}{}
+
+	err := json.Unmarshal(data, &shadow)
+	if err != nil {
+		return err
+	}
+
+	group, err := NewTransactionGroup(shadow.Relation, shadow.ObjectGroup)
+	if err != nil {
+		return err
+	}
+
+	*transactionGroup = *group
 	return nil
 }
 

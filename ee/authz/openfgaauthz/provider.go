@@ -135,30 +135,6 @@ func (provider *provider) Get(ctx context.Context, orgID valuer.UUID, id valuer.
 	return provider.pkgAuthzService.Get(ctx, orgID, id)
 }
 
-func (provider *provider) GetWithTransactionGroups(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*authtypes.RoleWithTransactionGroups, error) {
-	_, err := provider.licensing.GetActive(ctx, orgID)
-	if err != nil {
-		return nil, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
-	}
-
-	role, err := provider.store.Get(ctx, orgID, id)
-	if err != nil {
-		return nil, err
-	}
-
-	tuples, err := provider.readAllTuplesForRole(ctx, role.Name, orgID)
-	if err != nil {
-		return nil, err
-	}
-
-	transactionGroups, err := authtypes.NewTransactionGroupsFromTuples(tuples)
-	if err != nil {
-		return nil, err
-	}
-
-	return authtypes.MakeRoleWithTransactionGroups(role, transactionGroups), nil
-}
-
 func (provider *provider) GetByOrgIDAndName(ctx context.Context, orgID valuer.UUID, name string) (*authtypes.Role, error) {
 	return provider.pkgAuthzService.GetByOrgIDAndName(ctx, orgID, name)
 }
@@ -251,6 +227,30 @@ func (provider *provider) GetOrCreate(ctx context.Context, orgID valuer.UUID, ro
 	return role, nil
 }
 
+func (provider *provider) GetWithTransactionGroups(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*authtypes.RoleWithTransactionGroups, error) {
+	_, err := provider.licensing.GetActive(ctx, orgID)
+	if err != nil {
+		return nil, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
+	}
+
+	role, err := provider.store.Get(ctx, orgID, id)
+	if err != nil {
+		return nil, err
+	}
+
+	tuples, err := provider.readAllTuplesForRole(ctx, role.Name, orgID)
+	if err != nil {
+		return nil, err
+	}
+
+	transactionGroups, err := authtypes.NewTransactionGroupsFromTuples(tuples)
+	if err != nil {
+		return nil, err
+	}
+
+	return authtypes.MakeRoleWithTransactionGroups(role, transactionGroups), nil
+}
+
 func (provider *provider) GetObjects(ctx context.Context, orgID valuer.UUID, id valuer.UUID, relation authtypes.Relation) ([]*coretypes.Object, error) {
 	_, err := provider.licensing.GetActive(ctx, orgID)
 	if err != nil {
@@ -291,17 +291,17 @@ func (provider *provider) Update(ctx context.Context, orgID valuer.UUID, role *a
 		return errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
 	}
 
-	desired, err := authtypes.NewTuplesFromTransactionGroups(role.Name, orgID, role.TransactionGroups)
+	desiredTuples, err := authtypes.NewTuplesFromTransactionGroups(role.Name, orgID, role.TransactionGroups)
 	if err != nil {
 		return err
 	}
 
-	current, err := provider.readAllTuplesForRole(ctx, role.Name, orgID)
+	currentTuples, err := provider.readAllTuplesForRole(ctx, role.Name, orgID)
 	if err != nil {
 		return err
 	}
 
-	additions, deletions := diffTuples(current, desired)
+	additions, deletions := diffTuples(currentTuples, desiredTuples)
 	if err := provider.store.Update(ctx, orgID, role.Role); err != nil {
 		return err
 	}

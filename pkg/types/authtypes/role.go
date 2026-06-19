@@ -145,7 +145,7 @@ func (role *Role) PatchMetadata(description string) error {
 	return nil
 }
 
-func (role *RoleWithTransactionGroups) UpdateRole(description string, transactionGroups []*TransactionGroup) error {
+func (role *RoleWithTransactionGroups) Update(description string, transactionGroups []*TransactionGroup) error {
 	err := role.ErrIfManaged()
 	if err != nil {
 		return err

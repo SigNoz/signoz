@@ -117,6 +117,7 @@ function CreateRoleModal({
 				const data: AuthtypesPostableRoleDTO = {
 					name: values.name,
 					...(values.description ? { description: values.description } : {}),
+					transactionGroups: [],
 				};
 				createRole({ data });
 			}

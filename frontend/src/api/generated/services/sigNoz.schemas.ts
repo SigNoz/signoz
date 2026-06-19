@@ -2247,9 +2247,9 @@ export interface AuthtypesPostableRoleDTO {
 	 */
 	name: string;
 	/**
-	 * @type array,null
+	 * @type array
 	 */
-	transactionGroups?: AuthtypesTransactionGroupDTO[] | null;
+	transactionGroups: AuthtypesTransactionGroupDTO[];
 }
 
 export interface AuthtypesPostableRotateTokenDTO {
@@ -2357,7 +2357,7 @@ export interface AuthtypesUpdatableRoleDTO {
 	/**
 	 * @type array
 	 */
-	transactionGroups?: AuthtypesTransactionGroupDTO[];
+	transactionGroups: AuthtypesTransactionGroupDTO[];
 }
 
 export interface AuthtypesUserRoleDTO {

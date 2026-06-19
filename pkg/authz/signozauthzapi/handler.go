@@ -118,7 +118,7 @@ func (handler *handler) Update(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	roleWithTransactionGroups := authtypes.MakeRoleWithTransactionGroups(role, nil)
-	err = roleWithTransactionGroups.UpdateRole(req.Description, req.TransactionGroups)
+	err = roleWithTransactionGroups.Update(req.Description, req.TransactionGroups)
 	if err != nil {
 		render.Error(rw, err)
 		return

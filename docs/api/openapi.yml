@@ -650,10 +650,10 @@ components:
         transactionGroups:
           items:
             $ref: '#/components/schemas/AuthtypesTransactionGroup'
-          nullable: true
           type: array
       required:
       - name
+      - transactionGroups
       type: object
     AuthtypesPostableRotateToken:
       properties:
@@ -794,6 +794,8 @@ components:
           items:
             $ref: '#/components/schemas/AuthtypesTransactionGroup'
           type: array
+      required:
+      - transactionGroups
       type: object
     AuthtypesUserRole:
       properties:
