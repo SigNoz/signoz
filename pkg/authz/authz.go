@@ -30,29 +30,17 @@ type AuthZ interface {
 	// Write accepts the insertion tuples and the deletion tuples.
 	Write(context.Context, []*openfgav1.TupleKey, []*openfgav1.TupleKey) error
 
-	// Lists the selectors for objects assigned to subject (s) with relation (r) on resource (s)
-	ListObjects(context.Context, string, authtypes.Relation, coretypes.Type) ([]*coretypes.Object, error)
-
 	// Creates the role.
-	Create(context.Context, valuer.UUID, *authtypes.Role) error
+	Create(context.Context, valuer.UUID, *authtypes.RoleWithTransactionGroups) error
 
 	// Gets the role if it exists or creates one.
 	GetOrCreate(context.Context, valuer.UUID, *authtypes.Role) (*authtypes.Role, error)
 
-	// Gets the objects associated with the given role and relation.
-	GetObjects(context.Context, valuer.UUID, valuer.UUID, authtypes.Relation) ([]*coretypes.Object, error)
-
-	// Patches the role.
-	Patch(context.Context, valuer.UUID, *authtypes.Role) error
-
-	// Patches the objects in authorization server associated with the given role and relation
-	PatchObjects(context.Context, valuer.UUID, string, authtypes.Relation, []*coretypes.Object, []*coretypes.Object) error
-
-	// Deletes the role and tuples in authorization server.
-	Delete(context.Context, valuer.UUID, valuer.UUID) error
-
 	// Gets the role
 	Get(context.Context, valuer.UUID, valuer.UUID) (*authtypes.Role, error)
+
+	// Gets the role with transaction groups
+	GetWithTransactionGroups(context.Context, valuer.UUID, valuer.UUID) (*authtypes.RoleWithTransactionGroups, error)
 
 	// Gets the role by org_id and name
 	GetByOrgIDAndName(context.Context, valuer.UUID, string) (*authtypes.Role, error)
@@ -65,6 +53,12 @@ type AuthZ interface {
 
 	//  Lists all the roles for the organization filtered by ids
 	ListByOrgIDAndIDs(context.Context, valuer.UUID, []valuer.UUID) ([]*authtypes.Role, error)
+
+	// Deletes the role and tuples in authorization server.
+	Delete(context.Context, valuer.UUID, valuer.UUID) error
+
+	// Updates the role and tuples in authorization server.
+	Update(context.Context, valuer.UUID, *authtypes.RoleWithTransactionGroups) error
 
 	// Grants a role to the subject based on role name.
 	Grant(context.Context, valuer.UUID, []string, string) error
@@ -83,6 +77,18 @@ type AuthZ interface {
 
 	// ReadTuples reads tuples from the authorization server matching the given tuple key filter.
 	ReadTuples(context.Context, *openfgav1.ReadRequestTupleKey) ([]*openfgav1.TupleKey, error)
+
+	// Lists the selectors for objects assigned to subject (s) with relation (r) on resource (s)
+	ListObjects(context.Context, string, authtypes.Relation, coretypes.Type) ([]*coretypes.Object, error)
+
+	// Patches the role.
+	Patch(context.Context, valuer.UUID, *authtypes.Role) error
+
+	// Patches the objects in authorization server associated with the given role and relation
+	PatchObjects(context.Context, valuer.UUID, string, authtypes.Relation, []*coretypes.Object, []*coretypes.Object) error
+
+	// Gets the objects associated with the given role and relation.
+	GetObjects(context.Context, valuer.UUID, valuer.UUID, authtypes.Relation) ([]*coretypes.Object, error)
 }
 
 // OnBeforeRoleDelete is a callback invoked before a role is deleted.
@@ -93,15 +99,17 @@ type Handler interface {
 
 	Get(http.ResponseWriter, *http.Request)
 
-	GetObjects(http.ResponseWriter, *http.Request)
-
 	List(http.ResponseWriter, *http.Request)
+
+	Update(http.ResponseWriter, *http.Request)
+
+	Delete(http.ResponseWriter, *http.Request)
+
+	Check(http.ResponseWriter, *http.Request)
+
+	GetObjects(http.ResponseWriter, *http.Request)
 
 	Patch(http.ResponseWriter, *http.Request)
 
 	PatchObjects(http.ResponseWriter, *http.Request)
-
-	Check(http.ResponseWriter, *http.Request)
-
-	Delete(http.ResponseWriter, *http.Request)
 }

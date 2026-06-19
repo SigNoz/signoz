@@ -13,6 +13,11 @@ type Transaction struct {
 	Object   coretypes.Object `json:"object" required:"true"`
 }
 
+type TransactionGroup struct {
+	Relation    Relation              `json:"relation" required:"true"`
+	ObjectGroup coretypes.ObjectGroup `json:"objectGroup" required:"true"`
+}
+
 type GettableTransaction struct {
 	Relation   Relation         `json:"relation" required:"true"`
 	Object     coretypes.Object `json:"object" required:"true"`

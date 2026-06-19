@@ -135,6 +135,30 @@ func (provider *provider) Get(ctx context.Context, orgID valuer.UUID, id valuer.
 	return provider.pkgAuthzService.Get(ctx, orgID, id)
 }
 
+func (provider *provider) GetWithTransactionGroups(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*authtypes.RoleWithTransactionGroups, error) {
+	_, err := provider.licensing.GetActive(ctx, orgID)
+	if err != nil {
+		return nil, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
+	}
+
+	role, err := provider.store.Get(ctx, orgID, id)
+	if err != nil {
+		return nil, err
+	}
+
+	tuples, err := provider.readAllTuplesForRole(ctx, role.Name, orgID)
+	if err != nil {
+		return nil, err
+	}
+
+	transactionGroups, err := authtypes.NewTransactionGroupsFromTuples(tuples)
+	if err != nil {
+		return nil, err
+	}
+
+	return authtypes.MakeRoleWithTransactionGroups(role, transactionGroups), nil
+}
+
 func (provider *provider) GetByOrgIDAndName(ctx context.Context, orgID valuer.UUID, name string) (*authtypes.Role, error) {
 	return provider.pkgAuthzService.GetByOrgIDAndName(ctx, orgID, name)
 }
@@ -179,13 +203,27 @@ func (provider *provider) CreateManagedUserRoleTransactions(ctx context.Context,
 	return provider.Write(ctx, tuples, nil)
 }
 
-func (provider *provider) Create(ctx context.Context, orgID valuer.UUID, role *authtypes.Role) error {
+func (provider *provider) Create(ctx context.Context, orgID valuer.UUID, role *authtypes.RoleWithTransactionGroups) error {
 	_, err := provider.licensing.GetActive(ctx, orgID)
 	if err != nil {
 		return errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
 	}
 
-	return provider.store.Create(ctx, role)
+	tuples, err := authtypes.NewTuplesFromTransactionGroups(role.Name, orgID, role.TransactionGroups)
+	if err != nil {
+		return err
+	}
+
+	err = provider.chunkedTuplesWrite(ctx, tuples, nil)
+	if err != nil {
+		return err
+	}
+
+	if err := provider.store.Create(ctx, role.Role); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (provider *provider) GetOrCreate(ctx context.Context, orgID valuer.UUID, role *authtypes.Role) (*authtypes.Role, error) {
@@ -245,6 +283,30 @@ func (provider *provider) GetObjects(ctx context.Context, orgID valuer.UUID, id 
 	}
 
 	return objects, nil
+}
+
+func (provider *provider) Update(ctx context.Context, orgID valuer.UUID, role *authtypes.RoleWithTransactionGroups) error {
+	_, err := provider.licensing.GetActive(ctx, orgID)
+	if err != nil {
+		return errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
+	}
+
+	desired, err := authtypes.NewTuplesFromTransactionGroups(role.Name, orgID, role.TransactionGroups)
+	if err != nil {
+		return err
+	}
+
+	current, err := provider.readAllTuplesForRole(ctx, role.Name, orgID)
+	if err != nil {
+		return err
+	}
+
+	additions, deletions := diffTuples(current, desired)
+	if err := provider.store.Update(ctx, orgID, role.Role); err != nil {
+		return err
+	}
+
+	return provider.chunkedTuplesWrite(ctx, additions, deletions)
 }
 
 func (provider *provider) Patch(ctx context.Context, orgID valuer.UUID, role *authtypes.Role) error {
@@ -361,7 +423,7 @@ func (provider *provider) getManagedRoleTransactionTuples(orgID valuer.UUID) []*
 	return tuples
 }
 
-func (provider *provider) deleteTuples(ctx context.Context, roleName string, orgID valuer.UUID) error {
+func (provider *provider) readAllTuplesForRole(ctx context.Context, roleName string, orgID valuer.UUID) ([]*openfgav1.TupleKey, error) {
 	subject := authtypes.MustNewSubject(coretypes.NewResourceRole(), roleName, orgID, &coretypes.VerbAssignee)
 
 	tuples := make([]*openfgav1.TupleKey, 0)
@@ -371,26 +433,76 @@ func (provider *provider) deleteTuples(ctx context.Context, roleName string, org
 			Object: objectType.StringValue() + ":",
 		})
 		if err != nil {
-			return err
+			return nil, err
 		}
 		tuples = append(tuples, typeTuples...)
+	}
+
+	return tuples, nil
+}
+
+func (provider *provider) chunkedTuplesWrite(ctx context.Context, additions, deletions []*openfgav1.TupleKey) error {
+	maxTuplesPerWrite := provider.config.OpenFGA.MaxTuplesPerWrite
+
+	for idx := 0; idx < len(additions); idx += maxTuplesPerWrite {
+		end := idx + maxTuplesPerWrite
+		if end > len(additions) {
+			end = len(additions)
+		}
+		if err := provider.Write(ctx, additions[idx:end], nil); err != nil {
+			return err
+		}
+	}
+
+	for idx := 0; idx < len(deletions); idx += maxTuplesPerWrite {
+		end := idx + maxTuplesPerWrite
+		if end > len(deletions) {
+			end = len(deletions)
+		}
+		if err := provider.Write(ctx, nil, deletions[idx:end]); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func diffTuples(current, desired []*openfgav1.TupleKey) (additions, deletions []*openfgav1.TupleKey) {
+	key := func(tuple *openfgav1.TupleKey) string {
+		return tuple.GetUser() + "|" + tuple.GetRelation() + "|" + tuple.GetObject()
+	}
+
+	currentKeys := make(map[string]struct{}, len(current))
+	for _, tuple := range current {
+		currentKeys[key(tuple)] = struct{}{}
+	}
+
+	desiredKeys := make(map[string]struct{}, len(desired))
+	for _, tuple := range desired {
+		desiredKeys[key(tuple)] = struct{}{}
+		if _, ok := currentKeys[key(tuple)]; !ok {
+			additions = append(additions, tuple)
+		}
+	}
+
+	for _, tuple := range current {
+		if _, ok := desiredKeys[key(tuple)]; !ok {
+			deletions = append(deletions, tuple)
+		}
+	}
+
+	return additions, deletions
+}
+
+func (provider *provider) deleteTuples(ctx context.Context, roleName string, orgID valuer.UUID) error {
+	tuples, err := provider.readAllTuplesForRole(ctx, roleName, orgID)
+	if err != nil {
+		return err
 	}
 
 	if len(tuples) == 0 {
 		return nil
 	}
 
-	for idx := 0; idx < len(tuples); idx += provider.config.OpenFGA.MaxTuplesPerWrite {
-		end := idx + provider.config.OpenFGA.MaxTuplesPerWrite
-		if end > len(tuples) {
-			end = len(tuples)
-		}
-
-		err := provider.Write(ctx, nil, tuples[idx:end])
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
+	return provider.chunkedTuplesWrite(ctx, nil, tuples)
 }

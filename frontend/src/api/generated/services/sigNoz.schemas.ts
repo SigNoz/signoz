@@ -2224,6 +2224,19 @@ export interface AuthtypesPostableEmailPasswordSessionDTO {
 	password?: string;
 }
 
+export interface CoretypesObjectGroupDTO {
+	resource: CoretypesResourceRefDTO;
+	/**
+	 * @type array
+	 */
+	selectors: string[];
+}
+
+export interface AuthtypesTransactionGroupDTO {
+	objectGroup: CoretypesObjectGroupDTO;
+	relation: AuthtypesRelationDTO;
+}
+
 export interface AuthtypesPostableRoleDTO {
 	/**
 	 * @type string
@@ -2233,6 +2246,10 @@ export interface AuthtypesPostableRoleDTO {
 	 * @type string
 	 */
 	name: string;
+	/**
+	 * @type array,null
+	 */
+	transactionGroups?: AuthtypesTransactionGroupDTO[] | null;
 }
 
 export interface AuthtypesPostableRotateTokenDTO {
@@ -2275,6 +2292,43 @@ export interface AuthtypesRoleDTO {
 	updatedAt?: string;
 }
 
+export interface AuthtypesRoleWithTransactionGroupsDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: string;
+	/**
+	 * @type string
+	 */
+	description: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	orgId: string;
+	/**
+	 * @type array
+	 */
+	transactionGroups: AuthtypesTransactionGroupDTO[];
+	/**
+	 * @type string
+	 */
+	type: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: string;
+}
+
 export interface AuthtypesSessionContextDTO {
 	/**
 	 * @type boolean
@@ -2293,6 +2347,17 @@ export interface AuthtypesTransactionDTO {
 
 export interface AuthtypesUpdatableAuthDomainDTO {
 	config?: AuthtypesAuthDomainConfigDTO;
+}
+
+export interface AuthtypesUpdatableRoleDTO {
+	/**
+	 * @type string
+	 */
+	description?: string;
+	/**
+	 * @type array
+	 */
+	transactionGroups?: AuthtypesTransactionGroupDTO[];
 }
 
 export interface AuthtypesUserRoleDTO {
@@ -3063,14 +3128,6 @@ export interface CommonJSONRefDTO {
 	 * @type string
 	 */
 	$ref?: string;
-}
-
-export interface CoretypesObjectGroupDTO {
-	resource: CoretypesResourceRefDTO;
-	/**
-	 * @type array
-	 */
-	selectors: string[];
 }
 
 export interface CoretypesPatchableObjectsDTO {
@@ -9559,7 +9616,7 @@ export type GetRolePathParameters = {
 	id: string;
 };
 export type GetRole200 = {
-	data: AuthtypesRoleDTO;
+	data: AuthtypesRoleWithTransactionGroupsDTO;
 	/**
 	 * @type string
 	 */
@@ -9567,6 +9624,9 @@ export type GetRole200 = {
 };
 
 export type PatchRolePathParameters = {
+	id: string;
+};
+export type UpdateRolePathParameters = {
 	id: string;
 };
 export type GetObjectsPathParameters = {
