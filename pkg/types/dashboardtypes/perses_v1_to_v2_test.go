@@ -7,6 +7,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	qb "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/perses/spec/go/dashboard"
 	"github.com/perses/spec/go/dashboard/variable"
@@ -693,7 +694,7 @@ func TestConvertV1VariablesAllTypes(t *testing.T) {
 			"name":                      "deployment.environment",
 			"type":                      "DYNAMIC",
 			"dynamicVariablesAttribute": "deployment.environment",
-			"dynamicVariablesSource":    "traces",
+			"dynamicVariablesSource":    "Traces",
 			"order":                     float64(0),
 		},
 		"u-4": map[string]any{
@@ -713,6 +714,9 @@ func TestConvertV1VariablesAllTypes(t *testing.T) {
 	require.True(t, ok)
 	assert.Equal(t, "deployment.environment", dyn.Name)
 	assert.Equal(t, VariableKindDynamic, dyn.Plugin.Kind)
+	dynSpec, ok := dyn.Plugin.Spec.(*DynamicVariableSpec)
+	require.True(t, ok)
+	assert.Equal(t, telemetrytypes.SignalTraces, dynSpec.Signal)
 
 	q, ok := vars[1].Spec.(*ListVariableSpec)
 	require.True(t, ok)

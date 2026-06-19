@@ -2,6 +2,7 @@ package dashboardtypes
 
 import (
 	"encoding/json"
+	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	qb "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -233,9 +234,14 @@ func parseBuilderQuerySpec(rawSpec any, signal telemetrytypes.Signal) any {
 	return parsed
 }
 
+// signalFromDataSource maps a v1 data-source string to a v5 signal. Casing
+// varies by source: builder queries store lowercase ("traces"), while variable
+// `dynamicVariablesSource` stores capitalized ("Traces"), so match
+// case-insensitively. Unknown values (e.g. "All telemetry") map to the zero
+// Signal.
 func signalFromDataSource(raw any) telemetrytypes.Signal {
 	s, _ := raw.(string)
-	switch s {
+	switch strings.ToLower(s) {
 	case "traces":
 		return telemetrytypes.SignalTraces
 	case "logs":
