@@ -21476,15 +21476,15 @@ paths:
       summary: Put profile in Zeus for a deployment.
       tags:
       - zeus
-  /api/v3/metrics/{metric_name}/dashboards:
+  /api/v3/metrics/dashboards:
     get:
       deprecated: false
       description: This endpoint returns associated v2 dashboards for a specified
         metric
       operationId: GetMetricDashboardsV2
       parameters:
-      - in: path
-        name: metric_name
+      - in: query
+        name: metricName
         required: true
         schema:
           type: string

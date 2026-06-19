@@ -10857,9 +10857,14 @@ export type GetHosts200 = {
 	status: string;
 };
 
-export type GetMetricDashboardsV2PathParameters = {
+export type GetMetricDashboardsV2Params = {
+	/**
+	 * @type string
+	 * @description undefined
+	 */
 	metricName: string;
 };
+
 export type GetMetricDashboardsV2200 = {
 	data: MetricsexplorertypesMetricDashboardsResponseDTO;
 	/**

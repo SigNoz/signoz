@@ -1215,7 +1215,8 @@ def test_dashboard_v2_get_by_metric_name(
     d4_id = response.json()["data"]["id"]
 
     response = requests.get(
-        signoz.self.host_configs["8080"].get(f"/api/v3/metrics/{target_metric}/dashboards"),
+        signoz.self.host_configs["8080"].get("/api/v3/metrics/dashboards"),
+        params={"metricName": target_metric},
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
