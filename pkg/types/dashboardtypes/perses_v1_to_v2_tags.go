@@ -26,10 +26,13 @@ import (
 // separator (or one side of the split is empty).
 const defaultV1TagKey = "tag"
 
-func convertV1TagsForOrg(orgID valuer.UUID, raw any) []*tagtypes.Tag {
+func convertV1TagsForOrg(orgID valuer.UUID, raw any) ([]*tagtypes.Tag, error) {
+	if raw == nil {
+		return nil, nil
+	}
 	rawSlice, ok := raw.([]any)
 	if !ok {
-		return nil
+		return nil, malformedV1FieldErr("tags", raw)
 	}
 	seen := make(map[string]struct{}, len(rawSlice))
 	out := make([]*tagtypes.Tag, 0, len(rawSlice))
@@ -49,7 +52,7 @@ func convertV1TagsForOrg(orgID valuer.UUID, raw any) []*tagtypes.Tag {
 		seen[dedupKey] = struct{}{}
 		out = append(out, tagtypes.NewTag(orgID, coretypes.KindDashboard, key, value))
 	}
-	return out
+	return out, nil
 }
 
 // normalizeV1Tag derives a (key, value) pair from one v1 tag string. After

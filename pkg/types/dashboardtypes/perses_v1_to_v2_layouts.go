@@ -17,10 +17,21 @@ import (
 // panels below it until the next row; panels above the first row form an unnamed
 // grid with no section header. Collapsed rows are the exception — their children
 // live in panelMap[rowID].widgets, not `layout`.
-func convertV1Layouts(data StorableDashboardData) []Layout {
+func convertV1Layouts(data StorableDashboardData) ([]Layout, error) {
+	if raw := data["layout"]; raw != nil {
+		if _, ok := raw.([]any); !ok {
+			return nil, malformedV1FieldErr("layout", raw)
+		}
+	}
+	if raw := data["panelMap"]; raw != nil {
+		if _, ok := raw.(map[string]any); !ok {
+			return nil, malformedV1FieldErr("panelMap", raw)
+		}
+	}
+
 	layout := readSliceOfMaps(data["layout"])
 	if len(layout) == 0 {
-		return nil
+		return nil, nil
 	}
 
 	rows := extractRowsAndCollapsedWidgets(data["widgets"], data["panelMap"])
@@ -71,7 +82,7 @@ func convertV1Layouts(data StorableDashboardData) []Layout {
 	for _, sec := range sectionsWithHeader {
 		out = append(out, buildV2GridLayout(sec.row, sec.items))
 	}
-	return out
+	return out, nil
 }
 
 type rowInfo struct {

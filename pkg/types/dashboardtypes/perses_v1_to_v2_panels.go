@@ -17,10 +17,13 @@ import (
 // convertV1Panels walks the v1 `widgets` array and produces v2 panels keyed by
 // the v1 widget id. WidgetRow entries (panelTypes == "row") are dropped here
 // and consumed by convertV1Layouts as section headers.
-func convertV1Panels(raw any) map[string]*Panel {
+func convertV1Panels(raw any) (map[string]*Panel, error) {
+	if raw == nil {
+		return nil, nil
+	}
 	rawSlice, ok := raw.([]any)
 	if !ok {
-		return nil
+		return nil, malformedV1FieldErr("widgets", raw)
 	}
 	panels := make(map[string]*Panel, len(rawSlice))
 	for _, item := range rawSlice {
@@ -58,7 +61,7 @@ func convertV1Panels(raw any) map[string]*Panel {
 		}
 		panels[id] = panel
 	}
-	return panels
+	return panels, nil
 }
 
 func convertGraphWidget(w map[string]any) *Panel {

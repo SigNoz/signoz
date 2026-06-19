@@ -19,10 +19,16 @@ import (
 //	CUSTOM   → ListVariable + signoz/CustomVariable
 //	DYNAMIC  → ListVariable + signoz/DynamicVariable
 //	TEXTBOX  → TextVariable
-func convertV1Variables(raw any) []Variable {
+func convertV1Variables(raw any) ([]Variable, error) {
+	if raw == nil {
+		return nil, nil
+	}
 	rawMap, ok := raw.(map[string]any)
-	if !ok || len(rawMap) == 0 {
-		return nil
+	if !ok {
+		return nil, malformedV1FieldErr("variables", raw)
+	}
+	if len(rawMap) == 0 {
+		return nil, nil
 	}
 	type ordered struct {
 		key string
@@ -53,7 +59,7 @@ func convertV1Variables(raw any) []Variable {
 		}
 		out = append(out, v)
 	}
-	return out
+	return out, nil
 }
 
 func convertV1Variable(v map[string]any) (Variable, bool) {

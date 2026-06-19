@@ -47,16 +47,29 @@ func (storable StorableDashboard) ConvertV1ToV2() (result *DashboardV2, err erro
 		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardInvalidData, "dashboard %s is already in %s schema", storable.ID, SchemaVersion)
 	}
 
+	// Each converter errors only if its field is present with the wrong type (a
+	// corrupt dashboard); absent/empty fields convert to nothing. Panels runs
+	// before Layouts so a malformed `widgets` is caught before Layouts reads it.
+	variables, err := convertV1Variables(storable.Data["variables"])
+	if err != nil {
+		return nil, err
+	}
+	panels, err := convertV1Panels(storable.Data["widgets"])
+	if err != nil {
+		return nil, err
+	}
+	layouts, err := convertV1Layouts(storable.Data)
+	if err != nil {
+		return nil, err
+	}
+	tags, err := convertV1TagsForOrg(storable.OrgID, storable.Data["tags"])
+	if err != nil {
+		return nil, err
+	}
+
 	image, _ := storable.Data["image"].(string)
 	title, _ := storable.Data["title"].(string)
 	description, _ := storable.Data["description"].(string)
-
-	spec := DashboardSpec{
-		Display:   Display{Name: title, Description: description},
-		Variables: convertV1Variables(storable.Data["variables"]),
-		Panels:    convertV1Panels(storable.Data["widgets"]),
-		Layouts:   convertV1Layouts(storable.Data),
-	}
 
 	return &DashboardV2{
 		Identifiable:  storable.Identifiable,
@@ -70,7 +83,18 @@ func (storable StorableDashboard) ConvertV1ToV2() (result *DashboardV2, err erro
 			Image:         image,
 		},
 		Name: generateDashboardName(title),
-		Tags: convertV1TagsForOrg(storable.OrgID, storable.Data["tags"]),
-		Spec: spec,
+		Tags: tags,
+		Spec: DashboardSpec{
+			Display:   Display{Name: title, Description: description},
+			Variables: variables,
+			Panels:    panels,
+			Layouts:   layouts,
+		},
 	}, nil
+}
+
+// malformedV1FieldErr reports a v1 field present with the wrong type (a corrupt
+// dashboard), as distinct from an absent field, which converts to nothing.
+func malformedV1FieldErr(field string, raw any) error {
+	return errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardInvalidData, "v1 dashboard field %q has unexpected type %T", field, raw)
 }

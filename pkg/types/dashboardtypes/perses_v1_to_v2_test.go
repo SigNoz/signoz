@@ -121,7 +121,8 @@ func TestConvertV1TagsForOrg(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.scenario, func(t *testing.T) {
-			tags := convertV1TagsForOrg(orgID, tc.rawTags)
+			tags, err := convertV1TagsForOrg(orgID, tc.rawTags)
+			require.NoError(t, err)
 			require.Len(t, tags, len(tc.expectedTags))
 			for i, expected := range tc.expectedTags {
 				assert.Equal(t, expected.key, tags[i].Key)
@@ -148,7 +149,8 @@ func TestMoldedV1TagsPassValidation(t *testing.T) {
 		"weird*&^chars:val#1",
 	}
 
-	tags := convertV1TagsForOrg(orgID, raw)
+	tags, err := convertV1TagsForOrg(orgID, raw)
+	require.NoError(t, err)
 	require.NotEmpty(t, tags)
 	for _, tag := range tags {
 		_, _, err := tagtypes.ValidatePostableTag(tagtypes.PostableTag{Key: tag.Key, Value: tag.Value})
@@ -662,7 +664,8 @@ func TestConvertV1LayoutsRootOnly(t *testing.T) {
 		},
 	}
 
-	layouts := convertV1Layouts(data)
+	layouts, err := convertV1Layouts(data)
+	require.NoError(t, err)
 	require.Len(t, layouts, 1)
 	assert.Equal(t, dashboard.KindGridLayout, layouts[0].Kind)
 
@@ -696,7 +699,8 @@ func TestConvertV1LayoutsWithCollapsedSection(t *testing.T) {
 		},
 	}
 
-	layouts := convertV1Layouts(data)
+	layouts, err := convertV1Layouts(data)
+	require.NoError(t, err)
 	require.Len(t, layouts, 2, "one root grid (p-2) + one section grid (row-1 with p-1)")
 
 	rootSpec, ok := layouts[0].Spec.(*dashboard.GridLayoutSpec)
@@ -739,7 +743,8 @@ func TestConvertV1LayoutsExpandedSectionsNoPanelMap(t *testing.T) {
 		},
 	}
 
-	layouts := convertV1Layouts(data)
+	layouts, err := convertV1Layouts(data)
+	require.NoError(t, err)
 	require.Len(t, layouts, 2, "two row sections, no root grid")
 
 	s1, ok := layouts[0].Spec.(*dashboard.GridLayoutSpec)
@@ -767,7 +772,9 @@ func TestConvertV1LayoutsExpandedSectionsNoPanelMap(t *testing.T) {
 }
 
 func TestConvertV1LayoutsEmpty(t *testing.T) {
-	assert.Nil(t, convertV1Layouts(StorableDashboardData{}))
+	layouts, err := convertV1Layouts(StorableDashboardData{})
+	require.NoError(t, err)
+	assert.Nil(t, layouts)
 }
 
 // ══════════════════════════════════════════════
@@ -808,7 +815,8 @@ func TestConvertV1VariablesAllTypes(t *testing.T) {
 		},
 	}
 
-	vars := convertV1Variables(raw)
+	vars, err := convertV1Variables(raw)
+	require.NoError(t, err)
 	require.Len(t, vars, 4)
 
 	// Ordered by `order` ascending: u-3 (0), u-1 (1), u-2 (2), u-4 (3)
@@ -850,7 +858,8 @@ func TestConvertV1VariablesSkipsUnnamedAndUnknownTypes(t *testing.T) {
 		"u-2": map[string]any{"name": "ok", "type": "WHATEVER"},
 		"u-3": map[string]any{"name": "good", "type": "CUSTOM", "customValue": "a"},
 	}
-	vars := convertV1Variables(raw)
+	vars, err := convertV1Variables(raw)
+	require.NoError(t, err)
 	require.Len(t, vars, 1)
 	spec := vars[0].Spec.(*ListVariableSpec)
 	assert.Equal(t, "good", spec.Name)
@@ -865,7 +874,8 @@ func TestConvertV1VariablesDefaultFromSelectedSlice(t *testing.T) {
 			"selectedValue": []any{"foo", "", "bar"},
 		},
 	}
-	vars := convertV1Variables(raw)
+	vars, err := convertV1Variables(raw)
+	require.NoError(t, err)
 	require.Len(t, vars, 1)
 	spec := vars[0].Spec.(*ListVariableSpec)
 	require.NotNil(t, spec.DefaultValue)
