@@ -1654,13 +1654,12 @@ components:
       type: object
     ConfigJsmOpsConfig:
       properties:
-        api_token:
+        connection_id:
           type: string
         cloud_id:
+          readOnly: true
           type: string
         description:
-          type: string
-        email:
           type: string
         message:
           type: string

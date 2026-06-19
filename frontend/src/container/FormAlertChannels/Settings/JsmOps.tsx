@@ -1,14 +1,73 @@
-import React from 'react';
+import { Dispatch, SetStateAction, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Form, Input } from 'antd';
+import { Button, Form, Input, Select, Space } from 'antd';
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 
 import { JsmOpsChannel } from '../../CreateAlertChannels/config';
+import { useJsmOpsConnect } from './useJsmOpsConnect';
+import { useJsmOpsConnections } from './useJsmOpsConnections';
+import { useJsmOpsTeams } from './useJsmOpsTeams';
 
 const { TextArea } = Input;
 
+// Responders are stored as a comma-separated string of team ids
+function splitResponders(value?: string): string[] {
+	return value
+		? value
+				.split(',')
+				.map((id) => id.trim())
+				.filter((id) => id)
+		: [];
+}
+
+function getChannelIdFromPath(): string | undefined {
+	const match = window.location.pathname.match(
+		/\/settings\/channels\/edit\/([^/]+)/,
+	);
+	return match ? match[1] : undefined;
+}
+
 function JsmOps({ setSelectedConfig }: JsmOpsProps): JSX.Element {
 	const { t } = useTranslation('channels');
+	const form = Form.useFormInstance();
+
+	const savedConnectionId: string | undefined =
+		form.getFieldValue('connection_id');
+	const savedResponders: string | undefined = form.getFieldValue('responders');
+
+	const [connectionId, setConnectionId] = useState<string | undefined>(
+		savedConnectionId,
+	);
+	const [responders, setResponders] = useState<string[]>(
+		splitResponders(savedResponders),
+	);
+
+	const channelId = useMemo(getChannelIdFromPath, []);
+
+	const {
+		connections,
+		isLoading: connectionsLoading,
+		refetch: refetchConnections,
+	} = useJsmOpsConnections();
+
+	const { connect, isConnecting } = useJsmOpsConnect((connection) => {
+		setConnectionId(connection.id);
+		setSelectedConfig((value) => ({
+			...value,
+			connection_id: connection.id,
+		}));
+		void refetchConnections();
+	});
+
+	const {
+		teams,
+		isLoading: teamsLoading,
+		isError: teamsError,
+	} = useJsmOpsTeams({
+		connectionId,
+		channelId,
+		enabled: Boolean(connectionId),
+	});
 
 	const handleInputChange =
 		(field: string) =>
@@ -19,15 +78,30 @@ function JsmOps({ setSelectedConfig }: JsmOpsProps): JSX.Element {
 			}));
 		};
 
+	const handleConnectionChange = (id: string): void => {
+		setConnectionId(id);
+		setSelectedConfig((value) => ({
+			...value,
+			connection_id: id,
+		}));
+	};
+
+	const handleRespondersChange = (ids: string[]): void => {
+		setResponders(ids);
+		setSelectedConfig((value) => ({
+			...value,
+			responders: ids.join(', '),
+		}));
+	};
+
 	return (
 		<>
 			<Form.Item
-				name="email"
-				label={t('field_jsmops_email')}
+				label={t('field_jsmops_oauth')}
 				tooltip={{
 					title: (
 						<MarkdownRenderer
-							markdownContent={t('tooltip_jsmops_email')}
+							markdownContent={t('tooltip_jsmops_oauth')}
 							variables={{}}
 						/>
 					),
@@ -36,59 +110,34 @@ function JsmOps({ setSelectedConfig }: JsmOpsProps): JSX.Element {
 				}}
 				required
 			>
-				<Input
-					onChange={handleInputChange('email')}
-					data-testid="jsmops-email-textbox"
-					placeholder="user@example.com"
-				/>
+				<Space direction="vertical" style={{ width: '100%' }}>
+					<Select
+						value={connectionId}
+						onChange={handleConnectionChange}
+						options={connections.map((connection) => ({
+							label: connection.site_url || connection.cloud_id,
+							value: connection.id,
+						}))}
+						loading={connectionsLoading}
+						placeholder={t('placeholder_jsmops_connection')}
+						optionFilterProp="label"
+						showSearch
+						data-testid="jsmops-connection-select"
+					/>
+					<Button
+						type={connectionId ? 'default' : 'primary'}
+						onClick={(): void => {
+							void connect();
+						}}
+						loading={isConnecting}
+						data-testid="jsmops-oauth-connect"
+					>
+						{t('button_add_jsmops_connection')}
+					</Button>
+				</Space>
 			</Form.Item>
 
 			<Form.Item
-				name="api_token"
-				label={t('field_jsmops_api_token')}
-				tooltip={{
-					title: (
-						<MarkdownRenderer
-							markdownContent={t('tooltip_jsmops_api_token')}
-							variables={{}}
-						/>
-					),
-					overlayInnerStyle: { maxWidth: 400 },
-					placement: 'right',
-				}}
-				required
-			>
-				<Input.Password
-					onChange={handleInputChange('api_token')}
-					data-testid="jsmops-api-token-textbox"
-					placeholder="API Token"
-				/>
-			</Form.Item>
-
-			<Form.Item
-				name="cloud_id"
-				label={t('field_jsmops_cloud_id')}
-				tooltip={{
-					title: (
-						<MarkdownRenderer
-							markdownContent={t('tooltip_jsmops_cloud_id')}
-							variables={{}}
-						/>
-					),
-					overlayInnerStyle: { maxWidth: 400 },
-					placement: 'right',
-				}}
-				required
-			>
-				<Input
-					onChange={handleInputChange('cloud_id')}
-					data-testid="jsmops-cloud-id-textbox"
-					placeholder="cloud-id"
-				/>
-			</Form.Item>
-
-			<Form.Item
-				name="responders"
 				label={t('field_jsmops_responders')}
 				tooltip={{
 					title: (
@@ -101,10 +150,24 @@ function JsmOps({ setSelectedConfig }: JsmOpsProps): JSX.Element {
 					placement: 'right',
 				}}
 			>
-				<Input
-					onChange={handleInputChange('responders')}
-					data-testid="jsmops-responders-textbox"
-					placeholder="team-id-1, team-id-2"
+				<Select
+					mode="multiple"
+					value={responders}
+					onChange={handleRespondersChange}
+					options={teams.map((team) => ({
+						label: team.name,
+						value: team.id,
+					}))}
+					loading={teamsLoading}
+					disabled={!connectionId}
+					optionFilterProp="label"
+					placeholder={
+						teamsError
+							? t('jsmops_teams_load_failed')
+							: t('placeholder_jsmops_responders')
+					}
+					notFoundContent={teamsError ? t('jsmops_teams_load_failed') : undefined}
+					data-testid="jsmops-responders-select"
 				/>
 			</Form.Item>
 
@@ -161,10 +224,10 @@ function JsmOps({ setSelectedConfig }: JsmOpsProps): JSX.Element {
 					placement: 'right',
 				}}
 			>
-				<Input
+				<TextArea
+					rows={2}
 					onChange={handleInputChange('priority')}
-					data-testid="jsmops-priority-textbox"
-					placeholder="high"
+					data-testid="jsmops-priority-textarea"
 				/>
 			</Form.Item>
 		</>
@@ -172,9 +235,7 @@ function JsmOps({ setSelectedConfig }: JsmOpsProps): JSX.Element {
 }
 
 interface JsmOpsProps {
-	setSelectedConfig: React.Dispatch<
-		React.SetStateAction<Partial<JsmOpsChannel>>
-	>;
+	setSelectedConfig: Dispatch<SetStateAction<Partial<JsmOpsChannel>>>;
 }
 
 export default JsmOps;

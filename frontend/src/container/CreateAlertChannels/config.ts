@@ -128,8 +128,10 @@ export interface MsTeamsChannel extends Channel {
 }
 
 export interface JsmOpsChannel extends Channel {
-	email?: string;
-	api_token?: string;
+	// connection_id is an opaque, short-lived reference to the OAuth tokens
+	connection_id?: string;
+	// site is the Atlassian site URL
+	site?: string;
 	cloud_id?: string;
 	responders?: string;
 	message?: string;

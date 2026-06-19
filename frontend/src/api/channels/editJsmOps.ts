@@ -13,9 +13,7 @@ const editJsmOps = async (
 			jsmops_configs: [
 				{
 					send_resolved: props.send_resolved,
-					email: props.email,
-					api_token: props.api_token,
-					cloud_id: props.cloud_id,
+					connection_id: props.connection_id,
 					responders: props.responders
 						? props.responders
 								.split(',')

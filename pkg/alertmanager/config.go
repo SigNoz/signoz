@@ -24,6 +24,28 @@ type Signoz struct {
 
 	// Config is the config for the alertmanager server.
 	alertmanagerserver.Config `mapstructure:",squash" yaml:",squash"`
+
+	// JSMOps holds configuration for the JSM Ops notification channel.
+	JSMOps JSMOpsConfig `mapstructure:"jsmops" yaml:"jsmops"`
+}
+
+// JSMOpsConfig is the configuration for the JSM Ops notification channel.
+type JSMOpsConfig struct {
+	// OAuth holds the Atlassian OAuth 2.0 (3LO) app credentials used to connect JSM Ops channels.
+	OAuth JSMOpsOAuthConfig `mapstructure:"oauth" yaml:"oauth"`
+}
+
+// JSMOpsOAuthConfig holds the Atlassian OAuth 2.0 app credentials.
+type JSMOpsOAuthConfig struct {
+	ClientID     string `mapstructure:"client_id" yaml:"client_id"`
+	ClientSecret string `mapstructure:"client_secret" yaml:"client_secret"`
+	RedirectURI  string `mapstructure:"redirect_uri" yaml:"redirect_uri"`
+	AllowedOpenerOrigins []string `mapstructure:"allowed_opener_origins" yaml:"allowed_opener_origins"`
+}
+
+// Enabled reports whether the JSM Ops OAuth app is fully configured.
+func (c JSMOpsOAuthConfig) Enabled() bool {
+	return c.ClientID != "" && c.ClientSecret != "" && c.RedirectURI != ""
 }
 
 type Legacy struct {

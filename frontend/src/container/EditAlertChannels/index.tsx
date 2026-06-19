@@ -376,9 +376,7 @@ function EditAlertChannels({
 		() => ({
 			name: selectedConfig?.name || '',
 			send_resolved: selectedConfig?.send_resolved || false,
-			email: selectedConfig?.email || '',
-			api_token: selectedConfig?.api_token || '',
-			cloud_id: selectedConfig?.cloud_id || '',
+			connection_id: selectedConfig?.connection_id || '',
 			responders: selectedConfig?.responders || '',
 			message: selectedConfig?.message || '',
 			description: selectedConfig?.description || '',
@@ -392,29 +390,13 @@ function EditAlertChannels({
 	const onJsmOpsEditHandler = useCallback(async () => {
 		setSavingState(true);
 
-		if (!selectedConfig?.email) {
+		if (!selectedConfig?.connection_id) {
 			notifications.error({
 				message: 'Error',
-				description: t('jsmops_email_required'),
+				description: t('jsmops_not_connected'),
 			});
 			setSavingState(false);
-			return { status: 'failed', statusMessage: t('jsmops_email_required') };
-		}
-		if (!selectedConfig?.api_token) {
-			notifications.error({
-				message: 'Error',
-				description: t('jsmops_api_token_required'),
-			});
-			setSavingState(false);
-			return { status: 'failed', statusMessage: t('jsmops_api_token_required') };
-		}
-		if (!selectedConfig?.cloud_id) {
-			notifications.error({
-				message: 'Error',
-				description: t('jsmops_cloud_id_required'),
-			});
-			setSavingState(false);
-			return { status: 'failed', statusMessage: t('jsmops_cloud_id_required') };
+			return { status: 'failed', statusMessage: t('jsmops_not_connected') };
 		}
 		if (!selectedConfig?.message) {
 			notifications.error({

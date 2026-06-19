@@ -391,9 +391,7 @@ function CreateAlertChannels({
 		() => ({
 			name: selectedConfig?.name || '',
 			send_resolved: selectedConfig?.send_resolved || false,
-			email: selectedConfig?.email || '',
-			api_token: selectedConfig?.api_token || '',
-			cloud_id: selectedConfig?.cloud_id || '',
+			connection_id: selectedConfig?.connection_id || '',
 			responders: selectedConfig?.responders || '',
 			message: selectedConfig?.message || '',
 			description: selectedConfig?.description || '',
@@ -437,24 +435,10 @@ function CreateAlertChannels({
 	]);
 
 	const onJsmOpsHandler = useCallback(async () => {
-		if (!selectedConfig.email) {
+		if (!selectedConfig.connection_id) {
 			notifications.error({
 				message: 'Error',
-				description: t('jsmops_email_required'),
-			});
-			return;
-		}
-		if (!selectedConfig.api_token) {
-			notifications.error({
-				message: 'Error',
-				description: t('jsmops_api_token_required'),
-			});
-			return;
-		}
-		if (!selectedConfig.cloud_id) {
-			notifications.error({
-				message: 'Error',
-				description: t('jsmops_cloud_id_required'),
+				description: t('jsmops_not_connected'),
 			});
 			return;
 		}
@@ -483,9 +467,7 @@ function CreateAlertChannels({
 			setSavingState(false);
 		}
 	}, [
-		selectedConfig.email,
-		selectedConfig.api_token,
-		selectedConfig.cloud_id,
+		selectedConfig.connection_id,
 		selectedConfig.message,
 		notifications,
 		t,

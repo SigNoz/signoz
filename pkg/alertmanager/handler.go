@@ -28,4 +28,14 @@ type Handler interface {
 	UpdateRoutePolicy(http.ResponseWriter, *http.Request)
 
 	DeleteRoutePolicyByID(http.ResponseWriter, *http.Request)
+
+	JsmOpsOAuthSession(http.ResponseWriter, *http.Request)
+
+	JsmOpsOAuthCallback(http.ResponseWriter, *http.Request)
+
+	JsmOpsTeams(http.ResponseWriter, *http.Request)
+
+	JsmOpsConnections(http.ResponseWriter, *http.Request)
+
+	JsmOpsConnectionDelete(http.ResponseWriter, *http.Request)
 }

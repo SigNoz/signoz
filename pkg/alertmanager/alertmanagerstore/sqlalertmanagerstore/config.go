@@ -44,6 +44,8 @@ func (store *config) Get(ctx context.Context, orgID string) (*alertmanagertypes.
 		return nil, err
 	}
 
+	cfg.SetJsmOpsOrgID(orgID)
+
 	return cfg, nil
 }
 

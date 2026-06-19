@@ -5,6 +5,7 @@ import { ROLES, USER_ROLES } from 'types/roles';
 import {
 	alertChannels,
 	billingSettings,
+	connectionsSettings,
 	createAlertChannels,
 	editAlertChannels,
 	generalSettings,
@@ -61,6 +62,7 @@ export const getRoutes = (
 	}
 
 	settings.push(...alertChannels(t));
+	settings.push(...connectionsSettings(t));
 
 	// Visible to all authenticated users
 	settings.push(

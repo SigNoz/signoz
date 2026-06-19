@@ -8,9 +8,11 @@ import (
 	"github.com/prometheus/common/model"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
+	jsmopsnotify "github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/jsmops"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerserver"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerstore/sqlalertmanagerstore"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
+	"github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanager/jsmops"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
@@ -27,6 +29,7 @@ type provider struct {
 	config              alertmanager.Config
 	settings            factory.ScopedProviderSettings
 	configStore         alertmanagertypes.ConfigStore
+	jsmOpsConnStore     alertmanagertypes.JsmOpsConnectionStore
 	stateStore          alertmanagertypes.StateStore
 	notificationManager nfmanager.NotificationManager
 	maintenanceStore    alertmanagertypes.MaintenanceStore
@@ -54,6 +57,7 @@ func New(
 ) (*provider, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanager")
 	configStore := sqlalertmanagerstore.NewConfigStore(sqlstore)
+	jsmOpsConnStore := sqlalertmanagerstore.NewJsmOpsConnectionStore(sqlstore)
 	stateStore := sqlalertmanagerstore.NewStateStore(sqlstore)
 
 	p := &provider{
@@ -69,11 +73,16 @@ func New(
 		settings:            settings,
 		config:              config,
 		configStore:         configStore,
+		jsmOpsConnStore:     jsmOpsConnStore,
 		stateStore:          stateStore,
 		notificationManager: notificationManager,
 		maintenanceStore:    maintenanceStore,
 		stopC:               make(chan struct{}),
 	}
+
+	// Wire the connection store so JSM Ops notifiers fetch live credentials on
+	// each fire and can recover from expired access tokens via OAuth refresh.
+	jsmopsnotify.RegisterConnectionStore(jsmops.NewConnectionResolver(jsmOpsConnStore, config.Signoz.JSMOps.OAuth, settings.Logger()))
 
 	return p, nil
 }
@@ -238,6 +247,14 @@ func (provider *provider) CreateChannel(ctx context.Context, orgID string, recei
 
 func (provider *provider) Config() alertmanagerserver.Config {
 	return provider.config.Signoz.Config
+}
+
+func (provider *provider) JSMOpsOAuthConfig() alertmanager.JSMOpsOAuthConfig {
+	return provider.config.Signoz.JSMOps.OAuth
+}
+
+func (provider *provider) JSMOpsConnectionStore() alertmanagertypes.JsmOpsConnectionStore {
+	return provider.jsmOpsConnStore
 }
 
 func (provider *provider) SetConfig(ctx context.Context, config *alertmanagertypes.Config) error {

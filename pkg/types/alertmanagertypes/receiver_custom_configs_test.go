@@ -14,9 +14,7 @@ func TestExtractReceiverConfigList(t *testing.T) {
 		"name": "jsmops-receiver",
 		"jsmops_configs": []interface{}{
 			map[string]interface{}{
-				"email":         "ops@example.com",
-				"api_token":     "token",
-				"cloud_id":      "cloud",
+				"connection_id": "conn-123",
 				"responders":    []interface{}{"team-1"},
 				"message":       "Alert",
 				"description":   "Body",
@@ -27,7 +25,7 @@ func TestExtractReceiverConfigList(t *testing.T) {
 
 	configs := extractReceiverConfigList[JsmOpsReceiverConfig](rawData, receiverFieldJsmOpsConfigs)
 	require.Len(t, configs, 1)
-	assert.Equal(t, "ops@example.com", configs[0].Email)
+	assert.Equal(t, "conn-123", configs[0].ConnectionID)
 
 	_, exists := rawData[receiverFieldJsmOpsConfigs]
 	assert.False(t, exists)
@@ -51,9 +49,8 @@ func TestMarshalReceiverWithCustomConfigs(t *testing.T) {
 		Receiver: &config.Receiver{Name: "jsmops-receiver"},
 		JsmOpsConfigs: []*JsmOpsReceiverConfig{
 			{
-				Email:             "ops@example.com",
-				APIToken:          "token",
-				CloudID:           "cloud",
+				ConnectionID:      "conn-123",
+				OrgID:             "org-1",
 				Responders:        []string{"team-1"},
 				Message:           "Alert",
 				Description:       "Body",
@@ -69,7 +66,7 @@ func TestMarshalReceiverWithCustomConfigs(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, hasCustom)
 	assert.Equal(t, channelTypeJsmOps, channelType)
-	assert.JSONEq(t, `{"name":"jsmops-receiver","jsmops_configs":[{"email":"ops@example.com","api_token":"token","cloud_id":"cloud","responders":["team-1"],"message":"Alert","description":"Body","send_resolved":true}]}`, string(data))
+	assert.JSONEq(t, `{"name":"jsmops-receiver","jsmops_configs":[{"connection_id":"conn-123","responders":["team-1"],"message":"Alert","description":"Body","send_resolved":true}]}`, string(data))
 }
 
 func TestMarshalReceiverWithCustomConfigsSkipsEmpty(t *testing.T) {

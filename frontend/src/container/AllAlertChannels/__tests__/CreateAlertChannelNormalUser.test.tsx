@@ -341,25 +341,18 @@ describe('Create Alert Channel (Normal User)', () => {
 				expect(screen.getByText('JSM Ops')).toBeInTheDocument();
 			});
 
-			it('Should check if Email label and input are displayed properly', () => {
+			it('Should check if OAuth label and connection picker are displayed properly', () => {
 				testLabelInputAndHelpValue({
-					labelText: 'field_jsmops_email',
-					testId: 'jsmops-email-textbox',
+					labelText: 'field_jsmops_oauth',
+					testId: 'jsmops-connection-select',
 				});
 			});
 
-			it('Should check if API Token label and input are displayed properly', () => {
-				testLabelInputAndHelpValue({
-					labelText: 'field_jsmops_api_token',
-					testId: 'jsmops-api-token-textbox',
-				});
-			});
-
-			it('Should check if Cloud ID label and input are displayed properly', () => {
-				testLabelInputAndHelpValue({
-					labelText: 'field_jsmops_cloud_id',
-					testId: 'jsmops-cloud-id-textbox',
-				});
+			it('Should check if the Add connection button is displayed', () => {
+				expect(screen.getByTestId('jsmops-oauth-connect')).toBeInTheDocument();
+				expect(
+					screen.getByText('button_add_jsmops_connection'),
+				).toBeInTheDocument();
 			});
 
 			it('Should check if Message label and text area are displayed properly', () => {

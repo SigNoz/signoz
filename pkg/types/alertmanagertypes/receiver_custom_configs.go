@@ -12,10 +12,9 @@ const (
 
 // JsmOpsReceiverConfig represents a JSM Ops notification configuration.
 type JsmOpsReceiverConfig struct {
-	Email             string   `json:"email" yaml:"email"`
-	APIToken          string   `json:"api_token" yaml:"api_token"`
-	CloudID           string   `json:"cloud_id" yaml:"cloud_id"`
-	Responders        []string `json:"responders,omitempty" yaml:"responders,omitempty"`
+	ConnectionID string `json:"connection_id,omitempty" yaml:"connection_id,omitempty"`
+	OrgID      string   `json:"-" yaml:"-"`
+	Responders []string `json:"responders,omitempty" yaml:"responders,omitempty"`
 	Message           string   `json:"message" yaml:"message"`
 	Description       string   `json:"description" yaml:"description"`
 	Tags              []string `json:"tags,omitempty" yaml:"tags,omitempty"`

@@ -355,6 +355,11 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 }
 
 func (server *Server) TestReceiver(ctx context.Context, receiver *alertmanagertypes.Receiver) error {
+	if server.alertmanagerConfig == nil {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput,
+			"alertmanager configuration is not loaded for this org yet; check the server logs for a config load error")
+	}
+
 	testAlert := alertmanagertypes.NewTestAlert(receiver, time.Now(), time.Now())
 	return alertmanagertypes.TestReceiver(ctx, receiver, alertmanagernotify.NewReceiverIntegrations, server.alertmanagerConfig, server.tmpl, server.logger, server.templater, testAlert.Labels, testAlert)
 }
@@ -363,6 +368,11 @@ func (server *Server) TestAlert(ctx context.Context, receiversMap map[*alertmana
 	if len(receiversMap) == 0 {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput,
 			"expected at least 1 alert, got 0")
+	}
+
+	if server.alertmanagerConfig == nil {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput,
+			"alertmanager configuration is not loaded for this org yet; check the server logs for a config load error")
 	}
 
 	postableAlerts := make(alertmanagertypes.PostableAlerts, 0, len(receiversMap))

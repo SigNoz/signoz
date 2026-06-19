@@ -19,6 +19,7 @@ import {
 	BellDot,
 	Bot,
 	Building,
+	Cable,
 	Cpu,
 	CreditCard,
 	Keyboard,
@@ -30,6 +31,7 @@ import {
 	Users,
 } from '@signozhq/icons';
 import ChannelsEdit from 'pages/ChannelsEdit';
+import ConnectionsSettings from 'pages/ConnectionsSettings';
 import MembersSettings from 'pages/MembersSettings';
 import ServiceAccountsSettings from 'pages/ServiceAccountsSettings';
 import Shortcuts from 'pages/Shortcuts';
@@ -57,6 +59,19 @@ export const alertChannels = (t: TFunction): RouteTabProps['routes'] => [
 		),
 		route: ROUTES.ALL_CHANNELS,
 		key: ROUTES.ALL_CHANNELS,
+	},
+];
+
+export const connectionsSettings = (t: TFunction): RouteTabProps['routes'] => [
+	{
+		Component: ConnectionsSettings,
+		name: (
+			<div className="periscope-tab">
+				<Cable size={16} /> {t('routes:connections').toString()}
+			</div>
+		),
+		route: ROUTES.CONNECTIONS_SETTINGS,
+		key: ROUTES.CONNECTIONS_SETTINGS,
 	},
 ];
 

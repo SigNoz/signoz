@@ -371,6 +371,16 @@ func (c *Config) setCustomConfigs(receiver *Receiver) {
 	}
 }
 
+// SetJsmOpsOrgID stamps the runtime-only OrgID onto every JSM Ops config so
+// notifiers can look up live credentials from the connection store on each fire.
+func (c *Config) SetJsmOpsOrgID(orgID string) {
+	for _, custom := range c.customConfigs {
+		for _, cfg := range custom.JsmOps {
+			cfg.OrgID = orgID
+		}
+	}
+}
+
 func (c *Config) applyNativeDefaults() {
 	if c.alertmanagerConfig.Global == nil {
 		return
