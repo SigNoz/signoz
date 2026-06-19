@@ -522,9 +522,9 @@ func (r *ClickHouseReader) GetTopLevelOperations(ctx context.Context, skipConfig
 	operations := map[string][]string{}
 	// We can't use the `end` because the `top_level_operations` table has the most recent instances of the operations
 	// We can only use the `start` time to filter the operations
-	query := fmt.Sprintf(`SELECT name, serviceName, max(time) as ts FROM %s.%s WHERE time >= @start`, r.TraceDB, r.topLevelOperationsTable)
+	query := fmt.Sprintf(`SELECT name, serviceName, max(time) as ts FROM %s.%s WHERE time >= {start:DateTime}`, r.TraceDB, r.topLevelOperationsTable)
 	if len(services) > 0 {
-		query += ` AND serviceName IN @services`
+		query += ` AND serviceName IN {services:Array(String)}`
 	}
 	query += ` GROUP BY name, serviceName ORDER BY ts DESC LIMIT 5000`
 
@@ -951,6 +951,21 @@ func buildQueryWithTagParams(_ context.Context, tags []model.TagQuery) (string, 
 	return query, args, nil
 }
 
+func clickhouseParamType(value interface{}) string {
+	switch value.(type) {
+	case bool:
+		return "Bool"
+	case float32, float64:
+		return "Float64"
+	case int, int8, int16, int32, int64:
+		return "Int64"
+	case uint, uint8, uint16, uint32, uint64:
+		return "UInt64"
+	default:
+		return "String"
+	}
+}
+
 func addInOperator(item model.TagQuery, tagMapType string, not bool) (string, []interface{}) {
 	values := item.GetValues()
 	args := []interface{}{}
@@ -962,7 +977,7 @@ func addInOperator(item model.TagQuery, tagMapType string, not bool) (string, []
 	for _, value := range values {
 		tagKey := "inTagKey" + String(5)
 		tagValue := "inTagValue" + String(5)
-		tagValuePair = append(tagValuePair, fmt.Sprintf("%s[@%s] = @%s", tagMapType, tagKey, tagValue))
+		tagValuePair = append(tagValuePair, fmt.Sprintf("%s[{%s:String}] = {%s:%s}", tagMapType, tagKey, tagValue, clickhouseParamType(value)))
 		args = append(args, clickhouse.Named(tagKey, item.GetKey()))
 		args = append(args, clickhouse.Named(tagValue, value))
 	}
@@ -980,7 +995,7 @@ func addContainsOperator(item model.TagQuery, tagMapType string, not bool) (stri
 	for _, value := range values {
 		tagKey := "containsTagKey" + String(5)
 		tagValue := "containsTagValue" + String(5)
-		tagValuePair = append(tagValuePair, fmt.Sprintf("%s[@%s] ILIKE @%s", tagMapType, tagKey, tagValue))
+		tagValuePair = append(tagValuePair, fmt.Sprintf("%s[{%s:String}] ILIKE {%s:String}", tagMapType, tagKey, tagValue))
 		args = append(args, clickhouse.Named(tagKey, item.GetKey()))
 		args = append(args, clickhouse.Named(tagValue, "%"+fmt.Sprintf("%v", value)+"%"))
 	}
@@ -998,7 +1013,7 @@ func addStartsWithOperator(item model.TagQuery, tagMapType string, not bool) (st
 	for _, value := range values {
 		tagKey := "startsWithTagKey" + String(5)
 		tagValue := "startsWithTagValue" + String(5)
-		tagValuePair = append(tagValuePair, fmt.Sprintf("%s[@%s] ILIKE @%s", tagMapType, tagKey, tagValue))
+		tagValuePair = append(tagValuePair, fmt.Sprintf("%s[{%s:String}] ILIKE {%s:String}", tagMapType, tagKey, tagValue))
 		args = append(args, clickhouse.Named(tagKey, item.GetKey()))
 		args = append(args, clickhouse.Named(tagValue, "%"+fmt.Sprintf("%v", value)+"%"))
 	}
@@ -1012,7 +1027,7 @@ func addArithmeticOperator(item model.TagQuery, tagMapType string, operator stri
 	for _, value := range values {
 		tagKey := "arithmeticTagKey" + String(5)
 		tagValue := "arithmeticTagValue" + String(5)
-		tagValuePair = append(tagValuePair, fmt.Sprintf("%s[@%s] %s @%s", tagMapType, tagKey, operator, tagValue))
+		tagValuePair = append(tagValuePair, fmt.Sprintf("%s[{%s:String}] %s {%s:%s}", tagMapType, tagKey, operator, tagValue, clickhouseParamType(value)))
 		args = append(args, clickhouse.Named(tagKey, item.GetKey()))
 		args = append(args, clickhouse.Named(tagValue, value))
 	}
@@ -1029,7 +1044,7 @@ func addExistsOperator(item model.TagQuery, tagMapType string, not bool) (string
 	tagOperatorPair := []string{}
 	for range values {
 		tagKey := "existsTagKey" + String(5)
-		tagOperatorPair = append(tagOperatorPair, fmt.Sprintf("mapContains(%s, @%s)", tagMapType, tagKey))
+		tagOperatorPair = append(tagOperatorPair, fmt.Sprintf("mapContains(%s, {%s:String})", tagMapType, tagKey))
 		args = append(args, clickhouse.Named(tagKey, item.GetKey()))
 	}
 	return fmt.Sprintf(" AND %s (%s)", notStr, strings.Join(tagOperatorPair, " OR ")), args
@@ -1038,11 +1053,11 @@ func addExistsOperator(item model.TagQuery, tagMapType string, not bool) (string
 func (r *ClickHouseReader) GetTopOperationsV2(ctx context.Context, queryParams *model.GetTopOperationsParams) (*[]model.TopOperationsItem, *model.ApiError) {
 
 	namedArgs := []interface{}{
-		clickhouse.Named("start", strconv.FormatInt(queryParams.Start.UnixNano(), 10)),
-		clickhouse.Named("end", strconv.FormatInt(queryParams.End.UnixNano(), 10)),
+		clickhouse.Named("start", uint64(queryParams.Start.UnixNano())),
+		clickhouse.Named("end", uint64(queryParams.End.UnixNano())),
 		clickhouse.Named("serviceName", queryParams.ServiceName),
-		clickhouse.Named("start_bucket", strconv.FormatInt(queryParams.Start.Unix()-1800, 10)),
-		clickhouse.Named("end_bucket", strconv.FormatInt(queryParams.End.Unix(), 10)),
+		clickhouse.Named("start_bucket", queryParams.Start.Unix()-1800),
+		clickhouse.Named("end_bucket", queryParams.End.Unix()),
 	}
 
 	var topOperationsItems []model.TopOperationsItem
@@ -1056,7 +1071,7 @@ func (r *ClickHouseReader) GetTopOperationsV2(ctx context.Context, queryParams *
 			countIf(statusCode=2) as errorCount,
 			name
 		FROM %s.%s
-		WHERE serviceName = @serviceName AND timestamp>= @start AND timestamp<= @end`,
+		WHERE serviceName = {serviceName:String} AND timestamp>= {start:UInt64} AND timestamp<= {end:UInt64}`,
 		r.TraceDB, r.traceTableName,
 	)
 
@@ -1069,11 +1084,11 @@ func (r *ClickHouseReader) GetTopOperationsV2(ctx context.Context, queryParams *
 			AND (
 				resource_fingerprint GLOBAL IN ` +
 		resourceSubQuery +
-		`) AND ts_bucket_start >= @start_bucket AND ts_bucket_start <= @end_bucket`
+		`) AND ts_bucket_start >= {start_bucket:Int64} AND ts_bucket_start <= {end_bucket:Int64}`
 
 	query += " GROUP BY name ORDER BY p99 DESC"
 	if queryParams.Limit > 0 {
-		query += " LIMIT @limit"
+		query += " LIMIT {limit:UInt64}"
 		namedArgs = append(namedArgs, clickhouse.Named("limit", queryParams.Limit))
 	}
 	err = r.db.Select(ctx, &topOperationsItems, query, namedArgs...)
@@ -1097,8 +1112,8 @@ func (r *ClickHouseReader) GetTopOperations(ctx context.Context, queryParams *mo
 	}
 
 	namedArgs := []interface{}{
-		clickhouse.Named("start", strconv.FormatInt(queryParams.Start.UnixNano(), 10)),
-		clickhouse.Named("end", strconv.FormatInt(queryParams.End.UnixNano(), 10)),
+		clickhouse.Named("start", uint64(queryParams.Start.UnixNano())),
+		clickhouse.Named("end", uint64(queryParams.End.UnixNano())),
 		clickhouse.Named("serviceName", queryParams.ServiceName),
 	}
 
@@ -1113,7 +1128,7 @@ func (r *ClickHouseReader) GetTopOperations(ctx context.Context, queryParams *mo
 			countIf(statusCode=2) as errorCount,
 			name
 		FROM %s.%s
-		WHERE serviceName = @serviceName AND timestamp>= @start AND timestamp<= @end`,
+		WHERE serviceName = {serviceName:String} AND timestamp>= {start:UInt64} AND timestamp<= {end:UInt64}`,
 		r.TraceDB, r.indexTable,
 	)
 	args := []interface{}{}
@@ -1128,7 +1143,7 @@ func (r *ClickHouseReader) GetTopOperations(ctx context.Context, queryParams *mo
 	}
 	query += " GROUP BY name ORDER BY p99 DESC"
 	if queryParams.Limit > 0 {
-		query += " LIMIT @limit"
+		query += " LIMIT {limit:UInt64}"
 		args = append(args, clickhouse.Named("limit", queryParams.Limit))
 	}
 	err := r.db.Select(ctx, &topOperationsItems, query, args...)
