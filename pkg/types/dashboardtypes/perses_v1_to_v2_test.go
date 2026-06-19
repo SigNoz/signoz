@@ -715,6 +715,57 @@ func TestConvertV1LayoutsWithCollapsedSection(t *testing.T) {
 	assert.Equal(t, "#/spec/panels/p-1", sectionSpec.Items[0].Content.Ref)
 }
 
+// TestConvertV1LayoutsExpandedSectionsNoPanelMap covers the common real-world
+// shape: multiple expanded row sections, each with its own panels, and no
+// panelMap at all. Section membership must come from the layout y/x positions —
+// each row owns the panels below it until the next row.
+func TestConvertV1LayoutsExpandedSectionsNoPanelMap(t *testing.T) {
+	data := StorableDashboardData{
+		"widgets": []any{
+			map[string]any{"id": "row_s1", "panelTypes": "row", "title": "section 1"},
+			map[string]any{"id": "s1p1", "panelTypes": "graph"},
+			map[string]any{"id": "s1p2", "panelTypes": "graph"},
+			map[string]any{"id": "row_s2", "panelTypes": "row", "title": "section 2"},
+			map[string]any{"id": "s2p1", "panelTypes": "graph"},
+			map[string]any{"id": "s2p2", "panelTypes": "graph"},
+		},
+		"layout": []any{
+			map[string]any{"i": "row_s1", "x": float64(0), "y": float64(0), "w": float64(12), "h": float64(1)},
+			map[string]any{"i": "s1p1", "x": float64(0), "y": float64(1), "w": float64(6), "h": float64(6)},
+			map[string]any{"i": "s1p2", "x": float64(6), "y": float64(1), "w": float64(6), "h": float64(6)},
+			map[string]any{"i": "row_s2", "x": float64(0), "y": float64(7), "w": float64(12), "h": float64(1)},
+			map[string]any{"i": "s2p1", "x": float64(0), "y": float64(8), "w": float64(6), "h": float64(6)},
+			map[string]any{"i": "s2p2", "x": float64(6), "y": float64(8), "w": float64(6), "h": float64(6)},
+		},
+	}
+
+	layouts := convertV1Layouts(data)
+	require.Len(t, layouts, 2, "two row sections, no root grid")
+
+	s1, ok := layouts[0].Spec.(*dashboard.GridLayoutSpec)
+	require.True(t, ok)
+	require.NotNil(t, s1.Display)
+	assert.Equal(t, "section 1", s1.Display.Title)
+	require.NotNil(t, s1.Display.Collapse)
+	assert.True(t, s1.Display.Collapse.Open)
+	require.Len(t, s1.Items, 2)
+	assert.Equal(t, "#/spec/panels/s1p1", s1.Items[0].Content.Ref)
+	assert.Equal(t, "#/spec/panels/s1p2", s1.Items[1].Content.Ref)
+	// y normalized within the section: the row header's row is dropped.
+	assert.Equal(t, 0, s1.Items[0].Y)
+	assert.Equal(t, 0, s1.Items[1].Y)
+	assert.Equal(t, 6, s1.Items[1].X)
+
+	s2, ok := layouts[1].Spec.(*dashboard.GridLayoutSpec)
+	require.True(t, ok)
+	assert.Equal(t, "section 2", s2.Display.Title)
+	require.Len(t, s2.Items, 2)
+	assert.Equal(t, "#/spec/panels/s2p1", s2.Items[0].Content.Ref)
+	assert.Equal(t, "#/spec/panels/s2p2", s2.Items[1].Content.Ref)
+	assert.Equal(t, 0, s2.Items[0].Y)
+	assert.Equal(t, 0, s2.Items[1].Y)
+}
+
 func TestConvertV1LayoutsEmpty(t *testing.T) {
 	assert.Nil(t, convertV1Layouts(StorableDashboardData{}))
 }

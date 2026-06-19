@@ -12,127 +12,130 @@ import (
 // Layouts (data.layout + data.panelMap)
 // ══════════════════════════════════════════════
 
-// convertV1Layouts groups v1 react-grid-layout entries by section. Each row
-// widget (panelTypes == "row") in `widgets` plus its `panelMap` entry becomes
-// a separate v2 grid layout with a collapsible display. Widgets that are not
-// part of any section land in a default unnamed grid (added only if any such
-// widgets exist).
+// convertV1Layouts groups v1 react-grid-layout entries into v2 grid layouts.
+// Membership is positional (as the frontend renders): each row widget owns the
+// panels below it until the next row; panels above the first row form an unnamed
+// grid with no section header. Collapsed rows are the exception — their children
+// live in panelMap[rowID].widgets, not `layout`.
 func convertV1Layouts(data StorableDashboardData) []Layout {
-	layoutsRaw := readSliceOfMaps(data["layout"])
-	if len(layoutsRaw) == 0 {
+	layout := readSliceOfMaps(data["layout"])
+	if len(layout) == 0 {
 		return nil
 	}
-	panelMap, _ := data["panelMap"].(map[string]any)
 
-	rows, widgetIDToRow := indexRows(data["widgets"], panelMap)
+	rows := extractRowsAndCollapsedWidgets(data["widgets"], data["panelMap"])
 
-	type bucket struct {
-		title    string
-		open     bool
-		isRow    bool
-		layouts  []map[string]any
-		ordering int
-	}
-	rootBucket := &bucket{}
-	rowBuckets := make(map[string]*bucket, len(rows))
+	// Skip collapsed-row children a malformed dashboard lists in `layout` too.
+	isWidgetCollapsed := make(map[string]bool)
 	for _, row := range rows {
-		rowBuckets[row.id] = &bucket{
-			title:    row.title,
-			open:     !row.collapsed,
-			isRow:    true,
-			ordering: row.ordering,
-		}
-	}
-
-	for _, item := range layoutsRaw {
-		widgetID, _ := item["i"].(string)
-		if widgetID == "" {
-			continue
-		}
-		if rowID, ok := widgetIDToRow[widgetID]; ok {
-			if b, ok := rowBuckets[rowID]; ok {
-				b.layouts = append(b.layouts, item)
-				continue
+		for _, child := range row.collapsedWidgets {
+			if id, _ := child["i"].(string); id != "" {
+				isWidgetCollapsed[id] = true
 			}
 		}
-		// row widgets themselves shouldn't end up as items in the root grid;
-		// they exist only to anchor their section.
-		if _, isRow := rowBuckets[widgetID]; isRow {
+	}
+
+	// this lets us track the current row under which widgets are to be added.
+	sortByPosition(layout)
+
+	type section struct {
+		row   *rowInfo // nil for the unnamed grid of ungrouped panels
+		items []map[string]any
+	}
+	topSectionWithoutHeader := &section{}
+	sectionsWithHeader := make([]*section, 0, len(rows))
+	currentRowHeader := topSectionWithoutHeader
+	for _, item := range layout {
+		id, _ := item["i"].(string)
+		if id == "" || isWidgetCollapsed[id] {
 			continue
 		}
-		rootBucket.layouts = append(rootBucket.layouts, item)
+		if row, ok := rows[id]; ok {
+			newRowHeader := &section{row: row, items: row.collapsedWidgets}
+			sectionsWithHeader = append(sectionsWithHeader, newRowHeader)
+			// A collapsed row owns only its stashed children; later panels → ungrouped.
+			if row.collapsed {
+				currentRowHeader = topSectionWithoutHeader
+			} else {
+				currentRowHeader = newRowHeader
+			}
+			continue
+		}
+		currentRowHeader.items = append(currentRowHeader.items, item)
 	}
 
-	out := make([]Layout, 0, len(rows)+1)
-	if len(rootBucket.layouts) > 0 {
-		out = append(out, gridLayoutFromBucket("", true, false, rootBucket.layouts))
+	out := make([]Layout, 0, len(sectionsWithHeader)+1)
+	if len(topSectionWithoutHeader.items) > 0 {
+		out = append(out, buildV2GridLayout(nil, topSectionWithoutHeader.items))
 	}
-
-	rowKeys := make([]string, 0, len(rowBuckets))
-	for id := range rowBuckets {
-		rowKeys = append(rowKeys, id)
-	}
-	sort.SliceStable(rowKeys, func(i, j int) bool {
-		return rowBuckets[rowKeys[i]].ordering < rowBuckets[rowKeys[j]].ordering
-	})
-	for _, id := range rowKeys {
-		b := rowBuckets[id]
-		out = append(out, gridLayoutFromBucket(b.title, b.open, true, b.layouts))
+	for _, sec := range sectionsWithHeader {
+		out = append(out, buildV2GridLayout(sec.row, sec.items))
 	}
 	return out
 }
 
 type rowInfo struct {
-	id        string
-	title     string
-	collapsed bool
-	ordering  int
+	title            string
+	collapsed        bool
+	collapsedWidgets []map[string]any
 }
 
-func indexRows(widgetsRaw any, panelMap map[string]any) ([]rowInfo, map[string]string) {
-	widgets := readSliceOfMaps(widgetsRaw)
-	rows := make([]rowInfo, 0)
-	widgetToRow := make(map[string]string)
-	for i, w := range widgets {
-		if t, _ := w["panelTypes"].(string); t != "row" {
+// extractRowsAndCollapsedWidgets returns the row widgets keyed by id; collapsed rows also carry their
+// children stashed under panelMap[id].widgets.
+func extractRowsAndCollapsedWidgets(widgetsRaw, panelMapRaw any) map[string]*rowInfo {
+	panelMap, _ := panelMapRaw.(map[string]any)
+	rows := make(map[string]*rowInfo)
+	for _, w := range readSliceOfMaps(widgetsRaw) {
+		id := valueAt[string](w, "id")
+		if valueAt[string](w, "panelTypes") != "row" || id == "" {
 			continue
 		}
-		id, _ := w["id"].(string)
-		if id == "" {
-			continue
+		row := &rowInfo{title: valueAt[string](w, "title")}
+		if pm, ok := panelMap[id].(map[string]any); ok && valueAt[bool](pm, "collapsed") {
+			row.collapsed = true
+			row.collapsedWidgets = readSliceOfMaps(pm["widgets"])
 		}
-		title, _ := w["title"].(string)
-		row := rowInfo{id: id, title: title, ordering: i}
-		if pm, ok := panelMap[id].(map[string]any); ok {
-			row.collapsed = valueAt[bool](pm, "collapsed")
-			for _, child := range readSliceOfMaps(pm["widgets"]) {
-				if childID, _ := child["i"].(string); childID != "" {
-					widgetToRow[childID] = id
-				}
-			}
-		}
-		rows = append(rows, row)
+		rows[id] = row
 	}
-	return rows, widgetToRow
+	return rows
 }
 
-func gridLayoutFromBucket(title string, open, isRow bool, items []map[string]any) Layout {
+// buildV2GridLayout builds one v2 grid. row is nil for the unnamed grid (no display);
+// otherwise the grid takes the row's title and collapse state. Items are sorted
+// by (y, x) and their y's normalized so the topmost sits at 0.
+func buildV2GridLayout(row *rowInfo, items []map[string]any) Layout {
+	sortByPosition(items)
+
 	spec := dashboard.GridLayoutSpec{Items: make([]dashboard.GridItem, 0, len(items))}
-	if title != "" || isRow {
-		spec.Display = &dashboard.GridLayoutDisplay{Title: title}
-		if isRow {
-			spec.Display.Collapse = &dashboard.GridLayoutCollapse{Open: open}
+	if row != nil {
+		spec.Display = &dashboard.GridLayoutDisplay{
+			Title:    row.title,
+			Collapse: &dashboard.GridLayoutCollapse{Open: !row.collapsed},
 		}
+	}
+
+	minY := 0
+	if len(items) > 0 {
+		minY = intAt(items[0], "y") // sorted by y, so the first item is topmost
 	}
 	for _, item := range items {
-		widgetID, _ := item["i"].(string)
+		id, _ := item["i"].(string)
 		spec.Items = append(spec.Items, dashboard.GridItem{
 			X:       intAt(item, "x"),
-			Y:       intAt(item, "y"),
+			Y:       intAt(item, "y") - minY,
 			Width:   intAt(item, "w"),
 			Height:  intAt(item, "h"),
-			Content: &common.JSONRef{Ref: fmt.Sprintf("#/spec/panels/%s", widgetID)},
+			Content: &common.JSONRef{Ref: fmt.Sprintf("#/spec/panels/%s", id)},
 		})
 	}
 	return Layout{Kind: dashboard.KindGridLayout, Spec: &spec}
+}
+
+func sortByPosition(items []map[string]any) {
+	sort.SliceStable(items, func(i, j int) bool {
+		if yi, yj := intAt(items[i], "y"), intAt(items[j], "y"); yi != yj {
+			return yi < yj
+		}
+		return intAt(items[i], "x") < intAt(items[j], "x")
+	})
 }
