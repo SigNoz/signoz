@@ -10,6 +10,7 @@ import { parseAsInteger, useQueryState } from 'nuqs';
 import { useAppContext } from 'providers/App/App';
 
 import { PAGE_KEY, PAGE_SIZE } from './constants';
+import styles from './LLMObservabilityModelPricing.module.scss';
 import ModelCostDrawer from './ModelCostDrawer';
 import ModelCostsTable from './ModelCostsTable';
 import { useModelCostDrawer } from './useModelCostDrawer';
@@ -25,10 +26,14 @@ function ModelCostsTab(): JSX.Element {
 		parseAsInteger.withDefault(1).withOptions({ history: 'replace' }),
 	);
 
+	// A crafted/edited URL (?page=0 or negative) parses to a valid integer that
+	// skips withDefault(1), so clamp before deriving the offset / display.
+	const safePage = Math.max(1, page);
+
 	// Search + source filters are intentionally omitted for now — the list API
 	// doesn't honour them yet. They'll be reintroduced here once it does.
 	const listParams: ListLLMPricingRulesParams = {
-		offset: (page - 1) * PAGE_SIZE,
+		offset: (safePage - 1) * PAGE_SIZE,
 		limit: PAGE_SIZE,
 	};
 
@@ -47,10 +52,10 @@ function ModelCostsTab(): JSX.Element {
 
 	return (
 		<>
-			<div className="filters-bar">
+			<div className={styles.filtersBar}>
 				{/* Only USD is priced today — disabled until other currencies land. */}
 				<SelectSimple
-					className="filters-bar__currency"
+					className={styles.filtersBarCurrency}
 					value="USD"
 					disabled
 					testId="currency-select"
@@ -59,7 +64,6 @@ function ModelCostsTab(): JSX.Element {
 					<Button
 						variant="solid"
 						color="primary"
-						className="filters-bar__add"
 						prefix={<Plus size={14} />}
 						onClick={(): void => drawer.openForAdd()}
 						testId="add-model-cost-btn"
@@ -70,7 +74,7 @@ function ModelCostsTab(): JSX.Element {
 			</div>
 
 			{isError && (
-				<div className="page-error" role="alert">
+				<div className={styles.pageError} role="alert">
 					Failed to load pricing rules. Please try again.
 				</div>
 			)}
@@ -85,15 +89,15 @@ function ModelCostsTab(): JSX.Element {
 
 			{total > PAGE_SIZE && (
 				<Pagination
-					className="page-pagination"
+					className={styles.pagePagination}
 					total={total}
 					pageSize={PAGE_SIZE}
-					current={page}
+					current={safePage}
 					onPageChange={setPage}
 				/>
 			)}
 
-			<footer className="page-footer">
+			<footer className={styles.pageFooter}>
 				Showing {rules.length} of {total} model{total === 1 ? '' : 's'}
 				{' · '}All prices per 1M tokens (USD)
 			</footer>
