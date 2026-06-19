@@ -60,7 +60,7 @@ func (storable StorableDashboard) ConvertV1ToV2() (*DashboardV2, error) {
 			SchemaVersion: SchemaVersion,
 			Image:         image,
 		},
-		Name: storable.Name,
+		Name: generateDashboardName(title),
 		Tags: convertV1TagsForOrg(storable.OrgID, storable.Data["tags"]),
 		Spec: spec,
 	}, nil
