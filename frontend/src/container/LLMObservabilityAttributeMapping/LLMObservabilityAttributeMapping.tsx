@@ -1,13 +1,12 @@
 import AttributeMappingHeader from './AttributeMappingHeader';
-
-import './LLMObservabilityAttributeMapping.styles.scss';
+import styles from './LLMObservabilityAttributeMapping.module.scss';
 
 const noop = (): void => undefined;
 
 function LLMObservabilityAttributeMapping(): JSX.Element {
 	return (
 		<div
-			className="llm-observability-attribute-mapping"
+			className={styles.llmObservabilityAttributeMapping}
 			data-testid="llm-observability-attribute-mapping-page"
 		>
 			<AttributeMappingHeader
@@ -17,7 +16,7 @@ function LLMObservabilityAttributeMapping(): JSX.Element {
 				onSave={noop}
 			/>
 
-			<div className="am-table__empty" data-testid="attribute-mapping-empty">
+			<div className={styles.tableEmpty} data-testid="attribute-mapping-empty">
 				No mapping groups configured yet.
 			</div>
 		</div>

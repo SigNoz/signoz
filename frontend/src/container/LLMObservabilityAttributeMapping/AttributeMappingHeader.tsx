@@ -1,5 +1,7 @@
 import { Button } from '@signozhq/ui/button';
 
+import styles from './LLMObservabilityAttributeMapping.module.scss';
+
 interface AttributeMappingHeaderProps {
 	isDirty: boolean;
 	isSaving: boolean;
@@ -14,14 +16,16 @@ function AttributeMappingHeader({
 	onSave,
 }: AttributeMappingHeaderProps): JSX.Element {
 	return (
-		<header className="page-header">
-			<div className="page-header__title">
-				<h1>Attribute Mapping</h1>
-				<p>Configure source-to-target attribute remapping for LLM traces</p>
+		<header className={styles.pageHeader}>
+			<div className={styles.pageHeaderTitle}>
+				<h1 className={styles.title}>Attribute Mapping</h1>
+				<p className={styles.description}>
+					Configure source-to-target attribute remapping for LLM traces
+				</p>
 			</div>
-			<div className="page-header__actions">
+			<div className={styles.pageHeaderActions}>
 				{isDirty && (
-					<span className="page-header__unsaved" data-testid="unsaved-changes">
+					<span className={styles.unsavedChanges} data-testid="unsaved-changes">
 						Unsaved changes
 					</span>
 				)}
