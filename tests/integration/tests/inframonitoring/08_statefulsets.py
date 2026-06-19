@@ -147,10 +147,11 @@ def test_statefulsets_accuracy(
         # filter (k8s.statefulset.name != '') excludes the label-less pod metrics ->
         # statefulSet* (pod-derived) come back -1, while desiredPods/currentPods
         # (statefulset metrics) stay real. Reproduces the production response.
-        # The "key ... not found on metric" warning is asserted too, but is the
-        # provisional bit: it can be suppressed if the shared backend already holds
-        # the (pod-metric, k8s.statefulset.name) pair from other tests seeding it
-        # with "". The -1 partial render is the robust core.
+        # The "key ... not found on metric" warning fires deterministically: the
+        # (pod-metric, k8s.statefulset.name) pair is absent from distributed_metadata
+        # (insert_metrics truncates it per function; the suite runs serially), so the
+        # statement builder falls back to raw labels and warns. The -1 partial render
+        # is the robust core.
         pytest.param(
             {
                 "dataset": "statefulsets_metric_key_pair.jsonl",

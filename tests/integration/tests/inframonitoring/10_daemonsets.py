@@ -147,8 +147,11 @@ def test_daemonsets_accuracy(
         # (k8s.daemonset.name != '') excludes the label-less pod metrics ->
         # daemonSet* (pod-derived) come back -1, while desiredNodes/currentNodes
         # (daemonset metrics) stay real. Mirrors the statefulsets faithful case.
-        # The -1 partial render is the robust core; the "key ... not found on metric"
-        # warning is asserted too (surfaced fine on statefulsets).
+        # The "key ... not found on metric" warning fires deterministically: the
+        # (pod-metric, k8s.daemonset.name) pair is absent from distributed_metadata
+        # (insert_metrics truncates it per function; the suite runs serially), so the
+        # statement builder falls back to raw labels and warns. The -1 partial render
+        # is the robust core.
         pytest.param(
             {
                 "dataset": "daemonsets_metric_key_pair.jsonl",

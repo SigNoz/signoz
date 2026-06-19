@@ -143,8 +143,7 @@ def test_hosts_warnings(
 ) -> None:
     """Data-availability gaps surface as non-blocking warnings (200 + data),
     not hard errors. Covers never-seen metrics (scenario 1) and never-seen
-    (metric, key) pairs via groupBy (scenario 2). Field-level expectations are
-    provisional pending a real run."""
+    (metric, key) pairs via groupBy (scenario 2)."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
