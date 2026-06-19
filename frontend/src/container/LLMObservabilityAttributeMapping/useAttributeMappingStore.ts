@@ -1,8 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from '@signozhq/ui/sonner';
-import { useQueries, useQueryClient } from 'react-query';
+import { useQueryClient } from 'react-query';
 import {
-	getListSpanMappersQueryOptions,
 	useCreateSpanMapper,
 	useCreateSpanMapperGroup,
 	useDeleteSpanMapper,
@@ -22,6 +21,7 @@ import {
 } from './types';
 import {
 	buildDraftGroup,
+	buildDraftMapper,
 	nodeFromGroupDraft,
 	nodeFromMapperDraft,
 } from './utils';
@@ -42,6 +42,7 @@ export interface AttributeMappingStore {
 	upsertGroup: (draft: GroupDraft) => void;
 	removeGroup: (localId: string) => void;
 	toggleGroup: (localId: string, enabled: boolean) => void;
+	hydrateGroupMappers: (groupServerId: string, mappers: Mapper[]) => void;
 	upsertMapper: (groupLocalId: string, draft: MapperDraft) => void;
 	removeMapper: (groupLocalId: string, mapperLocalId: string) => void;
 	toggleMapper: (
@@ -62,35 +63,25 @@ export function useAttributeMappingStore(): AttributeMappingStore {
 		[groupsQuery.data],
 	);
 
-	const mapperQueries = useQueries(
-		serverGroups.map((group) =>
-			getListSpanMappersQueryOptions({ groupId: group.id }),
-		),
-	);
+	const ready = !groupsQuery.isLoading;
 
-	const mappersReady = mapperQueries.every((query) => !query.isLoading);
-	const ready = !groupsQuery.isLoading && mappersReady;
-
-	// Stable signature so the snapshot only rebuilds when server data changes.
-	const dataSignature = useMemo(
-		() =>
-			JSON.stringify(serverGroups) +
-			JSON.stringify(mapperQueries.map((query) => query.data?.data?.items ?? [])),
-		[serverGroups, mapperQueries],
+	// A group's mappers are fetched lazily when its row is first expanded (see
+	// MappersTable -> hydrateGroupMappers) and cached here, keyed by group server
+	// id. Page load stays a single groups request — never an N+1 fan-out across
+	// every group.
+	const [loadedMappers, setLoadedMappers] = useState<Record<string, Mapper[]>>(
+		{},
 	);
+	const loadedRef = useRef<Set<string>>(new Set());
 
 	const snapshot = useMemo<DraftGroup[]>(() => {
 		if (!ready) {
 			return [];
 		}
-		return serverGroups.map((group, index) =>
-			buildDraftGroup(
-				group,
-				(mapperQueries[index]?.data?.data?.items ?? []) as unknown as Mapper[],
-			),
+		return serverGroups.map((group) =>
+			buildDraftGroup(group, loadedMappers[group.id] ?? []),
 		);
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [ready, dataSignature]);
+	}, [ready, serverGroups, loadedMappers]);
 
 	const [draft, setDraft] = useState<DraftGroup[] | null>(null);
 
@@ -169,6 +160,29 @@ export function useAttributeMappingStore(): AttributeMappingStore {
 			),
 		);
 	}, []);
+
+	// Fold a group's freshly-fetched server mappers into both the snapshot
+	// baseline and the working draft, exactly once per group. Re-expands hit the
+	// guard, so in-flight edits are never clobbered.
+	const hydrateGroupMappers = useCallback(
+		(groupServerId: string, mappers: Mapper[]): void => {
+			if (loadedRef.current.has(groupServerId)) {
+				return;
+			}
+			loadedRef.current.add(groupServerId);
+			setLoadedMappers((prev) => ({ ...prev, [groupServerId]: mappers }));
+			setDraft((prev) =>
+				prev === null
+					? prev
+					: prev.map((group) =>
+							group.serverId === groupServerId
+								? { ...group, mappers: mappers.map(buildDraftMapper) }
+								: group,
+						),
+			);
+		},
+		[],
+	);
 
 	const upsertMapper = useCallback(
 		(groupLocalId: string, mapperDraft: MapperDraft): void => {
@@ -251,7 +265,10 @@ export function useAttributeMappingStore(): AttributeMappingStore {
 					typeof query.queryKey?.[0] === 'string' &&
 					(query.queryKey[0] as string).startsWith(GROUPS_KEY_PREFIX),
 			});
-			// Re-initialise the working copy from the freshly-fetched server data.
+			// Drop lazily-loaded mappers and re-initialise the working copy from the
+			// freshly-fetched server data; expanded rows re-hydrate on next render.
+			loadedRef.current = new Set();
+			setLoadedMappers({});
 			setDraft(null);
 			toast.success('Attribute mapping changes saved');
 		} catch (error) {
@@ -278,6 +295,7 @@ export function useAttributeMappingStore(): AttributeMappingStore {
 		upsertGroup,
 		removeGroup,
 		toggleGroup,
+		hydrateGroupMappers,
 		upsertMapper,
 		removeMapper,
 		toggleMapper,

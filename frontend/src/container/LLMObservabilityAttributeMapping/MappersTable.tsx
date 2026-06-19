@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
 import { Switch } from '@signozhq/ui/switch';
@@ -11,10 +11,12 @@ import {
 	TableRow,
 } from '@signozhq/ui/table';
 import { Pencil, Plus, Trash2 } from '@signozhq/icons';
+import { useListSpanMappers } from 'api/generated/services/spanmapper';
+import Spinner from 'components/Spinner';
 
 import IndexBadge from './IndexBadge';
 import MapperFormDrawer from './MapperFormDrawer';
-import { DraftGroup, DraftMapper, FieldContext } from './types';
+import { DraftGroup, DraftMapper, FieldContext, Mapper } from './types';
 import { AttributeMappingStore } from './useAttributeMappingStore';
 import { useMapperFormDrawer } from './useMapperFormDrawer';
 
@@ -129,6 +131,27 @@ function MapperRow({
 
 function MappersTable({ group, store }: MappersTableProps): JSX.Element {
 	const drawer = useMapperFormDrawer();
+	const { hydrateGroupMappers } = store;
+
+	// Lazy: this component only mounts when its group row is expanded, so a
+	// group's mappers are fetched on first open and then cached by react-query.
+	// New (unsaved) groups have no serverId, so skip the fetch. On success the
+	// result is folded into the store's draft tree so it's editable.
+	const hasServerId = group.serverId !== null;
+	const { data, isLoading, isError } = useListSpanMappers(
+		{ groupId: group.serverId ?? '' },
+		{ query: { enabled: hasServerId } },
+	);
+
+	useEffect(() => {
+		const items = data?.data?.items;
+		if (group.serverId && items) {
+			hydrateGroupMappers(group.serverId, items as unknown as Mapper[]);
+		}
+	}, [group.serverId, data, hydrateGroupMappers]);
+
+	const isLoadingMappers = hasServerId && isLoading;
+	const isErrorMappers = hasServerId && isError;
 
 	const handleSave = useCallback((): void => {
 		store.upsertMapper(group.localId, drawer.draft);
@@ -155,25 +178,41 @@ function MappersTable({ group, store }: MappersTableProps): JSX.Element {
 					</TableRow>
 				</TableHeader>
 				<TableBody>
-					{group.mappers.length === 0 && (
+					{isLoadingMappers && (
+						<TableRow>
+							<TableCell colSpan={COLUMN_COUNT} className="am-table__empty">
+								<Spinner size="small" height="auto" />
+							</TableCell>
+						</TableRow>
+					)}
+					{isErrorMappers && (
+						<TableRow>
+							<TableCell colSpan={COLUMN_COUNT} className="am-table__empty">
+								Failed to load mappings. Please try again.
+							</TableCell>
+						</TableRow>
+					)}
+					{!isLoadingMappers && !isErrorMappers && group.mappers.length === 0 && (
 						<TableRow>
 							<TableCell colSpan={COLUMN_COUNT} className="am-table__empty">
 								No mappings in this group yet.
 							</TableCell>
 						</TableRow>
 					)}
-					{group.mappers.map((mapper, index) => (
-						<MapperRow
-							key={mapper.localId}
-							mapper={mapper}
-							index={index}
-							onEdit={drawer.openForEdit}
-							onDelete={(localId): void => store.removeMapper(group.localId, localId)}
-							onToggle={(localId, enabled): void =>
-								store.toggleMapper(group.localId, localId, enabled)
-							}
-						/>
-					))}
+					{!isLoadingMappers &&
+						!isErrorMappers &&
+						group.mappers.map((mapper, index) => (
+							<MapperRow
+								key={mapper.localId}
+								mapper={mapper}
+								index={index}
+								onEdit={drawer.openForEdit}
+								onDelete={(localId): void => store.removeMapper(group.localId, localId)}
+								onToggle={(localId, enabled): void =>
+									store.toggleMapper(group.localId, localId, enabled)
+								}
+							/>
+						))}
 				</TableBody>
 			</Table>
 
