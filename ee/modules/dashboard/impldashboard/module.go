@@ -217,6 +217,10 @@ func (module *module) CreateV2(ctx context.Context, orgID valuer.UUID, createdBy
 	return module.pkgDashboardModule.CreateV2(ctx, orgID, createdBy, creator, source, postable)
 }
 
+func (module *module) CloneV2(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, id valuer.UUID) (*dashboardtypes.DashboardV2, error) {
+	return module.pkgDashboardModule.CloneV2(ctx, orgID, createdBy, creator, id)
+}
+
 func (module *module) GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.DashboardV2, error) {
 	return module.pkgDashboardModule.GetV2(ctx, orgID, id)
 }
@@ -229,8 +233,53 @@ func (module *module) PatchV2(ctx context.Context, orgID valuer.UUID, id valuer.
 	return module.pkgDashboardModule.PatchV2(ctx, orgID, id, updatedBy, patch)
 }
 
+func (module *module) DeleteV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {
+	return module.store.RunInTx(ctx, func(ctx context.Context) error {
+		if err := module.store.DeletePublic(ctx, id.String()); err != nil && !errors.Ast(err, errors.TypeNotFound) {
+			return err
+		}
+		return module.pkgDashboardModule.DeleteV2(ctx, orgID, id)
+	})
+}
+
 func (module *module) LockUnlockV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, isAdmin bool, lock bool) error {
 	return module.pkgDashboardModule.LockUnlockV2(ctx, orgID, id, updatedBy, isAdmin, lock)
+}
+
+func (module *module) ListV2(ctx context.Context, orgID valuer.UUID, params *dashboardtypes.ListDashboardsV2Params) (*dashboardtypes.ListableDashboardV2, error) {
+	return module.pkgDashboardModule.ListV2(ctx, orgID, params)
+}
+
+func (module *module) ListForUserV2(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, params *dashboardtypes.ListDashboardsV2Params) (*dashboardtypes.ListableDashboardForUserV2, error) {
+	return module.pkgDashboardModule.ListForUserV2(ctx, orgID, userID, params)
+}
+
+func (module *module) PinV2(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, id valuer.UUID) error {
+	return module.pkgDashboardModule.PinV2(ctx, orgID, userID, id)
+}
+
+func (module *module) UnpinV2(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, id valuer.UUID) error {
+	return module.pkgDashboardModule.UnpinV2(ctx, orgID, userID, id)
+}
+
+func (module *module) DeletePreferencesForUser(ctx context.Context, orgID valuer.UUID, userID valuer.UUID) error {
+	return module.pkgDashboardModule.DeletePreferencesForUser(ctx, orgID, userID)
+}
+
+func (module *module) CreateView(ctx context.Context, orgID valuer.UUID, postable dashboardtypes.PostableDashboardView) (*dashboardtypes.DashboardView, error) {
+	return module.pkgDashboardModule.CreateView(ctx, orgID, postable)
+}
+
+func (module *module) ListViews(ctx context.Context, orgID valuer.UUID) (*dashboardtypes.ListableDashboardView, error) {
+	return module.pkgDashboardModule.ListViews(ctx, orgID)
+}
+
+func (module *module) UpdateView(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updateable dashboardtypes.UpdatableDashboardView) (*dashboardtypes.DashboardView, error) {
+	return module.pkgDashboardModule.UpdateView(ctx, orgID, id, updateable)
+}
+
+func (module *module) DeleteView(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {
+	return module.pkgDashboardModule.DeleteView(ctx, orgID, id)
 }
 
 func (module *module) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.Dashboard, error) {

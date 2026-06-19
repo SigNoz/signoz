@@ -212,6 +212,10 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewFixChangelogOperationTypeFactory(sqlstore, sqlschema),
 		sqlmigration.NewCloudIntegrationRemoveCascadeDeleteFactory(sqlschema),
 		sqlmigration.NewAddJsmOpsConnectionFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddUserDashboardPreferenceFactory(sqlstore, sqlschema),
+		sqlmigration.NewRecreateUserDashboardPreferenceFactory(sqlstore, sqlschema),
+		sqlmigration.NewMigrateRecurrenceBoundsFactory(sqlstore),
+		sqlmigration.NewAddDashboardViewFactory(sqlstore, sqlschema),
 	)
 }
 
@@ -263,9 +267,9 @@ func NewSharderProviderFactories() factory.NamedMap[factory.ProviderFactory[shar
 	)
 }
 
-func NewStatsReporterProviderFactories(telemetryStore telemetrystore.TelemetryStore, collectors []statsreporter.StatsCollector, orgGetter organization.Getter, userGetter user.Getter, tokenizer tokenizer.Tokenizer, build version.Build, analyticsConfig analytics.Config) factory.NamedMap[factory.ProviderFactory[statsreporter.StatsReporter, statsreporter.Config]] {
+func NewStatsReporterProviderFactories(aggregator statsreporter.Aggregator, orgGetter organization.Getter, userGetter user.Getter, tokenizer tokenizer.Tokenizer, build version.Build, analyticsConfig analytics.Config) factory.NamedMap[factory.ProviderFactory[statsreporter.StatsReporter, statsreporter.Config]] {
 	return factory.MustNewNamedMap(
-		analyticsstatsreporter.NewFactory(telemetryStore, collectors, orgGetter, userGetter, tokenizer, build, analyticsConfig),
+		analyticsstatsreporter.NewFactory(aggregator, orgGetter, userGetter, tokenizer, build, analyticsConfig),
 		noopstatsreporter.NewFactory(),
 	)
 }
@@ -308,6 +312,7 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			handlers.LLMPricingRuleHandler,
 			handlers.TraceDetail,
 			handlers.RulerHandler,
+			handlers.StatsHandler,
 		),
 	)
 }

@@ -10,7 +10,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/inframonitoringtypes"
+	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -48,6 +50,8 @@ func NewModule(
 }
 
 func (m *module) ListHosts(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableHosts) (*inframonitoringtypes.Hosts, error) {
+	ctx = m.withInfraMonitoringContext(ctx, "ListHosts")
+
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
@@ -161,6 +165,8 @@ func (m *module) ListHosts(ctx context.Context, orgID valuer.UUID, req *inframon
 }
 
 func (m *module) ListPods(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostablePods) (*inframonitoringtypes.Pods, error) {
+	ctx = m.withInfraMonitoringContext(ctx, "ListPods")
+
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
@@ -244,6 +250,8 @@ func (m *module) ListPods(ctx context.Context, orgID valuer.UUID, req *inframoni
 }
 
 func (m *module) ListNodes(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableNodes) (*inframonitoringtypes.Nodes, error) {
+	ctx = m.withInfraMonitoringContext(ctx, "ListNodes")
+
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
@@ -332,6 +340,8 @@ func (m *module) ListNodes(ctx context.Context, orgID valuer.UUID, req *inframon
 }
 
 func (m *module) ListNamespaces(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableNamespaces) (*inframonitoringtypes.Namespaces, error) {
+	ctx = m.withInfraMonitoringContext(ctx, "ListNamespaces")
+
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
@@ -350,7 +360,7 @@ func (m *module) ListNamespaces(ctx context.Context, orgID valuer.UUID, req *inf
 	}
 
 	if len(req.GroupBy) == 0 {
-		req.GroupBy = []qbtypes.GroupByKey{namespaceNameGroupByKey}
+		req.GroupBy = []qbtypes.GroupByKey{namespaceNameGroupByKey, clusterNameGroupByKey}
 		resp.Type = inframonitoringtypes.ResponseTypeList
 	} else {
 		resp.Type = inframonitoringtypes.ResponseTypeGroupedList
@@ -414,6 +424,8 @@ func (m *module) ListNamespaces(ctx context.Context, orgID valuer.UUID, req *inf
 }
 
 func (m *module) ListClusters(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableClusters) (*inframonitoringtypes.Clusters, error) {
+	ctx = m.withInfraMonitoringContext(ctx, "ListClusters")
+
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
@@ -503,6 +515,8 @@ func (m *module) ListClusters(ctx context.Context, orgID valuer.UUID, req *infra
 }
 
 func (m *module) ListVolumes(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableVolumes) (*inframonitoringtypes.Volumes, error) {
+	ctx = m.withInfraMonitoringContext(ctx, "ListVolumes")
+
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
@@ -521,7 +535,7 @@ func (m *module) ListVolumes(ctx context.Context, orgID valuer.UUID, req *infram
 	}
 
 	if len(req.GroupBy) == 0 {
-		req.GroupBy = []qbtypes.GroupByKey{pvcNameGroupByKey}
+		req.GroupBy = []qbtypes.GroupByKey{pvcNameGroupByKey, namespaceNameGroupByKey, clusterNameGroupByKey}
 		resp.Type = inframonitoringtypes.ResponseTypeList
 	} else {
 		resp.Type = inframonitoringtypes.ResponseTypeGroupedList
@@ -586,6 +600,8 @@ func (m *module) ListVolumes(ctx context.Context, orgID valuer.UUID, req *infram
 }
 
 func (m *module) ListDeployments(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableDeployments) (*inframonitoringtypes.Deployments, error) {
+	ctx = m.withInfraMonitoringContext(ctx, "ListDeployments")
+
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
@@ -604,7 +620,7 @@ func (m *module) ListDeployments(ctx context.Context, orgID valuer.UUID, req *in
 	}
 
 	if len(req.GroupBy) == 0 {
-		req.GroupBy = []qbtypes.GroupByKey{deploymentNameGroupByKey}
+		req.GroupBy = []qbtypes.GroupByKey{deploymentNameGroupByKey, namespaceNameGroupByKey, clusterNameGroupByKey}
 		resp.Type = inframonitoringtypes.ResponseTypeList
 	} else {
 		resp.Type = inframonitoringtypes.ResponseTypeGroupedList
@@ -674,6 +690,8 @@ func (m *module) ListDeployments(ctx context.Context, orgID valuer.UUID, req *in
 }
 
 func (m *module) ListStatefulSets(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableStatefulSets) (*inframonitoringtypes.StatefulSets, error) {
+	ctx = m.withInfraMonitoringContext(ctx, "ListStatefulSets")
+
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
@@ -692,7 +710,7 @@ func (m *module) ListStatefulSets(ctx context.Context, orgID valuer.UUID, req *i
 	}
 
 	if len(req.GroupBy) == 0 {
-		req.GroupBy = []qbtypes.GroupByKey{statefulSetNameGroupByKey}
+		req.GroupBy = []qbtypes.GroupByKey{statefulSetNameGroupByKey, namespaceNameGroupByKey, clusterNameGroupByKey}
 		resp.Type = inframonitoringtypes.ResponseTypeList
 	} else {
 		resp.Type = inframonitoringtypes.ResponseTypeGroupedList
@@ -764,6 +782,8 @@ func (m *module) ListStatefulSets(ctx context.Context, orgID valuer.UUID, req *i
 }
 
 func (m *module) ListJobs(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableJobs) (*inframonitoringtypes.Jobs, error) {
+	ctx = m.withInfraMonitoringContext(ctx, "ListJobs")
+
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
@@ -782,7 +802,7 @@ func (m *module) ListJobs(ctx context.Context, orgID valuer.UUID, req *inframoni
 	}
 
 	if len(req.GroupBy) == 0 {
-		req.GroupBy = []qbtypes.GroupByKey{jobNameGroupByKey}
+		req.GroupBy = []qbtypes.GroupByKey{jobNameGroupByKey, namespaceNameGroupByKey, clusterNameGroupByKey}
 		resp.Type = inframonitoringtypes.ResponseTypeList
 	} else {
 		resp.Type = inframonitoringtypes.ResponseTypeGroupedList
@@ -854,6 +874,8 @@ func (m *module) ListJobs(ctx context.Context, orgID valuer.UUID, req *inframoni
 }
 
 func (m *module) ListDaemonSets(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableDaemonSets) (*inframonitoringtypes.DaemonSets, error) {
+	ctx = m.withInfraMonitoringContext(ctx, "ListDaemonSets")
+
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
@@ -872,7 +894,7 @@ func (m *module) ListDaemonSets(ctx context.Context, orgID valuer.UUID, req *inf
 	}
 
 	if len(req.GroupBy) == 0 {
-		req.GroupBy = []qbtypes.GroupByKey{daemonSetNameGroupByKey}
+		req.GroupBy = []qbtypes.GroupByKey{daemonSetNameGroupByKey, namespaceNameGroupByKey, clusterNameGroupByKey}
 		resp.Type = inframonitoringtypes.ResponseTypeList
 	} else {
 		resp.Type = inframonitoringtypes.ResponseTypeGroupedList
@@ -941,4 +963,13 @@ func (m *module) ListDaemonSets(ctx context.Context, orgID valuer.UUID, req *inf
 	resp.Warning = queryResp.Warning
 
 	return resp, nil
+}
+
+func (m *module) withInfraMonitoringContext(ctx context.Context, functionName string) context.Context {
+	comments := map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
+		instrumentationtypes.CodeNamespace:    "infra-monitoring",
+		instrumentationtypes.CodeFunctionName: functionName,
+	}
+	return ctxtypes.NewContextWithCommentVals(ctx, comments)
 }

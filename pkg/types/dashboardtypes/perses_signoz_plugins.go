@@ -93,14 +93,21 @@ func (b BuilderQuerySpec) MarshalJSON() ([]byte, error) {
 	return json.Marshal(b.Spec)
 }
 
-// PrepareJSONSchema drops the reflected struct shape so only the
-// JSONSchemaOneOf result binds.
+// PrepareJSONSchema marks the envelope with x-signoz-discriminator keyed on
+// `signal`. Each QueryBuilderQuery[T] variant pins `signal` to its one value
+// (via its own PrepareJSONSchema in the qb package), so the union resolves
+// cleanly even though it doesn't carry a `kind`.
 func (BuilderQuerySpec) PrepareJSONSchema(s *jsonschema.Schema) error {
-	return clearOneOfParentShape(s)
+	return markDiscriminator(s, "signal", map[string]string{
+		telemetrytypes.SignalLogs.StringValue():    schemaRef("Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregation"),
+		telemetrytypes.SignalMetrics.StringValue(): schemaRef("Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregation"),
+		telemetrytypes.SignalTraces.StringValue():  schemaRef("Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregation"),
+	})
 }
 
 // JSONSchemaOneOf exposes the three signal-dispatched shapes a builder query
-// can take. Mirrors qb.UnmarshalBuilderQueryBySignal's runtime dispatch.
+// can take. Mirrors qb.UnmarshalBuilderQueryBySignal's runtime dispatch. Each
+// QueryBuilderQuery[T] pins its own `signal` enum (see its PrepareJSONSchema).
 func (BuilderQuerySpec) JSONSchemaOneOf() []any {
 	return []any{
 		qb.QueryBuilderQuery[qb.LogAggregation]{},

@@ -1,0 +1,1037 @@
+{
+  "id": "virtualmachine",
+  "title": "Virtual Machines",
+  "icon": "file://icon.svg",
+  "overview": "file://overview.md",
+  "supportedSignals": {
+    "metrics": true,
+    "logs": false
+  },
+  "dataCollected": {
+    "metrics": [
+      {
+        "name": "azure_available_memory_percentage_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_available_memory_percentage_count",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_available_memory_percentage_maximum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_available_memory_percentage_minimum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_available_memory_percentage_total",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_available_memory_bytes_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_available_memory_bytes_count",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_available_memory_bytes_maximum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_available_memory_bytes_minimum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_available_memory_bytes_total",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_percentage_cpu_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_percentage_cpu_count",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_percentage_cpu_maximum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_percentage_cpu_minimum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_percentage_cpu_total",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_vm_cached_bandwidth_consumed_percentage_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_vm_cached_bandwidth_consumed_percentage_count",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_vm_cached_bandwidth_consumed_percentage_maximum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_vm_cached_bandwidth_consumed_percentage_minimum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_vm_cached_bandwidth_consumed_percentage_total",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_network_in_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_network_in_count",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_network_in_maximum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_network_in_minimum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_network_in_total",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_network_out_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_network_out_count",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_network_out_maximum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_network_out_minimum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_network_out_total",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_cpu_credits_consumed_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_cpu_credits_consumed_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_cpu_credits_consumed_total",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_cpu_credits_remaining_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_cpu_credits_remaining_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_cpu_credits_remaining_total",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_inbound_flows_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_inbound_flows_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_inbound_flows_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_inbound_flows_maximum_creation_rate_average",
+        "unit": "CountPerSecond",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_inbound_flows_maximum_creation_rate_count",
+        "unit": "CountPerSecond",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_inbound_flows_maximum_creation_rate_maximum",
+        "unit": "CountPerSecond",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_inbound_flows_maximum_creation_rate_minimum",
+        "unit": "CountPerSecond",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_inbound_flows_maximum_creation_rate_total",
+        "unit": "CountPerSecond",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_inbound_flows_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_inbound_flows_total",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_network_in_total_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_network_in_total_count",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_network_in_total_maximum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_network_in_total_minimum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_network_in_total_total",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_network_out_total_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_network_out_total_count",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_network_out_total_maximum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_network_out_total_minimum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_network_out_total_total",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_outbound_flows_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_outbound_flows_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_outbound_flows_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_outbound_flows_maximum_creation_rate_average",
+        "unit": "CountPerSecond",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_outbound_flows_maximum_creation_rate_count",
+        "unit": "CountPerSecond",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_outbound_flows_maximum_creation_rate_maximum",
+        "unit": "CountPerSecond",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_outbound_flows_maximum_creation_rate_minimum",
+        "unit": "CountPerSecond",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_outbound_flows_maximum_creation_rate_total",
+        "unit": "CountPerSecond",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_outbound_flows_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_outbound_flows_total",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_vmavailabilitymetric_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_vmavailabilitymetric_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_vmavailabilitymetric_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_disk_read_bytes_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_disk_read_bytes_count",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_disk_read_bytes_maximum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_disk_read_bytes_minimum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_disk_read_bytes_total",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_disk_read_operations/sec_average",
+        "unit": "CountPerSecond",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_disk_read_operations/sec_count",
+        "unit": "CountPerSecond",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_disk_read_operations/sec_maximum",
+        "unit": "CountPerSecond",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_disk_read_operations/sec_minimum",
+        "unit": "CountPerSecond",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_disk_read_operations/sec_total",
+        "unit": "CountPerSecond",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_disk_write_bytes_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_disk_write_bytes_count",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_disk_write_bytes_maximum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_disk_write_bytes_minimum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_disk_write_bytes_total",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_disk_write_operations/sec_average",
+        "unit": "CountPerSecond",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_disk_write_operations/sec_count",
+        "unit": "CountPerSecond",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_disk_write_operations/sec_maximum",
+        "unit": "CountPerSecond",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_disk_write_operations/sec_minimum",
+        "unit": "CountPerSecond",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_disk_write_operations/sec_total",
+        "unit": "CountPerSecond",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_os_disk_bandwidth_consumed_percentage_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_os_disk_bandwidth_consumed_percentage_count",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_os_disk_bandwidth_consumed_percentage_maximum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_os_disk_bandwidth_consumed_percentage_minimum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_os_disk_bandwidth_consumed_percentage_total",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_os_disk_iops_consumed_percentage_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_os_disk_iops_consumed_percentage_count",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_os_disk_iops_consumed_percentage_maximum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_os_disk_iops_consumed_percentage_minimum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_os_disk_iops_consumed_percentage_total",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_os_disk_latency_average",
+        "unit": "MilliSeconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_os_disk_latency_count",
+        "unit": "MilliSeconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_os_disk_latency_maximum",
+        "unit": "MilliSeconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_os_disk_latency_minimum",
+        "unit": "MilliSeconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_os_disk_latency_total",
+        "unit": "MilliSeconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_os_disk_queue_depth_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_os_disk_queue_depth_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_os_disk_queue_depth_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_os_disk_queue_depth_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_os_disk_queue_depth_total",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_os_disk_read_bytes/sec_average",
+        "unit": "BytesPerSecond",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_os_disk_read_bytes/sec_count",
+        "unit": "BytesPerSecond",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_os_disk_read_bytes/sec_maximum",
+        "unit": "BytesPerSecond",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_os_disk_read_bytes/sec_minimum",
+        "unit": "BytesPerSecond",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_os_disk_read_bytes/sec_total",
+        "unit": "BytesPerSecond",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_os_disk_read_operations/sec_average",
+        "unit": "CountPerSecond",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_os_disk_read_operations/sec_count",
+        "unit": "CountPerSecond",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_os_disk_read_operations/sec_maximum",
+        "unit": "CountPerSecond",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_os_disk_read_operations/sec_minimum",
+        "unit": "CountPerSecond",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_os_disk_read_operations/sec_total",
+        "unit": "CountPerSecond",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_os_disk_write_bytes/sec_average",
+        "unit": "BytesPerSecond",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_os_disk_write_bytes/sec_count",
+        "unit": "BytesPerSecond",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_os_disk_write_bytes/sec_maximum",
+        "unit": "BytesPerSecond",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_os_disk_write_bytes/sec_minimum",
+        "unit": "BytesPerSecond",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_os_disk_write_bytes/sec_total",
+        "unit": "BytesPerSecond",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_os_disk_write_operations/sec_average",
+        "unit": "CountPerSecond",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_os_disk_write_operations/sec_count",
+        "unit": "CountPerSecond",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_os_disk_write_operations/sec_maximum",
+        "unit": "CountPerSecond",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_os_disk_write_operations/sec_minimum",
+        "unit": "CountPerSecond",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_os_disk_write_operations/sec_total",
+        "unit": "CountPerSecond",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_vm_cached_iops_consumed_percentage_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_vm_cached_iops_consumed_percentage_count",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_vm_cached_iops_consumed_percentage_maximum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_vm_cached_iops_consumed_percentage_minimum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_vm_cached_iops_consumed_percentage_total",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_vm_uncached_bandwidth_consumed_percentage_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_vm_uncached_bandwidth_consumed_percentage_count",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_vm_uncached_bandwidth_consumed_percentage_maximum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_vm_uncached_bandwidth_consumed_percentage_minimum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_vm_uncached_bandwidth_consumed_percentage_total",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_vm_uncached_iops_consumed_percentage_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_vm_uncached_iops_consumed_percentage_count",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_vm_uncached_iops_consumed_percentage_maximum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_vm_uncached_iops_consumed_percentage_minimum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_vm_uncached_iops_consumed_percentage_total",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_os_disk_target_iops_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_os_disk_target_iops_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_os_disk_target_iops_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_os_disk_target_iops_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_os_disk_target_iops_total",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_vm_local_used_burst_bps_credits_percentage_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_vm_local_used_burst_bps_credits_percentage_maximum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_vm_local_used_burst_bps_credits_percentage_minimum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_vm_local_used_burst_io_credits_percentage_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_vm_local_used_burst_io_credits_percentage_maximum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_vm_local_used_burst_io_credits_percentage_minimum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_os_disk_target_bandwidth_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_os_disk_target_bandwidth_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_os_disk_target_bandwidth_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_os_disk_target_bandwidth_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_os_disk_target_bandwidth_total",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_vm_remote_used_burst_bps_credits_percentage_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_vm_remote_used_burst_bps_credits_percentage_maximum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_vm_remote_used_burst_bps_credits_percentage_minimum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_vm_remote_used_burst_io_credits_percentage_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_vm_remote_used_burst_io_credits_percentage_maximum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_vm_remote_used_burst_io_credits_percentage_minimum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      }
+    ],
+    "logs": [
+      {
+        "name": "Resource ID",
+        "path": "resources.azure.resource.id",
+        "type": "string"
+      }
+    ]
+  },
+  "telemetryCollectionStrategy": {
+    "azure": {
+      "resourceProvider": "Microsoft.Compute",
+      "resourceType": "virtualMachines",
+      "metrics": {},
+      "logs": {
+        "categoryGroups": ["allLogs"]
+      }
+    }
+  },
+  "assets": {
+    "dashboards": [
+      {
+        "id": "overview",
+        "title": "Virtual Machine Overview",
+        "description": "Overview of Virtual Machine metrics",
+        "definition": "file://assets/dashboards/overview.json"
+      }
+    ]
+  }
+}

@@ -38,6 +38,30 @@ func getQueryIdentifier(envelope QueryEnvelope, index int) string {
 	return fmt.Sprintf("%s at position %d", typeLabel, index+1)
 }
 
+// wrapValidationError rewraps a validation failure as errorFormat % (contextIdentifier,
+// innerMsg), carrying the inner error's additionals and suggestions onto the new error so
+// the structured hints survive the rewrap.
+func wrapValidationError(cause error, contextIdentifier string, errorFormat string) error {
+	if cause == nil {
+		return nil
+	}
+
+	_, _, innerMsg, _, _, additionals := errors.Unwrapb(cause)
+	inner := errors.AsJSON(cause)
+
+	newErr := errors.NewInvalidInputf(errors.CodeInvalidInput, errorFormat, contextIdentifier, innerMsg)
+
+	if len(additionals) > 0 {
+		newErr = newErr.WithAdditionals(additionals...)
+	}
+
+	if len(inner.Suggestions) > 0 {
+		newErr = newErr.WithSuggestions(inner.Suggestions...)
+	}
+
+	return newErr
+}
+
 const (
 	// Maximum limit for query results.
 	MaxQueryLimit = 10000
@@ -317,6 +341,19 @@ func (q *QueryBuilderQuery[T]) validateAggregations(cfg validationConfig) error 
 	return nil
 }
 
+func (m MetricAggregation) ValidateForType() error {
+	if m.SpaceAggregation.IsPercentile() && !m.Type.IsPercentileSpaceAggregationAllowed() {
+		return errors.Newf(
+			errors.TypeInvalidInput,
+			errors.CodeInvalidInput,
+			"invalid space aggregation `%s` for metric type `%s`, percentile space aggregations are only supported for `histogram`, `exponentialhistogram` metric types",
+			m.SpaceAggregation.StringValue(),
+			m.Type.StringValue(),
+		)
+	}
+	return nil
+}
+
 func (q *QueryBuilderQuery[T]) validateLimitAndPagination(cfg validationConfig) error {
 	if cfg.skipLimitOffsetValidation {
 		return nil
@@ -471,6 +508,9 @@ func (q *QueryBuilderQuery[T]) validateOrderByForAggregation() error {
 			}
 			slices.Sort(validKeys)
 
+			// Aggregation order-by keys are a small, exhaustive set (group-by keys,
+			// aggregation aliases/expressions, indices, __result), so a "valid references"
+			// list — unlike free-form field suggestions — is genuinely useful here.
 			return errors.NewInvalidInputf(
 				errors.CodeInvalidInput,
 				"invalid order by key '%s' for %s",
@@ -478,7 +518,7 @@ func (q *QueryBuilderQuery[T]) validateOrderByForAggregation() error {
 				orderId,
 			).WithAdditional(
 				fmt.Sprintf("For aggregation queries, order by can only reference group by keys, aggregation aliases/expressions, or aggregation indices. Valid keys are: %s", strings.Join(validKeys, ", ")),
-			)
+			).WithSuggestions(errors.SuggestionsOnLevenshteinDistance(orderKey, validKeys)...)
 		}
 	}
 
@@ -672,7 +712,7 @@ func validateQueryEnvelope(envelope QueryEnvelope, opts ...ValidationOption) err
 			envelope.Type,
 		).WithAdditional(
 			"Valid query types are: builder_query, builder_sub_query, builder_formula, builder_join, promql, clickhouse_sql, trace_operator",
-		)
+		).WithSuggestions(errors.ValidReferences(QueryType{}.Enum()...))
 	}
 }
 

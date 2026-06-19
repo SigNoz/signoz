@@ -1,10 +1,14 @@
 package querybuildertypesv5
 
 import (
+	"bytes"
 	"fmt"
+	"slices"
 
+	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/swaggest/jsonschema-go"
 )
 
 type QueryBuilderQuery[T any] struct {
@@ -67,6 +71,32 @@ type QueryBuilderQuery[T any] struct {
 	// ShiftBy is extracted from timeShift function for internal use
 	// This field is not serialized to JSON
 	ShiftBy int64 `json:"-"`
+}
+
+// PrepareJSONSchema pins `signal` to the single value implied by the aggregation
+// type T, as an inline single-value enum, and marks it required. This lets a
+// oneOf over the QueryBuilderQuery[T] instantiations be discriminated by signal.
+func (QueryBuilderQuery[T]) PrepareJSONSchema(s *jsonschema.Schema) error {
+	var signal telemetrytypes.Signal
+	switch any(*new(T)).(type) {
+	case LogAggregation:
+		signal = telemetrytypes.SignalLogs
+	case MetricAggregation:
+		signal = telemetrytypes.SignalMetrics
+	case TraceAggregation:
+		signal = telemetrytypes.SignalTraces
+	default:
+		return nil
+	}
+	if _, ok := s.Properties["signal"]; !ok {
+		return nil
+	}
+	prop := (&jsonschema.Schema{}).WithType(jsonschema.String.Type()).WithEnum(signal.StringValue())
+	s.Properties["signal"] = prop.ToSchemaOrBool()
+	if !slices.Contains(s.Required, "signal") {
+		s.Required = append(s.Required, "signal")
+	}
+	return nil
 }
 
 // Copy creates a deep copy of the QueryBuilderQuery.
@@ -133,8 +163,8 @@ func (q *QueryBuilderQuery[T]) UnmarshalJSON(data []byte) error {
 	type Alias QueryBuilderQuery[T]
 
 	var temp Alias
-	// Use UnmarshalJSONWithContext for better error messages
-	if err := UnmarshalJSONWithContext(data, &temp, fmt.Sprintf("query spec for %T", q)); err != nil {
+	// Strict-decode the alias so unknown fields surface with field-name suggestions.
+	if err := binding.JSON.BindBody(bytes.NewReader(data), &temp, binding.WithDisallowUnknownFields(true), binding.WithUnknownFieldContext(fmt.Sprintf("query spec for %T", q))); err != nil {
 		return err
 	}
 

@@ -1,6 +1,7 @@
 import type { MessageContext } from 'api/ai-assistant/chat';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
+import { AlertListTabs } from 'pages/AlertList/types';
 import { matchPath } from 'react-router-dom';
 
 /**
@@ -99,6 +100,30 @@ export function getAutoContexts(
 
 	// ── Alerts ────────────────────────────────────────────────────────────────
 
+	// Alert detail (overview / per-rule history) — `/alerts/overview?ruleId=…`
+	// or `/alerts/history?ruleId=…`. Mirrors dashboard_detail: resourceId is the
+	// rule id and shared metadata carries the URL time range when present.
+	if (
+		matchPath(pathname, { path: ROUTES.ALERT_OVERVIEW, exact: true }) ||
+		matchPath(pathname, { path: ROUTES.ALERT_HISTORY, exact: true })
+	) {
+		const ruleId = params.get(QueryParams.ruleId);
+		if (ruleId) {
+			return [
+				{
+					source: 'auto',
+					type: 'alert',
+					resourceId: ruleId,
+					metadata: {
+						page: 'alert_detail',
+						ruleId,
+						...sharedMetadata,
+					},
+				},
+			];
+		}
+	}
+
 	// Alert edit — `/alerts/edit?ruleId=…`.
 	if (matchPath(pathname, { path: ROUTES.EDIT_ALERTS, exact: true })) {
 		const ruleId = params.get(QueryParams.ruleId);
@@ -108,7 +133,7 @@ export function getAutoContexts(
 					source: 'auto',
 					type: 'alert',
 					resourceId: ruleId,
-					metadata: { page: 'alert_edit' },
+					metadata: { page: 'alert_edit', ruleId },
 				},
 			];
 		}
@@ -125,6 +150,7 @@ export function getAutoContexts(
 		];
 	}
 
+	// Triggered-alerts index — `/alerts/history` without a rule id.
 	if (matchPath(pathname, { path: ROUTES.ALERT_HISTORY, exact: true })) {
 		return [
 			{
@@ -139,13 +165,18 @@ export function getAutoContexts(
 		];
 	}
 
+	// Alerts index — `/alerts` with tab query param (defaults to Alert Rules).
 	if (matchPath(pathname, { path: ROUTES.LIST_ALL_ALERT, exact: true })) {
+		const page = resolveAlertsIndexPage(params.get(QueryParams.tab));
 		return [
 			{
 				source: 'auto',
 				type: 'alert',
 				resourceId: null,
-				metadata: { page: 'alert_list' },
+				metadata: {
+					page,
+					...(page === 'alerts_triggered' ? sharedMetadata : {}),
+				},
 			},
 		];
 	}
@@ -251,8 +282,9 @@ export function getAutoContexts(
 
 	// ── Metrics ───────────────────────────────────────────────────────────────
 
+	// Metrics explorer — `/metrics-explorer` and sub-routes (summary, explorer, views).
 	if (
-		matchPath(pathname, { path: ROUTES.METRICS_EXPLORER_EXPLORER, exact: false })
+		matchPath(pathname, { path: ROUTES.METRICS_EXPLORER_BASE, exact: false })
 	) {
 		return [
 			{
@@ -267,7 +299,23 @@ export function getAutoContexts(
 		];
 	}
 
+	// NOTE: Homepage (`/home`) and infrastructure monitoring
+	// (`/infrastructure-monitoring/*`) intentionally emit no auto-context here.
+	// They have no resource that maps to `MessageContextDTOType`, so attaching
+	// a chip would misrepresent the page (e.g. a bogus "metrics_explorer"
+	// context). Their `page_type` for empty-state chips is resolved directly
+	// from the route in `resolvePageType`.
+
 	return [];
+}
+
+type AlertsIndexPage = 'alert_list' | 'alerts_triggered';
+
+function resolveAlertsIndexPage(tab: string | null): AlertsIndexPage {
+	if (tab === AlertListTabs.TRIGGERED_ALERTS) {
+		return 'alerts_triggered';
+	}
+	return 'alert_list';
 }
 
 /**
