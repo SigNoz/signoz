@@ -2,7 +2,7 @@
 	display: flex;
 	flex-direction: column;
 	gap: var(--spacing-8);
-	padding: var(--padding-6);
+	padding: var(--spacing-12);
 }
 
 .pageHeader {
@@ -19,12 +19,12 @@
 
 .title {
 	margin: 0;
-	font-size: var(--font-size-lg);
+	font-size: var(--periscope-font-size-large);
 	font-weight: var(--font-weight-semibold);
 }
 
 .description {
-	margin: var(--margin-1) 0 0;
+	margin: var(--spacing-2) 0 0;
 	font-size: var(--periscope-font-size-base);
 	color: var(--l3-foreground);
 }
@@ -40,6 +40,17 @@
 	color: var(--accent-amber);
 }
 
+.tableEmpty {
+	padding: var(--spacing-12) var(--spacing-6);
+	text-align: center;
+	color: var(--l3-foreground);
+	font-size: var(--periscope-font-size-base);
+}
+
+.muted {
+	color: var(--l3-foreground);
+}
+
 .pageError {
 	padding: var(--padding-3) var(--padding-4);
 	border-radius: var(--radius-2);
@@ -51,10 +62,6 @@
 .pageFooter {
 	margin-top: var(--spacing-8);
 	font-size: var(--font-size-xs);
-	color: var(--l3-foreground);
-}
-
-.muted {
 	color: var(--l3-foreground);
 }
 
@@ -82,21 +89,10 @@
 	align-self: flex-start;
 }
 
-.tableEmpty {
-	padding: var(--padding-6) var(--padding-3);
-	text-align: center;
-	color: var(--l3-foreground);
-	font-size: var(--periscope-font-size-base);
-}
-
 .groupsTableWrapper {
 	display: flex;
 	flex-direction: column;
 	gap: var(--spacing-4);
-}
-
-.groupsTableName {
-	font-weight: var(--font-weight-semibold);
 }
 
 .groupsTableNameCell {
@@ -105,9 +101,13 @@
 	gap: var(--spacing-4);
 }
 
+.groupsTableName {
+	font-weight: var(--font-weight-semibold);
+}
+
 .groupsTableSubRow {
 	// @signozhq/ui Table renders cells tagged with data-slot — target that
-	// rather than a bare `td` selector.
+	// rather than a bare `td` selector (matches the model-pricing table).
 	[data-slot='table-cell'] {
 		padding: 0 var(--padding-4) var(--padding-3);
 		background: var(--l2-background);
