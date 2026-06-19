@@ -1,13 +1,13 @@
-import './LLMObservabilityModelPricing.styles.scss';
+import styles from './LLMObservabilityModelPricing.module.scss';
 
 function LLMObservabilityModelPricing(): JSX.Element {
 	return (
 		<div
-			className="llm-observability-model-pricing"
+			className={styles.llmObservabilityModelPricing}
 			data-testid="llm-observability-model-pricing-page"
 		>
-			<header className="page-header">
-				<div className="page-header__title">
+			<header className={styles.pageHeader}>
+				<div className={styles.pageHeaderTitle}>
 					<h1>Configuration</h1>
 					<p>Model pricing and cost estimation settings</p>
 				</div>

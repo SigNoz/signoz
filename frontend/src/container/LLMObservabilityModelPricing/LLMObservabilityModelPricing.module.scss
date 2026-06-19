@@ -1,0 +1,27 @@
+.llmObservabilityModelPricing {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	padding: 24px 32px;
+}
+
+.pageHeader {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 16px;
+}
+
+.pageHeaderTitle {
+	h1 {
+		margin: 0;
+		font-size: 22px;
+		font-weight: 600;
+	}
+
+	p {
+		margin: 4px 0 0;
+		color: var(--bg-vanilla-400);
+		font-size: 13px;
+	}
+}
