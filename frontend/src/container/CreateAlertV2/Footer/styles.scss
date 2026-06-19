@@ -29,3 +29,7 @@
 		color: var(--l2-foreground);
 	}
 }
+
+body.ai-assistant-panel-open .create-alert-v2-footer {
+	right: var(--ai-assistant-panel-width, 380px);
+}

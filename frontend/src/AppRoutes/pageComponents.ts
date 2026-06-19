@@ -64,10 +64,17 @@ export const TraceDetail = Loadable(
 		),
 );
 
+export const TraceDetailOldRedirect = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "TraceDetailOldRedirect" */ 'pages/TraceDetailOldRedirect/index'
+		),
+);
+
 export const TraceDetailV3 = Loadable(
 	() =>
 		import(
-			/* webpackChunkName: "TraceDetailV3 Page" */ 'pages/TraceDetailV3Page/index'
+			/* webpackChunkName: "TraceDetailV3 Page" */ 'pages/TraceDetailsV3/index'
 		),
 );
 

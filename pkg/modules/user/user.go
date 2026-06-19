@@ -129,3 +129,6 @@ type Handler interface {
 	ChangePassword(http.ResponseWriter, *http.Request)
 	ForgotPassword(http.ResponseWriter, *http.Request)
 }
+
+// OnDeleteUser lets other modules clean up data tied to a deleted user.
+type OnDeleteUser func(ctx context.Context, orgID valuer.UUID, userID valuer.UUID) error

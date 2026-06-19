@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/pkg/errors"
 	"github.com/prometheus/prometheus/promql/parser"
 	"github.com/prometheus/prometheus/util/stats"
@@ -240,13 +239,6 @@ type SearchSpanDBResponseItem struct {
 	Model     string    `ch:"model"`
 }
 
-type Event struct {
-	Name         string                 `json:"name,omitempty"`
-	TimeUnixNano uint64                 `json:"timeUnixNano,omitempty"`
-	AttributeMap map[string]interface{} `json:"attributeMap,omitempty"`
-	IsError      bool                   `json:"isError,omitempty"`
-}
-
 //easyjson:json
 type SearchSpanResponseItem struct {
 	TimeUnixNano     uint64            `json:"timestamp"`
@@ -265,79 +257,6 @@ type SearchSpanResponseItem struct {
 	StatusMessage    string            `json:"statusMessage"`
 	StatusCodeString string            `json:"statusCodeString"`
 	SpanKind         string            `json:"spanKind"`
-}
-
-type Span struct {
-	TimeUnixNano     uint64            `json:"timestamp"`
-	DurationNano     uint64            `json:"durationNano"`
-	SpanID           string            `json:"spanId"`
-	RootSpanID       string            `json:"rootSpanId"`
-	TraceID          string            `json:"traceId"`
-	HasError         bool              `json:"hasError"`
-	Kind             int32             `json:"kind"`
-	ServiceName      string            `json:"serviceName"`
-	Name             string            `json:"name"`
-	References       []OtelSpanRef     `json:"references,omitempty"`
-	TagMap           map[string]string `json:"tagMap"`
-	Events           []Event           `json:"event"`
-	RootName         string            `json:"rootName"`
-	StatusMessage    string            `json:"statusMessage"`
-	StatusCodeString string            `json:"statusCodeString"`
-	SpanKind         string            `json:"spanKind"`
-	Children         []*Span           `json:"children"`
-
-	// the below two fields are for frontend to render the spans
-	SubTreeNodeCount uint64 `json:"subTreeNodeCount"`
-	HasChildren      bool   `json:"hasChildren"`
-	HasSiblings      bool   `json:"hasSiblings"`
-	Level            uint64 `json:"level"`
-}
-
-type FlamegraphSpan struct {
-	TimeUnixNano uint64            `json:"timestamp"`
-	DurationNano uint64            `json:"durationNano"`
-	SpanID       string            `json:"spanId"`
-	TraceID      string            `json:"traceId"`
-	HasError     bool              `json:"hasError"`
-	ServiceName  string            `json:"serviceName"`
-	Name         string            `json:"name"`
-	Level        int64             `json:"level"`
-	Events       []Event           `json:"event"`
-	References   []OtelSpanRef     `json:"references,omitempty"`
-	Children     []*FlamegraphSpan `json:"children"`
-	Attributes   map[string]any    `json:"attributes,omitempty"`
-	Resource     map[string]string `json:"resource,omitempty"`
-}
-
-// SetRequestedFields extracts the requested attribute/resource fields from item into s.
-// This can eventually support missing fieldContext by checking both
-func (s *FlamegraphSpan) SetRequestedFields(item SpanItemV2, fields []telemetrytypes.TelemetryFieldKey) {
-	for _, field := range fields {
-		switch field.FieldContext {
-		case telemetrytypes.FieldContextResource:
-			if v, ok := item.Resources_string[field.Name]; ok && v != "" {
-				if s.Resource == nil {
-					s.Resource = make(map[string]string)
-				}
-				s.Resource[field.Name] = v
-			}
-		case telemetrytypes.FieldContextAttribute:
-			if v := item.AttributeValue(field.Name); v != nil {
-				if s.Attributes == nil {
-					s.Attributes = make(map[string]any)
-				}
-				s.Attributes[field.Name] = v
-			}
-		}
-	}
-}
-
-type GetFlamegraphSpansForTraceResponse struct {
-	StartTimestampMillis uint64              `json:"startTimestampMillis"`
-	EndTimestampMillis   uint64              `json:"endTimestampMillis"`
-	DurationNano         uint64              `json:"durationNano"`
-	Spans                [][]*FlamegraphSpan `json:"spans"`
-	HasMore              bool                `json:"hasMore"`
 }
 
 type OtelSpanRef struct {

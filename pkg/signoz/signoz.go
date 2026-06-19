@@ -499,14 +499,19 @@ func New(
 		serviceAccount,
 		cloudIntegrationModule,
 		modules.LogsPipeline,
+		modules.InfraMonitoring,
+		querier,
 	}
+
+	// Initialize the stats aggregator (always-on, independent of whether reporting is enabled)
+	statsAggregator := statsreporter.NewAggregator(providerSettings, statsCollectors)
 
 	// Initialize stats reporter from the available stats reporter provider factories
 	statsReporter, err := factory.NewProviderFromNamedMap(
 		ctx,
 		providerSettings,
 		config.StatsReporter,
-		NewStatsReporterProviderFactories(telemetrystore, statsCollectors, orgGetter, userGetter, tokenizer, version.Info, config.Analytics),
+		NewStatsReporterProviderFactories(statsAggregator, orgGetter, userGetter, tokenizer, version.Info, config.Analytics),
 		config.StatsReporter.Provider(),
 	)
 	if err != nil {
@@ -535,7 +540,7 @@ func New(
 
 	// Initialize all handlers for the modules
 	registryHandler := factory.NewHandler(registry)
-	handlers := NewHandlers(modules, providerSettings, analytics, querierHandler, licensing, global, flagger, gateway, telemetryMetadataStore, authz, zeus, registryHandler, alertmanager, rulerInstance)
+	handlers := NewHandlers(modules, providerSettings, analytics, querierHandler, licensing, global, flagger, gateway, telemetryMetadataStore, authz, zeus, registryHandler, alertmanager, rulerInstance, statsAggregator)
 
 	// Initialize the API server (after registry so it can access service health)
 	apiserverInstance, err := factory.NewProviderFromNamedMap(
