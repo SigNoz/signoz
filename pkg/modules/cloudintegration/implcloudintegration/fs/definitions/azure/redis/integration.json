@@ -1,0 +1,151 @@
+{
+  "id": "redis",
+  "title": "Redis",
+  "icon": "file://icon.svg",
+  "overview": "file://overview.md",
+  "supportedSignals": {
+    "metrics": true,
+    "logs": true
+  },
+  "dataCollected": {
+    "metrics": [
+      {
+        "name": "azure_cachehits_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "The number of successful key lookups."
+      },
+      {
+        "name": "azure_cachemisses_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "The number of failed key lookups."
+      },
+      {
+        "name": "azure_evictedkeys_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "The number of items evicted from the cache."
+      },
+      {
+        "name": "azure_expiredkeys_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "The number of items expired from the cache."
+      },
+      {
+        "name": "azure_getcommands_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "The number of get operations from the cache."
+      },
+      {
+        "name": "azure_setcommands_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "The number of set operations to the cache."
+      },
+      {
+        "name": "azure_totalcommandsprocessed_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "The total number of commands processed by the cache server."
+      },
+      {
+        "name": "azure_cachelatency_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "The latency to the cache in microseconds (preview)."
+      },
+      {
+        "name": "azure_cacheread_maximum",
+        "unit": "BytesPerSecond",
+        "type": "Gauge",
+        "description": "The amount of data read from the cache in Megabytes per second (MB/s)."
+      },
+      {
+        "name": "azure_cachewrite_maximum",
+        "unit": "BytesPerSecond",
+        "type": "Gauge",
+        "description": "The amount of data written to the cache in Megabytes per second (MB/s)."
+      },
+      {
+        "name": "azure_connectedclients_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "The number of client connections to the cache."
+      },
+      {
+        "name": "azure_operationspersecond_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "The number of instantaneous operations per second executed on the cache."
+      },
+      {
+        "name": "azure_totalkeys_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "The total number of items in the cache."
+      },
+      {
+        "name": "azure_percentprocessortime_maximum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "The CPU utilization of the Azure Redis Cache server as a percentage."
+      },
+      {
+        "name": "azure_serverload_maximum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "The percentage of cycles in which the Redis server is busy processing and not waiting idle for messages."
+      },
+      {
+        "name": "azure_usedmemory_maximum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "The amount of cache memory used for key/value pairs in the cache in MB."
+      },
+      {
+        "name": "azure_usedmemorypercentage_maximum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "The percentage of cache memory used for key/value pairs."
+      },
+      {
+        "name": "azure_georeplicationhealthy_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "The health of geo replication in an Active Geo-Replication group. 0 represents Unhealthy and 1 represents Healthy."
+      }
+    ],
+    "logs": [
+      {
+        "name": "Resource ID",
+        "path": "resources.azure.resource.id",
+        "type": "string"
+      }
+    ]
+  },
+  "telemetryCollectionStrategy": {
+    "azure": {
+      "resourceProvider": "Microsoft.Cache",
+      "resourceType": "redisEnterprise",
+      "metrics": {},
+      "logs": {
+        "categoryGroups": [
+          "allLogs"
+        ]
+      }
+    }
+  },
+  "assets": {
+    "dashboards": [
+      {
+        "id": "overview",
+        "title": "Azure Redis Overview",
+        "description": "Overview of Azure Redis metrics",
+        "definition": "file://assets/dashboards/overview.json"
+      }
+    ]
+  }
+}

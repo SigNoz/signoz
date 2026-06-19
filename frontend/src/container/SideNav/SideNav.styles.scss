@@ -119,6 +119,10 @@
 
 				border-radius: 0px 4px 4px 0px;
 				background: var(--l3-background);
+
+				&.version-container-standalone {
+					border-radius: 4px;
+				}
 			}
 
 			.version {
@@ -579,7 +583,8 @@
 	}
 
 	.nav-item-beta,
-	.nav-item-new {
+	.nav-item-new,
+	.nav-item-early-access {
 		display: none;
 	}
 
@@ -621,6 +626,23 @@
 
 		border-radius: 12px;
 		background: var(--l3-background);
+	}
+
+	.sidenav-early-access-tag {
+		font-variant-numeric: lining-nums tabular-nums slashed-zero;
+		font-feature-settings:
+			'case' on,
+			'cpsp' on,
+			'dlig' on,
+			'salt' on;
+		font-family: Inter;
+		font-size: 9px;
+		font-style: normal;
+		font-weight: 300;
+		line-height: 12px;
+		letter-spacing: 0.3px;
+		text-transform: uppercase;
+		border-radius: 12px;
 	}
 
 	&:not(.pinned) {
@@ -839,7 +861,8 @@
 		}
 
 		.nav-item-beta,
-		.nav-item-new {
+		.nav-item-new,
+		.nav-item-early-access {
 			display: block;
 		}
 	}
@@ -1012,7 +1035,8 @@
 		}
 
 		.nav-item-beta,
-		.nav-item-new {
+		.nav-item-new,
+		.nav-item-early-access {
 			display: block;
 		}
 	}
@@ -1111,17 +1135,9 @@
 
 .settings-dropdown,
 .help-support-dropdown {
-	.ant-dropdown-menu-item {
-		min-height: 32px;
-
-		.ant-dropdown-menu-title-content {
-			color: var(--l1-foreground) !important;
-		}
-
-		.user-settings-dropdown-logout-section {
-			color: var(--danger-background);
-			pointer-events: auto;
-		}
+	.user-settings-dropdown-logout-section {
+		color: var(--danger-background);
+		pointer-events: auto;
 	}
 }
 

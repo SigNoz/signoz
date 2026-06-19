@@ -8,9 +8,9 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
+	qb "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/tagtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/perses/perses/pkg/model/api/v1/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -43,7 +43,7 @@ func newTestDashboardV2(t *testing.T, orgID valuer.UUID, source Source) *Dashboa
 					},
 					Queries: []Query{
 						{
-							Kind: "TimeSeriesQuery",
+							Kind: qb.RequestTypeTimeSeries,
 							Spec: QuerySpec{
 								Plugin: QueryPlugin{
 									Kind: QueryKindPromQL,
@@ -165,7 +165,7 @@ func TestPostableDashboardV2NewDashboardV2(t *testing.T) {
 			DashboardV2MetadataBase: DashboardV2MetadataBase{SchemaVersion: SchemaVersion},
 			GenerateName:            true,
 			Spec: DashboardSpec{
-				Display: &common.Display{Name: "My Dashboard!"},
+				Display: Display{Name: "My Dashboard!"},
 			},
 		}
 
@@ -200,6 +200,24 @@ func TestDashboardV2ToGettableDashboardV2(t *testing.T) {
 			assert.Equal(t, sourceTag.Value, gettable.Tags[i].Value)
 		}
 	})
+}
+
+func TestDashboardV2ToPostableForCloning(t *testing.T) {
+	orgID := valuer.GenerateUUID()
+	dashboard := newTestDashboardV2(t, orgID, SourceUser)
+
+	postable := dashboard.ToPostableForCloning()
+
+	assert.True(t, postable.GenerateName, "internal name must be regenerated, not copied")
+	assert.Empty(t, postable.Name, "name must be empty so generateName can derive it")
+	assert.Equal(t, dashboard.DashboardV2MetadataBase, postable.DashboardV2MetadataBase, "schema version and image are carried over")
+	assert.Equal(t, dashboard.Spec, postable.Spec, "spec (incl. display name) is preserved verbatim")
+
+	require.Len(t, postable.Tags, len(dashboard.Tags))
+	for i, sourceTag := range dashboard.Tags {
+		assert.Equal(t, sourceTag.Key, postable.Tags[i].Key)
+		assert.Equal(t, sourceTag.Value, postable.Tags[i].Value)
+	}
 }
 
 func TestDashboardV2StorableRoundTrip(t *testing.T) {

@@ -8,20 +8,17 @@ import { Collapse } from 'antd';
 import { useDetailsPanel } from 'components/DetailsPanel';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import useGetTraceV3 from 'hooks/trace/useGetTraceV3';
+import useGetTraceV4 from 'hooks/trace/useGetTraceV4';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import NoData from 'pages/TraceDetailV2/NoData/NoData';
 import { ResizableBox } from 'periscope/components/ResizableBox';
-import {
-	SpanV3,
-	TraceDetailV3URLProps,
-	WaterfallAggregationRequest,
-} from 'types/api/trace/getTraceV3';
+import { SpanV3, TraceDetailV3URLProps } from 'types/api/trace/getTraceV3';
 
-import { COLOR_BY_FIELDS } from './constants';
+import { TraceDetailEventKeys, TraceDetailEvents } from './events';
+import { useTraceDetailLogEvent } from './hooks/useTraceDetailLogEvent';
 import TraceStoreSync from './stores/TraceStoreSync';
-import { AGGREGATIONS } from './utils/aggregations';
+import { useTraceStore } from './stores/traceStore';
 import { SpanDetailVariant } from './SpanDetailsPanel/constants';
 import SpanDetailsPanel from './SpanDetailsPanel/SpanDetailsPanel';
 import type { TraceMetadataForHeader } from './TraceDetailsHeader/TraceDetailsHeader';
@@ -31,6 +28,7 @@ import TraceFlamegraph from './TraceFlamegraph/TraceFlamegraph';
 import TraceWaterfall from './TraceWaterfall/TraceWaterfall';
 import { IInterestedSpan } from './TraceWaterfall/types';
 import { getAncestorSpanIds } from './TraceWaterfall/utils';
+import { getAvailableColorByFieldNames } from './utils';
 
 import cx from 'classnames';
 
@@ -55,6 +53,14 @@ function TraceDetailsV3(): JSX.Element {
 
 	const selectedSpanId = urlQuery.get('spanId') || undefined;
 	const { safeNavigate } = useSafeNavigate();
+
+	const logTraceEvent = useTraceDetailLogEvent('v3', traceId || '');
+	// Tracks which traceId the load event already fired for, so navigating
+	// between traces (the route component stays mounted) re-fires it once each.
+	const dataLoadedFiredForRef = useRef('');
+	const colorByField = useTraceStore((s) => s.colorByField);
+	const previewFieldsCount = useTraceStore((s) => s.previewFields.length);
+	const userPrefsReady = useTraceStore((s) => s.userPreferences !== null);
 
 	const handleSpanDetailsClose = useCallback((): void => {
 		urlQuery.delete('spanId');
@@ -92,17 +98,6 @@ function TraceDetailsV3(): JSX.Element {
 		setInterestedSpanId({ spanId, isUncollapsed: true });
 	}, [urlQuery]);
 
-	// Hardcoded for now — fetch aggregations for all 3 candidate color-by fields
-	// upfront so a future color-by-field switch doesn't need to refetch.
-	const waterfallAggregationsRequest = useMemo<WaterfallAggregationRequest[]>(
-		() =>
-			COLOR_BY_FIELDS.flatMap((field) => [
-				{ field, aggregation: AGGREGATIONS.EXEC_TIME_PCT },
-				{ field, aggregation: AGGREGATIONS.SPAN_COUNT },
-			]),
-		[],
-	);
-
 	// Once all spans are loaded (frontend mode), freeze query params so
 	// subsequent interestedSpanId changes don't trigger unnecessary refetches.
 	const fullDataLoadedRef = useRef(false);
@@ -110,7 +105,6 @@ function TraceDetailsV3(): JSX.Element {
 		selectedSpanId: interestedSpanId.spanId,
 		isSelectedSpanIDUnCollapsed: interestedSpanId.isUncollapsed,
 		uncollapsedSpans: uncollapsedNodes,
-		aggregations: waterfallAggregationsRequest,
 	});
 
 	const queryParams = fullDataLoadedRef.current
@@ -119,25 +113,30 @@ function TraceDetailsV3(): JSX.Element {
 				selectedSpanId: interestedSpanId.spanId,
 				isSelectedSpanIDUnCollapsed: interestedSpanId.isUncollapsed,
 				uncollapsedSpans: uncollapsedNodes,
-				aggregations: waterfallAggregationsRequest,
 			};
 
 	const {
 		data: traceData,
 		isFetching: isFetchingTraceData,
 		error: errorFetchingTraceData,
-	} = useGetTraceV3({
+	} = useGetTraceV4({
 		traceId,
 		uncollapsedSpans: queryParams.uncollapsedSpans,
 		selectedSpanId: queryParams.selectedSpanId,
 		isSelectedSpanIDUnCollapsed: queryParams.isSelectedSpanIDUnCollapsed,
-		aggregations: queryParams.aggregations,
 	});
 
 	const allSpans = traceData?.payload?.spans || [];
 	const totalSpansCount = traceData?.payload?.totalSpansCount || 0;
 	const isFullDataLoaded =
 		totalSpansCount > 0 && totalSpansCount <= allSpans.length;
+
+	// Color-by options, gated on fields in loaded spans. Resource attrs are
+	// trace-wide, so any window has the full set — no need to accumulate.
+	const availableColorByFields = useMemo(() => {
+		const spans = traceData?.payload?.spans;
+		return spans?.length ? getAvailableColorByFieldNames(spans) : undefined;
+	}, [traceData?.payload?.spans]);
 
 	// Lock the ref once we confirm all data is loaded
 	if (isFullDataLoaded && !fullDataLoadedRef.current) {
@@ -146,13 +145,50 @@ function TraceDetailsV3(): JSX.Element {
 			selectedSpanId: interestedSpanId.spanId,
 			isSelectedSpanIDUnCollapsed: interestedSpanId.isUncollapsed,
 			uncollapsedSpans: uncollapsedNodes,
-			aggregations: waterfallAggregationsRequest,
 		};
 	}
 
 	useEffect(() => {
 		allSpansRef.current = allSpans;
 	}, [allSpans]);
+
+	useEffect(() => {
+		if (
+			!traceId ||
+			dataLoadedFiredForRef.current === traceId ||
+			!userPrefsReady
+		) {
+			return;
+		}
+		const payload = traceData?.payload;
+		if (!payload?.spans?.length) {
+			return;
+		}
+		dataLoadedFiredForRef.current = traceId;
+		const numServices = new Set(payload.spans.map((s) => s['service.name'])).size;
+		logTraceEvent(TraceDetailEvents.DataLoaded, {
+			[TraceDetailEventKeys.TotalSpansCount]: totalSpansCount,
+			[TraceDetailEventKeys.NumServices]: numServices,
+			[TraceDetailEventKeys.TraceDurationMs]:
+				payload.endTimestampMillis - payload.startTimestampMillis,
+			[TraceDetailEventKeys.HadErrors]: (payload.totalErrorSpansCount || 0) > 0,
+			[TraceDetailEventKeys.FlamegraphSampled]:
+				totalSpansCount > FLAMEGRAPH_SPAN_LIMIT,
+			[TraceDetailEventKeys.SpanPanelVariant]:
+				getLocalStorageKey(LOCALSTORAGE.TRACE_DETAILS_SPAN_DETAILS_POSITION) ||
+				SpanDetailVariant.DOCKED_RIGHT,
+			[TraceDetailEventKeys.ColorByField]: colorByField.name,
+			[TraceDetailEventKeys.PreviewFieldsCount]: previewFieldsCount,
+		});
+	}, [
+		traceId,
+		userPrefsReady,
+		traceData,
+		totalSpansCount,
+		colorByField,
+		previewFieldsCount,
+		logTraceEvent,
+	]);
 
 	// Frontend mode: expand all parents by default when full data arrives
 	useEffect(() => {
@@ -233,6 +269,12 @@ function TraceDetailsV3(): JSX.Element {
 	const [activeKeys, setActiveKeys] = useState<string[]>(['flame', 'waterfall']);
 
 	const handleCollapseChange = (key: string): void => {
+		logTraceEvent(
+			key === 'flame'
+				? TraceDetailEvents.FlameGraphToggled
+				: TraceDetailEvents.WaterfallToggled,
+			{ [TraceDetailEventKeys.Expanded]: !activeKeys.includes(key) },
+		);
 		setActiveKeys((prev) =>
 			prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
 		);
@@ -325,7 +367,7 @@ function TraceDetailsV3(): JSX.Element {
 	);
 
 	return (
-		<TraceStoreSync aggregations={traceData?.payload?.aggregations}>
+		<TraceStoreSync availableColorByFields={availableColorByFields}>
 			<div className={styles.root}>
 				<TraceDetailsHeader
 					filterMetadata={filterMetadata}

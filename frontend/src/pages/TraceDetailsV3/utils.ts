@@ -1,5 +1,6 @@
 import { SpanV3 } from 'types/api/trace/getTraceV3';
 
+import { COLOR_BY_OPTIONS } from './constants';
 import {
 	ColorPair,
 	generateColorPair,
@@ -108,4 +109,15 @@ export function resolveSpanColor(
 		return { color: RESERVED_ERROR, colorDark: RESERVED_ERROR };
 	}
 	return generateColorPair(getSpanGroupValue(span, colorByFieldName));
+}
+
+/**
+ * Color-by fields present on any of the given spans — replaces the old
+ * server-side aggregation gating. `service.name` is always offered by the store
+ * regardless of this list.
+ */
+export function getAvailableColorByFieldNames(spans: SpanV3[]): string[] {
+	return COLOR_BY_OPTIONS.filter((opt) =>
+		spans.some((s) => getSpanAttribute(s, opt.field.name)),
+	).map((opt) => opt.field.name);
 }

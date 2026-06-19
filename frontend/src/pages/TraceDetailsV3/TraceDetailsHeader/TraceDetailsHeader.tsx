@@ -8,11 +8,9 @@ import {
 	TooltipTrigger,
 } from '@signozhq/ui/tooltip';
 import { Skeleton } from 'antd';
-import setLocalStorageKey from 'api/browser/localstorage/set';
 import cx from 'classnames';
 import FieldsSelector from 'components/FieldsSelector';
 import HttpStatusBadge from 'components/HttpStatusBadge/HttpStatusBadge';
-import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
 import dayjs from 'dayjs';
@@ -21,7 +19,6 @@ import {
 	ArrowLeft,
 	CalendarClock,
 	ChartPie,
-	CornerUpLeft,
 	Server,
 	Timer,
 } from '@signozhq/icons';
@@ -29,6 +26,8 @@ import KeyValueLabel from 'periscope/components/KeyValueLabel';
 import { TraceDetailV2URLProps } from 'types/api/trace/getTraceV2';
 import { DataSource } from 'types/common/queryBuilder';
 
+import { TraceDetailEventKeys, TraceDetailEvents } from '../events';
+import { useTraceDetailLogEvent } from '../hooks/useTraceDetailLogEvent';
 import { useTraceStore } from '../stores/traceStore';
 import AnalyticsPanel from '../SpanDetailsPanel/AnalyticsPanel/AnalyticsPanel';
 import Filters from '../TraceWaterfall/TraceWaterfallStates/Success/Filters/Filters';
@@ -90,11 +89,23 @@ function TraceDetailsHeader({
 	const previewFields = useTraceStore((s) => s.previewFields);
 	const setPreviewFields = useTraceStore((s) => s.setPreviewFields);
 
-	const handleSwitchToOldView = useCallback((): void => {
-		setLocalStorageKey(LOCALSTORAGE.TRACE_DETAILS_PREFER_OLD_VIEW, 'true');
-		const oldUrl = `/trace-old/${traceID}${window.location.search}`;
-		history.replace(oldUrl);
-	}, [traceID]);
+	const logTraceEvent = useTraceDetailLogEvent('v3', traceID || '');
+
+	const handleToggleAnalytics = useCallback((): void => {
+		logTraceEvent(TraceDetailEvents.AnalyticsPanelToggled, {
+			[TraceDetailEventKeys.Open]: !isAnalyticsOpen,
+		});
+		setIsAnalyticsOpen((prev) => !prev);
+	}, [logTraceEvent, isAnalyticsOpen]);
+
+	const handleAnalyticsTabChange = useCallback(
+		(tab: string): void => {
+			logTraceEvent(TraceDetailEvents.AnalyticsTabChanged, {
+				[TraceDetailEventKeys.Tab]: tab,
+			});
+		},
+		[logTraceEvent],
+	);
 
 	const handlePreviousBtnClick = useCallback((): void => {
 		if (hasInAppHistory()) {
@@ -152,22 +163,8 @@ function TraceDetailsHeader({
 												variant="ghost"
 												size="icon"
 												color="secondary"
-												aria-label="Switch to legacy trace view"
-												onClick={handleSwitchToOldView}
-											>
-												<CornerUpLeft size={14} />
-											</Button>
-										</TooltipTrigger>
-										<TooltipContent>Switch to legacy trace view</TooltipContent>
-									</TooltipRoot>
-									<TooltipRoot>
-										<TooltipTrigger asChild>
-											<Button
-												variant="ghost"
-												size="icon"
-												color="secondary"
 												aria-label="Analytics"
-												onClick={(): void => setIsAnalyticsOpen((prev) => !prev)}
+												onClick={handleToggleAnalytics}
 											>
 												<ChartPie size={14} />
 											</Button>
@@ -245,6 +242,7 @@ function TraceDetailsHeader({
 			<AnalyticsPanel
 				isOpen={isAnalyticsOpen}
 				onClose={(): void => setIsAnalyticsOpen(false)}
+				onTabChange={handleAnalyticsTabChange}
 			/>
 		</div>
 	);

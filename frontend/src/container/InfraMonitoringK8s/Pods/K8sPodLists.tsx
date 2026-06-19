@@ -14,7 +14,6 @@ import {
 	k8sPodGetEntityName,
 	k8sPodGetSelectedItemFilters,
 	k8sPodInitialEventsFilter,
-	k8sPodInitialFilters,
 	k8sPodInitialLogTracesFilter,
 	podWidgetInfo,
 } from './constants';
@@ -106,7 +105,6 @@ function K8sPodsList({
 				getEntityName={k8sPodGetEntityName}
 				getInitialLogTracesFilters={k8sPodInitialLogTracesFilter}
 				getInitialEventsFilters={k8sPodInitialEventsFilter}
-				primaryFilterKeys={k8sPodInitialFilters}
 				metadataConfig={k8sPodDetailsMetadataConfig}
 				entityWidgetInfo={podWidgetInfo}
 				getEntityQueryPayload={getPodMetricsQueryPayload}

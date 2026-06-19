@@ -8,16 +8,17 @@ import { Tabs } from '@signozhq/ui/tabs';
 import { Skeleton } from 'antd';
 import logEvent from 'api/common/logEvent';
 import {
-	getListServicesMetadataQueryKey,
-	invalidateGetService,
-	invalidateListServicesMetadata,
+	getListAccountServicesMetadataQueryKey,
+	invalidateGetAccountService,
+	invalidateListAccountServicesMetadata,
+	useGetAccountService,
 	useGetService,
 	useUpdateService,
 } from 'api/generated/services/cloudintegration';
 import {
 	CloudintegrationtypesServiceConfigDTO,
 	CloudintegrationtypesServiceDTO,
-	ListServicesMetadata200,
+	ListAccountServicesMetadata200,
 } from 'api/generated/services/sigNoz.schemas';
 import CloudServiceDataCollected from 'components/CloudIntegrations/CloudServiceDataCollected/CloudServiceDataCollected';
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
@@ -118,29 +119,49 @@ function ServiceDetails({
 	const cloudAccountId = urlQuery.get('cloudAccountId');
 	const serviceId = urlQuery.get('service');
 	const isReadOnly = !cloudAccountId;
-	const serviceQueryParams = cloudAccountId
-		? { cloud_integration_id: cloudAccountId }
-		: undefined;
 
 	const {
-		queryKey: _queryKey,
-		data: serviceDetailsData,
-		isLoading: isServiceDetailsLoading,
+		queryKey: _accountServiceQueryKey,
+		data: accountServiceData,
+		isLoading: isAccountServiceLoading,
+	} = useGetAccountService(
+		{
+			cloudProvider: type,
+			id: cloudAccountId || '',
+			serviceId: serviceId || '',
+		},
+		{
+			query: {
+				enabled: !!serviceId && !!cloudAccountId,
+				select: (response): ServiceDetailsData => response.data,
+			},
+		},
+	);
+
+	const {
+		queryKey: _readOnlyServiceQueryKey,
+		data: readOnlyServiceData,
+		isLoading: isReadOnlyServiceLoading,
 	} = useGetService(
 		{
 			cloudProvider: type,
 			serviceId: serviceId || '',
 		},
-		{
-			...serviceQueryParams,
-		},
+		undefined,
 		{
 			query: {
-				enabled: !!serviceId,
+				enabled: !!serviceId && !cloudAccountId,
 				select: (response): ServiceDetailsData => response.data,
 			},
 		},
 	);
+
+	const serviceDetailsData = cloudAccountId
+		? accountServiceData
+		: readOnlyServiceData;
+	const isServiceDetailsLoading = cloudAccountId
+		? isAccountServiceLoading
+		: isReadOnlyServiceLoading;
 
 	const integrationConfig =
 		type === IntegrationType.AWS_SERVICES
@@ -240,16 +261,12 @@ function ServiceDetails({
 							// instead of waiting for the refetch to complete.
 							reset(nextFormValues);
 
-							const servicesListQueryKey = getListServicesMetadataQueryKey(
-								{
-									cloudProvider: type,
-								},
-								{
-									cloud_integration_id: cloudAccountId,
-								},
-							);
+							const servicesListQueryKey = getListAccountServicesMetadataQueryKey({
+								cloudProvider: type,
+								id: cloudAccountId,
+							});
 
-							queryClient.setQueryData<ListServicesMetadata200 | undefined>(
+							queryClient.setQueryData<ListAccountServicesMetadata200 | undefined>(
 								servicesListQueryKey,
 								(prev) => {
 									if (!prev?.data?.services?.length) {
@@ -272,26 +289,16 @@ function ServiceDetails({
 								},
 							);
 
-							invalidateGetService(
-								queryClient,
-								{
-									cloudProvider: type,
-									serviceId,
-								},
-								{
-									cloud_integration_id: cloudAccountId,
-								},
-							);
+							invalidateGetAccountService(queryClient, {
+								cloudProvider: type,
+								id: cloudAccountId,
+								serviceId,
+							});
 
-							invalidateListServicesMetadata(
-								queryClient,
-								{
-									cloudProvider: type,
-								},
-								{
-									cloud_integration_id: cloudAccountId,
-								},
-							);
+							invalidateListAccountServicesMetadata(queryClient, {
+								cloudProvider: type,
+								id: cloudAccountId,
+							});
 
 							logEvent(`${type} Integration: Service settings saved`, {
 								cloudAccountId,

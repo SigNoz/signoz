@@ -54,8 +54,7 @@ import {
 } from './PlannedDowntimeutils';
 
 import './PlannedDowntime.styles.scss';
-import { RadioGroupItem } from '@signozhq/ui/radio-group';
-import { RadioGroup } from '@signozhq/ui/radio-group';
+import { RadioGroupItem, RadioGroup } from '@signozhq/ui/radio-group';
 
 dayjs.locale('en');
 dayjs.extend(utc);
@@ -152,6 +151,11 @@ export function PlannedDowntimeForm(
 
 	const saveHandler = useCallback(
 		async (values: PlannedDowntimeFormData) => {
+			const { startTime, timezone } = values;
+			if (!startTime || !timezone) {
+				// unreachable: required fields should always be present on submitting.
+				return;
+			}
 			const data: AlertmanagertypesPostablePlannedMaintenanceDTO = {
 				alertIds:
 					values.alertRuleScope === 'all'
@@ -162,9 +166,9 @@ export function PlannedDowntimeForm(
 				name: values.name,
 				scope: values.scope,
 				schedule: {
-					startTime: values.startTime?.format(),
+					startTime: startTime.format(),
 					endTime: values.endTime?.format(),
-					timezone: values.timezone!,
+					timezone,
 					recurrence: values.recurrence,
 				},
 			};
@@ -201,25 +205,17 @@ export function PlannedDowntimeForm(
 		],
 	);
 	const onFinish = async (values: PlannedDowntimeFormData): Promise<void> => {
-		const { recurrence } = values;
-		const recurrenceData =
-			!recurrence ||
-			recurrence.repeatType === recurrenceOptions.doesNotRepeat.value
-				? undefined
-				: {
-						duration: recurrence.duration
-							? `${recurrence.duration}${durationUnit}`
-							: '',
-						startTime: values.startTime!.format(),
-						endTime: values.endTime?.format(),
-						repeatOn: recurrence.repeatOn,
-						repeatType: recurrence.repeatType,
-					};
+		const rec = values.recurrence;
+		const recurrence =
+			rec && rec.repeatType !== recurrenceOptions.doesNotRepeat.value
+				? {
+						duration: `${rec.duration}${durationUnit}`,
+						repeatOn: rec.repeatOn,
+						repeatType: rec.repeatType,
+					}
+				: undefined;
 
-		await saveHandler({
-			...values,
-			recurrence: recurrenceData,
-		});
+		await saveHandler({ ...values, recurrence });
 	};
 
 	const handleFormData = (data: Partial<PlannedDowntimeFormData>): void => {
@@ -276,9 +272,6 @@ export function PlannedDowntimeForm(
 
 	const formattedInitialValues = useMemo((): PlannedDowntimeFormData => {
 		const { schedule } = initialValues;
-		const startTime = schedule?.recurrence?.startTime || schedule?.startTime;
-		const endTime = schedule?.recurrence?.endTime || schedule?.endTime;
-
 		const initialAlertIds = initialValues.alertIds || [];
 
 		return {
@@ -286,8 +279,12 @@ export function PlannedDowntimeForm(
 			alertRuleScope:
 				isEditMode && initialAlertIds.length === 0 ? 'all' : 'specific',
 			alertRules: getAlertOptionsFromIds(initialAlertIds, alertOptions),
-			startTime: startTime ? dayjs(startTime).tz(schedule.timezone) : null,
-			endTime: endTime ? dayjs(endTime).tz(schedule.timezone) : null,
+			startTime: schedule?.startTime
+				? dayjs(schedule.startTime).tz(schedule.timezone)
+				: null,
+			endTime: schedule?.endTime
+				? dayjs(schedule.endTime).tz(schedule.timezone)
+				: null,
 			recurrence: {
 				...schedule?.recurrence,
 				repeatType: !isScheduleRecurring(schedule)
@@ -298,7 +295,7 @@ export function PlannedDowntimeForm(
 			timezone: schedule?.timezone as string,
 			scope: initialValues.scope || '',
 		};
-	}, [initialValues, alertOptions]);
+	}, [initialValues, isEditMode, alertOptions]);
 
 	useEffect(() => {
 		setSelectedTags(formattedInitialValues.alertRules);
@@ -342,7 +339,7 @@ export function PlannedDowntimeForm(
 		const formattedEndTime = endTime.format(TIME_FORMAT);
 		const formattedEndDate = endTime.format(DATE_FORMAT);
 		return `Scheduled to end maintenance on ${formattedEndDate} at ${formattedEndTime}.`;
-	}, [formData, recurrenceType]);
+	}, [formData]);
 
 	return (
 		<Modal
@@ -471,7 +468,7 @@ export function PlannedDowntimeForm(
 						initialValue="specific"
 						className="alert-rule-scope"
 					>
-						<RadioGroup>
+						<RadioGroup className="silence-alerts-radio-group">
 							<RadioGroupItem value="all">All alert rules</RadioGroupItem>
 							<RadioGroupItem value="specific">Specific alert rules</RadioGroupItem>
 						</RadioGroup>

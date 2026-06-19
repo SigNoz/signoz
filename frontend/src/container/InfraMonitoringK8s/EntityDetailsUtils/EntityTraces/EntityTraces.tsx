@@ -41,6 +41,7 @@ import { getTraceListColumns } from './traceListColumns';
 import { getEntityTracesQueryPayload } from './utils';
 
 import styles from './EntityTraces.module.scss';
+import { useTimezone } from 'providers/Timezone';
 
 interface Props {
 	timeRange: {
@@ -136,7 +137,11 @@ function EntityTracesContent({
 		[timeRange.startTime, timeRange.endTime, userExpression],
 	);
 
-	const traceListColumns = getTraceListColumns(selectedEntityTracesColumns);
+	const { formatTimezoneAdjustedTimestamp } = useTimezone();
+	const traceListColumns = getTraceListColumns(
+		selectedEntityTracesColumns,
+		formatTimezoneAdjustedTimestamp,
+	);
 
 	const isKeyNotFound = isKeyNotFoundError(error);
 	const isDataEmpty =
