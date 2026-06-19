@@ -2,23 +2,22 @@ import { Tabs } from '@signozhq/ui/tabs';
 
 import ModelCostsTab from './ModelCostsTab';
 
-import './LLMObservabilityModelPricing.styles.scss';
+import styles from './LLMObservabilityModelPricing.module.scss';
 
 function LLMObservabilityModelPricing(): JSX.Element {
 	return (
 		<div
-			className="llm-observability-model-pricing"
+			className={styles.llmObservabilityModelPricing}
 			data-testid="llm-observability-model-pricing-page"
 		>
-			<header className="page-header">
-				<div className="page-header__title">
+			<header className={styles.pageHeader}>
+				<div className={styles.pageHeaderTitle}>
 					<h1>Configuration</h1>
 					<p>Model pricing and cost estimation settings</p>
 				</div>
 			</header>
 
 			<Tabs
-				className="page-tabs"
 				// Model costs is the only enabled tab for now, so default to it. When
 				// the unpriced-models tab lands, this can become a URL-backed param.
 				defaultValue="model-costs"

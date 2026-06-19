@@ -14,6 +14,7 @@ import cx from 'classnames';
 import { startCase } from 'lodash-es';
 
 import { COLUMN_COUNT, SKELETON_ROW_COUNT } from './constants';
+import styles from './LLMObservabilityModelPricing.module.scss';
 import type { PricingRule } from './types';
 import {
 	formatPricePerMillion,
@@ -48,19 +49,19 @@ function ModelCostRow({
 
 	return (
 		<TableRow
-			className={cx({ 'model-costs-table__row--selected': isSelected })}
+			className={cx({ [styles.rowSelected]: isSelected })}
 			data-testid={`model-cost-row-${rule.id}`}
 		>
 			<TableCell>
-				<div className="model-cell">
+				<div className={styles.modelCell}>
 					<div
-						className="model-cell__name"
+						className={styles.modelCellName}
 						data-testid={`model-cell-name-${rule.id}`}
 					>
 						{rule.modelName}
 					</div>
 					<div
-						className="model-cell__canonical-id"
+						className={styles.modelCellCanonicalId}
 						data-testid={`model-cell-canonical-id-${rule.id}`}
 					>
 						{getCanonicalId(rule)}
@@ -69,29 +70,35 @@ function ModelCostRow({
 			</TableCell>
 			<TableCell>{rule.provider}</TableCell>
 			<TableCell>
-				<span className="price-cell" data-testid={`price-cell-input-${rule.id}`}>
+				<span
+					className={styles.priceCell}
+					data-testid={`price-cell-input-${rule.id}`}
+				>
 					{formatPricePerMillion(rule.pricing?.input)}
 				</span>
 			</TableCell>
 			<TableCell>
-				<span className="price-cell" data-testid={`price-cell-output-${rule.id}`}>
+				<span
+					className={styles.priceCell}
+					data-testid={`price-cell-output-${rule.id}`}
+				>
 					{formatPricePerMillion(rule.pricing?.output)}
 				</span>
 			</TableCell>
 			<TableCell>
 				{buckets.length === 0 ? (
-					<span className="muted">—</span>
+					<span className={styles.muted}>—</span>
 				) : (
-					<div className="extra-buckets">
+					<div className={styles.extraBuckets}>
 						{buckets.map((bucket) => (
 							<Badge
 								key={bucket.key}
 								color="vanilla"
 								variant="outline"
-								className="extra-buckets__chip"
+								className={styles.extraBucketsChip}
 							>
-								<span className="extra-buckets__key">{startCase(bucket.key)}</span>
-								<span className="extra-buckets__price">
+								<span className={styles.extraBucketsKey}>{startCase(bucket.key)}</span>
+								<span className={styles.extraBucketsPrice}>
 									{formatPricePerMillion(bucket.pricePerMillion)}
 								</span>
 							</Badge>
@@ -103,7 +110,7 @@ function ModelCostRow({
 				<Badge
 					color={rule.isOverride ? 'amber' : 'robin'}
 					variant="outline"
-					className="source-badge"
+					className={styles.sourceBadge}
 					data-testid={`source-badge-${rule.id}`}
 				>
 					{getSourceLabel(rule)}
@@ -137,7 +144,7 @@ function ModelCostsTable({
 
 	return (
 		<Table
-			className="model-costs-table"
+			className={styles.modelCostsTable}
 			testId="model-costs-table"
 			aria-busy={isInitialLoading}
 		>
@@ -158,7 +165,7 @@ function ModelCostsTable({
 					Array.from({ length: SKELETON_ROW_COUNT }, (_, i) => (
 						<TableRow key={`skeleton-row-${i}`} data-testid="model-cost-skeleton-row">
 							<TableCell>
-								<div className="model-cell">
+								<div className={styles.modelCell}>
 									<Skeleton.Input active block size="small" />
 									<Skeleton.Input active size="small" style={{ width: '60%' }} />
 								</div>
@@ -188,9 +195,7 @@ function ModelCostsTable({
 					))}
 				{!isLoading && rules.length === 0 && (
 					<TableRow>
-						<TableCell colSpan={COLUMN_COUNT} className="model-costs-table__empty">
-							No model costs yet.
-						</TableCell>
+						<TableCell colSpan={COLUMN_COUNT}>No model costs yet.</TableCell>
 					</TableRow>
 				)}
 				{rules.map((rule) => (

@@ -6,6 +6,7 @@ import { type ListLLMPricingRulesParams } from 'api/generated/services/sigNoz.sc
 import { parseAsInteger, useQueryState } from 'nuqs';
 
 import { PAGE_KEY, PAGE_SIZE } from './constants';
+import styles from './LLMObservabilityModelPricing.module.scss';
 import ModelCostsTable from './ModelCostsTable';
 import type { PricingRule } from './types';
 
@@ -36,10 +37,10 @@ function ModelCostsTab(): JSX.Element {
 
 	return (
 		<>
-			<div className="filters-bar">
+			<div className={styles.filtersBar}>
 				{/* Only USD is priced today — disabled until other currencies land. */}
 				<SelectSimple
-					className="filters-bar__currency"
+					className={styles.filtersBarCurrency}
 					value="USD"
 					disabled
 					testId="currency-select"
@@ -47,7 +48,7 @@ function ModelCostsTab(): JSX.Element {
 			</div>
 
 			{isError && (
-				<div className="page-error" role="alert">
+				<div className={styles.pageError} role="alert">
 					Failed to load pricing rules. Please try again.
 				</div>
 			)}
@@ -63,7 +64,7 @@ function ModelCostsTab(): JSX.Element {
 
 			{total > PAGE_SIZE && (
 				<Pagination
-					className="page-pagination"
+					className={styles.pagePagination}
 					total={total}
 					pageSize={PAGE_SIZE}
 					current={safePage}
@@ -71,7 +72,7 @@ function ModelCostsTab(): JSX.Element {
 				/>
 			)}
 
-			<footer className="page-footer">
+			<footer className={styles.pageFooter}>
 				Showing {rules.length} of {total} model{total === 1 ? '' : 's'}
 				{' · '}All prices per 1M tokens (USD)
 			</footer>
