@@ -1,5 +1,6 @@
 import type {
 	Querybuildertypesv5ColumnDescriptorDTO,
+	Querybuildertypesv5QueryEnvelopeClickHouseSQLDTO,
 	Querybuildertypesv5QueryRangeRequestDTO,
 	Querybuildertypesv5ScalarDataDTO,
 } from 'api/generated/services/sigNoz.schemas';
@@ -59,7 +60,8 @@ export function extractClickhouseQueryNames(
 		if (envelope.type !== Querybuildertypesv5QueryTypeDTO.clickhouse_sql) {
 			return;
 		}
-		const spec = envelope.spec as { name?: string };
+		const spec = (envelope as Querybuildertypesv5QueryEnvelopeClickHouseSQLDTO)
+			.spec;
 		if (spec?.name) {
 			names.add(spec.name);
 		}
