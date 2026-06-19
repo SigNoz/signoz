@@ -11,23 +11,9 @@ from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.fs import get_testdata_file_path
 from fixtures.metrics import Metrics
-from fixtures.querier import compare_values
+from fixtures.querier import compare_values, get_all_warnings
 
 ENDPOINT = "/api/v2/infra_monitoring/statefulsets"
-
-# Required metrics for the v2 statefulsets endpoint
-# (pkg/modules/inframonitoring/implinframonitoring/statefulsets_constants.go:24-34).
-REQUIRED_METRICS = {
-    "k8s.pod.phase",
-    "k8s.pod.cpu.usage",
-    "k8s.pod.cpu_request_utilization",
-    "k8s.pod.cpu_limit_utilization",
-    "k8s.pod.memory.working_set",
-    "k8s.pod.memory_request_utilization",
-    "k8s.pod.memory_limit_utilization",
-    "k8s.statefulset.desired_pods",
-    "k8s.statefulset.current_pods",
-}
 
 
 def test_statefulsets_accuracy(
@@ -75,7 +61,8 @@ def test_statefulsets_accuracy(
     # Shape/contract.
     assert data["total"] == len(expected["records"])
     assert len(data["records"]) == len(expected["records"])
-    assert data["requiredMetricsCheck"]["missingMetrics"] == []
+    # Full data present -> no warnings surfaced.
+    assert get_all_warnings(response.json()) == []
     assert data["endTimeBeforeRetention"] is False
     assert {r["statefulSetName"] for r in data["records"]} == set(exp_by_name.keys())
 
@@ -123,38 +110,115 @@ def test_statefulsets_accuracy(
         assert record["podCountsByPhase"] == exp["podCountsByPhase"]
 
 
-def test_statefulsets_missing_metrics(
+@pytest.mark.parametrize(
+    "case",
+    [
+        # Scenario 1: required metrics were never ingested. Post-#11754 the querier
+        # drops them (no hard error), so the endpoint returns 200 with the
+        # statefulset that DOES have data; never-seen columns are the -1 sentinel +
+        # a "have never been received" warning. No formulas; each missing metric
+        # maps to one -1 column.
+        pytest.param(
+            {
+                "dataset": "statefulsets_missing_metrics.jsonl",  # seeds only k8s.pod.cpu.usage
+                "body": {"filter": {"expression": "k8s.statefulset.name = 'miss-ss'"}},
+                "warn_substrings": ["never been received"],
+                "warn_names": [
+                    "k8s.pod.memory.working_set",
+                    "k8s.statefulset.desired_pods",
+                    "k8s.statefulset.current_pods",
+                ],
+                "data_fields": ["statefulSetCPU"],
+                "no_data_fields": [
+                    "statefulSetCPURequest",
+                    "statefulSetCPULimit",
+                    "statefulSetMemory",
+                    "statefulSetMemoryRequest",
+                    "statefulSetMemoryLimit",
+                    "desiredPods",
+                    "currentPods",
+                ],
+            },
+            id="metric_never_seen",
+        ),
+        # Scenario 2 (FAITHFUL (metric,key)-pair): pods are NOT labelled with
+        # k8s.statefulset.name, while the statefulset-level metrics ARE. Grouping by
+        # the default [statefulset.name, namespace.name, cluster.name], the base
+        # filter (k8s.statefulset.name != '') excludes the label-less pod metrics ->
+        # statefulSet* (pod-derived) come back -1, while desiredPods/currentPods
+        # (statefulset metrics) stay real. Reproduces the production response.
+        # The "key ... not found on metric" warning is asserted too, but is the
+        # provisional bit: it can be suppressed if the shared backend already holds
+        # the (pod-metric, k8s.statefulset.name) pair from other tests seeding it
+        # with "". The -1 partial render is the robust core.
+        pytest.param(
+            {
+                "dataset": "statefulsets_metric_key_pair.jsonl",
+                "body": {"filter": {"expression": "k8s.statefulset.name = 'kp-sts'"}},
+                "warn_substrings": ["key `k8s.statefulset.name` not found on metric"],
+                "warn_names": [],
+                "data_fields": ["desiredPods", "currentPods"],
+                "no_data_fields": [
+                    "statefulSetCPU",
+                    "statefulSetCPURequest",
+                    "statefulSetCPULimit",
+                    "statefulSetMemory",
+                    "statefulSetMemoryRequest",
+                    "statefulSetMemoryLimit",
+                ],
+            },
+            id="metric_key_pair_not_seen",
+        ),
+    ],
+)
+def test_statefulsets_warnings(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
+    case: dict,
 ) -> None:
-    """Seed only k8s.pod.cpu.usage; assert other 8 required metrics flagged missing."""
+    """Data-availability gaps surface as non-blocking warnings (200 + data), not
+    hard errors. Covers never-seen metrics (scenario 1) and a faithful never-seen
+    (metric, key) pair (scenario 2: pod columns -1, statefulset counts real)."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
-            get_testdata_file_path("inframonitoring/statefulsets_missing_metrics.jsonl"),
+            get_testdata_file_path(f"inframonitoring/{case['dataset']}"),
             base_time=now - timedelta(minutes=4),
         )
     )
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    body: dict = {
+        "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+        "end": int(now.timestamp() * 1000),
+        "limit": 50,
+    }
+    body.update(case["body"])
+
     response = requests.post(
         signoz.self.host_configs["8080"].get(ENDPOINT),
         headers={"authorization": f"Bearer {token}"},
-        json={
-            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "limit": 50,
-        },
+        json=body,
         timeout=5,
     )
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()["data"]
+    warnings = get_all_warnings(response.json())
 
-    assert set(data["requiredMetricsCheck"]["missingMetrics"]) == (REQUIRED_METRICS - {"k8s.pod.cpu.usage"})
-    assert data["records"] == []
-    assert data["total"] == 0
+    for substr in case["warn_substrings"]:
+        assert any(substr in w["message"] for w in warnings), f"{substr!r} not surfaced: {warnings!r}"
+    for name in case["warn_names"]:
+        assert any(name in w["message"] for w in warnings), f"{name!r} not surfaced: {warnings!r}"
+
+    assert len(data["records"]) >= 1, f"expected at least one record: {data!r}"
+    if case["data_fields"] or case["no_data_fields"]:
+        record = data["records"][0]
+        for field in case["data_fields"]:
+            assert record[field] != -1, f"expected {field} populated, got {record[field]}"
+        for field in case["no_data_fields"]:
+            assert record[field] == -1, f"expected {field} == -1 sentinel, got {record[field]}"
 
 
 @pytest.mark.parametrize(
