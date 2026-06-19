@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/modules/spanmapper"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/types/opamptypes"
@@ -100,6 +101,87 @@ func (module *module) DeleteMapper(ctx context.Context, orgID, groupID, id value
 	}
 	agentConf.NotifyConfigUpdate(ctx)
 	return nil
+}
+
+// PreviewMapping runs the sample span through the request's groups (in order)
+// and returns the transformed attribute and resource maps.
+func (module *module) PreviewMapping(ctx context.Context, orgID valuer.UUID, req *spantypes.SpanMappingPreviewRequest) (*spantypes.SpanMappingPreviewResponse, error) {
+	if len(req.Span.Attributes) == 0 && len(req.Span.Resource) == 0 {
+		return nil, errors.New(errors.TypeInvalidInput, spantypes.ErrCodeMappingInvalidInput, "'span' must contain attributes or resource")
+	}
+
+	groups, err := module.resolvePreviewGroups(ctx, orgID, req)
+	if err != nil {
+		return nil, err
+	}
+
+	outResource, outSpan := spantypes.SimulateMappingForAttributes(groups, req.Span.Resource, req.Span.Attributes)
+
+	return &spantypes.SpanMappingPreviewResponse{
+		Span: spantypes.SpanMappingPreviewSpan{Attributes: outSpan, Resource: outResource},
+	}, nil
+}
+
+// resolvePreviewGroups builds the ordered groups to simulate. Each group's meta
+// comes from the payload; its mappers come from the payload when provided, else
+// from the saved group with the same name.
+func (module *module) resolvePreviewGroups(ctx context.Context, orgID valuer.UUID, req *spantypes.SpanMappingPreviewRequest) ([]*spantypes.SpanMapperGroupWithMappers, error) {
+	var savedByName map[string]*spantypes.SpanMapperGroup
+
+	out := make([]*spantypes.SpanMapperGroupWithMappers, 0, len(req.Groups))
+	for _, spec := range req.Groups {
+		group := &spantypes.SpanMapperGroup{
+			OrgID:     orgID,
+			Name:      spec.Group.Name,
+			Condition: spec.Group.Condition,
+			Enabled:   spec.Group.Enabled,
+		}
+
+		var mappers []*spantypes.SpanMapper
+		if spec.Mappers != nil {
+			mappers = make([]*spantypes.SpanMapper, 0, len(*spec.Mappers))
+			for _, pm := range *spec.Mappers {
+				mappers = append(mappers, &spantypes.SpanMapper{
+					Name:         pm.Name,
+					FieldContext: pm.FieldContext,
+					Config:       pm.Config,
+					Enabled:      pm.Enabled,
+				})
+			}
+		} else {
+			if savedByName == nil {
+				saved, err := module.savedGroupsByName(ctx, orgID)
+				if err != nil {
+					return nil, err
+				}
+				savedByName = saved
+			}
+			saved, ok := savedByName[spec.Group.Name]
+			if !ok {
+				return nil, errors.Newf(errors.TypeInvalidInput, spantypes.ErrCodeMappingGroupNotFound, "no saved group named %q to load mappers from; send 'mappers' for new or edited groups", spec.Group.Name)
+			}
+			loaded, err := module.store.ListMappers(ctx, orgID, saved.ID)
+			if err != nil {
+				return nil, err
+			}
+			mappers = loaded
+		}
+
+		out = append(out, &spantypes.SpanMapperGroupWithMappers{Group: group, Mappers: mappers})
+	}
+	return out, nil
+}
+
+func (module *module) savedGroupsByName(ctx context.Context, orgID valuer.UUID) (map[string]*spantypes.SpanMapperGroup, error) {
+	groups, err := module.store.ListGroups(ctx, orgID, &spantypes.ListSpanMapperGroupsQuery{})
+	if err != nil {
+		return nil, err
+	}
+	byName := make(map[string]*spantypes.SpanMapperGroup, len(groups))
+	for _, g := range groups {
+		byName[g.Name] = g
+	}
+	return byName, nil
 }
 
 func (module *module) AgentFeatureType() agentConf.AgentFeatureType {
