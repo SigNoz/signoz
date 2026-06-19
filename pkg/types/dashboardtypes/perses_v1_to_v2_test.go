@@ -1,12 +1,14 @@
 package dashboardtypes
 
 import (
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	qb "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/types/tagtypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/perses/spec/go/dashboard"
@@ -81,6 +83,31 @@ func TestConvertV1TagsForOrg(t *testing.T) {
 			expectedTags: []kv{{"Env", "Prod"}},
 		},
 		{
+			scenario:     "spaces in key and value collapse to underscores",
+			rawTags:      []any{"env:spaced out", "spaced key:prod", "spaced out"},
+			expectedTags: []kv{{"env", "spaced_out"}, {"spaced_key", "prod"}, {"tag", "spaced_out"}},
+		},
+		{
+			scenario:     "runs of disallowed punctuation collapse to a single underscore",
+			rawTags:      []any{"team (eng):prod!!one"},
+			expectedTags: []kv{{"team_eng", "prod_one"}},
+		},
+		{
+			scenario:     "key that would start with a non-leading char is prefixed with underscore",
+			rawTags:      []any{"2nd tier:x"},
+			expectedTags: []kv{{"_2nd_tier", "x"}},
+		},
+		{
+			scenario:     "a side that molds to empty falls back to the default key with the survivor",
+			rawTags:      []any{"(:x", "y:!!!", "good:tag"},
+			expectedTags: []kv{{"tag", "x"}, {"tag", "y"}, {"good", "tag"}},
+		},
+		{
+			scenario:     "pairs with no representable content on either side are skipped",
+			rawTags:      []any{"(:!!!", "()", "ok"},
+			expectedTags: []kv{{"tag", "ok"}},
+		},
+		{
 			scenario:     "returns nil for missing tags field",
 			rawTags:      nil,
 			expectedTags: nil,
@@ -103,6 +130,31 @@ func TestConvertV1TagsForOrg(t *testing.T) {
 				assert.Equal(t, coretypes.KindDashboard, tags[i].Kind)
 			}
 		})
+	}
+}
+
+// TestMoldedV1TagsPassValidation guards against the mold rules drifting from
+// the tag validators: every tag the converter emits for messy input must pass
+// the real tagtypes.ValidatePostableTag, and over-long fields must be capped.
+func TestMoldedV1TagsPassValidation(t *testing.T) {
+	orgID := valuer.GenerateUUID()
+
+	raw := []any{
+		"env:spaced out",
+		"team (eng):prod!!one",
+		"2nd tier:x",
+		"k:" + strings.Repeat("a", 50),
+		strings.Repeat("verylongkeysegment ", 4) + ":v",
+		"weird*&^chars:val#1",
+	}
+
+	tags := convertV1TagsForOrg(orgID, raw)
+	require.NotEmpty(t, tags)
+	for _, tag := range tags {
+		_, _, err := tagtypes.ValidatePostableTag(tagtypes.PostableTag{Key: tag.Key, Value: tag.Value})
+		assert.NoError(t, err, "molded tag %q=%q must pass validation", tag.Key, tag.Value)
+		assert.LessOrEqual(t, len(tag.Key), tagtypes.MAX_LEN_TAG_KEY)
+		assert.LessOrEqual(t, len(tag.Value), tagtypes.MAX_LEN_TAG_VALUE)
 	}
 }
 
