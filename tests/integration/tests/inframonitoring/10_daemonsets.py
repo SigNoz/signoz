@@ -11,23 +11,9 @@ from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.fs import get_testdata_file_path
 from fixtures.metrics import Metrics
-from fixtures.querier import compare_values
+from fixtures.querier import compare_values, get_all_warnings
 
 ENDPOINT = "/api/v2/infra_monitoring/daemonsets"
-
-# Required metrics for the v2 daemonsets endpoint
-# (pkg/modules/inframonitoring/implinframonitoring/daemonsets_constants.go:24-34).
-REQUIRED_METRICS = {
-    "k8s.pod.phase",
-    "k8s.pod.cpu.usage",
-    "k8s.pod.cpu_request_utilization",
-    "k8s.pod.cpu_limit_utilization",
-    "k8s.pod.memory.working_set",
-    "k8s.pod.memory_request_utilization",
-    "k8s.pod.memory_limit_utilization",
-    "k8s.daemonset.desired_scheduled_nodes",
-    "k8s.daemonset.current_scheduled_nodes",
-}
 
 
 def test_daemonsets_accuracy(
@@ -75,7 +61,8 @@ def test_daemonsets_accuracy(
     # Shape/contract.
     assert data["total"] == len(expected["records"])
     assert len(data["records"]) == len(expected["records"])
-    assert data["requiredMetricsCheck"]["missingMetrics"] == []
+    # Full data present -> no warnings surfaced.
+    assert get_all_warnings(response.json()) == []
     assert data["endTimeBeforeRetention"] is False
     assert {r["daemonSetName"] for r in data["records"]} == set(exp_by_name.keys())
 
@@ -123,38 +110,113 @@ def test_daemonsets_accuracy(
         assert record["podCountsByPhase"] == exp["podCountsByPhase"]
 
 
-def test_daemonsets_missing_metrics(
+@pytest.mark.parametrize(
+    "case",
+    [
+        # Scenario 1: required metrics were never ingested. Post-#11754 the querier
+        # drops them (no hard error), so the endpoint returns 200 with the daemonset
+        # that DOES have data; never-seen columns are the -1 sentinel + a
+        # "have never been received" warning. No formulas; pod- and daemonset-level
+        # metrics each map to one column.
+        pytest.param(
+            {
+                "dataset": "daemonsets_missing_metrics.jsonl",  # seeds only k8s.pod.cpu.usage
+                "body": {"filter": {"expression": "k8s.daemonset.name = 'miss-ds'"}},
+                "warn_substrings": ["never been received"],
+                "warn_names": [
+                    "k8s.pod.memory.working_set",
+                    "k8s.daemonset.desired_scheduled_nodes",
+                    "k8s.daemonset.current_scheduled_nodes",
+                ],
+                "data_fields": ["daemonSetCPU"],
+                "no_data_fields": [
+                    "daemonSetCPURequest",
+                    "daemonSetCPULimit",
+                    "daemonSetMemory",
+                    "daemonSetMemoryRequest",
+                    "daemonSetMemoryLimit",
+                    "desiredNodes",
+                    "currentNodes",
+                ],
+            },
+            id="metric_never_seen",
+        ),
+        # Scenario 2 (FAITHFUL (metric,key)-pair): pods are NOT labelled with
+        # k8s.daemonset.name, while the daemonset-level metrics ARE. Grouping by the
+        # default [daemonset.name, namespace.name, cluster.name], the base filter
+        # (k8s.daemonset.name != '') excludes the label-less pod metrics ->
+        # daemonSet* (pod-derived) come back -1, while desiredNodes/currentNodes
+        # (daemonset metrics) stay real. Mirrors the statefulsets faithful case.
+        # The -1 partial render is the robust core; the "key ... not found on metric"
+        # warning is asserted too (surfaced fine on statefulsets).
+        pytest.param(
+            {
+                "dataset": "daemonsets_metric_key_pair.jsonl",
+                "body": {"filter": {"expression": "k8s.daemonset.name = 'kp-ds'"}},
+                "warn_substrings": ["key `k8s.daemonset.name` not found on metric"],
+                "warn_names": [],
+                "data_fields": ["desiredNodes", "currentNodes"],
+                "no_data_fields": [
+                    "daemonSetCPU",
+                    "daemonSetCPURequest",
+                    "daemonSetCPULimit",
+                    "daemonSetMemory",
+                    "daemonSetMemoryRequest",
+                    "daemonSetMemoryLimit",
+                ],
+            },
+            id="metric_key_pair_not_seen",
+        ),
+    ],
+)
+def test_daemonsets_warnings(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
+    case: dict,
 ) -> None:
-    """Seed only k8s.pod.cpu.usage; assert other 8 required metrics flagged missing."""
+    """Data-availability gaps surface as non-blocking warnings (200 + data), not
+    hard errors. Covers never-seen metrics (scenario 1) and a faithful never-seen
+    (metric, key) pair (scenario 2: pod columns -1, daemonset counts real)."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
-            get_testdata_file_path("inframonitoring/daemonsets_missing_metrics.jsonl"),
+            get_testdata_file_path(f"inframonitoring/{case['dataset']}"),
             base_time=now - timedelta(minutes=4),
         )
     )
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    body: dict = {
+        "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+        "end": int(now.timestamp() * 1000),
+        "limit": 50,
+    }
+    body.update(case["body"])
+
     response = requests.post(
         signoz.self.host_configs["8080"].get(ENDPOINT),
         headers={"authorization": f"Bearer {token}"},
-        json={
-            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "limit": 50,
-        },
+        json=body,
         timeout=5,
     )
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()["data"]
+    warnings = get_all_warnings(response.json())
 
-    assert set(data["requiredMetricsCheck"]["missingMetrics"]) == (REQUIRED_METRICS - {"k8s.pod.cpu.usage"})
-    assert data["records"] == []
-    assert data["total"] == 0
+    for substr in case["warn_substrings"]:
+        assert any(substr in w["message"] for w in warnings), f"{substr!r} not surfaced: {warnings!r}"
+    for name in case["warn_names"]:
+        assert any(name in w["message"] for w in warnings), f"{name!r} not surfaced: {warnings!r}"
+
+    assert len(data["records"]) >= 1, f"expected at least one record: {data!r}"
+    if case["data_fields"] or case["no_data_fields"]:
+        record = data["records"][0]
+        for field in case["data_fields"]:
+            assert record[field] != -1, f"expected {field} populated, got {record[field]}"
+        for field in case["no_data_fields"]:
+            assert record[field] == -1, f"expected {field} == -1 sentinel, got {record[field]}"
 
 
 @pytest.mark.parametrize(
