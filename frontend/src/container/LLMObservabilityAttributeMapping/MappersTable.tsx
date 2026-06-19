@@ -11,6 +11,7 @@ import {
 import { useListSpanMappers } from 'api/generated/services/spanmapper';
 
 import IndexBadge from './IndexBadge';
+import styles from './LLMObservabilityAttributeMapping.module.scss';
 import { DraftGroup, DraftMapper, FieldContext, Mapper } from './types';
 import { buildDraftMapper } from './utils';
 
@@ -23,7 +24,7 @@ interface MappersTableProps {
 
 function SourcesCell({ mapper }: { mapper: DraftMapper }): JSX.Element {
 	if (mapper.sources.length === 0) {
-		return <span className="muted">—</span>;
+		return <span className={styles.muted}>—</span>;
 	}
 
 	const visible = mapper.sources.slice(0, MAX_VISIBLE_SOURCES);
@@ -31,12 +32,12 @@ function SourcesCell({ mapper }: { mapper: DraftMapper }): JSX.Element {
 
 	return (
 		<div
-			className="mappers-table__sources"
+			className={styles.mappersTableSources}
 			data-testid={`mapper-sources-${mapper.localId}`}
 		>
 			{visible.map((source) => (
 				<span
-					className="mappers-table__source-chip"
+					className={styles.mappersTableSourceChip}
 					key={`${source.context}:${source.key}`}
 					title={source.key}
 				>
@@ -44,7 +45,9 @@ function SourcesCell({ mapper }: { mapper: DraftMapper }): JSX.Element {
 				</span>
 			))}
 			{remaining > 0 && (
-				<span className="mappers-table__source-more muted">+{remaining} more</span>
+				<span className={`${styles.mappersTableSourceMore} ${styles.muted}`}>
+					+{remaining} more
+				</span>
 			)}
 		</div>
 	);
@@ -64,7 +67,7 @@ function MapperRow({
 			</TableCell>
 			<TableCell>
 				<span
-					className="mappers-table__target"
+					className={styles.mappersTableTarget}
 					data-testid={`mapper-target-${mapper.localId}`}
 				>
 					{mapper.name}
@@ -107,8 +110,8 @@ function MappersTable({ group }: MappersTableProps): JSX.Element {
 	}, [data]);
 
 	return (
-		<div className="mappers-table__wrapper">
-			<Table testId={`mappers-table-${group.localId}`} className="am-table">
+		<div className={styles.mappersTableWrapper}>
+			<Table testId={`mappers-table-${group.localId}`}>
 				<TableHeader>
 					<TableRow>
 						<TableHead>#</TableHead>
@@ -121,21 +124,21 @@ function MappersTable({ group }: MappersTableProps): JSX.Element {
 				<TableBody>
 					{isLoading && (
 						<TableRow>
-							<TableCell colSpan={COLUMN_COUNT} className="am-table__empty">
+							<TableCell colSpan={COLUMN_COUNT} className={styles.tableEmpty}>
 								Loading mappings…
 							</TableCell>
 						</TableRow>
 					)}
 					{!isLoading && isError && (
 						<TableRow>
-							<TableCell colSpan={COLUMN_COUNT} className="am-table__empty">
+							<TableCell colSpan={COLUMN_COUNT} className={styles.tableEmpty}>
 								Failed to load mappings. Please try again.
 							</TableCell>
 						</TableRow>
 					)}
 					{!isLoading && !isError && mappers.length === 0 && (
 						<TableRow>
-							<TableCell colSpan={COLUMN_COUNT} className="am-table__empty">
+							<TableCell colSpan={COLUMN_COUNT} className={styles.tableEmpty}>
 								No mappings in this group yet.
 							</TableCell>
 						</TableRow>

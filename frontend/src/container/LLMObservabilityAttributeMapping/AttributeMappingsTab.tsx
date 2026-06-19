@@ -1,3 +1,4 @@
+import styles from './LLMObservabilityAttributeMapping.module.scss';
 import MapperGroupsTable from './MapperGroupsTable';
 import { DraftGroup } from './types';
 import { AttributeMappingStore } from './useAttributeMappingStore';
@@ -19,7 +20,7 @@ function AttributeMappingsTab({
 	return (
 		<div data-testid="attribute-mappings-tab">
 			{store.isError && (
-				<div className="page-error" role="alert">
+				<div className={styles.pageError} role="alert">
 					Failed to load mapping groups. Please try again.
 				</div>
 			)}
@@ -30,7 +31,7 @@ function AttributeMappingsTab({
 				onAddGroup={onAddGroup}
 			/>
 
-			<footer className="page-footer">
+			<footer className={styles.pageFooter}>
 				Showing {store.groups.length} group{store.groups.length === 1 ? '' : 's'}
 			</footer>
 		</div>

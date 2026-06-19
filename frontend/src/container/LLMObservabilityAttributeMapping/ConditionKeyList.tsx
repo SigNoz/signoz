@@ -1,6 +1,7 @@
 import { Button } from '@signozhq/ui/button';
 import { Plus, X } from '@signozhq/icons';
 
+import styles from './GroupFormDrawer.module.scss';
 import KeySearchInput from './KeySearchInput';
 import { FieldContextValue } from './types';
 
@@ -40,19 +41,21 @@ function ConditionKeyList({
 	};
 
 	return (
-		<div className="group-form__field">
-			<span className="group-form__label">
+		<div className={styles.groupFormField}>
+			<span className={styles.groupFormLabel}>
 				{label}
-				{labelHint && <span className="group-form__label-hint"> {labelHint}</span>}
+				{labelHint && (
+					<span className={styles.groupFormLabelHint}> {labelHint}</span>
+				)}
 			</span>
 
 			{keys.length > 0 && (
-				<div className="group-form__keys">
+				<div className={styles.groupFormKeys}>
 					{keys.map((key, index) => (
 						// eslint-disable-next-line react/no-array-index-key
-						<div className="group-form__key" key={index}>
+						<div className={styles.groupFormKey} key={index}>
 							<KeySearchInput
-								className="group-form__key-input"
+								className={styles.groupFormKeyInput}
 								placeholder={placeholder}
 								value={key}
 								fieldContext={fieldContext}

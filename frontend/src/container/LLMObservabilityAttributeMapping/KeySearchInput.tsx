@@ -9,9 +9,8 @@ import cx from 'classnames';
 import Spinner from 'components/Spinner';
 import useDebounce from 'hooks/useDebounce';
 
+import styles from './KeySearchInput.module.scss';
 import { FieldContext, FieldContextValue } from './types';
-
-import './KeySearchInput.styles.scss';
 
 const SUGGESTION_LIMIT = 50;
 const DEBOUNCE_MS = 300;
@@ -67,7 +66,7 @@ function KeySearchInput({
 	}, [data, value]);
 
 	return (
-		<div className={cx('key-search', className)}>
+		<div className={cx(styles.keySearch, className)}>
 			<Input
 				placeholder={placeholder}
 				value={value}
@@ -82,12 +81,15 @@ function KeySearchInput({
 				testId={testId}
 			/>
 			{isOpen && suggestions.length > 0 && (
-				<div className="key-search__dropdown" data-testid={`${testId}-dropdown`}>
+				<div
+					className={styles.keySearchDropdown}
+					data-testid={`${testId}-dropdown`}
+				>
 					{suggestions.map((name) => (
 						<button
 							type="button"
 							key={name}
-							className="key-search__option"
+							className={styles.keySearchOption}
 							// onMouseDown (not onClick) so selection runs before the input blur.
 							onMouseDown={(event): void => {
 								event.preventDefault();
@@ -102,7 +104,9 @@ function KeySearchInput({
 				</div>
 			)}
 			{isOpen && isFetching && suggestions.length === 0 && (
-				<div className="key-search__dropdown key-search__dropdown--empty">
+				<div
+					className={cx(styles.keySearchDropdown, styles.keySearchDropdownEmpty)}
+				>
 					<Spinner size="small" height="auto" />
 				</div>
 			)}

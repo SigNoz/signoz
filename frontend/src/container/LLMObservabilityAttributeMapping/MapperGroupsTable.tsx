@@ -18,6 +18,7 @@ import {
 	Trash2,
 } from '@signozhq/icons';
 
+import styles from './LLMObservabilityAttributeMapping.module.scss';
 import MappersTable from './MappersTable';
 import { DraftGroup } from './types';
 import { AttributeMappingStore } from './useAttributeMappingStore';
@@ -34,17 +35,17 @@ interface MapperGroupsTableProps {
 function FiltersCell({ group }: { group: DraftGroup }): JSX.Element {
 	const filters = conditionFiltersFromGroup(group);
 	if (filters.length === 0) {
-		return <span className="muted">No condition · always runs</span>;
+		return <span className={styles.muted}>No condition · always runs</span>;
 	}
 
 	return (
 		<div
-			className="groups-table__filters"
+			className={styles.groupsTableFilters}
 			data-testid={`group-filters-${group.localId}`}
 		>
 			{filters.map((filter) => (
 				<div
-					className="groups-table__filter"
+					className={styles.groupsTableFilter}
 					key={`${filter.context}:${filter.key}`}
 				>
 					<Badge
@@ -53,7 +54,7 @@ function FiltersCell({ group }: { group: DraftGroup }): JSX.Element {
 					>
 						{filter.context}
 					</Badge>
-					<span className="groups-table__filter-key">contains {filter.key}</span>
+					<span className={styles.groupsTableFilterKey}>contains {filter.key}</span>
 				</div>
 			))}
 		</div>
@@ -79,7 +80,7 @@ function GroupRow({
 		<>
 			<TableRow data-testid={`group-row-${group.localId}`}>
 				<TableCell>
-					<div className="groups-table__name-cell">
+					<div className={styles.groupsTableNameCell}>
 						<Button
 							variant="ghost"
 							color="secondary"
@@ -91,7 +92,7 @@ function GroupRow({
 							{isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
 						</Button>
 						<span
-							className="groups-table__name"
+							className={styles.groupsTableName}
 							data-testid={`group-name-${group.localId}`}
 						>
 							{group.name}
@@ -102,7 +103,7 @@ function GroupRow({
 					<FiltersCell group={group} />
 				</TableCell>
 				<TableCell>
-					<div className="am-row-actions">
+					<div className={styles.rowActions}>
 						<Button
 							variant="ghost"
 							color="secondary"
@@ -132,7 +133,7 @@ function GroupRow({
 				</TableCell>
 			</TableRow>
 			{isExpanded && (
-				<TableRow className="groups-table__sub-row">
+				<TableRow className={styles.groupsTableSubRow}>
 					<TableCell colSpan={COLUMN_COUNT}>
 						<MappersTable group={group} />
 					</TableCell>
@@ -154,8 +155,8 @@ function MapperGroupsTable({
 	};
 
 	return (
-		<div className="groups-table__wrapper">
-			<Table testId="mapper-groups-table" className="am-table">
+		<div className={styles.groupsTableWrapper}>
+			<Table testId="mapper-groups-table">
 				<TableHeader>
 					<TableRow>
 						<TableHead>Group name</TableHead>
@@ -166,14 +167,14 @@ function MapperGroupsTable({
 				<TableBody>
 					{store.isLoading && store.groups.length === 0 && (
 						<TableRow>
-							<TableCell colSpan={COLUMN_COUNT} className="am-table__empty">
+							<TableCell colSpan={COLUMN_COUNT} className={styles.tableEmpty}>
 								Loading groups…
 							</TableCell>
 						</TableRow>
 					)}
 					{!store.isLoading && store.groups.length === 0 && (
 						<TableRow>
-							<TableCell colSpan={COLUMN_COUNT} className="am-table__empty">
+							<TableCell colSpan={COLUMN_COUNT} className={styles.tableEmpty}>
 								No mapping groups yet.
 							</TableCell>
 						</TableRow>
@@ -195,7 +196,7 @@ function MapperGroupsTable({
 				variant="ghost"
 				color="primary"
 				prefix={<Plus size={14} />}
-				className="am-add-row"
+				className={styles.addRow}
 				onClick={onAddGroup}
 				testId="add-group-row"
 				disabled={store.isLoading}

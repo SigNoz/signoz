@@ -5,10 +5,9 @@ import { Switch } from '@signozhq/ui/switch';
 import { Trash2 } from '@signozhq/icons';
 
 import ConditionKeyList from './ConditionKeyList';
+import styles from './GroupFormDrawer.module.scss';
 import { FieldContext, GroupDraft, MapperDraftMode } from './types';
 import { isGroupDraftValid } from './utils';
-
-import './GroupFormDrawer.styles.scss';
 
 interface GroupFormDrawerProps {
 	isOpen: boolean;
@@ -51,7 +50,7 @@ function GroupFormDrawer({
 			width="wide"
 			testId="group-form-drawer"
 			footer={
-				<div className="group-form__footer">
+				<div className={styles.groupFormFooter}>
 					{isEdit && (
 						<Button
 							variant="ghost"
@@ -64,7 +63,7 @@ function GroupFormDrawer({
 							{isDeleting ? 'Deleting…' : 'Delete'}
 						</Button>
 					)}
-					<div className="group-form__footer-actions">
+					<div className={styles.groupFormFooterActions}>
 						<Button
 							variant="ghost"
 							color="secondary"
@@ -87,9 +86,9 @@ function GroupFormDrawer({
 				</div>
 			}
 		>
-			<div className="group-form">
-				<div className="group-form__field">
-					<span className="group-form__label">Group name</span>
+			<div className={styles.groupForm}>
+				<div className={styles.groupFormField}>
+					<span className={styles.groupFormLabel}>Group name</span>
 					<Input
 						placeholder="e.g. OpenAI gateway"
 						value={draft.name}
@@ -100,8 +99,8 @@ function GroupFormDrawer({
 					/>
 				</div>
 
-				<div className="group-form__field group-form__field--row">
-					<span className="group-form__label">Enabled</span>
+				<div className={`${styles.groupFormField} ${styles.groupFormFieldRow}`}>
+					<span className={styles.groupFormLabel}>Enabled</span>
 					<Switch
 						value={draft.enabled}
 						onChange={(checked): void => setDraft({ ...draft, enabled: checked })}
@@ -131,12 +130,12 @@ function GroupFormDrawer({
 					onChange={(resource): void => setDraft({ ...draft, resource })}
 				/>
 
-				<span className="group-form__hint">
+				<span className={styles.groupFormHint}>
 					Leave both empty to run this group on every span.
 				</span>
 
 				{saveError && (
-					<div className="group-form__error" role="alert">
+					<div className={styles.groupFormError} role="alert">
 						{saveError}
 					</div>
 				)}

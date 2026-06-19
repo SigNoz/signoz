@@ -4,10 +4,9 @@ import { Tabs } from '@signozhq/ui/tabs';
 import AttributeMappingHeader from './AttributeMappingHeader';
 import AttributeMappingsTab from './AttributeMappingsTab';
 import GroupFormDrawer from './GroupFormDrawer';
+import styles from './LLMObservabilityAttributeMapping.module.scss';
 import { useAttributeMappingStore } from './useAttributeMappingStore';
 import { useGroupFormDrawer } from './useGroupFormDrawer';
-
-import './LLMObservabilityAttributeMapping.styles.scss';
 
 function LLMObservabilityAttributeMapping(): JSX.Element {
 	const store = useAttributeMappingStore();
@@ -48,7 +47,7 @@ function LLMObservabilityAttributeMapping(): JSX.Element {
 
 	return (
 		<div
-			className="llm-observability-attribute-mapping"
+			className={styles.llmObservabilityAttributeMapping}
 			data-testid="llm-observability-attribute-mapping-page"
 		>
 			<AttributeMappingHeader
@@ -59,7 +58,7 @@ function LLMObservabilityAttributeMapping(): JSX.Element {
 			/>
 
 			{store.saveError && (
-				<div className="page-error" role="alert">
+				<div className={styles.pageError} role="alert">
 					{store.saveError}
 				</div>
 			)}
