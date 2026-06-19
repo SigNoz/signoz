@@ -9,9 +9,9 @@ import PatternEditor from './PatternEditor';
 import PricingFields from './PricingFields';
 import SourceSelector from './SourceSelector';
 import { PROVIDER_OPTIONS } from './constants';
+import styles from './ModelCostDrawer.module.scss';
 import { validateModelName, validatePricing, validateProvider } from './utils';
 import type { DrawerDraft, DrawerMode } from './types';
-import './ModelCostDrawer.styles.scss';
 
 interface ModelCostDrawerProps {
 	isOpen: boolean;
@@ -64,7 +64,7 @@ function ModelCostDrawer({
 	}
 
 	const footer = (
-		<div className="model-cost-drawer__footer">
+		<div className={styles.footer}>
 			{mode === 'edit' && canManage && (
 				<Button
 					variant="ghost"
@@ -77,7 +77,7 @@ function ModelCostDrawer({
 					Delete
 				</Button>
 			)}
-			<div className="model-cost-drawer__footer-right">
+			<div className={styles.footerRight}>
 				<Button
 					variant="outlined"
 					color="secondary"
@@ -113,14 +113,14 @@ function ModelCostDrawer({
 			}}
 			direction="right"
 			width="base"
-			className="model-cost-drawer"
+			className={styles.modelCostDrawer}
 			footer={footer}
 			title={drawerTitle}
-			drawerHeaderProps={{ className: 'model-cost-drawer__title' }}
+			drawerHeaderProps={{ className: styles.title }}
 		>
-			<div className="drawer-section">
+			<div className={styles.drawerSection}>
 				<label htmlFor="billing-model-id">
-					Billing model ID <span className="required">*</span>
+					Billing model ID <span className={styles.required}>*</span>
 				</label>
 				<Controller
 					name="modelName"
@@ -140,7 +140,7 @@ function ModelCostDrawer({
 								testId="drawer-model-id-input"
 							/>
 							{fieldState.error && (
-								<p className="field-error" role="alert">
+								<p className={styles.fieldError} role="alert">
 									{fieldState.error.message}
 								</p>
 							)}
@@ -149,7 +149,7 @@ function ModelCostDrawer({
 				/>
 			</div>
 
-			<div className="drawer-section">
+			<div className={styles.drawerSection}>
 				<label htmlFor="provider-select">Provider</label>
 				<Controller
 					name="provider"
@@ -163,12 +163,12 @@ function ModelCostDrawer({
 								onChange={(value): void => field.onChange(value as string)}
 								items={PROVIDER_OPTIONS}
 								disabled={mode === 'edit' || metadataReadOnly}
-								className="full-width"
+								className={styles.fullWidth}
 								withPortal={false}
 								testId="drawer-provider-select"
 							/>
 							{fieldState.error && (
-								<p className="field-error" role="alert">
+								<p className={styles.fieldError} role="alert">
 									{fieldState.error.message}
 								</p>
 							)}
@@ -224,7 +224,7 @@ function ModelCostDrawer({
 							onChange={(patch): void => field.onChange({ ...field.value, ...patch })}
 						/>
 						{fieldState.error && (
-							<p className="field-error" role="alert">
+							<p className={styles.fieldError} role="alert">
 								{fieldState.error.message}
 							</p>
 						)}
@@ -233,7 +233,7 @@ function ModelCostDrawer({
 			/>
 
 			{saveError && (
-				<div className="drawer-error" role="alert">
+				<div className={styles.drawerError} role="alert">
 					{saveError}
 				</div>
 			)}

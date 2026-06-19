@@ -4,8 +4,10 @@ import { Input } from '@signozhq/ui/input';
 import { SelectSimple } from '@signozhq/ui/select';
 import { Plus, Trash2 } from '@signozhq/icons';
 import { LlmpricingruletypesLLMPricingRuleCacheModeDTO as CacheModeDTO } from 'api/generated/services/sigNoz.schemas';
+import cx from 'classnames';
 
 import { CACHE_BUCKETS, CACHE_MODE_OPTIONS } from './constants';
+import styles from './ModelCostDrawer.module.scss';
 import { parsePricingAmount } from './utils';
 import type { CacheBucketKey, DrawerDraft } from './types';
 
@@ -64,15 +66,15 @@ function ExtraPricingBuckets({
 	};
 
 	return (
-		<div className="extra-buckets-section drawer-section">
-			<div className="extra-buckets-section__head">
-				<span className="field-label">Extra pricing buckets</span>
-				<span className="optional-label">optional</span>
+		<div className={cx(styles.extraBucketsSection, styles.drawerSection)}>
+			<div className={styles.extraBucketsSectionHead}>
+				<span className={styles.fieldLabel}>Extra pricing buckets</span>
+				<span className={styles.optionalLabel}>optional</span>
 			</div>
 
 			{addedBuckets.map((bucket) => (
-				<div className="bucket-row" key={bucket.key}>
-					<span className="bucket-row__name">{bucket.label}</span>
+				<div className={styles.bucketRow} key={bucket.key}>
+					<span className={styles.bucketRowName}>{bucket.label}</span>
 					<Input
 						type="number"
 						min={0}
@@ -87,11 +89,11 @@ function ExtraPricingBuckets({
 						}
 						testId={`drawer-${bucket.testId}-cost`}
 					/>
-					<span className="bucket-row__unit">/ 1M</span>
+					<span className={styles.bucketRowUnit}>/ 1M</span>
 					{!isReadOnly && (
 						<button
 							type="button"
-							className="bucket-row__remove"
+							className={styles.bucketRowRemove}
 							onClick={(): void => removeBucket(bucket.key)}
 							aria-label={`Remove ${bucket.label}`}
 							data-testid={`drawer-remove-${bucket.testId}`}
@@ -103,7 +105,7 @@ function ExtraPricingBuckets({
 			))}
 
 			{addedBuckets.length > 0 && (
-				<div className="pricing-field cache-mode-field">
+				<div className={cx(styles.pricingField, styles.cacheModeField)}>
 					<label htmlFor="cache-mode">Cache mode</label>
 					<SelectSimple
 						id="cache-mode"
@@ -111,7 +113,7 @@ function ExtraPricingBuckets({
 						items={CACHE_MODE_OPTIONS}
 						onChange={(v): void => onChange({ cacheMode: v as CacheModeDTO })}
 						disabled={isReadOnly}
-						className="full-width"
+						className={styles.fullWidth}
 						withPortal={false}
 						testId="drawer-cache-mode"
 					/>
@@ -122,7 +124,7 @@ function ExtraPricingBuckets({
 				<Button
 					variant="dashed"
 					color="secondary"
-					className="bucket-add-btn"
+					className={styles.bucketAddBtn}
 					prefix={<Plus size={14} />}
 					onClick={(): void => setIsExtraPricingBucketOpen(true)}
 					testId="drawer-add-bucket-btn"
@@ -132,9 +134,9 @@ function ExtraPricingBuckets({
 			)}
 
 			{!isReadOnly && isExtraPricingBucketOpen && (
-				<div className="bucket-picker" data-testid="drawer-bucket-picker">
-					<div className="bucket-picker__title">Add a pricing bucket</div>
-					<div className="bucket-picker__chips">
+				<div className={styles.bucketPicker} data-testid="drawer-bucket-picker">
+					<div className={styles.bucketPickerTitle}>Add a pricing bucket</div>
+					<div className={styles.bucketPickerChips}>
 						{availableBuckets.map((bucket) => (
 							<Button
 								key={bucket.key}

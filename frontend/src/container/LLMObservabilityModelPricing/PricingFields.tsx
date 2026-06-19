@@ -1,7 +1,9 @@
 import { Input } from '@signozhq/ui/input';
 import { Lock } from '@signozhq/icons';
+import cx from 'classnames';
 
 import ExtraPricingBuckets from './ExtraPricingBuckets';
+import styles from './ModelCostDrawer.module.scss';
 import { parsePricingAmount } from './utils';
 import type { DrawerDraft } from './types';
 
@@ -19,20 +21,20 @@ function PricingFields({
 	onChange,
 }: PricingFieldsProps): JSX.Element {
 	return (
-		<div className="drawer-section drawer-surface">
-			<div className="drawer-surface__head">
+		<div className={cx(styles.drawerSection, styles.drawerSurface)}>
+			<div className={styles.drawerSurfaceHead}>
 				<h4>Pricing (per 1M tokens, USD)</h4>
 				{isReadOnly && (
-					<span className="managed-label" data-testid="drawer-readonly-label">
+					<span className={styles.managedLabel} data-testid="drawer-readonly-label">
 						<Lock size={12} />
 						Read-only
 					</span>
 				)}
 			</div>
-			<div className="pricing-grid">
-				<div className="pricing-field">
+			<div className={styles.pricingGrid}>
+				<div className={styles.pricingField}>
 					<label htmlFor="input-cost">
-						Input cost <span className="required">*</span>
+						Input cost <span className={styles.required}>*</span>
 					</label>
 					<Input
 						id="input-cost"
@@ -46,9 +48,9 @@ function PricingFields({
 						testId="drawer-input-cost"
 					/>
 				</div>
-				<div className="pricing-field">
+				<div className={styles.pricingField}>
 					<label htmlFor="output-cost">
-						Output cost <span className="required">*</span>
+						Output cost <span className={styles.required}>*</span>
 					</label>
 					<Input
 						id="output-cost"

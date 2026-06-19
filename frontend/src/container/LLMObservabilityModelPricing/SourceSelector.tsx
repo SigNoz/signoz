@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { RadioGroup, RadioGroupItem } from '@signozhq/ui/radio-group';
 import { Lock } from '@signozhq/icons';
+import cx from 'classnames';
+
+import styles from './ModelCostDrawer.module.scss';
 
 interface SourceSelectorProps {
 	isOverride: boolean;
@@ -36,11 +39,11 @@ function SourceSelector({
 	};
 
 	return (
-		<div className="drawer-section drawer-surface">
-			<div className="drawer-surface__head">
+		<div className={cx(styles.drawerSection, styles.drawerSurface)}>
+			<div className={styles.drawerSurfaceHead}>
 				<h4>Source</h4>
 				{isReadOnly && (
-					<span className="managed-label" data-testid="drawer-managed-label">
+					<span className={styles.managedLabel} data-testid="drawer-managed-label">
 						<Lock size={12} />
 						Managed by SigNoz
 					</span>
@@ -49,16 +52,16 @@ function SourceSelector({
 			<RadioGroup
 				value={isOverride ? 'override' : 'auto'}
 				onChange={(value): void => handleSourceChange(value as 'auto' | 'override')}
-				className="source-radio-group"
+				className={styles.sourceRadioGroup}
 			>
 				<RadioGroupItem
 					value="auto"
-					containerClassName="source-radio source-radio--auto"
+					containerClassName={cx(styles.sourceRadio, styles.sourceRadioAuto)}
 					testId="drawer-source-auto"
 					disabled={disableAuto}
 				>
-					<div className="source-radio__title">Auto-populated</div>
-					<div className="source-radio__desc">
+					<div className={styles.sourceRadioTitle}>Auto-populated</div>
+					<div className={styles.sourceRadioDesc}>
 						{disableAuto
 							? 'Available once SigNoz has default pricing for this model.'
 							: 'Default pricing from SigNoz.'}
@@ -66,16 +69,18 @@ function SourceSelector({
 				</RadioGroupItem>
 				<RadioGroupItem
 					value="override"
-					containerClassName="source-radio source-radio--override"
+					containerClassName={cx(styles.sourceRadio, styles.sourceRadioOverride)}
 					testId="drawer-source-override"
 				>
-					<div className="source-radio__title">User override</div>
-					<div className="source-radio__desc">Custom pricing. Takes precedence.</div>
+					<div className={styles.sourceRadioTitle}>User override</div>
+					<div className={styles.sourceRadioDesc}>
+						Custom pricing. Takes precedence.
+					</div>
 				</RadioGroupItem>
 			</RadioGroup>
 			{showResetConfirm && (
 				<div
-					className="reset-confirm"
+					className={styles.resetConfirm}
 					role="dialog"
 					aria-label="Reset to default pricing"
 				>
@@ -83,7 +88,7 @@ function SourceSelector({
 						Reset to default pricing? Custom values will be discarded. It might take
 						24 hours for changes to take effect.
 					</p>
-					<div className="reset-confirm__actions">
+					<div className={styles.resetConfirmActions}>
 						<Button
 							variant="outlined"
 							color="secondary"

@@ -1,0 +1,395 @@
+.modelCostDrawer {
+	// Uniform horizontal padding across header / body / footer. The header and
+	// footer read these dialog vars; the body (rendered in drawer-description)
+	// is set directly below.
+	--dialog-header-padding: 20px 24px;
+	--dialog-footer-padding: 16px 24px;
+
+	display: flex;
+	overflow-y: auto;
+
+	// The drawer body — children render inside [data-slot='drawer-description']
+	// (this is the @signozhq drawer, not antd, so .ant-drawer-body was a no-op).
+	[data-slot='drawer-description'] {
+		display: flex;
+		flex-direction: column;
+		gap: 18px;
+		padding: 20px 24px;
+	}
+
+	[data-slot='select-content'] {
+		width: var(--radix-select-trigger-width);
+	}
+}
+
+.title {
+	h3 {
+		margin: 0;
+		font-size: 16px;
+		font-weight: 600;
+	}
+
+	p {
+		margin: 4px 0 0;
+		color: var(--bg-vanilla-400);
+		font-size: 12px;
+	}
+}
+
+.footer {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	// Horizontal padding is provided by the drawer-footer slot var above.
+	padding: 0;
+	width: 100%;
+}
+
+.footerRight {
+	display: flex;
+	gap: 8px;
+	margin-left: auto;
+}
+
+.drawerSection {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+
+	label,
+	.fieldLabel {
+		font-size: 12px;
+		font-weight: 600;
+		color: var(--bg-vanilla-200);
+	}
+
+	.help {
+		margin: 0;
+		font-size: 11px;
+	}
+}
+
+.muted {
+	color: var(--bg-vanilla-400);
+}
+
+.required {
+	color: var(--bg-cherry-400);
+}
+
+.fullWidth {
+	width: 100%;
+}
+
+.drawerSurface {
+	padding: 14px;
+	border-radius: 6px;
+	background: color-mix(in srgb, var(--bg-vanilla-100) 2%, transparent);
+	border: 1px solid var(--bg-slate-300);
+}
+
+.drawerSurfaceHead {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 10px;
+
+	h4 {
+		margin: 0;
+		font-size: 13px;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+		color: var(--bg-vanilla-300);
+	}
+}
+
+.managedLabel {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	font-size: 11px;
+	color: var(--bg-vanilla-400);
+}
+
+.patternBox {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	padding: 12px;
+	border-radius: 6px;
+	background: color-mix(in srgb, var(--bg-vanilla-100) 2%, transparent);
+	border: 1px solid var(--bg-slate-300);
+}
+
+.patternChips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	min-height: 28px;
+}
+
+.patternChip {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.patternChipRemove {
+	background: transparent;
+	border: none;
+	padding: 0;
+	margin-left: 2px;
+	cursor: pointer;
+	color: inherit;
+	display: inline-flex;
+	align-items: center;
+
+	&:hover {
+		color: var(--bg-cherry-400);
+	}
+}
+
+.patternAdd {
+	display: flex;
+	gap: 6px;
+}
+
+// Inline <code> styling for help text rendered anywhere in the drawer.
+.help {
+	code {
+		padding: 1px 4px;
+		border-radius: 3px;
+		background: color-mix(in srgb, var(--bg-vanilla-100) 6%, transparent);
+		font-family: var(--code-font-family, monospace);
+		font-size: 10px;
+	}
+}
+
+.sourceRadioGroup {
+	// @signozhq/ui's RadioGroupItem defaults its unchecked border to
+	// --l3-background, which matches the drawer surface and makes the dot
+	// invisible. Override with a contrasting border so users can see the
+	// unchecked state.
+	--radio-group-item-border-color: var(--bg-slate-200);
+
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	width: 100%;
+
+	// Layout overrides for @signozhq/ui's RadioGroupItem wrapper. The library
+	// injects single-class CSS at runtime (after our bundled stylesheet loads),
+	// so we use a two-class selector to win the cascade and force the wrapper to
+	// lay the dot on the left with the label text flush beside it.
+	.sourceRadio {
+		display: flex;
+		flex-direction: row;
+		align-items: flex-start;
+		justify-content: flex-start;
+		gap: 10px;
+		padding: 10px 12px;
+		border-radius: 4px;
+		border: 1px solid transparent;
+		background: color-mix(in srgb, var(--bg-vanilla-100) 2%, transparent);
+		margin: 0;
+		width: 100%;
+		// Include padding + border in the 100% width so the card fits inside
+		// the SOURCE surface instead of overflowing its right edge.
+		box-sizing: border-box;
+		cursor: pointer;
+		transition:
+			background-color 0.12s ease,
+			border-color 0.12s ease;
+
+		// The radio button itself: keep it fixed-size and aligned with the title
+		// baseline (margin-top compensates for align-items: flex-start vs the
+		// title's line-box).
+		> button[role='radio'] {
+			flex: 0 0 16px;
+			width: 16px;
+			height: 16px;
+			margin-top: 3px;
+		}
+
+		// The library wraps children in a <label>. Make it grow into the
+		// remaining width and reset the .drawerSection label typography leak
+		// (set earlier in this file) so the title/desc divs use their own styles.
+		> label {
+			flex: 1 1 auto;
+			min-width: 0;
+			display: block;
+			text-align: left;
+			cursor: pointer;
+			font-size: inherit;
+			font-weight: inherit;
+			color: inherit;
+		}
+
+		// Radix RadioGroupItem renders <button data-state="checked|unchecked">.
+		// Use :has() to highlight the wrapper card when its inner button is checked.
+		&.sourceRadioAuto:has(button[data-state='checked']) {
+			background: color-mix(in srgb, var(--bg-robin-400) 10%, transparent);
+			border-color: color-mix(in srgb, var(--bg-robin-400) 30%, transparent);
+		}
+
+		&.sourceRadioOverride:has(button[data-state='checked']) {
+			background: color-mix(in srgb, var(--bg-amber-400) 10%, transparent);
+			border-color: color-mix(in srgb, var(--bg-amber-400) 30%, transparent);
+		}
+
+		&:hover {
+			background: color-mix(in srgb, var(--bg-vanilla-100) 4%, transparent);
+		}
+	}
+}
+
+.sourceRadioTitle {
+	font-weight: 600;
+	font-size: 13px;
+	color: var(--bg-vanilla-100);
+}
+
+.sourceRadioDesc {
+	margin-top: 2px;
+	font-size: 12px;
+	color: var(--bg-vanilla-400);
+}
+
+.resetConfirm {
+	margin-top: 12px;
+	padding: 12px;
+	border-radius: 4px;
+	background: color-mix(in srgb, var(--bg-robin-400) 6%, transparent);
+	border: 1px solid color-mix(in srgb, var(--bg-robin-400) 20%, transparent);
+
+	p {
+		margin: 0 0 10px;
+		font-size: 12px;
+	}
+}
+
+.resetConfirmActions {
+	display: flex;
+	gap: 8px;
+	justify-content: flex-end;
+}
+
+.pricingGrid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 12px;
+}
+
+.pricingField {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+
+	input {
+		width: 100%;
+	}
+}
+
+.cacheModeField {
+	margin-top: 10px;
+}
+
+.extraBucketsSection {
+	margin-top: 14px;
+	gap: 10px;
+}
+
+.extraBucketsSectionHead {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.optionalLabel {
+	font-size: 11px;
+	font-weight: 400;
+	color: var(--bg-vanilla-400);
+}
+
+.bucketRow {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+
+	input {
+		flex: 1 1 auto;
+		min-width: 0;
+	}
+}
+
+.bucketRowName {
+	flex: 0 0 110px;
+	font-size: 12px;
+	color: var(--bg-vanilla-200);
+	font-family: var(--code-font-family, monospace);
+}
+
+.bucketRowUnit {
+	flex: 0 0 auto;
+	font-size: 12px;
+	color: var(--bg-vanilla-400);
+}
+
+.bucketRowRemove {
+	flex: 0 0 auto;
+	background: transparent;
+	border: none;
+	padding: 4px;
+	cursor: pointer;
+	color: var(--bg-vanilla-400);
+	display: inline-flex;
+	align-items: center;
+
+	&:hover {
+		color: var(--bg-cherry-400);
+	}
+}
+
+.bucketAddBtn {
+	width: 100%;
+}
+
+.bucketPicker {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 10px;
+	padding: 12px;
+	border-radius: 6px;
+	background: color-mix(in srgb, var(--bg-vanilla-100) 2%, transparent);
+	border: 1px solid var(--bg-slate-300);
+}
+
+.bucketPickerTitle {
+	font-size: 11px;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: var(--bg-vanilla-400);
+}
+
+.bucketPickerChips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.drawerError {
+	padding: 10px 12px;
+	border-radius: 4px;
+	background: color-mix(in srgb, var(--bg-cherry-400) 8%, transparent);
+	color: var(--bg-cherry-400);
+	font-size: 12px;
+}
+
+// Inline validation message rendered under an invalid field.
+.fieldError {
+	margin: 4px 0 0;
+	color: var(--bg-cherry-400);
+	font-size: 12px;
+}

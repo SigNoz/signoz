@@ -3,6 +3,9 @@ import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import { X } from '@signozhq/icons';
+import cx from 'classnames';
+
+import styles from './ModelCostDrawer.module.scss';
 
 interface PatternEditorProps {
 	patterns: string[];
@@ -33,25 +36,25 @@ function PatternEditor({
 	};
 
 	return (
-		<div className="drawer-section">
-			<span className="field-label">
-				Model name patterns <span className="muted">(prefix match)</span>
+		<div className={styles.drawerSection}>
+			<span className={styles.fieldLabel}>
+				Model name patterns <span className={styles.muted}>(prefix match)</span>
 			</span>
-			<div className="pattern-box">
-				<div className="pattern-chips">
+			<div className={styles.patternBox}>
+				<div className={styles.patternChips}>
 					{patterns.map((pattern) => (
 						<Badge
 							key={pattern}
 							color="vanilla"
 							variant="outline"
-							className="pattern-chip"
+							className={styles.patternChip}
 						>
 							{pattern}*
 							{!isReadOnly && (
 								<button
 									type="button"
 									aria-label={`Remove pattern ${pattern}`}
-									className="pattern-chip__remove"
+									className={styles.patternChipRemove}
 									onClick={(): void => removePattern(pattern)}
 								>
 									<X size={10} />
@@ -61,7 +64,7 @@ function PatternEditor({
 					))}
 				</div>
 				{!isReadOnly && (
-					<div className="pattern-add">
+					<div className={styles.patternAdd}>
 						<Input
 							placeholder="Add pattern…"
 							value={patternInput}
@@ -85,7 +88,7 @@ function PatternEditor({
 					</div>
 				)}
 			</div>
-			<p className="muted help">
+			<p className={cx(styles.muted, styles.help)}>
 				Each pattern uses <strong>prefix matching</strong> against{' '}
 				<code>gen_ai.request.model</code>.
 			</p>
