@@ -12,12 +12,13 @@ const renderWithProvider = (ui: ReactElement): ReturnType<typeof render> =>
 	render(<TooltipProvider>{ui}</TooltipProvider>);
 
 // The actions menu has its own gating logic (kind/role/context) and its own
-// tests; stub it so this test exercises only the header's status indicators.
+// tests; stub it with a marker so this header test only checks whether the menu
+// is mounted at all (the `hideActions` switch), not which items it resolves.
 jest.mock(
 	'../PanelActionsMenu/PanelActionsMenu',
 	() =>
-		function MockPanelActionsMenu(): null {
-			return null;
+		function MockPanelActionsMenu(): ReactElement {
+			return <div data-testid="panel-actions-menu" />;
 		},
 );
 
@@ -116,6 +117,18 @@ describe('PanelHeader search', () => {
 
 		expect(onSearchChange).toHaveBeenCalledWith('');
 		expect(screen.getByTestId('panel-header-search-trigger')).toBeInTheDocument();
+	});
+});
+
+describe('PanelHeader actions menu', () => {
+	it('mounts the actions menu by default', () => {
+		renderWithProvider(<PanelHeader {...baseProps} />);
+		expect(screen.getByTestId('panel-actions-menu')).toBeInTheDocument();
+	});
+
+	it('hides the actions menu when hideActions is set (editor preview)', () => {
+		renderWithProvider(<PanelHeader {...baseProps} hideActions />);
+		expect(screen.queryByTestId('panel-actions-menu')).not.toBeInTheDocument();
 	});
 });
 
