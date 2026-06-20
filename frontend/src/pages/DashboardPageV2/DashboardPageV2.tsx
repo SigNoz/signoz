@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 
 import { Typography } from '@signozhq/ui/typography';
@@ -16,13 +15,6 @@ function DashboardPageV2(): JSX.Element {
 	});
 
 	const dashboard = data?.data;
-	const name = dashboard?.spec?.display?.name;
-
-	useEffect(() => {
-		if (name) {
-			document.title = name;
-		}
-	}, [name]);
 
 	if (isLoading) {
 		return <Spinner tip="Loading dashboard..." />;

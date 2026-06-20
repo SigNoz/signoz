@@ -47,6 +47,15 @@ import { AIAssistantEvents, SuggestedPromptCategory } from '../../events';
 import { useAIAssistantAnalyticsContext } from '../../hooks/useAIAssistantAnalyticsContext';
 import { useAIAssistantStore } from '../../store/useAIAssistantStore';
 
+import { openSavedViewByKey } from './utils/openSavedView';
+import {
+	isSavedViewOpenAction,
+	resolveOpenResourceType,
+	resolveResourceId,
+	resolveSavedViewSourceHint,
+} from './utils/resolveOpenResource';
+import { ResourceType, resourceRoute } from './utils/resourceRoute';
+
 import styles from './ActionsSection.module.scss';
 
 interface ActionsSectionProps {
@@ -54,20 +63,6 @@ interface ActionsSectionProps {
 	/** ID of the assistant message these actions belong to — used in analytics. */
 	messageId: string;
 }
-
-/**
- * Resource-type strings the backend uses for `open_resource` and rollback
- * actions. Centralized here so the route/module lookups below stay in sync.
- */
-const ResourceType = {
-	dashboard: 'dashboard',
-	alert: 'alert',
-	service: 'service',
-	saved_view: 'saved_view',
-	logs_explorer: 'logs_explorer',
-	traces_explorer: 'traces_explorer',
-	metrics_explorer: 'metrics_explorer',
-} as const;
 
 /** Maps an open_resource action's resourceType to its product module name. */
 function targetModuleForResource(resourceType: string): string | null {
@@ -78,6 +73,8 @@ function targetModuleForResource(resourceType: string): string | null {
 			return 'alerts';
 		case ResourceType.service:
 			return 'apm';
+		case ResourceType.channel:
+			return 'channels';
 		case ResourceType.saved_view:
 			return 'savedViews';
 		case ResourceType.logs_explorer:
@@ -137,39 +134,6 @@ function ActionIcon({
 			return <Filter size={size} />;
 		default:
 			return <ExternalLink size={size} />;
-	}
-}
-
-/**
- * Resolves an `open_resource` action to an in-app route.
- * Resource taxonomy mirrors `MessageContextDTOType`: dashboard, alert,
- * saved_view, service, and the *_explorer signals.
- */
-function resourceRoute(
-	resourceType: string,
-	resourceId: string,
-): string | null {
-	switch (resourceType) {
-		case ResourceType.dashboard:
-			return ROUTES.DASHBOARD.replace(':dashboardId', resourceId);
-		case ResourceType.alert: {
-			const params = new URLSearchParams({ [QueryParams.ruleId]: resourceId });
-			return `${ROUTES.EDIT_ALERTS}?${params.toString()}`;
-		}
-		case ResourceType.service:
-			return ROUTES.SERVICE_METRICS.replace(':servicename', resourceId);
-		case ResourceType.saved_view:
-			// No detail route — saved views land on the list page.
-			// Caller may provide signal-aware metadata in future; default to logs.
-			return ROUTES.LOGS_SAVE_VIEWS;
-		case ResourceType.logs_explorer:
-			return ROUTES.LOGS_EXPLORER;
-		case ResourceType.traces_explorer:
-			return ROUTES.TRACES_EXPLORER;
-		case ResourceType.metrics_explorer:
-			return ROUTES.METRICS_EXPLORER_EXPLORER;
-		default:
-			return null;
 	}
 }
 
@@ -484,6 +448,35 @@ export default function ActionsSection({
 		setResults((prev) => ({ ...prev, [key]: result }));
 	};
 
+	const runOpenSavedView = async (
+		key: string,
+		action: MessageActionDTO,
+	): Promise<void> => {
+		const resourceId = resolveResourceId(action);
+		if (!resourceId) {
+			return;
+		}
+		setResult(key, { state: 'loading' });
+		try {
+			await openSavedViewByKey(
+				resourceId,
+				resolveSavedViewSourceHint(action),
+				history,
+			);
+			void logEvent(AIAssistantEvents.ResourceOpened, {
+				threadId,
+				messageId,
+				targetModule: targetModuleForResource(ResourceType.saved_view),
+				resourceId,
+			});
+			setResult(key, { state: 'success' });
+		} catch (err) {
+			const message =
+				err instanceof Error ? err.message : 'Failed to open saved view';
+			setResult(key, { state: 'error', error: message });
+		}
+	};
+
 	const runRollback = async (
 		key: string,
 		action: MessageActionDTO,
@@ -500,6 +493,31 @@ export default function ActionsSection({
 			const message = err instanceof Error ? err.message : 'Failed';
 			setResult(key, { state: 'error', error: message });
 		}
+	};
+
+	const handleOpenResource = (key: string, action: MessageActionDTO): void => {
+		if (isSavedViewOpenAction(action)) {
+			void runOpenSavedView(key, action);
+			return;
+		}
+
+		const resourceType = resolveOpenResourceType(action);
+		const resourceId = resolveResourceId(action);
+		if (!resourceType || !resourceId) {
+			return;
+		}
+
+		const path = resourceRoute(resourceType, resourceId);
+		if (!path) {
+			return;
+		}
+		void logEvent(AIAssistantEvents.ResourceOpened, {
+			threadId,
+			messageId,
+			targetModule: targetModuleForResource(resourceType),
+			resourceId,
+		});
+		history.push(path);
 	};
 
 	const handleClick = (key: string, action: MessageActionDTO): void => {
@@ -542,21 +560,9 @@ export default function ActionsSection({
 				}
 				break;
 			}
-			case MessageActionKindDTO.open_resource: {
-				if (action.resourceType && action.resourceId) {
-					const path = resourceRoute(action.resourceType, action.resourceId);
-					if (path) {
-						void logEvent(AIAssistantEvents.ResourceOpened, {
-							threadId,
-							messageId,
-							targetModule: targetModuleForResource(action.resourceType),
-							resourceId: action.resourceId,
-						});
-						history.push(path);
-					}
-				}
+			case MessageActionKindDTO.open_resource:
+				handleOpenResource(key, action);
 				break;
-			}
 			case MessageActionKindDTO.undo:
 			case MessageActionKindDTO.revert:
 			case MessageActionKindDTO.restore: {

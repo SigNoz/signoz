@@ -3,50 +3,8 @@
 	flex-direction: column;
 	height: 100%;
 	width: 100%;
-	background: var(--bg-ink-400, #0b0c0e);
-	border: 1px solid var(--l1-border);
+	background: var(--l2-background);
+	border: 1px solid var(--l2-border);
 	border-radius: 4px;
 	overflow: hidden;
-}
-
-.header {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	padding: 8px 12px;
-	border-bottom: 1px solid var(--l1-border);
-	cursor: grab;
-}
-
-.headerLeft {
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	min-width: 0;
-}
-
-.headerTitle {
-	margin: 0;
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
-}
-
-.badge {
-	margin-inline-end: 0;
-}
-
-.body {
-	flex: 1;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	padding: 12px;
-	color: var(--l2-foreground);
-	font-size: 12px;
-	text-align: center;
-}
-
-.bodyKind {
-	margin-bottom: 6px;
 }

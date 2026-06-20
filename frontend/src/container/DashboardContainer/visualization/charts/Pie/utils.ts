@@ -3,7 +3,37 @@
  * so the renderer stays declarative (per the one-component-per-file rule).
  */
 
-import { ArcGeometry, ParsedRgb, ScaledFontSizeArgs } from './types';
+import {
+	ArcGeometry,
+	DonutGeometry,
+	ParsedRgb,
+	ScaledFontSizeArgs,
+} from './types';
+
+// Leader-line + two-line label/value drawn outside the donut. `getArcGeometry`
+// anchors the label at `radius * LABEL_RADIUS_RATIO`; `LABEL_TEXT_ALLOWANCE` is
+// the px reserved beyond that anchor for the (10px, two-line) text so it never
+// clips against the SVG edge.
+const LABEL_RADIUS_RATIO = 1.3;
+const LABEL_TEXT_ALLOWANCE = 22;
+const INNER_RADIUS_RATIO = 0.6;
+
+/**
+ * Sizes the donut to fit inside a `width × height` box *with room for the
+ * external leader labels*. The label anchor sits at `radius * 1.3`, so we solve
+ * the outer radius back from the box's half-extent minus the text allowance —
+ * guaranteeing the labels stay inside the SVG instead of being clipped (V1 used
+ * a flat `0.35 * min(w,h)`, which left too little margin on small panels).
+ */
+export function getDonutGeometry(width: number, height: number): DonutGeometry {
+	const half = Math.min(width, height) / 2;
+	const radius = Math.max(0, (half - LABEL_TEXT_ALLOWANCE) / LABEL_RADIUS_RATIO);
+	return {
+		size: radius * 2,
+		radius,
+		innerRadius: radius * INNER_RADIUS_RATIO,
+	};
+}
 
 /**
  * Shrinks the centre-total font as the text gets longer so it never overflows
@@ -37,7 +67,7 @@ export function getArcGeometry(
 	radius: number,
 ): ArcGeometry {
 	const angle = (startAngle + endAngle) / 2;
-	const labelRadius = radius * 1.3;
+	const labelRadius = radius * LABEL_RADIUS_RATIO;
 	const lineEndRadius = radius * 1.1;
 	return {
 		labelX: Math.sin(angle) * labelRadius,

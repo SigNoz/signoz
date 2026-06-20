@@ -1,6 +1,8 @@
 package spantypes
 
 import (
+	"time"
+
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
@@ -37,11 +39,17 @@ type GettableFlamegraphTrace struct {
 	HasMore              bool                `json:"hasMore" required:"true"`
 }
 
-func NewGettableFlamegraphTrace(spans [][]*FlamegraphSpan, startMs, endMs int64, hasMore bool) *GettableFlamegraphTrace {
+func NewGettableFlamegraphTrace(spans [][]*FlamegraphSpan, start, end time.Time, hasMore bool) *GettableFlamegraphTrace {
+	// convert timestamp to millisecond since client expect that
+	for _, level := range spans {
+		for _, span := range level {
+			span.Timestamp /= 1_000_000
+		}
+	}
 	return &GettableFlamegraphTrace{
 		Spans:                spans,
-		StartTimestampMillis: startMs,
-		EndTimestampMillis:   endMs,
+		StartTimestampMillis: start.UnixMilli(),
+		EndTimestampMillis:   end.UnixMilli(),
 		HasMore:              hasMore,
 	}
 }

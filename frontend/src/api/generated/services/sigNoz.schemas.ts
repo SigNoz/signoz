@@ -414,20 +414,10 @@ export interface AlertmanagertypesRecurrenceDTO {
 	 */
 	duration: string;
 	/**
-	 * @type string,null
-	 * @format date-time
-	 */
-	endTime?: string | null;
-	/**
 	 * @type array,null
 	 */
 	repeatOn?: AlertmanagertypesRepeatOnDTO[] | null;
 	repeatType: AlertmanagertypesRepeatTypeDTO;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	startTime: string;
 }
 
 export interface AlertmanagertypesScheduleDTO {
@@ -441,7 +431,7 @@ export interface AlertmanagertypesScheduleDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	startTime?: string;
+	startTime: string;
 	/**
 	 * @type string
 	 */
@@ -2153,6 +2143,10 @@ export interface ErrorsResponseerroradditionalDTO {
 	 * @type string
 	 */
 	message?: string;
+	/**
+	 * @type array
+	 */
+	suggestions?: string[];
 }
 
 export interface ErrorsResponseretryjsonDTO {
@@ -2168,10 +2162,6 @@ export interface ErrorsJSONDTO {
 	 * @type array
 	 */
 	errors?: ErrorsResponseerroradditionalDTO[];
-	/**
-	 * @type array
-	 */
-	invalidReferences?: string[];
 	/**
 	 * @type string
 	 */
@@ -2651,6 +2641,18 @@ export enum CloudintegrationtypesServiceIDDTO {
 	sqs = 'sqs',
 	storageaccountsblob = 'storageaccountsblob',
 	cdnprofile = 'cdnprofile',
+	virtualmachine = 'virtualmachine',
+	appservice = 'appservice',
+	containerapp = 'containerapp',
+	aks = 'aks',
+	sqldatabase = 'sqldatabase',
+	sqldatabasemi = 'sqldatabasemi',
+	mysqlflexibleserver = 'mysqlflexibleserver',
+	postgresqlflexibleserver = 'postgresqlflexibleserver',
+	mongodb = 'mongodb',
+	cosmosdb = 'cosmosdb',
+	cassandradb = 'cassandradb',
+	redis = 'redis',
 }
 export type CloudintegrationtypesCloudIntegrationServiceDTOAnyOf = {
 	/**
@@ -3152,17 +3154,6 @@ export interface DashboardLinkDTO {
 	url?: string;
 }
 
-export interface DashboardPanelDisplayDTO {
-	/**
-	 * @type string
-	 */
-	description?: string;
-	/**
-	 * @type string
-	 */
-	name?: string;
-}
-
 export interface VariableDisplayDTO {
 	/**
 	 * @type string
@@ -3491,6 +3482,9 @@ export interface TelemetrytypesTelemetryFieldKeyDTO {
 	unit?: string;
 }
 
+export enum Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregationDTOSignal {
+	logs = 'logs',
+}
 export enum TelemetrytypesSourceDTO {
 	meter = 'meter',
 }
@@ -3546,7 +3540,11 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	 * @type array
 	 */
 	selectFields?: TelemetrytypesTelemetryFieldKeyDTO[];
-	signal?: TelemetrytypesSignalDTO;
+	/**
+	 * @enum logs
+	 * @type string
+	 */
+	signal: Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregationDTOSignal;
 	source?: TelemetrytypesSourceDTO;
 	stepInterval?: Querybuildertypesv5StepDTO;
 }
@@ -3612,6 +3610,9 @@ export interface Querybuildertypesv5MetricAggregationDTO {
 	timeAggregation?: MetrictypesTimeAggregationDTO;
 }
 
+export enum Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTOSignal {
+	metrics = 'metrics',
+}
 export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTO {
 	/**
 	 * @type array
@@ -3664,7 +3665,11 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	 * @type array
 	 */
 	selectFields?: TelemetrytypesTelemetryFieldKeyDTO[];
-	signal?: TelemetrytypesSignalDTO;
+	/**
+	 * @enum metrics
+	 * @type string
+	 */
+	signal: Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTOSignal;
 	source?: TelemetrytypesSourceDTO;
 	stepInterval?: Querybuildertypesv5StepDTO;
 }
@@ -3680,6 +3685,9 @@ export interface Querybuildertypesv5TraceAggregationDTO {
 	expression?: string;
 }
 
+export enum Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregationDTOSignal {
+	traces = 'traces',
+}
 export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregationDTO {
 	/**
 	 * @type array
@@ -3732,7 +3740,11 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	 * @type array
 	 */
 	selectFields?: TelemetrytypesTelemetryFieldKeyDTO[];
-	signal?: TelemetrytypesSignalDTO;
+	/**
+	 * @enum traces
+	 * @type string
+	 */
+	signal: Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregationDTOSignal;
 	source?: TelemetrytypesSourceDTO;
 	stepInterval?: Querybuildertypesv5StepDTO;
 }
@@ -3867,6 +3879,17 @@ export type DashboardtypesDashboardSpecDTODatasources = {
 export enum DashboardtypesPanelKindDTO {
 	Panel = 'Panel',
 }
+export interface DashboardtypesDisplayDTO {
+	/**
+	 * @type string
+	 */
+	description?: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+}
+
 export enum DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpecDTOKind {
 	'signoz/TimeSeriesPanel' = 'signoz/TimeSeriesPanel',
 }
@@ -4415,41 +4438,35 @@ export interface DashboardtypesQuerySpecDTO {
 	 * @type string
 	 */
 	name?: string;
-	plugin?: DashboardtypesQueryPluginDTO;
+	plugin: DashboardtypesQueryPluginDTO;
 }
 
 export interface DashboardtypesQueryDTO {
-	kind?: Querybuildertypesv5RequestTypeDTO;
-	spec?: DashboardtypesQuerySpecDTO;
+	kind: Querybuildertypesv5RequestTypeDTO;
+	spec: DashboardtypesQuerySpecDTO;
 }
 
 export interface DashboardtypesPanelSpecDTO {
-	display?: DashboardPanelDisplayDTO;
+	display: DashboardtypesDisplayDTO;
 	/**
 	 * @type array
 	 */
 	links?: DashboardLinkDTO[];
-	plugin?: DashboardtypesPanelPluginDTO;
+	plugin: DashboardtypesPanelPluginDTO;
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	queries?: DashboardtypesQueryDTO[];
+	queries: DashboardtypesQueryDTO[] | null;
 }
 
 export interface DashboardtypesPanelDTO {
-	kind?: DashboardtypesPanelKindDTO;
-	spec?: DashboardtypesPanelSpecDTO;
+	kind: DashboardtypesPanelKindDTO;
+	spec: DashboardtypesPanelSpecDTO;
 }
 
-export type DashboardtypesDashboardSpecDTOPanelsAnyOf = {
+export type DashboardtypesDashboardSpecDTOPanels = {
 	[key: string]: DashboardtypesPanelDTO;
 };
-
-/**
- * @nullable
- */
-export type DashboardtypesDashboardSpecDTOPanels =
-	DashboardtypesDashboardSpecDTOPanelsAnyOf | null;
 
 export enum DashboardtypesLayoutEnvelopeGithubComPersesSpecGoDashboardGridLayoutSpecDTOKind {
 	Grid = 'Grid',
@@ -4547,7 +4564,7 @@ export interface DashboardtypesListVariableSpecDTO {
 	 */
 	customAllValue?: string;
 	defaultValue?: VariableDefaultValueDTO;
-	display?: VariableDisplayDTO;
+	display: DashboardtypesDisplayDTO;
 	/**
 	 * @type string
 	 */
@@ -4589,23 +4606,23 @@ export interface DashboardtypesDashboardSpecDTO {
 	 * @type object
 	 */
 	datasources?: DashboardtypesDashboardSpecDTODatasources;
-	display?: CommonDisplayDTO;
+	display: DashboardtypesDisplayDTO;
 	/**
 	 * @type string
 	 */
 	duration?: string;
 	/**
-	 * @type array,null
+	 * @type array
 	 */
-	layouts?: DashboardtypesLayoutDTO[] | null;
+	layouts: DashboardtypesLayoutDTO[];
 	/**
 	 * @type array
 	 */
 	links?: DashboardLinkDTO[];
 	/**
-	 * @type object,null
+	 * @type object
 	 */
-	panels?: DashboardtypesDashboardSpecDTOPanels;
+	panels: DashboardtypesDashboardSpecDTOPanels;
 	/**
 	 * @type string
 	 */
@@ -4613,13 +4630,61 @@ export interface DashboardtypesDashboardSpecDTO {
 	/**
 	 * @type array
 	 */
-	variables?: DashboardtypesVariableDTO[];
+	variables: DashboardtypesVariableDTO[];
+}
+
+export enum DashboardtypesListOrderDTO {
+	asc = 'asc',
+	desc = 'desc',
+}
+export enum DashboardtypesListSortDTO {
+	updated_at = 'updated_at',
+	created_at = 'created_at',
+	name = 'name',
+}
+export interface DashboardtypesDashboardViewDataDTO {
+	order?: DashboardtypesListOrderDTO;
+	/**
+	 * @type string
+	 */
+	query?: string;
+	sort?: DashboardtypesListSortDTO;
+	/**
+	 * @type string
+	 */
+	version: string;
+}
+
+export interface DashboardtypesDashboardViewDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: string;
+	data: DashboardtypesDashboardViewDataDTO;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	orgId: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: string;
 }
 
 export enum DashboardtypesDatasourcePluginKindDTO {
 	'signoz/Datasource' = 'signoz/Datasource',
 }
-export interface TagtypesPostableTagDTO {
+export interface TagtypesGettableTagDTO {
 	/**
 	 * @type string
 	 */
@@ -4669,7 +4734,7 @@ export interface DashboardtypesGettableDashboardV2DTO {
 	/**
 	 * @type array,null
 	 */
-	tags: TagtypesPostableTagDTO[] | null;
+	tags: TagtypesGettableTagDTO[] | null;
 	/**
 	 * @type string
 	 * @format date-time
@@ -4727,6 +4792,155 @@ export interface DashboardtypesJSONPatchOperationDTO {
 	value?: unknown;
 }
 
+export interface DashboardtypesListedDashboardV2SpecDTO {
+	display?: DashboardtypesDisplayDTO;
+}
+
+export interface DashboardtypesListedDashboardForUserV2DTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: string;
+	/**
+	 * @type string
+	 */
+	createdBy?: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	image?: string;
+	/**
+	 * @type boolean
+	 */
+	locked: boolean;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	orgId: string;
+	/**
+	 * @type boolean
+	 */
+	pinned: boolean;
+	/**
+	 * @type string
+	 */
+	schemaVersion: string;
+	source: DashboardtypesSourceDTO;
+	spec: DashboardtypesListedDashboardV2SpecDTO;
+	/**
+	 * @type array
+	 */
+	tags: TagtypesGettableTagDTO[];
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: string;
+	/**
+	 * @type string
+	 */
+	updatedBy?: string;
+}
+
+export interface DashboardtypesListableDashboardForUserV2DTO {
+	/**
+	 * @type array
+	 */
+	dashboards: DashboardtypesListedDashboardForUserV2DTO[];
+	/**
+	 * @type array
+	 */
+	tags: TagtypesGettableTagDTO[];
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	total: number;
+}
+
+export interface DashboardtypesListedDashboardV2DTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: string;
+	/**
+	 * @type string
+	 */
+	createdBy?: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	image?: string;
+	/**
+	 * @type boolean
+	 */
+	locked: boolean;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	orgId: string;
+	/**
+	 * @type string
+	 */
+	schemaVersion: string;
+	source: DashboardtypesSourceDTO;
+	spec: DashboardtypesListedDashboardV2SpecDTO;
+	/**
+	 * @type array
+	 */
+	tags: TagtypesGettableTagDTO[];
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: string;
+	/**
+	 * @type string
+	 */
+	updatedBy?: string;
+}
+
+export interface DashboardtypesListableDashboardV2DTO {
+	/**
+	 * @type array
+	 */
+	dashboards: DashboardtypesListedDashboardV2DTO[];
+	/**
+	 * @type array
+	 */
+	tags: TagtypesGettableTagDTO[];
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	total: number;
+}
+
+export interface DashboardtypesListableDashboardViewDTO {
+	/**
+	 * @type array
+	 */
+	views: DashboardtypesDashboardViewDTO[];
+}
+
 export enum DashboardtypesPanelPluginKindDTO {
 	'signoz/TimeSeriesPanel' = 'signoz/TimeSeriesPanel',
 	'signoz/BarChartPanel' = 'signoz/BarChartPanel',
@@ -4742,6 +4956,17 @@ export enum DashboardtypesPanelPluginKindDTO {
 export type DashboardtypesPatchableDashboardV2DTO =
 	| DashboardtypesJSONPatchOperationDTO[]
 	| null;
+
+export interface TagtypesPostableTagDTO {
+	/**
+	 * @type string
+	 */
+	key: string;
+	/**
+	 * @type string
+	 */
+	value: string;
+}
 
 export interface DashboardtypesPostableDashboardV2DTO {
 	/**
@@ -4765,6 +4990,14 @@ export interface DashboardtypesPostableDashboardV2DTO {
 	 * @type array,null
 	 */
 	tags: TagtypesPostableTagDTO[] | null;
+}
+
+export interface DashboardtypesPostableDashboardViewDTO {
+	data: DashboardtypesDashboardViewDataDTO;
+	/**
+	 * @type string
+	 */
+	name: string;
 }
 
 export interface DashboardtypesPostablePublicDashboardDTO {
@@ -8092,10 +8325,6 @@ export interface SpantypesWaterfallSpanDTO {
 
 export interface SpantypesGettableWaterfallTraceDTO {
 	/**
-	 * @type array,null
-	 */
-	aggregations?: SpantypesSpanAggregationResultDTO[] | null;
-	/**
 	 * @type integer
 	 * @minimum 0
 	 */
@@ -8214,15 +8443,6 @@ export interface SpantypesPostableTraceAggregationsDTO {
 }
 
 export interface SpantypesPostableWaterfallDTO {
-	/**
-	 * @type array,null
-	 */
-	aggregations?: SpantypesSpanAggregationDTO[] | null;
-	/**
-	 * @type integer
-	 * @minimum 0
-	 */
-	limit?: number;
 	/**
 	 * @type string
 	 */
@@ -9578,6 +9798,19 @@ export type UpdateSpanMapperPathParameters = {
 	groupId: string;
 	mapperId: string;
 };
+export type GetStats200Data = { [key: string]: unknown };
+
+export type GetStats200 = {
+	/**
+	 * @type object
+	 */
+	data: GetStats200Data;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type GetTraceAggregationsPathParameters = {
 	traceID: string;
 };
@@ -9658,6 +9891,70 @@ export type GetUserPreference200 = {
 export type UpdateUserPreferencePathParameters = {
 	name: string;
 };
+export type ListDashboardViews200 = {
+	data: DashboardtypesListableDashboardViewDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type CreateDashboardView201 = {
+	data: DashboardtypesDashboardViewDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type DeleteDashboardViewPathParameters = {
+	id: string;
+};
+export type UpdateDashboardViewPathParameters = {
+	id: string;
+};
+export type UpdateDashboardView200 = {
+	data: DashboardtypesDashboardViewDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListDashboardsV2Params = {
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	query?: string;
+	/**
+	 * @description undefined
+	 */
+	sort?: DashboardtypesListSortDTO;
+	/**
+	 * @description undefined
+	 */
+	order?: DashboardtypesListOrderDTO;
+	/**
+	 * @type integer
+	 * @description undefined
+	 */
+	limit?: number;
+	/**
+	 * @type integer
+	 * @description undefined
+	 */
+	offset?: number;
+};
+
+export type ListDashboardsV2200 = {
+	data: DashboardtypesListableDashboardV2DTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type CreateDashboardV2201 = {
 	data: DashboardtypesGettableDashboardV2DTO;
 	/**
@@ -9666,6 +9963,9 @@ export type CreateDashboardV2201 = {
 	status: string;
 };
 
+export type DeleteDashboardV2PathParameters = {
+	id: string;
+};
 export type GetDashboardV2PathParameters = {
 	id: string;
 };
@@ -9692,6 +9992,17 @@ export type UpdateDashboardV2PathParameters = {
 	id: string;
 };
 export type UpdateDashboardV2200 = {
+	data: DashboardtypesGettableDashboardV2DTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type CloneDashboardV2PathParameters = {
+	id: string;
+};
+export type CloneDashboardV2201 = {
 	data: DashboardtypesGettableDashboardV2DTO;
 	/**
 	 * @type string
@@ -10498,6 +10809,46 @@ export type GetMyUser200 = {
 	status: string;
 };
 
+export type ListDashboardsForUserV2Params = {
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	query?: string;
+	/**
+	 * @description undefined
+	 */
+	sort?: DashboardtypesListSortDTO;
+	/**
+	 * @description undefined
+	 */
+	order?: DashboardtypesListOrderDTO;
+	/**
+	 * @type integer
+	 * @description undefined
+	 */
+	limit?: number;
+	/**
+	 * @type integer
+	 * @description undefined
+	 */
+	offset?: number;
+};
+
+export type ListDashboardsForUserV2200 = {
+	data: DashboardtypesListableDashboardForUserV2DTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type UnpinDashboardV2PathParameters = {
+	id: string;
+};
+export type PinDashboardV2PathParameters = {
+	id: string;
+};
 export type GetHosts200 = {
 	data: ZeustypesGettableHostDTO;
 	/**
@@ -10511,17 +10862,6 @@ export type GetFlamegraphPathParameters = {
 };
 export type GetFlamegraph200 = {
 	data: SpantypesGettableFlamegraphTraceDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type GetWaterfallPathParameters = {
-	traceID: string;
-};
-export type GetWaterfall200 = {
-	data: SpantypesGettableWaterfallTraceDTO;
 	/**
 	 * @type string
 	 */

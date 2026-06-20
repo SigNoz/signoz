@@ -17,12 +17,12 @@ import (
 // occurrence is replaced with a typed SigNoz plugin whose OpenAPI schema is a
 // per-site discriminated oneOf.
 type DashboardSpec struct {
-	Display         *common.Display            `json:"display,omitempty"`
+	Display         Display                    `json:"display" required:"true"`
 	Datasources     map[string]*DatasourceSpec `json:"datasources,omitempty"`
-	Variables       []Variable                 `json:"variables,omitempty"`
-	Panels          map[string]*Panel          `json:"panels"`
-	Layouts         []Layout                   `json:"layouts"`
-	Duration        common.DurationString      `json:"duration"`
+	Variables       []Variable                 `json:"variables" required:"true" nullable:"false"`
+	Panels          map[string]*Panel          `json:"panels" required:"true" nullable:"false"`
+	Layouts         []Layout                   `json:"layouts" required:"true" nullable:"false"`
+	Duration        common.DurationString      `json:"duration,omitempty"`
 	RefreshInterval common.DurationString      `json:"refreshInterval,omitempty"`
 	Links           []dashboard.Link           `json:"links,omitempty"`
 }

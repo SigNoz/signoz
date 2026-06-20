@@ -82,6 +82,11 @@ export default defineConfig(({ mode }): UserConfig => {
 	];
 
 	if (env.VITE_SENTRY_AUTH_TOKEN) {
+		if (!env.VITE_SENTRY_ORG || !env.VITE_SENTRY_PROJECT_ID) {
+			throw new Error(
+				'VITE_SENTRY_ORG and VITE_SENTRY_PROJECT_ID must be defined when VITE_SENTRY_AUTH_TOKEN is present.',
+			);
+		}
 		// Refuse to upload sourcemaps without an explicit version.
 		if (!env.VITE_VERSION) {
 			throw new Error(
@@ -95,7 +100,7 @@ export default defineConfig(({ mode }): UserConfig => {
 				project: env.VITE_SENTRY_PROJECT_ID,
 				// Pin the sourcemap-upload release to the same value injected as
 				// process.env.VERSION so uploaded sourcemaps resolve. Ref: platform-pod#2393
-				release: { name: env.VITE_VERSION },
+				release: { name: env.VITE_VERSION, setCommits: { auto: true } },
 			}),
 		);
 	}

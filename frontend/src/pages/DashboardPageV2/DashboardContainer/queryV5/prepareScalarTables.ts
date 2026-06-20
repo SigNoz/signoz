@@ -1,0 +1,156 @@
+import type {
+	Querybuildertypesv5ColumnDescriptorDTO,
+	Querybuildertypesv5QueryRangeRequestDTO,
+	Querybuildertypesv5ScalarDataDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import { Querybuildertypesv5QueryTypeDTO } from 'api/generated/services/sigNoz.schemas';
+
+import type { PanelTable, PanelTableColumn } from './types';
+
+/**
+ * Narrow view over a builder-query aggregation; the generated envelope spec
+ * is `unknown`, so the fields column naming needs are read through this view
+ * with a localized cast at the envelope boundary.
+ */
+interface AggregationView {
+	alias?: string;
+	expression?: string;
+}
+
+type AggregationsPerQuery = Record<string, AggregationView[]>;
+
+/**
+ * queryName → aggregations, recovered from the request payload's builder
+ * envelopes. Column display names depend on the aggregation alias/expression
+ * the query was sent with (V1 parity: `convertV5ResponseToLegacy` derived the
+ * same map from `params.compositeQuery`).
+ */
+export function extractAggregationsPerQuery(
+	requestPayload: Querybuildertypesv5QueryRangeRequestDTO | undefined,
+): AggregationsPerQuery {
+	const perQuery: AggregationsPerQuery = {};
+	(requestPayload?.compositeQuery?.queries ?? []).forEach((envelope) => {
+		if (envelope.type !== Querybuildertypesv5QueryTypeDTO.builder_query) {
+			return;
+		}
+		const spec = envelope.spec as {
+			name?: string;
+			aggregations?: AggregationView[];
+		};
+		if (spec?.name && spec.aggregations) {
+			perQuery[spec.name] = spec.aggregations;
+		}
+	});
+	return perQuery;
+}
+
+/**
+ * Column display name. Group columns keep their field name; aggregation
+ * columns resolve alias > legend > expression > queryName — with the legend
+ * skipped when the query has multiple aggregations, because one legend can't
+ * label several value columns. (Port of V1 `getColName`.)
+ */
+function getColName(
+	col: Querybuildertypesv5ColumnDescriptorDTO,
+	legendMap: Record<string, string>,
+	aggregationsPerQuery: AggregationsPerQuery,
+): string {
+	if (col.columnType === 'group') {
+		return col.name;
+	}
+
+	const queryName = col.queryName ?? '';
+	const aggregations = aggregationsPerQuery[queryName];
+	const aggregation = aggregations?.[col.aggregationIndex ?? 0];
+	const legend = legendMap[queryName];
+	const alias = aggregation?.alias;
+	const expression = aggregation?.expression || '';
+	const aggregationsCount = aggregations?.length || 0;
+
+	if (aggregationsCount > 0) {
+		if (aggregationsCount === 1) {
+			return alias || legend || expression || queryName;
+		}
+		return alias || expression || queryName;
+	}
+
+	return legend || queryName;
+}
+
+/**
+ * Stable row-data key for a column. Multi-aggregation queries need
+ * `queryName.expression` so the value columns don't collide. (Port of V1
+ * `getColId`.)
+ */
+function getColId(
+	col: Querybuildertypesv5ColumnDescriptorDTO,
+	aggregationsPerQuery: AggregationsPerQuery,
+): string {
+	if (col.columnType === 'group') {
+		return col.name;
+	}
+
+	const queryName = col.queryName ?? '';
+	const aggregations = aggregationsPerQuery[queryName];
+	const expression = aggregations?.[col.aggregationIndex ?? 0]?.expression || '';
+
+	if ((aggregations?.length || 0) > 1 && expression) {
+		return `${queryName}.${expression}`;
+	}
+	return queryName;
+}
+
+export interface PrepareScalarTablesArgs {
+	results: Querybuildertypesv5ScalarDataDTO[];
+	legendMap: Record<string, string>;
+	requestPayload: Querybuildertypesv5QueryRangeRequestDTO | undefined;
+}
+
+/**
+ * Converts V5 scalar results (`{columns, data[][]}`) into the keyed
+ * table shape Number/Pie/Table panels render: columns with resolved display
+ * names + `isValueColumn`, rows keyed by column id. (Port of V1
+ * `convertScalarDataArrayToTable`; the `formatForWeb` variant produced the
+ * same structure and is collapsed into this one.)
+ */
+export function prepareScalarTables({
+	results,
+	legendMap,
+	requestPayload,
+}: PrepareScalarTablesArgs): PanelTable[] {
+	const aggregationsPerQuery = extractAggregationsPerQuery(requestPayload);
+
+	return results.map((scalarData) => {
+		if (!scalarData) {
+			return {
+				queryName: '',
+				legend: '',
+				columns: [],
+				rows: [],
+			};
+		}
+		const queryName = scalarData.columns?.[0]?.queryName ?? '';
+
+		const columns: PanelTableColumn[] = (scalarData.columns ?? []).map((col) => ({
+			name: getColName(col, legendMap, aggregationsPerQuery),
+			queryName: col.queryName ?? '',
+			isValueColumn: col.columnType === 'aggregation',
+			id: getColId(col, aggregationsPerQuery),
+		}));
+
+		const rows = (scalarData.data ?? []).map((dataRow) => {
+			const rowData: Record<string, unknown> = {};
+			columns.forEach((col, colIndex) => {
+				rowData[col.id || col.name] = dataRow[colIndex];
+			});
+			return { data: rowData };
+		});
+
+		return {
+			queryName,
+			legend: legendMap[queryName] || '',
+			columns,
+			rows,
+		};
+	});
+}

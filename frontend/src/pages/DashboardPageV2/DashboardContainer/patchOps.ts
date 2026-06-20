@@ -4,7 +4,7 @@ import type {
 	DashboardtypesLayoutDTO,
 	DashboardtypesPanelDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { DashboardtypesJSONPatchOperationDTOOp } from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesPatchOpDTO } from 'api/generated/services/sigNoz.schemas';
 
 import type { GridItem } from './utils';
 
@@ -13,10 +13,10 @@ import type { GridItem } from './utils';
  * intentionally side-effect-free (no React, no network) so they can be unit
  * tested and reused by the layout hooks. JSON pointers target the postable
  * shape: `/spec/layouts/...`, `/spec/panels/...` (matches the existing V2
- * patches in DashboardSettings/General and DashboardDescription).
+ * patches in DashboardSettings/Overview and DashboardDescription).
  */
 
-const { add, replace, remove } = DashboardtypesJSONPatchOperationDTOOp;
+const { add, replace, remove } = DashboardtypesPatchOpDTO;
 
 const PANEL_REF_PREFIX = '#/spec/panels/';
 

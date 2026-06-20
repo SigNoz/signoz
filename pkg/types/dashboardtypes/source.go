@@ -51,6 +51,14 @@ func (s *Source) UnmarshalJSON(data []byte) error {
 	return s.s.UnmarshalJSON(data)
 }
 
+func (s Source) isUserDeletable() bool {
+	return s == SourceUser
+}
+
+func (s Source) isClonable() bool {
+	return s == SourceUser || s == SourceIntegration
+}
+
 func NewSource(source string) (Source, error) {
 	candidate := Source{s: valuer.NewString(source)}
 	if !candidate.IsValid() {

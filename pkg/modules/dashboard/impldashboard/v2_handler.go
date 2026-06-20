@@ -42,6 +42,101 @@ func (handler *handler) CreateV2(rw http.ResponseWriter, r *http.Request) {
 	render.Success(rw, http.StatusCreated, dashboard.ToGettableDashboardV2())
 }
 
+func (handler *handler) CloneV2(rw http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
+	id := mux.Vars(r)["id"]
+	if id == "" {
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is missing in the path"))
+		return
+	}
+	dashboardID, err := valuer.NewUUID(id)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	dashboard, err := handler.module.CloneV2(ctx, orgID, claims.Email, valuer.MustNewUUID(claims.IdentityID()), dashboardID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusCreated, dashboard.ToGettableDashboardV2())
+}
+
+func (handler *handler) ListV2(rw http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
+	params := new(dashboardtypes.ListDashboardsV2Params)
+	if err := binding.Query.BindQuery(r.URL.Query(), params); err != nil {
+		render.Error(rw, err)
+		return
+	}
+	if err := params.Validate(); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	out, err := handler.module.ListV2(ctx, orgID, params)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, out)
+}
+
+func (handler *handler) ListForUserV2(rw http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	orgID := valuer.MustNewUUID(claims.OrgID)
+	userID := valuer.MustNewUUID(claims.IdentityID())
+
+	params := new(dashboardtypes.ListDashboardsV2Params)
+	if err := binding.Query.BindQuery(r.URL.Query(), params); err != nil {
+		render.Error(rw, err)
+		return
+	}
+	if err := params.Validate(); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	out, err := handler.module.ListForUserV2(ctx, orgID, userID, params)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, out)
+}
+
 func (handler *handler) GetV2(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
@@ -204,4 +299,80 @@ func (handler *handler) PatchV2(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	render.Success(rw, http.StatusOK, dashboard.ToGettableDashboardV2())
+}
+
+func (handler *handler) PinV2(rw http.ResponseWriter, r *http.Request) {
+	handler.pinUnpinV2(rw, r, true)
+}
+
+func (handler *handler) UnpinV2(rw http.ResponseWriter, r *http.Request) {
+	handler.pinUnpinV2(rw, r, false)
+}
+
+func (handler *handler) pinUnpinV2(rw http.ResponseWriter, r *http.Request, pin bool) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	orgID := valuer.MustNewUUID(claims.OrgID)
+	userID := valuer.MustNewUUID(claims.IdentityID())
+
+	id := mux.Vars(r)["id"]
+	if id == "" {
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is missing in the path"))
+		return
+	}
+	dashboardID, err := valuer.NewUUID(id)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	if pin {
+		err = handler.module.PinV2(ctx, orgID, userID, dashboardID)
+	} else {
+		err = handler.module.UnpinV2(ctx, orgID, userID, dashboardID)
+	}
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusNoContent, nil)
+}
+
+func (handler *handler) DeleteV2(rw http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
+	id := mux.Vars(r)["id"]
+	if id == "" {
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is missing in the path"))
+		return
+	}
+	dashboardID, err := valuer.NewUUID(id)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	if err := handler.module.DeleteV2(ctx, orgID, dashboardID); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusNoContent, nil)
 }

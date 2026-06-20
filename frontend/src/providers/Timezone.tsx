@@ -19,17 +19,14 @@ import {
 } from 'components/CustomTimePicker/timezoneUtils';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import useTimezoneFormatter, {
-	TimestampInput,
+	FormatTimezoneAdjustedTimestamp,
 } from 'hooks/useTimezoneFormatter/useTimezoneFormatter';
 
 export interface TimezoneContextType {
 	timezone: Timezone;
 	browserTimezone: Timezone;
 	updateTimezone: (timezone: Timezone) => void;
-	formatTimezoneAdjustedTimestamp: (
-		input: TimestampInput,
-		format?: string,
-	) => string;
+	formatTimezoneAdjustedTimestamp: FormatTimezoneAdjustedTimestamp;
 	isAdaptationEnabled: boolean;
 	setIsAdaptationEnabled: Dispatch<SetStateAction<boolean>>;
 }

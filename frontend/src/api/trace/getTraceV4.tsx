@@ -27,7 +27,6 @@ const getTraceV4 = async (
 		{
 			selectedSpanId: props.selectedSpanId,
 			uncollapsedSpans,
-			limit: 10000,
 		},
 	);
 

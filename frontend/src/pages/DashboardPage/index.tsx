@@ -1,53 +1,15 @@
-import { useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import { Modal } from 'antd';
-import { Typography } from '@signozhq/ui/typography';
-import { AxiosError } from 'axios';
-import NotFound from 'components/NotFound';
-import Spinner from 'components/Spinner';
-import DashboardContainer from 'container/DashboardContainer';
-import { useDashboardBootstrap } from 'hooks/dashboard/useDashboardBootstrap';
-import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
-import { ErrorType } from 'types/common';
+import { useIsDashboardV2 } from 'hooks/useIsDashboardV2';
+import DashboardPageV2 from 'pages/DashboardPageV2';
 
-function DashboardPage(): JSX.Element {
-	const { dashboardId } = useParams<{ dashboardId: string }>();
+import DashboardPage from './DashboardPage';
 
-	const [onModal, Content] = Modal.useModal();
+// Serves the V2 dashboard detail page when the `use_dashboard_v2` flag is active;
+// otherwise the existing V1 page. Lets V2 dark-ship behind the flag without
+// changing route definitions.
+function DashboardPageEntry(): JSX.Element {
+	const isDashboardV2 = useIsDashboardV2();
 
-	const { isLoading, isError, isFetching, error } = useDashboardBootstrap(
-		dashboardId,
-		{ confirm: onModal.confirm },
-	);
-
-	const dashboardTitle = useDashboardStore((s) => s.dashboardData?.data.title);
-
-	useEffect(() => {
-		document.title = dashboardTitle || document.title;
-	}, [dashboardTitle]);
-
-	const errorMessage = isError
-		? (error as AxiosError<{ errorType: string }>)?.response?.data?.errorType
-		: 'Something went wrong';
-
-	if (isError && !isFetching && errorMessage === ErrorType.NotFound) {
-		return <NotFound />;
-	}
-
-	if (isError && errorMessage) {
-		return <Typography>{errorMessage}</Typography>;
-	}
-
-	if (isLoading) {
-		return <Spinner tip="Loading.." />;
-	}
-
-	return (
-		<>
-			{Content}
-			<DashboardContainer />
-		</>
-	);
+	return isDashboardV2 ? <DashboardPageV2 /> : <DashboardPage />;
 }
 
-export default DashboardPage;
+export default DashboardPageEntry;
