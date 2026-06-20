@@ -105,15 +105,6 @@
 	font-weight: var(--font-weight-semibold);
 }
 
-.groupsTableSubRow {
-	// @signozhq/ui Table renders cells tagged with data-slot — target that
-	// rather than a bare `td` selector (matches the model-pricing table).
-	[data-slot='table-cell'] {
-		padding: 0 var(--padding-4) var(--padding-3);
-		background: var(--l2-background);
-	}
-}
-
 .groupsTableFilters {
 	display: flex;
 	flex-direction: column;
