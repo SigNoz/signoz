@@ -1,214 +1,69 @@
-import { Badge } from '@signozhq/ui/badge';
-import { Button } from '@signozhq/ui/button';
-import { Skeleton } from 'antd';
-import {
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow,
-} from '@signozhq/ui/table';
-import { ChevronDown } from '@signozhq/icons';
-import cx from 'classnames';
-import { startCase } from 'lodash-es';
+import { useMemo } from 'react';
+import TanStackTable from 'components/TanStackTableView';
 
-import { COLUMN_COUNT, SKELETON_ROW_COUNT } from './constants';
-import styles from './LLMObservabilityModelPricing.module.scss';
-import type { PricingRule } from './types';
 import {
-	formatPricePerMillion,
-	getCanonicalId,
-	getExtraBuckets,
-	getRelativeLastSeen,
-	getSourceLabel,
-} from './utils';
+	LIMIT_KEY,
+	PAGE_KEY,
+	PAGE_SIZE,
+	SKELETON_ROW_COUNT,
+} from './constants';
+import styles from './LLMObservabilityModelPricing.module.scss';
+import { getModelCostsColumns } from './table.config';
+import type { PricingRule } from './types';
 
 interface ModelCostsTableProps {
 	rules: PricingRule[];
 	isLoading: boolean;
+	total: number;
 	selectedRuleId: string | null;
 	canManage: boolean;
 	onEdit: (rule: PricingRule) => void;
 }
 
-interface RowProps {
-	rule: PricingRule;
-	isSelected: boolean;
-	canManage: boolean;
-	onEdit: (rule: PricingRule) => void;
-}
-
-function ModelCostRow({
-	rule,
-	isSelected,
-	canManage,
-	onEdit,
-}: RowProps): JSX.Element {
-	const buckets = getExtraBuckets(rule);
-
-	return (
-		<TableRow
-			className={cx({ [styles.rowSelected]: isSelected })}
-			data-testid={`model-cost-row-${rule.id}`}
-		>
-			<TableCell>
-				<div className={styles.modelCell}>
-					<div
-						className={styles.modelCellName}
-						data-testid={`model-cell-name-${rule.id}`}
-					>
-						{rule.modelName}
-					</div>
-					<div
-						className={styles.modelCellCanonicalId}
-						data-testid={`model-cell-canonical-id-${rule.id}`}
-					>
-						{getCanonicalId(rule)}
-					</div>
-				</div>
-			</TableCell>
-			<TableCell>{rule.provider}</TableCell>
-			<TableCell>
-				<span
-					className={styles.priceCell}
-					data-testid={`price-cell-input-${rule.id}`}
-				>
-					{formatPricePerMillion(rule.pricing?.input)}
-				</span>
-			</TableCell>
-			<TableCell>
-				<span
-					className={styles.priceCell}
-					data-testid={`price-cell-output-${rule.id}`}
-				>
-					{formatPricePerMillion(rule.pricing?.output)}
-				</span>
-			</TableCell>
-			<TableCell>
-				{buckets.length === 0 ? (
-					<span className={styles.muted}>—</span>
-				) : (
-					<div className={styles.extraBuckets}>
-						{buckets.map((bucket) => (
-							<Badge
-								key={bucket.key}
-								color="vanilla"
-								variant="outline"
-								className={styles.extraBucketsChip}
-							>
-								<span className={styles.extraBucketsKey}>{startCase(bucket.key)}</span>
-								<span className={styles.extraBucketsPrice}>
-									{formatPricePerMillion(bucket.pricePerMillion)}
-								</span>
-							</Badge>
-						))}
-					</div>
-				)}
-			</TableCell>
-			<TableCell>
-				<Badge
-					color={rule.isOverride ? 'amber' : 'robin'}
-					variant="outline"
-					className={styles.sourceBadge}
-					data-testid={`source-badge-${rule.id}`}
-				>
-					{getSourceLabel(rule)}
-				</Badge>
-			</TableCell>
-			<TableCell>{getRelativeLastSeen(rule)}</TableCell>
-			<TableCell>
-				<Button
-					variant="ghost"
-					color="secondary"
-					size="sm"
-					suffix={<ChevronDown size={14} />}
-					testId={`edit-rule-${rule.id}`}
-					onClick={(): void => onEdit(rule)}
-				>
-					{canManage ? 'Edit' : 'View'}
-				</Button>
-			</TableCell>
-		</TableRow>
-	);
-}
-
+// The table owns its own pagination URL state (page/limit) via enableQueryParams;
+// ModelCostsTab reads the same keys to build the list request. Virtual scroll is
+// disabled because this is a small, server-paginated page that lives in a
+// content-height container rather than a fixed-height viewport.
 function ModelCostsTable({
 	rules,
 	isLoading,
+	total,
 	selectedRuleId,
 	canManage,
 	onEdit,
 }: ModelCostsTableProps): JSX.Element {
-	const isInitialLoading = isLoading && rules.length === 0;
+	const columns = useMemo(
+		() => getModelCostsColumns({ canManage, onEdit }),
+		[canManage, onEdit],
+	);
+
+	if (!isLoading && rules.length === 0) {
+		return (
+			<div className={styles.modelCostsTable} data-testid="model-costs-empty">
+				No model costs yet.
+			</div>
+		);
+	}
 
 	return (
-		<Table
+		<TanStackTable<PricingRule>
 			className={styles.modelCostsTable}
+			data={rules}
+			columns={columns}
+			isLoading={isLoading}
+			skeletonRowCount={SKELETON_ROW_COUNT}
+			getRowKey={(row): string => row.id}
+			isRowActive={(row): boolean => row.id === selectedRuleId}
+			disableVirtualScroll
 			testId="model-costs-table"
-			aria-busy={isInitialLoading}
-		>
-			<TableHeader>
-				<TableRow>
-					<TableHead>Model</TableHead>
-					<TableHead>Provider</TableHead>
-					<TableHead>Input / 1M</TableHead>
-					<TableHead>Output / 1M</TableHead>
-					<TableHead>Extra buckets</TableHead>
-					<TableHead>Source</TableHead>
-					<TableHead>Last seen</TableHead>
-					<TableHead aria-label="Actions" />
-				</TableRow>
-			</TableHeader>
-			<TableBody>
-				{isInitialLoading &&
-					Array.from({ length: SKELETON_ROW_COUNT }, (_, i) => (
-						<TableRow key={`skeleton-row-${i}`} data-testid="model-cost-skeleton-row">
-							<TableCell>
-								<div className={styles.modelCell}>
-									<Skeleton.Input active block size="small" />
-									<Skeleton.Input active size="small" style={{ width: '60%' }} />
-								</div>
-							</TableCell>
-							<TableCell>
-								<Skeleton.Input active block size="small" />
-							</TableCell>
-							<TableCell>
-								<Skeleton.Input active block size="small" />
-							</TableCell>
-							<TableCell>
-								<Skeleton.Input active block size="small" />
-							</TableCell>
-							<TableCell>
-								<Skeleton.Input active block size="small" />
-							</TableCell>
-							<TableCell>
-								<Skeleton.Input active block size="small" />
-							</TableCell>
-							<TableCell>
-								<Skeleton.Input active block size="small" />
-							</TableCell>
-							<TableCell>
-								<Skeleton.Button active size="small" />
-							</TableCell>
-						</TableRow>
-					))}
-				{!isLoading && rules.length === 0 && (
-					<TableRow>
-						<TableCell colSpan={COLUMN_COUNT}>No model costs yet.</TableCell>
-					</TableRow>
-				)}
-				{rules.map((rule) => (
-					<ModelCostRow
-						key={rule.id}
-						rule={rule}
-						isSelected={rule.id === selectedRuleId}
-						canManage={canManage}
-						onEdit={onEdit}
-					/>
-				))}
-			</TableBody>
-		</Table>
+			enableQueryParams={{ page: PAGE_KEY, limit: LIMIT_KEY }}
+			pagination={{
+				total,
+				defaultLimit: PAGE_SIZE,
+				showTotalCount: true,
+				totalCountLabel: 'models',
+			}}
+		/>
 	);
 }
 

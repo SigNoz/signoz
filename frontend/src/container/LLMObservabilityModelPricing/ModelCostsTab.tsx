@@ -1,40 +1,35 @@
 import { useMemo } from 'react';
 import { Button } from '@signozhq/ui/button';
-import { Pagination } from '@signozhq/ui/pagination';
 import { SelectSimple } from '@signozhq/ui/select';
 import { Plus } from '@signozhq/icons';
 import { useListLLMPricingRules } from 'api/generated/services/llmpricingrules';
 import { type ListLLMPricingRulesParams } from 'api/generated/services/sigNoz.schemas';
+import { useTableParams } from 'components/TanStackTableView';
 import useComponentPermission from 'hooks/useComponentPermission';
-import { parseAsInteger, useQueryState } from 'nuqs';
 import { useAppContext } from 'providers/App/App';
 
-import { PAGE_KEY, PAGE_SIZE } from './constants';
+import { LIMIT_KEY, PAGE_KEY, PAGE_SIZE } from './constants';
 import styles from './LLMObservabilityModelPricing.module.scss';
 import ModelCostDrawer from './ModelCostDrawer';
 import ModelCostsTable from './ModelCostsTable';
 import { useModelCostDrawer } from './useModelCostDrawer';
 import type { PricingRule } from './types';
 
-// "Model costs" tab: the priced-model listing, its currency control,
-// pagination, and the add/edit drawer. Page lives in the URL (shareable/
-// reload-safe); replace mode keeps paging out of the back-stack, and
-// withDefault(1) omits ?page=1.
+// "Model costs" tab: the priced-model listing, its currency control, the add/
+// edit drawer, and pagination. Page and page size live in the URL (shareable/
+// reload-safe) and are owned by TanStackTable via enableQueryParams — this tab
+// reads them back through the same useTableParams hook so the two stay in lockstep.
 function ModelCostsTab(): JSX.Element {
-	const [page, setPage] = useQueryState(
-		PAGE_KEY,
-		parseAsInteger.withDefault(1).withOptions({ history: 'replace' }),
+	const { page, limit } = useTableParams(
+		{ page: PAGE_KEY, limit: LIMIT_KEY },
+		{ page: 1, limit: PAGE_SIZE },
 	);
-
-	// A crafted/edited URL (?page=0 or negative) parses to a valid integer that
-	// skips withDefault(1), so clamp before deriving the offset / display.
-	const safePage = Math.max(1, page);
 
 	// Search + source filters are intentionally omitted for now — the list API
 	// doesn't honour them yet. They'll be reintroduced here once it does.
 	const listParams: ListLLMPricingRulesParams = {
-		offset: (safePage - 1) * PAGE_SIZE,
-		limit: PAGE_SIZE,
+		offset: (page - 1) * limit,
+		limit,
 	};
 
 	const { data, isLoading, isError } = useListLLMPricingRules(listParams);
@@ -82,25 +77,13 @@ function ModelCostsTab(): JSX.Element {
 			<ModelCostsTable
 				rules={rules}
 				isLoading={isLoading}
+				total={total}
 				selectedRuleId={drawer.selectedRuleId}
 				canManage={canManagePricing}
 				onEdit={drawer.openForEdit}
 			/>
 
-			{total > PAGE_SIZE && (
-				<Pagination
-					className={styles.pagePagination}
-					total={total}
-					pageSize={PAGE_SIZE}
-					current={safePage}
-					onPageChange={setPage}
-				/>
-			)}
-
-			<footer className={styles.pageFooter}>
-				Showing {rules.length} of {total} model{total === 1 ? '' : 's'}
-				{' · '}All prices per 1M tokens (USD)
-			</footer>
+			<footer className={styles.pageFooter}>All prices per 1M tokens (USD)</footer>
 			{drawer.isOpen && (
 				<ModelCostDrawer
 					isOpen={drawer.isOpen}
