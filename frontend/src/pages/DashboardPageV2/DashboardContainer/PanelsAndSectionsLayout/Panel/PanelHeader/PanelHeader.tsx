@@ -1,8 +1,7 @@
 import { useMemo } from 'react';
-import { Info } from '@signozhq/icons';
+import { Info, Loader } from '@signozhq/icons';
 import { Typography } from '@signozhq/ui/typography';
 import type { Querybuildertypesv5QueryWarnDataDTO as WarningDTO } from 'api/generated/services/sigNoz.schemas';
-import { Loader } from '@signozhq/icons';
 import cx from 'classnames';
 import type { PanelTimePreferenceLabel } from 'pages/DashboardPageV2/DashboardContainer/hooks/resolvePanelTimeWindow';
 
@@ -40,6 +39,13 @@ interface PanelHeaderProps {
 	searchTerm?: string;
 	/** Pushes a new search term up to the shell. */
 	onSearchChange?: (value: string) => void;
+	/**
+	 * Suppress the actions menu entirely. The editor preview reuses this header,
+	 * but panel-level actions (View/Edit/Clone/Delete) don't apply there — and
+	 * omitting `panelActions` alone isn't enough since View/Edit/Download survive
+	 * on their own gates.
+	 */
+	hideActions?: boolean;
 }
 
 /** Panel chrome: drag handle, title, refetch + status indicators, actions. */
@@ -56,6 +62,7 @@ function PanelHeader({
 	searchable,
 	searchTerm = '',
 	onSearchChange,
+	hideActions,
 }: PanelHeaderProps): JSX.Element {
 	const errorDetail = useMemo(() => panelStatusFromError(error), [error]);
 
@@ -107,11 +114,13 @@ function PanelHeader({
 					<PanelStatusPopover variant="warning" detail={warningDetail} />
 				)}
 				{/* Renders nothing when no action survives its gates (kind/role/context). */}
-				<PanelActionsMenu
-					panelId={panelId}
-					panelKind={panelKind}
-					panelActions={panelActions}
-				/>
+				{!hideActions && (
+					<PanelActionsMenu
+						panelId={panelId}
+						panelKind={panelKind}
+						panelActions={panelActions}
+					/>
+				)}
 			</div>
 		</div>
 	);
