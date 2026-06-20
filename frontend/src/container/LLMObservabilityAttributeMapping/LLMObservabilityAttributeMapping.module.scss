@@ -65,20 +65,6 @@
 	color: var(--l3-foreground);
 }
 
-.indexBadge {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	min-width: 22px;
-	height: 22px;
-	padding: 0 var(--spacing-3);
-	border-radius: 999px;
-	background: var(--accent-primary);
-	color: var(--accent-primary-foreground);
-	font-size: var(--font-size-xs);
-	font-weight: var(--font-weight-semibold);
-}
-
 .rowActions {
 	display: flex;
 	align-items: center;
