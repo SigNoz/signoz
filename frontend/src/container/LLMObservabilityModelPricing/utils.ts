@@ -53,5 +53,6 @@ export const getRelativeLastSeen = (rule: PricingRule): string =>
 // arrive with mixed casing).
 export const getCanonicalId = (rule: PricingRule): string => {
 	const provider = rule.provider?.trim().toLowerCase() || 'unknown';
-	return `${provider}:${rule.modelName.toLowerCase()}`;
+	const model = rule.modelName?.trim().toLowerCase() || 'unknown';
+	return `${provider}:${model}`;
 };

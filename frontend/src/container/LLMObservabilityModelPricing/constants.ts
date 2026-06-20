@@ -1,12 +1,11 @@
-// Page size for the model-cost list request / pagination.
+// Default page size for the model-cost list request / pagination.
 export const PAGE_SIZE = 20;
 
-// URL query-param key backing the current page.
+// URL query-param keys backing the current page and page size. These match the
+// keys passed to TanStackTable's `enableQueryParams`, so the table owns the
+// writes while the tab reads them to build the list request.
 export const PAGE_KEY = 'page';
-
-// Number of columns in ModelCostsTable — used as the empty/loading row colSpan.
-// Keep in sync with the <TableHead> count in ModelCostsTable.
-export const COLUMN_COUNT = 8;
+export const LIMIT_KEY = 'limit';
 
 // Number of skeleton rows shown while the first page is loading.
-export const SKELETON_ROW_COUNT = 5;
+export const SKELETON_ROW_COUNT = 10;
