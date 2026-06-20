@@ -11,6 +11,7 @@ import {
 } from 'api/generated/services/sigNoz.schemas';
 
 import type { PanelKind } from './Panels/types/panelKind';
+import type { DefaultPluginSpec } from './Panels/utils/buildDefaultPluginSpec';
 import type { GridItem } from './utils';
 
 /**
@@ -35,9 +36,15 @@ export function panelRef(panelId: string): string {
  * default query (see `fromPerses`), and the editor re-serializes the live query
  * for the panel's kind on save — so the persisted panel always carries a
  * kind-valid query, and the seed needs no hand-built query envelope.
+ *
+ * `pluginSpec` seeds the per-kind config defaults so the editor's config pane
+ * opens populated instead of blank (see `buildDefaultPluginSpec`). It stays pure:
+ * the caller resolves the kind's defaults — this builder only stores them, so it
+ * carries no dependency on the (React) panel registry.
  */
 export function createDefaultPanel(
 	pluginKind: PanelKind,
+	pluginSpec: DefaultPluginSpec = {},
 ): DashboardtypesPanelDTO {
 	return {
 		kind: DashboardtypesPanelKindDTO.Panel,
@@ -45,7 +52,10 @@ export function createDefaultPanel(
 			display: { name: 'New panel' },
 			// `plugin` is a discriminated union keyed by a per-kind enum; the kind is
 			// chosen at runtime, so assert the variant at this one boundary.
-			plugin: { kind: pluginKind, spec: {} } as DashboardtypesPanelPluginDTO,
+			plugin: {
+				kind: pluginKind,
+				spec: pluginSpec,
+			} as DashboardtypesPanelPluginDTO,
 			queries: [],
 		},
 	};
