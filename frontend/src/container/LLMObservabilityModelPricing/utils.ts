@@ -23,7 +23,7 @@ export const formatPricePerMillion = (value: number | undefined): string => {
 	if (value === undefined || value === null) {
 		return '—';
 	}
-	// We can keep it simple and just show two decimal places. but yes onces we have real data. we can increase the precision to 3 or 4 decimal places. For now, we can keep it simple and just show two decimal places.
+	// 2dp is enough for per-1M pricing; revisit precision when real sub-cent data lands.
 	return `$${value.toFixed(2)}`;
 };
 
