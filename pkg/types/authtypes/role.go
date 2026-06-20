@@ -20,6 +20,7 @@ var (
 	ErrCodeRoleEmptyPatch                   = errors.MustNewCode("role_empty_patch")
 	ErrCodeInvalidTypeRelation              = errors.MustNewCode("role_invalid_type_relation")
 	ErrCodeRoleNotFound                     = errors.MustNewCode("role_not_found")
+	ErrCodeRoleAlreadyExists                = errors.MustNewCode("role_already_exists")
 	ErrCodeRoleFailedTransactionsFromString = errors.MustNewCode("role_failed_transactions_from_string")
 	ErrCodeRoleUnsupported                  = errors.MustNewCode("role_unsupported")
 	ErrCodeRoleHasUserAssignees             = errors.MustNewCode("role_has_user_assignees")
@@ -79,12 +80,12 @@ type RoleWithTransactionGroups struct {
 
 type PostableRole struct {
 	Name              string            `json:"name" required:"true"`
-	Description       string            `json:"description"`
+	Description       string            `json:"description" required:"true"`
 	TransactionGroups TransactionGroups `json:"transactionGroups" required:"true" nullable:"false"`
 }
 
 type UpdatableRole struct {
-	Description       string            `json:"description"`
+	Description       string            `json:"description" required:"true"`
 	TransactionGroups TransactionGroups `json:"transactionGroups" required:"true" nullable:"false"`
 }
 

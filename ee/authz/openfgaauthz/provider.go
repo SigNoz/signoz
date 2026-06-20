@@ -185,9 +185,13 @@ func (provider *provider) Create(ctx context.Context, orgID valuer.UUID, role *a
 		return errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
 	}
 
-	_, err = provider.GetByOrgIDAndName(ctx, orgID, role.Name)
-	if err != nil {
+	existingRole, err := provider.GetByOrgIDAndName(ctx, orgID, role.Name)
+	if err != nil && !errors.Asc(err, errors.CodeNotFound) {
 		return err
+	}
+
+	if existingRole != nil {
+		return errors.Newf(errors.TypeAlreadyExists, authtypes.ErrCodeRoleAlreadyExists, "role with name: %s already exists", existingRole.Name)
 	}
 
 	tuples, err := authtypes.NewTuplesFromTransactionGroups(role.Name, orgID, role.TransactionGroups)

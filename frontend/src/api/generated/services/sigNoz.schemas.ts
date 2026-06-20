@@ -2243,7 +2243,7 @@ export interface AuthtypesPostableRoleDTO {
 	/**
 	 * @type string
 	 */
-	description?: string;
+	description: string;
 	/**
 	 * @type string
 	 */
@@ -2349,7 +2349,7 @@ export interface AuthtypesUpdatableRoleDTO {
 	/**
 	 * @type string
 	 */
-	description?: string;
+	description: string;
 	transactionGroups: AuthtypesTransactionGroupsDTO;
 }
 
