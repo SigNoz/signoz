@@ -74,18 +74,18 @@ type Role struct {
 
 type RoleWithTransactionGroups struct {
 	*Role
-	TransactionGroups []*TransactionGroup `json:"transactionGroups" required:"true" nullable:"false"`
+	TransactionGroups TransactionGroups `json:"transactionGroups" required:"true" nullable:"false"`
 }
 
 type PostableRole struct {
-	Name              string              `json:"name" required:"true"`
-	Description       string              `json:"description"`
-	TransactionGroups []*TransactionGroup `json:"transactionGroups" required:"true" nullable:"false"`
+	Name              string            `json:"name" required:"true"`
+	Description       string            `json:"description"`
+	TransactionGroups TransactionGroups `json:"transactionGroups" required:"true" nullable:"false"`
 }
 
 type UpdatableRole struct {
-	Description       string              `json:"description"`
-	TransactionGroups []*TransactionGroup `json:"transactionGroups" required:"true" nullable:"false"`
+	Description       string            `json:"description"`
+	TransactionGroups TransactionGroups `json:"transactionGroups" required:"true" nullable:"false"`
 }
 
 type PatchableRole struct {
@@ -108,7 +108,7 @@ func NewRole(name, description string, roleType valuer.String, orgID valuer.UUID
 	}
 }
 
-func NewRoleWithTransactionGroups(name, description string, roleType valuer.String, orgID valuer.UUID, transactionGroups []*TransactionGroup) *RoleWithTransactionGroups {
+func NewRoleWithTransactionGroups(name, description string, roleType valuer.String, orgID valuer.UUID, transactionGroups TransactionGroups) *RoleWithTransactionGroups {
 	role := NewRole(name, description, roleType, orgID)
 
 	return &RoleWithTransactionGroups{
@@ -117,7 +117,7 @@ func NewRoleWithTransactionGroups(name, description string, roleType valuer.Stri
 	}
 }
 
-func MakeRoleWithTransactionGroups(role *Role, transactionGroups []*TransactionGroup) *RoleWithTransactionGroups {
+func MakeRoleWithTransactionGroups(role *Role, transactionGroups TransactionGroups) *RoleWithTransactionGroups {
 	return &RoleWithTransactionGroups{
 		Role:              role,
 		TransactionGroups: transactionGroups,
@@ -145,7 +145,7 @@ func (role *Role) PatchMetadata(description string) error {
 	return nil
 }
 
-func (role *RoleWithTransactionGroups) Update(description string, transactionGroups []*TransactionGroup) error {
+func (role *RoleWithTransactionGroups) Update(description string, transactionGroups TransactionGroups) error {
 	err := role.ErrIfManaged()
 	if err != nil {
 		return err

@@ -648,9 +648,7 @@ components:
         name:
           type: string
         transactionGroups:
-          items:
-            $ref: '#/components/schemas/AuthtypesTransactionGroup'
-          type: array
+          $ref: '#/components/schemas/AuthtypesTransactionGroups'
       required:
       - name
       - transactionGroups
@@ -722,9 +720,7 @@ components:
         orgId:
           type: string
         transactionGroups:
-          items:
-            $ref: '#/components/schemas/AuthtypesTransactionGroup'
-          type: array
+          $ref: '#/components/schemas/AuthtypesTransactionGroups'
         type:
           type: string
         updatedAt:
@@ -781,6 +777,10 @@ components:
       - relation
       - objectGroup
       type: object
+    AuthtypesTransactionGroups:
+      items:
+        $ref: '#/components/schemas/AuthtypesTransactionGroup'
+      type: array
     AuthtypesUpdatableAuthDomain:
       properties:
         config:
@@ -791,9 +791,7 @@ components:
         description:
           type: string
         transactionGroups:
-          items:
-            $ref: '#/components/schemas/AuthtypesTransactionGroup'
-          type: array
+          $ref: '#/components/schemas/AuthtypesTransactionGroups'
       required:
       - transactionGroups
       type: object

@@ -68,20 +68,16 @@ func NewTuplesFromTransactionGroups(name string, orgID valuer.UUID, transactionG
 	return tuples, nil
 }
 
-func NewTransactionGroupsFromTuples(tuples []*openfgav1.TupleKey) ([]*TransactionGroup, error) {
+func MustNewTransactionGroupsFromTuples(tuples []*openfgav1.TupleKey) []*TransactionGroup {
 	objectsByRelation := make(map[string][]*coretypes.Object)
 
 	for _, tuple := range tuples {
 		verb, err := coretypes.NewVerb(tuple.GetRelation())
 		if err != nil {
-			return nil, err
+			panic(err)
 		}
 
-		object, err := coretypes.NewObjectFromString(tuple.GetObject())
-		if err != nil {
-			return nil, err
-		}
-
+		object := coretypes.MustNewObjectFromString(tuple.GetObject())
 		objectsByRelation[verb.StringValue()] = append(objectsByRelation[verb.StringValue()], object)
 	}
 
@@ -100,7 +96,7 @@ func NewTransactionGroupsFromTuples(tuples []*openfgav1.TupleKey) ([]*Transactio
 		}
 	}
 
-	return transactionGroups, nil
+	return transactionGroups
 }
 
 func NewTuplesFromTransactionsWithCorrelations(transactions []*Transaction, subject string, orgID valuer.UUID) (tuples map[string]*openfgav1.TupleKey, correlations map[string][]string, err error) {

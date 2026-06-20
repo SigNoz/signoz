@@ -45,46 +45,25 @@ func MustNewObject(resource ResourceRef, inputSelector string) *Object {
 	return object
 }
 
-// NewObjectFromString parses a tuple's object string back into an Object. Object strings are of the
-// form "<type>:<...>/<kind>/<selector>" across all resource types (e.g.
-// "metaresource:organization/<org>/dashboard/<uuid>", "organization:organization/<uuid>"); the kind
-// is always the second-to-last "/" segment and the selector is the last, after stripping the type prefix.
-func NewObjectFromString(input string) (*Object, error) {
-	typeAndRest := strings.SplitN(input, ":", 2)
-	if len(typeAndRest) != 2 {
-		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidObject, "invalid object format: %s", input)
-	}
-
-	typed, err := NewType(typeAndRest[0])
-	if err != nil {
-		return nil, err
-	}
-
-	segments := strings.Split(typeAndRest[1], "/")
-	if len(segments) < 2 {
-		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidObject, "invalid object format: %s", input)
-	}
-
-	kind, err := NewKind(segments[len(segments)-2])
-	if err != nil {
-		return nil, err
-	}
-
-	selector, err := typed.Selector(segments[len(segments)-1])
-	if err != nil {
-		return nil, err
-	}
-
-	return &Object{Resource: ResourceRef{Type: typed, Kind: kind}, Selector: selector}, nil
-}
-
 func MustNewObjectFromString(input string) *Object {
-	object, err := NewObjectFromString(input)
-	if err != nil {
-		panic(err)
+	parts := strings.Split(input, "/")
+	if len(parts) != 4 {
+		panic(errors.Newf(errors.TypeInternal, errors.CodeInternal, "invalid input format: %s", input))
 	}
 
-	return object
+	typeParts := strings.Split(parts[0], ":")
+	if len(typeParts) != 2 {
+		panic(errors.Newf(errors.TypeInternal, errors.CodeInternal, "invalid type format: %s", parts[0]))
+	}
+
+	resource := ResourceRef{
+		Type: MustNewType(typeParts[0]),
+		Kind: MustNewKind(parts[2]),
+	}
+
+	selector := resource.Type.MustSelector(parts[3])
+
+	return &Object{Resource: resource, Selector: selector}
 }
 
 func MustNewObjectsFromStringSlice(input []string) []*Object {

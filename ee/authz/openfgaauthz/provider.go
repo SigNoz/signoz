@@ -190,7 +190,7 @@ func (provider *provider) Create(ctx context.Context, orgID valuer.UUID, role *a
 		return err
 	}
 
-	err = provider.chunkedTuplesWrite(ctx, tuples, nil)
+	err = provider.Write(ctx, tuples, nil)
 	if err != nil {
 		return err
 	}
@@ -243,11 +243,7 @@ func (provider *provider) GetWithTransactionGroups(ctx context.Context, orgID va
 		return nil, err
 	}
 
-	transactionGroups, err := authtypes.NewTransactionGroupsFromTuples(tuples)
-	if err != nil {
-		return nil, err
-	}
-
+	transactionGroups := authtypes.MustNewTransactionGroupsFromTuples(tuples)
 	return authtypes.MakeRoleWithTransactionGroups(role, transactionGroups), nil
 }
 
@@ -285,28 +281,33 @@ func (provider *provider) GetObjects(ctx context.Context, orgID valuer.UUID, id 
 	return objects, nil
 }
 
-func (provider *provider) Update(ctx context.Context, orgID valuer.UUID, role *authtypes.RoleWithTransactionGroups) error {
+func (provider *provider) Update(ctx context.Context, orgID valuer.UUID, updatedRole *authtypes.RoleWithTransactionGroups) error {
 	_, err := provider.licensing.GetActive(ctx, orgID)
 	if err != nil {
 		return errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
 	}
 
-	desiredTuples, err := authtypes.NewTuplesFromTransactionGroups(role.Name, orgID, role.TransactionGroups)
+	existingRole, err := provider.GetWithTransactionGroups(ctx, orgID, updatedRole.ID)
 	if err != nil {
 		return err
 	}
 
-	currentTuples, err := provider.readAllTuplesForRole(ctx, role.Name, orgID)
+	additions, deletions := existingRole.TransactionGroups.Diff(updatedRole.TransactionGroups)
+	additionTuples, err := authtypes.NewTuplesFromTransactionGroups(existingRole.Name, orgID, additions)
 	if err != nil {
 		return err
 	}
 
-	additions, deletions := diffTuples(currentTuples, desiredTuples)
-	if err := provider.store.Update(ctx, orgID, role.Role); err != nil {
+	deletionTuples, err := authtypes.NewTuplesFromTransactionGroups(existingRole.Name, orgID, deletions)
+	if err != nil {
 		return err
 	}
 
-	return provider.chunkedTuplesWrite(ctx, additions, deletions)
+	if err := provider.store.Update(ctx, orgID, updatedRole.Role); err != nil {
+		return err
+	}
+
+	return provider.Write(ctx, additionTuples, deletionTuples)
 }
 
 func (provider *provider) Patch(ctx context.Context, orgID valuer.UUID, role *authtypes.Role) error {
@@ -348,7 +349,7 @@ func (provider *provider) Delete(ctx context.Context, orgID valuer.UUID, id valu
 		return errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
 	}
 
-	role, err := provider.store.Get(ctx, orgID, id)
+	role, err := provider.GetWithTransactionGroups(ctx, orgID, id)
 	if err != nil {
 		return err
 	}
@@ -364,7 +365,12 @@ func (provider *provider) Delete(ctx context.Context, orgID valuer.UUID, id valu
 		}
 	}
 
-	if err := provider.deleteTuples(ctx, role.Name, orgID); err != nil {
+	tuples, err := authtypes.NewTuplesFromTransactionGroups(role.Name, orgID, role.TransactionGroups)
+	if err != nil {
+		return err
+	}
+
+	if err := provider.Write(ctx, nil, tuples); err != nil {
 		return errors.WithAdditionalf(err, "failed to delete tuples for the role: %s", role.Name)
 	}
 
@@ -439,70 +445,4 @@ func (provider *provider) readAllTuplesForRole(ctx context.Context, roleName str
 	}
 
 	return tuples, nil
-}
-
-func (provider *provider) chunkedTuplesWrite(ctx context.Context, additions, deletions []*openfgav1.TupleKey) error {
-	maxTuplesPerWrite := provider.config.OpenFGA.MaxTuplesPerWrite
-
-	for idx := 0; idx < len(additions); idx += maxTuplesPerWrite {
-		end := idx + maxTuplesPerWrite
-		if end > len(additions) {
-			end = len(additions)
-		}
-		if err := provider.Write(ctx, additions[idx:end], nil); err != nil {
-			return err
-		}
-	}
-
-	for idx := 0; idx < len(deletions); idx += maxTuplesPerWrite {
-		end := idx + maxTuplesPerWrite
-		if end > len(deletions) {
-			end = len(deletions)
-		}
-		if err := provider.Write(ctx, nil, deletions[idx:end]); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func diffTuples(current, desired []*openfgav1.TupleKey) (additions, deletions []*openfgav1.TupleKey) {
-	key := func(tuple *openfgav1.TupleKey) string {
-		return tuple.GetUser() + "|" + tuple.GetRelation() + "|" + tuple.GetObject()
-	}
-
-	currentKeys := make(map[string]struct{}, len(current))
-	for _, tuple := range current {
-		currentKeys[key(tuple)] = struct{}{}
-	}
-
-	desiredKeys := make(map[string]struct{}, len(desired))
-	for _, tuple := range desired {
-		desiredKeys[key(tuple)] = struct{}{}
-		if _, ok := currentKeys[key(tuple)]; !ok {
-			additions = append(additions, tuple)
-		}
-	}
-
-	for _, tuple := range current {
-		if _, ok := desiredKeys[key(tuple)]; !ok {
-			deletions = append(deletions, tuple)
-		}
-	}
-
-	return additions, deletions
-}
-
-func (provider *provider) deleteTuples(ctx context.Context, roleName string, orgID valuer.UUID) error {
-	tuples, err := provider.readAllTuplesForRole(ctx, roleName, orgID)
-	if err != nil {
-		return err
-	}
-
-	if len(tuples) == 0 {
-		return nil
-	}
-
-	return provider.chunkedTuplesWrite(ctx, nil, tuples)
 }

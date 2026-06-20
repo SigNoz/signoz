@@ -2237,6 +2237,8 @@ export interface AuthtypesTransactionGroupDTO {
 	relation: AuthtypesRelationDTO;
 }
 
+export type AuthtypesTransactionGroupsDTO = AuthtypesTransactionGroupDTO[];
+
 export interface AuthtypesPostableRoleDTO {
 	/**
 	 * @type string
@@ -2246,10 +2248,7 @@ export interface AuthtypesPostableRoleDTO {
 	 * @type string
 	 */
 	name: string;
-	/**
-	 * @type array
-	 */
-	transactionGroups: AuthtypesTransactionGroupDTO[];
+	transactionGroups: AuthtypesTransactionGroupsDTO;
 }
 
 export interface AuthtypesPostableRotateTokenDTO {
@@ -2314,10 +2313,7 @@ export interface AuthtypesRoleWithTransactionGroupsDTO {
 	 * @type string
 	 */
 	orgId: string;
-	/**
-	 * @type array
-	 */
-	transactionGroups: AuthtypesTransactionGroupDTO[];
+	transactionGroups: AuthtypesTransactionGroupsDTO;
 	/**
 	 * @type string
 	 */
@@ -2354,10 +2350,7 @@ export interface AuthtypesUpdatableRoleDTO {
 	 * @type string
 	 */
 	description?: string;
-	/**
-	 * @type array
-	 */
-	transactionGroups: AuthtypesTransactionGroupDTO[];
+	transactionGroups: AuthtypesTransactionGroupsDTO;
 }
 
 export interface AuthtypesUserRoleDTO {
