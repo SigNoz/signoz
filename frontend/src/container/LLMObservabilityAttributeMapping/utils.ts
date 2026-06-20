@@ -10,12 +10,21 @@ import {
 // Display clauses for a group's condition keys (span attribute keys first,
 // then resource keys).
 export function conditionFiltersFromGroup(group: {
-	attributes: string[];
-	resource: string[];
+	attributes?: string[];
+	resource?: string[];
 }): ConditionFilter[] {
+	// TanStackTable renders skeleton placeholder rows through the cells on first
+	// render, so these arrays can be undefined before real data lands — default
+	// to empty rather than crashing the cell.
 	return [
-		...group.attributes.map((key) => ({ context: 'attribute' as const, key })),
-		...group.resource.map((key) => ({ context: 'resource' as const, key })),
+		...(group.attributes ?? []).map((key) => ({
+			context: 'attribute' as const,
+			key,
+		})),
+		...(group.resource ?? []).map((key) => ({
+			context: 'resource' as const,
+			key,
+		})),
 	];
 }
 
