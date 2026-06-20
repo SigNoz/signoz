@@ -66,22 +66,26 @@ func (m *module) GetOnboarding(ctx context.Context, orgID valuer.UUID, req *infr
 	allMetrics := spec.getAllMetrics()
 	allAttrs := spec.getAllAttrs()
 
-	missingMetricsList, _, err := m.getMetricsExistenceAndEarliestTime(ctx, allMetrics)
+	presentMetrics, err := m.getMetricsExistence(ctx, allMetrics)
 	if err != nil {
 		return nil, err
 	}
-	missingMetricsMap := make(map[string]bool, len(missingMetricsList))
-	for _, name := range missingMetricsList {
-		missingMetricsMap[name] = true
+	missingMetricsMap := make(map[string]bool, len(allMetrics))
+	for _, name := range allMetrics {
+		if !presentMetrics[name] {
+			missingMetricsMap[name] = true
+		}
 	}
 
-	missingAttrsList, err := m.getAttributesExistence(ctx, allMetrics, allAttrs)
+	presentAttrs, err := m.getAttributesExistence(ctx, allMetrics, allAttrs)
 	if err != nil {
 		return nil, err
 	}
-	missingAttrsMap := make(map[string]bool, len(missingAttrsList))
-	for _, name := range missingAttrsList {
-		missingAttrsMap[name] = true
+	missingAttrsMap := make(map[string]bool, len(allAttrs))
+	for _, name := range allAttrs {
+		if !presentAttrs[name] {
+			missingAttrsMap[name] = true
+		}
 	}
 
 	resp := &inframonitoringtypes.Onboarding{
