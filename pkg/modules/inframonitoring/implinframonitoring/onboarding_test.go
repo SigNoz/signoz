@@ -145,9 +145,9 @@ func TestSplitBucket(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got := splitBucket(tt.bucket, tt.missingMetrics, tt.missingAttrs)
 
-			requireMetricsEntry(t, "presentDefault", got.PresentDefault, tt.want.presentDefault, false)
-			requireMetricsEntry(t, "presentOptional", got.PresentOptional, tt.want.presentOptional, false)
-			requireAttrsEntry(t, "presentAttrs", got.PresentAttrs, tt.want.presentAttrs, false)
+			requireMetricsEntry(t, "presentDefault", got.PresentDefault, tt.want.presentDefault)
+			requireMetricsEntry(t, "presentOptional", got.PresentOptional, tt.want.presentOptional)
+			requireAttrsEntry(t, "presentAttrs", got.PresentAttrs, tt.want.presentAttrs)
 
 			requireMissingMetrics(t, "missingDefault", got.MissingDefault, tt.want.missingDefault)
 			requireMissingMetrics(t, "missingOptional", got.MissingOptional, tt.want.missingOptional)
@@ -197,7 +197,7 @@ func TestOnboardingSpecs_CoverAllTypes(t *testing.T) {
 
 // --- helpers ---
 
-func requireMetricsEntry(t *testing.T, name string, got *inframonitoringtypes.MetricsComponentEntry, wantMetrics []string, _ bool) {
+func requireMetricsEntry(t *testing.T, name string, got *inframonitoringtypes.MetricsComponentEntry, wantMetrics []string) {
 	t.Helper()
 	if len(wantMetrics) == 0 {
 		require.Nil(t, got, name)
@@ -208,7 +208,7 @@ func requireMetricsEntry(t *testing.T, name string, got *inframonitoringtypes.Me
 	require.Equal(t, testComponent, got.AssociatedComponent, name)
 }
 
-func requireAttrsEntry(t *testing.T, name string, got *inframonitoringtypes.AttributesComponentEntry, wantAttrs []string, _ bool) {
+func requireAttrsEntry(t *testing.T, name string, got *inframonitoringtypes.AttributesComponentEntry, wantAttrs []string) {
 	t.Helper()
 	if len(wantAttrs) == 0 {
 		require.Nil(t, got, name)
