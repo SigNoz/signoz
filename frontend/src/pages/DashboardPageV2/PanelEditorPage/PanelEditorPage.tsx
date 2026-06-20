@@ -12,6 +12,8 @@ import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 
+import { getPanelDefinition } from '../DashboardContainer/Panels/registry';
+import { buildDefaultPluginSpec } from '../DashboardContainer/Panels/utils/buildDefaultPluginSpec';
 import PanelEditorContainer from '../DashboardContainer/PanelEditor';
 import {
 	parseNewPanelKind,
@@ -45,7 +47,15 @@ function PanelEditorPage(): JSX.Element {
 	const newKind = parseNewPanelKind(panelId, search);
 	const existingPanel = dashboard?.spec.panels[panelId];
 	const panel = useMemo(
-		() => (newKind ? createDefaultPanel(newKind) : existingPanel),
+		() =>
+			newKind
+				? // Seed the kind's config defaults so the editor opens populated, not
+					// blank (derived from the kind's declared sections).
+					createDefaultPanel(
+						newKind,
+						buildDefaultPluginSpec(getPanelDefinition(newKind)?.sections ?? []),
+					)
+				: existingPanel,
 		[newKind, existingPanel],
 	);
 
