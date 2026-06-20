@@ -186,7 +186,7 @@ func (provider *provider) Create(ctx context.Context, orgID valuer.UUID, role *a
 	}
 
 	existingRole, err := provider.GetByOrgIDAndName(ctx, orgID, role.Name)
-	if err != nil && !errors.Asc(err, errors.CodeNotFound) {
+	if err != nil && !errors.Asc(err, authtypes.ErrCodeRoleNotFound) {
 		return err
 	}
 
