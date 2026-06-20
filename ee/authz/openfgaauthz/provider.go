@@ -185,6 +185,11 @@ func (provider *provider) Create(ctx context.Context, orgID valuer.UUID, role *a
 		return errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
 	}
 
+	_, err = provider.GetByOrgIDAndName(ctx, orgID, role.Name)
+	if err != nil {
+		return err
+	}
+
 	tuples, err := authtypes.NewTuplesFromTransactionGroups(role.Name, orgID, role.TransactionGroups)
 	if err != nil {
 		return err
@@ -303,11 +308,12 @@ func (provider *provider) Update(ctx context.Context, orgID valuer.UUID, updated
 		return err
 	}
 
-	if err := provider.store.Update(ctx, orgID, updatedRole.Role); err != nil {
+	err = provider.Write(ctx, additionTuples, deletionTuples)
+	if err != nil {
 		return err
 	}
 
-	return provider.Write(ctx, additionTuples, deletionTuples)
+	return provider.store.Update(ctx, orgID, updatedRole.Role)
 }
 
 func (provider *provider) Patch(ctx context.Context, orgID valuer.UUID, role *authtypes.Role) error {

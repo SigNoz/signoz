@@ -89,7 +89,7 @@ func (provider *provider) GetWithTransactionGroups(ctx context.Context, orgID va
 		return nil, err
 	}
 
-	return &authtypes.RoleWithTransactionGroups{Role: role, TransactionGroups: nil}, nil
+	return authtypes.MakeRoleWithTransactionGroups(role, nil), nil
 }
 
 func (provider *provider) GetByOrgIDAndName(ctx context.Context, orgID valuer.UUID, name string) (*authtypes.Role, error) {
