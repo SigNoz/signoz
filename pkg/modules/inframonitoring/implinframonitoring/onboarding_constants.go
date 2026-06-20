@@ -147,6 +147,7 @@ var nodesSpec = onboardingSpec{
 				// controlled by allocatable_types_to_report config option (Check // https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/4f9a578b210a6dcb9f9bf47942f27208b5765298/receiver/k8sclusterreceiver/metadata.yaml#L805-L806)
 				"k8s.node.condition_ready", // # k8s.node.condition_* metrics (k8s.node.condition_ready, k8s.node.condition_memory_pressure, etc) are controlled# by node_conditions_to_report config option.
 				//  By default, only k8s.node.condition_ready is enabled. (Check https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/4f9a578b210a6dcb9f9bf47942f27208b5765298/receiver/k8sclusterreceiver/metadata.yaml#L802)
+				"k8s.pod.phase", // pod counts per node by phase
 			},
 			DocumentationLink: docLinkK8sClusterReceiver,
 		},
@@ -177,7 +178,7 @@ var deploymentsSpec = onboardingSpec{
 		{
 			Component: componentK8sClusterReceiver,
 			DefaultMetrics: []string{
-				"k8s.container.restarts",
+				"k8s.pod.phase",
 				"k8s.deployment.desired",
 				"k8s.deployment.available",
 			},
@@ -185,8 +186,13 @@ var deploymentsSpec = onboardingSpec{
 		},
 		{
 			Component:         componentK8sAttributesProcessor,
-			RequiredAttrs:     []string{"k8s.deployment.name"},
+			RequiredAttrs:     []string{"k8s.deployment.name", "k8s.namespace.name"},
 			DocumentationLink: docLinkK8sAttributesProcessor,
+		},
+		{
+			Component:         componentResourceDetectionProcessor,
+			RequiredAttrs:     []string{"k8s.cluster.name"},
+			DocumentationLink: docLinkResourceDetectionProcessor,
 		},
 	},
 }
@@ -210,7 +216,7 @@ var daemonsetsSpec = onboardingSpec{
 		{
 			Component: componentK8sClusterReceiver,
 			DefaultMetrics: []string{
-				"k8s.container.restarts",
+				"k8s.pod.phase",
 				"k8s.daemonset.desired_scheduled_nodes",
 				"k8s.daemonset.current_scheduled_nodes",
 			},
@@ -218,8 +224,13 @@ var daemonsetsSpec = onboardingSpec{
 		},
 		{
 			Component:         componentK8sAttributesProcessor,
-			RequiredAttrs:     []string{"k8s.daemonset.name"},
+			RequiredAttrs:     []string{"k8s.daemonset.name", "k8s.namespace.name"},
 			DocumentationLink: docLinkK8sAttributesProcessor,
+		},
+		{
+			Component:         componentResourceDetectionProcessor,
+			RequiredAttrs:     []string{"k8s.cluster.name"},
+			DocumentationLink: docLinkResourceDetectionProcessor,
 		},
 	},
 }
@@ -243,7 +254,7 @@ var statefulsetsSpec = onboardingSpec{
 		{
 			Component: componentK8sClusterReceiver,
 			DefaultMetrics: []string{
-				"k8s.container.restarts",
+				"k8s.pod.phase",
 				"k8s.statefulset.desired_pods",
 				"k8s.statefulset.current_pods",
 			},
@@ -251,8 +262,13 @@ var statefulsetsSpec = onboardingSpec{
 		},
 		{
 			Component:         componentK8sAttributesProcessor,
-			RequiredAttrs:     []string{"k8s.statefulset.name"},
+			RequiredAttrs:     []string{"k8s.statefulset.name", "k8s.namespace.name"},
 			DocumentationLink: docLinkK8sAttributesProcessor,
+		},
+		{
+			Component:         componentResourceDetectionProcessor,
+			RequiredAttrs:     []string{"k8s.cluster.name"},
+			DocumentationLink: docLinkResourceDetectionProcessor,
 		},
 	},
 }
@@ -276,7 +292,7 @@ var jobsSpec = onboardingSpec{
 		{
 			Component: componentK8sClusterReceiver,
 			DefaultMetrics: []string{
-				"k8s.container.restarts",
+				"k8s.pod.phase",
 				"k8s.job.desired_successful_pods",
 				"k8s.job.active_pods",
 				"k8s.job.failed_pods",
@@ -286,8 +302,13 @@ var jobsSpec = onboardingSpec{
 		},
 		{
 			Component:         componentK8sAttributesProcessor,
-			RequiredAttrs:     []string{"k8s.job.name"},
+			RequiredAttrs:     []string{"k8s.job.name", "k8s.namespace.name"},
 			DocumentationLink: docLinkK8sAttributesProcessor,
+		},
+		{
+			Component:         componentResourceDetectionProcessor,
+			RequiredAttrs:     []string{"k8s.cluster.name"},
+			DocumentationLink: docLinkResourceDetectionProcessor,
 		},
 	},
 }
@@ -312,6 +333,11 @@ var namespacesSpec = onboardingSpec{
 			RequiredAttrs:     []string{"k8s.namespace.name"},
 			DocumentationLink: docLinkK8sAttributesProcessor,
 		},
+		{
+			Component:         componentResourceDetectionProcessor,
+			RequiredAttrs:     []string{"k8s.cluster.name"},
+			DocumentationLink: docLinkResourceDetectionProcessor,
+		},
 	},
 }
 
@@ -331,6 +357,8 @@ var clustersSpec = onboardingSpec{
 				"k8s.node.allocatable_cpu",
 				"k8s.node.allocatable_memory", //k8s.node.allocatable_cpu and k8s.node.allocatable_memory are
 				// controlled by allocatable_types_to_report config option (Check // https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/4f9a578b210a6dcb9f9bf47942f27208b5765298/receiver/k8sclusterreceiver/metadata.yaml#L805-L806)
+				"k8s.node.condition_ready", // node counts by readiness
+				"k8s.pod.phase",            // pod counts per cluster by phase
 			},
 			DocumentationLink: docLinkK8sClusterReceiver,
 		},
@@ -357,8 +385,13 @@ var volumesSpec = onboardingSpec{
 		},
 		{
 			Component:         componentK8sAttributesProcessor,
-			RequiredAttrs:     []string{"k8s.persistentvolumeclaim.name"},
+			RequiredAttrs:     []string{"k8s.persistentvolumeclaim.name", "k8s.namespace.name"},
 			DocumentationLink: docLinkK8sAttributesProcessor,
+		},
+		{
+			Component:         componentResourceDetectionProcessor,
+			RequiredAttrs:     []string{"k8s.cluster.name"},
+			DocumentationLink: docLinkResourceDetectionProcessor,
 		},
 	},
 }
