@@ -91,13 +91,22 @@ func (q *builderQuery[T]) Fingerprint() string {
 				if a.ComparisonSpaceAggregationParam != nil {
 					spaceAggParamStr = a.ComparisonSpaceAggregationParam.StringValue()
 				}
-				aggParts = append(aggParts, fmt.Sprintf("%s:%s:%s:%s:%s",
+				part := fmt.Sprintf("%s:%s:%s:%s:%s",
 					a.MetricName,
 					a.Temporality.StringValue(),
 					a.TimeAggregation.StringValue(),
 					a.SpaceAggregation.StringValue(),
 					spaceAggParamStr,
-				))
+				)
+				if a.Reduced {
+					oneDay := uint64(24 * time.Hour.Milliseconds())
+					route := "reduced"
+					if q.toMS-q.fromMS < oneDay && q.fromMS >= uint64(time.Now().UnixMilli())-oneDay {
+						route = "buffer"
+					}
+					part += ":" + route
+				}
+				aggParts = append(aggParts, part)
 			}
 		}
 		parts = append(parts, fmt.Sprintf("aggs=[%s]", strings.Join(aggParts, ",")))
