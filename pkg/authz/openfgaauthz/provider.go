@@ -84,12 +84,7 @@ func (provider *provider) Get(ctx context.Context, orgID valuer.UUID, id valuer.
 }
 
 func (provider *provider) GetWithTransactionGroups(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*authtypes.RoleWithTransactionGroups, error) {
-	role, err := provider.store.Get(ctx, orgID, id)
-	if err != nil {
-		return nil, err
-	}
-
-	return authtypes.MakeRoleWithTransactionGroups(role, nil), nil
+	return nil, errors.Newf(errors.TypeUnsupported, authtypes.ErrCodeRoleUnsupported, "not implemented")
 }
 
 func (provider *provider) GetByOrgIDAndName(ctx context.Context, orgID valuer.UUID, name string) (*authtypes.Role, error) {

@@ -186,9 +186,39 @@ func (role *PostableRole) UnmarshalJSON(data []byte) error {
 		return errors.Newf(errors.TypeInvalidInput, ErrCodeRoleInvalidInput, "role name cannot start with %q as it is reserved for SigNoz managed roles.", managedRolePrefix)
 	}
 
+	if temp.TransactionGroups == nil {
+		return errors.New(errors.TypeInvalidInput, ErrCodeRoleInvalidInput, "transactionGroups is required").WithAdditional("send an empty array to create a role with no transaction groups")
+	}
+
 	role.Name = temp.Name
 	role.Description = temp.Description
 	role.TransactionGroups = temp.TransactionGroups
+	return nil
+}
+
+func (role *UpdatableRole) UnmarshalJSON(data []byte) error {
+	shadow := struct {
+		Description       *string           `json:"description"`
+		TransactionGroups TransactionGroups `json:"transactionGroups"`
+	}{}
+
+	if err := json.Unmarshal(data, &shadow); err != nil {
+		return err
+	}
+
+	// A pointer distinguishes an omitted/null description from an explicit empty string: the field
+	// must be sent (update reconciles to exactly what is given), but an empty string is allowed so a
+	// caller can deliberately clear the description.
+	if shadow.Description == nil {
+		return errors.New(errors.TypeInvalidInput, ErrCodeRoleInvalidInput, "description is required").WithAdditional("send an empty string to clear the description")
+	}
+
+	if shadow.TransactionGroups == nil {
+		return errors.New(errors.TypeInvalidInput, ErrCodeRoleInvalidInput, "transactionGroups is required").WithAdditional("send an empty array to clear the role's transaction groups")
+	}
+
+	role.Description = *shadow.Description
+	role.TransactionGroups = shadow.TransactionGroups
 	return nil
 }
 
