@@ -54,7 +54,9 @@ function MapperGroupsTable({
 					skeletonRowCount={SKELETON_ROW_COUNT}
 					getRowKey={(row): string => row.localId}
 					getRowCanExpand={(): boolean => true}
-					renderExpandedRow={(row): JSX.Element => <MappersTable group={row} />}
+					renderExpandedRow={(row): JSX.Element => (
+						<MappersTable group={row} store={store} />
+					)}
 					disableVirtualScroll
 					testId="mapper-groups-table"
 				/>

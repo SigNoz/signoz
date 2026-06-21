@@ -1,4 +1,7 @@
 import { Badge } from '@signozhq/ui/badge';
+import { Button } from '@signozhq/ui/button';
+import { Switch } from '@signozhq/ui/switch';
+import { Pencil, Trash2 } from '@signozhq/icons';
 import type { TableColumnDef } from 'components/TanStackTableView';
 import cx from 'classnames';
 
@@ -7,10 +10,19 @@ import { DraftMapper, FieldContext } from './types';
 
 const MAX_VISIBLE_SOURCES = 3;
 
+interface ColumnsConfig {
+	onEdit: (mapper: DraftMapper) => void;
+	onRemove: (localId: string) => void;
+	onToggle: (localId: string, enabled: boolean) => void;
+}
+
 // Column definitions for the per-group mappers TanStackTable (rendered inside an
-// expanded group row). Sorting is off — priority order is positional (top wins)
-// and surfaced by the leading index column.
-export function getMappersColumns(): TableColumnDef<DraftMapper>[] {
+// expanded group row). Sorting is off — priority order is positional (top wins).
+export function getMappersColumns({
+	onEdit,
+	onRemove,
+	onToggle,
+}: ColumnsConfig): TableColumnDef<DraftMapper>[] {
 	return [
 		{
 			id: 'target',
@@ -79,17 +91,41 @@ export function getMappersColumns(): TableColumnDef<DraftMapper>[] {
 			),
 		},
 		{
-			id: 'status',
-			header: 'Status',
-			// Opt the trailing column out of the "last column fills 100%" rule so the
-			// spare width flows into Target / Sources instead of leaving a large empty
-			// Status column on the right.
-			width: { min: 120, ignoreLastColumnFill: true },
+			id: 'actions',
+			header: 'Actions',
+			// Compact, right-aligned action cluster — opt out of the "last column
+			// fills 100%" rule so the spare width flows into Target / Sources.
+			width: { fixed: '160px', ignoreLastColumnFill: true },
 			enableMove: false,
+			enableRemove: false,
 			cell: ({ row }): JSX.Element => (
-				<Badge color={row.enabled ? 'forest' : 'vanilla'} variant="outline">
-					{row.enabled ? 'Enabled' : 'Disabled'}
-				</Badge>
+				<div className={styles.rowActions}>
+					<Button
+						variant="ghost"
+						color="secondary"
+						size="icon"
+						aria-label="Edit mapping"
+						onClick={(): void => onEdit(row)}
+						testId={`mapper-edit-${row.localId}`}
+					>
+						<Pencil size={14} />
+					</Button>
+					<Button
+						variant="ghost"
+						color="destructive"
+						size="icon"
+						aria-label="Delete mapping"
+						onClick={(): void => onRemove(row.localId)}
+						testId={`mapper-delete-${row.localId}`}
+					>
+						<Trash2 size={14} />
+					</Button>
+					<Switch
+						value={row.enabled}
+						onChange={(checked): void => onToggle(row.localId, checked)}
+						testId={`mapper-enabled-${row.localId}`}
+					/>
+				</div>
 			),
 		},
 	];
