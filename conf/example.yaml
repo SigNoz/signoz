@@ -141,6 +141,10 @@ querier:
   flux_interval: 5m
   # The maximum number of concurrent queries for missing ranges.
   max_concurrent_queries: 4
+  # When filtering logs by trace_id, clamp the query window to the trace time
+  # range with padding to include slightly delayed log exports. Logs only; set
+  # to 0 to disable.
+  log_trace_id_window_padding: 5m
 
 ##################### TelemetryStore #####################
 telemetrystore:

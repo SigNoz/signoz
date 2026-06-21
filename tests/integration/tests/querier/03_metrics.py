@@ -15,7 +15,6 @@ from fixtures.querier import (
     build_builder_query,
     find_named_result,
     get_all_warnings,
-    get_error_message,
     index_series_by_label,
     make_query_request,
 )

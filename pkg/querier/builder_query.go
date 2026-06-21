@@ -31,6 +31,8 @@ type builderQuery[T any] struct {
 	fromMS uint64
 	toMS   uint64
 	kind   qbtypes.RequestType
+
+	logTraceIDWindowPaddingMS uint64
 }
 
 var _ qbtypes.Query = (*builderQuery[any])(nil)
@@ -43,16 +45,18 @@ func newBuilderQuery[T any](
 	tr qbtypes.TimeRange,
 	kind qbtypes.RequestType,
 	variables map[string]qbtypes.VariableItem,
+	logTraceIDWindowPaddingMS uint64,
 ) *builderQuery[T] {
 	return &builderQuery[T]{
-		logger:         logger,
-		telemetryStore: telemetryStore,
-		stmtBuilder:    stmtBuilder,
-		spec:           spec,
-		variables:      variables,
-		fromMS:         tr.From,
-		toMS:           tr.To,
-		kind:           kind,
+		logger:                    logger,
+		telemetryStore:            telemetryStore,
+		stmtBuilder:               stmtBuilder,
+		spec:                      spec,
+		variables:                 variables,
+		fromMS:                    tr.From,
+		toMS:                      tr.To,
+		kind:                      kind,
+		logTraceIDWindowPaddingMS: logTraceIDWindowPaddingMS,
 	}
 }
 
@@ -277,9 +281,20 @@ func (q *builderQuery[T]) narrowWindowByTraceID(ctx context.Context, fromMS, toM
 		return fromMS, toMS, true, ""
 	}
 
+	// Logs can be flushed slightly after the span ends. The trace
+	// time range comes from the spans table, so for logs we widen it by the
+	// configured padding before clamping. Keep the actual recorded bounds for
+	// the user-facing warning so it reports where the trace truly lies, not the
+	// padded range.
+	actualStartMS, actualEndMS := traceStartMS, traceEndMS
+	if q.spec.Signal == telemetrytypes.SignalLogs {
+		traceStartMS -= q.logTraceIDWindowPaddingMS
+		traceEndMS += q.logTraceIDWindowPaddingMS
+	}
+
 	if traceStartMS > toMS || traceEndMS < fromMS {
-		traceStartUTC := time.UnixMilli(int64(traceStartMS)).UTC().Format(time.RFC3339)
-		traceEndUTC := time.UnixMilli(int64(traceEndMS)).UTC().Format(time.RFC3339)
+		traceStartUTC := time.UnixMilli(int64(actualStartMS)).UTC().Format(time.RFC3339)
+		traceEndUTC := time.UnixMilli(int64(actualEndMS)).UTC().Format(time.RFC3339)
 		return fromMS, toMS, false, fmt.Sprintf(traceOutsideRangeWarn, q.spec.Name, traceStartUTC, traceEndUTC)
 	}
 	if traceStartMS > fromMS {
