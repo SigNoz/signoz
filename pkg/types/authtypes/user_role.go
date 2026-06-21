@@ -2,6 +2,7 @@ package authtypes
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -28,6 +29,38 @@ type UserRole struct {
 	Role *Role `bun:"rel:belongs-to,join:role_id=id" json:"role" required:"true"`
 }
 
+type UserWithRoles struct {
+	*types.User
+	UserRoles []*UserRole `json:"userRoles"`
+}
+
+type PostableUser struct {
+	DisplayName     string              `json:"displayName"`
+	Email           valuer.Email        `json:"email" required:"true"`
+	FrontendBaseUrl string              `json:"frontendBaseUrl"`
+	Roles           []*PostableUserRole `json:"roles" required:"true" nullable:"false"`
+}
+
+type PostableUserRole struct {
+	ID valuer.UUID `json:"id" required:"true"`
+}
+
+func (p *PostableUser) UnmarshalJSON(data []byte) error {
+	type Alias PostableUser
+
+	var temp Alias
+	if err := json.Unmarshal(data, &temp); err != nil {
+		return err
+	}
+
+	if temp.Roles == nil {
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "roles is required")
+	}
+
+	*p = PostableUser(temp)
+	return nil
+}
+
 func newUserRole(userID valuer.UUID, roleID valuer.UUID) *UserRole {
 	return &UserRole{
 		ID:        valuer.GenerateUUID(),
@@ -46,11 +79,6 @@ func NewUserRoles(userID valuer.UUID, roles []*Role) []*UserRole {
 	}
 
 	return userRoles
-}
-
-type UserWithRoles struct {
-	*types.User
-	UserRoles []*UserRole `json:"userRoles"`
 }
 
 type UserRoleStore interface {
