@@ -6,7 +6,7 @@ import RouteTab from 'components/RouteTab';
 import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
 import { routeConfig } from 'container/SideNav/config';
-import { getQueryString } from 'container/SideNav/helper';
+import { buildNavUrl, getQueryString } from 'container/SideNav/helper';
 import { settingsNavSections } from 'container/SideNav/menuItems';
 import NavItem from 'container/SideNav/NavItem/NavItem';
 import { SidebarItem } from 'container/SideNav/sideNav.types';
@@ -240,12 +240,13 @@ function SettingsPage(): JSX.Element {
 			const availableParams = routeConfig[key];
 
 			const queryString = getQueryString(availableParams || [], params);
+			const url = buildNavUrl(key, queryString);
 
 			if (pathname !== key) {
 				if (event && isModifierKeyPressed(event)) {
-					openInNewTab(`${key}?${queryString.join('&')}`);
+					openInNewTab(url);
 				} else {
-					history.push(`${key}?${queryString.join('&')}`, {
+					history.push(url, {
 						from: pathname,
 					});
 				}
@@ -259,17 +260,6 @@ function SettingsPage(): JSX.Element {
 	};
 
 	const isActiveNavItem = (key: string): boolean => {
-		if (pathname.startsWith(ROUTES.ALL_CHANNELS) && key === ROUTES.ALL_CHANNELS) {
-			return true;
-		}
-
-		if (
-			pathname.startsWith(ROUTES.CHANNELS_EDIT) &&
-			key === ROUTES.ALL_CHANNELS
-		) {
-			return true;
-		}
-
 		if (
 			pathname.startsWith(ROUTES.ROLES_SETTINGS) &&
 			key === ROUTES.ROLES_SETTINGS

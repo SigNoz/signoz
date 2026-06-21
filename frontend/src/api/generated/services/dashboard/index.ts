@@ -18,15 +18,20 @@ import type {
 } from 'react-query';
 
 import type {
+	CloneDashboardV2201,
+	CloneDashboardV2PathParameters,
 	CreateDashboardV2201,
+	CreateDashboardView201,
 	CreatePublicDashboard201,
 	CreatePublicDashboardPathParameters,
 	DashboardtypesPatchableDashboardV2DTO,
 	DashboardtypesPostableDashboardV2DTO,
+	DashboardtypesPostableDashboardViewDTO,
 	DashboardtypesPostablePublicDashboardDTO,
 	DashboardtypesUpdatableDashboardV2DTO,
 	DashboardtypesUpdatablePublicDashboardDTO,
 	DeleteDashboardV2PathParameters,
+	DeleteDashboardViewPathParameters,
 	DeletePublicDashboardPathParameters,
 	GetDashboardV2200,
 	GetDashboardV2PathParameters,
@@ -36,6 +41,7 @@ import type {
 	GetPublicDashboardPathParameters,
 	GetPublicDashboardWidgetQueryRange200,
 	GetPublicDashboardWidgetQueryRangePathParameters,
+	ListDashboardViews200,
 	ListDashboardsForUserV2200,
 	ListDashboardsForUserV2Params,
 	ListDashboardsV2200,
@@ -49,6 +55,8 @@ import type {
 	UnpinDashboardV2PathParameters,
 	UpdateDashboardV2200,
 	UpdateDashboardV2PathParameters,
+	UpdateDashboardView200,
+	UpdateDashboardViewPathParameters,
 	UpdatePublicDashboardPathParameters,
 } from '../sigNoz.schemas';
 
@@ -63,7 +71,7 @@ export const deletePublicDashboard = (
 	{ id }: DeletePublicDashboardPathParameters,
 	signal?: AbortSignal,
 ) => {
-	return GeneratedAPIInstance<string>({
+	return GeneratedAPIInstance<void>({
 		url: `/api/v1/dashboards/${id}/public`,
 		method: 'DELETE',
 		signal,
@@ -346,7 +354,7 @@ export const updatePublicDashboard = (
 	dashboardtypesUpdatablePublicDashboardDTO?: BodyType<DashboardtypesUpdatablePublicDashboardDTO>,
 	signal?: AbortSignal,
 ) => {
-	return GeneratedAPIInstance<string>({
+	return GeneratedAPIInstance<void>({
 		url: `/api/v1/dashboards/${id}/public`,
 		method: 'PUT',
 		headers: { 'Content-Type': 'application/json' },
@@ -649,6 +657,354 @@ export const invalidateGetPublicDashboardWidgetQueryRange = async (
 };
 
 /**
+ * Returns every saved view in the calling user's org. Saved views are shared org-wide.
+ * @summary List dashboard saved views
+ */
+export const listDashboardViews = (signal?: AbortSignal) => {
+	return GeneratedAPIInstance<ListDashboardViews200>({
+		url: `/api/v2/dashboard_views`,
+		method: 'GET',
+		signal,
+	});
+};
+
+export const getListDashboardViewsQueryKey = () => {
+	return [`/api/v2/dashboard_views`] as const;
+};
+
+export const getListDashboardViewsQueryOptions = <
+	TData = Awaited<ReturnType<typeof listDashboardViews>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(options?: {
+	query?: UseQueryOptions<
+		Awaited<ReturnType<typeof listDashboardViews>>,
+		TError,
+		TData
+	>;
+}) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey = queryOptions?.queryKey ?? getListDashboardViewsQueryKey();
+
+	const queryFn: QueryFunction<
+		Awaited<ReturnType<typeof listDashboardViews>>
+	> = ({ signal }) => listDashboardViews(signal);
+
+	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+		Awaited<ReturnType<typeof listDashboardViews>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type ListDashboardViewsQueryResult = NonNullable<
+	Awaited<ReturnType<typeof listDashboardViews>>
+>;
+export type ListDashboardViewsQueryError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary List dashboard saved views
+ */
+
+export function useListDashboardViews<
+	TData = Awaited<ReturnType<typeof listDashboardViews>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(options?: {
+	query?: UseQueryOptions<
+		Awaited<ReturnType<typeof listDashboardViews>>,
+		TError,
+		TData
+	>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getListDashboardViewsQueryOptions(options);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary List dashboard saved views
+ */
+export const invalidateListDashboardViews = async (
+	queryClient: QueryClient,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getListDashboardViewsQueryKey() },
+		options,
+	);
+
+	return queryClient;
+};
+
+/**
+ * Persists the calling user's dashboard listing state (query, sort, order) as a named, reusable view shared across the org.
+ * @summary Create dashboard saved view
+ */
+export const createDashboardView = (
+	dashboardtypesPostableDashboardViewDTO?: BodyType<DashboardtypesPostableDashboardViewDTO>,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<CreateDashboardView201>({
+		url: `/api/v2/dashboard_views`,
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		data: dashboardtypesPostableDashboardViewDTO,
+		signal,
+	});
+};
+
+export const getCreateDashboardViewMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof createDashboardView>>,
+		TError,
+		{ data?: BodyType<DashboardtypesPostableDashboardViewDTO> },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof createDashboardView>>,
+	TError,
+	{ data?: BodyType<DashboardtypesPostableDashboardViewDTO> },
+	TContext
+> => {
+	const mutationKey = ['createDashboardView'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof createDashboardView>>,
+		{ data?: BodyType<DashboardtypesPostableDashboardViewDTO> }
+	> = (props) => {
+		const { data } = props ?? {};
+
+		return createDashboardView(data);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type CreateDashboardViewMutationResult = NonNullable<
+	Awaited<ReturnType<typeof createDashboardView>>
+>;
+export type CreateDashboardViewMutationBody =
+	| BodyType<DashboardtypesPostableDashboardViewDTO>
+	| undefined;
+export type CreateDashboardViewMutationError =
+	ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Create dashboard saved view
+ */
+export const useCreateDashboardView = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof createDashboardView>>,
+		TError,
+		{ data?: BodyType<DashboardtypesPostableDashboardViewDTO> },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof createDashboardView>>,
+	TError,
+	{ data?: BodyType<DashboardtypesPostableDashboardViewDTO> },
+	TContext
+> => {
+	return useMutation(getCreateDashboardViewMutationOptions(options));
+};
+/**
+ * Removes a saved view. Saved views are shared org-wide. Deleting a non-existent view returns 404.
+ * @summary Delete dashboard saved view
+ */
+export const deleteDashboardView = (
+	{ id }: DeleteDashboardViewPathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<void>({
+		url: `/api/v2/dashboard_views/${id}`,
+		method: 'DELETE',
+		signal,
+	});
+};
+
+export const getDeleteDashboardViewMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof deleteDashboardView>>,
+		TError,
+		{ pathParams: DeleteDashboardViewPathParameters },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof deleteDashboardView>>,
+	TError,
+	{ pathParams: DeleteDashboardViewPathParameters },
+	TContext
+> => {
+	const mutationKey = ['deleteDashboardView'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof deleteDashboardView>>,
+		{ pathParams: DeleteDashboardViewPathParameters }
+	> = (props) => {
+		const { pathParams } = props ?? {};
+
+		return deleteDashboardView(pathParams);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteDashboardViewMutationResult = NonNullable<
+	Awaited<ReturnType<typeof deleteDashboardView>>
+>;
+
+export type DeleteDashboardViewMutationError =
+	ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Delete dashboard saved view
+ */
+export const useDeleteDashboardView = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof deleteDashboardView>>,
+		TError,
+		{ pathParams: DeleteDashboardViewPathParameters },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof deleteDashboardView>>,
+	TError,
+	{ pathParams: DeleteDashboardViewPathParameters },
+	TContext
+> => {
+	return useMutation(getDeleteDashboardViewMutationOptions(options));
+};
+/**
+ * Replaces a saved view's name and data. Saved views are shared org-wide.
+ * @summary Update dashboard saved view
+ */
+export const updateDashboardView = (
+	{ id }: UpdateDashboardViewPathParameters,
+	dashboardtypesPostableDashboardViewDTO?: BodyType<DashboardtypesPostableDashboardViewDTO>,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<UpdateDashboardView200>({
+		url: `/api/v2/dashboard_views/${id}`,
+		method: 'PUT',
+		headers: { 'Content-Type': 'application/json' },
+		data: dashboardtypesPostableDashboardViewDTO,
+		signal,
+	});
+};
+
+export const getUpdateDashboardViewMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof updateDashboardView>>,
+		TError,
+		{
+			pathParams: UpdateDashboardViewPathParameters;
+			data?: BodyType<DashboardtypesPostableDashboardViewDTO>;
+		},
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof updateDashboardView>>,
+	TError,
+	{
+		pathParams: UpdateDashboardViewPathParameters;
+		data?: BodyType<DashboardtypesPostableDashboardViewDTO>;
+	},
+	TContext
+> => {
+	const mutationKey = ['updateDashboardView'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof updateDashboardView>>,
+		{
+			pathParams: UpdateDashboardViewPathParameters;
+			data?: BodyType<DashboardtypesPostableDashboardViewDTO>;
+		}
+	> = (props) => {
+		const { pathParams, data } = props ?? {};
+
+		return updateDashboardView(pathParams, data);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateDashboardViewMutationResult = NonNullable<
+	Awaited<ReturnType<typeof updateDashboardView>>
+>;
+export type UpdateDashboardViewMutationBody =
+	| BodyType<DashboardtypesPostableDashboardViewDTO>
+	| undefined;
+export type UpdateDashboardViewMutationError =
+	ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Update dashboard saved view
+ */
+export const useUpdateDashboardView = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof updateDashboardView>>,
+		TError,
+		{
+			pathParams: UpdateDashboardViewPathParameters;
+			data?: BodyType<DashboardtypesPostableDashboardViewDTO>;
+		},
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof updateDashboardView>>,
+	TError,
+	{
+		pathParams: UpdateDashboardViewPathParameters;
+		data?: BodyType<DashboardtypesPostableDashboardViewDTO>;
+	},
+	TContext
+> => {
+	return useMutation(getUpdateDashboardViewMutationOptions(options));
+};
+/**
  * Returns a page of v2-shape dashboards for the org. This is the pure, user-independent list — it carries no pin state. Use ListDashboardsForUserV2 for the personalized, pin-aware list. Supports a filter DSL (`query`), sort (`updated_at`/`created_at`/`name`), order (`asc`/`desc`), and offset-based pagination (`limit`/`offset`).
  * @summary List dashboards (v2)
  */
@@ -836,7 +1192,7 @@ export const deleteDashboardV2 = (
 	{ id }: DeleteDashboardV2PathParameters,
 	signal?: AbortSignal,
 ) => {
-	return GeneratedAPIInstance<string>({
+	return GeneratedAPIInstance<void>({
 		url: `/api/v2/dashboards/${id}`,
 		method: 'DELETE',
 		signal,
@@ -1207,6 +1563,85 @@ export const useUpdateDashboardV2 = <
 	return useMutation(getUpdateDashboardV2MutationOptions(options));
 };
 /**
+ * This endpoint clones an existing v2-shape dashboard. User and integration dashboards can be cloned; system dashboards are rejected. The clone keeps the source's display name, panels, and tags, but gets a freshly generated unique internal name and is always created as an unlocked user dashboard owned by the caller.
+ * @summary Clone dashboard (v2)
+ */
+export const cloneDashboardV2 = (
+	{ id }: CloneDashboardV2PathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<CloneDashboardV2201>({
+		url: `/api/v2/dashboards/${id}/clone`,
+		method: 'POST',
+		signal,
+	});
+};
+
+export const getCloneDashboardV2MutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof cloneDashboardV2>>,
+		TError,
+		{ pathParams: CloneDashboardV2PathParameters },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof cloneDashboardV2>>,
+	TError,
+	{ pathParams: CloneDashboardV2PathParameters },
+	TContext
+> => {
+	const mutationKey = ['cloneDashboardV2'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof cloneDashboardV2>>,
+		{ pathParams: CloneDashboardV2PathParameters }
+	> = (props) => {
+		const { pathParams } = props ?? {};
+
+		return cloneDashboardV2(pathParams);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type CloneDashboardV2MutationResult = NonNullable<
+	Awaited<ReturnType<typeof cloneDashboardV2>>
+>;
+
+export type CloneDashboardV2MutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Clone dashboard (v2)
+ */
+export const useCloneDashboardV2 = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof cloneDashboardV2>>,
+		TError,
+		{ pathParams: CloneDashboardV2PathParameters },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof cloneDashboardV2>>,
+	TError,
+	{ pathParams: CloneDashboardV2PathParameters },
+	TContext
+> => {
+	return useMutation(getCloneDashboardV2MutationOptions(options));
+};
+/**
  * This endpoint unlocks a v2-shape dashboard. Only the dashboard's creator or an org admin may lock or unlock.
  * @summary Unlock dashboard (v2)
  */
@@ -1214,7 +1649,7 @@ export const unlockDashboardV2 = (
 	{ id }: UnlockDashboardV2PathParameters,
 	signal?: AbortSignal,
 ) => {
-	return GeneratedAPIInstance<string>({
+	return GeneratedAPIInstance<void>({
 		url: `/api/v2/dashboards/${id}/lock`,
 		method: 'DELETE',
 		signal,
@@ -1293,7 +1728,7 @@ export const lockDashboardV2 = (
 	{ id }: LockDashboardV2PathParameters,
 	signal?: AbortSignal,
 ) => {
-	return GeneratedAPIInstance<string>({
+	return GeneratedAPIInstance<void>({
 		url: `/api/v2/dashboards/${id}/lock`,
 		method: 'PUT',
 		signal,
@@ -1471,7 +1906,7 @@ export const unpinDashboardV2 = (
 	{ id }: UnpinDashboardV2PathParameters,
 	signal?: AbortSignal,
 ) => {
-	return GeneratedAPIInstance<string>({
+	return GeneratedAPIInstance<void>({
 		url: `/api/v2/users/me/dashboards/${id}/pins`,
 		method: 'DELETE',
 		signal,
@@ -1550,7 +1985,7 @@ export const pinDashboardV2 = (
 	{ id }: PinDashboardV2PathParameters,
 	signal?: AbortSignal,
 ) => {
-	return GeneratedAPIInstance<string>({
+	return GeneratedAPIInstance<void>({
 		url: `/api/v2/users/me/dashboards/${id}/pins`,
 		method: 'PUT',
 		signal,

@@ -1,0 +1,19 @@
+.hint {
+	display: flex;
+	align-items: flex-start;
+	gap: 8px;
+	padding-top: 2px;
+	color: var(--l3-foreground);
+}
+
+.hintIcon {
+	flex: none;
+	margin-top: 1px;
+	color: var(--l3-foreground);
+}
+
+.hintText {
+	color: var(--l3-foreground);
+	font-size: 12px;
+	line-height: 1.5;
+}

@@ -217,6 +217,10 @@ func (module *module) CreateV2(ctx context.Context, orgID valuer.UUID, createdBy
 	return module.pkgDashboardModule.CreateV2(ctx, orgID, createdBy, creator, source, postable)
 }
 
+func (module *module) CloneV2(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, id valuer.UUID) (*dashboardtypes.DashboardV2, error) {
+	return module.pkgDashboardModule.CloneV2(ctx, orgID, createdBy, creator, id)
+}
+
 func (module *module) GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.DashboardV2, error) {
 	return module.pkgDashboardModule.GetV2(ctx, orgID, id)
 }
@@ -254,12 +258,28 @@ func (module *module) PinV2(ctx context.Context, orgID valuer.UUID, userID value
 	return module.pkgDashboardModule.PinV2(ctx, orgID, userID, id)
 }
 
-func (module *module) UnpinV2(ctx context.Context, userID valuer.UUID, id valuer.UUID) error {
-	return module.pkgDashboardModule.UnpinV2(ctx, userID, id)
+func (module *module) UnpinV2(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, id valuer.UUID) error {
+	return module.pkgDashboardModule.UnpinV2(ctx, orgID, userID, id)
 }
 
-func (module *module) DeletePreferencesForUser(ctx context.Context, userID valuer.UUID) error {
-	return module.pkgDashboardModule.DeletePreferencesForUser(ctx, userID)
+func (module *module) DeletePreferencesForUser(ctx context.Context, orgID valuer.UUID, userID valuer.UUID) error {
+	return module.pkgDashboardModule.DeletePreferencesForUser(ctx, orgID, userID)
+}
+
+func (module *module) CreateView(ctx context.Context, orgID valuer.UUID, postable dashboardtypes.PostableDashboardView) (*dashboardtypes.DashboardView, error) {
+	return module.pkgDashboardModule.CreateView(ctx, orgID, postable)
+}
+
+func (module *module) ListViews(ctx context.Context, orgID valuer.UUID) (*dashboardtypes.ListableDashboardView, error) {
+	return module.pkgDashboardModule.ListViews(ctx, orgID)
+}
+
+func (module *module) UpdateView(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updateable dashboardtypes.UpdatableDashboardView) (*dashboardtypes.DashboardView, error) {
+	return module.pkgDashboardModule.UpdateView(ctx, orgID, id, updateable)
+}
+
+func (module *module) DeleteView(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {
+	return module.pkgDashboardModule.DeleteView(ctx, orgID, id)
 }
 
 func (module *module) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.Dashboard, error) {

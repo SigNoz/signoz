@@ -2,17 +2,18 @@ package dashboardtypes
 
 import (
 	"slices"
+	"unicode/utf8"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/tagtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/perses/spec/go/common"
 )
 
 const (
 	DefaultListLimit = 20
 	MaxListLimit     = 200
+	MaxListQueryLen  = 1024
 )
 
 // ListSort is the sort field for the dashboard list endpoint. The value is a
@@ -50,31 +51,45 @@ func (o ListOrder) IsValid() bool {
 
 var ErrCodeDashboardListInvalid = errors.MustNewCode("dashboard_list_invalid")
 
-type ListDashboardsV2Params struct {
-	Query  string    `query:"query"`
-	Sort   ListSort  `query:"sort"`
-	Order  ListOrder `query:"order"`
-	Limit  int       `query:"limit"`
-	Offset int       `query:"offset"`
+type ListFilter struct {
+	Query string    `query:"query" json:"query"`
+	Sort  ListSort  `query:"sort" json:"sort"`
+	Order ListOrder `query:"order" json:"order"`
 }
 
-// Validate fills in defaults (sort=updated_at, order=desc, limit=20) and
-// rejects out-of-allowlist sort/order values and bad limit/offset. Limit is
-// clamped to MaxListLimit on the high side. Sort/order are case-insensitive —
-// valuer.String lowercases them at bind time.
+func (f *ListFilter) Validate() error {
+	if n := utf8.RuneCountInString(f.Query); n > MaxListQueryLen {
+		return errors.NewInvalidInputf(ErrCodeDashboardListInvalid,
+			"query cannot be longer than %d characters, got %d", MaxListQueryLen, n)
+	}
+	if !f.Sort.IsZero() && !f.Sort.IsValid() {
+		return errors.NewInvalidInputf(ErrCodeDashboardListInvalid,
+			"invalid sort %q — expected one of: `updated_at`, `created_at`, `name`", f.Sort)
+	}
+	if !f.Order.IsZero() && !f.Order.IsValid() {
+		return errors.NewInvalidInputf(ErrCodeDashboardListInvalid,
+			"invalid order %q — expected `asc` or `desc`", f.Order)
+	}
+	return nil
+}
+
+type ListDashboardsV2Params struct {
+	ListFilter
+	Limit  int `query:"limit"`
+	Offset int `query:"offset"`
+}
+
 func (p *ListDashboardsV2Params) Validate() error {
+	if err := p.ListFilter.Validate(); err != nil {
+		return err
+	}
+
 	if p.Sort.IsZero() {
 		p.Sort = ListSortUpdatedAt
-	} else if !p.Sort.IsValid() {
-		return errors.NewInvalidInputf(ErrCodeDashboardListInvalid,
-			"invalid sort %q — expected one of: `updated_at`, `created_at`, `name`", p.Sort)
 	}
 
 	if p.Order.IsZero() {
 		p.Order = ListOrderDesc
-	} else if !p.Order.IsValid() {
-		return errors.NewInvalidInputf(ErrCodeDashboardListInvalid,
-			"invalid order %q — expected `asc` or `desc`", p.Order)
 	}
 
 	if p.Limit == 0 {
@@ -110,7 +125,7 @@ type listedDashboardV2 struct {
 }
 
 type listedDashboardV2Spec struct {
-	Display *common.Display `json:"display,omitempty"`
+	Display Display `json:"display,omitempty"`
 }
 
 func newListedDashboardV2(v2 *DashboardV2) *listedDashboardV2 {

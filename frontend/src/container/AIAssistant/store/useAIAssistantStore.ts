@@ -1,12 +1,10 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 
 import type {
-	ErrorResponseDTO,
 	MessageActionDTO,
 	MessageSummaryDTOBlocksAnyOfItem,
 } from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
@@ -37,6 +35,7 @@ import {
 	MessageBlock,
 	MessageRole,
 } from '../types';
+import { resolveAssistantErrorMessage } from '../utils/resolveAssistantErrorMessage';
 
 // ---------------------------------------------------------------------------
 // Types used by module-level helpers
@@ -399,6 +398,7 @@ async function runStreamingLoop(
 			}
 			throw Object.assign(new Error(event.error.message), {
 				retryAction: event.retryAction,
+				code: event.error.code,
 			});
 		} else if (event.type === 'conversation' && event.title) {
 			set((s) => {
@@ -484,36 +484,6 @@ function hasPendingInput(conversationId: string, get: StoreGetter): boolean {
 	return Boolean(stream?.pendingApproval || stream?.pendingClarification);
 }
 
-function parseErrorBody(value: unknown): string | null {
-	if (typeof value === 'string') {
-		try {
-			return parseErrorBody(JSON.parse(value));
-		} catch {
-			return null;
-		}
-	}
-	const message = (value as ErrorResponseDTO | undefined)?.error?.message;
-	return typeof message === 'string' && message.length > 0 ? message : null;
-}
-
-/**
- * Returns the backend's `error.message` when `err` is a 429 axios response
- * (typically from the threads API surface — createThread, sendMessage, approve,
- * clarify, regenerate). Returns null for any other error so callers fall
- * through to their generic copy.
- */
-function rateLimitMessage(err: unknown): string | null {
-	if (axios.isAxiosError(err) && err.response?.status === 429) {
-		return parseErrorBody(err.response.data);
-	}
-	return null;
-}
-
-/**
- * Commits an error message and removes the stream entry. When `isRateLimit`
- * is true, the committed message is flagged so the feedback/regenerate bar
- * is hidden — clicking regenerate would just 429 again.
- */
 function finalizeStreamingError(
 	conversationId: string,
 	errorContent: string,
@@ -1174,14 +1144,11 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 						return;
 					}
 					console.error('[AIAssistant] sendMessage failed:', err);
-					const rateLimit = rateLimitMessage(err);
-					finalizeStreamingError(
-						convId,
-						rateLimit ??
-							'Something went wrong while fetching the response. Please try again.',
-						set,
-						rateLimit !== null,
+					const { message, isRateLimit } = resolveAssistantErrorMessage(
+						err,
+						'Something went wrong while fetching the response. Please try again.',
 					);
+					finalizeStreamingError(convId, message, set, isRateLimit);
 				}
 			},
 
@@ -1214,14 +1181,11 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 						return;
 					}
 					console.error('[AIAssistant] approveAction failed:', err);
-					const rateLimit = rateLimitMessage(err);
-					finalizeStreamingError(
-						conversationId,
-						rateLimit ??
-							'Something went wrong while processing the approval. Please try again.',
-						set,
-						rateLimit !== null,
+					const { message, isRateLimit } = resolveAssistantErrorMessage(
+						err,
+						'Something went wrong while processing the approval. Please try again.',
 					);
+					finalizeStreamingError(conversationId, message, set, isRateLimit);
 				}
 			},
 
@@ -1296,14 +1260,11 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 						return;
 					}
 					console.error('[AIAssistant] regenerateAssistantMessage failed:', err);
-					const rateLimit = rateLimitMessage(err);
-					finalizeStreamingError(
-						conversationId,
-						rateLimit ??
-							'Something went wrong while regenerating the response. Please try again.',
-						set,
-						rateLimit !== null,
+					const { message, isRateLimit } = resolveAssistantErrorMessage(
+						err,
+						'Something went wrong while regenerating the response. Please try again.',
 					);
+					finalizeStreamingError(conversationId, message, set, isRateLimit);
 				}
 			},
 
@@ -1365,14 +1326,11 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 						return;
 					}
 					console.error('[AIAssistant] submitClarification failed:', err);
-					const rateLimit = rateLimitMessage(err);
-					finalizeStreamingError(
-						conversationId,
-						rateLimit ??
-							'Something went wrong while processing your answers. Please try again.',
-						set,
-						rateLimit !== null,
+					const { message, isRateLimit } = resolveAssistantErrorMessage(
+						err,
+						'Something went wrong while processing your answers. Please try again.',
 					);
+					finalizeStreamingError(conversationId, message, set, isRateLimit);
 				}
 			},
 		})),

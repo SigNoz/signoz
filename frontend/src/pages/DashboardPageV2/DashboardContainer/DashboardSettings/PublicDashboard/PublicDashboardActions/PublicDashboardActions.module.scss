@@ -1,0 +1,12 @@
+.footer {
+	position: sticky;
+	z-index: 1;
+	flex: none;
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 12px;
+	margin-top: 10px;
+	padding-top: 14px;
+	border-top: 1px solid var(--l2-border);
+}

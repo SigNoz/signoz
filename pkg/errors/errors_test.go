@@ -48,7 +48,7 @@ func TestUnwrapb(t *testing.T) {
 	assert.Equal(t, "this is a base err", amessage)
 	assert.Equal(t, oerr, aerr)
 	assert.Equal(t, "https://docs", au)
-	assert.Equal(t, []string{"additional err"}, aa)
+	assert.Equal(t, []additional{{message: "additional err"}}, aa)
 
 	atyp, _, _, _, _, _ = Unwrapb(oerr)
 	assert.Equal(t, TypeInternal, atyp)
@@ -74,6 +74,19 @@ func TestWithSuggestions(t *testing.T) {
 	assert.Equal(t, []string{"first", "second"}, suggestionsOf(err))
 }
 
+func TestWithSuggestiveAdditional(t *testing.T) {
+	// WithSuggestiveAdditional attaches suggestions to a specific detail (in the
+	// errors array), distinct from the error-wide WithSuggestions.
+	err := NewInvalidInputf(MustNewCode("bad_field"), "unknown field %q", "filed").
+		WithSuggestiveAdditional("field `filed` not found", "did you mean: `field`")
+
+	j := AsJSON(err)
+	assert.Equal(t, []responseerroradditional{
+		{Message: "field `filed` not found", Suggestions: []string{"did you mean: `field`"}},
+	}, j.Errors)
+	assert.Nil(t, j.Suggestions, "detail-scoped suggestions must not leak into the error-wide list")
+}
+
 func TestWithRetryAfter(t *testing.T) {
 	err := New(TypeInternal, MustNewCode("test_code"), "test error").WithRetryAfter(5 * time.Microsecond)
 	r := retryOf(err)
@@ -81,24 +94,11 @@ func TestWithRetryAfter(t *testing.T) {
 	assert.Equal(t, 5, int(r.delay.Microseconds()))
 }
 
-func TestWithInvalidReferences(t *testing.T) {
-	// WithInvalidReferences populates the list.
-	err := New(TypeInvalidInput, MustNewCode("bad_ref"), "bad ref").
-		WithInvalidReferences("queries[0]", "queries[1]")
-	assert.Equal(t, []string{"queries[0]", "queries[1]"}, invalidReferencesOf(err))
-
-	// WithInvalidReferences replaces the entire list on each call.
-	err = err.WithInvalidReferences("queries[2]")
-	assert.Equal(t, []string{"queries[2]"}, invalidReferencesOf(err),
-		"WithInvalidReferences must replace the entire list")
-}
-
 func TestAsJSONBaseError(t *testing.T) {
 	err := New(TypeInvalidInput, MustNewCode("bad_input"), "field foo is bad").
 		WithUrl("https://docs/bad_input").
 		WithAdditional("hint1", "hint2").
-		WithSuggestions("try this").
-		WithInvalidReferences("queries[0]")
+		WithSuggestions("try this")
 
 	j := AsJSON(err)
 
@@ -113,7 +113,20 @@ func TestAsJSONBaseError(t *testing.T) {
 	assert.Nil(t, j.Retry, "bare New(...) should not populate a retry block")
 
 	assert.Equal(t, []string{"try this"}, j.Suggestions)
-	assert.Equal(t, []string{"queries[0]"}, j.InvalidReferences)
+}
+
+func TestAsJSONWrappedErrorPreservesHints(t *testing.T) {
+	// An inner base carries the user-facing hints (e.g. produced inside an
+	// UnmarshalJSON), then gets re-wrapped (e.g. WrapInvalidInputf). suggestionsOf
+	// must walk the cause chain so the hints still surface.
+	inner := NewInvalidInputf(MustNewCode("bad_kind"), "unknown panel kind %q", "boom").
+		WithSuggestions("valid references: a, b, c")
+
+	wrapped := WrapInvalidInputf(inner, MustNewCode("outer"), "%s", inner.Error())
+
+	j := AsJSON(wrapped)
+	assert.Equal(t, []string{"valid references: a, b, c"}, j.Suggestions,
+		"suggestions on an inner base must survive wrapping")
 }
 
 func TestAsJSONRetryBlock(t *testing.T) {
@@ -147,7 +160,6 @@ func TestAsJSONRetryBlock(t *testing.T) {
 func TestAsJSONOptionalFieldsOmittedWhenEmpty(t *testing.T) {
 	j := AsJSON(New(TypeInternal, MustNewCode("boom"), "boom"))
 	assert.Nil(t, j.Suggestions, "no suggestions set => Suggestions must be nil so json omitempty drops it")
-	assert.Nil(t, j.InvalidReferences, "no invalid references set => InvalidReferences must be nil so json omitempty drops it")
 }
 
 func TestWithStacktrace(t *testing.T) {
