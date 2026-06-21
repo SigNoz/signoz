@@ -173,22 +173,12 @@ def _check_missing_entries(entries: list) -> None:
 
 # Parametrize cases derived from SPECS.
 _DEFAULT_CASES = [  # one representative dropped default metric per type
-    pytest.param(t, comp, ms[0], id=f"{t}-{ms[0]}")
-    for t in ALL_TYPES
-    for comp, ms in [next(iter(SPECS[t]["default"].items()))]
+    pytest.param(t, comp, ms[0], id=f"{t}-{ms[0]}") for t in ALL_TYPES for comp, ms in [next(iter(SPECS[t]["default"].items()))]
 ]
 _OPTIONAL_CASES = [  # types that have optional metrics
-    pytest.param(t, comp, ms[0], id=f"{t}-{ms[0]}")
-    for t in ALL_TYPES
-    for comp, ms in SPECS[t]["optional"].items()
-    if ms
+    pytest.param(t, comp, ms[0], id=f"{t}-{ms[0]}") for t in ALL_TYPES for comp, ms in SPECS[t]["optional"].items() if ms
 ]
-_ATTR_CASES = [
-    pytest.param(t, comp, a, id=f"{t}-{a}")
-    for t in ALL_TYPES
-    for comp, attrs in SPECS[t]["attrs"].items()
-    for a in attrs
-]
+_ATTR_CASES = [pytest.param(t, comp, a, id=f"{t}-{a}") for t in ALL_TYPES for comp, attrs in SPECS[t]["attrs"].items() for a in attrs]
 
 
 @pytest.mark.parametrize(
