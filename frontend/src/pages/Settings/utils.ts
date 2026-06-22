@@ -3,11 +3,8 @@ import { TFunction } from 'i18next';
 import { ROLES, USER_ROLES } from 'types/roles';
 
 import {
-	alertChannels,
 	billingSettings,
 	connectionsSettings,
-	createAlertChannels,
-	editAlertChannels,
 	generalSettings,
 	ingestionSettings,
 	keyboardShortcuts,
@@ -61,7 +58,6 @@ export const getRoutes = (
 		settings.push(...ingestionSettings(t));
 	}
 
-	settings.push(...alertChannels(t));
 	settings.push(...connectionsSettings(t));
 
 	// Visible to all authenticated users
@@ -82,8 +78,6 @@ export const getRoutes = (
 
 	settings.push(
 		...mySettings(t),
-		...createAlertChannels(t),
-		...editAlertChannels(t),
 		...keyboardShortcuts(t),
 		...mcpServerSettings(t),
 	);
