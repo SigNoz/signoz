@@ -6,11 +6,8 @@ export interface PanelTimeWindow {
 	endMs: number;
 }
 
-/**
- * Span of each relative time preference, in milliseconds. `global_time` is absent: it
- * means "follow the dashboard window" and is handled as the default branch below.
- * Mirrors V1's `getStartAndEndTime` preset durations (last_1_month = 30 days).
- */
+// Span per relative preference, in ms. `global_time` is absent (follow the dashboard
+// window, default branch below). Mirrors V1's `getStartAndEndTime` (last_1_month = 30 days).
 const MINUTE_MS = 60 * 1000;
 const PRESET_SPAN_MS: Partial<Record<DashboardtypesTimePreferenceDTO, number>> =
 	{
@@ -25,11 +22,8 @@ const PRESET_SPAN_MS: Partial<Record<DashboardtypesTimePreferenceDTO, number>> =
 		[DashboardtypesTimePreferenceDTO.last_1_month]: 30 * 24 * 60 * MINUTE_MS,
 	};
 
-/**
- * Short + full labels for each relative preference, for the panel header time
- * pill. `global_time` is absent — a panel that follows the dashboard window
- * shows no pill.
- */
+// Short + full labels per relative preference, for the header time pill. `global_time` is
+// absent — a panel that follows the dashboard window shows no pill.
 const TIME_PREFERENCE_LABEL: Partial<
 	Record<DashboardtypesTimePreferenceDTO, { short: string; full: string }>
 > = {
