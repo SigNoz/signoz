@@ -27,7 +27,6 @@ import {
 import ROUTES from 'constants/routes';
 import InfraMetrics from 'container/LogDetailedView/InfraMetrics/InfraMetrics';
 import { getEmptyLogsListConfig } from 'container/LogsExplorerList/utils';
-import Events from 'container/SpanDetailsDrawer/Events/Events';
 import dayjs from 'dayjs';
 import {
 	TraceDetailEventKeys,
@@ -66,6 +65,7 @@ import {
 import SpanPercentileBadge from './SpanPercentile/SpanPercentileBadge';
 import SpanPercentilePanel from './SpanPercentile/SpanPercentilePanel';
 import useSpanPercentile from './SpanPercentile/useSpanPercentile';
+import Events from './Events/Events';
 import SpanLogs from './SpanLogs/SpanLogs';
 import { useSpanContextLogs } from './SpanLogs/useSpanContextLogs';
 
@@ -424,9 +424,8 @@ function SpanDetailsContent({
 							/>
 						</TabsContent>
 						<TabsContent value="events">
-							{/* V2 Events component expects span.event (singular), V3 has span.events (plural) */}
 							<Events
-								span={{ ...selectedSpan, event: selectedSpan.events } as any}
+								span={selectedSpan}
 								startTime={traceStartTime || 0}
 								isSearchVisible
 							/>
