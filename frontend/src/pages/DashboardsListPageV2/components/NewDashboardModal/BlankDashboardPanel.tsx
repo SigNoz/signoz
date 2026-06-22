@@ -9,11 +9,12 @@ import { AxiosError } from 'axios';
 import { generatePath } from 'react-router-dom';
 import logEvent from 'api/common/logEvent';
 import { createDashboardV2 } from 'api/generated/services/dashboard';
-import type { TagtypesPostableTagDTO } from 'api/generated/services/sigNoz.schemas';
 import ROUTES from 'constants/routes';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
+
+import { toPostableTags } from '../../utils';
 
 import styles from './NewDashboardModal.module.scss';
 
@@ -22,23 +23,6 @@ const DEFAULT_NAME = 'Sample Dashboard';
 interface Props {
 	onClose: () => void;
 }
-
-// Each comma-separated tag is "key:value" or a bare label (key === value).
-const toPostableTags = (raw: string): TagtypesPostableTagDTO[] =>
-	raw
-		.split(',')
-		.map((label) => label.trim())
-		.filter(Boolean)
-		.map((label) => {
-			const sep = label.indexOf(':');
-			if (sep > 0) {
-				return {
-					key: label.slice(0, sep).trim(),
-					value: label.slice(sep + 1).trim(),
-				};
-			}
-			return { key: label, value: label };
-		});
 
 function BlankDashboardPanel({ onClose }: Props): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
