@@ -75,7 +75,7 @@ export const isFilterStateEmpty = (state: DashboardFilterState): boolean =>
 	state.createdBy.length === 0 &&
 	state.updated === 'any';
 
-export const filterStatesEqual = (
+export const areFilterStatesEqual = (
 	a: DashboardFilterState,
 	b: DashboardFilterState,
 ): boolean =>

@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { parseAsString, useQueryState, type Options } from 'nuqs';
 
-import { DEFAULT_FILTER_STATE, filterStatesEqual } from '../filterQuery';
+import { DEFAULT_FILTER_STATE, areFilterStatesEqual } from '../filterQuery';
 import { useDashboardViewsStore } from '../store/useDashboardViewsStore';
 import type { DashboardFilterState, SavedView } from '../types';
 import {
@@ -71,7 +71,7 @@ export function useActiveView({
 	);
 
 	const isModified = canonicalSnapshot
-		? !filterStatesEqual(filters, canonicalSnapshot)
+		? !areFilterStatesEqual(filters, canonicalSnapshot)
 		: false;
 
 	const selectView = useCallback(
