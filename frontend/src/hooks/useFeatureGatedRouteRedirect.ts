@@ -10,7 +10,7 @@ interface FeatureGatedRoute {
 }
 
 export function useFeatureGatedRouteRedirect(pathname: string): string | null {
-	const { featureFlags } = useAppContext();
+	const { featureFlags, isFetchingFeatureFlags } = useAppContext();
 	const isAIObservabilityEnabled = useIsAIObservabilityEnabled();
 
 	const gatedRoutes: FeatureGatedRoute[] = [
@@ -27,11 +27,12 @@ export function useFeatureGatedRouteRedirect(pathname: string): string | null {
 			matchPath(pathname, { path: route.path }) !== null && !route.enabled,
 	);
 
-	// Feature flags load asynchronously and start as `null`. Until they resolve we
-	// don't actually know whether a gated flag is enabled — redirecting now would
-	// boot users off valid deep links (e.g. a hard refresh on the pricing page)
-	// whenever the flag ultimately resolves to enabled. Hold off until flags load.
-	if (featureFlags === null) {
+	// Feature flags load asynchronously and start as `null`. While the initial
+	// fetch is still in flight we don't know whether a gated flag is enabled, so
+	// redirecting now would boot users off valid deep links (e.g. a hard refresh
+	// on the pricing page) whenever the flag ultimately resolves to enabled. Wait
+	// for the fetch to settle; once it does (success or error) we gate normally.
+	if (featureFlags === null && isFetchingFeatureFlags) {
 		return null;
 	}
 
