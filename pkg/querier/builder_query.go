@@ -37,6 +37,10 @@ type builderQuery[T any] struct {
 
 var _ qbtypes.Query = (*builderQuery[any])(nil)
 
+type builderQueryOptions struct {
+	logTraceIDWindowPaddingMS uint64
+}
+
 func newBuilderQuery[T any](
 	logger *slog.Logger,
 	telemetryStore telemetrystore.TelemetryStore,
@@ -45,7 +49,7 @@ func newBuilderQuery[T any](
 	tr qbtypes.TimeRange,
 	kind qbtypes.RequestType,
 	variables map[string]qbtypes.VariableItem,
-	logTraceIDWindowPaddingMS uint64,
+	cfg builderQueryOptions,
 ) *builderQuery[T] {
 	return &builderQuery[T]{
 		logger:                    logger,
@@ -56,7 +60,7 @@ func newBuilderQuery[T any](
 		fromMS:                    tr.From,
 		toMS:                      tr.To,
 		kind:                      kind,
-		logTraceIDWindowPaddingMS: logTraceIDWindowPaddingMS,
+		logTraceIDWindowPaddingMS: cfg.logTraceIDWindowPaddingMS,
 	}
 }
 
