@@ -657,8 +657,12 @@ components:
           type: string
         name:
           type: string
+        transactionGroups:
+          $ref: '#/components/schemas/AuthtypesTransactionGroups'
       required:
       - name
+      - description
+      - transactionGroups
       type: object
     AuthtypesPostableRotateToken:
       properties:
@@ -713,6 +717,34 @@ components:
         useRoleAttribute:
           type: boolean
       type: object
+    AuthtypesRoleWithTransactionGroups:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        description:
+          type: string
+        id:
+          type: string
+        name:
+          type: string
+        orgId:
+          type: string
+        transactionGroups:
+          $ref: '#/components/schemas/AuthtypesTransactionGroups'
+        type:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      required:
+      - id
+      - name
+      - description
+      - type
+      - orgId
+      - transactionGroups
+      type: object
     AuthtypesSamlConfig:
       properties:
         attributeMapping:
@@ -746,10 +778,34 @@ components:
       - relation
       - object
       type: object
+    AuthtypesTransactionGroup:
+      properties:
+        objectGroup:
+          $ref: '#/components/schemas/CoretypesObjectGroup'
+        relation:
+          $ref: '#/components/schemas/AuthtypesRelation'
+      required:
+      - relation
+      - objectGroup
+      type: object
+    AuthtypesTransactionGroups:
+      items:
+        $ref: '#/components/schemas/AuthtypesTransactionGroup'
+      type: array
     AuthtypesUpdatableAuthDomain:
       properties:
         config:
           $ref: '#/components/schemas/AuthtypesAuthDomainConfig'
+      type: object
+    AuthtypesUpdatableRole:
+      properties:
+        description:
+          type: string
+        transactionGroups:
+          $ref: '#/components/schemas/AuthtypesTransactionGroups'
+      required:
+      - description
+      - transactionGroups
       type: object
     AuthtypesUserRole:
       properties:
@@ -11092,7 +11148,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/AuthtypesRole'
+                    $ref: '#/components/schemas/AuthtypesRoleWithTransactionGroups'
                   status:
                     type: string
                 required:
@@ -11127,7 +11183,7 @@ paths:
       tags:
       - role
     patch:
-      deprecated: false
+      deprecated: true
       description: This endpoint patches a role
       operationId: PatchRole
       parameters:
@@ -11186,6 +11242,68 @@ paths:
       - tokenizer:
         - role:update
       summary: Patch role
+      tags:
+      - role
+    put:
+      deprecated: false
+      description: This endpoint updates a role
+      operationId: UpdateRole
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthtypesUpdatableRole'
+      responses:
+        "204":
+          description: No Content
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "451":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unavailable For Legal Reasons
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+        "501":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Implemented
+      security:
+      - api_key:
+        - role:update
+      - tokenizer:
+        - role:update
+      summary: Update role
       tags:
       - role
   /api/v1/roles/{id}/relations/{relation}/objects:
@@ -11267,7 +11385,7 @@ paths:
       tags:
       - role
     patch:
-      deprecated: false
+      deprecated: true
       description: Patches the objects connected to the specified role via a given
         relation type
       operationId: PatchObjects
