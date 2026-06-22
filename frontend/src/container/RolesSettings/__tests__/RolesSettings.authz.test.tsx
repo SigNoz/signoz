@@ -6,9 +6,9 @@ import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import {
 	defaultFeatureFlags,
-	fireEvent,
 	render,
 	screen,
+	userEvent,
 } from 'tests/test-utils';
 import { FeatureKeys } from 'constants/features';
 import { useAuthZ } from 'hooks/useAuthZ/useAuthZ';
@@ -77,13 +77,14 @@ describe('RolesSettings', () => {
 	});
 
 	it('filters roles by search query on name', async () => {
+		const user = userEvent.setup();
 		render(<RolesSettings />);
 
 		await expect(screen.findByText('signoz-admin')).resolves.toBeInTheDocument();
 
-		fireEvent.change(screen.getByPlaceholderText('Search for roles...'), {
-			target: { value: 'billing' },
-		});
+		const searchInput = screen.getByPlaceholderText('Search for roles...');
+		await user.clear(searchInput);
+		await user.type(searchInput, 'billing');
 
 		await expect(
 			screen.findByText('billing-manager'),
@@ -94,13 +95,14 @@ describe('RolesSettings', () => {
 	});
 
 	it('filters roles by search query on description', async () => {
+		const user = userEvent.setup();
 		render(<RolesSettings />);
 
 		await expect(screen.findByText('signoz-admin')).resolves.toBeInTheDocument();
 
-		fireEvent.change(screen.getByPlaceholderText('Search for roles...'), {
-			target: { value: 'read-only' },
-		});
+		const searchInput = screen.getByPlaceholderText('Search for roles...');
+		await user.clear(searchInput);
+		await user.type(searchInput, 'read-only');
 
 		await expect(screen.findByText('signoz-viewer')).resolves.toBeInTheDocument();
 		expect(screen.queryByText('signoz-admin')).not.toBeInTheDocument();
@@ -108,13 +110,14 @@ describe('RolesSettings', () => {
 	});
 
 	it('shows empty state when search matches nothing', async () => {
+		const user = userEvent.setup();
 		render(<RolesSettings />);
 
 		await expect(screen.findByText('signoz-admin')).resolves.toBeInTheDocument();
 
-		fireEvent.change(screen.getByPlaceholderText('Search for roles...'), {
-			target: { value: 'nonexistentrole' },
-		});
+		const searchInput = screen.getByPlaceholderText('Search for roles...');
+		await user.clear(searchInput);
+		await user.type(searchInput, 'nonexistentrole');
 
 		await expect(
 			screen.findByText('No roles match your search.'),
