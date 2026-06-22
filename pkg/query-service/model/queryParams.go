@@ -2,8 +2,6 @@ package model
 
 import (
 	"time"
-
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
 type InstantQueryMetricsParams struct {
@@ -329,14 +327,6 @@ type SearchTracesParams struct {
 	SpanID           string `json:"spanId"`
 	SpansRenderLimit int    `json:"spansRenderLimit"`
 	MaxSpansInTrace  int    `json:"maxSpansInTrace"`
-}
-
-type GetFlamegraphSpansForTraceParams struct {
-	SelectedSpanID  string                             `json:"selectedSpanId"`
-	Limit           uint                               `json:"limit"`
-	BoundaryStartTS uint64                             `json:"boundaryStartTsMilli"`
-	BoundaryEndTS   uint64                             `json:"boundarEndTsMilli"`
-	SelectFields    []telemetrytypes.TelemetryFieldKey `json:"selectFields"`
 }
 
 type SpanFilterParams struct {

@@ -214,6 +214,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddUserDashboardPreferenceFactory(sqlstore, sqlschema),
 		sqlmigration.NewRecreateUserDashboardPreferenceFactory(sqlstore, sqlschema),
 		sqlmigration.NewMigrateRecurrenceBoundsFactory(sqlstore),
+		sqlmigration.NewAddDashboardViewFactory(sqlstore, sqlschema),
 	)
 }
 
