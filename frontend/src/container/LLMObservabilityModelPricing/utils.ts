@@ -26,7 +26,9 @@ const getRelativeTime = (
 	return parsed?.isValid() ? parsed.fromNow() : '—';
 };
 
-const hasCacheValue = (value: number | null): boolean =>
+// Type guard so callers narrow `number | null | undefined` down to `number`
+// in the truthy branch — no casts needed at the call sites.
+const hasCacheValue = (value: number | null | undefined): value is number =>
 	typeof value === 'number' && value > 0;
 
 // ─── Input helpers ───────────────────────────────────────────────────────────
@@ -60,10 +62,10 @@ export const getExtraBuckets = (rule: PricingRule): ExtraBucket[] => {
 		return [];
 	}
 	const buckets: ExtraBucket[] = [];
-	if (typeof cache.read === 'number' && cache.read > 0) {
+	if (hasCacheValue(cache.read)) {
 		buckets.push({ key: 'cache_read', pricePerMillion: cache.read });
 	}
-	if (typeof cache.write === 'number' && cache.write > 0) {
+	if (hasCacheValue(cache.write)) {
 		buckets.push({ key: 'cache_write', pricePerMillion: cache.write });
 	}
 	return buckets;
@@ -90,7 +92,7 @@ export const draftFromRule = (rule: PricingRule): DrawerDraft => ({
 	id: rule.id,
 	sourceId: rule.sourceId ?? null,
 	modelName: rule.modelName,
-	provider: rule.provider || 'OpenAI',
+	provider: rule.provider,
 	patterns: rule.modelPattern || [],
 	isOverride: !!rule.isOverride,
 	pricing: {
@@ -111,8 +113,8 @@ const buildCacheCosts = (
 	}
 	return {
 		mode: cacheMode,
-		...(hasCacheValue(cacheRead) && { read: cacheRead as number }),
-		...(hasCacheValue(cacheWrite) && { write: cacheWrite as number }),
+		...(hasCacheValue(cacheRead) && { read: cacheRead }),
+		...(hasCacheValue(cacheWrite) && { write: cacheWrite }),
 	};
 };
 
@@ -134,7 +136,7 @@ export const buildRulePayload = (
 	sourceId: draft.sourceId || undefined,
 	modelName: draft.modelName.trim(),
 	provider: draft.provider.trim(),
-	modelPattern: draft.patterns.length > 0 ? draft.patterns : [],
+	modelPattern: draft.patterns,
 	isOverride: draft.isOverride,
 	enabled: true,
 	unit: UnitDTO.per_million_tokens,
