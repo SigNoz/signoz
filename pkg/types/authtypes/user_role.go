@@ -55,7 +55,7 @@ func (p *PostableUser) UnmarshalJSON(data []byte) error {
 	}
 
 	if temp.UserRoles == nil {
-		return errors.New(errors.TypeInvalidInput, ErrCodeUserRoleInvalidInput, "roles is required").WithAdditional("send an empty array to create user without role")
+		return errors.New(errors.TypeInvalidInput, ErrCodeUserRoleInvalidInput, "userRoles is required").WithSuggestions("send an empty array to create user without role")
 	}
 
 	*p = PostableUser(temp)
