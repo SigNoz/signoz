@@ -9,6 +9,7 @@ import (
 
 var (
 	ErrCodeInvalidPatchObject = errors.MustNewCode("authz_invalid_patch_objects")
+	ErrCodeInvalidObject      = errors.MustNewCode("authz_invalid_object")
 )
 
 type Object struct {

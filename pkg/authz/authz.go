@@ -33,8 +33,8 @@ type AuthZ interface {
 	// Lists the selectors for objects assigned to subject (s) with relation (r) on resource (s)
 	ListObjects(context.Context, string, authtypes.Relation, coretypes.Type) ([]*coretypes.Object, error)
 
-	// Creates the role.
-	Create(context.Context, valuer.UUID, *authtypes.Role) error
+	// Creates the role with its transaction groups.
+	Create(context.Context, valuer.UUID, *authtypes.RoleWithTransactionGroups) error
 
 	// Gets the role if it exists or creates one.
 	GetOrCreate(context.Context, valuer.UUID, *authtypes.Role) (*authtypes.Role, error)
@@ -48,11 +48,17 @@ type AuthZ interface {
 	// Patches the objects in authorization server associated with the given role and relation
 	PatchObjects(context.Context, valuer.UUID, string, authtypes.Relation, []*coretypes.Object, []*coretypes.Object) error
 
+	// Updates the role's metadata and reconciles its transaction groups.
+	Update(context.Context, valuer.UUID, *authtypes.RoleWithTransactionGroups) error
+
 	// Deletes the role and tuples in authorization server.
 	Delete(context.Context, valuer.UUID, valuer.UUID) error
 
 	// Gets the role
 	Get(context.Context, valuer.UUID, valuer.UUID) (*authtypes.Role, error)
+
+	// Gets the role with transaction groups
+	GetWithTransactionGroups(context.Context, valuer.UUID, valuer.UUID) (*authtypes.RoleWithTransactionGroups, error)
 
 	// Gets the role by org_id and name
 	GetByOrgIDAndName(context.Context, valuer.UUID, string) (*authtypes.Role, error)
@@ -100,6 +106,8 @@ type Handler interface {
 	Patch(http.ResponseWriter, *http.Request)
 
 	PatchObjects(http.ResponseWriter, *http.Request)
+
+	Update(http.ResponseWriter, *http.Request)
 
 	Check(http.ResponseWriter, *http.Request)
 
