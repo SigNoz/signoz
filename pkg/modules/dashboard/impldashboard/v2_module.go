@@ -43,6 +43,18 @@ func (m *module) CreateV2(ctx context.Context, orgID valuer.UUID, createdBy stri
 	return dashboard, nil
 }
 
+func (m *module) CloneV2(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, id valuer.UUID) (*dashboardtypes.DashboardV2, error) {
+	existing, err := m.GetV2(ctx, orgID, id)
+	if err != nil {
+		return nil, err
+	}
+	if err := existing.ErrIfNotClonable(); err != nil {
+		return nil, err
+	}
+
+	return m.CreateV2(ctx, orgID, createdBy, creator, dashboardtypes.SourceUser, existing.ToPostableForCloning())
+}
+
 func (module *module) ListV2(ctx context.Context, orgID valuer.UUID, params *dashboardtypes.ListDashboardsV2Params) (*dashboardtypes.ListableDashboardV2, error) {
 	dashboards, total, err := module.store.ListV2(ctx, orgID, params)
 	if err != nil {

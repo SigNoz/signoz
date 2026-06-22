@@ -26,6 +26,7 @@ import type {
 	CancelApiV1AssistantCancelPostHeaders,
 	CancelRequestDTO,
 	CancelResponseDTO,
+	ChipsResponseDTO,
 	ClarifyApiV1AssistantClarifyPostHeaders,
 	ClarifyRequestDTO,
 	ClarifyResponseDTO,
@@ -39,8 +40,11 @@ import type {
 	ErrorResponseDTO,
 	FeedbackRequestDTO,
 	FeedbackResponseDTO,
+	GetChipsApiV1AssistantEmptyStateChipsGetHeaders,
+	GetChipsApiV1AssistantEmptyStateChipsGetParams,
 	GetThreadApiV1AssistantThreadsThreadIdGetHeaders,
 	GetThreadApiV1AssistantThreadsThreadIdGetPathParameters,
+	GetUsageApiV1AssistantUsageGetHeaders,
 	HTTPValidationErrorDTO,
 	HealthResponseDTO,
 	ListThreadsApiV1AssistantThreadsGetHeaders,
@@ -65,93 +69,89 @@ import type {
 	UpdateThreadApiV1AssistantThreadsThreadIdPatchHeaders,
 	UpdateThreadApiV1AssistantThreadsThreadIdPatchPathParameters,
 	UpdateThreadRequestDTO,
+	UsageResponseDTO,
 } from './sigNozAIAssistantAPI.schemas';
 
-import {
-	GeneratedAPIInstance,
-	getGeneratedAPIQueryKeyHeaders,
-} from '../generatedAPIInstance';
+import { GeneratedAPIInstance } from '../generatedAPIInstance';
 import type { ErrorType, BodyType } from '../generatedAPIInstance';
 
 /**
- * @summary Health
+ * @summary Healthz
  */
-export const healthHealthGet = (signal?: AbortSignal) => {
+export const healthzHealthzGet = (signal?: AbortSignal) => {
 	return GeneratedAPIInstance<HealthResponseDTO>({
-		url: `/health`,
+		url: `/healthz`,
 		method: 'GET',
 		signal,
 	});
 };
 
-export const getHealthHealthGetQueryKey = () => {
-	return [`/health`] as const;
+export const getHealthzHealthzGetQueryKey = () => {
+	return [`/healthz`] as const;
 };
 
-export const getHealthHealthGetQueryOptions = <
-	TData = Awaited<ReturnType<typeof healthHealthGet>>,
+export const getHealthzHealthzGetQueryOptions = <
+	TData = Awaited<ReturnType<typeof healthzHealthzGet>>,
 	TError = ErrorType<unknown>,
 >(options?: {
 	query?: UseQueryOptions<
-		Awaited<ReturnType<typeof healthHealthGet>>,
+		Awaited<ReturnType<typeof healthzHealthzGet>>,
 		TError,
 		TData
 	>;
 }) => {
 	const { query: queryOptions } = options ?? {};
 
-	const queryKey = queryOptions?.queryKey ?? getHealthHealthGetQueryKey();
+	const queryKey = queryOptions?.queryKey ?? getHealthzHealthzGetQueryKey();
 
-	const queryFn: QueryFunction<Awaited<ReturnType<typeof healthHealthGet>>> = ({
-		signal,
-	}) => healthHealthGet(signal);
+	const queryFn: QueryFunction<
+		Awaited<ReturnType<typeof healthzHealthzGet>>
+	> = ({ signal }) => healthzHealthzGet(signal);
 
 	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-		Awaited<ReturnType<typeof healthHealthGet>>,
+		Awaited<ReturnType<typeof healthzHealthzGet>>,
 		TError,
 		TData
 	> & { queryKey: QueryKey };
 };
 
-export type HealthHealthGetQueryResult = NonNullable<
-	Awaited<ReturnType<typeof healthHealthGet>>
+export type HealthzHealthzGetQueryResult = NonNullable<
+	Awaited<ReturnType<typeof healthzHealthzGet>>
 >;
-export type HealthHealthGetQueryError = ErrorType<unknown>;
+export type HealthzHealthzGetQueryError = ErrorType<unknown>;
 
 /**
- * @summary Health
+ * @summary Healthz
  */
 
-export function useHealthHealthGet<
-	TData = Awaited<ReturnType<typeof healthHealthGet>>,
+export function useHealthzHealthzGet<
+	TData = Awaited<ReturnType<typeof healthzHealthzGet>>,
 	TError = ErrorType<unknown>,
 >(options?: {
 	query?: UseQueryOptions<
-		Awaited<ReturnType<typeof healthHealthGet>>,
+		Awaited<ReturnType<typeof healthzHealthzGet>>,
 		TError,
 		TData
 	>;
 }): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-	const queryOptions = getHealthHealthGetQueryOptions(options);
+	const queryOptions = getHealthzHealthzGetQueryOptions(options);
 
 	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
- * @summary Health
+ * @summary Healthz
  */
-export const invalidateHealthHealthGet = async (
+export const invalidateHealthzHealthzGet = async (
 	queryClient: QueryClient,
 	options?: InvalidateOptions,
 ): Promise<QueryClient> => {
 	await queryClient.invalidateQueries(
-		{ queryKey: getHealthHealthGetQueryKey() },
+		{ queryKey: getHealthzHealthzGetQueryKey() },
 		options,
 	);
 
@@ -159,84 +159,82 @@ export const invalidateHealthHealthGet = async (
 };
 
 /**
- * @summary Ready
+ * @summary Readyz
  */
-export const readyReadyGet = (signal?: AbortSignal) => {
+export const readyzReadyzGet = (signal?: AbortSignal) => {
 	return GeneratedAPIInstance<ReadinessResponseDTO>({
-		url: `/ready`,
+		url: `/readyz`,
 		method: 'GET',
 		signal,
 	});
 };
 
-export const getReadyReadyGetQueryKey = () => {
-	return [`/ready`] as const;
+export const getReadyzReadyzGetQueryKey = () => {
+	return [`/readyz`] as const;
 };
 
-export const getReadyReadyGetQueryOptions = <
-	TData = Awaited<ReturnType<typeof readyReadyGet>>,
+export const getReadyzReadyzGetQueryOptions = <
+	TData = Awaited<ReturnType<typeof readyzReadyzGet>>,
 	TError = ErrorType<ReadinessResponseDTO>,
 >(options?: {
 	query?: UseQueryOptions<
-		Awaited<ReturnType<typeof readyReadyGet>>,
+		Awaited<ReturnType<typeof readyzReadyzGet>>,
 		TError,
 		TData
 	>;
 }) => {
 	const { query: queryOptions } = options ?? {};
 
-	const queryKey = queryOptions?.queryKey ?? getReadyReadyGetQueryKey();
+	const queryKey = queryOptions?.queryKey ?? getReadyzReadyzGetQueryKey();
 
-	const queryFn: QueryFunction<Awaited<ReturnType<typeof readyReadyGet>>> = ({
+	const queryFn: QueryFunction<Awaited<ReturnType<typeof readyzReadyzGet>>> = ({
 		signal,
-	}) => readyReadyGet(signal);
+	}) => readyzReadyzGet(signal);
 
 	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-		Awaited<ReturnType<typeof readyReadyGet>>,
+		Awaited<ReturnType<typeof readyzReadyzGet>>,
 		TError,
 		TData
 	> & { queryKey: QueryKey };
 };
 
-export type ReadyReadyGetQueryResult = NonNullable<
-	Awaited<ReturnType<typeof readyReadyGet>>
+export type ReadyzReadyzGetQueryResult = NonNullable<
+	Awaited<ReturnType<typeof readyzReadyzGet>>
 >;
-export type ReadyReadyGetQueryError = ErrorType<ReadinessResponseDTO>;
+export type ReadyzReadyzGetQueryError = ErrorType<ReadinessResponseDTO>;
 
 /**
- * @summary Ready
+ * @summary Readyz
  */
 
-export function useReadyReadyGet<
-	TData = Awaited<ReturnType<typeof readyReadyGet>>,
+export function useReadyzReadyzGet<
+	TData = Awaited<ReturnType<typeof readyzReadyzGet>>,
 	TError = ErrorType<ReadinessResponseDTO>,
 >(options?: {
 	query?: UseQueryOptions<
-		Awaited<ReturnType<typeof readyReadyGet>>,
+		Awaited<ReturnType<typeof readyzReadyzGet>>,
 		TError,
 		TData
 	>;
 }): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-	const queryOptions = getReadyReadyGetQueryOptions(options);
+	const queryOptions = getReadyzReadyzGetQueryOptions(options);
 
 	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
- * @summary Ready
+ * @summary Readyz
  */
-export const invalidateReadyReadyGet = async (
+export const invalidateReadyzReadyzGet = async (
 	queryClient: QueryClient,
 	options?: InvalidateOptions,
 ): Promise<QueryClient> => {
 	await queryClient.invalidateQueries(
-		{ queryKey: getReadyReadyGetQueryKey() },
+		{ queryKey: getReadyzReadyzGetQueryKey() },
 		options,
 	);
 
@@ -247,7 +245,7 @@ export const invalidateReadyReadyGet = async (
  * @summary Create a new thread
  */
 export const createThreadApiV1AssistantThreadsPost = (
-	createThreadApiV1AssistantThreadsPostBody: BodyType<CreateThreadApiV1AssistantThreadsPostBody>,
+	createThreadApiV1AssistantThreadsPostBody?: BodyType<CreateThreadApiV1AssistantThreadsPostBody>,
 	headers?: CreateThreadApiV1AssistantThreadsPostHeaders,
 	signal?: AbortSignal,
 ) => {
@@ -268,7 +266,7 @@ export const getCreateThreadApiV1AssistantThreadsPostMutationOptions = <
 		Awaited<ReturnType<typeof createThreadApiV1AssistantThreadsPost>>,
 		TError,
 		{
-			data: BodyType<CreateThreadApiV1AssistantThreadsPostBody>;
+			data?: BodyType<CreateThreadApiV1AssistantThreadsPostBody>;
 			headers?: CreateThreadApiV1AssistantThreadsPostHeaders;
 		},
 		TContext
@@ -277,7 +275,7 @@ export const getCreateThreadApiV1AssistantThreadsPostMutationOptions = <
 	Awaited<ReturnType<typeof createThreadApiV1AssistantThreadsPost>>,
 	TError,
 	{
-		data: BodyType<CreateThreadApiV1AssistantThreadsPostBody>;
+		data?: BodyType<CreateThreadApiV1AssistantThreadsPostBody>;
 		headers?: CreateThreadApiV1AssistantThreadsPostHeaders;
 	},
 	TContext
@@ -294,7 +292,7 @@ export const getCreateThreadApiV1AssistantThreadsPostMutationOptions = <
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof createThreadApiV1AssistantThreadsPost>>,
 		{
-			data: BodyType<CreateThreadApiV1AssistantThreadsPostBody>;
+			data?: BodyType<CreateThreadApiV1AssistantThreadsPostBody>;
 			headers?: CreateThreadApiV1AssistantThreadsPostHeaders;
 		}
 	> = (props) => {
@@ -310,7 +308,8 @@ export type CreateThreadApiV1AssistantThreadsPostMutationResult = NonNullable<
 	Awaited<ReturnType<typeof createThreadApiV1AssistantThreadsPost>>
 >;
 export type CreateThreadApiV1AssistantThreadsPostMutationBody =
-	BodyType<CreateThreadApiV1AssistantThreadsPostBody>;
+	| BodyType<CreateThreadApiV1AssistantThreadsPostBody>
+	| undefined;
 export type CreateThreadApiV1AssistantThreadsPostMutationError = ErrorType<
 	ErrorResponseDTO | HTTPValidationErrorDTO
 >;
@@ -326,7 +325,7 @@ export const useCreateThreadApiV1AssistantThreadsPost = <
 		Awaited<ReturnType<typeof createThreadApiV1AssistantThreadsPost>>,
 		TError,
 		{
-			data: BodyType<CreateThreadApiV1AssistantThreadsPostBody>;
+			data?: BodyType<CreateThreadApiV1AssistantThreadsPostBody>;
 			headers?: CreateThreadApiV1AssistantThreadsPostHeaders;
 		},
 		TContext
@@ -335,15 +334,14 @@ export const useCreateThreadApiV1AssistantThreadsPost = <
 	Awaited<ReturnType<typeof createThreadApiV1AssistantThreadsPost>>,
 	TError,
 	{
-		data: BodyType<CreateThreadApiV1AssistantThreadsPostBody>;
+		data?: BodyType<CreateThreadApiV1AssistantThreadsPostBody>;
 		headers?: CreateThreadApiV1AssistantThreadsPostHeaders;
 	},
 	TContext
 > => {
-	const mutationOptions =
-		getCreateThreadApiV1AssistantThreadsPostMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(
+		getCreateThreadApiV1AssistantThreadsPostMutationOptions(options),
+	);
 };
 /**
  * Cursor-based pagination, sorted by updatedAt desc. Use `archived=true|false|all` to filter.
@@ -365,13 +363,8 @@ export const listThreadsApiV1AssistantThreadsGet = (
 
 export const getListThreadsApiV1AssistantThreadsGetQueryKey = (
 	params?: ListThreadsApiV1AssistantThreadsGetParams,
-	headers?: ListThreadsApiV1AssistantThreadsGetHeaders,
 ) => {
-	return [
-		`/api/v1/assistant/threads`,
-		...(params ? [params] : []),
-		...getGeneratedAPIQueryKeyHeaders(headers),
-	] as const;
+	return [`/api/v1/assistant/threads`, ...(params ? [params] : [])] as const;
 };
 
 export const getListThreadsApiV1AssistantThreadsGetQueryOptions = <
@@ -392,7 +385,7 @@ export const getListThreadsApiV1AssistantThreadsGetQueryOptions = <
 
 	const queryKey =
 		queryOptions?.queryKey ??
-		getListThreadsApiV1AssistantThreadsGetQueryKey(params, headers);
+		getListThreadsApiV1AssistantThreadsGetQueryKey(params);
 
 	const queryFn: QueryFunction<
 		Awaited<ReturnType<typeof listThreadsApiV1AssistantThreadsGet>>
@@ -441,9 +434,7 @@ export function useListThreadsApiV1AssistantThreadsGet<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
@@ -456,7 +447,7 @@ export const invalidateListThreadsApiV1AssistantThreadsGet = async (
 	options?: InvalidateOptions,
 ): Promise<QueryClient> => {
 	await queryClient.invalidateQueries(
-		{ queryKey: getListThreadsApiV1AssistantThreadsGetQueryKey(params, headers) },
+		{ queryKey: getListThreadsApiV1AssistantThreadsGetQueryKey(params) },
 		options,
 	);
 
@@ -480,14 +471,10 @@ export const getThreadApiV1AssistantThreadsThreadIdGet = (
 	});
 };
 
-export const getGetThreadApiV1AssistantThreadsThreadIdGetQueryKey = (
-	{ threadId }: GetThreadApiV1AssistantThreadsThreadIdGetPathParameters,
-	headers?: GetThreadApiV1AssistantThreadsThreadIdGetHeaders,
-) => {
-	return [
-		`/api/v1/assistant/threads/${threadId}`,
-		...getGeneratedAPIQueryKeyHeaders(headers),
-	] as const;
+export const getGetThreadApiV1AssistantThreadsThreadIdGetQueryKey = ({
+	threadId,
+}: GetThreadApiV1AssistantThreadsThreadIdGetPathParameters) => {
+	return [`/api/v1/assistant/threads/${threadId}`] as const;
 };
 
 export const getGetThreadApiV1AssistantThreadsThreadIdGetQueryOptions = <
@@ -508,7 +495,7 @@ export const getGetThreadApiV1AssistantThreadsThreadIdGetQueryOptions = <
 
 	const queryKey =
 		queryOptions?.queryKey ??
-		getGetThreadApiV1AssistantThreadsThreadIdGetQueryKey({ threadId }, headers);
+		getGetThreadApiV1AssistantThreadsThreadIdGetQueryKey({ threadId });
 
 	const queryFn: QueryFunction<
 		Awaited<ReturnType<typeof getThreadApiV1AssistantThreadsThreadIdGet>>
@@ -562,9 +549,7 @@ export function useGetThreadApiV1AssistantThreadsThreadIdGet<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
@@ -578,10 +563,7 @@ export const invalidateGetThreadApiV1AssistantThreadsThreadIdGet = async (
 ): Promise<QueryClient> => {
 	await queryClient.invalidateQueries(
 		{
-			queryKey: getGetThreadApiV1AssistantThreadsThreadIdGetQueryKey(
-				{ threadId },
-				headers,
-			),
+			queryKey: getGetThreadApiV1AssistantThreadsThreadIdGetQueryKey({ threadId }),
 		},
 		options,
 	);
@@ -596,12 +578,14 @@ export const updateThreadApiV1AssistantThreadsThreadIdPatch = (
 	{ threadId }: UpdateThreadApiV1AssistantThreadsThreadIdPatchPathParameters,
 	updateThreadRequestDTO: BodyType<UpdateThreadRequestDTO>,
 	headers?: UpdateThreadApiV1AssistantThreadsThreadIdPatchHeaders,
+	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<ThreadSummaryDTO>({
 		url: `/api/v1/assistant/threads/${threadId}`,
 		method: 'PATCH',
 		headers: { 'Content-Type': 'application/json', ...headers },
 		data: updateThreadRequestDTO,
+		signal,
 	});
 };
 
@@ -695,10 +679,9 @@ export const useUpdateThreadApiV1AssistantThreadsThreadIdPatch = <
 	},
 	TContext
 > => {
-	const mutationOptions =
-		getUpdateThreadApiV1AssistantThreadsThreadIdPatchMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(
+		getUpdateThreadApiV1AssistantThreadsThreadIdPatchMutationOptions(options),
+	);
 };
 /**
  * Persists the user message, creates an execution (state: queued), kicks off the agent loop asynchronously, and returns immediately. Open `GET /executions/{executionId}/events` for the SSE stream.
@@ -825,12 +808,11 @@ export const useCreateMessageApiV1AssistantThreadsThreadIdMessagesPost = <
 	},
 	TContext
 > => {
-	const mutationOptions =
+	return useMutation(
 		getCreateMessageApiV1AssistantThreadsThreadIdMessagesPostMutationOptions(
 			options,
-		);
-
-	return useMutation(mutationOptions);
+		),
+	);
 };
 /**
  * Clean-slate regeneration. Starts a fresh execution with conversation history up to (excluding) the original assistant response.
@@ -961,12 +943,11 @@ export const useRegenerateMessageApiV1AssistantMessagesMessageIdRegeneratePost =
 		},
 		TContext
 	> => {
-		const mutationOptions =
+		return useMutation(
 			getRegenerateMessageApiV1AssistantMessagesMessageIdRegeneratePostMutationOptions(
 				options,
-			);
-
-		return useMutation(mutationOptions);
+			),
+		);
 	};
 /**
  * Triggers a replay execution that runs the stored tool call with exact params. Returns a new executionId — open SSE for that execution.
@@ -1066,10 +1047,9 @@ export const useApproveApiV1AssistantApprovePost = <
 	},
 	TContext
 > => {
-	const mutationOptions =
-		getApproveApiV1AssistantApprovePostMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(
+		getApproveApiV1AssistantApprovePostMutationOptions(options),
+	);
 };
 /**
  * Marks the approval as rejected. The execution completes with no tool execution.
@@ -1169,10 +1149,7 @@ export const useRejectApiV1AssistantRejectPost = <
 	},
 	TContext
 > => {
-	const mutationOptions =
-		getRejectApiV1AssistantRejectPostMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getRejectApiV1AssistantRejectPostMutationOptions(options));
 };
 /**
  * Provides structured answers to a clarification request. Persists the answers as a user transcript message, emits `user_message` as the first replayable event on the new execution stream, and resumes the agent with the answers as tool results.
@@ -1272,10 +1249,9 @@ export const useClarifyApiV1AssistantClarifyPost = <
 	},
 	TContext
 > => {
-	const mutationOptions =
-		getClarifyApiV1AssistantClarifyPostMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(
+		getClarifyApiV1AssistantClarifyPostMutationOptions(options),
+	);
 };
 /**
  * Cooperative cancel. The agent loop finishes its current step, emits a truncated message if streaming, and transitions to canceled.
@@ -1375,10 +1351,7 @@ export const useCancelApiV1AssistantCancelPost = <
 	},
 	TContext
 > => {
-	const mutationOptions =
-		getCancelApiV1AssistantCancelPostMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getCancelApiV1AssistantCancelPostMutationOptions(options));
 };
 /**
  * Deletes the resource that was created by the assistant.
@@ -1477,9 +1450,7 @@ export const useUndoApiV1AssistantUndoPost = <
 	},
 	TContext
 > => {
-	const mutationOptions = getUndoApiV1AssistantUndoPostMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getUndoApiV1AssistantUndoPostMutationOptions(options));
 };
 /**
  * Rolls back the resource to its pre-change snapshot.
@@ -1579,10 +1550,7 @@ export const useRevertApiV1AssistantRevertPost = <
 	},
 	TContext
 > => {
-	const mutationOptions =
-		getRevertApiV1AssistantRevertPostMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getRevertApiV1AssistantRevertPostMutationOptions(options));
 };
 /**
  * Recreates the resource from its pre-delete snapshot.
@@ -1682,10 +1650,9 @@ export const useRestoreApiV1AssistantRestorePost = <
 	},
 	TContext
 > => {
-	const mutationOptions =
-		getRestoreApiV1AssistantRestorePostMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(
+		getRestoreApiV1AssistantRestorePostMutationOptions(options),
+	);
 };
 /**
  * @summary Submit feedback on an assistant message
@@ -1811,10 +1778,221 @@ export const useSubmitFeedbackApiV1AssistantMessagesMessageIdFeedbackPost = <
 	},
 	TContext
 > => {
-	const mutationOptions =
+	return useMutation(
 		getSubmitFeedbackApiV1AssistantMessagesMessageIdFeedbackPostMutationOptions(
 			options,
-		);
+		),
+	);
+};
+/**
+ * @summary Current rate-limit usage for the authenticated user + org
+ */
+export const getUsageApiV1AssistantUsageGet = (
+	headers?: GetUsageApiV1AssistantUsageGetHeaders,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<UsageResponseDTO>({
+		url: `/api/v1/assistant/usage`,
+		method: 'GET',
+		headers,
+		signal,
+	});
+};
 
-	return useMutation(mutationOptions);
+export const getGetUsageApiV1AssistantUsageGetQueryKey = () => {
+	return [`/api/v1/assistant/usage`] as const;
+};
+
+export const getGetUsageApiV1AssistantUsageGetQueryOptions = <
+	TData = Awaited<ReturnType<typeof getUsageApiV1AssistantUsageGet>>,
+	TError = ErrorType<ErrorResponseDTO | HTTPValidationErrorDTO>,
+>(
+	headers?: GetUsageApiV1AssistantUsageGetHeaders,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getUsageApiV1AssistantUsageGet>>,
+			TError,
+			TData
+		>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ?? getGetUsageApiV1AssistantUsageGetQueryKey();
+
+	const queryFn: QueryFunction<
+		Awaited<ReturnType<typeof getUsageApiV1AssistantUsageGet>>
+	> = ({ signal }) => getUsageApiV1AssistantUsageGet(headers, signal);
+
+	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+		Awaited<ReturnType<typeof getUsageApiV1AssistantUsageGet>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type GetUsageApiV1AssistantUsageGetQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getUsageApiV1AssistantUsageGet>>
+>;
+export type GetUsageApiV1AssistantUsageGetQueryError = ErrorType<
+	ErrorResponseDTO | HTTPValidationErrorDTO
+>;
+
+/**
+ * @summary Current rate-limit usage for the authenticated user + org
+ */
+
+export function useGetUsageApiV1AssistantUsageGet<
+	TData = Awaited<ReturnType<typeof getUsageApiV1AssistantUsageGet>>,
+	TError = ErrorType<ErrorResponseDTO | HTTPValidationErrorDTO>,
+>(
+	headers?: GetUsageApiV1AssistantUsageGetHeaders,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getUsageApiV1AssistantUsageGet>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getGetUsageApiV1AssistantUsageGetQueryOptions(
+		headers,
+		options,
+	);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Current rate-limit usage for the authenticated user + org
+ */
+export const invalidateGetUsageApiV1AssistantUsageGet = async (
+	queryClient: QueryClient,
+	headers?: GetUsageApiV1AssistantUsageGetHeaders,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getGetUsageApiV1AssistantUsageGetQueryKey() },
+		options,
+	);
+
+	return queryClient;
+};
+
+/**
+ * @summary Contextual empty-state chips
+ */
+export const getChipsApiV1AssistantEmptyStateChipsGet = (
+	params: GetChipsApiV1AssistantEmptyStateChipsGetParams,
+	headers?: GetChipsApiV1AssistantEmptyStateChipsGetHeaders,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<ChipsResponseDTO>({
+		url: `/api/v1/assistant/empty-state/chips`,
+		method: 'GET',
+		headers,
+		params,
+		signal,
+	});
+};
+
+export const getGetChipsApiV1AssistantEmptyStateChipsGetQueryKey = (
+	params?: GetChipsApiV1AssistantEmptyStateChipsGetParams,
+) => {
+	return [
+		`/api/v1/assistant/empty-state/chips`,
+		...(params ? [params] : []),
+	] as const;
+};
+
+export const getGetChipsApiV1AssistantEmptyStateChipsGetQueryOptions = <
+	TData = Awaited<ReturnType<typeof getChipsApiV1AssistantEmptyStateChipsGet>>,
+	TError = ErrorType<ErrorResponseDTO | HTTPValidationErrorDTO>,
+>(
+	params: GetChipsApiV1AssistantEmptyStateChipsGetParams,
+	headers?: GetChipsApiV1AssistantEmptyStateChipsGetHeaders,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getChipsApiV1AssistantEmptyStateChipsGet>>,
+			TError,
+			TData
+		>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ??
+		getGetChipsApiV1AssistantEmptyStateChipsGetQueryKey(params);
+
+	const queryFn: QueryFunction<
+		Awaited<ReturnType<typeof getChipsApiV1AssistantEmptyStateChipsGet>>
+	> = ({ signal }) =>
+		getChipsApiV1AssistantEmptyStateChipsGet(params, headers, signal);
+
+	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+		Awaited<ReturnType<typeof getChipsApiV1AssistantEmptyStateChipsGet>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type GetChipsApiV1AssistantEmptyStateChipsGetQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getChipsApiV1AssistantEmptyStateChipsGet>>
+>;
+export type GetChipsApiV1AssistantEmptyStateChipsGetQueryError = ErrorType<
+	ErrorResponseDTO | HTTPValidationErrorDTO
+>;
+
+/**
+ * @summary Contextual empty-state chips
+ */
+
+export function useGetChipsApiV1AssistantEmptyStateChipsGet<
+	TData = Awaited<ReturnType<typeof getChipsApiV1AssistantEmptyStateChipsGet>>,
+	TError = ErrorType<ErrorResponseDTO | HTTPValidationErrorDTO>,
+>(
+	params: GetChipsApiV1AssistantEmptyStateChipsGetParams,
+	headers?: GetChipsApiV1AssistantEmptyStateChipsGetHeaders,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getChipsApiV1AssistantEmptyStateChipsGet>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getGetChipsApiV1AssistantEmptyStateChipsGetQueryOptions(
+		params,
+		headers,
+		options,
+	);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Contextual empty-state chips
+ */
+export const invalidateGetChipsApiV1AssistantEmptyStateChipsGet = async (
+	queryClient: QueryClient,
+	params: GetChipsApiV1AssistantEmptyStateChipsGetParams,
+	headers?: GetChipsApiV1AssistantEmptyStateChipsGetHeaders,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getGetChipsApiV1AssistantEmptyStateChipsGetQueryKey(params) },
+		options,
+	);
+
+	return queryClient;
 };

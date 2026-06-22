@@ -26,10 +26,10 @@ def find_role_by_name(signoz: types.SigNoz, token: str, name: str) -> str:
 
 
 def create_custom_role(signoz: types.SigNoz, token: str, name: str) -> str:
-    """Create a custom role and return its ID."""
+    """Create a custom role and return its ID. transactionGroups is required (send [] for none)."""
     resp = requests.post(
         signoz.self.host_configs["8080"].get(ROLES_BASE),
-        json={"name": name},
+        json={"name": name, "transactionGroups": []},
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )

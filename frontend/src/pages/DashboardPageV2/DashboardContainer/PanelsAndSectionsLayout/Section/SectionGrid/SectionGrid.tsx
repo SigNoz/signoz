@@ -54,6 +54,7 @@ function SectionGrid({
 			useCSSTransforms
 			layout={rglLayout}
 			draggableHandle=".panel-drag-handle"
+			draggableCancel=".panel-no-drag"
 			isDraggable={isEditable}
 			isResizable={isEditable}
 			onDragStop={handleLayoutChange}
@@ -62,21 +63,23 @@ function SectionGrid({
 		>
 			{items.map((item) => (
 				<div key={item.id}>
-					<Panel
-						panel={item.panel}
-						panelId={item.id}
-						isVisible={isVisible}
-						panelActions={
-							isEditable && onMovePanel && onDeletePanel
-								? {
-										currentLayoutIndex: layoutIndex,
-										sections: sections ?? [],
-										onMovePanel,
-										onDeletePanel,
-									}
-								: undefined
-						}
-					/>
+					{item.panel && (
+						<Panel
+							panel={item.panel}
+							panelId={item.id}
+							isVisible={isVisible}
+							panelActions={
+								isEditable && onMovePanel && onDeletePanel
+									? {
+											currentLayoutIndex: layoutIndex,
+											sections: sections ?? [],
+											onMovePanel,
+											onDeletePanel,
+										}
+									: undefined
+							}
+						/>
+					)}
 				</div>
 			))}
 		</ResponsiveGridLayout>

@@ -232,6 +232,66 @@ def test_get_missing_dashboard_returns_not_found(
     assert response.status_code == HTTPStatus.NOT_FOUND
 
 
+def test_update_rejects_malformed_id(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"{BASE_URL}/not-a-uuid"),
+        json={
+            "schemaVersion": "v6",
+            "name": "malformed-id",
+            "spec": {"display": {"name": "Malformed Id"}},
+            "tags": [],
+        },
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+
+
+def test_update_missing_dashboard_returns_not_found(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"{BASE_URL}/{uuid.uuid4()}"),
+        json={
+            "schemaVersion": "v6",
+            "name": "missing-dashboard",
+            "spec": {"display": {"name": "Missing Dashboard"}},
+            "tags": [],
+        },
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+
+
+def test_delete_rejects_malformed_id(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    response = requests.delete(
+        signoz.self.host_configs["8080"].get(f"{BASE_URL}/not-a-uuid"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+
+
 def test_delete_missing_dashboard_returns_not_found(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
@@ -686,6 +746,28 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
         "Zeta Overview",
     }
 
+    # ── stage 11: clone keeps the display name but mints a new, retrievable one ─
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(f"{BASE_URL}/{ids['lc-alpha']}/clone"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    clone = response.json()["data"]
+    assert clone["id"] != ids["lc-alpha"]
+    assert clone["name"] != "lc-alpha"  # internal name is regenerated
+    assert clone["spec"]["display"]["name"] == "Alpha Overview"  # display name preserved
+    assert clone["source"] == "user"
+    assert clone["locked"] is False
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(f"{BASE_URL}/{clone['id']}"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert response.json()["data"]["id"] == clone["id"]
+
 
 def test_dashboard_v2_pin_limit(
     signoz: SigNoz,
@@ -763,6 +845,12 @@ def test_dashboard_v2_pin_limit(
         ).status_code
         == HTTPStatus.NO_CONTENT
     )
+
+
+# TODO: add an integration test that clones an integration-source dashboard once
+# integration dashboards adopt the v2 (perses) flow. Today they're created via the
+# v1 path, and the v2 clone endpoint only operates on v6 dashboards — so the
+# integration-source branch of clone is unreachable through the API.
 
 
 # ─── LIKE escaping ───────────────────────────────────────────────────────────

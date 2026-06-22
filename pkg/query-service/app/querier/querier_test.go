@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	cmock "github.com/SigNoz/clickhouse-go-mock"
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/cache/cachetest"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
@@ -26,7 +27,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	cmock "github.com/SigNoz/clickhouse-go-mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -1409,8 +1409,6 @@ func Test_querier_Traces_runWindowBasedListQueryDesc(t *testing.T) {
 				telemetryStore,
 				prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{Timeout: 2 * time.Minute}, telemetryStore),
 				"",
-				time.Duration(time.Second),
-				nil,
 				nil,
 				options,
 			)
@@ -1635,8 +1633,6 @@ func Test_querier_Traces_runWindowBasedListQueryAsc(t *testing.T) {
 				telemetryStore,
 				prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{Timeout: 2 * time.Minute}, telemetryStore),
 				"",
-				time.Duration(time.Second),
-				nil,
 				nil,
 				options,
 			)
@@ -1936,8 +1932,6 @@ func Test_querier_Logs_runWindowBasedListQueryDesc(t *testing.T) {
 				telemetryStore,
 				prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{Timeout: 2 * time.Minute}, telemetryStore),
 				"",
-				time.Duration(time.Second),
-				nil,
 				nil,
 				options,
 			)
@@ -2164,8 +2158,6 @@ func Test_querier_Logs_runWindowBasedListQueryAsc(t *testing.T) {
 				telemetryStore,
 				prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{Timeout: 2 * time.Minute}, telemetryStore),
 				"",
-				time.Duration(time.Second),
-				nil,
 				nil,
 				options,
 			)

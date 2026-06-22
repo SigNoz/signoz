@@ -100,7 +100,16 @@ func (provider *provider) Collect(ctx context.Context, orgID valuer.UUID) (map[s
 		return nil, err
 	}
 
-	return ruletypes.NewStatsFromRules(rules), nil
+	stats := ruletypes.NewStatsFromRules(rules)
+
+	alertStats := provider.manager.AlertStats(ctx)
+	stats["alert.firing.count"] = alertStats.FiringRules
+	if !alertStats.LastFiredAt.IsZero() {
+		stats["alert.last_fired.time"] = alertStats.LastFiredAt.UTC()
+		stats["alert.last_fired.time_unix"] = alertStats.LastFiredAt.Unix()
+	}
+
+	return stats, nil
 }
 
 func (provider *provider) ListRuleStates(ctx context.Context) (*ruletypes.GettableRules, error) {

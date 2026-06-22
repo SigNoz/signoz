@@ -1,0 +1,167 @@
+{
+  "id": "sqldatabasemi",
+  "title": "SQL Database Managed Instance",
+  "icon": "file://icon.svg",
+  "overview": "file://overview.md",
+  "supportedSignals": {
+    "metrics": true,
+    "logs": true
+  },
+  "dataCollected": {
+    "metrics": [
+      {
+        "name": "azure_avg_cpu_percent_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Average CPU utilization of the managed instance, as a percentage."
+      },
+      {
+        "name": "azure_avg_cpu_percent_maximum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Maximum CPU utilization of the managed instance, as a percentage."
+      },
+      {
+        "name": "azure_avg_cpu_percent_minimum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Minimum CPU utilization of the managed instance, as a percentage."
+      },
+      {
+        "name": "azure_io_bytes_read_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Average bytes read from storage by the managed instance."
+      },
+      {
+        "name": "azure_io_bytes_read_maximum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Maximum bytes read from storage by the managed instance."
+      },
+      {
+        "name": "azure_io_bytes_read_minimum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Minimum bytes read from storage by the managed instance."
+      },
+      {
+        "name": "azure_io_bytes_written_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Average bytes written to storage by the managed instance."
+      },
+      {
+        "name": "azure_io_bytes_written_maximum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Maximum bytes written to storage by the managed instance."
+      },
+      {
+        "name": "azure_io_bytes_written_minimum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Minimum bytes written to storage by the managed instance."
+      },
+      {
+        "name": "azure_io_requests_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Average number of storage IO requests made by the managed instance."
+      },
+      {
+        "name": "azure_io_requests_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Maximum number of storage IO requests made by the managed instance."
+      },
+      {
+        "name": "azure_io_requests_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Minimum number of storage IO requests made by the managed instance."
+      },
+      {
+        "name": "azure_reserved_storage_mb_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Average storage space reserved for the managed instance, in megabytes."
+      },
+      {
+        "name": "azure_reserved_storage_mb_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Maximum storage space reserved for the managed instance, in megabytes."
+      },
+      {
+        "name": "azure_reserved_storage_mb_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Minimum storage space reserved for the managed instance, in megabytes."
+      },
+      {
+        "name": "azure_storage_space_used_mb_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Average storage space used by the managed instance, in megabytes."
+      },
+      {
+        "name": "azure_storage_space_used_mb_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Maximum storage space used by the managed instance, in megabytes."
+      },
+      {
+        "name": "azure_storage_space_used_mb_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Minimum storage space used by the managed instance, in megabytes."
+      },
+      {
+        "name": "azure_virtual_core_count_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Average number of virtual cores provisioned for the managed instance."
+      },
+      {
+        "name": "azure_virtual_core_count_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Maximum number of virtual cores provisioned for the managed instance."
+      },
+      {
+        "name": "azure_virtual_core_count_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Minimum number of virtual cores provisioned for the managed instance."
+      }
+    ],
+    "logs": [
+      {
+        "name": "Resource ID",
+        "path": "resources.azure.resource.id",
+        "type": "string"
+      }
+    ]
+  },
+  "telemetryCollectionStrategy": {
+    "azure": {
+      "resourceProvider": "Microsoft.Sql",
+      "resourceType": "managedInstances",
+      "metrics": {},
+      "logs": {
+        "categoryGroups": ["allLogs"]
+      }
+    }
+  },
+  "assets": {
+    "dashboards": [
+      {
+        "id": "overview",
+        "title": "Azure SQL Database Managed Instance Overview",
+        "description": "Overview of Azure SQL Database Managed Instance metrics",
+        "definition": "file://assets/dashboards/overview.json"
+      }
+    ]
+  }
+}
