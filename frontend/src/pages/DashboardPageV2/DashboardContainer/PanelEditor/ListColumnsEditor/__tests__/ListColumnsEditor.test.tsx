@@ -1,4 +1,5 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import {
 	TelemetrytypesSignalDTO,
 	type DashboardtypesPanelSpecDTO,
@@ -83,7 +84,8 @@ describe('ListColumnsEditor', () => {
 		);
 	});
 
-	it('removing a chip writes the spec without that column', () => {
+	it('removing a chip writes the spec without that column', async () => {
+		const user = userEvent.setup();
 		const onChangeSpec = jest.fn();
 		render(
 			<ListColumnsEditor
@@ -93,7 +95,7 @@ describe('ListColumnsEditor', () => {
 			/>,
 		);
 
-		fireEvent.click(screen.getByLabelText('Remove body'));
+		await user.click(screen.getByLabelText('Remove body'));
 
 		expect(onChangeSpec).toHaveBeenCalledTimes(1);
 		const nextSpec = onChangeSpec.mock.calls[0][0] as DashboardtypesPanelSpecDTO;
@@ -102,6 +104,7 @@ describe('ListColumnsEditor', () => {
 	});
 
 	it('adds a suggestion picked from the dropdown', async () => {
+		const user = userEvent.setup();
 		mockUseGetFieldsKeys.mockReturnValue({
 			data: { data: { keys: { group: [{ name: 'status' }] } } },
 			isFetching: false,
@@ -115,9 +118,9 @@ describe('ListColumnsEditor', () => {
 			/>,
 		);
 
-		fireEvent.click(screen.getByTestId('list-columns-add'));
+		await user.click(screen.getByTestId('list-columns-add'));
 		const suggestion = await screen.findByText('status');
-		fireEvent.click(suggestion);
+		await user.click(suggestion);
 
 		expect(onChangeSpec).toHaveBeenCalledTimes(1);
 		const nextSpec = onChangeSpec.mock.calls[0][0] as DashboardtypesPanelSpecDTO;

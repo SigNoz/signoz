@@ -1,5 +1,6 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { Button } from '@signozhq/ui/button';
 import { GripVertical, X } from '@signozhq/icons';
 
 import styles from './SortableColumnChip.module.scss';
@@ -35,27 +36,33 @@ function SortableColumnChip({
 
 	return (
 		<div ref={setNodeRef} style={style} className={styles.chip}>
-			<button
+			<Button
 				type="button"
+				variant="ghost"
+				color="secondary"
+				size="icon"
 				className={styles.grip}
 				aria-label={`Reorder ${name}`}
 				{...attributes}
 				{...listeners}
 			>
 				<GripVertical size={12} />
-			</button>
+			</Button>
 			<span className={styles.chipName} title={name}>
 				{name}
 			</span>
-			<button
+			<Button
 				type="button"
+				variant="ghost"
+				color="secondary"
+				size="icon"
 				className={styles.remove}
 				aria-label={`Remove ${name}`}
-				data-testid="list-column-remove"
+				testId="list-column-remove"
 				onClick={(): void => onRemove(name)}
 			>
 				<X size={12} />
-			</button>
+			</Button>
 		</div>
 	);
 }

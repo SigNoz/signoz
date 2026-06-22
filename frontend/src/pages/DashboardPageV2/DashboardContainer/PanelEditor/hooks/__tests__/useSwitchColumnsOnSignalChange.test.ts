@@ -1,7 +1,8 @@
 import { renderHook } from '@testing-library/react';
-import type {
-	DashboardtypesPanelSpecDTO,
-	TelemetrytypesTelemetryFieldKeyDTO,
+import {
+	type DashboardtypesPanelSpecDTO,
+	TelemetrytypesSignalDTO,
+	type TelemetrytypesTelemetryFieldKeyDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import {
 	defaultLogsSelectedColumns,
@@ -31,7 +32,7 @@ function makeSpec(
 
 type Props = {
 	enabled: boolean;
-	signal: string | undefined;
+	signal: TelemetrytypesSignalDTO | undefined;
 	spec: DashboardtypesPanelSpecDTO;
 	onChangeSpec: (next: DashboardtypesPanelSpecDTO) => void;
 };
@@ -54,12 +55,17 @@ describe('useSwitchColumnsOnSignalChange', () => {
 		const spec = makeSpec([{ name: 'body' }]);
 		const { rerender } = renderWith({
 			enabled: true,
-			signal: 'logs',
+			signal: TelemetrytypesSignalDTO.logs,
 			spec,
 			onChangeSpec,
 		});
 
-		rerender({ enabled: true, signal: 'traces', spec, onChangeSpec });
+		rerender({
+			enabled: true,
+			signal: TelemetrytypesSignalDTO.traces,
+			spec,
+			onChangeSpec,
+		});
 
 		expect(onChangeSpec).toHaveBeenCalledTimes(1);
 		expect(selectFieldsOf(onChangeSpec.mock.calls[0][0])).toStrictEqual(
@@ -72,12 +78,17 @@ describe('useSwitchColumnsOnSignalChange', () => {
 		const spec = makeSpec([{ name: 'service.name' }]);
 		const { rerender } = renderWith({
 			enabled: true,
-			signal: 'traces',
+			signal: TelemetrytypesSignalDTO.traces,
 			spec,
 			onChangeSpec,
 		});
 
-		rerender({ enabled: true, signal: 'logs', spec, onChangeSpec });
+		rerender({
+			enabled: true,
+			signal: TelemetrytypesSignalDTO.logs,
+			spec,
+			onChangeSpec,
+		});
 
 		expect(selectFieldsOf(onChangeSpec.mock.calls[0][0])).toStrictEqual(
 			expectedLogs,
@@ -89,12 +100,17 @@ describe('useSwitchColumnsOnSignalChange', () => {
 		const spec = makeSpec([{ name: 'body' }]);
 		const { rerender } = renderWith({
 			enabled: true,
-			signal: 'logs',
+			signal: TelemetrytypesSignalDTO.logs,
 			spec,
 			onChangeSpec,
 		});
 
-		rerender({ enabled: true, signal: 'logs', spec, onChangeSpec });
+		rerender({
+			enabled: true,
+			signal: TelemetrytypesSignalDTO.logs,
+			spec,
+			onChangeSpec,
+		});
 		expect(onChangeSpec).not.toHaveBeenCalled();
 	});
 
@@ -103,7 +119,7 @@ describe('useSwitchColumnsOnSignalChange', () => {
 		const spec = makeSpec([{ name: 'body' }]);
 		const { rerender } = renderWith({
 			enabled: true,
-			signal: 'logs',
+			signal: TelemetrytypesSignalDTO.logs,
 			spec,
 			onChangeSpec,
 		});
@@ -117,12 +133,17 @@ describe('useSwitchColumnsOnSignalChange', () => {
 		const spec = makeSpec([{ name: 'body' }]);
 		const { rerender } = renderWith({
 			enabled: false,
-			signal: 'logs',
+			signal: TelemetrytypesSignalDTO.logs,
 			spec,
 			onChangeSpec,
 		});
 
-		rerender({ enabled: false, signal: 'traces', spec, onChangeSpec });
+		rerender({
+			enabled: false,
+			signal: TelemetrytypesSignalDTO.traces,
+			spec,
+			onChangeSpec,
+		});
 		expect(onChangeSpec).not.toHaveBeenCalled();
 	});
 });

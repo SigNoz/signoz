@@ -3,7 +3,10 @@ import { Select, Table } from 'antd';
 import cx from 'classnames';
 import { Button } from '@signozhq/ui/button';
 import { ChevronLeft, ChevronRight } from '@signozhq/icons';
-import type { DashboardtypesListPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	type DashboardtypesListPanelSpecDTO,
+	TelemetrytypesSignalDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import LogDetail from 'components/LogDetail';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { useTimezone } from 'providers/Timezone';
@@ -34,8 +37,7 @@ function ListPanelRenderer({
 	searchTerm = '',
 	pagination,
 }: PanelRendererProps<'signoz/ListPanel'>): JSX.Element {
-	// Measure the panel so the header stays pinned while the body scrolls —
-	// shared with the Table kind. List pages server-side, so only scrollY is used.
+	// Pin the header while the body scrolls (shared with the Table kind).
 	const containerRef = useRef<HTMLDivElement>(null);
 	const { height } = useResizeObserver(containerRef);
 	const { scrollY } = useMemo(() => computeTableLayout(height), [height]);
@@ -48,22 +50,21 @@ function ListPanelRenderer({
 	);
 
 	// Telemetry signal of the panel's first builder query — drives data flattening,
-	// the per-signal cell rendering, and the row-click behavior (log drawer vs trace
-	// navigation), mirroring V1's Logs/Traces split.
+	// per-signal cell rendering, and the row-click behavior (log drawer vs trace
+	// navigation). Cast at this boundary (the query carries the same string values).
 	const signal = useMemo(
-		() => getBuilderQueries(panel.spec.queries)[0]?.signal,
+		() =>
+			getBuilderQueries(panel.spec.queries)[0]?.signal as
+				| TelemetrytypesSignalDTO
+				| undefined,
 		[panel.spec.queries],
 	);
 
-	// `raw`/`trace` responses carry one result per query; the prep util picks the
-	// first with rows and flattens it (columns from the panel's selectFields, or
-	// derived from the rows when none are chosen). For logs it also flattens nested
-	// attribute maps so selected fields resolve (V1 `FlatLogData` parity).
 	const table = useMemo(
 		() =>
 			prepareRawTable({
 				results: getRawResults(data?.response),
-				selectFields: spec.selectFields,
+				selectFields: spec.selectFields ?? [],
 				signal,
 			}),
 		[data?.response, spec.selectFields, signal],
@@ -83,8 +84,7 @@ function ListPanelRenderer({
 		[table, signal, formatTimezoneAdjustedTimestamp],
 	);
 
-	// User-resizable columns, persisted per panel to localStorage. `body` stays
-	// flexible so it absorbs the remaining width instead of overflowing the panel.
+	// User-resizable columns, persisted per panel; `body` flexes to fill width.
 	const { columns: resizableColumns, components } = useResizableColumns({
 		panelId,
 		columns,
@@ -132,8 +132,8 @@ function ListPanelRenderer({
 				<>
 					<div
 						className={cx(styles.container, {
-							[styles.logRows]: signal === 'logs',
-							[styles.traceRows]: signal === 'traces',
+							[styles.logRows]: signal === TelemetrytypesSignalDTO.logs,
+							[styles.traceRows]: signal === TelemetrytypesSignalDTO.traces,
 						})}
 					>
 						<Table
@@ -143,10 +143,9 @@ function ListPanelRenderer({
 							components={components}
 							dataSource={filteredDataSource}
 							pagination={false}
-							// Only scroll the body vertically; the table fills the panel width
-							// (no `x: 'max-content'`, which forced a content-width min and pushed
-							// right-hand columns off-screen). `tableLayout="fixed"` then fits the
-							// columns to the available width.
+							// Scroll the body vertically only — no `x: 'max-content'`, which
+							// forced a content-width min and pushed columns off-screen;
+							// `tableLayout="fixed"` fits them to the available width.
 							scroll={{ y: scrollY }}
 							onRow={onRow}
 						/>
@@ -195,7 +194,7 @@ function ListPanelRenderer({
 					)}
 				</>
 			)}
-			{logDetail?.activeLog && logDetail.selectedTab && (
+			{logDetail?.activeLog && (
 				<LogDetail
 					log={logDetail.activeLog}
 					selectedTab={logDetail.selectedTab}

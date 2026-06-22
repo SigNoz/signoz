@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import type { TableProps } from 'antd';
 import { Badge } from '@signozhq/ui/badge';
 import { Typography } from '@signozhq/ui/typography';
+import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { getMs } from 'container/Trace/Filters/Panel/PanelBody/Duration/util';
 import type {
@@ -136,7 +137,7 @@ export interface BuildListColumnsArgs {
 	/** Prepared column ids in render order (timestamp first when present). */
 	columns: string[];
 	/** Panel telemetry signal — picks log vs trace cell rendering. */
-	signal?: string;
+	signal: TelemetrytypesSignalDTO | undefined;
 	/** Timezone-aware timestamp formatter from `useTimezone`. */
 	formatTimestamp: FormatTimezoneAdjustedTimestamp;
 }
@@ -152,7 +153,7 @@ export function buildListColumns({
 	signal,
 	formatTimestamp,
 }: BuildListColumnsArgs): ListColumns {
-	const isTraces = signal === 'traces';
+	const isTraces = signal === TelemetrytypesSignalDTO.traces;
 	const renderTimestamp = makeTimestampRenderer(formatTimestamp);
 
 	return columns.map((name) => {

@@ -1,7 +1,17 @@
 import { useState } from 'react';
-import { Input } from 'antd';
-import { Popover, PopoverContent, PopoverTrigger } from '@signozhq/ui/popover';
-import { Check, Plus, Search } from '@signozhq/icons';
+import { Button } from '@signozhq/ui/button';
+import {
+	Combobox,
+	ComboboxCommand,
+	ComboboxContent,
+	ComboboxEmpty,
+	ComboboxInput,
+	ComboboxItem,
+	ComboboxList,
+	ComboboxLoading,
+	ComboboxTrigger,
+} from '@signozhq/ui/combobox';
+import { Plus } from '@signozhq/icons';
 import type {
 	TelemetrytypesSignalDTO,
 	TelemetrytypesTelemetryFieldKeyDTO,
@@ -18,10 +28,10 @@ interface AddColumnDropdownProps {
 }
 
 /**
- * The "+" affordance for the List columns editor: a popover with a field-key
- * search and a togglable suggestion list. Picking a suggestion adds it (with its
- * metadata); picking a selected one removes it. A non-matching search term can be
- * added verbatim so fields not yet indexed are still selectable.
+ * The "+" affordance for the List columns editor: a searchable combobox of
+ * field-key suggestions. Picking a suggestion toggles it (checkmark = selected);
+ * a non-matching search term can be added verbatim so not-yet-indexed fields are
+ * still selectable. Search is server-side, so cmdk filtering is disabled.
  */
 function AddColumnDropdown({
 	signal,
@@ -34,65 +44,62 @@ function AddColumnDropdown({
 
 	const trimmed = searchText.trim();
 	const hasExactMatch = suggestions.some((field) => field.name === trimmed);
+	const showCustomAdd = trimmed.length > 0 && !hasExactMatch;
 
 	return (
-		<Popover open={open} onOpenChange={setOpen}>
-			<PopoverTrigger asChild>
-				<button
+		<Combobox open={open} onOpenChange={setOpen}>
+			<ComboboxTrigger asChild>
+				<Button
 					type="button"
+					variant="outlined"
+					color="secondary"
+					size="icon"
 					className={styles.addBtn}
 					aria-label="Add column"
+					// `data-testid` (not the `testId` prop) survives the trigger's
+					// `asChild` Slot merge, which otherwise resets it to undefined.
 					data-testid="list-columns-add"
 				>
 					<Plus size={16} />
-				</button>
-			</PopoverTrigger>
-			<PopoverContent arrow side="top" align="end" className={styles.dropdown}>
-				<Input
-					autoFocus
-					className={styles.search}
-					value={searchText}
-					onChange={(event): void => setSearchText(event.target.value)}
-					placeholder="Search fields"
-					prefix={<Search size={14} />}
-					data-testid="list-columns-search"
-				/>
-				<div className={styles.suggestionList}>
-					{trimmed && !hasExactMatch && (
-						<button
-							type="button"
-							className={styles.suggestion}
-							onClick={(): void => onToggle({ name: trimmed })}
-							data-testid="list-columns-add-custom"
-						>
-							<span className={styles.checkSlot} />
-							Add &quot;{trimmed}&quot;
-						</button>
-					)}
-					{suggestions.map((field) => {
-						const checked = selectedNames.has(field.name);
-						return (
-							<button
-								type="button"
+				</Button>
+			</ComboboxTrigger>
+			<ComboboxContent arrow side="top" align="end" className={styles.dropdown}>
+				<ComboboxCommand shouldFilter={false}>
+					<ComboboxInput
+						value={searchText}
+						onValueChange={setSearchText}
+						placeholder="Search fields"
+						testId="list-columns-search"
+					/>
+					<ComboboxList>
+						{showCustomAdd && (
+							<ComboboxItem
+								value={trimmed}
+								onSelect={(): void => onToggle({ name: trimmed })}
+								data-testid="list-columns-add-custom"
+							>
+								Add &quot;{trimmed}&quot;
+							</ComboboxItem>
+						)}
+						{suggestions.map((field) => (
+							<ComboboxItem
 								key={field.name}
-								className={styles.suggestion}
-								onClick={(): void => onToggle(field)}
+								value={field.name}
+								isSelected={selectedNames.has(field.name)}
+								onSelect={(): void => onToggle(field)}
 								data-testid="list-columns-suggestion"
 							>
-								<span className={styles.checkSlot}>
-									{checked && <Check size={14} />}
-								</span>
 								{field.name}
-							</button>
-						);
-					})}
-					{!isFetching && suggestions.length === 0 && (
-						<div className={styles.empty}>No fields found</div>
-					)}
-					{isFetching && <div className={styles.empty}>Loading…</div>}
-				</div>
-			</PopoverContent>
-		</Popover>
+							</ComboboxItem>
+						))}
+						{isFetching && <ComboboxLoading>Loading…</ComboboxLoading>}
+						{!isFetching && !showCustomAdd && suggestions.length === 0 && (
+							<ComboboxEmpty>No fields found</ComboboxEmpty>
+						)}
+					</ComboboxList>
+				</ComboboxCommand>
+			</ComboboxContent>
+		</Combobox>
 	);
 }
 

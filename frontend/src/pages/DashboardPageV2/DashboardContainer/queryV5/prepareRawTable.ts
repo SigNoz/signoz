@@ -1,7 +1,9 @@
-import type {
-	Querybuildertypesv5RawDataDTO,
-	TelemetrytypesTelemetryFieldKeyDTO,
+import {
+	type Querybuildertypesv5RawDataDTO,
+	TelemetrytypesSignalDTO,
+	type TelemetrytypesTelemetryFieldKeyDTO,
 } from 'api/generated/services/sigNoz.schemas';
+import { isPlainObject } from 'lodash-es';
 
 /**
  * One raw record flattened for the antd Table: the record's `data` keys spread
@@ -29,23 +31,21 @@ interface PrepareRawTableArgs {
 	/** `raw`/`trace` results from `getRawResults`. */
 	results: Querybuildertypesv5RawDataDTO[];
 	/** The panel's chosen columns; when empty, columns are derived from the rows. */
-	selectFields?: TelemetrytypesTelemetryFieldKeyDTO[];
+	selectFields: TelemetrytypesTelemetryFieldKeyDTO[];
 	/**
-	 * Panel telemetry signal. For `logs`, nested attribute/resource maps in the
-	 * row data are flattened one level so selected fields (e.g. `service.name`,
-	 * which the backend nests under `resources_string`) resolve to a top-level
-	 * column — V1 `FlatLogData` parity. Traces return flat data, so they're left
-	 * as-is.
+	 * Panel telemetry signal. For `logs`, nested attribute/resource maps are
+	 * flattened one level so selected fields (e.g. `service.name`, nested under
+	 * `resources_string`) resolve to a top-level column — V1 `FlatLogData` parity.
+	 * Absent on the derive-columns fallback (no committed query yet).
 	 */
-	signal?: string;
+	signal?: TelemetrytypesSignalDTO;
 }
 
-// Lift the children of object-valued keys to the top level (one level deep),
-// keyed by child name, so selected fields like `service.name` (nested under
-// `resources_string`) resolve to a column — mirrors V1 `FlatLogData`. The
-// original maps are RETAINED on the row (deriveColumns skips them) so the log
-// detail drawer still gets the structured `resources_string`/`attributes_*`.
-// Later keys win on collision, matching V1's last-write-wins flatten.
+// Lift the children of object-valued keys to the top level (one level deep) so
+// selected fields like `service.name` (nested under `resources_string`) resolve
+// to a column — mirrors V1 `FlatLogData`. The original maps are RETAINED so the
+// log detail drawer still gets the structured `resources_string`/`attributes_*`;
+// later keys win on collision, matching V1's last-write-wins flatten.
 function flattenAttributes(
 	data: Record<string, unknown>,
 ): Record<string, unknown> {
@@ -59,14 +59,10 @@ function flattenAttributes(
 	return flat;
 }
 
-function isPlainObject(value: unknown): boolean {
-	return value !== null && typeof value === 'object' && !Array.isArray(value);
-}
-
 // Union of every row's keys (minus the synthetic antd `key`), first-seen order
 // preserved — the fallback column set when the panel hasn't picked fields. The
-// retained nested maps (resources_string, attributes_*, …) are object-valued and
-// excluded: their scalar children are surfaced as lifted top-level columns instead.
+// retained nested maps are object-valued and excluded; their scalar children are
+// surfaced as lifted top-level columns instead.
 function deriveColumns(rows: RawTableRow[]): string[] {
 	const seen = new Set<string>();
 	rows.forEach((row) => {
@@ -97,7 +93,7 @@ export function prepareRawTable({
 		return undefined;
 	}
 
-	const shouldFlatten = signal === 'logs';
+	const shouldFlatten = signal === TelemetrytypesSignalDTO.logs;
 	const rows: RawTableRow[] = result.rows.map((row, index) => {
 		const data = row.data ?? {};
 		return {
@@ -107,9 +103,7 @@ export function prepareRawTable({
 		};
 	});
 
-	const selected = (selectFields ?? [])
-		.map((field) => field.name)
-		.filter(Boolean);
+	const selected = selectFields.map((field) => field.name).filter(Boolean);
 	const columns = selected.length > 0 ? selected : deriveColumns(rows);
 
 	const withoutTimestamp = columns.filter(

@@ -36,10 +36,7 @@ export function sanitizeSelectFields(
 export function readSelectFields(
 	spec: DashboardtypesPanelSpecDTO,
 ): TelemetrytypesTelemetryFieldKeyDTO[] {
-	return (
-		(spec.plugin?.spec as DashboardtypesListPanelSpecDTO | undefined)
-			?.selectFields ?? []
-	);
+	return (spec.plugin.spec as DashboardtypesListPanelSpecDTO).selectFields ?? [];
 }
 
 export function writeSelectFields(
@@ -47,7 +44,7 @@ export function writeSelectFields(
 	selectFields: TelemetrytypesTelemetryFieldKeyDTO[],
 ): DashboardtypesPanelSpecDTO {
 	const listSpec: DashboardtypesListPanelSpecDTO = {
-		...(spec.plugin?.spec as DashboardtypesListPanelSpecDTO),
+		...(spec.plugin.spec as DashboardtypesListPanelSpecDTO),
 		selectFields: sanitizeSelectFields(selectFields),
 	};
 	return {

@@ -1,6 +1,6 @@
 import { HTMLAttributes, useCallback, useMemo } from 'react';
 import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
-import { VIEWS } from 'components/LogDetail/constants';
+import { VIEW_TYPES, type VIEWS } from 'components/LogDetail/constants';
 import { getTraceLink } from 'container/TracesExplorer/ListView/utils';
 import useLogDetailHandlers from 'hooks/logs/useLogDetailHandlers';
 import history from 'lib/history';
@@ -15,7 +15,7 @@ import { rawRowToILog } from './rawRowToILog';
 /** Drawer state surfaced to the renderer when the panel shows logs. */
 export interface ListLogDetail {
 	activeLog: ILog | null;
-	selectedTab: VIEWS | undefined;
+	selectedTab: VIEWS;
 	logs: ILog[];
 	onClose: () => void;
 	onAddToQuery: ReturnType<typeof useLogDetailHandlers>['onAddToQuery'];
@@ -23,12 +23,8 @@ export interface ListLogDetail {
 }
 
 interface UseListRowInteractionArgs {
-	/**
-	 * Telemetry signal of the panel's first builder query (logs vs traces).
-	 * Typed as the raw string the builder query carries; compared against the
-	 * `TelemetrytypesSignalDTO` enum (whose members are those same strings).
-	 */
-	signal?: string;
+	/** Telemetry signal of the panel's first builder query (logs vs traces). */
+	signal: TelemetrytypesSignalDTO | undefined;
 	/** Current page rows, mapped to `ILog[]` for log-detail navigation. */
 	rows: RawTableRow[];
 }
@@ -91,7 +87,7 @@ export function useListRowInteraction({
 			isLogs
 				? {
 						activeLog,
-						selectedTab,
+						selectedTab: selectedTab ?? VIEW_TYPES.OVERVIEW,
 						logs,
 						onClose: handleCloseLogDetail,
 						onAddToQuery,

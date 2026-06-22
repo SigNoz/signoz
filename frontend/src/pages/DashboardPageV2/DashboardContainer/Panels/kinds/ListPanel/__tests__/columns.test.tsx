@@ -1,5 +1,6 @@
 import { render } from '@testing-library/react';
 import type { ColumnType } from 'antd/es/table';
+import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 
 import type { RawTableRow } from 'pages/DashboardPageV2/DashboardContainer/queryV5/prepareRawTable';
 
@@ -27,7 +28,7 @@ describe('buildListColumns', () => {
 	it('formats the timestamp column for any signal', () => {
 		const cols = buildListColumns({
 			columns: ['timestamp', 'body'],
-			signal: 'logs',
+			signal: TelemetrytypesSignalDTO.logs,
 			formatTimestamp: fmt,
 		}) as Col[];
 		const ts = colByKey(cols, 'timestamp');
@@ -40,7 +41,7 @@ describe('buildListColumns', () => {
 	it('normalizes a nanosecond epoch to milliseconds before formatting', () => {
 		const cols = buildListColumns({
 			columns: ['timestamp'],
-			signal: 'logs',
+			signal: TelemetrytypesSignalDTO.logs,
 			formatTimestamp: fmt,
 		}) as Col[];
 		const ts = colByKey(cols, 'timestamp');
@@ -56,7 +57,7 @@ describe('buildListColumns', () => {
 	it('passes an ISO timestamp through unchanged', () => {
 		const cols = buildListColumns({
 			columns: ['timestamp'],
-			signal: 'logs',
+			signal: TelemetrytypesSignalDTO.logs,
 			formatTimestamp: fmt,
 		}) as Col[];
 		expect(
@@ -67,7 +68,7 @@ describe('buildListColumns', () => {
 	it('leaves the log body column width-less (flexible) and ellipsis-truncated', () => {
 		const cols = buildListColumns({
 			columns: ['body'],
-			signal: 'logs',
+			signal: TelemetrytypesSignalDTO.logs,
 			formatTimestamp: fmt,
 		}) as Col[];
 		const body = colByKey(cols, 'body');
@@ -78,7 +79,7 @@ describe('buildListColumns', () => {
 	it('renders trace http fields as a tag', () => {
 		const cols = buildListColumns({
 			columns: ['http_method'],
-			signal: 'traces',
+			signal: TelemetrytypesSignalDTO.traces,
 			formatTimestamp: fmt,
 		}) as Col[];
 		expect(renderCell(colByKey(cols, 'http_method'), 'GET').textContent).toBe(
@@ -89,7 +90,7 @@ describe('buildListColumns', () => {
 	it('renders trace duration in milliseconds', () => {
 		const cols = buildListColumns({
 			columns: ['duration_nano'],
-			signal: 'traces',
+			signal: TelemetrytypesSignalDTO.traces,
 			formatTimestamp: fmt,
 		}) as Col[];
 		expect(
@@ -100,7 +101,7 @@ describe('buildListColumns', () => {
 	it('shows N/A for empty trace cells', () => {
 		const cols = buildListColumns({
 			columns: ['service.name'],
-			signal: 'traces',
+			signal: TelemetrytypesSignalDTO.traces,
 			formatTimestamp: fmt,
 		}) as Col[];
 		expect(renderCell(colByKey(cols, 'service.name'), '').textContent).toBe(

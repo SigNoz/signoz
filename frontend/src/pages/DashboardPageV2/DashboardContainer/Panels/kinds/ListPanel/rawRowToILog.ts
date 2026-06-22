@@ -1,42 +1,12 @@
+import { isPlainObject } from 'lodash-es';
 import type { RawTableRow } from 'pages/DashboardPageV2/DashboardContainer/queryV5/prepareRawTable';
 import type { ILog } from 'types/api/logs/log';
+import { toFiniteNumber } from 'utils/numericUtils';
+import { coerceToString } from 'utils/stringUtils';
 
-function isPlainObject(value: unknown): boolean {
-	return value !== null && typeof value === 'object' && !Array.isArray(value);
-}
-
-function toStr(value: unknown): string {
-	if (value == null) {
-		return '';
-	}
-	if (typeof value === 'object') {
-		return JSON.stringify(value);
-	}
-	if (typeof value === 'string') {
-		return value;
-	}
-	if (typeof value === 'number' || typeof value === 'boolean') {
-		return String(value);
-	}
-	return '';
-}
-
-function toNum(value: unknown): number {
-	const n = Number(value);
-	return Number.isFinite(n) ? n : 0;
-}
-
-/**
- * Best-effort projection of a V5 raw log row into the `ILog` shape the shared
- * `LogDetail` drawer consumes. The raw row already carries the log's fields
- * flattened onto the top level (`body`, `severity_*`, trace/span ids, plus any
- * selected attributes); we surface the canonical aliases the drawer reads and
- * pass everything else through. `id`-less rows fall back to the synthetic table
- * key so navigation/active-log tracking stays stable.
- */
 // Map-typed fields the LogDetail drawer iterates with `Object.keys` (resource
-// filters, attribute/scope tabs). They must be objects — default to `{}` so a
-// row missing one (or a flattened row) never trips `Object.keys(undefined)`.
+// filters, attribute/scope tabs). Default to `{}` so a row missing one (or a
+// flattened row) never trips `Object.keys(undefined)`.
 const MAP_FIELDS = [
 	'resources_string',
 	'attributes_string',
@@ -45,6 +15,13 @@ const MAP_FIELDS = [
 	'scope_string',
 ] as const;
 
+/**
+ * Best-effort projection of a V5 raw log row into the `ILog` shape the shared
+ * `LogDetail` drawer consumes. The raw row already carries the log's fields
+ * flattened onto the top level; we surface the canonical aliases the drawer
+ * reads and pass everything else through. `id`-less rows fall back to the
+ * synthetic table key so navigation/active-log tracking stays stable.
+ */
 export function rawRowToILog(row: RawTableRow): ILog {
 	const data = row as Record<string, unknown>;
 	const severityText = data.severity_text ?? data.severityText;
@@ -62,17 +39,17 @@ export function rawRowToILog(row: RawTableRow): ILog {
 	return {
 		...data,
 		...maps,
-		id: toStr(data.id ?? row.key),
+		id: coerceToString(data.id ?? row.key),
 		timestamp: (data.timestamp as string | number) ?? '',
-		date: toStr(data.timestamp),
+		date: coerceToString(data.timestamp),
 		body: (data.body as ILog['body']) ?? '',
-		severityText: toStr(severityText),
-		severity_text: toStr(severityText),
-		severityNumber: toNum(severityNumber),
-		severity_number: toNum(severityNumber),
-		traceId: toStr(traceId),
-		trace_id: toStr(traceId),
-		spanID: toStr(spanId),
-		span_id: toStr(spanId),
+		severityText: coerceToString(severityText),
+		severity_text: coerceToString(severityText),
+		severityNumber: toFiniteNumber(severityNumber),
+		severity_number: toFiniteNumber(severityNumber),
+		traceId: coerceToString(traceId),
+		trace_id: coerceToString(traceId),
+		spanID: coerceToString(spanId),
+		span_id: coerceToString(spanId),
 	} as ILog;
 }

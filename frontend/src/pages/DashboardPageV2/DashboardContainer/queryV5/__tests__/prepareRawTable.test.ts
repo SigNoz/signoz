@@ -1,6 +1,7 @@
-import type {
-	Querybuildertypesv5RawDataDTO,
-	TelemetrytypesTelemetryFieldKeyDTO,
+import {
+	type Querybuildertypesv5RawDataDTO,
+	TelemetrytypesSignalDTO,
+	type TelemetrytypesTelemetryFieldKeyDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
 import { prepareRawTable } from '../prepareRawTable';
@@ -25,6 +26,7 @@ describe('prepareRawTable', () => {
 					},
 				]),
 			],
+			selectFields: [],
 		});
 
 		expect(table?.columns).toStrictEqual(['timestamp', 'body', 'level']);
@@ -52,6 +54,7 @@ describe('prepareRawTable', () => {
 	it('omits the timestamp column when no row carries one', () => {
 		const table = prepareRawTable({
 			results: [result([{ data: { body: 'x' } }])],
+			selectFields: [],
 		});
 
 		expect(table?.columns).toStrictEqual(['body']);
@@ -60,6 +63,7 @@ describe('prepareRawTable', () => {
 	it('takes the first result that has rows', () => {
 		const table = prepareRawTable({
 			results: [result([]), result([{ data: { body: 'y' } }], 'cursor-1')],
+			selectFields: [],
 		});
 
 		expect(table?.rows).toHaveLength(1);
@@ -67,9 +71,13 @@ describe('prepareRawTable', () => {
 	});
 
 	it('returns undefined when there is nothing to show', () => {
-		expect(prepareRawTable({ results: [] })).toBeUndefined();
-		expect(prepareRawTable({ results: [result([])] })).toBeUndefined();
-		expect(prepareRawTable({ results: [result(null)] })).toBeUndefined();
+		expect(prepareRawTable({ results: [], selectFields: [] })).toBeUndefined();
+		expect(
+			prepareRawTable({ results: [result([])], selectFields: [] }),
+		).toBeUndefined();
+		expect(
+			prepareRawTable({ results: [result(null)], selectFields: [] }),
+		).toBeUndefined();
 	});
 
 	// The V5 raw log row nests resource/attribute maps; selected fields like
@@ -91,7 +99,7 @@ describe('prepareRawTable', () => {
 		const table = prepareRawTable({
 			results: [result([logRow])],
 			selectFields: [field('body'), field('service.name'), field('k8s.pod.name')],
-			signal: 'logs',
+			signal: TelemetrytypesSignalDTO.logs,
 		});
 
 		expect(table?.rows[0]).toMatchObject({
@@ -107,7 +115,8 @@ describe('prepareRawTable', () => {
 	it('keeps nested maps out of derived columns (logs, no selectFields)', () => {
 		const table = prepareRawTable({
 			results: [result([logRow])],
-			signal: 'logs',
+			selectFields: [],
+			signal: TelemetrytypesSignalDTO.logs,
 		});
 
 		expect(table?.columns).toContain('service.name'); // lifted child
@@ -118,7 +127,8 @@ describe('prepareRawTable', () => {
 	it('does not flatten for non-log signals (traces return flat data)', () => {
 		const table = prepareRawTable({
 			results: [result([logRow])],
-			signal: 'traces',
+			selectFields: [],
+			signal: TelemetrytypesSignalDTO.traces,
 		});
 
 		expect(table?.rows[0]).toHaveProperty('resources_string');
