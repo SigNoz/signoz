@@ -98,9 +98,9 @@ func (ah *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 		Route:      "",
 	})
 
-	aiObservability := ah.Signoz.Flagger.BooleanOrEmpty(ctx, flagger.FeatureAIObservability, evalCtx)
+	aiObservability := ah.Signoz.Flagger.BooleanOrEmpty(ctx, flagger.FeatureEnableAIObservability, evalCtx)
 	featureSet = append(featureSet, &licensetypes.Feature{
-		Name:       valuer.NewString(flagger.FeatureAIObservability.String()),
+		Name:       valuer.NewString(flagger.FeatureEnableAIObservability.String()),
 		Active:     aiObservability,
 		Usage:      0,
 		UsageLimit: -1,
