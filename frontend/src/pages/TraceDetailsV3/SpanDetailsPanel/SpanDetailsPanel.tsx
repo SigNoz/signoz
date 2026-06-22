@@ -28,8 +28,6 @@ import ROUTES from 'constants/routes';
 import InfraMetrics from 'container/LogDetailedView/InfraMetrics/InfraMetrics';
 import { getEmptyLogsListConfig } from 'container/LogsExplorerList/utils';
 import Events from 'container/SpanDetailsDrawer/Events/Events';
-import SpanLogs from 'container/SpanDetailsDrawer/SpanLogs/SpanLogs';
-import { useSpanContextLogs } from 'container/SpanDetailsDrawer/SpanLogs/useSpanContextLogs';
 import dayjs from 'dayjs';
 import {
 	TraceDetailEventKeys,
@@ -68,6 +66,8 @@ import {
 import SpanPercentileBadge from './SpanPercentile/SpanPercentileBadge';
 import SpanPercentilePanel from './SpanPercentile/SpanPercentilePanel';
 import useSpanPercentile from './SpanPercentile/useSpanPercentile';
+import SpanLogs from './SpanLogs/SpanLogs';
+import { useSpanContextLogs } from './SpanLogs/useSpanContextLogs';
 
 import styles from './SpanDetailsPanel.module.scss';
 
