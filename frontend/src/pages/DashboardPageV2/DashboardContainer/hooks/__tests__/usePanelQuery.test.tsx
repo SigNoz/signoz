@@ -471,5 +471,94 @@ describe('usePanelQuery', () => {
 			// Page size participates in the cache key so each size is its own entry.
 			expect(lastCall[0].queryKey).toStrictEqual(expect.arrayContaining([50]));
 		});
+
+		// A raw V5 response carrying `rowCount` rows (+ an optional cursor), shaped
+		// the way getRawResults reads it.
+		const rawResponse = (rowCount: number, nextCursor?: string): unknown => ({
+			data: {
+				type: 'raw',
+				data: {
+					results: [
+						{
+							rows: Array.from({ length: rowCount }, () => ({ data: {} })),
+							...(nextCursor ? { nextCursor } : {}),
+						},
+					],
+				},
+			},
+		});
+
+		const withResponse = (response: unknown): void => {
+			mockUseGetQueryRangeV5.mockReturnValue({
+				data: response,
+				isLoading: false,
+				isFetching: false,
+				error: null,
+			});
+		};
+
+		it('starts on page 0 with no prev/next and does not throw before data arrives', () => {
+			const { result } = renderHook(() =>
+				usePanelQuery({ panel: listPanel({}), panelId: 'p1' }),
+			);
+			expect(result.current.pagination?.pageIndex).toBe(0);
+			expect(result.current.pagination?.canPrev).toBe(false);
+			expect(result.current.pagination?.canNext).toBe(false);
+		});
+
+		it('flags canNext on a full page and clears it on a partial page', () => {
+			withResponse(rawResponse(25));
+			const full = renderHook(() =>
+				usePanelQuery({ panel: listPanel({}), panelId: 'p1' }),
+			);
+			expect(full.result.current.pagination?.canNext).toBe(true);
+
+			withResponse(rawResponse(10));
+			const partial = renderHook(() =>
+				usePanelQuery({ panel: listPanel({}), panelId: 'p1' }),
+			);
+			expect(partial.result.current.pagination?.canNext).toBe(false);
+		});
+
+		it('flags canNext from a nextCursor even on a partial page', () => {
+			withResponse(rawResponse(3, 'cursor-1'));
+			const { result } = renderHook(() =>
+				usePanelQuery({ panel: listPanel({}), panelId: 'p1' }),
+			);
+			expect(result.current.pagination?.canNext).toBe(true);
+		});
+
+		it('advances pageIndex and enables canPrev after goNext', () => {
+			withResponse(rawResponse(25));
+			// Stable panel reference: a fresh one each render would change the
+			// `queries` identity and trip the offset-reset effect (real props are stable).
+			const panel = listPanel({});
+			const { result } = renderHook(() => usePanelQuery({ panel, panelId: 'p1' }));
+			expect(result.current.pagination?.pageIndex).toBe(0);
+
+			act(() => result.current.pagination?.goNext());
+
+			expect(result.current.pagination?.pageIndex).toBe(1);
+			expect(result.current.pagination?.canPrev).toBe(true);
+		});
+
+		it('stays defined and zero-paged for a non-raw (scalar) response', () => {
+			withResponse({ data: { type: 'scalar', data: { results: [] } } });
+			const { result } = renderHook(() =>
+				usePanelQuery({ panel: listPanel({}), panelId: 'p1' }),
+			);
+			expect(result.current.pagination).toBeDefined();
+			expect(result.current.pagination?.canNext).toBe(false);
+			expect(result.current.pagination?.pageIndex).toBe(0);
+		});
+
+		it('ignores a non-positive page size so paging never goes invalid', () => {
+			const { result } = renderHook(() =>
+				usePanelQuery({ panel: listPanel({}), panelId: 'p1' }),
+			);
+			act(() => result.current.pagination?.setPageSize(0));
+			expect(result.current.pagination?.pageSize).toBe(25);
+			expect(result.current.pagination?.pageIndex).toBe(0);
+		});
 	});
 });
