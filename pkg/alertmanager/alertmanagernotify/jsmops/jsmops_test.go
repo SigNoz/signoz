@@ -15,8 +15,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
 	test "github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/alertmanagernotifytest"
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
@@ -63,9 +63,6 @@ func TestJsmOpsCreateAlert(t *testing.T) {
 	defer server.Close()
 
 	store := &fakeConnectionStore{accessToken: "test-access-token", refreshToken: "rt", cloudID: "cloud"}
-	RegisterConnectionStore(store)
-	t.Cleanup(func() { RegisterConnectionStore(nil) })
-
 	tmpl := test.CreateTmpl(t)
 	notifier, err := New(&alertmanagertypes.JsmOpsReceiverConfig{
 		ConnectionID: "conn-1",
@@ -73,7 +70,7 @@ func TestJsmOpsCreateAlert(t *testing.T) {
 		Responders:   []string{"team-1"},
 		Message:      "Alert: {{ .CommonLabels.alertname }}",
 		Description:  "Body: {{ .CommonLabels.alertname }}",
-	}, tmpl, slog.New(slog.DiscardHandler), newTestTemplater(tmpl))
+	}, tmpl, slog.New(slog.DiscardHandler), newTestTemplater(tmpl), store)
 	require.NoError(t, err)
 	notifier.baseURL = server.URL
 
@@ -123,9 +120,6 @@ func TestJsmOpsRefreshesExpiredToken(t *testing.T) {
 		newAccess:    "new-access-token",
 		newRefresh:   "new-refresh-token",
 	}
-	RegisterConnectionStore(store)
-	t.Cleanup(func() { RegisterConnectionStore(nil) })
-
 	tmpl := test.CreateTmpl(t)
 	notifier, err := New(&alertmanagertypes.JsmOpsReceiverConfig{
 		ConnectionID: "conn-1",
@@ -133,7 +127,7 @@ func TestJsmOpsRefreshesExpiredToken(t *testing.T) {
 		Responders:   []string{"team-1"},
 		Message:      "Alert: {{ .CommonLabels.alertname }}",
 		Description:  "Body",
-	}, tmpl, slog.New(slog.DiscardHandler), newTestTemplater(tmpl))
+	}, tmpl, slog.New(slog.DiscardHandler), newTestTemplater(tmpl), store)
 	require.NoError(t, err)
 	notifier.baseURL = server.URL
 
@@ -169,9 +163,6 @@ func TestJsmOpsCloseAlert(t *testing.T) {
 	defer server.Close()
 
 	store := &fakeConnectionStore{accessToken: "test-access-token", refreshToken: "rt", cloudID: "cloud"}
-	RegisterConnectionStore(store)
-	t.Cleanup(func() { RegisterConnectionStore(nil) })
-
 	tmpl := test.CreateTmpl(t)
 	notifier, err := New(&alertmanagertypes.JsmOpsReceiverConfig{
 		ConnectionID:      "conn-1",
@@ -179,7 +170,7 @@ func TestJsmOpsCloseAlert(t *testing.T) {
 		Message:           "Alert: {{ .CommonLabels.alertname }}",
 		Description:       "Body",
 		SendResolvedValue: true,
-	}, tmpl, slog.New(slog.DiscardHandler), newTestTemplater(tmpl))
+	}, tmpl, slog.New(slog.DiscardHandler), newTestTemplater(tmpl), store)
 	require.NoError(t, err)
 	notifier.baseURL = server.URL
 

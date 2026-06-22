@@ -31,6 +31,16 @@ export function useJsmOpsConnect(
 	const [isConnecting, setIsConnecting] = useState(false);
 	const onConnectedRef = useRef(onConnected);
 	onConnectedRef.current = onConnected;
+	const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+	useEffect(
+		() => (): void => {
+			if (pollTimerRef.current) {
+				clearInterval(pollTimerRef.current);
+			}
+		},
+		[],
+	);
 
 	useEffect(() => {
 		const handleMessage = (event: MessageEvent): void => {
@@ -80,9 +90,15 @@ export function useJsmOpsConnect(
 			);
 
 			if (popup) {
-				const pollTimer = setInterval(() => {
+				if (pollTimerRef.current) {
+					clearInterval(pollTimerRef.current);
+				}
+				pollTimerRef.current = setInterval(() => {
 					if (popup.closed) {
-						clearInterval(pollTimer);
+						if (pollTimerRef.current) {
+							clearInterval(pollTimerRef.current);
+							pollTimerRef.current = null;
+						}
 						setIsConnecting(false);
 					}
 				}, 500);

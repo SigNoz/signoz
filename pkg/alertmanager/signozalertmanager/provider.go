@@ -8,7 +8,7 @@ import (
 	"github.com/prometheus/common/model"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
-	jsmopsnotify "github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/jsmops"
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerserver"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerstore/sqlalertmanagerstore"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
@@ -59,6 +59,8 @@ func New(
 	configStore := sqlalertmanagerstore.NewConfigStore(sqlstore)
 	jsmOpsConnStore := sqlalertmanagerstore.NewJsmOpsConnectionStore(sqlstore)
 	stateStore := sqlalertmanagerstore.NewStateStore(sqlstore)
+	jsmOpsResolver := jsmops.NewConnectionResolver(jsmOpsConnStore, config.Signoz.JSMOps.OAuth, settings.Logger())
+	receiverIntegrations := alertmanagernotify.NewReceiverIntegrationsFactory(jsmOpsResolver)
 
 	p := &provider{
 		service: alertmanager.New(
@@ -69,6 +71,7 @@ func New(
 			orgGetter,
 			notificationManager,
 			maintenanceStore,
+			receiverIntegrations,
 		),
 		settings:            settings,
 		config:              config,
@@ -79,10 +82,6 @@ func New(
 		maintenanceStore:    maintenanceStore,
 		stopC:               make(chan struct{}),
 	}
-
-	// Wire the connection store so JSM Ops notifiers fetch live credentials on
-	// each fire and can recover from expired access tokens via OAuth refresh.
-	jsmopsnotify.RegisterConnectionStore(jsmops.NewConnectionResolver(jsmOpsConnStore, config.Signoz.JSMOps.OAuth, settings.Logger()))
 
 	return p, nil
 }

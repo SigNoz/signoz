@@ -22,7 +22,7 @@ function splitResponders(value?: string): string[] {
 
 function getChannelIdFromPath(): string | undefined {
 	const match = window.location.pathname.match(
-		/\/settings\/channels\/edit\/([^/]+)/,
+		/\/alerts\/channels\/edit\/([^/]+)/,
 	);
 	return match ? match[1] : undefined;
 }

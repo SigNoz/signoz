@@ -15,6 +15,23 @@ var (
 	ErrCodeJsmOpsConnectionInUse    = errors.MustNewCode("jsmops_connection_in_use")
 )
 
+// JsmOpsReceiverConfig represents a JSM Ops notification configuration.
+type JsmOpsReceiverConfig struct {
+	ConnectionID      string   `json:"connection_id,omitempty" yaml:"connection_id,omitempty"`
+	OrgID             string   `json:"-" yaml:"-"`
+	Responders        []string `json:"responders,omitempty" yaml:"responders,omitempty"`
+	Message           string   `json:"message" yaml:"message"`
+	Description       string   `json:"description" yaml:"description"`
+	Tags              []string `json:"tags,omitempty" yaml:"tags,omitempty"`
+	Priority          string   `json:"priority,omitempty" yaml:"priority,omitempty"`
+	SendResolvedValue bool     `json:"send_resolved" yaml:"send_resolved"`
+}
+
+// SendResolved returns whether resolved notifications should be sent.
+func (c *JsmOpsReceiverConfig) SendResolved() bool {
+	return c != nil && c.SendResolvedValue
+}
+
 type JsmOpsConnection struct {
 	bun.BaseModel `bun:"table:jsmops_connection"`
 

@@ -59,7 +59,7 @@ function EditAlertChannels({
 
 	// Extract channelId from URL pathname since useParams doesn't work in nested routing
 	const { pathname } = window.location;
-	const channelIdMatch = pathname.match(/\/settings\/channels\/edit\/([^/]+)/);
+	const channelIdMatch = pathname.match(/\/alerts\/channels\/edit\/([^/]+)/);
 	const id = channelIdMatch ? channelIdMatch[1] : '';
 
 	const [type, setType] = useState<ChannelType>(
@@ -388,14 +388,11 @@ function EditAlertChannels({
 	);
 
 	const onJsmOpsEditHandler = useCallback(async () => {
-		setSavingState(true);
-
 		if (!selectedConfig?.connection_id) {
 			notifications.error({
 				message: 'Error',
 				description: t('jsmops_not_connected'),
 			});
-			setSavingState(false);
 			return { status: 'failed', statusMessage: t('jsmops_not_connected') };
 		}
 		if (!selectedConfig?.message) {
@@ -403,9 +400,10 @@ function EditAlertChannels({
 				message: 'Error',
 				description: t('jsmops_message_required'),
 			});
-			setSavingState(false);
 			return { status: 'failed', statusMessage: t('jsmops_message_required') };
 		}
+
+		setSavingState(true);
 
 		try {
 			await editJsmOps(prepareJsmOpsRequest());

@@ -13,7 +13,6 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"sync/atomic"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
@@ -38,25 +37,9 @@ type ConnectionStore interface {
 	Refresh(ctx context.Context, staleRefreshToken string) (newAccessToken, newRefreshToken string, err error)
 }
 
-var globalConnectionStore atomic.Pointer[ConnectionStore]
-
-func RegisterConnectionStore(s ConnectionStore) {
-	if s == nil {
-		globalConnectionStore.Store(nil)
-		return
-	}
-	globalConnectionStore.Store(&s)
-}
-
-func loadConnectionStore() ConnectionStore {
-	if p := globalConnectionStore.Load(); p != nil {
-		return *p
-	}
-	return nil
-}
-
 type Notifier struct {
 	config  *alertmanagertypes.JsmOpsReceiverConfig
+	store   ConnectionStore
 	tmpl    *template.Template
 	logger  *slog.Logger
 	client  *http.Client
@@ -64,9 +47,12 @@ type Notifier struct {
 	baseURL string
 }
 
-func New(cfg *alertmanagertypes.JsmOpsReceiverConfig, t *template.Template, l *slog.Logger, templater alertmanagertypes.Templater, httpOpts ...commoncfg.HTTPClientOption) (*Notifier, error) {
+func New(cfg *alertmanagertypes.JsmOpsReceiverConfig, t *template.Template, l *slog.Logger, templater alertmanagertypes.Templater, store ConnectionStore, httpOpts ...commoncfg.HTTPClientOption) (*Notifier, error) {
 	if cfg == nil {
 		return nil, errors.NewInternalf(errors.CodeInternal, "jsm ops config is required")
+	}
+	if store == nil {
+		return nil, errors.NewInternalf(errors.CodeInternal, "jsm ops connection store is required")
 	}
 	if cfg.ConnectionID == "" {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "jsm ops connection_id is required")
@@ -85,6 +71,7 @@ func New(cfg *alertmanagertypes.JsmOpsReceiverConfig, t *template.Template, l *s
 
 	return &Notifier{
 		config:  cfg,
+		store:   store,
 		tmpl:    t,
 		logger:  l,
 		client:  client,
@@ -119,11 +106,7 @@ func (n *Notifier) Notify(ctx context.Context, alerts ...*types.Alert) (bool, er
 	logger := n.logger.With(slog.Any("group_key", key))
 	logger.DebugContext(ctx, "extracted group key")
 
-	store := loadConnectionStore()
-	if store == nil {
-		return false, errors.NewInternalf(errors.CodeInternal, "jsm ops connection store is not registered")
-	}
-	accessToken, refreshToken, cloudID, err := store.GetTokens(ctx, n.config.OrgID, n.config.ConnectionID)
+	accessToken, refreshToken, cloudID, err := n.store.GetTokens(ctx, n.config.OrgID, n.config.ConnectionID)
 	if err != nil {
 		return false, errors.NewInternalf(errors.CodeInternal, "failed to resolve jsm ops connection: %v", err)
 	}
@@ -292,8 +275,8 @@ func (n *Notifier) doRequest(ctx context.Context, method, reqURL string, body io
 	}
 
 	if resp.StatusCode == http.StatusUnauthorized {
-		if store := loadConnectionStore(); store != nil && refreshToken != "" {
-			newAccess, _, refreshErr := store.Refresh(ctx, refreshToken)
+		if refreshToken != "" {
+			newAccess, _, refreshErr := n.store.Refresh(ctx, refreshToken)
 			if refreshErr != nil {
 				n.logger.WarnContext(ctx, "failed to refresh jsm ops access token; reconnect the integration", slog.Any("err", refreshErr))
 			} else if newAccess != "" {

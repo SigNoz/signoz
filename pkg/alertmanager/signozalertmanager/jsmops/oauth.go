@@ -36,9 +36,7 @@ func NewHandler(am alertmanager.Alertmanager) *Handler {
 // writeBridge renders the minimal OAuth bridge page.
 func writeBridge(rw http.ResponseWriter, openerOrigin string, message map[string]string) {
 	var script string
-	if openerOrigin == "" {
-		script = ""
-	} else {
+	if openerOrigin != "" {
 		messageJSON, _ := json.Marshal(message)
 		targetOriginJSON, _ := json.Marshal(openerOrigin)
 		script = fmt.Sprintf(`<script>
@@ -313,7 +311,7 @@ func (h *Handler) connectionInUse(ctx context.Context, orgID, connectionID strin
 	for _, channel := range channels {
 		receiver, err := alertmanagertypes.NewReceiver(channel.Data)
 		if err != nil {
-			continue
+			return false, errors.NewInternalf(errors.CodeInternal, "failed to parse channel %q while checking JSM Ops connection usage: %v", channel.Name, err)
 		}
 		for _, cfg := range receiver.JsmOpsConfigs {
 			if cfg.ConnectionID == connectionID {
