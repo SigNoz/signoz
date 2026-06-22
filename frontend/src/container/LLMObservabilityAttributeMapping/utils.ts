@@ -73,8 +73,6 @@ export function getMapperSources(mapper: Mapper): SourceConfig[] {
 		}));
 }
 
-// A blank source row. New sources default to `move` so the original key is
-// removed once standardized (the PRD default — minimizes duplication).
 export function createEmptySource(): SourceConfig {
 	return {
 		key: '',
@@ -91,15 +89,18 @@ export const EMPTY_MAPPER_DRAFT: MapperDraft = {
 	enabled: true,
 };
 
-// Trimmed, de-duplicated (by key), non-empty sources in priority order,
-// preserving each source's context and operation.
+// Trimmed, de-duplicated (by context+key), non-empty sources in priority order,
+// preserving each source's context and operation. A key identifies a different
+// source per context (span attribute vs resource), so both can coexist; only an
+// exact (context, key) repeat is collapsed, keeping the higher-priority row.
 export function getCleanSources(draft: MapperDraft): SourceConfig[] {
 	const seen = new Set<string>();
 	const result: SourceConfig[] = [];
 	draft.sources.forEach((source) => {
 		const key = source.key.trim();
-		if (key && !seen.has(key)) {
-			seen.add(key);
+		const dedupeKey = `${source.context}:${key}`;
+		if (key && !seen.has(dedupeKey)) {
+			seen.add(dedupeKey);
 			result.push({ ...source, key });
 		}
 	});
