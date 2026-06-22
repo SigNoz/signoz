@@ -36,10 +36,10 @@ type UserWithRoles struct {
 }
 
 type PostableUser struct {
-	DisplayName     string              `json:"displayName"`
-	Email           valuer.Email        `json:"email" required:"true"`
-	FrontendBaseUrl string              `json:"frontendBaseUrl"`
-	UserRoles       []*PostableUserRole `json:"userRoles" required:"true" nullable:"false"`
+	DisplayName     string             `json:"displayName"`
+	Email           valuer.Email       `json:"email" required:"true"`
+	FrontendBaseUrl string             `json:"frontendBaseUrl"`
+	UserRoles       []PostableUserRole `json:"userRoles" required:"true" nullable:"false"`
 }
 
 type PostableUserRole struct {
