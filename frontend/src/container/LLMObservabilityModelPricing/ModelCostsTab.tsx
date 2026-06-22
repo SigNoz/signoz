@@ -9,10 +9,6 @@ import styles from './LLMObservabilityModelPricing.module.scss';
 import ModelCostsTable from './ModelCostsTable';
 import type { PricingRule } from './types';
 
-// "Model costs" tab: the priced-model listing and its currency control. Page and
-// page size live in the URL (shareable/reload-safe) and are owned by
-// TanStackTable via enableQueryParams — this tab reads them back through the same
-// useTableParams hook the table uses internally, so the two stay in lockstep.
 function ModelCostsTab(): JSX.Element {
 	const { page, limit } = useTableParams(
 		{ page: PAGE_KEY, limit: LIMIT_KEY },
