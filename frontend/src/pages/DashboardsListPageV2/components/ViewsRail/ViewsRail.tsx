@@ -109,11 +109,12 @@ function ViewsRail({
 		const active = row.id === activeViewId;
 		return (
 			<div key={row.id} className={cx(styles.row, { [styles.rowActive]: active })}>
-				<button
-					type="button"
+				<Button
+					variant="ghost"
+					color="secondary"
 					className={styles.item}
 					onClick={(): void => onSelect(row.id)}
-					data-testid={`dashboards-view-${row.id}`}
+					testId={`dashboards-view-${row.id}`}
 				>
 					<span className={styles.itemIcon}>
 						<Icon size={14} />
@@ -122,17 +123,19 @@ function ViewsRail({
 					{active && isModified && (
 						<span className={styles.dirtyDot} title="Unsaved changes" />
 					)}
-				</button>
+				</Button>
 				{row.deletable && (
-					<button
-						type="button"
+					<Button
+						variant="ghost"
+						color="secondary"
+						size="icon"
 						className={styles.itemAction}
 						aria-label="Delete view"
 						title="Delete view"
 						onClick={(): void => confirmDelete(row.id, row.label)}
 					>
 						<Trash2 size={12} />
-					</button>
+					</Button>
 				)}
 			</div>
 		);
