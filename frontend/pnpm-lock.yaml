@@ -163,6 +163,9 @@ importers:
       history:
         specifier: 4.10.1
         version: 4.10.1
+      html-to-image:
+        specifier: 1.11.13
+        version: 1.11.13
       http-proxy-middleware:
         specifier: 4.0.0
         version: 4.0.0
@@ -5448,6 +5451,9 @@ packages:
   html-tags@5.1.0:
     resolution: {integrity: sha512-n6l5uca7/y5joxZ3LUePhzmBFUJ+U2YWzhMa8XUTecSeSlQiZdF5XAd/Q3/WUl0VsXgUwWi8I7CNIwdI5WN1SQ==}
     engines: {node: '>=20.10'}
+
+  html-to-image@1.11.13:
+    resolution: {integrity: sha512-cuOPoI7WApyhBElTTb9oqsawRvZ0rHhaHwghRLlTuffoD1B2aDemlCruLeZrUIIdvG7gs9xeELEPm6PhuASqrg==}
 
   html-void-elements@3.0.0:
     resolution: {integrity: sha512-bEqo66MRXsUGxWHV5IP0PUiAWwoEjba4VCzg0LjFJBpchPaTfyfCKTG6bc5F8ucKec3q5y6qOdGyYTSBEvhCrg==}
@@ -14495,6 +14501,8 @@ snapshots:
       void-elements: 3.1.0
 
   html-tags@5.1.0: {}
+
+  html-to-image@1.11.13: {}
 
   html-void-elements@3.0.0: {}
 
