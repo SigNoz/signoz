@@ -1,59 +1,53 @@
-import { Trash2, X } from '@signozhq/icons';
-import { Button } from '@signozhq/ui/button';
-import { Modal } from 'antd';
+import { Trash2 } from '@signozhq/icons';
+import { Callout } from '@signozhq/ui/callout';
+import { ConfirmDialog } from '@signozhq/ui/dialog';
+import { Typography } from '@signozhq/ui/typography';
+import styles from './DeleteRoleModal.module.scss';
 
 interface DeleteRoleModalProps {
 	isOpen: boolean;
 	roleName: string;
-	isDeleting: boolean;
+	errorMessage: string | null;
 	onCancel: () => void;
-	onConfirm: () => void;
+	onConfirm: () => Promise<boolean>;
 }
 
 function DeleteRoleModal({
 	isOpen,
 	roleName,
-	isDeleting,
+	errorMessage,
 	onCancel,
 	onConfirm,
 }: DeleteRoleModalProps): JSX.Element {
 	return (
-		<Modal
+		<ConfirmDialog
 			open={isOpen}
+			onOpenChange={(next): void => {
+				if (!next) {
+					onCancel();
+				}
+			}}
+			title="Delete Role"
+			titleIcon={<Trash2 size={14} />}
+			confirmText="Delete Role"
+			confirmColor="destructive"
+			cancelText="Cancel"
+			onConfirm={onConfirm}
 			onCancel={onCancel}
-			title={<span className="title">Delete Role</span>}
-			closable
-			footer={[
-				<Button
-					key="cancel"
-					className="cancel-btn"
-					prefix={<X size={14} />}
-					onClick={onCancel}
-					variant="solid"
-					color="secondary"
-				>
-					Cancel
-				</Button>,
-				<Button
-					key="delete"
-					className="delete-btn"
-					prefix={<Trash2 size={14} />}
-					onClick={onConfirm}
-					loading={isDeleting}
-					variant="solid"
-					color="destructive"
-				>
-					Delete Role
-				</Button>,
-			]}
-			destroyOnClose
-			className="role-details-delete-modal"
+			disableOutsideClick
 		>
-			<p className="delete-text">
+			<Typography>
 				Are you sure you want to delete the role <strong>{roleName}</strong>? This
 				action cannot be undone.
-			</p>
-		</Modal>
+			</Typography>
+			{errorMessage && (
+				<>
+					<Callout title="Error" color="cherry" className={styles.errorCallout}>
+						{errorMessage}
+					</Callout>
+				</>
+			)}
+		</ConfirmDialog>
 	);
 }
 
