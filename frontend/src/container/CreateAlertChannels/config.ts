@@ -128,11 +128,13 @@ export interface MsTeamsChannel extends Channel {
 }
 
 export interface JsmOpsChannel extends Channel {
-	// connection_id is an opaque, short-lived reference to the OAuth tokens
+	// connection_id references a persisted OAuth connection in the jsmops_connection table
 	connection_id?: string;
 	// site is the Atlassian site URL
 	site?: string;
+	// cloude_id is the Atlassian Cloud ID
 	cloud_id?: string;
+	// responders is a comma-separated list of team IDs to notify for this alert
 	responders?: string;
 	message?: string;
 	description?: string;

@@ -8,7 +8,6 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -18,9 +17,6 @@ import (
 
 const oauthStateTTL = 10 * time.Minute
 
-// maxOAuthStates caps the in-flight OAuth state map
-const maxOAuthStates = 4096
-
 // oauthStateEntry is the server-side state for one in-flight OAuth handshake.
 type oauthStateEntry struct {
 	expiry       time.Time
@@ -28,32 +24,7 @@ type oauthStateEntry struct {
 	orgID        string
 }
 
-var (
-	oauthStates      = &sync.Map{}
-	oauthStatesCount atomic.Int64
-)
-
-var janitorOnce sync.Once
-
-// startJanitor lazily launches a single background sweeper that evicts expired OAuth states.
-func startJanitor() {
-	janitorOnce.Do(func() {
-		go func() {
-			ticker := time.NewTicker(oauthStateTTL)
-			defer ticker.Stop()
-			for range ticker.C {
-				now := time.Now()
-				oauthStates.Range(func(key, value any) bool {
-					if entry, ok := value.(oauthStateEntry); ok && now.After(entry.expiry) {
-						oauthStates.Delete(key)
-						oauthStatesCount.Add(-1)
-					}
-					return true
-				})
-			}
-		}()
-	})
-}
+var oauthStates = &sync.Map{}
 
 // randomToken returns a fresh, URL-safe token.
 func randomToken() (string, error) {
@@ -64,19 +35,13 @@ func randomToken() (string, error) {
 	return base64.URLEncoding.EncodeToString(b), nil
 }
 
-// storeOAuthState records a freshly minted OAuth state, rejecting the flow if the
-// map is already at capacity.
+// storeOAuthState records a freshly minted OAuth state token.
 func storeOAuthState(entry oauthStateEntry) (string, error) {
-	startJanitor()
-	if oauthStatesCount.Load() >= maxOAuthStates {
-		return "", errors.NewInternalf(errors.CodeInternal, "too many in-flight JSM Ops connections; please retry shortly")
-	}
 	state, err := randomToken()
 	if err != nil {
 		return "", err
 	}
 	oauthStates.Store(state, entry)
-	oauthStatesCount.Add(1)
 	return state, nil
 }
 
@@ -86,7 +51,6 @@ func loadAndDeleteOAuthState(state string) (oauthStateEntry, bool) {
 	if !exists {
 		return oauthStateEntry{}, false
 	}
-	oauthStatesCount.Add(-1)
 	entry, ok := value.(oauthStateEntry)
 	if !ok {
 		return oauthStateEntry{}, false
@@ -94,8 +58,7 @@ func loadAndDeleteOAuthState(state string) (oauthStateEntry, bool) {
 	return entry, true
 }
 
-// ResolveConnections validates that each JSM Ops config references a connection the
-// org owns and stamps the runtime-only OrgID.
+// ResolveConnections validates that each JSM Ops config references a connection the org owns and stamps the runtime-only OrgID.
 func (h *Handler) ResolveConnections(ctx context.Context, orgID string, receiver *alertmanagertypes.Receiver) error {
 	connStore := h.alertmanager.JSMOpsConnectionStore()
 
