@@ -11,9 +11,11 @@ import {
 
 import { sanitizeSelectFields } from '../ListColumnsEditor/selectFields';
 
-// The datasource's default List columns (V1 parity), sanitized to the field-key
-// DTO — the V1 constants carry extra keys (isIndexed) the save contract rejects.
-// Other signals (metrics) don't produce a list, so they clear the selection.
+/**
+ * The datasource's default List columns (V1 parity), sanitized to the field-key
+ * DTO — the V1 constants carry extra keys (isIndexed) the save contract rejects.
+ * Other signals (metrics) don't produce a list, so they clear the selection.
+ */
 function defaultColumnsForSignal(
 	signal: TelemetrytypesSignalDTO,
 ): TelemetrytypesTelemetryFieldKeyDTO[] {

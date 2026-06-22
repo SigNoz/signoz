@@ -5,11 +5,7 @@ import {
 } from 'api/generated/services/sigNoz.schemas';
 import { isPlainObject } from 'lodash-es';
 
-/**
- * One raw record flattened for the antd Table: the record's `data` keys spread
- * to the top level, the row `timestamp` lifted alongside them, and a synthetic
- * `key` for antd. Mirrors how the scalar prep shapes Table rows.
- */
+/** A raw record flattened for the antd Table: `data` keys + `timestamp` lifted, plus a synthetic antd `key`. */
 export type RawTableRow = Record<string, unknown> & { key: number };
 
 /** A `raw`/`trace` result prepared for the List renderer. */
@@ -17,11 +13,7 @@ export interface RawTable {
 	/** Display column ids, in render order (timestamp first when present). */
 	columns: string[];
 	rows: RawTableRow[];
-	/**
-	 * Cursor for the next page from the V5 response. Threaded through for the
-	 * future server-side pagination path; the current renderer pages rows
-	 * client-side and does not consume it yet.
-	 */
+	/** Next-page cursor from the V5 response; not consumed yet (rows page client-side). */
 	nextCursor?: string;
 }
 
@@ -33,19 +25,18 @@ interface PrepareRawTableArgs {
 	/** The panel's chosen columns; when empty, columns are derived from the rows. */
 	selectFields: TelemetrytypesTelemetryFieldKeyDTO[];
 	/**
-	 * Panel telemetry signal. For `logs`, nested attribute/resource maps are
-	 * flattened one level so selected fields (e.g. `service.name`, nested under
-	 * `resources_string`) resolve to a top-level column — V1 `FlatLogData` parity.
-	 * Absent on the derive-columns fallback (no committed query yet).
+	 * Panel telemetry signal. `logs` flattens nested attribute/resource maps one
+	 * level so selected fields (e.g. `service.name`) resolve (V1 `FlatLogData`
+	 * parity). Absent on the derive-columns fallback.
 	 */
 	signal?: TelemetrytypesSignalDTO;
 }
 
-// Lift the children of object-valued keys to the top level (one level deep) so
-// selected fields like `service.name` (nested under `resources_string`) resolve
-// to a column — mirrors V1 `FlatLogData`. The original maps are RETAINED so the
-// log detail drawer still gets the structured `resources_string`/`attributes_*`;
-// later keys win on collision, matching V1's last-write-wins flatten.
+/**
+ * Lift object-valued keys' children to the top level so selected fields like
+ * `service.name` (nested under `resources_string`) resolve to a column (V1
+ * `FlatLogData` parity). Original maps are kept for the log-detail drawer.
+ */
 function flattenAttributes(
 	data: Record<string, unknown>,
 ): Record<string, unknown> {
@@ -59,10 +50,11 @@ function flattenAttributes(
 	return flat;
 }
 
-// Union of every row's keys (minus the synthetic antd `key`), first-seen order
-// preserved — the fallback column set when the panel hasn't picked fields. The
-// retained nested maps are object-valued and excluded; their scalar children are
-// surfaced as lifted top-level columns instead.
+/**
+ * Union of every row's scalar keys (first-seen order) — the fallback columns when
+ * the panel hasn't picked fields. Nested maps are excluded; their children are
+ * surfaced as lifted top-level columns instead.
+ */
 function deriveColumns(rows: RawTableRow[]): string[] {
 	const seen = new Set<string>();
 	rows.forEach((row) => {

@@ -54,20 +54,19 @@ function ListPanelRenderer({
 	// navigation). Cast at this boundary (the query carries the same string values).
 	const signal = useMemo(
 		() =>
-			getBuilderQueries(panel.spec.queries)[0]?.signal as
-				| TelemetrytypesSignalDTO
-				| undefined,
+			(getBuilderQueries(panel.spec.queries)[0]
+				?.signal as TelemetrytypesSignalDTO) || TelemetrytypesSignalDTO.logs,
 		[panel.spec.queries],
 	);
 
 	const table = useMemo(
 		() =>
 			prepareRawTable({
-				results: getRawResults(data?.response),
+				results: getRawResults(data.response),
 				selectFields: spec.selectFields ?? [],
 				signal,
 			}),
-		[data?.response, spec.selectFields, signal],
+		[data.response, spec.selectFields, signal],
 	);
 
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();

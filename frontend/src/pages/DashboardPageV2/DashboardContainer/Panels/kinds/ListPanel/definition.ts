@@ -11,13 +11,12 @@ export const definition: PanelDefinition<'signoz/ListPanel'> = {
 	// Raw records come from logs and traces; metrics don't produce row data.
 	supportedSignals: [DataSource.LOGS, DataSource.TRACES],
 	sections,
-	// Tabular records worth exporting; search filters rows like the Table kind.
 	actions: {
 		view: true,
 		edit: true,
 		clone: true,
 		download: false,
 		createAlert: false,
+		search: true,
 	},
-	headerControls: { search: true },
 };

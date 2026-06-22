@@ -30,9 +30,11 @@ export function sanitizeSelectFields(
 	return fields.map(toFieldKeyDTO);
 }
 
-// `spec.plugin.spec` is a discriminated union over every panel kind. These
-// helpers run only for the List panel, so the spec is narrowed to the List
-// variant with a single localized cast at the boundary.
+/**
+ * `spec.plugin.spec` is a discriminated union over every panel kind; these helpers
+ * run only for the List panel, so it's narrowed to the List variant with a single
+ * localized cast at the boundary.
+ */
 export function readSelectFields(
 	spec: DashboardtypesPanelSpecDTO,
 ): TelemetrytypesTelemetryFieldKeyDTO[] {

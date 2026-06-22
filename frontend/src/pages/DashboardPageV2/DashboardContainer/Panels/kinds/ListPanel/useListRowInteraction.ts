@@ -24,7 +24,7 @@ export interface ListLogDetail {
 
 interface UseListRowInteractionArgs {
 	/** Telemetry signal of the panel's first builder query (logs vs traces). */
-	signal: TelemetrytypesSignalDTO | undefined;
+	signal: TelemetrytypesSignalDTO;
 	/** Current page rows, mapped to `ILog[]` for log-detail navigation. */
 	rows: RawTableRow[];
 }

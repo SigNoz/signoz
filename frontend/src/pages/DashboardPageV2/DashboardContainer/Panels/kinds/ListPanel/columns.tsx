@@ -36,8 +36,10 @@ function renderCell(value: unknown): ReactNode {
 	return <Typography.Text>{coerceToString(value)}</Typography.Text>;
 }
 
-// Scale an epoch integer to milliseconds (what dayjs expects from a number) by
-// its magnitude: logs/traces carry nanoseconds, but be tolerant of µs/ms/s too.
+/**
+ * Scale an epoch integer to milliseconds (what dayjs expects) by its magnitude:
+ * logs/traces carry nanoseconds, but be tolerant of µs/ms/s too.
+ */
 function epochToMillis(n: number): number {
 	if (n >= 1e18) {
 		return Math.floor(n / 1e6); // nanoseconds
@@ -54,8 +56,10 @@ function epochToMillis(n: number): number {
 	return n;
 }
 
-// The timestamp can arrive as an ISO string or a bare epoch (ns/µs/ms/s) — return
-// something `dayjs` parses correctly, or null when there's nothing to show.
+/**
+ * The timestamp can arrive as an ISO string or a bare epoch (ns/µs/ms/s) — return
+ * something `dayjs` parses correctly, or null when there's nothing to show.
+ */
 function normalizeTimestamp(value: unknown): TimestampInput | null {
 	if (value == null) {
 		return null;
@@ -74,8 +78,7 @@ function normalizeTimestamp(value: unknown): TimestampInput | null {
 	return null;
 }
 
-// Timestamp cell: normalize the epoch/ISO value then format in the user's
-// timezone (V1 parity).
+/** Timestamp cell: normalize the epoch/ISO value then format in the user's timezone (V1 parity). */
 function makeTimestampRenderer(
 	formatTimestamp: FormatTimezoneAdjustedTimestamp,
 ) {
@@ -91,8 +94,10 @@ function makeTimestampRenderer(
 	};
 }
 
-// Trace attribute cell: empty → N/A, http verb/status → tag, duration → ms,
-// everything else → a 3-line-clamped value (V1 `getListColumns`).
+/**
+ * Trace attribute cell: empty → N/A, http verb/status → tag, duration → ms,
+ * everything else → a 3-line-clamped value (V1 `getListColumns`).
+ */
 function makeTraceRenderer(name: string) {
 	return (value: unknown): ReactNode => {
 		if (value == null || value === '') {
