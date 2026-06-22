@@ -178,3 +178,36 @@ export const validatePricing = (
 	}
 	return true;
 };
+
+// ─── Unpriced-models helpers ─────────────────────────────────────────────────
+
+// Compact span count for the "Spans" badge, e.g. 1234 → "1.2K", 1_200_000 → "1.2M".
+export const formatSpanCount = (count: number): string => {
+	if (count >= 1_000_000) {
+		return `${(count / 1_000_000).toFixed(1)}M`;
+	}
+	if (count >= 1_000) {
+		return `${(count / 1_000).toFixed(1)}K`;
+	}
+	return `${count}`;
+};
+
+// Label for the "Map to billing model" dropdown, e.g. "openai:gpt-4o ($15.00/$60.00)".
+export const getRuleOptionLabel = (rule: PricingRule): string =>
+	`${getCanonicalId(rule)} (${formatPricePerMillion(
+		rule.pricing?.input,
+	)}/${formatPricePerMillion(rule.pricing?.output)})`;
+
+// Builds the CreateOrUpdate payload that maps an unpriced model onto an existing
+// rule by appending its name as a match pattern. The rule's other fields
+// (pricing, provider, etc.) are preserved so the PUT overwrite doesn't wipe them.
+export const buildPatternMappingPayload = (
+	rule: PricingRule,
+	modelName: string,
+): LlmpricingruletypesUpdatableLLMPricingRuleDTO => {
+	const draft = draftFromRule(rule);
+	const patterns = draft.patterns.includes(modelName)
+		? draft.patterns
+		: [...draft.patterns, modelName];
+	return buildRulePayload({ ...draft, patterns });
+};

@@ -1,9 +1,25 @@
+import { Badge } from '@signozhq/ui/badge';
 import { Tabs } from '@signozhq/ui/tabs';
+import { useListUnmappedLLMModels } from 'api/generated/services/llmpricingrules';
+import { parseAsStringEnum, useQueryState } from 'nuqs';
 
-import ModelCostsTab from './ModelCostsTab';
+import { MODEL_COSTS_TAB, TAB_KEY, UNPRICED_MODELS_TAB } from './constants';
 import styles from './LLMObservabilityModelPricing.module.scss';
+import ModelCostsTab from './ModelCostsTab';
+import UnpricedModelsTab from './UnpricedModelsTab';
 
 function LLMObservabilityModelPricing(): JSX.Element {
+	const [activeTab, setActiveTab] = useQueryState(
+		TAB_KEY,
+		parseAsStringEnum([MODEL_COSTS_TAB, UNPRICED_MODELS_TAB]).withDefault(
+			MODEL_COSTS_TAB,
+		),
+	);
+
+	// Count powers the tab badge; deduped with the tab's own fetch by react-query.
+	const { data } = useListUnmappedLLMModels();
+	const unpricedCount = data?.data?.total ?? 0;
+
 	return (
 		<div
 			className={styles.llmObservabilityModelPricing}
@@ -17,21 +33,34 @@ function LLMObservabilityModelPricing(): JSX.Element {
 			</header>
 
 			<Tabs
-				// Model costs is the only enabled tab for now, so default to it. When
-				// the unpriced-models tab lands, this can become a URL-backed param.
-				defaultValue="model-costs"
+				value={activeTab}
+				onChange={(key): void => {
+					void setActiveTab(key as typeof activeTab);
+				}}
 				items={[
 					{
-						key: 'model-costs',
+						key: MODEL_COSTS_TAB,
 						label: 'Model costs',
 						children: <ModelCostsTab />,
 					},
 					{
-						// Unpriced-models tab lands in a later PR.
-						key: 'unpriced-models',
-						label: 'Unpriced models',
-						disabled: true,
-						children: null,
+						key: UNPRICED_MODELS_TAB,
+						label: (
+							<span className={styles.tabLabel}>
+								Unpriced models
+								{unpricedCount > 0 && (
+									<Badge
+										color="cherry"
+										variant="default"
+										className={styles.tabBadge}
+										data-testid="unpriced-models-count"
+									>
+										{unpricedCount}
+									</Badge>
+								)}
+							</span>
+						),
+						children: <UnpricedModelsTab />,
 					},
 				]}
 			/>
