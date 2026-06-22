@@ -73,6 +73,36 @@ describe('useSwitchColumnsOnSignalChange', () => {
 		);
 	});
 
+	it('restores the original columns on logs → traces → logs', () => {
+		// A customized logs selection (not just the timestamp/body defaults).
+		const original = [
+			{ name: 'timestamp' },
+			{ name: 'body' },
+			{ name: 'response_status_code' },
+			{ name: 'trace_id' },
+		];
+		// onChangeSpec is wired to update the spec, mirroring the real parent so
+		// the next switch stashes the columns the previous one just applied.
+		let spec = makeSpec(original);
+		const onChangeSpec = jest.fn((next: DashboardtypesPanelSpecDTO) => {
+			spec = next;
+		});
+		const { rerender } = renderWith({
+			enabled: true,
+			signal: 'logs',
+			spec,
+			onChangeSpec,
+		});
+
+		// logs → traces: columns swap to the trace defaults.
+		rerender({ enabled: true, signal: 'traces', spec, onChangeSpec });
+		expect(selectFieldsOf(spec)).toStrictEqual(expectedTraces);
+
+		// traces → logs: the original logs columns come back, not the log defaults.
+		rerender({ enabled: true, signal: 'logs', spec, onChangeSpec });
+		expect(selectFieldsOf(spec)).toStrictEqual(original);
+	});
+
 	it('switches to the log defaults when going traces → logs', () => {
 		const onChangeSpec = jest.fn();
 		const spec = makeSpec([{ name: 'service.name' }]);
