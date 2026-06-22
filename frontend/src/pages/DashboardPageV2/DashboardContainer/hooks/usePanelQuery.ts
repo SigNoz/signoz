@@ -106,10 +106,10 @@ export function usePanelQuery({
 	enabled = true,
 	time,
 }: UsePanelQueryArgs): UsePanelQueryResult {
-	const fullKind = panel?.spec?.plugin?.kind;
+	const fullKind = panel?.spec.plugin.kind;
 	const panelType =
 		(fullKind && PANEL_KIND_TO_PANEL_TYPE[fullKind]) ?? PANEL_TYPES.TIME_SERIES;
-	const queries = panel?.spec?.queries;
+	const queries = panel?.spec.queries;
 
 	// A list query with its own explicit `limit` caps results and shows them
 	// without a server pager (V1 parity: Controls render is gated on no limit).
@@ -140,7 +140,7 @@ export function usePanelQuery({
 	// `timePreference` pins the panel to a fixed relative window (every visualization
 	// variant has it); `fillSpans` backend-fills missing points with 0 and exists
 	// only on TimeSeries/Bar (→ formatOptions.fillGaps).
-	const pluginSpec = panel?.spec?.plugin?.spec;
+	const pluginSpec = panel?.spec.plugin.spec;
 	const visualization =
 		pluginSpec && 'visualization' in pluginSpec
 			? pluginSpec.visualization

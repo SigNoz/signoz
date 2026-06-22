@@ -85,8 +85,6 @@ export function usePanelActionItems({
 		],
 		user.role,
 	);
-	// Folds in the dashboard lock + edit_dashboard permission (set once by
-	// DashboardContainer). Mutating actions respect it; view/download don't.
 	const isEditable = useDashboardStore((s) => s.isEditable);
 	const openPanelEditor = useOpenPanelEditor();
 

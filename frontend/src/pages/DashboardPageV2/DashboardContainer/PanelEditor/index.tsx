@@ -65,13 +65,13 @@ function PanelEditorContainer({
 	});
 
 	// Panel kind → V1 panel type (drives the query builder + preview).
-	const fullKind = draft.spec?.plugin?.kind;
+	const fullKind = draft.spec.plugin.kind;
 	const panelType =
 		(fullKind && PANEL_KIND_TO_PANEL_TYPE[fullKind as PanelKind]) ??
 		PANEL_TYPES.TIME_SERIES;
 
 	// One shared query result for the whole editor: the preview renders it.
-	const panelDef = getPanelDefinition(draft.spec?.plugin?.kind);
+	const panelDef = getPanelDefinition(draft.spec.plugin.kind);
 	const {
 		data,
 		isLoading,

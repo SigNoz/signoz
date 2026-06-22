@@ -51,7 +51,7 @@ function PanelHeader({
 	timeLabel,
 	panelActions,
 	searchable,
-	searchTerm,
+	searchTerm = '',
 	onSearchChange,
 }: PanelHeaderProps): JSX.Element {
 	const errorDetail = useMemo(() => panelStatusFromError(error), [error]);

@@ -1,10 +1,9 @@
 import { BookOpenText, CircleX, TriangleAlert } from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
-import { Typography } from '@signozhq/ui/typography';
+import { Button } from '@signozhq/ui/button';
 
 import type { PanelStatusDetail, PanelStatusVariant } from './types';
 import styles from './PanelStatusPopover.module.scss';
-import { Button } from '@signozhq/ui/button';
 
 interface PanelStatusContentProps {
 	variant: PanelStatusVariant;

@@ -16,6 +16,6 @@ export const definition: PanelDefinition<'signoz/PieChartPanel'> = {
 		clone: true,
 		download: false,
 		createAlert: false,
+		search: false,
 	},
-	headerControls: { search: false },
 };

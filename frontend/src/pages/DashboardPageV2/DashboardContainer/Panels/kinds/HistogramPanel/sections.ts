@@ -6,12 +6,11 @@ export const sections: SectionConfig[] = [
 	{
 		kind: 'legend',
 		controls: { position: true },
-		// Merging all queries collapses the histogram to a single distribution with no
-		// legend — so hide the legend settings when that's on.
+		// Merging all queries collapses to one distribution with no legend.
 		isHidden: (spec): boolean =>
 			Boolean(
-				(spec.plugin?.spec as DashboardtypesHistogramPanelSpecDTO | undefined)
-					?.histogramBuckets?.mergeAllActiveQueries,
+				(spec.plugin.spec as DashboardtypesHistogramPanelSpecDTO).histogramBuckets
+					?.mergeAllActiveQueries,
 			),
 	},
 	{

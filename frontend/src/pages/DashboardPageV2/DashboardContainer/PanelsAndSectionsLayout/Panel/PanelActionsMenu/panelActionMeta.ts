@@ -2,16 +2,13 @@ import type { PanelActionCapabilities } from 'pages/DashboardPageV2/DashboardCon
 import type { ComponentTypes } from 'utils/permission';
 
 /**
- * Every action the panel menu can offer. `Record<PanelActionId, …>` below
- * forces a meta entry per id — adding an action without declaring its gates is
- * a compile error.
+ * Every action the panel menu can offer: the per-kind gated capabilities
+ * (minus `search`, a header control, not a menu action) plus the chrome actions
+ * every kind gets. `Record<PanelActionId, …>` below forces a meta entry per id —
+ * adding an action without declaring its gates is a compile error.
  */
 export type PanelActionId =
-	| 'view'
-	| 'edit'
-	| 'clone'
-	| 'download'
-	| 'createAlert'
+	| Exclude<keyof PanelActionCapabilities, 'search'>
 	| 'move'
 	| 'delete';
 

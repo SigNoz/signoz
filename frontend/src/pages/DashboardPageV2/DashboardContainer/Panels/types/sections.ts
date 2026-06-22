@@ -52,23 +52,12 @@ export type AnyThreshold =
 	| DashboardtypesTableThresholdDTO;
 
 /**
- * The single source of truth for sections: each section ↔ exactly one slice of the
- * panel spec it edits. The slice type is uniform across every panel kind that shows
- * the section, so a section editor is written once and reused everywhere.
- *
- * Most slices live under the plugin spec (`spec.plugin.spec.<key>`); a few are
- * panel-level (`contextLinks` → `spec.links`). The section registry's lens (see
- * `ConfigPane/sectionRegistry`) abstracts over both, so this map stays purely about
- * "what shape does this section edit".
- *
- * `SectionKind` is derived below as `ControlledSectionKind | AtomicSectionKind`; the
- * `satisfies Record<SectionKind, …>` checks on `SectionControls` + `SECTION_METADATA`
- * keep all three structures covering the exact same set of kinds.
+ * Each section ↔ one slice of the panel spec it edits, uniform across every kind
+ * that shows the section. Most slices live under `spec.plugin.spec.<key>`;
+ * `contextLinks` is panel-level (`spec.links`).
  */
-// Formatting slice spans the union of every kind's formatting DTO: a single `unit`
-// + `decimalPrecision` (most kinds) plus Table's per-column `columnUnits`. The
-// per-kind `controls` bag gates which fields each editor writes, so a kind never
-// writes a field its real DTO lacks (cast localized in the registry).
+// Spans every kind's formatting DTO: `unit` + `decimalPrecision` plus Table's
+// per-column `columnUnits`; the `controls` bag gates which a kind actually writes.
 export type PanelFormattingSlice = DashboardtypesPanelFormattingDTO &
 	Pick<DashboardtypesTableFormattingDTO, 'columnUnits'>;
 
@@ -78,24 +67,17 @@ export interface SectionSpecMap {
 	legend: DashboardtypesLegendDTO; // spec.plugin.spec.legend
 	chartAppearance: DashboardtypesTimeSeriesChartAppearanceDTO; // spec.plugin.spec.chartAppearance
 	buckets: DashboardtypesHistogramBucketsDTO; // spec.plugin.spec.histogramBuckets
-	// spec.plugin.spec.visualization. Typed as the Bar shape because it's the widest
-	// superset (stackedBarChart + fillSpans + timePreference); other kinds' visualization
-	// DTOs are subsets. The per-kind `controls` bag gates which fields each editor writes,
-	// so a kind never writes a field its real DTO lacks (cast localized in the registry).
+	// spec.plugin.spec.visualization — typed as the Bar shape (widest superset);
+	// the `controls` bag gates which fields each kind writes.
 	visualization: DashboardtypesBarChartVisualizationDTO;
-	// spec.plugin.spec.thresholds. One slice, three element shapes (see ThresholdVariant);
-	// the per-kind `variant` control picks the editor, so a kind only ever reads/writes the
-	// shape its spec actually stores.
-	thresholds: AnyThreshold[];
+	thresholds: AnyThreshold[]; // spec.plugin.spec.thresholds (variant picks the editor)
 	contextLinks: DashboardLinkDTO[]; // spec.links (PANEL-level)
 	columns: TelemetrytypesTelemetryFieldKeyDTO[]; // spec.plugin.spec.selectFields (List)
 }
 
 /**
- * (1) CONTROLLED sections — those with multiple independently-pickable sub-features.
- * The per-kind bag lets a kind expose a SUBSET of the section's controls (the V2
- * analogue of V1's `allowSoftMinMax` / `allowLegendColors` flags). Every key here
- * corresponds to a real, editable field on the section's spec slice.
+ * CONTROLLED sections — a kind exposes a SUBSET of the section's controls (V2
+ * analogue of V1's `allowSoftMinMax` / `allowLegendColors` flags).
  */
 export interface SectionControls {
 	formatting: { unit?: boolean; decimals?: boolean; columnUnits?: boolean };
@@ -109,15 +91,13 @@ export interface SectionControls {
 		spanGaps?: boolean;
 	};
 	buckets: { count?: boolean; width?: boolean; mergeQueries?: boolean };
-	// timePreference → per-panel time scope (all kinds); stacking → stackedBarChart (Bar);
-	// fillSpans → fill data gaps with 0 (TimeSeries). Each kind exposes only its subset.
+	// stacking → stackedBarChart (Bar); fillSpans → fill gaps with 0 (TimeSeries).
 	visualization: {
 		timePreference?: boolean;
 		stacking?: boolean;
 		fillSpans?: boolean;
 	};
-	// Not a spec field but the editor discriminator: which threshold variant a kind edits
-	// (label / comparison / table). All three persist to plugin.spec.thresholds.
+	// Editor discriminator (not a spec field): which threshold variant a kind edits.
 	thresholds: { variant?: ThresholdVariant };
 }
 
@@ -132,21 +112,17 @@ export type AtomicSectionKind = 'contextLinks' | 'columns';
 export type SectionKind = ControlledSectionKind | AtomicSectionKind;
 
 /**
- * What a panel kind declares in `kinds/<Kind>/sections.ts`. A controlled section is
- * declared with its `controls` subset; an atomic section is declared bare (`{ kind }`).
- *
- * Whether a kind ALLOWS a section at all is governed entirely by whether it appears in
- * the kind's `sections` array — e.g. Pie/Histogram omit `thresholds`, so it never shows.
- */
-/**
- * Optional predicate to hide a section based on the current panel spec — for
- * cross-section rules (e.g. the Histogram legend is irrelevant once its queries are
- * merged into one distribution). Returning true removes the section from the pane.
+ * Optional predicate to hide a section from the current spec (e.g. the Histogram
+ * legend once its queries are merged). Returning true removes it from the pane.
  */
 export type SectionVisibilityPredicate = (
 	spec: DashboardtypesPanelSpecDTO,
 ) => boolean;
 
+/**
+ * What a kind declares in `kinds/<Kind>/sections.ts`: a controlled section with its
+ * `controls` subset, or an atomic section bare (`{ kind }`).
+ */
 export type SectionConfig =
 	| {
 			[K in ControlledSectionKind]: {

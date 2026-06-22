@@ -8,6 +8,25 @@
  * `container/NewWidget` `ThresholdProps` shape.
  */
 
+import type {
+	DashboardtypesComparisonOperatorDTO,
+	DashboardtypesThresholdFormatDTO,
+} from 'api/generated/services/sigNoz.schemas';
+
+/**
+ * The comparison-shaped fields shared by every panel-spec threshold DTO that
+ * recolors on an operator crossing (`ComparisonThresholdDTO`,
+ * `TableThresholdDTO`). The container DTOs add their own keys (e.g. a table
+ * threshold's `columnName`) around this common core.
+ */
+export interface ComparisonThresholdShape {
+	color: string;
+	value: number;
+	operator?: DashboardtypesComparisonOperatorDTO;
+	unit?: string;
+	format?: DashboardtypesThresholdFormatDTO;
+}
+
 /** Comparison operators a threshold can use, as evaluable symbols. */
 export type ThresholdComparisonOperator = '>' | '<' | '>=' | '<=' | '=' | '!=';
 

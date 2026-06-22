@@ -1,5 +1,6 @@
 import { TooltipProvider } from '@signozhq/ui/tooltip';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import type { ReactElement } from 'react';
 import type { Warning } from 'types/api';
 
@@ -61,7 +62,8 @@ describe('PanelHeader search', () => {
 		).not.toBeInTheDocument();
 	});
 
-	it('expands the collapsed trigger into an input and reports changes', () => {
+	it('expands the collapsed trigger into an input and reports changes', async () => {
+		const user = userEvent.setup();
 		const onSearchChange = jest.fn();
 		renderWithProvider(
 			<PanelHeader
@@ -72,14 +74,17 @@ describe('PanelHeader search', () => {
 			/>,
 		);
 
-		fireEvent.click(screen.getByTestId('panel-header-search-trigger'));
+		await user.click(screen.getByTestId('panel-header-search-trigger'));
 
+		// The input is controlled to the (fixed) `searchTerm` here, so each keystroke
+		// reports a single character — assert one to confirm changes are propagated.
 		const input = screen.getByTestId('panel-header-search-input');
-		fireEvent.change(input, { target: { value: 'frontend' } });
-		expect(onSearchChange).toHaveBeenCalledWith('frontend');
+		await user.type(input, 'f');
+		expect(onSearchChange).toHaveBeenCalledWith('f');
 	});
 
-	it('clears the term and collapses when the clear button is pressed', () => {
+	it('clears the term and collapses when the clear button is pressed', async () => {
+		const user = userEvent.setup();
 		const onSearchChange = jest.fn();
 		renderWithProvider(
 			<PanelHeader
@@ -90,8 +95,8 @@ describe('PanelHeader search', () => {
 			/>,
 		);
 
-		fireEvent.click(screen.getByTestId('panel-header-search-trigger'));
-		fireEvent.click(screen.getByTestId('panel-header-search-clear'));
+		await user.click(screen.getByTestId('panel-header-search-trigger'));
+		await user.click(screen.getByTestId('panel-header-search-clear'));
 
 		expect(onSearchChange).toHaveBeenCalledWith('');
 		expect(screen.getByTestId('panel-header-search-trigger')).toBeInTheDocument();

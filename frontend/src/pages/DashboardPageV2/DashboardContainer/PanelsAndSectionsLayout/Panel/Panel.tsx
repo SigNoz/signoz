@@ -69,7 +69,7 @@ function Panel({
 	// Header search: only kinds that declare it (e.g. tables) render the box; the
 	// term is owned here and threaded to both the header (input) and the renderer
 	// (filter), the two being siblings under this orchestrator.
-	const searchable = !!panelDefinition?.headerControls.search;
+	const searchable = !!panelDefinition?.actions.search;
 	const [searchTerm, setSearchTerm] = useState('');
 
 	const { data, isLoading, isFetching, error, refetch, pagination } =

@@ -70,7 +70,7 @@ export interface BaseRendererProps {
 	/**
 	 * Free-text filter from the header search box, owned by the shell and
 	 * applied client-side by the renderer. Only meaningful for kinds that
-	 * declare `headerControls.search`; other renderers ignore it.
+	 * declare `actions.search`; other renderers ignore it.
 	 */
 	searchTerm?: string;
 	/**
