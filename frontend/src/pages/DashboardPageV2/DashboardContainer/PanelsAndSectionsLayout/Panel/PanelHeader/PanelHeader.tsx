@@ -117,6 +117,7 @@ function PanelHeader({
 				{!hideActions && (
 					<PanelActionsMenu
 						panelId={panelId}
+						panelName={name}
 						panelKind={panelKind}
 						panelActions={panelActions}
 					/>

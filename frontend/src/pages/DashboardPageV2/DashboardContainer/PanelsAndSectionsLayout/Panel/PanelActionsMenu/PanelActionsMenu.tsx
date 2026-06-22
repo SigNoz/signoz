@@ -10,6 +10,8 @@ import { PanelKind } from 'pages/DashboardPageV2/DashboardContainer/Panels/types
 
 interface PanelActionsMenuProps {
 	panelId: string;
+	/** Panel title — used as the downloaded image's filename. */
+	panelName: string;
 	/** Full plugin kind (e.g. `signoz/TimeSeriesPanel`);*/
 	panelKind: PanelKind;
 	/** Layout context for move/delete — absent outside editable sectioned mode. */
@@ -23,11 +25,13 @@ interface PanelActionsMenuProps {
  */
 function PanelActionsMenu({
 	panelId,
+	panelName,
 	panelKind,
 	panelActions,
 }: PanelActionsMenuProps): JSX.Element | null {
 	const { items, deleteConfirm } = usePanelActionItems({
 		panelId,
+		panelName,
 		panelKind,
 		panelActions,
 	});

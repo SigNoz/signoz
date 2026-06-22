@@ -7,6 +7,14 @@ import type { PanelKind } from './panelKind';
 import type { BaseRendererProps, PanelRendererProps } from './rendererProps';
 
 /**
+ * Formats a panel can be exported as — the options under the single "Download"
+ * action. The union is the one source of truth for available formats: adding
+ * one here turns every kind's `download` map into a compile error until it
+ * declares support, forcing an explicit per-kind decision (see below).
+ */
+export type DownloadFormat = 'csv' | 'png' | 'svg';
+
+/**
  * Kind-level action capabilities: which panel actions THIS kind supports.
  * Declared per-kind in `kinds/<Kind>/definition.ts` — the field is required,
  * so registering a new kind forces an explicit decision for every action
@@ -24,10 +32,13 @@ export interface PanelActionCapabilities {
 	/** Kind can be cloned — gates the "Clone" action. */
 	clone: boolean;
 	/**
-	 * Kind's data can be exported as CSV — gates "Download as CSV". V1 parity:
-	 * only table panels carry tabular data worth exporting.
+	 * Which formats this kind can be downloaded as — surfaced as options under
+	 * the single "Download" action. Keyed by every DownloadFormat so each kind
+	 * makes an explicit per-format decision. CSV needs tabular data (table-only,
+	 * V1 parity); PNG/SVG capture the rendered DOM, so every renderable kind
+	 * supports them.
 	 */
-	download: boolean;
+	download: Record<DownloadFormat, boolean>;
 	/** Kind's query can seed a new alert — gates "Create Alerts". */
 	createAlert: boolean;
 }
