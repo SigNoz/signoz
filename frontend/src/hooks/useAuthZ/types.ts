@@ -43,17 +43,14 @@ export type AuthZResource = ResourceName;
 export type AuthZObject<R extends AuthZRelation> = RelationToObject<R>;
 
 /**
- * Verbs that can support selector.
- *
- * Create is here because we can create a role with permission create:serviceaccount:<id>
+ * Verbs that can support selectors.
  */
 export type ObjectScopedVerb = Extract<
 	AuthZVerb,
-	'create' | 'read' | 'update' | 'delete' | 'assignee' | 'attach' | 'detach'
+	'read' | 'update' | 'delete' | 'assignee' | 'attach' | 'detach'
 >;
 
 export const OBJECT_SCOPED_VERBS: readonly ObjectScopedVerb[] = [
-	'create',
 	'read',
 	'update',
 	'delete',
