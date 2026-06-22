@@ -41,7 +41,12 @@ function ModelCostDrawer({
 	// Default mode validates on submit, then re-validates on change — so we don't
 	// flag empty fields before the user has tried to save, but errors clear live
 	// once they start fixing them.
-	const { control, handleSubmit, watch } = useForm<DrawerDraft>({
+	const {
+		control,
+		handleSubmit,
+		watch,
+		formState: { isDirty },
+	} = useForm<DrawerDraft>({
 		defaultValues: initialDraft,
 	});
 
@@ -87,12 +92,15 @@ function ModelCostDrawer({
 					{canManage ? 'Cancel' : 'Close'}
 				</Button>
 				{canManage && (
-					// Always enabled — clicking with invalid input surfaces inline field
-					// errors via handleSubmit rather than silently disabling Save.
+					// Disabled until the form is dirty, so saving an untouched draft
+					// (no real change) is impossible. Once dirty it stays enabled even
+					// when invalid, so clicking surfaces inline field errors via
+					// handleSubmit rather than silently blocking Save.
 					<Button
 						variant="solid"
 						color="primary"
 						onClick={handleSubmit(onSave)}
+						disabled={!isDirty}
 						loading={isSaving}
 						testId="drawer-save-btn"
 					>
