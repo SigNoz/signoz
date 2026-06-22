@@ -24,12 +24,30 @@ import {
 } from './buildQueryRangeRequest';
 
 /**
- * Adapters between the V2 perses query shape and the V1 `Query` the shared query builder uses.
- * Both directions pivot through the V5 query-envelope list so they reuse the existing V1↔V5
- * mappers. The one unavoidable cast (Orval erases envelope `spec` to `unknown`) is localized here.
+ * Adapters between the V2 perses query shape and the V1 `Query` the shared query
+ * builder uses. Both directions pivot through the V5 query-envelope list to reuse
+ * the existing V1↔V5 mappers.
+ *
+ * Two nominally-distinct envelope families meet here: the generated
+ * `Querybuildertypesv5QueryEnvelopeDTO` (enum `type`, undiscriminated `spec`) carried
+ * by the panel spec + request builder, and the hand-written `QueryEnvelope` (typed
+ * `spec`) the V1 mappers consume. They describe the same wire shape, so converting
+ * between them is a structural cast — localized to the two `*Envelopes` helpers below.
  */
 
-/** Which query-builder tab the perses queries belong to. */
+const toMapperEnvelopes = (
+	envelopes: Querybuildertypesv5QueryEnvelopeDTO[],
+): QueryEnvelope[] => envelopes as unknown as QueryEnvelope[];
+
+const toGeneratedEnvelopes = (
+	envelopes: QueryEnvelope[],
+): Querybuildertypesv5QueryEnvelopeDTO[] =>
+	envelopes as unknown as Querybuildertypesv5QueryEnvelopeDTO[];
+
+const isBuilderQueryEnvelope = (
+	envelope: Querybuildertypesv5QueryEnvelopeDTO,
+): boolean => envelope.type === Querybuildertypesv5QueryTypeDTO.builder_query;
+
 function deriveQueryType(
 	envelopes: Querybuildertypesv5QueryEnvelopeDTO[],
 ): EQueryType {
@@ -47,8 +65,8 @@ function deriveQueryType(
 }
 
 /**
- * Perses panel queries → V1 `Query` (to seed the query builder), via the V5 envelope list +
- * `mapQueryDataFromApi`. An empty panel opens on a fresh metrics builder query (V1 default).
+ * Perses panel queries → V1 `Query` (to seed the query builder), via the V5 envelope
+ * list + `mapQueryDataFromApi`. An empty panel opens on a fresh metrics builder query.
  */
 export function fromPerses(
 	queries: DashboardtypesQueryDTO[],
@@ -66,32 +84,27 @@ export function fromPerses(
 		chQueries: {},
 		promQueries: {},
 		unit: undefined,
-		// Generated envelope DTO → hand-written V5 type (spec erased to unknown).
-		queries: envelopes as unknown as QueryEnvelope[],
+		queries: toMapperEnvelopes(envelopes),
 	};
 
 	return mapQueryDataFromApi(composite);
 }
 
 /**
- * V1 `Query` → perses panel queries (to write the builder result back to the editor draft).
- * Wrapped in a single `signoz/CompositeQuery` to satisfy the `panel.queries.length === 1`
- * invariant. Exception: List emits its one builder query as a bare `signoz/BuilderQuery` because
- * the backend rejects a `signoz/CompositeQuery` for it.
+ * V1 `Query` → perses panel queries (to write the builder result back to the editor
+ * draft). Wrapped in a single `signoz/CompositeQuery` to satisfy the
+ * `panel.queries.length === 1` invariant. Exception: List emits its one builder query
+ * as a bare `signoz/BuilderQuery` because the backend rejects a `signoz/CompositeQuery`.
  */
 export function toPerses(
 	query: Query,
 	panelType: PANEL_TYPES,
 ): DashboardtypesQueryDTO[] {
 	const composite = mapCompositeQueryFromQuery(query, panelType);
-	const envelopes = (composite.queries ??
-		[]) as unknown as Querybuildertypesv5QueryEnvelopeDTO[];
+	const envelopes = toGeneratedEnvelopes(composite.queries ?? []);
 
 	if (panelType === PANEL_TYPES.LIST) {
-		const builder = envelopes.find(
-			(envelope) =>
-				envelope.type === Querybuildertypesv5QueryTypeDTO.builder_query,
-		);
+		const builder = envelopes.find(isBuilderQueryEnvelope);
 		if (!builder) {
 			return [];
 		}
@@ -101,7 +114,8 @@ export function toPerses(
 				spec: {
 					plugin: {
 						kind: BuilderQueryPluginKind['signoz/BuilderQuery'],
-						// Orval erases spec to `unknown`; cast to the builder query spec at this boundary.
+						// The generated envelope union doesn't discriminate `spec` by `type`, so
+						// narrow the filtered builder query to the dashboard builder spec.
 						spec: builder.spec as DashboardtypesBuilderQuerySpecDTO,
 					},
 				},
@@ -109,15 +123,16 @@ export function toPerses(
 		];
 	}
 
-	const spec: Querybuildertypesv5CompositeQueryDTO = { queries: envelopes };
-
+	const compositeSpec: Querybuildertypesv5CompositeQueryDTO = {
+		queries: envelopes,
+	};
 	return [
 		{
 			kind: panelTypeToRequestType(panelType),
 			spec: {
 				plugin: {
 					kind: CompositeQueryPluginKind['signoz/CompositeQuery'],
-					spec,
+					spec: compositeSpec,
 				},
 			},
 		},
