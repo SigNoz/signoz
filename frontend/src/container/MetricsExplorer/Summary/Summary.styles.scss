@@ -182,15 +182,13 @@
 		}
 
 		.ant-pagination {
-			position: fixed;
+			position: sticky;
 			bottom: 0;
-			width: calc(100% - 54px);
+			width: 100%;
 			background: var(--l1-background);
 			padding: 16px;
 			margin: 0;
-
-			// this is to offset chat support icon till we improve the design
-			right: 20px;
+			z-index: 10;
 
 			.ant-pagination-item {
 				border-radius: 4px;
