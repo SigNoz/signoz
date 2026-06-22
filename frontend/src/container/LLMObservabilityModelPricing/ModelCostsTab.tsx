@@ -38,15 +38,12 @@ function ModelCostsTab(): JSX.Element {
 		{ page: 1, limit: PAGE_SIZE },
 	);
 
-	// Search term lives in the URL (shareable/reload-safe) alongside page/limit.
-	// It's debounced before reaching the list API so typing doesn't spam requests.
 	const [search, setSearch] = useQueryState(
 		SEARCH_KEY,
 		parseAsString.withDefault(''),
 	);
 	const debouncedSearch = useDebounce(search, SEARCH_DEBOUNCE_MS);
 
-	// Source filter (All / User override / Auto) → API's nullable isOverride.
 	const [source, setSource] = useQueryState(
 		SOURCE_KEY,
 		parseAsStringEnum<SourceFilter>(
@@ -58,8 +55,6 @@ function ModelCostsTab(): JSX.Element {
 		event: React.ChangeEvent<HTMLInputElement>,
 	): void => {
 		void setSearch(event.target.value || null);
-		// Any new search collapses the result set — jump back to the first page so
-		// the user isn't stranded on an out-of-range page.
 		setPage(1);
 	};
 
@@ -78,7 +73,6 @@ function ModelCostsTab(): JSX.Element {
 	const listParams: ListLLMPricingRulesParams = {
 		offset: (page - 1) * limit,
 		limit,
-		// Omit each filter entirely when unset so the API treats it as "no filter".
 		...(debouncedSearch ? { q: debouncedSearch } : {}),
 		...(isOverride !== undefined ? { isOverride } : {}),
 	};
