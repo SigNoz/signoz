@@ -9500,6 +9500,16 @@ export type ListLLMPricingRulesParams = {
 	 * @description undefined
 	 */
 	limit?: number;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	q?: string;
+	/**
+	 * @type boolean,null
+	 * @description undefined
+	 */
+	isOverride?: boolean | null;
 };
 
 export type ListLLMPricingRules200 = {
