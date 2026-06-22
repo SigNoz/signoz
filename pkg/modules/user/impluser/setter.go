@@ -216,6 +216,10 @@ func (module *setter) CreateUser(ctx context.Context, user *types.User, opts ...
 }
 
 func (module *setter) CreatePendingInviteUser(ctx context.Context, identityID valuer.UUID, identityEmail valuer.Email, frontendBaseURL string, user *types.User, opts ...root.CreateUserOption) (*types.User, error) {
+	if err := user.ErrIfNotPending(); err != nil {
+		return nil, err
+	}
+
 	createUserOpts := root.NewCreateUserOptions(opts...)
 
 	roleNames := createUserOpts.RoleNames
