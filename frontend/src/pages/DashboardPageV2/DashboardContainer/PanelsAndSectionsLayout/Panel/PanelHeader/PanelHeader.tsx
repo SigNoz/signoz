@@ -21,7 +21,7 @@ interface PanelHeaderProps {
 	name: string;
 	description?: string;
 	panelId: string;
-	/** Full plugin kind — drives kind-gated menu actions; */
+	/** Full plugin kind — drives kind-gated menu actions. */
 	panelKind: PanelKind;
 	/** Background refresh in flight — shows a spinner without blinking the chart. */
 	isFetching: boolean;
@@ -40,10 +40,9 @@ interface PanelHeaderProps {
 	/** Pushes a new search term up to the shell. */
 	onSearchChange?: (value: string) => void;
 	/**
-	 * Suppress the actions menu entirely. The editor preview reuses this header,
-	 * but panel-level actions (View/Edit/Clone/Delete) don't apply there — and
-	 * omitting `panelActions` alone isn't enough since View/Edit/Download survive
-	 * on their own gates.
+	 * Suppress the actions menu entirely — for the editor preview, where
+	 * panel-level actions don't apply (some survive their gates without
+	 * `panelActions`, so omitting it isn't enough).
 	 */
 	hideActions?: boolean;
 }
@@ -96,8 +95,8 @@ function PanelHeader({
 					/>
 				)}
 			</div>
-			{/* `panel-no-drag` opts this region out of the grid drag handle so the
-			    actions menu is clickable instead of starting a panel drag. */}
+			{/* `panel-no-drag` opts this region out of the drag handle so clicks hit
+			    the controls instead of starting a panel drag. */}
 			<div className={cx('panel-no-drag', styles.actions)}>
 				{searchable && onSearchChange && (
 					<PanelHeaderSearch value={searchTerm ?? ''} onChange={onSearchChange} />

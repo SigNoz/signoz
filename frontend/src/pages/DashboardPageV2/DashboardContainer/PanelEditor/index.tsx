@@ -51,9 +51,9 @@ interface PanelEditorContainerProps {
 }
 
 /**
- * V2 panel editor page body (rendered full-page by `PanelEditorPage`): a resizable
- * split with the live preview + query builder on the left and the config pane on the
- * right. Owns the draft state and the save round-trip.
+ * V2 panel editor page body: a resizable split with the live preview + query
+ * builder on the left and the config pane on the right. Owns the draft state and
+ * the save round-trip.
  */
 function PanelEditorContainer({
 	dashboardId,
@@ -91,7 +91,7 @@ function PanelEditorContainer({
 		PANEL_TYPES.TIME_SERIES;
 
 	// One shared query result for the whole editor; the preview renders it.
-	const panelDef = getPanelDefinition(draft.spec.plugin.kind);
+	const panelDefinition = getPanelDefinition(draft.spec.plugin.kind);
 	const {
 		data,
 		isLoading,
@@ -103,35 +103,27 @@ function PanelEditorContainer({
 	} = usePanelQuery({
 		panel: draft,
 		panelId,
-		enabled: !!panelDef,
+		enabled: !!panelDefinition,
 	});
 
 	// A new panel defaults to its kind's first supported signal (e.g. List → logs);
 	// drives both the seed query's datasource and the seed of its default columns.
-	const defaultDataSource = panelDef?.supportedSignals[0];
+	const defaultDataSource = panelDefinition?.supportedSignals[0];
 
-	// Seed the shared query builder from the draft and expose the Stage-&-Run
-	// action (writes the query into the draft → preview re-fetches, or forces a
-	// re-fetch when unchanged).
 	const { runQuery, isQueryDirty, buildSaveSpec } = usePanelEditorQuerySync({
 		draft,
 		panelType,
 		setSpec,
 		refetch,
-		// A new panel's seed query is the builder default, not a real saved query —
-		// always serialize it for the panel's kind on save.
+		// New panel's seed query is the builder default, not a real saved query —
+		// always serialize it on save.
 		alwaysSerializeQuery: isNew,
-		// Seed a new panel with a datasource the panel actually supports.
 		defaultDataSource,
 	});
 
-	// Dirty = an edited config slice (display/plugin spec) OR an edited query. The
-	// two are tracked independently so query re-serialization never false-dirties.
-	// A new panel is always savable (you're creating it), even before any edit.
+	// Spec and query dirtiness are tracked independently so query re-serialization
+	// never false-dirties. A new panel is always savable (you're creating it).
 	const isDirty = isNew || isSpecDirty || isQueryDirty;
-	// The List panel edits its columns below the query builder (V1 parity), so the
-	// editor container resolves the committed query's signal once and shares it
-	// with both the columns control and the datasource-switch effect below.
 	const isListPanel = fullKind === 'signoz/ListPanel';
 	// The builder-query `signal` literal matches the TelemetrytypesSignalDTO enum
 	// values; cast at this boundary (as ConfigPane does) so the columns editor's
@@ -140,10 +132,8 @@ function PanelEditorContainer({
 		| TelemetrytypesSignalDTO
 		| undefined;
 
-	// When the List panel's datasource changes, swap its columns to the new
-	// source's defaults (V1 kept a per-datasource field list; V2 has one
-	// `selectFields`). Driven by the committed query's signal, so it lives in the
-	// editor container alongside the query sync — ConfigPane stays presentational.
+	// Swap the List panel's columns to the new source's defaults on a datasource
+	// change (V1 kept a per-datasource field list; V2 has one `selectFields`).
 	useSwitchColumnsOnSignalChange({
 		enabled: isListPanel,
 		signal: listSignal,
@@ -201,18 +191,20 @@ function PanelEditorContainer({
 							onLayoutChanged={onMainLayoutChanged}
 						>
 							<ResizablePanel minSize="55%" maxSize="65%" defaultSize="60%">
-								<PreviewPane
-									panelId={panelId}
-									panel={draft}
-									panelDef={panelDef}
-									data={data}
-									isLoading={isLoading || isFetching}
-									isFetching={isFetching}
-									error={error}
-									refetch={refetch}
-									onDragSelect={onDragSelect}
-									pagination={pagination}
-								/>
+								{panelDefinition && (
+									<PreviewPane
+										panelId={panelId}
+										panel={draft}
+										panelDefinition={panelDefinition}
+										data={data}
+										isLoading={isLoading || isFetching}
+										isFetching={isFetching}
+										error={error}
+										refetch={refetch}
+										onDragSelect={onDragSelect}
+										pagination={pagination}
+									/>
+								)}
 							</ResizablePanel>
 							<ResizableHandle withHandle className={styles.handle} />
 							<ResizablePanel minSize="35%" maxSize="45%" defaultSize="40%">

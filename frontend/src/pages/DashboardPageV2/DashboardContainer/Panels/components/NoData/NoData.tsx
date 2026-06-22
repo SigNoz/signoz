@@ -13,10 +13,8 @@ interface NoDataProps {
 }
 
 /**
- * Shared empty-state for panel renderers, shown when a query resolves but
- * returns nothing to plot. Wraps `PanelMessage` so every panel kind surfaces the
- * same "No data in this time range" affordance (icon + copy + optional Retry)
- * instead of each renderer inventing its own.
+ * Shared empty-state for panel renderers: wraps `PanelMessage` so every panel
+ * kind surfaces the same "no data" affordance when a query returns nothing.
  */
 function NoData({
 	title = 'No data in this time range',

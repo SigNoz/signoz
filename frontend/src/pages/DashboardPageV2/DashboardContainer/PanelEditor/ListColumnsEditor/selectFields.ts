@@ -9,10 +9,8 @@ import {
 } from 'container/OptionsMenu/constants';
 
 /**
- * The field-key suggestions API and the default-column constants carry extra
- * runtime fields (e.g. `isIndexed`) that the save contract rejects. Reduce each
- * column to the `TelemetrytypesTelemetryFieldKeyDTO` shape so persisted
- * `selectFields` only contain backend-known keys.
+ * Reduce each column to the field-key DTO shape: the suggestions API and default
+ * constants carry extra runtime fields (e.g. `isIndexed`) the save contract rejects.
  */
 function toFieldKeyDTO(
 	field: TelemetrytypesTelemetryFieldKeyDTO,
@@ -35,10 +33,7 @@ export function sanitizeSelectFields(
 }
 
 /**
- * The datasource's default List columns (V1 parity): logs → timestamp/body,
- * traces → service.name/name/duration_nano/http_method/response_status_code.
- * Sanitized to the field-key DTO — the V1 constants carry extra keys (isIndexed)
- * the save contract rejects. Other signals (metrics) don't produce a list.
+ * logs/traces List-column defaults (V1 parity), sanitized to the field-key DTO.
  */
 export function defaultColumnsForSignal(
 	signal: string,
@@ -56,9 +51,8 @@ export function defaultColumnsForSignal(
 	return [];
 }
 
-// `spec.plugin.spec` is a discriminated union over every panel kind. These
-// helpers run only for the List panel, so the spec is narrowed to the List
-// variant with a single localized cast at the boundary.
+// `spec.plugin.spec` is a discriminated union over panel kinds; these List-only
+// helpers narrow to the List variant via a single localized cast at the boundary.
 export function readSelectFields(
 	spec: DashboardtypesPanelSpecDTO,
 ): TelemetrytypesTelemetryFieldKeyDTO[] {

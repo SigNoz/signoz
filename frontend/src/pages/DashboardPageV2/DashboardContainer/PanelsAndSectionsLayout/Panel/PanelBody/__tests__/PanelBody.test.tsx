@@ -5,8 +5,7 @@ import type { PanelQueryData } from 'pages/DashboardPageV2/DashboardContainer/qu
 
 import PanelBody from '../PanelBody';
 
-// The renderer is only reached once there's a runnable query; stub it so these
-// tests stay focused on PanelBody's state machine.
+// Stub the renderer so these tests focus on PanelBody's state machine.
 const MockRenderer = (): JSX.Element => <div data-testid="mock-renderer" />;
 
 const panelDefinition = {

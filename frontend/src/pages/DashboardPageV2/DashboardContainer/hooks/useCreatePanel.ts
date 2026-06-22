@@ -14,11 +14,8 @@ interface CreatePanelArgs {
 }
 
 /**
- * Opens the panel editor to create a new panel: navigates to the editor route
- * with a `new_<Kind>` token (and optional target section). Nothing is persisted
- * until the user saves — cancelling leaves the dashboard untouched. The dashboard
- * id comes from the edit-context store, so any trigger can call this with just a
- * kind.
+ * Navigates to the panel editor to create a new panel of the given kind. Nothing
+ * is persisted until save, so cancelling leaves the dashboard untouched.
  */
 export function useCreatePanel(): (args: CreatePanelArgs) => void {
 	const { safeNavigate } = useSafeNavigate();

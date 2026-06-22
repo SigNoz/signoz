@@ -17,11 +17,10 @@ interface UseSeedNewListColumnsArgs {
 }
 
 /**
- * Seeds a brand-new List panel's columns with its default signal's columns
- * (logs → timestamp/body, traces → service.name/…), so the Columns control
- * isn't empty on first open. Runs once: an empty selection is a valid "show all
- * fields" state, so existing panels and user-cleared selections are never
- * touched — only the initial seed of a freshly-created panel.
+ * Seeds a brand-new List panel's columns with its default signal's columns so the
+ * Columns control isn't empty on first open. Runs once and only when empty: an
+ * empty selection is a valid "show all fields" state, so existing panels and
+ * user-cleared selections are never touched.
  */
 export function useSeedNewListColumns({
 	enabled,
@@ -35,8 +34,7 @@ export function useSeedNewListColumns({
 		if (!enabled || seededRef.current || !signal) {
 			return;
 		}
-		// Don't clobber a selection that's already present (e.g. re-render before
-		// the seed flag settles); only seed when the panel has no columns yet.
+		// Only seed when empty — don't clobber a selection that's already present.
 		if (readSelectFields(spec).length > 0) {
 			return;
 		}

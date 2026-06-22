@@ -26,25 +26,16 @@ export interface DashboardPreference {
 	dashboardId?: string;
 }
 
-// Kind-agnostic props every renderer receives. Kind-specific interaction props
-// are layered on per-kind by PanelRendererProps<K>.
+/** Kind-agnostic props every renderer receives; kind-specific interactions are layered on by PanelRendererProps<K>. */
 export interface BaseRendererProps {
 	panelId: string;
-	/**
-	 * The whole perses panel — renderers derive `spec` and `queries` from this.
-	 * Required: the render boundary only mounts a renderer once the panel and its
-	 * kind are resolved, so a renderer never sees an absent panel.
-	 */
+	/** The whole panel — renderers derive `spec` and `queries` from it. Required: the render boundary only mounts once panel + kind resolve. */
 	panel: DashboardtypesPanelDTO;
 	/** Raw V5 fetch result — response + the request that produced it. */
 	data: PanelQueryData;
 	isLoading: boolean;
 	error: Error | null;
-	/**
-	 * Re-run the panel query. Owned by `usePanelQuery` and threaded through
-	 * `PanelBody`; renderers wire it to the no-data Retry affordance. Optional so
-	 * standalone renderer call sites (e.g. the editor preview) can omit it.
-	 */
+	/** Re-run the panel query; wired to the no-data Retry affordance. Optional so standalone call sites (e.g. the editor preview) can omit it. */
 	refetch?: () => void;
 	/** Gate for the drill-down right-click menu. Off by default in V2. */
 	enableDrillDown?: boolean;
@@ -52,20 +43,15 @@ export interface BaseRendererProps {
 	panelMode: PanelMode;
 	/** Dashboard-level preferences propagated to every panel; shell resolves, renderer consumes. */
 	dashboardPreference?: DashboardPreference;
-	/**
-	 * Free-text filter from the header search box, applied client-side. Only
-	 * meaningful for kinds that declare `actions.search`; others ignore it.
-	 */
+	/** Free-text header filter, applied client-side. Only meaningful for kinds that declare `actions.search`. */
 	searchTerm?: string;
 	/** Server-side paging handles. Present only for raw/list panels; others ignore it. */
 	pagination?: PanelPagination;
 }
 
 // The single plugin variant for kind K, picked from the generated plugin union.
-// The union members carry a nominal kind-enum, so we distribute over it and
-// coerce each member's kind to its string value (`${VK & string}`) to match
-// against K. Result: the variant whose `spec` is that kind's exact spec DTO.
-// K = PanelKind keeps every variant, recovering the full union.
+// Distributes over the union, coercing each member's nominal kind-enum to its
+// string value (`${VK & string}`) to match K. K = PanelKind recovers the full union.
 type PluginOfKind<K extends PanelKind> =
 	DashboardtypesPanelPluginDTO extends infer V
 		? V extends { kind: infer VK }
@@ -75,9 +61,9 @@ type PluginOfKind<K extends PanelKind> =
 			: never
 		: never;
 
-// The panel narrowed to kind K: identical to the wire DTO except `plugin` (and
-// hence `plugin.spec`) is the single variant for K. Lets a renderer read
-// `panel.spec.plugin.spec` as its own spec type — no cast at the call site.
+// The panel narrowed to kind K: the wire DTO with `plugin` (and `plugin.spec`)
+// fixed to K's single variant, so a renderer reads `panel.spec.plugin.spec` as
+// its own spec type with no cast.
 export type PanelOfKind<K extends PanelKind = PanelKind> = Omit<
 	DashboardtypesPanelDTO,
 	'spec'
@@ -87,13 +73,9 @@ export type PanelOfKind<K extends PanelKind = PanelKind> = Omit<
 	};
 };
 
-// Renderer props for a specific panel kind: the shared base (with `panel`
-// narrowed to K) plus that kind's interaction surface (PanelInteractionMap[K]).
-// Each renderer annotates with its own kind — e.g.
-// PanelRendererProps<'signoz/TimeSeriesPanel'> — so it sees its exact spec and
-// only the gestures that kind supports. Indexing PanelInteractionMap here forces
-// the map to cover every PanelKind. The default K = PanelKind yields the widest
-// surface (a union over all kinds).
+// Renderer props for kind K: the base (with `panel` narrowed to K) plus K's
+// interaction surface (PanelInteractionMap[K]), so a renderer sees its exact spec
+// and only the gestures it supports. The default K = PanelKind is the widest surface.
 export type PanelRendererProps<K extends PanelKind = PanelKind> = Omit<
 	BaseRendererProps,
 	'panel'

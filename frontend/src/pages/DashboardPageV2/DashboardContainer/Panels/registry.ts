@@ -11,9 +11,7 @@ import type {
 } from './types/panelDefinition';
 import { PanelKind } from './types/panelKind';
 
-// Pure assembly: each kind owns its own PanelDefinition (see
-// `kinds/<Kind>/definition.ts`). Registering a new panel = add its folder and a
-// single entry below — no other central file needs editing.
+// Each kind owns its PanelDefinition; registering a new panel is one entry here.
 export const PANELS: PanelRegistry = {
 	[TimeSeries.kind]: TimeSeries,
 	[BarChart.kind]: BarChart,
@@ -27,10 +25,7 @@ export const PANELS: PanelRegistry = {
 export function getPanelDefinition(
 	kind: PanelKind,
 ): RenderablePanelDefinition | undefined {
-	// Indexing yields this kind's exactly-typed definition (or undefined for an
-	// unregistered kind). Widen the per-kind Renderer to the kind-agnostic prop
-	// surface: a renderer typed for one kind's interactions can't be statically
-	// validated against the union the render boundary calls it with, so this is
-	// the single, intentional cast for the whole panel system.
+	// Single intentional cast widening the per-kind Renderer to the kind-agnostic
+	// prop surface (a per-kind renderer can't be statically validated against the union).
 	return PANELS[kind] as RenderablePanelDefinition | undefined;
 }

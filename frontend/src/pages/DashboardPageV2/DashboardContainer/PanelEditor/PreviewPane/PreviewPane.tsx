@@ -18,8 +18,8 @@ import styles from './PreviewPane.module.scss';
 interface PreviewPaneProps {
 	panelId: string;
 	panel: DashboardtypesPanelDTO;
-	/** Resolved definition for the panel kind; undefined when the kind is unsupported. */
-	panelDef: RenderablePanelDefinition | undefined;
+	/** Resolved definition for the panel kind; */
+	panelDefinition: RenderablePanelDefinition;
 	data: PanelQueryData;
 	isLoading: boolean;
 	/** Background refresh in flight — drives the header's subtle refetch spinner. */
@@ -34,14 +34,14 @@ interface PreviewPaneProps {
 }
 
 /**
- * Live preview for the panel editor. Renders the draft through the same `PanelBody`
- * the dashboard grid uses (only `panelMode={DASHBOARD_EDIT}` differs), so the preview
- * is the production render path. The query result is owned by the editor root.
+ * Live preview for the panel editor: renders the draft through the same `PanelBody`
+ * the dashboard grid uses (only `panelMode` differs), so the preview is the
+ * production render path. The query result is owned by the editor root.
  */
 function PreviewPane({
 	panelId,
 	panel,
-	panelDef,
+	panelDefinition,
 	data,
 	isLoading,
 	isFetching,
@@ -53,11 +53,9 @@ function PreviewPane({
 	const panelType = PANEL_KIND_TO_PANEL_TYPE[panel.spec.plugin.kind];
 	const queryType = getPanelQueryType(panel);
 
-	// Header search: only kinds that declare it (e.g. tables/lists) render the
-	// box. The term is ephemeral preview state — like the dashboard grid's
-	// `Panel`, it's owned here and threaded to both the header (input) and the
-	// renderer (filter), not persisted to the draft spec.
-	const searchable = !!panelDef?.headerControls.search;
+	// Search term is ephemeral preview state, threaded to header + renderer but
+	// not persisted to the draft spec. Only kinds that declare it render the box.
+	const searchable = !!panelDefinition.actions.search;
 	const [searchTerm, setSearchTerm] = useState('');
 
 	return (
@@ -74,44 +72,32 @@ function PreviewPane({
 			</div>
 			<div className={styles.container}>
 				<div className={styles.surface}>
-					{panelDef ? (
-						<>
-							{/* Same header as the dashboard grid, minus the actions menu —
-							    panel-level actions (View/Edit/Clone/Delete) don't apply in
-							    the editor. The per-panel time pill is omitted too: the
-							    preview owns its own time window (see resolvePanelTimeWindow). */}
-							<PanelHeader
-								name={panel.spec.display.name}
-								description={panel.spec.display?.description}
-								panelId={panelId}
-								panelKind={panel.spec.plugin.kind}
-								isFetching={isFetching}
-								error={error}
-								warning={data.response?.data?.warning}
-								searchable={searchable}
-								searchTerm={searchTerm}
-								onSearchChange={setSearchTerm}
-								hideActions
-							/>
-							<PanelBody
-								panelDefinition={panelDef}
-								panel={panel}
-								panelId={panelId}
-								data={data}
-								isLoading={isLoading}
-								error={error}
-								refetch={refetch}
-								onDragSelect={onDragSelect}
-								panelMode={PanelMode.DASHBOARD_EDIT}
-								searchTerm={searchable ? searchTerm : undefined}
-								pagination={pagination}
-							/>
-						</>
-					) : (
-						<div className={styles.state} data-testid="panel-editor-v2-unknown-kind">
-							This panel type is not yet supported in V2.
-						</div>
-					)}
+					<PanelHeader
+						name={panel.spec.display.name}
+						description={panel.spec.display?.description}
+						panelId={panelId}
+						panelKind={panel.spec.plugin.kind}
+						isFetching={isFetching}
+						error={error}
+						warning={data.response?.data?.warning}
+						searchable={searchable}
+						searchTerm={searchTerm}
+						onSearchChange={setSearchTerm}
+						hideActions
+					/>
+					<PanelBody
+						panelDefinition={panelDefinition}
+						panel={panel}
+						panelId={panelId}
+						data={data}
+						isLoading={isLoading}
+						error={error}
+						refetch={refetch}
+						onDragSelect={onDragSelect}
+						panelMode={PanelMode.DASHBOARD_EDIT}
+						searchTerm={searchable ? searchTerm : undefined}
+						pagination={pagination}
+					/>
 				</div>
 			</div>
 		</div>

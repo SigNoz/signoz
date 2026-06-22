@@ -54,8 +54,7 @@ describe('createPanelOps', () => {
 	});
 
 	it('fills the empty right half of a row instead of wrapping to a new one', () => {
-		// One 6-wide panel at the left of the top row → the new 6-wide panel fits
-		// at x:6 in the same row.
+		// Left half filled → new 6-wide panel fits at x:6 in the same row.
 		const layouts = [section([item(0, 6)])];
 		const ops = createPanelOps({ layouts, layoutIndex: 0, panelId: 'p1', panel });
 
@@ -65,7 +64,7 @@ describe('createPanelOps', () => {
 	});
 
 	it('wraps to a new row when the last row is full', () => {
-		// A full-width (12) row leaves no horizontal room, so the panel drops below.
+		// Full-width (12) row leaves no room → panel drops to the next row.
 		const layouts = [section([itemAt(0, 0, 12, 6)])];
 		const ops = createPanelOps({ layouts, layoutIndex: 0, panelId: 'p1', panel });
 
@@ -75,8 +74,7 @@ describe('createPanelOps', () => {
 	});
 
 	it('ignores a gap in an upper row and only fills the last row', () => {
-		// Top row half-filled (x:0..6) but the last row is full → the new panel
-		// starts a fresh row rather than back-filling the upper gap.
+		// Upper-row gap is ignored when the last row is full → starts a fresh row.
 		const layouts = [section([itemAt(0, 0, 6, 6), itemAt(0, 6, 12, 6)])];
 		const ops = createPanelOps({ layouts, layoutIndex: 0, panelId: 'p1', panel });
 
@@ -86,7 +84,7 @@ describe('createPanelOps', () => {
 	});
 
 	it('fills the right of the last row when it has room', () => {
-		// Full top row, half-filled last row → panel sits at x:6 of the last row.
+		// Half-filled last row → panel sits at x:6 of that row.
 		const layouts = [section([itemAt(0, 0, 12, 6), itemAt(0, 6, 6, 6)])];
 		const ops = createPanelOps({ layouts, layoutIndex: 0, panelId: 'p1', panel });
 
@@ -96,9 +94,7 @@ describe('createPanelOps', () => {
 	});
 
 	it('checks the last row of the target section only, not other sections', () => {
-		// Section 0 has a half-empty last row, but the panel is added to section 1;
-		// placement is computed from section 1's last row (full → new row), and
-		// section 0 is left untouched.
+		// Placement uses the target section's (1) last row, ignoring section 0's gap.
 		const layouts = [
 			section([itemAt(0, 0, 6, 6)]),
 			section([itemAt(0, 0, 12, 6)]),

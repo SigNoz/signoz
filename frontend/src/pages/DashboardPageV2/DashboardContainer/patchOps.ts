@@ -15,11 +15,9 @@ import type { DefaultPluginSpec } from './Panels/utils/buildDefaultPluginSpec';
 import type { GridItem } from './utils';
 
 /**
- * Pure RFC-6902 JSON-Patch builders for the V2 dashboard spec. These are
- * intentionally side-effect-free (no React, no network) so they can be unit
- * tested and reused by the layout hooks. JSON pointers target the postable
- * shape: `/spec/layouts/...`, `/spec/panels/...` (matches the existing V2
- * patches in DashboardSettings/Overview and DashboardDescription).
+ * Pure (no React/network) RFC-6902 JSON-Patch builders for the V2 dashboard
+ * spec. Pointers target the postable shape: `/spec/layouts/...`,
+ * `/spec/panels/...`.
  */
 
 const { add, replace, remove } = DashboardtypesPatchOpDTO;
@@ -31,16 +29,10 @@ export function panelRef(panelId: string): string {
 }
 
 /**
- * Builds a fresh panel of the given kind to seed the editor when creating a new
- * panel. Queries start empty: the editor's query builder falls back to its
- * default query (see `fromPerses`), and the editor re-serializes the live query
- * for the panel's kind on save — so the persisted panel always carries a
- * kind-valid query, and the seed needs no hand-built query envelope.
- *
- * `pluginSpec` seeds the per-kind config defaults so the editor's config pane
- * opens populated instead of blank (see `buildDefaultPluginSpec`). It stays pure:
- * the caller resolves the kind's defaults — this builder only stores them, so it
- * carries no dependency on the (React) panel registry.
+ * Builds a fresh panel of the given kind to seed the editor for a new panel.
+ * Queries start empty — the editor re-serializes a kind-valid query on save, so
+ * no hand-built query envelope is needed. The caller resolves `pluginSpec` (the
+ * kind's config defaults) so this builder stays free of the React panel registry.
  */
 export function createDefaultPanel(
 	pluginKind: PanelKind,
@@ -50,8 +42,7 @@ export function createDefaultPanel(
 		kind: DashboardtypesPanelKindDTO.Panel,
 		spec: {
 			display: { name: 'New panel' },
-			// `plugin` is a discriminated union keyed by a per-kind enum; the kind is
-			// chosen at runtime, so assert the variant at this one boundary.
+			// `plugin` is a discriminated union; kind is runtime-chosen, so assert here.
 			plugin: {
 				kind: pluginKind,
 				spec: pluginSpec,
@@ -141,12 +132,9 @@ const NEW_PANEL_SIZE = { width: 6, height: 6 };
 const GRID_COLS = 12;
 
 /**
- * Placement for a new grid item: if the last row has horizontal room to the
- * right of its panels, drop the new panel there; otherwise wrap to a fresh row
- * at the bottom. Only the last row is considered (gaps in earlier rows are left
- * alone). The last row is the set of items sharing the greatest top-y; its right
- * edge is the furthest `x + width` among them. Matches the 12-col grid +
- * vertical compaction in SectionGrid.
+ * Placement for a new grid item: drop it right of the last row if there's room,
+ * else wrap to a fresh row at the bottom. Only the last row is considered (items
+ * sharing the greatest top-y); gaps in earlier rows are left alone.
  */
 function findFreeSlot(
 	items: DashboardGridItemDTO[],
@@ -166,7 +154,6 @@ function findFreeSlot(
 		.filter((it) => (it.y ?? 0) === lastRowY)
 		.reduce((max, it) => Math.max(max, (it.x ?? 0) + (it.width ?? 0)), 0);
 
-	// Room in the last row → sit to the right of it; else start a new row.
 	if (lastRowRightEdge + w <= GRID_COLS) {
 		return { x: lastRowRightEdge, y: lastRowY };
 	}
@@ -174,11 +161,9 @@ function findFreeSlot(
 }
 
 /**
- * Ops to create a brand-new panel: resolve the target section (the requested
- * index when valid, else the last section, else a freshly-created one when the
- * dashboard has no sections) and drop the panel into the last row when it has
- * room, otherwise a new row. Used by the editor's save path when persisting a
- * draft panel.
+ * Ops to persist a brand-new panel (editor save path): resolve the target
+ * section (requested index if valid, else last, else a freshly-created one) and
+ * place the panel via `findFreeSlot`.
  */
 export function createPanelOps({
 	layouts,
@@ -188,7 +173,6 @@ export function createPanelOps({
 }: CreatePanelOpsArgs): DashboardtypesJSONPatchOperationDTO[] {
 	const ops: DashboardtypesJSONPatchOperationDTO[] = [];
 
-	// Prefer the requested section; if it's missing/out of range, use the last.
 	const requested =
 		layoutIndex !== undefined && layouts[layoutIndex] !== undefined
 			? layoutIndex
@@ -197,7 +181,7 @@ export function createPanelOps({
 	let targetIndex = requested;
 	let items: DashboardGridItemDTO[] = layouts[requested]?.spec.items ?? [];
 	if (targetIndex < 0) {
-		// No sections yet — create one (free-flowing, untitled) and target it.
+		// No sections yet — create an untitled one and target it.
 		ops.push(addSectionOp(''));
 		targetIndex = 0;
 		items = [];

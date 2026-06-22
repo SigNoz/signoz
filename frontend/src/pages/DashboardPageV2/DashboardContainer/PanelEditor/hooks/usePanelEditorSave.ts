@@ -31,19 +31,10 @@ interface UsePanelEditorSaveApi {
 }
 
 /**
- * Persists panel edits for the V2 editor via RFC-6902 JSON Patch.
- *
- * Editing: replaces the whole panel spec in one `add` op against
- * `/spec/panels/{panelId}/spec` with the editor's draft spec — so every edit the
- * config pane makes (display, formatting/axes/legend/chart-appearance under
- * `plugin.spec`, `legend.customColors`, context links) plus the live query is
- * persisted. `add` doubles as create-or-replace.
- *
- * Creating (`isNew`): the draft panel doesn't exist yet, so a fresh id is minted
- * and the panel is added to `spec.panels` along with a grid item in the target
- * section (resolved from the current dashboard in cache; a section is created if
- * the dashboard has none). This is what makes "create new panel" persist only on
- * save — cancelling never touches the dashboard.
+ * Persists panel edits for the V2 editor via RFC-6902 JSON Patch. Editing: one
+ * `add` op replaces the whole spec. Creating (`isNew`): mints a fresh id and adds
+ * a grid item in the target section. Persists only on save — cancelling never
+ * touches the dashboard.
  */
 export function usePanelEditorSave({
 	dashboardId,

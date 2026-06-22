@@ -26,10 +26,8 @@ interface PanelMessageProps {
 }
 
 /**
- * Shared centred panel state: an icon, a title, an optional description and an
- * optional action button. One component for every non-chart panel state (no
- * query, no data, error) so the copy, spacing and casing stay consistent
- * instead of each call site reinventing them.
+ * Shared centred panel state (icon + title + optional description/action) so the
+ * no-query / no-data / error states stay visually consistent across call sites.
  */
 function PanelMessage({
 	icon,

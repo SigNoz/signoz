@@ -48,8 +48,7 @@ describe('buildDefaultPluginSpec', () => {
 	});
 
 	it('does not seed controls that already show a clear default', () => {
-		// `axes` (Auto inputs + linear/log toggle) and `formatting` (none/auto
-		// placeholders) must stay unset — their empty state is the chart default.
+		// `axes` and `formatting` stay unset — their empty state is the chart default.
 		const sections: SectionConfig[] = [
 			{ kind: 'axes', controls: { minMax: true, logScale: true } },
 			{ kind: 'formatting', controls: { unit: true, decimals: true } },

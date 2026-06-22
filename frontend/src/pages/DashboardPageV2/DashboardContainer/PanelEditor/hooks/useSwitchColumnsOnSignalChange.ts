@@ -22,11 +22,10 @@ interface UseSwitchColumnsOnSignalChangeArgs {
 }
 
 /**
- * Swaps the List panel's columns when the telemetry signal changes (logs →
- * traces). V2 stores a single `selectFields`, so each signal's columns are
- * remembered and restored when the user switches back — logs → traces → logs
- * returns the original logs columns. A signal seen for the first time has
- * nothing stashed, so it gets the datasource's defaults (V1 parity).
+ * Swaps the List panel's columns when the telemetry signal changes. V2 stores a
+ * single `selectFields`, so each signal's columns are stashed and restored on
+ * switch-back; a signal seen for the first time gets the datasource defaults (V1
+ * parity).
  */
 export function useSwitchColumnsOnSignalChange({
 	enabled,

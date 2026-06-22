@@ -3,11 +3,9 @@ import {
 	type PanelKind,
 } from '../Panels/types/panelKind';
 
-// A new (unsaved) panel has no id yet, so the editor route uses a fixed `new`
-// id segment and carries the chosen kind (and optional target section) in the
-// query string: `/panel/new?panelKind=signoz/ListPanel&layoutIndex=2`.
-// PanelEditorPage seeds a default panel of that kind instead of looking one up;
-// the real id is generated when the panel is saved.
+// New (unsaved) panels share a fixed id segment, carrying kind + target section
+// in the query: `/panel/new?panelKind=signoz/ListPanel&layoutIndex=2`. The real
+// id is generated on save.
 export const NEW_PANEL_ID = 'new';
 const PANEL_KIND_PARAM = 'panelKind';
 const LAYOUT_INDEX_PARAM = 'layoutIndex';

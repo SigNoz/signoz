@@ -23,10 +23,8 @@ import { createDefaultPanel } from '../DashboardContainer/patchOps';
 import styles from './PanelEditorPage.module.scss';
 
 /**
- * Full-page route for editing a V2 dashboard panel. Fetches the dashboard, resolves
- * the panel from its spec, and hands `PanelEditorContainer` the navigate-back
- * callbacks. The save round-trip invalidates the dashboard query, so returning shows
- * the persisted edit without an explicit refetch here.
+ * Full-page route for editing a V2 dashboard panel. Resolves the panel from the
+ * fetched dashboard spec and wires up navigate-back callbacks.
  */
 function PanelEditorPage(): JSX.Element {
 	const { dashboardId, panelId } = useParams<{
@@ -42,15 +40,13 @@ function PanelEditorPage(): JSX.Element {
 	const dashboard = data?.data;
 
 	// A `panel/new?panelKind=…` route means "create": seed a default panel of that
-	// kind instead of looking one up. The panel is persisted (with a real id) only
-	// on save, so cancelling leaves the dashboard untouched.
+	// kind rather than looking one up. Persisted (with a real id) only on save.
 	const newKind = parseNewPanelKind(panelId, search);
 	const existingPanel = dashboard?.spec.panels[panelId];
 	const panel = useMemo(
 		() =>
 			newKind
-				? // Seed the kind's config defaults so the editor opens populated, not
-					// blank (derived from the kind's declared sections).
+				? // Seed config defaults so the editor opens populated, not blank.
 					createDefaultPanel(
 						newKind,
 						buildDefaultPluginSpec(getPanelDefinition(newKind)?.sections ?? []),
@@ -63,9 +59,8 @@ function PanelEditorPage(): JSX.Element {
 	const layoutIndex = parseNewPanelLayoutIndex(search);
 
 	const backToDashboard = useCallback((): void => {
-		// Carry only dashboard params back; drop editor-only URL state (chiefly
-		// `compositeQuery`, the query builder's URL sync) so it doesn't leak into the
-		// dashboard. Time lives in Redux, so it survives without being in the URL.
+		// Carry only dashboard params; drop editor-only URL state (chiefly
+		// `compositeQuery`) so it doesn't leak into the dashboard. Time lives in Redux.
 		const params = new URLSearchParams();
 		const variables = new URLSearchParams(search).get(QueryParams.variables);
 		if (variables) {
@@ -92,8 +87,7 @@ function PanelEditorPage(): JSX.Element {
 		);
 	}
 
-	// No panel to show: either a stale/deleted panel id, or a `new_<Kind>` token
-	// naming an unknown kind — send the user back instead of an empty editor.
+	// No panel (stale/deleted id, or unknown new-panel kind) — send the user back.
 	if (!panel) {
 		return (
 			<Redirect

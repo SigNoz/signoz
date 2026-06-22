@@ -7,14 +7,13 @@ import type { Warning } from 'types/api';
 import PanelHeader from '../PanelHeader/PanelHeader';
 import { PanelKind } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelKind';
 
-// PanelHeader's status indicators render a radix tooltip, which needs a
-// TooltipProvider ancestor (supplied globally by AppLayout at runtime).
+// Status indicators use a radix tooltip, which needs a TooltipProvider ancestor
+// (supplied globally by AppLayout at runtime).
 const renderWithProvider = (ui: ReactElement): ReturnType<typeof render> =>
 	render(<TooltipProvider>{ui}</TooltipProvider>);
 
-// The actions menu has its own gating logic (kind/role/context) and its own
-// tests; stub it with a marker so this header test only checks whether the menu
-// is mounted at all (the `hideActions` switch), not which items it resolves.
+// Stub the actions menu (its gating logic is tested separately) so this asserts
+// only whether the menu mounts, per the `hideActions` switch.
 jest.mock(
 	'../PanelActionsMenu/PanelActionsMenu',
 	() =>
@@ -98,8 +97,8 @@ describe('PanelHeader search', () => {
 
 		await user.click(screen.getByTestId('panel-header-search-trigger'));
 
-		// The input is controlled to the (fixed) `searchTerm` here, so each keystroke
-		// reports a single character — assert one to confirm changes are propagated.
+		// Input is controlled to a fixed `searchTerm`, so each keystroke reports a
+		// single character — one is enough to confirm changes propagate.
 		const input = screen.getByTestId('panel-header-search-input');
 		await user.type(input, 'f');
 		expect(onSearchChange).toHaveBeenCalledWith('f');

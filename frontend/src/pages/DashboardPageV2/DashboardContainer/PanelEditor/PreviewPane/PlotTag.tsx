@@ -11,10 +11,9 @@ interface PlotTagProps {
 }
 
 /**
- * "Plotted with <query mode>" chip for the editor preview — the V2 counterpart
- * of V1's WidgetGraph/PlotTag (duplicated into V2 land per the split policy).
- * Hidden for list panels (the mode is irrelevant there) and before a query is
- * configured, mirroring V1's guard instead of hardcoding the builder.
+ * "Plotted with <query mode>" chip for the editor preview; V2 counterpart of V1's
+ * PlotTag (duplicated per the split policy). Hidden for list panels and before a
+ * query exists, where the mode is irrelevant.
  */
 function PlotTag({
 	queryType,

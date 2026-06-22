@@ -14,10 +14,8 @@ import PanelHeader from './PanelHeader/PanelHeader';
 import styles from './Panel.module.scss';
 
 /**
- * Layout context for the panel actions menu — pure data, present only in
- * editable mode. No callbacks: the menu resolves its own mutations from
- * store-backed hooks (useDeletePanel / useMovePanelToSection), and edit is
- * URL-driven (useOpenPanelEditor).
+ * Layout context for the panel actions menu — present only in editable mode. No
+ * callbacks: the menu resolves its own mutations from store-backed hooks.
  */
 export interface PanelActionsConfig {
 	currentLayoutIndex: number;
@@ -34,10 +32,8 @@ interface PanelProps {
 }
 
 /**
- * A single dashboard panel: chrome (header) + content (body). Thin orchestrator
- * — data fetching lives in `usePanelQuery`, cross-panel interactions in
- * `usePanelInteractions`, and the loading/error/chart state machine in
- * `PanelBody`.
+ * A single dashboard panel (header + body). Thin orchestrator: fetching lives in
+ * `usePanelQuery`, interactions in `usePanelInteractions`, state in `PanelBody`.
  */
 function Panel({
 	panel,
@@ -47,13 +43,11 @@ function Panel({
 }: PanelProps): JSX.Element {
 	const name = panel.spec.display.name;
 	const description = panel.spec.display?.description;
-	// `spec.plugin.kind` is a union of the per-variant kind enums, each a string
-	// literal that lands in the `PanelKind` union — assignable directly, no cast.
 	const fullKind = panel.spec.plugin.kind;
 
-	// A per-panel relative time preference (anything other than global_time) is
-	// surfaced as a pill in the header. `visualization` is common to every
-	// plugin-spec variant — localized cast reads it without narrowing on kind.
+	// A per-panel time preference is surfaced as a header pill. `visualization` is
+	// common to every plugin-spec variant — localized cast reads it without
+	// narrowing on kind.
 	const timePreference = (
 		panel.spec.plugin.spec as
 			| { visualization?: { timePreference?: DashboardtypesTimePreferenceDTO } }
@@ -63,9 +57,8 @@ function Panel({
 
 	const panelDefinition = getPanelDefinition(fullKind);
 
-	// Header search: only kinds that declare it (e.g. tables) render the box; the
-	// term is owned here and threaded to both the header (input) and the renderer
-	// (filter), the two being siblings under this orchestrator.
+	// Header search: only kinds that declare it render the box. The term is owned
+	// here and threaded to both the header (input) and renderer (filter).
 	const searchable = !!panelDefinition?.actions.search;
 	const [searchTerm, setSearchTerm] = useState('');
 
@@ -73,8 +66,7 @@ function Panel({
 		usePanelQuery({
 			panel,
 			panelId,
-			// Lazy: only fetch once the section is on screen (undefined → treat as
-			// visible) and a renderer exists for the kind.
+			// Lazy: fetch only once on screen (undefined → visible) and a renderer exists.
 			enabled: !!panelDefinition && isVisible !== false,
 		});
 

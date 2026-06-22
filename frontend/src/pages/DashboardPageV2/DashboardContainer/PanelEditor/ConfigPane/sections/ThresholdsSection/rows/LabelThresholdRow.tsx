@@ -23,10 +23,7 @@ interface LabelThresholdRowProps {
 	onRemove: () => void;
 }
 
-/**
- * Value + color + label threshold (TimeSeries / Bar): a line drawn on the chart. Edit
- * form is color, value, unit, label.
- */
+/** Value + color + label threshold (TimeSeries / Bar): a line drawn on the chart. */
 function LabelThresholdRow({
 	index,
 	threshold,

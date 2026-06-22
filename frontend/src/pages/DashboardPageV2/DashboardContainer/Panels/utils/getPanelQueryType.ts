@@ -5,10 +5,9 @@ import { toQueryEnvelopes } from '../../queryV5/buildQueryRangeRequest';
 import { deriveQueryType } from '../../queryV5/persesQueryAdapters';
 
 /**
- * The authoring mode (builder / ClickHouse / PromQL) of a panel's query, read
- * from its V5 envelopes. Returns `undefined` when the panel has no query yet, so
- * callers can hide query-type chrome (e.g. the editor preview's "Plotted with"
- * tag) instead of defaulting to the builder.
+ * The authoring mode (builder / ClickHouse / PromQL) of a panel's query. Returns
+ * `undefined` when the panel has no query yet so callers can hide query-type chrome
+ * (e.g. the editor preview's "Plotted with" tag) rather than defaulting to builder.
  */
 export function getPanelQueryType(
 	panel: DashboardtypesPanelDTO,

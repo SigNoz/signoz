@@ -12,8 +12,8 @@ import {
 import { sanitizeSelectFields } from '../../ListColumnsEditor/selectFields';
 import { useSwitchColumnsOnSignalChange } from '../useSwitchColumnsOnSignalChange';
 
-// The hook applies the datasource defaults reduced to the field-key DTO (the V1
-// constants carry extra keys like `isIndexed`); assertions mirror that.
+// V1 constants carry extra keys (e.g. `isIndexed`); the hook reduces them to the
+// field-key DTO, so assertions sanitize the same way.
 const expectedLogs = sanitizeSelectFields(
 	defaultLogsSelectedColumns as TelemetrytypesTelemetryFieldKeyDTO[],
 );
@@ -74,32 +74,41 @@ describe('useSwitchColumnsOnSignalChange', () => {
 	});
 
 	it('restores the original columns on logs → traces → logs', () => {
-		// A customized logs selection (not just the timestamp/body defaults).
+		// Customized logs selection, not the timestamp/body defaults.
 		const original = [
 			{ name: 'timestamp' },
 			{ name: 'body' },
 			{ name: 'response_status_code' },
 			{ name: 'trace_id' },
 		];
-		// onChangeSpec is wired to update the spec, mirroring the real parent so
-		// the next switch stashes the columns the previous one just applied.
+		// Mirror the real parent: persist the spec so the next switch stashes the
+		// columns the previous one applied.
 		let spec = makeSpec(original);
 		const onChangeSpec = jest.fn((next: DashboardtypesPanelSpecDTO) => {
 			spec = next;
 		});
 		const { rerender } = renderWith({
 			enabled: true,
-			signal: 'logs',
+			signal: TelemetrytypesSignalDTO.logs,
 			spec,
 			onChangeSpec,
 		});
 
-		// logs → traces: columns swap to the trace defaults.
-		rerender({ enabled: true, signal: 'traces', spec, onChangeSpec });
+		rerender({
+			enabled: true,
+			signal: TelemetrytypesSignalDTO.traces,
+			spec,
+			onChangeSpec,
+		});
 		expect(selectFieldsOf(spec)).toStrictEqual(expectedTraces);
 
-		// traces → logs: the original logs columns come back, not the log defaults.
-		rerender({ enabled: true, signal: 'logs', spec, onChangeSpec });
+		// Switching back restores the original columns, not the log defaults.
+		rerender({
+			enabled: true,
+			signal: TelemetrytypesSignalDTO.logs,
+			spec,
+			onChangeSpec,
+		});
 		expect(selectFieldsOf(spec)).toStrictEqual(original);
 	});
 

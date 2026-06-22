@@ -28,8 +28,7 @@ function TablePanelRenderer({
 	refetch,
 	searchTerm = '',
 }: PanelRendererProps<'signoz/TablePanel'>): JSX.Element {
-	// Measure the panel so each page roughly fills it (min 10 rows) and the
-	// header stays pinned while the body scrolls.
+	// Measure the panel so each page roughly fills it (min 10 rows) with a pinned header.
 	const containerRef = useRef<HTMLDivElement>(null);
 	const { height } = useResizeObserver(containerRef);
 	const { pageSize, scrollY } = useMemo(
@@ -37,8 +36,7 @@ function TablePanelRenderer({
 		[height],
 	);
 
-	// `panel` is narrowed to this kind by PanelRendererProps, so `spec` is this
-	// kind's exact spec DTO — no cast needed.
+	// `panel` is narrowed to this kind by PanelRendererProps, so no cast needed.
 	const spec = useMemo<DashboardtypesTablePanelSpecDTO>(
 		() => panel.spec.plugin.spec,
 		[panel.spec.plugin.spec],
@@ -91,15 +89,13 @@ function TablePanelRenderer({
 		[table],
 	);
 
-	// Header search filters rows client-side (V1 parity). Falls back to the full
-	// set when the term is empty, so non-searching tables pay nothing.
+	// Header search filters rows client-side (V1 parity); empty term returns the full set, so non-searching tables pay nothing.
 	const filteredDataSource = useMemo(
 		() => filterTableRows(dataSource, searchTerm),
 		[dataSource, searchTerm],
 	);
 
-	// Keep pagination in range as the filtered set shrinks: a new term snaps back
-	// to the first page so the user never lands on a now-empty page.
+	// Snap back to page 1 on a new search term so the filtered set never lands on a now-empty page.
 	const [page, setPage] = useState(1);
 	useEffect(() => setPage(1), [searchTerm]);
 
