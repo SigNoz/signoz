@@ -2265,7 +2265,7 @@ export interface AuthtypesPostableUserDTO {
 	/**
 	 * @type array
 	 */
-	roles: AuthtypesPostableUserRoleDTO[];
+	userRoles: AuthtypesPostableUserRoleDTO[];
 }
 
 export interface AuthtypesRoleDTO {

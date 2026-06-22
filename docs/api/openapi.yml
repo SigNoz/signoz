@@ -663,13 +663,13 @@ components:
           type: string
         frontendBaseUrl:
           type: string
-        roles:
+        userRoles:
           items:
             $ref: '#/components/schemas/AuthtypesPostableUserRole'
           type: array
       required:
       - email
-      - roles
+      - userRoles
       type: object
     AuthtypesPostableUserRole:
       properties:

@@ -36,7 +36,7 @@ func (handler *handler) CreateUser(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	req := new(authtypes.PostableUser)
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := binding.JSON.BindBody(r.Body, req); err != nil {
 		render.Error(rw, err)
 		return
 	}
@@ -47,12 +47,12 @@ func (handler *handler) CreateUser(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	roleIDs := make([]valuer.UUID, 0, len(req.Roles))
-	for _, role := range req.Roles {
+	roleIDs := make([]valuer.UUID, 0, len(req.UserRoles))
+	for _, role := range req.UserRoles {
 		roleIDs = append(roleIDs, role.ID)
 	}
 
-	user, err = handler.setter.CreateUserInvite(ctx, valuer.MustNewUUID(claims.IdentityID()), valuer.MustNewEmail(claims.Email), req.FrontendBaseUrl, user, root.WithRoleIDs(roleIDs))
+	user, err = handler.setter.CreatePendingInviteUser(ctx, valuer.MustNewUUID(claims.IdentityID()), valuer.MustNewEmail(claims.Email), req.FrontendBaseUrl, user, root.WithRoleIDs(roleIDs))
 	if err != nil {
 		render.Error(rw, err)
 		return

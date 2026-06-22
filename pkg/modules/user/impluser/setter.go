@@ -215,14 +215,9 @@ func (module *setter) CreateUser(ctx context.Context, user *types.User, opts ...
 	return nil
 }
 
-// CreateUserInvite creates a pending invite user with the roles given via opts and emails them a
-// link to set their password. The grant is deferred until the invite is accepted (see
-// UpdatePasswordByResetPasswordToken), so unlike CreateUser it never grants the roles here.
-func (module *setter) CreateUserInvite(ctx context.Context, identityID valuer.UUID, identityEmail valuer.Email, frontendBaseURL string, user *types.User, opts ...root.CreateUserOption) (*types.User, error) {
+func (module *setter) CreatePendingInviteUser(ctx context.Context, identityID valuer.UUID, identityEmail valuer.Email, frontendBaseURL string, user *types.User, opts ...root.CreateUserOption) (*types.User, error) {
 	createUserOpts := root.NewCreateUserOptions(opts...)
 
-	// roles can be supplied either by name or by id, resolve the ids to names so both
-	// converge. ListByOrgIDAndIDs also validates that the roles exist in the org.
 	roleNames := createUserOpts.RoleNames
 	if len(createUserOpts.RoleIDs) > 0 {
 		roles, err := module.authz.ListByOrgIDAndIDs(ctx, user.OrgID, createUserOpts.RoleIDs)

@@ -46,7 +46,7 @@ type Setter interface {
 	CreateBulkInvite(ctx context.Context, orgID valuer.UUID, identityID valuer.UUID, identityEmail valuer.Email, bulkInvites *types.PostableBulkInviteRequest) ([]*types.Invite, error)
 
 	// Creates a pending invite user with the roles given via opts and emails them the invite link.
-	CreateUserInvite(ctx context.Context, identityID valuer.UUID, identityEmail valuer.Email, frontendBaseURL string, user *types.User, opts ...CreateUserOption) (*types.User, error)
+	CreatePendingInviteUser(ctx context.Context, identityID valuer.UUID, identityEmail valuer.Email, frontendBaseURL string, user *types.User, opts ...CreateUserOption) (*types.User, error)
 
 	// Roles
 	UpdateUserRoles(ctx context.Context, orgID, userID valuer.UUID, finalRoleNames []string) error

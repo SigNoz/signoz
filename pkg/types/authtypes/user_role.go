@@ -14,6 +14,7 @@ import (
 var (
 	ErrCodeUserRoleAlreadyExists = errors.MustNewCode("user_role_already_exists")
 	ErrCodeUserRolesNotFound     = errors.MustNewCode("user_roles_not_found")
+	ErrCodeUserRoleInvalidInput  = errors.MustNewCode("user_role_invalid_input")
 )
 
 type UserRole struct {
@@ -38,7 +39,7 @@ type PostableUser struct {
 	DisplayName     string              `json:"displayName"`
 	Email           valuer.Email        `json:"email" required:"true"`
 	FrontendBaseUrl string              `json:"frontendBaseUrl"`
-	Roles           []*PostableUserRole `json:"roles" required:"true" nullable:"false"`
+	UserRoles       []*PostableUserRole `json:"userRoles" required:"true" nullable:"false"`
 }
 
 type PostableUserRole struct {
@@ -53,8 +54,8 @@ func (p *PostableUser) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	if temp.Roles == nil {
-		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "roles is required")
+	if temp.UserRoles == nil {
+		return errors.New(errors.TypeInvalidInput, ErrCodeUserRoleInvalidInput, "roles is required").WithAdditional("send an empty array to create user without role")
 	}
 
 	*p = PostableUser(temp)
