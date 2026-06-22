@@ -15,7 +15,7 @@ export const definition: PanelDefinition<'signoz/TablePanel'> = {
 		view: true,
 		edit: true,
 		clone: true,
-		download: true,
+		download: { csv: true, png: true, svg: true },
 		createAlert: false,
 	},
 	// V1 parity: only tables expose the header search box.

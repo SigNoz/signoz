@@ -29,6 +29,13 @@ jest.mock('../../hooks/useClonePanel', () => ({
 	useClonePanel: (): jest.Mock => mockClonePanel,
 }));
 
+const mockDownloadImage = jest.fn();
+jest.mock('../../hooks/useDownloadPanelImage', () => ({
+	useDownloadPanelImage: (): { downloadPanelImage: jest.Mock } => ({
+		downloadPanelImage: mockDownloadImage,
+	}),
+}));
+
 // Role is the only thing read off the app context; useComponentPermission runs
 // for real so the tests exercise the actual role → permission mapping.
 let mockRole: ROLES = 'ADMIN';
@@ -55,6 +62,7 @@ const TWO_TITLED_SECTIONS = [section(0, 'Overview'), section(1, 'Latency')];
 
 const baseArgs = {
 	panelId: 'panel-1',
+	panelName: 'My panel',
 	panelKind: 'signoz/TimeSeriesPanel' as PanelKind,
 	panelActions: { currentLayoutIndex: 0, sections: TWO_TITLED_SECTIONS },
 };
@@ -79,14 +87,15 @@ describe('usePanelActionItems', () => {
 			'edit-panel',
 			'clone-panel',
 			'divider',
+			'download',
 			'create-alert',
 			'divider',
 			'move',
 			'divider',
 			'delete-panel',
 		]);
-		// download stays hidden: no current kind declares the capability
-		// (V1 parity — CSV export was table-only).
+		// The single "Download" entry is a submenu (PNG/SVG, plus CSV on tables);
+		// it's present for every renderable kind.
 	});
 
 	it('AUTHOR loses edit and clone (edit_widget excludes AUTHOR) but keeps the rest', () => {
@@ -95,6 +104,7 @@ describe('usePanelActionItems', () => {
 		expect(itemKeys(result.current)).toStrictEqual([
 			'view-panel',
 			'divider',
+			'download',
 			'create-alert',
 			'divider',
 			'move',
@@ -103,12 +113,13 @@ describe('usePanelActionItems', () => {
 		]);
 	});
 
-	it('VIEWER keeps only the role-ungated actions (view, create-alert)', () => {
+	it('VIEWER keeps only the role-ungated actions (view, download, create-alert)', () => {
 		mockRole = 'VIEWER';
 		const { result } = renderHook(() => usePanelActionItems(baseArgs));
 		expect(itemKeys(result.current)).toStrictEqual([
 			'view-panel',
 			'divider',
+			'download',
 			'create-alert',
 		]);
 	});
@@ -130,12 +141,19 @@ describe('usePanelActionItems', () => {
 		]);
 	});
 
-	it('read-only dashboard keeps only View (V1 parity)', () => {
+	it('read-only dashboard keeps the non-mutating actions (View, download-image)', () => {
 		useDashboardStore.setState({ isEditable: false });
 		const { result } = renderHook(() =>
 			usePanelActionItems({ ...baseArgs, panelActions: undefined }),
 		);
-		expect(itemKeys(result.current)).toStrictEqual(['view-panel']);
+		// View and the Download submenu (PNG/SVG) are non-mutating, so they
+		// survive on a read-only dashboard (V1 parity for View; image export
+		// follows the same policy).
+		expect(itemKeys(result.current)).toStrictEqual([
+			'view-panel',
+			'divider',
+			'download',
+		]);
 	});
 
 	it('move is disabled when there is no other titled section to move to', () => {
@@ -212,6 +230,25 @@ describe('usePanelActionItems', () => {
 			panelId: 'panel-1',
 			layoutIndex: 0,
 		});
+	});
+
+	it('the Download submenu captures the panel by id, name and chosen format', () => {
+		const { result } = renderHook(() => usePanelActionItems(baseArgs));
+		const download = result.current.items.find(
+			(i) => 'key' in i && i.key === 'download',
+		) as { children: { key: string; onClick: () => void }[] };
+
+		// TimeSeries declares no CSV capability, so the submenu is just PNG + SVG.
+		expect(download.children.map((c) => c.key)).toStrictEqual([
+			'download-png',
+			'download-svg',
+		]);
+
+		download.children.find((c) => c.key === 'download-png')?.onClick();
+		expect(mockDownloadImage).toHaveBeenCalledWith('panel-1', 'My panel', 'png');
+
+		download.children.find((c) => c.key === 'download-svg')?.onClick();
+		expect(mockDownloadImage).toHaveBeenCalledWith('panel-1', 'My panel', 'svg');
 	});
 
 	it('not-yet-implemented actions (view/create-alert) fire the placeholder alert with the feature name', () => {
