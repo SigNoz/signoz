@@ -14,10 +14,8 @@ interface PanelHeaderSearchProps {
 }
 
 /**
- * Collapsible header search (V1 parity): a search icon that expands into an
- * input on click and collapses again once it's empty and blurred. Purely a
- * controlled input over `value` — it owns only its expanded/collapsed chrome,
- * never the term itself.
+ * Collapsible header search (V1 parity): an icon that expands into an input and
+ * collapses once empty and blurred. Owns only its chrome, never the term.
  */
 function PanelHeaderSearch({
 	value,

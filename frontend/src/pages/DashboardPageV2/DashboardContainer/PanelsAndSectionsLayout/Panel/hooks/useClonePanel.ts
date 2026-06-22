@@ -19,10 +19,9 @@ export interface ClonePanelArgs {
 }
 
 /**
- * Duplicates a panel: deep-copies the source panel's spec under a fresh id and
- * drops a new grid item — same dimensions as the source — at the bottom of the
- * same section, as one atomic patch. Mirrors V1's clone (verbatim spec copy, no
- * rename) and reuses the same add-panel op builder as useAddPanelToSection.
+ * Duplicates a panel: deep-copies the source spec under a fresh id and drops a
+ * same-size grid item at the bottom of the section, as one atomic patch. Mirrors
+ * V1's clone (verbatim spec copy, no rename).
  */
 export function useClonePanel({
 	sections,
@@ -39,7 +38,6 @@ export function useClonePanel({
 			}
 
 			const newPanelId = uuid();
-			// Place at a fresh row at the bottom of the same section.
 			const nextY = section.items.reduce(
 				(max, i) => Math.max(max, i.y + i.height),
 				0,
@@ -61,8 +59,7 @@ export function useClonePanel({
 				}),
 			);
 
-			// Surface in-flight → done/failed state to the user (toast.promise also
-			// reports the failure, so no separate error modal is needed here).
+			// toast.promise reports the failure, so no separate error modal here.
 			toast.promise(clone, {
 				loading: 'Cloning panel…',
 				success: 'Panel cloned',
@@ -70,8 +67,8 @@ export function useClonePanel({
 				position: 'top-center',
 			});
 
-			// Refetch only on success; the rejection is already surfaced by the
-			// toast, so swallow it to avoid an unhandled rejection.
+			// Refetch only on success; swallow the rejection (toast owns the error
+			// UX) to avoid an unhandled rejection.
 			try {
 				await clone;
 				refetch();

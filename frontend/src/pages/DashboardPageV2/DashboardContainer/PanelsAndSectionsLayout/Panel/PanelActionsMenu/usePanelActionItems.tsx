@@ -31,8 +31,7 @@ import { PanelKind } from 'pages/DashboardPageV2/DashboardContainer/Panels/types
 // hooks' deps (a fresh [] each render would re-create their callbacks).
 const EMPTY_SECTIONS: DashboardSection[] = [];
 
-// Placeholder for the V1-parity actions whose V2 implementations land in
-// later milestones (view, clone, download, create-alerts).
+/** Placeholder for V1-parity actions whose V2 implementations land later. */
 function notImplementedYet(feature: string): void {
 	// eslint-disable-next-line no-alert -- temporary placeholder, see above
 	alert(`${feature} option clicked`);
@@ -48,17 +47,13 @@ interface UsePanelActionItemsArgs {
 
 export interface PanelActionItems {
 	items: MenuItem[];
-	/**
-	 * Two-step confirm flow for the destructive Delete action — the menu defers
-	 * to it instead of deleting on click. The presentational menu renders
-	 * ConfirmDeleteDialog from this.
-	 */
+	/** Two-step confirm flow for the destructive Delete action. */
 	deleteConfirm: ConfirmableAction;
 }
 
 /**
- * Resolves the panel actions menu items (the V1 WidgetHeader action set plus
- * V2's "Move to section"). Every action passes three gates before it appears:
+ * Resolves the panel actions menu items (V1 WidgetHeader set plus V2's "Move to
+ * section"). Every action passes three gates before it appears:
  *
  *   kind — what the panel kind declares it supports (PanelDefinition.actions);
  *          unknown kinds support no kind-gated actions.
@@ -66,9 +61,6 @@ export interface PanelActionItems {
  *          actions without a permission key are open to every role, V1 parity).
  *   context — runtime state: dashboard editable (store), layout config present.
  *          View and Download remain available on read-only dashboards, as in V1.
- *
- * Items are composed as groups with dividers inserted between non-empty
- * groups, so adding an action never touches divider bookkeeping.
  */
 export function usePanelActionItems({
 	panelId,
@@ -97,8 +89,7 @@ export function usePanelActionItems({
 
 	const kindActions = getPanelDefinition(panelKind)?.actions;
 
-	// Delete is destructive, so the menu item opens a confirmation prompt rather
-	// than deleting on click; the actual mutation runs on confirm.
+	// Delete runs on confirm, not on click — the menu item opens a prompt.
 	const deleteConfirm = useConfirmableAction(
 		useCallback(async (): Promise<void> => {
 			if (!panelActions) {
@@ -110,12 +101,10 @@ export function usePanelActionItems({
 			});
 		}, [deletePanel, panelActions, panelId]),
 	);
-	// Stable opener — used in the items memo without rebuilding it when the
-	// dialog's open/pending state changes.
+	// Stable opener so the items memo doesn't rebuild on dialog state changes.
 	const { request: requestDelete } = deleteConfirm;
 
 	const items = useMemo<MenuItem[]>(() => {
-		// Group 1 — open/author the panel: View, Edit, Clone.
 		const panelGroup: MenuItem[] = [];
 		if (kindActions?.view) {
 			panelGroup.push({
@@ -148,7 +137,6 @@ export function usePanelActionItems({
 			});
 		}
 
-		// Group 2 — derive from the panel's data: Download, Create Alerts.
 		const dataGroup: MenuItem[] = [];
 		if (kindActions?.download) {
 			dataGroup.push({
@@ -167,7 +155,6 @@ export function usePanelActionItems({
 			});
 		}
 
-		// Group 3 — layout: Move to section.
 		const moveGroup: MenuItem[] = [];
 		if (canMove && panelActions) {
 			const targets = sections.filter(
@@ -194,7 +181,6 @@ export function usePanelActionItems({
 			});
 		}
 
-		// Group 4 — danger: Delete.
 		const deleteGroup: MenuItem[] =
 			canDelete && panelActions
 				? [

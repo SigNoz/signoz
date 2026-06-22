@@ -16,14 +16,10 @@ import PanelEditorContainer from '../DashboardContainer/PanelEditor';
 import styles from './PanelEditorPage.module.scss';
 
 /**
- * Dedicated route for editing a V2 dashboard panel (`/dashboard/:dashboardId/
- * panel/:panelId`). Replaces the former modal overlay: the editor is now a full
- * page you navigate to and back from, mirroring the V1 widget-editor flow.
- *
- * Fetches the dashboard (same hook as DashboardPageV2), resolves the panel from
- * its spec, and hands `PanelEditorContainer` the navigate-back callbacks. The
- * save round-trip invalidates the dashboard query, so returning to the
- * dashboard shows the persisted edit without an explicit refetch here.
+ * Full-page route for editing a V2 dashboard panel. Fetches the dashboard, resolves
+ * the panel from its spec, and hands `PanelEditorContainer` the navigate-back
+ * callbacks. The save round-trip invalidates the dashboard query, so returning shows
+ * the persisted edit without an explicit refetch here.
  */
 function PanelEditorPage(): JSX.Element {
 	const { dashboardId, panelId } = useParams<{
@@ -40,10 +36,9 @@ function PanelEditorPage(): JSX.Element {
 	const panel = dashboard?.spec.panels[panelId];
 
 	const backToDashboard = useCallback((): void => {
-		// Carry only dashboard-relevant params back; drop editor-only URL state —
-		// chiefly `compositeQuery` (the query builder's URL sync) — so it doesn't
-		// leak into the dashboard view. Mirrors V1's navigateToDashboardPage. Time
-		// lives in Redux, so it survives the navigation without being in the URL.
+		// Carry only dashboard params back; drop editor-only URL state (chiefly
+		// `compositeQuery`, the query builder's URL sync) so it doesn't leak into the
+		// dashboard. Time lives in Redux, so it survives without being in the URL.
 		const params = new URLSearchParams();
 		const variables = new URLSearchParams(search).get(QueryParams.variables);
 		if (variables) {
@@ -70,9 +65,7 @@ function PanelEditorPage(): JSX.Element {
 		);
 	}
 
-	// The URL references a panel that no longer exists on this dashboard (stale
-	// link or deleted panel) — send the user back to the dashboard instead of
-	// rendering an empty editor.
+	// Stale/deleted panel ref: redirect to the dashboard rather than render an empty editor.
 	if (!panel) {
 		return (
 			<Redirect

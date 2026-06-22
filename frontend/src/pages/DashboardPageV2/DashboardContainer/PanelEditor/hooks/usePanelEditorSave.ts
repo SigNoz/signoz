@@ -22,15 +22,10 @@ interface UsePanelEditorSaveApi {
 }
 
 /**
- * Persists panel edits for the V2 editor via RFC-6902 JSON Patch.
- *
- * Replaces the whole panel spec in one `add` op against `/spec/panels/{panelId}/spec`
- * with the editor's draft spec — so every edit the config pane makes (display,
- * formatting/axes/legend/chart-appearance under `plugin.spec`, `legend.customColors`,
- * context links) is persisted, not just the title/description. `add` doubles as
- * create-or-replace, so panels that loaded without a sub-object are handled without a
- * separate existence check. The draft carries `queries` unchanged until the V2 query
- * builder lands, so replacing the whole spec is safe.
+ * Persists panel edits via a single RFC-6902 `add` op that replaces the whole panel
+ * spec at `/spec/panels/{panelId}/spec`, so every config-pane edit is saved (not just
+ * title/description). `add` doubles as create-or-replace, avoiding a separate
+ * existence check.
  */
 export function usePanelEditorSave({
 	dashboardId,

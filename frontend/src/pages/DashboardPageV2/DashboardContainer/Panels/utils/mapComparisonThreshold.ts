@@ -32,10 +32,9 @@ const FORMAT_MAP: Record<
 };
 
 /**
- * Maps a comparison-shaped panel-spec threshold onto the V2-native
- * `PanelThreshold` consumed by threshold evaluation / rendering. The single
- * place the Perses operator/format enums cross into the symbol model, shared by
- * every kind that carries comparison thresholds (Number, Table, …).
+ * Maps a comparison-shaped spec threshold onto the V2-native `PanelThreshold`.
+ * The single place the Perses operator/format enums cross into the symbol model,
+ * shared by every kind that carries comparison thresholds (Number, Table, …).
  */
 export function toPanelThreshold(
 	threshold: ComparisonThresholdShape,

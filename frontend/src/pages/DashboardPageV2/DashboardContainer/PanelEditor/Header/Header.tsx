@@ -25,8 +25,7 @@ function Header({
 		useCallback(async (): Promise<void> => onClose(), [onClose]),
 	);
 
-	// Closing with unsaved edits prompts for confirmation; a pristine panel closes
-	// straight away.
+	// Confirm before closing with unsaved edits; a pristine panel closes straight away.
 	const handleCloseClick = useCallback((): void => {
 		if (isDirty) {
 			discard.request();

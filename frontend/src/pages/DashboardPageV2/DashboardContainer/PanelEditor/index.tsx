@@ -37,10 +37,9 @@ interface PanelEditorContainerProps {
 }
 
 /**
- * V2 panel editor page body. Rendered by the `DASHBOARD_PANEL_EDITOR` route
- * (`PanelEditorPage`) as a full page — a resizable split holds the live preview
- * + query builder on the left and the configuration pane on the right. Owns the
- * draft state and the save round-trip.
+ * V2 panel editor page body (rendered full-page by `PanelEditorPage`): a resizable
+ * split with the live preview + query builder on the left and the config pane on the
+ * right. Owns the draft state and the save round-trip.
  */
 function PanelEditorContainer({
 	dashboardId,
@@ -64,13 +63,13 @@ function PanelEditorContainer({
 		storage: layoutStorage,
 	});
 
-	// Panel kind → V1 panel type (drives the query builder + preview).
+	// Panel kind → V1 panel type, which drives the query builder and preview.
 	const fullKind = draft.spec.plugin.kind;
 	const panelType =
 		(fullKind && PANEL_KIND_TO_PANEL_TYPE[fullKind as PanelKind]) ??
 		PANEL_TYPES.TIME_SERIES;
 
-	// One shared query result for the whole editor: the preview renders it.
+	// One shared query result for the whole editor; the preview renders it.
 	const panelDef = getPanelDefinition(draft.spec.plugin.kind);
 	const {
 		data,
@@ -86,9 +85,7 @@ function PanelEditorContainer({
 		enabled: !!panelDef,
 	});
 
-	// Seed the shared query builder from the draft and expose the Stage-&-Run
-	// action (writes the query into the draft → preview re-fetches, or forces a
-	// re-fetch when unchanged).
+	// Seed the shared query builder from the draft and expose the Stage-&-Run action.
 	const { runQuery, isQueryDirty, buildSaveSpec } = usePanelEditorQuerySync({
 		draft,
 		panelType,
@@ -96,12 +93,11 @@ function PanelEditorContainer({
 		refetch,
 	});
 
-	// Dirty = an edited config slice (display/plugin spec) OR an edited query. The
-	// two are tracked independently so query re-serialization never false-dirties.
+	// Spec and query dirtiness are tracked independently so query re-serialization
+	// never false-dirties.
 	const isDirty = isSpecDirty || isQueryDirty;
 
-	// Drag-to-zoom on the preview chart updates the (URL-synced) time window,
-	// exactly as on the dashboard.
+	// Drag-to-zoom on the preview updates the URL-synced time window, as on the dashboard.
 	const { onDragSelect } = usePanelInteractions();
 
 	const onSave = useCallback(async (): Promise<void> => {

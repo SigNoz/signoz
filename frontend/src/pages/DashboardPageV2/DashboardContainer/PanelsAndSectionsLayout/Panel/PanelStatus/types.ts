@@ -3,12 +3,11 @@ export type PanelStatusVariant = 'error' | 'warning';
 
 /**
  * Normalized status shape that both an API error and a query warning adapt into,
- * so a single popover can render either. Mirrors the fields the backend supplies
- * on its `ErrorV2` / `Warning` envelopes (code + summary + optional docs link +
- * per-item messages).
+ * so a single popover can render either. Mirrors the backend `ErrorV2`/`Warning`
+ * envelope fields (code + summary + optional docs link + per-item messages).
  */
 export interface PanelStatusDetail {
-	/** Short status code (e.g. an error/warning code) shown as the heading. Only present in error cases. */
+	/** Status code shown as the heading. Only present in error cases. */
 	code?: string;
 	/** Human-readable summary line. */
 	message: string;

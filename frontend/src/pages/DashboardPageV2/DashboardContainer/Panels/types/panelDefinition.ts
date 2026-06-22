@@ -7,14 +7,10 @@ import type { PanelKind } from './panelKind';
 import type { BaseRendererProps, PanelRendererProps } from './rendererProps';
 
 /**
- * Kind-level action capabilities: which panel actions THIS kind supports.
- * Declared per-kind in `kinds/<Kind>/definition.ts` — the field is required,
- * so registering a new kind forces an explicit decision for every action
- * (mirroring how PanelInteractionMap forces per-kind interaction coverage).
- *
- * Chrome actions (move to section, clone, delete) are dashboard-layout
- * concerns, available for every panel — including kinds V2 can't render —
- * and are intentionally not declarable here.
+ * Which panel actions a kind supports. Required field, so registering a new
+ * kind forces an explicit decision for every action. Chrome actions (move to
+ * section, clone, delete) are dashboard-layout concerns available to every
+ * panel and are intentionally not declarable here.
  */
 export interface PanelActionCapabilities {
 	/** Kind has a full-screen view — gates the "View" action. */
@@ -23,17 +19,13 @@ export interface PanelActionCapabilities {
 	edit: boolean;
 	/** Kind can be cloned — gates the "Clone" action. */
 	clone: boolean;
-	/**
-	 * Kind's data can be exported as CSV — gates "Download as CSV". V1 parity:
-	 * only table panels carry tabular data worth exporting.
-	 */
+	/** Gates "Download as CSV". V1 parity: only table panels carry exportable data. */
 	download: boolean;
 	/** Kind's query can seed a new alert — gates "Create Alerts". */
 	createAlert: boolean;
 	/**
-	 * Header carries a collapsible search box that filters the rendered rows
-	 * client-side (V1 parity: only tabular kinds). Not a menu action — the kind's
-	 * renderer must consume `searchTerm` (see BaseRendererProps) to apply it.
+	 * Header search box that filters rendered rows client-side (V1 parity: only
+	 * tabular kinds). Not a menu action — the renderer must consume `searchTerm`.
 	 */
 	search: boolean;
 }
@@ -47,15 +39,12 @@ export interface PanelDefinition<K extends PanelKind = PanelKind> {
 	actions: PanelActionCapabilities;
 }
 
-// Keyed registry that preserves the kind ↔ definition correlation: indexing
-// with a literal kind yields that kind's exactly-typed PanelDefinition.
+// Indexing with a literal kind yields that kind's exactly-typed PanelDefinition.
 export type PanelRegistry = { [K in PanelKind]?: PanelDefinition<K> };
 
-// A PanelDefinition whose Renderer is widened to the kind-agnostic prop surface.
-// At the render boundary the concrete kind isn't known statically (a registry
-// lookup returns a union over kinds), so getPanelDefinition resolves to this —
-// concentrating the single unavoidable cast in one place instead of leaking it
-// to every call site.
+// PanelDefinition with its Renderer widened to the kind-agnostic prop surface.
+// getPanelDefinition resolves to this, concentrating the unavoidable cast in one
+// place rather than leaking it to every call site (the kind isn't known statically).
 export interface RenderablePanelDefinition extends Omit<
 	PanelDefinition,
 	'Renderer'

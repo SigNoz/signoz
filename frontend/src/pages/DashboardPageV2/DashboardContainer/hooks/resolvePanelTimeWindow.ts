@@ -6,11 +6,8 @@ export interface PanelTimeWindow {
 	endMs: number;
 }
 
-/**
- * Span of each relative time preference, in milliseconds. `global_time` is absent: it
- * means "follow the dashboard window" and is handled as the default branch below.
- * Mirrors V1's `getStartAndEndTime` preset durations (last_1_month = 30 days).
- */
+// Span per relative preference, in ms. `global_time` is absent (follow the dashboard
+// window, default branch below). Mirrors V1's `getStartAndEndTime` (last_1_month = 30 days).
 const MINUTE_MS = 60 * 1000;
 const PRESET_SPAN_MS: Partial<Record<DashboardtypesTimePreferenceDTO, number>> =
 	{
@@ -25,11 +22,8 @@ const PRESET_SPAN_MS: Partial<Record<DashboardtypesTimePreferenceDTO, number>> =
 		[DashboardtypesTimePreferenceDTO.last_1_month]: 30 * 24 * 60 * MINUTE_MS,
 	};
 
-/**
- * Short + full labels for each relative preference, for the panel header time
- * pill. `global_time` is absent — a panel that follows the dashboard window
- * shows no pill.
- */
+// Short + full labels per relative preference, for the header time pill. `global_time` is
+// absent — a panel that follows the dashboard window shows no pill.
 const TIME_PREFERENCE_LABEL: Partial<
 	Record<DashboardtypesTimePreferenceDTO, { short: string; full: string }>
 > = {
@@ -78,11 +72,7 @@ export interface PanelTimePreferenceLabel {
 	full: string;
 }
 
-/**
- * Display labels for a panel's relative time preference, or `null` when the
- * panel follows the dashboard window (`global_time` / unset) and so needs no
- * pill.
- */
+/** Pill labels for a panel's relative time preference, or `null` when it follows the dashboard window (`global_time`/unset). */
 export function panelTimePreferenceLabel(
 	timePreference: DashboardtypesTimePreferenceDTO | undefined,
 ): PanelTimePreferenceLabel | null {
@@ -101,22 +91,17 @@ interface ResolvePanelTimeWindowArgs {
 	/** Dashboard global window (epoch ms) — used as-is for `global_time`. */
 	globalStartMs: number;
 	globalEndMs: number;
-	/**
-	 * Explicit caller window (epoch ms), e.g. the editor preview. When present it wins
-	 * outright: the preview owns its own time selection and ignores the panel preference.
-	 */
+	/** Explicit caller window (epoch ms), e.g. the editor preview. When present it wins outright over the panel preference. */
 	override?: PanelTimeWindow;
 }
 
 /**
- * Resolves the absolute `[startMs, endMs]` window a panel should query over.
+ * Resolves the absolute `[startMs, endMs]` window a panel queries over.
  *
- * Precedence: explicit `override` → relative `timePreference` preset → dashboard global
- * window. A relative preset is anchored to the dashboard's current end (`globalEndMs`)
- * rather than wall-clock `Date.now()`, so the window only changes when the dashboard
- * refreshes — this keeps it stable across renders (no react-query refetch loop) and in
- * step with the dashboard's refresh cadence. All values are floored: V5 start/end are
- * int64 on the wire and upstream ms can carry a fraction.
+ * Precedence: `override` → relative `timePreference` preset → dashboard global window. A
+ * preset is anchored to `globalEndMs`, not wall-clock `Date.now()`, so the window is stable
+ * across renders (no refetch loop) and tracks the dashboard's refresh. All values floored:
+ * V5 start/end are int64 on the wire and upstream ms can carry a fraction.
  */
 export function resolvePanelTimeWindow({
 	timePreference,

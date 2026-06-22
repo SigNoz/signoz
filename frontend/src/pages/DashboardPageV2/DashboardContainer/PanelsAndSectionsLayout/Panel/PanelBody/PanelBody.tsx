@@ -16,7 +16,7 @@ import styles from './PanelBody.module.scss';
 
 interface PanelBodyProps {
 	/** Resolved renderer for the panel kind — always present (`Panel` renders the
-	 * unsupported fallback itself when no renderer is registered). */
+	 * unsupported fallback itself when none is registered). */
 	panelDefinition: RenderablePanelDefinition;
 	panel: DashboardtypesPanelDTO;
 	panelId: string;
@@ -36,14 +36,13 @@ interface PanelBodyProps {
 }
 
 /**
- * Renders the content of a panel whose kind has a registered renderer, as an
- * explicit state machine so each state is handled deliberately (no implicit
- * fall-through):
+ * Renders a panel whose kind has a registered renderer, as an explicit state
+ * machine:
  *
  *   error + no data → error message with retry
  *   first load (no data) → loading indicator
- *   otherwise → the kind's renderer (which owns its own "No Data" state, and
- *               keeps stale data mounted during background refetches)
+ *   otherwise → the kind's renderer (owns its own "No Data" state and keeps
+ *               stale data mounted during background refetches)
  */
 function PanelBody({
 	panelDefinition,
@@ -59,15 +58,14 @@ function PanelBody({
 	searchTerm,
 	pagination,
 }: PanelBodyProps): JSX.Element {
-	// Surface a hard failure only when there's no (stale) data to show; otherwise
-	// keep the last-good chart and let the header indicate the refresh.
 	// react-query keeps the previous response during background refetches, so
-	// `data.response` presence is the "have something to show" signal.
+	// `data.response` presence is the "have something to show" signal — surface a
+	// hard failure only when there's nothing to keep on screen.
 	const hasData = !!data.response;
 
 	if (error && !hasData) {
-		// Parse the API error the same way the header status popover does, so the
-		// body shows the backend's message (not the raw axios "status code 4xx").
+		// Parse the API error like the header popover does, so the body shows the
+		// backend message (not the raw axios "status code 4xx").
 		const errorDetail = panelStatusFromError(error);
 		return (
 			<div className={styles.error} data-testid="panel-error">
@@ -82,8 +80,8 @@ function PanelBody({
 		);
 	}
 
-	// First load only — background refetches keep the response populated so the
-	// chart stays mounted instead of blinking.
+	// First load only — refetches keep the response populated so the chart stays
+	// mounted instead of blinking.
 	if (isLoading) {
 		return (
 			<div className={styles.body} data-testid="panel-loading">

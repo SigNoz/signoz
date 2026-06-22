@@ -30,11 +30,9 @@ interface PreviewPaneProps {
 }
 
 /**
- * Live preview for the panel editor. Presentational: the draft panel renders
- * through `PanelBody` — the very same body the dashboard grid uses — so the
- * preview is the production render path (loading / error-retry / renderer), with
- * `panelMode={DASHBOARD_EDIT}` the only difference. The query result is owned by
- * the editor root (`usePanelQuery`) and passed in, shared with the config pane.
+ * Live preview for the panel editor. Renders the draft through the same `PanelBody`
+ * the dashboard grid uses (only `panelMode={DASHBOARD_EDIT}` differs), so the preview
+ * is the production render path. The query result is owned by the editor root.
  */
 function PreviewPane({
 	panelId,

@@ -6,11 +6,9 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { useDashboardStore } from '../store/useDashboardStore';
 
 /**
- * Returns a callback that opens the V2 panel editor for a panel by navigating
- * to its dedicated route (`/dashboard/:dashboardId/panel/:panelId`). The editor
- * is a full page (not a modal), mirroring the V1 widget-editor flow. The
- * dashboard id comes from the edit-context store (set by DashboardContainer),
- * so any entry point can open the editor with just the panel id.
+ * Returns a callback that opens the V2 panel editor by navigating to its full-page route
+ * (`/dashboard/:dashboardId/panel/:panelId`). The dashboard id comes from the store, so any
+ * caller can open the editor with just the panel id.
  */
 export function useOpenPanelEditor(): (panelId: string) => void {
 	const { safeNavigate } = useSafeNavigate();

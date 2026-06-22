@@ -9,12 +9,9 @@ import type { PanelStatusDetail } from './types';
  * Adapts a query failure into the normalized status shape.
  *
  * The generated `queryRangeV5` client's reject interceptor passes the raw
- * `AxiosError` through untouched — it is NOT pre-converted to `APIError` — so
- * the error arriving here is an axios error. `convertToApiError` is the
- * app-standard normalizer for generated-API axios errors: it pulls the backend
- * `code / message / url / errors` envelope off the response and supplies
- * sensible fallbacks for anything missing, so there's always a structured
- * detail to surface.
+ * `AxiosError` through untouched (NOT pre-converted to `APIError`), so
+ * `convertToApiError` is needed here to pull the backend `code/message/url/
+ * errors` envelope off the response (with fallbacks) into a structured detail.
  */
 export function panelStatusFromError(
 	error: Error | null | undefined,

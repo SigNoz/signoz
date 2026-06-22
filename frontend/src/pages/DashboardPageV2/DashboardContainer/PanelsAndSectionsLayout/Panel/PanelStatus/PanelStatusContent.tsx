@@ -15,12 +15,7 @@ const VARIANT_ICON = {
 	warning: { Icon: TriangleAlert, color: Color.BG_AMBER_500 },
 };
 
-/**
- * Popover card for a panel status (error or warning): a variant-coloured icon +
- * code/summary header with an optional docs button, a MESSAGES count pill, and
- * the per-item messages list. Pure presentation — the trigger icon is owned by
- * `PanelStatusPopover`.
- */
+/** Popover card for a panel status (error or warning). Pure presentation. */
 function PanelStatusContent({
 	variant,
 	detail,

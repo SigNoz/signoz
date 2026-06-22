@@ -12,42 +12,24 @@ import type {
 import type { PanelInteractionMap } from './interactions';
 import type { PanelKind } from './panelKind';
 
-/**
- * Dashboard-wide rendering preferences propagated down to every panel renderer
- * on the same dashboard. Lets the shell push cross-panel concerns (cursor
- * sync, tooltip filter mode, dashboard id for scoped state) without each
- * renderer rediscovering them via hooks.
- */
+/** Dashboard-wide rendering preferences propagated to every panel renderer. */
 export interface DashboardPreference {
-	/**
-	 * Cursor-sync mode for the dashboard. Drives the uPlot tooltip plugin so
-	 * hovering one panel highlights the corresponding x on every other panel.
-	 * Always present — `DashboardCursorSync.None` is the off state.
-	 */
+	/** Cursor-sync mode; always present — `DashboardCursorSync.None` is the off state. */
 	syncMode: DashboardCursorSync;
-	/**
-	 * Filter applied to the synced tooltip across panels (e.g. only show series
-	 * whose label matches the hovered series).
-	 */
+	/** Filter applied to the synced tooltip across panels. */
 	syncFilterMode?: SyncTooltipFilterMode;
-	/**
-	 * Dashboard id — useful for renderers that scope per-dashboard state
-	 * (e.g. pinned-tooltip persistence, drill-down history).
-	 */
+	/** Dashboard id, for renderers that scope per-dashboard state. */
 	dashboardId?: string;
 }
 
-// Kind-agnostic props every renderer receives, regardless of panel kind. The
-// kind-specific interaction props (onClick payload, onDragSelect) are layered
-// on per-kind by PanelRendererProps<K>.
+// Kind-agnostic props every renderer receives. Kind-specific interaction props
+// are layered on per-kind by PanelRendererProps<K>.
 export interface BaseRendererProps {
 	panelId: string;
 	/**
-	 * The whole perses panel — renderers derive their concrete `spec` and the
-	 * perses-shaped `queries` from this. Passing the full panel keeps the prop
-	 * surface stable as new panel-level fields are added to the wire format.
-	 * Required: the render boundary (`Panel`) only mounts a renderer once the
-	 * panel and its kind are resolved, so a renderer never sees an absent panel.
+	 * The whole perses panel — renderers derive `spec` and `queries` from this.
+	 * Required: the render boundary only mounts a renderer once the panel and its
+	 * kind are resolved, so a renderer never sees an absent panel.
 	 */
 	panel: DashboardtypesPanelDTO;
 	/** Raw V5 fetch result — response + the request that produced it. */
@@ -56,35 +38,21 @@ export interface BaseRendererProps {
 	error: Error | null;
 	/** Gate for the drill-down right-click menu. Off by default in V2. */
 	enableDrillDown?: boolean;
-	/**
-	 * Render context — varies behavior (e.g. dashboard widget vs. standalone
-	 * full-screen vs. inside the editor). See PanelMode for the contract.
-	 */
+	/** Render context (dashboard widget vs. standalone vs. editor); see PanelMode. */
 	panelMode: PanelMode;
-	/**
-	 * Dashboard-level preferences that should propagate to every panel
-	 * (cursor sync, tooltip filter mode, dashboard id). The shell owns
-	 * resolving these; the renderer just consumes them.
-	 */
+	/** Dashboard-level preferences propagated to every panel; shell resolves, renderer consumes. */
 	dashboardPreference?: DashboardPreference;
 	/**
-	 * Free-text filter from the header search box, owned by the shell and
-	 * applied client-side by the renderer. Only meaningful for kinds that
-	 * declare `actions.search`; other renderers ignore it.
+	 * Free-text filter from the header search box, applied client-side. Only
+	 * meaningful for kinds that declare `actions.search`; others ignore it.
 	 */
 	searchTerm?: string;
-	/**
-	 * Server-side paging handles, owned by `usePanelQuery`. Present only for
-	 * raw/list panels; other renderers ignore it.
-	 */
+	/** Server-side paging handles. Present only for raw/list panels; others ignore it. */
 	pagination?: PanelPagination;
 }
 
-// Renderer props for a specific panel kind: the shared base plus that kind's
-// interaction surface (PanelInteractionMap[K]). Each renderer annotates with
-// its own kind — e.g. PanelRendererProps<'signoz/TimeSeriesPanel'> — so it can
-// only reference the gestures that kind supports. Indexing PanelInteractionMap
-// here forces the map to cover every PanelKind. The default K = PanelKind
-// yields the widest surface (a union over all kinds).
+// Renderer props for a specific kind: shared base plus that kind's interaction
+// surface. Indexing PanelInteractionMap forces it to cover every PanelKind; the
+// default K = PanelKind yields the widest surface (a union over all kinds).
 export type PanelRendererProps<K extends PanelKind = PanelKind> =
 	BaseRendererProps & PanelInteractionMap[K];

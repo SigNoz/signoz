@@ -22,19 +22,19 @@ interface PanelHeaderProps {
 	panelId: string;
 	/** Full plugin kind — drives kind-gated menu actions; */
 	panelKind: PanelKind;
-	/** Background refresh in flight — shows a subtle spinner without blinking the chart. */
+	/** Background refresh in flight — shows a spinner without blinking the chart. */
 	isFetching: boolean;
-	/** Latest query error, if any — surfaced as a header error indicator. */
+	/** Latest query error — surfaced as a header error indicator. */
 	error?: Error | null;
 	/** Non-fatal query warning lifted from the response payload. */
 	warning?: WarningDTO;
-	/** Per-panel relative time-preference label; null when it follows the dashboard window. */
+	/** Per-panel time-preference label; null when it follows the dashboard window. */
 	timeLabel?: PanelTimePreferenceLabel | null;
 	/** Layout context for move/delete — absent outside editable sectioned mode. */
 	panelActions?: PanelActionsConfig;
-	/** Kind declares header search (`headerControls.search`) — renders the box. */
+	/** Kind declares header search — renders the box. */
 	searchable?: boolean;
-	/** Current search term; the shell owns it, the renderer applies the filter. */
+	/** Current search term; shell owns it, the renderer applies the filter. */
 	searchTerm?: string;
 	/** Pushes a new search term up to the shell. */
 	onSearchChange?: (value: string) => void;

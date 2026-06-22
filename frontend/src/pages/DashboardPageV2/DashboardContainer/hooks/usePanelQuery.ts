@@ -20,7 +20,7 @@ import { PANEL_KIND_TO_PANEL_TYPE } from '../Panels/types/panelKind';
 import { resolvePanelTimeWindow } from './resolvePanelTimeWindow';
 import { useGetQueryRangeV5 } from './useGetQueryRangeV5';
 
-// V1 list page-size choices (PER_PAGE_OPTIONS); default mirrors V1's list views.
+// V1 parity: PER_PAGE_OPTIONS + default page size from V1's list views.
 const LIST_PAGE_SIZE_OPTIONS = [10, 25, 50, 100, 200];
 const DEFAULT_LIST_PAGE_SIZE = 25;
 
@@ -28,29 +28,18 @@ export interface UsePanelQueryArgs {
 	panel: DashboardtypesPanelDTO | undefined;
 	panelId: string;
 	/**
-	 * Gate the underlying fetch. Defaults to true. PanelV2 sets this false when
-	 * no plugin is registered for the panel's kind so the unknown-kind fallback
-	 * UI doesn't trigger a wasted API call.
-	 *
-	 * The hook *also* auto-disables internally when the panel has no runnable
-	 * queries — callers don't need to compute that themselves.
+	 * Gate the fetch (default true). PanelV2 sets false for unregistered kinds to skip a wasted
+	 * call. The hook also auto-disables internally when the panel has no runnable queries.
 	 */
 	enabled?: boolean;
-	/**
-	 * Override the time window instead of reading global Redux time. Used by the
-	 * panel editor preview to stay isolated from the dashboard — changing the
-	 * preview time neither touches nor re-runs the dashboard behind the overlay.
-	 */
+	/** Override the time window instead of global Redux time, so the editor preview stays isolated from the dashboard. */
 	time?: PanelQueryTimeOverride;
 }
 
 /**
- * Editor-local time window in epoch milliseconds (the V5 request native unit).
- * The caller resolves its selection — relative or custom — to an absolute
- * window so the fetch can ignore global Redux time entirely. Fractional ms are
- * floored before the request: the V1 time helpers some callers resolve through
- * (e.g. getStartEndRangeTime → getMicroSeconds) divide without truncating, and
- * the V5 start/end are int64 — a float breaks the API call.
+ * Editor-local absolute time window in epoch ms. Floored before the request: V5 start/end are
+ * int64 and the V1 helpers callers resolve through divide without truncating, so a float breaks
+ * the API call.
  */
 export interface PanelQueryTimeOverride {
 	startMs: number;
@@ -60,16 +49,9 @@ export interface PanelQueryTimeOverride {
 export interface UsePanelQueryResult {
 	/** Raw V5 fetch result — response + the request that produced it. */
 	data: PanelQueryData;
-	/**
-	 * First fetch only — a request is in flight and there's no cached data yet.
-	 * Drives the full-panel loader (nothing to show). A background refetch with
-	 * data already present does NOT set this — watch `isFetching` for that.
-	 */
+	/** First fetch only (no cached data yet) — drives the full-panel loader. A background refetch does NOT set this; use `isFetching`. */
 	isLoading: boolean;
-	/**
-	 * Any request in flight, including a background refetch while stale data is
-	 * still displayed. Drives a subtle "refreshing" affordance, never a blank panel.
-	 */
+	/** Any request in flight, including a background refetch over stale data — drives a "refreshing" affordance, never a blank panel. */
 	isFetching: boolean;
 	error: Error | null;
 	/** Re-run the query (e.g. a retry button on the error state). */
@@ -81,24 +63,10 @@ export interface UsePanelQueryResult {
 }
 
 /**
- * Fetches the query-range data for a V2 panel over the pure-V5 contract.
- *
- *   1. Request — `buildQueryRangeRequest` assembles the generated
- *      `Querybuildertypesv5QueryRangeRequestDTO` directly from the panel's
- *      perses queries (a CompositeQuery plugin already nests the V5
- *      envelope list). No V1 `Query` intermediary.
- *   2. Time + variables — reads the global time selection from Redux
- *      (variables substitution is intentionally deferred until V2 has its
- *      own variable plumbing).
- *   3. Fetch — `useGetQueryRangeV5` posts via the generated `queryRangeV5`
- *      call with a react-query cache key composed from panel identity +
- *      time range + kind + queries.
- *
- * Renderers consume the raw V5 response through the `queryV5` prep utils
- * (`flattenTimeSeries`, `prepareScalarTables`, …).
- *
- * The hook is consumed today by PanelV2 (renderer dispatch) and will be
- * consumed by PanelEditor (1.8) for "preview as you edit."
+ * Fetches query-range data for a V2 panel over the pure-V5 contract: builds the request DTO
+ * from the panel's perses queries (no V1 `Query` intermediary), reads global time from Redux,
+ * and posts via `useGetQueryRangeV5`. Variable substitution is deferred until V2 has its own
+ * variable plumbing. Renderers consume the raw response through the `queryV5` prep utils.
  */
 export function usePanelQuery({
 	panel,
@@ -111,9 +79,8 @@ export function usePanelQuery({
 		(fullKind && PANEL_KIND_TO_PANEL_TYPE[fullKind]) ?? PANEL_TYPES.TIME_SERIES;
 	const queries = panel?.spec.queries;
 
-	// A list query with its own explicit `limit` caps results and shows them
-	// without a server pager (V1 parity: Controls render is gated on no limit).
-	// Without a limit, the list pages server-side at a user-selectable page size.
+	// V1 parity: a list query with an explicit `limit` shows without a server pager; without
+	// one it pages server-side at a user-selectable size.
 	const hasExplicitLimit = useMemo(
 		() => !!getBuilderQueries(queries ?? [])[0]?.limit,
 		[queries],
@@ -123,7 +90,6 @@ export function usePanelQuery({
 	const [pageSize, setPageSize] = useState(DEFAULT_LIST_PAGE_SIZE);
 	const [offset, setOffset] = useState(0);
 
-	// Changing page size restarts paging from the first page.
 	const handleSetPageSize = useCallback((size: number): void => {
 		setPageSize(size);
 		setOffset(0);
@@ -135,11 +101,8 @@ export function usePanelQuery({
 		minTime,
 	} = useSelector<AppState, GlobalReducer>((state) => state.globalTime);
 
-	// `visualization` carries panel-level options but only on the variants that
-	// declare it — read it via `in` narrowing over the generated union (no cast).
-	// `timePreference` pins the panel to a fixed relative window (every visualization
-	// variant has it); `fillSpans` backend-fills missing points with 0 and exists
-	// only on TimeSeries/Bar (→ formatOptions.fillGaps).
+	// `visualization` exists only on variants that declare it — read via `in` narrowing over the
+	// generated union (no cast). `fillSpans` (TimeSeries/Bar only) → formatOptions.fillGaps.
 	const pluginSpec = panel?.spec.plugin.spec;
 	const visualization =
 		pluginSpec && 'visualization' in pluginSpec
@@ -150,10 +113,8 @@ export function usePanelQuery({
 		visualization && 'fillSpans' in visualization && visualization.fillSpans,
 	);
 
-	// Redux global time is in nanoseconds; the V5 API takes epoch ms. Precedence: an
-	// editor time override (already in ms) wins so the preview stays independent of the
-	// dashboard, then the panel's time preference, then the global window. See
-	// resolvePanelTimeWindow for the flooring/anchoring rationale.
+	// Redux global time is in nanoseconds; V5 takes epoch ms. See resolvePanelTimeWindow for
+	// precedence and the flooring/anchoring rationale.
 	const { startMs, endMs } = resolvePanelTimeWindow({
 		timePreference,
 		globalStartMs: minTime / 1e6,
@@ -161,8 +122,8 @@ export function usePanelQuery({
 		override: time,
 	});
 
-	// A new query or time window invalidates the current page — snap back to the
-	// first page so we never request an offset past a now-shorter result set.
+	// New query/time window: snap to the first page so we never request an offset past a
+	// now-shorter result set.
 	useEffect(() => {
 		setOffset(0);
 	}, [queries, startMs, endMs]);
@@ -188,23 +149,18 @@ export function usePanelQuery({
 		() => [
 			REACT_QUERY_KEY.DASHBOARD_GRID_CARD_QUERY_RANGE,
 			panelId,
-			// Dashboard keys off Redux min/max + interval; the editor passes an
-			// explicit ms window. Keep each distinct so they refetch on their own
-			// time without colliding in the react-query cache. The floored values
-			// key the cache so it matches what was actually requested. The panel time
-			// preference participates too: it changes the resolved window off the same
-			// global min/max, so the key must distinguish it (else a preference switch
-			// would read a stale cache entry).
+			// Dashboard keys off Redux min/max + interval; the editor passes an explicit ms window.
+			// Keep them distinct so they don't collide in the cache. timePreference participates too:
+			// it changes the resolved window off the same global min/max, so a switch must not read a
+			// stale entry.
 			...(time
 				? [`override-${startMs}-${endMs}`]
 				: [minTime, maxTime, globalSelectedInterval, timePreference]),
-			// fillGaps changes the request payload (formatOptions), so it must key the
-			// cache too — otherwise toggling it would read a stale response.
+			// fillGaps changes the payload (formatOptions), so it must key the cache too.
 			fillGaps,
 			fullKind,
 			queries,
-			// Offset + page size key the cache so each page is its own entry (0/default
-			// for non-paged kinds).
+			// Each page is its own cache entry (0/default for non-paged kinds).
 			offset,
 			pageSize,
 		],
@@ -250,8 +206,8 @@ export function usePanelQuery({
 		[pageSize],
 	);
 
-	// Paging handles for raw/list panels. `canNext` is a heuristic: a full page
-	// or a response `nextCursor` implies more rows (no total count on the wire).
+	// Paging handles for raw/list panels. `canNext` is a heuristic (no total count on the wire):
+	// a full page or a response `nextCursor` implies more rows.
 	const pagination = useMemo<PanelPagination | undefined>(() => {
 		if (!isPaginated) {
 			return undefined;
@@ -282,9 +238,7 @@ export function usePanelQuery({
 		data,
 		isLoading: response.isLoading,
 		isFetching: response.isFetching,
-		// Coerce undefined → null so the contract is `Error | null`, not
-		// `Error | null | undefined`. Consumers can rely on a single
-		// "no error" sentinel.
+		// Coerce undefined → null so the contract is a single `Error | null` sentinel.
 		error: response.error ?? null,
 		refetch: response.refetch,
 		cancelQuery,

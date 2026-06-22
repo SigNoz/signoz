@@ -20,9 +20,8 @@ interface PanelStatusPopoverProps {
 }
 
 /**
- * Header status indicator: a variant-coloured icon (error → CircleX,
- * warning → TriangleAlert) that opens a tooltip with the status detail. One
- * component drives both variants so error and warning surfacing stay in lockstep.
+ * Header status indicator: an icon that opens a tooltip with the status detail.
+ * One component drives both variants so error and warning stay in lockstep.
  */
 function PanelStatusPopover({
 	variant,

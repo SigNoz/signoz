@@ -36,12 +36,9 @@ interface PanelEditorQueryBuilderProps {
 }
 
 /**
- * Query builder for the V2 panel editor's left pane — the queryType tabs
- * (Query Builder / ClickHouse / PromQL) over the shared `QueryBuilderV2` and the
- * V1 ClickHouse/PromQL containers, plus the Stage & Run button. All of these
- * read/write the global `QueryBuilderProvider`; `usePanelEditorQuerySync` owns
- * seeding the provider from the panel and pushing Stage-&-Run results back into
- * the editor draft, so this component is purely the builder UI.
+ * Builder UI for the V2 panel editor's left pane: queryType tabs (Query Builder /
+ * ClickHouse / PromQL) plus the Stage & Run button, all reading/writing the global
+ * `QueryBuilderProvider`. `usePanelEditorQuerySync` owns the panel↔provider sync.
  */
 function PanelEditorQueryBuilder({
 	panelType,
@@ -63,12 +60,10 @@ function PanelEditorQueryBuilder({
 		[currentQuery, redirectWithQueryBuilderData],
 	);
 
-	// ⌘↵ / Ctrl+↵ stages and runs the query while a query-builder field is
-	// focused. The global keyboard-hotkeys provider deliberately ignores keydowns
-	// originating in inputs / the query editor, so this is handled locally. Uses
-	// the capture phase so it fires even for fields that stop the event from
-	// bubbling (e.g. the filter search, CodeMirror) — the container sees the
-	// keydown on the way down to the focused field.
+	// ⌘↵ / Ctrl+↵ stages and runs the query. Handled locally because the global
+	// hotkeys provider ignores keydowns from inputs / the query editor, and on the
+	// capture phase so it still fires for fields that stop bubbling (filter search,
+	// CodeMirror).
 	const handleKeyDownCapture = useCallback(
 		(event: KeyboardEvent<HTMLDivElement>): void => {
 			if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {

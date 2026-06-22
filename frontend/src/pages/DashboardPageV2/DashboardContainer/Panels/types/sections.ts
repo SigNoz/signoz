@@ -37,8 +37,7 @@ export interface SectionMetadata {
 
 /**
  * Which threshold editor a kind uses. All three variants persist to the same
- * `plugin.spec.thresholds` key but with different element shapes, so one section
- * (`thresholds`) drives all of them, discriminated by this variant:
+ * `plugin.spec.thresholds` key with different element shapes:
  * - `label` — value + color + label lines (TimeSeries / Bar)
  * - `comparison` — value crosses an operator → recolor (Number)
  * - `table` — per-column comparison (Table)
@@ -52,12 +51,11 @@ export type AnyThreshold =
 	| DashboardtypesTableThresholdDTO;
 
 /**
- * Each section ↔ one slice of the panel spec it edits, uniform across every kind
- * that shows the section. Most slices live under `spec.plugin.spec.<key>`;
- * `contextLinks` is panel-level (`spec.links`).
+ * Each section ↔ one slice of the panel spec it edits. Most slices live under
+ * `spec.plugin.spec.<key>`; `contextLinks` is panel-level (`spec.links`).
  */
-// Spans every kind's formatting DTO: `unit` + `decimalPrecision` plus Table's
-// per-column `columnUnits`; the `controls` bag gates which a kind actually writes.
+// Superset spanning every kind's formatting DTO; the `controls` bag gates which
+// fields a kind actually writes.
 export type PanelFormattingSlice = DashboardtypesPanelFormattingDTO &
 	Pick<DashboardtypesTableFormattingDTO, 'columnUnits'>;
 
@@ -76,7 +74,7 @@ export interface SectionSpecMap {
 }
 
 /**
- * CONTROLLED sections — a kind exposes a SUBSET of the section's controls (V2
+ * Controlled sections — a kind exposes a subset of the section's controls (V2
  * analogue of V1's `allowSoftMinMax` / `allowLegendColors` flags).
  */
 export interface SectionControls {
@@ -103,25 +101,19 @@ export interface SectionControls {
 
 export type ControlledSectionKind = keyof SectionControls;
 
-/**
- * (2) ATOMIC sections — no sub-controls; a kind either shows them or not. Thresholds
- * and Context Links are each just a list editor, so there is nothing to subset.
- */
+/** Atomic sections — no sub-controls; a kind either shows them or not. */
 export type AtomicSectionKind = 'contextLinks' | 'columns';
 
 export type SectionKind = ControlledSectionKind | AtomicSectionKind;
 
-/**
- * Optional predicate to hide a section from the current spec (e.g. the Histogram
- * legend once its queries are merged). Returning true removes it from the pane.
- */
+/** Predicate to hide a section from the current spec; returning true removes it. */
 export type SectionVisibilityPredicate = (
 	spec: DashboardtypesPanelSpecDTO,
 ) => boolean;
 
 /**
- * What a kind declares in `kinds/<Kind>/sections.ts`: a controlled section with its
- * `controls` subset, or an atomic section bare (`{ kind }`).
+ * What a kind declares in `kinds/<Kind>/sections.ts`: a controlled section with
+ * its `controls` subset, or an atomic section bare (`{ kind }`).
  */
 export type SectionConfig =
 	| {
@@ -133,8 +125,8 @@ export type SectionConfig =
 	  }[ControlledSectionKind]
 	| { kind: AtomicSectionKind; isHidden?: SectionVisibilityPredicate };
 
-// Runtime UI metadata per section (title + sidebar icon). Pure data — no component
-// coupling. The editor component + spec lens live in the ConfigPane section registry.
+// Per-section title + sidebar icon. Pure data; the editor component + spec lens
+// live in the ConfigPane section registry.
 export const SECTION_METADATA = {
 	formatting: { title: 'Formatting', icon: Hash },
 	axes: { title: 'Axes', icon: Ruler },
@@ -148,9 +140,8 @@ export const SECTION_METADATA = {
 } as const satisfies Record<SectionKind, SectionMetadata>;
 
 /**
- * Props every section editor receives — exactly its slice type (`value`), an
- * `onChange` to write the next slice, and (controlled sections only) the per-kind
- * `controls` subset. Atomic editors omit `controls`.
+ * Props every section editor receives: its slice (`value`), an `onChange`, and
+ * (controlled sections only) the per-kind `controls` subset.
  */
 export type SectionEditorProps<K extends SectionKind> = {
 	value: SectionSpecMap[K] | undefined;

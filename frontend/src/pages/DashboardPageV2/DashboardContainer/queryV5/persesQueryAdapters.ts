@@ -24,16 +24,9 @@ import {
 } from './buildQueryRangeRequest';
 
 /**
- * Adapters between the V2 dashboard's perses query shape
- * (`DashboardtypesPanelDTO.spec.queries`) and the V1 `Query` the shared query
- * builder (and the global `QueryBuilderProvider`) operates on.
- *
- * Both directions pivot through the V5 query-envelope list — the same wire
- * shape `buildQueryRangeRequest`/`compositeQueryToQueryEnvelope` already produce
- * — so the conversion reuses the app's existing V1↔V5 mappers rather than
- * inventing a parallel one. The single unavoidable cast is at the
- * generated-DTO ↔ hand-written-V5-type boundary (Orval erases the envelope
- * `spec` to `unknown`); it is localized here.
+ * Adapters between the V2 perses query shape and the V1 `Query` the shared query builder uses.
+ * Both directions pivot through the V5 query-envelope list so they reuse the existing V1↔V5
+ * mappers. The one unavoidable cast (Orval erases envelope `spec` to `unknown`) is localized here.
  */
 
 /** Which query-builder tab the perses queries belong to. */
@@ -54,10 +47,8 @@ function deriveQueryType(
 }
 
 /**
- * Perses panel queries → V1 `Query` (to seed the query builder). Unwraps the
- * perses envelope to the V5 envelope list (`toQueryEnvelopes`) and runs it
- * through `mapQueryDataFromApi`, which converts every envelope type to its V1
- * shape. An empty panel opens on a fresh metrics builder query (V1 default).
+ * Perses panel queries → V1 `Query` (to seed the query builder), via the V5 envelope list +
+ * `mapQueryDataFromApi`. An empty panel opens on a fresh metrics builder query (V1 default).
  */
 export function fromPerses(
 	queries: DashboardtypesQueryDTO[],
@@ -75,7 +66,7 @@ export function fromPerses(
 		chQueries: {},
 		promQueries: {},
 		unit: undefined,
-		// generated envelope DTO → hand-written V5 type (spec erased to unknown).
+		// Generated envelope DTO → hand-written V5 type (spec erased to unknown).
 		queries: envelopes as unknown as QueryEnvelope[],
 	};
 
@@ -83,15 +74,10 @@ export function fromPerses(
 }
 
 /**
- * V1 `Query` → perses panel queries (to write the builder's result back into
- * the editor draft). `mapCompositeQueryFromQuery` produces the V5 envelope list
- * (via `compositeQueryToQueryEnvelope`); we wrap it in a single
- * `signoz/CompositeQuery` perses query — the backend invariant
- * (`panel.queries.length === 1`) `toQueryEnvelopes` reads back verbatim.
- *
- * Exception: the List panel only runs the query builder (a single builder query,
- * no formulas) and the backend rejects a `signoz/CompositeQuery` for it, so its
- * one builder query is emitted as a bare `signoz/BuilderQuery` plugin instead.
+ * V1 `Query` → perses panel queries (to write the builder result back to the editor draft).
+ * Wrapped in a single `signoz/CompositeQuery` to satisfy the `panel.queries.length === 1`
+ * invariant. Exception: List emits its one builder query as a bare `signoz/BuilderQuery` because
+ * the backend rejects a `signoz/CompositeQuery` for it.
  */
 export function toPerses(
 	query: Query,
@@ -115,8 +101,7 @@ export function toPerses(
 				spec: {
 					plugin: {
 						kind: BuilderQueryPluginKind['signoz/BuilderQuery'],
-						// Envelope spec is erased to `unknown` by Orval; it is the builder
-						// query spec — cast at this generated-DTO boundary.
+						// Orval erases spec to `unknown`; cast to the builder query spec at this boundary.
 						spec: builder.spec as DashboardtypesBuilderQuerySpecDTO,
 					},
 				},

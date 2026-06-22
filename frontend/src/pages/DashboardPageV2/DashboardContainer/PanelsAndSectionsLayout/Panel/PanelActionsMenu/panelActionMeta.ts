@@ -2,10 +2,10 @@ import type { PanelActionCapabilities } from 'pages/DashboardPageV2/DashboardCon
 import type { ComponentTypes } from 'utils/permission';
 
 /**
- * Every action the panel menu can offer: the per-kind gated capabilities
- * (minus `search`, a header control, not a menu action) plus the chrome actions
- * every kind gets. `Record<PanelActionId, …>` below forces a meta entry per id —
- * adding an action without declaring its gates is a compile error.
+ * Every action the panel menu can offer: per-kind gated capabilities (minus
+ * `search`, a header control) plus the chrome actions every kind gets. The
+ * `Record<PanelActionId, …>` below forces a meta entry per id, so adding an
+ * action without declaring its gates is a compile error.
  */
 export type PanelActionId =
 	| Exclude<keyof PanelActionCapabilities, 'search'>
@@ -29,9 +29,8 @@ export interface PanelActionMeta {
 
 /**
  * Single source of truth for how each panel action is gated, mirroring V1's
- * WidgetHeader rules. The third gate — context (dashboard editable, target
- * sections available) — is runtime state resolved in `usePanelActionItems`,
- * not declarable here.
+ * WidgetHeader rules. The third gate — context (editable, target sections) — is
+ * runtime state resolved in `usePanelActionItems`, not declarable here.
  */
 export const PANEL_ACTION_META: Record<PanelActionId, PanelActionMeta> = {
 	view: { capability: 'view' },
