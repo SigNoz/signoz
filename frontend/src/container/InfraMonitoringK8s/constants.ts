@@ -28,11 +28,11 @@ export const METRIC_NAMESPACE_BY_ENTITY: Record<InfraMonitoringEntity, string> =
 		[InfraMonitoringEntity.NODES]: 'k8s.node.',
 		[InfraMonitoringEntity.NAMESPACES]: 'k8s.pod.',
 		[InfraMonitoringEntity.CLUSTERS]: 'k8s.node.',
-		[InfraMonitoringEntity.DEPLOYMENTS]: 'k8s.pod.',
-		[InfraMonitoringEntity.STATEFULSETS]: 'k8s.pod.',
-		[InfraMonitoringEntity.DAEMONSETS]: 'k8s.pod.',
+		[InfraMonitoringEntity.DEPLOYMENTS]: 'k8s.',
+		[InfraMonitoringEntity.STATEFULSETS]: 'k8s.',
+		[InfraMonitoringEntity.DAEMONSETS]: 'k8s.',
 		[InfraMonitoringEntity.CONTAINERS]: 'k8s.pod.',
-		[InfraMonitoringEntity.JOBS]: 'k8s.pod.',
+		[InfraMonitoringEntity.JOBS]: 'k8s.',
 		[InfraMonitoringEntity.VOLUMES]: 'k8s.volume.',
 	};
 
