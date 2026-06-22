@@ -32,12 +32,12 @@ type builderQuery[T any] struct {
 	toMS   uint64
 	kind   qbtypes.RequestType
 
-	logTraceIDWindowPaddingMS uint64
+	builderConfig builderConfig
 }
 
 var _ qbtypes.Query = (*builderQuery[any])(nil)
 
-type builderQueryOptions struct {
+type builderConfig struct {
 	logTraceIDWindowPaddingMS uint64
 }
 
@@ -49,18 +49,18 @@ func newBuilderQuery[T any](
 	tr qbtypes.TimeRange,
 	kind qbtypes.RequestType,
 	variables map[string]qbtypes.VariableItem,
-	cfg builderQueryOptions,
+	cfg builderConfig,
 ) *builderQuery[T] {
 	return &builderQuery[T]{
-		logger:                    logger,
-		telemetryStore:            telemetryStore,
-		stmtBuilder:               stmtBuilder,
-		spec:                      spec,
-		variables:                 variables,
-		fromMS:                    tr.From,
-		toMS:                      tr.To,
-		kind:                      kind,
-		logTraceIDWindowPaddingMS: cfg.logTraceIDWindowPaddingMS,
+		logger:         logger,
+		telemetryStore: telemetryStore,
+		stmtBuilder:    stmtBuilder,
+		spec:           spec,
+		variables:      variables,
+		fromMS:         tr.From,
+		toMS:           tr.To,
+		kind:           kind,
+		builderConfig:  cfg,
 	}
 }
 
@@ -292,8 +292,8 @@ func (q *builderQuery[T]) narrowWindowByTraceID(ctx context.Context, fromMS, toM
 	// padded range.
 	actualStartMS, actualEndMS := traceStartMS, traceEndMS
 	if q.spec.Signal == telemetrytypes.SignalLogs {
-		traceStartMS -= q.logTraceIDWindowPaddingMS
-		traceEndMS += q.logTraceIDWindowPaddingMS
+		traceStartMS -= q.builderConfig.logTraceIDWindowPaddingMS
+		traceEndMS += q.builderConfig.logTraceIDWindowPaddingMS
 	}
 
 	if traceStartMS > toMS || traceEndMS < fromMS {
