@@ -25,7 +25,7 @@ const LIST_PAGE_SIZE_OPTIONS = [10, 25, 50, 100, 200];
 const DEFAULT_LIST_PAGE_SIZE = 25;
 
 export interface UsePanelQueryArgs {
-	panel: DashboardtypesPanelDTO | undefined;
+	panel: DashboardtypesPanelDTO;
 	panelId: string;
 	/**
 	 * Gate the fetch (default true). PanelV2 sets false for unregistered kinds to skip a wasted
@@ -74,10 +74,10 @@ export function usePanelQuery({
 	enabled = true,
 	time,
 }: UsePanelQueryArgs): UsePanelQueryResult {
-	const fullKind = panel?.spec.plugin.kind;
+	const fullKind = panel.spec.plugin.kind;
 	const panelType =
 		(fullKind && PANEL_KIND_TO_PANEL_TYPE[fullKind]) ?? PANEL_TYPES.TIME_SERIES;
-	const queries = panel?.spec.queries;
+	const queries = panel.spec.queries;
 
 	// V1 parity: a list query with an explicit `limit` shows without a server pager; without
 	// one it pages server-side at a user-selectable size.
@@ -91,6 +91,10 @@ export function usePanelQuery({
 	const [offset, setOffset] = useState(0);
 
 	const handleSetPageSize = useCallback((size: number): void => {
+		// Ignore a non-positive/NaN size so the pager state never goes invalid.
+		if (!Number.isFinite(size) || size <= 0) {
+			return;
+		}
 		setPageSize(size);
 		setOffset(0);
 	}, []);
@@ -212,15 +216,22 @@ export function usePanelQuery({
 		if (!isPaginated) {
 			return undefined;
 		}
+		const safePageSize =
+			Number.isFinite(pageSize) && pageSize > 0
+				? pageSize
+				: DEFAULT_LIST_PAGE_SIZE;
+		const safeOffset = Number.isFinite(offset) && offset > 0 ? offset : 0;
+		// `getRawResults` returns [] for a missing/non-raw response, so this stays
+		// defined and zero-rowed rather than throwing while data is absent.
 		const result = getRawResults(response.data)[0];
 		const rowCount = result?.rows?.length ?? 0;
 		return {
-			pageIndex: pageSize > 0 ? Math.floor(offset / pageSize) : 0,
-			canPrev: offset > 0,
-			canNext: !!result?.nextCursor || rowCount === pageSize,
+			pageIndex: Math.floor(safeOffset / safePageSize),
+			canPrev: safeOffset > 0,
+			canNext: !!result?.nextCursor || rowCount >= safePageSize,
 			goPrev,
 			goNext,
-			pageSize,
+			pageSize: safePageSize,
 			pageSizeOptions: LIST_PAGE_SIZE_OPTIONS,
 			setPageSize: handleSetPageSize,
 		};
