@@ -189,6 +189,13 @@ go.mod @therealpandey
 /frontend/src/container/TriggeredAlerts/ @SigNoz/pulse-frontend
 /frontend/src/container/AnomalyAlertEvaluationView/ @SigNoz/pulse-frontend
 
+## Notification Channels
+/frontend/src/pages/ChannelsEdit/ @SigNoz/pulse-frontend
+/frontend/src/pages/ChannelsNew/ @SigNoz/pulse-frontend
+/frontend/src/container/AllAlertChannels/ @SigNoz/pulse-frontend
+/frontend/src/container/CreateAlertChannels/ @SigNoz/pulse-frontend
+/frontend/src/container/EditAlertChannels/ @SigNoz/pulse-frontend
+
 ## OpenAPI Schema - Generated
 /frontend/src/api/generated/services/ @therealpandey @vikrantgupta25 @srikanthccv
 /docs/api/openapi.yml @therealpandey @vikrantgupta25 @srikanthccv

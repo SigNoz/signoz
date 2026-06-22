@@ -22,7 +22,6 @@ export enum TraceDetailEventKeys {
 	SpanPanelVariant = 'spanPanelVariant',
 	ColorByField = 'colorByField',
 	PreviewFieldsCount = 'previewFieldsCount',
-	EntryPreferOldView = 'entryPreferOldView',
 	// View switched
 	From = 'from',
 	To = 'to',
