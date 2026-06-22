@@ -7,6 +7,7 @@ import { FeatureKeys } from 'constants/features';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { ORG_PREFERENCES } from 'constants/orgPreferences';
 import ROUTES from 'constants/routes';
+import { useFeatureGatedRouteRedirect } from 'hooks/useFeatureGatedRouteRedirect';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
 import { isEmpty } from 'lodash-es';
@@ -42,6 +43,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 
 	const isAdmin = user.role === USER_ROLES.ADMIN;
 	const isAIAssistantEnabled = useIsAIAssistantEnabled();
+	const featureGatedRedirect = useFeatureGatedRouteRedirect(pathname);
 
 	const mapRoutes = useMemo(
 		() =>
@@ -131,6 +133,11 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		!isAIAssistantEnabled
 	) {
 		return <Redirect to={ROUTES.HOME} />;
+	}
+
+	// Redirect away from feature-flag-gated routes whose flag is disabled
+	if (featureGatedRedirect) {
+		return <Redirect to={featureGatedRedirect} />;
 	}
 
 	// Check for workspace access restriction (cloud only)

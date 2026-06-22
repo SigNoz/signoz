@@ -33,6 +33,35 @@
 	justify-content: space-between;
 }
 
+.filtersBarLeft {
+	display: flex;
+	gap: 12px;
+	align-items: center;
+}
+
+.filtersBarSearch {
+	width: 280px;
+}
+
+.filtersBarSource {
+	width: 160px;
+}
+
+.filtersBarSearchClear {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+	border: none;
+	background: none;
+	color: var(--bg-vanilla-400);
+	cursor: pointer;
+
+	&:hover {
+		color: var(--bg-vanilla-100);
+	}
+}
+
 .filtersBarCurrency {
 	// Fixed width — the trigger otherwise stretches to fill the bar.
 	width: 160px;

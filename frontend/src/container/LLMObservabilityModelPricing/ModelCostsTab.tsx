@@ -1,14 +1,27 @@
 import { useMemo } from 'react';
 import { Button } from '@signozhq/ui/button';
+import { Input } from '@signozhq/ui/input';
 import { SelectSimple } from '@signozhq/ui/select';
-import { Plus } from '@signozhq/icons';
+import { Plus, Search, X } from '@signozhq/icons';
 import { useListLLMPricingRules } from 'api/generated/services/llmpricingrules';
 import { type ListLLMPricingRulesParams } from 'api/generated/services/sigNoz.schemas';
 import { useTableParams } from 'components/TanStackTableView';
 import useComponentPermission from 'hooks/useComponentPermission';
+import useDebounce from 'hooks/useDebounce';
+import { parseAsString, parseAsStringEnum, useQueryState } from 'nuqs';
 import { useAppContext } from 'providers/App/App';
 
-import { LIMIT_KEY, PAGE_KEY, PAGE_SIZE } from './constants';
+import {
+	LIMIT_KEY,
+	PAGE_KEY,
+	PAGE_SIZE,
+	SEARCH_DEBOUNCE_MS,
+	SEARCH_KEY,
+	SOURCE_FILTER_OPTIONS,
+	SOURCE_FILTER_TO_IS_OVERRIDE,
+	SOURCE_KEY,
+	type SourceFilter,
+} from './constants';
 import styles from './LLMObservabilityModelPricing.module.scss';
 import ModelCostDrawer from './ModelCostDrawer';
 import ModelCostsTable from './ModelCostsTable';
@@ -20,16 +33,54 @@ import type { PricingRule } from './types';
 // reload-safe) and are owned by TanStackTable via enableQueryParams — this tab
 // reads them back through the same useTableParams hook so the two stay in lockstep.
 function ModelCostsTab(): JSX.Element {
-	const { page, limit } = useTableParams(
+	const { page, limit, setPage } = useTableParams(
 		{ page: PAGE_KEY, limit: LIMIT_KEY },
 		{ page: 1, limit: PAGE_SIZE },
 	);
 
-	// Search + source filters are intentionally omitted for now — the list API
-	// doesn't honour them yet. They'll be reintroduced here once it does.
+	// Search term lives in the URL (shareable/reload-safe) alongside page/limit.
+	// It's debounced before reaching the list API so typing doesn't spam requests.
+	const [search, setSearch] = useQueryState(
+		SEARCH_KEY,
+		parseAsString.withDefault(''),
+	);
+	const debouncedSearch = useDebounce(search, SEARCH_DEBOUNCE_MS);
+
+	// Source filter (All / User override / Auto) → API's nullable isOverride.
+	const [source, setSource] = useQueryState(
+		SOURCE_KEY,
+		parseAsStringEnum<SourceFilter>(
+			SOURCE_FILTER_OPTIONS.map((option) => option.value),
+		).withDefault('all'),
+	);
+
+	const handleSearchChange = (
+		event: React.ChangeEvent<HTMLInputElement>,
+	): void => {
+		void setSearch(event.target.value || null);
+		// Any new search collapses the result set — jump back to the first page so
+		// the user isn't stranded on an out-of-range page.
+		setPage(1);
+	};
+
+	const clearSearch = (): void => {
+		void setSearch(null);
+		setPage(1);
+	};
+
+	const handleSourceChange = (value: string | string[]): void => {
+		void setSource(value as SourceFilter);
+		setPage(1);
+	};
+
+	const isOverride = SOURCE_FILTER_TO_IS_OVERRIDE[source];
+
 	const listParams: ListLLMPricingRulesParams = {
 		offset: (page - 1) * limit,
 		limit,
+		// Omit each filter entirely when unset so the API treats it as "no filter".
+		...(debouncedSearch ? { q: debouncedSearch } : {}),
+		...(isOverride !== undefined ? { isOverride } : {}),
 	};
 
 	const { data, isLoading, isError } = useListLLMPricingRules(listParams);
@@ -48,13 +99,42 @@ function ModelCostsTab(): JSX.Element {
 	return (
 		<>
 			<div className={styles.filtersBar}>
-				{/* Only USD is priced today — disabled until other currencies land. */}
-				<SelectSimple
-					className={styles.filtersBarCurrency}
-					value="USD"
-					disabled
-					testId="currency-select"
-				/>
+				<div className={styles.filtersBarLeft}>
+					<Input
+						className={styles.filtersBarSearch}
+						placeholder="Search by model or provider"
+						value={search}
+						onChange={handleSearchChange}
+						prefix={<Search size={14} />}
+						suffix={
+							search ? (
+								<button
+									type="button"
+									className={styles.filtersBarSearchClear}
+									onClick={clearSearch}
+									aria-label="Clear search"
+								>
+									<X size={14} />
+								</button>
+							) : undefined
+						}
+						testId="model-cost-search"
+					/>
+					<SelectSimple
+						className={styles.filtersBarSource}
+						items={SOURCE_FILTER_OPTIONS}
+						value={source}
+						onChange={handleSourceChange}
+						testId="source-filter"
+					/>
+					{/* Only USD is priced today — disabled until other currencies land. */}
+					<SelectSimple
+						className={styles.filtersBarCurrency}
+						value="USD"
+						disabled
+						testId="currency-select"
+					/>
+				</div>
 				{canManagePricing && (
 					<Button
 						variant="solid"
