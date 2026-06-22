@@ -26,7 +26,7 @@ To stay up to date on new installation platforms and patterns, please refer to [
 
 2. Generate your `casting.yaml`. Based on internal testing, the following casting should generate the manifests that mimic the [legacy docker compose](https://github.com/SigNoz/signoz/blob/main/deploy/docker/docker-compose.yaml) setup. Once created, run `foundryctl forge -f casting.yaml`.
 
-> [!NOTE] The casting contains `patches` to ensure that the newly generated manifests can use the existing volumes.
+> [!NOTE] The casting contains `patches` and `config` overrides to ensure that the newly generated manifests use the existing volumes and configurations.
 
 > [!WARNING] If your deployment had more than 1 shard or replica, you will need to adjust your manifest volumes accordingly. Additionally, if you had specific container images, you need to include them in your casting.
 
@@ -43,6 +43,14 @@ spec:
     kind: sqlite
   telemetrykeeper:
     kind: zookeeper
+  telemetrystore:
+    spec:
+      config:
+        data:
+          config-0-0.yaml: |
+            macros:
+              replica: "example01-01-1"
+              shard: "01"
   patches:
     - target: "deployment/compose.yaml"
       operations:
@@ -58,14 +66,6 @@ spec:
         - op: add
           path: /services/dev-telemetrykeeper-zookeeper-0/user
           value: root
-    - target: "deployment/telemetrystore/clickhouse/config-0-0.yaml"
-      operations:
-        - op: replace
-          path: /macros/replica
-          value: example01-01-1
-        - op: replace
-          path: /macros/shard
-          value: "01"
 ```
 
 3. Validate the manifests in `pours/deployment`. Pay special attention to `compose.yaml` — it should mimic the legacy manifest and the configuration files needed for `clickhouse`. **Do note that these are now in YAML instead of XML.**
@@ -79,7 +79,6 @@ spec:
 6. Run `foundryctl cast -f casting.yaml`. This will recreate the containers based on the spec. This process will download new container images.
 
 > [!NOTE] When `cast` is run, the migration container will execute its migrations.
-
 
 ## Verifying the Migration
 - SigNoz containers will be up and running.
