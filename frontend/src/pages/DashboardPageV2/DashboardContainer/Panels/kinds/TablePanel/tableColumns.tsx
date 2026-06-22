@@ -2,50 +2,16 @@ import type { TableProps } from 'antd';
 import type { DashboardtypesTableThresholdDTO } from 'api/generated/services/sigNoz.schemas';
 import type { PrecisionOption } from 'components/Graph/types';
 import type { PanelTable } from 'pages/DashboardPageV2/DashboardContainer/queryV5/types';
+import { coerceToString } from 'utils/stringUtils';
 
 import type { PanelThreshold } from '../../types/threshold';
 import { resolveActiveThreshold } from '../../utils/evaluateThresholds';
 import { formatPanelValue } from '../../utils/formatPanelValue';
+import { getColumnUnit } from '../../utils/getColumnUnit';
 import { toPanelThreshold } from '../../utils/mapComparisonThreshold';
 
-type TableRowData = Record<string, unknown>;
-
-// Resolve a column's unit by its key (queryName / queryName.expression), falling
-// back to the base query name for the legacy `queryName.expression` syntax — mirrors
-// V1 `getColumnUnit`. An empty entry means "no unit".
-function getColumnUnit(
-	key: string,
-	columnUnits: Record<string, string>,
-): string | undefined {
-	if (columnUnits[key] !== undefined) {
-		return columnUnits[key] || undefined;
-	}
-	if (key.includes('.')) {
-		const baseQuery = key.split('.')[0];
-		if (columnUnits[baseQuery] !== undefined) {
-			return columnUnits[baseQuery] || undefined;
-		}
-	}
-	return undefined;
-}
-
-// Safely render a raw cell value (typed `unknown`) as text: primitives stringify
-// directly, objects fall back to JSON, nullish to empty.
-function stringifyCell(raw: unknown): string {
-	if (raw == null) {
-		return '';
-	}
-	if (typeof raw === 'object') {
-		return JSON.stringify(raw);
-	}
-	if (typeof raw === 'string') {
-		return raw;
-	}
-	if (typeof raw === 'number' || typeof raw === 'boolean') {
-		return String(raw);
-	}
-	return '';
-}
+/** A prepared scalar-table row flattened for the antd Table, with the antd key. */
+export type TableRowData = Record<string, unknown> & { key: number };
 
 /**
  * Groups table thresholds by the column they target, mapping each onto the
@@ -76,7 +42,7 @@ function compareCells(a: unknown, b: unknown): number {
 	if (b == null) {
 		return -1;
 	}
-	return stringifyCell(a).localeCompare(stringifyCell(b));
+	return coerceToString(a).localeCompare(coerceToString(b));
 }
 
 export interface BuildTableColumnsArgs {
@@ -115,11 +81,11 @@ export function buildTableColumns({
 				compareCells(a[key], b[key]),
 			render: (raw: unknown): React.ReactNode => {
 				if (!col.isValueColumn) {
-					return stringifyCell(raw);
+					return coerceToString(raw);
 				}
 				const num = Number(raw);
 				if (!Number.isFinite(num)) {
-					return stringifyCell(raw);
+					return coerceToString(raw);
 				}
 				const text = formatPanelValue(num, unit, decimalPrecision);
 				if (colThresholds.length === 0) {

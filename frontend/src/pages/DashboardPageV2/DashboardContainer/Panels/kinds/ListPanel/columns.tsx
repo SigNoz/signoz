@@ -10,6 +10,7 @@ import type {
 	TimestampInput,
 } from 'hooks/useTimezoneFormatter/useTimezoneFormatter';
 import LineClampedText from 'periscope/components/LineClampedText/LineClampedText';
+import { coerceToString } from 'utils/stringUtils';
 
 import type { RawTableRow } from 'pages/DashboardPageV2/DashboardContainer/queryV5/prepareRawTable';
 
@@ -31,24 +32,8 @@ const HTTP_FIELDS = new Set([
 ]);
 const DURATION_FIELDS = new Set(['durationNano', 'duration_nano']);
 
-// Raw cell values are untyped (log/trace attributes): primitives render as-is,
-// objects/arrays are JSON-stringified so antd never receives a non-renderable
-// child, and nullish becomes an empty string.
-function stringifyCell(value: unknown): string {
-	if (value == null) {
-		return '';
-	}
-	if (typeof value === 'string') {
-		return value;
-	}
-	if (typeof value === 'number' || typeof value === 'boolean') {
-		return String(value);
-	}
-	return JSON.stringify(value);
-}
-
 function renderCell(value: unknown): ReactNode {
-	return <Typography.Text>{stringifyCell(value)}</Typography.Text>;
+	return <Typography.Text>{coerceToString(value)}</Typography.Text>;
 }
 
 // Scale an epoch integer to milliseconds (what dayjs expects from a number) by
@@ -116,19 +101,19 @@ function makeTraceRenderer(name: string) {
 		if (HTTP_FIELDS.has(name)) {
 			return (
 				<Badge color="sakura" variant="outline" data-testid={name}>
-					{stringifyCell(value)}
+					{coerceToString(value)}
 				</Badge>
 			);
 		}
 		if (DURATION_FIELDS.has(name)) {
 			return (
 				<Typography.Text data-testid={name}>
-					{getMs(stringifyCell(value))}ms
+					{getMs(coerceToString(value))}ms
 				</Typography.Text>
 			);
 		}
 		return (
-			<LineClampedText text={stringifyCell(value)} lines={TRACE_CLAMP_LINES} />
+			<LineClampedText text={coerceToString(value)} lines={TRACE_CLAMP_LINES} />
 		);
 	};
 }
