@@ -162,8 +162,11 @@ export function useAttributeMappingStore(): AttributeMappingStore {
 	}, []);
 
 	// Fold a group's freshly-fetched server mappers into both the snapshot
-	// baseline and the working draft, exactly once per group. Re-expands hit the
-	// guard, so in-flight edits are never clobbered.
+	// baseline and the working draft, exactly once per group (the guard skips
+	// re-expands). The "Add mapping" affordance renders while the fetch is still
+	// in flight, so a user can stage a new mapper (serverId === null) before the
+	// server list arrives — those unsaved rows are preserved, with the server
+	// mappers folded in ahead of them, so a racing add isn't clobbered.
 	const hydrateGroupMappers = useCallback(
 		(groupServerId: string, mappers: Mapper[]): void => {
 			if (loadedRef.current.has(groupServerId)) {
@@ -176,7 +179,13 @@ export function useAttributeMappingStore(): AttributeMappingStore {
 					? prev
 					: prev.map((group) =>
 							group.serverId === groupServerId
-								? { ...group, mappers: mappers.map(buildDraftMapper) }
+								? {
+										...group,
+										mappers: [
+											...mappers.map(buildDraftMapper),
+											...group.mappers.filter((mapper) => mapper.serverId === null),
+										],
+									}
 								: group,
 						),
 			);
