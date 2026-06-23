@@ -9,6 +9,7 @@ import { ORG_PREFERENCES } from 'constants/orgPreferences';
 import ROUTES from 'constants/routes';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
+import { useIsAIObservabilityEnabled } from 'hooks/useIsAIObservabilityEnabled';
 import { isEmpty } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
 import { LicensePlatform, LicenseState } from 'types/api/licensesV3/getActive';
@@ -38,10 +39,12 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		isFetchingActiveLicense,
 		trialInfo,
 		featureFlags,
+		isFetchingFeatureFlags,
 	} = useAppContext();
 
 	const isAdmin = user.role === USER_ROLES.ADMIN;
 	const isAIAssistantEnabled = useIsAIAssistantEnabled();
+	const isAIObservabilityEnabled = useIsAIObservabilityEnabled();
 
 	const mapRoutes = useMemo(
 		() =>
@@ -129,6 +132,17 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		(pathname === ROUTES.AI_ASSISTANT_BASE ||
 			pathname.startsWith('/ai-assistant/')) &&
 		!isAIAssistantEnabled
+	) {
+		return <Redirect to={ROUTES.HOME} />;
+	}
+
+	// Gate the LLM observability tree behind its feature flag. Prefix match so
+	// every sub-route is covered. The `featureFlags` guard avoids bouncing users
+	// off valid deep links while the initial flag fetch is still in flight.
+	if (
+		pathname.startsWith(ROUTES.LLM_OBSERVABILITY) &&
+		!isAIObservabilityEnabled &&
+		!(featureFlags === null && isFetchingFeatureFlags)
 	) {
 		return <Redirect to={ROUTES.HOME} />;
 	}
