@@ -87,7 +87,7 @@ export class UPlotSeriesBuilder extends ConfigBuilder<
 			lineConfig.fill = `${finalFillColor}40`;
 		} else if (fillMode && fillMode !== FillMode.None) {
 			if (fillMode === FillMode.Solid) {
-				lineConfig.fill = finalFillColor;
+				lineConfig.fill = `${finalFillColor}70`;
 			} else if (fillMode === FillMode.Gradient) {
 				lineConfig.fill = (self: uPlot): CanvasGradient =>
 					generateGradientFill(self, finalFillColor, 'rgba(0, 0, 0, 0)');
