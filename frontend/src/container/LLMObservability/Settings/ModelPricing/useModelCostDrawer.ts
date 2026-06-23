@@ -14,8 +14,6 @@ import { buildRulePayload, draftFromRule } from './utils';
 interface UseModelCostDrawerResult {
 	isOpen: boolean;
 	mode: DrawerMode;
-	// Seeds the drawer form on open; the form owns its own working copy from
-	// here on (react-hook-form), so there's no live `draft`/`setDraft` to lift.
 	initialDraft: DrawerDraft;
 	openForAdd: (prefillModelName?: string) => void;
 	openForEdit: (rule: PricingRule) => void;
@@ -47,12 +45,12 @@ export function useModelCostDrawer(): UseModelCostDrawerResult {
 		});
 	}, [queryClient]);
 
-	const openForAdd = useCallback((prefillModelName?: string): void => {
+	const openForAdd = useCallback((): void => {
 		setMode('add');
 		setInitialDraft({
 			...EMPTY_DRAFT,
-			modelName: prefillModelName || '',
-			patterns: prefillModelName ? [prefillModelName] : [],
+			modelName: '',
+			patterns: [],
 		});
 		setSelectedRuleId(null);
 		setSaveError(null);

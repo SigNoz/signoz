@@ -19,9 +19,6 @@ interface ExtraPricingBucketsProps {
 	onChange: (patch: Partial<Pricing>) => void;
 }
 
-// Optional, add-on-demand pricing buckets. A bucket is "added" once its value
-// is non-null; adding seeds it at 0 and removing clears it back to null. Only
-// the cache buckets are backed by the API today (pricing.cache.read/write).
 function ExtraPricingBuckets({
 	pricing,
 	isReadOnly,

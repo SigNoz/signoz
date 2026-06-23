@@ -24,15 +24,11 @@ const getRelativeTime = (
 	return parsed?.isValid() ? parsed.fromNow() : '—';
 };
 
-// Type guard so callers narrow `number | null | undefined` down to `number`
-// in the truthy branch — no casts needed at the call sites.
 const hasCacheValue = (value: number | null | undefined): value is number =>
 	typeof value === 'number' && value > 0;
 
 // ─── Input helpers ───────────────────────────────────────────────────────────
 
-// Parses a price input's raw string. Empty → null (used by optional buckets),
-// otherwise a finite number (NaN coerced to 0).
 export const parsePricingAmount = (raw: string): number | null => {
 	if (raw.trim() === '') {
 		return null;
@@ -138,11 +134,6 @@ export const buildRulePayload = (
 	pricing: buildPricingPayload(draft),
 });
 
-// Field validators follow react-hook-form's `validate` convention: return
-// `true` when valid, or the error message string when invalid.
-
-// Billing model ID is only user-entered when adding; in edit mode it's
-// immutable, so there's nothing to require.
 export const validateModelName = (
 	modelName: string,
 	mode: DrawerMode,
@@ -152,9 +143,6 @@ export const validateModelName = (
 export const validateProvider = (provider: string): true | string =>
 	provider.trim() ? true : 'Provider is required.';
 
-// Pricing is only user-entered for overrides; auto-populated rules are managed
-// by SigNoz (and may legitimately be 0 for self-hosted models). `!(x > 0)`
-// (rather than `x <= 0`) so NaN counts as invalid.
 export const validatePricing = (
 	pricing: DrawerDraft['pricing'],
 	isOverride: boolean,
