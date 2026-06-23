@@ -21,6 +21,7 @@ import AllAttributes from './AllAttributes';
 import DashboardsAndAlertsPopover from './DashboardsAndAlertsPopover';
 import Highlights from './Highlights';
 import Metadata from './Metadata';
+import VolumeControlSection from './VolumeControl/VolumeControlSection';
 import { MetricDetailsProps } from './types';
 import { getMetricDetailsQuery } from './utils';
 
@@ -190,6 +191,7 @@ function MetricDetails({
 					isLoadingMetricMetadata={isLoadingMetricMetadata}
 					refetchMetricMetadata={refetchMetricMetadata}
 				/>
+				<VolumeControlSection metricName={metricName} />
 				<AllAttributes
 					metricName={metricName}
 					metricType={metadata?.type}

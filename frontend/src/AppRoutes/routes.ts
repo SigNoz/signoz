@@ -469,6 +469,13 @@ const routes: AppRoutes[] = [
 		key: 'METRICS_EXPLORER_VIEWS',
 		isPrivate: true,
 	},
+	{
+		path: ROUTES.METRICS_EXPLORER_VOLUME_CONTROL,
+		exact: true,
+		component: MetricsExplorer,
+		key: 'METRICS_EXPLORER_VOLUME_CONTROL',
+		isPrivate: true,
+	},
 
 	{
 		path: ROUTES.METER,

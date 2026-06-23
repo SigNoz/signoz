@@ -1,6 +1,5 @@
 import { Color } from '@signozhq/design-tokens';
-import { Tooltip } from 'antd';
-import { TableColumnType as ColumnType } from 'antd';
+import { TableColumnType as ColumnType, Tooltip } from 'antd';
 import {
 	MetricsexplorertypesStatDTO,
 	MetricsexplorertypesTreemapEntryDTO,

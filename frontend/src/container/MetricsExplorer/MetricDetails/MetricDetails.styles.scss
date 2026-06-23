@@ -516,6 +516,11 @@
 	--tooltip-z-index: 1000;
 }
 
+// Lift the volume-control config drawer above the MetricDetails drawer (z-index 1000).
+.volume-control-config-drawer {
+	z-index: 1100 !important;
+}
+
 @keyframes fade-in-out {
 	0% {
 		opacity: 0;

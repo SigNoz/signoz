@@ -6577,6 +6577,157 @@ export interface LlmpricingruletypesUpdatableLLMPricingRulesDTO {
 	rules: LlmpricingruletypesUpdatableLLMPricingRuleDTO[] | null;
 }
 
+export enum MetricreductionruletypesAssetTypeDTO {
+	dashboard = 'dashboard',
+	alert_rule = 'alert_rule',
+}
+export interface MetricreductionruletypesAffectedAssetDTO {
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type array,null
+	 */
+	impactedLabels: string[] | null;
+	/**
+	 * @type string
+	 */
+	name: string;
+	type: MetricreductionruletypesAssetTypeDTO;
+	/**
+	 * @type string
+	 */
+	widget?: string;
+}
+
+export enum MetricreductionruletypesMatchTypeDTO {
+	drop = 'drop',
+	keep = 'keep',
+}
+export interface MetricreductionruletypesGettableReductionRuleDTO {
+	/**
+	 * @type boolean
+	 */
+	active: boolean;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	effectiveFrom: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	ingestedSeries: number;
+	/**
+	 * @type array,null
+	 */
+	labels: string[] | null;
+	matchType: MetricreductionruletypesMatchTypeDTO;
+	/**
+	 * @type string
+	 */
+	metricName: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	reducedSeries: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	reductionPercent: number;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt: string;
+	/**
+	 * @type string
+	 */
+	updatedBy: string;
+}
+
+export interface MetricreductionruletypesGettableReductionRulePreviewDTO {
+	/**
+	 * @type array,null
+	 */
+	affectedAssets: MetricreductionruletypesAffectedAssetDTO[] | null;
+	/**
+	 * @type array,null
+	 */
+	droppedLabels: string[] | null;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	effectiveFrom: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	ingestedSeries: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	reducedSeries: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	reductionPercent: number;
+}
+
+export interface MetricreductionruletypesGettableReductionRulesDTO {
+	/**
+	 * @type array,null
+	 */
+	rules: MetricreductionruletypesGettableReductionRuleDTO[] | null;
+	/**
+	 * @type integer
+	 */
+	total: number;
+}
+
+export enum MetricreductionruletypesOrderDTO {
+	asc = 'asc',
+	desc = 'desc',
+}
+export interface MetricreductionruletypesPostableReductionRuleDTO {
+	/**
+	 * @type array,null
+	 */
+	labels: string[] | null;
+	matchType: MetricreductionruletypesMatchTypeDTO;
+}
+
+export interface MetricreductionruletypesPostableReductionRulePreviewDTO {
+	/**
+	 * @type array,null
+	 */
+	labels: string[] | null;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	lookbackMs?: number;
+	matchType: MetricreductionruletypesMatchTypeDTO;
+	/**
+	 * @type string
+	 */
+	metricName: string;
+}
+
+export enum MetricreductionruletypesReductionRuleOrderByDTO {
+	metricname = 'metricname',
+	ingestedvolume = 'ingestedvolume',
+	reducedvolume = 'reducedvolume',
+	reduction = 'reduction',
+	lastupdated = 'lastupdated',
+}
 export interface MetricsexplorertypesInspectMetricsRequestDTO {
 	/**
 	 * @type integer
@@ -6738,6 +6889,10 @@ export interface MetricsexplorertypesMetricDashboardDTO {
 	 * @type string
 	 */
 	dashboardName: string;
+	/**
+	 * @type array
+	 */
+	groupBy?: string[];
 	/**
 	 * @type string
 	 */
@@ -10316,6 +10471,31 @@ export type GetMetricMetadata200 = {
 export type UpdateMetricMetadataPathParameters = {
 	metricName: string;
 };
+export type DeleteMetricReductionRulePathParameters = {
+	metricName: string;
+};
+export type GetMetricReductionRulePathParameters = {
+	metricName: string;
+};
+export type GetMetricReductionRule200 = {
+	data: MetricreductionruletypesGettableReductionRuleDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type UpsertMetricReductionRulePathParameters = {
+	metricName: string;
+};
+export type UpsertMetricReductionRule200 = {
+	data: MetricreductionruletypesGettableReductionRuleDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type InspectMetrics200 = {
 	data: MetricsexplorertypesInspectMetricsResponseDTO;
 	/**
@@ -10326,6 +10506,43 @@ export type InspectMetrics200 = {
 
 export type GetMetricsOnboardingStatus200 = {
 	data: MetricsexplorertypesMetricsOnboardingResponseDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListMetricReductionRulesParams = {
+	/**
+	 * @description undefined
+	 */
+	orderBy?: MetricreductionruletypesReductionRuleOrderByDTO;
+	/**
+	 * @description undefined
+	 */
+	order?: MetricreductionruletypesOrderDTO;
+	/**
+	 * @type integer
+	 * @description undefined
+	 */
+	offset?: number;
+	/**
+	 * @type integer
+	 * @description undefined
+	 */
+	limit?: number;
+};
+
+export type ListMetricReductionRules200 = {
+	data: MetricreductionruletypesGettableReductionRulesDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type PreviewMetricReductionRule200 = {
+	data: MetricreductionruletypesGettableReductionRulePreviewDTO;
 	/**
 	 * @type string
 	 */

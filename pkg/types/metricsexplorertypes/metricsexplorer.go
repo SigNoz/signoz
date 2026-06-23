@@ -241,10 +241,11 @@ type MetricAlertsResponse struct {
 
 // MetricDashboard represents a dashboard/widget referencing a metric.
 type MetricDashboard struct {
-	DashboardName string `json:"dashboardName" required:"true"`
-	DashboardID   string `json:"dashboardId" required:"true"`
-	WidgetID      string `json:"widgetId" required:"true"`
-	WidgetName    string `json:"widgetName" required:"true"`
+	DashboardName string   `json:"dashboardName" required:"true"`
+	DashboardID   string   `json:"dashboardId" required:"true"`
+	WidgetID      string   `json:"widgetId" required:"true"`
+	WidgetName    string   `json:"widgetName" required:"true"`
+	GroupBy       []string `json:"groupBy,omitempty"`
 }
 
 // MetricDashboardsResponse represents the response for metric dashboards endpoint.

@@ -377,11 +377,16 @@ func (m *module) GetMetricDashboards(ctx context.Context, orgID valuer.UUID, met
 	if dashboardList, ok := data[metricName]; ok {
 		dashboards = make([]metricsexplorertypes.MetricDashboard, 0, len(dashboardList))
 		for _, item := range dashboardList {
+			var groupBy []string
+			if gb := item["group_by"]; gb != "" {
+				groupBy = strings.Split(gb, ",")
+			}
 			dashboards = append(dashboards, metricsexplorertypes.MetricDashboard{
 				DashboardName: item["dashboard_name"],
 				DashboardID:   item["dashboard_id"],
 				WidgetID:      item["widget_id"],
 				WidgetName:    item["widget_name"],
+				GroupBy:       groupBy,
 			})
 		}
 	}

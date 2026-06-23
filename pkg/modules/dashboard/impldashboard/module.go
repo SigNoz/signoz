@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 	"slices"
+	"strings"
 
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -207,12 +208,14 @@ func (module *module) GetByMetricNames(ctx context.Context, orgID valuer.UUID, m
 			module.checkPromQLQueriesForMetricNames(ctx, query, metricNames, foundMetrics)
 
 			// Add widget to results for all found metrics
+			groupByByMetric := module.collectBuilderGroupBy(query, metricNames)
 			for metricName := range foundMetrics {
 				result[metricName] = append(result[metricName], map[string]string{
 					"dashboard_id":   dashboard.ID,
 					"widget_name":    widgetTitle,
 					"widget_id":      widgetID,
 					"dashboard_name": dashTitle,
+					"group_by":       strings.Join(groupByByMetric[metricName], ","),
 				})
 			}
 		}
@@ -304,6 +307,68 @@ func (module *module) checkBuilderQueriesForMetricNames(query map[string]interfa
 			}
 		}
 	}
+}
+
+// collectBuilderGroupBy returns, per metric, the group-by attribute keys used alongside it in the
+// builder queries of a widget.
+func (module *module) collectBuilderGroupBy(query map[string]interface{}, metricNames []string) map[string][]string {
+	out := make(map[string][]string)
+	builder, ok := query["builder"].(map[string]interface{})
+	if !ok {
+		return out
+	}
+	queryData, ok := builder["queryData"].([]interface{})
+	if !ok {
+		return out
+	}
+	for _, qd := range queryData {
+		data, ok := qd.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		if dataSource, ok := data["dataSource"].(string); !ok || dataSource != "metrics" {
+			continue
+		}
+		aggregations, ok := data["aggregations"].([]interface{})
+		if !ok {
+			continue
+		}
+		groupByKeys := groupByKeysFromData(data["groupBy"])
+		if len(groupByKeys) == 0 {
+			continue
+		}
+		for _, agg := range aggregations {
+			aggMap, ok := agg.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			metricName, ok := aggMap["metricName"].(string)
+			if !ok || metricName == "" || !slices.Contains(metricNames, metricName) {
+				continue
+			}
+			out[metricName] = append(out[metricName], groupByKeys...)
+		}
+	}
+	return out
+}
+
+// groupByKeysFromData extracts attribute names from a builder query's groupBy (JSON []GroupByKey).
+func groupByKeysFromData(v interface{}) []string {
+	arr, ok := v.([]interface{})
+	if !ok {
+		return nil
+	}
+	var keys []string
+	for _, item := range arr {
+		m, ok := item.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		if name, ok := m["name"].(string); ok && name != "" {
+			keys = append(keys, name)
+		}
+	}
+	return keys
 }
 
 // checkClickHouseQueriesForMetricNames checks clickhouse_sql[] array for metric names in query strings.

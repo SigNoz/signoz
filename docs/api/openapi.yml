@@ -5022,6 +5022,169 @@ components:
       required:
       - rules
       type: object
+    MetricreductionruletypesAffectedAsset:
+      properties:
+        id:
+          type: string
+        impactedLabels:
+          items:
+            type: string
+          nullable: true
+          type: array
+        name:
+          type: string
+        type:
+          $ref: '#/components/schemas/MetricreductionruletypesAssetType'
+        widget:
+          type: string
+      required:
+      - type
+      - id
+      - name
+      - impactedLabels
+      type: object
+    MetricreductionruletypesAssetType:
+      enum:
+      - dashboard
+      - alert_rule
+      type: string
+    MetricreductionruletypesGettableReductionRule:
+      properties:
+        active:
+          type: boolean
+        effectiveFrom:
+          format: date-time
+          type: string
+        ingestedSeries:
+          minimum: 0
+          type: integer
+        labels:
+          items:
+            type: string
+          nullable: true
+          type: array
+        matchType:
+          $ref: '#/components/schemas/MetricreductionruletypesMatchType'
+        metricName:
+          type: string
+        reducedSeries:
+          minimum: 0
+          type: integer
+        reductionPercent:
+          format: double
+          type: number
+        updatedAt:
+          format: date-time
+          type: string
+        updatedBy:
+          type: string
+      required:
+      - metricName
+      - matchType
+      - labels
+      - effectiveFrom
+      - updatedAt
+      - updatedBy
+      - active
+      - ingestedSeries
+      - reducedSeries
+      - reductionPercent
+      type: object
+    MetricreductionruletypesGettableReductionRulePreview:
+      properties:
+        affectedAssets:
+          items:
+            $ref: '#/components/schemas/MetricreductionruletypesAffectedAsset'
+          nullable: true
+          type: array
+        droppedLabels:
+          items:
+            type: string
+          nullable: true
+          type: array
+        effectiveFrom:
+          format: date-time
+          type: string
+        ingestedSeries:
+          minimum: 0
+          type: integer
+        reducedSeries:
+          minimum: 0
+          type: integer
+        reductionPercent:
+          format: double
+          type: number
+      required:
+      - ingestedSeries
+      - reducedSeries
+      - reductionPercent
+      - droppedLabels
+      - affectedAssets
+      - effectiveFrom
+      type: object
+    MetricreductionruletypesGettableReductionRules:
+      properties:
+        rules:
+          items:
+            $ref: '#/components/schemas/MetricreductionruletypesGettableReductionRule'
+          nullable: true
+          type: array
+        total:
+          type: integer
+      required:
+      - rules
+      - total
+      type: object
+    MetricreductionruletypesMatchType:
+      enum:
+      - drop
+      - keep
+      type: string
+    MetricreductionruletypesOrder:
+      enum:
+      - asc
+      - desc
+      type: string
+    MetricreductionruletypesPostableReductionRule:
+      properties:
+        labels:
+          items:
+            type: string
+          nullable: true
+          type: array
+        matchType:
+          $ref: '#/components/schemas/MetricreductionruletypesMatchType'
+      required:
+      - matchType
+      - labels
+      type: object
+    MetricreductionruletypesPostableReductionRulePreview:
+      properties:
+        labels:
+          items:
+            type: string
+          nullable: true
+          type: array
+        lookbackMs:
+          format: int64
+          type: integer
+        matchType:
+          $ref: '#/components/schemas/MetricreductionruletypesMatchType'
+        metricName:
+          type: string
+      required:
+      - metricName
+      - matchType
+      - labels
+      type: object
+    MetricreductionruletypesReductionRuleOrderBy:
+      enum:
+      - metricname
+      - ingestedvolume
+      - reducedvolume
+      - reduction
+      - lastupdated
+      type: string
     MetricsexplorertypesInspectMetricsRequest:
       properties:
         end:
@@ -5138,6 +5301,10 @@ components:
           type: string
         dashboardName:
           type: string
+        groupBy:
+          items:
+            type: string
+          type: array
         widgetId:
           type: string
         widgetName:
@@ -15897,6 +16064,229 @@ paths:
       summary: Update metric metadata
       tags:
       - metrics
+  /api/v2/metrics/{metric_name}/reduction_rule:
+    delete:
+      deprecated: false
+      description: Removes the volume-control (label reduction) rule for a specified
+        metric, reverting it to full fidelity. Admin only; enterprise feature.
+      operationId: DeleteMetricReductionRule
+      parameters:
+      - in: path
+        name: metric_name
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "451":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unavailable For Legal Reasons
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+        "501":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Implemented
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Delete a metric reduction rule
+      tags:
+      - metrics
+    get:
+      deprecated: false
+      description: Returns the active volume-control (label reduction) rule for a
+        specified metric. Enterprise feature.
+      operationId: GetMetricReductionRule
+      parameters:
+      - in: path
+        name: metric_name
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/MetricreductionruletypesGettableReductionRule'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "451":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unavailable For Legal Reasons
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+        "501":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Implemented
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get a metric reduction rule
+      tags:
+      - metrics
+    put:
+      deprecated: false
+      description: Creates or updates the volume-control (label reduction) rule for
+        a specified metric. The rule takes effect after a short activation delay.
+        Admin only; enterprise feature.
+      operationId: UpsertMetricReductionRule
+      parameters:
+      - in: path
+        name: metric_name
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MetricreductionruletypesPostableReductionRule'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/MetricreductionruletypesGettableReductionRule'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "451":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unavailable For Legal Reasons
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+        "501":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Implemented
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Create or update a metric reduction rule
+      tags:
+      - metrics
   /api/v2/metrics/inspect:
     post:
       deprecated: false
@@ -16000,6 +16390,158 @@ paths:
       - tokenizer:
         - VIEWER
       summary: Check if non-SigNoz metrics have been received
+      tags:
+      - metrics
+  /api/v2/metrics/reduction_rules:
+    get:
+      deprecated: false
+      description: Returns active metric volume-control (label reduction) rules, sorted
+        and paginated server-side. Enterprise feature.
+      operationId: ListMetricReductionRules
+      parameters:
+      - in: query
+        name: orderBy
+        schema:
+          $ref: '#/components/schemas/MetricreductionruletypesReductionRuleOrderBy'
+      - in: query
+        name: order
+        schema:
+          $ref: '#/components/schemas/MetricreductionruletypesOrder'
+      - in: query
+        name: offset
+        schema:
+          type: integer
+      - in: query
+        name: limit
+        schema:
+          type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/MetricreductionruletypesGettableReductionRules'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "451":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unavailable For Legal Reasons
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+        "501":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Implemented
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: List metric reduction rules
+      tags:
+      - metrics
+  /api/v2/metrics/reduction_rules/preview:
+    post:
+      deprecated: false
+      description: Estimates the series reduction and related-asset impact of a candidate
+        volume-control rule without persisting it. Enterprise feature.
+      operationId: PreviewMetricReductionRule
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MetricreductionruletypesPostableReductionRulePreview'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/MetricreductionruletypesGettableReductionRulePreview'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "451":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unavailable For Legal Reasons
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+        "501":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Implemented
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Preview a metric reduction rule
       tags:
       - metrics
   /api/v2/metrics/stats:

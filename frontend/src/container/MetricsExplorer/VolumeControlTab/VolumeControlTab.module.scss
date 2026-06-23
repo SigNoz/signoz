@@ -1,0 +1,95 @@
+.tab {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	padding: 16px 0;
+}
+
+.header {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.title-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	color: var(--bg-robin-400, #7190f9);
+}
+
+.title {
+	margin: 0 !important;
+}
+
+.subtitle {
+	font-size: 13px;
+	color: var(--bg-vanilla-400, #c0c1c3);
+	max-width: 680px;
+}
+
+.stats {
+	display: flex;
+	gap: 12px;
+}
+
+.stat {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	min-width: 160px;
+	padding: 12px 16px;
+	border: 1px solid var(--bg-slate-400, #1d212d);
+	border-radius: 6px;
+	background: var(--bg-ink-400, #121317);
+}
+
+.stat-label {
+	font-size: 11px;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--bg-vanilla-400, #c0c1c3);
+}
+
+.stat-value {
+	font-family: 'Geist Mono', monospace;
+	font-size: 22px;
+	font-weight: 600;
+	color: var(--bg-vanilla-100, #fff);
+}
+
+.metric-name {
+	font-family: 'Geist Mono', monospace;
+	font-size: 12.5px;
+	color: var(--bg-vanilla-100, #fff);
+}
+
+.attributes {
+	font-family: 'Geist Mono', monospace;
+	font-size: 12px;
+	color: var(--bg-vanilla-300, #e9e9e9);
+}
+
+.muted {
+	font-size: 12px;
+	color: var(--bg-vanilla-400, #c0c1c3);
+}
+
+.reduction {
+	font-family: 'Geist Mono', monospace;
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--bg-forest-400, #50e7a7);
+}
+
+.empty {
+	padding: 32px 16px;
+	text-align: center;
+	color: var(--bg-vanilla-400, #c0c1c3);
+}
+
+.unavailable {
+	padding: 48px 16px;
+	text-align: center;
+	color: var(--bg-vanilla-400, #c0c1c3);
+}
