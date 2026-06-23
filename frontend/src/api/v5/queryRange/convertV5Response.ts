@@ -85,7 +85,6 @@ function getColId(
 function convertTimeSeriesData(
 	timeSeriesData: TimeSeriesData,
 	legendMap: Record<string, string>,
-	isHeatmap = false,
 ): QueryDataV3 {
 	// Convert V5 time series format to legacy QueryDataV3 format
 
@@ -116,13 +115,17 @@ function convertTimeSeriesData(
 				labelsArray: series.labels
 					? series.labels.map((label: any) => ({ [label.key.name]: label.value }))
 					: [],
-				values: isHeatmap
-					? series.values
-					: series.values.map((value: any) => ({
+				values: series.values.map((value: any) => ({
+					timestamp: value.timestamp,
+					value: String(value.value),
+				})),
+				bounds: series.bounds,
+				heatmapValues: series.bounds
+					? series.values.map((value: any) => ({
 							timestamp: value.timestamp,
-							value: String(value.value),
-						})),
-				bounds: isHeatmap ? series.bounds : undefined,
+							values: value.values,
+						}))
+					: undefined,
 				metaData: {
 					alias,
 					index,
@@ -376,7 +379,7 @@ function convertV5DataByType(
 			return {
 				resultType: 'heatmap',
 				result: heatmapData.map((heatmap) =>
-					convertTimeSeriesData(heatmap, legendMap, true),
+					convertTimeSeriesData(heatmap, legendMap),
 				),
 			};
 		}

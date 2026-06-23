@@ -46,8 +46,7 @@ export function extractAndProcessHeatmapData(
 				continue;
 			}
 
-			const firstValue = series.values?.[0] as any;
-			if (!firstValue?.values || !Array.isArray(firstValue.values)) {
+			if (!series.heatmapValues?.length) {
 				continue;
 			}
 
@@ -75,12 +74,12 @@ export function extractAndProcessHeatmapData(
 	let finalValues: any[];
 
 	if (allSeries.length === 1) {
-		finalValues = allSeries[0].values as any;
+		finalValues = allSeries[0].heatmapValues as any;
 	} else {
 		const timestampMap = new Map<number, number[]>();
 
 		allSeries.forEach((series) => {
-			series.values.forEach((item: any) => {
+			series.heatmapValues?.forEach((item: any) => {
 				if (!item.timestamp || !item.values) {
 					return;
 				}
@@ -122,7 +121,7 @@ export function extractAndProcessHeatmapData(
 	yData.counts = countsFlat;
 	yData.xs = xs;
 	yData.bounds = sortedBounds; // actual bucket boundaries for Y-axis scale and rendering
-	const data = ([xs, yData] as unknown) as AlignedData;
+	const data = [xs, yData] as unknown as AlignedData;
 
 	// Calculate time interval
 	const timestampsMs = finalValues?.map((v: any) => v.timestamp) || [];

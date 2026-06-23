@@ -296,12 +296,13 @@ export function createAggregation(
 	if (queryData.aggregations?.length > 0) {
 		return queryData.aggregations.flatMap(
 			(agg: { expression: string; alias?: string }) => {
+				if (agg.expression.trim().startsWith('heatmap(')) {
+					return [{ expression: agg.expression }];
+				}
+
 				const parsedAggregations = parseAggregations(agg.expression, agg?.alias);
 
 				if (isEmpty(parsedAggregations)) {
-					if (agg.expression.trim().startsWith('heatmap(')) {
-						return [{ expression: agg.expression }];
-					}
 					return [{ expression: 'count()' }];
 				}
 

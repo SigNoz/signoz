@@ -47,6 +47,7 @@ export interface SeriesItem {
 	labelsArray: { [key: string]: string }[];
 	values: { timestamp: number; value: string }[];
 	bounds?: number[];
+	heatmapValues?: { timestamp: number; values: number[] }[];
 	metaData?: {
 		alias: string;
 		index: number;

@@ -290,7 +290,6 @@ function RightContainer({
 						<Select
 							options={heatmapColorPaletteOptions}
 							value={heatmapColorPalette}
-							style={{ width: '100%' }}
 							className="panel-type-select"
 							onChange={(val: string): void => setHeatmapColorPalette(val)}
 						/>

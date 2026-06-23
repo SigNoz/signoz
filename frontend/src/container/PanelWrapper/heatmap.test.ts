@@ -1,3 +1,5 @@
+import uPlot from 'uplot';
+
 import {
 	convertToHeatmapData,
 	countsToFills,
@@ -87,7 +89,7 @@ describe('heatmap utility functions', () => {
 						counts: [10, 20, 30, 40, 50],
 					},
 				],
-			} as any;
+			} as unknown as uPlot;
 
 			const fills = fillsFn(mockUplot, 1);
 
@@ -106,7 +108,7 @@ describe('heatmap utility functions', () => {
 						counts: [0, 10, 0, 20],
 					},
 				],
-			} as any;
+			} as unknown as uPlot;
 
 			const fills = fillsFn(mockUplot, 1);
 
@@ -122,7 +124,7 @@ describe('heatmap utility functions', () => {
 
 			const mockUplot = {
 				data: [null, {}],
-			} as any;
+			} as unknown as uPlot;
 
 			const fills = fillsFn(mockUplot, 1);
 
