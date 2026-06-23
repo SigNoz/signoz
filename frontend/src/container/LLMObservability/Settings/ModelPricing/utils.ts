@@ -18,7 +18,7 @@ export const formatPricePerMillion = (value: number | undefined): string => {
 	if (value === undefined || value === null) {
 		return '—';
 	}
-	// 2dp is enough for per-1M pricing. we can update this later
+	// 2dp is enough for per-1M pricing. we can update this later we models have sub-cent pricing.
 	return `$${value.toFixed(2)}`;
 };
 
