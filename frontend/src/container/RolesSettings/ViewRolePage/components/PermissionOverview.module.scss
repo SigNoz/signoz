@@ -1,0 +1,45 @@
+.container {
+	display: flex;
+	flex-direction: column;
+	padding-bottom: var(--spacing-8);
+}
+
+.collapseAction {
+	display: flex;
+	justify-content: flex-end;
+	padding-bottom: var(--spacing-4);
+}
+
+.collapseButton {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-2);
+	padding: var(--spacing-2) var(--spacing-4);
+	background: transparent;
+	border: none;
+	cursor: pointer;
+	font-family: Inter;
+	font-size: var(--periscope-font-size-base);
+	font-weight: var(--font-weight-normal);
+	line-height: var(--line-height-20);
+	color: var(--l2-foreground);
+	transition: color 0.15s ease;
+
+	&:hover {
+		color: var(--l1-foreground);
+	}
+}
+
+.grid {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-10);
+}
+
+.errorText {
+	font-size: var(--periscope-font-size-base);
+	color: var(--cherry-foreground);
+	margin: 0;
+	padding: var(--spacing-4);
+	text-align: center;
+}
