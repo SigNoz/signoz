@@ -39,7 +39,6 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		isFetchingActiveLicense,
 		trialInfo,
 		featureFlags,
-		isFetchingFeatureFlags,
 	} = useAppContext();
 
 	const isAdmin = user.role === USER_ROLES.ADMIN;
@@ -136,13 +135,10 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		return <Redirect to={ROUTES.HOME} />;
 	}
 
-	// Gate the LLM observability tree behind its feature flag. Prefix match so
-	// every sub-route is covered. The `featureFlags` guard avoids bouncing users
-	// off valid deep links while the initial flag fetch is still in flight.
 	if (
-		pathname.startsWith(ROUTES.LLM_OBSERVABILITY) &&
-		!isAIObservabilityEnabled &&
-		!(featureFlags === null && isFetchingFeatureFlags)
+		(pathname.startsWith(ROUTES.LLM_OBSERVABILITY_BASE) ||
+			pathname === ROUTES.LLM_OBSERVABILITY_BASE) &&
+		!isAIObservabilityEnabled
 	) {
 		return <Redirect to={ROUTES.HOME} />;
 	}

@@ -508,10 +508,10 @@ const routes: AppRoutes[] = [
 		isPrivate: true,
 	},
 	{
-		path: ROUTES.LLM_OBSERVABILITY,
+		path: ROUTES.LLM_OBSERVABILITY_BASE,
 		exact: true,
 		component: LLMObservabilityPage,
-		key: 'LLM_OBSERVABILITY',
+		key: 'LLM_OBSERVABILITY_BASE',
 		isPrivate: true,
 	},
 	{
