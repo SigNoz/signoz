@@ -20,6 +20,7 @@ var (
 	ErrCodeRoleEmptyPatch                   = errors.MustNewCode("role_empty_patch")
 	ErrCodeInvalidTypeRelation              = errors.MustNewCode("role_invalid_type_relation")
 	ErrCodeRoleNotFound                     = errors.MustNewCode("role_not_found")
+	ErrCodeRoleAlreadyExists                = errors.MustNewCode("role_already_exists")
 	ErrCodeRoleFailedTransactionsFromString = errors.MustNewCode("role_failed_transactions_from_string")
 	ErrCodeRoleUnsupported                  = errors.MustNewCode("role_unsupported")
 	ErrCodeRoleHasUserAssignees             = errors.MustNewCode("role_has_user_assignees")
@@ -72,9 +73,20 @@ type Role struct {
 	OrgID       valuer.UUID   `bun:"org_id,type:string" json:"orgId" required:"true"`
 }
 
+type RoleWithTransactionGroups struct {
+	*Role
+	TransactionGroups TransactionGroups `json:"transactionGroups" required:"true" nullable:"false"`
+}
+
 type PostableRole struct {
-	Name        string `json:"name" required:"true"`
-	Description string `json:"description"`
+	Name              string            `json:"name" required:"true"`
+	Description       string            `json:"description" required:"true"`
+	TransactionGroups TransactionGroups `json:"transactionGroups" required:"true" nullable:"false"`
+}
+
+type UpdatableRole struct {
+	Description       string            `json:"description" required:"true"`
+	TransactionGroups TransactionGroups `json:"transactionGroups" required:"true" nullable:"false"`
 }
 
 type PatchableRole struct {
@@ -94,6 +106,22 @@ func NewRole(name, description string, roleType valuer.String, orgID valuer.UUID
 		Description: description,
 		Type:        roleType,
 		OrgID:       orgID,
+	}
+}
+
+func NewRoleWithTransactionGroups(name, description string, roleType valuer.String, orgID valuer.UUID, transactionGroups TransactionGroups) *RoleWithTransactionGroups {
+	role := NewRole(name, description, roleType, orgID)
+
+	return &RoleWithTransactionGroups{
+		Role:              role,
+		TransactionGroups: transactionGroups,
+	}
+}
+
+func MakeRoleWithTransactionGroups(role *Role, transactionGroups TransactionGroups) *RoleWithTransactionGroups {
+	return &RoleWithTransactionGroups{
+		Role:              role,
+		TransactionGroups: transactionGroups,
 	}
 }
 
@@ -118,6 +146,18 @@ func (role *Role) PatchMetadata(description string) error {
 	return nil
 }
 
+func (role *RoleWithTransactionGroups) Update(description string, transactionGroups TransactionGroups) error {
+	err := role.ErrIfManaged()
+	if err != nil {
+		return err
+	}
+
+	role.Description = description
+	role.TransactionGroups = transactionGroups
+	role.UpdatedAt = time.Now()
+	return nil
+}
+
 func (role *Role) ErrIfManaged() error {
 	if role.Type == RoleTypeManaged {
 		return errors.Newf(errors.TypeInvalidInput, ErrCodeRoleInvalidInput, "cannot edit/delete managed role: %s", role.Name)
@@ -127,31 +167,58 @@ func (role *Role) ErrIfManaged() error {
 }
 
 func (role *PostableRole) UnmarshalJSON(data []byte) error {
-	type shadowPostableRole struct {
-		Name        string `json:"name"`
-		Description string `json:"description"`
-	}
+	type Alias PostableRole
+	var temp Alias
 
-	var shadowRole shadowPostableRole
-	if err := json.Unmarshal(data, &shadowRole); err != nil {
+	if err := json.Unmarshal(data, &temp); err != nil {
 		return err
 	}
 
-	if shadowRole.Name == "" {
+	if temp.Name == "" {
 		return errors.New(errors.TypeInvalidInput, ErrCodeRoleInvalidInput, "name is missing from the request")
 	}
 
-	if match := roleNameRegex.MatchString(shadowRole.Name); !match {
+	if match := roleNameRegex.MatchString(temp.Name); !match {
 		return errors.New(errors.TypeInvalidInput, ErrCodeRoleInvalidInput, "name must contain only lowercase letters (a-z) and hyphens (-), and be at most 50 characters long.")
 	}
 
-	if strings.HasPrefix(shadowRole.Name, managedRolePrefix) {
+	if strings.HasPrefix(temp.Name, managedRolePrefix) {
 		return errors.Newf(errors.TypeInvalidInput, ErrCodeRoleInvalidInput, "role name cannot start with %q as it is reserved for SigNoz managed roles.", managedRolePrefix)
 	}
 
-	role.Name = shadowRole.Name
-	role.Description = shadowRole.Description
+	if temp.TransactionGroups == nil {
+		return errors.New(errors.TypeInvalidInput, ErrCodeRoleInvalidInput, "transactionGroups is required").WithAdditional("send an empty array to create a role with no transaction groups")
+	}
 
+	role.Name = temp.Name
+	role.Description = temp.Description
+	role.TransactionGroups = temp.TransactionGroups
+	return nil
+}
+
+func (role *UpdatableRole) UnmarshalJSON(data []byte) error {
+	shadow := struct {
+		Description       *string           `json:"description"`
+		TransactionGroups TransactionGroups `json:"transactionGroups"`
+	}{}
+
+	if err := json.Unmarshal(data, &shadow); err != nil {
+		return err
+	}
+
+	// A pointer distinguishes an omitted/null description from an explicit empty string: the field
+	// must be sent (update reconciles to exactly what is given), but an empty string is allowed so a
+	// caller can deliberately clear the description.
+	if shadow.Description == nil {
+		return errors.New(errors.TypeInvalidInput, ErrCodeRoleInvalidInput, "description is required").WithAdditional("send an empty string to clear the description")
+	}
+
+	if shadow.TransactionGroups == nil {
+		return errors.New(errors.TypeInvalidInput, ErrCodeRoleInvalidInput, "transactionGroups is required").WithAdditional("send an empty array to clear the role's transaction groups")
+	}
+
+	role.Description = *shadow.Description
+	role.TransactionGroups = shadow.TransactionGroups
 	return nil
 }
 

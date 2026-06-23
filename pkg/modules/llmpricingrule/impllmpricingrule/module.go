@@ -29,8 +29,8 @@ func NewModule(store llmpricingruletypes.Store, querier querier.Querier) llmpric
 	return &module{store: store, querier: querier}
 }
 
-func (module *module) List(ctx context.Context, orgID valuer.UUID, offset, limit int) ([]*llmpricingruletypes.LLMPricingRule, int, error) {
-	return module.store.List(ctx, orgID, offset, limit)
+func (module *module) List(ctx context.Context, orgID valuer.UUID, offset, limit int, search string, isOverride *bool) ([]*llmpricingruletypes.LLMPricingRule, int, error) {
+	return module.store.List(ctx, orgID, offset, limit, search, isOverride)
 }
 
 func (module *module) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*llmpricingruletypes.LLMPricingRule, error) {
@@ -138,7 +138,7 @@ func (module *module) RecommendAgentConfig(orgID valuer.UUID, currentConfYaml []
 }
 
 func (module *module) getEnabledRules(ctx context.Context, orgID valuer.UUID) ([]*llmpricingruletypes.LLMPricingRule, error) {
-	rules, _, err := module.List(ctx, orgID, 0, 10000)
+	rules, _, err := module.List(ctx, orgID, 0, 10000, "", nil)
 	if err != nil {
 		return nil, err
 	}

@@ -20,6 +20,7 @@ import APIError from 'types/api/error';
 import DashboardActions from './DashboardActions/DashboardActions';
 import DashboardInfo from './DashboardInfo/DashboardInfo';
 import { useEditableTitle } from './DashboardInfo/useEditableTitle';
+import VariablesBar from '../VariablesBar/VariablesBar';
 
 import styles from './DashboardPageToolbar.module.scss';
 
@@ -137,6 +138,8 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 					onOpenRename={startEdit}
 				/>
 			</div>
+
+			<VariablesBar dashboard={dashboard} />
 		</section>
 	);
 }

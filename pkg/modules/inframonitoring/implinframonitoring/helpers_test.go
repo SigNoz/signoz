@@ -304,7 +304,7 @@ func TestCompositeKeyFromLabels(t *testing.T) {
 			name: "daemonset and namespace group-by",
 			labels: map[string]string{
 				"k8s.daemonset.name": "web-1",
-				"k8s.namespace.name":  "ns-x",
+				"k8s.namespace.name": "ns-x",
 			},
 			groupBy:  []qbtypes.GroupByKey{daemonSetNameGroupByKey, namespaceNameGroupByKey},
 			expected: "web-1\x00ns-x",
@@ -329,6 +329,47 @@ func TestCompositeKeyFromLabels(t *testing.T) {
 			},
 			groupBy:  []qbtypes.GroupByKey{deploymentNameGroupByKey, namespaceNameGroupByKey, clusterNameGroupByKey},
 			expected: "web-1\x00ns-x\x00",
+		},
+		{
+			// volumes default group identity: (pvc, namespace, cluster).
+			name: "pvc, namespace and cluster group-by",
+			labels: map[string]string{
+				"k8s.persistentvolumeclaim.name": "data-pg-0",
+				"k8s.namespace.name":             "ns-x",
+				"k8s.cluster.name":               "cluster-a",
+			},
+			groupBy:  []qbtypes.GroupByKey{pvcNameGroupByKey, namespaceNameGroupByKey, clusterNameGroupByKey},
+			expected: "data-pg-0\x00ns-x\x00cluster-a",
+		},
+		{
+			// absent cluster label on a PVC -> empty trailing segment.
+			name: "pvc missing cluster label yields empty trailing segment",
+			labels: map[string]string{
+				"k8s.persistentvolumeclaim.name": "data-pg-0",
+				"k8s.namespace.name":             "ns-x",
+			},
+			groupBy:  []qbtypes.GroupByKey{pvcNameGroupByKey, namespaceNameGroupByKey, clusterNameGroupByKey},
+			expected: "data-pg-0\x00ns-x\x00",
+		},
+		{
+			// namespaces default group identity: (namespace, cluster) — namespaces are
+			// cluster-scoped, so cluster is the only cross-cluster disambiguator.
+			name: "namespace and cluster group-by",
+			labels: map[string]string{
+				"k8s.namespace.name": "ns-x",
+				"k8s.cluster.name":   "cluster-a",
+			},
+			groupBy:  []qbtypes.GroupByKey{namespaceNameGroupByKey, clusterNameGroupByKey},
+			expected: "ns-x\x00cluster-a",
+		},
+		{
+			// absent cluster label on a namespace -> empty trailing segment.
+			name: "namespace missing cluster label yields empty trailing segment",
+			labels: map[string]string{
+				"k8s.namespace.name": "ns-x",
+			},
+			groupBy:  []qbtypes.GroupByKey{namespaceNameGroupByKey, clusterNameGroupByKey},
+			expected: "ns-x\x00",
 		},
 	}
 

@@ -614,7 +614,7 @@ def test_histogram_p90_returns_warning_outside_data_window(
     assert warnings[0]["message"].startswith(f"no data found for the metric {metric_name}")
 
 
-def test_non_existent_metrics_returns_404(
+def test_non_existent_metrics_returns_warning(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
@@ -635,9 +635,11 @@ def test_non_existent_metrics_returns_404(
 
     start_2h = int((now - timedelta(hours=2)).timestamp() * 1000)
     response = make_query_request(signoz, token, start_2h, end_ms, [query])
-    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response.status_code == HTTPStatus.OK
 
-    assert get_error_message(response.json()) == "could not find the metric whatevergoennnsgoeshere"
+    data = response.json()
+    warnings = get_all_warnings(data)
+    assert any("whatevergoennnsgoeshere" in w["message"] and "has never been received" in w["message"] for w in warnings), f"expected never-seen metric warning, got: {warnings}"
 
 
 def test_non_existent_internal_metrics_returns_no_warning(
