@@ -5,7 +5,8 @@ import type { TableColumnDef } from 'components/TanStackTableView';
 import { startCase } from 'lodash-es';
 
 import styles from './LLMObservabilityModelPricing.module.scss';
-import type { PricingRule } from './types';
+import { type LlmpricingruletypesLLMPricingRuleDTO } from 'api/generated/services/sigNoz.schemas';
+
 import {
 	formatPricePerMillion,
 	getCanonicalId,
@@ -16,7 +17,7 @@ import {
 
 interface ColumnsConfig {
 	canManage: boolean;
-	onEdit: (rule: PricingRule) => void;
+	onEdit: (rule: LlmpricingruletypesLLMPricingRuleDTO) => void;
 }
 
 // Column definitions for the model-costs TanStackTable. Sorting is intentionally
@@ -25,7 +26,7 @@ interface ColumnsConfig {
 export function getModelCostsColumns({
 	canManage,
 	onEdit,
-}: ColumnsConfig): TableColumnDef<PricingRule>[] {
+}: ColumnsConfig): TableColumnDef<LlmpricingruletypesLLMPricingRuleDTO>[] {
 	return [
 		{
 			id: 'model',

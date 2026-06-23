@@ -9,15 +9,15 @@ import {
 } from './constants';
 import styles from './LLMObservabilityModelPricing.module.scss';
 import { getModelCostsColumns } from './table.config';
-import type { PricingRule } from './types';
+import { type LlmpricingruletypesLLMPricingRuleDTO } from 'api/generated/services/sigNoz.schemas';
 
 interface ModelCostsTableProps {
-	rules: PricingRule[];
+	rules: LlmpricingruletypesLLMPricingRuleDTO[];
 	isLoading: boolean;
 	total: number;
 	selectedRuleId: string | null;
 	canManage: boolean;
-	onEdit: (rule: PricingRule) => void;
+	onEdit: (rule: LlmpricingruletypesLLMPricingRuleDTO) => void;
 }
 
 // The table owns its own pagination URL state (page/limit) via enableQueryParams;
@@ -46,7 +46,7 @@ function ModelCostsTable({
 	}
 
 	return (
-		<TanStackTable<PricingRule>
+		<TanStackTable<LlmpricingruletypesLLMPricingRuleDTO>
 			className={styles.modelCostsTable}
 			data={rules}
 			columns={columns}
