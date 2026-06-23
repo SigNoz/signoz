@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { useGetFieldValues } from 'hooks/dynamicVariables/useGetFieldValues';
+import { filterVariableValues } from 'lib/dashboardVariables/filterVariableValues';
 import type { AppState } from 'store/reducers';
 import type { GlobalReducer } from 'types/reducer/globalTime';
 
@@ -61,8 +62,9 @@ function DynamicSelector({
 		const payload = data?.data;
 		const values =
 			payload?.normalizedValues ?? payload?.values?.StringValues ?? [];
-		return sortValuesByOrder(values, variable.sort).map(String);
-	}, [data, variable.sort]);
+		const result = filterVariableValues(values, variable.capturingRegexp);
+		return sortValuesByOrder(result.values, variable.sort).map(String);
+	}, [data, variable.capturingRegexp, variable.sort]);
 
 	useAutoSelect(variable, options, selection, onChange);
 

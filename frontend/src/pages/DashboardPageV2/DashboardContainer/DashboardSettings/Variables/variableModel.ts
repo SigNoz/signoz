@@ -44,6 +44,7 @@ export interface VariableFormModel {
 	multiSelect: boolean;
 	showAllOption: boolean;
 	sort: VariableSort;
+	capturingRegexp: string;
 
 	// Type-specific.
 	queryValue: string; // QUERY
@@ -69,6 +70,7 @@ export function emptyVariableFormModel(): VariableFormModel {
 		multiSelect: false,
 		showAllOption: false,
 		sort: 'DISABLED',
+		capturingRegexp: '',
 		queryValue: '',
 		customValue: '',
 		textValue: '',

@@ -7,6 +7,7 @@ import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useVariableFetchState } from 'hooks/dashboard/useVariableFetchState';
 import useDebounce from 'hooks/useDebounce';
+import { filterVariableValues } from 'lib/dashboardVariables/filterVariableValues';
 import { AppState } from 'store/reducers';
 import { SuccessResponseV2 } from 'types/api';
 import { FieldValueResponse } from 'types/api/dynamicVariables/getFieldValues';
@@ -147,8 +148,23 @@ function DynamicVariableInput({
 
 	const handleQuerySuccess = useCallback(
 		(data: SuccessResponseV2<FieldValueResponse>): void => {
-			const newNormalizedValues = data.data?.normalizedValues || [];
-			const newRelatedValues = data.data?.relatedValues || [];
+			const filteredNormalizedValues = filterVariableValues(
+				data.data?.normalizedValues || [],
+				variableData.dynamicVariablesRegex,
+			);
+			const filteredRelatedValues = filterVariableValues(
+				data.data?.relatedValues || [],
+				variableData.dynamicVariablesRegex,
+			);
+			const newNormalizedValues = filteredNormalizedValues.values;
+			const newRelatedValues = filteredRelatedValues.values.map((value) =>
+				value.toString(),
+			);
+			const regexError =
+				filteredNormalizedValues.error ?? filteredRelatedValues.error;
+
+			setErrorMessage(regexError ?? null);
+			setIsRetryableError(!regexError);
 
 			if (!debouncedApiSearchText) {
 				setOptionsData(newNormalizedValues);
@@ -192,6 +208,7 @@ function DynamicVariableInput({
 		[
 			debouncedApiSearchText,
 			variableData.allSelected,
+			variableData.dynamicVariablesRegex,
 			variableData.name,
 			isDropdownOpen,
 			tempSelection,
@@ -222,6 +239,7 @@ function DynamicVariableInput({
 			debouncedApiSearchText,
 			variableData.dynamicVariablesSource,
 			variableData.dynamicVariablesAttribute,
+			variableData.dynamicVariablesRegex,
 			variableFetchCycleId,
 		],
 		{

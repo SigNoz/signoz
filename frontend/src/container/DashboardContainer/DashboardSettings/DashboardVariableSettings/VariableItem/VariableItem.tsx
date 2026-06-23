@@ -21,6 +21,7 @@ import { getWidgetsHavingDynamicVariableAttribute } from 'hooks/dashboard/utils'
 import { useGetFieldValues } from 'hooks/dynamicVariables/useGetFieldValues';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { commaValuesParser } from 'lib/dashboardVariables/customCommaValuesParser';
+import { filterVariableValues } from 'lib/dashboardVariables/filterVariableValues';
 import sortValues from 'lib/dashboardVariables/sortVariableValues';
 import { isEmpty, map } from 'lodash-es';
 import {
@@ -123,6 +124,9 @@ function VariableItem({
 
 	const [dynamicVariablesSelectedValue, setDynamicVariablesSelectedValue] =
 		useState<{ name: string; value: string }>();
+	const [dynamicVariablesRegex, setDynamicVariablesRegex] = useState<string>(
+		variableData.dynamicVariablesRegex || '',
+	);
 
 	// Error messages
 	const [errorName, setErrorName] = useState<boolean>(false);
@@ -146,6 +150,10 @@ function VariableItem({
 		variableData.dynamicVariablesAttribute,
 		variableData.dynamicVariablesSource,
 	]);
+
+	useEffect(() => {
+		setDynamicVariablesRegex(variableData.dynamicVariablesRegex || '');
+	}, [variableData.dynamicVariablesRegex]);
 
 	// Validate attribute key uniqueness for dynamic variables
 	useEffect(() => {
@@ -285,15 +293,16 @@ function VariableItem({
 			dynamicVariablesSelectedValue?.name &&
 			dynamicVariablesSelectedValue?.value
 		) {
-			setPreviewValues(
-				sortValues(
-					fieldValues.data?.normalizedValues || [],
-					variableSortType,
-				) as never,
+			const result = filterVariableValues(
+				fieldValues.data?.normalizedValues || [],
+				dynamicVariablesRegex,
 			);
+			setPreviewValues(sortValues(result.values, variableSortType) as never);
+			setErrorPreview(result.error ?? null);
 		}
 	}, [
 		fieldValues,
+		dynamicVariablesRegex,
 		variableSortType,
 		queryType,
 		dynamicVariablesSelectedValue?.name,
@@ -364,6 +373,7 @@ function VariableItem({
 			...(queryType === 'DYNAMIC' && {
 				dynamicVariablesAttribute: dynamicVariablesSelectedValue?.name,
 				dynamicVariablesSource: dynamicVariablesSelectedValue?.value,
+				dynamicVariablesRegex: dynamicVariablesRegex || undefined,
 			}),
 			selectedValue: variableValue,
 			allSelected: variableData.allSelected,
@@ -629,6 +639,20 @@ function VariableItem({
 								errorAttributeKeyMessage={errorAttributeKeyMessage}
 							/>
 						</div>
+					)}
+					{queryType === 'DYNAMIC' && (
+						<VariableItemRow className="dynamic-regex-section">
+							<LabelContainer>
+								<Typography className="typography-variables">Regex</Typography>
+							</LabelContainer>
+							<Input
+								value={dynamicVariablesRegex}
+								className="default-input"
+								onChange={(e): void => setDynamicVariablesRegex(e.target.value)}
+								placeholder="^api-.*"
+								style={{ width: 400 }}
+							/>
+						</VariableItemRow>
 					)}
 					{queryType === 'QUERY' && (
 						<div className="query-container">
