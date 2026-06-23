@@ -10337,7 +10337,7 @@ export type ListMetrics200 = {
 export type GetMetricAlertsParams = {
 	/**
 	 * @type string
-	 * @description undefined
+	 * @description The name of the metric. May contain slashes (e.g. cloud-provider metrics like run.googleapis.com/request_latencies).
 	 */
 	metricName: string;
 };
@@ -10353,17 +10353,17 @@ export type GetMetricAlerts200 = {
 export type GetMetricAttributesParams = {
 	/**
 	 * @type string
-	 * @description undefined
+	 * @description The name of the metric. May contain slashes (e.g. cloud-provider metrics like run.googleapis.com/request_latencies).
 	 */
 	metricName: string;
 	/**
 	 * @type integer,null
-	 * @description undefined
+	 * @description Start of the time range as a Unix timestamp in milliseconds.
 	 */
 	start?: number | null;
 	/**
 	 * @type integer,null
-	 * @description undefined
+	 * @description End of the time range as a Unix timestamp in milliseconds.
 	 */
 	end?: number | null;
 };
@@ -10379,7 +10379,7 @@ export type GetMetricAttributes200 = {
 export type GetMetricDashboardsParams = {
 	/**
 	 * @type string
-	 * @description undefined
+	 * @description The name of the metric. May contain slashes (e.g. cloud-provider metrics like run.googleapis.com/request_latencies).
 	 */
 	metricName: string;
 };
@@ -10395,7 +10395,7 @@ export type GetMetricDashboards200 = {
 export type GetMetricHighlightsParams = {
 	/**
 	 * @type string
-	 * @description undefined
+	 * @description The name of the metric. May contain slashes (e.g. cloud-provider metrics like run.googleapis.com/request_latencies).
 	 */
 	metricName: string;
 };
@@ -10419,7 +10419,7 @@ export type InspectMetrics200 = {
 export type GetMetricMetadataParams = {
 	/**
 	 * @type string
-	 * @description undefined
+	 * @description The name of the metric. May contain slashes (e.g. cloud-provider metrics like run.googleapis.com/request_latencies).
 	 */
 	metricName: string;
 };
