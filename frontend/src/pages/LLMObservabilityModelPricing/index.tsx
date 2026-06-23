@@ -1,4 +1,4 @@
-import LLMObservabilityModelPricing from 'container/LLMObservabilityModelPricing/LLMObservabilityModelPricing';
+import LLMObservabilityModelPricing from 'container/LLMObservability/Settings/ModelPricing/LLMObservabilityModelPricing';
 
 function LLMObservabilityModelPricingPage(): JSX.Element {
 	return <LLMObservabilityModelPricing />;

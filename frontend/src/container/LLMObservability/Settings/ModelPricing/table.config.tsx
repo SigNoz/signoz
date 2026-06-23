@@ -144,9 +144,6 @@ export function getModelCostsColumns({
 		{
 			id: 'actions',
 			header: '',
-			// ignoreLastColumnFill keeps the pinned actions cell compact — without it
-			// the table's "last column fills 100%" rule stretches it and left-aligns
-			// the button against a large empty gap.
 			width: { fixed: '88px', ignoreLastColumnFill: true },
 			pin: 'right',
 			enableMove: false,

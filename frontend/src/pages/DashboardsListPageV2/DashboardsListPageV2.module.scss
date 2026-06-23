@@ -1,17 +1,20 @@
 .page {
 	display: flex;
 	flex-direction: column;
-	gap: 16px;
 	width: 100%;
+	flex: 1;
+	min-height: 0;
 }
 
 .header {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	padding: 0 8px;
+	padding: 0 16px;
 	gap: 8px;
 	height: 48px;
+	flex: none;
+	border-bottom: 1px solid var(--l2-border);
 }
 
 .headerLeft {

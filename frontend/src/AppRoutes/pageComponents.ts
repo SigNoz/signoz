@@ -331,6 +331,13 @@ export const AIAssistantPage = Loadable(
 		),
 );
 
+export const LLMObservabilityPage = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "LLM Observability Page" */ 'pages/LLMObservability'
+		),
+);
+
 export const LLMObservabilityModelPricingPage = Loadable(
 	() =>
 		import(

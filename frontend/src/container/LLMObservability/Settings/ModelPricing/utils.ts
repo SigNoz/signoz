@@ -17,8 +17,6 @@ import type {
 
 dayjs.extend(relativeTime);
 
-// Relative, human-readable distance from now (e.g. "2 days ago"); "—" for
-// missing/invalid timestamps.
 const getRelativeTime = (
 	timestamp: string | number | Date | null | undefined,
 ): string => {
@@ -45,14 +43,11 @@ export const parsePricingAmount = (raw: string): number | null => {
 
 // ─── Display helpers ─────────────────────────────────────────────────────────
 
-// Pricing fields are typed as required numbers, but guard null/undefined
-// anyway — API responses don't always honour the spec, and toFixed() on a
-// missing value would crash the row instead of showing "—".
 export const formatPricePerMillion = (value: number | undefined): string => {
 	if (value === undefined || value === null) {
 		return '—';
 	}
-	// 2dp is enough for per-1M pricing; revisit precision when real sub-cent data lands.
+	// 2dp is enough for per-1M pricing. we can update this later we models have sub-cent pricing.
 	return `$${value.toFixed(2)}`;
 };
 

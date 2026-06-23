@@ -1,6 +1,9 @@
 import dayjs from 'dayjs';
 import { isEmpty } from 'lodash-es';
-import type { DashboardtypesListedDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
+import type {
+	DashboardtypesListedDashboardV2DTO,
+	TagtypesPostableTagDTO,
+} from 'api/generated/services/sigNoz.schemas';
 
 export type DashboardListItem = DashboardtypesListedDashboardV2DTO;
 
@@ -10,6 +13,24 @@ export const tagsToStrings = (
 	(tags ?? []).map((tag) =>
 		tag.key === tag.value ? tag.key : `${tag.key}:${tag.value}`,
 	);
+
+// Inverse of `tagsToStrings`: each comma-separated tag is "key:value" or a bare
+// label (key === value).
+export const toPostableTags = (raw: string): TagtypesPostableTagDTO[] =>
+	raw
+		.split(',')
+		.map((label) => label.trim())
+		.filter(Boolean)
+		.map((label) => {
+			const sep = label.indexOf(':');
+			if (sep > 0) {
+				return {
+					key: label.slice(0, sep).trim(),
+					value: label.slice(sep + 1).trim(),
+				};
+			}
+			return { key: label, value: label };
+		});
 
 export const lastUpdatedLabel = (time: string | undefined): string => {
 	if (!time || isEmpty(time)) {

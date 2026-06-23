@@ -1,0 +1,71 @@
+/* Mirrors the V1 dashboard variable bar: each variable is a connected pill —
+   a robin `$name` segment joined to a value segment. */
+/* Sits inside the already-padded sticky toolbar section, so it only needs a top
+   gap from the tags — horizontal/bottom padding comes from the toolbar. */
+.bar {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+	padding-top: 12px;
+}
+
+.variableItem {
+	display: flex;
+	align-items: center;
+}
+
+.variableName {
+	display: flex;
+	min-width: 56px;
+	height: 32px;
+	align-items: center;
+	gap: 4px;
+	padding: 6px 6px 6px 8px;
+	border: 1px solid var(--l1-border);
+	border-radius: 2px 0 0 2px;
+	background: var(--l3-background);
+	color: var(--bg-robin-300);
+	font-family: Inter;
+	font-size: 12px;
+	font-weight: 400;
+	line-height: 16px;
+	white-space: nowrap;
+}
+
+.infoIcon {
+	margin-left: 4px;
+	color: var(--l2-foreground);
+}
+
+.variableValue {
+	display: flex;
+	min-width: 120px;
+	height: 32px;
+	align-items: center;
+	border: 1px solid var(--l1-border);
+	border-left: none;
+	border-radius: 0 2px 2px 0;
+	background: var(--l2-background);
+	color: var(--l2-foreground);
+	font-size: 12px;
+
+	&:hover,
+	&:focus-within {
+		outline: 1px solid var(--bg-robin-400);
+	}
+}
+
+/* Inner control fills the value segment; the segment provides the frame, so the
+   control itself is borderless/transparent. */
+.control {
+	width: 100%;
+	min-width: 120px;
+
+	:global(.ant-select-selector),
+	:global(.ant-input),
+	&:global(.ant-input) {
+		border: none !important;
+		background: transparent !important;
+		box-shadow: none !important;
+	}
+}

@@ -2258,6 +2258,32 @@ export interface AuthtypesPostableRotateTokenDTO {
 	refreshToken?: string;
 }
 
+export interface AuthtypesPostableUserRoleDTO {
+	/**
+	 * @type string
+	 */
+	id: string;
+}
+
+export interface AuthtypesPostableUserDTO {
+	/**
+	 * @type string
+	 */
+	displayName?: string;
+	/**
+	 * @type string
+	 */
+	email: string;
+	/**
+	 * @type string
+	 */
+	frontendBaseUrl?: string;
+	/**
+	 * @type array
+	 */
+	userRoles: AuthtypesPostableUserRoleDTO[];
+}
+
 export interface AuthtypesRoleDTO {
 	/**
 	 * @type string
@@ -10801,6 +10827,14 @@ export type ListUsers200 = {
 	 * @type array
 	 */
 	data: TypesUserDTO[];
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type CreateUser201 = {
+	data: TypesIdentifiableDTO;
 	/**
 	 * @type string
 	 */
