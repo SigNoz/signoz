@@ -1,0 +1,129 @@
+.testTab {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-6);
+	max-width: 860px;
+}
+
+.heading {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-3);
+	margin: 0;
+	font-size: var(--periscope-font-size-base);
+	font-weight: var(--font-weight-semibold);
+}
+
+.description {
+	margin: 0;
+	font-size: var(--periscope-font-size-base);
+	color: var(--l3-foreground);
+}
+
+.editor {
+	width: 100%;
+	min-height: 260px;
+	padding: var(--padding-4);
+	border: 1px solid var(--l2-border);
+	border-radius: var(--radius-2);
+	background: var(--l1-background);
+	color: var(--l1-foreground);
+	font-family: 'Geist Mono', monospace;
+	font-size: var(--font-size-xs);
+	line-height: 1.6;
+	resize: vertical;
+
+	&:focus {
+		outline: none;
+		border-color: var(--robin-500);
+	}
+}
+
+.actions {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-4);
+}
+
+.error {
+	padding: var(--padding-3) var(--padding-4);
+	border-radius: var(--radius-2);
+	background: var(--callout-error-background);
+	color: var(--callout-error-title);
+	font-size: var(--periscope-font-size-base);
+}
+
+.results {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-6);
+}
+
+.resultCard {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-4);
+	padding: var(--padding-4);
+	border: 1px solid var(--l2-border);
+	border-radius: var(--radius-2);
+	background: var(--l1-background);
+}
+
+.resultTitle {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-3);
+	font-size: var(--periscope-font-size-base);
+	font-weight: var(--font-weight-semibold);
+}
+
+.resultEmpty {
+	color: var(--l3-foreground);
+	font-size: var(--periscope-font-size-base);
+}
+
+.attrRows {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-2);
+}
+
+.attrRow {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) auto;
+	align-items: center;
+	gap: var(--spacing-4);
+	padding: var(--spacing-2) var(--padding-3);
+	border-radius: var(--radius-2);
+	font-family: 'Geist Mono', monospace;
+	font-size: var(--font-size-xs);
+
+	&.added {
+		background: var(--callout-success-background);
+	}
+
+	&.removed {
+		opacity: 0.65;
+
+		.attrKey,
+		.attrValue {
+			text-decoration: line-through;
+		}
+	}
+}
+
+.attrKey,
+.attrValue {
+	min-width: 0;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.attrKey {
+	font-weight: var(--font-weight-medium);
+}
+
+.attrValue {
+	color: var(--l3-foreground);
+}

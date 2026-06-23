@@ -5,6 +5,7 @@ import AttributeMappingHeader from './AttributeMappingHeader';
 import AttributeMappingsTab from './AttributeMappingsTab';
 import GroupFormDrawer from './GroupFormDrawer';
 import styles from './LLMObservabilityAttributeMapping.module.scss';
+import TestTab from './TestTab';
 import { useAttributeMappingStore } from './useAttributeMappingStore';
 import { useGroupFormDrawer } from './useGroupFormDrawer';
 
@@ -39,9 +40,7 @@ function LLMObservabilityAttributeMapping(): JSX.Element {
 		{
 			key: 'test',
 			label: 'Test',
-			disabled: true,
-			disabledReason: 'Coming soon',
-			children: null,
+			children: <TestTab store={store} />,
 		},
 	];
 

@@ -34,6 +34,9 @@ function clone(groups: DraftGroup[]): DraftGroup[] {
 
 export interface AttributeMappingStore {
 	groups: DraftGroup[];
+	// The last-saved server baseline the working `groups` are diffed against.
+	// Exposed so the Test tab can send only the groups whose mappers changed.
+	snapshot: DraftGroup[];
 	isLoading: boolean;
 	isError: boolean;
 	isDirty: boolean;
@@ -296,6 +299,7 @@ export function useAttributeMappingStore(): AttributeMappingStore {
 
 	return {
 		groups: draft ?? [],
+		snapshot,
 		isLoading: !ready || draft === null,
 		isError: groupsQuery.isError,
 		isDirty,
