@@ -107,7 +107,7 @@ export function usePanelQuery({
 
 	// `visualization` exists only on variants that declare it — read via `in` narrowing over the
 	// generated union (no cast). `fillSpans` (TimeSeries/Bar only) → formatOptions.fillGaps.
-	const pluginSpec = panel?.spec.plugin.spec;
+	const pluginSpec = panel.spec.plugin.spec;
 	const visualization =
 		pluginSpec && 'visualization' in pluginSpec
 			? pluginSpec.visualization
@@ -249,7 +249,6 @@ export function usePanelQuery({
 		data,
 		isLoading: response.isLoading,
 		isFetching: response.isFetching,
-		// Coerce undefined → null so the contract is a single `Error | null` sentinel.
 		error: response.error ?? null,
 		refetch: response.refetch,
 		cancelQuery,
