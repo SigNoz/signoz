@@ -18,9 +18,11 @@ import type {
 } from 'react-query';
 
 import type {
+	AuthtypesPostableUserDTO,
 	CreateInvite201,
 	CreateResetPasswordToken201,
 	CreateResetPasswordTokenPathParameters,
+	CreateUser201,
 	DeleteUserPathParameters,
 	GetMyUser200,
 	GetMyUserDeprecated200,
@@ -169,6 +171,7 @@ export const invalidateGetResetPasswordTokenDeprecated = async (
 
 /**
  * This endpoint creates an invite for a user
+ * @deprecated
  * @summary Create invite
  */
 export const createInvite = (
@@ -230,6 +233,7 @@ export type CreateInviteMutationBody =
 export type CreateInviteMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
+ * @deprecated
  * @summary Create invite
  */
 export const useCreateInvite = <
@@ -252,6 +256,7 @@ export const useCreateInvite = <
 };
 /**
  * This endpoint creates a bulk invite for a user
+ * @deprecated
  * @summary Create bulk invite
  */
 export const createBulkInvite = (
@@ -313,6 +318,7 @@ export type CreateBulkInviteMutationBody =
 export type CreateBulkInviteMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
+ * @deprecated
  * @summary Create bulk invite
  */
 export const useCreateBulkInvite = <
@@ -418,6 +424,7 @@ export const useResetPassword = <
 };
 /**
  * This endpoint lists all users
+ * @deprecated
  * @summary List users
  */
 export const listUsersDeprecated = (signal?: AbortSignal) => {
@@ -463,6 +470,7 @@ export type ListUsersDeprecatedQueryResult = NonNullable<
 export type ListUsersDeprecatedQueryError = ErrorType<RenderErrorResponseDTO>;
 
 /**
+ * @deprecated
  * @summary List users
  */
 
@@ -486,6 +494,7 @@ export function useListUsersDeprecated<
 }
 
 /**
+ * @deprecated
  * @summary List users
  */
 export const invalidateListUsersDeprecated = async (
@@ -581,6 +590,7 @@ export const useDeleteUser = <
 };
 /**
  * This endpoint returns the user by id
+ * @deprecated
  * @summary Get user
  */
 export const getUserDeprecated = (
@@ -640,6 +650,7 @@ export type GetUserDeprecatedQueryResult = NonNullable<
 export type GetUserDeprecatedQueryError = ErrorType<RenderErrorResponseDTO>;
 
 /**
+ * @deprecated
  * @summary Get user
  */
 
@@ -666,6 +677,7 @@ export function useGetUserDeprecated<
 }
 
 /**
+ * @deprecated
  * @summary Get user
  */
 export const invalidateGetUserDeprecated = async (
@@ -683,6 +695,7 @@ export const invalidateGetUserDeprecated = async (
 
 /**
  * This endpoint updates the user by id
+ * @deprecated
  * @summary Update user
  */
 export const updateUserDeprecated = (
@@ -755,6 +768,7 @@ export type UpdateUserDeprecatedMutationError =
 	ErrorType<RenderErrorResponseDTO>;
 
 /**
+ * @deprecated
  * @summary Update user
  */
 export const useUpdateUserDeprecated = <
@@ -783,6 +797,7 @@ export const useUpdateUserDeprecated = <
 };
 /**
  * This endpoint returns the user I belong to
+ * @deprecated
  * @summary Get my user
  */
 export const getMyUserDeprecated = (signal?: AbortSignal) => {
@@ -828,6 +843,7 @@ export type GetMyUserDeprecatedQueryResult = NonNullable<
 export type GetMyUserDeprecatedQueryError = ErrorType<RenderErrorResponseDTO>;
 
 /**
+ * @deprecated
  * @summary Get my user
  */
 
@@ -851,6 +867,7 @@ export function useGetMyUserDeprecated<
 }
 
 /**
+ * @deprecated
  * @summary Get my user
  */
 export const invalidateGetMyUserDeprecated = async (
@@ -1209,6 +1226,89 @@ export const invalidateListUsers = async (
 	return queryClient;
 };
 
+/**
+ * This endpoint creates a user for the organization
+ * @summary Create user
+ */
+export const createUser = (
+	authtypesPostableUserDTO?: BodyType<AuthtypesPostableUserDTO>,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<CreateUser201>({
+		url: `/api/v2/users`,
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		data: authtypesPostableUserDTO,
+		signal,
+	});
+};
+
+export const getCreateUserMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof createUser>>,
+		TError,
+		{ data?: BodyType<AuthtypesPostableUserDTO> },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof createUser>>,
+	TError,
+	{ data?: BodyType<AuthtypesPostableUserDTO> },
+	TContext
+> => {
+	const mutationKey = ['createUser'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof createUser>>,
+		{ data?: BodyType<AuthtypesPostableUserDTO> }
+	> = (props) => {
+		const { data } = props ?? {};
+
+		return createUser(data);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type CreateUserMutationResult = NonNullable<
+	Awaited<ReturnType<typeof createUser>>
+>;
+export type CreateUserMutationBody =
+	| BodyType<AuthtypesPostableUserDTO>
+	| undefined;
+export type CreateUserMutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Create user
+ */
+export const useCreateUser = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof createUser>>,
+		TError,
+		{ data?: BodyType<AuthtypesPostableUserDTO> },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof createUser>>,
+	TError,
+	{ data?: BodyType<AuthtypesPostableUserDTO> },
+	TContext
+> => {
+	return useMutation(getCreateUserMutationOptions(options));
+};
 /**
  * This endpoint returns the user by id
  * @summary Get user by user id

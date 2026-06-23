@@ -25,6 +25,42 @@ func NewHandler(setter root.Setter, getter root.Getter) root.Handler {
 	return &handler{setter: setter, getter: getter}
 }
 
+func (handler *handler) CreateUser(rw http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	req := new(authtypes.PostableUser)
+	if err := binding.JSON.BindBody(r.Body, req); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	user, err := types.NewUser(req.DisplayName, req.Email, valuer.MustNewUUID(claims.OrgID), types.UserStatusPendingInvite)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	roleIDs := make([]valuer.UUID, 0, len(req.UserRoles))
+	for _, role := range req.UserRoles {
+		roleIDs = append(roleIDs, role.ID)
+	}
+
+	user, err = handler.setter.CreatePendingInviteUser(ctx, valuer.MustNewUUID(claims.IdentityID()), valuer.MustNewEmail(claims.Email), req.FrontendBaseUrl, user, root.WithRoleIDs(roleIDs))
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusCreated, types.Identifiable{ID: user.ID})
+}
+
 func (handler *handler) CreateInvite(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()

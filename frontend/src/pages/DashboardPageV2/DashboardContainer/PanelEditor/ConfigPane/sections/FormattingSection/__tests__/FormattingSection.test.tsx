@@ -1,0 +1,74 @@
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+
+import FormattingSection from '../FormattingSection';
+
+// Open the Decimals select (clicking its antd selector) and pick the option with the
+// given visible label.
+async function pickDecimal(label: string): Promise<void> {
+	const user = userEvent.setup();
+	const trigger = screen.getByTestId('panel-editor-v2-decimals');
+	await user.click(trigger.querySelector('.ant-select-selector') as HTMLElement);
+	await user.click(await screen.findByRole('option', { name: label }));
+}
+
+describe('FormattingSection', () => {
+	it('renders Unit and Decimals when both controls are enabled', () => {
+		render(
+			<FormattingSection
+				value={undefined}
+				controls={{ unit: true, decimals: true }}
+				onChange={jest.fn()}
+			/>,
+		);
+
+		expect(screen.getByTestId('panel-editor-v2-unit')).toBeInTheDocument();
+		expect(screen.getByTestId('panel-editor-v2-decimals')).toBeInTheDocument();
+	});
+
+	it('hides a control when its flag is off', () => {
+		render(
+			<FormattingSection
+				value={undefined}
+				controls={{ decimals: true }}
+				onChange={jest.fn()}
+			/>,
+		);
+
+		expect(screen.queryByTestId('panel-editor-v2-unit')).not.toBeInTheDocument();
+		expect(screen.getByTestId('panel-editor-v2-decimals')).toBeInTheDocument();
+	});
+
+	it('writes the chosen decimal precision through onChange', async () => {
+		const onChange = jest.fn();
+		render(
+			<FormattingSection
+				value={undefined}
+				controls={{ decimals: true }}
+				onChange={onChange}
+			/>,
+		);
+
+		await pickDecimal('Full');
+
+		expect(onChange).toHaveBeenCalledWith({ decimalPrecision: 'full' });
+	});
+
+	it('merges the edit into the existing formatting slice', async () => {
+		const onChange = jest.fn();
+		render(
+			<FormattingSection
+				value={{ unit: 'bytes' }}
+				controls={{ decimals: true }}
+				onChange={onChange}
+			/>,
+		);
+
+		await pickDecimal('2 decimals');
+
+		expect(onChange).toHaveBeenCalledWith({
+			unit: 'bytes',
+			decimalPrecision: '2',
+		});
+	});
+});
