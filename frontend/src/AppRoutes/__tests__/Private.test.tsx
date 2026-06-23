@@ -73,7 +73,13 @@ const queryClient = new QueryClient({
 // Component to capture current location for assertions
 function LocationDisplay(): ReactElement {
 	const location = useLocation();
-	return <div data-testid="location-display">{location.pathname}</div>;
+	return (
+		<>
+			<div data-testid="location-display">{location.pathname}</div>
+			<div data-testid="location-search">{location.search}</div>
+			<div data-testid="location-hash">{location.hash}</div>
+		</>
+	);
 }
 
 // Helper to create mock user
@@ -1475,12 +1481,10 @@ describe('PrivateRoute', () => {
 			await assertRedirectsTo(ROUTES.UN_AUTHORIZED);
 		});
 
-		it('should not redirect VIEWER from /settings/channels/new due to route matching order (ALL_CHANNELS matches last)', () => {
-			// Note: This tests the ACTUAL behavior of Private.tsx route matching
-			// CHANNELS_NEW has path '/settings/channels/new' with permission ['ADMIN']
-			// ALL_CHANNELS has path '/settings/channels' with permission ['ADMIN', 'EDITOR', 'VIEWER']
-			// Due to non-exact matching and array order, ALL_CHANNELS matches LAST for '/settings/channels/new'
-			// This is a known limitation - actual permission enforcement happens in the page component
+		it('should redirect VIEWER from /alerts/channels/new (ADMIN only)', async () => {
+			// After moving channels under /alerts, CHANNELS_NEW ('/alerts/channels/new')
+			// is an exact, ADMIN-only route with no overlapping non-exact ALL_CHANNELS
+			// route to match last, so a VIEWER is now correctly redirected.
 			renderPrivateRoute({
 				initialRoute: ROUTES.CHANNELS_NEW,
 				appContext: {
@@ -1489,8 +1493,7 @@ describe('PrivateRoute', () => {
 				},
 			});
 
-			assertRendersChildren();
-			assertStaysOnRoute(ROUTES.CHANNELS_NEW);
+			await assertRedirectsTo(ROUTES.UN_AUTHORIZED);
 		});
 
 		it('should allow EDITOR to access /get-started route', () => {
@@ -1546,6 +1549,62 @@ describe('PrivateRoute', () => {
 			});
 
 			await assertRedirectsTo(ROUTES.UN_AUTHORIZED);
+		});
+	});
+
+	describe('Old channel route redirects', () => {
+		it.each([
+			['/settings/channels', '/alerts', 'tab=Channels'],
+			['/settings/channels/new', '/alerts/channels/new', ''],
+		])(
+			'should redirect %s to %s',
+			async (oldRoute, expectedPath, expectedSearch) => {
+				renderPrivateRoute({
+					initialRoute: oldRoute,
+					appContext: { isLoggedIn: true },
+				});
+
+				await waitFor(() => {
+					expect(screen.getByTestId('location-display')).toHaveTextContent(
+						expectedPath,
+					);
+				});
+
+				if (expectedSearch) {
+					const search = screen.getByTestId('location-search').textContent ?? '';
+					const params = new URLSearchParams(search);
+					new URLSearchParams(expectedSearch).forEach((value, name) => {
+						expect(params.get(name)).toBe(value);
+					});
+				} else {
+					expect(screen.getByTestId('location-search')).toHaveTextContent('');
+				}
+			},
+		);
+
+		it('should redirect dynamic channel edit route preserving the channel id', async () => {
+			renderPrivateRoute({
+				initialRoute: '/settings/channels/edit/abc123',
+				appContext: { isLoggedIn: true },
+			});
+
+			await assertRedirectsTo('/alerts/channels/edit/abc123');
+		});
+
+		it('should merge incoming query params with the embedded query of the target', async () => {
+			renderPrivateRoute({
+				initialRoute: '/settings/channels?foo=bar',
+				appContext: { isLoggedIn: true },
+			});
+
+			await waitFor(() => {
+				expect(screen.getByTestId('location-display')).toHaveTextContent('/alerts');
+			});
+
+			const search = screen.getByTestId('location-search').textContent ?? '';
+			const params = new URLSearchParams(search);
+			expect(params.get('tab')).toBe('Channels');
+			expect(params.get('foo')).toBe('bar');
 		});
 	});
 });

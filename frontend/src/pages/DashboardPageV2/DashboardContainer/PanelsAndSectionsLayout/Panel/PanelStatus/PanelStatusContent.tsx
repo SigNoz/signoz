@@ -1,41 +1,71 @@
-import { BookOpenText } from '@signozhq/icons';
-import { Typography } from '@signozhq/ui/typography';
+import { BookOpenText, CircleX, TriangleAlert } from '@signozhq/icons';
+import { Color } from '@signozhq/design-tokens';
+import { Button } from '@signozhq/ui/button';
 
-import type { PanelStatusDetail } from './types';
+import type { PanelStatusDetail, PanelStatusVariant } from './types';
 import styles from './PanelStatusPopover.module.scss';
 
 interface PanelStatusContentProps {
+	variant: PanelStatusVariant;
 	detail: PanelStatusDetail;
 }
 
-/**
- * Popover body for a panel status (error or warning): a code + summary header
- * with an optional docs link, followed by any per-item messages. Pure
- * presentation — the variant's icon/colour is owned by `PanelStatusPopover`.
- */
-function PanelStatusContent({ detail }: PanelStatusContentProps): JSX.Element {
+const VARIANT_ICON = {
+	error: { Icon: CircleX, color: Color.BG_CHERRY_500 },
+	warning: { Icon: TriangleAlert, color: Color.BG_AMBER_500 },
+};
+
+/** Popover card for a panel status (error or warning). Pure presentation. */
+function PanelStatusContent({
+	variant,
+	detail,
+}: PanelStatusContentProps): JSX.Element {
 	const { code, message, docsUrl, messages } = detail;
+	const { Icon, color } = VARIANT_ICON[variant];
 
 	return (
 		<section className={styles.content} data-testid="panel-status-content">
 			<header className={styles.summary}>
-				<div className={styles.summaryText}>
-					<h2 className={styles.code}>{code}</h2>
-					<p className={styles.message}>{message}</p>
+				<div className={styles.summaryLeft}>
+					<span className={styles.iconWrapper}>
+						<Icon size={16} color={color} />
+					</span>
+					<div className={styles.summaryText}>
+						{code && <h2 className={styles.code}>{code}</h2>}
+						<p className={styles.message}>{message}</p>
+					</div>
 				</div>
 				{docsUrl && (
-					<Typography.Link
-						className={styles.docsLink}
-						href={docsUrl}
-						target="_blank"
-						rel="noreferrer"
-						data-testid="panel-status-docs"
+					<Button
+						variant="outlined"
+						color="secondary"
+						size="sm"
+						prefix={<BookOpenText size={14} />}
 					>
-						<BookOpenText size={14} />
-						<span>Open Docs</span>
-					</Typography.Link>
+						<a
+							href={docsUrl}
+							className={styles.docsLink}
+							target="_blank"
+							rel="noreferrer"
+							data-testid="panel-status-docs"
+						>
+							Open Docs
+						</a>
+					</Button>
 				)}
 			</header>
+
+			{messages.length > 0 && (
+				<div className={styles.messageBadge}>
+					<span className={styles.badge}>
+						<span className={styles.badgeDot} />
+						<span className={styles.badgeText}>MESSAGES</span>
+						<span className={styles.badgeCount}>{messages.length}</span>
+					</span>
+					<span className={styles.badgeLine} />
+				</div>
+			)}
+
 			{messages.length > 0 && (
 				<ul className={styles.messageList}>
 					{messages.map((m) => (

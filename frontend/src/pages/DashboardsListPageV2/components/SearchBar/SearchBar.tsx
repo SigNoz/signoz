@@ -9,12 +9,18 @@ interface Props {
 	value: string;
 	onChange: (value: string) => void;
 	onSubmit: () => void;
+	placeholder?: string;
 }
 
-function SearchBar({ value, onChange, onSubmit }: Props): JSX.Element {
+function SearchBar({
+	value,
+	onChange,
+	onSubmit,
+	placeholder = "Search with DSL (e.g. name CONTAINS 'foo')",
+}: Props): JSX.Element {
 	return (
 		<Input
-			placeholder="Search with DSL (e.g. name CONTAINS 'foo')"
+			placeholder={placeholder}
 			prefix={<Search size={12} color={Color.BG_VANILLA_400} />}
 			suffix={
 				<button

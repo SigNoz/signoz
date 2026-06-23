@@ -20,9 +20,8 @@ interface PanelStatusPopoverProps {
 }
 
 /**
- * Header status indicator: a variant-coloured icon (error → CircleX,
- * warning → TriangleAlert) that opens a tooltip with the status detail. One
- * component drives both variants so error and warning surfacing stay in lockstep.
+ * Header status indicator: an icon that opens a tooltip with the status detail.
+ * One component drives both variants so error and warning stay in lockstep.
  */
 function PanelStatusPopover({
 	variant,
@@ -32,9 +31,13 @@ function PanelStatusPopover({
 	const Icon = variant === 'error' ? CircleX : TriangleAlert;
 
 	return (
-		<TooltipSimple title={<PanelStatusContent detail={detail} />} arrow>
-			{/* Wrapping span gives a ref-able, hoverable trigger (icon
-			    components don't forward refs) and a stable testid anchor. */}
+		<TooltipSimple
+			title={<PanelStatusContent variant={variant} detail={detail} />}
+			side="top"
+			align="end"
+			arrow
+			tooltipContentProps={{ className: styles.tooltipContent }}
+		>
 			<span
 				className={styles.trigger}
 				aria-label={ariaLabel}
