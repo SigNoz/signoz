@@ -262,7 +262,7 @@ type MetricHighlightsResponse struct {
 
 // MetricNameQuery represents the query parameters for endpoints that take a metric name.
 type MetricNameQuery struct {
-	MetricName string `query:"metricName" required:"true"`
+	MetricName string `query:"metricName" required:"true" description:"The name of the metric. May contain slashes (e.g. cloud-provider metrics like run.googleapis.com/request_latencies)."`
 }
 
 // Validate ensures MetricNameQuery contains acceptable values.
@@ -278,9 +278,9 @@ func (q *MetricNameQuery) Validate() error {
 
 // MetricAttributesRequest represents the query parameters for the metric attributes endpoint.
 type MetricAttributesRequest struct {
-	MetricName string `query:"metricName" required:"true"`
-	Start      *int64 `query:"start"`
-	End        *int64 `query:"end"`
+	MetricName string `query:"metricName" required:"true" description:"The name of the metric. May contain slashes (e.g. cloud-provider metrics like run.googleapis.com/request_latencies)."`
+	Start      *int64 `query:"start" description:"Start of the time range as a Unix timestamp in milliseconds."`
+	End        *int64 `query:"end" description:"End of the time range as a Unix timestamp in milliseconds."`
 }
 
 // Validate ensures MetricAttributesRequest contains acceptable values.

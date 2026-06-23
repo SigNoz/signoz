@@ -15669,10 +15669,14 @@ paths:
       description: This endpoint returns associated alerts for a specified metric
       operationId: GetMetricAlerts
       parameters:
-      - in: query
+      - description: The name of the metric. May contain slashes (e.g. cloud-provider
+          metrics like run.googleapis.com/request_latencies).
+        in: query
         name: metricName
         required: true
         schema:
+          description: The name of the metric. May contain slashes (e.g. cloud-provider
+            metrics like run.googleapis.com/request_latencies).
           type: string
       responses:
         "200":
@@ -15734,19 +15738,27 @@ paths:
         a specified metric
       operationId: GetMetricAttributes
       parameters:
-      - in: query
+      - description: The name of the metric. May contain slashes (e.g. cloud-provider
+          metrics like run.googleapis.com/request_latencies).
+        in: query
         name: metricName
         required: true
         schema:
+          description: The name of the metric. May contain slashes (e.g. cloud-provider
+            metrics like run.googleapis.com/request_latencies).
           type: string
-      - in: query
+      - description: Start of the time range as a Unix timestamp in milliseconds.
+        in: query
         name: start
         schema:
+          description: Start of the time range as a Unix timestamp in milliseconds.
           nullable: true
           type: integer
-      - in: query
+      - description: End of the time range as a Unix timestamp in milliseconds.
+        in: query
         name: end
         schema:
+          description: End of the time range as a Unix timestamp in milliseconds.
           nullable: true
           type: integer
       responses:
@@ -15808,10 +15820,14 @@ paths:
       description: This endpoint returns associated dashboards for a specified metric
       operationId: GetMetricDashboards
       parameters:
-      - in: query
+      - description: The name of the metric. May contain slashes (e.g. cloud-provider
+          metrics like run.googleapis.com/request_latencies).
+        in: query
         name: metricName
         required: true
         schema:
+          description: The name of the metric. May contain slashes (e.g. cloud-provider
+            metrics like run.googleapis.com/request_latencies).
           type: string
       responses:
         "200":
@@ -15873,10 +15889,14 @@ paths:
         active time series, last received time for a specified metric
       operationId: GetMetricHighlights
       parameters:
-      - in: query
+      - description: The name of the metric. May contain slashes (e.g. cloud-provider
+          metrics like run.googleapis.com/request_latencies).
+        in: query
         name: metricName
         required: true
         schema:
+          description: The name of the metric. May contain slashes (e.g. cloud-provider
+            metrics like run.googleapis.com/request_latencies).
           type: string
       responses:
         "200":
@@ -15996,10 +16016,14 @@ paths:
         unit, type, temporality, monotonicity for a specified metric
       operationId: GetMetricMetadata
       parameters:
-      - in: query
+      - description: The name of the metric. May contain slashes (e.g. cloud-provider
+          metrics like run.googleapis.com/request_latencies).
+        in: query
         name: metricName
         required: true
         schema:
+          description: The name of the metric. May contain slashes (e.g. cloud-provider
+            metrics like run.googleapis.com/request_latencies).
           type: string
       responses:
         "200":
