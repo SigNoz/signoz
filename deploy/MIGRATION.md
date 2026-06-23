@@ -34,9 +34,6 @@ Two `foundryctl` commands are used throughout this guide:
 
 2. Generate your `casting.yaml`. Based on internal testing, the following casting should generate the manifests that mimic the legacy docker compose setup (compare against your backed-up `docker-compose.yaml`). Once created, run `foundryctl forge -f casting.yaml`.
 
-> [!NOTE]
-> The casting contains `patches` and `config` overrides to ensure that the newly generated manifests use the existing volumes and configurations.
-
 > [!WARNING]
 > If your deployment had more than 1 shard or replica, you will need to adjust your manifest volumes accordingly. Additionally, if you had specific container images, you need to include them in your casting.
 
@@ -84,7 +81,7 @@ spec:
 > [!NOTE]
 > The `user: root` patch on the ZooKeeper service is required so the container can read/write the data in your reused ZooKeeper volume, which was created with `root`-owned files by the legacy compose setup. Without it, ZooKeeper may fail to start with permission errors.
 
-If you had custom configurations for features like SMTP or additional ingestion processors/receivers, you will need to include those in your casting file. Via patches, configuration objects or environment variables based on your previous configuration - see ##References at the end of this guide.
+If you had custom configurations for features like SMTP or additional ingestion processors/receivers, you will need to include those in your casting file. Via patches, configuration objects or environment variables based on your previous configuration - see References at the end of this guide.
 
 3. Validate the manifests in `pours/deployment`. Pay special attention to `compose.yaml` — it should mimic the legacy manifest and the configuration files needed for `clickhouse`. **Do note that these are now in YAML instead of XML.**
 
@@ -92,7 +89,7 @@ If you had custom configurations for features like SMTP or additional ingestion 
 4. Execute a `docker compose down`. **Do not** include parameters such as `--volumes` (or `-v`), as it will wipe the volumes we need to maintain and reuse to avoid data loss. 
 
 > [!NOTE]
-> This will generate downtime so please plan accordingly**.
+> This will generate downtime so please plan accordingly.
 
 5. Validate the SigNoz containers are down with `docker ps -a`. Multiple containers cannot bind the same volume.
 
