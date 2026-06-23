@@ -659,6 +659,29 @@ components:
         refreshToken:
           type: string
       type: object
+    AuthtypesPostableUser:
+      properties:
+        displayName:
+          type: string
+        email:
+          type: string
+        frontendBaseUrl:
+          type: string
+        userRoles:
+          items:
+            $ref: '#/components/schemas/AuthtypesPostableUserRole'
+          type: array
+      required:
+      - email
+      - userRoles
+      type: object
+    AuthtypesPostableUserRole:
+      properties:
+        id:
+          type: string
+      required:
+      - id
+      type: object
     AuthtypesRelation:
       enum:
       - create
@@ -10183,7 +10206,7 @@ paths:
       - global
   /api/v1/invite:
     post:
-      deprecated: false
+      deprecated: true
       description: This endpoint creates an invite for a user
       operationId: CreateInvite
       requestBody:
@@ -10246,7 +10269,7 @@ paths:
       - users
   /api/v1/invite/bulk:
     post:
-      deprecated: false
+      deprecated: true
       description: This endpoint creates a bulk invite for a user
       operationId: CreateBulkInvite
       requestBody:
@@ -13087,7 +13110,7 @@ paths:
       - tracedetail
   /api/v1/user:
     get:
-      deprecated: false
+      deprecated: true
       description: This endpoint lists all users
       operationId: ListUsersDeprecated
       responses:
@@ -13180,7 +13203,7 @@ paths:
       tags:
       - users
     get:
-      deprecated: false
+      deprecated: true
       description: This endpoint returns the user by id
       operationId: GetUserDeprecated
       parameters:
@@ -13237,7 +13260,7 @@ paths:
       tags:
       - users
     put:
-      deprecated: false
+      deprecated: true
       description: This endpoint updates the user by id
       operationId: UpdateUserDeprecated
       parameters:
@@ -13306,7 +13329,7 @@ paths:
       - users
   /api/v1/user/me:
     get:
-      deprecated: false
+      deprecated: true
       description: This endpoint returns the user I belong to
       operationId: GetMyUserDeprecated
       responses:
@@ -20720,6 +20743,68 @@ paths:
       - tokenizer:
         - ADMIN
       summary: List users v2
+      tags:
+      - users
+    post:
+      deprecated: false
+      description: This endpoint creates a user for the organization
+      operationId: CreateUser
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthtypesPostableUser'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TypesIdentifiable'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Conflict
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Create user
       tags:
       - users
   /api/v2/users/{id}:
