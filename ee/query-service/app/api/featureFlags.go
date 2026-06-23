@@ -98,6 +98,15 @@ func (ah *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 		Route:      "",
 	})
 
+	aiObservability := ah.Signoz.Flagger.BooleanOrEmpty(ctx, flagger.FeatureEnableAIObservability, evalCtx)
+	featureSet = append(featureSet, &licensetypes.Feature{
+		Name:       valuer.NewString(flagger.FeatureEnableAIObservability.String()),
+		Active:     aiObservability,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	})
+
 	if constants.IsDotMetricsEnabled {
 		for idx, feature := range featureSet {
 			if feature.Name == licensetypes.DotMetricsEnabled {

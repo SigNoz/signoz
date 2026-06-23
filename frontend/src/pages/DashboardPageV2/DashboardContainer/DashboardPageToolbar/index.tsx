@@ -20,7 +20,7 @@ import APIError from 'types/api/error';
 import DashboardActions from './DashboardActions/DashboardActions';
 import DashboardInfo from './DashboardInfo/DashboardInfo';
 import { useEditableTitle } from './DashboardInfo/useEditableTitle';
-import { usePublicDashboardMeta } from '../DashboardSettings/PublicDashboard/usePublicDashboardMeta';
+import VariablesBar from '../VariablesBar/VariablesBar';
 
 import styles from './DashboardPageToolbar.module.scss';
 
@@ -52,10 +52,6 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 	const setIsPanelTypeSelectionModalOpen = usePanelTypeSelectionModalStore(
 		(s) => s.setIsPanelTypeSelectionModalOpen,
 	);
-
-	// Single global fetch of the public-sharing meta (the drawer reuses this cache);
-	// drives the public-access badge.
-	const { isPublic: isPublicDashboard } = usePublicDashboardMeta(id);
 
 	const isAuthor =
 		!!user?.email && !!dashboard.createdBy && dashboard.createdBy === user.email;
@@ -122,7 +118,7 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 					image={image}
 					tags={tags}
 					description={description}
-					isPublicDashboard={isPublicDashboard}
+					isPublicDashboard={false}
 					isDashboardLocked={isDashboardLocked}
 					isEditing={isEditing}
 					draft={draft}
@@ -142,6 +138,8 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 					onOpenRename={startEdit}
 				/>
 			</div>
+
+			<VariablesBar dashboard={dashboard} />
 		</section>
 	);
 }
