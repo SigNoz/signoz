@@ -358,6 +358,10 @@ func (r *BaseRule) ActiveAlerts() []*ruletypes.Alert {
 }
 
 func (r *BaseRule) SendAlerts(ctx context.Context, ts time.Time, resendDelay time.Duration, interval time.Duration, notifyFunc NotifyFunc) {
+	if r.orgID.IsZero() {
+		r.logger.ErrorContext(ctx, "rule has no org id")
+		return
+	}
 	orgID := r.orgID.StringValue()
 
 	alerts := []*ruletypes.Alert{}

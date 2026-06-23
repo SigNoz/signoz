@@ -52,7 +52,7 @@ func TestManager_TestNotification_SendUnmatched_ThresholdRule(t *testing.T) {
 					mockAM.On("Config").Return(alertmanagerserver.Config{ExternalURL: mustParseURL(t, "http://localhost:8080")})
 					// for saving temp alerts that are triggered via TestNotification
 					if tc.ExpectAlerts > 0 {
-						mockAM.On("TestAlert", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+						mockAM.On("TestAlert", mock.Anything, orgID.StringValue(), mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
 							triggeredTestAlerts = append(triggeredTestAlerts, args.Get(3).(map[*alertmanagertypes.PostableAlert][]string))
 						}).Return(nil).Times(tc.ExpectAlerts)
 					}
@@ -157,7 +157,7 @@ func TestManager_TestNotification_SendUnmatched_PromRule(t *testing.T) {
 					mockAM.On("Config").Return(alertmanagerserver.Config{ExternalURL: mustParseURL(t, "http://localhost:8080")})
 					// for saving temp alerts that are triggered via TestNotification
 					if tc.ExpectAlerts > 0 {
-						mockAM.On("TestAlert", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+						mockAM.On("TestAlert", mock.Anything, orgID.StringValue(), mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
 							triggeredTestAlerts = append(triggeredTestAlerts, args.Get(3).(map[*alertmanagertypes.PostableAlert][]string))
 						}).Return(nil).Times(tc.ExpectAlerts)
 					}
