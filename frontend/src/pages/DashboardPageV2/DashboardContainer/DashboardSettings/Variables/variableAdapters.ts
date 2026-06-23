@@ -51,6 +51,7 @@ export function dtoToFormModel(
 		multiSelect: spec.allowMultiple ?? false,
 		showAllOption: spec.allowAllValue ?? false,
 		sort: (spec.sort as VariableSort) ?? 'DISABLED',
+		capturingRegexp: spec.capturingRegexp ?? '',
 		defaultValue: spec.defaultValue,
 	};
 	const plugin = spec.plugin;
@@ -137,6 +138,7 @@ export function formModelToDto(
 			allowMultiple: model.multiSelect,
 			allowAllValue: model.showAllOption,
 			sort: model.sort,
+			capturingRegexp: model.capturingRegexp || undefined,
 			defaultValue: model.defaultValue,
 			plugin: buildPlugin(model),
 		},

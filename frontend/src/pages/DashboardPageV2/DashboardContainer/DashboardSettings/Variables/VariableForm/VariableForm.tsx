@@ -165,8 +165,10 @@ function VariableForm({
 						<DynamicVariableFields
 							attribute={model.dynamicAttribute}
 							signal={model.dynamicSignal}
+							capturingRegexp={model.capturingRegexp}
 							onChange={(patch): void => set(patch)}
 							onPreview={setPreviewValues}
+							onPreviewError={setPreviewError}
 						/>
 					) : null}
 

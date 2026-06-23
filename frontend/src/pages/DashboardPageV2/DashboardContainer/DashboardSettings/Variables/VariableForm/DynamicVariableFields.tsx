@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Input } from '@signozhq/ui/input';
 import { SelectSimple } from '@signozhq/ui/select';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
@@ -7,6 +8,7 @@ import { Select } from 'antd';
 import { useGetFieldKeys } from 'hooks/dynamicVariables/useGetFieldKeys';
 import { useGetFieldValues } from 'hooks/dynamicVariables/useGetFieldValues';
 import useDebounce from 'hooks/useDebounce';
+import { filterVariableValues } from 'lib/dashboardVariables/filterVariableValues';
 
 import { TELEMETRY_SIGNALS, type TelemetrySignal } from '../variableModel';
 import styles from './VariableForm.module.scss';
@@ -14,19 +16,24 @@ import styles from './VariableForm.module.scss';
 interface DynamicVariableFieldsProps {
 	attribute: string;
 	signal: TelemetrySignal;
+	capturingRegexp: string;
 	onChange: (patch: {
 		dynamicAttribute?: string;
 		dynamicSignal?: TelemetrySignal;
+		capturingRegexp?: string;
 	}) => void;
 	onPreview: (values: (string | number)[]) => void;
+	onPreviewError: (error: string | null) => void;
 }
 
 /** Dynamic-variable body: telemetry signal + field, whose live values preview. */
 function DynamicVariableFields({
 	attribute,
 	signal,
+	capturingRegexp,
 	onChange,
 	onPreview,
+	onPreviewError,
 }: DynamicVariableFieldsProps): JSX.Element {
 	const [search, setSearch] = useState('');
 	const debouncedSearch = useDebounce(search, 300);
@@ -58,9 +65,11 @@ function DynamicVariableFields({
 		const payload = valueData?.data;
 		const values =
 			payload?.normalizedValues ?? payload?.values?.StringValues ?? [];
-		onPreview(values);
+		const result = filterVariableValues(values, capturingRegexp);
+		onPreview(result.values as (string | number)[]);
+		onPreviewError(result.error ?? null);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [valueData]);
+	}, [valueData, capturingRegexp]);
 
 	return (
 		<>
@@ -94,6 +103,18 @@ function DynamicVariableFields({
 					options={options}
 					notFoundContent={isLoading ? 'Loading…' : 'No fields found'}
 					data-testid="variable-field-select"
+				/>
+			</div>
+			<div className={cx(styles.row, styles.textboxSection)}>
+				<div className={styles.labelContainer}>
+					<Typography.Text className={styles.label}>Regex</Typography.Text>
+				</div>
+				<Input
+					className={styles.defaultInput}
+					value={capturingRegexp}
+					placeholder="^api-.*"
+					onChange={(e): void => onChange({ capturingRegexp: e.target.value })}
+					testId="variable-regex-input"
 				/>
 			</div>
 		</>
