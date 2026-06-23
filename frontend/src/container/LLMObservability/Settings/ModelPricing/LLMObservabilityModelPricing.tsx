@@ -8,8 +8,10 @@ function LLMObservabilityModelPricing(): JSX.Element {
 		>
 			<header className={styles.pageHeader}>
 				<div className={styles.pageHeaderTitle}>
-					<h1>Configuration</h1>
-					<p>Model pricing and cost estimation settings</p>
+					<h1 className={styles.title}>Configuration</h1>
+					<p className={styles.subtitle}>
+						Model pricing and cost estimation settings
+					</p>
 				</div>
 			</header>
 		</div>
