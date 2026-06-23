@@ -46,7 +46,7 @@ func NewReceiver(input string) (*Receiver, error) {
 			return nil, err
 		}
 		receiver.GoogleChatConfigs[i] = defaulted
-		
+
 		// Validate Google Chat configuration
 		if err := validateGoogleChatConfig(defaulted); err != nil {
 			return nil, err
@@ -131,7 +131,7 @@ func validateGoogleChatConfig(cfg *GoogleChatReceiverConfig) error {
 	if cfg.WebhookURL == nil {
 		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "google chat webhook_url is required")
 	}
-	
+
 	// Validate webhook URL format
 	return ValidateGoogleChatWebhookURL(cfg.WebhookURL.String())
 }

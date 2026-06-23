@@ -63,7 +63,7 @@ func RenderSlackMrkdwn(markdown string) (string, error) {
 func RenderGoogleChatMarkdown(markdown string) (string, error) {
 	md := googlechatPool.Get().(goldmark.Markdown)
 	defer googlechatPool.Put(md)
-	
+
 	return render(md, markdown, "Google Chat")
 }
 

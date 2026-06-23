@@ -103,16 +103,16 @@ func (n *Notifier) Notify(ctx context.Context, alerts ...*types.Alert) (bool, er
 	if buf.Len() > maxMessageBytes {
 		// Calculate how many bytes over the limit we are
 		excessBytes := buf.Len() - maxMessageBytes
-		
+
 		// Remove at least that many bytes from the text
 		newTextSize := len(finalText) - excessBytes
 		if newTextSize < 0 {
 			newTextSize = 0
 		}
-		
+
 		finalText = truncateToByteLimit(finalText, newTextSize)
 		msg.Text = finalText
-		
+
 		// Re-encode with truncated text
 		buf.Reset()
 		if err := json.NewEncoder(&buf).Encode(msg); err != nil {
@@ -155,7 +155,7 @@ func (n *Notifier) Notify(ctx context.Context, alerts ...*types.Alert) (bool, er
 func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert) (*contentResult, error) {
 	// Extract custom templates from alert annotations
 	customTitle, customBody := alertmanagertemplate.ExtractTemplatesFromAnnotations(alerts)
-	
+
 	// Use the templater to expand templates
 	result, err := n.templater.Expand(ctx, alertmanagertypes.ExpandRequest{
 		TitleTemplate:        customTitle,
@@ -173,7 +173,7 @@ func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert) (*
 		// Join all alert bodies with newlines
 		body = strings.Join(result.Body, "\n\n")
 	}
-	
+
 	// Custom templates are authored in standard markdown, but Google Chat
 	// webhooks expect a different format
 	title := result.Title
@@ -257,5 +257,5 @@ func truncateToByteLimit(s string, maxBytes int) string {
 		truncated = truncated[:len(truncated)-size]
 	}
 
-    return truncated + ellipsis
+	return truncated + ellipsis
 }

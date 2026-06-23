@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Form } from 'antd';
-import editGoogleChat from 'api/channels/editGoogleChat';
 import editEmail from 'api/channels/editEmail';
+import editGoogleChat from 'api/channels/editGoogleChat';
 import editMsTeamsApi from 'api/channels/editMsTeams';
 import editOpsgenie from 'api/channels/editOpsgenie';
 import editPagerApi from 'api/channels/editPager';

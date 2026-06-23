@@ -77,21 +77,13 @@ func (r *googlechatRenderer) renderString(w util.BufWriter, source []byte, node 
 
 func (r *googlechatRenderer) renderEmphasis(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
 	n := node.(*ast.Emphasis)
-	
+
 	if n.Level == 2 {
 		// Strong/bold: **text** → *text*
-		if entering {
-			_ = w.WriteByte('*')
-		} else {
-			_ = w.WriteByte('*')
-		}
+		_ = w.WriteByte('*')
 	} else {
 		// Emphasis/italic: *text* or _text_ → _text_
-		if entering {
-			_ = w.WriteByte('_')
-		} else {
-			_ = w.WriteByte('_')
-		}
+		_ = w.WriteByte('_')
 	}
 	return ast.WalkContinue, nil
 }
@@ -110,7 +102,7 @@ func (r *googlechatRenderer) renderCodeSpan(w util.BufWriter, source []byte, nod
 
 func (r *googlechatRenderer) renderLink(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
 	n := node.(*ast.Link)
-	
+
 	if entering {
 		// Convert [text](url) → <url|text>
 		url := string(n.Destination)
