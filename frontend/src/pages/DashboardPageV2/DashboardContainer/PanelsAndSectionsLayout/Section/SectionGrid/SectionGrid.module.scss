@@ -9,4 +9,14 @@
 		z-index: 2;
 		user-select: none;
 	}
+
+	// react-resizable draws the bottom-right resize grip as a ::after chevron
+	// with a hard-coded light-grey border that is invisible on the dark theme.
+	// Recolour it with the theme border token so the grip is visible in both.
+	:global(.react-resizable-handle) {
+		&::after {
+			border-right-color: var(--l2-border) !important;
+			border-bottom-color: var(--l2-border) !important;
+		}
+	}
 }

@@ -126,6 +126,22 @@ func (d *DashboardV2) ErrIfNotDeletable() error {
 	return nil
 }
 
+func (d *DashboardV2) ErrIfNotClonable() error {
+	if !d.Source.isClonable() {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardImmutable, "%s dashboards cannot be cloned", d.Source)
+	}
+	return nil
+}
+
+func (d DashboardV2) ToPostableForCloning() PostableDashboardV2 {
+	return PostableDashboardV2{
+		DashboardV2MetadataBase: d.DashboardV2MetadataBase,
+		GenerateName:            true,
+		Tags:                    tagtypes.NewPostableTagsFromTags(d.Tags),
+		Spec:                    d.Spec,
+	}
+}
+
 type DashboardV2MetadataBase struct {
 	SchemaVersion string `json:"schemaVersion" required:"true"`
 	Image         string `json:"image,omitempty"`

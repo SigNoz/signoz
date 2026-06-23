@@ -25,12 +25,20 @@ var (
 	AWSServiceSQS         = ServiceID{valuer.NewString("sqs")}
 
 	// Azure services.
-	AzureServiceStorageAccountsBlob = ServiceID{valuer.NewString("storageaccountsblob")}
-	AzureServiceCDNProfile          = ServiceID{valuer.NewString("cdnprofile")}
-	AzureServiceVirtualMachine      = ServiceID{valuer.NewString("virtualmachine")}
-	AzureServiceAppService          = ServiceID{valuer.NewString("appservice")}
-	AzureServiceContainerApp        = ServiceID{valuer.NewString("containerapp")}
-	AzureServiceAKS                 = ServiceID{valuer.NewString("aks")}
+	AzureServiceStorageAccountsBlob        = ServiceID{valuer.NewString("storageaccountsblob")}
+	AzureServiceCDNProfile                 = ServiceID{valuer.NewString("cdnprofile")}
+	AzureServiceVirtualMachine             = ServiceID{valuer.NewString("virtualmachine")}
+	AzureServiceAppService                 = ServiceID{valuer.NewString("appservice")}
+	AzureServiceContainerApp               = ServiceID{valuer.NewString("containerapp")}
+	AzureServiceAKS                        = ServiceID{valuer.NewString("aks")}
+	AzureServiceSQLDatabase                = ServiceID{valuer.NewString("sqldatabase")}
+	AzureServiceSQLDatabaseManagedInstance = ServiceID{valuer.NewString("sqldatabasemi")}
+	AzureServiceMySQLFlexibleServer        = ServiceID{valuer.NewString("mysqlflexibleserver")}
+	AzureServicePostgreSQLFlexibleServer   = ServiceID{valuer.NewString("postgresqlflexibleserver")}
+	AzureServiceMongoDB                    = ServiceID{valuer.NewString("mongodb")}
+	AzureServiceCosmosDB                   = ServiceID{valuer.NewString("cosmosdb")}
+	AzureServiceCassandraDB                = ServiceID{valuer.NewString("cassandradb")}
+	AzureServiceRedis                      = ServiceID{valuer.NewString("redis")}
 )
 
 func (ServiceID) Enum() []any {
@@ -54,6 +62,14 @@ func (ServiceID) Enum() []any {
 		AzureServiceAppService,
 		AzureServiceContainerApp,
 		AzureServiceAKS,
+		AzureServiceSQLDatabase,
+		AzureServiceSQLDatabaseManagedInstance,
+		AzureServiceMySQLFlexibleServer,
+		AzureServicePostgreSQLFlexibleServer,
+		AzureServiceMongoDB,
+		AzureServiceCosmosDB,
+		AzureServiceCassandraDB,
+		AzureServiceRedis,
 	}
 }
 
@@ -81,6 +97,14 @@ var SupportedServices = map[CloudProviderType][]ServiceID{
 		AzureServiceAppService,
 		AzureServiceContainerApp,
 		AzureServiceAKS,
+		AzureServiceSQLDatabase,
+		AzureServiceSQLDatabaseManagedInstance,
+		AzureServiceMySQLFlexibleServer,
+		AzureServicePostgreSQLFlexibleServer,
+		AzureServiceMongoDB,
+		AzureServiceCosmosDB,
+		AzureServiceCassandraDB,
+		AzureServiceRedis,
 	},
 }
 

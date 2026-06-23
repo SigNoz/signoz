@@ -647,13 +647,40 @@ components:
           type: string
         name:
           type: string
+        transactionGroups:
+          $ref: '#/components/schemas/AuthtypesTransactionGroups'
       required:
       - name
+      - description
+      - transactionGroups
       type: object
     AuthtypesPostableRotateToken:
       properties:
         refreshToken:
           type: string
+      type: object
+    AuthtypesPostableUser:
+      properties:
+        displayName:
+          type: string
+        email:
+          type: string
+        frontendBaseUrl:
+          type: string
+        userRoles:
+          items:
+            $ref: '#/components/schemas/AuthtypesPostableUserRole'
+          type: array
+      required:
+      - email
+      - userRoles
+      type: object
+    AuthtypesPostableUserRole:
+      properties:
+        id:
+          type: string
+      required:
+      - id
       type: object
     AuthtypesRelation:
       enum:
@@ -703,6 +730,34 @@ components:
         useRoleAttribute:
           type: boolean
       type: object
+    AuthtypesRoleWithTransactionGroups:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        description:
+          type: string
+        id:
+          type: string
+        name:
+          type: string
+        orgId:
+          type: string
+        transactionGroups:
+          $ref: '#/components/schemas/AuthtypesTransactionGroups'
+        type:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      required:
+      - id
+      - name
+      - description
+      - type
+      - orgId
+      - transactionGroups
+      type: object
     AuthtypesSamlConfig:
       properties:
         attributeMapping:
@@ -736,10 +791,34 @@ components:
       - relation
       - object
       type: object
+    AuthtypesTransactionGroup:
+      properties:
+        objectGroup:
+          $ref: '#/components/schemas/CoretypesObjectGroup'
+        relation:
+          $ref: '#/components/schemas/AuthtypesRelation'
+      required:
+      - relation
+      - objectGroup
+      type: object
+    AuthtypesTransactionGroups:
+      items:
+        $ref: '#/components/schemas/AuthtypesTransactionGroup'
+      type: array
     AuthtypesUpdatableAuthDomain:
       properties:
         config:
           $ref: '#/components/schemas/AuthtypesAuthDomainConfig'
+      type: object
+    AuthtypesUpdatableRole:
+      properties:
+        description:
+          type: string
+        transactionGroups:
+          $ref: '#/components/schemas/AuthtypesTransactionGroups'
+      required:
+      - description
+      - transactionGroups
       type: object
     AuthtypesUserRole:
       properties:
@@ -1357,6 +1436,14 @@ components:
       - appservice
       - containerapp
       - aks
+      - sqldatabase
+      - sqldatabasemi
+      - mysqlflexibleserver
+      - postgresqlflexibleserver
+      - mongodb
+      - cosmosdb
+      - cassandradb
+      - redis
       type: string
     CloudintegrationtypesServiceMetadata:
       properties:
@@ -2583,6 +2670,41 @@ components:
       - panels
       - layouts
       type: object
+    DashboardtypesDashboardView:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        data:
+          $ref: '#/components/schemas/DashboardtypesDashboardViewData'
+        id:
+          type: string
+        name:
+          type: string
+        orgId:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      required:
+      - id
+      - name
+      - data
+      - orgId
+      type: object
+    DashboardtypesDashboardViewData:
+      properties:
+        order:
+          $ref: '#/components/schemas/DashboardtypesListOrder'
+        query:
+          type: string
+        sort:
+          $ref: '#/components/schemas/DashboardtypesListSort'
+        version:
+          type: string
+      required:
+      - version
+      type: object
     DashboardtypesDatasourcePlugin:
       discriminator:
         mapping:
@@ -2866,6 +2988,15 @@ components:
       - dashboards
       - total
       - tags
+      type: object
+    DashboardtypesListableDashboardView:
+      properties:
+        views:
+          items:
+            $ref: '#/components/schemas/DashboardtypesDashboardView'
+          type: array
+      required:
+      - views
       type: object
     DashboardtypesListedDashboardForUserV2:
       properties:
@@ -3170,6 +3301,16 @@ components:
       - schemaVersion
       - tags
       - spec
+      type: object
+    DashboardtypesPostableDashboardView:
+      properties:
+        data:
+          $ref: '#/components/schemas/DashboardtypesDashboardViewData'
+        name:
+          type: string
+      required:
+      - name
+      - data
       type: object
     DashboardtypesPostablePublicDashboard:
       properties:
@@ -10065,7 +10206,7 @@ paths:
       - global
   /api/v1/invite:
     post:
-      deprecated: false
+      deprecated: true
       description: This endpoint creates an invite for a user
       operationId: CreateInvite
       requestBody:
@@ -10128,7 +10269,7 @@ paths:
       - users
   /api/v1/invite/bulk:
     post:
-      deprecated: false
+      deprecated: true
       description: This endpoint creates a bulk invite for a user
       operationId: CreateBulkInvite
       requestBody:
@@ -10191,6 +10332,15 @@ paths:
         name: limit
         schema:
           type: integer
+      - in: query
+        name: q
+        schema:
+          type: string
+      - in: query
+        name: isOverride
+        schema:
+          nullable: true
+          type: boolean
       responses:
         "200":
           content:
@@ -10996,7 +11146,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/AuthtypesRole'
+                    $ref: '#/components/schemas/AuthtypesRoleWithTransactionGroups'
                   status:
                     type: string
                 required:
@@ -11031,7 +11181,7 @@ paths:
       tags:
       - role
     patch:
-      deprecated: false
+      deprecated: true
       description: This endpoint patches a role
       operationId: PatchRole
       parameters:
@@ -11090,6 +11240,68 @@ paths:
       - tokenizer:
         - role:update
       summary: Patch role
+      tags:
+      - role
+    put:
+      deprecated: false
+      description: This endpoint updates a role
+      operationId: UpdateRole
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthtypesUpdatableRole'
+      responses:
+        "204":
+          description: No Content
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "451":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unavailable For Legal Reasons
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+        "501":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Implemented
+      security:
+      - api_key:
+        - role:update
+      - tokenizer:
+        - role:update
+      summary: Update role
       tags:
       - role
   /api/v1/roles/{id}/relations/{relation}/objects:
@@ -11171,7 +11383,7 @@ paths:
       tags:
       - role
     patch:
-      deprecated: false
+      deprecated: true
       description: Patches the objects connected to the specified role via a given
         relation type
       operationId: PatchObjects
@@ -12898,7 +13110,7 @@ paths:
       - tracedetail
   /api/v1/user:
     get:
-      deprecated: false
+      deprecated: true
       description: This endpoint lists all users
       operationId: ListUsersDeprecated
       responses:
@@ -12991,7 +13203,7 @@ paths:
       tags:
       - users
     get:
-      deprecated: false
+      deprecated: true
       description: This endpoint returns the user by id
       operationId: GetUserDeprecated
       parameters:
@@ -13048,7 +13260,7 @@ paths:
       tags:
       - users
     put:
-      deprecated: false
+      deprecated: true
       description: This endpoint updates the user by id
       operationId: UpdateUserDeprecated
       parameters:
@@ -13117,7 +13329,7 @@ paths:
       - users
   /api/v1/user/me:
     get:
-      deprecated: false
+      deprecated: true
       description: This endpoint returns the user I belong to
       operationId: GetMyUserDeprecated
       responses:
@@ -13320,6 +13532,231 @@ paths:
       summary: Update user preference
       tags:
       - preferences
+  /api/v2/dashboard_views:
+    get:
+      deprecated: false
+      description: Returns every saved view in the calling user's org. Saved views
+        are shared org-wide.
+      operationId: ListDashboardViews
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DashboardtypesListableDashboardView'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: List dashboard saved views
+      tags:
+      - dashboard
+    post:
+      deprecated: false
+      description: Persists the calling user's dashboard listing state (query, sort,
+        order) as a named, reusable view shared across the org.
+      operationId: CreateDashboardView
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DashboardtypesPostableDashboardView'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DashboardtypesDashboardView'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - EDITOR
+      - tokenizer:
+        - EDITOR
+      summary: Create dashboard saved view
+      tags:
+      - dashboard
+  /api/v2/dashboard_views/{id}:
+    delete:
+      deprecated: false
+      description: Removes a saved view. Saved views are shared org-wide. Deleting
+        a non-existent view returns 404.
+      operationId: DeleteDashboardView
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - EDITOR
+      - tokenizer:
+        - EDITOR
+      summary: Delete dashboard saved view
+      tags:
+      - dashboard
+    put:
+      deprecated: false
+      description: Replaces a saved view's name and data. Saved views are shared org-wide.
+      operationId: UpdateDashboardView
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DashboardtypesPostableDashboardView'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DashboardtypesDashboardView'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - EDITOR
+      - tokenizer:
+        - EDITOR
+      summary: Update dashboard saved view
+      tags:
+      - dashboard
   /api/v2/dashboards:
     get:
       deprecated: false
@@ -13711,6 +14148,74 @@ paths:
       - tokenizer:
         - EDITOR
       summary: Update dashboard (v2)
+      tags:
+      - dashboard
+  /api/v2/dashboards/{id}/clone:
+    post:
+      deprecated: false
+      description: This endpoint clones an existing v2-shape dashboard. User and integration
+        dashboards can be cloned; system dashboards are rejected. The clone keeps
+        the source's display name, panels, and tags, but gets a freshly generated
+        unique internal name and is always created as an unlocked user dashboard owned
+        by the caller.
+      operationId: CloneDashboardV2
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DashboardtypesGettableDashboardV2'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - EDITOR
+      - tokenizer:
+        - EDITOR
+      summary: Clone dashboard (v2)
       tags:
       - dashboard
   /api/v2/dashboards/{id}/lock:
@@ -20238,6 +20743,68 @@ paths:
       - tokenizer:
         - ADMIN
       summary: List users v2
+      tags:
+      - users
+    post:
+      deprecated: false
+      description: This endpoint creates a user for the organization
+      operationId: CreateUser
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthtypesPostableUser'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TypesIdentifiable'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Conflict
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Create user
       tags:
       - users
   /api/v2/users/{id}:

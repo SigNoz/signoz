@@ -5,10 +5,10 @@ import {
 	AIAssistantPage,
 	AlertHistory,
 	AlertOverview,
-	AllAlertChannels,
 	AllErrors,
 	ApiMonitoring,
-	CreateAlertChannelAlerts,
+	ChannelsEdit,
+	ChannelsNew,
 	CreateNewAlerts,
 	DashboardPage,
 	DashboardsListPage,
@@ -47,7 +47,7 @@ import {
 	SomethingWentWrong,
 	StatusPage,
 	SupportPage,
-	TraceDetail,
+	TraceDetailOldRedirect,
 	TraceDetailV3,
 	TraceFilter,
 	TracesExplorer,
@@ -139,13 +139,11 @@ const routes: AppRoutes[] = [
 		exact: true,
 		key: 'LOGS_SAVE_VIEWS',
 	},
-	// V3 trace details is gated until release: /trace serves V2 (public),
-	// /trace-old serves V3 (URL-only access). Flip the two `component`
-	// values back to release V3.
+	// Legacy /trace-old/:id redirects to the current /trace/:id view.
 	{
 		path: ROUTES.TRACE_DETAIL_OLD,
 		exact: true,
-		component: TraceDetail,
+		component: TraceDetailOldRedirect,
 		isPrivate: true,
 		key: 'TRACE_DETAIL_OLD',
 	},
@@ -271,16 +269,16 @@ const routes: AppRoutes[] = [
 	{
 		path: ROUTES.CHANNELS_NEW,
 		exact: true,
-		component: CreateAlertChannelAlerts,
+		component: ChannelsNew,
 		isPrivate: true,
 		key: 'CHANNELS_NEW',
 	},
 	{
-		path: ROUTES.ALL_CHANNELS,
+		path: ROUTES.CHANNELS_EDIT,
 		exact: true,
-		component: AllAlertChannels,
+		component: ChannelsEdit,
 		isPrivate: true,
-		key: 'ALL_CHANNELS',
+		key: 'CHANNELS_EDIT',
 	},
 	{
 		path: ROUTES.ALL_ERROR,
@@ -536,6 +534,9 @@ export const oldNewRoutesMapping: Record<string, string> = {
 	'/messaging-queues': '/messaging-queues/overview',
 	'/alerts/edit': '/alerts/overview',
 	'/alerts/type-selection': '/alerts/new',
+	// TODO(H4ad): Update this after https://github.com/SigNoz/engineering-pod/issues/5322
+	'/settings/channels': '/alerts?tab=Channels',
+	'/settings/channels/new': '/alerts/channels/new',
 };
 export const oldRoutes = Object.keys(oldNewRoutesMapping);
 

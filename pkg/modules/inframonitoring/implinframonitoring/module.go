@@ -360,7 +360,7 @@ func (m *module) ListNamespaces(ctx context.Context, orgID valuer.UUID, req *inf
 	}
 
 	if len(req.GroupBy) == 0 {
-		req.GroupBy = []qbtypes.GroupByKey{namespaceNameGroupByKey}
+		req.GroupBy = []qbtypes.GroupByKey{namespaceNameGroupByKey, clusterNameGroupByKey}
 		resp.Type = inframonitoringtypes.ResponseTypeList
 	} else {
 		resp.Type = inframonitoringtypes.ResponseTypeGroupedList
@@ -535,7 +535,7 @@ func (m *module) ListVolumes(ctx context.Context, orgID valuer.UUID, req *infram
 	}
 
 	if len(req.GroupBy) == 0 {
-		req.GroupBy = []qbtypes.GroupByKey{pvcNameGroupByKey}
+		req.GroupBy = []qbtypes.GroupByKey{pvcNameGroupByKey, namespaceNameGroupByKey, clusterNameGroupByKey}
 		resp.Type = inframonitoringtypes.ResponseTypeList
 	} else {
 		resp.Type = inframonitoringtypes.ResponseTypeGroupedList
@@ -620,7 +620,7 @@ func (m *module) ListDeployments(ctx context.Context, orgID valuer.UUID, req *in
 	}
 
 	if len(req.GroupBy) == 0 {
-		req.GroupBy = []qbtypes.GroupByKey{deploymentNameGroupByKey}
+		req.GroupBy = []qbtypes.GroupByKey{deploymentNameGroupByKey, namespaceNameGroupByKey, clusterNameGroupByKey}
 		resp.Type = inframonitoringtypes.ResponseTypeList
 	} else {
 		resp.Type = inframonitoringtypes.ResponseTypeGroupedList
@@ -710,7 +710,7 @@ func (m *module) ListStatefulSets(ctx context.Context, orgID valuer.UUID, req *i
 	}
 
 	if len(req.GroupBy) == 0 {
-		req.GroupBy = []qbtypes.GroupByKey{statefulSetNameGroupByKey}
+		req.GroupBy = []qbtypes.GroupByKey{statefulSetNameGroupByKey, namespaceNameGroupByKey, clusterNameGroupByKey}
 		resp.Type = inframonitoringtypes.ResponseTypeList
 	} else {
 		resp.Type = inframonitoringtypes.ResponseTypeGroupedList
@@ -802,7 +802,7 @@ func (m *module) ListJobs(ctx context.Context, orgID valuer.UUID, req *inframoni
 	}
 
 	if len(req.GroupBy) == 0 {
-		req.GroupBy = []qbtypes.GroupByKey{jobNameGroupByKey}
+		req.GroupBy = []qbtypes.GroupByKey{jobNameGroupByKey, namespaceNameGroupByKey, clusterNameGroupByKey}
 		resp.Type = inframonitoringtypes.ResponseTypeList
 	} else {
 		resp.Type = inframonitoringtypes.ResponseTypeGroupedList
@@ -894,7 +894,7 @@ func (m *module) ListDaemonSets(ctx context.Context, orgID valuer.UUID, req *inf
 	}
 
 	if len(req.GroupBy) == 0 {
-		req.GroupBy = []qbtypes.GroupByKey{daemonSetNameGroupByKey}
+		req.GroupBy = []qbtypes.GroupByKey{daemonSetNameGroupByKey, namespaceNameGroupByKey, clusterNameGroupByKey}
 		resp.Type = inframonitoringtypes.ResponseTypeList
 	} else {
 		resp.Type = inframonitoringtypes.ResponseTypeGroupedList

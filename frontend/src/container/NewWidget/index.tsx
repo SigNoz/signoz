@@ -15,6 +15,7 @@ import { Flex } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { PrecisionOption, PrecisionOptionsEnum } from 'components/Graph/types';
+import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { adjustQueryForV5 } from 'components/QueryBuilderV2/utils';
 import { QueryParams } from 'constants/query';
@@ -820,6 +821,11 @@ function NewWidget({
 					</Flex>
 				</div>
 				<div className="right-header">
+					<HeaderRightSection
+						enableAnnouncements={false}
+						enableShare={false}
+						enableFeedback={false}
+					/>
 					{showSwitchToViewModeButton && (
 						<Button
 							color="primary"

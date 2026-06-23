@@ -376,22 +376,110 @@ def test_volumes_non_pvc_volume_filtered(
     assert rec["persistentVolumeClaimName"] == "np-real-pvc"
 
 
+# Float record fields compared with tolerance; everything else compared with ==.
+_GROUPBY_FLOAT_FIELDS = {
+    "volumeAvailable",
+    "volumeCapacity",
+    "volumeUsage",
+    "volumeInodes",
+    "volumeInodesFree",
+    "volumeInodesUsed",
+}
+
+
 @pytest.mark.parametrize(
-    "group_key,expected_groups",
+    "scenario",
     [
-        # groupBy=[k8s.persistentvolumeclaim.name]: one record per PVC,
-        # persistentVolumeClaimName populated (volumes.go:26-29).
+        # Explicit groupBy=[k8s.persistentvolumeclaim.name]: one record per PVC,
+        # persistentVolumeClaimName populated (volumes.go:26-29), response grouped_list.
         pytest.param(
-            "k8s.persistentvolumeclaim.name",
-            {"gb-pvc-a1", "gb-pvc-a2", "gb-pvc-b1", "gb-pvc-b2"},
+            {
+                "fixture": "volumes_groupby.jsonl",
+                "group_by": "k8s.persistentvolumeclaim.name",
+                "filter": None,
+                "group_meta_keys": ["k8s.persistentvolumeclaim.name"],
+                "expected_type": "grouped_list",
+                "groups": {
+                    "gb-pvc-a1": {"persistentVolumeClaimName": "gb-pvc-a1"},
+                    "gb-pvc-a2": {"persistentVolumeClaimName": "gb-pvc-a2"},
+                    "gb-pvc-b1": {"persistentVolumeClaimName": "gb-pvc-b1"},
+                    "gb-pvc-b2": {"persistentVolumeClaimName": "gb-pvc-b2"},
+                },
+            },
             id="pvc_name",
         ),
-        # groupBy=[k8s.namespace.name]: aggregated per namespace,
-        # persistentVolumeClaimName cleared (custom-groupBy branch).
+        # Explicit groupBy=[k8s.namespace.name]: aggregated per namespace,
+        # persistentVolumeClaimName cleared, response grouped_list.
         pytest.param(
-            "k8s.namespace.name",
-            {"gb-ns-a", "gb-ns-b"},
+            {
+                "fixture": "volumes_groupby.jsonl",
+                "group_by": "k8s.namespace.name",
+                "filter": None,
+                "group_meta_keys": ["k8s.namespace.name"],
+                "expected_type": "grouped_list",
+                "groups": {
+                    "gb-ns-a": {"persistentVolumeClaimName": ""},
+                    "gb-ns-b": {"persistentVolumeClaimName": ""},
+                },
+            },
             id="namespace",
+        ),
+        # Default groupBy (no groupBy in request) => [k8s.persistentvolumeclaim.name,
+        # k8s.namespace.name, k8s.cluster.name] (module.go ListVolumes), response list.
+        # Same PVC name must NOT collapse across namespaces OR clusters; the
+        # empty-cluster group (k8s.cluster.name label absent on the source series)
+        # must appear as its own row with real metrics, not be dropped.
+        # Single series per group => SpaceAggregationSum == seeded value.
+        # Fails on the pre-cluster default (name+ns) — the three ns-x groups would
+        # collapse into one summed row.
+        pytest.param(
+            {
+                "fixture": "volumes_same_name_across_ns_and_clusters.jsonl",
+                "group_by": None,
+                "filter": "k8s.persistentvolumeclaim.name = 'dup-pvc'",
+                "group_meta_keys": ["k8s.persistentvolumeclaim.name", "k8s.namespace.name", "k8s.cluster.name"],
+                "expected_type": "list",
+                "groups": {
+                    ("dup-pvc", "ns-x", "cluster-a"): {
+                        "persistentVolumeClaimName": "dup-pvc",
+                        "volumeCapacity": 100.0,
+                        "volumeAvailable": 60.0,
+                        "volumeUsage": 40.0,
+                        "volumeInodes": 1000.0,
+                        "volumeInodesFree": 600.0,
+                        "volumeInodesUsed": 400.0,
+                    },
+                    ("dup-pvc", "ns-y", "cluster-a"): {
+                        "persistentVolumeClaimName": "dup-pvc",
+                        "volumeCapacity": 500.0,
+                        "volumeAvailable": 100.0,
+                        "volumeUsage": 400.0,
+                        "volumeInodes": 5000.0,
+                        "volumeInodesFree": 1000.0,
+                        "volumeInodesUsed": 4000.0,
+                    },
+                    ("dup-pvc", "ns-x", "cluster-b"): {
+                        "persistentVolumeClaimName": "dup-pvc",
+                        "volumeCapacity": 300.0,
+                        "volumeAvailable": 50.0,
+                        "volumeUsage": 250.0,
+                        "volumeInodes": 3000.0,
+                        "volumeInodesFree": 500.0,
+                        "volumeInodesUsed": 2500.0,
+                    },
+                    # empty-cluster group: k8s.cluster.name label absent on the source series.
+                    ("dup-pvc", "ns-x", ""): {
+                        "persistentVolumeClaimName": "dup-pvc",
+                        "volumeCapacity": 200.0,
+                        "volumeAvailable": 0.0,
+                        "volumeUsage": 200.0,
+                        "volumeInodes": 2000.0,
+                        "volumeInodesFree": 0.0,
+                        "volumeInodesUsed": 2000.0,
+                    },
+                },
+            },
+            id="default_disambiguates_ns_and_cluster",
         ),
     ],
 )
@@ -400,51 +488,64 @@ def test_volumes_groupby(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
-    group_key: str,
-    expected_groups: set,
+    scenario: dict,
 ) -> None:
-    """groupBy returns one record per distinct group. persistentVolumeClaimName
-    is populated only when grouping by k8s.persistentvolumeclaim.name
-    (volumes.go:26-29 list-vs-grouped branch); meta surfaces the groupBy key."""
+    """groupBy determines row identity. Explicit groupBy returns one grouped_list
+    record per distinct group (persistentVolumeClaimName populated only when
+    grouping by k8s.persistentvolumeclaim.name; volumes.go:26-29). With no groupBy
+    the default is [k8s.persistentvolumeclaim.name, k8s.namespace.name,
+    k8s.cluster.name] (module.go ListVolumes), so same-named PVCs across
+    namespaces/clusters stay as separate, un-collapsed list rows (incl. an
+    absent-cluster group keyed by ""). meta always surfaces the grouping key(s)."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
-            get_testdata_file_path("inframonitoring/volumes_groupby.jsonl"),
+            get_testdata_file_path(f"inframonitoring/{scenario['fixture']}"),
             base_time=now - timedelta(minutes=4),
         )
     )
+
+    body: dict = {
+        "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+        "end": int(now.timestamp() * 1000),
+        "limit": 50,
+    }
+    if scenario["group_by"] is not None:
+        body["groupBy"] = [{"name": scenario["group_by"], "fieldDataType": "string", "fieldContext": "resource"}]
+    if scenario["filter"] is not None:
+        body["filter"] = {"expression": scenario["filter"]}
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     response = requests.post(
         signoz.self.host_configs["8080"].get(ENDPOINT),
         headers={"authorization": f"Bearer {token}"},
-        json={
-            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "limit": 50,
-            "groupBy": [
-                {
-                    "name": group_key,
-                    "fieldDataType": "string",
-                    "fieldContext": "resource",
-                }
-            ],
-        },
+        json=body,
         timeout=5,
     )
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()["data"]
-    assert data["total"] == len(expected_groups)
 
-    is_pvc_group = group_key == "k8s.persistentvolumeclaim.name"
-    group_of = lambda r: r["persistentVolumeClaimName"] if is_pvc_group else r["meta"][group_key]  # noqa: E731  # pylint: disable=unnecessary-lambda-assignment
-    by_group = {group_of(r): r for r in data["records"]}
-    assert set(by_group.keys()) == expected_groups
+    groups = scenario["groups"]
+    meta_keys = scenario["group_meta_keys"]
+    assert data["type"] == scenario["expected_type"]
+    assert data["total"] == len(groups)
 
-    for group, rec in by_group.items():
-        # persistentVolumeClaimName populated per PVC when grouping by it, empty otherwise.
-        assert rec["persistentVolumeClaimName"] == (group if is_pvc_group else "")
-        assert group_key in rec["meta"], rec["meta"]
+    def _gid(rec: dict):
+        vals = [rec["meta"][k] for k in meta_keys]
+        return vals[0] if len(vals) == 1 else tuple(vals)
+
+    by_group = {_gid(r): r for r in data["records"]}
+    assert set(by_group.keys()) == set(groups.keys())
+
+    for gid, exp in groups.items():
+        rec = by_group[gid]
+        for k in meta_keys:
+            assert k in rec["meta"], rec["meta"]
+        for field, val in exp.items():
+            if field in _GROUPBY_FLOAT_FIELDS:
+                assert compare_values(rec[field], val, 1e-6), f"{gid}.{field}: got {rec[field]}, expected {val}"
+            else:
+                assert rec[field] == val, f"{gid}.{field}: got {rec[field]}, expected {val}"
 
 
 def test_volumes_pagination(

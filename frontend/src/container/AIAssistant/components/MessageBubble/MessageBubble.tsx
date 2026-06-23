@@ -11,6 +11,7 @@ import { Message, MessageBlock } from '../../types';
 import ActionsSection from '../ActionsSection';
 import ActivityGroup, { ActivityItem } from '../ActivityGroup';
 import { RichCodeBlock } from '../blocks';
+import MarkdownExternalLink from '../MarkdownExternalLink/MarkdownExternalLink';
 import { MessageContext } from '../MessageContext';
 import MessageFeedback from '../MessageFeedback';
 import UserMessageActions from '../UserMessageActions';
@@ -37,7 +38,11 @@ function SmartPre({ children }: { children?: React.ReactNode }): JSX.Element {
 }
 
 const MD_PLUGINS = [remarkGfm];
-const MD_COMPONENTS = { code: RichCodeBlock, pre: SmartPre };
+const MD_COMPONENTS = {
+	code: RichCodeBlock,
+	pre: SmartPre,
+	a: MarkdownExternalLink,
+};
 
 type RenderGroup =
 	| { kind: 'text'; id: string; content: string }
