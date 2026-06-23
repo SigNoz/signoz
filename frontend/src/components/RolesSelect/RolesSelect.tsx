@@ -1,5 +1,6 @@
 import { CircleAlert, RefreshCw } from '@signozhq/icons';
-import { Checkbox, Select } from 'antd';
+import { Select } from 'antd';
+import { Checkbox } from '@signozhq/ui/checkbox';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { useListRoles } from 'api/generated/services/role';
 import type { AuthtypesRoleDTO } from 'api/generated/services/sigNoz.schemas';
@@ -80,12 +81,14 @@ interface BaseProps {
 	isError?: boolean;
 	error?: APIError;
 	onRefetch?: () => void;
+	disabled?: boolean;
 }
 
 interface SingleProps extends BaseProps {
 	mode?: 'single';
 	value?: string;
-	onChange?: (role: string) => void;
+	onChange?: (role: string | undefined) => void;
+	allowClear?: boolean;
 }
 
 interface MultipleProps extends BaseProps {
@@ -122,6 +125,7 @@ function RolesSelect(props: RolesSelectProps): JSX.Element {
 		isError = internalError,
 		error = convertToApiError(internalErrorObj),
 		onRefetch = externalRoles === undefined ? internalRefetch : undefined,
+		disabled,
 	} = props;
 
 	const notFoundContent = isError ? (
@@ -141,31 +145,36 @@ function RolesSelect(props: RolesSelectProps): JSX.Element {
 				loading={loading}
 				notFoundContent={notFoundContent}
 				options={options}
+				optionFilterProp="label"
 				optionRender={(option): JSX.Element => (
-					<Checkbox
-						checked={value.includes(option.value as string)}
-						style={{ pointerEvents: 'none' }}
-					>
-						{option.label}
-					</Checkbox>
+					<div style={{ pointerEvents: 'none' }}>
+						<Checkbox value={value.includes(option.value as string)}>
+							{option.label}
+						</Checkbox>
+					</div>
 				)}
 				getPopupContainer={getPopupContainer}
+				disabled={disabled}
 			/>
 		);
 	}
 
-	const { value, onChange } = props as SingleProps;
+	const { value, onChange, allowClear = true } = props as SingleProps;
 	return (
 		<Select
 			id={id}
-			value={value}
+			showSearch
+			value={value || undefined}
 			onChange={onChange}
 			placeholder={placeholder}
-			className={cx('roles-select', className)}
+			allowClear={allowClear}
+			className={cx('roles-single-select', className)}
 			loading={loading}
 			notFoundContent={notFoundContent}
 			options={options}
+			optionFilterProp="label"
 			getPopupContainer={getPopupContainer}
+			disabled={disabled}
 		/>
 	);
 }

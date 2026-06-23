@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { useQueries } from 'react-query';
-import { Typography } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import getDisks from 'api/disks/getDisks';
 import getRetentionPeriodApi from 'api/settings/getRetention';
 import getRetentionPeriodApiV2 from 'api/settings/getRetentionV2';
@@ -76,7 +76,9 @@ function GeneralSettings(): JSX.Element {
 	if (getRetentionPeriodLogsApiResponse.isError || getDisksResponse.isError) {
 		return (
 			<Typography>
-				{(getRetentionPeriodLogsApiResponse.error as APIError).getErrorMessage() ||
+				{(getRetentionPeriodLogsApiResponse.error instanceof APIError
+					? getRetentionPeriodLogsApiResponse.error.getErrorMessage()
+					: undefined) ||
 					getDisksResponse.data?.error ||
 					t('something_went_wrong')}
 			</Typography>

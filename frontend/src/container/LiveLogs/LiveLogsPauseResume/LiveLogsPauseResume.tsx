@@ -1,9 +1,9 @@
 import { useCallback, useEffect } from 'react';
-import { PauseCircleFilled, PlayCircleFilled } from '@ant-design/icons';
 import { Button } from 'antd';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useEventSource } from 'providers/EventSource';
 import { validateQuery } from 'utils/queryValidationUtils';
+import { CirclePause, CirclePlay } from '@signozhq/icons';
 
 function LiveLogsPauseResume(): JSX.Element {
 	const {
@@ -75,7 +75,7 @@ function LiveLogsPauseResume(): JSX.Element {
 	return (
 		<div className="live-logs-pause-resume">
 			<Button
-				icon={isPlaying ? <PauseCircleFilled /> : <PlayCircleFilled />}
+				icon={isPlaying ? <CirclePause size="md" /> : <CirclePlay size="md" />}
 				danger={isPlaying}
 				onClick={onLiveButtonClick}
 				type="primary"

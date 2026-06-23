@@ -1,15 +1,12 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react';
-import { ToggleGraphProps } from 'components/Graph/types';
+import { useCallback, useMemo, useRef } from 'react';
 import Uplot from 'components/Uplot';
-import GraphManager from 'container/GridCardLayout/GridCard/FullView/GraphManager';
-import { getLocalStorageGraphVisibilityState } from 'container/GridCardLayout/GridCard/utils';
+import { useScrollWidgetIntoView } from 'container/DashboardContainer/visualization/hooks/useScrollWidgetIntoView';
 import { getUplotClickData } from 'container/QueryTable/Drilldown/drilldownUtils';
 import useGraphContextMenu from 'container/QueryTable/Drilldown/useGraphContextMenu';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { getUplotHeatmapChartOptions } from 'lib/uPlotLib/getUplotHeatmapChartOptions';
 import { ContextMenu, useCoordinates } from 'periscope/components/ContextMenu';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useTimezone } from 'providers/Timezone';
 import { getTimeRange } from 'utils/getTimeRange';
 
@@ -20,20 +17,14 @@ import { PanelWrapperProps } from './panelWrapper.types';
 function HeatmapPanelWrapper({
 	queryResponse,
 	widget,
-	setGraphVisibility,
-	graphVisibility,
-	isFullViewMode,
-	onToggleModelHandler,
 	enableDrillDown = false,
 	onDragSelect,
 	onClickHandler,
 }: PanelWrapperProps): JSX.Element {
 	const graphRef = useRef<HTMLDivElement>(null);
-	const lineChartRef = useRef<ToggleGraphProps>();
 	const containerDimensions = useResizeObserver(graphRef);
 	const isDarkMode = useIsDarkMode();
 	const { timezone } = useTimezone();
-	const { toScrollWidgetId, setToScrollWidgetId } = useDashboard();
 	const {
 		coordinates,
 		popoverPosition,
@@ -61,28 +52,7 @@ function HeatmapPanelWrapper({
 		[queryResponse],
 	);
 
-	useEffect(() => {
-		if (toScrollWidgetId === widget.id) {
-			graphRef.current?.scrollIntoView({
-				behavior: 'smooth',
-				block: 'center',
-			});
-			graphRef.current?.focus();
-			setToScrollWidgetId('');
-		}
-	}, [toScrollWidgetId, setToScrollWidgetId, widget.id]);
-
-	useEffect(() => {
-		const {
-			graphVisibilityStates: localStoredVisibilityState,
-		} = getLocalStorageGraphVisibilityState({
-			apiResponse: queryResponse.data?.payload?.data?.result || [],
-			name: widget.id,
-		});
-		if (setGraphVisibility) {
-			setGraphVisibility(localStoredVisibilityState);
-		}
-	}, [queryResponse.data?.payload?.data?.result, setGraphVisibility, widget.id]);
+	useScrollWidgetIntoView(widget.id ?? '', graphRef);
 
 	// Extract and process heatmap data
 	const heatmapData = useMemo(
@@ -200,18 +170,6 @@ function HeatmapPanelWrapper({
 				items={menuItemsConfig.items}
 				onClose={onClose}
 			/>
-			{isFullViewMode && setGraphVisibility && heatmapData && options && (
-				<GraphManager
-					data={heatmapData.data}
-					name={widget.id}
-					options={options}
-					yAxisUnit={widget.yAxisUnit}
-					onToggleModelHandler={onToggleModelHandler}
-					setGraphsVisibilityStates={setGraphVisibility}
-					graphsVisibilityStates={graphVisibility}
-					lineChartRef={lineChartRef}
-				/>
-			)}
 		</div>
 	);
 }

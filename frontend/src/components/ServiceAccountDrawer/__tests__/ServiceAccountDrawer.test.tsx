@@ -3,20 +3,31 @@ import { listRolesSuccessResponse } from 'mocks-server/__mockdata__/roles';
 import { rest, server } from 'mocks-server/server';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+import { setupAuthzAdmin } from 'tests/authz-test-utils';
 
 import ServiceAccountDrawer from '../ServiceAccountDrawer';
 
-jest.mock('@signozhq/drawer', () => ({
+jest.mock('@signozhq/ui/drawer', () => ({
+	...jest.requireActual('@signozhq/ui/drawer'),
 	DrawerWrapper: ({
-		content,
+		children,
+		footer,
 		open,
 	}: {
-		content?: ReactNode;
+		children?: ReactNode;
+		footer?: ReactNode;
 		open: boolean;
-	}): JSX.Element | null => (open ? <div>{content}</div> : null),
+	}): JSX.Element | null =>
+		open ? (
+			<div>
+				{children}
+				{footer}
+			</div>
+		) : null,
 }));
 
-jest.mock('@signozhq/sonner', () => ({
+jest.mock('@signozhq/ui/sonner', () => ({
+	...jest.requireActual('@signozhq/ui/sonner'),
 	toast: { success: jest.fn(), error: jest.fn() },
 }));
 
@@ -88,6 +99,7 @@ describe('ServiceAccountDrawer', () => {
 			rest.delete(SA_ROLE_DELETE_ENDPOINT, (_, res, ctx) =>
 				res(ctx.status(200), ctx.json({ status: 'success', data: {} })),
 			),
+			setupAuthzAdmin(),
 		);
 	});
 
@@ -98,7 +110,9 @@ describe('ServiceAccountDrawer', () => {
 	it('renders Overview tab by default: editable name input, locked email, Save disabled when not dirty', async () => {
 		renderDrawer();
 
-		expect(await screen.findByDisplayValue('CI Bot')).toBeInTheDocument();
+		await expect(
+			screen.findByDisplayValue('CI Bot'),
+		).resolves.toBeInTheDocument();
 		expect(screen.getByText('ci-bot@signoz.io')).toBeInTheDocument();
 		expect(screen.getByRole('button', { name: /Save Changes/i })).toBeDisabled();
 	});
@@ -139,18 +153,18 @@ describe('ServiceAccountDrawer', () => {
 		});
 	});
 
-	it('changing roles enables Save; clicking Save sends updated roles in payload', async () => {
-		const updateSpy = jest.fn();
+	it('adding a role fires POST for the new role and no DELETE for existing roles', async () => {
 		const roleSpy = jest.fn();
+		const deleteSpy = jest.fn();
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 		server.use(
-			rest.put(SA_ENDPOINT, async (req, res, ctx) => {
-				updateSpy(await req.json());
-				return res(ctx.status(200), ctx.json({ status: 'success', data: {} }));
-			}),
 			rest.post(SA_ROLES_ENDPOINT, async (req, res, ctx) => {
 				roleSpy(await req.json());
+				return res(ctx.status(200), ctx.json({ status: 'success', data: {} }));
+			}),
+			rest.delete(SA_ROLE_DELETE_ENDPOINT, (_, res, ctx) => {
+				deleteSpy();
 				return res(ctx.status(200), ctx.json({ status: 'success', data: {} }));
 			}),
 		);
@@ -159,6 +173,7 @@ describe('ServiceAccountDrawer', () => {
 
 		await screen.findByDisplayValue('CI Bot');
 
+		// Add signoz-viewer while keeping signoz-admin selected
 		await user.click(screen.getByLabelText('Roles'));
 		await user.click(await screen.findByTitle('signoz-viewer'));
 
@@ -167,12 +182,49 @@ describe('ServiceAccountDrawer', () => {
 		await user.click(saveBtn);
 
 		await waitFor(() => {
-			expect(updateSpy).not.toHaveBeenCalled();
 			expect(roleSpy).toHaveBeenCalledWith(
 				expect.objectContaining({
 					id: '019c24aa-2248-7585-a129-4188b3473c27',
 				}),
 			);
+			expect(deleteSpy).not.toHaveBeenCalled();
+		});
+	});
+
+	it('removing a role fires DELETE for the removed role and no POST', async () => {
+		const roleSpy = jest.fn();
+		const deleteSpy = jest.fn();
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+
+		server.use(
+			rest.post(SA_ROLES_ENDPOINT, async (req, res, ctx) => {
+				roleSpy(await req.json());
+				return res(ctx.status(200), ctx.json({ status: 'success', data: {} }));
+			}),
+			rest.delete(SA_ROLE_DELETE_ENDPOINT, (_, res, ctx) => {
+				deleteSpy();
+				return res(ctx.status(200), ctx.json({ status: 'success', data: {} }));
+			}),
+		);
+
+		renderDrawer();
+
+		await screen.findByDisplayValue('CI Bot');
+
+		// Remove the signoz-admin tag from the multi-select
+		const adminTag = await screen.findByTitle('signoz-admin');
+		const removeBtn = adminTag.querySelector(
+			'.ant-select-selection-item-remove',
+		) as Element;
+		await user.click(removeBtn);
+
+		const saveBtn = screen.getByRole('button', { name: /Save Changes/i });
+		await waitFor(() => expect(saveBtn).not.toBeDisabled());
+		await user.click(saveBtn);
+
+		await waitFor(() => {
+			expect(deleteSpy).toHaveBeenCalled();
+			expect(roleSpy).not.toHaveBeenCalled();
 		});
 	});
 
@@ -250,13 +302,6 @@ describe('ServiceAccountDrawer', () => {
 		await screen.findByText(/No keys/i);
 	});
 
-	it('shows skeleton while loading account data', () => {
-		renderDrawer();
-
-		// Skeleton renders while the fetch is in-flight
-		expect(document.querySelector('.ant-skeleton')).toBeInTheDocument();
-	});
-
 	it('shows error state when account fetch fails', async () => {
 		server.use(
 			rest.get(SA_ENDPOINT, (_, res, ctx) =>
@@ -266,11 +311,11 @@ describe('ServiceAccountDrawer', () => {
 
 		renderDrawer();
 
-		expect(
-			await screen.findByText(
+		await expect(
+			screen.findByText(
 				/An unexpected error occurred while fetching service account details/i,
 			),
-		).toBeInTheDocument();
+		).resolves.toBeInTheDocument();
 	});
 });
 
@@ -309,6 +354,7 @@ describe('ServiceAccountDrawer – save-error UX', () => {
 			rest.delete(SA_ROLE_DELETE_ENDPOINT, (_, res, ctx) =>
 				res(ctx.status(200), ctx.json({ status: 'success', data: {} })),
 			),
+			setupAuthzAdmin(),
 		);
 	});
 
@@ -343,14 +389,14 @@ describe('ServiceAccountDrawer – save-error UX', () => {
 		await waitFor(() => expect(saveBtn).not.toBeDisabled());
 		await user.click(saveBtn);
 
-		expect(
-			await screen.findByText(/Name update.*name update failed/i, undefined, {
+		await expect(
+			screen.findByText(/Name update.*name update failed/i, undefined, {
 				timeout: 5000,
 			}),
-		).toBeInTheDocument();
+		).resolves.toBeInTheDocument();
 	});
 
-	it('role update failure shows SaveErrorItem with the role name context', async () => {
+	it('role add failure shows SaveErrorItem with the role name context', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 		server.use(
@@ -379,15 +425,47 @@ describe('ServiceAccountDrawer – save-error UX', () => {
 		await waitFor(() => expect(saveBtn).not.toBeDisabled());
 		await user.click(saveBtn);
 
-		expect(
-			await screen.findByText(
-				/Role 'signoz-viewer'.*role assign failed/i,
-				undefined,
-				{
-					timeout: 5000,
-				},
-			),
-		).toBeInTheDocument();
+		await expect(
+			screen.findByText(/Role 'signoz-viewer'.*role assign failed/i, undefined, {
+				timeout: 5000,
+			}),
+		).resolves.toBeInTheDocument();
+	});
+
+	it('role add retries on 429 then succeeds without showing an error', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		let roleAddCallCount = 0;
+
+		// First call → 429, second call → 200
+		server.use(
+			rest.post(SA_ROLES_ENDPOINT, (_, res, ctx) => {
+				roleAddCallCount += 1;
+				if (roleAddCallCount === 1) {
+					return res(ctx.status(429), ctx.json({ message: 'Too Many Requests' }));
+				}
+				return res(ctx.status(200), ctx.json({ status: 'success', data: {} }));
+			}),
+		);
+
+		renderDrawer();
+
+		await screen.findByDisplayValue('CI Bot');
+
+		await user.click(screen.getByLabelText('Roles'));
+		await user.click(await screen.findByTitle('signoz-viewer'));
+
+		const saveBtn = screen.getByRole('button', { name: /Save Changes/i });
+		await waitFor(() => expect(saveBtn).not.toBeDisabled());
+		await user.click(saveBtn);
+
+		// Retried after 429 — at least 2 calls, no error shown
+		await waitFor(
+			() => {
+				expect(roleAddCallCount).toBeGreaterThanOrEqual(2);
+			},
+			{ timeout: 5000 },
+		);
+		expect(screen.queryByText(/role assign failed/i)).not.toBeInTheDocument();
 	});
 
 	it('clicking Retry on a name-update error re-triggers the request; on success the error item is removed', async () => {

@@ -2,13 +2,13 @@ import { RouteProps } from 'react-router-dom';
 import ROUTES from 'constants/routes';
 
 import {
+	AIAssistantPage,
 	AlertHistory,
 	AlertOverview,
-	AlertTypeSelectionPage,
-	AllAlertChannels,
 	AllErrors,
 	ApiMonitoring,
-	CreateAlertChannelAlerts,
+	ChannelsEdit,
+	ChannelsNew,
 	CreateNewAlerts,
 	DashboardPage,
 	DashboardsListPage,
@@ -18,7 +18,8 @@ import {
 	ForgotPassword,
 	Home,
 	InfrastructureMonitoring,
-	InstalledIntegrations,
+	Integrations,
+	IntegrationsDetailsPage,
 	LicensePage,
 	ListAllALertsPage,
 	LiveLogs,
@@ -46,7 +47,8 @@ import {
 	SomethingWentWrong,
 	StatusPage,
 	SupportPage,
-	TraceDetail,
+	TraceDetailOldRedirect,
+	TraceDetailV3,
 	TraceFilter,
 	TracesExplorer,
 	TracesFunnelDetails,
@@ -137,10 +139,18 @@ const routes: AppRoutes[] = [
 		exact: true,
 		key: 'LOGS_SAVE_VIEWS',
 	},
+	// Legacy /trace-old/:id redirects to the current /trace/:id view.
+	{
+		path: ROUTES.TRACE_DETAIL_OLD,
+		exact: true,
+		component: TraceDetailOldRedirect,
+		isPrivate: true,
+		key: 'TRACE_DETAIL_OLD',
+	},
 	{
 		path: ROUTES.TRACE_DETAIL,
 		exact: true,
-		component: TraceDetail,
+		component: TraceDetailV3,
 		isPrivate: true,
 		key: 'TRACE_DETAIL',
 	},
@@ -201,13 +211,6 @@ const routes: AppRoutes[] = [
 		key: 'LIST_ALL_ALERT',
 	},
 	{
-		path: ROUTES.ALERT_TYPE_SELECTION,
-		exact: true,
-		component: AlertTypeSelectionPage,
-		isPrivate: true,
-		key: 'ALERT_TYPE_SELECTION',
-	},
-	{
 		path: ROUTES.ALERTS_NEW,
 		exact: true,
 		component: CreateNewAlerts,
@@ -266,16 +269,16 @@ const routes: AppRoutes[] = [
 	{
 		path: ROUTES.CHANNELS_NEW,
 		exact: true,
-		component: CreateAlertChannelAlerts,
+		component: ChannelsNew,
 		isPrivate: true,
 		key: 'CHANNELS_NEW',
 	},
 	{
-		path: ROUTES.ALL_CHANNELS,
+		path: ROUTES.CHANNELS_EDIT,
 		exact: true,
-		component: AllAlertChannels,
+		component: ChannelsEdit,
 		isPrivate: true,
-		key: 'ALL_CHANNELS',
+		key: 'CHANNELS_EDIT',
 	},
 	{
 		path: ROUTES.ALL_ERROR,
@@ -390,9 +393,16 @@ const routes: AppRoutes[] = [
 		key: 'WORKSPACE_ACCESS_RESTRICTED',
 	},
 	{
+		path: ROUTES.INTEGRATIONS_DETAIL,
+		exact: true,
+		component: IntegrationsDetailsPage,
+		isPrivate: true,
+		key: 'INTEGRATIONS_DETAIL',
+	},
+	{
 		path: ROUTES.INTEGRATIONS,
 		exact: true,
-		component: InstalledIntegrations,
+		component: Integrations,
 		isPrivate: true,
 		key: 'INTEGRATIONS',
 	},
@@ -488,6 +498,13 @@ const routes: AppRoutes[] = [
 		key: 'API_MONITORING',
 		isPrivate: true,
 	},
+	{
+		path: [ROUTES.AI_ASSISTANT_BASE, ROUTES.AI_ASSISTANT],
+		exact: true,
+		component: AIAssistantPage,
+		key: 'AI_ASSISTANT',
+		isPrivate: true,
+	},
 ];
 
 export const SUPPORT_ROUTE: AppRoutes = {
@@ -506,18 +523,6 @@ export const LIST_LICENSES: AppRoutes = {
 	key: 'LIST_LICENSES',
 };
 
-export const oldRoutes = [
-	'/pipelines',
-	'/logs-explorer',
-	'/logs-explorer/live',
-	'/logs-save-views',
-	'/traces-save-views',
-	'/settings/access-tokens',
-	'/settings/api-keys',
-	'/messaging-queues',
-	'/alerts/edit',
-];
-
 export const oldNewRoutesMapping: Record<string, string> = {
 	'/pipelines': '/logs/pipelines',
 	'/logs-explorer': '/logs/logs-explorer',
@@ -528,7 +533,12 @@ export const oldNewRoutesMapping: Record<string, string> = {
 	'/settings/api-keys': '/settings/service-accounts',
 	'/messaging-queues': '/messaging-queues/overview',
 	'/alerts/edit': '/alerts/overview',
+	'/alerts/type-selection': '/alerts/new',
+	// TODO(H4ad): Update this after https://github.com/SigNoz/engineering-pod/issues/5322
+	'/settings/channels': '/alerts?tab=Channels',
+	'/settings/channels/new': '/alerts/channels/new',
 };
+export const oldRoutes = Object.keys(oldNewRoutesMapping);
 
 export const ROUTES_NOT_TO_BE_OVERRIDEN: string[] = [
 	ROUTES.WORKSPACE_LOCKED,

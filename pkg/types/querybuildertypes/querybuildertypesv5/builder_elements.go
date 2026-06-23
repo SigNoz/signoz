@@ -113,6 +113,29 @@ const (
 	FilterOperatorNotContains
 )
 
+var operatorInverseMapping = map[FilterOperator]FilterOperator{
+	FilterOperatorEqual:           FilterOperatorNotEqual,
+	FilterOperatorNotEqual:        FilterOperatorEqual,
+	FilterOperatorGreaterThan:     FilterOperatorLessThanOrEq,
+	FilterOperatorGreaterThanOrEq: FilterOperatorLessThan,
+	FilterOperatorLessThan:        FilterOperatorGreaterThanOrEq,
+	FilterOperatorLessThanOrEq:    FilterOperatorGreaterThan,
+	FilterOperatorLike:            FilterOperatorNotLike,
+	FilterOperatorNotLike:         FilterOperatorLike,
+	FilterOperatorILike:           FilterOperatorNotILike,
+	FilterOperatorNotILike:        FilterOperatorILike,
+	FilterOperatorBetween:         FilterOperatorNotBetween,
+	FilterOperatorNotBetween:      FilterOperatorBetween,
+	FilterOperatorIn:              FilterOperatorNotIn,
+	FilterOperatorNotIn:           FilterOperatorIn,
+	FilterOperatorExists:          FilterOperatorNotExists,
+	FilterOperatorNotExists:       FilterOperatorExists,
+	FilterOperatorRegexp:          FilterOperatorNotRegexp,
+	FilterOperatorNotRegexp:       FilterOperatorRegexp,
+	FilterOperatorContains:        FilterOperatorNotContains,
+	FilterOperatorNotContains:     FilterOperatorContains,
+}
+
 // AddDefaultExistsFilter returns true if addl exists filter should be added to the query
 // For the negative predicates, we don't want to add the exists filter. Why?
 // Say for example, user adds a filter `service.name != "redis"`, we can't interpret it
@@ -160,6 +183,10 @@ func (f FilterOperator) IsNegativeOperator() bool {
 		return false
 	}
 	return true
+}
+
+func (f FilterOperator) Inverse() FilterOperator {
+	return operatorInverseMapping[f]
 }
 
 func (f FilterOperator) IsComparisonOperator() bool {

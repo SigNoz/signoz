@@ -1,8 +1,9 @@
 import { ChangeEvent, useCallback, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { CloseOutlined, PlusCircleFilled } from '@ant-design/icons';
-import { Col, Input } from 'antd';
+import { CirclePlus, X } from '@signozhq/icons';
+import { Input } from '@signozhq/ui/input';
+import { Col } from 'antd';
 import CategoryHeading from 'components/Logs/CategoryHeading';
 import { fieldSearchFilter } from 'lib/logs/fieldSearch';
 import { AppState } from 'store/reducers';
@@ -30,31 +31,30 @@ function LogsFilters(): JSX.Element {
 	};
 
 	const onHandleAddSelectedToInteresting = useCallback(
-		({ fieldData, fieldIndex }: IHandleInterestProps) => (): Promise<void> =>
-			onHandleAddInterest({
-				fieldData,
-				fieldIndex,
-				interesting,
-				interestingFieldLoading,
-				setInterestingFieldLoading,
-				selected,
-			}),
+		({ fieldData, fieldIndex }: IHandleInterestProps) =>
+			(): Promise<void> =>
+				onHandleAddInterest({
+					fieldData,
+					fieldIndex,
+					interesting,
+					interestingFieldLoading,
+					setInterestingFieldLoading,
+					selected,
+				}),
 		[interesting, interestingFieldLoading, selected],
 	);
 
 	const onHandleRemoveSelected = useCallback(
-		({
-			fieldData,
-			fieldIndex,
-		}: IHandleRemoveInterestProps) => (): Promise<void> =>
-			onHandleRemoveInterest({
-				fieldData,
-				fieldIndex,
-				interesting,
-				interestingFieldLoading,
-				selected,
-				setSelectedFieldLoading,
-			}),
+		({ fieldData, fieldIndex }: IHandleRemoveInterestProps) =>
+			(): Promise<void> =>
+				onHandleRemoveInterest({
+					fieldData,
+					fieldIndex,
+					interesting,
+					interestingFieldLoading,
+					selected,
+					setSelectedFieldLoading,
+				}),
 		[interesting, interestingFieldLoading, selected, setSelectedFieldLoading],
 	);
 
@@ -79,7 +79,7 @@ function LogsFilters(): JSX.Element {
 								name={field.name}
 								fieldData={field}
 								fieldIndex={idx}
-								buttonIcon={<CloseOutlined style={ICON_STYLE.CLOSE} />}
+								buttonIcon={<X style={ICON_STYLE.CLOSE} size="md" />}
 								buttonOnClick={onHandleRemoveSelected({
 									fieldData: field,
 									fieldIndex: idx,
@@ -101,7 +101,7 @@ function LogsFilters(): JSX.Element {
 								name={field.name}
 								fieldData={field}
 								fieldIndex={idx}
-								buttonIcon={<PlusCircleFilled style={ICON_STYLE.PLUS} />}
+								buttonIcon={<CirclePlus style={ICON_STYLE.PLUS} size="md" />}
 								buttonOnClick={onHandleAddSelectedToInteresting({
 									fieldData: field,
 									fieldIndex: idx,

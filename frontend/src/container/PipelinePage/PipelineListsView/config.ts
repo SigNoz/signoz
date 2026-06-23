@@ -130,6 +130,6 @@ export const formValidationRules = [
 	},
 ];
 
-export const iconStyle = { fontSize: '1.5rem' };
-export const smallIconStyle = { fontSize: '1rem' };
+export const iconStyle = { fontSize: '1rem' };
+export const smallIconStyle = { fontSize: '0.75rem' };
 export const holdIconStyle = { ...iconStyle, cursor: 'move' };

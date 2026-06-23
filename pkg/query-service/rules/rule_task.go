@@ -2,21 +2,18 @@ package rules
 
 import (
 	"context"
-	"fmt"
+	"log/slog"
+	"runtime/debug"
 	"sort"
 	"sync"
 	"time"
 
-	"log/slog"
-
 	opentracing "github.com/opentracing/opentracing-go"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
-	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 )
 
 // RuleTask holds a rule (with composite queries)
@@ -38,34 +35,28 @@ type RuleTask struct {
 
 	pause  bool
 	notify NotifyFunc
-
-	maintenanceStore ruletypes.MaintenanceStore
-	orgID            valuer.UUID
 }
 
 const DefaultFrequency = 1 * time.Minute
 
 // NewRuleTask makes a new RuleTask with the given name, options, and rules.
-func NewRuleTask(name, file string, frequency time.Duration, rules []Rule, opts *ManagerOptions, notify NotifyFunc, maintenanceStore ruletypes.MaintenanceStore, orgID valuer.UUID) *RuleTask {
-
+func NewRuleTask(name, file string, frequency time.Duration, rules []Rule, opts *ManagerOptions, notify NotifyFunc) *RuleTask {
 	if frequency == 0 {
 		frequency = DefaultFrequency
 	}
 	opts.Logger.Info("initiating a new rule task", "name", name, "frequency", frequency)
 
 	return &RuleTask{
-		name:             name,
-		file:             file,
-		pause:            false,
-		frequency:        frequency,
-		rules:            rules,
-		opts:             opts,
-		logger:           opts.Logger,
-		done:             make(chan struct{}),
-		terminated:       make(chan struct{}),
-		notify:           notify,
-		maintenanceStore: maintenanceStore,
-		orgID:            orgID,
+		name:       name,
+		file:       file,
+		pause:      false,
+		frequency:  frequency,
+		rules:      rules,
+		opts:       opts,
+		logger:     opts.Logger,
+		done:       make(chan struct{}),
+		terminated: make(chan struct{}),
+		notify:     notify,
 	}
 }
 
@@ -73,6 +64,7 @@ func NewRuleTask(name, file string, frequency time.Duration, rules []Rule, opts 
 func (g *RuleTask) Name() string { return g.name }
 
 // Key returns the group key
+// TODO(jatinderjit): remove (unused)?
 func (g *RuleTask) Key() string {
 	return g.name + ";" + g.file
 }
@@ -84,7 +76,7 @@ func (g *RuleTask) Type() TaskType { return TaskTypeCh }
 func (g *RuleTask) Rules() []Rule { return g.rules }
 
 // Interval returns the group's interval.
-// TODO: remove (unused)?
+// TODO(jatinderjit): remove (unused)?
 func (g *RuleTask) Interval() time.Duration { return g.frequency }
 
 func (g *RuleTask) Pause(b bool) {
@@ -95,7 +87,7 @@ func (g *RuleTask) Pause(b bool) {
 
 type QueryOrigin struct{}
 
-func NewQueryOriginContext(ctx context.Context, data map[string]interface{}) context.Context {
+func NewQueryOriginContext(ctx context.Context, data map[string]any) context.Context {
 	return context.WithValue(ctx, QueryOrigin{}, data)
 }
 
@@ -111,7 +103,7 @@ func (g *RuleTask) Run(ctx context.Context) {
 		return
 	}
 
-	ctx = NewQueryOriginContext(ctx, map[string]interface{}{
+	ctx = NewQueryOriginContext(ctx, map[string]any{
 		"ruleRuleTask": map[string]string{
 			"name": g.Name(),
 		},
@@ -163,8 +155,8 @@ func (g *RuleTask) Stop() {
 }
 
 func (g *RuleTask) hash() uint64 {
-	l := labels.New(
-		labels.Label{Name: "name", Value: g.name},
+	l := ruletypes.New(
+		ruletypes.Label{Name: "name", Value: g.name},
 	)
 	return l.Hash()
 }
@@ -180,7 +172,7 @@ func (g *RuleTask) ThresholdRules() []*ThresholdRule {
 		}
 	}
 	sort.Slice(alerts, func(i, j int) bool {
-		return alerts[i].State() > alerts[j].State() ||
+		return alerts[i].State().Severity() > alerts[j].State().Severity() ||
 			(alerts[i].State() == alerts[j].State() &&
 				alerts[i].Name() < alerts[j].Name())
 	})
@@ -262,10 +254,9 @@ func nameAndLabels(rule Rule) string {
 // Rules are matched based on their name and labels. If there are duplicates, the
 // first is matched with the first, second with the second etc.
 func (g *RuleTask) CopyState(fromTask Task) error {
-
 	from, ok := fromTask.(*RuleTask)
 	if !ok {
-		return fmt.Errorf("invalid from task for copy")
+		return errors.NewInternalf(errors.CodeInternal, "invalid from task for copy")
 	}
 	g.evaluationTime = from.evaluationTime
 	g.lastEvaluation = from.lastEvaluation
@@ -307,37 +298,19 @@ func (g *RuleTask) CopyState(fromTask Task) error {
 
 // Eval runs a single evaluation cycle in which all rules are evaluated sequentially.
 func (g *RuleTask) Eval(ctx context.Context, ts time.Time) {
-
 	defer func() {
 		if r := recover(); r != nil {
-			g.logger.ErrorContext(ctx, "panic during threshold rule evaluation", "panic", r)
+			g.logger.ErrorContext(
+				ctx, "panic during rule evaluation", slog.Any("panic", r),
+				slog.String("stack", string(debug.Stack())),
+			)
 		}
 	}()
 
 	g.logger.DebugContext(ctx, "rule task eval started", "name", g.name, "start_time", ts)
 
-	maintenance, err := g.maintenanceStore.GetAllPlannedMaintenance(ctx, g.orgID.StringValue())
-
-	if err != nil {
-		g.logger.ErrorContext(ctx, "error in processing sql query", errors.Attr(err))
-	}
-
 	for i, rule := range g.rules {
 		if rule == nil {
-			continue
-		}
-
-		shouldSkip := false
-		for _, m := range maintenance {
-			g.logger.InfoContext(ctx, "checking if rule should be skipped", "rule", rule.ID(), "maintenance", m)
-			if m.ShouldSkip(rule.ID(), ts) {
-				shouldSkip = true
-				break
-			}
-		}
-
-		if shouldSkip {
-			g.logger.InfoContext(ctx, "rule should be skipped", "rule", rule.ID())
 			continue
 		}
 
@@ -369,7 +342,7 @@ func (g *RuleTask) Eval(ctx context.Context, ts time.Time) {
 				rule.SetHealth(ruletypes.HealthBad)
 				rule.SetLastError(err)
 
-				g.logger.WarnContext(ctx, "evaluating rule failed", "rule_id", rule.ID(), errors.Attr(err))
+				g.logger.WarnContext(ctx, "evaluating rule failed", slog.String("rule.id", rule.ID()), errors.Attr(err))
 
 				// Canceled queries are intentional termination of queries. This normally
 				// happens on shutdown and thus we skip logging of any errors here.
@@ -380,7 +353,6 @@ func (g *RuleTask) Eval(ctx context.Context, ts time.Time) {
 			}
 
 			rule.SendAlerts(ctx, ts, g.opts.ResendDelay, g.frequency, g.notify)
-
 		}(i, rule)
 	}
 }

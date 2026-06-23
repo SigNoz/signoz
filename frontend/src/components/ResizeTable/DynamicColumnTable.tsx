@@ -4,13 +4,14 @@ import type {
 	TableColumnsType as ColumnsType,
 	TableColumnType as ColumnType,
 } from 'antd';
-import { Button, Dropdown, Flex, MenuProps, Switch } from 'antd';
+import { Button, Flex } from 'antd';
+import { DropdownMenuSimple, type MenuItem } from '@signozhq/ui/dropdown-menu';
+import { Switch } from '@signozhq/ui/switch';
 import logEvent from 'api/common/logEvent';
 import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { SlidersHorizontal } from 'lucide-react';
-import { popupContainer } from 'utils/selectPopupContainer';
+import { SlidersHorizontal } from '@signozhq/icons';
 
 import ResizeTable from './ResizeTable';
 import { DynamicColumnTableProps } from './types';
@@ -52,53 +53,53 @@ function DynamicColumnTable({
 						...prevColumns.slice(0, prevColumns.length - 1),
 						...visibleColumns,
 						prevColumns[prevColumns.length - 1],
-				  ]
+					]
 				: undefined,
 		);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [columns, dynamicColumns]);
 
-	const onToggleHandler = (
-		index: number,
-		column: ColumnGroupType<any> | ColumnType<any>,
-	) => (checked: boolean, event: React.MouseEvent<HTMLButtonElement>): void => {
-		event.stopPropagation();
-
-		if (shouldSendAlertsLogEvent) {
-			logEvent('Alert: Column toggled', {
-				column: column?.title,
-				action: checked ? 'Enable' : 'Disable',
-			});
-		}
-		setVisibleColumns({
-			tablesource,
-			dynamicColumns,
-			index,
-			checked,
-		});
-		setColumnsData((prevColumns) =>
-			getNewColumnData({
-				checked,
-				index,
-				prevColumns,
+	const onToggleHandler =
+		(index: number, column: ColumnGroupType<any> | ColumnType<any>) =>
+		(checked: boolean): void => {
+			if (shouldSendAlertsLogEvent) {
+				logEvent('Alert: Column toggled', {
+					column: column?.title,
+					action: checked ? 'Enable' : 'Disable',
+				});
+			}
+			setVisibleColumns({
+				tablesource,
 				dynamicColumns,
-			}),
-		);
-	};
+				index,
+				checked,
+			});
+			setColumnsData((prevColumns) =>
+				getNewColumnData({
+					checked,
+					index,
+					prevColumns,
+					dynamicColumns,
+				}),
+			);
+		};
 
-	const items: MenuProps['items'] =
+	const items: MenuItem[] =
 		dynamicColumns?.map((column, index) => ({
+			key: String(index),
 			label: (
-				<div className="dynamicColumnsTable-items">
+				<div
+					className="dynamicColumnsTable-items"
+					onClick={(e): void => e.stopPropagation()}
+					role="presentation"
+				>
 					<div>{column.title?.toString()}</div>
 					<Switch
-						checked={columnsData?.findIndex((c) => c.key === column.key) !== -1}
+						value={columnsData?.findIndex((c) => c.key === column.key) !== -1}
 						onChange={onToggleHandler(index, column)}
 					/>
 				</div>
 			),
-			key: index,
-			type: 'checkbox',
 		})) || [];
 
 	// Get current page from URL or default to 1
@@ -108,8 +109,7 @@ function DynamicColumnTable({
 		// Update URL with new page number while preserving other params
 		urlQuery.set('page', page.toString());
 
-		const newUrl = `${window.location.pathname}?${urlQuery.toString()}`;
-		safeNavigate(newUrl);
+		safeNavigate({ search: `?${urlQuery.toString()}` });
 
 		// Call original pagination handler if provided
 		if (pagination?.onChange && !!pageSize) {
@@ -128,18 +128,14 @@ function DynamicColumnTable({
 			<Flex justify="flex-end" align="center" gap={8}>
 				{facingIssueBtn && <LaunchChatSupport {...facingIssueBtn} />}
 				{dynamicColumns && (
-					<Dropdown
-						getPopupContainer={popupContainer}
-						menu={{ items }}
-						trigger={['click']}
-					>
+					<DropdownMenuSimple menu={{ items }}>
 						<Button
 							className="dynamicColumnTable-button filter-btn"
 							size="middle"
 							icon={<SlidersHorizontal size={14} />}
 							data-testid="additional-filters-button"
 						/>
-					</Dropdown>
+					</DropdownMenuSimple>
 				)}
 			</Flex>
 

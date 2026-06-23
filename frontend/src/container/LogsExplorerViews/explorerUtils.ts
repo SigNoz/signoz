@@ -39,7 +39,8 @@ export const getFrequencyChartData = (
 
 	let updatedFilterExpression = baseFirstQuery.filter?.expression || '';
 	if (activeLogId) {
-		updatedFilterExpression = `${updatedFilterExpression} id <= '${activeLogId}'`.trim();
+		updatedFilterExpression =
+			`${updatedFilterExpression} id <= '${activeLogId}'`.trim();
 	}
 
 	const modifiedQueryData: IBuilderQuery = {
@@ -143,7 +144,8 @@ export const getQueryByPanelType = (
 				],
 				op: 'AND',
 			};
-			updatedFilterExpression = `${updatedFilterExpression} id <= '${activeLogId}'`.trim();
+			updatedFilterExpression =
+				`${updatedFilterExpression} id <= '${activeLogId}'`.trim();
 		}
 
 		// Create orderBy array based on orderDirection

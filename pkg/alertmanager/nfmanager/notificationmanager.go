@@ -23,6 +23,10 @@ type NotificationManager interface {
 	DeleteRoutePolicy(ctx context.Context, orgID string, routeID string) error
 	DeleteAllRoutePoliciesByName(ctx context.Context, orgID string, name string) error
 
+	// GetRoutePoliciesByChannel returns all route policies (both rule-based and policy-based)
+	// that reference the given channel name.
+	GetRoutePoliciesByChannel(ctx context.Context, orgID string, channelName string) ([]*alertmanagertypes.RoutePolicy, error)
+
 	// Route matching
 	Match(ctx context.Context, orgID string, ruleID string, set model.LabelSet) ([]string, error)
 }

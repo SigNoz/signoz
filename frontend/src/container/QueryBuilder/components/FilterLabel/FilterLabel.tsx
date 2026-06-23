@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { Typography } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 
 // ** Types
@@ -16,7 +16,7 @@ export const FilterLabel = memo(function FilterLabel({
 		<StyledLabel isDarkMode={isDarkMode}>
 			<Typography
 				style={{
-					color: '#c0c1c3',
+					color: 'var(--bg-vanilla-400)',
 				}}
 			>
 				{label}

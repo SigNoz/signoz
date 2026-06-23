@@ -1,8 +1,12 @@
 import { Dispatch, SetStateAction } from 'react';
+import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageKey from 'api/browser/localstorage/set';
 import { TelemetryFieldKey } from 'api/v5/v5';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import { defaultOptionsQuery } from 'container/OptionsMenu/constants';
+import {
+	defaultOptionsQuery,
+	ensureLogsRequiredColumns,
+} from 'container/OptionsMenu/constants';
 import { FontSize, OptionsQuery } from 'container/OptionsMenu/types';
 
 import { FormattingOptions, PreferenceMode, Preferences } from '../types';
@@ -17,11 +21,12 @@ const getLogsUpdaterConfig = (
 	updateFormatting: (newFormatting: FormattingOptions, mode: string) => void;
 } => ({
 	updateColumns: (newColumns: TelemetryFieldKey[], mode: string): void => {
+		const guardedColumns = ensureLogsRequiredColumns(newColumns);
 		if (mode === PreferenceMode.SAVED_VIEW) {
 			setSavedViewPreferences((prev) => {
 				if (!prev) {
 					return {
-						columns: newColumns,
+						columns: guardedColumns,
 						formatting: {
 							maxLines: 1,
 							format: 'table',
@@ -33,7 +38,7 @@ const getLogsUpdaterConfig = (
 
 				return {
 					...prev,
-					columns: newColumns,
+					columns: guardedColumns,
 				};
 			});
 		}
@@ -43,14 +48,14 @@ const getLogsUpdaterConfig = (
 			redirectWithOptionsData({
 				...defaultOptionsQuery,
 				...preferences?.formatting,
-				selectColumns: newColumns,
+				selectColumns: guardedColumns,
 			});
 
 			// Also update local storage
 			const local = JSON.parse(
-				localStorage.getItem(LOCALSTORAGE.LOGS_LIST_OPTIONS) || '{}',
+				getLocalStorageKey(LOCALSTORAGE.LOGS_LIST_OPTIONS) || '{}',
 			);
-			local.selectColumns = newColumns;
+			local.selectColumns = guardedColumns;
 			setLocalStorageKey(LOCALSTORAGE.LOGS_LIST_OPTIONS, JSON.stringify(local));
 		}
 	},
@@ -76,7 +81,7 @@ const getLogsUpdaterConfig = (
 
 			// Also update local storage
 			const local = JSON.parse(
-				localStorage.getItem(LOCALSTORAGE.LOGS_LIST_OPTIONS) || '{}',
+				getLocalStorageKey(LOCALSTORAGE.LOGS_LIST_OPTIONS) || '{}',
 			);
 			Object.assign(local, newFormatting);
 			setLocalStorageKey(LOCALSTORAGE.LOGS_LIST_OPTIONS, JSON.stringify(local));

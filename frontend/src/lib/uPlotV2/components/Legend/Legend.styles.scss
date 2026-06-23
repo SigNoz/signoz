@@ -26,7 +26,7 @@
 
 	.legend-empty-state {
 		font-size: 12px;
-		color: var(--bg-vanilla-400);
+		color: var(--l2-foreground);
 		text-align: center;
 		padding: 12px;
 		padding: 2rem 0;
@@ -44,7 +44,6 @@
 				auto-fill,
 				minmax(var(--legend-average-width, 240px), 1fr)
 			);
-			row-gap: 4px;
 			column-gap: 12px;
 		}
 
@@ -77,7 +76,7 @@
 		}
 
 		&::-webkit-scrollbar-thumb {
-			background: var(--bg-slate-100);
+			background: var(--l3-background);
 			border-radius: 0.5rem;
 		}
 	}
@@ -139,6 +138,7 @@
 
 	.legend-marker {
 		border-width: 2px;
+		border-style: solid;
 		border-radius: 50%;
 		min-width: 11px;
 		min-height: 11px;
@@ -170,52 +170,31 @@
 	}
 
 	.legend-copy-button {
-		display: none;
-		align-items: center;
-		justify-content: center;
+		// Always laid out (space reserved) but transparent, so revealing it on
+		// hover fades the icon in without reflowing the row / shifting the label.
+		// Shrink the shared icon Button (defaults to a 2rem square) to the
+		// compact legend row via its size tokens.
+		--button-height: auto;
+		--button-width: auto;
+		--button-padding: 2px;
+
+		opacity: 0;
 		flex-shrink: 0;
-		padding: 2px;
-		margin: 0;
-		border: none;
-		color: var(--bg-vanilla-400);
-		cursor: pointer;
+		color: var(--l2-foreground);
 		border-radius: 4px;
-		opacity: 1;
-		transition: opacity 0.15s ease, color 0.15s ease;
+		transition:
+			opacity 0.15s ease,
+			color 0.15s ease;
 
 		&:hover {
-			color: var(--bg-vanilla-100);
+			color: var(--l1-foreground);
 		}
 	}
 
 	&:hover {
-		background: rgba(255, 255, 255, 0.05);
+		background: var(--l3-background);
 		.legend-copy-button {
-			display: flex;
 			opacity: 1;
-		}
-	}
-}
-
-.lightMode {
-	.legend-container {
-		.legend-virtuoso-container {
-			&::-webkit-scrollbar-thumb {
-				background: var(--bg-vanilla-400);
-			}
-		}
-	}
-
-	.legend-item {
-		&:hover {
-			background: rgba(0, 0, 0, 0.05);
-		}
-		.legend-copy-button {
-			color: var(--bg-ink-400);
-
-			&:hover {
-				color: var(--bg-ink-500);
-			}
 		}
 	}
 }

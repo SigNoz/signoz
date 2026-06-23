@@ -2,10 +2,8 @@ package common
 
 import (
 	"math"
-	"regexp"
 	"sort"
 	"time"
-	"unicode"
 
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
@@ -74,23 +72,6 @@ func LCMList(nums []int64) int64 {
 		result = LCM(result, num)
 	}
 	return result
-}
-
-func NormalizeLabelName(name string) string {
-	// See https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels
-
-	// Regular expression to match non-alphanumeric characters except underscores
-	reg := regexp.MustCompile(`[^a-zA-Z0-9_]`)
-
-	// Replace all non-alphanumeric characters except underscores with underscores
-	normalized := reg.ReplaceAllString(name, "_")
-
-	// If the first character is not a letter or an underscore, prepend an underscore
-	if len(normalized) > 0 && !unicode.IsLetter(rune(normalized[0])) && normalized[0] != '_' {
-		normalized = "_" + normalized
-	}
-
-	return normalized
 }
 
 func GetSeriesFromCachedData(data []querycache.CachedSeriesData, start, end int64) []*v3.Series {

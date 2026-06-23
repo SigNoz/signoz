@@ -3,11 +3,6 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import LabelsInput from '../LabelsInput';
 import { LabelsInputProps } from '../types';
 
-// Mock the CloseOutlined icon
-jest.mock('@ant-design/icons', () => ({
-	CloseOutlined: (): JSX.Element => <span data-testid="close-icon">×</span>,
-}));
-
 const mockOnLabelsChange = jest.fn();
 const mockValidateLabelsKey = jest.fn().mockReturnValue(null);
 
@@ -21,10 +16,11 @@ const ADD_LABELS_TEXT = '+ Add labels';
 const ENTER_KEY_PLACEHOLDER = 'Enter key';
 const ENTER_VALUE_PLACEHOLDER = 'Enter value';
 
-const CLOSE_ICON_TEST_ID = 'close-icon';
+const REMOVE_LABEL_NAME = /^Remove label/;
 const SEVERITY_HIGH_TEXT = 'severity: high';
 const ENVIRONMENT_PRODUCTION_TEXT = 'environment: production';
 const SEVERITY_HIGH_KEY_VALUE = 'severity:high';
+const REMOVE_LABEL_SEVERITY_NAME = 'Remove label severity';
 
 const renderLabelsInput = (
 	props: Partial<LabelsInputProps> = {},
@@ -41,7 +37,9 @@ describe('LabelsInput', () => {
 		it('renders add button when no labels exist', () => {
 			renderLabelsInput();
 			expect(screen.getByText(ADD_LABELS_TEXT)).toBeInTheDocument();
-			expect(screen.queryByTestId(CLOSE_ICON_TEST_ID)).not.toBeInTheDocument();
+			expect(
+				screen.queryByRole('button', { name: REMOVE_LABEL_NAME }),
+			).not.toBeInTheDocument();
 		});
 
 		it('renders existing labels when provided', () => {
@@ -50,7 +48,9 @@ describe('LabelsInput', () => {
 
 			expect(screen.getByText(SEVERITY_HIGH_TEXT)).toBeInTheDocument();
 			expect(screen.getByText(ENVIRONMENT_PRODUCTION_TEXT)).toBeInTheDocument();
-			expect(screen.getAllByTestId(CLOSE_ICON_TEST_ID)).toHaveLength(2);
+			expect(
+				screen.getAllByRole('button', { name: REMOVE_LABEL_NAME }),
+			).toHaveLength(2);
 		});
 
 		it('does not render existing labels section when no labels', () => {
@@ -186,8 +186,10 @@ describe('LabelsInput', () => {
 			const labels = { severity: 'high', environment: 'production' };
 			renderLabelsInput({ labels });
 
-			const removeButtons = screen.getAllByTestId(CLOSE_ICON_TEST_ID);
-			fireEvent.click(removeButtons[0]);
+			const removeButton = screen.getByRole('button', {
+				name: REMOVE_LABEL_SEVERITY_NAME,
+			});
+			fireEvent.click(removeButton);
 
 			expect(mockOnLabelsChange).toHaveBeenCalledWith({
 				environment: 'production',
@@ -198,7 +200,9 @@ describe('LabelsInput', () => {
 			const labels = { severity: 'high' };
 			renderLabelsInput({ labels });
 
-			const removeButton = screen.getByTestId('close-icon');
+			const removeButton = screen.getByRole('button', {
+				name: REMOVE_LABEL_SEVERITY_NAME,
+			});
 			fireEvent.click(removeButton);
 
 			expect(mockOnLabelsChange).toHaveBeenCalledWith({});
@@ -320,7 +324,9 @@ describe('LabelsInput', () => {
 			expect(screen.getByText(SEVERITY_HIGH_TEXT)).toBeInTheDocument();
 			expect(screen.getByText(ENVIRONMENT_PRODUCTION_TEXT)).toBeInTheDocument();
 			expect(screen.getByText('service: api-gateway')).toBeInTheDocument();
-			expect(screen.getAllByTestId(CLOSE_ICON_TEST_ID)).toHaveLength(3);
+			expect(
+				screen.getAllByRole('button', { name: REMOVE_LABEL_NAME }),
+			).toHaveLength(3);
 		});
 
 		it('handles empty string values', () => {

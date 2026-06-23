@@ -28,7 +28,7 @@
 
 	.infra-container-card-text {
 		font-size: var(--font-size-sm);
-		color: var(--text-vanilla-400);
+		color: var(--l2-foreground);
 		line-height: 20px;
 		letter-spacing: -0.07px;
 		width: 400px;
@@ -44,7 +44,7 @@
 		align-items: flex-start;
 		gap: 12px;
 		border-radius: 4px;
-		background: rgba(171, 189, 255, 0.04);
+		background: color-mix(in srgb, var(--bg-robin-200) 4%, transparent);
 
 		.ant-space {
 			align-items: flex-start;
@@ -56,11 +56,5 @@
 		align-items: center;
 		justify-content: center;
 		margin: auto;
-	}
-}
-
-.lightMode {
-	.infra-container-card-text {
-		color: var(--text-ink-200);
 	}
 }

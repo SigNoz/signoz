@@ -1,14 +1,17 @@
 import { useMemo } from 'react';
 import { generatePath } from 'react-router-dom';
 import { Color } from '@signozhq/design-tokens';
-import { Dropdown, Skeleton, Typography } from 'antd';
+import { DropdownMenuSimple } from '@signozhq/ui/dropdown-menu';
+import { Skeleton } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import {
 	useGetMetricAlerts,
 	useGetMetricDashboards,
 } from 'api/generated/services/metrics';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
-import { Bell, Grid } from 'lucide-react';
+import { Bell, Grid2X2 } from '@signozhq/icons';
+import { openInNewTab } from 'utils/navigation';
 import { pluralize } from 'utils/pluralize';
 
 import { DashboardsAndAlertsPopoverProps } from './types';
@@ -67,9 +70,8 @@ function DashboardsAndAlertsPopover({
 					<Typography.Link
 						key={alert.alertId}
 						onClick={(): void => {
-							window.open(
+							openInNewTab(
 								`${ROUTES.ALERT_OVERVIEW}?${QueryParams.ruleId}=${alert.alertId}`,
-								'_blank',
 							);
 						}}
 						className="dashboards-popover-content-item"
@@ -90,11 +92,10 @@ function DashboardsAndAlertsPopover({
 					<Typography.Link
 						key={dashboard.dashboardId}
 						onClick={(): void => {
-							window.open(
+							openInNewTab(
 								generatePath(ROUTES.DASHBOARD, {
 									dashboardId: dashboard.dashboardId,
 								}),
-								'_blank',
 							);
 						}}
 						className="dashboards-popover-content-item"
@@ -126,31 +127,29 @@ function DashboardsAndAlertsPopover({
 	return (
 		<div className="dashboards-and-alerts-popover-container">
 			{dashboardsPopoverContent && (
-				<Dropdown
+				<DropdownMenuSimple
 					menu={{
 						items: dashboardsPopoverContent,
 					}}
-					placement="bottomLeft"
-					trigger={['click']}
+					align="start"
 				>
 					<div
 						className="dashboards-and-alerts-popover dashboards-popover"
 						style={{ backgroundColor: `${Color.BG_SIENNA_500}33` }}
 					>
-						<Grid size={12} color={Color.BG_SIENNA_500} />
+						<Grid2X2 size={12} color={Color.BG_SIENNA_500} />
 						<Typography.Text>
 							{pluralize(dashboards.length, 'dashboard')}
 						</Typography.Text>
 					</div>
-				</Dropdown>
+				</DropdownMenuSimple>
 			)}
 			{alertsPopoverContent && (
-				<Dropdown
+				<DropdownMenuSimple
 					menu={{
 						items: alertsPopoverContent,
 					}}
-					placement="bottomLeft"
-					trigger={['click']}
+					align="start"
 				>
 					<div
 						className="dashboards-and-alerts-popover alerts-popover"
@@ -161,7 +160,7 @@ function DashboardsAndAlertsPopover({
 							{pluralize(alerts.length, 'alert rule')}
 						</Typography.Text>
 					</div>
-				</Dropdown>
+				</DropdownMenuSimple>
 			)}
 		</div>
 	);

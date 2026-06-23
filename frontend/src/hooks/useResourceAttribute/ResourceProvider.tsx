@@ -1,7 +1,5 @@
 import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-// eslint-disable-next-line no-restricted-imports
-import { useMachine } from '@xstate/react';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
@@ -12,7 +10,6 @@ import { FeatureKeys } from '../../constants/features';
 import { useAppContext } from '../../providers/App/App';
 import { whilelistedKeys } from './config';
 import { ResourceContext } from './context';
-import { ResourceAttributesFilterMachine } from './machine';
 import {
 	IResourceAttribute,
 	IResourceAttributeProps,
@@ -28,6 +25,9 @@ import {
 	OperatorSchema,
 } from './utils';
 
+type ResourceStep = 'Idle' | 'TagKey' | 'Operator' | 'TagValue';
+type ResourceEvent = 'NEXT' | 'onBlur' | 'RESET';
+
 function ResourceProvider({ children }: Props): JSX.Element {
 	const { pathname } = useLocation();
 	const [loading, setLoading] = useState(true);
@@ -36,6 +36,7 @@ function ResourceProvider({ children }: Props): JSX.Element {
 	const [queries, setQueries] = useState<IResourceAttribute[]>(
 		getResourceAttributeQueriesFromURL(),
 	);
+	const [step, setStep] = useState<ResourceStep>('Idle');
 	const { safeNavigate } = useSafeNavigate();
 	const urlQuery = useUrlQuery();
 
@@ -75,64 +76,79 @@ function ResourceProvider({ children }: Props): JSX.Element {
 		[pathname, safeNavigate, urlQuery],
 	);
 
-	const [state, send] = useMachine(ResourceAttributesFilterMachine, {
-		actions: {
-			onSelectTagKey: () => {
-				handleLoading(true);
-				GetTagKeys(dotMetricsEnabled)
-					.then((tagKeys) => {
-						const options = mappingWithRoutesAndKeys(pathname, tagKeys);
+	const loadTagKeys = (): void => {
+		handleLoading(true);
+		GetTagKeys(dotMetricsEnabled)
+			.then((tagKeys) => {
+				const options = mappingWithRoutesAndKeys(pathname, tagKeys);
+				setOptionsData({ options, mode: undefined });
+			})
+			.finally(() => {
+				handleLoading(false);
+			});
+	};
 
-						setOptionsData({
-							options,
-							mode: undefined,
-						});
-					})
-					.finally(() => {
-						handleLoading(false);
-					});
-			},
-			onSelectOperator: () => {
-				setOptionsData({ options: OperatorSchema, mode: undefined });
-			},
-			onSelectTagValue: () => {
-				handleLoading(true);
+	const loadTagValues = (): void => {
+		handleLoading(true);
+		GetTagValues(staging[0])
+			.then((tagValuesOptions) =>
+				setOptionsData({ options: tagValuesOptions, mode: 'multiple' }),
+			)
+			.finally(() => {
+				handleLoading(false);
+			});
+	};
 
-				GetTagValues(staging[0])
-					.then((tagValuesOptions) =>
-						setOptionsData({ options: tagValuesOptions, mode: 'multiple' }),
-					)
-					.finally(() => {
-						handleLoading(false);
-					});
-			},
-			onBlurPurge: () => {
-				setSelectedQueries([]);
-				setStaging([]);
-			},
-			onValidateQuery: (): void => {
-				if (staging.length < 2 || selectedQuery.length === 0) {
-					return;
-				}
+	const handleNext = (): void => {
+		if (step === 'Idle') {
+			loadTagKeys();
+			setStep('TagKey');
+		} else if (step === 'TagKey') {
+			setOptionsData({ options: OperatorSchema, mode: undefined });
+			setStep('Operator');
+		} else if (step === 'Operator') {
+			loadTagValues();
+			setStep('TagValue');
+		}
+	};
 
-				const generatedQuery = createQuery([...staging, selectedQuery]);
+	const handleOnBlur = (): void => {
+		if (step === 'TagValue' && staging.length >= 2 && selectedQuery.length > 0) {
+			const generatedQuery = createQuery([...staging, selectedQuery]);
+			if (generatedQuery) {
+				dispatchQueries([...queries, generatedQuery]);
+			}
+		}
+		if (step !== 'Idle') {
+			setSelectedQueries([]);
+			setStaging([]);
+			setStep('Idle');
+		}
+	};
 
-				if (generatedQuery) {
-					dispatchQueries([...queries, generatedQuery]);
-				}
-			},
-		},
-	});
+	const send = (event: ResourceEvent): void => {
+		if (event === 'RESET') {
+			setStep('Idle');
+			return;
+		}
+		if (event === 'NEXT') {
+			handleNext();
+			return;
+		}
+		if (event === 'onBlur') {
+			handleOnBlur();
+		}
+	};
 
 	const handleFocus = useCallback((): void => {
-		if (state.value === 'Idle') {
+		if (step === 'Idle') {
 			send('NEXT');
 		}
-	}, [send, state.value]);
+	}, [step]);
 
 	const handleBlur = useCallback((): void => {
 		send('onBlur');
-	}, [send]);
+	}, [step, staging, selectedQuery, queries, dispatchQueries]);
 
 	const handleChange = useCallback(
 		(value: string): void => {
@@ -145,7 +161,7 @@ function ResourceProvider({ children }: Props): JSX.Element {
 
 			setSelectedQueries([...value]);
 		},
-		[optionsData.mode, send],
+		[optionsData.mode, step, staging, dotMetricsEnabled, pathname],
 	);
 
 	const handleEnvironmentChange = useCallback(
@@ -166,9 +182,9 @@ function ResourceProvider({ children }: Props): JSX.Element {
 				dispatchQueries([...queriesCopy]);
 			}
 
-			send('RESET');
+			setStep('Idle');
 		},
-		[dispatchQueries, dotMetricsEnabled, queries, send],
+		[dispatchQueries, dotMetricsEnabled, queries],
 	);
 
 	const handleClose = useCallback(
@@ -179,12 +195,12 @@ function ResourceProvider({ children }: Props): JSX.Element {
 	);
 
 	const handleClearAll = useCallback(() => {
-		send('RESET');
+		setStep('Idle');
 		dispatchQueries([]);
 		setStaging([]);
 		setQueries([]);
 		setOptionsData({ mode: undefined, options: [] });
-	}, [dispatchQueries, send]);
+	}, [dispatchQueries]);
 
 	const getVisibleQueries = useMemo(() => {
 		if (pathname === ROUTES.SERVICE_MAP) {

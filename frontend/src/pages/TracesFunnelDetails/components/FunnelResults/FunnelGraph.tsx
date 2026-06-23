@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { LoadingOutlined } from '@ant-design/icons';
+import { Loader } from '@signozhq/icons';
 import { Empty, Spin } from 'antd';
 import {
 	BarController,
@@ -44,25 +44,21 @@ function FunnelGraph(): JSX.Element {
 		isError,
 	} = useFunnelStepsGraphData(funnelId, payload);
 
-	const data = useMemo(() => stepsData?.payload?.data?.[0]?.data, [
-		stepsData?.payload?.data,
-	]);
+	const data = useMemo(
+		() => stepsData?.payload?.data?.[0]?.data,
+		[stepsData?.payload?.data],
+	);
 
 	const [hoveredBar, setHoveredBar] = useState<{
 		index: number;
 		type: 'total' | 'error';
 	} | null>(null);
 
-	const {
-		successSteps,
-		errorSteps,
-		totalSteps,
-		canvasRef,
-		renderLegendItem,
-	} = useFunnelGraph({
-		data,
-		hoveredBar,
-	});
+	const { successSteps, errorSteps, totalSteps, canvasRef, renderLegendItem } =
+		useFunnelGraph({
+			data,
+			hoveredBar,
+		});
 
 	const handleLegendHover = useCallback(
 		(index: number, type: 'total' | 'error') => {
@@ -101,7 +97,10 @@ function FunnelGraph(): JSX.Element {
 	}
 
 	return (
-		<Spin spinning={isFetching} indicator={<LoadingOutlined spin />}>
+		<Spin
+			spinning={isFetching}
+			indicator={<Loader className="animate-spin" size="md" />}
+		>
 			<div className={cx('funnel-graph', `funnel-graph--${totalSteps}-columns`)}>
 				<div className="funnel-graph__chart-container">
 					<canvas ref={canvasRef} />

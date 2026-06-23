@@ -1,10 +1,11 @@
 import { useCallback } from 'react';
-import { Space, Typography } from 'antd';
+import { Space } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import UnAuthorized from 'assets/UnAuthorized';
 import { Container } from 'components/NotFound/styles';
+import { handleContactSupport } from 'container/Integrations/utils';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useQueryState } from 'nuqs';
-import { handleContactSupport } from 'pages/Integrations/utils';
 
 import { useAppContext } from '../../providers/App/App';
 import { USER_ROLES } from '../../types/roles';

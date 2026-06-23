@@ -67,9 +67,10 @@ describe('AdvancedOptions', () => {
 		const alertWhenDataStopsComingContainer = screen
 			.getByText(ALERT_WHEN_DATA_STOPS_COMING_TEXT)
 			.closest(ADVANCED_OPTION_ITEM_CLASS);
-		const alertWhenDataStopsComingSwitch = alertWhenDataStopsComingContainer?.querySelector(
-			SWITCH_ROLE_SELECTOR,
-		) as HTMLElement;
+		const alertWhenDataStopsComingSwitch =
+			alertWhenDataStopsComingContainer?.querySelector(
+				SWITCH_ROLE_SELECTOR,
+			) as HTMLElement;
 
 		fireEvent.click(alertWhenDataStopsComingSwitch);
 

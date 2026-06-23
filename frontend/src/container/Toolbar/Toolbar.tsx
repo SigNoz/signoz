@@ -31,13 +31,15 @@ export default function Toolbar({
 }: ToolbarProps): JSX.Element {
 	const { pathname } = useLocation();
 
-	const isLogsExplorerPage = useMemo(() => pathname === ROUTES.LOGS_EXPLORER, [
-		pathname,
-	]);
+	const isLogsExplorerPage = useMemo(
+		() => pathname === ROUTES.LOGS_EXPLORER,
+		[pathname],
+	);
 
-	const isApiMonitoringPage = useMemo(() => pathname === ROUTES.API_MONITORING, [
-		pathname,
-	]);
+	const isApiMonitoringPage = useMemo(
+		() => pathname === ROUTES.API_MONITORING,
+		[pathname],
+	);
 
 	return (
 		<div className="toolbar">

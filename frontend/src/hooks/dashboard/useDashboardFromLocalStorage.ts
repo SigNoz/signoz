@@ -59,9 +59,10 @@ export function updateLocalStorageDashboardVariable(
 		[id]:
 			isDynamic && allSelected
 				? {
-						selectedValue: (undefined as unknown) as IDashboardVariable['selectedValue'],
+						selectedValue:
+							undefined as unknown as IDashboardVariable['selectedValue'],
 						allSelected: true,
-				  }
+					}
 				: { selectedValue, allSelected },
 	};
 	writeAll(all);

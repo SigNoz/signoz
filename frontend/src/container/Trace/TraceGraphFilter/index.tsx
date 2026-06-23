@@ -2,7 +2,8 @@ import { useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { AutoComplete, Input, Space } from 'antd';
+import { Input } from '@signozhq/ui/input';
+import { AutoComplete, Space } from 'antd';
 import getTagFilters from 'api/trace/getTagFilter';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -27,9 +28,8 @@ function TraceGraphFilter(): JSX.Element {
 		AppState,
 		TraceReducer
 	>((state) => state.traces);
-	const [selectedGroupByLocal, setSelectedGroupByLocal] = useState<string>(
-		selectedGroupBy,
-	);
+	const [selectedGroupByLocal, setSelectedGroupByLocal] =
+		useState<string>(selectedGroupBy);
 	const globalTime = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);

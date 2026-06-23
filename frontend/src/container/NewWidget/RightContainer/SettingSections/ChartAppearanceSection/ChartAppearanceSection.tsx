@@ -1,11 +1,12 @@
 import { Dispatch, SetStateAction } from 'react';
-import { Switch, Typography } from 'antd';
+import { Switch } from '@signozhq/ui/switch';
+import { Typography } from '@signozhq/ui/typography';
 import {
 	FillMode,
 	LineInterpolation,
 	LineStyle,
 } from 'lib/uPlotV2/config/types';
-import { Paintbrush } from 'lucide-react';
+import { Paintbrush } from '@signozhq/icons';
 
 import DisconnectValuesSelector from '../../components/DisconnectValuesSelector/DisconnectValuesSelector';
 import FillModeSelector from '../../components/FillModeSelector/FillModeSelector';
@@ -72,7 +73,7 @@ export default function ChartAppearanceSection({
 							Display individual data points on the chart
 						</Typography.Text>
 					</div>
-					<Switch size="small" checked={showPoints} onChange={setShowPoints} />
+					<Switch value={showPoints} onChange={setShowPoints} />
 				</section>
 			)}
 			{allowSpanGaps && (

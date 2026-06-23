@@ -1,6 +1,6 @@
-import { Button } from '@signozhq/button';
 import { Plus, Trash2 } from '@signozhq/icons';
-import { Input } from '@signozhq/input';
+import { Button } from '@signozhq/ui/button';
+import { Input } from '@signozhq/ui/input';
 import { Form } from 'antd';
 
 import './DomainMappingList.styles.scss';
@@ -70,10 +70,10 @@ function DomainMappingList({
 						))}
 
 						<Button
-							variant="dashed"
+							variant="outlined"
+							color="secondary"
 							onClick={(): void => add({ domain: '', adminEmail: '' })}
-							prefixIcon={<Plus size={14} />}
-							className="domain-mapping-list__add-btn"
+							prefix={<Plus size={14} />}
 						>
 							Add Domain Mapping
 						</Button>

@@ -13,8 +13,8 @@ describe('Table panel wrappper tests', () => {
 		const { container, getByText } = render(
 			<TablePanelWrapper
 				panelMode={PanelMode.DASHBOARD_VIEW}
-				widget={(tablePanelWidgetQuery as unknown) as Widgets}
-				queryResponse={(tablePanelQueryResponse as unknown) as any}
+				widget={tablePanelWidgetQuery as unknown as Widgets}
+				queryResponse={tablePanelQueryResponse as unknown as any}
 				onDragSelect={(): void => {}}
 			/>,
 		);

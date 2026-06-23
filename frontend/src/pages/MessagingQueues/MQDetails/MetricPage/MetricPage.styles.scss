@@ -39,7 +39,7 @@
 
 	.row-panel {
 		border-radius: 4px;
-		background: rgba(18, 19, 23, 0.4);
+		background: color-mix(in srgb, var(--card) 40%, transparent);
 		padding: 8px;
 		display: flex;
 		gap: 6px;
@@ -57,12 +57,12 @@
 			align-items: center;
 
 			.row-icon {
-				color: var(--bg-vanilla-400);
+				color: var(--l2-foreground);
 				cursor: pointer;
 			}
 
 			.section-title {
-				color: var(--bg-vanilla-400);
+				color: var(--l2-foreground);
 				font-family: Inter;
 				font-size: 14px;
 				font-style: normal;
@@ -107,22 +107,6 @@
 	@media (max-width: 768px) {
 		.metric-column-graph-container {
 			grid-template-columns: 1fr;
-		}
-	}
-}
-
-.lightMode {
-	.metric-page {
-		.row-panel {
-			.row-panel-section {
-				.row-icon {
-					color: var(--bg-ink-300);
-				}
-
-				.section-title {
-					color: var(--bg-ink-300);
-				}
-			}
 		}
 	}
 }

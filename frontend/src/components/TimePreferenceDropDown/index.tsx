@@ -1,11 +1,12 @@
 import { Dispatch, SetStateAction, useCallback, useMemo } from 'react';
-import { DownOutlined } from '@ant-design/icons';
-import { Button, Dropdown, Typography } from 'antd';
+import { ChevronDown, Globe } from '@signozhq/icons';
+import { DropdownMenuSimple } from '@signozhq/ui/dropdown-menu';
+import { Button } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import TimeItems, {
 	timePreferance,
 	timePreferenceType,
 } from 'container/NewWidget/RightContainer/timeItems';
-import { Globe } from 'lucide-react';
 
 import { menuItems } from './config';
 
@@ -27,29 +28,26 @@ function TimePreference({
 
 	const menu = useMemo(
 		() => ({
-			items: menuItems,
-			onClick: timeMenuItemOnChangeHandler,
+			items: menuItems.map((item) => ({
+				...item,
+				onClick: timeMenuItemOnChangeHandler,
+			})),
 		}),
 		[timeMenuItemOnChangeHandler],
 	);
 
 	return (
-		<Dropdown
-			menu={menu}
-			rootClassName="time-selection-menu"
-			className="time-selection-target"
-			trigger={['click']}
-		>
-			<Button>
+		<DropdownMenuSimple menu={menu} className="time-selection-menu">
+			<Button className="time-selection-target">
 				<div className="button-selected-text">
 					<Globe size={14} />
 					<Typography.Text className="selected-value">
 						{selectedTime.name}
 					</Typography.Text>
 				</div>
-				<DownOutlined />
+				<ChevronDown size="md" />
 			</Button>
-		</Dropdown>
+		</DropdownMenuSimple>
 	);
 }
 

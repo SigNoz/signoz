@@ -1,10 +1,13 @@
 import { useMemo, useState } from 'react';
-import { Button, Input, Select, Tooltip, Typography } from 'antd';
-import { CircleX, Trash } from 'lucide-react';
+import { Input } from '@signozhq/ui/input';
+import { Button, Select, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
+import { CircleX, Trash } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 
 import { useCreateAlertState } from '../context';
 import { AlertThresholdOperator } from '../context/types';
+import { normalizeOperator } from '../utils';
 import { ThresholdItemProps } from './types';
 import { NotificationChannelsNotFoundContent } from './utils';
 
@@ -54,7 +57,7 @@ function ThresholdItem({
 	}, [units, threshold.unit, updateThreshold, threshold.id]);
 
 	const getOperatorSymbol = (): string => {
-		switch (thresholdState.operator) {
+		switch (normalizeOperator(thresholdState.operator)) {
 			case AlertThresholdOperator.IS_ABOVE:
 				return '>';
 			case AlertThresholdOperator.IS_BELOW:

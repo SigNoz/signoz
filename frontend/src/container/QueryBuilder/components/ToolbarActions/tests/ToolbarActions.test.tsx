@@ -92,7 +92,12 @@ describe('ToolbarActions', () => {
 		const onStageRunQuery = jest.fn();
 		const { queryByText } = render(
 			<MockQueryClientProvider>
-				<RightToolbarActions onStageRunQuery={onStageRunQuery} />,
+				<RightToolbarActions
+					onStageRunQuery={onStageRunQuery}
+					isLoadingQueries={false}
+					handleCancelQuery={jest.fn()}
+				/>
+				,
 			</MockQueryClientProvider>,
 		);
 

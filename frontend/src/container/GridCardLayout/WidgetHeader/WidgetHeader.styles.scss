@@ -13,7 +13,7 @@
 
 	.ant-input-group-addon {
 		border: none;
-		background-color: var(--bg-ink-500);
+		background-color: var(--l1-background);
 	}
 	.search-header-icons {
 		cursor: pointer;
@@ -26,10 +26,13 @@
 	gap: 8px;
 	overflow: hidden;
 	text-overflow: ellipsis;
+	flex: 1;
+	min-width: 0;
 }
 
 .widget-header-title {
 	max-width: 80%;
+	min-width: 0;
 }
 
 .widget-header-actions {
@@ -51,16 +54,19 @@
 	visibility: visible;
 }
 
-.widget-api-actions {
-	padding-right: 0.25rem;
+// currently the width of the dropdown menu is set to 100% of the parent container,
+// which is not desired. This is a workaround to unset that width and allow the dropdown menu to size based on its content.
+// This is necessary because the dropdown menu can contain items with varying widths, and setting it to 100% can cause layout issues and make the menu look unbalanced.
+// we should idealy fix this in the dropdown menu component itself, but for now this is a quick fix to ensure the dropdown menu looks correct in the widget header.
+
+[data-radix-popper-content-wrapper]
+	[data-slot='dropdown-menu-content'].widget-header-dropdown
+	[data-slot='dropdown-menu-item'] {
+	width: unset !important;
 }
 
-.lightMode {
-	.widget-header-container {
-		.ant-input-group-addon {
-			background-color: inherit;
-		}
-	}
+.widget-api-actions {
+	padding-right: 0.25rem;
 }
 
 .long-tooltip {

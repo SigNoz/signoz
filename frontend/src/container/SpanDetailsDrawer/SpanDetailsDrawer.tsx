@@ -1,3 +1,4 @@
+import { Typography } from '@signozhq/ui/typography';
 import {
 	Dispatch,
 	SetStateAction,
@@ -8,17 +9,16 @@ import {
 	useState,
 } from 'react';
 import { useMutation, useQuery } from 'react-query';
+import { Input } from '@signozhq/ui/input';
 import {
 	Button,
 	Checkbox,
-	Input,
 	Modal,
 	Select,
 	Skeleton,
 	Tabs,
 	TabsProps,
 	Tooltip,
-	Typography,
 } from 'antd';
 import getSpanPercentiles from 'api/trace/getSpanPercentiles';
 import getUserPreference from 'api/v1/user/preferences/name/get';
@@ -35,17 +35,17 @@ import useClickOutside from 'hooks/useClickOutside';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import {
 	Anvil,
-	BarChart2,
+	BarChart,
 	Bookmark,
 	Check,
 	ChevronDown,
 	ChevronUp,
 	Link2,
-	Loader2,
+	LoaderCircle,
 	PanelRight,
-	PlusIcon,
+	Plus,
 	Search,
-} from 'lucide-react';
+} from '@signozhq/icons';
 import { AnimatePresence, motion } from 'motion/react';
 import { Span } from 'types/api/trace/getTraceV2';
 import { formatEpochTimestamp } from 'utils/timeUtils';
@@ -121,24 +121,19 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 	} = props;
 
 	const [isSearchVisible, setIsSearchVisible] = useState<boolean>(true);
-	const [shouldAutoFocusSearch, setShouldAutoFocusSearch] = useState<boolean>(
-		false,
-	);
-	const [isSpanPercentilesOpen, setIsSpanPercentilesOpen] = useState<boolean>(
-		false,
-	);
-	const [isRelatedSignalsOpen, setIsRelatedSignalsOpen] = useState<boolean>(
-		false,
-	);
+	const [shouldAutoFocusSearch, setShouldAutoFocusSearch] =
+		useState<boolean>(false);
+	const [isSpanPercentilesOpen, setIsSpanPercentilesOpen] =
+		useState<boolean>(false);
+	const [isRelatedSignalsOpen, setIsRelatedSignalsOpen] =
+		useState<boolean>(false);
 	const [activeDrawerView, setActiveDrawerView] = useState<RelatedSignalsViews>(
 		RelatedSignalsViews.LOGS,
 	);
 
 	const [selectedTimeRange, setSelectedTimeRange] = useState<number>(1);
-	const [
-		resourceAttributesSearchQuery,
-		setResourceAttributesSearchQuery,
-	] = useState<string>('');
+	const [resourceAttributesSearchQuery, setResourceAttributesSearchQuery] =
+		useState<string>('');
 
 	const [spanPercentileData, setSpanPercentileData] = useState<{
 		percentile: number;
@@ -146,10 +141,8 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 		percentiles: Record<string, number>;
 	} | null>(null);
 
-	const [
-		showResourceAttributesSelector,
-		setShowResourceAttributesSelector,
-	] = useState<boolean>(false);
+	const [showResourceAttributesSelector, setShowResourceAttributesSelector] =
+		useState<boolean>(false);
 
 	const [selectedResourceAttributes, setSelectedResourceAttributes] = useState<
 		Record<string, string>
@@ -159,19 +152,14 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 		IResourceAttribute[]
 	>([] as IResourceAttribute[]);
 
-	const [initialWaitCompleted, setInitialWaitCompleted] = useState<boolean>(
-		false,
-	);
+	const [initialWaitCompleted, setInitialWaitCompleted] =
+		useState<boolean>(false);
 
-	const [
-		shouldFetchSpanPercentilesData,
-		setShouldFetchSpanPercentilesData,
-	] = useState<boolean>(false);
+	const [shouldFetchSpanPercentilesData, setShouldFetchSpanPercentilesData] =
+		useState<boolean>(false);
 
-	const [
-		shouldUpdateUserPreference,
-		setShouldUpdateUserPreference,
-	] = useState<boolean>(false);
+	const [shouldUpdateUserPreference, setShouldUpdateUserPreference] =
+		useState<boolean>(false);
 
 	const [statusMessageModalContent, setStatusMessageModalContent] = useState<{
 		title: string;
@@ -229,7 +217,7 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 			baseOptions.push({
 				label: (
 					<div className="view-title">
-						<BarChart2 size={14} />
+						<BarChart size={14} />
 						Metrics
 					</div>
 				),
@@ -246,7 +234,7 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 				label: (
 					<Button
 						type="text"
-						icon={<Bookmark size="14" />}
+						icon={<Bookmark size={14} />}
 						className="attributes-tab-btn"
 					>
 						<span className="tab-label">Attributes</span>
@@ -266,7 +254,7 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 			},
 			{
 				label: (
-					<Button type="text" icon={<Anvil size="14" />} className="events-tab-btn">
+					<Button type="text" icon={<Anvil size={14} />} className="events-tab-btn">
 						<span className="tab-label">Events</span>
 						<span className="count-badge">{span.event?.length || 0}</span>
 					</Button>
@@ -284,7 +272,7 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 				label: (
 					<Button
 						type="text"
-						icon={<Link2 size="14" />}
+						icon={<Link2 size={14} />}
 						className="linked-spans-tab-btn"
 					>
 						<span className="tab-label">Links</span>
@@ -349,9 +337,8 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 		[selectedSpan?.timestamp, selectedTimeRange],
 	);
 
-	const { mutate: updateUserPreferenceMutation } = useMutation(
-		updateUserPreference,
-	);
+	const { mutate: updateUserPreferenceMutation } =
+		useMutation(updateUserPreference);
 
 	// TODO: Span percentile should be eventually moved to context and not fetched on every span change
 	const {
@@ -451,8 +438,9 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 
 	useEffect(() => {
 		if (userSelectedResourceAttributes) {
-			const userSelectedResourceAttributesList = (userSelectedResourceAttributes
-				?.data?.value as string[]).map((attribute: string) => attribute);
+			const userSelectedResourceAttributesList = (
+				userSelectedResourceAttributes?.data?.value as string[]
+			).map((attribute: string) => attribute);
 
 			let selectedResourceAttributesMap: Record<string, string> = {};
 
@@ -597,14 +585,14 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 
 							<div className="value-wrapper span-name-wrapper">
 								<Tooltip title={selectedSpan.name}>
-									<Typography.Text className="attribute-value" ellipsis>
+									<Typography.Text className="attribute-value" truncate={1}>
 										{selectedSpan.name}
 									</Typography.Text>
 								</Tooltip>
 
 								{loadingSpanPercentilesData && (
 									<div className="loading-spinner-container">
-										<Loader2 size={16} className="animate-spin" />
+										<LoaderCircle size={16} className="animate-spin" />
 									</div>
 								)}
 
@@ -625,7 +613,6 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 											<Typography.Text
 												className="span-percentile-value"
 												onClick={(): void => setIsSpanPercentilesOpen((prev) => !prev)}
-												disabled={loadingSpanPercentilesData}
 											>
 												<span className="span-percentile-value-text">
 													p{spanPercentileValue}
@@ -668,7 +655,7 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 														onClick={(): void => setShowResourceAttributesSelector(false)}
 													/>
 												) : (
-													<PlusIcon
+													<Plus
 														data-testid="plus-icon"
 														size={16}
 														className="cursor-pointer span-percentiles-header-icon"
@@ -742,7 +729,7 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 														</span>
 													) : (
 														<span className="span-percentile-value-loader">
-															<Loader2 size={12} className="animate-spin" />
+															<LoaderCircle size={12} className="animate-spin" />
 														</span>
 													)}{' '}
 													out of the distribution for this resource evaluated for{' '}
@@ -873,7 +860,7 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 								<div className="dot" style={{ backgroundColor: color }} />
 								<div className="value-wrapper">
 									<Tooltip title={selectedSpan.serviceName}>
-										<Typography.Text className="service-value" ellipsis>
+										<Typography.Text className="service-value" truncate={1}>
 											{selectedSpan.serviceName}
 										</Typography.Text>
 									</Tooltip>

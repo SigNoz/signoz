@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { Button, Form } from 'antd';
-import { CheckCircle, CloudUpload, InfoIcon, Wrench } from 'lucide-react';
+import { CircleCheck, CloudUpload, Info, Wrench } from '@signozhq/icons';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
 import { checkVersionState } from 'utils/app';
@@ -81,7 +81,7 @@ function Version(): JSX.Element {
 					{!isError && isLatestVersion && (
 						<div className="version-page-latest-version-container">
 							<div className="version-page-latest-version-container-title">
-								<CheckCircle size={16} />
+								<CircleCheck size={16} />
 
 								{t('latest_version_signoz')}
 							</div>
@@ -91,7 +91,7 @@ function Version(): JSX.Element {
 					{!isError && !isLatestVersion && (
 						<div className="version-page-stale-version-container">
 							<div className="version-page-stale-version-container-title">
-								<InfoIcon size={16} />
+								<Info size={16} />
 								{t('stale_version')}
 							</div>
 						</div>

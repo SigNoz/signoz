@@ -30,7 +30,7 @@ func NewRuleStore(store sqlstore.SQLStore, queryParser queryparser.QueryParser, 
 	}
 }
 
-func (r *rule) CreateRule(ctx context.Context, storedRule *ruletypes.Rule, cb func(context.Context, valuer.UUID) error) (valuer.UUID, error) {
+func (r *rule) CreateRule(ctx context.Context, storedRule *ruletypes.StorableRule, cb func(context.Context, valuer.UUID) error) (valuer.UUID, error) {
 	err := r.sqlstore.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
 		_, err := r.sqlstore.
 			BunDBCtx(ctx).
@@ -51,7 +51,7 @@ func (r *rule) CreateRule(ctx context.Context, storedRule *ruletypes.Rule, cb fu
 	return storedRule.ID, nil
 }
 
-func (r *rule) EditRule(ctx context.Context, storedRule *ruletypes.Rule, cb func(context.Context) error) error {
+func (r *rule) EditRule(ctx context.Context, storedRule *ruletypes.StorableRule, cb func(context.Context) error) error {
 	return r.sqlstore.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
 		_, err := r.sqlstore.
 			BunDBCtx(ctx).
@@ -72,7 +72,7 @@ func (r *rule) DeleteRule(ctx context.Context, id valuer.UUID, cb func(context.C
 		_, err := r.sqlstore.
 			BunDBCtx(ctx).
 			NewDelete().
-			Model(new(ruletypes.Rule)).
+			Model(new(ruletypes.StorableRule)).
 			Where("id = ?", id.StringValue()).
 			Exec(ctx)
 		if err != nil {
@@ -87,8 +87,8 @@ func (r *rule) DeleteRule(ctx context.Context, id valuer.UUID, cb func(context.C
 	return nil
 }
 
-func (r *rule) GetStoredRules(ctx context.Context, orgID string) ([]*ruletypes.Rule, error) {
-	rules := make([]*ruletypes.Rule, 0)
+func (r *rule) GetStoredRules(ctx context.Context, orgID string) ([]*ruletypes.StorableRule, error) {
+	rules := make([]*ruletypes.StorableRule, 0)
 	err := r.sqlstore.
 		BunDB().
 		NewSelect().
@@ -102,8 +102,8 @@ func (r *rule) GetStoredRules(ctx context.Context, orgID string) ([]*ruletypes.R
 	return rules, nil
 }
 
-func (r *rule) GetStoredRule(ctx context.Context, id valuer.UUID) (*ruletypes.Rule, error) {
-	rule := new(ruletypes.Rule)
+func (r *rule) GetStoredRule(ctx context.Context, id valuer.UUID) (*ruletypes.StorableRule, error) {
+	rule := new(ruletypes.StorableRule)
 	err := r.sqlstore.
 		BunDB().
 		NewSelect().
@@ -111,7 +111,7 @@ func (r *rule) GetStoredRule(ctx context.Context, id valuer.UUID) (*ruletypes.Ru
 		Where("id = ?", id.StringValue()).
 		Scan(ctx)
 	if err != nil {
-		return nil, err
+		return nil, r.sqlstore.WrapNotFoundErrf(err, errors.CodeNotFound, "rule with ID: %s does not exist", id.StringValue())
 	}
 	return rule, nil
 }
@@ -133,14 +133,14 @@ func (r *rule) GetStoredRulesByMetricName(ctx context.Context, orgID string, met
 	for _, storedRule := range storedRules {
 		var ruleData ruletypes.PostableRule
 		if err := json.Unmarshal([]byte(storedRule.Data), &ruleData); err != nil {
-			r.logger.WarnContext(ctx, "failed to unmarshal rule data", slog.String("rule_id", storedRule.ID.StringValue()), errors.Attr(err))
+			//nolint:sloglint
+			r.logger.WarnContext(ctx, "failed to unmarshal rule data", slog.String("rule.id", storedRule.ID.StringValue()), errors.Attr(err))
 			continue
 		}
 
 		// Check conditions: must be metric-based alert with valid composite query
 		if ruleData.AlertType != ruletypes.AlertTypeMetric ||
-			ruleData.RuleCondition == nil ||
-			ruleData.RuleCondition.CompositeQuery == nil {
+			ruleData.RuleCondition == nil {
 			continue
 		}
 

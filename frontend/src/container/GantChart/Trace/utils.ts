@@ -1,3 +1,3 @@
-export const getIconStyles = (isDarkMode: boolean): Record<string, string> => ({
-	color: isDarkMode ? 'white' : 'black',
+export const getIconStyles = (): Record<string, string> => ({
+	color: 'var(--l1-foreground)',
 });

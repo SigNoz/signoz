@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { HolderOutlined, PlusOutlined } from '@ant-design/icons';
+import { GripVertical, PenLine, Plus, Trash2 } from '@signozhq/icons';
 import type { DragEndEvent, UniqueIdentifier } from '@dnd-kit/core';
 import {
 	DndContext,
@@ -11,17 +11,18 @@ import {
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import { arrayMove, SortableContext, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Button, Modal, Row, RowProps, Space, Table, Typography } from 'antd';
+import { Button, Modal, Row, RowProps, Space, Table, Flex } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import { VariablesSettingsTabHandle } from 'container/DashboardContainer/DashboardDescription/types';
 import { convertVariablesToDbFormat } from 'container/DashboardContainer/DashboardVariablesSelection/util';
 import { useAddDynamicVariableToPanels } from 'hooks/dashboard/useAddDynamicVariableToPanels';
 import { useDashboardVariables } from 'hooks/dashboard/useDashboardVariables';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
-import { useNotifications } from 'hooks/useNotifications';
-import { PenLine, Trash2 } from 'lucide-react';
+import { toast } from '@signozhq/ui/sonner';
 import { IDashboardVariables } from 'providers/Dashboard/store/dashboardVariables/dashboardVariablesStoreTypes';
 import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
+import { removeVariableReferencesFromDashboard } from './addTagFiltersToDashboard';
 
 import { TVariableMode } from './types';
 import VariableItem from './VariableItem/VariableItem';
@@ -38,7 +39,7 @@ function TableRow({ children, ...props }: RowProps): JSX.Element {
 		transition,
 		isDragging,
 	} = useSortable({
-		// @ts-ignore
+		// @ts-expect-error
 		id: props['data-row-key'],
 	});
 
@@ -58,11 +59,13 @@ function TableRow({ children, ...props }: RowProps): JSX.Element {
 						key: 'name-with-drag',
 						children: (
 							<div className="variable-name-drag">
-								<HolderOutlined
-									ref={setActivatorNodeRef}
+								<GripVertical
+									ref={setActivatorNodeRef as unknown as React.Ref<SVGSVGElement>}
 									style={{ touchAction: 'none', cursor: 'move' }}
+									size="md"
 									{...listeners}
 								/>
+
 								{child}
 							</div>
 						),
@@ -87,10 +90,8 @@ function VariablesSettings({
 
 	const { t } = useTranslation(['dashboard']);
 
-	const { selectedDashboard, setSelectedDashboard } = useDashboardStore();
+	const { dashboardData, setDashboardData } = useDashboardStore();
 	const { dashboardVariables } = useDashboardVariables();
-
-	const { notifications } = useNotifications();
 
 	const [variablesTableData, setVariablesTableData] = useState<any>([]);
 	const [variblesOrderArr, setVariablesOrderArr] = useState<number[]>([]);
@@ -102,10 +103,8 @@ function VariablesSettings({
 		null,
 	);
 
-	const [
-		variableEditData,
-		setVariableEditData,
-	] = useState<null | IDashboardVariable>(null);
+	const [variableEditData, setVariableEditData] =
+		useState<null | IDashboardVariable>(null);
 
 	const onDoneVariableViewMode = (): void => {
 		setVariableViewMode(null);
@@ -150,7 +149,7 @@ function VariablesSettings({
 			});
 
 			if (name) {
-				// @ts-ignore
+				// @ts-expect-error
 				variableNamesMap[name] = name;
 			}
 
@@ -173,7 +172,7 @@ function VariablesSettings({
 		widgetIds?: string[],
 		applyToAll?: boolean,
 	): void => {
-		if (!selectedDashboard) {
+		if (!dashboardData) {
 			return;
 		}
 
@@ -181,16 +180,16 @@ function VariablesSettings({
 			(currentRequestedId &&
 				updatedVariablesData[currentRequestedId || '']?.type === 'DYNAMIC' &&
 				addDynamicVariableToPanels(
-					selectedDashboard,
+					dashboardData,
 					updatedVariablesData[currentRequestedId || ''],
 					widgetIds,
 					applyToAll,
 				)) ||
-			selectedDashboard;
+			dashboardData;
 
 		updateMutation.mutateAsync(
 			{
-				id: selectedDashboard.id,
+				id: dashboardData.id,
 
 				data: {
 					...newDashboard.data,
@@ -200,10 +199,8 @@ function VariablesSettings({
 			{
 				onSuccess: (updatedDashboard) => {
 					if (updatedDashboard.data) {
-						setSelectedDashboard(updatedDashboard.data);
-						notifications.success({
-							message: t('variable_updated_successfully'),
-						});
+						setDashboardData(updatedDashboard.data);
+						toast.success(t('variable_updated_successfully'));
 					}
 				},
 			},
@@ -256,6 +253,11 @@ function VariablesSettings({
 	};
 
 	const handleDeleteConfirm = (): void => {
+		if (!dashboardData || !variableToDelete.current) {
+			setDeleteVariableModal(false);
+			return;
+		}
+
 		const newVariablesArr = variablesTableData.filter(
 			(variable: IDashboardVariable) =>
 				variable.id !== variableToDelete?.current?.id,
@@ -263,7 +265,31 @@ function VariablesSettings({
 
 		const updatedVariables = convertVariablesToDbFormat(newVariablesArr);
 
-		updateVariables(updatedVariables);
+		const cleanedDashboard =
+			removeVariableReferencesFromDashboard(
+				dashboardData,
+				variableToDelete.current.name || '',
+			) || dashboardData;
+
+		updateMutation.mutateAsync(
+			{
+				id: dashboardData.id,
+
+				data: {
+					...cleanedDashboard.data,
+					variables: updatedVariables,
+				},
+			},
+			{
+				onSuccess: (updatedDashboard) => {
+					if (updatedDashboard.data) {
+						setDashboardData(updatedDashboard.data);
+						toast.success(t('variable_updated_successfully'));
+					}
+				},
+			},
+		);
+
 		variableToDelete.current = null;
 		setDeleteVariableModal(false);
 	};
@@ -393,7 +419,7 @@ function VariablesSettings({
 				const variableName = updatedVariables[index].name;
 
 				if (variableName) {
-					// @ts-ignore
+					// @ts-expect-error
 					reArrangedVariables[variableName] = {
 						...updatedVariables[index],
 						order: index,
@@ -439,7 +465,9 @@ function VariablesSettings({
 								onVariableViewModeEnter('ADD', {} as IDashboardVariable)
 							}
 						>
-							<PlusOutlined /> Add Variable
+							<Flex align="center" justify="center" gap={4}>
+								<Plus size="md" /> Add Variable
+							</Flex>
 						</Button>
 					</Row>
 
@@ -474,6 +502,7 @@ function VariablesSettings({
 				open={deleteVariableModal}
 				onOk={handleDeleteConfirm}
 				onCancel={handleDeleteCancel}
+				okButtonProps={{ loading: updateMutation.isLoading }}
 			>
 				<Typography.Text>
 					Are you sure you want to delete variable{' '}

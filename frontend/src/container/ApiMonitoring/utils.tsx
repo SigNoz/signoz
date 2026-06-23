@@ -1,6 +1,8 @@
 import { ReactNode } from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { Progress, TableColumnType as ColumnType, Tag, Tooltip } from 'antd';
+import { TableColumnType as ColumnType, Tooltip } from 'antd';
+import { Progress } from '@signozhq/ui/progress';
+import { Badge } from '@signozhq/ui/badge';
 import { convertFiltersToExpressionWithExistingQuery } from 'components/QueryBuilderV2/utils';
 import {
 	FiltersType,
@@ -14,7 +16,7 @@ import { convertNanoToMilliseconds } from 'container/MetricsExplorer/Summary/uti
 import dayjs from 'dayjs';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { cloneDeep } from 'lodash-es';
-import { ArrowUpDown, ChevronDown, ChevronRight, Info } from 'lucide-react';
+import { ArrowUpDown, ChevronDown, ChevronRight, Info } from '@signozhq/icons';
 import { getWidgetQuery } from 'pages/MessagingQueues/MQDetails/MetricPage/MetricPageUtil';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
@@ -257,10 +259,9 @@ export const columnsConfig: ColumnType<APIDomainsRowData>[] = [
 				errorRate === 'n/a' || errorRate === '-' ? 0 : errorRate;
 			return (
 				<Progress
-					status="active"
 					percent={Number((errorRateValue as number).toFixed(2))}
 					strokeLinecap="butt"
-					size="small"
+					showInfo
 					strokeColor={((): string => {
 						const errorRatePercent = Number((errorRateValue as number).toFixed(2));
 						if (errorRatePercent >= 90) {
@@ -302,14 +303,17 @@ export const formatDataForTable = (
 	data: string[][],
 	columns: APIMonitoringResponseColumn[],
 ): APIDomainsRowData[] => {
-	const indexMap = columns.reduce((acc, column, index) => {
-		if (column.name === domainNameKey) {
-			acc[column.name] = index;
-		} else {
-			acc[column.queryName] = index;
-		}
-		return acc;
-	}, {} as Record<string, number>);
+	const indexMap = columns.reduce(
+		(acc, column, index) => {
+			if (column.name === domainNameKey) {
+				acc[column.name] = index;
+			} else {
+				acc[column.queryName] = index;
+			}
+			return acc;
+		},
+		{} as Record<string, number>,
+	);
 
 	return data.map((row) => {
 		const rowData: APIDomainsRowData = {
@@ -969,14 +973,10 @@ export const getEndPointsColumnsConfig = (
 					})()}
 					{isGroupedByAttribute
 						? text.split(',').map((value) => (
-								<Tag
-									key={value}
-									color={Color.BG_SLATE_100}
-									className="endpoint-group-tag-item"
-								>
+								<Badge key={value} color="vanilla" className="endpoint-group-tag-item">
 									{value === '' ? '<no-value>' : value}
-								</Tag>
-						  ))
+								</Badge>
+							))
 						: endPointName}
 				</div>
 			);
@@ -1019,14 +1019,13 @@ export const getEndPointsColumnsConfig = (
 		className: `column`,
 		render: (errorRate: number | string): React.ReactNode => (
 			<Progress
-				status="active"
 				percent={Number(
-					((errorRate === 'n/a' || errorRate === '-'
-						? 0
-						: errorRate) as number).toFixed(1),
+					(
+						(errorRate === 'n/a' || errorRate === '-' ? 0 : errorRate) as number
+					).toFixed(1),
 				)}
 				strokeLinecap="butt"
-				size="small"
+				showInfo
 				strokeColor={((): string => {
 					const errorRatePercent = Number((errorRate as number).toFixed(1));
 					if (errorRatePercent >= 90) {
@@ -1137,10 +1136,13 @@ export const formatEndPointsDataForTable = (
 					endpoint.data.D === 'n/a' || endpoint.data.D === undefined
 						? 0
 						: Number(endpoint.data.D),
-				groupedByMeta: groupedByAttributeData.reduce((acc, attribute) => {
-					acc[attribute] = endpoint.data[attribute] || '';
-					return acc;
-				}, {} as Record<string, string | number>),
+				groupedByMeta: groupedByAttributeData.reduce(
+					(acc, attribute) => {
+						acc[attribute] = endpoint.data[attribute] || '';
+						return acc;
+					},
+					{} as Record<string, string | number>,
+				),
 			};
 		});
 	}
@@ -1281,53 +1283,54 @@ export const getTopErrorsCoRelationQueryFilters = (
 	};
 };
 
-export const getTopErrorsColumnsConfig = (): ColumnType<TopErrorsTableRowData>[] => [
-	{
-		title: <div className="endpoint-name-header">Endpoint</div>,
-		dataIndex: 'endpointName',
-		key: 'endpointName',
-		width: 180,
-		ellipsis: true,
-		sorter: false,
-		className: 'column',
-		render: (text: string, record: TopErrorsTableRowData): React.ReactNode => {
-			const { endpoint } = extractPortAndEndpoint(record.endpointName);
-			return (
-				<Tooltip title="Click to open traces">
-					<div className="endpoint-name-value">{endpoint}</div>
-				</Tooltip>
-			);
+export const getTopErrorsColumnsConfig =
+	(): ColumnType<TopErrorsTableRowData>[] => [
+		{
+			title: <div className="endpoint-name-header">Endpoint</div>,
+			dataIndex: 'endpointName',
+			key: 'endpointName',
+			width: 180,
+			ellipsis: true,
+			sorter: false,
+			className: 'column',
+			render: (text: string, record: TopErrorsTableRowData): React.ReactNode => {
+				const { endpoint } = extractPortAndEndpoint(record.endpointName);
+				return (
+					<Tooltip title="Click to open traces">
+						<div className="endpoint-name-value">{endpoint}</div>
+					</Tooltip>
+				);
+			},
 		},
-	},
-	{
-		title: <div className="column-header">Status code</div>,
-		dataIndex: 'statusCode',
-		key: 'statusCode',
-		width: 180,
-		ellipsis: true,
-		sorter: false,
-		align: 'right',
-		className: `column`,
-	},
-	{
-		title: <div className="column-header">Status message</div>,
-		dataIndex: 'statusMessage',
-		key: 'statusMessage',
-		width: 180,
-		ellipsis: true,
-		align: 'right',
-		className: `column`,
-	},
-	{
-		title: <div>Count</div>,
-		dataIndex: 'count',
-		key: 'count',
-		width: 120,
-		sorter: false,
-		align: 'right',
-		className: `column`,
-	},
-];
+		{
+			title: <div className="column-header">Status code</div>,
+			dataIndex: 'statusCode',
+			key: 'statusCode',
+			width: 180,
+			ellipsis: true,
+			sorter: false,
+			align: 'right',
+			className: `column`,
+		},
+		{
+			title: <div className="column-header">Status message</div>,
+			dataIndex: 'statusMessage',
+			key: 'statusMessage',
+			width: 180,
+			ellipsis: true,
+			align: 'right',
+			className: `column`,
+		},
+		{
+			title: <div>Count</div>,
+			dataIndex: 'count',
+			key: 'count',
+			width: 120,
+			sorter: false,
+			align: 'right',
+			className: `column`,
+		},
+	];
 
 export const createFiltersForSelectedRowData = (
 	selectedRowData: EndPointsTableRowData,
@@ -2507,10 +2510,9 @@ export const dependentServicesColumns: ColumnType<DependentServicesData>[] = [
 		render: (errorPercentage: number | string): React.ReactNode =>
 			errorPercentage !== '-' ? (
 				<Progress
-					status="active"
 					percent={Number((errorPercentage as number).toFixed(2))}
 					strokeLinecap="butt"
-					size="small"
+					showInfo
 					strokeColor={((): string => {
 						const errorPercentagePercent = Number(
 							(errorPercentage as number).toFixed(2),
@@ -3010,24 +3012,23 @@ export const getAllEndpointsWidgetData = (
 					? '-'
 					: getLastUsedRelativeTime(
 							new Date(new Date(lastUsed).toISOString()).getTime(),
-					  )}
+						)}
 			</span>
 		),
 		F1: (errorRate: any): ReactNode => (
 			<Progress
-				status="active"
 				percent={Number(
-					((errorRate === 'n/a' || errorRate === '-'
-						? 0
-						: errorRate) as number).toFixed(2),
+					(
+						(errorRate === 'n/a' || errorRate === '-' ? 0 : errorRate) as number
+					).toFixed(2),
 				)}
 				strokeLinecap="butt"
-				size="small"
+				showInfo
 				strokeColor={((): string => {
 					const errorRatePercent = Number(
-						((errorRate === 'n/a' || errorRate === '-'
-							? 0
-							: errorRate) as number).toFixed(2),
+						(
+							(errorRate === 'n/a' || errorRate === '-' ? 0 : errorRate) as number
+						).toFixed(2),
 					);
 					if (errorRatePercent >= 90) {
 						return Color.BG_SAKURA_500;
@@ -3257,7 +3258,7 @@ export const createGroupByFiltersForBarChart = (
 							op: '<=',
 							value: endStatusCode,
 						},
-				  ]
+					]
 				: [];
 		})
 		.flat();

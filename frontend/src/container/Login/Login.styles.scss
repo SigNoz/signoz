@@ -51,7 +51,7 @@
 
 .login-form-card {
 	width: 100%;
-	background: var(--bg-neutral-dark-950);
+	background: var(--l2-background);
 	border: 1px solid var(--l2-border);
 	border-radius: 4px;
 	padding: 24px;
@@ -65,12 +65,14 @@
 	width: 100%;
 
 	.error-content {
-		background: rgba(229, 72, 77, 0.1);
-		border: 1px solid rgba(229, 72, 77, 0.2);
+		background: color-mix(in srgb, var(--danger-background) 10%, transparent);
+		border: 1px solid
+			color-mix(in srgb, var(--danger-background) 20%, transparent);
 		border-radius: 4px;
 
 		&__summary-section {
-			border-bottom: 1px solid rgba(229, 72, 77, 0.2);
+			border-bottom: 1px solid
+				color-mix(in srgb, var(--danger-background) 20%, transparent);
 		}
 
 		&__summary {
@@ -123,7 +125,7 @@
 		&__message-badge-line {
 			background-image: radial-gradient(
 				circle,
-				rgba(229, 72, 77, 0.3) 1px,
+				color-mix(in srgb, var(--danger-background) 30%, transparent) 1px,
 				transparent 2px
 			);
 		}
@@ -149,56 +151,11 @@
 		}
 
 		&__scroll-hint {
-			background: rgba(229, 72, 77, 0.2);
+			background: color-mix(in srgb, var(--danger-background) 20%, transparent);
 		}
 
 		&__scroll-hint-text {
 			color: #fadadb;
-		}
-	}
-}
-
-.lightMode {
-	.login-error-container {
-		.error-content {
-			background: rgba(229, 72, 77, 0.1);
-			border-color: rgba(229, 72, 77, 0.2);
-
-			&__error-code {
-				color: var(--bg-ink-100);
-			}
-
-			&__error-message {
-				color: var(--bg-ink-400);
-			}
-
-			&__docs-button {
-				color: var(--bg-ink-400);
-				border-color: var(--bg-vanilla-300);
-				background: transparent;
-
-				&:hover {
-					color: var(--bg-ink-100);
-					border-color: var(--bg-vanilla-400);
-					background: transparent;
-				}
-			}
-
-			&__message-badge-label-text {
-				color: var(--bg-ink-100);
-			}
-
-			&__message-item {
-				color: var(--bg-ink-400);
-
-				&::before {
-					background: var(--bg-ink-400);
-				}
-			}
-
-			&__scroll-hint-text {
-				color: var(--bg-ink-100);
-			}
 		}
 	}
 }
@@ -230,8 +187,8 @@
 
 .login-form-input {
 	height: 32px;
-	background: var(--l3-background);
-	border: 1px solid var(--l3-border);
+	background: var(--l2-background) !important;
+	border: 1px solid var(--l2-border) !important;
 	border-radius: 2px;
 	padding: 6px 8px;
 	font-family: Inter, sans-serif;
@@ -245,8 +202,8 @@
 		color: var(--l3-foreground);
 	}
 
-	&:hover {
-		border-color: var(--l3-border);
+	&:hover:not(:disabled) {
+		border-color: var(--l1-border);
 	}
 
 	&:focus {
@@ -271,8 +228,8 @@
 			font-weight: 400 !important;
 			line-height: 1 !important;
 			letter-spacing: -0.065px !important;
-			background: var(--l3-background) !important;
-			border: 1px solid var(--l3-border) !important;
+			background: var(--l2-background) !important;
+			border: 1px solid var(--l2-border) !important;
 			display: flex !important;
 			align-items: center !important;
 		}
@@ -296,7 +253,7 @@
 		}
 
 		.ant-select-selection-placeholder {
-			color: var(--l3-foreground) !important;
+			color: var(--l2-foreground) !important;
 		}
 
 		.ant-select-selection-item {
@@ -304,7 +261,7 @@
 		}
 
 		&:hover .ant-select-selector {
-			border-color: var(--l3-border) !important;
+			border-color: var(--l1-border) !important;
 		}
 
 		&.ant-select-focused .ant-select-selector {
@@ -337,62 +294,4 @@
 
 .login-submit-btn {
 	width: 100%;
-}
-
-.lightMode {
-	.login-form-title {
-		color: var(--text-ink-500);
-	}
-
-	.login-form-description {
-		color: var(--text-neutral-light-200);
-	}
-
-	.login-form-card {
-		background: var(--bg-base-white);
-		border-color: var(--bg-vanilla-300);
-	}
-
-	.forgot-password-link {
-		color: var(--text-neutral-dark-300);
-	}
-
-	.login-form-input {
-		background: var(--bg-vanilla-200);
-		border-color: var(--bg-vanilla-300);
-		color: var(--text-ink-500);
-
-		&::placeholder {
-			color: var(--text-neutral-light-200);
-		}
-
-		&:focus {
-			border-color: var(--primary);
-		}
-
-		// Select component light mode styling
-		&.ant-select {
-			.ant-select-selector {
-				background: var(--bg-vanilla-200) !important;
-				border-color: var(--bg-vanilla-300) !important;
-				color: var(--text-ink-500) !important;
-			}
-
-			.ant-select-selection-placeholder {
-				color: var(--text-neutral-light-200) !important;
-			}
-
-			.ant-select-selection-item {
-				color: var(--text-ink-500) !important;
-			}
-
-			&:hover .ant-select-selector {
-				border-color: var(--bg-vanilla-300) !important;
-			}
-
-			&.ant-select-focused .ant-select-selector {
-				border-color: var(--primary) !important;
-			}
-		}
-	}
 }

@@ -2,6 +2,7 @@ package rulestatehistorytypes
 
 import (
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 )
 
 type GettableRuleStateTimeline struct {
@@ -11,16 +12,16 @@ type GettableRuleStateTimeline struct {
 }
 
 type GettableRuleStateHistory struct {
-	RuleID              string           `json:"ruleID" required:"true"`
-	RuleName            string           `json:"ruleName" required:"true"`
-	OverallState        AlertState       `json:"overallState" required:"true"`
-	OverallStateChanged bool             `json:"overallStateChanged" required:"true"`
-	State               AlertState       `json:"state" required:"true"`
-	StateChanged        bool             `json:"stateChanged" required:"true"`
-	UnixMilli           int64            `json:"unixMilli" required:"true"`
-	Labels              []*qbtypes.Label `json:"labels" required:"true"`
-	Fingerprint         uint64           `json:"fingerprint" required:"true"`
-	Value               float64          `json:"value" required:"true"`
+	RuleID              string               `json:"ruleId" required:"true"`
+	RuleName            string               `json:"ruleName" required:"true"`
+	OverallState        ruletypes.AlertState `json:"overallState" required:"true"`
+	OverallStateChanged bool                 `json:"overallStateChanged" required:"true"`
+	State               ruletypes.AlertState `json:"state" required:"true"`
+	StateChanged        bool                 `json:"stateChanged" required:"true"`
+	UnixMilli           int64                `json:"unixMilli" required:"true"`
+	Labels              []*qbtypes.Label     `json:"labels" required:"true"`
+	Fingerprint         uint64               `json:"fingerprint" required:"true"`
+	Value               float64              `json:"value" required:"true"`
 }
 
 type GettableRuleStateHistoryContributor struct {
@@ -32,9 +33,9 @@ type GettableRuleStateHistoryContributor struct {
 }
 
 type GettableRuleStateWindow struct {
-	State AlertState `json:"state" ch:"state" required:"true"`
-	Start int64      `json:"start" ch:"start" required:"true"`
-	End   int64      `json:"end" ch:"end" required:"true"`
+	State ruletypes.AlertState `json:"state" ch:"state" required:"true"`
+	Start int64                `json:"start" ch:"start" required:"true"`
+	End   int64                `json:"end" ch:"end" required:"true"`
 }
 
 type GettableRuleStateHistoryStats struct {

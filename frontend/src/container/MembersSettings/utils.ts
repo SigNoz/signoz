@@ -1,6 +1,7 @@
 export enum FilterMode {
 	All = 'all',
 	Invited = 'invited',
+	Deleted = 'deleted',
 }
 
 export enum MemberStatus {

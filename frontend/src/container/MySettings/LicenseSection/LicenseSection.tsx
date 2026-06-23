@@ -1,8 +1,8 @@
 import { useCopyToClipboard } from 'react-use';
-import { Button } from '@signozhq/button';
-import { Typography } from 'antd';
+import { Button } from '@signozhq/ui/button';
+import { Typography } from '@signozhq/ui/typography';
 import { useNotifications } from 'hooks/useNotifications';
-import { Copy } from 'lucide-react';
+import { Copy } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { getMaskedKey } from 'utils/maskedKey';
 
@@ -37,7 +37,8 @@ function LicenseSection(): JSX.Element | null {
 						<span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
 							<Typography.Text code>{getMaskedKey(activeLicense.key)}</Typography.Text>
 							<Button
-								variant="ghost"
+								variant="link"
+								color="none"
 								aria-label="Copy license key"
 								data-testid="license-key-copy-btn"
 								onClick={(): void => handleCopyKey(activeLicense.key)}

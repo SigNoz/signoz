@@ -29,12 +29,21 @@
 
 	&--critical,
 	&--error {
-		@include severity-styles(rgba(245, 108, 135, 0.2), var(--text-sakura-400));
+		@include severity-styles(
+			color-mix(in srgb, var(--bg-sakura-400) 20%, transparent),
+			var(--text-sakura-400)
+		);
 	}
 	&--warning {
-		@include severity-styles(rgba(255, 215, 120, 0.2), var(--text-amber-400));
+		@include severity-styles(
+			color-mix(in srgb, var(--bg-amber-400) 20%, transparent),
+			var(--text-amber-400)
+		);
 	}
 	&--info {
-		@include severity-styles(rgba(113, 144, 249, 0.2), var(--text-robin-400));
+		@include severity-styles(
+			color-mix(in srgb, var(--bg-robin-400) 20%, transparent),
+			var(--text-robin-400)
+		);
 	}
 }

@@ -12,6 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/cachetypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/serviceaccounttypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -144,12 +145,12 @@ func (module *module) DeleteRole(ctx context.Context, orgID valuer.UUID, id valu
 		return err
 	}
 
-	err = module.store.DeleteServiceAccountRole(ctx, serviceAccount.ID, roleID)
+	err = module.authz.Revoke(ctx, orgID, []string{role.Name}, authtypes.MustNewSubject(coretypes.NewResourceServiceAccount(), id.String(), orgID, nil))
 	if err != nil {
 		return err
 	}
 
-	err = module.authz.Revoke(ctx, orgID, []string{role.Name}, authtypes.MustNewSubject(authtypes.TypeableServiceAccount, id.String(), orgID, nil))
+	err = module.store.DeleteServiceAccountRole(ctx, serviceAccount.ID, roleID)
 	if err != nil {
 		return err
 	}
@@ -187,7 +188,7 @@ func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.U
 		return err
 	}
 
-	err = module.authz.Revoke(ctx, orgID, serviceAccount.RoleNames(), authtypes.MustNewSubject(authtypes.TypeableServiceAccount, id.StringValue(), orgID, nil))
+	err = module.authz.Revoke(ctx, orgID, serviceAccount.RoleNames(), authtypes.MustNewSubject(coretypes.NewResourceServiceAccount(), id.StringValue(), orgID, nil))
 	if err != nil {
 		return err
 	}
@@ -361,7 +362,7 @@ func (module *module) getOrGetSetIdentity(ctx context.Context, serviceAccountID 
 		return identity, nil
 	}
 
-	storableServiceAccount, err := module.store.GetByID(ctx, serviceAccountID)
+	storableServiceAccount, err := module.store.GetByIDAndStatus(ctx, serviceAccountID, serviceaccounttypes.ServiceAccountStatusActive)
 	if err != nil {
 		return nil, err
 	}
@@ -386,12 +387,12 @@ func (module *module) setRole(ctx context.Context, orgID valuer.UUID, id valuer.
 		return err
 	}
 
-	err = module.store.CreateServiceAccountRole(ctx, serviceAccountRole)
+	err = module.authz.Grant(ctx, orgID, []string{role.Name}, authtypes.MustNewSubject(coretypes.NewResourceServiceAccount(), id.String(), orgID, nil))
 	if err != nil {
 		return err
 	}
 
-	err = module.authz.Grant(ctx, orgID, []string{role.Name}, authtypes.MustNewSubject(authtypes.TypeableServiceAccount, id.String(), orgID, nil))
+	err = module.store.CreateServiceAccountRole(ctx, serviceAccountRole)
 	if err != nil {
 		return err
 	}

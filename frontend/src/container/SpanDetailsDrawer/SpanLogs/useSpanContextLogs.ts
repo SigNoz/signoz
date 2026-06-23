@@ -118,10 +118,10 @@ export const useSpanContextLogs = ({
 	const [spanLogIds, setSpanLogIds] = useState<Set<string>>(new Set());
 
 	// Phase 1: Fetch span-specific logs (trace_id + span_id)
-	const spanFilter = useMemo(() => createSpanLogsFilters(traceId, spanId), [
-		traceId,
-		spanId,
-	]);
+	const spanFilter = useMemo(
+		() => createSpanLogsFilters(traceId, spanId),
+		[traceId, spanId],
+	);
 	const spanQueryPayload = useMemo(
 		() =>
 			getSpanLogsQueryPayload(timeRange.startTime, timeRange.endTime, spanFilter),

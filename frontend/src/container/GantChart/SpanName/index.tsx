@@ -7,8 +7,8 @@ function SpanNameComponent({
 	return (
 		<Container title={`${name} ${serviceName}`}>
 			<SpanWrapper>
-				<Span ellipsis>{name}</Span>
-				<Service ellipsis>{serviceName}</Service>
+				<Span truncate={1}>{name}</Span>
+				<Service truncate={1}>{serviceName}</Service>
 			</SpanWrapper>
 		</Container>
 	);

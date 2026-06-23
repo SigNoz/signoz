@@ -19,15 +19,16 @@ export const ColumnsTitle = {
 	[ColumnsKeyAndDataIndex.Min]: 'Min',
 };
 
-export const PANEL_TYPES_VS_FULL_VIEW_TABLE: PanelTypeAndGraphManagerVisibilityProps = {
-	TIME_SERIES: true,
-	VALUE: false,
-	TABLE: false,
-	LIST: false,
-	TRACE: false,
-	BAR: true,
-	PIE: false,
-	HEATMAP: false,
-	HISTOGRAM: false,
-	EMPTY_WIDGET: false,
-};
+export const PANEL_TYPES_VS_FULL_VIEW_TABLE: PanelTypeAndGraphManagerVisibilityProps =
+	{
+		TIME_SERIES: true,
+		VALUE: false,
+		TABLE: false,
+		LIST: false,
+		TRACE: false,
+		BAR: true,
+		PIE: false,
+		HEATMAP: false,
+		HISTOGRAM: false,
+		EMPTY_WIDGET: false,
+	};

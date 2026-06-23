@@ -1,11 +1,15 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useQuery } from 'react-query';
 import { Button, Card } from 'antd';
-import get from 'api/alerts/get';
+import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
+import { useGetRuleByID } from 'api/generated/services/rules';
+import type {
+	RenderErrorResponseDTO,
+	RuletypesRuleDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import { AxiosError } from 'axios';
 import Spinner from 'components/Spinner';
 import { QueryParams } from 'constants/query';
-import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
 import EditRulesContainer from 'container/EditRules';
 import { useNotifications } from 'hooks/useNotifications';
@@ -16,12 +20,10 @@ import {
 	NEW_ALERT_SCHEMA_VERSION,
 	PostableAlertRuleV2,
 } from 'types/api/alerts/alertTypesV2';
-
 import {
-	errorMessageReceivedFromBackend,
-	improvedErrorMessage,
-	returnToAlertsPage,
-} from './constants';
+	fromRuleDTOToAlertDef,
+	fromRuleDTOToPostableRuleV2,
+} from 'types/api/alerts/convert';
 
 import './EditRules.styles.scss';
 
@@ -33,16 +35,14 @@ function EditRules(): JSX.Element {
 
 	const isValidRuleId = ruleId !== null && String(ruleId).length !== 0;
 
-	const { isLoading, data, isRefetching, isError } = useQuery(
-		[REACT_QUERY_KEY.ALERT_RULE_DETAILS, ruleId],
+	const { isLoading, data, isRefetching, isError, error } = useGetRuleByID(
+		{ id: ruleId || '' },
 		{
-			queryFn: () =>
-				get({
-					id: ruleId || '',
-				}),
-			enabled: isValidRuleId,
-			refetchOnMount: false,
-			refetchOnWindowFocus: false,
+			query: {
+				enabled: isValidRuleId,
+				refetchOnMount: false,
+				refetchOnWindowFocus: false,
+			},
 		},
 	);
 
@@ -65,22 +65,26 @@ function EditRules(): JSX.Element {
 		}
 	}, [isValidRuleId, ruleId, notifications, safeNavigate]);
 
+	const ruleData: RuletypesRuleDTO | undefined = data?.data;
+
+	const apiError = useMemo(
+		() => convertToApiError(error as AxiosError<RenderErrorResponseDTO> | null),
+		[error],
+	);
+
 	if (
 		(isError && !isValidRuleId) ||
 		ruleId == null ||
-		(data?.payload?.data === undefined && !isLoading)
+		(ruleData === undefined && !isLoading)
 	) {
+		const errorMsg = apiError?.getErrorMessage() || '';
 		return (
 			<div className="edit-rules-container edit-rules-container--error">
 				<Card size="small" className="edit-rules-card">
-					<p className="content">
-						{data?.message === errorMessageReceivedFromBackend
-							? improvedErrorMessage
-							: data?.error || t('something_went_wrong')}
-					</p>
+					<p className="content">{errorMsg || t('something_went_wrong')}</p>
 					<div className="btn-container">
 						<Button type="default" size="large" onClick={clickHandler}>
-							{returnToAlertsPage}
+							Return to Alerts Page
 						</Button>
 					</div>
 				</Card>
@@ -88,20 +92,20 @@ function EditRules(): JSX.Element {
 		);
 	}
 
-	if (isLoading || isRefetching || !data?.payload) {
+	if (isLoading || isRefetching || !ruleData) {
 		return <Spinner tip="Loading Rules..." />;
 	}
 
 	let initialV2AlertValue: PostableAlertRuleV2 | null = null;
-	if (data.payload.data.schemaVersion === NEW_ALERT_SCHEMA_VERSION) {
-		initialV2AlertValue = data.payload.data as PostableAlertRuleV2;
+	if (ruleData.schemaVersion === NEW_ALERT_SCHEMA_VERSION) {
+		initialV2AlertValue = fromRuleDTOToPostableRuleV2(ruleData);
 	}
 
 	return (
 		<div className="edit-rules-container">
 			<EditRulesContainer
 				ruleId={ruleId || ''}
-				initialValue={data.payload.data}
+				initialValue={fromRuleDTOToAlertDef(ruleData)}
 				initialV2AlertValue={initialV2AlertValue}
 			/>
 		</div>

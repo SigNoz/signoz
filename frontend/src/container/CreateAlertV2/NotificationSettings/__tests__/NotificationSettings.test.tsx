@@ -27,8 +27,8 @@ jest.mock('container/CreateAlertV2/utils', () => ({
 	...jest.requireActual('container/CreateAlertV2/utils'),
 }));
 
-const initialNotificationSettings = createMockAlertContextState()
-	.notificationSettings;
+const initialNotificationSettings =
+	createMockAlertContextState().notificationSettings;
 const mockSetNotificationSettings = jest.fn();
 jest.spyOn(createAlertContext, 'useCreateAlertState').mockReturnValue(
 	createMockAlertContextState({

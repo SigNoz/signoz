@@ -56,7 +56,7 @@ const hexToRgb = (
 				r: parseInt(result[1], 16),
 				g: parseInt(result[2], 16),
 				b: parseInt(result[3], 16),
-		  }
+			}
 		: null;
 };
 
@@ -129,7 +129,9 @@ export function buildDerivedStarts(
 	bucketEnds: number[],
 	bucketStarts?: number[],
 ): number[] {
-	if (bucketStarts?.length === bucketEnds.length) return bucketStarts;
+	if (bucketStarts?.length === bucketEnds.length) {
+		return bucketStarts;
+	}
 	return bucketEnds.map((_, idx) => (idx === 0 ? 0 : bucketEnds[idx - 1]));
 }
 
@@ -164,15 +166,18 @@ export function findCumulativeIndex(
 	let cum = 0;
 	for (let i = 0; i < bucketTotals.length; i += 1) {
 		cum += bucketTotals[i];
-		if (cum >= target) return i;
+		if (cum >= target) {
+			return i;
+		}
 	}
 	return bucketTotals.length - 1;
 }
 
 // findNonZeroRange function returns the min and max index of the non zero values in the bucketTotals array
-export function findNonZeroRange(
-	bucketTotals: number[],
-): { minIdx: number; maxIdx: number } {
+export function findNonZeroRange(bucketTotals: number[]): {
+	minIdx: number;
+	maxIdx: number;
+} {
 	let minIdx = 0;
 	let maxIdx = bucketTotals.length - 1;
 

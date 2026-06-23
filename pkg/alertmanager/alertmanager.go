@@ -5,6 +5,7 @@ import (
 
 	amConfig "github.com/prometheus/alertmanager/config"
 
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerserver"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/statsreporter"
@@ -25,7 +26,7 @@ type Alertmanager interface {
 	PutAlerts(context.Context, string, alertmanagertypes.PostableAlerts) error
 
 	// TestReceiver sends a test alert to a receiver.
-	TestReceiver(context.Context, string, alertmanagertypes.Receiver) error
+	TestReceiver(context.Context, string, *alertmanagertypes.Receiver) error
 
 	// TestAlert sends an alert to a list of receivers.
 	TestAlert(ctx context.Context, orgID string, ruleID string, receiversMap map[*alertmanagertypes.PostableAlert][]string) error
@@ -40,13 +41,16 @@ type Alertmanager interface {
 	GetChannelByID(context.Context, string, valuer.UUID) (*alertmanagertypes.Channel, error)
 
 	// UpdateChannel updates a channel for the organization.
-	UpdateChannelByReceiverAndID(context.Context, string, alertmanagertypes.Receiver, valuer.UUID) error
+	UpdateChannelByReceiverAndID(context.Context, string, *alertmanagertypes.Receiver, valuer.UUID) error
 
 	// CreateChannel creates a channel for the organization.
-	CreateChannel(context.Context, string, alertmanagertypes.Receiver) (*alertmanagertypes.Channel, error)
+	CreateChannel(context.Context, string, *alertmanagertypes.Receiver) (*alertmanagertypes.Channel, error)
 
 	// DeleteChannelByID deletes a channel for the organization.
 	DeleteChannelByID(context.Context, string, valuer.UUID) error
+
+	// Config returns the alertmanagerserver configuration.
+	Config() alertmanagerserver.Config
 
 	// SetConfig sets the config for the organization.
 	SetConfig(context.Context, *alertmanagertypes.Config) error

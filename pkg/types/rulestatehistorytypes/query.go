@@ -3,12 +3,13 @@ package rulestatehistorytypes
 import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 )
 
 type Query struct {
 	Start            int64
 	End              int64
-	State            AlertState
+	State            ruletypes.AlertState
 	FilterExpression qbtypes.Filter
 	Limit            int64
 	Offset           int64

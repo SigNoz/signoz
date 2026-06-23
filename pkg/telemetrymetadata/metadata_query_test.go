@@ -2,9 +2,14 @@ package telemetrymetadata
 
 import (
 	"context"
+	"regexp"
 	"testing"
 
+	cmock "github.com/SigNoz/clickhouse-go-mock"
+	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
+	"github.com/SigNoz/signoz/pkg/telemetryaudit"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
 	"github.com/SigNoz/signoz/pkg/telemetrymeter"
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
@@ -12,10 +17,23 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
 	"github.com/SigNoz/signoz/pkg/telemetrytraces"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	cmock "github.com/srikanthccv/ClickHouse-go-mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+type regexMatcher struct {
+}
+
+func (m *regexMatcher) Match(expectedSQL, actualSQL string) error {
+	re, err := regexp.Compile(expectedSQL)
+	if err != nil {
+		return err
+	}
+	if !re.MatchString(actualSQL) {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "expected query to contain %s, got %s", expectedSQL, actualSQL)
+	}
+	return nil
+}
 
 func TestGetFirstSeenFromMetricMetadata(t *testing.T) {
 	mockTelemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
@@ -37,9 +55,15 @@ func TestGetFirstSeenFromMetricMetadata(t *testing.T) {
 		telemetrylogs.TagAttributesV2TableName,
 		telemetrylogs.LogAttributeKeysTblName,
 		telemetrylogs.LogResourceKeysTblName,
+		telemetryaudit.DBName,
+		telemetryaudit.AuditLogsTableName,
+		telemetryaudit.TagAttributesTableName,
+		telemetryaudit.LogAttributeKeysTblName,
+		telemetryaudit.LogResourceKeysTblName,
 		DBName,
 		AttributesMetadataLocalTableName,
 		ColumnEvolutionMetadataTableName,
+		flaggertest.New(t),
 	)
 
 	lookupKeys := []telemetrytypes.MetricMetadataLookupKey{

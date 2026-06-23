@@ -4,11 +4,6 @@ import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 import OnboardingQuestionaire from '../index';
 
 // Mock dependencies
-jest.mock('api/common/logEvent', () => ({
-	__esModule: true,
-	default: jest.fn(),
-}));
-
 jest.mock('lib/history', () => ({
 	__esModule: true,
 	default: {
@@ -103,9 +98,9 @@ describe('OnboardingQuestionaire Component', () => {
 			const othersCheckbox = screen.getByLabelText(/^others$/i);
 			await user.click(othersCheckbox);
 
-			expect(
-				await screen.findByPlaceholderText(/what tool do you currently use/i),
-			).toBeInTheDocument();
+			await expect(
+				screen.findByPlaceholderText(/what tool do you currently use/i),
+			).resolves.toBeInTheDocument();
 		});
 
 		it('shows migration timeline options only when specific observability tools are selected', async () => {
@@ -120,9 +115,9 @@ describe('OnboardingQuestionaire Component', () => {
 			const datadogCheckbox = screen.getByLabelText(/datadog/i);
 			await user.click(datadogCheckbox);
 
-			expect(
-				await screen.findByText(/What is your timeline for migrating to SigNoz/i),
-			).toBeInTheDocument();
+			await expect(
+				screen.findByText(/What is your timeline for migrating to SigNoz/i),
+			).resolves.toBeInTheDocument();
 
 			// Not visible when None is selected
 			const noneCheckbox = screen.getByLabelText(/none\/starting fresh/i);
@@ -144,9 +139,9 @@ describe('OnboardingQuestionaire Component', () => {
 			const nextButton = screen.getByRole('button', { name: /next/i });
 			await user.click(nextButton);
 
-			expect(
-				await screen.findByText(/how did you first come across signoz/i, {}),
-			).toBeInTheDocument();
+			await expect(
+				screen.findByText(/how did you first come across signoz/i, {}),
+			).resolves.toBeInTheDocument();
 		});
 	});
 
@@ -162,12 +157,12 @@ describe('OnboardingQuestionaire Component', () => {
 			await user.click(screen.getByLabelText(/just exploring/i));
 			await user.click(screen.getByRole('button', { name: /next/i }));
 
-			expect(
-				await screen.findByText(/set up your workspace/i, {}),
-			).toBeInTheDocument();
-			expect(
-				await screen.findByText(/how did you first come across signoz/i, {}),
-			).toBeInTheDocument();
+			await expect(
+				screen.findByText(/set up your workspace/i, {}),
+			).resolves.toBeInTheDocument();
+			await expect(
+				screen.findByText(/how did you first come across signoz/i, {}),
+			).resolves.toBeInTheDocument();
 		});
 
 		it('disables next button when fields are empty', async () => {
@@ -198,9 +193,9 @@ describe('OnboardingQuestionaire Component', () => {
 			await user.click(screen.getByLabelText(/just exploring/i));
 			await user.click(screen.getByRole('button', { name: /next/i }));
 
-			expect(
-				await screen.findByPlaceholderText(/e\.g\., googling/i, {}),
-			).toBeInTheDocument();
+			await expect(
+				screen.findByPlaceholderText(/e\.g\., googling/i, {}),
+			).resolves.toBeInTheDocument();
 
 			const discoverInput = screen.getByPlaceholderText(/e\.g\., googling/i);
 			await user.type(discoverInput, 'Found via Google search');
@@ -225,19 +220,16 @@ describe('OnboardingQuestionaire Component', () => {
 			await user.click(screen.getByLabelText(/just exploring/i));
 			await user.click(screen.getByRole('button', { name: /next/i }));
 
-			expect(
-				await screen.findByText(/what got you interested in signoz/i, {}),
-			).toBeInTheDocument();
+			await expect(
+				screen.findByText(/what got you interested in signoz/i, {}),
+			).resolves.toBeInTheDocument();
 
 			const othersCheckbox = screen.getByLabelText(/^others$/i);
 			await user.click(othersCheckbox);
 
-			expect(
-				await screen.findByPlaceholderText(
-					/what got you interested in signoz/i,
-					{},
-				),
-			).toBeInTheDocument();
+			await expect(
+				screen.findByPlaceholderText(/what got you interested in signoz/i, {}),
+			).resolves.toBeInTheDocument();
 		});
 	});
 
@@ -253,9 +245,9 @@ describe('OnboardingQuestionaire Component', () => {
 			await user.click(screen.getByLabelText(/just exploring/i));
 			await user.click(screen.getByRole('button', { name: /next/i }));
 
-			expect(
-				await screen.findByPlaceholderText(/e\.g\., googling/i, {}),
-			).toBeInTheDocument();
+			await expect(
+				screen.findByPlaceholderText(/e\.g\., googling/i, {}),
+			).resolves.toBeInTheDocument();
 
 			await user.type(
 				screen.getByPlaceholderText(/e\.g\., googling/i),
@@ -264,16 +256,15 @@ describe('OnboardingQuestionaire Component', () => {
 			await user.click(screen.getByLabelText(/lowering observability costs/i));
 			await user.click(screen.getByRole('button', { name: /next/i }));
 
-			expect(
-				await screen.findByText(
-					/what does your scale approximately look like/i,
-					{},
-				),
-			).toBeInTheDocument();
-			expect(await screen.findByText(/logs \/ day/i, {})).toBeInTheDocument();
-			expect(
-				await screen.findByText(/number of services/i, {}),
-			).toBeInTheDocument();
+			await expect(
+				screen.findByText(/what does your scale approximately look like/i, {}),
+			).resolves.toBeInTheDocument();
+			await expect(
+				screen.findByText(/logs \/ day/i, {}),
+			).resolves.toBeInTheDocument();
+			await expect(
+				screen.findByText(/number of services/i, {}),
+			).resolves.toBeInTheDocument();
 		});
 
 		it('fires PUT to /zeus/profiles and advances to step 4 on success', async () => {
@@ -327,9 +318,9 @@ describe('OnboardingQuestionaire Component', () => {
 			await user.click(screen.getByLabelText(/just exploring/i));
 			await user.click(screen.getByRole('button', { name: /next/i }));
 
-			expect(
-				await screen.findByPlaceholderText(/e\.g\., googling/i, {}),
-			).toBeInTheDocument();
+			await expect(
+				screen.findByPlaceholderText(/e\.g\., googling/i, {}),
+			).resolves.toBeInTheDocument();
 
 			await user.type(
 				screen.getByPlaceholderText(/e\.g\., googling/i),
@@ -338,9 +329,9 @@ describe('OnboardingQuestionaire Component', () => {
 			await user.click(screen.getByLabelText(/lowering observability costs/i));
 			await user.click(screen.getByRole('button', { name: /next/i }));
 
-			expect(
-				await screen.findByRole('button', { name: /i'll do this later/i }),
-			).toBeInTheDocument();
+			await expect(
+				screen.findByRole('button', { name: /i'll do this later/i }),
+			).resolves.toBeInTheDocument();
 		});
 	});
 });

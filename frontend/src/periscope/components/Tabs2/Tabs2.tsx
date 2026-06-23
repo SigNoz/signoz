@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Tag } from 'antd';
+import { Button } from 'antd';
+import { Badge } from '@signozhq/ui/badge';
 import { TimelineFilter } from 'container/AlertHistory/types';
-import { Undo } from 'lucide-react';
+import { Undo } from '@signozhq/icons';
 
 import './Tabs2.styles.scss';
 
@@ -65,11 +66,7 @@ function Tabs2({
 					>
 						{tab.label}
 
-						{tab.isBeta && (
-							<Tag bordered={false} color="geekblue">
-								Beta
-							</Tag>
-						)}
+						{tab.isBeta && <Badge color="robin">Beta</Badge>}
 					</Button>
 				))}
 			</Button.Group>

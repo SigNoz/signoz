@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Button, Radio, RadioChangeEvent, Tooltip } from 'antd';
+import { Button, Tooltip } from 'antd';
+import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
 import InputWithLabel from 'components/InputWithLabel/InputWithLabel';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GroupByFilter } from 'container/QueryBuilder/filters/GroupByFilter/GroupByFilter';
@@ -8,7 +9,7 @@ import { ReduceToFilter } from 'container/QueryBuilder/filters/ReduceToFilter/Re
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { get, isEmpty } from 'lodash-es';
-import { BarChart2, ChevronUp, ExternalLink, ScrollText } from 'lucide-react';
+import { BarChart, ChevronUp, ExternalLink, ScrollText } from '@signozhq/icons';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { MetricAggregation } from 'types/api/v5/queryRange';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
@@ -46,7 +47,7 @@ const ADD_ONS_KEYS_TO_QUERY_PATH = {
 
 const ADD_ONS = [
 	{
-		icon: <BarChart2 size={14} />,
+		icon: <BarChart size={14} />,
 		label: 'Group By',
 		key: ADD_ONS_KEYS.GROUP_BY,
 		description:
@@ -250,8 +251,7 @@ function QueryAddOns({
 		);
 	}, [panelType, isListViewPanel, query, showReduceTo]);
 
-	const handleOptionClick = (e: RadioChangeEvent): void => {
-		const clickedAddOn = e.target.value as AddOn;
+	const handleOptionClick = (clickedAddOn: AddOn): void => {
 		const isAlreadySelected = selectedViews.some(
 			(view) => view.key === clickedAddOn.key,
 		);
@@ -464,36 +464,37 @@ function QueryAddOns({
 						</div>
 					)}
 
-					{selectedViews.find((view) => view.key === 'reduce_to') && showReduceTo && (
-						<div className="add-on-content" data-testid="reduce-to-content">
-							<div className="periscope-input-with-label">
-								<Tooltip
-									title={
-										<TooltipContent
-											label="Reduce to"
-											description="Apply mathematical operations like sum, average, min, max, or percentiles to reduce multiple time series into a single value."
-											docLink="https://signoz.io/docs/userguide/query-builder-v5/#reduce-operations"
-										/>
-									}
-									placement="top"
-									mouseEnterDelay={0.5}
-								>
-									<div className="label" style={{ cursor: 'help' }}>
-										Reduce to
+					{selectedViews.find((view) => view.key === 'reduce_to') &&
+						showReduceTo && (
+							<div className="add-on-content" data-testid="reduce-to-content">
+								<div className="periscope-input-with-label">
+									<Tooltip
+										title={
+											<TooltipContent
+												label="Reduce to"
+												description="Apply mathematical operations like sum, average, min, max, or percentiles to reduce multiple time series into a single value."
+												docLink="https://signoz.io/docs/userguide/query-builder-v5/#reduce-operations"
+											/>
+										}
+										placement="top"
+										mouseEnterDelay={0.5}
+									>
+										<div className="label" style={{ cursor: 'help' }}>
+											Reduce to
+										</div>
+									</Tooltip>
+									<div className="input">
+										<ReduceToFilter query={query} onChange={handleChangeReduceToV5} />
 									</div>
-								</Tooltip>
-								<div className="input">
-									<ReduceToFilter query={query} onChange={handleChangeReduceToV5} />
-								</div>
 
-								<Button
-									className="close-btn periscope-btn ghost"
-									icon={<ChevronUp size={16} />}
-									onClick={(): void => handleRemoveView('reduce_to')}
-								/>
+									<Button
+										className="close-btn periscope-btn ghost"
+										icon={<ChevronUp size={16} />}
+										onClick={(): void => handleRemoveView('reduce_to')}
+									/>
+								</div>
 							</div>
-						</div>
-					)}
+						)}
 
 					{selectedViews.find((view) => view.key === 'legend_format') && (
 						<div className="add-on-content" data-testid="legend-format-content">
@@ -514,15 +515,27 @@ function QueryAddOns({
 				</div>
 			)}
 
-			<div className="add-ons-list">
-				<Radio.Group
-					className="add-ons-tabs"
-					onChange={handleOptionClick}
-					value={selectedViews}
-				>
-					{addOns.map((addOn) => (
+			<ToggleGroupSimple
+				type="multiple"
+				className="add-ons-tabs"
+				value={selectedViews.map((view) => view.key)}
+				onChange={(newKeys: string[]): void => {
+					const oldKeys = selectedViews.map((view) => view.key);
+					const toggledKey =
+						newKeys.find((k) => !oldKeys.includes(k)) ??
+						oldKeys.find((k) => !newKeys.includes(k));
+					if (!toggledKey) {
+						return;
+					}
+					const clickedAddOn = addOns.find((a) => a.key === toggledKey);
+					if (clickedAddOn) {
+						handleOptionClick(clickedAddOn);
+					}
+				}}
+				items={addOns.map((addOn) => ({
+					value: addOn.key,
+					label: (
 						<Tooltip
-							key={addOn.key}
 							title={
 								<TooltipContent
 									label={addOn.label}
@@ -533,26 +546,17 @@ function QueryAddOns({
 							placement="top"
 							mouseEnterDelay={0.5}
 						>
-							<Radio.Button
-								className={
-									selectedViews.find((view) => view.key === addOn.key)
-										? 'selected-view tab'
-										: 'tab'
-								}
-								value={addOn}
+							<span
+								className="add-on-tab-title"
+								data-testid={`query-add-on-${addOn.key}`}
 							>
-								<div
-									className="add-on-tab-title"
-									data-testid={`query-add-on-${addOn.key}`}
-								>
-									{addOn.icon}
-									{addOn.label}
-								</div>
-							</Radio.Button>
+								{addOn.icon}
+								{addOn.label}
+							</span>
 						</Tooltip>
-					))}
-				</Radio.Group>
-			</div>
+					),
+				}))}
+			/>
 		</div>
 	);
 }

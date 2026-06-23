@@ -12,7 +12,7 @@ describe('getUplotChartData', () => {
 			BarNonStackedChartData.fillSpans,
 			BarNonStackedChartData.stackedBarChart,
 		);
-		expect(result).toEqual([
+		expect(result).toStrictEqual([
 			[1758713940, 1758715020],
 			[33.933, 31.767],
 			[20.0, 25.0],
@@ -29,10 +29,10 @@ describe('getUplotChartData', () => {
 		// First series: [33.933, 31.767] + [20.0, 25.0] = [53.933, 56.767]
 		// Second series: [20.0, 25.0] (unchanged)
 		expect(result).toHaveLength(3);
-		expect(result[0]).toEqual([1758713940, 1758715020]);
+		expect(result[0]).toStrictEqual([1758713940, 1758715020]);
 		expect(result[1][0]).toBeCloseTo(53.933, 3);
 		expect(result[1][1]).toBeCloseTo(56.767, 3);
-		expect(result[2]).toEqual([20.0, 25.0]);
+		expect(result[2]).toStrictEqual([20.0, 25.0]);
 	});
 
 	it('should return the correct chart data for time series chart', () => {
@@ -41,7 +41,7 @@ describe('getUplotChartData', () => {
 			TimeSeriesChartData.fillSpans,
 			TimeSeriesChartData.stackedBarChart,
 		);
-		expect(result).toEqual([
+		expect(result).toStrictEqual([
 			[1758713940, 1758715020],
 			[33.933, 31.767],
 			[20.0, 25.0],

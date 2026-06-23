@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 import { ChangeEvent, useState } from 'react';
-import { Button, Input, Modal, Typography } from 'antd';
+import { Input } from '@signozhq/ui/input';
+import { Button, Modal } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import ApacheIcon from 'assets/CustomIcons/ApacheIcon';
 import DockerIcon from 'assets/CustomIcons/DockerIcon';
 import ElasticSearchIcon from 'assets/CustomIcons/ElasticSearchIcon';
@@ -12,8 +14,17 @@ import NginxIcon from 'assets/CustomIcons/NginxIcon';
 import PostgreSQLIcon from 'assets/CustomIcons/PostgreSQLIcon';
 import RedisIcon from 'assets/CustomIcons/RedisIcon';
 import cx from 'classnames';
-import { ConciergeBell, DraftingCompass, Drill, Plus, X } from 'lucide-react';
+import {
+	ConciergeBell,
+	DraftingCompass,
+	Drill,
+	Plus,
+	X,
+} from '@signozhq/icons';
 import { DashboardTemplate } from 'types/api/dashboard/getAll';
+
+import blankDashboardTemplatePreviewUrl from '@/assets/Images/blankDashboardTemplatePreview.svg';
+import redisTemplatePreviewUrl from '@/assets/Images/redisTemplatePreview.svg';
 
 import { filterTemplates } from '../utils';
 
@@ -25,91 +36,91 @@ const templatesList: DashboardTemplate[] = [
 		icon: <Drill />,
 		id: 'blank',
 		description: 'Create a custom dashboard from scratch.',
-		previewImage: '/Images/blankDashboardTemplatePreview.svg',
+		previewImage: blankDashboardTemplatePreviewUrl,
 	},
 	{
 		name: 'Alert Manager',
 		icon: <ConciergeBell />,
 		id: 'alertManager',
 		description: 'Create a custom dashboard from scratch.',
-		previewImage: '/Images/blankDashboardTemplatePreview.svg',
+		previewImage: blankDashboardTemplatePreviewUrl,
 	},
 	{
 		name: 'Apache',
 		icon: <ApacheIcon />,
 		id: 'apache',
 		description: 'Create a custom dashboard from scratch.',
-		previewImage: '/Images/blankDashboardTemplatePreview.svg',
+		previewImage: blankDashboardTemplatePreviewUrl,
 	},
 	{
 		name: 'Docker',
 		icon: <DockerIcon />,
 		id: 'docker',
 		description: 'Create a custom dashboard from scratch.',
-		previewImage: '/Images/blankDashboardTemplatePreview.svg',
+		previewImage: blankDashboardTemplatePreviewUrl,
 	},
 	{
 		name: 'Elasticsearch',
 		icon: <ElasticSearchIcon />,
 		id: 'elasticSearch',
 		description: 'Create a custom dashboard from scratch.',
-		previewImage: '/Images/blankDashboardTemplatePreview.svg',
+		previewImage: blankDashboardTemplatePreviewUrl,
 	},
 	{
 		name: 'MongoDB',
 		icon: <MongoDBIcon />,
 		id: 'mongoDB',
 		description: 'Create a custom dashboard from scratch.',
-		previewImage: '/Images/blankDashboardTemplatePreview.svg',
+		previewImage: blankDashboardTemplatePreviewUrl,
 	},
 	{
 		name: 'Heroku',
 		icon: <HerokuIcon />,
 		id: 'heroku',
 		description: 'Create a custom dashboard from scratch.',
-		previewImage: '/Images/blankDashboardTemplatePreview.svg',
+		previewImage: blankDashboardTemplatePreviewUrl,
 	},
 	{
 		name: 'Nginx',
 		icon: <NginxIcon />,
 		id: 'nginx',
 		description: 'Create a custom dashboard from scratch.',
-		previewImage: '/Images/blankDashboardTemplatePreview.svg',
+		previewImage: blankDashboardTemplatePreviewUrl,
 	},
 	{
 		name: 'Kubernetes',
 		icon: <KubernetesIcon />,
 		id: 'kubernetes',
 		description: 'Create a custom dashboard from scratch.',
-		previewImage: '/Images/blankDashboardTemplatePreview.svg',
+		previewImage: blankDashboardTemplatePreviewUrl,
 	},
 	{
 		name: 'MySQL',
 		icon: <MySQLIcon />,
 		id: 'mySQL',
 		description: 'Create a custom dashboard from scratch.',
-		previewImage: '/Images/blankDashboardTemplatePreview.svg',
+		previewImage: blankDashboardTemplatePreviewUrl,
 	},
 	{
 		name: 'PostgreSQL',
 		icon: <PostgreSQLIcon />,
 		id: 'postgreSQL',
 		description: 'Create a custom dashboard from scratch.',
-		previewImage: '/Images/blankDashboardTemplatePreview.svg',
+		previewImage: blankDashboardTemplatePreviewUrl,
 	},
 	{
 		name: 'Redis',
 		icon: <RedisIcon />,
 		id: 'redis',
 		description: 'Create a custom dashboard from scratch.',
-		previewImage: '/Images/redisTemplatePreview.svg',
+		previewImage: redisTemplatePreviewUrl,
 	},
 	{
 		name: 'AWS',
 		icon: <DraftingCompass size={14} />,
 		id: 'aws',
 		description: 'Create a custom dashboard from scratch.',
-		previewImage: '/Images/blankDashboardTemplatePreview.svg',
+		previewImage: blankDashboardTemplatePreviewUrl,
 	},
 ];
 

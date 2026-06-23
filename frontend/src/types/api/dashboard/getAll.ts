@@ -21,10 +21,10 @@ export const VariableQueryTypeArr = [
 	'CUSTOM',
 	'DYNAMIC',
 ] as const;
-export type TVariableQueryType = typeof VariableQueryTypeArr[number];
+export type TVariableQueryType = (typeof VariableQueryTypeArr)[number];
 
 export const VariableSortTypeArr = ['DISABLED', 'ASC', 'DESC'] as const;
-export type TSortVariableValuesType = typeof VariableSortTypeArr[number];
+export type TSortVariableValuesType = (typeof VariableSortTypeArr)[number];
 
 export enum LegendPosition {
 	BOTTOM = 'bottom',
@@ -95,7 +95,7 @@ export interface DashboardData {
 	title: string;
 	layout?: Layout[];
 	panelMap?: Record<string, { widgets: Layout[]; collapsed: boolean }>;
-	variables: Record<string, IDashboardVariable>;
+	variables?: Record<string, IDashboardVariable>;
 	version?: string;
 	image?: string;
 }

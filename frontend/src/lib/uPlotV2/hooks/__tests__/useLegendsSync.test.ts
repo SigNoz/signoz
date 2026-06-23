@@ -46,7 +46,7 @@ describe('useLegendsSync', () => {
 			| ((u: uPlot, seriesIndex: number | null, opts: uPlot.Series) => void)
 			| null = null;
 
-		const config = ({
+		const config = {
 			getLegendItems: jest.fn(() => legendItems),
 			addHook: jest.fn(
 				(
@@ -66,7 +66,7 @@ describe('useLegendsSync', () => {
 					};
 				},
 			),
-		} as unknown) as UPlotConfigBuilder;
+		} as unknown as UPlotConfigBuilder;
 
 		const invokeSetSeries = (
 			seriesIndex: number | null,
@@ -96,7 +96,7 @@ describe('useLegendsSync', () => {
 			expect.any(Function),
 		);
 
-		expect(result.current.legendItemsMap).toEqual(initialItems);
+		expect(result.current.legendItemsMap).toStrictEqual(initialItems);
 	});
 
 	it('updates focusedSeriesIndex when a series gains focus via setSeries by default', async () => {
@@ -168,7 +168,7 @@ describe('useLegendsSync', () => {
 		invokeSetSeries(1, { show: true });
 
 		const after = result.current.legendItemsMap;
-		expect(after).toEqual(before);
+		expect(after).toStrictEqual(before);
 	});
 
 	it('cancels pending visibility RAF on unmount', () => {

@@ -1,6 +1,7 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
-import { AutoComplete, Spin, Typography } from 'antd';
+import { AutoComplete, Spin } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import { useListMetrics } from 'api/generated/services/metrics';
 import { MetricsexplorertypesListMetricDTO } from 'api/generated/services/sigNoz.schemas';
 import { ATTRIBUTE_TYPES, toAttributeType } from 'constants/queryBuilder';
@@ -27,6 +28,7 @@ export type MetricNameSelectorProps = {
 	defaultValue?: string;
 	onSelect?: (value: BaseAutocompleteData) => void;
 	signalSource?: 'meter' | '';
+	'data-testid'?: string;
 };
 
 function getAttributeType(
@@ -81,6 +83,7 @@ export const MetricNameSelector = memo(function MetricNameSelector({
 	defaultValue,
 	onSelect,
 	signalSource,
+	'data-testid': dataTestId,
 }: MetricNameSelectorProps): JSX.Element {
 	const currentMetricName =
 		(query.aggregations?.[0] as MetricAggregation)?.metricName ||
@@ -125,7 +128,11 @@ export const MetricNameSelector = memo(function MetricNameSelector({
 
 	const debouncedValue = useDebounce(searchText, DEBOUNCE_DELAY);
 
-	const { isFetching, isError, data: listMetricsData } = useListMetrics(
+	const {
+		isFetching,
+		isError,
+		data: listMetricsData,
+	} = useListMetrics(
 		{
 			searchText: debouncedValue,
 			limit: 100,
@@ -139,9 +146,10 @@ export const MetricNameSelector = memo(function MetricNameSelector({
 		},
 	);
 
-	const metrics = useMemo(() => listMetricsData?.data?.metrics ?? [], [
-		listMetricsData,
-	]);
+	const metrics = useMemo(
+		() => listMetricsData?.data?.metrics ?? [],
+		[listMetricsData],
+	);
 
 	useEffect(() => {
 		metricsRef.current = metrics;
@@ -274,11 +282,12 @@ export const MetricNameSelector = memo(function MetricNameSelector({
 				isFetching ? (
 					<Spin size="small" />
 				) : isError ? (
-					<Typography.Text type="danger" style={{ fontSize: 12 }}>
+					<Typography.Text color="danger" style={{ fontSize: 12 }}>
 						Failed to load metrics
 					</Typography.Text>
 				) : null
 			}
+			data-testid={dataTestId}
 			options={optionsData}
 			value={inputValue}
 			onBlur={handleBlur}

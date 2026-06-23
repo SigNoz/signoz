@@ -1,6 +1,8 @@
 package signoz
 
 import (
+	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanager"
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/authz/signozauthzapi"
@@ -18,6 +20,10 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/dashboard/impldashboard"
 	"github.com/SigNoz/signoz/pkg/modules/fields"
 	"github.com/SigNoz/signoz/pkg/modules/fields/implfields"
+	"github.com/SigNoz/signoz/pkg/modules/inframonitoring"
+	"github.com/SigNoz/signoz/pkg/modules/inframonitoring/implinframonitoring"
+	"github.com/SigNoz/signoz/pkg/modules/llmpricingrule"
+	"github.com/SigNoz/signoz/pkg/modules/llmpricingrule/impllmpricingrule"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer/implmetricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
@@ -32,11 +38,18 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/serviceaccount/implserviceaccount"
 	"github.com/SigNoz/signoz/pkg/modules/services"
 	"github.com/SigNoz/signoz/pkg/modules/services/implservices"
+	"github.com/SigNoz/signoz/pkg/modules/spanmapper"
+	"github.com/SigNoz/signoz/pkg/modules/spanmapper/implspanmapper"
 	"github.com/SigNoz/signoz/pkg/modules/spanpercentile"
 	"github.com/SigNoz/signoz/pkg/modules/spanpercentile/implspanpercentile"
+	"github.com/SigNoz/signoz/pkg/modules/tracedetail"
+	"github.com/SigNoz/signoz/pkg/modules/tracedetail/impltracedetail"
 	"github.com/SigNoz/signoz/pkg/modules/tracefunnel"
 	"github.com/SigNoz/signoz/pkg/modules/tracefunnel/impltracefunnel"
 	"github.com/SigNoz/signoz/pkg/querier"
+	"github.com/SigNoz/signoz/pkg/ruler"
+	"github.com/SigNoz/signoz/pkg/ruler/signozruler"
+	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/zeus"
 )
@@ -51,6 +64,7 @@ type Handlers struct {
 	SpanPercentile          spanpercentile.Handler
 	Services                services.Handler
 	MetricsExplorer         metricsexplorer.Handler
+	InfraMonitoring         inframonitoring.Handler
 	Global                  global.Handler
 	FlaggerHandler          flagger.Handler
 	GatewayHandler          gateway.Handler
@@ -62,6 +76,12 @@ type Handlers struct {
 	RegistryHandler         factory.Handler
 	CloudIntegrationHandler cloudintegration.Handler
 	RuleStateHistory        rulestatehistory.Handler
+	SpanMapperHandler       spanmapper.Handler
+	AlertmanagerHandler     alertmanager.Handler
+	TraceDetail             tracedetail.Handler
+	RulerHandler            ruler.Handler
+	LLMPricingRuleHandler   llmpricingrule.Handler
+	StatsHandler            statsreporter.Handler
 }
 
 func NewHandlers(
@@ -77,6 +97,9 @@ func NewHandlers(
 	authz authz.AuthZ,
 	zeusService zeus.Zeus,
 	registryHandler factory.Handler,
+	alertmanagerService alertmanager.Alertmanager,
+	rulerService ruler.Ruler,
+	statsAggregator statsreporter.Aggregator,
 ) Handlers {
 	return Handlers{
 		SavedView:               implsavedview.NewHandler(modules.SavedView),
@@ -87,6 +110,7 @@ func NewHandlers(
 		RawDataExport:           implrawdataexport.NewHandler(modules.RawDataExport),
 		Services:                implservices.NewHandler(modules.Services),
 		MetricsExplorer:         implmetricsexplorer.NewHandler(modules.MetricsExplorer),
+		InfraMonitoring:         implinframonitoring.NewHandler(modules.InfraMonitoring),
 		SpanPercentile:          implspanpercentile.NewHandler(modules.SpanPercentile),
 		Global:                  signozglobal.NewHandler(global),
 		FlaggerHandler:          flagger.NewHandler(flaggerService),
@@ -97,7 +121,13 @@ func NewHandlers(
 		QuerierHandler:          querierHandler,
 		ServiceAccountHandler:   implserviceaccount.NewHandler(modules.ServiceAccount),
 		RegistryHandler:         registryHandler,
-		CloudIntegrationHandler: implcloudintegration.NewHandler(),
 		RuleStateHistory:        implrulestatehistory.NewHandler(modules.RuleStateHistory),
+		CloudIntegrationHandler: implcloudintegration.NewHandler(modules.CloudIntegration),
+		SpanMapperHandler:       implspanmapper.NewHandler(modules.SpanMapper),
+		AlertmanagerHandler:     signozalertmanager.NewHandler(alertmanagerService),
+		TraceDetail:             impltracedetail.NewHandler(modules.TraceDetail),
+		RulerHandler:            signozruler.NewHandler(rulerService),
+		LLMPricingRuleHandler:   impllmpricingrule.NewHandler(modules.LLMPricingRule),
+		StatsHandler:            statsreporter.NewHandler(statsAggregator),
 	}
 }

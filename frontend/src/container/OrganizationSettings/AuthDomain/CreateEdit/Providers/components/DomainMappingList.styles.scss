@@ -52,7 +52,9 @@
 		color: var(--destructive) !important;
 		opacity: 0.6 !important;
 		cursor: pointer;
-		transition: background-color 0.2s, opacity 0.2s;
+		transition:
+			background-color 0.2s,
+			opacity 0.2s;
 		box-shadow: none !important;
 		display: flex;
 		align-items: center;
@@ -65,7 +67,11 @@
 		}
 
 		&:hover {
-			background: rgba(229, 72, 77, 0.1) !important;
+			background: color-mix(
+				in srgb,
+				var(--danger-background) 10%,
+				transparent
+			) !important;
 			opacity: 0.9 !important;
 			color: var(--destructive) !important;
 
@@ -76,28 +82,11 @@
 
 		&:active {
 			opacity: 0.7 !important;
-			background: rgba(229, 72, 77, 0.15) !important;
-		}
-	}
-
-	&__add-btn {
-		width: 100%;
-
-		// Ensure icon is visible
-		svg,
-		[class*='icon'] {
-			color: var(--l2-foreground) !important;
-			display: inline-block !important;
-			opacity: 1 !important;
-		}
-
-		&:hover {
-			color: var(--l1-foreground);
-
-			svg,
-			[class*='icon'] {
-				color: var(--l1-foreground) !important;
-			}
+			background: color-mix(
+				in srgb,
+				var(--danger-background) 15%,
+				transparent
+			) !important;
 		}
 	}
 }

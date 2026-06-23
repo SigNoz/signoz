@@ -703,13 +703,13 @@ export function getQueryContextAtCursor(
 				keyToken: isInKeyBoundary
 					? keyToken
 					: isInOperatorBoundary || finalIsInValue
-					? keyToken
-					: undefined,
+						? keyToken
+						: undefined,
 				operatorToken: isInOperatorBoundary
 					? operatorToken
 					: finalIsInValue
-					? operatorToken
-					: undefined,
+						? operatorToken
+						: undefined,
 				valueToken: finalIsInValue ? valueToken : undefined,
 				queryPairs: queryPairs,
 				currentPair: currentPair,
@@ -764,6 +764,58 @@ export function getQueryContextAtCursor(
 					}
 				}
 			}
+		}
+
+		// A token that ends with a '.' (e.g. "service." or "k8s.pod.") is lexed as
+		// FREETEXT, not KEY, because the KEY rule requires a character after the dot.
+		// While the user is mid-typing such a key/value the token stays FREETEXT, which
+		// is otherwise unclassified and would collapse the context to "nothing" — making
+		// the suggestion dropdown render empty (and appear closed). Classify the partial
+		// token by the slot it occupies so suggestions keep flowing until the next
+		// character turns it back into a valid KEY token.
+		const partialToken = exactToken ?? lastTokenBeforeCursor;
+		if (
+			partialToken &&
+			partialToken.channel === 0 &&
+			partialToken.type === FilterQueryLexer.FREETEXT
+		) {
+			// Closest meaningful token before the partial one determines the slot:
+			// right after an operator we are typing a value, otherwise a key.
+			const prevMeaningful =
+				allTokens
+					.filter(
+						(t) =>
+							t.channel === 0 &&
+							t.type !== FilterQueryLexer.EOF &&
+							t.stop < partialToken.start,
+					)
+					.pop() || null;
+
+			const prevContext = prevMeaningful
+				? determineTokenContext(prevMeaningful, input)
+				: null;
+			const isValuePosition = !!prevContext?.isInOperator;
+
+			return {
+				tokenType: partialToken.type,
+				text: partialToken.text,
+				start: partialToken.start,
+				stop: partialToken.stop,
+				currentToken: partialToken.text,
+				isInKey: !isValuePosition,
+				isInNegation: false,
+				isInOperator: false,
+				isInValue: isValuePosition,
+				isInFunction: false,
+				isInConjunction: false,
+				isInParenthesis: false,
+				isInBracketList: false,
+				keyToken: isValuePosition ? currentPair?.key || '' : partialToken.text,
+				operatorToken: isValuePosition ? currentPair?.operator || '' : undefined,
+				valueToken: isValuePosition ? partialToken.text : undefined,
+				queryPairs,
+				currentPair,
+			};
 		}
 
 		// If we don't have tokens yet, return default context
@@ -983,13 +1035,13 @@ export function getQueryContextAtCursor(
 				keyToken: tokenContext.isInKey
 					? exactToken.text
 					: tokenContext.isInOperator || tokenContext.isInValue
-					? keyFromPair
-					: undefined,
+						? keyFromPair
+						: undefined,
 				operatorToken: tokenContext.isInOperator
 					? exactToken.text
 					: tokenContext.isInValue
-					? operatorFromPair
-					: undefined,
+						? operatorFromPair
+						: undefined,
 				valueToken: tokenContext.isInValue ? exactToken.text : undefined,
 				queryPairs: queryPairs,
 				currentPair: currentPair,
@@ -1208,7 +1260,7 @@ export function extractQueryPairs(query: string): IQueryPair[] {
 						isComplete: !!(
 							currentPair.key &&
 							currentPair.operator &&
-							currentPair.value
+							(currentPair.value || isNonValueOperator(currentPair.operator))
 						),
 					} as IQueryPair);
 				}
@@ -1369,7 +1421,7 @@ export function extractQueryPairs(query: string): IQueryPair[] {
 					isComplete: !!(
 						currentPair.key &&
 						currentPair.operator &&
-						currentPair.value
+						(currentPair.value || isNonValueOperator(currentPair.operator))
 					),
 				} as IQueryPair);
 
@@ -1414,7 +1466,7 @@ export function extractQueryPairs(query: string): IQueryPair[] {
 				isComplete: !!(
 					currentPair.key &&
 					currentPair.operator &&
-					currentPair.value
+					(currentPair.value || isNonValueOperator(currentPair.operator))
 				),
 			} as IQueryPair);
 		}

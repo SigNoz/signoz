@@ -240,6 +240,26 @@ func (m *MockNotificationManager) DeleteAllRoutePoliciesByName(ctx context.Conte
 	return nil
 }
 
+func (m *MockNotificationManager) GetRoutePoliciesByChannel(ctx context.Context, orgID string, channelName string) ([]*alertmanagertypes.RoutePolicy, error) {
+	if orgID == "" {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "orgID cannot be empty")
+	}
+
+	var matched []*alertmanagertypes.RoutePolicy
+	for _, route := range m.routes {
+		if route.OrgID != orgID {
+			continue
+		}
+		for _, ch := range route.Channels {
+			if ch == channelName {
+				matched = append(matched, route)
+				break
+			}
+		}
+	}
+	return matched, nil
+}
+
 func (m *MockNotificationManager) Match(ctx context.Context, orgID string, ruleID string, set model.LabelSet) ([]string, error) {
 	key := getKey(orgID, ruleID)
 	if err := m.errors[key]; err != nil {

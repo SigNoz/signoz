@@ -1,1 +1,0 @@
-export { OnboardingHeader } from './OnboardingHeader';

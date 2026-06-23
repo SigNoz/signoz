@@ -32,7 +32,7 @@ func newConfig() factory.Config {
 			Domain: "signozserviceaccount.com",
 		},
 		Analytics: AnalyticsConfig{
-			Enabled: true,
+			Enabled: false,
 		},
 	}
 }

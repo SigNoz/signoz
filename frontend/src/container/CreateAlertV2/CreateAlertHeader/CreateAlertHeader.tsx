@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react';
-import { Button } from 'antd';
+import { Button } from '@signozhq/ui/button';
+import { Input } from '@signozhq/ui/input';
 import logEvent from 'api/common/logEvent';
 import classNames from 'classnames';
 import { QueryParams } from 'constants/query';
@@ -7,7 +8,8 @@ import ROUTES from 'constants/routes';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { RotateCcw } from 'lucide-react';
+import { RotateCcw } from '@signozhq/icons';
+import { useAlertRuleOptional } from 'providers/Alert';
 import { Labels } from 'types/api/alerts/def';
 
 import { useCreateAlertState } from '../context';
@@ -17,6 +19,7 @@ import './styles.scss';
 
 function CreateAlertHeader(): JSX.Element {
 	const { alertState, setAlertState, isEditMode } = useCreateAlertState();
+	const alertRuleContext = useAlertRuleOptional();
 
 	const { currentQuery } = useQueryBuilder();
 	const { safeNavigate } = useSafeNavigate();
@@ -59,20 +62,27 @@ function CreateAlertHeader(): JSX.Element {
 				<div className="alert-header__tab-bar">
 					<div className="alert-header__tab">New Alert Rule</div>
 					<Button
-						icon={<RotateCcw size={16} />}
+						prefix={<RotateCcw size={12} />}
 						onClick={handleSwitchToClassicExperience}
+						variant="solid"
+						color="secondary"
+						size="sm"
 					>
 						Switch to Classic Experience
 					</Button>
 				</div>
 			)}
 			<div className="alert-header__content">
-				<input
+				<Input
 					type="text"
 					value={alertState.name}
-					onChange={(e): void =>
-						setAlertState({ type: 'SET_ALERT_NAME', payload: e.target.value })
-					}
+					onChange={(e): void => {
+						const newName = e.target.value;
+						setAlertState({ type: 'SET_ALERT_NAME', payload: newName });
+						if (isEditMode && alertRuleContext?.setAlertRuleName) {
+							alertRuleContext.setAlertRuleName(newName);
+						}
+					}}
 					className="alert-header__input title"
 					placeholder="Enter alert rule name"
 					data-testid="alert-name-input"

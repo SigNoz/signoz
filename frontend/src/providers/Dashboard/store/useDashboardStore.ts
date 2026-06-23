@@ -25,7 +25,7 @@ export type DashboardStore = DashboardUISlice &
  * In this case, we are selecting the locked state of the selected dashboard.
  * */
 export const selectIsDashboardLocked = (s: DashboardStore): boolean =>
-	s.selectedDashboard?.locked ?? false;
+	s.dashboardData?.locked ?? false;
 
 export const useDashboardStore = create<DashboardStore>()(
 	immer((set, get, api) => ({
@@ -40,8 +40,8 @@ export const useDashboardStore = create<DashboardStore>()(
 );
 
 // Standalone imperative accessors — use these instead of calling useDashboardStore.getState() at call sites.
-export const getSelectedDashboard = (): Dashboard | undefined =>
-	useDashboardStore.getState().selectedDashboard;
+export const getDashboardData = (): Dashboard | undefined =>
+	useDashboardStore.getState().dashboardData;
 
 export const getDashboardLayouts = (): Layout[] =>
 	useDashboardStore.getState().layouts;

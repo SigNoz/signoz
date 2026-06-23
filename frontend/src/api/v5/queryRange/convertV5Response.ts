@@ -94,7 +94,7 @@ function convertTimeSeriesData(
 				labels: series.labels
 					? Object.fromEntries(
 							series.labels.map((label: any) => [label.key.name, label.value]),
-					  )
+						)
 					: {},
 				labelsArray: series.labels
 					? series.labels.map((label: any) => ({ [label.key.name]: label.value }))
@@ -104,7 +104,7 @@ function convertTimeSeriesData(
 					: series.values.map((value: any) => ({
 							timestamp: value.timestamp,
 							value: String(value.value),
-					  })),
+						})),
 				bounds: isHeatmap ? series.bounds : undefined,
 				metaData: {
 					alias,
@@ -268,6 +268,7 @@ function convertRawData(
 				date: row.timestamp,
 			} as any,
 		})),
+		nextCursor: rawData.nextCursor,
 	};
 }
 
@@ -361,7 +362,7 @@ function convertV5DataByType(
  */
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export function convertV5ResponseToLegacy(
-	v5Response: SuccessResponse<MetricRangePayloadV5>,
+	v5Response: SuccessResponse<MetricRangePayloadV5, QueryRangeRequestV5>,
 	legendMap: Record<string, string>,
 	formatForWeb?: boolean,
 ): SuccessResponse<MetricRangePayloadV3> & { warning?: Warning } {
@@ -369,18 +370,21 @@ export function convertV5ResponseToLegacy(
 	const v5Data = payload?.data;
 
 	const aggregationPerQuery =
-		(params as QueryRangeRequestV5)?.compositeQuery?.queries
+		params?.compositeQuery?.queries
 			?.filter((query) => query.type === 'builder_query')
-			.reduce((acc, query) => {
-				if (
-					query.type === 'builder_query' &&
-					'aggregations' in query.spec &&
-					query.spec.name
-				) {
-					acc[query.spec.name] = query.spec.aggregations;
-				}
-				return acc;
-			}, {} as Record<string, any>) || {};
+			.reduce(
+				(acc, query) => {
+					if (
+						query.type === 'builder_query' &&
+						'aggregations' in query.spec &&
+						query.spec.name
+					) {
+						acc[query.spec.name] = query.spec.aggregations;
+					}
+					return acc;
+				},
+				{} as Record<string, any>,
+			) || {};
 
 	// If formatForWeb is true, return as-is (like existing logic)
 	if (formatForWeb && v5Data?.type === 'scalar') {

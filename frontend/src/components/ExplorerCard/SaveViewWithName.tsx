@@ -1,5 +1,7 @@
 import { useTranslation } from 'react-i18next';
-import { Card, Form, Input, Typography } from 'antd';
+import { Input } from '@signozhq/ui/input';
+import { Card, Form } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSaveView } from 'hooks/saveViews/useSaveView';
@@ -17,11 +19,8 @@ function SaveViewWithName({
 }: SaveViewWithNameProps): JSX.Element {
 	const [form] = Form.useForm<SaveViewFormProps>();
 	const { t } = useTranslation(['explorer']);
-	const {
-		currentQuery,
-		panelType,
-		redirectWithQueryBuilderData,
-	} = useQueryBuilder();
+	const { currentQuery, panelType, redirectWithQueryBuilderData } =
+		useQueryBuilder();
 	const { notifications } = useNotifications();
 	const compositeQuery = mapCompositeQueryFromQuery(currentQuery, panelType);
 

@@ -1,4 +1,5 @@
-import { Checkbox, Empty } from 'antd';
+import { Empty } from 'antd';
+import { Checkbox } from '@signozhq/ui/checkbox';
 import { AxiosResponse } from 'axios';
 import Spinner from 'components/Spinner';
 import { EXCLUDED_COLUMNS } from 'container/OptionsMenu/constants';
@@ -50,9 +51,8 @@ function ExplorerAttributeColumns({
 		<div className="attribute-columns">
 			{filteredAttributeKeys.map((attributeKey: any) => (
 				<Checkbox
-					checked={isAttributeKeySelected(attributeKey.name)}
+					value={isAttributeKeySelected(attributeKey.name)}
 					onChange={(): void => handleCheckboxChange(attributeKey.name)}
-					style={{ padding: 0 }}
 					key={attributeKey.name}
 				>
 					{attributeKey.name}

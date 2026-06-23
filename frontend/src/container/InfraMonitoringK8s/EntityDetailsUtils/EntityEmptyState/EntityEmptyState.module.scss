@@ -1,0 +1,32 @@
+.container {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	height: 240px;
+}
+
+.content {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	color: var(--muted-foreground);
+	font-size: 14px;
+	font-weight: 400;
+	line-height: 18px;
+	letter-spacing: -0.07px;
+}
+
+.icon {
+	height: 32px;
+	width: 32px;
+}
+
+.title {
+	font-weight: 600;
+}
+
+.subtitle {
+	font-weight: 400;
+	color: var(--muted-foreground);
+}

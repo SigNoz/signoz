@@ -52,8 +52,8 @@
 
 		.signup-form-container {
 			width: 100%;
-			background: var(--bg-neutral-dark-950);
-			border: 1px solid var(--l3-background);
+			background: var(--l1-background);
+			border: 1px solid var(--l1-border);
 			border-radius: 4px;
 			padding: 24px;
 
@@ -81,8 +81,9 @@
 				&.ant-input-affix-wrapper {
 					height: 32px;
 					border-radius: 2px;
-					background: var(--l3-background);
-					border-color: var(--l3-border);
+					background: var(--l2-background);
+					border-color: var(--l2-border);
+					color: var(--l2-foreground);
 				}
 
 				&.ant-input-affix-wrapper {
@@ -91,12 +92,20 @@
 						background: transparent;
 					}
 				}
+
+				&::placeholder {
+					color: var(--l2-foreground);
+				}
+
+				&:focus {
+					border-color: var(--primary);
+				}
 			}
 
 			.signup-form-input {
 				height: 32px;
-				background: var(--l3-background);
-				border: 1px solid var(--l3-border);
+				background: var(--l2-background);
+				border: 1px solid var(--l1-border);
 				border-radius: 2px;
 				padding: 6px 8px;
 				font-family: Inter, sans-serif;
@@ -107,11 +116,11 @@
 				color: var(--l1-foreground);
 
 				&::placeholder {
-					color: var(--l3-foreground);
+					color: var(--l2-foreground);
 				}
 
 				&:hover {
-					border-color: var(--l3-border);
+					border-color: var(--l1-border);
 				}
 
 				&:focus {
@@ -127,8 +136,9 @@
 		}
 
 		.signup-error-callout {
-			background: rgba(229, 72, 77, 0.1);
-			border: 1px solid rgba(229, 72, 77, 0.2);
+			background: color-mix(in srgb, var(--danger-background) 10%, transparent);
+			border: 1px solid
+				color-mix(in srgb, var(--danger-background) 20%, transparent);
 			border-radius: 4px;
 			animation: horizontal-shaking 300ms ease-out;
 		}
@@ -162,68 +172,6 @@
 
 		.signup-form-header {
 			padding: 0;
-		}
-	}
-}
-
-.lightMode {
-	.signup-card {
-		.signup-form-header {
-			.signup-header-icon {
-				color: var(--text-ink-500);
-			}
-
-			.signup-header-title {
-				color: var(--text-ink-500);
-			}
-
-			.signup-header-subtitle {
-				color: var(--text-neutral-light-200);
-			}
-		}
-
-		.signup-form {
-			.signup-form-container {
-				background: var(--bg-base-white);
-				border: 1px solid var(--bg-vanilla-300);
-
-				.signup-form-input,
-				.signup-antd-input {
-					&.ant-input,
-					&.ant-input-password,
-					&.ant-input-affix-wrapper {
-						background: var(--bg-vanilla-200);
-						border-color: var(--bg-vanilla-300);
-						color: var(--text-ink-500);
-					}
-
-					&::placeholder {
-						color: var(--text-neutral-light-200);
-					}
-
-					&:focus {
-						border-color: var(--primary);
-					}
-				}
-
-				.signup-form-input {
-					background: var(--bg-vanilla-200);
-					border-color: var(--bg-vanilla-300);
-					color: var(--text-ink-500);
-
-					&::placeholder {
-						color: var(--text-neutral-light-200);
-					}
-
-					&:focus {
-						border-color: var(--primary);
-					}
-				}
-			}
-
-			.signup-info-message {
-				color: var(--text-neutral-light-200);
-			}
 		}
 	}
 }

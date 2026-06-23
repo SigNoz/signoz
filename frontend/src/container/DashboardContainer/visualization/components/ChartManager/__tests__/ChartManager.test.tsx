@@ -34,16 +34,16 @@ jest.mock('lib/uPlotV2/hooks/useLegendsSync', () => ({
 
 jest.mock('providers/Dashboard/store/useDashboardStore', () => ({
 	useDashboardStore: (
-		selector?: (s: {
-			selectedDashboard: { locked: boolean } | undefined;
-		}) => { selectedDashboard: { locked: boolean } },
-	): { selectedDashboard: { locked: boolean } } => {
-		const mockState = { selectedDashboard: { locked: false } };
+		selector?: (s: { dashboardData: { locked: boolean } | undefined }) => {
+			dashboardData: { locked: boolean };
+		},
+	): { dashboardData: { locked: boolean } } => {
+		const mockState = { dashboardData: { locked: false } };
 		return selector ? selector(mockState) : mockState;
 	},
 	selectIsDashboardLocked: (s: {
-		selectedDashboard: { locked: boolean } | undefined;
-	}): boolean => s.selectedDashboard?.locked ?? false,
+		dashboardData: { locked: boolean } | undefined;
+	}): boolean => s.dashboardData?.locked ?? false,
 }));
 
 jest.mock('hooks/useNotifications', () => ({

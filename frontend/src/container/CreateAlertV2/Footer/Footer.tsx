@@ -1,9 +1,16 @@
 import { useCallback, useMemo } from 'react';
-import { toast } from '@signozhq/sonner';
-import { Button, Tooltip, Typography } from 'antd';
+import { Button } from '@signozhq/ui/button';
+import { toast } from '@signozhq/ui/sonner';
+import { Tooltip } from 'antd';
+import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import { AxiosError } from 'axios';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import { Check, Loader, Send, X } from 'lucide-react';
+import { Check, Loader, Send, X } from '@signozhq/icons';
+import { useErrorModal } from 'providers/ErrorModalProvider';
+import { toPostableRuleDTO } from 'types/api/alerts/convert';
+import APIError from 'types/api/error';
 import { isModifierKeyPressed } from 'utils/app';
 
 import { useCreateAlertState } from '../context';
@@ -13,6 +20,11 @@ import {
 } from './utils';
 
 import './styles.scss';
+import {
+	invalidateGetRuleByID,
+	invalidateListRules,
+} from 'api/generated/services/rules';
+import { useQueryClient } from 'react-query';
 
 function Footer(): JSX.Element {
 	const {
@@ -30,9 +42,20 @@ function Footer(): JSX.Element {
 		updateAlertRule,
 		isUpdatingAlertRule,
 		isEditMode,
+		ruleId,
 	} = useCreateAlertState();
 	const { currentQuery } = useQueryBuilder();
 	const { safeNavigate } = useSafeNavigate();
+	const { showErrorModal } = useErrorModal();
+
+	const handleApiError = useCallback(
+		(error: unknown): void => {
+			showErrorModal(
+				convertToApiError(error as AxiosError<RenderErrorResponseDTO>) as APIError,
+			);
+		},
+		[showErrorModal],
+	);
 
 	const handleDiscard = (e: React.MouseEvent): void => {
 		discardAlertRule();
@@ -71,20 +94,21 @@ function Footer(): JSX.Element {
 			notificationSettings,
 			query: currentQuery,
 		});
-		testAlertRule(payload, {
-			onSuccess: (response) => {
-				if (response.payload?.data?.alertCount === 0) {
-					toast.error(
-						'No alerts found during the evaluation. This happens when rule condition is unsatisfied. You may adjust the rule threshold and retry.',
-					);
-					return;
-				}
-				toast.success('Test notification sent successfully');
+		testAlertRule(
+			{ data: toPostableRuleDTO(payload) },
+			{
+				onSuccess: (response) => {
+					if (response.data?.alertCount === 0) {
+						toast.error(
+							'No alerts found during the evaluation. This happens when rule condition is unsatisfied. You may adjust the rule threshold and retry.',
+						);
+						return;
+					}
+					toast.success('Test notification sent successfully');
+				},
+				onError: handleApiError,
 			},
-			onError: (error) => {
-				toast.error(error.message);
-			},
-		});
+		);
 	}, [
 		alertType,
 		basicAlertState,
@@ -96,6 +120,7 @@ function Footer(): JSX.Element {
 		testAlertRule,
 	]);
 
+	const queryClient = useQueryClient();
 	const handleSaveAlert = useCallback((): void => {
 		const payload = buildCreateThresholdAlertRulePayload({
 			alertType,
@@ -107,25 +132,33 @@ function Footer(): JSX.Element {
 			query: currentQuery,
 		});
 		if (isEditMode) {
-			updateAlertRule(payload, {
-				onSuccess: () => {
-					toast.success('Alert rule updated successfully');
-					safeNavigate('/alerts');
+			updateAlertRule(
+				{
+					pathParams: { id: ruleId },
+					data: toPostableRuleDTO(payload),
 				},
-				onError: (error) => {
-					toast.error(error.message);
+				{
+					onSuccess: () => {
+						void invalidateGetRuleByID(queryClient, { id: ruleId });
+						void invalidateListRules(queryClient);
+
+						toast.success('Alert rule updated successfully');
+						safeNavigate('/alerts');
+					},
+					onError: handleApiError,
 				},
-			});
+			);
 		} else {
-			createAlertRule(payload, {
-				onSuccess: () => {
-					toast.success('Alert rule created successfully');
-					safeNavigate('/alerts');
+			createAlertRule(
+				{ data: toPostableRuleDTO(payload) },
+				{
+					onSuccess: () => {
+						toast.success('Alert rule created successfully');
+						safeNavigate('/alerts');
+					},
+					onError: handleApiError,
 				},
-				onError: (error) => {
-					toast.error(error.message);
-				},
-			});
+			);
 		}
 	}, [
 		alertType,
@@ -136,9 +169,11 @@ function Footer(): JSX.Element {
 		notificationSettings,
 		currentQuery,
 		isEditMode,
+		ruleId,
 		updateAlertRule,
 		createAlertRule,
 		safeNavigate,
+		handleApiError,
 	]);
 
 	const disableButtons =
@@ -147,20 +182,25 @@ function Footer(): JSX.Element {
 	const saveAlertButton = useMemo(() => {
 		let button = (
 			<Button
-				type="primary"
+				variant="solid"
+				color="primary"
 				onClick={handleSaveAlert}
 				disabled={disableButtons || Boolean(alertValidationMessage)}
 			>
 				{isCreatingAlertRule || isUpdatingAlertRule ? (
-					<Loader size={14} />
+					<Loader data-testid="save-alert-rule-loader-icon" size={14} />
 				) : (
-					<Check size={14} />
+					<Check data-testid="save-alert-rule-check-icon" size={14} />
 				)}
-				<Typography.Text>Save Alert Rule</Typography.Text>
+				Save Alert Rule
 			</Button>
 		);
 		if (alertValidationMessage) {
-			button = <Tooltip title={alertValidationMessage}>{button}</Tooltip>;
+			button = (
+				<Tooltip title={alertValidationMessage}>
+					<span>{button}</span>
+				</Tooltip>
+			);
 		}
 		return button;
 	}, [
@@ -174,16 +214,25 @@ function Footer(): JSX.Element {
 	const testAlertButton = useMemo(() => {
 		let button = (
 			<Button
-				type="default"
+				variant="solid"
+				color="secondary"
 				onClick={handleTestNotification}
 				disabled={disableButtons || Boolean(alertValidationMessage)}
 			>
-				{isTestingAlertRule ? <Loader size={14} /> : <Send size={14} />}
-				<Typography.Text>Test Notification</Typography.Text>
+				{isTestingAlertRule ? (
+					<Loader data-testid="test-notification-loader-icon" size={14} />
+				) : (
+					<Send data-testid="test-notification-send-icon" size={14} />
+				)}
+				Test Notification
 			</Button>
 		);
 		if (alertValidationMessage) {
-			button = <Tooltip title={alertValidationMessage}>{button}</Tooltip>;
+			button = (
+				<Tooltip title={alertValidationMessage}>
+					<span>{button}</span>
+				</Tooltip>
+			);
 		}
 		return button;
 	}, [
@@ -195,7 +244,12 @@ function Footer(): JSX.Element {
 
 	return (
 		<div className="create-alert-v2-footer">
-			<Button type="default" onClick={handleDiscard} disabled={disableButtons}>
+			<Button
+				variant="solid"
+				color="secondary"
+				onClick={handleDiscard}
+				disabled={disableButtons}
+			>
 				<X size={14} /> Discard
 			</Button>
 			<div className="button-group">

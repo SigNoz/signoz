@@ -2,15 +2,14 @@ import { Dispatch, SetStateAction } from 'react';
 import { UseQueryResult } from 'react-query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
-import { SuccessResponse, Warning } from 'types/api';
 import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
 
 import { timePreferance } from './RightContainer/timeItems';
 
 export interface NewWidgetProps {
 	dashboardId: string;
-	selectedDashboard: Dashboard | undefined;
+	dashboardData: Dashboard | undefined;
 	selectedGraph: PANEL_TYPES;
 	enableDrillDown?: boolean;
 }
@@ -29,25 +28,19 @@ export interface WidgetGraphProps {
 	setRequestData: Dispatch<SetStateAction<GetQueryResultsProps>>;
 	isLoadingPanelData: boolean;
 	setQueryResponse?: Dispatch<
-		SetStateAction<
-			UseQueryResult<SuccessResponse<MetricRangePayloadProps, unknown>, Error>
-		>
+		SetStateAction<UseQueryResult<MetricQueryRangeSuccessResponse, Error>>
 	>;
 	enableDrillDown?: boolean;
-	selectedDashboard: Dashboard | undefined;
+	dashboardData: Dashboard | undefined;
 	isNewPanel?: boolean;
 }
 
 export type WidgetGraphContainerProps = {
-	queryResponse: UseQueryResult<
-		SuccessResponse<MetricRangePayloadProps, unknown> & {
-			warning?: Warning;
-		},
-		Error
-	>;
+	queryResponse: UseQueryResult<MetricQueryRangeSuccessResponse, Error>;
 	setRequestData: Dispatch<SetStateAction<GetQueryResultsProps>>;
 	selectedGraph: PANEL_TYPES;
 	selectedWidget: Widgets;
 	isLoadingPanelData: boolean;
 	enableDrillDown?: boolean;
+	isCancelled?: boolean;
 };

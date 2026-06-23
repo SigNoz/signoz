@@ -30,11 +30,8 @@ import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Pagination } from 'hooks/queryPagination';
 import { getDefaultPaginationConfig } from 'hooks/queryPagination/utils';
-import useDragColumns from 'hooks/useDragColumns';
-import { getDraggedColumns } from 'hooks/useDragColumns/utils';
 import useUrlQueryData from 'hooks/useUrlQueryData';
-import { RowData } from 'lib/query/createTableColumnsFromQuery';
-import { ArrowUp10, Minus } from 'lucide-react';
+import { ArrowUp10, Minus } from '@signozhq/icons';
 import { useTimezone } from 'providers/Timezone';
 import { AppState } from 'store/reducers';
 import { Warning } from 'types/api';
@@ -62,10 +59,8 @@ function ListView({
 	setIsLoadingQueries,
 	queryKeyRef,
 }: ListViewProps): JSX.Element {
-	const {
-		stagedQuery,
-		panelType: panelTypeFromQueryBuilder,
-	} = useQueryBuilder();
+	const { stagedQuery, panelType: panelTypeFromQueryBuilder } =
+		useQueryBuilder();
 
 	const panelType = panelTypeFromQueryBuilder || PANEL_TYPES.LIST;
 
@@ -87,10 +82,6 @@ function ListView({
 		},
 	});
 
-	const { draggedColumns, onDragColumns } = useDragColumns<RowData>(
-		LOCALSTORAGE.TRACES_LIST_COLUMNS,
-	);
-
 	const { queryData: paginationQueryData } = useUrlQueryData<Pagination>(
 		QueryParams.pagination,
 	);
@@ -102,6 +93,19 @@ function ListView({
 		[stagedQuery, orderBy],
 	);
 
+	// TEMP — remove after traces moves to TanStack table.
+	// - Drag updates selectColumns; raw queryKey would churn on reorder.
+	// - Trace API fetches only listed columns → add/remove must refetch.
+	// - Sorted-name signature: stable on reorder, changes on add/remove.
+	const selectColumnsSignature = useMemo(
+		() =>
+			(options?.selectColumns ?? [])
+				.map((c) => c.name)
+				.sort()
+				.join(','),
+		[options?.selectColumns],
+	);
+
 	const queryKey = useMemo(
 		() => [
 			REACT_QUERY_KEY.GET_QUERY_RANGE,
@@ -111,7 +115,7 @@ function ListView({
 			stagedQuery,
 			panelType,
 			paginationConfig,
-			options?.selectColumns,
+			selectColumnsSignature,
 			orderBy,
 		],
 		[
@@ -119,7 +123,7 @@ function ListView({
 			panelType,
 			globalSelectedTime,
 			paginationConfig,
-			options?.selectColumns,
+			selectColumnsSignature,
 			maxTime,
 			minTime,
 			orderBy,
@@ -177,19 +181,21 @@ function ListView({
 	const totalCount = useMemo(() => dataLength || 0, [dataLength]);
 
 	const queryTableDataResult = data?.payload?.data?.newResult?.data?.result;
-	const queryTableData = useMemo(() => queryTableDataResult || [], [
-		queryTableDataResult,
-	]);
+	const queryTableData = useMemo(
+		() => queryTableDataResult || [],
+		[queryTableDataResult],
+	);
 
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
-	const columns = useMemo(() => {
-		const updatedColumns = getListColumns(
-			options?.selectColumns || [],
-			formatTimezoneAdjustedTimestamp,
-		);
-		return getDraggedColumns(updatedColumns, draggedColumns);
-	}, [options?.selectColumns, formatTimezoneAdjustedTimestamp, draggedColumns]);
+	const columns = useMemo(
+		() =>
+			getListColumns(
+				options?.selectColumns || [],
+				formatTimezoneAdjustedTimestamp,
+			),
+		[options?.selectColumns, formatTimezoneAdjustedTimestamp],
+	);
 
 	const transformedQueryTableData = useMemo(
 		() => transformDataWithDate(queryTableData) || [],
@@ -197,9 +203,17 @@ function ListView({
 	);
 
 	const handleDragColumn = useCallback(
-		(fromIndex: number, toIndex: number) =>
-			onDragColumns(columns, fromIndex, toIndex),
-		[columns, onDragColumns],
+		(fromIndex: number, toIndex: number): void => {
+			const reordered = [...columns];
+			const [moved] = reordered.splice(fromIndex, 1);
+			reordered.splice(toIndex, 0, moved);
+			// `key` is the composite (fieldContext.name) — disambiguates same-name fields.
+			const orderedIds = reordered
+				.map((c) => String(c.key || ('dataIndex' in c && c.dataIndex) || ''))
+				.filter(Boolean);
+			config?.addColumn?.onReorder(orderedIds);
+		},
+		[columns, config],
 	);
 
 	const handleOrderChange = useCallback((value: string) => {

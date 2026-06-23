@@ -30,7 +30,7 @@
 	font-size: 15.4px;
 	font-weight: 500;
 	line-height: 17.5px;
-	color: var(--text-neutral-dark-50);
+	color: var(--l1-foreground);
 	white-space: nowrap;
 }
 
@@ -41,7 +41,8 @@
 	gap: 8px;
 	height: 32px;
 	padding: 10px 16px;
-	background: var(--bg-ink-400);
+	background: var(--l2-background);
+	color: var(--l2-foreground);
 	border: none;
 	border-radius: 2px;
 	cursor: pointer;
@@ -52,31 +53,16 @@
 		font-size: 11px;
 		font-weight: 500;
 		line-height: 1;
-		color: var(--text-neutral-dark-100);
+		color: var(--l2-foreground);
 		text-align: center;
 	}
 
 	svg {
 		flex-shrink: 0;
-		color: var(--text-neutral-dark-100);
+		color: var(--l2-foreground);
 	}
 
 	&:hover {
 		opacity: 0.8;
-	}
-}
-
-.lightMode {
-	.auth-header-logo-text {
-		color: var(--text-neutral-light-100);
-	}
-
-	.auth-header-help-button {
-		background: var(--bg-vanilla-200);
-
-		span,
-		svg {
-			color: var(--text-neutral-light-200);
-		}
 	}
 }

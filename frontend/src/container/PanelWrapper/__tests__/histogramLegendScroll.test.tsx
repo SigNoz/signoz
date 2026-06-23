@@ -53,9 +53,9 @@ describe('Histogram Chart Options Legend Scroll Position', () => {
 		});
 
 		// Create mock chart with legend element
-		const mockChart = ({
+		const mockChart = {
 			root: document.createElement('div'),
-		} as unknown) as uPlot;
+		} as unknown as uPlot;
 
 		const legend = document.createElement('div');
 		legend.className = 'u-legend';
@@ -93,9 +93,9 @@ describe('Histogram Chart Options Legend Scroll Position', () => {
 		});
 
 		// Create mock chart with legend element
-		const mockChart = ({
+		const mockChart = {
 			root: document.createElement('div'),
-		} as unknown) as uPlot;
+		} as unknown as uPlot;
 
 		const legend = document.createElement('div');
 		legend.className = 'u-legend';

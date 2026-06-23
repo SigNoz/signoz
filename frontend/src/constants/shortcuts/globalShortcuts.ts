@@ -27,6 +27,9 @@ export const GlobalShortcuts = {
 	NavigateToSettingsIngestion: 'shift+g+i',
 	NavigateToSettingsBilling: 'shift+g+b',
 	NavigateToSettingsNotificationChannels: 'shift+g+n',
+	NavigateToSettingsServiceAccounts: 'shift+g+k',
+	NavigateToSettingsRoles: 'shift+g+r',
+	NavigateToSettingsMembers: 'shift+g+m',
 };
 
 export const GlobalShortcutsName = {
@@ -47,6 +50,9 @@ export const GlobalShortcutsName = {
 	NavigateToSettingsIngestion: 'shift+g+i',
 	NavigateToSettingsBilling: 'shift+g+b',
 	NavigateToSettingsNotificationChannels: 'shift+g+n',
+	NavigateToSettingsServiceAccounts: 'shift+g+k',
+	NavigateToSettingsRoles: 'shift+g+r',
+	NavigateToSettingsMembers: 'shift+g+m',
 	NavigateToLogs: 'shift+l',
 	NavigateToLogsPipelines: 'shift+l+p',
 	NavigateToLogsViews: 'shift+l+v',
@@ -74,4 +80,7 @@ export const GlobalShortcutsDescription = {
 		'Navigate to Notification Channels Settings',
 	NavigateToLogsPipelines: 'Navigate to Logs Pipelines',
 	NavigateToLogsViews: 'Navigate to Logs Views',
+	NavigateToSettingsServiceAccounts: 'Navigate to Service Accounts Settings',
+	NavigateToSettingsRoles: 'Navigate to Roles Settings',
+	NavigateToSettingsMembers: 'Navigate to Members Settings',
 };

@@ -32,7 +32,7 @@ func (s Seasonality) IsValid() bool {
 }
 
 type AnomaliesRequest struct {
-	Params      qbtypes.QueryRangeRequest
+	Params      *qbtypes.QueryRangeRequest
 	Seasonality Seasonality
 }
 
@@ -81,7 +81,7 @@ type anomalyQueryParams struct {
 	Past3SeasonQuery qbtypes.QueryRangeRequest
 }
 
-func prepareAnomalyQueryParams(req qbtypes.QueryRangeRequest, seasonality Seasonality) *anomalyQueryParams {
+func prepareAnomalyQueryParams(req *qbtypes.QueryRangeRequest, seasonality Seasonality) *anomalyQueryParams {
 	start := req.Start
 	end := req.End
 

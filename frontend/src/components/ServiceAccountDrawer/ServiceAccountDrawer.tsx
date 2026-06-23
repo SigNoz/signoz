@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from 'react-query';
-import { Button } from '@signozhq/button';
-import { DrawerWrapper } from '@signozhq/drawer';
 import { Key, LayoutGrid, Plus, Trash2, X } from '@signozhq/icons';
-import { toast } from '@signozhq/sonner';
-import { ToggleGroup, ToggleGroupItem } from '@signozhq/toggle-group';
+import { Button } from '@signozhq/ui/button';
+import { DrawerWrapper } from '@signozhq/ui/drawer';
+import { toast } from '@signozhq/ui/sonner';
+import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
 import { Pagination, Skeleton } from 'antd';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
@@ -16,6 +16,8 @@ import {
 import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
+import { GuardAuthZ } from 'components/GuardAuthZ/GuardAuthZ';
+import PermissionDeniedCallout from 'components/PermissionDeniedCallout/PermissionDeniedCallout';
 import { useRoles } from 'components/RolesSelect';
 import { SA_QUERY_PARAMS } from 'container/ServiceAccountsSettings/constants';
 import {
@@ -23,7 +25,19 @@ import {
 	ServiceAccountStatus,
 	toServiceAccountRow,
 } from 'container/ServiceAccountsSettings/utils';
-import { useServiceAccountRoleManager } from 'hooks/serviceAccount/useServiceAccountRoleManager';
+import {
+	RoleUpdateFailure,
+	useServiceAccountRoleManager,
+} from 'hooks/serviceAccount/useServiceAccountRoleManager';
+import {
+	APIKeyCreatePermission,
+	APIKeyListPermission,
+	buildSAAttachPermission,
+	buildSADeletePermission,
+	buildSAReadPermission,
+	buildSAUpdatePermission,
+} from 'hooks/useAuthZ/permissions/service-account.permissions';
+import { useAuthZ } from 'hooks/useAuthZ/useAuthZ';
 import {
 	parseAsBoolean,
 	parseAsInteger,
@@ -34,6 +48,7 @@ import {
 import APIError from 'types/api/error';
 import { toAPIError } from 'utils/errorUtils';
 
+import AuthZTooltip from 'components/AuthZTooltip/AuthZTooltip';
 import AddKeyModal from './AddKeyModal';
 import DeleteAccountModal from './DeleteAccountModal';
 import KeysTab from './KeysTab';
@@ -48,6 +63,13 @@ export interface ServiceAccountDrawerProps {
 }
 
 const PAGE_SIZE = 15;
+
+function toSaveApiError(err: unknown): APIError {
+	return (
+		convertToApiError(err as AxiosError<RenderErrorResponseDTO>) ??
+		toAPIError(err as AxiosError<RenderErrorResponseDTO>)
+	);
+}
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function ServiceAccountDrawer({
@@ -86,6 +108,22 @@ function ServiceAccountDrawer({
 
 	const queryClient = useQueryClient();
 
+	const { permissions: drawerPermissions, isLoading: isAuthZLoading } = useAuthZ(
+		selectedAccountId
+			? [
+					buildSAReadPermission(selectedAccountId),
+					buildSAUpdatePermission(selectedAccountId),
+					buildSADeletePermission(selectedAccountId),
+					APIKeyListPermission,
+				]
+			: [],
+		{ enabled: !!selectedAccountId },
+	);
+
+	const canRead =
+		drawerPermissions?.[buildSAReadPermission(selectedAccountId ?? '')]
+			?.isGranted ?? false;
+
 	const {
 		data: accountData,
 		isLoading: isAccountLoading,
@@ -94,7 +132,7 @@ function ServiceAccountDrawer({
 		refetch: refetchAccount,
 	} = useGetServiceAccount(
 		{ id: selectedAccountId ?? '' },
-		{ query: { enabled: !!selectedAccountId } },
+		{ query: { enabled: canRead && !!selectedAccountId } },
 	);
 
 	const account = useMemo(
@@ -103,21 +141,37 @@ function ServiceAccountDrawer({
 		[accountData],
 	);
 
-	const { currentRoles, applyDiff } = useServiceAccountRoleManager(
-		selectedAccountId ?? '',
-	);
+	const {
+		currentRoles,
+		isLoading: isRolesLoading,
+		applyDiff,
+	} = useServiceAccountRoleManager(selectedAccountId ?? '', {
+		enabled: canRead && !!selectedAccountId,
+	});
+
+	const roleSessionRef = useRef<string | null>(null);
 
 	useEffect(() => {
 		if (account?.id) {
 			setLocalName(account?.name ?? '');
-			setKeysPage(1);
+			void setKeysPage(1);
 		}
-		setSaveErrors([]);
 	}, [account?.id, account?.name, setKeysPage]);
 
 	useEffect(() => {
-		setLocalRoles(currentRoles.map((r) => r.id).filter(Boolean) as string[]);
-	}, [currentRoles]);
+		if (account?.id) {
+			setSaveErrors([]);
+		}
+	}, [account?.id]);
+
+	useEffect(() => {
+		if (!account?.id) {
+			roleSessionRef.current = null;
+		} else if (account.id !== roleSessionRef.current && !isRolesLoading) {
+			setLocalRoles(currentRoles.map((r) => r.id).filter(Boolean) as string[]);
+			roleSessionRef.current = account.id;
+		}
+	}, [account?.id, currentRoles, isRolesLoading]);
 
 	const isDeleted =
 		account?.status?.toUpperCase() === ServiceAccountStatus.Deleted;
@@ -126,7 +180,12 @@ function ServiceAccountDrawer({
 		account !== null &&
 		(localName !== (account.name ?? '') ||
 			JSON.stringify([...localRoles].sort()) !==
-				JSON.stringify([...currentRoles.map((r) => r.id).filter(Boolean)].sort()));
+				JSON.stringify(
+					currentRoles
+						.map((r) => r.id)
+						.filter(Boolean)
+						.sort(),
+				));
 
 	const {
 		roles: availableRoles,
@@ -136,9 +195,16 @@ function ServiceAccountDrawer({
 		refetch: refetchRoles,
 	} = useRoles();
 
+	const canListKeys =
+		drawerPermissions?.[APIKeyListPermission]?.isGranted ?? false;
+
+	const canUpdate =
+		drawerPermissions?.[buildSAUpdatePermission(selectedAccountId ?? '')]
+			?.isGranted ?? true;
+
 	const { data: keysData, isLoading: keysLoading } = useListServiceAccountKeys(
 		{ id: selectedAccountId ?? '' },
-		{ query: { enabled: !!selectedAccountId } },
+		{ query: { enabled: !!selectedAccountId && canListKeys } },
 	);
 	const keys = keysData?.data ?? [];
 
@@ -148,19 +214,12 @@ function ServiceAccountDrawer({
 		}
 		const maxPage = Math.max(1, Math.ceil(keys.length / PAGE_SIZE));
 		if (keysPage > maxPage) {
-			setKeysPage(maxPage);
+			void setKeysPage(maxPage);
 		}
 	}, [keysLoading, keys.length, keysPage, setKeysPage]);
 
 	// the retry for this mutation is safe due to the api being idempotent on backend
 	const { mutateAsync: updateMutateAsync } = useUpdateServiceAccount();
-
-	const toSaveApiError = useCallback(
-		(err: unknown): APIError =>
-			convertToApiError(err as AxiosError<RenderErrorResponseDTO>) ??
-			toAPIError(err as AxiosError<RenderErrorResponseDTO>),
-		[],
-	);
 
 	const retryNameUpdate = useCallback(async (): Promise<void> => {
 		if (!account) {
@@ -172,8 +231,8 @@ function ServiceAccountDrawer({
 				data: { name: localName },
 			});
 			setSaveErrors((prev) => prev.filter((e) => e.context !== 'Name update'));
-			refetchAccount();
-			queryClient.invalidateQueries(getListServiceAccountsQueryKey());
+			void refetchAccount();
+			void queryClient.invalidateQueries(getListServiceAccountsQueryKey());
 		} catch (err) {
 			setSaveErrors((prev) =>
 				prev.map((e) =>
@@ -181,14 +240,7 @@ function ServiceAccountDrawer({
 				),
 			);
 		}
-	}, [
-		account,
-		localName,
-		updateMutateAsync,
-		refetchAccount,
-		queryClient,
-		toSaveApiError,
-	]);
+	}, [account, localName, updateMutateAsync, refetchAccount, queryClient]);
 
 	const handleNameChange = useCallback((name: string): void => {
 		setLocalName(name);
@@ -196,41 +248,52 @@ function ServiceAccountDrawer({
 	}, []);
 
 	const makeRoleRetry = useCallback(
-		(
-			context: string,
-			rawRetry: () => Promise<void>,
-		) => async (): Promise<void> => {
-			try {
-				await rawRetry();
-				setSaveErrors((prev) => prev.filter((e) => e.context !== context));
-			} catch (err) {
-				setSaveErrors((prev) =>
-					prev.map((e) =>
-						e.context === context ? { ...e, apiError: toSaveApiError(err) } : e,
-					),
-				);
-			}
-		},
-		[toSaveApiError],
+		(context: string, rawRetry: () => Promise<void>) =>
+			async (): Promise<void> => {
+				try {
+					await rawRetry();
+					setSaveErrors((prev) => prev.filter((e) => e.context !== context));
+				} catch (err) {
+					setSaveErrors((prev) =>
+						prev.map((e) =>
+							e.context === context ? { ...e, apiError: toSaveApiError(err) } : e,
+						),
+					);
+				}
+			},
+		[],
+	);
+
+	const clearRoleErrors = useCallback((): void => {
+		setSaveErrors((prev) =>
+			prev.filter(
+				(e) => e.context !== 'Roles update' && !e.context.startsWith("Role '"),
+			),
+		);
+	}, []);
+
+	const failuresToSaveErrors = useCallback(
+		(failures: RoleUpdateFailure[]): SaveError[] =>
+			failures.map((f) => {
+				const ctx = `Role '${f.roleName}'`;
+				return {
+					context: ctx,
+					apiError: toSaveApiError(f.error),
+					onRetry: makeRoleRetry(ctx, f.onRetry),
+				};
+			}),
+		[makeRoleRetry],
 	);
 
 	const retryRolesUpdate = useCallback(async (): Promise<void> => {
 		try {
-			const failures = await applyDiff(localRoles, availableRoles);
+			const failures = await applyDiff([...localRoles], availableRoles);
 			if (failures.length === 0) {
 				setSaveErrors((prev) => prev.filter((e) => e.context !== 'Roles update'));
 			} else {
 				setSaveErrors((prev) => {
 					const rest = prev.filter((e) => e.context !== 'Roles update');
-					const roleErrors = failures.map((f) => {
-						const ctx = `Role '${f.roleName}'`;
-						return {
-							context: ctx,
-							apiError: toSaveApiError(f.error),
-							onRetry: makeRoleRetry(ctx, f.onRetry),
-						};
-					});
-					return [...rest, ...roleErrors];
+					return [...rest, ...failuresToSaveErrors(failures)];
 				});
 			}
 		} catch (err) {
@@ -240,7 +303,7 @@ function ServiceAccountDrawer({
 				),
 			);
 		}
-	}, [localRoles, availableRoles, applyDiff, toSaveApiError, makeRoleRetry]);
+	}, [localRoles, availableRoles, applyDiff, failuresToSaveErrors]);
 
 	const handleSave = useCallback(async (): Promise<void> => {
 		if (!account || !isDirty) {
@@ -254,12 +317,12 @@ function ServiceAccountDrawer({
 					? updateMutateAsync({
 							pathParams: { id: account.id },
 							data: { name: localName },
-					  })
+						})
 					: Promise.resolve();
 
 			const [nameResult, rolesResult] = await Promise.allSettled([
 				namePromise,
-				applyDiff(localRoles, availableRoles),
+				applyDiff([...localRoles], availableRoles),
 			]);
 
 			const errors: SaveError[] = [];
@@ -279,27 +342,20 @@ function ServiceAccountDrawer({
 					onRetry: retryRolesUpdate,
 				});
 			} else {
-				for (const failure of rolesResult.value) {
-					const context = `Role '${failure.roleName}'`;
-					errors.push({
-						context,
-						apiError: toSaveApiError(failure.error),
-						onRetry: makeRoleRetry(context, failure.onRetry),
-					});
-				}
+				errors.push(...failuresToSaveErrors(rolesResult.value));
 			}
 
 			if (errors.length > 0) {
 				setSaveErrors(errors);
 			} else {
 				toast.success('Service account updated successfully', {
-					richColors: true,
+					position: 'top-right',
 				});
 				onSuccess({ closeDrawer: false });
 			}
 
-			refetchAccount();
-			queryClient.invalidateQueries(getListServiceAccountsQueryKey());
+			void refetchAccount();
+			void queryClient.invalidateQueries(getListServiceAccountsQueryKey());
 		} finally {
 			setIsSaving(false);
 		}
@@ -314,19 +370,18 @@ function ServiceAccountDrawer({
 		refetchAccount,
 		onSuccess,
 		queryClient,
-		toSaveApiError,
 		retryNameUpdate,
-		makeRoleRetry,
 		retryRolesUpdate,
+		failuresToSaveErrors,
 	]);
 
 	const handleClose = useCallback((): void => {
-		setIsDeleteOpen(null);
-		setIsAddKeyOpen(null);
-		setSelectedAccountId(null);
-		setActiveTab(null);
-		setKeysPage(null);
-		setEditKeyId(null);
+		void setIsDeleteOpen(null);
+		void setIsAddKeyOpen(null);
+		void setSelectedAccountId(null);
+		void setActiveTab(null);
+		void setKeysPage(null);
+		void setEditKeyId(null);
 		setSaveErrors([]);
 	}, [
 		setSelectedAccountId,
@@ -340,51 +395,65 @@ function ServiceAccountDrawer({
 	const drawerContent = (
 		<div className="sa-drawer__layout">
 			<div className="sa-drawer__tabs">
-				<ToggleGroup
+				<ToggleGroupSimple
 					type="single"
 					value={activeTab}
-					onValueChange={(val): void => {
+					size="sm"
+					onChange={(val: string): void => {
 						if (val) {
-							setActiveTab(val as ServiceAccountDrawerTab);
+							void setActiveTab(val as ServiceAccountDrawerTab);
 							if (val !== ServiceAccountDrawerTab.Keys) {
-								setKeysPage(null);
-								setEditKeyId(null);
+								void setKeysPage(null);
+								void setEditKeyId(null);
 							}
 						}
 					}}
 					className="sa-drawer__tab-group"
-				>
-					<ToggleGroupItem
-						value={ServiceAccountDrawerTab.Overview}
-						className="sa-drawer__tab"
-					>
-						<LayoutGrid size={14} />
-						Overview
-					</ToggleGroupItem>
-					<ToggleGroupItem
-						value={ServiceAccountDrawerTab.Keys}
-						className="sa-drawer__tab"
-					>
-						<Key size={14} />
-						Keys
-						{keys.length > 0 && (
-							<span className="sa-drawer__tab-count">{keys.length}</span>
-						)}
-					</ToggleGroupItem>
-				</ToggleGroup>
+					items={[
+						{
+							value: ServiceAccountDrawerTab.Overview,
+							label: (
+								<>
+									<LayoutGrid size={14} />
+									Overview
+								</>
+							),
+						},
+						{
+							value: ServiceAccountDrawerTab.Keys,
+							label: (
+								<>
+									<Key size={14} />
+									Keys
+									{keys.length > 0 && (
+										<span className="sa-drawer__tab-count">{keys.length}</span>
+									)}
+								</>
+							),
+						},
+					]}
+				/>
 				{activeTab === ServiceAccountDrawerTab.Keys && (
-					<Button
-						variant="outlined"
-						size="sm"
-						color="secondary"
-						disabled={isDeleted}
-						onClick={(): void => {
-							setIsAddKeyOpen(true);
-						}}
+					<AuthZTooltip
+						checks={[
+							APIKeyCreatePermission,
+							buildSAAttachPermission(selectedAccountId ?? ''),
+						]}
+						enabled={!isDeleted && !!selectedAccountId}
 					>
-						<Plus size={12} />
-						Add Key
-					</Button>
+						<Button
+							variant="outlined"
+							size="sm"
+							color="secondary"
+							disabled={isDeleted}
+							onClick={(): void => {
+								void setIsAddKeyOpen(true);
+							}}
+						>
+							<Plus size={12} />
+							Add Key
+						</Button>
+					</AuthZTooltip>
 				)}
 			</div>
 
@@ -393,7 +462,9 @@ function ServiceAccountDrawer({
 					activeTab === ServiceAccountDrawerTab.Keys ? ' sa-drawer__body--keys' : ''
 				}`}
 			>
-				{isAccountLoading && <Skeleton active paragraph={{ rows: 6 }} />}
+				{(isAuthZLoading || isAccountLoading) && (
+					<Skeleton active paragraph={{ rows: 6 }} />
+				)}
 				{isAccountError && (
 					<ErrorInPlace
 						error={toAPIError(
@@ -402,99 +473,119 @@ function ServiceAccountDrawer({
 						)}
 					/>
 				)}
-				{!isAccountLoading && !isAccountError && (
-					<>
-						{activeTab === ServiceAccountDrawerTab.Overview && account && (
-							<OverviewTab
-								account={account}
-								localName={localName}
-								onNameChange={handleNameChange}
-								localRoles={localRoles}
-								onRolesChange={setLocalRoles}
-								isDisabled={isDeleted}
-								availableRoles={availableRoles}
-								rolesLoading={rolesLoading}
-								rolesError={rolesError}
-								rolesErrorObj={rolesErrorObj}
-								onRefetchRoles={refetchRoles}
-								saveErrors={saveErrors}
-							/>
-						)}
-						{activeTab === ServiceAccountDrawerTab.Keys && (
-							<KeysTab
-								keys={keys}
-								isLoading={keysLoading}
-								isDisabled={isDeleted}
-								currentPage={keysPage}
-								pageSize={PAGE_SIZE}
-							/>
-						)}
-					</>
-				)}
-			</div>
-
-			<div className="sa-drawer__footer">
-				{activeTab === ServiceAccountDrawerTab.Keys ? (
-					<Pagination
-						current={keysPage}
-						pageSize={PAGE_SIZE}
-						total={keys.length}
-						showTotal={(total: number, range: number[]): JSX.Element => (
+				{!isAuthZLoading &&
+					!isAccountLoading &&
+					!isAccountError &&
+					selectedAccountId && (
+						<GuardAuthZ
+							relation="read"
+							object={`serviceaccount:${selectedAccountId}`}
+							fallbackOnNoPermissions={(): JSX.Element => (
+								<PermissionDeniedCallout permissionName="serviceaccount:read" />
+							)}
+						>
 							<>
-								<span className="sa-drawer__pagination-range">
-									{range[0]} &#8212; {range[1]}
-								</span>
-								<span className="sa-drawer__pagination-total"> of {total}</span>
+								{activeTab === ServiceAccountDrawerTab.Overview && account && (
+									<OverviewTab
+										account={account}
+										localName={localName}
+										onNameChange={handleNameChange}
+										localRoles={localRoles}
+										onRolesChange={(roles): void => {
+											setLocalRoles(roles);
+											clearRoleErrors();
+										}}
+										isDisabled={isDeleted}
+										canUpdate={canUpdate}
+										availableRoles={availableRoles}
+										rolesLoading={rolesLoading}
+										rolesError={rolesError}
+										rolesErrorObj={rolesErrorObj}
+										onRefetchRoles={refetchRoles}
+										saveErrors={saveErrors}
+									/>
+								)}
+								{activeTab === ServiceAccountDrawerTab.Keys &&
+									(canListKeys ? (
+										<KeysTab
+											keys={keys}
+											isLoading={keysLoading}
+											isDisabled={isDeleted}
+											canUpdate={canUpdate}
+											accountId={selectedAccountId}
+											currentPage={keysPage}
+											pageSize={PAGE_SIZE}
+										/>
+									) : (
+										<PermissionDeniedCallout permissionName="factor-api-key:list" />
+									))}
 							</>
-						)}
-						showSizeChanger={false}
-						hideOnSinglePage
-						onChange={(page): void => {
-							void setKeysPage(page);
-						}}
-						className="sa-drawer__keys-pagination"
-					/>
-				) : (
-					<>
-						{!isDeleted && (
+						</GuardAuthZ>
+					)}
+			</div>
+		</div>
+	);
+
+	const footer = (
+		<div className="sa-drawer__footer">
+			{activeTab === ServiceAccountDrawerTab.Keys ? (
+				<Pagination
+					current={keysPage}
+					pageSize={PAGE_SIZE}
+					total={keys.length}
+					showTotal={(total: number, range: number[]): JSX.Element => (
+						<>
+							<span className="sa-drawer__pagination-range">
+								{range[0]} &#8212; {range[1]}
+							</span>
+							<span className="sa-drawer__pagination-total"> of {total}</span>
+						</>
+					)}
+					showSizeChanger={false}
+					hideOnSinglePage
+					onChange={(page): void => {
+						void setKeysPage(page);
+					}}
+					className="sa-drawer__keys-pagination"
+				/>
+			) : (
+				<>
+					{!isDeleted && (
+						<AuthZTooltip
+							checks={[buildSADeletePermission(selectedAccountId ?? '')]}
+							enabled={!!selectedAccountId}
+						>
 							<Button
-								variant="ghost"
+								variant="link"
 								color="destructive"
-								className="sa-drawer__footer-btn"
 								onClick={(): void => {
-									setIsDeleteOpen(true);
+									void setIsDeleteOpen(true);
 								}}
 							>
 								<Trash2 size={12} />
 								Delete Service Account
 							</Button>
-						)}
-						{!isDeleted && (
-							<div className="sa-drawer__footer-right">
-								<Button
-									variant="solid"
-									color="secondary"
-									size="sm"
-									onClick={handleClose}
-								>
-									<X size={14} />
-									Cancel
-								</Button>
-								<Button
-									variant="solid"
-									color="primary"
-									size="sm"
-									loading={isSaving}
-									disabled={!isDirty}
-									onClick={handleSave}
-								>
-									Save Changes
-								</Button>
-							</div>
-						)}
-					</>
-				)}
-			</div>
+						</AuthZTooltip>
+					)}
+					{!isDeleted && (
+						<div className="sa-drawer__footer-right">
+							<Button variant="outlined" color="secondary" onClick={handleClose}>
+								<X size={14} />
+								Cancel
+							</Button>
+							<Button
+								variant="solid"
+								color="primary"
+								loading={isSaving}
+								disabled={!isDirty}
+								onClick={handleSave}
+							>
+								Save Changes
+							</Button>
+						</div>
+					)}
+				</>
+			)}
 		</div>
 	);
 
@@ -508,14 +599,15 @@ function ServiceAccountDrawer({
 					}
 				}}
 				direction="right"
-				type="panel"
 				showCloseButton
 				showOverlay={false}
-				allowOutsideClick
-				header={{ title: 'Service Account Details' }}
-				content={drawerContent}
+				title="Service Account Details"
 				className="sa-drawer"
-			/>
+				width="wide"
+				footer={footer}
+			>
+				{drawerContent}
+			</DrawerWrapper>
 
 			<DeleteAccountModal />
 

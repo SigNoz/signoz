@@ -1,11 +1,14 @@
 import { memo, useCallback, useMemo } from 'react';
 import { blue } from '@ant-design/colors';
-import { Typography } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
-import { getSanitizedLogBody } from 'container/LogDetailedView/utils';
+import {
+	getBodyDisplayString,
+	getSanitizedLogBody,
+} from 'container/LogDetailedView/utils';
 import { FontSize } from 'container/OptionsMenu/types';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -89,7 +92,7 @@ function LogSelectedField({
 					</span>
 				</Typography.Text>
 			</AddToQueryHOC>
-			<Typography.Text ellipsis className={cx('selected-log-kv', fontSize)}>
+			<Typography.Text truncate={1} className={cx('selected-log-kv', fontSize)}>
 				<span className={cx('selected-log-field-key', fontSize)}>{': '}</span>
 				<span className={cx('selected-log-value', fontSize)}>
 					{fieldValue || "''"}
@@ -104,7 +107,7 @@ type ListLogViewProps = {
 	selectedFields: IField[];
 	onSetActiveLog: (
 		log: ILog,
-		selectedTab?: typeof VIEW_TYPES[keyof typeof VIEW_TYPES],
+		selectedTab?: (typeof VIEW_TYPES)[keyof typeof VIEW_TYPES],
 	) => void;
 	onAddToQuery: AddToQueryHOCProps['onAddToQuery'];
 	activeLog?: ILog | null;
@@ -166,11 +169,11 @@ function ListLogView({
 				? formatTimezoneAdjustedTimestamp(
 						flattenLogData.timestamp,
 						DATE_TIME_FORMATS.ISO_DATETIME_MS,
-				  )
+					)
 				: formatTimezoneAdjustedTimestamp(
 						flattenLogData.timestamp / 1e6,
 						DATE_TIME_FORMATS.ISO_DATETIME_MS,
-				  ),
+					),
 		[flattenLogData.timestamp, formatTimezoneAdjustedTimestamp],
 	);
 
@@ -196,7 +199,7 @@ function ListLogView({
 							{updatedSelecedFields.some((field) => field.name === 'body') && (
 								<LogGeneralField
 									fieldKey="Log"
-									fieldValue={flattenLogData.body}
+									fieldValue={getBodyDisplayString(logData.body)}
 									linesPerRow={linesPerRow}
 									fontSize={fontSize}
 								/>

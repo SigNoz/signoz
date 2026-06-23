@@ -1,16 +1,27 @@
+import type { CSSProperties, MouseEvent, ReactNode } from 'react';
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCopyToClipboard } from 'react-use';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
+import { toast } from '@signozhq/ui/sonner';
 import { Card } from 'antd';
 import logEvent from 'api/common/logEvent';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import LogDetail from 'components/LogDetail';
-// components
+import { VIEW_TYPES } from 'components/LogDetail/constants';
 import ListLogView from 'components/Logs/ListLogView';
+import LogLinesActionButtons from 'components/Logs/LogLinesActionButtons/LogLinesActionButtons';
+import { getRowBackgroundColor } from 'components/Logs/LogStateIndicator/getRowBackgroundColor';
+import { getLogIndicatorType } from 'components/Logs/LogStateIndicator/utils';
 import RawLogView from 'components/Logs/RawLogView';
+import { useLogsTableColumns } from 'components/Logs/TableView/useLogsTableColumns';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import Spinner from 'components/Spinner';
+import type { TanStackTableHandle } from 'components/TanStackTableView';
+import TanStackTable from 'components/TanStackTableView';
+import type { TableColumnDef } from 'components/TanStackTableView/types';
 import { CARD_BODY_STYLE } from 'constants/card';
 import { LOCALSTORAGE } from 'constants/localStorage';
+import { QueryParams } from 'constants/query';
 import EmptyLogsSearch from 'container/EmptyLogsSearch/EmptyLogsSearch';
 import { LogsLoading } from 'container/LogsLoading/LogsLoading';
 import { useOptionsMenu } from 'container/OptionsMenu';
@@ -19,13 +30,15 @@ import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import useLogDetailHandlers from 'hooks/logs/useLogDetailHandlers';
 import useScrollToLog from 'hooks/logs/useScrollToLog';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import APIError from 'types/api/error';
 // interfaces
 import { ILog } from 'types/api/logs/log';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 
+import { getAbsoluteUrl } from 'utils/basePath';
+
 import NoLogs from '../NoLogs/NoLogs';
-import InfinityTableView from './InfinityTableView';
 import { LogsExplorerListProps } from './LogsExplorerList.interfaces';
 import { InfinityWrapperStyled } from './styles';
 import {
@@ -50,9 +63,10 @@ function LogsExplorerList({
 	isFilterApplied,
 	handleChangeSelectedView,
 }: LogsExplorerListProps): JSX.Element {
-	const ref = useRef<VirtuosoHandle>(null);
+	const ref = useRef<TanStackTableHandle | VirtuosoHandle | null>(null);
+	const [, setCopy] = useCopyToClipboard();
+	const isDarkMode = useIsDarkMode();
 	const { activeLogId } = useCopyLogLink();
-
 	const {
 		activeLog,
 		onAddToQuery,
@@ -61,18 +75,15 @@ function LogsExplorerList({
 		handleCloseLogDetail,
 	} = useLogDetailHandlers();
 
-	const { options } = useOptionsMenu({
+	const { options, config } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
 		dataSource: DataSource.LOGS,
 		aggregateOperator:
 			currentStagedQueryData?.aggregateOperator || StringOperators.NOOP,
 	});
 
-	const {
-		currentQuery,
-		lastUsedQuery,
-		redirectWithQueryBuilderData,
-	} = useQueryBuilder();
+	const { currentQuery, lastUsedQuery, redirectWithQueryBuilderData } =
+		useQueryBuilder();
 
 	const activeLogIndex = useMemo(
 		() => logs.findIndex(({ id }) => id === activeLogId),
@@ -81,12 +92,45 @@ function LogsExplorerList({
 
 	const selectedFields = useMemo(
 		() => convertKeysToColumnFields(options.selectColumns),
-		[options],
+		[options.selectColumns],
+	);
+
+	const handleColumnOrderChange = useCallback(
+		(cols: TableColumnDef<ILog>[]): void => {
+			config?.addColumn?.onReorder(cols.map((c) => c.id));
+		},
+		[config],
+	);
+
+	const logsColumns = useLogsTableColumns({
+		fields: selectedFields,
+		fontSize: options.fontSize,
+	});
+
+	const makeOnLogCopy = useCallback(
+		(log: ILog) =>
+			(event: MouseEvent<HTMLElement>): void => {
+				event.preventDefault();
+				event.stopPropagation();
+				const urlQuery = new URLSearchParams(window.location.search);
+				urlQuery.delete(QueryParams.activeLogId);
+				urlQuery.delete(QueryParams.relativeTime);
+				urlQuery.set(QueryParams.activeLogId, `"${log.id}"`);
+				const link = getAbsoluteUrl(
+					`${window.location.pathname}?${urlQuery.toString()}`,
+				);
+				setCopy(link);
+				toast.success('Copied to clipboard', { position: 'top-right' });
+			},
+		[setCopy],
 	);
 
 	const handleScrollToLog = useScrollToLog({
 		logs,
-		virtuosoRef: ref,
+		virtuosoRef: ref as React.RefObject<Pick<
+			VirtuosoHandle,
+			'scrollToIndex'
+		> | null>,
 	});
 
 	useEffect(() => {
@@ -150,28 +194,53 @@ function LogsExplorerList({
 		const components = isLoading
 			? {
 					Footer,
-			  }
+				}
 			: {};
 
 		if (options.format === 'table') {
 			return (
-				<InfinityTableView
-					ref={ref}
-					isLoading={isLoading}
-					tableViewProps={{
-						logs,
-						fields: selectedFields,
-						linesPerRow: options.maxLines,
-						fontSize: options.fontSize,
-						appendTo: 'end',
-						activeLogIndex,
+				<TanStackTable<ILog>
+					ref={ref as React.Ref<TanStackTableHandle>}
+					columns={logsColumns}
+					columnStorageKey={LOCALSTORAGE.LOGS_LIST_COLUMNS}
+					respectColumnOrder={false}
+					onColumnRemove={config?.addColumn?.onRemove}
+					onColumnOrderChange={handleColumnOrderChange}
+					plainTextCellLineClamp={options.maxLines}
+					cellTypographySize={options.fontSize}
+					data={logs}
+					isLoading={isLoading || isFetching}
+					onEndReached={onEndReached}
+					isRowActive={(log): boolean =>
+						log.id === activeLog?.id || log.id === activeLogId
+					}
+					getRowStyle={(log): CSSProperties =>
+						({
+							'--row-active-bg': getRowBackgroundColor(
+								isDarkMode,
+								getLogIndicatorType(log),
+							),
+							'--row-hover-bg': getRowBackgroundColor(
+								isDarkMode,
+								getLogIndicatorType(log),
+							),
+						}) as CSSProperties
+					}
+					onRowClick={(log): void => {
+						handleSetActiveLog(log);
 					}}
-					infitiyTableProps={{ onEndReached }}
-					handleChangeSelectedView={handleChangeSelectedView}
-					logs={logs}
-					onSetActiveLog={handleSetActiveLog}
-					onClearActiveLog={handleCloseLogDetail}
-					activeLog={activeLog}
+					onRowDeactivate={handleCloseLogDetail}
+					activeRowIndex={activeLogIndex}
+					renderRowActions={(log): ReactNode => (
+						<LogLinesActionButtons
+							handleShowContext={(e): void => {
+								e.preventDefault();
+								e.stopPropagation();
+								handleSetActiveLog(log, VIEW_TYPES.CONTEXT);
+							}}
+							onLogCopy={makeOnLogCopy(log)}
+						/>
+					)}
 				/>
 			);
 		}
@@ -196,7 +265,7 @@ function LogsExplorerList({
 				<OverlayScrollbar isVirtuoso>
 					<Virtuoso
 						key={activeLogIndex || 'logs-virtuoso'}
-						ref={ref}
+						ref={ref as React.Ref<VirtuosoHandle>}
 						initialTopMostItemIndex={activeLogIndex !== -1 ? activeLogIndex : 0}
 						data={logs}
 						endReached={onEndReached}
@@ -216,11 +285,12 @@ function LogsExplorerList({
 		logs,
 		onEndReached,
 		getItemContent,
-		selectedFields,
-		handleChangeSelectedView,
+		isFetching,
 		handleSetActiveLog,
 		handleCloseLogDetail,
 		activeLog,
+		isDarkMode,
+		makeOnLogCopy,
 	]);
 
 	const isTraceToLogsNavigation = useMemo(() => {

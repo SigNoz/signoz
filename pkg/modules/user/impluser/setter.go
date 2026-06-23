@@ -3,7 +3,6 @@ package impluser
 import (
 	"context"
 	"log/slog"
-	"slices"
 	"strings"
 	"time"
 
@@ -19,8 +18,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/tokenizer"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/emailtypes"
-	"github.com/SigNoz/signoz/pkg/types/integrationtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -35,10 +34,11 @@ type setter struct {
 	analytics     analytics.Analytics
 	config        root.Config
 	getter        root.Getter
+	onDeleteUser  []root.OnDeleteUser
 }
 
 // This module is a WIP, don't take inspiration from this.
-func NewSetter(store types.UserStore, tokenizer tokenizer.Tokenizer, emailing emailing.Emailing, providerSettings factory.ProviderSettings, orgSetter organization.Setter, authz authz.AuthZ, analytics analytics.Analytics, config root.Config, userRoleStore authtypes.UserRoleStore, getter root.Getter) root.Setter {
+func NewSetter(store types.UserStore, tokenizer tokenizer.Tokenizer, emailing emailing.Emailing, providerSettings factory.ProviderSettings, orgSetter organization.Setter, authz authz.AuthZ, analytics analytics.Analytics, config root.Config, userRoleStore authtypes.UserRoleStore, getter root.Getter, onDeleteUser []root.OnDeleteUser) root.Setter {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/user/impluser")
 	return &setter{
 		store:         store,
@@ -51,6 +51,7 @@ func NewSetter(store types.UserStore, tokenizer tokenizer.Tokenizer, emailing em
 		authz:         authz,
 		config:        config,
 		getter:        getter,
+		onDeleteUser:  onDeleteUser,
 	}
 }
 
@@ -176,7 +177,7 @@ func (module *setter) CreateUser(ctx context.Context, user *types.User, opts ...
 			ctx,
 			user.OrgID,
 			createUserOpts.RoleNames,
-			authtypes.MustNewSubject(authtypes.TypeableUser, user.ID.StringValue(), user.OrgID, nil),
+			authtypes.MustNewSubject(coretypes.NewResourceUser(), user.ID.StringValue(), user.OrgID, nil),
 		)
 		if err != nil {
 			return err
@@ -236,15 +237,15 @@ func (module *setter) UpdateUserDeprecated(ctx context.Context, orgID valuer.UUI
 	roleChange := user.Role != "" && user.Role != existingUser.Role
 
 	if roleChange {
-		selectors := []authtypes.Selector{
-			authtypes.MustNewSelector(authtypes.TypeRole, authtypes.SigNozAdminRoleName),
+		selectors := []coretypes.Selector{
+			coretypes.TypeRole.MustSelector(authtypes.SigNozAdminRoleName),
 		}
 		err = module.authz.CheckWithTupleCreation(
 			ctx,
 			claims,
 			valuer.MustNewUUID(claims.OrgID),
-			authtypes.RelationAssignee,
-			authtypes.TypeableRole,
+			authtypes.Relation{Verb: coretypes.VerbAssignee},
+			coretypes.NewResourceRole(),
 			selectors,
 			selectors,
 		)
@@ -264,7 +265,7 @@ func (module *setter) UpdateUserDeprecated(ctx context.Context, orgID valuer.UUI
 			orgID,
 			[]string{authtypes.MustGetSigNozManagedRoleFromExistingRole(existingUser.Role)},
 			[]string{authtypes.MustGetSigNozManagedRoleFromExistingRole(user.Role)},
-			authtypes.MustNewSubject(authtypes.TypeableUser, id, orgID, nil),
+			authtypes.MustNewSubject(coretypes.NewResourceUser(), id, orgID, nil),
 		)
 		if err != nil {
 			return nil, err
@@ -370,10 +371,6 @@ func (module *setter) DeleteUser(ctx context.Context, orgID valuer.UUID, id stri
 		return errors.WithAdditionalf(err, "cannot delete already deleted user")
 	}
 
-	if slices.Contains(integrationtypes.AllIntegrationUserEmails, integrationtypes.IntegrationUserEmail(user.Email.String())) {
-		return errors.New(errors.TypeForbidden, errors.CodeForbidden, "integration user cannot be deleted")
-	}
-
 	deleter, err := module.store.GetUser(ctx, valuer.MustNewUUID(deletedBy))
 	if err != nil {
 		return err
@@ -381,6 +378,11 @@ func (module *setter) DeleteUser(ctx context.Context, orgID valuer.UUID, id stri
 
 	if deleter.ID == user.ID {
 		return errors.New(errors.TypeForbidden, errors.CodeForbidden, "cannot self delete")
+	}
+
+	err = user.UpdateStatus(types.UserStatusDeleted)
+	if err != nil {
+		return err
 	}
 
 	userRoles, err := module.getter.GetRolesByUserID(ctx, user.ID)
@@ -395,7 +397,7 @@ func (module *setter) DeleteUser(ctx context.Context, orgID valuer.UUID, id stri
 		ctx,
 		orgID,
 		roleNames,
-		authtypes.MustNewSubject(authtypes.TypeableUser, id, orgID, nil),
+		authtypes.MustNewSubject(coretypes.NewResourceUser(), id, orgID, nil),
 	)
 	if err != nil {
 		return err
@@ -406,6 +408,14 @@ func (module *setter) DeleteUser(ctx context.Context, orgID valuer.UUID, id stri
 		return err
 	}
 
+	for _, onDeleteUser := range module.onDeleteUser {
+		if err := onDeleteUser(ctx, orgID, user.ID); err != nil {
+			return err
+		}
+	}
+
+	traitsOrProperties := types.NewTraitsFromUser(user)
+	module.analytics.IdentifyUser(ctx, user.OrgID.String(), user.ID.String(), traitsOrProperties)
 	module.analytics.TrackUser(ctx, user.OrgID.String(), user.ID.String(), "User Deleted", map[string]any{
 		"deleted_by": deletedBy,
 	})
@@ -535,7 +545,7 @@ func (module *setter) UpdatePasswordByResetPasswordToken(ctx context.Context, to
 	}
 
 	if resetPasswordToken.IsExpired() {
-		return errors.New(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "reset password token has expired")
+		return errors.New(errors.TypeUnauthenticated, types.ErrCodeResetPasswordTokenExpired, "reset password token has expired")
 	}
 
 	password, err := module.store.GetPassword(ctx, resetPasswordToken.PasswordID)
@@ -568,27 +578,31 @@ func (module *setter) UpdatePasswordByResetPasswordToken(ctx context.Context, to
 
 	roleNames := roleNamesFromUserRoles(userRoles)
 
+	isPendingInviteUser := user.Status == types.UserStatusPendingInvite
 	// since grant is idempotent, multiple calls won't cause issues in case of retries
-	if user.Status == types.UserStatusPendingInvite {
+	if isPendingInviteUser {
+		if err := user.UpdateStatus(types.UserStatusActive); err != nil {
+			return err
+		}
+
 		if err = module.authz.Grant(
 			ctx,
 			user.OrgID,
 			roleNames,
-			authtypes.MustNewSubject(authtypes.TypeableUser, user.ID.StringValue(), user.OrgID, nil),
+			authtypes.MustNewSubject(coretypes.NewResourceUser(), user.ID.StringValue(), user.OrgID, nil),
 		); err != nil {
 			return err
 		}
 
 		traitsOrProperties := types.NewTraitsFromUser(user)
+		module.analytics.IdentifyUser(ctx, user.OrgID.String(), user.ID.String(), traitsOrProperties)
 		module.analytics.TrackUser(ctx, user.OrgID.String(), user.ID.String(), "User Activated", traitsOrProperties)
 	}
 
 	return module.store.RunInTx(ctx, func(ctx context.Context) error {
-		if user.Status == types.UserStatusPendingInvite {
-			if err := user.UpdateStatus(types.UserStatusActive); err != nil {
-				return err
-			}
-			if err := module.store.UpdateUser(ctx, user.OrgID, user); err != nil {
+		if isPendingInviteUser {
+			err := module.store.UpdateUser(ctx, user.OrgID, user)
+			if err != nil {
 				return err
 			}
 		}
@@ -708,7 +722,7 @@ func (module *setter) CreateFirstUser(ctx context.Context, organization *types.O
 			return err
 		}
 
-		err = module.CreateUser(ctx, user, root.WithFactorPassword(password), root.WithRoleNames(roleNames))
+		err = module.createUserWithoutGrant(ctx, user, root.WithFactorPassword(password), root.WithRoleNames(roleNames))
 		if err != nil {
 			return err
 		}
@@ -785,7 +799,7 @@ func (module *setter) activatePendingUser(ctx context.Context, user *types.User,
 			ctx,
 			user.OrgID,
 			createUserOpts.RoleNames,
-			authtypes.MustNewSubject(authtypes.TypeableUser, user.ID.StringValue(), user.OrgID, nil),
+			authtypes.MustNewSubject(coretypes.NewResourceUser(), user.ID.StringValue(), user.OrgID, nil),
 		)
 		if err != nil {
 			return err
@@ -817,6 +831,7 @@ func (module *setter) activatePendingUser(ctx context.Context, user *types.User,
 	}
 
 	traitsOrProperties := types.NewTraitsFromUser(user)
+	module.analytics.IdentifyUser(ctx, user.OrgID.String(), user.ID.String(), traitsOrProperties)
 	module.analytics.TrackUser(ctx, user.OrgID.String(), user.ID.String(), "User Activated", traitsOrProperties)
 
 	return nil
@@ -861,31 +876,22 @@ func (module *setter) AddUserRole(ctx context.Context, orgID, userID valuer.UUID
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "role name not found: %s", roleName)
 	}
 
-	// check if user already has this role
-	existingUserRoles, err := module.getter.GetRolesByUserID(ctx, existingUser.ID)
-	if err != nil {
-		return err
-	}
-	for _, userRole := range existingUserRoles {
-		if userRole.Role != nil && userRole.Role.Name == roleName {
-			return nil // role already assigned no-op
-		}
-	}
-
-	// grant via authz (idempotent)
+	// grant via authz (additive, idempotent — OpenFGA uses OnDuplicate: "ignore")
 	if err := module.authz.Grant(
 		ctx,
 		orgID,
 		[]string{roleName},
-		authtypes.MustNewSubject(authtypes.TypeableUser, existingUser.ID.StringValue(), existingUser.OrgID, nil),
+		authtypes.MustNewSubject(coretypes.NewResourceUser(), existingUser.ID.StringValue(), existingUser.OrgID, nil),
 	); err != nil {
 		return err
 	}
 
-	// create user_role entry
+	// create user_role entry (swallow AlreadyExists for idempotency — DB has unique constraint on user_id+role_id)
 	userRoles := authtypes.NewUserRoles(userID, foundRoles)
 	if err := module.userRoleStore.CreateUserRoles(ctx, userRoles); err != nil {
-		return err
+		if !errors.Ast(err, errors.TypeAlreadyExists) {
+			return err
+		}
 	}
 
 	return module.tokenizer.DeleteIdentity(ctx, userID)
@@ -927,7 +933,7 @@ func (module *setter) RemoveUserRole(ctx context.Context, orgID, userID valuer.U
 		ctx,
 		orgID,
 		[]string{roleName},
-		authtypes.MustNewSubject(authtypes.TypeableUser, existingUser.ID.StringValue(), existingUser.OrgID, nil),
+		authtypes.MustNewSubject(coretypes.NewResourceUser(), existingUser.ID.StringValue(), existingUser.OrgID, nil),
 	); err != nil {
 		return err
 	}

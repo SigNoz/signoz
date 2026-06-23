@@ -36,14 +36,14 @@ beforeAll(() => {
 		const mockRange = {
 			// CodeMirror uses these for text measurement
 			getClientRects: (): DOMRectList =>
-				(({
+				({
 					length: 1,
 					item: (index: number): DOMRect | null => (index === 0 ? mockRect : null),
 					0: mockRect,
 					*[Symbol.iterator](): Generator<DOMRect> {
 						yield mockRect;
 					},
-				} as unknown) as DOMRectList),
+				}) as unknown as DOMRectList,
 			getBoundingClientRect: (): DOMRect => mockRect,
 			// CodeMirror calls these to set up text ranges
 			setStart: (node: Node, offset: number): void => {
@@ -72,7 +72,7 @@ beforeAll(() => {
 			},
 			commonAncestorContainer: document.body,
 		};
-		return (mockRange as unknown) as Range;
+		return mockRange as unknown as Range;
 	};
 
 	// Mock document.createRange to return a new Range instance each time
@@ -87,8 +87,8 @@ jest.mock('hooks/useDarkMode', () => ({
 }));
 
 jest.mock('providers/Dashboard/store/useDashboardStore', () => ({
-	useDashboardStore: (): { selectedDashboard: undefined } => ({
-		selectedDashboard: undefined,
+	useDashboardStore: (): { dashboardData: undefined } => ({
+		dashboardData: undefined,
 	}),
 }));
 

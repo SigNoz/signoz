@@ -59,6 +59,10 @@ func (m *MockSQLRouteStore) DeleteRouteByName(ctx context.Context, orgID string,
 	return m.routeStore.DeleteRouteByName(ctx, orgID, name)
 }
 
+func (m *MockSQLRouteStore) GetAll(ctx context.Context, orgID string) ([]*alertmanagertypes.RoutePolicy, error) {
+	return m.routeStore.GetAll(ctx, orgID)
+}
+
 func (m *MockSQLRouteStore) ExpectGetByID(orgID, id string, route *alertmanagertypes.RoutePolicy) {
 	rows := sqlmock.NewRows([]string{"id", "org_id", "name", "expression", "kind", "description", "enabled", "tags", "channels", "created_at", "updated_at", "created_by", "updated_by"})
 

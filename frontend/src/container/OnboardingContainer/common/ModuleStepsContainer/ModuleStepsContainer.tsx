@@ -1,10 +1,12 @@
 import React, { SetStateAction, useState } from 'react';
 import {
-	ArrowLeftOutlined,
-	ArrowRightOutlined,
-	LeftCircleOutlined,
-} from '@ant-design/icons';
-import { Button, Space, Steps, Typography } from 'antd';
+	ArrowLeft,
+	ArrowRight,
+	CircleArrowLeft,
+	UserPlus,
+} from '@signozhq/icons';
+import { Button, Space, Steps } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
 import { onboardingHelpMessage } from 'components/LaunchChatSupport/util';
@@ -14,8 +16,9 @@ import { DataSourceType } from 'container/OnboardingContainer/Steps/DataSource/D
 import { hasFrameworks } from 'container/OnboardingContainer/utils/dataSourceUtils';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { isEmpty, isNull } from 'lodash-es';
-import { UserPlus } from 'lucide-react';
 import { isModifierKeyPressed } from 'utils/app';
+
+import signozBrandLogoUrl from '@/assets/Logos/signoz-brand-logo.svg';
 
 import { useOnboardingContext } from '../../context/OnboardingContext';
 import {
@@ -89,9 +92,8 @@ export default function ModuleStepsContainer({
 
 		const { step } = activeStep;
 
-		const {
-			name: selectedDataSourceName = '',
-		} = selectedDataSource as DataSourceType;
+		const { name: selectedDataSourceName = '' } =
+			selectedDataSource as DataSourceType;
 
 		if (
 			step.id === environmentDetailsStep &&
@@ -381,7 +383,7 @@ export default function ModuleStepsContainer({
 				<div>
 					<div className="steps-container-header">
 						<div className="brand-logo" onClick={handleLogoClick}>
-							<img src="/Logos/signoz-brand-logo.svg" alt="SigNoz" />
+							<img src={signozBrandLogoUrl} alt="SigNoz" />
 
 							<div className="brand-logo-name">SigNoz</div>
 						</div>
@@ -391,7 +393,7 @@ export default function ModuleStepsContainer({
 						<Button
 							style={{ display: 'flex', alignItems: 'center' }}
 							type="default"
-							icon={<LeftCircleOutlined />}
+							icon={<CircleArrowLeft size="md" />}
 							onClick={(e): void => onReselectModule(e)}
 						>
 							{selectedModule.title}
@@ -458,14 +460,14 @@ export default function ModuleStepsContainer({
 					<Button
 						onClick={handlePrev}
 						disabled={current === 0}
-						icon={<ArrowLeftOutlined />}
+						icon={<ArrowLeft size="md" />}
 					>
 						Back
 					</Button>
 					<Button
 						onClick={(e): void => handleNext(e)}
 						type="primary"
-						icon={<ArrowRightOutlined />}
+						icon={<ArrowRight size="md" />}
 					>
 						{current < lastStepIndex ? 'Continue to next step' : 'Done'}
 					</Button>

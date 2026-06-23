@@ -1,22 +1,19 @@
 import { ChangeEvent, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-	CloseCircleFilled,
-	ExclamationCircleOutlined,
-} from '@ant-design/icons';
-// eslint-disable-next-line no-restricted-imports
-import { useMachine } from '@xstate/react';
+import { CircleAlert, CircleX } from '@signozhq/icons';
 import { Button, Input, message, Modal } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { map } from 'lodash-es';
 import { Labels } from 'types/api/alerts/def';
 import { v4 as uuid } from 'uuid';
 
-import { ResourceAttributesFilterMachine } from './Labels.machine';
-import QueryChip from './QueryChip';
-import { QueryChipItem, SearchContainer } from './styles';
+import { Badge } from '@signozhq/ui/badge';
+import { QueryChipContainer, QueryChipItem, SearchContainer } from './styles';
 import { ILabelRecord } from './types';
 import { createQuery, flattenLabels, prepareLabels } from './utils';
+
+type LabelStep = 'Idle' | 'LabelKey' | 'LabelValue';
+type LabelEvent = 'NEXT' | 'onBlur' | 'RESET';
 
 interface LabelSelectProps {
 	onSetLabels: (q: Labels) => void;
@@ -35,42 +32,65 @@ function LabelSelect({
 	const [queries, setQueries] = useState<ILabelRecord[]>(
 		initialValues ? flattenLabels(initialValues) : [],
 	);
+	const [step, setStep] = useState<LabelStep>('Idle');
 
 	const dispatchChanges = (updatedRecs: ILabelRecord[]): void => {
 		onSetLabels(prepareLabels(updatedRecs, initialValues));
 		setQueries(updatedRecs);
 	};
 
-	const [state, send] = useMachine(ResourceAttributesFilterMachine, {
-		actions: {
-			onSelectLabelKey: () => {},
-			onSelectLabelValue: () => {
-				if (currentVal !== '') {
-					setStaging((prevState) => [...prevState, currentVal]);
-				} else {
-					return;
-				}
-				setCurrentVal('');
-			},
-			onValidateQuery: (): void => {
-				if (currentVal === '') {
-					return;
-				}
+	const onSelectLabelValue = (): void => {
+		if (currentVal !== '') {
+			setStaging((prevState) => [...prevState, currentVal]);
+		} else {
+			return;
+		}
+		setCurrentVal('');
+	};
 
-				const generatedQuery = createQuery([...staging, currentVal]);
+	const onValidateQuery = (): void => {
+		if (currentVal === '') {
+			return;
+		}
 
-				if (generatedQuery) {
-					dispatchChanges([...queries, generatedQuery]);
-					setStaging([]);
-					setCurrentVal('');
-					send('RESET');
-				}
-			},
-		},
-	});
+		const generatedQuery = createQuery([...staging, currentVal]);
+
+		if (generatedQuery) {
+			dispatchChanges([...queries, generatedQuery]);
+			setStaging([]);
+			setCurrentVal('');
+			setStep('Idle');
+		}
+	};
+
+	const send = (event: LabelEvent): void => {
+		if (event === 'RESET') {
+			setStep('Idle');
+			return;
+		}
+		if (event === 'NEXT') {
+			if (step === 'Idle') {
+				setStep('LabelKey');
+			} else if (step === 'LabelKey') {
+				onSelectLabelValue();
+				setStep('LabelValue');
+			} else if (step === 'LabelValue') {
+				onValidateQuery();
+			}
+			return;
+		}
+		if (event === 'onBlur') {
+			if (step === 'LabelKey') {
+				onSelectLabelValue();
+				setStep('LabelValue');
+			} else if (step === 'LabelValue') {
+				onValidateQuery();
+			}
+		}
+	};
 
 	const handleFocus = (): void => {
-		if (state.value === 'Idle') {
+		if (step === 'Idle') {
 			send('NEXT');
 		}
 	};
@@ -79,7 +99,7 @@ function LabelSelect({
 		if (staging.length === 1 && staging[0] !== undefined) {
 			send('onBlur');
 		}
-	}, [send, staging]);
+	}, [staging]);
 
 	useEffect(() => {
 		handleBlur();
@@ -102,7 +122,7 @@ function LabelSelect({
 	const handleClearAll = (): void => {
 		Modal.confirm({
 			title: 'Confirm',
-			icon: <ExclamationCircleOutlined />,
+			icon: <CircleAlert size="md" />,
 			content: t('remove_label_confirm'),
 			onOk() {
 				send('RESET');
@@ -115,24 +135,36 @@ function LabelSelect({
 		});
 	};
 	const renderPlaceholder = useCallback((): string => {
-		if (state.value === 'LabelKey') {
+		if (step === 'LabelKey') {
 			return 'Enter a label key then press ENTER.';
 		}
-		if (state.value === 'LabelValue') {
+		if (step === 'LabelValue') {
 			return `Enter a value for label key(${staging[0]}) then press ENTER.`;
 		}
 		return t('placeholder_label_key_pair');
-	}, [t, state, staging]);
+	}, [t, step, staging]);
 	return (
 		<SearchContainer isDarkMode={isDarkMode} disabled={false}>
 			<div style={{ display: 'inline-flex', flexWrap: 'wrap' }}>
 				{queries.length > 0 &&
-					map(
-						queries,
-						(query): JSX.Element => (
-							<QueryChip key={query.key} queryData={query} onRemove={handleClose} />
-						),
-					)}
+					map(queries, (query): JSX.Element => {
+						const isClosable =
+							query.key !== 'severity' && query.key !== 'description';
+						return (
+							<QueryChipContainer key={query.key}>
+								<Badge
+									color="vanilla"
+									closable={isClosable}
+									onClose={(e): void => {
+										e.preventDefault();
+										handleClose(query.key);
+									}}
+								>
+									{query.key}: {query.value}
+								</Badge>
+							</QueryChipContainer>
+						);
+					})}
 			</div>
 			<div>
 				{map(staging, (item) => (
@@ -148,7 +180,7 @@ function LabelSelect({
 						if (e.key === 'Enter' || e.code === 'Enter' || e.key === ':') {
 							send('NEXT');
 						}
-						if (state.value === 'Idle') {
+						if (step === 'Idle') {
 							send('NEXT');
 						}
 					}}
@@ -159,10 +191,10 @@ function LabelSelect({
 					onBlur={handleBlur}
 				/>
 
-				{queries.length || staging.length || currentVal ? (
+				{queries.length > 0 || staging.length > 0 || currentVal ? (
 					<Button
 						onClick={handleClearAll}
-						icon={<CloseCircleFilled />}
+						icon={<CircleX size="md" />}
 						type="text"
 					/>
 				) : null}

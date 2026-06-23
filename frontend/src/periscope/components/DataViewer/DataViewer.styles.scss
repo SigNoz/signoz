@@ -1,0 +1,52 @@
+.data-viewer {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	min-height: 0;
+
+	// Toolbar — view mode switcher + copy button
+	&__toolbar {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding-bottom: 8px;
+	}
+
+	&__mode-select {
+		min-width: 90px;
+	}
+
+	// Dropdown content is rendered in a portal; bump above FloatingPanel
+	// (z-index 999) so it stays visible when the consumer panel is floating.
+	&__mode-dropdown {
+		--dropdown-menu-content-z-index: 1000;
+	}
+
+	&__copy-btn {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 4px 8px;
+		border: 1px solid var(--l2-border);
+		border-radius: 4px;
+		background: transparent;
+		color: var(--l2-foreground);
+		cursor: pointer;
+
+		&:hover {
+			color: var(--l1-foreground);
+			background: var(--l3-background);
+		}
+	}
+
+	// Shared content container — no scroll, each view handles its own
+	&__content {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		border: 1px solid var(--l2-border);
+		border-radius: 4px;
+		padding: 8px;
+		min-height: 0;
+	}
+}

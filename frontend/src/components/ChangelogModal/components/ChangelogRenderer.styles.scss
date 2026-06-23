@@ -15,13 +15,13 @@
 	&-section-title {
 		font-size: 14px;
 		line-height: 20px;
-		color: var(--text-vanilla-400, #c0c1c3);
+		color: var(--l1-foreground);
 	}
 
 	.changelog-release-date {
 		font-size: 14px;
 		line-height: 20px;
-		color: var(--text-vanilla-400, #c0c1c3);
+		color: var(--l1-foreground);
 		display: block;
 		margin-bottom: 12px;
 	}
@@ -38,7 +38,7 @@
 		top: 6px;
 		bottom: -30px;
 		width: 1px;
-		background-color: var(--bg-slate-400, #1d212d);
+		background-color: var(--l1-border);
 
 		.inner-ball {
 			position: absolute;
@@ -47,7 +47,7 @@
 			height: 6px;
 			border-radius: 100%;
 			transform: translateX(-50%);
-			background-color: var(--bg-robin-500, #7190f9);
+			background-color: var(--primary-background);
 		}
 	}
 
@@ -69,7 +69,7 @@
 				top: 10px;
 				width: 20px;
 				height: 2px;
-				background-color: var(--bg-robin-500, #7190f9);
+				background-color: var(--primary-background);
 				transform: translate(-100%, -50%);
 			}
 		}
@@ -79,19 +79,20 @@
 	p {
 		font-size: 14px;
 		line-height: 20px;
-		color: var(--text-vanilla-400, #c0c1c3);
+		color: var(--l1-foreground);
 	}
 
 	code {
 		padding: 2px 4px;
-		background-color: var(--bg-slate-500, #161922);
+		background-color: var(--l1-border);
 		border-radius: 6px;
 		font-size: 95%;
 		vertical-align: middle;
-		border: 1px solid var(--bg-slate-600, #1c1f2a);
+		border: 1px solid var(--l1-border);
+		color: var(--l1-foreground);
 	}
 	a {
-		color: var(--text-robin-500, #7190f9);
+		color: var(--text-robin-500);
 		font-weight: 600;
 		text-decoration: underline;
 
@@ -102,7 +103,7 @@
 
 	& :is(h1, h2, h3, h4, h5, h6, &-section-title) {
 		font-weight: 600;
-		color: var(--text-vanilla-100, #fff);
+		color: var(--l1-foreground);
 	}
 
 	h1 {
@@ -122,33 +123,11 @@
 		width: 100%;
 		overflow: hidden;
 		border-radius: 4px;
-		border: 1px solid var(--bg-slate-400, #1d212d);
+		border: 1px solid var(--l1-border);
 		margin-bottom: 28px;
 	}
 
 	.changelog-media-video {
 		margin: 12px 0;
-	}
-}
-
-.lightMode {
-	.changelog-renderer {
-		.changelog-release-date {
-			color: var(--text-ink-500);
-		}
-
-		&-line {
-			background-color: var(--bg-vanilla-300);
-		}
-
-		& :is(h1, h2, h3, h4, h5, h6, p, li, &-section-title) {
-			color: var(--text-ink-500);
-		}
-
-		code {
-			background-color: var(--bg-vanilla-300);
-			border: 1px solid var(--bg-vanilla-300);
-			color: var(--text-ink-500);
-		}
 	}
 }

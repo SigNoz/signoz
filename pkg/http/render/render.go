@@ -1,7 +1,9 @@
 package render
 
 import (
+	"math"
 	"net/http"
+	"strconv"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	jsoniter "github.com/json-iterator/go"
@@ -77,6 +79,8 @@ func ErrorTypeFromStatusCode(statusCode int) string {
 		return errors.TypeTimeout.String()
 	case http.StatusUnavailableForLegalReasons:
 		return errors.TypeLicenseUnavailable.String()
+	case http.StatusTooManyRequests:
+		return errors.TypeTooManyRequests.String()
 	default:
 		return errors.TypeInternal.String()
 	}
@@ -108,6 +112,8 @@ func Error(rw http.ResponseWriter, cause error) {
 		httpCode = http.StatusInternalServerError
 	case errors.TypeLicenseUnavailable:
 		httpCode = http.StatusUnavailableForLegalReasons
+	case errors.TypeTooManyRequests:
+		httpCode = http.StatusTooManyRequests
 	}
 
 	body, err := json.Marshal(&ErrorResponse{Status: StatusError.s, Error: errors.AsJSON(cause)})
@@ -115,6 +121,13 @@ func Error(rw http.ResponseWriter, cause error) {
 		// this should never be the case
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return
+	}
+
+	// Retry-After carries the explicit delay declared via
+	// errors.WithRetryAfter. Set it before WriteHeader so headers go on the wire.
+	d := errors.RetryDelayOf(cause)
+	if d.Seconds() > 0 {
+		rw.Header().Set("Retry-After", strconv.Itoa(int(math.Ceil(d.Seconds()))))
 	}
 
 	rw.WriteHeader(httpCode)

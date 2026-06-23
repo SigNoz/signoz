@@ -3,16 +3,16 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { useInterval } from 'react-use';
-import { CaretDownFilled } from '@ant-design/icons';
-import { Button, Checkbox, Popover, Typography } from 'antd';
-import type { CheckboxChangeEvent } from 'antd/lib/checkbox';
+import { Check, ChevronDown } from '@signozhq/icons';
+import { Button, Popover } from 'antd';
+import { Checkbox } from '@signozhq/ui/checkbox';
+import { Typography } from '@signozhq/ui/typography';
 import get from 'api/browser/localstorage/get';
 import set from 'api/browser/localstorage/set';
 import { DASHBOARD_TIME_IN_DURATION } from 'constants/app';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { getMinMaxForSelectedTime } from 'lib/getMinMax';
 import _omit from 'lodash-es/omit';
-import { Check } from 'lucide-react';
 // eslint-disable-next-line no-restricted-imports
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
@@ -50,10 +50,10 @@ function AutoRefresh({
 
 	const localStorageData = JSON.parse(get(DASHBOARD_TIME_IN_DURATION) || '{}');
 
-	const localStorageValue = useMemo(() => localStorageData[pathname], [
-		pathname,
-		localStorageData,
-	]);
+	const localStorageValue = useMemo(
+		() => localStorageData[pathname],
+		[pathname, localStorageData],
+	);
 
 	const [isAutoRefreshEnabled, setIsAutoRefreshfreshEnabled] = useState<boolean>(
 		Boolean(localStorageValue),
@@ -132,8 +132,8 @@ function AutoRefresh({
 	);
 
 	const onChangeAutoRefreshHandler = useCallback(
-		(event: CheckboxChangeEvent) => {
-			const { checked } = event.target;
+		(value: boolean | 'indeterminate') => {
+			const checked = value === true;
 			if (!checked) {
 				// remove the path from localstorage
 				set(
@@ -168,18 +168,15 @@ function AutoRefresh({
 				<div className="auto-refresh-menu">
 					<Checkbox
 						onChange={onChangeAutoRefreshHandler}
-						checked={isAutoRefreshEnabled}
+						value={isAutoRefreshEnabled}
 						disabled={isDisabled}
 						className="auto-refresh-checkbox"
 					>
 						Auto Refresh
 					</Checkbox>
-					<Typography.Paragraph
-						disabled={isDisabled}
-						className="refresh-interval-text"
-					>
+					<Typography.Text disabled={isDisabled} className="refresh-interval-text">
 						Refresh Interval
-					</Typography.Paragraph>
+					</Typography.Text>
 					{refreshIntervalOptions
 						.filter((e) => e.label !== 'off')
 						.map((option) => (
@@ -202,7 +199,7 @@ function AutoRefresh({
 				title="Set auto refresh"
 				type={showAutoRefreshBtnPrimary ? 'primary' : 'default'}
 			>
-				<CaretDownFilled />
+				<ChevronDown size={14} />
 			</ButtonContainer>
 		</Popover>
 	);

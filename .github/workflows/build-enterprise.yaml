@@ -58,8 +58,6 @@ jobs:
         run: |
           mkdir -p frontend
           echo 'CI=1' > frontend/.env
-          echo 'VITE_INTERCOM_APP_ID="${{ secrets.INTERCOM_APP_ID }}"' >> frontend/.env
-          echo 'VITE_SEGMENT_ID="${{ secrets.SEGMENT_ID }}"' >> frontend/.env
           echo 'VITE_SENTRY_AUTH_TOKEN="${{ secrets.SENTRY_AUTH_TOKEN }}"' >> frontend/.env
           echo 'VITE_SENTRY_ORG="${{ secrets.SENTRY_ORG }}"' >> frontend/.env
           echo 'VITE_SENTRY_PROJECT_ID="${{ secrets.SENTRY_PROJECT_ID }}"' >> frontend/.env
@@ -71,6 +69,8 @@ jobs:
           echo 'VITE_APPCUES_APP_ID="${{ secrets.APPCUES_APP_ID }}"' >> frontend/.env
           echo 'VITE_PYLON_IDENTITY_SECRET="${{ secrets.PYLON_IDENTITY_SECRET }}"' >> frontend/.env
           echo 'VITE_DOCS_BASE_URL="https://signoz.io"' >> frontend/.env
+          echo 'VITE_ENVIRONMENT="production"' >> frontend/.env
+          echo 'VITE_VERSION="${{ steps.build-info.outputs.version }}"' >> frontend/.env
       - name: cache-dotenv
         uses: actions/cache@v4
         with:
@@ -87,6 +87,7 @@ jobs:
       JS_INPUT_ARTIFACT_PATH: frontend/.env
       JS_OUTPUT_ARTIFACT_CACHE_KEY: enterprise-jsbuild-${{ github.sha }}
       JS_OUTPUT_ARTIFACT_PATH: frontend/build
+      JS_PKG_MANAGER: pnpm
       DOCKER_BUILD: false
       DOCKER_MANIFEST: false
   go-build:

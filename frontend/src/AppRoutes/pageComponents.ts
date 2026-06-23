@@ -47,7 +47,6 @@ export const TracesFunnels = Loadable(
 		import(/* webpackChunkName: "Traces Funnels" */ 'pages/TracesModulePage'),
 );
 export const TracesFunnelDetails = Loadable(
-	// eslint-disable-next-line sonarjs/no-identical-functions
 	() =>
 		import(
 			/* webpackChunkName: "Traces Funnel Details" */ 'pages/TracesModulePage'
@@ -62,6 +61,20 @@ export const TraceDetail = Loadable(
 	() =>
 		import(
 			/* webpackChunkName: "TraceDetail Page" */ 'pages/TraceDetailV2/index'
+		),
+);
+
+export const TraceDetailOldRedirect = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "TraceDetailOldRedirect" */ 'pages/TraceDetailOldRedirect/index'
+		),
+);
+
+export const TraceDetailV3 = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "TraceDetailV3 Page" */ 'pages/TraceDetailsV3/index'
 		),
 );
 
@@ -129,12 +142,12 @@ export const AlertOverview = Loadable(
 	() => import(/* webpackChunkName: "Alert Overview" */ 'pages/AlertList'),
 );
 
-export const CreateAlertChannelAlerts = Loadable(
-	() => import(/* webpackChunkName: "Create Channels" */ 'pages/Settings'),
+export const ChannelsNew = Loadable(
+	() => import(/* webpackChunkName: "Create Channels" */ 'pages/AlertList'),
 );
 
-export const AllAlertChannels = Loadable(
-	() => import(/* webpackChunkName: "All Channels" */ 'pages/Settings'),
+export const ChannelsEdit = Loadable(
+	() => import(/* webpackChunkName: "Edit Channels" */ 'pages/AlertList'),
 );
 
 export const AllErrors = Loadable(
@@ -244,10 +257,16 @@ export const ShortcutsPage = Loadable(
 	() => import(/* webpackChunkName: "ShortcutsPage" */ 'pages/Settings'),
 );
 
-export const InstalledIntegrations = Loadable(
+export const Integrations = Loadable(
 	() =>
 		import(
 			/* webpackChunkName: "InstalledIntegrations" */ 'pages/IntegrationsModulePage'
+		),
+);
+export const IntegrationsDetailsPage = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "IntegrationsDetailsPage" */ 'pages/IntegrationsDetailsPage'
 		),
 );
 
@@ -300,14 +319,14 @@ export const PublicDashboardPage = Loadable(
 		),
 );
 
-export const AlertTypeSelectionPage = Loadable(
-	() =>
-		import(
-			/* webpackChunkName: "Alert Type Selection Page" */ 'pages/AlertTypeSelection'
-		),
-);
-
 export const MeterExplorerPage = Loadable(
 	() =>
 		import(/* webpackChunkName: "Meter Explorer Page" */ 'pages/MeterExplorer'),
+);
+
+export const AIAssistantPage = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "AI Assistant Page" */ 'pages/AIAssistantPage/AIAssistantPage'
+		),
 );

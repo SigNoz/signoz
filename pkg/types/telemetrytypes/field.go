@@ -30,17 +30,16 @@ const (
 )
 
 type TelemetryFieldKey struct {
-	Name          string        `json:"name" required:"true"`
+	Name          string        `json:"name" validate:"required" required:"true"`
 	Description   string        `json:"description,omitempty"`
 	Unit          string        `json:"unit,omitempty"`
 	Signal        Signal        `json:"signal,omitzero"`
 	FieldContext  FieldContext  `json:"fieldContext,omitzero"`
 	FieldDataType FieldDataType `json:"fieldDataType,omitzero"`
 
-	JSONDataType *JSONDataType       `json:"-"`
-	JSONPlan     JSONAccessPlan      `json:"-"`
-	Indexes      []JSONDataTypeIndex `json:"-"`
-	Materialized bool                `json:"-"` // refers to promoted in case of body.... fields
+	JSONPlan     JSONAccessPlan               `json:"-"`
+	Indexes      []TelemetryFieldKeySkipIndex `json:"-"`
+	Materialized bool                         `json:"-"` // refers to promoted in case of body.... fields
 
 	Evolutions []*EvolutionEntry `json:"-"`
 }
@@ -80,6 +79,11 @@ func (f *TelemetryFieldKey) ArrayParentSelectors() []*FieldKeySelector {
 	return selectors
 }
 
+// GetJSONDataType derives the JSONDataType from FieldDataType.
+func (f *TelemetryFieldKey) GetJSONDataType() JSONDataType {
+	return MappingFieldDataTypeToJSONDataType[f.FieldDataType]
+}
+
 func (f TelemetryFieldKey) String() string {
 	var sb strings.Builder
 	fmt.Fprintf(&sb, "name=%s", f.Name)
@@ -92,16 +96,13 @@ func (f TelemetryFieldKey) String() string {
 	if f.Materialized {
 		sb.WriteString(",materialized=true")
 	}
-	if f.JSONDataType != nil {
-		fmt.Fprintf(&sb, ",jsondatatype=%s", f.JSONDataType.StringValue())
-	}
 	if len(f.Indexes) > 0 {
 		sb.WriteString(",indexes=[")
 		for i, index := range f.Indexes {
 			if i > 0 {
 				sb.WriteString("; ")
 			}
-			fmt.Fprintf(&sb, "{type=%s, columnExpr=%s, indexExpr=%s}", index.Type.StringValue(), index.ColumnExpression, index.IndexExpression)
+			fmt.Fprintf(&sb, "{type=%s, indexExpr=%s}", MappingFieldDataTypeToJSONDataType[index.FieldDataType].StringValue(), index.IndexExpression)
 		}
 		sb.WriteString("]")
 	}
@@ -117,7 +118,6 @@ func (f TelemetryFieldKey) Text() string {
 func (f *TelemetryFieldKey) OverrideMetadataFrom(src *TelemetryFieldKey) {
 	f.FieldContext = src.FieldContext
 	f.FieldDataType = src.FieldDataType
-	f.JSONDataType = src.JSONDataType
 	f.Indexes = src.Indexes
 	f.Materialized = src.Materialized
 	f.JSONPlan = src.JSONPlan
@@ -268,7 +268,8 @@ func (t *TelemetryFieldValues) NumValues() int {
 }
 
 type MetricContext struct {
-	MetricName string `json:"metricName"`
+	MetricName      string `json:"metricName"`
+	MetricNamespace string `json:"metricNamespace,omitempty"`
 }
 
 type FieldKeySelector struct {
@@ -297,15 +298,16 @@ type GettableFieldKeys struct {
 }
 
 type PostableFieldKeysParams struct {
-	Signal         Signal        `query:"signal"`
-	Source         Source        `query:"source"`
-	Limit          int           `query:"limit"`
-	StartUnixMilli int64         `query:"startUnixMilli"`
-	EndUnixMilli   int64         `query:"endUnixMilli"`
-	FieldContext   FieldContext  `query:"fieldContext"`
-	FieldDataType  FieldDataType `query:"fieldDataType"`
-	MetricName     string        `query:"metricName"`
-	SearchText     string        `query:"searchText"`
+	Signal          Signal        `query:"signal"`
+	Source          Source        `query:"source"`
+	Limit           int           `query:"limit"`
+	StartUnixMilli  int64         `query:"startUnixMilli"`
+	EndUnixMilli    int64         `query:"endUnixMilli"`
+	FieldContext    FieldContext  `query:"fieldContext"`
+	FieldDataType   FieldDataType `query:"fieldDataType"`
+	MetricName      string        `query:"metricName"`
+	MetricNamespace string        `query:"metricNamespace"`
+	SearchText      string        `query:"searchText"`
 }
 
 type GettableFieldValues struct {
@@ -344,9 +346,10 @@ func NewFieldKeySelectorFromPostableFieldKeysParams(params PostableFieldKeysPara
 		req.Limit = 1000
 	}
 
-	if params.MetricName != "" {
+	if params.MetricName != "" || params.MetricNamespace != "" {
 		req.MetricContext = &MetricContext{
-			MetricName: params.MetricName,
+			MetricName:      params.MetricName,
+			MetricNamespace: params.MetricNamespace,
 		}
 	}
 
@@ -396,4 +399,15 @@ func NewFieldValueSelectorFromPostableFieldValueParams(params PostableFieldValue
 	}
 
 	return fieldValueSelector
+}
+
+type TelemetryFieldKeySkipIndex struct {
+	Name            string        `json:"name"` // Name is TelemetryFieldKey.Name not IndexName from ClickHouse
+	FieldContext    FieldContext  `json:"fieldContext,omitzero"`
+	FieldDataType   FieldDataType `json:"fieldDataType,omitzero"`
+	BaseColumn      string        `json:"baseColumn"`
+	IndexName       string        `json:"indexName"`
+	IndexType       string        `json:"indexType"`
+	IndexExpression string        `json:"indexExpression"`
+	Granularity     int           `json:"granularity"`
 }

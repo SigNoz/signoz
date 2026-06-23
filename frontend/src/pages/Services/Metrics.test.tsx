@@ -3,7 +3,7 @@ import { render, screen } from 'tests/test-utils';
 import Metrics from '.';
 
 describe('Services', () => {
-	test('Should render the component', () => {
+	it('Should render the component', () => {
 		render(<Metrics />);
 
 		const inputBox = screen.getByTestId('resource-attributes-filter');
@@ -12,7 +12,7 @@ describe('Services', () => {
 		expect(screen.getByTestId('resource-environment-filter')).toBeInTheDocument();
 
 		const application = screen.getByRole('columnheader', {
-			name: /application search/i,
+			name: /application/i,
 		});
 		expect(application).toBeInTheDocument();
 

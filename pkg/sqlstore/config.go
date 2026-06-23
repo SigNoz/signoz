@@ -39,6 +39,10 @@ type SqliteConfig struct {
 type ConnectionConfig struct {
 	// MaxOpenConns is the maximum number of open connections to the database.
 	MaxOpenConns int `mapstructure:"max_open_conns"`
+
+	// MaxConnLifetime is the maximum amount of time a connection may be reused.
+	// If max_conn_lifetime == 0, connections are not closed due to a connection's age.
+	MaxConnLifetime time.Duration `mapstructure:"max_conn_lifetime"`
 }
 
 func NewConfigFactory() factory.ConfigFactory {
@@ -49,11 +53,12 @@ func newConfig() factory.Config {
 	return Config{
 		Provider: "sqlite",
 		Connection: ConnectionConfig{
-			MaxOpenConns: 100,
+			MaxOpenConns:    100,
+			MaxConnLifetime: 0,
 		},
 		Sqlite: SqliteConfig{
 			Path:            "/var/lib/signoz/signoz.db",
-			Mode:            "delete",
+			Mode:            "wal",
 			BusyTimeout:     10000 * time.Millisecond, // increasing the defaults from https://github.com/mattn/go-sqlite3/blob/master/sqlite3.go#L1098 because of transpilation from C to GO
 			TransactionMode: "deferred",
 		},

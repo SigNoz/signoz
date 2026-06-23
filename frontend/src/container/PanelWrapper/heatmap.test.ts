@@ -6,9 +6,10 @@ import {
 
 describe('heatmap utility functions', () => {
 	describe('convertToHeatmapData', () => {
-		it('converts timestamps, bucket indices, and counts to flat arrays', () => {
+		it('converts timestamps, bucket bounds, and counts to flat arrays', () => {
 			const timestamps = [1000, 2000];
-			const bucketIndices = [0, 1, 2];
+			// bounds has numBuckets+1 entries; 4 bounds => 3 buckets
+			const bucketBounds = [0, 1, 2, 3];
 			const counts = [
 				[5, 10, 15],
 				[8, 12, 18],
@@ -16,35 +17,36 @@ describe('heatmap utility functions', () => {
 
 			const [xs, ys, countsFlat] = convertToHeatmapData(
 				timestamps,
-				bucketIndices,
+				bucketBounds,
 				counts,
 			);
 
-			expect(xs).toEqual([1000, 1000, 1000, 2000, 2000, 2000]);
-			expect(ys).toEqual([0, 1, 2, 0, 1, 2]);
-			expect(countsFlat).toEqual([5, 10, 15, 8, 12, 18]);
+			expect(xs).toStrictEqual([1000, 1000, 1000, 2000, 2000, 2000]);
+			expect(ys).toStrictEqual([0, 1, 2, 0, 1, 2]);
+			expect(countsFlat).toStrictEqual([5, 10, 15, 8, 12, 18]);
 		});
 
 		it('handles empty data', () => {
 			const [xs, ys, countsFlat] = convertToHeatmapData([], [], []);
 
-			expect(xs).toEqual([]);
-			expect(ys).toEqual([]);
-			expect(countsFlat).toEqual([]);
+			expect(xs).toStrictEqual([]);
+			expect(ys).toStrictEqual([]);
+			expect(countsFlat).toStrictEqual([]);
 		});
 
 		it('handles missing counts with zeros', () => {
 			const timestamps = [1000];
-			const bucketIndices = [0, 1, 2];
+			// bounds has numBuckets+1 entries; 4 bounds => 3 buckets
+			const bucketBounds = [0, 1, 2, 3];
 			const counts = [[5]]; // Missing counts for buckets 1 and 2
 
 			const [_xs, _ys, countsFlat] = convertToHeatmapData(
 				timestamps,
-				bucketIndices,
+				bucketBounds,
 				counts,
 			);
 
-			expect(countsFlat).toEqual([5, 0, 0]);
+			expect(countsFlat).toStrictEqual([5, 0, 0]);
 		});
 	});
 
@@ -124,7 +126,7 @@ describe('heatmap utility functions', () => {
 
 			const fills = fillsFn(mockUplot, 1);
 
-			expect(fills).toEqual([]);
+			expect(fills).toStrictEqual([]);
 		});
 	});
 });

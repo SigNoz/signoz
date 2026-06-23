@@ -10,22 +10,20 @@ import {
 	PopoverPosition,
 	useCoordinates,
 } from 'periscope/components/ContextMenu';
-import { SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
 interface UseTimeSeriesContextMenuParams {
 	widget: Widgets;
-	queryResponse: UseQueryResult<
-		SuccessResponse<MetricRangePayloadProps, unknown>,
-		Error
-	>;
+	queryResponse: UseQueryResult<MetricQueryRangeSuccessResponse, Error>;
+	enableDrillDown?: boolean;
 }
 
 export const usePanelContextMenu = ({
 	widget,
 	queryResponse,
+	enableDrillDown = false,
 }: UseTimeSeriesContextMenuParams): {
 	coordinates: { x: number; y: number } | null;
 	popoverPosition: PopoverPosition | null;
@@ -61,6 +59,9 @@ export const usePanelContextMenu = ({
 
 	const clickHandlerWithContextMenu = useCallback(
 		(...args: any[]) => {
+			if (!enableDrillDown) {
+				return;
+			}
 			const [
 				xValue,
 				_yvalue,
@@ -113,17 +114,22 @@ export const usePanelContextMenu = ({
 			}
 
 			if (data && data?.record?.queryName) {
-				onClick(data.coord, { ...data.record, label: data.label, timeRange });
+				onClick(data.coord, {
+					...data.record,
+					label: data.label,
+					seriesColor: data.seriesColor,
+					timeRange,
+				});
 			}
 		},
-		[onClick, queryResponse],
+		[enableDrillDown, onClick, queryResponse],
 	);
 
 	return {
 		coordinates,
 		popoverPosition,
 		onClose,
-		menuItemsConfig,
+		menuItemsConfig: enableDrillDown ? menuItemsConfig : {},
 		clickHandlerWithContextMenu,
 	};
 };

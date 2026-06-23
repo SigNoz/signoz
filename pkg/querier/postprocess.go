@@ -12,8 +12,12 @@ import (
 	"github.com/SigNoz/govaluate"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/flagger"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 // queryInfo holds common query properties.
@@ -49,7 +53,7 @@ func getQueryName(spec any) string {
 	return getqueryInfo(spec).Name
 }
 
-func (q *querier) postProcessResults(ctx context.Context, results map[string]any, req *qbtypes.QueryRangeRequest) (map[string]any, error) {
+func (q *querier) postProcessResults(ctx context.Context, orgID valuer.UUID, results map[string]any, req *qbtypes.QueryRangeRequest) (map[string]any, error) {
 	// Convert results to typed format for processing
 	typedResults := make(map[string]*qbtypes.Result)
 	for name, result := range results {
@@ -68,6 +72,7 @@ func (q *querier) postProcessResults(ctx context.Context, results map[string]any
 		case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]:
 			if result, ok := typedResults[spec.Name]; ok {
 				result = postProcessBuilderQuery(q, result, spec, req)
+				result = q.postProcessLogBody(ctx, orgID, result, req)
 				typedResults[spec.Name] = result
 			}
 		case qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]:
@@ -124,8 +129,12 @@ func (q *querier) postProcessResults(ctx context.Context, results map[string]any
 				continue
 			}
 
+			stepInterval, err := req.StepIntervalForQuery(name)
+			if err != nil {
+				return nil, err
+			}
 			funcs := []qbtypes.Function{{Name: qbtypes.FunctionNameFillZero}}
-			funcs = q.prepareFillZeroArgsWithStep(funcs, req, req.StepIntervalForQuery(name))
+			funcs = q.prepareFillZeroArgsWithStep(funcs, req, stepInterval)
 			// empty time series if it doesn't exist
 			tsData, ok := typedResults[name].Value.(*qbtypes.TimeSeriesData)
 			if !ok {
@@ -330,10 +339,8 @@ func (q *querier) applyFormulas(ctx context.Context, results map[string]*qbtypes
 			}
 		case qbtypes.RequestTypeScalar:
 			result := q.processScalarFormula(ctx, results, formula, req)
-			if result != nil {
-				result = q.applySeriesLimit(result, formula.Limit, formula.Order)
-				results[name] = result
-			}
+			// For scalar results, apply limit by processScalarFormula itself since it needs to be applied before converting back to scalar format
+			results[name] = result
 		}
 	}
 
@@ -521,6 +528,9 @@ func (q *querier) processScalarFormula(
 		return nil
 	}
 
+	// Apply ordering (and limit) before converting to scalar format.
+	formulaSeries = qbtypes.ApplySeriesLimit(formulaSeries, formula.Order, formula.Limit)
+
 	// Convert back to scalar format
 	scalarResult := &qbtypes.ScalarData{
 		QueryName: formula.Name,
@@ -623,17 +633,27 @@ func convertTimeSeriesDataToScalar(tsData *qbtypes.TimeSeriesData, queryName str
 		return &qbtypes.ScalarData{QueryName: queryName}
 	}
 
-	columns := []*qbtypes.ColumnDescriptor{}
-
-	// Add group columns from first series
-	if len(tsData.Aggregations[0].Series) > 0 {
-		for _, label := range tsData.Aggregations[0].Series[0].Labels {
-			columns = append(columns, &qbtypes.ColumnDescriptor{
-				TelemetryFieldKey: label.Key,
-				QueryName:         queryName,
-				Type:              qbtypes.ColumnTypeGroup,
-			})
+	// Series can have ragged label sets; build the column schema from the
+	// union of all label keys (first-seen order) and fill rows by key lookup.
+	keyOrder := []telemetrytypes.TelemetryFieldKey{}
+	keyIndex := map[string]int{}
+	for _, series := range tsData.Aggregations[0].Series {
+		for _, label := range series.Labels {
+			if _, ok := keyIndex[label.Key.Name]; ok {
+				continue
+			}
+			keyIndex[label.Key.Name] = len(keyOrder)
+			keyOrder = append(keyOrder, label.Key)
 		}
+	}
+
+	columns := make([]*qbtypes.ColumnDescriptor, 0, len(keyOrder)+len(tsData.Aggregations))
+	for _, key := range keyOrder {
+		columns = append(columns, &qbtypes.ColumnDescriptor{
+			TelemetryFieldKey: key,
+			QueryName:         queryName,
+			Type:              qbtypes.ColumnTypeGroup,
+		})
 	}
 
 	// Add aggregation columns
@@ -651,18 +671,18 @@ func convertTimeSeriesDataToScalar(tsData *qbtypes.TimeSeriesData, queryName str
 		})
 	}
 
-	// Build rows
+	// Build rows.
+	groupColCount := len(keyOrder)
 	data := [][]any{}
 	for seriesIdx, series := range tsData.Aggregations[0].Series {
 		row := make([]any, len(columns))
 
-		// Add group values
-		for i, label := range series.Labels {
-			row[i] = label.Value
+		// Place each label under its key's column (by lookup, not index).
+		for _, label := range series.Labels {
+			row[keyIndex[label.Key.Name]] = label.Value
 		}
 
 		// Add aggregation values (last value)
-		groupColCount := len(series.Labels)
 		for aggIdx, agg := range tsData.Aggregations {
 			if seriesIdx < len(agg.Series) && len(agg.Series[seriesIdx].Values) > 0 {
 				lastValue := agg.Series[seriesIdx].Values[len(agg.Series[seriesIdx].Values)-1].Value
@@ -965,11 +985,19 @@ func (q *querier) prepareFillZeroArgsWithStep(functions []qbtypes.Function, req 
 	updatedFunctions := make([]qbtypes.Function, len(functions))
 	copy(updatedFunctions, functions)
 
+	// funcFillZero expects start/end in milliseconds. req.Start/req.End may
+	// arrive in s/ms/μs/ns depending on the caller; normalize via ToNanoSecs
+	// (same pattern used elsewhere in the codebase, e.g. RecommendedStepInterval)
+	// then convert to ms. Without this, an ns payload makes (end-start)/step
+	// 10^6× too large and OOMs the process.
+	startMs := querybuilder.ToNanoSecs(req.Start) / 1_000_000
+	endMs := querybuilder.ToNanoSecs(req.End) / 1_000_000
+
 	for i, fn := range updatedFunctions {
 		if fn.Name == qbtypes.FunctionNameFillZero && len(fn.Args) == 0 {
 			fn.Args = []qbtypes.FunctionArg{
-				{Value: float64(req.Start)},
-				{Value: float64(req.End)},
+				{Value: float64(startMs)},
+				{Value: float64(endMs)},
 				{Value: float64(step)},
 			}
 			updatedFunctions[i] = fn
@@ -1020,5 +1048,35 @@ func (q *querier) calculateFormulaStep(expression string, req *qbtypes.QueryRang
 		result = gcd(result, steps[i])
 	}
 
+	return result
+}
+
+// postProcessLogBody removes the "message" key from the body map when it is empty.
+// Only runs for raw list queries with the use_json_body feature enabled.
+func (q *querier) postProcessLogBody(ctx context.Context, orgID valuer.UUID, result *qbtypes.Result, req *qbtypes.QueryRangeRequest) *qbtypes.Result {
+	if req.RequestType != qbtypes.RequestTypeRaw {
+		return result
+	}
+	if !q.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID)) {
+		return result
+	}
+	rawData, ok := result.Value.(*qbtypes.RawData)
+	if !ok {
+		return result
+	}
+	for _, row := range rawData.Rows {
+		bodyMap, ok := row.Data["body"].(map[string]any)
+		if !ok {
+			continue
+		}
+		if msg, exists := bodyMap["message"]; exists {
+			switch v := msg.(type) {
+			case string:
+				if v == "" {
+					delete(bodyMap, "message")
+				}
+			}
+		}
+	}
 	return result
 }

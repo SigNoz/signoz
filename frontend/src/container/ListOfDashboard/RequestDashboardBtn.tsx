@@ -1,18 +1,17 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { LoadingOutlined } from '@ant-design/icons';
-import { Button, Input, Space, Typography } from 'antd';
+import { LoaderCircle, Check } from '@signozhq/icons';
+import { Input } from '@signozhq/ui/input';
+import { Button, Space } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { useNotifications } from 'hooks/useNotifications';
-import { Check } from 'lucide-react';
 
-import '../../pages/Integrations/Integrations.styles.scss';
+import '../Integrations/Integrations.styles.scss';
 
 export function RequestDashboardBtn(): JSX.Element {
-	const [
-		isSubmittingRequestForDashboard,
-		setIsSubmittingRequestForDashboard,
-	] = useState(false);
+	const [isSubmittingRequestForDashboard, setIsSubmittingRequestForDashboard] =
+		useState(false);
 
 	const [requestedDashboardName, setRequestedDashboardName] = useState('');
 
@@ -80,7 +79,7 @@ export function RequestDashboardBtn(): JSX.Element {
 						className="periscope-btn primary"
 						icon={
 							isSubmittingRequestForDashboard ? (
-								<LoadingOutlined />
+								<LoaderCircle className="animate-spin" size={12} />
 							) : (
 								<Check size={12} />
 							)

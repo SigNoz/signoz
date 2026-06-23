@@ -10,7 +10,7 @@ import (
 )
 
 func (provider *provider) addAuthDomainRoutes(router *mux.Router) error {
-	if err := router.Handle("/api/v1/domains", handler.New(provider.authZ.AdminAccess(provider.authDomainHandler.List), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/domains", handler.New(provider.authzMiddleware.AdminAccess(provider.authDomainHandler.List), handler.OpenAPIDef{
 		ID:                  "ListAuthDomains",
 		Tags:                []string{"authdomains"},
 		Summary:             "List all auth domains",
@@ -27,16 +27,16 @@ func (provider *provider) addAuthDomainRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/domains", handler.New(provider.authZ.AdminAccess(provider.authDomainHandler.Create), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/domains", handler.New(provider.authzMiddleware.AdminAccess(provider.authDomainHandler.Create), handler.OpenAPIDef{
 		ID:                  "CreateAuthDomain",
 		Tags:                []string{"authdomains"},
 		Summary:             "Create auth domain",
 		Description:         "This endpoint creates an auth domain",
 		Request:             new(authtypes.PostableAuthDomain),
 		RequestContentType:  "application/json",
-		Response:            new(authtypes.GettableAuthDomain),
+		Response:            new(types.Identifiable),
 		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusOK,
+		SuccessStatusCode:   http.StatusCreated,
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusConflict},
 		Deprecated:          false,
 		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
@@ -44,12 +44,29 @@ func (provider *provider) addAuthDomainRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/domains/{id}", handler.New(provider.authZ.AdminAccess(provider.authDomainHandler.Update), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/domains/{id}", handler.New(provider.authzMiddleware.AdminAccess(provider.authDomainHandler.Get), handler.OpenAPIDef{
+		ID:                  "GetAuthDomain",
+		Tags:                []string{"authdomains"},
+		Summary:             "Get auth domain by ID",
+		Description:         "This endpoint returns an auth domain by ID",
+		Request:             nil,
+		RequestContentType:  "",
+		Response:            new(authtypes.GettableAuthDomain),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{http.StatusNotFound},
+		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+	})).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v1/domains/{id}", handler.New(provider.authzMiddleware.AdminAccess(provider.authDomainHandler.Update), handler.OpenAPIDef{
 		ID:                  "UpdateAuthDomain",
 		Tags:                []string{"authdomains"},
 		Summary:             "Update auth domain",
 		Description:         "This endpoint updates an auth domain",
-		Request:             new(authtypes.UpdateableAuthDomain),
+		Request:             new(authtypes.UpdatableAuthDomain),
 		RequestContentType:  "application/json",
 		Response:            nil,
 		ResponseContentType: "",
@@ -61,7 +78,7 @@ func (provider *provider) addAuthDomainRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/domains/{id}", handler.New(provider.authZ.AdminAccess(provider.authDomainHandler.Delete), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/domains/{id}", handler.New(provider.authzMiddleware.AdminAccess(provider.authDomainHandler.Delete), handler.OpenAPIDef{
 		ID:                  "DeleteAuthDomain",
 		Tags:                []string{"authdomains"},
 		Summary:             "Delete auth domain",

@@ -26,10 +26,10 @@ import VariableItem from './VariableItem';
 import './DashboardVariableSelection.styles.scss';
 
 function DashboardVariableSelection(): JSX.Element | null {
-	const { dashboardId, setSelectedDashboard } = useDashboardStore(
+	const { dashboardId, setDashboardData } = useDashboardStore(
 		useShallow((s) => ({
-			dashboardId: s.selectedDashboard?.id ?? '',
-			setSelectedDashboard: s.setSelectedDashboard,
+			dashboardId: s.dashboardData?.id ?? '',
+			setDashboardData: s.setDashboardData,
 		})),
 	);
 
@@ -99,7 +99,7 @@ function DashboardVariableSelection(): JSX.Element | null {
 
 			// Synchronously update the external store with the new variable value so that
 			// child variables see the updated parent value when they refetch, rather than
-			// waiting for setSelectedDashboard → useEffect → updateDashboardVariablesStore.
+			// waiting for setDashboardData → useEffect → updateDashboardVariablesStore.
 			const updatedVariables = { ...dashboardVariables };
 			if (updatedVariables[id]) {
 				updatedVariables[id] = {
@@ -119,7 +119,7 @@ function DashboardVariableSelection(): JSX.Element | null {
 			}
 			updateDashboardVariablesStore({ dashboardId, variables: updatedVariables });
 
-			setSelectedDashboard((prev) => {
+			setDashboardData((prev) => {
 				if (prev) {
 					const oldVariables = { ...prev?.data.variables };
 					// this is added to handle case where we have two different
@@ -157,7 +157,7 @@ function DashboardVariableSelection(): JSX.Element | null {
 			// Safe to call synchronously now that the store already has the updated value.
 			enqueueDescendantsOfVariable(name);
 		},
-		[dashboardId, dashboardVariables, updateUrlVariable, setSelectedDashboard],
+		[dashboardId, dashboardVariables, updateUrlVariable, setDashboardData],
 	);
 
 	return (

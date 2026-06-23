@@ -1,0 +1,49 @@
+.trigger {
+	display: block;
+	min-width: 0;
+	max-width: 100%;
+	overflow: hidden;
+
+	[data-truncated='true'] {
+		pointer-events: none;
+	}
+}
+
+.tooltipContent {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	max-width: 480px;
+	padding: 8px;
+}
+
+.preview {
+	margin: 0;
+	max-height: 220px;
+	overflow: auto;
+	white-space: pre-wrap;
+	word-break: break-word;
+	font-family: var(--font-family-mono, monospace);
+	font-size: 12px;
+	line-height: 1.4;
+}
+
+.expandButton {
+	align-self: flex-end;
+}
+
+.dialog {
+	max-width: 80vw;
+	width: 80vw;
+}
+
+.fullValue {
+	margin: 0;
+	max-height: 70vh;
+	overflow: auto;
+	white-space: pre-wrap;
+	word-break: break-word;
+	font-family: var(--font-family-mono, monospace);
+	font-size: 13px;
+	line-height: 1.5;
+}

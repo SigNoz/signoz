@@ -247,6 +247,7 @@ export const panelTypeVsLineInterpolation: {
 	[PANEL_TYPES.PIE]: false,
 	[PANEL_TYPES.BAR]: false,
 	[PANEL_TYPES.HISTOGRAM]: false,
+	[PANEL_TYPES.HEATMAP]: false,
 	[PANEL_TYPES.TRACE]: false,
 	[PANEL_TYPES.EMPTY_WIDGET]: false,
 } as const;
@@ -261,6 +262,7 @@ export const panelTypeVsLineStyle: {
 	[PANEL_TYPES.PIE]: false,
 	[PANEL_TYPES.BAR]: false,
 	[PANEL_TYPES.HISTOGRAM]: false,
+	[PANEL_TYPES.HEATMAP]: false,
 	[PANEL_TYPES.TRACE]: false,
 	[PANEL_TYPES.EMPTY_WIDGET]: false,
 } as const;
@@ -275,6 +277,7 @@ export const panelTypeVsFillMode: {
 	[PANEL_TYPES.PIE]: false,
 	[PANEL_TYPES.BAR]: false,
 	[PANEL_TYPES.HISTOGRAM]: false,
+	[PANEL_TYPES.HEATMAP]: false,
 	[PANEL_TYPES.TRACE]: false,
 	[PANEL_TYPES.EMPTY_WIDGET]: false,
 } as const;
@@ -289,6 +292,7 @@ export const panelTypeVsShowPoints: {
 	[PANEL_TYPES.PIE]: false,
 	[PANEL_TYPES.BAR]: false,
 	[PANEL_TYPES.HISTOGRAM]: false,
+	[PANEL_TYPES.HEATMAP]: false,
 	[PANEL_TYPES.TRACE]: false,
 	[PANEL_TYPES.EMPTY_WIDGET]: false,
 } as const;
@@ -303,6 +307,7 @@ export const panelTypeVsSpanGaps: {
 	[PANEL_TYPES.PIE]: false,
 	[PANEL_TYPES.BAR]: false,
 	[PANEL_TYPES.HISTOGRAM]: false,
+	[PANEL_TYPES.HEATMAP]: false,
 	[PANEL_TYPES.TRACE]: false,
 	[PANEL_TYPES.EMPTY_WIDGET]: false,
 } as const;

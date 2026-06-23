@@ -54,6 +54,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 
 	// Set the maximum number of open connections
 	pgConfig.MaxConns = int32(config.Connection.MaxOpenConns)
+	pgConfig.MaxConnLifetime = config.Connection.MaxConnLifetime
 
 	// Use pgxpool to create a connection pool
 	pool, err := pgxpool.NewWithConfig(ctx, pgConfig)

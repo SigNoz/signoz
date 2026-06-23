@@ -1,9 +1,8 @@
 import { useTranslation } from 'react-i18next';
-import { Form, Input } from 'antd';
-
+import { Input } from '@signozhq/ui/input';
+import { Form } from 'antd';
 import { ProcessorFormField } from '../../AddNewProcessor/config';
 import { formValidationRules } from '../../config';
-import { FormLabelStyle } from '../styles';
 
 function NameInput({ fieldData }: NameInputProps): JSX.Element {
 	const { t } = useTranslation('pipeline');
@@ -11,7 +10,7 @@ function NameInput({ fieldData }: NameInputProps): JSX.Element {
 	return (
 		<Form.Item
 			required={false}
-			label={<FormLabelStyle>{fieldData.fieldName}</FormLabelStyle>}
+			label={fieldData.fieldName}
 			key={fieldData.id}
 			rules={formValidationRules}
 			name={fieldData.name}

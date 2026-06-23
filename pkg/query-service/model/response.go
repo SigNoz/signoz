@@ -149,16 +149,6 @@ type RuleResponseItem struct {
 	Data      string    `json:"data" db:"data"`
 }
 
-type TTLStatusItem struct {
-	Id             int       `json:"id" db:"id"`
-	UpdatedAt      time.Time `json:"updated_at" db:"updated_at"`
-	CreatedAt      time.Time `json:"created_at" db:"created_at"`
-	TableName      string    `json:"table_name" db:"table_name"`
-	TTL            int       `json:"ttl" db:"ttl"`
-	Status         string    `json:"status" db:"status"`
-	ColdStorageTtl int       `json:"cold_storage_ttl" db:"cold_storage_ttl"`
-}
-
 type ChannelItem struct {
 	Id        int       `json:"id" db:"id"`
 	CreatedAt time.Time `json:"created_at" db:"created_at"`
@@ -249,13 +239,6 @@ type SearchSpanDBResponseItem struct {
 	Model     string    `ch:"model"`
 }
 
-type Event struct {
-	Name         string                 `json:"name,omitempty"`
-	TimeUnixNano uint64                 `json:"timeUnixNano,omitempty"`
-	AttributeMap map[string]interface{} `json:"attributeMap,omitempty"`
-	IsError      bool                   `json:"isError,omitempty"`
-}
-
 //easyjson:json
 type SearchSpanResponseItem struct {
 	TimeUnixNano     uint64            `json:"timestamp"`
@@ -274,70 +257,6 @@ type SearchSpanResponseItem struct {
 	StatusMessage    string            `json:"statusMessage"`
 	StatusCodeString string            `json:"statusCodeString"`
 	SpanKind         string            `json:"spanKind"`
-}
-
-type Span struct {
-	TimeUnixNano     uint64            `json:"timestamp"`
-	DurationNano     uint64            `json:"durationNano"`
-	SpanID           string            `json:"spanId"`
-	RootSpanID       string            `json:"rootSpanId"`
-	TraceID          string            `json:"traceId"`
-	HasError         bool              `json:"hasError"`
-	Kind             int32             `json:"kind"`
-	ServiceName      string            `json:"serviceName"`
-	Name             string            `json:"name"`
-	References       []OtelSpanRef     `json:"references,omitempty"`
-	TagMap           map[string]string `json:"tagMap"`
-	Events           []Event           `json:"event"`
-	RootName         string            `json:"rootName"`
-	StatusMessage    string            `json:"statusMessage"`
-	StatusCodeString string            `json:"statusCodeString"`
-	SpanKind         string            `json:"spanKind"`
-	Children         []*Span           `json:"children"`
-
-	// the below two fields are for frontend to render the spans
-	SubTreeNodeCount uint64 `json:"subTreeNodeCount"`
-	HasChildren      bool   `json:"hasChildren"`
-	HasSiblings      bool   `json:"hasSiblings"`
-	Level            uint64 `json:"level"`
-}
-
-type FlamegraphSpan struct {
-	TimeUnixNano uint64            `json:"timestamp"`
-	DurationNano uint64            `json:"durationNano"`
-	SpanID       string            `json:"spanId"`
-	TraceID      string            `json:"traceId"`
-	HasError     bool              `json:"hasError"`
-	ServiceName  string            `json:"serviceName"`
-	Name         string            `json:"name"`
-	Level        int64             `json:"level"`
-	Events       []Event           `json:"event"`
-	References   []OtelSpanRef     `json:"references,omitempty"`
-	Children     []*FlamegraphSpan `json:"children"`
-}
-
-type GetWaterfallSpansForTraceWithMetadataResponse struct {
-	StartTimestampMillis          uint64            `json:"startTimestampMillis"`
-	EndTimestampMillis            uint64            `json:"endTimestampMillis"`
-	DurationNano                  uint64            `json:"durationNano"`
-	RootServiceName               string            `json:"rootServiceName"`
-	RootServiceEntryPoint         string            `json:"rootServiceEntryPoint"`
-	TotalSpansCount               uint64            `json:"totalSpansCount"`
-	TotalErrorSpansCount          uint64            `json:"totalErrorSpansCount"`
-	ServiceNameToTotalDurationMap map[string]uint64 `json:"serviceNameToTotalDurationMap"`
-	Spans                         []*Span           `json:"spans"`
-	HasMissingSpans               bool              `json:"hasMissingSpans"`
-	// this is needed for frontend and query service sync
-	UncollapsedSpans []string `json:"uncollapsedSpans"`
-	HasMore          bool     `json:"hasMore"`
-}
-
-type GetFlamegraphSpansForTraceResponse struct {
-	StartTimestampMillis uint64              `json:"startTimestampMillis"`
-	EndTimestampMillis   uint64              `json:"endTimestampMillis"`
-	DurationNano         uint64              `json:"durationNano"`
-	Spans                [][]*FlamegraphSpan `json:"spans"`
-	HasMore              bool                `json:"hasMore"`
 }
 
 type OtelSpanRef struct {
@@ -436,33 +355,9 @@ type SpanAggregatesDBResponseItem struct {
 	GroupBy      string    `ch:"groupBy"`
 }
 
-type SetTTLResponseItem struct {
-	Message string `json:"message"`
-}
-
 type DiskItem struct {
 	Name string `json:"name,omitempty" ch:"name"`
 	Type string `json:"type,omitempty" ch:"type"`
-}
-
-type DBResponseTTL struct {
-	EngineFull string `ch:"engine_full"`
-}
-
-type GetTTLResponseItem struct {
-	MetricsTime             int    `json:"metrics_ttl_duration_hrs,omitempty"`
-	MetricsMoveTime         int    `json:"metrics_move_ttl_duration_hrs,omitempty"`
-	TracesTime              int    `json:"traces_ttl_duration_hrs,omitempty"`
-	TracesMoveTime          int    `json:"traces_move_ttl_duration_hrs,omitempty"`
-	LogsTime                int    `json:"logs_ttl_duration_hrs,omitempty"`
-	LogsMoveTime            int    `json:"logs_move_ttl_duration_hrs,omitempty"`
-	ExpectedMetricsTime     int    `json:"expected_metrics_ttl_duration_hrs,omitempty"`
-	ExpectedMetricsMoveTime int    `json:"expected_metrics_move_ttl_duration_hrs,omitempty"`
-	ExpectedTracesTime      int    `json:"expected_traces_ttl_duration_hrs,omitempty"`
-	ExpectedTracesMoveTime  int    `json:"expected_traces_move_ttl_duration_hrs,omitempty"`
-	ExpectedLogsTime        int    `json:"expected_logs_ttl_duration_hrs,omitempty"`
-	ExpectedLogsMoveTime    int    `json:"expected_logs_move_ttl_duration_hrs,omitempty"`
-	Status                  string `json:"status"`
 }
 
 type DBResponseServiceName struct {

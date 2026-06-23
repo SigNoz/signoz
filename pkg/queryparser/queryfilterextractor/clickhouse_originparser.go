@@ -104,8 +104,15 @@ func extractCHOriginFieldFromQuery(query string) (string, error) {
 		return "", errors.NewInternalf(errors.CodeInternal, "failed to parse origin field from query: %s", err.Error())
 	}
 
+	if len(stmts) == 0 {
+		return "", errors.NewInternalf(errors.CodeInternal, "no statements found in query")
+	}
+
 	// Get the first statement which should be a SELECT
-	selectStmt := stmts[0].(*parser.SelectQuery)
+	selectStmt, ok := stmts[0].(*parser.SelectQuery)
+	if !ok {
+		return "", errors.NewInternalf(errors.CodeInternal, "expected SELECT query, got %T", stmts[0])
+	}
 
 	// If query has multiple select items, return blank string as we don't expect multiple select items
 	if len(selectStmt.SelectItems) > 1 {

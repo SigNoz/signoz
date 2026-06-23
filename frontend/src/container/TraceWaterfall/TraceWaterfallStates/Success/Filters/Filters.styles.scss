@@ -16,7 +16,7 @@
 		.ant-typography {
 			display: flex;
 			align-items: center;
-			color: var(--bg-vanilla-400);
+			color: var(--l2-foreground);
 			font-family: 'Geist Mono';
 			font-size: 12px;
 			font-style: normal;
@@ -36,25 +36,11 @@
 		display: flex;
 		align-items: center;
 		flex-shrink: 0;
-		color: var(--bg-vanilla-400);
+		color: var(--l2-foreground);
 		font-family: 'Geist Mono';
 		font-size: 12px;
 		font-style: normal;
 		font-weight: 400;
 		line-height: 18px; /* 150% */
-	}
-}
-
-.lightMode {
-	.filter-row {
-		.pre-next-toggle {
-			.ant-typography {
-				color: var(--bg-ink-400);
-			}
-		}
-
-		.no-results {
-			color: var(--bg-ink-400);
-		}
 	}
 }

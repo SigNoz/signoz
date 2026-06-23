@@ -1,4 +1,3 @@
-import { Tag as AntDTag } from 'antd';
 import styled from 'styled-components';
 
 export const Container = styled.div`
@@ -18,8 +17,4 @@ export const ButtonContainer = styled.div`
 export const PanelContainer = styled.div`
 	display: flex;
 	overflow-y: auto;
-`;
-
-export const Tag = styled(AntDTag)`
-	margin: 0;
 `;

@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { PlusOutlined } from '@ant-design/icons';
+import { Plus } from '@signozhq/icons';
 import { Select, Spin } from 'antd';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useNotifications } from 'hooks/useNotifications';
@@ -66,7 +66,7 @@ function ChannelSelect({
 			children.push(
 				<Select.Option key="add-new-channel" value="add-new-channel">
 					<StyledCreateChannelOption>
-						<PlusOutlined />
+						<Plus size="md" />
 						Create a new channel
 					</StyledCreateChannelOption>
 				</Select.Option>,

@@ -35,14 +35,14 @@ describe('useGetQueryLabels', () => {
 				queryType: EQueryType.QUERY_BUILDER,
 				builder: {
 					queryData: [],
-					queryFormulas: (undefined as unknown) as IBuilderFormula[],
+					queryFormulas: undefined as unknown as IBuilderFormula[],
 					queryTraceOperator: [],
 				},
 			});
 
 			const { result } = renderHook(() => useGetQueryLabels(query));
 
-			expect(result.current).toEqual([]);
+			expect(result.current).toStrictEqual([]);
 		});
 
 		it('returns formula labels when queryFormulas is populated', () => {
@@ -51,8 +51,8 @@ describe('useGetQueryLabels', () => {
 				builder: {
 					queryData: [],
 					queryFormulas: [
-						({ queryName: 'F1' } as unknown) as IBuilderFormula,
-						({ queryName: 'F2' } as unknown) as IBuilderFormula,
+						{ queryName: 'F1' } as unknown as IBuilderFormula,
+						{ queryName: 'F2' } as unknown as IBuilderFormula,
 					],
 					queryTraceOperator: [],
 				},
@@ -60,7 +60,7 @@ describe('useGetQueryLabels', () => {
 
 			const { result } = renderHook(() => useGetQueryLabels(query));
 
-			expect(result.current).toEqual([
+			expect(result.current).toStrictEqual([
 				{ label: 'F1', value: 'F1' },
 				{ label: 'F2', value: 'F2' },
 			]);
@@ -71,26 +71,26 @@ describe('useGetQueryLabels', () => {
 		it('returns empty array when clickhouse_sql is undefined', () => {
 			const query = buildQuery({
 				queryType: EQueryType.CLICKHOUSE,
-				clickhouse_sql: (undefined as unknown) as IClickHouseQuery[],
+				clickhouse_sql: undefined as unknown as IClickHouseQuery[],
 			});
 
 			const { result } = renderHook(() => useGetQueryLabels(query));
 
-			expect(result.current).toEqual([]);
+			expect(result.current).toStrictEqual([]);
 		});
 
 		it('returns labels from clickhouse_sql when populated', () => {
 			const query = buildQuery({
 				queryType: EQueryType.CLICKHOUSE,
 				clickhouse_sql: [
-					({ name: 'query_a' } as unknown) as IClickHouseQuery,
-					({ name: 'query_b' } as unknown) as IClickHouseQuery,
+					{ name: 'query_a' } as unknown as IClickHouseQuery,
+					{ name: 'query_b' } as unknown as IClickHouseQuery,
 				],
 			});
 
 			const { result } = renderHook(() => useGetQueryLabels(query));
 
-			expect(result.current).toEqual([
+			expect(result.current).toStrictEqual([
 				{ label: 'query_a', value: 'query_a' },
 				{ label: 'query_b', value: 'query_b' },
 			]);
@@ -101,26 +101,26 @@ describe('useGetQueryLabels', () => {
 		it('returns empty array when promql is undefined', () => {
 			const query = buildQuery({
 				queryType: EQueryType.PROM,
-				promql: (undefined as unknown) as IPromQLQuery[],
+				promql: undefined as unknown as IPromQLQuery[],
 			});
 
 			const { result } = renderHook(() => useGetQueryLabels(query));
 
-			expect(result.current).toEqual([]);
+			expect(result.current).toStrictEqual([]);
 		});
 
 		it('returns labels from promql when populated', () => {
 			const query = buildQuery({
 				queryType: EQueryType.PROM,
 				promql: [
-					({ name: 'prom_1' } as unknown) as IPromQLQuery,
-					({ name: 'prom_2' } as unknown) as IPromQLQuery,
+					{ name: 'prom_1' } as unknown as IPromQLQuery,
+					{ name: 'prom_2' } as unknown as IPromQLQuery,
 				],
 			});
 
 			const { result } = renderHook(() => useGetQueryLabels(query));
 
-			expect(result.current).toEqual([
+			expect(result.current).toStrictEqual([
 				{ label: 'prom_1', value: 'prom_1' },
 				{ label: 'prom_2', value: 'prom_2' },
 			]);

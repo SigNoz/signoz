@@ -31,9 +31,8 @@ export function FilterSelect({
 	onChange,
 	isMultiple,
 }: SelectOptionConfig): JSX.Element {
-	const { handleSearch, isFetching, options } = useCeleryFilterOptions(
-		filterType,
-	);
+	const { handleSearch, isFetching, options } =
+		useCeleryFilterOptions(filterType);
 
 	const urlQuery = useUrlQuery();
 	const history = useHistory();

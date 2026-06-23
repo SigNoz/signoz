@@ -1,15 +1,36 @@
+// TODO: Improve the styling of the query aggregation container and its components. - @YounixM , @H4ad
+
+$dropdown-base-height: 250px;
+$recents-header-height: 30px;
+$recent-row-height: 36px;
+// how many recents are rendered, this caps how tall the dropdown can grow to fit them.
+$max-recents-shown: 5;
+
 .code-mirror-where-clause {
 	width: 100%;
 	display: flex;
 	flex-direction: column;
 	gap: 8px;
-	font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-		'Helvetica Neue', sans-serif;
+	font-family:
+		Inter,
+		-apple-system,
+		BlinkMacSystemFont,
+		'Segoe UI',
+		Roboto,
+		'Helvetica Neue',
+		sans-serif;
 
 	.query-where-clause-editor-container {
 		position: relative;
 		display: flex;
 		flex-direction: row;
+
+		.query-search-initial-scope-label {
+			position: absolute;
+			left: 8px;
+			top: 10px;
+			z-index: 10;
+		}
 
 		.query-where-clause-editor {
 			flex: 1;
@@ -19,18 +40,18 @@
 		.query-status-container {
 			width: 32px;
 
-			background-color: #121317 !important;
+			background-color: var(--l1-background) !important;
 			display: flex;
 			justify-content: center;
 			align-items: center;
-			border: 1px solid var(--bg-slate-200);
+			border: 1px solid var(--l1-border);
 			border-radius: 2px;
 			border-top-left-radius: 0px !important;
 			border-bottom-left-radius: 0px !important;
 			border-left: none !important;
 
 			&.hasErrors {
-				border-color: var(--bg-cherry-500);
+				border-color: var(--danger-background);
 			}
 		}
 	}
@@ -39,11 +60,15 @@
 		&.hasErrors {
 			.cm-editor {
 				.cm-content {
-					border-color: var(--bg-cherry-500);
+					border-color: var(--danger-background);
 					border-top-right-radius: 0px !important;
 					border-bottom-right-radius: 0px !important;
 				}
 			}
+		}
+
+		&.hasInitialExpression .cm-editor .cm-content {
+			padding-left: 22px !important;
 		}
 	}
 
@@ -53,26 +78,25 @@
 		background-color: transparent !important;
 
 		&:focus-within {
-			border-color: var(--bg-robin-500);
+			border-color: var(--primary-background);
 		}
 
 		.cm-content {
 			border-radius: 2px;
-			border: 1px solid var(--Slate-400, #1d212d);
+			border: 1px solid var(--l1-border);
 			padding: 0px !important;
-			background-color: #121317 !important;
 
 			&:focus-within {
-				border-color: var(--bg-ink-200);
+				border-color: var(--l1-border);
 			}
 		}
 
 		&.cm-focused {
-			outline: 1px solid var(--bg-slate-200);
+			outline: 1px solid var(--l1-border);
 		}
 
 		.cm-tooltip-autocomplete {
-			background: var(--bg-ink-300) !important;
+			background: var(--l3-background) !important;
 			border-radius: 2px !important;
 			font-size: 12px !important;
 			font-weight: 500 !important;
@@ -86,20 +110,36 @@
 			border: 0px;
 			background: linear-gradient(
 				139deg,
-				rgba(18, 19, 23, 0.8) 0%,
-				rgba(18, 19, 23, 0.9) 98.68%
+				color-mix(in srgb, var(--card) 80%, transparent) 0%,
+				color-mix(in srgb, var(--card) 90%, transparent) 98.68%
 			) !important;
 			backdrop-filter: blur(20px);
 			box-sizing: border-box;
 			font-family: 'Space Mono', monospace !important;
-			border: 1px solid var(--bg-slate-200);
+			border: 1px solid var(--l1-border);
 			box-shadow: 0 4px 8px rgba(0, 0, 0, 0.6);
 
 			ul {
 				width: 100% !important;
 				max-width: 100% !important;
 				font-family: 'Space Mono', monospace !important;
-				min-height: 200px !important;
+				max-height: $dropdown-base-height !important;
+				overflow-y: auto !important;
+
+				// Recents render at the top of the dropdown ahead of regular suggestions.
+				// At the base max-height, having recents in view would crowd out the
+				// suggestion list below. This loop grows the dropdown by one row's worth
+				// of height for every recent present (up to $max-recents-shown), plus the
+				// section header. `:has(> li:nth-of-type(N) .cm-completionIcon-recent)`
+				// matches when the Nth child of <ul> is a recent — i.e. there are at
+				// least N recents visible.
+				@for $i from 1 through $max-recents-shown {
+					&:has(> li:nth-of-type(#{$i}) .cm-completionIcon-recent) {
+						max-height: $dropdown-base-height +
+							$recents-header-height +
+							($i * $recent-row-height) !important;
+					}
+				}
 
 				&::-webkit-scrollbar {
 					width: 0.3rem;
@@ -113,6 +153,19 @@
 				}
 				&::-webkit-scrollbar-track {
 					background: transparent;
+				}
+
+				completion-section {
+					display: block;
+					padding: 10px 12px 6px;
+					font-size: 10px !important;
+					font-weight: 700;
+					letter-spacing: 0.08em;
+					text-transform: uppercase;
+					color: var(--l3-foreground, var(--l2-foreground));
+					opacity: 0.7;
+					border-bottom: 0;
+					background-color: transparent;
 				}
 
 				li {
@@ -130,19 +183,89 @@
 
 					font-family: 'Space Mono', monospace !important;
 
+					background-color: var(--l1-background) !important;
+					color: var(--l2-foreground) !important;
+
 					&:hover {
-						background: var(--bg-ink-100) !important;
+						background: var(--l3-background) !important;
 					}
 
 					.cm-completionIcon {
 						display: none !important;
 					}
 
+					.cm-completionDetail {
+						margin-left: auto;
+						font-style: normal;
+						font-size: var(--periscope-font-size-small, 11px);
+						font-weight: 600;
+						letter-spacing: 0.06em;
+						text-transform: uppercase;
+						opacity: 0.55;
+					}
+
 					&[aria-selected='true'] {
-						// background-color: rgba(78, 116, 248, 0.7) !important;
-						background: rgba(171, 189, 255, 0.04) !important;
+						background: var(--l3-background) !important;
+						font-weight: 600 !important;
 					}
 				}
+
+				li:has(.cm-completionIcon-recent) {
+					&:hover .cm-recent-delete,
+					&[aria-selected='true'] .cm-recent-delete {
+						opacity: 1;
+					}
+				}
+
+				li .cm-completionLabel {
+					flex: 1;
+					min-width: 0;
+					white-space: nowrap;
+					overflow: hidden;
+					text-overflow: ellipsis;
+				}
+
+				.cm-recent-delete {
+					margin-left: 8px;
+					display: inline-flex;
+					align-items: center;
+					justify-content: center;
+					width: 20px;
+					height: 20px;
+					padding: 0;
+					border: 0;
+					border-radius: 4px;
+					background: transparent;
+					color: var(--l2-foreground);
+					font-size: 18px;
+					line-height: 1;
+					cursor: pointer;
+					opacity: 0.5;
+					transition:
+						opacity 0.12s ease,
+						background-color 0.12s ease;
+
+					&:hover {
+						opacity: 1;
+						background: color-mix(in srgb, var(--l2-foreground) 18%, transparent);
+					}
+				}
+			}
+
+			&::after {
+				content: '↓↑ to navigate · ↵ to apply · esc to dismiss';
+				display: block;
+				padding: 8px 12px;
+				border-top: 1px solid var(--l1-border);
+				font-family: 'Space Mono', monospace;
+				font-size: 11px;
+				font-weight: 500;
+				letter-spacing: 0.02em;
+				color: var(--l2-foreground);
+				opacity: 0.6;
+				background: color-mix(in srgb, var(--l1-background) 50%, transparent);
+				border-bottom-left-radius: 4px;
+				border-bottom-right-radius: 4px;
 			}
 		}
 
@@ -153,30 +276,30 @@
 		.cm-line {
 			line-height: 34px !important;
 			font-family: 'Space Mono', monospace !important;
-			background-color: #121317 !important;
+			background-color: var(--l2-background) !important;
 
 			::-moz-selection {
-				background: var(--bg-ink-100) !important;
+				background: var(--l3-background) !important;
 				opacity: 0.5 !important;
 			}
 
 			::selection {
-				background: var(--bg-ink-100) !important;
+				background: var(--l3-background) !important;
 				opacity: 0.5 !important;
 			}
 		}
 
 		.cm-selectionBackground {
-			background: var(--bg-ink-100) !important;
+			background: var(--l3-background) !important;
 			opacity: 0.5 !important;
 		}
 	}
 
 	.cursor-position {
 		font-size: 12px;
-		color: var(--bg-ink-200);
+		color: var(--l2-foreground);
 		padding: 6px;
-		background-color: var(--bg-vanilla-200);
+		background-color: var(--l1-background);
 		border-radius: 4px;
 		display: inline-flex;
 		align-items: center;
@@ -202,13 +325,13 @@
 		}
 
 		.valid {
-			background-color: rgba(39, 174, 96, 0.1);
-			color: #27ae60;
+			background-color: color-mix(in srgb, var(--bg-forest-400) 10%, transparent);
+			color: var(--bg-forest-600);
 		}
 
 		.invalid {
-			background-color: rgba(235, 87, 87, 0.1);
-			color: #eb5757;
+			background-color: color-mix(in srgb, var(--bg-cherry-400) 10%, transparent);
+			color: var(--danger-background);
 		}
 
 		.query-validation-status {
@@ -229,7 +352,7 @@
 
 				font-size: 12px;
 				font-family: 'Space Mono', monospace !important;
-				color: var(--bg-cherry-500);
+				color: var(--danger-background);
 				padding: 8px;
 			}
 		}
@@ -237,13 +360,13 @@
 
 	.query-context {
 		padding: 12px;
-		background-color: var(--bg-ink-400);
+		background-color: var(--l1-background);
 		border-radius: 4px;
-		border-left: 3px solid var(--bg-robin-500);
-		color: var(--bg-ink-300) !important;
+		border-left: 3px solid var(--l1-border);
+		color: var(--l2-foreground) !important;
 
 		.ant-card-head {
-			color: var(--bg-vanilla-300) !important;
+			color: var(--l2-foreground) !important;
 		}
 
 		.context-details {
@@ -256,7 +379,7 @@
 				font-size: 13px;
 
 				strong {
-					color: var(--bg-vanilla-300);
+					color: var(--l2-foreground);
 					margin-right: 4px;
 				}
 			}
@@ -271,8 +394,8 @@
 
 	.query-text-preview-title {
 		font-size: 13px;
-		color: var(--bg-vanilla-100);
-		background-color: var(--bg-robin-500);
+		color: var(--primary-foreground);
+		background-color: var(--primary-background);
 		padding: 2px 6px;
 		border-radius: 2px;
 		margin-right: 4px;
@@ -281,14 +404,14 @@
 	.query-text-preview {
 		font-family: 'Space Mono', monospace;
 		font-size: 13px;
-		color: var(--bg-vanilla-200);
+		color: var(--l2-foreground);
 		padding: 2px 6px;
 		font-style: italic;
 	}
 
 	.query-examples-card {
-		background-color: var(--bg-ink-400);
-		border: 1px solid var(--bg-slate-200);
+		background-color: var(--l1-background);
+		border: 1px solid var(--l1-border);
 
 		.ant-card-body {
 			padding: 0;
@@ -297,7 +420,7 @@
 		.query-examples {
 			.ant-collapse-header {
 				padding: 8px 16px !important;
-				color: var(--bg-vanilla-300) !important;
+				color: var(--l2-foreground) !important;
 				font-weight: 500;
 			}
 
@@ -317,20 +440,20 @@
 				flex-direction: column;
 				gap: 4px;
 				padding: 8px 12px;
-				background-color: var(--bg-ink-400);
-				border: 1px solid var(--bg-slate-200);
+				background-color: var(--l1-background);
+				border: 1px solid var(--l1-border);
 				border-radius: 4px;
 				cursor: pointer;
 				transition: all 0.2s ease;
 				outline: none;
 
 				&:hover {
-					background-color: var(--bg-ink-300);
-					border-color: var(--bg-robin-500);
+					background-color: var(--l3-background);
+					border-color: var(--primary-background);
 				}
 
 				&:focus-visible {
-					outline: 2px solid var(--bg-robin-500);
+					outline: 2px solid var(--primary-background);
 					outline-offset: 2px;
 				}
 
@@ -342,22 +465,22 @@
 
 				.query-example-label {
 					font-weight: 500;
-					color: var(--bg-vanilla-300);
+					color: var(--l2-foreground);
 					font-size: 13px;
 				}
 
 				.query-example-query {
 					font-family: 'Space Mono', monospace;
 					font-size: 12px;
-					color: var(--bg-vanilla-200);
-					background-color: var(--bg-ink-300);
+					color: var(--l2-foreground);
+					background-color: var(--l3-background);
 					padding: 2px 6px;
 					border-radius: 2px;
 				}
 
 				.query-example-description {
 					font-size: 12px;
-					color: var(--bg-vanilla-200);
+					color: var(--l2-foreground);
 					opacity: 0.8;
 				}
 			}
@@ -404,33 +527,37 @@
 
 		// Color variations based on context
 		&.context-indicator-key {
-			border-left-color: #1890ff; // blue
-			background-color: rgba(24, 144, 255, 0.1);
+			border-left-color: var(--primary-background);
+			background-color: color-mix(
+				in srgb,
+				var(--primary-background) 10%,
+				transparent
+			);
 		}
 
 		&.context-indicator-operator {
-			border-left-color: #722ed1; // purple
-			background-color: rgba(114, 46, 209, 0.1);
+			border-left-color: var(--bg-robin-600); // purple
+			background-color: color-mix(in srgb, var(--bg-robin-600) 10%, transparent);
 		}
 
 		&.context-indicator-value {
-			border-left-color: #52c41a; // green
-			background-color: rgba(82, 196, 26, 0.1);
+			border-left-color: var(--bg-forest-500); // green
+			background-color: color-mix(in srgb, var(--bg-forest-400) 10%, transparent);
 		}
 
 		&.context-indicator-conjunction {
-			border-left-color: #fa8c16; // orange
-			background-color: rgba(250, 140, 22, 0.1);
+			border-left-color: var(--bg-amber-500); // orange
+			background-color: color-mix(in srgb, var(--bg-amber-400) 10%, transparent);
 		}
 
 		&.context-indicator-function {
-			border-left-color: #13c2c2; // cyan
-			background-color: rgba(19, 194, 194, 0.1);
+			border-left-color: var(--bg-aqua-500); // cyan
+			background-color: color-mix(in srgb, var(--bg-aqua-500) 10%, transparent);
 		}
 
 		&.context-indicator-parenthesis {
-			border-left-color: #eb2f96; // magenta
-			background-color: rgba(235, 47, 150, 0.1);
+			border-left-color: var(--bg-sakura-500); // magenta
+			background-color: color-mix(in srgb, var(--bg-sakura-500) 10%, transparent);
 		}
 	}
 }
@@ -441,279 +568,9 @@
 	}
 
 	.ant-popover-content {
-		background: linear-gradient(
-			139deg,
-			rgba(18, 19, 23, 0.8) 0%,
-			rgba(18, 19, 23, 0.9) 98.68%
-		);
-		box-shadow: 4px 10px 16px 2px rgba(0, 0, 0, 0.2);
-		backdrop-filter: blur(20px);
+		background: var(--l1-background);
+		box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
 
 		margin-top: -6px !important;
-	}
-}
-
-// /* Dark mode support */
-// :global(.darkMode) {
-// 	.code-mirror-where-clause {
-// 		.cm-editor {
-// 			border-color: var(--bg-slate-500);
-// 			background-color: var(--bg-ink-400);
-// 		}
-
-// 		.cursor-position {
-// 			background-color: var(--bg-ink-400);
-// 			color: var(--bg-vanilla-100);
-// 		}
-
-// 		.query-context {
-// 			background-color: var(--bg-ink-400);
-// 			color: var(--bg-vanilla-100);
-
-// 			h3 {
-// 				color: var(--bg-vanilla-100);
-// 			}
-
-// 			.context-details {
-// 				p {
-// 					strong {
-// 						color: var(--bg-vanilla-200);
-// 					}
-// 				}
-// 			}
-// 		}
-
-// 		.query-examples-card {
-// 			background-color: var(--bg-ink-400);
-// 			border-color: var(--bg-slate-500);
-
-// 			.ant-collapse-header {
-// 				color: var(--bg-vanilla-100) !important;
-// 			}
-
-// 			.query-example-tag {
-// 				background-color: var(--bg-ink-400);
-// 				border-color: var(--bg-slate-500);
-
-// 				&:hover {
-// 					background-color: var(--bg-ink-300);
-// 					border-color: var(--bg-robin-500);
-// 				}
-
-// 				.query-example-label {
-// 					color: var(--bg-vanilla-100);
-// 				}
-
-// 				.query-example-query {
-// 					color: var(--bg-vanilla-100);
-// 					background-color: var(--bg-ink-300);
-// 				}
-
-// 				.query-example-description {
-// 					color: var(--bg-vanilla-100);
-// 				}
-// 			}
-// 		}
-
-// 		.context-indicator {
-// 			background-color: var(--bg-ink-300);
-// 			color: var(--bg-vanilla-100);
-
-// 			.query-pair-info {
-// 				border-left: 1px solid rgba(255, 255, 255, 0.1);
-// 				background-color: rgba(255, 255, 255, 0.05);
-// 			}
-// 		}
-// 	}
-// }
-
-.lightMode {
-	.code-mirror-where-clause {
-		.query-where-clause-editor-container {
-			.query-status-container {
-				background-color: var(--bg-vanilla-100) !important;
-				border: 1px solid var(--bg-vanilla-300);
-
-				&.hasErrors {
-					border-color: var(--bg-cherry-500);
-				}
-			}
-		}
-
-		.query-where-clause-editor {
-			&.hasErrors {
-				.cm-editor {
-					.cm-content {
-						border-color: var(--bg-cherry-500);
-						border-top-right-radius: 0px !important;
-						border-bottom-right-radius: 0px !important;
-					}
-				}
-			}
-		}
-
-		.cm-editor {
-			&:focus-within {
-				border-color: var(--bg-robin-500);
-			}
-
-			&.cm-focused {
-				outline: 1px solid var(--bg-vanilla-300);
-			}
-
-			.cm-content {
-				border-radius: 2px;
-				border: 1px solid var(--bg-vanilla-300);
-				padding: 0px !important;
-				background-color: var(--bg-vanilla-100) !important;
-
-				&:focus-within {
-					border-color: var(--bg-vanilla-200);
-				}
-			}
-
-			.cm-tooltip-autocomplete {
-				background: var(--bg-vanilla-100) !important;
-				border: 1px solid var(--bg-vanilla-300);
-				backdrop-filter: blur(20px);
-				box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1) !important;
-
-				ul {
-					li {
-						background-color: var(--bg-vanilla-100) !important;
-						color: var(--bg-ink-300) !important;
-
-						&:hover,
-						&[aria-selected='true'] {
-							background-color: var(--bg-vanilla-300) !important;
-							font-weight: 600 !important;
-						}
-					}
-				}
-			}
-
-			.cm-line {
-				background-color: var(--bg-vanilla-100) !important;
-
-				::-moz-selection {
-					background: #b3d4fc !important;
-				}
-
-				::selection {
-					background: #b3d4fc !important;
-				}
-			}
-
-			.cm-selectionBackground {
-				background: #b3d4fc !important;
-			}
-		}
-
-		.cursor-position {
-			color: var(--bg-vanilla-200);
-			background-color: var(--bg-vanilla-100);
-		}
-
-		.query-context {
-			background-color: var(--bg-vanilla-100);
-			border-left: 3px solid var(--bg-vanilla-300);
-			color: var(--bg-vanilla-300) !important;
-
-			.ant-card-head {
-				color: var(--bg-ink-300) !important;
-			}
-
-			.context-details {
-				p {
-					strong {
-						color: var(--bg-ink-300);
-					}
-				}
-			}
-		}
-
-		.query-examples-card {
-			background-color: var(--bg-vanilla-100);
-			border: 1px solid var(--bg-vanilla-300);
-
-			.query-examples {
-				.ant-collapse-header {
-					color: var(--bg-ink-300) !important;
-				}
-
-				.query-example-tag {
-					background-color: var(--bg-vanilla-100);
-					border: 1px solid var(--bg-vanilla-300);
-
-					&:hover {
-						background-color: var(--bg-vanilla-200);
-						border-color: var(--bg-vanilla-300);
-					}
-
-					.query-example-label {
-						color: var(--bg-ink-300);
-					}
-
-					.query-example-query {
-						color: var(--bg-ink-300);
-						background-color: var(--bg-vanilla-100);
-					}
-
-					.query-example-description {
-						color: var(--bg-ink-300);
-					}
-				}
-			}
-		}
-
-		.context-indicator {
-			background-color: var(--bg-vanilla-100);
-			border-left: 4px solid var(--bg-vanilla-300);
-
-			display: none;
-
-			.query-pair-info {
-				border-left: 1px solid rgba(255, 255, 255, 0.1);
-				background-color: rgba(255, 255, 255, 0.03);
-			}
-
-			// Color variations based on context
-			&.context-indicator-key {
-				border-left-color: #1890ff; // blue
-				background-color: rgba(24, 144, 255, 0.1);
-			}
-
-			&.context-indicator-operator {
-				border-left-color: #722ed1; // purple
-				background-color: rgba(114, 46, 209, 0.1);
-			}
-
-			&.context-indicator-value {
-				border-left-color: #52c41a; // green
-				background-color: rgba(82, 196, 26, 0.1);
-			}
-
-			&.context-indicator-conjunction {
-				border-left-color: #fa8c16; // orange
-				background-color: rgba(250, 140, 22, 0.1);
-			}
-
-			&.context-indicator-function {
-				border-left-color: #13c2c2; // cyan
-				background-color: rgba(19, 194, 194, 0.1);
-			}
-
-			&.context-indicator-parenthesis {
-				border-left-color: #eb2f96; // magenta
-				background-color: rgba(235, 47, 150, 0.1);
-			}
-		}
-	}
-
-	.query-status-popover {
-		.ant-popover-content {
-			background: var(--bg-vanilla-100);
-			box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
-		}
 	}
 }

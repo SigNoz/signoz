@@ -4,7 +4,7 @@
 		margin-bottom: 0px;
 
 		&::before {
-			border-bottom: 1px solid var(--bg-slate-400) !important;
+			border-bottom: 1px solid var(--l1-border) !important;
 		}
 	}
 
@@ -19,15 +19,5 @@
 		margin: 16px 0px;
 		border-right: none;
 		border-left: none;
-	}
-}
-
-.lightMode {
-	.integrations-module-container {
-		.ant-tabs-nav {
-			&::before {
-				border-bottom: 1px solid var(--bg-vanilla-400) !important;
-			}
-		}
 	}
 }

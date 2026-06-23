@@ -45,9 +45,7 @@ export interface SeriesItem {
 		[key: string]: string;
 	};
 	labelsArray: { [key: string]: string }[];
-	values:
-		| { timestamp: number; value: string }[]
-		| { timestamp: number; values: number[] }[];
+	values: { timestamp: number; value: string }[];
 	bounds?: number[];
 	metaData?: {
 		alias: string;
@@ -68,6 +66,7 @@ export interface QueryDataV3 {
 	queryName: string;
 	legend?: string;
 	series: SeriesItem[] | null;
+	nextCursor?: string;
 	quantity?: number;
 	unitPrice?: number;
 	unit?: string;

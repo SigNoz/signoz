@@ -33,7 +33,7 @@
 		font-size: var(--font-size-sm);
 		color: var(--l1-foreground);
 		background: var(--l3-background);
-		border: 1px solid var(--border);
+		border: 1px solid var(--l1-border);
 		border-radius: 2px;
 		padding: 0 var(--padding-1) 0 6px;
 		line-height: var(--line-height-20);
@@ -86,5 +86,15 @@
 		cursor: pointer;
 		padding: 2px;
 		color: var(--destructive);
+	}
+}
+
+.roles-single-select {
+	.ant-select-selector {
+		min-height: 32px;
+		background-color: var(--l2-background) !important;
+		border: 1px solid var(--border) !important;
+		border-radius: 2px;
+		padding: 2px var(--padding-2) !important;
 	}
 }

@@ -12,20 +12,12 @@
 	}
 
 	.no-data-text {
-		color: var(--bg-vanilla-400);
+		color: var(--muted-foreground);
 		font-family: Inter;
 		font-size: 14px;
 		font-style: normal;
 		font-weight: 500;
 		line-height: 18px; /* 128.571% */
 		letter-spacing: -0.07px;
-	}
-}
-
-.lightMode {
-	.error-flamegraph {
-		.no-data-text {
-			color: var(--bg-ink-400);
-		}
 	}
 }

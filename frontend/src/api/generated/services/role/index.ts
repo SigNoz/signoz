@@ -1,9 +1,10 @@
 /**
  * ! Do not edit manually
  * * The file has been auto-generated using Orval for SigNoz
- * * regenerate with 'yarn generate:api'
+ * * regenerate with 'pnpm generate:api'
  * SigNoz
  */
+import { useMutation, useQuery } from 'react-query';
 import type {
 	InvalidateOptions,
 	MutationFunction,
@@ -15,14 +16,11 @@ import type {
 	UseQueryOptions,
 	UseQueryResult,
 } from 'react-query';
-import { useMutation, useQuery } from 'react-query';
 
-import type { BodyType, ErrorType } from '../../../generatedAPIInstance';
-import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type {
-	AuthtypesPatchableObjectsDTO,
 	AuthtypesPatchableRoleDTO,
 	AuthtypesPostableRoleDTO,
+	CoretypesPatchableObjectsDTO,
 	CreateRole201,
 	DeleteRolePathParameters,
 	GetObjects200,
@@ -34,6 +32,9 @@ import type {
 	PatchRolePathParameters,
 	RenderErrorResponseDTO,
 } from '../sigNoz.schemas';
+
+import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
+import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
 
 /**
  * This endpoint lists all roles
@@ -53,7 +54,7 @@ export const getListRolesQueryKey = () => {
 
 export const getListRolesQueryOptions = <
 	TData = Awaited<ReturnType<typeof listRoles>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(options?: {
 	query?: UseQueryOptions<Awaited<ReturnType<typeof listRoles>>, TError, TData>;
 }) => {
@@ -83,7 +84,7 @@ export type ListRolesQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useListRoles<
 	TData = Awaited<ReturnType<typeof listRoles>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(options?: {
 	query?: UseQueryOptions<Awaited<ReturnType<typeof listRoles>>, TError, TData>;
 }): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
@@ -93,9 +94,7 @@ export function useListRoles<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
@@ -118,7 +117,7 @@ export const invalidateListRoles = async (
  * @summary Create role
  */
 export const createRole = (
-	authtypesPostableRoleDTO: BodyType<AuthtypesPostableRoleDTO>,
+	authtypesPostableRoleDTO?: BodyType<AuthtypesPostableRoleDTO>,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<CreateRole201>({
@@ -132,32 +131,32 @@ export const createRole = (
 
 export const getCreateRoleMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createRole>>,
 		TError,
-		{ data: BodyType<AuthtypesPostableRoleDTO> },
+		{ data?: BodyType<AuthtypesPostableRoleDTO> },
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof createRole>>,
 	TError,
-	{ data: BodyType<AuthtypesPostableRoleDTO> },
+	{ data?: BodyType<AuthtypesPostableRoleDTO> },
 	TContext
 > => {
 	const mutationKey = ['createRole'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof createRole>>,
-		{ data: BodyType<AuthtypesPostableRoleDTO> }
+		{ data?: BodyType<AuthtypesPostableRoleDTO> }
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -170,7 +169,9 @@ export const getCreateRoleMutationOptions = <
 export type CreateRoleMutationResult = NonNullable<
 	Awaited<ReturnType<typeof createRole>>
 >;
-export type CreateRoleMutationBody = BodyType<AuthtypesPostableRoleDTO>;
+export type CreateRoleMutationBody =
+	| BodyType<AuthtypesPostableRoleDTO>
+	| undefined;
 export type CreateRoleMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -178,38 +179,40 @@ export type CreateRoleMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const useCreateRole = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createRole>>,
 		TError,
-		{ data: BodyType<AuthtypesPostableRoleDTO> },
+		{ data?: BodyType<AuthtypesPostableRoleDTO> },
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof createRole>>,
 	TError,
-	{ data: BodyType<AuthtypesPostableRoleDTO> },
+	{ data?: BodyType<AuthtypesPostableRoleDTO> },
 	TContext
 > => {
-	const mutationOptions = getCreateRoleMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getCreateRoleMutationOptions(options));
 };
 /**
  * This endpoint deletes a role
  * @summary Delete role
  */
-export const deleteRole = ({ id }: DeleteRolePathParameters) => {
-	return GeneratedAPIInstance<string>({
+export const deleteRole = (
+	{ id }: DeleteRolePathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<void>({
 		url: `/api/v1/roles/${id}`,
 		method: 'DELETE',
+		signal,
 	});
 };
 
 export const getDeleteRoleMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deleteRole>>,
@@ -226,8 +229,8 @@ export const getDeleteRoleMutationOptions = <
 	const mutationKey = ['deleteRole'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -255,7 +258,7 @@ export type DeleteRoleMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const useDeleteRole = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deleteRole>>,
@@ -269,9 +272,7 @@ export const useDeleteRole = <
 	{ pathParams: DeleteRolePathParameters },
 	TContext
 > => {
-	const mutationOptions = getDeleteRoleMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getDeleteRoleMutationOptions(options));
 };
 /**
  * This endpoint gets a role
@@ -294,7 +295,7 @@ export const getGetRoleQueryKey = ({ id }: GetRolePathParameters) => {
 
 export const getGetRoleQueryOptions = <
 	TData = Awaited<ReturnType<typeof getRole>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ id }: GetRolePathParameters,
 	options?: {
@@ -330,7 +331,7 @@ export type GetRoleQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useGetRole<
 	TData = Awaited<ReturnType<typeof getRole>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ id }: GetRolePathParameters,
 	options?: {
@@ -343,9 +344,7 @@ export function useGetRole<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
@@ -370,26 +369,28 @@ export const invalidateGetRole = async (
  */
 export const patchRole = (
 	{ id }: PatchRolePathParameters,
-	authtypesPatchableRoleDTO: BodyType<AuthtypesPatchableRoleDTO>,
+	authtypesPatchableRoleDTO?: BodyType<AuthtypesPatchableRoleDTO>,
+	signal?: AbortSignal,
 ) => {
-	return GeneratedAPIInstance<string>({
+	return GeneratedAPIInstance<void>({
 		url: `/api/v1/roles/${id}`,
 		method: 'PATCH',
 		headers: { 'Content-Type': 'application/json' },
 		data: authtypesPatchableRoleDTO,
+		signal,
 	});
 };
 
 export const getPatchRoleMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof patchRole>>,
 		TError,
 		{
 			pathParams: PatchRolePathParameters;
-			data: BodyType<AuthtypesPatchableRoleDTO>;
+			data?: BodyType<AuthtypesPatchableRoleDTO>;
 		},
 		TContext
 	>;
@@ -398,15 +399,15 @@ export const getPatchRoleMutationOptions = <
 	TError,
 	{
 		pathParams: PatchRolePathParameters;
-		data: BodyType<AuthtypesPatchableRoleDTO>;
+		data?: BodyType<AuthtypesPatchableRoleDTO>;
 	},
 	TContext
 > => {
 	const mutationKey = ['patchRole'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -415,7 +416,7 @@ export const getPatchRoleMutationOptions = <
 		Awaited<ReturnType<typeof patchRole>>,
 		{
 			pathParams: PatchRolePathParameters;
-			data: BodyType<AuthtypesPatchableRoleDTO>;
+			data?: BodyType<AuthtypesPatchableRoleDTO>;
 		}
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
@@ -429,7 +430,9 @@ export const getPatchRoleMutationOptions = <
 export type PatchRoleMutationResult = NonNullable<
 	Awaited<ReturnType<typeof patchRole>>
 >;
-export type PatchRoleMutationBody = BodyType<AuthtypesPatchableRoleDTO>;
+export type PatchRoleMutationBody =
+	| BodyType<AuthtypesPatchableRoleDTO>
+	| undefined;
 export type PatchRoleMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -437,14 +440,14 @@ export type PatchRoleMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const usePatchRole = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof patchRole>>,
 		TError,
 		{
 			pathParams: PatchRolePathParameters;
-			data: BodyType<AuthtypesPatchableRoleDTO>;
+			data?: BodyType<AuthtypesPatchableRoleDTO>;
 		},
 		TContext
 	>;
@@ -453,13 +456,11 @@ export const usePatchRole = <
 	TError,
 	{
 		pathParams: PatchRolePathParameters;
-		data: BodyType<AuthtypesPatchableRoleDTO>;
+		data?: BodyType<AuthtypesPatchableRoleDTO>;
 	},
 	TContext
 > => {
-	const mutationOptions = getPatchRoleMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getPatchRoleMutationOptions(options));
 };
 /**
  * Gets all objects connected to the specified role via a given relation type
@@ -470,7 +471,7 @@ export const getObjects = (
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<GetObjects200>({
-		url: `/api/v1/roles/${id}/relation/${relation}/objects`,
+		url: `/api/v1/roles/${id}/relations/${relation}/objects`,
 		method: 'GET',
 		signal,
 	});
@@ -480,12 +481,12 @@ export const getGetObjectsQueryKey = ({
 	id,
 	relation,
 }: GetObjectsPathParameters) => {
-	return [`/api/v1/roles/${id}/relation/${relation}/objects`] as const;
+	return [`/api/v1/roles/${id}/relations/${relation}/objects`] as const;
 };
 
 export const getGetObjectsQueryOptions = <
 	TData = Awaited<ReturnType<typeof getObjects>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ id, relation }: GetObjectsPathParameters,
 	options?: {
@@ -526,7 +527,7 @@ export type GetObjectsQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useGetObjects<
 	TData = Awaited<ReturnType<typeof getObjects>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ id, relation }: GetObjectsPathParameters,
 	options?: {
@@ -543,9 +544,7 @@ export function useGetObjects<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
@@ -570,26 +569,28 @@ export const invalidateGetObjects = async (
  */
 export const patchObjects = (
 	{ id, relation }: PatchObjectsPathParameters,
-	authtypesPatchableObjectsDTO: BodyType<AuthtypesPatchableObjectsDTO>,
+	coretypesPatchableObjectsDTO?: BodyType<CoretypesPatchableObjectsDTO>,
+	signal?: AbortSignal,
 ) => {
-	return GeneratedAPIInstance<string>({
-		url: `/api/v1/roles/${id}/relation/${relation}/objects`,
+	return GeneratedAPIInstance<void>({
+		url: `/api/v1/roles/${id}/relations/${relation}/objects`,
 		method: 'PATCH',
 		headers: { 'Content-Type': 'application/json' },
-		data: authtypesPatchableObjectsDTO,
+		data: coretypesPatchableObjectsDTO,
+		signal,
 	});
 };
 
 export const getPatchObjectsMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof patchObjects>>,
 		TError,
 		{
 			pathParams: PatchObjectsPathParameters;
-			data: BodyType<AuthtypesPatchableObjectsDTO>;
+			data?: BodyType<CoretypesPatchableObjectsDTO>;
 		},
 		TContext
 	>;
@@ -598,15 +599,15 @@ export const getPatchObjectsMutationOptions = <
 	TError,
 	{
 		pathParams: PatchObjectsPathParameters;
-		data: BodyType<AuthtypesPatchableObjectsDTO>;
+		data?: BodyType<CoretypesPatchableObjectsDTO>;
 	},
 	TContext
 > => {
 	const mutationKey = ['patchObjects'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -615,7 +616,7 @@ export const getPatchObjectsMutationOptions = <
 		Awaited<ReturnType<typeof patchObjects>>,
 		{
 			pathParams: PatchObjectsPathParameters;
-			data: BodyType<AuthtypesPatchableObjectsDTO>;
+			data?: BodyType<CoretypesPatchableObjectsDTO>;
 		}
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
@@ -629,7 +630,9 @@ export const getPatchObjectsMutationOptions = <
 export type PatchObjectsMutationResult = NonNullable<
 	Awaited<ReturnType<typeof patchObjects>>
 >;
-export type PatchObjectsMutationBody = BodyType<AuthtypesPatchableObjectsDTO>;
+export type PatchObjectsMutationBody =
+	| BodyType<CoretypesPatchableObjectsDTO>
+	| undefined;
 export type PatchObjectsMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -637,14 +640,14 @@ export type PatchObjectsMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const usePatchObjects = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof patchObjects>>,
 		TError,
 		{
 			pathParams: PatchObjectsPathParameters;
-			data: BodyType<AuthtypesPatchableObjectsDTO>;
+			data?: BodyType<CoretypesPatchableObjectsDTO>;
 		},
 		TContext
 	>;
@@ -653,11 +656,9 @@ export const usePatchObjects = <
 	TError,
 	{
 		pathParams: PatchObjectsPathParameters;
-		data: BodyType<AuthtypesPatchableObjectsDTO>;
+		data?: BodyType<CoretypesPatchableObjectsDTO>;
 	},
 	TContext
 > => {
-	const mutationOptions = getPatchObjectsMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getPatchObjectsMutationOptions(options));
 };

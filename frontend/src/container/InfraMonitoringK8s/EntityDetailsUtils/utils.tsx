@@ -1,8 +1,5 @@
-import { Color } from '@signozhq/design-tokens';
-import { Typography } from 'antd';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
-import { Ghost } from 'lucide-react';
 import {
 	BaseAutocompleteData,
 	DataTypes,
@@ -11,12 +8,25 @@ import {
 	IBuilderQuery,
 	TagFilterItem,
 } from 'types/api/queryBuilder/queryBuilderData';
+import APIError from 'types/api/error';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { nanoToMilli } from 'utils/timeUtils';
 import { v4 as uuidv4 } from 'uuid';
 
-import { K8sCategory } from '../constants';
+export function isKeyNotFoundError(error: unknown): boolean {
+	if (!(error instanceof APIError)) {
+		return false;
+	}
+
+	const errorDetails = error.getErrorDetails();
+	if (errorDetails.error.code !== 'invalid_input') {
+		return false;
+	}
+
+	const errors = errorDetails.error.errors || [];
+	return errors.some((err) => err.message?.includes('not found'));
+}
 
 export const QUERY_KEYS = {
 	K8S_OBJECT_KIND: 'k8s.object.kind',
@@ -29,6 +39,7 @@ export const QUERY_KEYS = {
 	K8S_STATEFUL_SET_NAME: 'k8s.statefulset.name',
 	K8S_JOB_NAME: 'k8s.job.name',
 	K8S_DAEMON_SET_NAME: 'k8s.daemonset.name',
+	K8S_PERSISTENT_VOLUME_CLAIM_NAME: 'k8s.persistentvolumeclaim.name',
 };
 
 /**
@@ -87,29 +98,6 @@ export const getEntityEventsOrLogsQueryPayload = (
 	start,
 	end,
 });
-
-/**
- * Empty state container for entity details
- */
-export function EntityDetailsEmptyContainer({
-	view,
-	category,
-}: {
-	view: 'logs' | 'traces' | 'events';
-	category: K8sCategory;
-}): React.ReactElement {
-	const label = category.slice(0, category.length);
-
-	return (
-		<div className="no-logs-found">
-			<Typography.Text type="secondary">
-				<Ghost size={24} color={Color.BG_AMBER_500} />
-				{`No ${view} found for this ${label}
-				in the selected time range.`}
-			</Typography.Text>
-		</div>
-	);
-}
 
 export const entityTracesColumns = [
 	{

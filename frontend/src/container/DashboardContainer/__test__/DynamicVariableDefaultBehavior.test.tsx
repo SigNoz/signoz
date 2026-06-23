@@ -279,7 +279,7 @@ describe('Dynamic Variable Default Behavior', () => {
 				type: 'DYNAMIC',
 				multiSelect: true,
 				showALLOption: true,
-				defaultValue: (['backend', 'database'] as unknown) as string,
+				defaultValue: ['backend', 'database'] as unknown as string,
 				selectedValue: undefined,
 				dynamicVariablesAttribute: 'service.name',
 				dynamicVariablesSource: 'Traces',
@@ -314,7 +314,7 @@ describe('Dynamic Variable Default Behavior', () => {
 				type: 'DYNAMIC',
 				multiSelect: true,
 				showALLOption: true,
-				defaultValue: (['backend'] as unknown) as string,
+				defaultValue: ['backend'] as unknown as string,
 				selectedValue: ['frontend', 'cache'],
 				dynamicVariablesAttribute: 'service.name',
 				dynamicVariablesSource: 'Traces',
@@ -395,8 +395,8 @@ describe('Dynamic Variable Default Behavior', () => {
 
 			// Check if the checkbox exists (it should be unchecked initially)
 			const checkbox = allOptionContainer?.querySelector(
-				'input[type="checkbox"]',
-			) as HTMLInputElement;
+				'[role="checkbox"]',
+			) as HTMLElement;
 			expect(checkbox).toBeInTheDocument();
 
 			// Should call onValueUpdate with all values (ALL selection)
@@ -418,7 +418,7 @@ describe('Dynamic Variable Default Behavior', () => {
 				type: 'DYNAMIC',
 				multiSelect: true,
 				showALLOption: false,
-				defaultValue: (['database', 'cache'] as unknown) as string,
+				defaultValue: ['database', 'cache'] as unknown as string,
 				selectedValue: undefined,
 				dynamicVariablesAttribute: 'service.name',
 				dynamicVariablesSource: 'Traces',
@@ -516,10 +516,10 @@ describe('Dynamic Variable Default Behavior', () => {
 
 			// Check if the checkbox for ALL option is checked
 			const checkbox = dropdownAllOption.querySelector(
-				'input[type="checkbox"]',
-			) as HTMLInputElement;
+				'[role="checkbox"]',
+			) as HTMLElement;
 			expect(checkbox).toBeInTheDocument();
-			expect(checkbox.checked).toBe(true);
+			expect(checkbox).toHaveAttribute('data-state', 'checked');
 		});
 	});
 });

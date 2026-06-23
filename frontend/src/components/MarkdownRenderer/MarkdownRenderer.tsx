@@ -50,7 +50,7 @@ function Code({
 	const match = /language-(\w+)/.exec(className || '');
 	return !inline && match ? (
 		<SyntaxHighlighter
-			// @ts-ignore
+			// @ts-expect-error
 			style={a11yDark}
 			language={match[1]}
 			PreTag="div"
@@ -100,19 +100,22 @@ function MarkdownRenderer({
 	variables,
 	trackCopyAction,
 	elementDetails,
+	className,
 }: {
 	markdownContent: any;
 	variables: any;
 	trackCopyAction?: boolean;
 	elementDetails?: Record<string, unknown>;
+	className?: string;
 }): JSX.Element {
 	const interpolatedMarkdown = interpolateMarkdown(markdownContent, variables);
 
 	return (
 		<ReactMarkdown
+			className={className}
 			rehypePlugins={[rehypeRaw as any]}
 			components={{
-				// @ts-ignore
+				// @ts-expect-error
 				a: Link,
 				pre: ({ children }) =>
 					Pre({

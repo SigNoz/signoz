@@ -53,7 +53,7 @@ const createApiResponse = (
 	({
 		data: { result: [], resultType: 'matrix', newResult: null },
 		...overrides,
-	} as MetricRangePayloadProps);
+	}) as MetricRangePayloadProps;
 
 const baseProps = {
 	...createBaseConfigBuilderProps(),
@@ -145,8 +145,9 @@ describe('buildBaseConfig', () => {
 	});
 
 	it('adds onClick plugin when onClick is a function', () => {
-		const onClickPlugin = jest.requireMock('lib/uPlotLib/plugins/onClickPlugin')
-			.default;
+		const onClickPlugin = jest.requireMock(
+			'lib/uPlotLib/plugins/onClickPlugin',
+		).default;
 		const onClick = jest.fn();
 
 		buildBaseConfig({
@@ -162,8 +163,9 @@ describe('buildBaseConfig', () => {
 	});
 
 	it('does not add onClick plugin when onClick is not a function', () => {
-		const onClickPlugin = jest.requireMock('lib/uPlotLib/plugins/onClickPlugin')
-			.default;
+		const onClickPlugin = jest.requireMock(
+			'lib/uPlotLib/plugins/onClickPlugin',
+		).default;
 
 		const builder = buildBaseConfig({
 			...baseProps,

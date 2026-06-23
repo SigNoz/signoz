@@ -80,6 +80,9 @@ type Getter interface {
 	// Get factor password by user id.
 	GetFactorPasswordByUserID(context.Context, valuer.UUID) (*types.FactorPassword, error)
 
+	// Get reset password token by org id and user id.
+	GetResetPasswordTokenByOrgIDAndUserID(ctx context.Context, orgID valuer.UUID, userID valuer.UUID) (*types.ResetPasswordToken, error)
+
 	// Gets single Non-Deleted user by email and org id
 	GetNonDeletedUserByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) (*types.User, error)
 
@@ -88,6 +91,12 @@ type Getter interface {
 
 	// Gets all the user with role using role id in an org id
 	GetUsersByOrgIDAndRoleID(ctx context.Context, orgID valuer.UUID, roleID valuer.UUID) ([]*types.User, error)
+
+	// OnBeforeRoleDelete checks if any users are assigned to the role and rejects deletion if so.
+	OnBeforeRoleDelete(ctx context.Context, orgID valuer.UUID, roleID valuer.UUID) error
+
+	// VerifyResetPasswordToken checks if a reset password token exists and is not expired.
+	VerifyResetPasswordToken(ctx context.Context, token string) error
 }
 
 type Handler interface {
@@ -112,8 +121,14 @@ type Handler interface {
 	GetUsersByRoleID(http.ResponseWriter, *http.Request)
 
 	// Reset Password
+	GetResetPasswordTokenDeprecated(http.ResponseWriter, *http.Request)
 	GetResetPasswordToken(http.ResponseWriter, *http.Request)
+	CreateResetPasswordToken(http.ResponseWriter, *http.Request)
+	VerifyResetPasswordToken(http.ResponseWriter, *http.Request)
 	ResetPassword(http.ResponseWriter, *http.Request)
 	ChangePassword(http.ResponseWriter, *http.Request)
 	ForgotPassword(http.ResponseWriter, *http.Request)
 }
+
+// OnDeleteUser lets other modules clean up data tied to a deleted user.
+type OnDeleteUser func(ctx context.Context, orgID valuer.UUID, userID valuer.UUID) error

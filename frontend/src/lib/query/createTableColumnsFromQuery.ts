@@ -48,9 +48,7 @@ export type DynamicColumn = {
 
 type DynamicColumns = DynamicColumn[];
 
-type CreateTableDataFromQuery = (
-	params: CreateTableDataFromQueryParams,
-) => {
+type CreateTableDataFromQuery = (params: CreateTableDataFromQueryParams) => {
 	columns: ColumnsType<RowData>;
 	dataSource: RowData[];
 	rowsLength: number;
@@ -768,7 +766,7 @@ export const createTableColumnsFromQuery: CreateTableDataFromQuery = ({
 				key: 'actions',
 				title: 'Actions',
 				render: (_, record): ReactNode => renderActionCell(record),
-		  }
+			}
 		: null;
 
 	if (actionsCell && dataSource.length > 0) {

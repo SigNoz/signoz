@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import RGL, { WidthProvider } from 'react-grid-layout';
-import { Typography } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
 import { themeColors } from 'constants/theme';
@@ -17,6 +17,8 @@ import GetMinMax from 'lib/getMinMax';
 import { SuccessResponseV2 } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { PublicDashboardDataProps } from 'types/api/dashboard/public/get';
+
+import signozBrandLogoUrl from '@/assets/Logos/signoz-brand-logo.svg';
 
 import Panel from './Panel';
 
@@ -96,13 +98,15 @@ function PublicDashboardContainer({
 	const isTimeRangeEnabled = publicDashboard?.timeRangeEnabled || false;
 
 	// Memoize dashboardLayout to prevent array recreation on every render
-	const dashboardLayout = useMemo(() => dashboard?.data?.layout || [], [
-		dashboard?.data?.layout,
-	]);
+	const dashboardLayout = useMemo(
+		() => dashboard?.data?.layout || [],
+		[dashboard?.data?.layout],
+	);
 
-	const currentPanelMap = useMemo(() => dashboard?.data?.panelMap || {}, [
-		dashboard?.data?.panelMap,
-	]);
+	const currentPanelMap = useMemo(
+		() => dashboard?.data?.panelMap || {},
+		[dashboard?.data?.panelMap],
+	);
 
 	const handleTimeChange = (
 		interval: Time | CustomTimeType,
@@ -130,11 +134,7 @@ function PublicDashboardContainer({
 			<div className="public-dashboard-header">
 				<div className="public-dashboard-header-left">
 					<div className="brand-logo">
-						<img
-							src="/Logos/signoz-brand-logo.svg"
-							alt="SigNoz"
-							className="brand-logo-img"
-						/>
+						<img src={signozBrandLogoUrl} alt="SigNoz" className="brand-logo-img" />
 
 						<Typography className="brand-logo-name">SigNoz</Typography>
 					</div>

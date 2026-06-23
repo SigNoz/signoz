@@ -31,8 +31,8 @@
 			min-width: 32px;
 
 			border-radius: 2px;
-			border: 1px solid var(--Slate-400, #1d212d);
-			background: var(--Ink-300, #16181d);
+			border: 1px solid var(--l1-border);
+			background: var(--l2-background);
 			box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
 		}
 
@@ -45,11 +45,15 @@
 
 			color: var(--bg-sakura-400) !important;
 
-			border: 1px solid rgba(242, 71, 105, 0.2) !important;
-			background: rgba(242, 71, 105, 0.1) !important;
+			border: 1px solid color-mix(in srgb, var(--bg-sakura-500) 20%, transparent) !important;
+			background: color-mix(
+				in srgb,
+				var(--bg-sakura-500) 10%,
+				transparent
+			) !important;
 
 			&:hover {
-				border: 1px solid rgba(242, 71, 105, 0.4) !important;
+				border: 1px solid color-mix(in srgb, var(--bg-sakura-500) 40%, transparent) !important;
 				color: var(--bg-sakura-400) !important;
 			}
 		}
@@ -62,32 +66,17 @@
 
 			color: var(--bg-sienna-400) !important;
 
-			border: 1px solid rgba(189, 153, 121, 0.2) !important;
-			background: rgba(189, 153, 121, 0.1);
+			border: 1px solid color-mix(in srgb, var(--bg-sienna-400) 20%, transparent) !important;
+			background: color-mix(in srgb, var(--bg-sienna-400) 10%, transparent);
 
 			&:hover {
-				border: 1px solid rgba(189, 153, 121, 0.4) !important;
+				border: 1px solid color-mix(in srgb, var(--bg-sienna-400) 40%, transparent) !important;
 				color: var(--bg-sienna-400) !important;
 			}
 		}
 
 		.options-group {
 			max-width: 100%;
-		}
-	}
-}
-
-.lightMode {
-	.qb-entity-options {
-		.options {
-			border-color: var(--bg-vanilla-300);
-			box-shadow: none;
-
-			.periscope-btn {
-				border-color: var(--bg-vanilla-300);
-				background: var(--bg-vanilla-100);
-				color: var(--bg-ink-200);
-			}
 		}
 	}
 }

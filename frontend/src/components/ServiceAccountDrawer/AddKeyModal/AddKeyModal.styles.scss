@@ -17,7 +17,7 @@
 	}
 
 	&__label {
-		font-size: var(--font-size-sm);
+		font-size: var(--font-size-xs);
 		font-weight: var(--font-weight-normal);
 		color: var(--foreground);
 		line-height: var(--line-height-20);
@@ -27,7 +27,7 @@
 	&__input {
 		height: 32px;
 		background: var(--l2-background);
-		border-color: var(--border);
+		border-color: var(--l1-border);
 		color: var(--l1-foreground);
 		box-shadow: none;
 
@@ -39,7 +39,7 @@
 	&__expiry-toggle {
 		width: 60%;
 		display: flex;
-		border: 1px solid var(--border);
+		border: 1px solid var(--l1-border);
 		border-radius: 2px;
 		overflow: hidden;
 		padding: 0;
@@ -60,7 +60,7 @@
 			justify-content: center;
 			background: transparent;
 			border: none;
-			border-right: 1px solid var(--border);
+			border-right: 1px solid var(--l1-border);
 			color: var(--foreground);
 
 			&:last-child {
@@ -80,14 +80,14 @@
 
 		.ant-picker {
 			background: var(--l2-background);
-			border-color: var(--border);
+			border-color: var(--l1-border);
 			border-radius: 2px;
 			width: 100%;
 			height: 32px;
 
 			input {
 				color: var(--l1-foreground);
-				font-size: var(--font-size-sm);
+				font-size: var(--font-size-xs);
 			}
 
 			.ant-picker-suffix {
@@ -108,7 +108,7 @@
 		align-items: center;
 		height: 32px;
 		background: var(--l2-background);
-		border: 1px solid var(--border);
+		border: 1px solid var(--l1-border);
 		border-radius: 2px;
 		overflow: hidden;
 	}
@@ -126,13 +126,7 @@
 	}
 
 	&__copy-btn {
-		flex-shrink: 0;
-		height: 32px;
-		border-radius: 0 2px 2px 0;
-		border-top: none;
-		border-right: none;
-		border-bottom: none;
-		border-left: 1px solid var(--border);
+		border-left: 1px solid var(--l1-border);
 		min-width: 40px;
 	}
 
@@ -142,12 +136,17 @@
 		gap: var(--spacing-2);
 	}
 
+	&__callout-wrapper {
+		display: flex;
+	}
+
 	&__expiry-label {
 		font-size: var(--font-size-xs);
 		font-weight: var(--font-weight-medium);
 		color: var(--foreground);
 		letter-spacing: 0.48px;
 		text-transform: uppercase;
+		margin-bottom: var(--spacing-4);
 	}
 
 	&__footer {

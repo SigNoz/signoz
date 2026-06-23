@@ -6,7 +6,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
 func TestBasicRuleThresholdEval_UnitConversion(t *testing.T) {
@@ -15,22 +16,29 @@ func TestBasicRuleThresholdEval_UnitConversion(t *testing.T) {
 	tests := []struct {
 		name        string
 		threshold   BasicRuleThreshold
-		series      v3.Series
+		series      *qbtypes.TimeSeries
 		ruleUnit    string
 		shouldAlert bool
 	}{
 		{
 			name: "milliseconds to seconds conversion - should alert",
 			threshold: BasicRuleThreshold{
-				Name:        CriticalThresholdName,
-				TargetValue: &target, // 100ms
-				TargetUnit:  "ms",
-				MatchType:   AtleastOnce,
-				CompareOp:   ValueIsAbove,
+				Name:            CriticalThresholdName,
+				TargetValue:     &target, // 100ms
+				TargetUnit:      "ms",
+				MatchType:       AtleastOnce,
+				CompareOperator: ValueIsAbove,
 			},
-			series: v3.Series{
-				Labels: map[string]string{"service": "test"},
-				Points: []v3.Point{
+			series: &qbtypes.TimeSeries{
+				Labels: []*qbtypes.Label{
+					{
+						Key: telemetrytypes.TelemetryFieldKey{
+							Name: "service",
+						},
+						Value: "test",
+					},
+				},
+				Values: []*qbtypes.TimeSeriesValue{
 					{Value: 0.15, Timestamp: 1000}, // 150ms in seconds
 				},
 			},
@@ -40,15 +48,22 @@ func TestBasicRuleThresholdEval_UnitConversion(t *testing.T) {
 		{
 			name: "milliseconds to seconds conversion - should not alert",
 			threshold: BasicRuleThreshold{
-				Name:        WarningThresholdName,
-				TargetValue: &target, // 100ms
-				TargetUnit:  "ms",
-				MatchType:   AtleastOnce,
-				CompareOp:   ValueIsAbove,
+				Name:            WarningThresholdName,
+				TargetValue:     &target, // 100ms
+				TargetUnit:      "ms",
+				MatchType:       AtleastOnce,
+				CompareOperator: ValueIsAbove,
 			},
-			series: v3.Series{
-				Labels: map[string]string{"service": "test"},
-				Points: []v3.Point{
+			series: &qbtypes.TimeSeries{
+				Labels: []*qbtypes.Label{
+					{
+						Key: telemetrytypes.TelemetryFieldKey{
+							Name: "service",
+						},
+						Value: "test",
+					},
+				},
+				Values: []*qbtypes.TimeSeriesValue{
 					{Value: 0.05, Timestamp: 1000}, // 50ms in seconds
 				},
 			},
@@ -58,15 +73,22 @@ func TestBasicRuleThresholdEval_UnitConversion(t *testing.T) {
 		{
 			name: "seconds to milliseconds conversion - should alert",
 			threshold: BasicRuleThreshold{
-				Name:        CriticalThresholdName,
-				TargetValue: &target, // 100s
-				TargetUnit:  "s",
-				MatchType:   AtleastOnce,
-				CompareOp:   ValueIsAbove,
+				Name:            CriticalThresholdName,
+				TargetValue:     &target, // 100s
+				TargetUnit:      "s",
+				MatchType:       AtleastOnce,
+				CompareOperator: ValueIsAbove,
 			},
-			series: v3.Series{
-				Labels: map[string]string{"service": "test"},
-				Points: []v3.Point{
+			series: &qbtypes.TimeSeries{
+				Labels: []*qbtypes.Label{
+					{
+						Key: telemetrytypes.TelemetryFieldKey{
+							Name: "service",
+						},
+						Value: "test",
+					},
+				},
+				Values: []*qbtypes.TimeSeriesValue{
 					{Value: 150000, Timestamp: 1000}, // 150000ms = 150s
 				},
 			},
@@ -77,15 +99,22 @@ func TestBasicRuleThresholdEval_UnitConversion(t *testing.T) {
 		{
 			name: "bytes to kibibytes conversion - should alert",
 			threshold: BasicRuleThreshold{
-				Name:        InfoThresholdName,
-				TargetValue: &target, // 100 bytes
-				TargetUnit:  "bytes",
-				MatchType:   AtleastOnce,
-				CompareOp:   ValueIsAbove,
+				Name:            InfoThresholdName,
+				TargetValue:     &target, // 100 bytes
+				TargetUnit:      "bytes",
+				MatchType:       AtleastOnce,
+				CompareOperator: ValueIsAbove,
 			},
-			series: v3.Series{
-				Labels: map[string]string{"service": "test"},
-				Points: []v3.Point{
+			series: &qbtypes.TimeSeries{
+				Labels: []*qbtypes.Label{
+					{
+						Key: telemetrytypes.TelemetryFieldKey{
+							Name: "service",
+						},
+						Value: "test",
+					},
+				},
+				Values: []*qbtypes.TimeSeriesValue{
 					{Value: 0.15, Timestamp: 1000}, // 0.15KiB ≈ 153.6 bytes
 				},
 			},
@@ -95,15 +124,22 @@ func TestBasicRuleThresholdEval_UnitConversion(t *testing.T) {
 		{
 			name: "kibibytes to mebibytes conversion - should alert",
 			threshold: BasicRuleThreshold{
-				Name:        ErrorThresholdName,
-				TargetValue: &target, // 100KiB
-				TargetUnit:  "kbytes",
-				MatchType:   AtleastOnce,
-				CompareOp:   ValueIsAbove,
+				Name:            ErrorThresholdName,
+				TargetValue:     &target, // 100KiB
+				TargetUnit:      "kbytes",
+				MatchType:       AtleastOnce,
+				CompareOperator: ValueIsAbove,
 			},
-			series: v3.Series{
-				Labels: map[string]string{"service": "test"},
-				Points: []v3.Point{
+			series: &qbtypes.TimeSeries{
+				Labels: []*qbtypes.Label{
+					{
+						Key: telemetrytypes.TelemetryFieldKey{
+							Name: "service",
+						},
+						Value: "test",
+					},
+				},
+				Values: []*qbtypes.TimeSeriesValue{
 					{Value: 0.15, Timestamp: 1000},
 				},
 			},
@@ -114,15 +150,22 @@ func TestBasicRuleThresholdEval_UnitConversion(t *testing.T) {
 		{
 			name: "milliseconds to seconds with ValueIsBelow - should alert",
 			threshold: BasicRuleThreshold{
-				Name:        WarningThresholdName,
-				TargetValue: &target, // 100ms
-				TargetUnit:  "ms",
-				MatchType:   AtleastOnce,
-				CompareOp:   ValueIsBelow,
+				Name:            WarningThresholdName,
+				TargetValue:     &target, // 100ms
+				TargetUnit:      "ms",
+				MatchType:       AtleastOnce,
+				CompareOperator: ValueIsBelow,
 			},
-			series: v3.Series{
-				Labels: map[string]string{"service": "test"},
-				Points: []v3.Point{
+			series: &qbtypes.TimeSeries{
+				Labels: []*qbtypes.Label{
+					{
+						Key: telemetrytypes.TelemetryFieldKey{
+							Name: "service",
+						},
+						Value: "test",
+					},
+				},
+				Values: []*qbtypes.TimeSeriesValue{
 					{Value: 0.05, Timestamp: 1000}, // 50ms in seconds
 				},
 			},
@@ -132,15 +175,22 @@ func TestBasicRuleThresholdEval_UnitConversion(t *testing.T) {
 		{
 			name: "milliseconds to seconds with OnAverage - should alert",
 			threshold: BasicRuleThreshold{
-				Name:        CriticalThresholdName,
-				TargetValue: &target, // 100ms
-				TargetUnit:  "ms",
-				MatchType:   OnAverage,
-				CompareOp:   ValueIsAbove,
+				Name:            CriticalThresholdName,
+				TargetValue:     &target, // 100ms
+				TargetUnit:      "ms",
+				MatchType:       OnAverage,
+				CompareOperator: ValueIsAbove,
 			},
-			series: v3.Series{
-				Labels: map[string]string{"service": "test"},
-				Points: []v3.Point{
+			series: &qbtypes.TimeSeries{
+				Labels: []*qbtypes.Label{
+					{
+						Key: telemetrytypes.TelemetryFieldKey{
+							Name: "service",
+						},
+						Value: "test",
+					},
+				},
+				Values: []*qbtypes.TimeSeriesValue{
 					{Value: 0.08, Timestamp: 1000}, // 80ms
 					{Value: 0.12, Timestamp: 2000}, // 120ms
 					{Value: 0.15, Timestamp: 3000}, // 150ms
@@ -152,15 +202,22 @@ func TestBasicRuleThresholdEval_UnitConversion(t *testing.T) {
 		{
 			name: "decimal megabytes to gigabytes with InTotal - should alert",
 			threshold: BasicRuleThreshold{
-				Name:        WarningThresholdName,
-				TargetValue: &target, // 100MB
-				TargetUnit:  "decmbytes",
-				MatchType:   InTotal,
-				CompareOp:   ValueIsAbove,
+				Name:            WarningThresholdName,
+				TargetValue:     &target, // 100MB
+				TargetUnit:      "decmbytes",
+				MatchType:       InTotal,
+				CompareOperator: ValueIsAbove,
 			},
-			series: v3.Series{
-				Labels: map[string]string{"service": "test"},
-				Points: []v3.Point{
+			series: &qbtypes.TimeSeries{
+				Labels: []*qbtypes.Label{
+					{
+						Key: telemetrytypes.TelemetryFieldKey{
+							Name: "service",
+						},
+						Value: "test",
+					},
+				},
+				Values: []*qbtypes.TimeSeriesValue{
 					{Value: 0.04, Timestamp: 1000}, // 40MB
 					{Value: 0.05, Timestamp: 2000}, // 50MB
 					{Value: 0.03, Timestamp: 3000}, // 30MB
@@ -172,15 +229,22 @@ func TestBasicRuleThresholdEval_UnitConversion(t *testing.T) {
 		{
 			name: "milliseconds to seconds with AllTheTimes - should alert",
 			threshold: BasicRuleThreshold{
-				Name:        InfoThresholdName,
-				TargetValue: &target, // 100ms
-				TargetUnit:  "ms",
-				MatchType:   AllTheTimes,
-				CompareOp:   ValueIsAbove,
+				Name:            InfoThresholdName,
+				TargetValue:     &target, // 100ms
+				TargetUnit:      "ms",
+				MatchType:       AllTheTimes,
+				CompareOperator: ValueIsAbove,
 			},
-			series: v3.Series{
-				Labels: map[string]string{"service": "test"},
-				Points: []v3.Point{
+			series: &qbtypes.TimeSeries{
+				Labels: []*qbtypes.Label{
+					{
+						Key: telemetrytypes.TelemetryFieldKey{
+							Name: "service",
+						},
+						Value: "test",
+					},
+				},
+				Values: []*qbtypes.TimeSeriesValue{
 					{Value: 0.11, Timestamp: 1000}, // 110ms
 					{Value: 0.12, Timestamp: 2000}, // 120ms
 					{Value: 0.15, Timestamp: 3000}, // 150ms
@@ -192,15 +256,22 @@ func TestBasicRuleThresholdEval_UnitConversion(t *testing.T) {
 		{
 			name: "kilobytes to megabytes with Last - should not alert",
 			threshold: BasicRuleThreshold{
-				Name:        ErrorThresholdName,
-				TargetValue: &target, // 100kB
-				TargetUnit:  "deckbytes",
-				MatchType:   Last,
-				CompareOp:   ValueIsAbove,
+				Name:            ErrorThresholdName,
+				TargetValue:     &target, // 100kB
+				TargetUnit:      "deckbytes",
+				MatchType:       Last,
+				CompareOperator: ValueIsAbove,
 			},
-			series: v3.Series{
-				Labels: map[string]string{"service": "test"},
-				Points: []v3.Point{
+			series: &qbtypes.TimeSeries{
+				Labels: []*qbtypes.Label{
+					{
+						Key: telemetrytypes.TelemetryFieldKey{
+							Name: "service",
+						},
+						Value: "test",
+					},
+				},
+				Values: []*qbtypes.TimeSeriesValue{
 					{Value: 0.15, Timestamp: 1000}, // 150kB
 					{Value: 0.05, Timestamp: 2000}, // 50kB (last value)
 				},
@@ -212,15 +283,22 @@ func TestBasicRuleThresholdEval_UnitConversion(t *testing.T) {
 		{
 			name: "bytes per second to kilobytes per second - should alert",
 			threshold: BasicRuleThreshold{
-				Name:        CriticalThresholdName,
-				TargetValue: &target, // 100 bytes/s
-				TargetUnit:  "Bps",
-				MatchType:   AtleastOnce,
-				CompareOp:   ValueIsAbove,
+				Name:            CriticalThresholdName,
+				TargetValue:     &target, // 100 bytes/s
+				TargetUnit:      "Bps",
+				MatchType:       AtleastOnce,
+				CompareOperator: ValueIsAbove,
 			},
-			series: v3.Series{
-				Labels: map[string]string{"service": "test"},
-				Points: []v3.Point{
+			series: &qbtypes.TimeSeries{
+				Labels: []*qbtypes.Label{
+					{
+						Key: telemetrytypes.TelemetryFieldKey{
+							Name: "service",
+						},
+						Value: "test",
+					},
+				},
+				Values: []*qbtypes.TimeSeriesValue{
 					{Value: 0.15, Timestamp: 1000},
 				},
 			},
@@ -231,15 +309,22 @@ func TestBasicRuleThresholdEval_UnitConversion(t *testing.T) {
 		{
 			name: "same unit - no conversion needed - should alert",
 			threshold: BasicRuleThreshold{
-				Name:        InfoThresholdName,
-				TargetValue: &target, // 100ms
-				TargetUnit:  "ms",
-				MatchType:   AtleastOnce,
-				CompareOp:   ValueIsAbove,
+				Name:            InfoThresholdName,
+				TargetValue:     &target, // 100ms
+				TargetUnit:      "ms",
+				MatchType:       AtleastOnce,
+				CompareOperator: ValueIsAbove,
 			},
-			series: v3.Series{
-				Labels: map[string]string{"service": "test"},
-				Points: []v3.Point{
+			series: &qbtypes.TimeSeries{
+				Labels: []*qbtypes.Label{
+					{
+						Key: telemetrytypes.TelemetryFieldKey{
+							Name: "service",
+						},
+						Value: "test",
+					},
+				},
+				Values: []*qbtypes.TimeSeriesValue{
 					{Value: 150, Timestamp: 1000}, // 150ms
 				},
 			},
@@ -250,15 +335,22 @@ func TestBasicRuleThresholdEval_UnitConversion(t *testing.T) {
 		{
 			name: "empty unit - no conversion - should alert",
 			threshold: BasicRuleThreshold{
-				Name:        ErrorThresholdName,
-				TargetValue: &target, // 100 (unitless)
-				TargetUnit:  "",
-				MatchType:   AtleastOnce,
-				CompareOp:   ValueIsAbove,
+				Name:            ErrorThresholdName,
+				TargetValue:     &target, // 100 (unitless)
+				TargetUnit:      "",
+				MatchType:       AtleastOnce,
+				CompareOperator: ValueIsAbove,
 			},
-			series: v3.Series{
-				Labels: map[string]string{"service": "test"},
-				Points: []v3.Point{
+			series: &qbtypes.TimeSeries{
+				Labels: []*qbtypes.Label{
+					{
+						Key: telemetrytypes.TelemetryFieldKey{
+							Name: "service",
+						},
+						Value: "test",
+					},
+				},
+				Values: []*qbtypes.TimeSeriesValue{
 					{Value: 150, Timestamp: 1000}, // 150 (unitless)
 				},
 			},
@@ -270,15 +362,22 @@ func TestBasicRuleThresholdEval_UnitConversion(t *testing.T) {
 		{
 			name: "bytes to Gibibytes - should alert",
 			threshold: BasicRuleThreshold{
-				Name:        CriticalThresholdName,
-				TargetValue: &target, // 100 Gibibytes
-				TargetUnit:  "GiBy",
-				MatchType:   AtleastOnce,
-				CompareOp:   ValueIsBelow,
+				Name:            CriticalThresholdName,
+				TargetValue:     &target, // 100 Gibibytes
+				TargetUnit:      "GiBy",
+				MatchType:       AtleastOnce,
+				CompareOperator: ValueIsBelow,
 			},
-			series: v3.Series{
-				Labels: map[string]string{"service": "test"},
-				Points: []v3.Point{
+			series: &qbtypes.TimeSeries{
+				Labels: []*qbtypes.Label{
+					{
+						Key: telemetrytypes.TelemetryFieldKey{
+							Name: "service",
+						},
+						Value: "test",
+					},
+				},
+				Values: []*qbtypes.TimeSeriesValue{
 					{Value: 70 * 1024 * 1024 * 1024, Timestamp: 1000}, // 70 Gibibytes
 				},
 			},
@@ -290,15 +389,22 @@ func TestBasicRuleThresholdEval_UnitConversion(t *testing.T) {
 		{
 			name: "bytes per second to MiB per second - should alert",
 			threshold: BasicRuleThreshold{
-				Name:        CriticalThresholdName,
-				TargetValue: &target, // 100 MiB/s
-				TargetUnit:  "MiBy/s",
-				MatchType:   AtleastOnce,
-				CompareOp:   ValueIsBelow,
+				Name:            CriticalThresholdName,
+				TargetValue:     &target, // 100 MiB/s
+				TargetUnit:      "MiBy/s",
+				MatchType:       AtleastOnce,
+				CompareOperator: ValueIsBelow,
 			},
-			series: v3.Series{
-				Labels: map[string]string{"service": "test"},
-				Points: []v3.Point{
+			series: &qbtypes.TimeSeries{
+				Labels: []*qbtypes.Label{
+					{
+						Key: telemetrytypes.TelemetryFieldKey{
+							Name: "service",
+						},
+						Value: "test",
+					},
+				},
+				Values: []*qbtypes.TimeSeriesValue{
 					{Value: 30 * 1024 * 1024, Timestamp: 1000}, // 30 MiB/s
 				},
 			},
@@ -346,20 +452,20 @@ func TestPrepareSampleLabelsForRule(t *testing.T) {
 	alertAllHashes := make(map[uint64]struct{})
 	thresholdName := "test"
 	for range 50_000 {
-		sampleLabels := map[string]string{
-			"service":   "test",
-			"env":       "prod",
-			"tier":      "backend",
-			"namespace": "default",
-			"pod":       "test-pod",
-			"container": "test-container",
-			"node":      "test-node",
-			"cluster":   "test-cluster",
-			"region":    "test-region",
-			"az":        "test-az",
-			"hostname":  "test-hostname",
-			"ip":        "192.168.1.1",
-			"port":      "8080",
+		sampleLabels := []*qbtypes.Label{
+			{Key: telemetrytypes.TelemetryFieldKey{Name: "service"}, Value: "test"},
+			{Key: telemetrytypes.TelemetryFieldKey{Name: "env"}, Value: "prod"},
+			{Key: telemetrytypes.TelemetryFieldKey{Name: "tier"}, Value: "backend"},
+			{Key: telemetrytypes.TelemetryFieldKey{Name: "namespace"}, Value: "default"},
+			{Key: telemetrytypes.TelemetryFieldKey{Name: "pod"}, Value: "test-pod"},
+			{Key: telemetrytypes.TelemetryFieldKey{Name: "container"}, Value: "test-container"},
+			{Key: telemetrytypes.TelemetryFieldKey{Name: "node"}, Value: "test-node"},
+			{Key: telemetrytypes.TelemetryFieldKey{Name: "cluster"}, Value: "test-cluster"},
+			{Key: telemetrytypes.TelemetryFieldKey{Name: "region"}, Value: "test-region"},
+			{Key: telemetrytypes.TelemetryFieldKey{Name: "az"}, Value: "test-az"},
+			{Key: telemetrytypes.TelemetryFieldKey{Name: "hostname"}, Value: "test-hostname"},
+			{Key: telemetrytypes.TelemetryFieldKey{Name: "ip"}, Value: "192.168.1.1"},
+			{Key: telemetrytypes.TelemetryFieldKey{Name: "port"}, Value: "8080"},
 		}
 		lbls := PrepareSampleLabelsForRule(sampleLabels, thresholdName)
 		assert.True(t, lbls.Has(LabelThresholdName), "LabelThresholdName not found in labels")

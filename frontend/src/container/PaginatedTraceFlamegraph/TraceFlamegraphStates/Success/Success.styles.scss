@@ -25,13 +25,13 @@
 					transform: translate(-50%, -50%) rotate(45deg);
 					width: 6px;
 					height: 6px;
-					background-color: var(--bg-robin-500);
+					background-color: var(--primary-background);
 					border: 1px solid var(--bg-robin-600);
 					cursor: pointer;
 					z-index: 1;
 
 					&.error {
-						background-color: var(--bg-cherry-500);
+						background-color: var(--danger-background);
 						border-color: var(--bg-cherry-600);
 					}
 

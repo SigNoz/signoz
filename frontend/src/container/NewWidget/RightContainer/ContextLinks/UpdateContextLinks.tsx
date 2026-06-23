@@ -1,13 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import {
-	Button,
-	Col,
-	Form,
-	Input as AntInput,
-	Input,
-	Row,
-	Typography,
-} from 'antd';
+// TODO(@signozhq/ui-input): migrate <Input> once @signozhq/ui Input
+// supports the `spellCheck` prop on the URL input below.
+import { Button, Col, Form, Input, Input as AntInput, Row } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import { CONTEXT_LINK_FIELDS } from 'container/NewWidget/RightContainer/ContextLinks/constants';
 import {
 	getInitialValues,
@@ -16,10 +11,11 @@ import {
 	updateUrlWithParams,
 } from 'container/NewWidget/RightContainer/ContextLinks/utils';
 import useContextVariables from 'hooks/dashboard/useContextVariables';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2 } from '@signozhq/icons';
 import { ContextLinkProps, Widgets } from 'types/api/dashboard/getAll';
+import { getBaseUrl } from 'utils/basePath';
 
-import VariablesDropdown from './VariablesDropdown';
+import VariablesPopover from './VariablesPopover';
 
 import './UpdateContextLinks.styles.scss';
 
@@ -77,14 +73,14 @@ function UpdateContextLinks({
 		customVariables: fieldVariables,
 	});
 
-	// Transform variables into the format expected by VariablesDropdown
+	// Transform variables into the format expected by VariablesPopover
 	const transformedVariables = useMemo(
 		() => transformContextVariables(variables),
 		[variables],
 	);
 
 	// Function to get current domain
-	const getCurrentDomain = (): string => window.location.origin;
+	const getCurrentDomain = (): string => getBaseUrl();
 
 	// Function to handle variable selection from dropdown
 	const handleVariableSelect = (
@@ -98,8 +94,8 @@ function UpdateContextLinks({
 		const newValue =
 			cursorPosition !== undefined
 				? currentValue.slice(0, cursorPosition) +
-				  variableName +
-				  currentValue.slice(cursorPosition)
+					variableName +
+					currentValue.slice(cursorPosition)
 				: currentValue + variableName;
 
 		// Update form value
@@ -131,8 +127,8 @@ function UpdateContextLinks({
 		const newValue =
 			cursorPosition !== undefined
 				? currentValue.slice(0, cursorPosition) +
-				  variableName +
-				  currentValue.slice(cursorPosition)
+					variableName +
+					currentValue.slice(cursorPosition)
 				: currentValue + variableName;
 
 		// Update the parameter value
@@ -140,7 +136,7 @@ function UpdateContextLinks({
 	};
 
 	useEffect(() => {
-		((window as unknown) as Record<string, unknown>).form = form;
+		(window as unknown as Record<string, unknown>).form = form;
 	}, [form]);
 
 	// Parse URL and update params when URL changes
@@ -230,7 +226,9 @@ function UpdateContextLinks({
 							},
 						]}
 					>
-						<VariablesDropdown
+						{/* TODO: replace with AutoComplete with options for variables and
+						previously used URLs for better UX */}
+						<VariablesPopover
 							onVariableSelect={handleVariableSelect}
 							variables={transformedVariables}
 						>
@@ -258,7 +256,7 @@ function UpdateContextLinks({
 									/>
 								</div>
 							)}
-						</VariablesDropdown>
+						</VariablesPopover>
 					</Form.Item>
 
 					{/* Remove the separate variables section */}
@@ -288,7 +286,7 @@ function UpdateContextLinks({
 										/>
 									</Col>
 									<Col span={16}>
-										<VariablesDropdown
+										<VariablesPopover
 											onVariableSelect={(variableName, cursorPosition): void =>
 												handleParamVariableSelect(index, variableName, cursorPosition)
 											}
@@ -317,7 +315,7 @@ function UpdateContextLinks({
 													}
 												/>
 											)}
-										</VariablesDropdown>
+										</VariablesPopover>
 									</Col>
 									<Col span={2}>
 										<Button

@@ -11,6 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
@@ -45,7 +46,7 @@ func (handler *handler) QueryRange(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	var queryRangeRequest qbtypes.QueryRangeRequest
-	if err := json.NewDecoder(req.Body).Decode(&queryRangeRequest); err != nil {
+	if err := binding.JSON.BindBody(req.Body, &queryRangeRequest); err != nil {
 		render.Error(rw, err)
 		return
 	}
@@ -186,7 +187,7 @@ func (handler *handler) QueryRawStream(rw http.ResponseWriter, req *http.Request
 func (handler *handler) ReplaceVariables(rw http.ResponseWriter, req *http.Request) {
 
 	var queryRangeRequest qbtypes.QueryRangeRequest
-	if err := json.NewDecoder(req.Body).Decode(&queryRangeRequest); err != nil {
+	if err := binding.JSON.BindBody(req.Body, &queryRangeRequest); err != nil {
 		render.Error(rw, err)
 		return
 	}

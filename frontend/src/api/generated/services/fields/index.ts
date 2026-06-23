@@ -1,9 +1,10 @@
 /**
  * ! Do not edit manually
  * * The file has been auto-generated using Orval for SigNoz
- * * regenerate with 'yarn generate:api'
+ * * regenerate with 'pnpm generate:api'
  * SigNoz
  */
+import { useQuery } from 'react-query';
 import type {
 	InvalidateOptions,
 	QueryClient,
@@ -12,10 +13,7 @@ import type {
 	UseQueryOptions,
 	UseQueryResult,
 } from 'react-query';
-import { useQuery } from 'react-query';
 
-import type { ErrorType } from '../../../generatedAPIInstance';
-import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type {
 	GetFieldsKeys200,
 	GetFieldsKeysParams,
@@ -23,6 +21,9 @@ import type {
 	GetFieldsValuesParams,
 	RenderErrorResponseDTO,
 } from '../sigNoz.schemas';
+
+import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
+import type { ErrorType } from '../../../generatedAPIInstance';
 
 /**
  * This endpoint returns field keys
@@ -46,7 +47,7 @@ export const getGetFieldsKeysQueryKey = (params?: GetFieldsKeysParams) => {
 
 export const getGetFieldsKeysQueryOptions = <
 	TData = Awaited<ReturnType<typeof getFieldsKeys>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	params?: GetFieldsKeysParams,
 	options?: {
@@ -83,7 +84,7 @@ export type GetFieldsKeysQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useGetFieldsKeys<
 	TData = Awaited<ReturnType<typeof getFieldsKeys>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	params?: GetFieldsKeysParams,
 	options?: {
@@ -100,9 +101,7 @@ export function useGetFieldsKeys<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
@@ -143,7 +142,7 @@ export const getGetFieldsValuesQueryKey = (params?: GetFieldsValuesParams) => {
 
 export const getGetFieldsValuesQueryOptions = <
 	TData = Awaited<ReturnType<typeof getFieldsValues>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	params?: GetFieldsValuesParams,
 	options?: {
@@ -180,7 +179,7 @@ export type GetFieldsValuesQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useGetFieldsValues<
 	TData = Awaited<ReturnType<typeof getFieldsValues>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	params?: GetFieldsValuesParams,
 	options?: {
@@ -197,9 +196,7 @@ export function useGetFieldsValues<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**

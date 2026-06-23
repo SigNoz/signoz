@@ -1,21 +1,22 @@
 package audittypes
 
+import "github.com/SigNoz/signoz/pkg/types/coretypes"
+
 // EventName is a typed wrapper for audit event names, ensuring not every
 // string qualifies as an event name.
 type EventName struct {
 	s string
 }
 
-// NewEventName derives the audit event name from a resource name and action.
-// Format: {resource_name}.{pastTense(action)}
+// NewEventName derives the audit event name from a resource kind and action.
+// Format: {resource_kind}.{pastTense(action)}
 //
 // Examples:
 //
-//	NewEventName("dashboard", ActionCreate)  → "dashboard.created"
-//	NewEventName("dashboard", ActionUpdate)  → "dashboard.updated"
-//	NewEventName("user.role", ActionUpdate)  → "user.role.updated"
-func NewEventName(resourceName string, action Action) EventName {
-	return EventName{s: resourceName + "." + action.PastTense()}
+//	NewEventName("dashboard", coretypes.VerbCreate)  → "dashboard.created"
+//	NewEventName("dashboard", coretypes.VerbUpdate)  → "dashboard.updated"
+func NewEventName(resourceKind coretypes.Kind, action coretypes.Verb) EventName {
+	return EventName{s: resourceKind.String() + "." + action.PastTense()}
 }
 
 // String returns the string representation of the event name.

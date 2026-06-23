@@ -11,14 +11,14 @@
 		gap: 20px;
 		padding: 8px 12px;
 
-		background: var(--bg-ink-500);
-		color: var(--bg-vanilla-300);
+		background: var(--l1-background);
+		color: var(--l2-foreground);
 
 		border-radius: 8px;
 		font-size: 13px;
 		line-height: 1.2;
 
-		box-shadow: 0 6px 20px var(--bg-ink-500);
+		box-shadow: 0 6px 20px var(--l1-background);
 		animation: shift-overlay-fade-in 120ms ease-out;
 	}
 
@@ -40,7 +40,7 @@
 		display: flex;
 
 		border-radius: 4px;
-		background: var(--bg-slate-100);
+		background: var(--l3-background);
 	}
 
 	&__key {
@@ -53,12 +53,12 @@
 
 		border-radius: 4px;
 
-		background-color: var(--bg-slate-100);
+		background-color: var(--l3-background);
 
 		font-size: 12px;
 		font-weight: 500;
 		line-height: 1;
-		color: var(--bg-vanilla-300);
+		color: var(--l2-foreground);
 		flex-shrink: 0;
 	}
 }

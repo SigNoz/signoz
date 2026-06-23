@@ -22,7 +22,7 @@
 				.required-symbol {
 					display: inline-block;
 					margin-inline-end: 0px;
-					color: #dc4446;
+					color: var(--danger-background);
 					font-size: 14px;
 					font-family: SimSun, sans-serif;
 					line-height: 1;
@@ -68,7 +68,7 @@
 				font-weight: 500;
 				line-height: 18px;
 
-				color: #fff;
+				color: var(--l1-foreground);
 			}
 		}
 	}
@@ -82,12 +82,12 @@
 		align-items: center;
 		border-radius: 2px;
 		margin-bottom: 31px;
-		border: 1px solid var(--bg-slate-400);
-		background: var(--bg-ink-300);
+		border: 1px solid var(--l1-border);
+		background: var(--l3-background);
 		box-shadow: none;
 
 		.ant-typography {
-			color: var(--bg-vanilla-400);
+			color: var(--l2-foreground);
 			font-family: Inter;
 			font-size: 12px;
 			font-style: normal;
@@ -122,10 +122,9 @@
 			min-height: 30px;
 			border-radius: 3px;
 			min-width: 120px;
-			// text-transform: capitalize;
-			color: #1668dc;
-			background-color: #111a2c;
-			border-color: #111a2c;
+			color: var(--accent-primary);
+			background-color: var(--l2-background);
+			border-color: var(--l1-border);
 		}
 	}
 }
@@ -154,15 +153,15 @@
 	cursor: pointer;
 
 	&.selected {
-		color: #1668dc;
-		background-color: #111a2c;
-		border-color: #111a2c;
+		color: var(--accent-primary);
+		background-color: var(--l2-background);
+		border-color: var(--l1-border);
 	}
 
 	&:hover {
-		color: #1668dc;
-		background-color: #111a2c;
-		border-color: #111a2c;
+		color: var(--accent-primary);
+		background-color: var(--l2-background);
+		border-color: var(--l1-border);
 	}
 
 	.environment-name {
@@ -181,56 +180,6 @@
 	padding: 24px 0;
 }
 
-.lightMode {
-	.entity-value {
-		background-color: #e6f4ff !important;
-		border-color: #e6f4ff !important;
-	}
-
-	.environment,
-	.supported-language {
-		&.selected {
-			color: #1668dc;
-			background-color: #e6f4ff !important;
-			border-color: #e6f4ff !important;
-		}
-
-		&:hover {
-			color: #1668dc;
-			background-color: #e6f4ff !important;
-			border-color: #e6f4ff !important;
-		}
-	}
-
-	.markdown-container {
-		color: rgba(0, 0, 0, 0.88);
-	}
-}
-
 .error-container {
 	margin: 8px 0;
-}
-
-.lightMode {
-	.steps-container {
-		width: 20%;
-		height: 100%;
-
-		.steps-container-header {
-			.brand-logo {
-				.brand-logo-name {
-					color: black;
-				}
-			}
-		}
-
-		.invite-user-btn {
-			border: 1px solid var(--bg-vanilla-300);
-			background: var(--bg-vanilla-100);
-
-			.ant-typography {
-				color: var(--bg-slate-200);
-			}
-		}
-	}
 }

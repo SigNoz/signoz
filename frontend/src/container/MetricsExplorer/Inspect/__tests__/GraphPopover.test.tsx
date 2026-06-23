@@ -18,10 +18,8 @@ describe('GraphPopover', () => {
 			labels: {},
 		},
 	};
-	const mockSpaceAggregationSeriesMap: Map<
-		string,
-		InspectMetricsSeries[]
-	> = new Map();
+	const mockSpaceAggregationSeriesMap: Map<string, InspectMetricsSeries[]> =
+		new Map();
 
 	const mockOpenInExpandedView = jest.fn();
 	const mockStep = InspectionStep.TIME_AGGREGATION;

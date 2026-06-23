@@ -104,9 +104,9 @@ const mockRefetchMetricMetadata = jest.fn();
 
 describe('Metadata', () => {
 	beforeEach(() => {
-		mockUseUpdateMetricMetadataHook.mockReturnValue(({
+		mockUseUpdateMetricMetadataHook.mockReturnValue({
 			mutate: mockUseUpdateMetricMetadata,
-		} as Partial<UseUpdateMetricMetadataResult>) as UseUpdateMetricMetadataResult);
+		} as Partial<UseUpdateMetricMetadataResult> as UseUpdateMetricMetadataResult);
 	});
 
 	it('should render the metadata properly', () => {

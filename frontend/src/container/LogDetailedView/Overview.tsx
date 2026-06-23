@@ -1,26 +1,24 @@
 import { ReactNode, useState } from 'react';
 import MEditor, { EditorProps, Monaco } from '@monaco-editor/react';
 import { Color } from '@signozhq/design-tokens';
-import {
-	Button,
-	Collapse,
-	Divider,
-	Input,
-	Switch,
-	Tag,
-	Typography,
-} from 'antd';
+import { Button } from '@signozhq/ui/button';
+import { Input } from '@signozhq/ui/input';
+import { Switch } from '@signozhq/ui/switch';
+import { Collapse } from 'antd';
+import { Divider } from '@signozhq/ui/divider';
+import { Badge } from '@signozhq/ui/badge';
+import { Typography } from '@signozhq/ui/typography';
 import { AddToQueryHOCProps } from 'components/Logs/AddToQueryHOC';
 import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
 import { OptionsQuery } from 'container/OptionsMenu/types';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { ChevronDown, ChevronRight, Search } from 'lucide-react';
+import { ChevronDown, ChevronRight, Search } from '@signozhq/icons';
 import { IField } from 'types/api/logs/fields';
 import { ILog } from 'types/api/logs/log';
 
 import { ActionItemProps } from './ActionItem';
 import TableView from './TableView';
-import { removeEscapeCharacters } from './utils';
+import { getBodyDisplayString, removeEscapeCharacters } from './utils';
 
 import './Overview.styles.scss';
 
@@ -47,9 +45,8 @@ function Overview({
 }: Props): JSX.Element {
 	const [isWrapWord, setIsWrapWord] = useState<boolean>(true);
 	const [isSearchVisible, setIsSearchVisible] = useState<boolean>(true);
-	const [isAttributesExpanded, setIsAttributesExpanded] = useState<boolean>(
-		true,
-	);
+	const [isAttributesExpanded, setIsAttributesExpanded] =
+		useState<boolean>(true);
 	const [fieldSearchInput, setFieldSearchInput] = useState<string>('');
 
 	const isDarkMode = useIsDarkMode();
@@ -57,15 +54,14 @@ function Overview({
 	const options: EditorProps['options'] = {
 		automaticLayout: true,
 		readOnly: true,
-		height: '40vh',
 		wordWrap: isWrapWord ? 'on' : 'off',
 		minimap: {
 			enabled: false,
 		},
-		fontWeight: 400,
+		fontWeight: '400',
 		fontFamily: 'Geist Mono',
 		fontSize: 13,
-		lineHeight: '18px',
+		lineHeight: 18,
 		colorDecorators: true,
 		scrollBeyondLastLine: false,
 		scrollbar: {
@@ -111,16 +107,16 @@ function Overview({
 					{
 						key: '1',
 						label: (
-							<Tag bordered={false}>
+							<Badge color="vanilla">
 								<Typography.Text style={{ color: Color.BG_ROBIN_400 }}>
 									body
 								</Typography.Text>
-							</Tag>
+							</Badge>
 						),
 						children: (
 							<div className="logs-body-content">
 								<MEditor
-									value={removeEscapeCharacters(logData.body)}
+									value={removeEscapeCharacters(getBodyDisplayString(logData.body))}
 									language="json"
 									options={options}
 									onChange={(): void => {}}
@@ -144,12 +140,12 @@ function Overview({
 								<div className="log-switch">
 									<div className="wrap-word-switch">
 										<Typography.Text>Wrap text</Typography.Text>
-										<Switch checked={isWrapWord} onChange={handleWrapWord} size="small" />
+										<Switch value={isWrapWord} onChange={handleWrapWord} />
 									</div>
 								</div>
 							</div>
 						),
-						// extra: <Tag className="tag">JSON</Tag>,
+						// extra: <Badge className="tag" color="vanilla">JSON</Badge>,
 						className: 'collapse-content',
 					},
 				]}
@@ -170,21 +166,25 @@ function Overview({
 								className="attribute-tab-header"
 								onClick={toogleAttributePanelOpenState}
 							>
-								<Tag bordered={false}>
+								<Badge color="vanilla">
 									<Typography.Text style={{ color: Color.BG_ROBIN_400 }}>
 										Attributes
 									</Typography.Text>
-								</Tag>
+								</Badge>
 
 								{isAttributesExpanded && (
 									<Button
+										variant="link"
+										color="none"
 										className="action-btn"
-										icon={<Search size={12} />}
+										prefix={<Search size={12} />}
 										onClick={(e): void => {
 											e.stopPropagation();
 											handleSearchVisible();
 										}}
-									/>
+									>
+										Search
+									</Button>
 								)}
 							</div>
 						),

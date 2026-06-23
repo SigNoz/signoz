@@ -1,9 +1,16 @@
-import { useCallback, useMemo } from 'react';
-import { Button } from '@signozhq/button';
+import React, { useCallback, useMemo } from 'react';
 import { KeyRound, X } from '@signozhq/icons';
+import { Button } from '@signozhq/ui/button';
 import { Skeleton, Table, Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table/interface';
 import type { ServiceaccounttypesGettableFactorAPIKeyDTO } from 'api/generated/services/sigNoz.schemas';
+import AuthZTooltip from 'components/AuthZTooltip/AuthZTooltip';
+import {
+	APIKeyCreatePermission,
+	buildAPIKeyDeletePermission,
+	buildSAAttachPermission,
+	buildSADetachPermission,
+} from 'hooks/useAuthZ/permissions/service-account.permissions';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
 import { parseAsBoolean, parseAsString, useQueryState } from 'nuqs';
@@ -17,12 +24,15 @@ interface KeysTabProps {
 	keys: ServiceaccounttypesGettableFactorAPIKeyDTO[];
 	isLoading: boolean;
 	isDisabled?: boolean;
+	canUpdate?: boolean;
+	accountId?: string;
 	currentPage: number;
 	pageSize: number;
 }
 
 interface BuildColumnsParams {
 	isDisabled: boolean;
+	accountId: string;
 	onRevokeClick: (keyId: string) => void;
 	handleformatLastObservedAt: (
 		lastObservedAt: Date | null | undefined,
@@ -42,6 +52,7 @@ function formatExpiry(expiresAt: number): JSX.Element {
 
 function buildColumns({
 	isDisabled,
+	accountId,
 	onRevokeClick,
 	handleformatLastObservedAt,
 }: BuildColumnsParams): ColumnsType<ServiceaccounttypesGettableFactorAPIKeyDTO> {
@@ -92,23 +103,41 @@ function buildColumns({
 			key: 'action',
 			width: 48,
 			align: 'right' as const,
-			render: (_, record): JSX.Element => (
-				<Tooltip title={isDisabled ? 'Service account disabled' : 'Revoke Key'}>
-					<Button
-						variant="ghost"
-						size="xs"
-						color="destructive"
-						disabled={isDisabled}
-						onClick={(e): void => {
-							e.stopPropagation();
-							onRevokeClick(record.id);
-						}}
-						className="keys-tab__revoke-btn"
+			onCell: (): {
+				onClick: (e: React.MouseEvent) => void;
+				style: React.CSSProperties;
+			} => ({
+				onClick: (e): void => e.stopPropagation(),
+				style: { cursor: 'default' },
+			}),
+			render: (_, record): JSX.Element => {
+				const tooltipTitle = isDisabled ? 'Service account disabled' : 'Revoke Key';
+				return (
+					<AuthZTooltip
+						checks={[
+							buildAPIKeyDeletePermission(record.id),
+							buildSADetachPermission(accountId),
+						]}
+						enabled={!isDisabled && !!accountId}
 					>
-						<X size={12} />
-					</Button>
-				</Tooltip>
-			),
+						<Tooltip title={tooltipTitle}>
+							<Button
+								variant="ghost"
+								size="sm"
+								color="destructive"
+								disabled={isDisabled}
+								onClick={(e): void => {
+									e.stopPropagation();
+									onRevokeClick(record.id);
+								}}
+								className="keys-tab__revoke-btn"
+							>
+								<X size={12} />
+							</Button>
+						</Tooltip>
+					</AuthZTooltip>
+				);
+			},
 		},
 	];
 }
@@ -117,6 +146,7 @@ function KeysTab({
 	keys,
 	isLoading,
 	isDisabled = false,
+	accountId = '',
 	currentPage,
 	pageSize,
 }: KeysTabProps): JSX.Element {
@@ -143,14 +173,20 @@ function KeysTab({
 
 	const onRevokeClick = useCallback(
 		(keyId: string): void => {
-			setRevokeKeyId(keyId);
+			void setRevokeKeyId(keyId);
 		},
 		[setRevokeKeyId],
 	);
 
 	const columns = useMemo(
-		() => buildColumns({ isDisabled, onRevokeClick, handleformatLastObservedAt }),
-		[isDisabled, onRevokeClick, handleformatLastObservedAt],
+		() =>
+			buildColumns({
+				isDisabled,
+				accountId,
+				onRevokeClick,
+				handleformatLastObservedAt,
+			}),
+		[isDisabled, accountId, onRevokeClick, handleformatLastObservedAt],
 	);
 
 	if (isLoading) {
@@ -165,17 +201,32 @@ function KeysTab({
 		return (
 			<div className="keys-tab__empty">
 				<KeyRound size={24} className="keys-tab__empty-icon" />
-				<p className="keys-tab__empty-text">No keys. Start by creating one.</p>
-				<Button
-					type="button"
-					className="keys-tab__learn-more"
-					onClick={async (): Promise<void> => {
-						await setIsAddKeyOpen(true);
-					}}
-					disabled={isDisabled}
+				<p className="keys-tab__empty-text">
+					No keys. Start by creating one.{' '}
+					<a
+						href="https://signoz.io/docs/manage/administrator-guide/iam/service-accounts/#step-3-generate-an-api-key"
+						target="_blank"
+						rel="noopener noreferrer"
+						className="keys-tab__learn-more"
+					>
+						Learn more
+					</a>
+				</p>
+				<AuthZTooltip
+					checks={[APIKeyCreatePermission, buildSAAttachPermission(accountId)]}
+					enabled={!isDisabled && !!accountId}
 				>
-					+ Add your first key
-				</Button>
+					<Button
+						variant="link"
+						color="primary"
+						onClick={async (): Promise<void> => {
+							await setIsAddKeyOpen(true);
+						}}
+						disabled={isDisabled}
+					>
+						+ Add your first key
+					</Button>
+				</AuthZTooltip>
 			</div>
 		);
 	}

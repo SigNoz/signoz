@@ -12,7 +12,7 @@ RUN apk update && \
     rm -rf /var/cache/apk/*
 
 COPY ./target/${OS}-${ARCH}/signoz /root/signoz
-COPY ./templates/email /root/templates
+COPY ./templates /root/templates
 COPY frontend/build/ /etc/signoz/web/
 
 RUN chmod 755 /root /root/signoz
