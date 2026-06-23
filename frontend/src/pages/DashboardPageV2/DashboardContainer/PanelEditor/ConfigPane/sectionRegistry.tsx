@@ -34,8 +34,8 @@ type PanelSpec = DashboardtypesPanelSpecDTO;
  */
 export interface SectionDescriptor<K extends SectionKind> {
 	Component: ComponentType<SectionEditorProps<K>>;
-	read: (spec: PanelSpec) => SectionSpecMap[K] | undefined;
-	write: (spec: PanelSpec, value: SectionSpecMap[K]) => PanelSpec;
+	get: (spec: PanelSpec) => SectionSpecMap[K] | undefined;
+	update: (spec: PanelSpec, value: SectionSpecMap[K]) => PanelSpec;
 }
 
 // The plugin spec is a discriminated union over panel kinds; reading/writing a shared
@@ -43,13 +43,11 @@ export interface SectionDescriptor<K extends SectionKind> {
 // helper concentrates that cast so the registry entries stay declarative.
 type PluginSpecSlice = Partial<Record<string, unknown>>;
 
-function readPluginSlice<T>(spec: PanelSpec, key: string): T | undefined {
-	return (spec.plugin?.spec as PluginSpecSlice | undefined)?.[key] as
-		| T
-		| undefined;
+function getPluginSlice<T>(spec: PanelSpec, key: string): T | undefined {
+	return (spec.plugin.spec as PluginSpecSlice)[key] as T | undefined;
 }
 
-function writePluginSlice(
+function updatePluginSlice(
 	spec: PanelSpec,
 	key: string,
 	value: unknown,
@@ -58,7 +56,7 @@ function writePluginSlice(
 		...spec,
 		plugin: {
 			...spec.plugin,
-			spec: { ...(spec.plugin?.spec as PluginSpecSlice), [key]: value },
+			spec: { ...(spec.plugin.spec as PluginSpecSlice), [key]: value },
 		},
 	} as PanelSpec;
 }
@@ -73,65 +71,66 @@ export const SECTION_REGISTRY: {
 } = {
 	formatting: {
 		Component: FormattingSection,
-		read: (spec): PanelFormattingSlice | undefined =>
-			readPluginSlice<PanelFormattingSlice>(spec, 'formatting'),
-		write: (spec, formatting): PanelSpec =>
-			writePluginSlice(spec, 'formatting', formatting),
+		get: (spec): PanelFormattingSlice | undefined =>
+			getPluginSlice<PanelFormattingSlice>(spec, 'formatting'),
+		update: (spec, formatting): PanelSpec =>
+			updatePluginSlice(spec, 'formatting', formatting),
 	},
 	axes: {
 		Component: AxesSection,
-		read: (spec): DashboardtypesAxesDTO | undefined =>
-			readPluginSlice<DashboardtypesAxesDTO>(spec, 'axes'),
-		write: (spec, axes): PanelSpec => writePluginSlice(spec, 'axes', axes),
+		get: (spec): DashboardtypesAxesDTO | undefined =>
+			getPluginSlice<DashboardtypesAxesDTO>(spec, 'axes'),
+		update: (spec, axes): PanelSpec => updatePluginSlice(spec, 'axes', axes),
 	},
 	legend: {
 		Component: LegendSection,
-		read: (spec): DashboardtypesLegendDTO | undefined =>
-			readPluginSlice<DashboardtypesLegendDTO>(spec, 'legend'),
-		write: (spec, legend): PanelSpec => writePluginSlice(spec, 'legend', legend),
+		get: (spec): DashboardtypesLegendDTO | undefined =>
+			getPluginSlice<DashboardtypesLegendDTO>(spec, 'legend'),
+		update: (spec, legend): PanelSpec =>
+			updatePluginSlice(spec, 'legend', legend),
 	},
 	chartAppearance: {
 		Component: ChartAppearanceSection,
-		read: (spec): DashboardtypesTimeSeriesChartAppearanceDTO | undefined =>
-			readPluginSlice<DashboardtypesTimeSeriesChartAppearanceDTO>(
+		get: (spec): DashboardtypesTimeSeriesChartAppearanceDTO | undefined =>
+			getPluginSlice<DashboardtypesTimeSeriesChartAppearanceDTO>(
 				spec,
 				'chartAppearance',
 			),
-		write: (spec, chartAppearance): PanelSpec =>
-			writePluginSlice(spec, 'chartAppearance', chartAppearance),
+		update: (spec, chartAppearance): PanelSpec =>
+			updatePluginSlice(spec, 'chartAppearance', chartAppearance),
 	},
 	visualization: {
 		Component: VisualizationSection,
-		read: (spec): DashboardtypesBarChartVisualizationDTO | undefined =>
-			readPluginSlice<DashboardtypesBarChartVisualizationDTO>(
+		get: (spec): DashboardtypesBarChartVisualizationDTO | undefined =>
+			getPluginSlice<DashboardtypesBarChartVisualizationDTO>(
 				spec,
 				'visualization',
 			),
-		write: (spec, visualization): PanelSpec =>
-			writePluginSlice(spec, 'visualization', visualization),
+		update: (spec, visualization): PanelSpec =>
+			updatePluginSlice(spec, 'visualization', visualization),
 	},
 	buckets: {
 		Component: BucketsSection,
-		read: (spec): DashboardtypesHistogramBucketsDTO | undefined =>
-			readPluginSlice<DashboardtypesHistogramBucketsDTO>(spec, 'histogramBuckets'),
-		write: (spec, buckets): PanelSpec =>
-			writePluginSlice(spec, 'histogramBuckets', buckets),
+		get: (spec): DashboardtypesHistogramBucketsDTO | undefined =>
+			getPluginSlice<DashboardtypesHistogramBucketsDTO>(spec, 'histogramBuckets'),
+		update: (spec, buckets): PanelSpec =>
+			updatePluginSlice(spec, 'histogramBuckets', buckets),
 	},
 	contextLinks: {
 		Component: ContextLinksSection,
 		// Panel-level slice (spec.links), not under the plugin spec — no cast needed.
-		read: (spec): DashboardLinkDTO[] | undefined => spec.links,
-		write: (spec, links): PanelSpec => ({ ...spec, links }),
+		get: (spec): DashboardLinkDTO[] | undefined => spec.links,
+		update: (spec, links): PanelSpec => ({ ...spec, links }),
 	},
 	// One editor for every threshold variant (label / comparison / table); the kind's
 	// `controls.variant` picks the row editor + element shape. All persist to the same
 	// plugin.spec.thresholds key.
 	thresholds: {
 		Component: ThresholdsSection,
-		read: (spec): AnyThreshold[] | undefined =>
-			readPluginSlice<AnyThreshold[]>(spec, 'thresholds'),
-		write: (spec, thresholds): PanelSpec =>
-			writePluginSlice(spec, 'thresholds', thresholds),
+		get: (spec): AnyThreshold[] | undefined =>
+			getPluginSlice<AnyThreshold[]>(spec, 'thresholds'),
+		update: (spec, thresholds): PanelSpec =>
+			updatePluginSlice(spec, 'thresholds', thresholds),
 	},
 };
 
@@ -140,7 +139,7 @@ export const SECTION_REGISTRY: {
  * `SectionConfig` are both unions keyed by the same `kind`, but TS can't prove the lookup
  * and the config refer to the same member — the classic correlated-union limitation. The
  * resolver below narrows once here (the single localized cast), so render sites compose
- * `read` → `Component` → `write` without any further casts.
+ * `get` → `Component` → `update` without any further casts.
  */
 export interface ErasedSectionDescriptor {
 	Component: ComponentType<{
@@ -159,8 +158,8 @@ export interface ErasedSectionDescriptor {
 		// suggestions scoped to it (List column picker).
 		signal?: unknown;
 	}>;
-	read: (spec: PanelSpec) => unknown;
-	write: (spec: PanelSpec, value: unknown) => PanelSpec;
+	get: (spec: PanelSpec) => unknown;
+	update: (spec: PanelSpec, value: unknown) => PanelSpec;
 }
 
 export function resolveSectionEditor(

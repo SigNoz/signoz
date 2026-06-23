@@ -3,6 +3,7 @@ import type {
 	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import {
+	type PanelFormattingSlice,
 	SECTION_METADATA,
 	type SectionConfig,
 } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/sections';
@@ -50,21 +51,20 @@ function SectionSlot({
 	}
 
 	const { title, icon: Icon } = SECTION_METADATA[config.kind];
-	const { Component, read, write } = editor;
+	const { Component, get, update } = editor;
 	// Atomic sections carry no `controls`; controlled ones do.
 	const controls = 'controls' in config ? config.controls : undefined;
 	// The panel's formatting unit, forwarded to editors that scope to it (thresholds
 	// restrict their unit picker to this unit's category, as in V1).
-	const yAxisUnit = (
-		spec.plugin?.spec as { formatting?: { unit?: string } } | undefined
-	)?.formatting?.unit;
+	const yAxisUnit = (spec.plugin.spec as { formatting?: PanelFormattingSlice })
+		.formatting?.unit;
 
 	return (
 		<SettingsSection title={title} icon={<Icon size={15} />}>
 			<Component
-				value={read(spec)}
+				value={get(spec)}
 				controls={controls}
-				onChange={(next): void => onChangeSpec(write(spec, next))}
+				onChange={(next): void => onChangeSpec(update(spec, next))}
 				legendSeries={legendSeries}
 				yAxisUnit={yAxisUnit}
 				tableColumns={tableColumns}

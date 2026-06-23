@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import type { PanelFormattingSlice } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/sections';
 import { prepareScalarTables } from 'pages/DashboardPageV2/DashboardContainer/queryV5/prepareScalarTables';
 import type { PanelQueryData } from 'pages/DashboardPageV2/DashboardContainer/queryV5/types';
 import { getScalarResults } from 'pages/DashboardPageV2/DashboardContainer/queryV5/v5ResponseData';
@@ -51,23 +52,20 @@ export function useTableColumns(
 	data: PanelQueryData,
 ): TableColumnOption[] {
 	return useMemo(() => {
-		if (panel?.spec?.plugin?.kind !== 'signoz/TablePanel') {
+		if (panel.spec.plugin.kind !== 'signoz/TablePanel') {
 			return [];
 		}
 		const table = prepareScalarTables({
-			results: getScalarResults(data?.response),
-			legendMap: data?.legendMap ?? {},
-			requestPayload: data?.requestPayload,
+			results: getScalarResults(data.response),
+			legendMap: data.legendMap,
+			requestPayload: data.requestPayload,
 		}).find((candidate) => candidate.columns.length > 0);
 		if (!table) {
 			return [];
 		}
 		const columnUnits =
-			(
-				panel?.spec?.plugin?.spec as
-					| { formatting?: { columnUnits?: Record<string, string> | null } }
-					| undefined
-			)?.formatting?.columnUnits ?? {};
+			(panel.spec.plugin.spec as { formatting?: PanelFormattingSlice }).formatting
+				?.columnUnits ?? {};
 		return table.columns
 			.filter((column) => column.isValueColumn)
 			.map((column) => {
@@ -81,8 +79,8 @@ export function useTableColumns(
 	}, [
 		panel.spec.plugin.kind,
 		panel.spec.plugin.spec,
-		data?.response,
+		data.response,
 		data.legendMap,
-		data?.requestPayload,
+		data.requestPayload,
 	]);
 }

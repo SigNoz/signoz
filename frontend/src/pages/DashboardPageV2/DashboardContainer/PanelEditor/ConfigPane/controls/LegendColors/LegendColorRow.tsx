@@ -1,4 +1,5 @@
 import { ColorPicker } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 
 import styles from './LegendColors.module.scss';
@@ -46,14 +47,15 @@ function LegendColorRow({
 				</button>
 			</ColorPicker>
 			{isOverridden && (
-				<button
-					type="button"
-					className={styles.reset}
+				<Button
+					size="sm"
+					color="secondary"
+					variant="ghost"
 					onClick={onReset}
-					data-testid={`legend-color-reset-${label}`}
+					testId={`legend-color-reset-${label}`}
 				>
 					Reset
-				</button>
+				</Button>
 			)}
 		</div>
 	);

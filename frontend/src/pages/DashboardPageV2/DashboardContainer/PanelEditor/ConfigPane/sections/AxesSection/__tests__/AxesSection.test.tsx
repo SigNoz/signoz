@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen, userEvent } from 'tests/test-utils';
 
 import AxesSection from '../AxesSection';
 
@@ -32,7 +32,8 @@ describe('AxesSection', () => {
 		expect(screen.getByTestId('panel-editor-v2-log-scale')).toBeInTheDocument();
 	});
 
-	it('writes a numeric soft min through onChange', () => {
+	it('writes a numeric soft min through onChange', async () => {
+		const user = userEvent.setup();
 		const onChange = jest.fn();
 		render(
 			<AxesSection
@@ -42,14 +43,13 @@ describe('AxesSection', () => {
 			/>,
 		);
 
-		fireEvent.change(screen.getByTestId('panel-editor-v2-soft-min'), {
-			target: { value: '5' },
-		});
+		await user.type(screen.getByTestId('panel-editor-v2-soft-min'), '5');
 
 		expect(onChange).toHaveBeenCalledWith({ softMin: 5 });
 	});
 
-	it('clears a soft bound to null when the field is emptied', () => {
+	it('clears a soft bound to null when the field is emptied', async () => {
+		const user = userEvent.setup();
 		const onChange = jest.fn();
 		render(
 			<AxesSection
@@ -59,14 +59,13 @@ describe('AxesSection', () => {
 			/>,
 		);
 
-		fireEvent.change(screen.getByTestId('panel-editor-v2-soft-max'), {
-			target: { value: '' },
-		});
+		await user.clear(screen.getByTestId('panel-editor-v2-soft-max'));
 
 		expect(onChange).toHaveBeenCalledWith({ softMax: null });
 	});
 
-	it('toggles the logarithmic scale through onChange', () => {
+	it('toggles the logarithmic scale through onChange', async () => {
+		const user = userEvent.setup();
 		const onChange = jest.fn();
 		render(
 			<AxesSection
@@ -76,7 +75,7 @@ describe('AxesSection', () => {
 			/>,
 		);
 
-		fireEvent.click(screen.getByText('Log'));
+		await user.click(screen.getByText('Log'));
 
 		expect(onChange).toHaveBeenCalledWith({ isLogScale: true });
 	});

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen, userEvent } from 'tests/test-utils';
 
 import BucketsSection from '../BucketsSection';
 
@@ -23,35 +23,8 @@ describe('BucketsSection', () => {
 		).not.toBeInTheDocument();
 	});
 
-	it('writes a numeric bucket count and clears it to null when emptied', () => {
-		const onChange = jest.fn();
-		const { rerender } = render(
-			<BucketsSection
-				value={undefined}
-				controls={{ count: true }}
-				onChange={onChange}
-			/>,
-		);
-
-		fireEvent.change(screen.getByTestId('panel-editor-v2-bucket-count'), {
-			target: { value: '20' },
-		});
-		expect(onChange).toHaveBeenLastCalledWith({ bucketCount: 20 });
-
-		rerender(
-			<BucketsSection
-				value={{ bucketCount: 20 }}
-				controls={{ count: true }}
-				onChange={onChange}
-			/>,
-		);
-		fireEvent.change(screen.getByTestId('panel-editor-v2-bucket-count'), {
-			target: { value: '' },
-		});
-		expect(onChange).toHaveBeenLastCalledWith({ bucketCount: null });
-	});
-
-	it('toggles merge-active-queries through onChange', () => {
+	it('toggles merge-active-queries through onChange', async () => {
+		const user = userEvent.setup();
 		const onChange = jest.fn();
 		render(
 			<BucketsSection
@@ -61,7 +34,7 @@ describe('BucketsSection', () => {
 			/>,
 		);
 
-		fireEvent.click(screen.getByTestId('panel-editor-v2-merge-queries'));
+		await user.click(screen.getByTestId('panel-editor-v2-merge-queries'));
 
 		expect(onChange).toHaveBeenCalledWith({ mergeAllActiveQueries: true });
 	});

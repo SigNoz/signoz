@@ -171,7 +171,7 @@ function PanelEditorContainer({
 					className={styles.right}
 				>
 					<ConfigPane
-						panelKind={draft.spec?.plugin?.kind}
+						panelKind={draft.spec.plugin.kind}
 						spec={spec}
 						onChangeSpec={setSpec}
 						legendSeries={legendSeries}

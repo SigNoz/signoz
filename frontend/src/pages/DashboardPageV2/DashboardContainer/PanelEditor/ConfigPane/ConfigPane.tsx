@@ -42,9 +42,6 @@ function ConfigPane({
 	const definition = getPanelDefinition(panelKind);
 	const sections = definition?.sections ?? [];
 
-	// Telemetry signal of the panel's first builder query — scopes field-key
-	// suggestions for editors that need them (the List column picker). The v5
-	// `signal` literal matches the TelemetrytypesSignalDTO values.
 	const signal = getBuilderQueries(spec.queries)[0]?.signal as
 		| TelemetrytypesSignalDTO
 		| undefined;
@@ -65,7 +62,7 @@ function ConfigPane({
 					<Typography.Text>Title</Typography.Text>
 					<Input
 						data-testid="panel-editor-v2-title"
-						value={spec.display?.name ?? ''}
+						value={spec.display.name}
 						placeholder="Panel title"
 						onChange={(e): void => setDisplayField('name', e.target.value)}
 					/>
@@ -75,7 +72,7 @@ function ConfigPane({
 					<Typography.Text>Description</Typography.Text>
 					<Input.TextArea
 						data-testid="panel-editor-v2-description"
-						value={spec.display?.description ?? ''}
+						value={spec.display.description ?? ''}
 						placeholder="Add a description"
 						rows={3}
 						onChange={(e): void => setDisplayField('description', e.target.value)}

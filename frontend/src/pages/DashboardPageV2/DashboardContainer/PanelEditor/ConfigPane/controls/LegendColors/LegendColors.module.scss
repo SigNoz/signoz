@@ -45,16 +45,6 @@
 	text-overflow: ellipsis;
 }
 
-.reset {
-	flex: none;
-	padding: 0;
-	border: none;
-	background: transparent;
-	color: var(--bg-robin-400);
-	font-size: 12px;
-	cursor: pointer;
-}
-
 .empty {
 	font-size: 12px;
 	color: var(--text-vanilla-400);

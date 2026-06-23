@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
 import {
 	DashboardtypesComparisonOperatorDTO,
 	type DashboardtypesComparisonThresholdDTO,
 	DashboardtypesThresholdFormatDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import type { AnyThreshold } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/sections';
+import { render, screen, userEvent } from 'tests/test-utils';
 
 import UnifiedThresholdsSection from '../ThresholdsSection';
 
@@ -97,19 +97,20 @@ describe('ComparisonThresholdsSection', () => {
 		expect(row).not.toHaveTextContent('currencyUSD');
 	});
 
-	it('edits a threshold value and commits it on Save', () => {
+	it('edits a threshold value and commits it on Save', async () => {
+		const user = userEvent.setup();
 		const onChange = jest.fn();
 		render(
 			<ComparisonThresholdsSection value={THRESHOLDS} onChange={onChange} />,
 		);
 
-		fireEvent.click(screen.getByTestId('comparison-threshold-edit-0'));
-		expect(screen.getByTestId('comparison-threshold-value-0')).toHaveValue(80);
+		await user.click(screen.getByTestId('comparison-threshold-edit-0'));
+		const valueInput = screen.getByTestId('comparison-threshold-value-0');
+		expect(valueInput).toHaveValue(80);
 
-		fireEvent.change(screen.getByTestId('comparison-threshold-value-0'), {
-			target: { value: '90' },
-		});
-		fireEvent.click(screen.getByTestId('comparison-threshold-save-0'));
+		await user.clear(valueInput);
+		await user.type(valueInput, '90');
+		await user.click(screen.getByTestId('comparison-threshold-save-0'));
 
 		expect(onChange).toHaveBeenCalledWith([
 			{
@@ -122,17 +123,17 @@ describe('ComparisonThresholdsSection', () => {
 		]);
 	});
 
-	it('does not commit edits when Discard is clicked', () => {
+	it('does not commit edits when Discard is clicked', async () => {
+		const user = userEvent.setup();
 		const onChange = jest.fn();
 		render(
 			<ComparisonThresholdsSection value={THRESHOLDS} onChange={onChange} />,
 		);
 
-		fireEvent.click(screen.getByTestId('comparison-threshold-edit-0'));
-		fireEvent.change(screen.getByTestId('comparison-threshold-value-0'), {
-			target: { value: '90' },
-		});
-		fireEvent.click(screen.getByTestId('comparison-threshold-discard-0'));
+		await user.click(screen.getByTestId('comparison-threshold-edit-0'));
+		await user.clear(screen.getByTestId('comparison-threshold-value-0'));
+		await user.type(screen.getByTestId('comparison-threshold-value-0'), '90');
+		await user.click(screen.getByTestId('comparison-threshold-discard-0'));
 
 		expect(onChange).not.toHaveBeenCalled();
 		// Back to view mode.
@@ -142,21 +143,23 @@ describe('ComparisonThresholdsSection', () => {
 		expect(screen.getByTestId('comparison-threshold-edit-0')).toBeInTheDocument();
 	});
 
-	it('removes a threshold from view mode', () => {
+	it('removes a threshold from view mode', async () => {
+		const user = userEvent.setup();
 		const onChange = jest.fn();
 		render(
 			<ComparisonThresholdsSection value={THRESHOLDS} onChange={onChange} />,
 		);
 
-		fireEvent.click(screen.getByTestId('comparison-threshold-remove-0'));
+		await user.click(screen.getByTestId('comparison-threshold-remove-0'));
 
 		expect(onChange).toHaveBeenCalledWith([]);
 	});
 
-	it('adds a threshold that opens in edit mode, and discards it away', () => {
+	it('adds a threshold that opens in edit mode, and discards it away', async () => {
+		const user = userEvent.setup();
 		render(<Harness />);
 
-		fireEvent.click(
+		await user.click(
 			screen.getByTestId('panel-editor-v2-add-comparison-threshold'),
 		);
 		// New row opens in edit mode.
@@ -164,7 +167,7 @@ describe('ComparisonThresholdsSection', () => {
 			screen.getByTestId('comparison-threshold-value-0'),
 		).toBeInTheDocument();
 
-		fireEvent.click(screen.getByTestId('comparison-threshold-discard-0'));
+		await user.click(screen.getByTestId('comparison-threshold-discard-0'));
 		// Discarding a never-saved row removes it entirely.
 		expect(
 			screen.queryByTestId('comparison-threshold-value-0'),
@@ -174,7 +177,8 @@ describe('ComparisonThresholdsSection', () => {
 		).not.toBeInTheDocument();
 	});
 
-	it('flags a threshold unit in a different category than the y-axis unit', () => {
+	it('flags a threshold unit in a different category than the y-axis unit', async () => {
+		const user = userEvent.setup();
 		render(
 			<ComparisonThresholdsSection
 				value={[
@@ -190,7 +194,7 @@ describe('ComparisonThresholdsSection', () => {
 			/>,
 		);
 
-		fireEvent.click(screen.getByTestId('comparison-threshold-edit-0'));
+		await user.click(screen.getByTestId('comparison-threshold-edit-0'));
 		expect(
 			screen.getByTestId('comparison-threshold-unit-invalid-0'),
 		).toBeInTheDocument();

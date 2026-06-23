@@ -1,13 +1,18 @@
 import type { ChangeEvent } from 'react';
 import { Typography } from '@signozhq/ui/typography';
 import { Input } from 'antd';
+import type { DashboardtypesHistogramBucketsDTO } from 'api/generated/services/sigNoz.schemas';
 import type { SectionEditorProps } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/sections';
 
 import ConfigSwitch from '../../controls/ConfigSwitch/ConfigSwitch';
 
 import styles from './BucketsSection.module.scss';
 
-type NumericBound = 'bucketCount' | 'bucketWidth';
+// The two numeric bounds of the histogram-buckets spec (derived from the BE DTO).
+type NumericBound = keyof Pick<
+	DashboardtypesHistogramBucketsDTO,
+	'bucketCount' | 'bucketWidth'
+>;
 
 /**
  * Edits the `histogramBuckets` slice of a Histogram panel spec: bucket count / width
