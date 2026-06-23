@@ -7,9 +7,9 @@ import { FeatureKeys } from 'constants/features';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { ORG_PREFERENCES } from 'constants/orgPreferences';
 import ROUTES from 'constants/routes';
-import { useFeatureGatedRouteRedirect } from 'hooks/useFeatureGatedRouteRedirect';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
+import { useIsAIObservabilityEnabled } from 'hooks/useIsAIObservabilityEnabled';
 import { isEmpty } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
 import { LicensePlatform, LicenseState } from 'types/api/licensesV3/getActive';
@@ -43,7 +43,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 
 	const isAdmin = user.role === USER_ROLES.ADMIN;
 	const isAIAssistantEnabled = useIsAIAssistantEnabled();
-	const featureGatedRedirect = useFeatureGatedRouteRedirect(pathname);
+	const isAIObservabilityEnabled = useIsAIObservabilityEnabled();
 
 	const mapRoutes = useMemo(
 		() =>
@@ -135,9 +135,12 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		return <Redirect to={ROUTES.HOME} />;
 	}
 
-	// Redirect away from feature-flag-gated routes whose flag is disabled
-	if (featureGatedRedirect) {
-		return <Redirect to={featureGatedRedirect} />;
+	if (
+		(pathname.startsWith(ROUTES.LLM_OBSERVABILITY_BASE) ||
+			pathname === ROUTES.LLM_OBSERVABILITY_BASE) &&
+		!isAIObservabilityEnabled
+	) {
+		return <Redirect to={ROUTES.HOME} />;
 	}
 
 	// Check for workspace access restriction (cloud only)

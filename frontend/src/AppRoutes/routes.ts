@@ -22,6 +22,7 @@ import {
 	IntegrationsDetailsPage,
 	LicensePage,
 	ListAllALertsPage,
+	LLMObservabilityPage,
 	LLMObservabilityModelPricingPage,
 	LiveLogs,
 	Login,
@@ -504,6 +505,13 @@ const routes: AppRoutes[] = [
 		exact: true,
 		component: AIAssistantPage,
 		key: 'AI_ASSISTANT',
+		isPrivate: true,
+	},
+	{
+		path: ROUTES.LLM_OBSERVABILITY_BASE,
+		exact: true,
+		component: LLMObservabilityPage,
+		key: 'LLM_OBSERVABILITY_BASE',
 		isPrivate: true,
 	},
 	{
