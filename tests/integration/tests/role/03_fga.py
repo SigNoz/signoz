@@ -63,7 +63,7 @@ def test_create_role_with_signoz_prefix_rejected(
     for name in ("signoz-custom", "signozcustom"):
         resp = requests.post(
             signoz.self.host_configs["8080"].get(ROLES_BASE),
-            json={"name": name},
+            json={"name": name, "transactionGroups": []},
             headers={"Authorization": f"Bearer {admin_token}"},
             timeout=5,
         )
@@ -175,7 +175,7 @@ def test_role_readonly_forbidden_operations(
     # Create role — forbidden.
     resp = requests.post(
         signoz.self.host_configs["8080"].get(ROLES_BASE),
-        json={"name": "role-fga-should-fail"},
+        json={"name": "role-fga-should-fail", "transactionGroups": []},
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
@@ -238,7 +238,7 @@ def test_role_grant_write_permissions(
     # Create role — now allowed.
     resp = requests.post(
         signoz.self.host_configs["8080"].get(ROLES_BASE),
-        json={"name": "role-fga-write-test"},
+        json={"name": "role-fga-write-test", "transactionGroups": []},
         headers={"Authorization": f"Bearer {custom_token}"},
         timeout=5,
     )

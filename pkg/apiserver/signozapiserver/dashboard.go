@@ -68,6 +68,23 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		return err
 	}
 
+	if err := router.Handle("/api/v2/dashboards/{id}/clone", handler.New(provider.authzMiddleware.EditAccess(provider.dashboardHandler.CloneV2), handler.OpenAPIDef{
+		ID:                  "CloneDashboardV2",
+		Tags:                []string{"dashboard"},
+		Summary:             "Clone dashboard (v2)",
+		Description:         "This endpoint clones an existing v2-shape dashboard. User and integration dashboards can be cloned; system dashboards are rejected. The clone keeps the source's display name, panels, and tags, but gets a freshly generated unique internal name and is always created as an unlocked user dashboard owned by the caller.",
+		Request:             nil,
+		RequestContentType:  "",
+		Response:            new(dashboardtypes.GettableDashboardV2),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusCreated,
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
+	})).Methods(http.MethodPost).GetError(); err != nil {
+		return err
+	}
+
 	if err := router.Handle("/api/v2/dashboards/{id}", handler.New(provider.authzMiddleware.ViewAccess(provider.dashboardHandler.GetV2), handler.OpenAPIDef{
 		ID:                  "GetDashboardV2",
 		Tags:                []string{"dashboard"},
@@ -208,6 +225,74 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		ErrorStatusCodes:    []int{http.StatusBadRequest},
 		Deprecated:          false,
 		SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
+	})).Methods(http.MethodDelete).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v2/dashboard_views", handler.New(provider.authzMiddleware.ViewAccess(provider.dashboardHandler.ListViews), handler.OpenAPIDef{
+		ID:                  "ListDashboardViews",
+		Tags:                []string{"dashboard"},
+		Summary:             "List dashboard saved views",
+		Description:         "Returns every saved view in the calling user's org. Saved views are shared org-wide.",
+		Request:             nil,
+		RequestContentType:  "",
+		Response:            new(dashboardtypes.ListableDashboardView),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{},
+		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
+	})).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v2/dashboard_views", handler.New(provider.authzMiddleware.EditAccess(provider.dashboardHandler.CreateView), handler.OpenAPIDef{
+		ID:                  "CreateDashboardView",
+		Tags:                []string{"dashboard"},
+		Summary:             "Create dashboard saved view",
+		Description:         "Persists the calling user's dashboard listing state (query, sort, order) as a named, reusable view shared across the org.",
+		Request:             new(dashboardtypes.PostableDashboardView),
+		RequestContentType:  "application/json",
+		Response:            new(dashboardtypes.DashboardView),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusCreated,
+		ErrorStatusCodes:    []int{http.StatusBadRequest},
+		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
+	})).Methods(http.MethodPost).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v2/dashboard_views/{id}", handler.New(provider.authzMiddleware.EditAccess(provider.dashboardHandler.UpdateView), handler.OpenAPIDef{
+		ID:                  "UpdateDashboardView",
+		Tags:                []string{"dashboard"},
+		Summary:             "Update dashboard saved view",
+		Description:         "Replaces a saved view's name and data. Saved views are shared org-wide.",
+		Request:             new(dashboardtypes.UpdatableDashboardView),
+		RequestContentType:  "application/json",
+		Response:            new(dashboardtypes.DashboardView),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
+	})).Methods(http.MethodPut).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v2/dashboard_views/{id}", handler.New(provider.authzMiddleware.EditAccess(provider.dashboardHandler.DeleteView), handler.OpenAPIDef{
+		ID:                  "DeleteDashboardView",
+		Tags:                []string{"dashboard"},
+		Summary:             "Delete dashboard saved view",
+		Description:         "Removes a saved view. Saved views are shared org-wide. Deleting a non-existent view returns 404.",
+		Request:             nil,
+		RequestContentType:  "",
+		Response:            nil,
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusNoContent,
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
 	})).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}
