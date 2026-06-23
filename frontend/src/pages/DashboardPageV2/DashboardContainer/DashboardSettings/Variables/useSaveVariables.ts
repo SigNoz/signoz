@@ -6,7 +6,7 @@ import APIError from 'types/api/error';
 
 import { useDashboardStore } from '../../store/useDashboardStore';
 import { formModelToDto } from './variableAdapters';
-import type { VariableFormModel } from './variableModel';
+import type { VariableFormModel } from './variableFormModel';
 import { buildVariablesPatch } from './variablePatchOps';
 
 interface UseSaveVariables {

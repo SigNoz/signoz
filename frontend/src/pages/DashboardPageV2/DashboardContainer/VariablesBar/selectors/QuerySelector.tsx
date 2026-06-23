@@ -6,8 +6,8 @@ import dashboardVariablesQuery from 'api/dashboard/variables/dashboardVariablesQ
 import type { AppState } from 'store/reducers';
 import type { GlobalReducer } from 'types/reducer/globalTime';
 
-import { sortValuesByOrder } from '../../DashboardSettings/Variables/variableModel';
-import type { VariableFormModel } from '../../DashboardSettings/Variables/variableModel';
+import { sortValuesByOrder } from '../../DashboardSettings/Variables/variableFormModel';
+import type { VariableFormModel } from '../../DashboardSettings/Variables/variableFormModel';
 import type {
 	VariableSelection,
 	VariableSelectionMap,
