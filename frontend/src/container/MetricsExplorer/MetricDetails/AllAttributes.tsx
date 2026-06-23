@@ -48,15 +48,11 @@ function AllAttributes({
 		isLoading: isLoadingAttributes,
 		isError: isErrorAttributes,
 		refetch: refetchAttributes,
-	} = useGetMetricAttributes(
-		{
-			metricName,
-		},
-		{
-			start: minTime ? Math.floor(minTime / 1000000) : undefined,
-			end: maxTime ? Math.floor(maxTime / 1000000) : undefined,
-		},
-	);
+	} = useGetMetricAttributes({
+		metricName,
+		start: minTime ? Math.floor(minTime / 1000000) : undefined,
+		end: maxTime ? Math.floor(maxTime / 1000000) : undefined,
+	});
 
 	const attributes = useMemo(
 		() => attributesData?.data?.attributes ?? [],

@@ -10150,9 +10150,14 @@ export type ListMetrics200 = {
 	status: string;
 };
 
-export type GetMetricAlertsPathParameters = {
+export type GetMetricAlertsParams = {
+	/**
+	 * @type string
+	 * @description undefined
+	 */
 	metricName: string;
 };
+
 export type GetMetricAlerts200 = {
 	data: MetricsexplorertypesMetricAlertsResponseDTO;
 	/**
@@ -10161,10 +10166,12 @@ export type GetMetricAlerts200 = {
 	status: string;
 };
 
-export type GetMetricAttributesPathParameters = {
-	metricName: string;
-};
 export type GetMetricAttributesParams = {
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	metricName: string;
 	/**
 	 * @type integer,null
 	 * @description undefined
@@ -10185,9 +10192,14 @@ export type GetMetricAttributes200 = {
 	status: string;
 };
 
-export type GetMetricDashboardsPathParameters = {
+export type GetMetricDashboardsParams = {
+	/**
+	 * @type string
+	 * @description undefined
+	 */
 	metricName: string;
 };
+
 export type GetMetricDashboards200 = {
 	data: MetricsexplorertypesMetricDashboardsResponseDTO;
 	/**
@@ -10196,9 +10208,14 @@ export type GetMetricDashboards200 = {
 	status: string;
 };
 
-export type GetMetricHighlightsPathParameters = {
+export type GetMetricHighlightsParams = {
+	/**
+	 * @type string
+	 * @description undefined
+	 */
 	metricName: string;
 };
+
 export type GetMetricHighlights200 = {
 	data: MetricsexplorertypesMetricHighlightsResponseDTO;
 	/**
@@ -10207,22 +10224,24 @@ export type GetMetricHighlights200 = {
 	status: string;
 };
 
-export type GetMetricMetadataPathParameters = {
-	metricName: string;
-};
-export type GetMetricMetadata200 = {
-	data: MetricsexplorertypesMetricMetadataDTO;
+export type InspectMetrics200 = {
+	data: MetricsexplorertypesInspectMetricsResponseDTO;
 	/**
 	 * @type string
 	 */
 	status: string;
 };
 
-export type UpdateMetricMetadataPathParameters = {
+export type GetMetricMetadataParams = {
+	/**
+	 * @type string
+	 * @description undefined
+	 */
 	metricName: string;
 };
-export type InspectMetrics200 = {
-	data: MetricsexplorertypesInspectMetricsResponseDTO;
+
+export type GetMetricMetadata200 = {
+	data: MetricsexplorertypesMetricMetadataDTO;
 	/**
 	 * @type string
 	 */
