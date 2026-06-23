@@ -24,6 +24,13 @@ func logQuery(limit int) qbtypes.QueryEnvelope {
 	}
 }
 
+func traceOperatorQueryWithOffset(limit, offset int) qbtypes.QueryEnvelope {
+	return qbtypes.QueryEnvelope{
+		Type: qbtypes.QueryTypeTraceOperator,
+		Spec: qbtypes.QueryBuilderTraceOperator{Limit: limit, Offset: offset, Expression: "A"},
+	}
+}
+
 func traceQuery(limit int) qbtypes.QueryEnvelope {
 	return qbtypes.QueryEnvelope{
 		Type: qbtypes.QueryTypeBuilder,
@@ -140,6 +147,19 @@ func TestValidateAndApplyDefaultExportLimits(t *testing.T) {
 			checkQueries: func(t *testing.T, q []qbtypes.QueryEnvelope) {
 				assert.Equal(t, DefaultExportRowCountLimit, q[0].GetLimit())
 			},
+		},
+		{
+			name:    "trace operator with valid offset preserved",
+			queries: makeRequest(traceOperatorQueryWithOffset(1000, 50000)).CompositeQuery.Queries,
+			checkQueries: func(t *testing.T, q []qbtypes.QueryEnvelope) {
+				assert.Equal(t, 1000, q[0].GetLimit())
+				assert.Equal(t, 50000, q[0].GetOffset())
+			},
+		},
+		{
+			name:          "trace operator with negative offset rejected",
+			queries:       makeRequest(traceOperatorQueryWithOffset(1000, -1)).CompositeQuery.Queries,
+			expectedError: true,
 		},
 	}
 
