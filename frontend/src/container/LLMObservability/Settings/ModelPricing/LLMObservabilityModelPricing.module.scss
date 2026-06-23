@@ -1,28 +1,28 @@
 .llmObservabilityModelPricing {
 	display: flex;
 	flex-direction: column;
-	gap: 16px;
-	padding: 24px 32px;
+	gap: var(--spacing-8);
+	padding: var(--spacing-12) var(--spacing-16);
 }
 
 .pageHeader {
 	display: flex;
 	align-items: flex-start;
 	justify-content: space-between;
-	gap: 16px;
+	gap: var(--spacing-8);
 }
 
 .pageHeaderTitle {
-	h1 {
+	.title {
 		margin: 0;
-		font-size: 22px;
-		font-weight: 600;
+		font-size: var(--font-size-xl);
+		font-weight: var(--font-weight-semibold);
 	}
 
-	p {
-		margin: 4px 0 0;
-		color: var(--bg-vanilla-400);
-		font-size: 13px;
+	.subtitle {
+		margin: var(--spacing-2) 0 0;
+		color: var(--text-vanilla-400);
+		font-size: var(--periscope-font-size-base);
 	}
 }
 
