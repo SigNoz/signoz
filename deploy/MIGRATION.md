@@ -1,13 +1,15 @@
-# Migrating from Docker Compose to Foundry
+# Migrating from the install script to Foundry
+
+> [!IMPORTANT]
+> The install script is now deprecated and will no longer receive updates.
 
 This guide walks you through migrating an existing SigNoz deployment running via
 Docker Compose to [Foundry](https://signoz.io/docs/install/docker/).
 
+> [!NOTE]
+> Setting up SigNoz for the first time? You don't need this guide — follow the [SigNoz installation docs](https://signoz.io/docs/install/) instead.
+
 ## Overview
-SigNoz has developed a CLI to make installation and deployment much easier. Foundry is the evolution of how SigNoz should be installed and managed going forward.
-
-The install script is now deprecated and will no longer receive updates.
-
 To stay up to date on new installation platforms and patterns, please refer to [Foundry](https://github.com/SigNoz/foundry).
 
 Two `foundryctl` commands are used throughout this guide:
@@ -66,27 +68,31 @@ spec:
     - target: "deployment/compose.yaml"
       operations:
         - op: replace
-          path: /volumes/dev-telemetrykeeper-0-data/name
+          path: /volumes/signoz-telemetrykeeper-0-data/name
           value: signoz-zookeeper-1
         - op: replace
-          path: /volumes/dev-telemetrystore-0-0-data/name
+          path: /volumes/signoz-telemetrystore-0-0-data/name
           value: signoz-clickhouse
         - op: replace
-          path: /volumes/dev-metastore-sqlite-0-data/name
+          path: /volumes/signoz-metastore-sqlite-0-data/name
           value: signoz-sqlite
         - op: add
-          path: /services/dev-telemetrykeeper-zookeeper-0/user
+          path: /services/signoz-telemetrykeeper-zookeeper-0/user
           value: root
 ```
 
 > [!NOTE]
 > The `user: root` patch on the ZooKeeper service is required so the container can read/write the data in your reused ZooKeeper volume, which was created with `root`-owned files by the legacy compose setup. Without it, ZooKeeper may fail to start with permission errors.
 
+If you had custom configurations for features like SMTP or additional ingestion processors/receivers, you will need to include those in your casting file. Via patches, configuration objects or environment variables based on your previous configuration - see ##References at the end of this guide.
+
 3. Validate the manifests in `pours/deployment`. Pay special attention to `compose.yaml` — it should mimic the legacy manifest and the configuration files needed for `clickhouse`. **Do note that these are now in YAML instead of XML.**
 
-   If you had custom settings for features like SMTP or ingestion processors/receivers, you will need to include those in your casting file.
 
-4. Execute a `docker compose down`. **Do not** include parameters such as `--volumes` (or `-v`), as it will wipe the volumes we need to maintain and reuse to avoid data loss. **NOTE: this will generate downtime so please plan accordingly**.
+4. Execute a `docker compose down`. **Do not** include parameters such as `--volumes` (or `-v`), as it will wipe the volumes we need to maintain and reuse to avoid data loss. 
+
+> [!NOTE]
+> This will generate downtime so please plan accordingly**.
 
 5. Validate the SigNoz containers are down with `docker ps -a`. Multiple containers cannot bind the same volume.
 
@@ -98,7 +104,9 @@ spec:
 ## Verifying the Migration
 - SigNoz containers will be up and running.
 - Log in to the SigNoz UI and verify that data is present.
+    - Signoz will run on localhost:8080
 - Validate that your data ingestion is receiving data.
+    - Ingesters will receive data on localhost:4317(grpc) and localhost:4318(http)
 - Review the logs from both ClickHouse and ZooKeeper; no errors should be present.
 
 ## Rolling Back
@@ -117,3 +125,7 @@ are untouched and still hold your data. To roll back:
 - [SigNoz Docker installation docs](https://signoz.io/docs/install/docker/)
 - [SigNoz documentation](https://signoz.io/docs)
 - [Foundry](https://github.com/SigNoz/foundry)
+- [Casting reference](https://github.com/SigNoz/foundry/blob/main/docs/reference/casting-file.md)
+- [Custom configurations](https://github.com/SigNoz/foundry/blob/main/docs/concepts/moldings.md#custom-config-files)
+- [Patches](https://github.com/SigNoz/foundry/blob/main/docs/concepts/patches.md)
+- [Docker Compose example](https://github.com/SigNoz/foundry/tree/main/docs/examples/docker/compose).

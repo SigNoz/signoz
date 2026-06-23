@@ -14,8 +14,6 @@ SigNoz now installs and runs through [Foundry](https://signoz.io/docs/install/do
 Please follow the latest installation instructions at [signoz.io/docs/install/docker](https://signoz.io/docs/install/docker/).
 Foundry has support for **different platforms and architectures**, please review the project documentation for more details.
 
-> You will need Docker installed first. If you don't have it set up, follow [this guide](https://docs.docker.com/engine/install/).
-
 ## Uninstall/Troubleshoot?
 
 Go to our official documentation site [signoz.io/docs](https://signoz.io/docs) for more.
