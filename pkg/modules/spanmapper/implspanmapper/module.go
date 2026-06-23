@@ -108,17 +108,16 @@ func (module *module) TestMappers(ctx context.Context, orgID valuer.UUID, spans 
 		return nil, errors.New(errors.TypeInvalidInput, spantypes.ErrCodeMappingInvalidInput, "'spans' must contain at least one span")
 	}
 
-	_, err := module.backfillMappers(ctx, orgID, groups)
+	resolved, err := module.backfillMappers(ctx, orgID, groups)
 	if err != nil {
 		return nil, err
 	}
 
-	// out, _, err := spantypes.SimulateSpanMappersProcessing(ctx, resolved, spans)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// return out, nil
-	return nil, nil
+	out, _, err := spantypes.SimulateSpanMappersProcessing(ctx, resolved, spans)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 // backfillMappers loads saved mappers for any group whose Mappers is nil.
