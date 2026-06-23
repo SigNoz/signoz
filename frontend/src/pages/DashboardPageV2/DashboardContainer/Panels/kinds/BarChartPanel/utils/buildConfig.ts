@@ -16,10 +16,7 @@ import type { BuilderQuery } from 'types/api/v5/queryRange';
 export interface BuildBarChartConfigArgs {
 	panelId: string;
 	spec: DashboardtypesBarChartPanelSpecDTO;
-	/**
-	 * Flat list of builder queries on this panel (see `getBuilderQueries`).
-	 * Powers per-query legend resolution; empty for non-builder panels.
-	 */
+	/** Flat list of builder queries (see `getBuilderQueries`); powers per-query legend resolution. */
 	builderQueries: BuilderQuery[];
 	/** Flattened V5 series (see `flattenTimeSeries`). */
 	series: PanelSeries[];
@@ -34,14 +31,7 @@ export interface BuildBarChartConfigArgs {
 	maxTimeScale?: number;
 }
 
-/**
- * Builds a fully-wired `UPlotConfigBuilder` for a Bar chart panel.
- *
- * Delegates the panel-agnostic scaffolding (scales, thresholds, axes,
- * drag-to-zoom, click plugin) to the shared `buildBaseConfig`, then layers
- * in the Bar-specific concerns: optional stacking via uPlot bands, plus
- * one bar series per result row.
- */
+/** Builds a `UPlotConfigBuilder` for a Bar chart panel: shared scaffolding, optional stacking, one bar series per result. */
 export function buildBarChartConfig({
 	panelId,
 	spec,
@@ -97,11 +87,8 @@ interface AddSeriesArgs {
 }
 
 /**
- * Adds one bar series per flattened V5 series, plus uPlot bands for stacking
- * when `spec.visualization.stackedBarChart` is set. Each series receives its
- * own per-query step interval so bar widths line up with the actual
- * sampling cadence reported by the backend.
- *
+ * Adds one bar series per flattened V5 series (plus stacking bands). Each gets its
+ * own per-query step interval so bar widths match the backend's sampling cadence.
  * Order must match `prepareAlignedData` — both iterate the same flat list.
  */
 function addSeries({
