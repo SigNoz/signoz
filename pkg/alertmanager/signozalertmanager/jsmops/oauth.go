@@ -134,7 +134,6 @@ func (h *Handler) OAuthSession(rw http.ResponseWriter, req *http.Request) {
 	scopes := strings.Join([]string{
 		"read:ops-alert:jira-service-management",
 		"write:ops-alert:jira-service-management",
-		"delete:ops-alert:jira-service-management",
 		"read:ops-config:jira-service-management",
 		"read:jira-work",
 		"read:me",
