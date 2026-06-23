@@ -12,6 +12,7 @@ var (
 	FeatureUseJSONBody            = featuretypes.MustNewName("use_json_body")
 	FeatureUseFineGrainedAuthz    = featuretypes.MustNewName("use_fine_grained_authz")
 	FeatureUseDashboardV2         = featuretypes.MustNewName("use_dashboard_v2")
+	FeatureEnableAIObservability  = featuretypes.MustNewName("enable_ai_observability")
 	FeatureEnableMetricsReduction = featuretypes.MustNewName("enable_metrics_reduction")
 )
 
@@ -86,6 +87,14 @@ func MustNewRegistry() featuretypes.Registry {
 			Kind:           featuretypes.KindBoolean,
 			Stage:          featuretypes.StageExperimental,
 			Description:    "Controls whether dashboard v2 is enabled",
+			DefaultVariant: featuretypes.MustNewName("disabled"),
+			Variants:       featuretypes.NewBooleanVariants(),
+		},
+		&featuretypes.Feature{
+			Name:           FeatureEnableAIObservability,
+			Kind:           featuretypes.KindBoolean,
+			Stage:          featuretypes.StageExperimental,
+			Description:    "Controls whether ai observability is enabled",
 			DefaultVariant: featuretypes.MustNewName("disabled"),
 			Variants:       featuretypes.NewBooleanVariants(),
 		},
