@@ -210,11 +210,24 @@ func TestFieldForAttributeJSON(t *testing.T) {
 		FieldContext:  telemetrytypes.FieldContextAttribute,
 		FieldDataType: telemetrytypes.FieldDataTypeBool,
 	}
-	materializedKey := telemetrytypes.TelemetryFieldKey{
-		Name:          "http.method",
+	// http.route has a real materialized ($$) physical column.
+	legacyMaterializedKey := telemetrytypes.TelemetryFieldKey{
+		Name:          "http.route",
 		FieldContext:  telemetrytypes.FieldContextAttribute,
 		FieldDataType: telemetrytypes.FieldDataTypeString,
 		Materialized:  true,
+	}
+	promotedStringKey := telemetrytypes.TelemetryFieldKey{
+		Name:          "http.method",
+		FieldContext:  telemetrytypes.FieldContextAttribute,
+		FieldDataType: telemetrytypes.FieldDataTypeString,
+		Promoted:      true,
+	}
+	promotedNumberKey := telemetrytypes.TelemetryFieldKey{
+		Name:          "http.status_code",
+		FieldContext:  telemetrytypes.FieldContextAttribute,
+		FieldDataType: telemetrytypes.FieldDataTypeNumber,
+		Promoted:      true,
 	}
 
 	testCases := []struct {
@@ -239,15 +252,25 @@ func TestFieldForAttributeJSON(t *testing.T) {
 			expectedResult: "multiIf(attributes.`request.success` IS NOT NULL, attributes.`request.success`::Bool, attributes_bool['request.success'])",
 		},
 		{
+			name:           "promoted string key tries attributes_promoted first",
+			key:            promotedStringKey,
+			expectedResult: "multiIf(attributes_promoted.`http.method` IS NOT NULL, attributes_promoted.`http.method`::String, attributes.`http.method` IS NOT NULL, attributes.`http.method`::String, attributes_string['http.method'])",
+		},
+		{
+			name:           "promoted number key tries attributes_promoted first",
+			key:            promotedNumberKey,
+			expectedResult: "multiIf(attributes_promoted.`http.status_code` IS NOT NULL, attributes_promoted.`http.status_code`::Float64, attributes.`http.status_code` IS NOT NULL, attributes.`http.status_code`::Float64, attributes_number['http.status_code'])",
+		},
+		{
 			name:           "filter intent stays on map column",
 			key:            stringKey,
 			filterIntent:   true,
 			expectedResult: "attributes_string['http.method']",
 		},
 		{
-			name:           "materialized key keeps legacy physical column",
-			key:            materializedKey,
-			expectedResult: "`attribute_string_http$$method`",
+			name:           "legacy materialized key keeps physical column",
+			key:            legacyMaterializedKey,
+			expectedResult: "`attribute_string_http$$route`",
 		},
 	}
 

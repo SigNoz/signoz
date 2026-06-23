@@ -2418,6 +2418,14 @@ func (k *telemetryMetaStore) updateColumnEvolutionMetadataForKeys(ctx context.Co
 			selector.FieldName = key.Name
 			if keyEvolutions, ok := evolutionsByUniqueKey[selector.QualifiedName()]; ok {
 				keysToUpdate[i].Evolutions = keyEvolutions
+
+				for _, evolution := range keyEvolutions {
+					if evolution.ColumnName == telemetrytraces.ColumnAttributesPromoted {
+						// field has been promoted into the dedicated JSON sub-column.
+						keysToUpdate[i].Promoted = true
+						break
+					}
+				}
 			}
 		}
 	}

@@ -40,6 +40,7 @@ type TelemetryFieldKey struct {
 	JSONPlan     JSONAccessPlan               `json:"-"`
 	Indexes      []TelemetryFieldKeySkipIndex `json:"-"`
 	Materialized bool                         `json:"-"` // refers to promoted in case of body.... fields
+	Promoted     bool                         `json:"-"`
 
 	Evolutions []*EvolutionEntry `json:"-"`
 }

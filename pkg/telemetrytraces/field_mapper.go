@@ -188,20 +188,34 @@ func chJSONTypeAndMapColumn(dt telemetrytypes.FieldDataType) (chType string, map
 }
 
 // buildAttributeJSONExpr builds a value expression for an attribute key that
-// prefers the JSON columns and falls back to the map column
+// prefers the JSON columns and falls back to the map column. When promoted is
+// true the attributes_promoted sub-column (dedicated, fastest) is tried first:
 //
-// TODO: once promoted-path metadata is wired, prepend an
-// attributes_promoted.`k` branch for promoted keys. The map fallback branch
-// also lets the existing Evolutions mechanism prune to a single column once
-// evolution entries are populated for these columns.
-func buildAttributeJSONExpr(key *telemetrytypes.TelemetryFieldKey) (string, bool) {
+//	promoted:     multiIf(attributes_promoted.`k` IS NOT NULL, attributes_promoted.`k`::T,
+//	                      attributes.`k` IS NOT NULL, attributes.`k`::T, attributes_<t>['k'])
+//	non-promoted: multiIf(attributes.`k` IS NOT NULL, attributes.`k`::T, attributes_<t>['k'])
+func buildAttributeJSONExpr(key *telemetrytypes.TelemetryFieldKey, promoted bool) (string, bool) {
 	chType, mapColumn, ok := chJSONTypeAndMapColumn(key.FieldDataType)
 	if !ok {
 		return "", false
 	}
+
+	branches := []string{}
+	if promoted {
+		promotedPath := fmt.Sprintf("%s.`%s`", ColumnAttributesPromoted, key.Name)
+		branches = append(branches,
+			fmt.Sprintf("%s IS NOT NULL", promotedPath),
+			fmt.Sprintf("%s::%s", promotedPath, chType),
+		)
+	}
 	jsonPath := fmt.Sprintf("%s.`%s`", ColumnAttributes, key.Name)
+	branches = append(branches,
+		fmt.Sprintf("%s IS NOT NULL", jsonPath),
+		fmt.Sprintf("%s::%s", jsonPath, chType),
+	)
+
 	mapAccess := fmt.Sprintf("%s['%s']", mapColumn, key.Name)
-	expr := fmt.Sprintf("multiIf(%s IS NOT NULL, %s::%s, %s)", jsonPath, jsonPath, chType, mapAccess)
+	expr := fmt.Sprintf("multiIf(%s, %s)", strings.Join(branches, ", "), mapAccess)
 	return expr, true
 }
 
