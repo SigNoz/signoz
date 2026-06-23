@@ -288,10 +288,8 @@ func (m *defaultFieldMapper) FieldFor(
 		return key.Name, nil
 	}
 
-	if key.FieldContext == telemetrytypes.FieldContextAttribute &&
-		!key.Materialized &&
-		!qbtypes.IsFilterIntent(ctx) {
-		if expr, ok := buildAttributeJSONExpr(key); ok {
+	if key.FieldContext == telemetrytypes.FieldContextAttribute && !key.Materialized && !qbtypes.IsFilterIntent(ctx) {
+		if expr, ok := buildAttributeJSONExpr(key, key.Promoted); ok {
 			return expr, nil
 		}
 	}
