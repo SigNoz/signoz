@@ -5,8 +5,6 @@ import type { ExtraBucket, PricingRule } from './types';
 
 dayjs.extend(relativeTime);
 
-// Relative, human-readable distance from now (e.g. "2 days ago"); "—" for
-// missing/invalid timestamps.
 const getRelativeTime = (
 	timestamp: string | number | Date | null | undefined,
 ): string => {
@@ -16,14 +14,11 @@ const getRelativeTime = (
 
 // ─── Display helpers ─────────────────────────────────────────────────────────
 
-// Pricing fields are typed as required numbers, but guard null/undefined
-// anyway — API responses don't always honour the spec, and toFixed() on a
-// missing value would crash the row instead of showing "—".
 export const formatPricePerMillion = (value: number | undefined): string => {
 	if (value === undefined || value === null) {
 		return '—';
 	}
-	// 2dp is enough for per-1M pricing; revisit precision when real sub-cent data lands.
+	// 2dp is enough for per-1M pricing. we can update this later
 	return `$${value.toFixed(2)}`;
 };
 
