@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import type { PanelFormattingSlice } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/sections';
+import { getColumnUnit } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/getColumnUnit';
 import { prepareScalarTables } from 'pages/DashboardPageV2/DashboardContainer/queryV5/prepareScalarTables';
 import type { PanelQueryData } from 'pages/DashboardPageV2/DashboardContainer/queryV5/types';
 import { getScalarResults } from 'pages/DashboardPageV2/DashboardContainer/queryV5/v5ResponseData';
@@ -21,24 +22,6 @@ export interface TableColumnOption {
 	 * (V1 parity), since Table panels have no single panel-wide unit.
 	 */
 	unit?: string;
-}
-
-// Resolve a column's unit by its key, falling back to the base query name (the legacy
-// `queryName.expression` → `queryName` syntax) — mirrors the renderer's getColumnUnit.
-function resolveColumnUnit(
-	key: string,
-	columnUnits: Record<string, string>,
-): string | undefined {
-	if (columnUnits[key]) {
-		return columnUnits[key];
-	}
-	if (key.includes('.')) {
-		const baseQuery = key.split('.')[0];
-		if (columnUnits[baseQuery]) {
-			return columnUnits[baseQuery];
-		}
-	}
-	return undefined;
 }
 
 /**
@@ -73,7 +56,7 @@ export function useTableColumns(
 				return {
 					key,
 					label: column.name,
-					unit: resolveColumnUnit(key, columnUnits),
+					unit: getColumnUnit(key, columnUnits),
 				};
 			});
 	}, [

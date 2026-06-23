@@ -13,11 +13,13 @@ import NoData from '../../components/NoData/NoData';
 
 import { computeTableLayout, filterTableRows } from '../../utils/recordTable';
 
-import { buildTableColumns, mapTableThresholds } from './tableColumns';
+import {
+	buildTableColumns,
+	mapTableThresholds,
+	type TableRowData,
+} from './tableColumns';
 
 import styles from './TablePanel.module.scss';
-
-type TableRowData = Record<string, unknown> & { key: number };
 
 function TablePanelRenderer({
 	panelId,
