@@ -7,7 +7,7 @@ import { useTableParams } from 'components/TanStackTableView';
 import { LIMIT_KEY, PAGE_KEY, PAGE_SIZE } from './constants';
 import styles from './LLMObservabilityModelPricing.module.scss';
 import ModelCostsTable from './ModelCostsTable';
-import type { PricingRule } from './types';
+import { type LlmpricingruletypesLLMPricingRuleDTO } from 'api/generated/services/sigNoz.schemas';
 
 function ModelCostsTab(): JSX.Element {
 	const { page, limit } = useTableParams(
@@ -24,7 +24,10 @@ function ModelCostsTab(): JSX.Element {
 
 	const { data, isLoading, isError } = useListLLMPricingRules(listParams);
 
-	const rules: PricingRule[] = useMemo(() => data?.data?.items || [], [data]);
+	const rules: LlmpricingruletypesLLMPricingRuleDTO[] = useMemo(
+		() => data?.data?.items || [],
+		[data],
+	);
 	const total = data?.data?.total ?? 0;
 
 	return (

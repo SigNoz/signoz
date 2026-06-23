@@ -33,7 +33,6 @@
 }
 
 .filtersBarCurrency {
-	// Fixed width — the trigger otherwise stretches to fill the bar.
 	width: 160px;
 }
 
@@ -45,7 +44,6 @@
 	font-size: var(--periscope-font-size-base);
 }
 
-// Space the table away from the filters bar above it.
 .modelCostsTable {
 	margin-top: var(--spacing-8);
 }
@@ -59,9 +57,6 @@
 	display: flex;
 	flex-direction: column;
 	gap: var(--spacing-1);
-	// Allow the flex children to shrink below their content width so the
-	// table's fixed-layout / nowrap cells truncate instead of overflowing
-	// into the Provider column.
 	min-width: 0;
 }
 
