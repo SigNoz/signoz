@@ -1,0 +1,10 @@
+// Shrink the icon Button from its 2rem default to the editor's 28px control row.
+.addBtn {
+	--button-height: 28px;
+	--button-width: 28px;
+	flex-shrink: 0;
+}
+
+.dropdown {
+	width: 260px;
+}

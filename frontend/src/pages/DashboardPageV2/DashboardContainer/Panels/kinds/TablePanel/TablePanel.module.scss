@@ -1,0 +1,20 @@
+@use '../../../../../../styles/scrollbar' as *;
+
+// Scroll the table within the panel rather than letting it grow the card.
+.container {
+	flex: 1;
+	min-width: 0;
+	min-height: 0;
+	overflow: auto;
+
+	// Match the chart legend scrollbar (shared mixin).
+	@include custom-scrollbar;
+
+	// antd renders its own scroll containers when `scroll={{ x, y }}` is set —
+	// the pinned-header body (vertical) and the content (horizontal). Match them
+	// to the legend scrollbar too.
+	:global(.ant-table-body),
+	:global(.ant-table-content) {
+		@include custom-scrollbar;
+	}
+}

@@ -3,7 +3,7 @@ import { parseAsJson, useQueryState } from 'nuqs';
 import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
 
 import { dtoToFormModel } from '../DashboardSettings/Variables/variableAdapters';
-import type { VariableFormModel } from '../DashboardSettings/Variables/variableModel';
+import type { VariableFormModel } from '../DashboardSettings/Variables/variableFormModel';
 import { selectVariableValues } from '../store/slices/variableSelectionSlice';
 import { useDashboardStore } from '../store/useDashboardStore';
 import type {
