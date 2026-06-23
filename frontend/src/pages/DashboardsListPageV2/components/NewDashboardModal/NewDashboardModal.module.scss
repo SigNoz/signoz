@@ -1,0 +1,195 @@
+// Fixed height so the modal doesn't resize when switching tabs.
+.panel {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	padding-top: 12px;
+	height: 460px;
+}
+
+.footer {
+	display: flex;
+	justify-content: flex-end;
+	gap: 8px;
+	margin-top: auto;
+}
+
+.form {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.field {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.label {
+	font-size: var(--font-size-sm);
+	color: var(--l2-foreground);
+}
+
+.required {
+	color: var(--danger-background);
+}
+
+.hint {
+	font-size: var(--font-size-xs);
+	color: var(--l3-foreground);
+}
+
+.loading {
+	flex: 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	color: var(--l3-foreground);
+	font-size: var(--font-size-sm);
+}
+
+.spinner {
+	animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+.cardName {
+	color: var(--l1-foreground);
+	font-size: var(--font-size-sm);
+	font-weight: var(--font-weight-medium);
+}
+
+.cardDesc {
+	color: var(--l2-foreground);
+	font-size: var(--font-size-xs);
+	line-height: 1.45;
+}
+
+.requestRow {
+	border-top: 1px solid var(--l2-border);
+	padding-top: 12px;
+
+	:global(.request-entity-container) {
+		gap: 10px 16px;
+		padding: 14px 16px;
+	}
+}
+
+.importHeader {
+	font-size: var(--font-size-sm);
+	color: var(--l2-foreground);
+}
+
+.editorWrap {
+	position: relative;
+}
+
+.expandBtn {
+	position: absolute;
+	top: 6px;
+	right: 6px;
+	z-index: 2;
+}
+
+.editor {
+	border: 1px solid var(--l2-border);
+	border-radius: 6px;
+	overflow: hidden;
+}
+
+.editorExpanded {
+	margin-top: 8px;
+}
+
+.templatesLayout {
+	display: flex;
+	gap: 12px;
+	flex: 1;
+	min-height: 0;
+}
+
+.templatesList {
+	flex: none;
+	width: 200px;
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	overflow-y: auto;
+	padding-right: 4px;
+}
+
+.templateItem {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	padding: 8px 10px;
+	border: 1px solid transparent;
+	border-radius: 6px;
+	background: transparent;
+	text-align: left;
+	cursor: pointer;
+	transition:
+		background 0.12s,
+		border-color 0.12s;
+}
+
+.templateItem:hover {
+	background: var(--l2-background);
+}
+
+.templateItemActive {
+	background: var(--l2-background);
+	border-color: var(--primary-background);
+}
+
+.templateName {
+	color: var(--l1-foreground);
+	font-size: var(--font-size-sm);
+	font-weight: var(--font-weight-medium);
+}
+
+.templateCat {
+	color: var(--l3-foreground);
+	font-size: var(--font-size-xs);
+}
+
+.templatesPreview {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.previewHead {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 12px;
+}
+
+.jsonError {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.errorText {
+	color: var(--danger-background);
+	font-size: var(--font-size-sm);
+}
+
+.importFooter {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	margin-top: auto;
+}
