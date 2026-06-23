@@ -1,4 +1,4 @@
-/* AUTO GENERATED FILE - DO NOT EDIT - GENERATED FROM docs/config/web-settings.json */
+/* AUTO GENERATED FILE - DO NOT EDIT - GENERATED FROM frontend/src/schemas/generated/web-settings.json */
 
 export interface WebSettings {
 	appcues: Appcues;
