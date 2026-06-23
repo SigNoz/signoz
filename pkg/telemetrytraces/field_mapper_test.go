@@ -31,33 +31,33 @@ func TestGetFieldKeyName(t *testing.T) {
 			expectedError:  nil,
 		},
 		{
-			name: "Map column type - string attribute",
+			name: "Attribute - string attribute uses JSON with map fallback",
 			key: telemetrytypes.TelemetryFieldKey{
 				Name:          "user.id",
 				FieldContext:  telemetrytypes.FieldContextAttribute,
 				FieldDataType: telemetrytypes.FieldDataTypeString,
 			},
-			expectedResult: "attributes_string['user.id']",
+			expectedResult: "multiIf(attributes.`user.id` IS NOT NULL, attributes.`user.id`::String, attributes_string['user.id'])",
 			expectedError:  nil,
 		},
 		{
-			name: "Map column type - number attribute",
+			name: "Attribute - number attribute uses JSON with map fallback",
 			key: telemetrytypes.TelemetryFieldKey{
 				Name:          "request.size",
 				FieldContext:  telemetrytypes.FieldContextAttribute,
 				FieldDataType: telemetrytypes.FieldDataTypeNumber,
 			},
-			expectedResult: "attributes_number['request.size']",
+			expectedResult: "multiIf(attributes.`request.size` IS NOT NULL, attributes.`request.size`::Float64, attributes_number['request.size'])",
 			expectedError:  nil,
 		},
 		{
-			name: "Map column type - bool attribute",
+			name: "Attribute - bool attribute uses JSON with map fallback",
 			key: telemetrytypes.TelemetryFieldKey{
 				Name:          "request.success",
 				FieldContext:  telemetrytypes.FieldContextAttribute,
 				FieldDataType: telemetrytypes.FieldDataTypeBool,
 			},
-			expectedResult: "attributes_bool['request.success']",
+			expectedResult: "multiIf(attributes.`request.success` IS NOT NULL, attributes.`request.success`::Bool, attributes_bool['request.success'])",
 			expectedError:  nil,
 		},
 		{
@@ -185,6 +185,81 @@ func TestFieldForResourceWithEvolution(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			fm := NewFieldMapper()
 			result, err := fm.FieldFor(ctx, tc.tsStart, tc.tsEnd, &tc.key)
+			require.NoError(t, err)
+			assert.Equal(t, tc.expectedResult, result)
+		})
+	}
+}
+
+func TestFieldForAttributeJSON(t *testing.T) {
+	start := uint64(time.Date(2024, 6, 1, 0, 0, 0, 0, time.UTC).UnixNano())
+	end := uint64(time.Date(2024, 6, 5, 0, 0, 0, 0, time.UTC).UnixNano())
+
+	stringKey := telemetrytypes.TelemetryFieldKey{
+		Name:          "http.method",
+		FieldContext:  telemetrytypes.FieldContextAttribute,
+		FieldDataType: telemetrytypes.FieldDataTypeString,
+	}
+	numberKey := telemetrytypes.TelemetryFieldKey{
+		Name:          "http.status_code",
+		FieldContext:  telemetrytypes.FieldContextAttribute,
+		FieldDataType: telemetrytypes.FieldDataTypeNumber,
+	}
+	boolKey := telemetrytypes.TelemetryFieldKey{
+		Name:          "request.success",
+		FieldContext:  telemetrytypes.FieldContextAttribute,
+		FieldDataType: telemetrytypes.FieldDataTypeBool,
+	}
+	materializedKey := telemetrytypes.TelemetryFieldKey{
+		Name:          "http.method",
+		FieldContext:  telemetrytypes.FieldContextAttribute,
+		FieldDataType: telemetrytypes.FieldDataTypeString,
+		Materialized:  true,
+	}
+
+	testCases := []struct {
+		name           string
+		key            telemetrytypes.TelemetryFieldKey
+		filterIntent   bool
+		expectedResult string
+	}{
+		{
+			name:           "select/group by uses attributes JSON with map fallback - string",
+			key:            stringKey,
+			expectedResult: "multiIf(attributes.`http.method` IS NOT NULL, attributes.`http.method`::String, attributes_string['http.method'])",
+		},
+		{
+			name:           "select/group by uses attributes JSON with map fallback - number",
+			key:            numberKey,
+			expectedResult: "multiIf(attributes.`http.status_code` IS NOT NULL, attributes.`http.status_code`::Float64, attributes_number['http.status_code'])",
+		},
+		{
+			name:           "select/group by uses attributes JSON with map fallback - bool",
+			key:            boolKey,
+			expectedResult: "multiIf(attributes.`request.success` IS NOT NULL, attributes.`request.success`::Bool, attributes_bool['request.success'])",
+		},
+		{
+			name:           "filter intent stays on map column",
+			key:            stringKey,
+			filterIntent:   true,
+			expectedResult: "attributes_string['http.method']",
+		},
+		{
+			name:           "materialized key keeps legacy physical column",
+			key:            materializedKey,
+			expectedResult: "`attribute_string_http$$method`",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			fm := NewFieldMapper()
+			ctx := context.Background()
+			if tc.filterIntent {
+				ctx = qbtypes.WithFilterIntent(ctx)
+			}
+			key := tc.key
+			result, err := fm.FieldFor(ctx, start, end, &key)
 			require.NoError(t, err)
 			assert.Equal(t, tc.expectedResult, result)
 		})

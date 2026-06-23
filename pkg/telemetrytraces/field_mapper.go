@@ -46,6 +46,10 @@ var (
 			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
 			ValueType: schema.ColumnTypeBool,
 		}},
+
+		ColumnAttributes:         {Name: ColumnAttributes, Type: schema.JSONColumnType{}},
+		ColumnAttributesPromoted: {Name: ColumnAttributesPromoted, Type: schema.JSONColumnType{}},
+
 		"resources_string": {Name: "resources_string", Type: schema.MapColumnType{
 			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
 			ValueType: schema.ColumnTypeString,
@@ -167,6 +171,40 @@ func NewFieldMapper() *defaultFieldMapper {
 	return &defaultFieldMapper{}
 }
 
+// chJSONTypeAndMapColumn returns the ClickHouse dynamic type used to read an
+// attribute value out of a JSON column and the corresponding map column used as fallback
+func chJSONTypeAndMapColumn(dt telemetrytypes.FieldDataType) (chType string, mapColumn string, ok bool) {
+	switch dt {
+	case telemetrytypes.FieldDataTypeString:
+		return "String", "attributes_string", true
+	case telemetrytypes.FieldDataTypeInt64,
+		telemetrytypes.FieldDataTypeFloat64,
+		telemetrytypes.FieldDataTypeNumber:
+		return "Float64", "attributes_number", true
+	case telemetrytypes.FieldDataTypeBool:
+		return "Bool", "attributes_bool", true
+	}
+	return "", "", false
+}
+
+// buildAttributeJSONExpr builds a value expression for an attribute key that
+// prefers the JSON columns and falls back to the map column
+//
+// TODO: once promoted-path metadata is wired, prepend an
+// attributes_promoted.`k` branch for promoted keys. The map fallback branch
+// also lets the existing Evolutions mechanism prune to a single column once
+// evolution entries are populated for these columns.
+func buildAttributeJSONExpr(key *telemetrytypes.TelemetryFieldKey) (string, bool) {
+	chType, mapColumn, ok := chJSONTypeAndMapColumn(key.FieldDataType)
+	if !ok {
+		return "", false
+	}
+	jsonPath := fmt.Sprintf("%s.`%s`", ColumnAttributes, key.Name)
+	mapAccess := fmt.Sprintf("%s['%s']", mapColumn, key.Name)
+	expr := fmt.Sprintf("multiIf(%s IS NOT NULL, %s::%s, %s)", jsonPath, jsonPath, chType, mapAccess)
+	return expr, true
+}
+
 func (m *defaultFieldMapper) getColumn(
 	_ context.Context,
 	_, _ uint64,
@@ -248,6 +286,14 @@ func (m *defaultFieldMapper) FieldFor(
 		(strings.ToLower(key.Name) == SpanSearchScopeRoot || strings.ToLower(key.Name) == SpanSearchScopeEntryPoint) {
 		// Return the field name as-is, the condition builder will handle the SQL generation
 		return key.Name, nil
+	}
+
+	if key.FieldContext == telemetrytypes.FieldContextAttribute &&
+		!key.Materialized &&
+		!qbtypes.IsFilterIntent(ctx) {
+		if expr, ok := buildAttributeJSONExpr(key); ok {
+			return expr, nil
+		}
 	}
 
 	columns, err := m.getColumn(ctx, startNs, endNs, key)

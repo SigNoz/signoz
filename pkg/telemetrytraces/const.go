@@ -4,6 +4,11 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
+const (
+	ColumnAttributes         = "attributes"
+	ColumnAttributesPromoted = "attributes_promoted"
+)
+
 var (
 	IntrinsicFields = map[string]telemetrytypes.TelemetryFieldKey{
 		"trace_id": {

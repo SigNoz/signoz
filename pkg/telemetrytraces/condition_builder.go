@@ -41,6 +41,9 @@ func (c *conditionBuilder) conditionFor(
 		value = querybuilder.FormatValueForContains(value)
 	}
 
+	// For filters, field mapper keeps WHERE on the map columns instead of JSON column.
+	ctx = qbtypes.WithFilterIntent(ctx)
+
 	// first, locate the raw column type (so we can choose the right EXISTS logic)
 	columns, err := c.fm.ColumnFor(ctx, startNs, endNs, key)
 	if err != nil {
