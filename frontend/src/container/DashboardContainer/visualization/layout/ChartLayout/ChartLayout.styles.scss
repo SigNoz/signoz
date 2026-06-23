@@ -7,15 +7,17 @@
 
 	&--legend-right {
 		flex-direction: row;
-
-		.chart-layout__legend-wrapper {
-			padding-left: 0 !important;
-		}
 	}
 
 	&__legend-wrapper {
+		// The inline height is the legend rectangle from calculateChartDimensions;
+		// border-box keeps the padding inside it so the wrapper doesn't grow past
+		// that height and steal space from the chart. overflow:hidden clips to the
+		// rectangle so the virtualized legend scrolls within it.
+		box-sizing: border-box;
+		min-height: 0;
+		overflow: hidden;
 		padding-left: 12px;
 		padding-bottom: 12px;
-		overflow: auto;
 	}
 }

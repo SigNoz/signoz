@@ -11,6 +11,7 @@ import {
 	ChannelsNew,
 	CreateNewAlerts,
 	DashboardPage,
+	DashboardPanelEditorPage,
 	DashboardsListPage,
 	DashboardWidget,
 	EditRulesPage,
@@ -195,6 +196,13 @@ const routes: AppRoutes[] = [
 		component: DashboardWidget,
 		isPrivate: true,
 		key: 'DASHBOARD_WIDGET',
+	},
+	{
+		path: ROUTES.DASHBOARD_PANEL_EDITOR,
+		exact: true,
+		component: DashboardPanelEditorPage,
+		isPrivate: true,
+		key: 'DASHBOARD_PANEL_EDITOR',
 	},
 	{
 		path: ROUTES.EDIT_ALERTS,
