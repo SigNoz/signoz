@@ -29,10 +29,14 @@ export function buildObjectString<
 	return `${resource}${ObjectSeparator}${objectId}` as AuthZObject<R>;
 }
 
-export function parsePermission(permission: BrandedPermission): {
+export type ParsedPermissionObject = {
 	relation: AuthZRelation;
 	object: string;
-} {
+};
+
+export function parsePermission(
+	permission: BrandedPermission,
+): ParsedPermissionObject {
 	const [relation, object] = permission.split(PermissionSeparator);
 	return { relation: relation as AuthZRelation, object };
 }
