@@ -34,8 +34,10 @@ Two `foundryctl` commands are used throughout this guide:
 
 2. Generate your `casting.yaml`. Based on internal testing, the following casting should generate the manifests that mimic the legacy docker compose setup (compare against your backed-up `docker-compose.yaml`). Once created, run `foundryctl forge -f casting.yaml`.
 
+Foundry has a [Docker Compose example](https://github.com/SigNoz/foundry/tree/main/docs/examples/docker/compose). Please use it as a reference.
+
 > [!WARNING]
-> If your deployment had more than 1 shard or replica, you will need to adjust your manifest volumes accordingly. Additionally, if you had specific container images, you need to include them in your casting.
+> If your deployment had more than 1 shard or replica, you will need to adjust your manifest volumes accordingly.
 
 > [!IMPORTANT]
 > The `replica` and `shard` macros below are placeholders. Replace them with the values from your existing ClickHouse configuration (check the `macros` section of your current ClickHouse config, e.g. `config.xml`/`metrika.xml`), otherwise the generated manifests will not match your existing data.
@@ -81,10 +83,13 @@ spec:
 > [!NOTE]
 > The `user: root` patch on the ZooKeeper service is required so the container can read/write the data in your reused ZooKeeper volume, which was created with `root`-owned files by the legacy compose setup. Without it, ZooKeeper may fail to start with permission errors.
 
-If you had custom configurations for features like SMTP or additional ingestion processors/receivers, you will need to include those in your casting file. Via patches, configuration objects or environment variables based on your previous configuration - see References at the end of this guide.
+If you had custom configurations for features like SMTP or additional ingestion processors/receivers, you will need to include those in your casting file via [patches](https://github.com/SigNoz/foundry/blob/main/docs/concepts/patches.md), [custom configuration](https://github.com/SigNoz/foundry/blob/main/docs/concepts/moldings.md#custom-config-files) or [environment variables](https://github.com/SigNoz/foundry/blob/main/docs/reference/casting-file.md#molding-spec) based on your previous configuration.
 
-3. Validate the manifests in `pours/deployment`. Pay special attention to `compose.yaml` — it should mimic the legacy manifest and the configuration files needed for `clickhouse`. **Do note that these are now in YAML instead of XML.**
-
+3. Review your manifests, we suggest executing the following checks on your manifests before proceeding:
+- [ ] Validate the container images match what your deployment had, Foundry uses `latest` on generation by default.
+- [ ] If your signoz version was older than latest, please check the [upgrade path](https://signoz.io/docs/operate/upgrade/) first.
+- [ ] Check the produced manifests in `pours/deployment` match your older configurations. Extra consideration and review needs to be done on `compose.yaml` as this will be the main entry point for your new deployment.
+- [ ] The configuration files for clickhouse are now in YAML so validate your custom settings are present.
 
 4. Execute a `docker compose down`. **Do not** include parameters such as `--volumes` (or `-v`), as it will wipe the volumes we need to maintain and reuse to avoid data loss. 
 
@@ -122,7 +127,3 @@ are untouched and still hold your data. To roll back:
 - [SigNoz Docker installation docs](https://signoz.io/docs/install/docker/)
 - [SigNoz documentation](https://signoz.io/docs)
 - [Foundry](https://github.com/SigNoz/foundry)
-- [Casting reference](https://github.com/SigNoz/foundry/blob/main/docs/reference/casting-file.md)
-- [Custom configurations](https://github.com/SigNoz/foundry/blob/main/docs/concepts/moldings.md#custom-config-files)
-- [Patches](https://github.com/SigNoz/foundry/blob/main/docs/concepts/patches.md)
-- [Docker Compose example](https://github.com/SigNoz/foundry/tree/main/docs/examples/docker/compose).
