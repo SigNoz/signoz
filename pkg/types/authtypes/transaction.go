@@ -160,29 +160,29 @@ func (group *TransactionGroup) selectorKey(selector coretypes.Selector) string {
 func newTransactionGroup(raw rawTransactionGroup, index int) (*TransactionGroup, error) {
 	verb, err := coretypes.NewVerb(raw.Relation)
 	if err != nil {
-		return nil, wrapValidationError(err, fmt.Sprintf("transactionGroups[%d].relation", index), "%s: %s")
+		return nil, wrapValidationError(err, fmt.Sprintf("transactionGroups[%d].relation", index))
 	}
 
 	resourceType, err := coretypes.NewType(raw.ObjectGroup.Resource.Type)
 	if err != nil {
-		return nil, wrapValidationError(err, fmt.Sprintf("transactionGroups[%d].objectGroup.resource.type", index), "%s: %s")
+		return nil, wrapValidationError(err, fmt.Sprintf("transactionGroups[%d].objectGroup.resource.type", index))
 	}
 
 	kind, err := coretypes.NewKind(raw.ObjectGroup.Resource.Kind)
 	if err != nil {
-		return nil, wrapValidationError(err, fmt.Sprintf("transactionGroups[%d].objectGroup.resource.kind", index), "%s: %s")
+		return nil, wrapValidationError(err, fmt.Sprintf("transactionGroups[%d].objectGroup.resource.kind", index))
 	}
 
 	resourceRef := coretypes.ResourceRef{Type: resourceType, Kind: kind}
 	if err := coretypes.ErrIfVerbNotValidForResource(verb, resourceRef); err != nil {
-		return nil, wrapValidationError(err, fmt.Sprintf("transactionGroups[%d]", index), "%s: %s")
+		return nil, wrapValidationError(err, fmt.Sprintf("transactionGroups[%d]", index))
 	}
 
 	selectors := make([]coretypes.Selector, 0, len(raw.ObjectGroup.Selectors))
 	for selectorIndex, rawSelector := range raw.ObjectGroup.Selectors {
 		selector, err := resourceType.Selector(rawSelector)
 		if err != nil {
-			return nil, wrapValidationError(err, fmt.Sprintf("transactionGroups[%d].objectGroup.selectors[%d]", index, selectorIndex), "%s: %s")
+			return nil, wrapValidationError(err, fmt.Sprintf("transactionGroups[%d].objectGroup.selectors[%d]", index, selectorIndex))
 		}
 		selectors = append(selectors, selector)
 	}
@@ -193,7 +193,7 @@ func newTransactionGroup(raw rawTransactionGroup, index int) (*TransactionGroup,
 	}, nil
 }
 
-func wrapValidationError(cause error, contextIdentifier string, errorFormat string) error {
+func wrapValidationError(cause error, contextIdentifier string) error {
 	if cause == nil {
 		return nil
 	}
@@ -201,7 +201,7 @@ func wrapValidationError(cause error, contextIdentifier string, errorFormat stri
 	_, _, innerMsg, _, _, additionals := errors.Unwrapb(cause)
 	inner := errors.AsJSON(cause)
 
-	newErr := errors.NewInvalidInputf(errors.CodeInvalidInput, errorFormat, contextIdentifier, innerMsg)
+	newErr := errors.NewInvalidInputf(errors.CodeInvalidInput, "%s: %s", contextIdentifier, innerMsg)
 
 	if len(additionals) > 0 {
 		newErr = newErr.WithAdditionals(additionals...)
