@@ -55,7 +55,7 @@ function AllAttributes({
 	});
 
 	const attributes = useMemo(
-		() => attributesData?.data?.attributes ?? [],
+		() => attributesData?.data.attributes ?? [],
 		[attributesData],
 	);
 
