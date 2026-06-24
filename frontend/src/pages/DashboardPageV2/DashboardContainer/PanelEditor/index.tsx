@@ -141,13 +141,10 @@ function PanelEditorContainer({
 		onChangeSpec: setSpec,
 	});
 
-	// When the List panel's datasource changes, swap its columns to the new
-	// source's defaults (V1 kept a per-datasource field list; V2 has one
-	// `selectFields`). Driven by the committed query's signal, so it lives in the
-	// editor container alongside the query sync — ConfigPane stays presentational.
-	useSwitchColumnsOnSignalChange({
-		enabled: isListPanel,
-		signal: listSignal,
+	// Seed a new List panel's default columns so the Columns control isn't empty.
+	useSeedNewListColumns({
+		enabled: isNew && isListPanel,
+		signal: defaultDataSource,
 		spec,
 		onChangeSpec: setSpec,
 	});

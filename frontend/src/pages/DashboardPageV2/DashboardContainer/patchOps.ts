@@ -4,6 +4,7 @@ import type {
 	DashboardtypesLayoutDTO,
 	DashboardtypesPanelDTO,
 	DashboardtypesPanelPluginDTO,
+	DashboardtypesQueryDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import {
 	DashboardtypesPanelKindDTO,
@@ -29,14 +30,14 @@ export function panelRef(panelId: string): string {
 }
 
 /**
- * Builds a fresh panel of the given kind to seed the editor for a new panel.
- * Queries start empty — the editor re-serializes a kind-valid query on save, so
- * no hand-built query envelope is needed. The caller resolves `pluginSpec` (the
- * kind's config defaults) so this builder stays free of the React panel registry.
+ * Builds a fresh panel of the given kind to seed the editor. The caller resolves
+ * `pluginSpec` (config defaults) and `queries` (a kind's seed query) so this stays
+ * free of the React panel registry.
  */
 export function createDefaultPanel(
 	pluginKind: PanelKind,
 	pluginSpec: DefaultPluginSpec = {},
+	queries: DashboardtypesQueryDTO[] = [],
 ): DashboardtypesPanelDTO {
 	return {
 		kind: DashboardtypesPanelKindDTO.Panel,
@@ -47,7 +48,7 @@ export function createDefaultPanel(
 				kind: pluginKind,
 				spec: pluginSpec,
 			} as DashboardtypesPanelPluginDTO,
-			queries: [],
+			queries,
 		},
 	};
 }
