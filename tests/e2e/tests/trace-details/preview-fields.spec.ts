@@ -1,0 +1,94 @@
+import { test, expect } from '../../fixtures/auth';
+import { newAdminContext } from '../../helpers/auth';
+import {
+	gotoTraceUntilLoaded,
+	hoverFlamegraphSpan,
+	loadLargeTrace,
+	resetTracePreferences,
+	seedTracesViaSeeder,
+	setPreviewFieldsPreference,
+} from '../../helpers/trace-details';
+
+// §6 — preview fields. A configured preview field appears as a row in the span
+// hover card across BOTH surfaces (flamegraph + waterfall), which share the
+// SpanTooltipContent component (testid span-hover-card-preview-<key>).
+//
+// Preview fields are a server-side, per-user preference, so each test seeds them
+// via the API before navigating; afterAll resets them so the state doesn't leak
+// into other specs run by the same admin user.
+const trace = loadLargeTrace();
+
+// The db landmark span carries db.system="redis"; seed db.system as a preview
+// field so its value renders in the hover card.
+const PREVIEW_FIELD = 'db.system';
+const PREVIEW_VALUE = 'redis';
+const PREVIEW_TESTID = `span-hover-card-preview-${PREVIEW_FIELD}`;
+
+test.describe('Trace details — preview fields in the hover card', () => {
+	// Run serially in one worker: preview fields are a per-user preference, so
+	// the afterAll reset must not race a sibling test still using them on another
+	// worker (which intermittently wiped the preview row mid-test).
+	test.describe.configure({ mode: 'serial' });
+
+	test.beforeAll(async ({ browser }) => {
+		const page = await browser.newPage();
+		await seedTracesViaSeeder(page, trace.spans);
+		await page.close();
+	});
+
+	test.afterAll(async ({ browser }) => {
+		// Reset prefs to defaults (afterAll can't use the authedPage fixture).
+		const ctx = await newAdminContext(browser);
+		const page = await ctx.newPage();
+		await resetTracePreferences(page);
+		await ctx.close();
+	});
+
+	test.beforeEach(async ({ authedPage: page }) => {
+		// Seed the preview field BEFORE navigating so the on-mount prefs fetch
+		// returns it and the hover card renders the row.
+		// db.system is a span ATTRIBUTE (fieldContext 'attribute', not 'span') —
+		// the flamegraph fetches fields selectively, so the wrong context means
+		// the bar's span wouldn't carry the value and the hover row wouldn't render.
+		await setPreviewFieldsPreference(page, [
+			{ name: PREVIEW_FIELD, fieldContext: 'attribute', fieldDataType: 'string' },
+		]);
+		await gotoTraceUntilLoaded(
+			page,
+			`/trace/${trace.traceId}`,
+			`cell-0-${trace.landmarks.root}`,
+		);
+	});
+
+	// FIXME: blocked by a frontend bug — the flamegraph fires its span fetch
+	// (POST /flamegraph) with selectFields = color-by only, before previewFields
+	// syncs into the store, and does NOT refetch when the preference lands. So the
+	// flamegraph span never carries the preview attribute (e.g. db.system) and its
+	// hover card can't render the row. Intermittent (passes only when prefs are
+	// cache-warm before the first fetch). Waterfall is unaffected (TC-02). Re-enable
+	// once the flamegraph gates/refetches on previewFields. See sprint task.
+	test.fixme('TC-01 flamegraph hover card shows the configured preview field', async ({
+		authedPage: page,
+	}) => {
+		const previewRow = page.getByTestId(PREVIEW_TESTID).first();
+		await expect(async () => {
+			await page.mouse.move(0, 0);
+			await hoverFlamegraphSpan(page, trace.landmarks.db);
+			await expect(previewRow).toBeVisible({ timeout: 1500 });
+		}).toPass({ timeout: 15_000 });
+
+		await expect(previewRow).toContainText(PREVIEW_VALUE);
+	});
+
+	test('TC-02 waterfall hover card shows the same preview field', async ({
+		authedPage: page,
+	}) => {
+		// Hovering the row fires onHoverEnter(span_id) → opens the SpanHoverCard.
+		await page.getByTestId(`cell-0-${trace.landmarks.db}`).hover();
+
+		// .first(): the waterfall hover card renders its content more than once.
+		const previewRow = page.getByTestId(PREVIEW_TESTID).first();
+		await expect(previewRow).toBeVisible();
+		await expect(previewRow).toContainText(PREVIEW_VALUE);
+	});
+});
