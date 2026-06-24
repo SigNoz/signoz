@@ -111,7 +111,7 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 	// We need to set if it is unspecified or adjust it if value is not within recommended range
 	intervalWarnings := q.adjustStepInterval(req.CompositeQuery.Queries, req.Start, req.End)
 
-	missingMetricQueries, metricWarnings, err := q.resolveMetricMetadata(ctx, req.CompositeQuery.Queries, req.Start, req.End)
+	missingMetricQueries, metricWarnings, err := q.resolveMetricMetadata(ctx, orgID, req.CompositeQuery.Queries, req.Start, req.End)
 	if err != nil {
 		return nil, err
 	}
@@ -320,7 +320,7 @@ func (q *querier) populateQBEvent(event *qbtypes.QBEvent, queries []qbtypes.Quer
 //     resolved: never-seen metrics and dormant metrics (seen but no data in
 //     the query window).
 //   - err: Internal when a metadata fetch fails.
-func (q *querier) resolveMetricMetadata(ctx context.Context, queries []qbtypes.QueryEnvelope, start, end uint64) (missingMetricQueries []string, metricWarnings []string, err error) {
+func (q *querier) resolveMetricMetadata(ctx context.Context, orgID valuer.UUID, queries []qbtypes.QueryEnvelope, start, end uint64) (missingMetricQueries []string, metricWarnings []string, err error) {
 	metricNames := make([]string, 0)
 	for idx := range queries {
 		if queries[idx].Type != qbtypes.QueryTypeBuilder {
@@ -341,7 +341,7 @@ func (q *querier) resolveMetricMetadata(ctx context.Context, queries []qbtypes.Q
 		return nil, nil, nil
 	}
 
-	metricTemporality, metricTypes, err := q.metadataStore.FetchTemporalityAndTypeMulti(ctx, start, end, metricNames...)
+	metricTemporality, metricTypes, reducedMetricsSet, err := q.metadataStore.FetchTemporalityAndTypeMulti(ctx, orgID, start, end, metricNames...)
 	if err != nil {
 		q.logger.WarnContext(ctx, "failed to fetch metric temporality", errors.Attr(err), slog.Any("metrics", metricNames))
 		return nil, nil, errors.NewInternalf(errors.CodeInternal, "failed to fetch metrics temporality")
@@ -377,6 +377,9 @@ func (q *querier) resolveMetricMetadata(ctx context.Context, queries []qbtypes.Q
 			// Type is resolved now; validate aggregation compatibility against it.
 			if err := spec.Aggregations[i].ValidateForType(); err != nil {
 				return nil, nil, err
+			}
+			if reducedMetricsSet[spec.Aggregations[i].MetricName] {
+				spec.Aggregations[i].Reduced = true
 			}
 			presentAggregations = append(presentAggregations, spec.Aggregations[i])
 		}
