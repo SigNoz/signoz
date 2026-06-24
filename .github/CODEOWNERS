@@ -109,6 +109,25 @@ go.mod @therealpandey
 /pkg/modules/role/ @therealpandey
 /pkg/types/coretypes/ @therealpandey @vikrantgupta25
 
+/frontend/src/hooks/useAuthZ/ @H4ad
+/frontend/src/components/GuardAuthZ/ @H4ad
+/frontend/src/components/AuthZTooltip/ @H4ad
+/frontend/src/components/createGuardedRoute/ @H4ad
+/frontend/src/container/RolesSettings/ @H4ad
+/frontend/src/components/RolesSelect/ @H4ad
+/frontend/src/pages/MembersSettings/ @H4ad
+/frontend/src/container/MembersSettings/ @H4ad
+/frontend/src/components/MembersTable/ @H4ad
+/frontend/src/components/EditMemberDrawer/ @H4ad
+/frontend/src/components/InviteMembersModal/ @H4ad
+/frontend/src/hooks/member/ @H4ad
+/frontend/src/pages/ServiceAccountsSettings/ @H4ad
+/frontend/src/container/ServiceAccountsSettings/ @H4ad
+/frontend/src/components/ServiceAccountsTable/ @H4ad
+/frontend/src/components/ServiceAccountDrawer/ @H4ad
+/frontend/src/components/CreateServiceAccountModal/ @H4ad
+/frontend/src/hooks/serviceAccount/ @H4ad
+
 # IdentN Owners
 
 /pkg/identn/ @therealpandey
@@ -189,6 +208,82 @@ go.mod @therealpandey
 /frontend/src/container/TriggeredAlerts/ @SigNoz/pulse-frontend
 /frontend/src/container/AnomalyAlertEvaluationView/ @SigNoz/pulse-frontend
 
+## Notification Channels
+/frontend/src/pages/ChannelsEdit/ @SigNoz/pulse-frontend
+/frontend/src/pages/ChannelsNew/ @SigNoz/pulse-frontend
+/frontend/src/container/AllAlertChannels/ @SigNoz/pulse-frontend
+/frontend/src/container/CreateAlertChannels/ @SigNoz/pulse-frontend
+/frontend/src/container/EditAlertChannels/ @SigNoz/pulse-frontend
+
 ## OpenAPI Schema - Generated
 /frontend/src/api/generated/services/ @therealpandey @vikrantgupta25 @srikanthccv
 /docs/api/openapi.yml @therealpandey @vikrantgupta25 @srikanthccv
+
+## Logs
+/frontend/src/pages/Logs/ @SigNoz/events-frontend
+/frontend/src/pages/LogsExplorer/ @SigNoz/events-frontend
+/frontend/src/pages/LogsModulePage/ @SigNoz/events-frontend
+/frontend/src/pages/LogsSettings/ @SigNoz/events-frontend
+/frontend/src/pages/LiveLogs/ @SigNoz/events-frontend
+/frontend/src/container/LogsExplorerChart/ @SigNoz/events-frontend
+/frontend/src/container/LogsExplorerContext/ @SigNoz/events-frontend
+/frontend/src/container/LogsExplorerList/ @SigNoz/events-frontend
+/frontend/src/container/LogsExplorerTable/ @SigNoz/events-frontend
+/frontend/src/container/LogsExplorerViews/ @SigNoz/events-frontend
+/frontend/src/container/LogsFilters/ @SigNoz/events-frontend
+/frontend/src/container/LogsSearchFilter/ @SigNoz/events-frontend
+/frontend/src/container/LogsTable/ @SigNoz/events-frontend
+/frontend/src/container/LogsAggregate/ @SigNoz/events-frontend
+/frontend/src/container/LogsContextList/ @SigNoz/events-frontend
+/frontend/src/container/LogsIndexToFields/ @SigNoz/events-frontend
+/frontend/src/container/LogsLoading/ @SigNoz/events-frontend
+/frontend/src/container/LogsPanelTable/ @SigNoz/events-frontend
+/frontend/src/container/LogControls/ @SigNoz/events-frontend
+/frontend/src/container/LogDetailedView/ @SigNoz/events-frontend
+/frontend/src/container/LogExplorerQuerySection/ @SigNoz/events-frontend
+/frontend/src/container/LogLiveTail/ @SigNoz/events-frontend
+/frontend/src/container/LiveLogs/ @SigNoz/events-frontend
+/frontend/src/container/EmptyLogsSearch/ @SigNoz/events-frontend
+/frontend/src/container/NoLogs/ @SigNoz/events-frontend
+/frontend/src/components/Logs/ @SigNoz/events-frontend
+/frontend/src/components/LogDetail/ @SigNoz/events-frontend
+/frontend/src/components/LogsFormatOptionsMenu/ @SigNoz/events-frontend
+/frontend/src/hooks/logs/ @SigNoz/events-frontend
+
+## Logs Pipelines
+/frontend/src/pages/Pipelines/ @SigNoz/events-frontend
+/frontend/src/container/PipelinePage/ @SigNoz/events-frontend
+
+## Traces / Trace Explorer
+/frontend/src/pages/Trace/ @SigNoz/events-frontend
+/frontend/src/pages/TracesExplorer/ @SigNoz/events-frontend
+/frontend/src/pages/TracesModulePage/ @SigNoz/events-frontend
+/frontend/src/container/Trace/ @SigNoz/events-frontend
+/frontend/src/container/TracesExplorer/ @SigNoz/events-frontend
+/frontend/src/container/TracesTableComponent/ @SigNoz/events-frontend
+
+## Trace Funnels
+/frontend/src/pages/TracesFunnels/ @SigNoz/events-frontend
+/frontend/src/pages/TracesFunnelDetails/ @SigNoz/events-frontend
+/frontend/src/hooks/TracesFunnels/ @SigNoz/events-frontend
+
+## Trace Details
+/frontend/src/pages/TraceDetailsV3/ @SigNoz/events-frontend
+/frontend/src/pages/TraceDetailOldRedirect/ @SigNoz/events-frontend
+/frontend/src/hooks/trace/ @SigNoz/events-frontend
+
+## Exceptions
+/frontend/src/pages/AllErrors/ @SigNoz/events-frontend
+/frontend/src/pages/ErrorDetails/ @SigNoz/events-frontend
+/frontend/src/container/AllError/ @SigNoz/events-frontend
+/frontend/src/container/ErrorDetails/ @SigNoz/events-frontend
+
+## External APIs
+/frontend/src/pages/ApiMonitoring/ @SigNoz/events-frontend
+/frontend/src/container/ApiMonitoring/ @SigNoz/events-frontend
+
+## Messaging Queues
+/frontend/src/pages/MessagingQueues/ @SigNoz/events-frontend
+/frontend/src/components/MessagingQueues/ @SigNoz/events-frontend
+/frontend/src/components/MessagingQueueHealthCheck/ @SigNoz/events-frontend
+/frontend/src/hooks/messagingQueue/ @SigNoz/events-frontend

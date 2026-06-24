@@ -12,8 +12,6 @@ import type { DashboardtypesLayoutDTO } from 'api/generated/services/sigNoz.sche
 
 import type { DashboardSection } from '../../utils';
 import { useAddPanelToSection } from '../Panel/hooks/useAddPanelToSection';
-import { useDeletePanel } from '../Panel/hooks/useDeletePanel';
-import { useMovePanelToSection } from '../Panel/hooks/useMovePanelToSection';
 import { useDashboardStore } from '../../store/useDashboardStore';
 import { useSectionDragReorder } from './hooks/useSectionDragReorder';
 import Section from './Section/Section';
@@ -38,8 +36,6 @@ function SectionList({ sections, layouts }: SectionListProps): JSX.Element {
 	} = useSectionDragReorder({ sections, layouts });
 
 	const onAddPanel = useAddPanelToSection({ sections });
-	const onMovePanel = useMovePanelToSection({ sections });
-	const onDeletePanel = useDeletePanel({ sections });
 
 	// Only titled sections participate in reordering; untitled (free-flow)
 	// blocks render in place without a drag handle.
@@ -75,8 +71,6 @@ function SectionList({ sections, layouts }: SectionListProps): JSX.Element {
 							section={section}
 							sections={sections}
 							onAddPanel={onAddPanel}
-							onMovePanel={onMovePanel}
-							onDeletePanel={onDeletePanel}
 						/>
 					) : (
 						<Section
@@ -84,8 +78,6 @@ function SectionList({ sections, layouts }: SectionListProps): JSX.Element {
 							section={section}
 							sections={sections}
 							onAddPanel={onAddPanel}
-							onMovePanel={onMovePanel}
-							onDeletePanel={onDeletePanel}
 						/>
 					),
 				)}

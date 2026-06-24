@@ -4,14 +4,14 @@ import { Typography } from '@signozhq/ui/typography';
 import dashboardVariablesQuery from 'api/dashboard/variables/dashboardVariablesQuery';
 import { DashboardtypesListVariableSpecSortDTO as VariableSortDTO } from 'api/generated/services/sigNoz.schemas';
 import Editor from 'components/Editor';
-import sortValues from 'lib/dashboardVariables/sortVariableValues';
+import type { PayloadVariables } from 'types/api/dashboard/variables/query';
 
-import { sortDirectionOf } from '../variableModel';
 import styles from './VariableForm.module.scss';
 
 interface QueryVariableFieldsProps {
 	queryValue: string;
-	sort: VariableSortDTO;
+	/** Sibling variable selections, so dependent `$vars` in the query resolve. */
+	variables: PayloadVariables;
 	onChange: (queryValue: string) => void;
 	onPreview: (values: (string | number)[]) => void;
 	onError: (message: string | null) => void;
@@ -20,7 +20,7 @@ interface QueryVariableFieldsProps {
 /** Query-variable body: SQL editor + "Test Run Query" that previews the values. */
 function QueryVariableFields({
 	queryValue,
-	sort,
+	variables,
 	onChange,
 	onPreview,
 	onError,
@@ -31,23 +31,21 @@ function QueryVariableFields({
 		setIsRunning(true);
 		onError(null);
 		try {
-			const res = await dashboardVariablesQuery({
-				query: queryValue,
-				variables: {},
-			});
+			const res = await dashboardVariablesQuery({ query: queryValue, variables });
 			if (res.statusCode === 200 && res.payload) {
-				onPreview(
-					sortValues(res.payload.variableValues ?? [], sortDirectionOf(sort)) as (
-						| string
-						| number
-					)[],
-				);
+				onPreview(res.payload.variableValues ?? []);
 			} else {
 				onError(res.error || 'Failed to run query');
 				onPreview([]);
 			}
 		} catch (err) {
-			onError((err as Error).message || 'Failed to run query');
+			// `dashboardVariablesQuery` throws `{ message, details: { error } }`.
+			const detail = (err as { details?: { error?: string } }).details?.error;
+			const message =
+				detail && detail.includes('Syntax error:')
+					? 'Please make sure query is valid and dependent variables are selected'
+					: detail || (err as Error).message || 'Failed to run query';
+			onError(message);
 			onPreview([]);
 		} finally {
 			setIsRunning(false);

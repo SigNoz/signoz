@@ -4,7 +4,9 @@ import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { Typography } from '@signozhq/ui/typography';
 import get from 'api/channels/get';
+import AlertBreadcrumb from 'components/AlertBreadcrumb';
 import Spinner from 'components/Spinner';
+import ROUTES from 'constants/routes';
 import {
 	ChannelType,
 	MsTeamsChannel,
@@ -22,9 +24,9 @@ import './ChannelsEdit.styles.scss';
 function ChannelsEdit(): JSX.Element {
 	const { t } = useTranslation();
 
-	// Extract channelId from URL pathname since useParams doesn't work in nested routing
+	// Extract channelId from URL pathname
 	const { pathname } = window.location;
-	const channelIdMatch = pathname.match(/\/settings\/channels\/edit\/([^/]+)/);
+	const channelIdMatch = pathname.match(/\/alerts\/channels\/edit\/([^/]+)/);
 	const channelId = channelIdMatch ? channelIdMatch[1] : undefined;
 
 	const { isFetching, isError, data, error } = useQuery<
@@ -135,17 +137,25 @@ function ChannelsEdit(): JSX.Element {
 	const target = prepChannelConfig();
 
 	return (
-		<div className="edit-alert-channels-container">
-			<EditAlertChannels
-				{...{
-					initialValue: {
-						...target.channel,
-						type: target.type,
-						name: value.name,
-					},
-				}}
+		<>
+			<AlertBreadcrumb
+				items={[
+					{ title: 'Channels', route: ROUTES.ALL_CHANNELS },
+					{ title: value.name || 'Edit Channel', isLast: true },
+				]}
 			/>
-		</div>
+			<div className="edit-alert-channels-container">
+				<EditAlertChannels
+					{...{
+						initialValue: {
+							...target.channel,
+							type: target.type,
+							name: value.name,
+						},
+					}}
+				/>
+			</div>
+		</>
 	);
 }
 

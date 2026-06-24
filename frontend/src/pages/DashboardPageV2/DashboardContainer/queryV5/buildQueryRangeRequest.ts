@@ -10,13 +10,8 @@ import {
 } from 'api/generated/services/sigNoz.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 
-/**
- * Narrow view over the builder-query / promql / clickhouse spec variants of
- * the generated query-envelope union. The generated envelope types erase
- * `spec` to `unknown` (Orval limitation on the discriminated union), so the
- * fields shared by every spec variant are read through this view with a
- * localized cast at the envelope boundary.
- */
+// Narrow view over the envelope spec variants. Orval erases envelope `spec` to `unknown`, so
+// shared fields are read through this view with a localized cast at the envelope boundary.
 interface QuerySpecView {
 	name?: string;
 	legend?: string;
@@ -26,11 +21,8 @@ interface QuerySpecView {
 }
 
 /**
- * Maps a V2 panel type to the V5 `requestType` the backend expects.
- *
- * HISTOGRAM and BAR panels bin/derive from raw time-series data client-side,
- * so the backend request type for them is `time_series` — the same effective
- * mapping the V1 path produced via `getGraphType` + `mapPanelTypeToRequestType`.
+ * Maps a V2 panel type to the V5 `requestType`. HISTOGRAM/BAR bin client-side from raw
+ * time-series, so their request type is `time_series` (V1 parity).
  */
 export function panelTypeToRequestType(
 	panelType: PANEL_TYPES,
@@ -54,19 +46,14 @@ export function panelTypeToRequestType(
 }
 
 /**
- * Unwraps the perses query envelope into the V5 `compositeQuery.queries`
- * list. A CompositeQuery plugin already carries the V5 envelope list and is
- * passed through verbatim; bare plugins are wrapped into a single envelope.
- *
- * Top-level Formula and TraceOperator are invalid — they reference builder
- * queries by name and can only travel inside a CompositeQuery. Defensive
- * read: warn and drop, don't crash dashboard load.
+ * Unwraps the perses query into the V5 `compositeQuery.queries` list: a CompositeQuery passes
+ * through verbatim, bare plugins wrap into one envelope. Top-level Formula/TraceOperator are
+ * invalid (they reference builder queries by name) — warn and drop rather than crash load.
  */
 export function toQueryEnvelopes(
 	queries: DashboardtypesQueryDTO[],
 ): Querybuildertypesv5QueryEnvelopeDTO[] {
-	// Backend invariant: panel.queries.length === 1. Only the first entry is
-	// consumed — extras (a malformed payload) are ignored.
+	// Backend invariant: panel.queries.length === 1. Only the first entry is consumed.
 	const plugin = queries[0]?.spec?.plugin;
 	if (!plugin?.spec) {
 		return [];
@@ -107,9 +94,8 @@ export function toQueryEnvelopes(
 }
 
 /**
- * Step interval (seconds) for BAR panels so the bar count stays readable
- * (~80 bars max). Duplicated from V1 `getBarStepIntervalPoints`
- * (container/GridCardLayout/utils.ts) per the V1/V2 split policy.
+ * Step interval (seconds) for BAR panels capping the bar count (~80 max). Duplicated from V1
+ * `getBarStepIntervalPoints` per the V1/V2 split policy.
  */
 export function getBarStepIntervalSeconds(
 	startMs: number,
@@ -134,8 +120,10 @@ export function getBarStepIntervalSeconds(
 	return roundedInterval * 60;
 }
 
-// BAR panels: builder queries without a user-set stepInterval get the
-// range-derived interval so bars align (V1 parity: `updateBarStepInterval`).
+/**
+ * BAR panels: builder queries without a user-set stepInterval get the range-derived one so bars
+ * align (V1 parity: `updateBarStepInterval`).
+ */
 function withBarStepInterval(
 	envelopes: Querybuildertypesv5QueryEnvelopeDTO[],
 	startMs: number,
@@ -154,6 +142,25 @@ function withBarStepInterval(
 	});
 }
 
+/**
+ * Stamps offset/limit onto builder-query envelopes (server-side paging for raw/list); other
+ * kinds pass through.
+ */
+function withPagination(
+	envelopes: Querybuildertypesv5QueryEnvelopeDTO[],
+	{ offset, limit }: { offset: number; limit: number },
+): Querybuildertypesv5QueryEnvelopeDTO[] {
+	return envelopes.map((envelope) => {
+		if (envelope.type !== Querybuildertypesv5QueryTypeDTO.builder_query) {
+			return envelope;
+		}
+		return {
+			...envelope,
+			spec: { ...(envelope.spec as Record<string, unknown>), offset, limit },
+		};
+	});
+}
+
 export interface BuildQueryRangeRequestArgs {
 	queries: DashboardtypesQueryDTO[];
 	panelType: PANEL_TYPES;
@@ -161,25 +168,30 @@ export interface BuildQueryRangeRequestArgs {
 	startMs: number;
 	/** Epoch milliseconds. */
 	endMs: number;
+	/** Backend-fill missing points with 0 (panel's `visualization.fillSpans`) → `formatOptions.fillGaps`. */
+	fillGaps?: boolean;
+	/** Server-side paging for raw/list panels, written onto the builder queries' `offset`/`limit`. */
+	pagination?: { offset: number; limit: number };
 }
 
 /**
- * Builds the generated V5 query-range request DTO directly from the panel's
- * perses queries — no V1 `Query` intermediary.
- *
- * Dashboard variables are intentionally absent (`variables: {}`) until V2
- * grows its own variable plumbing; this matches what usePanelQuery sent
- * through the V1 path.
+ * Builds the V5 query-range request DTO directly from the panel's perses queries (no V1 `Query`
+ * intermediary). Variables are absent (`variables: {}`) until V2 grows its own variable plumbing.
  */
 export function buildQueryRangeRequest({
 	queries,
 	panelType,
 	startMs,
 	endMs,
+	fillGaps = false,
+	pagination,
 }: BuildQueryRangeRequestArgs): Querybuildertypesv5QueryRangeRequestDTO {
 	let envelopes = toQueryEnvelopes(queries);
 	if (panelType === PANEL_TYPES.BAR) {
 		envelopes = withBarStepInterval(envelopes, startMs, endMs);
+	}
+	if (pagination) {
+		envelopes = withPagination(envelopes, pagination);
 	}
 
 	return {
@@ -190,17 +202,13 @@ export function buildQueryRangeRequest({
 		compositeQuery: { queries: envelopes },
 		formatOptions: {
 			formatTableResultForUI: panelType === PANEL_TYPES.TABLE,
-			fillGaps: false,
+			fillGaps,
 		},
 		variables: {},
 	};
 }
 
-/**
- * queryName → legend for every envelope that carries one. Replaces the
- * legendMap `prepareQueryRangePayloadV5` derived from the V1 query; consumed
- * by the legacy-response bridge for legend resolution.
- */
+/** queryName → legend for every envelope that carries one, for legend resolution. */
 export function extractLegendMap(
 	queries: DashboardtypesQueryDTO[],
 ): Record<string, string> {
@@ -215,10 +223,8 @@ export function extractLegendMap(
 }
 
 /**
- * Fetch gate. False when the panel has no queries, or when every metrics
- * builder query is missing a metric name (the V1 path short-circuited those
- * to an empty response via `validateMetricNameForMetricsDataSource` to avoid
- * a guaranteed 400; here the fetch is skipped outright).
+ * Fetch gate. False with no queries, or when every metrics builder query lacks a metric name —
+ * skipping a guaranteed 400 (V1 parity: `validateMetricNameForMetricsDataSource`).
  */
 export function hasRunnableQueries(queries: DashboardtypesQueryDTO[]): boolean {
 	const envelopes = toQueryEnvelopes(queries);
