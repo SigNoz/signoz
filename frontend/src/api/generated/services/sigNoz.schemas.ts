@@ -4660,7 +4660,7 @@ export interface DashboardtypesListVariableSpecDTO {
 	 */
 	customAllValue?: string;
 	defaultValue?: VariableDefaultValueDTO;
-	display?: DashboardtypesDisplayDTO;
+	display: DashboardtypesDisplayDTO;
 	/**
 	 * @type string
 	 * @minLength 1
@@ -4687,7 +4687,7 @@ export interface DashboardtypesTextVariableSpecDTO {
 	 * @type boolean
 	 */
 	constant?: boolean;
-	display?: DashboardtypesDisplayDTO;
+	display: DashboardtypesDisplayDTO;
 	/**
 	 * @type string
 	 * @minLength 1
@@ -4696,7 +4696,7 @@ export interface DashboardtypesTextVariableSpecDTO {
 	/**
 	 * @type string
 	 */
-	value?: string;
+	value: string;
 }
 
 export interface DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesTextVariableSpecDTO {

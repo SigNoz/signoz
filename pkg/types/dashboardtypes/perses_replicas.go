@@ -145,7 +145,7 @@ func (v VariableEnvelope[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
 // ListVariableSpec mirrors dashboard.ListVariableSpec (variable.ListSpec
 // fields + Name) but with a typed VariablePlugin replacing common.Plugin.
 type ListVariableSpec struct {
-	Display         *Display               `json:"display,omitempty"`
+	Display         Display                `json:"display" required:"true"`
 	DefaultValue    *variable.DefaultValue `json:"defaultValue,omitempty"`
 	AllowAllValue   bool                   `json:"allowAllValue"`
 	AllowMultiple   bool                   `json:"allowMultiple"`
@@ -227,10 +227,10 @@ func (s *ListVariableSpecSort) UnmarshalJSON(data []byte) error {
 // TextVariableSpec replicates dashboard.TextVariableSpec so name can carry the
 // required/non-empty schema tags perses leaves off.
 type TextVariableSpec struct {
-	Display  *Display `json:"display,omitempty"`
-	Value    string   `json:"value"`
-	Constant bool     `json:"constant,omitempty"`
-	Name     string   `json:"name" required:"true" minLength:"1"`
+	Display  Display `json:"display" required:"true"`
+	Value    string  `json:"value" required:"true"`
+	Constant bool    `json:"constant,omitempty"`
+	Name     string  `json:"name" required:"true" minLength:"1"`
 }
 
 // validate mirrors perses TextVariableSpec validation; run by decodeSpec on unmarshal.

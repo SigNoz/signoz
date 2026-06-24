@@ -2983,6 +2983,7 @@ components:
         sort:
           $ref: '#/components/schemas/DashboardtypesListVariableSpecSort'
       required:
+      - display
       - name
       type: object
     DashboardtypesListVariableSpecSort:
@@ -3570,6 +3571,8 @@ components:
         value:
           type: string
       required:
+      - display
+      - value
       - name
       type: object
     DashboardtypesThresholdFormat:
