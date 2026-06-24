@@ -709,6 +709,31 @@ def test_traces_list(
                 x[1].trace_id,
             ],  # type: Callable[[List[Traces]], List[Any]]
         ),
+        # Case 9: filter on a scope attribute. Only x[1] carries the scope
+        # attribute telemetry.sdk.language='cpp'. The filter must resolve
+        # against the scope JSON column's attributes and ignore the
+        # attribute/resource keys that look like scope fields (e.g.
+        # "scope.name", "scope.scope.scope") as well as the scope attribute
+        # keys that collide with the JSON sub-columns (name/version/attributes).
+        pytest.param(
+            {
+                "type": "builder_query",
+                "spec": {
+                    "name": "A",
+                    "signal": "traces",
+                    "disabled": False,
+                    "selectFields": [{"name": "timestamp"}],
+                    "filter": {"expression": "scope.telemetry.sdk.language = 'cpp'"},
+                    "limit": 1,
+                },
+            },
+            HTTPStatus.OK,
+            lambda x: [
+                x[1].span_id,
+                format_timestamp(x[1].timestamp),
+                x[1].trace_id,
+            ],  # type: Callable[[List[Traces]], List[Any]]
+        ),
     ],
 )
 def test_traces_list_with_corrupt_data(
@@ -753,6 +778,103 @@ def test_traces_list_with_corrupt_data(
             # Cannot compare values as they are randomly generated
             for key, value in zip(list(data.keys()), results(traces)):
                 assert data[key] == value
+
+
+@pytest.mark.parametrize(
+    "filter_expression,expected_index",
+    [
+        # Filter on a scope attribute resolves against the scope JSON column's attributes object.
+        pytest.param("scope.telemetry.sdk.language = 'python'", 1),
+        pytest.param("scope.telemetry.sdk.language = 'go'", 0),
+    ],
+)
+def test_traces_list_with_scope_filter(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_traces: Callable[[list[Traces]], None],
+    filter_expression: str,
+    expected_index: int,
+) -> None:
+    """
+    Setup:
+    Insert 2 spans from different instrumentation scopes.
+    Tests:
+    Filtering on a scope attribute returns only the matching span.
+    """
+    checkout_trace_id = TraceIdGenerator.trace_id()
+    checkout_span_id = TraceIdGenerator.span_id()
+    payment_trace_id = TraceIdGenerator.trace_id()
+    payment_span_id = TraceIdGenerator.span_id()
+
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+
+    traces = [
+        Traces(
+            timestamp=now - timedelta(seconds=4),
+            duration=timedelta(seconds=2),
+            trace_id=checkout_trace_id,
+            span_id=checkout_span_id,
+            parent_span_id="",
+            name="GET /checkout",
+            kind=TracesKind.SPAN_KIND_SERVER,
+            status_code=TracesStatusCode.STATUS_CODE_OK,
+            resources={"service.name": "checkout"},
+            attributes={"http.request.method": "GET"},
+            scope_name="io.signoz.checkout",
+            scope_version="2.3.1",
+            scope_attributes={"telemetry.sdk.language": "go"},
+        ),
+        Traces(
+            timestamp=now - timedelta(seconds=2),
+            duration=timedelta(seconds=1),
+            trace_id=payment_trace_id,
+            span_id=payment_span_id,
+            parent_span_id="",
+            name="POST /pay",
+            kind=TracesKind.SPAN_KIND_SERVER,
+            status_code=TracesStatusCode.STATUS_CODE_OK,
+            resources={"service.name": "payment"},
+            attributes={"http.request.method": "POST"},
+            scope_name="io.signoz.payment",
+            scope_version="4.5.6",
+            scope_attributes={"telemetry.sdk.language": "python"},
+        ),
+    ]
+    insert_traces(traces)
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    response = make_query_request(
+        signoz,
+        token,
+        start_ms=int((datetime.now(tz=UTC) - timedelta(minutes=5)).timestamp() * 1000),
+        end_ms=int(datetime.now(tz=UTC).timestamp() * 1000),
+        request_type="raw",
+        queries=[
+            {
+                "type": "builder_query",
+                "spec": {
+                    "name": "A",
+                    "signal": "traces",
+                    "disabled": False,
+                    "selectFields": [{"name": "timestamp"}],
+                    "filter": {"expression": filter_expression},
+                    "limit": 10,
+                },
+            }
+        ],
+    )
+
+    assert response.status_code == HTTPStatus.OK
+
+    rows = response.json()["data"]["data"]["results"][0]["rows"]
+    # Exactly one span matches the scope filter.
+    assert rows is not None
+    assert len(rows) == 1
+    expected = traces[expected_index]
+    assert rows[0]["data"]["span_id"] == expected.span_id
+    assert rows[0]["data"]["trace_id"] == expected.trace_id
 
 
 def _verify_events_links_full(rows: list[dict], traces: list[Traces]) -> None:

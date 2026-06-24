@@ -286,6 +286,10 @@ class Traces(ABC):
     db_operation: str
     has_error: bool
     is_remote: str
+    scope_name: str
+    scope_version: str
+    scope_string: dict[str, str]
+    scope_json: dict[str, Any]
 
     resource: list[TracesResource]
     tag_attributes: list[TracesTagAttributes]
@@ -311,6 +315,9 @@ class Traces(ABC):
         links: list[TracesLink] = [],
         trace_state: str = "",
         flags: np.uint32 = 0,
+        scope_name: str = "",
+        scope_version: str = "",
+        scope_attributes: dict[str, Any] = {},
         resource_write_mode: Literal["legacy_only", "dual_write"] = "dual_write",
     ) -> None:
         if timestamp is None:
@@ -391,6 +398,30 @@ class Traces(ABC):
 
         # Calculate resource fingerprint
         self.resource_fingerprint = LogsOrTracesFingerprint(self.resources_string).calculate()
+
+        # Process scope mirroring the InstrumentationScope on the OTLP span.
+        self.scope_name = scope_name
+        self.scope_version = scope_version
+        self.scope_string = {k: str(v) for k, v in scope_attributes.items()}
+        self.scope_json = {
+            "name": self.scope_name,
+            "version": self.scope_version,
+            "attributes": self.scope_string,
+        }
+        for k, v in self.scope_string.items():
+            self.tag_attributes.append(
+                TracesTagAttributes(
+                    timestamp=timestamp,
+                    tag_key=k,
+                    tag_type="scope",
+                    tag_data_type="string",
+                    string_value=v,
+                    number_value=None,
+                )
+            )
+            self.attribute_keys.append(
+                TracesResourceOrAttributeKeys(name=k, datatype="string", tag_type="scope")
+            )
 
         # Process attributes by type and populate custom fields
         self.attribute_string = {}
@@ -644,6 +675,7 @@ class Traces(ABC):
                 self.has_error,
                 self.is_remote,
                 self.resource_json,
+                self.scope_json,
             ],
             dtype=object,
         )
@@ -675,6 +707,9 @@ class Traces(ABC):
             attributes=data.get("attributes", {}),
             trace_state=data.get("trace_state", ""),
             flags=data.get("flags", 0),
+            scope_name=data.get("scope_name", ""),
+            scope_version=data.get("scope_version", ""),
+            scope_attributes=data.get("scope_attributes", {}),
         )
 
     @classmethod
@@ -814,6 +849,7 @@ def insert_traces_to_clickhouse(conn, traces: list[Traces]) -> None:
             "has_error",
             "is_remote",
             "resource",
+            "scope",
         ],
         data=[trace.np_arr() for trace in traces],
     )
