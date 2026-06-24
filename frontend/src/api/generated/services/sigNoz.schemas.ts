@@ -8568,6 +8568,56 @@ export interface SpantypesSpanMapperDTO {
 	updatedBy?: string;
 }
 
+export interface SpantypesSpanMappingPreviewGroupDTO {
+	group: SpantypesPostableSpanMapperGroupDTO;
+	/**
+	 * @type array,null
+	 */
+	mappers: SpantypesPostableSpanMapperDTO[] | null;
+}
+
+export type SpantypesSpanMappingPreviewRequestDTOSpanAnyOf = {
+	[key: string]: unknown;
+};
+
+/**
+ * @nullable
+ */
+export type SpantypesSpanMappingPreviewRequestDTOSpan =
+	SpantypesSpanMappingPreviewRequestDTOSpanAnyOf | null;
+
+export interface SpantypesSpanMappingPreviewRequestDTO {
+	/**
+	 * @type string,null
+	 */
+	groupId?: string | null;
+	/**
+	 * @type array,null
+	 */
+	groups?: SpantypesSpanMappingPreviewGroupDTO[] | null;
+	/**
+	 * @type object,null
+	 */
+	span?: SpantypesSpanMappingPreviewRequestDTOSpan;
+}
+
+export type SpantypesSpanMappingPreviewResponseDTOSpanAnyOf = {
+	[key: string]: unknown;
+};
+
+/**
+ * @nullable
+ */
+export type SpantypesSpanMappingPreviewResponseDTOSpan =
+	SpantypesSpanMappingPreviewResponseDTOSpanAnyOf | null;
+
+export interface SpantypesSpanMappingPreviewResponseDTO {
+	/**
+	 * @type object,null
+	 */
+	span?: SpantypesSpanMappingPreviewResponseDTOSpan;
+}
+
 export interface SpantypesUpdatableSpanMapperDTO {
 	config?: SpantypesSpanMapperConfigDTO;
 	/**
@@ -9887,6 +9937,14 @@ export type UpdateSpanMapperPathParameters = {
 	groupId: string;
 	mapperId: string;
 };
+export type PreviewSpanMapping200 = {
+	data: SpantypesSpanMappingPreviewResponseDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type GetStats200Data = { [key: string]: unknown };
 
 export type GetStats200 = {

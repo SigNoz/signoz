@@ -27,6 +27,7 @@ type Module interface {
 	CreateMapper(ctx context.Context, orgID, groupID valuer.UUID, mapper *spantypes.SpanMapper) error
 	UpdateMapper(ctx context.Context, orgID, groupID, id valuer.UUID, fieldContext spantypes.FieldContext, config *spantypes.SpanMapperConfig, enabled *bool, updatedBy string) error
 	DeleteMapper(ctx context.Context, orgID, groupID, id valuer.UUID) error
+	PreviewMapping(ctx context.Context, orgID valuer.UUID, req *spantypes.SpanMappingPreviewRequest) (*spantypes.SpanMappingPreviewResponse, error)
 }
 
 // Handler defines the HTTP handler interface for mapping group and mapper endpoints.
@@ -42,4 +43,5 @@ type Handler interface {
 	CreateMapper(rw http.ResponseWriter, r *http.Request)
 	UpdateMapper(rw http.ResponseWriter, r *http.Request)
 	DeleteMapper(rw http.ResponseWriter, r *http.Request)
+	PreviewMapping(rw http.ResponseWriter, r *http.Request)
 }

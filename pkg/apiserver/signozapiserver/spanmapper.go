@@ -51,6 +51,26 @@ func (provider *provider) addSpanMapperRoutes(router *mux.Router) error {
 		return err
 	}
 
+	if err := router.Handle("/api/v1/span_mapper_groups/preview", handler.New(
+		provider.authzMiddleware.ViewAccess(provider.spanMapperHandler.PreviewMapping),
+		handler.OpenAPIDef{
+			ID:                  "PreviewSpanMapping",
+			Tags:                []string{"spanmapper"},
+			Summary:             "Preview span attribute mapping against a sample span",
+			Description:         "Previews how attribute mappings would transform a sample span.",
+			Request:             new(spantypes.SpanMappingPreviewRequest),
+			RequestContentType:  "application/json",
+			Response:            new(spantypes.SpanMappingPreviewResponse),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusOK,
+			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+			Deprecated:          false,
+			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
+		},
+	)).Methods(http.MethodPost).GetError(); err != nil {
+		return err
+	}
+
 	if err := router.Handle("/api/v1/span_mapper_groups/{groupId}", handler.New(
 		provider.authzMiddleware.AdminAccess(provider.spanMapperHandler.UpdateGroup),
 		handler.OpenAPIDef{
