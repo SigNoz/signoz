@@ -5,8 +5,8 @@ import { Typography } from '@signozhq/ui/typography';
 import { Tooltip } from 'antd';
 import { commaValuesParser } from 'lib/dashboardVariables/customCommaValuesParser';
 
-import { sortValuesByOrder } from '../DashboardSettings/Variables/variableModel';
-import type { VariableFormModel } from '../DashboardSettings/Variables/variableModel';
+import { sortValuesByOrder } from '../DashboardSettings/Variables/variableFormModel';
+import type { VariableFormModel } from '../DashboardSettings/Variables/variableFormModel';
 import type { VariableSelection, VariableSelectionMap } from './selectionTypes';
 import DynamicSelector from './selectors/DynamicSelector';
 import QuerySelector from './selectors/QuerySelector';

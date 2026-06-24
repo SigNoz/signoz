@@ -1,4 +1,4 @@
-import type { VariableFormModel } from '../DashboardSettings/Variables/variableModel';
+import type { VariableFormModel } from '../DashboardSettings/Variables/variableFormModel';
 import type { VariableSelectionMap } from './selectionTypes';
 
 function formatQueryValue(val: string): string {

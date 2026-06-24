@@ -85,6 +85,13 @@ func (q *traceOperatorQuery) executeWithContext(ctx context.Context, query strin
 		return nil, err
 	}
 
+	// TODO: This should move to readAsRaw function in consume.go but for now we can keep it here since it's only relevant for traces
+	if raw, ok := payload.(*qbtypes.RawData); ok {
+		for _, rr := range raw.Rows {
+			mergeSpanAttributeColumns(rr.Data)
+		}
+	}
+
 	return &qbtypes.Result{
 		Type:  q.kind,
 		Value: payload,
