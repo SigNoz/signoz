@@ -651,7 +651,6 @@ components:
           $ref: '#/components/schemas/AuthtypesTransactionGroups'
       required:
       - name
-      - description
       type: object
     AuthtypesPostableRotateToken:
       properties:

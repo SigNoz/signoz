@@ -80,7 +80,7 @@ type RoleWithTransactionGroups struct {
 
 type PostableRole struct {
 	Name              string            `json:"name" required:"true"`
-	Description       string            `json:"description" required:"true"`
+	Description       string            `json:"description" required:"false"`
 	TransactionGroups TransactionGroups `json:"transactionGroups" required:"false" nullable:"false"`
 }
 

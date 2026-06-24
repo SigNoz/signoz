@@ -2279,7 +2279,7 @@ export interface AuthtypesPostableRoleDTO {
 	/**
 	 * @type string
 	 */
-	description: string;
+	description?: string;
 	/**
 	 * @type string
 	 */

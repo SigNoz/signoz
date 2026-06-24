@@ -12,7 +12,7 @@ import (
 	"github.com/swaggest/jsonschema-go"
 )
 
-const webSettingsSchemaPath = "frontend/src/schemas/generated/web-settings.json"
+const webSettingsSchemaPath = "frontend/src/schemas/generated/webSettings.json"
 
 const transactionGroupsSchemaPath = "frontend/src/schemas/generated/transactionGroups.schema.json"
 
