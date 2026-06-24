@@ -7,16 +7,13 @@ import { LegendPosition } from 'lib/uPlotV2/components/types';
 
 import { LEGEND_POSITION_MAP } from './enumMaps';
 
-/**
- * Resolvers that turn raw `spec` chart-appearance fields into the chart's
- * runtime values, falling back to the chart defaults for missing/unknown input.
- */
+// Resolvers turning raw `spec` chart-appearance fields into runtime chart
+// values, falling back to chart defaults for missing/unknown input.
 
 /**
  * `spec.formatting.decimalPrecision` is a stringified-digit enum on the wire
- * (`'0'`–`'4'` plus the sentinel `'full'`). The chart consumes a numeric
- * `PrecisionOption` (`0`–`4`) or the same `'full'` sentinel from its own
- * enum. Missing / unknown → `undefined` (chart uses its default).
+ * (`'0'`–`'4'` plus the `'full'` sentinel). Maps to a numeric `PrecisionOption`
+ * or the `'full'` sentinel; missing/unknown → `undefined` (chart default).
  */
 export function resolveDecimalPrecision(
 	precision: DashboardtypesPrecisionOptionDTO | undefined,
@@ -42,8 +39,8 @@ export function resolveDecimalPrecision(
 
 /**
  * `spec.chartAppearance.spanGaps.fillLessThan` is a stringified number on the
- * wire. Empty / missing → span all gaps (the chart default). Numeric → forward
- * the threshold so uPlot only bridges short runs of nulls.
+ * wire. Empty/missing → span all gaps (default); numeric → forward the threshold
+ * so uPlot only bridges short runs of nulls.
  */
 export function resolveSpanGaps(
 	fillLessThan: string | undefined,
@@ -55,10 +52,7 @@ export function resolveSpanGaps(
 	return Number.isFinite(parsed) ? parsed : true;
 }
 
-/**
- * Resolves the legend position for a panel. Missing / unknown values fall
- * back to `BOTTOM` to match the chart's default and the V1 behavior.
- */
+/** Legend position; missing/unknown falls back to `BOTTOM` (chart default, V1 parity). */
 export function resolveLegendPosition(
 	position: DashboardtypesLegendPositionDTO | undefined,
 ): LegendPosition {

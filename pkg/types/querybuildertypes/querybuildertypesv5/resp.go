@@ -236,6 +236,7 @@ type RawStream struct {
 	Error chan error
 }
 
+
 func roundToNonZeroDecimals(val float64, n int) float64 {
 	if val == 0 || math.IsNaN(val) || math.IsInf(val, 0) {
 		return val
