@@ -286,8 +286,6 @@ class Traces(ABC):
     db_operation: str
     has_error: bool
     is_remote: str
-    scope_name: str
-    scope_version: str
     scope_json: dict[str, Any]
 
     resource: list[TracesResource]
@@ -397,18 +395,18 @@ class Traces(ABC):
         self.resource_fingerprint = LogsOrTracesFingerprint(self.resources_string).calculate()
 
         # Process scope mirroring the InstrumentationScope on the OTLP span.
-        self.scope_name = scope.get("name", "")
-        self.scope_version = scope.get("version", "")
+        scope_name = scope.get("name", "")
+        scope_version = scope.get("version", "")
         scope_string = {k: str(v) for k, v in scope.get("attributes", {}).items()}
         self.scope_json = {
-            "name": self.scope_name,
-            "version": self.scope_version,
+            "name": scope_name,
+            "version": scope_version,
             "attributes": scope_string,
         }
         # Register scope.name, scope.version and each scope attribute as
         # scope-typed keys, exactly like InstrumentationScope.GetSpanAttributes
         # in the clickhousetracesexporter (empty values are skipped).
-        scope_keys = {"scope.name": self.scope_name, "scope.version": self.scope_version}
+        scope_keys = {"scope.name": scope_name, "scope.version": scope_version}
         scope_keys.update(scope_string)
         for k, v in scope_keys.items():
             if v == "":
