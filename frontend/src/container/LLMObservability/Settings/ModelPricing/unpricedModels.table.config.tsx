@@ -1,7 +1,7 @@
 import { Badge } from '@signozhq/ui/badge';
-import { SelectSimple, type SelectSimpleItem } from '@signozhq/ui/select';
 import type { TableColumnDef } from 'components/TanStackTableView';
 
+import MapToBillingModelSelect from './MapToBillingModelSelect';
 import styles from './LLMObservabilityModelPricing.module.scss';
 import type { PricingRule, UnpricedModel } from './types';
 import UnpricedModelActionCell from './UnpricedModelActionCell';
@@ -9,15 +9,14 @@ import { formatSpanCount } from './utils';
 
 export interface UnpricedColumnsConfig {
 	canManage: boolean;
-	ruleOptions: SelectSimpleItem[];
-	rulesById: Record<string, PricingRule>;
-	// modelName -> selected target rule id.
-	selections: Record<string, string>;
+	// modelName -> selected target rule. Carries the full rule (not just an id)
+	// because the per-row dropdown searches server-side and there's no global map.
+	selections: Record<string, PricingRule>;
 	// modelName whose action cell is showing the inline confirm panel, if any.
 	confirmingModel: string | null;
 	// modelName currently being committed, so its confirm button shows a spinner.
 	mappingModelName: string | null;
-	onSelectRule: (modelName: string, ruleId: string) => void;
+	onSelectRule: (modelName: string, rule: PricingRule) => void;
 	onStartConfirm: (modelName: string) => void;
 	onCancelConfirm: () => void;
 	onConfirm: (model: UnpricedModel) => void;
@@ -27,8 +26,6 @@ export interface UnpricedColumnsConfig {
 // unmapped-models endpoint returns the full set in one shot with no ordering knob.
 export function getUnpricedModelsColumns({
 	canManage,
-	ruleOptions,
-	rulesById,
 	selections,
 	confirmingModel,
 	mappingModelName,
@@ -83,14 +80,11 @@ export function getUnpricedModelsColumns({
 			width: { min: 280 },
 			enableMove: false,
 			cell: ({ row }): JSX.Element => (
-				<SelectSimple
-					className={styles.mapToSelect}
-					items={ruleOptions}
-					value={selections[row.modelName] ?? ''}
-					placeholder="Select a billing model"
-					disabled={!canManage || ruleOptions.length === 0}
-					onChange={(value): void => onSelectRule(row.modelName, value as string)}
-					testId={`map-to-select-${row.modelName}`}
+				<MapToBillingModelSelect
+					modelName={row.modelName}
+					selectedRule={selections[row.modelName]}
+					disabled={!canManage}
+					onSelect={(rule): void => onSelectRule(row.modelName, rule)}
 				/>
 			),
 		},
@@ -103,7 +97,7 @@ export function getUnpricedModelsColumns({
 			cell: ({ row }): JSX.Element | null => (
 				<UnpricedModelActionCell
 					model={row}
-					targetRule={rulesById[selections[row.modelName]]}
+					targetRule={selections[row.modelName]}
 					isConfirming={confirmingModel === row.modelName}
 					isMapping={mappingModelName === row.modelName}
 					canManage={canManage}
