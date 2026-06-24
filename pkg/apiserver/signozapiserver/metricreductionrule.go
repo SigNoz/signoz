@@ -35,7 +35,7 @@ func (provider *provider) addMetricReductionRuleRoutes(router *mux.Router) error
 			ID:                  "CreateMetricReductionRule",
 			Tags:                []string{"metrics"},
 			Summary:             "Create a metric reduction rule",
-			Description:         "Creates a volume-control rule for a metric and returns it with its id; fails if the metric already has a rule. Intended for Terraform/operators.",
+			Description:         "Creates a volume-control rule for a metric and returns it with its id; fails if the metric already has a rule.",
 			Request:             new(metricreductionruletypes.PostableReductionRule),
 			RequestContentType:  "application/json",
 			Response:            new(metricreductionruletypes.GettableReductionRule),
