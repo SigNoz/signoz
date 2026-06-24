@@ -1,0 +1,30 @@
+.resizableHeader {
+	position: relative;
+	user-select: none;
+	-webkit-user-select: none;
+}
+
+// Grip pinned to the column's trailing edge; the offset straddles the border so
+// the cursor lands on it without overlapping the adjacent column's content.
+.handle {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	inset-inline-end: -5px;
+	z-index: 1;
+	width: 10px;
+	cursor: col-resize;
+	touch-action: none;
+
+	&::after {
+		content: '';
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		width: 1px;
+		height: 1.6em;
+		background-color: var(--l3-background);
+		transition: background-color 0.2s;
+	}
+}

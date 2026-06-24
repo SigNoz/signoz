@@ -2281,7 +2281,7 @@ export interface AuthtypesPostableUserDTO {
 	/**
 	 * @type array
 	 */
-	userRoles: AuthtypesPostableUserRoleDTO[];
+	userRoles?: AuthtypesPostableUserRoleDTO[];
 }
 
 export interface AuthtypesRoleDTO {
@@ -9922,7 +9922,7 @@ export type ListUsersDeprecated200 = {
 	status: string;
 };
 
-export type DeleteUserPathParameters = {
+export type DeleteUserDeprecatedPathParameters = {
 	id: string;
 };
 export type GetUserDeprecatedPathParameters = {
@@ -10841,6 +10841,9 @@ export type CreateUser201 = {
 	status: string;
 };
 
+export type DeleteUserPathParameters = {
+	id: string;
+};
 export type GetUserPathParameters = {
 	id: string;
 };
