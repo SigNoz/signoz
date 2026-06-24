@@ -794,11 +794,19 @@ def test_traces_list_with_corrupt_data(
         # scope attribute literally named `name` (span 1's scope attribute
         # name='io.signoz.checkout').
         pytest.param("scope.name = 'io.signoz.checkout'", [0, 1]),
+        # `scope.name` also matches a span attribute literally named `scope.name`
+        # (attribute context) — span 2 carries attribute scope.name='attr-scope-name'.
+        pytest.param("scope.name = 'attr-scope-name'", [2]),
         # An unprefixed `name` resolves to the intrinsic span `name` column and a
         # `name` scope attribute, but NOT the scope.name field. Span 2's span
         # name and span 1's scope attribute `name` both equal 'io.signoz.checkout';
         # span 0's scope.name field equals it too but is NOT matched.
         pytest.param("name = 'io.signoz.checkout'", [1, 2]),
+        # A value that no resolvable key holds (scope.name/scope.version field,
+        # a `name`/`version` scope attribute, or a same-named attribute/resource)
+        # returns nothing.
+        pytest.param("scope.version = 'corrupt_data'", []),
+        pytest.param("scope.name = 'corrupt_data'", []),
     ],
 )
 def test_traces_list_with_scope_filter(
@@ -810,22 +818,15 @@ def test_traces_list_with_scope_filter(
     expected_indices: list[int],
 ) -> None:
     """
-    Setup three spans that exercise scope key resolution:
-    - span 0 (checkout): intrinsic scope.name='io.signoz.checkout',
-      scope.version='2.3.1', scope attribute telemetry.sdk.language='go', and a
-      span attribute env.tier='gold'.
-    - span 1 (payment): intrinsic scope.name='io.signoz.payment', scope
-      attributes telemetry.sdk.language='python', env.tier='gold' and
-      name='io.signoz.checkout'.
-    - span 2 (probe): span name 'io.signoz.checkout', unrelated scope.
-
+    Setup three spans that have different scope key resolution.
     Tests:
     - Filtering on scope.name / scope.version / a scope attribute.
     - An unprefixed key is resolved across contexts (scope checked alongside
       attribute / intrinsic), while a `scope.`-prefixed key is scope-only.
-    - `scope.name` hits the intrinsic field and a `name` scope attribute, while
-      a bare `name` hits the span name column (and a `name` scope attribute) but
-      never the scope.name field.
+    - `scope.name` hits the intrinsic field, a `name` scope attribute, and a
+      span attribute `scope.name` (cross-context), while a bare
+      `name` hits the span name column (and a `name` scope attribute) but never
+      the scope.name field.
     """
     trace_id = TraceIdGenerator.trace_id()
     span_ids = [TraceIdGenerator.span_id() for _ in range(3)]
@@ -842,7 +843,6 @@ def test_traces_list_with_scope_filter(
             kind=TracesKind.SPAN_KIND_SERVER,
             status_code=TracesStatusCode.STATUS_CODE_OK,
             resources={"service.name": "checkout"},
-            # env.tier here is a span attribute
             attributes={"http.request.method": "GET", "env.tier": "gold"},
             scope={
                 "name": "io.signoz.checkout",
@@ -884,6 +884,8 @@ def test_traces_list_with_scope_filter(
             kind=TracesKind.SPAN_KIND_SERVER,
             status_code=TracesStatusCode.STATUS_CODE_OK,
             resources={"service.name": "probe"},
+            # a span attribute named `scope.name`
+            attributes={"scope.name": "attr-scope-name"},
             scope={"name": "span-gamma", "version": "9.9.9"},
         ),
     ]

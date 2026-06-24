@@ -862,8 +862,7 @@ def generate_traces_with_corrupt_metadata() -> list[Traces]:
                 "cloud.provider": "integration",
                 "cloud.account.id": "000",
                 "trace_id": "corrupt_data",
-                # resource keys that look like scope fields
-                "scope.name": "corrupt_data",
+                "scope_name": "corrupt_data",
                 "scope.scope.name": "corrupt_data",
             },
             attributes={
@@ -873,11 +872,7 @@ def generate_traces_with_corrupt_metadata() -> list[Traces]:
                 "http.request.method": "POST",
                 "http.response.status_code": "200",
                 "timestamp": "corrupt_data",
-                # attribute keys colliding with the scope context prefix
-                "scope.version": "corrupt_data",
-                # holds the SAME value the scope.version filter searches for, but
-                # the key is `scope.scope.version` (not resolvable as scope.version),
-                # so this span must NOT be matched by `scope.version = '1.0.0'`.
+                "version": "1.0.0",
                 "scope.scope.version": "1.0.0",
             },
             scope={"name": "io.signoz.http.server", "version": "2.0.0"},
@@ -909,9 +904,6 @@ def generate_traces_with_corrupt_metadata() -> list[Traces]:
                 "trace_d": "corrupt_data",
                 "scope.attributes.version": "corrupt_data",
             },
-            # the only span carrying scope.version '1.0.0'. The scope attribute
-            # keys deliberately collide with the JSON sub-column names
-            # (name/version/attributes) to stress the scope projection.
             scope={
                 "name": "io.opentelemetry.contrib.http",
                 "version": "1.0.0",
@@ -941,13 +933,13 @@ def generate_traces_with_corrupt_metadata() -> list[Traces]:
                 "cloud.provider": "integration",
                 "cloud.account.id": "000",
                 "duration_nano": "corrupt_data",
-                "scope.scope.attributes": "corrupt_data",
+                "scope.scope.attributes.version": "corrupt_data",
             },
             attributes={
                 "http.request.method": "PATCH",
                 "http.status_code": "404",
                 "id": "1",
-                "scope.scope.scope": "corrupt_data",
+                "scope.scope.version": "corrupt_data",
             },
             scope={"name": "io.signoz.http.client", "version": "2.0.0"},
         ),
@@ -968,7 +960,7 @@ def generate_traces_with_corrupt_metadata() -> list[Traces]:
                 "host.name": "linux-001",
                 "cloud.provider": "integration",
                 "cloud.account.id": "001",
-                "scope.scope": "corrupt_data",
+                "scope.scope.version": "corrupt_data",
             },
             attributes={
                 "message.type": "SENT",
@@ -977,7 +969,7 @@ def generate_traces_with_corrupt_metadata() -> list[Traces]:
                 "duration_nano": "corrupt_data",
                 "id": 1,
                 "scope": "corrupt_data",
-                "scope.attributes": "corrupt_data",
+                "scope.attributes.name": "corrupt_data",
             },
             scope={"name": "io.signoz.messaging", "version": "3.0.0"},
         ),

@@ -403,9 +403,7 @@ class Traces(ABC):
             "version": scope_version,
             "attributes": scope_string,
         }
-        # Register scope.name, scope.version and each scope attribute as
-        # scope-typed keys, exactly like InstrumentationScope.GetSpanAttributes
-        # in the clickhousetracesexporter (empty values are skipped).
+
         scope_keys = {"scope.name": scope_name, "scope.version": scope_version}
         scope_keys.update(scope_string)
         for k, v in scope_keys.items():
