@@ -19,7 +19,7 @@ import (
 // and consumed by convertV1Layouts as section headers.
 func convertV1Panels(raw any) (map[string]*Panel, error) {
 	if raw == nil {
-		return nil, nil
+		return map[string]*Panel{}, nil
 	}
 	rawSlice, ok := raw.([]any)
 	if !ok {
