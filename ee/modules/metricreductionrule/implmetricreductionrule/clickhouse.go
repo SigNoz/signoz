@@ -358,8 +358,8 @@ func (c *clickhouse) SampleVolume(ctx context.Context, metricNames []string, eff
 		return 0, 0, nil
 	}
 	if !c.tableExists(ctx, telemetrymetrics.SamplesV4BufferTableName) ||
-		!c.tableExists(ctx, telemetrymetrics.SamplesV4ReducedLast60sTableName) ||
-		!c.tableExists(ctx, telemetrymetrics.SamplesV4ReducedSum60sTableName) {
+		!c.tableExists(ctx, telemetrymetrics.SamplesV4ReducedLastTableName) ||
+		!c.tableExists(ctx, telemetrymetrics.SamplesV4ReducedSumTableName) {
 		return 0, 0, nil
 	}
 	ctx = c.withThreads(ctx)
@@ -369,11 +369,11 @@ func (c *clickhouse) SampleVolume(ctx context.Context, metricNames []string, eff
 		return 0, 0, err
 	}
 
-	last, err := c.countReducedSamples(ctx, telemetrymetrics.DBName+"."+telemetrymetrics.SamplesV4ReducedLast60sTableName, metricNames, startMs, endMs)
+	last, err := c.countReducedSamples(ctx, telemetrymetrics.DBName+"."+telemetrymetrics.SamplesV4ReducedLastTableName, metricNames, startMs, endMs)
 	if err != nil {
 		return 0, 0, err
 	}
-	sum, err := c.countReducedSamples(ctx, telemetrymetrics.DBName+"."+telemetrymetrics.SamplesV4ReducedSum60sTableName, metricNames, startMs, endMs)
+	sum, err := c.countReducedSamples(ctx, telemetrymetrics.DBName+"."+telemetrymetrics.SamplesV4ReducedSumTableName, metricNames, startMs, endMs)
 	if err != nil {
 		return 0, 0, err
 	}
