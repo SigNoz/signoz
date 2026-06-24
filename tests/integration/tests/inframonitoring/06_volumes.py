@@ -129,32 +129,6 @@ def test_volumes_accuracy(
             },
             id="metric_never_seen",
         ),
-        # Scenario 2: groupBy a key that IS in metadata (deployment.environment is
-        # seeded on k8s.volume.capacity only) but was never seen together with the
-        # other volume metrics. The key resolves (page-groups IN-filter parses ->
-        # no 400), but the other metrics miss the (metric, key) pair and the
-        # statement builder falls back to raw labels, surfacing
-        # "key `...` not found on metric ...". Still 200, no hard error.
-        pytest.param(
-            {
-                "dataset": "volumes_metric_key_pair.jsonl",
-                "body": {
-                    "filter": {"expression": "k8s.persistentvolumeclaim.name = 'kp-pvc'"},
-                    "groupBy": [
-                        {
-                            "name": "deployment.environment",
-                            "fieldDataType": "string",
-                            "fieldContext": "resource",
-                        }
-                    ],
-                },
-                "warn_substrings": ["key `deployment.environment` not found on metric"],
-                "warn_names": [],
-                "data_fields": [],
-                "no_data_fields": [],
-            },
-            id="metric_key_pair_not_seen",
-        ),
     ],
 )
 def test_volumes_warnings(
@@ -164,10 +138,13 @@ def test_volumes_warnings(
     insert_metrics,
     case: dict,
 ) -> None:
-    """Data-availability gaps surface as non-blocking warnings (200 + data), not
-    hard errors. Covers a never-seen formula operand (scenario 1: volumeUsage
-    stays -1, not capacity) and a never-seen (metric, key) pair via groupBy
-    (scenario 2)."""
+    """A never-ingested metric surfaces a non-blocking warning (200 + data), not a
+    hard error. Here the never-seen metric is the FORMULA OPERAND
+    k8s.volume.available (volumeUsage = capacity - available): since A uses
+    TimeAggregationAvg it is NOT zero-defaultable, so the formula drops the group
+    -> volumeUsage == -1 (it does NOT fall back to capacity); capacity + inodes
+    stay real. (The generic never-seen (metric, key)-pair-via-groupBy warning is
+    entity-agnostic and is exercised once, for hosts, in 01_hosts.py.)"""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(

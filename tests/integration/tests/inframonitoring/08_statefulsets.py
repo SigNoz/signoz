@@ -113,54 +113,25 @@ def test_statefulsets_accuracy(
 @pytest.mark.parametrize(
     "case",
     [
-        # Scenario 1: required metrics were never ingested. Post-#11754 the querier
-        # drops them (no hard error), so the endpoint returns 200 with the
+        # Required metrics partially ingested. Post-#11754 the querier drops the
+        # never-seen ones (no hard error), so the endpoint returns 200 with the
         # statefulset that DOES have data; never-seen columns are the -1 sentinel +
-        # a "have never been received" warning. No formulas; each missing metric
-        # maps to one -1 column.
+        # a "have never been received" warning. The fixture seeds k8s.pod.cpu.usage
+        # AND the statefulset-level metrics (desired_pods/current_pods) but omits the
+        # remaining pod metrics, so the statefulset-level columns (desiredPods/
+        # currentPods) render real INDEPENDENTLY of the missing pod-derived columns
+        # (statefulSetMemory/*Request/*Limit -> -1). This is the faithful
+        # pod-vs-workload partial render; no formulas, each metric maps to one column.
         pytest.param(
             {
-                "dataset": "statefulsets_missing_metrics.jsonl",  # seeds only k8s.pod.cpu.usage
+                "dataset": "statefulsets_missing_metrics.jsonl",
                 "body": {"filter": {"expression": "k8s.statefulset.name = 'miss-ss'"}},
                 "warn_substrings": ["never been received"],
                 "warn_names": [
                     "k8s.pod.memory.working_set",
-                    "k8s.statefulset.desired_pods",
-                    "k8s.statefulset.current_pods",
                 ],
-                "data_fields": ["statefulSetCPU"],
+                "data_fields": ["statefulSetCPU", "desiredPods", "currentPods"],
                 "no_data_fields": [
-                    "statefulSetCPURequest",
-                    "statefulSetCPULimit",
-                    "statefulSetMemory",
-                    "statefulSetMemoryRequest",
-                    "statefulSetMemoryLimit",
-                    "desiredPods",
-                    "currentPods",
-                ],
-            },
-            id="metric_never_seen",
-        ),
-        # Scenario 2 (FAITHFUL (metric,key)-pair): pods are NOT labelled with
-        # k8s.statefulset.name, while the statefulset-level metrics ARE. Grouping by
-        # the default [statefulset.name, namespace.name, cluster.name], the base
-        # filter (k8s.statefulset.name != '') excludes the label-less pod metrics ->
-        # statefulSet* (pod-derived) come back -1, while desiredPods/currentPods
-        # (statefulset metrics) stay real. Reproduces the production response.
-        # The "key ... not found on metric" warning fires deterministically: the
-        # (pod-metric, k8s.statefulset.name) pair is absent from distributed_metadata
-        # (insert_metrics truncates it per function; the suite runs serially), so the
-        # statement builder falls back to raw labels and warns. The -1 partial render
-        # is the robust core.
-        pytest.param(
-            {
-                "dataset": "statefulsets_metric_key_pair.jsonl",
-                "body": {"filter": {"expression": "k8s.statefulset.name = 'kp-sts'"}},
-                "warn_substrings": ["key `k8s.statefulset.name` not found on metric"],
-                "warn_names": [],
-                "data_fields": ["desiredPods", "currentPods"],
-                "no_data_fields": [
-                    "statefulSetCPU",
                     "statefulSetCPURequest",
                     "statefulSetCPULimit",
                     "statefulSetMemory",
@@ -168,7 +139,7 @@ def test_statefulsets_accuracy(
                     "statefulSetMemoryLimit",
                 ],
             },
-            id="metric_key_pair_not_seen",
+            id="metric_never_seen",
         ),
     ],
 )
@@ -179,9 +150,12 @@ def test_statefulsets_warnings(
     insert_metrics,
     case: dict,
 ) -> None:
-    """Data-availability gaps surface as non-blocking warnings (200 + data), not
-    hard errors. Covers never-seen metrics (scenario 1) and a faithful never-seen
-    (metric, key) pair (scenario 2: pod columns -1, statefulset counts real)."""
+    """A never-ingested metric surfaces a non-blocking warning (200 + data), not a
+    hard error. The fixture keeps the statefulset-level metrics but omits most pod
+    metrics, so statefulset counts (desiredPods/currentPods) render real while the
+    pod-derived columns go -1 -- the faithful pod-vs-workload partial render. (The
+    generic never-seen (metric, key)-pair-via-groupBy warning is entity-agnostic
+    and is exercised once, for hosts, in 01_hosts.py.)"""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(

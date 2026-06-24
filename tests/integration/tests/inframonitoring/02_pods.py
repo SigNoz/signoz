@@ -181,32 +181,6 @@ def test_pods_accuracy(
             },
             id="metric_never_seen",
         ),
-        # Scenario 2: groupBy a key that IS in metadata (deployment.environment is
-        # seeded on k8s.pod.cpu.usage only) but was never seen together with the
-        # other pod metrics. The key resolves (the page-groups IN-filter parses ->
-        # no 400), but B-F miss the (metric, key) pair and the statement builder
-        # falls back to raw labels, surfacing "key `...` not found on metric ...".
-        # Still 200, no hard error.
-        pytest.param(
-            {
-                "dataset": "pods_metric_key_pair.jsonl",
-                "body": {
-                    "filter": {"expression": "k8s.pod.name = 'kp-p1'"},
-                    "groupBy": [
-                        {
-                            "name": "deployment.environment",
-                            "fieldDataType": "string",
-                            "fieldContext": "resource",
-                        }
-                    ],
-                },
-                "warn_substrings": ["key `deployment.environment` not found on metric"],
-                "warn_names": [],
-                "data_fields": [],
-                "no_data_fields": [],
-            },
-            id="metric_key_pair_not_seen",
-        ),
     ],
 )
 def test_pods_warnings(
@@ -216,9 +190,11 @@ def test_pods_warnings(
     insert_metrics,
     case: dict,
 ) -> None:
-    """Data-availability gaps surface as non-blocking warnings (200 + data), not
-    hard errors. Covers never-seen metrics (scenario 1) and never-seen
-    (metric, key) pairs via groupBy (scenario 2)."""
+    """A never-ingested metric surfaces a non-blocking warning (200 + data), not a
+    hard error: the endpoint returns the entity that DOES have data and the
+    never-seen columns carry the -1 sentinel. (The generic never-seen
+    (metric, key)-pair-via-groupBy warning is entity-agnostic and is exercised
+    once, for hosts, in 01_hosts.py.)"""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         _load_pods_metrics(

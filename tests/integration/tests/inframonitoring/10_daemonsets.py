@@ -113,54 +113,25 @@ def test_daemonsets_accuracy(
 @pytest.mark.parametrize(
     "case",
     [
-        # Scenario 1: required metrics were never ingested. Post-#11754 the querier
-        # drops them (no hard error), so the endpoint returns 200 with the daemonset
-        # that DOES have data; never-seen columns are the -1 sentinel + a
-        # "have never been received" warning. No formulas; pod- and daemonset-level
-        # metrics each map to one column.
+        # Required metrics partially ingested. Post-#11754 the querier drops the
+        # never-seen ones (no hard error), so the endpoint returns 200 with the
+        # daemonset that DOES have data; never-seen columns are the -1 sentinel + a
+        # "have never been received" warning. The fixture seeds k8s.pod.cpu.usage AND
+        # the daemonset-level metrics (desired/current_scheduled_nodes) but omits the
+        # remaining pod metrics, so the daemonset-level columns (desiredNodes/
+        # currentNodes) render real INDEPENDENTLY of the missing pod-derived columns
+        # (daemonSetMemory/*Request/*Limit -> -1). This is the faithful
+        # pod-vs-workload partial render; no formulas, each metric maps to one column.
         pytest.param(
             {
-                "dataset": "daemonsets_missing_metrics.jsonl",  # seeds only k8s.pod.cpu.usage
+                "dataset": "daemonsets_missing_metrics.jsonl",
                 "body": {"filter": {"expression": "k8s.daemonset.name = 'miss-ds'"}},
                 "warn_substrings": ["never been received"],
                 "warn_names": [
                     "k8s.pod.memory.working_set",
-                    "k8s.daemonset.desired_scheduled_nodes",
-                    "k8s.daemonset.current_scheduled_nodes",
                 ],
-                "data_fields": ["daemonSetCPU"],
+                "data_fields": ["daemonSetCPU", "desiredNodes", "currentNodes"],
                 "no_data_fields": [
-                    "daemonSetCPURequest",
-                    "daemonSetCPULimit",
-                    "daemonSetMemory",
-                    "daemonSetMemoryRequest",
-                    "daemonSetMemoryLimit",
-                    "desiredNodes",
-                    "currentNodes",
-                ],
-            },
-            id="metric_never_seen",
-        ),
-        # Scenario 2 (FAITHFUL (metric,key)-pair): pods are NOT labelled with
-        # k8s.daemonset.name, while the daemonset-level metrics ARE. Grouping by the
-        # default [daemonset.name, namespace.name, cluster.name], the base filter
-        # (k8s.daemonset.name != '') excludes the label-less pod metrics ->
-        # daemonSet* (pod-derived) come back -1, while desiredNodes/currentNodes
-        # (daemonset metrics) stay real. Mirrors the statefulsets faithful case.
-        # The "key ... not found on metric" warning fires deterministically: the
-        # (pod-metric, k8s.daemonset.name) pair is absent from distributed_metadata
-        # (insert_metrics truncates it per function; the suite runs serially), so the
-        # statement builder falls back to raw labels and warns. The -1 partial render
-        # is the robust core.
-        pytest.param(
-            {
-                "dataset": "daemonsets_metric_key_pair.jsonl",
-                "body": {"filter": {"expression": "k8s.daemonset.name = 'kp-ds'"}},
-                "warn_substrings": ["key `k8s.daemonset.name` not found on metric"],
-                "warn_names": [],
-                "data_fields": ["desiredNodes", "currentNodes"],
-                "no_data_fields": [
-                    "daemonSetCPU",
                     "daemonSetCPURequest",
                     "daemonSetCPULimit",
                     "daemonSetMemory",
@@ -168,7 +139,7 @@ def test_daemonsets_accuracy(
                     "daemonSetMemoryLimit",
                 ],
             },
-            id="metric_key_pair_not_seen",
+            id="metric_never_seen",
         ),
     ],
 )
@@ -179,9 +150,12 @@ def test_daemonsets_warnings(
     insert_metrics,
     case: dict,
 ) -> None:
-    """Data-availability gaps surface as non-blocking warnings (200 + data), not
-    hard errors. Covers never-seen metrics (scenario 1) and a faithful never-seen
-    (metric, key) pair (scenario 2: pod columns -1, daemonset counts real)."""
+    """A never-ingested metric surfaces a non-blocking warning (200 + data), not a
+    hard error. The fixture keeps the daemonset-level metrics but omits most pod
+    metrics, so daemonset counts (desiredNodes/currentNodes) render real while the
+    pod-derived columns go -1 -- the faithful pod-vs-workload partial render. (The
+    generic never-seen (metric, key)-pair-via-groupBy warning is entity-agnostic
+    and is exercised once, for hosts, in 01_hosts.py.)"""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
