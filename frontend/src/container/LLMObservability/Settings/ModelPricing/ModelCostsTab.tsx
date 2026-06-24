@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 import { Button } from '@signozhq/ui/button';
-import { SelectSimple } from '@signozhq/ui/select';
 import { Plus } from '@signozhq/icons';
 import { useListLLMPricingRules } from 'api/generated/services/llmpricingrules';
 import { type ListLLMPricingRulesParams } from 'api/generated/services/sigNoz.schemas';
@@ -48,13 +47,6 @@ function ModelCostsTab(): JSX.Element {
 	return (
 		<>
 			<div className={styles.filtersBar}>
-				{/* Only USD is priced today — disabled until other currencies land. */}
-				<SelectSimple
-					className={styles.filtersBarCurrency}
-					value="USD"
-					disabled
-					testId="currency-select"
-				/>
 				{canManagePricing && (
 					<Button
 						variant="solid"
