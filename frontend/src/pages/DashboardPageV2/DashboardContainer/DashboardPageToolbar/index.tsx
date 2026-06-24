@@ -12,6 +12,7 @@ import type {
 	DashboardtypesJSONPatchOperationDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { Base64Icons } from 'container/DashboardContainer/DashboardSettings/General/utils';
+import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { useAppContext } from 'providers/App/App';
 import { usePanelTypeSelectionModalStore } from 'providers/Dashboard/helpers/panelTypeSelectionModalHelper';
 import { useErrorModal } from 'providers/ErrorModalProvider';
@@ -20,7 +21,7 @@ import APIError from 'types/api/error';
 import DashboardActions from './DashboardActions/DashboardActions';
 import DashboardInfo from './DashboardInfo/DashboardInfo';
 import { useEditableTitle } from './DashboardInfo/useEditableTitle';
-import { usePublicDashboardMeta } from '../DashboardSettings/PublicDashboard/usePublicDashboardMeta';
+import VariablesBar from '../VariablesBar/VariablesBar';
 
 import styles from './DashboardPageToolbar.module.scss';
 
@@ -52,10 +53,6 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 	const setIsPanelTypeSelectionModalOpen = usePanelTypeSelectionModalStore(
 		(s) => s.setIsPanelTypeSelectionModalOpen,
 	);
-
-	// Single global fetch of the public-sharing meta (the drawer reuses this cache);
-	// drives the public-access badge.
-	const { isPublic: isPublicDashboard } = usePublicDashboardMeta(id);
 
 	const isAuthor =
 		!!user?.email && !!dashboard.createdBy && dashboard.createdBy === user.email;
@@ -122,7 +119,7 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 					image={image}
 					tags={tags}
 					description={description}
-					isPublicDashboard={isPublicDashboard}
+					isPublicDashboard={false}
 					isDashboardLocked={isDashboardLocked}
 					isEditing={isEditing}
 					draft={draft}
@@ -141,6 +138,16 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 					onLockToggle={handleLockDashboardToggle}
 					onOpenRename={startEdit}
 				/>
+			</div>
+
+			{/* Row 2: the time selector floats top-right (declared first so the
+			    variables bar's content wraps around it); the variables bar
+			    collapses to one line and, when expanded, wraps full-width under it. */}
+			<div className={styles.toolbarRow2}>
+				<div className={styles.timeCluster}>
+					<DateTimeSelectionV2 showAutoRefresh hideShareModal />
+				</div>
+				<VariablesBar dashboard={dashboard} />
 			</div>
 		</section>
 	);

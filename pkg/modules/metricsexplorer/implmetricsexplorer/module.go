@@ -141,7 +141,7 @@ func (m *module) listMetrics(ctx context.Context, orgID valuer.UUID, params *met
 	sb.Select("DISTINCT metric_name")
 
 	if params.Start != nil && params.End != nil {
-		start, end, distributedTsTable, _ := telemetrymetrics.WhichTSTableToUse(uint64(*params.Start), uint64(*params.End), nil)
+		start, end, distributedTsTable, _ := telemetrymetrics.WhichTSTableToUse(uint64(*params.Start), uint64(*params.End), false, nil)
 		sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, distributedTsTable))
 		sb.Where(sb.Between("unix_milli", start, end))
 	} else {
@@ -540,7 +540,7 @@ func (m *module) InspectMetrics(
 		return nil, err
 	}
 
-	tsStart, _, tsTable, _ := telemetrymetrics.WhichTSTableToUse(start, end, nil)
+	tsStart, _, tsTable, _ := telemetrymetrics.WhichTSTableToUse(start, end, false, nil)
 	tsSb := sqlbuilder.NewSelectBuilder()
 	tsSb.Select("fingerprint", "labels")
 	tsSb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, tsTable))
@@ -984,8 +984,8 @@ func (m *module) fetchMetricsStatsWithSamples(
 		}
 	}
 
-	start, end, distributedTsTable, localTsTable := telemetrymetrics.WhichTSTableToUse(uint64(req.Start), uint64(req.End), nil)
-	distributedSamplesTable, _ := telemetrymetrics.WhichSamplesTableToUse(uint64(req.Start), uint64(req.End), metrictypes.UnspecifiedType, metrictypes.TimeAggregationUnspecified, nil)
+	start, end, distributedTsTable, localTsTable := telemetrymetrics.WhichTSTableToUse(uint64(req.Start), uint64(req.End), false, nil)
+	distributedSamplesTable, _ := telemetrymetrics.WhichSamplesTableToUse(uint64(req.Start), uint64(req.End), metrictypes.UnspecifiedType, metrictypes.TimeAggregationUnspecified, false, nil)
 	countExp := telemetrymetrics.CountExpressionForSamplesTable(distributedSamplesTable)
 
 	// Timeseries counts per metric
@@ -1113,7 +1113,7 @@ func (m *module) computeTimeseriesTreemap(ctx context.Context, req *metricsexplo
 		}
 	}
 
-	start, end, distributedTsTable, _ := telemetrymetrics.WhichTSTableToUse(uint64(req.Start), uint64(req.End), nil)
+	start, end, distributedTsTable, _ := telemetrymetrics.WhichTSTableToUse(uint64(req.Start), uint64(req.End), false, nil)
 
 	totalTSBuilder := sqlbuilder.NewSelectBuilder()
 	totalTSBuilder.Select("uniq(fingerprint) AS total_time_series")
@@ -1189,8 +1189,8 @@ func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsexplorer
 		}
 	}
 
-	start, end, distributedTsTable, localTsTable := telemetrymetrics.WhichTSTableToUse(uint64(req.Start), uint64(req.End), nil)
-	distributedSamplesTable, _ := telemetrymetrics.WhichSamplesTableToUse(uint64(req.Start), uint64(req.End), metrictypes.UnspecifiedType, metrictypes.TimeAggregationUnspecified, nil)
+	start, end, distributedTsTable, localTsTable := telemetrymetrics.WhichTSTableToUse(uint64(req.Start), uint64(req.End), false, nil)
+	distributedSamplesTable, _ := telemetrymetrics.WhichSamplesTableToUse(uint64(req.Start), uint64(req.End), metrictypes.UnspecifiedType, metrictypes.TimeAggregationUnspecified, false, nil)
 	countExp := telemetrymetrics.CountExpressionForSamplesTable(distributedSamplesTable)
 
 	candidateLimit := req.Limit + 50

@@ -1,0 +1,51 @@
+.container {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.list {
+	width: 100%;
+}
+
+.row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-width: 0;
+	height: 34px;
+}
+
+.trigger {
+	display: flex;
+	flex: 1;
+	align-items: center;
+	gap: 10px;
+	min-width: 0;
+	padding: 0;
+	border: none;
+	background: transparent;
+	cursor: pointer;
+	text-align: left;
+}
+
+.swatch {
+	width: 18px;
+	height: 18px;
+	flex: none;
+	border: 1px solid var(--l2-border);
+	border-radius: 4px;
+}
+
+.label {
+	overflow: hidden;
+	font-size: 12px;
+	color: var(--l2-foreground);
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.empty {
+	font-size: 12px;
+	color: var(--text-vanilla-400);
+}
