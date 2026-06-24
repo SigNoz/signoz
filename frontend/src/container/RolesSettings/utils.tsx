@@ -1,6 +1,7 @@
 import React from 'react';
 import { Badge } from '@signozhq/ui/badge';
 import type {
+	CoretypesKindDTO,
 	CoretypesObjectGroupDTO,
 	CoretypesResourceRefDTO,
 	CoretypesTypeDTO,
@@ -147,7 +148,7 @@ export function buildPatchPayload({
 			continue;
 		}
 		const resourceDef: CoretypesResourceRefDTO = {
-			kind: found.kind,
+			kind: found.kind as CoretypesKindDTO,
 			type: found.type as CoretypesTypeDTO,
 		};
 
