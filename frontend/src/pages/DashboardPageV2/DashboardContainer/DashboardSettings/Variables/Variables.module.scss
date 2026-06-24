@@ -1,0 +1,100 @@
+.container {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.header {
+	display: flex;
+	justify-content: flex-end;
+	gap: 16px;
+}
+
+.titleRow {
+	display: flex;
+	align-items: baseline;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.title {
+	font-size: 14px;
+	font-weight: 500;
+	color: var(--l1-foreground);
+}
+
+.subtitle {
+	font-size: 12px;
+	color: var(--l2-foreground);
+}
+
+.list {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 10px 12px;
+	border: 1px solid var(--l1-border);
+	border-radius: 4px;
+	background: var(--l1-background);
+}
+
+.rowMain {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	min-width: 0;
+}
+
+.dragHandle {
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	color: var(--l3-foreground);
+	cursor: grab;
+	touch-action: none;
+}
+
+.varName {
+	font-weight: 500;
+	color: var(--l1-foreground);
+}
+
+.varDesc {
+	min-width: 0;
+	overflow: hidden;
+	font-size: 12px;
+	color: var(--l2-foreground);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.typeTag {
+	flex-shrink: 0;
+	padding: 1px 8px;
+	font-size: 11px;
+	letter-spacing: 0.04em;
+	color: var(--l2-foreground);
+	text-transform: uppercase;
+	background: var(--l2-background);
+	border-radius: 10px;
+}
+
+.rowActions {
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	gap: 2px;
+}
+
+.confirmText {
+	margin-right: 4px;
+	font-size: 12px;
+	color: var(--l2-foreground);
+}

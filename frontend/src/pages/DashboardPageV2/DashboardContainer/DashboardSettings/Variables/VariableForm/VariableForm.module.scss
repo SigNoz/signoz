@@ -1,0 +1,346 @@
+/* Faithful reproduction of the V1 VariableItem layout, scoped as a module and
+   built on @signozhq components where possible. antd is retained only for the
+   monaco Editor, multiline TextArea, Collapse, and searchable Selects. */
+
+.container {
+	display: flex;
+	flex-direction: column;
+	border-radius: 3px;
+	border: 1px solid var(--l2-border);
+}
+
+.content {
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+	padding: 12px 16px 20px;
+}
+
+/* VariableItemRow */
+.row {
+	display: flex;
+	gap: 1rem;
+	margin-bottom: 0;
+}
+
+/* LabelContainer */
+.labelContainer {
+	width: 200px;
+}
+
+.sourceLabel {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.label {
+	color: var(--l2-foreground);
+	font-family: Inter;
+	font-size: 14px;
+	font-weight: 400;
+	line-height: 20px;
+}
+
+.column {
+	flex-direction: column;
+	gap: 8px;
+}
+
+.input,
+.textarea,
+.defaultInput {
+	padding: 6px 6px 6px 8px;
+	border: 1px solid var(--l2-border);
+	border-radius: 2px;
+	background: var(--l3-background);
+}
+
+.input,
+.textarea {
+	width: 100%;
+}
+
+.defaultInput {
+	width: 342px;
+}
+
+.errorText {
+	font-size: 12px;
+	color: var(--bg-amber-500);
+}
+
+/* Variable type — Tabs root composing the picker row + per-type body panels. */
+.typeSection {
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+	margin-top: 40px;
+	margin-bottom: 0;
+}
+
+/* Picker row (label left, tabs right); the bottom divider separates type from
+   config. Single line — the tab row scrolls (never wraps) when narrow. */
+.typePicker {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	padding-bottom: 12px;
+	border-bottom: 1px solid var(--l2-border);
+
+	@media (max-width: 1440px) {
+		flex-wrap: wrap;
+	}
+}
+
+/* Active tab panel — reset the Tabs default padding; body rows handle spacing. */
+.typePanel {
+	padding: 0 !important;
+}
+
+.typeContent {
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+}
+
+.typeLabelContainer {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	white-space: nowrap;
+}
+
+/* Horizontal scroll so the tab row never wraps to a second line. The scrollbar
+   is hidden — the row stays a single crisp line and scrolls only when narrow. */
+.typeTabsScroll {
+	justify-self: flex-end;
+	--tab-list-wrapper-secondary-padding-left: 0;
+}
+
+/* Connected segmented control, mirroring Overview's SegmentedControl: no outer
+   padding, segments divided by 1px borders, active segment filled + bold. */
+.typeTabs {
+	display: inline-flex;
+	flex-wrap: nowrap;
+	width: max-content;
+	gap: 0;
+	padding: 0;
+	border: 1px solid var(--l2-border);
+	border-radius: 2px;
+	background: transparent;
+}
+
+.typeTab {
+	display: inline-flex;
+	flex-shrink: 0;
+	align-items: center;
+	gap: 6px;
+	min-height: 24px;
+	padding: 6px 14px;
+	white-space: nowrap;
+	border-radius: 0;
+	color: var(--l2-foreground);
+
+	&:not(:last-child) {
+		border-right: 1px solid var(--l2-border);
+	}
+
+	&[data-state='active'] {
+		color: var(--l1-foreground);
+		font-weight: 500;
+		// override the Tabs component's default (transparent) active background.
+		background: var(--l3-background) !important;
+	}
+}
+
+.betaTag {
+	margin-left: 4px;
+}
+
+/* Query */
+.queryContainer {
+	display: flex;
+	flex-flow: column wrap;
+	gap: 1rem;
+	min-width: 0;
+	margin-bottom: 0;
+}
+
+.editorWrap {
+	height: 240px;
+	overflow: hidden;
+	border: 1px solid var(--l2-border);
+	border-radius: 2px;
+}
+
+.testRow {
+	display: flex;
+	margin-top: 8px;
+}
+
+/* Custom — antd Collapse */
+.customSection {
+	margin-bottom: 0;
+}
+
+.customSection :global(.custom-collapse) {
+	width: 100%;
+	border: 1px solid var(--l2-border);
+	border-radius: 3px 3px 0 0;
+
+	:global(.ant-collapse-item) {
+		border-bottom: none;
+	}
+
+	:global(.ant-collapse-header) {
+		align-items: center;
+		gap: 8px;
+		height: 38px;
+		padding: 12px;
+		background: var(--l3-background);
+		border-radius: 3px 3px 0 0;
+	}
+
+	:global(.ant-collapse-header-text) {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		padding: 1px 2px;
+		color: var(--bg-robin-400);
+		font-family: 'Space Mono';
+		font-size: 14px;
+		line-height: 18px;
+		border-radius: 2px;
+		background: color-mix(in srgb, var(--bg-robin-400) 8%, transparent);
+	}
+
+	:global(.ant-collapse-content-box) {
+		padding: 0;
+	}
+
+	:global(.comma-input) {
+		height: 109px;
+		border: none;
+	}
+}
+
+/* Textbox */
+.textboxSection {
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 0;
+}
+
+/* Preview strip */
+.previewSection {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	min-height: 88px;
+	margin-bottom: 0;
+	padding-bottom: 8px;
+	border: 1px solid var(--l2-border);
+	border-radius: 3px;
+}
+
+.previewLabel {
+	align-self: flex-start;
+	display: inline-flex;
+	align-items: center;
+	gap: 10px;
+	padding: 4px 8px;
+	color: var(--bg-robin-400);
+	font-family: 'Space Mono';
+	font-size: 14px;
+	line-height: 18px;
+	border-radius: 3px 0 2px;
+	background: color-mix(in srgb, var(--bg-robin-400) 8%, transparent);
+}
+
+.previewValues {
+	display: flex;
+	flex-flow: wrap;
+	gap: 8px;
+	padding: 4.5px 11px;
+	overflow-y: auto;
+}
+
+.previewValues [data-slot='badge'] {
+	height: 30px;
+	align-items: center;
+	color: var(--l1-foreground);
+	font-family: 'Space Mono';
+	font-size: 14px;
+	border: 1px solid var(--l1-border);
+	border-radius: 2px;
+}
+
+.previewError {
+	color: var(--bg-amber-500);
+}
+
+/* Sort / multi / all / default rows */
+.sortSection,
+.multiSection,
+.allOptionSection,
+.dynamicSection {
+	align-items: flex-start;
+	justify-content: space-between;
+	margin-bottom: 0;
+}
+
+.sortSection {
+	align-items: center;
+}
+
+.rowLabel {
+	width: 339px;
+	color: var(--l2-foreground);
+	font-family: Inter;
+	font-size: 14px;
+	line-height: 20px;
+	letter-spacing: -0.07px;
+}
+
+.defaultValueSection {
+	display: flex;
+	justify-content: space-between;
+	gap: 1rem;
+	align-items: center;
+	margin-bottom: 0;
+}
+
+.defaultValueSection .label {
+	display: block;
+	margin-bottom: 2px;
+}
+
+.defaultValueDesc {
+	display: block;
+	color: var(--l2-foreground);
+	font-family: Inter;
+	font-size: 11px;
+	line-height: 18px;
+	letter-spacing: -0.06px;
+}
+
+/* All variable selects (Source / Attribute / Sort / Default Value) share width
+   and a consistent --l2-border outline. */
+.sortSelect,
+.searchSelect {
+	width: 240px;
+	flex-shrink: 0;
+
+	:global(.ant-select-selector) {
+		border-color: var(--l2-border) !important;
+	}
+}
+
+.actionButtons {
+	width: 100%;
+	display: flex;
+	justify-content: flex-end;
+	gap: 1rem;
+}

@@ -29,6 +29,7 @@ import HttpStatusBadge from 'components/HttpStatusBadge/HttpStatusBadge';
 import TimelineV3 from 'components/TimelineV3/TimelineV3';
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
 import { useCopySpanLink } from 'hooks/trace/useCopySpanLink';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { colorToRgb } from 'lib/uPlotLib/utils/generateColor';
@@ -214,8 +215,12 @@ const SpanOverview = memo(function SpanOverview({
 	const isRootSpan = span.level === 0;
 	const { onSpanCopy } = useCopySpanLink(span);
 	const colorByFieldName = useTraceStore((s) => s.colorByField.name);
+	const isDarkMode = useIsDarkMode();
 
-	const color = resolveSpanColor(span, colorByFieldName);
+	const { color, colorDark } = resolveSpanColor(span, colorByFieldName);
+	// Single theme-resolved color: bright base in dark mode, darkened variant in
+	// light mode so the dot stands out against the white panel.
+	const effectiveColor = isDarkMode ? color : colorDark;
 
 	// Smart highlighting logic
 	const {
@@ -317,7 +322,11 @@ const SpanOverview = memo(function SpanOverview({
 			{/* Colored service dot */}
 			<span
 				className={cx(styles.treeIcon, { [styles.hasError]: span.has_error })}
-				style={{ backgroundColor: color }}
+				style={
+					{
+						'--service-dot-color': effectiveColor,
+					} as React.CSSProperties
+				}
 			/>
 
 			{/* Span name + service name */}
@@ -391,9 +400,16 @@ export const SpanDuration = memo(function SpanDuration({
 	const width = (span.duration_nano * 1e2) / (spread * 1e6);
 
 	const colorByFieldName = useTraceStore((s) => s.colorByField.name);
-	const color = resolveSpanColor(span, colorByFieldName);
-	// `resolveSpanColor` returns a CSS variable for errors; `colorToRgb` can't parse it.
-	const rgbColor = span.has_error ? '239, 68, 68' : colorToRgb(color);
+	const isDarkMode = useIsDarkMode();
+	const { color, colorDark } = resolveSpanColor(span, colorByFieldName);
+	// Single theme-resolved color: bright base in dark mode, darkened variant in
+	// light mode (so the bar stands out against the white panel and hover/selected
+	// foregrounds stay legible). The bar's text flips dark↔white to suit the fill.
+	const effectiveColor = isDarkMode ? color : colorDark;
+	const rgbColor = colorToRgb(effectiveColor);
+	const spanTextColor = isDarkMode
+		? 'rgba(0, 0, 0, 0.7)'
+		: 'rgba(255, 255, 255, 0.95)';
 
 	const {
 		isSelected,
@@ -424,8 +440,9 @@ export const SpanDuration = memo(function SpanDuration({
 					{
 						left: `${leftOffset}%`,
 						width: `${width}%`,
-						'--span-color': color,
+						'--span-color': effectiveColor,
 						'--span-color-rgb': rgbColor,
+						'--span-text-color': spanTextColor,
 					} as React.CSSProperties
 				}
 			>
@@ -580,10 +597,9 @@ function Success(props: ISuccessProps): JSX.Element {
 					}
 					return next;
 				});
+				return;
 			}
-			// Backend mode: trigger API call (current behavior)
-			// keeping this for both mode to support scroll to view to function well.
-			// interestedspan would not make api call in frontend mode so it is safe to use for both mode.
+			// Backend mode: trigger refetch via interestedSpanId
 			setInterestedSpanId({
 				spanId,
 				isUncollapsed: !collapse,
@@ -782,19 +798,26 @@ function Success(props: ISuccessProps): JSX.Element {
 		[],
 	);
 
+	// Backend mode: scroll + select to the interestedSpanId target. `spans` in
+	// deps so we retry once a refetch lands (chevron / pagination / deep-link).
 	useEffect(() => {
-		if (interestedSpanId.spanId !== '') {
-			const idx = spans.findIndex(
-				(span) => span.span_id === interestedSpanId.spanId,
-			);
-			if (idx !== -1) {
-				scrollSpanIntoView(spans[idx], spans);
-				setSelectedSpan(spans[idx]);
-			}
-		} else {
-			setSelectedSpan((prev) => prev ?? spans[0]);
+		if (isFullDataLoaded || interestedSpanId.spanId === '') {
+			return;
 		}
-	}, [interestedSpanId, setSelectedSpan, spans, scrollSpanIntoView]);
+		const idx = spans.findIndex(
+			(span) => span.span_id === interestedSpanId.spanId,
+		);
+		if (idx !== -1) {
+			scrollSpanIntoView(spans[idx], spans);
+			setSelectedSpan(spans[idx]);
+		}
+	}, [
+		interestedSpanId,
+		setSelectedSpan,
+		spans,
+		scrollSpanIntoView,
+		isFullDataLoaded,
+	]);
 
 	// Covers URL-driven navigation to an already-loaded span (flamegraph /
 	// filter / browser back) that the interestedSpanId-keyed effect doesn't see.
@@ -887,7 +910,7 @@ function Success(props: ISuccessProps): JSX.Element {
 					/>
 					{/* Left panel - table with horizontal scroll */}
 					<ResizableBox
-						direction="horizontal"
+						handle="right"
 						defaultWidth={DEFAULT_SIDEBAR_WIDTH}
 						minWidth={MIN_SIDEBAR_WIDTH}
 						maxWidth={MAX_SIDEBAR_WIDTH}

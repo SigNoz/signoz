@@ -5,8 +5,9 @@ import (
 	"testing"
 	"time"
 
-	cmock "github.com/srikanthccv/ClickHouse-go-mock"
+	cmock "github.com/SigNoz/clickhouse-go-mock"
 
+	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
@@ -36,7 +37,7 @@ func (m *mockMetricStmtBuilder) Build(_ context.Context, _, _ uint64, _ qbtypes.
 
 func TestQueryRange_MetricTypeMissing(t *testing.T) {
 	// When a metric has UnspecifiedType and is not found in the metadata store,
-	// the querier should return a not-found error, even if the request provides a temporality
+	// the querier should return an empty result with a warning instead of an error.
 	providerSettings := instrumentationtest.New().ToProviderSettings()
 	metadataStore := telemetrytypestest.NewMockMetadataStore()
 
@@ -44,14 +45,15 @@ func TestQueryRange_MetricTypeMissing(t *testing.T) {
 		providerSettings,
 		nil, // telemetryStore
 		metadataStore,
-		nil, // prometheus
-		nil, // traceStmtBuilder
-		nil, // logStmtBuilder
-		nil, // auditStmtBuilder
-		nil, // metricStmtBuilder
-		nil, // meterStmtBuilder
-		nil, // traceOperatorStmtBuilder
-		nil, // bucketCache
+		nil,                // prometheus
+		nil,                // traceStmtBuilder
+		nil,                // logStmtBuilder
+		nil,                // auditStmtBuilder
+		nil,                // metricStmtBuilder
+		nil,                // meterStmtBuilder
+		nil,                // traceOperatorStmtBuilder
+		nil,                // bucketCache
+		flaggertest.New(t), // flagger
 	)
 
 	req := &qbtypes.QueryRangeRequest{
@@ -78,9 +80,14 @@ func TestQueryRange_MetricTypeMissing(t *testing.T) {
 		},
 	}
 
-	_, err := q.QueryRange(context.Background(), valuer.GenerateUUID(), req)
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "could not find the metric unknown_metric")
+	resp, err := q.QueryRange(context.Background(), valuer.GenerateUUID(), req)
+	require.NoError(t, err)
+	require.NotNil(t, resp)
+	require.NotNil(t, resp.Warning)
+
+	require.Len(t, resp.Warning.Warnings, 1)
+	assert.Contains(t, resp.Warning.Warnings[0].Message, "unknown_metric")
+	assert.Contains(t, resp.Warning.Warnings[0].Message, "has never been received")
 }
 
 func TestQueryRange_MetricTypeFromStore(t *testing.T) {
@@ -116,6 +123,7 @@ func TestQueryRange_MetricTypeFromStore(t *testing.T) {
 		nil,                      // meterStmtBuilder
 		nil,                      // traceOperatorStmtBuilder
 		nil,                      // bucketCache
+		flaggertest.New(t),       // flagger
 	)
 
 	req := &qbtypes.QueryRangeRequest{

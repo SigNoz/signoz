@@ -1,0 +1,55 @@
+.header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 8px 12px;
+	border-bottom: 1px solid var(--l2-border);
+	cursor: grab;
+}
+
+.headerLeft {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-width: 0;
+}
+
+.headerTitle {
+	margin: 0;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.badge {
+	margin-inline-end: 0;
+}
+
+// Actions sit inside the drag-handle row but opt out of dragging
+// (`panel-no-drag`); reset the grab cursor so the menu reads as clickable.
+.actions {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	cursor: default;
+}
+
+// Subtle background-refetch spinner in the header (chart stays mounted).
+.refetchIndicator {
+	color: var(--l2-foreground);
+	flex-shrink: 0;
+}
+
+// Per-panel time-preference pill (e.g. `6h`), shown when the panel overrides
+// the dashboard time window.
+.timePill {
+	flex-shrink: 0;
+	padding: 1px 6px;
+	border-radius: 4px;
+	font-size: 11px;
+	line-height: 16px;
+	color: var(--l3-foreground);
+	background: var(--l3-background);
+	border: 1px solid var(--l3-border);
+	cursor: default;
+}

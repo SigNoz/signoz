@@ -11,10 +11,9 @@ import {
 import { useTraceStore } from 'pages/TraceDetailsV3/stores/traceStore';
 import { RESERVED_PREVIEW_KEYS } from 'pages/TraceDetailsV3/SpanHoverCard/SpanHoverCard';
 import { getSpanAttribute } from 'pages/TraceDetailsV3/utils';
-import { FlamegraphSpan } from 'types/api/trace/getTraceFlamegraph';
+import { SpantypesFlamegraphSpanDTO as FlamegraphSpan } from 'api/generated/services/sigNoz.schemas';
 
-import { EventRect, SpanRect } from '../types';
-import { ITraceMetadata } from '../types';
+import { EventRect, ITraceMetadata, SpanRect } from '../types';
 import {
 	getFlamegraphServiceName,
 	getFlamegraphSpanGroupValue,
@@ -144,14 +143,14 @@ export function useFlamegraphHover(
 	const buildPreviewRows = useCallback(
 		(span: FlamegraphSpan): SpanPreviewRowData[] =>
 			previewFields
-				.filter((field) => !RESERVED_PREVIEW_KEYS.has(field.key))
+				.filter((field) => !RESERVED_PREVIEW_KEYS.has(field.name))
 				.map((field) => {
 					const value = getSpanAttribute(
 						{ resource: span.resource, attributes: span.attributes },
-						field.key,
+						field.name,
 					);
 					return value !== undefined && value !== ''
-						? { key: field.key, value: String(value) }
+						? { key: field.name, value: String(value) }
 						: null;
 				})
 				.filter((r): r is SpanPreviewRowData => r !== null),
@@ -200,7 +199,7 @@ export function useFlamegraphHover(
 
 			if (eventRect) {
 				const { event, span } = eventRect;
-				const eventTimeMs = event.timeUnixNano / 1e6;
+				const eventTimeMs = (event.timeUnixNano ?? 0) / 1e6;
 				setHoveredEventKey(`${span.spanId}-${event.name}-${event.timeUnixNano}`);
 				setHoveredSpanId(span.spanId);
 				setTooltipContent({
@@ -211,16 +210,19 @@ export function useFlamegraphHover(
 					durationMs: span.durationNano / 1e6,
 					clientX: e.clientX,
 					clientY: e.clientY,
-					spanColor: getSpanColor({
-						span,
-						isDarkMode,
-						groupValue: getFlamegraphSpanGroupValue(span, colorByField),
-					}),
+					spanColor: ((): string => {
+						const pair = getSpanColor({
+							span,
+							isDarkMode,
+							groupValue: getFlamegraphSpanGroupValue(span, colorByField),
+						});
+						return isDarkMode ? pair.color : pair.colorDark;
+					})(),
 					event: {
-						name: event.name,
+						name: event.name ?? '',
 						timeOffsetMs: eventTimeMs - span.timestamp,
-						isError: event.isError,
-						attributeMap: event.attributeMap || {},
+						isError: event.isError ?? false,
+						attributeMap: (event.attributeMap as Record<string, string>) ?? {},
 					},
 				});
 				updateCursor(canvas, eventRect.span);
@@ -244,11 +246,14 @@ export function useFlamegraphHover(
 					durationMs: span.durationNano / 1e6,
 					clientX: e.clientX,
 					clientY: e.clientY,
-					spanColor: getSpanColor({
-						span,
-						isDarkMode,
-						groupValue: getFlamegraphSpanGroupValue(span, colorByField),
-					}),
+					spanColor: ((): string => {
+						const pair = getSpanColor({
+							span,
+							isDarkMode,
+							groupValue: getFlamegraphSpanGroupValue(span, colorByField),
+						});
+						return isDarkMode ? pair.color : pair.colorDark;
+					})(),
 					previewRows: buildPreviewRows(span),
 				});
 				updateCursor(canvas, span);

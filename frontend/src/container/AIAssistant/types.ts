@@ -86,6 +86,11 @@ export interface Message {
 	actions?: MessageActionDTO[];
 	/** Persisted feedback rating — set after user votes and the API confirms. */
 	feedbackRating?: FeedbackRating | null;
+	/**
+	 * Set on client-side rate-limit error messages so the feedback/regenerate
+	 * bar (copy/vote/regenerate) is hidden — retrying would just 429 again.
+	 */
+	isRateLimitError?: boolean;
 	createdAt: number;
 }
 

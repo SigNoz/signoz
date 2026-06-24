@@ -1,0 +1,16 @@
+.breadcrumb {
+	padding-left: 16px;
+
+	ol {
+		align-items: center;
+	}
+
+	:global(.ant-breadcrumb-separator) {
+		color: var(--muted-foreground);
+	}
+}
+
+.divider {
+	--divider-color: var(--l1-border);
+	--divider-margin: 10px 0 16px 0;
+}

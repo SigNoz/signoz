@@ -5,6 +5,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/gorilla/mux"
 )
@@ -120,8 +121,8 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 		Tags:                []string{"downtimeschedules"},
 		Summary:             "List downtime schedules",
 		Description:         "This endpoint lists all planned maintenance / downtime schedules",
-		RequestQuery:        new(ruletypes.ListPlannedMaintenanceParams),
-		Response:            make([]*ruletypes.PlannedMaintenance, 0),
+		RequestQuery:        new(alertmanagertypes.ListPlannedMaintenanceParams),
+		Response:            make([]*alertmanagertypes.PlannedMaintenance, 0),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
@@ -134,7 +135,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 		Tags:                []string{"downtimeschedules"},
 		Summary:             "Get downtime schedule by ID",
 		Description:         "This endpoint returns a downtime schedule by ID",
-		Response:            new(ruletypes.PlannedMaintenance),
+		Response:            new(alertmanagertypes.PlannedMaintenance),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{http.StatusNotFound},
@@ -148,9 +149,9 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 		Tags:                []string{"downtimeschedules"},
 		Summary:             "Create downtime schedule",
 		Description:         "This endpoint creates a new planned maintenance / downtime schedule",
-		Request:             new(ruletypes.PostablePlannedMaintenance),
+		Request:             new(alertmanagertypes.PostablePlannedMaintenance),
 		RequestContentType:  "application/json",
-		Response:            new(ruletypes.PlannedMaintenance),
+		Response:            new(alertmanagertypes.PlannedMaintenance),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusCreated,
 		ErrorStatusCodes:    []int{http.StatusBadRequest},
@@ -164,7 +165,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 		Tags:               []string{"downtimeschedules"},
 		Summary:            "Update downtime schedule",
 		Description:        "This endpoint updates a downtime schedule by ID",
-		Request:            new(ruletypes.PostablePlannedMaintenance),
+		Request:            new(alertmanagertypes.PostablePlannedMaintenance),
 		RequestContentType: "application/json",
 		SuccessStatusCode:  http.StatusNoContent,
 		ErrorStatusCodes:   []int{http.StatusBadRequest, http.StatusNotFound},

@@ -175,7 +175,7 @@ func (m *defaultFieldMapper) getColumn(
 ) ([]*schema.Column, error) {
 	switch key.FieldContext {
 	case telemetrytypes.FieldContextResource:
-		return []*schema.Column{indexV3Columns["resource"]}, nil
+		return []*schema.Column{indexV3Columns["resources_string"], indexV3Columns["resource"]}, nil
 	case telemetrytypes.FieldContextScope:
 		return []*schema.Column{indexV3Columns["scope"]}, nil
 	case telemetrytypes.FieldContextAttribute:
@@ -255,70 +255,102 @@ func (m *defaultFieldMapper) FieldFor(
 	if err != nil {
 		return "", err
 	}
-	if len(columns) != 1 {
-		return "", errors.Newf(errors.TypeInternal, errors.CodeInternal, "expected exactly 1 column, got %d", len(columns))
-	}
-	column := columns[0]
 
-	switch column.Type.GetType() {
-	case schema.ColumnTypeEnumJSON:
-		switch key.FieldContext {
-		case telemetrytypes.FieldContextScope:
-			switch key.Name {
-			case "scope.name", "scope.version":
-				return fmt.Sprintf("%s::String", key.Name), nil
-			default:
-				return fmt.Sprintf("%s.attributes.`%s`::String", column.Name, key.Name), nil
-			}
-		case telemetrytypes.FieldContextResource:
-			oldColumn := indexV3Columns["resources_string"]
-			oldKeyName := fmt.Sprintf("%s['%s']", oldColumn.Name, key.Name)
+	var newColumns []*schema.Column
+	var evolutionsEntries []*telemetrytypes.EvolutionEntry
+	if len(key.Evolutions) > 0 {
+		// we will use the corresponding column and its evolution entry for the query
+		newColumns, evolutionsEntries, err = qbtypes.SelectEvolutionsForColumns(columns, key.Evolutions, startNs, endNs)
+		if err != nil {
+			return "", err
+		}
+	} else {
+		newColumns = columns
+	}
+
+	exprs := []string{}
+	existExpr := []string{}
+	for i, column := range newColumns {
+		// Use evolution column name if available, otherwise use the column name
+		columnName := column.Name
+		if evolutionsEntries != nil && evolutionsEntries[i] != nil {
+			columnName = evolutionsEntries[i].ColumnName
+		}
+
+		switch column.Type.GetType() {
+		case schema.ColumnTypeEnumJSON:
 			// have to add ::string as clickHouse throws an error :- data types Variant/Dynamic are not allowed in GROUP BY
 			// once clickHouse dependency is updated, we need to check if we can remove it.
-			if key.Materialized {
-				oldKeyName = telemetrytypes.FieldKeyToMaterializedColumnName(key)
-				oldKeyNameExists := telemetrytypes.FieldKeyToMaterializedColumnNameForExists(key)
-				return fmt.Sprintf("multiIf(%s.`%s` IS NOT NULL, %s.`%s`::String, %s==true, %s, NULL)", column.Name, key.Name, column.Name, key.Name, oldKeyNameExists, oldKeyName), nil
-			} else {
-				return fmt.Sprintf("multiIf(%s.`%s` IS NOT NULL, %s.`%s`::String, mapContains(%s, '%s'), %s, NULL)", column.Name, key.Name, column.Name, key.Name, oldColumn.Name, key.Name, oldKeyName), nil
+			switch key.FieldContext {
+			case telemetrytypes.FieldContextResource:
+				exprs = append(exprs, fmt.Sprintf("%s.`%s`::String", columnName, key.Name))
+				existExpr = append(existExpr, fmt.Sprintf("%s.`%s` IS NOT NULL", columnName, key.Name))
+			case telemetrytypes.FieldContextScope:
+				switch key.Name {
+				case "scope.name", "scope.version":
+					exprs = append(exprs, fmt.Sprintf("%s::String", key.Name))
+					existExpr = append(existExpr, fmt.Sprintf("%s IS NOT NULL", key.Name))
+				default:
+					exprs = append(exprs, fmt.Sprintf("%s.attributes.`%s`::String", columnName, key.Name))
+					existExpr = append(existExpr, fmt.Sprintf("%s.attributes.`%s` IS NOT NULL", columnName, key.Name))
+				}
+			default:
+				return "", errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "only resource and scope context fields are supported for json columns, got %s", key.FieldContext.String)
 			}
-		}
-		return "", errors.Newf(errors.TypeInternal, errors.CodeInternal, "json column type only supported for resource and scope context, got %s", key.FieldContext.String)
-	case schema.ColumnTypeEnumString,
-		schema.ColumnTypeEnumUInt64,
-		schema.ColumnTypeEnumUInt32,
-		schema.ColumnTypeEnumInt8,
-		schema.ColumnTypeEnumInt16,
-		schema.ColumnTypeEnumBool,
-		schema.ColumnTypeEnumDateTime64,
-		schema.ColumnTypeEnumFixedString:
-		return column.Name, nil
-	case schema.ColumnTypeEnumLowCardinality:
-		switch elementType := column.Type.(schema.LowCardinalityColumnType).ElementType; elementType.GetType() {
-		case schema.ColumnTypeEnumString:
-			return column.Name, nil
-		default:
-			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "value type %s is not supported for low cardinality column type %s", elementType, column.Type)
-		}
-	case schema.ColumnTypeEnumMap:
-		keyType := column.Type.(schema.MapColumnType).KeyType
-		if _, ok := keyType.(schema.LowCardinalityColumnType); !ok {
-			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "key type %s is not supported for map column type %s", keyType, column.Type)
-		}
+		case schema.ColumnTypeEnumString,
+			schema.ColumnTypeEnumUInt64,
+			schema.ColumnTypeEnumUInt32,
+			schema.ColumnTypeEnumInt8,
+			schema.ColumnTypeEnumInt16,
+			schema.ColumnTypeEnumBool,
+			schema.ColumnTypeEnumDateTime64,
+			schema.ColumnTypeEnumFixedString:
+			exprs = append(exprs, column.Name)
+		case schema.ColumnTypeEnumLowCardinality:
+			switch elementType := column.Type.(schema.LowCardinalityColumnType).ElementType; elementType.GetType() {
+			case schema.ColumnTypeEnumString:
+				exprs = append(exprs, column.Name)
+			default:
+				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "value type %s is not supported for low cardinality column type %s", elementType, column.Type)
+			}
+		case schema.ColumnTypeEnumMap:
+			keyType := column.Type.(schema.MapColumnType).KeyType
+			if _, ok := keyType.(schema.LowCardinalityColumnType); !ok {
+				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "key type %s is not supported for map column type %s", keyType, column.Type)
+			}
 
-		switch valueType := column.Type.(schema.MapColumnType).ValueType; valueType.GetType() {
-		case schema.ColumnTypeEnumString, schema.ColumnTypeEnumFloat64, schema.ColumnTypeEnumBool:
-			// a key could have been materialized, if so return the materialized column name
-			if key.Materialized {
-				return telemetrytypes.FieldKeyToMaterializedColumnName(key), nil
+			switch valueType := column.Type.(schema.MapColumnType).ValueType; valueType.GetType() {
+			case schema.ColumnTypeEnumString, schema.ColumnTypeEnumFloat64, schema.ColumnTypeEnumBool:
+				// a key could have been materialized, if so return the materialized column name
+				if key.Materialized {
+					exprs = append(exprs, telemetrytypes.FieldKeyToMaterializedColumnName(key))
+					existExpr = append(existExpr, fmt.Sprintf("%s==true", telemetrytypes.FieldKeyToMaterializedColumnNameForExists(key)))
+				} else {
+					exprs = append(exprs, fmt.Sprintf("%s['%s']", columnName, key.Name))
+					existExpr = append(existExpr, fmt.Sprintf("mapContains(%s, '%s')", columnName, key.Name))
+				}
+			default:
+				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "value type %s is not supported for map column type %s", valueType, column.Type)
 			}
-			return fmt.Sprintf("%s['%s']", column.Name, key.Name), nil
-		default:
-			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "value type %s is not supported for map column type %s", valueType, column.Type)
 		}
 	}
+
+	if len(exprs) == 1 {
+		return exprs[0], nil
+	} else if len(exprs) > 1 {
+		// Ensure existExpr has the same length as exprs
+		if len(existExpr) != len(exprs) {
+			return "", errors.New(errors.TypeInternal, errors.CodeInternal, "length of exist exprs doesn't match to that of exprs")
+		}
+		finalExprs := []string{}
+		for i, expr := range exprs {
+			finalExprs = append(finalExprs, fmt.Sprintf("%s, %s", existExpr[i], expr))
+		}
+		return "multiIf(" + strings.Join(finalExprs, ", ") + ", NULL)", nil
+	}
+
 	// should not reach here
-	return column.Name, nil
+	return columns[0].Name, nil
 }
 
 // ColumnExpressionFor returns the column expression for the given field
@@ -347,14 +379,8 @@ func (m *defaultFieldMapper) ColumnExpressionFor(
 				// - it is not a static field
 				// - the next best thing to do is see if there is a typo
 				// and suggest a correction
-				correction, found := telemetrytypes.SuggestCorrection(field.Name, maps.Keys(keys))
-				if found {
-					// we found a close match, in the error message send the suggestion
-					return "", errors.Wrap(err, errors.TypeInvalidInput, errors.CodeInvalidInput, correction)
-				} else {
-					// not even a close match, return an error
-					return "", errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field `%s` not found", field.Name)
-				}
+				wrappedErr := errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field `%s` not found", field.Name).WithSuggestions(errors.SuggestionsOnLevenshteinDistance(field.Name, maps.Keys(keys))...)
+				return "", wrappedErr
 			}
 		} else if len(keysForField) == 1 {
 			// we have a single key for the field, use it

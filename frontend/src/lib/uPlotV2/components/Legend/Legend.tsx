@@ -1,39 +1,41 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { VirtuosoGrid } from 'react-virtuoso';
-import { Input, Tooltip as AntdTooltip } from 'antd';
+import { Input } from 'antd';
+import { Button } from '@signozhq/ui/button';
+import { TooltipSimple } from '@signozhq/ui/tooltip';
 import cx from 'classnames';
 import { useCopyToClipboard } from 'hooks/useCopyToClipboard';
 import { LegendItem } from 'lib/uPlotV2/config/types';
-import useLegendsSync from 'lib/uPlotV2/hooks/useLegendsSync';
 import { Check, Copy } from '@signozhq/icons';
 
-import { useLegendActions } from '../../hooks/useLegendActions';
 import { LegendPosition, LegendProps } from '../types';
 
 import './Legend.styles.scss';
 
 export const MAX_LEGEND_WIDTH = 240;
 
+/**
+ * Presentational legend. Renders the supplied `items` (markers + labels, an
+ * optional copy button, and a search box for the RIGHT position) and delegates
+ * all interaction to the container handlers. Source-agnostic — the uPlot
+ * charts feed it via UPlotLegend; Pie feeds it directly.
+ */
 export default function Legend({
-	position = LegendPosition.BOTTOM,
-	config,
+	items,
+	position,
 	averageLegendWidth = MAX_LEGEND_WIDTH,
+	focusedSeriesIndex,
+	onClick,
+	onMouseMove,
+	onMouseLeave,
+	showCopy = true,
 }: LegendProps): JSX.Element {
-	const { legendItemsMap, focusedSeriesIndex, setFocusedSeriesIndex } =
-		useLegendsSync({ config });
-	const { onLegendClick, onLegendMouseMove, onLegendMouseLeave } =
-		useLegendActions({
-			setFocusedSeriesIndex,
-			focusedSeriesIndex,
-		});
 	const legendContainerRef = useRef<HTMLDivElement | null>(null);
 	const [legendSearchQuery, setLegendSearchQuery] = useState('');
 	const { copyToClipboard, id: copiedId } = useCopyToClipboard();
 
-	const legendItems = useMemo(
-		() => Object.values(legendItemsMap),
-		[legendItemsMap],
-	);
+	// Search is intrinsic to the right-positioned legend.
+	const searchEnabled = position === LegendPosition.RIGHT;
 
 	const isSingleRow = useMemo(() => {
 		if (!legendContainerRef.current || position !== LegendPosition.BOTTOM) {
@@ -41,21 +43,19 @@ export default function Legend({
 		}
 		const containerWidth = legendContainerRef.current.clientWidth;
 
-		const totalLegendWidth = legendItems.length * (averageLegendWidth + 16);
+		const totalLegendWidth = items.length * (averageLegendWidth + 16);
 		const totalRows = Math.ceil(totalLegendWidth / containerWidth);
 		return totalRows <= 1;
-	}, [averageLegendWidth, legendContainerRef, legendItems.length, position]);
+	}, [averageLegendWidth, items.length, position]);
 
 	const visibleLegendItems = useMemo(() => {
-		if (position !== LegendPosition.RIGHT || !legendSearchQuery.trim()) {
-			return legendItems;
+		if (!searchEnabled || !legendSearchQuery.trim()) {
+			return items;
 		}
 
 		const query = legendSearchQuery.trim().toLowerCase();
-		return legendItems.filter((item) =>
-			item.label?.toLowerCase().includes(query),
-		);
-	}, [position, legendSearchQuery, legendItems]);
+		return items.filter((item) => item.label?.toLowerCase().includes(query));
+	}, [searchEnabled, legendSearchQuery, items]);
 
 	const handleCopyLegendItem = useCallback(
 		(e: React.MouseEvent, seriesIndex: number, label: string): void => {
@@ -68,6 +68,9 @@ export default function Legend({
 	const renderLegendItem = useCallback(
 		(item: LegendItem): JSX.Element => {
 			const isCopied = copiedId === item.seriesIndex;
+			// `color` is uPlot's stroke union (string | fn | gradient); only a string
+			// is a usable CSS colour for the marker.
+			const markerColor = typeof item.color === 'string' ? item.color : undefined;
 			return (
 				<div
 					key={item.seriesIndex}
@@ -77,54 +80,68 @@ export default function Legend({
 						'legend-item-focused': focusedSeriesIndex === item.seriesIndex,
 					})}
 				>
-					<AntdTooltip title={item.label}>
+					<TooltipSimple title={item.label} arrow side="top" disableHoverableContent>
 						<div className="legend-item-label-trigger">
 							<div
 								className="legend-marker"
-								style={{ borderColor: String(item.color) }}
+								style={{ borderColor: markerColor }}
 								data-is-legend-marker={true}
 							/>
 							<span className="legend-label">{item.label}</span>
 						</div>
-					</AntdTooltip>
-					<AntdTooltip title={isCopied ? 'Copied' : 'Copy'}>
-						<button
-							type="button"
-							className="legend-copy-button"
-							onClick={(e): void =>
-								handleCopyLegendItem(e, item.seriesIndex, item.label ?? '')
-							}
-							aria-label={`Copy ${item.label}`}
-							data-testid="legend-copy"
+					</TooltipSimple>
+					{showCopy && (
+						<TooltipSimple
+							title={isCopied ? 'Copied' : 'Copy'}
+							arrow
+							side="top"
+							disableHoverableContent
 						>
-							{isCopied ? <Check size={12} /> : <Copy size={12} />}
-						</button>
-					</AntdTooltip>
+							<Button
+								type="button"
+								size="icon"
+								variant="ghost"
+								color="secondary"
+								className="legend-copy-button"
+								onClick={(e): void =>
+									handleCopyLegendItem(e, item.seriesIndex, item.label ?? '')
+								}
+								aria-label={`Copy ${item.label}`}
+								// data-testid (not testId): TooltipSimple's trigger injects
+								// data-testid:undefined via Radix Slot, and Button spreads
+								// incoming props after its own testId — so set it as a prop
+								// that wins the Slot merge and survives the spread.
+								data-testid="legend-copy"
+							>
+								{isCopied ? <Check size={12} /> : <Copy size={12} />}
+							</Button>
+						</TooltipSimple>
+					)}
 				</div>
 			);
 		},
-		[copiedId, focusedSeriesIndex, handleCopyLegendItem, position],
+		[copiedId, focusedSeriesIndex, handleCopyLegendItem, position, showCopy],
 	);
 
 	const isEmptyState = useMemo(() => {
-		if (position !== LegendPosition.RIGHT || !legendSearchQuery.trim()) {
+		if (!searchEnabled || !legendSearchQuery.trim()) {
 			return false;
 		}
 		return visibleLegendItems.length === 0;
-	}, [position, legendSearchQuery, visibleLegendItems]);
+	}, [searchEnabled, legendSearchQuery, visibleLegendItems]);
 
 	return (
 		<div
 			ref={legendContainerRef}
 			className="legend-container"
-			onClick={onLegendClick}
-			onMouseMove={onLegendMouseMove}
-			onMouseLeave={onLegendMouseLeave}
+			onClick={onClick}
+			onMouseMove={onMouseMove}
+			onMouseLeave={onMouseLeave}
 			style={{
 				['--legend-average-width' as string]: `${averageLegendWidth + 16}px`, // 16px is the marker width
 			}}
 		>
-			{position === LegendPosition.RIGHT && (
+			{searchEnabled && (
 				<div className="legend-search-container">
 					<Input
 						allowClear

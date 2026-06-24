@@ -5,6 +5,7 @@ import {
 	TooltipTrigger,
 } from '@signozhq/ui/tooltip';
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useTraceStore } from 'pages/TraceDetailsV3/stores/traceStore';
 import { getSpanAttribute, resolveSpanColor } from 'pages/TraceDetailsV3/utils';
 import { useMemo } from 'react';
@@ -101,6 +102,7 @@ export function SpanHoverCard({
 }: SpanHoverCardProps): JSX.Element {
 	const previewFields = useTraceStore((s) => s.previewFields);
 	const colorByFieldName = useTraceStore((s) => s.colorByField.name);
+	const isDarkMode = useIsDarkMode();
 
 	const hoverCardData = useMemo(() => {
 		if (!hoveredSpanId) {
@@ -112,20 +114,21 @@ export function SpanHoverCard({
 		}
 		const span = spans[idx];
 		const previewRows: SpanPreviewRow[] = previewFields
-			.filter((f) => !RESERVED_PREVIEW_KEYS.has(f.key))
+			.filter((f) => !RESERVED_PREVIEW_KEYS.has(f.name))
 			.map((f) => {
-				const value = getSpanAttribute(span, f.key);
+				const value = getSpanAttribute(span, f.name);
 				return value !== undefined && value !== ''
-					? { key: f.key, value: String(value) }
+					? { key: f.name, value: String(value) }
 					: null;
 			})
 			.filter((r): r is SpanPreviewRow => r !== null);
 
+		const pair = resolveSpanColor(span, colorByFieldName);
 		return {
 			anchorTop: idx * rowHeight,
 			tooltip: {
 				spanName: span.name,
-				color: resolveSpanColor(span, colorByFieldName),
+				color: isDarkMode ? pair.color : pair.colorDark,
 				hasError: span.has_error,
 				relativeStartMs: span.timestamp - traceStartTime,
 				durationMs: span.duration_nano / 1e6,
@@ -139,6 +142,7 @@ export function SpanHoverCard({
 		colorByFieldName,
 		rowHeight,
 		traceStartTime,
+		isDarkMode,
 	]);
 
 	return (

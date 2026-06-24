@@ -3,11 +3,13 @@ import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { getFlamegraphSpanGroupValue, getSpanColor } from '../utils';
 import { MOCK_SPAN } from './testUtils';
 
-const mockGenerateColor = jest.fn();
+const mockGenerateColorPair = jest.fn();
 
-jest.mock('lib/uPlotLib/utils/generateColor', () => ({
-	generateColor: (key: string, colorMap: Record<string, string>): string =>
-		mockGenerateColor(key, colorMap),
+jest.mock('pages/TraceDetailsV3/utils/generateColorPair', () => ({
+	generateColorPair: (name: string): { color: string; colorDark: string } =>
+		mockGenerateColorPair(name),
+	RESERVED_ERROR: '#FC4E4E',
+	darkenHex: (hex: string): string => hex,
 }));
 
 const SERVICE_FIELD: TelemetryFieldKey = {
@@ -24,85 +26,64 @@ const HOST_FIELD: TelemetryFieldKey = {
 describe('Presentation / Styling Utils', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
-		mockGenerateColor.mockReturnValue('#2F80ED');
+		mockGenerateColorPair.mockReturnValue({
+			color: '#2F80ED',
+			colorDark: '#1a4d99',
+		});
 	});
 
 	describe('getSpanColor', () => {
 		it('uses generated colour from groupValue for normal span', () => {
-			mockGenerateColor.mockReturnValue('#1890ff');
+			mockGenerateColorPair.mockReturnValue({
+				color: '#1890ff',
+				colorDark: '#0d5599',
+			});
 
-			const color = getSpanColor({
+			const result = getSpanColor({
 				span: { ...MOCK_SPAN, hasError: false },
 				isDarkMode: false,
 				groupValue: 'my-bucket',
 			});
 
-			expect(mockGenerateColor).toHaveBeenCalledWith(
-				'my-bucket',
-				expect.any(Object),
-			);
-			expect(color).toBe('#1890ff');
+			expect(mockGenerateColorPair).toHaveBeenCalledWith('my-bucket');
+			expect(result.color).toBe('#1890ff');
+			expect(result.colorDark).toBe('#0d5599');
 		});
 
-		it('overrides with error color in light mode when span has error', () => {
-			mockGenerateColor.mockReturnValue('#1890ff');
-
-			const color = getSpanColor({
+		it('overrides with reserved error color when span has error', () => {
+			const result = getSpanColor({
 				span: { ...MOCK_SPAN, hasError: true },
 				isDarkMode: false,
 				groupValue: 'my-bucket',
 			});
 
-			expect(color).toBe('rgb(220, 38, 38)');
-		});
-
-		it('overrides with error color in dark mode when span has error', () => {
-			mockGenerateColor.mockReturnValue('#1890ff');
-
-			const color = getSpanColor({
-				span: { ...MOCK_SPAN, hasError: true },
-				isDarkMode: true,
-				groupValue: 'my-bucket',
-			});
-
-			expect(color).toBe('rgb(239, 68, 68)');
+			expect(result.color).toBe('#FC4E4E');
+			expect(result.colorDark).toBe('#FC4E4E');
 		});
 	});
 
 	describe('getFlamegraphSpanGroupValue', () => {
 		it('returns resource[field.name] when present', () => {
 			const value = getFlamegraphSpanGroupValue(
-				{
-					serviceName: 'legacy',
-					resource: { 'service.name': 'svc-from-resource' },
-				},
+				{ resource: { 'service.name': 'svc-from-resource' } },
 				SERVICE_FIELD,
 			);
 			expect(value).toBe('svc-from-resource');
 		});
 
-		it('falls back to top-level serviceName for service.name when resource is empty', () => {
-			const value = getFlamegraphSpanGroupValue(
-				{ serviceName: 'svc-legacy', resource: {} },
-				SERVICE_FIELD,
-			);
-			expect(value).toBe('svc-legacy');
+		it('returns "unknown" for service.name when resource is empty', () => {
+			const value = getFlamegraphSpanGroupValue({ resource: {} }, SERVICE_FIELD);
+			expect(value).toBe('unknown');
 		});
 
 		it('returns "unknown" for non-service fields when resource is missing', () => {
-			const value = getFlamegraphSpanGroupValue(
-				{ serviceName: 'svc', resource: {} },
-				HOST_FIELD,
-			);
+			const value = getFlamegraphSpanGroupValue({ resource: {} }, HOST_FIELD);
 			expect(value).toBe('unknown');
 		});
 
 		it('reads host.name from resource when present', () => {
 			const value = getFlamegraphSpanGroupValue(
-				{
-					serviceName: 'svc',
-					resource: { 'host.name': 'host-1' },
-				},
+				{ resource: { 'host.name': 'host-1' } },
 				HOST_FIELD,
 			);
 			expect(value).toBe('host-1');

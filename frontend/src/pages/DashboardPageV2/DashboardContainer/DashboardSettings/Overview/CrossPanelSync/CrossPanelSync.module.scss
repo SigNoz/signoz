@@ -1,0 +1,86 @@
+.crossPanelSyncGroup {
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+}
+
+.crossPanelSyncSectionHeader {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.crossPanelsSyncSectionTitle {
+	color: var(--l1-foreground);
+	font-size: 14px;
+	font-weight: 500;
+}
+
+.crossPanelSyncInfoIcon {
+	cursor: help;
+}
+
+.crossPanelSyncTooltipContent {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 8px;
+	max-width: 200px;
+}
+
+.crossPanelSyncTooltipTitle {
+	font-size: 14px;
+}
+
+.crossPanelSyncTooltipDescription {
+	font-size: 12px;
+}
+
+.crossPanelSyncTooltipDocLink {
+	color: var(--primary-background);
+	font-size: 12px;
+	margin-top: 16px;
+	vertical-align: middle;
+
+	// typography override
+	--typography-text-display: inline-flex;
+	align-items: center;
+	gap: 5px;
+}
+
+.crossPanelSyncRow {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	align-items: center;
+	gap: 16px;
+
+	& + & {
+		padding-top: 16px;
+		border-top: 1px dashed var(--l2-border);
+	}
+}
+
+.crossPanelSyncInfo {
+	display: flex;
+	flex: 1 1 80px;
+	min-width: 0;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.crossPanelSyncTitle {
+	color: var(--l2-foreground);
+	font-family: Inter;
+	font-size: 14px;
+	font-weight: 400;
+	line-height: 20px;
+}
+
+.crossPanelSyncDescription {
+	color: var(--l3-foreground);
+	font-family: Inter;
+	font-size: 13px;
+	font-weight: 400;
+	line-height: 20px;
+}

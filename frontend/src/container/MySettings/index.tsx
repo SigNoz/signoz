@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useMutation } from 'react-query';
-import { Radio, RadioChangeEvent, Switch, Tag } from 'antd';
+import { Badge } from '@signozhq/ui/badge';
+import { Switch } from '@signozhq/ui/switch';
+import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
 import setLocalStorageApi from 'api/browser/localstorage/set';
 import logEvent from 'api/common/logEvent';
 import updateUserPreference from 'api/v1/user/preferences/name/update';
@@ -63,9 +65,7 @@ function MySettings(): JSX.Element {
 			label: (
 				<div className="theme-option">
 					<Sun size={12} data-testid="light-theme-icon" /> Light{' '}
-					<Tag bordered={false} color="geekblue">
-						Beta
-					</Tag>
+					<Badge color="robin">Beta</Badge>
 				</div>
 			),
 			value: 'light',
@@ -87,7 +87,7 @@ function MySettings(): JSX.Element {
 		return isDarkMode ? 'dark' : 'light';
 	});
 
-	const handleThemeChange = ({ target: { value } }: RadioChangeEvent): void => {
+	const handleThemeChange = (value: string): void => {
 		logEvent('Account Settings: Theme Changed', {
 			theme: value,
 		});
@@ -186,14 +186,12 @@ function MySettings(): JSX.Element {
 					<div className="user-preference-section-content-item theme-selector">
 						<div className="user-preference-section-content-item-title-action">
 							Select your theme
-							<Radio.Group
-								options={themeOptions}
+							<ToggleGroupSimple
+								type="single"
 								onChange={handleThemeChange}
 								value={theme}
-								optionType="button"
-								buttonStyle="solid"
 								data-testid="theme-selector"
-								size="middle"
+								items={themeOptions}
 							/>
 						</div>
 
@@ -218,10 +216,10 @@ function MySettings(): JSX.Element {
 						<div className="user-preference-section-content-item-title-action">
 							Keep the primary sidebar always open{' '}
 							<Switch
-								checked={sideNavPinned}
+								value={sideNavPinned}
 								onChange={handleSideNavPinnedChange}
-								loading={isUpdatingUserPreference}
-								data-testid="side-nav-pinned-switch"
+								disabled={isUpdatingUserPreference}
+								testId="side-nav-pinned-switch"
 							/>
 						</div>
 

@@ -8,12 +8,16 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"os"
 	"testing"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	commoncfg "github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/common/promslog"
@@ -22,16 +26,23 @@ import (
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/notify/test"
+	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 )
 
+func newTestTemplater(tmpl *template.Template) alertmanagertypes.Templater {
+	return alertmanagertemplate.New(tmpl, slog.New(slog.DiscardHandler))
+}
+
 func TestOpsGenieRetry(t *testing.T) {
+	tmpl := test.CreateTmpl(t)
 	notifier, err := New(
 		&config.OpsGenieConfig{
 			HTTPConfig: &commoncfg.HTTPClientConfig{},
 		},
-		test.CreateTmpl(t),
+		tmpl,
 		promslog.NewNopLogger(),
+		newTestTemplater(tmpl),
 	)
 	require.NoError(t, err)
 
@@ -47,14 +58,16 @@ func TestOpsGenieRedactedURL(t *testing.T) {
 	defer fn()
 
 	key := "key"
+	tmpl := test.CreateTmpl(t)
 	notifier, err := New(
 		&config.OpsGenieConfig{
 			APIURL:     &config.URL{URL: u},
 			APIKey:     config.Secret(key),
 			HTTPConfig: &commoncfg.HTTPClientConfig{},
 		},
-		test.CreateTmpl(t),
+		tmpl,
 		promslog.NewNopLogger(),
+		newTestTemplater(tmpl),
 	)
 	require.NoError(t, err)
 
@@ -72,14 +85,16 @@ func TestGettingOpsGegineApikeyFromFile(t *testing.T) {
 	_, err = f.WriteString(key)
 	require.NoError(t, err, "writing to temp file failed")
 
+	tmpl := test.CreateTmpl(t)
 	notifier, err := New(
 		&config.OpsGenieConfig{
 			APIURL:     &config.URL{URL: u},
 			APIKeyFile: f.Name(),
 			HTTPConfig: &commoncfg.HTTPClientConfig{},
 		},
-		test.CreateTmpl(t),
+		tmpl,
 		promslog.NewNopLogger(),
+		newTestTemplater(tmpl),
 	)
 	require.NoError(t, err)
 
@@ -202,7 +217,7 @@ func TestOpsGenie(t *testing.T) {
 		},
 	} {
 		t.Run(tc.title, func(t *testing.T) {
-			notifier, err := New(tc.cfg, tmpl, logger)
+			notifier, err := New(tc.cfg, tmpl, logger, newTestTemplater(tmpl))
 			require.NoError(t, err)
 
 			ctx := context.Background()
@@ -278,7 +293,7 @@ func TestOpsGenieWithUpdate(t *testing.T) {
 		APIURL:       &config.URL{URL: u},
 		HTTPConfig:   &commoncfg.HTTPClientConfig{},
 	}
-	notifierWithUpdate, err := New(&opsGenieConfigWithUpdate, tmpl, promslog.NewNopLogger())
+	notifierWithUpdate, err := New(&opsGenieConfigWithUpdate, tmpl, promslog.NewNopLogger(), newTestTemplater(tmpl))
 	alert := &types.Alert{
 		Alert: model.Alert{
 			StartsAt: time.Now(),
@@ -321,12 +336,105 @@ func TestOpsGenieApiKeyFile(t *testing.T) {
 		APIURL:     &config.URL{URL: u},
 		HTTPConfig: &commoncfg.HTTPClientConfig{},
 	}
-	notifierWithUpdate, err := New(&opsGenieConfigWithUpdate, tmpl, promslog.NewNopLogger())
+	notifierWithUpdate, err := New(&opsGenieConfigWithUpdate, tmpl, promslog.NewNopLogger(), newTestTemplater(tmpl))
 
 	require.NoError(t, err)
 	requests, _, err := notifierWithUpdate.createRequests(ctx)
 	require.NoError(t, err)
 	require.Equal(t, "GenieKey my_secret_api_key", requests[0].Header.Get("Authorization"))
+}
+
+func TestPrepareContent(t *testing.T) {
+	t.Run("default template", func(t *testing.T) {
+		tmpl := test.CreateTmpl(t)
+		logger := promslog.NewNopLogger()
+
+		notifier := &Notifier{
+			conf: &config.OpsGenieConfig{
+				Message:     `{{ .CommonLabels.Message }}`,
+				Description: `{{ .CommonLabels.Description }}`,
+			},
+			tmpl:      tmpl,
+			logger:    logger,
+			templater: newTestTemplater(tmpl),
+		}
+
+		ctx := context.Background()
+		ctx = notify.WithGroupKey(ctx, "1")
+
+		alert := &types.Alert{
+			Alert: model.Alert{
+				Labels: model.LabelSet{
+					"Message":     "Firing alert: test",
+					"Description": "Check runbook for more details",
+				},
+				StartsAt: time.Now(),
+				EndsAt:   time.Now().Add(time.Hour),
+			},
+		}
+
+		alerts := []*types.Alert{alert}
+
+		title, desc, prepErr := notifier.prepareContent(ctx, alerts)
+		require.NoError(t, prepErr)
+		require.Equal(t, "Firing alert: test", title)
+		require.Equal(t, "Check runbook for more details", desc)
+	})
+
+	t.Run("custom template", func(t *testing.T) {
+		tmpl := test.CreateTmpl(t)
+		logger := promslog.NewNopLogger()
+
+		notifier := &Notifier{
+			conf: &config.OpsGenieConfig{
+				Message:     `{{ .CommonLabels.Message }}`,
+				Description: `{{ .CommonLabels.Description }}`,
+			},
+			tmpl:      tmpl,
+			logger:    logger,
+			templater: newTestTemplater(tmpl),
+		}
+
+		ctx := context.Background()
+		ctx = notify.WithGroupKey(ctx, "1")
+
+		alert1 := &types.Alert{
+			Alert: model.Alert{
+				Labels: model.LabelSet{
+					"service":   "payment",
+					"namespace": "potter-the-harry",
+				},
+				Annotations: model.LabelSet{
+					ruletypes.AnnotationTitleTemplate: "High request throughput for $service",
+					ruletypes.AnnotationBodyTemplate:  "Alert firing in NS: $labels.namespace",
+				},
+				StartsAt: time.Now(),
+				EndsAt:   time.Now().Add(time.Hour),
+			},
+		}
+		alert2 := &types.Alert{
+			Alert: model.Alert{
+				Labels: model.LabelSet{
+					"service":   "payment",
+					"namespace": "smart-the-rat",
+				},
+				Annotations: model.LabelSet{
+					ruletypes.AnnotationTitleTemplate: "High request throughput for $service",
+					ruletypes.AnnotationBodyTemplate:  "Alert firing in NS: $labels.namespace",
+				},
+				StartsAt: time.Now(),
+				EndsAt:   time.Now().Add(time.Hour),
+			},
+		}
+
+		alerts := []*types.Alert{alert1, alert2}
+
+		title, desc, err := notifier.prepareContent(ctx, alerts)
+		require.NoError(t, err)
+		require.Equal(t, "High request throughput for payment", title)
+		// Each alert body wrapped in <div>, separated by <hr>
+		require.Equal(t, "<div><p>Alert firing in NS: potter-the-harry</p>\n</div><hr><div><p>Alert firing in NS: smart-the-rat</p>\n</div>", desc)
+	})
 }
 
 func readBody(t *testing.T, r *http.Request) string {

@@ -1,9 +1,9 @@
-import { Skeleton } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import axios from 'axios';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import Graph from 'container/GridCardLayout/GridCard';
+import { SERVICE_DETAIL_DRILLDOWN_ENABLED } from 'container/MetricsApplication/constant';
 import { Card, GraphContainer } from 'container/MetricsApplication/styles';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
 import { Widgets } from 'types/api/dashboard/getAll';
@@ -28,23 +28,14 @@ function TopLevelOperation({
 				</Typography>
 			) : (
 				<GraphContainer>
-					{topLevelOperationsIsLoading && (
-						<Skeleton
-							style={{
-								height: '100%',
-								padding: '16px',
-							}}
-						/>
-					)}
-					{!topLevelOperationsIsLoading && (
-						<Graph
-							widget={widget}
-							onClickHandler={handleGraphClick(opName)}
-							onDragSelect={onDragSelect}
-							isQueryEnabled={!topLevelOperationsIsLoading}
-							version={ENTITY_VERSION_V4}
-						/>
-					)}
+					<Graph
+						widget={widget}
+						onClickHandler={handleGraphClick(opName)}
+						onDragSelect={onDragSelect}
+						isQueryEnabled={!topLevelOperationsIsLoading}
+						version={ENTITY_VERSION_V4}
+						enableDrillDown={SERVICE_DETAIL_DRILLDOWN_ENABLED}
+					/>
 				</GraphContainer>
 			)}
 		</Card>

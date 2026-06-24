@@ -1,4 +1,4 @@
-import { FlamegraphSpan } from 'types/api/trace/getTraceFlamegraph';
+import { SpantypesFlamegraphSpanDTO as FlamegraphSpan } from 'api/generated/services/sigNoz.schemas';
 
 import { VisualLayout } from './computeVisualLayout';
 
