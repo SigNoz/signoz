@@ -210,7 +210,7 @@ function ModelCostDrawer({
 						<SourceSelector
 							isOverride={field.value}
 							isReadOnly={metadataReadOnly}
-							disableAuto={mode === 'add'}
+							disableAuto={mode === 'add' || !initialDraft.sourceId}
 							onChange={field.onChange}
 						/>
 					)}

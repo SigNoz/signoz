@@ -1,7 +1,7 @@
 import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
 import type { AxiosError } from 'axios';
+import type { Querybuildertypesv5QueryWarnDataDTO as WarningDTO } from 'api/generated/services/sigNoz.schemas';
 import { StatusCodes } from 'http-status-codes';
-import type { Warning } from 'types/api';
 
 import { panelStatusFromError, panelStatusFromWarning } from '../utils';
 
@@ -61,16 +61,14 @@ describe('panelStatusFromWarning', () => {
 		expect(panelStatusFromWarning(undefined)).toBeNull();
 	});
 
-	it('maps a warning to the normalized status shape', () => {
-		const warning: Warning = {
-			code: 'partial_data',
+	it('maps a warning to the normalized status shape (no code — V5 warnings carry none)', () => {
+		const warning: WarningDTO = {
 			message: 'Some series were dropped',
 			url: 'https://docs/warn',
 			warnings: [{ message: 'series A truncated' }],
 		};
 
 		expect(panelStatusFromWarning(warning)).toStrictEqual({
-			code: 'partial_data',
 			message: 'Some series were dropped',
 			docsUrl: 'https://docs/warn',
 			messages: ['series A truncated'],

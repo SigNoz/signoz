@@ -23,6 +23,7 @@ import type {
 	CreateResetPasswordToken201,
 	CreateResetPasswordTokenPathParameters,
 	CreateUser201,
+	DeleteUserDeprecatedPathParameters,
 	DeleteUserPathParameters,
 	GetMyUser200,
 	GetMyUserDeprecated200,
@@ -511,10 +512,11 @@ export const invalidateListUsersDeprecated = async (
 
 /**
  * This endpoint deletes the user by id
+ * @deprecated
  * @summary Delete user
  */
-export const deleteUser = (
-	{ id }: DeleteUserPathParameters,
+export const deleteUserDeprecated = (
+	{ id }: DeleteUserDeprecatedPathParameters,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<void>({
@@ -524,23 +526,23 @@ export const deleteUser = (
 	});
 };
 
-export const getDeleteUserMutationOptions = <
+export const getDeleteUserDeprecatedMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof deleteUser>>,
+		Awaited<ReturnType<typeof deleteUserDeprecated>>,
 		TError,
-		{ pathParams: DeleteUserPathParameters },
+		{ pathParams: DeleteUserDeprecatedPathParameters },
 		TContext
 	>;
 }): UseMutationOptions<
-	Awaited<ReturnType<typeof deleteUser>>,
+	Awaited<ReturnType<typeof deleteUserDeprecated>>,
 	TError,
-	{ pathParams: DeleteUserPathParameters },
+	{ pathParams: DeleteUserDeprecatedPathParameters },
 	TContext
 > => {
-	const mutationKey = ['deleteUser'];
+	const mutationKey = ['deleteUserDeprecated'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -550,43 +552,45 @@ export const getDeleteUserMutationOptions = <
 		: { mutation: { mutationKey } };
 
 	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof deleteUser>>,
-		{ pathParams: DeleteUserPathParameters }
+		Awaited<ReturnType<typeof deleteUserDeprecated>>,
+		{ pathParams: DeleteUserDeprecatedPathParameters }
 	> = (props) => {
 		const { pathParams } = props ?? {};
 
-		return deleteUser(pathParams);
+		return deleteUserDeprecated(pathParams);
 	};
 
 	return { mutationFn, ...mutationOptions };
 };
 
-export type DeleteUserMutationResult = NonNullable<
-	Awaited<ReturnType<typeof deleteUser>>
+export type DeleteUserDeprecatedMutationResult = NonNullable<
+	Awaited<ReturnType<typeof deleteUserDeprecated>>
 >;
 
-export type DeleteUserMutationError = ErrorType<RenderErrorResponseDTO>;
+export type DeleteUserDeprecatedMutationError =
+	ErrorType<RenderErrorResponseDTO>;
 
 /**
+ * @deprecated
  * @summary Delete user
  */
-export const useDeleteUser = <
+export const useDeleteUserDeprecated = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof deleteUser>>,
+		Awaited<ReturnType<typeof deleteUserDeprecated>>,
 		TError,
-		{ pathParams: DeleteUserPathParameters },
+		{ pathParams: DeleteUserDeprecatedPathParameters },
 		TContext
 	>;
 }): UseMutationResult<
-	Awaited<ReturnType<typeof deleteUser>>,
+	Awaited<ReturnType<typeof deleteUserDeprecated>>,
 	TError,
-	{ pathParams: DeleteUserPathParameters },
+	{ pathParams: DeleteUserDeprecatedPathParameters },
 	TContext
 > => {
-	return useMutation(getDeleteUserMutationOptions(options));
+	return useMutation(getDeleteUserDeprecatedMutationOptions(options));
 };
 /**
  * This endpoint returns the user by id
@@ -1308,6 +1312,85 @@ export const useCreateUser = <
 	TContext
 > => {
 	return useMutation(getCreateUserMutationOptions(options));
+};
+/**
+ * This endpoint deletes the user by id
+ * @summary Delete user
+ */
+export const deleteUser = (
+	{ id }: DeleteUserPathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<void>({
+		url: `/api/v2/users/${id}`,
+		method: 'DELETE',
+		signal,
+	});
+};
+
+export const getDeleteUserMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof deleteUser>>,
+		TError,
+		{ pathParams: DeleteUserPathParameters },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof deleteUser>>,
+	TError,
+	{ pathParams: DeleteUserPathParameters },
+	TContext
+> => {
+	const mutationKey = ['deleteUser'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof deleteUser>>,
+		{ pathParams: DeleteUserPathParameters }
+	> = (props) => {
+		const { pathParams } = props ?? {};
+
+		return deleteUser(pathParams);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteUserMutationResult = NonNullable<
+	Awaited<ReturnType<typeof deleteUser>>
+>;
+
+export type DeleteUserMutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Delete user
+ */
+export const useDeleteUser = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof deleteUser>>,
+		TError,
+		{ pathParams: DeleteUserPathParameters },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof deleteUser>>,
+	TError,
+	{ pathParams: DeleteUserPathParameters },
+	TContext
+> => {
+	return useMutation(getDeleteUserMutationOptions(options));
 };
 /**
  * This endpoint returns the user by id
