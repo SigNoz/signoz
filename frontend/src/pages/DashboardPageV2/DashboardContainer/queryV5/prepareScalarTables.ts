@@ -8,11 +8,8 @@ import { Querybuildertypesv5QueryTypeDTO } from 'api/generated/services/sigNoz.s
 
 import type { PanelTable, PanelTableColumn } from './types';
 
-/**
- * Narrow view over a builder-query aggregation; the generated envelope spec
- * is `unknown`, so the fields column naming needs are read through this view
- * with a localized cast at the envelope boundary.
- */
+// Narrow view over a builder-query aggregation; envelope spec is `unknown`, so naming reads
+// through this view with a localized cast at the boundary.
 interface AggregationView {
 	alias?: string;
 	expression?: string;
@@ -21,10 +18,8 @@ interface AggregationView {
 type AggregationsPerQuery = Record<string, AggregationView[]>;
 
 /**
- * queryName → aggregations, recovered from the request payload's builder
- * envelopes. Column display names depend on the aggregation alias/expression
- * the query was sent with (V1 parity: `convertV5ResponseToLegacy` derived the
- * same map from `params.compositeQuery`).
+ * queryName → aggregations, recovered from the request payload: column display names depend on
+ * the alias/expression the query was sent with (V1 parity).
  */
 export function extractAggregationsPerQuery(
 	requestPayload: Querybuildertypesv5QueryRangeRequestDTO | undefined,
@@ -70,12 +65,9 @@ export function extractClickhouseQueryNames(
 }
 
 /**
- * Column display name. Group columns keep their field name; aggregation
- * columns resolve alias > legend > expression > queryName — with the legend
- * skipped when the query has multiple aggregations, because one legend can't
- * label several value columns. clickhouse_sql columns have no aggregation
- * metadata, so their value columns are named by the real SQL alias the
- * response carries in `col.name`. (Port of V1 `getColName`.)
+ * Column display name (port of V1 `getColName`). Group columns keep their field name; aggregation
+ * columns resolve alias > legend > expression > queryName, skipping legend on multi-aggregation
+ * queries (one legend can't label several value columns).
  */
 function getColName(
 	col: Querybuildertypesv5ColumnDescriptorDTO,
@@ -113,9 +105,8 @@ function getColName(
 }
 
 /**
- * Stable row-data key for a column. Multi-aggregation queries need
- * `queryName.expression` so the value columns don't collide. (Port of V1
- * `getColId`.)
+ * Stable row-data key (port of V1 `getColId`). Multi-aggregation queries need
+ * `queryName.expression` so value columns don't collide.
  */
 function getColId(
 	col: Querybuildertypesv5ColumnDescriptorDTO,
@@ -150,11 +141,9 @@ export interface PrepareScalarTablesArgs {
 }
 
 /**
- * Converts V5 scalar results (`{columns, data[][]}`) into the keyed
- * table shape Number/Pie/Table panels render: columns with resolved display
- * names + `isValueColumn`, rows keyed by column id. (Port of V1
- * `convertScalarDataArrayToTable`; the `formatForWeb` variant produced the
- * same structure and is collapsed into this one.)
+ * Converts V5 scalar results into the keyed table shape Number/Pie/Table panels render: columns
+ * with resolved display names + `isValueColumn`, rows keyed by column id (port of V1
+ * `convertScalarDataArrayToTable`).
  */
 export function prepareScalarTables({
 	results,

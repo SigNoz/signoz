@@ -48,8 +48,11 @@ function PanelsAndSectionsLayout({
 			return <SectionList sections={sections} layouts={layouts} />;
 		}
 
+		// Free-flow (no titled sections): panels still get the layout context so
+		// the menu's delete action can patch the section's items (previously a
+		// silent noop in this mode).
 		return sections.map((section) => (
-			<Section key={section.id} section={section} />
+			<Section key={section.id} section={section} sections={sections} />
 		));
 	};
 

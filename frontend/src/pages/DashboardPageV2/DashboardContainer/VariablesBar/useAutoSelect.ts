@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-import type { VariableFormModel } from '../DashboardSettings/Variables/variableModel';
+import type { VariableFormModel } from '../DashboardSettings/Variables/variableFormModel';
 import type { VariableSelection } from './selectionTypes';
 
 /**
