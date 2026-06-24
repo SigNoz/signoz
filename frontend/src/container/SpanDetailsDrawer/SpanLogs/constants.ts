@@ -66,8 +66,14 @@ export const getSpanLogsQueryPayload = (
 		id: uuidv4(),
 		queryType: EQueryType.QUERY_BUILDER,
 	},
-	start,
-	end,
+	// `start`/`end` arrive in milliseconds, but GetQueryResultsProps (consumed by
+	// prepareQueryRangePayloadV5, which multiplies by 1e3) expects seconds. Convert
+	// here so the resulting query_range request is in milliseconds rather than
+	// microseconds — otherwise the log query window is 1000x too large and the
+	// related-logs tab returns nothing. See getStartEndRangeTime (seconds) used by
+	// the Logs Explorer path.
+	start: Math.floor(start / 1000),
+	end: Math.ceil(end / 1000),
 });
 
 /**
