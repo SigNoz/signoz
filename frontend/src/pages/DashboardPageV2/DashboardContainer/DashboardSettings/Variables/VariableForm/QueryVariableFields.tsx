@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import dashboardVariablesQuery from 'api/dashboard/variables/dashboardVariablesQuery';
-import { DashboardtypesListVariableSpecSortDTO as VariableSortDTO } from 'api/generated/services/sigNoz.schemas';
 import Editor from 'components/Editor';
 import type { PayloadVariables } from 'types/api/dashboard/variables/query';
 
