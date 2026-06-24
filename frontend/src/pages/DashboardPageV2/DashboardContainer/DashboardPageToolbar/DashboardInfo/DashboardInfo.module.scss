@@ -1,19 +1,9 @@
 .dashboardInfo {
 	display: flex;
-	flex-direction: column;
-	gap: 8px;
-	width: 40%;
-
-	@media (min-width: 1280px) {
-		width: 30%;
-	}
-}
-
-.dashboardTitleContainer {
-	display: flex;
+	flex: 1;
 	align-items: center;
 	gap: 8px;
-	width: 100%;
+	min-width: 0;
 }
 
 .dashboardImage {
@@ -21,9 +11,8 @@
 }
 
 .dashboardTitle {
-	flex: 1;
+	flex: 0 1 auto;
 	min-width: 0;
-	max-width: fit-content;
 	color: var(--l1-foreground);
 	font-size: 18px;
 	font-weight: 500;
@@ -35,6 +24,19 @@
 
 .dashboardTitleHover {
 	cursor: text !important;
+}
+
+.descriptionIcon {
+	flex-shrink: 0;
+	color: var(--l2-foreground);
+	cursor: help;
+}
+
+.divider {
+	flex-shrink: 0;
+	width: 1px;
+	height: 18px;
+	background: var(--l2-border);
 }
 
 .dashboardTitleEditor {
@@ -54,8 +56,13 @@
 	flex-shrink: 0;
 }
 
+/* Flexes into the remaining space and clips so the ResizeObserver can measure
+   how many tags fit before collapsing the rest into a `+N` badge. */
 .dashboardTags {
 	display: flex;
-	flex-wrap: wrap;
-	gap: 8px;
+	flex: 1 1 0;
+	align-items: center;
+	gap: 4px;
+	min-width: 0;
+	overflow: hidden;
 }

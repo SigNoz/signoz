@@ -1,6 +1,6 @@
 import { textContainsVariableReference } from 'lib/dashboardVariables/variableReference';
 
-import type { VariableFormModel } from '../DashboardSettings/Variables/variableModel';
+import type { VariableFormModel } from '../DashboardSettings/Variables/variableFormModel';
 
 /**
  * Inter-variable dependency graph for runtime selection. A QUERY variable

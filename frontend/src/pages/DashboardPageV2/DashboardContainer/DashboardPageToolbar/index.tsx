@@ -12,6 +12,7 @@ import type {
 	DashboardtypesJSONPatchOperationDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { Base64Icons } from 'container/DashboardContainer/DashboardSettings/General/utils';
+import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { useAppContext } from 'providers/App/App';
 import { usePanelTypeSelectionModalStore } from 'providers/Dashboard/helpers/panelTypeSelectionModalHelper';
 import { useErrorModal } from 'providers/ErrorModalProvider';
@@ -139,7 +140,15 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 				/>
 			</div>
 
-			<VariablesBar dashboard={dashboard} />
+			{/* Row 2: the time selector floats top-right (declared first so the
+			    variables bar's content wraps around it); the variables bar
+			    collapses to one line and, when expanded, wraps full-width under it. */}
+			<div className={styles.toolbarRow2}>
+				<div className={styles.timeCluster}>
+					<DateTimeSelectionV2 showAutoRefresh hideShareModal />
+				</div>
+				<VariablesBar dashboard={dashboard} />
+			</div>
 		</section>
 	);
 }

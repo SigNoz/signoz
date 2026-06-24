@@ -651,8 +651,6 @@ components:
           $ref: '#/components/schemas/AuthtypesTransactionGroups'
       required:
       - name
-      - description
-      - transactionGroups
       type: object
     AuthtypesPostableRotateToken:
       properties:
@@ -673,7 +671,6 @@ components:
           type: array
       required:
       - email
-      - userRoles
       type: object
     AuthtypesPostableUserRole:
       properties:
@@ -2408,6 +2405,46 @@ components:
         to_user:
           type: string
       type: object
+    CoretypesKind:
+      enum:
+      - anonymous
+      - organization
+      - role
+      - serviceaccount
+      - user
+      - notification-channel
+      - route-policy
+      - apdex-setting
+      - auth-domain
+      - session
+      - cloud-integration
+      - cloud-integration-service
+      - integration
+      - dashboard
+      - public-dashboard
+      - ingestion-key
+      - ingestion-limit
+      - pipeline
+      - user-preference
+      - org-preference
+      - quick-filter
+      - ttl-setting
+      - rule
+      - planned-maintenance
+      - saved-view
+      - trace-funnel
+      - factor-password
+      - factor-api-key
+      - license
+      - subscription
+      - logs
+      - traces
+      - metrics
+      - audit-logs
+      - meter-metrics
+      - logs-field
+      - traces-field
+      type: string
     CoretypesObject:
       properties:
         resource:
@@ -2449,7 +2486,7 @@ components:
     CoretypesResourceRef:
       properties:
         kind:
-          type: string
+          $ref: '#/components/schemas/CoretypesKind'
         type:
           $ref: '#/components/schemas/CoretypesType'
       required:
@@ -13158,9 +13195,9 @@ paths:
       - users
   /api/v1/user/{id}:
     delete:
-      deprecated: false
+      deprecated: true
       description: This endpoint deletes the user by id
-      operationId: DeleteUser
+      operationId: DeleteUserDeprecated
       parameters:
       - in: path
         name: id
@@ -20826,6 +20863,51 @@ paths:
       tags:
       - users
   /api/v2/users/{id}:
+    delete:
+      deprecated: false
+      description: This endpoint deletes the user by id
+      operationId: DeleteUser
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No Content
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Delete user
+      tags:
+      - users
     get:
       deprecated: false
       description: This endpoint returns the user by id
