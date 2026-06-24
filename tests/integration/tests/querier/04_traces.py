@@ -709,12 +709,7 @@ def test_traces_list(
                 x[1].trace_id,
             ],  # type: Callable[[List[Traces]], List[Any]]
         ),
-        # Case 9: filter on a scope attribute. Only x[1] carries the scope
-        # attribute telemetry.sdk.language='cpp'. The filter must resolve
-        # against the scope JSON column's attributes and ignore the
-        # attribute/resource keys that look like scope fields (e.g.
-        # "scope.name", "scope.scope.scope") as well as the scope attribute
-        # keys that collide with the JSON sub-columns (name/version/attributes).
+        # Case 9: filter on the intrinsic scope.version. Only x[1] should match
         pytest.param(
             {
                 "type": "builder_query",
@@ -723,7 +718,7 @@ def test_traces_list(
                     "signal": "traces",
                     "disabled": False,
                     "selectFields": [{"name": "timestamp"}],
-                    "filter": {"expression": "scope.telemetry.sdk.language = 'cpp'"},
+                    "filter": {"expression": "scope.version = '1.0.0'"},
                     "limit": 1,
                 },
             },
@@ -781,11 +776,29 @@ def test_traces_list_with_corrupt_data(
 
 
 @pytest.mark.parametrize(
-    "filter_expression,expected_index",
+    "filter_expression,expected_indices",
     [
-        # Filter on a scope attribute resolves against the scope JSON column's attributes object.
-        pytest.param("scope.telemetry.sdk.language = 'python'", 1),
-        pytest.param("scope.telemetry.sdk.language = 'go'", 0),
+        # Intrinsic scope.name / scope.version resolve to the JSON sub-columns.
+        pytest.param("scope.name = 'io.signoz.payment'", [1]),
+        pytest.param("scope.version = '2.3.1'", [0]),
+        # A scope attribute resolves against the scope JSON column's attributes.
+        pytest.param("scope.telemetry.sdk.language = 'python'", [1]),
+        # `env.tier` is a span attribute on span 0 and a scope attribute on
+        # span 1. Unprefixed -> no explicit context, so it is checked in every
+        # applicable context (attribute OR scope) and both spans match.
+        pytest.param("env.tier = 'gold'", [0, 1]),
+        # The explicit `scope.` prefix forces scope context only, so span 0's
+        # span attribute is ignored — only span 1 matches.
+        pytest.param("scope.env.tier = 'gold'", [1]),
+        # `scope.name` matches BOTH the intrinsic scope.name field (span 0) and a
+        # scope attribute literally named `name` (span 1's scope attribute
+        # name='io.signoz.checkout').
+        pytest.param("scope.name = 'io.signoz.checkout'", [0, 1]),
+        # An unprefixed `name` resolves to the intrinsic span `name` column and a
+        # `name` scope attribute, but NOT the scope.name field. Span 2's span
+        # name and span 1's scope attribute `name` both equal 'io.signoz.checkout';
+        # span 0's scope.name field equals it too but is NOT matched.
+        pytest.param("name = 'io.signoz.checkout'", [1, 2]),
     ],
 )
 def test_traces_list_with_scope_filter(
@@ -794,51 +807,84 @@ def test_traces_list_with_scope_filter(
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
     filter_expression: str,
-    expected_index: int,
+    expected_indices: list[int],
 ) -> None:
     """
-    Setup:
-    Insert 2 spans from different instrumentation scopes.
-    Tests:
-    Filtering on a scope attribute returns only the matching span.
-    """
-    checkout_trace_id = TraceIdGenerator.trace_id()
-    checkout_span_id = TraceIdGenerator.span_id()
-    payment_trace_id = TraceIdGenerator.trace_id()
-    payment_span_id = TraceIdGenerator.span_id()
+    Setup three spans that exercise scope key resolution:
+    - span 0 (checkout): intrinsic scope.name='io.signoz.checkout',
+      scope.version='2.3.1', scope attribute telemetry.sdk.language='go', and a
+      span attribute env.tier='gold'.
+    - span 1 (payment): intrinsic scope.name='io.signoz.payment', scope
+      attributes telemetry.sdk.language='python', env.tier='gold' and
+      name='io.signoz.checkout'.
+    - span 2 (probe): span name 'io.signoz.checkout', unrelated scope.
 
+    Tests:
+    - Filtering on scope.name / scope.version / a scope attribute.
+    - An unprefixed key is resolved across contexts (scope checked alongside
+      attribute / intrinsic), while a `scope.`-prefixed key is scope-only.
+    - `scope.name` hits the intrinsic field and a `name` scope attribute, while
+      a bare `name` hits the span name column (and a `name` scope attribute) but
+      never the scope.name field.
+    """
+    trace_id = TraceIdGenerator.trace_id()
+    span_ids = [TraceIdGenerator.span_id() for _ in range(3)]
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
 
     traces = [
         Traces(
             timestamp=now - timedelta(seconds=4),
             duration=timedelta(seconds=2),
-            trace_id=checkout_trace_id,
-            span_id=checkout_span_id,
+            trace_id=trace_id,
+            span_id=span_ids[0],
             parent_span_id="",
             name="GET /checkout",
             kind=TracesKind.SPAN_KIND_SERVER,
             status_code=TracesStatusCode.STATUS_CODE_OK,
             resources={"service.name": "checkout"},
-            attributes={"http.request.method": "GET"},
-            scope_name="io.signoz.checkout",
-            scope_version="2.3.1",
-            scope_attributes={"telemetry.sdk.language": "go"},
+            # env.tier here is a span attribute
+            attributes={"http.request.method": "GET", "env.tier": "gold"},
+            scope={
+                "name": "io.signoz.checkout",
+                "version": "2.3.1",
+                "attributes": {"telemetry.sdk.language": "go"},
+            },
         ),
         Traces(
             timestamp=now - timedelta(seconds=2),
             duration=timedelta(seconds=1),
-            trace_id=payment_trace_id,
-            span_id=payment_span_id,
+            trace_id=trace_id,
+            span_id=span_ids[1],
             parent_span_id="",
             name="POST /pay",
             kind=TracesKind.SPAN_KIND_SERVER,
             status_code=TracesStatusCode.STATUS_CODE_OK,
             resources={"service.name": "payment"},
             attributes={"http.request.method": "POST"},
-            scope_name="io.signoz.payment",
-            scope_version="4.5.6",
-            scope_attributes={"telemetry.sdk.language": "python"},
+            # env.tier is a scope attribute here (cross-context with span 0);
+            # `name` is a scope attribute colliding with span 0's scope.name.
+            scope={
+                "name": "io.signoz.payment",
+                "version": "4.5.6",
+                "attributes": {
+                    "telemetry.sdk.language": "python",
+                    "env.tier": "gold",
+                    "name": "io.signoz.checkout",
+                },
+            },
+        ),
+        Traces(
+            timestamp=now - timedelta(seconds=1),
+            duration=timedelta(seconds=1),
+            trace_id=trace_id,
+            span_id=span_ids[2],
+            parent_span_id="",
+            # span name collides with span 0's scope.name value
+            name="io.signoz.checkout",
+            kind=TracesKind.SPAN_KIND_SERVER,
+            status_code=TracesStatusCode.STATUS_CODE_OK,
+            resources={"service.name": "probe"},
+            scope={"name": "span-gamma", "version": "9.9.9"},
         ),
     ]
     insert_traces(traces)
@@ -868,13 +914,10 @@ def test_traces_list_with_scope_filter(
 
     assert response.status_code == HTTPStatus.OK
 
-    rows = response.json()["data"]["data"]["results"][0]["rows"]
-    # Exactly one span matches the scope filter.
-    assert rows is not None
-    assert len(rows) == 1
-    expected = traces[expected_index]
-    assert rows[0]["data"]["span_id"] == expected.span_id
-    assert rows[0]["data"]["trace_id"] == expected.trace_id
+    rows = response.json()["data"]["data"]["results"][0]["rows"] or []
+    got_span_ids = {row["data"]["span_id"] for row in rows}
+    expected_span_ids = {traces[i].span_id for i in expected_indices}
+    assert got_span_ids == expected_span_ids
 
 
 def _verify_events_links_full(rows: list[dict], traces: list[Traces]) -> None:

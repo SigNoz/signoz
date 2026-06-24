@@ -875,8 +875,12 @@ def generate_traces_with_corrupt_metadata() -> list[Traces]:
                 "timestamp": "corrupt_data",
                 # attribute keys colliding with the scope context prefix
                 "scope.version": "corrupt_data",
-                "scope.scope.version": "corrupt_data",
+                # holds the SAME value the scope.version filter searches for, but
+                # the key is `scope.scope.version` (not resolvable as scope.version),
+                # so this span must NOT be matched by `scope.version = '1.0.0'`.
+                "scope.scope.version": "1.0.0",
             },
+            scope={"name": "io.signoz.http.server", "version": "2.0.0"},
         ),
         Traces(
             timestamp=now - timedelta(seconds=3.5),
@@ -905,14 +909,18 @@ def generate_traces_with_corrupt_metadata() -> list[Traces]:
                 "trace_d": "corrupt_data",
                 "scope.attributes.version": "corrupt_data",
             },
-            # the only span carrying real scope + the unique scope attribute
-            scope_name="io.opentelemetry.contrib.http",
-            scope_version="1.0.0",
-            scope_attributes={
-                "telemetry.sdk.language": "cpp",
-                "name": "not-the-real-name",
-                "version": "not-the-real-version",
-                "attributes": "literally-a-key-named-attributes",
+            # the only span carrying scope.version '1.0.0'. The scope attribute
+            # keys deliberately collide with the JSON sub-column names
+            # (name/version/attributes) to stress the scope projection.
+            scope={
+                "name": "io.opentelemetry.contrib.http",
+                "version": "1.0.0",
+                "attributes": {
+                    "telemetry.sdk.language": "cpp",
+                    "name": "not-the-real-name",
+                    "version": "not-the-real-version",
+                    "attributes": "literally-a-key-named-attributes",
+                },
             },
         ),
         Traces(
@@ -941,6 +949,7 @@ def generate_traces_with_corrupt_metadata() -> list[Traces]:
                 "id": "1",
                 "scope.scope.scope": "corrupt_data",
             },
+            scope={"name": "io.signoz.http.client", "version": "2.0.0"},
         ),
         Traces(
             timestamp=now - timedelta(seconds=1),
@@ -970,5 +979,6 @@ def generate_traces_with_corrupt_metadata() -> list[Traces]:
                 "scope": "corrupt_data",
                 "scope.attributes": "corrupt_data",
             },
+            scope={"name": "io.signoz.messaging", "version": "3.0.0"},
         ),
     ]

@@ -288,7 +288,6 @@ class Traces(ABC):
     is_remote: str
     scope_name: str
     scope_version: str
-    scope_string: dict[str, str]
     scope_json: dict[str, Any]
 
     resource: list[TracesResource]
@@ -315,9 +314,7 @@ class Traces(ABC):
         links: list[TracesLink] = [],
         trace_state: str = "",
         flags: np.uint32 = 0,
-        scope_name: str = "",
-        scope_version: str = "",
-        scope_attributes: dict[str, Any] = {},
+        scope: dict[str, Any] = {},
         resource_write_mode: Literal["legacy_only", "dual_write"] = "dual_write",
     ) -> None:
         if timestamp is None:
@@ -400,15 +397,22 @@ class Traces(ABC):
         self.resource_fingerprint = LogsOrTracesFingerprint(self.resources_string).calculate()
 
         # Process scope mirroring the InstrumentationScope on the OTLP span.
-        self.scope_name = scope_name
-        self.scope_version = scope_version
-        self.scope_string = {k: str(v) for k, v in scope_attributes.items()}
+        self.scope_name = scope.get("name", "")
+        self.scope_version = scope.get("version", "")
+        scope_string = {k: str(v) for k, v in scope.get("attributes", {}).items()}
         self.scope_json = {
             "name": self.scope_name,
             "version": self.scope_version,
-            "attributes": self.scope_string,
+            "attributes": scope_string,
         }
-        for k, v in self.scope_string.items():
+        # Register scope.name, scope.version and each scope attribute as
+        # scope-typed keys, exactly like InstrumentationScope.GetSpanAttributes
+        # in the clickhousetracesexporter (empty values are skipped).
+        scope_keys = {"scope.name": self.scope_name, "scope.version": self.scope_version}
+        scope_keys.update(scope_string)
+        for k, v in scope_keys.items():
+            if v == "":
+                continue
             self.tag_attributes.append(
                 TracesTagAttributes(
                     timestamp=timestamp,
@@ -707,9 +711,7 @@ class Traces(ABC):
             attributes=data.get("attributes", {}),
             trace_state=data.get("trace_state", ""),
             flags=data.get("flags", 0),
-            scope_name=data.get("scope_name", ""),
-            scope_version=data.get("scope_version", ""),
-            scope_attributes=data.get("scope_attributes", {}),
+            scope=data.get("scope", {}),
         )
 
     @classmethod
