@@ -39,7 +39,7 @@ type PostableUser struct {
 	DisplayName     string              `json:"displayName"`
 	Email           valuer.Email        `json:"email" required:"true"`
 	FrontendBaseUrl string              `json:"frontendBaseUrl"`
-	UserRoles       []*PostableUserRole `json:"userRoles" required:"true" nullable:"false"`
+	UserRoles       []*PostableUserRole `json:"userRoles" required:"false" nullable:"false"`
 }
 
 type PostableUserRole struct {
@@ -52,10 +52,6 @@ func (p *PostableUser) UnmarshalJSON(data []byte) error {
 	var temp Alias
 	if err := json.Unmarshal(data, &temp); err != nil {
 		return err
-	}
-
-	if temp.UserRoles == nil {
-		return errors.New(errors.TypeInvalidInput, ErrCodeUserRoleInvalidInput, "userRoles is required").WithSuggestions("send an empty array to create user without role")
 	}
 
 	for _, role := range temp.UserRoles {

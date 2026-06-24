@@ -341,12 +341,12 @@ func alignedMetricWindow(startMs, endMs int64) (
 	}
 
 	tsAdjustedStartMs, _, distributedTSTable, localTSTable := telemetrymetrics.WhichTSTableToUse(
-		samplesAdjustedStartMs, flooredEndMs, nil,
+		samplesAdjustedStartMs, flooredEndMs, false, nil,
 	)
 
 	distributedSamplesTable, localSamplesTable := telemetrymetrics.WhichSamplesTableToUse(
 		samplesAdjustedStartMs, flooredEndMs,
-		metrictypes.UnspecifiedType, metrictypes.TimeAggregationUnspecified, nil,
+		metrictypes.UnspecifiedType, metrictypes.TimeAggregationUnspecified, false, nil,
 	)
 
 	return samplesAdjustedStartMs, flooredEndMs, tsAdjustedStartMs, distributedTSTable, localTSTable, distributedSamplesTable, localSamplesTable

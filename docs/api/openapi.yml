@@ -673,7 +673,6 @@ components:
           type: array
       required:
       - email
-      - userRoles
       type: object
     AuthtypesPostableUserRole:
       properties:
@@ -13118,9 +13117,9 @@ paths:
       - users
   /api/v1/user/{id}:
     delete:
-      deprecated: false
+      deprecated: true
       description: This endpoint deletes the user by id
-      operationId: DeleteUser
+      operationId: DeleteUserDeprecated
       parameters:
       - in: path
         name: id
@@ -20764,6 +20763,51 @@ paths:
       tags:
       - users
   /api/v2/users/{id}:
+    delete:
+      deprecated: false
+      description: This endpoint deletes the user by id
+      operationId: DeleteUser
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No Content
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Delete user
+      tags:
+      - users
     get:
       deprecated: false
       description: This endpoint returns the user by id
