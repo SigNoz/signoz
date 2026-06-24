@@ -6,7 +6,10 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/swaggest/jsonschema-go"
 )
+
+var _ jsonschema.Exposer = Source{}
 
 type Source struct {
 	s valuer.String
@@ -20,6 +23,16 @@ var (
 
 func (Source) Enum() []any {
 	return []any{SourceUser, SourceSystem, SourceIntegration}
+}
+
+func (Source) JSONSchema() (jsonschema.Schema, error) {
+	return *new(jsonschema.Schema).
+		WithType(jsonschema.String.Type()).
+		WithEnum(
+			SourceUser.StringValue(),
+			SourceSystem.StringValue(),
+			SourceIntegration.StringValue(),
+		), nil
 }
 
 func (s Source) IsValid() bool {

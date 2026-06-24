@@ -3457,7 +3457,7 @@ components:
       - user
       - system
       - integration
-      type: object
+      type: string
     DashboardtypesSpanGaps:
       properties:
         fillLessThan:
