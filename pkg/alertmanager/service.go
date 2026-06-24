@@ -41,18 +41,20 @@ type Service struct {
 
 	notificationManager nfmanager.NotificationManager
 
+	maintenanceStore alertmanagertypes.MaintenanceStore
+
 	// externalIssueRepo for bi-directional Jira sync
 	externalIssueRepo dao.ExternalIssueRepo
 }
 
 func New(
-	ctx context.Context,
 	settings factory.ScopedProviderSettings,
 	config alertmanagerserver.Config,
 	stateStore alertmanagertypes.StateStore,
 	configStore alertmanagertypes.ConfigStore,
 	orgGetter organization.Getter,
 	nfManager nfmanager.NotificationManager,
+	maintenanceStore alertmanagertypes.MaintenanceStore,
 	externalIssueRepo dao.ExternalIssueRepo,
 ) *Service {
 	service := &Service{
@@ -64,6 +66,7 @@ func New(
 		servers:             make(map[string]*alertmanagerserver.Server),
 		serversMtx:          sync.RWMutex{},
 		notificationManager: nfManager,
+		maintenanceStore:    maintenanceStore,
 		externalIssueRepo:   externalIssueRepo,
 	}
 
@@ -141,7 +144,7 @@ func (service *Service) PutAlerts(ctx context.Context, orgID string, alerts aler
 	return server.PutAlerts(ctx, alerts)
 }
 
-func (service *Service) TestReceiver(ctx context.Context, orgID string, receiver alertmanagertypes.Receiver) error {
+func (service *Service) TestReceiver(ctx context.Context, orgID string, receiver *alertmanagertypes.Receiver) error {
 	service.serversMtx.RLock()
 	defer service.serversMtx.RUnlock()
 
@@ -183,7 +186,10 @@ func (service *Service) newServer(ctx context.Context, orgID string) (*alertmana
 		return nil, err
 	}
 
-	server, err := alertmanagerserver.New(ctx, service.settings.Logger(), service.settings.PrometheusRegisterer(), service.config, orgID, service.stateStore, service.notificationManager, service.externalIssueRepo)
+	server, err := alertmanagerserver.New(
+		ctx, service.settings.Logger(), service.settings.PrometheusRegisterer(), service.config, orgID,
+		service.stateStore, service.notificationManager, service.maintenanceStore, service.externalIssueRepo,
+	)
 	if err != nil {
 		return nil, err
 	}

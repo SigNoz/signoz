@@ -46,11 +46,6 @@ export const k8sJobDetailsMetadataConfig: K8sDetailsMetadataConfig<K8sJobsData>[
 		},
 	];
 
-export const k8sJobInitialFilters = [
-	QUERY_KEYS.K8S_JOB_NAME,
-	QUERY_KEYS.K8S_NAMESPACE_NAME,
-];
-
 export const k8sJobInitialEventsFilter = (
 	item: K8sJobsData,
 ): ReturnType<typeof createFilterItem>[] => [
@@ -74,7 +69,7 @@ export const jobWidgetInfo = [
 		yAxisUnit: '',
 	},
 	{
-		title: 'Memory usage, request, limits',
+		title: 'Memory Usage',
 		yAxisUnit: 'bytes',
 	},
 	{

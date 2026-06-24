@@ -1,12 +1,13 @@
-import { Popover, Tag } from 'antd';
+import { Popover } from 'antd';
+import { Badge } from '@signozhq/ui/badge';
 
 import { LabelColumnProps } from './TableRenderer.types';
-import TagWithToolTip from './TagWithToolTip';
+import BadgeWithTooltip from './BadgeWithTooltip';
 import { getLabelAndValueContent } from './utils';
 
 import './LabelColumn.styles.scss';
 
-function LabelColumn({ labels, value, color }: LabelColumnProps): JSX.Element {
+function LabelColumn({ labels, value }: LabelColumnProps): JSX.Element {
 	const newLabels = labels.length > 3 ? labels.slice(0, 3) : labels;
 	const remainingLabels = labels.length > 3 ? labels.slice(3) : [];
 
@@ -14,7 +15,7 @@ function LabelColumn({ labels, value, color }: LabelColumnProps): JSX.Element {
 		<div className="label-column">
 			{newLabels.map(
 				(label: string): JSX.Element => (
-					<TagWithToolTip key={label} label={label} color={color} value={value} />
+					<BadgeWithTooltip key={label} label={label} value={value} />
 				),
 			)}
 			{remainingLabels.length > 0 && (
@@ -26,9 +27,9 @@ function LabelColumn({ labels, value, color }: LabelColumnProps): JSX.Element {
 							{labels.map(
 								(label: string): JSX.Element => (
 									<div key={label}>
-										<Tag className="label-column--tag" color={color}>
+										<Badge className="label-column--tag" color="vanilla">
 											{getLabelAndValueContent(label, value && value[label])}
-										</Tag>
+										</Badge>
 									</div>
 								),
 							)}
@@ -36,9 +37,9 @@ function LabelColumn({ labels, value, color }: LabelColumnProps): JSX.Element {
 					}
 					trigger="hover"
 				>
-					<Tag className="label-column--tag" color={color}>
+					<Badge className="label-column--tag" color="vanilla">
 						+{remainingLabels.length}
-					</Tag>
+					</Badge>
 				</Popover>
 			)}
 		</div>

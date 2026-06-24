@@ -2,6 +2,7 @@ package rules
 
 import (
 	"context"
+	"net/url"
 	"testing"
 	"time"
 
@@ -120,6 +121,7 @@ func TestAnomalyRule_NoData_AlertOnAbsent(t *testing.T) {
 				&postableRule,
 				nil,
 				logger,
+				mustParseURL(t, "http://localhost:8000"),
 			)
 			require.NoError(t, err)
 
@@ -247,7 +249,8 @@ func TestAnomalyRule_NoData_AbsentFor(t *testing.T) {
 				},
 			}
 
-			rule, err := NewAnomalyRule("test-anomaly-rule", valuer.GenerateUUID(), &postableRule, nil, logger)
+			externalURL := mustParseURL(t, "http://localhost:8000")
+			rule, err := NewAnomalyRule("test-anomaly-rule", valuer.GenerateUUID(), &postableRule, nil, logger, externalURL)
 			require.NoError(t, err)
 
 			rule.provider = &mockAnomalyProvider{
@@ -263,4 +266,11 @@ func TestAnomalyRule_NoData_AbsentFor(t *testing.T) {
 			assert.Equal(t, c.expectAlertOnEval2, alertsFound2)
 		})
 	}
+}
+
+func mustParseURL(t *testing.T, raw string) *url.URL {
+	t.Helper()
+	u, err := url.Parse(raw)
+	require.NoError(t, err)
+	return u
 }

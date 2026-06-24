@@ -1,9 +1,13 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-import { themeColors } from 'constants/theme';
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
-import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import { getSpanAttribute } from 'pages/TraceDetailsV3/utils';
-import { FlamegraphSpan } from 'types/api/trace/getTraceFlamegraph';
+import {
+	ColorPair,
+	darkenHex,
+	generateColorPair,
+	RESERVED_ERROR,
+} from 'pages/TraceDetailsV3/utils/generateColorPair';
+import { SpantypesFlamegraphSpanDTO as FlamegraphSpan } from 'api/generated/services/sigNoz.schemas';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 
 import {
@@ -70,34 +74,25 @@ export function getFlamegraphRowMetrics(
 
 /**
  * Resolve the displayed service.name for a flamegraph span. Used by tooltips
- * (service identity, independent of the active colour-by field). Prefers
- * `resource['service.name']` with legacy top-level `serviceName` fallback.
+ * (service identity, independent of the active colour-by field). Reads
+ * `resource['service.name']`.
  */
 export function getFlamegraphServiceName(
-	span: Pick<FlamegraphSpan, 'serviceName' | 'resource' | 'attributes'>,
+	span: Partial<Pick<FlamegraphSpan, 'resource' | 'attributes'>>,
 ): string {
-	return getSpanAttribute(span, 'service.name') || span.serviceName || '';
+	return getSpanAttribute(span, 'service.name') || '';
 }
 
 /**
  * Resolve the value used to bucket a flamegraph span by colour for the given
- * field. Prefers `resource[field.name]` (new contract from `selectFields`).
- * For `service.name`, falls back to the legacy top-level `serviceName` when
- * resource is empty (backward-compat with backends that haven't shipped
- * `selectFields` yet). For other fields, falls back to `'unknown'`.
+ * field. Prefers `resource[field.name]` (contract from `selectFields`), falling
+ * back to `'unknown'`.
  */
 export function getFlamegraphSpanGroupValue(
-	span: Pick<FlamegraphSpan, 'serviceName' | 'resource' | 'attributes'>,
+	span: Partial<Pick<FlamegraphSpan, 'resource' | 'attributes'>>,
 	field: TelemetryFieldKey,
 ): string {
-	const fromAttribute = getSpanAttribute(span, field.name);
-	if (fromAttribute) {
-		return fromAttribute;
-	}
-	if (field.name === 'service.name') {
-		return span.serviceName || 'unknown';
-	}
-	return 'unknown';
+	return getSpanAttribute(span, field.name) || 'unknown';
 }
 
 interface GetSpanColorArgs {
@@ -106,15 +101,12 @@ interface GetSpanColorArgs {
 	groupValue: string;
 }
 
-export function getSpanColor(args: GetSpanColorArgs): string {
-	const { span, isDarkMode, groupValue } = args;
-	let color = generateColor(groupValue, themeColors.traceDetailColorsV3);
-
+export function getSpanColor(args: GetSpanColorArgs): ColorPair {
+	const { span, groupValue } = args;
 	if (span.hasError) {
-		color = isDarkMode ? 'rgb(239, 68, 68)' : 'rgb(220, 38, 38)';
+		return { color: RESERVED_ERROR, colorDark: RESERVED_ERROR };
 	}
-
-	return color;
+	return generateColorPair(groupValue);
 }
 
 export interface EventDotColor {
@@ -130,8 +122,8 @@ export function getEventDotColor(
 ): EventDotColor {
 	if (isError) {
 		return {
-			fill: isDarkMode ? 'rgb(239, 68, 68)' : 'rgb(220, 38, 38)',
-			stroke: isDarkMode ? 'rgb(185, 28, 28)' : 'rgb(153, 27, 27)',
+			fill: RESERVED_ERROR,
+			stroke: darkenHex(RESERVED_ERROR, 0.22),
 		};
 	}
 
@@ -209,6 +201,9 @@ interface DrawSpanBarArgs {
 	spanRectsArray: SpanRect[];
 	eventRectsArray: EventRect[];
 	color: string;
+	// Darkened variant used as foreground (stroke + label) on light mode
+	// hover/selected, where the base color sits against a near-white panel.
+	colorDark: string;
 	isDarkMode: boolean;
 	metrics: FlamegraphRowMetrics;
 	selectedSpanId?: string | null;
@@ -228,6 +223,7 @@ export function drawSpanBar(args: DrawSpanBarArgs): void {
 		spanRectsArray,
 		eventRectsArray,
 		color,
+		colorDark,
 		isDarkMode,
 		metrics,
 		selectedSpanId,
@@ -259,15 +255,21 @@ export function drawSpanBar(args: DrawSpanBarArgs): void {
 		if (isSelected) {
 			ctx.setLineDash(DASHED_BORDER_LINE_DASH);
 		}
-		ctx.strokeStyle = color;
+		ctx.strokeStyle = isDarkMode ? color : colorDark;
 		ctx.lineWidth = isSelected ? 2 : 1;
 		ctx.stroke();
 		if (isSelected) {
 			ctx.setLineDash([]);
 		}
 	} else {
-		ctx.fillStyle = color;
+		// Light mode uses the darkened variant as fill so bars contrast against
+		// the white panel background; dark mode keeps the bright base.
+		ctx.fillStyle = isDarkMode ? color : colorDark;
 		ctx.fill();
+		// Subtle outline to match spec: 1px semi-transparent black border at rest
+		ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+		ctx.lineWidth = 1;
+		ctx.stroke();
 	}
 
 	spanRectsArray.push({
@@ -285,14 +287,21 @@ export function drawSpanBar(args: DrawSpanBarArgs): void {
 			return;
 		}
 
-		const eventTimeMs = event.timeUnixNano / 1e6;
+		const eventTimeMs = (event.timeUnixNano ?? 0) / 1e6;
 		const eventOffsetPercent =
 			((eventTimeMs - span.timestamp) / spanDurationMs) * 100;
 		const clampedOffset = clamp(eventOffsetPercent, 1, 99);
 		const eventX = x + (clampedOffset / 100) * width;
 		const eventY = spanY + metrics.SPAN_BAR_HEIGHT / 2;
 
-		const dotColor = getEventDotColor(color, event.isError, isDarkMode);
+		// Event dots derive from the effective bar color so they track the
+		// light/dark variant the bar is rendered with.
+		const parentBarColor = isDarkMode ? color : colorDark;
+		const dotColor = getEventDotColor(
+			parentBarColor,
+			event.isError ?? false,
+			isDarkMode,
+		);
 		const eventKey = `${span.spanId}-${event.name}-${event.timeUnixNano}`;
 		const isEventHovered = hoveredEventKey === eventKey;
 		const dotSize = isEventHovered
@@ -328,6 +337,7 @@ export function drawSpanBar(args: DrawSpanBarArgs): void {
 		y: spanY,
 		width,
 		color,
+		colorDark,
 		isSelectedOrHovered,
 		isDarkMode,
 		spanBarHeight: metrics.SPAN_BAR_HEIGHT,
@@ -347,6 +357,7 @@ interface DrawSpanLabelArgs {
 	y: number;
 	width: number;
 	color: string;
+	colorDark: string;
 	isSelectedOrHovered: boolean;
 	isDarkMode: boolean;
 	spanBarHeight: number;
@@ -360,6 +371,7 @@ function drawSpanLabel(args: DrawSpanLabelArgs): void {
 		y,
 		width,
 		color,
+		colorDark,
 		isSelectedOrHovered,
 		isDarkMode,
 		spanBarHeight,
@@ -379,11 +391,12 @@ function drawSpanLabel(args: DrawSpanLabelArgs): void {
 	ctx.clip();
 
 	ctx.font = LABEL_FONT;
+	const hoverLabelColor = isDarkMode ? color : colorDark;
 	ctx.fillStyle = isSelectedOrHovered
-		? color
+		? hoverLabelColor
 		: isDarkMode
-			? 'rgba(0, 0, 0, 0.9)'
-			: 'rgba(255, 255, 255, 0.9)';
+			? 'rgba(0, 0, 0, 0.7)'
+			: 'rgba(255, 255, 255, 0.95)';
 	ctx.textBaseline = 'middle';
 
 	const textY = y + spanBarHeight / 2;

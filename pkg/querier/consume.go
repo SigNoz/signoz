@@ -12,8 +12,10 @@ import (
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
+	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/bytedance/sonic"
 )
 
 var (
@@ -22,6 +24,8 @@ var (
 	// written clickhouse query. The column alias indcate which value is
 	// to be considered as final result (or target).
 	legacyReservedColumnTargetAliases = []string{"__result", "__value", "result", "res", "value"}
+
+	CodeFailUnmarshalJSONColumn = errors.MustNewCode("fail_unmarshal_json_column")
 )
 
 // consume reads every row and shapes it into the payload expected for the
@@ -58,7 +62,7 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 	numericColsCount := 0
 	for i, ct := range colTypes {
 		slots[i] = reflect.New(ct.ScanType()).Interface()
-		if numericKind(ct.ScanType().Kind()) {
+		if isNumericKind(ct.ScanType()) {
 			numericColsCount++
 		}
 	}
@@ -266,8 +270,14 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 	}, nil
 }
 
-func numericKind(k reflect.Kind) bool {
-	switch k {
+func isNumericKind(t reflect.Type) bool {
+	if t == nil {
+		return false
+	}
+	for t.Kind() == reflect.Ptr || t.Kind() == reflect.UnsafePointer {
+		t = t.Elem()
+	}
+	switch t.Kind() {
 	case reflect.Float32, reflect.Float64,
 		reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
 		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
@@ -286,7 +296,13 @@ func readAsScalar(rows driver.Rows, queryName string) (*qbtypes.ScalarData, erro
 	var aggIndex int64
 	for i, name := range colNames {
 		colType := qbtypes.ColumnTypeGroup
-		if aggRe.MatchString(name) {
+		// Builder queries aliases aggregation columns as __result_N (always numeric) and wraps group-by keys with toString (always string);
+		// Raw ClickHouse queries may use any aliases.
+		// Handling Builder queries, If name like __result_N -> aggregation, otherwise group-by column
+		// Handling Raw ClickHouse queries, If type is numeric -> aggregation, otherwise group-by column
+		// NOTE: For clickhouse queries, its wrong to assume that numeric columns are always aggregations, user might be grouping by on integer status_code.
+		// However, we are fine with this for now. If need arises, simplest way would be to solve this on the frontend side by asking user a mapping of column names to column types.
+		if aggRe.MatchString(name) || isNumericKind(colTypes[i].ScanType()) {
 			colType = qbtypes.ColumnTypeAggregation
 		}
 		cd[i] = &qbtypes.ColumnDescriptor{
@@ -393,11 +409,16 @@ func readAsRaw(rows driver.Rows, queryName string) (*qbtypes.RawData, error) {
 
 			// de-reference the typed pointer to any
 			val := reflect.ValueOf(cellPtr).Elem().Interface()
-			// Post-process JSON columns: normalize into String value
+			// Post-process JSON columns: unmarshal bytes into map[string]any
 			if strings.HasPrefix(strings.ToUpper(colTypes[i].DatabaseTypeName()), "JSON") {
 				switch x := val.(type) {
 				case []byte:
-					val = string(x)
+					var m map[string]any
+					err := sonic.Unmarshal(x, &m)
+					if err != nil {
+						return nil, errors.WrapInternalf(err, CodeFailUnmarshalJSONColumn, "failed to unmarshal JSON column %s", name)
+					}
+					val = m
 				default:
 					// already a structured type (map[string]any, []any, etc.)
 				}

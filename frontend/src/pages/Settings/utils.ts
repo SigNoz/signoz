@@ -3,10 +3,7 @@ import { TFunction } from 'i18next';
 import { ROLES, USER_ROLES } from 'types/roles';
 
 import {
-	alertChannels,
 	billingSettings,
-	createAlertChannels,
-	editAlertChannels,
 	generalSettings,
 	ingestionSettings,
 	jiraIntegrationSettings,
@@ -61,8 +58,6 @@ export const getRoutes = (
 		settings.push(...ingestionSettings(t));
 	}
 
-	settings.push(...alertChannels(t));
-
 	// Jira Integration - visible to all users
 	settings.push(...jiraIntegrationSettings(t));
 
@@ -84,8 +79,6 @@ export const getRoutes = (
 
 	settings.push(
 		...mySettings(t),
-		...createAlertChannels(t),
-		...editAlertChannels(t),
 		...keyboardShortcuts(t),
 		...mcpServerSettings(t),
 	);

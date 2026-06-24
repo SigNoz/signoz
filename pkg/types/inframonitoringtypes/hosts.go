@@ -10,7 +10,7 @@ import (
 
 type Hosts struct {
 	Type                   ResponseType           `json:"type" required:"true"`
-	Records                []HostRecord           `json:"records" required:"true"`
+	Records                []HostRecord           `json:"records" required:"true" nullable:"false"`
 	Total                  int                    `json:"total" required:"true"`
 	RequiredMetricsCheck   RequiredMetricsCheck   `json:"requiredMetricsCheck" required:"true"`
 	EndTimeBeforeRetention bool                   `json:"endTimeBeforeRetention" required:"true"`
@@ -99,6 +99,9 @@ func (req *PostableHosts) Validate() error {
 		}
 		if req.OrderBy.Direction != qbtypes.OrderDirectionAsc && req.OrderBy.Direction != qbtypes.OrderDirectionDesc {
 			return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid order by direction: %s", req.OrderBy.Direction)
+		}
+		if req.OrderBy.Key.Name == HostNameAttrKey && len(req.GroupBy) > 0 {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "order by '%s' is only allowed when groupBy is empty", HostNameAttrKey)
 		}
 	}
 

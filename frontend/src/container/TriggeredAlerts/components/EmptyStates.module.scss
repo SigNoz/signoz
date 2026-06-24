@@ -1,0 +1,36 @@
+.emptyState {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 48px 24px;
+	text-align: center;
+	gap: 16px;
+}
+
+.emptyStateIcon {
+	font-size: 48px;
+	color: var(--bg-forest-500);
+}
+
+.emptyStateIconMuted {
+	font-size: 48px;
+	color: var(--l2-foreground);
+}
+
+.emptyStateTitle {
+	font-size: 18px;
+	font-weight: 600;
+	color: var(--l1-foreground);
+}
+
+.emptyStateSubtitle {
+	font-size: 14px;
+	color: var(--l2-foreground);
+	max-width: 400px;
+}
+
+.emptyStateActions {
+	display: flex;
+	gap: 8px;
+}

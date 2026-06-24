@@ -1,0 +1,30 @@
+.emptyState {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 12px;
+	padding: 48px 24px;
+	text-align: center;
+}
+
+.icon {
+	color: var(--text-vanilla-400);
+}
+
+.title {
+	font-size: 16px;
+	font-weight: 500;
+	color: var(--text-vanilla-100);
+}
+
+.subtitle {
+	font-size: 14px;
+	color: var(--text-vanilla-400);
+	max-width: 400px;
+}
+
+.actions {
+	display: flex;
+	gap: 8px;
+}

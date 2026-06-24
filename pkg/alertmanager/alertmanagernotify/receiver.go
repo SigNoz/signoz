@@ -29,8 +29,24 @@ var customNotifierIntegrations = []string{
 	msteamsv2.Integration,
 }
 
-func NewReceiverIntegrations(nc alertmanagertypes.Receiver, tmpl *template.Template, logger *slog.Logger, externalIssueRepo interface{}) ([]notify.Integration, error) {
-	upstreamIntegrations, err := receiver.BuildReceiverIntegrations(nc, tmpl, logger)
+// NewReceiverIntegrations builds the integrations for a receiver without
+// wiring the Jira issue mapping store. It matches alertmanagertypes.ReceiverIntegrationsFunc
+// and is used where bi-directional Jira sync is not needed (e.g. test receiver).
+func NewReceiverIntegrations(nc *alertmanagertypes.Receiver, tmpl *template.Template, logger *slog.Logger, templater alertmanagertypes.Templater) ([]notify.Integration, error) {
+	return buildReceiverIntegrations(nc, tmpl, logger, templater, nil)
+}
+
+// NewReceiverIntegrationsWithStore returns a ReceiverIntegrationsFunc that wires the
+// Jira issue mapping store (for bi-directional sync) into Jira notifiers via a closure
+// capturing externalIssueRepo. Used on the live notification pipeline.
+func NewReceiverIntegrationsWithStore(externalIssueRepo dao.ExternalIssueRepo) alertmanagertypes.ReceiverIntegrationsFunc {
+	return func(nc *alertmanagertypes.Receiver, tmpl *template.Template, logger *slog.Logger, templater alertmanagertypes.Templater) ([]notify.Integration, error) {
+		return buildReceiverIntegrations(nc, tmpl, logger, templater, externalIssueRepo)
+	}
+}
+
+func buildReceiverIntegrations(nc *alertmanagertypes.Receiver, tmpl *template.Template, logger *slog.Logger, templater alertmanagertypes.Templater, externalIssueRepo dao.ExternalIssueRepo) ([]notify.Integration, error) {
+	upstreamIntegrations, err := receiver.BuildReceiverIntegrations(*nc.Receiver, tmpl, logger)
 	if err != nil {
 		return nil, err
 	}
@@ -56,16 +72,18 @@ func NewReceiverIntegrations(nc alertmanagertypes.Receiver, tmpl *template.Templ
 	}
 
 	for i, c := range nc.WebhookConfigs {
-		add(webhook.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) { return webhook.New(c, tmpl, l) })
+		add(webhook.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) { return webhook.New(c, tmpl, l, templater) })
 	}
 	for i, c := range nc.EmailConfigs {
-		add(email.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) { return email.New(c, tmpl, l), nil })
+		add(email.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) {
+			return email.New(c, tmpl, l, templater), nil
+		})
 	}
 	for i, c := range nc.PagerdutyConfigs {
-		add(pagerduty.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) { return pagerduty.New(c, tmpl, l) })
+		add(pagerduty.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) { return pagerduty.New(c, tmpl, l, templater) })
 	}
 	for i, c := range nc.OpsGenieConfigs {
-		add(opsgenie.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) { return opsgenie.New(c, tmpl, l) })
+		add(opsgenie.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) { return opsgenie.New(c, tmpl, l, templater) })
 	}
 	for i, c := range nc.JiraConfigs {
 		add(jira.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) {
@@ -74,25 +92,20 @@ func NewReceiverIntegrations(nc alertmanagertypes.Receiver, tmpl *template.Templ
 				return nil, err
 			}
 
-			// Wire up the issue mapping store for bi-directional sync
+			// Wire up the issue mapping store for bi-directional sync.
 			if externalIssueRepo != nil {
-				// Type assert to dao.ExternalIssueRepo
-				if repo, ok := externalIssueRepo.(dao.ExternalIssueRepo); ok {
-					store := jira.NewIssueMappingStore(repo)
-					notifier.SetIssueMappingStore(store)
-					l.Info("✅ wired up external issue mapping store to jira notifier")
-				}
+				notifier.SetIssueMappingStore(jira.NewIssueMappingStore(externalIssueRepo))
 			}
 
 			return notifier, nil
 		})
 	}
 	for i, c := range nc.SlackConfigs {
-		add(slack.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) { return slack.New(c, tmpl, l) })
+		add(slack.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) { return slack.New(c, tmpl, l, templater) })
 	}
 	for i, c := range nc.MSTeamsV2Configs {
 		add(msteamsv2.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) {
-			return msteamsv2.New(c, tmpl, `{{ template "msteamsv2.default.titleLink" . }}`, l)
+			return msteamsv2.New(c, tmpl, `{{ template "msteamsv2.default.titleLink" . }}`, l, templater)
 		})
 	}
 

@@ -17,46 +17,79 @@ import (
 	"github.com/prometheus/alertmanager/config"
 )
 
-type (
-	// Receiver is the type for the receiver configuration.
-	Receiver                 = config.Receiver
-	ReceiverIntegrationsFunc = func(nc Receiver, tmpl *template.Template, logger *slog.Logger, externalIssueRepo interface{}) ([]notify.Integration, error)
-)
+// Receiver embeds upstream config.Receiver to support custom receivers
+// To add another native notifier, mirror GoogleChatConfigs here
+// and extend customReceiverConfigs in config.go.
+type Receiver struct {
+	*config.Receiver
+	GoogleChatConfigs []*GoogleChatReceiverConfig `json:"googlechat_configs,omitempty" yaml:"googlechat_configs,omitempty"`
+}
 
-// Creates a new receiver from a string. The input is initialized with the default values from the upstream alertmanager.
-// The only default value which is missed is `send_resolved` (as it is a bool) which if not set in the input will always be set to `false`.
-func NewReceiver(input string) (Receiver, error) {
-	receiver := Receiver{}
-	err := json.Unmarshal([]byte(input), &receiver)
+// NewReceiver builds a Receiver from its JSON input, applying each notifier
+// config's per-config defaults via UnmarshalYAML.
+func NewReceiver(input string) (*Receiver, error) {
+	receiver := &Receiver{Receiver: &config.Receiver{}}
+	if err := json.Unmarshal([]byte(input), receiver); err != nil {
+		return nil, err
+	}
+
+	withDefaults, err := defaultedBaseReceiver(receiver.Receiver)
 	if err != nil {
-		return Receiver{}, err
+		return nil, err
 	}
-
-	// We marshal and unmarshal the receiver to ensure that the receiver is
-	// initialized with defaults from the upstream alertmanager.
-	bytes, err := yaml.Marshal(receiver)
-	if err != nil {
-		return Receiver{}, err
-	}
-
-	receiverWithDefaults := Receiver{}
-	if err := yaml.Unmarshal(bytes, &receiverWithDefaults); err != nil {
-		return Receiver{}, err
-	}
-
-	if err := receiverWithDefaults.UnmarshalYAML(func(i interface{}) error { return nil }); err != nil {
-		return Receiver{}, err
-	}
+	receiver.Receiver = withDefaults
 
 	// Fix custom_fields: YAML unmarshal converts map[string]interface{} to map[interface{}]interface{}
-	// which breaks JSON marshaling. We need to convert it back.
-	for _, jiraConfig := range receiverWithDefaults.JiraConfigs {
+	// which breaks JSON marshaling. We need to convert it back. Jira rides on the native
+	// config.JiraConfigs carried by the embedded *config.Receiver.
+	for _, jiraConfig := range receiver.Receiver.JiraConfigs {
 		if jiraConfig.Fields != nil {
 			jiraConfig.Fields = convertMapInterfaceToMapString(jiraConfig.Fields)
 		}
 	}
 
-	return receiverWithDefaults, nil
+	// Extend this block when adding another native notifier type.
+	for i, gc := range receiver.GoogleChatConfigs {
+		defaulted, err := defaultedNotifierConfig(gc)
+		if err != nil {
+			return nil, err
+		}
+		receiver.GoogleChatConfigs[i] = defaulted
+	}
+
+	return receiver, nil
+}
+
+func defaultedBaseReceiver(base *config.Receiver) (*config.Receiver, error) {
+	bytes, err := yaml.Marshal(base)
+	if err != nil {
+		return nil, err
+	}
+
+	withDefaults := &config.Receiver{}
+	if err := yaml.Unmarshal(bytes, withDefaults); err != nil {
+		return nil, err
+	}
+
+	if err := withDefaults.UnmarshalYAML(func(i interface{}) error { return nil }); err != nil {
+		return nil, err
+	}
+
+	return withDefaults, nil
+}
+
+// defaultedNotifierConfig triggers T.UnmarshalYAML via a yaml round-trip,
+// installing T's DefaultXxxConfig over user values.
+func defaultedNotifierConfig[T any](cfg *T) (*T, error) {
+	bytes, err := yaml.Marshal(cfg)
+	if err != nil {
+		return nil, err
+	}
+	out := new(T)
+	if err := yaml.Unmarshal(bytes, out); err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 // convertMapInterfaceToMapString recursively converts map[interface{}]interface{} to map[string]interface{}
@@ -99,7 +132,7 @@ func convertValue(value interface{}) interface{} {
 	}
 }
 
-func TestReceiver(ctx context.Context, receiver Receiver, receiverIntegrationsFunc ReceiverIntegrationsFunc, config *Config, tmpl *template.Template, logger *slog.Logger, lSet model.LabelSet, alert ...*Alert) error {
+func TestReceiver(ctx context.Context, receiver *Receiver, receiverIntegrationsFunc ReceiverIntegrationsFunc, config *Config, tmpl *template.Template, logger *slog.Logger, templater Templater, lSet model.LabelSet, alert ...*Alert) error {
 	ctx = notify.WithGroupKey(ctx, fmt.Sprintf("%s-%s-%d", receiver.Name, lSet.Fingerprint(), time.Now().Unix()))
 	ctx = notify.WithGroupLabels(ctx, lSet)
 	ctx = notify.WithReceiverName(ctx, receiver.Name)
@@ -116,12 +149,12 @@ func TestReceiver(ctx context.Context, receiver Receiver, receiverIntegrationsFu
 		return err
 	}
 
-	receiver, err = testConfig.GetReceiver(receiver.Name)
+	defaultedReceiver, err := testConfig.GetReceiver(receiver.Name)
 	if err != nil {
 		return err
 	}
 
-	integrations, err := receiverIntegrationsFunc(receiver, tmpl, logger, nil)
+	integrations, err := receiverIntegrationsFunc(defaultedReceiver, tmpl, logger, templater)
 	if err != nil {
 		return err
 	}

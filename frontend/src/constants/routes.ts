@@ -31,9 +31,10 @@ const ROUTES = {
 	ALERT_OVERVIEW: '/alerts/overview',
 	ALERT_TYPE_SELECTION: '/alerts/type-selection',
 	EXTERNAL_ISSUES: '/issues',
-	ALL_CHANNELS: '/settings/channels',
-	CHANNELS_NEW: '/settings/channels/new',
-	CHANNELS_EDIT: '/settings/channels/edit/:channelId',
+	// TODO(H4ad): Add test to forbidden ? in this map after https://github.com/SigNoz/engineering-pod/issues/5322
+	ALL_CHANNELS: '/alerts?tab=Channels',
+	CHANNELS_NEW: '/alerts/channels/new',
+	CHANNELS_EDIT: '/alerts/channels/edit/:channelId',
 	JIRA_INTEGRATION: '/settings/integrations/jira',
 	ALL_ERROR: '/exceptions',
 	ERROR_DETAIL: '/error-detail',
@@ -91,6 +92,7 @@ const ROUTES = {
 	PUBLIC_DASHBOARD: '/public/dashboard/:dashboardId',
 	SERVICE_ACCOUNTS_SETTINGS: '/settings/service-accounts',
 	AI_ASSISTANT: '/ai-assistant/:conversationId',
+	AI_ASSISTANT_BASE: '/ai-assistant',
 	AI_ASSISTANT_ICON_PREVIEW: '/ai-assistant-icon-preview',
 	MCP_SERVER: '/settings/mcp-server',
 } as const;

@@ -47,6 +47,7 @@ export const componentPermission: Record<ComponentTypes, ROLES[]> = {
 export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {
 	HOME: ['ADMIN', 'EDITOR', 'VIEWER'],
 	ALERTS_NEW: ['ADMIN', 'EDITOR'],
+	ALERT_TYPE_SELECTION: ['ADMIN', 'EDITOR'],
 	ORG_SETTINGS: ['ADMIN'],
 	MY_SETTINGS: ['ADMIN', 'EDITOR', 'VIEWER', 'ANONYMOUS'],
 	SERVICE_MAP: ['ADMIN', 'EDITOR', 'VIEWER'],
@@ -134,8 +135,8 @@ export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {
 	METER: ['ADMIN', 'EDITOR', 'VIEWER'],
 	METER_EXPLORER_VIEWS: ['ADMIN', 'EDITOR', 'VIEWER'],
 	PUBLIC_DASHBOARD: ['ADMIN', 'EDITOR', 'VIEWER'],
-	ALERT_TYPE_SELECTION: ['ADMIN', 'EDITOR'],
 	AI_ASSISTANT: ['ADMIN', 'EDITOR', 'VIEWER'],
 	AI_ASSISTANT_ICON_PREVIEW: ['ADMIN', 'EDITOR', 'VIEWER'],
 	MCP_SERVER: ['ADMIN', 'EDITOR', 'VIEWER'],
+	AI_ASSISTANT_BASE: ['ADMIN', 'EDITOR', 'VIEWER'],
 };

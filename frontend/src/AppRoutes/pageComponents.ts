@@ -47,7 +47,6 @@ export const TracesFunnels = Loadable(
 		import(/* webpackChunkName: "Traces Funnels" */ 'pages/TracesModulePage'),
 );
 export const TracesFunnelDetails = Loadable(
-	// eslint-disable-next-line sonarjs/no-identical-functions
 	() =>
 		import(
 			/* webpackChunkName: "Traces Funnel Details" */ 'pages/TracesModulePage'
@@ -65,10 +64,17 @@ export const TraceDetail = Loadable(
 		),
 );
 
+export const TraceDetailOldRedirect = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "TraceDetailOldRedirect" */ 'pages/TraceDetailOldRedirect/index'
+		),
+);
+
 export const TraceDetailV3 = Loadable(
 	() =>
 		import(
-			/* webpackChunkName: "TraceDetailV3 Page" */ 'pages/TraceDetailV3Page/index'
+			/* webpackChunkName: "TraceDetailV3 Page" */ 'pages/TraceDetailsV3/index'
 		),
 );
 
@@ -136,12 +142,12 @@ export const AlertOverview = Loadable(
 	() => import(/* webpackChunkName: "Alert Overview" */ 'pages/AlertList'),
 );
 
-export const CreateAlertChannelAlerts = Loadable(
-	() => import(/* webpackChunkName: "Create Channels" */ 'pages/Settings'),
+export const ChannelsNew = Loadable(
+	() => import(/* webpackChunkName: "Create Channels" */ 'pages/AlertList'),
 );
 
-export const AllAlertChannels = Loadable(
-	() => import(/* webpackChunkName: "All Channels" */ 'pages/Settings'),
+export const ChannelsEdit = Loadable(
+	() => import(/* webpackChunkName: "Edit Channels" */ 'pages/AlertList'),
 );
 
 export const AllErrors = Loadable(
@@ -310,13 +316,6 @@ export const PublicDashboardPage = Loadable(
 	() =>
 		import(
 			/* webpackChunkName: "Public Dashboard Page" */ 'pages/PublicDashboard'
-		),
-);
-
-export const AlertTypeSelectionPage = Loadable(
-	() =>
-		import(
-			/* webpackChunkName: "Alert Type Selection Page" */ 'pages/AlertTypeSelection'
 		),
 );
 

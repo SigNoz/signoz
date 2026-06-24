@@ -5,8 +5,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-type MemMarker = types.MemMarker
-
-func NewMarker(r prometheus.Registerer) *MemMarker {
+func NewMarker(r prometheus.Registerer) *types.MemMarker {
 	return types.NewMarker(r)
 }

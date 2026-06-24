@@ -18,19 +18,19 @@ func TestJSONExtractString(t *testing.T) {
 			name:     "simple path",
 			column:   "data",
 			path:     "$.field",
-			expected: `"data"->>'field'`,
+			expected: `"data"::jsonb->>'field'`,
 		},
 		{
 			name:     "nested path",
 			column:   "metadata",
 			path:     "$.user.name",
-			expected: `"metadata"->'user'->>'name'`,
+			expected: `"metadata"::jsonb->'user'->>'name'`,
 		},
 		{
 			name:     "deeply nested path",
 			column:   "json_col",
 			path:     "$.level1.level2.level3",
-			expected: `"json_col"->'level1'->'level2'->>'level3'`,
+			expected: `"json_col"::jsonb->'level1'->'level2'->>'level3'`,
 		},
 		{
 			name:     "root path",

@@ -34,6 +34,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/dao"
 	"github.com/SigNoz/signoz/pkg/ruler"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/zeus"
@@ -73,6 +74,7 @@ type provider struct {
 	traceDetailHandler      tracedetail.Handler
 	rulerHandler            ruler.Handler
 	llmPricingRuleHandler   llmpricingrule.Handler
+	statsHandler            statsreporter.Handler
 	externalIssueRepo       dao.ExternalIssueRepo
 	logger                  *slog.Logger
 }
@@ -108,6 +110,7 @@ func NewFactory(
 	llmPricingRuleHandler llmpricingrule.Handler,
 	traceDetailHandler tracedetail.Handler,
 	rulerHandler ruler.Handler,
+	statsHandler statsreporter.Handler,
 ) factory.ProviderFactory[apiserver.APIServer, apiserver.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, providerSettings factory.ProviderSettings, config apiserver.Config) (apiserver.APIServer, error) {
 		return newProvider(
@@ -144,6 +147,7 @@ func NewFactory(
 			llmPricingRuleHandler,
 			traceDetailHandler,
 			rulerHandler,
+			statsHandler,
 		)
 	})
 }
@@ -182,6 +186,7 @@ func newProvider(
 	llmPricingRuleHandler llmpricingrule.Handler,
 	traceDetailHandler tracedetail.Handler,
 	rulerHandler ruler.Handler,
+	statsHandler statsreporter.Handler,
 ) (apiserver.APIServer, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/apiserver/signozapiserver")
 	router := mux.NewRouter().UseEncodedPath()
@@ -221,6 +226,7 @@ func newProvider(
 		traceDetailHandler:      traceDetailHandler,
 		rulerHandler:            rulerHandler,
 		llmPricingRuleHandler:   llmPricingRuleHandler,
+		statsHandler:            statsHandler,
 		externalIssueRepo:       externalIssueRepo,
 		logger:                  settings.Logger(),
 	}
@@ -352,6 +358,10 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 	}
 
 	if err := provider.addWebhookRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addStatsReporterRoutes(router); err != nil {
 		return err
 	}
 

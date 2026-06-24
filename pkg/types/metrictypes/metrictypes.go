@@ -137,7 +137,7 @@ func (t *Type) Scan(src interface{}) error {
 }
 
 func (t Type) IsPercentileSpaceAggregationAllowed() bool {
-	return t == HistogramType || t == ExpHistogramType || t == SummaryType
+	return t == HistogramType || t == ExpHistogramType
 }
 
 var (
@@ -257,7 +257,10 @@ func (s SpaceAggregation) Percentile() float64 {
 }
 
 // MetricTableHints is a struct that contains tables to use instead of the derived tables
-// from the start and end time, for internal use only when we need to override the derived tables.
+//
+// Convention :
+//   - TimeSeriesTableName: the LOCAL table name (e.g. "time_series_v4_1day").
+//   - SamplesTableName: the DISTRIBUTED table name (e.g. "distributed_samples_v4_agg_5m").
 type MetricTableHints struct {
 	TimeSeriesTableName string
 	SamplesTableName    string

@@ -60,7 +60,7 @@ func (handler *handler) Create(rw http.ResponseWriter, r *http.Request) {
 		dashboardMigrator.Migrate(ctx, req)
 	}
 
-	dashboard, err := handler.module.Create(ctx, orgID, claims.Email, valuer.MustNewUUID(claims.IdentityID()), req)
+	dashboard, err := handler.module.Create(ctx, orgID, claims.Email, valuer.MustNewUUID(claims.IdentityID()), dashboardtypes.SourceUser, req)
 	if err != nil {
 		render.Error(rw, err)
 		return

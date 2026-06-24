@@ -10,7 +10,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 	"github.com/SigNoz/signoz/pkg/types/inframonitoringtypes"
-	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
@@ -96,14 +95,16 @@ func buildPodRecords(
 			}
 		}
 
-		if attrs, ok := metadataMap[compositeKey]; ok && isPodUIDInGroupBy {
-			// the condition above ensures we deduce age only if pod uid is in group by because if
-			// it's not in group by then we might have multiple pod uids in the same group and hence then podAge wont make sense
-			if startTimeStr, exists := attrs[podStartTimeAttrKey]; exists && startTimeStr != "" {
-				if t, err := time.Parse(time.RFC3339, startTimeStr); err == nil {
-					startTimeMs := t.UnixMilli()
-					if startTimeMs > 0 {
-						record.PodAge = reqEnd - startTimeMs
+		if attrs, ok := metadataMap[compositeKey]; ok {
+			// podAge only makes sense when pod uid is in groupBy. Otherwise the
+			// group can contain multiple pods with different start times.
+			if isPodUIDInGroupBy {
+				if startTimeStr, exists := attrs[podStartTimeAttrKey]; exists && startTimeStr != "" {
+					if t, err := time.Parse(time.RFC3339, startTimeStr); err == nil {
+						startTimeMs := t.UnixMilli()
+						if startTimeMs > 0 {
+							record.PodAge = reqEnd - startTimeMs
+						}
 					}
 				}
 			}
@@ -124,6 +125,9 @@ func (m *module) getTopPodGroups(
 	metadataMap map[string]map[string]string,
 ) ([]map[string]string, error) {
 	orderByKey := req.OrderBy.Key.Name
+	if orderByKey == inframonitoringtypes.PodNameAttrKey {
+		return inframonitoringtypes.PaginateMetadataByName(metadataMap, req.GroupBy, req.OrderBy.Direction, req.Offset, req.Limit, inframonitoringtypes.PodNameAttrKey), nil
+	}
 	queryNamesForOrderBy := orderByToPodsQueryNames[orderByKey]
 	rankingQueryName := queryNamesForOrderBy[len(queryNamesForOrderBy)-1]
 
@@ -189,30 +193,26 @@ func (m *module) getPodsTableMetadata(ctx context.Context, req *inframonitoringt
 // Groups absent from the result map have implicit zero counts (caller default).
 func (m *module) getPerGroupPodPhaseCounts(
 	ctx context.Context,
-	req *inframonitoringtypes.PostablePods,
+	start, end int64,
+	filter *qbtypes.Filter,
+	groupBy []qbtypes.GroupByKey,
 	pageGroups []map[string]string,
 ) (map[string]podPhaseCounts, error) {
-	if len(pageGroups) == 0 || len(req.GroupBy) == 0 {
+	if len(pageGroups) == 0 || len(groupBy) == 0 {
 		return map[string]podPhaseCounts{}, nil
 	}
 
-	// Merged filter expression (user filter + page-groups IN clauses).
-	reqFilterExpr := ""
-	if req.Filter != nil {
-		reqFilterExpr = req.Filter.Expression
+	// Merge user filter with page-groups IN clauses.
+	userFilterExpr := ""
+	if filter != nil {
+		userFilterExpr = filter.Expression
 	}
 	pageGroupsFilterExpr := buildPageGroupsFilterExpr(pageGroups)
-	filterExpr := mergeFilterExpressions(reqFilterExpr, pageGroupsFilterExpr)
+	mergedFilterExpr := mergeFilterExpressions(userFilterExpr, pageGroupsFilterExpr)
 
-	// Resolve tables. Same convention as hosts (distributed names from helpers).
-	adjustedStart, adjustedEnd, _, localTimeSeriesTable := telemetrymetrics.WhichTSTableToUse(
-		uint64(req.Start), uint64(req.End), nil,
-	)
-	samplesTable := telemetrymetrics.WhichSamplesTableToUse(
-		uint64(req.Start), uint64(req.End),
-		metrictypes.UnspecifiedType, metrictypes.TimeAggregationUnspecified, nil,
-	)
-	valueCol := telemetrymetrics.ValueColumnForSamplesTable(samplesTable)
+	// Step-floor bounds + resolve tables in one shot to match QB v5 querier.
+	samplesStartMs, flooredEndMs, tsAdjustedStart, _, localTimeSeriesTable, distributedSamplesTable, _ := alignedMetricWindow(start, end)
+	valueCol := telemetrymetrics.ValueColumnForSamplesTable(distributedSamplesTable)
 
 	// ----- timeSeriesFPs -----
 	timeSeriesFPs := sqlbuilder.NewSelectBuilder()
@@ -220,7 +220,7 @@ func (m *module) getPerGroupPodPhaseCounts(
 		"fingerprint",
 		fmt.Sprintf("JSONExtractString(labels, %s) AS pod_uid", timeSeriesFPs.Var(podUIDAttrKey)),
 	}
-	for _, key := range req.GroupBy {
+	for _, key := range groupBy {
 		timeSeriesFPsSelectCols = append(timeSeriesFPsSelectCols,
 			fmt.Sprintf("JSONExtractString(labels, %s) AS %s", timeSeriesFPs.Var(key.Name), quoteIdentifier(key.Name)),
 		)
@@ -229,11 +229,11 @@ func (m *module) getPerGroupPodPhaseCounts(
 	timeSeriesFPs.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, localTimeSeriesTable))
 	timeSeriesFPs.Where(
 		timeSeriesFPs.E("metric_name", podPhaseMetricName),
-		timeSeriesFPs.GE("unix_milli", adjustedStart),
-		timeSeriesFPs.L("unix_milli", adjustedEnd),
+		timeSeriesFPs.GE("unix_milli", tsAdjustedStart),
+		timeSeriesFPs.LE("unix_milli", flooredEndMs),
 	)
-	if filterExpr != "" {
-		filterClause, err := m.buildFilterClause(ctx, &qbtypes.Filter{Expression: filterExpr}, req.Start, req.End)
+	if mergedFilterExpr != "" {
+		filterClause, err := m.buildFilterClause(ctx, &qbtypes.Filter{Expression: mergedFilterExpr}, start, end)
 		if err != nil {
 			return nil, err
 		}
@@ -242,7 +242,7 @@ func (m *module) getPerGroupPodPhaseCounts(
 		}
 	}
 	timeSeriesFPsGroupBy := []string{"fingerprint", "pod_uid"}
-	for _, key := range req.GroupBy {
+	for _, key := range groupBy {
 		timeSeriesFPsGroupBy = append(timeSeriesFPsGroupBy, quoteIdentifier(key.Name))
 	}
 	timeSeriesFPs.GroupBy(timeSeriesFPsGroupBy...)
@@ -251,7 +251,7 @@ func (m *module) getPerGroupPodPhaseCounts(
 	latestPhasePerPod := sqlbuilder.NewSelectBuilder()
 	latestPhasePerPodSelectCols := []string{"tsfp.pod_uid AS pod_uid"}
 	latestPhasePerPodGroupBy := []string{"pod_uid"}
-	for _, key := range req.GroupBy {
+	for _, key := range groupBy {
 		col := quoteIdentifier(key.Name)
 		latestPhasePerPodSelectCols = append(latestPhasePerPodSelectCols, fmt.Sprintf("tsfp.%s AS %s", col, col))
 		latestPhasePerPodGroupBy = append(latestPhasePerPodGroupBy, col)
@@ -262,21 +262,21 @@ func (m *module) getPerGroupPodPhaseCounts(
 	latestPhasePerPod.Select(latestPhasePerPodSelectCols...)
 	latestPhasePerPod.From(fmt.Sprintf(
 		"%s.%s AS samples INNER JOIN time_series_fps AS tsfp ON samples.fingerprint = tsfp.fingerprint",
-		telemetrymetrics.DBName, samplesTable,
+		telemetrymetrics.DBName, distributedSamplesTable,
 	))
 	latestPhasePerPod.Where(
 		latestPhasePerPod.E("samples.metric_name", podPhaseMetricName),
-		latestPhasePerPod.GE("samples.unix_milli", req.Start),
-		latestPhasePerPod.L("samples.unix_milli", req.End),
+		latestPhasePerPod.GE("samples.unix_milli", samplesStartMs),
+		latestPhasePerPod.L("samples.unix_milli", flooredEndMs),
 		"tsfp.pod_uid != ''",
 	)
 	latestPhasePerPod.GroupBy(latestPhasePerPodGroupBy...)
 	latestPhasePerPodSQL, latestPhasePerPodArgs := latestPhasePerPod.BuildWithFlavor(sqlbuilder.ClickHouse)
 
 	// ----- countPodsPerPhase (outer SELECT) -----
-	countPodsPerPhaseSelectCols := make([]string, 0, len(req.GroupBy)+5)
-	countPodsPerPhaseGroupBy := make([]string, 0, len(req.GroupBy))
-	for _, key := range req.GroupBy {
+	countPodsPerPhaseSelectCols := make([]string, 0, len(groupBy)+5)
+	countPodsPerPhaseGroupBy := make([]string, 0, len(groupBy))
+	for _, key := range groupBy {
 		col := quoteIdentifier(key.Name)
 		countPodsPerPhaseSelectCols = append(countPodsPerPhaseSelectCols, col)
 		countPodsPerPhaseGroupBy = append(countPodsPerPhaseGroupBy, col)
@@ -310,8 +310,8 @@ func (m *module) getPerGroupPodPhaseCounts(
 
 	result := make(map[string]podPhaseCounts)
 	for rows.Next() {
-		groupVals := make([]string, len(req.GroupBy))
-		scanPtrs := make([]any, 0, len(req.GroupBy)+5)
+		groupVals := make([]string, len(groupBy))
+		scanPtrs := make([]any, 0, len(groupBy)+5)
 		for i := range groupVals {
 			scanPtrs = append(scanPtrs, &groupVals[i])
 		}

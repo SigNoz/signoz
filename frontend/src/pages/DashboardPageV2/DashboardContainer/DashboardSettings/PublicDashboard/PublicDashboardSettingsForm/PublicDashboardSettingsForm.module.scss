@@ -1,0 +1,34 @@
+.switchRow {
+	display: flex;
+	align-items: center;
+}
+
+.fieldGroup {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+
+	// Render the (non-portaled) dropdown above the drawer.
+	[data-radix-popper-content-wrapper] {
+		z-index: 1100 !important;
+	}
+
+	// Radix sets --radix-select-trigger-width on the content element (the wrapper's
+	// child), so match it there to make the dropdown take the input's width.
+	// SelectSimple exposes no content className, hence the descendant selector.
+	[data-radix-popper-content-wrapper] > * {
+		width: var(--radix-select-trigger-width);
+		min-width: var(--radix-select-trigger-width);
+	}
+}
+
+.fieldLabel {
+	color: var(--l2-foreground);
+	font-size: 12px;
+	font-weight: 500;
+	line-height: 1;
+}
+
+.timeRangeSelect {
+	width: 100%;
+}

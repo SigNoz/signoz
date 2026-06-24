@@ -4,23 +4,22 @@ import (
 	"context"
 	"time"
 
+	amConfig "github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/common/model"
 
-	"github.com/SigNoz/signoz/pkg/query-service/dao"
-	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
-
-	amConfig "github.com/prometheus/alertmanager/config"
-
 	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerserver"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerstore/sqlalertmanagerstore"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/query-service/dao"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -31,16 +30,29 @@ type provider struct {
 	configStore         alertmanagertypes.ConfigStore
 	stateStore          alertmanagertypes.StateStore
 	notificationManager nfmanager.NotificationManager
+	maintenanceStore    alertmanagertypes.MaintenanceStore
 	stopC               chan struct{}
 }
 
-func NewFactory(sqlstore sqlstore.SQLStore, orgGetter organization.Getter, notificationManager nfmanager.NotificationManager) factory.ProviderFactory[alertmanager.Alertmanager, alertmanager.Config] {
+func NewFactory(
+	sqlstore sqlstore.SQLStore,
+	orgGetter organization.Getter,
+	notificationManager nfmanager.NotificationManager,
+	maintenanceStore alertmanagertypes.MaintenanceStore,
+) factory.ProviderFactory[alertmanager.Alertmanager, alertmanager.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, settings factory.ProviderSettings, config alertmanager.Config) (alertmanager.Alertmanager, error) {
-		return New(ctx, settings, config, sqlstore, orgGetter, notificationManager)
+		return New(settings, config, sqlstore, orgGetter, notificationManager, maintenanceStore)
 	})
 }
 
-func New(ctx context.Context, providerSettings factory.ProviderSettings, config alertmanager.Config, sqlstore sqlstore.SQLStore, orgGetter organization.Getter, notificationManager nfmanager.NotificationManager) (*provider, error) {
+func New(
+	providerSettings factory.ProviderSettings,
+	config alertmanager.Config,
+	sqlstore sqlstore.SQLStore,
+	orgGetter organization.Getter,
+	notificationManager nfmanager.NotificationManager,
+	maintenanceStore alertmanagertypes.MaintenanceStore,
+) (*provider, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanager")
 	configStore := sqlalertmanagerstore.NewConfigStore(sqlstore)
 	stateStore := sqlalertmanagerstore.NewStateStore(sqlstore)
@@ -50,13 +62,13 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 
 	p := &provider{
 		service: alertmanager.New(
-			ctx,
 			settings,
 			config.Signoz.Config,
 			stateStore,
 			configStore,
 			orgGetter,
 			notificationManager,
+			maintenanceStore,
 			externalIssueRepo,
 		),
 		settings:            settings,
@@ -64,6 +76,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 		configStore:         configStore,
 		stateStore:          stateStore,
 		notificationManager: notificationManager,
+		maintenanceStore:    maintenanceStore,
 		stopC:               make(chan struct{}),
 	}
 
@@ -103,7 +116,7 @@ func (provider *provider) PutAlerts(ctx context.Context, orgID string, alerts al
 	return provider.service.PutAlerts(ctx, orgID, alerts)
 }
 
-func (provider *provider) TestReceiver(ctx context.Context, orgID string, receiver alertmanagertypes.Receiver) error {
+func (provider *provider) TestReceiver(ctx context.Context, orgID string, receiver *alertmanagertypes.Receiver) error {
 	return provider.service.TestReceiver(ctx, orgID, receiver)
 }
 
@@ -118,7 +131,7 @@ func (provider *provider) TestAlert(ctx context.Context, orgID string, ruleID st
 			for k, v := range alert.Labels {
 				set[model.LabelName(k)] = model.LabelValue(v)
 			}
-			match, err := provider.notificationManager.Match(ctx, orgID, alert.Labels[labels.AlertRuleIdLabel], set)
+			match, err := provider.notificationManager.Match(ctx, orgID, alert.Labels[ruletypes.LabelRuleID], set)
 			if err != nil {
 				return err
 			}
@@ -144,7 +157,7 @@ func (provider *provider) GetChannelByID(ctx context.Context, orgID string, chan
 	return provider.configStore.GetChannelByID(ctx, orgID, channelID)
 }
 
-func (provider *provider) UpdateChannelByReceiverAndID(ctx context.Context, orgID string, receiver alertmanagertypes.Receiver, id valuer.UUID) error {
+func (provider *provider) UpdateChannelByReceiverAndID(ctx context.Context, orgID string, receiver *alertmanagertypes.Receiver, id valuer.UUID) error {
 	channel, err := provider.configStore.GetChannelByID(ctx, orgID, id)
 	if err != nil {
 		return err
@@ -203,7 +216,7 @@ func (provider *provider) DeleteChannelByID(ctx context.Context, orgID string, c
 	}))
 }
 
-func (provider *provider) CreateChannel(ctx context.Context, orgID string, receiver alertmanagertypes.Receiver) (*alertmanagertypes.Channel, error) {
+func (provider *provider) CreateChannel(ctx context.Context, orgID string, receiver *alertmanagertypes.Receiver) (*alertmanagertypes.Channel, error) {
 	config, err := provider.configStore.Get(ctx, orgID)
 	if err != nil {
 		return nil, err
@@ -226,6 +239,10 @@ func (provider *provider) CreateChannel(ctx context.Context, orgID string, recei
 	}
 
 	return channel, nil
+}
+
+func (provider *provider) Config() alertmanagerserver.Config {
+	return provider.config.Signoz.Config
 }
 
 func (provider *provider) SetConfig(ctx context.Context, config *alertmanagertypes.Config) error {

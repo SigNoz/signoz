@@ -43,7 +43,7 @@ type PostableTag struct {
 	Value string `json:"value" required:"true"`
 }
 
-type GettableTag = PostableTag
+type GettableTag PostableTag
 
 func NewGettableTagFromTag(tag *Tag) *GettableTag {
 	return &GettableTag{Key: tag.Key, Value: tag.Value}
@@ -65,6 +65,14 @@ func NewPostableTagsFromTags(tags []*Tag) []PostableTag {
 	out := make([]PostableTag, len(tags))
 	for i, t := range tags {
 		out[i] = NewPostableTagFromTag(t)
+	}
+	return out
+}
+
+func NewTagsFromPostableTags(orgID valuer.UUID, kind coretypes.Kind, tags []PostableTag) []*Tag {
+	out := make([]*Tag, len(tags))
+	for i, t := range tags {
+		out[i] = NewTag(orgID, kind, t.Key, t.Value)
 	}
 	return out
 }

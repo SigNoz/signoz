@@ -1,44 +1,18 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { Button } from '@signozhq/ui/button';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
-import {
-	Activity,
-	TriangleAlert,
-	ChartBar,
-	Search,
-	Zap,
-	Sparkles,
-} from '@signozhq/icons';
+import Noz from 'components/Noz/Noz';
 
+import logEvent from 'api/common/logEvent';
+
+import { AIAssistantEvents, SuggestedPromptCategory } from '../../events';
+import { useAIAssistantAnalyticsContext } from '../../hooks/useAIAssistantAnalyticsContext';
 import { useAIAssistantStore } from '../../store/useAIAssistantStore';
 import { Message, StreamingEventItem } from '../../types';
 import MessageBubble from '../MessageBubble';
 import StreamingMessage from '../StreamingMessage';
 
 import styles from './VirtualizedMessages.module.scss';
-
-const SUGGESTIONS = [
-	{
-		icon: TriangleAlert,
-		text: 'Show me the top errors in the last hour',
-	},
-	{
-		icon: Activity,
-		text: 'What services have the highest latency?',
-	},
-	{
-		icon: ChartBar,
-		text: 'Give me an overview of system health',
-	},
-	{
-		icon: Search,
-		text: 'Find slow database queries',
-	},
-	{
-		icon: Zap,
-		text: 'Which endpoints have the most 5xx errors?',
-	},
-];
+import { useEmptyStateChips } from './useEmptyStateChips';
 
 const EMPTY_EVENTS: StreamingEventItem[] = [];
 
@@ -46,17 +20,24 @@ interface VirtualizedMessagesProps {
 	conversationId: string;
 	messages: Message[];
 	isStreaming: boolean;
+	/**
+	 * Called when a user clicks an empty-state suggested prompt. Routed
+	 * through the parent so analytics (Message sent) fire with the same
+	 * page/mode/context attribution as a normal send.
+	 */
+	onSendSuggestedPrompt: (text: string) => void;
 }
 
 export default function VirtualizedMessages({
 	conversationId,
 	messages,
 	isStreaming,
+	onSendSuggestedPrompt,
 }: VirtualizedMessagesProps): JSX.Element {
-	const sendMessage = useAIAssistantStore((s) => s.sendMessage);
 	const regenerateAssistantMessage = useAIAssistantStore(
 		(s) => s.regenerateAssistantMessage,
 	);
+	const { threadId } = useAIAssistantAnalyticsContext(conversationId);
 	const streamingStatus = useAIAssistantStore(
 		(s) => s.streams[conversationId]?.streamingStatus ?? '',
 	);
@@ -79,15 +60,29 @@ export default function VirtualizedMessages({
 
 	const virtuosoRef = useRef<VirtuosoHandle>(null);
 	const scrollerRef = useRef<HTMLElement | Window | null>(null);
+	// Tracks whether the scroller is pinned to (or near) the bottom. Updated
+	// via Virtuoso's `atBottomStateChange` so we can stop force-scrolling the
+	// user back down when they've intentionally scrolled up to read earlier
+	// content.
+	const atBottomRef = useRef(true);
+	// Id of the latest user message we've already anchored to. Used to detect
+	// a fresh user send so we can re-anchor to the bottom regardless of where
+	// the user was scrolled — sending a message and not seeing it is worse
+	// than the anti-yank guarantee.
+	const lastSeenUserMessageIdRef = useRef<string | null>(null);
 
 	const handleRegenerate = useCallback(
 		(messageId: string): void => {
 			if (isStreaming) {
 				return;
 			}
+			void logEvent(AIAssistantEvents.RegenerateClicked, {
+				messageId,
+				threadId,
+			});
 			void regenerateAssistantMessage(conversationId, messageId);
 		},
-		[conversationId, isStreaming, regenerateAssistantMessage],
+		[conversationId, isStreaming, regenerateAssistantMessage, threadId],
 	);
 
 	// Scroll all the way to the actual bottom — including the 64px of bottom
@@ -96,8 +91,25 @@ export default function VirtualizedMessages({
 	// align: 'end')` would only reach the last item's bottom and leave the
 	// padding hidden below the fold. Use `auto` while streaming so the bottom
 	// stays glued as text deltas arrive; `smooth` lags when triggered every
-	// few ms.
+	// few ms. Bail out if the user has scrolled away from the bottom — that's
+	// an explicit signal they want to read earlier content without being
+	// yanked back.
 	useEffect(() => {
+		const lastMessage = messages[messages.length - 1];
+		const isFreshUserSend =
+			lastMessage?.role === 'user' &&
+			lastMessage.id !== lastSeenUserMessageIdRef.current;
+		if (isFreshUserSend) {
+			lastSeenUserMessageIdRef.current = lastMessage.id;
+			// Re-anchor so the user sees their own send (and the assistant's
+			// follow-up streaming) even if they were reading history when they
+			// hit Enter.
+			atBottomRef.current = true;
+		}
+
+		if (!atBottomRef.current) {
+			return;
+		}
 		const scroller = scrollerRef.current;
 		if (!(scroller instanceof HTMLElement)) {
 			return;
@@ -107,7 +119,7 @@ export default function VirtualizedMessages({
 			behavior: isStreaming ? 'auto' : 'smooth',
 		});
 	}, [
-		messages.length,
+		messages,
 		streamingEvents.length,
 		streamingContentLength,
 		isStreaming,
@@ -117,41 +129,49 @@ export default function VirtualizedMessages({
 
 	const followOutput = useCallback(
 		(atBottom: boolean): false | 'auto' | 'smooth' => {
-			if (isStreaming) {
-				return 'auto';
+			if (!atBottom) {
+				return false;
 			}
-			return atBottom ? 'smooth' : false;
+			return isStreaming ? 'auto' : 'smooth';
 		},
 		[isStreaming],
 	);
 
+	const handleAtBottomStateChange = useCallback((atBottom: boolean): void => {
+		atBottomRef.current = atBottom;
+	}, []);
+
 	const showStreamingSlot =
 		isStreaming || Boolean(pendingApproval) || Boolean(pendingClarification);
+	const isEmptyState = messages.length === 0 && !showStreamingSlot;
+	const { chips: emptyStateChips } = useEmptyStateChips(isEmptyState);
 
-	if (messages.length === 0 && !showStreamingSlot) {
+	if (isEmptyState) {
 		return (
 			<div className={styles.empty}>
-				<div className={styles.emptyIcon}>
-					<Sparkles size={24} color="var(--primary)" />
+				<div className={`${styles.emptyIcon} noz-wave`}>
+					<Noz size={48} />
 				</div>
-				<h3 className={styles.emptyTitle}>SigNoz AI Assistant</h3>
+				<h3 className={styles.emptyTitle}>Noz</h3>
 				<p className={styles.emptySubtitle}>
 					Ask questions about your traces, logs, metrics, and infrastructure.
 				</p>
-				<div className={styles.emptySuggestions}>
-					{SUGGESTIONS.map((s) => (
-						<Button
-							key={s.text}
-							variant="outlined"
-							color="secondary"
-							className={styles.emptyChip}
+				<div className={styles.suggestions}>
+					{emptyStateChips.map((chip) => (
+						<div
+							key={chip.id}
+							className={styles.suggestion}
 							onClick={(): void => {
-								sendMessage(s.text);
+								void logEvent(AIAssistantEvents.SuggestedPromptClicked, {
+									promptId: chip.id,
+									category: SuggestedPromptCategory.EmptyState,
+								});
+								onSendSuggestedPrompt(chip.text);
 							}}
-							prefix={<s.icon size={14} />}
+							data-testid={`empty-state-chip-${chip.id}`}
 						>
-							{s.text}
-						</Button>
+							{chip.text}
+						</div>
 					))}
 				</div>
 			</div>
@@ -169,6 +189,8 @@ export default function VirtualizedMessages({
 			className={styles.messages}
 			totalCount={totalCount}
 			followOutput={followOutput}
+			atBottomStateChange={handleAtBottomStateChange}
+			atBottomThreshold={64}
 			initialTopMostItemIndex={Math.max(0, totalCount - 1)}
 			itemContent={(index): JSX.Element => {
 				if (index < messages.length) {

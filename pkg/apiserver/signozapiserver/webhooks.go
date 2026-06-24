@@ -407,6 +407,7 @@ func (h *webhookHandler) GetJiraWebhookURL(w http.ResponseWriter, r *http.Reques
 }
 
 // generateWebhookToken generates a unique webhook token for an org
+func (h *webhookHandler) generateWebhookToken(orgID string) (string, error) {
 	secret, err := h.webhookSigningSecret()
 	if err != nil {
 		return "", err
