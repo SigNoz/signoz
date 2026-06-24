@@ -1,0 +1,235 @@
+.llmObservabilityModelPricing {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-8);
+	padding: var(--spacing-12) var(--spacing-16);
+}
+
+.pageHeader {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: var(--spacing-8);
+}
+
+.pageHeaderTitle {
+	.title {
+		margin: 0;
+		font-size: var(--font-size-xl);
+		font-weight: var(--font-weight-semibold);
+	}
+
+	.subtitle {
+		margin: var(--spacing-2) 0 0;
+		color: var(--text-vanilla-400);
+		font-size: var(--periscope-font-size-base);
+	}
+}
+
+.filtersBar {
+	display: flex;
+	gap: var(--spacing-6);
+	align-items: center;
+	justify-content: space-between;
+}
+
+.filtersBarLeft {
+	display: flex;
+	gap: 12px;
+	align-items: center;
+}
+
+.filtersBarSearch {
+	width: 280px;
+}
+
+.filtersBarSource {
+	width: 160px;
+}
+
+.filtersBarSearchClear {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+	border: none;
+	background: none;
+	color: var(--bg-vanilla-400);
+	cursor: pointer;
+
+	&:hover {
+		color: var(--bg-vanilla-100);
+	}
+}
+
+.filtersBarCurrency {
+	width: 160px;
+}
+
+.pageError {
+	padding: var(--spacing-6) var(--spacing-8);
+	border-radius: var(--radius-2);
+	background: color-mix(in srgb, var(--bg-cherry-400) 8%, transparent);
+	color: var(--text-cherry-400);
+	font-size: var(--periscope-font-size-base);
+}
+
+.modelCostsTable {
+	margin-top: var(--spacing-8);
+}
+
+.pageFooter {
+	color: var(--text-vanilla-400);
+	font-size: var(--font-size-xs);
+}
+
+.modelCell {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-1);
+	min-width: 0;
+}
+
+.modelCellName {
+	color: var(--text-vanilla-100);
+	font-weight: var(--font-weight-semibold);
+}
+
+.modelCellName,
+.modelCellCanonicalId {
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.modelCellCanonicalId {
+	color: var(--text-vanilla-400);
+	font-family: var(--code-font-family, monospace);
+	font-size: var(--font-size-xs);
+}
+
+.priceCell {
+	font-family: var(--code-font-family, monospace);
+	color: var(--text-vanilla-400);
+}
+
+.extraBuckets {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--spacing-3);
+}
+
+.extraBucketsChip {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-3);
+	margin: 0;
+}
+
+.extraBucketsKey {
+	font-family: var(--code-font-family, monospace);
+	font-size: var(--font-size-xs);
+}
+
+.extraBucketsPrice {
+	font-family: var(--code-font-family, monospace);
+	font-weight: var(--font-weight-semibold);
+}
+
+.muted {
+	color: var(--text-vanilla-400);
+}
+
+.sourceBadge {
+	margin: 0;
+}
+
+// ─── Tab label badge ─────────────────────────────────────────────────────────
+
+.tabLabel {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.tabBadge {
+	margin: 0;
+}
+
+// ─── Unpriced models tab ─────────────────────────────────────────────────────
+
+.unpricedBanner {
+	display: flex;
+	align-items: flex-start;
+	gap: 10px;
+	padding: 12px 16px;
+	border-radius: 6px;
+	border: 1px solid color-mix(in srgb, var(--bg-amber-400) 30%, transparent);
+	background: color-mix(in srgb, var(--bg-amber-400) 8%, transparent);
+	color: var(--bg-amber-300, var(--bg-amber-400));
+	font-size: 13px;
+	line-height: 1.5;
+
+	code {
+		font-family: var(--code-font-family, monospace);
+		font-size: 12px;
+	}
+}
+
+.unpricedBannerIcon {
+	flex-shrink: 0;
+	margin-top: 2px;
+}
+
+.spansBadge {
+	margin: 0;
+	font-family: var(--code-font-family, monospace);
+}
+
+.mapToSelect {
+	width: 100%;
+	max-width: 280px;
+}
+
+.confirmPanel {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 12px;
+	border-radius: 6px;
+	border: 1px solid color-mix(in srgb, var(--bg-forest-500) 40%, transparent);
+	background: color-mix(in srgb, var(--bg-forest-500) 10%, transparent);
+}
+
+.confirmText {
+	font-size: 13px;
+	color: var(--bg-vanilla-100);
+
+	strong {
+		font-family: var(--code-font-family, monospace);
+		font-weight: 600;
+	}
+}
+
+.confirmPricing {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	font-size: 12px;
+	color: var(--bg-vanilla-400);
+}
+
+.confirmBucket {
+	padding: 1px 6px;
+	border-radius: 4px;
+	background: color-mix(in srgb, var(--bg-vanilla-400) 14%, transparent);
+	font-family: var(--code-font-family, monospace);
+}
+
+.confirmActions {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}

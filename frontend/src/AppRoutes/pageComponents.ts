@@ -122,6 +122,13 @@ export const DashboardWidget = Loadable(
 		import(/* webpackChunkName: "DashboardWidgetPage" */ 'pages/DashboardWidget'),
 );
 
+export const DashboardPanelEditorPage = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "DashboardPanelEditorPage" */ 'pages/DashboardPageV2/PanelEditorPage/PanelEditorPage'
+		),
+);
+
 export const EditRulesPage = Loadable(
 	() => import(/* webpackChunkName: "Alerts Edit Page" */ 'pages/EditRules'),
 );
@@ -328,6 +335,13 @@ export const AIAssistantPage = Loadable(
 	() =>
 		import(
 			/* webpackChunkName: "AI Assistant Page" */ 'pages/AIAssistantPage/AIAssistantPage'
+		),
+);
+
+export const LLMObservabilityPage = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "LLM Observability Page" */ 'pages/LLMObservability'
 		),
 );
 

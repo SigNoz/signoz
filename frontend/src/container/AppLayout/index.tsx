@@ -408,6 +408,9 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 	const isPublicDashboard = pathname.startsWith('/public/dashboard/');
 	const isAIAssistantPage = pathname.startsWith('/ai-assistant/');
+	// The V2 panel editor is a chromeless full-page route (no side nav / top nav),
+	// like the onboarding and public-dashboard screens.
+	const isPanelEditorV2 = routeKey === 'DASHBOARD_PANEL_EDITOR';
 
 	const renderFullScreen =
 		pathname === ROUTES.GET_STARTED ||
@@ -418,7 +421,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		pathname === ROUTES.GET_STARTED_LOGS_MANAGEMENT ||
 		pathname === ROUTES.GET_STARTED_AWS_MONITORING ||
 		pathname === ROUTES.GET_STARTED_AZURE_MONITORING ||
-		isPublicDashboard;
+		isPublicDashboard ||
+		isPanelEditorV2;
 
 	const [showTrialExpiryBanner, setShowTrialExpiryBanner] = useState(false);
 

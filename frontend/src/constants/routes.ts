@@ -24,6 +24,7 @@ const ROUTES = {
 	ALL_DASHBOARD: '/dashboard',
 	DASHBOARD: '/dashboard/:dashboardId',
 	DASHBOARD_WIDGET: '/dashboard/:dashboardId/:widgetId',
+	DASHBOARD_PANEL_EDITOR: '/dashboard/:dashboardId/panel/:panelId',
 	EDIT_ALERTS: '/alerts/edit',
 	LIST_ALL_ALERT: '/alerts',
 	ALERTS_NEW: '/alerts/new',
@@ -92,7 +93,7 @@ const ROUTES = {
 	AI_ASSISTANT_BASE: '/ai-assistant',
 	AI_ASSISTANT_ICON_PREVIEW: '/ai-assistant-icon-preview',
 	MCP_SERVER: '/settings/mcp-server',
-	LLM_OBSERVABILITY: '/llm-observability',
+	LLM_OBSERVABILITY_BASE: '/llm-observability',
 	LLM_OBSERVABILITY_MODEL_PRICING: '/llm-observability/settings/model-pricing',
 } as const;
 

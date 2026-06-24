@@ -2258,6 +2258,32 @@ export interface AuthtypesPostableRotateTokenDTO {
 	refreshToken?: string;
 }
 
+export interface AuthtypesPostableUserRoleDTO {
+	/**
+	 * @type string
+	 */
+	id: string;
+}
+
+export interface AuthtypesPostableUserDTO {
+	/**
+	 * @type string
+	 */
+	displayName?: string;
+	/**
+	 * @type string
+	 */
+	email: string;
+	/**
+	 * @type string
+	 */
+	frontendBaseUrl?: string;
+	/**
+	 * @type array
+	 */
+	userRoles?: AuthtypesPostableUserRoleDTO[];
+}
+
 export interface AuthtypesRoleDTO {
 	/**
 	 * @type string
@@ -9931,7 +9957,7 @@ export type ListUsersDeprecated200 = {
 	status: string;
 };
 
-export type DeleteUserPathParameters = {
+export type DeleteUserDeprecatedPathParameters = {
 	id: string;
 };
 export type GetUserDeprecatedPathParameters = {
@@ -10842,6 +10868,17 @@ export type ListUsers200 = {
 	status: string;
 };
 
+export type CreateUser201 = {
+	data: TypesIdentifiableDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type DeleteUserPathParameters = {
+	id: string;
+};
 export type GetUserPathParameters = {
 	id: string;
 };
