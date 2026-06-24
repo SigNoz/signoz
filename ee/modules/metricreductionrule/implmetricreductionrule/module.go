@@ -9,6 +9,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/metricreductionrule"
@@ -16,6 +17,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/ruler/rulestore/sqlrulestore"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/metricreductionruletypes"
 	"github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
@@ -40,10 +42,11 @@ type module struct {
 	dashboard dashboard.Module
 	ruleStore ruletypes.RuleStore
 	licensing licensing.Licensing
+	flagger   flagger.Flagger
 	logger    *slog.Logger
 }
 
-func NewModule(sqlStore sqlstore.SQLStore, telemetryStore telemetrystore.TelemetryStore, dashboardModule dashboard.Module, queryParser queryparser.QueryParser, licensing licensing.Licensing, providerSettings factory.ProviderSettings, threads int) metricreductionrule.Module {
+func NewModule(sqlStore sqlstore.SQLStore, telemetryStore telemetrystore.TelemetryStore, dashboardModule dashboard.Module, queryParser queryparser.QueryParser, licensing licensing.Licensing, flagger flagger.Flagger, providerSettings factory.ProviderSettings, threads int) metricreductionrule.Module {
 	scoped := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/ee/modules/metricreductionrule/implmetricreductionrule")
 	return &module{
 		store:     NewStore(sqlStore),
@@ -51,11 +54,15 @@ func NewModule(sqlStore sqlstore.SQLStore, telemetryStore telemetrystore.Telemet
 		dashboard: dashboardModule,
 		ruleStore: sqlrulestore.NewRuleStore(sqlStore, queryParser, providerSettings),
 		licensing: licensing,
+		flagger:   flagger,
 		logger:    scoped.Logger(),
 	}
 }
 
-func (m *module) checkLicense(ctx context.Context, orgID valuer.UUID) error {
+func (m *module) checkAccess(ctx context.Context, orgID valuer.UUID) error {
+	if !m.flagger.BooleanOrEmpty(ctx, flagger.FeatureEnableMetricsReduction, featuretypes.NewFlaggerEvaluationContext(orgID)) {
+		return errors.Newf(errors.TypeUnsupported, metricreductionruletypes.ErrCodeMetricReductionRuleUnsupported, "metric volume control is not enabled")
+	}
 	return nil
 	if _, err := m.licensing.GetActive(ctx, orgID); err != nil {
 		return errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "metric volume control requires a valid license").WithAdditional(err.Error())
@@ -64,7 +71,7 @@ func (m *module) checkLicense(ctx context.Context, orgID valuer.UUID) error {
 }
 
 func (m *module) List(ctx context.Context, orgID valuer.UUID, params *metricreductionruletypes.ListReductionRulesParams) (*metricreductionruletypes.GettableReductionRules, error) {
-	if err := m.checkLicense(ctx, orgID); err != nil {
+	if err := m.checkAccess(ctx, orgID); err != nil {
 		return nil, err
 	}
 	if err := params.Validate(); err != nil {
@@ -144,7 +151,7 @@ func (m *module) listSortedByVolume(ctx context.Context, orgID valuer.UUID, para
 }
 
 func (m *module) Get(ctx context.Context, orgID valuer.UUID, metricName string) (*metricreductionruletypes.GettableReductionRule, error) {
-	if err := m.checkLicense(ctx, orgID); err != nil {
+	if err := m.checkAccess(ctx, orgID); err != nil {
 		return nil, err
 	}
 	if metricName == "" {
@@ -174,7 +181,7 @@ func (m *module) Upsert(ctx context.Context, orgID valuer.UUID, userEmail string
 
 // writeRule validates, persists (create inserts, else upserts), and syncs the rule to ClickHouse.
 func (m *module) writeRule(ctx context.Context, orgID valuer.UUID, userEmail string, req *metricreductionruletypes.PostableReductionRule, create bool) (*metricreductionruletypes.GettableReductionRule, error) {
-	if err := m.checkLicense(ctx, orgID); err != nil {
+	if err := m.checkAccess(ctx, orgID); err != nil {
 		return nil, err
 	}
 	if err := req.Validate(); err != nil {
@@ -213,7 +220,7 @@ func (m *module) writeRule(ctx context.Context, orgID valuer.UUID, userEmail str
 }
 
 func (m *module) Delete(ctx context.Context, orgID valuer.UUID, metricName string) error {
-	if err := m.checkLicense(ctx, orgID); err != nil {
+	if err := m.checkAccess(ctx, orgID); err != nil {
 		return err
 	}
 	if metricName == "" {
@@ -236,7 +243,7 @@ func (m *module) Create(ctx context.Context, orgID valuer.UUID, userEmail string
 }
 
 func (m *module) GetByID(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*metricreductionruletypes.GettableReductionRule, error) {
-	if err := m.checkLicense(ctx, orgID); err != nil {
+	if err := m.checkAccess(ctx, orgID); err != nil {
 		return nil, err
 	}
 	rule, err := m.store.GetByID(ctx, orgID, id)
@@ -248,7 +255,7 @@ func (m *module) GetByID(ctx context.Context, orgID valuer.UUID, id valuer.UUID)
 }
 
 func (m *module) UpdateByID(ctx context.Context, orgID valuer.UUID, userEmail string, id valuer.UUID, req *metricreductionruletypes.PostableReductionRule) (*metricreductionruletypes.GettableReductionRule, error) {
-	if err := m.checkLicense(ctx, orgID); err != nil {
+	if err := m.checkAccess(ctx, orgID); err != nil {
 		return nil, err
 	}
 	existing, err := m.store.GetByID(ctx, orgID, id)
@@ -283,7 +290,7 @@ func (m *module) UpdateByID(ctx context.Context, orgID valuer.UUID, userEmail st
 }
 
 func (m *module) DeleteByID(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {
-	if err := m.checkLicense(ctx, orgID); err != nil {
+	if err := m.checkAccess(ctx, orgID); err != nil {
 		return err
 	}
 	rule, err := m.store.GetByID(ctx, orgID, id)
@@ -302,7 +309,7 @@ func (m *module) DeleteByID(ctx context.Context, orgID valuer.UUID, id valuer.UU
 }
 
 func (m *module) Preview(ctx context.Context, orgID valuer.UUID, req *metricreductionruletypes.PostableReductionRulePreview) (*metricreductionruletypes.GettableReductionRulePreview, error) {
-	if err := m.checkLicense(ctx, orgID); err != nil {
+	if err := m.checkAccess(ctx, orgID); err != nil {
 		return nil, err
 	}
 	if err := req.Validate(); err != nil {
@@ -344,7 +351,7 @@ func (m *module) Preview(ctx context.Context, orgID valuer.UUID, req *metricredu
 }
 
 func (m *module) Stats(ctx context.Context, orgID valuer.UUID) (*metricreductionruletypes.GettableReductionRuleStats, error) {
-	if err := m.checkLicense(ctx, orgID); err != nil {
+	if err := m.checkAccess(ctx, orgID); err != nil {
 		return nil, err
 	}
 
@@ -401,7 +408,7 @@ func monthlySavingsUSD(ingestedSamples, reducedSamples uint64, startMs, endMs in
 }
 
 func (m *module) Timeseries(ctx context.Context, orgID valuer.UUID) (*querybuildertypesv5.QueryRangeResponse, error) {
-	if err := m.checkLicense(ctx, orgID); err != nil {
+	if err := m.checkAccess(ctx, orgID); err != nil {
 		return nil, err
 	}
 

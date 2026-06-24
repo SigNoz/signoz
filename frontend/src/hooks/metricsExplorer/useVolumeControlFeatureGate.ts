@@ -1,3 +1,4 @@
+import { FeatureKeys } from 'constants/features';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useAppContext } from 'providers/App/App';
 import { USER_ROLES } from 'types/roles';
@@ -10,10 +11,18 @@ interface VolumeControlFeatureGate {
 
 export function useVolumeControlFeatureGate(): VolumeControlFeatureGate {
 	const { isCloudUser, isEnterpriseSelfHostedUser } = useGetTenantLicense();
-	const { user, isFetchingActiveLicense, activeLicense } = useAppContext();
+	const { user, featureFlags, isFetchingActiveLicense, activeLicense } =
+		useAppContext();
+
+	const isMetricsReductionEnabled = Boolean(
+		featureFlags?.find(
+			(flag) => flag.name === FeatureKeys.ENABLE_METRICS_REDUCTION,
+		)?.active,
+	);
 
 	const isVolumeControlEnabled =
-		isCloudUser || isEnterpriseSelfHostedUser || true;
+		isMetricsReductionEnabled &&
+		(isCloudUser || isEnterpriseSelfHostedUser || true);
 	const isAdmin = user?.role === USER_ROLES.ADMIN || true;
 
 	return {

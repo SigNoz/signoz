@@ -219,7 +219,7 @@ func (c *clickhouse) VolumeByMetric(ctx context.Context, metricNames []string, e
 
 	reduced := ingested
 	if c.tableExists(ctx, telemetrymetrics.TimeseriesV4ReducedTableName) {
-		reduced, err = c.countSeries(ctx, telemetrymetrics.DBName+"."+telemetrymetrics.TimeseriesV4ReducedTableName, false, metricNames, nil, startMs, endMs)
+		reduced, err = c.countSeries(ctx, telemetrymetrics.DBName+"."+telemetrymetrics.TimeseriesV4ReducedTableName, false, metricNames, effectiveFrom, startMs, endMs)
 		if err != nil {
 			return nil, err
 		}
@@ -326,7 +326,7 @@ func (c *clickhouse) RankByVolume(ctx context.Context, metricNames []string, eff
 		reducedTable := telemetrymetrics.DBName + "." + telemetrymetrics.TimeseriesV4ReducedTableName
 		sb.JoinWithOption(
 			sqlbuilder.LeftJoin,
-			"(SELECT metric_name, uniq(fingerprint) AS cnt FROM "+reducedTable+" WHERE has("+sb.Var(metricNames)+", metric_name) AND unix_milli >= "+sb.Var(startMs)+" AND unix_milli < "+sb.Var(endMs)+" GROUP BY metric_name) AS d",
+			"(SELECT metric_name, uniq(fingerprint) AS cnt FROM "+reducedTable+" WHERE has("+sb.Var(metricNames)+", metric_name) AND unix_milli >= "+sb.Var(startMs)+" AND unix_milli < "+sb.Var(endMs)+" AND "+effectiveFromGate(sb, metricNames, effectiveFrom)+" GROUP BY metric_name) AS d",
 			"base.metric_name = d.metric_name",
 		)
 	}
@@ -369,11 +369,11 @@ func (c *clickhouse) SampleVolume(ctx context.Context, metricNames []string, eff
 		return 0, 0, err
 	}
 
-	last, err := c.countReducedSamples(ctx, telemetrymetrics.DBName+"."+telemetrymetrics.SamplesV4ReducedLastTableName, metricNames, startMs, endMs)
+	last, err := c.countReducedSamples(ctx, telemetrymetrics.DBName+"."+telemetrymetrics.SamplesV4ReducedLastTableName, metricNames, effectiveFrom, startMs, endMs)
 	if err != nil {
 		return 0, 0, err
 	}
-	sum, err := c.countReducedSamples(ctx, telemetrymetrics.DBName+"."+telemetrymetrics.SamplesV4ReducedSumTableName, metricNames, startMs, endMs)
+	sum, err := c.countReducedSamples(ctx, telemetrymetrics.DBName+"."+telemetrymetrics.SamplesV4ReducedSumTableName, metricNames, effectiveFrom, startMs, endMs)
 	if err != nil {
 		return 0, 0, err
 	}
@@ -404,7 +404,7 @@ func (c *clickhouse) countRawSamples(ctx context.Context, table string, metricNa
 	return count, nil
 }
 
-func (c *clickhouse) countReducedSamples(ctx context.Context, table string, metricNames []string, startMs, endMs int64) (uint64, error) {
+func (c *clickhouse) countReducedSamples(ctx context.Context, table string, metricNames []string, effectiveFrom map[string]int64, startMs, endMs int64) (uint64, error) {
 	names := make([]any, len(metricNames))
 	for i, name := range metricNames {
 		names[i] = name
@@ -414,7 +414,11 @@ func (c *clickhouse) countReducedSamples(ctx context.Context, table string, metr
 	// Reduced tables key the series on reduced_fingerprint (not fingerprint); dedupe ReplacingMergeTree recomputes.
 	sb.Select("uniq(reduced_fingerprint, unix_milli)")
 	sb.From(table)
-	sb.Where(sb.In("metric_name", names...), sb.GE("unix_milli", startMs), sb.LT("unix_milli", endMs))
+	conds := []string{sb.In("metric_name", names...), sb.GE("unix_milli", startMs), sb.LT("unix_milli", endMs)}
+	if len(effectiveFrom) > 0 {
+		conds = append(conds, effectiveFromGate(sb, metricNames, effectiveFrom))
+	}
+	sb.Where(conds...)
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 	var count uint64
@@ -441,7 +445,7 @@ func (c *clickhouse) SeriesTimeseries(ctx context.Context, metricNames []string,
 
 	reduced := ingested
 	if c.tableExists(ctx, telemetrymetrics.TimeseriesV4ReducedTableName) {
-		reduced, err = c.seriesByBucket(ctx, telemetrymetrics.DBName+"."+telemetrymetrics.TimeseriesV4ReducedTableName, false, metricNames, nil, startMs, endMs)
+		reduced, err = c.seriesByBucket(ctx, telemetrymetrics.DBName+"."+telemetrymetrics.TimeseriesV4ReducedTableName, false, metricNames, effectiveFrom, startMs, endMs)
 		if err != nil {
 			return nil, err
 		}

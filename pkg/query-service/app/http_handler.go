@@ -1687,6 +1687,15 @@ func (aH *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 		Route:      "",
 	})
 
+	metricsReduction := aH.Signoz.Flagger.BooleanOrEmpty(r.Context(), flagger.FeatureEnableMetricsReduction, evalCtx)
+	featureSet = append(featureSet, &licensetypes.Feature{
+		Name:       valuer.NewString(flagger.FeatureEnableMetricsReduction.String()),
+		Active:     metricsReduction,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	})
+
 	if constants.IsDotMetricsEnabled {
 		for idx, feature := range featureSet {
 			if feature.Name == licensetypes.DotMetricsEnabled {
