@@ -295,6 +295,7 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			modules.Dashboard,
 			handlers.Dashboard,
 			handlers.MetricsExplorer,
+			handlers.MetricReductionRule,
 			handlers.InfraMonitoring,
 			handlers.GatewayHandler,
 			handlers.Fields,
