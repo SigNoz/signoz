@@ -136,7 +136,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 	}
 
 	if (
-		(pathname.startsWith(ROUTES.LLM_OBSERVABILITY_BASE) ||
+		(pathname.startsWith(`${ROUTES.LLM_OBSERVABILITY_BASE}/`) ||
 			pathname === ROUTES.LLM_OBSERVABILITY_BASE) &&
 		!isAIObservabilityEnabled
 	) {
