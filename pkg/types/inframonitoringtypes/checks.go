@@ -6,15 +6,15 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 )
 
-// PostableOnboarding is the request for GET /api/v2/infra_monitoring/onboarding.
+// PostableChecks is the request for GET /api/v2/infra_monitoring/checks.
 // The single `type` query param selects which infra-monitoring subsection the
 // readiness check runs for.
-type PostableOnboarding struct {
-	Type OnboardingType `query:"type" required:"true"`
+type PostableChecks struct {
+	Type CheckType `query:"type" required:"true"`
 }
 
-// Validate rejects empty/unknown onboarding types.
-func (req *PostableOnboarding) Validate() error {
+// Validate rejects empty/unknown checks types.
+func (req *PostableChecks) Validate() error {
 	if req == nil {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
 	}
@@ -23,21 +23,21 @@ func (req *PostableOnboarding) Validate() error {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "type is required")
 	}
 
-	if !slices.Contains(ValidOnboardingTypes, req.Type) {
+	if !slices.Contains(ValidCheckTypes, req.Type) {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid type: %s", req.Type)
 	}
 
 	return nil
 }
 
-// Onboarding is the response for GET /api/v2/infra_monitoring/onboarding.
+// Checks is the response for GET /api/v2/infra_monitoring/checks.
 //
 // The three present/missing pairs partition a type's requirements into three
 // dimensions — default-enabled metrics, optional metrics, required attributes —
 // each bucketed by the collector component (receiver or processor) that
 // produces it. Ready is true iff every Missing* array is empty.
-type Onboarding struct {
-	Type                         OnboardingType                    `json:"type" required:"true"`
+type Checks struct {
+	Type                         CheckType                         `json:"type" required:"true"`
 	Ready                        bool                              `json:"ready" required:"true"`
 	PresentDefaultEnabledMetrics []MetricsComponentEntry           `json:"presentDefaultEnabledMetrics" required:"true"`
 	PresentOptionalMetrics       []MetricsComponentEntry           `json:"presentOptionalMetrics" required:"true"`
@@ -50,8 +50,8 @@ type Onboarding struct {
 // AssociatedComponent identifies the collector receiver or processor that a
 // metric or attribute originates from. Name is free-form (e.g. "kubeletstatsreceiver").
 type AssociatedComponent struct {
-	Type OnboardingComponentType `json:"type" required:"true"`
-	Name string                  `json:"name" required:"true"`
+	Type CheckComponentType `json:"type" required:"true"`
+	Name string             `json:"name" required:"true"`
 }
 
 // MetricsComponentEntry lists metrics that share a single associated component.

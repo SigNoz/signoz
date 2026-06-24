@@ -25,49 +25,49 @@ const (
 
 var (
 	componentHostMetricsReceiver = inframonitoringtypes.AssociatedComponent{
-		Type: inframonitoringtypes.OnboardingComponentTypeReceiver,
+		Type: inframonitoringtypes.CheckComponentTypeReceiver,
 		Name: componentNameHostMetricsReceiver,
 	}
 	componentKubeletStatsReceiver = inframonitoringtypes.AssociatedComponent{
-		Type: inframonitoringtypes.OnboardingComponentTypeReceiver,
+		Type: inframonitoringtypes.CheckComponentTypeReceiver,
 		Name: componentNameKubeletStatsReceiver,
 	}
 	componentK8sClusterReceiver = inframonitoringtypes.AssociatedComponent{
-		Type: inframonitoringtypes.OnboardingComponentTypeReceiver,
+		Type: inframonitoringtypes.CheckComponentTypeReceiver,
 		Name: componentNameK8sClusterReceiver,
 	}
 	componentResourceDetectionProcessor = inframonitoringtypes.AssociatedComponent{
-		Type: inframonitoringtypes.OnboardingComponentTypeProcessor,
+		Type: inframonitoringtypes.CheckComponentTypeProcessor,
 		Name: componentNameResourceDetectionProcessor,
 	}
 	componentK8sAttributesProcessor = inframonitoringtypes.AssociatedComponent{
-		Type: inframonitoringtypes.OnboardingComponentTypeProcessor,
+		Type: inframonitoringtypes.CheckComponentTypeProcessor,
 		Name: componentNameK8sAttributesProcessor,
 	}
 )
 
-// onboardingSpecs is the single lookup table the module consults for a type's
-// readiness contract. Every OnboardingType value must have an entry here.
-var onboardingSpecs = map[inframonitoringtypes.OnboardingType]onboardingSpec{
-	inframonitoringtypes.OnboardingTypeHosts:        hostsSpec,
-	inframonitoringtypes.OnboardingTypeProcesses:    processesSpec,
-	inframonitoringtypes.OnboardingTypePods:         podsSpec,
-	inframonitoringtypes.OnboardingTypeNodes:        nodesSpec,
-	inframonitoringtypes.OnboardingTypeDeployments:  deploymentsSpec,
-	inframonitoringtypes.OnboardingTypeDaemonsets:   daemonsetsSpec,
-	inframonitoringtypes.OnboardingTypeStatefulsets: statefulsetsSpec,
-	inframonitoringtypes.OnboardingTypeJobs:         jobsSpec,
-	inframonitoringtypes.OnboardingTypeNamespaces:   namespacesSpec,
-	inframonitoringtypes.OnboardingTypeClusters:     clustersSpec,
-	inframonitoringtypes.OnboardingTypeVolumes:      volumesSpec,
+// checkSpecs is the single lookup table the module consults for a type's
+// readiness contract. Every CheckType value must have an entry here.
+var checkSpecs = map[inframonitoringtypes.CheckType]checkSpec{
+	inframonitoringtypes.CheckTypeHosts:        hostsSpec,
+	inframonitoringtypes.CheckTypeProcesses:    processesSpec,
+	inframonitoringtypes.CheckTypePods:         podsSpec,
+	inframonitoringtypes.CheckTypeNodes:        nodesSpec,
+	inframonitoringtypes.CheckTypeDeployments:  deploymentsSpec,
+	inframonitoringtypes.CheckTypeDaemonsets:   daemonsetsSpec,
+	inframonitoringtypes.CheckTypeStatefulsets: statefulsetsSpec,
+	inframonitoringtypes.CheckTypeJobs:         jobsSpec,
+	inframonitoringtypes.CheckTypeNamespaces:   namespacesSpec,
+	inframonitoringtypes.CheckTypeClusters:     clustersSpec,
+	inframonitoringtypes.CheckTypeVolumes:      volumesSpec,
 }
 
 // Per-type specs. Every metric and attribute is spelled out in its own spec
 // on purpose — no shared slices, no concatenation helpers. Repetition is
 // cheaper than indirection when auditing what each tab actually requires.
 
-var hostsSpec = onboardingSpec{
-	Buckets: []onboardingComponentBucket{
+var hostsSpec = checkSpec{
+	Buckets: []checkComponentBucket{
 		{
 			Component: componentHostMetricsReceiver,
 			DefaultMetrics: []string{
@@ -86,8 +86,8 @@ var hostsSpec = onboardingSpec{
 	},
 }
 
-var processesSpec = onboardingSpec{
-	Buckets: []onboardingComponentBucket{
+var processesSpec = checkSpec{
+	Buckets: []checkComponentBucket{
 		{
 			Component: componentHostMetricsReceiver,
 			DefaultMetrics: []string{
@@ -100,8 +100,8 @@ var processesSpec = onboardingSpec{
 	},
 }
 
-var podsSpec = onboardingSpec{
-	Buckets: []onboardingComponentBucket{
+var podsSpec = checkSpec{
+	Buckets: []checkComponentBucket{
 		{
 			Component: componentKubeletStatsReceiver,
 			DefaultMetrics: []string{
@@ -129,8 +129,8 @@ var podsSpec = onboardingSpec{
 	},
 }
 
-var nodesSpec = onboardingSpec{
-	Buckets: []onboardingComponentBucket{
+var nodesSpec = checkSpec{
+	Buckets: []checkComponentBucket{
 		{
 			Component: componentKubeletStatsReceiver,
 			DefaultMetrics: []string{
@@ -159,8 +159,8 @@ var nodesSpec = onboardingSpec{
 	},
 }
 
-var deploymentsSpec = onboardingSpec{
-	Buckets: []onboardingComponentBucket{
+var deploymentsSpec = checkSpec{
+	Buckets: []checkComponentBucket{
 		{
 			Component: componentKubeletStatsReceiver,
 			DefaultMetrics: []string{
@@ -197,8 +197,8 @@ var deploymentsSpec = onboardingSpec{
 	},
 }
 
-var daemonsetsSpec = onboardingSpec{
-	Buckets: []onboardingComponentBucket{
+var daemonsetsSpec = checkSpec{
+	Buckets: []checkComponentBucket{
 		{
 			Component: componentKubeletStatsReceiver,
 			DefaultMetrics: []string{
@@ -235,8 +235,8 @@ var daemonsetsSpec = onboardingSpec{
 	},
 }
 
-var statefulsetsSpec = onboardingSpec{
-	Buckets: []onboardingComponentBucket{
+var statefulsetsSpec = checkSpec{
+	Buckets: []checkComponentBucket{
 		{
 			Component: componentKubeletStatsReceiver,
 			DefaultMetrics: []string{
@@ -273,8 +273,8 @@ var statefulsetsSpec = onboardingSpec{
 	},
 }
 
-var jobsSpec = onboardingSpec{
-	Buckets: []onboardingComponentBucket{
+var jobsSpec = checkSpec{
+	Buckets: []checkComponentBucket{
 		{
 			Component: componentKubeletStatsReceiver,
 			DefaultMetrics: []string{
@@ -313,8 +313,8 @@ var jobsSpec = onboardingSpec{
 	},
 }
 
-var namespacesSpec = onboardingSpec{
-	Buckets: []onboardingComponentBucket{
+var namespacesSpec = checkSpec{
+	Buckets: []checkComponentBucket{
 		{
 			Component: componentKubeletStatsReceiver,
 			DefaultMetrics: []string{
@@ -341,8 +341,8 @@ var namespacesSpec = onboardingSpec{
 	},
 }
 
-var clustersSpec = onboardingSpec{
-	Buckets: []onboardingComponentBucket{
+var clustersSpec = checkSpec{
+	Buckets: []checkComponentBucket{
 		{
 			Component: componentKubeletStatsReceiver,
 			DefaultMetrics: []string{
@@ -370,8 +370,8 @@ var clustersSpec = onboardingSpec{
 	},
 }
 
-var volumesSpec = onboardingSpec{
-	Buckets: []onboardingComponentBucket{
+var volumesSpec = checkSpec{
+	Buckets: []checkComponentBucket{
 		{
 			Component: componentKubeletStatsReceiver,
 			DefaultMetrics: []string{

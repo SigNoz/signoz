@@ -11,7 +11,7 @@ import (
 // splitBucket partitions one component bucket's metric and attribute lists
 // against the module-wide missing sets into up to six response entries.
 // Empty partitions are left nil so callers can skip them.
-func splitBucket(b onboardingComponentBucket, missingMetrics, missingAttrs map[string]bool) bucketSplit {
+func splitBucket(b checkComponentBucket, missingMetrics, missingAttrs map[string]bool) bucketSplit {
 	var s bucketSplit
 	presentDef, missDef := partitionList(b.DefaultMetrics, missingMetrics)
 	if len(presentDef) > 0 {
@@ -70,11 +70,11 @@ func splitBucket(b onboardingComponentBucket, missingMetrics, missingAttrs map[s
 	return s
 }
 
-// getSpecForType returns the onboardingSpec for a given OnboardingType, or an error if the type is invalid.
-func getSpecForType(t inframonitoringtypes.OnboardingType) (*onboardingSpec, error) {
-	spec, ok := onboardingSpecs[t]
+// getSpecForType returns the checkSpec for a given CheckType, or an error if the type is invalid.
+func getSpecForType(t inframonitoringtypes.CheckType) (*checkSpec, error) {
+	spec, ok := checkSpecs[t]
 	if !ok {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "no onboarding spec for type: %s", t)
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "no checks spec for type: %s", t)
 	}
 	return &spec, nil
 }

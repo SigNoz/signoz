@@ -49,11 +49,11 @@ func NewModule(
 	}
 }
 
-// GetOnboarding runs a per-type readiness check: for the requested
+// GetChecks runs a per-type readiness check: for the requested
 // infra-monitoring tab, reports which required metrics and attributes are
 // present vs missing, grouped by the collector component that produces them.
 // Ready is true iff every missing list is empty.
-func (m *module) GetOnboarding(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableOnboarding) (*inframonitoringtypes.Onboarding, error) {
+func (m *module) GetChecks(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableChecks) (*inframonitoringtypes.Checks, error) {
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
@@ -88,7 +88,7 @@ func (m *module) GetOnboarding(ctx context.Context, orgID valuer.UUID, req *infr
 		}
 	}
 
-	resp := &inframonitoringtypes.Onboarding{
+	resp := &inframonitoringtypes.Checks{
 		Type:                         req.Type,
 		PresentDefaultEnabledMetrics: []inframonitoringtypes.MetricsComponentEntry{},
 		PresentOptionalMetrics:       []inframonitoringtypes.MetricsComponentEntry{},

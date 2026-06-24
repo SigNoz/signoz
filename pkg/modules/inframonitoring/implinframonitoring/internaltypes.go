@@ -33,7 +33,7 @@ type nodeConditionCounts struct {
 }
 
 // bucketSplit carries the up-to-six entries a single spec bucket contributes
-// to an onboarding response. Any field may be nil if the bucket doesn't
+// to an checks response. Any field may be nil if the bucket doesn't
 // populate that dimension.
 type bucketSplit struct {
 	PresentDefault  *inframonitoringtypes.MetricsComponentEntry
@@ -44,11 +44,11 @@ type bucketSplit struct {
 	MissingAttrs    *inframonitoringtypes.MissingAttributesComponentEntry
 }
 
-// onboardingComponentBucket is a single collector component's contribution
+// checkComponentBucket is a single collector component's contribution
 // toward a single infra-monitoring tab's readiness. Any of the three dimension
 // slices (DefaultMetrics, OptionalMetrics, RequiredAttrs) may be empty — the
 // bucketizer in Phase 4 skips empty dimensions.
-type onboardingComponentBucket struct {
+type checkComponentBucket struct {
 	Component         inframonitoringtypes.AssociatedComponent
 	DefaultMetrics    []string
 	OptionalMetrics   []string
@@ -56,13 +56,13 @@ type onboardingComponentBucket struct {
 	DocumentationLink string
 }
 
-// onboardingSpec defines, for one OnboardingType, the full set of
+// checkSpec defines, for one CheckType, the full set of
 // component-scoped buckets that must be satisfied for the tab to be ready.
-type onboardingSpec struct {
-	Buckets []onboardingComponentBucket
+type checkSpec struct {
+	Buckets []checkComponentBucket
 }
 
-func (s onboardingSpec) getAllMetrics() []string {
+func (s checkSpec) getAllMetrics() []string {
 	var out []string
 	for _, b := range s.Buckets {
 		out = append(out, b.DefaultMetrics...)
@@ -71,7 +71,7 @@ func (s onboardingSpec) getAllMetrics() []string {
 	return out
 }
 
-func (s onboardingSpec) getAllAttrs() []string {
+func (s checkSpec) getAllAttrs() []string {
 	var out []string
 	for _, b := range s.Buckets {
 		out = append(out, b.RequiredAttrs...)

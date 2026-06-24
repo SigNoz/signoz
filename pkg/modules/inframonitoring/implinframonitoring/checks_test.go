@@ -10,7 +10,7 @@ import (
 // Component used across splitBucket cases — it's a processor so the test
 // doesn't carry any receiver semantics.
 var testComponent = inframonitoringtypes.AssociatedComponent{
-	Type: inframonitoringtypes.OnboardingComponentTypeReceiver,
+	Type: inframonitoringtypes.CheckComponentTypeReceiver,
 	Name: "testreceiver",
 }
 
@@ -28,21 +28,21 @@ func TestSplitBucket(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		bucket         onboardingComponentBucket
+		bucket         checkComponentBucket
 		missingMetrics map[string]bool
 		missingAttrs   map[string]bool
 		want           want
 	}{
 		{
 			name:           "empty bucket — nothing to emit",
-			bucket:         onboardingComponentBucket{Component: testComponent, DocumentationLink: testDocLink},
+			bucket:         checkComponentBucket{Component: testComponent, DocumentationLink: testDocLink},
 			missingMetrics: map[string]bool{},
 			missingAttrs:   map[string]bool{},
 			want:           want{},
 		},
 		{
 			name: "all default metrics present",
-			bucket: onboardingComponentBucket{
+			bucket: checkComponentBucket{
 				Component:         testComponent,
 				DefaultMetrics:    []string{"m1", "m2"},
 				DocumentationLink: testDocLink,
@@ -55,7 +55,7 @@ func TestSplitBucket(t *testing.T) {
 		},
 		{
 			name: "all default metrics missing",
-			bucket: onboardingComponentBucket{
+			bucket: checkComponentBucket{
 				Component:         testComponent,
 				DefaultMetrics:    []string{"m1", "m2"},
 				DocumentationLink: testDocLink,
@@ -68,7 +68,7 @@ func TestSplitBucket(t *testing.T) {
 		},
 		{
 			name: "mixed default metrics",
-			bucket: onboardingComponentBucket{
+			bucket: checkComponentBucket{
 				Component:         testComponent,
 				DefaultMetrics:    []string{"m1", "m2", "m3"},
 				DocumentationLink: testDocLink,
@@ -82,7 +82,7 @@ func TestSplitBucket(t *testing.T) {
 		},
 		{
 			name: "only optional metrics — all missing",
-			bucket: onboardingComponentBucket{
+			bucket: checkComponentBucket{
 				Component:         testComponent,
 				OptionalMetrics:   []string{"opt1", "opt2"},
 				DocumentationLink: testDocLink,
@@ -95,7 +95,7 @@ func TestSplitBucket(t *testing.T) {
 		},
 		{
 			name: "only required attrs — all present",
-			bucket: onboardingComponentBucket{
+			bucket: checkComponentBucket{
 				Component:         testComponent,
 				RequiredAttrs:     []string{"a1", "a2"},
 				DocumentationLink: testDocLink,
@@ -108,7 +108,7 @@ func TestSplitBucket(t *testing.T) {
 		},
 		{
 			name: "only required attrs — all missing",
-			bucket: onboardingComponentBucket{
+			bucket: checkComponentBucket{
 				Component:         testComponent,
 				RequiredAttrs:     []string{"a1"},
 				DocumentationLink: testDocLink,
@@ -121,7 +121,7 @@ func TestSplitBucket(t *testing.T) {
 		},
 		{
 			name: "every dimension populated on both sides",
-			bucket: onboardingComponentBucket{
+			bucket: checkComponentBucket{
 				Component:         testComponent,
 				DefaultMetrics:    []string{"d1", "d2"},
 				OptionalMetrics:   []string{"o1", "o2"},
@@ -184,15 +184,15 @@ func TestMissingMessageTemplates(t *testing.T) {
 	)
 }
 
-// TestOnboardingSpecs_CoverAllTypes ensures the spec map has an entry for
-// every OnboardingType — prevents silently shipping an onboarding type that
+// TestChecksSpecs_CoverAllTypes ensures the spec map has an entry for
+// every CheckType — prevents silently shipping an checks type that
 // has no spec and would 500 at runtime.
-func TestOnboardingSpecs_CoverAllTypes(t *testing.T) {
-	for _, tp := range inframonitoringtypes.ValidOnboardingTypes {
-		_, ok := onboardingSpecs[tp]
-		require.True(t, ok, "missing onboarding spec for type %s", tp)
+func TestChecksSpecs_CoverAllTypes(t *testing.T) {
+	for _, tp := range inframonitoringtypes.ValidCheckTypes {
+		_, ok := checkSpecs[tp]
+		require.True(t, ok, "missing checks spec for type %s", tp)
 	}
-	require.Len(t, onboardingSpecs, len(inframonitoringtypes.ValidOnboardingTypes))
+	require.Len(t, checkSpecs, len(inframonitoringtypes.ValidCheckTypes))
 }
 
 // --- helpers ---

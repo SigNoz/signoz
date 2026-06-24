@@ -22,7 +22,7 @@ func NewHandler(m inframonitoring.Module) inframonitoring.Handler {
 	}
 }
 
-func (h *handler) GetOnboarding(rw http.ResponseWriter, req *http.Request) {
+func (h *handler) GetChecks(rw http.ResponseWriter, req *http.Request) {
 	claims, err := authtypes.ClaimsFromContext(req.Context())
 	if err != nil {
 		render.Error(rw, err)
@@ -31,13 +31,13 @@ func (h *handler) GetOnboarding(rw http.ResponseWriter, req *http.Request) {
 
 	orgID := valuer.MustNewUUID(claims.OrgID)
 
-	var parsedReq inframonitoringtypes.PostableOnboarding
+	var parsedReq inframonitoringtypes.PostableChecks
 	if err := binding.Query.BindQuery(req.URL.Query(), &parsedReq); err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	result, err := h.module.GetOnboarding(req.Context(), orgID, &parsedReq)
+	result, err := h.module.GetChecks(req.Context(), orgID, &parsedReq)
 	if err != nil {
 		render.Error(rw, err)
 		return

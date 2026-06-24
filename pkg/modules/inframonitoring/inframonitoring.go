@@ -20,7 +20,7 @@ type Handler interface {
 	ListStatefulSets(http.ResponseWriter, *http.Request)
 	ListJobs(http.ResponseWriter, *http.Request)
 	ListDaemonSets(http.ResponseWriter, *http.Request)
-	GetOnboarding(http.ResponseWriter, *http.Request)
+	GetChecks(http.ResponseWriter, *http.Request)
 }
 
 type Module interface {
@@ -35,5 +35,5 @@ type Module interface {
 	ListStatefulSets(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableStatefulSets) (*inframonitoringtypes.StatefulSets, error)
 	ListJobs(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableJobs) (*inframonitoringtypes.Jobs, error)
 	ListDaemonSets(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableDaemonSets) (*inframonitoringtypes.DaemonSets, error)
-	GetOnboarding(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableOnboarding) (*inframonitoringtypes.Onboarding, error)
+	GetChecks(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableChecks) (*inframonitoringtypes.Checks, error)
 }

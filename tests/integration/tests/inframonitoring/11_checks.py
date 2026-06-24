@@ -1,6 +1,6 @@
-"""Integration tests for the v2 infra-monitoring onboarding endpoint.
+"""Integration tests for the v2 infra-monitoring checks endpoint.
 
-GET /api/v2/infra_monitoring/onboarding?type=<t> reports per-tab readiness:
+GET /api/v2/infra_monitoring/checks?type=<t> reports per-tab readiness:
 for each collector component it lists which required/optional metrics and
 required attributes are present vs missing. `ready` is true iff every missing
 list is empty (optional gaps DO block).
@@ -13,7 +13,7 @@ label on any of that type's spec metrics. So seeding here is purely "make these
 function-scoped and truncates metadata on teardown, so (serial suite) each test
 sees only its own seeds.
 
-SPECS mirrors pkg/modules/inframonitoring/implinframonitoring/onboarding_constants.go
+SPECS mirrors pkg/modules/inframonitoring/implinframonitoring/checks_constants.go
 and is the contract lock: if a Go spec changes, the matching assertion fails.
 """
 
@@ -27,9 +27,9 @@ from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.metrics import Metrics
 
-ENDPOINT = "/api/v2/infra_monitoring/onboarding"
+ENDPOINT = "/api/v2/infra_monitoring/checks"
 
-# Component names (onboarding_constants.go:9-15) + their type + docs link.
+# Component names (checks_constants.go:9-15) + their type + docs link.
 HMR = "hostmetricsreceiver"
 KSR = "kubeletstatsreceiver"
 KCR = "k8sclusterreceiver"
@@ -45,7 +45,7 @@ _PODS_OPT = [
     "k8s.pod.memory_limit_utilization",
 ]
 
-# Mirror of onboardingSpecs: type -> {default|optional: {component: [metrics]}, attrs: {component: [attrs]}}.
+# Mirror of checkSpecs: type -> {default|optional: {component: [metrics]}, attrs: {component: [attrs]}}.
 SPECS = {
     "hosts": {
         "default": {HMR: ["system.cpu.time", "system.memory.usage", "system.cpu.load_average.15m", "system.filesystem.usage"]},
@@ -188,7 +188,7 @@ _ATTR_CASES = [pytest.param(t, comp, a, id=f"{t}-{a}") for t in ALL_TYPES for co
         pytest.param("foo", "invalid type", id="invalid_type"),
     ],
 )
-def test_onboarding_validation_errors(
+def test_checks_validation_errors(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
@@ -204,7 +204,7 @@ def test_onboarding_validation_errors(
 
 
 @pytest.mark.parametrize("type_", ALL_TYPES)
-def test_onboarding_empty_backend(
+def test_checks_empty_backend(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
@@ -229,7 +229,7 @@ def test_onboarding_empty_backend(
 
 
 @pytest.mark.parametrize("type_", ALL_TYPES)
-def test_onboarding_all_present_ready(
+def test_checks_all_present_ready(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
@@ -254,7 +254,7 @@ def test_onboarding_all_present_ready(
 
 
 @pytest.mark.parametrize("type_,component,metric", _DEFAULT_CASES)
-def test_onboarding_missing_default_metric(
+def test_checks_missing_default_metric(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
@@ -279,7 +279,7 @@ def test_onboarding_missing_default_metric(
 
 
 @pytest.mark.parametrize("type_,component,metric", _OPTIONAL_CASES)
-def test_onboarding_missing_optional_metric(
+def test_checks_missing_optional_metric(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
@@ -304,7 +304,7 @@ def test_onboarding_missing_optional_metric(
 
 
 @pytest.mark.parametrize("type_,component,attr", _ATTR_CASES)
-def test_onboarding_missing_required_attribute(
+def test_checks_missing_required_attribute(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
