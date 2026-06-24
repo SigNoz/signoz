@@ -1,35 +1,46 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FullScreenHandle } from 'react-full-screen';
 import { useTranslation } from 'react-i18next';
+import { generatePath } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
 import {
+	Braces,
 	ClipboardCopy,
 	Configure,
-	Ellipsis,
+	Copy,
 	FileJson,
 	Fullscreen,
+	Grid3X3,
 	LockKeyhole,
 	PenLine,
 	Plus,
+	SquareStack,
 	Trash2,
 } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { DropdownMenuSimple } from '@signozhq/ui/dropdown-menu';
 import type { MenuItem } from '@signozhq/ui/dropdown-menu';
 import { toast } from '@signozhq/ui/sonner';
+import { cloneDashboardV2 } from 'api/generated/services/dashboard';
 import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
 import ROUTES from 'constants/routes';
-import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { useDeleteDashboard } from 'hooks/dashboard/useDeleteDashboard';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import history from 'lib/history';
 import { useAppContext } from 'providers/App/App';
+import { useErrorModal } from 'providers/ErrorModalProvider';
+import APIError from 'types/api/error';
 import { USER_ROLES } from 'types/roles';
 
 import ConfirmDeleteDialog from '../../components/ConfirmDeleteDialog/ConfirmDeleteDialog';
 import DashboardSettings from '../../DashboardSettings';
+import { useAddSection } from '../../PanelsAndSectionsLayout/Section/hooks/useAddSection';
+import JsonEditorDrawer from '../JsonEditorDrawer/JsonEditorDrawer';
 import SettingsDrawer from '../SettingsDrawer';
 import styles from './DashboardActions.module.scss';
 import { useDashboardStore } from '../../store/useDashboardStore';
+
+const NEW_SECTION_TITLE = 'New section';
 
 interface DashboardActionsProps {
 	title: string;
@@ -55,13 +66,19 @@ function DashboardActions({
 	const canEdit = useDashboardStore((s) => s.isEditable);
 	const { user } = useAppContext();
 	const { t } = useTranslation(['dashboard', 'common']);
+	const { safeNavigate } = useSafeNavigate();
+	const { showErrorModal } = useErrorModal();
 
 	const [isSettingsDrawerOpen, setIsSettingsDrawerOpen] =
 		useState<boolean>(false);
+	const [isJsonEditorOpen, setIsJsonEditorOpen] = useState<boolean>(false);
+	const [isCloning, setIsCloning] = useState<boolean>(false);
 
 	const [state, setCopy] = useCopyToClipboard();
 	const [isDeleteOpen, setIsDeleteOpen] = useState<boolean>(false);
 	const deleteDashboardMutation = useDeleteDashboard(dashboard.id);
+
+	const { addSection } = useAddSection({ layouts: dashboard.spec.layouts });
 
 	useEffect(() => {
 		if (state.error) {
@@ -89,6 +106,24 @@ function DashboardActions({
 		URL.revokeObjectURL(url);
 	}, [dashboardDataJSON, title]);
 
+	const handleClone = useCallback(async (): Promise<void> => {
+		if (!dashboard.id) {
+			return;
+		}
+		try {
+			setIsCloning(true);
+			const response = await cloneDashboardV2({ id: dashboard.id });
+			toast.success('Dashboard cloned');
+			safeNavigate(
+				generatePath(ROUTES.DASHBOARD, { dashboardId: response.data.id }),
+			);
+		} catch (error) {
+			showErrorModal(error as APIError);
+		} finally {
+			setIsCloning(false);
+		}
+	}, [dashboard.id, safeNavigate, showErrorModal]);
+
 	const handleConfirmDelete = useCallback((): void => {
 		deleteDashboardMutation.mutate(undefined, {
 			onSuccess: () => {
@@ -99,17 +134,24 @@ function DashboardActions({
 	}, [deleteDashboardMutation]);
 
 	const menuItems = useMemo<MenuItem[]>(() => {
-		const editGroup: MenuItem[] = [];
+		const dashboardGroup: MenuItem[] = [];
 		if (canEdit) {
-			editGroup.push({
+			dashboardGroup.push({
 				key: 'rename',
 				label: 'Rename',
 				icon: <PenLine size={14} />,
 				onClick: onOpenRename,
 			});
 		}
+		dashboardGroup.push({
+			key: 'clone',
+			label: 'Clone dashboard',
+			icon: <Copy size={14} />,
+			disabled: isCloning,
+			onClick: (): void => void handleClone(),
+		});
 		if (isAuthor || user.role === USER_ROLES.ADMIN) {
-			editGroup.push({
+			dashboardGroup.push({
 				key: 'lock',
 				label: isDashboardLocked ? 'Unlock dashboard' : 'Lock dashboard',
 				icon: <LockKeyhole size={14} />,
@@ -117,14 +159,14 @@ function DashboardActions({
 				onClick: onLockToggle,
 			});
 		}
-		editGroup.push({
+		dashboardGroup.push({
 			key: 'fullscreen',
 			label: 'Full screen',
 			icon: <Fullscreen size={14} />,
 			onClick: handle.enter,
 		});
 
-		const exportGroup: MenuItem[] = [
+		const dataGroup: MenuItem[] = [
 			{
 				key: 'export',
 				label: 'Export JSON',
@@ -139,7 +181,35 @@ function DashboardActions({
 			},
 		];
 
-		const dangerGroup: MenuItem[] = [
+		const layoutGroup: MenuItem[] = [];
+		if (canEdit) {
+			layoutGroup.push({
+				key: 'new-section',
+				label: 'New section',
+				icon: <SquareStack size={14} />,
+				onClick: (): void => void addSection(NEW_SECTION_TITLE),
+			});
+		}
+
+		const items: MenuItem[] = [
+			{
+				type: 'group',
+				key: 'group-dashboard',
+				label: 'Dashboard',
+				children: dashboardGroup,
+			},
+			{ type: 'group', key: 'group-data', label: 'Data', children: dataGroup },
+		];
+		if (layoutGroup.length > 0) {
+			items.push({
+				type: 'group',
+				key: 'group-layout',
+				label: 'Layout',
+				children: layoutGroup,
+			});
+		}
+		items.push(
+			{ type: 'divider', key: 'divider-danger' },
 			{
 				key: 'delete',
 				label: 'Delete dashboard',
@@ -147,74 +217,86 @@ function DashboardActions({
 				danger: true,
 				onClick: (): void => setIsDeleteOpen(true),
 			},
-		];
-
-		return [editGroup, exportGroup, dangerGroup]
-			.filter((group) => group.length > 0)
-			.flatMap((group, index) =>
-				index > 0 ? [{ type: 'divider' } as MenuItem, ...group] : group,
-			);
+		);
+		return items;
 	}, [
-		isDashboardLocked,
+		canEdit,
+		isCloning,
 		isAuthor,
 		user.role,
+		isDashboardLocked,
 		dashboard.createdBy,
 		onOpenRename,
+		handleClone,
 		onLockToggle,
 		handle.enter,
 		exportJSON,
 		setCopy,
 		dashboardDataJSON,
-		canEdit,
+		addSection,
 	]);
 
 	return (
 		<div className={styles.dashboardActionsContainer}>
-			<DateTimeSelectionV2 showAutoRefresh hideShareModal />
-			<div className={styles.dashboardActionsSecondary}>
-				<DropdownMenuSimple menu={{ items: menuItems }}>
+			<DropdownMenuSimple menu={{ items: menuItems }}>
+				<Button
+					variant="solid"
+					color="secondary"
+					size="md"
+					prefix={<Grid3X3 size="md" />}
+					testId="options"
+				>
+					Actions
+				</Button>
+			</DropdownMenuSimple>
+			{canEdit && (
+				<>
 					<Button
 						variant="solid"
 						color="secondary"
-						size="icon"
-						prefix={<Ellipsis size="md" />}
-						testId="options"
-					/>
-				</DropdownMenuSimple>
-				{canEdit && (
-					<>
-						<Button
-							variant="solid"
-							color="secondary"
-							prefix={<Configure size="md" />}
-							testId="show-drawer"
-							onClick={(): void => setIsSettingsDrawerOpen(true)}
-							size="md"
-						>
-							Configure
-						</Button>
-						<SettingsDrawer
-							drawerTitle="Dashboard Configuration"
-							isOpen={isSettingsDrawerOpen}
-							onClose={(): void => setIsSettingsDrawerOpen(false)}
-						>
-							<DashboardSettings dashboard={dashboard} />
-						</SettingsDrawer>
-					</>
-				)}
-				{!isDashboardLocked && (
-					<Button
-						variant="solid"
-						color="primary"
-						onClick={onAddPanel}
-						prefix={<Plus size="md" />}
-						testId="add-panel-header"
+						prefix={<Configure size="md" />}
+						testId="show-drawer"
+						onClick={(): void => setIsSettingsDrawerOpen(true)}
 						size="md"
 					>
-						New Panel
+						Configure
 					</Button>
-				)}
-			</div>
+					<SettingsDrawer
+						drawerTitle="Dashboard Configuration"
+						isOpen={isSettingsDrawerOpen}
+						onClose={(): void => setIsSettingsDrawerOpen(false)}
+					>
+						<DashboardSettings dashboard={dashboard} />
+					</SettingsDrawer>
+				</>
+			)}
+			<Button
+				variant="solid"
+				color="secondary"
+				prefix={<Braces size="md" />}
+				testId="edit-json"
+				onClick={(): void => setIsJsonEditorOpen(true)}
+				size="md"
+			>
+				Edit as JSON
+			</Button>
+			{!isDashboardLocked && (
+				<Button
+					variant="solid"
+					color="primary"
+					onClick={onAddPanel}
+					prefix={<Plus size="md" />}
+					testId="add-panel-header"
+					size="md"
+				>
+					New Panel
+				</Button>
+			)}
+			<JsonEditorDrawer
+				dashboard={dashboard}
+				isOpen={isJsonEditorOpen}
+				onClose={(): void => setIsJsonEditorOpen(false)}
+			/>
 			<ConfirmDeleteDialog
 				open={isDeleteOpen}
 				title={`Delete dashboard"?`}
