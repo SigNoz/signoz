@@ -63,6 +63,7 @@ func generateWebSettings() error {
 		return err
 	}
 
+	schema.WithTitle("WebSettings")
 	data, err := json.MarshalIndent(schema, "", "  ")
 	if err != nil {
 		return err
@@ -90,6 +91,7 @@ func generateTransactionGroups() error {
 		return err
 	}
 
+	schema.WithTitle("TransactionGroups")
 	data, err := json.MarshalIndent(schema, "", "  ")
 	if err != nil {
 		return err
