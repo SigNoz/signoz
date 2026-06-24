@@ -16,6 +16,7 @@ import {
 	DashboardWidget,
 	EditRulesPage,
 	ErrorDetails,
+	ExternalIssues,
 	ForgotPassword,
 	Home,
 	InfrastructureMonitoring,
@@ -513,6 +514,13 @@ const routes: AppRoutes[] = [
 		exact: true,
 		component: AIAssistantPage,
 		key: 'AI_ASSISTANT',
+		isPrivate: true,
+	},
+	{
+		path: ROUTES.EXTERNAL_ISSUES,
+		exact: true,
+		component: ExternalIssues,
+		key: 'EXTERNAL_ISSUES',
 		isPrivate: true,
 	},
 ];

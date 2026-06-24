@@ -174,6 +174,12 @@ const menuItems: SidebarItem[] = [
 		itemKey: 'alerts',
 	},
 	{
+		key: ROUTES.EXTERNAL_ISSUES,
+		label: 'Issues',
+		icon: <Bug size={16} />,
+		itemKey: 'external-issues',
+	},
+	{
 		key: ROUTES.INTEGRATIONS,
 		label: 'Integrations',
 		icon: <Unplug size={16} />,
@@ -339,6 +345,13 @@ export const settingsNavSections: SettingsNavSection[] = [
 				icon: <FileKey2 size={16} />,
 				isEnabled: true,
 				itemKey: 'notification-channels',
+			},
+			{
+				key: ROUTES.JIRA_INTEGRATION,
+				label: 'Jira Integration',
+				icon: <span style={{ fontSize: '16px' }}>🔷</span>,
+				isEnabled: true,
+				itemKey: 'jira-integration',
 			},
 			{
 				key: ROUTES.BILLING,

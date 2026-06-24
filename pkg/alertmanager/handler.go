@@ -7,6 +7,10 @@ type Handler interface {
 
 	TestReceiver(http.ResponseWriter, *http.Request)
 
+	GetJiraMetadata(http.ResponseWriter, *http.Request)
+	ListJiraProjects(http.ResponseWriter, *http.Request)
+	ListJiraProjectIssueTypes(http.ResponseWriter, *http.Request)
+
 	ListChannels(http.ResponseWriter, *http.Request)
 
 	ListAllChannels(http.ResponseWriter, *http.Request)

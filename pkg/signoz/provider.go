@@ -121,6 +121,7 @@ func NewSQLMigrationProviderFactories(
 ) factory.NamedMap[factory.ProviderFactory[sqlmigration.SQLMigration, sqlmigration.Config]] {
 	return factory.MustNewNamedMap(
 		sqlmigration.NewAddDataMigrationsFactory(),
+		sqlmigration.NewAddExternalIssuesTableFactory(sqlstore, sqlschema),
 		sqlmigration.NewAddOrganizationFactory(),
 		sqlmigration.NewAddPreferencesFactory(),
 		sqlmigration.NewAddDashboardsFactory(),
@@ -262,9 +263,10 @@ func NewQuerierProviderFactories(telemetryStore telemetrystore.TelemetryStore, p
 	)
 }
 
-func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.AuthZ, modules Modules, handlers Handlers) factory.NamedMap[factory.ProviderFactory[apiserver.APIServer, apiserver.Config]] {
+func NewAPIServerProviderFactories(sqlStore sqlstore.SQLStore, orgGetter organization.Getter, authz authz.AuthZ, modules Modules, handlers Handlers) factory.NamedMap[factory.ProviderFactory[apiserver.APIServer, apiserver.Config]] {
 	return factory.MustNewNamedMap(
 		signozapiserver.NewFactory(
+			sqlStore,
 			orgGetter,
 			authz,
 			implorganization.NewHandler(modules.OrgGetter, modules.OrgSetter),

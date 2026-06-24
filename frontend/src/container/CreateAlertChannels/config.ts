@@ -64,6 +64,22 @@ export interface OpsgenieChannel extends Channel {
 	priority?: string;
 }
 
+export interface JiraChannel extends Channel {
+	api_url?: string;
+	username?: string;
+	password?: string;
+	project?: string;
+	issue_type?: string;
+	summary?: string;
+	description?: string;
+	priority?: string;
+	labels?: string;
+	reopen_transition?: string;
+	reopen_duration?: string;
+	resolve_transition?: string;
+	custom_fields?: Record<string, unknown>;
+}
+
 export interface EmailChannel extends Channel {
 	// comma separated list of email addresses to send alerts to
 	to: string;
@@ -103,6 +119,7 @@ export enum ChannelType {
 	Webhook = 'webhook',
 	Pagerduty = 'pagerduty',
 	Opsgenie = 'opsgenie',
+	Jira = 'jira',
 	MsTeams = 'msteams',
 }
 

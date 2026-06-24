@@ -6,6 +6,7 @@ import (
 
 	"github.com/prometheus/common/model"
 
+	"github.com/SigNoz/signoz/pkg/query-service/dao"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 
 	amConfig "github.com/prometheus/alertmanager/config"
@@ -44,6 +45,9 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	configStore := sqlalertmanagerstore.NewConfigStore(sqlstore)
 	stateStore := sqlalertmanagerstore.NewStateStore(sqlstore)
 
+	// Create external issue repository for bi-directional Jira sync
+	externalIssueRepo := dao.NewExternalIssueRepo(sqlstore.SQLDB())
+
 	p := &provider{
 		service: alertmanager.New(
 			ctx,
@@ -53,6 +57,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 			configStore,
 			orgGetter,
 			notificationManager,
+			externalIssueRepo,
 		),
 		settings:            settings,
 		config:              config,

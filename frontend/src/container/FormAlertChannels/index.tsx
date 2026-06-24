@@ -7,6 +7,7 @@ import ROUTES from 'constants/routes';
 import {
 	ChannelType,
 	EmailChannel,
+	JiraChannel,
 	OpsgenieChannel,
 	PagerChannel,
 	SlackChannel,
@@ -15,6 +16,7 @@ import {
 import history from 'lib/history';
 
 import EmailSettings from './Settings/Email';
+import JiraSettings from './Settings/Jira';
 import MsTeamsSettings from './Settings/MsTeams';
 import OpsgenieSettings from './Settings/Opsgenie';
 import PagerSettings from './Settings/Pager';
@@ -25,6 +27,7 @@ import { Button } from './styles';
 function FormAlertChannels({
 	formInstance,
 	type,
+	selectedConfig,
 	setSelectedConfig,
 	onTypeChangeHandler,
 	onTestHandler,
@@ -49,6 +52,13 @@ function FormAlertChannels({
 				return <MsTeamsSettings setSelectedConfig={setSelectedConfig} />;
 			case ChannelType.Opsgenie:
 				return <OpsgenieSettings setSelectedConfig={setSelectedConfig} />;
+			case ChannelType.Jira:
+				return (
+					<JiraSettings
+						setSelectedConfig={setSelectedConfig}
+						selectedConfig={selectedConfig}
+					/>
+				);
 			case ChannelType.Email:
 				return <EmailSettings setSelectedConfig={setSelectedConfig} />;
 			default:
@@ -120,6 +130,9 @@ function FormAlertChannels({
 						>
 							Opsgenie
 						</Select.Option>
+						<Select.Option value="jira" key="jira" data-testid="select-option">
+							Jira Service Management
+						</Select.Option>
 						<Select.Option value="email" key="email" data-testid="select-option">
 							Email
 						</Select.Option>
@@ -164,6 +177,14 @@ function FormAlertChannels({
 interface FormAlertChannelsProps {
 	formInstance: FormInstance;
 	type: ChannelType;
+	selectedConfig: Partial<
+		SlackChannel &
+			WebhookChannel &
+			PagerChannel &
+			OpsgenieChannel &
+			JiraChannel &
+			EmailChannel
+	>;
 	setSelectedConfig: Dispatch<
 		SetStateAction<
 			Partial<
@@ -171,6 +192,7 @@ interface FormAlertChannelsProps {
 					WebhookChannel &
 					PagerChannel &
 					OpsgenieChannel &
+					JiraChannel &
 					EmailChannel
 			>
 		>

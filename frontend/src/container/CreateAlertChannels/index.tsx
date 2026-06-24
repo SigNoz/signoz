@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Form } from 'antd';
+import createJira from 'api/channels/createJira';
 import createEmail from 'api/channels/createEmail';
 import createMsTeamsApi from 'api/channels/createMsTeams';
 import createOpsgenie from 'api/channels/createOpsgenie';
@@ -8,6 +9,7 @@ import createPagerApi from 'api/channels/createPager';
 import createSlackApi from 'api/channels/createSlack';
 import createWebhookApi from 'api/channels/createWebhook';
 import testEmail from 'api/channels/testEmail';
+import testJira from 'api/channels/testJira';
 import testMsTeamsApi from 'api/channels/testMsTeams';
 import testOpsGenie from 'api/channels/testOpsgenie';
 import testPagerApi from 'api/channels/testPager';
@@ -24,6 +26,7 @@ import APIError from 'types/api/error';
 import {
 	ChannelType,
 	EmailChannel,
+	JiraChannel,
 	MsTeamsChannel,
 	OpsgenieChannel,
 	PagerChannel,
@@ -33,6 +36,7 @@ import {
 } from './config';
 import {
 	EmailInitialConfig,
+	JiraInitialConfig,
 	OpsgenieInitialConfig,
 	PagerInitialConfig,
 } from './defaults';
@@ -60,6 +64,7 @@ function CreateAlertChannels({
 				PagerChannel &
 				MsTeamsChannel &
 				OpsgenieChannel &
+				JiraChannel &
 				EmailChannel
 		>
 	>({
@@ -111,6 +116,13 @@ function CreateAlertChannels({
 				setSelectedConfig((selectedConfig) => ({
 					...selectedConfig,
 					...OpsgenieInitialConfig,
+				}));
+			}
+
+			if (value === ChannelType.Jira && currentType !== value) {
+				setSelectedConfig((selectedConfig) => ({
+					...selectedConfig,
+					...JiraInitialConfig,
 				}));
 			}
 
@@ -325,6 +337,74 @@ function CreateAlertChannels({
 		showErrorModal,
 	]);
 
+	const prepareJiraRequest = useCallback(
+		() => ({
+			name: selectedConfig?.name || '',
+			send_resolved: selectedConfig?.send_resolved || false,
+			api_url: selectedConfig?.api_url || '',
+			username: selectedConfig?.username || '',
+			password: selectedConfig?.password || '',
+			project: selectedConfig?.project || '',
+			issue_type: selectedConfig?.issue_type || '',
+			summary: selectedConfig?.summary || '',
+			description: selectedConfig?.description || '',
+			priority: selectedConfig?.priority || '',
+			labels: selectedConfig?.labels || '',
+			reopen_transition: selectedConfig?.reopen_transition || '',
+			reopen_duration: selectedConfig?.reopen_duration || '',
+			resolve_transition: selectedConfig?.resolve_transition || '',
+			custom_fields: selectedConfig?.custom_fields,
+		}),
+		[selectedConfig],
+	);
+
+	const onJiraHandler = useCallback(async () => {
+		if (!selectedConfig.api_url) {
+			notifications.error({
+				message: 'Error',
+				description: t('jira_api_url_required'),
+			});
+			return;
+		}
+		if (!selectedConfig.username || !selectedConfig.password) {
+			notifications.error({
+				message: 'Error',
+				description: 'Jira email and API token are required',
+			});
+			return;
+		}
+		if (!selectedConfig.project) {
+			notifications.error({
+				message: 'Error',
+				description: t('jira_project_required'),
+			});
+			return;
+		}
+		if (!selectedConfig.issue_type) {
+			notifications.error({
+				message: 'Error',
+				description: t('jira_issue_type_required'),
+			});
+			return;
+		}
+
+		setSavingState(true);
+		try {
+			await createJira(prepareJiraRequest());
+			notifications.success({
+				message: 'Success',
+				description: t('channel_creation_done'),
+			});
+			history.replace(ROUTES.ALL_CHANNELS);
+			return { status: 'success', statusMessage: t('channel_creation_done') };
+		} catch (error) {
+			showErrorModal(error as APIError);
+			return { status: 'failed', statusMessage: t('channel_creation_failed') };
+		} finally {
+			setSavingState(false);
+		}
+	}, [notifications, t, prepareJiraRequest, showErrorModal, selectedConfig]);
+
 	const prepareEmailRequest = useCallback(
 		() => ({
 			name: selectedConfig?.name || '',
@@ -422,6 +502,7 @@ function CreateAlertChannels({
 				[ChannelType.Webhook]: onWebhookHandler,
 				[ChannelType.Pagerduty]: onPagerHandler,
 				[ChannelType.Opsgenie]: onOpsgenieHandler,
+				[ChannelType.Jira]: onJiraHandler,
 				[ChannelType.MsTeams]: onMsTeamsHandler,
 				[ChannelType.Email]: onEmailHandler,
 			};
@@ -453,6 +534,7 @@ function CreateAlertChannels({
 			onWebhookHandler,
 			onPagerHandler,
 			onOpsgenieHandler,
+			onJiraHandler,
 			onMsTeamsHandler,
 			onEmailHandler,
 			notifications,
@@ -487,6 +569,10 @@ function CreateAlertChannels({
 					case ChannelType.Opsgenie:
 						request = prepareOpsgenieRequest();
 						await testOpsGenie(request);
+						break;
+					case ChannelType.Jira:
+						request = prepareJiraRequest();
+						await testJira(request);
 						break;
 					case ChannelType.Email:
 						request = prepareEmailRequest();
@@ -532,6 +618,7 @@ function CreateAlertChannels({
 			t,
 			preparePagerRequest,
 			prepareOpsgenieRequest,
+			prepareJiraRequest,
 			prepareSlackRequest,
 			prepareMsTeamsRequest,
 			prepareEmailRequest,
@@ -553,6 +640,7 @@ function CreateAlertChannels({
 					formInstance,
 					onTypeChangeHandler,
 					setSelectedConfig,
+					selectedConfig,
 					type,
 					onTestHandler,
 					onSaveHandler,

@@ -2,6 +2,7 @@ package signozapiserver
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/apiserver"
@@ -30,7 +31,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/tracedetail"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/querier"
+	"github.com/SigNoz/signoz/pkg/query-service/dao"
 	"github.com/SigNoz/signoz/pkg/ruler"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/zeus"
@@ -70,9 +73,12 @@ type provider struct {
 	traceDetailHandler      tracedetail.Handler
 	rulerHandler            ruler.Handler
 	llmPricingRuleHandler   llmpricingrule.Handler
+	externalIssueRepo       dao.ExternalIssueRepo
+	logger                  *slog.Logger
 }
 
 func NewFactory(
+	sqlStore sqlstore.SQLStore,
 	orgGetter organization.Getter,
 	authzService authz.AuthZ,
 	orgHandler organization.Handler,
@@ -108,6 +114,7 @@ func NewFactory(
 			ctx,
 			providerSettings,
 			config,
+			sqlStore,
 			orgGetter,
 			authzService,
 			orgHandler,
@@ -145,6 +152,7 @@ func newProvider(
 	_ context.Context,
 	providerSettings factory.ProviderSettings,
 	config apiserver.Config,
+	sqlStore sqlstore.SQLStore,
 	orgGetter organization.Getter,
 	authzService authz.AuthZ,
 	orgHandler organization.Handler,
@@ -178,6 +186,9 @@ func newProvider(
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/apiserver/signozapiserver")
 	router := mux.NewRouter().UseEncodedPath()
 
+	// Initialize external issue repository
+	externalIssueRepo := dao.NewExternalIssueRepo(sqlStore.SQLDB())
+
 	provider := &provider{
 		config:                  config,
 		settings:                settings,
@@ -210,6 +221,8 @@ func newProvider(
 		traceDetailHandler:      traceDetailHandler,
 		rulerHandler:            rulerHandler,
 		llmPricingRuleHandler:   llmPricingRuleHandler,
+		externalIssueRepo:       externalIssueRepo,
+		logger:                  settings.Logger(),
 	}
 
 	provider.authzMiddleware = middleware.NewAuthZ(settings.Logger(), orgGetter, authzService)
@@ -331,6 +344,14 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 	}
 
 	if err := provider.addRulerRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addExternalIssueRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addWebhookRoutes(router); err != nil {
 		return err
 	}
 

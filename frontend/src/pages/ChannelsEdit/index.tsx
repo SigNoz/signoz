@@ -7,6 +7,7 @@ import get from 'api/channels/get';
 import Spinner from 'components/Spinner';
 import {
 	ChannelType,
+	JiraChannel,
 	MsTeamsChannel,
 	PagerChannel,
 	SlackChannel,
@@ -56,11 +57,30 @@ function ChannelsEdit(): JSX.Element {
 
 	const prepChannelConfig = (): {
 		type: string;
-		channel: SlackChannel & WebhookChannel & PagerChannel & MsTeamsChannel;
+		channel: SlackChannel & WebhookChannel & PagerChannel & MsTeamsChannel & JiraChannel;
 	} => {
-		let channel: SlackChannel & WebhookChannel & PagerChannel & MsTeamsChannel = {
+		let channel: SlackChannel & WebhookChannel & PagerChannel & MsTeamsChannel & JiraChannel = {
 			name: '',
 		};
+		
+		if (value && 'jira_configs' in value) {
+			const jiraConfig = value.jira_configs[0];
+			channel = {
+				...(jiraConfig as unknown as JiraChannel),
+				api_url: jiraConfig.api_url as unknown as string,
+				username: jiraConfig.http_config?.basic_auth?.username || '',
+				password: jiraConfig.http_config?.basic_auth?.password || '',
+				summary: jiraConfig.summary?.template || '',
+				description: jiraConfig.description?.template || '',
+				labels: jiraConfig.labels?.join(', ') || '',
+				custom_fields: jiraConfig.custom_fields || {},
+			};
+			return {
+				type: ChannelType.Jira,
+				channel,
+			};
+		}
+
 		if (value && 'slack_configs' in value) {
 			const slackConfig = value.slack_configs[0];
 			channel = slackConfig;

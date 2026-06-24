@@ -1,4 +1,9 @@
-import { EmailChannel, OpsgenieChannel, PagerChannel } from './config';
+import {
+	EmailChannel,
+	JiraChannel,
+	OpsgenieChannel,
+	PagerChannel,
+} from './config';
 
 export const PagerInitialConfig: Partial<PagerChannel> = {
 	description: `[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }} for {{ .CommonLabels.job }}
@@ -49,6 +54,28 @@ export const OpsgenieInitialConfig: Partial<OpsgenieChannel> = {
 	{{- end }}`,
 	priority:
 		'{{ if eq (index .Alerts 0).Labels.severity "critical" }}P1{{ else if eq (index .Alerts 0).Labels.severity "warning" }}P2{{ else if eq (index .Alerts 0).Labels.severity "info" }}P3{{ else }}P4{{ end }}',
+};
+
+export const JiraInitialConfig: Partial<JiraChannel> = {
+	api_url: 'https://your-domain.atlassian.net',
+	username: '',
+	password: '',
+	project: 'PROJ',
+	issue_type: 'Incident',
+	summary: '{{ .CommonLabels.alertname }}',
+	description: `Alert: {{ .CommonLabels.alertname }}
+Severity: {{ .CommonLabels.severity }}
+
+{{ range .Alerts }}
+Message: {{ .Annotations.description }}
+Generator URL: {{ .GeneratorURL }}
+{{ end }}`,
+	priority: 'Medium',
+	labels: 'signoz,alert',
+	resolve_transition: '',
+	reopen_transition: '',
+	reopen_duration: '',
+	custom_fields: {},
 };
 
 export const EmailInitialConfig: Partial<EmailChannel> = {

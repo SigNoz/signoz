@@ -112,6 +112,57 @@ func (provider *provider) addAlertmanagerRoutes(router *mux.Router) error {
 		return err
 	}
 
+	if err := router.Handle("/api/v1/channels/jira/metadata", handler.New(provider.authzMiddleware.EditAccess(provider.alertmanagerHandler.GetJiraMetadata), handler.OpenAPIDef{
+		ID:                  "GetJiraMetadata",
+		Tags:                []string{"channels"},
+		Summary:             "Fetch Jira metadata",
+		Description:         "This endpoint fetches Jira fields metadata for a project and issue type",
+		Request:             new(alertmanagertypes.JiraMetadataRequest),
+		RequestContentType:  "application/json",
+		Response:            new(alertmanagertypes.JiraMetadataResponse),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{http.StatusBadRequest},
+		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
+	})).Methods(http.MethodPost).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v1/channels/jira/projects", handler.New(provider.authzMiddleware.EditAccess(provider.alertmanagerHandler.ListJiraProjects), handler.OpenAPIDef{
+		ID:                  "ListJiraProjects",
+		Tags:                []string{"channels"},
+		Summary:             "List Jira projects",
+		Description:         "This endpoint lists Jira projects for the account",
+		Request:             new(alertmanagertypes.JiraProjectsRequest),
+		RequestContentType:  "application/json",
+		Response:            new(alertmanagertypes.JiraProjectsResponse),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{http.StatusBadRequest},
+		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
+	})).Methods(http.MethodPost).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v1/channels/jira/project-issue-types", handler.New(provider.authzMiddleware.EditAccess(provider.alertmanagerHandler.ListJiraProjectIssueTypes), handler.OpenAPIDef{
+		ID:                  "ListJiraProjectIssueTypes",
+		Tags:                []string{"channels"},
+		Summary:             "List Jira project issue types",
+		Description:         "This endpoint lists issue types for a Jira project",
+		Request:             new(alertmanagertypes.JiraProjectIssueTypesRequest),
+		RequestContentType:  "application/json",
+		Response:            new(alertmanagertypes.JiraProjectIssueTypesResponse),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{http.StatusBadRequest},
+		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
+	})).Methods(http.MethodPost).GetError(); err != nil {
+		return err
+	}
+
 	if err := router.Handle("/api/v1/testChannel", handler.New(provider.authzMiddleware.EditAccess(provider.alertmanagerHandler.TestReceiver), handler.OpenAPIDef{
 		ID:                  "TestChannelDeprecated",
 		Tags:                []string{"channels"},

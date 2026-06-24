@@ -5,11 +5,13 @@ import (
 	"slices"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/email"
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/jira"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/msteamsv2"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/opsgenie"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/pagerduty"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/slack"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/webhook"
+	"github.com/SigNoz/signoz/pkg/query-service/dao"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/prometheus/alertmanager/config/receiver"
 	"github.com/prometheus/alertmanager/notify"
@@ -22,11 +24,12 @@ var customNotifierIntegrations = []string{
 	email.Integration,
 	pagerduty.Integration,
 	opsgenie.Integration,
+	jira.Integration,
 	slack.Integration,
 	msteamsv2.Integration,
 }
 
-func NewReceiverIntegrations(nc alertmanagertypes.Receiver, tmpl *template.Template, logger *slog.Logger) ([]notify.Integration, error) {
+func NewReceiverIntegrations(nc alertmanagertypes.Receiver, tmpl *template.Template, logger *slog.Logger, externalIssueRepo interface{}) ([]notify.Integration, error) {
 	upstreamIntegrations, err := receiver.BuildReceiverIntegrations(nc, tmpl, logger)
 	if err != nil {
 		return nil, err
@@ -63,6 +66,26 @@ func NewReceiverIntegrations(nc alertmanagertypes.Receiver, tmpl *template.Templ
 	}
 	for i, c := range nc.OpsGenieConfigs {
 		add(opsgenie.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) { return opsgenie.New(c, tmpl, l) })
+	}
+	for i, c := range nc.JiraConfigs {
+		add(jira.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) {
+			notifier, err := jira.New(c, tmpl, l)
+			if err != nil {
+				return nil, err
+			}
+
+			// Wire up the issue mapping store for bi-directional sync
+			if externalIssueRepo != nil {
+				// Type assert to dao.ExternalIssueRepo
+				if repo, ok := externalIssueRepo.(dao.ExternalIssueRepo); ok {
+					store := jira.NewIssueMappingStore(repo)
+					notifier.SetIssueMappingStore(store)
+					l.Info("✅ wired up external issue mapping store to jira notifier")
+				}
+			}
+
+			return notifier, nil
+		})
 	}
 	for i, c := range nc.SlackConfigs {
 		add(slack.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) { return slack.New(c, tmpl, l) })
