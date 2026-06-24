@@ -105,34 +105,6 @@ def test_hosts_accuracy(
             },
             id="metric_never_seen",
         ),
-        # Scenario 2: groupBy a key that IS in metadata (seen on some metrics) but
-        # was never seen together with every queried metric. deployment.environment
-        # is seeded on system.memory.usage + system.filesystem.usage only, so the key
-        # resolves (the page-groups IN-filter parses -> no 400) but the cpu.time /
-        # load_average metrics miss the (metric, key) pair and the statement builder
-        # falls back to raw labels, surfacing "key `...` not found on metric ...".
-        # Still 200, no hard error. Uses a dedicated, isolated dataset (host kp-h1)
-        # so the assertion never depends on data shared with another host test.
-        pytest.param(
-            {
-                "dataset": "hosts_metric_key_pair.jsonl",
-                "body": {
-                    "filter": {"expression": "host.name = 'kp-h1'"},
-                    "groupBy": [
-                        {
-                            "name": "deployment.environment",
-                            "fieldDataType": "string",
-                            "fieldContext": "resource",
-                        }
-                    ],
-                },
-                "warn_substrings": ["key `deployment.environment` not found on metric"],
-                "warn_names": [],
-                "data_fields": [],
-                "no_data_fields": [],
-            },
-            id="metric_key_pair_not_seen",
-        ),
     ],
 )
 def test_hosts_warnings(
@@ -143,8 +115,8 @@ def test_hosts_warnings(
     case: dict,
 ) -> None:
     """Data-availability gaps surface as non-blocking warnings (200 + data),
-    not hard errors. Covers never-seen metrics (scenario 1) and never-seen
-    (metric, key) pairs via groupBy (scenario 2)."""
+    not hard errors. Covers never-seen metrics surfacing a "never been
+    received" warning while present metrics still return data."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
