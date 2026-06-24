@@ -58,6 +58,7 @@
 	}
 
 	.metrics-table-container {
+		padding-bottom: 48px;
 		.ant-table {
 			margin-left: -16px;
 			margin-right: -16px;
@@ -182,13 +183,15 @@
 		}
 
 		.ant-pagination {
-			position: sticky;
+			position: fixed;
 			bottom: 0;
-			width: 100%;
+			width: calc(100% - 54px);
 			background: var(--l1-background);
 			padding: 16px;
 			margin: 0;
-			z-index: 10;
+
+			// this is to offset chat support icon till we improve the design
+			right: 20px;
 
 			.ant-pagination-item {
 				border-radius: 4px;
