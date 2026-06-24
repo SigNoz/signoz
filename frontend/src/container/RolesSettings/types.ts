@@ -35,17 +35,6 @@ export interface SelectableItem {
 	label: string;
 }
 
-export const ACTION_LABELS: Record<string, string> = {
-	read: 'Read',
-	create: 'Create',
-	update: 'Edit',
-	delete: 'Delete',
-	attach: 'Attach',
-	detach: 'Detach',
-	list: 'List',
-	assignee: 'Assign',
-};
-
 export interface ResourceItemsResult {
 	items: SelectableItem[];
 	isLoading: boolean;
