@@ -149,7 +149,6 @@ type UnmappedModel struct {
 
 type GettableUnmappedModels struct {
 	Items []*UnmappedModel `json:"items" required:"true"`
-	Total int              `json:"total" required:"true"`
 }
 
 func (LLMPricingRuleUnit) Enum() []any {
@@ -223,7 +222,6 @@ func NewGettableLLMPricingRulesFromLLMPricingRules(items []*LLMPricingRule, tota
 func NewGettableUnmappedModels(items []*UnmappedModel) *GettableUnmappedModels {
 	return &GettableUnmappedModels{
 		Items: items,
-		Total: len(items),
 	}
 }
 

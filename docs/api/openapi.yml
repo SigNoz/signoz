@@ -4975,11 +4975,8 @@ components:
             $ref: '#/components/schemas/LlmpricingruletypesUnmappedModel'
           nullable: true
           type: array
-        total:
-          type: integer
       required:
       - items
-      - total
       type: object
     LlmpricingruletypesLLMPricingCacheCosts:
       properties:

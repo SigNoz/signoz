@@ -6634,10 +6634,6 @@ export interface LlmpricingruletypesGettableUnmappedModelsDTO {
 	 * @type array,null
 	 */
 	items: LlmpricingruletypesUnmappedModelDTO[] | null;
-	/**
-	 * @type integer
-	 */
-	total: number;
 }
 
 export interface LlmpricingruletypesUpdatableLLMPricingRuleDTO {
