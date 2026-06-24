@@ -125,7 +125,7 @@ func (provider *provider) addMetricReductionRuleRoutes(router *mux.Router) error
 			Tags:                []string{"metrics"},
 			Summary:             "Update a metric reduction rule by id",
 			Description:         "Updates the match type and labels of a volume-control rule by its id; the metric name is immutable.",
-			Request:             new(metricreductionruletypes.PostableReductionRule),
+			Request:             new(metricreductionruletypes.UpdatableReductionRule),
 			RequestContentType:  "application/json",
 			Response:            new(metricreductionruletypes.GettableReductionRule),
 			ResponseContentType: "application/json",

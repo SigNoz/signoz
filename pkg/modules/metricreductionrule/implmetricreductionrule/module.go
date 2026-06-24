@@ -31,7 +31,7 @@ func (m *module) GetByID(_ context.Context, _ valuer.UUID, _ valuer.UUID) (*metr
 	return nil, errUnsupported
 }
 
-func (m *module) UpdateByID(_ context.Context, _ valuer.UUID, _ string, _ valuer.UUID, _ *metricreductionruletypes.PostableReductionRule) (*metricreductionruletypes.GettableReductionRule, error) {
+func (m *module) UpdateByID(_ context.Context, _ valuer.UUID, _ string, _ valuer.UUID, _ *metricreductionruletypes.UpdatableReductionRule) (*metricreductionruletypes.GettableReductionRule, error) {
 	return nil, errUnsupported
 }
 

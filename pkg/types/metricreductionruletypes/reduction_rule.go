@@ -110,10 +110,14 @@ type GettableReductionRules struct {
 	Total int                     `json:"total" required:"true"`
 }
 
+type UpdatableReductionRule struct {
+	MatchType MatchType `json:"matchType" required:"true"`
+	Labels    []string  `json:"labels" required:"true" nullable:"true"`
+}
+
 type PostableReductionRule struct {
-	MetricName string    `json:"metricName"`
-	MatchType  MatchType `json:"matchType" required:"true"`
-	Labels     []string  `json:"labels" required:"true" nullable:"true"`
+	MetricName string `json:"metricName" required:"true"`
+	UpdatableReductionRule
 }
 
 var protectedLabels = map[string]struct{}{
@@ -130,12 +134,9 @@ func IsProtectedLabel(label string) bool {
 	return ok
 }
 
-func (req *PostableReductionRule) Validate() error {
+func (req *UpdatableReductionRule) Validate() error {
 	if req == nil {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
-	}
-	if req.MetricName == "" {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "metricName is required")
 	}
 	if req.MatchType != MatchTypeDrop && req.MatchType != MatchTypeKeep {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput,
@@ -154,4 +155,14 @@ func (req *PostableReductionRule) Validate() error {
 		}
 	}
 	return nil
+}
+
+func (req *PostableReductionRule) Validate() error {
+	if req == nil {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
+	}
+	if req.MetricName == "" {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "metricName is required")
+	}
+	return req.UpdatableReductionRule.Validate()
 }

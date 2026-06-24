@@ -161,7 +161,7 @@ func (h *handler) UpdateByID(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var in metricreductionruletypes.PostableReductionRule
+	var in metricreductionruletypes.UpdatableReductionRule
 	if err := binding.JSON.BindBody(r.Body, &in); err != nil {
 		render.Error(rw, err)
 		return

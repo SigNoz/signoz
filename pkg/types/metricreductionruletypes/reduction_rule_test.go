@@ -7,19 +7,18 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestPostableReductionRuleValidate(t *testing.T) {
+func TestUpdatableReductionRuleValidate(t *testing.T) {
 	cases := []struct {
 		name    string
-		req     *metricreductionruletypes.PostableReductionRule
+		req     *metricreductionruletypes.UpdatableReductionRule
 		wantErr bool
 	}{
 		{"nil", nil, true},
-		{"empty metric name", &metricreductionruletypes.PostableReductionRule{MatchType: metricreductionruletypes.MatchTypeDrop, Labels: []string{"host"}}, true},
-		{"invalid match type", &metricreductionruletypes.PostableReductionRule{MetricName: "m", Labels: []string{"host"}}, true},
-		{"empty labels", &metricreductionruletypes.PostableReductionRule{MetricName: "m", MatchType: metricreductionruletypes.MatchTypeDrop}, true},
-		{"drop protected label", &metricreductionruletypes.PostableReductionRule{MetricName: "m", MatchType: metricreductionruletypes.MatchTypeDrop, Labels: []string{"host", "le"}}, true},
-		{"keep protected label is allowed", &metricreductionruletypes.PostableReductionRule{MetricName: "m", MatchType: metricreductionruletypes.MatchTypeKeep, Labels: []string{"le"}}, false},
-		{"valid drop", &metricreductionruletypes.PostableReductionRule{MetricName: "m", MatchType: metricreductionruletypes.MatchTypeDrop, Labels: []string{"host"}}, false},
+		{"invalid match type", &metricreductionruletypes.UpdatableReductionRule{Labels: []string{"host"}}, true},
+		{"empty labels", &metricreductionruletypes.UpdatableReductionRule{MatchType: metricreductionruletypes.MatchTypeDrop}, true},
+		{"drop protected label", &metricreductionruletypes.UpdatableReductionRule{MatchType: metricreductionruletypes.MatchTypeDrop, Labels: []string{"host", "le"}}, true},
+		{"keep protected label is allowed", &metricreductionruletypes.UpdatableReductionRule{MatchType: metricreductionruletypes.MatchTypeKeep, Labels: []string{"le"}}, false},
+		{"valid drop", &metricreductionruletypes.UpdatableReductionRule{MatchType: metricreductionruletypes.MatchTypeDrop, Labels: []string{"host"}}, false},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -30,4 +29,12 @@ func TestPostableReductionRuleValidate(t *testing.T) {
 			require.NoError(t, tc.req.Validate())
 		})
 	}
+}
+
+func TestPostableReductionRuleValidate(t *testing.T) {
+	valid := metricreductionruletypes.UpdatableReductionRule{MatchType: metricreductionruletypes.MatchTypeKeep, Labels: []string{"host"}}
+
+	require.Error(t, (*metricreductionruletypes.PostableReductionRule)(nil).Validate(), "nil request")
+	require.Error(t, (&metricreductionruletypes.PostableReductionRule{UpdatableReductionRule: valid}).Validate(), "metricName required")
+	require.NoError(t, (&metricreductionruletypes.PostableReductionRule{MetricName: "m", UpdatableReductionRule: valid}).Validate())
 }

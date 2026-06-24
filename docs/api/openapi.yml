@@ -5309,6 +5309,7 @@ components:
         metricName:
           type: string
       required:
+      - metricName
       - matchType
       - labels
       type: object
@@ -5339,6 +5340,19 @@ components:
       - reduction
       - last_updated
       type: string
+    MetricreductionruletypesUpdatableReductionRule:
+      properties:
+        labels:
+          items:
+            type: string
+          nullable: true
+          type: array
+        matchType:
+          $ref: '#/components/schemas/MetricreductionruletypesMatchType'
+      required:
+      - matchType
+      - labels
+      type: object
     MetricsexplorertypesInspectMetricsRequest:
       properties:
         end:
@@ -16125,7 +16139,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/MetricreductionruletypesPostableReductionRule'
+              $ref: '#/components/schemas/MetricreductionruletypesUpdatableReductionRule'
       responses:
         "200":
           content:
