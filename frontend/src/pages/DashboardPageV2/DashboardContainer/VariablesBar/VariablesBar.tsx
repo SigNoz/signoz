@@ -3,8 +3,8 @@ import { ChevronLeft } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import cx from 'classnames';
 import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
+import { useInlineOverflowCount } from 'hooks/useInlineOverflowCount';
 
-import { useVariableOverflow } from './useVariableOverflow';
 import { useVariableSelection } from './useVariableSelection';
 import VariableSelector from './VariableSelector';
 import styles from './VariablesBar.module.scss';
@@ -26,22 +26,23 @@ function VariablesBar({ dashboard }: VariablesBarProps): JSX.Element | null {
 	const { variables, dependencyData, selection, setSelection } =
 		useVariableSelection(dashboard);
 	const [expanded, setExpanded] = useState(false);
-	const { stripRef, visibleCount } = useVariableOverflow(
-		variables.length,
-		!expanded,
-	);
+	const { containerRef, visibleCount, overflowCount } = useInlineOverflowCount({
+		itemCount: variables.length,
+		gap: 8,
+		reserveWidth: 48,
+		enabled: !expanded,
+	});
 
 	if (variables.length === 0) {
 		return null;
 	}
 
-	const hiddenCount = Math.max(0, variables.length - visibleCount);
-	const hasOverflow = hiddenCount > 0;
+	const hasOverflow = overflowCount > 0;
 
 	return (
 		<div className={styles.bar} data-testid="dashboard-variables-bar">
 			<div
-				ref={stripRef}
+				ref={containerRef}
 				className={cx(styles.strip, { [styles.stripExpanded]: expanded })}
 			>
 				{variables.map((variable, index) => (
@@ -80,7 +81,7 @@ function VariablesBar({ dashboard }: VariablesBarProps): JSX.Element | null {
 							testId="dashboard-variables-more"
 							onClick={(): void => setExpanded((prev) => !prev)}
 						>
-							{expanded ? 'Less' : `+${hiddenCount}`}
+							{expanded ? 'Less' : `+${overflowCount}`}
 						</Button>
 					</span>
 				)}
