@@ -455,7 +455,7 @@ export const EmailInitialConfig: Partial<EmailChannel> = {
 export const JsmOpsInitialConfig: Partial<JsmOpsChannel> = {
 	priority:
 		'{{ if eq (index .Alerts 0).Labels.severity "critical" }}P1{{ else if eq (index .Alerts 0).Labels.severity "warning" }}P2{{ else if eq (index .Alerts 0).Labels.severity "info" }}P3{{ else }}P4{{ end }}',
-	message: `[Triggered] {{ .CommonLabels.alertname }}`,
+	message: `[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}`,
 	description: `{{ range .Alerts -}}
 Alert: {{ .Labels.alertname }}{{ if .Labels.severity }}
 Severity: {{ .Labels.severity }}{{ end }}{{ if .Annotations.summary }}
