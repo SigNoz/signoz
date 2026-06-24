@@ -8,8 +8,6 @@ import { usePanelTypeSelectionModalStore } from 'providers/Dashboard/helpers/pan
 import ConfirmDeleteDialog from '../../../components/ConfirmDeleteDialog/ConfirmDeleteDialog';
 import type { DashboardSection } from '../../../utils';
 import type { AddPanelArgs } from '../../Panel/hooks/useAddPanelToSection';
-import type { DeletePanelArgs } from '../../Panel/hooks/useDeletePanel';
-import type { MovePanelArgs } from '../../Panel/hooks/useMovePanelToSection';
 import PanelTypeSelectionModal from '../../Panel/PanelTypeSelectionModal/PanelTypeSelectionModal';
 import { useDashboardStore } from '../../../store/useDashboardStore';
 import { useDeleteSection } from '../hooks/useDeleteSection';
@@ -26,10 +24,8 @@ interface SectionProps {
 	section: DashboardSection;
 	/** Adds a panel to this section; present only in editable sectioned mode. */
 	onAddPanel?: (args: AddPanelArgs) => void;
-	/** All sections + per-panel handlers, for the panel "Move to section" / delete actions. */
+	/** All sections — layout context for the panel menu's move/delete actions. */
 	sections?: DashboardSection[];
-	onMovePanel?: (args: MovePanelArgs) => void;
-	onDeletePanel?: (args: DeletePanelArgs) => void;
 	/** Provided by SortableSection in sectioned mode; absent for untitled/free-flow. */
 	dragHandle?: SectionDragHandle;
 }
@@ -38,8 +34,6 @@ function Section({
 	section,
 	onAddPanel,
 	sections,
-	onMovePanel,
-	onDeletePanel,
 	dragHandle,
 }: SectionProps): JSX.Element {
 	const isEditable = useDashboardStore((s) => s.isEditable);
@@ -92,8 +86,6 @@ function Section({
 			layoutIndex={section.layoutIndex}
 			isVisible={isVisible}
 			sections={sections}
-			onMovePanel={onMovePanel}
-			onDeletePanel={onDeletePanel}
 		/>
 	);
 

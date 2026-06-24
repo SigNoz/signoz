@@ -125,8 +125,10 @@ type UpdatableLLMPricingRules struct {
 }
 
 type ListPricingRulesQuery struct {
-	Offset int `query:"offset" json:"offset"`
-	Limit  int `query:"limit"  json:"limit"`
+	Offset     int    `query:"offset" json:"offset"`
+	Limit      int    `query:"limit"  json:"limit"`
+	Search     string `query:"q" json:"q"`
+	IsOverride *bool  `query:"isOverride" json:"isOverride"`
 }
 
 type GettablePricingRules struct {
