@@ -18,6 +18,8 @@ import type {
 } from 'react-query';
 
 import type {
+	CreateMetricReductionRule201,
+	DeleteMetricReductionRuleByIDPathParameters,
 	DeleteMetricReductionRulePathParameters,
 	GetMetricAlerts200,
 	GetMetricAlertsPathParameters,
@@ -31,7 +33,11 @@ import type {
 	GetMetricMetadata200,
 	GetMetricMetadataPathParameters,
 	GetMetricReductionRule200,
+	GetMetricReductionRuleByID200,
+	GetMetricReductionRuleByIDPathParameters,
 	GetMetricReductionRulePathParameters,
+	GetMetricReductionRuleStats200,
+	GetMetricReductionRuleTimeseries200,
 	GetMetricsOnboardingStatus200,
 	GetMetricsStats200,
 	GetMetricsTreemap200,
@@ -49,6 +55,8 @@ import type {
 	PreviewMetricReductionRule200,
 	RenderErrorResponseDTO,
 	UpdateMetricMetadataPathParameters,
+	UpdateMetricReductionRuleByID200,
+	UpdateMetricReductionRuleByIDPathParameters,
 	UpsertMetricReductionRule200,
 	UpsertMetricReductionRulePathParameters,
 } from '../sigNoz.schemas';
@@ -862,7 +870,7 @@ export const useDeleteMetricReductionRule = <
 	return useMutation(getDeleteMetricReductionRuleMutationOptions(options));
 };
 /**
- * Returns the active volume-control (label reduction) rule for a specified metric. Enterprise feature.
+ * Returns the active volume-control (label reduction) rule for a specified metric.
  * @summary Get a metric reduction rule
  */
 export const getMetricReductionRule = (
@@ -1237,7 +1245,7 @@ export const invalidateGetMetricsOnboardingStatus = async (
 };
 
 /**
- * Returns active metric volume-control (label reduction) rules, sorted and paginated server-side. Enterprise feature.
+ * Returns active metric volume-control (label reduction) rules, sorted and paginated server-side.
  * @summary List metric reduction rules
  */
 export const listMetricReductionRules = (
@@ -1339,7 +1347,377 @@ export const invalidateListMetricReductionRules = async (
 };
 
 /**
- * Estimates the series reduction and related-asset impact of a candidate volume-control rule without persisting it. Enterprise feature.
+ * Creates a volume-control rule for a metric and returns it with its id; fails if the metric already has a rule. Intended for Terraform/operators.
+ * @summary Create a metric reduction rule
+ */
+export const createMetricReductionRule = (
+	metricreductionruletypesPostableReductionRuleDTO?: BodyType<MetricreductionruletypesPostableReductionRuleDTO>,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<CreateMetricReductionRule201>({
+		url: `/api/v2/metrics/reduction_rules`,
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		data: metricreductionruletypesPostableReductionRuleDTO,
+		signal,
+	});
+};
+
+export const getCreateMetricReductionRuleMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof createMetricReductionRule>>,
+		TError,
+		{ data?: BodyType<MetricreductionruletypesPostableReductionRuleDTO> },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof createMetricReductionRule>>,
+	TError,
+	{ data?: BodyType<MetricreductionruletypesPostableReductionRuleDTO> },
+	TContext
+> => {
+	const mutationKey = ['createMetricReductionRule'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof createMetricReductionRule>>,
+		{ data?: BodyType<MetricreductionruletypesPostableReductionRuleDTO> }
+	> = (props) => {
+		const { data } = props ?? {};
+
+		return createMetricReductionRule(data);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type CreateMetricReductionRuleMutationResult = NonNullable<
+	Awaited<ReturnType<typeof createMetricReductionRule>>
+>;
+export type CreateMetricReductionRuleMutationBody =
+	| BodyType<MetricreductionruletypesPostableReductionRuleDTO>
+	| undefined;
+export type CreateMetricReductionRuleMutationError =
+	ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Create a metric reduction rule
+ */
+export const useCreateMetricReductionRule = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof createMetricReductionRule>>,
+		TError,
+		{ data?: BodyType<MetricreductionruletypesPostableReductionRuleDTO> },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof createMetricReductionRule>>,
+	TError,
+	{ data?: BodyType<MetricreductionruletypesPostableReductionRuleDTO> },
+	TContext
+> => {
+	return useMutation(getCreateMetricReductionRuleMutationOptions(options));
+};
+/**
+ * Deletes a volume-control rule by its id.
+ * @summary Delete a metric reduction rule by id
+ */
+export const deleteMetricReductionRuleByID = (
+	{ id }: DeleteMetricReductionRuleByIDPathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<void>({
+		url: `/api/v2/metrics/reduction_rules/${id}`,
+		method: 'DELETE',
+		signal,
+	});
+};
+
+export const getDeleteMetricReductionRuleByIDMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof deleteMetricReductionRuleByID>>,
+		TError,
+		{ pathParams: DeleteMetricReductionRuleByIDPathParameters },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof deleteMetricReductionRuleByID>>,
+	TError,
+	{ pathParams: DeleteMetricReductionRuleByIDPathParameters },
+	TContext
+> => {
+	const mutationKey = ['deleteMetricReductionRuleByID'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof deleteMetricReductionRuleByID>>,
+		{ pathParams: DeleteMetricReductionRuleByIDPathParameters }
+	> = (props) => {
+		const { pathParams } = props ?? {};
+
+		return deleteMetricReductionRuleByID(pathParams);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteMetricReductionRuleByIDMutationResult = NonNullable<
+	Awaited<ReturnType<typeof deleteMetricReductionRuleByID>>
+>;
+
+export type DeleteMetricReductionRuleByIDMutationError =
+	ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Delete a metric reduction rule by id
+ */
+export const useDeleteMetricReductionRuleByID = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof deleteMetricReductionRuleByID>>,
+		TError,
+		{ pathParams: DeleteMetricReductionRuleByIDPathParameters },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof deleteMetricReductionRuleByID>>,
+	TError,
+	{ pathParams: DeleteMetricReductionRuleByIDPathParameters },
+	TContext
+> => {
+	return useMutation(getDeleteMetricReductionRuleByIDMutationOptions(options));
+};
+/**
+ * Returns a single volume-control rule by its id.
+ * @summary Get a metric reduction rule by id
+ */
+export const getMetricReductionRuleByID = (
+	{ id }: GetMetricReductionRuleByIDPathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<GetMetricReductionRuleByID200>({
+		url: `/api/v2/metrics/reduction_rules/${id}`,
+		method: 'GET',
+		signal,
+	});
+};
+
+export const getGetMetricReductionRuleByIDQueryKey = ({
+	id,
+}: GetMetricReductionRuleByIDPathParameters) => {
+	return [`/api/v2/metrics/reduction_rules/${id}`] as const;
+};
+
+export const getGetMetricReductionRuleByIDQueryOptions = <
+	TData = Awaited<ReturnType<typeof getMetricReductionRuleByID>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ id }: GetMetricReductionRuleByIDPathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getMetricReductionRuleByID>>,
+			TError,
+			TData
+		>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ?? getGetMetricReductionRuleByIDQueryKey({ id });
+
+	const queryFn: QueryFunction<
+		Awaited<ReturnType<typeof getMetricReductionRuleByID>>
+	> = ({ signal }) => getMetricReductionRuleByID({ id }, signal);
+
+	return {
+		queryKey,
+		queryFn,
+		enabled: !!id,
+		...queryOptions,
+	} as UseQueryOptions<
+		Awaited<ReturnType<typeof getMetricReductionRuleByID>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type GetMetricReductionRuleByIDQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getMetricReductionRuleByID>>
+>;
+export type GetMetricReductionRuleByIDQueryError =
+	ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Get a metric reduction rule by id
+ */
+
+export function useGetMetricReductionRuleByID<
+	TData = Awaited<ReturnType<typeof getMetricReductionRuleByID>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ id }: GetMetricReductionRuleByIDPathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getMetricReductionRuleByID>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getGetMetricReductionRuleByIDQueryOptions(
+		{ id },
+		options,
+	);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get a metric reduction rule by id
+ */
+export const invalidateGetMetricReductionRuleByID = async (
+	queryClient: QueryClient,
+	{ id }: GetMetricReductionRuleByIDPathParameters,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getGetMetricReductionRuleByIDQueryKey({ id }) },
+		options,
+	);
+
+	return queryClient;
+};
+
+/**
+ * Updates the match type and labels of a volume-control rule by its id; the metric name is immutable.
+ * @summary Update a metric reduction rule by id
+ */
+export const updateMetricReductionRuleByID = (
+	{ id }: UpdateMetricReductionRuleByIDPathParameters,
+	metricreductionruletypesPostableReductionRuleDTO?: BodyType<MetricreductionruletypesPostableReductionRuleDTO>,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<UpdateMetricReductionRuleByID200>({
+		url: `/api/v2/metrics/reduction_rules/${id}`,
+		method: 'PUT',
+		headers: { 'Content-Type': 'application/json' },
+		data: metricreductionruletypesPostableReductionRuleDTO,
+		signal,
+	});
+};
+
+export const getUpdateMetricReductionRuleByIDMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof updateMetricReductionRuleByID>>,
+		TError,
+		{
+			pathParams: UpdateMetricReductionRuleByIDPathParameters;
+			data?: BodyType<MetricreductionruletypesPostableReductionRuleDTO>;
+		},
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof updateMetricReductionRuleByID>>,
+	TError,
+	{
+		pathParams: UpdateMetricReductionRuleByIDPathParameters;
+		data?: BodyType<MetricreductionruletypesPostableReductionRuleDTO>;
+	},
+	TContext
+> => {
+	const mutationKey = ['updateMetricReductionRuleByID'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof updateMetricReductionRuleByID>>,
+		{
+			pathParams: UpdateMetricReductionRuleByIDPathParameters;
+			data?: BodyType<MetricreductionruletypesPostableReductionRuleDTO>;
+		}
+	> = (props) => {
+		const { pathParams, data } = props ?? {};
+
+		return updateMetricReductionRuleByID(pathParams, data);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateMetricReductionRuleByIDMutationResult = NonNullable<
+	Awaited<ReturnType<typeof updateMetricReductionRuleByID>>
+>;
+export type UpdateMetricReductionRuleByIDMutationBody =
+	| BodyType<MetricreductionruletypesPostableReductionRuleDTO>
+	| undefined;
+export type UpdateMetricReductionRuleByIDMutationError =
+	ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Update a metric reduction rule by id
+ */
+export const useUpdateMetricReductionRuleByID = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof updateMetricReductionRuleByID>>,
+		TError,
+		{
+			pathParams: UpdateMetricReductionRuleByIDPathParameters;
+			data?: BodyType<MetricreductionruletypesPostableReductionRuleDTO>;
+		},
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof updateMetricReductionRuleByID>>,
+	TError,
+	{
+		pathParams: UpdateMetricReductionRuleByIDPathParameters;
+		data?: BodyType<MetricreductionruletypesPostableReductionRuleDTO>;
+	},
+	TContext
+> => {
+	return useMutation(getUpdateMetricReductionRuleByIDMutationOptions(options));
+};
+/**
+ * Estimates the series reduction and related-asset impact of a candidate volume-control rule without persisting it.
  * @summary Preview a metric reduction rule
  */
 export const previewMetricReductionRule = (
@@ -1422,6 +1800,178 @@ export const usePreviewMetricReductionRule = <
 > => {
 	return useMutation(getPreviewMetricReductionRuleMutationOptions(options));
 };
+/**
+ * Returns total ingested vs reduced series and the estimated monthly savings across all volume-control rules.
+ * @summary Metric reduction stats
+ */
+export const getMetricReductionRuleStats = (signal?: AbortSignal) => {
+	return GeneratedAPIInstance<GetMetricReductionRuleStats200>({
+		url: `/api/v2/metrics/reduction_rules/stats`,
+		method: 'GET',
+		signal,
+	});
+};
+
+export const getGetMetricReductionRuleStatsQueryKey = () => {
+	return [`/api/v2/metrics/reduction_rules/stats`] as const;
+};
+
+export const getGetMetricReductionRuleStatsQueryOptions = <
+	TData = Awaited<ReturnType<typeof getMetricReductionRuleStats>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(options?: {
+	query?: UseQueryOptions<
+		Awaited<ReturnType<typeof getMetricReductionRuleStats>>,
+		TError,
+		TData
+	>;
+}) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ?? getGetMetricReductionRuleStatsQueryKey();
+
+	const queryFn: QueryFunction<
+		Awaited<ReturnType<typeof getMetricReductionRuleStats>>
+	> = ({ signal }) => getMetricReductionRuleStats(signal);
+
+	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+		Awaited<ReturnType<typeof getMetricReductionRuleStats>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type GetMetricReductionRuleStatsQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getMetricReductionRuleStats>>
+>;
+export type GetMetricReductionRuleStatsQueryError =
+	ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Metric reduction stats
+ */
+
+export function useGetMetricReductionRuleStats<
+	TData = Awaited<ReturnType<typeof getMetricReductionRuleStats>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(options?: {
+	query?: UseQueryOptions<
+		Awaited<ReturnType<typeof getMetricReductionRuleStats>>,
+		TError,
+		TData
+	>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getGetMetricReductionRuleStatsQueryOptions(options);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Metric reduction stats
+ */
+export const invalidateGetMetricReductionRuleStats = async (
+	queryClient: QueryClient,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getGetMetricReductionRuleStatsQueryKey() },
+		options,
+	);
+
+	return queryClient;
+};
+
+/**
+ * Returns ingested vs reduced series over time across all volume-control rules (hourly buckets), in the query-range time-series response shape.
+ * @summary Metric reduction volume over time
+ */
+export const getMetricReductionRuleTimeseries = (signal?: AbortSignal) => {
+	return GeneratedAPIInstance<GetMetricReductionRuleTimeseries200>({
+		url: `/api/v2/metrics/reduction_rules/timeseries`,
+		method: 'GET',
+		signal,
+	});
+};
+
+export const getGetMetricReductionRuleTimeseriesQueryKey = () => {
+	return [`/api/v2/metrics/reduction_rules/timeseries`] as const;
+};
+
+export const getGetMetricReductionRuleTimeseriesQueryOptions = <
+	TData = Awaited<ReturnType<typeof getMetricReductionRuleTimeseries>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(options?: {
+	query?: UseQueryOptions<
+		Awaited<ReturnType<typeof getMetricReductionRuleTimeseries>>,
+		TError,
+		TData
+	>;
+}) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ?? getGetMetricReductionRuleTimeseriesQueryKey();
+
+	const queryFn: QueryFunction<
+		Awaited<ReturnType<typeof getMetricReductionRuleTimeseries>>
+	> = ({ signal }) => getMetricReductionRuleTimeseries(signal);
+
+	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+		Awaited<ReturnType<typeof getMetricReductionRuleTimeseries>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type GetMetricReductionRuleTimeseriesQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getMetricReductionRuleTimeseries>>
+>;
+export type GetMetricReductionRuleTimeseriesQueryError =
+	ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Metric reduction volume over time
+ */
+
+export function useGetMetricReductionRuleTimeseries<
+	TData = Awaited<ReturnType<typeof getMetricReductionRuleTimeseries>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(options?: {
+	query?: UseQueryOptions<
+		Awaited<ReturnType<typeof getMetricReductionRuleTimeseries>>,
+		TError,
+		TData
+	>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getGetMetricReductionRuleTimeseriesQueryOptions(options);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Metric reduction volume over time
+ */
+export const invalidateGetMetricReductionRuleTimeseries = async (
+	queryClient: QueryClient,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getGetMetricReductionRuleTimeseriesQueryKey() },
+		options,
+	);
+
+	return queryClient;
+};
+
 /**
  * This endpoint provides list of metrics with their number of samples and timeseries for the given time range
  * @summary Get metrics statistics

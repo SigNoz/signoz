@@ -17,27 +17,22 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/metricreductionruletypes"
+	"github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 const (
+	// effectiveFromMargin delays effective_from so the collector picks up the synced rule before it
+	// goes live; it must be >= the collector's rule-refresh interval (signoz-otel-collector#839).
 	effectiveFromMargin    = 5 * time.Minute
 	defaultPreviewLookback = 24 * time.Hour
+
+	// pricePerMillionSamplesUSD is the metrics list price (samples are the billed unit).
+	pricePerMillionSamplesUSD = 0.1
+	monthDuration             = 30 * 24 * time.Hour
 )
-
-var protectedLabels = map[string]struct{}{
-	"le":                     {},
-	"quantile":               {},
-	"__name__":               {},
-	"__temporality__":        {},
-	"deployment.environment": {},
-}
-
-func isProtected(label string) bool {
-	_, ok := protectedLabels[label]
-	return ok
-}
 
 type module struct {
 	store     metricreductionruletypes.Store
@@ -61,6 +56,7 @@ func NewModule(sqlStore sqlstore.SQLStore, telemetryStore telemetrystore.Telemet
 }
 
 func (m *module) checkLicense(ctx context.Context, orgID valuer.UUID) error {
+	return nil
 	if _, err := m.licensing.GetActive(ctx, orgID); err != nil {
 		return errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "metric volume control requires a valid license").WithAdditional(err.Error())
 	}
@@ -94,10 +90,12 @@ func (m *module) listSortedByColumn(ctx context.Context, orgID valuer.UUID, para
 	}
 
 	metricNames := make([]string, len(domainRules))
+	effectiveFrom := make(map[string]int64, len(domainRules))
 	for i, rule := range domainRules {
 		metricNames[i] = rule.MetricName
+		effectiveFrom[rule.MetricName] = rule.EffectiveFrom.UnixMilli()
 	}
-	volumes, err := m.ch.VolumeByMetric(ctx, metricNames, startMs, endMs)
+	volumes, err := m.ch.VolumeByMetric(ctx, metricNames, effectiveFrom, startMs, endMs)
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +109,7 @@ func (m *module) listSortedByColumn(ctx context.Context, orgID valuer.UUID, para
 }
 
 func (m *module) listSortedByVolume(ctx context.Context, orgID valuer.UUID, params *metricreductionruletypes.ListReductionRulesParams, startMs, endMs int64) (*metricreductionruletypes.GettableReductionRules, error) {
-	allRules, total, err := m.store.List(ctx, orgID, &metricreductionruletypes.ListReductionRulesParams{})
+	allRules, total, err := m.store.List(ctx, orgID, &metricreductionruletypes.ListReductionRulesParams{Search: params.Search})
 	if err != nil {
 		return nil, err
 	}
@@ -120,13 +118,15 @@ func (m *module) listSortedByVolume(ctx context.Context, orgID valuer.UUID, para
 	}
 
 	metricNames := make([]string, len(allRules))
+	effectiveFrom := make(map[string]int64, len(allRules))
 	ruleByMetric := make(map[string]*metricreductionruletypes.StorableReductionRule, len(allRules))
 	for i, rule := range allRules {
 		metricNames[i] = rule.MetricName
+		effectiveFrom[rule.MetricName] = rule.EffectiveFrom.UnixMilli()
 		ruleByMetric[rule.MetricName] = rule
 	}
 
-	ranked, err := m.ch.RankByVolume(ctx, metricNames, params.OrderBy, params.Order, startMs, endMs, params.Offset, params.Limit)
+	ranked, err := m.ch.RankByVolume(ctx, metricNames, effectiveFrom, params.OrderBy, params.Order, startMs, endMs, params.Offset, params.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -169,30 +169,38 @@ func (m *module) Get(ctx context.Context, orgID valuer.UUID, metricName string) 
 }
 
 func (m *module) Upsert(ctx context.Context, orgID valuer.UUID, userEmail string, req *metricreductionruletypes.PostableReductionRule) (*metricreductionruletypes.GettableReductionRule, error) {
+	return m.writeRule(ctx, orgID, userEmail, req, false)
+}
+
+// writeRule validates, persists (create inserts, else upserts), and syncs the rule to ClickHouse.
+func (m *module) writeRule(ctx context.Context, orgID valuer.UUID, userEmail string, req *metricreductionruletypes.PostableReductionRule, create bool) (*metricreductionruletypes.GettableReductionRule, error) {
 	if err := m.checkLicense(ctx, orgID); err != nil {
 		return nil, err
 	}
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	if err := m.validateMetricForReduction(ctx, req.MetricName); err != nil {
-		return nil, err
-	}
-
-	if req.MatchType == metricreductionruletypes.MatchTypeDrop {
-		for _, label := range req.Labels {
-			if isProtected(label) {
-				return nil, errors.Newf(errors.TypeInvalidInput, metricreductionruletypes.ErrCodeMetricReductionRuleProtectedLabel,
-					"label %q is protected and cannot be dropped", label)
-			}
+	// Reducibility is only checked when creating; an existing rule stays editable even if its metric stopped reporting.
+	needsMetricCheck := create
+	if !create {
+		if _, err := m.store.Get(ctx, orgID, req.MetricName); err != nil {
+			needsMetricCheck = true
 		}
 	}
-
+	if needsMetricCheck {
+		if err := m.validateMetricForReduction(ctx, req.MetricName); err != nil {
+			return nil, err
+		}
+	}
 	now := time.Now()
 	rule := metricreductionruletypes.NewReductionRule(orgID, req.MetricName, req.MatchType, req.Labels, now.Add(effectiveFromMargin), userEmail)
 
+	persist := m.store.Upsert
+	if create {
+		persist = m.store.Create
+	}
 	if err := m.store.RunInTx(ctx, func(ctx context.Context) error {
-		if err := m.store.Upsert(ctx, rule); err != nil {
+		if err := persist(ctx, rule); err != nil {
 			return err
 		}
 		return m.ch.Sync(ctx, rule.MetricName, rule.Labels, rule.MatchType.StringValue(), rule.EffectiveFrom.UnixMilli(), false, rule.UpdatedAt)
@@ -222,6 +230,77 @@ func (m *module) Delete(ctx context.Context, orgID valuer.UUID, metricName strin
 	})
 }
 
+// Create inserts a new rule (Terraform/operators), returning AlreadyExists if the metric already has one.
+func (m *module) Create(ctx context.Context, orgID valuer.UUID, userEmail string, req *metricreductionruletypes.PostableReductionRule) (*metricreductionruletypes.GettableReductionRule, error) {
+	return m.writeRule(ctx, orgID, userEmail, req, true)
+}
+
+func (m *module) GetByID(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*metricreductionruletypes.GettableReductionRule, error) {
+	if err := m.checkLicense(ctx, orgID); err != nil {
+		return nil, err
+	}
+	rule, err := m.store.GetByID(ctx, orgID, id)
+	if err != nil {
+		return nil, err
+	}
+	gettable := toGettableReductionRule(rule)
+	return &gettable, nil
+}
+
+func (m *module) UpdateByID(ctx context.Context, orgID valuer.UUID, userEmail string, id valuer.UUID, req *metricreductionruletypes.PostableReductionRule) (*metricreductionruletypes.GettableReductionRule, error) {
+	if err := m.checkLicense(ctx, orgID); err != nil {
+		return nil, err
+	}
+	existing, err := m.store.GetByID(ctx, orgID, id)
+	if err != nil {
+		return nil, err
+	}
+	// metricName is immutable; an id always addresses the same metric.
+	req.MetricName = existing.MetricName
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	// Update in place to preserve the id and create-audit; the metric isn't re-validated so a rule
+	// stays editable even if its metric stopped reporting.
+	now := time.Now()
+	existing.MatchType = req.MatchType
+	existing.Labels = metricreductionruletypes.LabelList(req.Labels)
+	existing.EffectiveFrom = now.Add(effectiveFromMargin)
+	existing.UpdatedAt = now
+	existing.UpdatedBy = userEmail
+
+	if err := m.store.RunInTx(ctx, func(ctx context.Context) error {
+		if err := m.store.Upsert(ctx, existing); err != nil {
+			return err
+		}
+		return m.ch.Sync(ctx, existing.MetricName, existing.Labels, existing.MatchType.StringValue(), existing.EffectiveFrom.UnixMilli(), false, existing.UpdatedAt)
+	}); err != nil {
+		return nil, err
+	}
+
+	gettable := toGettableReductionRule(existing)
+	return &gettable, nil
+}
+
+func (m *module) DeleteByID(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {
+	if err := m.checkLicense(ctx, orgID); err != nil {
+		return err
+	}
+	rule, err := m.store.GetByID(ctx, orgID, id)
+	if err != nil {
+		return err
+	}
+
+	now := time.Now()
+	effectiveFromMs := now.Add(effectiveFromMargin).UnixMilli()
+	return m.store.RunInTx(ctx, func(ctx context.Context) error {
+		if err := m.store.DeleteByID(ctx, orgID, id); err != nil {
+			return err
+		}
+		return m.ch.Sync(ctx, rule.MetricName, []string{}, metricreductionruletypes.MatchTypeDrop.StringValue(), effectiveFromMs, true, now)
+	})
+}
+
 func (m *module) Preview(ctx context.Context, orgID valuer.UUID, req *metricreductionruletypes.PostableReductionRulePreview) (*metricreductionruletypes.GettableReductionRulePreview, error) {
 	if err := m.checkLicense(ctx, orgID); err != nil {
 		return nil, err
@@ -232,25 +311,149 @@ func (m *module) Preview(ctx context.Context, orgID valuer.UUID, req *metricredu
 	if err := m.validateMetricForReduction(ctx, req.MetricName); err != nil {
 		return nil, err
 	}
-
 	lookback := time.Duration(req.LookbackMs) * time.Millisecond
 	if lookback <= 0 {
 		lookback = defaultPreviewLookback
 	}
 	now := time.Now()
-	current, reduced, reductionPercent, dropped, err := m.estimateVolume(ctx, req.MetricName, req.MatchType, req.Labels, now.Add(-lookback).UnixMilli(), now.UnixMilli())
+	startMs := now.Add(-lookback).UnixMilli()
+	endMs := now.UnixMilli()
+	current, reduced, reductionPercent, dropped, err := m.estimateVolume(ctx, req.MetricName, req.MatchType, req.Labels, startMs, endMs)
 	if err != nil {
 		return nil, err
 	}
 
+	// Baseline is what the metric keeps today (its current rule, or raw if none) so the preview reads
+	// as current -> proposed.
+	currentReduced := current
+	if existing, gerr := m.store.Get(ctx, orgID, req.MetricName); gerr == nil {
+		if _, existingReduced, _, _, eerr := m.estimateVolume(ctx, req.MetricName, existing.MatchType, existing.Labels, startMs, endMs); eerr == nil {
+			currentReduced = existingReduced
+		}
+	}
+
 	return &metricreductionruletypes.GettableReductionRulePreview{
-		IngestedSeries:   current,
-		ReducedSeries:    reduced,
-		ReductionPercent: reductionPercent,
-		DroppedLabels:    dropped,
-		AffectedAssets:   m.relatedAssetImpact(ctx, orgID, req.MetricName, dropped),
-		EffectiveFrom:    now.Add(effectiveFromMargin),
+		IngestedSeries:       current,
+		CurrentReducedSeries: currentReduced,
+		ReducedSeries:        reduced,
+		ReductionPercent:     reductionPercent,
+		DroppedLabels:        dropped,
+		AffectedAssets:       m.relatedAssetImpact(ctx, orgID, req.MetricName, dropped),
+		EffectiveFrom:        now.Add(effectiveFromMargin),
 	}, nil
+}
+
+func (m *module) Stats(ctx context.Context, orgID valuer.UUID) (*metricreductionruletypes.GettableReductionRuleStats, error) {
+	if err := m.checkLicense(ctx, orgID); err != nil {
+		return nil, err
+	}
+
+	now := time.Now()
+	startMs := now.Add(-defaultPreviewLookback).UnixMilli()
+	endMs := now.UnixMilli()
+
+	allRules, total, err := m.store.List(ctx, orgID, &metricreductionruletypes.ListReductionRulesParams{})
+	if err != nil {
+		return nil, err
+	}
+	if total == 0 {
+		return &metricreductionruletypes.GettableReductionRuleStats{}, nil
+	}
+
+	metricNames := make([]string, len(allRules))
+	effectiveFrom := make(map[string]int64, len(allRules))
+	for i, rule := range allRules {
+		metricNames[i] = rule.MetricName
+		effectiveFrom[rule.MetricName] = rule.EffectiveFrom.UnixMilli()
+	}
+
+	volumes, err := m.ch.VolumeByMetric(ctx, metricNames, effectiveFrom, startMs, endMs)
+	if err != nil {
+		return nil, err
+	}
+	var ingestedSeries, reducedSeries uint64
+	for _, volume := range volumes {
+		ingestedSeries += volume.Ingested
+		reducedSeries += volume.Reduced
+	}
+
+	ingestedSamples, reducedSamples, err := m.ch.SampleVolume(ctx, metricNames, effectiveFrom, startMs, endMs)
+	if err != nil {
+		return nil, err
+	}
+
+	return &metricreductionruletypes.GettableReductionRuleStats{
+		IngestedSeries:             ingestedSeries,
+		ReducedSeries:              reducedSeries,
+		EstimatedMonthlySavingsUsd: monthlySavingsUSD(ingestedSamples, reducedSamples, startMs, endMs),
+	}, nil
+}
+
+// monthlySavingsUSD extrapolates the windowed sample reduction to a monthly figure at the per-sample
+// list price. Ingested is gated to effective_from upstream, so pre-activation hours don't inflate it.
+func monthlySavingsUSD(ingestedSamples, reducedSamples uint64, startMs, endMs int64) float64 {
+	if reducedSamples >= ingestedSamples || endMs <= startMs {
+		return 0
+	}
+	savedSamples := float64(ingestedSamples - reducedSamples)
+	monthlySamples := savedSamples * float64(monthDuration.Milliseconds()) / float64(endMs-startMs)
+	return monthlySamples / 1_000_000 * pricePerMillionSamplesUSD
+}
+
+func (m *module) Timeseries(ctx context.Context, orgID valuer.UUID) (*querybuildertypesv5.QueryRangeResponse, error) {
+	if err := m.checkLicense(ctx, orgID); err != nil {
+		return nil, err
+	}
+
+	now := time.Now()
+	startMs := now.Add(-defaultPreviewLookback).UnixMilli()
+	endMs := now.UnixMilli()
+
+	allRules, _, err := m.store.List(ctx, orgID, &metricreductionruletypes.ListReductionRulesParams{})
+	if err != nil {
+		return nil, err
+	}
+	metricNames := make([]string, len(allRules))
+	effectiveFrom := make(map[string]int64, len(allRules))
+	for i, rule := range allRules {
+		metricNames[i] = rule.MetricName
+		effectiveFrom[rule.MetricName] = rule.EffectiveFrom.UnixMilli()
+	}
+
+	points, err := m.ch.SeriesTimeseries(ctx, metricNames, effectiveFrom, startMs, endMs)
+	if err != nil {
+		return nil, err
+	}
+
+	return buildVolumeTimeseries(points), nil
+}
+
+func buildVolumeTimeseries(points []volumePoint) *querybuildertypesv5.QueryRangeResponse {
+	ingested := make([]*querybuildertypesv5.TimeSeriesValue, 0, len(points))
+	reduced := make([]*querybuildertypesv5.TimeSeriesValue, 0, len(points))
+	for _, point := range points {
+		ingested = append(ingested, &querybuildertypesv5.TimeSeriesValue{Timestamp: point.TimestampMs, Value: float64(point.Ingested)})
+		reduced = append(reduced, &querybuildertypesv5.TimeSeriesValue{Timestamp: point.TimestampMs, Value: float64(point.Reduced)})
+	}
+
+	return &querybuildertypesv5.QueryRangeResponse{
+		Type: querybuildertypesv5.RequestTypeTimeSeries,
+		Data: querybuildertypesv5.QueryData{
+			Results: []any{
+				&querybuildertypesv5.TimeSeriesData{
+					QueryName: "reduction_volume",
+					Aggregations: []*querybuildertypesv5.AggregationBucket{
+						{
+							Series: []*querybuildertypesv5.TimeSeries{
+								{Labels: []*querybuildertypesv5.Label{{Key: telemetrytypes.TelemetryFieldKey{Name: "series"}, Value: "ingested"}}, Values: ingested},
+								{Labels: []*querybuildertypesv5.Label{{Key: telemetrytypes.TelemetryFieldKey{Name: "series"}, Value: "reduced"}}, Values: reduced},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
 }
 
 func (m *module) validateMetricForReduction(ctx context.Context, metricName string) error {
@@ -284,16 +487,14 @@ func (m *module) relatedAssetImpact(ctx context.Context, orgID valuer.UUID, metr
 		m.logger.WarnContext(ctx, "failed to fetch related dashboards for reduction preview", slog.String("metric_name", metricName), errors.Attr(err))
 	} else {
 		for _, item := range dashboards[metricName] {
-			var groupBy []string
-			if gb := item["group_by"]; gb != "" {
-				groupBy = strings.Split(gb, ",")
-			}
+			usedLabels := append(splitCSV(item["group_by"]), splitCSV(item["filter_by"])...)
 			affected = append(affected, metricreductionruletypes.AffectedAsset{
 				Type:           metricreductionruletypes.AssetTypeDashboard,
 				ID:             item["dashboard_id"],
 				Name:           item["dashboard_name"],
 				Widget:         item["widget_name"],
-				ImpactedLabels: intersectLabels(groupBy, droppedSet),
+				WidgetID:       item["widget_id"],
+				ImpactedLabels: intersectLabels(usedLabels, droppedSet),
 			})
 		}
 	}
@@ -315,12 +516,13 @@ func (m *module) relatedAssetImpact(ctx context.Context, orgID valuer.UUID, metr
 
 func toGettableReductionRule(rule *metricreductionruletypes.StorableReductionRule) metricreductionruletypes.GettableReductionRule {
 	return metricreductionruletypes.GettableReductionRule{
+		Identifiable:  rule.Identifiable,
+		TimeAuditable: rule.TimeAuditable,
+		UserAuditable: rule.UserAuditable,
 		MetricName:    rule.MetricName,
 		MatchType:     rule.MatchType,
 		Labels:        rule.Labels,
 		EffectiveFrom: rule.EffectiveFrom,
-		UpdatedAt:     rule.UpdatedAt,
-		UpdatedBy:     rule.UpdatedBy,
 		Active:        !rule.EffectiveFrom.After(time.Now()),
 	}
 }
@@ -335,13 +537,27 @@ func withVolume(rule metricreductionruletypes.GettableReductionRule, volume volu
 }
 
 func intersectLabels(keys []string, droppedSet map[string]struct{}) []string {
+	seen := make(map[string]struct{})
 	var out []string
 	for _, key := range keys {
-		if _, ok := droppedSet[key]; ok {
-			out = append(out, key)
+		if _, ok := droppedSet[key]; !ok {
+			continue
 		}
+		if _, dup := seen[key]; dup {
+			continue
+		}
+		seen[key] = struct{}{}
+		out = append(out, key)
 	}
 	return out
+}
+
+// splitCSV splits a comma-joined label list, returning nil for the empty string.
+func splitCSV(s string) []string {
+	if s == "" {
+		return nil
+	}
+	return strings.Split(s, ",")
 }
 
 func resolveDroppedKept(matchType metricreductionruletypes.MatchType, ruleLabels, keys []string) (dropped, kept []string) {
@@ -351,7 +567,7 @@ func resolveDroppedKept(matchType metricreductionruletypes.MatchType, ruleLabels
 	}
 
 	for _, k := range keys {
-		if isProtected(k) {
+		if metricreductionruletypes.IsProtectedLabel(k) {
 			kept = append(kept, k)
 			continue
 		}

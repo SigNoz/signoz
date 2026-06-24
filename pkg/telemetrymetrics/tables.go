@@ -28,15 +28,17 @@ const (
 	TimeseriesV41dayLocalTableName  = "time_series_v4_1day"
 	TimeseriesV41weekTableName      = "distributed_time_series_v4_1week"
 	TimeseriesV41weekLocalTableName = "time_series_v4_1week"
-	// Reduction tables written by the collector; see signoz-otel-collector#839.
-	TimeseriesV4BufferTableName       = "distributed_time_series_v4_buffer"
-	TimeseriesV4BufferLocalTableName  = "time_series_v4_buffer"
-	TimeseriesV4ReducedTableName      = "distributed_time_series_v4_reduced"
-	TimeseriesV4ReducedLocalTableName = "time_series_v4_reduced"
-	AttributesMetadataTableName       = "distributed_metadata"
-	AttributesMetadataLocalTableName  = "metadata"
-	ReductionRulesTableName           = "distributed_metric_reduction_rules"
-	ReductionRulesLocalTableName      = "metric_reduction_rules"
+	// Reduction tables are written and owned by the collector (signoz-otel-collector#839); we only
+	// read them via their distributed names, so there are no local-table constants for them.
+	TimeseriesV4BufferTableName      = "distributed_time_series_v4_buffer"
+	TimeseriesV4ReducedTableName     = "distributed_time_series_v4_reduced"
+	SamplesV4BufferTableName         = "distributed_samples_v4_buffer"
+	SamplesV4ReducedLast60sTableName = "distributed_samples_v4_reduced_last_60s"
+	SamplesV4ReducedSum60sTableName  = "distributed_samples_v4_reduced_sum_60s"
+	AttributesMetadataTableName      = "distributed_metadata"
+	AttributesMetadataLocalTableName = "metadata"
+	ReductionRulesTableName          = "distributed_metric_reduction_rules"
+	ReductionRulesLocalTableName     = "metric_reduction_rules"
 )
 
 var (

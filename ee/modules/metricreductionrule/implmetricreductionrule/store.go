@@ -34,6 +34,9 @@ func (s *store) List(ctx context.Context, orgID valuer.UUID, params *metricreduc
 		Model(&rules).
 		Where("org_id = ?", orgID).
 		Order(column + " " + direction)
+	if params.Search != "" {
+		query = query.Where("metric_name LIKE ?", "%"+params.Search+"%")
+	}
 	if params.Limit > 0 {
 		query = query.Limit(params.Limit).Offset(params.Offset)
 	}
@@ -58,6 +61,43 @@ func (s *store) Get(ctx context.Context, orgID valuer.UUID, metricName string) (
 		return nil, s.sqlstore.WrapNotFoundErrf(err, metricreductionruletypes.ErrCodeMetricReductionRuleNotFound, "no reduction rule found for metric %q", metricName)
 	}
 	return rule, nil
+}
+
+func (s *store) GetByID(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*metricreductionruletypes.StorableReductionRule, error) {
+	rule := new(metricreductionruletypes.StorableReductionRule)
+	err := s.sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(rule).
+		Where("org_id = ?", orgID).
+		Where("id = ?", id).
+		Scan(ctx)
+	if err != nil {
+		return nil, s.sqlstore.WrapNotFoundErrf(err, metricreductionruletypes.ErrCodeMetricReductionRuleNotFound, "no reduction rule found with id %q", id.String())
+	}
+	return rule, nil
+}
+
+func (s *store) Create(ctx context.Context, rule *metricreductionruletypes.StorableReductionRule) error {
+	res, err := s.sqlstore.
+		BunDBCtx(ctx).
+		NewInsert().
+		Model(rule).
+		On("CONFLICT (org_id, metric_name) DO NOTHING").
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return errors.Newf(errors.TypeAlreadyExists, metricreductionruletypes.ErrCodeMetricReductionRuleAlreadyExists,
+			"a reduction rule for metric %q already exists", rule.MetricName)
+	}
+	return nil
 }
 
 func (s *store) Upsert(ctx context.Context, rule *metricreductionruletypes.StorableReductionRule) error {
@@ -93,6 +133,28 @@ func (s *store) Delete(ctx context.Context, orgID valuer.UUID, metricName string
 	}
 	if rowsAffected == 0 {
 		return errors.Newf(errors.TypeNotFound, metricreductionruletypes.ErrCodeMetricReductionRuleNotFound, "no reduction rule found for metric %q", metricName)
+	}
+	return nil
+}
+
+func (s *store) DeleteByID(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {
+	res, err := s.sqlstore.
+		BunDBCtx(ctx).
+		NewDelete().
+		Model((*metricreductionruletypes.StorableReductionRule)(nil)).
+		Where("org_id = ?", orgID).
+		Where("id = ?", id).
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return errors.Newf(errors.TypeNotFound, metricreductionruletypes.ErrCodeMetricReductionRuleNotFound, "no reduction rule found with id %q", id.String())
 	}
 	return nil
 }

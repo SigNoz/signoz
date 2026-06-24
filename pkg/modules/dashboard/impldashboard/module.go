@@ -12,6 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/tag"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
@@ -209,6 +210,7 @@ func (module *module) GetByMetricNames(ctx context.Context, orgID valuer.UUID, m
 
 			// Add widget to results for all found metrics
 			groupByByMetric := module.collectBuilderGroupBy(query, metricNames)
+			filterByMetric := module.collectBuilderFilterKeys(query, metricNames)
 			for metricName := range foundMetrics {
 				result[metricName] = append(result[metricName], map[string]string{
 					"dashboard_id":   dashboard.ID,
@@ -216,6 +218,7 @@ func (module *module) GetByMetricNames(ctx context.Context, orgID valuer.UUID, m
 					"widget_id":      widgetID,
 					"dashboard_name": dashTitle,
 					"group_by":       strings.Join(groupByByMetric[metricName], ","),
+					"filter_by":      strings.Join(filterByMetric[metricName], ","),
 				})
 			}
 		}
@@ -367,6 +370,75 @@ func groupByKeysFromData(v interface{}) []string {
 		if name, ok := m["name"].(string); ok && name != "" {
 			keys = append(keys, name)
 		}
+	}
+	return keys
+}
+
+// collectBuilderFilterKeys returns, per metric, the attribute keys referenced in builder-query filter
+// expressions: a panel that filters on a dropped label breaks just like one that groups by it.
+func (module *module) collectBuilderFilterKeys(query map[string]interface{}, metricNames []string) map[string][]string {
+	out := make(map[string][]string)
+	builder, ok := query["builder"].(map[string]interface{})
+	if !ok {
+		return out
+	}
+	queryData, ok := builder["queryData"].([]interface{})
+	if !ok {
+		return out
+	}
+	for _, qd := range queryData {
+		data, ok := qd.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		if dataSource, ok := data["dataSource"].(string); !ok || dataSource != "metrics" {
+			continue
+		}
+		aggregations, ok := data["aggregations"].([]interface{})
+		if !ok {
+			continue
+		}
+		filterKeys := filterKeysFromData(data["filter"])
+		if len(filterKeys) == 0 {
+			continue
+		}
+		for _, agg := range aggregations {
+			aggMap, ok := agg.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			metricName, ok := aggMap["metricName"].(string)
+			if !ok || metricName == "" || !slices.Contains(metricNames, metricName) {
+				continue
+			}
+			out[metricName] = append(out[metricName], filterKeys...)
+		}
+	}
+	return out
+}
+
+// filterKeysFromData extracts the attribute keys from a builder query's filter (JSON {expression})
+// using the filter-query grammar.
+func filterKeysFromData(v interface{}) []string {
+	m, ok := v.(map[string]interface{})
+	if !ok {
+		return nil
+	}
+	expr, ok := m["expression"].(string)
+	if !ok || expr == "" {
+		return nil
+	}
+	seen := make(map[string]struct{})
+	var keys []string
+	for _, sel := range querybuilder.QueryStringToKeysSelectors(expr) {
+		if sel == nil || sel.Name == "" {
+			continue
+		}
+		if _, dup := seen[sel.Name]; dup {
+			continue
+		}
+		seen[sel.Name] = struct{}{}
+		keys = append(keys, sel.Name)
 	}
 	return keys
 }

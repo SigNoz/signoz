@@ -27,27 +27,35 @@ function ImpactPanel({
 		);
 	}
 
+	// "Current" is what the metric keeps today (its rule, or raw if none); reduction is current -> proposed.
+	const current = preview?.currentReducedSeries ?? 0;
+	const proposed = preview?.reducedSeries ?? 0;
+	const deltaPct = current > 0 ? (1 - proposed / current) * 100 : 0;
+	const reductionLabel = `${deltaPct >= 0 ? '−' : '+'}${Math.round(
+		Math.abs(deltaPct),
+	)}%`;
+
 	return (
 		<div className={styles.impact} data-testid="volume-control-impact">
 			{isLoading && <Spin size="small" />}
 			{!isLoading && preview && (
 				<div className={styles.meters}>
 					<div className={styles.meter}>
-						<span className={styles.meterLabel}>Ingested series</span>
-						<span className={styles.meterValue}>
-							{formatCompact(preview.ingestedSeries)}
-						</span>
+						<span className={styles.meterLabel}>Current series</span>
+						<span className={styles.meterValue}>{formatCompact(current)}</span>
 					</div>
 					<div className={styles.meter}>
-						<span className={styles.meterLabel}>Reduced series</span>
-						<span className={styles.meterValue}>
-							{formatCompact(preview.reducedSeries)}
-						</span>
+						<span className={styles.meterLabel}>Proposed series</span>
+						<span className={styles.meterValue}>{formatCompact(proposed)}</span>
 					</div>
 					<div className={styles.meter}>
 						<span className={styles.meterLabel}>Reduction</span>
-						<span className={`${styles.meterValue} ${styles.meterValueGood}`}>
-							−{Math.round(preview.reductionPercent)}%
+						<span
+							className={`${styles.meterValue} ${
+								deltaPct >= 0 ? styles.meterValueGood : ''
+							}`}
+						>
+							{reductionLabel}
 						</span>
 					</div>
 				</div>

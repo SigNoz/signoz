@@ -6599,6 +6599,10 @@ export interface MetricreductionruletypesAffectedAssetDTO {
 	 * @type string
 	 */
 	widget?: string;
+	/**
+	 * @type string
+	 */
+	widgetId?: string;
 }
 
 export enum MetricreductionruletypesMatchTypeDTO {
@@ -6614,7 +6618,20 @@ export interface MetricreductionruletypesGettableReductionRuleDTO {
 	 * @type string
 	 * @format date-time
 	 */
+	createdAt?: string;
+	/**
+	 * @type string
+	 */
+	createdBy?: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
 	effectiveFrom: string;
+	/**
+	 * @type string
+	 */
+	id: string;
 	/**
 	 * @type integer
 	 * @minimum 0
@@ -6643,11 +6660,11 @@ export interface MetricreductionruletypesGettableReductionRuleDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt: string;
+	updatedAt?: string;
 	/**
 	 * @type string
 	 */
-	updatedBy: string;
+	updatedBy?: string;
 }
 
 export interface MetricreductionruletypesGettableReductionRulePreviewDTO {
@@ -6655,6 +6672,11 @@ export interface MetricreductionruletypesGettableReductionRulePreviewDTO {
 	 * @type array,null
 	 */
 	affectedAssets: MetricreductionruletypesAffectedAssetDTO[] | null;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	currentReducedSeries: number;
 	/**
 	 * @type array,null
 	 */
@@ -6681,6 +6703,24 @@ export interface MetricreductionruletypesGettableReductionRulePreviewDTO {
 	reductionPercent: number;
 }
 
+export interface MetricreductionruletypesGettableReductionRuleStatsDTO {
+	/**
+	 * @type number
+	 * @format double
+	 */
+	estimatedMonthlySavingsUsd: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	ingestedSeries: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	reducedSeries: number;
+}
+
 export interface MetricreductionruletypesGettableReductionRulesDTO {
 	/**
 	 * @type array,null
@@ -6702,6 +6742,10 @@ export interface MetricreductionruletypesPostableReductionRuleDTO {
 	 */
 	labels: string[] | null;
 	matchType: MetricreductionruletypesMatchTypeDTO;
+	/**
+	 * @type string
+	 */
+	metricName?: string;
 }
 
 export interface MetricreductionruletypesPostableReductionRulePreviewDTO {
@@ -6722,11 +6766,11 @@ export interface MetricreductionruletypesPostableReductionRulePreviewDTO {
 }
 
 export enum MetricreductionruletypesReductionRuleOrderByDTO {
-	metricname = 'metricname',
-	ingestedvolume = 'ingestedvolume',
-	reducedvolume = 'reducedvolume',
+	metric = 'metric',
+	ingested_volume = 'ingested_volume',
+	reduced_volume = 'reduced_volume',
 	reduction = 'reduction',
-	lastupdated = 'lastupdated',
+	last_updated = 'last_updated',
 }
 export interface MetricsexplorertypesInspectMetricsRequestDTO {
 	/**
@@ -10522,6 +10566,11 @@ export type ListMetricReductionRulesParams = {
 	 */
 	order?: MetricreductionruletypesOrderDTO;
 	/**
+	 * @type string
+	 * @description undefined
+	 */
+	search?: string;
+	/**
 	 * @type integer
 	 * @description undefined
 	 */
@@ -10541,8 +10590,57 @@ export type ListMetricReductionRules200 = {
 	status: string;
 };
 
+export type CreateMetricReductionRule201 = {
+	data: MetricreductionruletypesGettableReductionRuleDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type DeleteMetricReductionRuleByIDPathParameters = {
+	id: string;
+};
+export type GetMetricReductionRuleByIDPathParameters = {
+	id: string;
+};
+export type GetMetricReductionRuleByID200 = {
+	data: MetricreductionruletypesGettableReductionRuleDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type UpdateMetricReductionRuleByIDPathParameters = {
+	id: string;
+};
+export type UpdateMetricReductionRuleByID200 = {
+	data: MetricreductionruletypesGettableReductionRuleDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type PreviewMetricReductionRule200 = {
 	data: MetricreductionruletypesGettableReductionRulePreviewDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetMetricReductionRuleStats200 = {
+	data: MetricreductionruletypesGettableReductionRuleStatsDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetMetricReductionRuleTimeseries200 = {
+	data: Querybuildertypesv5QueryRangeResponseDTO;
 	/**
 	 * @type string
 	 */

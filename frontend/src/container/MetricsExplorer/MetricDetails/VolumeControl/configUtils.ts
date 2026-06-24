@@ -40,3 +40,10 @@ export function formatCompact(value: number): string {
 	}
 	return `${value}`;
 }
+
+export function formatUsd(value: number): string {
+	if (value >= 1e3) {
+		return `$${(value / 1e3).toFixed(1)}K`;
+	}
+	return `$${value.toFixed(2)}`;
+}

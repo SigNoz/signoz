@@ -14,6 +14,7 @@ import (
 var (
 	ErrCodeMetricReductionRuleUnsupported           = errors.MustNewCode("metric_reduction_rule_unsupported")
 	ErrCodeMetricReductionRuleNotFound              = errors.MustNewCode("metric_reduction_rule_not_found")
+	ErrCodeMetricReductionRuleAlreadyExists         = errors.MustNewCode("metric_reduction_rule_already_exists")
 	ErrCodeMetricReductionRuleProtectedLabel        = errors.MustNewCode("metric_reduction_rule_protected_label")
 	ErrCodeMetricReductionRuleUnsupportedMetricType = errors.MustNewCode("metric_reduction_rule_unsupported_metric_type")
 )
@@ -62,11 +63,11 @@ type ReductionRuleOrderBy struct {
 }
 
 var (
-	OrderByMetricName     = ReductionRuleOrderBy{valuer.NewString("metricName")}
-	OrderByIngestedVolume = ReductionRuleOrderBy{valuer.NewString("ingestedVolume")}
-	OrderByReducedVolume  = ReductionRuleOrderBy{valuer.NewString("reducedVolume")}
+	OrderByMetricName     = ReductionRuleOrderBy{valuer.NewString("metric")}
+	OrderByIngestedVolume = ReductionRuleOrderBy{valuer.NewString("ingested_volume")}
+	OrderByReducedVolume  = ReductionRuleOrderBy{valuer.NewString("reduced_volume")}
 	OrderByReduction      = ReductionRuleOrderBy{valuer.NewString("reduction")}
-	OrderByLastUpdated    = ReductionRuleOrderBy{valuer.NewString("lastUpdated")}
+	OrderByLastUpdated    = ReductionRuleOrderBy{valuer.NewString("last_updated")}
 )
 
 func (ReductionRuleOrderBy) Enum() []any {
@@ -132,12 +133,14 @@ func NewReductionRule(orgID valuer.UUID, metricName string, matchType MatchType,
 }
 
 type GettableReductionRule struct {
+	types.Identifiable
+	types.TimeAuditable
+	types.UserAuditable
+
 	MetricName       string    `json:"metricName" required:"true"`
 	MatchType        MatchType `json:"matchType" required:"true"`
 	Labels           []string  `json:"labels" required:"true" nullable:"true"`
 	EffectiveFrom    time.Time `json:"effectiveFrom" required:"true"`
-	UpdatedAt        time.Time `json:"updatedAt" required:"true"`
-	UpdatedBy        string    `json:"updatedBy" required:"true"`
 	Active           bool      `json:"active" required:"true"`
 	IngestedSeries   uint64    `json:"ingestedSeries" required:"true"`
 	ReducedSeries    uint64    `json:"reducedSeries" required:"true"`
@@ -149,16 +152,28 @@ type GettableReductionRules struct {
 	Total int                     `json:"total" required:"true"`
 }
 
+type GettableReductionRuleStats struct {
+	IngestedSeries             uint64  `json:"ingestedSeries" required:"true"`
+	ReducedSeries              uint64  `json:"reducedSeries" required:"true"`
+	EstimatedMonthlySavingsUsd float64 `json:"estimatedMonthlySavingsUsd" required:"true"`
+}
+
 type ListReductionRulesParams struct {
 	OrderBy ReductionRuleOrderBy `query:"orderBy,default=reduction" json:"orderBy"`
 	Order   Order                `query:"order,default=desc" json:"order"`
+	Search  string               `query:"search" json:"search"`
 	Offset  int                  `query:"offset" json:"offset"`
-	Limit   int                  `query:"limit" json:"limit"`
+	Limit   int                  `query:"limit,default=10" json:"limit"`
 }
+
+const maxReductionRulesPageSize = 1000
 
 func (p *ListReductionRulesParams) Validate() error {
 	if p.Limit <= 0 {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "limit must be greater than 0")
+	}
+	if p.Limit > maxReductionRulesPageSize {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "limit must not exceed %d", maxReductionRulesPageSize)
 	}
 	if p.Offset < 0 {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "offset must not be negative")
@@ -167,9 +182,23 @@ func (p *ListReductionRulesParams) Validate() error {
 }
 
 type PostableReductionRule struct {
-	MetricName string    `json:"-"`
+	MetricName string    `json:"metricName"`
 	MatchType  MatchType `json:"matchType" required:"true"`
 	Labels     []string  `json:"labels" required:"true" nullable:"true"`
+}
+
+var protectedLabels = map[string]struct{}{
+	"le":                     {},
+	"quantile":               {},
+	"__name__":               {},
+	"__temporality__":        {},
+	"deployment.environment": {},
+}
+
+// IsProtectedLabel reports whether a label is always retained regardless of a reduction rule.
+func IsProtectedLabel(label string) bool {
+	_, ok := protectedLabels[label]
+	return ok
 }
 
 func (req *PostableReductionRule) Validate() error {
@@ -186,6 +215,14 @@ func (req *PostableReductionRule) Validate() error {
 	if len(req.Labels) == 0 {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput,
 			"labels must not be empty; to allow all attributes, delete the rule instead")
+	}
+	if req.MatchType == MatchTypeDrop {
+		for _, label := range req.Labels {
+			if IsProtectedLabel(label) {
+				return errors.Newf(errors.TypeInvalidInput, ErrCodeMetricReductionRuleProtectedLabel,
+					"label %q is protected and cannot be dropped", label)
+			}
+		}
 	}
 	return nil
 }
@@ -219,14 +256,16 @@ type AffectedAsset struct {
 	ID             string    `json:"id" required:"true"`
 	Name           string    `json:"name" required:"true"`
 	Widget         string    `json:"widget,omitempty"`
+	WidgetID       string    `json:"widgetId,omitempty"`
 	ImpactedLabels []string  `json:"impactedLabels" required:"true" nullable:"true"`
 }
 
 type GettableReductionRulePreview struct {
-	IngestedSeries   uint64          `json:"ingestedSeries" required:"true"`
-	ReducedSeries    uint64          `json:"reducedSeries" required:"true"`
-	ReductionPercent float64         `json:"reductionPercent" required:"true"`
-	DroppedLabels    []string        `json:"droppedLabels" required:"true" nullable:"true"`
-	AffectedAssets   []AffectedAsset `json:"affectedAssets" required:"true" nullable:"true"`
-	EffectiveFrom    time.Time       `json:"effectiveFrom" required:"true"`
+	IngestedSeries       uint64          `json:"ingestedSeries" required:"true"`
+	CurrentReducedSeries uint64          `json:"currentReducedSeries" required:"true"`
+	ReducedSeries        uint64          `json:"reducedSeries" required:"true"`
+	ReductionPercent     float64         `json:"reductionPercent" required:"true"`
+	DroppedLabels        []string        `json:"droppedLabels" required:"true" nullable:"true"`
+	AffectedAssets       []AffectedAsset `json:"affectedAssets" required:"true" nullable:"true"`
+	EffectiveFrom        time.Time       `json:"effectiveFrom" required:"true"`
 }

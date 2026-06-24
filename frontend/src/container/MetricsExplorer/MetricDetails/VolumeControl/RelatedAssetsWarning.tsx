@@ -1,7 +1,29 @@
 import { Info } from '@signozhq/icons';
-import { MetricreductionruletypesAffectedAssetDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	MetricreductionruletypesAffectedAssetDTO,
+	MetricreductionruletypesAssetTypeDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import ROUTES from 'constants/routes';
 
 import styles from './VolumeControlConfig.module.scss';
+
+const AssetType = MetricreductionruletypesAssetTypeDTO;
+
+function assetHref(
+	asset: MetricreductionruletypesAffectedAssetDTO,
+): string | undefined {
+	if (!asset.id) {
+		return undefined;
+	}
+	if (asset.type === AssetType.dashboard) {
+		const base = `/dashboard/${asset.id}`;
+		return asset.widgetId ? `${base}/${asset.widgetId}` : base;
+	}
+	if (asset.type === AssetType.alert_rule) {
+		return `${ROUTES.EDIT_ALERTS}?ruleId=${asset.id}`;
+	}
+	return undefined;
+}
 
 interface RelatedAssetsWarningProps {
 	affectedAssets?: MetricreductionruletypesAffectedAssetDTO[] | null;
@@ -10,8 +32,12 @@ interface RelatedAssetsWarningProps {
 function RelatedAssetsWarning({
 	affectedAssets,
 }: RelatedAssetsWarningProps): JSX.Element | null {
+	// Dashboards are flagged only when they use a dropped label (group-by or filter); alerts are
+	// flagged whenever they reference the metric, since we don't yet resolve their impacted labels.
 	const impacted = (affectedAssets ?? []).filter(
-		(asset) => (asset.impactedLabels ?? []).length > 0,
+		(asset) =>
+			asset.type === AssetType.alert_rule ||
+			(asset.impactedLabels ?? []).length > 0,
 	);
 	if (impacted.length === 0) {
 		return null;
@@ -36,12 +62,21 @@ function RelatedAssetsWarning({
 					</div>
 				)}
 				<ul className={styles.assetList}>
-					{impacted.map((asset) => (
-						<li key={`${asset.type}-${asset.id}`}>
-							{asset.name}
-							{asset.widget ? ` · ${asset.widget}` : ''}
-						</li>
-					))}
+					{impacted.map((asset) => {
+						const href = assetHref(asset);
+						const label = `${asset.name}${asset.widget ? ` · ${asset.widget}` : ''}`;
+						return (
+							<li key={`${asset.type}-${asset.id}-${asset.widgetId ?? ''}`}>
+								{href ? (
+									<a href={href} target="_blank" rel="noopener noreferrer">
+										{label}
+									</a>
+								) : (
+									label
+								)}
+							</li>
+						);
+					})}
 				</ul>
 			</div>
 		</div>
