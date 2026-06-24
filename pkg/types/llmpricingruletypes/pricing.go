@@ -140,8 +140,7 @@ type GettablePricingRules struct {
 	Limit  int                       `json:"limit"  required:"true"`
 }
 
-// UnmappedModel is a model observed in trace data (gen_ai.request.model) that
-// no pricing rule pattern matches, so no cost is being computed for it.
+// Models deleted from spans which doesn't have a corresponding pricing entry.
 type UnmappedModel struct {
 	ModelName string `json:"modelName" required:"true"`
 	Provider  string `json:"provider"`
@@ -151,19 +150,6 @@ type UnmappedModel struct {
 type GettableUnmappedModels struct {
 	Items []*UnmappedModel `json:"items" required:"true"`
 	Total int              `json:"total" required:"true"`
-}
-
-// ModelMatchesAnyRule reports whether model matches any rule's glob pattern,
-// mirroring the path.Match semantics the signozllmpricing OTel processor uses.
-func ModelMatchesAnyRule(model string, rules []*LLMPricingRule) bool {
-	for _, r := range rules {
-		for _, pattern := range r.ModelPattern {
-			if ok, err := path.Match(pattern, model); err == nil && ok {
-				return true
-			}
-		}
-	}
-	return false
 }
 
 func (LLMPricingRuleUnit) Enum() []any {
@@ -284,4 +270,15 @@ func (r *LLMPricingRule) Update(u *UpdatableLLMPricingRule, userEmail string, no
 	r.SyncedAt = &now
 	r.UpdatedAt = now
 	r.UpdatedBy = userEmail
+}
+
+func ModelMatchesAnyRule(model string, rules []*LLMPricingRule) bool {
+	for _, r := range rules {
+		for _, pattern := range r.ModelPattern {
+			if ok, err := path.Match(pattern, model); err == nil && ok {
+				return true
+			}
+		}
+	}
+	return false
 }

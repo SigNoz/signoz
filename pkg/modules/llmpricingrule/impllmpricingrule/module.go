@@ -45,7 +45,7 @@ func (module *module) ListUnmappedModels(ctx context.Context, orgID valuer.UUID)
 		return nil, err
 	}
 
-	rules, _, err := module.store.List(ctx, orgID, 0, 10000)
+	rules, err := module.listAllRules(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}
@@ -138,7 +138,7 @@ func (module *module) RecommendAgentConfig(orgID valuer.UUID, currentConfYaml []
 }
 
 func (module *module) getEnabledRules(ctx context.Context, orgID valuer.UUID) ([]*llmpricingruletypes.LLMPricingRule, error) {
-	rules, _, err := module.List(ctx, orgID, 0, 10000, "", nil)
+	rules, err := module.listAllRules(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}
@@ -150,6 +150,25 @@ func (module *module) getEnabledRules(ctx context.Context, orgID valuer.UUID) ([
 		}
 	}
 	return enabled, nil
+}
+
+// listAllRules pages through every pricing rule for the org, since rule matching
+// needs the full set and the count is otherwise unbounded.
+func (module *module) listAllRules(ctx context.Context, orgID valuer.UUID) ([]*llmpricingruletypes.LLMPricingRule, error) {
+	const pageSize = 1000
+
+	all := make([]*llmpricingruletypes.LLMPricingRule, 0)
+	for offset := 0; ; offset += pageSize {
+		page, total, err := module.store.List(ctx, orgID, offset, pageSize, "", nil)
+		if err != nil {
+			return nil, err
+		}
+		all = append(all, page...)
+		if len(page) == 0 || len(all) >= total {
+			break
+		}
+	}
+	return all, nil
 }
 
 // findExisting returns the row matching the updatable's ID or SourceID.
@@ -209,17 +228,12 @@ func (module *module) discoverModels(ctx context.Context, orgID valuer.UUID) ([]
 		return nil, err
 	}
 
-	return parseModels(resp), nil
-}
-
-// parseModels extracts the grouped model names and their span counts from a scalar response.
-func parseModels(resp *qbtypes.QueryRangeResponse) []*llmpricingruletypes.UnmappedModel {
 	if resp == nil || len(resp.Data.Results) == 0 {
-		return nil
+		return nil, nil
 	}
 	sd, ok := resp.Data.Results[0].(*qbtypes.ScalarData)
 	if !ok || sd == nil {
-		return nil
+		return nil, nil
 	}
 
 	modelIdx, providerIdx, countIdx := -1, -1, -1
@@ -237,7 +251,7 @@ func parseModels(resp *qbtypes.QueryRangeResponse) []*llmpricingruletypes.Unmapp
 		}
 	}
 	if modelIdx == -1 {
-		return nil
+		return nil, nil
 	}
 
 	models := make([]*llmpricingruletypes.UnmappedModel, 0, len(sd.Data))
@@ -250,23 +264,11 @@ func parseModels(resp *qbtypes.QueryRangeResponse) []*llmpricingruletypes.Unmapp
 		if providerIdx != -1 {
 			provider, _ = row[providerIdx].(string)
 		}
-		models = append(models, &llmpricingruletypes.UnmappedModel{ModelName: name, Provider: provider, SpanCount: toUint64(row, countIdx)})
+		var spanCount uint64
+		if countIdx >= 0 && countIdx < len(row) {
+			spanCount, _ = row[countIdx].(uint64)
+		}
+		models = append(models, &llmpricingruletypes.UnmappedModel{ModelName: name, Provider: provider, SpanCount: spanCount})
 	}
-	return models
-}
-
-func toUint64(row []any, idx int) uint64 {
-	if idx < 0 || idx >= len(row) {
-		return 0
-	}
-	switch v := row[idx].(type) {
-	case uint64:
-		return v
-	case int64:
-		return uint64(v)
-	case float64:
-		return uint64(v)
-	default:
-		return 0
-	}
+	return models, nil
 }

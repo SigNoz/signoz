@@ -92,7 +92,7 @@ func (h *handler) Get(rw http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) CreateOrUpdate(rw http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
 	claims, err := authtypes.ClaimsFromContext(ctx)
@@ -120,7 +120,7 @@ func (h *handler) CreateOrUpdate(rw http.ResponseWriter, r *http.Request) {
 
 // ListUnmappedModels handles GET /api/v1/llm_pricing_rules/unmapped_models.
 func (h *handler) ListUnmappedModels(rw http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
 	claims, err := authtypes.ClaimsFromContext(ctx)
