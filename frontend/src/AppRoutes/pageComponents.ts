@@ -337,10 +337,3 @@ export const AIAssistantPage = Loadable(
 			/* webpackChunkName: "AI Assistant Page" */ 'pages/AIAssistantPage/AIAssistantPage'
 		),
 );
-
-export const ExternalIssues = Loadable(
-	() =>
-		import(
-			/* webpackChunkName: "External Issues" */ 'container/ExternalIssues'
-		),
-);

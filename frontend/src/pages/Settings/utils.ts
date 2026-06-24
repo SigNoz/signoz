@@ -6,7 +6,6 @@ import {
 	billingSettings,
 	generalSettings,
 	ingestionSettings,
-	jiraIntegrationSettings,
 	keyboardShortcuts,
 	mcpServerSettings,
 	membersSettings,
@@ -57,9 +56,6 @@ export const getRoutes = (
 	if (isCloudUser && !isGatewayEnabled) {
 		settings.push(...ingestionSettings(t));
 	}
-
-	// Jira Integration - visible to all users
-	settings.push(...jiraIntegrationSettings(t));
 
 	// Visible to all authenticated users
 	settings.push(

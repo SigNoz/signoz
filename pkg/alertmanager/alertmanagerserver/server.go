@@ -26,7 +26,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
-	"github.com/SigNoz/signoz/pkg/query-service/dao"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 )
 
@@ -71,7 +70,6 @@ type Server struct {
 	wg                  sync.WaitGroup
 	stopc               chan struct{}
 	notificationManager nfmanager.NotificationManager
-	externalIssueRepo   dao.ExternalIssueRepo
 }
 
 func New(
@@ -83,7 +81,6 @@ func New(
 	stateStore alertmanagertypes.StateStore,
 	nfManager nfmanager.NotificationManager,
 	maintenanceStore alertmanagertypes.MaintenanceStore,
-	externalIssueRepo dao.ExternalIssueRepo,
 ) (*Server, error) {
 	server := &Server{
 		logger:              logger.With(slog.String("pkg", "go.signoz.io/pkg/alertmanager/alertmanagerserver")),
@@ -93,7 +90,6 @@ func New(
 		stateStore:          stateStore,
 		stopc:               make(chan struct{}),
 		notificationManager: nfManager,
-		externalIssueRepo:   externalIssueRepo,
 	}
 	signozRegisterer := prometheus.WrapRegistererWithPrefix("signoz_", registry)
 	signozRegisterer = prometheus.WrapRegistererWith(prometheus.Labels{"org_id": server.orgID}, signozRegisterer)
@@ -283,8 +279,7 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 		if err != nil {
 			return err
 		}
-		buildIntegrations := alertmanagernotify.NewReceiverIntegrationsWithStore(server.externalIssueRepo)
-		integrations, err := buildIntegrations(extendedRcv, server.tmpl, server.logger, server.templater)
+		integrations, err := alertmanagernotify.NewReceiverIntegrations(extendedRcv, server.tmpl, server.logger, server.templater)
 		if err != nil {
 			return err
 		}

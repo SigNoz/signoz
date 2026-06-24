@@ -13,7 +13,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
-	"github.com/SigNoz/signoz/pkg/query-service/dao"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 )
 
@@ -42,9 +41,6 @@ type Service struct {
 	notificationManager nfmanager.NotificationManager
 
 	maintenanceStore alertmanagertypes.MaintenanceStore
-
-	// externalIssueRepo for bi-directional Jira sync
-	externalIssueRepo dao.ExternalIssueRepo
 }
 
 func New(
@@ -55,7 +51,6 @@ func New(
 	orgGetter organization.Getter,
 	nfManager nfmanager.NotificationManager,
 	maintenanceStore alertmanagertypes.MaintenanceStore,
-	externalIssueRepo dao.ExternalIssueRepo,
 ) *Service {
 	service := &Service{
 		config:              config,
@@ -67,7 +62,6 @@ func New(
 		serversMtx:          sync.RWMutex{},
 		notificationManager: nfManager,
 		maintenanceStore:    maintenanceStore,
-		externalIssueRepo:   externalIssueRepo,
 	}
 
 	return service
@@ -188,7 +182,7 @@ func (service *Service) newServer(ctx context.Context, orgID string) (*alertmana
 
 	server, err := alertmanagerserver.New(
 		ctx, service.settings.Logger(), service.settings.PrometheusRegisterer(), service.config, orgID,
-		service.stateStore, service.notificationManager, service.maintenanceStore, service.externalIssueRepo,
+		service.stateStore, service.notificationManager, service.maintenanceStore,
 	)
 	if err != nil {
 		return nil, err

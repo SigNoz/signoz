@@ -5,7 +5,6 @@ import GeneralSettings from 'container/GeneralSettings';
 import GeneralSettingsCloud from 'container/GeneralSettingsCloud';
 import IngestionSettings from 'container/IngestionSettings/IngestionSettings';
 import MultiIngestionSettings from 'container/IngestionSettings/MultiIngestionSettings';
-import JiraIntegrationSettings from 'container/JiraIntegrationSettings';
 import MCPServerSettings from 'container/MCPServerSettings/MCPServerSettings';
 import MySettings from 'container/MySettings';
 import OrganizationSettings from 'container/OrganizationSettings';
@@ -198,16 +197,5 @@ export const mcpServerSettings = (t: TFunction): RouteTabProps['routes'] => [
 		),
 		route: ROUTES.MCP_SERVER,
 		key: ROUTES.MCP_SERVER,
-	},
-];
-
-export const jiraIntegrationSettings = (
-	t: TFunction,
-): RouteTabProps['routes'] => [
-	{
-		Component: JiraIntegrationSettings,
-		name: <div className="periscope-tab">🔷 Jira Integration</div>,
-		route: ROUTES.JIRA_INTEGRATION,
-		key: ROUTES.JIRA_INTEGRATION,
 	},
 ];

@@ -11,7 +11,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/pagerduty"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/slack"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/webhook"
-	"github.com/SigNoz/signoz/pkg/query-service/dao"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/prometheus/alertmanager/config/receiver"
 	"github.com/prometheus/alertmanager/notify"
@@ -29,23 +28,7 @@ var customNotifierIntegrations = []string{
 	msteamsv2.Integration,
 }
 
-// NewReceiverIntegrations builds the integrations for a receiver without
-// wiring the Jira issue mapping store. It matches alertmanagertypes.ReceiverIntegrationsFunc
-// and is used where bi-directional Jira sync is not needed (e.g. test receiver).
 func NewReceiverIntegrations(nc *alertmanagertypes.Receiver, tmpl *template.Template, logger *slog.Logger, templater alertmanagertypes.Templater) ([]notify.Integration, error) {
-	return buildReceiverIntegrations(nc, tmpl, logger, templater, nil)
-}
-
-// NewReceiverIntegrationsWithStore returns a ReceiverIntegrationsFunc that wires the
-// Jira issue mapping store (for bi-directional sync) into Jira notifiers via a closure
-// capturing externalIssueRepo. Used on the live notification pipeline.
-func NewReceiverIntegrationsWithStore(externalIssueRepo dao.ExternalIssueRepo) alertmanagertypes.ReceiverIntegrationsFunc {
-	return func(nc *alertmanagertypes.Receiver, tmpl *template.Template, logger *slog.Logger, templater alertmanagertypes.Templater) ([]notify.Integration, error) {
-		return buildReceiverIntegrations(nc, tmpl, logger, templater, externalIssueRepo)
-	}
-}
-
-func buildReceiverIntegrations(nc *alertmanagertypes.Receiver, tmpl *template.Template, logger *slog.Logger, templater alertmanagertypes.Templater, externalIssueRepo dao.ExternalIssueRepo) ([]notify.Integration, error) {
 	upstreamIntegrations, err := receiver.BuildReceiverIntegrations(*nc.Receiver, tmpl, logger)
 	if err != nil {
 		return nil, err
@@ -86,19 +69,7 @@ func buildReceiverIntegrations(nc *alertmanagertypes.Receiver, tmpl *template.Te
 		add(opsgenie.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) { return opsgenie.New(c, tmpl, l, templater) })
 	}
 	for i, c := range nc.JiraConfigs {
-		add(jira.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) {
-			notifier, err := jira.New(c, tmpl, l)
-			if err != nil {
-				return nil, err
-			}
-
-			// Wire up the issue mapping store for bi-directional sync.
-			if externalIssueRepo != nil {
-				notifier.SetIssueMappingStore(jira.NewIssueMappingStore(externalIssueRepo))
-			}
-
-			return notifier, nil
-		})
+		add(jira.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) { return jira.New(c, tmpl, l) })
 	}
 	for i, c := range nc.SlackConfigs {
 		add(slack.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) { return slack.New(c, tmpl, l, templater) })

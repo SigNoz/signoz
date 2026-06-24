@@ -36,7 +36,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/ruler"
-	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/zeus"
@@ -56,7 +55,6 @@ type OpenAPI struct {
 
 func NewOpenAPI(ctx context.Context, instrumentation instrumentation.Instrumentation) (*OpenAPI, error) {
 	apiserver, err := signozapiserver.NewFactory(
-		struct{ sqlstore.SQLStore }{},
 		struct{ organization.Getter }{},
 		struct{ authz.AuthZ }{},
 		struct{ organization.Handler }{},

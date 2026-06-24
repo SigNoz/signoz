@@ -547,7 +547,7 @@ func New(
 		ctx,
 		providerSettings,
 		config.APIServer,
-		NewAPIServerProviderFactories(sqlstore, orgGetter, authz, modules, handlers, config.Global),
+		NewAPIServerProviderFactories(orgGetter, authz, modules, handlers, config.Global),
 		"signoz",
 	)
 	if err != nil {

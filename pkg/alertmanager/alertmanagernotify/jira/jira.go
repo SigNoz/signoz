@@ -136,17 +136,11 @@ func (i issueFields) MarshalJSON() ([]byte, error) {
 
 // Notifier implements a Notifier for Jira notifications.
 type Notifier struct {
-	conf              *config.JiraConfig
-	tmpl              *template.Template
-	logger            *slog.Logger
-	client            *http.Client
-	retrier           *notify.Retrier
-	issueMappingStore IssueMappingStore
-}
-
-// IssueMappingStore defines the interface for storing Jira issue mappings
-type IssueMappingStore interface {
-	StoreIssueMapping(ctx context.Context, issueKey string, fingerprint uint64, ruleID string, orgID string, issueURL string) error
+	conf    *config.JiraConfig
+	tmpl    *template.Template
+	logger  *slog.Logger
+	client  *http.Client
+	retrier *notify.Retrier
 }
 
 // New returns a new Jira notifier.
@@ -171,18 +165,12 @@ func New(c *config.JiraConfig, t *template.Template, l *slog.Logger, httpOpts ..
 	}
 
 	return &Notifier{
-		conf:              c,
-		tmpl:              t,
-		logger:            l,
-		client:            client,
-		retrier:           &notify.Retrier{RetryCodes: []int{http.StatusTooManyRequests}},
-		issueMappingStore: nil, // Will be set via SetIssueMappingStore
+		conf:    c,
+		tmpl:    t,
+		logger:  l,
+		client:  client,
+		retrier: &notify.Retrier{RetryCodes: []int{http.StatusTooManyRequests}},
 	}, nil
-}
-
-// SetIssueMappingStore sets the issue mapping store for bi-directional sync
-func (n *Notifier) SetIssueMappingStore(store IssueMappingStore) {
-	n.issueMappingStore = store
 }
 
 // Notify implements the Notifier interface for Jira.
@@ -263,45 +251,6 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 				slog.String("issue_url", issueURL),
 			)
 
-		}
-	} else if existingIssue != nil {
-		issueKey = existingIssue.Key
-		// Construct URL for existing issue
-		issueURL = n.conf.APIURL.String()
-		if strings.Contains(issueURL, "/rest/api/") {
-			issueURL = issueURL[:strings.Index(issueURL, "/rest/api/")]
-		}
-		issueURL = issueURL + "/browse/" + issueKey
-	}
-
-	// Store issue mapping for bi-directional sync
-	if issueKey != "" && n.issueMappingStore != nil && len(as) > 0 {
-		alert := as[0]
-		orgID, _ := ctx.Value("orgId").(string)
-		ruleID := string(alert.Labels["ruleId"])
-		fingerprint := uint64(alert.Fingerprint())
-		if ruleID == "" || orgID == "" || fingerprint == 0 {
-			logger.WarnContext(ctx, "missing required fields for issue mapping",
-				slog.String("rule_id", ruleID),
-				slog.String("org_id", orgID),
-				slog.Uint64("fingerprint", fingerprint),
-			)
-		} else {
-			err := n.issueMappingStore.StoreIssueMapping(ctx, issueKey, fingerprint, ruleID, orgID, issueURL)
-			if err != nil {
-				logger.ErrorContext(ctx, "failed to store issue mapping",
-					slog.String("issue_key", issueKey),
-					slog.String("error", err.Error()),
-				)
-				// Don't fail the notification if mapping storage fails.
-			} else {
-				logger.InfoContext(ctx, "✅ stored issue mapping for bi-directional sync",
-					slog.String("issue_key", issueKey),
-					slog.Uint64("fingerprint", fingerprint),
-					slog.String("rule_id", ruleID),
-					slog.String("issue_url", issueURL),
-				)
-			}
 		}
 	}
 

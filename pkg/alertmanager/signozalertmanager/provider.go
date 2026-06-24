@@ -14,7 +14,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
-	"github.com/SigNoz/signoz/pkg/query-service/dao"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
@@ -57,9 +56,6 @@ func New(
 	configStore := sqlalertmanagerstore.NewConfigStore(sqlstore)
 	stateStore := sqlalertmanagerstore.NewStateStore(sqlstore)
 
-	// Create external issue repository for bi-directional Jira sync
-	externalIssueRepo := dao.NewExternalIssueRepo(sqlstore.SQLDB())
-
 	p := &provider{
 		service: alertmanager.New(
 			settings,
@@ -69,7 +65,6 @@ func New(
 			orgGetter,
 			notificationManager,
 			maintenanceStore,
-			externalIssueRepo,
 		),
 		settings:            settings,
 		config:              config,
