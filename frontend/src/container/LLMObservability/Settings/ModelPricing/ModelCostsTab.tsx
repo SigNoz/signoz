@@ -121,13 +121,6 @@ function ModelCostsTab(): JSX.Element {
 						onChange={handleSourceChange}
 						testId="source-filter"
 					/>
-					{/* Only USD is priced today — disabled until other currencies land. */}
-					<SelectSimple
-						className={styles.filtersBarCurrency}
-						value="USD"
-						disabled
-						testId="currency-select"
-					/>
 				</div>
 				{canManagePricing && (
 					<Button
