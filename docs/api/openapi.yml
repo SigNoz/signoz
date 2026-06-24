@@ -15700,16 +15700,20 @@ paths:
       summary: List metric names
       tags:
       - metrics
-  /api/v2/metrics/{metric_name}/alerts:
+  /api/v2/metrics/alerts:
     get:
       deprecated: false
       description: This endpoint returns associated alerts for a specified metric
       operationId: GetMetricAlerts
       parameters:
-      - in: path
-        name: metric_name
+      - description: The name of the metric. May contain slashes (e.g. cloud-provider
+          metrics like run.googleapis.com/request_latencies).
+        in: query
+        name: metricName
         required: true
         schema:
+          description: The name of the metric. May contain slashes (e.g. cloud-provider
+            metrics like run.googleapis.com/request_latencies).
           type: string
       responses:
         "200":
@@ -15764,28 +15768,36 @@ paths:
       summary: Get metric alerts
       tags:
       - metrics
-  /api/v2/metrics/{metric_name}/attributes:
+  /api/v2/metrics/attributes:
     get:
       deprecated: false
       description: This endpoint returns attribute keys and their unique values for
         a specified metric
       operationId: GetMetricAttributes
       parameters:
-      - in: query
-        name: start
-        schema:
-          nullable: true
-          type: integer
-      - in: query
-        name: end
-        schema:
-          nullable: true
-          type: integer
-      - in: path
-        name: metric_name
+      - description: The name of the metric. May contain slashes (e.g. cloud-provider
+          metrics like run.googleapis.com/request_latencies).
+        in: query
+        name: metricName
         required: true
         schema:
+          description: The name of the metric. May contain slashes (e.g. cloud-provider
+            metrics like run.googleapis.com/request_latencies).
           type: string
+      - description: Start of the time range as a Unix timestamp in milliseconds.
+        in: query
+        name: start
+        schema:
+          description: Start of the time range as a Unix timestamp in milliseconds.
+          nullable: true
+          type: integer
+      - description: End of the time range as a Unix timestamp in milliseconds.
+        in: query
+        name: end
+        schema:
+          description: End of the time range as a Unix timestamp in milliseconds.
+          nullable: true
+          type: integer
       responses:
         "200":
           content:
@@ -15839,16 +15851,20 @@ paths:
       summary: Get metric attributes
       tags:
       - metrics
-  /api/v2/metrics/{metric_name}/dashboards:
+  /api/v2/metrics/dashboards:
     get:
       deprecated: false
       description: This endpoint returns associated dashboards for a specified metric
       operationId: GetMetricDashboards
       parameters:
-      - in: path
-        name: metric_name
+      - description: The name of the metric. May contain slashes (e.g. cloud-provider
+          metrics like run.googleapis.com/request_latencies).
+        in: query
+        name: metricName
         required: true
         schema:
+          description: The name of the metric. May contain slashes (e.g. cloud-provider
+            metrics like run.googleapis.com/request_latencies).
           type: string
       responses:
         "200":
@@ -15903,17 +15919,21 @@ paths:
       summary: Get metric dashboards
       tags:
       - metrics
-  /api/v2/metrics/{metric_name}/highlights:
+  /api/v2/metrics/highlights:
     get:
       deprecated: false
       description: This endpoint returns highlights like number of datapoints, totaltimeseries,
         active time series, last received time for a specified metric
       operationId: GetMetricHighlights
       parameters:
-      - in: path
-        name: metric_name
+      - description: The name of the metric. May contain slashes (e.g. cloud-provider
+          metrics like run.googleapis.com/request_latencies).
+        in: query
+        name: metricName
         required: true
         schema:
+          description: The name of the metric. May contain slashes (e.g. cloud-provider
+            metrics like run.googleapis.com/request_latencies).
           type: string
       responses:
         "200":
@@ -15968,17 +15988,79 @@ paths:
       summary: Get metric highlights
       tags:
       - metrics
-  /api/v2/metrics/{metric_name}/metadata:
+  /api/v2/metrics/inspect:
+    post:
+      deprecated: false
+      description: Returns raw time series data points for a metric within a time
+        range (max 30 minutes). Each series includes labels and timestamp/value pairs.
+      operationId: InspectMetrics
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MetricsexplorertypesInspectMetricsRequest'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/MetricsexplorertypesInspectMetricsResponse'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Inspect raw metric data points
+      tags:
+      - metrics
+  /api/v2/metrics/metadata:
     get:
       deprecated: false
       description: This endpoint returns metadata information like metric description,
         unit, type, temporality, monotonicity for a specified metric
       operationId: GetMetricMetadata
       parameters:
-      - in: path
-        name: metric_name
+      - description: The name of the metric. May contain slashes (e.g. cloud-provider
+          metrics like run.googleapis.com/request_latencies).
+        in: query
+        name: metricName
         required: true
         schema:
+          description: The name of the metric. May contain slashes (e.g. cloud-provider
+            metrics like run.googleapis.com/request_latencies).
           type: string
       responses:
         "200":
@@ -16038,12 +16120,6 @@ paths:
       description: This endpoint helps to update metadata information like metric
         description, unit, type, temporality, monotonicity for a specified metric
       operationId: UpdateMetricMetadata
-      parameters:
-      - in: path
-        name: metric_name
-        required: true
-        schema:
-          type: string
       requestBody:
         content:
           application/json:
@@ -16082,64 +16158,6 @@ paths:
       - tokenizer:
         - EDITOR
       summary: Update metric metadata
-      tags:
-      - metrics
-  /api/v2/metrics/inspect:
-    post:
-      deprecated: false
-      description: Returns raw time series data points for a metric within a time
-        range (max 30 minutes). Each series includes labels and timestamp/value pairs.
-      operationId: InspectMetrics
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/MetricsexplorertypesInspectMetricsRequest'
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    $ref: '#/components/schemas/MetricsexplorertypesInspectMetricsResponse'
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: OK
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - VIEWER
-      - tokenizer:
-        - VIEWER
-      summary: Inspect raw metric data points
       tags:
       - metrics
   /api/v2/metrics/onboarding:
