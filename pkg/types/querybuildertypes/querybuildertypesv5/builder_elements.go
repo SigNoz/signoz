@@ -480,7 +480,9 @@ type MetricAggregation struct {
 	// value filter to apply to the query
 	ValueFilter *metrictypes.MetricValueFilter `json:"-"`
 	// reduce to operator for metric scalar requests
-	ReduceTo ReduceTo `json:"reduceTo,omitempty"`
+	ReduceTo ReduceTo `json:"reduceTo,omitzero"`
+
+	Reduced bool `json:"-"`
 }
 
 // Copy creates a deep copy of MetricAggregation.

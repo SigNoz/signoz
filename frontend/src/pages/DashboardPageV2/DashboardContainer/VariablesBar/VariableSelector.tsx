@@ -5,8 +5,8 @@ import { Typography } from '@signozhq/ui/typography';
 import { Tooltip } from 'antd';
 import { commaValuesParser } from 'lib/dashboardVariables/customCommaValuesParser';
 
-import { sortValuesByOrder } from '../DashboardSettings/Variables/variableModel';
-import type { VariableFormModel } from '../DashboardSettings/Variables/variableModel';
+import { sortValuesByOrder } from '../DashboardSettings/Variables/variableFormModel';
+import type { VariableFormModel } from '../DashboardSettings/Variables/variableFormModel';
 import type { VariableSelection, VariableSelectionMap } from './selectionTypes';
 import DynamicSelector from './selectors/DynamicSelector';
 import QuerySelector from './selectors/QuerySelector';
@@ -101,7 +101,7 @@ function VariableSelector({
 				${variable.name}
 				{variable.description ? (
 					<Tooltip title={variable.description}>
-						<SolidInfoCircle className={styles.infoIcon} size="md" />
+						<SolidInfoCircle className={styles.infoIcon} size={14} />
 					</Tooltip>
 				) : null}
 			</Typography.Text>
