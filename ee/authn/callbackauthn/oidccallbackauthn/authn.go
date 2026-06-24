@@ -62,7 +62,15 @@ func (a *AuthN) LoginURL(ctx context.Context, siteURL *url.URL, authDomain *auth
 		return "", err
 	}
 
-	return oauth2Config.AuthCodeURL(authtypes.NewState(siteURL, authDomain.StorableAuthDomain().ID).URL.String()), nil
+	stateSecret, _ := ctx.Value(authtypes.StateSecretContextKey).(string)
+	var stateStr string
+	if stateSecret != "" {
+		stateStr = authtypes.NewStateWithSignature(siteURL, authDomain.StorableAuthDomain().ID, stateSecret).URL.String()
+	} else {
+		stateStr = authtypes.NewState(siteURL, authDomain.StorableAuthDomain().ID).URL.String()
+	}
+
+	return oauth2Config.AuthCodeURL(stateStr), nil
 }
 
 func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtypes.CallbackIdentity, error) {
@@ -70,7 +78,14 @@ func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtype
 		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "oidc: error while authenticating").WithAdditional(query.Get("error_description"))
 	}
 
-	state, err := authtypes.NewStateFromString(query.Get("state"))
+	stateSecret, _ := ctx.Value(authtypes.StateSecretContextKey).(string)
+	var state authtypes.State
+	var err error
+	if stateSecret != "" {
+		state, err = authtypes.NewStateFromStringWithVerification(query.Get("state"), stateSecret)
+	} else {
+		state, err = authtypes.NewStateFromString(query.Get("state"))
+	}
 	if err != nil {
 		return nil, errors.Newf(errors.TypeInvalidInput, authtypes.ErrCodeInvalidState, "oidc: invalid state").WithAdditional(err.Error())
 	}

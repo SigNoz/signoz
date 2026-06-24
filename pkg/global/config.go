@@ -15,10 +15,12 @@ var (
 )
 
 type Config struct {
-	ExternalURL    *url.URL `mapstructure:"external_url"`
-	IngestionURL   *url.URL `mapstructure:"ingestion_url"`
-	MCPURL         *url.URL `mapstructure:"mcp_url"`
-	AIAssistantURL *url.URL `mapstructure:"ai_assistant_url"`
+	ExternalURL                *url.URL `mapstructure:"external_url"`
+	IngestionURL               *url.URL `mapstructure:"ingestion_url"`
+	MCPURL                     *url.URL `mapstructure:"mcp_url"`
+	AIAssistantURL             *url.URL `mapstructure:"ai_assistant_url"`
+	OAuthStateSecret           string   `mapstructure:"oauth_state_secret"`
+	AllowedRedirectOriginsRaw  []string `mapstructure:"allowed_redirect_origins"`
 }
 
 func NewConfigFactory() factory.ConfigFactory {
@@ -71,4 +73,12 @@ func (c Config) ExternalPathTrailing() string {
 	}
 
 	return "/"
+}
+
+func (c Config) StateSecret() string {
+	return c.OAuthStateSecret
+}
+
+func (c Config) AllowedRedirectOrigins() []string {
+	return c.AllowedRedirectOriginsRaw
 }
