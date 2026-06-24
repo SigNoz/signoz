@@ -9907,8 +9907,19 @@ paths:
   /api/v1/export_raw_data:
     post:
       deprecated: false
-      description: This endpoints allows complex query exporting raw data for traces
-        and logs
+      description: |
+        Exports raw data for traces and logs using a query builder spec.
+
+        Pagination: set the `offset` field in a query spec to control the starting
+        row. The export begins at `offset` (default `0`) and returns up to `limit`
+        rows (default `10000`, max `50000`). To page through a large dataset, keep
+        `limit` fixed and increase `offset` by `limit` on each successive request;
+        stop when a response returns fewer rows than `limit`. An `offset` beyond the
+        available rows returns an empty result set, which signals the end of the
+        data. A negative `offset` is rejected with `400 Bad Request` and the message
+        `offset must be non-negative`. The per-request row cap (`50000`) applies to
+        each call independently; there is no cap on the total rows retrieved across
+        paginated requests.
       operationId: HandleExportRawDataPOST
       parameters:
       - description: The output format for the export.
