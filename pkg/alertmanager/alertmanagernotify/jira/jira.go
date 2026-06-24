@@ -223,34 +223,23 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 
 	responseBody, shouldRetry, err := n.doAPIRequest(ctx, method, path, requestBody)
 	if err != nil {
-		return shouldRetry, errors.WrapInternalf(err, errors.CodeInternal, "failed to %s request to %q", method, path)
+		return shouldRetry, errors.WrapInternalf(err, errors.CodeInternal, "failed to create Jira issue: %v", err)
 	}
 
-	// Parse response to get issue key and construct URL
-	var issueKey string
-	var issueURL string
-
+	// Log the created issue with a browse URL for operator convenience.
 	if method == http.MethodPost {
-		// Parse the response to get the created issue key
 		var createResponse struct {
-			Key  string `json:"key"`
-			Self string `json:"self"`
+			Key string `json:"key"`
 		}
 		if err := json.Unmarshal(responseBody, &createResponse); err == nil && createResponse.Key != "" {
-			issueKey = createResponse.Key
-			// Construct the issue URL from the API URL
-			issueURL = n.conf.APIURL.String()
-			if strings.Contains(issueURL, "/rest/api/") {
-				// Remove /rest/api/* from URL to get base URL
-				issueURL = issueURL[:strings.Index(issueURL, "/rest/api/")]
+			baseURL := n.conf.APIURL.String()
+			if idx := strings.Index(baseURL, "/rest/api/"); idx != -1 {
+				baseURL = baseURL[:idx]
 			}
-			issueURL = issueURL + "/browse/" + issueKey
-
 			logger.InfoContext(ctx, "created jira issue",
-				slog.String("issue_key", issueKey),
-				slog.String("issue_url", issueURL),
+				slog.String("issue_key", createResponse.Key),
+				slog.String("issue_url", baseURL+"/browse/"+createResponse.Key),
 			)
-
 		}
 	}
 

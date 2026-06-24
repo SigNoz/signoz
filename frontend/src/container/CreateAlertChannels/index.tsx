@@ -124,6 +124,7 @@ function CreateAlertChannels({
 					...selectedConfig,
 					...JiraInitialConfig,
 				}));
+				formInstance.setFieldsValue(JiraInitialConfig);
 			}
 
 			// reset config to email defaults
@@ -134,7 +135,7 @@ function CreateAlertChannels({
 				}));
 			}
 		},
-		[type, selectedConfig],
+		[type, selectedConfig, formInstance],
 	);
 
 	const prepareSlackRequest = useCallback(

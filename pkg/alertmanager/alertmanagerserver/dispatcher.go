@@ -92,9 +92,7 @@ func (d *Dispatcher) Run() {
 	d.receiverRoutes = map[string]*dispatch.Route{}
 	d.aggrGroupsNum = 0
 	d.metrics.aggrGroups.Set(0)
-	// Create context with orgID so it's available to notifiers
-	baseCtx := context.WithValue(context.Background(), "orgId", d.orgID)
-	d.ctx, d.cancel = context.WithCancel(baseCtx)
+	d.ctx, d.cancel = context.WithCancel(context.Background())
 	d.mtx.Unlock()
 
 	d.run(d.alerts.Subscribe(fmt.Sprintf("dispatcher-%s", d.orgID)))

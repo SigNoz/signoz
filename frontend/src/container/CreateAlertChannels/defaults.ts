@@ -60,8 +60,8 @@ export const JiraInitialConfig: Partial<JiraChannel> = {
 	api_url: 'https://your-domain.atlassian.net',
 	username: '',
 	password: '',
-	project: 'PROJ',
-	issue_type: 'Incident',
+	project: '',
+	issue_type: '',
 	summary: '{{ .CommonLabels.alertname }}',
 	description: `Alert: {{ .CommonLabels.alertname }}
 Severity: {{ .CommonLabels.severity }}

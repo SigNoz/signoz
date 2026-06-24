@@ -281,20 +281,20 @@ type jiraCreateMetaResponse struct {
 }
 
 type jiraCreateMetaProject struct {
-	Key        string                 `json:"key"`
-	IssueTypes []jiraCreateMetaIssue  `json:"issuetypes"`
+	Key        string                `json:"key"`
+	IssueTypes []jiraCreateMetaIssue `json:"issuetypes"`
 }
 
 type jiraCreateMetaIssue struct {
-	Name   string                        `json:"name"`
+	Name   string                         `json:"name"`
 	Fields map[string]jiraCreateMetaField `json:"fields"`
 }
 
 type jiraCreateMetaField struct {
-	Required      bool                   `json:"required"`
-	Name          string                 `json:"name"`
-	Schema        jiraCreateMetaSchema   `json:"schema"`
-	AllowedValues []map[string]any       `json:"allowedValues"`
+	Required      bool                 `json:"required"`
+	Name          string               `json:"name"`
+	Schema        jiraCreateMetaSchema `json:"schema"`
+	AllowedValues []map[string]any     `json:"allowedValues"`
 }
 
 type jiraCreateMetaSchema struct {
@@ -344,15 +344,15 @@ func flattenJiraFields(meta jiraCreateMetaResponse) []alertmanagertypes.JiraFiel
 			for fieldID, field := range issueType.Fields {
 				allowedValues := extractJiraAllowedValues(field.AllowedValues)
 				fields = append(fields, alertmanagertypes.JiraFieldMetadata{
-					ID:            fieldID,
-					Name:          field.Name,
-					Required:      field.Required,
-					SchemaType:    field.Schema.Type,
-					SchemaItems:   field.Schema.Items,
-					SchemaSystem:  field.Schema.System,
-					SchemaCustom:  field.Schema.Custom,
+					ID:             fieldID,
+					Name:           field.Name,
+					Required:       field.Required,
+					SchemaType:     field.Schema.Type,
+					SchemaItems:    field.Schema.Items,
+					SchemaSystem:   field.Schema.System,
+					SchemaCustom:   field.Schema.Custom,
 					SchemaCustomID: field.Schema.CustomID,
-					AllowedValues: allowedValues,
+					AllowedValues:  allowedValues,
 				})
 			}
 		}

@@ -59,7 +59,7 @@ function EditAlertChannels({
 
 	// Extract channelId from URL pathname since useParams doesn't work in nested routing
 	const { pathname } = window.location;
-	const channelIdMatch = pathname.match(/\/settings\/channels\/edit\/([^/]+)/);
+	const channelIdMatch = pathname.match(/\/alerts\/channels\/edit\/([^/]+)/);
 	const id = channelIdMatch ? channelIdMatch[1] : '';
 
 	const [type, setType] = useState<ChannelType>(

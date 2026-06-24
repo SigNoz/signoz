@@ -10,15 +10,15 @@ type JiraMetadataRequest struct {
 }
 
 type JiraFieldMetadata struct {
-	ID            string   `json:"id"`
-	Name          string   `json:"name"`
-	Required      bool     `json:"required"`
-	SchemaType    string   `json:"schema_type,omitempty"`
-	SchemaItems   string   `json:"schema_items,omitempty"`
-	SchemaSystem  string   `json:"schema_system,omitempty"`
-	SchemaCustom  string   `json:"schema_custom,omitempty"`
-	SchemaCustomID int     `json:"schema_custom_id,omitempty"`
-	AllowedValues []string `json:"allowed_values,omitempty"`
+	ID             string   `json:"id"`
+	Name           string   `json:"name"`
+	Required       bool     `json:"required"`
+	SchemaType     string   `json:"schema_type,omitempty"`
+	SchemaItems    string   `json:"schema_items,omitempty"`
+	SchemaSystem   string   `json:"schema_system,omitempty"`
+	SchemaCustom   string   `json:"schema_custom,omitempty"`
+	SchemaCustomID int      `json:"schema_custom_id,omitempty"`
+	AllowedValues  []string `json:"allowed_values,omitempty"`
 }
 
 type JiraMetadataResponse struct {

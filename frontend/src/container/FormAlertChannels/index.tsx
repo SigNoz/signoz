@@ -133,7 +133,7 @@ function FormAlertChannels({
 							Opsgenie
 						</Select.Option>
 						<Select.Option value="jira" key="jira" data-testid="select-option">
-							Jira Service Management
+							Jira
 						</Select.Option>
 						<Select.Option value="email" key="email" data-testid="select-option">
 							Email
