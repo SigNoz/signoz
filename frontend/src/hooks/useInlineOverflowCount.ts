@@ -45,51 +45,53 @@ export function useInlineOverflowCount({
 		if (!container || !enabledRef.current) {
 			return;
 		}
-		const items = Array.from(container.children).filter(
-			(el): el is HTMLElement =>
-				el instanceof HTMLElement && el.dataset.overflowItem === 'true',
+		const itemElements = Array.from(container.children).filter(
+			(itemElement): itemElement is HTMLElement =>
+				itemElement instanceof HTMLElement &&
+				itemElement.dataset.overflowItem === 'true',
 		);
-		if (items.length === 0) {
+		if (itemElements.length === 0) {
 			setVisibleCount(0);
 			return;
 		}
 
-		items.forEach((el, i) => {
-			if (el.offsetWidth > 0) {
-				itemWidthsRef.current[i] = el.offsetWidth;
+		itemElements.forEach((itemElement, index) => {
+			if (itemElement.offsetWidth > 0) {
+				itemWidthsRef.current[index] = itemElement.offsetWidth;
 			}
 		});
-		const widths: number[] = [];
-		for (let i = 0; i < items.length; i += 1) {
-			const width = itemWidthsRef.current[i];
-			if (width == null) {
+		const cachedWidths: number[] = [];
+		for (let index = 0; index < itemElements.length; index += 1) {
+			const cachedWidth = itemWidthsRef.current[index];
+			if (cachedWidth == null) {
 				// Width not cached yet — reveal everything for one frame so it gets
 				// measured, then the next pass collapses accurately.
-				setVisibleCount(items.length);
+				setVisibleCount(itemElements.length);
 				return;
 			}
-			widths.push(width);
+			cachedWidths.push(cachedWidth);
 		}
 
 		const containerWidth = container.clientWidth;
-		const totalWidth = widths.reduce(
-			(sum, w, i) => sum + w + (i > 0 ? gap : 0),
+		const totalWidth = cachedWidths.reduce(
+			(runningTotal, itemWidth, index) =>
+				runningTotal + itemWidth + (index > 0 ? gap : 0),
 			0,
 		);
 		if (totalWidth <= containerWidth) {
-			setVisibleCount(items.length);
+			setVisibleCount(itemElements.length);
 			return;
 		}
 
 		const availableWidth = containerWidth - reserveWidth;
 		let usedWidth = 0;
 		let fitCount = 0;
-		for (let i = 0; i < widths.length; i += 1) {
-			const segmentWidth = widths[i] + (i > 0 ? gap : 0);
-			if (usedWidth + segmentWidth > availableWidth && fitCount > 0) {
+		for (let index = 0; index < cachedWidths.length; index += 1) {
+			const itemWidthWithGap = cachedWidths[index] + (index > 0 ? gap : 0);
+			if (usedWidth + itemWidthWithGap > availableWidth && fitCount > 0) {
 				break;
 			}
-			usedWidth += segmentWidth;
+			usedWidth += itemWidthWithGap;
 			fitCount += 1;
 		}
 		setVisibleCount(Math.max(1, fitCount));
