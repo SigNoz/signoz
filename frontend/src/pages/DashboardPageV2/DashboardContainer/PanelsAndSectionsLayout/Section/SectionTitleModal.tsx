@@ -2,21 +2,30 @@ import { useEffect, useState } from 'react';
 import { Modal } from 'antd';
 import { Input } from '@signozhq/ui/input';
 
-interface RenameSectionModalProps {
+interface SectionTitleModalProps {
 	open: boolean;
+	/** Modal heading, e.g. "Rename section" / "New section". */
+	heading: string;
+	/** Confirm button label, e.g. "Rename" / "Create section". */
+	okText: string;
 	initialValue: string;
 	isSaving: boolean;
+	placeholder?: string;
 	onClose: () => void;
 	onSubmit: (title: string) => void;
 }
 
-function RenameSectionModal({
+/** Title-entry modal shared by section create and rename. */
+function SectionTitleModal({
 	open,
+	heading,
+	okText,
 	initialValue,
 	isSaving,
+	placeholder = 'Section name',
 	onClose,
 	onSubmit,
-}: RenameSectionModalProps): JSX.Element {
+}: SectionTitleModalProps): JSX.Element {
 	const [value, setValue] = useState<string>(initialValue);
 
 	// Reseed the field each time the modal opens.
@@ -36,19 +45,19 @@ function RenameSectionModal({
 	return (
 		<Modal
 			open={open}
-			title="Rename section"
+			title={heading}
 			onCancel={onClose}
 			onOk={submit}
-			okText="Rename"
+			okText={okText}
 			okButtonProps={{ disabled: isSaving || !value.trim() }}
 			destroyOnClose
 		>
 			<Input
-				testId="rename-section-input"
+				testId="section-title-input"
 				autoFocus
 				value={value}
 				maxLength={120}
-				placeholder="Section name"
+				placeholder={placeholder}
 				onChange={(e): void => setValue(e.target.value)}
 				onKeyDown={(e): void => {
 					if (e.key === 'Enter') {
@@ -61,4 +70,4 @@ function RenameSectionModal({
 	);
 }
 
-export default RenameSectionModal;
+export default SectionTitleModal;

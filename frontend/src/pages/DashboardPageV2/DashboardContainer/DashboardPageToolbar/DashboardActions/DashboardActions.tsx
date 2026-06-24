@@ -35,12 +35,11 @@ import { USER_ROLES } from 'types/roles';
 import ConfirmDeleteDialog from '../../components/ConfirmDeleteDialog/ConfirmDeleteDialog';
 import DashboardSettings from '../../DashboardSettings';
 import { useAddSection } from '../../PanelsAndSectionsLayout/Section/hooks/useAddSection';
+import SectionTitleModal from '../../PanelsAndSectionsLayout/Section/SectionTitleModal';
 import JsonEditorDrawer from '../JsonEditorDrawer/JsonEditorDrawer';
 import SettingsDrawer from '../SettingsDrawer';
 import styles from './DashboardActions.module.scss';
 import { useDashboardStore } from '../../store/useDashboardStore';
-
-const NEW_SECTION_TITLE = 'New section';
 
 interface DashboardActionsProps {
 	title: string;
@@ -73,12 +72,23 @@ function DashboardActions({
 		useState<boolean>(false);
 	const [isJsonEditorOpen, setIsJsonEditorOpen] = useState<boolean>(false);
 	const [isCloning, setIsCloning] = useState<boolean>(false);
+	const [isNewSectionOpen, setIsNewSectionOpen] = useState<boolean>(false);
 
 	const [state, setCopy] = useCopyToClipboard();
 	const [isDeleteOpen, setIsDeleteOpen] = useState<boolean>(false);
 	const deleteDashboardMutation = useDeleteDashboard(dashboard.id);
 
-	const { addSection } = useAddSection({ layouts: dashboard.spec.layouts });
+	const { addSection, isSaving: isAddingSection } = useAddSection({
+		layouts: dashboard.spec.layouts,
+	});
+
+	const handleCreateSection = useCallback(
+		async (title: string): Promise<void> => {
+			await addSection(title);
+			setIsNewSectionOpen(false);
+		},
+		[addSection],
+	);
 
 	useEffect(() => {
 		if (state.error) {
@@ -187,7 +197,7 @@ function DashboardActions({
 				key: 'new-section',
 				label: 'New section',
 				icon: <SquareStack size={14} />,
-				onClick: (): void => void addSection(NEW_SECTION_TITLE),
+				onClick: (): void => setIsNewSectionOpen(true),
 			});
 		}
 
@@ -233,7 +243,6 @@ function DashboardActions({
 		exportJSON,
 		setCopy,
 		dashboardDataJSON,
-		addSection,
 	]);
 
 	return (
@@ -304,6 +313,15 @@ function DashboardActions({
 				isLoading={deleteDashboardMutation.isLoading}
 				onConfirm={handleConfirmDelete}
 				onClose={(): void => setIsDeleteOpen(false)}
+			/>
+			<SectionTitleModal
+				open={isNewSectionOpen}
+				heading="New section"
+				okText="Create section"
+				initialValue=""
+				isSaving={isAddingSection}
+				onClose={(): void => setIsNewSectionOpen(false)}
+				onSubmit={handleCreateSection}
 			/>
 		</div>
 	);
