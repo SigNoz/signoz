@@ -11015,7 +11015,7 @@ export type GetHosts200 = {
 export type GetMetricDashboardsV2Params = {
 	/**
 	 * @type string
-	 * @description undefined
+	 * @description The name of the metric. May contain slashes (e.g. cloud-provider metrics like run.googleapis.com/request_latencies).
 	 */
 	metricName: string;
 };
