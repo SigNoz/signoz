@@ -1,12 +1,55 @@
-/* Mirrors the V1 dashboard variable bar: each variable is a connected pill —
-   a robin `$name` segment joined to a value segment. */
-/* Sits inside the already-padded sticky toolbar section, so it only needs a top
-   gap from the tags — horizontal/bottom padding comes from the toolbar. */
 .bar {
+	min-width: 0;
+}
+
+.strip {
+	display: flow-root;
+}
+
+.stripExpanded {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 12px;
+	gap: 8px;
 	padding-top: 12px;
+	overflow: visible;
+	clear: both;
+
+	.variableSlot,
+	.moreButton {
+		margin: 0;
+	}
+
+	@media (prefers-reduced-motion: no-preference) {
+		animation: variablesExpandIn 200ms ease-out;
+	}
+}
+
+@keyframes variablesExpandIn {
+	from {
+		opacity: 0;
+		transform: translateY(-6px);
+	}
+
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+.variableSlot {
+	display: inline-flex;
+	align-items: center;
+	margin-right: 8px;
+	vertical-align: top;
+}
+
+.variableSlotHidden {
+	display: none;
+}
+
+.moreButton {
+	display: inline-flex;
+	vertical-align: top;
 }
 
 .variableItem {
@@ -21,7 +64,7 @@
 	align-items: center;
 	gap: 4px;
 	padding: 6px 6px 6px 8px;
-	border: 1px solid var(--l1-border);
+	border: 1px solid var(--l3-border);
 	border-radius: 2px 0 0 2px;
 	background: var(--l3-background);
 	color: var(--bg-robin-300);
@@ -33,8 +76,10 @@
 }
 
 .infoIcon {
-	margin-left: 4px;
+	display: inline-flex;
+	margin-left: 2px;
 	color: var(--l2-foreground);
+	vertical-align: middle;
 }
 
 .variableValue {
@@ -42,7 +87,7 @@
 	min-width: 120px;
 	height: 32px;
 	align-items: center;
-	border: 1px solid var(--l1-border);
+	border: 1px solid var(--l3-border);
 	border-left: none;
 	border-radius: 0 2px 2px 0;
 	background: var(--l2-background);
@@ -55,8 +100,6 @@
 	}
 }
 
-/* Inner control fills the value segment; the segment provides the frame, so the
-   control itself is borderless/transparent. */
 .control {
 	width: 100%;
 	min-width: 120px;

@@ -13,7 +13,7 @@ import { useDashboardStore } from '../../../store/useDashboardStore';
 import { useDeleteSection } from '../hooks/useDeleteSection';
 import { useRenameSection } from '../hooks/useRenameSection';
 import { useToggleSectionCollapse } from '../hooks/useToggleSectionCollapse';
-import RenameSectionModal from '../RenameSectionModal';
+import SectionTitleModal from '../SectionTitleModal';
 import SectionGrid from '../SectionGrid/SectionGrid';
 import SectionHeader, {
 	type SectionDragHandle,
@@ -146,8 +146,10 @@ function Section({
 						)}
 					</div>
 				))}
-			<RenameSectionModal
+			<SectionTitleModal
 				open={isRenaming}
+				heading="Rename section"
+				okText="Rename"
 				initialValue={section.title}
 				isSaving={isSaving}
 				onClose={(): void => setIsRenaming(false)}

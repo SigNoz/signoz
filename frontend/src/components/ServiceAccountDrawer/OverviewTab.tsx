@@ -1,7 +1,9 @@
-import { useCallback } from 'react';
-import { LockKeyhole } from '@signozhq/icons';
+import { useCallback, useEffect, useState } from 'react';
+import { Check, Copy, LockKeyhole } from '@signozhq/icons';
 import { Badge } from '@signozhq/ui/badge';
+import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
+import { useCopyToClipboard } from 'react-use';
 import type { AuthtypesRoleDTO } from 'api/generated/services/sigNoz.schemas';
 import AuthZTooltip from 'components/AuthZTooltip/AuthZTooltip';
 import RolesSelect from 'components/RolesSelect';
@@ -46,6 +48,23 @@ function OverviewTab({
 	saveErrors = [],
 }: OverviewTabProps): JSX.Element {
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
+	const [, copyToClipboard] = useCopyToClipboard();
+	const [hasCopiedId, setHasCopiedId] = useState(false);
+
+	const handleCopyId = useCallback((): void => {
+		if (account.id) {
+			copyToClipboard(account.id);
+			setHasCopiedId(true);
+		}
+	}, [account.id, copyToClipboard]);
+
+	useEffect(() => {
+		if (hasCopiedId) {
+			const timer = setTimeout(() => setHasCopiedId(false), 2000);
+			return (): void => clearTimeout(timer);
+		}
+		return undefined;
+	}, [hasCopiedId]);
 
 	const formatTimestamp = useCallback(
 		(ts: string | null | undefined): string => {
@@ -93,6 +112,17 @@ function OverviewTab({
 				</label>
 				<div className="sa-drawer__input-wrapper sa-drawer__input-wrapper--disabled">
 					<span className="sa-drawer__input-text">{account.id || '—'}</span>
+					{account.id && (
+						<Button
+							variant="link"
+							color="secondary"
+							onClick={handleCopyId}
+							className="sa-drawer__copy-btn"
+							data-testid="copy-id-btn"
+						>
+							{hasCopiedId ? <Check size={14} /> : <Copy size={14} />}
+						</Button>
+					)}
 					<LockKeyhole size={14} className="sa-drawer__lock-icon" />
 				</div>
 			</div>

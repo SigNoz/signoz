@@ -1,0 +1,72 @@
+.root {
+	:global(.ant-drawer-wrapper-body) {
+		border-left: 1px solid var(--l1-border);
+		background: var(--l2-background);
+	}
+
+	:global(.ant-drawer-header) {
+		height: 48px;
+		border-bottom: 1px solid var(--l1-border);
+
+		:global(.ant-drawer-title) {
+			color: var(--l2-foreground);
+			font-family: Inter;
+			font-size: 14px;
+			font-weight: 500;
+		}
+	}
+
+	:global(.ant-drawer-body) {
+		padding: 0;
+		display: flex;
+		min-height: 0;
+	}
+
+	:global(.ant-drawer-footer) {
+		padding: 12px 16px;
+		border-top: 1px solid var(--l1-border);
+	}
+}
+
+.body {
+	display: flex;
+	flex: 1;
+	min-width: 0;
+	min-height: 0;
+	flex-direction: column;
+}
+
+.editor {
+	flex: 1;
+	min-height: 0;
+}
+
+.footer {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+}
+
+.validation {
+	min-width: 0;
+	overflow: hidden;
+	font-family: 'Space Mono', monospace;
+	font-size: 12px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.validationValid {
+	color: var(--bg-forest-400);
+}
+
+.validationInvalid {
+	color: var(--bg-cherry-400);
+}
+
+.footerActions {
+	display: flex;
+	flex-shrink: 0;
+	gap: 8px;
+}

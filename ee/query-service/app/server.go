@@ -90,8 +90,12 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 
 	// initiate agent config handler
 	agentConfMgr, err := agentConf.Initiate(&agentConf.ManagerOptions{
-		Store:         signoz.SQLStore,
-		AgentFeatures: []agentConf.AgentFeature{logParsingPipelineController},
+		Store: signoz.SQLStore,
+		AgentFeatures: []agentConf.AgentFeature{
+			logParsingPipelineController,
+			signoz.Modules.SpanMapper,
+			signoz.Modules.LLMPricingRule,
+		},
 	})
 	if err != nil {
 		return nil, err
