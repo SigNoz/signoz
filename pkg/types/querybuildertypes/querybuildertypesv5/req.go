@@ -46,10 +46,10 @@ type queryEnvelopeFormula struct {
 }
 
 // queryEnvelopeJoin is the OpenAPI schema for a QueryEnvelope with type=builder_join.
-// type queryEnvelopeJoin struct {
-// 	Type QueryType        `json:"type" description:"The type of the query."`
-// 	Spec QueryBuilderJoin `json:"spec" description:"The join specification."`
-// }
+type queryEnvelopeJoin struct {
+	Type QueryType        `json:"type" description:"The type of the query."`
+	Spec QueryBuilderJoin `json:"spec" description:"The join specification."`
+}
 
 // queryEnvelopeTraceOperator is the OpenAPI schema for a QueryEnvelope with type=builder_trace_operator.
 type queryEnvelopeTraceOperator struct {
@@ -79,7 +79,7 @@ func (QueryEnvelope) JSONSchemaOneOf() []any {
 		queryEnvelopeBuilderLog{},
 		queryEnvelopeBuilderMetric{},
 		queryEnvelopeFormula{},
-		// queryEnvelopeJoin{},
+		queryEnvelopeJoin{},
 		queryEnvelopeTraceOperator{},
 		queryEnvelopePromQL{},
 		queryEnvelopeClickHouseSQL{},
@@ -293,8 +293,9 @@ var _ jsonschema.Preparer = VariableItem{}
 
 // PrepareJSONSchema types the `value` property instead of leaving it as an
 // untyped {}: a variable resolves to a scalar (string/number/bool) or, for
-// multi-select, a list of scalars. The Go field stays `any`; this only documents
-// the wire contract in the generated OpenAPI schema.
+// multi-select, a list of scalars. It can also be `null` — the frontend sends
+// `null` for a dynamic variable whose "ALL" option is selected. The Go field
+// stays `any`; this only documents the wire contract in the generated schema.
 func (VariableItem) PrepareJSONSchema(s *jsonschema.Schema) error {
 	if _, ok := s.Properties["value"]; !ok {
 		return nil
@@ -320,6 +321,9 @@ func (VariableItem) PrepareJSONSchema(s *jsonschema.Schema) error {
 		jsonschema.Boolean.ToSchemaOrBool(),
 		list.ToSchemaOrBool(),
 	}
+	// The frontend sends `null` for a dynamic variable whose "ALL" option is
+	// selected; the reflector renders the null type as OpenAPI 3.0 `nullable`.
+	value.AddType(jsonschema.Null)
 	s.Properties["value"] = value.ToSchemaOrBool()
 
 	return nil

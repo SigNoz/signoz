@@ -3,6 +3,7 @@ package querybuildertypesv5
 import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/swaggest/jsonschema-go"
 )
 
 // JoinType is the SQL‐style join operator.
@@ -62,6 +63,32 @@ type QueryBuilderJoin struct {
 	Limit                 int                    `json:"limit,omitempty"`
 	SecondaryAggregations []SecondaryAggregation `json:"secondaryAggregations,omitempty"`
 	Functions             []Function             `json:"functions,omitempty"`
+}
+
+var _ jsonschema.Preparer = QueryBuilderJoin{}
+
+// PrepareJSONSchema types the `aggregations` items — a []any that holds trace,
+// log, or metric aggregations — as a oneOf of the concrete aggregation schemas
+// instead of an untyped {}. The Go field stays []any; this only shapes the
+// generated schema.
+func (QueryBuilderJoin) PrepareJSONSchema(s *jsonschema.Schema) error {
+	prop, ok := s.Properties["aggregations"]
+	if !ok || prop.TypeObject == nil {
+		return nil
+	}
+
+	item := jsonschema.Schema{}
+	item.OneOf = []jsonschema.SchemaOrBool{
+		(&jsonschema.Schema{}).WithRef("#/components/schemas/Querybuildertypesv5TraceAggregation").ToSchemaOrBool(),
+		(&jsonschema.Schema{}).WithRef("#/components/schemas/Querybuildertypesv5LogAggregation").ToSchemaOrBool(),
+		(&jsonschema.Schema{}).WithRef("#/components/schemas/Querybuildertypesv5MetricAggregation").ToSchemaOrBool(),
+	}
+	items := jsonschema.Items{}
+	items.WithSchemaOrBool(item.ToSchemaOrBool())
+	prop.TypeObject.WithItems(items)
+	s.Properties["aggregations"] = prop
+
+	return nil
 }
 
 // Copy creates a deep copy of QueryBuilderJoin.
