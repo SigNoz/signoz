@@ -224,7 +224,7 @@ Tests can be configured using pytest options:
 - `--sqlstore-provider` — Choose the SQL store provider (default: `postgres`)
 - `--sqlite-mode` — SQLite journal mode: `delete` or `wal` (default: `delete`). Only relevant when `--sqlstore-provider=sqlite`.
 - `--postgres-version` — PostgreSQL version (default: `15`)
-- `--clickhouse-version` — ClickHouse version (default: `25.5.6`)
+- `--clickhouse-version` — ClickHouse version (default: `25.12.5`)
 - `--zookeeper-version` — Zookeeper version (default: `3.7.1`)
 - `--schema-migrator-version` — SigNoz schema migrator version (default: `v0.144.2`)
 

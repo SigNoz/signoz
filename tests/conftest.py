@@ -77,7 +77,7 @@ def pytest_addoption(parser: pytest.Parser):
     parser.addoption(
         "--clickhouse-version",
         action="store",
-        default="25.5.6",
+        default="25.12.5",
         help="clickhouse version",
     )
     parser.addoption(

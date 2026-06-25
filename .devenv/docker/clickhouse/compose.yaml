@@ -1,6 +1,6 @@
 services:
   init-clickhouse:
-    image: clickhouse/clickhouse-server:25.5.6
+    image: clickhouse/clickhouse-server:25.12.5
     container_name: init-clickhouse
     command:
       - bash
@@ -18,7 +18,7 @@ services:
     volumes:
       - ${PWD}/fs/tmp/var/lib/clickhouse/user_scripts/:/var/lib/clickhouse/user_scripts/
   clickhouse:
-    image: clickhouse/clickhouse-server:25.5.6
+    image: clickhouse/clickhouse-server:25.12.5
     container_name: clickhouse
     volumes:
       - ${PWD}/fs/etc/clickhouse-server/config.d/config.xml:/etc/clickhouse-server/config.d/config.xml
