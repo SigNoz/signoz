@@ -5463,6 +5463,121 @@ export interface GlobaltypesConfigDTO {
 	mcp_url: string | null;
 }
 
+export enum InframonitoringtypesCheckComponentTypeDTO {
+	receiver = 'receiver',
+	processor = 'processor',
+}
+export interface InframonitoringtypesAssociatedComponentDTO {
+	/**
+	 * @type string
+	 */
+	name: string;
+	type: InframonitoringtypesCheckComponentTypeDTO;
+}
+
+export interface InframonitoringtypesAttributesComponentEntryDTO {
+	associatedComponent: InframonitoringtypesAssociatedComponentDTO;
+	/**
+	 * @type array,null
+	 */
+	attributes: string[] | null;
+}
+
+export enum InframonitoringtypesCheckTypeDTO {
+	hosts = 'hosts',
+	processes = 'processes',
+	pods = 'pods',
+	nodes = 'nodes',
+	deployments = 'deployments',
+	daemonsets = 'daemonsets',
+	statefulsets = 'statefulsets',
+	jobs = 'jobs',
+	namespaces = 'namespaces',
+	clusters = 'clusters',
+	volumes = 'volumes',
+}
+export interface InframonitoringtypesMissingMetricsComponentEntryDTO {
+	associatedComponent: InframonitoringtypesAssociatedComponentDTO;
+	/**
+	 * @type string
+	 */
+	documentationLink: string;
+	/**
+	 * @type string
+	 */
+	message: string;
+	/**
+	 * @type array,null
+	 */
+	metrics: string[] | null;
+}
+
+export interface InframonitoringtypesMissingAttributesComponentEntryDTO {
+	associatedComponent: InframonitoringtypesAssociatedComponentDTO;
+	/**
+	 * @type array,null
+	 */
+	attributes: string[] | null;
+	/**
+	 * @type string
+	 */
+	documentationLink: string;
+	/**
+	 * @type string
+	 */
+	message: string;
+}
+
+export interface InframonitoringtypesMetricsComponentEntryDTO {
+	associatedComponent: InframonitoringtypesAssociatedComponentDTO;
+	/**
+	 * @type array,null
+	 */
+	metrics: string[] | null;
+}
+
+export interface InframonitoringtypesChecksDTO {
+	/**
+	 * @type array,null
+	 */
+	missingDefaultEnabledMetrics:
+		| InframonitoringtypesMissingMetricsComponentEntryDTO[]
+		| null;
+	/**
+	 * @type array,null
+	 */
+	missingOptionalMetrics:
+		| InframonitoringtypesMissingMetricsComponentEntryDTO[]
+		| null;
+	/**
+	 * @type array,null
+	 */
+	missingRequiredAttributes:
+		| InframonitoringtypesMissingAttributesComponentEntryDTO[]
+		| null;
+	/**
+	 * @type array,null
+	 */
+	presentDefaultEnabledMetrics:
+		| InframonitoringtypesMetricsComponentEntryDTO[]
+		| null;
+	/**
+	 * @type array,null
+	 */
+	presentOptionalMetrics: InframonitoringtypesMetricsComponentEntryDTO[] | null;
+	/**
+	 * @type array,null
+	 */
+	presentRequiredAttributes:
+		| InframonitoringtypesAttributesComponentEntryDTO[]
+		| null;
+	/**
+	 * @type boolean
+	 */
+	ready: boolean;
+	type: InframonitoringtypesCheckTypeDTO;
+}
+
 export type InframonitoringtypesClusterRecordDTOMetaAnyOf = {
 	[key: string]: string;
 };
@@ -5540,13 +5655,6 @@ export interface InframonitoringtypesClusterRecordDTO {
 	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
 }
 
-export interface InframonitoringtypesRequiredMetricsCheckDTO {
-	/**
-	 * @type array,null
-	 */
-	missingMetrics: string[] | null;
-}
-
 export enum InframonitoringtypesResponseTypeDTO {
 	list = 'list',
 	grouped_list = 'grouped_list',
@@ -5582,7 +5690,6 @@ export interface InframonitoringtypesClustersDTO {
 	 * @type array
 	 */
 	records: InframonitoringtypesClusterRecordDTO[];
-	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
 	/**
 	 * @type integer
 	 */
@@ -5660,7 +5767,6 @@ export interface InframonitoringtypesDaemonSetsDTO {
 	 * @type array
 	 */
 	records: InframonitoringtypesDaemonSetRecordDTO[];
-	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
 	/**
 	 * @type integer
 	 */
@@ -5738,7 +5844,6 @@ export interface InframonitoringtypesDeploymentsDTO {
 	 * @type array
 	 */
 	records: InframonitoringtypesDeploymentRecordDTO[];
-	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
 	/**
 	 * @type integer
 	 */
@@ -5824,7 +5929,6 @@ export interface InframonitoringtypesHostsDTO {
 	 * @type array
 	 */
 	records: InframonitoringtypesHostRecordDTO[];
-	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
 	/**
 	 * @type integer
 	 */
@@ -5910,7 +6014,6 @@ export interface InframonitoringtypesJobsDTO {
 	 * @type array
 	 */
 	records: InframonitoringtypesJobRecordDTO[];
-	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
 	/**
 	 * @type integer
 	 */
@@ -5960,7 +6063,6 @@ export interface InframonitoringtypesNamespacesDTO {
 	 * @type array
 	 */
 	records: InframonitoringtypesNamespaceRecordDTO[];
-	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
 	/**
 	 * @type integer
 	 */
@@ -6027,7 +6129,6 @@ export interface InframonitoringtypesNodesDTO {
 	 * @type array
 	 */
 	records: InframonitoringtypesNodeRecordDTO[];
-	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
 	/**
 	 * @type integer
 	 */
@@ -6111,7 +6212,6 @@ export interface InframonitoringtypesPodsDTO {
 	 * @type array
 	 */
 	records: InframonitoringtypesPodRecordDTO[];
-	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
 	/**
 	 * @type integer
 	 */
@@ -6459,7 +6559,6 @@ export interface InframonitoringtypesStatefulSetsDTO {
 	 * @type array
 	 */
 	records: InframonitoringtypesStatefulSetRecordDTO[];
-	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
 	/**
 	 * @type integer
 	 */
@@ -6528,7 +6627,6 @@ export interface InframonitoringtypesVolumesDTO {
 	 * @type array
 	 */
 	records: InframonitoringtypesVolumeRecordDTO[];
-	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
 	/**
 	 * @type integer
 	 */
@@ -10245,6 +10343,21 @@ export type Healthz200 = {
 
 export type Healthz503 = {
 	data: FactoryResponseDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetChecksParams = {
+	/**
+	 * @description undefined
+	 */
+	type: InframonitoringtypesCheckTypeDTO;
+};
+
+export type GetChecks200 = {
+	data: InframonitoringtypesChecksDTO;
 	/**
 	 * @type string
 	 */

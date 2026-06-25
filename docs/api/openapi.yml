@@ -4018,6 +4018,94 @@ components:
         enabled:
           type: boolean
       type: object
+    InframonitoringtypesAssociatedComponent:
+      properties:
+        name:
+          type: string
+        type:
+          $ref: '#/components/schemas/InframonitoringtypesCheckComponentType'
+      required:
+      - type
+      - name
+      type: object
+    InframonitoringtypesAttributesComponentEntry:
+      properties:
+        associatedComponent:
+          $ref: '#/components/schemas/InframonitoringtypesAssociatedComponent'
+        attributes:
+          items:
+            type: string
+          nullable: true
+          type: array
+      required:
+      - attributes
+      - associatedComponent
+      type: object
+    InframonitoringtypesCheckComponentType:
+      enum:
+      - receiver
+      - processor
+      type: string
+    InframonitoringtypesCheckType:
+      enum:
+      - hosts
+      - processes
+      - pods
+      - nodes
+      - deployments
+      - daemonsets
+      - statefulsets
+      - jobs
+      - namespaces
+      - clusters
+      - volumes
+      type: string
+    InframonitoringtypesChecks:
+      properties:
+        missingDefaultEnabledMetrics:
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesMissingMetricsComponentEntry'
+          nullable: true
+          type: array
+        missingOptionalMetrics:
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesMissingMetricsComponentEntry'
+          nullable: true
+          type: array
+        missingRequiredAttributes:
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesMissingAttributesComponentEntry'
+          nullable: true
+          type: array
+        presentDefaultEnabledMetrics:
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesMetricsComponentEntry'
+          nullable: true
+          type: array
+        presentOptionalMetrics:
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesMetricsComponentEntry'
+          nullable: true
+          type: array
+        presentRequiredAttributes:
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesAttributesComponentEntry'
+          nullable: true
+          type: array
+        ready:
+          type: boolean
+        type:
+          $ref: '#/components/schemas/InframonitoringtypesCheckType'
+      required:
+      - type
+      - ready
+      - presentDefaultEnabledMetrics
+      - presentOptionalMetrics
+      - presentRequiredAttributes
+      - missingDefaultEnabledMetrics
+      - missingOptionalMetrics
+      - missingRequiredAttributes
+      type: object
     InframonitoringtypesClusterRecord:
       properties:
         clusterCPU:
@@ -4061,8 +4149,6 @@ components:
           items:
             $ref: '#/components/schemas/InframonitoringtypesClusterRecord'
           type: array
-        requiredMetricsCheck:
-          $ref: '#/components/schemas/InframonitoringtypesRequiredMetricsCheck'
         total:
           type: integer
         type:
@@ -4073,7 +4159,6 @@ components:
       - type
       - records
       - total
-      - requiredMetricsCheck
       - endTimeBeforeRetention
       type: object
     InframonitoringtypesDaemonSetRecord:
@@ -4130,8 +4215,6 @@ components:
           items:
             $ref: '#/components/schemas/InframonitoringtypesDaemonSetRecord'
           type: array
-        requiredMetricsCheck:
-          $ref: '#/components/schemas/InframonitoringtypesRequiredMetricsCheck'
         total:
           type: integer
         type:
@@ -4142,7 +4225,6 @@ components:
       - type
       - records
       - total
-      - requiredMetricsCheck
       - endTimeBeforeRetention
       type: object
     InframonitoringtypesDeploymentRecord:
@@ -4199,8 +4281,6 @@ components:
           items:
             $ref: '#/components/schemas/InframonitoringtypesDeploymentRecord'
           type: array
-        requiredMetricsCheck:
-          $ref: '#/components/schemas/InframonitoringtypesRequiredMetricsCheck'
         total:
           type: integer
         type:
@@ -4211,7 +4291,6 @@ components:
       - type
       - records
       - total
-      - requiredMetricsCheck
       - endTimeBeforeRetention
       type: object
     InframonitoringtypesHostFilter:
@@ -4277,8 +4356,6 @@ components:
           items:
             $ref: '#/components/schemas/InframonitoringtypesHostRecord'
           type: array
-        requiredMetricsCheck:
-          $ref: '#/components/schemas/InframonitoringtypesRequiredMetricsCheck'
         total:
           type: integer
         type:
@@ -4289,7 +4366,6 @@ components:
       - type
       - records
       - total
-      - requiredMetricsCheck
       - endTimeBeforeRetention
       type: object
     InframonitoringtypesJobRecord:
@@ -4352,8 +4428,6 @@ components:
           items:
             $ref: '#/components/schemas/InframonitoringtypesJobRecord'
           type: array
-        requiredMetricsCheck:
-          $ref: '#/components/schemas/InframonitoringtypesRequiredMetricsCheck'
         total:
           type: integer
         type:
@@ -4364,8 +4438,58 @@ components:
       - type
       - records
       - total
-      - requiredMetricsCheck
       - endTimeBeforeRetention
+      type: object
+    InframonitoringtypesMetricsComponentEntry:
+      properties:
+        associatedComponent:
+          $ref: '#/components/schemas/InframonitoringtypesAssociatedComponent'
+        metrics:
+          items:
+            type: string
+          nullable: true
+          type: array
+      required:
+      - metrics
+      - associatedComponent
+      type: object
+    InframonitoringtypesMissingAttributesComponentEntry:
+      properties:
+        associatedComponent:
+          $ref: '#/components/schemas/InframonitoringtypesAssociatedComponent'
+        attributes:
+          items:
+            type: string
+          nullable: true
+          type: array
+        documentationLink:
+          type: string
+        message:
+          type: string
+      required:
+      - attributes
+      - associatedComponent
+      - message
+      - documentationLink
+      type: object
+    InframonitoringtypesMissingMetricsComponentEntry:
+      properties:
+        associatedComponent:
+          $ref: '#/components/schemas/InframonitoringtypesAssociatedComponent'
+        documentationLink:
+          type: string
+        message:
+          type: string
+        metrics:
+          items:
+            type: string
+          nullable: true
+          type: array
+      required:
+      - metrics
+      - associatedComponent
+      - message
+      - documentationLink
       type: object
     InframonitoringtypesNamespaceRecord:
       properties:
@@ -4399,8 +4523,6 @@ components:
           items:
             $ref: '#/components/schemas/InframonitoringtypesNamespaceRecord'
           type: array
-        requiredMetricsCheck:
-          $ref: '#/components/schemas/InframonitoringtypesRequiredMetricsCheck'
         total:
           type: integer
         type:
@@ -4411,7 +4533,6 @@ components:
       - type
       - records
       - total
-      - requiredMetricsCheck
       - endTimeBeforeRetention
       type: object
     InframonitoringtypesNodeCondition:
@@ -4476,8 +4597,6 @@ components:
           items:
             $ref: '#/components/schemas/InframonitoringtypesNodeRecord'
           type: array
-        requiredMetricsCheck:
-          $ref: '#/components/schemas/InframonitoringtypesRequiredMetricsCheck'
         total:
           type: integer
         type:
@@ -4488,7 +4607,6 @@ components:
       - type
       - records
       - total
-      - requiredMetricsCheck
       - endTimeBeforeRetention
       type: object
     InframonitoringtypesPodCountsByPhase:
@@ -4574,8 +4692,6 @@ components:
           items:
             $ref: '#/components/schemas/InframonitoringtypesPodRecord'
           type: array
-        requiredMetricsCheck:
-          $ref: '#/components/schemas/InframonitoringtypesRequiredMetricsCheck'
         total:
           type: integer
         type:
@@ -4586,7 +4702,6 @@ components:
       - type
       - records
       - total
-      - requiredMetricsCheck
       - endTimeBeforeRetention
       type: object
     InframonitoringtypesPostableClusters:
@@ -4849,16 +4964,6 @@ components:
       - end
       - limit
       type: object
-    InframonitoringtypesRequiredMetricsCheck:
-      properties:
-        missingMetrics:
-          items:
-            type: string
-          nullable: true
-          type: array
-      required:
-      - missingMetrics
-      type: object
     InframonitoringtypesResponseType:
       enum:
       - list
@@ -4918,8 +5023,6 @@ components:
           items:
             $ref: '#/components/schemas/InframonitoringtypesStatefulSetRecord'
           type: array
-        requiredMetricsCheck:
-          $ref: '#/components/schemas/InframonitoringtypesRequiredMetricsCheck'
         total:
           type: integer
         type:
@@ -4930,7 +5033,6 @@ components:
       - type
       - records
       - total
-      - requiredMetricsCheck
       - endTimeBeforeRetention
       type: object
     InframonitoringtypesVolumeRecord:
@@ -4978,8 +5080,6 @@ components:
           items:
             $ref: '#/components/schemas/InframonitoringtypesVolumeRecord'
           type: array
-        requiredMetricsCheck:
-          $ref: '#/components/schemas/InframonitoringtypesRequiredMetricsCheck'
         total:
           type: integer
         type:
@@ -4990,7 +5090,6 @@ components:
       - type
       - records
       - total
-      - requiredMetricsCheck
       - endTimeBeforeRetention
       type: object
     LlmpricingruletypesGettablePricingRules:
@@ -14875,6 +14974,72 @@ paths:
       summary: Health check
       tags:
       - health
+  /api/v2/infra_monitoring/checks:
+    get:
+      deprecated: false
+      description: 'Checks whether the metrics and attributes required to power the
+        infra-monitoring section selected by the ''type'' query parameter (hosts,
+        processes, pods, nodes, deployments, daemonsets, statefulsets, jobs, namespaces,
+        clusters, volumes) are being received. For each collector receiver or processor
+        that contributes required metrics or attributes, lists what is present and
+        what is missing, with a prebuilt user-facing message and a docs link per missing
+        component. Default-enabled metrics are those expected as soon as the receiver
+        is configured; optional metrics require ''enabled: true'' in receiver config.
+        ''ready'' is true only when every missing list is empty.'
+      operationId: GetChecks
+      parameters:
+      - in: query
+        name: type
+        required: true
+        schema:
+          $ref: '#/components/schemas/InframonitoringtypesCheckType'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/InframonitoringtypesChecks'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Run Infra Monitoring Setup Checks
+      tags:
+      - inframonitoring
   /api/v2/infra_monitoring/clusters:
     post:
       deprecated: false
@@ -14889,10 +15054,10 @@ paths:
         for custom groupBy keys; in both modes every row aggregates nodes and pods
         in the group. Supports filtering via a filter expression, custom groupBy,
         ordering by cpu / cpu_allocatable / memory / memory_allocatable, and pagination
-        via offset/limit. Also reports missing required metrics and whether the requested
-        time range falls before the data retention boundary. Numeric metric fields
-        (clusterCPU, clusterCPUAllocatable, clusterMemory, clusterMemoryAllocatable)
-        return -1 as a sentinel when no data is available for that field.'
+        via offset/limit. Also reports whether the requested time range falls before
+        the data retention boundary. Numeric metric fields (clusterCPU, clusterCPUAllocatable,
+        clusterMemory, clusterMemoryAllocatable) return -1 as a sentinel when no data
+        is available for that field.'
       operationId: ListClusters
       requestBody:
         content:
@@ -14965,11 +15130,11 @@ paths:
         row aggregates pods owned by daemonsets in the group. Supports filtering via
         a filter expression, custom groupBy, ordering by cpu / cpu_request / cpu_limit
         / memory / memory_request / memory_limit / desired_nodes / current_nodes,
-        and pagination via offset/limit. Also reports missing required metrics and
-        whether the requested time range falls before the data retention boundary.
-        Numeric metric fields (daemonSetCPU, daemonSetCPURequest, daemonSetCPULimit,
-        daemonSetMemory, daemonSetMemoryRequest, daemonSetMemoryLimit, desiredNodes,
-        currentNodes) return -1 as a sentinel when no data is available for that field.'
+        and pagination via offset/limit. Also reports whether the requested time range
+        falls before the data retention boundary. Numeric metric fields (daemonSetCPU,
+        daemonSetCPURequest, daemonSetCPULimit, daemonSetMemory, daemonSetMemoryRequest,
+        daemonSetMemoryLimit, desiredNodes, currentNodes) return -1 as a sentinel
+        when no data is available for that field.'
       operationId: ListDaemonSets
       requestBody:
         content:
@@ -15040,11 +15205,11 @@ paths:
         group. Supports filtering via a filter expression, custom groupBy, ordering
         by cpu / cpu_request / cpu_limit / memory / memory_request / memory_limit
         / desired_pods / available_pods, and pagination via offset/limit. Also reports
-        missing required metrics and whether the requested time range falls before
-        the data retention boundary. Numeric metric fields (deploymentCPU, deploymentCPURequest,
-        deploymentCPULimit, deploymentMemory, deploymentMemoryRequest, deploymentMemoryLimit,
-        desiredPods, availablePods) return -1 as a sentinel when no data is available
-        for that field.'
+        whether the requested time range falls before the data retention boundary.
+        Numeric metric fields (deploymentCPU, deploymentCPURequest, deploymentCPULimit,
+        deploymentMemory, deploymentMemoryRequest, deploymentMemoryLimit, desiredPods,
+        availablePods) return -1 as a sentinel when no data is available for that
+        field.'
       operationId: ListDeployments
       requestBody:
         content:
@@ -15109,10 +15274,9 @@ paths:
         custom groupBy to aggregate hosts by any attribute, ordering by any of the
         five metrics, and pagination via offset/limit. The response type is ''list''
         for the default host.name grouping or ''grouped_list'' for custom groupBy
-        keys. Also reports missing required metrics and whether the requested time
-        range falls before the data retention boundary. Numeric metric fields (cpu,
-        memory, wait, load15, diskUsage) return -1 as a sentinel when no data is available
-        for that field.'
+        keys. Also reports whether the requested time range falls before the data
+        retention boundary. Numeric metric fields (cpu, memory, wait, load15, diskUsage)
+        return -1 as a sentinel when no data is available for that field.'
       operationId: ListHosts
       requestBody:
         content:
@@ -15186,11 +15350,11 @@ paths:
         jobs in the group. Supports filtering via a filter expression, custom groupBy,
         ordering by cpu / cpu_request / cpu_limit / memory / memory_request / memory_limit
         / desired_successful_pods / active_pods / failed_pods / successful_pods, and
-        pagination via offset/limit. Also reports missing required metrics and whether
-        the requested time range falls before the data retention boundary. Numeric
-        metric fields (jobCPU, jobCPURequest, jobCPULimit, jobMemory, jobMemoryRequest,
-        jobMemoryLimit, desiredSuccessfulPods, activePods, failedPods, successfulPods)
-        return -1 as a sentinel when no data is available for that field.'
+        pagination via offset/limit. Also reports whether the requested time range
+        falls before the data retention boundary. Numeric metric fields (jobCPU, jobCPURequest,
+        jobCPULimit, jobMemory, jobMemoryRequest, jobMemoryLimit, desiredSuccessfulPods,
+        activePods, failedPods, successfulPods) return -1 as a sentinel when no data
+        is available for that field.'
       operationId: ListJobs
       requestBody:
         content:
@@ -15255,10 +15419,10 @@ paths:
         type is ''list'' for the default k8s.namespace.name grouping or ''grouped_list''
         for custom groupBy keys; in both modes every row aggregates pods in the group.
         Supports filtering via a filter expression, custom groupBy, ordering by cpu
-        / memory, and pagination via offset/limit. Also reports missing required metrics
-        and whether the requested time range falls before the data retention boundary.
-        Numeric metric fields (namespaceCPU, namespaceMemory) return -1 as a sentinel
-        when no data is available for that field.'
+        / memory, and pagination via offset/limit. Also reports whether the requested
+        time range falls before the data retention boundary. Numeric metric fields
+        (namespaceCPU, namespaceMemory) return -1 as a sentinel when no data is available
+        for that field.'
       operationId: ListNamespaces
       requestBody:
         content:
@@ -15326,10 +15490,10 @@ paths:
         for custom groupBy keys (each row aggregates nodes in the group; condition
         stays no_data). Supports filtering via a filter expression, custom groupBy,
         ordering by cpu / cpu_allocatable / memory / memory_allocatable, and pagination
-        via offset/limit. Also reports missing required metrics and whether the requested
-        time range falls before the data retention boundary. Numeric metric fields
-        (nodeCPU, nodeCPUAllocatable, nodeMemory, nodeMemoryAllocatable) return -1
-        as a sentinel when no data is available for that field.'
+        via offset/limit. Also reports whether the requested time range falls before
+        the data retention boundary. Numeric metric fields (nodeCPU, nodeCPUAllocatable,
+        nodeMemory, nodeMemoryAllocatable) return -1 as a sentinel when no data is
+        available for that field.'
       operationId: ListNodes
       requestBody:
         content:
@@ -15398,11 +15562,10 @@ paths:
         is one pod with its current phase) or ''grouped_list'' for custom groupBy
         keys (each row aggregates pods in the group with per-phase counts under podCountsByPhase:
         { pending, running, succeeded, failed, unknown } derived from each pod''s
-        latest phase in the window). Also reports missing required metrics and whether
-        the requested time range falls before the data retention boundary. Numeric
-        metric fields (podCPU, podCPURequest, podCPULimit, podMemory, podMemoryRequest,
-        podMemoryLimit, podAge) return -1 as a sentinel when no data is available
-        for that field.'
+        latest phase in the window). Also reports whether the requested time range
+        falls before the data retention boundary. Numeric metric fields (podCPU, podCPURequest,
+        podCPULimit, podMemory, podMemoryRequest, podMemoryLimit, podAge) return -1
+        as a sentinel when no data is available for that field.'
       operationId: ListPods
       requestBody:
         content:
@@ -15469,11 +15632,10 @@ paths:
         usage, inodes, inodes_free, inodes_used), and pagination via offset/limit.
         The response type is ''list'' for the default k8s.persistentvolumeclaim.name
         grouping or ''grouped_list'' for custom groupBy keys; in both modes every
-        row aggregates volumes in the group. Also reports missing required metrics
-        and whether the requested time range falls before the data retention boundary.
-        Numeric metric fields (volumeAvailable, volumeCapacity, volumeUsage, volumeInodes,
-        volumeInodesFree, volumeInodesUsed) return -1 as a sentinel when no data is
-        available for that field.'
+        row aggregates volumes in the group. Also reports whether the requested time
+        range falls before the data retention boundary. Numeric metric fields (volumeAvailable,
+        volumeCapacity, volumeUsage, volumeInodes, volumeInodesFree, volumeInodesUsed)
+        return -1 as a sentinel when no data is available for that field.'
       operationId: ListVolumes
       requestBody:
         content:
@@ -15544,11 +15706,10 @@ paths:
         statefulsets in the group. Supports filtering via a filter expression, custom
         groupBy, ordering by cpu / cpu_request / cpu_limit / memory / memory_request
         / memory_limit / desired_pods / current_pods, and pagination via offset/limit.
-        Also reports missing required metrics and whether the requested time range
-        falls before the data retention boundary. Numeric metric fields (statefulSetCPU,
-        statefulSetCPURequest, statefulSetCPULimit, statefulSetMemory, statefulSetMemoryRequest,
-        statefulSetMemoryLimit, desiredPods, currentPods) return -1 as a sentinel
-        when no data is available for that field.'
+        Also reports whether the requested time range falls before the data retention
+        boundary. Numeric metric fields (statefulSetCPU, statefulSetCPURequest, statefulSetCPULimit,
+        statefulSetMemory, statefulSetMemoryRequest, statefulSetMemoryLimit, desiredPods,
+        currentPods) return -1 as a sentinel when no data is available for that field.'
       operationId: ListStatefulSets
       requestBody:
         content:
