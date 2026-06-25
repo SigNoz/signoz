@@ -17,37 +17,25 @@ import (
 // panels below it until the next row; panels above the first row form an unnamed
 // grid with no section header. Collapsed rows are the exception — their children
 // live in panelMap[rowID].widgets, not `layout`.
-func convertV1Layouts(data StorableDashboardData) ([]Layout, error) {
-	if raw := data["layout"]; raw != nil {
-		if _, ok := raw.([]any); !ok {
-			return nil, malformedV1FieldErr("layout", raw)
-		}
-	}
-	if raw := data["panelMap"]; raw != nil {
-		if _, ok := raw.(map[string]any); !ok {
-			return nil, malformedV1FieldErr("panelMap", raw)
-		}
-	}
-
-	layout := readSliceOfMaps(data["layout"])
+func (d *v1Decoder) convertV1Layouts(data StorableDashboardData) []Layout {
+	layout := d.readObjects(data, "layout")
 	if len(layout) == 0 {
-		return nil, nil
+		return nil
 	}
 
-	rows := extractRowsAndCollapsedWidgets(data["widgets"], data["panelMap"])
+	rows := d.extractRowsAndCollapsedWidgets(data)
 
 	// Skip collapsed-row children a malformed dashboard lists in `layout` too.
 	isWidgetCollapsed := make(map[string]bool)
 	for _, row := range rows {
 		for _, child := range row.collapsedWidgets {
-			if id, _ := child["i"].(string); id != "" {
+			if id := d.readString(child, "i"); id != "" {
 				isWidgetCollapsed[id] = true
 			}
 		}
 	}
 
-	// this lets us track the current row under which widgets are to be added.
-	sortByPosition(layout)
+	d.sortByPosition(layout)
 
 	type section struct {
 		row   *rowInfo // nil for the unnamed grid of ungrouped panels
@@ -57,7 +45,7 @@ func convertV1Layouts(data StorableDashboardData) ([]Layout, error) {
 	sectionsWithHeader := make([]*section, 0, len(rows))
 	currentRowHeader := topSectionWithoutHeader
 	for _, item := range layout {
-		id, _ := item["i"].(string)
+		id := d.readString(item, "i")
 		if id == "" || isWidgetCollapsed[id] {
 			continue
 		}
@@ -77,12 +65,12 @@ func convertV1Layouts(data StorableDashboardData) ([]Layout, error) {
 
 	out := make([]Layout, 0, len(sectionsWithHeader)+1)
 	if len(topSectionWithoutHeader.items) > 0 {
-		out = append(out, buildV2GridLayout(nil, topSectionWithoutHeader.items))
+		out = append(out, d.buildV2GridLayout(nil, topSectionWithoutHeader.items))
 	}
 	for _, sec := range sectionsWithHeader {
-		out = append(out, buildV2GridLayout(sec.row, sec.items))
+		out = append(out, d.buildV2GridLayout(sec.row, sec.items))
 	}
-	return out, nil
+	return out
 }
 
 type rowInfo struct {
@@ -91,31 +79,31 @@ type rowInfo struct {
 	collapsedWidgets []map[string]any
 }
 
-// extractRowsAndCollapsedWidgets returns the row widgets keyed by id; collapsed rows also carry their
-// children stashed under panelMap[id].widgets.
-func extractRowsAndCollapsedWidgets(widgetsRaw, panelMapRaw any) map[string]*rowInfo {
-	panelMap, _ := panelMapRaw.(map[string]any)
+// extractRowsAndCollapsedWidgets returns the row widgets keyed by id; collapsed
+// rows also carry their children stashed under panelMap[id].widgets.
+func (d *v1Decoder) extractRowsAndCollapsedWidgets(data StorableDashboardData) map[string]*rowInfo {
+	panelMap := d.readObject(data, "panelMap")
 	rows := make(map[string]*rowInfo)
-	for _, w := range readSliceOfMaps(widgetsRaw) {
-		id := valueAt[string](w, "id")
-		if valueAt[string](w, "panelTypes") != "row" || id == "" {
+	for _, w := range d.readObjects(data, "widgets") {
+		id := d.readString(w, "id")
+		if d.readString(w, "panelTypes") != "row" || id == "" {
 			continue
 		}
-		row := &rowInfo{title: valueAt[string](w, "title")}
-		if pm, ok := panelMap[id].(map[string]any); ok && valueAt[bool](pm, "collapsed") {
+		row := &rowInfo{title: d.readString(w, "title")}
+		if pm := d.readObject(panelMap, id); pm != nil && d.readBool(pm, "collapsed") {
 			row.collapsed = true
-			row.collapsedWidgets = readSliceOfMaps(pm["widgets"])
+			row.collapsedWidgets = d.readObjects(pm, "widgets")
 		}
 		rows[id] = row
 	}
 	return rows
 }
 
-// buildV2GridLayout builds one v2 grid. row is nil for the unnamed grid (no display);
-// otherwise the grid takes the row's title and collapse state. Items are sorted
-// by (y, x) and their y's normalized so the topmost sits at 0.
-func buildV2GridLayout(row *rowInfo, items []map[string]any) Layout {
-	sortByPosition(items)
+// buildV2GridLayout builds one v2 grid. row is nil for the unnamed grid (no
+// display); otherwise the grid takes the row's title and collapse state. Items
+// are sorted by (y, x) and their y's normalized so the topmost sits at 0.
+func (d *v1Decoder) buildV2GridLayout(row *rowInfo, items []map[string]any) Layout {
+	d.sortByPosition(items)
 
 	spec := dashboard.GridLayoutSpec{Items: make([]dashboard.GridItem, 0, len(items))}
 	if row != nil {
@@ -127,26 +115,25 @@ func buildV2GridLayout(row *rowInfo, items []map[string]any) Layout {
 
 	minY := 0
 	if len(items) > 0 {
-		minY = intAt(items[0], "y") // sorted by y, so the first item is topmost
+		minY = d.readInt(items[0], "y") // sorted by y, so the first item is topmost
 	}
 	for _, item := range items {
-		id, _ := item["i"].(string)
 		spec.Items = append(spec.Items, dashboard.GridItem{
-			X:       intAt(item, "x"),
-			Y:       intAt(item, "y") - minY,
-			Width:   intAt(item, "w"),
-			Height:  intAt(item, "h"),
-			Content: &common.JSONRef{Ref: fmt.Sprintf("#/spec/panels/%s", id)},
+			X:       d.readInt(item, "x"),
+			Y:       d.readInt(item, "y") - minY,
+			Width:   d.readInt(item, "w"),
+			Height:  d.readInt(item, "h"),
+			Content: &common.JSONRef{Ref: fmt.Sprintf("#/spec/panels/%s", d.readString(item, "i"))},
 		})
 	}
 	return Layout{Kind: dashboard.KindGridLayout, Spec: &spec}
 }
 
-func sortByPosition(items []map[string]any) {
+func (d *v1Decoder) sortByPosition(items []map[string]any) {
 	sort.SliceStable(items, func(i, j int) bool {
-		if yi, yj := intAt(items[i], "y"), intAt(items[j], "y"); yi != yj {
+		if yi, yj := d.readInt(items[i], "y"), d.readInt(items[j], "y"); yi != yj {
 			return yi < yj
 		}
-		return intAt(items[i], "x") < intAt(items[j], "x")
+		return d.readInt(items[i], "x") < d.readInt(items[j], "x")
 	})
 }

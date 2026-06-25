@@ -18,7 +18,7 @@ import (
 //   - perses_v1_to_v2_queries.go   widget queries
 //   - perses_v1_to_v2_layouts.go   grid layouts and sections
 //   - perses_v1_to_v2_variables.go variables
-//   - perses_v1_to_v2_helpers.go   generic map/slice accessors
+//   - perses_v1_to_v2_decoder.go   v1Decoder: typed field reads + malformed-field detection
 
 // ══════════════════════════════════════════════
 // Entry point
@@ -47,29 +47,22 @@ func (storable StorableDashboard) ConvertV1ToV2() (result *DashboardV2, err erro
 		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardMigrationFailed, "dashboard %s is already in %s schema", storable.ID, SchemaVersion)
 	}
 
-	// Each converter errors only if its field is present with the wrong type (a
-	// corrupt dashboard); absent/empty fields convert to nothing. Panels runs
-	// before Layouts so a malformed `widgets` is caught before Layouts reads it.
-	variables, err := convertV1Variables(storable.Data["variables"])
-	if err != nil {
-		return nil, err
-	}
-	panels, err := convertV1Panels(storable.Data["widgets"])
-	if err != nil {
-		return nil, err
-	}
-	layouts, err := convertV1Layouts(storable.Data)
-	if err != nil {
-		return nil, err
-	}
-	tags, err := convertV1TagsForOrg(storable.OrgID, storable.Data["tags"])
-	if err != nil {
-		return nil, err
-	}
+	d := &v1Decoder{}
+	title := d.readString(storable.Data, "title")
+	description := d.readString(storable.Data, "description")
+	image := d.readString(storable.Data, "image")
 
-	image, _ := storable.Data["image"].(string)
-	title, _ := storable.Data["title"].(string)
-	description, _ := storable.Data["description"].(string)
+	spec := DashboardSpec{
+		Display:   Display{Name: title, Description: description},
+		Variables: d.convertV1Variables(storable.Data["variables"]),
+		Panels:    d.convertV1Panels(storable.Data["widgets"]),
+		Layouts:   d.convertV1Layouts(storable.Data),
+	}
+	tags := d.convertV1TagsForOrg(storable.OrgID, storable.Data["tags"])
+
+	if err := d.errIfHasMalformedFields(); err != nil {
+		return nil, err
+	}
 
 	return &DashboardV2{
 		Identifiable:  storable.Identifiable,
@@ -84,17 +77,6 @@ func (storable StorableDashboard) ConvertV1ToV2() (result *DashboardV2, err erro
 		},
 		Name: generateDashboardName(title),
 		Tags: tags,
-		Spec: DashboardSpec{
-			Display:   Display{Name: title, Description: description},
-			Variables: variables,
-			Panels:    panels,
-			Layouts:   layouts,
-		},
+		Spec: spec,
 	}, nil
-}
-
-// malformedV1FieldErr reports a v1 field present with the wrong type (a corrupt
-// dashboard), as distinct from an absent field, which converts to nothing.
-func malformedV1FieldErr(field string, raw any) error {
-	return errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardMigrationFailed, "v1 dashboard field %q has unexpected type %T", field, raw)
 }

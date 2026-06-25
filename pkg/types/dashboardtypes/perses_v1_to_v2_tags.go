@@ -1,6 +1,7 @@
 package dashboardtypes
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
 
@@ -26,19 +27,21 @@ import (
 // separator (or one side of the split is empty).
 const defaultV1TagKey = "tag"
 
-func convertV1TagsForOrg(orgID valuer.UUID, raw any) ([]*tagtypes.Tag, error) {
+func (d *v1Decoder) convertV1TagsForOrg(orgID valuer.UUID, raw any) []*tagtypes.Tag {
 	if raw == nil {
-		return nil, nil
+		return nil
 	}
-	rawSlice, ok := raw.([]any)
+	rawTagsList, ok := raw.([]any)
 	if !ok {
-		return nil, malformedV1FieldErr("tags", raw)
+		d.noteMalformedField("tags", raw)
+		return nil
 	}
-	seen := make(map[string]struct{}, len(rawSlice))
-	out := make([]*tagtypes.Tag, 0, len(rawSlice))
-	for _, item := range rawSlice {
-		s, ok := item.(string)
+	seen := make(map[string]struct{}, len(rawTagsList))
+	tagsV2 := make([]*tagtypes.Tag, 0, len(rawTagsList))
+	for i, rawTag := range rawTagsList {
+		s, ok := rawTag.(string)
 		if !ok {
+			d.noteMalformedField(fmt.Sprintf("tags[%d]", i), rawTag)
 			continue
 		}
 		key, value, ok := normalizeV1Tag(s)
@@ -50,9 +53,9 @@ func convertV1TagsForOrg(orgID valuer.UUID, raw any) ([]*tagtypes.Tag, error) {
 			continue
 		}
 		seen[dedupKey] = struct{}{}
-		out = append(out, tagtypes.NewTag(orgID, coretypes.KindDashboard, key, value))
+		tagsV2 = append(tagsV2, tagtypes.NewTag(orgID, coretypes.KindDashboard, key, value))
 	}
-	return out, nil
+	return tagsV2
 }
 
 // normalizeV1Tag derives a (key, value) pair from one v1 tag string. After

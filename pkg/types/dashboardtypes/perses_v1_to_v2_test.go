@@ -112,17 +112,13 @@ func TestConvertV1TagsForOrg(t *testing.T) {
 			rawTags:      nil,
 			expectedTags: nil,
 		},
-		{
-			scenario:     "ignores non-string elements",
-			rawTags:      []any{"apm", 42, true, "logs"},
-			expectedTags: []kv{{"tag", "apm"}, {"tag", "logs"}},
-		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.scenario, func(t *testing.T) {
-			tags, err := convertV1TagsForOrg(orgID, tc.rawTags)
-			require.NoError(t, err)
+			d := &v1Decoder{}
+			tags := d.convertV1TagsForOrg(orgID, tc.rawTags)
+			require.NoError(t, d.errIfHasMalformedFields())
 			require.Len(t, tags, len(tc.expectedTags))
 			for i, expected := range tc.expectedTags {
 				assert.Equal(t, expected.key, tags[i].Key)
@@ -130,6 +126,37 @@ func TestConvertV1TagsForOrg(t *testing.T) {
 				assert.Equal(t, orgID, tags[i].OrgID)
 				assert.Equal(t, coretypes.KindDashboard, tags[i].Kind)
 			}
+		})
+	}
+}
+
+// TestConvertV1DetectsMalformedFields verifies a field present with the wrong
+// type at any depth (not just top-level containers) makes the conversion fail,
+// so the migration logs and skips the dashboard. Absent fields are not errors.
+func TestConvertV1DetectsMalformedFields(t *testing.T) {
+	cases := []struct {
+		scenario string
+		data     map[string]any
+	}{
+		{"variables not a map", map[string]any{"variables": "nope"}},
+		{"widgets not an array", map[string]any{"widgets": "nope"}},
+		{"tags not an array", map[string]any{"tags": "nope"}},
+		{"non-string tag element", map[string]any{"tags": []any{"ok", 42}}},
+		{"scalar widget field wrong type", map[string]any{"widgets": []any{
+			map[string]any{"id": "w1", "panelTypes": "graph", "title": float64(3)},
+		}}},
+		{"nested query wrong type", map[string]any{"widgets": []any{
+			map[string]any{"id": "w1", "panelTypes": "graph", "query": "nope"},
+		}}},
+		{"deep layout coordinate wrong type", map[string]any{
+			"widgets": []any{map[string]any{"id": "w1", "panelTypes": "graph"}},
+			"layout":  []any{map[string]any{"i": "w1", "x": "0", "y": float64(0)}},
+		}},
+	}
+	for _, tc := range cases {
+		t.Run(tc.scenario, func(t *testing.T) {
+			_, err := StorableDashboard{Data: tc.data}.ConvertV1ToV2()
+			require.Error(t, err)
 		})
 	}
 }
@@ -149,8 +176,9 @@ func TestMoldedV1TagsPassValidation(t *testing.T) {
 		"weird*&^chars:val#1",
 	}
 
-	tags, err := convertV1TagsForOrg(orgID, raw)
-	require.NoError(t, err)
+	d := &v1Decoder{}
+	tags := d.convertV1TagsForOrg(orgID, raw)
+	require.NoError(t, d.errIfHasMalformedFields())
 	require.NotEmpty(t, tags)
 	for _, tag := range tags {
 		_, _, err := tagtypes.ValidatePostableTag(tagtypes.PostableTag{Key: tag.Key, Value: tag.Value})
@@ -158,6 +186,39 @@ func TestMoldedV1TagsPassValidation(t *testing.T) {
 		assert.LessOrEqual(t, len(tag.Key), tagtypes.MAX_LEN_TAG_KEY)
 		assert.LessOrEqual(t, len(tag.Value), tagtypes.MAX_LEN_TAG_VALUE)
 	}
+}
+
+// TestConvertV1Panels covers the dispatcher itself: panels are keyed by widget
+// id, and row and empty-id widgets are dropped.
+func TestConvertV1Panels(t *testing.T) {
+	widgets := []any{
+		map[string]any{"id": "g1", "panelTypes": "graph", "title": "CPU"},
+		map[string]any{"id": "t1", "panelTypes": "table"},
+		map[string]any{"id": "row1", "panelTypes": "row", "title": "section"},
+		map[string]any{"id": "", "panelTypes": "graph"},
+	}
+
+	d := &v1Decoder{}
+	panels := d.convertV1Panels(widgets)
+	require.NoError(t, d.errIfHasMalformedFields())
+
+	require.Len(t, panels, 2)
+	require.Contains(t, panels, "g1")
+	require.Contains(t, panels, "t1")
+	assert.Equal(t, PanelKindTimeSeries, panels["g1"].Spec.Plugin.Kind)
+	assert.Equal(t, "CPU", panels["g1"].Spec.Display.Name)
+	assert.Equal(t, PanelKindTable, panels["t1"].Spec.Plugin.Kind)
+	assert.NotContains(t, panels, "row1", "row widgets are handled by the layout pass")
+}
+
+// TestConvertV1PanelsFlagsUnknownType verifies an unrecognized panelTypes is
+// recorded as a problem (so the dashboard is logged and skipped) rather than
+// silently dropped.
+func TestConvertV1PanelsFlagsUnknownType(t *testing.T) {
+	d := &v1Decoder{}
+	panels := d.convertV1Panels([]any{map[string]any{"id": "u1", "panelTypes": "somethingelse"}})
+	assert.NotContains(t, panels, "u1")
+	require.Error(t, d.errIfHasMalformedFields())
 }
 
 func TestConvertGraphWidgetToTimeSeriesPanel(t *testing.T) {
@@ -195,7 +256,7 @@ func TestConvertGraphWidgetToTimeSeriesPanel(t *testing.T) {
 		},
 	}
 
-	panel := convertGraphWidget(widget)
+	panel := (&v1Decoder{}).convertGraphWidget(widget)
 	require.NotNil(t, panel)
 
 	assert.Equal(t, PanelKindPanel, panel.Kind)
@@ -239,7 +300,7 @@ func TestConvertGraphWidgetDefaultsForMissingFields(t *testing.T) {
 		"title":      "minimal",
 	}
 
-	panel := convertGraphWidget(widget)
+	panel := (&v1Decoder{}).convertGraphWidget(widget)
 	require.NotNil(t, panel)
 
 	spec, ok := panel.Spec.Plugin.Spec.(*TimeSeriesPanelSpec)
@@ -284,8 +345,6 @@ func TestConvertV1ToV2HappyPath(t *testing.T) {
 				map[string]any{"id": "panel-2", "panelTypes": "table"},
 				// widget with missing id — dropped
 				map[string]any{"panelTypes": "graph", "title": "no id"},
-				// unknown panel kind — silently dropped
-				map[string]any{"id": "panel-3", "panelTypes": "totally-new"},
 			},
 		},
 	}
@@ -310,7 +369,7 @@ func TestConvertV1ToV2HappyPath(t *testing.T) {
 	assert.Equal(t, "team", dashboard.Tags[1].Key)
 	assert.Equal(t, "platform", dashboard.Tags[1].Value)
 
-	require.Len(t, dashboard.Spec.Panels, 2, "graph and table map; row, no-id, and unknown kinds are dropped")
+	require.Len(t, dashboard.Spec.Panels, 2, "graph and table map; row and no-id widgets are dropped")
 	require.Contains(t, dashboard.Spec.Panels, "panel-1")
 	require.Contains(t, dashboard.Spec.Panels, "panel-2")
 	assert.Equal(t, PanelKindTimeSeries, dashboard.Spec.Panels["panel-1"].Spec.Plugin.Kind)
@@ -374,7 +433,7 @@ func TestConvertBarWidgetToBarChartPanel(t *testing.T) {
 		"legendPosition":  "right",
 	}
 
-	panel := convertBarWidget(widget)
+	panel := (&v1Decoder{}).convertBarWidget(widget)
 	require.NotNil(t, panel)
 	assert.Equal(t, PanelKindBarChart, panel.Spec.Plugin.Kind)
 
@@ -410,7 +469,7 @@ func TestConvertValueWidgetToNumberPanel(t *testing.T) {
 		},
 	}
 
-	panel := convertValueWidget(widget)
+	panel := (&v1Decoder{}).convertValueWidget(widget)
 	require.NotNil(t, panel)
 	assert.Equal(t, PanelKindNumber, panel.Spec.Plugin.Kind)
 
@@ -421,6 +480,22 @@ func TestConvertValueWidgetToNumberPanel(t *testing.T) {
 	assert.Equal(t, ComparisonOperatorAboveOrEqual, spec.Thresholds[0].Operator)
 	assert.Equal(t, "#ff0000", spec.Thresholds[0].Color)
 	assert.Equal(t, ThresholdFormatBackground, spec.Thresholds[0].Format)
+}
+
+// TestConvertV1ThresholdFlagsUnknownOperator verifies an unrecognized threshold
+// comparison operator is recorded as a problem rather than silently defaulting
+// to ">".
+func TestConvertV1ThresholdFlagsUnknownOperator(t *testing.T) {
+	widget := map[string]any{
+		"id":         "val-1",
+		"panelTypes": "value",
+		"thresholds": []any{
+			map[string]any{"thresholdColor": "#fff", "thresholdOperator": "BOGUS", "thresholdValue": float64(1)},
+		},
+	}
+	d := &v1Decoder{}
+	d.convertValueWidget(widget)
+	require.Error(t, d.errIfHasMalformedFields())
 }
 
 func TestConvertTableWidgetToTablePanel(t *testing.T) {
@@ -447,7 +522,7 @@ func TestConvertTableWidgetToTablePanel(t *testing.T) {
 		},
 	}
 
-	panel := convertTableWidget(widget)
+	panel := (&v1Decoder{}).convertTableWidget(widget)
 	require.NotNil(t, panel)
 	assert.Equal(t, PanelKindTable, panel.Spec.Plugin.Kind)
 
@@ -468,7 +543,7 @@ func TestConvertPieWidgetToPieChartPanel(t *testing.T) {
 		"legendPosition": "right",
 	}
 
-	panel := convertPieWidget(widget)
+	panel := (&v1Decoder{}).convertPieWidget(widget)
 	require.NotNil(t, panel)
 	assert.Equal(t, PanelKindPieChart, panel.Spec.Plugin.Kind)
 
@@ -487,7 +562,7 @@ func TestConvertHistogramWidget(t *testing.T) {
 		"mergeAllActiveQueries": true,
 	}
 
-	panel := convertHistogramWidget(widget)
+	panel := (&v1Decoder{}).convertHistogramWidget(widget)
 	require.NotNil(t, panel)
 	assert.Equal(t, PanelKindHistogram, panel.Spec.Plugin.Kind)
 
@@ -510,7 +585,7 @@ func TestConvertListWidget(t *testing.T) {
 		},
 	}
 
-	panel := convertListWidget(widget)
+	panel := (&v1Decoder{}).convertListWidget(widget)
 	require.NotNil(t, panel)
 	assert.Equal(t, PanelKindList, panel.Spec.Plugin.Kind)
 
@@ -536,7 +611,7 @@ func TestConvertV1WidgetQuerySinglePromQL(t *testing.T) {
 		},
 	}
 
-	queries := convertV1WidgetQuery(widget, PanelKindTimeSeries)
+	queries := (&v1Decoder{}).convertV1WidgetQuery(widget, PanelKindTimeSeries)
 	require.Len(t, queries, 1)
 	assert.Equal(t, qb.RequestTypeTimeSeries, queries[0].Kind)
 	assert.Equal(t, QueryKindPromQL, queries[0].Spec.Plugin.Kind)
@@ -560,7 +635,7 @@ func TestConvertV1WidgetQuerySingleClickHouse(t *testing.T) {
 		},
 	}
 
-	queries := convertV1WidgetQuery(widget, PanelKindTable)
+	queries := (&v1Decoder{}).convertV1WidgetQuery(widget, PanelKindTable)
 	require.Len(t, queries, 1)
 	assert.Equal(t, qb.RequestTypeScalar, queries[0].Kind)
 	assert.Equal(t, QueryKindClickHouseSQL, queries[0].Spec.Plugin.Kind)
@@ -569,6 +644,35 @@ func TestConvertV1WidgetQuerySingleClickHouse(t *testing.T) {
 	require.True(t, ok)
 	assert.Equal(t, "Q", ch.Name)
 	assert.Equal(t, "SELECT 1", ch.Query)
+}
+
+func TestConvertV1WidgetQuerySingleBuilderUsesBuilderDirectly(t *testing.T) {
+	widget := map[string]any{
+		"id":         "b-1",
+		"panelTypes": "graph",
+		"query": map[string]any{
+			"queryType": "builder",
+			"builder": map[string]any{
+				"queryData": []any{
+					map[string]any{
+						"queryName":    "A",
+						"expression":   "A",
+						"dataSource":   "metrics",
+						"aggregations": []any{map[string]any{"metricName": "signoz_calls_total"}},
+					},
+				},
+			},
+		},
+	}
+
+	queries := (&v1Decoder{}).convertV1WidgetQuery(widget, PanelKindTimeSeries)
+	require.Len(t, queries, 1)
+	assert.Equal(t, qb.RequestTypeTimeSeries, queries[0].Kind)
+	assert.Equal(t, QueryKindBuilder, queries[0].Spec.Plugin.Kind, "a lone builder query is not wrapped in a CompositeQuery")
+	assert.Equal(t, "A", queries[0].Spec.Name)
+
+	_, ok := queries[0].Spec.Plugin.Spec.(*BuilderQuerySpec)
+	require.True(t, ok)
 }
 
 func TestConvertV1WidgetQueryMultipleBuilderWrapsInComposite(t *testing.T) {
@@ -599,7 +703,7 @@ func TestConvertV1WidgetQueryMultipleBuilderWrapsInComposite(t *testing.T) {
 		},
 	}
 
-	queries := convertV1WidgetQuery(widget, PanelKindTimeSeries)
+	queries := (&v1Decoder{}).convertV1WidgetQuery(widget, PanelKindTimeSeries)
 	require.Len(t, queries, 1)
 	assert.Equal(t, qb.RequestTypeTimeSeries, queries[0].Kind)
 	assert.Equal(t, QueryKindComposite, queries[0].Spec.Plugin.Kind)
@@ -630,7 +734,7 @@ func TestConvertV1WidgetQueryListPanelUsesBuilderDirectly(t *testing.T) {
 		},
 	}
 
-	queries := convertV1WidgetQuery(widget, PanelKindList)
+	queries := (&v1Decoder{}).convertV1WidgetQuery(widget, PanelKindList)
 	require.Len(t, queries, 1)
 	assert.Equal(t, qb.RequestTypeRaw, queries[0].Kind)
 	assert.Equal(t, QueryKindBuilder, queries[0].Spec.Plugin.Kind)
@@ -644,7 +748,7 @@ func TestConvertV1WidgetQueryListPanelUsesBuilderDirectly(t *testing.T) {
 
 func TestConvertV1WidgetQueryNoQuery(t *testing.T) {
 	widget := map[string]any{"id": "x", "panelTypes": "graph"}
-	queries := convertV1WidgetQuery(widget, PanelKindTimeSeries)
+	queries := (&v1Decoder{}).convertV1WidgetQuery(widget, PanelKindTimeSeries)
 	assert.Nil(t, queries)
 }
 
@@ -664,8 +768,9 @@ func TestConvertV1LayoutsRootOnly(t *testing.T) {
 		},
 	}
 
-	layouts, err := convertV1Layouts(data)
-	require.NoError(t, err)
+	d := &v1Decoder{}
+	layouts := d.convertV1Layouts(data)
+	require.NoError(t, d.errIfHasMalformedFields())
 	require.Len(t, layouts, 1)
 	assert.Equal(t, dashboard.KindGridLayout, layouts[0].Kind)
 
@@ -699,8 +804,9 @@ func TestConvertV1LayoutsWithCollapsedSection(t *testing.T) {
 		},
 	}
 
-	layouts, err := convertV1Layouts(data)
-	require.NoError(t, err)
+	d := &v1Decoder{}
+	layouts := d.convertV1Layouts(data)
+	require.NoError(t, d.errIfHasMalformedFields())
 	require.Len(t, layouts, 2, "one root grid (p-2) + one section grid (row-1 with p-1)")
 
 	rootSpec, ok := layouts[0].Spec.(*dashboard.GridLayoutSpec)
@@ -743,8 +849,9 @@ func TestConvertV1LayoutsExpandedSectionsNoPanelMap(t *testing.T) {
 		},
 	}
 
-	layouts, err := convertV1Layouts(data)
-	require.NoError(t, err)
+	d := &v1Decoder{}
+	layouts := d.convertV1Layouts(data)
+	require.NoError(t, d.errIfHasMalformedFields())
 	require.Len(t, layouts, 2, "two row sections, no root grid")
 
 	s1, ok := layouts[0].Spec.(*dashboard.GridLayoutSpec)
@@ -772,8 +879,9 @@ func TestConvertV1LayoutsExpandedSectionsNoPanelMap(t *testing.T) {
 }
 
 func TestConvertV1LayoutsEmpty(t *testing.T) {
-	layouts, err := convertV1Layouts(StorableDashboardData{})
-	require.NoError(t, err)
+	d := &v1Decoder{}
+	layouts := d.convertV1Layouts(StorableDashboardData{})
+	require.NoError(t, d.errIfHasMalformedFields())
 	assert.Nil(t, layouts)
 }
 
@@ -815,8 +923,9 @@ func TestConvertV1VariablesAllTypes(t *testing.T) {
 		},
 	}
 
-	vars, err := convertV1Variables(raw)
-	require.NoError(t, err)
+	d := &v1Decoder{}
+	vars := d.convertV1Variables(raw)
+	require.NoError(t, d.errIfHasMalformedFields())
 	require.Len(t, vars, 4)
 
 	// Ordered by `order` ascending: u-3 (0), u-1 (1), u-2 (2), u-4 (3)
@@ -852,17 +961,26 @@ func TestConvertV1VariablesAllTypes(t *testing.T) {
 	assert.Equal(t, "hello", text.Value)
 }
 
-func TestConvertV1VariablesSkipsUnnamedAndUnknownTypes(t *testing.T) {
+func TestConvertV1VariablesSkipsUnnamed(t *testing.T) {
 	raw := map[string]any{
 		"u-1": map[string]any{"name": "", "type": "QUERY"},
-		"u-2": map[string]any{"name": "ok", "type": "WHATEVER"},
 		"u-3": map[string]any{"name": "good", "type": "CUSTOM", "customValue": "a"},
 	}
-	vars, err := convertV1Variables(raw)
-	require.NoError(t, err)
+	d := &v1Decoder{}
+	vars := d.convertV1Variables(raw)
+	require.NoError(t, d.errIfHasMalformedFields())
 	require.Len(t, vars, 1)
 	spec := vars[0].Spec.(*ListVariableSpec)
 	assert.Equal(t, "good", spec.Name)
+}
+
+// TestConvertV1VariablesFlagsUnknownType verifies a named variable with an
+// unrecognized type is recorded as a problem (dashboard logged and skipped)
+// rather than silently dropped.
+func TestConvertV1VariablesFlagsUnknownType(t *testing.T) {
+	d := &v1Decoder{}
+	d.convertV1Variables(map[string]any{"u-1": map[string]any{"name": "ok", "type": "WHATEVER"}})
+	require.Error(t, d.errIfHasMalformedFields())
 }
 
 func TestConvertV1VariablesDefaultFromSelectedSlice(t *testing.T) {
@@ -874,8 +992,9 @@ func TestConvertV1VariablesDefaultFromSelectedSlice(t *testing.T) {
 			"selectedValue": []any{"foo", "", "bar"},
 		},
 	}
-	vars, err := convertV1Variables(raw)
-	require.NoError(t, err)
+	d := &v1Decoder{}
+	vars := d.convertV1Variables(raw)
+	require.NoError(t, d.errIfHasMalformedFields())
 	require.Len(t, vars, 1)
 	spec := vars[0].Spec.(*ListVariableSpec)
 	require.NotNil(t, spec.DefaultValue)

@@ -19,64 +19,61 @@ import (
 //	CUSTOM   → ListVariable + signoz/CustomVariable
 //	DYNAMIC  → ListVariable + signoz/DynamicVariable
 //	TEXTBOX  → TextVariable
-func convertV1Variables(raw any) ([]Variable, error) {
+func (d *v1Decoder) convertV1Variables(raw any) []Variable {
 	if raw == nil {
-		return nil, nil
+		return nil
 	}
-	rawMap, ok := raw.(map[string]any)
+	rawVariablesMap, ok := raw.(map[string]any)
 	if !ok {
-		return nil, malformedV1FieldErr("variables", raw)
-	}
-	if len(rawMap) == 0 {
-		return nil, nil
+		d.noteMalformedField("variables", raw)
+		return nil
 	}
 	type ordered struct {
-		key string
-		val map[string]any
-		ord float64
+		variableID      string
+		variableContent map[string]any
+		order           float64
 	}
-	entries := make([]ordered, 0, len(rawMap))
-	for key, value := range rawMap {
-		m, ok := value.(map[string]any)
+	entries := make([]ordered, 0, len(rawVariablesMap))
+	for variableID, variableContentRaw := range rawVariablesMap {
+		variableContent, ok := variableContentRaw.(map[string]any)
 		if !ok {
+			d.noteMalformedField("variables."+variableID, variableContentRaw)
 			continue
 		}
-		ord, _ := m["order"].(float64)
-		entries = append(entries, ordered{key: key, val: m, ord: ord})
+		entries = append(entries, ordered{variableID: variableID, variableContent: variableContent, order: d.readFloat(variableContent, "order")})
 	}
 	sort.SliceStable(entries, func(i, j int) bool {
-		if entries[i].ord != entries[j].ord {
-			return entries[i].ord < entries[j].ord
+		if entries[i].order != entries[j].order {
+			return entries[i].order < entries[j].order
 		}
-		return entries[i].key < entries[j].key
+		return entries[i].variableID < entries[j].variableID
 	})
 
-	out := make([]Variable, 0, len(entries))
+	variablesV2 := make([]Variable, 0, len(entries))
 	for _, e := range entries {
-		v, ok := convertV1Variable(e.val)
+		v, ok := d.convertV1Variable(e.variableContent)
 		if !ok {
 			continue
 		}
-		out = append(out, v)
+		variablesV2 = append(variablesV2, v)
 	}
-	return out, nil
+	return variablesV2
 }
 
-func convertV1Variable(v map[string]any) (Variable, bool) {
-	name, _ := v["name"].(string)
+func (d *v1Decoder) convertV1Variable(v map[string]any) (Variable, bool) {
+	name := d.readString(v, "name")
 	if name == "" {
 		return Variable{}, false
 	}
-	description, _ := v["description"].(string)
-	kind, _ := v["type"].(string)
+	description := d.readString(v, "description")
+	kind := d.readString(v, "type")
 
 	switch kind {
 	case "TEXTBOX":
-		value, _ := v["textboxValue"].(string)
 		spec := &dashboard.TextVariableSpec{
 			TextSpec: variable.TextSpec{
 				Display: &variable.Display{Name: name, Description: description},
-				Value:   value,
+				Value:   d.readString(v, "textboxValue"),
 			},
 			Name: name,
 		}
@@ -85,37 +82,39 @@ func convertV1Variable(v map[string]any) (Variable, bool) {
 	case "QUERY", "CUSTOM", "DYNAMIC":
 		listSpec := &ListVariableSpec{
 			Display:         Display{Name: name, Description: description},
-			AllowAllValue:   valueAt[bool](v, "showALLOption"),
-			AllowMultiple:   valueAt[bool](v, "multiSelect"),
-			CustomAllValue:  valueAt[string](v, "customAllValue"),
-			CapturingRegexp: valueAt[string](v, "capturingRegexp"),
-			Sort:            mapV1Sort(v["sort"]),
-			Plugin:          variablePluginFor(kind, v),
+			AllowAllValue:   d.readBool(v, "showALLOption"),
+			AllowMultiple:   d.readBool(v, "multiSelect"),
+			CustomAllValue:  d.readString(v, "customAllValue"),
+			CapturingRegexp: d.readString(v, "capturingRegexp"),
+			Sort:            mapV1Sort(d.readString(v, "sort")),
+			Plugin:          d.variablePluginFor(kind, v),
 			Name:            name,
 		}
 		if dv := mapV1VariableDefault(v); dv != nil {
 			listSpec.DefaultValue = dv
 		}
 		return Variable{Kind: variable.KindList, Spec: listSpec}, true
-	}
 
-	return Variable{}, false
+	default:
+		d.note("variable %q has unknown type %q", name, kind)
+		return Variable{}, false
+	}
 }
 
-func variablePluginFor(kind string, v map[string]any) VariablePlugin {
+func (d *v1Decoder) variablePluginFor(kind string, v map[string]any) VariablePlugin {
 	switch kind {
 	case "QUERY":
 		return VariablePlugin{
 			Kind: VariableKindQuery,
-			Spec: &QueryVariableSpec{QueryValue: valueAt[string](v, "queryValue")},
+			Spec: &QueryVariableSpec{QueryValue: d.readString(v, "queryValue")},
 		}
 	case "CUSTOM":
 		return VariablePlugin{
 			Kind: VariableKindCustom,
-			Spec: &CustomVariableSpec{CustomValue: valueAt[string](v, "customValue")},
+			Spec: &CustomVariableSpec{CustomValue: d.readString(v, "customValue")},
 		}
 	case "DYNAMIC":
-		spec := &DynamicVariableSpec{Name: valueAt[string](v, "dynamicVariablesAttribute")}
+		spec := &DynamicVariableSpec{Name: d.readString(v, "dynamicVariablesAttribute")}
 		if signal := signalFromDataSource(v["dynamicVariablesSource"]); !signal.IsZero() {
 			spec.Signal = signal
 		}
@@ -124,6 +123,9 @@ func variablePluginFor(kind string, v map[string]any) VariablePlugin {
 	return VariablePlugin{}
 }
 
+// mapV1VariableDefault reads selectedValue/defaultValue, both polymorphic
+// (string|array), so it indexes the raw value and lets defaultValueFromAny
+// type-switch — no typed accessor, intentionally lenient.
 func mapV1VariableDefault(v map[string]any) *variable.DefaultValue {
 	if raw, ok := v["selectedValue"]; ok {
 		return defaultValueFromAny(raw)
@@ -159,8 +161,7 @@ func defaultValueFromAny(raw any) *variable.DefaultValue {
 	return nil
 }
 
-func mapV1Sort(raw any) *variable.Sort {
-	s, _ := raw.(string)
+func mapV1Sort(s string) *variable.Sort {
 	var sort variable.Sort
 	switch s {
 	case "ASC":
