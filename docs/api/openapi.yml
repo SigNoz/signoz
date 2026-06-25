@@ -5602,6 +5602,12 @@ components:
           format: double
           type: number
       type: object
+    Querybuildertypesv5BuilderAggregation:
+      oneOf:
+      - $ref: '#/components/schemas/Querybuildertypesv5TraceAggregation'
+      - $ref: '#/components/schemas/Querybuildertypesv5LogAggregation'
+      - $ref: '#/components/schemas/Querybuildertypesv5MetricAggregation'
+      type: object
     Querybuildertypesv5ClickHouseQuery:
       properties:
         disabled:
@@ -5917,6 +5923,57 @@ components:
         type:
           $ref: '#/components/schemas/Querybuildertypesv5JoinType'
       type: object
+    Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5BuilderAggregation:
+      properties:
+        aggregations:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5BuilderAggregation'
+          type: array
+        cursor:
+          type: string
+        disabled:
+          type: boolean
+        filter:
+          $ref: '#/components/schemas/Querybuildertypesv5Filter'
+        functions:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5Function'
+          type: array
+        groupBy:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
+          type: array
+        having:
+          $ref: '#/components/schemas/Querybuildertypesv5Having'
+        legend:
+          type: string
+        limit:
+          type: integer
+        limitBy:
+          $ref: '#/components/schemas/Querybuildertypesv5LimitBy'
+        name:
+          type: string
+        offset:
+          type: integer
+        order:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+          type: array
+        secondaryAggregations:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5SecondaryAggregation'
+          type: array
+        selectFields:
+          items:
+            $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+          type: array
+        signal:
+          $ref: '#/components/schemas/TelemetrytypesSignal'
+        source:
+          $ref: '#/components/schemas/TelemetrytypesSource'
+        stepInterval:
+          $ref: '#/components/schemas/Querybuildertypesv5Step'
+      type: object
     Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregation:
       properties:
         aggregations:
@@ -6139,34 +6196,27 @@ components:
           type: array
       type: object
     Querybuildertypesv5QueryEnvelope:
+      discriminator:
+        mapping:
+          builder_formula: '#/components/schemas/Querybuildertypesv5QueryEnvelopeFormula'
+          builder_join: '#/components/schemas/Querybuildertypesv5QueryEnvelopeJoin'
+          builder_query: '#/components/schemas/Querybuildertypesv5QueryEnvelopeBuilder'
+          builder_trace_operator: '#/components/schemas/Querybuildertypesv5QueryEnvelopeTraceOperator'
+          clickhouse_sql: '#/components/schemas/Querybuildertypesv5QueryEnvelopeClickHouseSQL'
+          promql: '#/components/schemas/Querybuildertypesv5QueryEnvelopePromQL'
+        propertyName: type
       oneOf:
-      - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopeBuilderTrace'
-      - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopeBuilderLog'
-      - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopeBuilderMetric'
+      - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopeBuilder'
       - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopeFormula'
       - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopeJoin'
       - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopeTraceOperator'
       - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopePromQL'
       - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopeClickHouseSQL'
       type: object
-    Querybuildertypesv5QueryEnvelopeBuilderLog:
+    Querybuildertypesv5QueryEnvelopeBuilder:
       properties:
         spec:
-          $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregation'
-        type:
-          $ref: '#/components/schemas/Querybuildertypesv5QueryType'
-      type: object
-    Querybuildertypesv5QueryEnvelopeBuilderMetric:
-      properties:
-        spec:
-          $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregation'
-        type:
-          $ref: '#/components/schemas/Querybuildertypesv5QueryType'
-      type: object
-    Querybuildertypesv5QueryEnvelopeBuilderTrace:
-      properties:
-        spec:
-          $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregation'
+          $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5BuilderAggregation'
         type:
           $ref: '#/components/schemas/Querybuildertypesv5QueryType'
       type: object
