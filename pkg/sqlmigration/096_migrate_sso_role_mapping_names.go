@@ -30,6 +30,12 @@ var legacyRoleToManagedRoleName = map[string]string{
 	"VIEWER": "signoz-viewer",
 }
 
+type ssoRoleMapping struct {
+	DefaultRole      string            `json:"defaultRole"`
+	GroupMappings    map[string]string `json:"groupMappings"`
+	UseRoleAttribute bool              `json:"useRoleAttribute"`
+}
+
 func NewMigrateSSORoleMappingNamesFactory(sqlstore sqlstore.SQLStore) factory.ProviderFactory[SQLMigration, Config] {
 	return factory.NewProviderFactory(
 		factory.MustNewName("migrate_sso_role_mapping_names"),
@@ -70,46 +76,21 @@ func (migration *migrateSSORoleMappingNames) Up(ctx context.Context, db *bun.DB)
 			continue
 		}
 
-		roleMapping := make(map[string]json.RawMessage)
+		var roleMapping ssoRoleMapping
 		if err := json.Unmarshal(roleMappingRaw, &roleMapping); err != nil {
 			migration.logger.WarnContext(ctx, "skipping auth domain with unreadable role mapping", slog.String("auth_domain_id", row.ID), errors.Attr(err))
 			continue
 		}
 
 		changed := false
-
-		if defaultRoleRaw, ok := roleMapping["defaultRole"]; ok {
-			var defaultRole string
-			if err := json.Unmarshal(defaultRoleRaw, &defaultRole); err == nil {
-				if managed, ok := legacyRoleToManagedRoleName[defaultRole]; ok {
-					normalized, err := json.Marshal(managed)
-					if err != nil {
-						return err
-					}
-					roleMapping["defaultRole"] = normalized
-					changed = true
-				}
-			}
+		if managed, ok := legacyRoleToManagedRoleName[roleMapping.DefaultRole]; ok {
+			roleMapping.DefaultRole = managed
+			changed = true
 		}
-
-		if groupMappingsRaw, ok := roleMapping["groupMappings"]; ok && string(groupMappingsRaw) != "null" {
-			groupMappings := make(map[string]string)
-			if err := json.Unmarshal(groupMappingsRaw, &groupMappings); err == nil {
-				groupChanged := false
-				for group, role := range groupMappings {
-					if managed, ok := legacyRoleToManagedRoleName[role]; ok {
-						groupMappings[group] = managed
-						groupChanged = true
-					}
-				}
-				if groupChanged {
-					normalized, err := json.Marshal(groupMappings)
-					if err != nil {
-						return err
-					}
-					roleMapping["groupMappings"] = normalized
-					changed = true
-				}
+		for group, role := range roleMapping.GroupMappings {
+			if managed, ok := legacyRoleToManagedRoleName[role]; ok {
+				roleMapping.GroupMappings[group] = managed
+				changed = true
 			}
 		}
 
