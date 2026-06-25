@@ -14,7 +14,7 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import APIError from 'types/api/error';
 
 import PermissionEditor from './components/PermissionEditor';
-import { useCreateEditRolePageCallbacks } from './useCreateEditRolePageCallbacks';
+import { useCreateEditRolePageActions } from './useCreateEditRolePageActions';
 import { useNavigationBlocker } from '../../../hooks/useNavigationBlocker';
 
 import styles from './CreateEditRolePage.module.scss';
@@ -51,7 +51,7 @@ function CreateEditRolePage(): JSX.Element {
 		isAuthZLoading,
 		deniedPermission,
 		loadError,
-	} = useCreateEditRolePageCallbacks(roleId, roleName);
+	} = useCreateEditRolePageActions(roleId, roleName);
 
 	const { isBlocked, confirmNavigation, cancelNavigation, allowNextNavigation } =
 		useNavigationBlocker(hasUnsavedChanges);

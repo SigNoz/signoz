@@ -23,7 +23,7 @@ interface UseViewRolePageCallbacksResult {
 	handleTabChange: (key: string) => void;
 }
 
-export function useViewRolePageCallbacks(): UseViewRolePageCallbacksResult {
+export function useViewRolePageActions(): UseViewRolePageCallbacksResult {
 	const { pathname } = useLocation();
 	const history = useHistory();
 	const urlQuery = useUrlQuery();

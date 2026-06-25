@@ -23,7 +23,7 @@ import { toAPIError } from 'utils/errorUtils';
 import DeleteRoleModal from '../DeleteRoleModal/DeleteRoleModal';
 import PermissionOverview from './components/PermissionOverview';
 import ReadOnlyJsonViewer from './ReadOnlyJsonViewer';
-import { useViewRolePageCallbacks } from './useViewRolePageCallbacks';
+import { useViewRolePageActions } from './useViewRolePageActions';
 
 import styles from './ViewRolePage.module.scss';
 
@@ -43,7 +43,7 @@ function ViewRolePage(): JSX.Element {
 		handleCancel,
 		handleModeChange,
 		handleTabChange,
-	} = useViewRolePageCallbacks();
+	} = useViewRolePageActions();
 
 	const {
 		hasReadPermission,

@@ -48,7 +48,7 @@ interface UseCreateEditRolePageCallbacksResult {
 	deniedPermission: string;
 }
 
-export function useCreateEditRolePageCallbacks(
+export function useCreateEditRolePageActions(
 	roleId: string,
 	roleName: string,
 ): UseCreateEditRolePageCallbacksResult {
