@@ -11,6 +11,7 @@ import { CACHE_BUCKETS, CACHE_MODE_OPTIONS } from '../../../../../constants';
 import styles from './ExtraPricingBuckets.module.scss';
 import { parsePricingAmount } from '../../../../../utils';
 import type { CacheBucketKey, DrawerDraft } from '../../../../../types';
+import { Tooltip } from 'antd';
 
 type Pricing = DrawerDraft['pricing'];
 
@@ -93,9 +94,12 @@ function ExtraPricingBuckets({
 						}
 						testId={`drawer-${bucket.testId}-cost`}
 					/>
-					<Typography.Text as="span" size="small" color="muted">
-						/ 1M
-					</Typography.Text>
+					<Tooltip title="Pricing per 1M tokens" placement="left">
+						<Typography.Text size="xs" color="muted">
+							1M
+						</Typography.Text>
+					</Tooltip>
+
 					{!isReadOnly && (
 						<Button
 							size="icon"

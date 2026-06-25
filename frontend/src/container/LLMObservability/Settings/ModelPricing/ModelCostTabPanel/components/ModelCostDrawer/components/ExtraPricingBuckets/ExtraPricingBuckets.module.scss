@@ -32,10 +32,10 @@
 .bucketRow {
 	display: flex;
 	align-items: center;
-	gap: var(--spacing-5);
+	gap: var(--spacing-2);
 
 	input {
-		flex: 1 1 auto;
+		flex: 1 auto auto;
 		min-width: 0;
 	}
 }
