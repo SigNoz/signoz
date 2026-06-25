@@ -32,6 +32,7 @@ function BarPanelRenderer({
 	panelId,
 	panel,
 	data,
+	refetch,
 	onClick,
 	onDragSelect,
 	dashboardPreference,
@@ -42,14 +43,13 @@ function BarPanelRenderer({
 	const isDarkMode = useIsDarkMode();
 	const { timezone } = useTimezone();
 
-	// The registry guarantees the kind, so the cast is a boundary narrowing.
 	const spec = useMemo<DashboardtypesBarChartPanelSpecDTO>(
-		() => panel.spec.plugin.spec as DashboardtypesBarChartPanelSpecDTO,
+		() => panel.spec.plugin.spec,
 		[panel.spec.plugin.spec],
 	);
 
 	const builderQueries = useMemo(
-		() => getBuilderQueries(panel.spec.queries),
+		() => getBuilderQueries(panel.spec.queries || []),
 		[panel.spec.queries],
 	);
 
@@ -138,7 +138,7 @@ function BarPanelRenderer({
 			data-testid="bar-panel-renderer"
 			className={PanelStyles.panelContainer}
 		>
-			{flatSeries.length === 0 && <NoData />}
+			{flatSeries.length === 0 && <NoData onRetry={refetch} />}
 			{flatSeries.length > 0 &&
 				containerDimensions.width > 0 &&
 				containerDimensions.height > 0 && (
