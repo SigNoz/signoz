@@ -76,7 +76,9 @@ function ExtraPricingBuckets({
 
 			{addedBuckets.map((bucket) => (
 				<div className={styles.bucketRow} key={bucket.key}>
-					<span className={styles.bucketRowName}>{bucket.label}</span>
+					<Typography.Text as="span" className={styles.bucketRowName}>
+						{bucket.label}
+					</Typography.Text>
 					<Input
 						type="number"
 						min={0}

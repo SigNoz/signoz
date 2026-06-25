@@ -135,9 +135,9 @@ function ModelCostDrawer({
 			<div className={styles.drawerSection}>
 				<label htmlFor="billing-model-id">
 					Billing model ID{' '}
-					<Typography.Text as="span" color="danger">
+					<span className={styles.required} aria-hidden="true">
 						*
-					</Typography.Text>
+					</span>
 				</label>
 				<Controller
 					name="modelName"
@@ -150,6 +150,7 @@ function ModelCostDrawer({
 							<Input
 								id="billing-model-id"
 								placeholder="e.g. openai:gpt-4o"
+								required
 								value={field.value}
 								disabled={mode === 'edit' || metadataReadOnly}
 								aria-invalid={!!fieldState.error}

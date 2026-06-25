@@ -38,12 +38,16 @@ function PricingFields({
 			<div className={styles.pricingGrid}>
 				<div className={styles.pricingField}>
 					<label htmlFor="input-cost">
-						Input cost <span className={styles.required}>*</span>
+						Input cost{' '}
+						<span className={styles.required} aria-hidden="true">
+							*
+						</span>
 					</label>
 					<Input
 						id="input-cost"
 						type="number"
 						step={0.01}
+						required
 						value={pricing.input ?? ''}
 						disabled={isReadOnly}
 						onChange={(e): void =>
@@ -54,12 +58,16 @@ function PricingFields({
 				</div>
 				<div className={styles.pricingField}>
 					<label htmlFor="output-cost">
-						Output cost <span className={styles.required}>*</span>
+						Output cost{' '}
+						<span className={styles.required} aria-hidden="true">
+							*
+						</span>
 					</label>
 					<Input
 						id="output-cost"
 						type="number"
 						step={0.01}
+						required
 						value={pricing.output ?? ''}
 						disabled={isReadOnly}
 						onChange={(e): void =>

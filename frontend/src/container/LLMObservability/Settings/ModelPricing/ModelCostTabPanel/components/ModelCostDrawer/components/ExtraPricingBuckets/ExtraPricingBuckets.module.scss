@@ -42,9 +42,6 @@
 
 .bucketRowName {
 	flex: 0 0 110px;
-	font-size: 12px;
-	color: var(--l2-foreground);
-	font-family: var(--code-font-family, monospace);
 }
 
 .bucketAddBtn {
@@ -58,7 +55,7 @@
 	gap: var(--spacing-5);
 	padding: var(--spacing-6);
 	border-radius: 6px;
-	background: var(--l3-background);
+	background: var(--l2-background);
 	border: 1px solid var(--l2-border);
 }
 
