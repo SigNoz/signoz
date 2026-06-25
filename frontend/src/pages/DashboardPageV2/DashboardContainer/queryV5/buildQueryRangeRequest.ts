@@ -4,9 +4,13 @@ import type {
 	Querybuildertypesv5QueryEnvelopeDTO,
 	Querybuildertypesv5QueryRangeRequestDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { Querybuildertypesv5RequestTypeDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	Querybuildertypesv5QueryEnvelopeBuilderDTOType,
+	Querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType,
+	Querybuildertypesv5QueryEnvelopePromQLDTOType,
+	Querybuildertypesv5RequestTypeDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import type { QueryEnvelope } from 'types/api/v5/queryRange';
 
 // Narrow view over the envelope spec variants. Orval erases envelope `spec` to `unknown`, so
 // shared fields are read through this view with a localized cast at the envelope boundary.
@@ -61,19 +65,27 @@ export function toQueryEnvelopes(
 		case 'signoz/CompositeQuery':
 			return (plugin.spec as Querybuildertypesv5CompositeQueryDTO).queries ?? [];
 		case 'signoz/BuilderQuery':
-			// Built as the hand-rolled QueryEnvelope (plain-string `type`) and cast to
-			// the wire DTO — the generated union's per-variant `type` enums don't
-			// accept the shared QueryType value.
+			// The variant's `spec` is typed (BuilderQuerySpecDTO) but plugin.spec is the
+			// plugin-spec union, so cast the array to the wire DTO.
 			return [
-				{ type: 'builder_query', spec: plugin.spec },
+				{
+					type: Querybuildertypesv5QueryEnvelopeBuilderDTOType.builder_query,
+					spec: plugin.spec,
+				},
 			] as unknown as Querybuildertypesv5QueryEnvelopeDTO[];
 		case 'signoz/PromQLQuery':
 			return [
-				{ type: 'promql', spec: plugin.spec },
+				{
+					type: Querybuildertypesv5QueryEnvelopePromQLDTOType.promql,
+					spec: plugin.spec,
+				},
 			] as unknown as Querybuildertypesv5QueryEnvelopeDTO[];
 		case 'signoz/ClickHouseSQL':
 			return [
-				{ type: 'clickhouse_sql', spec: plugin.spec },
+				{
+					type: Querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType.clickhouse_sql,
+					spec: plugin.spec,
+				},
 			] as unknown as Querybuildertypesv5QueryEnvelopeDTO[];
 		case 'signoz/Formula':
 		case 'signoz/TraceOperator':
@@ -127,8 +139,11 @@ function withBarStepInterval(
 	endMs: number,
 ): Querybuildertypesv5QueryEnvelopeDTO[] {
 	const stepInterval = getBarStepIntervalSeconds(startMs, endMs);
-	return (envelopes as unknown as QueryEnvelope[]).map((envelope) => {
-		if (envelope.type !== 'builder_query') {
+	return envelopes.map((envelope) => {
+		if (
+			envelope.type !==
+			Querybuildertypesv5QueryEnvelopeBuilderDTOType.builder_query
+		) {
 			return envelope;
 		}
 		const spec = envelope.spec as unknown as QuerySpecView;
@@ -147,8 +162,11 @@ function withPagination(
 	envelopes: Querybuildertypesv5QueryEnvelopeDTO[],
 	{ offset, limit }: { offset: number; limit: number },
 ): Querybuildertypesv5QueryEnvelopeDTO[] {
-	return (envelopes as unknown as QueryEnvelope[]).map((envelope) => {
-		if (envelope.type !== 'builder_query') {
+	return envelopes.map((envelope) => {
+		if (
+			envelope.type !==
+			Querybuildertypesv5QueryEnvelopeBuilderDTOType.builder_query
+		) {
 			return envelope;
 		}
 		return {
@@ -233,8 +251,12 @@ export function hasRunnableQueries(queries: DashboardtypesQueryDTO[]): boolean {
 		return false;
 	}
 
-	const metricsSpecs = (envelopes as unknown as QueryEnvelope[])
-		.filter((envelope) => envelope.type === 'builder_query')
+	const metricsSpecs = envelopes
+		.filter(
+			(envelope) =>
+				envelope.type ===
+				Querybuildertypesv5QueryEnvelopeBuilderDTOType.builder_query,
+		)
 		.map((envelope) => envelope.spec as unknown as QuerySpecView)
 		.filter((spec) => spec.signal === 'metrics');
 

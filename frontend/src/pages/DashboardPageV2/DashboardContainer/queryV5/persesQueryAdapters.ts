@@ -7,6 +7,9 @@ import type {
 import {
 	DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBuilderQuerySpecDTOKind as BuilderQueryPluginKind,
 	DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5CompositeQueryDTOKind as CompositeQueryPluginKind,
+	Querybuildertypesv5QueryEnvelopeBuilderDTOType,
+	Querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType,
+	Querybuildertypesv5QueryEnvelopePromQLDTOType,
 } from 'api/generated/services/sigNoz.schemas';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { mapCompositeQueryFromQuery } from 'lib/newQueryBuilder/queryBuilderMappers/mapCompositeQueryFromQuery';
@@ -43,21 +46,28 @@ const toGeneratedEnvelopes = (
 ): Querybuildertypesv5QueryEnvelopeDTO[] =>
 	envelopes as unknown as Querybuildertypesv5QueryEnvelopeDTO[];
 
-// `type` is read through the hand-rolled QueryEnvelope (plain-string union); the
-// generated DTO splits the discriminator into per-variant enums, which don't
-// compare against the shared QueryType enum.
 const isBuilderQueryEnvelope = (
 	envelope: Querybuildertypesv5QueryEnvelopeDTO,
-): boolean => (envelope as unknown as QueryEnvelope).type === 'builder_query';
+): boolean =>
+	envelope.type === Querybuildertypesv5QueryEnvelopeBuilderDTOType.builder_query;
 
 function deriveQueryType(
 	envelopes: Querybuildertypesv5QueryEnvelopeDTO[],
 ): EQueryType {
-	const mapperEnvelopes = toMapperEnvelopes(envelopes);
-	if (mapperEnvelopes.some((e) => e.type === 'promql')) {
+	if (
+		envelopes.some(
+			(e) => e.type === Querybuildertypesv5QueryEnvelopePromQLDTOType.promql,
+		)
+	) {
 		return EQueryType.PROM;
 	}
-	if (mapperEnvelopes.some((e) => e.type === 'clickhouse_sql')) {
+	if (
+		envelopes.some(
+			(e) =>
+				e.type ===
+				Querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType.clickhouse_sql,
+		)
+	) {
 		return EQueryType.CLICKHOUSE;
 	}
 	return EQueryType.QUERY_BUILDER;
