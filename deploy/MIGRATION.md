@@ -267,6 +267,6 @@ out on [Slack][slack].
 [casting-ref]: https://github.com/SigNoz/foundry/blob/main/docs/reference/casting-file.md
 [ch-config]: https://clickhouse.com/docs/operations/configuration-files
 [upgrade-path]: https://signoz.io/docs/operate/upgrade/
-[troubleshooting]: https://signoz.io/docs/setup/foundry/troubleshooting/
+[troubleshooting]: https://signoz.io/docs/setup/foundry/troubleshooting/faq/
 [slack]: https://signoz.io/slack
 [signoz-docs]: https://signoz.io/docs
