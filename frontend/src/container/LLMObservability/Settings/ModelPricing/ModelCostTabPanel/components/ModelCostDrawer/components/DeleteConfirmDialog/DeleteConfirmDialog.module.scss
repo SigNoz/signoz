@@ -1,10 +1,6 @@
 .dialog {
 	background: var(--l2-background);
 	border: 1px solid var(--l1-border);
-
-	:global([data-slot='dialog-title']) {
-		color: var(--l1-foreground);
-	}
 	display: flex;
 	flex-direction: column;
 }

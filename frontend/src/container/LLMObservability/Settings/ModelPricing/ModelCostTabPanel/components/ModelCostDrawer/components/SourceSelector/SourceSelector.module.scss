@@ -15,21 +15,12 @@
 }
 
 .sourceRadioGroup {
-	// @signozhq/ui's RadioGroupItem defaults its unchecked border to
-	// --l3-background, which matches the drawer surface and makes the dot
-	// invisible. Override with a contrasting border so users can see the
-	// unchecked state.
 	--radio-group-item-border-color: var(--l2-border);
 
 	display: flex;
 	flex-direction: column;
 	gap: var(--spacing-4);
 	width: 100%;
-
-	// Layout overrides for @signozhq/ui's RadioGroupItem wrapper. The library
-	// injects single-class CSS at runtime (after our bundled stylesheet loads),
-	// so we use a two-class selector to win the cascade and force the wrapper to
-	// lay the dot on the left with the label text flush beside it.
 	.sourceRadio {
 		display: flex;
 		flex-direction: row;
