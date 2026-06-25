@@ -2,9 +2,7 @@ package authtypes
 
 import (
 	"encoding/json"
-	"strings"
 
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
 )
 
@@ -51,83 +49,101 @@ func (attr *AttributeMapping) UnmarshalJSON(data []byte) error {
 }
 
 type RoleMapping struct {
-	// Default role any new SSO users. Defaults to "VIEWER"
+	// Default role assigned to new SSO users when no group mapping applies.
 	DefaultRole string `json:"defaultRole"`
-	// Map of IDP group names to SigNoz roles. Key is group name, value is SigNoz role
+
+	// Map of IDP group name to SigNoz role name.
 	GroupMappings map[string]string `json:"groupMappings"`
-	// If true, use the role claim directly from IDP instead of group mappings
+
+	// If true, use the role claim directly from IDP instead of group mappings.
 	UseRoleAttribute bool `json:"useRoleAttribute"`
 }
 
-func (typ *RoleMapping) UnmarshalJSON(data []byte) error {
-	type Alias RoleMapping
+func (roleMapping *RoleMapping) UnmarshalJSON(data []byte) error {
+	type alias RoleMapping
 
-	var temp Alias
+	var temp alias
 	if err := json.Unmarshal(data, &temp); err != nil {
 		return err
 	}
 
-	if temp.DefaultRole != "" {
-		if _, err := types.NewRole(strings.ToUpper(temp.DefaultRole)); err != nil {
-			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid default role %s", temp.DefaultRole)
-		}
-	}
-
+	temp.DefaultRole = normalizeRoleName(temp.DefaultRole)
 	for group, role := range temp.GroupMappings {
-		if _, err := types.NewRole(strings.ToUpper(role)); err != nil {
-			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid role %s for group %s", role, group)
-		}
+		temp.GroupMappings[group] = normalizeRoleName(role)
 	}
 
-	*typ = RoleMapping(temp)
+	*roleMapping = RoleMapping(temp)
 	return nil
 }
 
-func (roleMapping *RoleMapping) NewRoleFromCallbackIdentity(callbackIdentity *CallbackIdentity) types.Role {
+func (roleMapping *RoleMapping) NewRolesFromCallbackIdentity(callbackIdentity *CallbackIdentity) []string {
 	if roleMapping == nil {
-		return types.RoleViewer
+		return []string{SigNozViewerRoleName}
 	}
 
 	if roleMapping.UseRoleAttribute && callbackIdentity.Role != "" {
-		if role, err := types.NewRole(strings.ToUpper(callbackIdentity.Role)); err == nil {
-			return role
-		}
+		return []string{normalizeRoleName(callbackIdentity.Role)}
 	}
 
 	if len(roleMapping.GroupMappings) > 0 && len(callbackIdentity.Groups) > 0 {
-		highestRole := types.RoleViewer
-		found := false
-
+		roleNames := make([]string, 0)
+		seen := make(map[string]struct{})
 		for _, group := range callbackIdentity.Groups {
-			if mappedRole, exists := roleMapping.GroupMappings[group]; exists {
-				found = true
-				if role, err := types.NewRole(strings.ToUpper(mappedRole)); err == nil {
-					if compareRoles(role, highestRole) > 0 {
-						highestRole = role
-					}
-				}
+			roleName, exists := roleMapping.GroupMappings[group]
+			if !exists {
+				continue
 			}
+			if _, duplicate := seen[roleName]; duplicate {
+				continue
+			}
+			seen[roleName] = struct{}{}
+			roleNames = append(roleNames, roleName)
 		}
-
-		if found {
-			return highestRole
+		if len(roleNames) > 0 {
+			return roleNames
 		}
 	}
 
 	if roleMapping.DefaultRole != "" {
-		if role, err := types.NewRole(strings.ToUpper(roleMapping.DefaultRole)); err == nil {
-			return role
+		return []string{roleMapping.DefaultRole}
+	}
+
+	return []string{SigNozViewerRoleName}
+}
+
+func (roleMapping *RoleMapping) RoleNames() []string {
+	if roleMapping == nil {
+		return nil
+	}
+
+	seen := make(map[string]struct{})
+	roleNames := make([]string, 0, len(roleMapping.GroupMappings)+1)
+
+	if roleMapping.DefaultRole != "" {
+		seen[roleMapping.DefaultRole] = struct{}{}
+		roleNames = append(roleNames, roleMapping.DefaultRole)
+	}
+
+	for _, roleName := range roleMapping.GroupMappings {
+		if roleName == "" {
+			continue
+		}
+		if _, duplicate := seen[roleName]; duplicate {
+			continue
+		}
+		seen[roleName] = struct{}{}
+		roleNames = append(roleNames, roleName)
+	}
+
+	return roleNames
+}
+
+func normalizeRoleName(role string) string {
+	if legacyRole, err := types.NewRole(role); err == nil {
+		if managedRole, ok := ExistingRoleToSigNozManagedRoleMap[legacyRole]; ok {
+			return managedRole
 		}
 	}
 
-	return types.RoleViewer
-}
-
-func compareRoles(a, b types.Role) int {
-	order := map[types.Role]int{
-		types.RoleViewer: 0,
-		types.RoleEditor: 1,
-		types.RoleAdmin:  2,
-	}
-	return order[a] - order[b]
+	return role
 }

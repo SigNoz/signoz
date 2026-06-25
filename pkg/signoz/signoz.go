@@ -24,6 +24,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/instrumentation"
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/meterreporter"
+	"github.com/SigNoz/signoz/pkg/modules/authdomain/implauthdomain"
 	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
@@ -349,10 +350,13 @@ func New(
 	// Initialize service account getter
 	serviceAccountGetter := implserviceaccount.NewGetter(implserviceaccount.NewStore(sqlstore))
 
+	authDomainGetter := implauthdomain.NewGetter(implauthdomain.NewStore(sqlstore))
+
 	// Build pre-delete callbacks from modules
 	onBeforeRoleDelete := []authz.OnBeforeRoleDelete{
 		userGetter.OnBeforeRoleDelete,
 		serviceAccountGetter.OnBeforeRoleDelete,
+		authDomainGetter.OnBeforeRoleDelete,
 	}
 
 	// Initialize authz

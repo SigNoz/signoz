@@ -128,6 +128,7 @@ func NewModules(
 	}
 	userSetter := impluser.NewSetter(impluser.NewStore(sqlstore, providerSettings), tokenizer, emailing, providerSettings, orgSetter, authz, analytics, config.User, userRoleStore, userGetter, onDeleteUser)
 	ruleStore := sqlrulestore.NewRuleStore(sqlstore, queryParser, providerSettings)
+	authDomainModule := implauthdomain.NewModule(implauthdomain.NewStore(sqlstore), authNs, authz)
 
 	return Modules{
 		OrgGetter:        orgGetter,
@@ -142,8 +143,8 @@ func NewModules(
 		QuickFilter:      quickfilter,
 		TraceFunnel:      impltracefunnel.NewModule(impltracefunnel.NewStore(sqlstore)),
 		RawDataExport:    implrawdataexport.NewModule(querier),
-		AuthDomain:       implauthdomain.NewModule(implauthdomain.NewStore(sqlstore), authNs),
-		Session:          implsession.NewModule(providerSettings, authNs, userSetter, userGetter, implauthdomain.NewModule(implauthdomain.NewStore(sqlstore), authNs), tokenizer, orgGetter),
+		AuthDomain:       authDomainModule,
+		Session:          implsession.NewModule(providerSettings, authNs, userSetter, userGetter, authDomainModule, tokenizer, orgGetter),
 		SpanPercentile:   implspanpercentile.NewModule(querier, providerSettings),
 		Services:         implservices.NewModule(querier, telemetryStore),
 		MetricsExplorer:  implmetricsexplorer.NewModule(telemetryStore, telemetryMetadataStore, cache, ruleStore, dashboard, providerSettings, config.MetricsExplorer),
