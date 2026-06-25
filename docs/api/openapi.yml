@@ -5749,6 +5749,12 @@ components:
         expression:
           type: string
       type: object
+    Querybuildertypesv5JoinAggregation:
+      oneOf:
+      - $ref: '#/components/schemas/Querybuildertypesv5TraceAggregation'
+      - $ref: '#/components/schemas/Querybuildertypesv5LogAggregation'
+      - $ref: '#/components/schemas/Querybuildertypesv5MetricAggregation'
+      type: object
     Querybuildertypesv5JoinType:
       enum:
       - inner
@@ -5870,10 +5876,7 @@ components:
       properties:
         aggregations:
           items:
-            oneOf:
-            - $ref: '#/components/schemas/Querybuildertypesv5TraceAggregation'
-            - $ref: '#/components/schemas/Querybuildertypesv5LogAggregation'
-            - $ref: '#/components/schemas/Querybuildertypesv5MetricAggregation'
+            $ref: '#/components/schemas/Querybuildertypesv5JoinAggregation'
           type: array
         disabled:
           type: boolean

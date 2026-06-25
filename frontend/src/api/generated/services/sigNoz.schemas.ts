@@ -4326,6 +4326,11 @@ export interface Querybuildertypesv5QueryEnvelopeFormulaDTO {
 	type?: Querybuildertypesv5QueryTypeDTO;
 }
 
+export type Querybuildertypesv5JoinAggregationDTO =
+	| Querybuildertypesv5TraceAggregationDTO
+	| Querybuildertypesv5LogAggregationDTO
+	| Querybuildertypesv5MetricAggregationDTO;
+
 export interface Querybuildertypesv5QueryRefDTO {
 	/**
 	 * @type string
@@ -4340,16 +4345,11 @@ export enum Querybuildertypesv5JoinTypeDTO {
 	full = 'full',
 	cross = 'cross',
 }
-export type Querybuildertypesv5QueryBuilderJoinDTOAggregationsItem =
-	| Querybuildertypesv5TraceAggregationDTO
-	| Querybuildertypesv5LogAggregationDTO
-	| Querybuildertypesv5MetricAggregationDTO;
-
 export interface Querybuildertypesv5QueryBuilderJoinDTO {
 	/**
 	 * @type array
 	 */
-	aggregations?: Querybuildertypesv5QueryBuilderJoinDTOAggregationsItem[];
+	aggregations?: Querybuildertypesv5JoinAggregationDTO[];
 	/**
 	 * @type boolean
 	 */
