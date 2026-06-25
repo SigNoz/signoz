@@ -6173,54 +6173,54 @@ components:
         spec:
           $ref: '#/components/schemas/Querybuildertypesv5BuilderQuerySpec'
         type:
-          enum:
-          - builder_query
-          type: string
+          $ref: '#/components/schemas/Querybuildertypesv5QueryType'
+      required:
+      - type
       type: object
     Querybuildertypesv5QueryEnvelopeClickHouseSQL:
       properties:
         spec:
           $ref: '#/components/schemas/Querybuildertypesv5ClickHouseQuery'
         type:
-          enum:
-          - clickhouse_sql
-          type: string
+          $ref: '#/components/schemas/Querybuildertypesv5QueryType'
+      required:
+      - type
       type: object
     Querybuildertypesv5QueryEnvelopeFormula:
       properties:
         spec:
           $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderFormula'
         type:
-          enum:
-          - builder_formula
-          type: string
+          $ref: '#/components/schemas/Querybuildertypesv5QueryType'
+      required:
+      - type
       type: object
     Querybuildertypesv5QueryEnvelopeJoin:
       properties:
         spec:
           $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderJoin'
         type:
-          enum:
-          - builder_join
-          type: string
+          $ref: '#/components/schemas/Querybuildertypesv5QueryType'
+      required:
+      - type
       type: object
     Querybuildertypesv5QueryEnvelopePromQL:
       properties:
         spec:
           $ref: '#/components/schemas/Querybuildertypesv5PromQuery'
         type:
-          enum:
-          - promql
-          type: string
+          $ref: '#/components/schemas/Querybuildertypesv5QueryType'
+      required:
+      - type
       type: object
     Querybuildertypesv5QueryEnvelopeTraceOperator:
       properties:
         spec:
           $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderTraceOperator'
         type:
-          enum:
-          - builder_trace_operator
-          type: string
+          $ref: '#/components/schemas/Querybuildertypesv5QueryType'
+      required:
+      - type
       type: object
     Querybuildertypesv5QueryRangeRequest:
       description: Request body for the v5 query range endpoint. Supports builder
