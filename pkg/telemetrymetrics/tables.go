@@ -41,6 +41,8 @@ const (
 	SamplesV4ReducedSumTableName      = "distributed_samples_v4_reduced_sum_60s"
 	TimeseriesV4ReducedTableName      = "distributed_time_series_v4_reduced"
 	TimeseriesV4ReducedLocalTableName = "time_series_v4_reduced"
+
+	ReductionRulesTableName = "distributed_metric_reduction_rules"
 )
 
 var (
