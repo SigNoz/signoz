@@ -1,7 +1,5 @@
 import { ReactNode, useMemo } from 'react';
 
-import { Empty } from 'antd';
-import { Typography } from '@signozhq/ui/typography';
 import type {
 	DashboardtypesLayoutDTO,
 	DashboardtypesPanelDTO,
@@ -9,7 +7,7 @@ import type {
 
 import { useDashboardStore } from '../store/useDashboardStore';
 import { layoutsToSections } from '../utils';
-import AddSectionControl from './Section/AddSectionControl/AddSectionControl';
+import DashboardEmptyState from './DashboardEmptyState/DashboardEmptyState';
 import Section from './Section/Section/Section';
 import SectionList from './Section/SectionList';
 import styles from './PanelsAndSectionsLayout.module.scss';
@@ -17,12 +15,15 @@ import styles from './PanelsAndSectionsLayout.module.scss';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 
-interface Props {
+interface PanelsAndSectionsLayoutProps {
 	layouts: DashboardtypesLayoutDTO[];
 	panels: Record<string, DashboardtypesPanelDTO | undefined>;
 }
 
-function PanelsAndSectionsLayout({ layouts, panels }: Props): JSX.Element {
+function PanelsAndSectionsLayout({
+	layouts,
+	panels,
+}: PanelsAndSectionsLayoutProps): JSX.Element {
 	const isEditable = useDashboardStore((s) => s.isEditable);
 
 	const sections = useMemo(
@@ -40,39 +41,22 @@ function PanelsAndSectionsLayout({ layouts, panels }: Props): JSX.Element {
 
 	const renderContent = (): ReactNode => {
 		if (isEmpty) {
-			return (
-				<div className={styles.emptyState}>
-					<Empty
-						image={Empty.PRESENTED_IMAGE_SIMPLE}
-						description={
-							<Typography.Text>No panels in this dashboard yet</Typography.Text>
-						}
-					/>
-				</div>
-			);
+			return <DashboardEmptyState canAddPanel={isEditable} />;
 		}
 
 		if (isSectioned) {
 			return <SectionList sections={sections} layouts={layouts} />;
 		}
 
+		// Free-flow (no titled sections): panels still get the layout context so
+		// the menu's delete action can patch the section's items (previously a
+		// silent noop in this mode).
 		return sections.map((section) => (
-			<Section key={section.id} section={section} />
+			<Section key={section.id} section={section} sections={sections} />
 		));
 	};
 
-	return (
-		<div className={styles.body}>
-			{renderContent()}
-			{isEditable ? (
-				<AddSectionControl
-					sections={sections}
-					layouts={layouts}
-					isSectioned={isSectioned}
-				/>
-			) : null}
-		</div>
-	);
+	return <div className={styles.body}>{renderContent()}</div>;
 }
 
 export default PanelsAndSectionsLayout;

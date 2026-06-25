@@ -179,8 +179,6 @@ function TraceDetailsV3(): JSX.Element {
 				SpanDetailVariant.DOCKED_RIGHT,
 			[TraceDetailEventKeys.ColorByField]: colorByField.name,
 			[TraceDetailEventKeys.PreviewFieldsCount]: previewFieldsCount,
-			[TraceDetailEventKeys.EntryPreferOldView]:
-				getLocalStorageKey(LOCALSTORAGE.TRACE_DETAILS_PREFER_OLD_VIEW) === 'true',
 		});
 	}, [
 		traceId,

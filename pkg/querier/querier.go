@@ -92,11 +92,6 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 	req.Start = querybuilder.ToMilliSecs(req.Start)
 	req.End = querybuilder.ToMilliSecs(req.End)
 
-	tmplVars := req.Variables
-	if tmplVars == nil {
-		tmplVars = make(map[string]qbtypes.VariableItem)
-	}
-
 	event := &qbtypes.QBEvent{
 		Version:         "v5",
 		NumberOfQueries: len(req.CompositeQuery.Queries),
@@ -116,14 +111,7 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 	// We need to set if it is unspecified or adjust it if value is not within recommended range
 	intervalWarnings := q.adjustStepInterval(req.CompositeQuery.Queries, req.Start, req.End)
 
-	queries := make(map[string]qbtypes.Query)
-	steps := make(map[string]qbtypes.Step)
-
-	// Resolve metric metadata once per request: patches each metric-aggregation
-	// query's spec in place, returns the queries whose every aggregation was
-	// missing (used for preseeded empty results), and any dormant-metric
-	// warning string. NotFound errors for never-seen metrics are propagated.
-	missingMetricQueries, dormantMetricsWarningMsg, err := q.resolveMetricMetadata(ctx, req.CompositeQuery.Queries, req.Start, req.End)
+	missingMetricQueries, metricWarnings, err := q.resolveMetricMetadata(ctx, orgID, req.CompositeQuery.Queries, req.Start, req.End)
 	if err != nil {
 		return nil, err
 	}
@@ -131,6 +119,64 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 	for _, name := range missingMetricQueries {
 		missingMetricQuerySet[name] = true
 	}
+
+	queries, steps, err := q.buildQueries(req, dependencyQueries, missingMetricQuerySet, event)
+	if err != nil {
+		return nil, err
+	}
+
+	preseededResults := make(map[string]any)
+	for _, name := range missingMetricQueries {
+		switch req.RequestType {
+		case qbtypes.RequestTypeTimeSeries:
+			preseededResults[name] = &qbtypes.TimeSeriesData{QueryName: name}
+		case qbtypes.RequestTypeScalar:
+			preseededResults[name] = &qbtypes.ScalarData{QueryName: name}
+		case qbtypes.RequestTypeRaw:
+			preseededResults[name] = &qbtypes.RawData{QueryName: name}
+		}
+	}
+	qbResp, qbErr := q.run(ctx, orgID, queries, req, steps, event, preseededResults)
+	if qbResp != nil {
+		qbResp.QBEvent = event
+		if len(intervalWarnings) != 0 && req.RequestType == qbtypes.RequestTypeTimeSeries {
+			if qbResp.Warning == nil {
+				qbResp.Warning = &qbtypes.QueryWarnData{
+					Warnings: make([]qbtypes.QueryWarnDataAdditional, len(intervalWarnings)),
+				}
+				for idx := range intervalWarnings {
+					qbResp.Warning.Warnings[idx] = qbtypes.QueryWarnDataAdditional{Message: intervalWarnings[idx]}
+				}
+			}
+		}
+		if len(metricWarnings) > 0 {
+			if qbResp.Warning == nil {
+				qbResp.Warning = &qbtypes.QueryWarnData{}
+			}
+			for _, w := range metricWarnings {
+				qbResp.Warning.Warnings = append(qbResp.Warning.Warnings, qbtypes.QueryWarnDataAdditional{
+					Message: w,
+				})
+			}
+		}
+	}
+	return qbResp, qbErr
+}
+
+func (q *querier) buildQueries(
+	req *qbtypes.QueryRangeRequest,
+	dependencyQueries map[string]bool,
+	missingMetricQuerySet map[string]bool,
+	event *qbtypes.QBEvent,
+) (map[string]qbtypes.Query, map[string]qbtypes.Step, error) {
+
+	tmplVars := req.Variables
+	if tmplVars == nil {
+		tmplVars = make(map[string]qbtypes.VariableItem)
+	}
+
+	queries := make(map[string]qbtypes.Query)
+	steps := make(map[string]qbtypes.Step)
 
 	for _, query := range req.CompositeQuery.Queries {
 		queryName := query.GetQueryName()
@@ -144,7 +190,7 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 		case qbtypes.QueryTypePromQL:
 			promQuery, ok := query.Spec.(qbtypes.PromQuery)
 			if !ok {
-				return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid promql query spec %T", query.Spec)
+				return nil, nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid promql query spec %T", query.Spec)
 			}
 			promqlQuery := newPromqlQuery(q.logger, q.promEngine, promQuery, qbtypes.TimeRange{From: req.Start, To: req.End}, req.RequestType, tmplVars)
 			queries[promQuery.Name] = promqlQuery
@@ -152,14 +198,14 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 		case qbtypes.QueryTypeClickHouseSQL:
 			chQuery, ok := query.Spec.(qbtypes.ClickHouseQuery)
 			if !ok {
-				return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid clickhouse query spec %T", query.Spec)
+				return nil, nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid clickhouse query spec %T", query.Spec)
 			}
 			chSQLQuery := newchSQLQuery(q.logger, q.telemetryStore, chQuery, nil, qbtypes.TimeRange{From: req.Start, To: req.End}, req.RequestType, tmplVars)
 			queries[chQuery.Name] = chSQLQuery
 		case qbtypes.QueryTypeTraceOperator:
 			traceOpQuery, ok := query.Spec.(qbtypes.QueryBuilderTraceOperator)
 			if !ok {
-				return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid trace operator query spec %T", query.Spec)
+				return nil, nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid trace operator query spec %T", query.Spec)
 			}
 			toq := &traceOperatorQuery{
 				telemetryStore: q.telemetryStore,
@@ -212,44 +258,12 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 				queries[spec.Name] = bq
 				steps[spec.Name] = spec.StepInterval
 			default:
-				return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported builder spec type %T", query.Spec)
+				return nil, nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported builder spec type %T", query.Spec)
 			}
 		}
 	}
-	preseededResults := make(map[string]any)
-	for _, name := range missingMetricQueries {
-		switch req.RequestType {
-		case qbtypes.RequestTypeTimeSeries:
-			preseededResults[name] = &qbtypes.TimeSeriesData{QueryName: name}
-		case qbtypes.RequestTypeScalar:
-			preseededResults[name] = &qbtypes.ScalarData{QueryName: name}
-		case qbtypes.RequestTypeRaw:
-			preseededResults[name] = &qbtypes.RawData{QueryName: name}
-		}
-	}
-	qbResp, qbErr := q.run(ctx, orgID, queries, req, steps, event, preseededResults)
-	if qbResp != nil {
-		qbResp.QBEvent = event
-		if len(intervalWarnings) != 0 && req.RequestType == qbtypes.RequestTypeTimeSeries {
-			if qbResp.Warning == nil {
-				qbResp.Warning = &qbtypes.QueryWarnData{
-					Warnings: make([]qbtypes.QueryWarnDataAdditional, len(intervalWarnings)),
-				}
-				for idx := range intervalWarnings {
-					qbResp.Warning.Warnings[idx] = qbtypes.QueryWarnDataAdditional{Message: intervalWarnings[idx]}
-				}
-			}
-		}
-		if dormantMetricsWarningMsg != "" {
-			if qbResp.Warning == nil {
-				qbResp.Warning = &qbtypes.QueryWarnData{}
-			}
-			qbResp.Warning.Warnings = append(qbResp.Warning.Warnings, qbtypes.QueryWarnDataAdditional{
-				Message: dormantMetricsWarningMsg,
-			})
-		}
-	}
-	return qbResp, qbErr
+
+	return queries, steps, nil
 }
 
 func (q *querier) populateQBEvent(event *qbtypes.QBEvent, queries []qbtypes.QueryEnvelope) {
@@ -302,12 +316,11 @@ func (q *querier) populateQBEvent(event *qbtypes.QBEvent, queries []qbtypes.Quer
 //   - missingMetricQueries: names of queries whose every aggregation was
 //     missing. Used downstream to preseed empty result placeholders so the
 //     response still has an entry per requested query name.
-//   - dormantWarning: a human-readable warning describing metrics that exist in
-//     the store but produced no data within the query window. Empty when no
-//     such metrics are present.
-//   - err: NotFound when one or more referenced metrics have never been seen,
-//     or Internal when a metadata fetch fails.
-func (q *querier) resolveMetricMetadata(ctx context.Context, queries []qbtypes.QueryEnvelope, start, end uint64) (missingMetricQueries []string, dormantWarning string, err error) {
+//   - metricWarnings: human-readable warnings for metrics that could not be
+//     resolved: never-seen metrics and dormant metrics (seen but no data in
+//     the query window).
+//   - err: Internal when a metadata fetch fails.
+func (q *querier) resolveMetricMetadata(ctx context.Context, orgID valuer.UUID, queries []qbtypes.QueryEnvelope, start, end uint64) (missingMetricQueries []string, metricWarnings []string, err error) {
 	metricNames := make([]string, 0)
 	for idx := range queries {
 		if queries[idx].Type != qbtypes.QueryTypeBuilder {
@@ -325,13 +338,13 @@ func (q *querier) resolveMetricMetadata(ctx context.Context, queries []qbtypes.Q
 	}
 
 	if len(metricNames) == 0 {
-		return nil, "", nil
+		return nil, nil, nil
 	}
 
-	metricTemporality, metricTypes, err := q.metadataStore.FetchTemporalityAndTypeMulti(ctx, start, end, metricNames...)
+	metricTemporality, metricTypes, reducedMetricsSet, err := q.metadataStore.FetchTemporalityAndTypeMulti(ctx, orgID, start, end, metricNames...)
 	if err != nil {
 		q.logger.WarnContext(ctx, "failed to fetch metric temporality", errors.Attr(err), slog.Any("metrics", metricNames))
-		return nil, "", errors.NewInternalf(errors.CodeInternal, "failed to fetch metrics temporality")
+		return nil, nil, errors.NewInternalf(errors.CodeInternal, "failed to fetch metrics temporality")
 	}
 	q.logger.DebugContext(ctx, "fetched metric temporalities and types", slog.Any("metric_temporality", metricTemporality), slog.Any("metric_types", metricTypes))
 
@@ -361,6 +374,13 @@ func (q *querier) resolveMetricMetadata(ctx context.Context, queries []qbtypes.Q
 				missingMetrics = append(missingMetrics, spec.Aggregations[i].MetricName)
 				continue
 			}
+			// Type is resolved now; validate aggregation compatibility against it.
+			if err := spec.Aggregations[i].ValidateForType(); err != nil {
+				return nil, nil, err
+			}
+			if reducedMetricsSet[spec.Aggregations[i].MetricName] {
+				spec.Aggregations[i].Reduced = true
+			}
 			presentAggregations = append(presentAggregations, spec.Aggregations[i])
 		}
 		if len(presentAggregations) == 0 {
@@ -372,7 +392,7 @@ func (q *querier) resolveMetricMetadata(ctx context.Context, queries []qbtypes.Q
 	}
 
 	if len(missingMetrics) == 0 {
-		return missingMetricQueries, "", nil
+		return missingMetricQueries, nil, nil
 	}
 
 	isInternalMetric := func(n string) bool { return strings.HasPrefix(n, "signoz.") || strings.HasPrefix(n, "signoz_") }
@@ -383,29 +403,33 @@ func (q *querier) resolveMetricMetadata(ctx context.Context, queries []qbtypes.Q
 		}
 	}
 	if len(externalMissingMetrics) == 0 {
-		// this means all missing metrics are internal, and since internal metrics
-		// aren't user-controlled, skip errors/warnings for them since users can't act on them
-		return missingMetricQueries, "", nil
+		return missingMetricQueries, nil, nil
 	}
 
-	// Classify each missing metric: never-seen → NotFound error; seen-but-no-
-	// data-in-window → dormant warning.
+	// Classify each missing metric: never-seen -> warning with empty result;
+	// seen-but-no-data-in-window -> dormant warning.
 	lastSeenInfo, _ := q.metadataStore.FetchLastSeenInfoMulti(ctx, externalMissingMetrics...)
-	nonExistentMetrics := []string{}
+	var nonExistentMetrics []string
+	var dormantMetrics []string
 	for _, name := range externalMissingMetrics {
 		if ts, ok := lastSeenInfo[name]; ok && ts > 0 {
+			dormantMetrics = append(dormantMetrics, name)
 			continue
 		}
 		nonExistentMetrics = append(nonExistentMetrics, name)
 	}
+
+	var warnings []string
+
+	// Never-seen metrics: the query already gets a preseeded empty result
+	// via the aggregation-dropping path above; we just attach a warning.
 	if len(nonExistentMetrics) == 1 {
-		return nil, "", errors.NewNotFoundf(errors.CodeNotFound, "could not find the metric %s", nonExistentMetrics[0])
-	}
-	if len(nonExistentMetrics) > 1 {
-		return nil, "", errors.NewNotFoundf(errors.CodeNotFound, "the following metrics were not found: %s", strings.Join(nonExistentMetrics, ", "))
+		warnings = append(warnings, fmt.Sprintf("metric %s has never been received. Check the metric name and instrumentation", nonExistentMetrics[0]))
+	} else if len(nonExistentMetrics) > 1 {
+		warnings = append(warnings, fmt.Sprintf("the following metrics have never been received. Check the metric names and instrumentation: %s", strings.Join(nonExistentMetrics, ", ")))
 	}
 
-	// All missing metrics are dormant — assemble the warning string.
+	// Dormant metrics: seen before but no data in the query window.
 	lastSeenStr := func(name string) string {
 		if ts, ok := lastSeenInfo[name]; ok && ts > 0 {
 			ago := humanize.RelTime(time.UnixMilli(ts), time.Now(), "ago", "from now")
@@ -413,16 +437,16 @@ func (q *querier) resolveMetricMetadata(ctx context.Context, queries []qbtypes.Q
 		}
 		return name
 	}
-	if len(externalMissingMetrics) == 1 {
-		dormantWarning = fmt.Sprintf("no data found for the metric %s in the query time range", lastSeenStr(missingMetrics[0]))
-	} else {
-		parts := make([]string, len(externalMissingMetrics))
-		for i, m := range externalMissingMetrics {
+	if len(dormantMetrics) == 1 {
+		warnings = append(warnings, fmt.Sprintf("no data found for the metric %s in the query time range", lastSeenStr(dormantMetrics[0])))
+	} else if len(dormantMetrics) > 1 {
+		parts := make([]string, len(dormantMetrics))
+		for i, m := range dormantMetrics {
 			parts[i] = lastSeenStr(m)
 		}
-		dormantWarning = fmt.Sprintf("no data found for the following metrics in the query time range: %s", strings.Join(parts, ", "))
+		warnings = append(warnings, fmt.Sprintf("no data found for the following metrics in the query time range: %s", strings.Join(parts, ", ")))
 	}
-	return missingMetricQueries, dormantWarning, nil
+	return missingMetricQueries, warnings, nil
 }
 
 func (q *querier) QueryRawStream(ctx context.Context, orgID valuer.UUID, req *qbtypes.QueryRangeRequest, client *qbtypes.RawStream) {

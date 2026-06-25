@@ -23,6 +23,8 @@ You are operating within a constrained context window and strict system prompts.
 - Always add data-testid or testId (if supported) to critical/behavioral components like inputs, buttons, etc...
   - When creating test, these IDs should be used instead of finding by role.
 - Never create barrel files.
+- When writing new css, prefer CSS Modules
+  - Use ./docs/css-modules-guide.md as reference on how to write good CSS Modules.
 
 3. FORCED VERIFICATION: Your internal tools mark file writes as successful even if the code does not compile. You are FORBIDDEN from reporting a task as complete until you have:
 - Run `pnpm tsgo --noEmit`

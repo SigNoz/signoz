@@ -18,6 +18,8 @@ interface TooltipHeaderProps {
 	showTooltipHeader: boolean;
 	isPinned: boolean;
 	activeItem: TooltipContentItem | null;
+	headerRowClassName?: string;
+	dateFormat?: string;
 }
 
 export default function TooltipHeader({
@@ -26,6 +28,8 @@ export default function TooltipHeader({
 	showTooltipHeader,
 	isPinned,
 	activeItem,
+	headerRowClassName,
+	dateFormat = DATE_TIME_FORMATS.MONTH_DATETIME_SECONDS,
 }: TooltipHeaderProps): JSX.Element {
 	const { timezone: userTimezone } = useTimezone();
 	const resolvedTimezone = timezone?.value ?? userTimezone.value;
@@ -44,12 +48,13 @@ export default function TooltipHeader({
 		}
 		return dayjs(timestamp * 1000)
 			.tz(resolvedTimezone)
-			.format(DATE_TIME_FORMATS.MONTH_DATETIME_SECONDS);
+			.format(dateFormat);
 	}, [
 		resolvedTimezone,
 		uPlotInstance.data,
 		uPlotInstance.cursor.idx,
 		showTooltipHeader,
+		dateFormat,
 	]);
 
 	return (
@@ -58,7 +63,7 @@ export default function TooltipHeader({
 			data-testid="uplot-tooltip-header-container"
 		>
 			{showTooltipHeader && headerTitle && (
-				<div className={Styles.headerRow}>
+				<div className={cx(Styles.headerRow, headerRowClassName)}>
 					<span>{headerTitle}</span>
 					{isPinned && (
 						<div className={cx(Styles.status)} data-testid="uplot-tooltip-status">

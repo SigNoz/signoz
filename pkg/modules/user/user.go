@@ -45,6 +45,9 @@ type Setter interface {
 	// invite
 	CreateBulkInvite(ctx context.Context, orgID valuer.UUID, identityID valuer.UUID, identityEmail valuer.Email, bulkInvites *types.PostableBulkInviteRequest) ([]*types.Invite, error)
 
+	// Creates a pending invite user with the roles given via opts and emails them the invite link.
+	CreatePendingInviteUser(ctx context.Context, identityID valuer.UUID, identityEmail valuer.Email, frontendBaseURL string, user *types.User, opts ...CreateUserOption) (*types.User, error)
+
 	// Roles
 	UpdateUserRoles(ctx context.Context, orgID, userID valuer.UUID, finalRoleNames []string) error
 	AddUserRole(ctx context.Context, orgID, userID valuer.UUID, roleName string) error
@@ -107,6 +110,7 @@ type Handler interface {
 	// users
 	ListUsersDeprecated(http.ResponseWriter, *http.Request)
 	ListUsers(http.ResponseWriter, *http.Request)
+	CreateUser(http.ResponseWriter, *http.Request)
 	UpdateUserDeprecated(http.ResponseWriter, *http.Request)
 	UpdateUser(http.ResponseWriter, *http.Request)
 	DeleteUser(http.ResponseWriter, *http.Request)
@@ -129,3 +133,6 @@ type Handler interface {
 	ChangePassword(http.ResponseWriter, *http.Request)
 	ForgotPassword(http.ResponseWriter, *http.Request)
 }
+
+// OnDeleteUser lets other modules clean up data tied to a deleted user.
+type OnDeleteUser func(ctx context.Context, orgID valuer.UUID, userID valuer.UUID) error

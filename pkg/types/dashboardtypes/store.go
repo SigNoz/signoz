@@ -32,4 +32,36 @@ type Store interface {
 	DeletePublic(context.Context, string) error
 
 	RunInTx(context.Context, func(context.Context) error) error
+
+	// ════════════════════════════════════════════════════════════════════════
+	// v2 dashboard methods
+	// ════════════════════════════════════════════════════════════════════════
+
+	// int64 return is the total row count for the filter (pre-limit/offset).
+	// ListV2 is the pure list; ListForUser additionally joins the caller's pins.
+	ListV2(ctx context.Context, orgID valuer.UUID, params *ListDashboardsV2Params) ([]*StorableDashboard, int64, error)
+
+	ListForUser(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, params *ListDashboardsV2Params) ([]*StorableDashboardWithPinInfo, int64, error)
+
+	// Returns ErrCodePinnedDashboardLimitHit when the user is at MaxPinnedDashboardsPerUser.
+	PinForUser(ctx context.Context, preference *UserDashboardPreference) error
+
+	UnpinForUser(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, dashboardID valuer.UUID) error
+
+	DeletePreferencesForDashboard(ctx context.Context, orgID valuer.UUID, dashboardID valuer.UUID) error
+
+	DeletePreferencesForUser(ctx context.Context, orgID valuer.UUID, userID valuer.UUID) error
+
+	// ════════════════════════════════════════════════════════════════════════
+	// Dashboard saved view methods
+	// ════════════════════════════════════════════════════════════════════════
+	CreateDashboardView(ctx context.Context, view *DashboardView) error
+
+	GetDashboardView(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*DashboardView, error)
+
+	ListDashboardViews(ctx context.Context, orgID valuer.UUID) ([]*DashboardView, error)
+
+	UpdateDashboardView(ctx context.Context, view *DashboardView) error
+
+	DeleteDashboardView(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error
 }

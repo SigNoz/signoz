@@ -122,7 +122,11 @@ func NewModules(
 ) Modules {
 	quickfilter := implquickfilter.NewModule(implquickfilter.NewStore(sqlstore))
 	orgSetter := implorganization.NewSetter(implorganization.NewStore(sqlstore), alertmanager, quickfilter)
-	userSetter := impluser.NewSetter(impluser.NewStore(sqlstore, providerSettings), tokenizer, emailing, providerSettings, orgSetter, authz, analytics, config.User, userRoleStore, userGetter)
+	// Cleanup callbacks from other modules, invoked when a user is deleted.
+	onDeleteUser := []user.OnDeleteUser{
+		dashboard.DeletePreferencesForUser,
+	}
+	userSetter := impluser.NewSetter(impluser.NewStore(sqlstore, providerSettings), tokenizer, emailing, providerSettings, orgSetter, authz, analytics, config.User, userRoleStore, userGetter, onDeleteUser)
 	ruleStore := sqlrulestore.NewRuleStore(sqlstore, queryParser, providerSettings)
 
 	return Modules{
@@ -150,8 +154,8 @@ func NewModules(
 		RuleStateHistory: implrulestatehistory.NewModule(implrulestatehistory.NewStore(telemetryStore, telemetryMetadataStore, providerSettings.Logger)),
 		CloudIntegration: cloudIntegrationModule,
 		TraceDetail:      impltracedetail.NewModule(impltracedetail.NewTraceStore(telemetryStore), providerSettings, config.TraceDetail),
-		SpanMapper:       implspanmapper.NewModule(implspanmapper.NewStore(sqlstore)),
-		LLMPricingRule:   impllmpricingrule.NewModule(impllmpricingrule.NewStore(sqlstore)),
+		SpanMapper:       implspanmapper.NewModule(implspanmapper.NewStore(sqlstore), fl),
+		LLMPricingRule:   impllmpricingrule.NewModule(impllmpricingrule.NewStore(sqlstore), fl),
 		Tag:              tagModule,
 	}
 }

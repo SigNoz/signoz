@@ -225,7 +225,7 @@ function BodyTitleRenderer({
 						<DropdownMenuTrigger asChild>
 							<Settings style={{ marginRight: 8 }} className="hover-reveal" />
 						</DropdownMenuTrigger>
-						<DropdownMenuContent>
+						<DropdownMenuContent align="start">
 							<div data-log-detail-ignore="true">
 								{menuItems.map((item) => (
 									<DropdownMenuItem

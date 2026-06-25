@@ -1,48 +1,10 @@
 import { Modal } from 'antd';
-import {
-	BarChart,
-	ChartLine,
-	ChartPie,
-	Hash,
-	List,
-	Table,
-} from '@signozhq/icons';
+import { Button } from '@signozhq/ui/button';
 
+import { PANEL_TYPES } from './constants';
 import styles from './PanelTypeSelectionModal.module.scss';
 
-interface PanelType {
-	pluginKind: string;
-	label: string;
-	icon: JSX.Element;
-}
-
-const PANEL_TYPES: PanelType[] = [
-	{
-		pluginKind: 'signoz/TimeSeriesPanel',
-		label: 'Time Series',
-		icon: <ChartLine size={16} />,
-	},
-	{ pluginKind: 'signoz/NumberPanel', label: 'Value', icon: <Hash size={16} /> },
-	{ pluginKind: 'signoz/TablePanel', label: 'Table', icon: <Table size={16} /> },
-	{
-		pluginKind: 'signoz/BarChartPanel',
-		label: 'Bar Chart',
-		icon: <BarChart size={16} />,
-	},
-	{
-		pluginKind: 'signoz/PieChartPanel',
-		label: 'Pie Chart',
-		icon: <ChartPie size={16} />,
-	},
-	{
-		pluginKind: 'signoz/HistogramPanel',
-		label: 'Histogram',
-		icon: <BarChart size={16} />,
-	},
-	{ pluginKind: 'signoz/ListPanel', label: 'List', icon: <List size={16} /> },
-];
-
-interface Props {
+interface PanelTypeSelectionModalProps {
 	open: boolean;
 	onClose: () => void;
 	onSelect: (pluginKind: string) => void;
@@ -52,7 +14,7 @@ function PanelTypeSelectionModal({
 	open,
 	onClose,
 	onSelect,
-}: Props): JSX.Element {
+}: PanelTypeSelectionModalProps): JSX.Element {
 	return (
 		<Modal
 			open={open}
@@ -63,16 +25,17 @@ function PanelTypeSelectionModal({
 		>
 			<div className={styles.grid}>
 				{PANEL_TYPES.map((type) => (
-					<button
+					<Button
 						key={type.pluginKind}
 						type="button"
+						variant="ghost"
 						className={styles.typeButton}
 						data-testid={`panel-type-${type.pluginKind}`}
 						onClick={(): void => onSelect(type.pluginKind)}
 					>
 						{type.icon}
 						{type.label}
-					</button>
+					</Button>
 				))}
 			</div>
 		</Modal>
