@@ -194,6 +194,22 @@ func (q *QueryEnvelope) SetLimit(limit int) {
 	}
 }
 
+// SetImplicitLimit records the row cap we imposed on an unbounded query so the querier can trim
+// results back to it and warn.
+func (q *QueryEnvelope) SetImplicitLimit(limit int) {
+	switch spec := q.Spec.(type) {
+	case QueryBuilderQuery[TraceAggregation]:
+		spec.implicitLimit = limit
+		q.Spec = spec
+	case QueryBuilderQuery[LogAggregation]:
+		spec.implicitLimit = limit
+		q.Spec = spec
+	case QueryBuilderQuery[MetricAggregation]:
+		spec.implicitLimit = limit
+		q.Spec = spec
+	}
+}
+
 // SetOffset sets the row offset of the spec, if applicable.
 func (q *QueryEnvelope) SetOffset(offset int) {
 	switch spec := q.Spec.(type) {
