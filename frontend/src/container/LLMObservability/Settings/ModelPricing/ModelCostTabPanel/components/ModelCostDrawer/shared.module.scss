@@ -7,60 +7,60 @@
 .drawerSection {
 	display: flex;
 	flex-direction: column;
-	gap: 6px;
+	gap: var(--spacing-3);
 }
 
 .drawerSection label,
 .drawerSection .fieldLabel,
 .fieldLabel {
 	font-size: 12px;
-	font-weight: 600;
-	color: var(--text-vanilla-200);
+	font-weight: var(--font-weight-semibold);
+	color: var(--l2-foreground);
 }
 
 .drawerSection .help,
 .help {
 	margin: 0;
-	font-size: 11px;
+	font-size: var(--periscope-font-size-small);
 }
 
 .help code {
-	padding: 1px 4px;
+	padding: 1px var(--spacing-2);
 	border-radius: 3px;
-	background: color-mix(in srgb, var(--bg-vanilla-100) 6%, transparent);
+	background: var(--l3-background);
 	font-family: var(--code-font-family, monospace);
 	font-size: 10px;
 }
 
 .drawerSurface {
-	padding: 14px;
+	padding: var(--spacing-7);
 	border-radius: 6px;
-	background: color-mix(in srgb, var(--bg-vanilla-100) 2%, transparent);
-	border: 1px solid var(--bg-slate-300);
+	background: var(--l2-background);
+	border: 1px solid var(--l2-border);
 }
 
 .drawerSurfaceHead {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	margin-bottom: 10px;
+	margin-bottom: var(--spacing-5);
 }
 
 .drawerSurfaceHead h4 {
 	margin: 0;
-	font-size: 13px;
-	font-weight: 600;
+	font-size: var(--periscope-font-size-base);
+	font-weight: var(--font-weight-semibold);
 	text-transform: uppercase;
 	letter-spacing: 0.04em;
-	color: var(--text-vanilla-300);
+	color: var(--l2-foreground);
 }
 
 .managedLabel {
 	display: inline-flex;
 	align-items: center;
-	gap: 4px;
-	font-size: 11px;
-	color: var(--text-vanilla-400);
+	gap: var(--spacing-2);
+	font-size: var(--periscope-font-size-small);
+	color: var(--l3-foreground);
 }
 
 .fullWidth {
@@ -68,13 +68,13 @@
 }
 
 .required {
-	color: var(--bg-cherry-400);
+	color: var(--accent-cherry);
 }
 
 .pricingField {
 	display: flex;
 	flex-direction: column;
-	gap: 4px;
+	gap: var(--spacing-2);
 }
 
 .pricingField input {

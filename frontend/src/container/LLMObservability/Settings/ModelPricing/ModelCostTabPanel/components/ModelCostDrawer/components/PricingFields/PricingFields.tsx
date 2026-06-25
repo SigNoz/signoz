@@ -6,6 +6,7 @@ import ExtraPricingBuckets from '../ExtraPricingBuckets';
 import styles from './PricingFields.module.scss';
 import { parsePricingAmount } from '../../../../../utils';
 import type { DrawerDraft } from '../../../../../types';
+import { Typography } from '@signozhq/ui/typography';
 
 type Pricing = DrawerDraft['pricing'];
 
@@ -27,7 +28,10 @@ function PricingFields({
 				{isReadOnly && (
 					<span className={styles.managedLabel} data-testid="drawer-readonly-label">
 						<Lock size={12} />
-						Read-only
+
+						<Typography.Text color="muted" data-testid="drawer-readonly-label">
+							Read-only
+						</Typography.Text>
 					</span>
 				)}
 			</div>

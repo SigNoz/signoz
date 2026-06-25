@@ -3,19 +3,25 @@
 }
 
 .fullWidth {
-	composes: fullWidth from './shared.module.scss';
+	width: 100%;
 }
 
 .required {
 	composes: required from './shared.module.scss';
 }
 
+.deleteButton {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
 .modelCostDrawer {
 	// Uniform horizontal padding across header / body / footer. The header and
 	// footer read these dialog vars; the body (rendered in drawer-description)
 	// is set directly below.
-	--dialog-header-padding: 20px 24px;
-	--dialog-footer-padding: 16px 24px;
+	--dialog-header-padding: var(--spacing-10) var(--spacing-12);
+	--dialog-footer-padding: var(--spacing-8) var(--spacing-12);
 
 	display: flex;
 	overflow-y: auto;
@@ -25,8 +31,8 @@
 	[data-slot='drawer-description'] {
 		display: flex;
 		flex-direction: column;
-		gap: 18px;
-		padding: 20px 24px;
+		gap: var(--spacing-12);
+		padding: var(--spacing-10) var(--spacing-12);
 	}
 
 	[data-slot='select-content'] {
@@ -37,13 +43,13 @@
 .title {
 	h3 {
 		margin: 0;
-		font-size: 16px;
-		font-weight: 600;
+		font-size: var(--periscope-font-size-medium);
+		font-weight: var(--font-weight-semibold);
 	}
 
 	p {
-		margin: 4px 0 0;
-		color: var(--text-vanilla-400);
+		margin: var(--spacing-2) 0 0;
+		color: var(--l3-foreground);
 		font-size: 12px;
 	}
 }
@@ -59,21 +65,6 @@
 
 .footerRight {
 	display: flex;
-	gap: 8px;
+	gap: var(--spacing-4);
 	margin-left: auto;
-}
-
-.drawerError {
-	padding: 10px 12px;
-	border-radius: 4px;
-	background: color-mix(in srgb, var(--bg-cherry-400) 8%, transparent);
-	color: var(--bg-cherry-400);
-	font-size: 12px;
-}
-
-// Inline validation message rendered under an invalid field.
-.fieldError {
-	margin: 4px 0 0;
-	color: var(--bg-cherry-400);
-	font-size: 12px;
 }

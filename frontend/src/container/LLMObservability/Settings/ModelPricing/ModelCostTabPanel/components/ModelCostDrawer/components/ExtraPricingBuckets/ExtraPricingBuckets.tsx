@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import { SelectSimple } from '@signozhq/ui/select';
+import { Typography } from '@signozhq/ui/typography';
 import { Plus, Trash2 } from '@signozhq/icons';
 import { LlmpricingruletypesLLMPricingRuleCacheModeDTO as CacheModeDTO } from 'api/generated/services/sigNoz.schemas';
 import cx from 'classnames';
@@ -65,8 +66,12 @@ function ExtraPricingBuckets({
 	return (
 		<div className={cx(styles.extraBucketsSection, styles.drawerSection)}>
 			<div className={styles.extraBucketsSectionHead}>
-				<span className={styles.fieldLabel}>Extra pricing buckets</span>
-				<span className={styles.optionalLabel}>optional</span>
+				<Typography.Text as="span" size="small" color="muted">
+					Extra pricing buckets
+				</Typography.Text>
+				<Typography.Text as="span" size="small" color="muted">
+					optional
+				</Typography.Text>
 			</div>
 
 			{addedBuckets.map((bucket) => (
@@ -86,17 +91,19 @@ function ExtraPricingBuckets({
 						}
 						testId={`drawer-${bucket.testId}-cost`}
 					/>
-					<span className={styles.bucketRowUnit}>/ 1M</span>
+					<Typography.Text as="span" size="small" color="muted">
+						/ 1M
+					</Typography.Text>
 					{!isReadOnly && (
-						<button
-							type="button"
-							className={styles.bucketRowRemove}
+						<Button
+							size="icon"
+							variant="ghost"
+							color="destructive"
 							onClick={(): void => removeBucket(bucket.key)}
 							aria-label={`Remove ${bucket.label}`}
 							data-testid={`drawer-remove-${bucket.testId}`}
-						>
-							<Trash2 size={14} />
-						</button>
+							prefix={<Trash2 size={14} />}
+						/>
 					)}
 				</div>
 			))}

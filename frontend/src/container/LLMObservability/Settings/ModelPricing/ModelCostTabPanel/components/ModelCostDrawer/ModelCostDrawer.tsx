@@ -2,6 +2,7 @@ import { Button } from '@signozhq/ui/button';
 import { DrawerWrapper } from '@signozhq/ui/drawer';
 import { Input } from '@signozhq/ui/input';
 import { SelectSimple } from '@signozhq/ui/select';
+import { Typography } from '@signozhq/ui/typography';
 import { Trash2 } from '@signozhq/icons';
 import { Controller, useForm } from 'react-hook-form';
 
@@ -82,6 +83,7 @@ function ModelCostDrawer({
 					onClick={onDelete}
 					loading={isDeleting}
 					testId="drawer-delete-btn"
+					className={styles.deleteButton}
 				>
 					Delete
 				</Button>
@@ -132,7 +134,10 @@ function ModelCostDrawer({
 		>
 			<div className={styles.drawerSection}>
 				<label htmlFor="billing-model-id">
-					Billing model ID <span className={styles.required}>*</span>
+					Billing model ID{' '}
+					<Typography.Text as="span" color="danger">
+						*
+					</Typography.Text>
 				</label>
 				<Controller
 					name="modelName"
@@ -152,9 +157,9 @@ function ModelCostDrawer({
 								testId="drawer-model-id-input"
 							/>
 							{fieldState.error && (
-								<p className={styles.fieldError} role="alert">
+								<Typography.Text as="p" size="small" color="danger" role="alert">
 									{fieldState.error.message}
-								</p>
+								</Typography.Text>
 							)}
 						</>
 					)}
@@ -180,9 +185,9 @@ function ModelCostDrawer({
 								testId="drawer-provider-select"
 							/>
 							{fieldState.error && (
-								<p className={styles.fieldError} role="alert">
+								<Typography.Text size="small" color="danger" role="alert">
 									{fieldState.error.message}
-								</p>
+								</Typography.Text>
 							)}
 						</>
 					)}
@@ -236,18 +241,18 @@ function ModelCostDrawer({
 							onChange={(patch): void => field.onChange({ ...field.value, ...patch })}
 						/>
 						{fieldState.error && (
-							<p className={styles.fieldError} role="alert">
+							<Typography.Text as="p" size="small" color="danger" role="alert">
 								{fieldState.error.message}
-							</p>
+							</Typography.Text>
 						)}
 					</>
 				)}
 			/>
 
 			{saveError && (
-				<div className={styles.drawerError} role="alert">
+				<Typography.Text as="p" size="small" color="danger" role="alert">
 					{saveError}
-				</div>
+				</Typography.Text>
 			)}
 		</DrawerWrapper>
 	);

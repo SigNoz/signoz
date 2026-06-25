@@ -11,7 +11,9 @@
 }
 
 .managedLabel {
-	composes: managedLabel from '../../shared.module.scss';
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-2);
 }
 
 .pricingField {
@@ -25,5 +27,5 @@
 .pricingGrid {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
-	gap: 12px;
+	gap: var(--spacing-6);
 }

@@ -10,31 +10,26 @@
 	composes: help from '../../shared.module.scss';
 }
 
-.muted {
-	color: var(--text-vanilla-400);
-}
-
 .patternBox {
 	display: flex;
 	flex-direction: column;
-	gap: 12px;
-	padding: 12px;
+	gap: var(--spacing-6);
+	padding: var(--spacing-6);
 	border-radius: 6px;
-	background: color-mix(in srgb, var(--bg-vanilla-100) 2%, transparent);
-	border: 1px solid var(--bg-slate-300);
+	border: 1px solid var(--l2-border);
 }
 
 .patternChips {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 6px;
+	gap: var(--spacing-3);
 	min-height: 28px;
 }
 
 .patternChip {
 	display: inline-flex;
 	align-items: center;
-	gap: 4px;
+	gap: var(--spacing-2);
 }
 
 .patternChipRemove {
@@ -48,11 +43,11 @@
 	align-items: center;
 
 	&:hover {
-		color: var(--bg-cherry-400);
+		color: var(--accent-cherry);
 	}
 }
 
 .patternAdd {
 	display: flex;
-	gap: 6px;
+	gap: var(--spacing-3);
 }

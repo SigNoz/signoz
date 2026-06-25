@@ -7,7 +7,7 @@
 }
 
 .fullWidth {
-	composes: fullWidth from '../../shared.module.scss';
+	width: 100%;
 }
 
 .pricingField {
@@ -15,12 +15,12 @@
 }
 
 .cacheModeField {
-	margin-top: 10px;
+	margin-top: var(--spacing-5);
 }
 
 .extraBucketsSection {
-	margin-top: 14px;
-	gap: 10px;
+	margin-top: var(--spacing-7);
+	gap: var(--spacing-5);
 }
 
 .extraBucketsSectionHead {
@@ -29,16 +29,10 @@
 	justify-content: space-between;
 }
 
-.optionalLabel {
-	font-size: 11px;
-	font-weight: 400;
-	color: var(--text-vanilla-400);
-}
-
 .bucketRow {
 	display: flex;
 	align-items: center;
-	gap: 10px;
+	gap: var(--spacing-5);
 
 	input {
 		flex: 1 1 auto;
@@ -49,29 +43,8 @@
 .bucketRowName {
 	flex: 0 0 110px;
 	font-size: 12px;
-	color: var(--text-vanilla-200);
+	color: var(--l2-foreground);
 	font-family: var(--code-font-family, monospace);
-}
-
-.bucketRowUnit {
-	flex: 0 0 auto;
-	font-size: 12px;
-	color: var(--text-vanilla-400);
-}
-
-.bucketRowRemove {
-	flex: 0 0 auto;
-	background: transparent;
-	border: none;
-	padding: 4px;
-	cursor: pointer;
-	color: var(--text-vanilla-400);
-	display: inline-flex;
-	align-items: center;
-
-	&:hover {
-		color: var(--bg-cherry-400);
-	}
 }
 
 .bucketAddBtn {
@@ -82,22 +55,22 @@
 	display: flex;
 	flex-direction: column;
 	align-items: flex-start;
-	gap: 10px;
-	padding: 12px;
+	gap: var(--spacing-5);
+	padding: var(--spacing-6);
 	border-radius: 6px;
-	background: color-mix(in srgb, var(--bg-vanilla-100) 2%, transparent);
-	border: 1px solid var(--bg-slate-300);
+	background: var(--l3-background);
+	border: 1px solid var(--l2-border);
 }
 
 .bucketPickerTitle {
-	font-size: 11px;
+	font-size: var(--periscope-font-size-small);
 	text-transform: uppercase;
 	letter-spacing: 0.04em;
-	color: var(--text-vanilla-400);
+	color: var(--l3-foreground);
 }
 
 .bucketPickerChips {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 8px;
+	gap: var(--spacing-4);
 }

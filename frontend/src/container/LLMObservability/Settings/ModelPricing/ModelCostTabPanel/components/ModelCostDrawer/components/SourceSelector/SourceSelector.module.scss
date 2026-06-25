@@ -19,11 +19,11 @@
 	// --l3-background, which matches the drawer surface and makes the dot
 	// invisible. Override with a contrasting border so users can see the
 	// unchecked state.
-	--radio-group-item-border-color: var(--bg-slate-200);
+	--radio-group-item-border-color: var(--l2-border);
 
 	display: flex;
 	flex-direction: column;
-	gap: 8px;
+	gap: var(--spacing-4);
 	width: 100%;
 
 	// Layout overrides for @signozhq/ui's RadioGroupItem wrapper. The library
@@ -35,11 +35,11 @@
 		flex-direction: row;
 		align-items: flex-start;
 		justify-content: flex-start;
-		gap: 10px;
-		padding: 10px 12px;
-		border-radius: 4px;
+		gap: var(--spacing-5);
+		padding: var(--spacing-5) var(--spacing-6);
+		border-radius: var(--radius-2);
 		border: 1px solid transparent;
-		background: color-mix(in srgb, var(--bg-vanilla-100) 2%, transparent);
+		background: var(--l3-background);
 		margin: 0;
 		width: 100%;
 		// Include padding + border in the 100% width so the card fits inside
@@ -77,48 +77,48 @@
 		// Radix RadioGroupItem renders <button data-state="checked|unchecked">.
 		// Use :has() to highlight the wrapper card when its inner button is checked.
 		&.sourceRadioAuto:has(button[data-state='checked']) {
-			background: color-mix(in srgb, var(--bg-robin-400) 10%, transparent);
-			border-color: color-mix(in srgb, var(--bg-robin-400) 30%, transparent);
+			background: color-mix(in srgb, var(--accent-primary) 10%, transparent);
+			border-color: color-mix(in srgb, var(--accent-primary) 30%, transparent);
 		}
 
 		&.sourceRadioOverride:has(button[data-state='checked']) {
-			background: color-mix(in srgb, var(--bg-amber-400) 10%, transparent);
-			border-color: color-mix(in srgb, var(--bg-amber-400) 30%, transparent);
+			background: color-mix(in srgb, var(--accent-amber) 10%, transparent);
+			border-color: color-mix(in srgb, var(--accent-amber) 30%, transparent);
 		}
 
 		&:hover {
-			background: color-mix(in srgb, var(--bg-vanilla-100) 4%, transparent);
+			background: var(--l3-background-hover);
 		}
 	}
 }
 
 .sourceRadioTitle {
-	font-weight: 600;
-	font-size: 13px;
-	color: var(--text-vanilla-100);
+	font-weight: var(--font-weight-semibold);
+	font-size: var(--periscope-font-size-base);
+	color: var(--l1-foreground);
 }
 
 .sourceRadioDesc {
 	margin-top: 2px;
 	font-size: 12px;
-	color: var(--text-vanilla-400);
+	color: var(--l3-foreground);
 }
 
 .resetConfirm {
-	margin-top: 12px;
-	padding: 12px;
-	border-radius: 4px;
-	background: color-mix(in srgb, var(--bg-robin-400) 6%, transparent);
-	border: 1px solid color-mix(in srgb, var(--bg-robin-400) 20%, transparent);
+	margin-top: var(--spacing-6);
+	padding: var(--spacing-6);
+	border-radius: var(--radius-2);
+	background: color-mix(in srgb, var(--accent-primary) 6%, transparent);
+	border: 1px solid color-mix(in srgb, var(--accent-primary) 20%, transparent);
 
 	p {
-		margin: 0 0 10px;
+		margin: 0 0 var(--spacing-5);
 		font-size: 12px;
 	}
 }
 
 .resetConfirmActions {
 	display: flex;
-	gap: 8px;
+	gap: var(--spacing-4);
 	justify-content: flex-end;
 }
