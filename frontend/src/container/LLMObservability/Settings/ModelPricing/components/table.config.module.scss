@@ -5,21 +5,11 @@
 	min-width: 0;
 }
 
-.modelCellName {
-	color: var(--text-vanilla-100);
-	font-weight: var(--font-weight-semibold);
-	line-height: 18px;
-}
-
-.modelCellName,
 .modelCellCanonicalId {
 	max-width: 100%;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-}
-
-.modelCellCanonicalId {
 	color: var(--text-vanilla-400);
 	font-family: var(--code-font-family, monospace);
 	font-size: var(--font-size-xs);
@@ -55,10 +45,6 @@
 .extraBucketsPrice {
 	font-family: var(--code-font-family, monospace);
 	font-weight: var(--font-weight-semibold);
-}
-
-.muted {
-	color: var(--text-vanilla-400);
 }
 
 .sourceBadge {

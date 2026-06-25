@@ -13,15 +13,13 @@
 }
 
 .pageHeaderTitle {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-2);
+
 	.title {
 		margin: 0;
 		font-size: var(--font-size-xl);
 		font-weight: var(--font-weight-semibold);
-	}
-
-	.subtitle {
-		margin: var(--spacing-2) 0 0;
-		color: var(--text-vanilla-400);
-		font-size: var(--periscope-font-size-base);
 	}
 }

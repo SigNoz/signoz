@@ -1,4 +1,5 @@
 import { Tabs } from '@signozhq/ui/tabs';
+import { Typography } from '@signozhq/ui/typography';
 
 import ModelCostsTab from './components/ModelCostsTab';
 import styles from './LLMObservabilityModelPricing.module.scss';
@@ -12,9 +13,9 @@ function LLMObservabilityModelPricing(): JSX.Element {
 			<header className={styles.pageHeader}>
 				<div className={styles.pageHeaderTitle}>
 					<h1 className={styles.title}>Configuration</h1>
-					<p className={styles.subtitle}>
+					<Typography.Text color="muted">
 						Model pricing and cost estimation settings
-					</p>
+					</Typography.Text>
 				</div>
 			</header>
 
