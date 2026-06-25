@@ -5458,6 +5458,121 @@ export interface GlobaltypesConfigDTO {
 	mcp_url: string | null;
 }
 
+export enum InframonitoringtypesCheckComponentTypeDTO {
+	receiver = 'receiver',
+	processor = 'processor',
+}
+export interface InframonitoringtypesAssociatedComponentDTO {
+	/**
+	 * @type string
+	 */
+	name: string;
+	type: InframonitoringtypesCheckComponentTypeDTO;
+}
+
+export interface InframonitoringtypesAttributesComponentEntryDTO {
+	associatedComponent: InframonitoringtypesAssociatedComponentDTO;
+	/**
+	 * @type array,null
+	 */
+	attributes: string[] | null;
+}
+
+export enum InframonitoringtypesCheckTypeDTO {
+	hosts = 'hosts',
+	processes = 'processes',
+	pods = 'pods',
+	nodes = 'nodes',
+	deployments = 'deployments',
+	daemonsets = 'daemonsets',
+	statefulsets = 'statefulsets',
+	jobs = 'jobs',
+	namespaces = 'namespaces',
+	clusters = 'clusters',
+	volumes = 'volumes',
+}
+export interface InframonitoringtypesMissingMetricsComponentEntryDTO {
+	associatedComponent: InframonitoringtypesAssociatedComponentDTO;
+	/**
+	 * @type string
+	 */
+	documentationLink: string;
+	/**
+	 * @type string
+	 */
+	message: string;
+	/**
+	 * @type array,null
+	 */
+	metrics: string[] | null;
+}
+
+export interface InframonitoringtypesMissingAttributesComponentEntryDTO {
+	associatedComponent: InframonitoringtypesAssociatedComponentDTO;
+	/**
+	 * @type array,null
+	 */
+	attributes: string[] | null;
+	/**
+	 * @type string
+	 */
+	documentationLink: string;
+	/**
+	 * @type string
+	 */
+	message: string;
+}
+
+export interface InframonitoringtypesMetricsComponentEntryDTO {
+	associatedComponent: InframonitoringtypesAssociatedComponentDTO;
+	/**
+	 * @type array,null
+	 */
+	metrics: string[] | null;
+}
+
+export interface InframonitoringtypesChecksDTO {
+	/**
+	 * @type array,null
+	 */
+	missingDefaultEnabledMetrics:
+		| InframonitoringtypesMissingMetricsComponentEntryDTO[]
+		| null;
+	/**
+	 * @type array,null
+	 */
+	missingOptionalMetrics:
+		| InframonitoringtypesMissingMetricsComponentEntryDTO[]
+		| null;
+	/**
+	 * @type array,null
+	 */
+	missingRequiredAttributes:
+		| InframonitoringtypesMissingAttributesComponentEntryDTO[]
+		| null;
+	/**
+	 * @type array,null
+	 */
+	presentDefaultEnabledMetrics:
+		| InframonitoringtypesMetricsComponentEntryDTO[]
+		| null;
+	/**
+	 * @type array,null
+	 */
+	presentOptionalMetrics: InframonitoringtypesMetricsComponentEntryDTO[] | null;
+	/**
+	 * @type array,null
+	 */
+	presentRequiredAttributes:
+		| InframonitoringtypesAttributesComponentEntryDTO[]
+		| null;
+	/**
+	 * @type boolean
+	 */
+	ready: boolean;
+	type: InframonitoringtypesCheckTypeDTO;
+}
+
 export type InframonitoringtypesClusterRecordDTOMetaAnyOf = {
 	[key: string]: string;
 };
@@ -10223,6 +10338,21 @@ export type Healthz200 = {
 
 export type Healthz503 = {
 	data: FactoryResponseDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetChecksParams = {
+	/**
+	 * @description undefined
+	 */
+	type: InframonitoringtypesCheckTypeDTO;
+};
+
+export type GetChecks200 = {
+	data: InframonitoringtypesChecksDTO;
 	/**
 	 * @type string
 	 */

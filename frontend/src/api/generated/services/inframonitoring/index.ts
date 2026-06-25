@@ -4,14 +4,22 @@
  * * regenerate with 'pnpm generate:api'
  * SigNoz
  */
-import { useMutation } from 'react-query';
+import { useMutation, useQuery } from 'react-query';
 import type {
+	InvalidateOptions,
 	MutationFunction,
+	QueryClient,
+	QueryFunction,
+	QueryKey,
 	UseMutationOptions,
 	UseMutationResult,
+	UseQueryOptions,
+	UseQueryResult,
 } from 'react-query';
 
 import type {
+	GetChecks200,
+	GetChecksParams,
 	InframonitoringtypesPostableClustersDTO,
 	InframonitoringtypesPostableDaemonSetsDTO,
 	InframonitoringtypesPostableDeploymentsDTO,
@@ -37,6 +45,93 @@ import type {
 
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
+
+/**
+ * Checks whether the metrics and attributes required to power the infra-monitoring section selected by the 'type' query parameter (hosts, processes, pods, nodes, deployments, daemonsets, statefulsets, jobs, namespaces, clusters, volumes) are being received. For each collector receiver or processor that contributes required metrics or attributes, lists what is present and what is missing, with a prebuilt user-facing message and a docs link per missing component. Default-enabled metrics are those expected as soon as the receiver is configured; optional metrics require 'enabled: true' in receiver config. 'ready' is true only when every missing list is empty.
+ * @summary Run Infra Monitoring Setup Checks
+ */
+export const getChecks = (params: GetChecksParams, signal?: AbortSignal) => {
+	return GeneratedAPIInstance<GetChecks200>({
+		url: `/api/v2/infra_monitoring/checks`,
+		method: 'GET',
+		params,
+		signal,
+	});
+};
+
+export const getGetChecksQueryKey = (params?: GetChecksParams) => {
+	return [
+		`/api/v2/infra_monitoring/checks`,
+		...(params ? [params] : []),
+	] as const;
+};
+
+export const getGetChecksQueryOptions = <
+	TData = Awaited<ReturnType<typeof getChecks>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	params: GetChecksParams,
+	options?: {
+		query?: UseQueryOptions<Awaited<ReturnType<typeof getChecks>>, TError, TData>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey = queryOptions?.queryKey ?? getGetChecksQueryKey(params);
+
+	const queryFn: QueryFunction<Awaited<ReturnType<typeof getChecks>>> = ({
+		signal,
+	}) => getChecks(params, signal);
+
+	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+		Awaited<ReturnType<typeof getChecks>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type GetChecksQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getChecks>>
+>;
+export type GetChecksQueryError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Run Infra Monitoring Setup Checks
+ */
+
+export function useGetChecks<
+	TData = Awaited<ReturnType<typeof getChecks>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	params: GetChecksParams,
+	options?: {
+		query?: UseQueryOptions<Awaited<ReturnType<typeof getChecks>>, TError, TData>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getGetChecksQueryOptions(params, options);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Run Infra Monitoring Setup Checks
+ */
+export const invalidateGetChecks = async (
+	queryClient: QueryClient,
+	params: GetChecksParams,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getGetChecksQueryKey(params) },
+		options,
+	);
+
+	return queryClient;
+};
 
 /**
  * Returns a paginated list of Kubernetes clusters with key aggregated metrics derived by summing per-node values within the group: CPU usage, CPU allocatable, memory working set, memory allocatable. Each row also reports per-group nodeCountsByReadiness ({ ready, notReady } from each node's latest k8s.node.condition_ready value) and per-group podCountsByPhase ({ pending, running, succeeded, failed, unknown } from each pod's latest k8s.pod.phase value). Each cluster includes metadata attributes (k8s.cluster.name). The response type is 'list' for the default k8s.cluster.name grouping or 'grouped_list' for custom groupBy keys; in both modes every row aggregates nodes and pods in the group. Supports filtering via a filter expression, custom groupBy, ordering by cpu / cpu_allocatable / memory / memory_allocatable, and pagination via offset/limit. Also reports whether the requested time range falls before the data retention boundary. Numeric metric fields (clusterCPU, clusterCPUAllocatable, clusterMemory, clusterMemoryAllocatable) return -1 as a sentinel when no data is available for that field.
