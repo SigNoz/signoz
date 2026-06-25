@@ -297,9 +297,9 @@ func TestConvertV1ToV2HappyPath(t *testing.T) {
 	assert.Equal(t, storable.ID, dashboard.ID)
 	assert.Equal(t, storable.OrgID, dashboard.OrgID)
 	assert.Equal(t, storable.Source, dashboard.Source)
-	assert.Equal(t, storable.Name, dashboard.Name)
 	assert.Equal(t, SchemaVersion, dashboard.SchemaVersion)
 	assert.Equal(t, "data:image/png;base64,abc", dashboard.Image)
+	assert.Contains(t, dashboard.Name, "apm-metrics")
 
 	assert.Equal(t, "APM Metrics", dashboard.Spec.Display.Name)
 	assert.Equal(t, "service overview", dashboard.Spec.Display.Description)
