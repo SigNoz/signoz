@@ -7110,6 +7110,11 @@ components:
       type: object
     SpantypesGettableSpanMapperTest:
       properties:
+        collectorLogs:
+          items:
+            type: string
+          nullable: true
+          type: array
         spans:
           items:
             $ref: '#/components/schemas/SpantypesSpanMapperTestSpan'

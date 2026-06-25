@@ -8282,6 +8282,10 @@ export interface SpantypesGettableSpanMapperTestDTO {
 	/**
 	 * @type array,null
 	 */
+	collectorLogs?: string[] | null;
+	/**
+	 * @type array,null
+	 */
 	spans: SpantypesSpanMapperTestSpanDTO[] | null;
 }
 
