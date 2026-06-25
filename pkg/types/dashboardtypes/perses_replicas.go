@@ -63,7 +63,7 @@ func (k *PanelKind) UnmarshalJSON(data []byte) error {
 type PanelSpec struct {
 	Display Display          `json:"display" required:"true"`
 	Plugin  PanelPlugin      `json:"plugin" required:"true"`
-	Queries []Query          `json:"queries" required:"true"`
+	Queries []Query          `json:"queries" required:"true" nullable:"false"`
 	Links   []dashboard.Link `json:"links,omitempty"`
 }
 

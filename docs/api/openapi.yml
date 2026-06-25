@@ -3293,7 +3293,6 @@ components:
         queries:
           items:
             $ref: '#/components/schemas/DashboardtypesQuery'
-          nullable: true
           type: array
       required:
       - display
