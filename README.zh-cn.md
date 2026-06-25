@@ -127,9 +127,9 @@ SigNoz 将日志、指标、链路追踪、告警、仪表盘、异常和面向 
 
 #### 自托管 SigNoz
 
-在你自己的基础设施中通过 Docker、Kubernetes 或 Linux 运行 SigNoz。
+在你自己的基础设施中通过 Foundry、Docker、Kubernetes 或 Linux 运行 SigNoz。
 
-[**Docker**](https://signoz.io/docs/install/docker/) · [**Kubernetes**](https://signoz.io/docs/install/kubernetes/) · [**Linux**](https://signoz.io/docs/install/linux/)
+[**Foundry**](https://github.com/SigNoz/foundry) · [**Docker**](https://signoz.io/docs/install/docker/) · [**Kubernetes**](https://signoz.io/docs/install/kubernetes/) · [**Linux**](https://signoz.io/docs/install/linux/)
 
 #### 发送数据
 

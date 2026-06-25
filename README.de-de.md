@@ -127,9 +127,9 @@ Erstelle einen verwalteten SigNoz-Workspace und erhalte dein erstes Dashboard, o
 
 #### SigNoz selbst hosten
 
-Betreibe SigNoz in deiner eigenen Infrastruktur mit Docker, Kubernetes oder Linux.
+Betreibe SigNoz in deiner eigenen Infrastruktur mit Foundry, Docker, Kubernetes oder Linux.
 
-[**Docker**](https://signoz.io/docs/install/docker/) · [**Kubernetes**](https://signoz.io/docs/install/kubernetes/) · [**Linux**](https://signoz.io/docs/install/linux/)
+[**Foundry**](https://github.com/SigNoz/foundry) · [**Docker**](https://signoz.io/docs/install/docker/) · [**Kubernetes**](https://signoz.io/docs/install/kubernetes/) · [**Linux**](https://signoz.io/docs/install/linux/)
 
 #### Daten senden
 

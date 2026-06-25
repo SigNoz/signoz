@@ -127,9 +127,9 @@ Crie um workspace gerenciado do SigNoz e obtenha seu primeiro dashboard sem oper
 
 #### Self-host SigNoz
 
-Execute o SigNoz na sua própria infraestrutura com Docker, Kubernetes ou Linux.
+Execute o SigNoz na sua própria infraestrutura com Foundry, Docker, Kubernetes ou Linux.
 
-[**Docker**](https://signoz.io/docs/install/docker/) · [**Kubernetes**](https://signoz.io/docs/install/kubernetes/) · [**Linux**](https://signoz.io/docs/install/linux/)
+[**Foundry**](https://github.com/SigNoz/foundry) · [**Docker**](https://signoz.io/docs/install/docker/) · [**Kubernetes**](https://signoz.io/docs/install/kubernetes/) · [**Linux**](https://signoz.io/docs/install/linux/)
 
 #### Envie dados
 
