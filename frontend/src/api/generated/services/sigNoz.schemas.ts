@@ -5535,13 +5535,6 @@ export interface InframonitoringtypesClusterRecordDTO {
 	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
 }
 
-export interface InframonitoringtypesRequiredMetricsCheckDTO {
-	/**
-	 * @type array,null
-	 */
-	missingMetrics: string[] | null;
-}
-
 export enum InframonitoringtypesResponseTypeDTO {
 	list = 'list',
 	grouped_list = 'grouped_list',
@@ -5577,7 +5570,6 @@ export interface InframonitoringtypesClustersDTO {
 	 * @type array
 	 */
 	records: InframonitoringtypesClusterRecordDTO[];
-	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
 	/**
 	 * @type integer
 	 */
@@ -5655,7 +5647,6 @@ export interface InframonitoringtypesDaemonSetsDTO {
 	 * @type array
 	 */
 	records: InframonitoringtypesDaemonSetRecordDTO[];
-	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
 	/**
 	 * @type integer
 	 */
@@ -5733,7 +5724,6 @@ export interface InframonitoringtypesDeploymentsDTO {
 	 * @type array
 	 */
 	records: InframonitoringtypesDeploymentRecordDTO[];
-	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
 	/**
 	 * @type integer
 	 */
@@ -5819,7 +5809,6 @@ export interface InframonitoringtypesHostsDTO {
 	 * @type array
 	 */
 	records: InframonitoringtypesHostRecordDTO[];
-	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
 	/**
 	 * @type integer
 	 */
@@ -5905,7 +5894,6 @@ export interface InframonitoringtypesJobsDTO {
 	 * @type array
 	 */
 	records: InframonitoringtypesJobRecordDTO[];
-	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
 	/**
 	 * @type integer
 	 */
@@ -5955,7 +5943,6 @@ export interface InframonitoringtypesNamespacesDTO {
 	 * @type array
 	 */
 	records: InframonitoringtypesNamespaceRecordDTO[];
-	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
 	/**
 	 * @type integer
 	 */
@@ -6022,7 +6009,6 @@ export interface InframonitoringtypesNodesDTO {
 	 * @type array
 	 */
 	records: InframonitoringtypesNodeRecordDTO[];
-	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
 	/**
 	 * @type integer
 	 */
@@ -6106,7 +6092,6 @@ export interface InframonitoringtypesPodsDTO {
 	 * @type array
 	 */
 	records: InframonitoringtypesPodRecordDTO[];
-	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
 	/**
 	 * @type integer
 	 */
@@ -6454,7 +6439,6 @@ export interface InframonitoringtypesStatefulSetsDTO {
 	 * @type array
 	 */
 	records: InframonitoringtypesStatefulSetRecordDTO[];
-	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
 	/**
 	 * @type integer
 	 */
@@ -6523,7 +6507,6 @@ export interface InframonitoringtypesVolumesDTO {
 	 * @type array
 	 */
 	records: InframonitoringtypesVolumeRecordDTO[];
-	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
 	/**
 	 * @type integer
 	 */
