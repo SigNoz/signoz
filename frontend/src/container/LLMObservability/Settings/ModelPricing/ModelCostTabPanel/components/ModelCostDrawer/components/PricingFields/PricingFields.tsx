@@ -2,10 +2,11 @@ import { Input } from '@signozhq/ui/input';
 import { Lock } from '@signozhq/icons';
 import cx from 'classnames';
 
-import ExtraPricingBuckets from './ExtraPricingBuckets';
-import styles from './ModelCostDrawer.module.scss';
-import { parsePricingAmount } from './utils';
-import type { DrawerDraft } from './types';
+import ExtraPricingBuckets from '../ExtraPricingBuckets';
+import styles from './PricingFields.module.scss';
+import { parsePricingAmount } from '../../../../../utils';
+import type { DrawerDraft } from '../../../../../types';
+import { Typography } from '@signozhq/ui/typography';
 
 type Pricing = DrawerDraft['pricing'];
 
@@ -23,23 +24,33 @@ function PricingFields({
 	return (
 		<div className={cx(styles.drawerSection, styles.drawerSurface)}>
 			<div className={styles.drawerSurfaceHead}>
-				<h4>Pricing (per 1M tokens, USD)</h4>
+				<Typography.Text size="base" weight="bold">
+					Pricing (per 1M tokens, USD)
+				</Typography.Text>
+
 				{isReadOnly && (
 					<span className={styles.managedLabel} data-testid="drawer-readonly-label">
 						<Lock size={12} />
-						Read-only
+
+						<Typography.Text color="muted" data-testid="drawer-readonly-label">
+							Read-only
+						</Typography.Text>
 					</span>
 				)}
 			</div>
 			<div className={styles.pricingGrid}>
 				<div className={styles.pricingField}>
 					<label htmlFor="input-cost">
-						Input cost <span className={styles.required}>*</span>
+						Input cost{' '}
+						<span className={styles.required} aria-hidden="true">
+							*
+						</span>
 					</label>
 					<Input
 						id="input-cost"
 						type="number"
 						step={0.01}
+						required
 						value={pricing.input ?? ''}
 						disabled={isReadOnly}
 						onChange={(e): void =>
@@ -50,12 +61,16 @@ function PricingFields({
 				</div>
 				<div className={styles.pricingField}>
 					<label htmlFor="output-cost">
-						Output cost <span className={styles.required}>*</span>
+						Output cost{' '}
+						<span className={styles.required} aria-hidden="true">
+							*
+						</span>
 					</label>
 					<Input
 						id="output-cost"
 						type="number"
 						step={0.01}
+						required
 						value={pricing.output ?? ''}
 						disabled={isReadOnly}
 						onChange={(e): void =>

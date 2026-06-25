@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { RadioGroup, RadioGroupItem } from '@signozhq/ui/radio-group';
 import { Lock } from '@signozhq/icons';
+import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 
-import styles from './ModelCostDrawer.module.scss';
+import styles from './SourceSelector.module.scss';
 
 interface SourceSelectorProps {
 	isOverride: boolean;
@@ -41,7 +42,10 @@ function SourceSelector({
 	return (
 		<div className={cx(styles.drawerSection, styles.drawerSurface)}>
 			<div className={styles.drawerSurfaceHead}>
-				<h4>Source</h4>
+				<Typography.Text weight="bold" size="base">
+					Source
+				</Typography.Text>
+
 				{isReadOnly && (
 					<span className={styles.managedLabel} data-testid="drawer-managed-label">
 						<Lock size={12} />
@@ -79,11 +83,7 @@ function SourceSelector({
 				</RadioGroupItem>
 			</RadioGroup>
 			{showResetConfirm && (
-				<div
-					className={styles.resetConfirm}
-					role="dialog"
-					aria-label="Reset to default pricing"
-				>
+				<div className={styles.resetConfirm} aria-label="Reset to default pricing">
 					<p>
 						Reset to default pricing? Custom values will be discarded. It might take
 						24 hours for changes to take effect.

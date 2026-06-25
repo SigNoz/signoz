@@ -1,10 +1,11 @@
 import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
+import { Typography } from '@signozhq/ui/typography';
 import { ChevronDown } from '@signozhq/icons';
 import type { TableColumnDef } from 'components/TanStackTableView';
 import { startCase } from 'lodash-es';
 
-import styles from './LLMObservabilityModelPricing.module.scss';
+import styles from './tableConfig.module.scss';
 import { type LlmpricingruletypesLLMPricingRuleDTO } from 'api/generated/services/sigNoz.schemas';
 
 import {
@@ -13,7 +14,7 @@ import {
 	getExtraBuckets,
 	getRelativeLastSeen,
 	getSourceLabel,
-} from './utils';
+} from '../../../../utils';
 
 interface ColumnsConfig {
 	canManage: boolean;
@@ -39,12 +40,13 @@ export function getModelCostsColumns({
 			enableRemove: false,
 			cell: ({ row }): JSX.Element => (
 				<div className={styles.modelCell}>
-					<div
-						className={styles.modelCellName}
-						data-testid={`model-cell-name-${row.id}`}
+					<Typography.Text
+						weight="semibold"
+						truncate={1}
+						testId={`model-cell-name-${row.id}`}
 					>
 						{row.modelName}
-					</div>
+					</Typography.Text>
 					<div
 						className={styles.modelCellCanonicalId}
 						data-testid={`model-cell-canonical-id-${row.id}`}
@@ -98,7 +100,11 @@ export function getModelCostsColumns({
 			cell: ({ row }): JSX.Element => {
 				const buckets = getExtraBuckets(row);
 				if (buckets.length === 0) {
-					return <span className={styles.muted}>—</span>;
+					return (
+						<Typography.Text color="muted" as="span">
+							—
+						</Typography.Text>
+					);
 				}
 				return (
 					<div className={styles.extraBuckets}>
@@ -109,10 +115,12 @@ export function getModelCostsColumns({
 								variant="outline"
 								className={styles.extraBucketsChip}
 							>
-								<span className={styles.extraBucketsKey}>{startCase(bucket.key)}</span>
-								<span className={styles.extraBucketsPrice}>
+								<Typography.Text as="span" size="small">
+									{startCase(bucket.key)}
+								</Typography.Text>
+								<Typography.Text as="span" size="small" weight="semibold">
 									{formatPricePerMillion(bucket.pricePerMillion)}
-								</span>
+								</Typography.Text>
 							</Badge>
 						))}
 					</div>

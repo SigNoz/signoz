@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
+import { Typography } from '@signozhq/ui/typography';
 import { X } from '@signozhq/icons';
-import cx from 'classnames';
 
-import styles from './ModelCostDrawer.module.scss';
+import styles from './PatternEditor.module.scss';
 
 interface PatternEditorProps {
 	patterns: string[];
@@ -37,9 +37,12 @@ function PatternEditor({
 
 	return (
 		<div className={styles.drawerSection}>
-			<span className={styles.fieldLabel}>
-				Model name patterns <span className={styles.muted}>(prefix match)</span>
-			</span>
+			<Typography.Text as="span">
+				Model name patterns{' '}
+				<Typography.Text as="span" color="muted">
+					(prefix match)
+				</Typography.Text>
+			</Typography.Text>
 			<div className={styles.patternBox}>
 				<div className={styles.patternChips}>
 					{patterns.map((pattern) => (
@@ -88,10 +91,10 @@ function PatternEditor({
 					</div>
 				)}
 			</div>
-			<p className={cx(styles.muted, styles.help)}>
+			<Typography.Text as="p" size="small" color="muted">
 				Each pattern uses <strong>prefix matching</strong> against{' '}
 				<code>gen_ai.request.model</code>.
-			</p>
+			</Typography.Text>
 		</div>
 	);
 }

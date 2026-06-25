@@ -1,17 +1,24 @@
+import { useState } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { DrawerWrapper } from '@signozhq/ui/drawer';
 import { Input } from '@signozhq/ui/input';
 import { SelectSimple } from '@signozhq/ui/select';
+import { Typography } from '@signozhq/ui/typography';
 import { Trash2 } from '@signozhq/icons';
 import { Controller, useForm } from 'react-hook-form';
 
-import PatternEditor from './PatternEditor';
-import PricingFields from './PricingFields';
-import SourceSelector from './SourceSelector';
-import { PROVIDER_OPTIONS } from './constants';
+import DeleteConfirmDialog from './components/DeleteConfirmDialog';
+import PatternEditor from './components/PatternEditor';
+import PricingFields from './components/PricingFields';
+import SourceSelector from './components/SourceSelector';
+import { PROVIDER_OPTIONS } from '../../../constants';
 import styles from './ModelCostDrawer.module.scss';
-import { validateModelName, validatePricing, validateProvider } from './utils';
-import type { DrawerDraft, DrawerMode } from './types';
+import {
+	validateModelName,
+	validatePricing,
+	validateProvider,
+} from '../../../utils';
+import type { DrawerDraft, DrawerMode } from '../../../types';
 
 interface ModelCostDrawerProps {
 	isOpen: boolean;
@@ -52,6 +59,9 @@ function ModelCostDrawer({
 
 	const isOverride = watch('isOverride');
 
+	const [showDeleteConfirmDialog, setShowDeleteConfirmDialog] =
+		useState<boolean>(false);
+
 	// Metadata (model id / provider / patterns / source) is editable by any
 	// manager. Pricing fields are editable only once the user picks "User
 	// override" — auto-populated pricing is managed by SigNoz. Write APIs are
@@ -75,9 +85,10 @@ function ModelCostDrawer({
 					variant="ghost"
 					color="destructive"
 					prefix={<Trash2 size={14} />}
-					onClick={onDelete}
+					onClick={(): void => setShowDeleteConfirmDialog(true)}
 					loading={isDeleting}
 					testId="drawer-delete-btn"
+					className={styles.deleteButton}
 				>
 					Delete
 				</Button>
@@ -128,7 +139,10 @@ function ModelCostDrawer({
 		>
 			<div className={styles.drawerSection}>
 				<label htmlFor="billing-model-id">
-					Billing model ID <span className={styles.required}>*</span>
+					Billing model ID{' '}
+					<span className={styles.required} aria-hidden="true">
+						*
+					</span>
 				</label>
 				<Controller
 					name="modelName"
@@ -141,6 +155,7 @@ function ModelCostDrawer({
 							<Input
 								id="billing-model-id"
 								placeholder="e.g. openai:gpt-4o"
+								required
 								value={field.value}
 								disabled={mode === 'edit' || metadataReadOnly}
 								aria-invalid={!!fieldState.error}
@@ -148,9 +163,9 @@ function ModelCostDrawer({
 								testId="drawer-model-id-input"
 							/>
 							{fieldState.error && (
-								<p className={styles.fieldError} role="alert">
+								<Typography.Text as="p" size="small" color="danger" role="alert">
 									{fieldState.error.message}
-								</p>
+								</Typography.Text>
 							)}
 						</>
 					)}
@@ -176,9 +191,9 @@ function ModelCostDrawer({
 								testId="drawer-provider-select"
 							/>
 							{fieldState.error && (
-								<p className={styles.fieldError} role="alert">
+								<Typography.Text size="small" color="danger" role="alert">
 									{fieldState.error.message}
-								</p>
+								</Typography.Text>
 							)}
 						</>
 					)}
@@ -232,19 +247,27 @@ function ModelCostDrawer({
 							onChange={(patch): void => field.onChange({ ...field.value, ...patch })}
 						/>
 						{fieldState.error && (
-							<p className={styles.fieldError} role="alert">
+							<Typography.Text as="p" size="small" color="danger" role="alert">
 								{fieldState.error.message}
-							</p>
+							</Typography.Text>
 						)}
 					</>
 				)}
 			/>
 
 			{saveError && (
-				<div className={styles.drawerError} role="alert">
+				<Typography.Text as="p" size="small" color="danger" role="alert">
 					{saveError}
-				</div>
+				</Typography.Text>
 			)}
+
+			<DeleteConfirmDialog
+				open={showDeleteConfirmDialog}
+				modelName={initialDraft.modelName}
+				isDeleting={isDeleting}
+				onConfirm={onDelete}
+				onCancel={(): void => setShowDeleteConfirmDialog(false)}
+			/>
 		</DrawerWrapper>
 	);
 }

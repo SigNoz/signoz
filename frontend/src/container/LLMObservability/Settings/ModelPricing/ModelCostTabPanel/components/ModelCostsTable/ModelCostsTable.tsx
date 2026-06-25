@@ -6,9 +6,9 @@ import {
 	PAGE_KEY,
 	PAGE_SIZE,
 	SKELETON_ROW_COUNT,
-} from './constants';
-import styles from './LLMObservabilityModelPricing.module.scss';
-import { getModelCostsColumns } from './table.config';
+} from '../../../constants';
+import styles from './ModelCostsTable.module.scss';
+import { getModelCostsColumns } from './TableConfig';
 import { type LlmpricingruletypesLLMPricingRuleDTO } from 'api/generated/services/sigNoz.schemas';
 
 interface ModelCostsTableProps {
@@ -22,8 +22,9 @@ interface ModelCostsTableProps {
 
 // The table owns its own pagination URL state (page/limit) via enableQueryParams;
 // ModelCostsTab reads the same keys to build the list request. Virtual scroll is
-// disabled because this is a small, server-paginated page that lives in a
-// content-height container rather than a fixed-height viewport.
+// disabled: a plain table renders fine at our page sizes (up to 100 rows) and the
+// fixed-height scroll viewport (.modelCostsTable) keeps large pages scrolling
+// inside the table.
 function ModelCostsTable({
 	rules,
 	isLoading,
@@ -39,7 +40,7 @@ function ModelCostsTable({
 
 	if (!isLoading && rules.length === 0) {
 		return (
-			<div className={styles.modelCostsTable} data-testid="model-costs-empty">
+			<div className={styles.modelCostsEmpty} data-testid="model-costs-empty">
 				No model costs yet.
 			</div>
 		);
