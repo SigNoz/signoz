@@ -49,7 +49,7 @@ describe('ViewRolePage - Error State', () => {
 		expect(document.querySelector('.error-in-place')).toBeInTheDocument();
 	});
 
-	it('displays error state with title when API fails without role data', () => {
+	it('displays error state with title when API fails without role data', async () => {
 		jest.spyOn(roleApi, 'useGetRole').mockReturnValue({
 			data: undefined,
 			isLoading: false,
@@ -61,7 +61,9 @@ describe('ViewRolePage - Error State', () => {
 			initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
 		});
 
-		expect(screen.getByText('Failed to load role')).toBeInTheDocument();
+		await expect(
+			screen.findByText('Failed to load role'),
+		).resolves.toBeInTheDocument();
 		expect(document.querySelector('.error-in-place')).toBeInTheDocument();
 	});
 

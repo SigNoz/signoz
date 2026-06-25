@@ -40,7 +40,7 @@ describe('ViewRolePage - AuthZ', () => {
 	});
 
 	describe('permission denied', () => {
-		it('shows permission denied page when read permission denied', () => {
+		it('shows permission denied page when read permission denied', async () => {
 			jest
 				.spyOn(useAuthZModule, 'useAuthZ')
 				.mockImplementation(mockUseAuthZDenyAll);
@@ -56,7 +56,9 @@ describe('ViewRolePage - AuthZ', () => {
 				initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
 			});
 
-			expect(screen.getByText(/You are not authorized/i)).toBeInTheDocument();
+			await expect(
+				screen.findByText(/You are not authorized/i),
+			).resolves.toBeInTheDocument();
 		});
 	});
 

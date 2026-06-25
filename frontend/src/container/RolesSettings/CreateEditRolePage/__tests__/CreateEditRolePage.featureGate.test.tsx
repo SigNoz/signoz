@@ -59,7 +59,7 @@ function renderEditPage(
 
 describe('CreateEditRolePage - Feature Gate', () => {
 	describe('create mode - feature disabled', () => {
-		it('shows error when fine-grained authz flag is inactive', () => {
+		it('shows error when fine-grained authz flag is inactive', async () => {
 			renderCreatePage({
 				featureFlags: defaultFeatureFlags.map((f) =>
 					f.name === FeatureKeys.USE_FINE_GRAINED_AUTHZ
@@ -69,24 +69,24 @@ describe('CreateEditRolePage - Feature Gate', () => {
 			});
 
 			expect(screen.getByTestId('feature-gate-error-banner')).toBeInTheDocument();
-			expect(
-				screen.getByText(/Custom roles feature is not available/i),
-			).toBeInTheDocument();
+			await expect(
+				screen.findByText(/Custom roles feature is not available/i),
+			).resolves.toBeInTheDocument();
 		});
 
-		it('shows error when license is invalid', () => {
+		it('shows error when license is invalid', async () => {
 			renderCreatePage({ activeLicense: invalidLicense });
 
 			expect(screen.getByTestId('feature-gate-error-banner')).toBeInTheDocument();
-			expect(
-				screen.getByText(/Custom roles feature is not available/i),
-			).toBeInTheDocument();
+			await expect(
+				screen.findByText(/Custom roles feature is not available/i),
+			).resolves.toBeInTheDocument();
 		});
 
-		it('shows Create Role title when feature disabled in create mode', () => {
+		it('shows Create Role title when feature disabled in create mode', async () => {
 			renderCreatePage({ activeLicense: invalidLicense });
 
-			expect(screen.getByText('Create Role')).toBeInTheDocument();
+			await expect(screen.findByText('Create Role')).resolves.toBeInTheDocument();
 		});
 
 		it('shows back button when feature disabled', () => {
@@ -106,7 +106,7 @@ describe('CreateEditRolePage - Feature Gate', () => {
 		const ROLE_ID = '019c24aa-3333-0001-aaaa-111111111111';
 		const ROLE_NAME = 'test-role';
 
-		it('shows error when fine-grained authz flag is inactive', () => {
+		it('shows error when fine-grained authz flag is inactive', async () => {
 			renderEditPage(ROLE_ID, ROLE_NAME, {
 				featureFlags: defaultFeatureFlags.map((f) =>
 					f.name === FeatureKeys.USE_FINE_GRAINED_AUTHZ
@@ -116,24 +116,24 @@ describe('CreateEditRolePage - Feature Gate', () => {
 			});
 
 			expect(screen.getByTestId('feature-gate-error-banner')).toBeInTheDocument();
-			expect(
-				screen.getByText(/Custom roles feature is not available/i),
-			).toBeInTheDocument();
+			await expect(
+				screen.findByText(/Custom roles feature is not available/i),
+			).resolves.toBeInTheDocument();
 		});
 
-		it('shows error when license is invalid', () => {
+		it('shows error when license is invalid', async () => {
 			renderEditPage(ROLE_ID, ROLE_NAME, { activeLicense: invalidLicense });
 
 			expect(screen.getByTestId('feature-gate-error-banner')).toBeInTheDocument();
-			expect(
-				screen.getByText(/Custom roles feature is not available/i),
-			).toBeInTheDocument();
+			await expect(
+				screen.findByText(/Custom roles feature is not available/i),
+			).resolves.toBeInTheDocument();
 		});
 
-		it('shows Edit Role title when feature disabled in edit mode', () => {
+		it('shows Edit Role title when feature disabled in edit mode', async () => {
 			renderEditPage(ROLE_ID, ROLE_NAME, { activeLicense: invalidLicense });
 
-			expect(screen.getByText('Edit Role')).toBeInTheDocument();
+			await expect(screen.findByText('Edit Role')).resolves.toBeInTheDocument();
 		});
 	});
 });

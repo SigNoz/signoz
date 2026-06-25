@@ -18,22 +18,24 @@ describe('ViewRolePage - Custom Role', () => {
 		jest.restoreAllMocks();
 	});
 
-	it('renders role name in page title', () => {
+	it('renders role name in page title', async () => {
 		render(<ViewRolePage />, undefined, {
 			initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
 		});
 
-		expect(screen.getByText('Role - billing-manager')).toBeInTheDocument();
+		await expect(
+			screen.findByText('Role - billing-manager'),
+		).resolves.toBeInTheDocument();
 	});
 
-	it('shows role description', () => {
+	it('shows role description', async () => {
 		render(<ViewRolePage />, undefined, {
 			initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
 		});
 
-		expect(
-			screen.getByText('Custom role for managing billing and invoices.'),
-		).toBeInTheDocument();
+		await expect(
+			screen.findByText('Custom role for managing billing and invoices.'),
+		).resolves.toBeInTheDocument();
 	});
 
 	it('shows Update button for custom roles', () => {
@@ -60,12 +62,14 @@ describe('ViewRolePage - Custom Role', () => {
 		expect(screen.getByTestId('delete-button')).toBeInTheDocument();
 	});
 
-	it('renders created/updated timestamps labels', () => {
+	it('renders created/updated timestamps labels', async () => {
 		render(<ViewRolePage />, undefined, {
 			initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
 		});
 
-		expect(screen.getByText('Created At')).toBeInTheDocument();
-		expect(screen.getByText('Last Modified At')).toBeInTheDocument();
+		await expect(screen.findByText('Created At')).resolves.toBeInTheDocument();
+		await expect(
+			screen.findByText('Last Modified At'),
+		).resolves.toBeInTheDocument();
 	});
 });

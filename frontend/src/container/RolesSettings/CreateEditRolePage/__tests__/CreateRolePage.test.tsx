@@ -114,7 +114,9 @@ describe('CreateRolePage', () => {
 			const nameInput = screen.getByTestId('role-name-input');
 			await user.type(nameInput, 'my-role');
 
-			expect(screen.getByText('Unsaved changes')).toBeInTheDocument();
+			await expect(
+				screen.findByText('Unsaved changes'),
+			).resolves.toBeInTheDocument();
 		});
 
 		it('enables save button when description is entered', async () => {
@@ -239,7 +241,9 @@ describe('CreateRolePage', () => {
 				screen.findByTestId('save-error-banner'),
 			).resolves.toBeInTheDocument();
 
-			expect(screen.getByText('Role name already exists')).toBeInTheDocument();
+			await expect(
+				screen.findByText('Role name already exists'),
+			).resolves.toBeInTheDocument();
 		});
 	});
 
@@ -260,7 +264,7 @@ describe('CreateRolePage', () => {
 			const readToggle = within(apiKeysCard).getByTestId(
 				'action-toggle-factor-api-key-read',
 			);
-			const onlySelectedBtn = within(readToggle).getByText('Only selected');
+			const onlySelectedBtn = await within(readToggle).findByText('Only selected');
 			await user.click(onlySelectedBtn);
 
 			const saveBtn = screen.getByTestId('save-button');
@@ -270,11 +274,11 @@ describe('CreateRolePage', () => {
 				screen.findByTestId('save-error-banner'),
 			).resolves.toBeInTheDocument();
 
-			expect(
-				screen.getByText(
+			await expect(
+				screen.findByText(
 					'Please add at least one selector for each "Only selected" permission.',
 				),
-			).toBeInTheDocument();
+			).resolves.toBeInTheDocument();
 		});
 	});
 });

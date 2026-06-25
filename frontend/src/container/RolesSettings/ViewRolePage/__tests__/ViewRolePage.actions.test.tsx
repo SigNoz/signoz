@@ -79,11 +79,9 @@ describe('ViewRolePage - Actions', () => {
 		const deleteBtn = screen.getByTestId('delete-button');
 		await user.click(deleteBtn);
 
-		await waitFor(() => {
-			expect(
-				screen.getByText(/Are you sure you want to delete the role/),
-			).toBeInTheDocument();
-		});
+		await expect(
+			screen.findByText(/Are you sure you want to delete the role/),
+		).resolves.toBeInTheDocument();
 	});
 
 	it('calls delete API and redirects on successful delete', async () => {
@@ -109,11 +107,9 @@ describe('ViewRolePage - Actions', () => {
 
 		await user.click(screen.getByTestId('delete-button'));
 
-		await waitFor(() => {
-			expect(
-				screen.getByText(/Are you sure you want to delete the role/),
-			).toBeInTheDocument();
-		});
+		await expect(
+			screen.findByText(/Are you sure you want to delete the role/),
+		).resolves.toBeInTheDocument();
 
 		const modal = screen.getByRole('dialog');
 		const modalConfirmBtn = within(modal).getByRole('button', {

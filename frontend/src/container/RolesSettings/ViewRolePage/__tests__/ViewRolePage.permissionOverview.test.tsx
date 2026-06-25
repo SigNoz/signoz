@@ -32,12 +32,14 @@ describe('ViewRolePage - Permission Overview', () => {
 		jest.restoreAllMocks();
 	});
 
-	it('renders Transaction Groups section label', () => {
+	it('renders Transaction Groups section label', async () => {
 		render(<ViewRolePage />, undefined, {
 			initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
 		});
 
-		expect(screen.getByText('Transaction Groups')).toBeInTheDocument();
+		await expect(
+			screen.findByText('Transaction Groups'),
+		).resolves.toBeInTheDocument();
 	});
 
 	it('renders permission overview container', () => {
@@ -334,8 +336,8 @@ describe('ViewRolePage - Scope: ONLY_SELECTED permissions', () => {
 
 		await expandAllCards();
 
-		expect(screen.getByText('key-abc-123')).toBeInTheDocument();
-		expect(screen.getByText('key-def-456')).toBeInTheDocument();
+		await expect(screen.findByText('key-abc-123')).resolves.toBeInTheDocument();
+		await expect(screen.findByText('key-def-456')).resolves.toBeInTheDocument();
 	});
 
 	it('counts ONLY_SELECTED as granted in count', () => {
@@ -393,7 +395,7 @@ describe('ViewRolePage - Scope: ONLY_SELECTED permissions', () => {
 
 		await expandAllCards();
 
-		expect(screen.getByText('editor-role')).toBeInTheDocument();
+		await expect(screen.findByText('editor-role')).resolves.toBeInTheDocument();
 
 		const toggle = screen.getByTestId('toggle-items-update');
 		await user.click(toggle);
@@ -401,7 +403,7 @@ describe('ViewRolePage - Scope: ONLY_SELECTED permissions', () => {
 		expect(screen.queryByText('editor-role')).not.toBeInTheDocument();
 
 		await user.click(toggle);
-		expect(screen.getByText('editor-role')).toBeInTheDocument();
+		await expect(screen.findByText('editor-role')).resolves.toBeInTheDocument();
 	});
 });
 
@@ -517,7 +519,7 @@ describe('ViewRolePage - Unknown resources', () => {
 		jest.restoreAllMocks();
 	});
 
-	it('renders unknown resource with fallback label', () => {
+	it('renders unknown resource with fallback label', async () => {
 		mockHooksWithPermissions({
 			...mockPermissionsData,
 			resources: [
@@ -541,7 +543,9 @@ describe('ViewRolePage - Unknown resources', () => {
 		expect(
 			screen.getByTestId('resource-section-future-resource'),
 		).toBeInTheDocument();
-		expect(screen.getByText('future-resource')).toBeInTheDocument();
+		await expect(
+			screen.findByText('future-resource'),
+		).resolves.toBeInTheDocument();
 	});
 
 	it('shows raw verb name when no label mapping exists', async () => {
@@ -567,7 +571,9 @@ describe('ViewRolePage - Unknown resources', () => {
 
 		await expandAllCards();
 
-		expect(screen.getByText('Unknown_action')).toBeInTheDocument();
+		await expect(
+			screen.findByText('Unknown_action'),
+		).resolves.toBeInTheDocument();
 	});
 
 	it('handles resource with empty actions', () => {

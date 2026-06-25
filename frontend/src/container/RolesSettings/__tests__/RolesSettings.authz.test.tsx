@@ -36,13 +36,13 @@ describe('RolesSettings', () => {
 		server.resetHandlers();
 	});
 
-	it('renders the header and search input', () => {
+	it('renders the header and search input', async () => {
 		render(<RolesSettings />);
 
-		expect(screen.getByText('Roles')).toBeInTheDocument();
-		expect(
-			screen.getByText('Create and manage custom roles for your team.'),
-		).toBeInTheDocument();
+		await expect(screen.findByText('Roles')).resolves.toBeInTheDocument();
+		await expect(
+			screen.findByText('Create and manage custom roles for your team.'),
+		).resolves.toBeInTheDocument();
 		expect(
 			screen.getByPlaceholderText('Search for roles...'),
 		).toBeInTheDocument();
@@ -54,26 +54,30 @@ describe('RolesSettings', () => {
 		await expect(screen.findByText('signoz-admin')).resolves.toBeInTheDocument();
 
 		// Section headers
-		expect(screen.getByText('Managed roles')).toBeInTheDocument();
-		expect(screen.getByText('Custom roles')).toBeInTheDocument();
+		await expect(screen.findByText('Managed roles')).resolves.toBeInTheDocument();
+		await expect(screen.findByText('Custom roles')).resolves.toBeInTheDocument();
 
 		// Managed roles
-		expect(screen.getByText('signoz-admin')).toBeInTheDocument();
-		expect(screen.getByText('signoz-editor')).toBeInTheDocument();
-		expect(screen.getByText('signoz-viewer')).toBeInTheDocument();
+		await expect(screen.findByText('signoz-admin')).resolves.toBeInTheDocument();
+		await expect(screen.findByText('signoz-editor')).resolves.toBeInTheDocument();
+		await expect(screen.findByText('signoz-viewer')).resolves.toBeInTheDocument();
 
 		// Custom roles
-		expect(screen.getByText('billing-manager')).toBeInTheDocument();
-		expect(screen.getByText('dashboard-creator')).toBeInTheDocument();
+		await expect(
+			screen.findByText('billing-manager'),
+		).resolves.toBeInTheDocument();
+		await expect(
+			screen.findByText('dashboard-creator'),
+		).resolves.toBeInTheDocument();
 
 		// Custom roles count badge
-		expect(screen.getByText('2')).toBeInTheDocument();
+		await expect(screen.findByText('2')).resolves.toBeInTheDocument();
 
 		// Column headers
-		expect(screen.getByText('Name')).toBeInTheDocument();
-		expect(screen.getByText('Description')).toBeInTheDocument();
-		expect(screen.getByText('Updated At')).toBeInTheDocument();
-		expect(screen.getByText('Created At')).toBeInTheDocument();
+		await expect(screen.findByText('Name')).resolves.toBeInTheDocument();
+		await expect(screen.findByText('Description')).resolves.toBeInTheDocument();
+		await expect(screen.findByText('Updated At')).resolves.toBeInTheDocument();
+		await expect(screen.findByText('Created At')).resolves.toBeInTheDocument();
 	});
 
 	it('filters roles by search query on name', async () => {
@@ -180,7 +184,9 @@ describe('RolesSettings', () => {
 
 		for (const role of allRoles) {
 			if (role.description) {
-				expect(screen.getByText(role.description)).toBeInTheDocument();
+				await expect(
+					screen.findByText(role.description),
+				).resolves.toBeInTheDocument();
 			}
 		}
 	});

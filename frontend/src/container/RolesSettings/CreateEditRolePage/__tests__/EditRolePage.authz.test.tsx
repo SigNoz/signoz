@@ -36,20 +36,24 @@ function renderEditPage(): ReturnType<typeof render> {
 
 describe('EditRolePage - AuthZ', () => {
 	describe('permission denied', () => {
-		it('shows PermissionDeniedFullPage when read permission denied', () => {
+		it('shows PermissionDeniedFullPage when read permission denied', async () => {
 			mockUseAuthZ.mockImplementation(mockUseAuthZDenyAll);
 
 			renderEditPage();
 
-			expect(screen.getByText(/You are not authorized/i)).toBeInTheDocument();
+			await expect(
+				screen.findByText(/You are not authorized/i),
+			).resolves.toBeInTheDocument();
 		});
 
-		it('shows PermissionDeniedFullPage when update permission denied but read granted', () => {
+		it('shows PermissionDeniedFullPage when update permission denied but read granted', async () => {
 			mockUseAuthZ.mockImplementation(mockUseAuthZGrantByPrefix('read'));
 
 			renderEditPage();
 
-			expect(screen.getByText(/You are not authorized/i)).toBeInTheDocument();
+			await expect(
+				screen.findByText(/You are not authorized/i),
+			).resolves.toBeInTheDocument();
 		});
 
 		it('checks both read and update permissions for edit mode', () => {

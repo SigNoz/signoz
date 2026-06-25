@@ -25,7 +25,7 @@ describe('ViewRolePage - Edge Cases', () => {
 		jest.restoreAllMocks();
 	});
 
-	it('shows fallback for missing description', () => {
+	it('shows fallback for missing description', async () => {
 		jest.spyOn(roleApi, 'useGetRole').mockReturnValue({
 			data: {
 				status: 'success',
@@ -50,7 +50,7 @@ describe('ViewRolePage - Edge Cases', () => {
 			initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
 		});
 
-		expect(screen.getByText('Description')).toBeInTheDocument();
+		await expect(screen.findByText('Description')).resolves.toBeInTheDocument();
 	});
 
 	it('shows fallback for invalid timestamps', () => {

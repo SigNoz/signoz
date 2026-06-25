@@ -139,11 +139,13 @@ describe('PermissionEditor', () => {
 			expect(header).toHaveAttribute('aria-expanded', 'false');
 		});
 
-		it('shows granted count in resource card header', () => {
+		it('shows granted count in resource card header', async () => {
 			renderPage();
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
-			expect(within(apiKeyCard).getByText(/0 \/ \d+ granted/)).toBeInTheDocument();
+			await expect(
+				within(apiKeyCard).findByText(/0 \/ \d+ granted/),
+			).resolves.toBeInTheDocument();
 		});
 	});
 
@@ -194,7 +196,7 @@ describe('PermissionEditor', () => {
 				'action-toggle-factor-api-key-read',
 			);
 
-			const allBtn = within(createToggle).getByText('All');
+			const allBtn = await within(createToggle).findByText('All');
 			await user.click(allBtn);
 
 			const scopeToggle = within(createToggle).getByTestId(
@@ -215,9 +217,11 @@ describe('PermissionEditor', () => {
 				'action-toggle-factor-api-key-read',
 			);
 
-			await user.click(within(createToggle).getByText('All'));
+			await user.click(await within(createToggle).findByText('All'));
 
-			expect(within(apiKeyCard).getByText(/1 \/ \d+ granted/)).toBeInTheDocument();
+			await expect(
+				within(apiKeyCard).findByText(/1 \/ \d+ granted/),
+			).resolves.toBeInTheDocument();
 		});
 	});
 
@@ -232,7 +236,8 @@ describe('PermissionEditor', () => {
 				'action-toggle-factor-api-key-read',
 			);
 
-			const onlySelectedBtn = within(createToggle).getByText('Only selected');
+			const onlySelectedBtn =
+				await within(createToggle).findByText('Only selected');
 			await user.click(onlySelectedBtn);
 
 			expect(screen.getByTestId('item-input-selector')).toBeInTheDocument();
@@ -248,12 +253,12 @@ describe('PermissionEditor', () => {
 				'action-toggle-factor-api-key-read',
 			);
 
-			await user.click(within(createToggle).getByText('Only selected'));
+			await user.click(await within(createToggle).findByText('Only selected'));
 
 			const input = screen.getByTestId('item-input-selector-input');
 			await user.type(input, 'api-key-001{enter}');
 
-			expect(screen.getByText('api-key-001')).toBeInTheDocument();
+			await expect(screen.findByText('api-key-001')).resolves.toBeInTheDocument();
 		});
 
 		it('adds item when Add button clicked', async () => {
@@ -266,7 +271,7 @@ describe('PermissionEditor', () => {
 				'action-toggle-factor-api-key-read',
 			);
 
-			await user.click(within(createToggle).getByText('Only selected'));
+			await user.click(await within(createToggle).findByText('Only selected'));
 
 			const input = screen.getByTestId('item-input-selector-input');
 			await user.type(input, 'api-key-002');
@@ -274,7 +279,7 @@ describe('PermissionEditor', () => {
 			const addBtn = screen.getByTestId('item-input-selector-add-btn');
 			await user.click(addBtn);
 
-			expect(screen.getByText('api-key-002')).toBeInTheDocument();
+			await expect(screen.findByText('api-key-002')).resolves.toBeInTheDocument();
 		});
 
 		it('adds multiple items separated by comma', async () => {
@@ -287,14 +292,14 @@ describe('PermissionEditor', () => {
 				'action-toggle-factor-api-key-read',
 			);
 
-			await user.click(within(createToggle).getByText('Only selected'));
+			await user.click(await within(createToggle).findByText('Only selected'));
 
 			const input = screen.getByTestId('item-input-selector-input');
 			await user.type(input, 'key-a, key-b, key-c{enter}');
 
-			expect(screen.getByText('key-a')).toBeInTheDocument();
-			expect(screen.getByText('key-b')).toBeInTheDocument();
-			expect(screen.getByText('key-c')).toBeInTheDocument();
+			await expect(screen.findByText('key-a')).resolves.toBeInTheDocument();
+			await expect(screen.findByText('key-b')).resolves.toBeInTheDocument();
+			await expect(screen.findByText('key-c')).resolves.toBeInTheDocument();
 		});
 
 		it('adds multiple items separated by space', async () => {
@@ -307,14 +312,14 @@ describe('PermissionEditor', () => {
 				'action-toggle-factor-api-key-read',
 			);
 
-			await user.click(within(createToggle).getByText('Only selected'));
+			await user.click(await within(createToggle).findByText('Only selected'));
 
 			const input = screen.getByTestId('item-input-selector-input');
 			await user.type(input, 'key-x key-y key-z{enter}');
 
-			expect(screen.getByText('key-x')).toBeInTheDocument();
-			expect(screen.getByText('key-y')).toBeInTheDocument();
-			expect(screen.getByText('key-z')).toBeInTheDocument();
+			await expect(screen.findByText('key-x')).resolves.toBeInTheDocument();
+			await expect(screen.findByText('key-y')).resolves.toBeInTheDocument();
+			await expect(screen.findByText('key-z')).resolves.toBeInTheDocument();
 		});
 
 		it('does not add duplicate items', async () => {
@@ -327,7 +332,7 @@ describe('PermissionEditor', () => {
 				'action-toggle-factor-api-key-read',
 			);
 
-			await user.click(within(createToggle).getByText('Only selected'));
+			await user.click(await within(createToggle).findByText('Only selected'));
 
 			const input = screen.getByTestId('item-input-selector-input');
 			await user.type(input, 'same-key{enter}');
@@ -347,7 +352,7 @@ describe('PermissionEditor', () => {
 				'action-toggle-factor-api-key-read',
 			);
 
-			await user.click(within(createToggle).getByText('Only selected'));
+			await user.click(await within(createToggle).findByText('Only selected'));
 
 			const input = screen.getByTestId('item-input-selector-input');
 			await user.type(input, 'removable-key{enter}');
@@ -370,7 +375,7 @@ describe('PermissionEditor', () => {
 				'action-toggle-factor-api-key-read',
 			);
 
-			await user.click(within(createToggle).getByText('Only selected'));
+			await user.click(await within(createToggle).findByText('Only selected'));
 
 			const addBtn = screen.getByTestId('item-input-selector-add-btn');
 			expect(addBtn).toBeDisabled();
@@ -388,12 +393,12 @@ describe('PermissionEditor', () => {
 				'action-toggle-factor-api-key-read',
 			);
 
-			await user.click(within(createToggle).getByText('Only selected'));
+			await user.click(await within(createToggle).findByText('Only selected'));
 
 			const input = screen.getByTestId('item-input-selector-input');
 			await user.type(input, 'will-be-cleared{enter}');
 
-			await user.click(within(createToggle).getByText('All'));
+			await user.click(await within(createToggle).findByText('All'));
 
 			await expect(
 				screen.findByText('Change permission scope?'),
@@ -410,12 +415,12 @@ describe('PermissionEditor', () => {
 				'action-toggle-factor-api-key-read',
 			);
 
-			await user.click(within(createToggle).getByText('Only selected'));
+			await user.click(await within(createToggle).findByText('Only selected'));
 
 			const input = screen.getByTestId('item-input-selector-input');
 			await user.type(input, 'to-be-cleared{enter}');
 
-			await user.click(within(createToggle).getByText('All'));
+			await user.click(await within(createToggle).findByText('All'));
 
 			const dialog = await screen.findByRole('dialog');
 			await user.click(
@@ -437,17 +442,19 @@ describe('PermissionEditor', () => {
 				'action-toggle-factor-api-key-read',
 			);
 
-			await user.click(within(createToggle).getByText('Only selected'));
+			await user.click(await within(createToggle).findByText('Only selected'));
 
 			const input = screen.getByTestId('item-input-selector-input');
 			await user.type(input, 'preserved-key{enter}');
 
-			await user.click(within(createToggle).getByText('None'));
+			await user.click(await within(createToggle).findByText('None'));
 
 			const dialog = await screen.findByRole('dialog');
 			await user.click(within(dialog).getByRole('button', { name: /cancel/i }));
 
-			expect(screen.getByText('preserved-key')).toBeInTheDocument();
+			await expect(
+				screen.findByText('preserved-key'),
+			).resolves.toBeInTheDocument();
 
 			expect(screen.getByTestId('item-input-selector')).toBeInTheDocument();
 		});
@@ -462,8 +469,8 @@ describe('PermissionEditor', () => {
 				'action-toggle-factor-api-key-read',
 			);
 
-			await user.click(within(createToggle).getByText('Only selected'));
-			await user.click(within(createToggle).getByText('All'));
+			await user.click(await within(createToggle).findByText('Only selected'));
+			await user.click(await within(createToggle).findByText('All'));
 
 			expect(
 				screen.queryByText('Change permission scope?'),
@@ -484,8 +491,12 @@ describe('PermissionEditor', () => {
 			expect(
 				within(listToggle).queryByText('Only selected'),
 			).not.toBeInTheDocument();
-			expect(within(listToggle).getByText('None')).toBeInTheDocument();
-			expect(within(listToggle).getByText('All')).toBeInTheDocument();
+			await expect(
+				within(listToggle).findByText('None'),
+			).resolves.toBeInTheDocument();
+			await expect(
+				within(listToggle).findByText('All'),
+			).resolves.toBeInTheDocument();
 		});
 	});
 

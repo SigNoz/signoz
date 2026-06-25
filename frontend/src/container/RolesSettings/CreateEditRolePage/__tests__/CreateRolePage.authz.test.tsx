@@ -30,12 +30,14 @@ function renderCreatePage(): ReturnType<typeof render> {
 
 describe('CreateRolePage - AuthZ', () => {
 	describe('permission denied', () => {
-		it('shows PermissionDeniedFullPage when create permission denied', () => {
+		it('shows PermissionDeniedFullPage when create permission denied', async () => {
 			mockUseAuthZ.mockImplementation(mockUseAuthZDenyAll);
 
 			renderCreatePage();
 
-			expect(screen.getByText(/You are not authorized/i)).toBeInTheDocument();
+			await expect(
+				screen.findByText(/You are not authorized/i),
+			).resolves.toBeInTheDocument();
 		});
 	});
 

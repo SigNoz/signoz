@@ -84,7 +84,7 @@ describe('JsonEditor', () => {
 			const createToggle = within(apiKeyCard).getByTestId(
 				'action-toggle-factor-api-key-create',
 			);
-			await user.click(within(createToggle).getByText('All'));
+			await user.click(await within(createToggle).findByText('All'));
 
 			await switchToJsonMode();
 
@@ -108,7 +108,7 @@ describe('JsonEditor', () => {
 			const createToggle = within(apiKeyCard).getByTestId(
 				'action-toggle-factor-api-key-create',
 			);
-			await user.click(within(createToggle).getByText('All'));
+			await user.click(await within(createToggle).findByText('All'));
 
 			await switchToJsonMode();
 
@@ -152,7 +152,7 @@ describe('JsonEditor', () => {
 			const readToggle = within(apiKeyCard).getByTestId(
 				'action-toggle-factor-api-key-read',
 			);
-			await user.click(within(readToggle).getByText('Only selected'));
+			await user.click(await within(readToggle).findByText('Only selected'));
 
 			const input = screen.getByTestId('item-input-selector-input');
 			await user.type(input, 'test-key-123{enter}');
@@ -178,7 +178,7 @@ describe('JsonEditor', () => {
 			const createToggle = within(apiKeyCard).getByTestId(
 				'action-toggle-factor-api-key-create',
 			);
-			await user.click(within(createToggle).getByText('All'));
+			await user.click(await within(createToggle).findByText('All'));
 
 			await switchToJsonMode();
 
@@ -208,7 +208,7 @@ describe('JsonEditor', () => {
 			const readToggle = within(apiKeyCard).getByTestId(
 				'action-toggle-factor-api-key-read',
 			);
-			await user.click(within(readToggle).getByText('All'));
+			await user.click(await within(readToggle).findByText('All'));
 
 			await switchToJsonMode();
 

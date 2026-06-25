@@ -220,7 +220,9 @@ describe('EditRolePage', () => {
 			const descInput = await screen.findByTestId('role-description-input');
 			await user.type(descInput, ' updated');
 
-			expect(screen.getByText('Unsaved changes')).toBeInTheDocument();
+			await expect(
+				screen.findByText('Unsaved changes'),
+			).resolves.toBeInTheDocument();
 		});
 
 		it('disables save when changes reverted to original', async () => {
@@ -384,10 +386,12 @@ describe('EditRolePage', () => {
 			const createToggle = within(apiKeysCard).getByTestId(
 				'action-toggle-factor-api-key-create',
 			);
-			const allBtn = within(createToggle).getByText('All');
+			const allBtn = await within(createToggle).findByText('All');
 			await user.click(allBtn);
 
-			expect(screen.getByText('Unsaved changes')).toBeInTheDocument();
+			await expect(
+				screen.findByText('Unsaved changes'),
+			).resolves.toBeInTheDocument();
 			expect(screen.getByTestId('save-button')).not.toBeDisabled();
 		});
 	});
