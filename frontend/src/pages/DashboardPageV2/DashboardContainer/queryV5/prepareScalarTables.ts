@@ -34,12 +34,9 @@ export function extractAggregationsPerQuery(
 		) {
 			return;
 		}
-		const spec = envelope.spec as unknown as {
-			name?: string;
-			aggregations?: AggregationView[];
-		};
+		const spec = envelope.spec;
 		if (spec?.name && spec.aggregations) {
-			perQuery[spec.name] = spec.aggregations;
+			perQuery[spec.name] = spec.aggregations as AggregationView[];
 		}
 	});
 	return perQuery;
@@ -63,9 +60,8 @@ export function extractClickhouseQueryNames(
 		) {
 			return;
 		}
-		const spec = envelope.spec as unknown as { name?: string };
-		if (spec?.name) {
-			names.add(spec.name);
+		if (envelope.spec?.name) {
+			names.add(envelope.spec.name);
 		}
 	});
 	return names;

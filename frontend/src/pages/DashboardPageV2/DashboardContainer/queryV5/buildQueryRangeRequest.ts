@@ -149,12 +149,17 @@ function withBarStepInterval(
 		) {
 			return envelope;
 		}
-		const spec = envelope.spec as unknown as QuerySpecView;
-		if (spec.stepInterval) {
+		if (envelope.spec?.stepInterval) {
 			return envelope;
 		}
-		return { ...envelope, spec: { ...spec, stepInterval } };
-	}) as unknown as Querybuildertypesv5QueryEnvelopeDTO[];
+		return {
+			...envelope,
+			spec: {
+				...envelope.spec,
+				stepInterval,
+			} as Querybuildertypesv5BuilderQuerySpecDTO,
+		};
+	});
 }
 
 /**
@@ -175,12 +180,12 @@ function withPagination(
 		return {
 			...envelope,
 			spec: {
-				...(envelope.spec as unknown as Record<string, unknown>),
+				...envelope.spec,
 				offset,
 				limit,
-			},
+			} as Querybuildertypesv5BuilderQuerySpecDTO,
 		};
-	}) as unknown as Querybuildertypesv5QueryEnvelopeDTO[];
+	});
 }
 
 export interface BuildQueryRangeRequestArgs {
@@ -260,7 +265,7 @@ export function hasRunnableQueries(queries: DashboardtypesQueryDTO[]): boolean {
 				envelope.type ===
 				Querybuildertypesv5QueryEnvelopeBuilderDTOType.builder_query,
 		)
-		.map((envelope) => envelope.spec as unknown as QuerySpecView)
+		.map((envelope) => envelope.spec as QuerySpecView)
 		.filter((spec) => spec.signal === 'metrics');
 
 	if (metricsSpecs.length === 0) {
