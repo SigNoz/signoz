@@ -16,7 +16,6 @@ processors:
                   pattern:
                     - gpt-4o*
                   cache:
-                    mode: subtract
                     read: 2.5
                     write: 0
                   in: 5
