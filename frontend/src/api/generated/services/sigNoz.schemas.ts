@@ -4328,85 +4328,6 @@ export interface Querybuildertypesv5QueryEnvelopeFormulaDTO {
 	type: Querybuildertypesv5QueryEnvelopeFormulaDTOType;
 }
 
-export type Querybuildertypesv5JoinAggregationDTO =
-	| Querybuildertypesv5TraceAggregationDTO
-	| Querybuildertypesv5LogAggregationDTO
-	| Querybuildertypesv5MetricAggregationDTO;
-
-export interface Querybuildertypesv5QueryRefDTO {
-	/**
-	 * @type string
-	 */
-	name?: string;
-}
-
-export enum Querybuildertypesv5JoinTypeDTO {
-	inner = 'inner',
-	left = 'left',
-	right = 'right',
-	full = 'full',
-	cross = 'cross',
-}
-export interface Querybuildertypesv5QueryBuilderJoinDTO {
-	/**
-	 * @type array
-	 */
-	aggregations?: Querybuildertypesv5JoinAggregationDTO[];
-	/**
-	 * @type boolean
-	 */
-	disabled?: boolean;
-	filter?: Querybuildertypesv5FilterDTO;
-	/**
-	 * @type array
-	 */
-	functions?: Querybuildertypesv5FunctionDTO[];
-	/**
-	 * @type array
-	 */
-	groupBy?: Querybuildertypesv5GroupByKeyDTO[];
-	having?: Querybuildertypesv5HavingDTO;
-	left?: Querybuildertypesv5QueryRefDTO;
-	/**
-	 * @type integer
-	 */
-	limit?: number;
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type string
-	 */
-	on?: string;
-	/**
-	 * @type array
-	 */
-	order?: Querybuildertypesv5OrderByDTO[];
-	right?: Querybuildertypesv5QueryRefDTO;
-	/**
-	 * @type array
-	 */
-	secondaryAggregations?: Querybuildertypesv5SecondaryAggregationDTO[];
-	/**
-	 * @type array
-	 */
-	selectFields?: TelemetrytypesTelemetryFieldKeyDTO[];
-	type?: Querybuildertypesv5JoinTypeDTO;
-}
-
-export enum Querybuildertypesv5QueryEnvelopeJoinDTOType {
-	builder_join = 'builder_join',
-}
-export interface Querybuildertypesv5QueryEnvelopeJoinDTO {
-	spec?: Querybuildertypesv5QueryBuilderJoinDTO;
-	/**
-	 * @type string
-	 * @enum builder_join
-	 */
-	type: Querybuildertypesv5QueryEnvelopeJoinDTOType;
-}
-
 export interface Querybuildertypesv5QueryBuilderTraceOperatorDTO {
 	/**
 	 * @type array
@@ -4547,7 +4468,6 @@ export interface Querybuildertypesv5QueryEnvelopeClickHouseSQLDTO {
 export type Querybuildertypesv5QueryEnvelopeDTO =
 	| Querybuildertypesv5QueryEnvelopeBuilderDTO
 	| Querybuildertypesv5QueryEnvelopeFormulaDTO
-	| Querybuildertypesv5QueryEnvelopeJoinDTO
 	| Querybuildertypesv5QueryEnvelopeTraceOperatorDTO
 	| Querybuildertypesv5QueryEnvelopePromQLDTO
 	| Querybuildertypesv5QueryEnvelopeClickHouseSQLDTO;
