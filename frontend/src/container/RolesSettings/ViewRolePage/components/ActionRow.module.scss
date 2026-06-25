@@ -43,38 +43,26 @@
 	}
 }
 
-.label {
-	font-family: Inter;
-	font-size: var(--periscope-font-size-base);
-	font-weight: var(--font-weight-normal);
-	line-height: var(--line-height-20);
-	color: var(--l1-foreground);
-}
-
 .badge {
 	display: inline-flex;
 	align-items: center;
 	padding: var(--spacing-1) var(--spacing-3);
-	font-family: Inter;
-	font-size: var(--periscope-font-size-small);
-	font-weight: var(--font-weight-medium);
-	line-height: var(--line-height-18);
 	border-radius: var(--spacing-2);
 	white-space: nowrap;
 	flex-shrink: 0;
 }
 
-.all {
+.allBadgeVariant {
 	color: var(--bg-robin-300);
 	background: color-mix(in srgb, var(--bg-robin-500) 16%, transparent);
 }
 
-.none {
+.noneBadgeVariant {
 	color: var(--l3-foreground);
 	background: color-mix(in srgb, var(--l3-foreground) 10%, transparent);
 }
 
-.selected {
+.selectedBadgeVariant {
 	color: var(--bg-sienna-400);
 	background: color-mix(in srgb, var(--bg-sienna-500) 16%, transparent);
 }

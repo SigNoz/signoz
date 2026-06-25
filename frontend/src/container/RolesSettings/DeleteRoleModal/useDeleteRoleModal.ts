@@ -5,6 +5,10 @@ import {
 	invalidateListRoles,
 	useDeleteRole,
 } from 'api/generated/services/role';
+import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
+import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import { AxiosError } from 'axios';
+import APIError from 'types/api/error';
 
 interface UseDeleteRoleModalProps {
 	roleId?: string | null;
@@ -18,7 +22,7 @@ interface UseDeleteRoleModalResult {
 	isDeleteDisabled: boolean;
 	deleteDisabledReason: string;
 	isDeleting: boolean;
-	deleteErrorMessage: string | null;
+	deleteError: APIError | null;
 	handleOpenDeleteModal: () => void;
 	handleCloseDeleteModal: () => void;
 	handleConfirmDelete: () => Promise<boolean>;
@@ -34,9 +38,7 @@ export function useDeleteRoleModal(
 		null,
 	);
 	const [isDeleting, setIsDeleting] = useState(false);
-	const [deleteErrorMessage, setDeleteErrorMessage] = useState<string | null>(
-		null,
-	);
+	const [deleteError, setDeleteError] = useState<APIError | null>(null);
 
 	const { mutateAsync: deleteRole } = useDeleteRole();
 
@@ -46,7 +48,7 @@ export function useDeleteRoleModal(
 
 	const handleCloseDeleteModal = useCallback((): void => {
 		setDeleteTargetRoleId(null);
-		setDeleteErrorMessage(null);
+		setDeleteError(null);
 	}, []);
 
 	const handleConfirmDelete = useCallback(async (): Promise<boolean> => {
@@ -55,7 +57,7 @@ export function useDeleteRoleModal(
 		}
 
 		setIsDeleting(true);
-		setDeleteErrorMessage(null);
+		setDeleteError(null);
 
 		try {
 			await deleteRole({ pathParams: { id: deleteTargetRoleId } });
@@ -65,14 +67,10 @@ export function useDeleteRoleModal(
 			onDeleteSuccess?.();
 			return true;
 		} catch (error) {
-			const axiosError = error as {
-				response?: { data?: { error?: { message?: unknown } } };
-			};
-			const message =
-				axiosError?.response?.data?.error?.message ||
-				(error instanceof Error ? error.message : null) ||
-				'Failed to delete role';
-			setDeleteErrorMessage(String(message));
+			const apiError = convertToApiError(
+				error as AxiosError<RenderErrorResponseDTO>,
+			);
+			setDeleteError(apiError ?? null);
 			return false;
 		} finally {
 			setIsDeleting(false);
@@ -91,7 +89,7 @@ export function useDeleteRoleModal(
 		isDeleteDisabled,
 		deleteDisabledReason,
 		isDeleting,
-		deleteErrorMessage,
+		deleteError,
 		handleOpenDeleteModal,
 		handleCloseDeleteModal,
 		handleConfirmDelete,

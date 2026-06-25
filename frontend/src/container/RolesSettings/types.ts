@@ -1,4 +1,5 @@
 import type { AuthZResource, AuthZVerb } from 'hooks/useAuthZ/types';
+import { CoretypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
 
 export enum PermissionScope {
 	ALL = 'all',
@@ -16,8 +17,7 @@ export interface ActionConfig {
 export interface ResourcePermissions {
 	resourceId: AuthZResource;
 	resourceKind: AuthZResource;
-	/** Resource type for API (e.g. 'metaresource', 'role', 'serviceaccount'). */
-	resourceType: string;
+	resourceType: CoretypesTypeDTO;
 	resourceLabel: string;
 	actions: Partial<Record<AuthZVerb, ActionConfig>>;
 	availableActions: AuthZVerb[];

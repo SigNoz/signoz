@@ -60,19 +60,11 @@
 	background: var(--l2-background);
 	border: 1px solid var(--l2-border);
 	border-radius: 4px;
-	font-family: Inter;
-	font-size: var(--periscope-font-size-small);
-	font-weight: var(--font-weight-normal);
-	line-height: var(--line-height-16);
-	color: var(--l1-foreground);
 }
 
 .itemInputSelectorBadgeLabel {
 	flex: 1;
 	min-width: 0;
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
 }
 
 .itemInputSelectorBadgeRemove {

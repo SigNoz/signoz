@@ -65,7 +65,7 @@ function ViewRolePage(): JSX.Element {
 		isDeleteModalOpen,
 		isDeleteDisabled,
 		deleteDisabledReason,
-		deleteErrorMessage,
+		deleteError,
 		handleOpenDeleteModal,
 		handleCloseDeleteModal,
 		handleConfirmDelete,
@@ -84,7 +84,15 @@ function ViewRolePage(): JSX.Element {
 				children: (
 					<div className={styles.permissionSection}>
 						<div className={styles.permissionHeader}>
-							<span className={styles.permissionTitle}>Transaction Groups</span>
+							<Typography
+								as="span"
+								size="small"
+								weight="medium"
+								color="muted"
+								className={styles.permissionTitle}
+							>
+								Transaction Groups
+							</Typography>
 							<hr className={styles.permissionDivider} />
 							<RadioGroup
 								className={styles.permissionModeToggle}
@@ -320,7 +328,7 @@ function ViewRolePage(): JSX.Element {
 			<DeleteRoleModal
 				isOpen={isDeleteModalOpen}
 				roleName={role.name}
-				errorMessage={deleteErrorMessage}
+				error={deleteError}
 				onCancel={handleCloseDeleteModal}
 				onConfirm={handleConfirmDelete}
 			/>

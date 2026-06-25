@@ -1,16 +1,15 @@
 import { useMutation, useQueryClient } from 'react-query';
 import { ErrorType } from 'api/generatedAPIInstance';
-import {
-	AuthtypesRelationDTO,
-	CoretypesKindDTO,
-	CoretypesTypeDTO,
-	RenderErrorResponseDTO,
-} from 'api/generated/services/sigNoz.schemas';
 import type {
 	AuthtypesPostableRoleDTO,
 	AuthtypesRoleWithTransactionGroupsDTO,
 	AuthtypesTransactionGroupDTO,
 	AuthtypesUpdatableRoleDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import {
+	AuthtypesRelationDTO,
+	CoretypesKindDTO,
+	RenderErrorResponseDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import {
 	invalidateGetRole,
@@ -62,7 +61,7 @@ export function transformResourcePermissionsToTransactionGroups(
 				objectGroup: {
 					resource: {
 						kind: resource.resourceKind as CoretypesKindDTO,
-						type: resource.resourceType as CoretypesTypeDTO,
+						type: resource.resourceType,
 					},
 					selectors,
 				},

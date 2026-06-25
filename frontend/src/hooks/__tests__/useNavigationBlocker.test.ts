@@ -37,14 +37,14 @@ describe('useNavigationBlocker', () => {
 			const { result } = renderHook(() => useNavigationBlocker(false));
 
 			expect(result.current.isBlocked).toBe(false);
-			expect(result.current.blockedNavigation).toBeNull();
+			expect(result.current.blockedNavigationDetails).toBeNull();
 		});
 
 		it('returns isBlocked false when shouldBlock is true but no navigation attempted', () => {
 			const { result } = renderHook(() => useNavigationBlocker(true));
 
 			expect(result.current.isBlocked).toBe(false);
-			expect(result.current.blockedNavigation).toBeNull();
+			expect(result.current.blockedNavigationDetails).toBeNull();
 		});
 	});
 
@@ -93,7 +93,7 @@ describe('useNavigationBlocker', () => {
 	});
 
 	describe('navigation blocking', () => {
-		it('blocks PUSH navigation and sets blockedNavigation', () => {
+		it('blocks PUSH navigation and sets blockedNavigationDetails', () => {
 			const { result } = renderHook(() => useNavigationBlocker(true));
 
 			const blockCallback = mockBlock.mock.calls[0][0];
@@ -105,13 +105,13 @@ describe('useNavigationBlocker', () => {
 
 			expect(blockResult).toBe(false);
 			expect(result.current.isBlocked).toBe(true);
-			expect(result.current.blockedNavigation).toStrictEqual({
+			expect(result.current.blockedNavigationDetails).toStrictEqual({
 				location: mockLocation,
 				action: 'PUSH',
 			});
 		});
 
-		it('blocks REPLACE navigation and sets blockedNavigation', () => {
+		it('blocks REPLACE navigation and sets blockedNavigationDetails', () => {
 			const { result } = renderHook(() => useNavigationBlocker(true));
 
 			const blockCallback = mockBlock.mock.calls[0][0];
@@ -121,10 +121,10 @@ describe('useNavigationBlocker', () => {
 			});
 
 			expect(result.current.isBlocked).toBe(true);
-			expect(result.current.blockedNavigation?.action).toBe('REPLACE');
+			expect(result.current.blockedNavigationDetails?.action).toBe('REPLACE');
 		});
 
-		it('blocks POP navigation and sets blockedNavigation', () => {
+		it('blocks POP navigation and sets blockedNavigationDetails', () => {
 			const { result } = renderHook(() => useNavigationBlocker(true));
 
 			const blockCallback = mockBlock.mock.calls[0][0];
@@ -134,12 +134,12 @@ describe('useNavigationBlocker', () => {
 			});
 
 			expect(result.current.isBlocked).toBe(true);
-			expect(result.current.blockedNavigation?.action).toBe('POP');
+			expect(result.current.blockedNavigationDetails?.action).toBe('POP');
 		});
 	});
 
 	describe('confirmNavigation', () => {
-		it('does nothing when no blockedNavigation', () => {
+		it('does nothing when no blockedNavigationDetails', () => {
 			const { result } = renderHook(() => useNavigationBlocker(true));
 
 			act(() => {
@@ -167,7 +167,7 @@ describe('useNavigationBlocker', () => {
 			expect(mockUnblock).toHaveBeenCalled();
 			expect(mockPush).toHaveBeenCalledWith(mockLocation);
 			expect(result.current.isBlocked).toBe(false);
-			expect(result.current.blockedNavigation).toBeNull();
+			expect(result.current.blockedNavigationDetails).toBeNull();
 		});
 
 		it('performs REPLACE navigation when confirming blocked REPLACE', () => {
@@ -204,7 +204,7 @@ describe('useNavigationBlocker', () => {
 	});
 
 	describe('cancelNavigation', () => {
-		it('clears blockedNavigation without performing navigation', () => {
+		it('clears blockedNavigationDetails without performing navigation', () => {
 			const { result } = renderHook(() => useNavigationBlocker(true));
 
 			const blockCallback = mockBlock.mock.calls[0][0];
@@ -220,7 +220,7 @@ describe('useNavigationBlocker', () => {
 			});
 
 			expect(result.current.isBlocked).toBe(false);
-			expect(result.current.blockedNavigation).toBeNull();
+			expect(result.current.blockedNavigationDetails).toBeNull();
 			expect(mockPush).not.toHaveBeenCalled();
 			expect(mockReplace).not.toHaveBeenCalled();
 			expect(mockGoBack).not.toHaveBeenCalled();

@@ -1,13 +1,15 @@
 import { Trash2 } from '@signozhq/icons';
-import { Callout } from '@signozhq/ui/callout';
 import { ConfirmDialog } from '@signozhq/ui/dialog';
 import { Typography } from '@signozhq/ui/typography';
+import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
+import APIError from 'types/api/error';
 import styles from './DeleteRoleModal.module.scss';
+import { Callout } from '@signozhq/ui/callout';
 
 interface DeleteRoleModalProps {
 	isOpen: boolean;
 	roleName: string;
-	errorMessage: string | null;
+	error: APIError | null;
 	onCancel: () => void;
 	onConfirm: () => Promise<boolean>;
 }
@@ -15,7 +17,7 @@ interface DeleteRoleModalProps {
 function DeleteRoleModal({
 	isOpen,
 	roleName,
-	errorMessage,
+	error,
 	onCancel,
 	onConfirm,
 }: DeleteRoleModalProps): JSX.Element {
@@ -40,12 +42,14 @@ function DeleteRoleModal({
 				Are you sure you want to delete the role <strong>{roleName}</strong>? This
 				action cannot be undone.
 			</Typography>
-			{errorMessage && (
-				<>
-					<Callout title="Error" color="cherry" className={styles.errorCallout}>
-						{errorMessage}
-					</Callout>
-				</>
+			{error && (
+				<Callout
+					title="Failed to delete role"
+					color="cherry"
+					className={styles.errorCallout}
+				>
+					<ErrorInPlace error={error} height="auto" padding={0} />
+				</Callout>
 			)}
 		</ConfirmDialog>
 	);

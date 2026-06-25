@@ -17,40 +17,12 @@ import {
 	transformTransactionGroupsToResourcePermissions,
 } from '../useRolePermissions';
 
-jest.mock('../../permissions.config', () => ({
-	RESOURCE_ORDER: ['factor-api-key', 'role', 'serviceaccount'] as const,
-	getResourceVerbs: (resource: string): string[] => {
-		const verbMap: Record<string, string[]> = {
-			'factor-api-key': ['create', 'read', 'update', 'delete'],
-			role: ['create', 'read', 'update', 'delete'],
-			serviceaccount: ['create', 'read', 'update', 'delete'],
-		};
-		return verbMap[resource] ?? [];
-	},
-	getResourceType: (resource: string): string => {
-		const typeMap: Record<string, string> = {
-			'factor-api-key': 'metaresource',
-			role: 'role',
-			serviceaccount: 'metaresource',
-		};
-		return typeMap[resource] ?? 'metaresource';
-	},
-	getResourcePanel: (resource: string): { label: string } => {
-		const labelMap: Record<string, string> = {
-			'factor-api-key': 'API Keys',
-			role: 'Roles',
-			serviceaccount: 'Service Accounts',
-		};
-		return { label: labelMap[resource] ?? resource };
-	},
-}));
-
 const ID_A = 'aaaaaaaa-0000-0000-0000-000000000001';
 const ID_B = 'bbbbbbbb-0000-0000-0000-000000000002';
 
 function createResourcePermissions(
 	resourceKind: AuthZResource,
-	resourceType: string,
+	resourceType: CoretypesTypeDTO,
 	resourceLabel: string,
 	actions: Partial<Record<AuthZVerb, ActionConfig>>,
 	availableActions: AuthZVerb[],
@@ -69,8 +41,8 @@ describe('transformResourcePermissionsToTransactionGroups', () => {
 	it('skips actions with NONE scope', () => {
 		const resources: ResourcePermissions[] = [
 			createResourcePermissions(
-				'factor-api-key' as AuthZResource,
-				'metaresource',
+				CoretypesKindDTO['factor-api-key'],
+				CoretypesTypeDTO.metaresource,
 				'API Keys',
 				{
 					create: { scope: PermissionScope.NONE, selectedIds: [] },
@@ -88,8 +60,8 @@ describe('transformResourcePermissionsToTransactionGroups', () => {
 	it('transforms ALL scope to wildcard selector', () => {
 		const resources: ResourcePermissions[] = [
 			createResourcePermissions(
-				'factor-api-key' as AuthZResource,
-				'metaresource',
+				CoretypesKindDTO['factor-api-key'],
+				CoretypesTypeDTO.metaresource,
 				'API Keys',
 				{
 					create: { scope: PermissionScope.ALL, selectedIds: [] },
@@ -104,20 +76,20 @@ describe('transformResourcePermissionsToTransactionGroups', () => {
 		expect(result[0]).toStrictEqual({
 			objectGroup: {
 				resource: {
-					kind: 'factor-api-key',
-					type: 'metaresource',
+					kind: CoretypesKindDTO['factor-api-key'],
+					type: CoretypesTypeDTO.metaresource,
 				},
 				selectors: ['*'],
 			},
-			relation: 'create',
+			relation: AuthtypesRelationDTO.create,
 		});
 	});
 
 	it('transforms ONLY_SELECTED scope to specific selectors', () => {
 		const resources: ResourcePermissions[] = [
 			createResourcePermissions(
-				'role' as AuthZResource,
-				'role',
+				CoretypesKindDTO.role,
+				CoretypesTypeDTO.role,
 				'Roles',
 				{
 					read: { scope: PermissionScope.ONLY_SELECTED, selectedIds: [ID_A, ID_B] },
@@ -132,20 +104,20 @@ describe('transformResourcePermissionsToTransactionGroups', () => {
 		expect(result[0]).toStrictEqual({
 			objectGroup: {
 				resource: {
-					kind: 'role',
-					type: 'role',
+					kind: CoretypesKindDTO.role,
+					type: CoretypesTypeDTO.role,
 				},
 				selectors: [ID_A, ID_B],
 			},
-			relation: 'read',
+			relation: AuthtypesRelationDTO.read,
 		});
 	});
 
 	it('creates separate transaction groups per verb', () => {
 		const resources: ResourcePermissions[] = [
 			createResourcePermissions(
-				'serviceaccount' as AuthZResource,
-				'metaresource',
+				CoretypesKindDTO.serviceaccount,
+				CoretypesTypeDTO.serviceaccount,
 				'Service Accounts',
 				{
 					create: { scope: PermissionScope.ALL, selectedIds: [] },
@@ -159,27 +131,37 @@ describe('transformResourcePermissionsToTransactionGroups', () => {
 		const result = transformResourcePermissionsToTransactionGroups(resources);
 
 		expect(result).toHaveLength(2);
-		expect(result.find((t) => t.relation === 'create')).toStrictEqual({
+		expect(
+			result.find((t) => t.relation === AuthtypesRelationDTO.create),
+		).toStrictEqual({
 			objectGroup: {
-				resource: { kind: 'serviceaccount', type: 'metaresource' },
+				resource: {
+					kind: CoretypesKindDTO.serviceaccount,
+					type: CoretypesTypeDTO.serviceaccount,
+				},
 				selectors: ['*'],
 			},
-			relation: 'create',
+			relation: AuthtypesRelationDTO.create,
 		});
-		expect(result.find((t) => t.relation === 'read')).toStrictEqual({
+		expect(
+			result.find((t) => t.relation === AuthtypesRelationDTO.read),
+		).toStrictEqual({
 			objectGroup: {
-				resource: { kind: 'serviceaccount', type: 'metaresource' },
+				resource: {
+					kind: CoretypesKindDTO.serviceaccount,
+					type: CoretypesTypeDTO.serviceaccount,
+				},
 				selectors: [ID_A],
 			},
-			relation: 'read',
+			relation: AuthtypesRelationDTO.read,
 		});
 	});
 
 	it('handles multiple resources with different configurations', () => {
 		const resources: ResourcePermissions[] = [
 			createResourcePermissions(
-				'factor-api-key' as AuthZResource,
-				'metaresource',
+				CoretypesKindDTO['factor-api-key'],
+				CoretypesTypeDTO.metaresource,
 				'API Keys',
 				{
 					delete: { scope: PermissionScope.ALL, selectedIds: [] },
@@ -187,8 +169,8 @@ describe('transformResourcePermissionsToTransactionGroups', () => {
 				['delete'] as AuthZVerb[],
 			),
 			createResourcePermissions(
-				'role' as AuthZResource,
-				'role',
+				CoretypesKindDTO.role,
+				CoretypesTypeDTO.role,
 				'Roles',
 				{
 					update: { scope: PermissionScope.ONLY_SELECTED, selectedIds: [ID_B] },
@@ -202,25 +184,31 @@ describe('transformResourcePermissionsToTransactionGroups', () => {
 		expect(result).toHaveLength(2);
 		expect(result).toContainEqual({
 			objectGroup: {
-				resource: { kind: 'factor-api-key', type: 'metaresource' },
+				resource: {
+					kind: CoretypesKindDTO['factor-api-key'],
+					type: CoretypesTypeDTO.metaresource,
+				},
 				selectors: ['*'],
 			},
-			relation: 'delete',
+			relation: AuthtypesRelationDTO.delete,
 		});
 		expect(result).toContainEqual({
 			objectGroup: {
-				resource: { kind: 'role', type: 'role' },
+				resource: {
+					kind: CoretypesKindDTO.role,
+					type: CoretypesTypeDTO.role,
+				},
 				selectors: [ID_B],
 			},
-			relation: 'update',
+			relation: AuthtypesRelationDTO.update,
 		});
 	});
 
 	it('returns empty array when all actions are NONE', () => {
 		const resources: ResourcePermissions[] = [
 			createResourcePermissions(
-				'factor-api-key' as AuthZResource,
-				'metaresource',
+				CoretypesKindDTO['factor-api-key'],
+				CoretypesTypeDTO.metaresource,
 				'API Keys',
 				{
 					create: { scope: PermissionScope.NONE, selectedIds: [] },
@@ -229,8 +217,8 @@ describe('transformResourcePermissionsToTransactionGroups', () => {
 				['create', 'read'] as AuthZVerb[],
 			),
 			createResourcePermissions(
-				'role' as AuthZResource,
-				'role',
+				CoretypesKindDTO.role,
+				CoretypesTypeDTO.role,
 				'Roles',
 				{
 					create: { scope: PermissionScope.NONE, selectedIds: [] },
@@ -252,11 +240,11 @@ describe('transformTransactionGroupsToResourcePermissions', () => {
 				objectGroup: {
 					resource: {
 						kind: CoretypesKindDTO['factor-api-key'],
-						type: 'metaresource' as CoretypesTypeDTO,
+						type: CoretypesTypeDTO.metaresource,
 					},
 					selectors: ['*'],
 				},
-				relation: 'read' as AuthtypesRelationDTO,
+				relation: AuthtypesRelationDTO.read,
 			},
 		];
 
@@ -278,11 +266,11 @@ describe('transformTransactionGroupsToResourcePermissions', () => {
 				objectGroup: {
 					resource: {
 						kind: CoretypesKindDTO.role,
-						type: 'role' as CoretypesTypeDTO,
+						type: CoretypesTypeDTO.role,
 					},
 					selectors: [ID_A, ID_B],
 				},
-				relation: 'update' as AuthtypesRelationDTO,
+				relation: AuthtypesRelationDTO.update,
 			},
 		];
 
@@ -302,11 +290,11 @@ describe('transformTransactionGroupsToResourcePermissions', () => {
 				objectGroup: {
 					resource: {
 						kind: CoretypesKindDTO['factor-api-key'],
-						type: 'metaresource' as CoretypesTypeDTO,
+						type: CoretypesTypeDTO.metaresource,
 					},
 					selectors: ['*'],
 				},
-				relation: 'create' as AuthtypesRelationDTO,
+				relation: AuthtypesRelationDTO.create,
 			},
 		];
 
@@ -321,6 +309,10 @@ describe('transformTransactionGroupsToResourcePermissions', () => {
 			selectedIds: [],
 		});
 		expect(apiKeyResource?.actions.read).toStrictEqual({
+			scope: PermissionScope.NONE,
+			selectedIds: [],
+		});
+		expect(apiKeyResource?.actions.list).toStrictEqual({
 			scope: PermissionScope.NONE,
 			selectedIds: [],
 		});
@@ -354,17 +346,28 @@ describe('transformTransactionGroupsToResourcePermissions', () => {
 		expect(apiKeyResource).toMatchObject({
 			resourceId: 'factor-api-key',
 			resourceKind: 'factor-api-key',
-			resourceType: 'metaresource',
+			resourceType: CoretypesTypeDTO.metaresource,
 			resourceLabel: 'API Keys',
-			availableActions: ['create', 'read', 'update', 'delete'],
+			availableActions: ['create', 'delete', 'list', 'read', 'update'],
 		});
 
-		const roleResource = result.find((r) => r.resourceKind === 'role');
+		const roleResource = result.find(
+			(r) => r.resourceKind === CoretypesKindDTO.role,
+		);
 		expect(roleResource).toMatchObject({
-			resourceId: 'role',
-			resourceKind: 'role',
-			resourceType: 'role',
+			resourceId: CoretypesKindDTO.role,
+			resourceKind: CoretypesKindDTO.role,
+			resourceType: CoretypesTypeDTO.role,
 			resourceLabel: 'Roles',
+			availableActions: [
+				'attach',
+				'create',
+				'delete',
+				'detach',
+				'list',
+				'read',
+				'update',
+			],
 		});
 	});
 
@@ -374,21 +377,21 @@ describe('transformTransactionGroupsToResourcePermissions', () => {
 				objectGroup: {
 					resource: {
 						kind: CoretypesKindDTO.role,
-						type: 'role' as CoretypesTypeDTO,
+						type: CoretypesTypeDTO.role,
 					},
 					selectors: ['*'],
 				},
-				relation: 'read' as AuthtypesRelationDTO,
+				relation: AuthtypesRelationDTO.read,
 			},
 			{
 				objectGroup: {
 					resource: {
 						kind: CoretypesKindDTO.role,
-						type: 'role' as CoretypesTypeDTO,
+						type: CoretypesTypeDTO.role,
 					},
 					selectors: [ID_A],
 				},
-				relation: 'update' as AuthtypesRelationDTO,
+				relation: AuthtypesRelationDTO.update,
 			},
 		];
 
@@ -440,9 +443,9 @@ describe('createEmptyRolePermissions', () => {
 		);
 		expect(apiKeyResource).toMatchObject({
 			resourceId: 'factor-api-key',
-			resourceType: 'metaresource',
+			resourceType: CoretypesTypeDTO.metaresource,
 			resourceLabel: 'API Keys',
-			availableActions: ['create', 'read', 'update', 'delete'],
+			availableActions: ['create', 'delete', 'list', 'read', 'update'],
 		});
 	});
 });
@@ -451,8 +454,8 @@ describe('round-trip transformation', () => {
 	it('transforming to transaction groups and back preserves data', () => {
 		const original: ResourcePermissions[] = [
 			createResourcePermissions(
-				'factor-api-key' as AuthZResource,
-				'metaresource',
+				CoretypesKindDTO['factor-api-key'],
+				CoretypesTypeDTO.metaresource,
 				'API Keys',
 				{
 					create: { scope: PermissionScope.ALL, selectedIds: [] },
@@ -463,8 +466,8 @@ describe('round-trip transformation', () => {
 				['create', 'read', 'update', 'delete'] as AuthZVerb[],
 			),
 			createResourcePermissions(
-				'role' as AuthZResource,
-				'role',
+				CoretypesKindDTO.role,
+				CoretypesTypeDTO.role,
 				'Roles',
 				{
 					create: { scope: PermissionScope.NONE, selectedIds: [] },
@@ -478,8 +481,8 @@ describe('round-trip transformation', () => {
 				['create', 'read', 'update', 'delete'] as AuthZVerb[],
 			),
 			createResourcePermissions(
-				'serviceaccount' as AuthZResource,
-				'metaresource',
+				CoretypesKindDTO.serviceaccount,
+				CoretypesTypeDTO.serviceaccount,
 				'Service Accounts',
 				{
 					create: { scope: PermissionScope.NONE, selectedIds: [] },

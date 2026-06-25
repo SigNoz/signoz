@@ -190,7 +190,9 @@ function CreateEditRolePage(): JSX.Element {
 					{hasUnsavedChanges && (
 						<div className={styles.unsavedIndicator}>
 							<span className={styles.unsavedDot} />
-							<span className={styles.unsavedText}>Unsaved changes</span>
+							<Typography as="span" size="base" className={styles.unsavedText}>
+								Unsaved changes
+							</Typography>
 						</div>
 					)}
 					<Button

@@ -7,6 +7,7 @@ import {
 	OBJECT_SCOPED_VERBS,
 	ObjectScopedVerb,
 } from 'hooks/useAuthZ/types';
+import { CoretypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
 
 /** Shared shape of the icon components exported by `@signozhq/icons`. */
 type IconComponent = typeof Shield;
@@ -21,6 +22,11 @@ export interface ResourcePanelConfig {
 	docsAnchor: string;
 }
 
+/**
+ * Do not use CoretypesTypeDTO to represent this,
+ * we want to add resource panel configs for only types we actually are using,
+ * not all of them
+ */
 export const RESOURCE_PANELS: Record<AuthZResource, ResourcePanelConfig> = {
 	'factor-api-key': {
 		label: 'API Keys',
@@ -86,11 +92,13 @@ export function getResourceVerbs(
 	return match.allowedVerbs;
 }
 
-export function getResourceType(resource: AuthZResource): string {
+export function getResourceType(resource: AuthZResource): CoretypesTypeDTO {
 	const match = permissionsType.data.resources.find(
 		(entry) => entry.kind === resource,
 	);
-	return match ? match.type : 'metaresource';
+	return match
+		? (match.type as CoretypesTypeDTO)
+		: CoretypesTypeDTO.metaresource;
 }
 
 export function supportsOnlySelected(

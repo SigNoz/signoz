@@ -1,3 +1,7 @@
+import {
+	CoretypesKindDTO,
+	CoretypesTypeDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import * as roleApi from 'api/generated/services/role';
 import * as useAuthZModule from 'hooks/useAuthZ/useAuthZ';
 import {
@@ -24,8 +28,8 @@ export const mockPermissionsData = {
 	resources: [
 		{
 			resourceId: 'factor-api-key',
-			resourceKind: 'factor-api-key',
-			resourceType: 'metaresource',
+			resourceKind: CoretypesKindDTO['factor-api-key'],
+			resourceType: CoretypesTypeDTO.metaresource,
 			resourceLabel: 'API Keys',
 			actions: {
 				create: { scope: 'none', selectedIds: [] },
@@ -35,8 +39,8 @@ export const mockPermissionsData = {
 		},
 		{
 			resourceId: 'role',
-			resourceKind: 'role',
-			resourceType: 'role',
+			resourceKind: CoretypesKindDTO.role,
+			resourceType: CoretypesTypeDTO.role,
 			resourceLabel: 'Roles',
 			actions: {
 				create: { scope: 'none', selectedIds: [] },
@@ -54,8 +58,8 @@ export const mockPermissionsData = {
 		},
 		{
 			resourceId: 'serviceaccount',
-			resourceKind: 'serviceaccount',
-			resourceType: 'serviceaccount',
+			resourceKind: CoretypesKindDTO.serviceaccount,
+			resourceType: CoretypesTypeDTO.serviceaccount,
 			resourceLabel: 'Service Accounts',
 			actions: {
 				create: { scope: 'none', selectedIds: [] },

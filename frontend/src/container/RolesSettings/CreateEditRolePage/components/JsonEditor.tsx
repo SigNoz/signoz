@@ -12,6 +12,7 @@ import { Color } from '@signozhq/design-tokens';
 import { Check, Copy } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Typography } from '@signozhq/ui/typography';
 import type { AuthtypesTransactionGroupDTO } from 'api/generated/services/sigNoz.schemas';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 
@@ -194,8 +195,16 @@ const JsonEditor = forwardRef<JsonEditorRef, JsonEditorProps>(
 				<div className={styles.jsonEditorErrorWrapper}>
 					{parseError && (
 						<div className={styles.jsonEditorError} data-testid="json-editor-error">
-							<span className={styles.jsonEditorErrorLabel}>Parse Error:</span>
-							<span className={styles.jsonEditorErrorMessage}>{parseError}</span>
+							<Typography as="span" size="base" weight="medium">
+								Parse Error:
+							</Typography>
+							<Typography
+								as="span"
+								size="base"
+								className={styles.jsonEditorErrorMessage}
+							>
+								{parseError}
+							</Typography>
 						</div>
 					)}
 					{!parseError && schemaErrors.length > 0 && (
@@ -203,11 +212,17 @@ const JsonEditor = forwardRef<JsonEditorRef, JsonEditorProps>(
 							className={styles.jsonEditorError}
 							data-testid="json-editor-schema-error"
 						>
-							<span className={styles.jsonEditorErrorLabel}>Schema Error:</span>
-							<span className={styles.jsonEditorErrorMessage}>
+							<Typography as="span" size="base" weight="medium">
+								Schema Error:
+							</Typography>
+							<Typography
+								as="span"
+								size="base"
+								className={styles.jsonEditorErrorMessage}
+							>
 								{schemaErrors[0]}
 								{schemaErrors.length > 1 && ` (+${schemaErrors.length - 1} more)`}
-							</span>
+							</Typography>
 						</div>
 					)}
 				</div>

@@ -102,7 +102,9 @@ function ActionToggle({
 				data-testid={`action-toggle-${resource}-${action}`}
 			>
 				<div className={styles.actionToggleHeader}>
-					<span className={styles.actionToggleLabel}>{displayLabel}</span>
+					<Typography as="span" size="base">
+						{displayLabel}
+					</Typography>
 					<ToggleGroupSimple
 						type="single"
 						size="sm"

@@ -1,6 +1,10 @@
 import { PermissionScope } from '../../types';
 
-export type ScopeBadgeVariant = 'all' | 'none' | 'selected';
+export enum ScopeBadgeVariant {
+	ALL = 'all',
+	NONE = 'none',
+	SELECTED = 'selected',
+}
 
 export interface ScopeBadge {
 	label: string;
@@ -21,11 +25,14 @@ export function getScopeBadge(
 ): ScopeBadge {
 	switch (scope) {
 		case PermissionScope.ALL:
-			return { label: 'All', variant: 'all' };
+			return { label: 'All', variant: ScopeBadgeVariant.ALL };
 		case PermissionScope.ONLY_SELECTED:
-			return { label: `Only selected · ${selectedCount}`, variant: 'selected' };
+			return {
+				label: `Only selected · ${selectedCount}`,
+				variant: ScopeBadgeVariant.SELECTED,
+			};
 		case PermissionScope.NONE:
 		default:
-			return { label: 'None', variant: 'none' };
+			return { label: 'None', variant: ScopeBadgeVariant.NONE };
 	}
 }

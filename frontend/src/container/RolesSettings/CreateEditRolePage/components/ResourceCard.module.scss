@@ -46,25 +46,9 @@
 	flex-shrink: 0;
 }
 
-.resourceCardLabel {
-	font-family: Inter;
-	font-size: 14px;
-	font-weight: var(--font-weight-medium);
-	line-height: var(--line-height-20);
-	color: var(--l1-foreground);
-}
-
 .resourceCardHeaderRight {
 	display: flex;
 	align-items: center;
-}
-
-.resourceCardGrantedCount {
-	font-family: Inter;
-	font-size: var(--periscope-font-size-base);
-	font-weight: var(--font-weight-normal);
-	line-height: var(--line-height-20);
-	color: var(--l2-foreground);
 }
 
 .resourceCardBody {

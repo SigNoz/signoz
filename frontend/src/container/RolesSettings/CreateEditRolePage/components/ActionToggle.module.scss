@@ -27,14 +27,6 @@
 	gap: var(--spacing-8);
 }
 
-.actionToggleLabel {
-	font-family: Inter;
-	font-size: var(--periscope-font-size-base);
-	font-weight: var(--font-weight-normal);
-	line-height: var(--line-height-20);
-	color: var(--l1-foreground);
-}
-
 .actionToggleScopeToggle {
 	flex-shrink: 0;
 	width: fit-content;

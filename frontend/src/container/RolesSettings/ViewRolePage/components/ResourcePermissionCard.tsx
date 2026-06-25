@@ -1,13 +1,15 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { ChevronDown, ChevronRight } from '@signozhq/icons';
 
 import { getResourcePanel } from '../../permissions.config';
+import { useRoleGrantedCount } from '../../hooks/useRoleGrantedCount';
 import { PermissionScope, ResourcePermissions } from '../../types';
 
 import ActionRow from './ActionRow';
 import { getActionLabel } from './permissionDisplay.utils';
 
 import styles from './ResourcePermissionCard.module.scss';
+import { Typography } from '@signozhq/ui/typography';
 
 export interface ResourcePermissionCardProps {
 	resource: ResourcePermissions;
@@ -37,14 +39,7 @@ function ResourcePermissionCard({
 		}
 	}, [isControlled, controlledExpanded, onExpandChange]);
 
-	const grantedCount = useMemo(() => {
-		return availableActions.filter((actionName) => {
-			const config = actions[actionName];
-			return !!config && config.scope !== PermissionScope.NONE;
-		}).length;
-	}, [availableActions, actions]);
-
-	const totalCount = availableActions.length;
+	const [grantedCount, totalCount] = useRoleGrantedCount(resource);
 
 	return (
 		<section
@@ -66,14 +61,19 @@ function ResourcePermissionCard({
 					<span className={styles.icon}>
 						<Icon size={16} />
 					</span>
-					<h4 className={styles.title}>{resourceLabel}</h4>
+					<Typography as="h4" size="base" weight="bold">
+						{resourceLabel}
+					</Typography>
 				</div>
-				<span
+				<Typography
+					as="span"
+					size="small"
+					weight="medium"
 					className={styles.grantedCount}
-					data-testid={`granted-count-${resourceKind}`}
+					testId={`granted-count-${resourceKind}`}
 				>
 					{grantedCount} / {totalCount} granted
-				</span>
+				</Typography>
 			</button>
 
 			{isExpanded && (

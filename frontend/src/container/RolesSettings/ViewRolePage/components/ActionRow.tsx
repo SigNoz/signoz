@@ -1,17 +1,18 @@
 import { useCallback, useState } from 'react';
 import { ChevronDown, ChevronRight } from '@signozhq/icons';
 
-import type { ScopeBadgeVariant } from './permissionDisplay.utils';
-import { getScopeBadge } from './permissionDisplay.utils';
+import { Typography } from '@signozhq/ui/typography';
+
+import { getScopeBadge, ScopeBadgeVariant } from './permissionDisplay.utils';
 import SelectedItemsChips from './SelectedItemsChips';
 
 import styles from './ActionRow.module.scss';
 import { PermissionScope } from 'container/RolesSettings/types';
 
 const BADGE_VARIANT_CLASS: Record<ScopeBadgeVariant, string> = {
-	all: styles.all,
-	none: styles.none,
-	selected: styles.selected,
+	[ScopeBadgeVariant.ALL]: styles.allBadgeVariant,
+	[ScopeBadgeVariant.NONE]: styles.noneBadgeVariant,
+	[ScopeBadgeVariant.SELECTED]: styles.selectedBadgeVariant,
 };
 
 export interface ActionRowProps {
@@ -54,14 +55,19 @@ function ActionRow({
 							{isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
 						</button>
 					)}
-					<span className={styles.label}>{actionLabel}</span>
+					<Typography as="span" size="base">
+						{actionLabel}
+					</Typography>
 				</div>
-				<span
+				<Typography
+					as="span"
+					size="small"
+					weight="medium"
 					className={`${styles.badge} ${BADGE_VARIANT_CLASS[badge.variant]}`}
-					data-testid={`scope-badge-${actionName}`}
+					testId={`scope-badge-${actionName}`}
 				>
 					{badge.label}
-				</span>
+				</Typography>
 			</div>
 
 			{isExpanded && isExpandable && (

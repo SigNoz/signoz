@@ -148,7 +148,15 @@ function PermissionEditor({
 	return (
 		<div className={styles.permissionEditor} data-testid="permission-editor">
 			<div className={styles.permissionEditorHeader}>
-				<span className={styles.permissionEditorTitle}>Transaction Groups</span>
+				<Typography
+					as="span"
+					size="small"
+					weight="medium"
+					color="muted"
+					className={styles.permissionEditorTitle}
+				>
+					Transaction Groups
+				</Typography>
 				<hr className={styles.permissionEditorDivider} />
 				<RadioGroup
 					className={styles.permissionEditorModeToggle}

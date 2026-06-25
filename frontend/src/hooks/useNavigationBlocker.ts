@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import type { Location, Action } from 'history';
 
-interface BlockedNavigation {
+interface BlockedNavigationDetails {
 	location: Location;
 	action: Action;
 }
@@ -11,7 +11,7 @@ interface UseNavigationBlockerResult {
 	/** True when navigation was attempted and blocked */
 	isBlocked: boolean;
 	/** Details of the blocked navigation attempt */
-	blockedNavigation: BlockedNavigation | null;
+	blockedNavigationDetails: BlockedNavigationDetails | null;
 	/** Call to proceed with blocked navigation (discard changes) */
 	confirmNavigation: () => void;
 	/** Call to cancel and stay on page */
@@ -46,7 +46,7 @@ export function useNavigationBlocker(
 ): UseNavigationBlockerResult {
 	const history = useHistory();
 	const [blockedNavigation, setBlockedNavigation] =
-		useState<BlockedNavigation | null>(null);
+		useState<BlockedNavigationDetails | null>(null);
 	const unblockRef = useRef<(() => void) | null>(null);
 	const bypassNextRef = useRef(false);
 
@@ -83,9 +83,8 @@ export function useNavigationBlocker(
 			return;
 		}
 
-		const handleBeforeUnload = (event: BeforeUnloadEvent): string => {
+		const handleBeforeUnload = (event: BeforeUnloadEvent): void => {
 			event.preventDefault();
-			return '';
 		};
 
 		window.addEventListener('beforeunload', handleBeforeUnload);
@@ -131,7 +130,7 @@ export function useNavigationBlocker(
 
 	return {
 		isBlocked: blockedNavigation !== null,
-		blockedNavigation,
+		blockedNavigationDetails: blockedNavigation,
 		confirmNavigation,
 		cancelNavigation,
 		allowNextNavigation,

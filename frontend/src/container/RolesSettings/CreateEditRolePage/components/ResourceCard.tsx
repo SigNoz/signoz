@@ -1,15 +1,15 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { ChevronDown, ChevronRight } from '@signozhq/icons';
 import type { AuthZResource, AuthZVerb } from 'hooks/useAuthZ/types';
 
+import { Typography } from '@signozhq/ui/typography';
+
+import { useRoleGrantedCount } from '../../hooks/useRoleGrantedCount';
 import { supportsOnlySelected } from '../../permissions.config';
 import ActionToggle from './ActionToggle';
 
 import styles from './ResourceCard.module.scss';
-import {
-	PermissionScope,
-	ResourcePermissions,
-} from 'container/RolesSettings/types';
+import { PermissionScope, ResourcePermissions } from '../../types';
 
 interface ResourceCardProps {
 	resource: ResourcePermissions;
@@ -72,13 +72,7 @@ function ResourceCard({
 		[resource.resourceId, resource.actions, onActionChange],
 	);
 
-	const grantedCount = useMemo(() => {
-		return Object.values(resource.actions).filter(
-			(config) => !!config && config.scope !== PermissionScope.NONE,
-		).length;
-	}, [resource.actions]);
-
-	const totalCount = resource.availableActions.length;
+	const [grantedCount, totalCount] = useRoleGrantedCount(resource);
 
 	return (
 		<div
@@ -97,12 +91,14 @@ function ResourceCard({
 					<span className={styles.resourceCardChevron}>
 						{isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
 					</span>
-					<span className={styles.resourceCardLabel}>{resource.resourceLabel}</span>
+					<Typography as="span" size="base" weight="medium">
+						{resource.resourceLabel}
+					</Typography>
 				</div>
 				<div className={styles.resourceCardHeaderRight}>
-					<span className={styles.resourceCardGrantedCount}>
+					<Typography as="span" size="base" color="muted">
 						{grantedCount} / {totalCount} granted
-					</span>
+					</Typography>
 				</div>
 			</button>
 

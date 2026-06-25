@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
+import { Typography } from '@signozhq/ui/typography';
 import { Button, ButtonGroup } from '@signozhq/ui/button';
 import { Skeleton } from 'antd';
 
@@ -78,7 +79,9 @@ function PermissionOverview({
 	if (isError || !permissions) {
 		return (
 			<div className={styles.container} data-testid="permission-overview-error">
-				<p className={styles.errorText}>Failed to load permissions</p>
+				<Typography.Text className={styles.errorText} align="center" color="danger">
+					Failed to load permissions
+				</Typography.Text>
 			</div>
 		);
 	}

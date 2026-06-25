@@ -148,7 +148,14 @@ function ItemInputSelector({
 					<div className={styles.itemInputSelectorBadges}>
 						{selectedIds.map((id, index) => (
 							<span key={id} className={styles.itemInputSelectorBadge} title={id}>
-								<span className={styles.itemInputSelectorBadgeLabel}>{id}</span>
+								<Typography
+									as="span"
+									size="small"
+									truncate={1}
+									className={styles.itemInputSelectorBadgeLabel}
+								>
+									{id}
+								</Typography>
 								<button
 									type="button"
 									className={styles.itemInputSelectorBadgeRemove}
@@ -163,8 +170,8 @@ function ItemInputSelector({
 					</div>
 					<TooltipSimple
 						title={
-							<span>
-								Still not sure on how to add selectors?{' '}
+							<Typography align="left">
+								Still not sure on how to add selectors? <br />
 								<Typography.Link
 									href={`${BASE_DOCS_URL}#${docsAnchor}`}
 									target="_blank"
@@ -173,7 +180,7 @@ function ItemInputSelector({
 									Check the docs
 								</Typography.Link>{' '}
 								to understand selectors for this resource.
-							</span>
+							</Typography>
 						}
 					>
 						<Info size={16} className={styles.itemInputSelectorInfoIcon} />

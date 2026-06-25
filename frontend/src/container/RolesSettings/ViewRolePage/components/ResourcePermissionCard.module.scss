@@ -55,26 +55,10 @@
 	flex-shrink: 0;
 }
 
-.title {
-	margin: 0;
-	font-family: Inter;
-	font-size: var(--periscope-font-size-base);
-	font-weight: var(--font-weight-semibold);
-	line-height: var(--line-height-20);
-	color: var(--l1-foreground);
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}
-
 .grantedCount {
 	display: inline-flex;
 	align-items: center;
 	padding: var(--spacing-1) var(--spacing-4);
-	font-family: Inter;
-	font-size: var(--periscope-font-size-small);
-	font-weight: var(--font-weight-medium);
-	line-height: var(--line-height-18);
 	color: var(--bg-robin-300);
 	background: color-mix(in srgb, var(--bg-robin-500) 14%, transparent);
 	border-radius: 16px;
