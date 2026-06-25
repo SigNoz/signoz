@@ -5,12 +5,13 @@ import {
 	AIAssistantPage,
 	AlertHistory,
 	AlertOverview,
-	AllAlertChannels,
 	AllErrors,
 	ApiMonitoring,
-	CreateAlertChannelAlerts,
+	ChannelsEdit,
+	ChannelsNew,
 	CreateNewAlerts,
 	DashboardPage,
+	DashboardPanelEditorPage,
 	DashboardsListPage,
 	DashboardWidget,
 	EditRulesPage,
@@ -197,6 +198,13 @@ const routes: AppRoutes[] = [
 		key: 'DASHBOARD_WIDGET',
 	},
 	{
+		path: ROUTES.DASHBOARD_PANEL_EDITOR,
+		exact: true,
+		component: DashboardPanelEditorPage,
+		isPrivate: true,
+		key: 'DASHBOARD_PANEL_EDITOR',
+	},
+	{
 		path: ROUTES.EDIT_ALERTS,
 		exact: true,
 		component: EditRulesPage,
@@ -269,16 +277,16 @@ const routes: AppRoutes[] = [
 	{
 		path: ROUTES.CHANNELS_NEW,
 		exact: true,
-		component: CreateAlertChannelAlerts,
+		component: ChannelsNew,
 		isPrivate: true,
 		key: 'CHANNELS_NEW',
 	},
 	{
-		path: ROUTES.ALL_CHANNELS,
+		path: ROUTES.CHANNELS_EDIT,
 		exact: true,
-		component: AllAlertChannels,
+		component: ChannelsEdit,
 		isPrivate: true,
-		key: 'ALL_CHANNELS',
+		key: 'CHANNELS_EDIT',
 	},
 	{
 		path: ROUTES.ALL_ERROR,
@@ -534,6 +542,9 @@ export const oldNewRoutesMapping: Record<string, string> = {
 	'/messaging-queues': '/messaging-queues/overview',
 	'/alerts/edit': '/alerts/overview',
 	'/alerts/type-selection': '/alerts/new',
+	// TODO(H4ad): Update this after https://github.com/SigNoz/engineering-pod/issues/5322
+	'/settings/channels': '/alerts?tab=Channels',
+	'/settings/channels/new': '/alerts/channels/new',
 };
 export const oldRoutes = Object.keys(oldNewRoutesMapping);
 
