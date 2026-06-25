@@ -86,6 +86,19 @@ func (QueryEnvelope) JSONSchemaOneOf() []any {
 	}
 }
 
+var _ jsonschema.Preparer = QueryEnvelope{}
+
+// PrepareJSONSchema drops the envelope's reflected base properties. Each variant
+// returned by JSONSchemaOneOf already declares its own `type` and typed `spec`,
+// so the base object's `type` and untyped `spec: {}` only duplicate them (and
+// leave `spec` untyped). Removing them leaves a clean oneOf-of-$ref.
+func (QueryEnvelope) PrepareJSONSchema(s *jsonschema.Schema) error {
+	s.Properties = nil
+	s.Required = nil
+
+	return nil
+}
+
 // implement custom json unmarshaler for the QueryEnvelope.
 func (q *QueryEnvelope) UnmarshalJSON(data []byte) error {
 	var shadow struct {
@@ -274,6 +287,42 @@ func (VariableType) Enum() []any {
 type VariableItem struct {
 	Type  VariableType `json:"type"`
 	Value any          `json:"value"`
+}
+
+var _ jsonschema.Preparer = VariableItem{}
+
+// PrepareJSONSchema types the `value` property instead of leaving it as an
+// untyped {}: a variable resolves to a scalar (string/number/bool) or, for
+// multi-select, a list of scalars. The Go field stays `any`; this only documents
+// the wire contract in the generated OpenAPI schema.
+func (VariableItem) PrepareJSONSchema(s *jsonschema.Schema) error {
+	if _, ok := s.Properties["value"]; !ok {
+		return nil
+	}
+
+	item := jsonschema.Schema{}
+	item.OneOf = []jsonschema.SchemaOrBool{
+		jsonschema.String.ToSchemaOrBool(),
+		jsonschema.Number.ToSchemaOrBool(),
+		jsonschema.Boolean.ToSchemaOrBool(),
+	}
+
+	list := jsonschema.Schema{}
+	list.WithType(jsonschema.Array.Type())
+	items := jsonschema.Items{}
+	items.WithSchemaOrBool(item.ToSchemaOrBool())
+	list.WithItems(items)
+
+	value := jsonschema.Schema{}
+	value.OneOf = []jsonschema.SchemaOrBool{
+		jsonschema.String.ToSchemaOrBool(),
+		jsonschema.Number.ToSchemaOrBool(),
+		jsonschema.Boolean.ToSchemaOrBool(),
+		list.ToSchemaOrBool(),
+	}
+	s.Properties["value"] = value.ToSchemaOrBool()
+
+	return nil
 }
 
 type QueryRangeRequest struct {

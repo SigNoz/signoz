@@ -621,6 +621,27 @@ func (f FunctionArg) Copy() FunctionArg {
 	return f
 }
 
+var _ jsonschema.Preparer = FunctionArg{}
+
+// PrepareJSONSchema types the `value` property as a scalar instead of an untyped
+// {}: function arguments are numbers (clamp/ewma/timeShift/fillZero) or a string
+// (the anomaly `seasonality` arg). The Go field stays `any`; this only documents
+// the wire contract in the generated OpenAPI schema.
+func (FunctionArg) PrepareJSONSchema(s *jsonschema.Schema) error {
+	if _, ok := s.Properties["value"]; !ok {
+		return nil
+	}
+
+	value := jsonschema.Schema{}
+	value.OneOf = []jsonschema.SchemaOrBool{
+		jsonschema.Number.ToSchemaOrBool(),
+		jsonschema.String.ToSchemaOrBool(),
+	}
+	s.Properties["value"] = value.ToSchemaOrBool()
+
+	return nil
+}
+
 type Function struct {
 	// name of the function
 	Name FunctionName `json:"name"`

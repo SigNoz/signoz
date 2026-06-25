@@ -116,6 +116,28 @@ type Label struct {
 	Value any                              `json:"value"`
 }
 
+var _ jsonschema.Preparer = Label{}
+
+// PrepareJSONSchema types the `value` property as a scalar instead of an untyped
+// {}: a label value is whatever the grouped-by column holds (string/number/bool).
+// The Go field stays `any`; this only documents the wire contract in the
+// generated OpenAPI schema.
+func (Label) PrepareJSONSchema(s *jsonschema.Schema) error {
+	if _, ok := s.Properties["value"]; !ok {
+		return nil
+	}
+
+	value := jsonschema.Schema{}
+	value.OneOf = []jsonschema.SchemaOrBool{
+		jsonschema.String.ToSchemaOrBool(),
+		jsonschema.Number.ToSchemaOrBool(),
+		jsonschema.Boolean.ToSchemaOrBool(),
+	}
+	s.Properties["value"] = value.ToSchemaOrBool()
+
+	return nil
+}
+
 func GetUniqueSeriesKey(labels []*Label) string {
 	// Fast path for common cases
 	if len(labels) == 0 {
