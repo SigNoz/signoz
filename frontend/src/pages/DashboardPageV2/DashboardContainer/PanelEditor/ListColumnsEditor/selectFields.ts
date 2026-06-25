@@ -37,7 +37,7 @@ export function sanitizeSelectFields(
  * logs/traces List-column defaults (V1 parity), sanitized to the field-key DTO.
  */
 export function defaultColumnsForSignal(
-	signal: string,
+	signal: TelemetrytypesSignalDTO,
 ): TelemetrytypesTelemetryFieldKeyDTO[] {
 	if (signal === TelemetrytypesSignalDTO.logs) {
 		return sanitizeSelectFields(

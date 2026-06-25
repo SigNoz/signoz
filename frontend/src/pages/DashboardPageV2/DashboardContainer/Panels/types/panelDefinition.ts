@@ -1,5 +1,5 @@
 import type { ComponentType } from 'react';
-import { DataSource } from 'types/common/queryBuilder';
+import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 
 import type { SectionConfig } from './sections';
 import type { AnyPanelInteractionProps } from './interactions';
@@ -35,7 +35,7 @@ export interface PanelDefinition<K extends PanelKind = PanelKind> {
 	displayName: string;
 	Renderer: ComponentType<PanelRendererProps<K>>;
 	sections: SectionConfig[];
-	supportedSignals: DataSource[];
+	supportedSignals: TelemetrytypesSignalDTO[];
 	actions: PanelActionCapabilities;
 }
 

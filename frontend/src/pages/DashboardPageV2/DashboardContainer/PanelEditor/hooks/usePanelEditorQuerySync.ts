@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type {
 	DashboardtypesPanelDTO,
 	DashboardtypesPanelSpecDTO,
+	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { getIsQueryModified } from 'container/NewWidget/utils';
@@ -9,7 +10,6 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { isEqual } from 'lodash-es';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { DataSource } from 'types/common/queryBuilder';
 
 import { toQueryEnvelopes } from '../../queryV5/buildQueryRangeRequest';
 import { fromPerses, toPerses } from '../../queryV5/persesQueryAdapters';
@@ -26,7 +26,7 @@ interface UsePanelEditorQuerySyncArgs {
 	 */
 	alwaysSerializeQuery?: boolean;
 	/** Signal to seed a new panel's builder with — the kind's first supported signal. */
-	signal?: DataSource;
+	signal?: TelemetrytypesSignalDTO;
 }
 
 interface UsePanelEditorQuerySyncApi {

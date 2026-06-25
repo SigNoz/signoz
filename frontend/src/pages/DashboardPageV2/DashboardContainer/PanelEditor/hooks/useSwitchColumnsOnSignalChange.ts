@@ -12,11 +12,11 @@ import {
 	writeSelectFields,
 } from '../ListColumnsEditor/selectFields';
 
-interface UseSwitchColumnsOnSignalChangeArgs {
+export interface UseSwitchColumnsOnSignalChangeArgs {
 	/** Gate so the switch only runs for the List kind (the only one with columns). */
 	enabled: boolean;
 	/** The panel's current telemetry signal (logs / traces / metrics). */
-	signal: TelemetrytypesSignalDTO | undefined;
+	signal: TelemetrytypesSignalDTO;
 	spec: DashboardtypesPanelSpecDTO;
 	onChangeSpec: (next: DashboardtypesPanelSpecDTO) => void;
 }
@@ -39,7 +39,7 @@ export function useSwitchColumnsOnSignalChange({
 	>(new Map());
 
 	useEffect(() => {
-		if (!enabled || !signal) {
+		if (!enabled) {
 			return;
 		}
 		const prev = prevSignalRef.current;

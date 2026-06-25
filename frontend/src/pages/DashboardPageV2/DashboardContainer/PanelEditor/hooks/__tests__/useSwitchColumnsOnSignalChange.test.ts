@@ -10,7 +10,10 @@ import {
 } from 'container/OptionsMenu/constants';
 
 import { sanitizeSelectFields } from '../../ListColumnsEditor/selectFields';
-import { useSwitchColumnsOnSignalChange } from '../useSwitchColumnsOnSignalChange';
+import {
+	useSwitchColumnsOnSignalChange,
+	type UseSwitchColumnsOnSignalChangeArgs,
+} from '../useSwitchColumnsOnSignalChange';
 
 // V1 constants carry extra keys (e.g. `isIndexed`); the hook reduces them to the
 // field-key DTO, so assertions sanitize the same way.
@@ -30,16 +33,12 @@ function makeSpec(
 	} as unknown as DashboardtypesPanelSpecDTO;
 }
 
-type Props = {
-	enabled: boolean;
-	signal: TelemetrytypesSignalDTO | undefined;
-	spec: DashboardtypesPanelSpecDTO;
-	onChangeSpec: (next: DashboardtypesPanelSpecDTO) => void;
-};
-
-function renderWith(initial: Props): { rerender: (next: Props) => void } {
+function renderWith(initial: UseSwitchColumnsOnSignalChangeArgs): {
+	rerender: (next: UseSwitchColumnsOnSignalChangeArgs) => void;
+} {
 	const { rerender } = renderHook(
-		(props: Props) => useSwitchColumnsOnSignalChange(props),
+		(props: UseSwitchColumnsOnSignalChangeArgs) =>
+			useSwitchColumnsOnSignalChange(props),
 		{ initialProps: initial },
 	);
 	return { rerender };
@@ -150,20 +149,6 @@ describe('useSwitchColumnsOnSignalChange', () => {
 			spec,
 			onChangeSpec,
 		});
-		expect(onChangeSpec).not.toHaveBeenCalled();
-	});
-
-	it('does not switch on a transient undefined signal', () => {
-		const onChangeSpec = jest.fn();
-		const spec = makeSpec([{ name: 'body' }]);
-		const { rerender } = renderWith({
-			enabled: true,
-			signal: TelemetrytypesSignalDTO.logs,
-			spec,
-			onChangeSpec,
-		});
-
-		rerender({ enabled: true, signal: undefined, spec, onChangeSpec });
 		expect(onChangeSpec).not.toHaveBeenCalled();
 	});
 

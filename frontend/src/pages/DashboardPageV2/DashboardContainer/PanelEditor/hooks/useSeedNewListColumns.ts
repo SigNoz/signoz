@@ -1,5 +1,8 @@
 import { useEffect, useRef } from 'react';
-import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
+import type {
+	DashboardtypesPanelSpecDTO,
+	TelemetrytypesSignalDTO,
+} from 'api/generated/services/sigNoz.schemas';
 
 import {
 	defaultColumnsForSignal,
@@ -11,7 +14,7 @@ interface UseSeedNewListColumnsArgs {
 	/** Gate: a brand-new List panel (the only case that should auto-fill columns). */
 	enabled: boolean;
 	/** Default signal for the new panel — its kind's first supported signal. */
-	signal: string;
+	signal: TelemetrytypesSignalDTO;
 	spec: DashboardtypesPanelSpecDTO;
 	onChangeSpec: (next: DashboardtypesPanelSpecDTO) => void;
 }
