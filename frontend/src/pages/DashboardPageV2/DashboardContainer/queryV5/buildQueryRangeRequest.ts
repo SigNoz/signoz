@@ -1,6 +1,9 @@
 import type {
 	DashboardtypesQueryDTO,
+	Querybuildertypesv5BuilderQuerySpecDTO,
+	Querybuildertypesv5ClickHouseQueryDTO,
 	Querybuildertypesv5CompositeQueryDTO,
+	Querybuildertypesv5PromQueryDTO,
 	Querybuildertypesv5QueryEnvelopeDTO,
 	Querybuildertypesv5QueryRangeRequestDTO,
 } from 'api/generated/services/sigNoz.schemas';
@@ -65,28 +68,28 @@ export function toQueryEnvelopes(
 		case 'signoz/CompositeQuery':
 			return (plugin.spec as Querybuildertypesv5CompositeQueryDTO).queries ?? [];
 		case 'signoz/BuilderQuery':
-			// The variant's `spec` is typed (BuilderQuerySpecDTO) but plugin.spec is the
-			// plugin-spec union, so cast the array to the wire DTO.
+			// plugin.spec is the (un-narrowed) plugin-spec union, so pick the builder
+			// spec out of it — mirroring the CompositeQuery case above.
 			return [
 				{
 					type: Querybuildertypesv5QueryEnvelopeBuilderDTOType.builder_query,
-					spec: plugin.spec,
+					spec: plugin.spec as Querybuildertypesv5BuilderQuerySpecDTO,
 				},
-			] as unknown as Querybuildertypesv5QueryEnvelopeDTO[];
+			];
 		case 'signoz/PromQLQuery':
 			return [
 				{
 					type: Querybuildertypesv5QueryEnvelopePromQLDTOType.promql,
-					spec: plugin.spec,
+					spec: plugin.spec as Querybuildertypesv5PromQueryDTO,
 				},
-			] as unknown as Querybuildertypesv5QueryEnvelopeDTO[];
+			];
 		case 'signoz/ClickHouseSQL':
 			return [
 				{
 					type: Querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType.clickhouse_sql,
-					spec: plugin.spec,
+					spec: plugin.spec as Querybuildertypesv5ClickHouseQueryDTO,
 				},
-			] as unknown as Querybuildertypesv5QueryEnvelopeDTO[];
+			];
 		case 'signoz/Formula':
 		case 'signoz/TraceOperator':
 			// eslint-disable-next-line no-console
