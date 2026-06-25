@@ -4267,26 +4267,78 @@ export interface DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDa
 export enum DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5CompositeQueryDTOKind {
 	'signoz/CompositeQuery' = 'signoz/CompositeQuery',
 }
-export enum Querybuildertypesv5QueryTypeDTO {
+export type Querybuildertypesv5BuilderAggregationDTO =
+	| Querybuildertypesv5TraceAggregationDTO
+	| Querybuildertypesv5LogAggregationDTO
+	| Querybuildertypesv5MetricAggregationDTO;
+
+export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5BuilderAggregationDTO {
+	/**
+	 * @type array
+	 */
+	aggregations?: Querybuildertypesv5BuilderAggregationDTO[];
+	/**
+	 * @type string
+	 */
+	cursor?: string;
+	/**
+	 * @type boolean
+	 */
+	disabled?: boolean;
+	filter?: Querybuildertypesv5FilterDTO;
+	/**
+	 * @type array
+	 */
+	functions?: Querybuildertypesv5FunctionDTO[];
+	/**
+	 * @type array
+	 */
+	groupBy?: Querybuildertypesv5GroupByKeyDTO[];
+	having?: Querybuildertypesv5HavingDTO;
+	/**
+	 * @type string
+	 */
+	legend?: string;
+	/**
+	 * @type integer
+	 */
+	limit?: number;
+	limitBy?: Querybuildertypesv5LimitByDTO;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type integer
+	 */
+	offset?: number;
+	/**
+	 * @type array
+	 */
+	order?: Querybuildertypesv5OrderByDTO[];
+	/**
+	 * @type array
+	 */
+	secondaryAggregations?: Querybuildertypesv5SecondaryAggregationDTO[];
+	/**
+	 * @type array
+	 */
+	selectFields?: TelemetrytypesTelemetryFieldKeyDTO[];
+	signal?: TelemetrytypesSignalDTO;
+	source?: TelemetrytypesSourceDTO;
+	stepInterval?: Querybuildertypesv5StepDTO;
+}
+
+export enum Querybuildertypesv5QueryEnvelopeBuilderDTOType {
 	builder_query = 'builder_query',
-	builder_formula = 'builder_formula',
-	builder_trace_operator = 'builder_trace_operator',
-	clickhouse_sql = 'clickhouse_sql',
-	promql = 'promql',
 }
-export interface Querybuildertypesv5QueryEnvelopeBuilderTraceDTO {
-	spec?: Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregationDTO;
-	type?: Querybuildertypesv5QueryTypeDTO;
-}
-
-export interface Querybuildertypesv5QueryEnvelopeBuilderLogDTO {
-	spec?: Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregationDTO;
-	type?: Querybuildertypesv5QueryTypeDTO;
-}
-
-export interface Querybuildertypesv5QueryEnvelopeBuilderMetricDTO {
-	spec?: Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTO;
-	type?: Querybuildertypesv5QueryTypeDTO;
+export interface Querybuildertypesv5QueryEnvelopeBuilderDTO {
+	spec?: Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5BuilderAggregationDTO;
+	/**
+	 * @type string
+	 * @enum builder_query
+	 */
+	type: Querybuildertypesv5QueryEnvelopeBuilderDTOType;
 }
 
 export interface Querybuildertypesv5QueryBuilderFormulaDTO {
@@ -4321,9 +4373,16 @@ export interface Querybuildertypesv5QueryBuilderFormulaDTO {
 	order?: Querybuildertypesv5OrderByDTO[];
 }
 
+export enum Querybuildertypesv5QueryEnvelopeFormulaDTOType {
+	builder_formula = 'builder_formula',
+}
 export interface Querybuildertypesv5QueryEnvelopeFormulaDTO {
 	spec?: Querybuildertypesv5QueryBuilderFormulaDTO;
-	type?: Querybuildertypesv5QueryTypeDTO;
+	/**
+	 * @type string
+	 * @enum builder_formula
+	 */
+	type: Querybuildertypesv5QueryEnvelopeFormulaDTOType;
 }
 
 export type Querybuildertypesv5JoinAggregationDTO =
@@ -4393,9 +4452,16 @@ export interface Querybuildertypesv5QueryBuilderJoinDTO {
 	type?: Querybuildertypesv5JoinTypeDTO;
 }
 
+export enum Querybuildertypesv5QueryEnvelopeJoinDTOType {
+	builder_join = 'builder_join',
+}
 export interface Querybuildertypesv5QueryEnvelopeJoinDTO {
 	spec?: Querybuildertypesv5QueryBuilderJoinDTO;
-	type?: Querybuildertypesv5QueryTypeDTO;
+	/**
+	 * @type string
+	 * @enum builder_join
+	 */
+	type: Querybuildertypesv5QueryEnvelopeJoinDTOType;
 }
 
 export interface Querybuildertypesv5QueryBuilderTraceOperatorDTO {
@@ -4456,9 +4522,16 @@ export interface Querybuildertypesv5QueryBuilderTraceOperatorDTO {
 	stepInterval?: Querybuildertypesv5StepDTO;
 }
 
+export enum Querybuildertypesv5QueryEnvelopeTraceOperatorDTOType {
+	builder_trace_operator = 'builder_trace_operator',
+}
 export interface Querybuildertypesv5QueryEnvelopeTraceOperatorDTO {
 	spec?: Querybuildertypesv5QueryBuilderTraceOperatorDTO;
-	type?: Querybuildertypesv5QueryTypeDTO;
+	/**
+	 * @type string
+	 * @enum builder_trace_operator
+	 */
+	type: Querybuildertypesv5QueryEnvelopeTraceOperatorDTOType;
 }
 
 export interface Querybuildertypesv5PromQueryDTO {
@@ -4485,9 +4558,16 @@ export interface Querybuildertypesv5PromQueryDTO {
 	step?: Querybuildertypesv5StepDTO;
 }
 
+export enum Querybuildertypesv5QueryEnvelopePromQLDTOType {
+	promql = 'promql',
+}
 export interface Querybuildertypesv5QueryEnvelopePromQLDTO {
 	spec?: Querybuildertypesv5PromQueryDTO;
-	type?: Querybuildertypesv5QueryTypeDTO;
+	/**
+	 * @type string
+	 * @enum promql
+	 */
+	type: Querybuildertypesv5QueryEnvelopePromQLDTOType;
 }
 
 export interface Querybuildertypesv5ClickHouseQueryDTO {
@@ -4509,15 +4589,20 @@ export interface Querybuildertypesv5ClickHouseQueryDTO {
 	query?: string;
 }
 
+export enum Querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType {
+	clickhouse_sql = 'clickhouse_sql',
+}
 export interface Querybuildertypesv5QueryEnvelopeClickHouseSQLDTO {
 	spec?: Querybuildertypesv5ClickHouseQueryDTO;
-	type?: Querybuildertypesv5QueryTypeDTO;
+	/**
+	 * @type string
+	 * @enum clickhouse_sql
+	 */
+	type: Querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType;
 }
 
 export type Querybuildertypesv5QueryEnvelopeDTO =
-	| Querybuildertypesv5QueryEnvelopeBuilderTraceDTO
-	| Querybuildertypesv5QueryEnvelopeBuilderLogDTO
-	| Querybuildertypesv5QueryEnvelopeBuilderMetricDTO
+	| Querybuildertypesv5QueryEnvelopeBuilderDTO
 	| Querybuildertypesv5QueryEnvelopeFormulaDTO
 	| Querybuildertypesv5QueryEnvelopeJoinDTO
 	| Querybuildertypesv5QueryEnvelopeTraceOperatorDTO
@@ -7440,6 +7525,13 @@ export interface Querybuildertypesv5QueryRangeResponseDTO {
 	warning?: Querybuildertypesv5QueryWarnDataDTO;
 }
 
+export enum Querybuildertypesv5QueryTypeDTO {
+	builder_query = 'builder_query',
+	builder_formula = 'builder_formula',
+	builder_trace_operator = 'builder_trace_operator',
+	clickhouse_sql = 'clickhouse_sql',
+	promql = 'promql',
+}
 export interface RenderErrorResponseDTO {
 	error: ErrorsJSONDTO;
 	/**
