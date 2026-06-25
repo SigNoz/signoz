@@ -39,12 +39,12 @@ func (storable StorableDashboard) ConvertV1ToV2() (result *DashboardV2, err erro
 	// surfaces as an error (to be logged and skipped) rather than crashing the run.
 	defer func() {
 		if r := recover(); r != nil {
-			result, err = nil, errors.Newf(errors.TypeInternal, ErrCodeDashboardInvalidData, "panic converting dashboard %s: %v", storable.ID, r)
+			result, err = nil, errors.Newf(errors.TypeInternal, ErrCodeDashboardMigrationFailed, "panic converting dashboard %s: %v", storable.ID, r)
 		}
 	}()
 
 	if storable.IsV2() {
-		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardInvalidData, "dashboard %s is already in %s schema", storable.ID, SchemaVersion)
+		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardMigrationFailed, "dashboard %s is already in %s schema", storable.ID, SchemaVersion)
 	}
 
 	// Each converter errors only if its field is present with the wrong type (a
@@ -96,5 +96,5 @@ func (storable StorableDashboard) ConvertV1ToV2() (result *DashboardV2, err erro
 // malformedV1FieldErr reports a v1 field present with the wrong type (a corrupt
 // dashboard), as distinct from an absent field, which converts to nothing.
 func malformedV1FieldErr(field string, raw any) error {
-	return errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardInvalidData, "v1 dashboard field %q has unexpected type %T", field, raw)
+	return errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardMigrationFailed, "v1 dashboard field %q has unexpected type %T", field, raw)
 }
