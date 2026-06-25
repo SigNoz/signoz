@@ -48,9 +48,7 @@ export function getModelCostsColumns({
 						{row.modelName}
 					</Typography.Text>
 
-					<Typography code color="muted" truncate={1}>
-						{getCanonicalId(row)}
-					</Typography>
+					<Typography.Text truncate={1}>{getCanonicalId(row)}</Typography.Text>
 				</div>
 			),
 		},
