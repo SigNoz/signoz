@@ -36,6 +36,28 @@
 
 .modelCostsTable {
 	margin-top: var(--spacing-8);
+
+	// Fixed row height so skeleton rows and loaded rows share identical
+	// dimensions — without this the single-line 14px skeleton collapses the
+	// row and the page jumps when real data (2-line model cell) arrives.
+	// Sized to fit the two-line Model cell; see .modelCell below.
+	--tanstack-table-row-height: 48px;
+
+	// Reserve a floor of vertical space so partial pages (fewer rows than the
+	// page size) and the empty state don't collapse the container and shift
+	// the pagination/footer below it.
+	height: calc(100vh - 250px);
+	overflow-y: auto;
+}
+
+.modelCostsEmpty {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin-top: var(--spacing-8);
+	min-height: 400px;
+	color: var(--text-vanilla-400);
+	font-size: var(--periscope-font-size-base);
 }
 
 .pageFooter {
@@ -53,6 +75,7 @@
 .modelCellName {
 	color: var(--text-vanilla-100);
 	font-weight: var(--font-weight-semibold);
+	line-height: 18px;
 }
 
 .modelCellName,
@@ -67,6 +90,7 @@
 	color: var(--text-vanilla-400);
 	font-family: var(--code-font-family, monospace);
 	font-size: var(--font-size-xs);
+	line-height: 16px;
 }
 
 .priceCell {
@@ -76,8 +100,11 @@
 
 .extraBuckets {
 	display: flex;
-	flex-wrap: wrap;
+	// Keep chips on a single line so the row stays at the fixed height set on
+	// .modelCostsTable; the column flexes to 100% so there's room for both.
+	flex-wrap: nowrap;
 	gap: var(--spacing-3);
+	overflow: hidden;
 }
 
 .extraBucketsChip {

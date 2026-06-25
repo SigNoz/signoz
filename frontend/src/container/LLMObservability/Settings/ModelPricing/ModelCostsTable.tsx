@@ -21,9 +21,7 @@ interface ModelCostsTableProps {
 }
 
 // The table owns its own pagination URL state (page/limit) via enableQueryParams;
-// ModelCostsTab reads the same keys to build the list request. Virtual scroll is
-// disabled because this is a small, server-paginated page that lives in a
-// content-height container rather than a fixed-height viewport.
+// ModelCostsTab reads the same keys to build the list request. Virtual scroll
 function ModelCostsTable({
 	rules,
 	isLoading,
@@ -39,7 +37,7 @@ function ModelCostsTable({
 
 	if (!isLoading && rules.length === 0) {
 		return (
-			<div className={styles.modelCostsTable} data-testid="model-costs-empty">
+			<div className={styles.modelCostsEmpty} data-testid="model-costs-empty">
 				No model costs yet.
 			</div>
 		);
@@ -55,6 +53,7 @@ function ModelCostsTable({
 			getRowKey={(row): string => row.id}
 			isRowActive={(row): boolean => row.id === selectedRuleId}
 			disableVirtualScroll
+			tableScrollerProps={{ className: styles.modelCostsScroll }}
 			testId="model-costs-table"
 			enableQueryParams={{ page: PAGE_KEY, limit: LIMIT_KEY }}
 			pagination={{
