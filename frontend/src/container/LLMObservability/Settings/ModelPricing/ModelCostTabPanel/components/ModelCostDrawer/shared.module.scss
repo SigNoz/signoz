@@ -10,25 +10,15 @@
 	gap: var(--spacing-3);
 }
 
-.drawerSection label,
-.drawerSection .fieldLabel,
-.fieldLabel {
-	font-size: 12px;
-	font-weight: var(--font-weight-semibold);
-	color: var(--l2-foreground);
-}
-
 .drawerSection .help,
 .help {
 	margin: 0;
-	font-size: var(--periscope-font-size-small);
 }
 
 .help code {
 	padding: 1px var(--spacing-2);
 	border-radius: 3px;
 	background: var(--l3-background);
-	font-family: var(--code-font-family, monospace);
 	font-size: 10px;
 }
 
@@ -44,15 +34,6 @@
 	align-items: center;
 	justify-content: space-between;
 	margin-bottom: var(--spacing-5);
-}
-
-.drawerSurfaceHead h4 {
-	margin: 0;
-	font-size: var(--periscope-font-size-base);
-	font-weight: var(--font-weight-semibold);
-	text-transform: uppercase;
-	letter-spacing: 0.04em;
-	color: var(--l2-foreground);
 }
 
 .managedLabel {

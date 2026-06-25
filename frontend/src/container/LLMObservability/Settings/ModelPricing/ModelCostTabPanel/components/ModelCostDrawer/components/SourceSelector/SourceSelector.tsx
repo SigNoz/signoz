@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { RadioGroup, RadioGroupItem } from '@signozhq/ui/radio-group';
 import { Lock } from '@signozhq/icons';
+import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 
 import styles from './SourceSelector.module.scss';
@@ -41,7 +42,10 @@ function SourceSelector({
 	return (
 		<div className={cx(styles.drawerSection, styles.drawerSurface)}>
 			<div className={styles.drawerSurfaceHead}>
-				<h4>Source</h4>
+				<Typography.Text weight="bold" size="base">
+					Source
+				</Typography.Text>
+
 				{isReadOnly && (
 					<span className={styles.managedLabel} data-testid="drawer-managed-label">
 						<Lock size={12} />

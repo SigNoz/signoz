@@ -24,7 +24,10 @@ function PricingFields({
 	return (
 		<div className={cx(styles.drawerSection, styles.drawerSurface)}>
 			<div className={styles.drawerSurfaceHead}>
-				<h4>Pricing (per 1M tokens, USD)</h4>
+				<Typography.Text size="base" weight="bold">
+					Pricing (per 1M tokens, USD)
+				</Typography.Text>
+
 				{isReadOnly && (
 					<span className={styles.managedLabel} data-testid="drawer-readonly-label">
 						<Lock size={12} />

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { DrawerWrapper } from '@signozhq/ui/drawer';
 import { Input } from '@signozhq/ui/input';
@@ -6,6 +7,7 @@ import { Typography } from '@signozhq/ui/typography';
 import { Trash2 } from '@signozhq/icons';
 import { Controller, useForm } from 'react-hook-form';
 
+import DeleteConfirmDialog from './components/DeleteConfirmDialog';
 import PatternEditor from './components/PatternEditor';
 import PricingFields from './components/PricingFields';
 import SourceSelector from './components/SourceSelector';
@@ -57,6 +59,9 @@ function ModelCostDrawer({
 
 	const isOverride = watch('isOverride');
 
+	const [showDeleteConfirmDialog, setShowDeleteConfirmDialog] =
+		useState<boolean>(false);
+
 	// Metadata (model id / provider / patterns / source) is editable by any
 	// manager. Pricing fields are editable only once the user picks "User
 	// override" — auto-populated pricing is managed by SigNoz. Write APIs are
@@ -80,7 +85,7 @@ function ModelCostDrawer({
 					variant="ghost"
 					color="destructive"
 					prefix={<Trash2 size={14} />}
-					onClick={onDelete}
+					onClick={(): void => setShowDeleteConfirmDialog(true)}
 					loading={isDeleting}
 					testId="drawer-delete-btn"
 					className={styles.deleteButton}
@@ -255,6 +260,14 @@ function ModelCostDrawer({
 					{saveError}
 				</Typography.Text>
 			)}
+
+			<DeleteConfirmDialog
+				open={showDeleteConfirmDialog}
+				modelName={initialDraft.modelName}
+				isDeleting={isDeleting}
+				onConfirm={onDelete}
+				onCancel={(): void => setShowDeleteConfirmDialog(false)}
+			/>
 		</DrawerWrapper>
 	);
 }

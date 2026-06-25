@@ -1,0 +1,22 @@
+.dialog {
+	background: var(--l2-background);
+	border: 1px solid var(--l1-border);
+
+	:global([data-slot='dialog-title']) {
+		color: var(--l1-foreground);
+	}
+	display: flex;
+	flex-direction: column;
+}
+
+.body {
+	margin: 0;
+	padding: var(--spacing-6);
+	color: var(--l2-foreground);
+}
+
+.footer {
+	display: flex;
+	justify-content: flex-end;
+	gap: var(--spacing-4);
+}
