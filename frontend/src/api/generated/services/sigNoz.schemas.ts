@@ -4278,8 +4278,8 @@ export enum Querybuildertypesv5QueryEnvelopeBuilderDTOType {
 export interface Querybuildertypesv5QueryEnvelopeBuilderDTO {
 	spec?: Querybuildertypesv5BuilderQuerySpecDTO;
 	/**
-	 * @enum builder_query
 	 * @type string
+	 * @enum builder_query
 	 */
 	type: Querybuildertypesv5QueryEnvelopeBuilderDTOType;
 }
@@ -4322,8 +4322,8 @@ export enum Querybuildertypesv5QueryEnvelopeFormulaDTOType {
 export interface Querybuildertypesv5QueryEnvelopeFormulaDTO {
 	spec?: Querybuildertypesv5QueryBuilderFormulaDTO;
 	/**
-	 * @enum builder_formula
 	 * @type string
+	 * @enum builder_formula
 	 */
 	type: Querybuildertypesv5QueryEnvelopeFormulaDTOType;
 }
@@ -4401,8 +4401,8 @@ export enum Querybuildertypesv5QueryEnvelopeJoinDTOType {
 export interface Querybuildertypesv5QueryEnvelopeJoinDTO {
 	spec?: Querybuildertypesv5QueryBuilderJoinDTO;
 	/**
-	 * @enum builder_join
 	 * @type string
+	 * @enum builder_join
 	 */
 	type: Querybuildertypesv5QueryEnvelopeJoinDTOType;
 }
@@ -4471,8 +4471,8 @@ export enum Querybuildertypesv5QueryEnvelopeTraceOperatorDTOType {
 export interface Querybuildertypesv5QueryEnvelopeTraceOperatorDTO {
 	spec?: Querybuildertypesv5QueryBuilderTraceOperatorDTO;
 	/**
-	 * @enum builder_trace_operator
 	 * @type string
+	 * @enum builder_trace_operator
 	 */
 	type: Querybuildertypesv5QueryEnvelopeTraceOperatorDTOType;
 }
@@ -4507,8 +4507,8 @@ export enum Querybuildertypesv5QueryEnvelopePromQLDTOType {
 export interface Querybuildertypesv5QueryEnvelopePromQLDTO {
 	spec?: Querybuildertypesv5PromQueryDTO;
 	/**
-	 * @enum promql
 	 * @type string
+	 * @enum promql
 	 */
 	type: Querybuildertypesv5QueryEnvelopePromQLDTOType;
 }
@@ -4538,8 +4538,8 @@ export enum Querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType {
 export interface Querybuildertypesv5QueryEnvelopeClickHouseSQLDTO {
 	spec?: Querybuildertypesv5ClickHouseQueryDTO;
 	/**
-	 * @enum clickhouse_sql
 	 * @type string
+	 * @enum clickhouse_sql
 	 */
 	type: Querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType;
 }
