@@ -1,0 +1,27 @@
+.badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	height: 20px;
+	padding: 0 8px;
+	border-radius: 99px;
+	font-size: 11px;
+	font-weight: 600;
+}
+
+.active {
+	color: var(--bg-forest-400, #50e7a7);
+	background: rgba(37, 225, 146, 0.1);
+	border: 1px solid rgba(37, 225, 146, 0.22);
+}
+
+.pending {
+	color: var(--bg-amber-400, #ffd778);
+	background: rgba(255, 204, 86, 0.1);
+	border: 1px solid rgba(255, 204, 86, 0.25);
+}
+
+.none {
+	color: var(--bg-vanilla-400, #c0c1c3);
+	font-size: 12px;
+}

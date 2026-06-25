@@ -20,10 +20,7 @@ var (
 	bufferSeriesTable   = telemetrymetrics.DBName + "." + telemetrymetrics.TimeseriesV4BufferTableName
 )
 
-const (
-	timeSeriesBucketMilli = int64(time.Hour / time.Millisecond)
-	sampleBucketMilli     = int64(60 * time.Second / time.Millisecond)
-)
+const timeSeriesBucketMilli = int64(time.Hour / time.Millisecond)
 
 type volumeRow struct {
 	MetricName string
@@ -422,23 +419,48 @@ func (c *clickhouse) countReducedSamples(ctx context.Context, table string, metr
 
 // SeriesTimeseries returns ingested vs reduced series per 60s bucket from the samples tables, gated
 // to each metric's strict effective_from (see strictEffectiveFrom).
-func (c *clickhouse) SeriesTimeseries(ctx context.Context, metricNames []string, effectiveFrom map[string]int64, startMs, endMs int64) ([]volumePoint, error) {
-	if len(metricNames) == 0 {
+func (c *clickhouse) SeriesTimeseries(ctx context.Context, allMetrics, reducedMetrics []string, effectiveFrom map[string]int64, startMs, endMs int64) ([]volumePoint, error) {
+	if len(allMetrics) == 0 {
 		return []volumePoint{}, nil
 	}
 	ctx = c.withThreads(ctx)
 
-	ingested, err := c.ingestedSeriesByBucket(ctx, metricNames, effectiveFrom, startMs, endMs)
+	ingested, err := c.ingestedSeriesByBucket(ctx, allMetrics, effectiveFrom, startMs, endMs)
 	if err != nil {
 		return nil, err
 	}
 
-	reduced, err := c.reducedSeriesByBucket(ctx, metricNames, effectiveFrom, startMs, endMs)
-	if err != nil {
-		return nil, err
+	retained := make(map[int64]uint64)
+	if len(reducedMetrics) > 0 {
+		reduced, err := c.reducedSeriesByBucket(ctx, reducedMetrics, effectiveFrom, startMs, endMs)
+		if err != nil {
+			return nil, err
+		}
+		for ts, count := range reduced {
+			retained[ts] += count
+		}
+	}
+	reducedSet := make(map[string]struct{}, len(reducedMetrics))
+	for _, name := range reducedMetrics {
+		reducedSet[name] = struct{}{}
+	}
+	nonReduced := make([]string, 0, len(allMetrics))
+	for _, name := range allMetrics {
+		if _, ok := reducedSet[name]; !ok {
+			nonReduced = append(nonReduced, name)
+		}
+	}
+	if len(nonReduced) > 0 {
+		nonReducedIngested, err := c.ingestedSeriesByBucket(ctx, nonReduced, effectiveFrom, startMs, endMs)
+		if err != nil {
+			return nil, err
+		}
+		for ts, count := range nonReducedIngested {
+			retained[ts] += count
+		}
 	}
 
-	return mergeVolumePoints(ingested, reduced), nil
+	return mergeVolumePoints(ingested, retained), nil
 }
 
 func mergeVolumePoints(ingested, reduced map[int64]uint64) []volumePoint {
@@ -466,7 +488,7 @@ func mergeVolumePoints(ingested, reduced map[int64]uint64) []volumePoint {
 	return points
 }
 
-// ingestedSeriesByBucket counts distinct raw fingerprints per 60s bucket from the samples buffer.
+// ingestedSeriesByBucket counts distinct raw fingerprints per hourly bucket from the samples buffer.
 func (c *clickhouse) ingestedSeriesByBucket(ctx context.Context, metricNames []string, effectiveFrom map[string]int64, startMs, endMs int64) (map[int64]uint64, error) {
 	names := make([]any, len(metricNames))
 	for i, name := range metricNames {
@@ -474,7 +496,7 @@ func (c *clickhouse) ingestedSeriesByBucket(ctx context.Context, metricNames []s
 	}
 
 	sb := sqlbuilder.NewSelectBuilder()
-	bucketExpr := "intDiv(unix_milli, " + sb.Var(sampleBucketMilli) + ") * " + sb.Var(sampleBucketMilli) + " AS bucket"
+	bucketExpr := "toInt64(toUnixTimestamp(toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalHour(1)))) * 1000 AS bucket"
 	sb.Select(bucketExpr, "uniq(fingerprint)")
 	sb.From(telemetrymetrics.DBName + "." + telemetrymetrics.SamplesV4BufferTableName)
 	conds := []string{sb.In("metric_name", names...), sb.GE("unix_milli", startMs), sb.LT("unix_milli", endMs)}
@@ -487,7 +509,7 @@ func (c *clickhouse) ingestedSeriesByBucket(ctx context.Context, metricNames []s
 	return c.scanBuckets(ctx, sb)
 }
 
-// reducedSeriesByBucket counts distinct reduced_fingerprints per 60s bucket, summed across the two
+// reducedSeriesByBucket counts distinct reduced_fingerprints per hourly bucket, summed across the two
 // reduced sample tables (a metric only lands in the table matching its type, so per-bucket sums are
 // exact).
 func (c *clickhouse) reducedSeriesByBucket(ctx context.Context, metricNames []string, effectiveFrom map[string]int64, startMs, endMs int64) (map[int64]uint64, error) {
@@ -499,7 +521,7 @@ func (c *clickhouse) reducedSeriesByBucket(ctx context.Context, metricNames []st
 		}
 
 		sb := sqlbuilder.NewSelectBuilder()
-		bucketExpr := "intDiv(unix_milli, " + sb.Var(sampleBucketMilli) + ") * " + sb.Var(sampleBucketMilli) + " AS bucket"
+		bucketExpr := "toInt64(toUnixTimestamp(toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalHour(1)))) * 1000 AS bucket"
 		sb.Select(bucketExpr, "uniq(reduced_fingerprint)")
 		sb.From(telemetrymetrics.DBName + "." + table)
 		conds := []string{sb.In("metric_name", names...), sb.GE("unix_milli", startMs), sb.LT("unix_milli", endMs)}

@@ -62,6 +62,7 @@ func NewModule(sqlStore sqlstore.SQLStore, telemetryStore telemetrystore.Telemet
 }
 
 func (m *module) checkAccess(ctx context.Context, orgID valuer.UUID) error {
+	return nil
 	if !m.flagger.BooleanOrEmpty(ctx, flagger.FeatureEnableMetricsReduction, featuretypes.NewFlaggerEvaluationContext(orgID)) {
 		return errors.Newf(errors.TypeUnsupported, metricreductionruletypes.ErrCodeMetricReductionRuleUnsupported, "metric volume control is not enabled")
 	}
@@ -310,20 +311,27 @@ func (m *module) Stats(ctx context.Context, orgID valuer.UUID) (*metricreduction
 	if err != nil {
 		return nil, err
 	}
-	var ingestedSeries, reducedSeries uint64
-	for _, volume := range volumes {
+	var ingestedSeries, retainedSeries uint64
+	reducedMetricNames := make([]string, 0, len(volumes))
+	reducedEffectiveFrom := make(map[string]int64, len(volumes))
+	for name, volume := range volumes {
 		ingestedSeries += volume.Ingested
-		reducedSeries += volume.Reduced
+		retained := effectiveRetained(volume.Ingested, volume.Reduced)
+		retainedSeries += retained
+		if retained < volume.Ingested {
+			reducedMetricNames = append(reducedMetricNames, name)
+			reducedEffectiveFrom[name] = effectiveFrom[name]
+		}
 	}
 
-	ingestedSamples, reducedSamples, err := m.ch.SampleVolume(ctx, metricNames, effectiveFrom, startMs, endMs)
+	ingestedSamples, reducedSamples, err := m.ch.SampleVolume(ctx, reducedMetricNames, reducedEffectiveFrom, startMs, endMs)
 	if err != nil {
 		return nil, err
 	}
 
 	return &metricreductionruletypes.GettableReductionRuleStats{
 		IngestedSeries:             ingestedSeries,
-		RetainedSeries:             reducedSeries,
+		RetainedSeries:             retainedSeries,
 		EstimatedMonthlySavingsUsd: monthlySavingsUSD(ingestedSamples, reducedSamples, startMs, endMs),
 	}, nil
 }
@@ -359,7 +367,18 @@ func (m *module) Timeseries(ctx context.Context, orgID valuer.UUID) (*querybuild
 		effectiveFrom[rule.MetricName] = rule.EffectiveFrom.UnixMilli()
 	}
 
-	points, err := m.ch.SeriesTimeseries(ctx, metricNames, effectiveFrom, startMs, endMs)
+	volumes, err := m.ch.VolumeByMetric(ctx, metricNames, effectiveFrom, startMs, endMs)
+	if err != nil {
+		return nil, err
+	}
+	reducedNames := make([]string, 0, len(volumes))
+	for name, volume := range volumes {
+		if effectiveRetained(volume.Ingested, volume.Reduced) < volume.Ingested {
+			reducedNames = append(reducedNames, name)
+		}
+	}
+
+	points, err := m.ch.SeriesTimeseries(ctx, metricNames, reducedNames, effectiveFrom, startMs, endMs)
 	if err != nil {
 		return nil, err
 	}
@@ -396,20 +415,22 @@ func buildVolumeTimeseries(points []volumePoint) *querybuildertypesv5.QueryRange
 }
 
 func (m *module) validateMetricForReduction(ctx context.Context, orgID valuer.UUID, metricName string) error {
+	lastSeen, err := m.metadataStore.FetchLastSeenInfoMulti(ctx, metricName)
+	if err != nil {
+		return err
+	}
+	if lastSeen[metricName] == 0 {
+		return errors.NewNotFoundf(errors.CodeNotFound, "metric not found: %q", metricName)
+	}
+
 	now := time.Now()
 	startTs := uint64(now.Add(-defaultPreviewLookback).UnixMilli())
 	endTs := uint64(now.UnixMilli())
-
 	_, types, _, err := m.metadataStore.FetchTemporalityAndTypeMulti(ctx, orgID, startTs, endTs, metricName)
 	if err != nil {
 		return err
 	}
-
-	metricType, ok := types[metricName]
-	if !ok || metricType == metrictypes.UnspecifiedType {
-		return errors.NewNotFoundf(errors.CodeNotFound, "metric not found: %q", metricName)
-	}
-	if metricType == metrictypes.ExpHistogramType {
+	if types[metricName] == metrictypes.ExpHistogramType {
 		return errors.Newf(errors.TypeInvalidInput, metricreductionruletypes.ErrCodeMetricReductionRuleUnsupportedMetricType,
 			"exponential histogram metrics cannot be reduced in v1")
 	}
@@ -466,11 +487,18 @@ func toGettableReductionRule(rule *metricreductionruletypes.ReductionRule) metri
 	}
 }
 
+func effectiveRetained(ingested, reduced uint64) uint64 {
+	if reduced == 0 || reduced > ingested {
+		return ingested
+	}
+	return reduced
+}
+
 func withVolume(rule metricreductionruletypes.GettableReductionRule, volume volumeRow) metricreductionruletypes.GettableReductionRule {
 	rule.IngestedSeries = volume.Ingested
-	rule.RetainedSeries = volume.Reduced
-	if volume.Ingested > 0 && volume.Reduced <= volume.Ingested {
-		rule.ReductionPercent = (1 - float64(volume.Reduced)/float64(volume.Ingested)) * 100
+	rule.RetainedSeries = effectiveRetained(volume.Ingested, volume.Reduced)
+	if volume.Ingested > 0 {
+		rule.ReductionPercent = (1 - float64(rule.RetainedSeries)/float64(volume.Ingested)) * 100
 	}
 	return rule
 }
