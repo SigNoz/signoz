@@ -2,13 +2,13 @@ import {
 	AuthtypesTransactionDTO,
 	CoretypesTypeDTO,
 	AuthtypesRelationDTO,
+	CoretypesKindDTO,
 } from '../../api/generated/services/sigNoz.schemas';
 import permissionsType from './permissions.type';
 import {
 	AuthZObject,
 	AuthZRelation,
 	BrandedPermission,
-	ResourceName,
 	ResourcesForRelation,
 	ResourceType,
 } from './types';
@@ -87,7 +87,7 @@ export function permissionToTransactionDto(
 		relation: relation as AuthtypesRelationDTO,
 		object: {
 			resource: {
-				kind: resourceName as ResourceName,
+				kind: resourceName as CoretypesKindDTO,
 				type: type as CoretypesTypeDTO,
 			},
 			selector: selector || '*',

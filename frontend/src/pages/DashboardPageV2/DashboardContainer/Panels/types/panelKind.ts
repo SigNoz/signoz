@@ -2,11 +2,9 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import type { DashboardtypesPanelPluginKindDTO } from 'api/generated/services/sigNoz.schemas';
 
 /**
- * String-literal union of every panel kind, derived from the generated enum so
- * the contract stays the single source of truth. Kept as a `${enum}` union
- * (not the nominal enum) so plain string-literal kinds — `PanelRendererProps<
- * 'signoz/TimeSeriesPanel'>`, registry keys, `PanelInteractionMap` keys —
- * remain assignable without enum-member ceremony at every call site.
+ * String-literal union of every panel kind, derived from the generated enum.
+ * A `${enum}` union (not the nominal enum) so plain string-literal kinds stay
+ * assignable without enum-member ceremony at every call site.
  */
 export type PanelKind = `${DashboardtypesPanelPluginKindDTO}`;
 

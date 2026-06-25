@@ -1,4 +1,5 @@
 import type {
+	CoretypesKindDTO,
 	CoretypesObjectGroupDTO,
 	CoretypesTypeDTO,
 } from 'api/generated/services/sigNoz.schemas';
@@ -56,7 +57,7 @@ const baseAuthzResources: AuthzResources = {
 
 // API payload resource refs — only kind+type, no allowedVerbs (matches CoretypesResourceRefDTO shape)
 const dashboardResourceRef = {
-	kind: 'dashboard',
+	kind: 'dashboard' as CoretypesKindDTO,
 	type: 'metaresource' as CoretypesTypeDTO,
 };
 const alertResourceRef = {

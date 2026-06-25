@@ -260,17 +260,37 @@ type MetricHighlightsResponse struct {
 	ActiveTimeSeries uint64 `json:"activeTimeSeries" required:"true"`
 }
 
+// MetricNameQuery represents the query parameters for endpoints that take a metric name.
+type MetricNameQuery struct {
+	MetricName string `query:"metricName" required:"true" description:"The name of the metric. May contain slashes (e.g. cloud-provider metrics like run.googleapis.com/request_latencies)."`
+}
+
+// Validate ensures MetricNameQuery contains acceptable values.
+func (q *MetricNameQuery) Validate() error {
+	if q == nil {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
+	}
+	if q.MetricName == "" {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "metricName is required")
+	}
+	return nil
+}
+
 // MetricAttributesRequest represents the query parameters for the metric attributes endpoint.
 type MetricAttributesRequest struct {
-	MetricName string `json:"-"`
-	Start      *int64 `query:"start"`
-	End        *int64 `query:"end"`
+	MetricName string `query:"metricName" required:"true" description:"The name of the metric. May contain slashes (e.g. cloud-provider metrics like run.googleapis.com/request_latencies)."`
+	Start      *int64 `query:"start" description:"Start of the time range as a Unix timestamp in milliseconds."`
+	End        *int64 `query:"end" description:"End of the time range as a Unix timestamp in milliseconds."`
 }
 
 // Validate ensures MetricAttributesRequest contains acceptable values.
 func (req *MetricAttributesRequest) Validate() error {
 	if req == nil {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
+	}
+
+	if req.MetricName == "" {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "metricName is required")
 	}
 
 	if req.Start != nil && req.End != nil {

@@ -1,0 +1,22 @@
+// Always-visible thin scrollbar shared across the panel system (chart legend,
+// table panel, …). Track is transparent; the thumb uses the l3 surface token
+// and a pill radius. NOTE: distinct from container/AIAssistant/_scrollbar.scss,
+// which is a hover-reveal variant.
+@mixin custom-scrollbar($size: 0.4rem) {
+	&::-webkit-scrollbar {
+		width: $size;
+		height: $size;
+	}
+
+	&::-webkit-scrollbar-track {
+		background: transparent;
+	}
+
+	&::-webkit-scrollbar-thumb {
+		background: var(--l3-background);
+		border-radius: 0.5rem;
+	}
+	&::-webkit-scrollbar-thumb:hover {
+		background: var(--l3-background-hover);
+	}
+}
