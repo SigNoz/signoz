@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/authn"
+	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain"
@@ -29,9 +30,10 @@ type module struct {
 	authDomain authdomain.Module
 	tokenizer  tokenizer.Tokenizer
 	orgGetter  organization.Getter
+	authz      authz.AuthZ
 }
 
-func NewModule(providerSettings factory.ProviderSettings, authNs map[authtypes.AuthNProvider]authn.AuthN, userSetter user.Setter, userGetter user.Getter, authDomain authdomain.Module, tokenizer tokenizer.Tokenizer, orgGetter organization.Getter) session.Module {
+func NewModule(providerSettings factory.ProviderSettings, authNs map[authtypes.AuthNProvider]authn.AuthN, userSetter user.Setter, userGetter user.Getter, authDomain authdomain.Module, tokenizer tokenizer.Tokenizer, orgGetter organization.Getter, authz authz.AuthZ) session.Module {
 	return &module{
 		settings:   factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/session/implsession"),
 		authNs:     authNs,
@@ -40,6 +42,7 @@ func NewModule(providerSettings factory.ProviderSettings, authNs map[authtypes.A
 		authDomain: authDomain,
 		tokenizer:  tokenizer,
 		orgGetter:  orgGetter,
+		authz:      authz,
 	}
 }
 
@@ -143,7 +146,16 @@ func (module *module) CreateCallbackAuthNSession(ctx context.Context, authNProvi
 	}
 
 	roleMapping := authDomain.AuthDomainConfig().RoleMapping
-	roleNames := roleMapping.NewRolesFromCallbackIdentity(callbackIdentity)
+
+	roleAttributeExists := false
+	if roleMapping != nil && roleMapping.UseRoleAttribute && callbackIdentity.Role != "" {
+		_, err := module.authz.GetByOrgIDAndName(ctx, callbackIdentity.OrgID, authtypes.NormalizeRoleName(callbackIdentity.Role))
+		if err == nil {
+			roleAttributeExists = true
+		}
+	}
+
+	roleNames := roleMapping.NewRolesFromCallbackIdentity(callbackIdentity, roleAttributeExists)
 
 	newUser, err := types.NewUser(callbackIdentity.Name, callbackIdentity.Email, callbackIdentity.OrgID, types.UserStatusActive)
 	if err != nil {

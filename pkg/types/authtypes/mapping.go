@@ -2,8 +2,6 @@ package authtypes
 
 import (
 	"encoding/json"
-
-	"github.com/SigNoz/signoz/pkg/types"
 )
 
 type AttributeMapping struct {
@@ -67,22 +65,22 @@ func (roleMapping *RoleMapping) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	temp.DefaultRole = normalizeRoleName(temp.DefaultRole)
+	temp.DefaultRole = NormalizeRoleName(temp.DefaultRole)
 	for group, role := range temp.GroupMappings {
-		temp.GroupMappings[group] = normalizeRoleName(role)
+		temp.GroupMappings[group] = NormalizeRoleName(role)
 	}
 
 	*roleMapping = RoleMapping(temp)
 	return nil
 }
 
-func (roleMapping *RoleMapping) NewRolesFromCallbackIdentity(callbackIdentity *CallbackIdentity) []string {
+func (roleMapping *RoleMapping) NewRolesFromCallbackIdentity(callbackIdentity *CallbackIdentity, roleAttributeExists bool) []string {
 	if roleMapping == nil {
 		return []string{SigNozViewerRoleName}
 	}
 
-	if roleMapping.UseRoleAttribute && callbackIdentity.Role != "" {
-		return []string{normalizeRoleName(callbackIdentity.Role)}
+	if roleAttributeExists {
+		return []string{NormalizeRoleName(callbackIdentity.Role)}
 	}
 
 	if len(roleMapping.GroupMappings) > 0 && len(callbackIdentity.Groups) > 0 {
@@ -104,11 +102,15 @@ func (roleMapping *RoleMapping) NewRolesFromCallbackIdentity(callbackIdentity *C
 		}
 	}
 
+	return []string{roleMapping.DefaultRoleName()}
+}
+
+func (roleMapping *RoleMapping) DefaultRoleName() string {
 	if roleMapping.DefaultRole != "" {
-		return []string{roleMapping.DefaultRole}
+		return roleMapping.DefaultRole
 	}
 
-	return []string{SigNozViewerRoleName}
+	return SigNozViewerRoleName
 }
 
 func (roleMapping *RoleMapping) RoleNames() []string {
@@ -136,14 +138,4 @@ func (roleMapping *RoleMapping) RoleNames() []string {
 	}
 
 	return roleNames
-}
-
-func normalizeRoleName(role string) string {
-	if legacyRole, err := types.NewRole(role); err == nil {
-		if managedRole, ok := ExistingRoleToSigNozManagedRoleMap[legacyRole]; ok {
-			return managedRole
-		}
-	}
-
-	return role
 }

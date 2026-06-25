@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"log/slog"
+	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -83,12 +84,12 @@ func (migration *migrateSSORoleMappingNames) Up(ctx context.Context, db *bun.DB)
 		}
 
 		changed := false
-		if managed, ok := legacyRoleToManagedRoleName[roleMapping.DefaultRole]; ok {
+		if managed, ok := legacyRoleToManagedRoleName[strings.ToUpper(roleMapping.DefaultRole)]; ok {
 			roleMapping.DefaultRole = managed
 			changed = true
 		}
 		for group, role := range roleMapping.GroupMappings {
-			if managed, ok := legacyRoleToManagedRoleName[role]; ok {
+			if managed, ok := legacyRoleToManagedRoleName[strings.ToUpper(role)]; ok {
 				roleMapping.GroupMappings[group] = managed
 				changed = true
 			}

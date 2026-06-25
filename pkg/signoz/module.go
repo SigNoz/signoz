@@ -144,7 +144,7 @@ func NewModules(
 		TraceFunnel:      impltracefunnel.NewModule(impltracefunnel.NewStore(sqlstore)),
 		RawDataExport:    implrawdataexport.NewModule(querier),
 		AuthDomain:       authDomainModule,
-		Session:          implsession.NewModule(providerSettings, authNs, userSetter, userGetter, authDomainModule, tokenizer, orgGetter),
+		Session:          implsession.NewModule(providerSettings, authNs, userSetter, userGetter, authDomainModule, tokenizer, orgGetter, authz),
 		SpanPercentile:   implspanpercentile.NewModule(querier, providerSettings),
 		Services:         implservices.NewModule(querier, telemetryStore),
 		MetricsExplorer:  implmetricsexplorer.NewModule(telemetryStore, telemetryMetadataStore, cache, ruleStore, dashboard, providerSettings, config.MetricsExplorer),

@@ -299,6 +299,20 @@ func MustGetSigNozManagedRoleFromExistingRole(role types.Role) string {
 	return managedRole
 }
 
+func NormalizeRoleName(role string) string {
+	legacyRole, err := types.NewRole(strings.ToUpper(role))
+	if err != nil {
+		return role
+	}
+
+	managedRole, ok := ExistingRoleToSigNozManagedRoleMap[legacyRole]
+	if !ok {
+		return role
+	}
+
+	return managedRole
+}
+
 type RoleStore interface {
 	Create(context.Context, *Role) error
 	Get(context.Context, valuer.UUID, valuer.UUID) (*Role, error)
