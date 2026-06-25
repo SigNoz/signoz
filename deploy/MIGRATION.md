@@ -1,4 +1,4 @@
-# Migrating to Foundry
+# Migrating from the install script and `deploy/` to Foundry
 
 The install script (`install.sh`) and the bundled Compose and Swarm files
 under `deploy/` are deprecated in favor of [Foundry][foundry], the supported
