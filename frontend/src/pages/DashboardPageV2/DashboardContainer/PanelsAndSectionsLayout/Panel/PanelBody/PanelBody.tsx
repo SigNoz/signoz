@@ -20,7 +20,7 @@ interface PanelBodyProps {
 	panel: DashboardtypesPanelDTO;
 	panelId: string;
 	data: PanelQueryData;
-	isLoading: boolean;
+	isFetching: boolean;
 	error: Error | null;
 	refetch: () => void;
 	onDragSelect: (start: number, end: number) => void;
@@ -43,7 +43,7 @@ function PanelBody({
 	panel,
 	panelId,
 	data,
-	isLoading,
+	isFetching,
 	error,
 	refetch,
 	onDragSelect,
@@ -55,9 +55,10 @@ function PanelBody({
 	// react-query keeps the previous response during refetches, so its presence is
 	// the "have something to show" signal — only fail hard when there's nothing.
 	const hasData = !!data.response;
+	const queries = panel.spec.queries || [];
 
 	// Not-configured panel: no runnable query, so nothing to error/load on.
-	if (!hasRunnableQueries(panel.spec.queries)) {
+	if (!hasRunnableQueries(queries)) {
 		return (
 			<PanelMessage
 				icon={<SquarePlus size={18} />}
@@ -88,9 +89,7 @@ function PanelBody({
 		);
 	}
 
-	// First load only — refetches keep the response populated so the chart stays
-	// mounted instead of blinking.
-	if (isLoading) {
+	if (isFetching) {
 		return (
 			<div className={styles.body} data-testid="panel-loading">
 				<Spin indicator={<Loader size={14} className="animate-spin" />} />
@@ -104,7 +103,7 @@ function PanelBody({
 				panelId={panelId}
 				panel={panel}
 				data={data}
-				isLoading={isLoading}
+				isFetching={isFetching}
 				error={error}
 				refetch={refetch}
 				onDragSelect={onDragSelect}

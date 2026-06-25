@@ -27,7 +27,7 @@ const baseProps = {
 	panelDefinition,
 	panelId: 'p1',
 	data: {} as PanelQueryData,
-	isLoading: false,
+	isFetching: false,
 	error: null,
 	refetch: jest.fn(),
 	onDragSelect: jest.fn(),

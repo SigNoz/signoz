@@ -88,7 +88,7 @@ function PreviewPane({
 						panel={panel}
 						panelId={panelId}
 						data={data}
-						isLoading={isFetching}
+						isFetching={isFetching}
 						error={error}
 						refetch={refetch}
 						onDragSelect={onDragSelect}

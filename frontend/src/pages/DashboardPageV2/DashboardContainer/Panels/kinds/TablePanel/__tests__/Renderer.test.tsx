@@ -68,7 +68,7 @@ function renderPanel(
 		panelId: 'panel-1',
 		panel: panelWith({}),
 		data: emptyData,
-		isLoading: false,
+		isFetching: false,
 		error: null,
 		panelMode: PanelMode.DASHBOARD_VIEW,
 		...props,

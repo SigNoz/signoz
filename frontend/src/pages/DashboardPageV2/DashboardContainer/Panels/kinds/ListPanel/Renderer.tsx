@@ -52,7 +52,7 @@ function ListPanelRenderer({
 	// and row-click behavior. Cast is safe — the query carries the same string values.
 	const signal = useMemo(
 		() =>
-			(getBuilderQueries(panel.spec.queries)[0]
+			(getBuilderQueries(panel.spec.queries || [])[0]
 				?.signal as TelemetrytypesSignalDTO) || TelemetrytypesSignalDTO.logs,
 		[panel.spec.queries],
 	);

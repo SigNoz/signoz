@@ -33,7 +33,7 @@ export interface BaseRendererProps {
 	panel: DashboardtypesPanelDTO;
 	/** Raw V5 fetch result — response + the request that produced it. */
 	data: PanelQueryData;
-	isLoading: boolean;
+	isFetching: boolean;
 	error: Error | null;
 	/** Re-run the panel query; wired to the no-data Retry affordance. Optional so standalone call sites (e.g. the editor preview) can omit it. */
 	refetch?: () => void;

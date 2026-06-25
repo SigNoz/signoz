@@ -121,8 +121,8 @@ function PanelEditorContainer({
 	// values; cast at this boundary (as ConfigPane does) so the columns editor's
 	// field-key lookup is typed.
 	const listSignal =
-		(getBuilderQueries(spec.queries)[0]?.signal as TelemetrytypesSignalDTO) ||
-		TelemetrytypesSignalDTO.logs;
+		(getBuilderQueries(spec.queries || [])[0]
+			?.signal as TelemetrytypesSignalDTO) || TelemetrytypesSignalDTO.logs;
 
 	// Swap the List panel's columns to the new signal's defaults on signal change
 	// (V1 had a per-signal field list; V2 has one `selectFields`).
