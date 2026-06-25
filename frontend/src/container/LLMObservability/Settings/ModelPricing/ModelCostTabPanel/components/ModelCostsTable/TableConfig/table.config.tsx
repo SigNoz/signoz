@@ -115,19 +115,10 @@ export function getModelCostsColumns({
 								variant="outline"
 								className={styles.extraBucketsChip}
 							>
-								<Typography.Text
-									as="span"
-									size="small"
-									className={styles.extraBucketValue}
-								>
+								<Typography.Text as="span" size="small">
 									{startCase(bucket.key)}
 								</Typography.Text>
-								<Typography.Text
-									as="span"
-									size="small"
-									weight="semibold"
-									className={styles.extraBucketValue}
-								>
+								<Typography.Text as="span" size="small" weight="semibold">
 									{formatPricePerMillion(bucket.pricePerMillion)}
 								</Typography.Text>
 							</Badge>

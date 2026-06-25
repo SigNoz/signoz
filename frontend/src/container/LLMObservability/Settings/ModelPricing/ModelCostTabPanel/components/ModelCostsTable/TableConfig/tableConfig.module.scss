@@ -37,13 +37,6 @@
 	margin: 0;
 }
 
-// Monospace for the cache bucket value chips. Size/weight come from the
-// Typography component; only the code font stays here, fed through Typography's
-// own --typography-font-family hook so it overrides regardless of stylesheet order.
-.extraBucketValue {
-	--typography-font-family: var(--code-font-family, monospace);
-}
-
 .sourceBadge {
 	margin: 0;
 }
