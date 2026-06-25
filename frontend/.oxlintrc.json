@@ -291,6 +291,8 @@
     // Prevents the usage of specific antd components in favor of our lib
     "signoz/no-signozhq-ui-barrel": "error",
     // Forces subpath imports (@signozhq/ui/<component>) instead of the eagerly-loaded barrel
+    "signoz/no-css-module-bracket-access": "warn",
+    // Prevents bracket access on CSS modules (styles['kebab-case']) which fails with camelCaseOnly config
     "no-restricted-globals": [
       "error",
       {

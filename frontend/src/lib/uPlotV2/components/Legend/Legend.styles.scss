@@ -1,3 +1,5 @@
+@use '../../../../styles/scrollbar' as *;
+
 .legend-search-container {
 	flex-shrink: 0;
 	width: 100%;
@@ -15,6 +17,10 @@
 	gap: 12px;
 	height: 100%;
 	width: 100%;
+	// Allow the flex children to shrink below their content height so the
+	// virtualized grid scrolls within the capped legend height instead of
+	// overflowing the wrapper (default min-height:auto would block the shrink).
+	min-height: 0;
 
 	&:has(.legend-item-focused) .legend-item {
 		opacity: 0.3;
@@ -33,6 +39,11 @@
 	}
 
 	.legend-virtuoso-container {
+		// flex:1 + min-height:0 pins the scroller to the space left after the
+		// search box (RIGHT legend) and lets it scroll instead of growing to fit
+		// every row — without this the grid overflows a BOTTOM legend's fixed height.
+		flex: 1;
+		min-height: 0;
 		height: 100%;
 		width: 100%;
 
@@ -44,7 +55,6 @@
 				auto-fill,
 				minmax(var(--legend-average-width, 240px), 1fr)
 			);
-			row-gap: 4px;
 			column-gap: 12px;
 		}
 
@@ -68,18 +78,7 @@
 			}
 		}
 
-		&::-webkit-scrollbar {
-			width: 0.3rem;
-		}
-
-		&::-webkit-scrollbar-track {
-			background: transparent;
-		}
-
-		&::-webkit-scrollbar-thumb {
-			background: var(--l3-background);
-			border-radius: 0.5rem;
-		}
+		@include custom-scrollbar;
 	}
 }
 
@@ -109,6 +108,10 @@
 	align-items: center;
 	gap: 6px;
 	padding: 4px 8px;
+	// Include padding within the width so a full-width row (legend-item-right) fits its
+	// column instead of overflowing by the 16px horizontal padding — there is no global
+	// border-box reset, so the default content-box would make it overflow.
+	box-sizing: border-box;
 	max-width: 100%;
 	overflow: hidden;
 	border-radius: 4px;

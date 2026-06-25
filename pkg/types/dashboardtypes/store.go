@@ -51,4 +51,17 @@ type Store interface {
 	DeletePreferencesForDashboard(ctx context.Context, orgID valuer.UUID, dashboardID valuer.UUID) error
 
 	DeletePreferencesForUser(ctx context.Context, orgID valuer.UUID, userID valuer.UUID) error
+
+	// ════════════════════════════════════════════════════════════════════════
+	// Dashboard saved view methods
+	// ════════════════════════════════════════════════════════════════════════
+	CreateDashboardView(ctx context.Context, view *DashboardView) error
+
+	GetDashboardView(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*DashboardView, error)
+
+	ListDashboardViews(ctx context.Context, orgID valuer.UUID) ([]*DashboardView, error)
+
+	UpdateDashboardView(ctx context.Context, view *DashboardView) error
+
+	DeleteDashboardView(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error
 }

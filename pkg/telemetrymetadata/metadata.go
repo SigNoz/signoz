@@ -2136,12 +2136,12 @@ func (t *telemetryMetaStore) GetAllValues(ctx context.Context, fieldValueSelecto
 	return values, complete, nil
 }
 
-func (t *telemetryMetaStore) FetchTemporality(ctx context.Context, queryTimeRangeStartTs, queryTimeRangeEndTs uint64, metricName string) (metrictypes.Temporality, error) {
+func (t *telemetryMetaStore) FetchTemporality(ctx context.Context, orgID valuer.UUID, queryTimeRangeStartTs, queryTimeRangeEndTs uint64, metricName string) (metrictypes.Temporality, error) {
 	if metricName == "" {
 		return metrictypes.Unknown, errors.Newf(errors.TypeInternal, errors.CodeInternal, "metric name cannot be empty")
 	}
 
-	temporalityMap, err := t.FetchTemporalityMulti(ctx, queryTimeRangeStartTs, queryTimeRangeEndTs, metricName)
+	temporalityMap, err := t.FetchTemporalityMulti(ctx, orgID, queryTimeRangeStartTs, queryTimeRangeEndTs, metricName)
 	if err != nil {
 		return metrictypes.Unknown, err
 	}
@@ -2154,25 +2154,27 @@ func (t *telemetryMetaStore) FetchTemporality(ctx context.Context, queryTimeRang
 	return temporality, nil
 }
 
-func (t *telemetryMetaStore) FetchTemporalityMulti(ctx context.Context, queryTimeRangeStartTs, queryTimeRangeEndTs uint64, metricNames ...string) (map[string]metrictypes.Temporality, error) {
-	temporalities, _, err := t.FetchTemporalityAndTypeMulti(ctx, queryTimeRangeStartTs, queryTimeRangeEndTs, metricNames...)
+func (t *telemetryMetaStore) FetchTemporalityMulti(ctx context.Context, orgID valuer.UUID, queryTimeRangeStartTs, queryTimeRangeEndTs uint64, metricNames ...string) (map[string]metrictypes.Temporality, error) {
+	temporalities, _, _, err := t.FetchTemporalityAndTypeMulti(ctx, orgID, queryTimeRangeStartTs, queryTimeRangeEndTs, metricNames...)
 	return temporalities, err
 }
 
-func (t *telemetryMetaStore) FetchTemporalityAndTypeMulti(ctx context.Context, queryTimeRangeStartTs, queryTimeRangeEndTs uint64, metricNames ...string) (map[string]metrictypes.Temporality, map[string]metrictypes.Type, error) {
+func (t *telemetryMetaStore) FetchTemporalityAndTypeMulti(ctx context.Context, orgID valuer.UUID, queryTimeRangeStartTs, queryTimeRangeEndTs uint64, metricNames ...string) (map[string]metrictypes.Temporality, map[string]metrictypes.Type, map[string]bool, error) {
 	if len(metricNames) == 0 {
-		return make(map[string]metrictypes.Temporality), make(map[string]metrictypes.Type), nil
+		return make(map[string]metrictypes.Temporality), make(map[string]metrictypes.Type), make(map[string]bool), nil
 	}
+
+	reductionEnabled := t.fl.BooleanOrEmpty(ctx, flagger.FeatureEnableMetricsReduction, featuretypes.NewFlaggerEvaluationContext(orgID))
 
 	temporalities := make(map[string]metrictypes.Temporality)
 	types := make(map[string]metrictypes.Type)
-	metricsTemporality, metricTypes, err := t.fetchMetricsTemporalityAndType(ctx, queryTimeRangeStartTs, queryTimeRangeEndTs, metricNames...)
+	metricsTemporality, metricTypes, reduced, err := t.fetchMetricsTemporalityAndType(ctx, queryTimeRangeStartTs, queryTimeRangeEndTs, reductionEnabled, metricNames...)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	meterMetricsTemporality, meterMetricsTypes, err := t.fetchMeterSourceMetricsTemporalityAndType(ctx, metricNames...)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	// For metrics not found in the database, set to Unknown
@@ -2197,10 +2199,10 @@ func (t *telemetryMetaStore) FetchTemporalityAndTypeMulti(ctx context.Context, q
 		}
 	}
 
-	return temporalities, types, nil
+	return temporalities, types, reduced, nil
 }
 
-func (t *telemetryMetaStore) fetchMetricsTemporalityAndType(ctx context.Context, queryTimeRangeStartTs, queryTimeRangeEndTs uint64, metricNames ...string) (map[string][]metrictypes.Temporality, map[string]metrictypes.Type, error) {
+func (t *telemetryMetaStore) fetchMetricsTemporalityAndType(ctx context.Context, queryTimeRangeStartTs, queryTimeRangeEndTs uint64, reductionEnabled bool, metricNames ...string) (map[string][]metrictypes.Temporality, map[string]metrictypes.Type, map[string]bool, error) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
 		instrumentationtypes.CodeNamespace:    "metadata",
@@ -2208,48 +2210,58 @@ func (t *telemetryMetaStore) fetchMetricsTemporalityAndType(ctx context.Context,
 	})
 	temporalities := make(map[string][]metrictypes.Temporality)
 	types := make(map[string]metrictypes.Type)
+	reduced := make(map[string]bool)
 
-	adjustedStartTs, adjustedEndTs, tsTableName, _ := telemetrymetrics.WhichTSTableToUse(queryTimeRangeStartTs, queryTimeRangeEndTs, nil)
+	adjustedStartTs, adjustedEndTs, tsTableName, _ := telemetrymetrics.WhichTSTableToUse(queryTimeRangeStartTs, queryTimeRangeEndTs, false, nil)
 
-	// Build query to fetch temporality for all metrics
-	// We use attr_string_value where attr_name = '__temporality__'
-	// Note: The columns are mixed in the current data - temporality column contains metric_name
-	// and metric_name column contains temporality value, so we use the correct mapping
-	sb := sqlbuilder.Select(
-		"metric_name",
-		"temporality",
-		"any(type) AS type",
-		"any(is_monotonic) as is_monotonic",
-	).
-		From(t.metricsDBName + "." + tsTableName)
+	cols := []string{"metric_name", "temporality", "any(type) AS type", "any(is_monotonic) as is_monotonic"}
 
-	// Filter by metric names (in the temporality column due to data mix-up)
+	// When reduction is enabled, fold the reduced-catalog presence check into the
+	// same query so a metric's reduced status comes back in one round trip.
+	var reducedArgs []any
+	if reductionEnabled {
+		rs := sqlbuilder.NewSelectBuilder()
+		rs.Select("metric_name")
+		rs.From(t.metricsDBName + "." + telemetrymetrics.TimeseriesV4ReducedTableName)
+		rs.Where(rs.In("metric_name", metricNames), rs.GTE("unix_milli", adjustedStartTs), rs.LT("unix_milli", adjustedEndTs))
+		rs.GroupBy("metric_name")
+		rsQuery, rsArgs := rs.BuildWithFlavor(sqlbuilder.ClickHouse)
+		cols = append(cols, fmt.Sprintf("metric_name GLOBAL IN (%s) AS reduced", rsQuery))
+		reducedArgs = rsArgs
+	}
+
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select(cols...)
+	sb.From(t.metricsDBName + "." + tsTableName)
 	sb.Where(
 		sb.In("metric_name", metricNames),
 		sb.GTE("unix_milli", adjustedStartTs),
 		sb.LT("unix_milli", adjustedEndTs),
 	)
-
 	sb.GroupBy("metric_name", "temporality")
 
-	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse, reducedArgs...)
 
 	t.logger.DebugContext(ctx, "fetching metric temporality", slog.String("query", query), slog.Any("args", args))
 
 	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
-		return nil, nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to fetch metric temporality")
+		return nil, nil, nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to fetch metric temporality")
 	}
 	defer rows.Close()
 
-	// Process results
 	for rows.Next() {
 		var metricName string
 		var temporality metrictypes.Temporality
 		var metricType metrictypes.Type
 		var isMonotonic bool
-		if err := rows.Scan(&metricName, &temporality, &metricType, &isMonotonic); err != nil {
-			return nil, nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to scan temporality result")
+		var isReduced uint8
+		dest := []any{&metricName, &temporality, &metricType, &isMonotonic}
+		if reductionEnabled {
+			dest = append(dest, &isReduced)
+		}
+		if err := rows.Scan(dest...); err != nil {
+			return nil, nil, nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to scan temporality result")
 		}
 		if temporality != metrictypes.Unknown {
 			temporalities[metricName] = append(temporalities[metricName], temporality)
@@ -2258,12 +2270,15 @@ func (t *telemetryMetaStore) fetchMetricsTemporalityAndType(ctx context.Context,
 			metricType = metrictypes.GaugeType
 		}
 		types[metricName] = metricType
+		if isReduced != 0 {
+			reduced[metricName] = true
+		}
 	}
 	if err := rows.Err(); err != nil {
-		return nil, nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "error iterating over metrics temporality rows")
+		return nil, nil, nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "error iterating over metrics temporality rows")
 	}
 
-	return temporalities, types, nil
+	return temporalities, types, reduced, nil
 }
 
 func (t *telemetryMetaStore) fetchMeterSourceMetricsTemporalityAndType(ctx context.Context, metricNames ...string) (map[string]metrictypes.Temporality, map[string]metrictypes.Type, error) {

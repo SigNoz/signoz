@@ -1,27 +1,48 @@
-.container {
-	margin-top: 30px;
-	margin-bottom: 30px;
+.layout {
 	display: flex;
-	justify-content: center;
+	align-items: stretch;
 	width: 100%;
+	flex: 1;
+	min-height: 0;
+}
+
+.main {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	// Deepest layer — the results canvas, so the lighter header zone and the
+	// row cards read with clear contrast (matches the design's list surface).
+	background: var(--l1-background);
+}
+
+.mainScroll {
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+}
+
+.headerZone {
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+	padding: 20px 24px;
+	background: var(--l2-background);
+	border-bottom: 1px solid var(--l2-border);
+}
+
+.emptyWrap {
+	padding: 24px;
 }
 
 .viewContent {
-	width: calc(100% - 30px);
-	max-width: 836px;
+	width: 100%;
 
 	:global(.ant-table-wrapper) :global(.ant-table-cell) {
 		padding: 0 !important;
 		border: none !important;
 		background: var(--l1-background) !important;
-	}
-
-	:global(.ant-table-wrapper)
-		:global(.ant-table-tbody)
-		:global(.ant-table-row)
-		:global(.ant-table-cell)
-		> div {
-		// Row content is the only child of the td; it carries the borders.
 	}
 
 	:global(.ant-table-wrapper)
@@ -55,19 +76,43 @@
 	}
 }
 
-.titleContainer {
+.commandHeader {
 	display: flex;
-	flex-direction: column;
-	gap: 4px;
+	align-items: center;
+	gap: 12px;
+}
+
+.headingBlock {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	min-width: 0;
+}
+
+.grow {
+	flex: 1;
+}
+
+.countPill {
+	padding: 2px 9px;
+	border-radius: 999px;
+	background: var(--l2-background);
+	border: 1px solid var(--l2-border);
+	color: var(--l2-foreground);
+	font-size: var(--font-size-xs);
+	font-variant-numeric: tabular-nums;
 }
 
 .title {
 	color: var(--l1-foreground);
 	font-size: var(--font-size-lg);
 	font-style: normal;
-	font-weight: var(--font-weight-normal);
+	font-weight: var(--font-weight-medium);
 	line-height: 28px;
 	letter-spacing: -0.09px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .subtitle {
@@ -80,17 +125,16 @@
 }
 
 .integrationsContainer {
-	margin: 16px 0;
+	width: 100%;
 }
 
 .integrationsContent {
 	max-width: 100%;
 	width: 100%;
-}
 
-.toolbar {
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	margin: 16px 0;
+	// The shared request banner ships a 12px margin; drop it so the banner's
+	// left edge lines up with the heading and filters above/below it.
+	:global(.request-entity-container) {
+		margin: 0;
+	}
 }

@@ -2094,6 +2094,45 @@ export interface AuthtypesGettableTokenDTO {
 	tokenType?: string;
 }
 
+export enum CoretypesKindDTO {
+	anonymous = 'anonymous',
+	organization = 'organization',
+	role = 'role',
+	serviceaccount = 'serviceaccount',
+	user = 'user',
+	'notification-channel' = 'notification-channel',
+	'route-policy' = 'route-policy',
+	'apdex-setting' = 'apdex-setting',
+	'auth-domain' = 'auth-domain',
+	session = 'session',
+	'cloud-integration' = 'cloud-integration',
+	'cloud-integration-service' = 'cloud-integration-service',
+	integration = 'integration',
+	dashboard = 'dashboard',
+	'public-dashboard' = 'public-dashboard',
+	'ingestion-key' = 'ingestion-key',
+	'ingestion-limit' = 'ingestion-limit',
+	pipeline = 'pipeline',
+	'user-preference' = 'user-preference',
+	'org-preference' = 'org-preference',
+	'quick-filter' = 'quick-filter',
+	'ttl-setting' = 'ttl-setting',
+	rule = 'rule',
+	'planned-maintenance' = 'planned-maintenance',
+	'saved-view' = 'saved-view',
+	'trace-funnel' = 'trace-funnel',
+	'factor-password' = 'factor-password',
+	'factor-api-key' = 'factor-api-key',
+	license = 'license',
+	subscription = 'subscription',
+	logs = 'logs',
+	traces = 'traces',
+	metrics = 'metrics',
+	'audit-logs' = 'audit-logs',
+	'meter-metrics' = 'meter-metrics',
+	'logs-field' = 'logs-field',
+	'traces-field' = 'traces-field',
+}
 export enum CoretypesTypeDTO {
 	user = 'user',
 	serviceaccount = 'serviceaccount',
@@ -2104,10 +2143,7 @@ export enum CoretypesTypeDTO {
 	telemetryresource = 'telemetryresource',
 }
 export interface CoretypesResourceRefDTO {
-	/**
-	 * @type string
-	 */
-	kind: string;
+	kind: CoretypesKindDTO;
 	type: CoretypesTypeDTO;
 }
 
@@ -2143,6 +2179,10 @@ export interface ErrorsResponseerroradditionalDTO {
 	 * @type string
 	 */
 	message?: string;
+	/**
+	 * @type array
+	 */
+	suggestions?: string[];
 }
 
 export interface ErrorsResponseretryjsonDTO {
@@ -2158,10 +2198,6 @@ export interface ErrorsJSONDTO {
 	 * @type array
 	 */
 	errors?: ErrorsResponseerroradditionalDTO[];
-	/**
-	 * @type array
-	 */
-	invalidReferences?: string[];
 	/**
 	 * @type string
 	 */
@@ -2224,6 +2260,21 @@ export interface AuthtypesPostableEmailPasswordSessionDTO {
 	password?: string;
 }
 
+export interface CoretypesObjectGroupDTO {
+	resource: CoretypesResourceRefDTO;
+	/**
+	 * @type array
+	 */
+	selectors: string[];
+}
+
+export interface AuthtypesTransactionGroupDTO {
+	objectGroup: CoretypesObjectGroupDTO;
+	relation: AuthtypesRelationDTO;
+}
+
+export type AuthtypesTransactionGroupsDTO = AuthtypesTransactionGroupDTO[];
+
 export interface AuthtypesPostableRoleDTO {
 	/**
 	 * @type string
@@ -2233,6 +2284,7 @@ export interface AuthtypesPostableRoleDTO {
 	 * @type string
 	 */
 	name: string;
+	transactionGroups?: AuthtypesTransactionGroupsDTO;
 }
 
 export interface AuthtypesPostableRotateTokenDTO {
@@ -2240,6 +2292,32 @@ export interface AuthtypesPostableRotateTokenDTO {
 	 * @type string
 	 */
 	refreshToken?: string;
+}
+
+export interface AuthtypesPostableUserRoleDTO {
+	/**
+	 * @type string
+	 */
+	id: string;
+}
+
+export interface AuthtypesPostableUserDTO {
+	/**
+	 * @type string
+	 */
+	displayName?: string;
+	/**
+	 * @type string
+	 */
+	email: string;
+	/**
+	 * @type string
+	 */
+	frontendBaseUrl?: string;
+	/**
+	 * @type array
+	 */
+	userRoles?: AuthtypesPostableUserRoleDTO[];
 }
 
 export interface AuthtypesRoleDTO {
@@ -2275,6 +2353,40 @@ export interface AuthtypesRoleDTO {
 	updatedAt?: string;
 }
 
+export interface AuthtypesRoleWithTransactionGroupsDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: string;
+	/**
+	 * @type string
+	 */
+	description: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	orgId: string;
+	transactionGroups: AuthtypesTransactionGroupsDTO;
+	/**
+	 * @type string
+	 */
+	type: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: string;
+}
+
 export interface AuthtypesSessionContextDTO {
 	/**
 	 * @type boolean
@@ -2293,6 +2405,14 @@ export interface AuthtypesTransactionDTO {
 
 export interface AuthtypesUpdatableAuthDomainDTO {
 	config?: AuthtypesAuthDomainConfigDTO;
+}
+
+export interface AuthtypesUpdatableRoleDTO {
+	/**
+	 * @type string
+	 */
+	description: string;
+	transactionGroups: AuthtypesTransactionGroupsDTO;
 }
 
 export interface AuthtypesUserRoleDTO {
@@ -2645,6 +2765,14 @@ export enum CloudintegrationtypesServiceIDDTO {
 	appservice = 'appservice',
 	containerapp = 'containerapp',
 	aks = 'aks',
+	sqldatabase = 'sqldatabase',
+	sqldatabasemi = 'sqldatabasemi',
+	mysqlflexibleserver = 'mysqlflexibleserver',
+	postgresqlflexibleserver = 'postgresqlflexibleserver',
+	mongodb = 'mongodb',
+	cosmosdb = 'cosmosdb',
+	cassandradb = 'cassandradb',
+	redis = 'redis',
 }
 export type CloudintegrationtypesCloudIntegrationServiceDTOAnyOf = {
 	/**
@@ -3055,14 +3183,6 @@ export interface CommonJSONRefDTO {
 	 * @type string
 	 */
 	$ref?: string;
-}
-
-export interface CoretypesObjectGroupDTO {
-	resource: CoretypesResourceRefDTO;
-	/**
-	 * @type array
-	 */
-	selectors: string[];
 }
 
 export interface CoretypesPatchableObjectsDTO {
@@ -4625,6 +4745,54 @@ export interface DashboardtypesDashboardSpecDTO {
 	variables: DashboardtypesVariableDTO[];
 }
 
+export enum DashboardtypesListOrderDTO {
+	asc = 'asc',
+	desc = 'desc',
+}
+export enum DashboardtypesListSortDTO {
+	updated_at = 'updated_at',
+	created_at = 'created_at',
+	name = 'name',
+}
+export interface DashboardtypesDashboardViewDataDTO {
+	order?: DashboardtypesListOrderDTO;
+	/**
+	 * @type string
+	 */
+	query?: string;
+	sort?: DashboardtypesListSortDTO;
+	/**
+	 * @type string
+	 */
+	version: string;
+}
+
+export interface DashboardtypesDashboardViewDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: string;
+	data: DashboardtypesDashboardViewDataDTO;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	orgId: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: string;
+}
+
 export enum DashboardtypesDatasourcePluginKindDTO {
 	'signoz/Datasource' = 'signoz/Datasource',
 }
@@ -4736,15 +4904,6 @@ export interface DashboardtypesJSONPatchOperationDTO {
 	value?: unknown;
 }
 
-export enum DashboardtypesListOrderDTO {
-	asc = 'asc',
-	desc = 'desc',
-}
-export enum DashboardtypesListSortDTO {
-	updated_at = 'updated_at',
-	created_at = 'created_at',
-	name = 'name',
-}
 export interface DashboardtypesListedDashboardV2SpecDTO {
 	display?: DashboardtypesDisplayDTO;
 }
@@ -4887,6 +5046,13 @@ export interface DashboardtypesListableDashboardV2DTO {
 	total: number;
 }
 
+export interface DashboardtypesListableDashboardViewDTO {
+	/**
+	 * @type array
+	 */
+	views: DashboardtypesDashboardViewDTO[];
+}
+
 export enum DashboardtypesPanelPluginKindDTO {
 	'signoz/TimeSeriesPanel' = 'signoz/TimeSeriesPanel',
 	'signoz/BarChartPanel' = 'signoz/BarChartPanel',
@@ -4936,6 +5102,14 @@ export interface DashboardtypesPostableDashboardV2DTO {
 	 * @type array,null
 	 */
 	tags: TagtypesPostableTagDTO[] | null;
+}
+
+export interface DashboardtypesPostableDashboardViewDTO {
+	data: DashboardtypesDashboardViewDataDTO;
+	/**
+	 * @type string
+	 */
+	name: string;
 }
 
 export interface DashboardtypesPostablePublicDashboardDTO {
@@ -9388,6 +9562,16 @@ export type ListLLMPricingRulesParams = {
 	 * @description undefined
 	 */
 	limit?: number;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	q?: string;
+	/**
+	 * @type boolean,null
+	 * @description undefined
+	 */
+	isOverride?: boolean | null;
 };
 
 export type ListLLMPricingRules200 = {
@@ -9497,7 +9681,7 @@ export type GetRolePathParameters = {
 	id: string;
 };
 export type GetRole200 = {
-	data: AuthtypesRoleDTO;
+	data: AuthtypesRoleWithTransactionGroupsDTO;
 	/**
 	 * @type string
 	 */
@@ -9505,6 +9689,9 @@ export type GetRole200 = {
 };
 
 export type PatchRolePathParameters = {
+	id: string;
+};
+export type UpdateRolePathParameters = {
 	id: string;
 };
 export type GetObjectsPathParameters = {
@@ -9736,6 +9923,19 @@ export type UpdateSpanMapperPathParameters = {
 	groupId: string;
 	mapperId: string;
 };
+export type GetStats200Data = { [key: string]: unknown };
+
+export type GetStats200 = {
+	/**
+	 * @type object
+	 */
+	data: GetStats200Data;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type GetTraceAggregationsPathParameters = {
 	traceID: string;
 };
@@ -9758,7 +9958,7 @@ export type ListUsersDeprecated200 = {
 	status: string;
 };
 
-export type DeleteUserPathParameters = {
+export type DeleteUserDeprecatedPathParameters = {
 	id: string;
 };
 export type GetUserDeprecatedPathParameters = {
@@ -9816,6 +10016,36 @@ export type GetUserPreference200 = {
 export type UpdateUserPreferencePathParameters = {
 	name: string;
 };
+export type ListDashboardViews200 = {
+	data: DashboardtypesListableDashboardViewDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type CreateDashboardView201 = {
+	data: DashboardtypesDashboardViewDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type DeleteDashboardViewPathParameters = {
+	id: string;
+};
+export type UpdateDashboardViewPathParameters = {
+	id: string;
+};
+export type UpdateDashboardView200 = {
+	data: DashboardtypesDashboardViewDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type ListDashboardsV2Params = {
 	/**
 	 * @type string
@@ -9887,6 +10117,17 @@ export type UpdateDashboardV2PathParameters = {
 	id: string;
 };
 export type UpdateDashboardV2200 = {
+	data: DashboardtypesGettableDashboardV2DTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type CloneDashboardV2PathParameters = {
+	id: string;
+};
+export type CloneDashboardV2201 = {
 	data: DashboardtypesGettableDashboardV2DTO;
 	/**
 	 * @type string
@@ -10129,9 +10370,14 @@ export type ListMetrics200 = {
 	status: string;
 };
 
-export type GetMetricAlertsPathParameters = {
+export type GetMetricAlertsParams = {
+	/**
+	 * @type string
+	 * @description The name of the metric. May contain slashes (e.g. cloud-provider metrics like run.googleapis.com/request_latencies).
+	 */
 	metricName: string;
 };
+
 export type GetMetricAlerts200 = {
 	data: MetricsexplorertypesMetricAlertsResponseDTO;
 	/**
@@ -10140,18 +10386,20 @@ export type GetMetricAlerts200 = {
 	status: string;
 };
 
-export type GetMetricAttributesPathParameters = {
-	metricName: string;
-};
 export type GetMetricAttributesParams = {
 	/**
+	 * @type string
+	 * @description The name of the metric. May contain slashes (e.g. cloud-provider metrics like run.googleapis.com/request_latencies).
+	 */
+	metricName: string;
+	/**
 	 * @type integer,null
-	 * @description undefined
+	 * @description Start of the time range as a Unix timestamp in milliseconds.
 	 */
 	start?: number | null;
 	/**
 	 * @type integer,null
-	 * @description undefined
+	 * @description End of the time range as a Unix timestamp in milliseconds.
 	 */
 	end?: number | null;
 };
@@ -10164,9 +10412,14 @@ export type GetMetricAttributes200 = {
 	status: string;
 };
 
-export type GetMetricDashboardsPathParameters = {
+export type GetMetricDashboardsParams = {
+	/**
+	 * @type string
+	 * @description The name of the metric. May contain slashes (e.g. cloud-provider metrics like run.googleapis.com/request_latencies).
+	 */
 	metricName: string;
 };
+
 export type GetMetricDashboards200 = {
 	data: MetricsexplorertypesMetricDashboardsResponseDTO;
 	/**
@@ -10175,9 +10428,14 @@ export type GetMetricDashboards200 = {
 	status: string;
 };
 
-export type GetMetricHighlightsPathParameters = {
+export type GetMetricHighlightsParams = {
+	/**
+	 * @type string
+	 * @description The name of the metric. May contain slashes (e.g. cloud-provider metrics like run.googleapis.com/request_latencies).
+	 */
 	metricName: string;
 };
+
 export type GetMetricHighlights200 = {
 	data: MetricsexplorertypesMetricHighlightsResponseDTO;
 	/**
@@ -10186,22 +10444,24 @@ export type GetMetricHighlights200 = {
 	status: string;
 };
 
-export type GetMetricMetadataPathParameters = {
-	metricName: string;
-};
-export type GetMetricMetadata200 = {
-	data: MetricsexplorertypesMetricMetadataDTO;
+export type InspectMetrics200 = {
+	data: MetricsexplorertypesInspectMetricsResponseDTO;
 	/**
 	 * @type string
 	 */
 	status: string;
 };
 
-export type UpdateMetricMetadataPathParameters = {
+export type GetMetricMetadataParams = {
+	/**
+	 * @type string
+	 * @description The name of the metric. May contain slashes (e.g. cloud-provider metrics like run.googleapis.com/request_latencies).
+	 */
 	metricName: string;
 };
-export type InspectMetrics200 = {
-	data: MetricsexplorertypesInspectMetricsResponseDTO;
+
+export type GetMetricMetadata200 = {
+	data: MetricsexplorertypesMetricMetadataDTO;
 	/**
 	 * @type string
 	 */
@@ -10628,6 +10888,17 @@ export type ListUsers200 = {
 	status: string;
 };
 
+export type CreateUser201 = {
+	data: TypesIdentifiableDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type DeleteUserPathParameters = {
+	id: string;
+};
 export type GetUserPathParameters = {
 	id: string;
 };

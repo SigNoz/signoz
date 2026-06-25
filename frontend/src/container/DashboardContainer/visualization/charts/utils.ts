@@ -116,7 +116,15 @@ export function calculateChartDimensions({
 			? legendRowCount * legendRowHeight - LEGEND_PADDING
 			: legendRowHeight;
 
-	const maxAllowedLegendHeight = Math.min(2 * legendRowHeight, 80);
+	// Cap at two rows / 80px, and never more than 30% of the container height
+	// (the doc above always promised the %-cap; without it, short grid panels
+	// hand most of their area to the legend and the chart — the pie donut
+	// especially — collapses to a sliver). 30% mirrors the RIGHT-legend width cap.
+	const maxAllowedLegendHeight = Math.min(
+		2 * legendRowHeight,
+		80,
+		Math.floor(containerHeight * 0.3),
+	);
 
 	const bottomLegendHeight = Math.min(
 		idealBottomLegendHeight,

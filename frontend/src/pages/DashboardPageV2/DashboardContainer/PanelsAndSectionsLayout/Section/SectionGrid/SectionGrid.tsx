@@ -2,8 +2,6 @@ import { useMemo } from 'react';
 import GridLayout, { WidthProvider, type Layout } from 'react-grid-layout';
 
 import type { DashboardSection } from '../../../utils';
-import type { DeletePanelArgs } from '../../Panel/hooks/useDeletePanel';
-import type { MovePanelArgs } from '../../Panel/hooks/useMovePanelToSection';
 import Panel from '../../Panel/Panel';
 import { useDashboardStore } from '../../../store/useDashboardStore';
 import { usePersistLayout } from '../hooks/usePersistLayout';
@@ -16,10 +14,8 @@ interface SectionGridProps {
 	layoutIndex: number;
 	/** Forwarded to panels — true when the parent section is in the viewport. */
 	isVisible?: boolean;
-	/** All sections + handlers — present only in editable sectioned mode (panel "Move to section" / delete). */
+	/** All sections — layout context for the panel menu's move/delete actions. */
 	sections?: DashboardSection[];
-	onMovePanel?: (args: MovePanelArgs) => void;
-	onDeletePanel?: (args: DeletePanelArgs) => void;
 }
 
 function SectionGrid({
@@ -27,8 +23,6 @@ function SectionGrid({
 	layoutIndex,
 	isVisible,
 	sections,
-	onMovePanel,
-	onDeletePanel,
 }: SectionGridProps): JSX.Element {
 	const isEditable = useDashboardStore((s) => s.isEditable);
 	const rglLayout = useMemo<Layout[]>(
@@ -54,6 +48,7 @@ function SectionGrid({
 			useCSSTransforms
 			layout={rglLayout}
 			draggableHandle=".panel-drag-handle"
+			draggableCancel=".panel-no-drag"
 			isDraggable={isEditable}
 			isResizable={isEditable}
 			onDragStop={handleLayoutChange}
@@ -61,22 +56,25 @@ function SectionGrid({
 			margin={[8, 8]}
 		>
 			{items.map((item) => (
+				// A layout item can reference a panel id that no longer exists in the
+				// panels map (orphan); render an empty grid cell for it rather than a
+				// panel with no content.
 				<div key={item.id}>
-					<Panel
-						panel={item.panel}
-						panelId={item.id}
-						isVisible={isVisible}
-						panelActions={
-							isEditable && onMovePanel && onDeletePanel
-								? {
-										currentLayoutIndex: layoutIndex,
-										sections: sections ?? [],
-										onMovePanel,
-										onDeletePanel,
-									}
-								: undefined
-						}
-					/>
+					{item.panel && (
+						<Panel
+							panel={item.panel}
+							panelId={item.id}
+							isVisible={isVisible}
+							panelActions={
+								isEditable
+									? {
+											currentLayoutIndex: layoutIndex,
+											sections: sections ?? [],
+										}
+									: undefined
+							}
+						/>
+					)}
 				</div>
 			))}
 		</ResponsiveGridLayout>

@@ -59,6 +59,8 @@ type Module interface {
 
 	CreateV2(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, source dashboardtypes.Source, postable dashboardtypes.PostableDashboardV2) (*dashboardtypes.DashboardV2, error)
 
+	CloneV2(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, id valuer.UUID) (*dashboardtypes.DashboardV2, error)
+
 	GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.DashboardV2, error)
 
 	ListV2(ctx context.Context, orgID valuer.UUID, params *dashboardtypes.ListDashboardsV2Params) (*dashboardtypes.ListableDashboardV2, error)
@@ -78,6 +80,14 @@ type Module interface {
 	DeleteV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error
 
 	DeletePreferencesForUser(ctx context.Context, orgID valuer.UUID, userID valuer.UUID) error
+
+	CreateView(ctx context.Context, orgID valuer.UUID, postable dashboardtypes.PostableDashboardView) (*dashboardtypes.DashboardView, error)
+
+	ListViews(ctx context.Context, orgID valuer.UUID) (*dashboardtypes.ListableDashboardView, error)
+
+	UpdateView(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updateable dashboardtypes.UpdatableDashboardView) (*dashboardtypes.DashboardView, error)
+
+	DeleteView(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error
 }
 
 type Handler interface {
@@ -106,6 +116,8 @@ type Handler interface {
 	// ════════════════════════════════════════════════════════════════════════
 	CreateV2(http.ResponseWriter, *http.Request)
 
+	CloneV2(http.ResponseWriter, *http.Request)
+
 	GetV2(http.ResponseWriter, *http.Request)
 
 	ListV2(http.ResponseWriter, *http.Request)
@@ -125,4 +137,12 @@ type Handler interface {
 	UnpinV2(http.ResponseWriter, *http.Request)
 
 	DeleteV2(http.ResponseWriter, *http.Request)
+
+	CreateView(http.ResponseWriter, *http.Request)
+
+	ListViews(http.ResponseWriter, *http.Request)
+
+	UpdateView(http.ResponseWriter, *http.Request)
+
+	DeleteView(http.ResponseWriter, *http.Request)
 }
