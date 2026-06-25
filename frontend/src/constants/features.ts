@@ -7,7 +7,6 @@ export enum FeatureKeys {
 	GATEWAY = 'gateway',
 	PREMIUM_SUPPORT = 'premium_support',
 	ANOMALY_DETECTION = 'anomaly_detection',
-	ONBOARDING_V3 = 'onboarding_v3',
 	DOT_METRICS_ENABLED = 'dot_metrics_enabled',
 	USE_JSON_BODY = 'use_json_body',
 	USE_FINE_GRAINED_AUTHZ = 'use_fine_grained_authz',
