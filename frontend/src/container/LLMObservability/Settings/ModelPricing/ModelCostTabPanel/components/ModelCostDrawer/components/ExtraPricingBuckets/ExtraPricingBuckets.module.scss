@@ -2,10 +2,6 @@
 	composes: drawerSection from '../../shared.module.scss';
 }
 
-.fieldLabel {
-	composes: fieldLabel from '../../shared.module.scss';
-}
-
 .fullWidth {
 	width: 100%;
 }

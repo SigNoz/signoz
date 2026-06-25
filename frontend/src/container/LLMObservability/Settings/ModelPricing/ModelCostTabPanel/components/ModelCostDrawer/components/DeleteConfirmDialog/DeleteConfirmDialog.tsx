@@ -4,7 +4,7 @@ import { Trash2, X } from '@signozhq/icons';
 import cx from 'classnames';
 
 import styles from './DeleteConfirmDialog.module.scss';
-import { Typography } from 'container/GridCardLayout/WidgetHeader/styles';
+import { Typography } from '@signozhq/ui/typography';
 
 interface DeleteConfirmDialogProps {
 	open: boolean;
@@ -63,9 +63,8 @@ function DeleteConfirmDialog({
 		>
 			<div>
 				<Typography.Text size="base" color="muted">
-					{' '}
-					Are you sure you want to delete <strong>{modelName}</strong> ? once
-					deleted, this action cannot be undone.
+					Are you sure you want to delete <strong>{modelName}</strong>? Once deleted,
+					this action cannot be undone.
 				</Typography.Text>
 			</div>
 		</DialogWrapper>
