@@ -3,8 +3,8 @@ import { useListLLMPricingRules } from 'api/generated/services/llmpricingrules';
 import { type ListLLMPricingRulesParams } from 'api/generated/services/sigNoz.schemas';
 import { useTableParams } from 'components/TanStackTableView';
 
-import { LIMIT_KEY, PAGE_KEY, PAGE_SIZE } from './constants';
-import styles from './LLMObservabilityModelPricing.module.scss';
+import { LIMIT_KEY, PAGE_KEY, PAGE_SIZE } from '../constants';
+import styles from './ModelCostsTab.module.scss';
 import ModelCostsTable from './ModelCostsTable';
 import { type LlmpricingruletypesLLMPricingRuleDTO } from 'api/generated/services/sigNoz.schemas';
 

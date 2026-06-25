@@ -6,8 +6,8 @@ import {
 	PAGE_KEY,
 	PAGE_SIZE,
 	SKELETON_ROW_COUNT,
-} from './constants';
-import styles from './LLMObservabilityModelPricing.module.scss';
+} from '../constants';
+import styles from './ModelCostsTable.module.scss';
 import { getModelCostsColumns } from './table.config';
 import { type LlmpricingruletypesLLMPricingRuleDTO } from 'api/generated/services/sigNoz.schemas';
 
@@ -21,7 +21,10 @@ interface ModelCostsTableProps {
 }
 
 // The table owns its own pagination URL state (page/limit) via enableQueryParams;
-// ModelCostsTab reads the same keys to build the list request. Virtual scroll
+// ModelCostsTab reads the same keys to build the list request. Virtual scroll is
+// disabled: a plain table renders fine at our page sizes (up to 100 rows) and the
+// fixed-height scroll viewport (.modelCostsTable) keeps large pages scrolling
+// inside the table.
 function ModelCostsTable({
 	rules,
 	isLoading,
@@ -53,7 +56,6 @@ function ModelCostsTable({
 			getRowKey={(row): string => row.id}
 			isRowActive={(row): boolean => row.id === selectedRuleId}
 			disableVirtualScroll
-			tableScrollerProps={{ className: styles.modelCostsScroll }}
 			testId="model-costs-table"
 			enableQueryParams={{ page: PAGE_KEY, limit: LIMIT_KEY }}
 			pagination={{

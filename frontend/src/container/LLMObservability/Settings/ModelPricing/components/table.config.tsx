@@ -4,7 +4,7 @@ import { ChevronDown } from '@signozhq/icons';
 import type { TableColumnDef } from 'components/TanStackTableView';
 import { startCase } from 'lodash-es';
 
-import styles from './LLMObservabilityModelPricing.module.scss';
+import styles from './table.config.module.scss';
 import { type LlmpricingruletypesLLMPricingRuleDTO } from 'api/generated/services/sigNoz.schemas';
 
 import {
@@ -13,7 +13,7 @@ import {
 	getExtraBuckets,
 	getRelativeLastSeen,
 	getSourceLabel,
-} from './utils';
+} from '../utils';
 
 interface ColumnsConfig {
 	canManage: boolean;

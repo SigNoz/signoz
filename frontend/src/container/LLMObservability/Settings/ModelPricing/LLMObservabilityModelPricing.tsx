@@ -1,6 +1,6 @@
 import { Tabs } from '@signozhq/ui/tabs';
 
-import ModelCostsTab from './ModelCostsTab';
+import ModelCostsTab from './components/ModelCostsTab';
 import styles from './LLMObservabilityModelPricing.module.scss';
 
 function LLMObservabilityModelPricing(): JSX.Element {
