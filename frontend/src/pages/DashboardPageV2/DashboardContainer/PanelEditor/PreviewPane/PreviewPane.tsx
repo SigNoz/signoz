@@ -21,8 +21,7 @@ interface PreviewPaneProps {
 	/** Resolved definition for the panel kind; */
 	panelDefinition: RenderablePanelDefinition;
 	data: PanelQueryData;
-	isLoading: boolean;
-	/** Background refresh in flight — drives the header's subtle refetch spinner. */
+	/** Any fetch in flight — drives the header spinner and the body's loading state. */
 	isFetching: boolean;
 	error: Error | null;
 	/** Re-run the query (drives PanelBody's error-state retry). */
@@ -43,7 +42,6 @@ function PreviewPane({
 	panel,
 	panelDefinition,
 	data,
-	isLoading,
 	isFetching,
 	error,
 	refetch,
@@ -74,7 +72,7 @@ function PreviewPane({
 				<div className={styles.surface}>
 					<PanelHeader
 						name={panel.spec.display.name}
-						description={panel.spec.display?.description}
+						description={panel.spec.display.description}
 						panelId={panelId}
 						panelKind={panel.spec.plugin.kind}
 						isFetching={isFetching}
@@ -90,7 +88,7 @@ function PreviewPane({
 						panel={panel}
 						panelId={panelId}
 						data={data}
-						isLoading={isLoading}
+						isLoading={isFetching}
 						error={error}
 						refetch={refetch}
 						onDragSelect={onDragSelect}

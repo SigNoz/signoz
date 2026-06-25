@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { generatePath } from 'react-router-dom';
 import ROUTES from 'constants/routes';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
@@ -7,28 +7,47 @@ import { newPanelSearch, NEW_PANEL_ID } from '../PanelEditor/newPanelRoute';
 import type { PanelKind } from '../Panels/types/panelKind';
 import { useDashboardStore } from '../store/useDashboardStore';
 
-interface CreatePanelArgs {
-	pluginKind: PanelKind;
-	/** Section to add the panel to on save; omitted → last/new section. */
-	layoutIndex?: number;
+interface UseCreatePanelResult {
+	isPickerOpen: boolean;
+	/** Pass the target section's layout index; omit → last/new section. */
+	openPicker: (layoutIndex?: number) => void;
+	closePicker: () => void;
+	createPanel: (panelKind: PanelKind) => void;
 }
 
 /**
- * Navigates to the panel editor to create a new panel of the given kind. Nothing
- * is persisted until save, so cancelling leaves the dashboard untouched.
+ * Drives new-panel creation from any "Add panel" trigger: owns the panel-type
+ * picker state and navigates to the editor on a draft panel. Nothing is persisted
+ * until save.
  */
-export function useCreatePanel(): (args: CreatePanelArgs) => void {
+export function useCreatePanel(): UseCreatePanelResult {
 	const { safeNavigate } = useSafeNavigate();
 	const dashboardId = useDashboardStore((s) => s.dashboardId);
 
-	return useCallback(
-		({ pluginKind, layoutIndex }: CreatePanelArgs): void => {
+	const [isPickerOpen, setIsPickerOpen] = useState(false);
+	// Captured on open, consumed on select.
+	const [layoutIndex, setLayoutIndex] = useState<number | undefined>(undefined);
+
+	const openPicker = useCallback((index?: number): void => {
+		setLayoutIndex(index);
+		setIsPickerOpen(true);
+	}, []);
+
+	const closePicker = useCallback((): void => {
+		setIsPickerOpen(false);
+	}, []);
+
+	const createPanel = useCallback(
+		(panelKind: PanelKind): void => {
+			setIsPickerOpen(false);
 			const path = generatePath(ROUTES.DASHBOARD_PANEL_EDITOR, {
 				dashboardId,
 				panelId: NEW_PANEL_ID,
 			});
-			safeNavigate(`${path}${newPanelSearch(pluginKind, layoutIndex)}`);
+			safeNavigate(`${path}${newPanelSearch(panelKind, layoutIndex)}`);
 		},
-		[safeNavigate, dashboardId],
+		[safeNavigate, dashboardId, layoutIndex],
 	);
+
+	return { isPickerOpen, openPicker, closePicker, createPanel };
 }

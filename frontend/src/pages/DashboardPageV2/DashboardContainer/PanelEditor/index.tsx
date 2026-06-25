@@ -92,23 +92,15 @@ function PanelEditorContainer({
 
 	// One shared query result for the whole editor; the preview renders it.
 	const panelDefinition = getPanelDefinition(draft.spec.plugin.kind);
-	const {
-		data,
-		isLoading,
-		isFetching,
-		error,
-		cancelQuery,
-		refetch,
-		pagination,
-	} = usePanelQuery({
-		panel: draft,
-		panelId,
-		enabled: !!panelDefinition,
-	});
+	const { data, isFetching, error, cancelQuery, refetch, pagination } =
+		usePanelQuery({
+			panel: draft,
+			panelId,
+			enabled: !!panelDefinition,
+		});
 
-	// A new panel defaults to its kind's first supported signal (e.g. List → logs);
-	// drives both the seed query's datasource and the seed of its default columns.
-	const defaultDataSource = panelDefinition?.supportedSignals[0];
+	// A new panel's default signal (its kind's first supported) — seeds the query and columns.
+	const defaultSignal = panelDefinition.supportedSignals[0];
 
 	const { runQuery, isQueryDirty, buildSaveSpec } = usePanelEditorQuerySync({
 		draft,
@@ -118,7 +110,7 @@ function PanelEditorContainer({
 		// New panel's seed query is the builder default, not a real saved query —
 		// always serialize it on save.
 		alwaysSerializeQuery: isNew,
-		defaultDataSource,
+		signal: defaultSignal,
 	});
 
 	// Spec and query dirtiness are tracked independently so query re-serialization
@@ -132,8 +124,8 @@ function PanelEditorContainer({
 		| TelemetrytypesSignalDTO
 		| undefined;
 
-	// Swap the List panel's columns to the new source's defaults on a datasource
-	// change (V1 kept a per-datasource field list; V2 has one `selectFields`).
+	// Swap the List panel's columns to the new signal's defaults on signal change
+	// (V1 had a per-signal field list; V2 has one `selectFields`).
 	useSwitchColumnsOnSignalChange({
 		enabled: isListPanel,
 		signal: listSignal,
@@ -144,7 +136,7 @@ function PanelEditorContainer({
 	// Seed a new List panel's default columns so the Columns control isn't empty.
 	useSeedNewListColumns({
 		enabled: isNew && isListPanel,
-		signal: defaultDataSource,
+		signal: defaultSignal,
 		spec,
 		onChangeSpec: setSpec,
 	});
@@ -194,7 +186,6 @@ function PanelEditorContainer({
 										panel={draft}
 										panelDefinition={panelDefinition}
 										data={data}
-										isLoading={isLoading || isFetching}
 										isFetching={isFetching}
 										error={error}
 										refetch={refetch}

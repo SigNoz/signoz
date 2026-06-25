@@ -1,7 +1,8 @@
-import type {
-	DashboardtypesListPanelSpecDTO,
-	DashboardtypesPanelSpecDTO,
-	TelemetrytypesTelemetryFieldKeyDTO,
+import {
+	TelemetrytypesSignalDTO,
+	type DashboardtypesListPanelSpecDTO,
+	type DashboardtypesPanelSpecDTO,
+	type TelemetrytypesTelemetryFieldKeyDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import {
 	defaultLogsSelectedColumns,
@@ -38,12 +39,12 @@ export function sanitizeSelectFields(
 export function defaultColumnsForSignal(
 	signal: string,
 ): TelemetrytypesTelemetryFieldKeyDTO[] {
-	if (signal === 'logs') {
+	if (signal === TelemetrytypesSignalDTO.logs) {
 		return sanitizeSelectFields(
 			defaultLogsSelectedColumns as TelemetrytypesTelemetryFieldKeyDTO[],
 		);
 	}
-	if (signal === 'traces') {
+	if (signal === TelemetrytypesSignalDTO.traces) {
 		return sanitizeSelectFields(
 			defaultTraceSelectedColumns as TelemetrytypesTelemetryFieldKeyDTO[],
 		);

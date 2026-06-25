@@ -147,7 +147,7 @@ export function usePanelQuery({
 
 	const legendMap = useMemo(() => extractLegendMap(queries ?? []), [queries]);
 
-	const runnable = useMemo(() => hasRunnableQueries(queries ?? []), [queries]);
+	const runnable = useMemo(() => hasRunnableQueries(queries), [queries]);
 
 	const queryKey = useMemo(
 		() => [

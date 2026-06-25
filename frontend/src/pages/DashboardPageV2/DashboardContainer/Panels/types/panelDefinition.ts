@@ -39,8 +39,9 @@ export interface PanelDefinition<K extends PanelKind = PanelKind> {
 	actions: PanelActionCapabilities;
 }
 
-// Indexing with a literal kind yields that kind's exactly-typed PanelDefinition.
-export type PanelRegistry = { [K in PanelKind]?: PanelDefinition<K> };
+// Total over PanelKind: every kind must be registered (missing → compile error),
+// so getPanelDefinition never returns undefined.
+export type PanelRegistry = { [K in PanelKind]: PanelDefinition<K> };
 
 // PanelDefinition with its Renderer widened to the kind-agnostic prop surface.
 // getPanelDefinition resolves to this, concentrating the unavoidable cast in one

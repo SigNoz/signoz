@@ -22,10 +22,8 @@ export const PANELS: PanelRegistry = {
 	[List.kind]: List,
 };
 
-export function getPanelDefinition(
-	kind: PanelKind,
-): RenderablePanelDefinition | undefined {
+export function getPanelDefinition(kind: PanelKind): RenderablePanelDefinition {
 	// Single intentional cast widening the per-kind Renderer to the kind-agnostic
 	// prop surface (a per-kind renderer can't be statically validated against the union).
-	return PANELS[kind] as RenderablePanelDefinition | undefined;
+	return PANELS[kind] as RenderablePanelDefinition;
 }

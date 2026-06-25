@@ -25,11 +25,8 @@ interface UsePanelEditorQuerySyncArgs {
 	 * whose seed query is the builder default (not a real saved query).
 	 */
 	alwaysSerializeQuery?: boolean;
-	/**
-	 * Datasource to seed a new panel's builder with — the panel kind's first
-	 * supported signal (e.g. List supports only logs/traces, not metrics).
-	 */
-	defaultDataSource?: DataSource;
+	/** Signal to seed a new panel's builder with — the kind's first supported signal. */
+	signal?: DataSource;
 }
 
 interface UsePanelEditorQuerySyncApi {
@@ -55,7 +52,7 @@ export function usePanelEditorQuerySync({
 	setSpec,
 	refetch,
 	alwaysSerializeQuery = false,
-	defaultDataSource,
+	signal,
 }: UsePanelEditorQuerySyncArgs): UsePanelEditorQuerySyncApi {
 	const { currentQuery, stagedQuery, handleRunQuery } = useQueryBuilder();
 
@@ -67,10 +64,10 @@ export function usePanelEditorQuerySync({
 	// doesn't support).
 	const seedQuery = useMemo(
 		() =>
-			savedQueries.length === 0 && defaultDataSource
-				? initialQueriesMap[defaultDataSource]
+			savedQueries.length === 0 && signal
+				? initialQueriesMap[signal]
 				: fromPerses(savedQueries, panelType),
-		[savedQueries, panelType, defaultDataSource],
+		[savedQueries, panelType, signal],
 	);
 	// Force-reset the builder to the SAVED panel on first render only, discarding a
 	// stale URL query from a prior edit (else the QB/preview diverge and the dirty

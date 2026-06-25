@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Plus } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
@@ -17,8 +16,8 @@ interface DashboardEmptyStateProps {
 function DashboardEmptyState({
 	canAddPanel,
 }: DashboardEmptyStateProps): JSX.Element {
-	const createPanel = useCreatePanel();
-	const [isAddingPanel, setIsAddingPanel] = useState(false);
+	const { isPickerOpen, openPicker, closePicker, createPanel } =
+		useCreatePanel();
 
 	return (
 		<section className={styles.emptyState}>
@@ -49,7 +48,7 @@ function DashboardEmptyState({
 						<Button
 							color="primary"
 							prefix={<Plus size="md" />}
-							onClick={(): void => setIsAddingPanel(true)}
+							onClick={(): void => openPicker()}
 							testId="add-panel"
 						>
 							New Panel
@@ -58,12 +57,9 @@ function DashboardEmptyState({
 				</div>
 			</div>
 			<PanelTypeSelectionModal
-				open={isAddingPanel}
-				onClose={(): void => setIsAddingPanel(false)}
-				onSelect={(pluginKind): void => {
-					setIsAddingPanel(false);
-					createPanel({ pluginKind });
-				}}
+				open={isPickerOpen}
+				onClose={closePicker}
+				onSelect={createPanel}
 			/>
 		</section>
 	);

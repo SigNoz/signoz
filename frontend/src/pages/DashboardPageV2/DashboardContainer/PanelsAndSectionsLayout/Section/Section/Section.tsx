@@ -6,7 +6,6 @@ import { useIntersectionObserver } from 'hooks/useIntersectionObserver';
 
 import ConfirmDeleteDialog from '../../../components/ConfirmDeleteDialog/ConfirmDeleteDialog';
 import { useCreatePanel } from '../../../hooks/useCreatePanel';
-import type { PanelKind } from '../../../Panels/types/panelKind';
 import type { DashboardSection } from '../../../utils';
 import PanelTypeSelectionModal from '../../Panel/PanelTypeSelectionModal/PanelTypeSelectionModal';
 import { useDashboardStore } from '../../../store/useDashboardStore';
@@ -30,7 +29,8 @@ interface SectionProps {
 
 function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
 	const isEditable = useDashboardStore((s) => s.isEditable);
-	const createPanel = useCreatePanel();
+	const { isPickerOpen, openPicker, closePicker, createPanel } =
+		useCreatePanel();
 	const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 	const containerRef = useRef<HTMLDivElement>(null);
 	// Placeholder signal for lazy panel query-loading (consumed in a later PR):
@@ -54,15 +54,6 @@ function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
 			}
 		},
 		[rename],
-	);
-
-	const [isAddingPanel, setIsAddingPanel] = useState(false);
-	const handleSelectPanelType = useCallback(
-		(pluginKind: PanelKind): void => {
-			setIsAddingPanel(false);
-			createPanel({ pluginKind, layoutIndex: section.layoutIndex });
-		},
-		[createPanel, section.layoutIndex],
 	);
 
 	const { deleteSection } = useDeleteSection({ section });
@@ -112,7 +103,7 @@ function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
 					isEditable
 						? {
 								onRename: (): void => setIsRenaming(true),
-								onAddPanel: (): void => setIsAddingPanel(true),
+								onAddPanel: (): void => openPicker(section.layoutIndex),
 								onDeleteSection: (): void => setIsDeleteOpen(true),
 							}
 						: undefined
@@ -129,7 +120,7 @@ function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
 								variant="dashed"
 								color="secondary"
 								prefix={<Plus size="md" />}
-								onClick={(): void => setIsAddingPanel(true)}
+								onClick={(): void => openPicker(section.layoutIndex)}
 								testId={`section-add-panel-${section.id}`}
 							>
 								New Panel
@@ -147,9 +138,9 @@ function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
 				onSubmit={handleRenameSubmit}
 			/>
 			<PanelTypeSelectionModal
-				open={isAddingPanel}
-				onClose={(): void => setIsAddingPanel(false)}
-				onSelect={handleSelectPanelType}
+				open={isPickerOpen}
+				onClose={closePicker}
+				onSelect={createPanel}
 			/>
 			<ConfirmDeleteDialog
 				open={isDeleteOpen}

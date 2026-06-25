@@ -51,10 +51,13 @@ export function panelTypeToRequestType(
  * invalid (they reference builder queries by name) — warn and drop rather than crash load.
  */
 export function toQueryEnvelopes(
-	queries: DashboardtypesQueryDTO[],
+	queries: DashboardtypesQueryDTO[] | null,
 ): Querybuildertypesv5QueryEnvelopeDTO[] {
 	// Backend invariant: panel.queries.length === 1. Only the first entry is consumed.
-	const plugin = queries[0]?.spec?.plugin;
+	if (!queries || queries.length === 0) {
+		return [];
+	}
+	const plugin = queries[0].spec.plugin;
 	if (!plugin?.spec) {
 		return [];
 	}
@@ -226,7 +229,9 @@ export function extractLegendMap(
  * Fetch gate. False with no queries, or when every metrics builder query lacks a metric name —
  * skipping a guaranteed 400 (V1 parity: `validateMetricNameForMetricsDataSource`).
  */
-export function hasRunnableQueries(queries: DashboardtypesQueryDTO[]): boolean {
+export function hasRunnableQueries(
+	queries: DashboardtypesQueryDTO[] | null,
+): boolean {
 	const envelopes = toQueryEnvelopes(queries);
 	if (envelopes.length === 0) {
 		return false;

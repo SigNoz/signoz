@@ -39,11 +39,10 @@ export function useSwitchColumnsOnSignalChange({
 	>(new Map());
 
 	useEffect(() => {
-		const prev = prevSignalRef.current;
-
 		if (!enabled || !signal) {
 			return;
 		}
+		const prev = prevSignalRef.current;
 		// Track only real signals: a transient `undefined` (mid query-edit) must
 		// not become `prev`, or stash/restore would lose a step.
 		prevSignalRef.current = signal;

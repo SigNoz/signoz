@@ -57,7 +57,7 @@ function PanelBody({
 	const hasData = !!data.response;
 
 	// Not-configured panel: no runnable query, so nothing to error/load on.
-	if (!hasRunnableQueries(panel.spec.queries ?? [])) {
+	if (!hasRunnableQueries(panel.spec.queries)) {
 		return (
 			<PanelMessage
 				icon={<SquarePlus size={18} />}

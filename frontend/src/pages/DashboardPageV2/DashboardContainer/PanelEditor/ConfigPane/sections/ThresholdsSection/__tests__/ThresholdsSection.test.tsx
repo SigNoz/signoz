@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import type { DashboardtypesThresholdWithLabelDTO } from 'api/generated/services/sigNoz.schemas';
 import type { AnyThreshold } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/sections';
 
@@ -53,15 +54,16 @@ describe('ThresholdsSection', () => {
 		]);
 	});
 
-	it('persists an empty-string label when none is provided', () => {
+	it('persists an empty-string label when none is provided', async () => {
+		const user = userEvent.setup();
 		const onChange = jest.fn();
 		// Label absent (e.g. a pre-existing spec); spec requires a string, so save
 		// must send '' not undefined.
 		const noLabel = [{ value: 50, color: '#F1575F' }] as AnyThreshold[];
 		render(<ThresholdsSection value={noLabel} onChange={onChange} />);
 
-		fireEvent.click(screen.getByTestId('threshold-edit-0'));
-		fireEvent.click(screen.getByTestId('threshold-save-0'));
+		await user.click(screen.getByTestId('threshold-edit-0'));
+		await user.click(screen.getByTestId('threshold-save-0'));
 
 		expect(onChange).toHaveBeenCalledWith([
 			{ value: 50, color: '#F1575F', label: '' },

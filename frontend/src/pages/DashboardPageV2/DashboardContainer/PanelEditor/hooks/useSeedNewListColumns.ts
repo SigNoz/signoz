@@ -11,7 +11,7 @@ interface UseSeedNewListColumnsArgs {
 	/** Gate: a brand-new List panel (the only case that should auto-fill columns). */
 	enabled: boolean;
 	/** Default signal for the new panel — its kind's first supported signal. */
-	signal: string | undefined;
+	signal: string;
 	spec: DashboardtypesPanelSpecDTO;
 	onChangeSpec: (next: DashboardtypesPanelSpecDTO) => void;
 }

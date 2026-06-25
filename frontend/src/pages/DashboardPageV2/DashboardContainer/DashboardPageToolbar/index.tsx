@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import { FullScreenHandle } from 'react-full-screen';
 import { toast } from '@signozhq/ui/sonner';
 import logEvent from 'api/common/logEvent';
@@ -51,8 +51,8 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 
 	const { user } = useAppContext();
 	const { showErrorModal } = useErrorModal();
-	const createPanel = useCreatePanel();
-	const [isAddingPanel, setIsAddingPanel] = useState(false);
+	const { isPickerOpen, openPicker, closePicker, createPanel } =
+		useCreatePanel();
 
 	const isAuthor =
 		!!user?.email && !!dashboard.createdBy && dashboard.createdBy === user.email;
@@ -108,8 +108,8 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 		void logEvent('Dashboard Detail V2: Add new panel clicked', {
 			dashboardId: id,
 		});
-		setIsAddingPanel(true);
-	}, [id]);
+		openPicker();
+	}, [id, openPicker]);
 
 	return (
 		<section className={styles.dashboardPageToolbarContainer}>
@@ -150,12 +150,9 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 				<VariablesBar dashboard={dashboard} />
 			</div>
 			<PanelTypeSelectionModal
-				open={isAddingPanel}
-				onClose={(): void => setIsAddingPanel(false)}
-				onSelect={(pluginKind): void => {
-					setIsAddingPanel(false);
-					createPanel({ pluginKind });
-				}}
+				open={isPickerOpen}
+				onClose={closePicker}
+				onSelect={createPanel}
 			/>
 		</section>
 	);

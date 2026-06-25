@@ -62,13 +62,12 @@ function Panel({
 	const searchable = !!panelDefinition?.actions.search;
 	const [searchTerm, setSearchTerm] = useState('');
 
-	const { data, isLoading, isFetching, error, refetch, pagination } =
-		usePanelQuery({
-			panel,
-			panelId,
-			// Lazy: fetch only once on screen (undefined → visible) and a renderer exists.
-			enabled: !!panelDefinition && isVisible !== false,
-		});
+	const { data, isFetching, error, refetch, pagination } = usePanelQuery({
+		panel,
+		panelId,
+		// Lazy: fetch only once on screen (undefined → visible) and a renderer exists.
+		enabled: !!panelDefinition && isVisible !== false,
+	});
 
 	const { onDragSelect, dashboardPreference } = usePanelInteractions();
 
@@ -97,7 +96,7 @@ function Panel({
 					panel={panel}
 					panelId={panelId}
 					data={data}
-					isLoading={isLoading || isFetching}
+					isLoading={isFetching}
 					error={error}
 					refetch={refetch}
 					onDragSelect={onDragSelect}

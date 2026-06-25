@@ -12,10 +12,10 @@ const LAYOUT_INDEX_PARAM = 'layoutIndex';
 
 /** Query string (incl. leading `?`) for the new-panel editor route. */
 export function newPanelSearch(
-	pluginKind: PanelKind,
+	panelKind: PanelKind,
 	layoutIndex?: number,
 ): string {
-	const params = new URLSearchParams({ [PANEL_KIND_PARAM]: pluginKind });
+	const params = new URLSearchParams({ [PANEL_KIND_PARAM]: panelKind });
 	if (layoutIndex !== undefined) {
 		params.set(LAYOUT_INDEX_PARAM, String(layoutIndex));
 	}
