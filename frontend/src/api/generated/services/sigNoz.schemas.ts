@@ -3427,12 +3427,14 @@ export interface Querybuildertypesv5FilterDTO {
 	expression?: string;
 }
 
+export type Querybuildertypesv5FunctionArgDTOValue = number | string;
+
 export interface Querybuildertypesv5FunctionArgDTO {
 	/**
 	 * @type string
 	 */
 	name?: string;
-	value?: unknown;
+	value?: Querybuildertypesv5FunctionArgDTOValue;
 }
 
 export enum Querybuildertypesv5FunctionNameDTO {
@@ -4441,34 +4443,13 @@ export interface Querybuildertypesv5QueryEnvelopeClickHouseSQLDTO {
 }
 
 export type Querybuildertypesv5QueryEnvelopeDTO =
-	| (Querybuildertypesv5QueryEnvelopeBuilderTraceDTO & {
-			spec?: unknown;
-			type?: Querybuildertypesv5QueryTypeDTO;
-	  })
-	| (Querybuildertypesv5QueryEnvelopeBuilderLogDTO & {
-			spec?: unknown;
-			type?: Querybuildertypesv5QueryTypeDTO;
-	  })
-	| (Querybuildertypesv5QueryEnvelopeBuilderMetricDTO & {
-			spec?: unknown;
-			type?: Querybuildertypesv5QueryTypeDTO;
-	  })
-	| (Querybuildertypesv5QueryEnvelopeFormulaDTO & {
-			spec?: unknown;
-			type?: Querybuildertypesv5QueryTypeDTO;
-	  })
-	| (Querybuildertypesv5QueryEnvelopeTraceOperatorDTO & {
-			spec?: unknown;
-			type?: Querybuildertypesv5QueryTypeDTO;
-	  })
-	| (Querybuildertypesv5QueryEnvelopePromQLDTO & {
-			spec?: unknown;
-			type?: Querybuildertypesv5QueryTypeDTO;
-	  })
-	| (Querybuildertypesv5QueryEnvelopeClickHouseSQLDTO & {
-			spec?: unknown;
-			type?: Querybuildertypesv5QueryTypeDTO;
-	  });
+	| Querybuildertypesv5QueryEnvelopeBuilderTraceDTO
+	| Querybuildertypesv5QueryEnvelopeBuilderLogDTO
+	| Querybuildertypesv5QueryEnvelopeBuilderMetricDTO
+	| Querybuildertypesv5QueryEnvelopeFormulaDTO
+	| Querybuildertypesv5QueryEnvelopeTraceOperatorDTO
+	| Querybuildertypesv5QueryEnvelopePromQLDTO
+	| Querybuildertypesv5QueryEnvelopeClickHouseSQLDTO;
 
 /**
  * Composite query containing one or more query envelopes. Each query envelope specifies its type and corresponding spec.
@@ -6707,9 +6688,11 @@ export interface MetricsexplorertypesInspectMetricsRequestDTO {
 	start: number;
 }
 
+export type Querybuildertypesv5LabelDTOValue = string | number | boolean;
+
 export interface Querybuildertypesv5LabelDTO {
 	key?: TelemetrytypesTelemetryFieldKeyDTO;
-	value?: unknown;
+	value?: Querybuildertypesv5LabelDTOValue;
 }
 
 export interface Querybuildertypesv5BucketDTO {
@@ -7319,9 +7302,20 @@ export enum Querybuildertypesv5VariableTypeDTO {
 	custom = 'custom',
 	text = 'text',
 }
+export type Querybuildertypesv5VariableItemDTOValueOneOfItem =
+	| string
+	| number
+	| boolean;
+
+export type Querybuildertypesv5VariableItemDTOValue =
+	| string
+	| number
+	| boolean
+	| Querybuildertypesv5VariableItemDTOValueOneOfItem[];
+
 export interface Querybuildertypesv5VariableItemDTO {
 	type?: Querybuildertypesv5VariableTypeDTO;
-	value?: unknown;
+	value?: Querybuildertypesv5VariableItemDTOValue;
 }
 
 export type Querybuildertypesv5QueryRangeRequestDTOVariables = {

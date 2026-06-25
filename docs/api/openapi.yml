@@ -5701,7 +5701,10 @@ components:
       properties:
         name:
           type: string
-        value: {}
+        value:
+          oneOf:
+          - type: number
+          - type: string
       type: object
     Querybuildertypesv5FunctionName:
       enum:
@@ -5750,7 +5753,11 @@ components:
       properties:
         key:
           $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
-        value: {}
+        value:
+          oneOf:
+          - type: string
+          - type: number
+          - type: boolean
       type: object
     Querybuildertypesv5LimitBy:
       properties:
@@ -6081,10 +6088,6 @@ components:
       - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopeTraceOperator'
       - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopePromQL'
       - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopeClickHouseSQL'
-      properties:
-        spec: {}
-        type:
-          $ref: '#/components/schemas/Querybuildertypesv5QueryType'
       type: object
     Querybuildertypesv5QueryEnvelopeBuilderLog:
       properties:
@@ -6337,7 +6340,17 @@ components:
       properties:
         type:
           $ref: '#/components/schemas/Querybuildertypesv5VariableType'
-        value: {}
+        value:
+          oneOf:
+          - type: string
+          - type: number
+          - type: boolean
+          - items:
+              oneOf:
+              - type: string
+              - type: number
+              - type: boolean
+            type: array
       type: object
     Querybuildertypesv5VariableType:
       enum:
