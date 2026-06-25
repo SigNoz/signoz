@@ -5749,6 +5749,14 @@ components:
         expression:
           type: string
       type: object
+    Querybuildertypesv5JoinType:
+      enum:
+      - inner
+      - left
+      - right
+      - full
+      - cross
+      type: string
     Querybuildertypesv5Label:
       properties:
         key:
@@ -5857,6 +5865,54 @@ components:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
           type: array
+      type: object
+    Querybuildertypesv5QueryBuilderJoin:
+      properties:
+        aggregations:
+          items:
+            oneOf:
+            - $ref: '#/components/schemas/Querybuildertypesv5TraceAggregation'
+            - $ref: '#/components/schemas/Querybuildertypesv5LogAggregation'
+            - $ref: '#/components/schemas/Querybuildertypesv5MetricAggregation'
+          type: array
+        disabled:
+          type: boolean
+        filter:
+          $ref: '#/components/schemas/Querybuildertypesv5Filter'
+        functions:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5Function'
+          type: array
+        groupBy:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
+          type: array
+        having:
+          $ref: '#/components/schemas/Querybuildertypesv5Having'
+        left:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryRef'
+        limit:
+          type: integer
+        name:
+          type: string
+        "on":
+          type: string
+        order:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+          type: array
+        right:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryRef'
+        secondaryAggregations:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5SecondaryAggregation'
+          type: array
+        selectFields:
+          items:
+            $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+          type: array
+        type:
+          $ref: '#/components/schemas/Querybuildertypesv5JoinType'
       type: object
     Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregation:
       properties:
@@ -6085,6 +6141,7 @@ components:
       - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopeBuilderLog'
       - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopeBuilderMetric'
       - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopeFormula'
+      - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopeJoin'
       - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopeTraceOperator'
       - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopePromQL'
       - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopeClickHouseSQL'
@@ -6121,6 +6178,13 @@ components:
       properties:
         spec:
           $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderFormula'
+        type:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryType'
+      type: object
+    Querybuildertypesv5QueryEnvelopeJoin:
+      properties:
+        spec:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderJoin'
         type:
           $ref: '#/components/schemas/Querybuildertypesv5QueryType'
       type: object
@@ -6177,6 +6241,11 @@ components:
           $ref: '#/components/schemas/Querybuildertypesv5RequestType'
         warning:
           $ref: '#/components/schemas/Querybuildertypesv5QueryWarnData'
+      type: object
+    Querybuildertypesv5QueryRef:
+      properties:
+        name:
+          type: string
       type: object
     Querybuildertypesv5QueryType:
       enum:
@@ -6341,6 +6410,7 @@ components:
         type:
           $ref: '#/components/schemas/Querybuildertypesv5VariableType'
         value:
+          nullable: true
           oneOf:
           - type: string
           - type: number

@@ -4326,6 +4326,78 @@ export interface Querybuildertypesv5QueryEnvelopeFormulaDTO {
 	type?: Querybuildertypesv5QueryTypeDTO;
 }
 
+export interface Querybuildertypesv5QueryRefDTO {
+	/**
+	 * @type string
+	 */
+	name?: string;
+}
+
+export enum Querybuildertypesv5JoinTypeDTO {
+	inner = 'inner',
+	left = 'left',
+	right = 'right',
+	full = 'full',
+	cross = 'cross',
+}
+export type Querybuildertypesv5QueryBuilderJoinDTOAggregationsItem =
+	| Querybuildertypesv5TraceAggregationDTO
+	| Querybuildertypesv5LogAggregationDTO
+	| Querybuildertypesv5MetricAggregationDTO;
+
+export interface Querybuildertypesv5QueryBuilderJoinDTO {
+	/**
+	 * @type array
+	 */
+	aggregations?: Querybuildertypesv5QueryBuilderJoinDTOAggregationsItem[];
+	/**
+	 * @type boolean
+	 */
+	disabled?: boolean;
+	filter?: Querybuildertypesv5FilterDTO;
+	/**
+	 * @type array
+	 */
+	functions?: Querybuildertypesv5FunctionDTO[];
+	/**
+	 * @type array
+	 */
+	groupBy?: Querybuildertypesv5GroupByKeyDTO[];
+	having?: Querybuildertypesv5HavingDTO;
+	left?: Querybuildertypesv5QueryRefDTO;
+	/**
+	 * @type integer
+	 */
+	limit?: number;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type string
+	 */
+	on?: string;
+	/**
+	 * @type array
+	 */
+	order?: Querybuildertypesv5OrderByDTO[];
+	right?: Querybuildertypesv5QueryRefDTO;
+	/**
+	 * @type array
+	 */
+	secondaryAggregations?: Querybuildertypesv5SecondaryAggregationDTO[];
+	/**
+	 * @type array
+	 */
+	selectFields?: TelemetrytypesTelemetryFieldKeyDTO[];
+	type?: Querybuildertypesv5JoinTypeDTO;
+}
+
+export interface Querybuildertypesv5QueryEnvelopeJoinDTO {
+	spec?: Querybuildertypesv5QueryBuilderJoinDTO;
+	type?: Querybuildertypesv5QueryTypeDTO;
+}
+
 export interface Querybuildertypesv5QueryBuilderTraceOperatorDTO {
 	/**
 	 * @type array
@@ -4447,6 +4519,7 @@ export type Querybuildertypesv5QueryEnvelopeDTO =
 	| Querybuildertypesv5QueryEnvelopeBuilderLogDTO
 	| Querybuildertypesv5QueryEnvelopeBuilderMetricDTO
 	| Querybuildertypesv5QueryEnvelopeFormulaDTO
+	| Querybuildertypesv5QueryEnvelopeJoinDTO
 	| Querybuildertypesv5QueryEnvelopeTraceOperatorDTO
 	| Querybuildertypesv5QueryEnvelopePromQLDTO
 	| Querybuildertypesv5QueryEnvelopeClickHouseSQLDTO;
@@ -7311,10 +7384,14 @@ export type Querybuildertypesv5VariableItemDTOValue =
 	| string
 	| number
 	| boolean
-	| Querybuildertypesv5VariableItemDTOValueOneOfItem[];
+	| Querybuildertypesv5VariableItemDTOValueOneOfItem[]
+	| null;
 
 export interface Querybuildertypesv5VariableItemDTO {
 	type?: Querybuildertypesv5VariableTypeDTO;
+	/**
+	 * @nullable true
+	 */
 	value?: Querybuildertypesv5VariableItemDTOValue;
 }
 
