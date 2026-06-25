@@ -1,0 +1,154 @@
+.llm-observability-model-pricing {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	padding: 24px 32px;
+
+	.page-header {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: 16px;
+
+		&__title {
+			h1 {
+				margin: 0;
+				font-size: 22px;
+				font-weight: 600;
+			}
+
+			p {
+				margin: 4px 0 0;
+				color: var(--bg-vanilla-400);
+				font-size: 13px;
+			}
+		}
+
+		&__actions {
+			display: flex;
+			gap: 8px;
+		}
+	}
+
+	.page-tabs {
+		.ant-tabs-nav {
+			margin-bottom: 0;
+		}
+	}
+
+	.filters-bar {
+		display: flex;
+		gap: 12px;
+		align-items: center;
+
+		&__search {
+			flex: 1;
+			max-width: 360px;
+		}
+
+		&__source,
+		&__currency {
+			min-width: 160px;
+		}
+
+		&__add {
+			margin-left: auto;
+		}
+	}
+
+	.page-error {
+		padding: 12px 16px;
+		border-radius: 4px;
+		background: rgba(255, 90, 90, 0.08);
+		color: var(--bg-cherry-400);
+		font-size: 13px;
+	}
+
+	.page-footer {
+		color: var(--bg-vanilla-400);
+		font-size: 12px;
+	}
+}
+
+.model-costs-table {
+	.ant-table-thead > tr > th {
+		color: var(--bg-vanilla-400) !important;
+		font-size: 11px;
+		font-weight: 600;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+	}
+
+	.ant-table-tbody > tr > td {
+		color: var(--bg-vanilla-400);
+	}
+
+	.model-cell {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+
+		&__name {
+			color: var(--bg-vanilla-100);
+			font-weight: 600;
+		}
+
+		&__canonical-id {
+			color: var(--bg-vanilla-400);
+			font-family: var(--code-font-family, monospace);
+			font-size: 12px;
+		}
+	}
+
+	.price-cell {
+		font-family: var(--code-font-family, monospace);
+		color: var(--bg-vanilla-400);
+	}
+
+	.extra-buckets {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 6px;
+
+		&__chip {
+			display: inline-flex;
+			align-items: center;
+			gap: 6px;
+			margin: 0;
+		}
+
+		&__key {
+			font-family: var(--code-font-family, monospace);
+			font-size: 12px;
+		}
+
+		&__price {
+			font-family: var(--code-font-family, monospace);
+			font-weight: 600;
+		}
+	}
+
+	.muted {
+		color: var(--bg-vanilla-400);
+	}
+
+	.source-badge {
+		margin: 0;
+
+		&--auto {
+			background: rgba(78, 116, 248, 0.12);
+			color: var(--bg-robin-400);
+			border-color: rgba(78, 116, 248, 0.24);
+		}
+
+		&--override {
+			background: rgba(245, 175, 25, 0.12);
+			color: var(--bg-amber-400);
+			border-color: rgba(245, 175, 25, 0.24);
+		}
+	}
+
+	&__row--selected {
+		background: rgba(78, 116, 248, 0.06);
+	}
+}

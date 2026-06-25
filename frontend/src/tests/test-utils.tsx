@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { render, RenderOptions, RenderResult } from '@testing-library/react';
+import { TooltipProvider } from '@signozhq/ui/tooltip';
 import { FeatureKeys } from 'constants/features';
 import { ORG_PREFERENCES } from 'constants/orgPreferences';
 import { ResourceProvider } from 'hooks/useResourceAttribute';
@@ -301,7 +302,7 @@ export function AllTheProviders({
 								<ErrorModalProvider>
 									<TimezoneProvider>
 										<PreferenceContextProvider>
-											{queryBuilderContent}
+											<TooltipProvider>{queryBuilderContent}</TooltipProvider>
 										</PreferenceContextProvider>
 									</TimezoneProvider>
 								</ErrorModalProvider>

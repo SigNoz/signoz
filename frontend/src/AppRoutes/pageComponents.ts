@@ -337,3 +337,10 @@ export const AIAssistantPage = Loadable(
 			/* webpackChunkName: "AI Assistant Page" */ 'pages/AIAssistantPage/AIAssistantPage'
 		),
 );
+
+export const LLMObservabilityModelPricingPage = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "LLM Observability Model Pricing Page" */ 'pages/LLMObservabilityModelPricing'
+		),
+);
