@@ -21,42 +21,64 @@ type QueryEnvelope struct {
 	Spec any `json:"spec"`
 }
 
-// BuilderAggregation is one item of a builder query's aggregations — a trace,
-// log, or metric aggregation. The runtime value is opaque (a builder query is
-// decoded by signal into QueryBuilderQuery[Trace|Log|Metric]Aggregation); this
-// type exists only to expose the three shapes as a named oneOf for the schema.
-type BuilderAggregation struct {
-	value any
+// signozDiscriminatorKey is the extension key signoz.attachDiscriminators
+// promotes into a native OpenAPI 3 discriminator after reflection.
+const signozDiscriminatorKey = "x-signoz-discriminator"
+
+// schemaRef builds a local component schema reference for a discriminator mapping.
+func schemaRef(name string) string { return "#/components/schemas/" + name }
+
+// markDiscriminator tags a oneOf schema with x-signoz-discriminator so
+// signoz.attachDiscriminators promotes it to a real OpenAPI 3 discriminator
+// (and strips the duplicate base properties), keyed on propertyName.
+func markDiscriminator(s *jsonschema.Schema, propertyName string, mapping map[string]string) error {
+	if s.ExtraProperties == nil {
+		s.ExtraProperties = map[string]any{}
+	}
+	s.ExtraProperties[signozDiscriminatorKey] = map[string]any{
+		"propertyName": propertyName,
+		"mapping":      mapping,
+	}
+	return nil
 }
 
-var _ jsonschema.OneOfExposer = BuilderAggregation{}
+// builderQuerySpec is the schema-only spec of a builder query: a signal-
+// discriminated oneOf of the three QueryBuilderQuery[T]. The three aggregation
+// shapes stay separate (free to diverge); `signal` — which QueryBuilderQuery[T]
+// already pins to one plain-string value — is the discriminator. Mirrors the
+// runtime signal dispatch in QueryEnvelope.UnmarshalJSON and is never
+// instantiated at runtime; it exists only to shape the schema.
+type builderQuerySpec struct{}
 
-// JSONSchemaOneOf documents the aggregation shapes a builder query item can take.
-func (BuilderAggregation) JSONSchemaOneOf() []any {
+var (
+	_ jsonschema.OneOfExposer = builderQuerySpec{}
+	_ jsonschema.Preparer     = builderQuerySpec{}
+)
+
+func (builderQuerySpec) JSONSchemaOneOf() []any {
 	return []any{
-		TraceAggregation{},
-		LogAggregation{},
-		MetricAggregation{},
+		QueryBuilderQuery[TraceAggregation]{},
+		QueryBuilderQuery[LogAggregation]{},
+		QueryBuilderQuery[MetricAggregation]{},
 	}
 }
 
-func (b BuilderAggregation) MarshalJSON() ([]byte, error) {
-	return json.Marshal(b.value)
-}
-
-func (b *BuilderAggregation) UnmarshalJSON(data []byte) error {
-	return json.Unmarshal(data, &b.value)
+func (builderQuerySpec) PrepareJSONSchema(s *jsonschema.Schema) error {
+	return markDiscriminator(s, "signal", map[string]string{
+		telemetrytypes.SignalTraces.StringValue():  schemaRef("Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregation"),
+		telemetrytypes.SignalLogs.StringValue():    schemaRef("Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregation"),
+		telemetrytypes.SignalMetrics.StringValue(): schemaRef("Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregation"),
+	})
 }
 
 // queryEnvelopeBuilder is the OpenAPI schema for a QueryEnvelope with
-// type=builder_query. The three signal-specific runtime shapes
-// (QueryBuilderQuery[Trace|Log|Metric]Aggregation) collapse to a single schema
-// whose aggregations are a trace/log/metric union, so `type` maps 1:1 to one
-// variant and the envelope can carry a real discriminator. Runtime decoding is
-// unchanged — it still dispatches by signal in UnmarshalJSON.
+// type=builder_query. Its spec is a signal-discriminated oneOf of the three
+// QueryBuilderQuery[T] (see builderQuerySpec), so `type` maps 1:1 to one
+// variant. Runtime decoding is unchanged — QueryEnvelope.UnmarshalJSON still
+// dispatches by signal.
 type queryEnvelopeBuilder struct {
-	Type QueryType                            `json:"type" description:"The type of the query."`
-	Spec QueryBuilderQuery[BuilderAggregation] `json:"spec" description:"The builder query specification."`
+	Type QueryType        `json:"type" description:"The type of the query."`
+	Spec builderQuerySpec `json:"spec" description:"The builder query specification."`
 }
 
 // queryEnvelopeFormula is the OpenAPI schema for a QueryEnvelope with type=builder_formula.
@@ -89,6 +111,47 @@ type queryEnvelopeClickHouseSQL struct {
 	Spec ClickHouseQuery `json:"spec" description:"The ClickHouse SQL query specification."`
 }
 
+// pinQueryType overrides a variant's `type` property with a single-value plain
+// string enum (replacing the QueryType $ref). The QueryEnvelope discriminator
+// dispatches on `type`, and oapi-codegen's From<Variant> assigns the value as a
+// plain string — a $ref to the typed QueryType enum makes that assignment
+// (`v.Type = "builder_query"`) fail to compile.
+func pinQueryType(s *jsonschema.Schema, value string) error {
+	if _, ok := s.Properties["type"]; !ok {
+		return nil
+	}
+	s.Properties["type"] = (&jsonschema.Schema{}).
+		WithType(jsonschema.String.Type()).
+		WithEnum(value).
+		ToSchemaOrBool()
+
+	return nil
+}
+
+func (queryEnvelopeBuilder) PrepareJSONSchema(s *jsonschema.Schema) error {
+	return pinQueryType(s, QueryTypeBuilder.StringValue())
+}
+
+func (queryEnvelopeFormula) PrepareJSONSchema(s *jsonschema.Schema) error {
+	return pinQueryType(s, QueryTypeFormula.StringValue())
+}
+
+func (queryEnvelopeJoin) PrepareJSONSchema(s *jsonschema.Schema) error {
+	return pinQueryType(s, QueryTypeJoin.StringValue())
+}
+
+func (queryEnvelopeTraceOperator) PrepareJSONSchema(s *jsonschema.Schema) error {
+	return pinQueryType(s, QueryTypeTraceOperator.StringValue())
+}
+
+func (queryEnvelopePromQL) PrepareJSONSchema(s *jsonschema.Schema) error {
+	return pinQueryType(s, QueryTypePromQL.StringValue())
+}
+
+func (queryEnvelopeClickHouseSQL) PrepareJSONSchema(s *jsonschema.Schema) error {
+	return pinQueryType(s, QueryTypeClickHouseSQL.StringValue())
+}
+
 var _ jsonschema.OneOfExposer = QueryEnvelope{}
 
 // JSONSchemaOneOf returns the oneOf variants for the QueryEnvelope discriminated union.
@@ -107,28 +170,21 @@ func (QueryEnvelope) JSONSchemaOneOf() []any {
 var _ jsonschema.Preparer = QueryEnvelope{}
 
 // PrepareJSONSchema tags the envelope with x-signoz-discriminator keyed on
-// `type`. signoz.attachDiscriminators promotes it to a real OpenAPI 3
-// discriminator (and strips the duplicate base `type`/`spec` properties), so
-// oapi-codegen emits ValueByDiscriminator and generators can dispatch the union
-// mechanically. The mapping is 1:1 only because the three signal-specific
-// builder shapes collapse to the single queryEnvelopeBuilder variant.
+// `type`; signoz.attachDiscriminators promotes it to a real OpenAPI 3
+// discriminator (and strips the duplicate base properties), so oapi-codegen
+// emits ValueByDiscriminator and generators dispatch the union mechanically.
+// Each variant pins its `type` to a plain-string value (see pinQueryType), and
+// builder_query maps 1:1 because its three signal shapes nest under the single
+// queryEnvelopeBuilder variant (discriminated again by signal).
 func (QueryEnvelope) PrepareJSONSchema(s *jsonschema.Schema) error {
-	if s.ExtraProperties == nil {
-		s.ExtraProperties = map[string]any{}
-	}
-	s.ExtraProperties["x-signoz-discriminator"] = map[string]any{
-		"propertyName": "type",
-		"mapping": map[string]string{
-			QueryTypeBuilder.StringValue():       "#/components/schemas/Querybuildertypesv5QueryEnvelopeBuilder",
-			QueryTypeFormula.StringValue():       "#/components/schemas/Querybuildertypesv5QueryEnvelopeFormula",
-			QueryTypeJoin.StringValue():          "#/components/schemas/Querybuildertypesv5QueryEnvelopeJoin",
-			QueryTypeTraceOperator.StringValue(): "#/components/schemas/Querybuildertypesv5QueryEnvelopeTraceOperator",
-			QueryTypePromQL.StringValue():        "#/components/schemas/Querybuildertypesv5QueryEnvelopePromQL",
-			QueryTypeClickHouseSQL.StringValue(): "#/components/schemas/Querybuildertypesv5QueryEnvelopeClickHouseSQL",
-		},
-	}
-
-	return nil
+	return markDiscriminator(s, "type", map[string]string{
+		QueryTypeBuilder.StringValue():       schemaRef("Querybuildertypesv5QueryEnvelopeBuilder"),
+		QueryTypeFormula.StringValue():       schemaRef("Querybuildertypesv5QueryEnvelopeFormula"),
+		QueryTypeJoin.StringValue():          schemaRef("Querybuildertypesv5QueryEnvelopeJoin"),
+		QueryTypeTraceOperator.StringValue(): schemaRef("Querybuildertypesv5QueryEnvelopeTraceOperator"),
+		QueryTypePromQL.StringValue():        schemaRef("Querybuildertypesv5QueryEnvelopePromQL"),
+		QueryTypeClickHouseSQL.StringValue(): schemaRef("Querybuildertypesv5QueryEnvelopeClickHouseSQL"),
+	})
 }
 
 // implement custom json unmarshaler for the QueryEnvelope.
