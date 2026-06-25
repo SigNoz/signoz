@@ -2,13 +2,14 @@ import { useMemo } from 'react';
 import { useListLLMPricingRules } from 'api/generated/services/llmpricingrules';
 import { type ListLLMPricingRulesParams } from 'api/generated/services/sigNoz.schemas';
 import { useTableParams } from 'components/TanStackTableView';
+import { Typography } from '@signozhq/ui/typography';
 
 import { LIMIT_KEY, PAGE_KEY, PAGE_SIZE } from '../constants';
-import styles from './ModelCostsTab.module.scss';
-import ModelCostsTable from './ModelCostsTable';
+import styles from './ModelCostTabPanel.module.scss';
+import ModelCostsTable from './components/ModelCostsTable';
 import { type LlmpricingruletypesLLMPricingRuleDTO } from 'api/generated/services/sigNoz.schemas';
 
-function ModelCostsTab(): JSX.Element {
+function ModelCostTabPanel(): JSX.Element {
 	const { page, limit } = useTableParams(
 		{ page: PAGE_KEY, limit: LIMIT_KEY },
 		{ page: 1, limit: PAGE_SIZE },
@@ -47,9 +48,13 @@ function ModelCostsTab(): JSX.Element {
 				onEdit={(): void => undefined}
 			/>
 
-			<footer className={styles.pageFooter}>All prices per 1M tokens (USD)</footer>
+			<footer>
+				<Typography.Text color="muted" size="small">
+					All prices per 1M tokens (USD)
+				</Typography.Text>
+			</footer>
 		</>
 	);
 }
 
-export default ModelCostsTab;
+export default ModelCostTabPanel;

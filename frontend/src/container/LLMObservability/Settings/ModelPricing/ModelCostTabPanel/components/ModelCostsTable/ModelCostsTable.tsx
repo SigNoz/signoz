@@ -6,9 +6,9 @@ import {
 	PAGE_KEY,
 	PAGE_SIZE,
 	SKELETON_ROW_COUNT,
-} from '../constants';
+} from '../../../constants';
 import styles from './ModelCostsTable.module.scss';
-import { getModelCostsColumns } from './table.config';
+import { getModelCostsColumns } from './TableConfig';
 import { type LlmpricingruletypesLLMPricingRuleDTO } from 'api/generated/services/sigNoz.schemas';
 
 interface ModelCostsTableProps {

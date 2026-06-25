@@ -5,7 +5,7 @@ import { ChevronDown } from '@signozhq/icons';
 import type { TableColumnDef } from 'components/TanStackTableView';
 import { startCase } from 'lodash-es';
 
-import styles from './table.config.module.scss';
+import styles from './tableConfig.module.scss';
 import { type LlmpricingruletypesLLMPricingRuleDTO } from 'api/generated/services/sigNoz.schemas';
 
 import {
@@ -14,7 +14,7 @@ import {
 	getExtraBuckets,
 	getRelativeLastSeen,
 	getSourceLabel,
-} from '../utils';
+} from '../../../../utils';
 
 interface ColumnsConfig {
 	canManage: boolean;
@@ -115,10 +115,21 @@ export function getModelCostsColumns({
 								variant="outline"
 								className={styles.extraBucketsChip}
 							>
-								<span className={styles.extraBucketsKey}>{startCase(bucket.key)}</span>
-								<span className={styles.extraBucketsPrice}>
+								<Typography.Text
+									as="span"
+									size="small"
+									className={styles.extraBucketValue}
+								>
+									{startCase(bucket.key)}
+								</Typography.Text>
+								<Typography.Text
+									as="span"
+									size="small"
+									weight="semibold"
+									className={styles.extraBucketValue}
+								>
 									{formatPricePerMillion(bucket.pricePerMillion)}
-								</span>
+								</Typography.Text>
 							</Badge>
 						))}
 					</div>
