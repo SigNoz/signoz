@@ -160,7 +160,7 @@ function MembersSettings(): JSX.Element {
 	}, [refetchUsers]);
 
 	return (
-		<>
+		<div className="members-settings-page">
 			<div className="members-settings">
 				<div className="members-settings__header">
 					<h1 className="members-settings__title">Members</h1>
@@ -231,7 +231,7 @@ function MembersSettings(): JSX.Element {
 				onClose={handleDrawerClose}
 				onComplete={handleMemberEditComplete}
 			/>
-		</>
+		</div>
 	);
 }
 

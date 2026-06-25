@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { useHistory } from 'react-router-dom';
+import cx from 'classnames';
 import { Pagination, Skeleton } from 'antd';
 import { useListRoles } from 'api/generated/services/role';
 import { AuthtypesRoleDTO } from 'api/generated/services/sigNoz.schemas';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import PermissionDeniedFullPage from 'components/PermissionDeniedFullPage/PermissionDeniedFullPage';
-import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import ROUTES from 'constants/routes';
 import { RoleListPermission } from 'hooks/useAuthZ/permissions/role.permissions';
 import { useAuthZ } from 'hooks/useAuthZ/useAuthZ';
@@ -16,7 +16,7 @@ import { useTimezone } from 'providers/Timezone';
 import { RoleType } from 'types/roles';
 import { toAPIError } from 'utils/errorUtils';
 
-import '../RolesSettings.styles.scss';
+import styles from './RolesListingTable.module.scss';
 
 const PAGE_SIZE = 20;
 
@@ -41,7 +41,7 @@ function RolesListingTable({
 	const { data, isLoading, isError, error } = useListRoles({
 		query: { enabled: hasListPermission },
 	});
-	const { formatTimezoneAdjustedTimestamp } = useTimezone();
+	const { formatTimezoneAdjustedTimestampOptional } = useTimezone();
 	const history = useHistory();
 	const urlQuery = useUrlQuery();
 	const pageParam = parseInt(urlQuery.get('page') ?? '1', 10);
@@ -56,19 +56,6 @@ function RolesListingTable({
 	);
 
 	const roles = useMemo(() => data?.data ?? [], [data]);
-
-	const formatTimestamp = (date?: Date | string): string => {
-		if (!date) {
-			return '—';
-		}
-		const d = new Date(date);
-
-		if (Number.isNaN(d.getTime())) {
-			return '—';
-		}
-
-		return formatTimezoneAdjustedTimestamp(date, DATE_TIME_FORMATS.DASH_DATETIME);
-	};
 
 	const filteredRoles = useMemo(() => {
 		if (!searchQuery.trim()) {
@@ -95,7 +82,6 @@ function RolesListingTable({
 		[filteredRoles],
 	);
 
-	// Combine managed + custom into a flat display list for pagination
 	const displayList = useMemo((): DisplayItem[] => {
 		const result: DisplayItem[] = [];
 
@@ -116,7 +102,6 @@ function RolesListingTable({
 
 	const totalRoleCount = managedRoles.length + customRoles.length;
 
-	// Ensure current page is valid; if out of bounds, redirect to last available page
 	useEffect(() => {
 		if (isLoading || totalRoleCount === 0) {
 			return;
@@ -127,7 +112,6 @@ function RolesListingTable({
 		}
 	}, [isLoading, totalRoleCount, currentPage, setCurrentPage]);
 
-	// Paginate: count only role items, but include section headers contextually
 	const paginatedItems = useMemo((): DisplayItem[] => {
 		const startRole = (currentPage - 1) * PAGE_SIZE;
 		const endRole = startRole + PAGE_SIZE;
@@ -140,7 +124,6 @@ function RolesListingTable({
 				lastSection = item;
 			} else {
 				if (roleIndex >= startRole && roleIndex < endRole) {
-					// Insert section header before first role in that section on this page
 					if (lastSection) {
 						result.push(lastSection);
 						lastSection = null;
@@ -152,6 +135,16 @@ function RolesListingTable({
 		}
 		return result;
 	}, [displayList, currentPage]);
+
+	const handleRowClick = useCallback(
+		(roleId: string, roleName: string): void => {
+			if (isRolesEnabled) {
+				const url = `${ROUTES.ROLE_DETAILS.replace(':roleId', roleId)}?name=${encodeURIComponent(roleName)}`;
+				history.push(url);
+			}
+		},
+		[isRolesEnabled, history],
+	);
 
 	const showPaginationItem = (total: number, range: number[]): JSX.Element => (
 		<>
@@ -168,7 +161,7 @@ function RolesListingTable({
 
 	if (isAuthZLoading || isLoading) {
 		return (
-			<div className="roles-listing-table">
+			<div className={styles.rolesListingTable}>
 				<Skeleton active paragraph={{ rows: 5 }} />
 			</div>
 		);
@@ -176,7 +169,7 @@ function RolesListingTable({
 
 	if (isError) {
 		return (
-			<div className="roles-listing-table">
+			<div className={styles.rolesListingTable}>
 				<ErrorInPlace
 					error={toAPIError(
 						error,
@@ -189,31 +182,27 @@ function RolesListingTable({
 
 	if (filteredRoles.length === 0) {
 		return (
-			<div className="roles-listing-table">
-				<div className="roles-table-empty">
+			<div className={styles.rolesListingTable}>
+				<div className={styles.emptyState}>
 					{searchQuery ? 'No roles match your search.' : 'No roles found.'}
 				</div>
 			</div>
 		);
 	}
 
-	const navigateToRole = (roleId: string, roleName?: string): void => {
-		const search = roleName ? `?name=${encodeURIComponent(roleName)}` : '';
-		history.push(`${ROUTES.ROLE_DETAILS.replace(':roleId', roleId)}${search}`);
-	};
-
-	// todo: use table from periscope when its available for consumption
 	const renderRow = (role: AuthtypesRoleDTO): JSX.Element => (
 		<div
 			key={role.id}
-			className={`roles-table-row${isRolesEnabled ? ' roles-table-row--clickable' : ''}`}
+			className={cx(styles.tableRow, {
+				[styles.tableRowClickable]: isRolesEnabled,
+			})}
 			role={isRolesEnabled ? 'button' : undefined}
 			tabIndex={isRolesEnabled ? 0 : undefined}
 			onClick={
 				isRolesEnabled
 					? (): void => {
-							if (role.id) {
-								navigateToRole(role.id, role.name);
+							if (role.id && role.name) {
+								handleRowClick(role.id, role.name);
 							}
 						}
 					: undefined
@@ -221,56 +210,54 @@ function RolesListingTable({
 			onKeyDown={
 				isRolesEnabled
 					? (e): void => {
-							if ((e.key === 'Enter' || e.key === ' ') && role.id) {
-								navigateToRole(role.id, role.name);
+							if ((e.key === 'Enter' || e.key === ' ') && role.id && role.name) {
+								handleRowClick(role.id, role.name);
 							}
 						}
 					: undefined
 			}
 		>
-			<div className="roles-table-cell roles-table-cell--name">
+			<div className={cx(styles.tableCell, styles.tableCellName)}>
 				{role.name ?? '—'}
 			</div>
-			<div className="roles-table-cell roles-table-cell--description">
+			<div className={cx(styles.tableCell, styles.tableCellDescription)}>
 				<LineClampedText
 					text={role.description ?? '—'}
-					tooltipProps={{ overlayClassName: 'roles-description-tooltip' }}
+					tooltipProps={{ overlayClassName: styles.descriptionTooltip }}
 				/>
 			</div>
-			<div className="roles-table-cell roles-table-cell--updated-at">
-				{formatTimestamp(role.updatedAt)}
+			<div className={cx(styles.tableCell, styles.tableCellUpdatedAt)}>
+				{formatTimezoneAdjustedTimestampOptional(role.updatedAt)}
 			</div>
-			<div className="roles-table-cell roles-table-cell--created-at">
-				{formatTimestamp(role.createdAt)}
+			<div className={cx(styles.tableCell, styles.tableCellCreatedAt)}>
+				{formatTimezoneAdjustedTimestampOptional(role.createdAt)}
 			</div>
 		</div>
 	);
 
 	return (
-		<div className="roles-listing-table">
-			<div className="roles-table-scroll-container">
-				<div className="roles-table-inner">
-					<div className="roles-table-header">
-						<div className="roles-table-header-cell roles-table-header-cell--name">
-							Name
-						</div>
-						<div className="roles-table-header-cell roles-table-header-cell--description">
+		<div className={styles.rolesListingTable}>
+			<div className={styles.scrollContainer}>
+				<div className={styles.tableInner}>
+					<div className={styles.tableHeader}>
+						<div className={cx(styles.headerCell, styles.headerCellName)}>Name</div>
+						<div className={cx(styles.headerCell, styles.headerCellDescription)}>
 							Description
 						</div>
-						<div className="roles-table-header-cell roles-table-header-cell--updated-at">
+						<div className={cx(styles.headerCell, styles.headerCellUpdatedAt)}>
 							Updated At
 						</div>
-						<div className="roles-table-header-cell roles-table-header-cell--created-at">
+						<div className={cx(styles.headerCell, styles.headerCellCreatedAt)}>
 							Created At
 						</div>
 					</div>
 
 					{paginatedItems.map((item) =>
 						item.type === 'section' ? (
-							<h3 key={`section-${item.label}`} className="roles-table-section-header">
+							<h3 key={`section-${item.label}`} className={styles.sectionHeader}>
 								{item.label}
 								{item.count !== undefined && (
-									<span className="roles-table-section-header__count">{item.count}</span>
+									<span className={styles.sectionHeaderCount}>{item.count}</span>
 								)}
 							</h3>
 						) : (
@@ -288,7 +275,7 @@ function RolesListingTable({
 				showSizeChanger={false}
 				hideOnSinglePage
 				onChange={(page): void => setCurrentPage(page)}
-				className="roles-table-pagination"
+				className={styles.pagination}
 			/>
 		</div>
 	);
