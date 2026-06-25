@@ -8286,7 +8286,7 @@ export interface SpantypesGettableSpanMapperTestDTO {
 	/**
 	 * @type array,null
 	 */
-	spans: SpantypesSpanMapperTestSpanDTO[] | null;
+	spans?: SpantypesSpanMapperTestSpanDTO[] | null;
 }
 
 export enum SpantypesSpanAggregationTypeDTO {

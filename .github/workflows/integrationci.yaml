@@ -38,7 +38,7 @@ jobs:
       fail-fast: false
       matrix:
         suite:
-          - aiobservability
+          - spanmapper
           - alerts
           - basepath
           - callbackauthn

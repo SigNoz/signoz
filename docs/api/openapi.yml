@@ -7120,8 +7120,6 @@ components:
             $ref: '#/components/schemas/SpantypesSpanMapperTestSpan'
           nullable: true
           type: array
-      required:
-      - spans
       type: object
     SpantypesGettableTraceAggregations:
       properties:

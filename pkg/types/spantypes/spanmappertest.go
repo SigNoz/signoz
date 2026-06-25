@@ -21,8 +21,8 @@ type PostableSpanMapperTest struct {
 }
 
 type GettableSpanMapperTest struct {
-	Spans         []SpanMapperTestSpan `json:"spans" required:"true"`
-	CollectorLogs []string             `json:"collectorLogs" nullable:"true"`
+	Spans         []SpanMapperTestSpan `json:"spans"`
+	CollectorLogs []string             `json:"collectorLogs"`
 }
 
 func NewSpanMapperGroupsWithMappersFromPostable(orgID valuer.UUID, in []PostableSpanMapperTestGroup) []*SpanMapperGroupWithMappers {

@@ -122,11 +122,7 @@ func (module *module) TestMappers(ctx context.Context, orgID valuer.UUID, spans 
 
 // backfillMappers loads saved mappers for any group whose Mappers is nil.
 func (module *module) backfillMappers(ctx context.Context, orgID valuer.UUID, groups []*spantypes.SpanMapperGroupWithMappers) ([]*spantypes.SpanMapperGroupWithMappers, error) {
-	// Load the enabled saved groups for this org, so we can look up by name.
-	// Disabled groups aren't part of the live collector config, so there's
-	// nothing to backfill from them.
-	enabled := true
-	savedGroups, err := module.store.ListGroups(ctx, orgID, &spantypes.ListSpanMapperGroupsQuery{Enabled: &enabled})
+	savedGroups, err := module.store.ListGroups(ctx, orgID, nil)
 	if err != nil {
 		return nil, err
 	}
