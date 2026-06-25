@@ -677,7 +677,7 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 							Right:        QueryRef{Name: "B"},
 							Type:         JoinTypeInner,
 							On:           "trace_id = trace_id",
-							Aggregations: []JoinAggregation{},
+							Aggregations: []any{},
 							Limit:        1000,
 						},
 					}},

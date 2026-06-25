@@ -92,10 +92,14 @@ type queryEnvelopeFormula struct {
 }
 
 // queryEnvelopeJoin is the OpenAPI schema for a QueryEnvelope with type=builder_join.
-type queryEnvelopeJoin struct {
-	Type QueryType        `json:"type" required:"true" description:"The type of the query."`
-	Spec QueryBuilderJoin `json:"spec" description:"The join specification."`
-}
+// Deferred: joins aren't fully supported yet. Re-add this variant to
+// JSONSchemaOneOf and the `type` discriminator mapping when join support lands —
+// but only after the join aggregations get a proper discriminator (see the
+// commented JoinAggregation in join.go).
+// type queryEnvelopeJoin struct {
+// 	Type QueryType        `json:"type" required:"true" description:"The type of the query."`
+// 	Spec QueryBuilderJoin `json:"spec" description:"The join specification."`
+// }
 
 // queryEnvelopeTraceOperator is the OpenAPI schema for a QueryEnvelope with type=builder_trace_operator.
 type queryEnvelopeTraceOperator struct {
@@ -123,7 +127,7 @@ func (QueryEnvelope) JSONSchemaOneOf() []any {
 	return []any{
 		queryEnvelopeBuilder{},
 		queryEnvelopeFormula{},
-		queryEnvelopeJoin{},
+		// queryEnvelopeJoin{}, // deferred — see commented queryEnvelopeJoin above
 		queryEnvelopeTraceOperator{},
 		queryEnvelopePromQL{},
 		queryEnvelopeClickHouseSQL{},
@@ -144,7 +148,6 @@ func (QueryEnvelope) PrepareJSONSchema(s *jsonschema.Schema) error {
 	return markDiscriminator(s, "type", map[string]string{
 		QueryTypeBuilder.StringValue():       schemaRef("Querybuildertypesv5QueryEnvelopeBuilder"),
 		QueryTypeFormula.StringValue():       schemaRef("Querybuildertypesv5QueryEnvelopeFormula"),
-		QueryTypeJoin.StringValue():          schemaRef("Querybuildertypesv5QueryEnvelopeJoin"),
 		QueryTypeTraceOperator.StringValue(): schemaRef("Querybuildertypesv5QueryEnvelopeTraceOperator"),
 		QueryTypePromQL.StringValue():        schemaRef("Querybuildertypesv5QueryEnvelopePromQL"),
 		QueryTypeClickHouseSQL.StringValue(): schemaRef("Querybuildertypesv5QueryEnvelopeClickHouseSQL"),

@@ -1,11 +1,8 @@
 package querybuildertypesv5
 
 import (
-	"encoding/json"
-
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/swaggest/jsonschema-go"
 )
 
 // JoinType is the SQL‐style join operator.
@@ -52,8 +49,9 @@ type QueryBuilderJoin struct {
 	On   string   `json:"on"`
 
 	// primary aggregations: if empty ⇒ raw columns. Each item is a trace, log,
-	// or metric aggregation (see JoinAggregation).
-	Aggregations []JoinAggregation `json:"aggregations,omitempty"`
+	// or metric aggregation. Untyped for now — joins are deferred and this oneOf
+	// has no discriminator (see the commented JoinAggregation below).
+	Aggregations []any `json:"aggregations,omitempty"`
 	// select columns to select
 	SelectFields []telemetrytypes.TelemetryFieldKey `json:"selectFields,omitempty"`
 
@@ -67,33 +65,37 @@ type QueryBuilderJoin struct {
 	Functions             []Function             `json:"functions,omitempty"`
 }
 
-// JoinAggregation is one item of QueryBuilderJoin.aggregations: a trace, log, or
-// metric aggregation. The runtime value is kept opaque (as the field was when it
-// was a []any), but exposing the three shapes as a named oneOf makes the
-// generated schema a `oneOf`-of-`$ref` *component* — which code generators can
-// flatten — instead of an inline union inside the array items, which they can't.
-type JoinAggregation struct {
-	value any
-}
-
-var _ jsonschema.OneOfExposer = JoinAggregation{}
-
-// JSONSchemaOneOf documents the aggregation shapes a join item can take.
-func (JoinAggregation) JSONSchemaOneOf() []any {
-	return []any{
-		TraceAggregation{},
-		LogAggregation{},
-		MetricAggregation{},
-	}
-}
-
-func (j JoinAggregation) MarshalJSON() ([]byte, error) {
-	return json.Marshal(j.value)
-}
-
-func (j *JoinAggregation) UnmarshalJSON(data []byte) error {
-	return json.Unmarshal(data, &j.value)
-}
+// JoinAggregation modelled a join aggregation as a trace/log/metric oneOf. It is
+// commented out because that oneOf has no discriminator: trace and log
+// aggregations are byte-identical, and a join carries no `signal` to dispatch on
+// (unlike a builder query). Without a discriminator, code generators can't map
+// it, so the builder_join variant stays deferred (out of
+// QueryEnvelope.JSONSchemaOneOf).
+//
+// TODO: when full support for joins is launched, this needs a proper
+// discriminator before it can be re-enabled.
+//
+// type JoinAggregation struct {
+// 	value any
+// }
+//
+// var _ jsonschema.OneOfExposer = JoinAggregation{}
+//
+// func (JoinAggregation) JSONSchemaOneOf() []any {
+// 	return []any{
+// 		TraceAggregation{},
+// 		LogAggregation{},
+// 		MetricAggregation{},
+// 	}
+// }
+//
+// func (j JoinAggregation) MarshalJSON() ([]byte, error) {
+// 	return json.Marshal(j.value)
+// }
+//
+// func (j *JoinAggregation) UnmarshalJSON(data []byte) error {
+// 	return json.Unmarshal(data, &j.value)
+// }
 
 // Copy creates a deep copy of QueryBuilderJoin.
 func (q QueryBuilderJoin) Copy() QueryBuilderJoin {
@@ -104,7 +106,7 @@ func (q QueryBuilderJoin) Copy() QueryBuilderJoin {
 	c.Right = q.Right.Copy()
 
 	if q.Aggregations != nil {
-		c.Aggregations = make([]JoinAggregation, len(q.Aggregations))
+		c.Aggregations = make([]any, len(q.Aggregations))
 		copy(c.Aggregations, q.Aggregations)
 	}
 
