@@ -245,10 +245,8 @@ previous setup:
 
 ## Troubleshooting
 
-If the migration runs into trouble, see
-[Troubleshooting Foundry][troubleshooting] for how to capture what we need to
-help (the `--debug` output, the exit code, and your `casting.yaml`), then reach
-out on [Slack][slack].
+If the migration runs into trouble, reach out on [Slack][slack] or open a
+[Foundry issue][foundry-issues].
 
 ## References
 
@@ -267,6 +265,6 @@ out on [Slack][slack].
 [casting-ref]: https://github.com/SigNoz/foundry/blob/main/docs/reference/casting-file.md
 [ch-config]: https://clickhouse.com/docs/operations/configuration-files
 [upgrade-path]: https://signoz.io/docs/operate/upgrade/
-[troubleshooting]: https://signoz.io/docs/setup/foundry/troubleshooting/faq/
 [slack]: https://signoz.io/slack
+[foundry-issues]: https://github.com/SigNoz/foundry/issues
 [signoz-docs]: https://signoz.io/docs
