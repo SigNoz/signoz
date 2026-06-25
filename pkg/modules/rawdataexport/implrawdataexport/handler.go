@@ -114,6 +114,10 @@ func validateAndApplyDefaultExportLimits(queries []qbtypes.QueryEnvelope) error 
 			return errors.NewInvalidInputf(errors.CodeInvalidInput, "limit cannot be more than %d", MaxExportRowCountLimit)
 		}
 		queries[idx].SetLimit(limit)
+
+		if queries[idx].GetOffset() < 0 {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "offset must be non-negative")
+		}
 	}
 	return nil
 }
@@ -202,15 +206,15 @@ func (handler *handler) exportRawDataJSONL(rowChan <-chan *qbtypes.RawRow, errCh
 			}
 			jsonBytes, err := json.Marshal(row.Data)
 			if err != nil {
-				return false, errors.NewUnexpectedf(errors.CodeInternal, "error marshaling JSON: %s", err)
+				return false, errors.NewInternalf(errors.CodeInternal, "error marshaling JSON: %s", err)
 			}
 			totalBytes += uint64(len(jsonBytes)) + 1
 
 			if _, err := writer.Write(jsonBytes); err != nil {
-				return false, errors.NewUnexpectedf(errors.CodeInternal, "error writing JSON: %s", err)
+				return false, errors.NewInternalf(errors.CodeInternal, "error writing JSON: %s", err)
 			}
 			if _, err := writer.Write([]byte("\n")); err != nil {
-				return false, errors.NewUnexpectedf(errors.CodeInternal, "error writing JSON newline: %s", err)
+				return false, errors.NewInternalf(errors.CodeInternal, "error writing JSON newline: %s", err)
 			}
 
 			if totalBytes > MaxExportBytesLimit {

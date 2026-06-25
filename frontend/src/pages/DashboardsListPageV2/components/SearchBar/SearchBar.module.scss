@@ -1,0 +1,24 @@
+.submit {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 18px;
+	height: 18px;
+	padding: 0;
+	background: transparent;
+	border: none;
+	border-radius: 3px;
+	color: inherit;
+	cursor: pointer;
+	transition: background 120ms ease;
+
+	&:hover,
+	&:focus-visible {
+		background: color-mix(in srgb, var(--l1-foreground) 12%, transparent);
+		outline: none;
+	}
+
+	&:active {
+		background: color-mix(in srgb, var(--l1-foreground) 20%, transparent);
+	}
+}

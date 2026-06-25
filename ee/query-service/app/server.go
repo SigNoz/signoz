@@ -10,7 +10,6 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux"
 	"go.opentelemetry.io/otel/propagation"
 
-	"github.com/SigNoz/signoz/pkg/cache/memorycache"
 	"github.com/SigNoz/signoz/pkg/errors"
 
 	"github.com/gorilla/handlers"
@@ -20,7 +19,6 @@ import (
 
 	"github.com/SigNoz/signoz/ee/query-service/app/api"
 	"github.com/SigNoz/signoz/ee/query-service/usage"
-	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/web"
@@ -30,7 +28,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	baseapp "github.com/SigNoz/signoz/pkg/query-service/app"
 	"github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader"
-	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/logparsingpipeline"
 	"github.com/SigNoz/signoz/pkg/query-service/app/opamp"
@@ -60,25 +57,12 @@ type Server struct {
 
 // NewServer creates and initializes Server
 func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
-	cacheForTraceDetail, err := memorycache.New(context.TODO(), signoz.Instrumentation.ToProviderSettings(), cache.Config{
-		Provider: "memory",
-		Memory: cache.Memory{
-			NumCounters: 10 * 10000,
-			MaxCost:     1 << 27, // 128 MB
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-
 	reader := clickhouseReader.NewReader(
 		signoz.Instrumentation.Logger(),
 		signoz.SQLStore,
 		signoz.TelemetryStore,
 		signoz.Prometheus,
 		signoz.TelemetryStore.Cluster(),
-		config.Querier.FluxInterval,
-		cacheForTraceDetail,
 		signoz.Cache,
 		nil,
 	)
@@ -86,17 +70,10 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 	// initiate opamp
 	opAmpModel.Init(signoz.SQLStore, signoz.Instrumentation.Logger(), signoz.Modules.OrgGetter)
 
-	integrationsController, err := integrations.NewController(signoz.SQLStore)
+	integrationsController, err := integrations.NewController(signoz.SQLStore, signoz.Modules.Dashboard)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"couldn't create integrations controller: %w", err,
-		)
-	}
-
-	cloudIntegrationsController, err := cloudintegrations.NewController(signoz.SQLStore)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"couldn't create cloud provider integrations controller: %w", err,
 		)
 	}
 
@@ -113,8 +90,12 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 
 	// initiate agent config handler
 	agentConfMgr, err := agentConf.Initiate(&agentConf.ManagerOptions{
-		Store:         signoz.SQLStore,
-		AgentFeatures: []agentConf.AgentFeature{logParsingPipelineController},
+		Store: signoz.SQLStore,
+		AgentFeatures: []agentConf.AgentFeature{
+			logParsingPipelineController,
+			signoz.Modules.SpanMapper,
+			signoz.Modules.LLMPricingRule,
+		},
 	})
 	if err != nil {
 		return nil, err
@@ -134,7 +115,6 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 		DataConnector:                 reader,
 		UsageManager:                  usageManager,
 		IntegrationsController:        integrationsController,
-		CloudIntegrationsController:   cloudIntegrationsController,
 		LogsParsingPipelineController: logParsingPipelineController,
 		FluxInterval:                  config.Querier.FluxInterval,
 		GatewayUrl:                    config.Gateway.URL.String(),
@@ -194,13 +174,13 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler, web web.Web) (*h
 		s.config.APIServer.Timeout.Default,
 		s.config.APIServer.Timeout.Max,
 	).Wrap)
+	r.Use(middleware.NewResource(s.signoz.Instrumentation.Logger()).Wrap)
 	r.Use(middleware.NewAudit(s.signoz.Instrumentation.Logger(), s.config.APIServer.Logging.ExcludedRoutes, s.signoz.Auditor).Wrap)
 	r.Use(middleware.NewComment().Wrap)
 
 	apiHandler.RegisterRoutes(r, am)
 	apiHandler.RegisterLogsRoutes(r, am)
 	apiHandler.RegisterIntegrationRoutes(r, am)
-	apiHandler.RegisterCloudIntegrationsRoutes(r, am)
 	apiHandler.RegisterQueryRangeV3Routes(r, am)
 	apiHandler.RegisterInfraMetricsRoutes(r, am)
 	apiHandler.RegisterQueryRangeV4Routes(r, am)

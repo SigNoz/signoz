@@ -32,7 +32,12 @@ import { v4 as uuid } from 'uuid';
 
 import { FeatureKeys } from '../../../constants/features';
 import { useAppContext } from '../../../providers/App/App';
-import { GraphTitle, legend, MENU_ITEMS } from '../constant';
+import {
+	GraphTitle,
+	legend,
+	MENU_ITEMS,
+	SERVICE_DETAIL_DRILLDOWN_ENABLED,
+} from '../constant';
 import { getWidgetQueryBuilder } from '../MetricsApplication.factory';
 import { Card, GraphContainer, Row } from '../styles';
 import GraphControlsPanel from './Overview/GraphControlsPanel/GraphControlsPanel';
@@ -279,6 +284,7 @@ function External(): JSX.Element {
 								}}
 								onDragSelect={onDragSelect}
 								version={ENTITY_VERSION_V4}
+								enableDrillDown={SERVICE_DETAIL_DRILLDOWN_ENABLED}
 							/>
 						</GraphContainer>
 					</Card>
@@ -322,6 +328,7 @@ function External(): JSX.Element {
 								}}
 								onDragSelect={onDragSelect}
 								version={ENTITY_VERSION_V4}
+								enableDrillDown={SERVICE_DETAIL_DRILLDOWN_ENABLED}
 							/>
 						</GraphContainer>
 					</Card>
@@ -366,6 +373,7 @@ function External(): JSX.Element {
 								}
 								onDragSelect={onDragSelect}
 								version={ENTITY_VERSION_V4}
+								enableDrillDown={SERVICE_DETAIL_DRILLDOWN_ENABLED}
 							/>
 						</GraphContainer>
 					</Card>
@@ -409,6 +417,7 @@ function External(): JSX.Element {
 								}}
 								onDragSelect={onDragSelect}
 								version={ENTITY_VERSION_V4}
+								enableDrillDown={SERVICE_DETAIL_DRILLDOWN_ENABLED}
 							/>
 						</GraphContainer>
 					</Card>

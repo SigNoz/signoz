@@ -10,7 +10,7 @@ import {
 	useState,
 } from 'react';
 // eslint-disable-next-line no-restricted-imports
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import getFromLocalstorage from 'api/browser/localstorage/get';
 import setToLocalstorage from 'api/browser/localstorage/set';
 import logEvent from 'api/common/logEvent';
@@ -42,7 +42,6 @@ import useUrlQueryData from 'hooks/useUrlQueryData';
 import useUrlYAxisUnit from 'hooks/useUrlYAxisUnit';
 import { isEmpty, isUndefined } from 'lodash-es';
 import LiveLogs from 'pages/LiveLogs';
-import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { Warning } from 'types/api';
 import { Dashboard } from 'types/api/dashboard/getAll';
@@ -77,7 +76,6 @@ function LogsExplorerViewsContainer({
 	handleChangeSelectedView: ChangeViewFunctionType;
 }): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
-	const dispatch = useDispatch();
 
 	const [showFrequencyChart, setShowFrequencyChart] = useState(
 		() => getFromLocalstorage(LOCALSTORAGE.SHOW_FREQUENCY_CHART) === 'true',
@@ -90,10 +88,9 @@ function LogsExplorerViewsContainer({
 		DEFAULT_PER_PAGE_VALUE,
 	);
 
-	const { minTime, maxTime, selectedTime } = useSelector<
-		AppState,
-		GlobalReducer
-	>((state) => state.globalTime);
+	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
 
 	const currentMinTimeRef = useRef<number>(minTime);
 
@@ -160,7 +157,7 @@ function LogsExplorerViewsContainer({
 		'custom',
 	);
 
-	const { data, isLoading, isFetching, isError, isSuccess, error } =
+	const { data, isLoading, isFetching, isError, error } =
 		useGetExplorerQueryRange(
 			requestData,
 			selectedPanelType,
@@ -329,16 +326,6 @@ function LogsExplorerViewsContainer({
 			currentMinTimeRef.current !== minTime ||
 			orderByChanged
 		) {
-			// Recalculate global time when query changes i.e. stage and run query clicked
-			if (
-				!!requestData?.id &&
-				stagedQuery?.id &&
-				requestData?.id !== stagedQuery?.id &&
-				selectedTime !== 'custom'
-			) {
-				dispatch(UpdateTimeInterval(selectedTime));
-			}
-
 			const newRequestData = getRequestData(stagedQuery, {
 				filters: listQuery?.filters || initialFilters,
 				filter: listQuery?.filter || { expression: '' },
@@ -360,8 +347,6 @@ function LogsExplorerViewsContainer({
 		minTime,
 		activeLogId,
 		selectedPanelType,
-		dispatch,
-		selectedTime,
 		maxTime,
 		orderBy,
 	]);
@@ -437,10 +422,6 @@ function LogsExplorerViewsContainer({
 						handleToggleFrequencyChart={handleToggleFrequencyChart}
 						orderBy={orderBy}
 						setOrderBy={setOrderBy}
-						isFetching={isFetching}
-						isLoading={isLoading}
-						isError={isError}
-						isSuccess={isSuccess}
 					/>
 				)}
 

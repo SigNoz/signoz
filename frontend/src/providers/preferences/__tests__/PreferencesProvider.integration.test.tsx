@@ -108,7 +108,9 @@ describe('PreferencesProvider integration', () => {
 				},
 			);
 
-			expect(Number(screen.getByTestId('logs-columns-len').textContent)).toBe(1);
+			// Loader's ensureLogsRequiredColumns prepends timestamp + body, so the
+			// 1 column in localStorage becomes 3 in preferences.
+			expect(Number(screen.getByTestId('logs-columns-len').textContent)).toBe(3);
 		});
 
 		it('direct mode updateColumns persists to localStorage', async () => {
@@ -126,8 +128,11 @@ describe('PreferencesProvider integration', () => {
 			const stored = getLocalStorageJSON<LogsLocalOptions>(
 				LOCALSTORAGE.LOGS_LIST_OPTIONS,
 			);
+			// Writer's ensureLogsRequiredColumns prepends `body` when only
+			// `timestamp` was passed in (defaults.slice(0,1) is just timestamp).
 			expect(stored?.selectColumns).toStrictEqual([
-				defaultLogsSelectedColumns[0] as TelemetryFieldKey,
+				defaultLogsSelectedColumns[1] as TelemetryFieldKey, // body
+				defaultLogsSelectedColumns[0] as TelemetryFieldKey, // timestamp
 			]);
 		});
 
@@ -183,7 +188,9 @@ describe('PreferencesProvider integration', () => {
 				value: originalLocation,
 			});
 
-			expect(Number(screen.getByTestId('logs-columns-len').textContent)).toBe(1);
+			// Loader's ensureLogsRequiredColumns prepends timestamp + body, so the
+			// URL's 1 column becomes 3 in preferences.
+			expect(Number(screen.getByTestId('logs-columns-len').textContent)).toBe(3);
 		});
 
 		it('updateFormatting persists to localStorage in direct mode', async () => {

@@ -132,7 +132,7 @@
                 ],
                 "queries": [
                     {
-                        "kind": "TimeSeriesQuery",
+                        "kind": "time_series",
                         "spec": {
                             "plugin": {
                                 "kind": "signoz/BuilderQuery",
@@ -191,7 +191,7 @@
                 },
                 "queries": [
                     {
-                        "kind": "TimeSeriesQuery",
+                        "kind": "time_series",
                         "spec": {
                             "plugin": {
                                 "kind": "signoz/CompositeQuery",
@@ -269,7 +269,7 @@
                 },
                 "queries": [
                     {
-                        "kind": "TimeSeriesQuery",
+                        "kind": "time_series",
                         "spec": {
                             "plugin": {
                                 "kind": "signoz/BuilderQuery",
@@ -317,14 +317,14 @@
                         "thresholds": [
                             {
                                 "value": 1200000,
-                                "operator": ">",
+                                "operator": "above",
                                 "unit": "none",
                                 "color": "Red",
                                 "format": "text"
                             },
                             {
                                 "value": 1200000,
-                                "operator": "<=",
+                                "operator": "below_or_equal",
                                 "unit": "none",
                                 "color": "Green",
                                 "format": "text"
@@ -334,7 +334,7 @@
                 },
                 "queries": [
                     {
-                        "kind": "TimeSeriesQuery",
+                        "kind": "time_series",
                         "spec": {
                             "plugin": {
                                 "kind": "signoz/BuilderQuery",
@@ -373,7 +373,7 @@
                 },
                 "queries": [
                     {
-                        "kind": "TimeSeriesQuery",
+                        "kind": "time_series",
                         "spec": {
                             "plugin": {
                                 "kind": "signoz/BuilderQuery",
@@ -418,7 +418,7 @@
                 },
                 "queries": [
                     {
-                        "kind": "TimeSeriesQuery",
+                        "kind": "time_series",
                         "spec": {
                             "plugin": {
                                 "kind": "signoz/BuilderQuery",
@@ -465,7 +465,7 @@
                         "thresholds": [
                             {
                                 "value": 1,
-                                "operator": ">",
+                                "operator": "above",
                                 "unit": "min",
                                 "color": "Red",
                                 "format": "text",
@@ -476,7 +476,7 @@
                 },
                 "queries": [
                     {
-                        "kind": "TimeSeriesQuery",
+                        "kind": "time_series",
                         "spec": {
                             "plugin": {
                                 "kind": "signoz/ClickHouseSQL",
@@ -517,7 +517,7 @@
                 },
                 "queries": [
                     {
-                        "kind": "LogQuery",
+                        "kind": "raw",
                         "spec": {
                             "plugin": {
                                 "kind": "signoz/BuilderQuery",
@@ -571,7 +571,7 @@
                 },
                 "queries": [
                     {
-                        "kind": "TimeSeriesQuery",
+                        "kind": "time_series",
                         "spec": {
                             "plugin": {
                                 "kind": "signoz/BuilderQuery",
@@ -610,7 +610,7 @@
                 },
                 "queries": [
                     {
-                        "kind": "TimeSeriesQuery",
+                        "kind": "time_series",
                         "spec": {
                             "plugin": {
                                 "kind": "signoz/CompositeQuery",
@@ -681,7 +681,7 @@
                 },
                 "queries": [
                     {
-                        "kind": "TimeSeriesQuery",
+                        "kind": "time_series",
                         "spec": {
                             "plugin": {
                                 "kind": "signoz/CompositeQuery",
@@ -722,7 +722,7 @@
                 },
                 "queries": [
                     {
-                        "kind": "TimeSeriesQuery",
+                        "kind": "time_series",
                         "spec": {
                             "plugin": {
                                 "kind": "signoz/PromQLQuery",

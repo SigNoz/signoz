@@ -6,7 +6,7 @@ import RouteTab from 'components/RouteTab';
 import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
 import { routeConfig } from 'container/SideNav/config';
-import { getQueryString } from 'container/SideNav/helper';
+import { buildNavUrl, getQueryString } from 'container/SideNav/helper';
 import { settingsNavSections } from 'container/SideNav/menuItems';
 import NavItem from 'container/SideNav/NavItem/NavItem';
 import { SidebarItem } from 'container/SideNav/sideNav.types';
@@ -72,18 +72,28 @@ function SettingsPage(): JSX.Element {
 			}
 
 			if (isCloudUser) {
+				// Visible to all authenticated users
+				updatedItems = updatedItems.map((item) => ({
+					...item,
+					isEnabled:
+						item.key === ROUTES.ROLES_SETTINGS ||
+						item.key === ROUTES.ROLE_CREATE ||
+						item.key === ROUTES.ROLE_DETAILS ||
+						item.key === ROUTES.ROLE_EDIT ||
+						item.key === ROUTES.SERVICE_ACCOUNTS_SETTINGS
+							? true
+							: item.isEnabled,
+				}));
+
 				if (isAdmin) {
 					updatedItems = updatedItems.map((item) => ({
 						...item,
 						isEnabled:
 							item.key === ROUTES.BILLING ||
-							item.key === ROUTES.ROLES_SETTINGS ||
-							item.key === ROUTES.ROLE_DETAILS ||
 							item.key === ROUTES.INTEGRATIONS ||
 							item.key === ROUTES.INGESTION_SETTINGS ||
 							item.key === ROUTES.ORG_SETTINGS ||
 							item.key === ROUTES.MEMBERS_SETTINGS ||
-							item.key === ROUTES.SERVICE_ACCOUNTS_SETTINGS ||
 							item.key === ROUTES.SHORTCUTS ||
 							item.key === ROUTES.MCP_SERVER
 								? true
@@ -113,17 +123,27 @@ function SettingsPage(): JSX.Element {
 			}
 
 			if (isEnterpriseSelfHostedUser) {
+				// Visible to all authenticated users
+				updatedItems = updatedItems.map((item) => ({
+					...item,
+					isEnabled:
+						item.key === ROUTES.ROLES_SETTINGS ||
+						item.key === ROUTES.ROLE_CREATE ||
+						item.key === ROUTES.ROLE_DETAILS ||
+						item.key === ROUTES.ROLE_EDIT ||
+						item.key === ROUTES.SERVICE_ACCOUNTS_SETTINGS
+							? true
+							: item.isEnabled,
+				}));
+
 				if (isAdmin) {
 					updatedItems = updatedItems.map((item) => ({
 						...item,
 						isEnabled:
 							item.key === ROUTES.BILLING ||
-							item.key === ROUTES.ROLES_SETTINGS ||
-							item.key === ROUTES.ROLE_DETAILS ||
 							item.key === ROUTES.INTEGRATIONS ||
 							item.key === ROUTES.ORG_SETTINGS ||
 							item.key === ROUTES.MEMBERS_SETTINGS ||
-							item.key === ROUTES.SERVICE_ACCOUNTS_SETTINGS ||
 							item.key === ROUTES.INGESTION_SETTINGS ||
 							item.key === ROUTES.MCP_SERVER
 								? true
@@ -152,15 +172,24 @@ function SettingsPage(): JSX.Element {
 			}
 
 			if (!isCloudUser && !isEnterpriseSelfHostedUser) {
+				// Visible to all authenticated users
+				updatedItems = updatedItems.map((item) => ({
+					...item,
+					isEnabled:
+						item.key === ROUTES.ROLES_SETTINGS ||
+						item.key === ROUTES.ROLE_CREATE ||
+						item.key === ROUTES.ROLE_DETAILS ||
+						item.key === ROUTES.ROLE_EDIT ||
+						item.key === ROUTES.SERVICE_ACCOUNTS_SETTINGS
+							? true
+							: item.isEnabled,
+				}));
+
 				if (isAdmin) {
 					updatedItems = updatedItems.map((item) => ({
 						...item,
 						isEnabled:
-							item.key === ROUTES.ORG_SETTINGS ||
-							item.key === ROUTES.MEMBERS_SETTINGS ||
-							item.key === ROUTES.SERVICE_ACCOUNTS_SETTINGS ||
-							item.key === ROUTES.ROLES_SETTINGS ||
-							item.key === ROUTES.ROLE_DETAILS
+							item.key === ROUTES.ORG_SETTINGS || item.key === ROUTES.MEMBERS_SETTINGS
 								? true
 								: item.isEnabled,
 					}));
@@ -217,12 +246,13 @@ function SettingsPage(): JSX.Element {
 			const availableParams = routeConfig[key];
 
 			const queryString = getQueryString(availableParams || [], params);
+			const url = buildNavUrl(key, queryString);
 
 			if (pathname !== key) {
 				if (event && isModifierKeyPressed(event)) {
-					openInNewTab(`${key}?${queryString.join('&')}`);
+					openInNewTab(url);
 				} else {
-					history.push(`${key}?${queryString.join('&')}`, {
+					history.push(url, {
 						from: pathname,
 					});
 				}
@@ -236,17 +266,6 @@ function SettingsPage(): JSX.Element {
 	};
 
 	const isActiveNavItem = (key: string): boolean => {
-		if (pathname.startsWith(ROUTES.ALL_CHANNELS) && key === ROUTES.ALL_CHANNELS) {
-			return true;
-		}
-
-		if (
-			pathname.startsWith(ROUTES.CHANNELS_EDIT) &&
-			key === ROUTES.ALL_CHANNELS
-		) {
-			return true;
-		}
-
 		if (
 			pathname.startsWith(ROUTES.ROLES_SETTINGS) &&
 			key === ROUTES.ROLES_SETTINGS
@@ -298,7 +317,7 @@ function SettingsPage(): JSX.Element {
 										isDisabled={false}
 										showIcon={false}
 										onClick={(event): void => {
-											logEvent('Settings V2: Menu clicked', {
+											void logEvent('Settings V2: Menu clicked', {
 												menuLabel: item.label,
 												menuRoute: item.key,
 											});

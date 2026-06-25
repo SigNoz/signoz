@@ -151,6 +151,26 @@ func (provider *provider) addCloudIntegrationRoutes(router *mux.Router) error {
 		return err
 	}
 
+	if err := router.Handle("/api/v1/cloud_integrations/{cloud_provider}/accounts/{id}/services", handler.New(
+		provider.authzMiddleware.AdminAccess(provider.cloudIntegrationHandler.ListAccountServicesMetadata),
+		handler.OpenAPIDef{
+			ID:                  "ListAccountServicesMetadata",
+			Tags:                []string{"cloudintegration"},
+			Summary:             "List account services metadata",
+			Description:         "This endpoint lists the services metadata for the specified account and cloud provider",
+			Request:             nil,
+			RequestContentType:  "",
+			Response:            new(citypes.GettableServicesMetadata),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusOK,
+			ErrorStatusCodes:    []int{},
+			Deprecated:          false,
+			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		},
+	)).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
 	if err := router.Handle("/api/v1/cloud_integrations/{cloud_provider}/services/{service_id}", handler.New(
 		provider.authzMiddleware.AdminAccess(provider.cloudIntegrationHandler.GetService),
 		handler.OpenAPIDef{
@@ -189,6 +209,26 @@ func (provider *provider) addCloudIntegrationRoutes(router *mux.Router) error {
 			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
 		},
 	)).Methods(http.MethodPut).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v1/cloud_integrations/{cloud_provider}/accounts/{id}/services/{service_id}", handler.New(
+		provider.authzMiddleware.AdminAccess(provider.cloudIntegrationHandler.GetAccountService),
+		handler.OpenAPIDef{
+			ID:                  "GetAccountService",
+			Tags:                []string{"cloudintegration"},
+			Summary:             "Get service for account",
+			Description:         "This endpoint gets a service and its configuration for the specified cloud integration account",
+			Request:             nil,
+			RequestContentType:  "",
+			Response:            new(citypes.Service),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusOK,
+			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+			Deprecated:          false,
+			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		},
+	)).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 

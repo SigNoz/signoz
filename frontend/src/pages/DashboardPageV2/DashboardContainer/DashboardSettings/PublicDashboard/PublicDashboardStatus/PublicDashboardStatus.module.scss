@@ -1,0 +1,67 @@
+.statusStrip {
+	display: flex;
+	align-items: center;
+	gap: 13px;
+	padding: 14px 16px;
+	border-radius: 8px;
+	border: 1px solid var(--l2-border);
+	background: var(--l1-background);
+}
+
+.statusStripLive {
+	border-color: var(--callout-primary-border);
+	background: var(--callout-primary-background);
+}
+
+.statusMedallion {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex: none;
+	width: 38px;
+	height: 38px;
+	border-radius: 6px;
+	border: 1px solid var(--l2-border);
+	background: var(--l3-background);
+	color: var(--l2-foreground);
+}
+
+.statusMedallionLive {
+	border-color: var(--callout-primary-border);
+	background: var(--callout-primary-background);
+	color: var(--callout-primary-icon);
+}
+
+.statusBody {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+}
+
+.statusTitle {
+	color: var(--l1-foreground);
+	font-size: 14px;
+	font-weight: 600;
+	line-height: 1.2;
+}
+
+.statusSubtitle {
+	margin-top: 2px;
+	color: var(--l3-foreground);
+	font-size: 13px;
+	line-height: 1.35;
+}
+
+.statusSubtitleLive {
+	color: var(--l2-foreground);
+}
+
+.statusBadgeDot {
+	display: inline-block;
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	margin-right: 6px;
+	background: currentColor;
+}

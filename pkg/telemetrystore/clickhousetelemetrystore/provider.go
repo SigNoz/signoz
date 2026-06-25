@@ -7,6 +7,7 @@ import (
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"go.opentelemetry.io/otel/metric"
 )
 
 type provider struct {
@@ -47,6 +48,23 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 			return nil, err
 		}
 		hooks[i] = hook
+	}
+
+	metrics, err := newMetrics(settings.Meter())
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = settings.Meter().RegisterCallback(func(_ context.Context, observer metric.Observer) error {
+		stats := chConn.Stats()
+		observer.ObserveInt64(metrics.open, int64(stats.Open))
+		observer.ObserveInt64(metrics.idle, int64(stats.Idle))
+		observer.ObserveInt64(metrics.maxOpen, int64(stats.MaxOpenConns))
+		observer.ObserveInt64(metrics.maxIdle, int64(stats.MaxIdleConns))
+		return nil
+	}, metrics.open, metrics.idle, metrics.maxOpen, metrics.maxIdle)
+	if err != nil {
+		return nil, err
 	}
 
 	return &provider{
@@ -136,7 +154,8 @@ func (p *provider) AsyncInsert(ctx context.Context, query string, wait bool, arg
 	event := telemetrystore.NewQueryEvent(query, args)
 
 	ctx = telemetrystore.WrapBeforeQuery(p.hooks, ctx, event)
-	err := p.clickHouseConn.AsyncInsert(ctx, query, wait, args...)
+	// TODO: migrate to WithAsync() — https://github.com/SigNoz/engineering-pod/issues/5093
+	err := p.clickHouseConn.AsyncInsert(ctx, query, wait, args...) //nolint:staticcheck
 
 	event.Err = err
 	telemetrystore.WrapAfterQuery(p.hooks, ctx, event)

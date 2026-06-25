@@ -12,7 +12,7 @@ export type GuardAuthZProps<R extends AuthZRelation> = {
 	relation: R;
 	object: AuthZObject<R>;
 	fallbackOnLoading?: JSX.Element;
-	fallbackOnError?: (error: Error) => JSX.Element;
+	fallbackOnError?: JSX.Element;
 	fallbackOnNoPermissions?: (response: {
 		requiredPermissionName: BrandedPermission;
 	}) => JSX.Element;
@@ -35,7 +35,7 @@ export function GuardAuthZ<R extends AuthZRelation>({
 	}
 
 	if (error) {
-		return fallbackOnError?.(error) ?? null;
+		return fallbackOnError ?? children;
 	}
 
 	if (!permissions?.[permission]?.isGranted) {

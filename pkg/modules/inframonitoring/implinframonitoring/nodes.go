@@ -9,7 +9,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 	"github.com/SigNoz/signoz/pkg/types/inframonitoringtypes"
-	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
@@ -33,7 +32,7 @@ func buildNodeRecords(
 	records := make([]inframonitoringtypes.NodeRecord, 0, len(pageGroups))
 	for _, labels := range pageGroups {
 		compositeKey := compositeKeyFromLabels(labels, groupBy)
-		nodeName := labels[nodeNameAttrKey]
+		nodeName := labels[inframonitoringtypes.NodeNameAttrKey]
 
 		record := inframonitoringtypes.NodeRecord{ // initialize with default values
 			NodeName:              nodeName,
@@ -105,6 +104,9 @@ func (m *module) getTopNodeGroups(
 	metadataMap map[string]map[string]string,
 ) ([]map[string]string, error) {
 	orderByKey := req.OrderBy.Key.Name
+	if orderByKey == inframonitoringtypes.NodeNameAttrKey {
+		return inframonitoringtypes.PaginateMetadataByName(metadataMap, req.GroupBy, req.OrderBy.Direction, req.Offset, req.Limit, inframonitoringtypes.NodeNameAttrKey), nil
+	}
 	queryNamesForOrderBy := orderByToNodesQueryNames[orderByKey]
 	rankingQueryName := queryNamesForOrderBy[len(queryNamesForOrderBy)-1]
 
@@ -170,38 +172,34 @@ func (m *module) getNodesTableMetadata(ctx context.Context, req *inframonitoring
 // Groups absent from the result map have implicit zero counts (caller default).
 func (m *module) getPerGroupNodeConditionCounts(
 	ctx context.Context,
-	req *inframonitoringtypes.PostableNodes,
+	start, end int64,
+	filter *qbtypes.Filter,
+	groupBy []qbtypes.GroupByKey,
 	pageGroups []map[string]string,
 ) (map[string]nodeConditionCounts, error) {
-	if len(pageGroups) == 0 || len(req.GroupBy) == 0 {
+	if len(pageGroups) == 0 || len(groupBy) == 0 {
 		return map[string]nodeConditionCounts{}, nil
 	}
 
-	// Merged filter expression (user filter + page-groups IN clauses).
-	reqFilterExpr := ""
-	if req.Filter != nil {
-		reqFilterExpr = req.Filter.Expression
+	// Merge user filter with page-groups IN clauses.
+	userFilterExpr := ""
+	if filter != nil {
+		userFilterExpr = filter.Expression
 	}
 	pageGroupsFilterExpr := buildPageGroupsFilterExpr(pageGroups)
-	filterExpr := mergeFilterExpressions(reqFilterExpr, pageGroupsFilterExpr)
+	mergedFilterExpr := mergeFilterExpressions(userFilterExpr, pageGroupsFilterExpr)
 
-	// Resolve tables. Same convention as pods.
-	adjustedStart, adjustedEnd, _, localTimeSeriesTable := telemetrymetrics.WhichTSTableToUse(
-		uint64(req.Start), uint64(req.End), nil,
-	)
-	samplesTable := telemetrymetrics.WhichSamplesTableToUse(
-		uint64(req.Start), uint64(req.End),
-		metrictypes.UnspecifiedType, metrictypes.TimeAggregationUnspecified, nil,
-	)
-	valueCol := telemetrymetrics.ValueColumnForSamplesTable(samplesTable)
+	// Step-floor bounds + resolve tables in one shot to match QB v5 querier.
+	samplesStartMs, flooredEndMs, tsAdjustedStartMs, _, localTimeSeriesTable, distributedSamplesTable, _ := alignedMetricWindow(start, end)
+	valueCol := telemetrymetrics.ValueColumnForSamplesTable(distributedSamplesTable)
 
 	// ----- timeSeriesFPs -----
 	timeSeriesFPs := sqlbuilder.NewSelectBuilder()
 	timeSeriesFPsSelectCols := []string{
 		"fingerprint",
-		fmt.Sprintf("JSONExtractString(labels, %s) AS node_name", timeSeriesFPs.Var(nodeNameAttrKey)),
+		fmt.Sprintf("JSONExtractString(labels, %s) AS node_name", timeSeriesFPs.Var(inframonitoringtypes.NodeNameAttrKey)),
 	}
-	for _, key := range req.GroupBy {
+	for _, key := range groupBy {
 		timeSeriesFPsSelectCols = append(timeSeriesFPsSelectCols,
 			fmt.Sprintf("JSONExtractString(labels, %s) AS %s", timeSeriesFPs.Var(key.Name), quoteIdentifier(key.Name)),
 		)
@@ -210,11 +208,11 @@ func (m *module) getPerGroupNodeConditionCounts(
 	timeSeriesFPs.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, localTimeSeriesTable))
 	timeSeriesFPs.Where(
 		timeSeriesFPs.E("metric_name", nodeConditionMetricName),
-		timeSeriesFPs.GE("unix_milli", adjustedStart),
-		timeSeriesFPs.L("unix_milli", adjustedEnd),
+		timeSeriesFPs.GE("unix_milli", tsAdjustedStartMs),
+		timeSeriesFPs.LE("unix_milli", flooredEndMs),
 	)
-	if filterExpr != "" {
-		filterClause, err := m.buildFilterClause(ctx, &qbtypes.Filter{Expression: filterExpr}, req.Start, req.End)
+	if mergedFilterExpr != "" {
+		filterClause, err := m.buildFilterClause(ctx, &qbtypes.Filter{Expression: mergedFilterExpr}, start, end)
 		if err != nil {
 			return nil, err
 		}
@@ -223,7 +221,7 @@ func (m *module) getPerGroupNodeConditionCounts(
 		}
 	}
 	timeSeriesFPsGroupBy := []string{"fingerprint", "node_name"}
-	for _, key := range req.GroupBy {
+	for _, key := range groupBy {
 		timeSeriesFPsGroupBy = append(timeSeriesFPsGroupBy, quoteIdentifier(key.Name))
 	}
 	timeSeriesFPs.GroupBy(timeSeriesFPsGroupBy...)
@@ -233,7 +231,7 @@ func (m *module) getPerGroupNodeConditionCounts(
 	latestConditionPerNode := sqlbuilder.NewSelectBuilder()
 	latestConditionPerNodeSelectCols := []string{"tsfp.node_name AS node_name"}
 	latestConditionPerNodeGroupBy := []string{"node_name"}
-	for _, key := range req.GroupBy {
+	for _, key := range groupBy {
 		col := quoteIdentifier(key.Name)
 		latestConditionPerNodeSelectCols = append(latestConditionPerNodeSelectCols, fmt.Sprintf("tsfp.%s AS %s", col, col))
 		latestConditionPerNodeGroupBy = append(latestConditionPerNodeGroupBy, col)
@@ -244,21 +242,21 @@ func (m *module) getPerGroupNodeConditionCounts(
 	latestConditionPerNode.Select(latestConditionPerNodeSelectCols...)
 	latestConditionPerNode.From(fmt.Sprintf(
 		"%s.%s AS samples INNER JOIN time_series_fps AS tsfp ON samples.fingerprint = tsfp.fingerprint",
-		telemetrymetrics.DBName, samplesTable,
+		telemetrymetrics.DBName, distributedSamplesTable,
 	))
 	latestConditionPerNode.Where(
 		latestConditionPerNode.E("samples.metric_name", nodeConditionMetricName),
-		latestConditionPerNode.GE("samples.unix_milli", req.Start),
-		latestConditionPerNode.L("samples.unix_milli", req.End),
+		latestConditionPerNode.GE("samples.unix_milli", samplesStartMs),
+		latestConditionPerNode.L("samples.unix_milli", flooredEndMs),
 		"tsfp.node_name != ''",
 	)
 	latestConditionPerNode.GroupBy(latestConditionPerNodeGroupBy...)
 	latestConditionPerNodeSQL, latestConditionPerNodeArgs := latestConditionPerNode.BuildWithFlavor(sqlbuilder.ClickHouse)
 
 	// ----- countNodesPerCondition (outer SELECT) -----
-	countNodesPerConditionSelectCols := make([]string, 0, len(req.GroupBy)+2)
-	countNodesPerConditionGroupBy := make([]string, 0, len(req.GroupBy))
-	for _, key := range req.GroupBy {
+	countNodesPerConditionSelectCols := make([]string, 0, len(groupBy)+2)
+	countNodesPerConditionGroupBy := make([]string, 0, len(groupBy))
+	for _, key := range groupBy {
 		col := quoteIdentifier(key.Name)
 		countNodesPerConditionSelectCols = append(countNodesPerConditionSelectCols, col)
 		countNodesPerConditionGroupBy = append(countNodesPerConditionGroupBy, col)
@@ -289,8 +287,8 @@ func (m *module) getPerGroupNodeConditionCounts(
 
 	result := make(map[string]nodeConditionCounts)
 	for rows.Next() {
-		groupVals := make([]string, len(req.GroupBy))
-		scanPtrs := make([]any, 0, len(req.GroupBy)+2)
+		groupVals := make([]string, len(groupBy))
+		scanPtrs := make([]any, 0, len(groupBy)+2)
 		for i := range groupVals {
 			scanPtrs = append(scanPtrs, &groupVals[i])
 		}

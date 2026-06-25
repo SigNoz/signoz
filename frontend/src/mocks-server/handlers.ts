@@ -3,6 +3,8 @@ import { rest } from 'msw';
 import commonEnTranslation from '../../public/locales/en/common.json';
 import enTranslation from '../../public/locales/en/translation.json';
 import { allAlertChannels } from './__mockdata__/alerts';
+import { alertRulesFixture } from './__mockdata__/alert_rules';
+import { triggeredAlertsFixture } from './__mockdata__/triggered_alerts';
 import { billingSuccessResponse } from './__mockdata__/billing';
 import {
 	dashboardSuccessResponse,
@@ -235,6 +237,38 @@ export const handlers = [
 
 	rest.get('http://localhost/api/v1/channels', (_, res, ctx) =>
 		res(ctx.status(200), ctx.json({ data: allAlertChannels, status: 'success' })),
+	),
+	rest.get('http://localhost/api/v1/alerts', (_, res, ctx) =>
+		res(
+			ctx.status(200),
+			ctx.json({ data: triggeredAlertsFixture, status: 'success' }),
+		),
+	),
+	rest.get('http://localhost/api/v2/rules', (_, res, ctx) =>
+		res(
+			ctx.status(200),
+			ctx.json({ data: alertRulesFixture, status: 'success' }),
+		),
+	),
+	rest.post('http://localhost/api/v2/rules', async (req, res, ctx) => {
+		const body = (await req.json()) as { alert?: string };
+		return res(
+			ctx.status(201),
+			ctx.json({
+				data: {
+					...alertRulesFixture[0],
+					id: 'new-rule-id',
+					alert: body?.alert ?? 'New Rule',
+				},
+				status: 'success',
+			}),
+		);
+	}),
+	rest.patch('http://localhost/api/v2/rules/:id', (_, res, ctx) =>
+		res(ctx.status(200), ctx.json({ status: 'success' })),
+	),
+	rest.delete('http://localhost/api/v2/rules/:id', (_, res, ctx) =>
+		res(ctx.status(200), ctx.json({ status: 'success' })),
 	),
 	rest.delete('http://localhost/api/v1/channels/:id', (_, res, ctx) =>
 		res(

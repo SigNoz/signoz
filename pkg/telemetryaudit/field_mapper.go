@@ -57,14 +57,14 @@ func (m *fieldMapper) FieldFor(ctx context.Context, _, _ uint64, key *telemetryt
 		return "", err
 	}
 	if len(columns) != 1 {
-		return "", errors.Newf(errors.TypeInternal, errors.CodeInternal, "expected exactly 1 column, got %d", len(columns))
+		return "", errors.NewInternalf(errors.CodeInternal, "expected exactly 1 column, got %d", len(columns))
 	}
 	column := columns[0]
 
 	switch column.Type.GetType() {
 	case schema.ColumnTypeEnumJSON:
 		if key.FieldContext != telemetrytypes.FieldContextResource {
-			return "", errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "only resource context fields are supported for json columns in audit, got %s", key.FieldContext.String)
+			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "only resource context fields are supported for json columns in audit, got %s", key.FieldContext.String)
 		}
 		return fmt.Sprintf("%s.`%s`::String", column.Name, key.Name), nil
 	case schema.ColumnTypeEnumLowCardinality:
@@ -109,11 +109,8 @@ func (m *fieldMapper) ColumnExpressionFor(
 				field.FieldContext = telemetrytypes.FieldContextLog
 				fieldExpression, _ = m.FieldFor(ctx, tsStart, tsEnd, field)
 			} else {
-				correction, found := telemetrytypes.SuggestCorrection(field.Name, maps.Keys(keys))
-				if found {
-					return "", errors.Wrap(err, errors.TypeInvalidInput, errors.CodeInvalidInput, correction)
-				}
-				return "", errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field `%s` not found", field.Name)
+				wrappedErr := errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field `%s` not found", field.Name).WithSuggestions(errors.SuggestionsOnLevenshteinDistance(field.Name, maps.Keys(keys))...)
+				return "", wrappedErr
 			}
 		} else {
 			fieldExpression, _ = m.FieldFor(ctx, tsStart, tsEnd, keysForField[0])

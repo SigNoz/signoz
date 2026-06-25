@@ -1,10 +1,14 @@
 import { useCallback, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Dot, Sparkles } from '@signozhq/icons';
+import { Dot } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
+import Noz from 'components/Noz/Noz';
+import { NOZ_TOOLTIP_TITLE } from 'components/Noz/Noz.constants';
 import { Popover } from 'antd';
 import logEvent from 'api/common/logEvent';
+import { AIAssistantEvents } from 'container/AIAssistant/events';
+import { normalizePage } from 'container/AIAssistant/hooks/useAIAssistantAnalyticsContext';
 import {
 	openAIAssistant,
 	useAIAssistantStore,
@@ -19,6 +23,7 @@ import FeedbackModal from './FeedbackModal';
 import ShareURLModal from './ShareURLModal';
 
 import './HeaderRightSection.styles.scss';
+import { Typography } from '@signozhq/ui/typography';
 
 interface HeaderRightSectionProps {
 	enableAnnouncements: boolean;
@@ -48,6 +53,14 @@ function HeaderRightSection({
 		setOpenFeedbackModal(true);
 		setOpenShareURLModal(false);
 		setOpenAnnouncementsModal(false);
+	}, [location.pathname]);
+
+	const handleOpenAIAssistant = useCallback((): void => {
+		void logEvent(AIAssistantEvents.Opened, {
+			source: 'header',
+			currentPage: normalizePage(location.pathname),
+		});
+		openAIAssistant();
 	}, [location.pathname]);
 
 	const handleOpenShareURLModal = useCallback((): void => {
@@ -97,21 +110,22 @@ function HeaderRightSection({
 						</span>
 					) : null}
 
-					<TooltipSimple title="AI Assistant">
+					<TooltipSimple title={NOZ_TOOLTIP_TITLE}>
 						<Button
 							variant="solid"
 							color="secondary"
-							onClick={openAIAssistant}
+							className="noz-wave"
+							onClick={handleOpenAIAssistant}
 							aria-label={
 								showHeaderPendingBadge
 									? pendingUserInputCount === 1
-										? 'Open AI Assistant, 1 action needs your response'
-										: `Open AI Assistant, ${pendingUserInputCount} actions need your response`
-									: 'Open AI Assistant'
+										? 'Open Noz, 1 action needs your response'
+										: `Open Noz, ${pendingUserInputCount} actions need your response`
+									: 'Open Noz'
 							}
-							prefix={<Sparkles size={14} color="var(--primary)" />}
+							prefix={<Noz size={20} />}
 						>
-							AI Assistant
+							<Typography.Text>Noz</Typography.Text>
 						</Button>
 					</TooltipSimple>
 				</div>

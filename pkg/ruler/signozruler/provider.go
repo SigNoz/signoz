@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerstore/sqlalertmanagerstore"
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
@@ -16,6 +17,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/ruler/rulestore/sqlrulestore"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -44,7 +46,7 @@ func NewFactory(
 ) factory.ProviderFactory[ruler.Ruler, ruler.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, providerSettings factory.ProviderSettings, config ruler.Config) (ruler.Ruler, error) {
 		ruleStore := sqlrulestore.NewRuleStore(sqlstore, queryParser, providerSettings)
-		maintenanceStore := sqlrulestore.NewMaintenanceStore(sqlstore)
+		maintenanceStore := sqlalertmanagerstore.NewMaintenanceStore(sqlstore, providerSettings)
 
 		managerOpts := &rules.ManagerOptions{
 			TelemetryStore:         telemetryStore,
@@ -98,7 +100,16 @@ func (provider *provider) Collect(ctx context.Context, orgID valuer.UUID) (map[s
 		return nil, err
 	}
 
-	return ruletypes.NewStatsFromRules(rules), nil
+	stats := ruletypes.NewStatsFromRules(rules)
+
+	alertStats := provider.manager.AlertStats(ctx)
+	stats["alert.firing.count"] = alertStats.FiringRules
+	if !alertStats.LastFiredAt.IsZero() {
+		stats["alert.last_fired.time"] = alertStats.LastFiredAt.UTC()
+		stats["alert.last_fired.time_unix"] = alertStats.LastFiredAt.Unix()
+	}
+
+	return stats, nil
 }
 
 func (provider *provider) ListRuleStates(ctx context.Context) (*ruletypes.GettableRules, error) {
@@ -129,6 +140,6 @@ func (provider *provider) TestNotification(ctx context.Context, orgID valuer.UUI
 	return provider.manager.TestNotification(ctx, orgID, ruleStr)
 }
 
-func (provider *provider) MaintenanceStore() ruletypes.MaintenanceStore {
+func (provider *provider) MaintenanceStore() alertmanagertypes.MaintenanceStore {
 	return provider.manager.MaintenanceStore()
 }

@@ -41,7 +41,7 @@ func (c *conditionBuilder) conditionFor(
 	// TODO(Piyush): Update this to support multiple JSON columns based on evolutions
 	for _, column := range columns {
 		// TODO(Tushar): thread orgID here to evaluate correctly
-		if column.Type.GetType() == schema.ColumnTypeEnumJSON && c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{})) && key.Name != messageSubField {
+		if column.Type.GetType() == schema.ColumnTypeEnumJSON && key.FieldContext == telemetrytypes.FieldContextBody && c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{})) && key.Name != messageSubField {
 			valueType, value := InferDataType(value, operator, key)
 			cond, err := NewJSONConditionBuilder(key, valueType).buildJSONCondition(operator, value, sb)
 			if err != nil {
@@ -186,7 +186,7 @@ func (c *conditionBuilder) conditionFor(
 		column := columns[0]
 		if len(key.Evolutions) > 0 {
 			// we will use the corresponding column and its evolution entry for the query
-			newColumns, _, err := selectEvolutionsForColumns(columns, key.Evolutions, startNs, endNs)
+			newColumns, _, err := qbtypes.SelectEvolutionsForColumns(columns, key.Evolutions, startNs, endNs)
 			if err != nil {
 				return "", err
 			}

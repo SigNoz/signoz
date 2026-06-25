@@ -3,7 +3,6 @@
  * * The file has been auto-generated using Orval for SigNoz
  * * regenerate with 'pnpm generate:api'
  * SigNoz
- * OpenAPI spec version: 0.0.1
  */
 import { useMutation, useQuery } from 'react-query';
 import type {
@@ -38,7 +37,7 @@ export const handleExportRawDataPOST = (
 	params?: HandleExportRawDataPOSTParams,
 	signal?: AbortSignal,
 ) => {
-	return GeneratedAPIInstance<string>({
+	return GeneratedAPIInstance<void>({
 		url: `/api/v1/export_raw_data`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },

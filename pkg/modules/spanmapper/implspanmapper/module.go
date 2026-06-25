@@ -2,18 +2,24 @@ package implspanmapper
 
 import (
 	"context"
+	"encoding/json"
 
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/modules/spanmapper"
+	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
+	"github.com/SigNoz/signoz/pkg/types/opamptypes"
 	"github.com/SigNoz/signoz/pkg/types/spantypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type module struct {
-	store spantypes.SpanMapperStore
+	store   spantypes.SpanMapperStore
+	flagger flagger.Flagger
 }
 
-func NewModule(store spantypes.SpanMapperStore) spanmapper.Module {
-	return &module{store: store}
+func NewModule(store spantypes.SpanMapperStore, flagger flagger.Flagger) spanmapper.Module {
+	return &module{store: store, flagger: flagger}
 }
 
 func (module *module) ListGroups(ctx context.Context, orgID valuer.UUID, q *spantypes.ListSpanMapperGroupsQuery) ([]*spantypes.SpanMapperGroup, error) {
@@ -34,11 +40,22 @@ func (module *module) UpdateGroup(ctx context.Context, orgID, id valuer.UUID, na
 		return err
 	}
 	group.Update(name, condition, enabled, updatedBy)
-	return module.store.UpdateGroup(ctx, group)
+
+	err = module.store.UpdateGroup(ctx, group)
+	if err != nil {
+		return err
+	}
+	agentConf.NotifyConfigUpdate(ctx)
+	return nil
 }
 
 func (module *module) DeleteGroup(ctx context.Context, orgID, id valuer.UUID) error {
-	return module.store.DeleteGroup(ctx, orgID, id)
+	err := module.store.DeleteGroup(ctx, orgID, id)
+	if err != nil {
+		return err
+	}
+	agentConf.NotifyConfigUpdate(ctx)
+	return nil
 }
 
 func (module *module) ListMappers(ctx context.Context, orgID, groupID valuer.UUID) ([]*spantypes.SpanMapper, error) {
@@ -54,7 +71,12 @@ func (module *module) CreateMapper(ctx context.Context, orgID, groupID valuer.UU
 	if _, err := module.store.GetGroup(ctx, orgID, groupID); err != nil {
 		return err
 	}
-	return module.store.CreateMapper(ctx, mapper)
+	err := module.store.CreateMapper(ctx, mapper)
+	if err != nil {
+		return err
+	}
+	agentConf.NotifyConfigUpdate(ctx)
+	return nil
 }
 
 func (module *module) UpdateMapper(ctx context.Context, orgID, groupID, id valuer.UUID, fieldContext spantypes.FieldContext, config *spantypes.SpanMapperConfig, enabled *bool, updatedBy string) error {
@@ -66,9 +88,82 @@ func (module *module) UpdateMapper(ctx context.Context, orgID, groupID, id value
 		return err
 	}
 	mapper.Update(fieldContext, config, enabled, updatedBy)
-	return module.store.UpdateMapper(ctx, mapper)
+	err = module.store.UpdateMapper(ctx, mapper)
+	if err != nil {
+		return err
+	}
+	agentConf.NotifyConfigUpdate(ctx)
+	return nil
 }
 
 func (module *module) DeleteMapper(ctx context.Context, orgID, groupID, id valuer.UUID) error {
-	return module.store.DeleteMapper(ctx, orgID, groupID, id)
+	err := module.store.DeleteMapper(ctx, orgID, groupID, id)
+	if err != nil {
+		return err
+	}
+	agentConf.NotifyConfigUpdate(ctx)
+	return nil
+}
+
+func (module *module) AgentFeatureType() agentConf.AgentFeatureType {
+	return spantypes.SpanAttrMappingFeatureType
+}
+
+func (module *module) RecommendAgentConfig(orgID valuer.UUID, currentConfYaml []byte, configVersion *opamptypes.AgentConfigVersion) ([]byte, string, error) {
+	ctx := context.Background()
+
+	// Skip the llm pricing processor unless AI observability is enabled for the org.
+	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
+	enabled, err := module.flagger.Boolean(ctx, flagger.FeatureEnableAIObservability, evalCtx)
+	if err != nil {
+		return nil, "", err
+	}
+	if !enabled {
+		return currentConfYaml, "", nil
+	}
+
+	enabledMappers, err := module.listEnabledGroupsWithMappers(ctx, orgID)
+	if err != nil {
+		return nil, "", err
+	}
+
+	updatedConf, err := spantypes.GenerateCollectorConfigWithSpanMapperProcessor(currentConfYaml, enabledMappers)
+	if err != nil {
+		return nil, "", err
+	}
+
+	serialized, err := json.Marshal(enabled)
+	if err != nil {
+		return nil, "", err
+	}
+
+	return updatedConf, string(serialized), nil
+}
+
+// listEnabledGroupsWithMappers returns groups with their mappers.
+func (module *module) listEnabledGroupsWithMappers(ctx context.Context, orgID valuer.UUID) ([]*spantypes.SpanMapperGroupWithMappers, error) {
+	enabled := true
+	groups, err := module.store.ListGroups(ctx, orgID, &spantypes.ListSpanMapperGroupsQuery{Enabled: &enabled})
+	if err != nil {
+		return nil, err
+	}
+
+	out := make([]*spantypes.SpanMapperGroupWithMappers, 0, len(groups))
+	for _, g := range groups {
+		mappers, err := module.store.ListMappers(ctx, orgID, g.ID)
+		if err != nil {
+			return nil, err
+		}
+		enabledMappers := make([]*spantypes.SpanMapper, 0, len(mappers))
+		for _, m := range mappers {
+			if m.Enabled {
+				enabledMappers = append(enabledMappers, m)
+			}
+		}
+		if len(enabledMappers) == 0 {
+			continue
+		}
+		out = append(out, &spantypes.SpanMapperGroupWithMappers{Group: g, Mappers: enabledMappers})
+	}
+	return out, nil
 }

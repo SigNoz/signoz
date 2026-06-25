@@ -68,7 +68,7 @@ var (
 	ResourceMetaResourceSavedView                        = NewResourceMetaResource(KindSavedView)
 	ResourceMetaResourceTraceFunnel                      = NewResourceMetaResource(KindTraceFunnel)
 	ResourceMetaResourceFactorPassword                   = NewResourceMetaResource(KindFactorPassword)
-	ResourceMetaResourceFactorAPIKey                     = NewResourceMetaResource(KindFactorAPIKey)
+	ResourceMetaResourceFactorAPIKey                     = NewResourceMetaResource(KindFactorAPIKey, VerbCreate, VerbList, VerbRead, VerbUpdate, VerbDelete)
 	ResourceMetaResourceLicense                          = NewResourceMetaResource(KindLicense)
 	ResourceMetaResourceSubscription                     = NewResourceMetaResource(KindSubscription)
 	ResourceTelemetryResourceLogs                        = NewResourceTelemetryResource(KindLogs)

@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
 import { Empty } from 'antd';
-import type { RadioChangeEvent } from 'antd/lib';
 import SignozRadioGroup from 'components/SignozRadioGroup/SignozRadioGroup';
 import { History, Table } from '@signozhq/icons';
 import { DataSource } from 'types/common/queryBuilder';
@@ -60,8 +59,8 @@ function InfraMetrics({
 		return options;
 	}, [podName]);
 
-	const handleModeChange = (e: RadioChangeEvent): void => {
-		setSelectedView(e.target.value);
+	const handleModeChange = (value: string): void => {
+		setSelectedView(value);
 	};
 
 	if (!podName && !nodeName && !hostName) {

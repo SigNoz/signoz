@@ -1,7 +1,6 @@
 import { USER_PREFERENCES } from 'constants/userPreferences';
 import { UserPreference } from 'types/api/preferences/preference';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { WaterfallAggregationResponse } from 'types/api/trace/getTraceV3';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { create } from 'zustand';
 
@@ -11,10 +10,7 @@ import {
 	ColorByOption,
 	DEFAULT_COLOR_BY_FIELD,
 } from '../constants';
-import {
-	AGGREGATIONS,
-	getAggregationMap as findAggregationMap,
-} from '../utils/aggregations';
+import { toTelemetryFieldKey } from '../utils/previewFields';
 
 interface MutateOptions {
 	onSuccess?: () => void;
@@ -29,7 +25,9 @@ type MutateUserPreference = (
 
 interface TraceStoreState {
 	// --- Inputs synced from React layer via TraceStoreSync ---
-	aggregations: WaterfallAggregationResponse[] | undefined;
+	// Fields present on loaded spans; gates color-by options. `undefined` while
+	// loading so we keep trusting the persisted field.
+	availableColorByFieldNames: string[] | undefined;
 	userPreferences: UserPreference[] | null;
 	updateUserPreferenceInContext: UpdateUserPreferenceInContext | null;
 	mutateUserPreference: MutateUserPreference | null;
@@ -37,12 +35,10 @@ interface TraceStoreState {
 	// --- Derived state (cached for reference stability) ---
 	colorByField: TelemetryFieldKey;
 	availableColorByOptions: ColorByOption[];
-	previewFields: BaseAutocompleteData[];
+	previewFields: TelemetryFieldKey[];
 
 	// --- Setters used only by TraceStoreSync ---
-	setAggregations: (
-		aggregations: WaterfallAggregationResponse[] | undefined,
-	) => void;
+	setAvailableColorByFields: (fieldNames: string[] | undefined) => void;
 	setUserPreferences: (userPreferences: UserPreference[] | null) => void;
 	setCallbacks: (callbacks: {
 		updateUserPreferenceInContext: UpdateUserPreferenceInContext;
@@ -51,7 +47,7 @@ interface TraceStoreState {
 
 	// --- Public actions (called from components) ---
 	setColorByField: (field: TelemetryFieldKey) => void;
-	setPreviewFields: (next: BaseAutocompleteData[]) => void;
+	setPreviewFields: (next: TelemetryFieldKey[]) => void;
 }
 
 /**
@@ -70,23 +66,18 @@ function getPersistedColorByField(
 
 /**
  * Re-derives `colorByField` + `availableColorByOptions` from the two inputs.
- * Preserves the "trust persisted while aggregations load" rule so the
- * flamegraph doesn't repaint when the aggregations response arrives.
+ * Preserves the "trust persisted while spans load" rule so the flamegraph
+ * doesn't repaint when the waterfall response arrives.
  */
 function deriveColorState(
-	aggregations: WaterfallAggregationResponse[] | undefined,
+	availableColorByFieldNames: string[] | undefined,
 	userPreferences: UserPreference[] | null,
 ): Pick<TraceStoreState, 'colorByField' | 'availableColorByOptions'> {
 	const isFieldAvailable = (fieldName: string): boolean => {
 		if (fieldName === DEFAULT_COLOR_BY_FIELD.name) {
 			return true;
 		}
-		const map = findAggregationMap(
-			aggregations,
-			AGGREGATIONS.EXEC_TIME_PCT,
-			fieldName,
-		);
-		return !!map && Object.keys(map).length > 0;
+		return !!availableColorByFieldNames?.includes(fieldName);
 	};
 
 	const availableColorByOptions = COLOR_BY_OPTIONS.filter((opt) =>
@@ -94,10 +85,10 @@ function deriveColorState(
 	);
 
 	const persistedColorByField = getPersistedColorByField(userPreferences);
-	// While aggregations are loading, trust persisted — don't flip to default
-	// just because we haven't confirmed availability yet.
+	// While loading, trust persisted — don't flip to default prematurely.
 	const colorByField =
-		aggregations === undefined || isFieldAvailable(persistedColorByField.name)
+		availableColorByFieldNames === undefined ||
+		isFieldAvailable(persistedColorByField.name)
 			? persistedColorByField
 			: DEFAULT_COLOR_BY_FIELD;
 
@@ -105,25 +96,35 @@ function deriveColorState(
 }
 
 /**
- * Reads preview fields from user preferences and filters out malformed entries.
+ * Reads preview fields from user preferences and normalizes them to
+ * `TelemetryFieldKey`. Legacy entries persisted as `BaseAutocompleteData` (with
+ * a `.key` instead of `.name`) are upgraded in-place so existing users don't
+ * lose their saved preview-field selection.
  */
 function derivePreviewFields(
 	userPreferences: UserPreference[] | null,
-): BaseAutocompleteData[] {
+): TelemetryFieldKey[] {
 	const pref = userPreferences?.find(
 		(p) => p.name === USER_PREFERENCES.SPAN_DETAILS_PREVIEW_ATTRIBUTES,
 	);
-	const raw = (pref?.value as BaseAutocompleteData[] | undefined) ?? [];
-	return raw.filter(
-		(f): f is BaseAutocompleteData =>
-			typeof f === 'object' &&
-			f !== null &&
-			typeof (f as { key?: unknown }).key === 'string',
-	);
+	const raw = (pref?.value as unknown[] | undefined) ?? [];
+	const result: TelemetryFieldKey[] = [];
+	for (const entry of raw) {
+		if (typeof entry !== 'object' || entry === null) {
+			continue;
+		}
+		const candidate = entry as { name?: unknown; key?: unknown };
+		if (typeof candidate.name === 'string') {
+			result.push(entry as TelemetryFieldKey);
+		} else if (typeof candidate.key === 'string') {
+			result.push(toTelemetryFieldKey(entry as BaseAutocompleteData));
+		}
+	}
+	return result;
 }
 
 export const useTraceStore = create<TraceStoreState>()((set, get) => ({
-	aggregations: undefined,
+	availableColorByFieldNames: undefined,
 	userPreferences: null,
 	updateUserPreferenceInContext: null,
 	mutateUserPreference: null,
@@ -134,19 +135,19 @@ export const useTraceStore = create<TraceStoreState>()((set, get) => ({
 	),
 	previewFields: [],
 
-	setAggregations: (aggregations): void => {
+	setAvailableColorByFields: (availableColorByFieldNames): void => {
 		const { userPreferences } = get();
 		set({
-			aggregations,
-			...deriveColorState(aggregations, userPreferences),
+			availableColorByFieldNames,
+			...deriveColorState(availableColorByFieldNames, userPreferences),
 		});
 	},
 
 	setUserPreferences: (userPreferences): void => {
-		const { aggregations } = get();
+		const { availableColorByFieldNames } = get();
 		set({
 			userPreferences,
-			...deriveColorState(aggregations, userPreferences),
+			...deriveColorState(availableColorByFieldNames, userPreferences),
 			previewFields: derivePreviewFields(userPreferences),
 		});
 	},
@@ -224,9 +225,9 @@ export const useTraceStore = create<TraceStoreState>()((set, get) => ({
 	},
 }));
 
-export const setTraceStoreAggregations = (
-	aggregations: WaterfallAggregationResponse[] | undefined,
-): void => useTraceStore.getState().setAggregations(aggregations);
+export const setTraceStoreAvailableColorByFields = (
+	fieldNames: string[] | undefined,
+): void => useTraceStore.getState().setAvailableColorByFields(fieldNames);
 
 export const setTraceStoreUserPreferences = (
 	userPreferences: UserPreference[] | null,

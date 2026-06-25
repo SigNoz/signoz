@@ -6,14 +6,34 @@ export default {
 			{
 				kind: 'factor-api-key',
 				type: 'metaresource',
+				allowedVerbs: ['create', 'delete', 'list', 'read', 'update'],
 			},
 			{
 				kind: 'role',
 				type: 'role',
+				allowedVerbs: [
+					'assignee',
+					'attach',
+					'create',
+					'delete',
+					'detach',
+					'list',
+					'read',
+					'update',
+				],
 			},
 			{
 				kind: 'serviceaccount',
 				type: 'serviceaccount',
+				allowedVerbs: [
+					'attach',
+					'create',
+					'delete',
+					'detach',
+					'list',
+					'read',
+					'update',
+				],
 			},
 		],
 		relations: {

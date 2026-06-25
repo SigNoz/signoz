@@ -6,7 +6,7 @@ import uuid
 from abc import ABC
 from collections.abc import Callable, Generator
 from enum import Enum
-from typing import Any
+from typing import Any, Literal
 from urllib.parse import urlparse
 
 import numpy as np
@@ -15,6 +15,42 @@ import pytest
 from fixtures import types
 from fixtures.fingerprint import LogsOrTracesFingerprint
 from fixtures.time import parse_duration, parse_timestamp
+
+# All keys returned by the trace list endpoint when selectFields is empty:
+# every intrinsic and calculated column, plus the merged `attributes` and
+# `resource` maps that wrap the contextual columns in the response layer.
+ALL_SELECT_FIELDS = [
+    # all intrinsic columns
+    "timestamp",
+    "trace_id",
+    "span_id",
+    "trace_state",
+    "parent_span_id",
+    "flags",
+    "name",
+    "kind",
+    "kind_string",
+    "duration_nano",
+    "status_code",
+    "status_message",
+    "status_code_string",
+    "events",
+    "links",
+    # all calculated columns
+    "response_status_code",
+    "external_http_url",
+    "http_url",
+    "external_http_method",
+    "http_method",
+    "http_host",
+    "db_name",
+    "db_operation",
+    "has_error",
+    "is_remote",
+    # all contextual columns (merged in response layer)
+    "attributes",
+    "resource",
+]
 
 
 class TracesKind(Enum):
@@ -236,8 +272,10 @@ class Traces(ABC):
     attributes_number: dict[str, np.float64]
     attributes_bool: dict[str, bool]
     resources_string: dict[str, str]
-    events: list[str]
-    links: str
+    # Accepting parsed events and links, but will be stored as list[str], str in db
+    events: list[dict[str, Any]]
+    links: list[dict[str, Any]]
+    resource_json: dict[str, str]
     response_status_code: str
     external_http_url: str
     http_url: str
@@ -273,6 +311,7 @@ class Traces(ABC):
         links: list[TracesLink] = [],
         trace_state: str = "",
         flags: np.uint32 = 0,
+        resource_write_mode: Literal["legacy_only", "dual_write"] = "dual_write",
     ) -> None:
         if timestamp is None:
             timestamp = datetime.datetime.now()
@@ -322,8 +361,11 @@ class Traces(ABC):
         self.db_name = ""
         self.db_operation = ""
 
-        # Process resources and derive service_name
+        # Process resources and derive service_name. Spans written before the
+        # JSON-resource evolution time only populate resources_string (legacy_only);
+        # spans at or after the evolution time dual-write to both columns.
         self.resources_string = {k: str(v) for k, v in resources.items()}
+        self.resource_json = {} if resource_write_mode == "legacy_only" else dict(self.resources_string)
         self.service_name = self.resources_string.get("service.name", "default-service")
 
         for k, v in self.resources_string.items():
@@ -423,10 +465,17 @@ class Traces(ABC):
                     )
                 )
 
-        # Process events and derive error events
+        # Process events and derive error events. self.events holds the parsed
+        # response shape; np_arr() encodes back to the DB format on insert.
         self.events = []
         for event in events:
-            self.events.append(json.dumps([event.name, event.time_unix_nano, event.attribute_map]))
+            self.events.append(
+                {
+                    "name": event.name,
+                    "timeUnixNano": int(event.time_unix_nano),
+                    "attributes": dict(event.attribute_map),
+                }
+            )
 
             # Create error events for exception events (following Go exporter logic)
             if event.name == "exception":
@@ -448,7 +497,26 @@ class Traces(ABC):
                 ),
             )
 
-        self.links = json.dumps([link.__dict__() for link in links_copy], separators=(",", ":"))
+        # self.links holds the parsed response shape (trace_id/span_id only;
+        # ref_type is dropped to match the API). np_arr() re-encodes for DB insert.
+        self.links = [{"traceId": link.trace_id, "spanId": link.span_id} for link in links_copy]
+        self._links_db = json.dumps(
+            [link.__dict__() for link in links_copy],
+            separators=(",", ":"),
+        )
+        # DB shape per event: {"name", "timeUnixNano", "attributeMap"}. Must match
+        # what the consume-layer parser in pkg/types/spantypes expects.
+        self._events_db = [
+            json.dumps(
+                {
+                    "name": event.name,
+                    "timeUnixNano": int(event.time_unix_nano),
+                    "attributeMap": dict(event.attribute_map),
+                },
+                separators=(",", ":"),
+            )
+            for event in events
+        ]
 
         # Initialize resource
         self.resource = []
@@ -563,8 +631,8 @@ class Traces(ABC):
                 self.attributes_number,
                 self.attributes_bool,
                 self.resources_string,
-                self.events,
-                self.links,
+                self._events_db,
+                self._links_db,
                 self.response_status_code,
                 self.external_http_url,
                 self.http_url,
@@ -575,7 +643,7 @@ class Traces(ABC):
                 self.db_operation,
                 self.has_error,
                 self.is_remote,
-                self.resources_string,
+                self.resource_json,
             ],
             dtype=object,
         )

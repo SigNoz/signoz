@@ -22,6 +22,30 @@ func NewHandler(m inframonitoring.Module) inframonitoring.Handler {
 	}
 }
 
+func (h *handler) GetChecks(rw http.ResponseWriter, req *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(req.Context())
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
+	var parsedReq inframonitoringtypes.PostableChecks
+	if err := binding.Query.BindQuery(req.URL.Query(), &parsedReq); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	result, err := h.module.GetChecks(req.Context(), orgID, &parsedReq)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, result)
+}
+
 func (h *handler) ListHosts(rw http.ResponseWriter, req *http.Request) {
 	claims, err := authtypes.ClaimsFromContext(req.Context())
 	if err != nil {
@@ -230,6 +254,30 @@ func (h *handler) ListJobs(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	result, err := h.module.ListJobs(req.Context(), orgID, &parsedReq)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, result)
+}
+
+func (h *handler) ListDaemonSets(rw http.ResponseWriter, req *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(req.Context())
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
+	var parsedReq inframonitoringtypes.PostableDaemonSets
+	if err := binding.JSON.BindBody(req.Body, &parsedReq); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	result, err := h.module.ListDaemonSets(req.Context(), orgID, &parsedReq)
 	if err != nil {
 		render.Error(rw, err)
 		return
