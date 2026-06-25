@@ -66,7 +66,7 @@ export function getModelCostsColumns({
 			width: { min: 120 },
 			enableMove: false,
 			cell: ({ row }): JSX.Element => (
-				<Typography.Text code color="muted">
+				<Typography.Text>
 					{formatPricePerMillion(row.pricing?.input)}
 				</Typography.Text>
 			),
@@ -77,7 +77,7 @@ export function getModelCostsColumns({
 			width: { min: 120 },
 			enableMove: false,
 			cell: ({ row }): JSX.Element => (
-				<Typography.Text code color="muted">
+				<Typography.Text>
 					{formatPricePerMillion(row.pricing?.output)}
 				</Typography.Text>
 			),
