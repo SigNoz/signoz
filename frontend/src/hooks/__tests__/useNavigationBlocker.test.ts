@@ -364,7 +364,7 @@ describe('useNavigationBlocker', () => {
 			const result = beforeUnloadHandler(mockEvent);
 
 			expect(mockEvent.preventDefault).toHaveBeenCalled();
-			expect(result).toBe('');
+			expect(result).toBeUndefined();
 		});
 	});
 });
