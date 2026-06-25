@@ -76,80 +76,43 @@ func (builderQuerySpec) PrepareJSONSchema(s *jsonschema.Schema) error {
 // QueryBuilderQuery[T] (see builderQuerySpec), so `type` maps 1:1 to one
 // variant. Runtime decoding is unchanged — QueryEnvelope.UnmarshalJSON still
 // dispatches by signal.
+// The `type` discriminator field is required:"true" on every variant so
+// oapi-codegen renders it non-pointer; its From<Variant> assigns the
+// discriminator string literal directly to the field, which only compiles on a
+// non-pointer field (an optional field renders as a pointer).
 type queryEnvelopeBuilder struct {
-	Type QueryType        `json:"type" description:"The type of the query."`
+	Type QueryType        `json:"type" required:"true" description:"The type of the query."`
 	Spec builderQuerySpec `json:"spec" description:"The builder query specification."`
 }
 
 // queryEnvelopeFormula is the OpenAPI schema for a QueryEnvelope with type=builder_formula.
 type queryEnvelopeFormula struct {
-	Type QueryType           `json:"type" description:"The type of the query."`
+	Type QueryType           `json:"type" required:"true" description:"The type of the query."`
 	Spec QueryBuilderFormula `json:"spec" description:"The formula specification."`
 }
 
 // queryEnvelopeJoin is the OpenAPI schema for a QueryEnvelope with type=builder_join.
 type queryEnvelopeJoin struct {
-	Type QueryType        `json:"type" description:"The type of the query."`
+	Type QueryType        `json:"type" required:"true" description:"The type of the query."`
 	Spec QueryBuilderJoin `json:"spec" description:"The join specification."`
 }
 
 // queryEnvelopeTraceOperator is the OpenAPI schema for a QueryEnvelope with type=builder_trace_operator.
 type queryEnvelopeTraceOperator struct {
-	Type QueryType                 `json:"type" description:"The type of the query."`
+	Type QueryType                 `json:"type" required:"true" description:"The type of the query."`
 	Spec QueryBuilderTraceOperator `json:"spec" description:"The trace operator specification."`
 }
 
 // queryEnvelopePromQL is the OpenAPI schema for a QueryEnvelope with type=promql.
 type queryEnvelopePromQL struct {
-	Type QueryType `json:"type" description:"The type of the query."`
+	Type QueryType `json:"type" required:"true" description:"The type of the query."`
 	Spec PromQuery `json:"spec" description:"The PromQL query specification."`
 }
 
 // queryEnvelopeClickHouseSQL is the OpenAPI schema for a QueryEnvelope with type=clickhouse_sql.
 type queryEnvelopeClickHouseSQL struct {
-	Type QueryType       `json:"type" description:"The type of the query."`
+	Type QueryType       `json:"type" required:"true" description:"The type of the query."`
 	Spec ClickHouseQuery `json:"spec" description:"The ClickHouse SQL query specification."`
-}
-
-// pinQueryType overrides a variant's `type` property with a single-value plain
-// string enum (replacing the QueryType $ref). The QueryEnvelope discriminator
-// dispatches on `type`, and oapi-codegen's From<Variant> assigns the value as a
-// plain string — a $ref to the typed QueryType enum makes that assignment
-// (`v.Type = "builder_query"`) fail to compile.
-func pinQueryType(s *jsonschema.Schema, value string) error {
-	if _, ok := s.Properties["type"]; !ok {
-		return nil
-	}
-	s.Properties["type"] = (&jsonschema.Schema{}).
-		WithType(jsonschema.String.Type()).
-		WithEnum(value).
-		ToSchemaOrBool()
-
-	return nil
-}
-
-func (queryEnvelopeBuilder) PrepareJSONSchema(s *jsonschema.Schema) error {
-	return pinQueryType(s, QueryTypeBuilder.StringValue())
-}
-
-func (queryEnvelopeFormula) PrepareJSONSchema(s *jsonschema.Schema) error {
-	return pinQueryType(s, QueryTypeFormula.StringValue())
-}
-
-func (queryEnvelopeJoin) PrepareJSONSchema(s *jsonschema.Schema) error {
-	return pinQueryType(s, QueryTypeJoin.StringValue())
-}
-
-func (queryEnvelopeTraceOperator) PrepareJSONSchema(s *jsonschema.Schema) error {
-	return pinQueryType(s, QueryTypeTraceOperator.StringValue())
-}
-
-func (queryEnvelopePromQL) PrepareJSONSchema(s *jsonschema.Schema) error {
-	return pinQueryType(s, QueryTypePromQL.StringValue())
-}
-
-func (queryEnvelopeClickHouseSQL) PrepareJSONSchema(s *jsonschema.Schema) error {
-	return pinQueryType(s, QueryTypeClickHouseSQL.StringValue())
 }
 
 var _ jsonschema.OneOfExposer = QueryEnvelope{}
@@ -173,7 +136,8 @@ var _ jsonschema.Preparer = QueryEnvelope{}
 // `type`; signoz.attachDiscriminators promotes it to a real OpenAPI 3
 // discriminator (and strips the duplicate base properties), so oapi-codegen
 // emits ValueByDiscriminator and generators dispatch the union mechanically.
-// Each variant pins its `type` to a plain-string value (see pinQueryType), and
+// Each variant marks `type` required:"true" so oapi-codegen renders it
+// non-pointer (its From<Variant> assigns the discriminator literal directly).
 // builder_query maps 1:1 because its three signal shapes nest under the single
 // queryEnvelopeBuilder variant (discriminated again by signal).
 func (QueryEnvelope) PrepareJSONSchema(s *jsonschema.Schema) error {
