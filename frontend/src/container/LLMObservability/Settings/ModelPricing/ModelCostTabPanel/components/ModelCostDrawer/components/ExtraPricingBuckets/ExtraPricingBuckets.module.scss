@@ -1,17 +1,17 @@
 .drawerSection {
-	composes: drawerSection from './shared.module.scss';
+	composes: drawerSection from '../../shared.module.scss';
 }
 
 .fieldLabel {
-	composes: fieldLabel from './shared.module.scss';
+	composes: fieldLabel from '../../shared.module.scss';
 }
 
 .fullWidth {
-	composes: fullWidth from './shared.module.scss';
+	composes: fullWidth from '../../shared.module.scss';
 }
 
 .pricingField {
-	composes: pricingField from './shared.module.scss';
+	composes: pricingField from '../../shared.module.scss';
 }
 
 .cacheModeField {

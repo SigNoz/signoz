@@ -1,17 +1,17 @@
 .drawerSection {
-	composes: drawerSection from './shared.module.scss';
+	composes: drawerSection from '../../shared.module.scss';
 }
 
 .drawerSurface {
-	composes: drawerSurface from './shared.module.scss';
+	composes: drawerSurface from '../../shared.module.scss';
 }
 
 .drawerSurfaceHead {
-	composes: drawerSurfaceHead from './shared.module.scss';
+	composes: drawerSurfaceHead from '../../shared.module.scss';
 }
 
 .managedLabel {
-	composes: managedLabel from './shared.module.scss';
+	composes: managedLabel from '../../shared.module.scss';
 }
 
 .sourceRadioGroup {

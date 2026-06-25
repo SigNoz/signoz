@@ -2,10 +2,10 @@ import { Input } from '@signozhq/ui/input';
 import { Lock } from '@signozhq/icons';
 import cx from 'classnames';
 
-import ExtraPricingBuckets from './ExtraPricingBuckets';
+import ExtraPricingBuckets from '../ExtraPricingBuckets';
 import styles from './PricingFields.module.scss';
-import { parsePricingAmount } from '../../../utils';
-import type { DrawerDraft } from '../../../types';
+import { parsePricingAmount } from '../../../../../utils';
+import type { DrawerDraft } from '../../../../../types';
 
 type Pricing = DrawerDraft['pricing'];
 

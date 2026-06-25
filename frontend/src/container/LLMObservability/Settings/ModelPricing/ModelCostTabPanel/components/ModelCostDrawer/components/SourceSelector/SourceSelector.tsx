@@ -79,11 +79,7 @@ function SourceSelector({
 				</RadioGroupItem>
 			</RadioGroup>
 			{showResetConfirm && (
-				<div
-					className={styles.resetConfirm}
-					role="dialog"
-					aria-label="Reset to default pricing"
-				>
+				<div className={styles.resetConfirm} aria-label="Reset to default pricing">
 					<p>
 						Reset to default pricing? Custom values will be discarded. It might take
 						24 hours for changes to take effect.

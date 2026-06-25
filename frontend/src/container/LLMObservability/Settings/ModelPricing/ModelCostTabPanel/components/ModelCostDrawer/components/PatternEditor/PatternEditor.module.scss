@@ -1,13 +1,13 @@
 .drawerSection {
-	composes: drawerSection from './shared.module.scss';
+	composes: drawerSection from '../../shared.module.scss';
 }
 
 .fieldLabel {
-	composes: fieldLabel from './shared.module.scss';
+	composes: fieldLabel from '../../shared.module.scss';
 }
 
 .help {
-	composes: help from './shared.module.scss';
+	composes: help from '../../shared.module.scss';
 }
 
 .muted {

@@ -1,2 +1,2 @@
 export { default } from './ModelCostDrawer';
-export { useModelCostDrawer } from './useModelCostDrawer';
+export { useModelCostDrawer } from './hooks/useModelCostDrawer';

@@ -5,9 +5,9 @@ import { SelectSimple } from '@signozhq/ui/select';
 import { Trash2 } from '@signozhq/icons';
 import { Controller, useForm } from 'react-hook-form';
 
-import PatternEditor from './PatternEditor';
-import PricingFields from './PricingFields';
-import SourceSelector from './SourceSelector';
+import PatternEditor from './components/PatternEditor';
+import PricingFields from './components/PricingFields';
+import SourceSelector from './components/SourceSelector';
 import { PROVIDER_OPTIONS } from '../../../constants';
 import styles from './ModelCostDrawer.module.scss';
 import {
