@@ -337,6 +337,7 @@ export const settingsNavSections: SettingsNavSection[] = [
 				isEnabled: true,
 				itemKey: 'account',
 			},
+			// TODO(@SigNoz/pulse-frontend): https://github.com/SigNoz/engineering-pod/issues/5323
 			{
 				key: ROUTES.ALL_CHANNELS,
 				label: 'Notification Channels',

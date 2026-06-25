@@ -83,6 +83,10 @@ func (provider *provider) Get(ctx context.Context, orgID valuer.UUID, id valuer.
 	return provider.store.Get(ctx, orgID, id)
 }
 
+func (provider *provider) GetWithTransactionGroups(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*authtypes.RoleWithTransactionGroups, error) {
+	return nil, errors.Newf(errors.TypeUnsupported, authtypes.ErrCodeRoleUnsupported, "not implemented")
+}
+
 func (provider *provider) GetByOrgIDAndName(ctx context.Context, orgID valuer.UUID, name string) (*authtypes.Role, error) {
 	return provider.store.GetByOrgIDAndName(ctx, orgID, name)
 }
@@ -168,7 +172,7 @@ func (provider *provider) CreateManagedUserRoleTransactions(ctx context.Context,
 	return provider.Grant(ctx, orgID, []string{authtypes.SigNozAdminRoleName}, authtypes.MustNewSubject(coretypes.NewResourceUser(), userID.String(), orgID, nil))
 }
 
-func (setter *provider) Create(_ context.Context, _ valuer.UUID, _ *authtypes.Role) error {
+func (setter *provider) Create(_ context.Context, _ valuer.UUID, _ *authtypes.RoleWithTransactionGroups) error {
 	return errors.Newf(errors.TypeUnsupported, authtypes.ErrCodeRoleUnsupported, "not implemented")
 }
 
@@ -178,6 +182,10 @@ func (provider *provider) GetOrCreate(_ context.Context, _ valuer.UUID, _ *autht
 
 func (provider *provider) GetObjects(ctx context.Context, orgID valuer.UUID, id valuer.UUID, relation authtypes.Relation) ([]*coretypes.Object, error) {
 	return nil, errors.Newf(errors.TypeUnsupported, authtypes.ErrCodeRoleUnsupported, "not implemented")
+}
+
+func (provider *provider) Update(_ context.Context, _ valuer.UUID, _ *authtypes.RoleWithTransactionGroups) error {
+	return errors.Newf(errors.TypeUnsupported, authtypes.ErrCodeRoleUnsupported, "not implemented")
 }
 
 func (provider *provider) Patch(_ context.Context, _ valuer.UUID, _ *authtypes.Role) error {

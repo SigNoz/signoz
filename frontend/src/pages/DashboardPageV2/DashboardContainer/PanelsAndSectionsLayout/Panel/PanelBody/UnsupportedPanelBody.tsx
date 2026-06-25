@@ -7,10 +7,8 @@ interface UnsupportedPanelBodyProps {
 }
 
 /**
- * Body shown when no renderer is registered for the panel's kind. Split out from
- * `PanelBody` so that `PanelBody` only ever runs with a resolved renderer — the
- * "kind not yet supported" path is handled here, before any data fetching is
- * surfaced.
+ * Body shown when no renderer is registered for the panel's kind. Split out so
+ * `PanelBody` only ever runs with a resolved renderer.
  */
 function UnsupportedPanelBody({
 	kind,
