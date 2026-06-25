@@ -4267,76 +4267,19 @@ export interface DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDa
 export enum DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5CompositeQueryDTOKind {
 	'signoz/CompositeQuery' = 'signoz/CompositeQuery',
 }
-export type Querybuildertypesv5BuilderAggregationDTO =
-	| Querybuildertypesv5TraceAggregationDTO
-	| Querybuildertypesv5LogAggregationDTO
-	| Querybuildertypesv5MetricAggregationDTO;
-
-export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5BuilderAggregationDTO {
-	/**
-	 * @type array
-	 */
-	aggregations?: Querybuildertypesv5BuilderAggregationDTO[];
-	/**
-	 * @type string
-	 */
-	cursor?: string;
-	/**
-	 * @type boolean
-	 */
-	disabled?: boolean;
-	filter?: Querybuildertypesv5FilterDTO;
-	/**
-	 * @type array
-	 */
-	functions?: Querybuildertypesv5FunctionDTO[];
-	/**
-	 * @type array
-	 */
-	groupBy?: Querybuildertypesv5GroupByKeyDTO[];
-	having?: Querybuildertypesv5HavingDTO;
-	/**
-	 * @type string
-	 */
-	legend?: string;
-	/**
-	 * @type integer
-	 */
-	limit?: number;
-	limitBy?: Querybuildertypesv5LimitByDTO;
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type integer
-	 */
-	offset?: number;
-	/**
-	 * @type array
-	 */
-	order?: Querybuildertypesv5OrderByDTO[];
-	/**
-	 * @type array
-	 */
-	secondaryAggregations?: Querybuildertypesv5SecondaryAggregationDTO[];
-	/**
-	 * @type array
-	 */
-	selectFields?: TelemetrytypesTelemetryFieldKeyDTO[];
-	signal?: TelemetrytypesSignalDTO;
-	source?: TelemetrytypesSourceDTO;
-	stepInterval?: Querybuildertypesv5StepDTO;
-}
+export type Querybuildertypesv5BuilderQuerySpecDTO =
+	| Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregationDTO
+	| Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregationDTO
+	| Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTO;
 
 export enum Querybuildertypesv5QueryEnvelopeBuilderDTOType {
 	builder_query = 'builder_query',
 }
 export interface Querybuildertypesv5QueryEnvelopeBuilderDTO {
-	spec?: Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5BuilderAggregationDTO;
+	spec?: Querybuildertypesv5BuilderQuerySpecDTO;
 	/**
-	 * @type string
 	 * @enum builder_query
+	 * @type string
 	 */
 	type: Querybuildertypesv5QueryEnvelopeBuilderDTOType;
 }
@@ -4379,8 +4322,8 @@ export enum Querybuildertypesv5QueryEnvelopeFormulaDTOType {
 export interface Querybuildertypesv5QueryEnvelopeFormulaDTO {
 	spec?: Querybuildertypesv5QueryBuilderFormulaDTO;
 	/**
-	 * @type string
 	 * @enum builder_formula
+	 * @type string
 	 */
 	type: Querybuildertypesv5QueryEnvelopeFormulaDTOType;
 }
@@ -4458,8 +4401,8 @@ export enum Querybuildertypesv5QueryEnvelopeJoinDTOType {
 export interface Querybuildertypesv5QueryEnvelopeJoinDTO {
 	spec?: Querybuildertypesv5QueryBuilderJoinDTO;
 	/**
-	 * @type string
 	 * @enum builder_join
+	 * @type string
 	 */
 	type: Querybuildertypesv5QueryEnvelopeJoinDTOType;
 }
@@ -4528,8 +4471,8 @@ export enum Querybuildertypesv5QueryEnvelopeTraceOperatorDTOType {
 export interface Querybuildertypesv5QueryEnvelopeTraceOperatorDTO {
 	spec?: Querybuildertypesv5QueryBuilderTraceOperatorDTO;
 	/**
-	 * @type string
 	 * @enum builder_trace_operator
+	 * @type string
 	 */
 	type: Querybuildertypesv5QueryEnvelopeTraceOperatorDTOType;
 }
@@ -4564,8 +4507,8 @@ export enum Querybuildertypesv5QueryEnvelopePromQLDTOType {
 export interface Querybuildertypesv5QueryEnvelopePromQLDTO {
 	spec?: Querybuildertypesv5PromQueryDTO;
 	/**
-	 * @type string
 	 * @enum promql
+	 * @type string
 	 */
 	type: Querybuildertypesv5QueryEnvelopePromQLDTOType;
 }
@@ -4595,8 +4538,8 @@ export enum Querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType {
 export interface Querybuildertypesv5QueryEnvelopeClickHouseSQLDTO {
 	spec?: Querybuildertypesv5ClickHouseQueryDTO;
 	/**
-	 * @type string
 	 * @enum clickhouse_sql
+	 * @type string
 	 */
 	type: Querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType;
 }
