@@ -48,9 +48,8 @@ type QueryBuilderJoin struct {
 	Type JoinType `json:"type"`
 	On   string   `json:"on"`
 
-	// primary aggregations: if empty ⇒ raw columns. Each item is a trace, log,
-	// or metric aggregation. Untyped for now — joins are deferred and this oneOf
-	// has no discriminator (see the commented JoinAggregation below).
+	// primary aggregations: if empty ⇒ raw columns. Untyped — joins are deferred
+	// (see the commented JoinAggregation below).
 	Aggregations []any `json:"aggregations,omitempty"`
 	// select columns to select
 	SelectFields []telemetrytypes.TelemetryFieldKey `json:"selectFields,omitempty"`
@@ -65,15 +64,9 @@ type QueryBuilderJoin struct {
 	Functions             []Function             `json:"functions,omitempty"`
 }
 
-// JoinAggregation modelled a join aggregation as a trace/log/metric oneOf. It is
-// commented out because that oneOf has no discriminator: trace and log
-// aggregations are byte-identical, and a join carries no `signal` to dispatch on
-// (unlike a builder query). Without a discriminator, code generators can't map
-// it, so the builder_join variant stays deferred (out of
-// QueryEnvelope.JSONSchemaOneOf).
-//
-// TODO: when full support for joins is launched, this needs a proper
-// discriminator before it can be re-enabled.
+// JoinAggregation modelled a join aggregation as a trace/log/metric oneOf. Deferred:
+// that oneOf has no discriminator (trace ≡ log, and a join carries no `signal`), so
+// code generators can't map it. TODO: add a discriminator before re-enabling.
 //
 // type JoinAggregation struct {
 // 	value any

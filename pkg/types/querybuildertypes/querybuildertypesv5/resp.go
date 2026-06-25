@@ -118,10 +118,8 @@ type Label struct {
 
 var _ jsonschema.Preparer = Label{}
 
-// PrepareJSONSchema types the `value` property as a scalar instead of an untyped
-// {}: a label value is whatever the grouped-by column holds (string/number/bool).
-// The Go field stays `any`; this only documents the wire contract in the
-// generated OpenAPI schema.
+// PrepareJSONSchema types `value` as a string/number/bool scalar instead of an
+// untyped {}. The Go field stays `any`; this only shapes the generated schema.
 func (Label) PrepareJSONSchema(s *jsonschema.Schema) error {
 	if _, ok := s.Properties["value"]; !ok {
 		return nil
