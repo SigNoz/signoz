@@ -104,14 +104,15 @@ function ModelCostTabPanel(): JSX.Element {
 						prefix={<Search size={14} />}
 						suffix={
 							search ? (
-								<button
-									type="button"
-									className={styles.filtersBarSearchClear}
+								<Button
+									variant="ghost"
+									color="secondary"
+									size="icon"
+									prefix={<X size={14} />}
 									onClick={clearSearch}
 									aria-label="Clear search"
-								>
-									<X size={14} />
-								</button>
+									testId="model-cost-search-clear"
+								/>
 							) : undefined
 						}
 						testId="model-cost-search"
