@@ -103,27 +103,30 @@ func (module *module) DeleteMapper(ctx context.Context, orgID, groupID, id value
 	return nil
 }
 
-func (module *module) TestMappers(ctx context.Context, orgID valuer.UUID, spans []spantypes.SpanMapperTestSpan, groups []*spantypes.SpanMapperGroupWithMappers) ([]spantypes.SpanMapperTestSpan, error) {
+func (module *module) TestMappers(ctx context.Context, orgID valuer.UUID, spans []spantypes.SpanMapperTestSpan, groups []*spantypes.SpanMapperGroupWithMappers) ([]spantypes.SpanMapperTestSpan, []string, error) {
 	if len(spans) == 0 {
-		return nil, errors.New(errors.TypeInvalidInput, spantypes.ErrCodeMappingInvalidInput, "'spans' must contain at least one span")
+		return nil, nil, errors.New(errors.TypeInvalidInput, spantypes.ErrCodeMappingInvalidInput, "'spans' must contain at least one span")
 	}
 
 	resolved, err := module.backfillMappers(ctx, orgID, groups)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	out, _, err := spantypes.SimulateSpanMappersProcessing(ctx, resolved, spans)
+	out, collectorLogs, err := spantypes.SimulateSpanMappersProcessing(ctx, resolved, spans)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return out, nil
+	return out, collectorLogs, nil
 }
 
 // backfillMappers loads saved mappers for any group whose Mappers is nil.
 func (module *module) backfillMappers(ctx context.Context, orgID valuer.UUID, groups []*spantypes.SpanMapperGroupWithMappers) ([]*spantypes.SpanMapperGroupWithMappers, error) {
-	// Load all the saved groups for this org, so we can look up by name.
-	savedGroups, err := module.store.ListGroups(ctx, orgID, &spantypes.ListSpanMapperGroupsQuery{})
+	// Load the enabled saved groups for this org, so we can look up by name.
+	// Disabled groups aren't part of the live collector config, so there's
+	// nothing to backfill from them.
+	enabled := true
+	savedGroups, err := module.store.ListGroups(ctx, orgID, &spantypes.ListSpanMapperGroupsQuery{Enabled: &enabled})
 	if err != nil {
 		return nil, err
 	}

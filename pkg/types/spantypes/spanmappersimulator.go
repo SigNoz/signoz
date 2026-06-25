@@ -21,16 +21,13 @@ var (
 
 const spanInputOrderAttr = "__signoz_input_idx__"
 
-// SimulateSpanMappersProcessing runs the given spans through an in-memory
-// collector pipeline that hosts signozspanmapperprocessor configured by the
-// supplied groups, and returns the transformed spans. Mirrors
-// SimulatePipelinesProcessing in pkg/query-service/app/logparsingpipeline.
 func SimulateSpanMappersProcessing(ctx context.Context, groups []*SpanMapperGroupWithMappers, spans []SpanMapperTestSpan) ([]SpanMapperTestSpan, []string, error) {
 	enabled := filterEnabledGroupsWithMappers(groups)
 	if len(enabled) < 1 {
 		return spans, nil, nil
 	}
 
+	// this is done to preserve the order in which the request was sent
 	for i := range spans {
 		if spans[i].Attributes == nil {
 			spans[i].Attributes = map[string]any{}
@@ -91,8 +88,6 @@ func SimulateSpanMappersProcessing(ctx context.Context, groups []*SpanMapperGrou
 	return outputSpans, collectorWarnAndErrorLogs, nil
 }
 
-// SpansToPTraces packs each input span into its own ptrace.Traces with one
-// ResourceSpans / ScopeSpans / Span carrying its attribute and resource maps.
 func SpansToPTraces(spans []SpanMapperTestSpan) []ptrace.Traces {
 	result := make([]ptrace.Traces, 0, len(spans))
 	for _, s := range spans {
@@ -111,8 +106,6 @@ func SpansToPTraces(spans []SpanMapperTestSpan) []ptrace.Traces {
 	return result
 }
 
-// PTracesToSpans flattens simulator output back into SpanMapperTestSpan: one
-// entry per individual Span across all ResourceSpans / ScopeSpans.
 func PTracesToSpans(traces []ptrace.Traces) []SpanMapperTestSpan {
 	result := []SpanMapperTestSpan{}
 	for _, td := range traces {

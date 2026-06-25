@@ -293,13 +293,13 @@ func (h *handler) TestMappers(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	groups := spantypes.NewSpanMapperGroupsWithMappersFromPostable(orgID, req.Groups)
-	out, err := h.module.TestMappers(ctx, orgID, req.Spans, groups)
+	out, collectorLogs, err := h.module.TestMappers(ctx, orgID, req.Spans, groups)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	render.Success(rw, http.StatusOK, &spantypes.GettableSpanMapperTest{Spans: out})
+	render.Success(rw, http.StatusOK, &spantypes.GettableSpanMapperTest{Spans: out, CollectorLogs: collectorLogs})
 }
 
 // groupIDFromPath extracts and validates the {id} or {groupId} path variable.
