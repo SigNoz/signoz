@@ -47,12 +47,10 @@ export function getModelCostsColumns({
 					>
 						{row.modelName}
 					</Typography.Text>
-					<div
-						className={styles.modelCellCanonicalId}
-						data-testid={`model-cell-canonical-id-${row.id}`}
-					>
+
+					<Typography code color="muted" truncate={1}>
 						{getCanonicalId(row)}
-					</div>
+					</Typography>
 				</div>
 			),
 		},
@@ -70,12 +68,9 @@ export function getModelCostsColumns({
 			width: { min: 120 },
 			enableMove: false,
 			cell: ({ row }): JSX.Element => (
-				<span
-					className={styles.priceCell}
-					data-testid={`price-cell-input-${row.id}`}
-				>
+				<Typography.Text code color="muted">
 					{formatPricePerMillion(row.pricing?.input)}
-				</span>
+				</Typography.Text>
 			),
 		},
 		{
@@ -84,12 +79,9 @@ export function getModelCostsColumns({
 			width: { min: 120 },
 			enableMove: false,
 			cell: ({ row }): JSX.Element => (
-				<span
-					className={styles.priceCell}
-					data-testid={`price-cell-output-${row.id}`}
-				>
+				<Typography.Text code color="muted">
 					{formatPricePerMillion(row.pricing?.output)}
-				</span>
+				</Typography.Text>
 			),
 		},
 		{
