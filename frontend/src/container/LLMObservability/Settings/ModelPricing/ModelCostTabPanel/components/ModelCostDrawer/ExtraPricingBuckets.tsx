@@ -6,10 +6,10 @@ import { Plus, Trash2 } from '@signozhq/icons';
 import { LlmpricingruletypesLLMPricingRuleCacheModeDTO as CacheModeDTO } from 'api/generated/services/sigNoz.schemas';
 import cx from 'classnames';
 
-import { CACHE_BUCKETS, CACHE_MODE_OPTIONS } from './constants';
-import styles from './ModelCostDrawer.module.scss';
-import { parsePricingAmount } from './utils';
-import type { CacheBucketKey, DrawerDraft } from './types';
+import { CACHE_BUCKETS, CACHE_MODE_OPTIONS } from '../../../constants';
+import styles from './ExtraPricingBuckets.module.scss';
+import { parsePricingAmount } from '../../../utils';
+import type { CacheBucketKey, DrawerDraft } from '../../../types';
 
 type Pricing = DrawerDraft['pricing'];
 

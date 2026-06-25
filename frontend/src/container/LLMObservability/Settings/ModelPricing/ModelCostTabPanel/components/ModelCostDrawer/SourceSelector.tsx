@@ -4,7 +4,7 @@ import { RadioGroup, RadioGroupItem } from '@signozhq/ui/radio-group';
 import { Lock } from '@signozhq/icons';
 import cx from 'classnames';
 
-import styles from './ModelCostDrawer.module.scss';
+import styles from './SourceSelector.module.scss';
 
 interface SourceSelectorProps {
 	isOverride: boolean;

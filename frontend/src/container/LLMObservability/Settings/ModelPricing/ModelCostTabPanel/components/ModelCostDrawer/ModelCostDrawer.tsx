@@ -8,10 +8,14 @@ import { Controller, useForm } from 'react-hook-form';
 import PatternEditor from './PatternEditor';
 import PricingFields from './PricingFields';
 import SourceSelector from './SourceSelector';
-import { PROVIDER_OPTIONS } from './constants';
+import { PROVIDER_OPTIONS } from '../../../constants';
 import styles from './ModelCostDrawer.module.scss';
-import { validateModelName, validatePricing, validateProvider } from './utils';
-import type { DrawerDraft, DrawerMode } from './types';
+import {
+	validateModelName,
+	validatePricing,
+	validateProvider,
+} from '../../../utils';
+import type { DrawerDraft, DrawerMode } from '../../../types';
 
 interface ModelCostDrawerProps {
 	isOpen: boolean;

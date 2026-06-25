@@ -1,0 +1,103 @@
+.drawerSection {
+	composes: drawerSection from './shared.module.scss';
+}
+
+.fieldLabel {
+	composes: fieldLabel from './shared.module.scss';
+}
+
+.fullWidth {
+	composes: fullWidth from './shared.module.scss';
+}
+
+.pricingField {
+	composes: pricingField from './shared.module.scss';
+}
+
+.cacheModeField {
+	margin-top: 10px;
+}
+
+.extraBucketsSection {
+	margin-top: 14px;
+	gap: 10px;
+}
+
+.extraBucketsSectionHead {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.optionalLabel {
+	font-size: 11px;
+	font-weight: 400;
+	color: var(--text-vanilla-400);
+}
+
+.bucketRow {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+
+	input {
+		flex: 1 1 auto;
+		min-width: 0;
+	}
+}
+
+.bucketRowName {
+	flex: 0 0 110px;
+	font-size: 12px;
+	color: var(--text-vanilla-200);
+	font-family: var(--code-font-family, monospace);
+}
+
+.bucketRowUnit {
+	flex: 0 0 auto;
+	font-size: 12px;
+	color: var(--text-vanilla-400);
+}
+
+.bucketRowRemove {
+	flex: 0 0 auto;
+	background: transparent;
+	border: none;
+	padding: 4px;
+	cursor: pointer;
+	color: var(--text-vanilla-400);
+	display: inline-flex;
+	align-items: center;
+
+	&:hover {
+		color: var(--bg-cherry-400);
+	}
+}
+
+.bucketAddBtn {
+	width: 100%;
+}
+
+.bucketPicker {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 10px;
+	padding: 12px;
+	border-radius: 6px;
+	background: color-mix(in srgb, var(--bg-vanilla-100) 2%, transparent);
+	border: 1px solid var(--bg-slate-300);
+}
+
+.bucketPickerTitle {
+	font-size: 11px;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: var(--text-vanilla-400);
+}
+
+.bucketPickerChips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}

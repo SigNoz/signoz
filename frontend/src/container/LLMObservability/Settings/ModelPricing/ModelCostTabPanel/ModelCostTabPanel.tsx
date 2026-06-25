@@ -9,9 +9,10 @@ import useComponentPermission from 'hooks/useComponentPermission';
 import { useAppContext } from 'providers/App/App';
 
 import { LIMIT_KEY, PAGE_KEY, PAGE_SIZE } from '../constants';
-import ModelCostDrawer from '../ModelCostDrawer';
 import type { PricingRule } from '../types';
-import { useModelCostDrawer } from '../useModelCostDrawer';
+import ModelCostDrawer, {
+	useModelCostDrawer,
+} from './components/ModelCostDrawer';
 import ModelCostsTable from './components/ModelCostsTable';
 import styles from './ModelCostTabPanel.module.scss';
 

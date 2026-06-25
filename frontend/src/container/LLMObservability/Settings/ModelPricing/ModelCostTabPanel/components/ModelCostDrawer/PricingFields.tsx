@@ -3,9 +3,9 @@ import { Lock } from '@signozhq/icons';
 import cx from 'classnames';
 
 import ExtraPricingBuckets from './ExtraPricingBuckets';
-import styles from './ModelCostDrawer.module.scss';
-import { parsePricingAmount } from './utils';
-import type { DrawerDraft } from './types';
+import styles from './PricingFields.module.scss';
+import { parsePricingAmount } from '../../../utils';
+import type { DrawerDraft } from '../../../types';
 
 type Pricing = DrawerDraft['pricing'];
 

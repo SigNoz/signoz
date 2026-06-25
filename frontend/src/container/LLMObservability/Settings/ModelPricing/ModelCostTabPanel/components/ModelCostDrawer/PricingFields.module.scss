@@ -1,0 +1,29 @@
+.drawerSection {
+	composes: drawerSection from './shared.module.scss';
+}
+
+.drawerSurface {
+	composes: drawerSurface from './shared.module.scss';
+}
+
+.drawerSurfaceHead {
+	composes: drawerSurfaceHead from './shared.module.scss';
+}
+
+.managedLabel {
+	composes: managedLabel from './shared.module.scss';
+}
+
+.pricingField {
+	composes: pricingField from './shared.module.scss';
+}
+
+.required {
+	composes: required from './shared.module.scss';
+}
+
+.pricingGrid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 12px;
+}

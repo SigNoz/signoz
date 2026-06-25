@@ -5,7 +5,7 @@ import { Input } from '@signozhq/ui/input';
 import { X } from '@signozhq/icons';
 import cx from 'classnames';
 
-import styles from './ModelCostDrawer.module.scss';
+import styles from './PatternEditor.module.scss';
 
 interface PatternEditorProps {
 	patterns: string[];

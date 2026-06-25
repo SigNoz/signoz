@@ -1,0 +1,82 @@
+/* Shared drawer selectors used by 2+ of the model-cost drawer components. */
+/* Components pull these in via CSS-modules `composes` from their own module so */
+/* the authored class names in the TSX stay identical. */
+/* NOTE: this file is a `composes` target, so it is parsed as plain CSS (no SCSS */
+/* preprocessing). Keep it flat — no nesting, no slash-slash comments. */
+
+.drawerSection {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.drawerSection label,
+.drawerSection .fieldLabel,
+.fieldLabel {
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--text-vanilla-200);
+}
+
+.drawerSection .help,
+.help {
+	margin: 0;
+	font-size: 11px;
+}
+
+.help code {
+	padding: 1px 4px;
+	border-radius: 3px;
+	background: color-mix(in srgb, var(--bg-vanilla-100) 6%, transparent);
+	font-family: var(--code-font-family, monospace);
+	font-size: 10px;
+}
+
+.drawerSurface {
+	padding: 14px;
+	border-radius: 6px;
+	background: color-mix(in srgb, var(--bg-vanilla-100) 2%, transparent);
+	border: 1px solid var(--bg-slate-300);
+}
+
+.drawerSurfaceHead {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 10px;
+}
+
+.drawerSurfaceHead h4 {
+	margin: 0;
+	font-size: 13px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: var(--text-vanilla-300);
+}
+
+.managedLabel {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	font-size: 11px;
+	color: var(--text-vanilla-400);
+}
+
+.fullWidth {
+	width: 100%;
+}
+
+.required {
+	color: var(--bg-cherry-400);
+}
+
+.pricingField {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.pricingField input {
+	width: 100%;
+}
