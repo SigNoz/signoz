@@ -1212,6 +1212,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 							</div>
 						</div>
 					</div>
+
 					<div className="nav-bottom-section">
 						<div className="secondary-nav-items">
 							{isAIAssistantEnabled && renderNavItems([aiAssistantMenuItem], false)}
