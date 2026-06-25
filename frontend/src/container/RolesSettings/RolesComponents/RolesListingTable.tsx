@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { useHistory } from 'react-router-dom';
-import { Pagination, Skeleton } from 'antd';
+import { Skeleton } from 'antd';
+import { Pagination } from '@signozhq/ui/pagination';
 import { useListRoles } from 'api/generated/services/role';
 import { AuthtypesRoleDTO } from 'api/generated/services/sigNoz.schemas';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
@@ -116,20 +117,22 @@ function RolesListingTable({
 
 	const totalRoleCount = managedRoles.length + customRoles.length;
 
-	// Ensure current page is valid; if out of bounds, redirect to last available page
+	const maxPage = totalRoleCount > 0 ? Math.ceil(totalRoleCount / PAGE_SIZE) : 1;
+	const effectivePage = Math.min(currentPage, maxPage);
+
+	// Sync URL when currentPage is out of bounds after data changes
 	useEffect(() => {
 		if (isLoading || totalRoleCount === 0) {
 			return;
 		}
-		const maxPage = Math.ceil(totalRoleCount / PAGE_SIZE);
 		if (currentPage > maxPage) {
 			setCurrentPage(maxPage);
 		}
-	}, [isLoading, totalRoleCount, currentPage, setCurrentPage]);
+	}, [isLoading, totalRoleCount, currentPage, maxPage, setCurrentPage]);
 
 	// Paginate: count only role items, but include section headers contextually
 	const paginatedItems = useMemo((): DisplayItem[] => {
-		const startRole = (currentPage - 1) * PAGE_SIZE;
+		const startRole = (effectivePage - 1) * PAGE_SIZE;
 		const endRole = startRole + PAGE_SIZE;
 		let roleIndex = 0;
 		let lastSection: DisplayItem | null = null;
@@ -151,16 +154,7 @@ function RolesListingTable({
 			}
 		}
 		return result;
-	}, [displayList, currentPage]);
-
-	const showPaginationItem = (total: number, range: number[]): JSX.Element => (
-		<>
-			<span className="numbers">
-				{range[0]} &#8212; {range[1]}
-			</span>
-			<span className="total"> of {total}</span>
-		</>
-	);
+	}, [displayList, effectivePage]);
 
 	if (!hasListPermission && listPerms !== null) {
 		return <PermissionDeniedFullPage permissionName="role:list" />;
@@ -280,16 +274,23 @@ function RolesListingTable({
 				</div>
 			</div>
 
-			<Pagination
-				current={currentPage}
-				pageSize={PAGE_SIZE}
-				total={totalRoleCount}
-				showTotal={showPaginationItem}
-				showSizeChanger={false}
-				hideOnSinglePage
-				onChange={(page): void => setCurrentPage(page)}
-				className="roles-table-pagination"
-			/>
+			<div className="roles-table-pagination">
+				{totalRoleCount > 0 && (
+					<div className="roles-table-count">
+						<span className="numbers">
+							{(effectivePage - 1) * PAGE_SIZE + 1} &#8212;{' '}
+							{Math.min(effectivePage * PAGE_SIZE, totalRoleCount)}
+						</span>
+						<span className="total">of {totalRoleCount}</span>
+					</div>
+				)}
+				<Pagination
+					current={effectivePage}
+					pageSize={PAGE_SIZE}
+					total={totalRoleCount}
+					onPageChange={(page): void => setCurrentPage(page)}
+				/>
+			</div>
 		</div>
 	);
 }

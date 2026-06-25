@@ -212,7 +212,10 @@
 	justify-content: flex-end;
 	padding: 8px 16px;
 
-	.ant-pagination-total-text {
+	.roles-table-count {
+		display: flex;
+		align-items: center;
+		gap: var(--spacing-2);
 		margin-right: auto;
 
 		.numbers {

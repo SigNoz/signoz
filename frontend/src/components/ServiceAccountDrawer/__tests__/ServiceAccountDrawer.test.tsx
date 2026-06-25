@@ -302,6 +302,58 @@ describe('ServiceAccountDrawer', () => {
 		await screen.findByText(/No keys/i);
 	});
 
+	it('Keys tab shows pagination count when keys exist', async () => {
+		const keys = [
+			{
+				id: 'k-1',
+				name: 'Key 1',
+				expiresAt: 0,
+				lastObservedAt: null as unknown as string,
+				serviceAccountId: 'sa-1',
+			},
+			{
+				id: 'k-2',
+				name: 'Key 2',
+				expiresAt: 0,
+				lastObservedAt: null as unknown as string,
+				serviceAccountId: 'sa-1',
+			},
+			{
+				id: 'k-3',
+				name: 'Key 3',
+				expiresAt: 0,
+				lastObservedAt: null as unknown as string,
+				serviceAccountId: 'sa-1',
+			},
+		];
+
+		server.use(
+			rest.get(SA_KEYS_ENDPOINT, (_, res, ctx) =>
+				res(ctx.status(200), ctx.json({ data: keys })),
+			),
+		);
+
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		renderDrawer();
+
+		await screen.findByDisplayValue('CI Bot');
+		await user.click(screen.getByRole('radio', { name: /Keys/i }));
+		await screen.findByText('Key 1');
+
+		// PAGE_SIZE=15, 3 keys on page 1 → range "1 — 3", total "of 3"
+		const countEl = document.querySelector('.sa-drawer__pagination-count');
+		expect(countEl).toBeInTheDocument();
+		expect(
+			countEl?.querySelector('.sa-drawer__pagination-total')?.textContent,
+		).toBe('of 3');
+		expect(
+			countEl
+				?.querySelector('.sa-drawer__pagination-range')
+				?.textContent?.replace(/\s+/g, ' ')
+				.trim(),
+		).toBe('1 — 3');
+	});
+
 	it('shows error state when account fetch fails', async () => {
 		server.use(
 			rest.get(SA_ENDPOINT, (_, res, ctx) =>
