@@ -2734,24 +2734,23 @@ components:
     DashboardtypesDatasourcePlugin:
       discriminator:
         mapping:
-          signoz/Datasource: '#/components/schemas/DashboardtypesDatasourcePluginVariantStruct'
+          signoz/Datasource: '#/components/schemas/DashboardtypesDatasourcePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesSigNozDatasourceSpec'
         propertyName: kind
       oneOf:
-      - $ref: '#/components/schemas/DashboardtypesDatasourcePluginVariantStruct'
+      - $ref: '#/components/schemas/DashboardtypesDatasourcePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesSigNozDatasourceSpec'
       type: object
     DashboardtypesDatasourcePluginKind:
       enum:
       - signoz/Datasource
       type: string
-    DashboardtypesDatasourcePluginVariantStruct:
+    DashboardtypesDatasourcePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesSigNozDatasourceSpec:
       properties:
         kind:
           enum:
           - signoz/Datasource
           type: string
         spec:
-          nullable: true
-          type: object
+          $ref: '#/components/schemas/DashboardtypesSigNozDatasourceSpec'
       required:
       - kind
       - spec
@@ -2972,7 +2971,11 @@ components:
         customAllValue:
           type: string
         defaultValue:
-          $ref: '#/components/schemas/VariableDefaultValue'
+          oneOf:
+          - type: string
+          - items:
+              type: string
+            type: array
         display:
           $ref: '#/components/schemas/DashboardtypesDisplay'
         name:
@@ -3494,6 +3497,8 @@ components:
           type: string
       required:
       - queryValue
+      type: object
+    DashboardtypesSigNozDatasourceSpec:
       type: object
     DashboardtypesSource:
       enum:

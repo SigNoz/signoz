@@ -2,7 +2,7 @@ import {
 	DashboardtypesListVariableSpecSortDTO,
 	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import type { VariableDefaultValueDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesListVariableSpecDTODefaultValue } from 'api/generated/services/sigNoz.schemas';
 import { sortBy } from 'lodash-es';
 
 /**
@@ -136,7 +136,7 @@ export interface VariableFormModel {
 	 * Runtime-selected default, not editable in the management tab yet; carried
 	 * through edits so saving a definition doesn't clobber it.
 	 */
-	defaultValue?: VariableDefaultValueDTO;
+	defaultValue?: DashboardtypesListVariableSpecDTODefaultValue;
 }
 
 export function emptyVariableFormModel(): VariableFormModel {

@@ -197,7 +197,7 @@ type DatasourcePlugin struct {
 
 func (DatasourcePlugin) PrepareJSONSchema(s *jsonschema.Schema) error {
 	return markDiscriminator(s, "kind", map[string]string{
-		string(DatasourceKindSigNoz): schemaRef("DashboardtypesDatasourcePluginVariantStruct"),
+		string(DatasourceKindSigNoz): schemaRef("DashboardtypesDatasourcePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesSigNozDatasourceSpec"),
 	})
 }
 
@@ -221,7 +221,7 @@ func (p *DatasourcePlugin) UnmarshalJSON(data []byte) error {
 
 func (DatasourcePlugin) JSONSchemaOneOf() []any {
 	return []any{
-		DatasourcePluginVariant[struct{}]{Kind: string(DatasourceKindSigNoz)},
+		DatasourcePluginVariant[SigNozDatasourceSpec]{Kind: string(DatasourceKindSigNoz)},
 	}
 }
 
@@ -262,7 +262,7 @@ var (
 		VariableKindCustom:  func() any { return new(CustomVariableSpec) },
 	}
 	datasourcePluginSpecs = map[DatasourcePluginKind]func() any{
-		DatasourceKindSigNoz: func() any { return new(struct{}) },
+		DatasourceKindSigNoz: func() any { return new(SigNozDatasourceSpec) },
 	}
 
 	allowedQueryKinds = map[PanelPluginKind][]QueryPluginKind{

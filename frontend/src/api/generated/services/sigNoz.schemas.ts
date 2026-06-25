@@ -3920,33 +3920,24 @@ export interface DashboardtypesDashboardDTO {
 	updatedBy?: string;
 }
 
-export enum DashboardtypesDatasourcePluginVariantStructDTOKind {
+export enum DashboardtypesDatasourcePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesSigNozDatasourceSpecDTOKind {
 	'signoz/Datasource' = 'signoz/Datasource',
 }
-export type DashboardtypesDatasourcePluginVariantStructDTOSpecAnyOf = {
+export interface DashboardtypesSigNozDatasourceSpecDTO {
 	[key: string]: unknown;
-};
+}
 
-/**
- * @nullable
- */
-export type DashboardtypesDatasourcePluginVariantStructDTOSpec =
-	DashboardtypesDatasourcePluginVariantStructDTOSpecAnyOf | null;
-
-export interface DashboardtypesDatasourcePluginVariantStructDTO {
+export interface DashboardtypesDatasourcePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesSigNozDatasourceSpecDTO {
 	/**
 	 * @enum signoz/Datasource
 	 * @type string
 	 */
-	kind: DashboardtypesDatasourcePluginVariantStructDTOKind;
-	/**
-	 * @type object,null
-	 */
-	spec: DashboardtypesDatasourcePluginVariantStructDTOSpec;
+	kind: DashboardtypesDatasourcePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesSigNozDatasourceSpecDTOKind;
+	spec: DashboardtypesSigNozDatasourceSpecDTO;
 }
 
 export type DashboardtypesDatasourcePluginDTO =
-	DashboardtypesDatasourcePluginVariantStructDTO;
+	DashboardtypesDatasourcePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesSigNozDatasourceSpecDTO;
 
 export interface DashboardtypesDatasourceSpecDTO {
 	/**
@@ -4573,10 +4564,6 @@ export type DashboardtypesLayoutDTO =
 export enum DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpecDTOKind {
 	ListVariable = 'ListVariable',
 }
-export interface VariableDefaultValueDTO {
-	[key: string]: unknown;
-}
-
 export enum DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDynamicVariableSpecDTOKind {
 	'signoz/DynamicVariable' = 'signoz/DynamicVariable',
 }
@@ -4642,6 +4629,8 @@ export enum DashboardtypesListVariableSpecSortDTO {
 	'alphabetical-ci-asc' = 'alphabetical-ci-asc',
 	'alphabetical-ci-desc' = 'alphabetical-ci-desc',
 }
+export type DashboardtypesListVariableSpecDTODefaultValue = string | string[];
+
 export interface DashboardtypesListVariableSpecDTO {
 	/**
 	 * @type boolean
@@ -4659,7 +4648,7 @@ export interface DashboardtypesListVariableSpecDTO {
 	 * @type string
 	 */
 	customAllValue?: string;
-	defaultValue?: VariableDefaultValueDTO;
+	defaultValue?: DashboardtypesListVariableSpecDTODefaultValue;
 	display: DashboardtypesDisplayDTO;
 	/**
 	 * @type string
@@ -9032,6 +9021,10 @@ export interface TypesUserDTO {
 	 * @format date-time
 	 */
 	updatedAt?: string;
+}
+
+export interface VariableDefaultValueDTO {
+	[key: string]: unknown;
 }
 
 export interface ZeustypesHostDTO {
