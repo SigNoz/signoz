@@ -10,7 +10,7 @@
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	color: var(--text-vanilla-400);
+	color: var(--l3-foreground);
 	font-family: var(--code-font-family, monospace);
 	font-size: var(--font-size-xs);
 	line-height: 16px;
@@ -18,7 +18,7 @@
 
 .priceCell {
 	font-family: var(--code-font-family, monospace);
-	color: var(--text-vanilla-400);
+	color: var(--l3-foreground);
 }
 
 .extraBuckets {

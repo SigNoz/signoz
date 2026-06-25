@@ -1,10 +1,10 @@
 import { Button } from '@signozhq/ui/button';
 import { DialogWrapper } from '@signozhq/ui/dialog';
+import { Typography } from '@signozhq/ui/typography';
 import { Trash2, X } from '@signozhq/icons';
 import cx from 'classnames';
 
 import styles from './DeleteConfirmDialog.module.scss';
-import { Typography } from 'container/GridCardLayout/WidgetHeader/styles';
 
 interface DeleteConfirmDialogProps {
 	open: boolean;
@@ -61,7 +61,7 @@ function DeleteConfirmDialog({
 			showCloseButton={false}
 			footer={footer}
 		>
-			<div>
+			<div className={styles.body}>
 				<Typography.Text size="base" color="muted">
 					{' '}
 					Are you sure you want to delete <strong>{modelName}</strong> ? once
