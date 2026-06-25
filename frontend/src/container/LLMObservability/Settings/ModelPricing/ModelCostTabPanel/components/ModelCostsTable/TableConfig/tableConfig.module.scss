@@ -5,22 +5,6 @@
 	min-width: 0;
 }
 
-.modelCellCanonicalId {
-	max-width: 100%;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-	color: var(--l3-foreground);
-	font-family: var(--code-font-family, monospace);
-	font-size: var(--font-size-xs);
-	line-height: 16px;
-}
-
-.priceCell {
-	font-family: var(--code-font-family, monospace);
-	color: var(--l3-foreground);
-}
-
 .extraBuckets {
 	display: flex;
 	// Keep chips on a single line so the row stays at the table's fixed row

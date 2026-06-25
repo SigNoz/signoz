@@ -63,9 +63,8 @@ function DeleteConfirmDialog({
 		>
 			<div className={styles.body}>
 				<Typography.Text size="base" color="muted">
-					{' '}
-					Are you sure you want to delete <strong>{modelName}</strong> ? once
-					deleted, this action cannot be undone.
+					Are you sure you want to delete <strong>{modelName}</strong>? Once deleted,
+					this action cannot be undone.
 				</Typography.Text>
 			</div>
 		</DialogWrapper>

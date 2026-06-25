@@ -1,15 +1,6 @@
 .modelCostsTable {
 	margin-top: var(--spacing-8);
-
-	// Fixed row height so skeleton rows and loaded rows share identical
-	// dimensions — without this the single-line 14px skeleton collapses the
-	// row and the page jumps when real data (2-line model cell) arrives.
-	// Sized to fit the two-line Model cell; see .modelCell in table.config.module.scss.
 	--tanstack-table-row-height: 48px;
-
-	// Fixed-height viewport so the layout stays put regardless of row count: a
-	// short last page and a small page size keep the same footprint as a full
-	// page, and the pagination/footer never move. Large pages scroll within it.
 	height: calc(100vh - 250px);
 	overflow-y: auto;
 }
