@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { Button } from '@signozhq/ui/button';
+import { Typography } from '@signozhq/ui/typography';
 import { Plus } from '@signozhq/icons';
 import { useListLLMPricingRules } from 'api/generated/services/llmpricingrules';
 import { type ListLLMPricingRulesParams } from 'api/generated/services/sigNoz.schemas';
@@ -7,18 +8,18 @@ import { useTableParams } from 'components/TanStackTableView';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useAppContext } from 'providers/App/App';
 
-import { LIMIT_KEY, PAGE_KEY, PAGE_SIZE } from './constants';
-import styles from './LLMObservabilityModelPricing.module.scss';
-import ModelCostDrawer from './ModelCostDrawer';
-import ModelCostsTable from './ModelCostsTable';
-import { useModelCostDrawer } from './useModelCostDrawer';
-import type { PricingRule } from './types';
+import { LIMIT_KEY, PAGE_KEY, PAGE_SIZE } from '../constants';
+import ModelCostDrawer from '../ModelCostDrawer';
+import type { PricingRule } from '../types';
+import { useModelCostDrawer } from '../useModelCostDrawer';
+import ModelCostsTable from './components/ModelCostsTable';
+import styles from './ModelCostTabPanel.module.scss';
 
-// "Model costs" tab: the priced-model listing, its currency control, the add/
-// edit drawer, and pagination. Page and page size live in the URL (shareable/
-// reload-safe) and are owned by TanStackTable via enableQueryParams — this tab
-// reads them back through the same useTableParams hook so the two stay in lockstep.
-function ModelCostsTab(): JSX.Element {
+// "Model costs" tab: the priced-model listing, the add/edit drawer, and
+// pagination. Page and page size live in the URL (shareable/reload-safe) and are
+// owned by TanStackTable via enableQueryParams — this tab reads them back through
+// the same useTableParams hook so the two stay in lockstep.
+function ModelCostTabPanel(): JSX.Element {
 	const { page, limit } = useTableParams(
 		{ page: PAGE_KEY, limit: LIMIT_KEY },
 		{ page: 1, limit: PAGE_SIZE },
@@ -75,7 +76,12 @@ function ModelCostsTab(): JSX.Element {
 				onEdit={drawer.openForEdit}
 			/>
 
-			<footer className={styles.pageFooter}>All prices per 1M tokens (USD)</footer>
+			<footer>
+				<Typography.Text color="muted" size="small">
+					All prices per 1M tokens (USD)
+				</Typography.Text>
+			</footer>
+
 			{drawer.isOpen && (
 				<ModelCostDrawer
 					isOpen={drawer.isOpen}
@@ -94,4 +100,4 @@ function ModelCostsTab(): JSX.Element {
 	);
 }
 
-export default ModelCostsTab;
+export default ModelCostTabPanel;

@@ -7,7 +7,9 @@ export const PAGE_SIZE = 20;
 export const PAGE_KEY = 'page';
 export const LIMIT_KEY = 'limit';
 
-export const SKELETON_ROW_COUNT = 10;
+// Match the page size so the skeleton reserves the same number of rows the
+// loaded page renders — otherwise the table height jumps on load.
+export const SKELETON_ROW_COUNT = PAGE_SIZE;
 
 export const PROVIDER_OPTIONS = [
 	{ value: 'OpenAI', label: 'OpenAI' },
