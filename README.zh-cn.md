@@ -80,10 +80,10 @@ SigNoz 将日志、指标、链路追踪、告警、仪表盘、异常和面向 
 
 #### Agent 原生可观测性和 MCP
 
-让 AI 编程助手通过 MCP 查询 SigNoz 遥测数据，检查链路追踪、日志、告警和仪表盘，并结合团队 Runbook 调查事故。
+使用 SigNoz MCP server 将遥测数据带入编程 Agent，或在 SigNoz 中使用 Noz，基于生产上下文调查事故、优化告警并构建仪表盘。Noz 仅适用于 SigNoz Cloud。
 
 <p align="center">
-  <img alt="SigNoz Agent 原生可观测性界面，展示 AI 助手工作流上下文" src="docs/readme-assets/monitor/agent-native.png" width="900">
+  <img alt="SigNoz Noz 界面与基于 MCP 的 Agent 工作流" src="docs/readme-assets/monitor/agent-native.png" width="900">
 </p>
 
 #### 分布式链路追踪

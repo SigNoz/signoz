@@ -80,10 +80,10 @@ Trace LLM apps, RAG pipelines, prompts, tool calls, tokens, latency, and costs a
 
 #### Agent-Native Observability and MCP
 
-Let AI coding assistants query SigNoz telemetry through MCP, inspect traces, logs, alerts, and dashboards, and investigate incidents with your team's runbooks.
+Use the SigNoz MCP server to bring telemetry into coding agents, or use Noz inside SigNoz to investigate incidents, tune alerts, and build dashboards with production context. Noz is available only on SigNoz Cloud.
 
 <p align="center">
-  <img alt="SigNoz agent-native observability interface with AI assistant workflow context" src="docs/readme-assets/monitor/agent-native.png" width="900">
+  <img alt="SigNoz Noz interface alongside MCP-powered agent workflow" src="docs/readme-assets/monitor/agent-native.png" width="900">
 </p>
 
 #### Distributed Tracing

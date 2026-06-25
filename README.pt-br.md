@@ -80,10 +80,10 @@ Rastreie apps LLM, pipelines RAG, prompts, chamadas de ferramentas, tokens, lat�
 
 #### Observabilidade agent-native e MCP
 
-Permita que assistentes de programação com AI consultem a telemetria do SigNoz via MCP, inspecionem traces, logs, alertas e dashboards, e investiguem incidentes com os runbooks da sua equipe.
+Use o servidor MCP do SigNoz para levar telemetria aos agentes de programação, ou use o Noz dentro do SigNoz para investigar incidentes, ajustar alertas e criar dashboards com contexto de produção. O Noz está disponível apenas no SigNoz Cloud.
 
 <p align="center">
-  <img alt="Interface de observabilidade agent-native do SigNoz com contexto de fluxo de trabalho de assistente de AI" src="docs/readme-assets/monitor/agent-native.png" width="900">
+  <img alt="Interface Noz do SigNoz ao lado de um fluxo agent via MCP" src="docs/readme-assets/monitor/agent-native.png" width="900">
 </p>
 
 #### Tracing distribuído
