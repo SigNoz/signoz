@@ -8,12 +8,12 @@ import type {
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import {
 	handleQueryChange,
-	PANEL_TYPE_TO_QUERY_TYPES,
 	type PartialPanelTypes,
 } from 'container/NewWidget/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
+import { resolveQueryType } from '../../Panels/capabilities';
 import {
 	PANEL_KIND_TO_PANEL_TYPE,
 	type PanelKind,
@@ -108,12 +108,9 @@ export function usePanelTypeSwitch({
 				return;
 			}
 
-			// First visit → coerce the query type if the new panel disallows it, then
+			// First visit → coerce the query type if the new kind disallows it, then
 			// rebuild the builder query for the new type.
-			const supported = PANEL_TYPE_TO_QUERY_TYPES[newPanelType] ?? [];
-			const queryType = supported.includes(query.queryType)
-				? query.queryType
-				: supported[0];
+			const queryType = resolveQueryType(newKind, query.queryType);
 			const transformed = handleQueryChange(
 				newPanelType as keyof PartialPanelTypes,
 				{ ...query, queryType },

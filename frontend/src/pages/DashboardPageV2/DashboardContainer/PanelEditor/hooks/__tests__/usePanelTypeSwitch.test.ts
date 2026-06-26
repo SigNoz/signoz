@@ -5,6 +5,7 @@ import { handleQueryChange } from 'container/NewWidget/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
+import { resolveQueryType } from '../../../Panels/capabilities';
 import { getBuilderQueries } from '../../../Panels/utils/getBuilderQueries';
 import { toPerses } from '../../../queryV5/persesQueryAdapters';
 import { getSwitchedPluginSpec } from '../../getSwitchedPluginSpec';
@@ -15,15 +16,9 @@ jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 }));
 jest.mock('container/NewWidget/utils', () => ({
 	handleQueryChange: jest.fn(),
-	PANEL_TYPE_TO_QUERY_TYPES: {
-		graph: ['builder', 'clickhouse', 'promql'],
-		table: ['builder', 'clickhouse'],
-		list: ['builder'],
-		value: ['builder', 'clickhouse', 'promql'],
-		bar: ['builder', 'clickhouse', 'promql'],
-		pie: ['builder', 'clickhouse'],
-		histogram: ['builder', 'clickhouse', 'promql'],
-	},
+}));
+jest.mock('../../../Panels/capabilities', () => ({
+	resolveQueryType: jest.fn(),
 }));
 jest.mock('../../../queryV5/persesQueryAdapters', () => ({
 	toPerses: jest.fn(),
@@ -37,6 +32,7 @@ jest.mock('../../../Panels/utils/getBuilderQueries', () => ({
 
 const mockUseQueryBuilder = useQueryBuilder as unknown as jest.Mock;
 const mockHandleQueryChange = handleQueryChange as unknown as jest.Mock;
+const mockResolveQueryType = resolveQueryType as unknown as jest.Mock;
 const mockToPerses = toPerses as unknown as jest.Mock;
 const mockGetSwitchedPluginSpec = getSwitchedPluginSpec as unknown as jest.Mock;
 const mockGetBuilderQueries = getBuilderQueries as unknown as jest.Mock;
@@ -92,6 +88,9 @@ describe('usePanelTypeSwitch', () => {
 		mockToPerses.mockReturnValue(CONVERTED);
 		mockGetSwitchedPluginSpec.mockReturnValue(SWITCHED_SPEC);
 		mockGetBuilderQueries.mockReturnValue([{ signal: 'logs' }]);
+		// The guard owns coercion (tested in capabilities.test.ts); here it always
+		// resolves to Query Builder so the coerced type flows into handleQueryChange.
+		mockResolveQueryType.mockReturnValue('builder');
 	});
 
 	it('does nothing when switching to the current kind', () => {
@@ -149,7 +148,12 @@ describe('usePanelTypeSwitch', () => {
 		);
 		act(() => result.current.onChangePanelKind('signoz/ListPanel'));
 
-		// List allows only Query Builder, so the promql query is coerced to 'builder'.
+		// The hook asks the guard to resolve the active query type against the new kind…
+		expect(mockResolveQueryType).toHaveBeenCalledWith(
+			'signoz/ListPanel',
+			'promql',
+		);
+		// …and the resolved type ('builder') flows into the query rebuild.
 		const [, queryArg] = mockHandleQueryChange.mock.calls[0];
 		expect((queryArg as Query).queryType).toBe('builder');
 	});

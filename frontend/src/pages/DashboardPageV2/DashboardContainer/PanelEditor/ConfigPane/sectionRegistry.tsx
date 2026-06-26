@@ -161,6 +161,9 @@ export interface ErasedSectionDescriptor {
 		// type switcher.
 		panelKind?: unknown;
 		onChangePanelKind?: unknown;
+		// Active query type; read by the visualization section's type switcher to
+		// disable kinds that can't be authored in it (List is Query-Builder-only).
+		queryType?: unknown;
 		// Query step interval (seconds); read by chart appearance to floor the
 		// span-gaps threshold.
 		stepInterval?: unknown;

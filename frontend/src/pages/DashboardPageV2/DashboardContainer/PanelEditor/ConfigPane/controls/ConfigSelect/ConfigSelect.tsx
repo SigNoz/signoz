@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Select } from 'antd';
+import { Select, Tooltip } from 'antd';
 
 import { SegmentIcon, type SegmentIconName } from '../segmentIcons';
 
@@ -11,6 +11,8 @@ export interface ConfigSelectItem {
 	/** A `SegmentIconName` string (resolved to a glyph), or an arbitrary icon node. */
 	icon?: ReactNode;
 	disabled?: boolean;
+	/** Hover hint shown on the option — typically the reason a disabled item is disabled. */
+	tooltip?: string;
 }
 
 interface ConfigSelectProps {
@@ -41,10 +43,8 @@ function ConfigSelect({
 			placeholder={placeholder}
 			onChange={onChange}
 			virtual={false}
-			options={items.map((item) => ({
-				value: item.value,
-				disabled: item.disabled,
-				label: item.icon ? (
+			options={items.map((item) => {
+				const content = item.icon ? (
 					<span className={styles.item}>
 						{typeof item.icon === 'string' ? (
 							<SegmentIcon name={item.icon as SegmentIconName} />
@@ -55,8 +55,19 @@ function ConfigSelect({
 					</span>
 				) : (
 					item.label
-				),
-			}))}
+				);
+				return {
+					value: item.value,
+					disabled: item.disabled,
+					label: item.tooltip ? (
+						<Tooltip title={item.tooltip} placement="top">
+							<span className={styles.tooltipTrigger}>{content}</span>
+						</Tooltip>
+					) : (
+						content
+					),
+				};
+			})}
 		/>
 	);
 }

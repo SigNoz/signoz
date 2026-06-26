@@ -3,6 +3,7 @@ import { Typography } from '@signozhq/ui/typography';
 import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
 import { getPanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Panels/registry';
 import { resolveSignal } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/getBuilderQueries';
+import type { EQueryType } from 'types/common/dashboard';
 
 import type { LegendSeries } from '../hooks/useLegendSeries';
 import type { TableColumnOption } from '../hooks/useTableColumns';
@@ -19,6 +20,12 @@ interface ConfigPaneProps {
 	onChangeSpec: (next: DashboardtypesPanelSpecDTO) => void;
 	/** Switch the panel to another visualization kind. */
 	onChangePanelKind: (kind: PanelKind) => void;
+	/**
+	 * Active query type from the query-builder provider (the selected tab). Drives which
+	 * panel types the visualization switcher disables — read from the provider, not the
+	 * spec, because a new panel's spec has no query until staged.
+	 */
+	queryType?: EQueryType;
 	/** Panel's resolved series, provided to sections that need them (legend colors). */
 	legendSeries: LegendSeries[];
 	/** Table panel's resolved value columns, for the table-only editors. */
@@ -38,6 +45,7 @@ function ConfigPane({
 	spec,
 	onChangeSpec,
 	onChangePanelKind,
+	queryType,
 	legendSeries,
 	tableColumns,
 	stepInterval,
@@ -98,6 +106,7 @@ function ConfigPane({
 									signal={signal}
 									panelKind={panelKind}
 									onChangePanelKind={onChangePanelKind}
+									queryType={queryType}
 									stepInterval={stepInterval}
 								/>
 							))}

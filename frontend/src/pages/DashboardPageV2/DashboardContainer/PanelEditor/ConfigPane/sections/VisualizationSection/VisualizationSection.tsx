@@ -4,6 +4,7 @@ import {
 	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import type { SectionEditorProps } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/sections';
+import type { EQueryType } from 'types/common/dashboard';
 
 import type { PanelKind } from '../../../../Panels/types/panelKind';
 import ConfigSelect from '../../controls/ConfigSelect/ConfigSelect';
@@ -17,6 +18,8 @@ type VisualizationSectionProps = SectionEditorProps<'visualization'> & {
 	/** Current panel kind + switch handler, forwarded by SectionSlot for the type switcher. */
 	panelKind?: PanelKind;
 	onChangePanelKind?: (kind: PanelKind) => void;
+	/** Active query type, forwarded by SectionSlot — scopes the switcher's disabled types. */
+	queryType?: EQueryType;
 	/** Panel's datasource, forwarded by SectionSlot — scopes the switcher's disabled types. */
 	signal?: TelemetrytypesSignalDTO;
 };
@@ -33,6 +36,7 @@ function VisualizationSection({
 	onChange,
 	panelKind,
 	onChangePanelKind,
+	queryType,
 	signal,
 }: VisualizationSectionProps): JSX.Element {
 	return (
@@ -40,6 +44,7 @@ function VisualizationSection({
 			{controls.switchPanelKind && panelKind && onChangePanelKind && (
 				<PanelTypeSwitcher
 					panelKind={panelKind}
+					queryType={queryType}
 					signal={signal}
 					onChange={onChangePanelKind}
 				/>

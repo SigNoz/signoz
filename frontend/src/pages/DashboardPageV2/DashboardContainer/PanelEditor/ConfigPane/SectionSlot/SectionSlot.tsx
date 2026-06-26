@@ -7,6 +7,7 @@ import {
 	SECTION_METADATA,
 	type SectionConfig,
 } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/sections';
+import type { EQueryType } from 'types/common/dashboard';
 
 import type { PanelKind } from '../../../Panels/types/panelKind';
 import type { LegendSeries } from '../../hooks/useLegendSeries';
@@ -27,6 +28,8 @@ interface SectionSlotProps {
 	/** Current panel kind + switch handler, for the visualization section's type switcher. */
 	panelKind: PanelKind;
 	onChangePanelKind: (kind: PanelKind) => void;
+	/** Active query type, for the type switcher's disabled rule (Query-Builder-only kinds). */
+	queryType?: EQueryType;
 	/** Query step interval (seconds), for the chart-appearance span-gaps floor. */
 	stepInterval?: number;
 }
@@ -46,6 +49,7 @@ function SectionSlot({
 	signal,
 	panelKind,
 	onChangePanelKind,
+	queryType,
 	stepInterval,
 }: SectionSlotProps): JSX.Element | null {
 	// A kind can hide a section based on current spec state (e.g. Histogram legend once
@@ -85,6 +89,7 @@ function SectionSlot({
 				signal={signal}
 				panelKind={panelKind}
 				onChangePanelKind={onChangePanelKind}
+				queryType={queryType}
 				stepInterval={stepInterval}
 			/>
 		</SettingsSection>
