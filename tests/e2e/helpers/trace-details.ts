@@ -75,19 +75,12 @@ export async function seedTracesViaSeeder(
 	throw new Error(`seeder POST /telemetry/traces ${lastStatus}: ${lastText}`);
 }
 
-// Truncates ALL seeded traces — only safe at suite teardown, never per-test
-// (it would clobber traces other parallel specs seeded). Prefer unique trace
-// ids per test + the global teardown, which clears the `traces` signal.
-export async function clearTracesViaSeeder(page: Page): Promise<void> {
-	const res = await page.request.delete(`${seederUrl()}/telemetry/traces`);
-	if (!res.ok()) {
-		throw new Error(
-			`seeder DELETE /telemetry/traces ${res.status()}: ${await res.text()}`,
-		);
-	}
-}
-
 // ── Navigation ───────────────────────────────────────────────────────────────
+
+// Pages that already had the e2e test-hook init script registered, so
+// gotoTraceUntilLoaded adds it at most once per Page (addInitScript re-runs on
+// every navigation, and the script would otherwise stack up across calls).
+const e2eHookRegistered = new WeakSet<Page>();
 
 // Open a seeded trace and wait until the waterfall has rendered. The trace page
 // fetches once on load, so if the seed isn't query-able yet (ClickHouse lag, worse
@@ -103,10 +96,14 @@ export async function gotoTraceUntilLoaded(
 	// Enable e2e-only test hooks (e.g. the flamegraph span→rect map in
 	// useFlamegraphTestHook) before the first navigation. Registered here because
 	// every trace-detail spec loads the page through this helper, so the flag is
-	// set without a dedicated fixture.
-	await page.addInitScript(() => {
-		(window as unknown as { __SIGNOZ_E2E__?: boolean }).__SIGNOZ_E2E__ = true;
-	});
+	// set without a dedicated fixture. Guarded to once per Page — addInitScript
+	// re-runs on every navigation, so re-registering would stack duplicates.
+	if (!e2eHookRegistered.has(page)) {
+		await page.addInitScript(() => {
+			(window as unknown as { __SIGNOZ_E2E__?: boolean }).__SIGNOZ_E2E__ = true;
+		});
+		e2eHookRegistered.add(page);
+	}
 
 	for (let i = 0; i < attempts; i += 1) {
 		// eslint-disable-next-line no-await-in-loop
@@ -382,7 +379,7 @@ export async function setUserPreference(
 	});
 	if (!res.ok()) {
 		throw new Error(
-			`PUT /user/preferences/${name} ${res.status()}: ${await res.text()}`,
+			`PUT /api/v1/user/preferences/${name} ${res.status()}: ${await res.text()}`,
 		);
 	}
 }

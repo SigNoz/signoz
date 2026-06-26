@@ -14,7 +14,7 @@ import {
 
 // The flamegraph is canvas-rendered, so individual bars have no DOM nodes. These
 // specs drive it through the window.__sigTraceFlame__ test hook (enabled by
-// gotoTraceUntilLoaded) — see helpers/flamegraph.ts — which resolves a span's
+// gotoTraceUntilLoaded) — see helpers/trace-details.ts — which resolves a span's
 // on-canvas point from the live span→rect map and dispatches real mouse events.
 //
 // One shared trace for the file, seeded once. Random ids per run isolate it from

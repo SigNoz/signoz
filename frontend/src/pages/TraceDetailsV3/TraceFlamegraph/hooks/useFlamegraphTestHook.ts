@@ -8,7 +8,7 @@ import { SpanRect } from '../types';
  * holds the live span→rectangle map (CSS pixels) used for hit-testing. This
  * exposes a thin, read-only view of it on `window.__sigTraceFlame__` so a
  * Playwright spec can resolve a span's on-screen point and drive real
- * hover/click events at it (see tests/e2e/helpers/flamegraph.ts).
+ * hover/click events at it (see tests/e2e/helpers/trace-details.ts).
  *
  * Gated on `window.__SIGNOZ_E2E__` (set by Playwright via addInitScript), so
  * nothing is attached in normal runtime — the e2e build is a production build,
