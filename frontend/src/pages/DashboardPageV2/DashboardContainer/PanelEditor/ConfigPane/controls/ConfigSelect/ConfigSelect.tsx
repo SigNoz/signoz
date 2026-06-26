@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Select } from 'antd';
 
 import { SegmentIcon, type SegmentIconName } from '../segmentIcons';
@@ -7,7 +8,9 @@ import styles from './ConfigSelect.module.scss';
 export interface ConfigSelectItem {
 	value: string;
 	label: string;
-	icon?: SegmentIconName;
+	/** A `SegmentIconName` string (resolved to a glyph), or an arbitrary icon node. */
+	icon?: ReactNode;
+	disabled?: boolean;
 }
 
 interface ConfigSelectProps {
@@ -40,9 +43,14 @@ function ConfigSelect({
 			virtual={false}
 			options={items.map((item) => ({
 				value: item.value,
+				disabled: item.disabled,
 				label: item.icon ? (
 					<span className={styles.item}>
-						<SegmentIcon name={item.icon} />
+						{typeof item.icon === 'string' ? (
+							<SegmentIcon name={item.icon as SegmentIconName} />
+						) : (
+							item.icon
+						)}
 						{item.label}
 					</span>
 				) : (
