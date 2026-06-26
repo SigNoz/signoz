@@ -4,11 +4,12 @@ import { DashboardtypesTimePreferenceDTO } from 'api/generated/services/sigNoz.s
 
 import VisualizationSection from '../VisualizationSection';
 
-// The type switcher resolves each kind's supported signals; stub it so the test
-// doesn't pull the whole panel registry (renderers, chart libs).
+// The type switcher resolves each kind's supported signals + query types; stub it so
+// the test doesn't pull the whole panel registry (renderers, chart libs).
 jest.mock('pages/DashboardPageV2/DashboardContainer/Panels/registry', () => ({
 	getPanelDefinition: jest.fn(() => ({
 		supportedSignals: ['metrics', 'logs', 'traces'],
+		supportedQueryTypes: ['builder', 'clickhouse_sql', 'promql'],
 	})),
 }));
 

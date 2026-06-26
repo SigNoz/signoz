@@ -13,7 +13,10 @@ import { TIME_PREFERENCE_OPTIONS } from './timePreferenceOptions';
 import styles from './VisualizationSection.module.scss';
 
 type VisualizationSectionProps = SectionEditorProps<SectionKind.Visualization> &
-	Pick<SectionEditorContext, 'panelKind' | 'onChangePanelKind' | 'signal'>;
+	Pick<
+		SectionEditorContext,
+		'panelKind' | 'onChangePanelKind' | 'signal' | 'queryType'
+	>;
 
 /**
  * Edits the `visualization` slice: the panel-type switcher (`switchPanelKind`, every
@@ -27,6 +30,7 @@ function VisualizationSection({
 	onChange,
 	panelKind,
 	onChangePanelKind,
+	queryType,
 	signal,
 }: VisualizationSectionProps): JSX.Element {
 	return (
@@ -34,6 +38,7 @@ function VisualizationSection({
 			{controls.switchPanelKind && panelKind && onChangePanelKind && (
 				<PanelTypeSwitcher
 					panelKind={panelKind}
+					queryType={queryType}
 					signal={signal}
 					onChange={onChangePanelKind}
 				/>
