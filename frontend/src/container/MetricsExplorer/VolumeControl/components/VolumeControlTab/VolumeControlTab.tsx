@@ -21,14 +21,14 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
 	formatCompact,
 	formatUsd,
-} from '../MetricDetails/VolumeControl/configUtils';
+} from '../../../MetricDetails/VolumeControl/configUtils';
 import {
 	getLabelVerb,
 	getMatchTypeLabel,
-} from '../MetricDetails/VolumeControl/utils';
-import VolumeControlConfigDrawer from '../MetricDetails/VolumeControl/VolumeControlConfigDrawer';
-import VolumeControlBadge from './VolumeControlBadge/VolumeControlBadge';
-import VolumeControlChart from './VolumeControlChart';
+} from '../../../MetricDetails/VolumeControl/utils';
+import VolumeControlConfigDrawer from '../../../MetricDetails/VolumeControl/VolumeControlConfigDrawer';
+import VolumeControlBadge from '../VolumeControlBadge';
+import VolumeControlChart from '../../VolumeControlChart';
 import styles from './VolumeControlTab.module.scss';
 
 const OrderBy = MetricreductionruletypesReductionRuleOrderByDTO;
