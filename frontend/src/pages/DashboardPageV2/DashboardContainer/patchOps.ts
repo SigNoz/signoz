@@ -121,7 +121,7 @@ export function addPanelToSectionOps({
 interface CreatePanelOpsArgs {
 	/** Current sections, used to resolve the target and the next free row. */
 	layouts: DashboardtypesLayoutDTO[];
-	/** Preferred section (from the "Add panel" trigger); falls back to the last. */
+	/** Preferred section (from a section's "Add panel" trigger); falls back to the root (first) section. */
 	layoutIndex: number | undefined;
 	panelId: string;
 	panel: DashboardtypesPanelDTO;
@@ -166,8 +166,8 @@ export function findFreeSlot(
 
 /**
  * Ops to persist a brand-new panel (editor save path): resolve the target
- * section (requested index if valid, else last, else a freshly-created one) and
- * place the panel via `findFreeSlot`.
+ * section (requested index if valid, else the root/first section, else a
+ * freshly-created one) and place the panel via `findFreeSlot`.
  */
 export function createPanelOps({
 	layouts,
@@ -177,14 +177,17 @@ export function createPanelOps({
 }: CreatePanelOpsArgs): DashboardtypesJSONPatchOperationDTO[] {
 	const ops: DashboardtypesJSONPatchOperationDTO[] = [];
 
-	const requested =
-		layoutIndex !== undefined && layouts[layoutIndex] !== undefined
-			? layoutIndex
-			: layouts.length - 1;
-
-	let targetIndex = requested;
-	let items: DashboardGridItemDTO[] = layouts[requested]?.spec.items ?? [];
-	if (targetIndex < 0) {
+	let targetIndex: number;
+	let items: DashboardGridItemDTO[];
+	if (layoutIndex !== undefined && layouts[layoutIndex] !== undefined) {
+		// Explicit section — a section's own "New Panel" trigger.
+		targetIndex = layoutIndex;
+		items = layouts[layoutIndex]?.spec.items ?? [];
+	} else if (layouts.length > 0) {
+		// No section specified (toolbar "New Panel") → the root (first) section.
+		targetIndex = 0;
+		items = layouts[0]?.spec.items ?? [];
+	} else {
 		// No sections yet — create an untitled one and target it.
 		ops.push(addSectionOp(''));
 		targetIndex = 0;
