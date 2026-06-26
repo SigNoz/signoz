@@ -124,30 +124,9 @@ func (handler *handler) GetJiraMetadata(rw http.ResponseWriter, req *http.Reques
 		return
 	}
 
-	jiraReq, err := http.NewRequestWithContext(ctx, http.MethodGet, metadataURL.String(), nil)
+	respBody, err := doJiraRequest(ctx, metadataURL.String(), metadataRequest.Username, metadataRequest.Password)
 	if err != nil {
 		render.Error(rw, err)
-		return
-	}
-	jiraReq.SetBasicAuth(metadataRequest.Username, metadataRequest.Password)
-	jiraReq.Header.Set("Accept", "application/json")
-
-	client := &http.Client{Timeout: 20 * time.Second}
-	resp, err := client.Do(jiraReq)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-	defer resp.Body.Close() //nolint:errcheck
-
-	respBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "jira metadata request failed with status %d: %s", resp.StatusCode, string(respBody)))
 		return
 	}
 
@@ -365,21 +344,33 @@ func flattenJiraFields(meta jiraCreateMetaResponse) []alertmanagertypes.JiraFiel
 	return fields
 }
 
-func extractJiraAllowedValues(values []map[string]any) []string {
+func extractJiraAllowedValues(values []map[string]any) []alertmanagertypes.JiraAllowedValue {
 	if len(values) == 0 {
 		return nil
 	}
 
-	allowed := make([]string, 0, len(values))
-	for _, value := range values {
-		for _, key := range []string{"value", "name", "key", "id"} {
+	stringField := func(value map[string]any, keys ...string) string {
+		for _, key := range keys {
 			if raw, ok := value[key]; ok {
 				if str, ok := raw.(string); ok && str != "" {
-					allowed = append(allowed, str)
-					break
+					return str
 				}
 			}
 		}
+		return ""
+	}
+
+	allowed := make([]alertmanagertypes.JiraAllowedValue, 0, len(values))
+	for _, value := range values {
+		label := stringField(value, "value", "name", "key", "id")
+		val := stringField(value, "id", "key", "value", "name")
+		if label == "" && val == "" {
+			continue
+		}
+		allowed = append(allowed, alertmanagertypes.JiraAllowedValue{
+			Label: label,
+			Value: val,
+		})
 	}
 
 	return allowed
@@ -405,19 +396,12 @@ type jiraIssueTypeItem struct {
 }
 
 func buildJiraProjectsURL(apiURL string) (*url.URL, error) {
-	baseURL, err := url.Parse(apiURL)
+	baseURL, err := jiraV3BaseURL(apiURL)
 	if err != nil {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid api_url: %v", err)
+		return nil, err
 	}
 
-	path := strings.TrimSuffix(baseURL.Path, "/")
-	if !strings.Contains(path, "/rest/api/") {
-		path = path + "/rest/api/3"
-	} else if strings.Contains(path, "/rest/api/2") {
-		path = strings.Replace(path, "/rest/api/2", "/rest/api/3", 1)
-	}
-
-	baseURL.Path = strings.TrimSuffix(path, "/") + "/project/search"
+	baseURL.Path += "/project/search"
 	query := baseURL.Query()
 	query.Set("maxResults", "200")
 	baseURL.RawQuery = query.Encode()
@@ -426,6 +410,17 @@ func buildJiraProjectsURL(apiURL string) (*url.URL, error) {
 }
 
 func buildJiraProjectIssueTypesURL(apiURL, projectKey string) (*url.URL, error) {
+	baseURL, err := jiraV3BaseURL(apiURL)
+	if err != nil {
+		return nil, err
+	}
+
+	baseURL.Path += "/project/" + projectKey
+	return baseURL, nil
+}
+
+// jiraV3BaseURL parses apiURL and normalizes its path to target the Jira v3 REST API.
+func jiraV3BaseURL(apiURL string) (*url.URL, error) {
 	baseURL, err := url.Parse(apiURL)
 	if err != nil {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid api_url: %v", err)
@@ -433,12 +428,12 @@ func buildJiraProjectIssueTypesURL(apiURL, projectKey string) (*url.URL, error) 
 
 	path := strings.TrimSuffix(baseURL.Path, "/")
 	if !strings.Contains(path, "/rest/api/") {
-		path = path + "/rest/api/3"
+		path += "/rest/api/3"
 	} else if strings.Contains(path, "/rest/api/2") {
 		path = strings.Replace(path, "/rest/api/2", "/rest/api/3", 1)
 	}
 
-	baseURL.Path = strings.TrimSuffix(path, "/") + "/project/" + projectKey
+	baseURL.Path = strings.TrimSuffix(path, "/")
 	return baseURL, nil
 }
 

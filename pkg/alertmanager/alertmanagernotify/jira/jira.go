@@ -137,6 +137,7 @@ func (i issueFields) MarshalJSON() ([]byte, error) {
 // Notifier implements a Notifier for Jira notifications.
 type Notifier struct {
 	conf    *config.JiraConfig
+	apiURL  *config.URL
 	tmpl    *template.Template
 	logger  *slog.Logger
 	client  *http.Client
@@ -149,13 +150,12 @@ func New(c *config.JiraConfig, t *template.Template, l *slog.Logger, httpOpts ..
 		return nil, errors.NewInternalf(errors.CodeInternal, "jira config nil")
 	}
 
-	// Normalize API URL: ensure it ends with /rest/api/2 (unless already present)
+	var apiURL *config.URL
 	if c.APIURL != nil {
-		path := strings.TrimSuffix(c.APIURL.Path, "/")
+		apiURL = c.APIURL.Copy()
+		path := strings.TrimSuffix(apiURL.Path, "/")
 		if !strings.HasSuffix(path, "/rest/api/2") {
-			normalizedURL := c.APIURL.Copy()
-			normalizedURL.Path = path + "/rest/api/2"
-			c.APIURL = normalizedURL
+			apiURL.Path = path + "/rest/api/2"
 		}
 	}
 
@@ -166,6 +166,7 @@ func New(c *config.JiraConfig, t *template.Template, l *slog.Logger, httpOpts ..
 
 	return &Notifier{
 		conf:    c,
+		apiURL:  apiURL,
 		tmpl:    t,
 		logger:  l,
 		client:  client,
@@ -216,9 +217,6 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 		if !n.conf.Description.EnableUpdateValue() {
 			requestBody.Fields.Description = nil
 		}
-		if !n.conf.Summary.EnableUpdateValue() {
-			requestBody.Fields.Summary = nil
-		}
 	}
 
 	responseBody, shouldRetry, err := n.doAPIRequest(ctx, method, path, requestBody)
@@ -232,7 +230,7 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 			Key string `json:"key"`
 		}
 		if err := json.Unmarshal(responseBody, &createResponse); err == nil && createResponse.Key != "" {
-			baseURL := n.conf.APIURL.String()
+			baseURL := n.apiURL.String()
 			if idx := strings.Index(baseURL, "/rest/api/"); idx != -1 {
 				baseURL = baseURL[:idx]
 			}
@@ -376,7 +374,7 @@ func (n *Notifier) prepareSearchRequest(jql string) (issueSearch, string) {
 		Fields:     []string{"status"},
 	}
 
-	baseURL := n.conf.APIURL.Copy()
+	baseURL := n.apiURL.Copy()
 	baseURL.Path = strings.TrimSuffix(baseURL.Path, "/")
 
 	if n.conf.APIType == "datacenter" {
@@ -384,7 +382,7 @@ func (n *Notifier) prepareSearchRequest(jql string) (issueSearch, string) {
 		return requestBody, baseURL.String()
 	}
 
-	if n.conf.APIType == "cloud" || (n.conf.APIType == "auto" && strings.HasSuffix(n.conf.APIURL.Host, "atlassian.net")) {
+	if n.conf.APIType == "cloud" || (n.conf.APIType == "auto" && strings.HasSuffix(n.apiURL.Host, "atlassian.net")) {
 		// For Jira Cloud, use API v3 for search
 		baseURL.Path = strings.Replace(baseURL.Path, "/rest/api/2", "/rest/api/3", 1)
 		baseURL.Path += "/search/jql"
@@ -460,7 +458,7 @@ func (n *Notifier) transitionIssue(ctx context.Context, logger *slog.Logger, iss
 }
 
 func (n *Notifier) doAPIRequest(ctx context.Context, method, path string, requestBody any) ([]byte, bool, error) {
-	url := n.conf.APIURL.Copy()
+	url := n.apiURL.Copy()
 	// Ensure path starts with /
 	if !strings.HasPrefix(path, "/") {
 		path = "/" + path

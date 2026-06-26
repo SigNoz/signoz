@@ -7,6 +7,11 @@ export interface JiraMetadataRequest {
 	issue_type: string;
 }
 
+export interface JiraAllowedValue {
+	label: string;
+	value: string;
+}
+
 export interface JiraFieldMetadata {
 	id: string;
 	name: string;
@@ -16,7 +21,7 @@ export interface JiraFieldMetadata {
 	schema_system?: string;
 	schema_custom?: string;
 	schema_custom_id?: number;
-	allowed_values?: string[];
+	allowed_values?: JiraAllowedValue[];
 }
 
 export interface JiraMetadataResponse {

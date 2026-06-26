@@ -57,12 +57,13 @@ export const OpsgenieInitialConfig: Partial<OpsgenieChannel> = {
 };
 
 export const JiraInitialConfig: Partial<JiraChannel> = {
-	api_url: 'https://your-domain.atlassian.net',
+	api_url: '',
 	username: '',
 	password: '',
 	project: '',
 	issue_type: '',
-	summary: '{{ .CommonLabels.alertname }}',
+	summary:
+		'[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}',
 	description: `Alert: {{ .CommonLabels.alertname }}
 Severity: {{ .CommonLabels.severity }}
 

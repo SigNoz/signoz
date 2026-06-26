@@ -370,7 +370,7 @@ function CreateAlertChannels({
 		if (!selectedConfig.username || !selectedConfig.password) {
 			notifications.error({
 				message: 'Error',
-				description: 'Jira email and API token are required',
+				description: t('jira_credentials_required'),
 			});
 			return;
 		}
