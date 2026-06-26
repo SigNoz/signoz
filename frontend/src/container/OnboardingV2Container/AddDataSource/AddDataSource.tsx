@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Check, Goal, Search, UserPlus, X } from '@signozhq/icons';
+import { ArrowRight, Check, Goal, Search, UserPlus, X } from '@signozhq/icons';
 import {
 	Button,
 	Flex,
@@ -25,7 +25,7 @@ import { isModifierKeyPressed } from 'utils/app';
 import signozBrandLogoUrl from '@/assets/Logos/signoz-brand-logo.svg';
 
 import OnboardingIngestionDetails from '../IngestionDetails/IngestionDetails';
-import InviteTeamMembers from '../InviteTeamMembers/InviteTeamMembers';
+import InviteMembers from 'components/InviteMembers/InviteMembers';
 import onboardingConfigWithLinks from '../onboarding-configs/onboarding-config-with-links';
 
 import '../OnboardingV2.styles.scss';
@@ -1094,12 +1094,35 @@ function OnboardingAddDataSource(): JSX.Element {
 					destroyOnClose
 				>
 					<div className="invite-team-member-modal-content">
-						<InviteTeamMembers
-							isLoading={false}
-							teamMembers={null}
-							setTeamMembers={(): void => {}}
-							onNext={(): void => setShowInviteTeamMembersModal(false)}
-							onClose={(): void => setShowInviteTeamMembersModal(false)}
+						<InviteMembers
+							onSuccess={(): void => {
+								logEvent('Onboarding V3: Invite team members success', {});
+								setShowInviteTeamMembersModal(false);
+							}}
+							onPartialSuccess={(): void => {
+								logEvent('Onboarding V3: Invite team members partial success', {});
+							}}
+							renderFooter={({ submit, canSubmit, isSubmitting }): JSX.Element => (
+								<div className="invite-team-member-modal-footer">
+									<Button
+										type="default"
+										className="periscope-btn"
+										onClick={(): void => setShowInviteTeamMembersModal(false)}
+									>
+										Cancel
+									</Button>
+									<Button
+										type="primary"
+										className="periscope-btn primary"
+										onClick={submit}
+										disabled={!canSubmit}
+										loading={isSubmitting}
+									>
+										Send Invites
+										<ArrowRight size={14} />
+									</Button>
+								</div>
+							)}
 						/>
 					</div>
 				</Modal>
