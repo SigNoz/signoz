@@ -1,10 +1,12 @@
 import type {
 	Querybuildertypesv5ColumnDescriptorDTO,
-	Querybuildertypesv5QueryEnvelopeClickHouseSQLDTO,
 	Querybuildertypesv5QueryRangeRequestDTO,
 	Querybuildertypesv5ScalarDataDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { Querybuildertypesv5QueryTypeDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	Querybuildertypesv5QueryEnvelopeBuilderDTOType,
+	Querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType,
+} from 'api/generated/services/sigNoz.schemas';
 
 import type { PanelTable, PanelTableColumn } from './types';
 
@@ -26,15 +28,15 @@ export function extractAggregationsPerQuery(
 ): AggregationsPerQuery {
 	const perQuery: AggregationsPerQuery = {};
 	(requestPayload?.compositeQuery?.queries ?? []).forEach((envelope) => {
-		if (envelope.type !== Querybuildertypesv5QueryTypeDTO.builder_query) {
+		if (
+			envelope.type !==
+			Querybuildertypesv5QueryEnvelopeBuilderDTOType.builder_query
+		) {
 			return;
 		}
-		const spec = envelope.spec as {
-			name?: string;
-			aggregations?: AggregationView[];
-		};
+		const spec = envelope.spec;
 		if (spec?.name && spec.aggregations) {
-			perQuery[spec.name] = spec.aggregations;
+			perQuery[spec.name] = spec.aggregations as AggregationView[];
 		}
 	});
 	return perQuery;
@@ -52,13 +54,14 @@ export function extractClickhouseQueryNames(
 ): Set<string> {
 	const names = new Set<string>();
 	(requestPayload?.compositeQuery?.queries ?? []).forEach((envelope) => {
-		if (envelope.type !== Querybuildertypesv5QueryTypeDTO.clickhouse_sql) {
+		if (
+			envelope.type !==
+			Querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType.clickhouse_sql
+		) {
 			return;
 		}
-		const spec = (envelope as Querybuildertypesv5QueryEnvelopeClickHouseSQLDTO)
-			.spec;
-		if (spec?.name) {
-			names.add(spec.name);
+		if (envelope.spec?.name) {
+			names.add(envelope.spec.name);
 		}
 	});
 	return names;
