@@ -27,10 +27,10 @@ function PanelTypeSwitcher({
 	signal,
 	onChange,
 }: PanelTypeSwitcherProps): JSX.Element {
-	const items = PANEL_TYPES.map(({ pluginKind, label, Icon }) => {
-		const definition = getPanelDefinition(pluginKind as PanelKind);
+	const items = PANEL_TYPES.map(({ panelKind, label, Icon }) => {
+		const definition = getPanelDefinition(panelKind as PanelKind);
 		return {
-			value: pluginKind,
+			value: panelKind,
 			label,
 			icon: <Icon size={14} />,
 			disabled:
