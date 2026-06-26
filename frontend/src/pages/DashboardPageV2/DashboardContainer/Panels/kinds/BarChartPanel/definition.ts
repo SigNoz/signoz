@@ -2,6 +2,7 @@ import type { PanelDefinition } from '../../types/panelDefinition';
 import Renderer from './Renderer';
 import { sections } from './sections';
 import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
+import { EQueryType } from 'types/common/dashboard';
 
 export const definition: PanelDefinition<'signoz/BarChartPanel'> = {
 	kind: 'signoz/BarChartPanel',
@@ -12,6 +13,11 @@ export const definition: PanelDefinition<'signoz/BarChartPanel'> = {
 		TelemetrytypesSignalDTO.metrics,
 		TelemetrytypesSignalDTO.logs,
 		TelemetrytypesSignalDTO.traces,
+	],
+	supportedQueryTypes: [
+		EQueryType.QUERY_BUILDER,
+		EQueryType.CLICKHOUSE,
+		EQueryType.PROM,
 	],
 	actions: {
 		view: true,
