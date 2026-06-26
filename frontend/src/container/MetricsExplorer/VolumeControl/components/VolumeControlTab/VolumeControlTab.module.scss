@@ -11,7 +11,7 @@
 	gap: 4px;
 }
 
-.title-row {
+.titleRow {
 	display: flex;
 	align-items: center;
 	gap: 8px;
@@ -37,26 +37,6 @@
 	max-width: 320px;
 }
 
-.chart {
-	display: flex;
-	flex-direction: column;
-	gap: 8px;
-	border: 1px solid var(--bg-slate-400, #1d212d);
-	border-radius: 6px;
-	padding: 12px 16px;
-}
-
-.chart-title {
-	font-size: 11px;
-	text-transform: uppercase;
-	letter-spacing: 0.05em;
-	color: var(--bg-vanilla-400, #c0c1c3);
-}
-
-.chart-body {
-	height: 340px;
-}
-
 .toolbar {
 	display: flex;
 	justify-content: flex-end;
@@ -78,19 +58,19 @@
 	background: var(--bg-ink-400, #121317);
 }
 
-.stat-hero {
+.statHero {
 	border-color: rgba(80, 231, 167, 0.4);
 	background: rgba(80, 231, 167, 0.06);
 }
 
-.stat-label {
+.statLabel {
 	font-size: 11px;
 	text-transform: uppercase;
 	letter-spacing: 0.05em;
 	color: var(--bg-vanilla-400, #c0c1c3);
 }
 
-.stat-value {
+.statValue {
 	display: flex;
 	align-items: baseline;
 	gap: 6px;
@@ -100,23 +80,23 @@
 	color: var(--bg-vanilla-100, #fff);
 }
 
-.stat-value-good {
+.statValueGood {
 	color: var(--bg-forest-400, #50e7a7);
 }
 
-.stat-delta {
+.statDelta {
 	font-size: 13px;
 	font-weight: 600;
 	color: var(--bg-forest-400, #50e7a7);
 }
 
-.stat-unit {
+.statUnit {
 	font-size: 13px;
 	font-weight: 500;
 	color: var(--bg-vanilla-400, #c0c1c3);
 }
 
-.metric-name {
+.metricName {
 	font-family: 'Geist Mono', monospace;
 	font-size: 12.5px;
 	color: var(--bg-vanilla-100, #fff);
