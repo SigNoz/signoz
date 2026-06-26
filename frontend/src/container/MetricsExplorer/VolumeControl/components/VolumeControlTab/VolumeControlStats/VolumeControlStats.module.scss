@@ -17,8 +17,8 @@
 }
 
 .statCardHighlighted {
-	border-color: rgba(80, 231, 167, 0.4);
-	background: rgba(80, 231, 167, 0.06);
+	border-color: var(--callout-success-border);
+	background: var(--callout-success-background);
 }
 
 .statCardLabel {

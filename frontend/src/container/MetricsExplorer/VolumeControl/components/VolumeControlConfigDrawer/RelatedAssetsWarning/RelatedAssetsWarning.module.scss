@@ -3,9 +3,9 @@
 	gap: 10px;
 	padding: 11px 13px;
 	border-radius: 6px;
-	background: rgba(255, 204, 86, 0.07);
-	border: 1px solid rgba(255, 204, 86, 0.3);
-	color: var(--bg-amber-400, #ffd778);
+	background: var(--callout-warning-background);
+	border: 1px solid var(--callout-warning-border);
+	color: var(--callout-warning-icon);
 }
 
 .warningBody {

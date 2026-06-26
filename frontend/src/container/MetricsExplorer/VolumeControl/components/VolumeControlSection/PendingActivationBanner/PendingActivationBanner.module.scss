@@ -4,7 +4,7 @@
 	gap: 8px;
 	padding: 9px 12px;
 	border-radius: 6px;
-	background: rgba(35, 196, 248, 0.07);
-	border: 1px solid rgba(35, 196, 248, 0.25);
-	color: var(--bg-aqua-400, #4bcff9);
+	background: var(--callout-primary-background);
+	border: 1px solid var(--callout-primary-border);
+	color: var(--callout-primary-icon);
 }
