@@ -8,10 +8,6 @@ interface VolumeControlBadgeProps {
 }
 
 function VolumeControlBadge({ rule }: VolumeControlBadgeProps): JSX.Element {
-	// ? @srikanth: will this every be undefined? type of the render in parent does not have undefined
-	if (!rule) {
-		return <span data-testid="vc-badge-none">—</span>;
-	}
 	return (
 		<Badge
 			data-testid="vc-badge-active"
