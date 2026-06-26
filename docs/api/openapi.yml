@@ -3743,7 +3743,6 @@ components:
         errors:
           items:
             $ref: '#/components/schemas/ErrorsResponseerroradditional'
-          nullable: true
           type: array
         message:
           type: string
@@ -3752,7 +3751,6 @@ components:
         suggestions:
           items:
             type: string
-          nullable: true
           type: array
         type:
           type: string
@@ -3775,7 +3773,6 @@ components:
         suggestions:
           items:
             type: string
-          nullable: true
           type: array
       required:
       - message

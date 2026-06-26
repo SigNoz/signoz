@@ -27,11 +27,11 @@ describe('panelStatusFromError', () => {
 			message: 'Query is invalid',
 			url: 'https://docs/err',
 			errors: [
-				{ message: 'missing aggregation', suggestions: null },
-				{ message: 'bad filter', suggestions: null },
+				{ message: 'missing aggregation', suggestions: [] },
+				{ message: 'bad filter', suggestions: [] },
 			],
 			retry: null,
-			suggestions: null,
+			suggestions: [],
 			type: '',
 		});
 
@@ -60,7 +60,7 @@ describe('panelStatusFromError', () => {
 				url: '',
 				errors: [],
 				retry: null,
-				suggestions: null,
+				suggestions: [],
 				type: '',
 			},
 			StatusCodes.INTERNAL_SERVER_ERROR,

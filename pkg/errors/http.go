@@ -11,9 +11,9 @@ type JSON struct {
 	Code        string                    `json:"code" required:"true"`
 	Message     string                    `json:"message" required:"true"`
 	Url         string                    `json:"url" required:"true" nullable:"true"`
-	Errors      []responseerroradditional `json:"errors" required:"true" nullable:"true"`
+	Errors      []responseerroradditional `json:"errors" required:"true" nullable:"false"`
 	Retry       *responseretryjson        `json:"retry" required:"true" nullable:"true"`
-	Suggestions []string                  `json:"suggestions" required:"true" nullable:"true"`
+	Suggestions []string                  `json:"suggestions" required:"true" nullable:"false"`
 }
 
 type responseretryjson struct {
@@ -22,20 +22,14 @@ type responseretryjson struct {
 
 type responseerroradditional struct {
 	Message     string   `json:"message" required:"true"`
-	Suggestions []string `json:"suggestions" required:"true" nullable:"true"`
+	Suggestions []string `json:"suggestions" required:"true" nullable:"false"`
 }
 
 func AsJSON(cause error) *JSON {
 	// See if this is an instance of the base error or not
 	t, c, m, _, u, a := Unwrapb(cause)
 
-	var rea []responseerroradditional
-	if len(a) > 0 {
-		rea = make([]responseerroradditional, len(a))
-		for k, v := range a {
-			rea[k] = responseerroradditional{Message: v.message, Suggestions: v.suggestions}
-		}
-	}
+	rea := responseAdditionals(a)
 
 	var retry *responseretryjson
 	if r := retryOf(cause); r != nil {
@@ -49,7 +43,7 @@ func AsJSON(cause error) *JSON {
 		Url:         u,
 		Errors:      rea,
 		Retry:       retry,
-		Suggestions: suggestionsOf(cause),
+		Suggestions: nonNilStrings(suggestionsOf(cause)),
 	}
 }
 
@@ -57,13 +51,7 @@ func AsURLValues(cause error) url.Values {
 	// See if this is an instance of the base error or not
 	_, c, m, _, u, a := Unwrapb(cause)
 
-	// Unlike AsJSON (whose null `errors` honors the OpenAPI nullable contract),
-	// this goes into a redirect query param that the frontend JSON.parses and
-	// .maps over, so keep a non-nil empty slice -> marshals to "[]", not "null".
-	rea := make([]responseerroradditional, len(a))
-	for k, v := range a {
-		rea[k] = responseerroradditional{Message: v.message, Suggestions: v.suggestions}
-	}
+	rea := responseAdditionals(a)
 
 	errors, err := json.Marshal(rea)
 	if err != nil {
@@ -80,4 +68,21 @@ func AsURLValues(cause error) url.Values {
 		"url":     {u},
 		"errors":  {string(errors)},
 	}
+}
+
+func responseAdditionals(a []additional) []responseerroradditional {
+	rea := make([]responseerroradditional, len(a))
+	for k, v := range a {
+		rea[k] = responseerroradditional{Message: v.message, Suggestions: nonNilStrings(v.suggestions)}
+	}
+
+	return rea
+}
+
+func nonNilStrings(s []string) []string {
+	if s == nil {
+		return []string{}
+	}
+
+	return s
 }

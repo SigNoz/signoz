@@ -2180,9 +2180,9 @@ export interface ErrorsResponseerroradditionalDTO {
 	 */
 	message: string;
 	/**
-	 * @type array,null
+	 * @type array
 	 */
-	suggestions: string[] | null;
+	suggestions: string[];
 }
 
 export type ErrorsResponseretryjsonDTOAnyOf = {
@@ -2200,18 +2200,18 @@ export interface ErrorsJSONDTO {
 	 */
 	code: string;
 	/**
-	 * @type array,null
+	 * @type array
 	 */
-	errors: ErrorsResponseerroradditionalDTO[] | null;
+	errors: ErrorsResponseerroradditionalDTO[];
 	/**
 	 * @type string
 	 */
 	message: string;
 	retry: ErrorsResponseretryjsonDTO | null;
 	/**
-	 * @type array,null
+	 * @type array
 	 */
-	suggestions: string[] | null;
+	suggestions: string[];
 	/**
 	 * @type string
 	 */

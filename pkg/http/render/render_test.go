@@ -99,13 +99,13 @@ func TestError(t *testing.T) {
 			name:       "AlreadyExists",
 			statusCode: http.StatusConflict,
 			err:        errors.New(errors.TypeAlreadyExists, errors.MustNewCode("already_exists"), "already exists").WithUrl("https://already_exists"),
-			expected:   []byte(`{"status":"error","error":{"type":"already-exists","code":"already_exists","message":"already exists","url":"https://already_exists","errors":null,"retry":null,"suggestions":null}}`),
+			expected:   []byte(`{"status":"error","error":{"type":"already-exists","code":"already_exists","message":"already exists","url":"https://already_exists","errors":[],"retry":null,"suggestions":[]}}`),
 		},
 		"/unauthenticated": {
 			name:       "Unauthenticated",
 			statusCode: http.StatusUnauthorized,
 			err:        errors.New(errors.TypeUnauthenticated, errors.MustNewCode("not_allowed"), "not allowed").WithUrl("https://unauthenticated").WithAdditional("a1", "a2"),
-			expected:   []byte(`{"status":"error","error":{"type":"unauthenticated","code":"not_allowed","message":"not allowed","url":"https://unauthenticated","errors":[{"message":"a1","suggestions":null},{"message":"a2","suggestions":null}],"retry":null,"suggestions":null}}`),
+			expected:   []byte(`{"status":"error","error":{"type":"unauthenticated","code":"not_allowed","message":"not allowed","url":"https://unauthenticated","errors":[{"message":"a1","suggestions":[]},{"message":"a2","suggestions":[]}],"retry":null,"suggestions":[]}}`),
 		},
 	}
 

@@ -107,11 +107,11 @@ func TestAsJSONBaseError(t *testing.T) {
 	assert.Equal(t, "bad_input", j.Code)
 	assert.Equal(t, "field foo is bad", j.Message)
 	assert.Equal(t, "https://docs/bad_input", j.Url)
-	// A detail with no suggestions carries a nil slice (the suggestions field is
-	// nullable, so it marshals to null rather than []).
+	// A detail with no suggestions carries an empty (non-nil) slice — the
+	// suggestions field is non-nullable, so it marshals to [] rather than null.
 	assert.Equal(t, []responseerroradditional{
-		{Message: "hint1"},
-		{Message: "hint2"},
+		{Message: "hint1", Suggestions: []string{}},
+		{Message: "hint2", Suggestions: []string{}},
 	}, j.Errors)
 
 	// InvalidInput auto-applies the after_fix policy via NewInvalidInputf — but
@@ -164,11 +164,14 @@ func TestAsJSONRetryBlock(t *testing.T) {
 }
 
 func TestAsJSONEmptyWhenNoneSet(t *testing.T) {
-	// errors and suggestions are nullable in the OpenAPI spec, so AsJSON leaves
-	// them empty when the error carries none (they marshal to null / []).
+	// errors and suggestions are non-nullable in the OpenAPI spec, so AsJSON
+	// leaves them as empty (non-nil) slices when the error carries none — they
+	// marshal to [] rather than null.
 	j := AsJSON(New(TypeInternal, MustNewCode("boom"), "boom"))
 
+	assert.NotNil(t, j.Suggestions)
 	assert.Empty(t, j.Suggestions)
+	assert.NotNil(t, j.Errors)
 	assert.Empty(t, j.Errors)
 }
 
