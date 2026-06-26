@@ -131,7 +131,7 @@ export type SectionConfig =
 // Per-section title + sidebar icon. Pure data; the editor component + spec lens
 // live in the ConfigPane section registry.
 export const SECTION_METADATA = {
-	formatting: { title: 'Formatting', icon: Hash },
+	formatting: { title: 'Formatting & Units', icon: Hash },
 	axes: { title: 'Axes', icon: Ruler },
 	legend: { title: 'Legend', icon: Layers },
 	chartAppearance: { title: 'Chart appearance', icon: Palette },
