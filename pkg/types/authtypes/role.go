@@ -135,6 +135,20 @@ func NewManagedRoles(orgID valuer.UUID) []*Role {
 
 }
 
+func NewStatsFromRoles(roles []*Role) map[string]any {
+	stats := make(map[string]any)
+	for _, role := range roles {
+		key := "role." + role.Type.StringValue() + ".count"
+		if value, ok := stats[key]; ok {
+			stats[key] = value.(int64) + 1
+		} else {
+			stats[key] = int64(1)
+		}
+	}
+	stats["role.count"] = int64(len(roles))
+	return stats
+}
+
 func (role *Role) PatchMetadata(description string) error {
 	err := role.ErrIfManaged()
 	if err != nil {
