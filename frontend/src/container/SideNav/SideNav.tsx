@@ -877,9 +877,9 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 					break;
 				case 'invite-collaborators':
 					if (event && isModifierKeyPressed(event)) {
-						openInNewTab(`${ROUTES.ORG_SETTINGS}#invite-team-members`);
+						openInNewTab(`${ROUTES.MEMBERS_SETTINGS}?invite=true`);
 					} else {
-						history.push(`${ROUTES.ORG_SETTINGS}#invite-team-members`);
+						history.push(`${ROUTES.MEMBERS_SETTINGS}?invite=true`);
 					}
 					break;
 				case 'chat-support':
