@@ -374,7 +374,7 @@ func (provider *provider) Delete(ctx context.Context, orgID valuer.UUID, id valu
 	}
 
 	for _, cb := range provider.onBeforeRoleDelete {
-		if err := cb(ctx, orgID, id); err != nil {
+		if err := cb(ctx, orgID, id, role.Name); err != nil {
 			return err
 		}
 	}
