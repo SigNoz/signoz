@@ -156,23 +156,6 @@ type ListVariableSpec struct {
 	Name            string                 `json:"name" required:"true" minLength:"1"`
 }
 
-// PrepareJSONSchema types defaultValue as the string | []string union.
-func (ListVariableSpec) PrepareJSONSchema(s *jsonschema.Schema) error {
-	if _, ok := s.Properties["defaultValue"]; !ok {
-		return nil
-	}
-	stringItem := jsonschema.String.ToSchemaOrBool()
-	defaultValue := (&jsonschema.Schema{}).WithOneOf(
-		jsonschema.String.ToSchemaOrBool(),
-		(&jsonschema.Schema{}).
-			WithType(jsonschema.Array.Type()).
-			WithItems(jsonschema.Items{SchemaOrBool: &stringItem}).
-			ToSchemaOrBool(),
-	)
-	s.Properties["defaultValue"] = defaultValue.ToSchemaOrBool()
-	return nil
-}
-
 // validate mirrors perses ListVariableSpec validation (plus the digits-only name
 // check perses only applies to text variables); run by decodeSpec on unmarshal.
 func (s *ListVariableSpec) validate() error {

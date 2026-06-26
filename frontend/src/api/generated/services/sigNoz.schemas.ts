@@ -4564,6 +4564,8 @@ export type DashboardtypesLayoutDTO =
 export enum DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpecDTOKind {
 	ListVariable = 'ListVariable',
 }
+export type VariableDefaultValueDTO = string | string[];
+
 export enum DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDynamicVariableSpecDTOKind {
 	'signoz/DynamicVariable' = 'signoz/DynamicVariable',
 }
@@ -4629,8 +4631,6 @@ export enum DashboardtypesListVariableSpecSortDTO {
 	'alphabetical-ci-asc' = 'alphabetical-ci-asc',
 	'alphabetical-ci-desc' = 'alphabetical-ci-desc',
 }
-export type DashboardtypesListVariableSpecDTODefaultValue = string | string[];
-
 export interface DashboardtypesListVariableSpecDTO {
 	/**
 	 * @type boolean
@@ -4648,7 +4648,7 @@ export interface DashboardtypesListVariableSpecDTO {
 	 * @type string
 	 */
 	customAllValue?: string;
-	defaultValue?: DashboardtypesListVariableSpecDTODefaultValue;
+	defaultValue?: VariableDefaultValueDTO;
 	display: DashboardtypesDisplayDTO;
 	/**
 	 * @type string
@@ -9021,10 +9021,6 @@ export interface TypesUserDTO {
 	 * @format date-time
 	 */
 	updatedAt?: string;
-}
-
-export interface VariableDefaultValueDTO {
-	[key: string]: unknown;
 }
 
 export interface ZeustypesHostDTO {

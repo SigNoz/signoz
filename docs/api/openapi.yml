@@ -2971,11 +2971,7 @@ components:
         customAllValue:
           type: string
         defaultValue:
-          oneOf:
-          - type: string
-          - items:
-              type: string
-            type: array
+          $ref: '#/components/schemas/VariableDefaultValue'
         display:
           $ref: '#/components/schemas/DashboardtypesDisplay'
         name:
@@ -7895,7 +7891,11 @@ components:
       - id
       type: object
     VariableDefaultValue:
-      type: object
+      oneOf:
+      - type: string
+      - items:
+          type: string
+        type: array
     ZeustypesGettableHost:
       properties:
         hosts:
