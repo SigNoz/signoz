@@ -13,18 +13,18 @@ import (
 )
 
 var (
-	ErrCodeSyntaxError       = errors.MustNewCode("telemetrystore.clickhouse.syntax_error")
-	ErrCodeUnknownTable      = errors.MustNewCode("telemetrystore.clickhouse.unknown_table")
-	ErrCodeUnknownDatabase   = errors.MustNewCode("telemetrystore.clickhouse.unknown_database")
-	ErrCodeUnknownIdentifier = errors.MustNewCode("telemetrystore.clickhouse.unknown_identifier")
-	ErrCodeIllegalArgument   = errors.MustNewCode("telemetrystore.clickhouse.illegal_argument")
+	ErrCodeSyntaxError       = errors.MustNewCode("syntax_error")
+	ErrCodeUnknownTable      = errors.MustNewCode("unknown_table")
+	ErrCodeUnknownDatabase   = errors.MustNewCode("unknown_database")
+	ErrCodeUnknownIdentifier = errors.MustNewCode("unknown_identifier")
+	ErrCodeIllegalArgument   = errors.MustNewCode("illegal_argument")
 
-	ErrCodeQueryCanceled   = errors.MustNewCode("telemetrystore.clickhouse.query_canceled")
-	ErrCodeQueryTimeout    = errors.MustNewCode("telemetrystore.clickhouse.query_timeout")
-	ErrCodeExecutionFailed = errors.MustNewCode("telemetrystore.clickhouse.execution_failed")
+	ErrCodeQueryCanceled   = errors.MustNewCode("query_canceled")
+	ErrCodeQueryTimeout    = errors.MustNewCode("query_timeout")
+	ErrCodeExecutionFailed = errors.MustNewCode("execution_failed")
 )
 
-// Codes absent from this map fall through to ErrCodeExecutionFailed in castError.
+// Codes absent from this map fall through to the raw driver error in castError.
 var clickHouseExceptionWrappers = map[chproto.Error]func(cause error, ex *clickhouse.Exception) error{
 	chproto.ErrSyntaxError: func(cause error, ex *clickhouse.Exception) error {
 		return errors.WrapInvalidInputf(cause, ErrCodeSyntaxError, "SQL syntax error: %s", ex.Message)
@@ -259,10 +259,10 @@ func castError(err error) error {
 	}
 
 	if errors.Is(err, context.Canceled) {
-		return errors.WrapCanceledf(err, ErrCodeQueryCanceled, "ClickHouse query canceled")
+		return errors.WrapCanceledf(err, ErrCodeQueryCanceled, "query canceled")
 	}
 	if errors.Is(err, context.DeadlineExceeded) {
-		return errors.WrapTimeoutf(err, ErrCodeQueryTimeout, "ClickHouse query deadline exceeded")
+		return errors.WrapTimeoutf(err, ErrCodeQueryTimeout, "query timed out")
 	}
 
 	var ex *clickhouse.Exception
@@ -274,5 +274,5 @@ func castError(err error) error {
 		return wrap(err, ex)
 	}
 
-	return errors.WrapInternalf(err, ErrCodeExecutionFailed, "ClickHouse SQL execution failed")
+	return err
 }

@@ -57,12 +57,12 @@ func AsURLValues(cause error) url.Values {
 	// See if this is an instance of the base error or not
 	_, c, m, _, u, a := Unwrapb(cause)
 
-	var rea []responseerroradditional
-	if len(a) > 0 {
-		rea = make([]responseerroradditional, len(a))
-		for k, v := range a {
-			rea[k] = responseerroradditional{Message: v.message, Suggestions: v.suggestions}
-		}
+	// Unlike AsJSON (whose null `errors` honors the OpenAPI nullable contract),
+	// this goes into a redirect query param that the frontend JSON.parses and
+	// .maps over, so keep a non-nil empty slice -> marshals to "[]", not "null".
+	rea := make([]responseerroradditional, len(a))
+	for k, v := range a {
+		rea[k] = responseerroradditional{Message: v.message, Suggestions: v.suggestions}
 	}
 
 	errors, err := json.Marshal(rea)

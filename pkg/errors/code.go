@@ -28,7 +28,7 @@ var (
 )
 
 var (
-	codeRegex = regexp.MustCompile(`^[a-z_.]+$`)
+	codeRegex = regexp.MustCompile(`^[a-z_]+$`)
 )
 
 type Code struct{ s string }
