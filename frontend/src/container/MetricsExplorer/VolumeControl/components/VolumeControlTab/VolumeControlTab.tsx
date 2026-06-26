@@ -28,7 +28,7 @@ import {
 } from '../../../MetricDetails/VolumeControl/utils';
 import VolumeControlConfigDrawer from '../../../MetricDetails/VolumeControl/VolumeControlConfigDrawer';
 import VolumeControlBadge from '../VolumeControlBadge';
-import VolumeControlChart from '../../VolumeControlChart';
+import VolumeControlChart from '../VolumeControlChart/VolumeControlChart';
 import styles from './VolumeControlTab.module.scss';
 
 const OrderBy = MetricreductionruletypesReductionRuleOrderByDTO;

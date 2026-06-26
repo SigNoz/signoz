@@ -12,8 +12,8 @@ import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
 import { useTimezone } from 'providers/Timezone';
 import { useMemo, useRef } from 'react';
 
-import { buildVolumeChartPayload } from './utils';
-import styles from './VolumeControlTab.module.scss';
+import { buildVolumeChartPayload } from '../../utils';
+import styles from './VolumeControlChart.module.scss';
 
 const COLOR_MAPPING: Record<string, string> = {
 	Ingested: Color.BG_ROBIN_500,
