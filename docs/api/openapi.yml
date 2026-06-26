@@ -3755,10 +3755,16 @@ components:
         type:
           type: string
         url:
+          nullable: true
           type: string
       required:
+      - type
       - code
       - message
+      - url
+      - errors
+      - retry
+      - suggestions
       type: object
     ErrorsResponseerroradditional:
       properties:
@@ -3768,11 +3774,17 @@ components:
           items:
             type: string
           type: array
+      required:
+      - message
+      - suggestions
       type: object
     ErrorsResponseretryjson:
+      nullable: true
       properties:
         delay:
           $ref: '#/components/schemas/TimeDuration'
+      required:
+      - delay
       type: object
     FactoryResponse:
       properties:
