@@ -6,7 +6,7 @@ import {
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 
-import styles from './VolumeControlConfig.module.scss';
+import styles from './RelatedAssetsWarning.module.scss';
 
 const AssetType = MetricreductionruletypesAssetTypeDTO;
 

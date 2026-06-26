@@ -21,7 +21,7 @@ import AllAttributes from './AllAttributes';
 import DashboardsAndAlertsPopover from './DashboardsAndAlertsPopover';
 import Highlights from './Highlights';
 import Metadata from './Metadata';
-import VolumeControlSection from './VolumeControl/VolumeControlSection';
+import VolumeControlSection from '../VolumeControl/components/VolumeControlSection/VolumeControlSection';
 import { MetricDetailsProps } from './types';
 import { getMetricDetailsQuery } from './utils';
 

@@ -2,12 +2,12 @@ import { Button } from '@signozhq/ui/button';
 import { DrawerWrapper } from '@signozhq/ui/drawer';
 import { MetricreductionruletypesGettableReductionRuleDTO } from 'api/generated/services/sigNoz.schemas';
 
-import ImpactPanel from './ImpactPanel';
-import LabelSelector from './LabelSelector';
-import ModeSelector from './ModeSelector';
-import RelatedAssetsWarning from './RelatedAssetsWarning';
-import { useVolumeControlConfig } from './useVolumeControlConfig';
-import styles from './VolumeControlConfig.module.scss';
+import ImpactPanel from './ImpactPanel/ImpactPanel';
+import LabelSelector from './LabelSelector/LabelSelector';
+import ModeSelector from './ModeSelector/ModeSelector';
+import RelatedAssetsWarning from './RelatedAssetsWarning/RelatedAssetsWarning';
+import { useVolumeControlConfig } from '../../hooks/useVolumeControlConfig';
+import styles from './VolumeControlConfigDrawer.module.scss';
 
 interface VolumeControlConfigDrawerProps {
 	metricName: string;

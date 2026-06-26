@@ -1,0 +1,59 @@
+.card {
+	border: 1px solid var(--bg-slate-400, #1d212d);
+	border-radius: 6px;
+	padding: 12px 14px;
+	background: var(--bg-ink-300, #16181d);
+}
+
+.card-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 8px;
+}
+
+.status-dot {
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	flex: 0 0 auto;
+}
+
+.status-active {
+	background: var(--bg-forest-500, #25e192);
+}
+
+.status-pending {
+	background: var(--bg-amber-500, #ffcc56);
+}
+
+.card-title {
+	font-weight: 600;
+}
+
+.edit-button {
+	margin-left: auto;
+}
+
+.mode {
+	display: block;
+	font-size: 12px;
+	color: var(--bg-vanilla-400, #c0c1c3);
+	margin-bottom: 8px;
+}
+
+.chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+
+.chip {
+	font-family: 'Geist Mono', monospace;
+	font-size: 11px;
+	padding: 2px 8px;
+	border-radius: 4px;
+	background: var(--bg-ink-200, #23262e);
+	border: 1px solid var(--bg-slate-400, #1d212d);
+	color: var(--bg-vanilla-100, #fff);
+}

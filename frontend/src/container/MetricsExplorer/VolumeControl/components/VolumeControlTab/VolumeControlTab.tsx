@@ -1,7 +1,6 @@
-import { Gauge } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
-import { Input, Table } from 'antd';
+import { Table } from 'antd';
 import type { TableColumnsType, TableProps } from 'antd';
 import {
 	useGetMetricReductionRuleStats,
@@ -18,18 +17,15 @@ import { useVolumeControlFeatureGate } from 'hooks/metricsExplorer/useVolumeCont
 import useDebounce from 'hooks/useDebounce';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import {
-	formatCompact,
-	formatUsd,
-} from '../../../MetricDetails/VolumeControl/configUtils';
-import {
-	getLabelVerb,
-	getMatchTypeLabel,
-} from '../../../MetricDetails/VolumeControl/utils';
-import VolumeControlConfigDrawer from '../../../MetricDetails/VolumeControl/VolumeControlConfigDrawer';
+import { formatCompact } from '../../configUtils';
+import { getLabelVerb, getMatchTypeLabel } from '../../ruleUtils';
 import VolumeControlBadge from '../VolumeControlBadge';
 import VolumeControlChart from '../VolumeControlChart/VolumeControlChart';
+import VolumeControlConfigDrawer from '../VolumeControlConfigDrawer/VolumeControlConfigDrawer';
+import VolumeControlHeader from './VolumeControlHeader/VolumeControlHeader';
+import VolumeControlStats from './VolumeControlStats/VolumeControlStats';
 import styles from './VolumeControlTab.module.scss';
+import VolumeControlToolbar from './VolumeControlToolbar/VolumeControlToolbar';
 
 const OrderBy = MetricreductionruletypesReductionRuleOrderByDTO;
 const SortOrder = MetricreductionruletypesOrderDTO;
@@ -72,10 +68,6 @@ function VolumeControlTab(): JSX.Element {
 		query: { enabled: isVolumeControlEnabled },
 	});
 	const stats = statsData?.data;
-	const overallReduction =
-		stats && stats.ingestedSeries > 0
-			? Math.round((1 - stats.retainedSeries / stats.ingestedSeries) * 100)
-			: 0;
 
 	const rules = data?.data.rules ?? [];
 	const total = data?.data.total ?? 0;
@@ -250,60 +242,18 @@ function VolumeControlTab(): JSX.Element {
 
 	return (
 		<div className={styles.tab} data-testid="volume-control-tab">
-			<div className={styles.header}>
-				<div className={styles.titleRow}>
-					<Gauge size={18} />
-					<Typography.Title level={4} className={styles.title}>
-						Volume Control
-					</Typography.Title>
-				</div>
-				<Typography.Text className={styles.subtitle}>
-					Aggregate away high-cardinality attributes to reduce stored metric volume
-					and cost.
-				</Typography.Text>
-			</div>
+			<VolumeControlHeader />
 
-			<div className={styles.stats}>
-				<div className={styles.stat}>
-					<span className={styles.statLabel}>Active rules</span>
-					<span className={styles.statValue}>{total}</span>
-				</div>
-				<div className={styles.stat}>
-					<span className={styles.statLabel}>Ingested series</span>
-					<span className={styles.statValue}>
-						{formatCompact(stats?.ingestedSeries ?? 0)}
-					</span>
-				</div>
-				<div className={styles.stat}>
-					<span className={styles.statLabel}>Retained series</span>
-					<span className={styles.statValue}>
-						{formatCompact(stats?.retainedSeries ?? 0)}
-						{overallReduction > 0 && (
-							<span className={styles.statDelta}>−{overallReduction}%</span>
-						)}
-					</span>
-				</div>
-				<div className={`${styles.stat} ${styles.statHero}`}>
-					<span className={styles.statLabel}>Est. monthly savings</span>
-					<span className={`${styles.statValue} ${styles.statValueGood}`}>
-						{formatUsd(stats?.estimatedMonthlySavingsUsd ?? 0)}
-						<span className={styles.statUnit}>/mo</span>
-					</span>
-				</div>
-			</div>
+			<VolumeControlStats
+				activeRules={total}
+				ingestedSeries={stats?.ingestedSeries ?? 0}
+				retainedSeries={stats?.retainedSeries ?? 0}
+				estimatedMonthlySavingsUsd={stats?.estimatedMonthlySavingsUsd ?? 0}
+			/>
 
 			<VolumeControlChart enabled={isVolumeControlEnabled} />
 
-			<div className={styles.toolbar}>
-				<Input
-					className={styles.search}
-					placeholder="Search metrics"
-					allowClear
-					value={searchInput}
-					onChange={(e): void => setSearchInput(e.target.value)}
-					data-testid="volume-control-search"
-				/>
-			</div>
+			<VolumeControlToolbar value={searchInput} onChange={setSearchInput} />
 
 			<Table<MetricreductionruletypesGettableReductionRuleDTO>
 				rowKey="metricName"

@@ -1,0 +1,40 @@
+.impact {
+	border: 1px solid var(--bg-slate-400, #1d212d);
+	border-radius: 6px;
+	background: var(--bg-ink-300, #16181d);
+	padding: 14px;
+}
+
+.impact-note {
+	font-size: 12px;
+	color: var(--bg-vanilla-400, #c0c1c3);
+}
+
+.meters {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 12px;
+}
+
+.meter {
+	display: flex;
+	flex-direction: column;
+	gap: 5px;
+}
+
+.meter-label {
+	font-size: 10px;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: var(--bg-vanilla-400, #c0c1c3);
+}
+
+.meter-value {
+	font-family: 'Geist Mono', monospace;
+	font-size: 18px;
+	color: var(--bg-vanilla-100, #fff);
+}
+
+.meter-value-good {
+	color: var(--bg-forest-400, #50e7a7);
+}

@@ -1,7 +1,7 @@
 import { Typography } from '@signozhq/ui/typography';
 
-import { RuleMode } from './types';
-import styles from './VolumeControlConfig.module.scss';
+import { RuleMode } from '../../../types';
+import styles from './ModeSelector.module.scss';
 
 interface ModeOption {
 	mode: RuleMode;

@@ -12,7 +12,7 @@ import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
 import { useTimezone } from 'providers/Timezone';
 import { useMemo, useRef } from 'react';
 
-import { buildVolumeChartPayload } from '../../utils';
+import { buildVolumeChartPayload } from '../../chartUtils';
 import styles from './VolumeControlChart.module.scss';
 
 const COLOR_MAPPING: Record<string, string> = {

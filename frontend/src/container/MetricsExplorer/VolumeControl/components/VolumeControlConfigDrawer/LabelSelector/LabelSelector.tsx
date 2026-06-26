@@ -2,8 +2,8 @@ import { Typography } from '@signozhq/ui/typography';
 import { Select } from 'antd';
 import { popupContainer } from 'utils/selectPopupContainer';
 
-import { RuleMode } from './types';
-import styles from './VolumeControlConfig.module.scss';
+import { RuleMode } from '../../../types';
+import styles from './LabelSelector.module.scss';
 
 interface LabelSelectorProps {
 	mode: RuleMode;

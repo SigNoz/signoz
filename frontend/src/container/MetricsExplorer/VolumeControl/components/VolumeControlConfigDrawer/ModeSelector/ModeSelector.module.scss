@@ -1,0 +1,41 @@
+.mode-cards {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 10px;
+}
+
+.mode-card {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	text-align: left;
+	border: 1px solid var(--bg-slate-400, #1d212d);
+	border-radius: 6px;
+	background: var(--bg-ink-300, #16181d);
+	padding: 12px;
+	cursor: pointer;
+	transition:
+		border-color 0.12s ease,
+		background 0.12s ease;
+}
+
+.mode-card:hover {
+	border-color: var(--bg-slate-200, #2c3140);
+}
+
+.mode-card-active {
+	border-color: var(--bg-robin-500, #4e74f8);
+	background: rgba(78, 116, 248, 0.08);
+}
+
+.mode-title {
+	font-size: 12.5px;
+	font-weight: 600;
+	color: var(--bg-vanilla-100, #fff);
+}
+
+.mode-desc {
+	font-size: 11px;
+	color: var(--bg-vanilla-400, #c0c1c3);
+	line-height: 1.45;
+}

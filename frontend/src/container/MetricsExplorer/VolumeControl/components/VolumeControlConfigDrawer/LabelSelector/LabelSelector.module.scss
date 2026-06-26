@@ -1,0 +1,21 @@
+.field {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.field-label {
+	font-size: 12.5px;
+	font-weight: 600;
+	color: var(--bg-vanilla-100, #fff);
+}
+
+.field-hint {
+	font-size: 11px;
+	color: var(--bg-vanilla-400, #c0c1c3);
+}
+
+.label-select {
+	width: 100%;
+	margin-top: 4px;
+}

@@ -1,0 +1,33 @@
+.body {
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+	padding: 4px 2px;
+}
+
+.title {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.admin-tag {
+	font-size: 10px;
+	font-weight: 600;
+	letter-spacing: 0.03em;
+	color: var(--bg-amber-400, #ffd778);
+	border: 1px solid var(--bg-amber-500, #ffcc56);
+	border-radius: 99px;
+	padding: 1px 8px;
+}
+
+.footer {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	width: 100%;
+}
+
+.footer-spacer {
+	flex: 1;
+}

@@ -2,9 +2,9 @@ import { Typography } from '@signozhq/ui/typography';
 import { Spin } from 'antd';
 import { MetricreductionruletypesGettableReductionRulePreviewDTO } from 'api/generated/services/sigNoz.schemas';
 
-import { formatCompact } from './configUtils';
-import { RuleMode } from './types';
-import styles from './VolumeControlConfig.module.scss';
+import { formatCompact } from '../../../configUtils';
+import { RuleMode } from '../../../types';
+import styles from './ImpactPanel.module.scss';
 
 interface ImpactPanelProps {
 	mode: RuleMode;
