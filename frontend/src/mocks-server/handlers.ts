@@ -176,12 +176,11 @@ export const handlers = [
 		res(ctx.status(200), ctx.json(getDashboardById)),
 	),
 
-	rest.post('http://localhost/api/v1/invite', (_, res, ctx) =>
+	rest.post('http://localhost/api/v2/users', (_, res, ctx) =>
 		res(
-			ctx.status(200),
+			ctx.status(201),
 			ctx.json({
-				status: 'success',
-				data: 'invite sent successfully',
+				data: { id: 'user-123' },
 			}),
 		),
 	),
