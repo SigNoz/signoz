@@ -1,5 +1,4 @@
 import {
-	type DashboardtypesPanelDTO,
 	type DashboardtypesTablePanelSpecDTO,
 	type QueryRangeV5200,
 } from 'api/generated/services/sigNoz.schemas';
@@ -7,16 +6,19 @@ import { PanelMode } from 'container/DashboardContainer/visualization/panels/typ
 import type { PanelQueryData } from 'pages/DashboardPageV2/DashboardContainer/queryV5/types';
 import { render } from 'tests/test-utils';
 
-import { BaseRendererProps } from '../../../types/rendererProps';
+import type {
+	PanelOfKind,
+	PanelRendererProps,
+} from '../../../types/rendererProps';
 import TablePanelRenderer from '../Renderer';
 
 function panelWith(
 	spec: DashboardtypesTablePanelSpecDTO,
-): DashboardtypesPanelDTO {
+): PanelOfKind<'signoz/TablePanel'> {
 	return {
 		kind: 'Panel',
 		spec: { plugin: { kind: 'signoz/TablePanel', spec } },
-	} as unknown as DashboardtypesPanelDTO;
+	} as unknown as PanelOfKind<'signoz/TablePanel'>;
 }
 
 // V5 scalar response: one joined result with a group column + an aggregation column.
@@ -60,13 +62,13 @@ const emptyData: PanelQueryData = {
 };
 
 function renderPanel(
-	props: Partial<BaseRendererProps>,
+	props: Partial<PanelRendererProps<'signoz/TablePanel'>>,
 ): ReturnType<typeof render> {
-	const baseProps: BaseRendererProps = {
+	const baseProps: PanelRendererProps<'signoz/TablePanel'> = {
 		panelId: 'panel-1',
 		panel: panelWith({}),
 		data: emptyData,
-		isLoading: false,
+		isFetching: false,
 		error: null,
 		panelMode: PanelMode.DASHBOARD_VIEW,
 		...props,

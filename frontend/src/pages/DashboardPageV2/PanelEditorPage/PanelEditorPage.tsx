@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import {
 	generatePath,
 	Redirect,
@@ -12,14 +12,20 @@ import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 
+import { getPanelDefinition } from '../DashboardContainer/Panels/registry';
+import { buildDefaultPluginSpec } from '../DashboardContainer/Panels/utils/buildDefaultPluginSpec';
+import { buildDefaultQueries } from '../DashboardContainer/Panels/utils/buildDefaultQueries';
 import PanelEditorContainer from '../DashboardContainer/PanelEditor';
+import {
+	parseNewPanelKind,
+	parseNewPanelLayoutIndex,
+} from '../DashboardContainer/PanelEditor/newPanelRoute';
+import { createDefaultPanel } from '../DashboardContainer/patchOps';
 import styles from './PanelEditorPage.module.scss';
 
 /**
- * Full-page route for editing a V2 dashboard panel. Fetches the dashboard, resolves
- * the panel from its spec, and hands `PanelEditorContainer` the navigate-back
- * callbacks. The save round-trip invalidates the dashboard query, so returning shows
- * the persisted edit without an explicit refetch here.
+ * Full-page route for editing a V2 dashboard panel. Resolves the panel from the
+ * fetched dashboard spec and wires up navigate-back callbacks.
  */
 function PanelEditorPage(): JSX.Element {
 	const { dashboardId, panelId } = useParams<{
@@ -33,12 +39,29 @@ function PanelEditorPage(): JSX.Element {
 		id: dashboardId,
 	});
 	const dashboard = data?.data;
-	const panel = dashboard?.spec.panels[panelId];
+
+	// A `panel/new?panelKind=…` route means "create": seed a default panel of that
+	// kind rather than looking one up. Persisted (with a real id) only on save.
+	const newKind = parseNewPanelKind(panelId, search);
+	const existingPanel = dashboard?.spec.panels[panelId];
+	const panel = useMemo(
+		() =>
+			newKind
+				? createDefaultPanel(
+						newKind,
+						buildDefaultPluginSpec(getPanelDefinition(newKind)?.sections ?? []),
+						buildDefaultQueries(newKind),
+					)
+				: existingPanel,
+		[newKind, existingPanel],
+	);
+
+	// Target section for a newly-created panel (set by the "Add panel" trigger).
+	const layoutIndex = parseNewPanelLayoutIndex(search);
 
 	const backToDashboard = useCallback((): void => {
-		// Carry only dashboard params back; drop editor-only URL state (chiefly
-		// `compositeQuery`, the query builder's URL sync) so it doesn't leak into the
-		// dashboard. Time lives in Redux, so it survives without being in the URL.
+		// Carry only dashboard params; drop editor-only URL state (chiefly
+		// `compositeQuery`) so it doesn't leak into the dashboard. Time lives in Redux.
 		const params = new URLSearchParams();
 		const variables = new URLSearchParams(search).get(QueryParams.variables);
 		if (variables) {
@@ -65,7 +88,7 @@ function PanelEditorPage(): JSX.Element {
 		);
 	}
 
-	// Stale/deleted panel ref: redirect to the dashboard rather than render an empty editor.
+	// No panel (stale/deleted id, or unknown new-panel kind) — send the user back.
 	if (!panel) {
 		return (
 			<Redirect
@@ -79,6 +102,8 @@ function PanelEditorPage(): JSX.Element {
 			dashboardId={dashboardId}
 			panelId={panelId}
 			panel={panel}
+			isNew={!!newKind}
+			layoutIndex={layoutIndex}
 			onClose={backToDashboard}
 			onSaved={backToDashboard}
 		/>
