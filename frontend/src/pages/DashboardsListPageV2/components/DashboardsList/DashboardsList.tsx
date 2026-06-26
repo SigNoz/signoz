@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import logEvent from 'api/common/logEvent';
-import { useListDashboardsV2 } from 'api/generated/services/dashboard';
+import { useListDashboardsForUserV2 } from 'api/generated/services/dashboard';
 import {
 	DashboardtypesListOrderDTO,
 	DashboardtypesListSortDTO,
@@ -20,7 +20,7 @@ import {
 } from '../../hooks/useDashboardsListQueryParams';
 import { useDashboardViewsStore } from '../../store/useDashboardViewsStore';
 import { useDashboardsListVisibleColumnsStore } from '../../store/useVisibleColumnsStore';
-import type { UpdatedWindow } from '../../types';
+import type { SelectedTag, UpdatedWindow } from '../../types';
 import type { DashboardListItem } from '../../utils';
 import { applyClientView } from '../../views';
 import type { CreatorOption } from '../FilterZone/FilterChips';
@@ -55,6 +55,7 @@ function DashboardsList(): JSX.Element {
 		setSearch,
 		setCreatedBy,
 		setUpdated,
+		setTags,
 		applyFilters,
 		clearAll,
 	} = useDashboardFilters();
@@ -66,6 +67,7 @@ function DashboardsList(): JSX.Element {
 		activeViewId,
 		builtinViews,
 		customViews,
+		customViewsLoading,
 		isCustomActive,
 		isModified,
 		viewQuery,
@@ -75,11 +77,18 @@ function DashboardsList(): JSX.Element {
 		saveActiveView,
 		resetView,
 		removeView,
-	} = useActiveView({ filters, applyFilters, userEmail: user.email });
+	} = useActiveView({
+		filters,
+		applyFilters,
+		userEmail: user.email,
+		sortColumn,
+		sortOrder,
+		setSortColumn,
+		setSortOrder,
+	});
 
 	const railCollapsed = useDashboardViewsStore((s) => s.railCollapsed);
 	const setRailCollapsed = useDashboardViewsStore((s) => s.setRailCollapsed);
-	const favorites = useDashboardViewsStore((s) => s.favorites);
 	const recent = useDashboardViewsStore((s) => s.recent);
 
 	// Any filter change resets to the first page so the user isn't stranded on a
@@ -104,6 +113,13 @@ function DashboardsList(): JSX.Element {
 			void setPage(1);
 		},
 		[setUpdated, setPage],
+	);
+	const handleTagsChange = useCallback(
+		(tags: SelectedTag[]): void => {
+			setTags(tags);
+			void setPage(1);
+		},
+		[setTags, setPage],
 	);
 	const handleClearAll = useCallback((): void => {
 		clearAll();
@@ -150,7 +166,9 @@ function DashboardsList(): JSX.Element {
 		isFetching,
 		error,
 		refetch,
-	} = useListDashboardsV2(listParams, { query: { keepPreviousData: true } });
+	} = useListDashboardsForUserV2(listParams, {
+		query: { keepPreviousData: true },
+	});
 
 	const apiError = useMemo(
 		() => (error ? toAPIError(error) : undefined),
@@ -169,9 +187,9 @@ function DashboardsList(): JSX.Element {
 	const dashboards = useMemo<DashboardListItem[]>(
 		() =>
 			clientView
-				? applyClientView(rawDashboards, activeViewId, favorites, recent)
+				? applyClientView(rawDashboards, activeViewId, recent)
 				: rawDashboards,
-		[clientView, rawDashboards, activeViewId, favorites, recent],
+		[clientView, rawDashboards, activeViewId, recent],
 	);
 	const total = clientView ? dashboards.length : (response?.data?.total ?? 0);
 
@@ -193,6 +211,14 @@ function DashboardsList(): JSX.Element {
 			label: email === user.email ? `${email} (me)` : email,
 		}));
 	}, [rawDashboards, user.email]);
+
+	// All key:value tags the API reports for the org's dashboards, powering the
+	// Tags filter chip's options.
+	const availableTags = useMemo<SelectedTag[]>(
+		() =>
+			(response?.data?.tags ?? []).map((t) => ({ key: t.key, value: t.value })),
+		[response],
+	);
 
 	const [isCreateOpen, setIsCreateOpen] = useState(false);
 	const visibleColumns = useDashboardsListVisibleColumnsStore(
@@ -251,6 +277,7 @@ function DashboardsList(): JSX.Element {
 				activeViewId={activeViewId}
 				builtinViews={builtinViews}
 				customViews={customViews}
+				customViewsLoading={customViewsLoading}
 				isCustomActive={isCustomActive}
 				isModified={isModified}
 				collapsed={railCollapsed}
@@ -281,11 +308,14 @@ function DashboardsList(): JSX.Element {
 									search={filters.search}
 									createdBy={filters.createdBy}
 									updated={filters.updated}
+									tags={filters.tags}
+									availableTags={availableTags}
 									creatorOptions={creatorOptions}
 									isEmpty={filtersEmpty}
 									onSearchChange={handleSearchChange}
 									onCreatedByChange={handleCreatedByChange}
 									onUpdatedChange={handleUpdatedChange}
+									onTagsChange={handleTagsChange}
 									onClearAll={handleClearAll}
 								/>
 							</div>

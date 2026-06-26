@@ -3,11 +3,11 @@ import { Modal } from 'antd';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import { Typography } from '@signozhq/ui/typography';
-import { CircleAlert, Plus, Search, Trash2 } from '@signozhq/icons';
+import { Bookmark, CircleAlert, Plus, Search, Trash2 } from '@signozhq/icons';
 import cx from 'classnames';
 
 import type { SavedView } from '../../types';
-import { type BuiltinView, iconByName } from '../../views';
+import { type BuiltinView } from '../../views';
 import SaveViewPopover from './SaveViewPopover';
 
 import styles from './ViewsRail.module.scss';
@@ -16,11 +16,12 @@ interface Props {
 	activeViewId: string;
 	builtinViews: BuiltinView[];
 	customViews: SavedView[];
+	customViewsLoading: boolean;
 	isCustomActive: boolean;
 	isModified: boolean;
 	collapsed?: boolean;
 	onSelect: (id: string) => void;
-	onSave: (name: string, icon: string) => void;
+	onSave: (name: string) => void;
 	onSaveChanges: () => void;
 	onReset: () => void;
 	onClearFilters: () => void;
@@ -40,6 +41,7 @@ function ViewsRail({
 	activeViewId,
 	builtinViews,
 	customViews,
+	customViewsLoading,
 	isCustomActive,
 	isModified,
 	collapsed = false,
@@ -198,7 +200,9 @@ function ViewsRail({
 							My views
 							<span className={styles.groupCount}>{customViews.length}</span>
 						</div>
-						{customViews.length === 0 ? (
+						{customViewsLoading ? (
+							<div className={styles.empty}>Loading views…</div>
+						) : customViews.length === 0 ? (
 							<div className={styles.empty}>
 								No saved views yet. Filter the list, then save it as a view.
 							</div>
@@ -207,7 +211,7 @@ function ViewsRail({
 								renderItem({
 									id: v.id,
 									label: v.name,
-									icon: iconByName(v.icon),
+									icon: Bookmark,
 									deletable: true,
 								}),
 							)

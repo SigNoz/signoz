@@ -28,6 +28,7 @@
 	font-weight: var(--font-weight-semibold);
 	letter-spacing: -0.01em;
 	color: var(--l1-foreground);
+	text-align: left;
 }
 
 .search {
@@ -77,6 +78,7 @@
 }
 
 .row {
+	position: relative;
 	display: flex;
 	align-items: center;
 	margin: 3px 0;
@@ -90,6 +92,19 @@
 
 .rowActive {
 	background: var(--l2-background);
+}
+
+// A left accent bar reads the active row more clearly than background alone.
+.rowActive::before {
+	content: '';
+	position: absolute;
+	left: 0;
+	top: 50%;
+	transform: translateY(-50%);
+	width: 3px;
+	height: 18px;
+	border-radius: 0 3px 3px 0;
+	background: var(--primary-background);
 }
 
 .item {
@@ -215,37 +230,6 @@
 	font-size: var(--font-size-xs);
 	color: var(--l3-foreground);
 	margin-top: 2px;
-}
-
-.iconGrid {
-	display: grid;
-	grid-template-columns: repeat(5, 1fr);
-	gap: 6px;
-}
-
-.iconCell {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	height: 34px;
-	border: 1px solid var(--l2-border);
-	border-radius: 6px;
-	background: var(--l2-background);
-	color: var(--l2-foreground);
-	cursor: pointer;
-	transition:
-		border-color 0.12s,
-		color 0.12s;
-}
-
-.iconCell:hover {
-	color: var(--l1-foreground);
-	border-color: var(--l3-foreground);
-}
-
-.iconCellOn {
-	border-color: var(--primary-background);
-	color: var(--primary-background);
 }
 
 .saveActions {
