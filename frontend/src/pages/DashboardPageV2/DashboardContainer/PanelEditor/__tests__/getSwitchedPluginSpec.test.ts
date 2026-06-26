@@ -41,7 +41,11 @@ describe('getSwitchedPluginSpec', () => {
 			axes: { logScale: true },
 		});
 
-		const result = getSwitchedPluginSpec(old, 'signoz/TimeSeriesPanel', TelemetrytypesSignalDTO.logs);
+		const result = getSwitchedPluginSpec(
+			old,
+			'signoz/TimeSeriesPanel',
+			TelemetrytypesSignalDTO.logs,
+		);
 
 		expect(result.formatting).toStrictEqual({ unit: 'ms', decimalPrecision: 2 });
 		// Type-specific config from the old kind is dropped.
@@ -83,7 +87,11 @@ describe('getSwitchedPluginSpec', () => {
 			sections: [{ kind: 'legend', controls: { position: true } }],
 		});
 
-		const result = getSwitchedPluginSpec(specWith({}), 'signoz/PieChartPanel', TelemetrytypesSignalDTO.logs);
+		const result = getSwitchedPluginSpec(
+			specWith({}),
+			'signoz/PieChartPanel',
+			TelemetrytypesSignalDTO.logs,
+		);
 
 		expect(result.legend?.position).toBe('bottom');
 	});
