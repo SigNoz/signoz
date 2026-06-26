@@ -23,6 +23,8 @@ interface ConfigPaneProps {
 	legendSeries: LegendSeries[];
 	/** Table panel's resolved value columns, for the table-only editors. */
 	tableColumns: TableColumnOption[];
+	/** Query step interval (seconds), for the chart-appearance span-gaps floor. */
+	stepInterval?: number;
 }
 
 /**
@@ -38,6 +40,7 @@ function ConfigPane({
 	onChangePanelKind,
 	legendSeries,
 	tableColumns,
+	stepInterval,
 }: ConfigPaneProps): JSX.Element {
 	const definition = getPanelDefinition(panelKind);
 	const sections = definition.sections;
@@ -95,6 +98,7 @@ function ConfigPane({
 									signal={signal}
 									panelKind={panelKind}
 									onChangePanelKind={onChangePanelKind}
+									stepInterval={stepInterval}
 								/>
 							))}
 						</div>

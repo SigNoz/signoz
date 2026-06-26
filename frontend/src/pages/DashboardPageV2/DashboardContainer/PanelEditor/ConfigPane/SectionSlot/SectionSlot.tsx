@@ -27,6 +27,8 @@ interface SectionSlotProps {
 	/** Current panel kind + switch handler, for the visualization section's type switcher. */
 	panelKind: PanelKind;
 	onChangePanelKind: (kind: PanelKind) => void;
+	/** Query step interval (seconds), for the chart-appearance span-gaps floor. */
+	stepInterval?: number;
 }
 
 /**
@@ -44,6 +46,7 @@ function SectionSlot({
 	signal,
 	panelKind,
 	onChangePanelKind,
+	stepInterval,
 }: SectionSlotProps): JSX.Element | null {
 	// A kind can hide a section based on current spec state (e.g. Histogram legend once
 	// queries are merged) — skip it before resolving the editor.
@@ -82,6 +85,7 @@ function SectionSlot({
 				signal={signal}
 				panelKind={panelKind}
 				onChangePanelKind={onChangePanelKind}
+				stepInterval={stepInterval}
 			/>
 		</SettingsSection>
 	);
