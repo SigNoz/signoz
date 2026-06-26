@@ -145,15 +145,46 @@ func (v VariableEnvelope[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
 // ListVariableSpec mirrors dashboard.ListVariableSpec (variable.ListSpec
 // fields + Name) but with a typed VariablePlugin replacing common.Plugin.
 type ListVariableSpec struct {
-	Display         Display                `json:"display" required:"true"`
-	DefaultValue    *variable.DefaultValue `json:"defaultValue,omitempty"`
-	AllowAllValue   bool                   `json:"allowAllValue"`
-	AllowMultiple   bool                   `json:"allowMultiple"`
-	CustomAllValue  string                 `json:"customAllValue,omitempty"`
-	CapturingRegexp string                 `json:"capturingRegexp,omitempty"`
-	Sort            ListVariableSpecSort   `json:"sort,omitzero"`
-	Plugin          VariablePlugin         `json:"plugin"`
-	Name            string                 `json:"name" required:"true" minLength:"1"`
+	Display         Display               `json:"display" required:"true"`
+	DefaultValue    *VariableDefaultValue `json:"defaultValue,omitempty"`
+	AllowAllValue   bool                  `json:"allowAllValue"`
+	AllowMultiple   bool                  `json:"allowMultiple"`
+	CustomAllValue  string                `json:"customAllValue,omitempty"`
+	CapturingRegexp string                `json:"capturingRegexp,omitempty"`
+	Sort            ListVariableSpecSort  `json:"sort,omitzero"`
+	Plugin          VariablePlugin        `json:"plugin"`
+	Name            string                `json:"name" required:"true" minLength:"1"`
+}
+
+// VariableDefaultValue is a list variable's defaultValue: the string | []string
+// union. It subclasses the perses variable.DefaultValue (which marshals as a
+// scalar-or-array) so SigNoz can attach the oneOf schema to it as a named
+// component.
+//
+// Emitting it as a named oneOf component (and having defaultValue $ref it),
+// instead of inlining the union onto the property, gives downstream codegen a
+// hook to canonicalize: oapi-codegen generates the union's Marshal/UnmarshalJSON
+// and skaff's scalar-union pre-pass flattens it to a string attribute. An inline
+// oneOf has no such named component to hook.
+type VariableDefaultValue struct {
+	variable.DefaultValue
+}
+
+// PrepareJSONSchema shapes the component as the string | []string oneOf; the
+// reflected struct shape (a bare object) is wrong because the value marshals as
+// a scalar-or-array, not an object.
+func (VariableDefaultValue) PrepareJSONSchema(s *jsonschema.Schema) error {
+	stringItem := jsonschema.String.ToSchemaOrBool()
+	s.Type = nil
+	s.Properties = nil
+	s.WithOneOf(
+		jsonschema.String.ToSchemaOrBool(),
+		(&jsonschema.Schema{}).
+			WithType(jsonschema.Array.Type()).
+			WithItems(jsonschema.Items{SchemaOrBool: &stringItem}).
+			ToSchemaOrBool(),
+	)
+	return nil
 }
 
 // validate mirrors perses ListVariableSpec validation (plus the digits-only name

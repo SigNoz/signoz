@@ -2971,7 +2971,7 @@ components:
         customAllValue:
           type: string
         defaultValue:
-          $ref: '#/components/schemas/VariableDefaultValue'
+          $ref: '#/components/schemas/DashboardtypesVariableDefaultValue'
         display:
           $ref: '#/components/schemas/DashboardtypesDisplay'
         name:
@@ -3684,6 +3684,12 @@ components:
       - $ref: '#/components/schemas/DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpec'
       - $ref: '#/components/schemas/DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesTextVariableSpec'
       type: object
+    DashboardtypesVariableDefaultValue:
+      oneOf:
+      - type: string
+      - items:
+          type: string
+        type: array
     DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpec:
       properties:
         kind:
@@ -7890,12 +7896,6 @@ components:
       required:
       - id
       type: object
-    VariableDefaultValue:
-      oneOf:
-      - type: string
-      - items:
-          type: string
-        type: array
     ZeustypesGettableHost:
       properties:
         hosts:

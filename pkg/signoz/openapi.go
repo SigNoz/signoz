@@ -39,7 +39,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/zeus"
-	"github.com/perses/spec/go/dashboard/variable"
 	"github.com/swaggest/jsonschema-go"
 	"github.com/swaggest/openapi-go"
 	"github.com/swaggest/openapi-go/openapi3"
@@ -103,41 +102,6 @@ func NewOpenAPI(ctx context.Context, instrumentation instrumentation.Instrumenta
 		}
 
 		return defaultDefName
-	}))
-
-	// variable.DefaultValue (perses) is the string | []string union used by a
-	// list variable's defaultValue. It marshals as a scalar-or-array, so its
-	// reflected struct shape (a bare object) is wrong. Emit it as a named oneOf
-	// component (VariableDefaultValue) and let defaultValue $ref it, instead of
-	// inlining the union onto the property: a named component gives downstream
-	// codegen a hook to canonicalize — oapi-codegen generates the union's
-	// Marshal/UnmarshalJSON and skaff's scalar-union pre-pass flattens it to a
-	// string attribute. An inline oneOf has no such component to hook.
-	reflector.JSONSchemaReflector().DefaultOptions = append(reflector.JSONSchemaReflector().DefaultOptions, jsonschema.InterceptSchema(func(params jsonschema.InterceptSchemaParams) (bool, error) {
-		if !params.Processed || !params.Value.IsValid() {
-			return false, nil
-		}
-
-		typ := params.Value.Type()
-		if typ.Kind() == reflect.Pointer {
-			typ = typ.Elem()
-		}
-		if typ != reflect.TypeOf(variable.DefaultValue{}) {
-			return false, nil
-		}
-
-		stringItem := jsonschema.String.ToSchemaOrBool()
-		params.Schema.Type = nil
-		params.Schema.Properties = nil
-		params.Schema.WithOneOf(
-			jsonschema.String.ToSchemaOrBool(),
-			(&jsonschema.Schema{}).
-				WithType(jsonschema.Array.Type()).
-				WithItems(jsonschema.Items{SchemaOrBool: &stringItem}).
-				ToSchemaOrBool(),
-		)
-
-		return false, nil
 	}))
 
 	reflector.Spec.WithInfo(*(&openapi3.Info{}).

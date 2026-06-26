@@ -4564,7 +4564,7 @@ export type DashboardtypesLayoutDTO =
 export enum DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpecDTOKind {
 	ListVariable = 'ListVariable',
 }
-export type VariableDefaultValueDTO = string | string[];
+export type DashboardtypesVariableDefaultValueDTO = string | string[];
 
 export enum DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDynamicVariableSpecDTOKind {
 	'signoz/DynamicVariable' = 'signoz/DynamicVariable',
@@ -4648,7 +4648,7 @@ export interface DashboardtypesListVariableSpecDTO {
 	 * @type string
 	 */
 	customAllValue?: string;
-	defaultValue?: VariableDefaultValueDTO;
+	defaultValue?: DashboardtypesVariableDefaultValueDTO;
 	display: DashboardtypesDisplayDTO;
 	/**
 	 * @type string
