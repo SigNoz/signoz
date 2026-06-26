@@ -4,16 +4,14 @@
 	gap: 8px;
 	border: 1px solid var(--bg-slate-400, #1d212d);
 	border-radius: 6px;
-	padding: 12px 16px;
+	padding: 12px 16px 0 16px;
 }
 
-.chart-title {
-	font-size: 11px;
+.chartTitle {
 	text-transform: uppercase;
 	letter-spacing: 0.05em;
-	color: var(--bg-vanilla-400, #c0c1c3);
 }
 
-.chart-body {
+.chartBody {
 	height: 340px;
 }
