@@ -1,39 +1,43 @@
-import inviteUsers from 'api/v1/invite/bulk/create';
-import sendInvite from 'api/v1/invite/create';
-import { StatusCodes } from 'http-status-codes';
-import { render, screen, userEvent, waitFor } from 'tests/test-utils';
-import APIError from 'types/api/error';
+import { toast } from '@signozhq/ui/sonner';
+import { render, screen, userEvent } from 'tests/test-utils';
 
 import InviteMembersModal from '../InviteMembersModal';
 
-const makeApiError = (message: string, code = StatusCodes.CONFLICT): APIError =>
-	new APIError({
-		httpStatusCode: code,
-		error: { code: 'already_exists', message, url: '', errors: [] },
-	});
-
-jest.mock('api/v1/invite/create');
-jest.mock('api/v1/invite/bulk/create');
 jest.mock('@signozhq/ui/sonner', () => ({
 	...jest.requireActual('@signozhq/ui/sonner'),
 	toast: {
 		success: jest.fn(),
-		error: jest.fn(),
+		warning: jest.fn(),
 	},
 }));
 
-const showErrorModal = jest.fn();
-jest.mock('providers/ErrorModalProvider', () => ({
-	__esModule: true,
-	...jest.requireActual('providers/ErrorModalProvider'),
-	useErrorModal: jest.fn(() => ({
-		showErrorModal,
-		isErrorModalVisible: false,
-	})),
-}));
+interface MockInviteMembersProps {
+	onSuccess: () => void;
+	onPartialSuccess: () => void;
+	onAllFailed?: () => void;
+	renderFooter: (props: {
+		submit: () => void;
+		canSubmit: boolean;
+		isSubmitting: boolean;
+	}) => JSX.Element;
+}
 
-const mockSendInvite = jest.mocked(sendInvite);
-const mockInviteUsers = jest.mocked(inviteUsers);
+let mockInviteMembersProps: MockInviteMembersProps | null = null;
+
+jest.mock('components/InviteMembers/InviteMembers', () => {
+	return function MockInviteMembers(props: MockInviteMembersProps): JSX.Element {
+		mockInviteMembersProps = props;
+		return (
+			<div data-testid="mock-invite-members">
+				{props.renderFooter({
+					submit: jest.fn(),
+					canSubmit: true,
+					isSubmitting: false,
+				})}
+			</div>
+		);
+	};
+});
 
 const defaultProps = {
 	open: true,
@@ -41,236 +45,166 @@ const defaultProps = {
 	onComplete: jest.fn(),
 };
 
+function renderComponent(
+	props: Partial<typeof defaultProps> = {},
+): ReturnType<typeof render> {
+	return render(<InviteMembersModal {...defaultProps} {...props} />);
+}
+
 describe('InviteMembersModal', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
-		showErrorModal.mockClear();
-		mockSendInvite.mockResolvedValue({
-			httpStatusCode: 200,
-			data: { data: 'test', status: 'success' },
-		});
-		mockInviteUsers.mockResolvedValue({ httpStatusCode: 200, data: null });
+		mockInviteMembersProps = null;
 	});
 
-	it('renders 3 initial empty rows and disables the submit button', () => {
-		render(<InviteMembersModal {...defaultProps} />);
+	describe('rendering', () => {
+		it('renders modal with title and InviteMembers component', () => {
+			renderComponent();
 
-		const emailInputs = screen.getAllByPlaceholderText('john@signoz.io');
-		expect(emailInputs).toHaveLength(3);
-
-		expect(
-			screen.getByRole('button', { name: /invite team members/i }),
-		).toBeDisabled();
-	});
-
-	it('adds a row when "Add another" is clicked and removes a row via trash button', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
-
-		render(<InviteMembersModal {...defaultProps} />);
-
-		await user.click(screen.getByRole('button', { name: /add another/i }));
-		expect(screen.getAllByPlaceholderText('john@signoz.io')).toHaveLength(4);
-
-		const removeButtons = screen.getAllByRole('button', { name: /remove row/i });
-		await user.click(removeButtons[0]);
-		expect(screen.getAllByPlaceholderText('john@signoz.io')).toHaveLength(3);
-	});
-
-	describe('validation callout messages', () => {
-		it('shows combined message when email is invalid and role is missing', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
-
-			render(<InviteMembersModal {...defaultProps} />);
-
-			await user.type(
-				screen.getAllByPlaceholderText('john@signoz.io')[0],
-				'not-an-email',
+			expect(screen.getByRole('dialog')).toBeInTheDocument();
+			expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent(
+				'Invite Team Members',
 			);
-			await user.click(
+			expect(screen.getByTestId('mock-invite-members')).toBeInTheDocument();
+		});
+
+		it('does not render when open=false', () => {
+			renderComponent({ open: false });
+
+			expect(screen.queryByText('Invite Team Members')).not.toBeInTheDocument();
+		});
+	});
+
+	describe('footer buttons', () => {
+		it('renders Cancel and Invite buttons', () => {
+			renderComponent();
+
+			expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
+			expect(
 				screen.getByRole('button', { name: /invite team members/i }),
-			);
-
-			await expect(
-				screen.findByText(
-					'Please enter valid emails and select roles for team members',
-				),
-			).resolves.toBeInTheDocument();
+			).toBeInTheDocument();
 		});
 
-		it('shows email-only message when email is invalid but role is selected', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+		it('disables Invite button when canSubmit=false', () => {
+			const { unmount } = renderComponent();
+			unmount();
 
-			render(<InviteMembersModal {...defaultProps} />);
-
-			const emailInputs = screen.getAllByPlaceholderText('john@signoz.io');
-			await user.type(emailInputs[0], 'not-an-email');
-
-			await user.click(screen.getAllByText('Select roles')[0]);
-			await user.click(await screen.findByText('Viewer'));
-
-			await user.click(
-				screen.getByRole('button', { name: /invite team members/i }),
+			const { getByRole } = render(
+				mockInviteMembersProps?.renderFooter({
+					submit: jest.fn(),
+					canSubmit: false,
+					isSubmitting: false,
+				}) as JSX.Element,
 			);
 
-			await expect(
-				screen.findByText('Please enter valid emails for team members'),
-			).resolves.toBeInTheDocument();
+			expect(getByRole('button', { name: /invite team members/i })).toBeDisabled();
 		});
 
-		it('shows role-only message when email is valid but role is missing', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+		it('shows loading state when isSubmitting=true', () => {
+			const { unmount } = renderComponent();
+			unmount();
 
-			render(<InviteMembersModal {...defaultProps} />);
-
-			await user.type(
-				screen.getAllByPlaceholderText('john@signoz.io')[0],
-				'valid@signoz.io',
+			const { getByRole } = render(
+				mockInviteMembersProps?.renderFooter({
+					submit: jest.fn(),
+					canSubmit: true,
+					isSubmitting: true,
+				}) as JSX.Element,
 			);
-			await user.click(
-				screen.getByRole('button', { name: /invite team members/i }),
-			);
 
-			await expect(
-				screen.findByText('Please select roles for team members'),
-			).resolves.toBeInTheDocument();
+			expect(getByRole('button', { name: /inviting/i })).toBeInTheDocument();
 		});
-	});
 
-	it('uses sendInvite (single) when only one row is filled', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		const onComplete = jest.fn();
+		it('calls onClose when Cancel is clicked', async () => {
+			const user = userEvent.setup();
+			const onClose = jest.fn();
+			renderComponent({ onClose });
 
-		render(<InviteMembersModal {...defaultProps} onComplete={onComplete} />);
+			await user.click(screen.getByRole('button', { name: /cancel/i }));
 
-		const emailInputs = screen.getAllByPlaceholderText('john@signoz.io');
-		await user.type(emailInputs[0], 'single@signoz.io');
+			expect(onClose).toHaveBeenCalledTimes(1);
+		});
 
-		const roleSelects = screen.getAllByText('Select roles');
-		await user.click(roleSelects[0]);
-		await user.click(await screen.findByText('Viewer'));
+		it('calls submit when Invite button is clicked', async () => {
+			const user = userEvent.setup();
+			const mockSubmit = jest.fn();
 
-		await user.click(
-			screen.getByRole('button', { name: /invite team members/i }),
-		);
+			const { unmount } = renderComponent();
+			unmount();
 
-		await waitFor(() => {
-			expect(mockSendInvite).toHaveBeenCalledWith(
-				expect.objectContaining({ email: 'single@signoz.io', role: 'VIEWER' }),
+			const { getByRole } = render(
+				mockInviteMembersProps?.renderFooter({
+					submit: mockSubmit,
+					canSubmit: true,
+					isSubmitting: false,
+				}) as JSX.Element,
 			);
-			expect(mockInviteUsers).not.toHaveBeenCalled();
-			expect(onComplete).toHaveBeenCalled();
+
+			await user.click(getByRole('button', { name: /invite team members/i }));
+
+			expect(mockSubmit).toHaveBeenCalledTimes(1);
 		});
 	});
 
-	describe('error handling', () => {
-		it('shows BE message on single invite 409', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
-			const error = makeApiError(
-				'An invite already exists for this email: single@signoz.io',
-			);
-			mockSendInvite.mockRejectedValue(error);
+	describe('handleSuccess callback', () => {
+		it('shows success toast, calls onClose and onComplete', () => {
+			const onClose = jest.fn();
+			const onComplete = jest.fn();
+			renderComponent({ onClose, onComplete });
 
-			render(<InviteMembersModal {...defaultProps} />);
+			mockInviteMembersProps?.onSuccess();
 
-			await user.type(
-				screen.getAllByPlaceholderText('john@signoz.io')[0],
-				'single@signoz.io',
-			);
-			await user.click(screen.getAllByText('Select roles')[0]);
-			await user.click(await screen.findByText('Viewer'));
-			await user.click(
-				screen.getByRole('button', { name: /invite team members/i }),
-			);
-
-			await waitFor(() => {
-				expect(showErrorModal).toHaveBeenCalledWith(error);
+			expect(toast.success).toHaveBeenCalledWith('Invites sent successfully', {
+				position: 'top-right',
 			});
+			expect(onClose).toHaveBeenCalledTimes(1);
+			expect(onComplete).toHaveBeenCalledTimes(1);
 		});
 
-		it('shows BE message on bulk invite 409', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
-			const error = makeApiError(
-				'An invite already exists for this email: alice@signoz.io',
-			);
-			mockInviteUsers.mockRejectedValue(error);
+		it('works without onComplete prop', () => {
+			const onClose = jest.fn();
+			renderComponent({ onClose, onComplete: undefined });
 
-			render(<InviteMembersModal {...defaultProps} />);
+			mockInviteMembersProps?.onSuccess();
 
-			const emailInputs = screen.getAllByPlaceholderText('john@signoz.io');
-			await user.type(emailInputs[0], 'alice@signoz.io');
-			await user.click(screen.getAllByText('Select roles')[0]);
-			await user.click(await screen.findByText('Viewer'));
-
-			await user.type(emailInputs[1], 'bob@signoz.io');
-			await user.click(screen.getAllByText('Select roles')[0]);
-			const editorOptions = await screen.findAllByText('Editor');
-			await user.click(editorOptions[editorOptions.length - 1]);
-
-			await user.click(
-				screen.getByRole('button', { name: /invite team members/i }),
-			);
-
-			await waitFor(() => {
-				expect(showErrorModal).toHaveBeenCalledWith(error);
-			});
-		});
-
-		it('shows BE message on generic error', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
-			const error = makeApiError(
-				'Internal server error',
-				StatusCodes.INTERNAL_SERVER_ERROR,
-			);
-			mockSendInvite.mockRejectedValue(error);
-
-			render(<InviteMembersModal {...defaultProps} />);
-
-			await user.type(
-				screen.getAllByPlaceholderText('john@signoz.io')[0],
-				'single@signoz.io',
-			);
-			await user.click(screen.getAllByText('Select roles')[0]);
-			await user.click(await screen.findByText('Viewer'));
-			await user.click(
-				screen.getByRole('button', { name: /invite team members/i }),
-			);
-
-			await waitFor(() => {
-				expect(showErrorModal).toHaveBeenCalledWith(error);
-			});
+			expect(toast.success).toHaveBeenCalled();
+			expect(onClose).toHaveBeenCalledTimes(1);
 		});
 	});
 
-	it('uses inviteUsers (bulk) when multiple rows are filled', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		const onComplete = jest.fn();
+	describe('handlePartialSuccess callback', () => {
+		it('shows warning toast and calls onComplete', () => {
+			const onComplete = jest.fn();
+			renderComponent({ onComplete });
 
-		render(<InviteMembersModal {...defaultProps} onComplete={onComplete} />);
+			mockInviteMembersProps?.onPartialSuccess();
 
-		const emailInputs = screen.getAllByPlaceholderText('john@signoz.io');
-
-		await user.type(emailInputs[0], 'alice@signoz.io');
-		await user.click(screen.getAllByText('Select roles')[0]);
-		await user.click(await screen.findByText('Viewer'));
-
-		await user.type(emailInputs[1], 'bob@signoz.io');
-		await user.click(screen.getAllByText('Select roles')[0]);
-		const editorOptions = await screen.findAllByText('Editor');
-		await user.click(editorOptions[editorOptions.length - 1]);
-
-		await user.click(
-			screen.getByRole('button', { name: /invite team members/i }),
-		);
-
-		await waitFor(() => {
-			expect(mockInviteUsers).toHaveBeenCalledWith({
-				invites: expect.arrayContaining([
-					expect.objectContaining({ email: 'alice@signoz.io', role: 'VIEWER' }),
-					expect.objectContaining({ email: 'bob@signoz.io', role: 'EDITOR' }),
-				]),
+			expect(toast.warning).toHaveBeenCalledWith('Some invites failed', {
+				position: 'top-right',
 			});
-			expect(mockSendInvite).not.toHaveBeenCalled();
-			expect(onComplete).toHaveBeenCalled();
+			expect(onComplete).toHaveBeenCalledTimes(1);
+		});
+
+		it('does not call onClose on partial success', () => {
+			const onClose = jest.fn();
+			renderComponent({ onClose });
+
+			mockInviteMembersProps?.onPartialSuccess();
+
+			expect(onClose).not.toHaveBeenCalled();
+		});
+	});
+
+	describe('dialog close behavior', () => {
+		it('calls onClose when dialog is closed via close button', async () => {
+			const user = userEvent.setup();
+			const onClose = jest.fn();
+			renderComponent({ onClose });
+
+			const closeButton = screen.getByRole('button', { name: /close/i });
+			await user.click(closeButton);
+
+			expect(onClose).toHaveBeenCalled();
 		});
 	});
 });
