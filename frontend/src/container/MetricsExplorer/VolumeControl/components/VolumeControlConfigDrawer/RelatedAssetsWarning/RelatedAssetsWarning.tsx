@@ -1,4 +1,5 @@
 import { Info } from '@signozhq/icons';
+import { Typography } from '@signozhq/ui/typography';
 import {
 	MetricreductionruletypesAffectedAssetDTO,
 	MetricreductionruletypesAssetTypeDTO,
@@ -6,7 +7,7 @@ import {
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 
-import styles from './VolumeControlConfig.module.scss';
+import styles from './RelatedAssetsWarning.module.scss';
 
 const AssetType = MetricreductionruletypesAssetTypeDTO;
 
@@ -51,16 +52,16 @@ function RelatedAssetsWarning({
 	return (
 		<div className={styles.warning} data-testid="volume-control-warning">
 			<Info size={14} />
-			<div>
-				<div className={styles.warningTitle}>
+			<div className={styles.warningBody}>
+				<Typography.Text as="div" size="small" weight="semibold" color="warning">
 					This rule affects {impacted.length} related asset
 					{impacted.length > 1 ? 's' : ''}.
-				</div>
+				</Typography.Text>
 				{impactedLabels.length > 0 && (
-					<div className={styles.warningDetail}>
+					<Typography.Text as="div" size="sm" color="muted">
 						{impactedLabels.join(', ')} will no longer be queryable; affected panels
 						fall back to aggregated data once the rule applies.
-					</div>
+					</Typography.Text>
 				)}
 				<ul className={styles.assetList}>
 					{impacted.map((asset) => {
@@ -71,11 +72,18 @@ function RelatedAssetsWarning({
 						return (
 							<li key={`${asset.type}-${asset.id}-${asset.widget?.id ?? ''}`}>
 								{href ? (
-									<a href={href} target="_blank" rel="noopener noreferrer">
+									<Typography.Link
+										size="sm"
+										href={href}
+										target="_blank"
+										rel="noopener noreferrer"
+									>
 										{label}
-									</a>
+									</Typography.Link>
 								) : (
-									label
+									<Typography.Text size="sm" color="muted">
+										{label}
+									</Typography.Text>
 								)}
 							</li>
 						);

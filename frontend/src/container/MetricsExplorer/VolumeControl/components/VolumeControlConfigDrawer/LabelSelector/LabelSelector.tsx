@@ -2,8 +2,8 @@ import { Typography } from '@signozhq/ui/typography';
 import { Select } from 'antd';
 import { popupContainer } from 'utils/selectPopupContainer';
 
-import { RuleMode } from './types';
-import styles from './VolumeControlConfig.module.scss';
+import { RuleMode } from '../../../types';
+import styles from './LabelSelector.module.scss';
 
 interface LabelSelectorProps {
 	mode: RuleMode;
@@ -26,12 +26,19 @@ function LabelSelector({
 			: 'The selected attributes will be aggregated away; all others stay queryable.';
 
 	return (
-		<div className={styles.field} data-testid="volume-control-label-selector">
-			<Typography.Text className={styles.fieldLabel}>Attributes</Typography.Text>
-			<Typography.Text className={styles.fieldHint}>{helpText}</Typography.Text>
+		<div
+			className={styles.fieldGroup}
+			data-testid="volume-control-label-selector"
+		>
+			<Typography.Text size="small" weight="semibold">
+				Attributes
+			</Typography.Text>
+			<Typography.Text size="sm" color="muted">
+				{helpText}
+			</Typography.Text>
 			<Select
 				mode="multiple"
-				className={styles.labelSelect}
+				className={styles.attributeSelect}
 				placeholder="Select attributes"
 				value={value}
 				onChange={onChange}

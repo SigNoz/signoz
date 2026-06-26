@@ -1,7 +1,6 @@
-import { Gauge } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
-import { Input, Table } from 'antd';
+import { Table } from 'antd';
 import type { TableColumnsType, TableProps } from 'antd';
 import {
 	useGetMetricReductionRuleStats,
@@ -18,18 +17,15 @@ import { useVolumeControlFeatureGate } from 'hooks/metricsExplorer/useVolumeCont
 import useDebounce from 'hooks/useDebounce';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import {
-	formatCompact,
-	formatUsd,
-} from '../MetricDetails/VolumeControl/configUtils';
-import {
-	getLabelVerb,
-	getMatchTypeLabel,
-} from '../MetricDetails/VolumeControl/utils';
-import VolumeControlConfigDrawer from '../MetricDetails/VolumeControl/VolumeControlConfigDrawer';
-import VolumeControlBadge from './VolumeControlBadge';
-import VolumeControlChart from './VolumeControlChart';
+import { formatCompact } from '../../configUtils';
+import { getLabelVerb, getMatchTypeLabel } from '../../ruleUtils';
+import VolumeControlBadge from '../VolumeControlBadge';
+import VolumeControlChart from '../VolumeControlChart/VolumeControlChart';
+import VolumeControlConfigDrawer from '../VolumeControlConfigDrawer/VolumeControlConfigDrawer';
+import VolumeControlHeader from './VolumeControlHeader/VolumeControlHeader';
+import VolumeControlStats from './VolumeControlStats/VolumeControlStats';
 import styles from './VolumeControlTab.module.scss';
+import VolumeControlToolbar from './VolumeControlToolbar/VolumeControlToolbar';
 
 const OrderBy = MetricreductionruletypesReductionRuleOrderByDTO;
 const SortOrder = MetricreductionruletypesOrderDTO;
@@ -72,10 +68,6 @@ function VolumeControlTab(): JSX.Element {
 		query: { enabled: isVolumeControlEnabled },
 	});
 	const stats = statsData?.data;
-	const overallReduction =
-		stats && stats.ingestedSeries > 0
-			? Math.round((1 - stats.retainedSeries / stats.ingestedSeries) * 100)
-			: 0;
 
 	const rules = data?.data.rules ?? [];
 	const total = data?.data.total ?? 0;
@@ -102,7 +94,9 @@ function VolumeControlTab(): JSX.Element {
 					sorter: true,
 					sortOrder: sortOrderFor(OrderBy.metric),
 					render: (metricName: string): JSX.Element => (
-						<span className={styles.metricName}>{metricName}</span>
+						<Typography.Text size="small" className={styles.metricNameCell}>
+							{metricName}
+						</Typography.Text>
 					),
 				},
 				{
@@ -121,7 +115,11 @@ function VolumeControlTab(): JSX.Element {
 					render: (
 						_value: unknown,
 						rule: MetricreductionruletypesGettableReductionRuleDTO,
-					): JSX.Element => <span>{getMatchTypeLabel(rule.matchType)}</span>,
+					): JSX.Element => (
+						<Typography.Text size="small">
+							{getMatchTypeLabel(rule.matchType)}
+						</Typography.Text>
+					),
 				},
 				{
 					title: 'ATTRIBUTES',
@@ -130,9 +128,13 @@ function VolumeControlTab(): JSX.Element {
 						_value: unknown,
 						rule: MetricreductionruletypesGettableReductionRuleDTO,
 					): JSX.Element => (
-						<span className={styles.attributes}>
+						<Typography.Text
+							size="small"
+							color="muted"
+							className={styles.attributesCell}
+						>
 							{getLabelVerb(rule.matchType)} {(rule.labels ?? []).join(', ') || '—'}
-						</span>
+						</Typography.Text>
 					),
 				},
 				{
@@ -145,7 +147,9 @@ function VolumeControlTab(): JSX.Element {
 						_value: unknown,
 						rule: MetricreductionruletypesGettableReductionRuleDTO,
 					): JSX.Element => (
-						<span className={styles.muted}>{formatCompact(rule.ingestedSeries)}</span>
+						<Typography.Text size="small" color="muted">
+							{formatCompact(rule.ingestedSeries)}
+						</Typography.Text>
 					),
 				},
 				{
@@ -157,7 +161,11 @@ function VolumeControlTab(): JSX.Element {
 					render: (
 						_value: unknown,
 						rule: MetricreductionruletypesGettableReductionRuleDTO,
-					): JSX.Element => <span>{formatCompact(rule.retainedSeries)}</span>,
+					): JSX.Element => (
+						<Typography.Text size="small">
+							{formatCompact(rule.retainedSeries)}
+						</Typography.Text>
+					),
 				},
 				{
 					title: 'CHANGE',
@@ -170,12 +178,21 @@ function VolumeControlTab(): JSX.Element {
 						rule: MetricreductionruletypesGettableReductionRuleDTO,
 					): JSX.Element => {
 						if (rule.reductionPercent <= 0) {
-							return <span className={styles.muted}>—</span>;
+							return (
+								<Typography.Text size="small" color="muted">
+									—
+								</Typography.Text>
+							);
 						}
 						return (
-							<span className={styles.reduction}>
+							<Typography.Text
+								size="small"
+								weight="semibold"
+								color="success"
+								className={styles.reductionCell}
+							>
 								−{Math.round(rule.reductionPercent)}%
-							</span>
+							</Typography.Text>
 						);
 					},
 				},
@@ -189,10 +206,10 @@ function VolumeControlTab(): JSX.Element {
 						_value: unknown,
 						rule: MetricreductionruletypesGettableReductionRuleDTO,
 					): JSX.Element => (
-						<span className={styles.muted}>
+						<Typography.Text size="small" color="muted">
 							{dayjs(rule.updatedAt).format('MMM D, YYYY · h:mm A')}
 							{rule.updatedBy ? ` · ${rule.updatedBy}` : ''}
-						</span>
+						</Typography.Text>
 					),
 				},
 				...(canManageVolumeControl
@@ -209,7 +226,7 @@ function VolumeControlTab(): JSX.Element {
 										variant="ghost"
 										color="secondary"
 										onClick={(): void => setSelectedRule(rule)}
-										data-testid={`vc-manage-${rule.metricName}`}
+										data-testid={`volume-control-manage-${rule.metricName}`}
 									>
 										Manage
 									</Button>
@@ -241,7 +258,7 @@ function VolumeControlTab(): JSX.Element {
 	if (!isVolumeControlEnabled) {
 		return (
 			<div className={styles.unavailable} data-testid="volume-control-unavailable">
-				<Typography.Text>
+				<Typography.Text color="muted">
 					Volume control is available on enterprise and cloud plans.
 				</Typography.Text>
 			</div>
@@ -250,60 +267,18 @@ function VolumeControlTab(): JSX.Element {
 
 	return (
 		<div className={styles.tab} data-testid="volume-control-tab">
-			<div className={styles.header}>
-				<div className={styles.titleRow}>
-					<Gauge size={18} />
-					<Typography.Title level={4} className={styles.title}>
-						Volume Control
-					</Typography.Title>
-				</div>
-				<Typography.Text className={styles.subtitle}>
-					Aggregate away high-cardinality attributes to reduce stored metric volume
-					and cost.
-				</Typography.Text>
-			</div>
+			<VolumeControlHeader />
 
-			<div className={styles.stats}>
-				<div className={styles.stat}>
-					<span className={styles.statLabel}>Active rules</span>
-					<span className={styles.statValue}>{total}</span>
-				</div>
-				<div className={styles.stat}>
-					<span className={styles.statLabel}>Ingested series</span>
-					<span className={styles.statValue}>
-						{formatCompact(stats?.ingestedSeries ?? 0)}
-					</span>
-				</div>
-				<div className={styles.stat}>
-					<span className={styles.statLabel}>Retained series</span>
-					<span className={styles.statValue}>
-						{formatCompact(stats?.retainedSeries ?? 0)}
-						{overallReduction > 0 && (
-							<span className={styles.statDelta}>−{overallReduction}%</span>
-						)}
-					</span>
-				</div>
-				<div className={`${styles.stat} ${styles.statHero}`}>
-					<span className={styles.statLabel}>Est. monthly savings</span>
-					<span className={`${styles.statValue} ${styles.statValueGood}`}>
-						{formatUsd(stats?.estimatedMonthlySavingsUsd ?? 0)}
-						<span className={styles.statUnit}>/mo</span>
-					</span>
-				</div>
-			</div>
+			<VolumeControlStats
+				activeRules={total}
+				ingestedSeries={stats?.ingestedSeries ?? 0}
+				retainedSeries={stats?.retainedSeries ?? 0}
+				estimatedMonthlySavingsUsd={stats?.estimatedMonthlySavingsUsd ?? 0}
+			/>
 
 			<VolumeControlChart enabled={isVolumeControlEnabled} />
 
-			<div className={styles.toolbar}>
-				<Input
-					className={styles.search}
-					placeholder="Search metrics"
-					allowClear
-					value={searchInput}
-					onChange={(e): void => setSearchInput(e.target.value)}
-					data-testid="volume-control-search"
-				/>
-			</div>
+			<VolumeControlToolbar value={searchInput} onChange={setSearchInput} />
 
 			<Table<MetricreductionruletypesGettableReductionRuleDTO>
 				rowKey="metricName"
@@ -320,8 +295,10 @@ function VolumeControlTab(): JSX.Element {
 				locale={{
 					emptyText: (
 						<div className={styles.empty} data-testid="volume-control-tab-empty">
-							No volume control rules yet. Open a metric and set one up to start
-							reducing its series volume.
+							<Typography.Text color="muted">
+								No volume control rules yet. Open a metric and set one up to start
+								reducing its series volume.
+							</Typography.Text>
 						</div>
 					),
 				}}

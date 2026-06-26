@@ -19,8 +19,8 @@ import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-import { matchTypeForMode, modeFromRule } from './configUtils';
-import { RuleMode } from './types';
+import { matchTypeForMode, modeFromRule } from '../configUtils';
+import { RuleMode } from '../types';
 
 interface UseVolumeControlConfigParams {
 	metricName: string;

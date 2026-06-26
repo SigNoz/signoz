@@ -1,7 +1,8 @@
 import { Typography } from '@signozhq/ui/typography';
+import cx from 'classnames';
 
-import { RuleMode } from './types';
-import styles from './VolumeControlConfig.module.scss';
+import { RuleMode } from '../../../types';
+import styles from './ModeSelector.module.scss';
 
 interface ModeOption {
 	mode: RuleMode;
@@ -34,21 +35,24 @@ interface ModeSelectorProps {
 
 function ModeSelector({ mode, onChange }: ModeSelectorProps): JSX.Element {
 	return (
-		<div className={styles.modeCards} data-testid="volume-control-mode-selector">
+		<div
+			className={styles.modeOptions}
+			data-testid="volume-control-mode-selector"
+		>
 			{MODE_OPTIONS.map((option) => (
 				<button
 					type="button"
 					key={option.mode}
-					className={`${styles.modeCard} ${
-						mode === option.mode ? styles.modeCardActive : ''
-					}`}
+					className={cx(styles.modeOption, {
+						[styles.modeOptionSelected]: mode === option.mode,
+					})}
 					onClick={(): void => onChange(option.mode)}
 					data-testid={`volume-control-mode-${option.mode}`}
 				>
-					<Typography.Text className={styles.modeTitle}>
+					<Typography.Text size="small" weight="semibold">
 						{option.title}
 					</Typography.Text>
-					<Typography.Text className={styles.modeDesc}>
+					<Typography.Text size="sm" color="muted">
 						{option.description}
 					</Typography.Text>
 				</button>

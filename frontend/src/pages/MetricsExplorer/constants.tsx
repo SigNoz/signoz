@@ -2,7 +2,7 @@ import { TabRoutes } from 'components/RouteTab/types';
 import ROUTES from 'constants/routes';
 import ExplorerPage from 'container/MetricsExplorer/Explorer';
 import SummaryPage from 'container/MetricsExplorer/Summary';
-import VolumeControlTab from 'container/MetricsExplorer/VolumeControlTab/VolumeControlTab';
+import VolumeControlTab from 'container/MetricsExplorer/VolumeControl/components/VolumeControlTab/VolumeControlTab';
 import { BarChart, Compass, Gauge, TowerControl } from '@signozhq/icons';
 import SaveView from 'pages/SaveView';
 

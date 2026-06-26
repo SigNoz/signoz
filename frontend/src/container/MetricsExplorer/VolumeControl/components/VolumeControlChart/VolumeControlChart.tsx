@@ -12,8 +12,8 @@ import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
 import { useTimezone } from 'providers/Timezone';
 import { useMemo, useRef } from 'react';
 
-import { buildVolumeChartPayload } from './utils';
-import styles from './VolumeControlTab.module.scss';
+import { buildVolumeChartPayload } from '../../chartUtils';
+import styles from './VolumeControlChart.module.scss';
 
 const COLOR_MAPPING: Record<string, string> = {
 	Ingested: Color.BG_ROBIN_500,
@@ -65,7 +65,7 @@ function VolumeControlChart({ enabled }: VolumeControlChartProps): JSX.Element {
 
 	return (
 		<div className={styles.chart} data-testid="volume-control-chart">
-			<Typography.Text className={styles.chartTitle}>
+			<Typography.Text className={styles.chartTitle} size={'small'}>
 				Series volume over time · ingested vs retained
 			</Typography.Text>
 			<div className={styles.chartBody} ref={graphRef}>

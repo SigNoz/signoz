@@ -2,9 +2,9 @@ import { Typography } from '@signozhq/ui/typography';
 import { Spin } from 'antd';
 import { MetricreductionruletypesGettableReductionRulePreviewDTO } from 'api/generated/services/sigNoz.schemas';
 
-import { formatCompact } from './configUtils';
-import { RuleMode } from './types';
-import styles from './VolumeControlConfig.module.scss';
+import { formatCompact } from '../../../configUtils';
+import { RuleMode } from '../../../types';
+import styles from './ImpactPanel.module.scss';
 
 interface ImpactPanelProps {
 	mode: RuleMode;
@@ -19,8 +19,8 @@ function ImpactPanel({
 }: ImpactPanelProps): JSX.Element {
 	if (mode === 'all') {
 		return (
-			<div className={styles.impact} data-testid="volume-control-impact">
-				<Typography.Text className={styles.impactNote}>
+			<div className={styles.impactPanel} data-testid="volume-control-impact">
+				<Typography.Text size="small" color="muted">
 					All attributes remain queryable, no reduction.
 				</Typography.Text>
 			</div>
@@ -35,32 +35,42 @@ function ImpactPanel({
 	)}%`;
 
 	return (
-		<div className={styles.impact} data-testid="volume-control-impact">
+		<div className={styles.impactPanel} data-testid="volume-control-impact">
 			{isLoading && <Spin size="small" />}
 			{!isLoading && preview && (
-				<div className={styles.meters}>
+				<div className={styles.meterGrid}>
 					<div className={styles.meter}>
-						<span className={styles.meterLabel}>Current series</span>
-						<span className={styles.meterValue}>{formatCompact(current)}</span>
+						<Typography.Text size="xs" color="muted" className={styles.meterLabel}>
+							Current series
+						</Typography.Text>
+						<Typography.Text size="2xl" className={styles.meterValue}>
+							{formatCompact(current)}
+						</Typography.Text>
 					</div>
 					<div className={styles.meter}>
-						<span className={styles.meterLabel}>Proposed series</span>
-						<span className={styles.meterValue}>{formatCompact(proposed)}</span>
+						<Typography.Text size="xs" color="muted" className={styles.meterLabel}>
+							Proposed series
+						</Typography.Text>
+						<Typography.Text size="2xl" className={styles.meterValue}>
+							{formatCompact(proposed)}
+						</Typography.Text>
 					</div>
 					<div className={styles.meter}>
-						<span className={styles.meterLabel}>Reduction</span>
-						<span
-							className={`${styles.meterValue} ${
-								deltaPct >= 0 ? styles.meterValueGood : ''
-							}`}
+						<Typography.Text size="xs" color="muted" className={styles.meterLabel}>
+							Reduction
+						</Typography.Text>
+						<Typography.Text
+							size="2xl"
+							color={deltaPct >= 0 ? 'success' : undefined}
+							className={styles.meterValue}
 						>
 							{reductionLabel}
-						</span>
+						</Typography.Text>
 					</div>
 				</div>
 			)}
 			{!isLoading && !preview && (
-				<Typography.Text className={styles.impactNote}>
+				<Typography.Text size="small" color="muted">
 					Select attributes to preview the impact.
 				</Typography.Text>
 			)}
