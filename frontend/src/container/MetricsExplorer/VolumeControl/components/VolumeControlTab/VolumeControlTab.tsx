@@ -226,7 +226,7 @@ function VolumeControlTab(): JSX.Element {
 										variant="ghost"
 										color="secondary"
 										onClick={(): void => setSelectedRule(rule)}
-										data-testid={`vc-manage-${rule.metricName}`}
+										data-testid={`volume-control-manage-${rule.metricName}`}
 									>
 										Manage
 									</Button>
