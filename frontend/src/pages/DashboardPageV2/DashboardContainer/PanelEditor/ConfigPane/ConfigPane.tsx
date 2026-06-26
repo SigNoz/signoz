@@ -1,11 +1,8 @@
 import { Input } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
-import type {
-	DashboardtypesPanelSpecDTO,
-	TelemetrytypesSignalDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
 import { getPanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Panels/registry';
-import { getBuilderQueries } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/getBuilderQueries';
+import { resolveSignal } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/getBuilderQueries';
 
 import type { LegendSeries } from '../hooks/useLegendSeries';
 import type { TableColumnOption } from '../hooks/useTableColumns';
@@ -45,9 +42,7 @@ function ConfigPane({
 	const definition = getPanelDefinition(panelKind);
 	const sections = definition.sections;
 
-	const signal = getBuilderQueries(spec.queries)[0]?.signal as
-		| TelemetrytypesSignalDTO
-		| undefined;
+	const signal = resolveSignal(spec.queries, definition.supportedSignals[0]);
 
 	// Title/description are just a slice of the spec — edit them through the same
 	// onChangeSpec path the sections use, so there's a single editing surface.
