@@ -27,7 +27,7 @@ import {
 	getMatchTypeLabel,
 } from '../MetricDetails/VolumeControl/utils';
 import VolumeControlConfigDrawer from '../MetricDetails/VolumeControl/VolumeControlConfigDrawer';
-import VolumeControlBadge from './VolumeControlBadge';
+import VolumeControlBadge from './VolumeControlBadge/VolumeControlBadge';
 import VolumeControlChart from './VolumeControlChart';
 import styles from './VolumeControlTab.module.scss';
 
