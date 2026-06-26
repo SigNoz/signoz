@@ -3,12 +3,32 @@ package clickhousetelemetrystore
 import (
 	"context"
 
+	chproto "github.com/ClickHouse/ch-go/proto"
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"go.opentelemetry.io/otel/metric"
 )
+
+var userFacingClickHouseErrorCodes = map[chproto.Error]bool{
+	chproto.ErrSyntaxError:                  true,
+	chproto.ErrUnknownTable:                 true,
+	chproto.ErrUnknownDatabase:              true,
+	chproto.ErrUnknownIdentifier:            true,
+	chproto.ErrUnknownFunction:              true,
+	chproto.ErrUnknownAggregateFunction:     true,
+	chproto.ErrUnknownType:                  true,
+	chproto.ErrUnknownStorage:               true,
+	chproto.ErrUnknownElementInAst:          true,
+	chproto.ErrUnknownTypeOfQuery:           true,
+	chproto.ErrIllegalTypeOfArgument:        true,
+	chproto.ErrIllegalColumn:                true,
+	chproto.ErrNumberOfArgumentsDoesntMatch: true,
+	chproto.ErrTooManyArgumentsForFunction:  true,
+	chproto.ErrTooLessArgumentsForFunction:  true,
+}
 
 type provider struct {
 	settings       factory.ScopedProviderSettings
@@ -101,6 +121,7 @@ func (p *provider) Query(ctx context.Context, query string, args ...interface{})
 	ctx = telemetrystore.WrapBeforeQuery(p.hooks, ctx, event)
 	rows, err := p.clickHouseConn.Query(ctx, query, args...)
 	if err != nil {
+		err = castError(err)
 		event.Err = err
 		telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
 		return nil, err
@@ -120,7 +141,7 @@ func (p *provider) QueryRow(ctx context.Context, query string, args ...interface
 	ctx = telemetrystore.WrapBeforeQuery(p.hooks, ctx, event)
 	row := p.clickHouseConn.QueryRow(ctx, query, args...)
 
-	event.Err = row.Err()
+	event.Err = castError(row.Err())
 	telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
 
 	return row
@@ -130,7 +151,7 @@ func (p *provider) Select(ctx context.Context, dest interface{}, query string, a
 	event := telemetrystore.NewQueryEvent(query, args)
 
 	ctx = telemetrystore.WrapBeforeQuery(p.hooks, ctx, event)
-	err := p.clickHouseConn.Select(ctx, dest, query, args...)
+	err := castError(p.clickHouseConn.Select(ctx, dest, query, args...))
 
 	event.Err = err
 	telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
@@ -142,7 +163,7 @@ func (p *provider) Exec(ctx context.Context, query string, args ...interface{}) 
 	event := telemetrystore.NewQueryEvent(query, args)
 
 	ctx = telemetrystore.WrapBeforeQuery(p.hooks, ctx, event)
-	err := p.clickHouseConn.Exec(ctx, query, args...)
+	err := castError(p.clickHouseConn.Exec(ctx, query, args...))
 
 	event.Err = err
 	telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
@@ -155,7 +176,7 @@ func (p *provider) AsyncInsert(ctx context.Context, query string, wait bool, arg
 
 	ctx = telemetrystore.WrapBeforeQuery(p.hooks, ctx, event)
 	// TODO: migrate to WithAsync() — https://github.com/SigNoz/engineering-pod/issues/5093
-	err := p.clickHouseConn.AsyncInsert(ctx, query, wait, args...) //nolint:staticcheck
+	err := castError(p.clickHouseConn.AsyncInsert(ctx, query, wait, args...)) //nolint:staticcheck
 
 	event.Err = err
 	telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
@@ -168,6 +189,7 @@ func (p *provider) PrepareBatch(ctx context.Context, query string, opts ...drive
 
 	ctx = telemetrystore.WrapBeforeQuery(p.hooks, ctx, event)
 	batch, err := p.clickHouseConn.PrepareBatch(ctx, query, opts...)
+	err = castError(err)
 
 	event.Err = err
 	telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
@@ -181,4 +203,18 @@ func (p *provider) ServerVersion() (*driver.ServerVersion, error) {
 
 func (p *provider) Contributors() []string {
 	return p.clickHouseConn.Contributors()
+}
+
+// castError classifies a ClickHouse server-side exception
+func castError(err error) error {
+	var ex *clickhouse.Exception
+	if !errors.As(err, &ex) {
+		return err
+	}
+
+	if userFacingClickHouseErrorCodes[chproto.Error(ex.Code)] {
+		return errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "ClickHouse SQL execution failed")
+	}
+
+	return errors.WrapInternalf(err, errors.CodeInternal, "ClickHouse SQL execution failed")
 }
