@@ -183,6 +183,11 @@ func (p *provider) QueryRow(ctx context.Context, query string, args ...interface
 	ctx = telemetrystore.WrapBeforeQuery(p.hooks, ctx, event)
 	row := p.clickHouseConn.QueryRow(ctx, query, args...)
 
+	if row == nil {
+		telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
+		return nil
+	}
+
 	event.Err = row.Err()
 	telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
 
@@ -234,6 +239,9 @@ func (p *provider) PrepareBatch(ctx context.Context, query string, opts ...drive
 	event.Err = err
 	telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
 
+	if batch == nil {
+		return nil, castError(err)
+	}
 	return &batchWithCastError{Batch: batch}, castError(err)
 }
 
