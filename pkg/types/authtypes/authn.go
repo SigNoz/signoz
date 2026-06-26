@@ -2,6 +2,9 @@ package authtypes
 
 import (
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"net/url"
 	"strings"
@@ -14,6 +17,10 @@ import (
 var (
 	ErrCodeInvalidState = errors.MustNewCode("invalid_state")
 )
+
+type contextKey string
+
+const StateSecretContextKey contextKey = "state_secret"
 
 var (
 	AuthNProviderGoogleAuth    = AuthNProvider{valuer.NewString("google_auth")}
@@ -70,6 +77,23 @@ func NewState(siteURL *url.URL, domainID valuer.UUID) State {
 	}
 }
 
+func NewStateWithSignature(siteURL *url.URL, domainID valuer.UUID, secret string) State {
+	u := &url.URL{
+		Scheme: siteURL.Scheme,
+		Host:   siteURL.Host,
+		Path:   siteURL.Path,
+		RawQuery: url.Values{
+			"domain_id": {newDomainIDForState(domainID)},
+			"signature": {signState(siteURL, domainID, secret)},
+		}.Encode(),
+	}
+
+	return State{
+		DomainID: domainID,
+		URL:      u,
+	}
+}
+
 func NewStateFromString(state string) (State, error) {
 	u, err := url.Parse(state)
 	if err != nil {
@@ -79,6 +103,32 @@ func NewStateFromString(state string) (State, error) {
 	domainID, err := newDomainIDFromState(u.Query().Get("domain_id"))
 	if err != nil {
 		return State{}, err
+	}
+
+	return State{
+		DomainID: domainID,
+		URL:      u,
+	}, nil
+}
+
+func NewStateFromStringWithVerification(state string, secret string) (State, error) {
+	u, err := url.Parse(state)
+	if err != nil {
+		return State{}, err
+	}
+
+	domainID, err := newDomainIDFromState(u.Query().Get("domain_id"))
+	if err != nil {
+		return State{}, err
+	}
+
+	signature := u.Query().Get("signature")
+	if signature == "" {
+		return State{}, errors.New(errors.TypeInvalidInput, ErrCodeInvalidState, "missing state signature")
+	}
+
+	if !verifyStateSignature(u.Scheme+"://"+u.Host+u.Path, domainID, secret, signature) {
+		return State{}, errors.New(errors.TypeInvalidInput, ErrCodeInvalidState, "invalid state signature")
 	}
 
 	return State{
@@ -171,4 +221,20 @@ type AuthNStore interface {
 
 	// Get org domain from id.
 	GetAuthDomainFromID(ctx context.Context, domainID valuer.UUID) (*AuthDomain, error)
+}
+
+func signState(siteURL *url.URL, domainID valuer.UUID, secret string) string {
+	h := hmac.New(sha256.New, []byte(secret))
+	h.Write([]byte(siteURL.Scheme + "://" + siteURL.Host + siteURL.Path))
+	h.Write([]byte(domainID.String()))
+	return hex.EncodeToString(h.Sum(nil))
+}
+
+func verifyStateSignature(urlStr string, domainID valuer.UUID, secret string, signature string) bool {
+	expected := signState(&url.URL{Scheme: "https", Host: "localhost"}, domainID, secret)
+	h := hmac.New(sha256.New, []byte(secret))
+	h.Write([]byte(urlStr))
+	h.Write([]byte(domainID.String()))
+	expected = hex.EncodeToString(h.Sum(nil))
+	return hmac.Equal([]byte(signature), []byte(expected))
 }

@@ -49,7 +49,15 @@ func (a *AuthN) LoginURL(ctx context.Context, siteURL *url.URL, authDomain *auth
 		return "", err
 	}
 
-	url, err := sp.BuildAuthURL(authtypes.NewState(siteURL, authDomain.StorableAuthDomain().ID).URL.String())
+	stateSecret, _ := ctx.Value(authtypes.StateSecretContextKey).(string)
+	var stateStr string
+	if stateSecret != "" {
+		stateStr = authtypes.NewStateWithSignature(siteURL, authDomain.StorableAuthDomain().ID, stateSecret).URL.String()
+	} else {
+		stateStr = authtypes.NewState(siteURL, authDomain.StorableAuthDomain().ID).URL.String()
+	}
+
+	url, err := sp.BuildAuthURL(stateStr)
 	if err != nil {
 		return "", err
 	}
@@ -58,7 +66,14 @@ func (a *AuthN) LoginURL(ctx context.Context, siteURL *url.URL, authDomain *auth
 }
 
 func (a *AuthN) HandleCallback(ctx context.Context, formValues url.Values) (*authtypes.CallbackIdentity, error) {
-	state, err := authtypes.NewStateFromString(formValues.Get("RelayState"))
+	stateSecret, _ := ctx.Value(authtypes.StateSecretContextKey).(string)
+	var state authtypes.State
+	var err error
+	if stateSecret != "" {
+		state, err = authtypes.NewStateFromStringWithVerification(formValues.Get("RelayState"), stateSecret)
+	} else {
+		state, err = authtypes.NewStateFromString(formValues.Get("RelayState"))
+	}
 	if err != nil {
 		return nil, errors.New(errors.TypeInvalidInput, authtypes.ErrCodeInvalidState, "saml: invalid state").WithAdditional(err.Error())
 	}

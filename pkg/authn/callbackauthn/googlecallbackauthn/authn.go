@@ -65,8 +65,16 @@ func (a *AuthN) LoginURL(ctx context.Context, siteURL *url.URL, authDomain *auth
 
 	oauth2Config := a.oauth2Config(siteURL, authDomain, oidcProvider)
 
+	stateSecret, _ := ctx.Value(authtypes.StateSecretContextKey).(string)
+	var stateStr string
+	if stateSecret != "" {
+		stateStr = authtypes.NewStateWithSignature(siteURL, authDomain.StorableAuthDomain().ID, stateSecret).URL.String()
+	} else {
+		stateStr = authtypes.NewState(siteURL, authDomain.StorableAuthDomain().ID).URL.String()
+	}
+
 	return oauth2Config.AuthCodeURL(
-		authtypes.NewState(siteURL, authDomain.StorableAuthDomain().ID).URL.String(),
+		stateStr,
 		oauth2.SetAuthURLParam("hd", authDomain.StorableAuthDomain().Name),
 	), nil
 }
@@ -82,7 +90,13 @@ func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtype
 		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "google: error while authenticating").WithAdditional(query.Get("error_description"))
 	}
 
-	state, err := authtypes.NewStateFromString(query.Get("state"))
+	stateSecret, _ := ctx.Value(authtypes.StateSecretContextKey).(string)
+	var state authtypes.State
+	if stateSecret != "" {
+		state, err = authtypes.NewStateFromStringWithVerification(query.Get("state"), stateSecret)
+	} else {
+		state, err = authtypes.NewStateFromString(query.Get("state"))
+	}
 	if err != nil {
 		a.settings.Logger().ErrorContext(ctx, "google: invalid state", errors.Attr(err))
 		return nil, errors.Newf(errors.TypeInvalidInput, authtypes.ErrCodeInvalidState, "google: invalid state").WithAdditional(err.Error())

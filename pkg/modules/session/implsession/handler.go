@@ -19,10 +19,11 @@ import (
 type handler struct {
 	module       session.Module
 	globalConfig global.Config
+	stateSecret  string
 }
 
 func NewHandler(module session.Module, globalConfig global.Config) session.Handler {
-	return &handler{module: module, globalConfig: globalConfig}
+	return &handler{module: module, globalConfig: globalConfig, stateSecret: globalConfig.StateSecret()}
 }
 
 func (handler *handler) GetSessionContext(rw http.ResponseWriter, req *http.Request) {
@@ -35,8 +36,14 @@ func (handler *handler) GetSessionContext(rw http.ResponseWriter, req *http.Requ
 		return
 	}
 
-	siteURL, err := url.Parse(req.URL.Query().Get("ref"))
+	ref := req.URL.Query().Get("ref")
+	siteURL, err := url.Parse(ref)
 	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	if err := handler.validateRedirectURL(siteURL); err != nil {
 		render.Error(rw, err)
 		return
 	}
@@ -170,4 +177,21 @@ func (handler *handler) getRedirectURLFromErr(err error) string {
 		Path:     path.Join(handler.globalConfig.ExternalPath(), "/login"),
 		RawQuery: values.Encode(),
 	}).String()
+}
+
+func (handler *handler) validateRedirectURL(u *url.URL) error {
+	allowedOrigins := handler.globalConfig.AllowedRedirectOrigins()
+
+	if len(allowedOrigins) == 0 {
+		return errors.New(errors.TypeForbidden, errors.CodeForbidden, "redirect origins not configured")
+	}
+
+	redirectOrigin := u.Scheme + "://" + u.Host
+	for _, allowed := range allowedOrigins {
+		if redirectOrigin == allowed {
+			return nil
+		}
+	}
+
+	return errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "redirect origin %q not allowed", redirectOrigin)
 }

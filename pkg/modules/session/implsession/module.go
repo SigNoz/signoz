@@ -29,9 +29,10 @@ type module struct {
 	authDomain authdomain.Module
 	tokenizer  tokenizer.Tokenizer
 	orgGetter  organization.Getter
+	stateSecret string
 }
 
-func NewModule(providerSettings factory.ProviderSettings, authNs map[authtypes.AuthNProvider]authn.AuthN, userSetter user.Setter, userGetter user.Getter, authDomain authdomain.Module, tokenizer tokenizer.Tokenizer, orgGetter organization.Getter) session.Module {
+func NewModule(providerSettings factory.ProviderSettings, authNs map[authtypes.AuthNProvider]authn.AuthN, userSetter user.Setter, userGetter user.Getter, authDomain authdomain.Module, tokenizer tokenizer.Tokenizer, orgGetter organization.Getter, stateSecret string) session.Module {
 	return &module{
 		settings:   factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/session/implsession"),
 		authNs:     authNs,
@@ -40,6 +41,7 @@ func NewModule(providerSettings factory.ProviderSettings, authNs map[authtypes.A
 		authDomain: authDomain,
 		tokenizer:  tokenizer,
 		orgGetter:  orgGetter,
+		stateSecret: stateSecret,
 	}
 }
 
@@ -131,7 +133,8 @@ func (module *module) CreateCallbackAuthNSession(ctx context.Context, authNProvi
 		return "", err
 	}
 
-	callbackIdentity, err := callbackAuthN.HandleCallback(ctx, values)
+	ctxWithSecret := context.WithValue(ctx, authtypes.StateSecretContextKey, module.stateSecret)
+	callbackIdentity, err := callbackAuthN.HandleCallback(ctxWithSecret, values)
 	if err != nil {
 		module.settings.Logger().ErrorContext(ctx, "failed to handle callback", errors.Attr(err), slog.Any("authn_provider", authNProvider))
 		return "", err
@@ -206,7 +209,8 @@ func (module *module) getOrgSessionContext(ctx context.Context, org *types.Organ
 		return nil, err
 	}
 
-	loginURL, err := provider.LoginURL(ctx, siteURL, authDomain)
+	ctxWithSecret := context.WithValue(ctx, authtypes.StateSecretContextKey, module.stateSecret)
+	loginURL, err := provider.LoginURL(ctxWithSecret, siteURL, authDomain)
 	if err != nil {
 		return nil, err
 	}
