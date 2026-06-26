@@ -1,4 +1,7 @@
-import type { DashboardtypesQueryDTO } from 'api/generated/services/sigNoz.schemas';
+import type {
+	DashboardtypesQueryDTO,
+	TelemetrytypesSignalDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import type { BuilderQuery } from 'types/api/v5/queryRange';
 
 /**
@@ -32,4 +35,22 @@ export function getBuilderQueries(
 		}
 	});
 	return flattened;
+}
+
+/**
+ * Datasource signal scoping panel-type compatibility (List needs logs/traces, not
+ * metrics): the builder query's signal if present; else `defaultSignal` for a new
+ * panel (queries empty until edited); else undefined for PromQL/ClickHouse.
+ */
+export function resolveSignal(
+	queries: DashboardtypesQueryDTO[] | null,
+	defaultSignal: TelemetrytypesSignalDTO,
+): TelemetrytypesSignalDTO | undefined {
+	const builderSignal = getBuilderQueries(queries ?? [])[0]?.signal as
+		| TelemetrytypesSignalDTO
+		| undefined;
+	if (builderSignal) {
+		return builderSignal;
+	}
+	return queries?.length ? undefined : defaultSignal;
 }
