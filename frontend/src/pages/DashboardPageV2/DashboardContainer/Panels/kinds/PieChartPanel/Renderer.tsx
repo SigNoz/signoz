@@ -20,13 +20,13 @@ function PiePanelRenderer({
 	panelId,
 	panel,
 	data,
+	refetch,
 	onClick,
 }: PanelRendererProps<'signoz/PieChartPanel'>): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 
-	// The registry guarantees the kind, so the cast is a boundary narrowing.
 	const spec = useMemo<DashboardtypesPieChartPanelSpecDTO>(
-		() => panel.spec.plugin.spec as DashboardtypesPieChartPanelSpecDTO,
+		() => panel.spec.plugin.spec,
 		[panel.spec.plugin.spec],
 	);
 
@@ -70,7 +70,7 @@ function PiePanelRenderer({
 	return (
 		<div data-testid="pie-panel-renderer" className={PanelStyles.panelContainer}>
 			{slices.length === 0 ? (
-				<NoData />
+				<NoData onRetry={refetch} />
 			) : (
 				<Pie
 					data={slices}

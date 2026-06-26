@@ -5,13 +5,9 @@ describe('PermissionDeniedFullPage', () => {
 	it('renders the title and subtitle with the permissionName interpolated', () => {
 		render(<PermissionDeniedFullPage permissionName="serviceaccount:list" />);
 
-		expect(
-			screen.getByText("Uh-oh! You don't have permission to view this page."),
-		).toBeInTheDocument();
+		expect(screen.getByText('Uh-oh! You are not authorized')).toBeInTheDocument();
 		expect(screen.getByText(/serviceaccount:list/)).toBeInTheDocument();
-		expect(
-			screen.getByText(/Please ask your SigNoz administrator to grant access/),
-		).toBeInTheDocument();
+		expect(screen.getByText(/is not authorized to perform/)).toBeInTheDocument();
 	});
 
 	it('renders with a different permissionName', () => {

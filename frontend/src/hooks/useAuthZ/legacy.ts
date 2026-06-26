@@ -1,5 +1,7 @@
 import { buildPermission } from './utils';
 
+// TODO(H4ad): Remove frontend/src/container/RolesSettings/CreateEditRolePage/permissions.config.ts once this is removed
+
 export const IsAdminPermission = buildPermission(
 	'assignee',
 	'role:signoz-admin',

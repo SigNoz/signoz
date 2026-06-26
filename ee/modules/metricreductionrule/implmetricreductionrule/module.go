@@ -62,7 +62,6 @@ func NewModule(sqlStore sqlstore.SQLStore, telemetryStore telemetrystore.Telemet
 }
 
 func (m *module) checkAccess(ctx context.Context, orgID valuer.UUID) error {
-	return nil
 	if !m.flagger.BooleanOrEmpty(ctx, flagger.FeatureEnableMetricsReduction, featuretypes.NewFlaggerEvaluationContext(orgID)) {
 		return errors.Newf(errors.TypeUnsupported, metricreductionruletypes.ErrCodeMetricReductionRuleUnsupported, "metric volume control is not enabled")
 	}

@@ -21,9 +21,8 @@ export function useVolumeControlFeatureGate(): VolumeControlFeatureGate {
 	);
 
 	const isVolumeControlEnabled =
-		(isMetricsReductionEnabled && (isCloudUser || isEnterpriseSelfHostedUser)) ||
-		true;
-	const isAdmin = user?.role === USER_ROLES.ADMIN || true;
+		isMetricsReductionEnabled && (isCloudUser || isEnterpriseSelfHostedUser);
+	const isAdmin = user?.role === USER_ROLES.ADMIN;
 
 	return {
 		isVolumeControlEnabled,

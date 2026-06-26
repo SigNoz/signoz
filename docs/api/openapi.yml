@@ -3755,10 +3755,16 @@ components:
         type:
           type: string
         url:
+          nullable: true
           type: string
       required:
+      - type
       - code
       - message
+      - url
+      - errors
+      - retry
+      - suggestions
       type: object
     ErrorsResponseerroradditional:
       properties:
@@ -3768,11 +3774,17 @@ components:
           items:
             type: string
           type: array
+      required:
+      - message
+      - suggestions
       type: object
     ErrorsResponseretryjson:
+      nullable: true
       properties:
         delay:
           $ref: '#/components/schemas/TimeDuration'
+      required:
+      - delay
       type: object
     FactoryResponse:
       properties:
@@ -5916,6 +5928,18 @@ components:
           format: double
           type: number
       type: object
+    Querybuildertypesv5BuilderQuerySpec:
+      discriminator:
+        mapping:
+          logs: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregation'
+          metrics: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregation'
+          traces: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregation'
+        propertyName: signal
+      oneOf:
+      - $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregation'
+      - $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregation'
+      - $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregation'
+      type: object
     Querybuildertypesv5ClickHouseQuery:
       properties:
         disabled:
@@ -6015,7 +6039,10 @@ components:
       properties:
         name:
           type: string
-        value: {}
+        value:
+          oneOf:
+          - type: number
+          - type: string
       type: object
     Querybuildertypesv5FunctionName:
       enum:
@@ -6064,7 +6091,11 @@ components:
       properties:
         key:
           $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
-        value: {}
+        value:
+          oneOf:
+          - type: string
+          - type: number
+          - type: boolean
       type: object
     Querybuildertypesv5LimitBy:
       properties:
@@ -6387,39 +6418,29 @@ components:
           type: array
       type: object
     Querybuildertypesv5QueryEnvelope:
+      discriminator:
+        mapping:
+          builder_formula: '#/components/schemas/Querybuildertypesv5QueryEnvelopeFormula'
+          builder_query: '#/components/schemas/Querybuildertypesv5QueryEnvelopeBuilder'
+          builder_trace_operator: '#/components/schemas/Querybuildertypesv5QueryEnvelopeTraceOperator'
+          clickhouse_sql: '#/components/schemas/Querybuildertypesv5QueryEnvelopeClickHouseSQL'
+          promql: '#/components/schemas/Querybuildertypesv5QueryEnvelopePromQL'
+        propertyName: type
       oneOf:
-      - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopeBuilderTrace'
-      - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopeBuilderLog'
-      - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopeBuilderMetric'
+      - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopeBuilder'
       - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopeFormula'
       - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopeTraceOperator'
       - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopePromQL'
       - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopeClickHouseSQL'
-      properties:
-        spec: {}
-        type:
-          $ref: '#/components/schemas/Querybuildertypesv5QueryType'
       type: object
-    Querybuildertypesv5QueryEnvelopeBuilderLog:
+    Querybuildertypesv5QueryEnvelopeBuilder:
       properties:
         spec:
-          $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregation'
+          $ref: '#/components/schemas/Querybuildertypesv5BuilderQuerySpec'
         type:
           $ref: '#/components/schemas/Querybuildertypesv5QueryType'
-      type: object
-    Querybuildertypesv5QueryEnvelopeBuilderMetric:
-      properties:
-        spec:
-          $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregation'
-        type:
-          $ref: '#/components/schemas/Querybuildertypesv5QueryType'
-      type: object
-    Querybuildertypesv5QueryEnvelopeBuilderTrace:
-      properties:
-        spec:
-          $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregation'
-        type:
-          $ref: '#/components/schemas/Querybuildertypesv5QueryType'
+      required:
+      - type
       type: object
     Querybuildertypesv5QueryEnvelopeClickHouseSQL:
       properties:
@@ -6427,6 +6448,8 @@ components:
           $ref: '#/components/schemas/Querybuildertypesv5ClickHouseQuery'
         type:
           $ref: '#/components/schemas/Querybuildertypesv5QueryType'
+      required:
+      - type
       type: object
     Querybuildertypesv5QueryEnvelopeFormula:
       properties:
@@ -6434,6 +6457,8 @@ components:
           $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderFormula'
         type:
           $ref: '#/components/schemas/Querybuildertypesv5QueryType'
+      required:
+      - type
       type: object
     Querybuildertypesv5QueryEnvelopePromQL:
       properties:
@@ -6441,6 +6466,8 @@ components:
           $ref: '#/components/schemas/Querybuildertypesv5PromQuery'
         type:
           $ref: '#/components/schemas/Querybuildertypesv5QueryType'
+      required:
+      - type
       type: object
     Querybuildertypesv5QueryEnvelopeTraceOperator:
       properties:
@@ -6448,6 +6475,8 @@ components:
           $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderTraceOperator'
         type:
           $ref: '#/components/schemas/Querybuildertypesv5QueryType'
+      required:
+      - type
       type: object
     Querybuildertypesv5QueryRangeRequest:
       description: Request body for the v5 query range endpoint. Supports builder
@@ -6651,7 +6680,17 @@ components:
       properties:
         type:
           $ref: '#/components/schemas/Querybuildertypesv5VariableType'
-        value: {}
+        value:
+          oneOf:
+          - type: string
+          - type: number
+          - type: boolean
+          - items:
+              oneOf:
+              - type: string
+              - type: number
+              - type: boolean
+            type: array
       type: object
     Querybuildertypesv5VariableType:
       enum:

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import type { DashboardtypesThresholdWithLabelDTO } from 'api/generated/services/sigNoz.schemas';
 import type { AnyThreshold } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/sections';
 
@@ -9,8 +10,8 @@ const THRESHOLDS: DashboardtypesThresholdWithLabelDTO[] = [
 	{ value: 80, color: '#F5B225', label: 'High', unit: 'percent' },
 ];
 
-// Stateful harness for flows that depend on the value updating (add/discard). No
-// `controls` is passed, exercising the default `label` variant.
+// Stateful harness for flows that depend on the value updating (add/discard);
+// omits `controls` to exercise the default `label` variant.
 function Harness({ yAxisUnit }: { yAxisUnit?: string }): JSX.Element {
 	const [value, setValue] = useState<AnyThreshold[]>([]);
 	return (
@@ -33,7 +34,6 @@ describe('ThresholdsSection', () => {
 
 		expect(screen.getByTestId('threshold-edit-0')).toBeInTheDocument();
 		expect(screen.getByText('High')).toBeInTheDocument();
-		// The editable fields are hidden until the row is edited.
 		expect(screen.queryByTestId('threshold-value-0')).not.toBeInTheDocument();
 	});
 
@@ -54,6 +54,22 @@ describe('ThresholdsSection', () => {
 		]);
 	});
 
+	it('persists an empty-string label when none is provided', async () => {
+		const user = userEvent.setup();
+		const onChange = jest.fn();
+		// Label absent (e.g. a pre-existing spec); spec requires a string, so save
+		// must send '' not undefined.
+		const noLabel = [{ value: 50, color: '#F1575F' }] as AnyThreshold[];
+		render(<ThresholdsSection value={noLabel} onChange={onChange} />);
+
+		await user.click(screen.getByTestId('threshold-edit-0'));
+		await user.click(screen.getByTestId('threshold-save-0'));
+
+		expect(onChange).toHaveBeenCalledWith([
+			{ value: 50, color: '#F1575F', label: '' },
+		]);
+	});
+
 	it('does not commit edits when Discard is clicked', () => {
 		const onChange = jest.fn();
 		render(<ThresholdsSection value={THRESHOLDS} onChange={onChange} />);
@@ -65,7 +81,6 @@ describe('ThresholdsSection', () => {
 		fireEvent.click(screen.getByTestId('threshold-discard-0'));
 
 		expect(onChange).not.toHaveBeenCalled();
-		// Back to view mode.
 		expect(screen.queryByTestId('threshold-value-0')).not.toBeInTheDocument();
 		expect(screen.getByTestId('threshold-edit-0')).toBeInTheDocument();
 	});
@@ -83,11 +98,10 @@ describe('ThresholdsSection', () => {
 		render(<Harness />);
 
 		fireEvent.click(screen.getByTestId('panel-editor-v2-add-threshold'));
-		// New row opens in edit mode.
 		expect(screen.getByTestId('threshold-value-0')).toBeInTheDocument();
 
-		fireEvent.click(screen.getByTestId('threshold-discard-0'));
 		// Discarding a never-saved row removes it entirely.
+		fireEvent.click(screen.getByTestId('threshold-discard-0'));
 		expect(screen.queryByTestId('threshold-value-0')).not.toBeInTheDocument();
 		expect(screen.queryByTestId('threshold-edit-0')).not.toBeInTheDocument();
 	});

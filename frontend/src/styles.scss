@@ -840,3 +840,7 @@ body.ai-assistant-panel-open {
 	--dropdown-menu-content-z-index: 1050;
 	--dropdown-menu-sub-content-z-index: 1050;
 }
+
+div[data-slot='callout'] {
+	box-sizing: border-box;
+}
