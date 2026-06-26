@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/reflectutil"
+	"github.com/SigNoz/signoz/pkg/jsonschema"
 )
 
 const (
@@ -76,7 +76,7 @@ func (b *jsonBinding) BindBody(body io.Reader, obj any, opts ...BindBodyOption) 
 
 				return errors.
 					NewInvalidInputf(errors.CodeInvalidInput, message, field).
-					WithSuggestions(errors.NewSuggestionsOnLevenshteinDistance(field, errors.NounFields, reflectutil.JSONFieldNames(obj))...)
+					WithSuggestions(errors.NewSuggestionsOnLevenshteinDistance(field, errors.NounFields, jsonschema.JSONFieldNames(obj))...)
 			}
 		}
 
