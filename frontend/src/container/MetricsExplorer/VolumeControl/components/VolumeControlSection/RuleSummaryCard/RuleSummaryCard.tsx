@@ -1,6 +1,7 @@
 import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import { MetricreductionruletypesGettableReductionRuleDTO } from 'api/generated/services/sigNoz.schemas';
+import cx from 'classnames';
 
 import { getLabelVerb, getMatchTypeLabel } from '../../../ruleUtils';
 import styles from './RuleSummaryCard.module.scss';
@@ -20,11 +21,12 @@ function RuleSummaryCard({
 		<div className={styles.card} data-testid="volume-control-active">
 			<div className={styles.cardRow}>
 				<span
-					className={`${styles.statusDot} ${
-						rule.active ? styles.statusActive : styles.statusPending
-					}`}
+					className={cx(
+						styles.statusIndicator,
+						rule.active ? styles.statusActive : styles.statusPending,
+					)}
 				/>
-				<Typography.Text className={styles.cardTitle}>
+				<Typography.Text weight="semibold">
 					{rule.active
 						? 'Aggregation rule active'
 						: 'Aggregation rule pending activation'}
@@ -41,14 +43,14 @@ function RuleSummaryCard({
 					</Button>
 				)}
 			</div>
-			<Typography.Text className={styles.mode}>
+			<Typography.Text as="div" size="small" color="muted">
 				{getMatchTypeLabel(rule.matchType)}
 			</Typography.Text>
 			<div className={styles.chips}>
 				{(rule.labels ?? []).map((label) => (
-					<span className={styles.chip} key={label}>
+					<Typography.Text size="sm" className={styles.labelChip} key={label}>
 						{getLabelVerb(rule.matchType)} {label}
-					</span>
+					</Typography.Text>
 				))}
 			</div>
 		</div>

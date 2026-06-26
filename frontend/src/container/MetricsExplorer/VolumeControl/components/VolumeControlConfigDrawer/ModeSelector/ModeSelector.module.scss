@@ -1,10 +1,10 @@
-.mode-cards {
+.modeOptions {
 	display: grid;
 	grid-template-columns: repeat(3, 1fr);
 	gap: 10px;
 }
 
-.mode-card {
+.modeOption {
 	display: flex;
 	flex-direction: column;
 	gap: 4px;
@@ -17,25 +17,13 @@
 	transition:
 		border-color 0.12s ease,
 		background 0.12s ease;
+
+	&:hover {
+		border-color: var(--bg-slate-200, #2c3140);
+	}
 }
 
-.mode-card:hover {
-	border-color: var(--bg-slate-200, #2c3140);
-}
-
-.mode-card-active {
+.modeOptionSelected {
 	border-color: var(--bg-robin-500, #4e74f8);
 	background: rgba(78, 116, 248, 0.08);
-}
-
-.mode-title {
-	font-size: 12.5px;
-	font-weight: 600;
-	color: var(--bg-vanilla-100, #fff);
-}
-
-.mode-desc {
-	font-size: 11px;
-	color: var(--bg-vanilla-400, #c0c1c3);
-	line-height: 1.45;
 }

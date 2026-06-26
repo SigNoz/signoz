@@ -5,12 +5,9 @@ import styles from './PendingActivationBanner.module.scss';
 
 function PendingActivationBanner(): JSX.Element {
 	return (
-		<div
-			className={styles.pendingBanner}
-			data-testid="volume-control-pending-banner"
-		>
+		<div className={styles.banner} data-testid="volume-control-pending-banner">
 			<Info size={13} />
-			<Typography.Text className={styles.pendingText}>
+			<Typography.Text size="sm" color="muted">
 				This metric&apos;s configuration was recently updated. Volume changes will
 				take effect within a few minutes.
 			</Typography.Text>

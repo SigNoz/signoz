@@ -12,7 +12,7 @@ function VolumeControlHeader(): JSX.Element {
 					Volume Control
 				</Typography.Title>
 			</div>
-			<Typography.Text className={styles.subtitle}>
+			<Typography.Text size="small" color="muted" className={styles.subtitle}>
 				Aggregate away high-cardinality attributes to reduce stored metric volume
 				and cost.
 			</Typography.Text>

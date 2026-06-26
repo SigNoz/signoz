@@ -1,12 +1,13 @@
 import { Button } from '@signozhq/ui/button';
 import { DrawerWrapper } from '@signozhq/ui/drawer';
+import { Typography } from '@signozhq/ui/typography';
 import { MetricreductionruletypesGettableReductionRuleDTO } from 'api/generated/services/sigNoz.schemas';
 
+import { useVolumeControlConfig } from '../../hooks/useVolumeControlConfig';
 import ImpactPanel from './ImpactPanel/ImpactPanel';
 import LabelSelector from './LabelSelector/LabelSelector';
 import ModeSelector from './ModeSelector/ModeSelector';
 import RelatedAssetsWarning from './RelatedAssetsWarning/RelatedAssetsWarning';
-import { useVolumeControlConfig } from '../../hooks/useVolumeControlConfig';
 import styles from './VolumeControlConfigDrawer.module.scss';
 
 interface VolumeControlConfigDrawerProps {
@@ -92,8 +93,15 @@ function VolumeControlConfigDrawer({
 			style={{ zIndex: 1100 }}
 		>
 			<div className={styles.body} data-testid="volume-control-config-drawer">
-				<div className={styles.title}>
-					<span className={styles.adminTag}>Admin only</span>
+				<div className={styles.adminRow}>
+					<Typography.Text
+						size="xs"
+						weight="semibold"
+						color="warning"
+						className={styles.adminOnlyTag}
+					>
+						Admin only
+					</Typography.Text>
 				</div>
 				<ModeSelector mode={mode} onChange={setMode} />
 				{mode !== 'all' && (

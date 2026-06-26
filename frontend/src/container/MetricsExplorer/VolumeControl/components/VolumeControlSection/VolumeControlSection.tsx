@@ -46,7 +46,9 @@ function VolumeControlSection({
 		<div className={styles.section} data-testid="volume-control-section">
 			<div className={styles.header}>
 				<Gauge size={14} />
-				<Typography.Text className={styles.title}>Volume control</Typography.Text>
+				<Typography.Text size="sm" weight="semibold" className={styles.title}>
+					Volume control
+				</Typography.Text>
 			</div>
 
 			{isLoading && <Skeleton active title={false} paragraph={{ rows: 2 }} />}

@@ -94,7 +94,9 @@ function VolumeControlTab(): JSX.Element {
 					sorter: true,
 					sortOrder: sortOrderFor(OrderBy.metric),
 					render: (metricName: string): JSX.Element => (
-						<span className={styles.metricName}>{metricName}</span>
+						<Typography.Text size="small" className={styles.metricNameCell}>
+							{metricName}
+						</Typography.Text>
 					),
 				},
 				{
@@ -113,7 +115,11 @@ function VolumeControlTab(): JSX.Element {
 					render: (
 						_value: unknown,
 						rule: MetricreductionruletypesGettableReductionRuleDTO,
-					): JSX.Element => <span>{getMatchTypeLabel(rule.matchType)}</span>,
+					): JSX.Element => (
+						<Typography.Text size="small">
+							{getMatchTypeLabel(rule.matchType)}
+						</Typography.Text>
+					),
 				},
 				{
 					title: 'ATTRIBUTES',
@@ -122,9 +128,13 @@ function VolumeControlTab(): JSX.Element {
 						_value: unknown,
 						rule: MetricreductionruletypesGettableReductionRuleDTO,
 					): JSX.Element => (
-						<span className={styles.attributes}>
+						<Typography.Text
+							size="small"
+							color="muted"
+							className={styles.attributesCell}
+						>
 							{getLabelVerb(rule.matchType)} {(rule.labels ?? []).join(', ') || '—'}
-						</span>
+						</Typography.Text>
 					),
 				},
 				{
@@ -137,7 +147,9 @@ function VolumeControlTab(): JSX.Element {
 						_value: unknown,
 						rule: MetricreductionruletypesGettableReductionRuleDTO,
 					): JSX.Element => (
-						<span className={styles.muted}>{formatCompact(rule.ingestedSeries)}</span>
+						<Typography.Text size="small" color="muted">
+							{formatCompact(rule.ingestedSeries)}
+						</Typography.Text>
 					),
 				},
 				{
@@ -149,7 +161,11 @@ function VolumeControlTab(): JSX.Element {
 					render: (
 						_value: unknown,
 						rule: MetricreductionruletypesGettableReductionRuleDTO,
-					): JSX.Element => <span>{formatCompact(rule.retainedSeries)}</span>,
+					): JSX.Element => (
+						<Typography.Text size="small">
+							{formatCompact(rule.retainedSeries)}
+						</Typography.Text>
+					),
 				},
 				{
 					title: 'CHANGE',
@@ -162,12 +178,21 @@ function VolumeControlTab(): JSX.Element {
 						rule: MetricreductionruletypesGettableReductionRuleDTO,
 					): JSX.Element => {
 						if (rule.reductionPercent <= 0) {
-							return <span className={styles.muted}>—</span>;
+							return (
+								<Typography.Text size="small" color="muted">
+									—
+								</Typography.Text>
+							);
 						}
 						return (
-							<span className={styles.reduction}>
+							<Typography.Text
+								size="small"
+								weight="semibold"
+								color="success"
+								className={styles.reductionCell}
+							>
 								−{Math.round(rule.reductionPercent)}%
-							</span>
+							</Typography.Text>
 						);
 					},
 				},
@@ -181,10 +206,10 @@ function VolumeControlTab(): JSX.Element {
 						_value: unknown,
 						rule: MetricreductionruletypesGettableReductionRuleDTO,
 					): JSX.Element => (
-						<span className={styles.muted}>
+						<Typography.Text size="small" color="muted">
 							{dayjs(rule.updatedAt).format('MMM D, YYYY · h:mm A')}
 							{rule.updatedBy ? ` · ${rule.updatedBy}` : ''}
-						</span>
+						</Typography.Text>
 					),
 				},
 				...(canManageVolumeControl
@@ -233,7 +258,7 @@ function VolumeControlTab(): JSX.Element {
 	if (!isVolumeControlEnabled) {
 		return (
 			<div className={styles.unavailable} data-testid="volume-control-unavailable">
-				<Typography.Text>
+				<Typography.Text color="muted">
 					Volume control is available on enterprise and cloud plans.
 				</Typography.Text>
 			</div>
@@ -270,8 +295,10 @@ function VolumeControlTab(): JSX.Element {
 				locale={{
 					emptyText: (
 						<div className={styles.empty} data-testid="volume-control-tab-empty">
-							No volume control rules yet. Open a metric and set one up to start
-							reducing its series volume.
+							<Typography.Text color="muted">
+								No volume control rules yet. Open a metric and set one up to start
+								reducing its series volume.
+							</Typography.Text>
 						</div>
 					),
 				}}

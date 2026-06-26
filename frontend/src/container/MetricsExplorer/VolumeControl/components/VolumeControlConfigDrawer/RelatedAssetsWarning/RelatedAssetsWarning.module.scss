@@ -8,21 +8,13 @@
 	color: var(--bg-amber-400, #ffd778);
 }
 
-.warning-title {
-	font-size: 12px;
-	font-weight: 600;
-	color: var(--bg-vanilla-100, #fff);
+.warningBody {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
 }
 
-.warning-detail {
-	font-size: 11.5px;
-	color: var(--bg-vanilla-300, #e9e9e9);
-	margin-top: 4px;
-}
-
-.asset-list {
-	margin: 6px 0 0;
+.assetList {
+	margin: 2px 0 0;
 	padding-left: 16px;
-	font-size: 11.5px;
-	color: var(--bg-vanilla-300, #e9e9e9);
 }

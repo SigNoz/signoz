@@ -5,20 +5,17 @@
 	padding: 4px 2px;
 }
 
-.title {
+.adminRow {
 	display: flex;
 	align-items: center;
 	gap: 10px;
 }
 
-.admin-tag {
-	font-size: 10px;
-	font-weight: 600;
-	letter-spacing: 0.03em;
-	color: var(--bg-amber-400, #ffd778);
+.adminOnlyTag {
 	border: 1px solid var(--bg-amber-500, #ffcc56);
 	border-radius: 99px;
 	padding: 1px 8px;
+	letter-spacing: 0.03em;
 }
 
 .footer {
@@ -28,6 +25,6 @@
 	width: 100%;
 }
 
-.footer-spacer {
+.footerSpacer {
 	flex: 1;
 }

@@ -13,8 +13,8 @@ function NoRuleEmptyState({
 	onSetup,
 }: NoRuleEmptyStateProps): JSX.Element {
 	return (
-		<div className={styles.empty} data-testid="volume-control-empty">
-			<Typography.Text className={styles.emptyText}>
+		<div className={styles.emptyState} data-testid="volume-control-empty">
+			<Typography.Text size="small" color="muted">
 				No volume control rule. All series are retained. Aggregate away
 				high-cardinality attributes to reduce cost.
 			</Typography.Text>

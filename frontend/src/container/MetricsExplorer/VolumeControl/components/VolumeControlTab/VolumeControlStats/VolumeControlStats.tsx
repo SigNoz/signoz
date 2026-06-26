@@ -1,3 +1,6 @@
+import { Typography } from '@signozhq/ui/typography';
+import cx from 'classnames';
+
 import { formatCompact, formatUsd } from '../../../configUtils';
 import styles from './VolumeControlStats.module.scss';
 
@@ -6,6 +9,15 @@ interface VolumeControlStatsProps {
 	ingestedSeries: number;
 	retainedSeries: number;
 	estimatedMonthlySavingsUsd: number;
+}
+
+interface StatItem {
+	label: string;
+	value: string;
+	delta?: string;
+	unit?: string;
+	highlighted?: boolean;
+	valueGood?: boolean;
 }
 
 function VolumeControlStats({
@@ -19,32 +31,56 @@ function VolumeControlStats({
 			? Math.round((1 - retainedSeries / ingestedSeries) * 100)
 			: 0;
 
+	const items: StatItem[] = [
+		{ label: 'Active rules', value: String(activeRules) },
+		{ label: 'Ingested series', value: formatCompact(ingestedSeries) },
+		{
+			label: 'Retained series',
+			value: formatCompact(retainedSeries),
+			delta: overallReduction > 0 ? `−${overallReduction}%` : undefined,
+		},
+		{
+			label: 'Est. monthly savings',
+			value: formatUsd(estimatedMonthlySavingsUsd),
+			unit: '/mo',
+			highlighted: true,
+			valueGood: true,
+		},
+	];
+
 	return (
-		<div className={styles.stats}>
-			<div className={styles.stat}>
-				<span className={styles.statLabel}>Active rules</span>
-				<span className={styles.statValue}>{activeRules}</span>
-			</div>
-			<div className={styles.stat}>
-				<span className={styles.statLabel}>Ingested series</span>
-				<span className={styles.statValue}>{formatCompact(ingestedSeries)}</span>
-			</div>
-			<div className={styles.stat}>
-				<span className={styles.statLabel}>Retained series</span>
-				<span className={styles.statValue}>
-					{formatCompact(retainedSeries)}
-					{overallReduction > 0 && (
-						<span className={styles.statDelta}>−{overallReduction}%</span>
-					)}
-				</span>
-			</div>
-			<div className={`${styles.stat} ${styles.statHero}`}>
-				<span className={styles.statLabel}>Est. monthly savings</span>
-				<span className={`${styles.statValue} ${styles.statValueGood}`}>
-					{formatUsd(estimatedMonthlySavingsUsd)}
-					<span className={styles.statUnit}>/mo</span>
-				</span>
-			</div>
+		<div className={styles.stats} data-testid="volume-control-stats">
+			{items.map((item) => (
+				<div
+					key={item.label}
+					className={cx(styles.statCard, {
+						[styles.statCardHighlighted]: item.highlighted,
+					})}
+				>
+					<Typography.Text size="sm" color="muted" className={styles.statCardLabel}>
+						{item.label}
+					</Typography.Text>
+					<Typography.Text
+						as="div"
+						size="large"
+						weight="semibold"
+						color={item.valueGood ? 'success' : undefined}
+						className={styles.statCardValue}
+					>
+						{item.value}
+						{item.delta && (
+							<Typography.Text size="small" weight="semibold" color="success">
+								{item.delta}
+							</Typography.Text>
+						)}
+						{item.unit && (
+							<Typography.Text size="small" weight="medium" color="muted">
+								{item.unit}
+							</Typography.Text>
+						)}
+					</Typography.Text>
+				</div>
+			))}
 		</div>
 	);
 }
