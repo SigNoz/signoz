@@ -6454,7 +6454,6 @@ components:
         type:
           $ref: '#/components/schemas/Querybuildertypesv5VariableType'
         value:
-          nullable: true
           oneOf:
           - type: string
           - type: number

@@ -320,8 +320,8 @@ type VariableItem struct {
 
 var _ jsonschema.Preparer = VariableItem{}
 
-// PrepareJSONSchema types `value` as a nullable scalar-or-scalar-list instead of
-// an untyped {}. The Go field stays `any`; this only shapes the generated schema.
+// PrepareJSONSchema types `value` as a scalar-or-scalar-list instead of an
+// untyped {}. The Go field stays `any`; this only shapes the generated schema.
 func (VariableItem) PrepareJSONSchema(s *jsonschema.Schema) error {
 	if _, ok := s.Properties["value"]; !ok {
 		return nil
@@ -347,8 +347,6 @@ func (VariableItem) PrepareJSONSchema(s *jsonschema.Schema) error {
 		jsonschema.Boolean.ToSchemaOrBool(),
 		list.ToSchemaOrBool(),
 	}
-	// nullable: the frontend sends null for a dynamic variable's "ALL" selection.
-	value.AddType(jsonschema.Null)
 	s.Properties["value"] = value.ToSchemaOrBool()
 
 	return nil

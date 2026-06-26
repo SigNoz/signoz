@@ -7430,14 +7430,10 @@ export type Querybuildertypesv5VariableItemDTOValue =
 	| string
 	| number
 	| boolean
-	| Querybuildertypesv5VariableItemDTOValueOneOfItem[]
-	| null;
+	| Querybuildertypesv5VariableItemDTOValueOneOfItem[];
 
 export interface Querybuildertypesv5VariableItemDTO {
 	type?: Querybuildertypesv5VariableTypeDTO;
-	/**
-	 * @nullable true
-	 */
 	value?: Querybuildertypesv5VariableItemDTOValue;
 }
 
