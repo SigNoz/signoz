@@ -1,0 +1,28 @@
+.tab {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	padding: 16px 0;
+}
+
+.metricNameCell {
+	font-family: 'Geist Mono', monospace;
+}
+
+.attributesCell {
+	font-family: 'Geist Mono', monospace;
+}
+
+.reductionCell {
+	font-family: 'Geist Mono', monospace;
+}
+
+.empty {
+	padding: 32px 16px;
+	text-align: center;
+}
+
+.unavailable {
+	padding: 48px 16px;
+	text-align: center;
+}
