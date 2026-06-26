@@ -22,6 +22,7 @@ jest.mock('providers/Timezone', () => ({
 		},
 		updateTimezone: jest.fn(),
 		formatTimezoneAdjustedTimestamp: jest.fn(() => 'mock-date'),
+		formatTimezoneAdjustedTimestampOptional: jest.fn(() => 'mock-date'),
 		isAdaptationEnabled: true,
 		setIsAdaptationEnabled: jest.fn(),
 	}),

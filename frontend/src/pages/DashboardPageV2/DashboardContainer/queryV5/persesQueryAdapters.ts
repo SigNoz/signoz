@@ -51,7 +51,7 @@ const isBuilderQueryEnvelope = (
 ): boolean =>
 	envelope.type === Querybuildertypesv5QueryEnvelopeBuilderDTOType.builder_query;
 
-function deriveQueryType(
+export function deriveQueryType(
 	envelopes: Querybuildertypesv5QueryEnvelopeDTO[],
 ): EQueryType {
 	if (

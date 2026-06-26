@@ -43,8 +43,10 @@
 	border-radius: 4px;
 	overflow: hidden;
 	display: flex;
+	// Header stacks above the body, flush to the border — mirrors the dashboard
+	// grid's `.panel` so the preview reads as the real panel chrome.
+	flex-direction: column;
 	background: var(--l2-background);
-	padding: 8px;
 }
 
 .state {
@@ -56,4 +58,8 @@
 	color: var(--l2-forground);
 	font-size: 13px;
 	text-align: center;
+}
+
+.dateTimeSelector {
+	margin-left: auto;
 }
