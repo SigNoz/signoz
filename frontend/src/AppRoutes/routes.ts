@@ -33,7 +33,6 @@ import {
 	MeterExplorerPage,
 	MetricsExplorer,
 	OldLogsExplorer,
-	Onboarding,
 	OnboardingV2,
 	OrgOnboarding,
 	PasswordReset,
@@ -69,13 +68,6 @@ const routes: AppRoutes[] = [
 		exact: true,
 		isPrivate: false,
 		key: 'SIGN_UP',
-	},
-	{
-		path: ROUTES.GET_STARTED,
-		exact: false,
-		component: Onboarding,
-		isPrivate: true,
-		key: 'GET_STARTED',
 	},
 	{
 		path: ROUTES.GET_STARTED_WITH_CLOUD,
