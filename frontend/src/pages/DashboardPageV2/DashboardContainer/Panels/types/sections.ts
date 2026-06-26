@@ -89,8 +89,11 @@ export interface SectionControls {
 		spanGaps?: boolean;
 	};
 	buckets: { count?: boolean; width?: boolean; mergeQueries?: boolean };
-	// stacking → stackedBarChart (Bar); fillSpans → fill gaps with 0 (TimeSeries).
+	// switchPanelKind → the visualization-type switcher (every kind, so you can switch
+	// away from any panel); stacking → stackedBarChart (Bar); fillSpans → fill gaps with
+	// 0 (TimeSeries).
 	visualization: {
+		switchPanelKind: boolean;
 		timePreference?: boolean;
 		stacking?: boolean;
 		fillSpans?: boolean;

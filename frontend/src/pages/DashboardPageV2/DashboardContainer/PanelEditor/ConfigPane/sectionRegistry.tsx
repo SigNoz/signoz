@@ -157,6 +157,10 @@ export interface ErasedSectionDescriptor {
 		// The panel's telemetry signal; read by editors that fetch field-key
 		// suggestions scoped to it (List column picker).
 		signal?: unknown;
+		// Current panel kind + switch handler; read by the visualization section's
+		// type switcher.
+		panelKind?: unknown;
+		onChangePanelKind?: unknown;
 	}>;
 	get: (spec: PanelSpec) => unknown;
 	update: (spec: PanelSpec, value: unknown) => PanelSpec;

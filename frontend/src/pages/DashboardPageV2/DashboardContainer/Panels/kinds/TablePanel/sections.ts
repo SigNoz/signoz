@@ -4,7 +4,10 @@ import type { SectionConfig } from '../../types/sections';
 // single column set). It exposes the per-panel time scope, formatting (decimals +
 // per-column units), per-column thresholds, and context links.
 export const sections: SectionConfig[] = [
-	{ kind: 'visualization', controls: { timePreference: true } },
+	{
+		kind: 'visualization',
+		controls: { switchPanelKind: true, timePreference: true },
+	},
 	{ kind: 'formatting', controls: { decimals: true, columnUnits: true } },
 	{ kind: 'thresholds', controls: { variant: 'table' } },
 	{ kind: 'contextLinks' },

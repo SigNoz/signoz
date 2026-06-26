@@ -8,6 +8,7 @@ import {
 	type SectionConfig,
 } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/sections';
 
+import type { PanelKind } from '../../../Panels/types/panelKind';
 import type { LegendSeries } from '../../hooks/useLegendSeries';
 import type { TableColumnOption } from '../../hooks/useTableColumns';
 import { resolveSectionEditor } from '../sectionRegistry';
@@ -23,6 +24,9 @@ interface SectionSlotProps {
 	tableColumns: TableColumnOption[];
 	/** Panel's telemetry signal, for editors that fetch field suggestions (List columns). */
 	signal?: TelemetrytypesSignalDTO;
+	/** Current panel kind + switch handler, for the visualization section's type switcher. */
+	panelKind: PanelKind;
+	onChangePanelKind: (kind: PanelKind) => void;
 }
 
 /**
@@ -38,6 +42,8 @@ function SectionSlot({
 	legendSeries,
 	tableColumns,
 	signal,
+	panelKind,
+	onChangePanelKind,
 }: SectionSlotProps): JSX.Element | null {
 	// A kind can hide a section based on current spec state (e.g. Histogram legend once
 	// queries are merged) — skip it before resolving the editor.
@@ -60,7 +66,12 @@ function SectionSlot({
 		.formatting?.unit;
 
 	return (
-		<SettingsSection title={title} icon={<Icon size={15} />}>
+		<SettingsSection
+			title={title}
+			icon={<Icon size={15} />}
+			// Open Visualization by default so the type switcher is visible.
+			defaultOpen={config.kind === 'visualization'}
+		>
 			<Component
 				value={get(spec)}
 				controls={controls}
@@ -69,6 +80,8 @@ function SectionSlot({
 				yAxisUnit={yAxisUnit}
 				tableColumns={tableColumns}
 				signal={signal}
+				panelKind={panelKind}
+				onChangePanelKind={onChangePanelKind}
 			/>
 		</SettingsSection>
 	);

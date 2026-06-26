@@ -4,6 +4,10 @@ import type { SectionConfig } from '../../types/sections';
 
 export const sections: SectionConfig[] = [
 	{
+		kind: 'visualization',
+		controls: { switchPanelKind: true },
+	},
+	{
 		kind: 'legend',
 		controls: { position: true },
 		// Merging all queries collapses to one distribution with no legend.
