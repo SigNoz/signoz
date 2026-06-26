@@ -161,6 +161,9 @@ export interface ErasedSectionDescriptor {
 		// type switcher.
 		panelKind?: unknown;
 		onChangePanelKind?: unknown;
+		// Query step interval (seconds); read by chart appearance to floor the
+		// span-gaps threshold.
+		stepInterval?: unknown;
 	}>;
 	get: (spec: PanelSpec) => unknown;
 	update: (spec: PanelSpec, value: unknown) => PanelSpec;

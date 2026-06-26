@@ -1,6 +1,4 @@
-import type { ChangeEvent } from 'react';
 import { Typography } from '@signozhq/ui/typography';
-import { Input } from 'antd';
 import {
 	DashboardtypesFillModeDTO,
 	DashboardtypesLineInterpolationDTO,
@@ -15,6 +13,7 @@ import ConfigSegmented from '../../controls/ConfigSegmented/ConfigSegmented';
 import ConfigSelect from '../../controls/ConfigSelect/ConfigSelect';
 import ConfigSwitch from '../../controls/ConfigSwitch/ConfigSwitch';
 import { SegmentIcon } from '../../controls/segmentIcons';
+import DisconnectValuesField from './DisconnectValuesField';
 
 import styles from './ChartAppearanceSection.module.scss';
 
@@ -81,16 +80,11 @@ function ChartAppearanceSection({
 	value,
 	controls,
 	onChange,
-}: SectionEditorProps<SectionKind.ChartAppearance>): JSX.Element {
-	// `spanGaps.fillLessThan` is a stringified seconds threshold: empty means "connect
-	// every gap" (the chart default), a number means "only bridge gaps shorter than this".
-	const handleSpanGaps = (e: ChangeEvent<HTMLInputElement>): void => {
-		const raw = e.target.value;
-		onChange({
-			...value,
-			spanGaps: raw === '' ? undefined : { ...value?.spanGaps, fillLessThan: raw },
-		});
-	};
+	stepInterval,
+}: SectionEditorProps<SectionKind.ChartAppearance> & {
+	/** Query step interval (seconds) for the span-gaps threshold floor. */
+	stepInterval?: number;
+}): JSX.Element {
 	return (
 		<>
 			{controls.lineStyle && (
@@ -150,16 +144,12 @@ function ChartAppearanceSection({
 			)}
 
 			{controls.spanGaps && (
-				<div className={styles.field}>
-					<Typography.Text>Connect gaps shorter than (s)</Typography.Text>
-					<Input
-						data-testid="panel-editor-v2-span-gaps"
-						type="number"
-						placeholder="All gaps"
-						value={value?.spanGaps?.fillLessThan ?? ''}
-						onChange={handleSpanGaps}
-					/>
-				</div>
+				<DisconnectValuesField
+					testId="panel-editor-v2-span-gaps"
+					value={value?.spanGaps}
+					stepInterval={stepInterval}
+					onChange={(spanGaps): void => onChange({ ...value, spanGaps })}
+				/>
 			)}
 		</>
 	);

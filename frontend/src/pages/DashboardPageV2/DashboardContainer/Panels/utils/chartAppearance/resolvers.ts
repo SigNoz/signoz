@@ -1,3 +1,4 @@
+import { rangeUtil } from '@grafana/data';
 import {
 	DashboardtypesLegendPositionDTO,
 	DashboardtypesPrecisionOptionDTO,
@@ -38,9 +39,10 @@ export function resolveDecimalPrecision(
 }
 
 /**
- * `spec.chartAppearance.spanGaps.fillLessThan` is a stringified number on the
- * wire. Empty/missing → span all gaps (default); numeric → forward the threshold
- * so uPlot only bridges short runs of nulls.
+ * `spec.chartAppearance.spanGaps.fillLessThan` is a duration string on the wire
+ * ("10m", "5s"). Empty/missing → span all gaps (default); otherwise forward the
+ * threshold in seconds so uPlot only bridges short runs of nulls. Tolerates a
+ * bare seconds number for back-compat.
  */
 export function resolveSpanGaps(
 	fillLessThan: string | undefined,
@@ -48,8 +50,10 @@ export function resolveSpanGaps(
 	if (!fillLessThan) {
 		return true;
 	}
-	const parsed = Number(fillLessThan);
-	return Number.isFinite(parsed) ? parsed : true;
+	const seconds = rangeUtil.isValidTimeSpan(fillLessThan)
+		? rangeUtil.intervalToSeconds(fillLessThan)
+		: Number(fillLessThan);
+	return Number.isFinite(seconds) && seconds > 0 ? seconds : true;
 }
 
 /** Legend position; missing/unknown falls back to `BOTTOM` (chart default, V1 parity). */

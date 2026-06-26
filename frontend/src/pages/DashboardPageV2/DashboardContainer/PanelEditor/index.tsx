@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import {
 	ResizableHandle,
 	ResizablePanel,
@@ -18,6 +18,7 @@ import {
 } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelKind';
 import { getBuilderQueries } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/getBuilderQueries';
 
+import { getExecStats } from '../queryV5/v5ResponseData';
 import { usePanelInteractions } from '../PanelsAndSectionsLayout/Panel/hooks/usePanelInteractions';
 import ConfigPane from './ConfigPane/ConfigPane';
 import Header from './Header/Header';
@@ -150,6 +151,14 @@ function PanelEditorContainer({
 	const legendSeries = useLegendSeries(draft, data);
 	const tableColumns = useTableColumns(draft, data);
 
+	// Smallest query step interval (seconds) — the floor for the span-gaps
+	// threshold. Undefined until results carry step metadata.
+	const stepInterval = useMemo((): number | undefined => {
+		const intervals = getExecStats(data.response)?.stepIntervals;
+		const values = intervals ? Object.values(intervals) : [];
+		return values.length ? Math.min(...values) : undefined;
+	}, [data.response]);
+
 	const onSave = useCallback(async (): Promise<void> => {
 		try {
 			// Bake the live query into the spec so unstaged edits are saved too.
@@ -233,6 +242,7 @@ function PanelEditorContainer({
 						onChangePanelKind={onChangePanelKind}
 						legendSeries={legendSeries}
 						tableColumns={tableColumns}
+						stepInterval={stepInterval}
 					/>
 				</ResizablePanel>
 			</ResizablePanelGroup>
