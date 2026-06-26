@@ -1,5 +1,5 @@
-// Package reflectutil holds small reflection helpers shared across packages.
-package reflectutil
+// Package jsonschema holds small reflection helpers shared across packages.
+package jsonschema
 
 import (
 	"reflect"

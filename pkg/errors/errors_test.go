@@ -1,6 +1,7 @@
 package errors
 
 import (
+	"context"
 	"errors" //nolint:depguard
 	"testing"
 	"time"
@@ -181,4 +182,17 @@ func TestWithStacktrace(t *testing.T) {
 	assert.Equal(t, TypeInternal, typ)
 	assert.Equal(t, "test_code", code.String())
 	assert.Equal(t, "panic", message)
+}
+
+// Wrapped context sentinels must remain detectable via errors.Is so callers
+// that branch on context.Canceled / context.DeadlineExceeded keep working
+// after the error passes through one of the signoz Wrap* helpers.
+func TestWrapPreservesContextSentinels(t *testing.T) {
+	canceled := WrapCanceledf(context.Canceled, MustNewCode("canceled"), "op canceled")
+	assert.True(t, Is(canceled, context.Canceled))
+	assert.False(t, Is(canceled, context.DeadlineExceeded))
+
+	deadline := WrapTimeoutf(context.DeadlineExceeded, MustNewCode("timeout"), "op timed out")
+	assert.True(t, Is(deadline, context.DeadlineExceeded))
+	assert.False(t, Is(deadline, context.Canceled))
 }
