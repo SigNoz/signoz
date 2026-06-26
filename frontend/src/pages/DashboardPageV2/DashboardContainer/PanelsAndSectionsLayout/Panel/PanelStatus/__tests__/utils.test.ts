@@ -26,7 +26,13 @@ describe('panelStatusFromError', () => {
 			code: 'invalid_query',
 			message: 'Query is invalid',
 			url: 'https://docs/err',
-			errors: [{ message: 'missing aggregation' }, { message: 'bad filter' }],
+			errors: [
+				{ message: 'missing aggregation', suggestions: null },
+				{ message: 'bad filter', suggestions: null },
+			],
+			retry: null,
+			suggestions: null,
+			type: '',
 		});
 
 		expect(panelStatusFromError(error)).toStrictEqual({
@@ -48,7 +54,15 @@ describe('panelStatusFromError', () => {
 
 	it('omits docsUrl when the API error has no url', () => {
 		const error = axiosErrorWith(
-			{ code: 'x', message: 'y', url: '', errors: [] },
+			{
+				code: 'x',
+				message: 'y',
+				url: '',
+				errors: [],
+				retry: null,
+				suggestions: null,
+				type: '',
+			},
 			StatusCodes.INTERNAL_SERVER_ERROR,
 		);
 
