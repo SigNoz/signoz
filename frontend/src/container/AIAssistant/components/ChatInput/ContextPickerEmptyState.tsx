@@ -56,11 +56,12 @@ export default function ContextPickerEmptyState({
 				variant="link"
 				size="sm"
 				color="primary"
+				className={styles.contextPopoverEmptyCta}
 				onClick={(): void => onPrefill(prefill)}
 				data-testid={`ai-context-empty-cta-${category}`}
-				prefix={<Sparkles size={12} />}
+				prefix={<Sparkles size={14} />}
 			>
-				{ctaLabel}
+				<span className={styles.contextPopoverEmptyCtaLabel}>{ctaLabel}</span>
 			</Button>
 		</div>
 	);

@@ -421,6 +421,21 @@
 	overflow-wrap: anywhere;
 }
 
+.contextPopoverEmptyCta {
+	max-width: 100%;
+}
+
+.contextPopoverEmptyCtaLabel {
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	overflow-wrap: anywhere;
+	text-align: center;
+}
+
 .micBtn {
 	flex-shrink: 0;
 }
