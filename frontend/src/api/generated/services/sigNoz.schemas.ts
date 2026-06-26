@@ -2178,16 +2178,21 @@ export interface ErrorsResponseerroradditionalDTO {
 	/**
 	 * @type string
 	 */
-	message?: string;
+	message: string;
 	/**
 	 * @type array
 	 */
-	suggestions?: string[];
+	suggestions: string[];
 }
 
-export interface ErrorsResponseretryjsonDTO {
-	delay?: TimeDurationDTO;
-}
+export type ErrorsResponseretryjsonDTOAnyOf = {
+	delay: TimeDurationDTO;
+};
+
+/**
+ * @nullable
+ */
+export type ErrorsResponseretryjsonDTO = ErrorsResponseretryjsonDTOAnyOf | null;
 
 export interface ErrorsJSONDTO {
 	/**
@@ -2197,24 +2202,24 @@ export interface ErrorsJSONDTO {
 	/**
 	 * @type array
 	 */
-	errors?: ErrorsResponseerroradditionalDTO[];
+	errors: ErrorsResponseerroradditionalDTO[];
 	/**
 	 * @type string
 	 */
 	message: string;
-	retry?: ErrorsResponseretryjsonDTO;
+	retry: ErrorsResponseretryjsonDTO | null;
 	/**
 	 * @type array
 	 */
-	suggestions?: string[];
+	suggestions: string[];
 	/**
 	 * @type string
 	 */
-	type?: string;
+	type: string;
 	/**
-	 * @type string
+	 * @type string,null
 	 */
-	url?: string;
+	url: string | null;
 }
 
 export interface AuthtypesOrgSessionContextDTO {

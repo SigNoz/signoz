@@ -505,6 +505,7 @@ func New(
 		modules.LogsPipeline,
 		modules.InfraMonitoring,
 		querier,
+		authz,
 	}
 
 	// Initialize the stats aggregator (always-on, independent of whether reporting is enabled)

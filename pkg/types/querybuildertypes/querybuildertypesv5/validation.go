@@ -518,7 +518,7 @@ func (q *QueryBuilderQuery[T]) validateOrderByForAggregation() error {
 				orderId,
 			).WithAdditional(
 				fmt.Sprintf("For aggregation queries, order by can only reference group by keys, aggregation aliases/expressions, or aggregation indices. Valid keys are: %s", strings.Join(validKeys, ", ")),
-			).WithSuggestions(errors.SuggestionsOnLevenshteinDistance(orderKey, validKeys)...)
+			).WithSuggestions(errors.NewSuggestionsOnLevenshteinDistance(orderKey, errors.NounKeys, validKeys)...)
 		}
 	}
 
@@ -712,7 +712,7 @@ func validateQueryEnvelope(envelope QueryEnvelope, opts ...ValidationOption) err
 			envelope.Type,
 		).WithAdditional(
 			"Valid query types are: builder_query, builder_sub_query, builder_formula, builder_join, promql, clickhouse_sql, trace_operator",
-		).WithSuggestions(errors.ValidReferences(QueryType{}.Enum()...))
+		).WithSuggestions(errors.NewValidReferences(errors.NounQueryTypes, QueryType{}.Enum()...))
 	}
 }
 

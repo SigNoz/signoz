@@ -143,6 +143,10 @@ func (provider *provider) List(ctx context.Context, orgID valuer.UUID) ([]*autht
 	return provider.pkgAuthzService.List(ctx, orgID)
 }
 
+func (provider *provider) Collect(ctx context.Context, orgID valuer.UUID) (map[string]any, error) {
+	return provider.pkgAuthzService.Collect(ctx, orgID)
+}
+
 func (provider *provider) ListByOrgIDAndNames(ctx context.Context, orgID valuer.UUID, names []string) ([]*authtypes.Role, error) {
 	return provider.pkgAuthzService.ListByOrgIDAndNames(ctx, orgID, names)
 }

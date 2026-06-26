@@ -66,6 +66,9 @@ type AuthZ interface {
 	// Lists all the roles for the organization.
 	List(context.Context, valuer.UUID) ([]*authtypes.Role, error)
 
+	// Collect returns per-org role usage stats for the stats reporter.
+	Collect(context.Context, valuer.UUID) (map[string]any, error)
+
 	//  Lists all the roles for the organization filtered by name
 	ListByOrgIDAndNames(context.Context, valuer.UUID, []string) ([]*authtypes.Role, error)
 
