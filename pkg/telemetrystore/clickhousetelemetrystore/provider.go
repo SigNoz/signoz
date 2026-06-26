@@ -186,7 +186,7 @@ func (p *provider) QueryRow(ctx context.Context, query string, args ...interface
 	event.Err = row.Err()
 	telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
 
-	return row
+	return &rowWithCastError{Row: row}
 }
 
 func (p *provider) Select(ctx context.Context, dest interface{}, query string, args ...interface{}) error {
@@ -234,7 +234,7 @@ func (p *provider) PrepareBatch(ctx context.Context, query string, opts ...drive
 	event.Err = err
 	telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
 
-	return batch, castError(err)
+	return &batchWithCastError{Batch: batch}, castError(err)
 }
 
 func (p *provider) ServerVersion() (*driver.ServerVersion, error) {

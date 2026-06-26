@@ -8,7 +8,7 @@ import (
 	"github.com/SigNoz/govaluate"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/binding"
-	"github.com/SigNoz/signoz/pkg/reflectutil"
+	signozjsonschema "github.com/SigNoz/signoz/pkg/jsonschema"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -230,7 +230,7 @@ func (c *CompositeQuery) UnmarshalJSON(data []byte) error {
 
 	// Valid field names are derived from the struct itself so this stays in
 	// sync with the schema (and the generated OpenAPI spec) automatically.
-	fieldNames := reflectutil.JSONFieldNames((*CompositeQuery)(nil))
+	fieldNames := signozjsonschema.JSONFieldNames((*CompositeQuery)(nil))
 	validFields := make(map[string]bool, len(fieldNames))
 	for _, f := range fieldNames {
 		validFields[f] = true
@@ -557,7 +557,7 @@ func (r *QueryRangeRequest) UnmarshalJSON(data []byte) error {
 
 	// Valid field names are derived from the struct itself so this stays in
 	// sync with the schema (and the generated OpenAPI spec) automatically.
-	fieldNames := reflectutil.JSONFieldNames((*QueryRangeRequest)(nil))
+	fieldNames := signozjsonschema.JSONFieldNames((*QueryRangeRequest)(nil))
 	validFields := make(map[string]bool, len(fieldNames))
 	for _, f := range fieldNames {
 		validFields[f] = true
