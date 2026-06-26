@@ -57,6 +57,8 @@ describe('ConfigPane', () => {
 	it('renders the Formatting section for a kind that declares it', () => {
 		renderConfigPane();
 		// The TimeSeries kind declares a Formatting section; its collapsible header shows.
-		expect(screen.getByTestId('config-section-Formatting')).toBeInTheDocument();
+		expect(
+			screen.getByTestId('config-section-formatting-&-units'),
+		).toBeInTheDocument();
 	});
 });
