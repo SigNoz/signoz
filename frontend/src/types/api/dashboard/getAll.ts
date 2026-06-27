@@ -29,6 +29,7 @@ export type TSortVariableValuesType = (typeof VariableSortTypeArr)[number];
 export enum LegendPosition {
 	BOTTOM = 'bottom',
 	RIGHT = 'right',
+	NONE = 'none',
 }
 
 export interface IDashboardVariable {
