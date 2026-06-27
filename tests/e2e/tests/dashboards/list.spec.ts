@@ -1,3 +1,4 @@
+import path from 'path';
 import type { Page } from '@playwright/test';
 
 import { expect, test } from '../../fixtures/auth';
@@ -8,12 +9,18 @@ import {
 	createDashboardViaApi,
 	DEFAULT_DASHBOARD_TITLE,
 	deleteDashboardViaApi,
+	fetchDashboardData,
 	findDashboardIdByTitle,
 	gotoDashboardsList,
 	importApmMetricsDashboardViaUI,
 	openDashboardActionMenu,
 	SEARCH_PLACEHOLDER,
 } from '../../helpers/dashboards';
+
+const APM_METRICS_TESTDATA_PATH = path.resolve(
+	__dirname,
+	'../../testdata/apm-metrics.json',
+);
 
 // Tests in this file mutate the dashboard list (create / delete). Run them
 // serially within the worker so state from one test does not leak into
@@ -422,12 +429,140 @@ test.describe('Dashboards List Page', () => {
 		await expect(page).toHaveURL(/\/dashboard($|\?)/);
 	});
 
+	test('TC-19 import via file upload creates dashboard, navigates to detail, and surfaces metadata in list', async ({
+		authedPage: page,
+	}) => {
+		await gotoDashboardsList(page);
+		await page.getByTestId('new-dashboard-cta').click();
+		await page.getByTestId('import-json-menu-cta').click();
+
+		const dialog = page
+			.getByRole('dialog')
+			.filter({ hasText: 'Import Dashboard JSON' });
+		await expect(dialog).toBeVisible();
+
+		const postResponse = page.waitForResponse(
+			(r) =>
+				r.request().method() === 'POST' && /\/api\/v1\/dashboards/.test(r.url()),
+		);
+		await dialog
+			.locator('input[type="file"]')
+			.setInputFiles(APM_METRICS_TESTDATA_PATH);
+		await dialog.getByRole('button', { name: 'Import and Next' }).click();
+		const res = await postResponse;
+
+		expect(res.status()).toBeGreaterThanOrEqual(200);
+		expect(res.status()).toBeLessThan(300);
+
+		await page.waitForURL(/\/dashboard\/[0-9a-f-]+/);
+
+		// Register for cleanup.
+		const urlMatch = page.url().match(/\/dashboard\/([0-9a-f-]+)/);
+		expect(urlMatch, 'URL must contain dashboard ID').not.toBeNull();
+		seedIds.add(urlMatch![1]);
+
+		await expect(page.getByTestId('dashboard-title')).toHaveText(
+			APM_METRICS_TITLE,
+		);
+
+		// Server-side check: every widget + tag from the fixture must be persisted.
+		// A partial import (e.g. silently dropped widgets) would pass the UI title
+		// check but fail here. The apm-metrics fixture has 16 widgets and 4 tags.
+		const persisted = await fetchDashboardData(page, urlMatch![1]);
+		expect(persisted.widgets?.length).toBe(16);
+		expect(persisted.tags).toEqual(
+			expect.arrayContaining(['apm', 'latency', 'error rate', 'throughput']),
+		);
+
+		// Navigate back and confirm the imported dashboard surfaces in the list
+		// with at least one tag chip.
+		await gotoDashboardsList(page);
+		await page.getByPlaceholder(SEARCH_PLACEHOLDER).fill(APM_METRICS_TITLE);
+		await expect(page.getByText(APM_METRICS_TITLE).first()).toBeVisible();
+		// The apm-metrics fixture has tags ['apm', 'latency', 'error rate', 'throughput'].
+		await expect(page.getByText('apm').first()).toBeVisible();
+	});
+
+	// The Monaco paste path is intentionally not covered — the file-upload
+	// path (TC-19) exercises the same populate-editor-then-import code path.
+	// Keyboard-typing large JSON into Monaco is unreliable in headless CI.
+
+	test('TC-20 invalid JSON via file upload shows "Invalid JSON" error', async ({
+		authedPage: page,
+	}) => {
+		await gotoDashboardsList(page);
+		await page.getByTestId('new-dashboard-cta').click();
+		await page.getByTestId('import-json-menu-cta').click();
+
+		const dialog = page
+			.getByRole('dialog')
+			.filter({ hasText: 'Import Dashboard JSON' });
+		await expect(dialog).toBeVisible();
+
+		// Track POST attempts: invalid JSON must never reach the create endpoint.
+		let postFired = false;
+		await page.route(/\/api\/v1\/dashboards(\?|$)/, (route) => {
+			if (route.request().method() === 'POST') {
+				postFired = true;
+			}
+			void route.continue();
+		});
+
+		await dialog.locator('input[type="file"]').setInputFiles({
+			name: 'bad.json',
+			mimeType: 'application/json',
+			buffer: Buffer.from('not valid json {'),
+		});
+
+		await expect(dialog.getByText('Invalid JSON')).toBeVisible();
+		await expect(dialog).toBeVisible();
+
+		// Clicking "Import and Next" with invalid content should surface an error
+		// and keep the dialog open.
+		await dialog.getByRole('button', { name: 'Import and Next' }).click();
+		await expect(page).not.toHaveURL(/\/dashboard\/[0-9a-f-]+/);
+		await expect(dialog).toBeVisible();
+
+		await page.waitForLoadState('networkidle');
+		expect(postFired, 'invalid JSON must not trigger POST').toBe(false);
+	});
+
+	test('TC-21 import with empty editor clicking Import and Next shows error', async ({
+		authedPage: page,
+	}) => {
+		await gotoDashboardsList(page);
+		await page.getByTestId('new-dashboard-cta').click();
+		await page.getByTestId('import-json-menu-cta').click();
+
+		const dialog = page
+			.getByRole('dialog')
+			.filter({ hasText: 'Import Dashboard JSON' });
+		await expect(dialog).toBeVisible();
+
+		let postFired = false;
+		await page.route(/\/api\/v1\/dashboards(\?|$)/, (route) => {
+			if (route.request().method() === 'POST') {
+				postFired = true;
+			}
+			void route.continue();
+		});
+
+		await dialog.getByRole('button', { name: 'Import and Next' }).click();
+
+		await expect(dialog.getByText('Error loading JSON file')).toBeVisible();
+		await expect(dialog).toBeVisible();
+		await expect(page).not.toHaveURL(/\/dashboard\/[0-9a-f-]+/);
+
+		await page.waitForLoadState('networkidle');
+		expect(postFired, 'empty editor must not trigger POST').toBe(false);
+	});
+
 	// ─── Deleting dashboards ─────────────────────────────────────────────────
 	//
 	// Known behaviour: clicking Cancel in the confirmation dialog navigates to
 	// the dashboard detail page rather than staying on the list.
 
-	test('TC-19 delete confirmation dialog shows dashboard name with Cancel and Delete buttons', async ({
+	test('TC-22 delete confirmation dialog shows dashboard name with Cancel and Delete buttons', async ({
 		authedPage: page,
 	}) => {
 		const name = 'dashboards-list-delete-confirm';
@@ -456,7 +591,7 @@ test.describe('Dashboards List Page', () => {
 		await expect(dialog.getByRole('button', { name: 'Delete' })).toBeVisible();
 	});
 
-	test('TC-20 cancelling delete navigates to the dashboard detail page (known behaviour)', async ({
+	test('TC-23 cancelling delete navigates to the dashboard detail page (known behaviour)', async ({
 		authedPage: page,
 	}) => {
 		const name = 'dashboards-list-delete-cancel';
@@ -471,7 +606,7 @@ test.describe('Dashboards List Page', () => {
 		await expect(page).toHaveURL(/\/dashboard\/[0-9a-f-]+/);
 	});
 
-	test('TC-21 confirming delete removes the dashboard from the list', async ({
+	test('TC-24 confirming delete removes the dashboard from the list', async ({
 		authedPage: page,
 	}) => {
 		const name = 'dashboards-list-delete-confirmed';
@@ -506,7 +641,7 @@ test.describe('Dashboards List Page', () => {
 
 	// ─── Row click navigation ────────────────────────────────────────────────
 
-	test('TC-22 clicking a dashboard row navigates to the detail page', async ({
+	test('TC-25 clicking a dashboard row navigates to the detail page', async ({
 		authedPage: page,
 	}) => {
 		const name = 'dashboards-list-row-click';
@@ -520,7 +655,7 @@ test.describe('Dashboards List Page', () => {
 		await expect(page).toHaveURL(/\/dashboard\/[0-9a-f-]+/);
 	});
 
-	test('TC-23 sidebar Dashboards link navigates to the list page', async ({
+	test('TC-26 sidebar Dashboards link navigates to the list page', async ({
 		authedPage: page,
 	}) => {
 		await page.goto('/home');
@@ -538,7 +673,7 @@ test.describe('Dashboards List Page', () => {
 
 	// ─── URL state and deep linking ──────────────────────────────────────────
 
-	test('TC-24 browser Back after navigating to a dashboard restores search state', async ({
+	test('TC-27 browser Back after navigating to a dashboard restores search state', async ({
 		authedPage: page,
 	}) => {
 		const name = 'dashboards-list-back-search';
@@ -557,7 +692,7 @@ test.describe('Dashboards List Page', () => {
 		await expect(page.getByPlaceholder(SEARCH_PLACEHOLDER)).toHaveValue(name);
 	});
 
-	test('TC-25 direct navigation with sort params honours them on load', async ({
+	test('TC-28 direct navigation with sort params honours them on load', async ({
 		authedPage: page,
 	}) => {
 		await page.goto('/dashboard?columnKey=updatedAt&order=descend');
