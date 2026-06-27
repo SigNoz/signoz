@@ -13,6 +13,7 @@ import (
 
 	"github.com/dustin/go-humanize"
 	"golang.org/x/exp/maps"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -22,6 +23,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -33,6 +35,23 @@ import (
 var (
 	intervalWarn = "Query %s is requesting aggregation interval %v seconds, which is smaller than the minimum allowed interval of %v seconds for selected time range. Using the minimum instead"
 )
+
+// maxParallelQueries bounds how many sub-queries of a composite query range
+// request are executed concurrently when the enable_parallel_queries flag is on.
+// Each sub-query can itself fan missing cache ranges out across up to 4 goroutines
+// in executeWithCache, so the worst-case concurrent ClickHouse statements is
+// maxParallelQueries*4 = 16, well under telemetrystore MaxOpenConns (default 100).
+const maxParallelQueries = 4
+
+// perQueryResult carries the outcome of a single sub-query so the run loop can
+// fan execution out and fold the results back in afterwards.
+type perQueryResult struct {
+	value          any
+	warnings       []string
+	warningsDocURL string
+	stats          qbtypes.ExecStats
+	hasData        bool
+}
 
 type querier struct {
 	logger                   *slog.Logger
@@ -602,7 +621,11 @@ func (q *querier) run(
 		return false
 	}
 
-	for name, query := range qs {
+	// execOne executes a single sub-query, going through the bucket cache when
+	// available. It returns the result alongside the bits that the caller folds
+	// into the aggregated response, without touching any shared state - so it is
+	// safe to call concurrently for distinct sub-queries.
+	execOne := func(ctx context.Context, name string, query qbtypes.Query) (perQueryResult, error) {
 		// Skip cache if NoCache is set, or if cache is not available
 		if req.NoCache || q.bucketCache == nil || query.Fingerprint() == "" {
 			if req.NoCache {
@@ -611,37 +634,86 @@ func (q *querier) run(
 				q.logger.InfoContext(ctx, "no bucket cache or fingerprint, executing query", slog.String("fingerprint", query.Fingerprint()))
 			}
 			result, err := query.Execute(ctx)
-			qbEvent.HasData = qbEvent.HasData || hasData(result)
 			if err != nil {
-				return nil, err
+				return perQueryResult{}, err
 			}
-			results[name] = result.Value
-			warnings = append(warnings, result.Warnings...)
-			warningsDocURL = result.WarningsDocURL
-			stats.RowsScanned += result.Stats.RowsScanned
-			stats.BytesScanned += result.Stats.BytesScanned
-			stats.DurationMS += result.Stats.DurationMS
-		} else {
-			result, err := q.executeWithCache(ctx, orgID, query, steps[name], req.NoCache)
-			qbEvent.HasData = qbEvent.HasData || hasData(result)
-			if err != nil {
-				return nil, err
-			}
-			switch v := result.Value.(type) {
-			case *qbtypes.TimeSeriesData:
-				v.QueryName = name
-			case *qbtypes.ScalarData:
-				v.QueryName = name
-			case *qbtypes.RawData:
-				v.QueryName = name
-			}
+			return perQueryResult{
+				value:          result.Value,
+				warnings:       result.Warnings,
+				warningsDocURL: result.WarningsDocURL,
+				stats:          result.Stats,
+				hasData:        hasData(result),
+			}, nil
+		}
 
-			results[name] = result.Value
-			warnings = append(warnings, result.Warnings...)
-			warningsDocURL = result.WarningsDocURL
-			stats.RowsScanned += result.Stats.RowsScanned
-			stats.BytesScanned += result.Stats.BytesScanned
-			stats.DurationMS += result.Stats.DurationMS
+		result, err := q.executeWithCache(ctx, orgID, query, steps[name], req.NoCache)
+		if err != nil {
+			return perQueryResult{}, err
+		}
+		switch v := result.Value.(type) {
+		case *qbtypes.TimeSeriesData:
+			v.QueryName = name
+		case *qbtypes.ScalarData:
+			v.QueryName = name
+		case *qbtypes.RawData:
+			v.QueryName = name
+		}
+		return perQueryResult{
+			value:          result.Value,
+			warnings:       result.Warnings,
+			warningsDocURL: result.WarningsDocURL,
+			stats:          result.Stats,
+			hasData:        hasData(result),
+		}, nil
+	}
+
+	// merge folds a sub-query result into the aggregated response. Always called
+	// from the single goroutine running run(), so it needs no synchronization.
+	merge := func(name string, r perQueryResult) {
+		results[name] = r.value
+		warnings = append(warnings, r.warnings...)
+		if r.warningsDocURL != "" && warningsDocURL == "" {
+			warningsDocURL = r.warningsDocURL
+		}
+		qbEvent.HasData = qbEvent.HasData || r.hasData
+		stats.RowsScanned += r.stats.RowsScanned
+		stats.BytesScanned += r.stats.BytesScanned
+		stats.DurationMS += r.stats.DurationMS
+	}
+
+	if q.fl.BooleanOrEmpty(ctx, flagger.FeatureEnableParallelQueries, featuretypes.NewFlaggerEvaluationContext(orgID)) {
+		// Execute sub-queries concurrently with bounded fan-out. Each goroutine
+		// writes only its own slot, so the merge below stays lock-free.
+		names := maps.Keys(qs)
+		slices.Sort(names)
+		slots := make([]perQueryResult, len(names))
+
+		g, gctx := errgroup.WithContext(ctx)
+		g.SetLimit(maxParallelQueries)
+		for i, name := range names {
+			i, name := i, name
+			g.Go(func() error {
+				r, err := execOne(gctx, name, qs[name])
+				if err != nil {
+					return err
+				}
+				slots[i] = r
+				return nil
+			})
+		}
+		if err := g.Wait(); err != nil {
+			return nil, err
+		}
+		for i, name := range names {
+			merge(name, slots[i])
+		}
+	} else {
+		for name, query := range qs {
+			r, err := execOne(ctx, name, query)
+			if err != nil {
+				return nil, err
+			}
+			merge(name, r)
 		}
 	}
 
