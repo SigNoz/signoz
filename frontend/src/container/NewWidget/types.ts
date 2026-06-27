@@ -33,6 +33,7 @@ export interface WidgetGraphProps {
 	enableDrillDown?: boolean;
 	dashboardData: Dashboard | undefined;
 	isNewPanel?: boolean;
+	onColumnWidthsChange?: (widths: Record<string, number>) => void;
 }
 
 export type WidgetGraphContainerProps = {
@@ -43,4 +44,5 @@ export type WidgetGraphContainerProps = {
 	isLoadingPanelData: boolean;
 	enableDrillDown?: boolean;
 	isCancelled?: boolean;
+	onColumnWidthsChange?: (widths: Record<string, number>) => void;
 };
