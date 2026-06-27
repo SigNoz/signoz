@@ -242,7 +242,9 @@ function PanelEditorContainer({
 					className={styles.right}
 				>
 					<ConfigPane
-						panelKind={draft.spec.plugin.kind}
+						panel={draft}
+						panelId={panelId}
+						// panelKind={draft.spec.plugin.kind}
 						spec={spec}
 						onChangeSpec={setSpec}
 						onChangePanelKind={onChangePanelKind}

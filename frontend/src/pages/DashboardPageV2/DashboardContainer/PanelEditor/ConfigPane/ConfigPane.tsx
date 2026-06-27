@@ -1,20 +1,22 @@
 import { Input } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
-import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
+import type {
+	DashboardtypesPanelDTO,
+	DashboardtypesPanelSpecDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { getPanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Panels/registry';
 import { resolveSignal } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/getBuilderQueries';
 import type { EQueryType } from 'types/common/dashboard';
 
 import type { LegendSeries } from '../hooks/useLegendSeries';
 import type { TableColumnOption } from '../hooks/useTableColumns';
+import ConfigActions from './ConfigActions/ConfigActions';
 import SectionSlot from './SectionSlot/SectionSlot';
 
 import styles from './ConfigPane.module.scss';
 import { PanelKind } from '../../Panels/types/panelKind';
 
 interface ConfigPaneProps {
-	/** Full plugin kind (e.g. `signoz/TimeSeriesPanel`); drives which sections show. */
-	panelKind: PanelKind;
 	/** The panel spec — the single editing surface (title/description + section slices). */
 	spec: DashboardtypesPanelSpecDTO;
 	onChangeSpec: (next: DashboardtypesPanelSpecDTO) => void;
@@ -32,6 +34,13 @@ interface ConfigPaneProps {
 	tableColumns: TableColumnOption[];
 	/** Query step interval (seconds), for the chart-appearance span-gaps floor. */
 	stepInterval?: number;
+	/**
+	 * The draft panel and its id — supplied by the editor so the "Actions" group can
+	 * seed cross-page links (Create alert rule) from the current query. Absent (e.g.
+	 * in isolation tests) hides that group.
+	 */
+	panel: DashboardtypesPanelDTO;
+	panelId: string;
 }
 
 /**
@@ -41,7 +50,6 @@ interface ConfigPaneProps {
  * generically via the section registry — only sections with a built editor appear.
  */
 function ConfigPane({
-	panelKind,
 	spec,
 	onChangeSpec,
 	onChangePanelKind,
@@ -49,7 +57,10 @@ function ConfigPane({
 	legendSeries,
 	tableColumns,
 	stepInterval,
+	panel,
+	panelId,
 }: ConfigPaneProps): JSX.Element {
+	const panelKind = spec.plugin.kind;
 	const definition = getPanelDefinition(panelKind);
 	const sections = definition.sections;
 
@@ -114,6 +125,8 @@ function ConfigPane({
 					</div>
 				</>
 			)}
+
+			<ConfigActions panel={panel} panelId={panelId} />
 		</div>
 	);
 }
