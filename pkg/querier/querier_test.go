@@ -35,6 +35,22 @@ func (m *mockMetricStmtBuilder) Build(_ context.Context, _, _ uint64, _ qbtypes.
 	}, nil
 }
 
+func TestNewMaxConcurrentQueries(t *testing.T) {
+	providerSettings := instrumentationtest.New().ToProviderSettings()
+	newQuerier := func(maxConcurrent int) *querier {
+		return New(
+			providerSettings,
+			nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
+			flaggertest.New(t),
+			maxConcurrent,
+		)
+	}
+
+	require.Equal(t, 8, newQuerier(8).maxConcurrentQueries, "configured value should be honored")
+	require.Equal(t, defaultMaxConcurrentQueries, newQuerier(0).maxConcurrentQueries, "zero should fall back to default")
+	require.Equal(t, defaultMaxConcurrentQueries, newQuerier(-3).maxConcurrentQueries, "negative should fall back to default")
+}
+
 func TestQueryRange_MetricTypeMissing(t *testing.T) {
 	// When a metric has UnspecifiedType and is not found in the metadata store,
 	// the querier should return an empty result with a warning instead of an error.
@@ -54,6 +70,7 @@ func TestQueryRange_MetricTypeMissing(t *testing.T) {
 		nil,                // traceOperatorStmtBuilder
 		nil,                // bucketCache
 		flaggertest.New(t), // flagger
+		0,                  // maxConcurrentQueries (use default)
 	)
 
 	req := &qbtypes.QueryRangeRequest{
@@ -124,6 +141,7 @@ func TestQueryRange_MetricTypeFromStore(t *testing.T) {
 		nil,                      // traceOperatorStmtBuilder
 		nil,                      // bucketCache
 		flaggertest.New(t),       // flagger
+		0,                        // maxConcurrentQueries (use default)
 	)
 
 	req := &qbtypes.QueryRangeRequest{

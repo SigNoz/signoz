@@ -34,6 +34,10 @@ var (
 	intervalWarn = "Query %s is requesting aggregation interval %v seconds, which is smaller than the minimum allowed interval of %v seconds for selected time range. Using the minimum instead"
 )
 
+// defaultMaxConcurrentQueries is the fallback bound on goroutines used to fetch
+// the missing cache ranges of a single query when no valid value is configured.
+const defaultMaxConcurrentQueries = 4
+
 type querier struct {
 	logger                   *slog.Logger
 	fl                       flagger.Flagger
@@ -48,6 +52,7 @@ type querier struct {
 	traceOperatorStmtBuilder qbtypes.TraceOperatorStatementBuilder
 	bucketCache              BucketCache
 	liveDataRefresh          time.Duration
+	maxConcurrentQueries     int
 }
 
 var _ Querier = (*querier)(nil)
@@ -65,8 +70,14 @@ func New(
 	traceOperatorStmtBuilder qbtypes.TraceOperatorStatementBuilder,
 	bucketCache BucketCache,
 	flagger flagger.Flagger,
+	maxConcurrentQueries int,
 ) *querier {
 	querierSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/querier")
+	// Guard against an unset/invalid value so callers (e.g. tests) that don't
+	// plumb the config still get the historical bound.
+	if maxConcurrentQueries <= 0 {
+		maxConcurrentQueries = defaultMaxConcurrentQueries
+	}
 	return &querier{
 		logger:                   querierSettings.Logger(),
 		fl:                       flagger,
@@ -81,6 +92,7 @@ func New(
 		traceOperatorStmtBuilder: traceOperatorStmtBuilder,
 		bucketCache:              bucketCache,
 		liveDataRefresh:          5 * time.Second,
+		maxConcurrentQueries:     maxConcurrentQueries,
 	}
 }
 
@@ -735,7 +747,7 @@ func (q *querier) executeWithCache(ctx context.Context, orgID valuer.UUID, query
 		slog.Int("missing_ranges_count", len(missingRanges)),
 		slog.Any("ranges", missingRanges))
 
-	sem := make(chan struct{}, 4)
+	sem := make(chan struct{}, q.maxConcurrentQueries)
 	var wg sync.WaitGroup
 
 	for i, timeRange := range missingRanges {

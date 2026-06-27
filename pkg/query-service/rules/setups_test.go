@@ -54,6 +54,7 @@ func prepareQuerierForMetrics(t *testing.T, telemetryStore telemetrystore.Teleme
 		nil, // traceOperatorStmtBuilder
 		nil, // bucketCache
 		flagger,
+		0, // maxConcurrentQueries (use default)
 	), metadataStore
 }
 
@@ -107,6 +108,7 @@ func prepareQuerierForLogs(t *testing.T, telemetryStore telemetrystore.Telemetry
 		nil,            // traceOperatorStmtBuilder
 		nil,            // bucketCache
 		fl,
+		0, // maxConcurrentQueries (use default)
 	)
 }
 
@@ -154,5 +156,6 @@ func prepareQuerierForTraces(t *testing.T, telemetryStore telemetrystore.Telemet
 		nil,              // traceOperatorStmtBuilder
 		nil,              // bucketCache
 		fl,
+		0, // maxConcurrentQueries (use default)
 	)
 }
