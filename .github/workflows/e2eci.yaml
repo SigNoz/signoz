@@ -68,9 +68,22 @@ jobs:
       - name: pnpm-install
         run: |
           cd tests/e2e && pnpm install --frozen-lockfile
+      - name: playwright-cache
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('tests/e2e/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
       - name: playwright-browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: |
           cd tests/e2e && pnpm playwright install --with-deps ${{ matrix.project }}
+      - name: playwright-system-deps
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: |
+          cd tests/e2e && pnpm playwright install-deps ${{ matrix.project }}
       - name: bring-up-stack
         run: |
           cd tests && \
