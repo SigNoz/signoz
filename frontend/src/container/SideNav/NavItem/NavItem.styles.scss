@@ -8,6 +8,19 @@
 	height: 32px;
 	margin-bottom: 4px;
 	cursor: pointer;
+	text-decoration: none;
+
+	&:hover {
+		text-decoration: none;
+	}
+
+	&.nav-item-button {
+		width: 100%;
+		padding: 0;
+		border: 0;
+		background: transparent;
+		text-align: left;
+	}
 
 	&.active {
 		.nav-item-active-marker {

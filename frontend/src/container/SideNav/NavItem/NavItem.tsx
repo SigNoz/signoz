@@ -2,6 +2,7 @@ import { Tooltip } from 'antd';
 import { Badge } from '@signozhq/ui/badge';
 import cx from 'classnames';
 import { Pin, PinOff } from '@signozhq/icons';
+import { Link } from 'react-router-dom';
 
 import { SidebarItem } from '../sideNav.types';
 
@@ -16,40 +17,61 @@ export default function NavItem({
 	isPinned,
 	showIcon,
 	dataTestId,
+	href,
 }: {
 	item: SidebarItem;
 	isActive: boolean;
-	onClick: (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
+	onClick: (event: React.MouseEvent<HTMLElement, MouseEvent>) => void;
 	isDisabled: boolean;
 	onTogglePin?: (item: SidebarItem) => void;
 	isPinned?: boolean;
 	showIcon?: boolean;
 	dataTestId?: string;
+	href?: string;
 }): JSX.Element {
 	const { label, icon, isBeta, isNew, isEarlyAccess, tooltip } = item;
+	const isExternalLink = item.isExternal && href;
 
 	const handleTogglePinClick = (
 		event: React.MouseEvent<SVGSVGElement, MouseEvent>,
 	): void => {
+		event.preventDefault();
 		event.stopPropagation();
 		onTogglePin?.(item);
 	};
 
-	const navItem = (
-		<div
-			className={cx(
-				'nav-item',
-				isActive ? 'active' : '',
-				isDisabled ? 'disabled' : '',
-			)}
-			onClick={(event): void => {
-				if (isDisabled) {
-					return;
-				}
-				onClick(event);
-			}}
-			data-testid={dataTestId}
-		>
+	const handleClick = (
+		event: React.MouseEvent<HTMLElement, MouseEvent>,
+	): void => {
+		if (isDisabled) {
+			event.preventDefault();
+			return;
+		}
+
+		if (isExternalLink) {
+			return;
+		}
+
+		if (
+			href &&
+			(event.metaKey ||
+				event.ctrlKey ||
+				event.shiftKey ||
+				event.altKey ||
+				event.button !== 0)
+		) {
+			return;
+		}
+
+		if (href) {
+			event.preventDefault();
+		}
+
+		onClick(event);
+	};
+
+	const navItemContent = (
+		<>
 			{showIcon && <div className="nav-item-active-marker" />}
 			<div className={cx('nav-item-data', isBeta ? 'beta-tag' : '')}>
 				{showIcon && (
@@ -104,7 +126,49 @@ export default function NavItem({
 					</Tooltip>
 				)}
 			</div>
-		</div>
+		</>
+	);
+
+	const navItemClassName = cx(
+		'nav-item',
+		isActive ? 'active' : '',
+		isDisabled ? 'disabled' : '',
+	);
+
+	const navItem = href ? (
+		isExternalLink ? (
+			<a
+				href={href}
+				target="_blank"
+				rel="noopener noreferrer"
+				className={navItemClassName}
+				onClick={handleClick}
+				data-testid={dataTestId}
+				aria-disabled={isDisabled}
+			>
+				{navItemContent}
+			</a>
+		) : (
+			<Link
+				to={href}
+				className={navItemClassName}
+				onClick={handleClick}
+				data-testid={dataTestId}
+				aria-disabled={isDisabled}
+			>
+				{navItemContent}
+			</Link>
+		)
+	) : (
+		<button
+			type="button"
+			className={cx(navItemClassName, 'nav-item-button')}
+			onClick={handleClick}
+			data-testid={dataTestId}
+			aria-disabled={isDisabled}
+		>
+			{navItemContent}
+		</button>
 	);
 
 	// Only non-pinnable items set `tooltip`; it would nest with the pin tooltip.
@@ -122,4 +186,5 @@ NavItem.defaultProps = {
 	isPinned: false,
 	showIcon: false,
 	dataTestId: undefined,
+	href: undefined,
 };

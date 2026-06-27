@@ -678,6 +678,39 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		});
 	};
 
+	const getNavItemHref = useCallback(
+		(item: SidebarItem): string | undefined => {
+			if (item.isExternal && item.url) {
+				return item.url;
+			}
+
+			if (item.key === 'quick-search') {
+				return undefined;
+			}
+
+			if (item.key === ROUTES.SETTINGS) {
+				return settingsRoute;
+			}
+
+			if (item.key === aiAssistantMenuItem.key) {
+				return aiAssistantActiveConversationId
+					? ROUTES.AI_ASSISTANT.replace(
+							':conversationId',
+							aiAssistantActiveConversationId,
+						)
+					: aiAssistantMenuItem.key;
+			}
+
+			const key = item.key as string;
+			const params = new URLSearchParams(search);
+			const availableParams = routeConfig[key];
+			const queryString = getQueryString(availableParams || [], params);
+
+			return buildNavUrl(key, queryString);
+		},
+		[aiAssistantActiveConversationId, search, settingsRoute],
+	);
+
 	useEffect(() => {
 		registerShortcut(GlobalShortcuts.NavigateToHome, () =>
 			onClickHandler(ROUTES.HOME, null),
@@ -801,37 +834,43 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		allowPin?: boolean,
 	): JSX.Element => (
 		<>
-			{items.map((item, index) => (
-				<NavItem
-					showIcon
-					key={item.key || index}
-					item={item}
-					isActive={activeMenuKey === item.key}
-					isDisabled={
-						isWorkspaceBlocked &&
-						item.key !== ROUTES.BILLING &&
-						item.key !== ROUTES.SETTINGS
-					}
-					onTogglePin={
-						allowPin
-							? (item): void => {
-									void logEvent(
-										`Sidebar V2: Menu item ${item.isPinned ? 'unpinned' : 'pinned'}`,
-										{
-											menuRoute: item.key,
-											menuLabel: item.label,
-										},
-									);
-									onTogglePin(item);
-								}
-							: undefined
-					}
-					onClick={(event): void => {
-						handleMenuItemClick(event, item);
-					}}
-					isPinned={isPinnedItem(item)}
-				/>
-			))}
+			{items.map((item, index) => {
+				const isDisabled =
+					isWorkspaceBlocked &&
+					item.key !== ROUTES.BILLING &&
+					item.key !== ROUTES.SETTINGS;
+
+				return (
+					<NavItem
+						showIcon
+						key={item.key || index}
+						item={item}
+						isActive={activeMenuKey === item.key}
+						isDisabled={isDisabled}
+						href={isDisabled ? undefined : getNavItemHref(item)}
+						onTogglePin={
+							allowPin
+								? (item): void => {
+										void logEvent(
+											`Sidebar V2: Menu item ${
+												item.isPinned ? 'unpinned' : 'pinned'
+											}`,
+											{
+												menuRoute: item.key,
+												menuLabel: item.label,
+											},
+										);
+										onTogglePin(item);
+									}
+								: undefined
+						}
+						onClick={(event): void => {
+							handleMenuItemClick(event, item);
+						}}
+						isPinned={isPinnedItem(item)}
+					/>
+				);
+			})}
 		</>
 	);
 
