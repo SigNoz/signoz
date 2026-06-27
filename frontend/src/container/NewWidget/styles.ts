@@ -15,6 +15,9 @@ export const ButtonContainer = styled.div`
 `;
 
 export const PanelContainer = styled.div`
+	flex: 1;
+	overflow: hidden;
 	display: flex;
-	overflow-y: auto;
+	flex-direction: column;
+	min-height: 0;
 `;
