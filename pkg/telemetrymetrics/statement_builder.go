@@ -412,9 +412,8 @@ func (b *MetricQueryStatementBuilder) buildTemporalAggDeltaFastPath(
 
 	sb := sqlbuilder.NewSelectBuilder()
 
-	sb.SelectMore(fmt.Sprintf(
-		"toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(%d)) AS ts",
-		stepSec,
+	sb.SelectMore(fmt.Sprintf("%s AS ts",
+		querybuilder.TimeIntervalExpr("toDateTime(intDiv(unix_milli, 1000))", fmt.Sprintf("toIntervalSecond(%d)", stepSec), query.ShiftBy),
 	))
 	for _, g := range query.GroupBy {
 		sb.SelectMore(fmt.Sprintf("`%s`", g.Name))
@@ -555,9 +554,8 @@ func (b *MetricQueryStatementBuilder) buildTemporalAggDelta(
 	sb := sqlbuilder.NewSelectBuilder()
 
 	sb.Select("fingerprint")
-	sb.SelectMore(fmt.Sprintf(
-		"toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(%d)) AS ts",
-		stepSec,
+	sb.SelectMore(fmt.Sprintf("%s AS ts",
+		querybuilder.TimeIntervalExpr("toDateTime(intDiv(unix_milli, 1000))", fmt.Sprintf("toIntervalSecond(%d)", stepSec), query.ShiftBy),
 	))
 	for _, g := range query.GroupBy {
 		sb.SelectMore(fmt.Sprintf("`%s`", g.Name))
@@ -601,9 +599,8 @@ func (b *MetricQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
 
 	baseSb := sqlbuilder.NewSelectBuilder()
 	baseSb.Select("fingerprint")
-	baseSb.SelectMore(fmt.Sprintf(
-		"toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(%d)) AS ts",
-		stepSec,
+	baseSb.SelectMore(fmt.Sprintf("%s AS ts",
+		querybuilder.TimeIntervalExpr("toDateTime(intDiv(unix_milli, 1000))", fmt.Sprintf("toIntervalSecond(%d)", stepSec), query.ShiftBy),
 	))
 	for _, g := range query.GroupBy {
 		baseSb.SelectMore(fmt.Sprintf("`%s`", g.Name))
@@ -666,9 +663,8 @@ func (b *MetricQueryStatementBuilder) buildTemporalAggForMultipleTemporalities(
 	stepSec := int64(query.StepInterval.Seconds())
 	sb := sqlbuilder.NewSelectBuilder()
 
-	sb.SelectMore(fmt.Sprintf(
-		"toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(%d)) AS ts",
-		stepSec,
+	sb.SelectMore(fmt.Sprintf("%s AS ts",
+		querybuilder.TimeIntervalExpr("toDateTime(intDiv(unix_milli, 1000))", fmt.Sprintf("toIntervalSecond(%d)", stepSec), query.ShiftBy),
 	))
 	for _, g := range query.GroupBy {
 		sb.SelectMore(fmt.Sprintf("`%s`", g.Name))
