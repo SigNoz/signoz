@@ -107,10 +107,12 @@ func (v *variableReplacementVisitor) Visit(tree antlr.ParseTree) any {
 		return v.VisitNotInClause(t)
 	case *grammar.ValueListContext:
 		return v.VisitValueList(t)
-	case *grammar.FullTextContext:
-		return v.VisitFullText(t)
+	case *grammar.FreeTextContext:
+		return v.VisitFreeText(t)
 	case *grammar.FunctionCallContext:
 		return v.VisitFunctionCall(t)
+	case *grammar.FullTextContext:
+		return v.VisitFullText(t)
 	case *grammar.FunctionParamListContext:
 		return v.VisitFunctionParamList(t)
 	case *grammar.FunctionParamContext:
@@ -205,6 +207,8 @@ func (v *variableReplacementVisitor) VisitPrimary(ctx *grammar.PrimaryContext) a
 		return v.Visit(ctx.FunctionCall())
 	} else if ctx.FullText() != nil {
 		return v.Visit(ctx.FullText())
+	} else if ctx.FreeText() != nil {
+		return v.Visit(ctx.FreeText())
 	}
 
 	// Handle standalone key/value
@@ -382,13 +386,18 @@ func (v *variableReplacementVisitor) VisitValueList(ctx *grammar.ValueListContex
 	return "(" + strings.Join(parts, "") + ")"
 }
 
-func (v *variableReplacementVisitor) VisitFullText(ctx *grammar.FullTextContext) any {
+func (v *variableReplacementVisitor) VisitFreeText(ctx *grammar.FreeTextContext) any {
 	if ctx.QUOTED_TEXT() != nil {
 		return ctx.QUOTED_TEXT().GetText()
 	} else if ctx.FREETEXT() != nil {
 		return ctx.FREETEXT().GetText()
 	}
 	return ""
+}
+
+func (v *variableReplacementVisitor) VisitFullText(ctx *grammar.FullTextContext) any {
+	params := v.Visit(ctx.FunctionParamList()).(string)
+	return "search(" + params + ")"
 }
 
 func (v *variableReplacementVisitor) VisitFunctionCall(ctx *grammar.FunctionCallContext) any {

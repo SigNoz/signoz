@@ -206,3 +206,4 @@ func (b *defaultConditionBuilder) ConditionFor(
 	}
 	return "", qbtypes.ErrUnsupportedOperator
 }
+

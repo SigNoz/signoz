@@ -550,7 +550,7 @@ func (b *auditQueryStatementBuilder) addFilterCondition(
 			ConditionBuilder:   b.cb,
 			FieldKeys:          keys,
 			SkipResourceFilter: true,
-			FullTextColumn:     b.fullTextColumn,
+			FreeTextColumn:     b.fullTextColumn,
 			JsonKeyToKey:       b.jsonKeyToKey,
 			Variables:          variables,
 			StartNs:            start,

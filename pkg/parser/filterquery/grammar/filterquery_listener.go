@@ -38,11 +38,14 @@ type FilterQueryListener interface {
 	// EnterValueList is called when entering the valueList production.
 	EnterValueList(c *ValueListContext)
 
-	// EnterFullText is called when entering the fullText production.
-	EnterFullText(c *FullTextContext)
+	// EnterFreeText is called when entering the freeText production.
+	EnterFreeText(c *FreeTextContext)
 
 	// EnterFunctionCall is called when entering the functionCall production.
 	EnterFunctionCall(c *FunctionCallContext)
+
+	// EnterFullText is called when entering the fullText production.
+	EnterFullText(c *FullTextContext)
 
 	// EnterFunctionParamList is called when entering the functionParamList production.
 	EnterFunctionParamList(c *FunctionParamListContext)
@@ -89,11 +92,14 @@ type FilterQueryListener interface {
 	// ExitValueList is called when exiting the valueList production.
 	ExitValueList(c *ValueListContext)
 
-	// ExitFullText is called when exiting the fullText production.
-	ExitFullText(c *FullTextContext)
+	// ExitFreeText is called when exiting the freeText production.
+	ExitFreeText(c *FreeTextContext)
 
 	// ExitFunctionCall is called when exiting the functionCall production.
 	ExitFunctionCall(c *FunctionCallContext)
+
+	// ExitFullText is called when exiting the fullText production.
+	ExitFullText(c *FullTextContext)
 
 	// ExitFunctionParamList is called when exiting the functionParamList production.
 	ExitFunctionParamList(c *FunctionParamListContext)

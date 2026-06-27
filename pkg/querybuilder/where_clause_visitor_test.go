@@ -755,7 +755,6 @@ func (b *conditionBuilder) ConditionFor(
 	_ any,
 	_ *sqlbuilder.SelectBuilder,
 ) (string, error) {
-
 	return fmt.Sprintf("%s_cond", key.Name), nil
 }
 
@@ -798,7 +797,7 @@ func visitComparisonOpts(t *testing.T) (rsbOpts, sbOpts FilterExprVisitorOpts) {
 		ConditionBuilder:   &resourceConditionBuilder{},
 		Variables:          allVariable,
 		SkipResourceFilter: false,
-		SkipFullTextFilter: true,
+		SkipFreeTextFilter: true,
 		SkipFunctionCalls:  true,
 		IgnoreNotFoundKeys: true,
 	}
@@ -808,10 +807,10 @@ func visitComparisonOpts(t *testing.T) (rsbOpts, sbOpts FilterExprVisitorOpts) {
 		ConditionBuilder:   &conditionBuilder{},
 		Variables:          allVariable,
 		SkipResourceFilter: true,
-		SkipFullTextFilter: false,
+		SkipFreeTextFilter: false,
 		SkipFunctionCalls:  false,
 		IgnoreNotFoundKeys: false,
-		FullTextColumn:     bodyCol,
+		FreeTextColumn:     bodyCol,
 	}
 	return
 }
@@ -1272,110 +1271,111 @@ func TestVisitComparison_Parens(t *testing.T) {
 	}
 }
 
-// TestVisitComparison_FullText covers full-text (bare string literal) expressions.
+// TestVisitComparison_FreeTextSearch covers Free Text Search — bare/quoted string literals
+// that route through freeTextColumn (body only). No search() involved.
 // rsbOpts has SkipFullTextFilter=true → TrueConditionLiteral.
-// sbOpts has SkipFullTextFilter=false, FullTextColumn=bodyCol → "body_cond".
-func TestVisitComparison_FullText(t *testing.T) {
+// sbOpts has SkipFullTextFilter=false, FreeTextColumn=bodyCol → "body_cond".
+func TestVisitComparison_FreeTextSearch(t *testing.T) {
 	rsbOpts, sbOpts := visitComparisonOpts(t)
 	tests := []visitComparisonCase{
 		{
-			name:    "standalone full-text term",
+			name:    "standalone free-text term",
 			expr:    "'hello'",
 			wantRSB: "",
 			wantSB:  "WHERE body_cond",
 		},
 		{
 			// RSB: FT→true, a→true; AND propagates true.
-			name:    "full-text AND attribute",
+			name:    "free-text AND attribute",
 			expr:    "'hello' AND a = 'a'",
 			wantRSB: "",
 			wantSB:  "WHERE (body_cond AND a_cond)",
 		},
 		{
 			// RSB: FT→true stripped; x_cond survives.
-			name:    "full-text AND resource",
+			name:    "free-text AND resource",
 			expr:    "'hello' AND x = 'x'",
 			wantRSB: "WHERE x_cond",
 			wantSB:  "WHERE body_cond",
 		},
 		{
 			// RSB: NOT(FT→SkipConditionLiteral)→SkipConditionLiteral. SB: structural NOT applied.
-			name:    "NOT full-text term",
+			name:    "NOT free-text term",
 			expr:    "NOT 'hello'",
 			wantRSB: "",
 			wantSB:  "WHERE NOT (body_cond)",
 		},
 		{
 			// RSB: FT→true short-circuits OR.
-			name:    "full-text OR resource",
+			name:    "free-text OR resource",
 			expr:    "'hello' OR x = 'x'",
 			wantRSB: "",
 			wantSB:  "WHERE (body_cond OR x_cond)",
 		},
 		{
-			name:    "full-text OR attribute",
+			name:    "free-text OR attribute",
 			expr:    "'hello' OR a = 'a'",
 			wantRSB: "",
 			wantSB:  "WHERE (body_cond OR a_cond)",
 		},
 		{
-			name:    "two full-text terms ANDed",
+			name:    "two free-text terms ANDed",
 			expr:    "'hello' AND 'world'",
 			wantRSB: "",
 			wantSB:  "WHERE (body_cond AND body_cond)",
 		},
 		{
-			name:    "two full-text terms ORed",
+			name:    "two free-text terms ORed",
 			expr:    "'hello' OR 'world'",
 			wantRSB: "",
 			wantSB:  "WHERE (body_cond OR body_cond)",
 		},
 		{
-			name:    "full-text in parentheses",
+			name:    "free-text in parentheses",
 			expr:    "('hello')",
 			wantRSB: "",
 			wantSB:  "WHERE (body_cond)",
 		},
 		{
-			name:    "two full-text AND attribute",
+			name:    "two free-text AND attribute",
 			expr:    "'hello' AND 'world' AND a = 'a'",
 			wantRSB: "",
 			wantSB:  "WHERE (body_cond AND body_cond AND a_cond)",
 		},
 		{
-			name:    "full-text OR attr OR resource all types",
+			name:    "free-text OR attr OR resource all types",
 			expr:    "'hello' OR a = 'a' OR x = 'x'",
 			wantRSB: "",
 			wantSB:  "WHERE (body_cond OR a_cond OR x_cond)",
 		},
 		{
-			name:    "NOT of paren full-text AND attr",
+			name:    "NOT of paren free-text AND attr",
 			expr:    "NOT ('hello' AND a = 'a')",
 			wantRSB: "",
 			wantSB:  "WHERE NOT (((body_cond AND a_cond)))",
 		},
 		{
 			// RSB: NOT(FT→SkipConditionLiteral)→SkipConditionLiteral stripped from AND; x_cond survives.
-			name:    "NOT full-text AND resource",
+			name:    "NOT free-text AND resource",
 			expr:    "NOT 'hello' AND x = 'x'",
 			wantRSB: "WHERE x_cond",
 			wantSB:  "WHERE NOT (body_cond)",
 		},
 		{
-			name:    "NOT full-text OR resource",
+			name:    "NOT free-text OR resource",
 			expr:    "NOT 'hello' OR x = 'x'",
 			wantRSB: "",
 			wantSB:  "WHERE (NOT (body_cond) OR x_cond)",
 		},
 		{
 			// RSB: FT→true stripped; x_cond survives.
-			name:    "full-text AND BETWEEN",
+			name:    "free-text AND BETWEEN",
 			expr:    "'hello' AND x BETWEEN 1 AND 3",
 			wantRSB: "WHERE x_cond",
 			wantSB:  "WHERE body_cond",
 		},
 		{
-			name:    "full-text AND EXISTS",
+			name:    "free-text AND EXISTS",
 			expr:    "'hello' AND x EXISTS",
 			wantRSB: "WHERE x_cond",
 			wantSB:  "WHERE body_cond",
@@ -1383,21 +1383,21 @@ func TestVisitComparison_FullText(t *testing.T) {
 		{
 			// RSB: FT→true and allVariable→true; AND propagates true.
 			// SB: allVariable→TrueConditionLiteral stripped; body_cond survives.
-			name:    "full-text AND allVariable",
+			name:    "free-text AND allVariable",
 			expr:    "'hello' AND x IN $service",
 			wantRSB: "",
 			wantSB:  "WHERE body_cond",
 		},
 		{
 			// SB: body_cond added first; then allVariable→TrueConditionLiteral short-circuits OR.
-			name:    "full-text OR allVariable",
+			name:    "free-text OR allVariable",
 			expr:    "'hello' OR x IN $service",
 			wantRSB: "",
 			wantSB:  "",
 		},
 		{
 			// SB: body_cond
-			name:    "full-text with sentinel value",
+			name:    "free-text with sentinel value",
 			expr:    SkipConditionLiteral,
 			wantRSB: "",
 			wantSB:  "WHERE body_cond",
@@ -1680,6 +1680,68 @@ func TestVisitComparison_UnknownKeys(t *testing.T) {
 				}
 				assert.Equal(t, tt.wantSB, expr, "conditionBuilder SQL mismatch:\n  want: %s\n   got: %s", tt.wantSB, expr)
 			}
+		})
+	}
+}
+
+// TestVisitComparison_FullTextSearch covers Full Text Search — the explicit search()
+// function that fans out across all FTSSet columns. FTSSet must be set for
+// search() to be enabled; invalid param counts must error.
+func TestVisitComparison_FullTextSearch(t *testing.T) {
+	ftsOpts := FilterExprVisitorOpts{
+		Context:            t.Context(),
+		FieldKeys:          visitTestKeys,
+		ConditionBuilder:   &conditionBuilder{},
+		SkipResourceFilter: false,
+		SkipFreeTextFilter: false,
+		SkipFunctionCalls:  false,
+		IgnoreNotFoundKeys: false,
+		FTSCondition: func(_ context.Context, _ any, _ *sqlbuilder.SelectBuilder) (string, error) {
+			return "fts_cond", nil
+		},
+	}
+
+	tests := []struct {
+		name    string
+		expr    string
+		opts    FilterExprVisitorOpts
+		wantErr bool
+	}{
+		{
+			name:    "search with quoted string - valid",
+			expr:    "search('error')",
+			opts:    ftsOpts,
+			wantErr: false,
+		},
+		{
+			name:    "search with unquoted word - invalid, quotes required",
+			expr:    "search(error)",
+			opts:    ftsOpts,
+			wantErr: true,
+		},
+		{
+			name:    "search(\"err1\", \"err2\") - too many params",
+			expr:    `search("err1", "err2")`,
+			opts:    ftsOpts,
+			wantErr: true,
+		},
+		{
+			name:    "search(attributes, \"err\") - too many params",
+			expr:    `search(attributes, "err")`,
+			opts:    ftsOpts,
+			wantErr: true,
+		},
+		{
+			name:    "search() without params - error",
+			expr:    "search()",
+			opts:    ftsOpts,
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := PrepareWhereClause(tt.expr, tt.opts)
+			assert.Equal(t, tt.wantErr, err != nil, "error expectation mismatch: err=%v", err)
 		})
 	}
 }

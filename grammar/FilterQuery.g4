@@ -32,12 +32,13 @@ unaryExpression
     ;
 
 // Primary constructs: grouped expressions, a comparison (key op value),
-// a function call, or a full-text string
+// a function call, a fullText (search() call), or a free-text search string
 primary
     : LPAREN orExpression RPAREN
     | comparison
     | functionCall
     | fullText
+    | freeText
     | key
     | value
     ;
@@ -93,9 +94,9 @@ valueList
     : value ( COMMA value )*
     ;
 
-// Full-text search: a standalone quoted string is allowed as a "primary"
+// Free-text search: a standalone quoted string or bare word is allowed as a "primary"
 // e.g. `"Waiting for response" http.status_code=200`
-fullText
+freeText
     : QUOTED_TEXT
     | FREETEXT
     ;
@@ -108,6 +109,13 @@ fullText
  */
 functionCall
     : (HASTOKEN | HAS | HASANY | HASALL) LPAREN functionParamList RPAREN
+    ;
+
+/*
+ * Full-text search call: search() function
+ */
+fullText
+    : SEARCH LPAREN functionParamList RPAREN
     ;
 
 // Function parameters can be keys, single scalar values, or arrays
@@ -184,6 +192,7 @@ HASTOKEN    : [Hh][Aa][Ss][Tt][Oo][Kk][Ee][Nn];
 HAS         : [Hh][Aa][Ss] ;
 HASANY      : [Hh][Aa][Ss][Aa][Nn][Yy] ;
 HASALL      : [Hh][Aa][Ss][Aa][Ll][Ll] ;
+SEARCH      : [Ss][Ee][Aa][Rr][Cc][Hh] ;
 
 // Potential boolean constants
 BOOL

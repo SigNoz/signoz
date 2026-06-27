@@ -501,7 +501,7 @@ func (s *store) buildFilterClause(ctx context.Context, filter qbtypes.Filter, st
 		FieldMapper:      s.fieldMapper,
 		ConditionBuilder: s.conditionBuilder,
 		FieldKeys:        fieldKeys,
-		FullTextColumn:   &telemetrytypes.TelemetryFieldKey{Name: "labels", FieldContext: telemetrytypes.FieldContextAttribute},
+		FreeTextColumn:   &telemetrytypes.TelemetryFieldKey{Name: "labels", FieldContext: telemetrytypes.FieldContextAttribute},
 	}
 
 	opts.StartNs = querybuilder.ToNanoSecs(uint64(startMillis))

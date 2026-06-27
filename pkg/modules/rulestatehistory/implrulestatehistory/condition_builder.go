@@ -104,3 +104,4 @@ func (c *conditionBuilder) ConditionFor(
 
 	return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported operator: %v", operator)
 }
+

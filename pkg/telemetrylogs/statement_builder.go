@@ -29,8 +29,9 @@ type logQueryStatementBuilder struct {
 	fl                             flagger.Flagger
 	skipResourceFingerprintEnabled bool
 
-	fullTextColumn *telemetrytypes.TelemetryFieldKey
-	jsonKeyToKey   qbtypes.JsonKeyToFieldFunc
+	freeTextColumn   *telemetrytypes.TelemetryFieldKey
+	jsonKeyToKey     qbtypes.JsonKeyToFieldFunc
+	ftsConditionFunc qbtypes.FTSConditionFunc
 }
 
 var _ qbtypes.StatementBuilder[qbtypes.LogAggregation] = (*logQueryStatementBuilder)(nil)
@@ -41,8 +42,9 @@ func NewLogQueryStatementBuilder(
 	fieldMapper qbtypes.FieldMapper,
 	conditionBuilder qbtypes.ConditionBuilder,
 	aggExprRewriter qbtypes.AggExprRewriter,
-	fullTextColumn *telemetrytypes.TelemetryFieldKey,
+	freeTextColumn *telemetrytypes.TelemetryFieldKey,
 	jsonKeyToKey qbtypes.JsonKeyToFieldFunc,
+	ftsConditionFunc qbtypes.FTSConditionFunc,
 	fl flagger.Flagger,
 	telemetryStore telemetrystore.TelemetryStore,
 	skipResourceFingerprintEnable bool,
@@ -57,7 +59,7 @@ func NewLogQueryStatementBuilder(
 		telemetrytypes.SignalLogs,
 		telemetrytypes.SourceUnspecified,
 		metadataStore,
-		fullTextColumn,
+		freeTextColumn,
 		jsonKeyToKey,
 		fl,
 		telemetryStore,
@@ -73,8 +75,9 @@ func NewLogQueryStatementBuilder(
 		aggExprRewriter:                aggExprRewriter,
 		fl:                             fl,
 		skipResourceFingerprintEnabled: skipResourceFingerprintEnable,
-		fullTextColumn:                 fullTextColumn,
+		freeTextColumn:                 freeTextColumn,
 		jsonKeyToKey:                   jsonKeyToKey,
+		ftsConditionFunc:               ftsConditionFunc,
 	}
 }
 
@@ -87,7 +90,6 @@ func (b *logQueryStatementBuilder) Build(
 	query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation],
 	variables map[string]qbtypes.VariableItem,
 ) (*qbtypes.Statement, error) {
-
 	start = querybuilder.ToNanoSecs(start)
 	end = querybuilder.ToNanoSecs(end)
 	// TODO(Tushar): thread orgID here to evaluate correctly
@@ -325,7 +327,7 @@ func (b *logQueryStatementBuilder) buildListQuery(
 
 	sb.From(fmt.Sprintf("%s.%s", DBName, LogsV2TableName))
 	// Add filter conditions
-	preparedWhereClause, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables, skipResourceFilter)
+	preparedWhereClause, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables, skipResourceFilter, true)
 
 	if err != nil {
 		return nil, err
@@ -431,7 +433,7 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 	// Add FROM clause
 	sb.From(fmt.Sprintf("%s.%s", DBName, LogsV2TableName))
 
-	preparedWhereClause, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables, skipResourceFilter)
+	preparedWhereClause, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables, skipResourceFilter, true)
 
 	if err != nil {
 		return nil, err
@@ -590,7 +592,7 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 	sb.From(fmt.Sprintf("%s.%s", DBName, LogsV2TableName))
 
 	// Add filter conditions
-	preparedWhereClause, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables, skipResourceFilter)
+	preparedWhereClause, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables, skipResourceFilter, false)
 
 	if err != nil {
 		return nil, err
@@ -655,6 +657,7 @@ func (b *logQueryStatementBuilder) addFilterCondition(
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 	variables map[string]qbtypes.VariableItem,
 	skipResourceFilter bool,
+	enableFTS bool,
 ) (querybuilder.PreparedWhereClause, error) {
 
 	var preparedWhereClause querybuilder.PreparedWhereClause
@@ -663,22 +666,26 @@ func (b *logQueryStatementBuilder) addFilterCondition(
 	bodyJSONEnabled := b.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{}))
 
 	if query.Filter != nil && query.Filter.Expression != "" {
-		// add filter expression
-		preparedWhereClause, err = querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
+		opts := querybuilder.FilterExprVisitorOpts{
 			Context:            ctx,
 			Logger:             b.logger,
 			FieldMapper:        b.fm,
 			ConditionBuilder:   b.cb,
 			FieldKeys:          keys,
 			BodyJSONEnabled:    bodyJSONEnabled,
+			FreeTextColumn:     b.freeTextColumn,
 			SkipResourceFilter: skipResourceFilter,
-			FullTextColumn:     b.fullTextColumn,
 			JsonKeyToKey:       b.jsonKeyToKey,
 			Variables:          variables,
 			StartNs:            start,
 			EndNs:              end,
-		})
+		}
+		if enableFTS {
+			opts.FTSCondition = b.ftsConditionFunc
+		}
 
+		// add filter expression
+		preparedWhereClause, err = querybuilder.PrepareWhereClause(query.Filter.Expression, opts)
 		if err != nil {
 			return preparedWhereClause, err
 		}

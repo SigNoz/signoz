@@ -88,6 +88,7 @@ func prepareQuerierForLogs(t *testing.T, telemetryStore telemetrystore.Telemetry
 		logAggExprRewriter,
 		telemetrylogs.DefaultFullTextColumn,
 		telemetrylogs.GetBodyJSONKey,
+		logConditionBuilder.ConditionForSearch,
 		fl,
 		nil,
 		false,

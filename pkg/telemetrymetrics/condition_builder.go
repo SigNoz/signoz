@@ -157,3 +157,4 @@ func (c *conditionBuilder) ConditionFor(
 
 	return condition, nil
 }
+

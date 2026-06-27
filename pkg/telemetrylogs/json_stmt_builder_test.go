@@ -1204,6 +1204,7 @@ func buildJSONTestStatementBuilder(t *testing.T, addIndexes bool) (*logQueryStat
 		aggExprRewriter,
 		DefaultFullTextColumn,
 		GetBodyJSONKey,
+		cb.ConditionForSearch,
 		fl,
 		nil,
 		false,

@@ -221,7 +221,7 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 				FieldMapper:      v.fieldMapper,
 				ConditionBuilder: v.conditionBuilder,
 				BodyJSONEnabled:  bodyJSONEnabled,
-				FullTextColumn:   v.fullTextColumn,
+				FreeTextColumn:   v.fullTextColumn,
 				JsonKeyToKey:     v.jsonKeyToKey,
 				StartNs:          v.startNs,
 				EndNs:            v.endNs,

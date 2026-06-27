@@ -135,3 +135,4 @@ func (c *conditionBuilder) ConditionFor(
 
 	return fmt.Sprintf(expr, columns[0].Name, sb.Var(key.Name), cond), nil
 }
+

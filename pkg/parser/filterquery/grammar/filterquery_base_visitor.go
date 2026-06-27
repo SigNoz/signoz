@@ -48,11 +48,15 @@ func (v *BaseFilterQueryVisitor) VisitValueList(ctx *ValueListContext) interface
 	return v.VisitChildren(ctx)
 }
 
-func (v *BaseFilterQueryVisitor) VisitFullText(ctx *FullTextContext) interface{} {
+func (v *BaseFilterQueryVisitor) VisitFreeText(ctx *FreeTextContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
 func (v *BaseFilterQueryVisitor) VisitFunctionCall(ctx *FunctionCallContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseFilterQueryVisitor) VisitFullText(ctx *FullTextContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 

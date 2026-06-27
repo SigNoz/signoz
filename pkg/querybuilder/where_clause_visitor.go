@@ -34,11 +34,12 @@ type filterExpressionVisitor struct {
 	errors             []string
 	mainErrorURL       string
 	builder            *sqlbuilder.SelectBuilder
-	fullTextColumn     *telemetrytypes.TelemetryFieldKey
+	freeTextColumn     *telemetrytypes.TelemetryFieldKey
 	jsonKeyToKey       qbtypes.JsonKeyToFieldFunc
 	bodyJSONEnabled    bool
 	skipResourceFilter bool
-	skipFullTextFilter bool
+	skipFreeTextFilter bool
+	skipFullTextSearch bool
 	skipFunctionCalls  bool
 	ignoreNotFoundKeys bool
 	variables          map[string]qbtypes.VariableItem
@@ -46,6 +47,7 @@ type filterExpressionVisitor struct {
 	keysWithWarnings map[string]bool
 	startNs          uint64
 	endNs            uint64
+	ftsCondition     qbtypes.FTSConditionFunc
 }
 
 type FilterExprVisitorOpts struct {
@@ -55,11 +57,13 @@ type FilterExprVisitorOpts struct {
 	ConditionBuilder   qbtypes.ConditionBuilder
 	FieldKeys          map[string][]*telemetrytypes.TelemetryFieldKey
 	Builder            *sqlbuilder.SelectBuilder
-	FullTextColumn     *telemetrytypes.TelemetryFieldKey
+	FreeTextColumn     *telemetrytypes.TelemetryFieldKey
 	JsonKeyToKey       qbtypes.JsonKeyToFieldFunc
+	FTSCondition       qbtypes.FTSConditionFunc
 	BodyJSONEnabled    bool
 	SkipResourceFilter bool
-	SkipFullTextFilter bool
+	SkipFreeTextFilter bool
+	SkipFullTextSearch bool
 	SkipFunctionCalls  bool
 	IgnoreNotFoundKeys bool
 	Variables          map[string]qbtypes.VariableItem
@@ -76,11 +80,13 @@ func newFilterExpressionVisitor(opts FilterExprVisitorOpts) *filterExpressionVis
 		conditionBuilder:   opts.ConditionBuilder,
 		fieldKeys:          opts.FieldKeys,
 		builder:            opts.Builder,
-		fullTextColumn:     opts.FullTextColumn,
+		freeTextColumn:     opts.FreeTextColumn,
 		jsonKeyToKey:       opts.JsonKeyToKey,
+		ftsCondition:       opts.FTSCondition,
 		bodyJSONEnabled:    opts.BodyJSONEnabled,
 		skipResourceFilter: opts.SkipResourceFilter,
-		skipFullTextFilter: opts.SkipFullTextFilter,
+		skipFreeTextFilter: opts.SkipFreeTextFilter,
+		skipFullTextSearch: opts.SkipFullTextSearch,
 		skipFunctionCalls:  opts.SkipFunctionCalls,
 		ignoreNotFoundKeys: opts.IgnoreNotFoundKeys,
 		variables:          opts.Variables,
@@ -211,10 +217,12 @@ func (v *filterExpressionVisitor) Visit(tree antlr.ParseTree) any {
 		return v.VisitNotInClause(t)
 	case *grammar.ValueListContext:
 		return v.VisitValueList(t)
-	case *grammar.FullTextContext:
-		return v.VisitFullText(t)
+	case *grammar.FreeTextContext:
+		return v.VisitFreeText(t)
 	case *grammar.FunctionCallContext:
 		return v.VisitFunctionCall(t)
+	case *grammar.FullTextContext:
+		return v.VisitFullText(t)
 	case *grammar.FunctionParamListContext:
 		return v.VisitFunctionParamList(t)
 	case *grammar.FunctionParamContext:
@@ -329,18 +337,21 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 		return v.Visit(ctx.FunctionCall())
 	} else if ctx.FullText() != nil {
 		return v.Visit(ctx.FullText())
+	} else if ctx.FreeText() != nil {
+		return v.Visit(ctx.FreeText())
 	}
 
 	// Handle standalone key/value as a full text search term
 	if ctx.GetChildCount() == 1 {
-		if v.skipFullTextFilter {
+		if v.skipFreeTextFilter {
 			return SkipConditionLiteral
 		}
 
-		if v.fullTextColumn == nil {
-			v.errors = append(v.errors, "full text search is not supported")
+		if v.freeTextColumn == nil {
+			v.errors = append(v.errors, "free text search is not supported")
 			return ErrorConditionLiteral
 		}
+
 		child := ctx.GetChild(0)
 		var searchText string
 		if keyCtx, ok := child.(*grammar.KeyContext); ok {
@@ -360,13 +371,14 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 				return ErrorConditionLiteral
 			}
 		}
-		cond, err := v.conditionBuilder.ConditionFor(context.Background(), v.startNs, v.endNs, v.fullTextColumn, qbtypes.FilterOperatorRegexp, FormatFullTextSearch(searchText), v.builder)
+
+		cond, err := v.conditionBuilder.ConditionFor(context.Background(), v.startNs, v.endNs, v.freeTextColumn, qbtypes.FilterOperatorRegexp, FormatFullTextSearch(searchText), v.builder)
 		if err != nil {
 			v.errors = append(v.errors, fmt.Sprintf("failed to build full text search condition: %s", err.Error()))
 			return ErrorConditionLiteral
 		}
-		if v.bodyJSONEnabled && v.fullTextColumn.Name == "body" {
-			v.warnings = append(v.warnings, BodyFullTextSearchDefaultWarning)
+		if v.bodyJSONEnabled && v.freeTextColumn.Name == "body" {
+			v.warnings = append(v.warnings, BodyFreeTextSearchWarning)
 		}
 
 		return cond
@@ -697,9 +709,9 @@ func (v *filterExpressionVisitor) VisitValueList(ctx *grammar.ValueListContext) 
 	return parts
 }
 
-// VisitFullText handles standalone quoted strings for full-text search.
-func (v *filterExpressionVisitor) VisitFullText(ctx *grammar.FullTextContext) any {
-	if v.skipFullTextFilter {
+// VisitFreeText handles standalone quoted strings for full-text search.
+func (v *filterExpressionVisitor) VisitFreeText(ctx *grammar.FreeTextContext) any {
+	if v.skipFreeTextFilter {
 		// A skipped FT term must be treated as TrueConditionLiteral, not "".
 		// Returning "" would silently drop this branch from an OR, incorrectly
 		// excluding rows that could match the FT condition on the real table.
@@ -714,24 +726,71 @@ func (v *filterExpressionVisitor) VisitFullText(ctx *grammar.FullTextContext) an
 		text = ctx.FREETEXT().GetText()
 	}
 
-	if v.fullTextColumn == nil {
-		v.errors = append(v.errors, "full text search is not supported")
+	if v.freeTextColumn == nil {
+		v.errors = append(v.errors, "free text search is not supported")
 		return ErrorConditionLiteral
 	}
-	cond, err := v.conditionBuilder.ConditionFor(v.context, v.startNs, v.endNs, v.fullTextColumn, qbtypes.FilterOperatorRegexp, FormatFullTextSearch(text), v.builder)
+	cond, err := v.conditionBuilder.ConditionFor(v.context, v.startNs, v.endNs, v.freeTextColumn, qbtypes.FilterOperatorRegexp, FormatFullTextSearch(text), v.builder)
 	if err != nil {
 		v.errors = append(v.errors, fmt.Sprintf("failed to build full text search condition: %s", err.Error()))
 		return ErrorConditionLiteral
 	}
 
-	if v.bodyJSONEnabled && v.fullTextColumn.Name == "body" {
-		v.warnings = append(v.warnings, BodyFullTextSearchDefaultWarning)
+	if v.bodyJSONEnabled && v.freeTextColumn.Name == "body" {
+		v.warnings = append(v.warnings, BodyFreeTextSearchWarning)
 	}
 
 	return cond
 }
 
-// VisitFunctionCall handles function calls like has(), hasAny(), etc.
+// VisitFullText handles the search() function call.
+func (v *filterExpressionVisitor) VisitFullText(ctx *grammar.FullTextContext) any {
+	if v.skipFunctionCalls || v.skipFullTextSearch {
+		return SkipConditionLiteral
+	}
+	// ftsCondition nil means search() is not enabled for this signal.
+	// Only log statement builders set these; traces/metrics leave them nil.
+	if v.ftsCondition == nil {
+		v.errors = append(v.errors, "search() is only supported for log queries")
+		return ErrorConditionLiteral
+	}
+
+	paramCtxs := ctx.FunctionParamList().AllFunctionParam()
+	if len(paramCtxs) < 1 {
+		v.errors = append(v.errors, "search() requires exactly one quoted string parameter, e.g. search('error')")
+		return ErrorConditionLiteral
+	}
+	if len(paramCtxs) > 1 {
+		v.errors = append(v.errors, fmt.Sprintf("search() accepts exactly one parameter but got %d", len(paramCtxs)))
+		return ErrorConditionLiteral
+	}
+	paramCtx := paramCtxs[0]
+	var searchText string
+	if paramCtx.Value() != nil {
+		raw := v.Visit(paramCtx.Value())
+		searchText = fmt.Sprintf("%v", raw)
+	} else {
+		v.errors = append(v.errors, "search() parameter must be a quoted string, e.g. search('error')")
+		return ErrorConditionLiteral
+	}
+
+	if v.endNs > 0 && v.startNs > 0 && (v.endNs-v.startNs) > FTSMaxWindowNs {
+		v.errors = append(v.errors, "search() is restricted to a maximum of 6-hour time window")
+		return ErrorConditionLiteral
+	}
+
+	formattedText := FormatFullTextSearch(searchText)
+	cond, err := v.ftsCondition(v.context, formattedText, v.builder)
+	if err != nil {
+		v.errors = append(v.errors, fmt.Sprintf("search() could not build condition: %s", err.Error()))
+		return ErrorConditionLiteral
+	}
+
+	v.warnings = append(v.warnings, FullTextSearchDefaultWarning)
+	return cond
+}
+
+// VisitFunctionCall handles function calls like has(), hasAny(), hasAll(), hasToken().
 func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallContext) any {
 	if v.skipFunctionCalls {
 		return SkipConditionLiteral

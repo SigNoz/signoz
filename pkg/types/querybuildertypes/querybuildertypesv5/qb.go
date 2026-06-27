@@ -19,6 +19,11 @@ var (
 
 type JsonKeyToFieldFunc func(context.Context, *telemetrytypes.TelemetryFieldKey, FilterOperator, any) (string, any)
 
+// FTSConditionFunc builds the search() SQL condition for all FTS columns.
+// Returns ("", nil) when no columns are searchable for the
+// context (e.g. body JSON when useJSONBody is off). Pass nil to disable search().
+type FTSConditionFunc func(ctx context.Context, value any, sb *sqlbuilder.SelectBuilder) (string, error)
+
 // FieldMapper maps the telemetry field key to the table field name.
 type FieldMapper interface {
 	// FieldFor returns the field name for the given key.

@@ -291,6 +291,7 @@ func (c *conditionBuilder) ConditionFor(
 	return condition, nil
 }
 
+
 func (c *conditionBuilder) isSpanScopeField(name string) bool {
 	keyName := strings.ToLower(name)
 	return keyName == SpanSearchScopeRoot || keyName == SpanSearchScopeEntryPoint

@@ -3,6 +3,7 @@ package telemetrylogs
 import (
 	"context"
 	"regexp"
+	"strings"
 	"testing"
 	"time"
 
@@ -228,6 +229,7 @@ func TestStatementBuilderTimeSeries(t *testing.T) {
 		aggExprRewriter,
 		DefaultFullTextColumn,
 		GetBodyJSONKey,
+		cb.ConditionForSearch,
 		fl,
 		nil,
 		false,
@@ -372,6 +374,7 @@ func TestStatementBuilderListQuery(t *testing.T) {
 		aggExprRewriter,
 		DefaultFullTextColumn,
 		GetBodyJSONKey,
+		cb.ConditionForSearch,
 		fl,
 		nil,
 		false,
@@ -409,28 +412,12 @@ func TestStatementBuilderListQueryResourceTests(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			name:        "List with full text search",
-			requestType: qbtypes.RequestTypeRaw,
-			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
-				Signal: telemetrytypes.SignalLogs,
-				Filter: &qbtypes.Filter{
-					Expression: "hello",
-				},
-				Limit: 10,
-			},
-			expected: qbtypes.Statement{
-				Query: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE match(LOWER(body), LOWER(?)) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
-				Args:  []any{"hello", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
-			},
-			expectedErr: nil,
-		},
-		{
 			name:        "list query with mat col order by",
 			requestType: qbtypes.RequestTypeRaw,
 			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
 				Signal: telemetrytypes.SignalLogs,
 				Filter: &qbtypes.Filter{
-					Expression: "service.name = 'cartservice' hello",
+					Expression: "service.name = 'cartservice'",
 				},
 				Limit: 10,
 				Order: []qbtypes.OrderBy{
@@ -447,8 +434,8 @@ func TestStatementBuilderListQueryResourceTests(t *testing.T) {
 				},
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ? GROUP BY fingerprint) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND match(LOWER(body), LOWER(?)) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? ORDER BY `attribute_string_materialized$$key$$name` AS `materialized.key.name` desc LIMIT ?",
-				Args:  []any{"cartservice", "%service.name%", "%service.name\":\"cartservice%", uint64(1747945619), uint64(1747983448), "hello", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ? GROUP BY fingerprint) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? ORDER BY `attribute_string_materialized$$key$$name` AS `materialized.key.name` desc LIMIT ?",
+				Args:  []any{"cartservice", "%service.name%", "%service.name\":\"cartservice%", uint64(1747945619), uint64(1747983448), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 			expectedErr: nil,
 		},
@@ -521,6 +508,7 @@ func TestStatementBuilderListQueryResourceTests(t *testing.T) {
 		aggExprRewriter,
 		DefaultFullTextColumn,
 		GetBodyJSONKey,
+		cb.ConditionForSearch,
 		fl,
 		nil,
 		false,
@@ -600,6 +588,7 @@ func TestStatementBuilderTimeSeriesBodyGroupBy(t *testing.T) {
 		aggExprRewriter,
 		DefaultFullTextColumn,
 		GetBodyJSONKey,
+		cb.ConditionForSearch,
 		fl,
 		nil,
 		false,
@@ -698,6 +687,7 @@ func TestStatementBuilderListQueryServiceCollision(t *testing.T) {
 		aggExprRewriter,
 		DefaultFullTextColumn,
 		GetBodyJSONKey,
+		cb.ConditionForSearch,
 		fl,
 		nil,
 		false,
@@ -925,6 +915,7 @@ func TestAdjustKey(t *testing.T) {
 		aggExprRewriter,
 		DefaultFullTextColumn,
 		GetBodyJSONKey,
+		cb.ConditionForSearch,
 		fl,
 		nil,
 		false,
@@ -1064,6 +1055,14 @@ func TestStmtBuilderBodyField(t *testing.T) {
 				f := field
 				mockMetadataStore.KeysMap[field.Name] = append(mockMetadataStore.KeysMap[field.Name], &f)
 			}
+			mockMetadataStore.KeysMap["service.name"] = []*telemetrytypes.TelemetryFieldKey{
+				{
+					Name:          "service.name",
+					Signal:        telemetrytypes.SignalLogs,
+					FieldContext:  telemetrytypes.FieldContextResource,
+					FieldDataType: telemetrytypes.FieldDataTypeString,
+				},
+			}
 			aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil, fl)
 			statementBuilder := NewLogQueryStatementBuilder(
 				instrumentationtest.New().ToProviderSettings(),
@@ -1073,6 +1072,7 @@ func TestStmtBuilderBodyField(t *testing.T) {
 				aggExprRewriter,
 				DefaultFullTextColumn,
 				GetBodyJSONKey,
+				cb.ConditionForSearch,
 				fl,
 				nil,
 				false,
@@ -1097,17 +1097,23 @@ func TestStmtBuilderBodyField(t *testing.T) {
 	}
 }
 
-func TestStmtBuilderBodyFullTextSearch(t *testing.T) {
+func TestStmtBuilderTextSearch(t *testing.T) {
 	cases := []struct {
 		name              string
 		requestType       qbtypes.RequestType
 		query             qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]
 		enableUseJSONBody bool
 		expected          qbtypes.Statement
-		expectedErr       error
+		expectedErr       string
+		// optional per-case time window (ms); zero → use default 1747947419000/1747983448000
+		startMs uint64
+		endMs   uint64
 	}{
+		// ── Free Text Search ──────────────────────────────────────────────────────────
+		// Bare/quoted tokens route through fullTextColumn (body / body_v2.message only).
+		// SQL: match(LOWER(<body_col>), LOWER(?))
 		{
-			name:        "fts",
+			name:        "free_text_search",
 			requestType: qbtypes.RequestTypeRaw,
 			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
 				Signal: telemetrytypes.SignalLogs,
@@ -1115,15 +1121,16 @@ func TestStmtBuilderBodyFullTextSearch(t *testing.T) {
 				Limit:  10,
 			},
 			enableUseJSONBody: true,
+			startMs:           1705309200000,
+			endMs:             1705316400000,
 			expected: qbtypes.Statement{
 				Query:    "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body_v2 as body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE match(LOWER(body_v2.message), LOWER(?)) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
-				Args:     []any{"error", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
-				Warnings: []string{querybuilder.BodyFullTextSearchDefaultWarning},
+				Args:     []any{"error", "1705309200000000000", uint64(1705307400), "1705316400000000000", uint64(1705316400), 10},
+				Warnings: []string{querybuilder.BodyFreeTextSearchWarning},
 			},
-			expectedErr: nil,
 		},
 		{
-			name:        "fts_2",
+			name:        "free_text_search_2",
 			requestType: qbtypes.RequestTypeRaw,
 			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
 				Signal: telemetrytypes.SignalLogs,
@@ -1131,15 +1138,16 @@ func TestStmtBuilderBodyFullTextSearch(t *testing.T) {
 				Limit:  10,
 			},
 			enableUseJSONBody: true,
+			startMs:           1705309200000,
+			endMs:             1705316400000,
 			expected: qbtypes.Statement{
 				Query:    "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body_v2 as body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE match(LOWER(body_v2.message), LOWER(?)) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
-				Args:     []any{"error", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
-				Warnings: []string{querybuilder.BodyFullTextSearchDefaultWarning},
+				Args:     []any{"error", "1705309200000000000", uint64(1705307400), "1705316400000000000", uint64(1705316400), 10},
+				Warnings: []string{querybuilder.BodyFreeTextSearchWarning},
 			},
-			expectedErr: nil,
 		},
 		{
-			name:        "fts_disabled",
+			name:        "free_text_search_json_disabled",
 			requestType: qbtypes.RequestTypeRaw,
 			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
 				Signal: telemetrytypes.SignalLogs,
@@ -1147,11 +1155,80 @@ func TestStmtBuilderBodyFullTextSearch(t *testing.T) {
 				Limit:  10,
 			},
 			enableUseJSONBody: false,
+			startMs:           1705309200000,
+			endMs:             1705316400000,
 			expected: qbtypes.Statement{
-				Query: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE match(LOWER(body), LOWER(?)) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
-				Args:  []any{"error", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Query:    "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE match(LOWER(body), LOWER(?)) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:     []any{"error", "1705309200000000000", uint64(1705307400), "1705316400000000000", uint64(1705316400), 10},
+				Warnings: nil,
 			},
-			expectedErr: nil,
+		},
+		// ── Full Text Search ──────────────────────────────────────────────────────────
+		// search() fans out via ftsSupportedContexts (log, body, attribute, resource).
+		// Each context returns one OR-combined condition from ConditionForContext.
+		// Uses a 2-hour window to stay under the 6-hour limit.
+		{
+			name:        "search_fans_out_to_all_columns",
+			requestType: qbtypes.RequestTypeRaw,
+			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+				Signal: telemetrytypes.SignalLogs,
+				Filter: &qbtypes.Filter{Expression: "search('error')"},
+				Limit:  10,
+			},
+			enableUseJSONBody: true,
+			startMs:           1705309200000,
+			endMs:             1705316400000,
+			expected: qbtypes.Statement{
+				Query:    "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body_v2 as body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE (match(LOWER(severity_text), LOWER(?)) OR match(LOWER(trace_id), LOWER(?)) OR match(LOWER(span_id), LOWER(?)) OR match(LOWER(toString(body_v2)), LOWER(?)) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_string)) OR arrayExists(x -> match(x, ?), mapValues(attributes_string))) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_number)) OR arrayExists(x -> match(x, ?), arrayMap(x -> toString(x), mapValues(attributes_number)))) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_bool)) OR arrayExists(x -> match(x, ?), arrayMap(x -> toString(x), mapValues(attributes_bool)))) OR (arrayExists(x -> match(x, ?), mapKeys(resources_string)) OR arrayExists(x -> match(x, ?), mapValues(resources_string))) OR match(LOWER(toString(resource)), LOWER(?))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:     []any{"error", "error", "error", "error", "error", "error", "error", "error", "error", "error", "error", "error", "error", "1705309200000000000", uint64(1705307400), "1705316400000000000", uint64(1705316400), 10},
+				Warnings: []string{querybuilder.FullTextSearchDefaultWarning},
+			},
+		},
+		{
+			name:        "search_not_wraps_condition",
+			requestType: qbtypes.RequestTypeRaw,
+			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+				Signal: telemetrytypes.SignalLogs,
+				Filter: &qbtypes.Filter{Expression: "NOT search('healthcheck')"},
+				Limit:  10,
+			},
+			enableUseJSONBody: false,
+			startMs:           1705309200000,
+			endMs:             1705316400000,
+			expected: qbtypes.Statement{
+				Query:    "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE NOT ((match(LOWER(severity_text), LOWER(?)) OR match(LOWER(trace_id), LOWER(?)) OR match(LOWER(span_id), LOWER(?)) OR match(LOWER(body), LOWER(?)) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_string)) OR arrayExists(x -> match(x, ?), mapValues(attributes_string))) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_number)) OR arrayExists(x -> match(x, ?), arrayMap(x -> toString(x), mapValues(attributes_number)))) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_bool)) OR arrayExists(x -> match(x, ?), arrayMap(x -> toString(x), mapValues(attributes_bool)))) OR (arrayExists(x -> match(x, ?), mapKeys(resources_string)) OR arrayExists(x -> match(x, ?), mapValues(resources_string))) OR match(LOWER(toString(resource)), LOWER(?)))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:     []any{"healthcheck", "healthcheck", "healthcheck", "healthcheck", "healthcheck", "healthcheck", "healthcheck", "healthcheck", "healthcheck", "healthcheck", "healthcheck", "healthcheck", "healthcheck", "1705309200000000000", uint64(1705307400), "1705316400000000000", uint64(1705316400), 10},
+				Warnings: []string{querybuilder.FullTextSearchDefaultWarning},
+			},
+		},
+		{
+			name:        "search_combined_with_filter",
+			requestType: qbtypes.RequestTypeRaw,
+			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+				Signal: telemetrytypes.SignalLogs,
+				Filter: &qbtypes.Filter{Expression: "search('error') AND severity_text = 'ERROR' AND service.name = 'cartservice'"},
+				Limit:  10,
+			},
+			enableUseJSONBody: false,
+			startMs:           1705309200000,
+			endMs:             1705316400000,
+			expected: qbtypes.Statement{
+				Query:    "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ? GROUP BY fingerprint) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND ((match(LOWER(severity_text), LOWER(?)) OR match(LOWER(trace_id), LOWER(?)) OR match(LOWER(span_id), LOWER(?)) OR match(LOWER(body), LOWER(?)) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_string)) OR arrayExists(x -> match(x, ?), mapValues(attributes_string))) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_number)) OR arrayExists(x -> match(x, ?), arrayMap(x -> toString(x), mapValues(attributes_number)))) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_bool)) OR arrayExists(x -> match(x, ?), arrayMap(x -> toString(x), mapValues(attributes_bool)))) OR (arrayExists(x -> match(x, ?), mapKeys(resources_string)) OR arrayExists(x -> match(x, ?), mapValues(resources_string))) OR match(LOWER(toString(resource)), LOWER(?))) AND severity_text = ?) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:     []any{"cartservice", "%service.name%", "%service.name\":\"cartservice%", uint64(1705307400), uint64(1705316400), "error", "error", "error", "error", "error", "error", "error", "error", "error", "error", "error", "error", "error", "ERROR", "1705309200000000000", uint64(1705307400), "1705316400000000000", uint64(1705316400), 10},
+				Warnings: []string{querybuilder.FullTextSearchDefaultWarning},
+			},
+		},
+		{
+			// default window is ~10h which exceeds the 6-hour search() limit
+			name:        "search_window_exceeds_6h",
+			requestType: qbtypes.RequestTypeRaw,
+			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+				Signal: telemetrytypes.SignalLogs,
+				Filter: &qbtypes.Filter{Expression: "search('error')"},
+				Limit:  10,
+			},
+			enableUseJSONBody: false,
+			expectedErr:       "maximum of 6-hour time",
 		},
 	}
 
@@ -1162,6 +1239,7 @@ func TestStmtBuilderBodyFullTextSearch(t *testing.T) {
 			cb := NewConditionBuilder(fm, fl)
 			// build the key map
 			mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
+			mockMetadataStore.KeysMap = buildCompleteFieldKeyMap(time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC))
 			for _, field := range IntrinsicFields {
 				f := field
 				mockMetadataStore.KeysMap[field.Name] = append(mockMetadataStore.KeysMap[field.Name], &f)
@@ -1175,25 +1253,39 @@ func TestStmtBuilderBodyFullTextSearch(t *testing.T) {
 				aggExprRewriter,
 				DefaultFullTextColumn,
 				GetBodyJSONKey,
+				cb.ConditionForSearch,
 				fl,
 				nil,
 				false,
 				100000,
 			)
-
-			q, err := statementBuilder.Build(context.Background(), 1747947419000, 1747983448000, c.requestType, c.query, nil)
-			if c.expectedErr != nil {
+			startMs := uint64(1747947419000)
+			if c.startMs != 0 {
+				startMs = c.startMs
+			}
+			endMs := uint64(1747983448000)
+			if c.endMs != 0 {
+				endMs = c.endMs
+			}
+			q, err := statementBuilder.Build(context.Background(), startMs, endMs, c.requestType, c.query, nil)
+			if c.expectedErr != "" {
 				require.Error(t, err)
-				require.Contains(t, err.Error(), c.expectedErr.Error())
-			} else {
-				if err != nil {
-					_, _, _, _, _, add := errors.Unwrapb(err)
-					t.Logf("error additionals: %v", add)
+				errAsJSON := errors.AsJSON(err)
+				found := false
+				for _, e := range errAsJSON.Errors {
+					if strings.Contains(e.Message, c.expectedErr) {
+						found = true
+						break
+					}
 				}
+				require.True(t, found, "expected additionals to contain %q, got %v", c.expectedErr, errAsJSON.Errors)
+			} else {
 				require.NoError(t, err)
-				require.Equal(t, c.expected.Query, q.Query)
-				require.Equal(t, c.expected.Args, q.Args)
-				require.Equal(t, c.expected.Warnings, q.Warnings)
+				if c.expected.Query != "" {
+					require.Equal(t, c.expected.Query, q.Query)
+					require.Equal(t, c.expected.Args, q.Args)
+					require.Equal(t, c.expected.Warnings, q.Warnings)
+				}
 			}
 		})
 	}
@@ -1299,6 +1391,7 @@ func newSkipResourceFingerprintLogsBuilder(
 		aggExprRewriter,
 		DefaultFullTextColumn,
 		GetBodyJSONKey,
+		cb.ConditionForSearch,
 		fl,
 		telemetryStore,
 		skipEnable,

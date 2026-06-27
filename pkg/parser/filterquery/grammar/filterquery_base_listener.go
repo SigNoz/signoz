@@ -81,17 +81,23 @@ func (s *BaseFilterQueryListener) EnterValueList(ctx *ValueListContext) {}
 // ExitValueList is called when production valueList is exited.
 func (s *BaseFilterQueryListener) ExitValueList(ctx *ValueListContext) {}
 
-// EnterFullText is called when production fullText is entered.
-func (s *BaseFilterQueryListener) EnterFullText(ctx *FullTextContext) {}
+// EnterFreeText is called when production freeText is entered.
+func (s *BaseFilterQueryListener) EnterFreeText(ctx *FreeTextContext) {}
 
-// ExitFullText is called when production fullText is exited.
-func (s *BaseFilterQueryListener) ExitFullText(ctx *FullTextContext) {}
+// ExitFreeText is called when production freeText is exited.
+func (s *BaseFilterQueryListener) ExitFreeText(ctx *FreeTextContext) {}
 
 // EnterFunctionCall is called when production functionCall is entered.
 func (s *BaseFilterQueryListener) EnterFunctionCall(ctx *FunctionCallContext) {}
 
 // ExitFunctionCall is called when production functionCall is exited.
 func (s *BaseFilterQueryListener) ExitFunctionCall(ctx *FunctionCallContext) {}
+
+// EnterFullText is called when production fullText is entered.
+func (s *BaseFilterQueryListener) EnterFullText(ctx *FullTextContext) {}
+
+// ExitFullText is called when production fullText is exited.
+func (s *BaseFilterQueryListener) ExitFullText(ctx *FullTextContext) {}
 
 // EnterFunctionParamList is called when production functionParamList is entered.
 func (s *BaseFilterQueryListener) EnterFunctionParamList(ctx *FunctionParamListContext) {}

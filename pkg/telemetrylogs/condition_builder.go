@@ -25,6 +25,50 @@ func NewConditionBuilder(fm qbtypes.FieldMapper, fl flagger.Flagger) *conditionB
 	return &conditionBuilder{fm: fm, fl: fl}
 }
 
+// ConditionForSearch builds the search condition for all FTS columns belonging
+// to fieldContext. Body JSON column is skipped when useJSONBody is disabled.
+// Returns ("", nil) when no searchable columns exist for the context.
+func (c *conditionBuilder) ConditionForSearch(
+	ctx context.Context,
+	value any,
+	sb *sqlbuilder.SelectBuilder,
+) (string, error) {
+	contexts := []telemetrytypes.FieldContext{
+		telemetrytypes.FieldContextLog,
+		telemetrytypes.FieldContextBody,
+		telemetrytypes.FieldContextAttribute,
+		telemetrytypes.FieldContextResource,
+	}
+
+	useJSONBody := c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{}))
+
+	var conditions []string
+	for _, fieldContext := range contexts {
+		for _, col := range ftsColumns(fieldContext, useJSONBody) {
+			switch col.Type.GetType() {
+			case schema.ColumnTypeEnumMap:
+				keysExpr := fmt.Sprintf("mapKeys(%s)", col.Name)
+				valsExpr := fmt.Sprintf("mapValues(%s)", col.Name)
+				if mc, ok := col.Type.(schema.MapColumnType); ok && mc.ValueType.GetType() != schema.ColumnTypeEnumString {
+					valsExpr = fmt.Sprintf("arrayMap(x -> toString(x), mapValues(%s))", col.Name)
+				}
+				conditions = append(conditions, sb.Or(
+					fmt.Sprintf(`arrayExists(x -> match(x, %s), %s)`, sb.Var(value), keysExpr),
+					fmt.Sprintf(`arrayExists(x -> match(x, %s), %s)`, sb.Var(value), valsExpr),
+				))
+			case schema.ColumnTypeEnumJSON:
+				conditions = append(conditions, fmt.Sprintf(`match(LOWER(toString(%s)), LOWER(%s))`, col.Name, sb.Var(value)))
+			case schema.ColumnTypeEnumString, schema.ColumnTypeEnumLowCardinality:
+				conditions = append(conditions, fmt.Sprintf(`match(LOWER(%s), LOWER(%s))`, col.Name, sb.Var(value)))
+			default:
+				return "", errors.Newf(errors.TypeInternal, errors.CodeInternal, "FTS unsupported column type %s", col.Type)
+			}
+		}
+	}
+
+	return sb.Or(conditions...), nil
+}
+
 func (c *conditionBuilder) conditionFor(
 	ctx context.Context,
 	startNs, endNs uint64,
@@ -62,7 +106,8 @@ func (c *conditionBuilder) conditionFor(
 
 	// Check if this is a body JSON search - either by FieldContext
 	// TODO(Tushar): thread orgID here to evaluate correctly
-	if key.FieldContext == telemetrytypes.FieldContextBody && !c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{})) {
+	if key.FieldContext == telemetrytypes.FieldContextBody &&
+		!c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{})) {
 		fieldExpression, value = GetBodyJSONKey(ctx, key, operator, value)
 	}
 
@@ -116,7 +161,6 @@ func (c *conditionBuilder) conditionFor(
 		return sb.ILike(fieldExpression, fmt.Sprintf("%%%s%%", value)), nil
 	case qbtypes.FilterOperatorNotContains:
 		return sb.NotILike(fieldExpression, fmt.Sprintf("%%%s%%", value)), nil
-
 	case qbtypes.FilterOperatorRegexp:
 		// Note: Escape $$ to $$$$ to avoid sqlbuilder interpreting materialized $ signs
 		// Only needed because we are using sprintf instead of sb.Match (not implemented in sqlbuilder)

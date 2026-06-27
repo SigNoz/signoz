@@ -1,25 +1,26 @@
-// Generated from FilterQuery.g4 by ANTLR 4.13.1
+// Generated from grammar/FilterQuery.g4 by ANTLR 4.13.2
 
 import {ParseTreeListener} from "antlr4";
 
 
-import { QueryContext } from "./FilterQueryParser";
-import { ExpressionContext } from "./FilterQueryParser";
-import { OrExpressionContext } from "./FilterQueryParser";
-import { AndExpressionContext } from "./FilterQueryParser";
-import { UnaryExpressionContext } from "./FilterQueryParser";
-import { PrimaryContext } from "./FilterQueryParser";
-import { ComparisonContext } from "./FilterQueryParser";
-import { InClauseContext } from "./FilterQueryParser";
-import { NotInClauseContext } from "./FilterQueryParser";
-import { ValueListContext } from "./FilterQueryParser";
-import { FullTextContext } from "./FilterQueryParser";
-import { FunctionCallContext } from "./FilterQueryParser";
-import { FunctionParamListContext } from "./FilterQueryParser";
-import { FunctionParamContext } from "./FilterQueryParser";
-import { ArrayContext } from "./FilterQueryParser";
-import { ValueContext } from "./FilterQueryParser";
-import { KeyContext } from "./FilterQueryParser";
+import { QueryContext } from "./FilterQueryParser.js";
+import { ExpressionContext } from "./FilterQueryParser.js";
+import { OrExpressionContext } from "./FilterQueryParser.js";
+import { AndExpressionContext } from "./FilterQueryParser.js";
+import { UnaryExpressionContext } from "./FilterQueryParser.js";
+import { PrimaryContext } from "./FilterQueryParser.js";
+import { ComparisonContext } from "./FilterQueryParser.js";
+import { InClauseContext } from "./FilterQueryParser.js";
+import { NotInClauseContext } from "./FilterQueryParser.js";
+import { ValueListContext } from "./FilterQueryParser.js";
+import { FreeTextContext } from "./FilterQueryParser.js";
+import { FunctionCallContext } from "./FilterQueryParser.js";
+import { FullTextContext } from "./FilterQueryParser.js";
+import { FunctionParamListContext } from "./FilterQueryParser.js";
+import { FunctionParamContext } from "./FilterQueryParser.js";
+import { ArrayContext } from "./FilterQueryParser.js";
+import { ValueContext } from "./FilterQueryParser.js";
+import { KeyContext } from "./FilterQueryParser.js";
 
 
 /**
@@ -128,15 +129,15 @@ export default class FilterQueryListener extends ParseTreeListener {
 	 */
 	exitValueList?: (ctx: ValueListContext) => void;
 	/**
-	 * Enter a parse tree produced by `FilterQueryParser.fullText`.
+	 * Enter a parse tree produced by `FilterQueryParser.freeText`.
 	 * @param ctx the parse tree
 	 */
-	enterFullText?: (ctx: FullTextContext) => void;
+	enterFreeText?: (ctx: FreeTextContext) => void;
 	/**
-	 * Exit a parse tree produced by `FilterQueryParser.fullText`.
+	 * Exit a parse tree produced by `FilterQueryParser.freeText`.
 	 * @param ctx the parse tree
 	 */
-	exitFullText?: (ctx: FullTextContext) => void;
+	exitFreeText?: (ctx: FreeTextContext) => void;
 	/**
 	 * Enter a parse tree produced by `FilterQueryParser.functionCall`.
 	 * @param ctx the parse tree
@@ -147,6 +148,16 @@ export default class FilterQueryListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	exitFunctionCall?: (ctx: FunctionCallContext) => void;
+	/**
+	 * Enter a parse tree produced by `FilterQueryParser.fullText`.
+	 * @param ctx the parse tree
+	 */
+	enterFullText?: (ctx: FullTextContext) => void;
+	/**
+	 * Exit a parse tree produced by `FilterQueryParser.fullText`.
+	 * @param ctx the parse tree
+	 */
+	exitFullText?: (ctx: FullTextContext) => void;
 	/**
 	 * Enter a parse tree produced by `FilterQueryParser.functionParamList`.
 	 * @param ctx the parse tree
