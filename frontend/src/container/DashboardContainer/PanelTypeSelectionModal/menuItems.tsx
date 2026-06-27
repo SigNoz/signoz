@@ -4,6 +4,7 @@ import {
 	BarChart,
 	ChartLine,
 	ChartPie,
+	ChartScatter,
 	List,
 	SquareSigma,
 	Table,
@@ -44,6 +45,11 @@ export const PanelTypesWithData: ItemsProps[] = [
 		name: PANEL_TYPES.HISTOGRAM,
 		icon: <BarChart size={16} color={Color.BG_ROBIN_400} />,
 		display: PanelDisplay.HISTOGRAM,
+	},
+	{
+		name: PANEL_TYPES.SCATTER,
+		icon: <ChartScatter size={16} color={Color.BG_ROBIN_400} />,
+		display: PanelDisplay.SCATTER,
 	},
 ];
 

@@ -279,6 +279,18 @@ function NewWidget({
 		selectedWidget?.contextLinks || { linksData: [] },
 	);
 
+	const [scatterXQuery, setScatterXQuery] = useState<string | undefined>(
+		selectedWidget?.scatterXQuery,
+	);
+
+	const [scatterYQuery, setScatterYQuery] = useState<string | undefined>(
+		selectedWidget?.scatterYQuery,
+	);
+
+	const [xAxisUnit, setXAxisUnit] = useState<string>(
+		selectedWidget?.xAxisUnit || 'none',
+	);
+
 	useEffect(() => {
 		setSelectedWidget((prev) => {
 			if (!prev) {
@@ -314,6 +326,9 @@ function NewWidget({
 				customLegendColors,
 				columnWidths: selectedWidget.columnWidths,
 				contextLinks,
+				scatterXQuery,
+				scatterYQuery,
+				xAxisUnit,
 			};
 		});
 	}, [
@@ -345,6 +360,9 @@ function NewWidget({
 		customLegendColors,
 		contextLinks,
 		selectedWidget.columnWidths,
+		scatterXQuery,
+		scatterYQuery,
+		xAxisUnit,
 	]);
 
 	const closeModal = (): void => {
@@ -959,6 +977,12 @@ function NewWidget({
 							setContextLinks={setContextLinks}
 							enableDrillDown={enableDrillDown}
 							isNewDashboard={isNewDashboard}
+							scatterXQuery={scatterXQuery}
+							setScatterXQuery={setScatterXQuery}
+							scatterYQuery={scatterYQuery}
+							setScatterYQuery={setScatterYQuery}
+							xAxisUnit={xAxisUnit}
+							setXAxisUnit={setXAxisUnit}
 						/>
 					</ResizablePanel>
 				</ResizablePanelGroup>
