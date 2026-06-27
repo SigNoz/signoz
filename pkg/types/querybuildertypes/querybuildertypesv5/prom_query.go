@@ -1,5 +1,7 @@
 package querybuildertypesv5
 
+import "github.com/SigNoz/signoz/pkg/errors"
+
 type PromQuery struct {
 	// name of the query
 	Name string `json:"name"`
@@ -18,4 +20,22 @@ type PromQuery struct {
 // Copy creates a deep copy of the PromQuery.
 func (q PromQuery) Copy() PromQuery {
 	return q // shallow copy is sufficient
+}
+
+// Validate performs preliminary validation on PromQuery.
+func (q PromQuery) Validate() error {
+	if q.Query == "" {
+		return errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"PromQL query is required",
+		)
+	}
+	if len(q.Query) > MaxPromQLQueryLength {
+		return errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"PromQL query exceeds maximum allowed length of %d characters",
+			MaxPromQLQueryLength,
+		)
+	}
+	return nil
 }
