@@ -223,6 +223,16 @@ const extractVarName = (
 	return match;
 };
 
+// Custom (per-row) variables are stored with a '_' prefix (see customVariablesList
+// above) to avoid colliding with dashboard/global variable names. Templates authored
+// by users reference them by their bare name (e.g. {{trace_id}}), so look up the
+// prefixed key as a fallback when the bare name isn't found.
+const getVariableValue = (
+	varName: string,
+	processedVariables: Record<string, string>,
+): string | undefined =>
+	processedVariables[varName] ?? processedVariables[`_${varName}`];
+
 // Utility function to resolve text with processed variables
 const resolveText = (
 	text: string,
@@ -233,7 +243,7 @@ const resolveText = (
 
 	return text.replace(combinedPattern, (match) => {
 		const varName = extractVarName(match, matcher, processedVariables);
-		const value = processedVariables[varName];
+		const value = getVariableValue(varName, processedVariables);
 
 		if (value != null) {
 			const parts = value.split('-|-');
@@ -254,7 +264,7 @@ const resolveTextWithTruncation = (
 
 	const result = text.replace(combinedPattern, (match) => {
 		const varName = extractVarName(match, matcher, processedVariables);
-		const value = processedVariables[varName];
+		const value = getVariableValue(varName, processedVariables);
 
 		if (value != null) {
 			const parts = value.split('-|-');
