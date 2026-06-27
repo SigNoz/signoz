@@ -42,6 +42,11 @@ describe('Should check if the edit alert channel is properly displayed', () => {
 			value: 'Dummy-Channel',
 		});
 	});
+
+	it('Should allow editing the channel name', () => {
+		expect(screen.getByTestId('channel-name-textbox')).toBeEnabled();
+	});
+
 	it('Should check if Send resolved alerts label and checkbox are displayed properly and the checkbox is checked', () => {
 		testLabelInputAndHelpValue({
 			labelText: 'field_send_resolved',
