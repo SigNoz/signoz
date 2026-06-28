@@ -1,7 +1,9 @@
 import { useCallback, useMemo, useRef } from 'react';
 import type { DashboardtypesTimeSeriesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
 import TimeSeries from 'container/DashboardContainer/visualization/charts/TimeSeries/TimeSeries';
+import ChartManager from 'container/DashboardContainer/visualization/components/ChartManager/ChartManager';
 import TooltipFooter from 'container/DashboardContainer/visualization/panels/components/TooltipFooter';
+import { PanelMode } from 'container/DashboardContainer/visualization/panels/types';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { IRenderTooltipFooterArgs } from 'lib/uPlotV2/components/types';
@@ -37,6 +39,7 @@ function TimeSeriesPanelRenderer({
 	onDragSelect,
 	dashboardPreference,
 	panelMode,
+	onCloseStandaloneView,
 }: PanelRendererProps<'signoz/TimeSeriesPanel'>): JSX.Element {
 	const graphRef = useRef<HTMLDivElement>(null);
 	const containerDimensions = useResizeObserver(graphRef);
@@ -115,6 +118,30 @@ function TimeSeriesPanelRenderer({
 		return resolveLegendPosition(spec.legend?.position);
 	}, [spec.legend?.position]);
 
+	// The standalone View modal shows V1's graph-manager legend below the chart:
+	// Filter Series + per-series show/hide + Save. Series visibility auto-persists to
+	// localStorage (STANDALONE_VIEW selection prefs), keyed by panelId.
+	const layoutChildren = useMemo(
+		() =>
+			panelMode === PanelMode.STANDALONE_VIEW ? (
+				<ChartManager
+					config={config}
+					alignedData={chartData}
+					yAxisUnit={spec.formatting?.unit}
+					decimalPrecision={decimalPrecision}
+					onCancel={onCloseStandaloneView}
+				/>
+			) : null,
+		[
+			panelMode,
+			config,
+			chartData,
+			spec.formatting?.unit,
+			decimalPrecision,
+			onCloseStandaloneView,
+		],
+	);
+
 	const renderTooltipFooter = useCallback(
 		({ isPinned, dismiss }: IRenderTooltipFooterArgs) => (
 			<TooltipFooter id={panelId} isPinned={isPinned} dismiss={dismiss} />
@@ -148,6 +175,7 @@ function TimeSeriesPanelRenderer({
 						config={config}
 						data={chartData}
 						legendConfig={{ position: legendPosition }}
+						layoutChildren={layoutChildren}
 						groupByPerQuery={groupByPerQuery}
 						canPinTooltip
 						timezone={timezone}
