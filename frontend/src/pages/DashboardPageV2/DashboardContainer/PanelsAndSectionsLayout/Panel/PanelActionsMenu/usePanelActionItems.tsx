@@ -30,6 +30,7 @@ import {
 	type MovePanelArgs,
 	useMovePanelToSection,
 } from '../hooks/useMovePanelToSection';
+import { useViewPanel } from '../hooks/useViewPanel';
 import { PANEL_ACTION_META } from './panelActionMeta';
 
 // Stable fallback so renders without layout context don't churn the mutation
@@ -149,6 +150,7 @@ export function usePanelActionItems({
 	const isEditable = useDashboardStore((s) => s.isEditable);
 	const openPanelEditor = useOpenPanelEditor();
 	const createAlert = useCreateAlertFromPanel();
+	const { openView } = useViewPanel();
 
 	// Mutations are store-backed (dashboardId/refetch) — the layout tree only
 	// supplies data (`sections`), so no callbacks are threaded through it.
@@ -181,7 +183,7 @@ export function usePanelActionItems({
 				key: 'view-panel',
 				label: 'View',
 				icon: <Fullscreen size={14} />,
-				onClick: (): void => notImplementedYet('View'),
+				onClick: (): void => openView(panelId),
 			});
 		}
 		if (isEditable && canEditWidget && kindActions.edit) {
@@ -266,6 +268,7 @@ export function usePanelActionItems({
 		panelActions,
 		sections,
 		panelId,
+		openView,
 		openPanelEditor,
 		createAlert,
 		movePanel,
