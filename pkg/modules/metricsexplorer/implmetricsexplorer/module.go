@@ -1031,17 +1031,76 @@ func (m *module) fetchMetricsStatsWithSamples(
 	samplesSB.GroupBy("metric_name")
 
 	ctes = append(ctes, sqlbuilder.CTEQuery("__sample_counts").As(samplesSB))
+
+	// reduced tables
+	reducedTsSB := sqlbuilder.NewSelectBuilder()
+	reducedTsSB.Select(
+		"metric_name",
+		"uniq(fingerprint) AS timeseries",
+	)
+
+	// the data lands either of the _reduced_last/_reduced_sum tables
+	reducedLastSB := sqlbuilder.NewSelectBuilder()
+	reducedLastSB.Select("metric_name", "uniq(reduced_fingerprint, unix_milli) AS cnt")
+	reducedLastSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.SamplesV4ReducedLastTableName))
+	reducedLastSB.Where(reducedLastSB.Between("unix_milli", req.Start, req.End))
+	reducedLastSB.Where("NOT startsWith(metric_name, 'signoz')")
+
+	reducedSumSB := sqlbuilder.NewSelectBuilder()
+	reducedSumSB.Select("metric_name", "uniq(reduced_fingerprint, unix_milli) AS cnt")
+	reducedSumSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.SamplesV4ReducedSumTableName))
+	reducedSumSB.Where(reducedSumSB.Between("unix_milli", req.Start, req.End))
+	reducedSumSB.Where("NOT startsWith(metric_name, 'signoz')")
+
+	if filterWhereClause == nil {
+		reducedTsSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.TimeseriesV4ReducedTableName))
+		reducedTsSB.Where(reducedTsSB.Between("unix_milli", start, end))
+		reducedTsSB.Where("NOT startsWith(metric_name, 'signoz')")
+		reducedTsSB.Where(reducedTsSB.E("__normalized", normalized))
+		reducedTsSB.GroupBy("metric_name")
+	} else {
+		reducedFpSB := sqlbuilder.NewSelectBuilder()
+		reducedFpSB.Select("metric_name", "fingerprint")
+		reducedFpSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.TimeseriesV4ReducedTableName))
+		reducedFpSB.Where(reducedFpSB.Between("unix_milli", start, end))
+		reducedFpSB.Where("NOT startsWith(metric_name, 'signoz')")
+		reducedFpSB.Where(reducedFpSB.E("__normalized", normalized))
+		reducedFpSB.AddWhereClause(sqlbuilder.CopyWhereClause(filterWhereClause))
+		reducedFpSB.GroupBy("metric_name", "fingerprint")
+		ctes = append(ctes, sqlbuilder.CTEQuery("__reduced_filtered_fingerprints").As(reducedFpSB))
+
+		reducedTsSB.From("__reduced_filtered_fingerprints")
+		reducedTsSB.GroupBy("metric_name")
+
+		reducedLastSB.Where("reduced_fingerprint IN (SELECT fingerprint FROM __reduced_filtered_fingerprints)")
+		reducedSumSB.Where("reduced_fingerprint IN (SELECT fingerprint FROM __reduced_filtered_fingerprints)")
+	}
+	reducedLastSB.GroupBy("metric_name")
+	reducedSumSB.GroupBy("metric_name")
+
+	reducedSamplesSB := sqlbuilder.NewSelectBuilder()
+	reducedSamplesSB.Select("metric_name", "sum(cnt) AS samples")
+	reducedSamplesSB.From(reducedSamplesSB.BuilderAs(sqlbuilder.UnionAll(reducedLastSB, reducedSumSB), "reduced_samples"))
+	reducedSamplesSB.GroupBy("metric_name")
+
+	ctes = append(ctes,
+		sqlbuilder.CTEQuery("__reduced_time_series_counts").As(reducedTsSB),
+		sqlbuilder.CTEQuery("__reduced_sample_counts").As(reducedSamplesSB),
+	)
+
 	cteBuilder := sqlbuilder.With(ctes...)
 
 	finalSB := cteBuilder.Select(
-		"COALESCE(ts.metric_name, s.metric_name) AS metric_name",
-		"COALESCE(ts.timeseries, 0) AS timeseries",
-		"COALESCE(s.samples, 0) AS samples",
+		"COALESCE(ts.metric_name, rts.metric_name, s.metric_name, rs.metric_name) AS metric_name",
+		"COALESCE(ts.timeseries, 0) + COALESCE(rts.timeseries, 0) AS timeseries",
+		"COALESCE(s.samples, 0) + COALESCE(rs.samples, 0) AS samples",
 		"COUNT(*) OVER() AS total",
 	)
 	finalSB.From("__time_series_counts ts")
-	finalSB.JoinWithOption(sqlbuilder.FullOuterJoin, "__sample_counts s", "ts.metric_name = s.metric_name")
-	finalSB.Where("(COALESCE(ts.timeseries, 0) > 0 OR COALESCE(s.samples, 0) > 0)")
+	finalSB.JoinWithOption(sqlbuilder.FullOuterJoin, "__reduced_time_series_counts rts", "ts.metric_name = rts.metric_name")
+	finalSB.JoinWithOption(sqlbuilder.FullOuterJoin, "__sample_counts s", "COALESCE(ts.metric_name, rts.metric_name) = s.metric_name")
+	finalSB.JoinWithOption(sqlbuilder.FullOuterJoin, "__reduced_sample_counts rs", "COALESCE(ts.metric_name, rts.metric_name, s.metric_name) = rs.metric_name")
+	finalSB.Where("(COALESCE(ts.timeseries, 0) + COALESCE(rts.timeseries, 0) > 0 OR COALESCE(s.samples, 0) + COALESCE(rs.samples, 0) > 0)")
 
 	orderByColumn, orderDirection, err := getStatsOrderByColumn(req.OrderBy)
 	if err != nil {
