@@ -419,6 +419,6 @@ func (m *MockMetadataStore) SetFirstSeenFromMetricMetadata(firstSeenMap map[tele
 	}
 }
 
-func (m *MockMetadataStore) FetchLastSeenInfoMulti(ctx context.Context, metricNames ...string) (map[string]int64, error) {
+func (m *MockMetadataStore) FetchLastSeenInfoMulti(ctx context.Context, orgID valuer.UUID, metricNames ...string) (map[string]int64, error) {
 	return make(map[string]int64), nil
 }

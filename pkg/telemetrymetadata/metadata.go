@@ -2525,12 +2525,33 @@ func (t *telemetryMetaStore) GetFirstSeenFromMetricMetadata(ctx context.Context,
 	return result, nil
 }
 
-func (t *telemetryMetaStore) FetchLastSeenInfoMulti(ctx context.Context, metricNames ...string) (map[string]int64, error) {
+func (t *telemetryMetaStore) FetchLastSeenInfoMulti(ctx context.Context, orgID valuer.UUID, metricNames ...string) (map[string]int64, error) {
+	lastSeenInfo, err := t.fetchLastSeenInfoForTable(ctx, telemetrymetrics.TimeseriesV4TableName, metricNames)
+	if err != nil {
+		return nil, err
+	}
+
+	if t.fl.BooleanOrEmpty(ctx, flagger.FeatureEnableMetricsReduction, featuretypes.NewFlaggerEvaluationContext(orgID)) {
+		reducedLastSeen, err := t.fetchLastSeenInfoForTable(ctx, telemetrymetrics.TimeseriesV4ReducedTableName, metricNames)
+		if err != nil {
+			return nil, err
+		}
+		for metricName, ts := range reducedLastSeen {
+			if ts > lastSeenInfo[metricName] {
+				lastSeenInfo[metricName] = ts
+			}
+		}
+	}
+
+	return lastSeenInfo, nil
+}
+
+func (t *telemetryMetaStore) fetchLastSeenInfoForTable(ctx context.Context, tableName string, metricNames []string) (map[string]int64, error) {
 	sb := sqlbuilder.Select(
 		"metric_name",
 		"max(unix_milli)",
 	).
-		From(t.metricsDBName + "." + telemetrymetrics.TimeseriesV4TableName)
+		From(t.metricsDBName + "." + tableName)
 	sb.Where(sb.In("metric_name", metricNames))
 	sb.GroupBy("metric_name")
 

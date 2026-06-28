@@ -1,5 +1,6 @@
 import { Color } from '@signozhq/design-tokens';
 import { Typography } from '@signozhq/ui/typography';
+import { Spin } from 'antd';
 import { useGetMetricReductionRuleTimeseries } from 'api/generated/services/metrics';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import BarChart from 'container/DashboardContainer/visualization/charts/BarChart/BarChart';
@@ -25,7 +26,9 @@ interface VolumeControlChartProps {
 }
 
 function VolumeControlChart({ enabled }: VolumeControlChartProps): JSX.Element {
-	const { data } = useGetMetricReductionRuleTimeseries({ query: { enabled } });
+	const { data, isLoading, isError } = useGetMetricReductionRuleTimeseries({
+		query: { enabled },
+	});
 
 	const isDarkMode = useIsDarkMode();
 	const { timezone } = useTimezone();
@@ -69,7 +72,25 @@ function VolumeControlChart({ enabled }: VolumeControlChartProps): JSX.Element {
 				Series volume over time · ingested vs retained
 			</Typography.Text>
 			<div className={styles.chartBody} ref={graphRef}>
-				{dimensions.width > 0 && (
+				{isLoading && (
+					<div
+						className={styles.chartStatus}
+						data-testid="volume-control-chart-loading"
+					>
+						<Spin size="small" />
+					</div>
+				)}
+				{!isLoading && isError && (
+					<div
+						className={styles.chartStatus}
+						data-testid="volume-control-chart-error"
+					>
+						<Typography.Text size="small" color="danger">
+							Failed to load chart
+						</Typography.Text>
+					</div>
+				)}
+				{!isLoading && !isError && dimensions.width > 0 && (
 					<BarChart
 						config={config}
 						data={chartData}

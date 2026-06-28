@@ -6857,6 +6857,11 @@ export interface MetricreductionruletypesGettableReductionRuleDTO {
 	 * @type integer
 	 * @minimum 0
 	 */
+	ingestedSamples: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
 	ingestedSeries: number;
 	/**
 	 * @type array,null
@@ -6868,10 +6873,10 @@ export interface MetricreductionruletypesGettableReductionRuleDTO {
 	 */
 	metricName: string;
 	/**
-	 * @type number
-	 * @format double
+	 * @type integer
+	 * @minimum 0
 	 */
-	reductionPercent: number;
+	retainedSamples: number;
 	/**
 	 * @type integer
 	 * @minimum 0
@@ -6934,7 +6939,17 @@ export interface MetricreductionruletypesGettableReductionRuleStatsDTO {
 	 * @type integer
 	 * @minimum 0
 	 */
+	ingestedSamples: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
 	ingestedSeries: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	retainedSamples: number;
 	/**
 	 * @type integer
 	 * @minimum 0
@@ -6990,7 +7005,6 @@ export enum MetricreductionruletypesReductionRuleOrderByDTO {
 	metric = 'metric',
 	ingested_volume = 'ingested_volume',
 	reduced_volume = 'reduced_volume',
-	reduction = 'reduction',
 	last_updated = 'last_updated',
 }
 export interface MetricreductionruletypesUpdatableReductionRuleDTO {

@@ -28,8 +28,13 @@ import (
 
 const (
 	// effectiveFromMargin delays effective_from so the collector picks up the synced rule before it
-	// goes live; it must be >= the collector's rule-refresh interval (see signoz-otel-collector#839).
-	effectiveFromMargin    = 5 * time.Minute
+	// goes live; it must be >= the collector's rule-refresh interval (~2m worst case,
+	// see signoz-otel-collector#839).
+	effectiveFromMargin = 2 * time.Minute
+	// uiActivationDelay keeps a rule shown as "pending" in the UI for a while after it goes live to
+	// the collector, so the user doesn't see "active" before reduced data is actually flowing. The
+	// user-facing pending window is effectiveFromMargin + uiActivationDelay (~5m).
+	uiActivationDelay      = 3 * time.Minute
 	defaultPreviewLookback = 24 * time.Hour
 
 	pricePerMillionSamplesUSD = 0.1
@@ -107,10 +112,14 @@ func (m *module) listSortedByColumn(ctx context.Context, orgID valuer.UUID, para
 	if err != nil {
 		return nil, err
 	}
+	sampleVolumes, err := m.ch.SampleVolumeByMetric(ctx, metricNames, effectiveFrom, startMs, endMs)
+	if err != nil {
+		return nil, err
+	}
 
 	rules := make([]metricreductionruletypes.GettableReductionRule, 0, len(domainRules))
 	for _, rule := range domainRules {
-		rules = append(rules, withVolume(toGettableReductionRule(rule), volumes[rule.MetricName]))
+		rules = append(rules, withVolume(toGettableReductionRule(rule), volumes[rule.MetricName], sampleVolumes[rule.MetricName]))
 	}
 
 	return &metricreductionruletypes.GettableReductionRules{Rules: rules, Total: total}, nil
@@ -139,13 +148,22 @@ func (m *module) listSortedByVolume(ctx context.Context, orgID valuer.UUID, para
 		return nil, err
 	}
 
+	pageMetricNames := make([]string, 0, len(ranked))
+	for _, row := range ranked {
+		pageMetricNames = append(pageMetricNames, row.MetricName)
+	}
+	sampleVolumes, err := m.ch.SampleVolumeByMetric(ctx, pageMetricNames, effectiveFrom, startMs, endMs)
+	if err != nil {
+		return nil, err
+	}
+
 	rules := make([]metricreductionruletypes.GettableReductionRule, 0, len(ranked))
 	for _, row := range ranked {
 		rule, ok := ruleByMetric[row.MetricName]
 		if !ok {
 			continue
 		}
-		rules = append(rules, withVolume(toGettableReductionRule(rule), row))
+		rules = append(rules, withVolume(toGettableReductionRule(rule), row, sampleVolumes[row.MetricName]))
 	}
 
 	return &metricreductionruletypes.GettableReductionRules{Rules: rules, Total: total}, nil
@@ -291,7 +309,7 @@ func (m *module) Stats(ctx context.Context, orgID valuer.UUID) (*metricreduction
 	startMs := now.Add(-defaultPreviewLookback).UnixMilli()
 	endMs := now.UnixMilli()
 
-	allRules, total, err := m.store.List(ctx, orgID, &metricreductionruletypes.ListReductionRulesParams{})
+	rules, total, err := m.store.List(ctx, orgID, &metricreductionruletypes.ListReductionRulesParams{})
 	if err != nil {
 		return nil, err
 	}
@@ -299,9 +317,9 @@ func (m *module) Stats(ctx context.Context, orgID valuer.UUID) (*metricreduction
 		return &metricreductionruletypes.GettableReductionRuleStats{}, nil
 	}
 
-	metricNames := make([]string, len(allRules))
-	effectiveFrom := make(map[string]int64, len(allRules))
-	for i, rule := range allRules {
+	metricNames := make([]string, len(rules))
+	effectiveFrom := make(map[string]int64, len(rules))
+	for i, rule := range rules {
 		metricNames[i] = rule.MetricName
 		effectiveFrom[rule.MetricName] = rule.EffectiveFrom.UnixMilli()
 	}
@@ -311,27 +329,27 @@ func (m *module) Stats(ctx context.Context, orgID valuer.UUID) (*metricreduction
 		return nil, err
 	}
 	var ingestedSeries, retainedSeries uint64
-	reducedMetricNames := make([]string, 0, len(volumes))
-	reducedEffectiveFrom := make(map[string]int64, len(volumes))
-	for name, volume := range volumes {
+	for _, volume := range volumes {
 		ingestedSeries += volume.Ingested
-		retained := effectiveRetained(volume.Ingested, volume.Reduced)
-		retainedSeries += retained
-		if retained < volume.Ingested {
-			reducedMetricNames = append(reducedMetricNames, name)
-			reducedEffectiveFrom[name] = effectiveFrom[name]
-		}
+		retainedSeries += effectiveRetained(volume.Ingested, volume.Reduced)
 	}
 
-	ingestedSamples, reducedSamples, err := m.ch.SampleVolume(ctx, reducedMetricNames, reducedEffectiveFrom, startMs, endMs)
+	sampleVolumes, err := m.ch.SampleVolumeByMetric(ctx, metricNames, effectiveFrom, startMs, endMs)
 	if err != nil {
 		return nil, err
+	}
+	var ingestedSamples, retainedSamples uint64
+	for _, sv := range sampleVolumes {
+		ingestedSamples += sv.Ingested
+		retainedSamples += effectiveRetained(sv.Ingested, sv.Reduced)
 	}
 
 	return &metricreductionruletypes.GettableReductionRuleStats{
 		IngestedSeries:             ingestedSeries,
 		RetainedSeries:             retainedSeries,
-		EstimatedMonthlySavingsUsd: monthlySavingsUSD(ingestedSamples, reducedSamples, startMs, endMs),
+		IngestedSamples:            ingestedSamples,
+		RetainedSamples:            retainedSamples,
+		EstimatedMonthlySavingsUsd: monthlySavingsUSD(ingestedSamples, retainedSamples, startMs, endMs),
 	}, nil
 }
 
@@ -414,7 +432,7 @@ func buildVolumeTimeseries(points []volumePoint) *querybuildertypesv5.QueryRange
 }
 
 func (m *module) validateMetricForReduction(ctx context.Context, orgID valuer.UUID, metricName string) error {
-	lastSeen, err := m.metadataStore.FetchLastSeenInfoMulti(ctx, metricName)
+	lastSeen, err := m.metadataStore.FetchLastSeenInfoMulti(ctx, orgID, metricName)
 	if err != nil {
 		return err
 	}
@@ -482,7 +500,7 @@ func toGettableReductionRule(rule *metricreductionruletypes.ReductionRule) metri
 		MatchType:     rule.MatchType,
 		Labels:        rule.Labels,
 		EffectiveFrom: rule.EffectiveFrom,
-		Active:        !rule.EffectiveFrom.After(time.Now()),
+		Active:        !rule.EffectiveFrom.Add(uiActivationDelay).After(time.Now()),
 	}
 }
 
@@ -493,12 +511,11 @@ func effectiveRetained(ingested, reduced uint64) uint64 {
 	return reduced
 }
 
-func withVolume(rule metricreductionruletypes.GettableReductionRule, volume volumeRow) metricreductionruletypes.GettableReductionRule {
-	rule.IngestedSeries = volume.Ingested
-	rule.RetainedSeries = effectiveRetained(volume.Ingested, volume.Reduced)
-	if volume.Ingested > 0 {
-		rule.ReductionPercent = (1 - float64(rule.RetainedSeries)/float64(volume.Ingested)) * 100
-	}
+func withVolume(rule metricreductionruletypes.GettableReductionRule, series volumeRow, samples volumeRow) metricreductionruletypes.GettableReductionRule {
+	rule.IngestedSeries = series.Ingested
+	rule.RetainedSeries = effectiveRetained(series.Ingested, series.Reduced)
+	rule.IngestedSamples = samples.Ingested
+	rule.RetainedSamples = effectiveRetained(samples.Ingested, samples.Reduced)
 	return rule
 }
 
