@@ -4737,6 +4737,9 @@ components:
           type: number
         podPhase:
           $ref: '#/components/schemas/InframonitoringtypesPodPhase'
+        podRestarts:
+          format: int64
+          type: integer
         podStatus:
           $ref: '#/components/schemas/InframonitoringtypesPodStatus'
         podUID:
@@ -4753,6 +4756,7 @@ components:
       - podCountsByPhase
       - podStatus
       - podCountsByStatus
+      - podRestarts
       - podAge
       - meta
       type: object

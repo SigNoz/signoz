@@ -6301,6 +6301,11 @@ export interface InframonitoringtypesPodRecordDTO {
 	 */
 	podMemoryRequest: number;
 	podPhase: InframonitoringtypesPodPhaseDTO;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	podRestarts: number;
 	podStatus: InframonitoringtypesPodStatusDTO;
 	/**
 	 * @type string

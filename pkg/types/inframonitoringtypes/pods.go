@@ -67,6 +67,7 @@ type PodRecord struct {
 	PodCountsByPhase  PodCountsByPhase  `json:"podCountsByPhase" required:"true"`
 	PodStatus         PodStatus         `json:"podStatus" required:"true"`
 	PodCountsByStatus PodCountsByStatus `json:"podCountsByStatus" required:"true"`
+	PodRestarts       int64             `json:"podRestarts" required:"true"`
 	PodAge            int64             `json:"podAge" required:"true"`
 	Meta              map[string]string `json:"meta" required:"true"`
 }
