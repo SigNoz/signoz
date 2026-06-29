@@ -253,8 +253,10 @@ type Legend struct {
 type ThresholdWithLabel struct {
 	// Value is a pointer so a threshold at 0 is valid: validate:"required" treats
 	// the float64 zero as "missing", but a non-nil *float64 to 0 passes (and nil
-	// still fails, so a genuinely absent value is still rejected).
-	Value *float64 `json:"value" validate:"required" required:"true"`
+	// still fails, so a genuinely absent value is still rejected). nullable:"false"
+	// keeps it a plain required number in the schema — it is never null in valid
+	// data (validation rejects nil), so the pointer must not leak as `number|null`.
+	Value *float64 `json:"value" validate:"required" required:"true" nullable:"false"`
 	Unit  string   `json:"unit"`
 	Color string   `json:"color" validate:"required" required:"true"`
 	Label string   `json:"label"`
@@ -262,7 +264,7 @@ type ThresholdWithLabel struct {
 
 type ComparisonThreshold struct {
 	// Value is a pointer so a threshold at 0 is valid (see ThresholdWithLabel.Value).
-	Value    *float64           `json:"value" validate:"required" required:"true"`
+	Value    *float64           `json:"value" validate:"required" required:"true" nullable:"false"`
 	Operator ComparisonOperator `json:"operator"`
 	Unit     string             `json:"unit"`
 	Color    string             `json:"color" validate:"required" required:"true"`
