@@ -8,23 +8,23 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	qb "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	v1 "github.com/perses/perses/pkg/model/api/v1"
-	"github.com/perses/perses/pkg/model/api/v1/common"
+	"github.com/perses/spec/go/common"
+	"github.com/perses/spec/go/dashboard"
 )
 
 // DashboardSpec is the SigNoz dashboard v2 spec shape. It mirrors
-// v1.DashboardSpec (Perses) field-for-field, except every common.Plugin
+// dashboard.Spec (Perses) field-for-field, except every common.Plugin
 // occurrence is replaced with a typed SigNoz plugin whose OpenAPI schema is a
 // per-site discriminated oneOf.
 type DashboardSpec struct {
-	Display         *common.Display            `json:"display,omitempty"`
+	Display         Display                    `json:"display" required:"true"`
 	Datasources     map[string]*DatasourceSpec `json:"datasources,omitempty"`
-	Variables       []Variable                 `json:"variables,omitempty"`
-	Panels          map[string]*Panel          `json:"panels"`
-	Layouts         []Layout                   `json:"layouts"`
-	Duration        common.DurationString      `json:"duration"`
+	Variables       []Variable                 `json:"variables" required:"true" nullable:"false"`
+	Panels          map[string]*Panel          `json:"panels" required:"true" nullable:"false"`
+	Layouts         []Layout                   `json:"layouts" required:"true" nullable:"false"`
+	Duration        common.DurationString      `json:"duration,omitempty"`
 	RefreshInterval common.DurationString      `json:"refreshInterval,omitempty"`
-	Links           []v1.Link                  `json:"links,omitempty"`
+	Links           []dashboard.Link           `json:"links,omitempty"`
 }
 
 // ══════════════════════════════════════════════

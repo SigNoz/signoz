@@ -5,12 +5,13 @@ import {
 	AIAssistantPage,
 	AlertHistory,
 	AlertOverview,
-	AllAlertChannels,
 	AllErrors,
 	ApiMonitoring,
-	CreateAlertChannelAlerts,
+	ChannelsEdit,
+	ChannelsNew,
 	CreateNewAlerts,
 	DashboardPage,
+	DashboardPanelEditorPage,
 	DashboardsListPage,
 	DashboardWidget,
 	EditRulesPage,
@@ -32,7 +33,6 @@ import {
 	MeterExplorerPage,
 	MetricsExplorer,
 	OldLogsExplorer,
-	Onboarding,
 	OnboardingV2,
 	OrgOnboarding,
 	PasswordReset,
@@ -47,7 +47,7 @@ import {
 	SomethingWentWrong,
 	StatusPage,
 	SupportPage,
-	TraceDetail,
+	TraceDetailOldRedirect,
 	TraceDetailV3,
 	TraceFilter,
 	TracesExplorer,
@@ -68,13 +68,6 @@ const routes: AppRoutes[] = [
 		exact: true,
 		isPrivate: false,
 		key: 'SIGN_UP',
-	},
-	{
-		path: ROUTES.GET_STARTED,
-		exact: false,
-		component: Onboarding,
-		isPrivate: true,
-		key: 'GET_STARTED',
 	},
 	{
 		path: ROUTES.GET_STARTED_WITH_CLOUD,
@@ -139,13 +132,11 @@ const routes: AppRoutes[] = [
 		exact: true,
 		key: 'LOGS_SAVE_VIEWS',
 	},
-	// V3 trace details is gated until release: /trace serves V2 (public),
-	// /trace-old serves V3 (URL-only access). Flip the two `component`
-	// values back to release V3.
+	// Legacy /trace-old/:id redirects to the current /trace/:id view.
 	{
 		path: ROUTES.TRACE_DETAIL_OLD,
 		exact: true,
-		component: TraceDetail,
+		component: TraceDetailOldRedirect,
 		isPrivate: true,
 		key: 'TRACE_DETAIL_OLD',
 	},
@@ -197,6 +188,13 @@ const routes: AppRoutes[] = [
 		component: DashboardWidget,
 		isPrivate: true,
 		key: 'DASHBOARD_WIDGET',
+	},
+	{
+		path: ROUTES.DASHBOARD_PANEL_EDITOR,
+		exact: true,
+		component: DashboardPanelEditorPage,
+		isPrivate: true,
+		key: 'DASHBOARD_PANEL_EDITOR',
 	},
 	{
 		path: ROUTES.EDIT_ALERTS,
@@ -271,16 +269,16 @@ const routes: AppRoutes[] = [
 	{
 		path: ROUTES.CHANNELS_NEW,
 		exact: true,
-		component: CreateAlertChannelAlerts,
+		component: ChannelsNew,
 		isPrivate: true,
 		key: 'CHANNELS_NEW',
 	},
 	{
-		path: ROUTES.ALL_CHANNELS,
+		path: ROUTES.CHANNELS_EDIT,
 		exact: true,
-		component: AllAlertChannels,
+		component: ChannelsEdit,
 		isPrivate: true,
-		key: 'ALL_CHANNELS',
+		key: 'CHANNELS_EDIT',
 	},
 	{
 		path: ROUTES.ALL_ERROR,
@@ -471,6 +469,13 @@ const routes: AppRoutes[] = [
 		key: 'METRICS_EXPLORER_VIEWS',
 		isPrivate: true,
 	},
+	{
+		path: ROUTES.METRICS_EXPLORER_VOLUME_CONTROL,
+		exact: true,
+		component: MetricsExplorer,
+		key: 'METRICS_EXPLORER_VOLUME_CONTROL',
+		isPrivate: true,
+	},
 
 	{
 		path: ROUTES.METER,
@@ -536,6 +541,9 @@ export const oldNewRoutesMapping: Record<string, string> = {
 	'/messaging-queues': '/messaging-queues/overview',
 	'/alerts/edit': '/alerts/overview',
 	'/alerts/type-selection': '/alerts/new',
+	// TODO(H4ad): Update this after https://github.com/SigNoz/engineering-pod/issues/5322
+	'/settings/channels': '/alerts?tab=Channels',
+	'/settings/channels/new': '/alerts/channels/new',
 };
 export const oldRoutes = Object.keys(oldNewRoutesMapping);
 

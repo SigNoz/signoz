@@ -1,0 +1,65 @@
+@use '../../../../../../styles/scrollbar' as *;
+
+// Scroll the table within the panel rather than letting it grow the card.
+.container {
+	flex: 1;
+	min-width: 0;
+	min-height: 0;
+	overflow: auto;
+
+	// Match the chart legend scrollbar (shared mixin).
+	@include custom-scrollbar;
+
+	// antd renders its own scroll containers when `scroll={{ x, y }}` is set —
+	// the pinned-header body (vertical) and the content (horizontal). Match them
+	// to the legend scrollbar too.
+	:global(.ant-table-body),
+	:global(.ant-table-content) {
+		@include custom-scrollbar;
+	}
+}
+
+// Logs: drop the row separators for a denser log view (V1 logs table parity).
+.logRows {
+	:global(.ant-table-tbody) > tr > td {
+		border-bottom: none;
+	}
+}
+
+// Traces: every row navigates to its trace, so present the cells as links
+// (V1 wraps each trace cell in an anchor).
+.traceRows {
+	:global(.ant-table-tbody) > tr {
+		cursor: pointer;
+	}
+
+	:global(.ant-table-tbody) > tr > td,
+	:global(.ant-table-tbody) > tr > td :global(.ant-typography) {
+		color: var(--bg-robin-400);
+	}
+
+	:global(.ant-table-tbody) > tr:hover > td :global(.ant-typography) {
+		text-decoration: underline;
+	}
+}
+
+// Server-side prev/next pager, pinned below the scrolling table body.
+.pager {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 8px;
+	padding: 6px 8px;
+	flex-shrink: 0;
+}
+
+.pagerLabel {
+	font-size: 12px;
+	color: var(--l3-foreground);
+}
+
+// Page-size picker, sat to the right of the prev/next controls.
+.pageSize {
+	min-width: 96px;
+	margin-left: 4px;
+}

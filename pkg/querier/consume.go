@@ -14,6 +14,7 @@ import (
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/types/spantypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/bytedance/sonic"
 )
@@ -62,7 +63,7 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 	numericColsCount := 0
 	for i, ct := range colTypes {
 		slots[i] = reflect.New(ct.ScanType()).Interface()
-		if numericKind(ct.ScanType().Kind()) {
+		if isNumericKind(ct.ScanType()) {
 			numericColsCount++
 		}
 	}
@@ -270,8 +271,14 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 	}, nil
 }
 
-func numericKind(k reflect.Kind) bool {
-	switch k {
+func isNumericKind(t reflect.Type) bool {
+	if t == nil {
+		return false
+	}
+	for t.Kind() == reflect.Ptr || t.Kind() == reflect.UnsafePointer {
+		t = t.Elem()
+	}
+	switch t.Kind() {
 	case reflect.Float32, reflect.Float64,
 		reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
 		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
@@ -290,7 +297,13 @@ func readAsScalar(rows driver.Rows, queryName string) (*qbtypes.ScalarData, erro
 	var aggIndex int64
 	for i, name := range colNames {
 		colType := qbtypes.ColumnTypeGroup
-		if aggRe.MatchString(name) {
+		// Builder queries aliases aggregation columns as __result_N (always numeric) and wraps group-by keys with toString (always string);
+		// Raw ClickHouse queries may use any aliases.
+		// Handling Builder queries, If name like __result_N -> aggregation, otherwise group-by column
+		// Handling Raw ClickHouse queries, If type is numeric -> aggregation, otherwise group-by column
+		// NOTE: For clickhouse queries, its wrong to assume that numeric columns are always aggregations, user might be grouping by on integer status_code.
+		// However, we are fine with this for now. If need arises, simplest way would be to solve this on the frontend side by asking user a mapping of column names to column types.
+		if aggRe.MatchString(name) || isNumericKind(colTypes[i].ScanType()) {
 			colType = qbtypes.ColumnTypeAggregation
 		}
 		cd[i] = &qbtypes.ColumnDescriptor{
@@ -438,6 +451,53 @@ func readAsRaw(rows driver.Rows, queryName string) (*qbtypes.RawData, error) {
 		QueryName: queryName,
 		Rows:      outRows,
 	}, nil
+}
+
+// mergeSpanAttributeColumns merges (attributes_string, attributes_number, attributes_bool, resources_string) into
+// unified "attributes" and "resource" keys, and parses the stringified `events`
+// and `links` columns into structured slices. Raw DB columns are removed.
+func mergeSpanAttributeColumns(data map[string]any) {
+	attrStr, hasStr := data["attributes_string"]
+	attrNum, hasNum := data["attributes_number"]
+	attrBool, hasBool := data["attributes_bool"]
+	// todo(nitya): move to resource json
+	resStr, hasRes := data["resources_string"]
+	if hasStr || hasNum || hasBool || hasRes {
+		attributes := make(map[string]any)
+		if m, ok := attrStr.(map[string]string); ok {
+			for k, v := range m {
+				attributes[k] = v
+			}
+		}
+		if m, ok := attrNum.(map[string]float64); ok {
+			for k, v := range m {
+				attributes[k] = v
+			}
+		}
+		if m, ok := attrBool.(map[string]bool); ok {
+			for k, v := range m {
+				attributes[k] = v
+			}
+		}
+		delete(data, "attributes_string")
+		delete(data, "attributes_number")
+		delete(data, "attributes_bool")
+		data["attributes"] = attributes
+
+		resource := map[string]string{}
+		if m, ok := resStr.(map[string]string); ok {
+			resource = m
+		}
+		data["resource"] = resource
+		delete(data, "resources_string")
+	}
+
+	if raw, ok := data["events"]; ok {
+		data["events"] = spantypes.ParseEvents(raw)
+	}
+	if raw, ok := data["links"]; ok {
+		data["links"] = spantypes.ParseLinks(raw)
+	}
 }
 
 // numericAsFloat converts numeric types to float64 efficiently.

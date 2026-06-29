@@ -1,5 +1,11 @@
 // TODO: Improve the styling of the query aggregation container and its components. - @YounixM , @H4ad
 
+$dropdown-base-height: 250px;
+$recents-header-height: 30px;
+$recent-row-height: 36px;
+// how many recents are rendered, this caps how tall the dropdown can grow to fit them.
+$max-recents-shown: 5;
+
 .code-mirror-where-clause {
 	width: 100%;
 	display: flex;
@@ -117,7 +123,23 @@
 				width: 100% !important;
 				max-width: 100% !important;
 				font-family: 'Space Mono', monospace !important;
-				min-height: 200px !important;
+				max-height: $dropdown-base-height !important;
+				overflow-y: auto !important;
+
+				// Recents render at the top of the dropdown ahead of regular suggestions.
+				// At the base max-height, having recents in view would crowd out the
+				// suggestion list below. This loop grows the dropdown by one row's worth
+				// of height for every recent present (up to $max-recents-shown), plus the
+				// section header. `:has(> li:nth-of-type(N) .cm-completionIcon-recent)`
+				// matches when the Nth child of <ul> is a recent — i.e. there are at
+				// least N recents visible.
+				@for $i from 1 through $max-recents-shown {
+					&:has(> li:nth-of-type(#{$i}) .cm-completionIcon-recent) {
+						max-height: $dropdown-base-height +
+							$recents-header-height +
+							($i * $recent-row-height) !important;
+					}
+				}
 
 				&::-webkit-scrollbar {
 					width: 0.3rem;
@@ -131,6 +153,19 @@
 				}
 				&::-webkit-scrollbar-track {
 					background: transparent;
+				}
+
+				completion-section {
+					display: block;
+					padding: 10px 12px 6px;
+					font-size: 10px !important;
+					font-weight: 700;
+					letter-spacing: 0.08em;
+					text-transform: uppercase;
+					color: var(--l3-foreground, var(--l2-foreground));
+					opacity: 0.7;
+					border-bottom: 0;
+					background-color: transparent;
 				}
 
 				li {
@@ -159,11 +194,78 @@
 						display: none !important;
 					}
 
+					.cm-completionDetail {
+						margin-left: auto;
+						font-style: normal;
+						font-size: var(--periscope-font-size-small, 11px);
+						font-weight: 600;
+						letter-spacing: 0.06em;
+						text-transform: uppercase;
+						opacity: 0.55;
+					}
+
 					&[aria-selected='true'] {
 						background: var(--l3-background) !important;
 						font-weight: 600 !important;
 					}
 				}
+
+				li:has(.cm-completionIcon-recent) {
+					&:hover .cm-recent-delete,
+					&[aria-selected='true'] .cm-recent-delete {
+						opacity: 1;
+					}
+				}
+
+				li .cm-completionLabel {
+					flex: 1;
+					min-width: 0;
+					white-space: nowrap;
+					overflow: hidden;
+					text-overflow: ellipsis;
+				}
+
+				.cm-recent-delete {
+					margin-left: 8px;
+					display: inline-flex;
+					align-items: center;
+					justify-content: center;
+					width: 20px;
+					height: 20px;
+					padding: 0;
+					border: 0;
+					border-radius: 4px;
+					background: transparent;
+					color: var(--l2-foreground);
+					font-size: 18px;
+					line-height: 1;
+					cursor: pointer;
+					opacity: 0.5;
+					transition:
+						opacity 0.12s ease,
+						background-color 0.12s ease;
+
+					&:hover {
+						opacity: 1;
+						background: color-mix(in srgb, var(--l2-foreground) 18%, transparent);
+					}
+				}
+			}
+
+			&::after {
+				content: '↓↑ to navigate · ↵ to apply · esc to dismiss';
+				display: block;
+				padding: 8px 12px;
+				border-top: 1px solid var(--l1-border);
+				font-family: 'Space Mono', monospace;
+				font-size: 11px;
+				font-weight: 500;
+				letter-spacing: 0.02em;
+				color: var(--l2-foreground);
+				opacity: 0.6;
+				background: color-mix(in srgb, var(--l1-background) 50%, transparent);
+				border-bottom-left-radius: 4px;
+				border-bottom-right-radius: 4px;
 			}
 		}
 

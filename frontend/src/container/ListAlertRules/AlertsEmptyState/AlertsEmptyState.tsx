@@ -89,7 +89,7 @@ export function AlertsEmptyState({
 									onClick={onClickNewAlertHandler}
 									disabled={!addNewAlert}
 									loading={loading}
-									data-testid="add-alert"
+									testId="add-alert"
 								>
 									<span className={styles.buttonContent}>
 										<Plus size="md" />
@@ -97,7 +97,12 @@ export function AlertsEmptyState({
 									</span>
 								</Button>
 								{onRefresh && (
-									<Button onClick={onRefresh} prefix={<RefreshCw />} color="secondary">
+									<Button
+										onClick={onRefresh}
+										prefix={<RefreshCw />}
+										color="secondary"
+										testId="list-alerts-empty-refresh-button"
+									>
 										Refresh
 									</Button>
 								)}

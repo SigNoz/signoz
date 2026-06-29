@@ -15,6 +15,7 @@ import { Flex } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { PrecisionOption, PrecisionOptionsEnum } from 'components/Graph/types';
+import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { adjustQueryForV5 } from 'components/QueryBuilderV2/utils';
 import { QueryParams } from 'constants/query';
@@ -52,7 +53,6 @@ import {
 	getSelectedWidgetIndex,
 } from 'providers/Dashboard/util';
 import { AppState } from 'store/reducers';
-import { SuccessResponse } from 'types/api';
 import {
 	ColumnUnit,
 	ContextLinksData,
@@ -61,7 +61,7 @@ import {
 } from 'types/api/dashboard/getAll';
 import { Props } from 'types/api/dashboard/update';
 import { IField } from 'types/api/logs/fields';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -398,7 +398,7 @@ function NewWidget({
 
 	// State to hold query response for sharing between left and right containers
 	const [queryResponse, setQueryResponse] = useState<
-		UseQueryResult<SuccessResponse<MetricRangePayloadProps, unknown>, Error>
+		UseQueryResult<MetricQueryRangeSuccessResponse, Error>
 	>(null as any);
 
 	// request data should be handled by the parent and the child components should consume the same
@@ -821,6 +821,11 @@ function NewWidget({
 					</Flex>
 				</div>
 				<div className="right-header">
+					<HeaderRightSection
+						enableAnnouncements={false}
+						enableShare={false}
+						enableFeedback={false}
+					/>
 					{showSwitchToViewModeButton && (
 						<Button
 							color="primary"

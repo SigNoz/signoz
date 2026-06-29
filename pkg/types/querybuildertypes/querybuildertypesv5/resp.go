@@ -116,6 +116,26 @@ type Label struct {
 	Value any                              `json:"value"`
 }
 
+var _ jsonschema.Preparer = Label{}
+
+// PrepareJSONSchema types `value` as a string/number/bool scalar instead of an
+// untyped {}. The Go field stays `any`; this only shapes the generated schema.
+func (Label) PrepareJSONSchema(s *jsonschema.Schema) error {
+	if _, ok := s.Properties["value"]; !ok {
+		return nil
+	}
+
+	value := jsonschema.Schema{}
+	value.OneOf = []jsonschema.SchemaOrBool{
+		jsonschema.String.ToSchemaOrBool(),
+		jsonschema.Number.ToSchemaOrBool(),
+		jsonschema.Boolean.ToSchemaOrBool(),
+	}
+	s.Properties["value"] = value.ToSchemaOrBool()
+
+	return nil
+}
+
 func GetUniqueSeriesKey(labels []*Label) string {
 	// Fast path for common cases
 	if len(labels) == 0 {
@@ -235,6 +255,7 @@ type RawStream struct {
 	Done  chan *bool
 	Error chan error
 }
+
 
 func roundToNonZeroDecimals(val float64, n int) float64 {
 	if val == 0 || math.IsNaN(val) || math.IsInf(val, 0) {

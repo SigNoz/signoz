@@ -1,0 +1,69 @@
+.fieldGroup {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.fieldLabel {
+	color: var(--l2-foreground);
+	font-size: 12px;
+	font-weight: 500;
+	line-height: 1;
+}
+
+.linkPlaceholder {
+	display: flex;
+	align-items: center;
+	gap: 9px;
+	height: 40px;
+	padding: 0 12px;
+	border-radius: 6px;
+	border: 1px dashed var(--l2-border);
+	background: var(--l1-background);
+	color: var(--l3-foreground);
+}
+
+.linkPlaceholderIcon {
+	flex: none;
+	color: var(--l3-foreground);
+}
+
+.linkPlaceholderText {
+	color: var(--l3-foreground);
+	font-size: 13px;
+	line-height: 1;
+}
+
+.linkField {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	height: 40px;
+	padding: 0 5px 0 12px;
+	border-radius: 6px;
+	border: 1px solid var(--l2-border);
+	background: var(--l1-background);
+
+	&:hover {
+		border-color: var(--l3-border);
+	}
+}
+
+.linkUrl {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	color: var(--l2-foreground);
+	font-family: var(--font-mono, 'Geist Mono'), monospace;
+	font-size: 13px;
+	line-height: 1;
+}
+
+.linkDivider {
+	width: 1px;
+	height: 20px;
+	margin: 0 4px;
+	background: var(--l2-border);
+}

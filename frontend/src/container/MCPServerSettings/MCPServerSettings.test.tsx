@@ -1,8 +1,8 @@
+import { logEventMock } from '__tests__/logEventMock';
 import { render, screen, userEvent } from 'tests/test-utils';
 
 import MCPServerSettings from './MCPServerSettings';
 
-const mockLogEvent = jest.fn();
 const mockCopyToClipboard = jest.fn();
 const mockHistoryPush = jest.fn();
 const mockUseGetGlobalConfig = jest.fn();
@@ -10,11 +10,6 @@ const mockUseGetHosts = jest.fn();
 const mockUseGetTenantLicense = jest.fn();
 const mockToastSuccess = jest.fn();
 const mockToastWarning = jest.fn();
-
-jest.mock('api/common/logEvent', () => ({
-	__esModule: true,
-	default: (...args: unknown[]): unknown => mockLogEvent(...args),
-}));
 
 jest.mock('api/generated/services/global', () => ({
 	useGetGlobalConfig: (...args: unknown[]): unknown =>
@@ -148,7 +143,7 @@ describe('MCPServerSettings', () => {
 
 		render(<MCPServerSettings />, undefined, { role: 'ADMIN' });
 
-		expect(mockLogEvent).toHaveBeenCalledWith('MCP Settings: Page viewed', {
+		expect(logEventMock).toHaveBeenCalledWith('MCP Settings: Page viewed', {
 			role: 'ADMIN',
 		});
 	});

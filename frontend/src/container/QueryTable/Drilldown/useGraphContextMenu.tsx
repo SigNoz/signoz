@@ -2,9 +2,8 @@ import { useMemo } from 'react';
 import { UseQueryResult } from 'react-query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
-import { SuccessResponse } from 'types/api';
 import { ContextLinksData } from 'types/api/dashboard/getAll';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { isValidQueryName } from './drilldownUtils';
@@ -20,10 +19,7 @@ interface UseGraphContextMenuProps {
 	setSubMenu: (subMenu: string) => void;
 	contextLinks?: ContextLinksData;
 	panelType?: PANEL_TYPES;
-	queryRange?: UseQueryResult<
-		SuccessResponse<MetricRangePayloadProps, unknown>,
-		Error
-	>;
+	queryRange?: UseQueryResult<MetricQueryRangeSuccessResponse, Error>;
 }
 
 export function useGraphContextMenu({

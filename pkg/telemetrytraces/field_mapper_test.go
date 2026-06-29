@@ -83,6 +83,17 @@ func TestGetFieldKeyName(t *testing.T) {
 			expectedError:  nil,
 		},
 		{
+			// Query like `attribute.attribute_string:string` should resolve to `attributes_string['attribute_string']`.
+			name: "Attribute key whose name collides with contextual map column resolves as a map lookup",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          SpanAttributesStringColumn,
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+			expectedResult: "attributes_string['attributes_string']",
+			expectedError:  nil,
+		},
+		{
 			name: "Non-existent column",
 			key: telemetrytypes.TelemetryFieldKey{
 				Name:         "nonexistent_field",

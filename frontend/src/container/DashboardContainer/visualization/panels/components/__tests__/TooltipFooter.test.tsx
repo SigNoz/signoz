@@ -1,15 +1,9 @@
+import { logEventMock } from '__tests__/logEventMock';
 import { Events } from 'constants/events';
 import { DEFAULT_PIN_TOOLTIP_KEY } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 import { render, screen, userEvent } from 'tests/test-utils';
 
 import TooltipFooter from '../TooltipFooter';
-
-const mockLogEvent = jest.fn();
-
-jest.mock('api/common/logEvent', () => ({
-	__esModule: true,
-	default: (...args: unknown[]): unknown => mockLogEvent(...args),
-}));
 
 describe('TooltipFooter', () => {
 	const defaultProps = {
@@ -84,7 +78,7 @@ describe('TooltipFooter', () => {
 
 			await user.click(screen.getByTestId('uplot-tooltip-unpin'));
 
-			expect(mockLogEvent).toHaveBeenCalledWith(Events.TOOLTIP_UNPINNED, {
+			expect(logEventMock).toHaveBeenCalledWith(Events.TOOLTIP_UNPINNED, {
 				id: 'panel-123',
 			});
 			expect(dismiss).toHaveBeenCalledTimes(1);

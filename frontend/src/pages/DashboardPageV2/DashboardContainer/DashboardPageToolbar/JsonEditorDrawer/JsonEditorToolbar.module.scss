@@ -1,0 +1,12 @@
+.toolbar {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	padding: 8px 12px;
+	border-bottom: 1px solid var(--l1-border);
+	background: var(--l1-background);
+}
+
+.spacer {
+	flex: 1;
+}

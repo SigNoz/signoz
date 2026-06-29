@@ -1,5 +1,8 @@
+import {
+	SpantypesEventDTO as FlamegraphEvent,
+	SpantypesFlamegraphSpanDTO as FlamegraphSpan,
+} from 'api/generated/services/sigNoz.schemas';
 import { Dispatch, SetStateAction } from 'react';
-import { Event, FlamegraphSpan } from 'types/api/trace/getTraceFlamegraph';
 
 import { VisualLayout } from './computeVisualLayout';
 
@@ -28,7 +31,7 @@ export interface SpanRect {
 }
 
 export interface EventRect {
-	event: Event;
+	event: FlamegraphEvent;
 	span: FlamegraphSpan;
 	cx: number;
 	cy: number;

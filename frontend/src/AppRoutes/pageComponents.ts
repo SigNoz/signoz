@@ -64,10 +64,17 @@ export const TraceDetail = Loadable(
 		),
 );
 
+export const TraceDetailOldRedirect = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "TraceDetailOldRedirect" */ 'pages/TraceDetailOldRedirect/index'
+		),
+);
+
 export const TraceDetailV3 = Loadable(
 	() =>
 		import(
-			/* webpackChunkName: "TraceDetailV3 Page" */ 'pages/TraceDetailV3Page/index'
+			/* webpackChunkName: "TraceDetailV3 Page" */ 'pages/TraceDetailsV3/index'
 		),
 );
 
@@ -81,14 +88,6 @@ export const SignupPage = Loadable(
 
 export const SettingsPage = Loadable(
 	() => import(/* webpackChunkName: "SettingsPage" */ 'pages/Settings'),
-);
-
-export const GettingStarted = Loadable(
-	() => import(/* webpackChunkName: "GettingStarted" */ 'pages/GettingStarted'),
-);
-
-export const Onboarding = Loadable(
-	() => import(/* webpackChunkName: "Onboarding" */ 'pages/OnboardingPage'),
 );
 
 export const OrgOnboarding = Loadable(
@@ -115,6 +114,13 @@ export const DashboardWidget = Loadable(
 		import(/* webpackChunkName: "DashboardWidgetPage" */ 'pages/DashboardWidget'),
 );
 
+export const DashboardPanelEditorPage = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "DashboardPanelEditorPage" */ 'pages/DashboardPageV2/PanelEditorPage/PanelEditorPage'
+		),
+);
+
 export const EditRulesPage = Loadable(
 	() => import(/* webpackChunkName: "Alerts Edit Page" */ 'pages/EditRules'),
 );
@@ -135,12 +141,12 @@ export const AlertOverview = Loadable(
 	() => import(/* webpackChunkName: "Alert Overview" */ 'pages/AlertList'),
 );
 
-export const CreateAlertChannelAlerts = Loadable(
-	() => import(/* webpackChunkName: "Create Channels" */ 'pages/Settings'),
+export const ChannelsNew = Loadable(
+	() => import(/* webpackChunkName: "Create Channels" */ 'pages/AlertList'),
 );
 
-export const AllAlertChannels = Loadable(
-	() => import(/* webpackChunkName: "All Channels" */ 'pages/Settings'),
+export const ChannelsEdit = Loadable(
+	() => import(/* webpackChunkName: "Edit Channels" */ 'pages/AlertList'),
 );
 
 export const AllErrors = Loadable(

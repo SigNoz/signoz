@@ -86,9 +86,9 @@ export const k8sVolumesColumnsConfig: TableColumnDef<K8sVolumesData>[] = [
 	},
 	{
 		id: 'capacity',
-		header: 'Volume Capacity',
+		header: 'Capacity',
 		accessorFn: (row): number => row.volumeCapacity,
-		width: { min: 220 },
+		width: { min: 140 },
 		enableSort: true,
 		cell: ({ value }): React.ReactNode => {
 			const capacity = value as number;
@@ -105,9 +105,9 @@ export const k8sVolumesColumnsConfig: TableColumnDef<K8sVolumesData>[] = [
 	},
 	{
 		id: 'usage',
-		header: 'Volume Utilization',
+		header: 'Used',
 		accessorFn: (row): number => row.volumeUsage,
-		width: { min: 220 },
+		width: { min: 140 },
 		enableSort: true,
 		cell: ({ value }): React.ReactNode => {
 			const usage = value as number;
@@ -124,9 +124,9 @@ export const k8sVolumesColumnsConfig: TableColumnDef<K8sVolumesData>[] = [
 	},
 	{
 		id: 'available',
-		header: 'Volume Available',
+		header: 'Available',
 		accessorFn: (row): number => row.volumeAvailable,
-		width: { min: 220 },
+		width: { min: 140 },
 		enableSort: true,
 		cell: ({ value }): React.ReactNode => {
 			const available = value as number;
@@ -137,6 +137,63 @@ export const k8sVolumesColumnsConfig: TableColumnDef<K8sVolumesData>[] = [
 					attribute="available metric"
 				>
 					<TanStackTable.Text>{formatBytes(available)}</TanStackTable.Text>
+				</ValidateColumnValueWrapper>
+			);
+		},
+	},
+	{
+		id: 'inodes',
+		header: 'Inodes',
+		accessorFn: (row): number => row.volumeInodes,
+		width: { min: 140 },
+		enableSort: true,
+		cell: ({ value }): React.ReactNode => {
+			const inodes = value as number;
+			return (
+				<ValidateColumnValueWrapper
+					value={inodes}
+					entity={InfraMonitoringEntity.VOLUMES}
+					attribute="inodes metric"
+				>
+					<TanStackTable.Text>{inodes}</TanStackTable.Text>
+				</ValidateColumnValueWrapper>
+			);
+		},
+	},
+	{
+		id: 'inodesUsed',
+		header: 'Inodes Used',
+		accessorFn: (row): number => row.volumeInodesUsed,
+		width: { min: 160 },
+		enableSort: true,
+		cell: ({ value }): React.ReactNode => {
+			const inodesUsed = value as number;
+			return (
+				<ValidateColumnValueWrapper
+					value={inodesUsed}
+					entity={InfraMonitoringEntity.VOLUMES}
+					attribute="inodes used metric"
+				>
+					<TanStackTable.Text>{inodesUsed}</TanStackTable.Text>
+				</ValidateColumnValueWrapper>
+			);
+		},
+	},
+	{
+		id: 'inodesFree',
+		header: 'Inodes Free',
+		accessorFn: (row): number => row.volumeInodesFree,
+		width: { min: 160 },
+		enableSort: true,
+		cell: ({ value }): React.ReactNode => {
+			const inodesFree = value as number;
+			return (
+				<ValidateColumnValueWrapper
+					value={inodesFree}
+					entity={InfraMonitoringEntity.VOLUMES}
+					attribute="inodes free metric"
+				>
+					<TanStackTable.Text>{inodesFree}</TanStackTable.Text>
 				</ValidateColumnValueWrapper>
 			);
 		},

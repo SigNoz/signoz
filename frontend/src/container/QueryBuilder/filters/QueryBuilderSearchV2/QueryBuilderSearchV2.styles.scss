@@ -233,8 +233,10 @@
 			background: var(--l1-background);
 			box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
 			padding: 0px;
+			gap: 0;
+			margin: 4px;
 
-			.ant-typography {
+			.qb-tag-text {
 				color: var(--l1-foreground);
 				font-family: Inter;
 				font-size: 14px !important;
@@ -244,7 +246,7 @@
 				padding: 2px 6px;
 			}
 
-			.close-icon {
+			> button {
 				display: flex;
 				align-items: center;
 				justify-content: center;
@@ -259,26 +261,26 @@
 			&.resource {
 				border: 1px solid color-mix(in srgb, var(--bg-aqua-400) 13%, transparent);
 
-				.ant-typography {
+				.qb-tag-text {
 					color: var(--bg-aqua-400);
 					background: color-mix(in srgb, var(--bg-aqua-400) 6%, transparent);
 					font-size: 14px;
 				}
 
-				.close-icon {
+				> button {
 					background: color-mix(in srgb, var(--bg-aqua-400) 6%, transparent);
 				}
 			}
 			&.tag {
 				border: 1px solid color-mix(in srgb, var(--bg-sienna-400) 20%, transparent);
 
-				.ant-typography {
+				.qb-tag-text {
 					color: var(--bg-sienna-400);
 					background: color-mix(in srgb, var(--bg-sienna-400) 10%, transparent);
 					font-size: 14px;
 				}
 
-				.close-icon {
+				> button {
 					background: color-mix(in srgb, var(--bg-sienna-400) 10%, transparent);
 				}
 			}
@@ -286,13 +288,13 @@
 			&.scope {
 				border: 1px solid color-mix(in srgb, var(--bg-robin-400) 20%, transparent);
 
-				.ant-typography {
+				.qb-tag-text {
 					color: var(--bg-robin-400);
 					background: color-mix(in srgb, var(--bg-robin-400) 10%, transparent);
 					font-size: 14px;
 				}
 
-				.close-icon {
+				> button {
 					background: color-mix(in srgb, var(--bg-robin-400) 10%, transparent);
 				}
 			}

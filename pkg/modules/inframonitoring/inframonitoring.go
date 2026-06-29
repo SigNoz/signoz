@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/types/inframonitoringtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -19,9 +20,11 @@ type Handler interface {
 	ListStatefulSets(http.ResponseWriter, *http.Request)
 	ListJobs(http.ResponseWriter, *http.Request)
 	ListDaemonSets(http.ResponseWriter, *http.Request)
+	GetChecks(http.ResponseWriter, *http.Request)
 }
 
 type Module interface {
+	statsreporter.StatsCollector
 	ListHosts(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableHosts) (*inframonitoringtypes.Hosts, error)
 	ListPods(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostablePods) (*inframonitoringtypes.Pods, error)
 	ListNodes(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableNodes) (*inframonitoringtypes.Nodes, error)
@@ -32,4 +35,5 @@ type Module interface {
 	ListStatefulSets(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableStatefulSets) (*inframonitoringtypes.StatefulSets, error)
 	ListJobs(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableJobs) (*inframonitoringtypes.Jobs, error)
 	ListDaemonSets(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableDaemonSets) (*inframonitoringtypes.DaemonSets, error)
+	GetChecks(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableChecks) (*inframonitoringtypes.Checks, error)
 }

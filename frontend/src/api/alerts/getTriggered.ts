@@ -5,6 +5,13 @@ import convertObjectIntoParams from 'lib/query/convertObjectIntoParams';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { PayloadProps, Props } from 'types/api/alerts/getTriggered';
 
+/**
+ * @deprecated Use the generated `useGetAlerts` hook (or `getAlerts` fetcher) from
+ * `api/generated/services/alerts` instead. This hand-written client targets the
+ * same endpoint and will be removed once call sites migrate.
+ *
+ * Part of https://github.com/SigNoz/engineering-pod/issues/5289, add a comment or update when removing this method.
+ */
 const getTriggered = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
