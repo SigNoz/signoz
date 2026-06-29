@@ -29,7 +29,6 @@ function ModelCostActionsMenu({
 				label: 'Edit',
 				onClick: (): void => onEdit(rule),
 			},
-			{ key: 'divider', type: 'divider' },
 			{
 				key: 'delete',
 				label: 'Delete',
