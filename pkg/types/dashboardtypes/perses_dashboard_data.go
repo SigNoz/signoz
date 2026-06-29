@@ -48,7 +48,42 @@ func (d *DashboardSpec) UnmarshalJSON(data []byte) error {
 // ══════════════════════════════════════════════
 
 func (d *DashboardSpec) Validate() error {
+	if err := d.validateVariables(); err != nil {
+		return err
+	}
+	if err := d.validatePanels(); err != nil {
+		return err
+	}
+	return d.validateLayouts()
+}
+
+// validateVariables rejects two variables sharing the same name.
+func (d *DashboardSpec) validateVariables() error {
+	seen := make(map[string]struct{}, len(d.Variables))
+	for i, v := range d.Variables {
+		var name string
+		switch s := v.Spec.(type) {
+		case *ListVariableSpec:
+			name = s.Name
+		case *TextVariableSpec:
+			name = s.Name
+		default:
+			// Unreachable via UnmarshalJSON; reaching here means a Go caller broke the Kind/Spec pairing.
+			return errors.NewInternalf(errors.CodeInternal, "spec.variables[%d].spec: unexpected variable spec type %T", i, v.Spec)
+		}
+		if _, dup := seen[name]; dup {
+			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.variables[%d]: duplicate variable name %q", i, name)
+		}
+		seen[name] = struct{}{}
+	}
+	return nil
+}
+
+func (d *DashboardSpec) validatePanels() error {
 	for key, panel := range d.Panels {
+		if err := common.ValidateID(key); err != nil {
+			return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "spec.panels: %s", err.Error())
+		}
 		if panel == nil {
 			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.panels.%s: panel must not be null", key)
 		}
@@ -69,6 +104,13 @@ func (d *DashboardSpec) Validate() error {
 }
 
 func validateQueryAllowedForPanel(plugin QueryPlugin, allowed []QueryPluginKind, panelKind PanelPluginKind, path string) error {
+	compositeSubQueryTypeToPluginKind := map[qb.QueryType]QueryPluginKind{
+		qb.QueryTypeBuilder:       QueryKindBuilder,
+		qb.QueryTypeFormula:       QueryKindFormula,
+		qb.QueryTypeTraceOperator: QueryKindTraceOperator,
+		qb.QueryTypePromQL:        QueryKindPromQL,
+		qb.QueryTypeClickHouseSQL: QueryKindClickHouseSQL,
+	}
 	if !slices.Contains(allowed, plugin.Kind) {
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput,
 			"%s: query kind %q is not supported by panel kind %q", path, plugin.Kind, panelKind)
@@ -96,12 +138,35 @@ func validateQueryAllowedForPanel(plugin QueryPlugin, allowed []QueryPluginKind,
 	return nil
 }
 
-var (
-	compositeSubQueryTypeToPluginKind = map[qb.QueryType]QueryPluginKind{
-		qb.QueryTypeBuilder:       QueryKindBuilder,
-		qb.QueryTypeFormula:       QueryKindFormula,
-		qb.QueryTypeTraceOperator: QueryKindTraceOperator,
-		qb.QueryTypePromQL:        QueryKindPromQL,
-		qb.QueryTypeClickHouseSQL: QueryKindClickHouseSQL,
+// validateLayouts rejects grid items referencing a panel that doesn't exist.
+func (d *DashboardSpec) validateLayouts() error {
+	for li, layout := range d.Layouts {
+		grid, ok := layout.Spec.(*dashboard.GridLayoutSpec)
+		if !ok {
+			// Unreachable via UnmarshalJSON; reaching here means a Go caller broke the Kind/Spec pairing.
+			return errors.NewInternalf(errors.CodeInternal, "spec.layouts[%d].spec: unexpected layout spec type %T", li, layout.Spec)
+		}
+		for ii, item := range grid.Items {
+			path := fmt.Sprintf("spec.layouts[%d].spec.items[%d].content", li, ii)
+			if item.Content == nil {
+				return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s: content reference is required", path)
+			}
+			key, err := panelKeyFromRef(item.Content.Path, item.Content.Ref, path)
+			if err != nil {
+				return err
+			}
+			if _, ok := d.Panels[key]; !ok {
+				return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s: references unknown panel %q", path, key)
+			}
+		}
 	}
-)
+	return nil
+}
+
+// panelKeyFromRef extracts <key> from a "#/spec/panels/<key>" content ref.
+func panelKeyFromRef(refPath []string, ref string, path string) (string, error) {
+	if len(refPath) != 3 || refPath[0] != "spec" || refPath[1] != "panels" {
+		return "", errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s: %q must reference a panel as \"#/spec/panels/<key>\"", path, ref)
+	}
+	return refPath[2], nil
+}
