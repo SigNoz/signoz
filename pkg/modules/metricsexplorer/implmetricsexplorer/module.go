@@ -376,7 +376,7 @@ func (m *module) GetMetricDashboards(ctx context.Context, orgID valuer.UUID, met
 	return newMetricDashboardsResponse(data[metricName]), nil
 }
 
-func (m *module) GetMetricDashboardsV2(ctx context.Context, orgID valuer.UUID, metricName string) (*metricsexplorertypes.MetricDashboardsResponse, error) {
+func (m *module) GetMetricDashboardsV2(ctx context.Context, orgID valuer.UUID, metricName string) (*metricsexplorertypes.MetricDashboardPanelsResponse, error) {
 	if metricName == "" {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "metricName is required")
 	}
@@ -385,7 +385,7 @@ func (m *module) GetMetricDashboardsV2(ctx context.Context, orgID valuer.UUID, m
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to get dashboards for metric")
 	}
 
-	return newMetricDashboardsResponse(data[metricName]), nil
+	return metricsexplorertypes.NewMetricDashboardPanelsResponse(data[metricName]), nil
 }
 
 func newMetricDashboardsResponse(dashboardList []map[string]string) *metricsexplorertypes.MetricDashboardsResponse {

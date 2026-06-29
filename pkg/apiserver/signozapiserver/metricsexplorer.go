@@ -197,7 +197,7 @@ func (provider *provider) addMetricsExplorerRoutes(router *mux.Router) error {
 			Request:             nil,
 			RequestQuery:        new(metricsexplorertypes.MetricNameQuery),
 			RequestContentType:  "",
-			Response:            new(metricsexplorertypes.MetricDashboardsResponse),
+			Response:            new(metricsexplorertypes.MetricDashboardPanelsResponse),
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusNotFound, http.StatusInternalServerError},

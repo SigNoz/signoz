@@ -11,7 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-func (m *module) GetByMetricNamesV2(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string][]map[string]string, error) {
+func (m *module) GetByMetricNamesV2(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string]dashboardtypes.DashboardPanelReferences, error) {
 	metricNamesMap := make(map[string]bool, len(metricNames))
 	for _, name := range metricNames {
 		metricNamesMap[name] = true
@@ -54,8 +54,8 @@ func (m *module) getCandidatesDashboardsForMetricNames(ctx context.Context, orgI
 	return candidates, nil
 }
 
-func (m *module) selectDashboardsFromCandidates(ctx context.Context, metricNamesMap map[string]bool, candidateDashboards []*dashboardtypes.DashboardV2) map[string][]map[string]string {
-	result := make(map[string][]map[string]string)
+func (m *module) selectDashboardsFromCandidates(ctx context.Context, metricNamesMap map[string]bool, candidateDashboards []*dashboardtypes.DashboardV2) map[string]dashboardtypes.DashboardPanelReferences {
+	result := make(map[string]dashboardtypes.DashboardPanelReferences)
 	for _, dashboard := range candidateDashboards {
 		for panelID, panel := range dashboard.Spec.Panels {
 			if panel == nil {
@@ -69,11 +69,11 @@ func (m *module) selectDashboardsFromCandidates(ctx context.Context, metricNames
 				if !metricNamesMap[metricName] {
 					continue
 				}
-				result[metricName] = append(result[metricName], map[string]string{
-					"dashboard_id":   dashboard.ID.StringValue(),
-					"dashboard_name": dashboard.Spec.Display.Name,
-					"widget_id":      panelID,
-					"widget_name":    panel.Spec.Display.Name,
+				result[metricName] = append(result[metricName], dashboardtypes.DashboardPanelRef{
+					DashboardID:   dashboard.ID.StringValue(),
+					DashboardName: dashboard.Spec.Display.Name,
+					PanelID:       panelID,
+					PanelName:     panel.Spec.Display.Name,
 				})
 			}
 		}

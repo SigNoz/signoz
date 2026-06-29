@@ -1223,8 +1223,8 @@ def test_dashboard_v2_get_by_metric_name(
     assert response.status_code == HTTPStatus.OK, response.text
     dashboards = response.json()["data"]["dashboards"]
 
-    # No dashboard/widget should be returned more than once.
-    pairs = [(d["dashboardId"], d["widgetId"]) for d in dashboards]
+    # No dashboard/panel should be returned more than once.
+    pairs = [(d["dashboardId"], d["panelId"]) for d in dashboards]
     assert len(pairs) == len(set(pairs))
 
     # D1 (1 panel) + D2 (2 panels) + D3 (1 promql panel) match; D4 (target only in
@@ -1234,7 +1234,7 @@ def test_dashboard_v2_get_by_metric_name(
 
     by_dashboard: dict[str, list[str]] = {}
     for d in dashboards:
-        by_dashboard.setdefault(d["dashboardId"], []).append(d["widgetName"])
+        by_dashboard.setdefault(d["dashboardId"], []).append(d["panelName"])
     assert sorted(by_dashboard[d1_id]) == ["D1 builder target"]
     assert sorted(by_dashboard[d2_id]) == ["D2 clickhouse target", "D2 promql target"]
     assert sorted(by_dashboard[d3_id]) == ["D3 promql target"]

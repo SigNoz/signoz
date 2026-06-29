@@ -3947,6 +3947,32 @@ export interface DashboardtypesDashboardDTO {
 	updatedBy?: string;
 }
 
+export interface DashboardtypesDashboardPanelRefDTO {
+	/**
+	 * @type string
+	 */
+	dashboardId: string;
+	/**
+	 * @type string
+	 */
+	dashboardName: string;
+	/**
+	 * @type string
+	 */
+	panelId: string;
+	/**
+	 * @type string
+	 */
+	panelName: string;
+}
+
+/**
+ * @nullable
+ */
+export type DashboardtypesDashboardPanelReferencesDTO =
+	| DashboardtypesDashboardPanelRefDTO[]
+	| null;
+
 export enum DashboardtypesDatasourcePluginVariantStructDTOKind {
 	'signoz/Datasource' = 'signoz/Datasource',
 }
@@ -6956,6 +6982,10 @@ export interface MetricsexplorertypesMetricDashboardDTO {
 	 * @type string
 	 */
 	widgetName: string;
+}
+
+export interface MetricsexplorertypesMetricDashboardPanelsResponseDTO {
+	dashboards: DashboardtypesDashboardPanelReferencesDTO | null;
 }
 
 export interface MetricsexplorertypesMetricDashboardsResponseDTO {
@@ -11134,7 +11164,7 @@ export type GetMetricDashboardsV2Params = {
 };
 
 export type GetMetricDashboardsV2200 = {
-	data: MetricsexplorertypesMetricDashboardsResponseDTO;
+	data: MetricsexplorertypesMetricDashboardPanelsResponseDTO;
 	/**
 	 * @type string
 	 */

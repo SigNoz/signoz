@@ -2673,6 +2673,27 @@ components:
         updatedBy:
           type: string
       type: object
+    DashboardtypesDashboardPanelRef:
+      properties:
+        dashboardId:
+          type: string
+        dashboardName:
+          type: string
+        panelId:
+          type: string
+        panelName:
+          type: string
+      required:
+      - dashboardId
+      - dashboardName
+      - panelId
+      - panelName
+      type: object
+    DashboardtypesDashboardPanelReferences:
+      items:
+        $ref: '#/components/schemas/DashboardtypesDashboardPanelRef'
+      nullable: true
+      type: array
     DashboardtypesDashboardSpec:
       properties:
         datasources:
@@ -5362,6 +5383,13 @@ components:
       - dashboardId
       - widgetId
       - widgetName
+      type: object
+    MetricsexplorertypesMetricDashboardPanelsResponse:
+      properties:
+        dashboards:
+          $ref: '#/components/schemas/DashboardtypesDashboardPanelReferences'
+      required:
+      - dashboards
       type: object
     MetricsexplorertypesMetricDashboardsResponse:
       properties:
@@ -21972,7 +22000,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/MetricsexplorertypesMetricDashboardsResponse'
+                    $ref: '#/components/schemas/MetricsexplorertypesMetricDashboardPanelsResponse'
                   status:
                     type: string
                 required:
