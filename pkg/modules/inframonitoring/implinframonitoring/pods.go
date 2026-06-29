@@ -26,6 +26,7 @@ func buildPodRecords(
 	groupBy []qbtypes.GroupByKey,
 	metadataMap map[string]map[string]string,
 	phaseCounts map[string]podPhaseCounts,
+	statusCounts map[string]podStatusCounts,
 	reqEnd int64,
 ) []inframonitoringtypes.PodRecord {
 	metricsMap := parseFullQueryResponse(resp, groupBy)
@@ -38,6 +39,7 @@ func buildPodRecords(
 		record := inframonitoringtypes.PodRecord{ // initialize with default values
 			PodUID:           podUID,
 			PodPhase:         inframonitoringtypes.PodPhaseNoData,
+			PodStatus:        inframonitoringtypes.PodStatusNoData,
 			PodCPU:           -1,
 			PodCPURequest:    -1,
 			PodCPULimit:      -1,
@@ -91,6 +93,74 @@ func buildPodRecords(
 					record.PodPhase = inframonitoringtypes.PodPhaseFailed
 				case phaseCountsForGroup.Unknown == 1:
 					record.PodPhase = inframonitoringtypes.PodPhaseUnknown
+				}
+			}
+		}
+
+		if statusCountsForGroup, ok := statusCounts[compositeKey]; ok {
+			record.PodCountsByStatus = inframonitoringtypes.PodCountsByStatus{
+				Pending:                    statusCountsForGroup.Pending,
+				Running:                    statusCountsForGroup.Running,
+				Succeeded:                  statusCountsForGroup.Succeeded,
+				Failed:                     statusCountsForGroup.Failed,
+				Unknown:                    statusCountsForGroup.Unknown,
+				CrashLoopBackOff:           statusCountsForGroup.CrashLoopBackOff,
+				ImagePullBackOff:           statusCountsForGroup.ImagePullBackOff,
+				ErrImagePull:               statusCountsForGroup.ErrImagePull,
+				CreateContainerConfigError: statusCountsForGroup.CreateContainerConfigError,
+				ContainerCreating:          statusCountsForGroup.ContainerCreating,
+				OOMKilled:                  statusCountsForGroup.OOMKilled,
+				Completed:                  statusCountsForGroup.Completed,
+				Error:                      statusCountsForGroup.Error,
+				ContainerCannotRun:         statusCountsForGroup.ContainerCannotRun,
+				Evicted:                    statusCountsForGroup.Evicted,
+				NodeAffinity:               statusCountsForGroup.NodeAffinity,
+				NodeLost:                   statusCountsForGroup.NodeLost,
+				Shutdown:                   statusCountsForGroup.Shutdown,
+				UnexpectedAdmissionError:   statusCountsForGroup.UnexpectedAdmissionError,
+			}
+
+			// In list mode each group is one pod; the count==1 bucket identifies the status.
+			if isPodUIDInGroupBy {
+				switch {
+				case statusCountsForGroup.Pending == 1:
+					record.PodStatus = inframonitoringtypes.PodStatusPending
+				case statusCountsForGroup.Running == 1:
+					record.PodStatus = inframonitoringtypes.PodStatusRunning
+				case statusCountsForGroup.Succeeded == 1:
+					record.PodStatus = inframonitoringtypes.PodStatusSucceeded
+				case statusCountsForGroup.Failed == 1:
+					record.PodStatus = inframonitoringtypes.PodStatusFailed
+				case statusCountsForGroup.Unknown == 1:
+					record.PodStatus = inframonitoringtypes.PodStatusUnknown
+				case statusCountsForGroup.CrashLoopBackOff == 1:
+					record.PodStatus = inframonitoringtypes.PodStatusCrashLoopBackOff
+				case statusCountsForGroup.ImagePullBackOff == 1:
+					record.PodStatus = inframonitoringtypes.PodStatusImagePullBackOff
+				case statusCountsForGroup.ErrImagePull == 1:
+					record.PodStatus = inframonitoringtypes.PodStatusErrImagePull
+				case statusCountsForGroup.CreateContainerConfigError == 1:
+					record.PodStatus = inframonitoringtypes.PodStatusCreateContainerConfigError
+				case statusCountsForGroup.ContainerCreating == 1:
+					record.PodStatus = inframonitoringtypes.PodStatusContainerCreating
+				case statusCountsForGroup.OOMKilled == 1:
+					record.PodStatus = inframonitoringtypes.PodStatusOOMKilled
+				case statusCountsForGroup.Completed == 1:
+					record.PodStatus = inframonitoringtypes.PodStatusCompleted
+				case statusCountsForGroup.Error == 1:
+					record.PodStatus = inframonitoringtypes.PodStatusError
+				case statusCountsForGroup.ContainerCannotRun == 1:
+					record.PodStatus = inframonitoringtypes.PodStatusContainerCannotRun
+				case statusCountsForGroup.Evicted == 1:
+					record.PodStatus = inframonitoringtypes.PodStatusEvicted
+				case statusCountsForGroup.NodeAffinity == 1:
+					record.PodStatus = inframonitoringtypes.PodStatusNodeAffinity
+				case statusCountsForGroup.NodeLost == 1:
+					record.PodStatus = inframonitoringtypes.PodStatusNodeLost
+				case statusCountsForGroup.Shutdown == 1:
+					record.PodStatus = inframonitoringtypes.PodStatusShutdown
+				case statusCountsForGroup.UnexpectedAdmissionError == 1:
+					record.PodStatus = inframonitoringtypes.PodStatusUnexpectedAdmissionError
 				}
 			}
 		}
