@@ -1629,7 +1629,7 @@ func TestSkipResourceFingerprint(t *testing.T) {
 
 		// Only the count query runs against the telemetry store; the CTE
 		// itself is embedded as SQL in the main query (no extra round trip).
-		mock.ExpectQueryRow(`SELECT count\(\) FROM \(SELECT fingerprint FROM signoz_traces\.distributed_traces_v3_resource`).
+		mock.ExpectQueryRow(`SELECT uniq\(fingerprint\) FROM signoz_traces\.distributed_traces_v3_resource`).
 			WillReturnRow(cmock.NewRow([]cmock.ColumnType{
 				{Name: "count", Type: "UInt64"},
 			}, []any{uint64(2)}))
@@ -1649,7 +1649,7 @@ func TestSkipResourceFingerprint(t *testing.T) {
 		mockStore := telemetrystoretest.New(telemetrystore.Config{}, &regexQueryMatcher{})
 		mock := mockStore.Mock()
 
-		mock.ExpectQueryRow(`SELECT count\(\) FROM \(SELECT fingerprint FROM signoz_traces\.distributed_traces_v3_resource`).
+		mock.ExpectQueryRow(`SELECT uniq\(fingerprint\) FROM signoz_traces\.distributed_traces_v3_resource`).
 			WillReturnRow(cmock.NewRow([]cmock.ColumnType{
 				{Name: "count", Type: "UInt64"},
 			}, []any{threshold}))
