@@ -221,8 +221,8 @@ func (role *PostableRole) UnmarshalJSON(data []byte) error {
 
 func (role *UpdatableRole) UnmarshalJSON(data []byte) error {
 	shadow := struct {
-		Description       *string           `json:"description"`
-		TransactionGroups TransactionGroups `json:"transactionGroups"`
+		Description       *string          `json:"description"`
+		TransactionGroups *json.RawMessage `json:"transactionGroups"`
 	}{}
 
 	if err := json.Unmarshal(data, &shadow); err != nil {
@@ -237,8 +237,13 @@ func (role *UpdatableRole) UnmarshalJSON(data []byte) error {
 		return errors.New(errors.TypeInvalidInput, ErrCodeRoleInvalidInput, "transactionGroups is required").WithAdditional("send an empty array to clear the role's transaction groups")
 	}
 
+	transactionGroups, err := NewTransactionGroups(*shadow.TransactionGroups)
+	if err != nil {
+		return err
+	}
+
 	role.Description = *shadow.Description
-	role.TransactionGroups = shadow.TransactionGroups
+	role.TransactionGroups = transactionGroups
 	return nil
 }
 
