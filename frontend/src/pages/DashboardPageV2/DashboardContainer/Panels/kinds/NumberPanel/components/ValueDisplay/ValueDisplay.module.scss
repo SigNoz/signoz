@@ -1,0 +1,36 @@
+.container {
+	width: 100%;
+	height: 100%;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	position: relative;
+}
+
+.textContainer {
+	display: flex;
+	flex-direction: row;
+	align-items: baseline;
+	justify-content: center;
+	flex-wrap: nowrap;
+}
+
+.valueText {
+	text-align: center;
+	font-weight: 400;
+}
+
+.conflictBackground {
+	position: absolute;
+	right: 10px;
+	bottom: 10px;
+}
+
+.conflictText {
+	margin-left: 10px;
+	margin-top: 20px;
+}
+
+.conflictIcon {
+	color: var(--warning-background);
+}

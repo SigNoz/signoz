@@ -70,7 +70,11 @@ jobs:
           cd tests/e2e && pnpm install --frozen-lockfile
       - name: playwright-browsers
         run: |
-          cd tests/e2e && pnpm playwright install --with-deps ${{ matrix.project }}
+          docker create --name pw mcr.microsoft.com/playwright:v1.57.0-noble
+          docker cp pw:/ms-playwright "$RUNNER_TEMP/ms-playwright"
+          docker rm pw
+          echo "PLAYWRIGHT_BROWSERS_PATH=$RUNNER_TEMP/ms-playwright" >> "$GITHUB_ENV"
+          cd tests/e2e && pnpm playwright install-deps ${{ matrix.project }}
       - name: bring-up-stack
         run: |
           cd tests && \

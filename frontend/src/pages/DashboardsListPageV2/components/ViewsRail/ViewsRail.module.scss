@@ -1,0 +1,256 @@
+.rail {
+	display: flex;
+	flex-direction: column;
+	width: 300px;
+	flex: none;
+	border-right: 1px solid var(--l2-border);
+	background: var(--l1-background);
+	overflow: hidden;
+	transition: width 0.18s cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+
+.collapsed {
+	width: 0;
+	border-right-color: transparent;
+}
+
+.header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	padding: 14px 12px 10px 16px;
+}
+
+.headerTitle {
+	margin: 0;
+	font-size: var(--font-size-base);
+	font-weight: var(--font-weight-semibold);
+	letter-spacing: -0.01em;
+	color: var(--l1-foreground);
+}
+
+.search {
+	padding: 0 12px 10px;
+}
+
+.searchEmpty {
+	padding: 12px;
+	color: var(--l3-foreground);
+	font-size: var(--font-size-xs);
+	text-align: center;
+}
+
+.scroll {
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+	padding: 0 8px 8px;
+}
+
+.groupLabel {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 16px 8px 8px;
+	font-size: var(--font-size-xs);
+	font-weight: var(--font-weight-semibold);
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--l3-foreground);
+}
+
+.groupLabelSpaced {
+	margin-top: 10px;
+	border-top: 1px solid var(--l2-border);
+	padding-top: 18px;
+}
+
+.groupCount {
+	font-size: var(--font-size-xs);
+	font-weight: var(--font-weight-normal);
+	letter-spacing: 0;
+	color: var(--l3-foreground);
+	background: var(--l2-background);
+	border-radius: 10px;
+	padding: 1px 6px;
+}
+
+.row {
+	display: flex;
+	align-items: center;
+	margin: 3px 0;
+	border-radius: 6px;
+	transition: background 0.12s;
+}
+
+.row:hover {
+	background: var(--l2-background);
+}
+
+.rowActive {
+	background: var(--l2-background);
+}
+
+.item {
+	// Neutralise the signoz Button defaults so it reads as a full-width,
+	// left-aligned list row; the row coordinates hover/active colours below.
+	--button-display: flex;
+	--button-justify-content: flex-start;
+	--button-height: auto;
+	--button-padding: 9px 10px;
+	--button-gap: 10px;
+	--button-variant-ghost-background-color: transparent;
+	--button-variant-ghost-hover-background-color: transparent;
+	--button-variant-ghost-color: var(--l2-foreground);
+	--button-variant-ghost-hover-color: var(--l1-foreground);
+	flex: 1;
+	min-width: 0;
+	width: 100%;
+	font-size: var(--font-size-sm);
+}
+
+.row:hover .item,
+.rowActive .item {
+	--button-variant-ghost-color: var(--l1-foreground);
+}
+
+.itemIcon {
+	display: inline-flex;
+	color: var(--l3-foreground);
+}
+
+.rowActive .itemIcon {
+	color: var(--primary-background);
+}
+
+.itemLabel {
+	flex: 1;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.dirtyDot {
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	background: var(--warning-background);
+	flex: none;
+}
+
+.itemAction {
+	// Square icon button that surfaces on row hover and turns red on its own
+	// hover; colours flow through the signoz Button tokens.
+	--button-height: auto;
+	--button-padding: 0;
+	--button-border-radius: 4px;
+	--button-variant-ghost-background-color: transparent;
+	--button-variant-ghost-color: var(--l3-foreground);
+	--button-variant-ghost-hover-background-color: var(--danger-background);
+	--button-variant-ghost-hover-color: var(--danger-color, #fff);
+	width: 20px;
+	height: 20px;
+	margin-right: 8px;
+	opacity: 0;
+	transition: opacity 0.1s;
+}
+
+.row:hover .itemAction {
+	opacity: 1;
+}
+
+.empty {
+	margin: 4px 8px;
+	padding: 12px;
+	border: 1px dashed var(--l2-border);
+	border-radius: 8px;
+	color: var(--l3-foreground);
+	font-size: var(--font-size-xs);
+	line-height: 1.5;
+	text-align: center;
+}
+
+.dirtyPanel {
+	flex: none;
+	padding: 12px 14px;
+	border-top: 1px solid var(--l2-border);
+	background: var(--l2-background);
+}
+
+.dirtyPanelDefault {
+	background: var(--l1-background);
+}
+
+.dirtyTitle {
+	font-size: var(--font-size-xs);
+	font-weight: var(--font-weight-semibold);
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--l2-foreground);
+	margin-bottom: 8px;
+}
+
+.dirtyActions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+
+.savePopover {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	width: 280px;
+	padding: 4px;
+}
+
+.saveTitle {
+	font-size: var(--font-size-sm);
+	font-weight: var(--font-weight-semibold);
+	color: var(--l1-foreground);
+}
+
+.saveLabel {
+	font-size: var(--font-size-xs);
+	color: var(--l3-foreground);
+	margin-top: 2px;
+}
+
+.iconGrid {
+	display: grid;
+	grid-template-columns: repeat(5, 1fr);
+	gap: 6px;
+}
+
+.iconCell {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 34px;
+	border: 1px solid var(--l2-border);
+	border-radius: 6px;
+	background: var(--l2-background);
+	color: var(--l2-foreground);
+	cursor: pointer;
+	transition:
+		border-color 0.12s,
+		color 0.12s;
+}
+
+.iconCell:hover {
+	color: var(--l1-foreground);
+	border-color: var(--l3-foreground);
+}
+
+.iconCellOn {
+	border-color: var(--primary-background);
+	color: var(--primary-background);
+}
+
+.saveActions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 8px;
+	margin-top: 4px;
+}

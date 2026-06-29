@@ -480,7 +480,9 @@ type MetricAggregation struct {
 	// value filter to apply to the query
 	ValueFilter *metrictypes.MetricValueFilter `json:"-"`
 	// reduce to operator for metric scalar requests
-	ReduceTo ReduceTo `json:"reduceTo,omitempty"`
+	ReduceTo ReduceTo `json:"reduceTo,omitzero"`
+
+	Reduced bool `json:"-"`
 }
 
 // Copy creates a deep copy of MetricAggregation.
@@ -617,6 +619,25 @@ func (f FunctionArg) Copy() FunctionArg {
 	// value is an interface{}, we keep it as-is
 	// in practice, it's usually primitives (string, float64, etc)
 	return f
+}
+
+var _ jsonschema.Preparer = FunctionArg{}
+
+// PrepareJSONSchema types `value` as a number-or-string scalar instead of an
+// untyped {}. The Go field stays `any`; this only shapes the generated schema.
+func (FunctionArg) PrepareJSONSchema(s *jsonschema.Schema) error {
+	if _, ok := s.Properties["value"]; !ok {
+		return nil
+	}
+
+	value := jsonschema.Schema{}
+	value.OneOf = []jsonschema.SchemaOrBool{
+		jsonschema.Number.ToSchemaOrBool(),
+		jsonschema.String.ToSchemaOrBool(),
+	}
+	s.Properties["value"] = value.ToSchemaOrBool()
+
+	return nil
 }
 
 type Function struct {

@@ -1,94 +1,110 @@
-import { useMemo } from 'react';
-import { Badge } from '@signozhq/ui/badge';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
-import { Typography } from '@signozhq/ui/typography';
-import { EllipsisVertical } from '@signozhq/icons';
-import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
-import cx from 'classnames';
+import { useState } from 'react';
+import type {
+	DashboardtypesPanelDTO,
+	DashboardtypesTimePreferenceDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import { getPanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Panels/registry';
+import { panelTimePreferenceLabel } from 'pages/DashboardPageV2/DashboardContainer/hooks/resolvePanelTimeWindow';
+import { usePanelQuery } from 'pages/DashboardPageV2/DashboardContainer/hooks/usePanelQuery';
 
 import type { DashboardSection } from '../../utils';
-import type { DeletePanelArgs } from './hooks/useDeletePanel';
-import type { MovePanelArgs } from './hooks/useMovePanelToSection';
-import PanelActionsMenu from './PanelActionsMenu/PanelActionsMenu';
+import { usePanelInteractions } from './hooks/usePanelInteractions';
+import PanelBody from './PanelBody/PanelBody';
+import PanelHeader from './PanelHeader/PanelHeader';
 import styles from './Panel.module.scss';
 
-/** Panel action context — present together only in editable sectioned mode. */
+/**
+ * Layout context for the panel actions menu — present only in editable mode. No
+ * callbacks: the menu resolves its own mutations from store-backed hooks.
+ */
 export interface PanelActionsConfig {
 	currentLayoutIndex: number;
 	sections: DashboardSection[];
-	onMovePanel: (args: MovePanelArgs) => void;
-	onDeletePanel: (args: DeletePanelArgs) => void;
 }
 
 interface PanelProps {
-	panel: DashboardtypesPanelDTO | undefined;
+	panel: DashboardtypesPanelDTO;
 	panelId: string;
-	/**
-	 * Placeholder: true once this panel's section enters the viewport. The panel
-	 * query-loading implementation (later PR) will consume this to lazily fetch
-	 * data. Currently unused on purpose.
-	 */
+	/** True once this panel's section enters the viewport — gates the fetch. */
 	isVisible?: boolean;
 	/** Move/delete actions — present only in editable sectioned mode. */
 	panelActions?: PanelActionsConfig;
 }
 
+/**
+ * A single dashboard panel (header + body). Thin orchestrator: fetching lives in
+ * `usePanelQuery`, interactions in `usePanelInteractions`, state in `PanelBody`.
+ */
 function Panel({
 	panel,
 	panelId,
 	isVisible,
 	panelActions,
 }: PanelProps): JSX.Element {
-	const name = panel?.spec?.display?.name || `Panel ${panelId.slice(0, 6)}`;
-	const description = panel?.spec?.display?.description;
-	const kind = panel?.spec?.plugin?.kind?.replace(/^signoz\//, '') ?? 'unknown';
-	const queryCount = panel?.spec?.queries?.length ?? 0;
+	const name = panel.spec.display.name;
+	const description = panel.spec.display?.description;
+	const fullKind = panel.spec.plugin.kind;
 
-	const headerTitle = useMemo(() => {
-		if (!description) {
-			return name;
-		}
-		return (
-			<TooltipSimple title={description}>
-				<span>{name}</span>
-			</TooltipSimple>
-		);
-	}, [name, description]);
+	// A per-panel time preference is surfaced as a header pill. `visualization` is
+	// common to every plugin-spec variant — localized cast reads it without
+	// narrowing on kind.
+	const timePreference = (
+		panel.spec.plugin.spec as
+			| { visualization?: { timePreference?: DashboardtypesTimePreferenceDTO } }
+			| undefined
+	)?.visualization?.timePreference;
+	const timeLabel = panelTimePreferenceLabel(timePreference);
+
+	const panelDefinition = getPanelDefinition(fullKind);
+
+	// Header search: only kinds that declare it render the box. The term is owned
+	// here and threaded to both the header (input) and renderer (filter).
+	const searchable = !!panelDefinition?.actions.search;
+	const [searchTerm, setSearchTerm] = useState('');
+
+	const { data, isFetching, error, refetch, pagination } = usePanelQuery({
+		panel,
+		panelId,
+		// Lazy: fetch only once on screen (undefined → visible) and a renderer exists.
+		enabled: !!panelDefinition && isVisible !== false,
+	});
+
+	const { onDragSelect, dashboardPreference } = usePanelInteractions();
 
 	return (
 		<div
 			className={styles.panel}
 			data-panel-visible={isVisible ? 'true' : 'false'}
 		>
-			<div className={cx(styles.header, 'panel-drag-handle')}>
-				<div className={styles.headerLeft}>
-					<Typography.Text className={styles.headerTitle}>
-						{headerTitle}
-					</Typography.Text>
-					<Badge className={styles.badge}>{kind}</Badge>
-				</div>
-				{panelActions ? (
-					<PanelActionsMenu
-						panelId={panelId}
-						currentLayoutIndex={panelActions.currentLayoutIndex}
-						sections={panelActions.sections}
-						onMovePanel={panelActions.onMovePanel}
-						onDeletePanel={panelActions.onDeletePanel}
-					/>
-				) : (
-					<EllipsisVertical size={14} />
-				)}
-			</div>
-
-			<div className={styles.body}>
-				<div>
-					<div className={styles.bodyKind}>{kind} panel</div>
-					<div>
-						{queryCount} {queryCount === 1 ? 'query' : 'queries'} · chart rendering
-						coming next
-					</div>
-				</div>
-			</div>
+			<PanelHeader
+				name={name}
+				description={description}
+				panelId={panelId}
+				panelKind={fullKind}
+				isFetching={isFetching}
+				error={error}
+				warning={data.response?.data?.warning}
+				timeLabel={timeLabel}
+				panelActions={panelActions}
+				searchable={searchable}
+				searchTerm={searchTerm}
+				onSearchChange={setSearchTerm}
+			/>
+			{panelDefinition && (
+				<PanelBody
+					panelDefinition={panelDefinition}
+					panel={panel}
+					panelId={panelId}
+					data={data}
+					isFetching={isFetching}
+					error={error}
+					refetch={refetch}
+					onDragSelect={onDragSelect}
+					dashboardPreference={dashboardPreference}
+					searchTerm={searchable ? searchTerm : undefined}
+					pagination={pagination}
+				/>
+			)}
 		</div>
 	);
 }

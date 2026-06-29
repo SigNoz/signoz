@@ -43,8 +43,6 @@ type Reader interface {
 
 	// Search Interfaces
 	SearchTraces(ctx context.Context, params *model.SearchTracesParams) (*[]model.SearchSpansResult, error)
-	GetFlamegraphSpansForTrace(ctx context.Context, orgID valuer.UUID, traceID string, req *model.GetFlamegraphSpansForTraceParams) (*model.GetFlamegraphSpansForTraceResponse, error)
-
 	// Setter Interfaces
 	SetTTL(ctx context.Context, orgID string, ttlParams *retentiontypes.TTLParams) (*retentiontypes.SetTTLResponseItem, *model.ApiError)
 	SetTTLV2(ctx context.Context, orgID string, params *retentiontypes.CustomRetentionTTLParams) (*retentiontypes.CustomRetentionTTLResponse, error)
