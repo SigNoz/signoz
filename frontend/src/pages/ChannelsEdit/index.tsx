@@ -147,6 +147,7 @@ function ChannelsEdit(): JSX.Element {
 			<div className="edit-alert-channels-container">
 				<EditAlertChannels
 					{...{
+						channelId: channelId || '',
 						initialValue: {
 							...target.channel,
 							type: target.type,
