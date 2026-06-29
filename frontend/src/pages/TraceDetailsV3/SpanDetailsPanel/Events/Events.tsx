@@ -55,69 +55,71 @@ function EventsTable(props: IEventsTableProps): JSX.Element {
 					.filter((eve) =>
 						eve.name?.toLowerCase().includes(fieldSearchInput.toLowerCase()),
 					)
-					.map((event) => (
-						<div
-							className={styles.event}
-							key={`${event.name} ${JSON.stringify(event.attributeMap)}`}
-						>
-							<Collapse
-								size="small"
-								defaultActiveKey="1"
-								expandIconPosition="right"
-								items={[
-									{
-										key: '1',
-										label: (
-											<div className={styles.collapseTitle}>
-												<Diamond size={14} className={styles.diamond} />
-												<Typography.Text>{event.name}</Typography.Text>
-											</div>
-										),
-										children: (
-											<div className={styles.eventDetails}>
-												<div className={styles.attributeContainer} key="timeUnixNano">
-													<Typography.Text className={styles.attributeKey}>
-														Start Time
-													</Typography.Text>
-													<div className={styles.timestampContainer}>
-														<Typography.Text className={styles.attributeValue}>
-															{getYAxisFormattedValue(
-																`${(event.timeUnixNano || 0) / 1e6 - startTime}`,
-																'ms',
-															)}
-														</Typography.Text>
-														<Typography.Text className={styles.timestampText}>
-															since trace start
-														</Typography.Text>
-													</div>
-													<div className={styles.timestampContainer}>
-														<Typography.Text className={styles.attributeValue}>
-															{getYAxisFormattedValue(
-																`${(event.timeUnixNano || 0) / 1e6 - span.timestamp}`,
-																'ms',
-															)}
-														</Typography.Text>
-														<Typography.Text className={styles.timestampText}>
-															since span start
-														</Typography.Text>
-													</div>
+					.map((event) => {
+						const { name, attributeMap, timeUnixNano } = event;
+						const eventKey = `${name} ${JSON.stringify(attributeMap)}`;
+
+						return (
+							<div className={styles.event} key={eventKey}>
+								<Collapse
+									size="small"
+									defaultActiveKey="1"
+									expandIconPosition="right"
+									items={[
+										{
+											key: '1',
+											label: (
+												<div className={styles.collapseTitle}>
+													<Diamond size={14} className={styles.diamond} />
+													<Typography.Text>{name}</Typography.Text>
 												</div>
-												{event.attributeMap &&
-													Object.keys(event.attributeMap).map((attributeKey) => (
-														<EventAttribute
-															key={attributeKey}
-															attributeKey={attributeKey}
-															attributeValue={event.attributeMap[attributeKey]}
-															onExpand={showAttributeModal}
-														/>
-													))}
-											</div>
-										),
-									},
-								]}
-							/>
-						</div>
-					))}
+											),
+											children: (
+												<div className={styles.eventDetails}>
+													<div className={styles.attributeContainer} key="timeUnixNano">
+														<Typography.Text className={styles.attributeKey}>
+															Start Time
+														</Typography.Text>
+														<div className={styles.timestampContainer}>
+															<Typography.Text className={styles.attributeValue}>
+																{getYAxisFormattedValue(
+																	`${(timeUnixNano || 0) / 1e6 - startTime}`,
+																	'ms',
+																)}
+															</Typography.Text>
+															<Typography.Text className={styles.timestampText}>
+																since trace start
+															</Typography.Text>
+														</div>
+														<div className={styles.timestampContainer}>
+															<Typography.Text className={styles.attributeValue}>
+																{getYAxisFormattedValue(
+																	`${(timeUnixNano || 0) / 1e6 - span.timestamp}`,
+																	'ms',
+																)}
+															</Typography.Text>
+															<Typography.Text className={styles.timestampText}>
+																since span start
+															</Typography.Text>
+														</div>
+													</div>
+													{attributeMap &&
+														Object.keys(attributeMap).map((attributeKey) => (
+															<EventAttribute
+																key={attributeKey}
+																attributeKey={attributeKey}
+																attributeValue={attributeMap[attributeKey]}
+																onExpand={showAttributeModal}
+															/>
+														))}
+												</div>
+											),
+										},
+									]}
+								/>
+							</div>
+						);
+					})}
 			</div>
 			<Modal
 				title={modalContent?.title}
