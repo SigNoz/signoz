@@ -2185,14 +2185,9 @@ export interface ErrorsResponseerroradditionalDTO {
 	suggestions: string[];
 }
 
-export type ErrorsResponseretryjsonDTOAnyOf = {
+export interface ErrorsResponseretryjsonDTO {
 	delay: TimeDurationDTO;
-};
-
-/**
- * @nullable
- */
-export type ErrorsResponseretryjsonDTO = ErrorsResponseretryjsonDTOAnyOf | null;
+}
 
 export interface ErrorsJSONDTO {
 	/**
@@ -2207,7 +2202,7 @@ export interface ErrorsJSONDTO {
 	 * @type string
 	 */
 	message: string;
-	retry: ErrorsResponseretryjsonDTO | null;
+	retry?: ErrorsResponseretryjsonDTO;
 	/**
 	 * @type array
 	 */
@@ -2217,9 +2212,9 @@ export interface ErrorsJSONDTO {
 	 */
 	type: string;
 	/**
-	 * @type string,null
+	 * @type string
 	 */
-	url: string | null;
+	url?: string;
 }
 
 export interface AuthtypesOrgSessionContextDTO {
