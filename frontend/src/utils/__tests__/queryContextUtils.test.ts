@@ -648,3 +648,176 @@ describe('getQueryContextAtCursor - trailing dot in key/value', () => {
 		expect(ctx.keyToken).toBe('k8s.namespace');
 	});
 });
+
+describe('getQueryContextAtCursor - partial operator', () => {
+	it('treats text after an incomplete key as an operator prefix', () => {
+		const q = 'service.name c';
+		const ctx = getQueryContextAtCursor(q, q.length);
+
+		expect(ctx.isInOperator).toBe(true);
+		expect(ctx.isInKey).toBe(false);
+		expect(ctx.keyToken).toBe('service.name');
+		expect(ctx.operatorToken).toBe('c');
+		expect(ctx.currentPair).toStrictEqual(
+			expect.objectContaining({
+				key: 'service.name',
+				operator: 'c',
+				position: expect.objectContaining({
+					operatorStart: 13,
+					operatorEnd: 13,
+				}),
+			}),
+		);
+	});
+
+	it('keeps the operator context while completing contains', () => {
+		const q = 'service.name cont';
+		const ctx = getQueryContextAtCursor(q, q.length);
+
+		expect(ctx.isInOperator).toBe(true);
+		expect(ctx.keyToken).toBe('service.name');
+		expect(ctx.operatorToken).toBe('cont');
+	});
+
+	it('treats cursor mid-token as operator context', () => {
+		const q = 'service.name cont';
+		// cursor sits between "con" and "t" — user still typing the operator
+		const ctx = getQueryContextAtCursor(q, 15);
+
+		expect(ctx.isInOperator).toBe(true);
+		expect(ctx.isInKey).toBe(false);
+		expect(ctx.keyToken).toBe('service.name');
+		expect(ctx.operatorToken).toBe('cont');
+	});
+
+	it('keeps operator context when an AND conjunction precedes the pair', () => {
+		const q = 'a = 1 AND service.name c';
+		const ctx = getQueryContextAtCursor(q, q.length);
+
+		expect(ctx.isInOperator).toBe(true);
+		expect(ctx.isInKey).toBe(false);
+		expect(ctx.keyToken).toBe('service.name');
+		expect(ctx.operatorToken).toBe('c');
+		expect(ctx.currentPair).toStrictEqual(
+			expect.objectContaining({
+				key: 'service.name',
+				operator: 'c',
+				position: expect.objectContaining({
+					operatorStart: 23,
+					operatorEnd: 23,
+				}),
+			}),
+		);
+	});
+
+	it('keeps operator context when an open parenthesis precedes the pair', () => {
+		const q = '(service.name c';
+		const ctx = getQueryContextAtCursor(q, q.length);
+
+		expect(ctx.isInOperator).toBe(true);
+		expect(ctx.isInKey).toBe(false);
+		expect(ctx.keyToken).toBe('service.name');
+		expect(ctx.operatorToken).toBe('c');
+	});
+
+	it('re-glues a partial operator that follows a NOT negation', () => {
+		const q = 'service.name NOT c';
+		const ctx = getQueryContextAtCursor(q, q.length);
+
+		expect(ctx.isInOperator).toBe(true);
+		expect(ctx.isInKey).toBe(false);
+		expect(ctx.keyToken).toBe('service.name');
+		expect(ctx.operatorToken).toBe('NOT c');
+		// operatorStart points at the partial operator (post-NOT), not at the
+		// negation — so suggestion selection only replaces the partial, never
+		// the user's typed NOT.
+		expect(ctx.currentPair).toStrictEqual(
+			expect.objectContaining({
+				key: 'service.name',
+				operator: 'NOT c',
+				hasNegation: true,
+				position: expect.objectContaining({
+					negationStart: 13,
+					negationEnd: 15,
+					operatorStart: 17,
+					operatorEnd: 17,
+				}),
+			}),
+		);
+	});
+
+	it('re-glues a multi-character partial operator after NOT', () => {
+		const q = 'service.name NOT lik';
+		const ctx = getQueryContextAtCursor(q, q.length);
+
+		expect(ctx.isInOperator).toBe(true);
+		expect(ctx.keyToken).toBe('service.name');
+		expect(ctx.operatorToken).toBe('NOT lik');
+		expect(ctx.currentPair?.hasNegation).toBe(true);
+	});
+
+	it('re-glues an uppercase partial operator after NOT', () => {
+		const q = 'service.name NOT EXI';
+		const ctx = getQueryContextAtCursor(q, q.length);
+
+		expect(ctx.isInOperator).toBe(true);
+		expect(ctx.keyToken).toBe('service.name');
+		expect(ctx.operatorToken).toBe('NOT EXI');
+		expect(ctx.currentPair?.hasNegation).toBe(true);
+	});
+
+	it('preserves original NOT casing in the operator text', () => {
+		const q = 'service.name not c';
+		const ctx = getQueryContextAtCursor(q, q.length);
+
+		expect(ctx.isInOperator).toBe(true);
+		expect(ctx.keyToken).toBe('service.name');
+		expect(ctx.operatorToken).toBe('not c');
+		expect(ctx.currentPair?.hasNegation).toBe(true);
+	});
+
+	it('tolerates extra whitespace between NOT and the partial operator', () => {
+		const q = 'service.name NOT  c';
+		const ctx = getQueryContextAtCursor(q, q.length);
+
+		expect(ctx.isInOperator).toBe(true);
+		expect(ctx.keyToken).toBe('service.name');
+		// Display text uses a canonical single space between NOT and the
+		// partial, regardless of how many spaces the user typed.
+		expect(ctx.operatorToken).toBe('NOT c');
+		expect(ctx.currentPair?.hasNegation).toBe(true);
+	});
+
+	it('keeps operator context for NOT-prefixed partial inside parentheses', () => {
+		const q = '(service.name NOT c';
+		const ctx = getQueryContextAtCursor(q, q.length);
+
+		expect(ctx.isInOperator).toBe(true);
+		expect(ctx.keyToken).toBe('service.name');
+		expect(ctx.operatorToken).toBe('NOT c');
+		expect(ctx.currentPair?.hasNegation).toBe(true);
+	});
+
+	it('keeps operator context for NOT-prefixed partial after an AND conjunction', () => {
+		const q = 'a = 1 AND service.name NOT c';
+		const ctx = getQueryContextAtCursor(q, q.length);
+
+		expect(ctx.isInOperator).toBe(true);
+		expect(ctx.keyToken).toBe('service.name');
+		expect(ctx.operatorToken).toBe('NOT c');
+		expect(ctx.currentPair?.hasNegation).toBe(true);
+	});
+
+	it('re-glues the most recent incomplete pair when three partial tokens are typed', () => {
+		// Pins documented behavior: with two trailing partial pairs (`c` and
+		// `k`), the heuristic pairs the most recent two — `c` becomes the
+		// key, `k` becomes the partial operator. The earlier `service.name`
+		// is dropped from the current pair view.
+		const q = 'service.name c k';
+		const ctx = getQueryContextAtCursor(q, q.length);
+
+		expect(ctx.isInOperator).toBe(true);
+		expect(ctx.keyToken).toBe('c');
+		expect(ctx.operatorToken).toBe('k');
+	});
+});

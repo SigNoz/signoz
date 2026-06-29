@@ -605,6 +605,98 @@ export function getQueryContextAtCursor(
 			queryPairs,
 		);
 
+		// Re-glue a partial operator that ANTLR has lexed as a second key.
+		//
+		// When the user types `service.name c` (or `service.name NOT c`), the
+		// lexer sees two KEY tokens (`service.name`, `c`) instead of a key +
+		// partial operator, so `extractQueryPairs` emits two consecutive
+		// key-only incomplete pairs. Downstream, that makes the dropdown
+		// suggest keys when it should be suggesting operators.
+		//
+		// Detect that pattern — a previous incomplete key-only pair followed
+		// by another incomplete key-only `currentPair`, separated only by
+		// whitespace (or by a negation token attached to the previous pair) —
+		// and rebuild a single synthetic pair where the previous pair's key
+		// is the key and the current pair's key is treated as the partial
+		// operator. The synthetic pair inherits the previous pair's negation
+		// flag and positions via the spread, so `NOT <partial>` propagates
+		// correctly to consumers.
+		const previousIncompletePair = queryPairs
+			.filter(
+				(pair) =>
+					!pair.isComplete &&
+					!!pair.key &&
+					!pair.operator &&
+					pair.position.keyEnd < (currentPair?.position.keyStart ?? cursorIndex),
+			)
+			.sort((a, b) => b.position.keyEnd - a.position.keyEnd)[0];
+
+		if (
+			previousIncompletePair &&
+			currentPair &&
+			currentPair !== previousIncompletePair &&
+			!currentPair.operator &&
+			currentPair.position.keyStart > previousIncompletePair.position.keyEnd
+		) {
+			const negationStart = previousIncompletePair.position.negationStart ?? 0;
+			const negationEnd = previousIncompletePair.position.negationEnd ?? 0;
+			const negationAfterKey =
+				previousIncompletePair.hasNegation &&
+				negationStart > previousIncompletePair.position.keyEnd;
+			const gapStart = negationAfterKey
+				? negationEnd + 1
+				: previousIncompletePair.position.keyEnd + 1;
+			const textBetweenPairs = query.slice(
+				gapStart,
+				currentPair.position.keyStart,
+			);
+
+			if (textBetweenPairs.trim() === '') {
+				// The replacement range (operatorStart/operatorEnd) must point
+				// at the partial operator only, NOT the leading negation.
+				// Consumers like QuerySearch use it to splice the chosen
+				// suggestion in-place, so including the negation would let a
+				// `NOT lik` -> `LIKE` selection erase the user's typed `NOT`.
+				// Matches the convention used for complete pairs in
+				// extractQueryPairs, where operatorStart starts after the
+				// negation token.
+				const operatorStart = currentPair.position.keyStart;
+				const operatorEnd = currentPair.position.keyEnd;
+				const partialOperator = query.slice(operatorStart, operatorEnd + 1);
+				const operatorText = negationAfterKey
+					? `${query.slice(negationStart, negationEnd + 1)} ${partialOperator}`
+					: partialOperator;
+
+				return {
+					tokenType: -1,
+					text: '',
+					start: cursorIndex,
+					stop: cursorIndex,
+					currentToken: operatorText,
+					isInKey: false,
+					isInNegation: false,
+					isInOperator: true,
+					isInValue: false,
+					isInConjunction: false,
+					isInFunction: false,
+					isInParenthesis: false,
+					isInBracketList: false,
+					keyToken: previousIncompletePair.key,
+					operatorToken: operatorText,
+					queryPairs,
+					currentPair: {
+						...previousIncompletePair,
+						operator: operatorText,
+						position: {
+							...previousIncompletePair.position,
+							operatorStart,
+							operatorEnd,
+						},
+					},
+				};
+			}
+		}
+
 		// Check if cursor is within any of the specific context boundaries
 		// FIXED: Include the case where the cursor is exactly at the end of a boundary
 		const isInKeyBoundary =
