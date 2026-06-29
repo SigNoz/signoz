@@ -12,7 +12,7 @@ var implicitLimitWarn = "Query %s returned too many results; output has been lim
 
 // enforceImplicitLimit trims each query that QueryRangeRequest.Normalize capped down to its
 // implicit limit, honoring its order, and returns a warning per trimmed query.
-func enforceImplicitLimit(results map[string]any, queries []qbtypes.QueryEnvelope) []string {
+func enforceImplicitLimit(results map[string]any, requestType qbtypes.RequestType, queries []qbtypes.QueryEnvelope) []string {
 	var warnings []string
 	for idx := range queries {
 		qe := &queries[idx]
@@ -28,8 +28,10 @@ func enforceImplicitLimit(results map[string]any, queries []qbtypes.QueryEnvelop
 			continue
 		}
 
-		if trimGroupsToLimit(result, limit, qe.GetOrder()) {
-			warnings = append(warnings, fmt.Sprintf(implicitLimitWarn, name, limit))
+		if requestType.IsAggregation() {
+			if trimGroupsToLimit(result, limit, qe.GetOrder()) {
+				warnings = append(warnings, fmt.Sprintf(implicitLimitWarn, name, limit))
+			}
 		}
 	}
 

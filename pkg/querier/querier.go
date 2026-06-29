@@ -649,7 +649,7 @@ func (q *querier) run(
 	}
 
 	// Trim capped queries before post-processing, which can reshape results and obscure counts.
-	warnings = append(warnings, enforceImplicitLimit(results, req.CompositeQuery.Queries)...)
+	warnings = append(warnings, enforceImplicitLimit(results, req.RequestType, req.CompositeQuery.Queries)...)
 
 	gomaps.Copy(results, preseededResults)
 	processedResults, err := q.postProcessResults(ctx, orgID, results, req)
