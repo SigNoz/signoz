@@ -133,7 +133,7 @@ func (q *querier) QueryRangePreview(
 
 		if query.Type == qbtypes.QueryTypeClickHouseSQL {
 			if bindErr := q.explainBindCheck(ctx, stmt.Query, stmt.Args); bindErr != nil {
-				if errors.Ast(bindErr, errors.TypeInvalidInput) {
+				if errors.Ast(bindErr, errors.TypeInvalidInput) || errors.Ast(bindErr, errors.TypeNotFound) {
 					ps.Error = bindErr
 					results[name] = ps
 					continue
