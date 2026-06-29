@@ -335,9 +335,52 @@ func (m *module) getPerGroupPodPhaseCounts(
 	return result, nil
 }
 
+// getPerGroupPodStatusCountsWithReqMetricChecks gates getPerGroupPodStatusCounts
+// on the required metrics being present. If any of podStatusMetricNamesList has
+// never been reported, it skips the query and returns a warning instead (the
+// status query would otherwise silently degrade to bare phase). Otherwise it
+// runs the query. The returned counts map is empty (never nil) when gated off.
+func (m *module) getPerGroupPodStatusCountsWithReqMetricChecks(
+	ctx context.Context,
+	start, end int64,
+	filter *qbtypes.Filter,
+	groupBy []qbtypes.GroupByKey,
+	pageGroups []map[string]string,
+) (map[string]podStatusCounts, *qbtypes.QueryWarnData, error) {
+	present, err := m.getMetricsExistence(ctx, podStatusMetricNamesList)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var missing []string
+	for _, name := range podStatusMetricNamesList {
+		if !present[name] {
+			missing = append(missing, name)
+		}
+	}
+	if len(missing) > 0 {
+		warning := &qbtypes.QueryWarnData{
+			Message: fmt.Sprintf(
+				"Pod status could not be computed: required metric(s) not found: %s. "+
+					"Enable the optional k8s.pod.status_reason and k8s.container.status.reason "+
+					"metrics in the k8s_cluster receiver to see pod statuses.",
+				strings.Join(missing, ", "),
+			),
+			Url: docLinkK8sClusterReceiver,
+		}
+		return map[string]podStatusCounts{}, warning, nil
+	}
+
+	counts, err := m.getPerGroupPodStatusCounts(ctx, start, end, filter, groupBy, pageGroups)
+	if err != nil {
+		return nil, nil, err
+	}
+	return counts, nil, nil
+}
+
 // getPerGroupPodStatusCounts computes per-group pod counts bucketed by each
 // pod's latest kubectl-style display status in the requested window. Caller
-// must ensure the required metrics exist (getMetricsExistence gate).
+// must ensure the required metrics exist (getPerGroupPodStatusCountsWithReqMetricChecks).
 // Pipeline (mirrors getPerGroupPodPhaseCounts, more CTEs):
 //
 //	phase_fps / phase_per_pod:           latest k8s.pod.phase per pod (+ groupBy cols).
