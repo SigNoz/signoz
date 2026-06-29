@@ -535,11 +535,9 @@ func (m *module) getPerGroupPodStatusCounts(
 	// ----- phase_per_pod -----
 	phasePerPod := sqlbuilder.NewSelectBuilder()
 	phasePerPodCols := []string{"fps.pod_uid AS pod_uid"}
-	phasePerPodGroupBy := []string{"pod_uid"}
 	for _, key := range groupBy {
 		col := quoteIdentifier(key.Name)
 		phasePerPodCols = append(phasePerPodCols, fmt.Sprintf("argMax(fps.%s, samples.unix_milli) AS %s", col, col))
-		phasePerPodGroupBy = append(phasePerPodGroupBy, col)
 	}
 	phasePerPodCols = append(phasePerPodCols, fmt.Sprintf("argMax(samples.%s, samples.unix_milli) AS phase_value", valueCol))
 	phasePerPod.Select(phasePerPodCols...)
@@ -553,7 +551,7 @@ func (m *module) getPerGroupPodStatusCounts(
 		phasePerPod.L("samples.unix_milli", flooredEndMs),
 		"fps.pod_uid != ''",
 	)
-	phasePerPod.GroupBy(phasePerPodGroupBy...)
+	phasePerPod.GroupBy("pod_uid")
 	phasePerPodSQL, phasePerPodArgs := phasePerPod.BuildWithFlavor(sqlbuilder.ClickHouse)
 
 	// ----- pod_reason_fps -----
