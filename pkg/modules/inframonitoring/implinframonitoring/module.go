@@ -310,8 +310,13 @@ func (m *module) ListPods(ctx context.Context, orgID valuer.UUID, req *inframoni
 		return nil, err
 	}
 
+	restartCounts, err := m.getPerGroupPodRestartCounts(ctx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+	if err != nil {
+		return nil, err
+	}
+
 	isPodUIDInGroupBy := isKeyInGroupByAttrs(req.GroupBy, podUIDAttrKey)
-	resp.Records = buildPodRecords(isPodUIDInGroupBy, queryResp, pageGroups, req.GroupBy, metadataMap, phaseCounts, statusCounts, req.End)
+	resp.Records = buildPodRecords(isPodUIDInGroupBy, queryResp, pageGroups, req.GroupBy, metadataMap, phaseCounts, statusCounts, restartCounts, req.End)
 	resp.Warning = mergeQueryWarnings(queryResp.Warning, statusWarning)
 
 	return resp, nil

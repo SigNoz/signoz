@@ -27,6 +27,7 @@ func buildPodRecords(
 	metadataMap map[string]map[string]string,
 	phaseCounts map[string]podPhaseCounts,
 	statusCounts map[string]podStatusCounts,
+	restartCounts map[string]int64,
 	reqEnd int64,
 ) []inframonitoringtypes.PodRecord {
 	metricsMap := parseFullQueryResponse(resp, groupBy)
@@ -40,6 +41,7 @@ func buildPodRecords(
 			PodUID:           podUID,
 			PodPhase:         inframonitoringtypes.PodPhaseNoData,
 			PodStatus:        inframonitoringtypes.PodStatusNoData,
+			PodRestarts:      -1,
 			PodCPU:           -1,
 			PodCPURequest:    -1,
 			PodCPULimit:      -1,
@@ -163,6 +165,11 @@ func buildPodRecords(
 					record.PodStatus = inframonitoringtypes.PodStatusUnexpectedAdmissionError
 				}
 			}
+		}
+
+		// Restart count: pod's own sum (list mode) or group total (grouped mode).
+		if restartCountForGroup, ok := restartCounts[compositeKey]; ok {
+			record.PodRestarts = restartCountForGroup
 		}
 
 		if attrs, ok := metadataMap[compositeKey]; ok {
@@ -760,6 +767,153 @@ func (m *module) getPerGroupPodStatusCounts(
 			Shutdown:                   int(counts[17]),
 			UnexpectedAdmissionError:   int(counts[18]),
 		}
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+// getPerGroupPodRestartCounts computes the absolute pod restart count per group
+// from k8s.container.restarts (default-enabled, so no existence gate). In list
+// mode (groupBy=pod_uid) each group is one pod -> its restart count; in grouped
+// mode it's the summed restarts across all pods in the group. Mirrors DD:
+// argMax(value, unix_milli) per (pod, container) takes the current cumulative
+// count from the latest incarnation (handling fingerprint staleness/pruning),
+// then sum.
+//
+//	restart_fps:        fp ↔ (pod_uid, container_name, groupBy cols) from time_series.
+//	container_restarts: INNER JOIN samples, latest restartCount per (pod, container).
+//	(outer):            per-group sum(restart_count).
+//
+// Groups absent from the result map have no data (caller default).
+func (m *module) getPerGroupPodRestartCounts(
+	ctx context.Context,
+	start, end int64,
+	filter *qbtypes.Filter,
+	groupBy []qbtypes.GroupByKey,
+	pageGroups []map[string]string,
+) (map[string]int64, error) {
+	if len(pageGroups) == 0 || len(groupBy) == 0 {
+		return map[string]int64{}, nil
+	}
+
+	// Merge user filter with page-groups IN clauses.
+	userFilterExpr := ""
+	if filter != nil {
+		userFilterExpr = filter.Expression
+	}
+	mergedFilterExpr := mergeFilterExpressions(userFilterExpr, buildPageGroupsFilterExpr(pageGroups))
+
+	samplesStartMs, flooredEndMs, tsAdjustedStart, _, localTimeSeriesTable, distributedSamplesTable, _ := alignedMetricWindow(start, end)
+	valueCol := telemetrymetrics.ValueColumnForSamplesTable(distributedSamplesTable)
+
+	var (
+		filterClause *sqlbuilder.WhereClause
+		err          error
+	)
+	if mergedFilterExpr != "" {
+		filterClause, err = m.buildFilterClause(ctx, &qbtypes.Filter{Expression: mergedFilterExpr}, start, end)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// ----- restart_fps (carries groupBy cols) -----
+	restartFps := sqlbuilder.NewSelectBuilder()
+	restartFpsCols := []string{
+		"fingerprint",
+		fmt.Sprintf("JSONExtractString(labels, %s) AS pod_uid", restartFps.Var(podUIDAttrKey)),
+		fmt.Sprintf("JSONExtractString(labels, %s) AS container_name", restartFps.Var(containerNameAttrKey)),
+	}
+	for _, key := range groupBy {
+		restartFpsCols = append(restartFpsCols,
+			fmt.Sprintf("JSONExtractString(labels, %s) AS %s", restartFps.Var(key.Name), quoteIdentifier(key.Name)),
+		)
+	}
+	restartFps.Select(restartFpsCols...)
+	restartFps.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, localTimeSeriesTable))
+	restartFps.Where(
+		restartFps.E("metric_name", containerRestartsMetricName),
+		restartFps.GE("unix_milli", tsAdjustedStart),
+		restartFps.LE("unix_milli", flooredEndMs),
+	)
+	if filterClause != nil {
+		restartFps.AddWhereClause(filterClause)
+	}
+	restartFpsGroupBy := []string{"fingerprint", "pod_uid", "container_name"}
+	for _, key := range groupBy {
+		restartFpsGroupBy = append(restartFpsGroupBy, quoteIdentifier(key.Name))
+	}
+	restartFps.GroupBy(restartFpsGroupBy...)
+	restartFpsSQL, restartFpsArgs := restartFps.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	// ----- container_restarts (latest cumulative count per container) -----
+	containerRestarts := sqlbuilder.NewSelectBuilder()
+	containerRestartsCols := []string{
+		"fps.pod_uid AS pod_uid",
+		"fps.container_name AS container_name",
+	}
+	for _, key := range groupBy {
+		col := quoteIdentifier(key.Name)
+		containerRestartsCols = append(containerRestartsCols, fmt.Sprintf("argMax(fps.%s, samples.unix_milli) AS %s", col, col))
+	}
+	containerRestartsCols = append(containerRestartsCols, fmt.Sprintf("argMax(samples.%s, samples.unix_milli) AS restart_count", valueCol))
+	containerRestarts.Select(containerRestartsCols...)
+	containerRestarts.From(fmt.Sprintf(
+		"%s.%s AS samples INNER JOIN restart_fps AS fps ON samples.fingerprint = fps.fingerprint",
+		telemetrymetrics.DBName, distributedSamplesTable,
+	))
+	containerRestarts.Where(
+		containerRestarts.E("samples.metric_name", containerRestartsMetricName),
+		containerRestarts.GE("samples.unix_milli", samplesStartMs),
+		containerRestarts.L("samples.unix_milli", flooredEndMs),
+		"fps.pod_uid != ''",
+	)
+	containerRestarts.GroupBy("fps.pod_uid", "fps.container_name")
+	containerRestartsSQL, containerRestartsArgs := containerRestarts.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	// ----- outer: per-group sum across containers (hence across pods) -----
+	sumSelectCols := make([]string, 0, len(groupBy)+1)
+	sumGroupBy := make([]string, 0, len(groupBy))
+	for _, key := range groupBy {
+		col := quoteIdentifier(key.Name)
+		sumSelectCols = append(sumSelectCols, col)
+		sumGroupBy = append(sumGroupBy, col)
+	}
+	sumSelectCols = append(sumSelectCols, "sum(restart_count) AS total_restarts")
+	sumSQL := fmt.Sprintf(
+		"SELECT %s FROM container_restarts GROUP BY %s",
+		strings.Join(sumSelectCols, ", "),
+		strings.Join(sumGroupBy, ", "),
+	)
+
+	cteFragments := []string{
+		fmt.Sprintf("restart_fps AS (%s)", restartFpsSQL),
+		fmt.Sprintf("container_restarts AS (%s)", containerRestartsSQL),
+	}
+	finalSQL := querybuilder.CombineCTEs(cteFragments) + sumSQL
+	finalArgs := querybuilder.PrependArgs([][]any{restartFpsArgs, containerRestartsArgs}, nil)
+
+	rows, err := m.telemetryStore.ClickhouseDB().Query(ctx, finalSQL, finalArgs...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	result := make(map[string]int64)
+	for rows.Next() {
+		groupVals := make([]string, len(groupBy))
+		var totalRestarts float64
+		scanPtrs := make([]any, 0, len(groupBy)+1)
+		for i := range groupVals {
+			scanPtrs = append(scanPtrs, &groupVals[i])
+		}
+		scanPtrs = append(scanPtrs, &totalRestarts)
+		if err := rows.Scan(scanPtrs...); err != nil {
+			return nil, err
+		}
+		result[compositeKeyFromList(groupVals)] = int64(totalRestarts)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err

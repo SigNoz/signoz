@@ -16,6 +16,7 @@ const (
 	podPhaseMetricName              = "k8s.pod.phase"
 	podStatusReasonMetricName       = "k8s.pod.status_reason"
 	containerStatusReasonMetricName = "k8s.container.status.reason"
+	containerRestartsMetricName     = "k8s.container.restarts"
 )
 
 // podStatusMetricNamesList are the metrics required to derive the kubectl-style
