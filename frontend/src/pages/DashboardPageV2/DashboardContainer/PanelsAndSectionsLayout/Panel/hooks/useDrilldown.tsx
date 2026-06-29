@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import useBaseDrilldownNavigate from 'container/QueryTable/Drilldown/useBaseDrilldownNavigate';
@@ -21,8 +21,12 @@ import { getBuilderQueries } from 'pages/DashboardPageV2/DashboardContainer/Pane
 import { fromPerses } from 'pages/DashboardPageV2/DashboardContainer/queryV5/persesQueryAdapters';
 
 import DrilldownAggregateMenu from '../DrilldownMenu/DrilldownAggregateMenu';
+import { useDrilldownBreakout } from './useDrilldownBreakout';
 import { useDrilldownFilter } from './useDrilldownFilter';
 import { useViewPanel } from './useViewPanel';
+
+/** Which menu the popover shows; extend the union as submenus are added (e.g. dashboard variables). */
+type DrilldownSubMenu = 'base' | 'breakout';
 
 /** Props the panel shell spreads onto `<ContextMenu>`. */
 export interface DrilldownContextMenuProps {
@@ -41,8 +45,8 @@ export interface UseDrilldownResult {
 }
 
 /**
- * Orchestrates panel drill-down: owns the popover and routes the clicked point to the base
- * aggregate menu (View in Logs/Traces) or the group filter-by-value menu.
+ * Orchestrates panel drill-down: owns the popover + which submenu is open, and routes the clicked
+ * point to the base aggregate menu, the group filter menu, or the breakout picker.
  */
 export function useDrilldown(
 	panel: DashboardtypesPanelDTO,
@@ -76,13 +80,41 @@ export function useDrilldown(
 		[context],
 	);
 
+	// A fresh click and any close reset to the base menu.
+	const [subMenu, setSubMenu] = useState<DrilldownSubMenu>('base');
+	const openBreakout = useCallback((): void => setSubMenu('breakout'), []);
+	const backToBase = useCallback((): void => setSubMenu('base'), []);
+
+	const onPanelClick = useCallback(
+		(payload: DrilldownClickPayload): void => {
+			setSubMenu('base');
+			onClick(payload.coordinates, payload.context);
+		},
+		[onClick],
+	);
+
+	const handleClose = useCallback((): void => {
+		setSubMenu('base');
+		onClose();
+	}, [onClose]);
+
 	const navigate = useBaseDrilldownNavigate({
 		resolvedQuery: v1Query,
 		aggregateData,
-		callback: onClose,
+		callback: handleClose,
 	});
 
 	const { openViewWithQuery } = useViewPanel();
+
+	const breakout = useDrilldownBreakout({
+		panelId,
+		v1Query,
+		panelType,
+		aggregateData,
+		openViewWithQuery,
+		onBack: backToBase,
+		onClose: handleClose,
+	});
 
 	const filter = useDrilldownFilter({
 		context,
@@ -90,10 +122,13 @@ export function useDrilldown(
 		panelId,
 		panelType,
 		openViewWithQuery,
-		onClose,
+		onClose: handleClose,
 	});
 
 	const items = useMemo<ReactNode>(() => {
+		if (subMenu === 'breakout') {
+			return breakout.items;
+		}
 		if (filter.items) {
 			return filter.items;
 		}
@@ -106,19 +141,27 @@ export function useDrilldown(
 				query={v1Query}
 				onViewLogs={(): void => navigate('view_logs')}
 				onViewTraces={(): void => navigate('view_traces')}
+				onBreakout={openBreakout}
 			/>
 		);
-	}, [filter.items, context, v1Query, navigate]);
-
-	const onPanelClick = useCallback(
-		(payload: DrilldownClickPayload): void =>
-			onClick(payload.coordinates, payload.context),
-		[onClick],
-	);
+	}, [
+		subMenu,
+		breakout.items,
+		filter.items,
+		context,
+		v1Query,
+		navigate,
+		openBreakout,
+	]);
 
 	return {
 		enableDrillDown,
 		onPanelClick,
-		contextMenuProps: { coordinates, popoverPosition, items, onClose },
+		contextMenuProps: {
+			coordinates,
+			popoverPosition,
+			items,
+			onClose: handleClose,
+		},
 	};
 }
