@@ -1903,3 +1903,70 @@ func TestQueryRangeRequest_StepIntervalForQuery(t *testing.T) {
 		})
 	}
 }
+
+func TestQueryRangeRequest_Normalize(t *testing.T) {
+	tests := []struct {
+		name      string
+		start     uint64
+		end       uint64
+		wantStart uint64
+		wantEnd   uint64
+		wantErr   bool
+	}{
+		{
+			name:      "seconds are scaled up to ms",
+			start:     1672531200,    // 2023-01-01 in seconds
+			end:       1716638400,    // 2024-05-25 in seconds
+			wantStart: 1672531200000, // * 10^3
+			wantEnd:   1716638400000,
+		},
+		{
+			name:      "milliseconds pass through unchanged",
+			start:     1672531200000,
+			end:       1716638400000,
+			wantStart: 1672531200000,
+			wantEnd:   1716638400000,
+		},
+		{
+			name:      "microseconds are scaled down to ms",
+			start:     1672531200000000, // µs
+			end:       1716638400000000,
+			wantStart: 1672531200000, // / 10^3
+			wantEnd:   1716638400000,
+		},
+		{
+			name:      "nanoseconds are scaled down to ms",
+			start:     1672531200000000000, // ns
+			end:       1716638400000000000,
+			wantStart: 1672531200000, // / 10^6
+			wantEnd:   1716638400000,
+		},
+		{
+			name:      "zero end (open-ended stream) is left untouched",
+			start:     1672531200000,
+			end:       0,
+			wantStart: 1672531200000,
+			wantEnd:   0,
+		},
+		{
+			name:    "out-of-range timestamp is rejected",
+			start:   5_000_000_000_000, // ~year 2128 in ms, beyond the 2100 bound
+			end:     5_000_000_000_000,
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &QueryRangeRequest{Start: tt.start, End: tt.end}
+			err := r.Normalize()
+			if tt.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tt.wantStart, r.Start)
+			assert.Equal(t, tt.wantEnd, r.End)
+		})
+	}
+}
