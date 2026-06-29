@@ -1,10 +1,6 @@
+import { AlertDialog } from '@signozhq/ui/alert-dialog';
 import { Button } from '@signozhq/ui/button';
-import { DialogWrapper } from '@signozhq/ui/dialog';
 import { Trash2, X } from '@signozhq/icons';
-import cx from 'classnames';
-
-import styles from './DeleteConfirmDialog.module.scss';
-import { Typography } from '@signozhq/ui/typography';
 
 interface DeleteConfirmDialogProps {
 	open: boolean;
@@ -15,7 +11,8 @@ interface DeleteConfirmDialogProps {
 }
 
 // Confirmation step before deleting a model cost — deletion is irreversible, so
-// the destructive action is gated behind an explicit confirm.
+// the destructive action is gated behind an explicit confirm. AlertDialog blocks
+// outside-click dismissal and hides the close button to force an explicit choice.
 function DeleteConfirmDialog({
 	open,
 	modelName,
@@ -23,51 +20,44 @@ function DeleteConfirmDialog({
 	onConfirm,
 	onCancel,
 }: DeleteConfirmDialogProps): JSX.Element {
-	const footer = (
-		<div className={styles.footer}>
-			<Button
-				variant="solid"
-				color="secondary"
-				onClick={onCancel}
-				prefix={<X size={12} />}
-				testId="drawer-delete-cancel-btn"
-			>
-				Cancel
-			</Button>
-			<Button
-				variant="solid"
-				color="destructive"
-				loading={isDeleting}
-				onClick={onConfirm}
-				prefix={<Trash2 size={12} />}
-				testId="drawer-delete-confirm-btn"
-			>
-				Delete
-			</Button>
-		</div>
-	);
-
 	return (
-		<DialogWrapper
+		<AlertDialog
 			open={open}
 			onOpenChange={(isOpen): void => {
 				if (!isOpen) {
 					onCancel();
 				}
 			}}
-			title={`Delete Model Cost Data?`}
 			width="narrow"
-			className={cx('alert-dialog', styles.dialog)}
-			showCloseButton={false}
-			footer={footer}
+			title="Delete Model Cost Data "
+			titleIcon={<Trash2 size={16} />}
+			footer={
+				<>
+					<Button
+						variant="solid"
+						color="secondary"
+						onClick={onCancel}
+						prefix={<X size={12} />}
+						testId="drawer-delete-cancel-btn"
+					>
+						Cancel
+					</Button>
+					<Button
+						variant="solid"
+						color="destructive"
+						loading={isDeleting}
+						onClick={onConfirm}
+						prefix={<Trash2 size={12} />}
+						testId="drawer-delete-confirm-btn"
+					>
+						Delete
+					</Button>
+				</>
+			}
 		>
-			<div>
-				<Typography.Text size="base" color="muted">
-					Are you sure you want to delete <strong>{modelName}</strong>? Once deleted,
-					this action cannot be undone.
-				</Typography.Text>
-			</div>
-		</DialogWrapper>
+			Are you sure you want to delete <strong>{modelName}</strong>? Once deleted,
+			this action cannot be undone.
+		</AlertDialog>
 	);
 }
 
