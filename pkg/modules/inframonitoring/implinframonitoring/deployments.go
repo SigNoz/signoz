@@ -19,6 +19,7 @@ func buildDeploymentRecords(
 	groupBy []qbtypes.GroupByKey,
 	metadataMap map[string]map[string]string,
 	phaseCounts map[string]podPhaseCounts,
+	podStatusCounts map[string]podStatusCounts,
 ) []inframonitoringtypes.DeploymentRecord {
 	metricsMap := parseFullQueryResponse(resp, groupBy)
 
@@ -75,6 +76,10 @@ func buildDeploymentRecords(
 				Failed:    phaseCountsForGroup.Failed,
 				Unknown:   phaseCountsForGroup.Unknown,
 			}
+		}
+
+		if podStatusCountsForGroup, ok := podStatusCounts[compositeKey]; ok {
+			record.PodCountsByStatus = podStatusCountsToResponse(podStatusCountsForGroup)
 		}
 
 		if attrs, ok := metadataMap[compositeKey]; ok {

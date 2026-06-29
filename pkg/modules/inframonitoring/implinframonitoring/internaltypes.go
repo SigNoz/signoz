@@ -55,6 +55,33 @@ type podStatusCounts struct {
 	UnexpectedAdmissionError int
 }
 
+// podStatusCountsToResponse copies the internal per-group status counts into the
+// public response struct. Shared by every entity that surfaces pod status
+// counts (pods, nodes, namespaces, clusters, workloads).
+func podStatusCountsToResponse(podStatuses podStatusCounts) inframonitoringtypes.PodCountsByStatus {
+	return inframonitoringtypes.PodCountsByStatus{
+		Pending:                    podStatuses.Pending,
+		Running:                    podStatuses.Running,
+		Succeeded:                  podStatuses.Succeeded,
+		Failed:                     podStatuses.Failed,
+		Unknown:                    podStatuses.Unknown,
+		CrashLoopBackOff:           podStatuses.CrashLoopBackOff,
+		ImagePullBackOff:           podStatuses.ImagePullBackOff,
+		ErrImagePull:               podStatuses.ErrImagePull,
+		CreateContainerConfigError: podStatuses.CreateContainerConfigError,
+		ContainerCreating:          podStatuses.ContainerCreating,
+		OOMKilled:                  podStatuses.OOMKilled,
+		Completed:                  podStatuses.Completed,
+		Error:                      podStatuses.Error,
+		ContainerCannotRun:         podStatuses.ContainerCannotRun,
+		Evicted:                    podStatuses.Evicted,
+		NodeAffinity:               podStatuses.NodeAffinity,
+		NodeLost:                   podStatuses.NodeLost,
+		Shutdown:                   podStatuses.Shutdown,
+		UnexpectedAdmissionError:   podStatuses.UnexpectedAdmissionError,
+	}
+}
+
 // nodeConditionCounts holds per-group node counts bucketed by latest condition_ready in window.
 type nodeConditionCounts struct {
 	Ready    int

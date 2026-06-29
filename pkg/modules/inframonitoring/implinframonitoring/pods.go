@@ -100,27 +100,7 @@ func buildPodRecords(
 		}
 
 		if statusCountsForGroup, ok := statusCounts[compositeKey]; ok {
-			record.PodCountsByStatus = inframonitoringtypes.PodCountsByStatus{
-				Pending:                    statusCountsForGroup.Pending,
-				Running:                    statusCountsForGroup.Running,
-				Succeeded:                  statusCountsForGroup.Succeeded,
-				Failed:                     statusCountsForGroup.Failed,
-				Unknown:                    statusCountsForGroup.Unknown,
-				CrashLoopBackOff:           statusCountsForGroup.CrashLoopBackOff,
-				ImagePullBackOff:           statusCountsForGroup.ImagePullBackOff,
-				ErrImagePull:               statusCountsForGroup.ErrImagePull,
-				CreateContainerConfigError: statusCountsForGroup.CreateContainerConfigError,
-				ContainerCreating:          statusCountsForGroup.ContainerCreating,
-				OOMKilled:                  statusCountsForGroup.OOMKilled,
-				Completed:                  statusCountsForGroup.Completed,
-				Error:                      statusCountsForGroup.Error,
-				ContainerCannotRun:         statusCountsForGroup.ContainerCannotRun,
-				Evicted:                    statusCountsForGroup.Evicted,
-				NodeAffinity:               statusCountsForGroup.NodeAffinity,
-				NodeLost:                   statusCountsForGroup.NodeLost,
-				Shutdown:                   statusCountsForGroup.Shutdown,
-				UnexpectedAdmissionError:   statusCountsForGroup.UnexpectedAdmissionError,
-			}
+			record.PodCountsByStatus = podStatusCountsToResponse(statusCountsForGroup)
 
 			// In list mode each group is one pod; the count==1 bucket identifies the status.
 			if isPodUIDInGroupBy {

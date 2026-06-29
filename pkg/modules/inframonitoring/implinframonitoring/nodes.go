@@ -26,6 +26,7 @@ func buildNodeRecords(
 	metadataMap map[string]map[string]string,
 	nodeConditionCounts map[string]nodeConditionCounts,
 	podPhaseCounts map[string]podPhaseCounts,
+	podStatusCounts map[string]podStatusCounts,
 ) []inframonitoringtypes.NodeRecord {
 	metricsMap := parseFullQueryResponse(resp, groupBy)
 
@@ -84,6 +85,10 @@ func buildNodeRecords(
 				Failed:    podPhaseCountsForGroup.Failed,
 				Unknown:   podPhaseCountsForGroup.Unknown,
 			}
+		}
+
+		if podStatusCountsForGroup, ok := podStatusCounts[compositeKey]; ok {
+			record.PodCountsByStatus = podStatusCountsToResponse(podStatusCountsForGroup)
 		}
 
 		if attrs, ok := metadataMap[compositeKey]; ok {

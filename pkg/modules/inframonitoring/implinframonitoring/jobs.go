@@ -19,6 +19,7 @@ func buildJobRecords(
 	groupBy []qbtypes.GroupByKey,
 	metadataMap map[string]map[string]string,
 	phaseCounts map[string]podPhaseCounts,
+	podStatusCounts map[string]podStatusCounts,
 ) []inframonitoringtypes.JobRecord {
 	metricsMap := parseFullQueryResponse(resp, groupBy)
 
@@ -83,6 +84,10 @@ func buildJobRecords(
 				Failed:    phaseCountsForGroup.Failed,
 				Unknown:   phaseCountsForGroup.Unknown,
 			}
+		}
+
+		if podStatusCountsForGroup, ok := podStatusCounts[compositeKey]; ok {
+			record.PodCountsByStatus = podStatusCountsToResponse(podStatusCountsForGroup)
 		}
 
 		if attrs, ok := metadataMap[compositeKey]; ok {
