@@ -94,7 +94,7 @@ describe('resourceRoute', () => {
 
 	it('routes channels to the edit page', () => {
 		expect(resourceRoute(ResourceType.channel, 'channel-uuid-1')).toBe(
-			'/settings/channels/edit/channel-uuid-1',
+			'/alerts/channels/edit/channel-uuid-1',
 		);
 	});
 });

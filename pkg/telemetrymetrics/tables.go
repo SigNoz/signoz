@@ -30,6 +30,19 @@ const (
 	TimeseriesV41weekLocalTableName  = "time_series_v4_1week"
 	AttributesMetadataTableName      = "distributed_metadata"
 	AttributesMetadataLocalTableName = "metadata"
+
+	// The buffer holds raw points for ~24h; the reduced tables hold 60s
+	// aggregates of dropped-label series.
+	SamplesV4BufferTableName          = "distributed_samples_v4_buffer"
+	SamplesV4BufferLocalTableName     = "samples_v4_buffer"
+	TimeseriesV4BufferTableName       = "distributed_time_series_v4_buffer"
+	TimeseriesV4BufferLocalTableName  = "time_series_v4_buffer"
+	SamplesV4ReducedLastTableName     = "distributed_samples_v4_reduced_last_60s"
+	SamplesV4ReducedSumTableName      = "distributed_samples_v4_reduced_sum_60s"
+	TimeseriesV4ReducedTableName      = "distributed_time_series_v4_reduced"
+	TimeseriesV4ReducedLocalTableName = "time_series_v4_reduced"
+
+	ReductionRulesTableName = "distributed_metric_reduction_rules"
 )
 
 var (
@@ -49,8 +62,16 @@ var (
 // in that order.
 func WhichTSTableToUse(
 	start, end uint64,
+	useBuffer bool,
 	tableHints *metrictypes.MetricTableHints,
 ) (uint64, uint64, string, string) {
+	// the buffer holds the recent raw window for reduced metrics and has the same
+	// shape as time_series_v4; round the start to the hour like the v4 table.
+	if useBuffer {
+		start = start - (start % (oneHourInMilliseconds))
+		return start, end, TimeseriesV4BufferTableName, TimeseriesV4BufferLocalTableName
+	}
+
 	// if we have a hint for the table, we need to use it
 	// the hint will be used to override the default table selection logic
 	if tableHints != nil {
@@ -149,14 +170,20 @@ func WhichSamplesTableToUse(
 	start, end uint64,
 	metricType metrictypes.Type,
 	timeAggregation metrictypes.TimeAggregation,
+	useBuffer bool,
 	tableHints *metrictypes.MetricTableHints,
 ) (string, string) {
+	// the buffer holds the recent raw window for reduced metrics; same shape as samples_v4
+	if useBuffer {
+		return SamplesV4BufferTableName, SamplesV4BufferLocalTableName
+	}
+
 	// if we have a hint for the table, we need to use it
 	// the hint will be used to override the default table selection logic.
 	// SamplesTableName is the distributed name; derive the local via switch.
 	if tableHints != nil && tableHints.SamplesTableName != "" {
 		switch tableHints.SamplesTableName {
-		case SamplesV4TableName:
+		case SamplesV4TableName, SamplesV4BufferTableName:
 			return SamplesV4TableName, SamplesV4LocalTableName
 		case SamplesV4Agg5mTableName:
 			return SamplesV4Agg5mTableName, SamplesV4Agg5mLocalTableName
@@ -188,13 +215,10 @@ func WhichSamplesTableToUse(
 }
 
 func AggregationColumnForSamplesTable(
-	start, end uint64,
-	metricType metrictypes.Type,
+	tableName string,
 	temporality metrictypes.Temporality,
 	timeAggregation metrictypes.TimeAggregation,
-	tableHints *metrictypes.MetricTableHints,
 ) (string, error) {
-	tableName, _ := WhichSamplesTableToUse(start, end, metricType, timeAggregation, tableHints)
 	var aggregationColumn string
 	switch temporality {
 	case metrictypes.Delta:
@@ -202,7 +226,7 @@ func AggregationColumnForSamplesTable(
 		// although it doesn't make sense to use anyLast, avg, min, max, count on delta metrics,
 		// we are keeping it here to make sure that query will not be invalid
 		switch tableName {
-		case SamplesV4TableName:
+		case SamplesV4TableName, SamplesV4BufferTableName:
 			switch timeAggregation {
 			case metrictypes.TimeAggregationLatest:
 				aggregationColumn = "anyLast(value)"
@@ -244,7 +268,7 @@ func AggregationColumnForSamplesTable(
 		// for cumulative metrics, we only support `RATE`/`INCREASE`. The max value in window is
 		// used to calculate the sum which is then divided by the window size to get the rate
 		switch tableName {
-		case SamplesV4TableName:
+		case SamplesV4TableName, SamplesV4BufferTableName:
 			switch timeAggregation {
 			case metrictypes.TimeAggregationLatest:
 				aggregationColumn = "anyLast(value)"
@@ -284,7 +308,7 @@ func AggregationColumnForSamplesTable(
 		}
 	case metrictypes.Unspecified:
 		switch tableName {
-		case SamplesV4TableName:
+		case SamplesV4TableName, SamplesV4BufferTableName:
 			switch timeAggregation {
 			case metrictypes.TimeAggregationLatest:
 				aggregationColumn = "anyLast(value)"
@@ -330,6 +354,65 @@ func AggregationColumnForSamplesTable(
 		)
 	}
 	return aggregationColumn, nil
+}
+
+// WhichReducedSamplesTableToUse returns the 60s reduced samples table for a metric
+// type: the last_60s table for gauge-like series, the sum_60s table for counters
+// and histograms.
+func WhichReducedSamplesTableToUse(metricType metrictypes.Type) string {
+	if metricType == metrictypes.SumType || metricType == metrictypes.HistogramType {
+		return SamplesV4ReducedSumTableName
+	}
+	return SamplesV4ReducedLastTableName
+}
+
+// ReducedValueColumn returns the reduced value column (and the avg-denominator
+// weight) for a space aggregation. The reduced columns are pre-aggregated across
+// the original series, so the space aggregation picks the underlying value; the
+// sum table only has `sum`, so min/max across series have no column (ok=false).
+func ReducedValueColumn(metricType metrictypes.Type, space metrictypes.SpaceAggregation) (value, weight string, ok bool) {
+	if metricType == metrictypes.SumType || metricType == metrictypes.HistogramType {
+		switch space {
+		case metrictypes.SpaceAggregationSum:
+			return "`sum`", "", true
+		case metrictypes.SpaceAggregationAvg:
+			return "`sum`", "`count_series`", true
+		}
+		return "", "", false
+	}
+	switch space {
+	case metrictypes.SpaceAggregationSum:
+		return "`sum_last`", "", true
+	case metrictypes.SpaceAggregationAvg:
+		return "`sum_last`", "`count_series`", true
+	case metrictypes.SpaceAggregationMin:
+		return "`min`", "", true
+	case metrictypes.SpaceAggregationMax:
+		return "`max`", "", true
+	}
+	return "", "", false
+}
+
+// ReducedTimeAggregationColumn applies the time aggregation to the reduced `value`
+// column over the step's 60s buckets. latest uses argMax over the bucket timestamp
+// (the buckets have no read order); rate divides the per-step sum by the step.
+func ReducedTimeAggregationColumn(timeAggregation metrictypes.TimeAggregation, stepSec int64) string {
+	switch timeAggregation {
+	case metrictypes.TimeAggregationLatest:
+		return "argMax(value, unix_milli)"
+	case metrictypes.TimeAggregationAvg:
+		return "avg(value)"
+	case metrictypes.TimeAggregationMin:
+		return "min(value)"
+	case metrictypes.TimeAggregationMax:
+		return "max(value)"
+	case metrictypes.TimeAggregationCount:
+		return "count(value)"
+	case metrictypes.TimeAggregationRate:
+		return fmt.Sprintf("sum(value) / %d", stepSec)
+	default: // sum, increase
+		return "sum(value)"
+	}
 }
 
 func AggregationQueryForHistogramCountWithParams(param *metrictypes.ComparisonSpaceAggregationParam) (string, error) {

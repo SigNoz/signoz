@@ -32,6 +32,7 @@ function BarPanelRenderer({
 	panelId,
 	panel,
 	data,
+	refetch,
 	onClick,
 	onDragSelect,
 	dashboardPreference,
@@ -42,22 +43,18 @@ function BarPanelRenderer({
 	const isDarkMode = useIsDarkMode();
 	const { timezone } = useTimezone();
 
-	// The registry guarantees this Renderer only runs when
-	// `panel.spec.plugin.kind === 'signoz/BarChartPanel'`, so the cast is a
-	// documented boundary narrowing.
 	const spec = useMemo<DashboardtypesBarChartPanelSpecDTO>(
-		() => panel.spec.plugin.spec as DashboardtypesBarChartPanelSpecDTO,
+		() => panel.spec.plugin.spec,
 		[panel.spec.plugin.spec],
 	);
 
 	const builderQueries = useMemo(
-		() => getBuilderQueries(panel.spec.queries),
+		() => getBuilderQueries(panel.spec.queries || []),
 		[panel.spec.queries],
 	);
 
-	// X-scale clamps come from the request that produced the data (falls back
-	// to the global picker inside the helper). The generated request DTO is
-	// structurally the hand-written V5 request; the cast is the boundary.
+	// X-scale clamps come from the request that produced the data. The generated
+	// request DTO is structurally the V5 request; the cast is the boundary.
 	const { minTimeScale, maxTimeScale } = useMemo(() => {
 		const { startTime, endTime } = getTimeRangeFromQueryRangeRequest(
 			data.requestPayload as unknown as QueryRangeRequestV5 | undefined,
@@ -100,10 +97,8 @@ function BarPanelRenderer({
 			minTimeScale,
 			maxTimeScale,
 			onDragSelect,
-			// `config` gets mutated by TooltipPlugin (config.setCursor for cursor sync).
-			// Rebuild it on syncMode changes so the new chart instance starts from a
-			// clean config — otherwise switching to "No Sync" would inherit stale sync
-			// settings from the previous mode.
+			// TooltipPlugin mutates `config` for cursor sync; rebuild on syncMode change
+			// so a fresh instance doesn't inherit stale sync settings (e.g. "No Sync").
 			dashboardPreference?.syncMode,
 		],
 	);
@@ -126,10 +121,8 @@ function BarPanelRenderer({
 		[panelId],
 	);
 
-	// The uPlot key prop is the only way to force a full teardown and re-mount
-	// of the chart. Including syncMode/syncFilterMode in the key ensures changes
-	// to these preferences trigger a fresh chart instance, preventing stale
-	// sync wiring from being inherited.
+	// Keying on sync prefs forces a full chart teardown/re-mount so stale sync
+	// settings aren't inherited — the only way to fully reset the uPlot instance.
 	const key = `${dashboardPreference?.syncMode}-${dashboardPreference?.syncFilterMode}`;
 
 	const handleChartClick = useCallback(
@@ -145,7 +138,7 @@ function BarPanelRenderer({
 			data-testid="bar-panel-renderer"
 			className={PanelStyles.panelContainer}
 		>
-			{flatSeries.length === 0 && <NoData />}
+			{flatSeries.length === 0 && <NoData onRetry={refetch} />}
 			{flatSeries.length > 0 &&
 				containerDimensions.width > 0 &&
 				containerDimensions.height > 0 && (

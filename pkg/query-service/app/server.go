@@ -113,6 +113,8 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 			Store: signoz.SQLStore,
 			AgentFeatures: []agentConf.AgentFeature{
 				logParsingPipelineController,
+				signoz.Modules.SpanMapper,
+				signoz.Modules.LLMPricingRule,
 			},
 		},
 	)

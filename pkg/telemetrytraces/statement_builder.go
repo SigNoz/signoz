@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"slices"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -16,7 +15,6 @@ import (
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
-	"golang.org/x/exp/maps"
 )
 
 var (
@@ -86,40 +84,13 @@ func (b *traceQueryStatementBuilder) Build(
 	start = querybuilder.ToNanoSecs(start)
 	end = querybuilder.ToNanoSecs(end)
 
-	/*
-		Adding a tech debt note here:
-		This piece of code is a hot fix and should be removed once we close issue: engineering-pod/issues/3622
-	*/
-	/*
-		-------------------------------- Start of tech debt ----------------------------
-	*/
+	isSelectFieldsEmpty := false
 	if requestType == qbtypes.RequestTypeRaw {
-
-		selectedFields := query.SelectFields
-
-		if len(selectedFields) == 0 {
-			sortedKeys := maps.Keys(DefaultFields)
-			slices.Sort(sortedKeys)
-			for _, key := range sortedKeys {
-				selectedFields = append(selectedFields, DefaultFields[key])
-			}
-			query.SelectFields = selectedFields
-		}
-
-		selectFieldKeys := []string{}
-		for _, field := range selectedFields {
-			selectFieldKeys = append(selectFieldKeys, field.Name)
-		}
-
-		for _, x := range []string{"timestamp", "span_id", "trace_id"} {
-			if !slices.Contains(selectFieldKeys, x) {
-				query.SelectFields = append(query.SelectFields, DefaultFields[x])
-			}
-		}
+		isSelectFieldsEmpty = len(query.SelectFields) == 0
+		// we are expanding here to ensure that all the conflicts are taken care in adjustKeys
+		// i.e if there is a conflict we strip away context of the key in adjustKeys
+		query = b.expandRawSelectFields(query)
 	}
-	/*
-		-------------------------------- End of tech debt ----------------------------
-	*/
 
 	// We modify SelectFields above (injecting default fields), and those default
 	// fields can carry keys that need evolutions, so fetch keys after that.
@@ -139,7 +110,7 @@ func (b *traceQueryStatementBuilder) Build(
 
 	switch requestType {
 	case qbtypes.RequestTypeRaw:
-		return b.buildListQuery(ctx, q, query, start, end, keys, variables)
+		return b.buildListQuery(ctx, q, query, start, end, keys, variables, isSelectFieldsEmpty)
 	case qbtypes.RequestTypeTimeSeries:
 		return b.buildTimeSeriesQuery(ctx, q, query, start, end, keys, variables)
 	case qbtypes.RequestTypeScalar:
@@ -305,6 +276,7 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 	start, end uint64,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 	variables map[string]qbtypes.VariableItem,
+	isSelectFieldsEmpty bool,
 ) (*qbtypes.Statement, error) {
 
 	var (
@@ -321,13 +293,18 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 		cteArgs = append(cteArgs, args)
 	}
 
-	// TODO: should we deprecate `SelectFields` and return everything from a span like we do for logs?
 	for _, field := range query.SelectFields {
 		colExpr, err := b.fm.ColumnExpressionFor(ctx, start, end, &field, keys)
 		if err != nil {
 			return nil, err
 		}
 		sb.SelectMore(colExpr)
+	}
+
+	if isSelectFieldsEmpty {
+		for _, col := range ContextualSpanColumns {
+			sb.SelectMore(col)
+		}
 	}
 
 	// From table
@@ -850,4 +827,31 @@ func (b *traceQueryStatementBuilder) maybeAttachResourceFilter(
 	}
 	sb.Where("resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter)")
 	return fmt.Sprintf("__resource_filter AS (%s)", stmt.Query), stmt.Args, true, nil
+}
+
+// expandRawSelectFields populates SelectFields for raw (list view) queries.
+// It must be called before adjustKeys so that normalization runs over the full set.
+func (b *traceQueryStatementBuilder) expandRawSelectFields(query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation] {
+	if len(query.SelectFields) == 0 {
+		selectFields := make([]telemetrytypes.TelemetryFieldKey, 0, len(IntrinsicSpanFields)+len(CalculatedSpanFields))
+		selectFields = append(selectFields, IntrinsicSpanFields...)
+		selectFields = append(selectFields, CalculatedSpanFields...)
+		query.SelectFields = selectFields
+		return query
+	}
+
+	selectFields := []telemetrytypes.TelemetryFieldKey{
+		{Name: SpanTimestampColumn, FieldContext: telemetrytypes.FieldContextSpan},
+		{Name: SpanTraceIDColumn, FieldContext: telemetrytypes.FieldContextSpan},
+		{Name: SpanSpanIDColumn, FieldContext: telemetrytypes.FieldContextSpan},
+	}
+	for _, field := range query.SelectFields {
+		// TODO(tvats): If a user specifies attribute.timestamp in the select fields, this loop will basically ignore it, as we already added a field by default. This can be fixed once we close https://github.com/SigNoz/engineering-pod/issues/3693
+		if field.Name == SpanTimestampColumn || field.Name == SpanTraceIDColumn || field.Name == SpanSpanIDColumn {
+			continue
+		}
+		selectFields = append(selectFields, field)
+	}
+	query.SelectFields = selectFields
+	return query
 }

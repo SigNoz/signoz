@@ -2,16 +2,13 @@ import type { DashboardtypesQueryDTO } from 'api/generated/services/sigNoz.schem
 import type { BuilderQuery } from 'types/api/v5/queryRange';
 
 /**
- * Flattens a panel's queries into the list of builder queries it contains —
- * unwrapping `CompositeQuery` envelopes along the way. Non-builder kinds
- * (PromQL, ClickHouseSQL, Formula, TraceOperator) are dropped: they don't
- * carry the legend / groupBy / aggregation context downstream code needs.
- *
- * Returns the generated v5 `BuilderQuery` shape directly — no intermediate
- * summary type — so callers consume the same type the wire format defines.
+ * Flattens a panel's queries into its builder queries, unwrapping
+ * `CompositeQuery` envelopes. Non-builder kinds (PromQL, ClickHouseSQL, Formula,
+ * TraceOperator) are dropped — they lack the legend/groupBy/aggregation context
+ * downstream code needs. Returns the generated v5 `BuilderQuery` shape directly.
  */
 export function getBuilderQueries(
-	queries: DashboardtypesQueryDTO[] | null | undefined,
+	queries: DashboardtypesQueryDTO[],
 ): BuilderQuery[] {
 	if (!queries) {
 		return [];

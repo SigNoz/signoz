@@ -54,7 +54,7 @@ func (h *handler) List(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rules, total, err := h.module.List(ctx, orgID, q.Offset, q.Limit)
+	rules, total, err := h.module.List(ctx, orgID, q.Offset, q.Limit, q.Search, q.IsOverride)
 	if err != nil {
 		render.Error(rw, err)
 		return
