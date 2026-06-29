@@ -73,7 +73,7 @@ function ValueSelector({
 
 	return (
 		<CustomSelect
-			className={styles.select}
+			className={styles.control}
 			data-testid={testId}
 			options={optionData}
 			value={

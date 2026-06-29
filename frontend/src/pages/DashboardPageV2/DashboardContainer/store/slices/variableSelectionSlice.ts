@@ -48,8 +48,15 @@ export const createVariableSelectionSlice: StateCreator<
 	},
 });
 
+/**
+ * Stable empty map for dashboards with no stored selections. Returning an inline
+ * `{}` here would hand zustand's useSyncExternalStore a new reference every call,
+ * which it reads as a changed snapshot → infinite re-render loop.
+ */
+const EMPTY_SELECTION_MAP: VariableSelectionMap = {};
+
 /** Selector: the selection map for a dashboard (empty if none). */
 export const selectVariableValues =
 	(dashboardId: string) =>
 	(state: DashboardStore): VariableSelectionMap =>
-		state.variableValues[dashboardId] ?? {};
+		state.variableValues[dashboardId] ?? EMPTY_SELECTION_MAP;

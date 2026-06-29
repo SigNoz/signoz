@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import { Typography } from '@signozhq/ui/typography';
 import { Input } from 'antd';
 import type { DashboardtypesThresholdWithLabelDTO } from 'api/generated/services/sigNoz.schemas';
@@ -23,10 +24,7 @@ interface LabelThresholdRowProps {
 	onRemove: () => void;
 }
 
-/**
- * Value + color + label threshold (TimeSeries / Bar): a line drawn on the chart. Edit
- * form is color, value, unit, label.
- */
+/** Value + color + label threshold (TimeSeries / Bar): a line drawn on the chart. */
 function LabelThresholdRow({
 	index,
 	threshold,
@@ -38,6 +36,11 @@ function LabelThresholdRow({
 	onRemove,
 }: LabelThresholdRowProps): JSX.Element {
 	const { draft, setDraft, setValue } = useThresholdDraft(threshold, isEditing);
+
+	// Persist an empty-string label when none was entered — the spec requires a string.
+	const handleSave = useCallback((): void => {
+		onSave({ ...draft, label: draft.label ?? '' });
+	}, [onSave, draft]);
 
 	const summary = (
 		<>
@@ -58,7 +61,7 @@ function LabelThresholdRow({
 			isEditing={isEditing}
 			summary={summary}
 			onEdit={onEdit}
-			onSave={(): void => onSave(draft)}
+			onSave={handleSave}
 			onDiscard={onDiscard}
 			onRemove={onRemove}
 		>

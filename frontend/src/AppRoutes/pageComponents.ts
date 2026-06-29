@@ -90,14 +90,6 @@ export const SettingsPage = Loadable(
 	() => import(/* webpackChunkName: "SettingsPage" */ 'pages/Settings'),
 );
 
-export const GettingStarted = Loadable(
-	() => import(/* webpackChunkName: "GettingStarted" */ 'pages/GettingStarted'),
-);
-
-export const Onboarding = Loadable(
-	() => import(/* webpackChunkName: "Onboarding" */ 'pages/OnboardingPage'),
-);
-
 export const OrgOnboarding = Loadable(
 	() => import(/* webpackChunkName: "OrgOnboarding" */ 'pages/OrgOnboarding'),
 );

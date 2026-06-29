@@ -96,7 +96,7 @@ type Getter interface {
 	GetUsersByOrgIDAndRoleID(ctx context.Context, orgID valuer.UUID, roleID valuer.UUID) ([]*types.User, error)
 
 	// OnBeforeRoleDelete checks if any users are assigned to the role and rejects deletion if so.
-	OnBeforeRoleDelete(ctx context.Context, orgID valuer.UUID, roleID valuer.UUID) error
+	OnBeforeRoleDelete(ctx context.Context, orgID valuer.UUID, roleID valuer.UUID, roleName string) error
 
 	// VerifyResetPasswordToken checks if a reset password token exists and is not expired.
 	VerifyResetPasswordToken(ctx context.Context, token string) error
