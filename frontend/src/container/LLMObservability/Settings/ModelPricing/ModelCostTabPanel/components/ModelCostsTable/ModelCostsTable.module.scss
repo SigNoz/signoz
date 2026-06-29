@@ -3,6 +3,10 @@
 	--tanstack-table-row-height: 48px;
 	height: calc(100vh - 250px);
 	overflow-y: auto;
+
+	:global(table) tbody tr {
+		cursor: default;
+	}
 }
 
 .modelCostsEmpty {

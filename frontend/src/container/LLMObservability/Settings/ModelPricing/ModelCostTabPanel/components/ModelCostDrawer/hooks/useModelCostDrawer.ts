@@ -4,7 +4,6 @@ import { useQueryClient } from 'react-query';
 import {
 	getListLLMPricingRulesQueryKey,
 	useCreateOrUpdateLLMPricingRules,
-	useDeleteLLMPricingRule,
 } from 'api/generated/services/llmpricingrules';
 
 import { EMPTY_DRAFT } from '../../../../constants';
@@ -19,9 +18,7 @@ interface UseModelCostDrawerResult {
 	openForEdit: (rule: PricingRule) => void;
 	close: () => void;
 	save: (draft: DrawerDraft) => Promise<void>;
-	deleteRule: () => Promise<void>;
 	isSaving: boolean;
-	isDeleting: boolean;
 	saveError: string | null;
 	selectedRuleId: string | null;
 }
@@ -36,8 +33,6 @@ export function useModelCostDrawer(): UseModelCostDrawerResult {
 
 	const { mutateAsync: createOrUpdate, isLoading: isSaving } =
 		useCreateOrUpdateLLMPricingRules();
-	const { mutateAsync: deleteRuleApi, isLoading: isDeleting } =
-		useDeleteLLMPricingRule();
 
 	const invalidateList = useCallback(async (): Promise<void> => {
 		await queryClient.invalidateQueries({
@@ -90,23 +85,6 @@ export function useModelCostDrawer(): UseModelCostDrawerResult {
 		[createOrUpdate, invalidateList, mode],
 	);
 
-	const deleteRule = useCallback(async (): Promise<void> => {
-		if (!selectedRuleId) {
-			return;
-		}
-		setSaveError(null);
-		try {
-			await deleteRuleApi({ pathParams: { id: selectedRuleId } });
-			await invalidateList();
-			setIsOpen(false);
-			setSelectedRuleId(null);
-			toast.success('Model cost deleted');
-		} catch (error) {
-			const message = error instanceof Error ? error.message : 'Delete failed';
-			setSaveError(message);
-		}
-	}, [deleteRuleApi, selectedRuleId, invalidateList]);
-
 	return {
 		isOpen,
 		mode,
@@ -115,9 +93,7 @@ export function useModelCostDrawer(): UseModelCostDrawerResult {
 		openForEdit,
 		close,
 		save,
-		deleteRule,
 		isSaving,
-		isDeleting,
 		saveError,
 		selectedRuleId,
 	};

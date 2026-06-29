@@ -18,6 +18,7 @@ interface ModelCostsTableProps {
 	selectedRuleId: string | null;
 	canManage: boolean;
 	onEdit: (rule: LlmpricingruletypesLLMPricingRuleDTO) => void;
+	onDelete: (rule: LlmpricingruletypesLLMPricingRuleDTO) => void;
 }
 
 // The table owns its own pagination URL state (page/limit) via enableQueryParams;
@@ -32,10 +33,11 @@ function ModelCostsTable({
 	selectedRuleId,
 	canManage,
 	onEdit,
+	onDelete,
 }: ModelCostsTableProps): JSX.Element {
 	const columns = useMemo(
-		() => getModelCostsColumns({ canManage, onEdit }),
-		[canManage, onEdit],
+		() => getModelCostsColumns({ canManage, onEdit, onDelete }),
+		[canManage, onEdit, onDelete],
 	);
 
 	if (!isLoading && rules.length === 0) {
