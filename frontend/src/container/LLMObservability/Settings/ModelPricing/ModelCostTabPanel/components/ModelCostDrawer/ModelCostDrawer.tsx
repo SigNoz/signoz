@@ -1,13 +1,10 @@
-import { useState } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { DrawerWrapper } from '@signozhq/ui/drawer';
 import { Input } from '@signozhq/ui/input';
 import { SelectSimple } from '@signozhq/ui/select';
 import { Typography } from '@signozhq/ui/typography';
-import { Trash2 } from '@signozhq/icons';
 import { Controller, useForm } from 'react-hook-form';
 
-import DeleteConfirmDialog from './components/DeleteConfirmDialog';
 import PatternEditor from './components/PatternEditor';
 import PricingFields from './components/PricingFields';
 import SourceSelector from './components/SourceSelector';
@@ -26,9 +23,7 @@ interface ModelCostDrawerProps {
 	initialDraft: DrawerDraft;
 	onClose: () => void;
 	onSave: (draft: DrawerDraft) => void;
-	onDelete: () => void;
 	isSaving: boolean;
-	isDeleting: boolean;
 	saveError: string | null;
 	canManage: boolean;
 }
@@ -39,9 +34,7 @@ function ModelCostDrawer({
 	initialDraft,
 	onClose,
 	onSave,
-	onDelete,
 	isSaving,
-	isDeleting,
 	saveError,
 	canManage,
 }: ModelCostDrawerProps): JSX.Element {
@@ -58,9 +51,6 @@ function ModelCostDrawer({
 	});
 
 	const isOverride = watch('isOverride');
-
-	const [showDeleteConfirmDialog, setShowDeleteConfirmDialog] =
-		useState<boolean>(false);
 
 	// Metadata (model id / provider / patterns / source) is editable by any
 	// manager. Pricing fields are editable only once the user picks "User
@@ -80,45 +70,30 @@ function ModelCostDrawer({
 
 	const footer = (
 		<div className={styles.footer}>
-			{mode === 'edit' && canManage && (
+			<Button
+				variant="outlined"
+				color="secondary"
+				onClick={onClose}
+				testId="drawer-cancel-btn"
+			>
+				{canManage ? 'Cancel' : 'Close'}
+			</Button>
+			{canManage && (
+				// Disabled until the form is dirty, so saving an untouched draft
+				// (no real change) is impossible. Once dirty it stays enabled even
+				// when invalid, so clicking surfaces inline field errors via
+				// handleSubmit rather than silently blocking Save.
 				<Button
-					variant="ghost"
-					color="destructive"
-					prefix={<Trash2 size={14} />}
-					onClick={(): void => setShowDeleteConfirmDialog(true)}
-					loading={isDeleting}
-					testId="drawer-delete-btn"
-					className={styles.deleteButton}
+					variant="solid"
+					color="primary"
+					onClick={handleSubmit(onSave)}
+					disabled={!isDirty}
+					loading={isSaving}
+					testId="drawer-save-btn"
 				>
-					Delete
+					Save
 				</Button>
 			)}
-			<div className={styles.footerRight}>
-				<Button
-					variant="outlined"
-					color="secondary"
-					onClick={onClose}
-					testId="drawer-cancel-btn"
-				>
-					{canManage ? 'Cancel' : 'Close'}
-				</Button>
-				{canManage && (
-					// Disabled until the form is dirty, so saving an untouched draft
-					// (no real change) is impossible. Once dirty it stays enabled even
-					// when invalid, so clicking surfaces inline field errors via
-					// handleSubmit rather than silently blocking Save.
-					<Button
-						variant="solid"
-						color="primary"
-						onClick={handleSubmit(onSave)}
-						disabled={!isDirty}
-						loading={isSaving}
-						testId="drawer-save-btn"
-					>
-						Save
-					</Button>
-				)}
-			</div>
 		</div>
 	);
 
@@ -260,14 +235,6 @@ function ModelCostDrawer({
 					{saveError}
 				</Typography.Text>
 			)}
-
-			<DeleteConfirmDialog
-				open={showDeleteConfirmDialog}
-				modelName={initialDraft.modelName}
-				isDeleting={isDeleting}
-				onConfirm={onDelete}
-				onCancel={(): void => setShowDeleteConfirmDialog(false)}
-			/>
 		</DrawerWrapper>
 	);
 }

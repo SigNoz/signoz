@@ -10,10 +10,12 @@ import { useAppContext } from 'providers/App/App';
 
 import { LIMIT_KEY, PAGE_KEY, PAGE_SIZE } from '../constants';
 import type { PricingRule } from '../types';
+import DeleteConfirmDialog from './components/DeleteConfirmDialog';
 import ModelCostDrawer, {
 	useModelCostDrawer,
 } from './components/ModelCostDrawer';
 import ModelCostsTable from './components/ModelCostsTable';
+import { useModelCostDelete } from './hooks/useModelCostDelete';
 import styles from './ModelCostTabPanel.module.scss';
 
 // "Model costs" tab: the priced-model listing, the add/edit drawer, and
@@ -45,6 +47,7 @@ function ModelCostTabPanel(): JSX.Element {
 	const total = data?.data?.total ?? 0;
 
 	const drawer = useModelCostDrawer();
+	const deletion = useModelCostDelete();
 
 	return (
 		<>
@@ -75,6 +78,7 @@ function ModelCostTabPanel(): JSX.Element {
 				selectedRuleId={drawer.selectedRuleId}
 				canManage={canManagePricing}
 				onEdit={drawer.openForEdit}
+				onDelete={deletion.requestDelete}
 			/>
 
 			<footer>
@@ -90,11 +94,19 @@ function ModelCostTabPanel(): JSX.Element {
 					initialDraft={drawer.initialDraft}
 					onClose={drawer.close}
 					onSave={drawer.save}
-					onDelete={drawer.deleteRule}
 					isSaving={drawer.isSaving}
-					isDeleting={drawer.isDeleting}
 					saveError={drawer.saveError}
 					canManage={canManagePricing}
+				/>
+			)}
+
+			{deletion.pendingDelete && (
+				<DeleteConfirmDialog
+					open
+					modelName={deletion.pendingDelete.modelName}
+					isDeleting={deletion.isDeleting}
+					onConfirm={deletion.confirmDelete}
+					onCancel={deletion.cancelDelete}
 				/>
 			)}
 		</>

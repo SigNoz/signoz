@@ -10,12 +10,6 @@
 	composes: required from './shared.module.scss';
 }
 
-.deleteButton {
-	display: flex;
-	justify-content: center;
-	align-items: center;
-}
-
 .modelCostDrawer {
 	// Uniform horizontal padding across header / body / footer. The header and
 	// footer read these dialog vars; the body (rendered in drawer-description)
@@ -61,10 +55,4 @@
 	// Horizontal padding is provided by the drawer-footer slot var above.
 	padding: 0;
 	width: 100%;
-}
-
-.footerRight {
-	display: flex;
-	gap: var(--spacing-4);
-	margin-left: auto;
 }
