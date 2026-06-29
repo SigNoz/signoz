@@ -2553,17 +2553,6 @@ components:
         url:
           type: string
       type: object
-    DashboardTextVariableSpec:
-      properties:
-        constant:
-          type: boolean
-        display:
-          $ref: '#/components/schemas/VariableDisplay'
-        name:
-          type: string
-        value:
-          type: string
-      type: object
     DashboardtypesAxes:
       properties:
         isLogScale:
@@ -2761,24 +2750,23 @@ components:
     DashboardtypesDatasourcePlugin:
       discriminator:
         mapping:
-          signoz/Datasource: '#/components/schemas/DashboardtypesDatasourcePluginVariantStruct'
+          signoz/Datasource: '#/components/schemas/DashboardtypesDatasourcePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesSigNozDatasourceSpec'
         propertyName: kind
       oneOf:
-      - $ref: '#/components/schemas/DashboardtypesDatasourcePluginVariantStruct'
+      - $ref: '#/components/schemas/DashboardtypesDatasourcePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesSigNozDatasourceSpec'
       type: object
     DashboardtypesDatasourcePluginKind:
       enum:
       - signoz/Datasource
       type: string
-    DashboardtypesDatasourcePluginVariantStruct:
+    DashboardtypesDatasourcePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesSigNozDatasourceSpec:
       properties:
         kind:
           enum:
           - signoz/Datasource
           type: string
         spec:
-          nullable: true
-          type: object
+          $ref: '#/components/schemas/DashboardtypesSigNozDatasourceSpec'
       required:
       - kind
       - spec
@@ -2944,9 +2932,15 @@ components:
             type: string
           nullable: true
           type: object
+        mode:
+          $ref: '#/components/schemas/DashboardtypesLegendMode'
         position:
           $ref: '#/components/schemas/DashboardtypesLegendPosition'
       type: object
+    DashboardtypesLegendMode:
+      enum:
+      - list
+      type: string
     DashboardtypesLegendPosition:
       enum:
       - bottom
@@ -2993,19 +2987,30 @@ components:
         customAllValue:
           type: string
         defaultValue:
-          $ref: '#/components/schemas/VariableDefaultValue'
+          $ref: '#/components/schemas/DashboardtypesVariableDefaultValue'
         display:
           $ref: '#/components/schemas/DashboardtypesDisplay'
         name:
+          minLength: 1
           type: string
         plugin:
           $ref: '#/components/schemas/DashboardtypesVariablePlugin'
         sort:
-          nullable: true
-          type: string
+          $ref: '#/components/schemas/DashboardtypesListVariableSpecSort'
       required:
       - display
+      - name
       type: object
+    DashboardtypesListVariableSpecSort:
+      enum:
+      - none
+      - alphabetical-asc
+      - alphabetical-desc
+      - numerical-asc
+      - numerical-desc
+      - alphabetical-ci-asc
+      - alphabetical-ci-desc
+      type: string
     DashboardtypesListableDashboardForUserV2:
       properties:
         dashboards:
@@ -3303,7 +3308,6 @@ components:
         queries:
           items:
             $ref: '#/components/schemas/DashboardtypesQuery'
-          nullable: true
           type: array
       required:
       - display
@@ -3506,6 +3510,8 @@ components:
       required:
       - queryValue
       type: object
+    DashboardtypesSigNozDatasourceSpec:
+      type: object
     DashboardtypesSource:
       enum:
       - user
@@ -3515,8 +3521,13 @@ components:
     DashboardtypesSpanGaps:
       properties:
         fillLessThan:
+          description: The maximum gap size to connect when fillOnlyBelow is true.
+            Gaps larger than this duration are left disconnected.
           type: string
         fillOnlyBelow:
+          description: Controls whether lines connect across null values. When false
+            (default), all gaps are connected. When true, only gaps smaller than fillLessThan
+            are connected.
           type: boolean
       type: object
     DashboardtypesStorableDashboardData:
@@ -3564,6 +3575,22 @@ components:
       - color
       - columnName
       type: object
+    DashboardtypesTextVariableSpec:
+      properties:
+        constant:
+          type: boolean
+        display:
+          $ref: '#/components/schemas/DashboardtypesDisplay'
+        name:
+          minLength: 1
+          type: string
+        value:
+          type: string
+      required:
+      - display
+      - value
+      - name
+      type: object
     DashboardtypesThresholdFormat:
       enum:
       - text
@@ -3583,7 +3610,6 @@ components:
       required:
       - value
       - color
-      - label
       type: object
     DashboardtypesTimePreference:
       enum:
@@ -3668,24 +3694,18 @@ components:
       discriminator:
         mapping:
           ListVariable: '#/components/schemas/DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpec'
-          TextVariable: '#/components/schemas/DashboardtypesVariableEnvelopeGithubComPersesSpecGoDashboardTextVariableSpec'
+          TextVariable: '#/components/schemas/DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesTextVariableSpec'
         propertyName: kind
       oneOf:
       - $ref: '#/components/schemas/DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpec'
-      - $ref: '#/components/schemas/DashboardtypesVariableEnvelopeGithubComPersesSpecGoDashboardTextVariableSpec'
+      - $ref: '#/components/schemas/DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesTextVariableSpec'
       type: object
-    DashboardtypesVariableEnvelopeGithubComPersesSpecGoDashboardTextVariableSpec:
-      properties:
-        kind:
-          enum:
-          - TextVariable
+    DashboardtypesVariableDefaultValue:
+      oneOf:
+      - type: string
+      - items:
           type: string
-        spec:
-          $ref: '#/components/schemas/DashboardTextVariableSpec'
-      required:
-      - kind
-      - spec
-      type: object
+        type: array
     DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpec:
       properties:
         kind:
@@ -3694,6 +3714,18 @@ components:
           type: string
         spec:
           $ref: '#/components/schemas/DashboardtypesListVariableSpec'
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesTextVariableSpec:
+      properties:
+        kind:
+          enum:
+          - TextVariable
+          type: string
+        spec:
+          $ref: '#/components/schemas/DashboardtypesTextVariableSpec'
       required:
       - kind
       - spec
@@ -3771,15 +3803,12 @@ components:
         type:
           type: string
         url:
-          nullable: true
           type: string
       required:
       - type
       - code
       - message
-      - url
       - errors
-      - retry
       - suggestions
       type: object
     ErrorsResponseerroradditional:
@@ -3795,7 +3824,6 @@ components:
       - suggestions
       type: object
     ErrorsResponseretryjson:
-      nullable: true
       properties:
         delay:
           $ref: '#/components/schemas/TimeDuration'
@@ -8143,17 +8171,6 @@ components:
           type: string
       required:
       - id
-      type: object
-    VariableDefaultValue:
-      type: object
-    VariableDisplay:
-      properties:
-        description:
-          type: string
-        hidden:
-          type: boolean
-        name:
-          type: string
       type: object
     ZeustypesGettableHost:
       properties:
