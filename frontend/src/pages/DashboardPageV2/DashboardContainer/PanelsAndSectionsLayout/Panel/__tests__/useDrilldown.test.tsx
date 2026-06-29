@@ -23,6 +23,9 @@ const mockGetBuilderQueries = jest.fn();
 jest.mock('../hooks/useViewPanel', () => ({
 	useViewPanel: (): unknown => ({ openViewWithQuery: mockOpenViewWithQuery }),
 }));
+jest.mock('../hooks/useDrilldownContextVariables', () => ({
+	useDrilldownContextVariables: (): unknown => ({}),
+}));
 jest.mock('../hooks/useDrilldownBreakout', () => ({
 	useDrilldownBreakout: (): unknown => ({
 		items: <div data-testid="breakout-submenu" />,
