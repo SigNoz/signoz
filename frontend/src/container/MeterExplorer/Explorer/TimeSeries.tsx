@@ -167,6 +167,7 @@ function TimeSeries({
 								dataSource={DataSource.METRICS}
 								yAxisUnit={yAxisUnit}
 								panelType={PANEL_TYPES.BAR}
+								stackBarChart
 							/>
 						</div>
 					))}
