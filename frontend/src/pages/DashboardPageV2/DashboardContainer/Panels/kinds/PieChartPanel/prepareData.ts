@@ -2,6 +2,7 @@ import { themeColors } from 'constants/theme';
 import type { PieSlice } from 'container/DashboardContainer/visualization/charts/types';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import type { PanelTable } from 'pages/DashboardPageV2/DashboardContainer/queryV5/types';
+import { coerceToString } from 'utils/stringUtils';
 
 export interface PreparePieDataArgs {
 	/** Scalar tables from the V5 response (see `prepareScalarTables`). */
@@ -36,17 +37,24 @@ export function preparePieData({
 
 		table.rows.forEach((row) => {
 			const value = Number(row.data[valueKey]);
+			// Group-by key→value of this row; carried on the slice so drill-down can build filters.
+			const labels: Record<string, string> = {};
+			labelColumns.forEach((column) => {
+				const cell = row.data[column.id || column.name];
+				if (cell != null) {
+					labels[column.name] = coerceToString(cell);
+				}
+			});
 			const label =
-				labelColumns
-					.map((column) => row.data[column.id || column.name])
-					.filter((part) => part != null)
-					.map(String)
-					.join(', ') ||
-				table.legend ||
-				table.queryName ||
-				'';
+				Object.values(labels).join(', ') || table.legend || table.queryName || '';
 			const color = customColors?.[label] ?? generateColor(label, colorMap);
-			slices.push({ label, value, color });
+			slices.push({
+				label,
+				value,
+				color,
+				queryName: valueColumn.queryName,
+				labels,
+			});
 		});
 	});
 
