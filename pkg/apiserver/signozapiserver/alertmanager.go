@@ -112,6 +112,26 @@ func (provider *provider) addAlertmanagerRoutes(router *mux.Router) error {
 		return err
 	}
 
+	if err := router.Handle("/api/v1/channels/jsmops/oauth/session", provider.authzMiddleware.EditAccess(provider.alertmanagerHandler.JsmOpsOAuthSession)).Methods(http.MethodPost).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v1/channels/jsmops/oauth/callback", http.HandlerFunc(provider.alertmanagerHandler.JsmOpsOAuthCallback)).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v1/channels/jsmops/teams", provider.authzMiddleware.EditAccess(provider.alertmanagerHandler.JsmOpsTeams)).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v1/channels/jsmops/connections", provider.authzMiddleware.ViewAccess(provider.alertmanagerHandler.JsmOpsConnections)).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v1/channels/jsmops/connections/{id}", provider.authzMiddleware.AdminAccess(provider.alertmanagerHandler.JsmOpsConnectionDelete)).Methods(http.MethodDelete).GetError(); err != nil {
+		return err
+	}
+
 	if err := router.Handle("/api/v1/testChannel", handler.New(provider.authzMiddleware.EditAccess(provider.alertmanagerHandler.TestReceiver), handler.OpenAPIDef{
 		ID:                  "TestChannelDeprecated",
 		Tags:                []string{"channels"},

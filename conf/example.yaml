@@ -228,6 +228,14 @@ alertmanager:
       maintenance_interval: 15m
       # Retention of the notification logs.
       retention: 120h
+    jsmops:
+      oauth:
+        # OAuth 2.0 credentials for the JSM Ops alert channel.
+        client_id: ""
+        client_secret: ""
+        redirect_uri: ""
+        # Extra origins besides the redirect URI's own origin.
+        allowed_opener_origins: []
 
 ##################### Emailing #####################
 emailing:

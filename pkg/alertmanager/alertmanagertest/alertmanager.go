@@ -8,6 +8,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerserver"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -150,6 +151,96 @@ func (_c *MockAlertmanager_Config_Call) Return(config alertmanagerserver.Config)
 }
 
 func (_c *MockAlertmanager_Config_Call) RunAndReturn(run func() alertmanagerserver.Config) *MockAlertmanager_Config_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// JSMOpsOAuthConfig provides a mock function for the type MockAlertmanager
+func (_mock *MockAlertmanager) JSMOpsOAuthConfig() alertmanager.JSMOpsOAuthConfig {
+	ret := _mock.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for JSMOpsOAuthConfig")
+	}
+
+	var r0 alertmanager.JSMOpsOAuthConfig
+	if returnFunc, ok := ret.Get(0).(func() alertmanager.JSMOpsOAuthConfig); ok {
+		r0 = returnFunc()
+	} else {
+		r0 = ret.Get(0).(alertmanager.JSMOpsOAuthConfig)
+	}
+	return r0
+}
+
+// MockAlertmanager_JSMOpsOAuthConfig_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'JSMOpsOAuthConfig'
+type MockAlertmanager_JSMOpsOAuthConfig_Call struct {
+	*mock.Call
+}
+
+// JSMOpsOAuthConfig is a helper method to define mock.On call
+func (_e *MockAlertmanager_Expecter) JSMOpsOAuthConfig() *MockAlertmanager_JSMOpsOAuthConfig_Call {
+	return &MockAlertmanager_JSMOpsOAuthConfig_Call{Call: _e.mock.On("JSMOpsOAuthConfig")}
+}
+
+func (_c *MockAlertmanager_JSMOpsOAuthConfig_Call) Run(run func()) *MockAlertmanager_JSMOpsOAuthConfig_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *MockAlertmanager_JSMOpsOAuthConfig_Call) Return(jSMOpsOAuthConfig alertmanager.JSMOpsOAuthConfig) *MockAlertmanager_JSMOpsOAuthConfig_Call {
+	_c.Call.Return(jSMOpsOAuthConfig)
+	return _c
+}
+
+func (_c *MockAlertmanager_JSMOpsOAuthConfig_Call) RunAndReturn(run func() alertmanager.JSMOpsOAuthConfig) *MockAlertmanager_JSMOpsOAuthConfig_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// JSMOpsConnectionStore provides a mock function for the type MockAlertmanager
+func (_mock *MockAlertmanager) JSMOpsConnectionStore() alertmanagertypes.JsmOpsConnectionStore {
+	ret := _mock.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for JSMOpsConnectionStore")
+	}
+
+	var r0 alertmanagertypes.JsmOpsConnectionStore
+	if returnFunc, ok := ret.Get(0).(func() alertmanagertypes.JsmOpsConnectionStore); ok {
+		r0 = returnFunc()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(alertmanagertypes.JsmOpsConnectionStore)
+		}
+	}
+	return r0
+}
+
+// MockAlertmanager_JSMOpsConnectionStore_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'JSMOpsConnectionStore'
+type MockAlertmanager_JSMOpsConnectionStore_Call struct {
+	*mock.Call
+}
+
+// JSMOpsConnectionStore is a helper method to define mock.On call
+func (_e *MockAlertmanager_Expecter) JSMOpsConnectionStore() *MockAlertmanager_JSMOpsConnectionStore_Call {
+	return &MockAlertmanager_JSMOpsConnectionStore_Call{Call: _e.mock.On("JSMOpsConnectionStore")}
+}
+
+func (_c *MockAlertmanager_JSMOpsConnectionStore_Call) Run(run func()) *MockAlertmanager_JSMOpsConnectionStore_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *MockAlertmanager_JSMOpsConnectionStore_Call) Return(jsmOpsConnectionStore alertmanagertypes.JsmOpsConnectionStore) *MockAlertmanager_JSMOpsConnectionStore_Call {
+	_c.Call.Return(jsmOpsConnectionStore)
+	return _c
+}
+
+func (_c *MockAlertmanager_JSMOpsConnectionStore_Call) RunAndReturn(run func() alertmanagertypes.JsmOpsConnectionStore) *MockAlertmanager_JSMOpsConnectionStore_Call {
 	_c.Call.Return(run)
 	return _c
 }
