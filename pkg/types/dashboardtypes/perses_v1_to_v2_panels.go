@@ -250,25 +250,33 @@ func (d *v1Decoder) legendFromWidget(w map[string]any) Legend {
 }
 
 func (d *v1Decoder) mapV1SelectFields(w map[string]any) []telemetrytypes.TelemetryFieldKey {
-	if raw := d.readArray(w, "selectedLogFields"); len(raw) > 0 {
-		return decodeTelemetryFields(raw)
+	field := "selectedLogFields"
+	raw := d.readArray(w, field)
+	if len(raw) == 0 {
+		field = "selectedTracesFields"
+		raw = d.readArray(w, field)
 	}
-	if raw := d.readArray(w, "selectedTracesFields"); len(raw) > 0 {
-		return decodeTelemetryFields(raw)
-	}
-	return nil
-}
-
-func decodeTelemetryFields(raw []any) []telemetrytypes.TelemetryFieldKey {
-	bytes, err := json.Marshal(raw)
-	if err != nil {
+	if len(raw) == 0 {
 		return nil
 	}
-	var fields []telemetrytypes.TelemetryFieldKey
-	if err := json.Unmarshal(bytes, &fields); err != nil {
+	fields, err := decodeTelemetryFields(raw)
+	if err != nil {
+		d.note("widget %q has malformed %s: %v", d.readString(w, "id"), field, err)
 		return nil
 	}
 	return fields
+}
+
+func decodeTelemetryFields(raw []any) ([]telemetrytypes.TelemetryFieldKey, error) {
+	bytes, err := json.Marshal(raw)
+	if err != nil {
+		return nil, err
+	}
+	var fields []telemetrytypes.TelemetryFieldKey
+	if err := json.Unmarshal(bytes, &fields); err != nil {
+		return nil, err
+	}
+	return fields, nil
 }
 
 // ══════════════════════════════════════════════
