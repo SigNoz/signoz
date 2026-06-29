@@ -368,7 +368,7 @@ func (m *defaultFieldMapper) ColumnExpressionFor(
 				// - it is not a static field
 				// - the next best thing to do is see if there is a typo
 				// and suggest a correction
-				wrappedErr := errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field `%s` not found", field.Name).WithSuggestions(errors.SuggestionsOnLevenshteinDistance(field.Name, maps.Keys(keys))...)
+				wrappedErr := errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field `%s` not found", field.Name).WithSuggestions(errors.NewSuggestionsOnLevenshteinDistance(field.Name, errors.NounKeys, maps.Keys(keys))...)
 				return "", wrappedErr
 			}
 		} else if len(keysForField) == 1 {

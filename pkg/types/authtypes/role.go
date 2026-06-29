@@ -25,6 +25,7 @@ var (
 	ErrCodeRoleUnsupported                  = errors.MustNewCode("role_unsupported")
 	ErrCodeRoleHasUserAssignees             = errors.MustNewCode("role_has_user_assignees")
 	ErrCodeRoleHasServiceAccountAssignees   = errors.MustNewCode("role_has_service_account_assignees")
+	ErrCodeRoleHasAuthDomainMappings        = errors.MustNewCode("role_has_auth_domain_mappings")
 )
 
 var (
@@ -80,8 +81,8 @@ type RoleWithTransactionGroups struct {
 
 type PostableRole struct {
 	Name              string            `json:"name" required:"true"`
-	Description       string            `json:"description" required:"true"`
-	TransactionGroups TransactionGroups `json:"transactionGroups" required:"true" nullable:"false"`
+	Description       string            `json:"description" required:"false"`
+	TransactionGroups TransactionGroups `json:"transactionGroups" required:"false" nullable:"false"`
 }
 
 type UpdatableRole struct {
@@ -135,6 +136,20 @@ func NewManagedRoles(orgID valuer.UUID) []*Role {
 
 }
 
+func NewStatsFromRoles(roles []*Role) map[string]any {
+	stats := make(map[string]any)
+	for _, role := range roles {
+		key := "role." + role.Type.StringValue() + ".count"
+		if value, ok := stats[key]; ok {
+			stats[key] = value.(int64) + 1
+		} else {
+			stats[key] = int64(1)
+		}
+	}
+	stats["role.count"] = int64(len(roles))
+	return stats
+}
+
 func (role *Role) PatchMetadata(description string) error {
 	err := role.ErrIfManaged()
 	if err != nil {
@@ -167,32 +182,40 @@ func (role *Role) ErrIfManaged() error {
 }
 
 func (role *PostableRole) UnmarshalJSON(data []byte) error {
-	type Alias PostableRole
-	var temp Alias
+	shadow := struct {
+		Name              string           `json:"name"`
+		Description       string           `json:"description"`
+		TransactionGroups *json.RawMessage `json:"transactionGroups"`
+	}{}
 
-	if err := json.Unmarshal(data, &temp); err != nil {
+	if err := json.Unmarshal(data, &shadow); err != nil {
 		return err
 	}
 
-	if temp.Name == "" {
+	if shadow.Name == "" {
 		return errors.New(errors.TypeInvalidInput, ErrCodeRoleInvalidInput, "name is missing from the request")
 	}
 
-	if match := roleNameRegex.MatchString(temp.Name); !match {
+	if match := roleNameRegex.MatchString(shadow.Name); !match {
 		return errors.New(errors.TypeInvalidInput, ErrCodeRoleInvalidInput, "name must contain only lowercase letters (a-z) and hyphens (-), and be at most 50 characters long.")
 	}
 
-	if strings.HasPrefix(temp.Name, managedRolePrefix) {
+	if strings.HasPrefix(shadow.Name, managedRolePrefix) {
 		return errors.Newf(errors.TypeInvalidInput, ErrCodeRoleInvalidInput, "role name cannot start with %q as it is reserved for SigNoz managed roles.", managedRolePrefix)
 	}
 
-	if temp.TransactionGroups == nil {
-		return errors.New(errors.TypeInvalidInput, ErrCodeRoleInvalidInput, "transactionGroups is required").WithAdditional("send an empty array to create a role with no transaction groups")
+	var transactionGroups TransactionGroups
+	if shadow.TransactionGroups != nil {
+		var err error
+		transactionGroups, err = NewTransactionGroups(*shadow.TransactionGroups)
+		if err != nil {
+			return err
+		}
 	}
 
-	role.Name = temp.Name
-	role.Description = temp.Description
-	role.TransactionGroups = temp.TransactionGroups
+	role.Name = shadow.Name
+	role.Description = shadow.Description
+	role.TransactionGroups = transactionGroups
 	return nil
 }
 
@@ -206,9 +229,6 @@ func (role *UpdatableRole) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	// A pointer distinguishes an omitted/null description from an explicit empty string: the field
-	// must be sent (update reconciles to exactly what is given), but an empty string is allowed so a
-	// caller can deliberately clear the description.
 	if shadow.Description == nil {
 		return errors.New(errors.TypeInvalidInput, ErrCodeRoleInvalidInput, "description is required").WithAdditional("send an empty string to clear the description")
 	}
@@ -293,6 +313,20 @@ func MustGetSigNozManagedRoleFromExistingRole(role types.Role) string {
 	managedRole, ok := ExistingRoleToSigNozManagedRoleMap[role]
 	if !ok {
 		panic(errors.Newf(errors.TypeInternal, errors.CodeInternal, "invalid role: %s", role.String()))
+	}
+
+	return managedRole
+}
+
+func NormalizeRoleName(role string) string {
+	legacyRole, err := types.NewRole(strings.ToUpper(role))
+	if err != nil {
+		return role
+	}
+
+	managedRole, ok := ExistingRoleToSigNozManagedRoleMap[legacyRole]
+	if !ok {
+		return role
 	}
 
 	return managedRole

@@ -95,6 +95,15 @@ func (provider *provider) List(ctx context.Context, orgID valuer.UUID) ([]*autht
 	return provider.store.List(ctx, orgID)
 }
 
+func (provider *provider) Collect(ctx context.Context, orgID valuer.UUID) (map[string]any, error) {
+	roles, err := provider.List(ctx, orgID)
+	if err != nil {
+		return nil, err
+	}
+
+	return authtypes.NewStatsFromRoles(roles), nil
+}
+
 func (provider *provider) ListByOrgIDAndNames(ctx context.Context, orgID valuer.UUID, names []string) ([]*authtypes.Role, error) {
 	return provider.store.ListByOrgIDAndNames(ctx, orgID, names)
 }

@@ -24,8 +24,10 @@ import (
 	"github.com/SigNoz/signoz/pkg/instrumentation"
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/meterreporter"
+	"github.com/SigNoz/signoz/pkg/modules/authdomain/implauthdomain"
 	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
+	"github.com/SigNoz/signoz/pkg/modules/metricreductionrule"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/modules/retention"
@@ -114,6 +116,7 @@ func New(
 	meterReporterProviderFactories func(context.Context, factory.ProviderSettings, flagger.Flagger, licensing.Licensing, telemetrystore.TelemetryStore, retention.Getter, organization.Getter, zeus.Zeus) (factory.NamedMap[factory.ProviderFactory[meterreporter.Reporter, meterreporter.Config]], string),
 	querierHandlerCallback func(factory.ProviderSettings, querier.Querier, analytics.Analytics) querier.Handler,
 	cloudIntegrationCallback func(sqlstore.SQLStore, dashboard.Module, global.Global, zeus.Zeus, gateway.Gateway, licensing.Licensing, serviceaccount.Module, cloudintegration.Config) (cloudintegration.Module, error),
+	metricReductionRuleModuleCallback func(sqlstore.SQLStore, telemetrystore.TelemetryStore, dashboard.Module, queryparser.QueryParser, licensing.Licensing, flagger.Flagger, telemetrytypes.MetadataStore, factory.ProviderSettings, int) metricreductionrule.Module,
 	rulerProviderFactories func(cache.Cache, alertmanager.Alertmanager, sqlstore.SQLStore, telemetrystore.TelemetryStore, telemetrytypes.MetadataStore, prometheus.Prometheus, organization.Getter, rulestatehistory.Module, querier.Querier, queryparser.QueryParser) factory.NamedMap[factory.ProviderFactory[ruler.Ruler, ruler.Config]],
 ) (*SigNoz, error) {
 	// Initialize instrumentation
@@ -349,10 +352,13 @@ func New(
 	// Initialize service account getter
 	serviceAccountGetter := implserviceaccount.NewGetter(implserviceaccount.NewStore(sqlstore))
 
+	authDomainGetter := implauthdomain.NewGetter(implauthdomain.NewStore(sqlstore))
+
 	// Build pre-delete callbacks from modules
 	onBeforeRoleDelete := []authz.OnBeforeRoleDelete{
 		userGetter.OnBeforeRoleDelete,
 		serviceAccountGetter.OnBeforeRoleDelete,
+		authDomainGetter.OnBeforeRoleDelete,
 	}
 
 	// Initialize authz
@@ -464,8 +470,10 @@ func New(
 		return nil, err
 	}
 
+	metricReductionRuleModule := metricReductionRuleModuleCallback(sqlstore, telemetrystore, dashboard, queryParser, licensing, flagger, telemetryMetadataStore, providerSettings, config.MetricsExplorer.TelemetryStore.Threads)
+
 	// Initialize all modules
-	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, telemetryMetadataStore, authNs, authz, cache, queryParser, config, dashboard, userGetter, userRoleStore, serviceAccount, cloudIntegrationModule, retentionGetter, flagger, tagModule)
+	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, telemetryMetadataStore, authNs, authz, cache, queryParser, config, dashboard, userGetter, userRoleStore, serviceAccount, cloudIntegrationModule, retentionGetter, flagger, tagModule, metricReductionRuleModule)
 
 	// Initialize ruler from the variant-specific provider factories
 	rulerInstance, err := factory.NewProviderFromNamedMap(ctx, providerSettings, config.Ruler, rulerProviderFactories(cache, alertmanager, sqlstore, telemetrystore, telemetryMetadataStore, prometheus, orgGetter, modules.RuleStateHistory, querier, queryParser), "signoz")
@@ -501,6 +509,7 @@ func New(
 		modules.LogsPipeline,
 		modules.InfraMonitoring,
 		querier,
+		authz,
 	}
 
 	// Initialize the stats aggregator (always-on, independent of whether reporting is enabled)

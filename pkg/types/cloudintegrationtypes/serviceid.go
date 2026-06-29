@@ -123,5 +123,5 @@ func NewServiceID(provider CloudProviderType, service string) (ServiceID, error)
 
 	return ServiceID{}, errors.NewInvalidInputf(ErrCodeInvalidServiceID,
 		"invalid service id %q for %s cloud provider", service, provider.StringValue()).
-		WithSuggestions(errors.SuggestionsOnLevenshteinDistance(service, validServices)...)
+		WithSuggestions(errors.NewSuggestionsOnLevenshteinDistance(service, errors.NounServices, validServices)...)
 }

@@ -25,9 +25,9 @@ interface PrepareRawTableArgs {
 	/** The panel's chosen columns; when empty, columns are derived from the rows. */
 	selectFields: TelemetrytypesTelemetryFieldKeyDTO[];
 	/**
-	 * Panel telemetry signal. `logs` flattens nested attribute/resource maps one
-	 * level so selected fields (e.g. `service.name`) resolve (V1 `FlatLogData`
-	 * parity). Absent on the derive-columns fallback.
+	 * Panel telemetry signal. `logs`/`traces` flatten nested attribute/resource
+	 * maps one level so selected fields (e.g. `service.name`) resolve (V1
+	 * `FlatLogData` parity). Absent on the derive-columns fallback.
 	 */
 	signal?: TelemetrytypesSignalDTO;
 }
@@ -85,7 +85,11 @@ export function prepareRawTable({
 		return undefined;
 	}
 
-	const shouldFlatten = signal === TelemetrytypesSignalDTO.logs;
+	// Logs and traces both nest resource/attribute maps; lift them so selected
+	// fields like `service.name` resolve to a column (V1 parity).
+	const shouldFlatten =
+		signal === TelemetrytypesSignalDTO.logs ||
+		signal === TelemetrytypesSignalDTO.traces;
 	const rows: RawTableRow[] = result.rows.map((row, index) => {
 		const data = row.data ?? {};
 		return {
