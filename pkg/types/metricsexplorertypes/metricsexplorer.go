@@ -256,14 +256,14 @@ type MetricDashboardsResponse struct {
 // MetricDashboardPanelsResponse is the response for the v2 metric dashboards
 // endpoint: the dashboard panels that reference the metric.
 type MetricDashboardPanelsResponse struct {
-	Dashboards dashboardtypes.DashboardPanelReferences `json:"dashboards" required:"true" nullable:"true"`
+	Dashboards []dashboardtypes.DashboardPanelRef `json:"dashboards" required:"true" nullable:"true"`
 }
 
 // NewMetricDashboardPanelsResponse wraps the dashboard panels that reference a
 // metric into the v2 API response.
-func NewMetricDashboardPanelsResponse(refs dashboardtypes.DashboardPanelReferences) *MetricDashboardPanelsResponse {
+func NewMetricDashboardPanelsResponse(refs []dashboardtypes.DashboardPanelRef) *MetricDashboardPanelsResponse {
 	if refs == nil {
-		refs = dashboardtypes.DashboardPanelReferences{}
+		refs = []dashboardtypes.DashboardPanelRef{}
 	}
 
 	return &MetricDashboardPanelsResponse{Dashboards: refs}

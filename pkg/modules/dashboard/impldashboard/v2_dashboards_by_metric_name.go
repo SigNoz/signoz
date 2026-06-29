@@ -11,7 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-func (m *module) GetByMetricNamesV2(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string]dashboardtypes.DashboardPanelReferences, error) {
+func (m *module) GetByMetricNamesV2(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string][]dashboardtypes.DashboardPanelRef, error) {
 	metricNamesMap := make(map[string]bool, len(metricNames))
 	for _, name := range metricNames {
 		metricNamesMap[name] = true
@@ -48,8 +48,8 @@ func (m *module) getCandidatesDashboardsForMetricNames(ctx context.Context, orgI
 	return candidates, nil
 }
 
-func (m *module) selectDashboardsFromCandidates(ctx context.Context, metricNamesMap map[string]bool, candidateDashboards []*dashboardtypes.DashboardV2) map[string]dashboardtypes.DashboardPanelReferences {
-	result := make(map[string]dashboardtypes.DashboardPanelReferences)
+func (m *module) selectDashboardsFromCandidates(ctx context.Context, metricNamesMap map[string]bool, candidateDashboards []*dashboardtypes.DashboardV2) map[string][]dashboardtypes.DashboardPanelRef {
+	result := make(map[string][]dashboardtypes.DashboardPanelRef)
 	for _, dashboard := range candidateDashboards {
 		for panelID, panel := range dashboard.Spec.Panels {
 			if panel == nil {

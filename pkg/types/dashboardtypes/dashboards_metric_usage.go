@@ -9,5 +9,3 @@ type DashboardPanelRef struct {
 	PanelID       string `json:"panelId" required:"true"`
 	PanelName     string `json:"panelName" required:"true"`
 }
-
-type DashboardPanelReferences []DashboardPanelRef

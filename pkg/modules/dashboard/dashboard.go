@@ -89,7 +89,7 @@ type Module interface {
 
 	DeleteView(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error
 
-	GetByMetricNamesV2(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string]dashboardtypes.DashboardPanelReferences, error)
+	GetByMetricNamesV2(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string][]dashboardtypes.DashboardPanelRef, error)
 }
 
 type Handler interface {

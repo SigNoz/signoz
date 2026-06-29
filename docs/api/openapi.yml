@@ -2689,11 +2689,6 @@ components:
       - panelId
       - panelName
       type: object
-    DashboardtypesDashboardPanelReferences:
-      items:
-        $ref: '#/components/schemas/DashboardtypesDashboardPanelRef'
-      nullable: true
-      type: array
     DashboardtypesDashboardSpec:
       properties:
         datasources:
@@ -5614,7 +5609,10 @@ components:
     MetricsexplorertypesMetricDashboardPanelsResponse:
       properties:
         dashboards:
-          $ref: '#/components/schemas/DashboardtypesDashboardPanelReferences'
+          items:
+            $ref: '#/components/schemas/DashboardtypesDashboardPanelRef'
+          nullable: true
+          type: array
       required:
       - dashboards
       type: object

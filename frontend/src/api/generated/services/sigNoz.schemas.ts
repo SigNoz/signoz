@@ -3973,13 +3973,6 @@ export interface DashboardtypesDashboardPanelRefDTO {
 	panelName: string;
 }
 
-/**
- * @nullable
- */
-export type DashboardtypesDashboardPanelReferencesDTO =
-	| DashboardtypesDashboardPanelRefDTO[]
-	| null;
-
 export enum DashboardtypesDatasourcePluginVariantStructDTOKind {
 	'signoz/Datasource' = 'signoz/Datasource',
 }
@@ -7201,7 +7194,10 @@ export interface MetricsexplorertypesMetricDashboardDTO {
 }
 
 export interface MetricsexplorertypesMetricDashboardPanelsResponseDTO {
-	dashboards: DashboardtypesDashboardPanelReferencesDTO | null;
+	/**
+	 * @type array,null
+	 */
+	dashboards: DashboardtypesDashboardPanelRefDTO[] | null;
 }
 
 export interface MetricsexplorertypesMetricDashboardsResponseDTO {
