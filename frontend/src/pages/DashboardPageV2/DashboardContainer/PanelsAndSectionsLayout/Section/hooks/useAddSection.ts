@@ -12,6 +12,27 @@ import {
 } from '../../../patchOps';
 import { useDashboardStore } from '../../../store/useDashboardStore';
 
+const SECTION_SELECTOR = '[data-testid^="dashboard-section-"]';
+
+/**
+ * Waits (via rAF) for the refetch to render the appended section, then scrolls
+ * it into view. Polls because `refetch` resolves before React commits the new
+ * section to the DOM; bails after ~40 frames.
+ */
+function scrollToNewSection(prevCount: number, attempts = 40): void {
+	const sections = document.querySelectorAll(SECTION_SELECTOR);
+	if (sections.length > prevCount) {
+		sections[sections.length - 1]?.scrollIntoView({
+			behavior: 'smooth',
+			block: 'center',
+		});
+		return;
+	}
+	if (attempts > 0) {
+		requestAnimationFrame(() => scrollToNewSection(prevCount, attempts - 1));
+	}
+}
+
 interface Params {
 	layouts: DashboardtypesLayoutDTO[] | undefined | null;
 }
@@ -42,10 +63,12 @@ export function useAddSection({ layouts }: Params): Result {
 				!layouts || layouts.length === 0
 					? reorderLayoutsOp([newGridLayout(trimmed)])
 					: addSectionOp(trimmed);
+			const prevSectionCount = document.querySelectorAll(SECTION_SELECTOR).length;
 			try {
 				setIsSaving(true);
 				await patchDashboardV2({ id: dashboardId }, [op]);
 				refetch();
+				scrollToNewSection(prevSectionCount);
 			} catch (error) {
 				showErrorModal(error as APIError);
 			} finally {

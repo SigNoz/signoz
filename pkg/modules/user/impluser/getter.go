@@ -239,7 +239,7 @@ func (module *getter) VerifyResetPasswordToken(ctx context.Context, token string
 	return nil
 }
 
-func (module *getter) OnBeforeRoleDelete(ctx context.Context, orgID valuer.UUID, roleID valuer.UUID) error {
+func (module *getter) OnBeforeRoleDelete(ctx context.Context, orgID valuer.UUID, roleID valuer.UUID, _ string) error {
 	users, err := module.GetUsersByOrgIDAndRoleID(ctx, orgID, roleID)
 	if err != nil {
 		return err

@@ -66,6 +66,9 @@ type AuthZ interface {
 	// Lists all the roles for the organization.
 	List(context.Context, valuer.UUID) ([]*authtypes.Role, error)
 
+	// Collect returns per-org role usage stats for the stats reporter.
+	Collect(context.Context, valuer.UUID) (map[string]any, error)
+
 	//  Lists all the roles for the organization filtered by name
 	ListByOrgIDAndNames(context.Context, valuer.UUID, []string) ([]*authtypes.Role, error)
 
@@ -92,7 +95,7 @@ type AuthZ interface {
 }
 
 // OnBeforeRoleDelete is a callback invoked before a role is deleted.
-type OnBeforeRoleDelete func(context.Context, valuer.UUID, valuer.UUID) error
+type OnBeforeRoleDelete func(ctx context.Context, orgID valuer.UUID, roleID valuer.UUID, roleName string) error
 
 type Handler interface {
 	Create(http.ResponseWriter, *http.Request)

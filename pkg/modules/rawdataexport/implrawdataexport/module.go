@@ -70,12 +70,13 @@ func exportRawDataForSingleQuery(querier querier.Querier, ctx context.Context, o
 
 	queries := rangeRequest.CompositeQuery.Queries
 	rowCountLimit := queries[queryIndex].GetLimit()
+	startingOffset := queries[queryIndex].GetOffset()
 	rowCount := 0
 
 	for rowCount < rowCountLimit {
 		chunkSize := min(ChunkSize, rowCountLimit-rowCount)
 		queries[queryIndex].SetLimit(chunkSize)
-		queries[queryIndex].SetOffset(rowCount)
+		queries[queryIndex].SetOffset(startingOffset + rowCount)
 
 		response, err := querier.QueryRange(ctx, orgID, rangeRequest)
 		if err != nil {
