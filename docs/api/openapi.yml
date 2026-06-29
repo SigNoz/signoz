@@ -1024,6 +1024,8 @@ components:
           $ref: '#/components/schemas/CloudintegrationtypesAWSAccountConfig'
         azure:
           $ref: '#/components/schemas/CloudintegrationtypesAzureAccountConfig'
+        gcp:
+          $ref: '#/components/schemas/CloudintegrationtypesGCPAccountConfig'
       type: object
     CloudintegrationtypesAgentReport:
       nullable: true
@@ -1169,6 +1171,8 @@ components:
           $ref: '#/components/schemas/CloudintegrationtypesAWSConnectionArtifact'
         azure:
           $ref: '#/components/schemas/CloudintegrationtypesAzureConnectionArtifact'
+        gcp:
+          $ref: '#/components/schemas/CloudintegrationtypesGCPConnectionArtifact'
       type: object
     CloudintegrationtypesCredentials:
       properties:
@@ -1198,6 +1202,46 @@ components:
             $ref: '#/components/schemas/CloudintegrationtypesCollectedMetric'
           nullable: true
           type: array
+      type: object
+    CloudintegrationtypesGCPAccountConfig:
+      properties:
+        deploymentProjectId:
+          type: string
+        deploymentRegion:
+          type: string
+        projectIds:
+          items:
+            type: string
+          type: array
+      required:
+      - deploymentProjectId
+      - deploymentRegion
+      - projectIds
+      type: object
+    CloudintegrationtypesGCPConnectionArtifact:
+      type: object
+    CloudintegrationtypesGCPIntegrationConfig:
+      type: object
+    CloudintegrationtypesGCPServiceConfig:
+      properties:
+        logs:
+          $ref: '#/components/schemas/CloudintegrationtypesGCPServiceLogsConfig'
+        metrics:
+          $ref: '#/components/schemas/CloudintegrationtypesGCPServiceMetricsConfig'
+      type: object
+    CloudintegrationtypesGCPServiceLogsConfig:
+      properties:
+        enabled:
+          type: boolean
+      required:
+      - enabled
+      type: object
+    CloudintegrationtypesGCPServiceMetricsConfig:
+      properties:
+        enabled:
+          type: boolean
+      required:
+      - enabled
       type: object
     CloudintegrationtypesGettableAccountWithConnectionArtifact:
       properties:
@@ -1331,6 +1375,8 @@ components:
           $ref: '#/components/schemas/CloudintegrationtypesAWSPostableAccountConfig'
         azure:
           $ref: '#/components/schemas/CloudintegrationtypesAzureAccountConfig'
+        gcp:
+          $ref: '#/components/schemas/CloudintegrationtypesGCPAccountConfig'
       type: object
     CloudintegrationtypesPostableAgentCheckIn:
       properties:
@@ -1355,6 +1401,8 @@ components:
           $ref: '#/components/schemas/CloudintegrationtypesAWSIntegrationConfig'
         azure:
           $ref: '#/components/schemas/CloudintegrationtypesAzureIntegrationConfig'
+        gcp:
+          $ref: '#/components/schemas/CloudintegrationtypesGCPIntegrationConfig'
       type: object
     CloudintegrationtypesService:
       properties:
@@ -1399,6 +1447,8 @@ components:
           $ref: '#/components/schemas/CloudintegrationtypesAWSServiceConfig'
         azure:
           $ref: '#/components/schemas/CloudintegrationtypesAzureServiceConfig'
+        gcp:
+          $ref: '#/components/schemas/CloudintegrationtypesGCPServiceConfig'
       type: object
     CloudintegrationtypesServiceDashboard:
       properties:
@@ -1441,6 +1491,7 @@ components:
       - cosmosdb
       - cassandradb
       - redis
+      - cloudsql
       type: string
     CloudintegrationtypesServiceMetadata:
       properties:
@@ -1502,6 +1553,8 @@ components:
           $ref: '#/components/schemas/CloudintegrationtypesAWSAccountConfig'
         azure:
           $ref: '#/components/schemas/CloudintegrationtypesUpdatableAzureAccountConfig'
+        gcp:
+          $ref: '#/components/schemas/CloudintegrationtypesUpdatableGCPAccountConfig'
       type: object
     CloudintegrationtypesUpdatableAzureAccountConfig:
       properties:
@@ -1511,6 +1564,22 @@ components:
           type: array
       required:
       - resourceGroups
+      type: object
+    CloudintegrationtypesUpdatableGCPAccountConfig:
+      properties:
+        deploymentProjectId:
+          type: string
+        deploymentRegion:
+          type: string
+        projectIds:
+          items:
+            type: string
+          nullable: true
+          type: array
+      required:
+      - deploymentProjectId
+      - deploymentRegion
+      - projectIds
       type: object
     CloudintegrationtypesUpdatableService:
       properties:

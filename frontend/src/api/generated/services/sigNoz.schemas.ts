@@ -2635,9 +2635,25 @@ export interface CloudintegrationtypesAzureAccountConfigDTO {
 	resourceGroups: string[];
 }
 
+export interface CloudintegrationtypesGCPAccountConfigDTO {
+	/**
+	 * @type string
+	 */
+	deploymentProjectId: string;
+	/**
+	 * @type string
+	 */
+	deploymentRegion: string;
+	/**
+	 * @type array
+	 */
+	projectIds: string[];
+}
+
 export interface CloudintegrationtypesAccountConfigDTO {
 	aws?: CloudintegrationtypesAWSAccountConfigDTO;
 	azure?: CloudintegrationtypesAzureAccountConfigDTO;
+	gcp?: CloudintegrationtypesGCPAccountConfigDTO;
 }
 
 export interface CloudintegrationtypesAccountDTO {
@@ -2745,9 +2761,29 @@ export interface CloudintegrationtypesAzureServiceConfigDTO {
 	metrics: CloudintegrationtypesAzureServiceMetricsConfigDTO;
 }
 
+export interface CloudintegrationtypesGCPServiceLogsConfigDTO {
+	/**
+	 * @type boolean
+	 */
+	enabled: boolean;
+}
+
+export interface CloudintegrationtypesGCPServiceMetricsConfigDTO {
+	/**
+	 * @type boolean
+	 */
+	enabled: boolean;
+}
+
+export interface CloudintegrationtypesGCPServiceConfigDTO {
+	logs?: CloudintegrationtypesGCPServiceLogsConfigDTO;
+	metrics?: CloudintegrationtypesGCPServiceMetricsConfigDTO;
+}
+
 export interface CloudintegrationtypesServiceConfigDTO {
 	aws?: CloudintegrationtypesAWSServiceConfigDTO;
 	azure?: CloudintegrationtypesAzureServiceConfigDTO;
+	gcp?: CloudintegrationtypesGCPServiceConfigDTO;
 }
 
 export enum CloudintegrationtypesServiceIDDTO {
@@ -2778,6 +2814,7 @@ export enum CloudintegrationtypesServiceIDDTO {
 	cosmosdb = 'cosmosdb',
 	cassandradb = 'cassandradb',
 	redis = 'redis',
+	cloudsql = 'cloudsql',
 }
 export type CloudintegrationtypesCloudIntegrationServiceDTOAnyOf = {
 	/**
@@ -2842,9 +2879,14 @@ export interface CloudintegrationtypesCollectedMetricDTO {
 	unit?: string;
 }
 
+export interface CloudintegrationtypesGCPConnectionArtifactDTO {
+	[key: string]: unknown;
+}
+
 export interface CloudintegrationtypesConnectionArtifactDTO {
 	aws?: CloudintegrationtypesAWSConnectionArtifactDTO;
 	azure?: CloudintegrationtypesAzureConnectionArtifactDTO;
+	gcp?: CloudintegrationtypesGCPConnectionArtifactDTO;
 }
 
 export interface CloudintegrationtypesCredentialsDTO {
@@ -2875,6 +2917,10 @@ export interface CloudintegrationtypesDataCollectedDTO {
 	 * @type array,null
 	 */
 	metrics?: CloudintegrationtypesCollectedMetricDTO[] | null;
+}
+
+export interface CloudintegrationtypesGCPIntegrationConfigDTO {
+	[key: string]: unknown;
 }
 
 export interface CloudintegrationtypesGettableAccountWithConnectionArtifactDTO {
@@ -2968,6 +3014,7 @@ export type CloudintegrationtypesIntegrationConfigDTO =
 export interface CloudintegrationtypesProviderIntegrationConfigDTO {
 	aws?: CloudintegrationtypesAWSIntegrationConfigDTO;
 	azure?: CloudintegrationtypesAzureIntegrationConfigDTO;
+	gcp?: CloudintegrationtypesGCPIntegrationConfigDTO;
 }
 
 export interface CloudintegrationtypesGettableAgentCheckInDTO {
@@ -3030,6 +3077,7 @@ export interface CloudintegrationtypesGettableServicesMetadataDTO {
 export interface CloudintegrationtypesPostableAccountConfigDTO {
 	aws?: CloudintegrationtypesAWSPostableAccountConfigDTO;
 	azure?: CloudintegrationtypesAzureAccountConfigDTO;
+	gcp?: CloudintegrationtypesGCPAccountConfigDTO;
 }
 
 export interface CloudintegrationtypesPostableAccountDTO {
@@ -3159,9 +3207,25 @@ export interface CloudintegrationtypesUpdatableAzureAccountConfigDTO {
 	resourceGroups: string[];
 }
 
+export interface CloudintegrationtypesUpdatableGCPAccountConfigDTO {
+	/**
+	 * @type string
+	 */
+	deploymentProjectId: string;
+	/**
+	 * @type string
+	 */
+	deploymentRegion: string;
+	/**
+	 * @type array,null
+	 */
+	projectIds: string[] | null;
+}
+
 export interface CloudintegrationtypesUpdatableAccountConfigDTO {
 	aws?: CloudintegrationtypesAWSAccountConfigDTO;
 	azure?: CloudintegrationtypesUpdatableAzureAccountConfigDTO;
+	gcp?: CloudintegrationtypesUpdatableGCPAccountConfigDTO;
 }
 
 export interface CloudintegrationtypesUpdatableAccountDTO {
