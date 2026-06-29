@@ -8,6 +8,7 @@ import { ORG_PREFERENCES } from 'constants/orgPreferences';
 import ROUTES from 'constants/routes';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
+import { useIsAIObservabilityEnabled } from 'hooks/useIsAIObservabilityEnabled';
 import { isEmpty } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
 import { LicensePlatform, LicenseState } from 'types/api/licensesV3/getActive';
@@ -40,6 +41,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 
 	const isAdmin = user.role === USER_ROLES.ADMIN;
 	const isAIAssistantEnabled = useIsAIAssistantEnabled();
+	const isAIObservabilityEnabled = useIsAIObservabilityEnabled();
 
 	const mapRoutes = useMemo(
 		() =>
@@ -127,6 +129,14 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		(pathname === ROUTES.AI_ASSISTANT_BASE ||
 			pathname.startsWith('/ai-assistant/')) &&
 		!isAIAssistantEnabled
+	) {
+		return <Redirect to={ROUTES.HOME} />;
+	}
+
+	if (
+		(pathname.startsWith(`${ROUTES.LLM_OBSERVABILITY_BASE}/`) ||
+			pathname === ROUTES.LLM_OBSERVABILITY_BASE) &&
+		!isAIObservabilityEnabled
 	) {
 		return <Redirect to={ROUTES.HOME} />;
 	}
