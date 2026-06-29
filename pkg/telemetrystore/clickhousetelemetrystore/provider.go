@@ -78,6 +78,7 @@ type provider struct {
 	clickHouseConn clickhouse.Conn
 	cluster        string
 	hooks          []telemetrystore.TelemetryStoreHook
+	conn           telemetrystore.ClickhouseConn
 }
 
 func NewFactory(hookFactories ...factory.ProviderFactory[telemetrystore.TelemetryStoreHook, telemetrystore.Config]) factory.ProviderFactory[telemetrystore.TelemetryStore, telemetrystore.Config] {
@@ -130,16 +131,20 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 		return nil, err
 	}
 
-	return &provider{
+	p := &provider{
 		settings:       settings,
 		clickHouseConn: chConn,
 		cluster:        config.Clickhouse.Cluster,
 		hooks:          hooks,
-	}, nil
+	}
+	// Explain runs through p (the hooked connection) so the EXPLAIN queries are
+	// instrumented and their errors normalized like any other query.
+	p.conn = telemetrystore.NewClickhouseConn(p)
+	return p, nil
 }
 
-func (p *provider) ClickhouseDB() clickhouse.Conn {
-	return p
+func (p *provider) ClickhouseDB() telemetrystore.ClickhouseConn {
+	return p.conn
 }
 
 func (p *provider) Cluster() string {

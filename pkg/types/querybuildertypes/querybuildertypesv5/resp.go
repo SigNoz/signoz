@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/swaggest/jsonschema-go"
@@ -99,50 +100,10 @@ type QueryPreview struct {
 // requested, its EXPLAIN ESTIMATE and granule breakdown. The query/args JSON
 // keys follow the OpenTelemetry db.statement.* convention.
 type PreviewStatement struct {
-	Query    string          `json:"db.statement.query" required:"true" nullable:"false"`
-	Args     []any           `json:"db.statement.args" required:"true" nullable:"false"`
-	Estimate []EstimateEntry `json:"estimate" required:"true" nullable:"false"`
-	Granules *Granules       `json:"granules" required:"true" nullable:"true"`
-}
-
-// EstimateEntry is ClickHouse's EXPLAIN ESTIMATE for one table read: the
-// absolute parts, rows, and marks it estimates it will scan.
-type EstimateEntry struct {
-	Database string `json:"database" required:"true" nullable:"false"`
-	Table    string `json:"table" required:"true" nullable:"false"`
-	Parts    int64  `json:"parts" required:"true" nullable:"false"`
-	Rows     int64  `json:"rows" required:"true" nullable:"false"`
-	Marks    int64  `json:"marks" required:"true" nullable:"false"`
-}
-
-// Granules is the granule-skip breakdown for one statement, parsed from
-// `EXPLAIN json = 1, indexes = 1` and summed across every ReadFromMergeTree node.
-type Granules struct {
-	Initial  int64           `json:"initial" required:"true" nullable:"false"`
-	Selected int64           `json:"selected" required:"true" nullable:"false"`
-	Skipped  int64           `json:"skipped" required:"true" nullable:"false"`
-	Reads    []MergeTreeRead `json:"reads" required:"true" nullable:"false"`
-}
-
-// MergeTreeRead is the index-pruning funnel for one ReadFromMergeTree node. The
-// Steps run in sequence, so each step's Initial* matches the previous Selected*.
-type MergeTreeRead struct {
-	Table string      `json:"table" required:"true" nullable:"false"`
-	Steps []IndexStep `json:"steps" required:"true" nullable:"false"`
-}
-
-// IndexStep is one index applied during a MergeTree read, with the parts and
-// granules entering (Initial*) and surviving (Selected*) it. Type is the index
-// kind (MinMax, Partition, PrimaryKey, or Skip).
-type IndexStep struct {
-	Type             string   `json:"type" required:"true" nullable:"false"`
-	Name             string   `json:"name" required:"true" nullable:"false"`
-	Keys             []string `json:"keys" required:"true" nullable:"false"`
-	Condition        string   `json:"condition" required:"true" nullable:"false"`
-	InitialParts     int64    `json:"initialParts" required:"true" nullable:"false"`
-	SelectedParts    int64    `json:"selectedParts" required:"true" nullable:"false"`
-	InitialGranules  int64    `json:"initialGranules" required:"true" nullable:"false"`
-	SelectedGranules int64    `json:"selectedGranules" required:"true" nullable:"false"`
+	Query    string                         `json:"db.statement.query" required:"true" nullable:"false"`
+	Args     []any                          `json:"db.statement.args" required:"true" nullable:"false"`
+	Estimate []telemetrystore.EstimateEntry `json:"estimate" required:"true" nullable:"false"`
+	Granules *telemetrystore.Granules       `json:"granules" required:"true" nullable:"true"`
 }
 
 // MarshalJSON renders Error in its structured form (code/message/suggestions)
@@ -355,7 +316,6 @@ type RawStream struct {
 	Done  chan *bool
 	Error chan error
 }
-
 
 func roundToNonZeroDecimals(val float64, n int) float64 {
 	if val == 0 || math.IsNaN(val) || math.IsInf(val, 0) {

@@ -5780,28 +5780,6 @@ components:
           nullable: true
           type: array
       type: object
-    Querybuildertypesv5EstimateEntry:
-      properties:
-        database:
-          type: string
-        marks:
-          format: int64
-          type: integer
-        parts:
-          format: int64
-          type: integer
-        rows:
-          format: int64
-          type: integer
-        table:
-          type: string
-      required:
-      - database
-      - table
-      - parts
-      - rows
-      - marks
-      type: object
     Querybuildertypesv5ExecStats:
       description: Execution statistics for the query, including rows scanned, bytes
         scanned, and duration.
@@ -5872,28 +5850,6 @@ components:
       - anomaly
       - fillzero
       type: string
-    Querybuildertypesv5Granules:
-      nullable: true
-      properties:
-        initial:
-          format: int64
-          type: integer
-        reads:
-          items:
-            $ref: '#/components/schemas/Querybuildertypesv5MergeTreeRead'
-          type: array
-        selected:
-          format: int64
-          type: integer
-        skipped:
-          format: int64
-          type: integer
-      required:
-      - initial
-      - selected
-      - skipped
-      - reads
-      type: object
     Querybuildertypesv5GroupByKey:
       properties:
         description:
@@ -5915,40 +5871,6 @@ components:
       properties:
         expression:
           type: string
-      type: object
-    Querybuildertypesv5IndexStep:
-      properties:
-        condition:
-          type: string
-        initialGranules:
-          format: int64
-          type: integer
-        initialParts:
-          format: int64
-          type: integer
-        keys:
-          items:
-            type: string
-          type: array
-        name:
-          type: string
-        selectedGranules:
-          format: int64
-          type: integer
-        selectedParts:
-          format: int64
-          type: integer
-        type:
-          type: string
-      required:
-      - type
-      - name
-      - keys
-      - condition
-      - initialParts
-      - selectedParts
-      - initialGranules
-      - selectedGranules
       type: object
     Querybuildertypesv5Label:
       properties:
@@ -5976,18 +5898,6 @@ components:
           type: string
         expression:
           type: string
-      type: object
-    Querybuildertypesv5MergeTreeRead:
-      properties:
-        steps:
-          items:
-            $ref: '#/components/schemas/Querybuildertypesv5IndexStep'
-          type: array
-        table:
-          type: string
-      required:
-      - table
-      - steps
       type: object
     Querybuildertypesv5MetricAggregation:
       properties:
@@ -6042,10 +5952,10 @@ components:
           type: string
         estimate:
           items:
-            $ref: '#/components/schemas/Querybuildertypesv5EstimateEntry'
+            $ref: '#/components/schemas/TelemetrystoreEstimateEntry'
           type: array
         granules:
-          $ref: '#/components/schemas/Querybuildertypesv5Granules'
+          $ref: '#/components/schemas/TelemetrystoreGranules'
       required:
       - db.statement.query
       - db.statement.args
@@ -7755,6 +7665,96 @@ components:
       required:
       - key
       - value
+      type: object
+    TelemetrystoreEstimateEntry:
+      properties:
+        database:
+          type: string
+        marks:
+          format: int64
+          type: integer
+        parts:
+          format: int64
+          type: integer
+        rows:
+          format: int64
+          type: integer
+        table:
+          type: string
+      required:
+      - database
+      - table
+      - parts
+      - rows
+      - marks
+      type: object
+    TelemetrystoreGranules:
+      nullable: true
+      properties:
+        initial:
+          format: int64
+          type: integer
+        reads:
+          items:
+            $ref: '#/components/schemas/TelemetrystoreMergeTreeRead'
+          type: array
+        selected:
+          format: int64
+          type: integer
+        skipped:
+          format: int64
+          type: integer
+      required:
+      - initial
+      - selected
+      - skipped
+      - reads
+      type: object
+    TelemetrystoreIndexStep:
+      properties:
+        condition:
+          type: string
+        initialGranules:
+          format: int64
+          type: integer
+        initialParts:
+          format: int64
+          type: integer
+        keys:
+          items:
+            type: string
+          type: array
+        name:
+          type: string
+        selectedGranules:
+          format: int64
+          type: integer
+        selectedParts:
+          format: int64
+          type: integer
+        type:
+          type: string
+      required:
+      - type
+      - name
+      - keys
+      - condition
+      - initialParts
+      - selectedParts
+      - initialGranules
+      - selectedGranules
+      type: object
+    TelemetrystoreMergeTreeRead:
+      properties:
+        steps:
+          items:
+            $ref: '#/components/schemas/TelemetrystoreIndexStep'
+          type: array
+        table:
+          type: string
+      required:
+      - table
+      - steps
       type: object
     TelemetrytypesFieldContext:
       enum:

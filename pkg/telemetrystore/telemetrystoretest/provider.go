@@ -3,8 +3,8 @@ package telemetrystoretest
 import (
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	cmock "github.com/SigNoz/clickhouse-go-mock"
+	"github.com/SigNoz/signoz/pkg/telemetrystore"
 )
 
 var _ telemetrystore.TelemetryStore = (*Provider)(nil)
@@ -26,9 +26,9 @@ func New(_ telemetrystore.Config, matcher sqlmock.QueryMatcher) *Provider {
 	}
 }
 
-// ClickhouseDB returns the mock Clickhouse connection.
-func (p *Provider) ClickhouseDB() clickhouse.Conn {
-	return p.clickhouseDB.(clickhouse.Conn)
+// ClickhouseDB returns the mock Clickhouse connection, enriched with Explain.
+func (p *Provider) ClickhouseDB() telemetrystore.ClickhouseConn {
+	return telemetrystore.NewClickhouseConn(p.clickhouseDB.(clickhouse.Conn))
 }
 
 // Cluster returns the cluster name.
