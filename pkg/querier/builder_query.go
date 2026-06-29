@@ -31,9 +31,15 @@ type builderQuery[T any] struct {
 	fromMS uint64
 	toMS   uint64
 	kind   qbtypes.RequestType
+
+	builderConfig builderConfig
 }
 
 var _ qbtypes.Query = (*builderQuery[any])(nil)
+
+type builderConfig struct {
+	logTraceIDWindowPaddingMS uint64
+}
 
 func newBuilderQuery[T any](
 	logger *slog.Logger,
@@ -43,6 +49,7 @@ func newBuilderQuery[T any](
 	tr qbtypes.TimeRange,
 	kind qbtypes.RequestType,
 	variables map[string]qbtypes.VariableItem,
+	cfg builderConfig,
 ) *builderQuery[T] {
 	return &builderQuery[T]{
 		logger:         logger,
@@ -53,6 +60,7 @@ func newBuilderQuery[T any](
 		fromMS:         tr.From,
 		toMS:           tr.To,
 		kind:           kind,
+		builderConfig:  cfg,
 	}
 }
 
@@ -286,9 +294,20 @@ func (q *builderQuery[T]) narrowWindowByTraceID(ctx context.Context, fromMS, toM
 		return fromMS, toMS, true, ""
 	}
 
+	// Logs can be flushed slightly after the span ends. The trace
+	// time range comes from the spans table, so for logs we widen it by the
+	// configured padding before clamping. Keep the actual recorded bounds for
+	// the user-facing warning so it reports where the trace truly lies, not the
+	// padded range.
+	actualStartMS, actualEndMS := traceStartMS, traceEndMS
+	if q.spec.Signal == telemetrytypes.SignalLogs {
+		traceStartMS -= q.builderConfig.logTraceIDWindowPaddingMS
+		traceEndMS += q.builderConfig.logTraceIDWindowPaddingMS
+	}
+
 	if traceStartMS > toMS || traceEndMS < fromMS {
-		traceStartUTC := time.UnixMilli(int64(traceStartMS)).UTC().Format(time.RFC3339)
-		traceEndUTC := time.UnixMilli(int64(traceEndMS)).UTC().Format(time.RFC3339)
+		traceStartUTC := time.UnixMilli(int64(actualStartMS)).UTC().Format(time.RFC3339)
+		traceEndUTC := time.UnixMilli(int64(actualEndMS)).UTC().Format(time.RFC3339)
 		return fromMS, toMS, false, fmt.Sprintf(traceOutsideRangeWarn, q.spec.Name, traceStartUTC, traceEndUTC)
 	}
 	if traceStartMS > fromMS {

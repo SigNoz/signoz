@@ -112,6 +112,174 @@ func TestValidateOnlyVariables(t *testing.T) {
 	require.NoError(t, err, "expected valid")
 }
 
+func TestInvalidateDuplicateVariableNames(t *testing.T) {
+	data := []byte(`{
+		"variables": [
+			{
+				"kind": "TextVariable",
+				"spec": {"name": "env", "value": "prod"}
+			},
+			{
+				"kind": "ListVariable",
+				"spec": {
+					"name": "env",
+					"allowAllValue": false,
+					"allowMultiple": false,
+					"plugin": {
+						"kind": "signoz/DynamicVariable",
+						"spec": {"name": "service.name", "signal": "metrics"}
+					}
+				}
+			}
+		],
+		"layouts": []
+	}`)
+	_, err := unmarshalDashboard(data)
+	require.Error(t, err, "expected error for duplicate variable name")
+	require.Contains(t, err.Error(), `duplicate variable name "env"`)
+}
+
+func TestInvalidateVariableNameWithInvalidChars(t *testing.T) {
+	listVarWithName := func(name string) []byte {
+		return []byte(`{
+			"variables": [
+				{
+					"kind": "ListVariable",
+					"spec": {
+						"name": "` + name + `",
+						"allowAllValue": false,
+						"allowMultiple": false,
+						"plugin": {
+							"kind": "signoz/DynamicVariable",
+							"spec": {"name": "service.name", "signal": "metrics"}
+						}
+					}
+				}
+			],
+			"layouts": []
+		}`)
+	}
+	for _, name := range []string{"my var", "cost$", "bad!", "a/b"} {
+		t.Run(name, func(t *testing.T) {
+			_, err := unmarshalDashboard(listVarWithName(name))
+			require.Error(t, err, "expected error for invalid variable name %q", name)
+			require.Contains(t, err.Error(), "is not a correct name")
+		})
+	}
+	for _, name := range []string{"service", "my_var", "MY_VAR", "MixedCase9", "with-hyphen", "with.dot"} {
+		t.Run(name, func(t *testing.T) {
+			_, err := unmarshalDashboard(listVarWithName(name))
+			require.NoError(t, err, "expected valid variable name %q", name)
+		})
+	}
+	t.Run("digits only", func(t *testing.T) {
+		_, err := unmarshalDashboard(listVarWithName("123"))
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "cannot contain only digits")
+	})
+}
+
+func TestInvalidatePanelKey(t *testing.T) {
+	data := []byte(`{
+		"panels": {
+			"bad key!": {
+				"kind": "Panel",
+				"spec": {
+					"plugin": {"kind": "signoz/TablePanel", "spec": {}},
+					"queries": [{
+						"kind": "time_series",
+						"spec": {"plugin": {"kind": "signoz/BuilderQuery", "spec": {
+							"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]
+						}}}
+					}]
+				}
+			}
+		},
+		"layouts": []
+	}`)
+	_, err := unmarshalDashboard(data)
+	require.Error(t, err, "expected error for invalid panel key")
+	require.Contains(t, err.Error(), "is not a correct name")
+}
+
+func TestInvalidateListVariableCrossFields(t *testing.T) {
+	listVar := func(specFields string) []byte {
+		return []byte(`{
+			"variables": [
+				{
+					"kind": "ListVariable",
+					"spec": {
+						"name": "service",
+						` + specFields + `
+						"plugin": {
+							"kind": "signoz/DynamicVariable",
+							"spec": {"name": "service.name", "signal": "metrics"}
+						}
+					}
+				}
+			],
+			"layouts": []
+		}`)
+	}
+
+	t.Run("customAllValue without allowAllValue", func(t *testing.T) {
+		_, err := unmarshalDashboard(listVar(`"allowAllValue": false, "allowMultiple": false, "customAllValue": "*",`))
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "customAllValue cannot be set")
+	})
+
+	t.Run("list defaultValue without allowMultiple", func(t *testing.T) {
+		_, err := unmarshalDashboard(listVar(`"allowAllValue": false, "allowMultiple": false, "defaultValue": ["a", "b"],`))
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "allowMultiple")
+	})
+
+	t.Run("single-element list default without allowMultiple", func(t *testing.T) {
+		_, err := unmarshalDashboard(listVar(`"allowAllValue": false, "allowMultiple": false, "defaultValue": ["only"],`))
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "allowMultiple")
+	})
+
+	t.Run("valid sort is accepted", func(t *testing.T) {
+		_, err := unmarshalDashboard(listVar(`"sort": "alphabetical-asc",`))
+		require.NoError(t, err)
+	})
+
+	t.Run("unknown sort is rejected", func(t *testing.T) {
+		_, err := unmarshalDashboard(listVar(`"sort": "bogus",`))
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "unknown sort")
+	})
+}
+
+func TestInvalidateEmptyVariableName(t *testing.T) {
+	cases := map[string][]byte{
+		"text variable": []byte(`{
+			"variables": [{"kind": "TextVariable", "spec": {"name": "", "value": "x"}}],
+			"layouts": []
+		}`),
+		"list variable": []byte(`{
+			"variables": [{
+				"kind": "ListVariable",
+				"spec": {
+					"name": "",
+					"allowAllValue": false,
+					"allowMultiple": false,
+					"plugin": {"kind": "signoz/DynamicVariable", "spec": {"name": "service.name", "signal": "metrics"}}
+				}
+			}],
+			"layouts": []
+		}`),
+	}
+	for name, data := range cases {
+		t.Run(name, func(t *testing.T) {
+			_, err := unmarshalDashboard(data)
+			require.Error(t, err, "expected error for empty variable name")
+			require.Contains(t, err.Error(), "name cannot be empty")
+		})
+	}
+}
+
 func TestInvalidateUnknownPluginKind(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -268,6 +436,65 @@ func TestInvalidateOneInvalidPanel(t *testing.T) {
 	_, err := unmarshalDashboard(data)
 	require.Error(t, err, "expected error for invalid panel plugin kind")
 	require.Contains(t, err.Error(), "FakePanel", "error should mention FakePanel")
+}
+
+func TestInvalidateLayoutPanelReferences(t *testing.T) {
+	validPanels := `"panels": {
+		"p1": {
+			"kind": "Panel",
+			"spec": {
+				"plugin": {"kind": "signoz/TablePanel", "spec": {}},
+				"queries": [{
+					"kind": "time_series",
+					"spec": {"plugin": {"kind": "signoz/BuilderQuery", "spec": {
+						"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]
+					}}}
+				}]
+			}
+		}
+	}`
+	layout := func(items string) []byte {
+		return []byte(`{` + validPanels + `, "layouts": [{"kind": "Grid", "spec": {"items": [` + items + `]}}]}`)
+	}
+
+	tests := []struct {
+		name        string
+		data        []byte
+		wantContain string
+	}{
+		{
+			name:        "reference to unknown panel",
+			data:        layout(`{"x": 0, "y": 0, "width": 6, "height": 6, "content": {"$ref": "#/spec/panels/ghost"}}`),
+			wantContain: `references unknown panel "ghost"`,
+		},
+		{
+			name:        "reference not pointing at a panel",
+			data:        layout(`{"x": 0, "y": 0, "width": 6, "height": 6, "content": {"$ref": "#/spec/variables/p1"}}`),
+			wantContain: "must reference a panel",
+		},
+		{
+			name:        "reference missing spec prefix",
+			data:        layout(`{"x": 0, "y": 0, "width": 6, "height": 6, "content": {"$ref": "#/panels/p1"}}`),
+			wantContain: "must reference a panel",
+		},
+		{
+			name:        "valid reference",
+			data:        layout(`{"x": 0, "y": 0, "width": 6, "height": 6, "content": {"$ref": "#/spec/panels/p1"}}`),
+			wantContain: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := unmarshalDashboard(tt.data)
+			if tt.wantContain == "" {
+				require.NoError(t, err)
+				return
+			}
+			require.Error(t, err)
+			require.Contains(t, err.Error(), tt.wantContain)
+		})
+	}
 }
 
 func TestRejectUnknownFieldsInPluginSpec(t *testing.T) {
@@ -570,6 +797,24 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 			wantContain: "legend position",
 		},
 		{
+			name: "bad legend mode",
+			data: `{
+				"panels": {
+					"p1": {
+						"kind": "Panel",
+						"spec": {
+							"plugin": {
+								"kind": "signoz/BarChartPanel",
+								"spec": {"legend": {"mode": "grid"}}
+							}
+						}
+					}
+				},
+				"layouts": []
+			}`,
+			wantContain: "legend mode",
+		},
+		{
 			name: "bad threshold format",
 			data: `{
 				"panels": {
@@ -630,6 +875,39 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 			_, err := unmarshalDashboard([]byte(tt.data))
 			require.Error(t, err, "expected error containing %q, got nil", tt.wantContain)
 			require.Contains(t, err.Error(), tt.wantContain, "error should mention %q", tt.wantContain)
+		})
+	}
+}
+
+// Label on ThresholdWithLabel is optional — the backend never reads it, so a
+// threshold with an omitted or empty label must validate cleanly.
+func TestThresholdLabelOptional(t *testing.T) {
+	for _, tt := range []struct {
+		name      string
+		threshold string
+	}{
+		{name: "label omitted", threshold: `{"value": 100, "color": "Red"}`},
+		{name: "label empty", threshold: `{"value": 100, "color": "Red", "label": ""}`},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			data := []byte(`{
+				"panels": {
+					"p1": {
+						"kind": "Panel",
+						"spec": {
+							"plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {"thresholds": [` + tt.threshold + `]}},
+							"queries": [{"kind": "time_series", "spec": {"plugin": {"kind": "signoz/PromQLQuery", "spec": {"name": "A", "query": "up"}}}}]
+						}
+					}
+				},
+				"layouts": []
+			}`)
+			d, err := unmarshalDashboard(data)
+			require.NoError(t, err, "threshold without a label should validate")
+
+			spec := d.Panels["p1"].Spec.Plugin.Spec.(*TimeSeriesPanelSpec)
+			require.Len(t, spec.Thresholds, 1)
+			require.Empty(t, spec.Thresholds[0].Label, "label should remain empty")
 		})
 	}
 }
@@ -750,11 +1028,6 @@ func TestValidateRequiredFields(t *testing.T) {
 			wantContain: "Color",
 		},
 		{
-			name:        "ThresholdWithLabel missing label",
-			data:        wrapPanel("signoz/TimeSeriesPanel", `{"thresholds": [{"value": 100, "color": "Red", "label": ""}]}`),
-			wantContain: "Label",
-		},
-		{
 			name:        "ComparisonThreshold missing value",
 			data:        wrapPanel("signoz/NumberPanel", `{"thresholds": [{"operator": "above", "format": "text", "color": "Red"}]}`),
 			wantContain: "Value",
@@ -811,10 +1084,11 @@ func TestTimeSeriesPanelDefaults(t *testing.T) {
 	require.Equal(t, "2", spec.Formatting.DecimalPrecision.ValueOrDefault(), "expected DecimalPrecision default 2")
 	require.Equal(t, "spline", spec.ChartAppearance.LineInterpolation.ValueOrDefault(), "expected LineInterpolation default spline")
 	require.Equal(t, "solid", spec.ChartAppearance.LineStyle.ValueOrDefault(), "expected LineStyle default solid")
-	require.Equal(t, "solid", spec.ChartAppearance.FillMode.ValueOrDefault(), "expected FillMode default solid")
+	require.Equal(t, "none", spec.ChartAppearance.FillMode.ValueOrDefault(), "expected FillMode default none")
 	require.False(t, spec.ChartAppearance.SpanGaps.FillOnlyBelow, "expected SpanGaps.FillOnlyBelow default false")
 	require.Equal(t, "global_time", spec.Visualization.TimePreference.ValueOrDefault(), "expected TimePreference default global_time")
 	require.Equal(t, "bottom", spec.Legend.Position.ValueOrDefault(), "expected LegendPosition default bottom")
+	require.Equal(t, "list", spec.Legend.Mode.ValueOrDefault(), "expected LegendMode default list")
 
 	// Re-marshal the full dashboard (what we'd store in DB / return in API response)
 	// and verify the output contains the default values.
@@ -825,9 +1099,10 @@ func TestTimeSeriesPanelDefaults(t *testing.T) {
 		"decimalPrecision":  `"2"`,
 		"lineInterpolation": `"spline"`,
 		"lineStyle":         `"solid"`,
-		"fillMode":          `"solid"`,
+		"fillMode":          `"none"`,
 		"timePreference":    `"global_time"`,
 		"position":          `"bottom"`,
+		"mode":              `"list"`,
 	} {
 		assert.Contains(t, outputStr, `"`+field+`":`+want, "expected stored/response JSON to contain %s:%s", field, want)
 	}
@@ -930,7 +1205,7 @@ func TestStorageRoundTrip(t *testing.T) {
 	assert.Equal(t, "2", tsSpec.Formatting.DecimalPrecision.ValueOrDefault())
 	assert.Equal(t, "spline", tsSpec.ChartAppearance.LineInterpolation.ValueOrDefault())
 	assert.Equal(t, "solid", tsSpec.ChartAppearance.LineStyle.ValueOrDefault())
-	assert.Equal(t, "solid", tsSpec.ChartAppearance.FillMode.ValueOrDefault())
+	assert.Equal(t, "none", tsSpec.ChartAppearance.FillMode.ValueOrDefault())
 	assert.Equal(t, "global_time", tsSpec.Visualization.TimePreference.ValueOrDefault())
 	assert.Equal(t, "bottom", tsSpec.Legend.Position.ValueOrDefault())
 	numSpec := d.Panels["p2"].Spec.Plugin.Spec.(*NumberPanelSpec)
@@ -950,7 +1225,7 @@ func TestStorageRoundTrip(t *testing.T) {
 	assert.Equal(t, "2", tsLoaded.Formatting.DecimalPrecision.ValueOrDefault(), "after load")
 	assert.Equal(t, "spline", tsLoaded.ChartAppearance.LineInterpolation.ValueOrDefault(), "after load")
 	assert.Equal(t, "solid", tsLoaded.ChartAppearance.LineStyle.ValueOrDefault(), "after load")
-	assert.Equal(t, "solid", tsLoaded.ChartAppearance.FillMode.ValueOrDefault(), "after load")
+	assert.Equal(t, "none", tsLoaded.ChartAppearance.FillMode.ValueOrDefault(), "after load")
 	assert.Equal(t, "global_time", tsLoaded.Visualization.TimePreference.ValueOrDefault(), "after load")
 	assert.Equal(t, "bottom", tsLoaded.Legend.Position.ValueOrDefault(), "after load")
 	numLoaded := loaded.Panels["p2"].Spec.Plugin.Spec.(*NumberPanelSpec)
@@ -966,7 +1241,7 @@ func TestStorageRoundTrip(t *testing.T) {
 		"decimalPrecision":  `"2"`,
 		"lineInterpolation": `"spline"`,
 		"lineStyle":         `"solid"`,
-		"fillMode":          `"solid"`,
+		"fillMode":          `"none"`,
 		"timePreference":    `"global_time"`,
 		"position":          `"bottom"`,
 		"format":            `"text"`,
