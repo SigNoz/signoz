@@ -3771,15 +3771,12 @@ components:
         type:
           type: string
         url:
-          nullable: true
           type: string
       required:
       - type
       - code
       - message
-      - url
       - errors
-      - retry
       - suggestions
       type: object
     ErrorsResponseerroradditional:
@@ -3795,7 +3792,6 @@ components:
       - suggestions
       type: object
     ErrorsResponseretryjson:
-      nullable: true
       properties:
         delay:
           $ref: '#/components/schemas/TimeDuration'
