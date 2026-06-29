@@ -101,7 +101,7 @@ function VariableSelector({
 				${variable.name}
 				{variable.description ? (
 					<Tooltip title={variable.description}>
-						<SolidInfoCircle className={styles.infoIcon} size="md" />
+						<SolidInfoCircle className={styles.infoIcon} size={14} />
 					</Tooltip>
 				) : null}
 			</Typography.Text>

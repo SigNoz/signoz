@@ -21,6 +21,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/llmpricingrule/impllmpricingrule"
 	"github.com/SigNoz/signoz/pkg/modules/logspipeline"
 	"github.com/SigNoz/signoz/pkg/modules/logspipeline/impllogspipeline"
+	"github.com/SigNoz/signoz/pkg/modules/metricreductionrule"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer/implmetricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
@@ -66,33 +67,34 @@ import (
 )
 
 type Modules struct {
-	OrgGetter        organization.Getter
-	OrgSetter        organization.Setter
-	Preference       preference.Module
-	UserSetter       user.Setter
-	UserGetter       user.Getter
-	RetentionGetter  retention.Getter
-	SavedView        savedview.Module
-	Apdex            apdex.Module
-	Dashboard        dashboard.Module
-	QuickFilter      quickfilter.Module
-	TraceFunnel      tracefunnel.Module
-	RawDataExport    rawdataexport.Module
-	AuthDomain       authdomain.Module
-	Session          session.Module
-	Services         services.Module
-	SpanPercentile   spanpercentile.Module
-	MetricsExplorer  metricsexplorer.Module
-	InfraMonitoring  inframonitoring.Module
-	Promote          promote.Module
-	ServiceAccount   serviceaccount.Module
-	CloudIntegration cloudintegration.Module
-	LogsPipeline     logspipeline.Module
-	RuleStateHistory rulestatehistory.Module
-	TraceDetail      tracedetail.Module
-	SpanMapper       spanmapper.Module
-	LLMPricingRule   llmpricingrule.Module
-	Tag              tag.Module
+	OrgGetter           organization.Getter
+	OrgSetter           organization.Setter
+	Preference          preference.Module
+	UserSetter          user.Setter
+	UserGetter          user.Getter
+	RetentionGetter     retention.Getter
+	SavedView           savedview.Module
+	Apdex               apdex.Module
+	Dashboard           dashboard.Module
+	QuickFilter         quickfilter.Module
+	TraceFunnel         tracefunnel.Module
+	RawDataExport       rawdataexport.Module
+	AuthDomain          authdomain.Module
+	Session             session.Module
+	Services            services.Module
+	SpanPercentile      spanpercentile.Module
+	MetricsExplorer     metricsexplorer.Module
+	MetricReductionRule metricreductionrule.Module
+	InfraMonitoring     inframonitoring.Module
+	Promote             promote.Module
+	ServiceAccount      serviceaccount.Module
+	CloudIntegration    cloudintegration.Module
+	LogsPipeline        logspipeline.Module
+	RuleStateHistory    rulestatehistory.Module
+	TraceDetail         tracedetail.Module
+	SpanMapper          spanmapper.Module
+	LLMPricingRule      llmpricingrule.Module
+	Tag                 tag.Module
 }
 
 func NewModules(
@@ -119,6 +121,7 @@ func NewModules(
 	retentionGetter retention.Getter,
 	fl flagger.Flagger,
 	tagModule tag.Module,
+	metricReductionRule metricreductionrule.Module,
 ) Modules {
 	quickfilter := implquickfilter.NewModule(implquickfilter.NewStore(sqlstore))
 	orgSetter := implorganization.NewSetter(implorganization.NewStore(sqlstore), alertmanager, quickfilter)
@@ -128,34 +131,36 @@ func NewModules(
 	}
 	userSetter := impluser.NewSetter(impluser.NewStore(sqlstore, providerSettings), tokenizer, emailing, providerSettings, orgSetter, authz, analytics, config.User, userRoleStore, userGetter, onDeleteUser)
 	ruleStore := sqlrulestore.NewRuleStore(sqlstore, queryParser, providerSettings)
+	authDomainModule := implauthdomain.NewModule(implauthdomain.NewStore(sqlstore), authNs, authz)
 
 	return Modules{
-		OrgGetter:        orgGetter,
-		OrgSetter:        orgSetter,
-		Preference:       implpreference.NewModule(implpreference.NewStore(sqlstore), preferencetypes.NewAvailablePreference()),
-		SavedView:        implsavedview.NewModule(sqlstore),
-		Apdex:            implapdex.NewModule(sqlstore),
-		Dashboard:        dashboard,
-		UserSetter:       userSetter,
-		UserGetter:       userGetter,
-		RetentionGetter:  retentionGetter,
-		QuickFilter:      quickfilter,
-		TraceFunnel:      impltracefunnel.NewModule(impltracefunnel.NewStore(sqlstore)),
-		RawDataExport:    implrawdataexport.NewModule(querier),
-		AuthDomain:       implauthdomain.NewModule(implauthdomain.NewStore(sqlstore), authNs),
-		Session:          implsession.NewModule(providerSettings, authNs, userSetter, userGetter, implauthdomain.NewModule(implauthdomain.NewStore(sqlstore), authNs), tokenizer, orgGetter),
-		SpanPercentile:   implspanpercentile.NewModule(querier, providerSettings),
-		Services:         implservices.NewModule(querier, telemetryStore),
-		MetricsExplorer:  implmetricsexplorer.NewModule(telemetryStore, telemetryMetadataStore, cache, ruleStore, dashboard, providerSettings, config.MetricsExplorer),
-		InfraMonitoring:  implinframonitoring.NewModule(telemetryStore, telemetryMetadataStore, querier, providerSettings, config.InfraMonitoring),
-		Promote:          implpromote.NewModule(telemetryMetadataStore, telemetryStore),
-		ServiceAccount:   serviceAccount,
-		LogsPipeline:     impllogspipeline.NewModule(sqlstore),
-		RuleStateHistory: implrulestatehistory.NewModule(implrulestatehistory.NewStore(telemetryStore, telemetryMetadataStore, providerSettings.Logger)),
-		CloudIntegration: cloudIntegrationModule,
-		TraceDetail:      impltracedetail.NewModule(impltracedetail.NewTraceStore(telemetryStore), providerSettings, config.TraceDetail),
-		SpanMapper:       implspanmapper.NewModule(implspanmapper.NewStore(sqlstore)),
-		LLMPricingRule:   impllmpricingrule.NewModule(impllmpricingrule.NewStore(sqlstore)),
-		Tag:              tagModule,
+		OrgGetter:           orgGetter,
+		OrgSetter:           orgSetter,
+		Preference:          implpreference.NewModule(implpreference.NewStore(sqlstore), preferencetypes.NewAvailablePreference()),
+		SavedView:           implsavedview.NewModule(sqlstore),
+		Apdex:               implapdex.NewModule(sqlstore),
+		Dashboard:           dashboard,
+		UserSetter:          userSetter,
+		UserGetter:          userGetter,
+		RetentionGetter:     retentionGetter,
+		QuickFilter:         quickfilter,
+		TraceFunnel:         impltracefunnel.NewModule(impltracefunnel.NewStore(sqlstore)),
+		RawDataExport:       implrawdataexport.NewModule(querier),
+		AuthDomain:          authDomainModule,
+		Session:             implsession.NewModule(providerSettings, authNs, userSetter, userGetter, authDomainModule, tokenizer, orgGetter, authz),
+		SpanPercentile:      implspanpercentile.NewModule(querier, providerSettings),
+		Services:            implservices.NewModule(querier, telemetryStore),
+		MetricsExplorer:     implmetricsexplorer.NewModule(telemetryStore, telemetryMetadataStore, cache, ruleStore, dashboard, providerSettings, config.MetricsExplorer),
+		MetricReductionRule: metricReductionRule,
+		InfraMonitoring:     implinframonitoring.NewModule(telemetryStore, telemetryMetadataStore, querier, providerSettings, config.InfraMonitoring),
+		Promote:             implpromote.NewModule(telemetryMetadataStore, telemetryStore),
+		ServiceAccount:      serviceAccount,
+		LogsPipeline:        impllogspipeline.NewModule(sqlstore),
+		RuleStateHistory:    implrulestatehistory.NewModule(implrulestatehistory.NewStore(telemetryStore, telemetryMetadataStore, providerSettings.Logger)),
+		CloudIntegration:    cloudIntegrationModule,
+		TraceDetail:         impltracedetail.NewModule(impltracedetail.NewTraceStore(telemetryStore), providerSettings, config.TraceDetail),
+		SpanMapper:          implspanmapper.NewModule(implspanmapper.NewStore(sqlstore), fl),
+		LLMPricingRule:      impllmpricingrule.NewModule(impllmpricingrule.NewStore(sqlstore), fl),
+		Tag:                 tagModule,
 	}
 }

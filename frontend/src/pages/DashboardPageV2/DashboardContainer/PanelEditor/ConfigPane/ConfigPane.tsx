@@ -40,9 +40,9 @@ function ConfigPane({
 	tableColumns,
 }: ConfigPaneProps): JSX.Element {
 	const definition = getPanelDefinition(panelKind);
-	const sections = definition?.sections ?? [];
+	const sections = definition.sections;
 
-	const signal = getBuilderQueries(spec.queries)[0]?.signal as
+	const signal = getBuilderQueries(spec.queries || [])[0]?.signal as
 		| TelemetrytypesSignalDTO
 		| undefined;
 

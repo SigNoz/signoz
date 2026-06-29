@@ -45,7 +45,7 @@ describe('ServiceAccountsSettings — FGA', () => {
 
 		await waitFor(() => {
 			expect(
-				screen.getByText(/You don't have permission to view this page/),
+				screen.getByText('Uh-oh! You are not authorized'),
 			).toBeInTheDocument();
 		});
 
@@ -75,7 +75,7 @@ describe('ServiceAccountsSettings — FGA', () => {
 		});
 
 		expect(
-			screen.queryByText(/You don't have permission to view this page/),
+			screen.queryByText('Uh-oh! You are not authorized'),
 		).not.toBeInTheDocument();
 	});
 
