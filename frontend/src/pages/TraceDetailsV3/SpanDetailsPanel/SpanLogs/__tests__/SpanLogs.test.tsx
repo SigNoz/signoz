@@ -140,10 +140,9 @@ describe('SpanLogs', () => {
 
 		// Should show simple empty state (no emptyStateConfig provided)
 		expect(
-			screen.getByText('No logs found for selected span.'),
-		).toBeInTheDocument();
-		expect(
-			screen.getByText('View logs for the current trace.'),
+			screen.getByText(
+				'No logs found for selected span. View logs for the current trace.',
+			),
 		).toBeInTheDocument();
 		expect(
 			screen.getByRole('button', {
