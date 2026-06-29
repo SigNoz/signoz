@@ -3,7 +3,6 @@ package dashboardtypes
 import (
 	"sort"
 
-	"github.com/perses/spec/go/dashboard"
 	"github.com/perses/spec/go/dashboard/variable"
 )
 
@@ -70,12 +69,10 @@ func (d *v1Decoder) convertV1Variable(v map[string]any) (Variable, bool) {
 
 	switch kind {
 	case "TEXTBOX":
-		spec := &dashboard.TextVariableSpec{
-			TextSpec: variable.TextSpec{
-				Display: &variable.Display{Name: name, Description: description},
-				Value:   d.readString(v, "textboxValue"),
-			},
-			Name: name,
+		spec := &TextVariableSpec{
+			Display: Display{Name: name, Description: description},
+			Value:   d.readString(v, "textboxValue"),
+			Name:    name,
 		}
 		return Variable{Kind: variable.KindText, Spec: spec}, true
 
@@ -126,7 +123,7 @@ func (d *v1Decoder) variablePluginFor(kind string, v map[string]any) VariablePlu
 // mapV1VariableDefault reads selectedValue/defaultValue, both polymorphic
 // (string|array), so it indexes the raw value and lets defaultValueFromAny
 // type-switch — no typed accessor, intentionally lenient.
-func mapV1VariableDefault(v map[string]any) *variable.DefaultValue {
+func mapV1VariableDefault(v map[string]any) *VariableDefaultValue {
 	if raw, ok := v["selectedValue"]; ok {
 		return defaultValueFromAny(raw)
 	}
@@ -136,13 +133,13 @@ func mapV1VariableDefault(v map[string]any) *variable.DefaultValue {
 	return nil
 }
 
-func defaultValueFromAny(raw any) *variable.DefaultValue {
+func defaultValueFromAny(raw any) *VariableDefaultValue {
 	switch v := raw.(type) {
 	case string:
 		if v == "" {
 			return nil
 		}
-		return &variable.DefaultValue{SingleValue: v}
+		return &VariableDefaultValue{variable.DefaultValue{SingleValue: v}}
 	case []any:
 		if len(v) == 0 {
 			return nil
@@ -156,22 +153,17 @@ func defaultValueFromAny(raw any) *variable.DefaultValue {
 		if len(values) == 0 {
 			return nil
 		}
-		return &variable.DefaultValue{SliceValues: values}
+		return &VariableDefaultValue{variable.DefaultValue{SliceValues: values}}
 	}
 	return nil
 }
 
-func mapV1Sort(s string) *variable.Sort {
-	var sort variable.Sort
+func mapV1Sort(s string) ListVariableSpecSort {
 	switch s {
 	case "ASC":
-		sort = variable.SortAlphabeticalAsc
+		return SortAlphabeticalAsc
 	case "DESC":
-		sort = variable.SortAlphabeticalDesc
-	case "DISABLED", "":
-		return nil // SortNone is the implicit default
-	default:
-		return nil
+		return SortAlphabeticalDesc
 	}
-	return &sort
+	return ListVariableSpecSort{} // zero (omitzero) — SortNone is the implicit default
 }
