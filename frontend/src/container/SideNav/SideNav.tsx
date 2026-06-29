@@ -319,10 +319,6 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		}
 	}, [computedPinnedMenuItems, computedSecondaryMenuItems, userPreferences]);
 
-	const isOnboardingV3Enabled = featureFlags?.find(
-		(flag) => flag.name === FeatureKeys.ONBOARDING_V3,
-	)?.active;
-
 	const isChatSupportEnabled = featureFlags?.find(
 		(flag) => flag.name === FeatureKeys.CHAT_SUPPORT,
 	)?.active;
@@ -465,18 +461,14 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 
 	const onClickGetStarted = (event: MouseEvent): void => {
 		void logEvent('Sidebar: Menu clicked', {
-			menuRoute: '/get-started',
+			menuRoute: ROUTES.GET_STARTED_WITH_CLOUD,
 			menuLabel: 'Get Started',
 		});
 
-		const onboaringRoute = isOnboardingV3Enabled
-			? ROUTES.GET_STARTED_WITH_CLOUD
-			: ROUTES.GET_STARTED;
-
 		if (isModifierKeyPressed(event)) {
-			openInNewTab(onboaringRoute);
+			openInNewTab(ROUTES.GET_STARTED_WITH_CLOUD);
 		} else {
-			history.push(onboaringRoute);
+			history.push(ROUTES.GET_STARTED_WITH_CLOUD);
 		}
 	};
 
@@ -885,9 +877,9 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 					break;
 				case 'invite-collaborators':
 					if (event && isModifierKeyPressed(event)) {
-						openInNewTab(`${ROUTES.ORG_SETTINGS}#invite-team-members`);
+						openInNewTab(`${ROUTES.MEMBERS_SETTINGS}?invite=true`);
 					} else {
-						history.push(`${ROUTES.ORG_SETTINGS}#invite-team-members`);
+						history.push(`${ROUTES.MEMBERS_SETTINGS}?invite=true`);
 					}
 					break;
 				case 'chat-support':

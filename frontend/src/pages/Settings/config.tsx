@@ -9,7 +9,8 @@ import MCPServerSettings from 'container/MCPServerSettings/MCPServerSettings';
 import MySettings from 'container/MySettings';
 import OrganizationSettings from 'container/OrganizationSettings';
 import RolesSettings from 'container/RolesSettings';
-import RoleDetailsPage from 'container/RolesSettings/RoleDetails';
+import CreateEditRolePage from 'container/RolesSettings/CreateEditRolePage';
+import ViewRolePage from 'container/RolesSettings/ViewRolePage';
 import { TFunction } from 'i18next';
 import {
 	Backpack,
@@ -135,7 +136,7 @@ export const rolesSettings = (t: TFunction): RouteTabProps['routes'] => [
 
 export const roleDetails = (t: TFunction): RouteTabProps['routes'] => [
 	{
-		Component: RoleDetailsPage,
+		Component: ViewRolePage,
 		name: (
 			<div className="periscope-tab">
 				<Shield size={16} /> {t('routes:role_details').toString()}
@@ -143,6 +144,32 @@ export const roleDetails = (t: TFunction): RouteTabProps['routes'] => [
 		),
 		route: ROUTES.ROLE_DETAILS,
 		key: ROUTES.ROLE_DETAILS,
+	},
+];
+
+export const roleEdit = (t: TFunction): RouteTabProps['routes'] => [
+	{
+		Component: CreateEditRolePage,
+		name: (
+			<div className="periscope-tab">
+				<Shield size={16} /> {t('routes:role_edit').toString()}
+			</div>
+		),
+		route: ROUTES.ROLE_EDIT,
+		key: ROUTES.ROLE_EDIT,
+	},
+];
+
+export const roleCreate = (t: TFunction): RouteTabProps['routes'] => [
+	{
+		Component: CreateEditRolePage,
+		name: (
+			<div className="periscope-tab">
+				<Shield size={16} /> {t('routes:role_create').toString()}
+			</div>
+		),
+		route: ROUTES.ROLE_CREATE,
+		key: ROUTES.ROLE_CREATE,
 	},
 ];
 

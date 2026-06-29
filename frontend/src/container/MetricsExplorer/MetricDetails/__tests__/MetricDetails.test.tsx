@@ -77,6 +77,14 @@ jest.mock(
 		},
 );
 
+jest.mock(
+	'container/MetricsExplorer/VolumeControl/components/VolumeControlSection/VolumeControlSection',
+	() =>
+		function MockVolumeControlSection(): JSX.Element {
+			return <div data-testid="volume-control-section-mock">Volume Control</div>;
+		},
+);
+
 const useGetMetricMetadataMock = jest.spyOn(
 	metricsExplorerHooks,
 	'useGetMetricMetadata',

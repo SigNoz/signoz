@@ -1,5 +1,5 @@
 import type { ComponentType } from 'react';
-import { DataSource } from 'types/common/queryBuilder';
+import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 
 import type { SectionConfig } from './sections';
 import type { AnyPanelInteractionProps } from './interactions';
@@ -35,12 +35,13 @@ export interface PanelDefinition<K extends PanelKind = PanelKind> {
 	displayName: string;
 	Renderer: ComponentType<PanelRendererProps<K>>;
 	sections: SectionConfig[];
-	supportedSignals: DataSource[];
+	supportedSignals: TelemetrytypesSignalDTO[];
 	actions: PanelActionCapabilities;
 }
 
-// Indexing with a literal kind yields that kind's exactly-typed PanelDefinition.
-export type PanelRegistry = { [K in PanelKind]?: PanelDefinition<K> };
+// Total over PanelKind: every kind must be registered (missing → compile error),
+// so getPanelDefinition never returns undefined.
+export type PanelRegistry = { [K in PanelKind]: PanelDefinition<K> };
 
 // PanelDefinition with its Renderer widened to the kind-agnostic prop surface.
 // getPanelDefinition resolves to this, concentrating the unavoidable cast in one

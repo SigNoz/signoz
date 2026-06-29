@@ -167,3 +167,23 @@ export function mockUseAuthZDenyAll(
 		refetchPermissions: jest.fn(),
 	};
 }
+
+export function mockUseAuthZGrantByPrefix(
+	...prefixes: string[]
+): (
+	permissions: BrandedPermission[],
+	options?: UseAuthZOptions,
+) => UseAuthZResult {
+	return (permissions, _options) => ({
+		isLoading: false,
+		isFetching: false,
+		error: null,
+		permissions: Object.fromEntries(
+			permissions.map((p) => [
+				p,
+				{ isGranted: prefixes.some((prefix) => p.startsWith(prefix)) },
+			]),
+		) as UseAuthZResult['permissions'],
+		refetchPermissions: jest.fn(),
+	});
+}

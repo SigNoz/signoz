@@ -6,6 +6,7 @@ type PermissionsData = typeof permissionsType.data;
 export type Resource = PermissionsData['resources'][number];
 export type ResourceName = Resource['kind'];
 export type ResourceType = Resource['type'];
+export type AuthZVerb = Resource['allowedVerbs'][number];
 
 type RelationsByType = PermissionsData['relations'];
 
@@ -40,6 +41,23 @@ type AllRelations = RelationName;
 export type AuthZRelation = AllRelations;
 export type AuthZResource = ResourceName;
 export type AuthZObject<R extends AuthZRelation> = RelationToObject<R>;
+
+/**
+ * Verbs that can support selectors.
+ */
+export type ObjectScopedVerb = Extract<
+	AuthZVerb,
+	'read' | 'update' | 'delete' | 'assignee' | 'attach' | 'detach'
+>;
+
+export const OBJECT_SCOPED_VERBS: readonly ObjectScopedVerb[] = [
+	'read',
+	'update',
+	'delete',
+	'assignee',
+	'attach',
+	'detach',
+];
 
 export type BrandedPermission = string & { __brandedPermission: true };
 
