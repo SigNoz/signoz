@@ -7301,28 +7301,28 @@ export interface Querybuildertypesv5ColumnDescriptorDTO {
 
 export interface Querybuildertypesv5EstimateEntryDTO {
 	/**
-	 * @type string,null
+	 * @type string
 	 */
-	database: string | null;
+	database: string;
 	/**
-	 * @type integer,null
+	 * @type integer
 	 * @format int64
 	 */
-	marks: number | null;
+	marks: number;
 	/**
-	 * @type integer,null
+	 * @type integer
 	 * @format int64
 	 */
-	parts: number | null;
+	parts: number;
 	/**
-	 * @type integer,null
+	 * @type integer
 	 * @format int64
 	 */
-	rows: number | null;
+	rows: number;
 	/**
-	 * @type string,null
+	 * @type string
 	 */
-	table: string | null;
+	table: string;
 }
 
 export type Querybuildertypesv5ExecStatsDTOStepIntervals = {
@@ -7367,74 +7367,74 @@ export interface Querybuildertypesv5FormatOptionsDTO {
 
 export interface Querybuildertypesv5IndexStepDTO {
 	/**
-	 * @type string,null
+	 * @type string
 	 */
-	condition: string | null;
+	condition: string;
 	/**
-	 * @type integer,null
+	 * @type integer
 	 * @format int64
 	 */
-	initialGranules: number | null;
+	initialGranules: number;
 	/**
-	 * @type integer,null
+	 * @type integer
 	 * @format int64
 	 */
-	initialParts: number | null;
+	initialParts: number;
 	/**
-	 * @type array,null
+	 * @type array
 	 */
-	keys: string[] | null;
+	keys: string[];
 	/**
-	 * @type string,null
+	 * @type string
 	 */
-	name: string | null;
+	name: string;
 	/**
-	 * @type integer,null
+	 * @type integer
 	 * @format int64
 	 */
-	selectedGranules: number | null;
+	selectedGranules: number;
 	/**
-	 * @type integer,null
+	 * @type integer
 	 * @format int64
 	 */
-	selectedParts: number | null;
+	selectedParts: number;
 	/**
-	 * @type string,null
+	 * @type string
 	 */
-	type: string | null;
+	type: string;
 }
 
 export interface Querybuildertypesv5MergeTreeReadDTO {
 	/**
-	 * @type array,null
+	 * @type array
 	 */
-	steps: Querybuildertypesv5IndexStepDTO[] | null;
+	steps: Querybuildertypesv5IndexStepDTO[];
 	/**
-	 * @type string,null
+	 * @type string
 	 */
-	table: string | null;
+	table: string;
 }
 
 export type Querybuildertypesv5GranulesDTOAnyOf = {
 	/**
-	 * @type integer,null
+	 * @type integer
 	 * @format int64
 	 */
-	initial: number | null;
+	initial: number;
 	/**
-	 * @type array,null
+	 * @type array
 	 */
-	reads: Querybuildertypesv5MergeTreeReadDTO[] | null;
+	reads: Querybuildertypesv5MergeTreeReadDTO[];
 	/**
-	 * @type integer,null
+	 * @type integer
 	 * @format int64
 	 */
-	selected: number | null;
+	selected: number;
 	/**
-	 * @type integer,null
+	 * @type integer
 	 * @format int64
 	 */
-	skipped: number | null;
+	skipped: number;
 };
 
 /**
@@ -7445,17 +7445,17 @@ export type Querybuildertypesv5GranulesDTO =
 
 export interface Querybuildertypesv5PreviewStatementDTO {
 	/**
-	 * @type array,null
+	 * @type array
 	 */
-	'db.statement.args': unknown[] | null;
+	'db.statement.args': unknown[];
 	/**
-	 * @type string,null
+	 * @type string
 	 */
-	'db.statement.query': string | null;
+	'db.statement.query': string;
 	/**
-	 * @type array,null
+	 * @type array
 	 */
-	estimate: Querybuildertypesv5EstimateEntryDTO[] | null;
+	estimate: Querybuildertypesv5EstimateEntryDTO[];
 	granules: Querybuildertypesv5GranulesDTO | null;
 }
 
@@ -7543,17 +7543,17 @@ export type Querybuildertypesv5QueryDataDTO =
 export interface Querybuildertypesv5QueryPreviewDTO {
 	error: unknown;
 	/**
-	 * @type array,null
+	 * @type array
 	 */
-	statements: Querybuildertypesv5PreviewStatementDTO[] | null;
+	statements: Querybuildertypesv5PreviewStatementDTO[];
 	/**
-	 * @type boolean,null
+	 * @type boolean
 	 */
-	valid: boolean | null;
+	valid: boolean;
 	/**
-	 * @type array,null
+	 * @type array
 	 */
-	warnings: string[] | null;
+	warnings: string[];
 }
 
 export type Querybuildertypesv5QueryRangePreviewResponseDTOCompositeQueryAnyOf =

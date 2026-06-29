@@ -89,64 +89,66 @@ func (q *QueryRangePreviewResponse) PrepareJSONSchema(schema *jsonschema.Schema)
 
 // QueryPreview is the dry-run result for a single query.
 type QueryPreview struct {
-	Valid      bool               `json:"valid" required:"true" nullable:"true"`
+	Valid      bool               `json:"valid" required:"true" nullable:"false"`
 	Error      error              `json:"error" required:"true"`
-	Warnings   []string           `json:"warnings" required:"true" nullable:"true"`
-	Statements []PreviewStatement `json:"statements" required:"true" nullable:"true"`
+	Warnings   []string           `json:"warnings" required:"true" nullable:"false"`
+	Statements []PreviewStatement `json:"statements" required:"true" nullable:"false"`
 }
 
 // PreviewStatement is one rendered ClickHouse statement with its args and, when
 // requested, its EXPLAIN ESTIMATE and granule breakdown. The query/args JSON
 // keys follow the OpenTelemetry db.statement.* convention.
 type PreviewStatement struct {
-	Query    string          `json:"db.statement.query" required:"true" nullable:"true"`
-	Args     []any           `json:"db.statement.args" required:"true" nullable:"true"`
-	Estimate []EstimateEntry `json:"estimate" required:"true" nullable:"true"`
+	Query    string          `json:"db.statement.query" required:"true" nullable:"false"`
+	Args     []any           `json:"db.statement.args" required:"true" nullable:"false"`
+	Estimate []EstimateEntry `json:"estimate" required:"true" nullable:"false"`
 	Granules *Granules       `json:"granules" required:"true" nullable:"true"`
 }
 
 // EstimateEntry is ClickHouse's EXPLAIN ESTIMATE for one table read: the
 // absolute parts, rows, and marks it estimates it will scan.
 type EstimateEntry struct {
-	Database string `json:"database" required:"true" nullable:"true"`
-	Table    string `json:"table" required:"true" nullable:"true"`
-	Parts    int64  `json:"parts" required:"true" nullable:"true"`
-	Rows     int64  `json:"rows" required:"true" nullable:"true"`
-	Marks    int64  `json:"marks" required:"true" nullable:"true"`
+	Database string `json:"database" required:"true" nullable:"false"`
+	Table    string `json:"table" required:"true" nullable:"false"`
+	Parts    int64  `json:"parts" required:"true" nullable:"false"`
+	Rows     int64  `json:"rows" required:"true" nullable:"false"`
+	Marks    int64  `json:"marks" required:"true" nullable:"false"`
 }
 
 // Granules is the granule-skip breakdown for one statement, parsed from
 // `EXPLAIN json = 1, indexes = 1` and summed across every ReadFromMergeTree node.
 type Granules struct {
-	Initial  int64           `json:"initial" required:"true" nullable:"true"`
-	Selected int64           `json:"selected" required:"true" nullable:"true"`
-	Skipped  int64           `json:"skipped" required:"true" nullable:"true"`
-	Reads    []MergeTreeRead `json:"reads" required:"true" nullable:"true"`
+	Initial  int64           `json:"initial" required:"true" nullable:"false"`
+	Selected int64           `json:"selected" required:"true" nullable:"false"`
+	Skipped  int64           `json:"skipped" required:"true" nullable:"false"`
+	Reads    []MergeTreeRead `json:"reads" required:"true" nullable:"false"`
 }
 
 // MergeTreeRead is the index-pruning funnel for one ReadFromMergeTree node. The
 // Steps run in sequence, so each step's Initial* matches the previous Selected*.
 type MergeTreeRead struct {
-	Table string      `json:"table" required:"true" nullable:"true"`
-	Steps []IndexStep `json:"steps" required:"true" nullable:"true"`
+	Table string      `json:"table" required:"true" nullable:"false"`
+	Steps []IndexStep `json:"steps" required:"true" nullable:"false"`
 }
 
 // IndexStep is one index applied during a MergeTree read, with the parts and
 // granules entering (Initial*) and surviving (Selected*) it. Type is the index
 // kind (MinMax, Partition, PrimaryKey, or Skip).
 type IndexStep struct {
-	Type             string   `json:"type" required:"true" nullable:"true"`
-	Name             string   `json:"name" required:"true" nullable:"true"`
-	Keys             []string `json:"keys" required:"true" nullable:"true"`
-	Condition        string   `json:"condition" required:"true" nullable:"true"`
-	InitialParts     int64    `json:"initialParts" required:"true" nullable:"true"`
-	SelectedParts    int64    `json:"selectedParts" required:"true" nullable:"true"`
-	InitialGranules  int64    `json:"initialGranules" required:"true" nullable:"true"`
-	SelectedGranules int64    `json:"selectedGranules" required:"true" nullable:"true"`
+	Type             string   `json:"type" required:"true" nullable:"false"`
+	Name             string   `json:"name" required:"true" nullable:"false"`
+	Keys             []string `json:"keys" required:"true" nullable:"false"`
+	Condition        string   `json:"condition" required:"true" nullable:"false"`
+	InitialParts     int64    `json:"initialParts" required:"true" nullable:"false"`
+	SelectedParts    int64    `json:"selectedParts" required:"true" nullable:"false"`
+	InitialGranules  int64    `json:"initialGranules" required:"true" nullable:"false"`
+	SelectedGranules int64    `json:"selectedGranules" required:"true" nullable:"false"`
 }
 
 // MarshalJSON renders Error in its structured form (code/message/suggestions)
-// rather than the empty object a bare error produces.
+// rather than the empty object a bare error produces. The nullable:"false"
+// arrays are initialized non-nil at construction by the producer, so they
+// marshal as [] rather than null.
 func (p QueryPreview) MarshalJSON() ([]byte, error) {
 	type alias QueryPreview
 	out := struct {

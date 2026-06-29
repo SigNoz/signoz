@@ -14,39 +14,12 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-// previewTask is one rendered statement queued for granule/estimate analysis.
-// stmtIdx is where its results merge back into the query's Statements.
-type previewTask struct {
-	name    string
-	stmtIdx int
-	query   string
-	args    []any
-}
-
-type explainPlanNode struct {
-	NodeType    string             `json:"Node Type"`
-	Description string             `json:"Description"`
-	Indexes     []explainPlanIndex `json:"Indexes"`
-	Plans       []explainPlanNode  `json:"Plans"`
-}
-
-type explainPlanIndex struct {
-	Type             string   `json:"Type"`
-	Name             string   `json:"Name"`
-	Keys             []string `json:"Keys"`
-	Condition        string   `json:"Condition"`
-	InitialParts     *int64   `json:"Initial Parts"`
-	SelectedParts    *int64   `json:"Selected Parts"`
-	InitialGranules  *int64   `json:"Initial Granules"`
-	SelectedGranules *int64   `json:"Selected Granules"`
-}
-
 // QueryRangePreview validates and renders each query without executing it.
 // When opts.Verbose, it also attaches each statement's EXPLAIN ESTIMATE and
 // granule analysis.
 func (q *querier) QueryRangePreview(
 	ctx context.Context,
-	_ valuer.UUID,
+	orgID valuer.UUID,
 	req *qbtypes.QueryRangeRequest,
 	opts qbtypes.QueryRangePreviewOptions,
 ) (*qbtypes.QueryRangePreviewResponse, error) {
@@ -67,7 +40,7 @@ func (q *querier) QueryRangePreview(
 	missingMetricQuerySet := make(map[string]bool)
 	for idx := range req.CompositeQuery.Queries {
 		name := req.CompositeQuery.Queries[idx].GetQueryName()
-		ps := qbtypes.QueryPreview{}
+		ps := qbtypes.QueryPreview{Warnings: []string{}, Statements: []qbtypes.PreviewStatement{}}
 
 		if vErr := req.CompositeQuery.Queries[idx].Validate(validationOpts...); vErr != nil {
 			ps.Error = vErr
@@ -76,9 +49,9 @@ func (q *querier) QueryRangePreview(
 		}
 
 		env := []qbtypes.QueryEnvelope{req.CompositeQuery.Queries[idx]}
-		ps.Warnings = q.adjustStepInterval(env, req.Start, req.End)
+		ps.Warnings = append(ps.Warnings, q.adjustStepInterval(env, req.Start, req.End)...)
 
-		missingMetricQueries, metricWarnings, mErr := q.resolveMetricMetadata(ctx, env, req.Start, req.End)
+		missingMetricQueries, metricWarnings, mErr := q.resolveMetricMetadata(ctx, orgID, env, req.Start, req.End)
 		if mErr != nil {
 			// Report this query's error but keep previewing the rest.
 			ps.Error = mErr
@@ -110,22 +83,19 @@ func (q *querier) QueryRangePreview(
 
 	// Render each executing query's statement and collect the ClickHouse-bound
 	// analysis work to run concurrently.
-	var previewTasks []previewTask
+	var previewTasks []qbtypes.PreviewTask
 	for _, query := range req.CompositeQuery.Queries {
 		name := query.GetQueryName()
 		ps := prepared[name]
 
-		// Surface an earlier error without rendering.
 		if ps.Error != nil {
 			results[name] = ps
 			continue
 		}
-		// Fully-missing metric: QueryRange renders no SQL, so neither do we.
 		if missingMetricQuerySet[name] {
 			results[name] = ps
 			continue
 		}
-		// Attribute a build error to this query instead of aborting the preview.
 		if bErr := buildErrs[name]; bErr != nil {
 			ps.Error = bErr
 			results[name] = ps
@@ -134,8 +104,6 @@ func (q *querier) QueryRangePreview(
 
 		provider, ok := providers[name]
 		if !ok {
-			// Formula/join/sub-query render no standalone statement; report them
-			// as valid with a note rather than failing them.
 			if !rendersStandaloneStatement(query.Type) {
 				ps.Warnings = append(ps.Warnings, fmt.Sprintf(
 					"query type %q has no standalone statement to preview; it is evaluated from the queries it references", query.Type.StringValue()))
@@ -163,8 +131,6 @@ func (q *querier) QueryRangePreview(
 
 		ps.Warnings = append(ps.Warnings, stmt.Warnings...)
 
-		// clickhouse_sql is user-authored, so verify it parses and binds via
-		// EXPLAIN PLAN. Engine-generated SQL is well-formed by construction.
 		if query.Type == qbtypes.QueryTypeClickHouseSQL {
 			if bindErr := q.explainBindCheck(ctx, stmt.Query, stmt.Args); bindErr != nil {
 				if errors.Ast(bindErr, errors.TypeInvalidInput) {
@@ -172,7 +138,6 @@ func (q *querier) QueryRangePreview(
 					results[name] = ps
 					continue
 				}
-				// Infra failure, not a query problem: warn, don't mark invalid.
 				ps.Warnings = append(ps.Warnings, "could not validate ClickHouse SQL: "+bindErr.Error())
 			}
 		}
@@ -189,18 +154,18 @@ func (q *querier) QueryRangePreview(
 					ps.Warnings = append(ps.Warnings, "could not render underlying ClickHouse SQL: "+pErr.Error())
 				} else {
 					for _, s := range sqlStmts {
-						ps.Statements = append(ps.Statements, qbtypes.PreviewStatement{Query: s.Query, Args: s.Args})
+						ps.Statements = append(ps.Statements, qbtypes.PreviewStatement{Query: s.Query, Args: orEmpty(s.Args), Estimate: []qbtypes.EstimateEntry{}})
 					}
 				}
 			}
 		} else {
-			ps.Statements = []qbtypes.PreviewStatement{{Query: stmt.Query, Args: stmt.Args}}
+			ps.Statements = []qbtypes.PreviewStatement{{Query: stmt.Query, Args: orEmpty(stmt.Args), Estimate: []qbtypes.EstimateEntry{}}}
 		}
 
 		results[name] = ps
 
 		for j := range ps.Statements {
-			previewTasks = append(previewTasks, previewTask{name: name, stmtIdx: j, query: ps.Statements[j].Query, args: ps.Statements[j].Args})
+			previewTasks = append(previewTasks, qbtypes.PreviewTask{Name: name, StmtIdx: j, Query: ps.Statements[j].Query, Args: ps.Statements[j].Args})
 		}
 	}
 
@@ -316,7 +281,7 @@ func (q *querier) traceOperatorPreviewComposite(req *qbtypes.QueryRangeRequest, 
 	return append(queries, operator), nil
 }
 
-func (q *querier) runPreviewTasks(ctx context.Context, tasks []previewTask, previews map[string]qbtypes.QueryPreview) {
+func (q *querier) runPreviewTasks(ctx context.Context, tasks []qbtypes.PreviewTask, previews map[string]qbtypes.QueryPreview) {
 	if len(tasks) == 0 {
 		return
 	}
@@ -335,12 +300,12 @@ func (q *querier) runPreviewTasks(ctx context.Context, tasks []previewTask, prev
 			defer wg.Done()
 			t := tasks[i]
 			var out outcome
-			if granules, ok, scErr := q.computeGranuleStats(ctx, t.query, t.args); scErr != nil {
+			if granules, ok, scErr := q.computeGranuleStats(ctx, t.Query, t.Args); scErr != nil {
 				out.warnings = append(out.warnings, "could not compute granule stats: "+scErr.Error())
 			} else if ok {
 				out.granules = &granules
 			}
-			if estimate, eErr := q.runExplainEstimate(ctx, t.query, t.args); eErr != nil {
+			if estimate, eErr := q.runExplainEstimate(ctx, t.Query, t.Args); eErr != nil {
 				out.warnings = append(out.warnings, "could not run EXPLAIN ESTIMATE: "+eErr.Error())
 			} else {
 				out.estimate = estimate
@@ -351,8 +316,8 @@ func (q *querier) runPreviewTasks(ctx context.Context, tasks []previewTask, prev
 	wg.Wait()
 
 	for i := range tasks {
-		ps := previews[tasks[i].name]
-		if idx := tasks[i].stmtIdx; idx >= 0 && idx < len(ps.Statements) {
+		ps := previews[tasks[i].Name]
+		if idx := tasks[i].StmtIdx; idx >= 0 && idx < len(ps.Statements) {
 			if outcomes[i].granules != nil {
 				ps.Statements[idx].Granules = outcomes[i].granules
 			}
@@ -361,7 +326,7 @@ func (q *querier) runPreviewTasks(ctx context.Context, tasks []previewTask, prev
 			}
 		}
 		ps.Warnings = append(ps.Warnings, outcomes[i].warnings...)
-		previews[tasks[i].name] = ps
+		previews[tasks[i].Name] = ps
 	}
 }
 
@@ -452,14 +417,14 @@ func (q *querier) computeGranuleStats(ctx context.Context, stmt string, args []a
 	}
 
 	var plans []struct {
-		Plan explainPlanNode `json:"Plan"`
+		Plan qbtypes.ExplainPlanNode `json:"Plan"`
 	}
 	if err := json.Unmarshal([]byte(sb.String()), &plans); err != nil {
 		return qbtypes.Granules{}, false, errors.WrapInternalf(err, errors.CodeInternal, "failed to parse EXPLAIN json")
 	}
 
 	var totalInitial, totalSelected int64
-	var reads []qbtypes.MergeTreeRead
+	reads := []qbtypes.MergeTreeRead{}
 	for i := range plans {
 		collectMergeTreeReads(&plans[i].Plan, &reads, &totalInitial, &totalSelected)
 	}
@@ -489,7 +454,7 @@ func derefInt64(p *int64) int64 {
 	return *p
 }
 
-func collectMergeTreeReads(node *explainPlanNode, reads *[]qbtypes.MergeTreeRead, totalInitial, totalSelected *int64) {
+func collectMergeTreeReads(node *qbtypes.ExplainPlanNode, reads *[]qbtypes.MergeTreeRead, totalInitial, totalSelected *int64) {
 	if node.NodeType == "ReadFromMergeTree" && len(node.Indexes) > 0 {
 		steps := make([]qbtypes.IndexStep, 0, len(node.Indexes))
 		var initial, selected *int64
@@ -504,7 +469,7 @@ func collectMergeTreeReads(node *explainPlanNode, reads *[]qbtypes.MergeTreeRead
 			steps = append(steps, qbtypes.IndexStep{
 				Type:             idx.Type,
 				Name:             idx.Name,
-				Keys:             idx.Keys,
+				Keys:             orEmpty(idx.Keys),
 				Condition:        idx.Condition,
 				InitialParts:     derefInt64(idx.InitialParts),
 				SelectedParts:    derefInt64(idx.SelectedParts),
@@ -521,4 +486,12 @@ func collectMergeTreeReads(node *explainPlanNode, reads *[]qbtypes.MergeTreeRead
 	for i := range node.Plans {
 		collectMergeTreeReads(&node.Plans[i], reads, totalInitial, totalSelected)
 	}
+}
+
+// orEmpty returns s, or a non-nil empty slice when s is nil
+func orEmpty[T any](s []T) []T {
+	if s == nil {
+		return []T{}
+	}
+	return s
 }

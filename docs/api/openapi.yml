@@ -5783,22 +5783,17 @@ components:
     Querybuildertypesv5EstimateEntry:
       properties:
         database:
-          nullable: true
           type: string
         marks:
           format: int64
-          nullable: true
           type: integer
         parts:
           format: int64
-          nullable: true
           type: integer
         rows:
           format: int64
-          nullable: true
           type: integer
         table:
-          nullable: true
           type: string
       required:
       - database
@@ -5882,20 +5877,16 @@ components:
       properties:
         initial:
           format: int64
-          nullable: true
           type: integer
         reads:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5MergeTreeRead'
-          nullable: true
           type: array
         selected:
           format: int64
-          nullable: true
           type: integer
         skipped:
           format: int64
-          nullable: true
           type: integer
       required:
       - initial
@@ -5928,34 +5919,26 @@ components:
     Querybuildertypesv5IndexStep:
       properties:
         condition:
-          nullable: true
           type: string
         initialGranules:
           format: int64
-          nullable: true
           type: integer
         initialParts:
           format: int64
-          nullable: true
           type: integer
         keys:
           items:
             type: string
-          nullable: true
           type: array
         name:
-          nullable: true
           type: string
         selectedGranules:
           format: int64
-          nullable: true
           type: integer
         selectedParts:
           format: int64
-          nullable: true
           type: integer
         type:
-          nullable: true
           type: string
       required:
       - type
@@ -5999,10 +5982,8 @@ components:
         steps:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5IndexStep'
-          nullable: true
           type: array
         table:
-          nullable: true
           type: string
       required:
       - table
@@ -6056,15 +6037,12 @@ components:
       properties:
         db.statement.args:
           items: {}
-          nullable: true
           type: array
         db.statement.query:
-          nullable: true
           type: string
         estimate:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5EstimateEntry'
-          nullable: true
           type: array
         granules:
           $ref: '#/components/schemas/Querybuildertypesv5Granules'
@@ -6400,15 +6378,12 @@ components:
         statements:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5PreviewStatement'
-          nullable: true
           type: array
         valid:
-          nullable: true
           type: boolean
         warnings:
           items:
             type: string
-          nullable: true
           type: array
       required:
       - valid
