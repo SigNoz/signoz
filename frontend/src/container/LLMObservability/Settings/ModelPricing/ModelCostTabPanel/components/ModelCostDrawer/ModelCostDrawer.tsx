@@ -79,10 +79,6 @@ function ModelCostDrawer({
 				{canManage ? 'Cancel' : 'Close'}
 			</Button>
 			{canManage && (
-				// Disabled until the form is dirty, so saving an untouched draft
-				// (no real change) is impossible. Once dirty it stays enabled even
-				// when invalid, so clicking surfaces inline field errors via
-				// handleSubmit rather than silently blocking Save.
 				<Button
 					variant="solid"
 					color="primary"
