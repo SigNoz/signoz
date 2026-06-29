@@ -7,6 +7,12 @@
 	padding: 12px 16px 0 16px;
 }
 
+.chartHeader {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
 .chartTitle {
 	text-transform: uppercase;
 	letter-spacing: 0.05em;

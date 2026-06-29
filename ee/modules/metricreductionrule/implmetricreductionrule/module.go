@@ -36,6 +36,8 @@ const (
 	// user-facing pending window is effectiveFromMargin + uiActivationDelay (~5m).
 	uiActivationDelay      = 3 * time.Minute
 	defaultPreviewLookback = 24 * time.Hour
+	statsLookback          = 1 * time.Hour
+	timeseriesLookback     = 6 * time.Hour
 
 	pricePerMillionSamplesUSD = 0.1
 	monthDuration             = 30 * 24 * time.Hour
@@ -85,7 +87,7 @@ func (m *module) List(ctx context.Context, orgID valuer.UUID, params *metricredu
 	}
 
 	now := time.Now()
-	startMs := now.Add(-defaultPreviewLookback).UnixMilli()
+	startMs := now.Add(-statsLookback).UnixMilli()
 	endMs := now.UnixMilli()
 
 	switch params.OrderBy {
@@ -306,15 +308,12 @@ func (m *module) Stats(ctx context.Context, orgID valuer.UUID) (*metricreduction
 	}
 
 	now := time.Now()
-	startMs := now.Add(-defaultPreviewLookback).UnixMilli()
+	startMs := now.Add(-statsLookback).UnixMilli()
 	endMs := now.UnixMilli()
 
-	rules, total, err := m.store.List(ctx, orgID, &metricreductionruletypes.ListReductionRulesParams{})
+	rules, _, err := m.store.List(ctx, orgID, &metricreductionruletypes.ListReductionRulesParams{})
 	if err != nil {
 		return nil, err
-	}
-	if total == 0 {
-		return &metricreductionruletypes.GettableReductionRuleStats{}, nil
 	}
 
 	metricNames := make([]string, len(rules))
@@ -328,29 +327,41 @@ func (m *module) Stats(ctx context.Context, orgID valuer.UUID) (*metricreduction
 	if err != nil {
 		return nil, err
 	}
-	var ingestedSeries, retainedSeries uint64
+	var ruledIngestedSeries, ruledRetainedSeries uint64
 	for _, volume := range volumes {
-		ingestedSeries += volume.Ingested
-		retainedSeries += effectiveRetained(volume.Ingested, volume.Reduced)
+		ruledIngestedSeries += volume.Ingested
+		ruledRetainedSeries += effectiveRetained(volume.Ingested, volume.Reduced)
 	}
 
 	sampleVolumes, err := m.ch.SampleVolumeByMetric(ctx, metricNames, effectiveFrom, startMs, endMs)
 	if err != nil {
 		return nil, err
 	}
-	var ingestedSamples, retainedSamples uint64
+	var ruledIngestedSamples, ruledRetainedSamples uint64
 	for _, sv := range sampleVolumes {
-		ingestedSamples += sv.Ingested
-		retainedSamples += effectiveRetained(sv.Ingested, sv.Reduced)
+		ruledIngestedSamples += sv.Ingested
+		ruledRetainedSamples += effectiveRetained(sv.Ingested, sv.Reduced)
+	}
+
+	totalSeries, totalSamples, err := m.ch.TotalVolume(ctx, startMs, endMs)
+	if err != nil {
+		return nil, err
 	}
 
 	return &metricreductionruletypes.GettableReductionRuleStats{
-		IngestedSeries:             ingestedSeries,
-		RetainedSeries:             retainedSeries,
-		IngestedSamples:            ingestedSamples,
-		RetainedSamples:            retainedSamples,
-		EstimatedMonthlySavingsUsd: monthlySavingsUSD(ingestedSamples, retainedSamples, startMs, endMs),
+		IngestedSeries:             totalSeries,
+		RetainedSeries:             clampSub(totalSeries, ruledIngestedSeries-ruledRetainedSeries),
+		IngestedSamples:            totalSamples,
+		RetainedSamples:            clampSub(totalSamples, ruledIngestedSamples-ruledRetainedSamples),
+		EstimatedMonthlySavingsUsd: monthlySavingsUSD(ruledIngestedSamples, ruledRetainedSamples, startMs, endMs),
 	}, nil
+}
+
+func clampSub(a, b uint64) uint64 {
+	if a < b {
+		return 0
+	}
+	return a - b
 }
 
 // monthlySavingsUSD extrapolates the windowed sample reduction to a monthly figure at the per-sample
@@ -370,7 +381,7 @@ func (m *module) Timeseries(ctx context.Context, orgID valuer.UUID) (*querybuild
 	}
 
 	now := time.Now()
-	startMs := now.Add(-defaultPreviewLookback).UnixMilli()
+	startMs := now.Add(-timeseriesLookback).UnixMilli()
 	endMs := now.UnixMilli()
 
 	allRules, _, err := m.store.List(ctx, orgID, &metricreductionruletypes.ListReductionRulesParams{})
@@ -384,18 +395,7 @@ func (m *module) Timeseries(ctx context.Context, orgID valuer.UUID) (*querybuild
 		effectiveFrom[rule.MetricName] = rule.EffectiveFrom.UnixMilli()
 	}
 
-	volumes, err := m.ch.VolumeByMetric(ctx, metricNames, effectiveFrom, startMs, endMs)
-	if err != nil {
-		return nil, err
-	}
-	reducedNames := make([]string, 0, len(volumes))
-	for name, volume := range volumes {
-		if effectiveRetained(volume.Ingested, volume.Reduced) < volume.Ingested {
-			reducedNames = append(reducedNames, name)
-		}
-	}
-
-	points, err := m.ch.SeriesTimeseries(ctx, metricNames, reducedNames, effectiveFrom, startMs, endMs)
+	points, err := m.ch.SampleTimeseries(ctx, metricNames, effectiveFrom, startMs, endMs)
 	if err != nil {
 		return nil, err
 	}

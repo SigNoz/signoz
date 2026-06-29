@@ -68,9 +68,14 @@ function VolumeControlChart({ enabled }: VolumeControlChartProps): JSX.Element {
 
 	return (
 		<div className={styles.chart} data-testid="volume-control-chart">
-			<Typography.Text className={styles.chartTitle} size={'small'}>
-				Series volume over time · ingested vs retained
-			</Typography.Text>
+			<div className={styles.chartHeader}>
+				<Typography.Text className={styles.chartTitle} size={'small'}>
+					Sample volume · ingested vs retained
+				</Typography.Text>
+				<Typography.Text size="small" color="muted">
+					Last 6 hours
+				</Typography.Text>
+			</div>
 			<div className={styles.chartBody} ref={graphRef}>
 				{isLoading && (
 					<div

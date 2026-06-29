@@ -147,7 +147,14 @@ function VolumeControlTab(): JSX.Element {
 					),
 				},
 				{
-					title: 'INGESTED',
+					title: (
+						<>
+							INGESTED{' '}
+							<Typography.Text size="small" color="muted">
+								(1h)
+							</Typography.Text>
+						</>
+					),
 					key: OrderBy.ingested_volume,
 					width: 130,
 					sorter: true,
@@ -170,7 +177,14 @@ function VolumeControlTab(): JSX.Element {
 					),
 				},
 				{
-					title: 'RETAINED',
+					title: (
+						<>
+							RETAINED{' '}
+							<Typography.Text size="small" color="muted">
+								(1h)
+							</Typography.Text>
+						</>
+					),
 					key: OrderBy.reduced_volume,
 					width: 130,
 					sorter: true,
