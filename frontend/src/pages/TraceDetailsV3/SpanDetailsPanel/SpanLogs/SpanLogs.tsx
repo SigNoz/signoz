@@ -238,11 +238,8 @@ function SpanLogs({
 		<div className={styles.spanLogsEmptyContent}>
 			<section className={styles.description}>
 				<img src={noDataUrl} alt="no-data" className={styles.noDataImg} />
-				<Typography.Text className={styles.noDataText1}>
-					No logs found for selected span.
-					<span className={styles.noDataText2}>
-						View logs for the current trace.
-					</span>
+				<Typography.Text className={styles.noDataDescription}>
+					No logs found for selected span. View logs for the current trace.
 				</Typography.Text>
 			</section>
 			<section className={styles.actionSection}>
