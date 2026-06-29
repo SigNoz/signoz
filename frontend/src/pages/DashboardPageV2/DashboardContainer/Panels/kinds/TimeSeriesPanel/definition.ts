@@ -1,15 +1,18 @@
-import { DataSource } from 'types/common/queryBuilder';
-
 import type { PanelDefinition } from '../../types/panelDefinition';
 import Renderer from './Renderer';
 import { sections } from './sections';
+import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 
 export const definition: PanelDefinition<'signoz/TimeSeriesPanel'> = {
 	kind: 'signoz/TimeSeriesPanel',
 	displayName: 'Time Series',
 	Renderer,
 	sections,
-	supportedSignals: [DataSource.METRICS, DataSource.LOGS, DataSource.TRACES],
+	supportedSignals: [
+		TelemetrytypesSignalDTO.metrics,
+		TelemetrytypesSignalDTO.logs,
+		TelemetrytypesSignalDTO.traces,
+	],
 	actions: {
 		view: true,
 		edit: true,

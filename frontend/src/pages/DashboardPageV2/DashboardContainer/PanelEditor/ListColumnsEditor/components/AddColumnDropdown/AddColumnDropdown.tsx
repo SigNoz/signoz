@@ -21,7 +21,7 @@ import { useListColumnSuggestions } from '../../hooks/useListColumnSuggestions';
 import styles from './AddColumnDropdown.module.scss';
 
 interface AddColumnDropdownProps {
-	signal: TelemetrytypesSignalDTO | undefined;
+	signal: TelemetrytypesSignalDTO;
 	/** Names already chosen — drives the checked state + toggle behavior. */
 	selectedNames: Set<string>;
 	onToggle: (field: TelemetrytypesTelemetryFieldKeyDTO) => void;

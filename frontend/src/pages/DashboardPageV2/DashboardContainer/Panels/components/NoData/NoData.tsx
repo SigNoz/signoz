@@ -1,27 +1,39 @@
-import { Typography } from '@signozhq/ui/typography';
+import { Clock, RotateCw } from '@signozhq/icons';
 
-import styles from './NoData.module.scss';
+import PanelMessage from '../PanelMessage/PanelMessage';
 
 interface NoDataProps {
-	/** Message to display. Defaults to "No data". */
-	label?: string;
+	/** Title override. Defaults to the time-range empty-state copy. */
+	title?: string;
+	/** Description override. Defaults to the "widen the range" hint. */
+	description?: string;
+	/** When provided, renders a Retry button that re-runs the query. */
+	onRetry?: () => void;
 	'data-testid'?: string;
 }
 
 /**
- * Shared empty-state for panel renderers, shown when a query resolves but
- * returns nothing to plot. Centred in the panel body so every panel kind
- * surfaces the same "No data" affordance instead of each renderer (or its
- * underlying chart) inventing its own copy and casing.
+ * Shared empty-state for panel renderers: wraps `PanelMessage` so every panel
+ * kind surfaces the same "no data" affordance when a query returns nothing.
  */
 function NoData({
-	label = 'No data',
+	title = 'No data in this time range',
+	description = 'Nothing in the selected window. Try widening the range.',
+	onRetry,
 	'data-testid': testId = 'panel-no-data',
 }: NoDataProps): JSX.Element {
 	return (
-		<div className={styles.noData} data-testid={testId}>
-			<Typography.Text className={styles.noDataText}>{label}</Typography.Text>
-		</div>
+		<PanelMessage
+			icon={<Clock size={18} />}
+			title={title}
+			description={description}
+			action={
+				onRetry
+					? { label: 'Retry', onClick: onRetry, icon: <RotateCw size={14} /> }
+					: undefined
+			}
+			data-testid={testId}
+		/>
 	);
 }
 
