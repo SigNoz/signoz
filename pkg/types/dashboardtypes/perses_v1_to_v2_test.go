@@ -884,6 +884,46 @@ func TestConvertV1LayoutsExpandedSectionsNoPanelMap(t *testing.T) {
 	assert.Equal(t, 0, s2.Items[1].Y)
 }
 
+// TestConvertV1LayoutsToleratesNonObjectPanelMap covers templates that store
+// panelMap as {rowID: []widgetID} instead of the canonical {rowID: {widgets,
+// collapsed}}. The frontend reads such an entry as "not collapsed" (it accesses
+// .collapsed/.widgets, which are absent on an array — see GridCardLayout), so the
+// migration must match: no malformed-field error, and the row becomes an
+// expanded section grouping its panels positionally.
+func TestConvertV1LayoutsToleratesNonObjectPanelMap(t *testing.T) {
+	data := StorableDashboardData{
+		"widgets": []any{
+			map[string]any{"id": "row_overview", "panelTypes": "row", "title": "Overview"},
+			map[string]any{"id": "v_up", "panelTypes": "value"},
+			map[string]any{"id": "v_version", "panelTypes": "value"},
+		},
+		"layout": []any{
+			map[string]any{"i": "row_overview", "x": float64(0), "y": float64(0), "w": float64(12), "h": float64(1)},
+			map[string]any{"i": "v_up", "x": float64(0), "y": float64(1), "w": float64(4), "h": float64(5)},
+			map[string]any{"i": "v_version", "x": float64(4), "y": float64(1), "w": float64(4), "h": float64(5)},
+		},
+		"panelMap": map[string]any{
+			// non-canonical: a bare []widgetID instead of {widgets, collapsed}.
+			"row_overview": []any{"v_up", "v_version"},
+		},
+	}
+
+	d := &v1Decoder{}
+	layouts := d.convertV1Layouts(data)
+	require.NoError(t, d.errIfHasMalformedFields(), "a non-object panelMap entry must not be flagged malformed")
+	require.Len(t, layouts, 1, "one expanded section grid for row_overview")
+
+	section, ok := layouts[0].Spec.(*dashboard.GridLayoutSpec)
+	require.True(t, ok)
+	require.NotNil(t, section.Display)
+	assert.Equal(t, "Overview", section.Display.Title)
+	require.NotNil(t, section.Display.Collapse)
+	assert.True(t, section.Display.Collapse.Open, "non-object panelMap entry → row treated as not collapsed")
+	require.Len(t, section.Items, 2, "both panels grouped under the section positionally")
+	assert.Equal(t, "#/spec/panels/v_up", section.Items[0].Content.Ref)
+	assert.Equal(t, "#/spec/panels/v_version", section.Items[1].Content.Ref)
+}
+
 func TestConvertV1LayoutsEmpty(t *testing.T) {
 	d := &v1Decoder{}
 	layouts := d.convertV1Layouts(StorableDashboardData{})

@@ -101,7 +101,12 @@ func (d *v1Decoder) extractRowsAndCollapsedWidgets(data StorableDashboardData) m
 			continue
 		}
 		row := &rowInfo{title: d.readString(w, "title")}
-		if pm := d.readObject(panelMap, id); pm != nil && d.readBool(pm, "collapsed") {
+		// Some templates store panelMap[id] as a bare []widgetID instead of the
+		// canonical {widgets, collapsed}. The frontend treats such a non-object
+		// entry as "not collapsed" (see GridCardLayout), so read it leniently: a
+		// non-map yields nil, which reads as not collapsed.
+		pm, _ := panelMap[id].(map[string]any)
+		if d.readBool(pm, "collapsed") {
 			row.collapsed = true
 			row.collapsedWidgets = d.readObjects(pm, "widgets")
 		}
