@@ -5,7 +5,8 @@ import {
 	AuthZRelation,
 	BrandedPermission,
 } from 'hooks/useAuthZ/types';
-import { parsePermission } from 'hooks/useAuthZ/utils';
+import { formatPermission } from 'hooks/useAuthZ/utils';
+import { useAppContext } from 'providers/App/App';
 
 import noDataUrl from '@/assets/Icons/no-data.svg';
 
@@ -17,21 +18,16 @@ import './createGuardedRoute.styles.scss';
 function OnNoPermissionsFallback(response: {
 	requiredPermissionName: BrandedPermission;
 }): ReactElement {
-	const { relation, object } = parsePermission(response.requiredPermissionName);
+	const { user } = useAppContext();
 
 	return (
 		<div className="guard-authz-error-no-authz">
 			<div className="guard-authz-error-no-authz-content">
 				<img src={noDataUrl} alt="No permission" />
-				<h3>Uh-oh! You don’t have permission to view this page.</h3>
+				<h3>Uh-oh! You are not authorized</h3>
 				<p>
-					You need the following permission to view this page:
-					<br />
-					Relation: <span>{relation}</span>
-					<br />
-					Object: <span>{object}</span>
-					<br />
-					Please ask your SigNoz administrator to grant access.
+					<code>user/{user.id}</code> is not authorized to perform{' '}
+					<code>{formatPermission(response.requiredPermissionName)}</code>
 				</p>
 			</div>
 		</div>
