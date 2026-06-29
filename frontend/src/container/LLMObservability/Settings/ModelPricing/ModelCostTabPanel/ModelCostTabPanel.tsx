@@ -81,7 +81,11 @@ function ModelCostTabPanel(): JSX.Element {
 		...(isOverride !== undefined ? { isOverride } : {}),
 	};
 
-	const { data, isLoading, isError } = useListLLMPricingRules(listParams);
+	const { data, isLoading, isError } = useListLLMPricingRules(listParams, {
+		query: {
+			enabled: search === debouncedSearch,
+		},
+	});
 
 	const { user } = useAppContext();
 	const [canManagePricing] = useComponentPermission(
