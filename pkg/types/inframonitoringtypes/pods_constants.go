@@ -64,7 +64,7 @@ var (
 	PodStatusUnexpectedAdmissionError = PodStatus{valuer.NewString("UnexpectedAdmissionError")}
 
 	// Sentinel when status cannot be derived (metrics absent / not in list view).
-	PodStatusNoData = PodStatus{valuer.NewString("NoData")}
+	PodStatusNoData = PodStatus{valuer.NewString("no_data")}
 )
 
 func (PodStatus) Enum() []any {

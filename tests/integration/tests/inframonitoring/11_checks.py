@@ -58,8 +58,8 @@ SPECS = {
         "attrs": {HMR: ["process.pid"]},
     },
     "pods": {
-        "default": {KSR: ["k8s.pod.cpu.usage", "k8s.pod.memory.working_set"], KCR: ["k8s.pod.phase"]},
-        "optional": {KSR: list(_PODS_OPT)},
+        "default": {KSR: ["k8s.pod.cpu.usage", "k8s.pod.memory.working_set"], KCR: ["k8s.pod.phase", "k8s.container.restarts"]},
+        "optional": {KSR: list(_PODS_OPT), KCR: ["k8s.pod.status_reason", "k8s.container.status.reason"]},
         "attrs": {KAP: ["k8s.pod.uid"]},
     },
     "nodes": {

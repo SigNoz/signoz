@@ -4781,7 +4781,7 @@ components:
       - nodelost
       - shutdown
       - unexpectedadmissionerror
-      - nodata
+      - no_data
       type: string
     InframonitoringtypesPods:
       properties:

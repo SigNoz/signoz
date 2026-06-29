@@ -6256,7 +6256,7 @@ export enum InframonitoringtypesPodStatusDTO {
 	nodelost = 'nodelost',
 	shutdown = 'shutdown',
 	unexpectedadmissionerror = 'unexpectedadmissionerror',
-	nodata = 'nodata',
+	no_data = 'no_data',
 }
 export interface InframonitoringtypesPodRecordDTO {
 	/**
