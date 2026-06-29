@@ -10,12 +10,12 @@ import {
 const trace = loadLargeTrace();
 
 test.describe('Trace details — span details drawer', () => {
-	test.beforeAll(async ({ browser }) => {
-		// Seed once. The seeder needs no auth, so a plain page is fine here
-		// (beforeAll can't use the test-scoped authedPage fixture).
-		const page = await browser.newPage();
-		await seedTracesViaSeeder(page, trace.spans);
-		await page.close();
+	test.beforeAll(async ({ playwright }) => {
+		// Seed once via a disposable request context — no auth needed (direct
+		// seeder call), and cheaper than spinning up a full browser page.
+		const request = await playwright.request.newContext();
+		await seedTracesViaSeeder(request, trace.spans);
+		await request.dispose();
 	});
 
 	test.beforeEach(async ({ authedPage: page }) => {

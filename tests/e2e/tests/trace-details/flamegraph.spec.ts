@@ -28,10 +28,10 @@ import {
 const trace = loadLargeTrace();
 
 test.describe('Trace details — flamegraph', () => {
-	test.beforeAll(async ({ browser }) => {
-		const page = await browser.newPage();
-		await seedTracesViaSeeder(page, trace.spans);
-		await page.close();
+	test.beforeAll(async ({ playwright }) => {
+		const request = await playwright.request.newContext();
+		await seedTracesViaSeeder(request, trace.spans);
+		await request.dispose();
 	});
 
 	test.afterAll(async ({ browser }) => {

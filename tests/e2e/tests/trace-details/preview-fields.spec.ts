@@ -30,10 +30,10 @@ test.describe('Trace details — preview fields in the hover card', () => {
 	// worker (which intermittently wiped the preview row mid-test).
 	test.describe.configure({ mode: 'serial' });
 
-	test.beforeAll(async ({ browser }) => {
-		const page = await browser.newPage();
-		await seedTracesViaSeeder(page, trace.spans);
-		await page.close();
+	test.beforeAll(async ({ playwright }) => {
+		const request = await playwright.request.newContext();
+		await seedTracesViaSeeder(request, trace.spans);
+		await request.dispose();
 	});
 
 	test.afterAll(async ({ browser }) => {
