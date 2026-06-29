@@ -26,30 +26,24 @@ func (m *module) GetByMetricNamesV2(ctx context.Context, orgID valuer.UUID, metr
 }
 
 func (m *module) getCandidatesDashboardsForMetricNames(ctx context.Context, orgID valuer.UUID, metricNames []string) ([]*dashboardtypes.DashboardV2, error) {
-	candidateIDs := make(map[valuer.UUID]bool)
-	candidates := make([]*dashboardtypes.DashboardV2, 0)
-	for _, name := range metricNames {
-		storables, err := m.store.ListByDataContains(ctx, orgID, name)
-		if err != nil {
-			return nil, err
-		}
-		for _, storable := range storables {
-			if storable.Source == dashboardtypes.SourceSystem {
-				continue
-			}
-			if candidateIDs[storable.ID] {
-				continue
-			}
-			candidateIDs[storable.ID] = true
+	storables, err := m.store.ListByDataContainsAny(ctx, orgID, metricNames)
+	if err != nil {
+		return nil, err
+	}
 
-			// tags are not required for this process so sending a nil list here.
-			dashboard, err := storable.ToDashboardV2(nil)
-			if err != nil {
-				m.settings.Logger().WarnContext(ctx, "skipping dashboard that couldn't be parsed as v2", slog.String("dashboard_id", storable.ID.StringValue()), errors.Attr(err))
-				continue
-			}
-			candidates = append(candidates, dashboard)
+	candidates := make([]*dashboardtypes.DashboardV2, 0, len(storables))
+	for _, storable := range storables {
+		if storable.Source == dashboardtypes.SourceSystem {
+			continue
 		}
+
+		// tags are not required for this process so sending a nil list here.
+		dashboard, err := storable.ToDashboardV2(nil)
+		if err != nil {
+			m.settings.Logger().WarnContext(ctx, "skipping dashboard that couldn't be parsed as v2", slog.String("dashboard_id", storable.ID.StringValue()), errors.Attr(err))
+			continue
+		}
+		candidates = append(candidates, dashboard)
 	}
 	return candidates, nil
 }
