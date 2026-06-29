@@ -1,8 +1,9 @@
 import { randomBytes } from 'crypto';
 
-import type { Page } from '@playwright/test';
+import type { APIRequestContext, Page } from '@playwright/test';
 
 import largeTraceRecords from '../testdata/traces/large-trace.json';
+import { authToken, seederUrl } from './common';
 
 // ── Seeder: insert traces via POST /telemetry/traces ─────────────────────────
 
@@ -28,24 +29,16 @@ export interface SeederSpan {
 export const randomTraceId = (): string => randomBytes(16).toString('hex');
 export const randomSpanId = (): string => randomBytes(8).toString('hex');
 
-// Seeder base URL written to .env.local by bootstrap/setup.py.
-function seederUrl(): string {
-	const url = process.env.SIGNOZ_E2E_SEEDER_URL;
-	if (!url) {
-		throw new Error(
-			'SIGNOZ_E2E_SEEDER_URL not set — pytest test_setup must be running.',
-		);
-	}
-	return url;
-}
-
-// Insert spans into the backend via the seeder. No auth needed (direct seeder call).
+// Insert spans into the backend via the seeder. No auth needed (direct seeder
+// call), so any APIRequestContext works — `page.request` or a standalone
+// `playwright.request.newContext()` (cheaper than a full browser page for a
+// pure API call).
 //
 // The seeder shares a single ClickHouse client, so concurrent POSTs from
 // parallel workers collide with a 500 "concurrent queries within the same
 // session". That's transient, so retry with backoff; any other error is real.
 export async function seedTracesViaSeeder(
-	page: Page,
+	request: APIRequestContext,
 	spans: SeederSpan[],
 ): Promise<void> {
 	const url = `${seederUrl()}/telemetry/traces`;
@@ -54,7 +47,7 @@ export async function seedTracesViaSeeder(
 	let lastText = '';
 	for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
 		// eslint-disable-next-line no-await-in-loop
-		const res = await page.request.post(url, {
+		const res = await request.post(url, {
 			data: spans,
 			headers: { 'Content-Type': 'application/json' },
 		});
@@ -102,6 +95,10 @@ export async function gotoTraceUntilLoaded(
 		await page.addInitScript(() => {
 			(window as unknown as { __SIGNOZ_E2E__?: boolean }).__SIGNOZ_E2E__ = true;
 		});
+		// Dock the left nav so it doesn't fly out on hover and overlay the trace
+		// content's left strip (which otherwise makes left-edge hover/click targets
+		// land on the sidebar). Once per Page, before the first navigation.
+		await pinSidenav(page);
 		e2eHookRegistered.add(page);
 	}
 
@@ -337,6 +334,9 @@ export const TRACE_PREFERENCE = {
 	PINNED_ATTRIBUTES: 'span_details_pinned_attributes',
 } as const;
 
+// Whether the left nav is docked/pinned (mirror USER_PREFERENCES.SIDENAV_PINNED).
+const SIDENAV_PINNED = 'sidenav_pinned';
+
 // A telemetry field key as persisted in the preview-fields preference. Only
 // `name` is required by the store (derivePreviewFields), but fieldContext /
 // fieldDataType match how the UI persists them.
@@ -344,21 +344,6 @@ export interface PreviewFieldKey {
 	name: string;
 	fieldContext?: string;
 	fieldDataType?: string;
-}
-
-// Read the app JWT from the context's stored auth state — no navigation needed,
-// since the authedPage fixture already loaded the admin storageState (localStorage
-// AUTH_TOKEN). Preferences are server-side, so page.request doesn't carry the
-// Bearer header automatically (auth is JWT-in-localStorage, not cookies).
-async function authToken(page: Page): Promise<string> {
-	const state = await page.context().storageState();
-	for (const origin of state.origins) {
-		const entry = origin.localStorage.find((e) => e.name === 'AUTH_TOKEN');
-		if (entry) {
-			return entry.value;
-		}
-	}
-	throw new Error('AUTH_TOKEN not found in storage state — is the page authed?');
 }
 
 // PUT a single user preference (server-side, per-user). Call BEFORE navigating
@@ -407,4 +392,14 @@ export async function setPreviewFieldsPreference(
 export async function resetTracePreferences(page: Page): Promise<void> {
 	await setColorByPreference(page, '');
 	await setPreviewFieldsPreference(page, []);
+}
+
+// Pin (dock) the left nav. When unpinned it's a collapsed rail that flies out on
+// hover as an absolute OVERLAY, covering the trace content's left strip — so
+// hover/click on left-edge targets (the waterfall collapse arrow, flamegraph
+// bars) lands on the sidebar instead. Pinned, it's a flex child that reserves
+// layout space, so nothing is occluded. Set before navigating: the server pref
+// wins over localStorage once preferences load.
+export async function pinSidenav(page: Page): Promise<void> {
+	await setUserPreference(page, SIDENAV_PINNED, true);
 }
