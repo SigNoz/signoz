@@ -25,6 +25,17 @@ func (d *v1Decoder) convertV1Layouts(data StorableDashboardData) []Layout {
 
 	rows := d.extractRowsAndCollapsedWidgets(data)
 
+	// `layout` ids must correspond to a real widget. react-grid-layout leaks a
+	// "__dropping-elem__" drag placeholder (and stale entries can outlive a
+	// deleted widget) into the saved layout; both would otherwise become grid
+	// items referencing a non-existent panel.
+	widgetIDs := make(map[string]bool)
+	for _, w := range d.readObjects(data, "widgets") {
+		if id := d.readString(w, "id"); id != "" {
+			widgetIDs[id] = true
+		}
+	}
+
 	// Skip collapsed-row children a malformed dashboard lists in `layout` too.
 	isWidgetCollapsed := make(map[string]bool)
 	for _, row := range rows {
@@ -46,7 +57,7 @@ func (d *v1Decoder) convertV1Layouts(data StorableDashboardData) []Layout {
 	currentRowHeader := topSectionWithoutHeader
 	for _, item := range layout {
 		id := d.readString(item, "i")
-		if id == "" || isWidgetCollapsed[id] {
+		if id == "" || isWidgetCollapsed[id] || !widgetIDs[id] {
 			continue
 		}
 		if row, ok := rows[id]; ok {
