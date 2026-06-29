@@ -621,6 +621,25 @@ func (f FunctionArg) Copy() FunctionArg {
 	return f
 }
 
+var _ jsonschema.Preparer = FunctionArg{}
+
+// PrepareJSONSchema types `value` as a number-or-string scalar instead of an
+// untyped {}. The Go field stays `any`; this only shapes the generated schema.
+func (FunctionArg) PrepareJSONSchema(s *jsonschema.Schema) error {
+	if _, ok := s.Properties["value"]; !ok {
+		return nil
+	}
+
+	value := jsonschema.Schema{}
+	value.OneOf = []jsonschema.SchemaOrBool{
+		jsonschema.Number.ToSchemaOrBool(),
+		jsonschema.String.ToSchemaOrBool(),
+	}
+	s.Properties["value"] = value.ToSchemaOrBool()
+
+	return nil
+}
+
 type Function struct {
 	// name of the function
 	Name FunctionName `json:"name"`
