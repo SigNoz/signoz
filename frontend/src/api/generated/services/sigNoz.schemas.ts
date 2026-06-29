@@ -3927,6 +3927,25 @@ export interface DashboardtypesDashboardDTO {
 	updatedBy?: string;
 }
 
+export interface DashboardtypesDashboardPanelRefDTO {
+	/**
+	 * @type string
+	 */
+	dashboardId: string;
+	/**
+	 * @type string
+	 */
+	dashboardName: string;
+	/**
+	 * @type string
+	 */
+	panelId: string;
+	/**
+	 * @type string
+	 */
+	panelName: string;
+}
+
 export enum DashboardtypesDatasourcePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesSigNozDatasourceSpecDTOKind {
 	'signoz/Datasource' = 'signoz/Datasource',
 }
@@ -7160,6 +7179,13 @@ export interface MetricsexplorertypesMetricDashboardDTO {
 	 * @type string
 	 */
 	widgetName: string;
+}
+
+export interface MetricsexplorertypesMetricDashboardPanelsResponseDTO {
+	/**
+	 * @type array,null
+	 */
+	dashboards: DashboardtypesDashboardPanelRefDTO[] | null;
 }
 
 export interface MetricsexplorertypesMetricDashboardsResponseDTO {
@@ -11437,6 +11463,22 @@ export type PinDashboardV2PathParameters = {
 };
 export type GetHosts200 = {
 	data: ZeustypesGettableHostDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetMetricDashboardsV2Params = {
+	/**
+	 * @type string
+	 * @description The name of the metric. May contain slashes (e.g. cloud-provider metrics like run.googleapis.com/request_latencies).
+	 */
+	metricName: string;
+};
+
+export type GetMetricDashboardsV2200 = {
+	data: MetricsexplorertypesMetricDashboardPanelsResponseDTO;
 	/**
 	 * @type string
 	 */

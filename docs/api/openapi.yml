@@ -2662,6 +2662,22 @@ components:
         updatedBy:
           type: string
       type: object
+    DashboardtypesDashboardPanelRef:
+      properties:
+        dashboardId:
+          type: string
+        dashboardName:
+          type: string
+        panelId:
+          type: string
+        panelName:
+          type: string
+      required:
+      - dashboardId
+      - dashboardName
+      - panelId
+      - panelName
+      type: object
     DashboardtypesDashboardSpec:
       properties:
         datasources:
@@ -5621,6 +5637,16 @@ components:
       - dashboardId
       - widgetId
       - widgetName
+      type: object
+    MetricsexplorertypesMetricDashboardPanelsResponse:
+      properties:
+        dashboards:
+          items:
+            $ref: '#/components/schemas/DashboardtypesDashboardPanelRef'
+          nullable: true
+          type: array
+      required:
+      - dashboards
       type: object
     MetricsexplorertypesMetricDashboardsResponse:
       properties:
@@ -22784,6 +22810,75 @@ paths:
       summary: Put profile in Zeus for a deployment.
       tags:
       - zeus
+  /api/v3/metrics/dashboards:
+    get:
+      deprecated: false
+      description: This endpoint returns associated v2 dashboards for a specified
+        metric
+      operationId: GetMetricDashboardsV2
+      parameters:
+      - description: The name of the metric. May contain slashes (e.g. cloud-provider
+          metrics like run.googleapis.com/request_latencies).
+        in: query
+        name: metricName
+        required: true
+        schema:
+          description: The name of the metric. May contain slashes (e.g. cloud-provider
+            metrics like run.googleapis.com/request_latencies).
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/MetricsexplorertypesMetricDashboardPanelsResponse'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get metric dashboards (v2)
+      tags:
+      - metrics
   /api/v3/traces/{traceID}/flamegraph:
     post:
       deprecated: false
