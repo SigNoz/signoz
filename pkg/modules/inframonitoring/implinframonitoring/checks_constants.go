@@ -117,8 +117,16 @@ var podsSpec = checkSpec{
 			DocumentationLink: docLinkKubeletStatsReceiver,
 		},
 		{
-			Component:         componentK8sClusterReceiver,
-			DefaultMetrics:    []string{"k8s.pod.phase"},
+			Component: componentK8sClusterReceiver,
+			DefaultMetrics: []string{
+				"k8s.pod.phase",
+				"k8s.container.restarts", // pod restart count (default-on)
+			},
+			OptionalMetrics: []string{
+				// kubectl-style pod display status (default-off in the receiver).
+				"k8s.pod.status_reason",
+				"k8s.container.status.reason",
+			},
 			DocumentationLink: docLinkK8sClusterReceiver,
 		},
 		{
