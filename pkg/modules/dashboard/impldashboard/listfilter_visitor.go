@@ -285,9 +285,9 @@ func (v *visitor) buildStringOperation(builder *sqlbuilder.SelectBuilder, ctx *g
 			like = "NOT LIKE"
 		}
 		// Escape the user's % and _ so they match literally, then wrap in wildcards.
-		// ESCAPE declares the backslash we just injected as the escape char — needed
-		// on SQLite (no default) and a harmless restatement of the Postgres default.
-		escaped := strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`).Replace(val)
+		// ESCAPE declares the backslash the escaper injected as the escape char —
+		// needed on SQLite (no default) and a harmless restatement of the Postgres default.
+		escaped := v.formatter.EscapeLikePattern(val)
 		return fmt.Sprintf("%s %s %s ESCAPE '\\'", columnExpression, like, builder.Var("%"+escaped+"%"))
 	case qbtypesv5.FilterOperatorRegexp, qbtypesv5.FilterOperatorNotRegexp:
 		v.addError("REGEXP filtering on %q is not yet supported", keyForError)

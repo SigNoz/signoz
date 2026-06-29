@@ -3,6 +3,7 @@ package rules
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
@@ -54,6 +55,7 @@ func prepareQuerierForMetrics(t *testing.T, telemetryStore telemetrystore.Teleme
 		nil, // traceOperatorStmtBuilder
 		nil, // bucketCache
 		flagger,
+		0,
 	), metadataStore
 }
 
@@ -107,6 +109,7 @@ func prepareQuerierForLogs(t *testing.T, telemetryStore telemetrystore.Telemetry
 		nil,            // traceOperatorStmtBuilder
 		nil,            // bucketCache
 		fl,
+		5*time.Minute, // logTraceIDWindowPadding
 	)
 }
 
@@ -154,5 +157,6 @@ func prepareQuerierForTraces(t *testing.T, telemetryStore telemetrystore.Telemet
 		nil,              // traceOperatorStmtBuilder
 		nil,              // bucketCache
 		fl,
+		0,
 	)
 }

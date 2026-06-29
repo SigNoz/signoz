@@ -38,7 +38,7 @@ func newTestDashboardV2(t *testing.T, orgID valuer.UUID, source Source) *Dashboa
 								FillMode:          FillModeSolid,
 								SpanGaps:          SpanGaps{FillLessThan: valuer.MustParseTextDuration("60s")},
 							},
-							Legend: Legend{Position: LegendPositionBottom},
+							Legend: Legend{Position: LegendPositionBottom, Mode: LegendModeList},
 						},
 					},
 					Queries: []Query{

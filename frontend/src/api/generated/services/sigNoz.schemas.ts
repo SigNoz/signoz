@@ -2185,14 +2185,9 @@ export interface ErrorsResponseerroradditionalDTO {
 	suggestions: string[];
 }
 
-export type ErrorsResponseretryjsonDTOAnyOf = {
+export interface ErrorsResponseretryjsonDTO {
 	delay: TimeDurationDTO;
-};
-
-/**
- * @nullable
- */
-export type ErrorsResponseretryjsonDTO = ErrorsResponseretryjsonDTOAnyOf | null;
+}
 
 export interface ErrorsJSONDTO {
 	/**
@@ -2207,7 +2202,7 @@ export interface ErrorsJSONDTO {
 	 * @type string
 	 */
 	message: string;
-	retry: ErrorsResponseretryjsonDTO | null;
+	retry?: ErrorsResponseretryjsonDTO;
 	/**
 	 * @type array
 	 */
@@ -2217,9 +2212,9 @@ export interface ErrorsJSONDTO {
 	 */
 	type: string;
 	/**
-	 * @type string,null
+	 * @type string
 	 */
-	url: string | null;
+	url?: string;
 }
 
 export interface AuthtypesOrgSessionContextDTO {
@@ -3271,37 +3266,6 @@ export interface DashboardLinkDTO {
 	url?: string;
 }
 
-export interface VariableDisplayDTO {
-	/**
-	 * @type string
-	 */
-	description?: string;
-	/**
-	 * @type boolean
-	 */
-	hidden?: boolean;
-	/**
-	 * @type string
-	 */
-	name?: string;
-}
-
-export interface DashboardTextVariableSpecDTO {
-	/**
-	 * @type boolean
-	 */
-	constant?: boolean;
-	display?: VariableDisplayDTO;
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type string
-	 */
-	value?: string;
-}
-
 export interface DashboardtypesAxesDTO {
 	/**
 	 * @type boolean
@@ -3333,6 +3297,9 @@ export interface DashboardtypesPanelFormattingDTO {
 	unit?: string;
 }
 
+export enum DashboardtypesLegendModeDTO {
+	list = 'list',
+}
 export enum DashboardtypesLegendPositionDTO {
 	bottom = 'bottom',
 	right = 'right',
@@ -3352,6 +3319,7 @@ export interface DashboardtypesLegendDTO {
 	 * @type object,null
 	 */
 	customColors?: DashboardtypesLegendDTOCustomColors;
+	mode?: DashboardtypesLegendModeDTO;
 	position?: DashboardtypesLegendPositionDTO;
 }
 
@@ -3363,7 +3331,7 @@ export interface DashboardtypesThresholdWithLabelDTO {
 	/**
 	 * @type string
 	 */
-	label: string;
+	label?: string;
 	/**
 	 * @type string
 	 */
@@ -3954,33 +3922,43 @@ export interface DashboardtypesDashboardDTO {
 	updatedBy?: string;
 }
 
-export enum DashboardtypesDatasourcePluginVariantStructDTOKind {
+export interface DashboardtypesDashboardPanelRefDTO {
+	/**
+	 * @type string
+	 */
+	dashboardId: string;
+	/**
+	 * @type string
+	 */
+	dashboardName: string;
+	/**
+	 * @type string
+	 */
+	panelId: string;
+	/**
+	 * @type string
+	 */
+	panelName: string;
+}
+
+export enum DashboardtypesDatasourcePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesSigNozDatasourceSpecDTOKind {
 	'signoz/Datasource' = 'signoz/Datasource',
 }
-export type DashboardtypesDatasourcePluginVariantStructDTOSpecAnyOf = {
+export interface DashboardtypesSigNozDatasourceSpecDTO {
 	[key: string]: unknown;
-};
+}
 
-/**
- * @nullable
- */
-export type DashboardtypesDatasourcePluginVariantStructDTOSpec =
-	DashboardtypesDatasourcePluginVariantStructDTOSpecAnyOf | null;
-
-export interface DashboardtypesDatasourcePluginVariantStructDTO {
+export interface DashboardtypesDatasourcePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesSigNozDatasourceSpecDTO {
 	/**
 	 * @enum signoz/Datasource
 	 * @type string
 	 */
-	kind: DashboardtypesDatasourcePluginVariantStructDTOKind;
-	/**
-	 * @type object,null
-	 */
-	spec: DashboardtypesDatasourcePluginVariantStructDTOSpec;
+	kind: DashboardtypesDatasourcePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesSigNozDatasourceSpecDTOKind;
+	spec: DashboardtypesSigNozDatasourceSpecDTO;
 }
 
 export type DashboardtypesDatasourcePluginDTO =
-	DashboardtypesDatasourcePluginVariantStructDTO;
+	DashboardtypesDatasourcePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesSigNozDatasourceSpecDTO;
 
 export interface DashboardtypesDatasourceSpecDTO {
 	/**
@@ -4030,10 +4008,12 @@ export enum DashboardtypesLineStyleDTO {
 export interface DashboardtypesSpanGapsDTO {
 	/**
 	 * @type string
+	 * @description The maximum gap size to connect when fillOnlyBelow is true. Gaps larger than this duration are left disconnected.
 	 */
 	fillLessThan?: string;
 	/**
 	 * @type boolean
+	 * @description Controls whether lines connect across null values. When false (default), all gaps are connected. When true, only gaps smaller than fillLessThan are connected.
 	 */
 	fillOnlyBelow?: boolean;
 }
@@ -4573,9 +4553,9 @@ export interface DashboardtypesPanelSpecDTO {
 	links?: DashboardLinkDTO[];
 	plugin: DashboardtypesPanelPluginDTO;
 	/**
-	 * @type array,null
+	 * @type array
 	 */
-	queries: DashboardtypesQueryDTO[] | null;
+	queries: DashboardtypesQueryDTO[];
 }
 
 export interface DashboardtypesPanelDTO {
@@ -4605,9 +4585,7 @@ export type DashboardtypesLayoutDTO =
 export enum DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpecDTOKind {
 	ListVariable = 'ListVariable',
 }
-export interface VariableDefaultValueDTO {
-	[key: string]: unknown;
-}
+export type DashboardtypesVariableDefaultValueDTO = string | string[];
 
 export enum DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDynamicVariableSpecDTOKind {
 	'signoz/DynamicVariable' = 'signoz/DynamicVariable',
@@ -4665,6 +4643,15 @@ export type DashboardtypesVariablePluginDTO =
 	| DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesQueryVariableSpecDTO
 	| DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesCustomVariableSpecDTO;
 
+export enum DashboardtypesListVariableSpecSortDTO {
+	none = 'none',
+	'alphabetical-asc' = 'alphabetical-asc',
+	'alphabetical-desc' = 'alphabetical-desc',
+	'numerical-asc' = 'numerical-asc',
+	'numerical-desc' = 'numerical-desc',
+	'alphabetical-ci-asc' = 'alphabetical-ci-asc',
+	'alphabetical-ci-desc' = 'alphabetical-ci-desc',
+}
 export interface DashboardtypesListVariableSpecDTO {
 	/**
 	 * @type boolean
@@ -4682,17 +4669,15 @@ export interface DashboardtypesListVariableSpecDTO {
 	 * @type string
 	 */
 	customAllValue?: string;
-	defaultValue?: VariableDefaultValueDTO;
+	defaultValue?: DashboardtypesVariableDefaultValueDTO;
 	display: DashboardtypesDisplayDTO;
 	/**
 	 * @type string
+	 * @minLength 1
 	 */
-	name?: string;
+	name: string;
 	plugin?: DashboardtypesVariablePluginDTO;
-	/**
-	 * @type string,null
-	 */
-	sort?: string | null;
+	sort?: DashboardtypesListVariableSpecSortDTO;
 }
 
 export interface DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpecDTO {
@@ -4704,21 +4689,38 @@ export interface DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDash
 	spec: DashboardtypesListVariableSpecDTO;
 }
 
-export enum DashboardtypesVariableEnvelopeGithubComPersesSpecGoDashboardTextVariableSpecDTOKind {
+export enum DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesTextVariableSpecDTOKind {
 	TextVariable = 'TextVariable',
 }
-export interface DashboardtypesVariableEnvelopeGithubComPersesSpecGoDashboardTextVariableSpecDTO {
+export interface DashboardtypesTextVariableSpecDTO {
+	/**
+	 * @type boolean
+	 */
+	constant?: boolean;
+	display: DashboardtypesDisplayDTO;
+	/**
+	 * @type string
+	 * @minLength 1
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	value: string;
+}
+
+export interface DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesTextVariableSpecDTO {
 	/**
 	 * @enum TextVariable
 	 * @type string
 	 */
-	kind: DashboardtypesVariableEnvelopeGithubComPersesSpecGoDashboardTextVariableSpecDTOKind;
-	spec: DashboardTextVariableSpecDTO;
+	kind: DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesTextVariableSpecDTOKind;
+	spec: DashboardtypesTextVariableSpecDTO;
 }
 
 export type DashboardtypesVariableDTO =
 	| DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpecDTO
-	| DashboardtypesVariableEnvelopeGithubComPersesSpecGoDashboardTextVariableSpecDTO;
+	| DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesTextVariableSpecDTO;
 
 export interface DashboardtypesDashboardSpecDTO {
 	/**
@@ -7172,6 +7174,13 @@ export interface MetricsexplorertypesMetricDashboardDTO {
 	 * @type string
 	 */
 	widgetName: string;
+}
+
+export interface MetricsexplorertypesMetricDashboardPanelsResponseDTO {
+	/**
+	 * @type array,null
+	 */
+	dashboards: DashboardtypesDashboardPanelRefDTO[] | null;
 }
 
 export interface MetricsexplorertypesMetricDashboardsResponseDTO {
@@ -11449,6 +11458,22 @@ export type PinDashboardV2PathParameters = {
 };
 export type GetHosts200 = {
 	data: ZeustypesGettableHostDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetMetricDashboardsV2Params = {
+	/**
+	 * @type string
+	 * @description The name of the metric. May contain slashes (e.g. cloud-provider metrics like run.googleapis.com/request_latencies).
+	 */
+	metricName: string;
+};
+
+export type GetMetricDashboardsV2200 = {
+	data: MetricsexplorertypesMetricDashboardPanelsResponseDTO;
 	/**
 	 * @type string
 	 */
