@@ -214,8 +214,7 @@ func (store *store) sortExprForListV2(sort dashboardtypes.ListSort) (string, err
 }
 
 func (store *store) ListByDataContains(ctx context.Context, orgID valuer.UUID, search string) ([]*dashboardtypes.StorableDashboard, error) {
-	// LIKE wildcards (`%`, `_`, `\`) in the search are escaped so it matches literally.
-	escaped := strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`).Replace(search)
+	escaped := store.sqlstore.Formatter().EscapeLikePattern(search)
 
 	storableDashboards := make([]*dashboardtypes.StorableDashboard, 0)
 	err := store.
