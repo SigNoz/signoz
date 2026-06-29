@@ -139,9 +139,11 @@ export function useDrilldown(
 			<DrilldownAggregateMenu
 				context={context}
 				query={v1Query}
+				links={panel.spec.links}
 				onViewLogs={(): void => navigate('view_logs')}
 				onViewTraces={(): void => navigate('view_traces')}
 				onBreakout={openBreakout}
+				onClose={handleClose}
 			/>
 		);
 	}, [
@@ -150,8 +152,10 @@ export function useDrilldown(
 		filter.items,
 		context,
 		v1Query,
+		panel.spec.links,
 		navigate,
 		openBreakout,
+		handleClose,
 	]);
 
 	return {
