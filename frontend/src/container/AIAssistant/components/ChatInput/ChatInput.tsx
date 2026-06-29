@@ -42,19 +42,22 @@ import { useSpeechRecognition } from '../../hooks/useSpeechRecognition';
 import { MessageAttachment } from '../../types';
 import { MessageContext } from '../../../../api/ai-assistant/chat';
 import {
-	Bell,
-	LayoutDashboard,
 	Mic,
 	Plus,
 	Search,
 	Send,
-	ShieldCheck,
 	Square,
 	TriangleAlert,
 	X,
 } from '@signozhq/icons';
 
 import styles from './ChatInput.module.scss';
+import ContextPickerEmptyState from './ContextPickerEmptyState';
+import {
+	CONTEXT_CATEGORIES,
+	CONTEXT_CATEGORY_ICONS,
+	ContextCategory,
+} from './contextPicker';
 
 interface ChatInputProps {
 	onSend: (
@@ -162,10 +165,6 @@ const HOME_SERVICES_INTERVAL = 30 * 60 * 1000;
 /** sessionStorage key for the "voice input failed this tab" flag. */
 const VOICE_UNAVAILABLE_KEY = 'ai-assistant-voice-unavailable';
 
-const CONTEXT_CATEGORIES = ['Dashboards', 'Alerts', 'Services'] as const;
-
-type ContextCategory = (typeof CONTEXT_CATEGORIES)[number];
-
 interface SelectedContextItem {
 	category: ContextCategory;
 	entityId: string;
@@ -204,12 +203,6 @@ interface ContextEntityItem {
 	id: string;
 	value: string;
 }
-
-const CONTEXT_CATEGORY_ICONS = {
-	Dashboards: LayoutDashboard,
-	Alerts: Bell,
-	Services: ShieldCheck,
-} satisfies Record<ContextCategory, unknown>;
 
 function fileToDataUrl(file: File): Promise<string> {
 	return new Promise((resolve, reject) => {
@@ -329,6 +322,30 @@ export default function ChatInput({
 			}
 		},
 		[mentionRange, selectedContexts, text],
+	);
+
+	// Empty-state CTA: drop a starter prompt into the composer (never auto-sent)
+	// and hand the user the caret at the end so they can finish the sentence.
+	const handleContextPrefill = useCallback(
+		(prompt: string) => {
+			const next = capText(prompt);
+			setText(next);
+			committedTextRef.current = next;
+			setMentionRange(null);
+			setPickerSearchQuery('');
+			setIsContextPickerOpen(false);
+			// Defer so React commits the new value before we place the caret.
+			requestAnimationFrame(() => {
+				const el = textareaRef.current;
+				if (!el) {
+					return;
+				}
+				el.focus();
+				const end = el.value.length;
+				el.setSelectionRange(end, end);
+			});
+		},
+		[capText],
 	);
 
 	const focusCategory = useCallback((category: ContextCategory) => {
@@ -824,10 +841,14 @@ export default function ChatInput({
 	// Type-ahead filter against the `@<query>` typed in the textarea. When
 	// the picker was opened from the "Add Context" button there's no
 	// mention query, so fall back to the in-popover search input.
-	const mentionQuery = mentionRange
-		? text.slice(mentionRange.start + 1, mentionRange.end).toLowerCase()
+	const rawMentionQuery = mentionRange
+		? text.slice(mentionRange.start + 1, mentionRange.end)
 		: '';
+	const mentionQuery = rawMentionQuery.toLowerCase();
 	const activeQuery = mentionQuery || pickerSearchQuery.trim().toLowerCase();
+	// Original-case query for empty-state copy + prefill ("checkout", not the
+	// lowercased filter key). Mirrors `activeQuery`'s mention-then-search order.
+	const displayQuery = rawMentionQuery || pickerSearchQuery.trim();
 	const filteredContextOptions = activeQuery
 		? contextEntitiesByCategory[activeContextCategory].filter((entity) =>
 				entity.value.toLowerCase().includes(activeQuery),
@@ -1071,9 +1092,11 @@ export default function ChatInput({
 												Failed to load {activeContextCategory.toLowerCase()}.
 											</div>
 										) : filteredContextOptions.length === 0 ? (
-											<div className={styles.contextPopoverEmpty}>
-												No matching entities
-											</div>
+											<ContextPickerEmptyState
+												category={activeContextCategory}
+												query={displayQuery}
+												onPrefill={handleContextPrefill}
+											/>
 										) : (
 											filteredContextOptions.map((option, index) => {
 												const isSelected = selectedContexts.some(

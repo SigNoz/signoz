@@ -24,6 +24,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/inframonitoring/implinframonitoring"
 	"github.com/SigNoz/signoz/pkg/modules/llmpricingrule"
 	"github.com/SigNoz/signoz/pkg/modules/llmpricingrule/impllmpricingrule"
+	"github.com/SigNoz/signoz/pkg/modules/metricreductionrule"
+	"github.com/SigNoz/signoz/pkg/modules/metricreductionrule/implmetricreductionrule"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer/implmetricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
@@ -64,6 +66,7 @@ type Handlers struct {
 	SpanPercentile          spanpercentile.Handler
 	Services                services.Handler
 	MetricsExplorer         metricsexplorer.Handler
+	MetricReductionRule     metricreductionrule.Handler
 	InfraMonitoring         inframonitoring.Handler
 	Global                  global.Handler
 	FlaggerHandler          flagger.Handler
@@ -110,6 +113,7 @@ func NewHandlers(
 		RawDataExport:           implrawdataexport.NewHandler(modules.RawDataExport),
 		Services:                implservices.NewHandler(modules.Services),
 		MetricsExplorer:         implmetricsexplorer.NewHandler(modules.MetricsExplorer),
+		MetricReductionRule:     implmetricreductionrule.NewHandler(modules.MetricReductionRule),
 		InfraMonitoring:         implinframonitoring.NewHandler(modules.InfraMonitoring),
 		SpanPercentile:          implspanpercentile.NewHandler(modules.SpanPercentile),
 		Global:                  signozglobal.NewHandler(global),

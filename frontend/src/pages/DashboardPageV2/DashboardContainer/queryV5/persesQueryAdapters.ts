@@ -7,7 +7,9 @@ import type {
 import {
 	DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBuilderQuerySpecDTOKind as BuilderQueryPluginKind,
 	DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5CompositeQueryDTOKind as CompositeQueryPluginKind,
-	Querybuildertypesv5QueryTypeDTO,
+	Querybuildertypesv5QueryEnvelopeBuilderDTOType,
+	Querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType,
+	Querybuildertypesv5QueryEnvelopePromQLDTOType,
 } from 'api/generated/services/sigNoz.schemas';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { mapCompositeQueryFromQuery } from 'lib/newQueryBuilder/queryBuilderMappers/mapCompositeQueryFromQuery';
@@ -46,17 +48,24 @@ const toGeneratedEnvelopes = (
 
 const isBuilderQueryEnvelope = (
 	envelope: Querybuildertypesv5QueryEnvelopeDTO,
-): boolean => envelope.type === Querybuildertypesv5QueryTypeDTO.builder_query;
+): boolean =>
+	envelope.type === Querybuildertypesv5QueryEnvelopeBuilderDTOType.builder_query;
 
 export function deriveQueryType(
 	envelopes: Querybuildertypesv5QueryEnvelopeDTO[],
 ): EQueryType {
-	if (envelopes.some((e) => e.type === Querybuildertypesv5QueryTypeDTO.promql)) {
+	if (
+		envelopes.some(
+			(e) => e.type === Querybuildertypesv5QueryEnvelopePromQLDTOType.promql,
+		)
+	) {
 		return EQueryType.PROM;
 	}
 	if (
 		envelopes.some(
-			(e) => e.type === Querybuildertypesv5QueryTypeDTO.clickhouse_sql,
+			(e) =>
+				e.type ===
+				Querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType.clickhouse_sql,
 		)
 	) {
 		return EQueryType.CLICKHOUSE;

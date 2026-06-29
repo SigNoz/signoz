@@ -3,12 +3,75 @@ package clickhousetelemetrystore
 import (
 	"context"
 
+	chproto "github.com/ClickHouse/ch-go/proto"
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"go.opentelemetry.io/otel/metric"
 )
+
+var (
+	ErrCodeSyntaxError       = errors.MustNewCode("syntax_error")
+	ErrCodeUnknownTable      = errors.MustNewCode("unknown_table")
+	ErrCodeUnknownDatabase   = errors.MustNewCode("unknown_database")
+	ErrCodeUnknownIdentifier = errors.MustNewCode("unknown_identifier")
+	ErrCodeIllegalArgument   = errors.MustNewCode("illegal_argument")
+
+	ErrCodeQueryCanceled   = errors.MustNewCode("query_canceled")
+	ErrCodeQueryTimeout    = errors.MustNewCode("query_timeout")
+	ErrCodeExecutionFailed = errors.MustNewCode("execution_failed")
+)
+
+// Codes absent from this map fall through to the raw driver error in castError.
+var clickHouseExceptionWrappers = map[chproto.Error]func(cause error, ex *clickhouse.Exception) error{
+	chproto.ErrSyntaxError: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeSyntaxError, "SQL syntax error: %s", ex.Message)
+	},
+	chproto.ErrUnknownTable: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapNotFoundf(cause, ErrCodeUnknownTable, "unknown table: %s", ex.Message)
+	},
+	chproto.ErrUnknownDatabase: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapNotFoundf(cause, ErrCodeUnknownDatabase, "unknown database: %s", ex.Message)
+	},
+	chproto.ErrUnknownIdentifier: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeUnknownIdentifier, "unknown identifier: %s", ex.Message)
+	},
+	chproto.ErrUnknownFunction: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeUnknownIdentifier, "unknown function: %s", ex.Message)
+	},
+	chproto.ErrUnknownAggregateFunction: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeUnknownIdentifier, "unknown aggregate function: %s", ex.Message)
+	},
+	chproto.ErrUnknownType: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeUnknownIdentifier, "unknown type: %s", ex.Message)
+	},
+	chproto.ErrUnknownStorage: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeUnknownIdentifier, "unknown storage engine: %s", ex.Message)
+	},
+	chproto.ErrIllegalColumn: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeUnknownIdentifier, "illegal column: %s", ex.Message)
+	},
+	chproto.ErrUnknownElementInAst: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeSyntaxError, "unknown element in SQL AST: %s", ex.Message)
+	},
+	chproto.ErrUnknownTypeOfQuery: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeSyntaxError, "unknown query type: %s", ex.Message)
+	},
+	chproto.ErrIllegalTypeOfArgument: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeIllegalArgument, "illegal argument type: %s", ex.Message)
+	},
+	chproto.ErrNumberOfArgumentsDoesntMatch: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeIllegalArgument, "wrong number of arguments: %s", ex.Message)
+	},
+	chproto.ErrTooManyArgumentsForFunction: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeIllegalArgument, "too many arguments to function: %s", ex.Message)
+	},
+	chproto.ErrTooLessArgumentsForFunction: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeIllegalArgument, "too few arguments to function: %s", ex.Message)
+	},
+}
 
 type provider struct {
 	settings       factory.ScopedProviderSettings
@@ -103,7 +166,7 @@ func (p *provider) Query(ctx context.Context, query string, args ...interface{})
 	if err != nil {
 		event.Err = err
 		telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
-		return nil, err
+		return nil, castError(err)
 	}
 
 	return &rowsWithHooks{
@@ -120,10 +183,15 @@ func (p *provider) QueryRow(ctx context.Context, query string, args ...interface
 	ctx = telemetrystore.WrapBeforeQuery(p.hooks, ctx, event)
 	row := p.clickHouseConn.QueryRow(ctx, query, args...)
 
+	if row == nil {
+		telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
+		return nil
+	}
+
 	event.Err = row.Err()
 	telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
 
-	return row
+	return &rowWithCastError{Row: row}
 }
 
 func (p *provider) Select(ctx context.Context, dest interface{}, query string, args ...interface{}) error {
@@ -135,7 +203,7 @@ func (p *provider) Select(ctx context.Context, dest interface{}, query string, a
 	event.Err = err
 	telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
 
-	return err
+	return castError(err)
 }
 
 func (p *provider) Exec(ctx context.Context, query string, args ...interface{}) error {
@@ -147,20 +215,19 @@ func (p *provider) Exec(ctx context.Context, query string, args ...interface{}) 
 	event.Err = err
 	telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
 
-	return err
+	return castError(err)
 }
 
 func (p *provider) AsyncInsert(ctx context.Context, query string, wait bool, args ...interface{}) error {
 	event := telemetrystore.NewQueryEvent(query, args)
 
 	ctx = telemetrystore.WrapBeforeQuery(p.hooks, ctx, event)
-	// TODO: migrate to WithAsync() — https://github.com/SigNoz/engineering-pod/issues/5093
-	err := p.clickHouseConn.AsyncInsert(ctx, query, wait, args...) //nolint:staticcheck
+	err := p.clickHouseConn.Exec(clickhouse.Context(ctx, clickhouse.WithAsync(wait)), query, args...)
 
 	event.Err = err
 	telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
 
-	return err
+	return castError(err)
 }
 
 func (p *provider) PrepareBatch(ctx context.Context, query string, opts ...driver.PrepareBatchOption) (driver.Batch, error) {
@@ -172,7 +239,10 @@ func (p *provider) PrepareBatch(ctx context.Context, query string, opts ...drive
 	event.Err = err
 	telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
 
-	return batch, err
+	if batch == nil {
+		return nil, castError(err)
+	}
+	return &batchWithCastError{Batch: batch}, castError(err)
 }
 
 func (p *provider) ServerVersion() (*driver.ServerVersion, error) {
@@ -181,4 +251,28 @@ func (p *provider) ServerVersion() (*driver.ServerVersion, error) {
 
 func (p *provider) Contributors() []string {
 	return p.clickHouseConn.Contributors()
+}
+
+func castError(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	if errors.Is(err, context.Canceled) {
+		return errors.WrapCanceledf(err, ErrCodeQueryCanceled, "query canceled")
+	}
+	if errors.Is(err, context.DeadlineExceeded) {
+		return errors.WrapTimeoutf(err, ErrCodeQueryTimeout, "query timed out")
+	}
+
+	var ex *clickhouse.Exception
+	if !errors.As(err, &ex) {
+		return err
+	}
+
+	if wrap, ok := clickHouseExceptionWrappers[chproto.Error(ex.Code)]; ok {
+		return wrap(err, ex)
+	}
+
+	return err
 }
