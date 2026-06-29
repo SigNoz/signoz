@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { DraftingCompass, ScrollText } from '@signozhq/icons';
+import { ChartBar, DraftingCompass, ScrollText } from '@signozhq/icons';
 import { getAggregateColumnHeader } from 'container/QueryTable/Drilldown/drilldownUtils';
 import ContextMenu from 'periscope/components/ContextMenu';
 import type { DrilldownContext } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/drilldown';
@@ -11,17 +11,19 @@ interface DrilldownAggregateMenuProps {
 	query: Query;
 	onViewLogs: () => void;
 	onViewTraces: () => void;
+	onBreakout: () => void;
 }
 
 /**
- * The base aggregate drill-down menu: a tinted header + View in Logs/Traces. Metrics is
- * omitted — V1 surfaces only Logs/Traces.
+ * The base aggregate drill-down menu: a tinted header + View in Logs/Traces + Breakout.
+ * Metrics is omitted — V1 surfaces only Logs/Traces.
  */
 function DrilldownAggregateMenu({
 	context,
 	query,
 	onViewLogs,
 	onViewTraces,
+	onBreakout,
 }: DrilldownAggregateMenuProps): JSX.Element {
 	const aggregations = useMemo(
 		() => getAggregateColumnHeader(query, context.queryName).aggregations,
@@ -63,6 +65,16 @@ function DrilldownAggregateMenu({
 				onClick={onViewTraces}
 			>
 				<span data-testid="drilldown-view-traces">View in Traces</span>
+			</ContextMenu.Item>
+			<ContextMenu.Item
+				icon={
+					<span style={{ color: context.seriesColor }}>
+						<ChartBar size={16} />
+					</span>
+				}
+				onClick={onBreakout}
+			>
+				<span data-testid="drilldown-breakout">Breakout by ..</span>
 			</ContextMenu.Item>
 		</>
 	);

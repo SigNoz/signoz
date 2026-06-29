@@ -23,6 +23,11 @@ const mockGetBuilderQueries = jest.fn();
 jest.mock('../hooks/useViewPanel', () => ({
 	useViewPanel: (): unknown => ({ openViewWithQuery: mockOpenViewWithQuery }),
 }));
+jest.mock('../hooks/useDrilldownBreakout', () => ({
+	useDrilldownBreakout: (): unknown => ({
+		items: <div data-testid="breakout-submenu" />,
+	}),
+}));
 jest.mock('container/QueryTable/Drilldown/useBaseDrilldownNavigate', () => ({
 	__esModule: true,
 	default: (): unknown => mockNavigate,
@@ -128,7 +133,7 @@ describe('useDrilldown', () => {
 	});
 
 	describe('aggregate menu', () => {
-		it('shows View in Logs/Traces on an aggregate click', () => {
+		it('shows View in Logs/Traces + Breakout on an aggregate click', () => {
 			const { result } = renderHook(() => useDrilldown(tsPanel, 'p1'));
 			act(() =>
 				result.current.onPanelClick({
@@ -140,6 +145,7 @@ describe('useDrilldown', () => {
 
 			expect(screen.getByTestId('drilldown-view-logs')).toBeInTheDocument();
 			expect(screen.getByTestId('drilldown-view-traces')).toBeInTheDocument();
+			expect(screen.getByTestId('drilldown-breakout')).toBeInTheDocument();
 		});
 
 		it('navigates to logs when View in Logs is clicked', () => {
@@ -154,6 +160,22 @@ describe('useDrilldown', () => {
 
 			fireEvent.click(screen.getByTestId('drilldown-view-logs'));
 			expect(mockNavigate).toHaveBeenCalledWith('view_logs');
+		});
+
+		it('swaps to the breakout submenu when "Breakout by .." is clicked', () => {
+			const { result } = renderHook(() => useDrilldown(tsPanel, 'p1'));
+			act(() =>
+				result.current.onPanelClick({
+					coordinates: { x: 1, y: 1 },
+					context: aggregateContext,
+				}),
+			);
+			const view = render(<div>{result.current.contextMenuProps.items}</div>);
+
+			fireEvent.click(screen.getByTestId('drilldown-breakout'));
+			view.rerender(<div>{result.current.contextMenuProps.items}</div>);
+
+			expect(screen.getByTestId('breakout-submenu')).toBeInTheDocument();
 		});
 	});
 
