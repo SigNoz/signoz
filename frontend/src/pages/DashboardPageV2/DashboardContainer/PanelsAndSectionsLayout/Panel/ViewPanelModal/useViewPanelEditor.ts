@@ -4,14 +4,18 @@ import type {
 	DashboardtypesPanelSpecDTO,
 	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
+import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import useUrlQuery from 'hooks/useUrlQuery';
 import { usePanelEditSession } from 'pages/DashboardPageV2/DashboardContainer/PanelEditor/hooks/usePanelEditSession';
 import type { RenderablePanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelDefinition';
 import {
 	PANEL_KIND_TO_PANEL_TYPE,
 	type PanelKind,
 } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelKind';
+import { buildViewPanelSpec } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/drilldown/buildViewPanelSpec';
 import { getBuilderQueries } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/getBuilderQueries';
 import { fromPerses } from 'pages/DashboardPageV2/DashboardContainer/queryV5/persesQueryAdapters';
 import {
@@ -41,7 +45,7 @@ export interface UseViewPanelEditorApi {
 	runQuery: () => void;
 	/** Switch the draft's visualization kind (temporary; reversible per session). */
 	onChangePanelKind: (kind: PanelKind) => void;
-	/** Restore the saved panel's query + kind, discarding the drilldown edits. */
+	/** Restore the query the view opened with, discarding in-modal edits. */
 	resetQuery: () => void;
 	/** Bake the live (possibly un-run) query into a spec — used to hand edits to the full editor. */
 	buildSaveSpec: (
@@ -50,12 +54,8 @@ export interface UseViewPanelEditorApi {
 }
 
 /**
- * Turns the View modal into a compact, drilldown panel editor on top of the shared
- * `usePanelEditSession`: the same draft/query/query-sync/type-switch pipeline the
- * full editor uses, scoped to a per-view time window, plus drilldown-only extras
- * (the saved-query snapshot for Reset, and the builder signal for the type selector).
- * Edits are temporary — they live in the builder/URL and the draft, never the
- * dashboard, matching V1.
+ * The View modal's compact drilldown editor on the shared `usePanelEditSession`. Edits are
+ * temporary — they live in the builder/URL + draft, never the dashboard (V1 parity).
  */
 export function useViewPanelEditor({
 	panel,
@@ -63,6 +63,29 @@ export function useViewPanelEditor({
 	time,
 }: UseViewPanelEditorArgs): UseViewPanelEditorApi {
 	const { redirectWithQueryBuilderData } = useQueryBuilder();
+
+	// Seed the draft from the URL (`compositeQuery` + `graphType`) when present, else the saved
+	// panel — mount-only, so a refresh re-seeds from the URL and in-modal edits survive (V1 parity).
+	const urlQuery = useGetCompositeQueryParam();
+	const urlGraphType = useUrlQuery().get(
+		QueryParams.graphType,
+	) as PANEL_TYPES | null;
+	const initialPanel = useMemo<DashboardtypesPanelDTO>(
+		() =>
+			urlQuery
+				? {
+						...panel,
+						spec: buildViewPanelSpec({
+							spec: panel.spec,
+							query: urlQuery,
+							panelType:
+								urlGraphType ?? PANEL_KIND_TO_PANEL_TYPE[panel.spec.plugin.kind],
+						}),
+					}
+				: panel,
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only seed from the URL
+		[],
+	);
 
 	const {
 		draft,
@@ -73,27 +96,25 @@ export function useViewPanelEditor({
 		onChangePanelKind,
 		buildSaveSpec,
 		reset,
-	} = usePanelEditSession({ panel, panelId, time });
+	} = usePanelEditSession({ panel: initialPanel, panelId, time });
 
-	// The saved panel's query, captured once — the restore target for Reset Query.
+	// The query the view opened with, captured once — the Reset target.
 	const savedQuery = useMemo(
 		() =>
 			fromPerses(
-				panel.spec.queries ?? [],
-				PANEL_KIND_TO_PANEL_TYPE[panel.spec.plugin.kind],
+				initialPanel.spec.queries ?? [],
+				PANEL_KIND_TO_PANEL_TYPE[initialPanel.spec.plugin.kind],
 			),
 		// eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only snapshot
 		[],
 	);
 
 	const resetQuery = useCallback((): void => {
-		// Draft back to the saved panel (query + kind); builder back to the saved query.
 		reset();
 		redirectWithQueryBuilderData(savedQuery);
 	}, [reset, redirectWithQueryBuilderData, savedQuery]);
 
-	// Current builder datasource (List needs logs/traces, not metrics) for the
-	// panel-type disabled rule; unknown for PromQL/ClickHouse.
+	// Builder datasource for the type-selector's disabled rule (List needs logs/traces).
 	const signal = getBuilderQueries(draft.spec.queries || [])[0]?.signal as
 		| TelemetrytypesSignalDTO
 		| undefined;
