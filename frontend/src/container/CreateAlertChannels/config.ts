@@ -77,6 +77,7 @@ export interface JiraChannel extends Channel {
 	reopen_transition?: string;
 	reopen_duration?: string;
 	resolve_transition?: string;
+	wont_fix_resolution?: string;
 	custom_fields?: Record<string, unknown>;
 }
 

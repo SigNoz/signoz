@@ -32,10 +32,9 @@ export const fetchJiraProjectIssueTypes = async (
 	props: JiraProjectIssueTypesRequest,
 ): Promise<SuccessResponseV2<JiraProjectIssueTypesResponse>> => {
 	try {
-		const response = await axios.post<RawSuccessResponse<JiraProjectIssueTypesResponse>>(
-			'/channels/jira/project-issue-types',
-			props,
-		);
+		const response = await axios.post<
+			RawSuccessResponse<JiraProjectIssueTypesResponse>
+		>('/channels/jira/project-issue-types', props);
 
 		return {
 			httpStatusCode: response.status,

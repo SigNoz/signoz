@@ -8,7 +8,6 @@ import (
 	"github.com/prometheus/common/model"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
-	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerserver"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerstore/sqlalertmanagerstore"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
@@ -56,8 +55,6 @@ func New(
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanager")
 	configStore := sqlalertmanagerstore.NewConfigStore(sqlstore)
 	stateStore := sqlalertmanagerstore.NewStateStore(sqlstore)
-	receiverIntegrations := alertmanagernotify.NewReceiverIntegrationsFactory()
-
 	p := &provider{
 		service: alertmanager.New(
 			settings,
@@ -67,7 +64,6 @@ func New(
 			orgGetter,
 			notificationManager,
 			maintenanceStore,
-			receiverIntegrations,
 		),
 		settings:            settings,
 		config:              config,

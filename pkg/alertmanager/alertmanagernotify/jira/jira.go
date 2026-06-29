@@ -40,11 +40,9 @@ import (
 const Integration = "jira"
 
 const (
-	// maxSummaryLenRunes is the maximum length in runes for Jira issue summary field (255 characters).
-	// This is a Jira API limit enforced across all Jira instances (Cloud, Data Center, etc.).
+	// maxSummaryLenRunes is the maximum length in runes for Jira issue summary field.
 	maxSummaryLenRunes = 255
-	// maxDescriptionLenRunes is the maximum length in runes for Jira issue description field (32767 characters).
-	// This is a Jira API limit enforced across all Jira instances (Cloud, Data Center, etc.).
+	// maxDescriptionLenRunes is the maximum length in runes for Jira issue description field.
 	maxDescriptionLenRunes = 32767
 )
 
@@ -217,6 +215,9 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 		if !n.conf.Description.EnableUpdateValue() {
 			requestBody.Fields.Description = nil
 		}
+		if !n.conf.Summary.EnableUpdateValue() {
+			requestBody.Fields.Summary = nil
+		}
 	}
 
 	responseBody, shouldRetry, err := n.doAPIRequest(ctx, method, path, requestBody)
@@ -319,15 +320,16 @@ func (n *Notifier) searchExistingIssue(ctx context.Context, logger *slog.Logger,
 	jql := strings.Builder{}
 
 	if n.conf.WontFixResolution != "" {
-		fmt.Fprintf(&jql, `resolution != %q and `, n.conf.WontFixResolution)
+		// JQL's != on resolution silently excludes issues whose resolution is EMPTY
+		// (unresolved). Use (resolution is EMPTY or resolution != X) so open issues
+		// remain in the candidate set and only won't-fix resolved ones are filtered out.
+		fmt.Fprintf(&jql, `(resolution is EMPTY or resolution != %q) and `, n.conf.WontFixResolution)
 	}
 
 	if firing {
 		reopenDuration := int64(time.Duration(n.conf.ReopenDuration).Minutes())
-		if n.conf.ReopenTransition != "" {
-			if reopenDuration > 0 {
-				fmt.Fprintf(&jql, `(resolutiondate is EMPTY OR resolutiondate >= -%dm) and `, reopenDuration)
-			}
+		if n.conf.ReopenTransition != "" && reopenDuration > 0 {
+			fmt.Fprintf(&jql, `(resolutiondate is EMPTY OR resolutiondate >= -%dm) and `, reopenDuration)
 		} else {
 			jql.WriteString(`statusCategory != Done and `)
 		}

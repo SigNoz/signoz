@@ -118,16 +118,10 @@
   "field_jira_reopen_transition": "Reopen Transition",
   "field_jira_resolve_transition": "Resolve Transition",
   "field_jira_reopen_duration": "Reopen Duration",
+  "field_jira_wont_fix_resolution": "Won't Fix Resolution",
+  "help_jira_wont_fix_resolution": "Resolution that marks an issue as won't-fix; matching issues are skipped instead of reopened",
   "help_jira_reopen_duration": "Duration to search for resolved issues to reopen (e.g., 7d, 24h, 30m). Leave empty to search all issues. Only used when Reopen Transition is set.",
   "help_jira_username": "The account used to authenticate with Jira.",
   "help_jira_password": "The credential used to authenticate the account above.",
-  "tooltip_jira_api_url": "Your Jira instance URL. For Jira Cloud: https://your-domain.atlassian.net. For Jira Data Center: https://your-jira-server.com",
-  "tooltip_jira_project": "Jira project key where issues will be created",
-  "tooltip_jira_issue_type": "Type of issue to create (e.g., Incident, Bug)",
-  "tooltip_jira_summary": "Template for issue summary (supports template variables)",
-  "tooltip_jira_description": "Template for issue description (supports template variables)",
-  "tooltip_jira_reopen_transition": "Transition name to use when reopening resolved issues",
-  "tooltip_jira_resolve_transition": "Transition name to use when resolving issues",
-  "tooltip_jira_username": "For Jira Cloud, use your Atlassian account email (e.g. user@company.com). For Jira Data Center, use your username.",
-  "tooltip_jira_password": "For Jira Cloud, create an API token at https://id.atlassian.com/manage-profile/security/api-tokens. For Jira Data Center, use a Personal Access Token or your password."
+  "tooltip_jira_api_url": "Your Jira instance URL. For Jira Cloud: https://your-domain.atlassian.net. For Jira Data Center: https://your-jira-server.com"
 }

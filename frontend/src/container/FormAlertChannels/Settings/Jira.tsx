@@ -4,6 +4,7 @@ import {
 	SetStateAction,
 	useEffect,
 	useMemo,
+	useRef,
 	useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -12,8 +13,8 @@ import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
 import {
 	fetchJiraProjectIssueTypes,
 	fetchJiraProjects,
-} from 'api/channels/jiraProjects';
-import jiraMetadata from 'api/channels/jiraMetadata';
+} from 'api/channels/getJiraProjects';
+import jiraMetadata from 'api/channels/getJiraMetadata';
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 import {
 	JiraAllowedValue,
@@ -25,11 +26,34 @@ import { JiraChannel } from '../../CreateAlertChannels/config';
 
 const { TextArea } = Input;
 
-function JiraSettings({
-	setSelectedConfig,
-	selectedConfig,
-}: JiraSettingsProps): JSX.Element {
+type FieldMode = 'none' | 'text' | 'select' | 'json';
+
+type CustomFieldRow = {
+	label: string;
+	fieldId: string;
+	value: string | string[];
+	mode: FieldMode;
+	allowedValues?: JiraAllowedValue[];
+	schemaType?: string;
+	schemaItems?: string;
+	schemaSystem?: string;
+	schemaCustom?: string;
+	schemaCustomId?: number;
+	required?: boolean;
+	touched?: boolean;
+};
+
+function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 	const { t } = useTranslation('channels');
+	const form = Form.useFormInstance();
+	const apiUrl = Form.useWatch('api_url', form) as string | undefined;
+	const username = Form.useWatch('username', form) as string | undefined;
+	const password = Form.useWatch('password', form) as string | undefined;
+	const project = Form.useWatch('project', form) as string | undefined;
+	const issueType = Form.useWatch('issue_type', form) as string | undefined;
+	const currentCustomFieldsRef = useRef<Record<string, unknown>>(
+		(form.getFieldValue('custom_fields') as Record<string, unknown>) ?? {},
+	);
 
 	const standardFieldIds = useMemo(
 		() =>
@@ -44,23 +68,6 @@ function JiraSettings({
 		[],
 	);
 
-	type FieldMode = 'none' | 'text' | 'select' | 'json';
-
-	type CustomFieldRow = {
-		label: string;
-		fieldId: string;
-		value: string | string[];
-		mode: FieldMode;
-		allowedValues?: JiraAllowedValue[];
-		schemaType?: string;
-		schemaItems?: string;
-		schemaSystem?: string;
-		schemaCustom?: string;
-		schemaCustomId?: number;
-		required?: boolean;
-		touched?: boolean;
-	};
-
 	const [customFieldRows, setCustomFieldRows] = useState<CustomFieldRow[]>([]);
 	const [customFieldErrors, setCustomFieldErrors] = useState<
 		Record<number, string>
@@ -72,7 +79,6 @@ function JiraSettings({
 	const [issueTypesLoading, setIssueTypesLoading] = useState(false);
 	const [projectsError, setProjectsError] = useState('');
 	const [issueTypesError, setIssueTypesError] = useState('');
-	const [selectedProjectKey, setSelectedProjectKey] = useState('');
 
 	const handleInputChange =
 		(field: string) =>
@@ -153,6 +159,26 @@ function JiraSettings({
 			return Array.isArray(plain) ? plain : [plain].filter((item) => item !== '');
 		}
 		return Array.isArray(plain) ? (plain[0] ?? '') : plain;
+	};
+
+	const jsonToSelectValue = (parsed: unknown): string | string[] => {
+		const toStr = (value: unknown): string =>
+			typeof value === 'string' ||
+			typeof value === 'number' ||
+			typeof value === 'boolean'
+				? String(value)
+				: '';
+		const extract = (item: unknown): string => {
+			if (item && typeof item === 'object') {
+				const obj = item as Record<string, unknown>;
+				return toStr(obj.value ?? obj.accountId ?? obj.key ?? obj.id ?? obj.name);
+			}
+			return toStr(item);
+		};
+		if (Array.isArray(parsed)) {
+			return parsed.map(extract);
+		}
+		return extract(parsed);
 	};
 
 	const resolveSelectFieldValue = (
@@ -241,26 +267,6 @@ function JiraSettings({
 		return Array.isArray(row.value) ? row.value.join(',') : row.value;
 	};
 
-	const jsonToSelectValue = (parsed: unknown): string | string[] => {
-		const toStr = (value: unknown): string =>
-			typeof value === 'string' ||
-			typeof value === 'number' ||
-			typeof value === 'boolean'
-				? String(value)
-				: '';
-		const extract = (item: unknown): string => {
-			if (item && typeof item === 'object') {
-				const obj = item as Record<string, unknown>;
-				return toStr(obj.value ?? obj.accountId ?? obj.key ?? obj.id ?? obj.name);
-			}
-			return toStr(item);
-		};
-		if (Array.isArray(parsed)) {
-			return parsed.map(extract);
-		}
-		return extract(parsed);
-	};
-
 	const buildCustomFields = (
 		rows: CustomFieldRow[],
 	): Record<string, unknown> => {
@@ -314,17 +320,13 @@ function JiraSettings({
 	};
 
 	useEffect(() => {
-		if (selectedConfig?.project && !selectedProjectKey) {
-			setSelectedProjectKey(selectedConfig.project);
-		}
-	}, [selectedConfig?.project, selectedProjectKey]);
-
-	useEffect(() => {
 		const customFields = buildCustomFields(customFieldRows);
+		currentCustomFieldsRef.current = customFields;
 		setSelectedConfig((value) => ({
 			...value,
 			custom_fields: customFields,
 		}));
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [customFieldRows]);
 
 	const updateCustomFieldRow = (
@@ -398,15 +400,11 @@ function JiraSettings({
 	};
 
 	const loadMetadata = async (): Promise<void> => {
-		if (
-			!selectedConfig?.api_url ||
-			!selectedConfig?.username ||
-			!selectedConfig?.password
-		) {
+		if (!apiUrl || !username || !password) {
 			setMetadataError(t('jira_metadata_missing_auth'));
 			return;
 		}
-		if (!selectedConfig.project || !selectedConfig.issue_type) {
+		if (!project || !issueType) {
 			setMetadataError(t('jira_metadata_missing_project'));
 			return;
 		}
@@ -414,16 +412,16 @@ function JiraSettings({
 		setMetadataError('');
 		try {
 			const response = await jiraMetadata({
-				api_url: selectedConfig.api_url,
+				api_url: apiUrl,
 				api_type: 'auto',
-				username: selectedConfig.username,
-				password: selectedConfig.password,
-				project: selectedConfig.project,
-				issue_type: selectedConfig.issue_type,
+				username,
+				password,
+				project,
+				issue_type: issueType,
 			});
 			const fields = response.data.data?.fields || [];
 			setCustomFieldRows(
-				resolveMetadataRows(fields, selectedConfig?.custom_fields),
+				resolveMetadataRows(fields, currentCustomFieldsRef.current),
 			);
 		} catch (error) {
 			setMetadataError(t('jira_metadata_failed'));
@@ -431,11 +429,7 @@ function JiraSettings({
 	};
 
 	const loadProjects = async (): Promise<void> => {
-		if (
-			!selectedConfig?.api_url ||
-			!selectedConfig?.username ||
-			!selectedConfig?.password
-		) {
+		if (!apiUrl || !username || !password) {
 			setProjectsError(t('jira_metadata_missing_auth'));
 			return;
 		}
@@ -444,9 +438,9 @@ function JiraSettings({
 		setProjectsError('');
 		try {
 			const projectsResponse = await fetchJiraProjects({
-				api_url: selectedConfig.api_url,
-				username: selectedConfig.username,
-				password: selectedConfig.password,
+				api_url: apiUrl,
+				username,
+				password,
 			});
 			const loadedProjects = projectsResponse.data.projects || [];
 			setProjects(loadedProjects);
@@ -457,29 +451,18 @@ function JiraSettings({
 		}
 	};
 
+	// Reload projects whenever the credentials change so an edited API URL or
+	// token does not keep serving the previously loaded list.
 	useEffect(() => {
-		if (
-			!selectedConfig?.api_url ||
-			!selectedConfig?.username ||
-			!selectedConfig?.password
-		) {
+		if (!apiUrl || !username || !password) {
 			return;
 		}
-		if (projects.length === 0 && !projectsLoading) {
-			void loadProjects();
-		}
-	}, [
-		selectedConfig?.api_url,
-		selectedConfig?.username,
-		selectedConfig?.password,
-	]);
+		void loadProjects();
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [apiUrl, username, password]);
 
 	const loadIssueTypes = async (projectKey: string): Promise<void> => {
-		if (
-			!selectedConfig?.api_url ||
-			!selectedConfig?.username ||
-			!selectedConfig?.password
-		) {
+		if (!apiUrl || !username || !password) {
 			setIssueTypesError(t('jira_metadata_missing_auth'));
 			return;
 		}
@@ -492,9 +475,9 @@ function JiraSettings({
 		setIssueTypesError('');
 		try {
 			const response = await fetchJiraProjectIssueTypes({
-				api_url: selectedConfig.api_url,
-				username: selectedConfig.username,
-				password: selectedConfig.password,
+				api_url: apiUrl,
+				username,
+				password,
 				project_key: projectKey,
 			});
 			const types = response.data.issue_types || [];
@@ -507,19 +490,20 @@ function JiraSettings({
 	};
 
 	useEffect(() => {
-		const projectKey = selectedProjectKey || selectedConfig?.project || '';
-		if (!projectKey) {
+		if (!project) {
 			return;
 		}
-		void loadIssueTypes(projectKey);
-	}, [selectedProjectKey, selectedConfig?.project]);
+		void loadIssueTypes(project);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [project]);
 
 	useEffect(() => {
-		if (!selectedConfig?.project || !selectedConfig?.issue_type) {
+		if (!project || !issueType) {
 			return;
 		}
 		void loadMetadata();
-	}, [selectedConfig?.project, selectedConfig?.issue_type]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [project, issueType]);
 
 	const metadataRows = useMemo(
 		() => customFieldRows.map((row, index) => ({ row, index })),
@@ -597,6 +581,91 @@ function JiraSettings({
 		);
 	};
 
+	const renderValueEditor = (
+		row: CustomFieldRow,
+		index: number,
+	): JSX.Element => {
+		if (row.mode === 'select') {
+			return (
+				<Select
+					mode={row.schemaType === 'array' ? 'multiple' : undefined}
+					value={row.value}
+					onChange={(value): void => updateCustomFieldRow(index, { value })}
+					options={(row.allowedValues || []).map((option) => ({
+						label: option.label,
+						value: option.value,
+					}))}
+					placeholder={t('placeholder_jira_custom_field_value')}
+					data-testid={`jira-custom-field-value-${index}`}
+				/>
+			);
+		}
+		if (row.mode === 'json') {
+			return (
+				<TextArea
+					rows={3}
+					value={Array.isArray(row.value) ? JSON.stringify(row.value) : row.value}
+					onChange={(event): void =>
+						updateCustomFieldRow(index, { value: event.target.value })
+					}
+					placeholder={t('placeholder_jira_custom_field_value')}
+					data-testid={`jira-custom-field-value-${index}`}
+				/>
+			);
+		}
+		return (
+			<Input
+				value={Array.isArray(row.value) ? row.value.join(', ') : row.value}
+				onChange={(event): void =>
+					updateCustomFieldRow(index, { value: event.target.value })
+				}
+				placeholder={t('placeholder_jira_custom_field_value')}
+				data-testid={`jira-custom-field-value-${index}`}
+			/>
+		);
+	};
+
+	// renderCustomFieldRow renders a single custom field. The same markup serves
+	// both required and optional fields; required fields simply never expose the
+	// "none" mode and so always show the value editor.
+	const renderCustomFieldRow = (
+		row: CustomFieldRow,
+		index: number,
+	): JSX.Element => (
+		<div>
+			<div style={{ marginBottom: 8 }}>
+				{t('jira_custom_field_id_label')}: {row.fieldId}
+			</div>
+			<ToggleGroupSimple
+				type="single"
+				size="sm"
+				value={row.mode}
+				onChange={(value: string): void => {
+					if (value) {
+						handleModeChange(index, row, value as FieldMode);
+					}
+				}}
+				items={getModeOptions(row).map((mode) => ({
+					value: mode,
+					label: mode.toUpperCase(),
+				}))}
+				testId={`jira-custom-field-mode-${index}`}
+			/>
+			{row.mode !== 'none' && (
+				<div style={{ marginTop: 12 }}>
+					<Form.Item
+						label={t('field_jira_custom_field_value')}
+						validateStatus={customFieldErrors[index] ? 'error' : ''}
+						help={customFieldErrors[index]}
+					>
+						{renderValueEditor(row, index)}
+					</Form.Item>
+				</div>
+			)}
+			{row.mode === 'json' && renderSchema(row)}
+		</div>
+	);
+
 	return (
 		<>
 			<Form.Item
@@ -625,16 +694,6 @@ function JiraSettings({
 				name="username"
 				label={t('field_jira_username')}
 				help={t('help_jira_username')}
-				tooltip={{
-					title: (
-						<MarkdownRenderer
-							markdownContent={t('tooltip_jira_username')}
-							variables={{}}
-						/>
-					),
-					overlayInnerStyle: { maxWidth: 400 },
-					placement: 'right',
-				}}
 				required
 			>
 				<Input
@@ -648,16 +707,6 @@ function JiraSettings({
 				name="password"
 				label={t('field_jira_password')}
 				help={t('help_jira_password')}
-				tooltip={{
-					title: (
-						<MarkdownRenderer
-							markdownContent={t('tooltip_jira_password')}
-							variables={{}}
-						/>
-					),
-					overlayInnerStyle: { maxWidth: 400 },
-					placement: 'right',
-				}}
 				required
 			>
 				<Input
@@ -672,10 +721,8 @@ function JiraSettings({
 				<Select
 					showSearch
 					optionFilterProp="label"
-					value={selectedProjectKey || selectedConfig?.project}
 					loading={projectsLoading}
 					onChange={(value): void => {
-						setSelectedProjectKey(value);
 						setSelectedConfig((current) => ({
 							...current,
 							project: value,
@@ -683,9 +730,9 @@ function JiraSettings({
 						setIssueTypes([]);
 						setIssueTypesError('');
 					}}
-					options={projects.map((project) => ({
-						label: `${project.key} - ${project.name}`,
-						value: project.key,
+					options={projects.map((proj) => ({
+						label: `${proj.key} - ${proj.name}`,
+						value: proj.key,
 					}))}
 					placeholder={t('jira_project_placeholder')}
 				/>
@@ -696,7 +743,6 @@ function JiraSettings({
 				<Select
 					showSearch
 					optionFilterProp="label"
-					value={selectedConfig?.issue_type}
 					loading={issueTypesLoading}
 					onChange={(value): void => {
 						setSelectedConfig((current) => ({
@@ -704,9 +750,9 @@ function JiraSettings({
 							issue_type: value,
 						}));
 					}}
-					options={issueTypes.map((issueType) => ({
-						label: issueType.name,
-						value: issueType.name,
+					options={issueTypes.map((type) => ({
+						label: type.name,
+						value: type.name,
 					}))}
 					placeholder={t('jira_issue_type_placeholder')}
 				/>
@@ -792,6 +838,17 @@ function JiraSettings({
 				/>
 			</Form.Item>
 
+			<Form.Item
+				name="wont_fix_resolution"
+				help={t('help_jira_wont_fix_resolution')}
+				label={t('field_jira_wont_fix_resolution')}
+			>
+				<Input
+					onChange={handleInputChange('wont_fix_resolution')}
+					data-testid="jira-wont-fix-resolution-textbox"
+				/>
+			</Form.Item>
+
 			<Form.Item>
 				{requiredRows.length > 0 && (
 					<>
@@ -803,75 +860,7 @@ function JiraSettings({
 							items={requiredRows.map(({ row, index }) => ({
 								key: row.fieldId || `${row.label}-${index}`,
 								label: row.label,
-								children: (
-									<div>
-										<div style={{ marginBottom: 8 }}>
-											{t('jira_custom_field_id_label')}: {row.fieldId}
-										</div>
-										<ToggleGroupSimple
-											type="single"
-											size="sm"
-											value={row.mode}
-											onChange={(value: string): void => {
-												if (value) {
-													handleModeChange(index, row, value as FieldMode);
-												}
-											}}
-											items={getModeOptions(row)
-												.filter((mode) => mode !== 'none')
-												.map((mode) => ({
-													value: mode,
-													label: mode.toUpperCase(),
-												}))}
-											testId={`jira-custom-field-mode-${index}`}
-										/>
-										<div style={{ marginTop: 12 }}>
-											<Form.Item
-												label={t('field_jira_custom_field_value')}
-												validateStatus={customFieldErrors[index] ? 'error' : ''}
-												help={customFieldErrors[index]}
-											>
-												{row.mode === 'select' ? (
-													<Select
-														mode={row.schemaType === 'array' ? 'multiple' : undefined}
-														value={row.value}
-														onChange={(value): void => updateCustomFieldRow(index, { value })}
-														options={(row.allowedValues || []).map((option) => ({
-															label: option.label,
-															value: option.value,
-														}))}
-														placeholder={t('placeholder_jira_custom_field_value')}
-														data-testid={`jira-custom-field-value-${index}`}
-													/>
-												) : row.mode === 'json' ? (
-													<TextArea
-														rows={3}
-														value={
-															Array.isArray(row.value) ? JSON.stringify(row.value) : row.value
-														}
-														onChange={(event): void =>
-															updateCustomFieldRow(index, { value: event.target.value })
-														}
-														placeholder={t('placeholder_jira_custom_field_value')}
-														data-testid={`jira-custom-field-value-${index}`}
-													/>
-												) : (
-													<Input
-														value={
-															Array.isArray(row.value) ? row.value.join(', ') : row.value
-														}
-														onChange={(event): void =>
-															updateCustomFieldRow(index, { value: event.target.value })
-														}
-														placeholder={t('placeholder_jira_custom_field_value')}
-														data-testid={`jira-custom-field-value-${index}`}
-													/>
-												)}
-											</Form.Item>
-										</div>
-										{row.mode === 'json' && renderSchema(row)}
-									</div>
-								),
+								children: renderCustomFieldRow(row, index),
 							}))}
 						/>
 					</>
@@ -886,77 +875,7 @@ function JiraSettings({
 							items={optionalRows.map(({ row, index }) => ({
 								key: row.fieldId || `${row.label}-${index}`,
 								label: row.label,
-								children: (
-									<div>
-										<div style={{ marginBottom: 8 }}>
-											{t('jira_custom_field_id_label')}: {row.fieldId}
-										</div>
-										<ToggleGroupSimple
-											type="single"
-											size="sm"
-											value={row.mode}
-											onChange={(value: string): void => {
-												if (value) {
-													handleModeChange(index, row, value as FieldMode);
-												}
-											}}
-											items={getModeOptions(row).map((mode) => ({
-												value: mode,
-												label: mode.toUpperCase(),
-											}))}
-											testId={`jira-custom-field-mode-${index}`}
-										/>
-										{row.mode !== 'none' && (
-											<div style={{ marginTop: 12 }}>
-												<Form.Item
-													label={t('field_jira_custom_field_value')}
-													validateStatus={customFieldErrors[index] ? 'error' : ''}
-													help={customFieldErrors[index]}
-												>
-													{row.mode === 'select' ? (
-														<Select
-															mode={row.schemaType === 'array' ? 'multiple' : undefined}
-															value={row.value}
-															onChange={(value): void =>
-																updateCustomFieldRow(index, { value })
-															}
-															options={(row.allowedValues || []).map((option) => ({
-																label: option.label,
-																value: option.value,
-															}))}
-															placeholder={t('placeholder_jira_custom_field_value')}
-															data-testid={`jira-custom-field-value-${index}`}
-														/>
-													) : row.mode === 'json' ? (
-														<TextArea
-															rows={3}
-															value={
-																Array.isArray(row.value) ? JSON.stringify(row.value) : row.value
-															}
-															onChange={(event): void =>
-																updateCustomFieldRow(index, { value: event.target.value })
-															}
-															placeholder={t('placeholder_jira_custom_field_value')}
-															data-testid={`jira-custom-field-value-${index}`}
-														/>
-													) : (
-														<Input
-															value={
-																Array.isArray(row.value) ? row.value.join(', ') : row.value
-															}
-															onChange={(event): void =>
-																updateCustomFieldRow(index, { value: event.target.value })
-															}
-															placeholder={t('placeholder_jira_custom_field_value')}
-															data-testid={`jira-custom-field-value-${index}`}
-														/>
-													)}
-												</Form.Item>
-											</div>
-										)}
-										{row.mode === 'json' && renderSchema(row)}
-									</div>
-								),
+								children: renderCustomFieldRow(row, index),
 							}))}
 						/>
 					</>
@@ -968,7 +887,6 @@ function JiraSettings({
 
 interface JiraSettingsProps {
 	setSelectedConfig: Dispatch<SetStateAction<Partial<JiraChannel>>>;
-	selectedConfig?: Partial<JiraChannel>;
 }
 
 export default JiraSettings;

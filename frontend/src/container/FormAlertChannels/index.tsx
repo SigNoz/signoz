@@ -29,7 +29,6 @@ import { Button } from './styles';
 function FormAlertChannels({
 	formInstance,
 	type,
-	selectedConfig,
 	setSelectedConfig,
 	onTypeChangeHandler,
 	onTestHandler,
@@ -55,12 +54,7 @@ function FormAlertChannels({
 			case ChannelType.Opsgenie:
 				return <OpsgenieSettings setSelectedConfig={setSelectedConfig} />;
 			case ChannelType.Jira:
-				return (
-					<JiraSettings
-						setSelectedConfig={setSelectedConfig}
-						selectedConfig={selectedConfig}
-					/>
-				);
+				return <JiraSettings setSelectedConfig={setSelectedConfig} />;
 			case ChannelType.Email:
 				return <EmailSettings setSelectedConfig={setSelectedConfig} />;
 			default:
@@ -179,14 +173,6 @@ function FormAlertChannels({
 interface FormAlertChannelsProps {
 	formInstance: FormInstance;
 	type: ChannelType;
-	selectedConfig: Partial<
-		SlackChannel &
-			WebhookChannel &
-			PagerChannel &
-			OpsgenieChannel &
-			JiraChannel &
-			EmailChannel
-	>;
 	setSelectedConfig: Dispatch<
 		SetStateAction<
 			Partial<

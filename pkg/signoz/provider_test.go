@@ -90,9 +90,8 @@ func TestNewProviderFactories(t *testing.T) {
 	})
 
 	assert.NotPanics(t, func() {
-		sqlStore := sqlstoretest.New(sqlstore.Config{Provider: "sqlite"}, sqlmock.QueryMatcherEqual)
 		NewAPIServerProviderFactories(
-			implorganization.NewGetter(implorganization.NewStore(sqlStore), nil),
+			implorganization.NewGetter(implorganization.NewStore(sqlstoretest.New(sqlstore.Config{Provider: "sqlite"}, sqlmock.QueryMatcherEqual)), nil),
 			nil,
 			Modules{},
 			Handlers{},

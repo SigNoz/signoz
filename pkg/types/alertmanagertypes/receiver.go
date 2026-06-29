@@ -33,19 +33,21 @@ func NewReceiver(input string) (*Receiver, error) {
 		return nil, err
 	}
 
+	// Save Jira Fields before the YAML round-trip: yaml.v2 converts map[string]interface{}
+	// to map[interface{}]interface{} which breaks JSON marshaling.
+	jiraFields := make([]map[string]any, len(receiver.Receiver.JiraConfigs))
+	for i, jc := range receiver.Receiver.JiraConfigs {
+		jiraFields[i] = jc.Fields
+	}
+
 	withDefaults, err := defaultedBaseReceiver(receiver.Receiver)
 	if err != nil {
 		return nil, err
 	}
 	receiver.Receiver = withDefaults
 
-	// Fix custom_fields: YAML unmarshal converts map[string]interface{} to map[interface{}]interface{}
-	// which breaks JSON marshaling. We need to convert it back. Jira rides on the native
-	// config.JiraConfigs carried by the embedded *config.Receiver.
-	for _, jiraConfig := range receiver.Receiver.JiraConfigs {
-		if jiraConfig.Fields != nil {
-			jiraConfig.Fields = convertMapInterfaceToMapString(jiraConfig.Fields)
-		}
+	for i, jc := range receiver.Receiver.JiraConfigs {
+		jc.Fields = jiraFields[i]
 	}
 
 	// Extend this block when adding another native notifier type.
@@ -92,45 +94,6 @@ func defaultedNotifierConfig[T any](cfg *T) (*T, error) {
 	return out, nil
 }
 
-// convertMapInterfaceToMapString recursively converts map[interface{}]interface{} to map[string]interface{}
-// This is needed because YAML unmarshal creates map[interface{}]interface{} but JSON marshal requires map[string]interface{}
-func convertMapInterfaceToMapString(input map[string]interface{}) map[string]interface{} {
-	output := make(map[string]interface{})
-	for key, value := range input {
-		output[key] = convertValue(value)
-	}
-	return output
-}
-
-func convertValue(value interface{}) interface{} {
-	switch v := value.(type) {
-	case map[interface{}]interface{}:
-		// Convert map[interface{}]interface{} to map[string]interface{}
-		result := make(map[string]interface{})
-		for key, val := range v {
-			if strKey, ok := key.(string); ok {
-				result[strKey] = convertValue(val)
-			}
-		}
-		return result
-	case map[string]interface{}:
-		// Recursively convert nested maps
-		result := make(map[string]interface{})
-		for key, val := range v {
-			result[key] = convertValue(val)
-		}
-		return result
-	case []interface{}:
-		// Recursively convert slices
-		result := make([]interface{}, len(v))
-		for i, val := range v {
-			result[i] = convertValue(val)
-		}
-		return result
-	default:
-		return value
-	}
-}
 
 func TestReceiver(ctx context.Context, receiver *Receiver, receiverIntegrationsFunc ReceiverIntegrationsFunc, config *Config, tmpl *template.Template, logger *slog.Logger, templater Templater, lSet model.LabelSet, alert ...*Alert) error {
 	ctx = notify.WithGroupKey(ctx, fmt.Sprintf("%s-%s-%d", receiver.Name, lSet.Fingerprint(), time.Now().Unix()))

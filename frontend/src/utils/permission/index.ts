@@ -47,7 +47,6 @@ export const componentPermission: Record<ComponentTypes, ROLES[]> = {
 export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {
 	HOME: ['ADMIN', 'EDITOR', 'VIEWER'],
 	ALERTS_NEW: ['ADMIN', 'EDITOR'],
-	ALERT_TYPE_SELECTION: ['ADMIN', 'EDITOR'],
 	ORG_SETTINGS: ['ADMIN'],
 	MY_SETTINGS: ['ADMIN', 'EDITOR', 'VIEWER', 'ANONYMOUS'],
 	SERVICE_MAP: ['ADMIN', 'EDITOR', 'VIEWER'],

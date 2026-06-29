@@ -124,7 +124,6 @@ function CreateAlertChannels({
 					...selectedConfig,
 					...JiraInitialConfig,
 				}));
-				formInstance.setFieldsValue(JiraInitialConfig);
 			}
 
 			// reset config to email defaults
@@ -135,7 +134,7 @@ function CreateAlertChannels({
 				}));
 			}
 		},
-		[type, selectedConfig, formInstance],
+		[type, selectedConfig],
 	);
 
 	const prepareSlackRequest = useCallback(
@@ -354,6 +353,7 @@ function CreateAlertChannels({
 			reopen_transition: selectedConfig?.reopen_transition || '',
 			reopen_duration: selectedConfig?.reopen_duration || '',
 			resolve_transition: selectedConfig?.resolve_transition || '',
+			wont_fix_resolution: selectedConfig?.wont_fix_resolution || '',
 			custom_fields: selectedConfig?.custom_fields,
 		}),
 		[selectedConfig],
@@ -641,7 +641,6 @@ function CreateAlertChannels({
 					formInstance,
 					onTypeChangeHandler,
 					setSelectedConfig,
-					selectedConfig,
 					type,
 					onTestHandler,
 					onSaveHandler,
@@ -653,6 +652,7 @@ function CreateAlertChannels({
 						...selectedConfig,
 						...PagerInitialConfig,
 						...OpsgenieInitialConfig,
+						...JiraInitialConfig,
 						...EmailInitialConfig,
 					},
 				}}

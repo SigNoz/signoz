@@ -15,7 +15,7 @@ const create = async (
 							username: props.username.trim(),
 							password: props.password.trim(),
 						},
-				  }
+					}
 				: undefined;
 
 		const reopenDuration = props.reopen_duration?.trim();
@@ -31,11 +31,15 @@ const create = async (
 					summary: { template: props.summary },
 					description: { template: props.description },
 					priority: props.priority,
-					labels: props.labels?.split(',').map((label) => label.trim()).filter(Boolean),
+					labels: props.labels
+						?.split(',')
+						.map((label) => label.trim())
+						.filter(Boolean),
 					custom_fields: props.custom_fields,
 					reopen_transition: props.reopen_transition,
 					...(reopenDuration ? { reopen_duration: reopenDuration } : {}),
 					resolve_transition: props.resolve_transition,
+					wont_fix_resolution: props.wont_fix_resolution,
 					send_resolved: props.send_resolved,
 				},
 			],

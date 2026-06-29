@@ -23,6 +23,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/model"
 
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
@@ -68,8 +69,7 @@ type Server struct {
 	templater            alertmanagertypes.Templater
 	wg                   sync.WaitGroup
 	stopc                chan struct{}
-	notificationManager  nfmanager.NotificationManager
-	receiverIntegrations alertmanagertypes.ReceiverIntegrationsFunc
+	notificationManager nfmanager.NotificationManager
 }
 
 func New(
@@ -81,17 +81,15 @@ func New(
 	stateStore alertmanagertypes.StateStore,
 	nfManager nfmanager.NotificationManager,
 	maintenanceStore alertmanagertypes.MaintenanceStore,
-	receiverIntegrations alertmanagertypes.ReceiverIntegrationsFunc,
 ) (*Server, error) {
 	server := &Server{
-		logger:               logger.With(slog.String("pkg", "go.signoz.io/pkg/alertmanager/alertmanagerserver")),
-		registry:             registry,
-		srvConfig:            srvConfig,
-		orgID:                orgID,
-		stateStore:           stateStore,
-		stopc:                make(chan struct{}),
-		notificationManager:  nfManager,
-		receiverIntegrations: receiverIntegrations,
+		logger:              logger.With(slog.String("pkg", "go.signoz.io/pkg/alertmanager/alertmanagerserver")),
+		registry:            registry,
+		srvConfig:           srvConfig,
+		orgID:               orgID,
+		stateStore:          stateStore,
+		stopc:               make(chan struct{}),
+		notificationManager: nfManager,
 	}
 	signozRegisterer := prometheus.WrapRegistererWithPrefix("signoz_", registry)
 	signozRegisterer = prometheus.WrapRegistererWith(prometheus.Labels{"org_id": server.orgID}, signozRegisterer)
@@ -281,7 +279,7 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 		if err != nil {
 			return err
 		}
-		integrations, err := server.receiverIntegrations(extendedRcv, server.tmpl, server.logger, server.templater)
+		integrations, err := alertmanagernotify.NewReceiverIntegrations(extendedRcv, server.tmpl, server.logger, server.templater)
 		if err != nil {
 			return err
 		}
@@ -363,7 +361,7 @@ func (server *Server) TestReceiver(ctx context.Context, receiver *alertmanagerty
 	}
 
 	testAlert := alertmanagertypes.NewTestAlert(receiver, time.Now(), time.Now())
-	return alertmanagertypes.TestReceiver(ctx, receiver, server.receiverIntegrations, server.alertmanagerConfig, server.tmpl, server.logger, server.templater, testAlert.Labels, testAlert)
+	return alertmanagertypes.TestReceiver(ctx, receiver, alertmanagernotify.NewReceiverIntegrations, server.alertmanagerConfig, server.tmpl, server.logger, server.templater, testAlert.Labels, testAlert)
 }
 
 func (server *Server) TestAlert(ctx context.Context, receiversMap map[*alertmanagertypes.PostableAlert][]string, config *alertmanagertypes.NotificationConfig) error {
@@ -447,7 +445,7 @@ func (server *Server) TestAlert(ctx context.Context, receiversMap map[*alertmana
 				err = alertmanagertypes.TestReceiver(
 					gCtx,
 					receiver,
-					server.receiverIntegrations,
+					alertmanagernotify.NewReceiverIntegrations,
 					server.alertmanagerConfig,
 					server.tmpl,
 					server.logger,

@@ -41,9 +41,6 @@ type Service struct {
 	notificationManager nfmanager.NotificationManager
 
 	maintenanceStore alertmanagertypes.MaintenanceStore
-
-	// receiverIntegrations builds the notify integrations for each per-org server
-	receiverIntegrations alertmanagertypes.ReceiverIntegrationsFunc
 }
 
 func New(
@@ -54,19 +51,17 @@ func New(
 	orgGetter organization.Getter,
 	nfManager nfmanager.NotificationManager,
 	maintenanceStore alertmanagertypes.MaintenanceStore,
-	receiverIntegrations alertmanagertypes.ReceiverIntegrationsFunc,
 ) *Service {
 	service := &Service{
-		config:               config,
-		stateStore:           stateStore,
-		configStore:          configStore,
-		orgGetter:            orgGetter,
-		settings:             settings,
-		servers:              make(map[string]*alertmanagerserver.Server),
-		serversMtx:           sync.RWMutex{},
-		notificationManager:  nfManager,
-		maintenanceStore:     maintenanceStore,
-		receiverIntegrations: receiverIntegrations,
+		config:              config,
+		stateStore:          stateStore,
+		configStore:         configStore,
+		orgGetter:           orgGetter,
+		settings:            settings,
+		servers:             make(map[string]*alertmanagerserver.Server),
+		serversMtx:          sync.RWMutex{},
+		notificationManager: nfManager,
+		maintenanceStore:    maintenanceStore,
 	}
 
 	return service
@@ -187,7 +182,7 @@ func (service *Service) newServer(ctx context.Context, orgID string) (*alertmana
 
 	server, err := alertmanagerserver.New(
 		ctx, service.settings.Logger(), service.settings.PrometheusRegisterer(), service.config, orgID,
-		service.stateStore, service.notificationManager, service.maintenanceStore, service.receiverIntegrations,
+		service.stateStore, service.notificationManager, service.maintenanceStore,
 	)
 	if err != nil {
 		return nil, err

@@ -57,11 +57,6 @@ export const OpsgenieInitialConfig: Partial<OpsgenieChannel> = {
 };
 
 export const JiraInitialConfig: Partial<JiraChannel> = {
-	api_url: '',
-	username: '',
-	password: '',
-	project: '',
-	issue_type: '',
 	summary:
 		'[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}',
 	description: `Alert: {{ .CommonLabels.alertname }}
@@ -72,11 +67,6 @@ Message: {{ .Annotations.description }}
 Generator URL: {{ .GeneratorURL }}
 {{ end }}`,
 	priority: 'Medium',
-	labels: 'signoz,alert',
-	resolve_transition: '',
-	reopen_transition: '',
-	reopen_duration: '',
-	custom_fields: {},
 };
 
 export const EmailInitialConfig: Partial<EmailChannel> = {

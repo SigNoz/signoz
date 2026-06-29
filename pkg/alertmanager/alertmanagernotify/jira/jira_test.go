@@ -1,3 +1,7 @@
+// Copyright (c) 2026 SigNoz, Inc.
+// Copyright 2023 Prometheus Team
+// SPDX-License-Identifier: Apache-2.0
+
 package jira
 
 import (
@@ -18,6 +22,7 @@ import (
 	"github.com/prometheus/alertmanager/types"
 	commoncfg "github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
+	"github.com/stretchr/testify/require"
 )
 
 func createTestTemplate(t *testing.T, externalURL *url.URL) *template.Template {
@@ -30,6 +35,220 @@ func createTestTemplate(t *testing.T, externalURL *url.URL) *template.Template {
 	return tmpl
 }
 
+func newTestConfig(serverURL string) *config.JiraConfig {
+	apiURL, _ := url.Parse(serverURL + "/rest/api/2/")
+	return &config.JiraConfig{
+		APIURL:     &config.URL{URL: apiURL},
+		APIType:    "datacenter",
+		Project:    "TEST",
+		IssueType:  "Incident",
+		HTTPConfig: &commoncfg.HTTPClientConfig{},
+		Summary:    config.JiraFieldConfig{Template: "Alert: {{ .GroupLabels.alertname }}"},
+		Description: config.JiraFieldConfig{
+			Template: "{{ .CommonAnnotations.description }}",
+		},
+	}
+}
+
+func TestNewRejectsNilConfig(t *testing.T) {
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	_, err := New(nil, &template.Template{}, logger)
+	require.Error(t, err)
+}
+
+func TestJiraRetry(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+	defer srv.Close()
+
+	cfg := newTestConfig(srv.URL)
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	notifier, err := New(cfg, createTestTemplate(t, cfg.APIURL.URL), logger)
+	require.NoError(t, err)
+
+	for _, tc := range []struct {
+		statusCode  int
+		expectRetry bool
+	}{
+		{http.StatusOK, false},
+		{http.StatusBadRequest, false},
+		{http.StatusUnauthorized, false},
+		{http.StatusForbidden, false},
+		{http.StatusNotFound, false},
+		{http.StatusTooManyRequests, true},
+		{http.StatusInternalServerError, true}, // Retrier retries all 5xx by default
+		{http.StatusBadGateway, true},
+	} {
+		actual, _ := notifier.retrier.Check(tc.statusCode, nil)
+		require.Equal(t, tc.expectRetry, actual, "unexpected retry for status %d", tc.statusCode)
+	}
+}
+
+func TestPrepareSearchRequest(t *testing.T) {
+	for _, tc := range []struct {
+		title       string
+		apiType     string
+		host        string
+		expectedURL string
+	}{
+		{
+			title:       "cloud always uses v3 search/jql",
+			apiType:     "cloud",
+			host:        "example.atlassian.net",
+			expectedURL: "/rest/api/3/search/jql",
+		},
+		{
+			title:       "auto with atlassian.net uses v3 search/jql",
+			apiType:     "auto",
+			host:        "example.atlassian.net",
+			expectedURL: "/rest/api/3/search/jql",
+		},
+		{
+			title:       "auto without atlassian.net uses v2 search",
+			apiType:     "auto",
+			host:        "jira.internal.com",
+			expectedURL: "/rest/api/2/search",
+		},
+		{
+			title:       "datacenter always uses v2 search",
+			apiType:     "datacenter",
+			host:        "example.atlassian.net",
+			expectedURL: "/rest/api/2/search",
+		},
+	} {
+		t.Run(tc.title, func(t *testing.T) {
+			apiURL := &url.URL{Scheme: "https", Host: tc.host, Path: "/rest/api/2"}
+			cfg := &config.JiraConfig{
+				APIURL:     &config.URL{URL: apiURL},
+				APIType:    tc.apiType,
+				HTTPConfig: &commoncfg.HTTPClientConfig{},
+				Summary:    config.JiraFieldConfig{Template: "s"},
+				Description: config.JiraFieldConfig{Template: "d"},
+			}
+			logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+			notifier, err := New(cfg, &template.Template{}, logger)
+			require.NoError(t, err)
+
+			_, searchURL := notifier.prepareSearchRequest("project=TEST")
+			parsedURL, err := url.Parse(searchURL)
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedURL, parsedURL.Path)
+
+			// Original conf APIURL must not be mutated
+			require.Equal(t, "/rest/api/2", cfg.APIURL.Path)
+		})
+	}
+}
+
+func TestWontFixResolutionJQL(t *testing.T) {
+	var capturedJQL string
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodPost && strings.HasSuffix(r.URL.Path, "/search") {
+			var body issueSearch
+			_ = json.NewDecoder(r.Body).Decode(&body)
+			capturedJQL = body.JQL
+			_ = json.NewEncoder(w).Encode(issueSearchResult{Issues: []issue{}})
+			return
+		}
+		if r.Method == http.MethodPost && strings.HasSuffix(r.URL.Path, "/issue") {
+			w.WriteHeader(http.StatusCreated)
+			_, _ = w.Write([]byte(`{"key":"TEST-1"}`))
+			return
+		}
+		w.WriteHeader(http.StatusNotFound)
+	}))
+	defer srv.Close()
+
+	cfg := newTestConfig(srv.URL)
+	cfg.WontFixResolution = "Won't Do"
+
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	notifier, err := New(cfg, createTestTemplate(t, cfg.APIURL.URL), logger)
+	require.NoError(t, err)
+
+	ctx := notify.WithGroupKey(context.Background(), "g1")
+	ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": "test"})
+
+	_, err = notifier.Notify(ctx, &types.Alert{
+		Alert: model.Alert{
+			Labels:   model.LabelSet{"alertname": "test"},
+			StartsAt: time.Now(),
+			EndsAt:   time.Now().Add(time.Hour),
+		},
+	})
+	require.NoError(t, err)
+
+	// Must use (resolution is EMPTY or resolution != X) so unresolved open issues
+	// are not silently excluded by JQL's != operator.
+	require.Contains(t, capturedJQL, `(resolution is EMPTY or resolution != "Won't Do")`)
+	require.NotContains(t, capturedJQL, `resolution != "Won't Do" and`)
+}
+
+func TestSummarySuppressionOnUpdate(t *testing.T) {
+	var updatedFields map[string]any
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case r.Method == http.MethodPost && strings.HasSuffix(r.URL.Path, "/search"):
+			_ = json.NewEncoder(w).Encode(issueSearchResult{Issues: []issue{
+				{
+					Key: "TEST-1",
+					Fields: &issueFields{
+						Status: &issueStatus{
+							StatusCategory: struct {
+								Key string `json:"key"`
+							}{Key: "new"},
+						},
+					},
+				},
+			}})
+		case r.Method == http.MethodPut && r.URL.Path == "/rest/api/2/issue/TEST-1":
+			var body map[string]any
+			_ = json.NewDecoder(r.Body).Decode(&body)
+			if f, ok := body["fields"].(map[string]any); ok {
+				updatedFields = f
+			}
+			w.WriteHeader(http.StatusNoContent)
+		default:
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	defer srv.Close()
+
+	falseVal := false
+	cfg := newTestConfig(srv.URL)
+	cfg.Summary = config.JiraFieldConfig{
+		Template:     "Alert: {{ .GroupLabels.alertname }}",
+		EnableUpdate: &falseVal,
+	}
+	cfg.Description = config.JiraFieldConfig{
+		Template:     "some description",
+		EnableUpdate: &falseVal,
+	}
+
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	notifier, err := New(cfg, createTestTemplate(t, cfg.APIURL.URL), logger)
+	require.NoError(t, err)
+
+	ctx := notify.WithGroupKey(context.Background(), "g1")
+	ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": "test"})
+
+	_, err = notifier.Notify(ctx, &types.Alert{
+		Alert: model.Alert{
+			Labels:   model.LabelSet{"alertname": "test"},
+			StartsAt: time.Now(),
+			EndsAt:   time.Now().Add(time.Hour),
+		},
+	})
+	require.NoError(t, err)
+	require.NotNil(t, updatedFields, "expected PUT request to issue")
+
+	_, hasSummary := updatedFields["summary"]
+	_, hasDescription := updatedFields["description"]
+	require.False(t, hasSummary, "summary should be absent from update when EnableUpdate=false")
+	require.False(t, hasDescription, "description should be absent from update when EnableUpdate=false")
+}
+
 func TestJiraNotifierCreatesIssueWithGroupLabel(t *testing.T) {
 	var (
 		searchJQL      string
@@ -37,21 +256,15 @@ func TestJiraNotifierCreatesIssueWithGroupLabel(t *testing.T) {
 		createdPayload map[string]any
 	)
 
-	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case r.Method == http.MethodPost && r.URL.Path == "/rest/api/2/search":
 			var body issueSearch
-			if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-				w.WriteHeader(http.StatusBadRequest)
-				return
-			}
+			_ = json.NewDecoder(r.Body).Decode(&body)
 			searchJQL = body.JQL
 			_ = json.NewEncoder(w).Encode(issueSearchResult{Issues: []issue{}})
 		case r.Method == http.MethodPost && r.URL.Path == "/rest/api/2/issue":
-			if err := json.NewDecoder(r.Body).Decode(&createdPayload); err != nil {
-				w.WriteHeader(http.StatusBadRequest)
-				return
-			}
+			_ = json.NewDecoder(r.Body).Decode(&createdPayload)
 			issueCreated = true
 			w.WriteHeader(http.StatusCreated)
 			_, _ = w.Write([]byte(`{"key":"TEST-1","id":"12345"}`))
@@ -59,105 +272,58 @@ func TestJiraNotifierCreatesIssueWithGroupLabel(t *testing.T) {
 			w.WriteHeader(http.StatusNotFound)
 		}
 	}))
-	defer mockServer.Close()
+	defer srv.Close()
 
-	apiURL, err := url.Parse(mockServer.URL + "/rest/api/2/")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	cfg := &config.JiraConfig{
-		APIURL:     &config.URL{URL: apiURL},
-		APIType:    "datacenter",
-		Project:    "TEST",
-		IssueType:  "Incident",
-		HTTPConfig: &commoncfg.HTTPClientConfig{},
-		Summary: config.JiraFieldConfig{
-			Template: "Alert: {{ .GroupLabels.alertname }}",
-		},
-		Description: config.JiraFieldConfig{
-			Template: "{{ .CommonAnnotations.description }}",
-		},
-		Priority: "High",
-		Labels:   []string{"signoz"},
-	}
+	cfg := newTestConfig(srv.URL)
+	cfg.Priority = "High"
+	cfg.Labels = []string{"signoz"}
 
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	notifier, err := New(cfg, createTestTemplate(t, apiURL), logger)
-	if err != nil {
-		t.Fatalf("Failed to create notifier: %v", err)
-	}
+	notifier, err := New(cfg, createTestTemplate(t, cfg.APIURL.URL), logger)
+	require.NoError(t, err)
 
-	alerts := []*types.Alert{
-		{
-			Alert: model.Alert{
-				Labels: model.LabelSet{
-					"alertname": "TestAlert",
-				},
-				Annotations: model.LabelSet{
-					"description": "Test Description",
-				},
-			},
-		},
-	}
-
-	ctx := context.Background()
-	ctx = notify.WithGroupKey(ctx, "test-group-1")
+	ctx := notify.WithGroupKey(context.Background(), "test-group-1")
 	ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": "TestAlert"})
 
-	retry, err := notifier.Notify(ctx, alerts...)
-	if err != nil {
-		t.Fatalf("Notify failed: %v", err)
-	}
-	if retry {
-		t.Error("Expected retry=false on success")
-	}
-	if !issueCreated {
-		t.Fatal("Expected issue to be created")
-	}
-	if !strings.Contains(searchJQL, `project="TEST"`) {
-		t.Fatalf("expected project in JQL, got: %s", searchJQL)
-	}
-	if !strings.Contains(searchJQL, `labels="ALERT{`) {
-		t.Fatalf("expected ALERT{group-hash} label in JQL, got: %s", searchJQL)
-	}
+	retry, err := notifier.Notify(ctx, &types.Alert{
+		Alert: model.Alert{
+			Labels:      model.LabelSet{"alertname": "TestAlert"},
+			Annotations: model.LabelSet{"description": "Test Description"},
+		},
+	})
+	require.NoError(t, err)
+	require.False(t, retry)
+	require.True(t, issueCreated)
+	require.Contains(t, searchJQL, `project="TEST"`)
+	require.Contains(t, searchJQL, `labels="ALERT{`)
 
 	fields, ok := createdPayload["fields"].(map[string]any)
-	if !ok {
-		t.Fatalf("expected fields map in payload, got: %#v", createdPayload["fields"])
-	}
+	require.True(t, ok)
 	labels, ok := fields["labels"].([]any)
-	if !ok || len(labels) < 2 {
-		t.Fatalf("expected generated labels in issue payload, got: %#v", fields["labels"])
-	}
+	require.True(t, ok)
+	require.GreaterOrEqual(t, len(labels), 2)
 }
 
 func TestJiraNotifierResolvesExistingIssue(t *testing.T) {
 	var transitioned bool
 
-	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case r.Method == http.MethodPost && r.URL.Path == "/rest/api/2/search":
 			_ = json.NewEncoder(w).Encode(map[string]any{
-				"issues": []map[string]any{
-					{
-						"key": "TEST-1",
-						"fields": map[string]any{
-							"status": map[string]any{
-								"name": "Open",
-								"statusCategory": map[string]any{
-									"key": "new",
-								},
-							},
+				"issues": []map[string]any{{
+					"key": "TEST-1",
+					"fields": map[string]any{
+						"status": map[string]any{
+							"name":           "Open",
+							"statusCategory": map[string]any{"key": "new"},
 						},
 					},
-				},
+				}},
 			})
 		case r.Method == http.MethodGet && r.URL.Path == "/rest/api/2/issue/TEST-1/transitions":
 			_ = json.NewEncoder(w).Encode(map[string]any{
-				"transitions": []map[string]string{
-					{"id": "31", "name": "Done"},
-				},
+				"transitions": []map[string]string{{"id": "31", "name": "Done"}},
 			})
 		case r.Method == http.MethodPost && r.URL.Path == "/rest/api/2/issue/TEST-1/transitions":
 			transitioned = true
@@ -168,255 +334,114 @@ func TestJiraNotifierResolvesExistingIssue(t *testing.T) {
 			w.WriteHeader(http.StatusNotFound)
 		}
 	}))
-	defer mockServer.Close()
+	defer srv.Close()
 
-	apiURL, err := url.Parse(mockServer.URL + "/rest/api/2/")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	cfg := &config.JiraConfig{
-		APIURL:            &config.URL{URL: apiURL},
-		APIType:           "datacenter",
-		Project:           "TEST",
-		IssueType:         "Incident",
-		ResolveTransition: "Done",
-		HTTPConfig:        &commoncfg.HTTPClientConfig{},
-		Summary: config.JiraFieldConfig{
-			Template: "Alert: {{ .GroupLabels.alertname }}",
-		},
-		Description: config.JiraFieldConfig{
-			Template: "{{ .CommonAnnotations.description }}",
-		},
-	}
+	cfg := newTestConfig(srv.URL)
+	cfg.ResolveTransition = "Done"
 
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	notifier, err := New(cfg, createTestTemplate(t, apiURL), logger)
-	if err != nil {
-		t.Fatalf("Failed to create notifier: %v", err)
-	}
+	notifier, err := New(cfg, createTestTemplate(t, cfg.APIURL.URL), logger)
+	require.NoError(t, err)
 
 	now := time.Now()
-	alerts := []*types.Alert{
-		{
-			Alert: model.Alert{
-				Labels: model.LabelSet{
-					"alertname": "TestAlert",
-				},
-				StartsAt: now.Add(-5 * time.Minute),
-				EndsAt:   now,
-			},
-		},
-	}
-
-	ctx := context.Background()
-	ctx = notify.WithGroupKey(ctx, "test-group-resolved")
+	ctx := notify.WithGroupKey(context.Background(), "test-group-resolved")
 	ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": "TestAlert"})
 
-	retry, err := notifier.Notify(ctx, alerts...)
-	if err != nil {
-		t.Fatalf("Notify failed: %v", err)
-	}
-	if retry {
-		t.Error("Expected retry=false on success")
-	}
-	if !transitioned {
-		t.Fatal("Expected existing issue to be transitioned to resolved state")
-	}
+	retry, err := notifier.Notify(ctx, &types.Alert{
+		Alert: model.Alert{
+			Labels:   model.LabelSet{"alertname": "TestAlert"},
+			StartsAt: now.Add(-5 * time.Minute),
+			EndsAt:   now,
+		},
+	})
+	require.NoError(t, err)
+	require.False(t, retry)
+	require.True(t, transitioned)
 }
 
-func TestJiraNotifierMissingConfig(t *testing.T) {
-	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	notifier := &Notifier{conf: nil, logger: logger}
+func TestReopenDurationZeroUsesStatusFilter(t *testing.T) {
+	var capturedJQL string
 
-	ctx := context.Background()
-	_, err := notifier.Notify(ctx)
-	if err == nil {
-		t.Error("Expected error for nil config")
-	}
-}
-
-func TestJiraNotifierSearchesAllIssuesWhenReopenDurationEmpty(t *testing.T) {
-	var searchJQL string
-
-	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch {
-		case r.Method == http.MethodPost && r.URL.Path == "/rest/api/2/search":
+		case r.Method == http.MethodPost && strings.HasSuffix(r.URL.Path, "/search"):
 			var body issueSearch
-			if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-				w.WriteHeader(http.StatusBadRequest)
-				return
-			}
-			searchJQL = body.JQL
-			// Return a resolved issue that was resolved more than 7 days ago
-			_ = json.NewEncoder(w).Encode(map[string]any{
-				"issues": []map[string]any{
-					{
-						"key": "TEST-1",
-						"fields": map[string]any{
-							"status": map[string]any{
-								"name": "Done",
-								"statusCategory": map[string]any{
-									"key": "done",
-								},
-							},
-						},
-					},
-				},
-			})
-		case r.Method == http.MethodGet && r.URL.Path == "/rest/api/2/issue/TEST-1/transitions":
-			_ = json.NewEncoder(w).Encode(map[string]any{
-				"transitions": []map[string]string{
-					{"id": "3", "name": "Reopen"},
-				},
-			})
-		case r.Method == http.MethodPost && r.URL.Path == "/rest/api/2/issue/TEST-1/transitions":
-			w.WriteHeader(http.StatusNoContent)
-		case r.Method == http.MethodPut && r.URL.Path == "/rest/api/2/issue/TEST-1":
-			w.WriteHeader(http.StatusNoContent)
-		default:
-			w.WriteHeader(http.StatusNotFound)
-		}
-	}))
-	defer mockServer.Close()
-
-	apiURL, err := url.Parse(mockServer.URL + "/rest/api/2/")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	cfg := &config.JiraConfig{
-		APIURL:           &config.URL{URL: apiURL},
-		APIType:          "datacenter",
-		Project:          "TEST",
-		IssueType:        "Incident",
-		ReopenTransition: "Reopen",
-		ReopenDuration:   0, // Empty/zero duration should search all issues
-		HTTPConfig:       &commoncfg.HTTPClientConfig{},
-		Summary: config.JiraFieldConfig{
-			Template: "Alert: {{ .GroupLabels.alertname }}",
-		},
-		Description: config.JiraFieldConfig{
-			Template: "{{ .CommonAnnotations.description }}",
-		},
-	}
-
-	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	notifier, err := New(cfg, createTestTemplate(t, apiURL), logger)
-	if err != nil {
-		t.Fatalf("Failed to create notifier: %v", err)
-	}
-
-	alerts := []*types.Alert{
-		{
-			Alert: model.Alert{
-				Labels: model.LabelSet{
-					"alertname": "TestAlert",
-				},
-				Annotations: model.LabelSet{
-					"description": "Test Description",
-				},
-			},
-		},
-	}
-
-	ctx := context.Background()
-	ctx = notify.WithGroupKey(ctx, "test-group-reopen-all")
-	ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": "TestAlert"})
-
-	_, err = notifier.Notify(ctx, alerts...)
-	if err != nil {
-		t.Fatalf("Notify failed: %v", err)
-	}
-
-	// When ReopenDuration is empty/zero, the JQL should NOT contain a resolutiondate filter in the WHERE clause
-	// This allows searching ALL issues, including those resolved long ago (matching Grafana behavior)
-	// Note: resolutiondate may still appear in ORDER BY clause, which is fine
-	if strings.Contains(searchJQL, "resolutiondate is EMPTY") || strings.Contains(searchJQL, "resolutiondate >=") {
-		t.Errorf("Expected no resolutiondate filter in WHERE clause when ReopenDuration is empty, got JQL: %s", searchJQL)
-	}
-	if !strings.Contains(searchJQL, `project="TEST"`) {
-		t.Errorf("Expected project in JQL, got: %s", searchJQL)
-	}
-	if !strings.Contains(searchJQL, `labels="ALERT{`) {
-		t.Errorf("Expected ALERT{group-hash} label in JQL, got: %s", searchJQL)
-	}
-}
-
-func TestJiraNotifierSearchesWithinDurationWhenSet(t *testing.T) {
-	var searchJQL string
-
-	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch {
-		case r.Method == http.MethodPost && r.URL.Path == "/rest/api/2/search":
-			var body issueSearch
-			if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-				w.WriteHeader(http.StatusBadRequest)
-				return
-			}
-			searchJQL = body.JQL
+			_ = json.NewDecoder(r.Body).Decode(&body)
+			capturedJQL = body.JQL
 			_ = json.NewEncoder(w).Encode(issueSearchResult{Issues: []issue{}})
-		case r.Method == http.MethodPost && r.URL.Path == "/rest/api/2/issue":
+		case r.Method == http.MethodPost && strings.HasSuffix(r.URL.Path, "/issue"):
 			w.WriteHeader(http.StatusCreated)
-			_, _ = w.Write([]byte(`{"key":"TEST-1","id":"12345"}`))
+			_, _ = w.Write([]byte(`{"key":"TEST-1"}`))
 		default:
 			w.WriteHeader(http.StatusNotFound)
 		}
 	}))
-	defer mockServer.Close()
+	defer srv.Close()
 
-	apiURL, err := url.Parse(mockServer.URL + "/rest/api/2/")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	cfg := &config.JiraConfig{
-		APIURL:           &config.URL{URL: apiURL},
-		APIType:          "datacenter",
-		Project:          "TEST",
-		IssueType:        "Incident",
-		ReopenTransition: "Reopen",
-		ReopenDuration:   model.Duration(7 * 24 * time.Hour), // 7 days
-		HTTPConfig:       &commoncfg.HTTPClientConfig{},
-		Summary: config.JiraFieldConfig{
-			Template: "Alert: {{ .GroupLabels.alertname }}",
-		},
-		Description: config.JiraFieldConfig{
-			Template: "{{ .CommonAnnotations.description }}",
-		},
-	}
+	cfg := newTestConfig(srv.URL)
+	cfg.ReopenTransition = "Reopen"
+	cfg.ReopenDuration = 0
 
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	notifier, err := New(cfg, createTestTemplate(t, apiURL), logger)
-	if err != nil {
-		t.Fatalf("Failed to create notifier: %v", err)
-	}
+	notifier, err := New(cfg, createTestTemplate(t, cfg.APIURL.URL), logger)
+	require.NoError(t, err)
 
-	alerts := []*types.Alert{
-		{
-			Alert: model.Alert{
-				Labels: model.LabelSet{
-					"alertname": "TestAlert",
-				},
-			},
+	ctx := notify.WithGroupKey(context.Background(), "g1")
+	ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": "test"})
+
+	_, err = notifier.Notify(ctx, &types.Alert{
+		Alert: model.Alert{
+			Labels:   model.LabelSet{"alertname": "test"},
+			StartsAt: time.Now(),
+			EndsAt:   time.Now().Add(time.Hour),
 		},
-	}
+	})
+	require.NoError(t, err)
 
-	ctx := context.Background()
-	ctx = notify.WithGroupKey(ctx, "test-group-duration")
-	ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": "TestAlert"})
+	// ReopenTransition set but ReopenDuration=0: falls back to statusCategory != Done,
+	// no resolutiondate filter.
+	require.Contains(t, capturedJQL, "statusCategory != Done")
+	require.NotContains(t, capturedJQL, "resolutiondate is EMPTY")
+	require.NotContains(t, capturedJQL, "resolutiondate >=")
+}
 
-	_, err = notifier.Notify(ctx, alerts...)
-	if err != nil {
-		t.Fatalf("Notify failed: %v", err)
-	}
+func TestReopenDurationSetUsesResolutiondateFilter(t *testing.T) {
+	var capturedJQL string
 
-	// When ReopenDuration is set, the JQL should contain a resolutiondate filter
-	if !strings.Contains(searchJQL, "resolutiondate") {
-		t.Errorf("Expected resolutiondate filter when ReopenDuration is set, got JQL: %s", searchJQL)
-	}
-	// Should search for issues resolved within 7 days (10080 minutes)
-	if !strings.Contains(searchJQL, "-10080m") {
-		t.Errorf("Expected -10080m (7 days) in JQL, got: %s", searchJQL)
-	}
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case r.Method == http.MethodPost && strings.HasSuffix(r.URL.Path, "/search"):
+			var body issueSearch
+			_ = json.NewDecoder(r.Body).Decode(&body)
+			capturedJQL = body.JQL
+			_ = json.NewEncoder(w).Encode(issueSearchResult{Issues: []issue{}})
+		case r.Method == http.MethodPost && strings.HasSuffix(r.URL.Path, "/issue"):
+			w.WriteHeader(http.StatusCreated)
+			_, _ = w.Write([]byte(`{"key":"TEST-1"}`))
+		default:
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	defer srv.Close()
+
+	cfg := newTestConfig(srv.URL)
+	cfg.ReopenTransition = "Reopen"
+	cfg.ReopenDuration = model.Duration(7 * 24 * time.Hour)
+
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	notifier, err := New(cfg, createTestTemplate(t, cfg.APIURL.URL), logger)
+	require.NoError(t, err)
+
+	ctx := notify.WithGroupKey(context.Background(), "g1")
+	ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": "test"})
+
+	_, err = notifier.Notify(ctx, &types.Alert{
+		Alert: model.Alert{
+			Labels:   model.LabelSet{"alertname": "test"},
+			StartsAt: time.Now(),
+			EndsAt:   time.Now().Add(time.Hour),
+		},
+	})
+	require.NoError(t, err)
+	require.Contains(t, capturedJQL, "resolutiondate is EMPTY OR resolutiondate >= -10080m")
 }
