@@ -30,7 +30,6 @@ describe('panelStatusFromError', () => {
 				{ message: 'missing aggregation', suggestions: [] },
 				{ message: 'bad filter', suggestions: [] },
 			],
-			retry: null,
 			suggestions: [],
 			type: '',
 		});
@@ -59,7 +58,6 @@ describe('panelStatusFromError', () => {
 				message: 'y',
 				url: '',
 				errors: [],
-				retry: null,
 				suggestions: [],
 				type: '',
 			},
