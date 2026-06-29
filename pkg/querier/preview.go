@@ -488,7 +488,7 @@ func collectMergeTreeReads(node *qbtypes.ExplainPlanNode, reads *[]qbtypes.Merge
 	}
 }
 
-// orEmpty returns s, or a non-nil empty slice when s is nil
+// orEmpty returns s, or a non-nil empty slice when s is nil.
 func orEmpty[T any](s []T) []T {
 	if s == nil {
 		return []T{}
