@@ -1,0 +1,10 @@
+.group {
+	width: min(350px, 100%);
+}
+
+.segment {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	white-space: nowrap;
+}

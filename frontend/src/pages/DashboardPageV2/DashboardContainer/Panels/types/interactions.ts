@@ -2,12 +2,7 @@ import type { ChartClickData } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 
 import type { PanelKind } from './panelKind';
 
-/**
- * Source-tagged click events. The three uPlot panels share `ChartClickEvent`;
- * each non-chart kind carries the context its drill-down needs. The `source`
- * tag lets a kind-agnostic consumer (the render boundary, a shared drill-down
- * handler) discriminate without assuming a chart shape.
- */
+/** Source-tagged click events; each non-chart kind carries its own drill-down context. */
 export type ChartClickEvent = ChartClickData;
 export type TableClickEvent = {
 	rowData: Record<string, unknown>;
@@ -28,11 +23,9 @@ export type PanelClickEvent =
 type DragSelect = (start: number, end: number) => void;
 
 /**
- * Per-kind interaction props. Each panel kind exposes ONLY the gestures it
- * supports: chart panels get a chart-shaped `onClick`, time-axis charts add
- * `onDragSelect`, histograms have no drag-to-zoom, a NumberPanel has no
- * interactions at all. Keys mirror `PanelKind`; `PanelRendererProps<K>` in
- * rendererProps.ts indexes this map, so a missing kind is a compile error there.
+ * Per-kind interaction props — each kind exposes only the gestures it supports.
+ * Keyed by `PanelKind`; `PanelRendererProps<K>` indexes this, so a missing kind
+ * is a compile error there.
  */
 export type PanelInteractionMap = Record<PanelKind, object> & {
 	'signoz/TimeSeriesPanel': {
@@ -51,9 +44,8 @@ export type PanelInteractionMap = Record<PanelKind, object> & {
 };
 
 /**
- * Widest interaction surface — used where the panel kind is not known
- * statically (the registry render boundary; see `getPanelDefinition`). It is
- * the structural supertype the per-kind shapes are cast to exactly once.
+ * Widest interaction surface — used where the kind isn't known statically (the
+ * registry render boundary). The supertype the per-kind shapes are cast to once.
  */
 export interface AnyPanelInteractionProps {
 	onClick?: (event: PanelClickEvent) => void;

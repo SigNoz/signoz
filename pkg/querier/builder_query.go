@@ -99,13 +99,22 @@ func (q *builderQuery[T]) Fingerprint() string {
 				if a.ComparisonSpaceAggregationParam != nil {
 					spaceAggParamStr = a.ComparisonSpaceAggregationParam.StringValue()
 				}
-				aggParts = append(aggParts, fmt.Sprintf("%s:%s:%s:%s:%s",
+				part := fmt.Sprintf("%s:%s:%s:%s:%s",
 					a.MetricName,
 					a.Temporality.StringValue(),
 					a.TimeAggregation.StringValue(),
 					a.SpaceAggregation.StringValue(),
 					spaceAggParamStr,
-				))
+				)
+				if a.Reduced {
+					oneDay := uint64(24 * time.Hour.Milliseconds())
+					route := "reduced"
+					if q.toMS-q.fromMS < oneDay && q.fromMS >= uint64(time.Now().UnixMilli())-oneDay {
+						route = "buffer"
+					}
+					part += ":" + route
+				}
+				aggParts = append(aggParts, part)
 			}
 		}
 		parts = append(parts, fmt.Sprintf("aggs=[%s]", strings.Join(aggParts, ",")))
@@ -380,6 +389,15 @@ func (q *builderQuery[T]) executeWithContext(ctx context.Context, query string, 
 	payload, err := consume(rows, kind, queryWindow, q.spec.StepInterval, q.spec.Name)
 	if err != nil {
 		return nil, err
+	}
+
+	// TODO: This should move to readAsRaw function in consume.go but for now we are keeping it here since it's only relevant for traces
+	if q.spec.Signal == telemetrytypes.SignalTraces {
+		if raw, ok := payload.(*qbtypes.RawData); ok {
+			for _, rr := range raw.Rows {
+				mergeSpanAttributeColumns(rr.Data)
+			}
+		}
 	}
 
 	return &qbtypes.Result{

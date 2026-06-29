@@ -20,6 +20,7 @@ import type {
 import type {
 	AuthtypesPatchableRoleDTO,
 	AuthtypesPostableRoleDTO,
+	AuthtypesUpdatableRoleDTO,
 	CoretypesPatchableObjectsDTO,
 	CreateRole201,
 	DeleteRolePathParameters,
@@ -31,6 +32,7 @@ import type {
 	PatchObjectsPathParameters,
 	PatchRolePathParameters,
 	RenderErrorResponseDTO,
+	UpdateRolePathParameters,
 } from '../sigNoz.schemas';
 
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
@@ -365,6 +367,7 @@ export const invalidateGetRole = async (
 
 /**
  * This endpoint patches a role
+ * @deprecated
  * @summary Patch role
  */
 export const patchRole = (
@@ -436,6 +439,7 @@ export type PatchRoleMutationBody =
 export type PatchRoleMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
+ * @deprecated
  * @summary Patch role
  */
 export const usePatchRole = <
@@ -461,6 +465,105 @@ export const usePatchRole = <
 	TContext
 > => {
 	return useMutation(getPatchRoleMutationOptions(options));
+};
+/**
+ * This endpoint updates a role
+ * @summary Update role
+ */
+export const updateRole = (
+	{ id }: UpdateRolePathParameters,
+	authtypesUpdatableRoleDTO?: BodyType<AuthtypesUpdatableRoleDTO>,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<void>({
+		url: `/api/v1/roles/${id}`,
+		method: 'PUT',
+		headers: { 'Content-Type': 'application/json' },
+		data: authtypesUpdatableRoleDTO,
+		signal,
+	});
+};
+
+export const getUpdateRoleMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof updateRole>>,
+		TError,
+		{
+			pathParams: UpdateRolePathParameters;
+			data?: BodyType<AuthtypesUpdatableRoleDTO>;
+		},
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof updateRole>>,
+	TError,
+	{
+		pathParams: UpdateRolePathParameters;
+		data?: BodyType<AuthtypesUpdatableRoleDTO>;
+	},
+	TContext
+> => {
+	const mutationKey = ['updateRole'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof updateRole>>,
+		{
+			pathParams: UpdateRolePathParameters;
+			data?: BodyType<AuthtypesUpdatableRoleDTO>;
+		}
+	> = (props) => {
+		const { pathParams, data } = props ?? {};
+
+		return updateRole(pathParams, data);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateRoleMutationResult = NonNullable<
+	Awaited<ReturnType<typeof updateRole>>
+>;
+export type UpdateRoleMutationBody =
+	| BodyType<AuthtypesUpdatableRoleDTO>
+	| undefined;
+export type UpdateRoleMutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Update role
+ */
+export const useUpdateRole = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof updateRole>>,
+		TError,
+		{
+			pathParams: UpdateRolePathParameters;
+			data?: BodyType<AuthtypesUpdatableRoleDTO>;
+		},
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof updateRole>>,
+	TError,
+	{
+		pathParams: UpdateRolePathParameters;
+		data?: BodyType<AuthtypesUpdatableRoleDTO>;
+	},
+	TContext
+> => {
+	return useMutation(getUpdateRoleMutationOptions(options));
 };
 /**
  * Gets all objects connected to the specified role via a given relation type
@@ -565,6 +668,7 @@ export const invalidateGetObjects = async (
 
 /**
  * Patches the objects connected to the specified role via a given relation type
+ * @deprecated
  * @summary Patch objects for a role by relation
  */
 export const patchObjects = (
@@ -636,6 +740,7 @@ export type PatchObjectsMutationBody =
 export type PatchObjectsMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
+ * @deprecated
  * @summary Patch objects for a role by relation
  */
 export const usePatchObjects = <

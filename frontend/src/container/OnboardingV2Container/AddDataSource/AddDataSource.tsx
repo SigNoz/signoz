@@ -14,10 +14,12 @@ import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
 import { DOCS_BASE_URL } from 'constants/app';
+import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { useGetGlobalConfig } from 'api/generated/services/global';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import useUrlQuery from 'hooks/useUrlQuery';
 import { isEmpty } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
 import { isModifierKeyPressed } from 'utils/app';
@@ -146,6 +148,7 @@ const allGroupedDataSources = groupDataSourcesByTags(
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function OnboardingAddDataSource(): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
+	const urlQuery = useUrlQuery();
 	const [groupedDataSources, setGroupedDataSources] = useState<{
 		[tag: string]: Entity[];
 	}>(allGroupedDataSources);
@@ -208,12 +211,58 @@ function OnboardingAddDataSource(): JSX.Element {
 		}, 100);
 	};
 
+	const getStartedSource = urlQuery.get(QueryParams.getStartedSource);
+	const getStartedSourceService = urlQuery.get(
+		QueryParams.getStartedSourceService,
+	);
+
 	useEffect(() => {
 		void logEvent(
 			`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.STARTED}`,
 			{},
 		);
 	}, []);
+
+	const orgName = org?.[0]?.displayName;
+
+	useEffect(() => {
+		if (!getStartedSource || selectedDataSource) {
+			return;
+		}
+
+		const matchingDataSource = onboardingConfigWithLinks.find(
+			(ds) => ds.dataSource === getStartedSource,
+		) as Entity | undefined;
+
+		if (!matchingDataSource) {
+			return;
+		}
+
+		setSelectedDataSource(matchingDataSource);
+		setHasMoreQuestions(false);
+		updateUrl(matchingDataSource.link || '', null);
+		setCurrentStep(2);
+		setSetupStepItems([
+			{
+				...setupStepItemsBase[0],
+				description: orgName || '',
+			},
+			{
+				...setupStepItemsBase[1],
+				description: matchingDataSource.label,
+			},
+			...setupStepItemsBase.slice(2),
+		]);
+
+		void logEvent(
+			`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.DATA_SOURCE_SELECTED}`,
+			{
+				dataSource: matchingDataSource.label,
+				source: 'query_param',
+			},
+		);
+		// oxlint-disable-next-line react-hooks/exhaustive-deps Ignore update url since it's not stable
+	}, [getStartedSource, orgName, selectedDataSource]);
 
 	const updateUrl = (url: string, selectedEnvironment: string | null): void => {
 		if (!url || url === '') {
@@ -230,6 +279,10 @@ function OnboardingAddDataSource(): JSX.Element {
 
 		if (selectedEnvironment) {
 			urlObj.searchParams.set('environment', selectedEnvironment);
+		}
+
+		if (getStartedSourceService) {
+			urlObj.searchParams.set('service', getStartedSourceService);
 		}
 
 		const ingestionUrl = globalConfig?.data?.ingestion_url;

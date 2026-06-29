@@ -1,75 +1,75 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Plus } from '@signozhq/icons';
-import { Button } from '@signozhq/ui/button';
-import { Typography } from '@signozhq/ui/typography';
 import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
+import cx from 'classnames';
 
+import settingsStyles from '../DashboardSettings.module.scss';
 import { useDashboardStore } from '../../store/useDashboardStore';
 import { useSaveVariables } from './useSaveVariables';
 import { dtoToFormModel } from './variableAdapters';
 import {
 	emptyVariableFormModel,
 	type VariableFormModel,
-} from './variableModel';
+} from './variableFormModel';
 import VariableForm from './VariableForm/VariableForm';
 import VariablesList from './VariablesList';
 import styles from './Variables.module.scss';
+import AddVariableButton from './components/AddVariableButton';
+import NoVariablesCard from './components/NoVariablesCard/NoVariablesCard';
+import { EditingState } from './types';
 
 interface VariablesSettingsProps {
 	dashboard: DashboardtypesGettableDashboardV2DTO;
 }
 
-/** `null` index = adding a new variable; a number = editing that row. */
-type EditingState = { index: number | null } | null;
-
 function VariablesSettings({ dashboard }: VariablesSettingsProps): JSX.Element {
 	const isEditable = useDashboardStore((s) => s.isEditable);
 	const { save, isSaving } = useSaveVariables();
 
-	const initialModels = useMemo(
-		() => (dashboard.spec?.variables ?? []).map(dtoToFormModel),
-		[dashboard.spec?.variables],
+	const initialFormModels = useMemo(
+		() => dashboard.spec.variables.map(dtoToFormModel),
+		[dashboard.spec.variables],
 	);
-	const [variables, setVariables] = useState<VariableFormModel[]>(initialModels);
+	const [variables, setVariables] =
+		useState<VariableFormModel[]>(initialFormModels);
 
 	// Resync from the dashboard after a save round-trips (refetch bumps updatedAt).
 	useEffect(() => {
-		setVariables(initialModels);
+		setVariables(initialFormModels);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [dashboard.updatedAt]);
 
-	const [editing, setEditing] = useState<EditingState>(null);
+	const [isEditing, setIsEditing] = useState<EditingState>(null);
 	const [confirmDeleteIndex, setConfirmDeleteIndex] = useState<number | null>(
 		null,
 	);
 
-	const editingModel: VariableFormModel | null = useMemo(() => {
-		if (!editing) {
+	const editingFormModel: VariableFormModel | null = useMemo(() => {
+		if (!isEditing) {
 			return null;
 		}
-		return editing.index === null
+		return isEditing.type === 'new'
 			? emptyVariableFormModel()
-			: variables[editing.index];
-	}, [editing, variables]);
+			: variables[isEditing.index];
+	}, [isEditing, variables]);
 
-	const existingNames = useMemo(() => {
-		const self = editing?.index ?? null;
-		return variables.filter((_, i) => i !== self).map((v) => v.name);
-	}, [variables, editing]);
+	const siblings = useMemo(() => {
+		const self = isEditing?.type === 'edit' ? isEditing.index : null;
+		return variables.filter((_, i) => i !== self);
+	}, [variables, isEditing]);
 
 	const persist = (next: VariableFormModel[]): void => {
 		setVariables(next);
 		void save(next);
 	};
 
-	const handleFormSave = (model: VariableFormModel): void => {
+	const handleFormSave = (Formmodel: VariableFormModel): void => {
 		const next = [...variables];
-		if (editing?.index == null) {
-			next.push(model);
-		} else {
-			next[editing.index] = model;
+		if (isEditing?.type === 'new') {
+			next.push(Formmodel);
+		} else if (isEditing?.type === 'edit') {
+			next[isEditing.index] = Formmodel;
 		}
-		setEditing(null);
+		setIsEditing(null);
 		persist(next);
 	};
 
@@ -88,14 +88,14 @@ function VariablesSettings({ dashboard }: VariablesSettingsProps): JSX.Element {
 		setConfirmDeleteIndex(null);
 	};
 
-	// Detail view — edit/new form replaces the list in place (no modal).
-	if (editingModel) {
+	if (editingFormModel) {
 		return (
 			<VariableForm
-				initial={editingModel}
-				existingNames={existingNames}
+				initial={editingFormModel}
+				siblings={siblings}
+				isNew={isEditing?.type === 'new'}
 				isSaving={isSaving}
-				onClose={(): void => setEditing(null)}
+				onClose={(): void => setIsEditing(null)}
 				onSave={handleFormSave}
 			/>
 		);
@@ -103,42 +103,25 @@ function VariablesSettings({ dashboard }: VariablesSettingsProps): JSX.Element {
 
 	// Master view — the variables list.
 	return (
-		<div className={styles.container}>
-			<div className={styles.header}>
-				<div className={styles.titleRow}>
-					<Typography.Text className={styles.title}>Variables</Typography.Text>
-					<Typography.Text className={styles.subtitle}>
-						Define variables to parameterize panel queries.
-					</Typography.Text>
-				</div>
-				{isEditable ? (
-					<Button
-						variant="solid"
-						color="primary"
-						prefix={<Plus size={14} />}
-						onClick={(): void => setEditing({ index: null })}
-						testId="add-variable"
-					>
-						New variable
-					</Button>
-				) : null}
-			</div>
-
+		<div className={cx(styles.container, settingsStyles.settingsCard)}>
 			{variables.length === 0 ? (
-				<div className={styles.empty}>
-					<Typography.Text>No variables defined yet.</Typography.Text>
-				</div>
+				<NoVariablesCard isEditable={isEditable} setIsEditing={setIsEditing} />
 			) : (
-				<VariablesList
-					variables={variables}
-					canEdit={isEditable}
-					confirmingIndex={confirmDeleteIndex}
-					onEdit={(index): void => setEditing({ index })}
-					onRequestDelete={(index): void => setConfirmDeleteIndex(index)}
-					onConfirmDelete={handleConfirmDelete}
-					onCancelDelete={(): void => setConfirmDeleteIndex(null)}
-					onMove={handleMove}
-				/>
+				<>
+					<div className={styles.header}>
+						<AddVariableButton isEditable={isEditable} setIsEditing={setIsEditing} />
+					</div>
+					<VariablesList
+						variables={variables}
+						canEdit={isEditable}
+						confirmingIndex={confirmDeleteIndex}
+						onEdit={(index): void => setIsEditing({ type: 'edit', index })}
+						onRequestDelete={(index): void => setConfirmDeleteIndex(index)}
+						onConfirmDelete={handleConfirmDelete}
+						onCancelDelete={(): void => setConfirmDeleteIndex(null)}
+						onMove={handleMove}
+					/>
+				</>
 			)}
 		</div>
 	);
