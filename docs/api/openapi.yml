@@ -4633,6 +4633,67 @@ components:
       - failed
       - unknown
       type: object
+    InframonitoringtypesPodCountsByStatus:
+      properties:
+        completed:
+          type: integer
+        containerCannotRun:
+          type: integer
+        containerCreating:
+          type: integer
+        crashLoopBackOff:
+          type: integer
+        createContainerConfigError:
+          type: integer
+        errImagePull:
+          type: integer
+        error:
+          type: integer
+        evicted:
+          type: integer
+        failed:
+          type: integer
+        imagePullBackOff:
+          type: integer
+        nodeAffinity:
+          type: integer
+        nodeLost:
+          type: integer
+        oomKilled:
+          type: integer
+        pending:
+          type: integer
+        running:
+          type: integer
+        shutdown:
+          type: integer
+        succeeded:
+          type: integer
+        unexpectedAdmissionError:
+          type: integer
+        unknown:
+          type: integer
+      required:
+      - pending
+      - running
+      - succeeded
+      - failed
+      - unknown
+      - crashLoopBackOff
+      - imagePullBackOff
+      - errImagePull
+      - createContainerConfigError
+      - containerCreating
+      - oomKilled
+      - completed
+      - error
+      - containerCannotRun
+      - evicted
+      - nodeAffinity
+      - nodeLost
+      - shutdown
+      - unexpectedAdmissionError
+      type: object
     InframonitoringtypesPodPhase:
       enum:
       - pending
@@ -4663,6 +4724,8 @@ components:
           type: number
         podCountsByPhase:
           $ref: '#/components/schemas/InframonitoringtypesPodCountsByPhase'
+        podCountsByStatus:
+          $ref: '#/components/schemas/InframonitoringtypesPodCountsByStatus'
         podMemory:
           format: double
           type: number
@@ -4674,6 +4737,8 @@ components:
           type: number
         podPhase:
           $ref: '#/components/schemas/InframonitoringtypesPodPhase'
+        podStatus:
+          $ref: '#/components/schemas/InframonitoringtypesPodStatus'
         podUID:
           type: string
       required:
@@ -4686,9 +4751,34 @@ components:
       - podMemoryLimit
       - podPhase
       - podCountsByPhase
+      - podStatus
+      - podCountsByStatus
       - podAge
       - meta
       type: object
+    InframonitoringtypesPodStatus:
+      enum:
+      - pending
+      - running
+      - succeeded
+      - failed
+      - unknown
+      - crashloopbackoff
+      - imagepullbackoff
+      - errimagepull
+      - createcontainerconfigerror
+      - containercreating
+      - oomkilled
+      - completed
+      - error
+      - containercannotrun
+      - evicted
+      - nodeaffinity
+      - nodelost
+      - shutdown
+      - unexpectedadmissionerror
+      - nodata
+      type: string
     InframonitoringtypesPods:
       properties:
         endTimeBeforeRetention:

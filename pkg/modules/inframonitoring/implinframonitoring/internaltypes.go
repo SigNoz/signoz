@@ -26,6 +26,35 @@ type podPhaseCounts struct {
 	Unknown   int
 }
 
+// podStatusCounts holds per-group pod counts bucketed by latest kubectl-style
+// display status in window. Mirrors inframonitoringtypes.PodCountsByStatus.
+type podStatusCounts struct {
+	// Phase fallback.
+	Pending   int
+	Running   int
+	Succeeded int
+	Failed    int
+	Unknown   int
+
+	// Container-level reasons.
+	CrashLoopBackOff           int
+	ImagePullBackOff           int
+	ErrImagePull               int
+	CreateContainerConfigError int
+	ContainerCreating          int
+	OOMKilled                  int
+	Completed                  int
+	Error                      int
+	ContainerCannotRun         int
+
+	// Pod-level reasons.
+	Evicted                  int
+	NodeAffinity             int
+	NodeLost                 int
+	Shutdown                 int
+	UnexpectedAdmissionError int
+}
+
 // nodeConditionCounts holds per-group node counts bucketed by latest condition_ready in window.
 type nodeConditionCounts struct {
 	Ready    int
