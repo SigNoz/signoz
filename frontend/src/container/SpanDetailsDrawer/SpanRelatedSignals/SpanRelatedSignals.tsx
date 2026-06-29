@@ -15,6 +15,10 @@ import InfraMetrics from 'container/LogDetailedView/InfraMetrics/InfraMetrics';
 import { getEmptyLogsListConfig } from 'container/LogsExplorerList/utils';
 import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import {
+	applySerializedParams,
+	serialize,
+} from 'lib/compositeQuery/serializer';
 import { BarChart, Compass, X } from '@signozhq/icons';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Span } from 'types/api/trace/getTraceV2';
@@ -155,7 +159,7 @@ function SpanRelatedSignals({
 		};
 
 		const searchParams = new URLSearchParams();
-		searchParams.set(QueryParams.compositeQuery, JSON.stringify(compositeQuery));
+		applySerializedParams(serialize(compositeQuery as any), searchParams);
 		searchParams.set(QueryParams.startTime, startTimeMs.toString());
 		searchParams.set(QueryParams.endTime, endTimeMs.toString());
 

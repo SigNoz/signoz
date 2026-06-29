@@ -14,6 +14,10 @@ import { FontSize } from 'container/OptionsMenu/types';
 import { ORDERBY_FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useUrlQuery from 'hooks/useUrlQuery';
+import {
+	applySerializedParams,
+	serialize,
+} from 'lib/compositeQuery/serializer';
 import { ILog } from 'types/api/logs/log';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
@@ -111,10 +115,7 @@ function ContextLogRenderer({
 		(logId: string): void => {
 			urlQuery.set(QueryParams.activeLogId, `"${logId}"`);
 
-			urlQuery.set(
-				QueryParams.compositeQuery,
-				encodeURIComponent(JSON.stringify(query)),
-			);
+			applySerializedParams(serialize(query), urlQuery);
 
 			const link = `${ROUTES.LOGS_EXPLORER}?${urlQuery.toString()}`;
 			window.open(withBasePath(link), '_blank', 'noopener,noreferrer');

@@ -32,6 +32,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useNotifications } from 'hooks/useNotifications';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import { serializeToParams } from 'lib/compositeQuery/serializer';
 import createQueryParams from 'lib/createQueryParams';
 import { cloneDeep } from 'lodash-es';
 import {
@@ -252,7 +253,7 @@ function LogDetailInner({
 			[QueryParams.activeLogId]: `"${log?.id}"`,
 			[QueryParams.startTime]: minTime?.toString() || '',
 			[QueryParams.endTime]: maxTime?.toString() || '',
-			[QueryParams.compositeQuery]: JSON.stringify(
+			...serializeToParams(
 				updateAllQueriesOperators(
 					initialQueriesMap[DataSource.LOGS],
 					PANEL_TYPES.LIST,

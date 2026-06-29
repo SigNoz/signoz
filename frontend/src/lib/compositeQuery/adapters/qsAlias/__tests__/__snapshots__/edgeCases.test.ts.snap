@@ -1,0 +1,1043 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`qsAliasAdapter edge cases array growth round-trips multiple added filter items element-wise: decoded 1`] = `
+{
+  "builder": {
+    "queryData": [
+      {
+        "aggregateAttribute": {
+          "dataType": "",
+          "id": "----",
+          "key": "",
+          "type": "",
+        },
+        "aggregateOperator": "count",
+        "aggregations": [
+          {
+            "expression": "count() ",
+          },
+        ],
+        "dataSource": "logs",
+        "disabled": false,
+        "expression": "A",
+        "filter": {
+          "expression": "",
+        },
+        "filters": {
+          "items": [
+            {
+              "id": "item-a",
+              "key": {
+                "dataType": "string",
+                "isColumn": false,
+                "isJSON": false,
+                "key": "severity_text",
+                "type": "tag",
+              },
+              "op": "=",
+              "value": "a",
+            },
+            {
+              "id": "item-b",
+              "key": {
+                "dataType": "string",
+                "isColumn": false,
+                "isJSON": false,
+                "key": "severity_text",
+                "type": "tag",
+              },
+              "op": "=",
+              "value": "b",
+            },
+          ],
+          "op": "AND",
+        },
+        "functions": [],
+        "groupBy": [],
+        "having": [],
+        "legend": "",
+        "limit": null,
+        "orderBy": [],
+        "queryName": "A",
+        "reduceTo": "avg",
+        "source": "",
+        "spaceAggregation": "sum",
+        "stepInterval": null,
+        "timeAggregation": "rate",
+      },
+    ],
+    "queryFormulas": [],
+    "queryTraceOperator": [],
+  },
+  "clickhouse_sql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "id": "test-stable-id",
+  "promql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "queryType": "builder",
+  "unit": "",
+}
+`;
+
+exports[`qsAliasAdapter edge cases array growth round-trips multiple added filter items element-wise: url 1`] = `"_t=QAl&id=test-stable-id&query0.aggOp=count&query0.filters.items.0.id=item-a&query0.filters.items.0.key.dt=string&query0.filters.items.0.key.ic=_false&query0.filters.items.0.key.ij=_false&query0.filters.items.0.key.key=severity_text&query0.filters.items.0.key.type=tag&query0.filters.items.0.op=%3D&query0.filters.items.0.value=a&query0.filters.items.1.id=item-b&query0.filters.items.1.key.dt=string&query0.filters.items.1.key.ic=_false&query0.filters.items.1.key.ij=_false&query0.filters.items.1.key.key=severity_text&query0.filters.items.1.key.type=tag&query0.filters.items.1.op=%3D&query0.filters.items.1.value=b&query0.source="`;
+
+exports[`qsAliasAdapter edge cases baseline field deletion emits a delete token and decode drops the field: decoded 1`] = `
+{
+  "builder": {
+    "queryData": [
+      {
+        "aggregateAttribute": {
+          "dataType": "",
+          "id": "----",
+          "key": "",
+          "type": "",
+        },
+        "aggregations": [
+          {
+            "expression": "count() ",
+          },
+        ],
+        "dataSource": "logs",
+        "disabled": false,
+        "expression": "A",
+        "filter": {
+          "expression": "",
+        },
+        "filters": {
+          "items": [],
+          "op": "AND",
+        },
+        "functions": [],
+        "groupBy": [],
+        "having": [],
+        "legend": "",
+        "limit": null,
+        "orderBy": [],
+        "queryName": "A",
+        "reduceTo": "avg",
+        "source": "",
+        "spaceAggregation": "sum",
+        "stepInterval": null,
+        "timeAggregation": "rate",
+      },
+    ],
+    "queryFormulas": [],
+    "queryTraceOperator": [],
+  },
+  "clickhouse_sql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "id": "test-stable-id",
+  "promql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "queryType": "builder",
+  "unit": "",
+}
+`;
+
+exports[`qsAliasAdapter edge cases baseline field deletion emits a delete token and decode drops the field: url 1`] = `"_t=QAl&-query0.aggOp=&id=test-stable-id&query0.source="`;
+
+exports[`qsAliasAdapter edge cases null and empty containers round-trips a null leaf: decoded 1`] = `
+{
+  "builder": {
+    "queryData": [
+      {
+        "aggregateAttribute": {
+          "dataType": "",
+          "id": "----",
+          "key": "",
+          "type": "",
+        },
+        "aggregateOperator": "count",
+        "aggregations": [
+          {
+            "expression": "count() ",
+          },
+        ],
+        "dataSource": "logs",
+        "disabled": false,
+        "expression": "A",
+        "filter": {
+          "expression": "",
+        },
+        "filters": {
+          "items": [],
+          "op": "AND",
+        },
+        "functions": [],
+        "groupBy": [],
+        "having": [],
+        "legend": null,
+        "limit": null,
+        "orderBy": [],
+        "queryName": "A",
+        "reduceTo": "avg",
+        "source": "",
+        "spaceAggregation": "sum",
+        "stepInterval": null,
+        "timeAggregation": "rate",
+      },
+    ],
+    "queryFormulas": [],
+    "queryTraceOperator": [],
+  },
+  "clickhouse_sql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "id": "test-stable-id",
+  "promql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "queryType": "builder",
+  "unit": "",
+}
+`;
+
+exports[`qsAliasAdapter edge cases null and empty containers round-trips a null leaf: url 1`] = `"_t=QAl&id=test-stable-id&query0.aggOp=count&query0.legend=_null&query0.source="`;
+
+exports[`qsAliasAdapter edge cases null and empty containers round-trips an empty-array leaf: decoded 1`] = `
+{
+  "builder": {
+    "queryData": [
+      {
+        "aggregateAttribute": {
+          "dataType": "",
+          "id": "----",
+          "key": "",
+          "type": "",
+        },
+        "aggregateOperator": "count",
+        "aggregations": [
+          {
+            "expression": "count() ",
+          },
+        ],
+        "dataSource": "logs",
+        "disabled": false,
+        "expression": "A",
+        "filter": {
+          "expression": "",
+        },
+        "filters": {
+          "items": [],
+          "op": "AND",
+        },
+        "functions": [],
+        "groupBy": [],
+        "having": [],
+        "legend": "",
+        "limit": null,
+        "orderBy": [],
+        "queryName": "A",
+        "reduceTo": "avg",
+        "source": "",
+        "spaceAggregation": "sum",
+        "stepInterval": null,
+        "timeAggregation": "rate",
+      },
+    ],
+    "queryFormulas": [],
+    "queryTraceOperator": [],
+  },
+  "clickhouse_sql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "id": "test-stable-id",
+  "promql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "queryType": "builder",
+  "unit": "",
+}
+`;
+
+exports[`qsAliasAdapter edge cases null and empty containers round-trips an empty-array leaf: url 1`] = `"_t=QAl&id=test-stable-id&query0.aggOp=count&query0.source="`;
+
+exports[`qsAliasAdapter edge cases null and empty containers round-trips an empty-object leaf: decoded 1`] = `
+{
+  "builder": {
+    "queryData": [
+      {
+        "aggregateAttribute": {
+          "dataType": "",
+          "id": "----",
+          "key": "",
+          "type": "",
+        },
+        "aggregateOperator": "count",
+        "aggregations": [
+          {
+            "expression": "count() ",
+          },
+        ],
+        "dataSource": "logs",
+        "disabled": false,
+        "expression": "A",
+        "filter": {},
+        "filters": {
+          "items": [],
+          "op": "AND",
+        },
+        "functions": [],
+        "groupBy": [],
+        "having": [],
+        "legend": "",
+        "limit": null,
+        "orderBy": [],
+        "queryName": "A",
+        "reduceTo": "avg",
+        "source": "",
+        "spaceAggregation": "sum",
+        "stepInterval": null,
+        "timeAggregation": "rate",
+      },
+    ],
+    "queryFormulas": [],
+    "queryTraceOperator": [],
+  },
+  "clickhouse_sql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "id": "test-stable-id",
+  "promql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "queryType": "builder",
+  "unit": "",
+}
+`;
+
+exports[`qsAliasAdapter edge cases null and empty containers round-trips an empty-object leaf: url 1`] = `"_t=QAl&id=test-stable-id&query0.aggOp=count&query0.filter=_%7B%7D&query0.source="`;
+
+exports[`qsAliasAdapter edge cases scalar type fidelity keeps boolean and look-alike string distinct: decoded 1`] = `
+{
+  "builder": {
+    "queryData": [
+      {
+        "aggregateAttribute": {
+          "dataType": "",
+          "id": "----",
+          "key": "",
+          "type": "",
+        },
+        "aggregateOperator": "count",
+        "aggregations": [
+          {
+            "expression": "count() ",
+          },
+        ],
+        "dataSource": "logs",
+        "disabled": true,
+        "expression": "A",
+        "filter": {
+          "expression": "",
+        },
+        "filters": {
+          "items": [],
+          "op": "AND",
+        },
+        "functions": [],
+        "groupBy": [],
+        "having": [],
+        "legend": "true",
+        "limit": null,
+        "orderBy": [],
+        "queryName": "A",
+        "reduceTo": "avg",
+        "source": "",
+        "spaceAggregation": "sum",
+        "stepInterval": null,
+        "timeAggregation": "rate",
+      },
+    ],
+    "queryFormulas": [],
+    "queryTraceOperator": [],
+  },
+  "clickhouse_sql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "id": "test-stable-id",
+  "promql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "queryType": "builder",
+  "unit": "",
+}
+`;
+
+exports[`qsAliasAdapter edge cases scalar type fidelity keeps boolean and look-alike string distinct: url 1`] = `"_t=QAl&id=test-stable-id&query0.aggOp=count&query0.disabled=_true&query0.legend=true&query0.source="`;
+
+exports[`qsAliasAdapter edge cases scalar type fidelity keeps number and look-alike string distinct: decoded 1`] = `
+{
+  "builder": {
+    "queryData": [
+      {
+        "aggregateAttribute": {
+          "dataType": "",
+          "id": "----",
+          "key": "",
+          "type": "",
+        },
+        "aggregateOperator": "count",
+        "aggregations": [
+          {
+            "expression": "count() ",
+          },
+        ],
+        "dataSource": "logs",
+        "disabled": false,
+        "expression": "A",
+        "filter": {
+          "expression": "",
+        },
+        "filters": {
+          "items": [],
+          "op": "AND",
+        },
+        "functions": [],
+        "groupBy": [],
+        "having": [],
+        "legend": "300",
+        "limit": null,
+        "orderBy": [],
+        "queryName": "A",
+        "reduceTo": "avg",
+        "source": "",
+        "spaceAggregation": "sum",
+        "stepInterval": 300,
+        "timeAggregation": "rate",
+      },
+    ],
+    "queryFormulas": [],
+    "queryTraceOperator": [],
+  },
+  "clickhouse_sql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "id": "test-stable-id",
+  "promql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "queryType": "builder",
+  "unit": "",
+}
+`;
+
+exports[`qsAliasAdapter edge cases scalar type fidelity keeps number and look-alike string distinct: url 1`] = `"_t=QAl&id=test-stable-id&query0.aggOp=count&query0.legend=300&query0.source=&query0.stepIn=_300"`;
+
+exports[`qsAliasAdapter edge cases tricky scalar values (lossless) keeps "true" / "false" / "null" string values as strings: decoded-false 1`] = `
+{
+  "builder": {
+    "queryData": [
+      {
+        "aggregateAttribute": {
+          "dataType": "",
+          "id": "----",
+          "key": "",
+          "type": "",
+        },
+        "aggregateOperator": "count",
+        "aggregations": [
+          {
+            "expression": "count() ",
+          },
+        ],
+        "dataSource": "logs",
+        "disabled": false,
+        "expression": "A",
+        "filter": {
+          "expression": "",
+        },
+        "filters": {
+          "items": [],
+          "op": "AND",
+        },
+        "functions": [],
+        "groupBy": [],
+        "having": [],
+        "legend": "false",
+        "limit": null,
+        "orderBy": [],
+        "queryName": "A",
+        "reduceTo": "avg",
+        "source": "",
+        "spaceAggregation": "sum",
+        "stepInterval": null,
+        "timeAggregation": "rate",
+      },
+    ],
+    "queryFormulas": [],
+    "queryTraceOperator": [],
+  },
+  "clickhouse_sql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "id": "test-stable-id",
+  "promql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "queryType": "builder",
+  "unit": "",
+}
+`;
+
+exports[`qsAliasAdapter edge cases tricky scalar values (lossless) keeps "true" / "false" / "null" string values as strings: decoded-null 1`] = `
+{
+  "builder": {
+    "queryData": [
+      {
+        "aggregateAttribute": {
+          "dataType": "",
+          "id": "----",
+          "key": "",
+          "type": "",
+        },
+        "aggregateOperator": "count",
+        "aggregations": [
+          {
+            "expression": "count() ",
+          },
+        ],
+        "dataSource": "logs",
+        "disabled": false,
+        "expression": "A",
+        "filter": {
+          "expression": "",
+        },
+        "filters": {
+          "items": [],
+          "op": "AND",
+        },
+        "functions": [],
+        "groupBy": [],
+        "having": [],
+        "legend": "null",
+        "limit": null,
+        "orderBy": [],
+        "queryName": "A",
+        "reduceTo": "avg",
+        "source": "",
+        "spaceAggregation": "sum",
+        "stepInterval": null,
+        "timeAggregation": "rate",
+      },
+    ],
+    "queryFormulas": [],
+    "queryTraceOperator": [],
+  },
+  "clickhouse_sql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "id": "test-stable-id",
+  "promql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "queryType": "builder",
+  "unit": "",
+}
+`;
+
+exports[`qsAliasAdapter edge cases tricky scalar values (lossless) keeps "true" / "false" / "null" string values as strings: decoded-true 1`] = `
+{
+  "builder": {
+    "queryData": [
+      {
+        "aggregateAttribute": {
+          "dataType": "",
+          "id": "----",
+          "key": "",
+          "type": "",
+        },
+        "aggregateOperator": "count",
+        "aggregations": [
+          {
+            "expression": "count() ",
+          },
+        ],
+        "dataSource": "logs",
+        "disabled": false,
+        "expression": "A",
+        "filter": {
+          "expression": "",
+        },
+        "filters": {
+          "items": [],
+          "op": "AND",
+        },
+        "functions": [],
+        "groupBy": [],
+        "having": [],
+        "legend": "true",
+        "limit": null,
+        "orderBy": [],
+        "queryName": "A",
+        "reduceTo": "avg",
+        "source": "",
+        "spaceAggregation": "sum",
+        "stepInterval": null,
+        "timeAggregation": "rate",
+      },
+    ],
+    "queryFormulas": [],
+    "queryTraceOperator": [],
+  },
+  "clickhouse_sql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "id": "test-stable-id",
+  "promql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "queryType": "builder",
+  "unit": "",
+}
+`;
+
+exports[`qsAliasAdapter edge cases tricky scalar values (lossless) keeps "true" / "false" / "null" string values as strings: url-false 1`] = `"_t=QAl&id=test-stable-id&query0.aggOp=count&query0.legend=false&query0.source="`;
+
+exports[`qsAliasAdapter edge cases tricky scalar values (lossless) keeps "true" / "false" / "null" string values as strings: url-null 1`] = `"_t=QAl&id=test-stable-id&query0.aggOp=count&query0.legend=null&query0.source="`;
+
+exports[`qsAliasAdapter edge cases tricky scalar values (lossless) keeps "true" / "false" / "null" string values as strings: url-true 1`] = `"_t=QAl&id=test-stable-id&query0.aggOp=count&query0.legend=true&query0.source="`;
+
+exports[`qsAliasAdapter edge cases tricky scalar values (lossless) keeps a numeric-looking string as a string: decoded 1`] = `
+{
+  "builder": {
+    "queryData": [
+      {
+        "aggregateAttribute": {
+          "dataType": "",
+          "id": "----",
+          "key": "",
+          "type": "",
+        },
+        "aggregateOperator": "count",
+        "aggregations": [
+          {
+            "expression": "count() ",
+          },
+        ],
+        "dataSource": "logs",
+        "disabled": false,
+        "expression": "A",
+        "filter": {
+          "expression": "",
+        },
+        "filters": {
+          "items": [],
+          "op": "AND",
+        },
+        "functions": [],
+        "groupBy": [],
+        "having": [],
+        "legend": "123",
+        "limit": null,
+        "orderBy": [],
+        "queryName": "A",
+        "reduceTo": "avg",
+        "source": "",
+        "spaceAggregation": "sum",
+        "stepInterval": null,
+        "timeAggregation": "rate",
+      },
+    ],
+    "queryFormulas": [],
+    "queryTraceOperator": [],
+  },
+  "clickhouse_sql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "id": "test-stable-id",
+  "promql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "queryType": "builder",
+  "unit": "",
+}
+`;
+
+exports[`qsAliasAdapter edge cases tricky scalar values (lossless) keeps a numeric-looking string as a string: url 1`] = `"_t=QAl&id=test-stable-id&query0.aggOp=count&query0.legend=123&query0.source="`;
+
+exports[`qsAliasAdapter edge cases tricky scalar values (lossless) preserves a string that begins with the type-tag char: decoded 1`] = `
+{
+  "builder": {
+    "queryData": [
+      {
+        "aggregateAttribute": {
+          "dataType": "",
+          "id": "----",
+          "key": "",
+          "type": "",
+        },
+        "aggregateOperator": "count",
+        "aggregations": [
+          {
+            "expression": "count() ",
+          },
+        ],
+        "dataSource": "logs",
+        "disabled": false,
+        "expression": "A",
+        "filter": {
+          "expression": "",
+        },
+        "filters": {
+          "items": [],
+          "op": "AND",
+        },
+        "functions": [],
+        "groupBy": [],
+        "having": [],
+        "legend": "_underscored",
+        "limit": null,
+        "orderBy": [],
+        "queryName": "A",
+        "reduceTo": "avg",
+        "source": "",
+        "spaceAggregation": "sum",
+        "stepInterval": null,
+        "timeAggregation": "rate",
+      },
+    ],
+    "queryFormulas": [],
+    "queryTraceOperator": [],
+  },
+  "clickhouse_sql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "id": "test-stable-id",
+  "promql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "queryType": "builder",
+  "unit": "",
+}
+`;
+
+exports[`qsAliasAdapter edge cases tricky scalar values (lossless) preserves a string that begins with the type-tag char: url 1`] = `"_t=QAl&id=test-stable-id&query0.aggOp=count&query0.legend=__underscored&query0.source="`;
+
+exports[`qsAliasAdapter edge cases tricky scalar values (lossless) preserves a value containing the ampersand delimiter: decoded 1`] = `
+{
+  "builder": {
+    "queryData": [
+      {
+        "aggregateAttribute": {
+          "dataType": "",
+          "id": "----",
+          "key": "",
+          "type": "",
+        },
+        "aggregateOperator": "count",
+        "aggregations": [
+          {
+            "expression": "count() ",
+          },
+        ],
+        "dataSource": "logs",
+        "disabled": false,
+        "expression": "A",
+        "filter": {
+          "expression": "",
+        },
+        "filters": {
+          "items": [],
+          "op": "AND",
+        },
+        "functions": [],
+        "groupBy": [],
+        "having": [],
+        "legend": "x&y",
+        "limit": null,
+        "orderBy": [],
+        "queryName": "A",
+        "reduceTo": "avg",
+        "source": "",
+        "spaceAggregation": "sum",
+        "stepInterval": null,
+        "timeAggregation": "rate",
+      },
+    ],
+    "queryFormulas": [],
+    "queryTraceOperator": [],
+  },
+  "clickhouse_sql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "id": "test-stable-id",
+  "promql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "queryType": "builder",
+  "unit": "",
+}
+`;
+
+exports[`qsAliasAdapter edge cases tricky scalar values (lossless) preserves a value containing the ampersand delimiter: url 1`] = `"_t=QAl&id=test-stable-id&query0.aggOp=count&query0.legend=x%26y&query0.source="`;
+
+exports[`qsAliasAdapter edge cases tricky scalar values (lossless) preserves assorted wire-special characters: decoded 1`] = `
+{
+  "builder": {
+    "queryData": [
+      {
+        "aggregateAttribute": {
+          "dataType": "",
+          "id": "----",
+          "key": "",
+          "type": "",
+        },
+        "aggregateOperator": "count",
+        "aggregations": [
+          {
+            "expression": "count() ",
+          },
+        ],
+        "dataSource": "logs",
+        "disabled": false,
+        "expression": "A",
+        "filter": {
+          "expression": "",
+        },
+        "filters": {
+          "items": [],
+          "op": "AND",
+        },
+        "functions": [],
+        "groupBy": [],
+        "having": [],
+        "legend": "a=b&c#d%e+f.g",
+        "limit": null,
+        "orderBy": [],
+        "queryName": "A",
+        "reduceTo": "avg",
+        "source": "",
+        "spaceAggregation": "sum",
+        "stepInterval": null,
+        "timeAggregation": "rate",
+      },
+    ],
+    "queryFormulas": [],
+    "queryTraceOperator": [],
+  },
+  "clickhouse_sql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "id": "test-stable-id",
+  "promql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "queryType": "builder",
+  "unit": "",
+}
+`;
+
+exports[`qsAliasAdapter edge cases tricky scalar values (lossless) preserves assorted wire-special characters: url 1`] = `"_t=QAl&id=test-stable-id&query0.aggOp=count&query0.legend=a%3Db%26c%23d%25e%2Bf.g&query0.source="`;
+
+exports[`qsAliasAdapter edge cases undefined values does not break decode when fields are undefined: decoded 1`] = `
+{
+  "builder": {
+    "queryData": [
+      {
+        "aggregateAttribute": {
+          "dataType": "",
+          "id": "----",
+          "key": "",
+          "type": "",
+        },
+        "aggregateOperator": null,
+        "aggregations": [
+          {
+            "expression": "count() ",
+          },
+        ],
+        "dataSource": "logs",
+        "disabled": false,
+        "expression": "A",
+        "filter": {
+          "expression": "",
+        },
+        "filters": {
+          "items": [],
+          "op": "AND",
+        },
+        "functions": [],
+        "groupBy": [],
+        "having": [],
+        "legend": "",
+        "limit": null,
+        "orderBy": [],
+        "queryName": "A",
+        "reduceTo": "avg",
+        "source": null,
+        "spaceAggregation": "sum",
+        "stepInterval": null,
+        "timeAggregation": "rate",
+      },
+    ],
+    "queryFormulas": [],
+    "queryTraceOperator": [],
+  },
+  "clickhouse_sql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "id": "test-stable-id",
+  "promql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "queryType": "builder",
+  "unit": "",
+}
+`;
+
+exports[`qsAliasAdapter edge cases undefined values does not break decode when fields are undefined: url 1`] = `"_t=QAl&id=test-stable-id&query0.aggOp=_null&query0.source=_null"`;

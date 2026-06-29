@@ -2,9 +2,10 @@ import { useMutation } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { act, renderHook } from '@testing-library/react';
-import { QueryParams } from 'constants/query';
+import { deserialize } from 'lib/compositeQuery/serializer';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { Widgets } from 'types/api/dashboard/getAll';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 
 import useCreateAlerts from '../useCreateAlerts';
@@ -79,14 +80,14 @@ const buildWidget = (queryType: EQueryType | undefined): Widgets =>
 		},
 	}) as unknown as Widgets;
 
-const getCompositeQueryFromLastOpen = (): Record<string, unknown> => {
+const getCompositeQueryFromLastOpen = (): Query => {
 	const [url] = (window.open as jest.Mock).mock.calls[0];
 	const query = new URLSearchParams((url as string).split('?')[1]);
-	const raw = query.get(QueryParams.compositeQuery);
-	if (!raw) {
+	const composite = deserialize(query);
+	if (!composite) {
 		throw new Error('compositeQuery not found in URL');
 	}
-	return JSON.parse(decodeURIComponent(raw));
+	return composite;
 };
 
 describe('useCreateAlerts', () => {

@@ -7,6 +7,10 @@ import { SelectOption } from 'types/common/select';
 
 export const metricAggregateOperatorOptions: SelectOption<string, string>[] = [
 	{
+		value: MetricAggregateOperator.NOOP,
+		label: 'No aggregation',
+	},
+	{
 		value: MetricAggregateOperator.COUNT,
 		label: 'Count',
 	},

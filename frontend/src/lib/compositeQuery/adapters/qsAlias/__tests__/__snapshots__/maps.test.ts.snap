@@ -1,0 +1,388 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`qsAlias maps FIELD_ALIASES integrity FIELD_REVERSE is the exact inverse of FIELD_ALIASES: all-reverse 1`] = `
+{
+  "aggAttr": "aggregateAttribute",
+  "aggOp": "aggregateOperator",
+  "ds": "dataSource",
+  "dt": "dataType",
+  "ic": "isColumn",
+  "ij": "isJSON",
+  "mn": "metricName",
+  "qn": "queryName",
+  "qt": "queryType",
+  "spaceAgg": "spaceAggregation",
+  "stepIn": "stepInterval",
+  "timeAgg": "timeAggregation",
+  "tp": "temporality",
+}
+`;
+
+exports[`qsAlias maps FIELD_ALIASES integrity alias values are unique (no two fields share an alias): all-aliases 1`] = `
+{
+  "aggregateAttribute": "aggAttr",
+  "aggregateOperator": "aggOp",
+  "dataSource": "ds",
+  "dataType": "dt",
+  "isColumn": "ic",
+  "isJSON": "ij",
+  "metricName": "mn",
+  "queryName": "qn",
+  "queryType": "qt",
+  "spaceAggregation": "spaceAgg",
+  "stepInterval": "stepIn",
+  "temporality": "tp",
+  "timeAggregation": "timeAgg",
+}
+`;
+
+exports[`qsAlias maps FIELD_ALIASES — every key round-trips aggregateAttribute ⇄ aggAttr via aliasField / expandField: alias-aggregateAttribute 1`] = `
+{
+  "alias": "aggAttr",
+  "aliased": "aggAttr",
+  "expanded": "aggregateAttribute",
+  "field": "aggregateAttribute",
+}
+`;
+
+exports[`qsAlias maps FIELD_ALIASES — every key round-trips aggregateOperator ⇄ aggOp via aliasField / expandField: alias-aggregateOperator 1`] = `
+{
+  "alias": "aggOp",
+  "aliased": "aggOp",
+  "expanded": "aggregateOperator",
+  "field": "aggregateOperator",
+}
+`;
+
+exports[`qsAlias maps FIELD_ALIASES — every key round-trips dataSource ⇄ ds via aliasField / expandField: alias-dataSource 1`] = `
+{
+  "alias": "ds",
+  "aliased": "ds",
+  "expanded": "dataSource",
+  "field": "dataSource",
+}
+`;
+
+exports[`qsAlias maps FIELD_ALIASES — every key round-trips dataType ⇄ dt via aliasField / expandField: alias-dataType 1`] = `
+{
+  "alias": "dt",
+  "aliased": "dt",
+  "expanded": "dataType",
+  "field": "dataType",
+}
+`;
+
+exports[`qsAlias maps FIELD_ALIASES — every key round-trips isColumn ⇄ ic via aliasField / expandField: alias-isColumn 1`] = `
+{
+  "alias": "ic",
+  "aliased": "ic",
+  "expanded": "isColumn",
+  "field": "isColumn",
+}
+`;
+
+exports[`qsAlias maps FIELD_ALIASES — every key round-trips isJSON ⇄ ij via aliasField / expandField: alias-isJSON 1`] = `
+{
+  "alias": "ij",
+  "aliased": "ij",
+  "expanded": "isJSON",
+  "field": "isJSON",
+}
+`;
+
+exports[`qsAlias maps FIELD_ALIASES — every key round-trips metricName ⇄ mn via aliasField / expandField: alias-metricName 1`] = `
+{
+  "alias": "mn",
+  "aliased": "mn",
+  "expanded": "metricName",
+  "field": "metricName",
+}
+`;
+
+exports[`qsAlias maps FIELD_ALIASES — every key round-trips queryName ⇄ qn via aliasField / expandField: alias-queryName 1`] = `
+{
+  "alias": "qn",
+  "aliased": "qn",
+  "expanded": "queryName",
+  "field": "queryName",
+}
+`;
+
+exports[`qsAlias maps FIELD_ALIASES — every key round-trips queryType ⇄ qt via aliasField / expandField: alias-queryType 1`] = `
+{
+  "alias": "qt",
+  "aliased": "qt",
+  "expanded": "queryType",
+  "field": "queryType",
+}
+`;
+
+exports[`qsAlias maps FIELD_ALIASES — every key round-trips spaceAggregation ⇄ spaceAgg via aliasField / expandField: alias-spaceAggregation 1`] = `
+{
+  "alias": "spaceAgg",
+  "aliased": "spaceAgg",
+  "expanded": "spaceAggregation",
+  "field": "spaceAggregation",
+}
+`;
+
+exports[`qsAlias maps FIELD_ALIASES — every key round-trips stepInterval ⇄ stepIn via aliasField / expandField: alias-stepInterval 1`] = `
+{
+  "alias": "stepIn",
+  "aliased": "stepIn",
+  "expanded": "stepInterval",
+  "field": "stepInterval",
+}
+`;
+
+exports[`qsAlias maps FIELD_ALIASES — every key round-trips temporality ⇄ tp via aliasField / expandField: alias-temporality 1`] = `
+{
+  "alias": "tp",
+  "aliased": "tp",
+  "expanded": "temporality",
+  "field": "temporality",
+}
+`;
+
+exports[`qsAlias maps FIELD_ALIASES — every key round-trips timeAggregation ⇄ timeAgg via aliasField / expandField: alias-timeAggregation 1`] = `
+{
+  "alias": "timeAgg",
+  "aliased": "timeAgg",
+  "expanded": "timeAggregation",
+  "field": "timeAggregation",
+}
+`;
+
+exports[`qsAlias maps PREFIX_PATTERNS — every prefix round-trips chsql ⇄ [["clickhouse_sql"]] via transformPath / expandPath: prefix-chsql 1`] = `
+{
+  "expanded": [
+    "clickhouse_sql",
+    0,
+    "someField",
+  ],
+  "match": [
+    "clickhouse_sql",
+  ],
+  "prefix": "chsql",
+  "transformed": [
+    "chsql0",
+    "someField",
+  ],
+}
+`;
+
+exports[`qsAlias maps PREFIX_PATTERNS — every prefix round-trips formula ⇄ [["builder", "queryFormulas"]] via transformPath / expandPath: prefix-formula 1`] = `
+{
+  "expanded": [
+    "builder",
+    "queryFormulas",
+    0,
+    "someField",
+  ],
+  "match": [
+    "builder",
+    "queryFormulas",
+  ],
+  "prefix": "formula",
+  "transformed": [
+    "formula0",
+    "someField",
+  ],
+}
+`;
+
+exports[`qsAlias maps PREFIX_PATTERNS — every prefix round-trips handles multi-digit indices: multi-digit 1`] = `
+{
+  "expanded": [
+    "builder",
+    "queryData",
+    12,
+    "x",
+  ],
+  "prefix": "query",
+  "transformed": [
+    "query12",
+    "x",
+  ],
+}
+`;
+
+exports[`qsAlias maps PREFIX_PATTERNS — every prefix round-trips promql ⇄ [["promql"]] via transformPath / expandPath: prefix-promql 1`] = `
+{
+  "expanded": [
+    "promql",
+    0,
+    "someField",
+  ],
+  "match": [
+    "promql",
+  ],
+  "prefix": "promql",
+  "transformed": [
+    "promql0",
+    "someField",
+  ],
+}
+`;
+
+exports[`qsAlias maps PREFIX_PATTERNS — every prefix round-trips query ⇄ [["builder", "queryData"]] via transformPath / expandPath: prefix-query 1`] = `
+{
+  "expanded": [
+    "builder",
+    "queryData",
+    0,
+    "someField",
+  ],
+  "match": [
+    "builder",
+    "queryData",
+  ],
+  "prefix": "query",
+  "transformed": [
+    "query0",
+    "someField",
+  ],
+}
+`;
+
+exports[`qsAlias maps PREFIX_PATTERNS — every prefix round-trips traceOp ⇄ [["builder", "queryTraceOperator"]] via transformPath / expandPath: prefix-traceOp 1`] = `
+{
+  "expanded": [
+    "builder",
+    "queryTraceOperator",
+    0,
+    "someField",
+  ],
+  "match": [
+    "builder",
+    "queryTraceOperator",
+  ],
+  "prefix": "traceOp",
+  "transformed": [
+    "traceOp0",
+    "someField",
+  ],
+}
+`;
+
+exports[`qsAlias maps PREFIX_REVERSE consistency mirrors PREFIX_PATTERNS one-to-one: all-prefix-reverse 1`] = `
+{
+  "chsql": [
+    "clickhouse_sql",
+  ],
+  "formula": [
+    "builder",
+    "queryFormulas",
+  ],
+  "promql": [
+    "promql",
+  ],
+  "query": [
+    "builder",
+    "queryData",
+  ],
+  "traceOp": [
+    "builder",
+    "queryTraceOperator",
+  ],
+}
+`;
+
+exports[`qsAlias maps alias / expand passthrough leaves numeric path segments untouched: numeric-passthrough 1`] = `
+{
+  "seven": 7,
+  "zero": 0,
+}
+`;
+
+exports[`qsAlias maps alias / expand passthrough leaves numeric-string segments untouched in expandField: numeric-string-passthrough 1`] = `
+{
+  "fortyTwo": "42",
+  "zero": "0",
+}
+`;
+
+exports[`qsAlias maps alias / expand passthrough leaves unknown field names untouched: unknown-passthrough 1`] = `
+{
+  "aliasUnknown": "unknownField",
+  "expandUnknown": "zz",
+}
+`;
+
+exports[`qsAlias maps isOwnedKey matches chsql prefix with index: owned-chsql 1`] = `
+{
+  "chsql0": true,
+  "chsql0.field": true,
+  "chsql12.nested.path": true,
+}
+`;
+
+exports[`qsAlias maps isOwnedKey matches delete-prefixed keys: delete-prefixed 1`] = `
+{
+  "-formula0": true,
+  "-query0.field": true,
+}
+`;
+
+exports[`qsAlias maps isOwnedKey matches formula prefix with index: owned-formula 1`] = `
+{
+  "formula0": true,
+  "formula0.field": true,
+  "formula12.nested.path": true,
+}
+`;
+
+exports[`qsAlias maps isOwnedKey matches promql prefix with index: owned-promql 1`] = `
+{
+  "promql0": true,
+  "promql0.field": true,
+  "promql12.nested.path": true,
+}
+`;
+
+exports[`qsAlias maps isOwnedKey matches query prefix with index: owned-query 1`] = `
+{
+  "query0": true,
+  "query0.field": true,
+  "query12.nested.path": true,
+}
+`;
+
+exports[`qsAlias maps isOwnedKey matches the tag key: tag-key 1`] = `
+{
+  "_t": true,
+}
+`;
+
+exports[`qsAlias maps isOwnedKey matches top-level query keys: top-level-keys 1`] = `
+{
+  "id": true,
+  "qt": true,
+  "queryType": true,
+  "unit": true,
+}
+`;
+
+exports[`qsAlias maps isOwnedKey matches traceOp prefix with index: owned-traceOp 1`] = `
+{
+  "traceOp0": true,
+  "traceOp0.field": true,
+  "traceOp12.nested.path": true,
+}
+`;
+
+exports[`qsAlias maps isOwnedKey rejects foreign params: foreign-params 1`] = `
+{
+  "compositeQuery": false,
+  "endTime": false,
+  "panelTypes": false,
+  "startTime": false,
+}
+`;
+
+exports[`qsAlias maps isOwnedKey rejects prefix without index: prefix-without-index 1`] = `
+{
+  "formula": false,
+  "query": false,
+}
+`;

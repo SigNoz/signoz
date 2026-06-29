@@ -1,0 +1,795 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`qsAliasAdapter round-trip decoded query keeps exactly the source top-level keys: decoded 1`] = `
+{
+  "builder": {
+    "queryData": [
+      {
+        "aggregateAttribute": {
+          "dataType": "",
+          "id": "----",
+          "key": "",
+          "type": "",
+        },
+        "aggregateOperator": "count",
+        "aggregations": [
+          {
+            "metricName": "",
+            "reduceTo": "avg",
+            "spaceAggregation": "sum",
+            "temporality": "",
+            "timeAggregation": "avg",
+          },
+        ],
+        "dataSource": "metrics",
+        "disabled": false,
+        "expression": "A",
+        "filter": {
+          "expression": "",
+        },
+        "filters": {
+          "items": [],
+          "op": "AND",
+        },
+        "functions": [],
+        "groupBy": [],
+        "having": [],
+        "legend": "",
+        "limit": null,
+        "orderBy": [],
+        "queryName": "A",
+        "reduceTo": "avg",
+        "source": "",
+        "spaceAggregation": "sum",
+        "stepInterval": null,
+        "timeAggregation": "rate",
+      },
+    ],
+    "queryFormulas": [],
+    "queryTraceOperator": [],
+  },
+  "clickhouse_sql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "id": "test-stable-id",
+  "promql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "queryType": "builder",
+  "unit": "",
+}
+`;
+
+exports[`qsAliasAdapter round-trip decoded query keeps exactly the source top-level keys: url 1`] = `"_t=QAm&id=test-stable-id&query0.aggOp=count&query0.source="`;
+
+exports[`qsAliasAdapter round-trip is lodash isEqual to the source (ignoring volatile id): decoded 1`] = `
+{
+  "builder": {
+    "queryData": [
+      {
+        "aggregateAttribute": {
+          "dataType": "",
+          "id": "----",
+          "key": "",
+          "type": "",
+        },
+        "aggregateOperator": "count",
+        "aggregations": [
+          {
+            "metricName": "",
+            "reduceTo": "avg",
+            "spaceAggregation": "sum",
+            "temporality": "",
+            "timeAggregation": "avg",
+          },
+        ],
+        "dataSource": "metrics",
+        "disabled": false,
+        "expression": "A",
+        "filter": {
+          "expression": "",
+        },
+        "filters": {
+          "items": [],
+          "op": "AND",
+        },
+        "functions": [],
+        "groupBy": [],
+        "having": [],
+        "legend": "",
+        "limit": null,
+        "orderBy": [],
+        "queryName": "A",
+        "reduceTo": "avg",
+        "source": "",
+        "spaceAggregation": "sum",
+        "stepInterval": null,
+        "timeAggregation": "rate",
+      },
+    ],
+    "queryFormulas": [],
+    "queryTraceOperator": [],
+  },
+  "clickhouse_sql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "id": "test-stable-id",
+  "promql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "queryType": "builder",
+  "unit": "",
+}
+`;
+
+exports[`qsAliasAdapter round-trip is lodash isEqual to the source (ignoring volatile id): url 1`] = `"_t=QAm&id=test-stable-id&query0.aggOp=count&query0.source="`;
+
+exports[`qsAliasAdapter round-trip scenarios clickhouse query survives encode → decode: clickhouse query-decoded 1`] = `
+{
+  "builder": {
+    "queryData": [
+      {
+        "aggregateAttribute": {
+          "dataType": "",
+          "id": "----",
+          "key": "",
+          "type": "",
+        },
+        "aggregateOperator": "count",
+        "aggregations": [
+          {
+            "metricName": "",
+            "reduceTo": "avg",
+            "spaceAggregation": "sum",
+            "temporality": "",
+            "timeAggregation": "avg",
+          },
+        ],
+        "dataSource": "metrics",
+        "disabled": false,
+        "expression": "A",
+        "filter": {
+          "expression": "",
+        },
+        "filters": {
+          "items": [],
+          "op": "AND",
+        },
+        "functions": [],
+        "groupBy": [],
+        "having": [],
+        "legend": "",
+        "limit": null,
+        "orderBy": [],
+        "queryName": "A",
+        "reduceTo": "avg",
+        "source": "",
+        "spaceAggregation": "sum",
+        "stepInterval": null,
+        "timeAggregation": "rate",
+      },
+    ],
+    "queryFormulas": [],
+    "queryTraceOperator": [],
+  },
+  "clickhouse_sql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "SELECT count() FROM signoz_logs",
+    },
+  ],
+  "id": "test-stable-id",
+  "promql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "queryType": "clickhouse_sql",
+  "unit": "",
+}
+`;
+
+exports[`qsAliasAdapter round-trip scenarios clickhouse query survives encode → decode: clickhouse query-url 1`] = `"_t=QAm&chsql0.query=SELECT+count%28%29+FROM+signoz_logs&id=test-stable-id&qt=clickhouse_sql&query0.aggOp=count&query0.source="`;
+
+exports[`qsAliasAdapter round-trip scenarios custom id survives encode → decode: custom id-decoded 1`] = `
+{
+  "builder": {
+    "queryData": [
+      {
+        "aggregateAttribute": {
+          "dataType": "",
+          "id": "----",
+          "key": "",
+          "type": "",
+        },
+        "aggregateOperator": "count",
+        "aggregations": [
+          {
+            "metricName": "",
+            "reduceTo": "avg",
+            "spaceAggregation": "sum",
+            "temporality": "",
+            "timeAggregation": "avg",
+          },
+        ],
+        "dataSource": "metrics",
+        "disabled": false,
+        "expression": "A",
+        "filter": {
+          "expression": "",
+        },
+        "filters": {
+          "items": [],
+          "op": "AND",
+        },
+        "functions": [],
+        "groupBy": [],
+        "having": [],
+        "legend": "",
+        "limit": null,
+        "orderBy": [],
+        "queryName": "A",
+        "reduceTo": "avg",
+        "source": "",
+        "spaceAggregation": "sum",
+        "stepInterval": null,
+        "timeAggregation": "rate",
+      },
+    ],
+    "queryFormulas": [],
+    "queryTraceOperator": [],
+  },
+  "clickhouse_sql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "id": "test-stable-id",
+  "promql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "queryType": "builder",
+  "unit": "",
+}
+`;
+
+exports[`qsAliasAdapter round-trip scenarios custom id survives encode → decode: custom id-url 1`] = `"_t=QAm&id=test-stable-id&query0.aggOp=count&query0.source="`;
+
+exports[`qsAliasAdapter round-trip scenarios enum-like legend preserved survives encode → decode: enum-like legend preserved-decoded 1`] = `
+{
+  "builder": {
+    "queryData": [
+      {
+        "aggregateAttribute": {
+          "dataType": "",
+          "id": "----",
+          "key": "",
+          "type": "",
+        },
+        "aggregateOperator": "count",
+        "aggregations": [
+          {
+            "metricName": "",
+            "reduceTo": "avg",
+            "spaceAggregation": "sum",
+            "temporality": "",
+            "timeAggregation": "avg",
+          },
+        ],
+        "dataSource": "metrics",
+        "disabled": false,
+        "expression": "A",
+        "filter": {
+          "expression": "",
+        },
+        "filters": {
+          "items": [],
+          "op": "AND",
+        },
+        "functions": [],
+        "groupBy": [],
+        "having": [],
+        "legend": "sum",
+        "limit": null,
+        "orderBy": [],
+        "queryName": "A",
+        "reduceTo": "avg",
+        "source": "",
+        "spaceAggregation": "sum",
+        "stepInterval": null,
+        "timeAggregation": "rate",
+      },
+    ],
+    "queryFormulas": [],
+    "queryTraceOperator": [],
+  },
+  "clickhouse_sql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "id": "test-stable-id",
+  "promql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "queryType": "builder",
+  "unit": "",
+}
+`;
+
+exports[`qsAliasAdapter round-trip scenarios enum-like legend preserved survives encode → decode: enum-like legend preserved-url 1`] = `"_t=QAm&id=test-stable-id&query0.aggOp=count&query0.legend=sum&query0.source="`;
+
+exports[`qsAliasAdapter round-trip scenarios logs baseline survives encode → decode: logs baseline-decoded 1`] = `
+{
+  "builder": {
+    "queryData": [
+      {
+        "aggregateAttribute": {
+          "dataType": "",
+          "id": "----",
+          "key": "",
+          "type": "",
+        },
+        "aggregateOperator": "count",
+        "aggregations": [
+          {
+            "expression": "count() ",
+          },
+        ],
+        "dataSource": "logs",
+        "disabled": false,
+        "expression": "A",
+        "filter": {
+          "expression": "",
+        },
+        "filters": {
+          "items": [],
+          "op": "AND",
+        },
+        "functions": [],
+        "groupBy": [],
+        "having": [],
+        "legend": "",
+        "limit": null,
+        "orderBy": [],
+        "queryName": "A",
+        "reduceTo": "avg",
+        "source": "",
+        "spaceAggregation": "sum",
+        "stepInterval": null,
+        "timeAggregation": "rate",
+      },
+    ],
+    "queryFormulas": [],
+    "queryTraceOperator": [],
+  },
+  "clickhouse_sql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "id": "test-stable-id",
+  "promql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "queryType": "builder",
+  "unit": "",
+}
+`;
+
+exports[`qsAliasAdapter round-trip scenarios logs baseline survives encode → decode: logs baseline-url 1`] = `"_t=QAl&id=test-stable-id&query0.aggOp=count&query0.source="`;
+
+exports[`qsAliasAdapter round-trip scenarios metrics baseline survives encode → decode: metrics baseline-decoded 1`] = `
+{
+  "builder": {
+    "queryData": [
+      {
+        "aggregateAttribute": {
+          "dataType": "",
+          "id": "----",
+          "key": "",
+          "type": "",
+        },
+        "aggregateOperator": "count",
+        "aggregations": [
+          {
+            "metricName": "",
+            "reduceTo": "avg",
+            "spaceAggregation": "sum",
+            "temporality": "",
+            "timeAggregation": "avg",
+          },
+        ],
+        "dataSource": "metrics",
+        "disabled": false,
+        "expression": "A",
+        "filter": {
+          "expression": "",
+        },
+        "filters": {
+          "items": [],
+          "op": "AND",
+        },
+        "functions": [],
+        "groupBy": [],
+        "having": [],
+        "legend": "",
+        "limit": null,
+        "orderBy": [],
+        "queryName": "A",
+        "reduceTo": "avg",
+        "source": "",
+        "spaceAggregation": "sum",
+        "stepInterval": null,
+        "timeAggregation": "rate",
+      },
+    ],
+    "queryFormulas": [],
+    "queryTraceOperator": [],
+  },
+  "clickhouse_sql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "id": "test-stable-id",
+  "promql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "queryType": "builder",
+  "unit": "",
+}
+`;
+
+exports[`qsAliasAdapter round-trip scenarios metrics baseline survives encode → decode: metrics baseline-url 1`] = `"_t=QAm&id=test-stable-id&query0.aggOp=count&query0.source="`;
+
+exports[`qsAliasAdapter round-trip scenarios modified builder query survives encode → decode: modified builder query-decoded 1`] = `
+{
+  "builder": {
+    "queryData": [
+      {
+        "aggregateAttribute": {
+          "dataType": "",
+          "id": "----",
+          "key": "",
+          "type": "",
+        },
+        "aggregateOperator": "p95",
+        "aggregations": [
+          {
+            "expression": "count() ",
+          },
+        ],
+        "dataSource": "logs",
+        "disabled": true,
+        "expression": "A",
+        "filter": {
+          "expression": "severity_text = 'ERROR'",
+        },
+        "filters": {
+          "items": [
+            {
+              "id": "item-1",
+              "key": {
+                "dataType": "string",
+                "isColumn": false,
+                "isJSON": false,
+                "key": "severity_text",
+                "type": "tag",
+              },
+              "op": "=",
+              "value": "ERROR",
+            },
+          ],
+          "op": "AND",
+        },
+        "functions": [],
+        "groupBy": [],
+        "having": [],
+        "legend": "error rate",
+        "limit": null,
+        "orderBy": [
+          {
+            "columnName": "timestamp",
+            "order": "desc",
+          },
+        ],
+        "queryName": "A",
+        "reduceTo": "avg",
+        "source": "",
+        "spaceAggregation": "sum",
+        "stepInterval": 60,
+        "timeAggregation": "rate",
+      },
+    ],
+    "queryFormulas": [],
+    "queryTraceOperator": [],
+  },
+  "clickhouse_sql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "id": "test-stable-id",
+  "promql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "queryType": "builder",
+  "unit": "",
+}
+`;
+
+exports[`qsAliasAdapter round-trip scenarios modified builder query survives encode → decode: modified builder query-url 1`] = `"_t=QAl&id=test-stable-id&query0.aggOp=p95&query0.disabled=_true&query0.filter.expression=severity_text+%3D+%27ERROR%27&query0.filters.items.0.id=item-1&query0.filters.items.0.key.dt=string&query0.filters.items.0.key.ic=_false&query0.filters.items.0.key.ij=_false&query0.filters.items.0.key.key=severity_text&query0.filters.items.0.key.type=tag&query0.filters.items.0.op=%3D&query0.filters.items.0.value=ERROR&query0.legend=error+rate&query0.orderBy.0.columnName=timestamp&query0.orderBy.0.order=desc&query0.source=&query0.stepIn=_60"`;
+
+exports[`qsAliasAdapter round-trip scenarios promql query survives encode → decode: promql query-decoded 1`] = `
+{
+  "builder": {
+    "queryData": [
+      {
+        "aggregateAttribute": {
+          "dataType": "",
+          "id": "----",
+          "key": "",
+          "type": "",
+        },
+        "aggregateOperator": "count",
+        "aggregations": [
+          {
+            "metricName": "",
+            "reduceTo": "avg",
+            "spaceAggregation": "sum",
+            "temporality": "",
+            "timeAggregation": "avg",
+          },
+        ],
+        "dataSource": "metrics",
+        "disabled": false,
+        "expression": "A",
+        "filter": {
+          "expression": "",
+        },
+        "filters": {
+          "items": [],
+          "op": "AND",
+        },
+        "functions": [],
+        "groupBy": [],
+        "having": [],
+        "legend": "",
+        "limit": null,
+        "orderBy": [],
+        "queryName": "A",
+        "reduceTo": "avg",
+        "source": "",
+        "spaceAggregation": "sum",
+        "stepInterval": null,
+        "timeAggregation": "rate",
+      },
+    ],
+    "queryFormulas": [],
+    "queryTraceOperator": [],
+  },
+  "clickhouse_sql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "id": "test-stable-id",
+  "promql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "rate(http_requests_total[5m])",
+    },
+  ],
+  "queryType": "promql",
+  "unit": "",
+}
+`;
+
+exports[`qsAliasAdapter round-trip scenarios promql query survives encode → decode: promql query-url 1`] = `"_t=QAm&id=test-stable-id&promql0.query=rate%28http_requests_total%5B5m%5D%29&qt=promql&query0.aggOp=count&query0.source="`;
+
+exports[`qsAliasAdapter round-trip scenarios traces baseline survives encode → decode: traces baseline-decoded 1`] = `
+{
+  "builder": {
+    "queryData": [
+      {
+        "aggregateAttribute": {
+          "dataType": "",
+          "id": "----",
+          "key": "",
+          "type": "",
+        },
+        "aggregateOperator": "count",
+        "aggregations": [
+          {
+            "expression": "count() ",
+          },
+        ],
+        "dataSource": "traces",
+        "disabled": false,
+        "expression": "A",
+        "filter": {
+          "expression": "",
+        },
+        "filters": {
+          "items": [],
+          "op": "AND",
+        },
+        "functions": [],
+        "groupBy": [],
+        "having": [],
+        "legend": "",
+        "limit": null,
+        "orderBy": [],
+        "queryName": "A",
+        "reduceTo": "avg",
+        "source": "",
+        "spaceAggregation": "sum",
+        "stepInterval": null,
+        "timeAggregation": "rate",
+      },
+    ],
+    "queryFormulas": [],
+    "queryTraceOperator": [],
+  },
+  "clickhouse_sql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "id": "test-stable-id",
+  "promql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "queryType": "builder",
+  "unit": "",
+}
+`;
+
+exports[`qsAliasAdapter round-trip scenarios traces baseline survives encode → decode: traces baseline-url 1`] = `"_t=QAt&id=test-stable-id&query0.aggOp=count&query0.source="`;
+
+exports[`qsAliasAdapter round-trip scenarios wire delimiters in values survives encode → decode: wire delimiters in values-decoded 1`] = `
+{
+  "builder": {
+    "queryData": [
+      {
+        "aggregateAttribute": {
+          "dataType": "",
+          "id": "----",
+          "key": "",
+          "type": "",
+        },
+        "aggregateOperator": "count",
+        "aggregations": [
+          {
+            "expression": "count() ",
+          },
+        ],
+        "dataSource": "logs",
+        "disabled": false,
+        "expression": "A",
+        "filter": {
+          "expression": "!weird = "x_y*z"",
+        },
+        "filters": {
+          "items": [],
+          "op": "AND",
+        },
+        "functions": [],
+        "groupBy": [],
+        "having": [],
+        "legend": "_a*b_*c",
+        "limit": null,
+        "orderBy": [],
+        "queryName": "A",
+        "reduceTo": "avg",
+        "source": "",
+        "spaceAggregation": "sum",
+        "stepInterval": null,
+        "timeAggregation": "rate",
+      },
+    ],
+    "queryFormulas": [],
+    "queryTraceOperator": [],
+  },
+  "clickhouse_sql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "id": "test-stable-id",
+  "promql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "queryType": "builder",
+  "unit": "",
+}
+`;
+
+exports[`qsAliasAdapter round-trip scenarios wire delimiters in values survives encode → decode: wire delimiters in values-url 1`] = `"_t=QAl&id=test-stable-id&query0.aggOp=count&query0.filter.expression=%21weird+%3D+%22x_y*z%22&query0.legend=__a*b_*c&query0.source="`;

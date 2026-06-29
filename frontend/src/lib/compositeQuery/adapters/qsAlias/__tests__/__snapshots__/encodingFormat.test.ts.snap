@@ -1,0 +1,81 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`qsAliasAdapter encoding format field aliasing emits the short alias instead of the full field name: url 1`] = `"_t=QAm&id=test-stable-id&query0.aggOp=sum&query0.source="`;
+
+exports[`qsAliasAdapter encoding format prefix substitution rewrites builder.queryData.0 to the query0 prefix: url 1`] = `"_t=QAt&id=test-stable-id&query0.aggOp=count&query0.source="`;
+
+exports[`qsAliasAdapter encoding format stability is independent of source key order: url 1`] = `"_t=QAm&id=test-stable-id&query0.aggOp=count&query0.source="`;
+
+exports[`qsAliasAdapter encoding format stability is stable after spread / reconstruct: url 1`] = `"_t=QAm&id=test-stable-id&query0.aggOp=count&query0.source="`;
+
+exports[`qsAliasAdapter encoding format stability re-encoding after a decode is byte-identical: decoded 1`] = `
+{
+  "builder": {
+    "queryData": [
+      {
+        "aggregateAttribute": {
+          "dataType": "",
+          "id": "----",
+          "key": "",
+          "type": "",
+        },
+        "aggregateOperator": "count",
+        "aggregations": [
+          {
+            "metricName": "",
+            "reduceTo": "avg",
+            "spaceAggregation": "sum",
+            "temporality": "",
+            "timeAggregation": "avg",
+          },
+        ],
+        "dataSource": "metrics",
+        "disabled": false,
+        "expression": "A",
+        "filter": {
+          "expression": "",
+        },
+        "filters": {
+          "items": [],
+          "op": "AND",
+        },
+        "functions": [],
+        "groupBy": [],
+        "having": [],
+        "legend": "",
+        "limit": null,
+        "orderBy": [],
+        "queryName": "A",
+        "reduceTo": "avg",
+        "source": "",
+        "spaceAggregation": "sum",
+        "stepInterval": null,
+        "timeAggregation": "rate",
+      },
+    ],
+    "queryFormulas": [],
+    "queryTraceOperator": [],
+  },
+  "clickhouse_sql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "id": "test-stable-id",
+  "promql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "queryType": "builder",
+  "unit": "",
+}
+`;
+
+exports[`qsAliasAdapter encoding format stability re-encoding after a decode is byte-identical: url 1`] = `"_t=QAm&id=test-stable-id&query0.aggOp=count&query0.source="`;

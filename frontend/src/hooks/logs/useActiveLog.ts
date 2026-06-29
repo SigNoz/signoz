@@ -5,7 +5,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useHistory, useLocation } from 'react-router-dom';
 import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
-import { QueryParams } from 'constants/query';
 import { OPERATORS, QueryBuilderKeys } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { MetricsType } from 'container/MetricsApplication/constant';
@@ -13,6 +12,7 @@ import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSea
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
+import { deserialize } from 'lib/compositeQuery/serializer';
 import { getGeneratedFilterQueryString } from 'lib/getGeneratedFilterQueryString';
 import { chooseAutocompleteFromCustomValue } from 'lib/newQueryBuilder/chooseAutocompleteFromCustomValue';
 import { AppState } from 'store/reducers';
@@ -58,9 +58,14 @@ export const useActiveLog = (): UseActiveLog => {
 
 	const [activeLog, setActiveLog] = useState<ILog | null>(null);
 
-	// Close drawer/clear active log when query in URL changes
+	// Close drawer/clear active log when query in URL changes. Track the decoded
+	// query (not a single raw param) so it stays correct across serializer tiers
+	// that explode the query into many keys.
 	const urlQuery = useUrlQuery();
-	const compositeQuery = urlQuery.get(QueryParams.compositeQuery) ?? '';
+	const compositeQuery = useMemo(() => {
+		const decoded = deserialize(urlQuery);
+		return decoded ? JSON.stringify(decoded) : '';
+	}, [urlQuery]);
 	const prevQueryRef = useRef<string | null>(null);
 	useEffect(() => {
 		if (

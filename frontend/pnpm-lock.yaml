@@ -209,6 +209,9 @@ importers:
       posthog-js:
         specifier: 1.298.0
         version: 1.298.0
+      qs:
+        specifier: 6.15.2
+        version: 6.15.2
       rc-select:
         specifier: 14.10.0
         version: 14.10.0(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
@@ -390,6 +393,9 @@ importers:
       '@types/papaparse':
         specifier: 5.3.7
         version: 5.3.7
+      '@types/qs':
+        specifier: 6.15.1
+        version: 6.15.1
       '@types/react':
         specifier: 18.0.26
         version: 18.0.26
@@ -3558,6 +3564,9 @@ packages:
 
   '@types/prop-types@15.7.5':
     resolution: {integrity: sha512-JCB8C6SnDoQf0cNycqd/35A7MjcnK+ZTqE7judS6o7utxUCg6imJg3QK2qzHKszlTjcj2cn+NwMB2i96ubpj7w==}
+
+  '@types/qs@6.15.1':
+    resolution: {integrity: sha512-GZHUBZR9hckSUhrxmp1nG6NwdpM9fCunJwyThLW1X3AyHgd9IlHb6VANpQQqDr2o/qQp6McZ3y/IA2rVzKzSbw==}
 
   '@types/react-addons-update@0.14.21':
     resolution: {integrity: sha512-HOxr0Hd8C1L4uw8DHyv2etqMVIj78oLEpe567/HgjoE+1Lc+PUsTGXTrkr1BDvFqsu5r49mSlgI5evwrk9eutA==}
@@ -7213,6 +7222,10 @@ packages:
     resolution: {integrity: sha512-oyF+Urr3oAMUG/OiOuONL3HXM+53wvuH3mtIWQrYmsXoAq0DkvZp2RYUWFSMFtbdOpuS++9v+WAkzNVkMlNW6Q==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0
+
+  qs@6.15.2:
+    resolution: {integrity: sha512-Rzq0KEyX/w/tEybncDgdkZrJgVUsUMk3xjh3t5bv3S1HTAtg+uOYt72+ZfwiQwKdysThkTBdL/rTi6HDmX9Ddw==}
+    engines: {node: '>=0.6'}
 
   querystringify@2.2.0:
     resolution: {integrity: sha512-FIqgj2EUvTa7R50u0rGsyTftzjYmv/a3hO345bZNrqabNqjtgiDMgmo4mkUjd+nzU5oF3dClKqFIPUKybUyqoQ==}
@@ -12363,6 +12376,8 @@ snapshots:
 
   '@types/prop-types@15.7.5': {}
 
+  '@types/qs@6.15.1': {}
+
   '@types/react-addons-update@0.14.21':
     dependencies:
       '@types/react': 18.0.26
@@ -16694,6 +16709,10 @@ snapshots:
   qrcode.react@3.1.0(react@18.2.0):
     dependencies:
       react: 18.2.0
+
+  qs@6.15.2:
+    dependencies:
+      side-channel: 1.1.0
 
   querystringify@2.2.0: {}
 

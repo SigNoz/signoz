@@ -29,6 +29,10 @@ import useCreateAlerts from 'hooks/queryBuilder/useCreateAlerts';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
+import {
+	applySerializedParams,
+	serialize,
+} from 'lib/compositeQuery/serializer';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { isEmpty } from 'lodash-es';
 import { unparse } from 'papaparse';
@@ -86,10 +90,7 @@ function WidgetHeader({
 		const widgetId = widget.id;
 		urlQuery.set(QueryParams.widgetId, widgetId);
 		urlQuery.set(QueryParams.graphType, widget.panelTypes);
-		urlQuery.set(
-			QueryParams.compositeQuery,
-			encodeURIComponent(JSON.stringify(widget.query)),
-		);
+		applySerializedParams(serialize(widget.query), urlQuery);
 		const generatedUrl = buildAbsolutePath({
 			relativePath: 'new',
 			urlQueryString: urlQuery.toString(),

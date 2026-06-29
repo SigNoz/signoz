@@ -1,0 +1,1531 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`qsAliasAdapter multi-queryData formula queries round-trips formula with complex expression: decoded 1`] = `
+{
+  "builder": {
+    "queryData": [
+      {
+        "aggregateAttribute": {
+          "dataType": "",
+          "id": "----",
+          "key": "",
+          "type": "",
+        },
+        "aggregateOperator": "count",
+        "aggregations": [
+          {
+            "metricName": "",
+            "reduceTo": "avg",
+            "spaceAggregation": "sum",
+            "temporality": "",
+            "timeAggregation": "avg",
+          },
+        ],
+        "dataSource": "metrics",
+        "disabled": false,
+        "expression": "A",
+        "filter": {
+          "expression": "",
+        },
+        "filters": {
+          "items": [],
+          "op": "AND",
+        },
+        "functions": [],
+        "groupBy": [],
+        "having": [],
+        "legend": "",
+        "limit": null,
+        "orderBy": [],
+        "queryName": "A",
+        "reduceTo": "avg",
+        "source": "",
+        "spaceAggregation": "sum",
+        "stepInterval": null,
+        "timeAggregation": "rate",
+      },
+      {
+        "aggregateAttribute": {
+          "dataType": "",
+          "id": "----",
+          "key": "",
+          "type": "",
+        },
+        "aggregateOperator": "avg",
+        "aggregations": [
+          {
+            "metricName": "",
+            "reduceTo": "avg",
+            "spaceAggregation": "sum",
+            "temporality": "",
+            "timeAggregation": "avg",
+          },
+        ],
+        "dataSource": "metrics",
+        "disabled": false,
+        "expression": "A",
+        "filter": {
+          "expression": "",
+        },
+        "filters": {
+          "items": [],
+          "op": "AND",
+        },
+        "functions": [],
+        "groupBy": [],
+        "having": [],
+        "legend": "B legend",
+        "limit": null,
+        "orderBy": [],
+        "queryName": "B",
+        "reduceTo": "avg",
+        "source": "",
+        "spaceAggregation": "sum",
+        "stepInterval": null,
+        "timeAggregation": "rate",
+      },
+    ],
+    "queryFormulas": [
+      {
+        "disabled": false,
+        "expression": "(A - B) / B * 100",
+        "legend": "F1 result",
+        "queryName": "F1",
+      },
+    ],
+    "queryTraceOperator": [],
+  },
+  "clickhouse_sql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "id": "test-stable-id",
+  "promql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "queryType": "builder",
+  "unit": "",
+}
+`;
+
+exports[`qsAliasAdapter multi-queryData formula queries round-trips formula with complex expression: url 1`] = `"_t=QAm&formula0.disabled=_false&formula0.expression=%28A+-+B%29+%2F+B+*+100&formula0.legend=F1+result&formula0.qn=F1&id=test-stable-id&query0.aggOp=count&query0.source=&query1.aggOp=avg&query1.legend=B+legend&query1.qn=B&query1.source="`;
+
+exports[`qsAliasAdapter multi-queryData formula queries round-trips multiple formulas F1 + F2: decoded 1`] = `
+{
+  "builder": {
+    "queryData": [
+      {
+        "aggregateAttribute": {
+          "dataType": "",
+          "id": "----",
+          "key": "",
+          "type": "",
+        },
+        "aggregateOperator": "count",
+        "aggregations": [
+          {
+            "metricName": "",
+            "reduceTo": "avg",
+            "spaceAggregation": "sum",
+            "temporality": "",
+            "timeAggregation": "avg",
+          },
+        ],
+        "dataSource": "metrics",
+        "disabled": false,
+        "expression": "A",
+        "filter": {
+          "expression": "",
+        },
+        "filters": {
+          "items": [],
+          "op": "AND",
+        },
+        "functions": [],
+        "groupBy": [],
+        "having": [],
+        "legend": "",
+        "limit": null,
+        "orderBy": [],
+        "queryName": "A",
+        "reduceTo": "avg",
+        "source": "",
+        "spaceAggregation": "sum",
+        "stepInterval": null,
+        "timeAggregation": "rate",
+      },
+      {
+        "aggregateAttribute": {
+          "dataType": "",
+          "id": "----",
+          "key": "",
+          "type": "",
+        },
+        "aggregateOperator": "avg",
+        "aggregations": [
+          {
+            "metricName": "",
+            "reduceTo": "avg",
+            "spaceAggregation": "sum",
+            "temporality": "",
+            "timeAggregation": "avg",
+          },
+        ],
+        "dataSource": "metrics",
+        "disabled": false,
+        "expression": "A",
+        "filter": {
+          "expression": "",
+        },
+        "filters": {
+          "items": [],
+          "op": "AND",
+        },
+        "functions": [],
+        "groupBy": [],
+        "having": [],
+        "legend": "B legend",
+        "limit": null,
+        "orderBy": [],
+        "queryName": "B",
+        "reduceTo": "avg",
+        "source": "",
+        "spaceAggregation": "sum",
+        "stepInterval": null,
+        "timeAggregation": "rate",
+      },
+      {
+        "aggregateAttribute": {
+          "dataType": "",
+          "id": "----",
+          "key": "",
+          "type": "",
+        },
+        "aggregateOperator": "avg",
+        "aggregations": [
+          {
+            "metricName": "",
+            "reduceTo": "avg",
+            "spaceAggregation": "sum",
+            "temporality": "",
+            "timeAggregation": "avg",
+          },
+        ],
+        "dataSource": "metrics",
+        "disabled": false,
+        "expression": "A",
+        "filter": {
+          "expression": "",
+        },
+        "filters": {
+          "items": [],
+          "op": "AND",
+        },
+        "functions": [],
+        "groupBy": [],
+        "having": [],
+        "legend": "C legend",
+        "limit": null,
+        "orderBy": [],
+        "queryName": "C",
+        "reduceTo": "avg",
+        "source": "",
+        "spaceAggregation": "sum",
+        "stepInterval": null,
+        "timeAggregation": "rate",
+      },
+    ],
+    "queryFormulas": [
+      {
+        "disabled": false,
+        "expression": "A/B",
+        "legend": "F1 result",
+        "queryName": "F1",
+      },
+      {
+        "disabled": false,
+        "expression": "A*100/C",
+        "legend": "F2 result",
+        "queryName": "F2",
+      },
+    ],
+    "queryTraceOperator": [],
+  },
+  "clickhouse_sql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "id": "test-stable-id",
+  "promql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "queryType": "builder",
+  "unit": "",
+}
+`;
+
+exports[`qsAliasAdapter multi-queryData formula queries round-trips multiple formulas F1 + F2: url 1`] = `"_t=QAm&formula0.disabled=_false&formula0.expression=A%2FB&formula0.legend=F1+result&formula0.qn=F1&formula1.disabled=_false&formula1.expression=A*100%2FC&formula1.legend=F2+result&formula1.qn=F2&id=test-stable-id&query0.aggOp=count&query0.source=&query1.aggOp=avg&query1.legend=B+legend&query1.qn=B&query1.source=&query2.aggOp=avg&query2.legend=C+legend&query2.qn=C&query2.source="`;
+
+exports[`qsAliasAdapter multi-queryData formula queries round-trips single formula F1 = A/B: decoded 1`] = `
+{
+  "builder": {
+    "queryData": [
+      {
+        "aggregateAttribute": {
+          "dataType": "",
+          "id": "----",
+          "key": "",
+          "type": "",
+        },
+        "aggregateOperator": "count",
+        "aggregations": [
+          {
+            "metricName": "",
+            "reduceTo": "avg",
+            "spaceAggregation": "sum",
+            "temporality": "",
+            "timeAggregation": "avg",
+          },
+        ],
+        "dataSource": "metrics",
+        "disabled": false,
+        "expression": "A",
+        "filter": {
+          "expression": "",
+        },
+        "filters": {
+          "items": [],
+          "op": "AND",
+        },
+        "functions": [],
+        "groupBy": [],
+        "having": [],
+        "legend": "",
+        "limit": null,
+        "orderBy": [],
+        "queryName": "A",
+        "reduceTo": "avg",
+        "source": "",
+        "spaceAggregation": "sum",
+        "stepInterval": null,
+        "timeAggregation": "rate",
+      },
+      {
+        "aggregateAttribute": {
+          "dataType": "",
+          "id": "----",
+          "key": "",
+          "type": "",
+        },
+        "aggregateOperator": "avg",
+        "aggregations": [
+          {
+            "metricName": "",
+            "reduceTo": "avg",
+            "spaceAggregation": "sum",
+            "temporality": "",
+            "timeAggregation": "avg",
+          },
+        ],
+        "dataSource": "metrics",
+        "disabled": false,
+        "expression": "A",
+        "filter": {
+          "expression": "",
+        },
+        "filters": {
+          "items": [],
+          "op": "AND",
+        },
+        "functions": [],
+        "groupBy": [],
+        "having": [],
+        "legend": "B legend",
+        "limit": null,
+        "orderBy": [],
+        "queryName": "B",
+        "reduceTo": "avg",
+        "source": "",
+        "spaceAggregation": "sum",
+        "stepInterval": null,
+        "timeAggregation": "rate",
+      },
+    ],
+    "queryFormulas": [
+      {
+        "disabled": false,
+        "expression": "A/B",
+        "legend": "F1 result",
+        "queryName": "F1",
+      },
+    ],
+    "queryTraceOperator": [],
+  },
+  "clickhouse_sql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "id": "test-stable-id",
+  "promql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "queryType": "builder",
+  "unit": "",
+}
+`;
+
+exports[`qsAliasAdapter multi-queryData formula queries round-trips single formula F1 = A/B: url 1`] = `"_t=QAm&formula0.disabled=_false&formula0.expression=A%2FB&formula0.legend=F1+result&formula0.qn=F1&id=test-stable-id&query0.aggOp=count&query0.source=&query1.aggOp=avg&query1.legend=B+legend&query1.qn=B&query1.source="`;
+
+exports[`qsAliasAdapter multi-queryData mixed data sources within builder round-trips logs queryData with formulas: decoded 1`] = `
+{
+  "builder": {
+    "queryData": [
+      {
+        "aggregateAttribute": {
+          "dataType": "",
+          "id": "----",
+          "key": "",
+          "type": "",
+        },
+        "aggregateOperator": "count",
+        "aggregations": [
+          {
+            "expression": "count() ",
+          },
+        ],
+        "dataSource": "logs",
+        "disabled": false,
+        "expression": "A",
+        "filter": {
+          "expression": "",
+        },
+        "filters": {
+          "items": [],
+          "op": "AND",
+        },
+        "functions": [],
+        "groupBy": [],
+        "having": [],
+        "legend": "",
+        "limit": null,
+        "orderBy": [],
+        "queryName": "A",
+        "reduceTo": "avg",
+        "source": "",
+        "spaceAggregation": "sum",
+        "stepInterval": null,
+        "timeAggregation": "rate",
+      },
+      {
+        "aggregateAttribute": {
+          "dataType": "",
+          "id": "----",
+          "key": "",
+          "type": "",
+        },
+        "aggregateOperator": "count_distinct",
+        "aggregations": [
+          {
+            "expression": "count() ",
+          },
+        ],
+        "dataSource": "logs",
+        "disabled": false,
+        "expression": "A",
+        "filter": {
+          "expression": "",
+        },
+        "filters": {
+          "items": [],
+          "op": "AND",
+        },
+        "functions": [],
+        "groupBy": [],
+        "having": [],
+        "legend": "",
+        "limit": null,
+        "orderBy": [],
+        "queryName": "B",
+        "reduceTo": "avg",
+        "source": "",
+        "spaceAggregation": "sum",
+        "stepInterval": null,
+        "timeAggregation": "rate",
+      },
+    ],
+    "queryFormulas": [
+      {
+        "disabled": false,
+        "expression": "A/B",
+        "legend": "F1 result",
+        "queryName": "F1",
+      },
+    ],
+    "queryTraceOperator": [],
+  },
+  "clickhouse_sql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "id": "test-stable-id",
+  "promql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "queryType": "builder",
+  "unit": "",
+}
+`;
+
+exports[`qsAliasAdapter multi-queryData mixed data sources within builder round-trips logs queryData with formulas: url 1`] = `"_t=QAl&formula0.disabled=_false&formula0.expression=A%2FB&formula0.legend=F1+result&formula0.qn=F1&id=test-stable-id&query0.aggOp=count&query0.source=&query1.aggOp=count_distinct&query1.qn=B&query1.source="`;
+
+exports[`qsAliasAdapter multi-queryData mixed data sources within builder round-trips traces queryData with formulas: decoded 1`] = `
+{
+  "builder": {
+    "queryData": [
+      {
+        "aggregateAttribute": {
+          "dataType": "",
+          "id": "----",
+          "key": "",
+          "type": "",
+        },
+        "aggregateOperator": "count",
+        "aggregations": [
+          {
+            "expression": "count() ",
+          },
+        ],
+        "dataSource": "traces",
+        "disabled": false,
+        "expression": "A",
+        "filter": {
+          "expression": "",
+        },
+        "filters": {
+          "items": [],
+          "op": "AND",
+        },
+        "functions": [],
+        "groupBy": [],
+        "having": [],
+        "legend": "",
+        "limit": null,
+        "orderBy": [],
+        "queryName": "A",
+        "reduceTo": "avg",
+        "source": "",
+        "spaceAggregation": "sum",
+        "stepInterval": null,
+        "timeAggregation": "rate",
+      },
+      {
+        "aggregateAttribute": {
+          "dataType": "",
+          "id": "----",
+          "key": "",
+          "type": "",
+        },
+        "aggregateOperator": "p99",
+        "aggregations": [
+          {
+            "expression": "count() ",
+          },
+        ],
+        "dataSource": "traces",
+        "disabled": false,
+        "expression": "A",
+        "filter": {
+          "expression": "",
+        },
+        "filters": {
+          "items": [],
+          "op": "AND",
+        },
+        "functions": [],
+        "groupBy": [],
+        "having": [],
+        "legend": "",
+        "limit": null,
+        "orderBy": [],
+        "queryName": "B",
+        "reduceTo": "avg",
+        "source": "",
+        "spaceAggregation": "sum",
+        "stepInterval": null,
+        "timeAggregation": "rate",
+      },
+    ],
+    "queryFormulas": [
+      {
+        "disabled": false,
+        "expression": "B - A",
+        "legend": "F1 result",
+        "queryName": "F1",
+      },
+    ],
+    "queryTraceOperator": [],
+  },
+  "clickhouse_sql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "id": "test-stable-id",
+  "promql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "queryType": "builder",
+  "unit": "",
+}
+`;
+
+exports[`qsAliasAdapter multi-queryData mixed data sources within builder round-trips traces queryData with formulas: url 1`] = `"_t=QAt&formula0.disabled=_false&formula0.expression=B+-+A&formula0.legend=F1+result&formula0.qn=F1&id=test-stable-id&query0.aggOp=count&query0.source=&query1.aggOp=p99&query1.qn=B&query1.source="`;
+
+exports[`qsAliasAdapter multi-queryData multiple builder queries round-trips three queryData entries (A + B + C): decoded 1`] = `
+{
+  "builder": {
+    "queryData": [
+      {
+        "aggregateAttribute": {
+          "dataType": "",
+          "id": "----",
+          "key": "",
+          "type": "",
+        },
+        "aggregateOperator": "count",
+        "aggregations": [
+          {
+            "metricName": "",
+            "reduceTo": "avg",
+            "spaceAggregation": "sum",
+            "temporality": "",
+            "timeAggregation": "avg",
+          },
+        ],
+        "dataSource": "metrics",
+        "disabled": false,
+        "expression": "A",
+        "filter": {
+          "expression": "",
+        },
+        "filters": {
+          "items": [],
+          "op": "AND",
+        },
+        "functions": [],
+        "groupBy": [],
+        "having": [],
+        "legend": "",
+        "limit": null,
+        "orderBy": [],
+        "queryName": "A",
+        "reduceTo": "avg",
+        "source": "",
+        "spaceAggregation": "sum",
+        "stepInterval": null,
+        "timeAggregation": "rate",
+      },
+      {
+        "aggregateAttribute": {
+          "dataType": "",
+          "id": "----",
+          "key": "",
+          "type": "",
+        },
+        "aggregateOperator": "avg",
+        "aggregations": [
+          {
+            "metricName": "",
+            "reduceTo": "avg",
+            "spaceAggregation": "sum",
+            "temporality": "",
+            "timeAggregation": "avg",
+          },
+        ],
+        "dataSource": "metrics",
+        "disabled": false,
+        "expression": "A",
+        "filter": {
+          "expression": "",
+        },
+        "filters": {
+          "items": [],
+          "op": "AND",
+        },
+        "functions": [],
+        "groupBy": [],
+        "having": [],
+        "legend": "B legend",
+        "limit": null,
+        "orderBy": [],
+        "queryName": "B",
+        "reduceTo": "avg",
+        "source": "",
+        "spaceAggregation": "sum",
+        "stepInterval": null,
+        "timeAggregation": "rate",
+      },
+      {
+        "aggregateAttribute": {
+          "dataType": "",
+          "id": "----",
+          "key": "",
+          "type": "",
+        },
+        "aggregateOperator": "avg",
+        "aggregations": [
+          {
+            "metricName": "",
+            "reduceTo": "avg",
+            "spaceAggregation": "sum",
+            "temporality": "",
+            "timeAggregation": "avg",
+          },
+        ],
+        "dataSource": "metrics",
+        "disabled": false,
+        "expression": "A",
+        "filter": {
+          "expression": "",
+        },
+        "filters": {
+          "items": [],
+          "op": "AND",
+        },
+        "functions": [],
+        "groupBy": [],
+        "having": [],
+        "legend": "C legend",
+        "limit": null,
+        "orderBy": [],
+        "queryName": "C",
+        "reduceTo": "avg",
+        "source": "",
+        "spaceAggregation": "sum",
+        "stepInterval": null,
+        "timeAggregation": "rate",
+      },
+    ],
+    "queryFormulas": [],
+    "queryTraceOperator": [],
+  },
+  "clickhouse_sql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "id": "test-stable-id",
+  "promql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "queryType": "builder",
+  "unit": "",
+}
+`;
+
+exports[`qsAliasAdapter multi-queryData multiple builder queries round-trips three queryData entries (A + B + C): url 1`] = `"_t=QAm&id=test-stable-id&query0.aggOp=count&query0.source=&query1.aggOp=avg&query1.legend=B+legend&query1.qn=B&query1.source=&query2.aggOp=avg&query2.legend=C+legend&query2.qn=C&query2.source="`;
+
+exports[`qsAliasAdapter multi-queryData multiple builder queries round-trips two queryData entries (A + B): decoded 1`] = `
+{
+  "builder": {
+    "queryData": [
+      {
+        "aggregateAttribute": {
+          "dataType": "",
+          "id": "----",
+          "key": "",
+          "type": "",
+        },
+        "aggregateOperator": "count",
+        "aggregations": [
+          {
+            "metricName": "",
+            "reduceTo": "avg",
+            "spaceAggregation": "sum",
+            "temporality": "",
+            "timeAggregation": "avg",
+          },
+        ],
+        "dataSource": "metrics",
+        "disabled": false,
+        "expression": "A",
+        "filter": {
+          "expression": "",
+        },
+        "filters": {
+          "items": [],
+          "op": "AND",
+        },
+        "functions": [],
+        "groupBy": [],
+        "having": [],
+        "legend": "",
+        "limit": null,
+        "orderBy": [],
+        "queryName": "A",
+        "reduceTo": "avg",
+        "source": "",
+        "spaceAggregation": "sum",
+        "stepInterval": null,
+        "timeAggregation": "rate",
+      },
+      {
+        "aggregateAttribute": {
+          "dataType": "",
+          "id": "----",
+          "key": "",
+          "type": "",
+        },
+        "aggregateOperator": "avg",
+        "aggregations": [
+          {
+            "metricName": "",
+            "reduceTo": "avg",
+            "spaceAggregation": "sum",
+            "temporality": "",
+            "timeAggregation": "avg",
+          },
+        ],
+        "dataSource": "metrics",
+        "disabled": false,
+        "expression": "A",
+        "filter": {
+          "expression": "",
+        },
+        "filters": {
+          "items": [],
+          "op": "AND",
+        },
+        "functions": [],
+        "groupBy": [],
+        "having": [],
+        "legend": "B legend",
+        "limit": null,
+        "orderBy": [],
+        "queryName": "B",
+        "reduceTo": "avg",
+        "source": "",
+        "spaceAggregation": "sum",
+        "stepInterval": null,
+        "timeAggregation": "rate",
+      },
+    ],
+    "queryFormulas": [],
+    "queryTraceOperator": [],
+  },
+  "clickhouse_sql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "id": "test-stable-id",
+  "promql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "queryType": "builder",
+  "unit": "",
+}
+`;
+
+exports[`qsAliasAdapter multi-queryData multiple builder queries round-trips two queryData entries (A + B): url 1`] = `"_t=QAm&id=test-stable-id&query0.aggOp=count&query0.source=&query1.aggOp=avg&query1.legend=B+legend&query1.qn=B&query1.source="`;
+
+exports[`qsAliasAdapter multi-queryData multiple clickhouse queries round-trips three clickhouse_sql entries with mixed disabled states: decoded 1`] = `
+{
+  "builder": {
+    "queryData": [
+      {
+        "aggregateAttribute": {
+          "dataType": "",
+          "id": "----",
+          "key": "",
+          "type": "",
+        },
+        "aggregateOperator": "count",
+        "aggregations": [
+          {
+            "metricName": "",
+            "reduceTo": "avg",
+            "spaceAggregation": "sum",
+            "temporality": "",
+            "timeAggregation": "avg",
+          },
+        ],
+        "dataSource": "metrics",
+        "disabled": false,
+        "expression": "A",
+        "filter": {
+          "expression": "",
+        },
+        "filters": {
+          "items": [],
+          "op": "AND",
+        },
+        "functions": [],
+        "groupBy": [],
+        "having": [],
+        "legend": "",
+        "limit": null,
+        "orderBy": [],
+        "queryName": "A",
+        "reduceTo": "avg",
+        "source": "",
+        "spaceAggregation": "sum",
+        "stepInterval": null,
+        "timeAggregation": "rate",
+      },
+    ],
+    "queryFormulas": [],
+    "queryTraceOperator": [],
+  },
+  "clickhouse_sql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "SELECT 1",
+    },
+    {
+      "disabled": true,
+      "legend": "second",
+      "name": "B",
+      "query": "SELECT 2",
+    },
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "C",
+      "query": "SELECT 3",
+    },
+  ],
+  "id": "test-stable-id",
+  "promql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "queryType": "clickhouse_sql",
+  "unit": "",
+}
+`;
+
+exports[`qsAliasAdapter multi-queryData multiple clickhouse queries round-trips three clickhouse_sql entries with mixed disabled states: url 1`] = `"_t=QAm&chsql0.query=SELECT+1&chsql1.disabled=_true&chsql1.legend=second&chsql1.name=B&chsql1.query=SELECT+2&chsql2.name=C&chsql2.query=SELECT+3&id=test-stable-id&qt=clickhouse_sql&query0.aggOp=count&query0.source="`;
+
+exports[`qsAliasAdapter multi-queryData multiple clickhouse queries round-trips two clickhouse_sql entries: decoded 1`] = `
+{
+  "builder": {
+    "queryData": [
+      {
+        "aggregateAttribute": {
+          "dataType": "",
+          "id": "----",
+          "key": "",
+          "type": "",
+        },
+        "aggregateOperator": "count",
+        "aggregations": [
+          {
+            "metricName": "",
+            "reduceTo": "avg",
+            "spaceAggregation": "sum",
+            "temporality": "",
+            "timeAggregation": "avg",
+          },
+        ],
+        "dataSource": "metrics",
+        "disabled": false,
+        "expression": "A",
+        "filter": {
+          "expression": "",
+        },
+        "filters": {
+          "items": [],
+          "op": "AND",
+        },
+        "functions": [],
+        "groupBy": [],
+        "having": [],
+        "legend": "",
+        "limit": null,
+        "orderBy": [],
+        "queryName": "A",
+        "reduceTo": "avg",
+        "source": "",
+        "spaceAggregation": "sum",
+        "stepInterval": null,
+        "timeAggregation": "rate",
+      },
+    ],
+    "queryFormulas": [],
+    "queryTraceOperator": [],
+  },
+  "clickhouse_sql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "SELECT count() FROM logs WHERE severity > 0",
+    },
+    {
+      "disabled": false,
+      "legend": "total",
+      "name": "B",
+      "query": "SELECT count() FROM logs",
+    },
+  ],
+  "id": "test-stable-id",
+  "promql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "queryType": "clickhouse_sql",
+  "unit": "",
+}
+`;
+
+exports[`qsAliasAdapter multi-queryData multiple clickhouse queries round-trips two clickhouse_sql entries: url 1`] = `"_t=QAm&chsql0.query=SELECT+count%28%29+FROM+logs+WHERE+severity+%3E+0&chsql1.legend=total&chsql1.name=B&chsql1.query=SELECT+count%28%29+FROM+logs&id=test-stable-id&qt=clickhouse_sql&query0.aggOp=count&query0.source="`;
+
+exports[`qsAliasAdapter multi-queryData multiple promql queries round-trips three promql entries: decoded 1`] = `
+{
+  "builder": {
+    "queryData": [
+      {
+        "aggregateAttribute": {
+          "dataType": "",
+          "id": "----",
+          "key": "",
+          "type": "",
+        },
+        "aggregateOperator": "count",
+        "aggregations": [
+          {
+            "metricName": "",
+            "reduceTo": "avg",
+            "spaceAggregation": "sum",
+            "temporality": "",
+            "timeAggregation": "avg",
+          },
+        ],
+        "dataSource": "metrics",
+        "disabled": false,
+        "expression": "A",
+        "filter": {
+          "expression": "",
+        },
+        "filters": {
+          "items": [],
+          "op": "AND",
+        },
+        "functions": [],
+        "groupBy": [],
+        "having": [],
+        "legend": "",
+        "limit": null,
+        "orderBy": [],
+        "queryName": "A",
+        "reduceTo": "avg",
+        "source": "",
+        "spaceAggregation": "sum",
+        "stepInterval": null,
+        "timeAggregation": "rate",
+      },
+    ],
+    "queryFormulas": [],
+    "queryTraceOperator": [],
+  },
+  "clickhouse_sql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "id": "test-stable-id",
+  "promql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "metric_a",
+    },
+    {
+      "disabled": false,
+      "legend": "b-legend",
+      "name": "B",
+      "query": "metric_b",
+    },
+    {
+      "disabled": true,
+      "legend": "",
+      "name": "C",
+      "query": "metric_c",
+    },
+  ],
+  "queryType": "promql",
+  "unit": "",
+}
+`;
+
+exports[`qsAliasAdapter multi-queryData multiple promql queries round-trips three promql entries: url 1`] = `"_t=QAm&id=test-stable-id&promql0.query=metric_a&promql1.legend=b-legend&promql1.name=B&promql1.query=metric_b&promql2.disabled=_true&promql2.name=C&promql2.query=metric_c&qt=promql&query0.aggOp=count&query0.source="`;
+
+exports[`qsAliasAdapter multi-queryData multiple promql queries round-trips two promql entries: decoded 1`] = `
+{
+  "builder": {
+    "queryData": [
+      {
+        "aggregateAttribute": {
+          "dataType": "",
+          "id": "----",
+          "key": "",
+          "type": "",
+        },
+        "aggregateOperator": "count",
+        "aggregations": [
+          {
+            "metricName": "",
+            "reduceTo": "avg",
+            "spaceAggregation": "sum",
+            "temporality": "",
+            "timeAggregation": "avg",
+          },
+        ],
+        "dataSource": "metrics",
+        "disabled": false,
+        "expression": "A",
+        "filter": {
+          "expression": "",
+        },
+        "filters": {
+          "items": [],
+          "op": "AND",
+        },
+        "functions": [],
+        "groupBy": [],
+        "having": [],
+        "legend": "",
+        "limit": null,
+        "orderBy": [],
+        "queryName": "A",
+        "reduceTo": "avg",
+        "source": "",
+        "spaceAggregation": "sum",
+        "stepInterval": null,
+        "timeAggregation": "rate",
+      },
+    ],
+    "queryFormulas": [],
+    "queryTraceOperator": [],
+  },
+  "clickhouse_sql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "id": "test-stable-id",
+  "promql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "rate(http_requests_total[5m])",
+    },
+    {
+      "disabled": false,
+      "legend": "errors",
+      "name": "B",
+      "query": "rate(http_errors_total[5m])",
+    },
+  ],
+  "queryType": "promql",
+  "unit": "",
+}
+`;
+
+exports[`qsAliasAdapter multi-queryData multiple promql queries round-trips two promql entries: url 1`] = `"_t=QAm&id=test-stable-id&promql0.query=rate%28http_requests_total%5B5m%5D%29&promql1.legend=errors&promql1.name=B&promql1.query=rate%28http_errors_total%5B5m%5D%29&qt=promql&query0.aggOp=count&query0.source="`;
+
+exports[`qsAliasAdapter multi-queryData template diffing optimization added queryData only emits changed fields vs baseline[0]: decoded 1`] = `
+{
+  "builder": {
+    "queryData": [
+      {
+        "aggregateAttribute": {
+          "dataType": "",
+          "id": "----",
+          "key": "",
+          "type": "",
+        },
+        "aggregateOperator": "count",
+        "aggregations": [
+          {
+            "metricName": "",
+            "reduceTo": "avg",
+            "spaceAggregation": "sum",
+            "temporality": "",
+            "timeAggregation": "avg",
+          },
+        ],
+        "dataSource": "metrics",
+        "disabled": false,
+        "expression": "A",
+        "filter": {
+          "expression": "",
+        },
+        "filters": {
+          "items": [],
+          "op": "AND",
+        },
+        "functions": [],
+        "groupBy": [],
+        "having": [],
+        "legend": "",
+        "limit": null,
+        "orderBy": [],
+        "queryName": "A",
+        "reduceTo": "avg",
+        "source": "",
+        "spaceAggregation": "sum",
+        "stepInterval": null,
+        "timeAggregation": "rate",
+      },
+      {
+        "aggregateAttribute": {
+          "dataType": "",
+          "id": "----",
+          "key": "",
+          "type": "",
+        },
+        "aggregateOperator": "avg",
+        "aggregations": [
+          {
+            "metricName": "",
+            "reduceTo": "avg",
+            "spaceAggregation": "sum",
+            "temporality": "",
+            "timeAggregation": "avg",
+          },
+        ],
+        "dataSource": "metrics",
+        "disabled": false,
+        "expression": "A",
+        "filter": {
+          "expression": "",
+        },
+        "filters": {
+          "items": [],
+          "op": "AND",
+        },
+        "functions": [],
+        "groupBy": [],
+        "having": [],
+        "legend": "B query",
+        "limit": null,
+        "orderBy": [],
+        "queryName": "B",
+        "reduceTo": "avg",
+        "source": "",
+        "spaceAggregation": "sum",
+        "stepInterval": null,
+        "timeAggregation": "rate",
+      },
+    ],
+    "queryFormulas": [],
+    "queryTraceOperator": [],
+  },
+  "clickhouse_sql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "id": "test-stable-id",
+  "promql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "queryType": "builder",
+  "unit": "",
+}
+`;
+
+exports[`qsAliasAdapter multi-queryData template diffing optimization added queryData only emits changed fields vs baseline[0]: url 1`] = `"_t=QAm&id=test-stable-id&query0.aggOp=count&query0.source=&query1.aggOp=avg&query1.legend=B+query&query1.qn=B&query1.source="`;
+
+exports[`qsAliasAdapter multi-queryData template diffing optimization decoder correctly reconstructs from template-diffed wire: decoded 1`] = `
+{
+  "builder": {
+    "queryData": [
+      {
+        "aggregateAttribute": {
+          "dataType": "",
+          "id": "----",
+          "key": "",
+          "type": "",
+        },
+        "aggregateOperator": "count",
+        "aggregations": [
+          {
+            "metricName": "",
+            "reduceTo": "avg",
+            "spaceAggregation": "sum",
+            "temporality": "",
+            "timeAggregation": "avg",
+          },
+        ],
+        "dataSource": "metrics",
+        "disabled": false,
+        "expression": "A",
+        "filter": {
+          "expression": "",
+        },
+        "filters": {
+          "items": [],
+          "op": "AND",
+        },
+        "functions": [],
+        "groupBy": [],
+        "having": [],
+        "legend": "",
+        "limit": null,
+        "orderBy": [],
+        "queryName": "A",
+        "reduceTo": "avg",
+        "source": "",
+        "spaceAggregation": "sum",
+        "stepInterval": null,
+        "timeAggregation": "rate",
+      },
+      {
+        "aggregateAttribute": {
+          "dataType": "",
+          "id": "----",
+          "key": "",
+          "type": "",
+        },
+        "aggregateOperator": "avg",
+        "aggregations": [
+          {
+            "metricName": "",
+            "reduceTo": "avg",
+            "spaceAggregation": "sum",
+            "temporality": "",
+            "timeAggregation": "avg",
+          },
+        ],
+        "dataSource": "metrics",
+        "disabled": false,
+        "expression": "A",
+        "filter": {
+          "expression": "",
+        },
+        "filters": {
+          "items": [],
+          "op": "AND",
+        },
+        "functions": [],
+        "groupBy": [],
+        "having": [],
+        "legend": "",
+        "limit": null,
+        "orderBy": [],
+        "queryName": "B",
+        "reduceTo": "avg",
+        "source": "",
+        "spaceAggregation": "sum",
+        "stepInterval": null,
+        "timeAggregation": "rate",
+      },
+    ],
+    "queryFormulas": [],
+    "queryTraceOperator": [],
+  },
+  "clickhouse_sql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "id": "test-stable-id",
+  "promql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "queryType": "builder",
+  "unit": "",
+}
+`;
+
+exports[`qsAliasAdapter multi-queryData template diffing optimization decoder correctly reconstructs from template-diffed wire: url 1`] = `"_t=QAm&id=test-stable-id&query0.aggOp=count&query0.source=&query1.aggOp=avg&query1.qn=B&query1.source="`;
+
+exports[`qsAliasAdapter multi-queryData template diffing optimization works for queryFormulas with template inheritance: decoded 1`] = `
+{
+  "builder": {
+    "queryData": [
+      {
+        "aggregateAttribute": {
+          "dataType": "",
+          "id": "----",
+          "key": "",
+          "type": "",
+        },
+        "aggregateOperator": "count",
+        "aggregations": [
+          {
+            "metricName": "",
+            "reduceTo": "avg",
+            "spaceAggregation": "sum",
+            "temporality": "",
+            "timeAggregation": "avg",
+          },
+        ],
+        "dataSource": "metrics",
+        "disabled": false,
+        "expression": "A",
+        "filter": {
+          "expression": "",
+        },
+        "filters": {
+          "items": [],
+          "op": "AND",
+        },
+        "functions": [],
+        "groupBy": [],
+        "having": [],
+        "legend": "",
+        "limit": null,
+        "orderBy": [],
+        "queryName": "A",
+        "reduceTo": "avg",
+        "source": "",
+        "spaceAggregation": "sum",
+        "stepInterval": null,
+        "timeAggregation": "rate",
+      },
+    ],
+    "queryFormulas": [
+      {
+        "disabled": false,
+        "expression": "A",
+        "legend": "F1 result",
+        "queryName": "F1",
+      },
+      {
+        "disabled": true,
+        "expression": "B",
+        "legend": "F2 result",
+        "queryName": "F2",
+      },
+    ],
+    "queryTraceOperator": [],
+  },
+  "clickhouse_sql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "id": "test-stable-id",
+  "promql": [
+    {
+      "disabled": false,
+      "legend": "",
+      "name": "A",
+      "query": "",
+    },
+  ],
+  "queryType": "builder",
+  "unit": "",
+}
+`;
+
+exports[`qsAliasAdapter multi-queryData template diffing optimization works for queryFormulas with template inheritance: url 1`] = `"_t=QAm&formula0.disabled=_false&formula0.expression=A&formula0.legend=F1+result&formula0.qn=F1&formula1.disabled=_true&formula1.expression=B&formula1.legend=F2+result&formula1.qn=F2&id=test-stable-id&query0.aggOp=count&query0.source="`;
+
+exports[`qsAliasAdapter multi-queryData wire format verification encodes clickhouse with chsql-prefixed keys: url 1`] = `"_t=QAm&chsql1.name=B&chsql1.query=SELECT+1&id=test-stable-id&qt=clickhouse_sql&query0.aggOp=count&query0.source="`;
+
+exports[`qsAliasAdapter multi-queryData wire format verification encodes formulas with formula-prefixed keys: url 1`] = `"_t=QAm&formula0.disabled=_false&formula0.expression=A%2FB&formula0.legend=F1+result&formula0.qn=F1&id=test-stable-id&query0.aggOp=count&query0.source=&query1.aggOp=avg&query1.legend=B+legend&query1.qn=B&query1.source="`;
+
+exports[`qsAliasAdapter multi-queryData wire format verification encodes multiple queryData with indexed keys: url 1`] = `"_t=QAm&id=test-stable-id&query0.aggOp=count&query0.source=&query1.aggOp=avg&query1.legend=B+legend&query1.qn=B&query1.source="`;
+
+exports[`qsAliasAdapter multi-queryData wire format verification encodes promql with promql-prefixed keys: url 1`] = `"_t=QAm&id=test-stable-id&promql1.name=B&promql1.query=metric_b&qt=promql&query0.aggOp=count&query0.source="`;

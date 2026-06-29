@@ -1,0 +1,225 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`qsAlias leaf codec decodeLeaf falls back to raw text on a malformed tagged token (never throws): decoded-fallback 1`] = `
+{
+  "fallback": "_not json",
+}
+`;
+
+exports[`qsAlias leaf codec decodeLeaf parses tagged empty containers: decoded-containers 1`] = `
+{
+  "array": [],
+  "object": {},
+}
+`;
+
+exports[`qsAlias leaf codec decodeLeaf parses tagged scalars back to their type: decoded-scalars 1`] = `
+{
+  "false": false,
+  "negative": -4.5,
+  "null": null,
+  "number": 123,
+  "true": true,
+}
+`;
+
+exports[`qsAlias leaf codec decodeLeaf returns untagged tokens as plain strings: decoded-strings 1`] = `
+{
+  "123": "123",
+  "empty": "",
+  "null": "null",
+  "traces": "traces",
+  "true": "true",
+}
+`;
+
+exports[`qsAlias leaf codec decodeLeaf unescapes a doubled-tag string: decoded-escaped 1`] = `
+{
+  "__": "_",
+  "___name__": "__name__",
+  "__x": "_x",
+}
+`;
+
+exports[`qsAlias leaf codec encodeLeaf emits strings verbatim: encoded-strings 1`] = `
+{
+  "empty": "",
+  "service.name": "service.name",
+  "traces": "traces",
+}
+`;
+
+exports[`qsAlias leaf codec encodeLeaf escapes a string that begins with the tag char by doubling it: encoded-escaped 1`] = `
+{
+  "_": "__",
+  "__name__": "___name__",
+  "_x": "__x",
+}
+`;
+
+exports[`qsAlias leaf codec encodeLeaf normalizes undefined to null: encoded-undefined 1`] = `
+{
+  "undefined": "_null",
+}
+`;
+
+exports[`qsAlias leaf codec encodeLeaf type-tags empty containers: encoded-containers 1`] = `
+{
+  "array": "_[]",
+  "object": "_{}",
+}
+`;
+
+exports[`qsAlias leaf codec encodeLeaf type-tags non-string scalars with a leading underscore: encoded-scalars 1`] = `
+{
+  "false": "_false",
+  "negative": "_-4.5",
+  "null": "_null",
+  "number": "_123",
+  "true": "_true",
+}
+`;
+
+exports[`qsAlias leaf codec round-trip "" survives encode → decode: roundtrip-"" 1`] = `
+{
+  "decoded": "",
+  "encoded": "",
+  "input": "",
+}
+`;
+
+exports[`qsAlias leaf codec round-trip "_" survives encode → decode: roundtrip-"_" 1`] = `
+{
+  "decoded": "_",
+  "encoded": "__",
+  "input": "_",
+}
+`;
+
+exports[`qsAlias leaf codec round-trip "_leading" survives encode → decode: roundtrip-"_leading" 1`] = `
+{
+  "decoded": "_leading",
+  "encoded": "__leading",
+  "input": "_leading",
+}
+`;
+
+exports[`qsAlias leaf codec round-trip "123" survives encode → decode: roundtrip-"123" 1`] = `
+{
+  "decoded": "123",
+  "encoded": "123",
+  "input": "123",
+}
+`;
+
+exports[`qsAlias leaf codec round-trip "a=b&c#d%e+f.g" survives encode → decode: roundtrip-"a=b&c#d%e+f.g" 1`] = `
+{
+  "decoded": "a=b&c#d%e+f.g",
+  "encoded": "a=b&c#d%e+f.g",
+  "input": "a=b&c#d%e+f.g",
+}
+`;
+
+exports[`qsAlias leaf codec round-trip "false" survives encode → decode: roundtrip-"false" 1`] = `
+{
+  "decoded": "false",
+  "encoded": "false",
+  "input": "false",
+}
+`;
+
+exports[`qsAlias leaf codec round-trip "null" survives encode → decode: roundtrip-"null" 1`] = `
+{
+  "decoded": "null",
+  "encoded": "null",
+  "input": "null",
+}
+`;
+
+exports[`qsAlias leaf codec round-trip "service.name" survives encode → decode: roundtrip-"service.name" 1`] = `
+{
+  "decoded": "service.name",
+  "encoded": "service.name",
+  "input": "service.name",
+}
+`;
+
+exports[`qsAlias leaf codec round-trip "traces" survives encode → decode: roundtrip-"traces" 1`] = `
+{
+  "decoded": "traces",
+  "encoded": "traces",
+  "input": "traces",
+}
+`;
+
+exports[`qsAlias leaf codec round-trip "true" survives encode → decode: roundtrip-"true" 1`] = `
+{
+  "decoded": "true",
+  "encoded": "true",
+  "input": "true",
+}
+`;
+
+exports[`qsAlias leaf codec round-trip [] survives encode → decode: roundtrip-[] 1`] = `
+{
+  "decoded": [],
+  "encoded": "_[]",
+  "input": [],
+}
+`;
+
+exports[`qsAlias leaf codec round-trip {} survives encode → decode: roundtrip-{} 1`] = `
+{
+  "decoded": {},
+  "encoded": "_{}",
+  "input": {},
+}
+`;
+
+exports[`qsAlias leaf codec round-trip -4.5 survives encode → decode: roundtrip--4.5 1`] = `
+{
+  "decoded": -4.5,
+  "encoded": "_-4.5",
+  "input": -4.5,
+}
+`;
+
+exports[`qsAlias leaf codec round-trip 0 survives encode → decode: roundtrip-0 1`] = `
+{
+  "decoded": 0,
+  "encoded": "_0",
+  "input": 0,
+}
+`;
+
+exports[`qsAlias leaf codec round-trip 123 survives encode → decode: roundtrip-123 1`] = `
+{
+  "decoded": 123,
+  "encoded": "_123",
+  "input": 123,
+}
+`;
+
+exports[`qsAlias leaf codec round-trip false survives encode → decode: roundtrip-false 1`] = `
+{
+  "decoded": false,
+  "encoded": "_false",
+  "input": false,
+}
+`;
+
+exports[`qsAlias leaf codec round-trip null survives encode → decode: roundtrip-null 1`] = `
+{
+  "decoded": null,
+  "encoded": "_null",
+  "input": null,
+}
+`;
+
+exports[`qsAlias leaf codec round-trip true survives encode → decode: roundtrip-true 1`] = `
+{
+  "decoded": true,
+  "encoded": "_true",
+  "input": true,
+}
+`;
