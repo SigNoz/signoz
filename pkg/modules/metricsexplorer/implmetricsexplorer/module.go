@@ -138,7 +138,14 @@ func (m *module) listMeterMetrics(ctx context.Context, params *metricsexplorerty
 
 func (m *module) listMetrics(ctx context.Context, orgID valuer.UUID, params *metricsexplorertypes.ListMetricsParams) (*metricsexplorertypes.ListMetricsResponse, error) {
 	sb := sqlbuilder.NewSelectBuilder()
-	sb.Select("DISTINCT metric_name")
+	sb.Select(
+		"metric_name",
+		"anyLast(description) AS description",
+		"anyLast(type) AS metric_type",
+		"argMax(unit, unix_milli) AS metric_unit",
+		"anyLast(temporality) AS temporality",
+		"anyLast(is_monotonic) AS is_monotonic",
+	)
 
 	if params.Start != nil && params.End != nil {
 		start, end, distributedTsTable, _ := telemetrymetrics.WhichTSTableToUse(uint64(*params.Start), uint64(*params.End), false, nil)
@@ -157,6 +164,7 @@ func (m *module) listMetrics(ctx context.Context, orgID valuer.UUID, params *met
 		sb.Where(sb.Like("lower(metric_name)", fmt.Sprintf("%%%s%%", searchLower)))
 	}
 
+	sb.GroupBy("metric_name")
 	sb.OrderBy("metric_name ASC")
 	sb.Limit(params.Limit)
 
@@ -170,43 +178,47 @@ func (m *module) listMetrics(ctx context.Context, orgID valuer.UUID, params *met
 	}
 	defer rows.Close()
 
-	metricNames := make([]string, 0)
+	var metrics []metricsexplorertypes.ListMetric
+	var metricNames []string
 	for rows.Next() {
-		var name string
-		if err := rows.Scan(&name); err != nil {
-			return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan metric name")
+		var metric metricsexplorertypes.ListMetric
+		if err := rows.Scan(
+			&metric.MetricName,
+			&metric.Description,
+			&metric.MetricType,
+			&metric.MetricUnit,
+			&metric.Temporality,
+			&metric.IsMonotonic,
+		); err != nil {
+			return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan metric")
 		}
-		metricNames = append(metricNames, name)
+		metrics = append(metrics, metric)
+		metricNames = append(metricNames, metric.MetricName)
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error iterating metric names")
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error iterating metrics")
 	}
 
-	if len(metricNames) == 0 {
+	if len(metrics) == 0 {
 		return &metricsexplorertypes.ListMetricsResponse{
 			Metrics: []metricsexplorertypes.ListMetric{},
 		}, nil
 	}
 
-	metadata, err := m.GetMetricMetadataMulti(ctx, orgID, metricNames)
+	// Overlay any user-updated metadata on top of the timeseries metadata.
+	updatedMetadata, err := m.fetchUpdatedMetadata(ctx, orgID, metricNames)
 	if err != nil {
 		return nil, err
 	}
-
-	metrics := make([]metricsexplorertypes.ListMetric, 0, len(metricNames))
-	for _, name := range metricNames {
-		metric := metricsexplorertypes.ListMetric{
-			MetricName: name,
+	for i := range metrics {
+		if meta, ok := updatedMetadata[metrics[i].MetricName]; ok && meta != nil {
+			metrics[i].Description = meta.Description
+			metrics[i].MetricType = meta.MetricType
+			metrics[i].MetricUnit = meta.MetricUnit
+			metrics[i].Temporality = meta.Temporality
+			metrics[i].IsMonotonic = meta.IsMonotonic
 		}
-		if meta, ok := metadata[name]; ok && meta != nil {
-			metric.Description = meta.Description
-			metric.MetricType = meta.MetricType
-			metric.MetricUnit = meta.MetricUnit
-			metric.Temporality = meta.Temporality
-			metric.IsMonotonic = meta.IsMonotonic
-		}
-		metrics = append(metrics, metric)
 	}
 
 	return &metricsexplorertypes.ListMetricsResponse{
@@ -231,19 +243,18 @@ func (m *module) GetStats(ctx context.Context, orgID valuer.UUID, req *metricsex
 		}, nil
 	}
 
-	// Get metadata for all metrics
+	// Overlay any user-updated metadata on top of the timeseries metadata
+	// that was already fetched in the combined query.
 	metricNames := make([]string, len(metricStats))
 	for i := range metricStats {
 		metricNames[i] = metricStats[i].MetricName
 	}
 
-	metadata, err := m.GetMetricMetadataMulti(ctx, orgID, metricNames)
+	updatedMetadata, err := m.fetchUpdatedMetadata(ctx, orgID, metricNames)
 	if err != nil {
 		return nil, err
 	}
-
-	// Enrich stats with metadata
-	enrichStatsWithMetadata(metricStats, metadata)
+	enrichStatsWithMetadata(metricStats, updatedMetadata)
 
 	return &metricsexplorertypes.StatsResponse{
 		Metrics: metricStats,
@@ -988,11 +999,14 @@ func (m *module) fetchMetricsStatsWithSamples(
 	distributedSamplesTable, _ := telemetrymetrics.WhichSamplesTableToUse(uint64(req.Start), uint64(req.End), metrictypes.UnspecifiedType, metrictypes.TimeAggregationUnspecified, false, nil)
 	countExp := telemetrymetrics.CountExpressionForSamplesTable(distributedSamplesTable)
 
-	// Timeseries counts per metric
+	// Timeseries counts and metadata per metric.
 	tsSB := sqlbuilder.NewSelectBuilder()
 	tsSB.Select(
 		"metric_name",
 		"uniq(fingerprint) AS timeseries",
+		"anyLast(description) AS description",
+		"anyLast(type) AS metric_type",
+		"argMax(unit, unix_milli) AS metric_unit",
 	)
 	tsSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, distributedTsTable))
 	tsSB.Where(tsSB.Between("unix_milli", start, end))
@@ -1051,6 +1065,9 @@ func (m *module) fetchMetricsStatsWithSamples(
 		"COALESCE(ts.timeseries, 0) AS timeseries",
 		"COALESCE(s.samples, 0) AS samples",
 		"COUNT(*) OVER() AS total",
+		"ts.description AS description",
+		"ts.metric_type AS metric_type",
+		"ts.metric_unit AS metric_unit",
 	)
 	finalSB.From("__time_series_counts ts")
 	finalSB.JoinWithOption(sqlbuilder.FullOuterJoin, "__sample_counts s", "ts.metric_name = s.metric_name")
@@ -1086,7 +1103,7 @@ func (m *module) fetchMetricsStatsWithSamples(
 			metricStat metricsexplorertypes.Stat
 			rowTotal   uint64
 		)
-		if err := rows.Scan(&metricStat.MetricName, &metricStat.TimeSeries, &metricStat.Samples, &rowTotal); err != nil {
+		if err := rows.Scan(&metricStat.MetricName, &metricStat.TimeSeries, &metricStat.Samples, &rowTotal, &metricStat.Description, &metricStat.MetricType, &metricStat.MetricUnit); err != nil {
 			return nil, 0, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan metrics stats row")
 		}
 		metricStats = append(metricStats, metricStat)
