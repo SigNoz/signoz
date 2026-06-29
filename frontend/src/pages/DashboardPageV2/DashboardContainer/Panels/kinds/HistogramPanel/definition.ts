@@ -26,5 +26,6 @@ export const definition: PanelDefinition<'signoz/HistogramPanel'> = {
 		download: false,
 		createAlert: true,
 		search: false,
+		drilldown: false,
 	},
 };

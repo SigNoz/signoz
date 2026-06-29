@@ -22,5 +22,6 @@ export const definition: PanelDefinition<'signoz/PieChartPanel'> = {
 		download: false,
 		createAlert: false,
 		search: false,
+		drilldown: true,
 	},
 };

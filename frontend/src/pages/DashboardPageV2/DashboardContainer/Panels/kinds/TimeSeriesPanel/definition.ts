@@ -26,5 +26,6 @@ export const definition: PanelDefinition<'signoz/TimeSeriesPanel'> = {
 		download: false,
 		createAlert: true,
 		search: false,
+		drilldown: true,
 	},
 };
