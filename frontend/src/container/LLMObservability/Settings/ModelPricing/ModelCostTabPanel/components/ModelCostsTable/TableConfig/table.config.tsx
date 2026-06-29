@@ -1,11 +1,10 @@
 import { Badge } from '@signozhq/ui/badge';
-import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
-import { ChevronDown } from '@signozhq/icons';
 import type { TableColumnDef } from 'components/TanStackTableView';
 import { startCase } from 'lodash-es';
 
 import styles from './tableConfig.module.scss';
+import ModelCostActionsMenu from '../ModelCostActionsMenu';
 import { type LlmpricingruletypesLLMPricingRuleDTO } from 'api/generated/services/sigNoz.schemas';
 
 import {
@@ -19,6 +18,7 @@ import {
 interface ColumnsConfig {
 	canManage: boolean;
 	onEdit: (rule: LlmpricingruletypesLLMPricingRuleDTO) => void;
+	onDelete: (rule: LlmpricingruletypesLLMPricingRuleDTO) => void;
 }
 
 // Column definitions for the model-costs TanStackTable. Sorting is intentionally
@@ -27,6 +27,7 @@ interface ColumnsConfig {
 export function getModelCostsColumns({
 	canManage,
 	onEdit,
+	onDelete,
 }: ColumnsConfig): TableColumnDef<LlmpricingruletypesLLMPricingRuleDTO>[] {
 	return [
 		{
@@ -143,21 +144,17 @@ export function getModelCostsColumns({
 		{
 			id: 'actions',
 			header: '',
-			width: { fixed: '88px', ignoreLastColumnFill: true },
+			width: { fixed: '56px', ignoreLastColumnFill: true },
 			pin: 'right',
 			enableMove: false,
 			enableRemove: false,
-			cell: ({ row }): JSX.Element => (
-				<Button
-					variant="ghost"
-					color="secondary"
-					size="sm"
-					suffix={<ChevronDown size={14} />}
-					testId={`edit-rule-${row.id}`}
-					onClick={(): void => onEdit(row)}
-				>
-					{canManage ? 'Edit' : 'View'}
-				</Button>
+			cell: ({ row }): JSX.Element | null => (
+				<ModelCostActionsMenu
+					rule={row}
+					canManage={canManage}
+					onEdit={onEdit}
+					onDelete={onDelete}
+				/>
 			),
 		},
 	];

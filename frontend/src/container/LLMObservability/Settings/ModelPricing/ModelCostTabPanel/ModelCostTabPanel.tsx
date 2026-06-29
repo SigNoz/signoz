@@ -46,6 +46,7 @@ function ModelCostTabPanel(): JSX.Element {
 				selectedRuleId={null}
 				canManage={false}
 				onEdit={(): void => undefined}
+				onDelete={(): void => undefined}
 			/>
 
 			<footer>
