@@ -32,7 +32,7 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "@playwright/test": "^1.57.0-alpha-2025-10-09",
+    "@playwright/test": "1.57.0",
     "@types/node": "^20.0.0",
     "dotenv": "^16.0.0",
     "eslint-plugin-playwright": "^2.10.2",

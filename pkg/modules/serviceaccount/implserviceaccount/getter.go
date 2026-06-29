@@ -18,7 +18,7 @@ func NewGetter(store serviceaccounttypes.Store) serviceaccount.Getter {
 	return &getter{store: store}
 }
 
-func (getter *getter) OnBeforeRoleDelete(ctx context.Context, orgID valuer.UUID, roleID valuer.UUID) error {
+func (getter *getter) OnBeforeRoleDelete(ctx context.Context, orgID valuer.UUID, roleID valuer.UUID, _ string) error {
 	serviceAccounts, err := getter.store.GetServiceAccountsByOrgIDAndRoleID(ctx, orgID, roleID)
 	if err != nil {
 		return err
