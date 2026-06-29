@@ -290,7 +290,12 @@ func TestConvertGraphWidgetToTimeSeriesPanel(t *testing.T) {
 	assert.Equal(t, map[string]string{"A": "#ff0000", "B": "#00ff00"}, spec.Legend.CustomColors)
 
 	require.Len(t, spec.Thresholds, 1, "threshold with missing color should be dropped")
-	assert.Equal(t, ThresholdWithLabel{Value: 90, Unit: "reqps", Color: "#ff0000", Label: "high"}, spec.Thresholds[0])
+	threshold := spec.Thresholds[0]
+	require.NotNil(t, threshold.Value)
+	assert.Equal(t, float64(90), *threshold.Value)
+	assert.Equal(t, "reqps", threshold.Unit)
+	assert.Equal(t, "#ff0000", threshold.Color)
+	assert.Equal(t, "high", threshold.Label)
 }
 
 func TestConvertGraphWidgetDefaultsForMissingFields(t *testing.T) {
@@ -476,7 +481,8 @@ func TestConvertValueWidgetToNumberPanel(t *testing.T) {
 	spec, ok := panel.Spec.Plugin.Spec.(*NumberPanelSpec)
 	require.True(t, ok)
 	require.Len(t, spec.Thresholds, 1)
-	assert.Equal(t, float64(100), spec.Thresholds[0].Value)
+	require.NotNil(t, spec.Thresholds[0].Value)
+	assert.Equal(t, float64(100), *spec.Thresholds[0].Value)
 	assert.Equal(t, ComparisonOperatorAboveOrEqual, spec.Thresholds[0].Operator)
 	assert.Equal(t, "#ff0000", spec.Thresholds[0].Color)
 	assert.Equal(t, ThresholdFormatBackground, spec.Thresholds[0].Format)
@@ -944,8 +950,7 @@ func TestConvertV1VariablesAllTypes(t *testing.T) {
 	assert.Equal(t, VariableKindQuery, q.Plugin.Kind)
 	assert.True(t, q.AllowMultiple)
 	assert.True(t, q.AllowAllValue)
-	require.NotNil(t, q.Sort)
-	assert.Equal(t, variable.SortAlphabeticalAsc, *q.Sort)
+	assert.Equal(t, SortAlphabeticalAsc, q.Sort)
 
 	c, ok := vars[2].Spec.(*ListVariableSpec)
 	require.True(t, ok)
@@ -955,7 +960,7 @@ func TestConvertV1VariablesAllTypes(t *testing.T) {
 	assert.Equal(t, "prod", c.DefaultValue.SingleValue)
 
 	assert.Equal(t, variable.KindText, vars[3].Kind)
-	text, ok := vars[3].Spec.(*dashboard.TextVariableSpec)
+	text, ok := vars[3].Spec.(*TextVariableSpec)
 	require.True(t, ok)
 	assert.Equal(t, "freetext", text.Name)
 	assert.Equal(t, "hello", text.Value)
