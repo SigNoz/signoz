@@ -7,23 +7,23 @@ import type { Warning } from 'types/api';
 import PanelHeader from '../PanelHeader/PanelHeader';
 import { PanelKind } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelKind';
 
-// PanelHeader's status indicators render a radix tooltip, which needs a
-// TooltipProvider ancestor (supplied globally by AppLayout at runtime).
+// Status indicators use a radix tooltip, which needs a TooltipProvider ancestor
+// (supplied globally by AppLayout at runtime).
 const renderWithProvider = (ui: ReactElement): ReturnType<typeof render> =>
 	render(<TooltipProvider>{ui}</TooltipProvider>);
 
-// The actions menu has its own gating logic (kind/role/context) and its own
-// tests; stub it so this test exercises only the header's status indicators.
+// Stub the actions menu (its gating logic is tested separately) so this asserts
+// only whether the menu mounts, per the `hideActions` switch.
 jest.mock(
 	'../PanelActionsMenu/PanelActionsMenu',
 	() =>
-		function MockPanelActionsMenu(): null {
-			return null;
+		function MockPanelActionsMenu(): ReactElement {
+			return <div data-testid="panel-actions-menu" />;
 		},
 );
 
 const baseProps = {
-	title: 'My panel',
+	name: 'My panel',
 	panelKind: 'signoz/TimeSeriesPanel' as PanelKind,
 	panelId: 'panel-1',
 	isFetching: false,
@@ -35,6 +35,27 @@ const warning: Warning = {
 	url: '',
 	warnings: [],
 };
+
+describe('PanelHeader title and description', () => {
+	it('renders the panel name', () => {
+		renderWithProvider(<PanelHeader {...baseProps} />);
+		expect(screen.getByText('My panel')).toBeInTheDocument();
+	});
+
+	it('shows the description info icon when a description is provided', () => {
+		renderWithProvider(
+			<PanelHeader {...baseProps} description="What this panel measures" />,
+		);
+		expect(screen.getByTestId('panel-header-info-icon')).toBeInTheDocument();
+	});
+
+	it('renders no description info icon when there is no description', () => {
+		renderWithProvider(<PanelHeader {...baseProps} />);
+		expect(
+			screen.queryByTestId('panel-header-info-icon'),
+		).not.toBeInTheDocument();
+	});
+});
 
 describe('PanelHeader status indicators', () => {
 	it('shows the error indicator whenever an error is present', () => {
@@ -76,8 +97,8 @@ describe('PanelHeader search', () => {
 
 		await user.click(screen.getByTestId('panel-header-search-trigger'));
 
-		// The input is controlled to the (fixed) `searchTerm` here, so each keystroke
-		// reports a single character — assert one to confirm changes are propagated.
+		// Input is controlled to a fixed `searchTerm`, so each keystroke reports a
+		// single character — one is enough to confirm changes propagate.
 		const input = screen.getByTestId('panel-header-search-input');
 		await user.type(input, 'f');
 		expect(onSearchChange).toHaveBeenCalledWith('f');
@@ -100,6 +121,18 @@ describe('PanelHeader search', () => {
 
 		expect(onSearchChange).toHaveBeenCalledWith('');
 		expect(screen.getByTestId('panel-header-search-trigger')).toBeInTheDocument();
+	});
+});
+
+describe('PanelHeader actions menu', () => {
+	it('mounts the actions menu by default', () => {
+		renderWithProvider(<PanelHeader {...baseProps} />);
+		expect(screen.getByTestId('panel-actions-menu')).toBeInTheDocument();
+	});
+
+	it('hides the actions menu when hideActions is set (editor preview)', () => {
+		renderWithProvider(<PanelHeader {...baseProps} hideActions />);
+		expect(screen.queryByTestId('panel-actions-menu')).not.toBeInTheDocument();
 	});
 });
 

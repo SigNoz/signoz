@@ -130,4 +130,14 @@ describe('MembersSettings (integration)', () => {
 			screen.findAllByPlaceholderText('john@signoz.io'),
 		).resolves.toHaveLength(3);
 	});
+
+	it('opens InviteMembersModal when invite=true query param is present', async () => {
+		render(<MembersSettings />, undefined, {
+			initialRoute: '/settings/members?invite=true',
+		});
+
+		await expect(
+			screen.findAllByPlaceholderText('john@signoz.io'),
+		).resolves.toHaveLength(3);
+	});
 });
