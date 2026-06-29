@@ -5624,6 +5624,85 @@ export interface InframonitoringtypesPodCountsByPhaseDTO {
 	unknown: number;
 }
 
+export interface InframonitoringtypesPodCountsByStatusDTO {
+	/**
+	 * @type integer
+	 */
+	completed: number;
+	/**
+	 * @type integer
+	 */
+	containerCannotRun: number;
+	/**
+	 * @type integer
+	 */
+	containerCreating: number;
+	/**
+	 * @type integer
+	 */
+	crashLoopBackOff: number;
+	/**
+	 * @type integer
+	 */
+	createContainerConfigError: number;
+	/**
+	 * @type integer
+	 */
+	errImagePull: number;
+	/**
+	 * @type integer
+	 */
+	error: number;
+	/**
+	 * @type integer
+	 */
+	evicted: number;
+	/**
+	 * @type integer
+	 */
+	failed: number;
+	/**
+	 * @type integer
+	 */
+	imagePullBackOff: number;
+	/**
+	 * @type integer
+	 */
+	nodeAffinity: number;
+	/**
+	 * @type integer
+	 */
+	nodeLost: number;
+	/**
+	 * @type integer
+	 */
+	oomKilled: number;
+	/**
+	 * @type integer
+	 */
+	pending: number;
+	/**
+	 * @type integer
+	 */
+	running: number;
+	/**
+	 * @type integer
+	 */
+	shutdown: number;
+	/**
+	 * @type integer
+	 */
+	succeeded: number;
+	/**
+	 * @type integer
+	 */
+	unexpectedAdmissionError: number;
+	/**
+	 * @type integer
+	 */
+	unknown: number;
+}
+
 export interface InframonitoringtypesClusterRecordDTO {
 	/**
 	 * @type number
@@ -5655,6 +5734,7 @@ export interface InframonitoringtypesClusterRecordDTO {
 	meta: InframonitoringtypesClusterRecordDTOMeta;
 	nodeCountsByReadiness: InframonitoringtypesNodeCountsByReadinessDTO;
 	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
+	podCountsByStatus: InframonitoringtypesPodCountsByStatusDTO;
 }
 
 export enum InframonitoringtypesResponseTypeDTO {
@@ -5758,6 +5838,7 @@ export interface InframonitoringtypesDaemonSetRecordDTO {
 	 */
 	meta: InframonitoringtypesDaemonSetRecordDTOMeta;
 	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
+	podCountsByStatus: InframonitoringtypesPodCountsByStatusDTO;
 }
 
 export interface InframonitoringtypesDaemonSetsDTO {
@@ -5835,6 +5916,7 @@ export interface InframonitoringtypesDeploymentRecordDTO {
 	 */
 	meta: InframonitoringtypesDeploymentRecordDTOMeta;
 	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
+	podCountsByStatus: InframonitoringtypesPodCountsByStatusDTO;
 }
 
 export interface InframonitoringtypesDeploymentsDTO {
@@ -6001,6 +6083,7 @@ export interface InframonitoringtypesJobRecordDTO {
 	 */
 	meta: InframonitoringtypesJobRecordDTOMeta;
 	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
+	podCountsByStatus: InframonitoringtypesPodCountsByStatusDTO;
 	/**
 	 * @type integer
 	 */
@@ -6054,6 +6137,7 @@ export interface InframonitoringtypesNamespaceRecordDTO {
 	 */
 	namespaceName: string;
 	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
+	podCountsByStatus: InframonitoringtypesPodCountsByStatusDTO;
 }
 
 export interface InframonitoringtypesNamespacesDTO {
@@ -6120,6 +6204,7 @@ export interface InframonitoringtypesNodeRecordDTO {
 	 */
 	nodeName: string;
 	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
+	podCountsByStatus: InframonitoringtypesPodCountsByStatusDTO;
 }
 
 export interface InframonitoringtypesNodesDTO {
@@ -6137,85 +6222,6 @@ export interface InframonitoringtypesNodesDTO {
 	total: number;
 	type: InframonitoringtypesResponseTypeDTO;
 	warning?: Querybuildertypesv5QueryWarnDataDTO;
-}
-
-export interface InframonitoringtypesPodCountsByStatusDTO {
-	/**
-	 * @type integer
-	 */
-	completed: number;
-	/**
-	 * @type integer
-	 */
-	containerCannotRun: number;
-	/**
-	 * @type integer
-	 */
-	containerCreating: number;
-	/**
-	 * @type integer
-	 */
-	crashLoopBackOff: number;
-	/**
-	 * @type integer
-	 */
-	createContainerConfigError: number;
-	/**
-	 * @type integer
-	 */
-	errImagePull: number;
-	/**
-	 * @type integer
-	 */
-	error: number;
-	/**
-	 * @type integer
-	 */
-	evicted: number;
-	/**
-	 * @type integer
-	 */
-	failed: number;
-	/**
-	 * @type integer
-	 */
-	imagePullBackOff: number;
-	/**
-	 * @type integer
-	 */
-	nodeAffinity: number;
-	/**
-	 * @type integer
-	 */
-	nodeLost: number;
-	/**
-	 * @type integer
-	 */
-	oomKilled: number;
-	/**
-	 * @type integer
-	 */
-	pending: number;
-	/**
-	 * @type integer
-	 */
-	running: number;
-	/**
-	 * @type integer
-	 */
-	shutdown: number;
-	/**
-	 * @type integer
-	 */
-	succeeded: number;
-	/**
-	 * @type integer
-	 */
-	unexpectedAdmissionError: number;
-	/**
-	 * @type integer
-	 */
-	unknown: number;
 }
 
 export enum InframonitoringtypesPodPhaseDTO {
@@ -6624,6 +6630,7 @@ export interface InframonitoringtypesStatefulSetRecordDTO {
 	 */
 	meta: InframonitoringtypesStatefulSetRecordDTOMeta;
 	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
+	podCountsByStatus: InframonitoringtypesPodCountsByStatusDTO;
 	/**
 	 * @type number
 	 * @format double
