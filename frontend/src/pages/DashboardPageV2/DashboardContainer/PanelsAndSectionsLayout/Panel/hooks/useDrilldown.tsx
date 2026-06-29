@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import useBaseDrilldownNavigate from 'container/QueryTable/Drilldown/useBaseDrilldownNavigate';
@@ -21,10 +21,14 @@ import { fromPerses } from 'pages/DashboardPageV2/DashboardContainer/queryV5/per
 
 import DrilldownAggregateMenu from '../DrilldownMenu/DrilldownAggregateMenu';
 import DrilldownFilterMenu from '../DrilldownMenu/DrilldownFilterMenu';
+import { useDrilldownBreakout } from './useDrilldownBreakout';
 import { useDrilldownCoordinates } from './useDrilldownCoordinates';
 import { useDrilldownFilter } from './useDrilldownFilter';
 import { useResolvedDrilldownQuery } from './useResolvedDrilldownQuery';
 import { useViewPanel } from './useViewPanel';
+
+/** Which menu the popover shows; extend the union as submenus are added (e.g. dashboard variables). */
+type DrilldownSubMenu = 'base' | 'breakout';
 
 /** Props the panel shell spreads onto `<ContextMenu>`. */
 export interface DrilldownContextMenuProps {
@@ -43,8 +47,8 @@ export interface UseDrilldownResult {
 }
 
 /**
- * Orchestrates panel drill-down: owns the popover and routes the clicked point to the base
- * aggregate menu (View in Logs/Traces) or the group filter-by-value menu.
+ * Orchestrates panel drill-down: owns the popover + which submenu is open, and routes the clicked
+ * point to the base aggregate menu (View in Logs/Traces), the group filter menu, or the breakout picker.
  */
 export function useDrilldown(
 	panel: DashboardtypesPanelDTO,
@@ -82,7 +86,35 @@ export function useDrilldown(
 		[context],
 	);
 
+	// A fresh click and any close reset to the base menu.
+	const [subMenu, setSubMenu] = useState<DrilldownSubMenu>('base');
+	const openBreakout = useCallback((): void => setSubMenu('breakout'), []);
+	const backToBase = useCallback((): void => setSubMenu('base'), []);
+
+	const onPanelClick = useCallback(
+		(payload: DrilldownClickPayload): void => {
+			setSubMenu('base');
+			onClick(payload.coordinates, payload.context);
+		},
+		[onClick],
+	);
+
+	const handleClose = useCallback((): void => {
+		setSubMenu('base');
+		onClose();
+	}, [onClose]);
+
 	const { openViewWithQuery } = useViewPanel();
+
+	const breakout = useDrilldownBreakout({
+		panelId,
+		v1Query,
+		panelType,
+		aggregateData,
+		openViewWithQuery,
+		onBack: backToBase,
+		onClose: handleClose,
+	});
 
 	const filter = useDrilldownFilter({
 		context,
@@ -90,13 +122,14 @@ export function useDrilldown(
 		panelId,
 		panelType,
 		openViewWithQuery,
-		onClose,
+		onClose: handleClose,
 	});
 
-	// The aggregate menu (View in Logs/Traces) shows for a non-group click; the group click
-	// routes to filter-by-value instead. Only that menu resolves variables — filter/breakout
-	// open the View modal, which resolves at query-run time.
-	const showAggregateMenu = !!context && !filter.isGroupColumnClick;
+	// The aggregate menu (View in Logs/Traces) shows for a non-group click on the base menu; the
+	// group click routes to filter-by-value instead. Only that menu resolves variables —
+	// filter/breakout open the View modal, which resolves at query-run time.
+	const showAggregateMenu =
+		subMenu === 'base' && !!context && !filter.isGroupColumnClick;
 
 	const { resolvedQuery, isResolving } = useResolvedDrilldownQuery({
 		queries,
@@ -108,10 +141,13 @@ export function useDrilldown(
 	const navigate = useBaseDrilldownNavigate({
 		resolvedQuery,
 		aggregateData,
-		callback: onClose,
+		callback: handleClose,
 	});
 
 	const items = useMemo<ReactNode>(() => {
+		if (subMenu === 'breakout') {
+			return breakout.items;
+		}
 		if (filter.isGroupColumnClick && context?.clickedKey) {
 			return (
 				<DrilldownFilterMenu
@@ -131,26 +167,29 @@ export function useDrilldown(
 				isResolving={isResolving}
 				onViewLogs={(): void => navigate('view_logs')}
 				onViewTraces={(): void => navigate('view_traces')}
+				onBreakout={openBreakout}
 			/>
 		);
 	}, [
+		subMenu,
+		breakout.items,
 		filter.isGroupColumnClick,
 		filter.onFilter,
 		context,
 		v1Query,
 		isResolving,
 		navigate,
+		openBreakout,
 	]);
-
-	const onPanelClick = useCallback(
-		(payload: DrilldownClickPayload): void =>
-			onClick(payload.coordinates, payload.context),
-		[onClick],
-	);
 
 	return {
 		enableDrillDown,
 		onPanelClick,
-		contextMenuProps: { coordinates, popoverPosition, items, onClose },
+		contextMenuProps: {
+			coordinates,
+			popoverPosition,
+			items,
+			onClose: handleClose,
+		},
 	};
 }
