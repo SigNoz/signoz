@@ -13,6 +13,7 @@ import { enrichChartClick } from '../enrichChartClick';
 import { enrichNumberClick } from '../enrichNumberClick';
 import { enrichPieClick } from '../enrichPieClick';
 import { enrichTableClick } from '../enrichTableClick';
+import { resolvePanelContextLinks } from '../resolvePanelContextLinks';
 import { resolveDrilldownSignal } from '../signal';
 
 // The v5 BuilderQuery union is too verbose to construct field-typed inline; cast at the boundary.
@@ -348,6 +349,44 @@ describe('enrichPieClick', () => {
 				coordinates: { x: 0, y: 0 },
 			}),
 		).toBeNull();
+	});
+});
+
+describe('resolvePanelContextLinks', () => {
+	it('substitutes the clicked field value (_-prefixed) into the label and URL', () => {
+		const resolved = resolvePanelContextLinks(
+			[
+				{
+					name: 'Runbook for {{_service.name}}',
+					url: 'https://wiki/{{_service.name}}',
+				},
+			],
+			{ '_service.name': 'frontend' },
+		);
+
+		expect(resolved).toHaveLength(1);
+		expect(resolved[0].label).toBe('Runbook for frontend');
+		expect(resolved[0].url).toBe('https://wiki/frontend');
+	});
+
+	it('drops links without a URL', () => {
+		expect(resolvePanelContextLinks([{ name: 'No URL' }], {})).toStrictEqual([]);
+		expect(resolvePanelContextLinks(undefined, {})).toStrictEqual([]);
+	});
+
+	it('keeps the raw URL when renderVariables is false', () => {
+		const resolved = resolvePanelContextLinks(
+			[
+				{
+					name: 'Literal',
+					url: 'https://wiki/{{_service.name}}',
+					renderVariables: false,
+				},
+			],
+			{ '_service.name': 'frontend' },
+		);
+
+		expect(resolved[0].url).toBe('https://wiki/{{_service.name}}');
 	});
 });
 

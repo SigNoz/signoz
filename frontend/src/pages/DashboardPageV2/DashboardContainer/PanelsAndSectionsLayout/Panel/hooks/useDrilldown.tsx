@@ -182,9 +182,11 @@ export function useDrilldown(
 				context={context}
 				query={v1Query}
 				isResolving={isResolving}
+				links={panel.spec.links}
 				onViewLogs={(): void => navigate('view_logs')}
 				onViewTraces={(): void => navigate('view_traces')}
 				onBreakout={openBreakout}
+				onClose={handleClose}
 			/>
 		);
 	}, [
@@ -197,8 +199,10 @@ export function useDrilldown(
 		context,
 		v1Query,
 		isResolving,
+		panel.spec.links,
 		navigate,
 		openBreakout,
+		handleClose,
 	]);
 
 	return {
