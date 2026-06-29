@@ -1202,8 +1202,10 @@ func (aH *APIHandler) queryRangeMetrics(w http.ResponseWriter, r *http.Request) 
 		switch res.Err.(type) {
 		case promql.ErrQueryCanceled:
 			RespondError(w, &model.ApiError{Typ: model.ErrorCanceled, Err: res.Err}, nil)
+			return
 		case promql.ErrQueryTimeout:
 			RespondError(w, &model.ApiError{Typ: model.ErrorTimeout, Err: res.Err}, nil)
+			return
 		}
 		RespondError(w, &model.ApiError{Typ: model.ErrorExec, Err: res.Err}, nil)
 		return
@@ -1257,10 +1259,13 @@ func (aH *APIHandler) queryMetrics(w http.ResponseWriter, r *http.Request) {
 		switch res.Err.(type) {
 		case promql.ErrQueryCanceled:
 			RespondError(w, &model.ApiError{Typ: model.ErrorCanceled, Err: res.Err}, nil)
+			return
 		case promql.ErrQueryTimeout:
 			RespondError(w, &model.ApiError{Typ: model.ErrorTimeout, Err: res.Err}, nil)
+			return
 		}
 		RespondError(w, &model.ApiError{Typ: model.ErrorExec, Err: res.Err}, nil)
+		return
 	}
 
 	responseData := &model.QueryData{
