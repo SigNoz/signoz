@@ -108,8 +108,7 @@ type PreviewStatement struct {
 
 // MarshalJSON renders Error in its structured form (code/message/suggestions)
 // rather than the empty object a bare error produces. The nullable:"false"
-// arrays are initialized non-nil at construction by the producer, so they
-// marshal as [] rather than null.
+// arrays are non-nil from the producer, so they marshal as [] rather than null.
 func (p QueryPreview) MarshalJSON() ([]byte, error) {
 	type alias QueryPreview
 	out := struct {

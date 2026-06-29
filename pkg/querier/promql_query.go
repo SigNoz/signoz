@@ -232,8 +232,8 @@ func (q *promqlQuery) Statement(_ context.Context) (*qbv5.Statement, error) {
 }
 
 // PreviewStatements returns the ClickHouse statement(s) this PromQL query would
-// run, captured by driving the engine with a Storage that records each
-// selector's SQL and returns empty results. Returns nil if capture is unsupported.
+// run, captured by driving the engine with a Storage that records each selector's
+// SQL and returns no data. Returns nil if capture is unsupported.
 func (q *promqlQuery) PreviewStatements(ctx context.Context) ([]prometheus.CapturedStatement, error) {
 	storer, ok := q.promEngine.(prometheus.StatementCapturer)
 	if !ok {

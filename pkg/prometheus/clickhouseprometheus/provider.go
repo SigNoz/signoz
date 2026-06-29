@@ -65,8 +65,8 @@ func (provider *provider) Querier(mint, maxt int64) (storage.Querier, error) {
 	return storage.NewMergeQuerier(nil, []storage.Querier{querier}, storage.ChainedSeriesMerge), nil
 }
 
-// CapturingStorage implements prometheus.StatementCapturer. A fresh recorder is
-// created per call so concurrent dry-runs don't share state.
+// CapturingStorage implements prometheus.StatementCapturer. Uses a fresh
+// recorder per call so concurrent dry-runs don't share state.
 func (provider *provider) CapturingStorage() (storage.Queryable, prometheus.StatementRecorder) {
 	recorder := &statementRecorder{}
 	capture := &captureClient{

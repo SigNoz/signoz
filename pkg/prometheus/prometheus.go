@@ -17,7 +17,7 @@ type Prometheus interface {
 }
 
 // CapturedStatement is one datastore statement a PromQL query would run,
-// captured without executing it.
+// captured without executing.
 type CapturedStatement struct {
 	Query string
 	Args  []any
@@ -29,9 +29,9 @@ type StatementRecorder interface {
 	Statements() []CapturedStatement
 }
 
-// StatementCapturer is an optional Prometheus-provider capability: it returns a
-// Storage that records each Select's statement without executing it, plus a
-// recorder to read them back. Discovered via type assertion.
+// StatementCapturer is an optional Prometheus-provider capability, discovered
+// via type assertion: it returns a Storage that records each Select's statement
+// without executing it, plus a recorder to read them back.
 type StatementCapturer interface {
 	CapturingStorage() (storage.Queryable, StatementRecorder)
 }

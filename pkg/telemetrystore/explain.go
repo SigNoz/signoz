@@ -11,8 +11,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 )
 
-// EstimateEntry is ClickHouse's EXPLAIN ESTIMATE for one table read: the
-// absolute parts, rows, and marks it estimates it will scan.
+// EstimateEntry is ClickHouse's EXPLAIN ESTIMATE for one table read: the parts,
+// rows, and marks it estimates it will scan.
 type EstimateEntry struct {
 	Database string `json:"database" required:"true" nullable:"false"`
 	Table    string `json:"table" required:"true" nullable:"false"`
@@ -21,8 +21,8 @@ type EstimateEntry struct {
 	Marks    int64  `json:"marks" required:"true" nullable:"false"`
 }
 
-// Granules is the granule-skip breakdown for one statement, parsed from
-// `EXPLAIN json = 1, indexes = 1` and summed across every ReadFromMergeTree node.
+// Granules is the granule-skip breakdown for one statement, summed from
+// `EXPLAIN json = 1, indexes = 1` across every ReadFromMergeTree node.
 type Granules struct {
 	Initial  int64           `json:"initial" required:"true" nullable:"false"`
 	Selected int64           `json:"selected" required:"true" nullable:"false"`
@@ -30,16 +30,16 @@ type Granules struct {
 	Reads    []MergeTreeRead `json:"reads" required:"true" nullable:"false"`
 }
 
-// MergeTreeRead is the index-pruning funnel for one ReadFromMergeTree node. The
-// Steps run in sequence, so each step's Initial* matches the previous Selected*.
+// MergeTreeRead is the index-pruning funnel for one ReadFromMergeTree node. Steps
+// run in sequence, so each step's Initial* matches the previous Selected*.
 type MergeTreeRead struct {
 	Table string      `json:"table" required:"true" nullable:"false"`
 	Steps []IndexStep `json:"steps" required:"true" nullable:"false"`
 }
 
-// IndexStep is one index applied during a MergeTree read, with the parts and
-// granules entering (Initial*) and surviving (Selected*) it. Type is the index
-// kind (MinMax, Partition, PrimaryKey, or Skip).
+// IndexStep is one index applied during a MergeTree read: parts and granules
+// entering (Initial*) and surviving (Selected*) it. Type is the index kind
+// (MinMax, Partition, PrimaryKey, or Skip).
 type IndexStep struct {
 	Type             string   `json:"type" required:"true" nullable:"false"`
 	Name             string   `json:"name" required:"true" nullable:"false"`
@@ -52,7 +52,7 @@ type IndexStep struct {
 }
 
 // ExplainPlanNode is a node in ClickHouse's `EXPLAIN json = 1, indexes = 1`
-// output, parsed to derive the granule-skip breakdown for a statement.
+// output, parsed to derive the granule-skip breakdown.
 type ExplainPlanNode struct {
 	NodeType    string             `json:"Node Type"`
 	Description string             `json:"Description"`
@@ -60,8 +60,8 @@ type ExplainPlanNode struct {
 	Plans       []ExplainPlanNode  `json:"Plans"`
 }
 
-// ExplainPlanIndex is one index entry under a ReadFromMergeTree node in the
-// EXPLAIN plan, reporting the parts/granules entering and surviving the index.
+// ExplainPlanIndex is one index entry under a ReadFromMergeTree node, reporting
+// the parts/granules entering and surviving the index.
 type ExplainPlanIndex struct {
 	Type             string   `json:"Type"`
 	Name             string   `json:"Name"`
@@ -73,30 +73,7 @@ type ExplainPlanIndex struct {
 	SelectedGranules *int64   `json:"Selected Granules"`
 }
 
-// explainConn adds the Explain methods to any clickhouse.Conn by delegating to
-// the Run* helpers.
-type explainConn struct {
-	clickhouse.Conn
-}
-
-// NewClickhouseConn wraps conn so it also satisfies Explain (and ClickhouseConn).
-func NewClickhouseConn(conn clickhouse.Conn) ClickhouseConn {
-	return explainConn{Conn: conn}
-}
-
-func (c explainConn) Estimate(ctx context.Context, stmt string, args ...any) ([]EstimateEntry, error) {
-	return RunExplainEstimate(ctx, c.Conn, stmt, args...)
-}
-
-func (c explainConn) Plan(ctx context.Context, stmt string, args ...any) error {
-	return RunExplainPlan(ctx, c.Conn, stmt, args...)
-}
-
-func (c explainConn) Indexes(ctx context.Context, stmt string, args ...any) (Granules, bool, error) {
-	return RunExplainIndexes(ctx, c.Conn, stmt, args...)
-}
-
-// RunExplainEstimate backs Explain.Estimate.
+// RunExplainEstimate backs TelemetryStore.Estimate.
 func RunExplainEstimate(ctx context.Context, conn clickhouse.Conn, stmt string, args ...any) ([]EstimateEntry, error) {
 	if err := ValidateExplainStatement(stmt); err != nil {
 		return nil, err
@@ -142,8 +119,8 @@ func RunExplainEstimate(ctx context.Context, conn clickhouse.Conn, stmt string, 
 	return entries, nil
 }
 
-// RunExplainPlan backs Explain.Plan, returning the driver error
-// when stmt does not parse or bind.
+// RunExplainPlan backs TelemetryStore.Plan, returning the driver error when stmt
+// does not parse or bind.
 func RunExplainPlan(ctx context.Context, conn clickhouse.Conn, stmt string, args ...any) error {
 	if err := ValidateExplainStatement(stmt); err != nil {
 		return err
@@ -157,7 +134,7 @@ func RunExplainPlan(ctx context.Context, conn clickhouse.Conn, stmt string, args
 	return nil
 }
 
-// RunExplainIndexes backs Explain.Indexes, summing the breakdown
+// RunExplainIndexes backs TelemetryStore.Indexes, summing the breakdown
 // across every ReadFromMergeTree node.
 func RunExplainIndexes(ctx context.Context, conn clickhouse.Conn, stmt string, args ...any) (Granules, bool, error) {
 	if err := ValidateExplainStatement(stmt); err != nil {

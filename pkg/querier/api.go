@@ -95,8 +95,8 @@ func (handler *handler) QueryRangePreview(rw http.ResponseWriter, req *http.Requ
 		return
 	}
 
-	// Validation is deferred to QueryRangePreview, which validates each query
-	// individually and reports per-query errors instead of failing fast.
+	// Validation is deferred to QueryRangePreview, which reports per-query
+	// errors instead of failing fast.
 
 	orgID, err := valuer.NewUUID(claims.OrgID)
 	if err != nil {

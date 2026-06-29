@@ -131,7 +131,7 @@ func (q *querier) QueryRangePreview(
 		ps.Warnings = append(ps.Warnings, stmt.Warnings...)
 
 		if query.Type == qbtypes.QueryTypeClickHouseSQL {
-			if bindErr := q.telemetryStore.ClickhouseDB().Plan(ctx, stmt.Query, stmt.Args...); bindErr != nil {
+			if bindErr := q.telemetryStore.Plan(ctx, stmt.Query, stmt.Args...); bindErr != nil {
 				if errors.Ast(bindErr, errors.TypeInvalidInput) || errors.Ast(bindErr, errors.TypeNotFound) {
 					ps.Error = bindErr
 					results[name] = ps
@@ -299,12 +299,12 @@ func (q *querier) runPreviewTasks(ctx context.Context, tasks []qbtypes.PreviewTa
 			defer wg.Done()
 			t := tasks[i]
 			var out outcome
-			if granules, ok, scErr := q.telemetryStore.ClickhouseDB().Indexes(ctx, t.Query, t.Args...); scErr != nil {
+			if granules, ok, scErr := q.telemetryStore.Indexes(ctx, t.Query, t.Args...); scErr != nil {
 				out.warnings = append(out.warnings, "could not compute granule stats: "+scErr.Error())
 			} else if ok {
 				out.granules = &granules
 			}
-			if estimate, eErr := q.telemetryStore.ClickhouseDB().Estimate(ctx, t.Query, t.Args...); eErr != nil {
+			if estimate, eErr := q.telemetryStore.Estimate(ctx, t.Query, t.Args...); eErr != nil {
 				out.warnings = append(out.warnings, "could not run EXPLAIN ESTIMATE: "+eErr.Error())
 			} else {
 				out.estimate = estimate

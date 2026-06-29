@@ -7299,32 +7299,6 @@ export interface Querybuildertypesv5ColumnDescriptorDTO {
 	unit?: string;
 }
 
-export interface Querybuildertypesv5EstimateEntryDTO {
-	/**
-	 * @type string
-	 */
-	database: string;
-	/**
-	 * @type integer
-	 * @format int64
-	 */
-	marks: number;
-	/**
-	 * @type integer
-	 * @format int64
-	 */
-	parts: number;
-	/**
-	 * @type integer
-	 * @format int64
-	 */
-	rows: number;
-	/**
-	 * @type string
-	 */
-	table: string;
-}
-
 export type Querybuildertypesv5ExecStatsDTOStepIntervals = {
 	[key: string]: number;
 };
@@ -7365,7 +7339,33 @@ export interface Querybuildertypesv5FormatOptionsDTO {
 	formatTableResultForUI?: boolean;
 }
 
-export interface Querybuildertypesv5IndexStepDTO {
+export interface TelemetrystoreEstimateEntryDTO {
+	/**
+	 * @type string
+	 */
+	database: string;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	marks: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	parts: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	rows: number;
+	/**
+	 * @type string
+	 */
+	table: string;
+}
+
+export interface TelemetrystoreIndexStepDTO {
 	/**
 	 * @type string
 	 */
@@ -7404,18 +7404,18 @@ export interface Querybuildertypesv5IndexStepDTO {
 	type: string;
 }
 
-export interface Querybuildertypesv5MergeTreeReadDTO {
+export interface TelemetrystoreMergeTreeReadDTO {
 	/**
 	 * @type array
 	 */
-	steps: Querybuildertypesv5IndexStepDTO[];
+	steps: TelemetrystoreIndexStepDTO[];
 	/**
 	 * @type string
 	 */
 	table: string;
 }
 
-export type Querybuildertypesv5GranulesDTOAnyOf = {
+export type TelemetrystoreGranulesDTOAnyOf = {
 	/**
 	 * @type integer
 	 * @format int64
@@ -7424,7 +7424,7 @@ export type Querybuildertypesv5GranulesDTOAnyOf = {
 	/**
 	 * @type array
 	 */
-	reads: Querybuildertypesv5MergeTreeReadDTO[];
+	reads: TelemetrystoreMergeTreeReadDTO[];
 	/**
 	 * @type integer
 	 * @format int64
@@ -7440,8 +7440,7 @@ export type Querybuildertypesv5GranulesDTOAnyOf = {
 /**
  * @nullable
  */
-export type Querybuildertypesv5GranulesDTO =
-	Querybuildertypesv5GranulesDTOAnyOf | null;
+export type TelemetrystoreGranulesDTO = TelemetrystoreGranulesDTOAnyOf | null;
 
 export interface Querybuildertypesv5PreviewStatementDTO {
 	/**
@@ -7455,8 +7454,8 @@ export interface Querybuildertypesv5PreviewStatementDTO {
 	/**
 	 * @type array
 	 */
-	estimate: Querybuildertypesv5EstimateEntryDTO[];
-	granules: Querybuildertypesv5GranulesDTO | null;
+	estimate: TelemetrystoreEstimateEntryDTO[];
+	granules: TelemetrystoreGranulesDTO | null;
 }
 
 export interface Querybuildertypesv5TimeSeriesDataDTO {
