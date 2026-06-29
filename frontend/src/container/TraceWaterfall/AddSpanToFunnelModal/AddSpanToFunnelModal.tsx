@@ -20,6 +20,7 @@ import {
 } from 'pages/TracesFunnels/FunnelContext';
 import { filterFunnelsByQuery } from 'pages/TracesFunnels/utils';
 import { Span } from 'types/api/trace/getTraceV2';
+import { SpanV3 } from 'types/api/trace/getTraceV3';
 import { FunnelData } from 'types/api/traceFunnels';
 
 import './AddSpanToFunnelModal.styles.scss';
@@ -71,7 +72,9 @@ function FunnelDetailsView({
 			<FunnelConfiguration
 				funnel={funnel}
 				isTraceDetailsPage
-				span={span}
+				// Dead V2 code (removed in the trace-v2 cleanup sweep); FunnelConfiguration
+				// now takes SpanV3, so bridge the V2 Span here to keep the build green.
+				span={span as unknown as SpanV3}
 				triggerAutoSave={triggerAutoSave}
 				showNotifications={showNotifications}
 			/>
