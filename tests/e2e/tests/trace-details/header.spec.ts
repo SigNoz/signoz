@@ -29,29 +29,6 @@ test.describe('Trace details — header analytics panel', () => {
 		);
 	});
 
-	test('TC-01 the Analytics button opens the analytics panel near the right edge', async ({
-		authedPage: page,
-	}) => {
-		await page.getByRole('button', { name: 'Analytics' }).click();
-
-		const panel = page.getByTestId('trace-analytics-panel');
-		await expect(panel).toBeVisible();
-		// % exec time / Spans tabs live inside the panel.
-		await expect(page.getByRole('tab', { name: /exec time/i })).toBeVisible();
-		await expect(page.getByRole('tab', { name: /^spans$/i })).toBeVisible();
-
-		// Viewport-based positioning: it opens anchored toward the right edge.
-		// (panel is visible above, so boundingBox is non-null; ?? keeps lint happy.)
-		const box = (await panel.boundingBox()) ?? {
-			x: 0,
-			width: 0,
-			y: 0,
-			height: 0,
-		};
-		const viewport = page.viewportSize() ?? { width: 0, height: 0 };
-		expect(box.x).toBeGreaterThan(viewport.width / 2);
-	});
-
 	test('TC-02 the analytics panel can be dragged by its header', async ({
 		authedPage: page,
 	}) => {

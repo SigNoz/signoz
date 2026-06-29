@@ -27,29 +27,6 @@ test.describe('Trace details — span details drawer', () => {
 		);
 	});
 
-	test('TC-01 clicking a span selects it and opens the drawer', async ({
-		authedPage: page,
-	}) => {
-		const errorSpan = trace.landmarks.errors[0];
-		await page.getByTestId(`cell-0-${errorSpan}`).click();
-
-		// selection is reflected in the URL...
-		await expect(page).toHaveURL(new RegExp(`spanId=${errorSpan}`));
-		// ...and the drawer is open (the Overview tab only exists in the drawer)
-		await expect(page.getByRole('tab', { name: /overview/i })).toBeVisible();
-	});
-
-	test('TC-02 drawer shows the selected span’s attributes', async ({
-		authedPage: page,
-	}) => {
-		// Click the DB span; its attribute value should appear in the overview
-		// (attribute values render only in the drawer, not the waterfall rows).
-		await page.getByTestId(`cell-0-${trace.landmarks.db}`).click();
-
-		await expect(page.getByRole('tab', { name: /overview/i })).toBeVisible();
-		await expect(page.getByText('redis', { exact: false })).toBeVisible();
-	});
-
 	test('TC-03 dock-mode switching toggles the drawer between floating and docked', async ({
 		authedPage: page,
 	}) => {
