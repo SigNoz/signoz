@@ -1,3 +1,4 @@
+import { rangeUtil } from '@grafana/data';
 import {
 	DashboardtypesLegendPositionDTO,
 	DashboardtypesPrecisionOptionDTO,
@@ -7,16 +8,13 @@ import { LegendPosition } from 'lib/uPlotV2/components/types';
 
 import { LEGEND_POSITION_MAP } from './enumMaps';
 
-/**
- * Resolvers that turn raw `spec` chart-appearance fields into the chart's
- * runtime values, falling back to the chart defaults for missing/unknown input.
- */
+// Resolvers turning raw `spec` chart-appearance fields into runtime chart
+// values, falling back to chart defaults for missing/unknown input.
 
 /**
  * `spec.formatting.decimalPrecision` is a stringified-digit enum on the wire
- * (`'0'`–`'4'` plus the sentinel `'full'`). The chart consumes a numeric
- * `PrecisionOption` (`0`–`4`) or the same `'full'` sentinel from its own
- * enum. Missing / unknown → `undefined` (chart uses its default).
+ * (`'0'`–`'4'` plus the `'full'` sentinel). Maps to a numeric `PrecisionOption`
+ * or the `'full'` sentinel; missing/unknown → `undefined` (chart default).
  */
 export function resolveDecimalPrecision(
 	precision: DashboardtypesPrecisionOptionDTO | undefined,
@@ -41,9 +39,10 @@ export function resolveDecimalPrecision(
 }
 
 /**
- * `spec.chartAppearance.spanGaps.fillLessThan` is a stringified number on the
- * wire. Empty / missing → span all gaps (the chart default). Numeric → forward
- * the threshold so uPlot only bridges short runs of nulls.
+ * `spec.chartAppearance.spanGaps.fillLessThan` is a duration string on the wire
+ * ("10m", "5s"). Empty/missing → span all gaps (default); otherwise forward the
+ * threshold in seconds so uPlot only bridges short runs of nulls. Tolerates a
+ * bare seconds number for back-compat.
  */
 export function resolveSpanGaps(
 	fillLessThan: string | undefined,
@@ -51,14 +50,13 @@ export function resolveSpanGaps(
 	if (!fillLessThan) {
 		return true;
 	}
-	const parsed = Number(fillLessThan);
-	return Number.isFinite(parsed) ? parsed : true;
+	const seconds = rangeUtil.isValidTimeSpan(fillLessThan)
+		? rangeUtil.intervalToSeconds(fillLessThan)
+		: Number(fillLessThan);
+	return Number.isFinite(seconds) && seconds > 0 ? seconds : true;
 }
 
-/**
- * Resolves the legend position for a panel. Missing / unknown values fall
- * back to `BOTTOM` to match the chart's default and the V1 behavior.
- */
+/** Legend position; missing/unknown falls back to `BOTTOM` (chart default, V1 parity). */
 export function resolveLegendPosition(
 	position: DashboardtypesLegendPositionDTO | undefined,
 ): LegendPosition {

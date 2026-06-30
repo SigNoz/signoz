@@ -1,7 +1,8 @@
 import { Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { Badge } from '@signozhq/ui/badge';
-import { CalendarClock } from '@signozhq/icons';
+import { CalendarClock, Pin, PinOff } from '@signozhq/icons';
+import cx from 'classnames';
 import logEvent from 'api/common/logEvent';
 import { generatePath } from 'react-router-dom';
 import { Base64Icons } from 'container/DashboardContainer/DashboardSettings/General/utils';
@@ -11,8 +12,10 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { useTimezone } from 'providers/Timezone';
 import { isModifierKeyPressed } from 'utils/app';
 
-import type { DashboardListItem } from '../../utils';
-import { lastUpdatedLabel, tagsToStrings } from '../../utils';
+import { usePinDashboard } from '../../hooks/usePinDashboard';
+import { useDashboardViewsStore } from '../../store/useDashboardViewsStore';
+import type { DashboardListItem } from '../../utils/helpers';
+import { lastUpdatedLabel, tagsToStrings } from '../../utils/helpers';
 import ActionsPopover from '../ActionsPopover/ActionsPopover';
 
 import styles from './DashboardRow.module.scss';
@@ -35,6 +38,10 @@ function DashboardRow({
 	const { safeNavigate } = useSafeNavigate();
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
+	const markViewed = useDashboardViewsStore((s) => s.markViewed);
+	const { togglePin, isUpdating } = usePinDashboard();
+
+	const isPinned = !!dashboard.pinned;
 	const id = dashboard.id;
 	const name = dashboard.spec?.display?.name ?? '';
 	const image = dashboard.image || Base64Icons[0];
@@ -53,11 +60,17 @@ function DashboardRow({
 
 	const onClickHandler = (event: React.MouseEvent<HTMLElement>): void => {
 		event.stopPropagation();
+		markViewed(id);
 		safeNavigate(link, { newTab: isModifierKeyPressed(event) });
 		logEvent('Dashboard List: Clicked on dashboard', {
 			dashboardId: id,
 			dashboardName: name,
 		});
+	};
+
+	const onTogglePin = (event: React.MouseEvent<HTMLElement>): void => {
+		event.stopPropagation();
+		togglePin(id, isPinned);
 	};
 
 	return (
@@ -91,12 +104,24 @@ function DashboardRow({
 							))}
 							{tags.length > 3 && (
 								<Badge className={styles.tag} key={tags[3]}>
-									+ <span> {tags.length - 3} </span>
+									+ <Typography.Text> {tags.length - 3} </Typography.Text>
 								</Badge>
 							)}
 						</div>
 					)}
 				</div>
+
+				<button
+					type="button"
+					className={cx(styles.pinBtn, { [styles.pinBtnOn]: isPinned })}
+					aria-label={isPinned ? 'Unpin dashboard' : 'Pin dashboard'}
+					title={isPinned ? 'Unpin dashboard' : 'Pin dashboard'}
+					data-testid={`dashboard-pin-${index}`}
+					disabled={isUpdating}
+					onClick={onTogglePin}
+				>
+					{isPinned ? <PinOff size={14} /> : <Pin size={14} />}
+				</button>
 
 				{canAct && (
 					<ActionsPopover

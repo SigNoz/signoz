@@ -2094,6 +2094,45 @@ export interface AuthtypesGettableTokenDTO {
 	tokenType?: string;
 }
 
+export enum CoretypesKindDTO {
+	anonymous = 'anonymous',
+	organization = 'organization',
+	role = 'role',
+	serviceaccount = 'serviceaccount',
+	user = 'user',
+	'notification-channel' = 'notification-channel',
+	'route-policy' = 'route-policy',
+	'apdex-setting' = 'apdex-setting',
+	'auth-domain' = 'auth-domain',
+	session = 'session',
+	'cloud-integration' = 'cloud-integration',
+	'cloud-integration-service' = 'cloud-integration-service',
+	integration = 'integration',
+	dashboard = 'dashboard',
+	'public-dashboard' = 'public-dashboard',
+	'ingestion-key' = 'ingestion-key',
+	'ingestion-limit' = 'ingestion-limit',
+	pipeline = 'pipeline',
+	'user-preference' = 'user-preference',
+	'org-preference' = 'org-preference',
+	'quick-filter' = 'quick-filter',
+	'ttl-setting' = 'ttl-setting',
+	rule = 'rule',
+	'planned-maintenance' = 'planned-maintenance',
+	'saved-view' = 'saved-view',
+	'trace-funnel' = 'trace-funnel',
+	'factor-password' = 'factor-password',
+	'factor-api-key' = 'factor-api-key',
+	license = 'license',
+	subscription = 'subscription',
+	logs = 'logs',
+	traces = 'traces',
+	metrics = 'metrics',
+	'audit-logs' = 'audit-logs',
+	'meter-metrics' = 'meter-metrics',
+	'logs-field' = 'logs-field',
+	'traces-field' = 'traces-field',
+}
 export enum CoretypesTypeDTO {
 	user = 'user',
 	serviceaccount = 'serviceaccount',
@@ -2104,10 +2143,7 @@ export enum CoretypesTypeDTO {
 	telemetryresource = 'telemetryresource',
 }
 export interface CoretypesResourceRefDTO {
-	/**
-	 * @type string
-	 */
-	kind: string;
+	kind: CoretypesKindDTO;
 	type: CoretypesTypeDTO;
 }
 
@@ -2142,15 +2178,15 @@ export interface ErrorsResponseerroradditionalDTO {
 	/**
 	 * @type string
 	 */
-	message?: string;
+	message: string;
 	/**
 	 * @type array
 	 */
-	suggestions?: string[];
+	suggestions: string[];
 }
 
 export interface ErrorsResponseretryjsonDTO {
-	delay?: TimeDurationDTO;
+	delay: TimeDurationDTO;
 }
 
 export interface ErrorsJSONDTO {
@@ -2161,7 +2197,7 @@ export interface ErrorsJSONDTO {
 	/**
 	 * @type array
 	 */
-	errors?: ErrorsResponseerroradditionalDTO[];
+	errors: ErrorsResponseerroradditionalDTO[];
 	/**
 	 * @type string
 	 */
@@ -2170,11 +2206,11 @@ export interface ErrorsJSONDTO {
 	/**
 	 * @type array
 	 */
-	suggestions?: string[];
+	suggestions: string[];
 	/**
 	 * @type string
 	 */
-	type?: string;
+	type: string;
 	/**
 	 * @type string
 	 */
@@ -2224,6 +2260,21 @@ export interface AuthtypesPostableEmailPasswordSessionDTO {
 	password?: string;
 }
 
+export interface CoretypesObjectGroupDTO {
+	resource: CoretypesResourceRefDTO;
+	/**
+	 * @type array
+	 */
+	selectors: string[];
+}
+
+export interface AuthtypesTransactionGroupDTO {
+	objectGroup: CoretypesObjectGroupDTO;
+	relation: AuthtypesRelationDTO;
+}
+
+export type AuthtypesTransactionGroupsDTO = AuthtypesTransactionGroupDTO[];
+
 export interface AuthtypesPostableRoleDTO {
 	/**
 	 * @type string
@@ -2233,6 +2284,7 @@ export interface AuthtypesPostableRoleDTO {
 	 * @type string
 	 */
 	name: string;
+	transactionGroups?: AuthtypesTransactionGroupsDTO;
 }
 
 export interface AuthtypesPostableRotateTokenDTO {
@@ -2240,6 +2292,32 @@ export interface AuthtypesPostableRotateTokenDTO {
 	 * @type string
 	 */
 	refreshToken?: string;
+}
+
+export interface AuthtypesPostableUserRoleDTO {
+	/**
+	 * @type string
+	 */
+	id: string;
+}
+
+export interface AuthtypesPostableUserDTO {
+	/**
+	 * @type string
+	 */
+	displayName?: string;
+	/**
+	 * @type string
+	 */
+	email: string;
+	/**
+	 * @type string
+	 */
+	frontendBaseUrl?: string;
+	/**
+	 * @type array
+	 */
+	userRoles?: AuthtypesPostableUserRoleDTO[];
 }
 
 export interface AuthtypesRoleDTO {
@@ -2275,6 +2353,40 @@ export interface AuthtypesRoleDTO {
 	updatedAt?: string;
 }
 
+export interface AuthtypesRoleWithTransactionGroupsDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: string;
+	/**
+	 * @type string
+	 */
+	description: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	orgId: string;
+	transactionGroups: AuthtypesTransactionGroupsDTO;
+	/**
+	 * @type string
+	 */
+	type: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: string;
+}
+
 export interface AuthtypesSessionContextDTO {
 	/**
 	 * @type boolean
@@ -2293,6 +2405,14 @@ export interface AuthtypesTransactionDTO {
 
 export interface AuthtypesUpdatableAuthDomainDTO {
 	config?: AuthtypesAuthDomainConfigDTO;
+}
+
+export interface AuthtypesUpdatableRoleDTO {
+	/**
+	 * @type string
+	 */
+	description: string;
+	transactionGroups: AuthtypesTransactionGroupsDTO;
 }
 
 export interface AuthtypesUserRoleDTO {
@@ -3065,14 +3185,6 @@ export interface CommonJSONRefDTO {
 	$ref?: string;
 }
 
-export interface CoretypesObjectGroupDTO {
-	resource: CoretypesResourceRefDTO;
-	/**
-	 * @type array
-	 */
-	selectors: string[];
-}
-
 export interface CoretypesPatchableObjectsDTO {
 	/**
 	 * @type array,null
@@ -3154,37 +3266,6 @@ export interface DashboardLinkDTO {
 	url?: string;
 }
 
-export interface VariableDisplayDTO {
-	/**
-	 * @type string
-	 */
-	description?: string;
-	/**
-	 * @type boolean
-	 */
-	hidden?: boolean;
-	/**
-	 * @type string
-	 */
-	name?: string;
-}
-
-export interface DashboardTextVariableSpecDTO {
-	/**
-	 * @type boolean
-	 */
-	constant?: boolean;
-	display?: VariableDisplayDTO;
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type string
-	 */
-	value?: string;
-}
-
 export interface DashboardtypesAxesDTO {
 	/**
 	 * @type boolean
@@ -3216,6 +3297,9 @@ export interface DashboardtypesPanelFormattingDTO {
 	unit?: string;
 }
 
+export enum DashboardtypesLegendModeDTO {
+	list = 'list',
+}
 export enum DashboardtypesLegendPositionDTO {
 	bottom = 'bottom',
 	right = 'right',
@@ -3235,6 +3319,7 @@ export interface DashboardtypesLegendDTO {
 	 * @type object,null
 	 */
 	customColors?: DashboardtypesLegendDTOCustomColors;
+	mode?: DashboardtypesLegendModeDTO;
 	position?: DashboardtypesLegendPositionDTO;
 }
 
@@ -3246,7 +3331,7 @@ export interface DashboardtypesThresholdWithLabelDTO {
 	/**
 	 * @type string
 	 */
-	label: string;
+	label?: string;
 	/**
 	 * @type string
 	 */
@@ -3315,12 +3400,14 @@ export interface Querybuildertypesv5FilterDTO {
 	expression?: string;
 }
 
+export type Querybuildertypesv5FunctionArgDTOValue = number | string;
+
 export interface Querybuildertypesv5FunctionArgDTO {
 	/**
 	 * @type string
 	 */
 	name?: string;
-	value?: unknown;
+	value?: Querybuildertypesv5FunctionArgDTOValue;
 }
 
 export enum Querybuildertypesv5FunctionNameDTO {
@@ -3835,33 +3922,43 @@ export interface DashboardtypesDashboardDTO {
 	updatedBy?: string;
 }
 
-export enum DashboardtypesDatasourcePluginVariantStructDTOKind {
+export interface DashboardtypesDashboardPanelRefDTO {
+	/**
+	 * @type string
+	 */
+	dashboardId: string;
+	/**
+	 * @type string
+	 */
+	dashboardName: string;
+	/**
+	 * @type string
+	 */
+	panelId: string;
+	/**
+	 * @type string
+	 */
+	panelName: string;
+}
+
+export enum DashboardtypesDatasourcePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesSigNozDatasourceSpecDTOKind {
 	'signoz/Datasource' = 'signoz/Datasource',
 }
-export type DashboardtypesDatasourcePluginVariantStructDTOSpecAnyOf = {
+export interface DashboardtypesSigNozDatasourceSpecDTO {
 	[key: string]: unknown;
-};
+}
 
-/**
- * @nullable
- */
-export type DashboardtypesDatasourcePluginVariantStructDTOSpec =
-	DashboardtypesDatasourcePluginVariantStructDTOSpecAnyOf | null;
-
-export interface DashboardtypesDatasourcePluginVariantStructDTO {
+export interface DashboardtypesDatasourcePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesSigNozDatasourceSpecDTO {
 	/**
 	 * @enum signoz/Datasource
 	 * @type string
 	 */
-	kind: DashboardtypesDatasourcePluginVariantStructDTOKind;
-	/**
-	 * @type object,null
-	 */
-	spec: DashboardtypesDatasourcePluginVariantStructDTOSpec;
+	kind: DashboardtypesDatasourcePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesSigNozDatasourceSpecDTOKind;
+	spec: DashboardtypesSigNozDatasourceSpecDTO;
 }
 
 export type DashboardtypesDatasourcePluginDTO =
-	DashboardtypesDatasourcePluginVariantStructDTO;
+	DashboardtypesDatasourcePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesSigNozDatasourceSpecDTO;
 
 export interface DashboardtypesDatasourceSpecDTO {
 	/**
@@ -3911,10 +4008,12 @@ export enum DashboardtypesLineStyleDTO {
 export interface DashboardtypesSpanGapsDTO {
 	/**
 	 * @type string
+	 * @description The maximum gap size to connect when fillOnlyBelow is true. Gaps larger than this duration are left disconnected.
 	 */
 	fillLessThan?: string;
 	/**
 	 * @type boolean
+	 * @description Controls whether lines connect across null values. When false (default), all gaps are connected. When true, only gaps smaller than fillLessThan are connected.
 	 */
 	fillOnlyBelow?: boolean;
 }
@@ -4153,26 +4252,21 @@ export interface DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDa
 export enum DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5CompositeQueryDTOKind {
 	'signoz/CompositeQuery' = 'signoz/CompositeQuery',
 }
-export enum Querybuildertypesv5QueryTypeDTO {
+export type Querybuildertypesv5BuilderQuerySpecDTO =
+	| Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregationDTO
+	| Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregationDTO
+	| Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTO;
+
+export enum Querybuildertypesv5QueryEnvelopeBuilderDTOType {
 	builder_query = 'builder_query',
-	builder_formula = 'builder_formula',
-	builder_trace_operator = 'builder_trace_operator',
-	clickhouse_sql = 'clickhouse_sql',
-	promql = 'promql',
 }
-export interface Querybuildertypesv5QueryEnvelopeBuilderTraceDTO {
-	spec?: Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregationDTO;
-	type?: Querybuildertypesv5QueryTypeDTO;
-}
-
-export interface Querybuildertypesv5QueryEnvelopeBuilderLogDTO {
-	spec?: Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregationDTO;
-	type?: Querybuildertypesv5QueryTypeDTO;
-}
-
-export interface Querybuildertypesv5QueryEnvelopeBuilderMetricDTO {
-	spec?: Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTO;
-	type?: Querybuildertypesv5QueryTypeDTO;
+export interface Querybuildertypesv5QueryEnvelopeBuilderDTO {
+	spec?: Querybuildertypesv5BuilderQuerySpecDTO;
+	/**
+	 * @type string
+	 * @enum builder_query
+	 */
+	type: Querybuildertypesv5QueryEnvelopeBuilderDTOType;
 }
 
 export interface Querybuildertypesv5QueryBuilderFormulaDTO {
@@ -4207,9 +4301,16 @@ export interface Querybuildertypesv5QueryBuilderFormulaDTO {
 	order?: Querybuildertypesv5OrderByDTO[];
 }
 
+export enum Querybuildertypesv5QueryEnvelopeFormulaDTOType {
+	builder_formula = 'builder_formula',
+}
 export interface Querybuildertypesv5QueryEnvelopeFormulaDTO {
 	spec?: Querybuildertypesv5QueryBuilderFormulaDTO;
-	type?: Querybuildertypesv5QueryTypeDTO;
+	/**
+	 * @type string
+	 * @enum builder_formula
+	 */
+	type: Querybuildertypesv5QueryEnvelopeFormulaDTOType;
 }
 
 export interface Querybuildertypesv5QueryBuilderTraceOperatorDTO {
@@ -4270,9 +4371,16 @@ export interface Querybuildertypesv5QueryBuilderTraceOperatorDTO {
 	stepInterval?: Querybuildertypesv5StepDTO;
 }
 
+export enum Querybuildertypesv5QueryEnvelopeTraceOperatorDTOType {
+	builder_trace_operator = 'builder_trace_operator',
+}
 export interface Querybuildertypesv5QueryEnvelopeTraceOperatorDTO {
 	spec?: Querybuildertypesv5QueryBuilderTraceOperatorDTO;
-	type?: Querybuildertypesv5QueryTypeDTO;
+	/**
+	 * @type string
+	 * @enum builder_trace_operator
+	 */
+	type: Querybuildertypesv5QueryEnvelopeTraceOperatorDTOType;
 }
 
 export interface Querybuildertypesv5PromQueryDTO {
@@ -4299,9 +4407,16 @@ export interface Querybuildertypesv5PromQueryDTO {
 	step?: Querybuildertypesv5StepDTO;
 }
 
+export enum Querybuildertypesv5QueryEnvelopePromQLDTOType {
+	promql = 'promql',
+}
 export interface Querybuildertypesv5QueryEnvelopePromQLDTO {
 	spec?: Querybuildertypesv5PromQueryDTO;
-	type?: Querybuildertypesv5QueryTypeDTO;
+	/**
+	 * @type string
+	 * @enum promql
+	 */
+	type: Querybuildertypesv5QueryEnvelopePromQLDTOType;
 }
 
 export interface Querybuildertypesv5ClickHouseQueryDTO {
@@ -4323,40 +4438,24 @@ export interface Querybuildertypesv5ClickHouseQueryDTO {
 	query?: string;
 }
 
+export enum Querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType {
+	clickhouse_sql = 'clickhouse_sql',
+}
 export interface Querybuildertypesv5QueryEnvelopeClickHouseSQLDTO {
 	spec?: Querybuildertypesv5ClickHouseQueryDTO;
-	type?: Querybuildertypesv5QueryTypeDTO;
+	/**
+	 * @type string
+	 * @enum clickhouse_sql
+	 */
+	type: Querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType;
 }
 
 export type Querybuildertypesv5QueryEnvelopeDTO =
-	| (Querybuildertypesv5QueryEnvelopeBuilderTraceDTO & {
-			spec?: unknown;
-			type?: Querybuildertypesv5QueryTypeDTO;
-	  })
-	| (Querybuildertypesv5QueryEnvelopeBuilderLogDTO & {
-			spec?: unknown;
-			type?: Querybuildertypesv5QueryTypeDTO;
-	  })
-	| (Querybuildertypesv5QueryEnvelopeBuilderMetricDTO & {
-			spec?: unknown;
-			type?: Querybuildertypesv5QueryTypeDTO;
-	  })
-	| (Querybuildertypesv5QueryEnvelopeFormulaDTO & {
-			spec?: unknown;
-			type?: Querybuildertypesv5QueryTypeDTO;
-	  })
-	| (Querybuildertypesv5QueryEnvelopeTraceOperatorDTO & {
-			spec?: unknown;
-			type?: Querybuildertypesv5QueryTypeDTO;
-	  })
-	| (Querybuildertypesv5QueryEnvelopePromQLDTO & {
-			spec?: unknown;
-			type?: Querybuildertypesv5QueryTypeDTO;
-	  })
-	| (Querybuildertypesv5QueryEnvelopeClickHouseSQLDTO & {
-			spec?: unknown;
-			type?: Querybuildertypesv5QueryTypeDTO;
-	  });
+	| Querybuildertypesv5QueryEnvelopeBuilderDTO
+	| Querybuildertypesv5QueryEnvelopeFormulaDTO
+	| Querybuildertypesv5QueryEnvelopeTraceOperatorDTO
+	| Querybuildertypesv5QueryEnvelopePromQLDTO
+	| Querybuildertypesv5QueryEnvelopeClickHouseSQLDTO;
 
 /**
  * Composite query containing one or more query envelopes. Each query envelope specifies its type and corresponding spec.
@@ -4454,9 +4553,9 @@ export interface DashboardtypesPanelSpecDTO {
 	links?: DashboardLinkDTO[];
 	plugin: DashboardtypesPanelPluginDTO;
 	/**
-	 * @type array,null
+	 * @type array
 	 */
-	queries: DashboardtypesQueryDTO[] | null;
+	queries: DashboardtypesQueryDTO[];
 }
 
 export interface DashboardtypesPanelDTO {
@@ -4486,9 +4585,7 @@ export type DashboardtypesLayoutDTO =
 export enum DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpecDTOKind {
 	ListVariable = 'ListVariable',
 }
-export interface VariableDefaultValueDTO {
-	[key: string]: unknown;
-}
+export type DashboardtypesVariableDefaultValueDTO = string | string[];
 
 export enum DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDynamicVariableSpecDTOKind {
 	'signoz/DynamicVariable' = 'signoz/DynamicVariable',
@@ -4546,6 +4643,15 @@ export type DashboardtypesVariablePluginDTO =
 	| DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesQueryVariableSpecDTO
 	| DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesCustomVariableSpecDTO;
 
+export enum DashboardtypesListVariableSpecSortDTO {
+	none = 'none',
+	'alphabetical-asc' = 'alphabetical-asc',
+	'alphabetical-desc' = 'alphabetical-desc',
+	'numerical-asc' = 'numerical-asc',
+	'numerical-desc' = 'numerical-desc',
+	'alphabetical-ci-asc' = 'alphabetical-ci-asc',
+	'alphabetical-ci-desc' = 'alphabetical-ci-desc',
+}
 export interface DashboardtypesListVariableSpecDTO {
 	/**
 	 * @type boolean
@@ -4563,17 +4669,15 @@ export interface DashboardtypesListVariableSpecDTO {
 	 * @type string
 	 */
 	customAllValue?: string;
-	defaultValue?: VariableDefaultValueDTO;
+	defaultValue?: DashboardtypesVariableDefaultValueDTO;
 	display: DashboardtypesDisplayDTO;
 	/**
 	 * @type string
+	 * @minLength 1
 	 */
-	name?: string;
+	name: string;
 	plugin?: DashboardtypesVariablePluginDTO;
-	/**
-	 * @type string,null
-	 */
-	sort?: string | null;
+	sort?: DashboardtypesListVariableSpecSortDTO;
 }
 
 export interface DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpecDTO {
@@ -4585,21 +4689,38 @@ export interface DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDash
 	spec: DashboardtypesListVariableSpecDTO;
 }
 
-export enum DashboardtypesVariableEnvelopeGithubComPersesSpecGoDashboardTextVariableSpecDTOKind {
+export enum DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesTextVariableSpecDTOKind {
 	TextVariable = 'TextVariable',
 }
-export interface DashboardtypesVariableEnvelopeGithubComPersesSpecGoDashboardTextVariableSpecDTO {
+export interface DashboardtypesTextVariableSpecDTO {
+	/**
+	 * @type boolean
+	 */
+	constant?: boolean;
+	display: DashboardtypesDisplayDTO;
+	/**
+	 * @type string
+	 * @minLength 1
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	value: string;
+}
+
+export interface DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesTextVariableSpecDTO {
 	/**
 	 * @enum TextVariable
 	 * @type string
 	 */
-	kind: DashboardtypesVariableEnvelopeGithubComPersesSpecGoDashboardTextVariableSpecDTOKind;
-	spec: DashboardTextVariableSpecDTO;
+	kind: DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesTextVariableSpecDTOKind;
+	spec: DashboardtypesTextVariableSpecDTO;
 }
 
 export type DashboardtypesVariableDTO =
 	| DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpecDTO
-	| DashboardtypesVariableEnvelopeGithubComPersesSpecGoDashboardTextVariableSpecDTO;
+	| DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesTextVariableSpecDTO;
 
 export interface DashboardtypesDashboardSpecDTO {
 	/**
@@ -5346,6 +5467,121 @@ export interface GlobaltypesConfigDTO {
 	mcp_url: string | null;
 }
 
+export enum InframonitoringtypesCheckComponentTypeDTO {
+	receiver = 'receiver',
+	processor = 'processor',
+}
+export interface InframonitoringtypesAssociatedComponentDTO {
+	/**
+	 * @type string
+	 */
+	name: string;
+	type: InframonitoringtypesCheckComponentTypeDTO;
+}
+
+export interface InframonitoringtypesAttributesComponentEntryDTO {
+	associatedComponent: InframonitoringtypesAssociatedComponentDTO;
+	/**
+	 * @type array,null
+	 */
+	attributes: string[] | null;
+}
+
+export enum InframonitoringtypesCheckTypeDTO {
+	hosts = 'hosts',
+	processes = 'processes',
+	pods = 'pods',
+	nodes = 'nodes',
+	deployments = 'deployments',
+	daemonsets = 'daemonsets',
+	statefulsets = 'statefulsets',
+	jobs = 'jobs',
+	namespaces = 'namespaces',
+	clusters = 'clusters',
+	volumes = 'volumes',
+}
+export interface InframonitoringtypesMissingMetricsComponentEntryDTO {
+	associatedComponent: InframonitoringtypesAssociatedComponentDTO;
+	/**
+	 * @type string
+	 */
+	documentationLink: string;
+	/**
+	 * @type string
+	 */
+	message: string;
+	/**
+	 * @type array,null
+	 */
+	metrics: string[] | null;
+}
+
+export interface InframonitoringtypesMissingAttributesComponentEntryDTO {
+	associatedComponent: InframonitoringtypesAssociatedComponentDTO;
+	/**
+	 * @type array,null
+	 */
+	attributes: string[] | null;
+	/**
+	 * @type string
+	 */
+	documentationLink: string;
+	/**
+	 * @type string
+	 */
+	message: string;
+}
+
+export interface InframonitoringtypesMetricsComponentEntryDTO {
+	associatedComponent: InframonitoringtypesAssociatedComponentDTO;
+	/**
+	 * @type array,null
+	 */
+	metrics: string[] | null;
+}
+
+export interface InframonitoringtypesChecksDTO {
+	/**
+	 * @type array,null
+	 */
+	missingDefaultEnabledMetrics:
+		| InframonitoringtypesMissingMetricsComponentEntryDTO[]
+		| null;
+	/**
+	 * @type array,null
+	 */
+	missingOptionalMetrics:
+		| InframonitoringtypesMissingMetricsComponentEntryDTO[]
+		| null;
+	/**
+	 * @type array,null
+	 */
+	missingRequiredAttributes:
+		| InframonitoringtypesMissingAttributesComponentEntryDTO[]
+		| null;
+	/**
+	 * @type array,null
+	 */
+	presentDefaultEnabledMetrics:
+		| InframonitoringtypesMetricsComponentEntryDTO[]
+		| null;
+	/**
+	 * @type array,null
+	 */
+	presentOptionalMetrics: InframonitoringtypesMetricsComponentEntryDTO[] | null;
+	/**
+	 * @type array,null
+	 */
+	presentRequiredAttributes:
+		| InframonitoringtypesAttributesComponentEntryDTO[]
+		| null;
+	/**
+	 * @type boolean
+	 */
+	ready: boolean;
+	type: InframonitoringtypesCheckTypeDTO;
+}
+
 export type InframonitoringtypesClusterRecordDTOMetaAnyOf = {
 	[key: string]: string;
 };
@@ -5423,13 +5659,6 @@ export interface InframonitoringtypesClusterRecordDTO {
 	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
 }
 
-export interface InframonitoringtypesRequiredMetricsCheckDTO {
-	/**
-	 * @type array,null
-	 */
-	missingMetrics: string[] | null;
-}
-
 export enum InframonitoringtypesResponseTypeDTO {
 	list = 'list',
 	grouped_list = 'grouped_list',
@@ -5465,7 +5694,6 @@ export interface InframonitoringtypesClustersDTO {
 	 * @type array
 	 */
 	records: InframonitoringtypesClusterRecordDTO[];
-	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
 	/**
 	 * @type integer
 	 */
@@ -5543,7 +5771,6 @@ export interface InframonitoringtypesDaemonSetsDTO {
 	 * @type array
 	 */
 	records: InframonitoringtypesDaemonSetRecordDTO[];
-	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
 	/**
 	 * @type integer
 	 */
@@ -5621,7 +5848,6 @@ export interface InframonitoringtypesDeploymentsDTO {
 	 * @type array
 	 */
 	records: InframonitoringtypesDeploymentRecordDTO[];
-	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
 	/**
 	 * @type integer
 	 */
@@ -5707,7 +5933,6 @@ export interface InframonitoringtypesHostsDTO {
 	 * @type array
 	 */
 	records: InframonitoringtypesHostRecordDTO[];
-	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
 	/**
 	 * @type integer
 	 */
@@ -5793,7 +6018,6 @@ export interface InframonitoringtypesJobsDTO {
 	 * @type array
 	 */
 	records: InframonitoringtypesJobRecordDTO[];
-	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
 	/**
 	 * @type integer
 	 */
@@ -5843,7 +6067,6 @@ export interface InframonitoringtypesNamespacesDTO {
 	 * @type array
 	 */
 	records: InframonitoringtypesNamespaceRecordDTO[];
-	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
 	/**
 	 * @type integer
 	 */
@@ -5910,7 +6133,6 @@ export interface InframonitoringtypesNodesDTO {
 	 * @type array
 	 */
 	records: InframonitoringtypesNodeRecordDTO[];
-	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
 	/**
 	 * @type integer
 	 */
@@ -5994,7 +6216,6 @@ export interface InframonitoringtypesPodsDTO {
 	 * @type array
 	 */
 	records: InframonitoringtypesPodRecordDTO[];
-	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
 	/**
 	 * @type integer
 	 */
@@ -6342,7 +6563,6 @@ export interface InframonitoringtypesStatefulSetsDTO {
 	 * @type array
 	 */
 	records: InframonitoringtypesStatefulSetRecordDTO[];
-	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
 	/**
 	 * @type integer
 	 */
@@ -6411,7 +6631,6 @@ export interface InframonitoringtypesVolumesDTO {
 	 * @type array
 	 */
 	records: InframonitoringtypesVolumeRecordDTO[];
-	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
 	/**
 	 * @type integer
 	 */
@@ -6577,6 +6796,213 @@ export interface LlmpricingruletypesUpdatableLLMPricingRulesDTO {
 	rules: LlmpricingruletypesUpdatableLLMPricingRuleDTO[] | null;
 }
 
+export enum MetricreductionruletypesAssetTypeDTO {
+	dashboard = 'dashboard',
+	alert_rule = 'alert_rule',
+}
+export interface MetricreductionruletypesAffectedWidgetDTO {
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+}
+
+export interface MetricreductionruletypesAffectedAssetDTO {
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type array,null
+	 */
+	impactedLabels: string[] | null;
+	/**
+	 * @type string
+	 */
+	name: string;
+	type: MetricreductionruletypesAssetTypeDTO;
+	widget?: MetricreductionruletypesAffectedWidgetDTO;
+}
+
+export enum MetricreductionruletypesMatchTypeDTO {
+	drop = 'drop',
+	keep = 'keep',
+}
+export interface MetricreductionruletypesGettableReductionRuleDTO {
+	/**
+	 * @type boolean
+	 */
+	active: boolean;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: string;
+	/**
+	 * @type string
+	 */
+	createdBy?: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	effectiveFrom: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	ingestedSeries: number;
+	/**
+	 * @type array,null
+	 */
+	labels: string[] | null;
+	matchType: MetricreductionruletypesMatchTypeDTO;
+	/**
+	 * @type string
+	 */
+	metricName: string;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	reductionPercent: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	retainedSeries: number;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: string;
+	/**
+	 * @type string
+	 */
+	updatedBy?: string;
+}
+
+export interface MetricreductionruletypesGettableReductionRulePreviewDTO {
+	/**
+	 * @type array,null
+	 */
+	affectedAssets: MetricreductionruletypesAffectedAssetDTO[] | null;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	currentRetainedSeries: number;
+	/**
+	 * @type array,null
+	 */
+	droppedLabels: string[] | null;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	effectiveFrom: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	ingestedSeries: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	reductionPercent: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	retainedSeries: number;
+}
+
+export interface MetricreductionruletypesGettableReductionRuleStatsDTO {
+	/**
+	 * @type number
+	 * @format double
+	 */
+	estimatedMonthlySavingsUsd: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	ingestedSeries: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	retainedSeries: number;
+}
+
+export interface MetricreductionruletypesGettableReductionRulesDTO {
+	/**
+	 * @type array,null
+	 */
+	rules: MetricreductionruletypesGettableReductionRuleDTO[] | null;
+	/**
+	 * @type integer
+	 */
+	total: number;
+}
+
+export enum MetricreductionruletypesOrderDTO {
+	asc = 'asc',
+	desc = 'desc',
+}
+export interface MetricreductionruletypesPostableReductionRuleDTO {
+	/**
+	 * @type array,null
+	 */
+	labels: string[] | null;
+	matchType: MetricreductionruletypesMatchTypeDTO;
+	/**
+	 * @type string
+	 */
+	metricName: string;
+}
+
+export interface MetricreductionruletypesPostableReductionRulePreviewDTO {
+	/**
+	 * @type array,null
+	 */
+	labels: string[] | null;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	lookbackMs?: number;
+	matchType: MetricreductionruletypesMatchTypeDTO;
+	/**
+	 * @type string
+	 */
+	metricName: string;
+}
+
+export enum MetricreductionruletypesReductionRuleOrderByDTO {
+	metric = 'metric',
+	ingested_volume = 'ingested_volume',
+	reduced_volume = 'reduced_volume',
+	reduction = 'reduction',
+	last_updated = 'last_updated',
+}
+export interface MetricreductionruletypesUpdatableReductionRuleDTO {
+	/**
+	 * @type array,null
+	 */
+	labels: string[] | null;
+	matchType: MetricreductionruletypesMatchTypeDTO;
+}
+
 export interface MetricsexplorertypesInspectMetricsRequestDTO {
 	/**
 	 * @type integer
@@ -6595,9 +7021,11 @@ export interface MetricsexplorertypesInspectMetricsRequestDTO {
 	start: number;
 }
 
+export type Querybuildertypesv5LabelDTOValue = string | number | boolean;
+
 export interface Querybuildertypesv5LabelDTO {
 	key?: TelemetrytypesTelemetryFieldKeyDTO;
-	value?: unknown;
+	value?: Querybuildertypesv5LabelDTOValue;
 }
 
 export interface Querybuildertypesv5BucketDTO {
@@ -6746,6 +7174,13 @@ export interface MetricsexplorertypesMetricDashboardDTO {
 	 * @type string
 	 */
 	widgetName: string;
+}
+
+export interface MetricsexplorertypesMetricDashboardPanelsResponseDTO {
+	/**
+	 * @type array,null
+	 */
+	dashboards: DashboardtypesDashboardPanelRefDTO[] | null;
 }
 
 export interface MetricsexplorertypesMetricDashboardsResponseDTO {
@@ -7120,6 +7555,126 @@ export interface Querybuildertypesv5FormatOptionsDTO {
 	formatTableResultForUI?: boolean;
 }
 
+export interface TelemetrystoretypesEstimateEntryDTO {
+	/**
+	 * @type string
+	 */
+	database: string;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	marks: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	parts: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	rows: number;
+	/**
+	 * @type string
+	 */
+	table: string;
+}
+
+export interface TelemetrystoretypesIndexStepDTO {
+	/**
+	 * @type string
+	 */
+	condition: string;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	initialGranules: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	initialParts: number;
+	/**
+	 * @type array
+	 */
+	keys: string[];
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	selectedGranules: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	selectedParts: number;
+	/**
+	 * @type string
+	 */
+	type: string;
+}
+
+export interface TelemetrystoretypesMergeTreeReadDTO {
+	/**
+	 * @type array
+	 */
+	steps: TelemetrystoretypesIndexStepDTO[];
+	/**
+	 * @type string
+	 */
+	table: string;
+}
+
+export type TelemetrystoretypesGranulesDTOAnyOf = {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	initial: number;
+	/**
+	 * @type array
+	 */
+	reads: TelemetrystoretypesMergeTreeReadDTO[];
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	selected: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	skipped: number;
+};
+
+/**
+ * @nullable
+ */
+export type TelemetrystoretypesGranulesDTO =
+	TelemetrystoretypesGranulesDTOAnyOf | null;
+
+export interface Querybuildertypesv5PreviewStatementDTO {
+	/**
+	 * @type array
+	 */
+	'db.statement.args': unknown[];
+	/**
+	 * @type string
+	 */
+	'db.statement.query': string;
+	/**
+	 * @type array
+	 */
+	estimate: TelemetrystoretypesEstimateEntryDTO[];
+	granules: TelemetrystoretypesGranulesDTO | null;
+}
+
 export interface Querybuildertypesv5TimeSeriesDataDTO {
 	/**
 	 * @type array,null
@@ -7201,15 +7756,61 @@ export type Querybuildertypesv5QueryDataDTO =
 			results?: unknown[] | null;
 	  });
 
+export interface Querybuildertypesv5QueryPreviewDTO {
+	error: unknown;
+	/**
+	 * @type array
+	 */
+	statements: Querybuildertypesv5PreviewStatementDTO[];
+	/**
+	 * @type boolean
+	 */
+	valid: boolean;
+	/**
+	 * @type array
+	 */
+	warnings: string[];
+}
+
+export type Querybuildertypesv5QueryRangePreviewResponseDTOCompositeQueryAnyOf =
+	{ [key: string]: Querybuildertypesv5QueryPreviewDTO };
+
+/**
+ * @nullable
+ */
+export type Querybuildertypesv5QueryRangePreviewResponseDTOCompositeQuery =
+	Querybuildertypesv5QueryRangePreviewResponseDTOCompositeQueryAnyOf | null;
+
+/**
+ * Response from the v5 query range preview (dry-run) endpoint. For each query in the composite query, returns the underlying ClickHouse statement(s) it renders to without executing them (one per PromQL metric selector; exactly one for builder/ClickHouse/trace-operator queries), with the optional EXPLAIN ESTIMATE and granule analysis attached per statement when requested.
+ */
+export interface Querybuildertypesv5QueryRangePreviewResponseDTO {
+	/**
+	 * @type object,null
+	 */
+	compositeQuery: Querybuildertypesv5QueryRangePreviewResponseDTOCompositeQuery;
+}
+
 export enum Querybuildertypesv5VariableTypeDTO {
 	query = 'query',
 	dynamic = 'dynamic',
 	custom = 'custom',
 	text = 'text',
 }
+export type Querybuildertypesv5VariableItemDTOValueOneOfItem =
+	| string
+	| number
+	| boolean;
+
+export type Querybuildertypesv5VariableItemDTOValue =
+	| string
+	| number
+	| boolean
+	| Querybuildertypesv5VariableItemDTOValueOneOfItem[];
+
 export interface Querybuildertypesv5VariableItemDTO {
 	type?: Querybuildertypesv5VariableTypeDTO;
-	value?: unknown;
+	value?: Querybuildertypesv5VariableItemDTOValue;
 }
 
 export type Querybuildertypesv5QueryRangeRequestDTOVariables = {
@@ -7257,6 +7858,13 @@ export interface Querybuildertypesv5QueryRangeResponseDTO {
 	warning?: Querybuildertypesv5QueryWarnDataDTO;
 }
 
+export enum Querybuildertypesv5QueryTypeDTO {
+	builder_query = 'builder_query',
+	builder_formula = 'builder_formula',
+	builder_trace_operator = 'builder_trace_operator',
+	clickhouse_sql = 'clickhouse_sql',
+	promql = 'promql',
+}
 export interface RenderErrorResponseDTO {
 	error: ErrorsJSONDTO;
 	/**
@@ -9450,6 +10058,16 @@ export type ListLLMPricingRulesParams = {
 	 * @description undefined
 	 */
 	limit?: number;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	q?: string;
+	/**
+	 * @type boolean,null
+	 * @description undefined
+	 */
+	isOverride?: boolean | null;
 };
 
 export type ListLLMPricingRules200 = {
@@ -9559,7 +10177,7 @@ export type GetRolePathParameters = {
 	id: string;
 };
 export type GetRole200 = {
-	data: AuthtypesRoleDTO;
+	data: AuthtypesRoleWithTransactionGroupsDTO;
 	/**
 	 * @type string
 	 */
@@ -9567,6 +10185,9 @@ export type GetRole200 = {
 };
 
 export type PatchRolePathParameters = {
+	id: string;
+};
+export type UpdateRolePathParameters = {
 	id: string;
 };
 export type GetObjectsPathParameters = {
@@ -9833,7 +10454,7 @@ export type ListUsersDeprecated200 = {
 	status: string;
 };
 
-export type DeleteUserPathParameters = {
+export type DeleteUserDeprecatedPathParameters = {
 	id: string;
 };
 export type GetUserDeprecatedPathParameters = {
@@ -10121,6 +10742,21 @@ export type Healthz503 = {
 	status: string;
 };
 
+export type GetChecksParams = {
+	/**
+	 * @description undefined
+	 */
+	type: InframonitoringtypesCheckTypeDTO;
+};
+
+export type GetChecks200 = {
+	data: InframonitoringtypesChecksDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type ListClusters200 = {
 	data: InframonitoringtypesClustersDTO;
 	/**
@@ -10209,6 +10845,102 @@ export type Livez200 = {
 	status: string;
 };
 
+export type ListMetricReductionRulesParams = {
+	/**
+	 * @description undefined
+	 */
+	orderBy?: MetricreductionruletypesReductionRuleOrderByDTO;
+	/**
+	 * @description undefined
+	 */
+	order?: MetricreductionruletypesOrderDTO;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	search?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	metricName?: string;
+	/**
+	 * @type integer
+	 * @description undefined
+	 */
+	offset?: number;
+	/**
+	 * @type integer
+	 * @description undefined
+	 */
+	limit?: number;
+};
+
+export type ListMetricReductionRules200 = {
+	data: MetricreductionruletypesGettableReductionRulesDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type CreateMetricReductionRule201 = {
+	data: MetricreductionruletypesGettableReductionRuleDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type DeleteMetricReductionRuleByIDPathParameters = {
+	id: string;
+};
+export type GetMetricReductionRuleByIDPathParameters = {
+	id: string;
+};
+export type GetMetricReductionRuleByID200 = {
+	data: MetricreductionruletypesGettableReductionRuleDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type UpdateMetricReductionRuleByIDPathParameters = {
+	id: string;
+};
+export type UpdateMetricReductionRuleByID200 = {
+	data: MetricreductionruletypesGettableReductionRuleDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type PreviewMetricReductionRule200 = {
+	data: MetricreductionruletypesGettableReductionRulePreviewDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetMetricReductionRuleStats200 = {
+	data: MetricreductionruletypesGettableReductionRuleStatsDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetMetricReductionRuleTimeseries200 = {
+	data: Querybuildertypesv5QueryRangeResponseDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type ListMetricsParams = {
 	/**
 	 * @type integer,null
@@ -10245,9 +10977,14 @@ export type ListMetrics200 = {
 	status: string;
 };
 
-export type GetMetricAlertsPathParameters = {
+export type GetMetricAlertsParams = {
+	/**
+	 * @type string
+	 * @description The name of the metric. May contain slashes (e.g. cloud-provider metrics like run.googleapis.com/request_latencies).
+	 */
 	metricName: string;
 };
+
 export type GetMetricAlerts200 = {
 	data: MetricsexplorertypesMetricAlertsResponseDTO;
 	/**
@@ -10256,18 +10993,20 @@ export type GetMetricAlerts200 = {
 	status: string;
 };
 
-export type GetMetricAttributesPathParameters = {
-	metricName: string;
-};
 export type GetMetricAttributesParams = {
 	/**
+	 * @type string
+	 * @description The name of the metric. May contain slashes (e.g. cloud-provider metrics like run.googleapis.com/request_latencies).
+	 */
+	metricName: string;
+	/**
 	 * @type integer,null
-	 * @description undefined
+	 * @description Start of the time range as a Unix timestamp in milliseconds.
 	 */
 	start?: number | null;
 	/**
 	 * @type integer,null
-	 * @description undefined
+	 * @description End of the time range as a Unix timestamp in milliseconds.
 	 */
 	end?: number | null;
 };
@@ -10280,9 +11019,14 @@ export type GetMetricAttributes200 = {
 	status: string;
 };
 
-export type GetMetricDashboardsPathParameters = {
+export type GetMetricDashboardsParams = {
+	/**
+	 * @type string
+	 * @description The name of the metric. May contain slashes (e.g. cloud-provider metrics like run.googleapis.com/request_latencies).
+	 */
 	metricName: string;
 };
+
 export type GetMetricDashboards200 = {
 	data: MetricsexplorertypesMetricDashboardsResponseDTO;
 	/**
@@ -10291,9 +11035,14 @@ export type GetMetricDashboards200 = {
 	status: string;
 };
 
-export type GetMetricHighlightsPathParameters = {
+export type GetMetricHighlightsParams = {
+	/**
+	 * @type string
+	 * @description The name of the metric. May contain slashes (e.g. cloud-provider metrics like run.googleapis.com/request_latencies).
+	 */
 	metricName: string;
 };
+
 export type GetMetricHighlights200 = {
 	data: MetricsexplorertypesMetricHighlightsResponseDTO;
 	/**
@@ -10302,22 +11051,24 @@ export type GetMetricHighlights200 = {
 	status: string;
 };
 
-export type GetMetricMetadataPathParameters = {
-	metricName: string;
-};
-export type GetMetricMetadata200 = {
-	data: MetricsexplorertypesMetricMetadataDTO;
+export type InspectMetrics200 = {
+	data: MetricsexplorertypesInspectMetricsResponseDTO;
 	/**
 	 * @type string
 	 */
 	status: string;
 };
 
-export type UpdateMetricMetadataPathParameters = {
+export type GetMetricMetadataParams = {
+	/**
+	 * @type string
+	 * @description The name of the metric. May contain slashes (e.g. cloud-provider metrics like run.googleapis.com/request_latencies).
+	 */
 	metricName: string;
 };
-export type InspectMetrics200 = {
-	data: MetricsexplorertypesInspectMetricsResponseDTO;
+
+export type GetMetricMetadata200 = {
+	data: MetricsexplorertypesMetricMetadataDTO;
 	/**
 	 * @type string
 	 */
@@ -10744,6 +11495,17 @@ export type ListUsers200 = {
 	status: string;
 };
 
+export type CreateUser201 = {
+	data: TypesIdentifiableDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type DeleteUserPathParameters = {
+	id: string;
+};
 export type GetUserPathParameters = {
 	id: string;
 };
@@ -10857,6 +11619,22 @@ export type GetHosts200 = {
 	status: string;
 };
 
+export type GetMetricDashboardsV2Params = {
+	/**
+	 * @type string
+	 * @description The name of the metric. May contain slashes (e.g. cloud-provider metrics like run.googleapis.com/request_latencies).
+	 */
+	metricName: string;
+};
+
+export type GetMetricDashboardsV2200 = {
+	data: MetricsexplorertypesMetricDashboardPanelsResponseDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type GetFlamegraphPathParameters = {
 	traceID: string;
 };
@@ -10881,6 +11659,22 @@ export type GetWaterfallV4200 = {
 
 export type QueryRangeV5200 = {
 	data: Querybuildertypesv5QueryRangeResponseDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type QueryRangePreviewV5Params = {
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	verbose?: string;
+};
+
+export type QueryRangePreviewV5200 = {
+	data: Querybuildertypesv5QueryRangePreviewResponseDTO;
 	/**
 	 * @type string
 	 */

@@ -6,6 +6,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 // MockMetadataStore implements the MetadataStore interface for testing purposes.
@@ -16,6 +17,7 @@ type MockMetadataStore struct {
 	AllValuesMap               map[string]*telemetrytypes.TelemetryFieldValues
 	TemporalityMap             map[string]metrictypes.Temporality
 	TypeMap                    map[string]metrictypes.Type
+	ReducedMap                 map[string]bool
 	PromotedPathsMap           map[string]bool
 	LogsJSONIndexes            []telemetrytypes.TelemetryFieldKeySkipIndex
 	ColumnEvolutionMetadataMap map[string][]*telemetrytypes.EvolutionEntry
@@ -306,7 +308,7 @@ func (m *MockMetadataStore) SetAllValues(lookupKey string, values *telemetrytype
 }
 
 // FetchTemporality fetches the temporality for a metric.
-func (m *MockMetadataStore) FetchTemporality(ctx context.Context, queryTimeRangeStartTs, queryTimeRangeEndTs uint64, metricName string) (metrictypes.Temporality, error) {
+func (m *MockMetadataStore) FetchTemporality(ctx context.Context, orgID valuer.UUID, queryTimeRangeStartTs, queryTimeRangeEndTs uint64, metricName string) (metrictypes.Temporality, error) {
 	if temporality, exists := m.TemporalityMap[metricName]; exists {
 		return temporality, nil
 	}
@@ -314,7 +316,7 @@ func (m *MockMetadataStore) FetchTemporality(ctx context.Context, queryTimeRange
 }
 
 // FetchTemporalityMulti fetches the temporality for multiple metrics.
-func (m *MockMetadataStore) FetchTemporalityMulti(ctx context.Context, queryTimeRangeStartTs, queryTimeRangeEndTs uint64, metricNames ...string) (map[string]metrictypes.Temporality, error) {
+func (m *MockMetadataStore) FetchTemporalityMulti(ctx context.Context, orgID valuer.UUID, queryTimeRangeStartTs, queryTimeRangeEndTs uint64, metricNames ...string) (map[string]metrictypes.Temporality, error) {
 	result := make(map[string]metrictypes.Temporality)
 
 	for _, metricName := range metricNames {
@@ -329,9 +331,10 @@ func (m *MockMetadataStore) FetchTemporalityMulti(ctx context.Context, queryTime
 }
 
 // FetchTemporalityMulti fetches the temporality for multiple metrics.
-func (m *MockMetadataStore) FetchTemporalityAndTypeMulti(ctx context.Context, queryTimeRangeStartTs, queryTimeRangeEndTs uint64, metricNames ...string) (map[string]metrictypes.Temporality, map[string]metrictypes.Type, error) {
+func (m *MockMetadataStore) FetchTemporalityAndTypeMulti(ctx context.Context, orgID valuer.UUID, queryTimeRangeStartTs, queryTimeRangeEndTs uint64, metricNames ...string) (map[string]metrictypes.Temporality, map[string]metrictypes.Type, map[string]bool, error) {
 	temporalities := make(map[string]metrictypes.Temporality)
 	types := make(map[string]metrictypes.Type)
+	reduced := make(map[string]bool)
 
 	for _, metricName := range metricNames {
 		if temporality, exists := m.TemporalityMap[metricName]; exists {
@@ -344,9 +347,12 @@ func (m *MockMetadataStore) FetchTemporalityAndTypeMulti(ctx context.Context, qu
 		} else {
 			types[metricName] = metrictypes.UnspecifiedType
 		}
+		if m.ReducedMap[metricName] {
+			reduced[metricName] = true
+		}
 	}
 
-	return temporalities, types, nil
+	return temporalities, types, reduced, nil
 }
 
 // SetTemporality sets the temporality for a metric in the mock store.

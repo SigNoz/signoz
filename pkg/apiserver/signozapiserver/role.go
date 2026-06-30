@@ -73,7 +73,7 @@ func (provider *provider) addRoleRoutes(router *mux.Router) error {
 			Description:         "This endpoint gets a role",
 			Request:             nil,
 			RequestContentType:  "",
-			Response:            new(authtypes.Role),
+			Response:            new(authtypes.RoleWithTransactionGroups),
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{},
@@ -88,6 +88,60 @@ func (provider *provider) addRoleRoutes(router *mux.Router) error {
 			Selector: provider.roleSelector,
 		}),
 	)).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v1/roles/{id}", handler.New(
+		provider.authzMiddleware.CheckResources(provider.authzHandler.Update, authtypes.SigNozAdminRoleName),
+		handler.OpenAPIDef{
+			ID:                  "UpdateRole",
+			Tags:                []string{"role"},
+			Summary:             "Update role",
+			Description:         "This endpoint updates a role",
+			Request:             new(authtypes.UpdatableRole),
+			RequestContentType:  "",
+			Response:            nil,
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusNoContent,
+			ErrorStatusCodes:    []int{http.StatusNotFound, http.StatusNotImplemented, http.StatusUnavailableForLegalReasons},
+			Deprecated:          false,
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceRole.Scope(coretypes.VerbUpdate)}),
+		},
+		handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceRole,
+			Verb:     coretypes.VerbUpdate,
+			Category: coretypes.ActionCategoryAccessControl,
+			ID:       coretypes.PathParam("id"),
+			Selector: provider.roleSelector,
+		}),
+	)).Methods(http.MethodPut).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v1/roles/{id}", handler.New(
+		provider.authzMiddleware.CheckResources(provider.authzHandler.Delete, authtypes.SigNozAdminRoleName),
+		handler.OpenAPIDef{
+			ID:                  "DeleteRole",
+			Tags:                []string{"role"},
+			Summary:             "Delete role",
+			Description:         "This endpoint deletes a role",
+			Request:             nil,
+			RequestContentType:  "",
+			Response:            nil,
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusNoContent,
+			ErrorStatusCodes:    []int{http.StatusNotFound, http.StatusNotImplemented, http.StatusUnavailableForLegalReasons},
+			Deprecated:          false,
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceRole.Scope(coretypes.VerbDelete)}),
+		},
+		handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceRole,
+			Verb:     coretypes.VerbDelete,
+			Category: coretypes.ActionCategoryAccessControl,
+			ID:       coretypes.PathParam("id"),
+			Selector: provider.roleSelector,
+		}),
+	)).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}
 
@@ -131,7 +185,7 @@ func (provider *provider) addRoleRoutes(router *mux.Router) error {
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusNoContent,
 			ErrorStatusCodes:    []int{http.StatusNotFound, http.StatusNotImplemented, http.StatusUnavailableForLegalReasons},
-			Deprecated:          false,
+			Deprecated:          true,
 			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceRole.Scope(coretypes.VerbUpdate)}),
 		},
 		handler.WithResourceDefs(handler.BasicResourceDef{
@@ -158,7 +212,7 @@ func (provider *provider) addRoleRoutes(router *mux.Router) error {
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusNoContent,
 			ErrorStatusCodes:    []int{http.StatusNotFound, http.StatusBadRequest, http.StatusNotImplemented, http.StatusUnavailableForLegalReasons},
-			Deprecated:          false,
+			Deprecated:          true,
 			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceRole.Scope(coretypes.VerbUpdate)}),
 		},
 		handler.WithResourceDefs(handler.BasicResourceDef{
@@ -169,33 +223,6 @@ func (provider *provider) addRoleRoutes(router *mux.Router) error {
 			Selector: provider.roleSelector,
 		}),
 	)).Methods(http.MethodPatch).GetError(); err != nil {
-		return err
-	}
-
-	if err := router.Handle("/api/v1/roles/{id}", handler.New(
-		provider.authzMiddleware.CheckResources(provider.authzHandler.Delete, authtypes.SigNozAdminRoleName),
-		handler.OpenAPIDef{
-			ID:                  "DeleteRole",
-			Tags:                []string{"role"},
-			Summary:             "Delete role",
-			Description:         "This endpoint deletes a role",
-			Request:             nil,
-			RequestContentType:  "",
-			Response:            nil,
-			ResponseContentType: "application/json",
-			SuccessStatusCode:   http.StatusNoContent,
-			ErrorStatusCodes:    []int{http.StatusNotFound, http.StatusNotImplemented, http.StatusUnavailableForLegalReasons},
-			Deprecated:          false,
-			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceRole.Scope(coretypes.VerbDelete)}),
-		},
-		handler.WithResourceDefs(handler.BasicResourceDef{
-			Resource: coretypes.ResourceRole,
-			Verb:     coretypes.VerbDelete,
-			Category: coretypes.ActionCategoryAccessControl,
-			ID:       coretypes.PathParam("id"),
-			Selector: provider.roleSelector,
-		}),
-	)).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}
 

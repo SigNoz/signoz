@@ -1,9 +1,15 @@
-import type { SectionConfig } from '../../types/sections';
+import { SectionKind, type SectionConfig } from '../../types/sections';
 
+// Bar stacking lives in `visualization.stackedBarChart`, so it's a `visualization`
+// control, not `chartAppearance`. fillSpans is TimeSeries-only, so Bar omits it (V1 parity).
 export const sections: SectionConfig[] = [
-	{ kind: 'formatting', controls: { unit: true, decimals: true } },
-	{ kind: 'axes', controls: { minMax: true, unit: true, logScale: true } },
-	{ kind: 'legend', controls: { position: true, mode: true } },
-	{ kind: 'thresholds', controls: { list: true } },
-	{ kind: 'chartAppearance', controls: { stacked: true } },
+	{
+		kind: SectionKind.Visualization,
+		controls: { switchPanelKind: true, timePreference: true, stacking: true },
+	},
+	{ kind: SectionKind.Formatting, controls: { unit: true, decimals: true } },
+	{ kind: SectionKind.Axes, controls: { minMax: true, logScale: true } },
+	{ kind: SectionKind.Legend, controls: { position: true } },
+	{ kind: SectionKind.Thresholds, controls: { variant: 'label' } },
+	{ kind: SectionKind.ContextLinks },
 ];

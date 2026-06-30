@@ -12,12 +12,9 @@ import {
 } from 'lib/uPlotV2/config/types';
 
 /**
- * Bridges the V2 dashboard wire-format enums (snake_case, generated from Go)
- * to the uPlotV2 chart enums (PascalCase). String values diverge between the
- * two — don't coerce, map.
- *
- * Kept as a single source of truth so every panel that reads chart-appearance
- * fields stays in sync as either side's enum evolves.
+ * Bridges the V2 wire-format enums to the uPlotV2 chart enums. String values
+ * diverge between the two — don't coerce, map. Single source of truth shared by
+ * every panel that reads chart-appearance fields.
  */
 
 export const LINE_STYLE_MAP: Record<DashboardtypesLineStyleDTO, LineStyle> = {

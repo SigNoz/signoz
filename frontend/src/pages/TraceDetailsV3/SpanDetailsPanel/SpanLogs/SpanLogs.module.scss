@@ -1,0 +1,74 @@
+.spanLogs {
+	margin-inline: var(--spacing-8);
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+}
+
+.spanLogsVirtuoso {
+	background: color-mix(in srgb, var(--bg-robin-200) 4%, transparent);
+}
+
+.spanLogsListContainer {
+	flex: 1;
+	min-height: 0;
+}
+
+.logsLoadingSkeleton {
+	height: 100%;
+	border: 1px solid var(--l1-border);
+	border-top: none;
+	color: var(--l2-foreground);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: var(--spacing-4) 0;
+}
+
+.spanLogsEmptyContent {
+	height: 100%;
+	border-top: none;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	padding-top: var(--spacing-48);
+	gap: var(--spacing-6);
+}
+
+.description {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: var(--spacing-6);
+	width: 320px;
+}
+
+.noDataImg {
+	height: 2rem;
+	width: 2rem;
+}
+
+.noDataDescription {
+	color: var(--l2-foreground);
+	font-weight: var(--font-weight-normal);
+	line-height: 18px;
+	letter-spacing: -0.07px;
+}
+
+.actionSection {
+	width: 320px;
+}
+
+.actionBtn {
+	border-radius: 2px;
+	border: 1px solid var(--l1-border);
+	background: var(--l1-border);
+	color: var(--l2-foreground);
+	padding: var(--spacing-2) var(--spacing-4);
+	font-size: 12px;
+	font-style: normal;
+	font-weight: var(--font-weight-normal);
+	line-height: var(--line-height-20);
+	letter-spacing: -0.07px;
+}
