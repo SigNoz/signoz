@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/transition"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -22,6 +21,7 @@ var (
 	ErrCodeDashboardInvalidSource      = errors.MustNewCode("dashboard_invalid_source")
 	ErrCodeDashboardImmutable          = errors.MustNewCode("dashboard_immutable")
 	ErrCodeDashboardInvalidPatch       = errors.MustNewCode("dashboard_invalid_patch")
+	ErrCodeDashboardMigrationFailed    = errors.MustNewCode("dashboard_migration_failed")
 )
 
 type StorableDashboard struct {
@@ -406,27 +406,34 @@ func (dashboard *Dashboard) GetWidgetQuery(startTime, endTime, widgetIndex uint6
 	widgetData := data.Widgets[widgetIndex]
 	switch widgetData.Query.QueryType {
 	case "builder":
-		migrate := transition.NewMigrateCommon(logger)
+		isRawRequest := dashboard.getQueryRequestTypeFromPanelType(widgetData.PanelTypes) == querybuildertypesv5.RequestTypeRaw
 		for _, query := range widgetData.Query.Builder.QueryData {
 			queryName, ok := query["queryName"].(string)
 			if !ok {
 				return nil, errors.New(errors.TypeInvalidInput, ErrCodeDashboardInvalidWidgetQuery, "cannot type cast query name as string")
 			}
-			compositeQueries = append(compositeQueries, migrate.WrapInV5Envelope(queryName, query, "builder_query"))
+			// build aggregations the same way the frontend does before hitting the query
+			// range API; raw requests carry no aggregations.
+			if isRawRequest {
+				delete(query, "aggregations")
+			} else {
+				query["aggregations"] = querybuildertypesv5.CreateAggregation(query, widgetData.PanelTypes)
+			}
+			compositeQueries = append(compositeQueries, querybuildertypesv5.WrapInV5Envelope(queryName, query, "builder_query"))
 		}
 		for _, query := range widgetData.Query.Builder.QueryFormulas {
 			queryName, ok := query["queryName"].(string)
 			if !ok {
 				return nil, errors.New(errors.TypeInvalidInput, ErrCodeDashboardInvalidWidgetQuery, "cannot type cast query name as string")
 			}
-			compositeQueries = append(compositeQueries, migrate.WrapInV5Envelope(queryName, query, "builder_formula"))
+			compositeQueries = append(compositeQueries, querybuildertypesv5.WrapInV5Envelope(queryName, query, "builder_formula"))
 		}
 		for _, query := range widgetData.Query.Builder.QueryTraceOperator {
 			queryName, ok := query["queryName"].(string)
 			if !ok {
 				return nil, errors.New(errors.TypeInvalidInput, ErrCodeDashboardInvalidWidgetQuery, "cannot type cast query name as string")
 			}
-			compositeQueries = append(compositeQueries, migrate.WrapInV5Envelope(queryName, query, "builder_trace_operator"))
+			compositeQueries = append(compositeQueries, querybuildertypesv5.WrapInV5Envelope(queryName, query, "builder_trace_operator"))
 		}
 	case "clickhouse_sql":
 		for _, query := range widgetData.Query.ClickhouseSQL {
