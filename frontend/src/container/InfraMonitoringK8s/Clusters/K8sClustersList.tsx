@@ -63,9 +63,6 @@ function K8sClustersList({
 							: ('list' as const),
 					records: data.records,
 					total: data.total,
-					requiredMetricsCheck: {
-						missingMetrics: data.requiredMetricsCheck?.missingMetrics ?? null,
-					},
 					endTimeBeforeRetention: data.endTimeBeforeRetention,
 					warning: data.warning,
 				};

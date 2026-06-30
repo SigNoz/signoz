@@ -18,7 +18,6 @@ export type K8sListResponse<T> = {
 	type: 'list' | 'grouped_list';
 	records: T[];
 	total: number;
-	requiredMetricsCheck?: { missingMetrics: string[] | null };
 	endTimeBeforeRetention?: boolean;
 	error?: string | null;
 };
