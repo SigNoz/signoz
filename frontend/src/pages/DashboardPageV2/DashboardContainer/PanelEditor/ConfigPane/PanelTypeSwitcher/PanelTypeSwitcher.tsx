@@ -14,15 +14,15 @@ interface PanelTypeSwitcherProps {
 	panelKind: PanelKind;
 	/** Active query type — a kind that can't be authored in it is disabled (e.g. List is Query-Builder-only, so PromQL/ClickHouse disable it). Defaults to Query Builder. */
 	queryType?: EQueryType;
-	/** Panel's current datasource — also gates the disabled rule (List needs logs/traces, not metrics). */
+	/** Panel's current signal — also gates the disabled rule (List needs logs/traces, not metrics). */
 	signal?: TelemetrytypesSignalDTO;
 	onChange: (kind: PanelKind) => void;
 }
 
 /**
  * Visualization-type selector (rendered inside the Visualization section). A type is
- * disabled when the active query type or datasource is incompatible with it — resolved
- * through the capabilities guard. The datasource is unknown for PromQL/ClickHouse, but
+ * disabled when the active query type or signal is incompatible with it — resolved
+ * through the capabilities guard. The signal is unknown for PromQL/ClickHouse, but
  * those query types still disable kinds that only support Query Builder (e.g. List).
  */
 function PanelTypeSwitcher({

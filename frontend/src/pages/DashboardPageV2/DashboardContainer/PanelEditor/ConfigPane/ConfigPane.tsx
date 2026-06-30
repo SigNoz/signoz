@@ -25,7 +25,7 @@ interface ConfigPaneProps {
 	 * panel types the visualization switcher disables — read from the provider, not the
 	 * spec, because a new panel's spec has no query until staged.
 	 */
-	queryType?: EQueryType;
+	queryType: EQueryType;
 	/** Panel's resolved series, provided to sections that need them (legend colors). */
 	legendSeries: LegendSeries[];
 	/** Table panel's resolved value columns, for the table-only editors. */

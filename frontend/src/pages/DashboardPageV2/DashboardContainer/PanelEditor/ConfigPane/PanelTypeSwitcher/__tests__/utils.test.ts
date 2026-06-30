@@ -49,7 +49,7 @@ describe('getPanelTypeDisabledReason', () => {
 		).toBe("Table isn't available for PromQL queries");
 	});
 
-	it('explains an unsupported datasource', () => {
+	it('explains an unsupported signal', () => {
 		expect(
 			getPanelTypeDisabledReason({
 				kind: 'signoz/ListPanel',

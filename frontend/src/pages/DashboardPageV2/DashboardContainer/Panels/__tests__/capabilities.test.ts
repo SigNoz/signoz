@@ -107,7 +107,7 @@ describe('panel capabilities guard', () => {
 			).toBe(false);
 		});
 
-		it('ignores signal when none is given (ClickHouse/PromQL have no datasource)', () => {
+		it('ignores signal when none is given (ClickHouse/PromQL have no signal)', () => {
 			expect(
 				isPanelCombinationValid({
 					kind: 'signoz/ListPanel',
@@ -134,9 +134,9 @@ describe('panel capabilities guard', () => {
 
 	describe('getHiddenQueryBuilderFields', () => {
 		it('returns {} for kinds that declare no field rules', () => {
-			expect(getHiddenQueryBuilderFields('signoz/TimeSeriesPanel')).toStrictEqual(
-				{},
-			);
+			expect(
+				getHiddenQueryBuilderFields('signoz/TimeSeriesPanel', logs),
+			).toStrictEqual({});
 			expect(getHiddenQueryBuilderFields('signoz/TablePanel', logs)).toStrictEqual(
 				{},
 			);
@@ -160,14 +160,6 @@ describe('panel capabilities guard', () => {
 				stepInterval: { isHidden: true, isDisabled: true },
 				having: { isHidden: true, isDisabled: true },
 				limit: { isHidden: true, isDisabled: true },
-				filters: { customKey: 'body', customOp: OPERATORS.CONTAINS },
-			});
-		});
-
-		it('falls back to the default rule when no signal is given', () => {
-			expect(getHiddenQueryBuilderFields('signoz/ListPanel')).toStrictEqual({
-				stepInterval: { isHidden: true, isDisabled: true },
-				having: { isHidden: true, isDisabled: true },
 				filters: { customKey: 'body', customOp: OPERATORS.CONTAINS },
 			});
 		});

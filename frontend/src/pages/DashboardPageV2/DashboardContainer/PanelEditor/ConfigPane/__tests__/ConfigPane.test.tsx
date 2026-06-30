@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
+import { EQueryType } from 'types/common/dashboard';
 
 import ConfigPane from '../ConfigPane';
 
@@ -22,6 +23,7 @@ function renderConfigPane(
 		spec: spec(),
 		onChangeSpec: jest.fn(),
 		onChangePanelKind: jest.fn(),
+		queryType: EQueryType.QUERY_BUILDER,
 		legendSeries: [],
 		tableColumns: [],
 		...overrides,

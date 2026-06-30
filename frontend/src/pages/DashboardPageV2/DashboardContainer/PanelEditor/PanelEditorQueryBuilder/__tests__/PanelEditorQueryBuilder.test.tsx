@@ -44,7 +44,7 @@ const mockUseQueryBuilder = useQueryBuilder as unknown as jest.Mock;
 
 function renderBuilder(
 	panelKind: string,
-	signal?: TelemetrytypesSignalDTO,
+	signal: TelemetrytypesSignalDTO = TelemetrytypesSignalDTO.logs,
 ): void {
 	render(
 		<PanelEditorQueryBuilder

@@ -58,7 +58,7 @@ describe('PanelTypeSwitcher', () => {
 		expect(onChange).toHaveBeenCalledWith('signoz/ListPanel');
 	});
 
-	it('disables types whose supported signals exclude the current datasource', () => {
+	it('disables types whose supported signals exclude the current signal', () => {
 		render(
 			<PanelTypeSwitcher
 				panelKind="signoz/TimeSeriesPanel"
@@ -73,7 +73,7 @@ describe('PanelTypeSwitcher', () => {
 		expect(disabledLabels()).not.toContain('Time Series');
 	});
 
-	it('does not disable any type when the datasource is unknown (builder, no signal)', () => {
+	it('does not disable any type when the signal is unknown (builder, no signal)', () => {
 		render(
 			<PanelTypeSwitcher
 				panelKind="signoz/TimeSeriesPanel"
@@ -87,7 +87,7 @@ describe('PanelTypeSwitcher', () => {
 		).toHaveLength(0);
 	});
 
-	it('disables Query-Builder-only kinds under PromQL even without a datasource', () => {
+	it('disables Query-Builder-only kinds under PromQL even without a signal', () => {
 		render(
 			<PanelTypeSwitcher
 				panelKind="signoz/TimeSeriesPanel"

@@ -20,10 +20,10 @@ const SIGNAL_LABEL: Record<TelemetrytypesSignalDTO, string> = {
 };
 
 /**
- * Why a panel kind can't be selected for the current query type / datasource, or
+ * Why a panel kind can't be selected for the current query type / signal, or
  * `undefined` when it can. Drives both the type switcher's disabled state and its
  * tooltip, so the two never disagree. The query-type reason takes precedence (it's the
- * outer choice): query types have no datasource, so the signal only matters in builder.
+ * outer choice): query types carry no signal, so the signal only matters in builder.
  */
 export function getPanelTypeDisabledReason({
 	kind,

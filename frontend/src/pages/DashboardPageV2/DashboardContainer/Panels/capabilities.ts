@@ -13,7 +13,7 @@ import type { PanelKind } from './types/panelKind';
  * these functions then cover it automatically. Pure and side-effect free.
  */
 
-/** Signals (datasources) a kind can visualize. */
+/** Signals a kind can visualize. */
 export function getSupportedSignals(
 	kind: PanelKind,
 ): TelemetrytypesSignalDTO[] {
@@ -40,9 +40,9 @@ export function isQueryTypeSupported(
 }
 
 /**
- * Master guard: is this panel kind renderable with this query type (and, when a
- * datasource is known, this signal)? Signal is only meaningful in builder mode —
- * ClickHouse/PromQL queries have no datasource — so it's validated only when given.
+ * Master guard: is this panel kind renderable with this query type (and, in builder
+ * mode, this signal)? ClickHouse/PromQL queries carry no signal, so the signal is
+ * validated only when one is given.
  */
 export function isPanelCombinationValid({
 	kind,
@@ -78,17 +78,14 @@ export function resolveQueryType(
 
 /**
  * Query-builder field visibility for a kind + signal: the kind's `default` rule with
- * its per-signal overrides merged over it (signal wins). `{}` when the kind declares
+ * its per-signal overrides merged over it (signal wins). `{}` when the kind hides
  * nothing, i.e. the builder shows every field.
  */
 export function getHiddenQueryBuilderFields(
 	kind: PanelKind,
-	signal?: TelemetrytypesSignalDTO,
+	signal: TelemetrytypesSignalDTO,
 ): FilterConfigsPartial {
 	const rule = getPanelDefinition(kind).queryBuilderFields;
-	if (!rule) {
-		return {};
-	}
 	const perSignal = signal ? rule[signal] : undefined;
 	return { ...rule.default, ...perSignal };
 }

@@ -17,6 +17,6 @@ export interface SectionEditorContext {
 	panelKind?: PanelKind;
 	onChangePanelKind?: (kind: PanelKind) => void;
 	yAxisUnit?: string;
-	queryType?: EQueryType
+	queryType?: EQueryType;
 	stepInterval?: number;
 }

@@ -35,8 +35,8 @@ import styles from './PanelEditorQueryBuilder.module.scss';
 interface PanelEditorQueryBuilderProps {
 	/** The edited panel's visualization kind — drives supported query types + field visibility via the capabilities guard. */
 	panelKind: PanelKind;
-	/** The panel's current datasource; selects per-signal query-builder field rules. */
-	signal?: TelemetrytypesSignalDTO;
+	/** The panel's current signal; selects per-signal query-builder field rules. */
+	signal: TelemetrytypesSignalDTO;
 	/** Preview fetch in flight — drives the Stage & Run button's loading/cancel state. */
 	isLoadingQueries: boolean;
 	/** Run the current query (Stage & Run button / ⌘↵). Always re-runs. */
@@ -89,9 +89,8 @@ function PanelEditorQueryBuilder({
 		[onStageRunQuery],
 	);
 
-	// Query-builder field visibility for this kind + signal (e.g. List hides step
-	// interval / having). QueryBuilderV2 ignores it for list view (its internal config
-	// wins), but the guard stays the single declared source — see ListPanel definition.
+	// Per-kind query-builder field rules from the guard (e.g. List hides step interval
+	// and having), passed to QueryBuilderV2 as its `filterConfigs`.
 	const filterConfigs: QueryBuilderProps['filterConfigs'] = useMemo(
 		() => getHiddenQueryBuilderFields(panelKind, signal),
 		[panelKind, signal],

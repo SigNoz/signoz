@@ -19,6 +19,7 @@ export const definition: PanelDefinition<'signoz/NumberPanel'> = {
 		EQueryType.CLICKHOUSE,
 		EQueryType.PROM,
 	],
+	queryBuilderFields: {},
 	actions: {
 		view: true,
 		edit: true,

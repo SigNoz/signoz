@@ -37,12 +37,12 @@ export interface PanelDefinition<K extends PanelKind = PanelKind> {
 	displayName: string;
 	Renderer: ComponentType<PanelRendererProps<K>>;
 	sections: SectionConfig[];
-	/** Signals (datasources) this kind can visualize. */
+	/** Signals this kind can visualize. */
 	supportedSignals: TelemetrytypesSignalDTO[];
 	/** Query languages this kind supports (Query Builder / ClickHouse / PromQL). */
 	supportedQueryTypes: EQueryType[];
-	/** Query-builder fields this kind hides/disables, optionally per signal. */
-	queryBuilderFields?: QueryBuilderFieldRule;
+	/** Query-builder fields this kind hides/disables, optionally per signal (`{}` hides none). */
+	queryBuilderFields: QueryBuilderFieldRule;
 	actions: PanelActionCapabilities;
 }
 

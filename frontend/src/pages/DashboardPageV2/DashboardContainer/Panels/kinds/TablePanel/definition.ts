@@ -15,6 +15,7 @@ export const definition: PanelDefinition<'signoz/TablePanel'> = {
 		TelemetrytypesSignalDTO.traces,
 	],
 	supportedQueryTypes: [EQueryType.QUERY_BUILDER, EQueryType.CLICKHOUSE],
+	queryBuilderFields: {},
 	// Tables carry tabular data worth exporting (V1 parity: download is table-only).
 	actions: {
 		view: true,
