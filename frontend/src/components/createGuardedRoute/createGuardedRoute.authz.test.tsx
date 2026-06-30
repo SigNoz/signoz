@@ -267,11 +267,10 @@ describe('createGuardedRoute', () => {
 		await waitFor(() => {
 			const heading = document.querySelector('h3');
 			expect(heading).toBeInTheDocument();
-			expect(heading?.textContent).toMatch(/permission to view/i);
+			expect(heading?.textContent).toMatch(/not authorized/i);
 		});
 
-		expect(screen.getByText('update')).toBeInTheDocument();
-		expect(screen.getByText('role:123')).toBeInTheDocument();
+		expect(screen.getByText(/update:role:123/)).toBeInTheDocument();
 		expect(
 			screen.queryByText('Test Component: test-value'),
 		).not.toBeInTheDocument();

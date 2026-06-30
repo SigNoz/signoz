@@ -14,6 +14,7 @@ import type {
 } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/sections';
 
 import type { TableColumnOption } from '../../../hooks/useTableColumns';
+import type { SectionEditorContext } from '../../sectionContext';
 import ComparisonThresholdRow from './rows/ComparisonThresholdRow';
 import LabelThresholdRow from './rows/LabelThresholdRow';
 import TableThresholdRow from './rows/TableThresholdRow';
@@ -61,11 +62,7 @@ type ThresholdsSectionProps = {
 	/** `variant` picks the row editor + element shape; defaults to `label`. */
 	controls?: { variant?: ThresholdVariant };
 	onChange: (next: AnyThreshold[]) => void;
-	/** Panel formatting unit; scopes each row's unit picker to its category (V1 parity). */
-	yAxisUnit?: string;
-	/** Table panel's resolved value columns (table variant only). */
-	tableColumns?: TableColumnOption[];
-};
+} & Pick<SectionEditorContext, 'yAxisUnit' | 'tableColumns'>;
 
 /**
  * Edits the `thresholds` slice for every panel kind. All variants share the same

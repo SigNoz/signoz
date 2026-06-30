@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
+import { EQueryType } from 'types/common/dashboard';
 
 import ConfigPane from '../ConfigPane';
 
@@ -21,6 +22,8 @@ function renderConfigPane(
 		panelKind: 'signoz/TimeSeriesPanel',
 		spec: spec(),
 		onChangeSpec: jest.fn(),
+		onChangePanelKind: jest.fn(),
+		queryType: EQueryType.QUERY_BUILDER,
 		legendSeries: [],
 		tableColumns: [],
 		...overrides,
@@ -56,6 +59,8 @@ describe('ConfigPane', () => {
 	it('renders the Formatting section for a kind that declares it', () => {
 		renderConfigPane();
 		// The TimeSeries kind declares a Formatting section; its collapsible header shows.
-		expect(screen.getByTestId('config-section-Formatting')).toBeInTheDocument();
+		expect(
+			screen.getByTestId('config-section-formatting-&-units'),
+		).toBeInTheDocument();
 	});
 });
