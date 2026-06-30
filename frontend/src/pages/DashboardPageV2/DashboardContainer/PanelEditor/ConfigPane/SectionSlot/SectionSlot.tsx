@@ -6,6 +6,7 @@ import {
 	type PanelFormattingSlice,
 	SECTION_METADATA,
 	type SectionConfig,
+	SectionKind,
 } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/sections';
 
 import type { PanelKind } from '../../../Panels/types/panelKind';
@@ -70,7 +71,7 @@ function SectionSlot({
 			title={title}
 			icon={<Icon size={15} />}
 			// Open Visualization by default so the type switcher is visible.
-			defaultOpen={config.kind === 'visualization'}
+			defaultOpen={config.kind === SectionKind.Visualization}
 		>
 			<Component
 				value={get(spec)}

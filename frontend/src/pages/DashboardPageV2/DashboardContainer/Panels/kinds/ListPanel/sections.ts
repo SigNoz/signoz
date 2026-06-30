@@ -1,8 +1,8 @@
-import type { SectionConfig } from '../../types/sections';
+import { SectionKind, type SectionConfig } from '../../types/sections';
 
 export const sections: SectionConfig[] = [
 	{
-		kind: 'visualization',
+		kind: SectionKind.Visualization,
 		controls: { switchPanelKind: true },
 	},
 ];

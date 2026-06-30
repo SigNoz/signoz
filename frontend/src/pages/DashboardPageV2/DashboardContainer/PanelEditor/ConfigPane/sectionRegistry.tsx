@@ -8,12 +8,12 @@ import type {
 	DashboardtypesPanelSpecDTO,
 	DashboardtypesTimeSeriesChartAppearanceDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import type {
-	AnyThreshold,
-	PanelFormattingSlice,
-	SectionEditorProps,
+import {
 	SectionKind,
-	SectionSpecMap,
+	type AnyThreshold,
+	type PanelFormattingSlice,
+	type SectionEditorProps,
+	type SectionSpecMap,
 } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/sections';
 
 import AxesSection from './sections/AxesSection/AxesSection';
@@ -69,27 +69,27 @@ function updatePluginSlice(
 export const SECTION_REGISTRY: {
 	[K in SectionKind]?: SectionDescriptor<K>;
 } = {
-	formatting: {
+	[SectionKind.Formatting]: {
 		Component: FormattingSection,
 		get: (spec): PanelFormattingSlice | undefined =>
 			getPluginSlice<PanelFormattingSlice>(spec, 'formatting'),
 		update: (spec, formatting): PanelSpec =>
 			updatePluginSlice(spec, 'formatting', formatting),
 	},
-	axes: {
+	[SectionKind.Axes]: {
 		Component: AxesSection,
 		get: (spec): DashboardtypesAxesDTO | undefined =>
 			getPluginSlice<DashboardtypesAxesDTO>(spec, 'axes'),
 		update: (spec, axes): PanelSpec => updatePluginSlice(spec, 'axes', axes),
 	},
-	legend: {
+	[SectionKind.Legend]: {
 		Component: LegendSection,
 		get: (spec): DashboardtypesLegendDTO | undefined =>
 			getPluginSlice<DashboardtypesLegendDTO>(spec, 'legend'),
 		update: (spec, legend): PanelSpec =>
 			updatePluginSlice(spec, 'legend', legend),
 	},
-	chartAppearance: {
+	[SectionKind.ChartAppearance]: {
 		Component: ChartAppearanceSection,
 		get: (spec): DashboardtypesTimeSeriesChartAppearanceDTO | undefined =>
 			getPluginSlice<DashboardtypesTimeSeriesChartAppearanceDTO>(
@@ -99,7 +99,7 @@ export const SECTION_REGISTRY: {
 		update: (spec, chartAppearance): PanelSpec =>
 			updatePluginSlice(spec, 'chartAppearance', chartAppearance),
 	},
-	visualization: {
+	[SectionKind.Visualization]: {
 		Component: VisualizationSection,
 		get: (spec): DashboardtypesBarChartVisualizationDTO | undefined =>
 			getPluginSlice<DashboardtypesBarChartVisualizationDTO>(
@@ -109,14 +109,14 @@ export const SECTION_REGISTRY: {
 		update: (spec, visualization): PanelSpec =>
 			updatePluginSlice(spec, 'visualization', visualization),
 	},
-	buckets: {
+	[SectionKind.Buckets]: {
 		Component: BucketsSection,
 		get: (spec): DashboardtypesHistogramBucketsDTO | undefined =>
 			getPluginSlice<DashboardtypesHistogramBucketsDTO>(spec, 'histogramBuckets'),
 		update: (spec, buckets): PanelSpec =>
 			updatePluginSlice(spec, 'histogramBuckets', buckets),
 	},
-	contextLinks: {
+	[SectionKind.ContextLinks]: {
 		Component: ContextLinksSection,
 		// Panel-level slice (spec.links), not under the plugin spec — no cast needed.
 		get: (spec): DashboardLinkDTO[] | undefined => spec.links,
@@ -125,7 +125,7 @@ export const SECTION_REGISTRY: {
 	// One editor for every threshold variant (label / comparison / table); the kind's
 	// `controls.variant` picks the row editor + element shape. All persist to the same
 	// plugin.spec.thresholds key.
-	thresholds: {
+	[SectionKind.Thresholds]: {
 		Component: ThresholdsSection,
 		get: (spec): AnyThreshold[] | undefined =>
 			getPluginSlice<AnyThreshold[]>(spec, 'thresholds'),

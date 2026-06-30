@@ -6,7 +6,10 @@ import {
 	DashboardtypesLineInterpolationDTO,
 	DashboardtypesLineStyleDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import type { SectionEditorProps } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/sections';
+import type {
+	SectionEditorProps,
+	SectionKind,
+} from 'pages/DashboardPageV2/DashboardContainer/Panels/types/sections';
 
 import ConfigSegmented from '../../controls/ConfigSegmented/ConfigSegmented';
 import ConfigSelect from '../../controls/ConfigSelect/ConfigSelect';
@@ -78,7 +81,7 @@ function ChartAppearanceSection({
 	value,
 	controls,
 	onChange,
-}: SectionEditorProps<'chartAppearance'>): JSX.Element {
+}: SectionEditorProps<SectionKind.ChartAppearance>): JSX.Element {
 	// `spanGaps.fillLessThan` is a stringified seconds threshold: empty means "connect
 	// every gap" (the chart default), a number means "only bridge gaps shorter than this".
 	const handleSpanGaps = (e: ChangeEvent<HTMLInputElement>): void => {

@@ -5,7 +5,10 @@ import type {
 } from 'api/generated/services/sigNoz.schemas';
 import { getPanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Panels/registry';
 import type { PanelKind } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelKind';
-import type { PanelFormattingSlice } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/sections';
+import {
+	SectionKind,
+	type PanelFormattingSlice,
+} from 'pages/DashboardPageV2/DashboardContainer/Panels/types/sections';
 import {
 	buildDefaultPluginSpec,
 	type DefaultPluginSpec,
@@ -39,7 +42,7 @@ export function getSwitchedPluginSpec(
 	const sections = getPanelDefinition(newKind).sections;
 	const result: SwitchedPluginSpec = buildDefaultPluginSpec(sections);
 
-	if (sections.some((section) => section.kind === 'formatting')) {
+	if (sections.some((section) => section.kind === SectionKind.Formatting)) {
 		const oldFormatting = (
 			oldSpec.plugin.spec as {
 				formatting?: PanelFormattingSlice;
@@ -56,7 +59,7 @@ export function getSwitchedPluginSpec(
 		}
 	}
 
-	if (sections.some((section) => section.kind === 'columns')) {
+	if (sections.some((section) => section.kind === SectionKind.Columns)) {
 		const columns = defaultColumnsForSignal(signal);
 		if (columns.length > 0) {
 			result.selectFields = columns;
