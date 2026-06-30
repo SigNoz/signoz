@@ -1,10 +1,19 @@
-import { type ReactNode, useCallback, useEffect, useState } from 'react';
+import {
+	type ReactNode,
+	useCallback,
+	useEffect,
+	useMemo,
+	useState,
+} from 'react';
 import { Button } from '@signozhq/ui/button';
+import { Typography } from '@signozhq/ui/typography';
 import { X } from '@signozhq/icons';
 
-import type { UpdatedWindow } from '../../types';
+import { buildSuggestionKeys } from '../../utils/dslSuggestions';
+import type { SelectedTag, UpdatedWindow } from '../../types';
 import SearchBar from '../SearchBar/SearchBar';
 import FilterChips, { type CreatorOption } from './FilterChips';
+import TagsFilterChip from './TagsFilterChip';
 
 import styles from './FilterZone.module.scss';
 
@@ -12,11 +21,14 @@ interface Props {
 	search: string;
 	createdBy: string[];
 	updated: UpdatedWindow;
+	tags: SelectedTag[];
+	availableTags: SelectedTag[];
 	creatorOptions: CreatorOption[];
 	isEmpty: boolean;
 	onSearchChange: (value: string) => void;
 	onCreatedByChange: (emails: string[]) => void;
 	onUpdatedChange: (window: UpdatedWindow) => void;
+	onTagsChange: (tags: SelectedTag[]) => void;
 	onClearAll: () => void;
 	// Rendered at the end of the search row (e.g. the New Dashboard action).
 	rightSlot?: ReactNode;
@@ -29,15 +41,23 @@ function FilterZone({
 	search,
 	createdBy,
 	updated,
+	tags,
+	availableTags,
 	creatorOptions,
 	isEmpty,
 	onSearchChange,
 	onCreatedByChange,
 	onUpdatedChange,
+	onTagsChange,
 	onClearAll,
 	rightSlot,
 }: Props): JSX.Element {
 	const [searchInput, setSearchInput] = useState(search);
+
+	const suggestionKeys = useMemo(
+		() => buildSuggestionKeys(availableTags),
+		[availableTags],
+	);
 
 	// Keep the local input in sync with external search changes (applying a view,
 	// clear-all, back/forward). User typing only mutates the local copy.
@@ -58,7 +78,8 @@ function FilterZone({
 				<div className={styles.searchInput}>
 					<SearchBar
 						value={searchInput}
-						placeholder="Search dashboards by name"
+						placeholder={`Search with DSL — e.g. name contains "prod" AND env = "staging"`}
+						suggestionKeys={suggestionKeys}
 						onChange={setSearchInput}
 						onSubmit={handleSubmit}
 					/>
@@ -66,13 +87,18 @@ function FilterZone({
 				{rightSlot}
 			</div>
 			<div className={styles.filtersRow}>
-				<span className={styles.filtersLabel}>Filters</span>
+				<Typography.Text className={styles.filtersLabel}>Filters</Typography.Text>
 				<FilterChips
 					createdBy={createdBy}
 					updated={updated}
 					creatorOptions={creatorOptions}
 					onCreatedByChange={onCreatedByChange}
 					onUpdatedChange={onUpdatedChange}
+				/>
+				<TagsFilterChip
+					availableTags={availableTags}
+					tags={tags}
+					onTagsChange={onTagsChange}
 				/>
 				{!isEmpty && (
 					<Button

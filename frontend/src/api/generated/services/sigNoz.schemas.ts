@@ -7555,6 +7555,126 @@ export interface Querybuildertypesv5FormatOptionsDTO {
 	formatTableResultForUI?: boolean;
 }
 
+export interface TelemetrystoretypesEstimateEntryDTO {
+	/**
+	 * @type string
+	 */
+	database: string;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	marks: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	parts: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	rows: number;
+	/**
+	 * @type string
+	 */
+	table: string;
+}
+
+export interface TelemetrystoretypesIndexStepDTO {
+	/**
+	 * @type string
+	 */
+	condition: string;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	initialGranules: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	initialParts: number;
+	/**
+	 * @type array
+	 */
+	keys: string[];
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	selectedGranules: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	selectedParts: number;
+	/**
+	 * @type string
+	 */
+	type: string;
+}
+
+export interface TelemetrystoretypesMergeTreeReadDTO {
+	/**
+	 * @type array
+	 */
+	steps: TelemetrystoretypesIndexStepDTO[];
+	/**
+	 * @type string
+	 */
+	table: string;
+}
+
+export type TelemetrystoretypesGranulesDTOAnyOf = {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	initial: number;
+	/**
+	 * @type array
+	 */
+	reads: TelemetrystoretypesMergeTreeReadDTO[];
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	selected: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	skipped: number;
+};
+
+/**
+ * @nullable
+ */
+export type TelemetrystoretypesGranulesDTO =
+	TelemetrystoretypesGranulesDTOAnyOf | null;
+
+export interface Querybuildertypesv5PreviewStatementDTO {
+	/**
+	 * @type array
+	 */
+	'db.statement.args': unknown[];
+	/**
+	 * @type string
+	 */
+	'db.statement.query': string;
+	/**
+	 * @type array
+	 */
+	estimate: TelemetrystoretypesEstimateEntryDTO[];
+	granules: TelemetrystoretypesGranulesDTO | null;
+}
+
 export interface Querybuildertypesv5TimeSeriesDataDTO {
 	/**
 	 * @type array,null
@@ -7635,6 +7755,41 @@ export type Querybuildertypesv5QueryDataDTO =
 			 */
 			results?: unknown[] | null;
 	  });
+
+export interface Querybuildertypesv5QueryPreviewDTO {
+	error: unknown;
+	/**
+	 * @type array
+	 */
+	statements: Querybuildertypesv5PreviewStatementDTO[];
+	/**
+	 * @type boolean
+	 */
+	valid: boolean;
+	/**
+	 * @type array
+	 */
+	warnings: string[];
+}
+
+export type Querybuildertypesv5QueryRangePreviewResponseDTOCompositeQueryAnyOf =
+	{ [key: string]: Querybuildertypesv5QueryPreviewDTO };
+
+/**
+ * @nullable
+ */
+export type Querybuildertypesv5QueryRangePreviewResponseDTOCompositeQuery =
+	Querybuildertypesv5QueryRangePreviewResponseDTOCompositeQueryAnyOf | null;
+
+/**
+ * Response from the v5 query range preview (dry-run) endpoint. For each query in the composite query, returns the underlying ClickHouse statement(s) it renders to without executing them (one per PromQL metric selector; exactly one for builder/ClickHouse/trace-operator queries), with the optional EXPLAIN ESTIMATE and granule analysis attached per statement when requested.
+ */
+export interface Querybuildertypesv5QueryRangePreviewResponseDTO {
+	/**
+	 * @type object,null
+	 */
+	compositeQuery: Querybuildertypesv5QueryRangePreviewResponseDTOCompositeQuery;
+}
 
 export enum Querybuildertypesv5VariableTypeDTO {
 	query = 'query',
@@ -11504,6 +11659,22 @@ export type GetWaterfallV4200 = {
 
 export type QueryRangeV5200 = {
 	data: Querybuildertypesv5QueryRangeResponseDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type QueryRangePreviewV5Params = {
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	verbose?: string;
+};
+
+export type QueryRangePreviewV5200 = {
+	data: Querybuildertypesv5QueryRangePreviewResponseDTO;
 	/**
 	 * @type string
 	 */
