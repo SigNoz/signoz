@@ -1,0 +1,16 @@
+.actions {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: var(--spacing-4);
+	margin-bottom: var(--spacing-6);
+}
+
+.tableEmpty {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: var(--spacing-16);
+	border: 1px dashed var(--bg-slate-400);
+	border-radius: var(--radius-2);
+}
