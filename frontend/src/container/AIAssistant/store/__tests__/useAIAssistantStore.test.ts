@@ -182,4 +182,82 @@ describe('useAIAssistantStore — streaming error handling', () => {
 			useAIAssistantStore.getState().conversations['thread-3'].messages,
 		).toHaveLength(before);
 	});
+
+	it('recovers silently when an auto-flagged error succeeds on retry', async () => {
+		chat.createThread.mockResolvedValue('thread-4');
+		chat.sendMessage.mockResolvedValue('exec');
+		chat.streamEvents
+			.mockReturnValueOnce(
+				eventStream([
+					errorEvent('exec', ErrorCodeDTO.internal_error, RetryActionDTO.auto),
+				]),
+			)
+			.mockReturnValueOnce(
+				eventStream([
+					{
+						type: 'message',
+						executionId: 'exec',
+						messageId: 'm1',
+						delta: 'Recovered',
+						done: true,
+					},
+				]),
+			);
+
+		useAIAssistantStore.getState().startNewConversation();
+		await useAIAssistantStore.getState().sendMessage('hi');
+
+		// 1 initial attempt + 1 silent auto retry, then success — no error bubble.
+		expect(chat.sendMessage).toHaveBeenCalledTimes(2);
+		const conv = useAIAssistantStore.getState().conversations['thread-4'];
+		expect(conv.messages).toHaveLength(2);
+		expect(conv.messages[0]).toMatchObject({ role: 'user', content: 'hi' });
+		expect(conv.messages[1]).toMatchObject({
+			role: 'assistant',
+			content: 'Recovered',
+		});
+		expect(conv.messages.some((m) => m.isError)).toBe(false);
+	}, 10000);
+
+	it('replays the originating action on retry for a non-send error (approve)', async () => {
+		chat.approveExecution.mockResolvedValue('exec-a');
+		chat.streamEvents.mockReturnValueOnce(
+			eventStream([
+				errorEvent('exec-a', ErrorCodeDTO.thread_busy, RetryActionDTO.manual),
+			]),
+		);
+
+		const convId = useAIAssistantStore.getState().startNewConversation();
+		await useAIAssistantStore.getState().approveAction(convId, 'approval-1');
+
+		expect(lastMessage(convId)).toMatchObject({
+			isError: true,
+			retryAction: RetryActionDTO.manual,
+		});
+		expect(chat.approveExecution).toHaveBeenCalledTimes(1);
+
+		// Retry replays the approval (not a send) and succeeds this time.
+		chat.streamEvents.mockReturnValueOnce(
+			eventStream([
+				{
+					type: 'message',
+					executionId: 'exec-a',
+					messageId: 'm1',
+					delta: 'Approved',
+					done: true,
+				},
+			]),
+		);
+		await useAIAssistantStore.getState().retryAssistantMessage(convId);
+
+		const conv = useAIAssistantStore.getState().conversations[convId];
+		expect(conv.messages).toHaveLength(1);
+		expect(conv.messages[0]).toMatchObject({
+			role: 'assistant',
+			content: 'Approved',
+		});
+		expect(conv.messages[0].isError).toBeUndefined();
+		expect(chat.approveExecution).toHaveBeenCalledTimes(2);
+		expect(chat.sendMessage).not.toHaveBeenCalled();
+	});
 });
