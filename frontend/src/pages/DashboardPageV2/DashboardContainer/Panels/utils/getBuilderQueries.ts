@@ -8,7 +8,7 @@ import type { BuilderQuery } from 'types/api/v5/queryRange';
  * downstream code needs. Returns the generated v5 `BuilderQuery` shape directly.
  */
 export function getBuilderQueries(
-	queries: DashboardtypesQueryDTO[] | null | undefined,
+	queries: DashboardtypesQueryDTO[],
 ): BuilderQuery[] {
 	if (!queries) {
 		return [];

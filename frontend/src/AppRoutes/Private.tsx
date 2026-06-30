@@ -3,7 +3,6 @@ import { matchPath, Redirect, useLocation } from 'react-router-dom';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
 import { useListUsers } from 'api/generated/services/users';
-import { FeatureKeys } from 'constants/features';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { ORG_PREFERENCES } from 'constants/orgPreferences';
 import ROUTES from 'constants/routes';
@@ -38,7 +37,6 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		activeLicense,
 		isFetchingActiveLicense,
 		trialInfo,
-		featureFlags,
 	} = useAppContext();
 
 	const isAdmin = user.role === USER_ROLES.ADMIN;
@@ -136,7 +134,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 	}
 
 	if (
-		(pathname.startsWith(ROUTES.LLM_OBSERVABILITY_BASE) ||
+		(pathname.startsWith(`${ROUTES.LLM_OBSERVABILITY_BASE}/`) ||
 			pathname === ROUTES.LLM_OBSERVABILITY_BASE) &&
 		!isAIObservabilityEnabled
 	) {
@@ -220,14 +218,6 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 				return <Redirect to={ROUTES.ONBOARDING} />;
 			}
 		}
-	}
-
-	// Check for GET_STARTED → GET_STARTED_WITH_CLOUD redirect (feature flag)
-	if (
-		currentRoute?.path === ROUTES.GET_STARTED &&
-		featureFlags?.find((e) => e.name === FeatureKeys.ONBOARDING_V3)?.active
-	) {
-		return <Redirect to={ROUTES.GET_STARTED_WITH_CLOUD} />;
 	}
 
 	// Main routing logic

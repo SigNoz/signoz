@@ -341,12 +341,12 @@ func alignedMetricWindow(startMs, endMs int64) (
 	}
 
 	tsAdjustedStartMs, _, distributedTSTable, localTSTable := telemetrymetrics.WhichTSTableToUse(
-		samplesAdjustedStartMs, flooredEndMs, nil,
+		samplesAdjustedStartMs, flooredEndMs, false, nil,
 	)
 
 	distributedSamplesTable, localSamplesTable := telemetrymetrics.WhichSamplesTableToUse(
 		samplesAdjustedStartMs, flooredEndMs,
-		metrictypes.UnspecifiedType, metrictypes.TimeAggregationUnspecified, nil,
+		metrictypes.UnspecifiedType, metrictypes.TimeAggregationUnspecified, false, nil,
 	)
 
 	return samplesAdjustedStartMs, flooredEndMs, tsAdjustedStartMs, distributedTSTable, localTSTable, distributedSamplesTable, localSamplesTable
@@ -413,20 +413,42 @@ func (m *module) buildFilterClause(ctx context.Context, filter *qbtypes.Filter, 
 // NOTE: this method is not specific to infra monitoring — it queries attributes_metadata generically.
 // Consider moving to telemetryMetaStore when a second use case emerges.
 //
-// getMetricsExistenceAndEarliestTime checks which of the given metric names have been
-// reported. It returns a list of missing metrics (those not found or with zero count)
-// and the earliest first-reported timestamp across all present metrics.
-// When all metrics are missing, minFirstReportedUnixMilli is 0.
-// TODO(nikhilmantri0902, srikanthccv): This method was designed this way because querier errors if any of the metrics
-// in the querier list was never sent, the QueryRange call throws not found error. Modify this method, if QueryRange
-// behaviour changes towards this.
-func (m *module) getMetricsExistenceAndEarliestTime(ctx context.Context, metricNames []string) ([]string, uint64, error) {
+// getEarliestMetricTime returns the earliest first_reported_unix_milli across the
+// given metric names. It is used solely for the end-time-before-retention check.
+// When none of the metrics have ever been reported, it returns 0.
+func (m *module) getEarliestMetricTime(ctx context.Context, metricNames []string) (uint64, error) {
 	if len(metricNames) == 0 {
-		return nil, 0, nil
+		return 0, nil
 	}
 
 	sb := sqlbuilder.NewSelectBuilder()
-	sb.Select("metric_name", "count(*) AS cnt", "min(first_reported_unix_milli) AS min_first_reported")
+	sb.Select("min(first_reported_unix_milli) AS min_first_reported")
+	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.AttributesMetadataTableName))
+	sb.Where(sb.In("metric_name", sqlbuilder.List(metricNames)))
+
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	var minFirstReported uint64
+	if err := m.telemetryStore.ClickhouseDB().QueryRow(ctx, query, args...).Scan(&minFirstReported); err != nil {
+		return 0, err
+	}
+
+	return minFirstReported, nil
+}
+
+// getMetricsExistence returns, for each requested metric name, whether it has ever
+// been reported (present in signoz_metrics.distributed_metadata). No time window.
+func (m *module) getMetricsExistence(ctx context.Context, metricNames []string) (map[string]bool, error) {
+	present := make(map[string]bool, len(metricNames))
+	for _, n := range metricNames {
+		present[n] = false
+	}
+	if len(metricNames) == 0 {
+		return present, nil
+	}
+
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select("metric_name", "count(*) AS cnt")
 	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.AttributesMetadataTableName))
 	sb.Where(sb.In("metric_name", sqlbuilder.List(metricNames)))
 	sb.GroupBy("metric_name")
@@ -435,42 +457,73 @@ func (m *module) getMetricsExistenceAndEarliestTime(ctx context.Context, metricN
 
 	rows, err := m.telemetryStore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 	defer rows.Close()
 
-	type metricInfo struct {
-		count            uint64
-		minFirstReported uint64
+	for rows.Next() {
+		var name string
+		var cnt uint64
+		if err := rows.Scan(&name, &cnt); err != nil {
+			return nil, err
+		}
+		if cnt > 0 {
+			present[name] = true
+		}
 	}
-	found := make(map[string]metricInfo, len(metricNames))
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return present, nil
+}
+
+// getAttributesExistence returns, for each requested attrName, whether it has ever
+// been reported as a label on any of the given metricNames. Presence is checked
+// against distributed_metadata without a time-range filter.
+func (m *module) getAttributesExistence(ctx context.Context, metricNames, attrNames []string) (map[string]bool, error) {
+	present := make(map[string]bool, len(attrNames))
+	for _, a := range attrNames {
+		present[a] = false
+	}
+	if len(attrNames) == 0 {
+		return present, nil
+	}
+	if len(metricNames) == 0 {
+		return nil, errors.NewInternalf(errors.CodeInternal, "getAttributesExistence: metricNames must not be empty")
+	}
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select("attr_name", "count(*) AS cnt")
+	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.AttributesMetadataTableName))
+	sb.Where(
+		sb.In("metric_name", sqlbuilder.List(metricNames)),
+		sb.In("attr_name", sqlbuilder.List(attrNames)),
+	)
+	sb.GroupBy("attr_name")
+
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	rows, err := m.telemetryStore.ClickhouseDB().Query(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
 
 	for rows.Next() {
 		var name string
-		var cnt, minFR uint64
-		if err := rows.Scan(&name, &cnt, &minFR); err != nil {
-			return nil, 0, err
+		var cnt uint64
+		if err := rows.Scan(&name, &cnt); err != nil {
+			return nil, err
 		}
-		found[name] = metricInfo{count: cnt, minFirstReported: minFR}
+		if name != "" && cnt > 0 {
+			present[name] = true
+		}
 	}
 	if err := rows.Err(); err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 
-	var missingMetrics []string
-	var globalMinFirstReported uint64
-	for _, name := range metricNames {
-		info, ok := found[name]
-		if !ok || info.count == 0 {
-			missingMetrics = append(missingMetrics, name)
-			continue
-		}
-		if globalMinFirstReported == 0 || info.minFirstReported < globalMinFirstReported {
-			globalMinFirstReported = info.minFirstReported
-		}
-	}
-
-	return missingMetrics, globalMinFirstReported, nil
+	return present, nil
 }
 
 // getMetadata fetches the latest values of additionalCols for each unique combination of groupBy keys,

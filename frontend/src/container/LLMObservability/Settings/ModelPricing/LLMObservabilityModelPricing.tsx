@@ -5,7 +5,7 @@ import { parseAsStringEnum, useQueryState } from 'nuqs';
 
 import { MODEL_COSTS_TAB, TAB_KEY, UNPRICED_MODELS_TAB } from './constants';
 import styles from './LLMObservabilityModelPricing.module.scss';
-import ModelCostsTab from './ModelCostsTab';
+import ModelCostTabPanel from './ModelCostTabPanel';
 import UnpricedModelsTab from './UnpricedModelsTab';
 
 function LLMObservabilityModelPricing(): JSX.Element {
@@ -25,15 +25,6 @@ function LLMObservabilityModelPricing(): JSX.Element {
 			className={styles.llmObservabilityModelPricing}
 			data-testid="llm-observability-model-pricing-page"
 		>
-			<header className={styles.pageHeader}>
-				<div className={styles.pageHeaderTitle}>
-					<h1 className={styles.title}>Configuration</h1>
-					<p className={styles.subtitle}>
-						Model pricing and cost estimation settings
-					</p>
-				</div>
-			</header>
-
 			<Tabs
 				value={activeTab}
 				onChange={(key): void => {
@@ -43,7 +34,7 @@ function LLMObservabilityModelPricing(): JSX.Element {
 					{
 						key: MODEL_COSTS_TAB,
 						label: 'Model costs',
-						children: <ModelCostsTab />,
+						children: <ModelCostTabPanel />,
 					},
 					{
 						key: UNPRICED_MODELS_TAB,

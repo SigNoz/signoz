@@ -21,7 +21,7 @@ interface UseListColumnSuggestions {
  * flatten them and index by name so picks can carry their context/data-type.
  */
 export function useListColumnSuggestions(
-	signal: TelemetrytypesSignalDTO | undefined,
+	signal: TelemetrytypesSignalDTO,
 ): UseListColumnSuggestions {
 	const [searchText, setSearchText] = useState('');
 	const debouncedSearch = useDebounce(searchText, 300);

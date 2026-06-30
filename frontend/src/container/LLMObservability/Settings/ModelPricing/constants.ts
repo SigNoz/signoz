@@ -26,7 +26,9 @@ export const SOURCE_FILTER_TO_IS_OVERRIDE: Record<
 	auto: false,
 };
 
-export const SKELETON_ROW_COUNT = 10;
+// Match the page size so the skeleton reserves the same number of rows the
+// loaded page renders — otherwise the table height jumps on load.
+export const SKELETON_ROW_COUNT = PAGE_SIZE;
 
 // Page size for the searchable "Map to billing model" dropdown. The dropdown
 // searches server-side (via the rules API `q` param), so it only ever loads one
