@@ -145,15 +145,15 @@ func (p *provider) ClickhouseDB() clickhouse.Conn {
 }
 
 func (p *provider) Estimate(ctx context.Context, stmt string, args ...any) ([]telemetrystoretypes.EstimateEntry, error) {
-	return telemetrystore.RunExplainEstimate(ctx, p, stmt, args...)
+	return RunExplainEstimate(ctx, p, stmt, args...)
 }
 
 func (p *provider) Plan(ctx context.Context, stmt string, args ...any) error {
-	return telemetrystore.RunExplainPlan(ctx, p, stmt, args...)
+	return RunExplainPlan(ctx, p, stmt, args...)
 }
 
 func (p *provider) Indexes(ctx context.Context, stmt string, args ...any) (telemetrystoretypes.Granules, bool, error) {
-	return telemetrystore.RunExplainIndexes(ctx, p, stmt, args...)
+	return RunExplainIndexes(ctx, p, stmt, args...)
 }
 
 func (p *provider) Cluster() string {

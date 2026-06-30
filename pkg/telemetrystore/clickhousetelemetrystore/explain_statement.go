@@ -1,4 +1,4 @@
-package telemetrystore
+package clickhousetelemetrystore
 
 import (
 	"strings"
