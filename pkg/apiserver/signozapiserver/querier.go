@@ -451,6 +451,23 @@ func (provider *provider) addQuerierRoutes(router *mux.Router) error {
 		return err
 	}
 
+	if err := router.Handle("/api/v5/query_range/preview", handler.New(provider.authzMiddleware.ViewAccess(provider.querierHandler.QueryRangePreview), handler.OpenAPIDef{
+		ID:                  "QueryRangePreviewV5",
+		Tags:                []string{"querier"},
+		Summary:             "Query range preview",
+		Description:         "Validate a composite query without executing it. Accepts the same payload as the query range endpoint. By default (verbose=true) returns, for each query, the rendered underlying ClickHouse statement(s) with each statement's EXPLAIN ESTIMATE (per-table parts/rows/marks) and granule index analysis (candidate/surviving granules and the per-index pruning funnel). Pass ?verbose=false for the lightweight per-query verdict (valid/error/warnings) with no rendered SQL and no ClickHouse round trips. Intended for agentic/dry-run consumption: per-query errors are reported in the response rather than failing the whole request.",
+		Request:             new(qbtypes.QueryRangeRequest),
+		RequestQuery:        new(qbtypes.QueryRangePreviewParams),
+		RequestContentType:  "application/json",
+		Response:            new(qbtypes.QueryRangePreviewResponse),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{http.StatusBadRequest},
+		SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
+	})).Methods(http.MethodPost).GetError(); err != nil {
+		return err
+	}
+
 	if err := router.Handle("/api/v5/substitute_vars", handler.New(provider.authzMiddleware.ViewAccess(provider.querierHandler.ReplaceVariables), handler.OpenAPIDef{
 		ID:                  "ReplaceVariables",
 		Tags:                []string{"querier"},
