@@ -1,9 +1,9 @@
-import { CalendarClock, Link2, Timer } from '@signozhq/icons';
-import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
+import { Link2 } from '@signozhq/icons';
 import dayjs from 'dayjs';
 import KeyValueLabel from 'periscope/components/KeyValueLabel';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
 
+import EntityMetadataRow from '../EntityMetadata/EntityMetadataRow';
 import { HIGHLIGHTED_OPTIONS } from './config';
 import {
 	LinkedSpansPanel,
@@ -52,32 +52,19 @@ function SpanSummary({
 
 			<SpanPercentilePanel selectedSpan={selectedSpan} percentile={percentile} />
 
-			<div className={styles.spanInfo}>
-				<div className={styles.spanInfoItem}>
-					<Timer size={14} />
-					<span>
-						{getYAxisFormattedValue(`${selectedSpan.duration_nano / 1000000}`, 'ms')}
-						{traceStartTime && traceEndTime && traceEndTime > traceStartTime && (
-							<>
-								{' — '}
-								<strong>
-									{(
-										(selectedSpan.duration_nano * 100) /
-										((traceEndTime - traceStartTime) * 1e6)
-									).toFixed(2)}
-									%
-								</strong>
-								{' of total exec time'}
-							</>
-						)}
-					</span>
-				</div>
-				<div className={styles.spanInfoItem}>
-					<CalendarClock size={14} />
-					<span>
-						{dayjs(selectedSpan.timestamp).format('HH:mm:ss — MMM D, YYYY')}
-					</span>
-				</div>
+			<div className={styles.spanMetaGroup}>
+				<EntityMetadataRow
+					entity="span"
+					durationMs={selectedSpan.duration_nano / 1000000}
+					execTimePercent={
+						traceStartTime && traceEndTime && traceEndTime > traceStartTime
+							? (selectedSpan.duration_nano * 100) /
+								((traceEndTime - traceStartTime) * 1e6)
+							: undefined
+					}
+					timestamp={dayjs(selectedSpan.timestamp).format('HH:mm:ss — MMM D, YYYY')}
+				/>
+
 				<div className={styles.spanInfoItem}>
 					<Link2 size={14} />
 					<LinkedSpansToggle

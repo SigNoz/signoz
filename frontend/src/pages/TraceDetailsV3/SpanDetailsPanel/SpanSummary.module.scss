@@ -6,18 +6,22 @@
 	justify-content: space-between;
 }
 
-.spanInfo {
+// Metadata and the linked-spans line share one column so every line has the
+// same vertical gap and line-height as the rows inside MetadataRow.
+.spanMetaGroup {
 	display: flex;
-	flex-wrap: wrap;
-	gap: 4px 16px;
+	flex-direction: column;
+	gap: 4px;
 	padding: 8px 0;
+	--typography-line-height: var(--line-height-20);
 }
 
 .spanInfoItem {
 	display: flex;
 	align-items: center;
-	gap: 8px;
-	font-size: 13px;
+	gap: 6px;
+	font-size: var(--periscope-font-size-base);
+	line-height: var(--line-height-20);
 	color: var(--l2-foreground);
 	white-space: nowrap;
 }
