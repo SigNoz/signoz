@@ -36,7 +36,7 @@ export function getSwitchedPluginSpec(
 	newKind: PanelKind,
 	signal: TelemetrytypesSignalDTO,
 ): SwitchedPluginSpec {
-	const sections = getPanelDefinition(newKind)?.sections ?? [];
+	const sections = getPanelDefinition(newKind).sections;
 	const result: SwitchedPluginSpec = buildDefaultPluginSpec(sections);
 
 	if (sections.some((section) => section.kind === 'formatting')) {

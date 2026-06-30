@@ -1,24 +1,22 @@
 import type { ReactNode } from 'react';
 import { Select } from 'antd';
 
-import { SegmentIcon, type SegmentIconName } from '../segmentIcons';
-
 import styles from './ConfigSelect.module.scss';
 
-export interface ConfigSelectItem {
-	value: string;
+export interface ConfigSelectItem<T extends string = string> {
+	value: T;
 	label: string;
-	/** A `SegmentIconName` string (resolved to a glyph), or an arbitrary icon node. */
+	/** Optional leading icon node rendered before the label. */
 	icon?: ReactNode;
 	disabled?: boolean;
 }
 
-interface ConfigSelectProps {
+interface ConfigSelectProps<T extends string = string> {
 	testId: string;
-	value: string | undefined;
+	value: T | undefined;
 	placeholder?: string;
-	items: ConfigSelectItem[];
-	onChange: (value: string) => void;
+	items: ConfigSelectItem<T>[];
+	onChange: (value: T) => void;
 }
 
 /**
@@ -26,15 +24,15 @@ interface ConfigSelectProps {
  * `Select` so it matches the rest of the editor's antd controls; the menu portals to
  * `document.body` (antd default) so the surrounding `overflow:auto` pane can't clip it.
  */
-function ConfigSelect({
+function ConfigSelect<T extends string = string>({
 	testId,
 	value,
 	placeholder,
 	items,
 	onChange,
-}: ConfigSelectProps): JSX.Element {
+}: ConfigSelectProps<T>): JSX.Element {
 	return (
-		<Select<string>
+		<Select<T>
 			className={styles.select}
 			data-testid={testId}
 			value={value}
@@ -46,11 +44,7 @@ function ConfigSelect({
 				disabled: item.disabled,
 				label: item.icon ? (
 					<span className={styles.item}>
-						{typeof item.icon === 'string' ? (
-							<SegmentIcon name={item.icon as SegmentIconName} />
-						) : (
-							item.icon
-						)}
+						{item.icon}
 						{item.label}
 					</span>
 				) : (

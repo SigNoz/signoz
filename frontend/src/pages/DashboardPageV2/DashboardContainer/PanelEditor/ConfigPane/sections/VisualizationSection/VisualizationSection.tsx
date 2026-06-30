@@ -1,8 +1,5 @@
 import { Typography } from '@signozhq/ui/typography';
-import {
-	DashboardtypesTimePreferenceDTO,
-	TelemetrytypesSignalDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 import type { SectionEditorProps } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/sections';
 
 import type { PanelKind } from '../../../../Panels/types/panelKind';
@@ -56,7 +53,7 @@ function VisualizationSection({
 						onChange={(next): void =>
 							onChange({
 								...value,
-								timePreference: next as DashboardtypesTimePreferenceDTO,
+								timePreference: next,
 							})
 						}
 					/>

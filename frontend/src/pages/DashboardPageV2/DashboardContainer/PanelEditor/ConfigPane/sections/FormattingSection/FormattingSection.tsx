@@ -65,7 +65,7 @@ function FormattingSection({
 						onChange={(next): void =>
 							onChange({
 								...value,
-								decimalPrecision: next as DashboardtypesPrecisionOptionDTO,
+								decimalPrecision: next,
 							})
 						}
 					/>

@@ -28,13 +28,12 @@ function PanelTypeSwitcher({
 	onChange,
 }: PanelTypeSwitcherProps): JSX.Element {
 	const items = PANEL_TYPES.map(({ panelKind, label, Icon }) => {
-		const definition = getPanelDefinition(panelKind as PanelKind);
+		const definition = getPanelDefinition(panelKind);
 		return {
 			value: panelKind,
 			label,
 			icon: <Icon size={14} />,
-			disabled:
-				!!signal && !!definition && !definition.supportedSignals.includes(signal),
+			disabled: !!signal && !definition.supportedSignals.includes(signal),
 		};
 	});
 
@@ -45,7 +44,7 @@ function PanelTypeSwitcher({
 				testId="panel-editor-v2-type-switcher"
 				value={panelKind}
 				items={items}
-				onChange={(value): void => onChange(value as PanelKind)}
+				onChange={(value): void => onChange(value)}
 			/>
 		</div>
 	);
