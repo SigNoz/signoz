@@ -59,7 +59,6 @@ export function useClonePanel({
 				}),
 			);
 
-			// toast.promise reports the failure, so no separate error modal here.
 			toast.promise(clone, {
 				loading: 'Cloning panel…',
 				success: 'Panel cloned',
@@ -67,13 +66,13 @@ export function useClonePanel({
 				position: 'top-center',
 			});
 
-			// Refetch only on success; swallow the rejection (toast owns the error
-			// UX) to avoid an unhandled rejection.
+			// Refetch only on success; toast.promise owns the error UX, so swallow
+			// the rejection to avoid an unhandled rejection.
 			try {
 				await clone;
 				refetch();
 			} catch {
-				// no-op — toast.promise owns the error UX.
+				// no-op
 			}
 		},
 		[sections, dashboardId, refetch],

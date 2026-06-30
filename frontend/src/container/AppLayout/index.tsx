@@ -413,14 +413,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	const isPanelEditorV2 = routeKey === 'DASHBOARD_PANEL_EDITOR';
 
 	const renderFullScreen =
-		pathname === ROUTES.GET_STARTED ||
 		pathname === ROUTES.ONBOARDING ||
 		pathname === ROUTES.GET_STARTED_WITH_CLOUD ||
-		pathname === ROUTES.GET_STARTED_APPLICATION_MONITORING ||
-		pathname === ROUTES.GET_STARTED_INFRASTRUCTURE_MONITORING ||
-		pathname === ROUTES.GET_STARTED_LOGS_MANAGEMENT ||
-		pathname === ROUTES.GET_STARTED_AWS_MONITORING ||
-		pathname === ROUTES.GET_STARTED_AZURE_MONITORING ||
 		isPublicDashboard ||
 		isPanelEditorV2;
 

@@ -436,6 +436,96 @@ func (m *module) getEarliestMetricTime(ctx context.Context, metricNames []string
 	return minFirstReported, nil
 }
 
+// getMetricsExistence returns, for each requested metric name, whether it has ever
+// been reported (present in signoz_metrics.distributed_metadata). No time window.
+func (m *module) getMetricsExistence(ctx context.Context, metricNames []string) (map[string]bool, error) {
+	present := make(map[string]bool, len(metricNames))
+	for _, n := range metricNames {
+		present[n] = false
+	}
+	if len(metricNames) == 0 {
+		return present, nil
+	}
+
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select("metric_name", "count(*) AS cnt")
+	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.AttributesMetadataTableName))
+	sb.Where(sb.In("metric_name", sqlbuilder.List(metricNames)))
+	sb.GroupBy("metric_name")
+
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	rows, err := m.telemetryStore.ClickhouseDB().Query(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var name string
+		var cnt uint64
+		if err := rows.Scan(&name, &cnt); err != nil {
+			return nil, err
+		}
+		if cnt > 0 {
+			present[name] = true
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return present, nil
+}
+
+// getAttributesExistence returns, for each requested attrName, whether it has ever
+// been reported as a label on any of the given metricNames. Presence is checked
+// against distributed_metadata without a time-range filter.
+func (m *module) getAttributesExistence(ctx context.Context, metricNames, attrNames []string) (map[string]bool, error) {
+	present := make(map[string]bool, len(attrNames))
+	for _, a := range attrNames {
+		present[a] = false
+	}
+	if len(attrNames) == 0 {
+		return present, nil
+	}
+	if len(metricNames) == 0 {
+		return nil, errors.NewInternalf(errors.CodeInternal, "getAttributesExistence: metricNames must not be empty")
+	}
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select("attr_name", "count(*) AS cnt")
+	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.AttributesMetadataTableName))
+	sb.Where(
+		sb.In("metric_name", sqlbuilder.List(metricNames)),
+		sb.In("attr_name", sqlbuilder.List(attrNames)),
+	)
+	sb.GroupBy("attr_name")
+
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	rows, err := m.telemetryStore.ClickhouseDB().Query(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var name string
+		var cnt uint64
+		if err := rows.Scan(&name, &cnt); err != nil {
+			return nil, err
+		}
+		if name != "" && cnt > 0 {
+			present[name] = true
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return present, nil
+}
+
 // getMetadata fetches the latest values of additionalCols for each unique combination of groupBy keys,
 // within the given time range and metric names. It uses argMax(tuple(...), unix_milli) to ensure
 // we always pick attribute values from the latest timestamp for each group.

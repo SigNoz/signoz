@@ -16,7 +16,6 @@ import {
 import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
-import { GuardAuthZ } from 'components/GuardAuthZ/GuardAuthZ';
 import PermissionDeniedCallout from 'components/PermissionDeniedCallout/PermissionDeniedCallout';
 import { useRoles } from 'components/RolesSelect';
 import { SA_QUERY_PARAMS } from 'container/ServiceAccountsSettings/constants';
@@ -477,15 +476,9 @@ function ServiceAccountDrawer({
 					!isAccountLoading &&
 					!isAccountError &&
 					selectedAccountId && (
-						<GuardAuthZ
-							relation="read"
-							object={`serviceaccount:${selectedAccountId}`}
-							fallbackOnNoPermissions={(): JSX.Element => (
-								<PermissionDeniedCallout permissionName="serviceaccount:read" />
-							)}
-						>
-							<>
-								{activeTab === ServiceAccountDrawerTab.Overview && account && (
+						<>
+							{activeTab === ServiceAccountDrawerTab.Overview &&
+								(canRead && account ? (
 									<OverviewTab
 										account={account}
 										localName={localName}
@@ -504,23 +497,24 @@ function ServiceAccountDrawer({
 										onRefetchRoles={refetchRoles}
 										saveErrors={saveErrors}
 									/>
-								)}
-								{activeTab === ServiceAccountDrawerTab.Keys &&
-									(canListKeys ? (
-										<KeysTab
-											keys={keys}
-											isLoading={keysLoading}
-											isDisabled={isDeleted}
-											canUpdate={canUpdate}
-											accountId={selectedAccountId}
-											currentPage={keysPage}
-											pageSize={PAGE_SIZE}
-										/>
-									) : (
-										<PermissionDeniedCallout permissionName="factor-api-key:list" />
-									))}
-							</>
-						</GuardAuthZ>
+								) : (
+									<PermissionDeniedCallout permissionName="serviceaccount:read" />
+								))}
+							{activeTab === ServiceAccountDrawerTab.Keys &&
+								(canListKeys ? (
+									<KeysTab
+										keys={keys}
+										isLoading={keysLoading}
+										isDisabled={isDeleted}
+										canUpdate={canUpdate}
+										accountId={selectedAccountId}
+										currentPage={keysPage}
+										pageSize={PAGE_SIZE}
+									/>
+								) : (
+									<PermissionDeniedCallout permissionName="factor-api-key:list" />
+								))}
+						</>
 					)}
 			</div>
 		</div>

@@ -1,0 +1,27 @@
+.impactPanel {
+	border: 1px solid var(--bg-slate-400, #1d212d);
+	border-radius: 6px;
+	background: var(--bg-ink-300, #16181d);
+	padding: 14px;
+}
+
+.meterGrid {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 12px;
+}
+
+.meter {
+	display: flex;
+	flex-direction: column;
+	gap: 5px;
+}
+
+.meterLabel {
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+.meterValue {
+	font-family: 'Geist Mono', monospace;
+}
