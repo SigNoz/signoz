@@ -3932,6 +3932,14 @@ export interface DashboardtypesDashboardPanelRefDTO {
 	 */
 	dashboardName: string;
 	/**
+	 * @type array
+	 */
+	filterBy?: string[];
+	/**
+	 * @type array
+	 */
+	groupBy?: string[];
+	/**
 	 * @type string
 	 */
 	panelId: string;

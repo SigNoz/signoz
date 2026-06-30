@@ -2668,6 +2668,14 @@ components:
           type: string
         dashboardName:
           type: string
+        filterBy:
+          items:
+            type: string
+          type: array
+        groupBy:
+          items:
+            type: string
+          type: array
         panelId:
           type: string
         panelName:
