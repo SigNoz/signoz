@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import {
 	ResizableHandle,
 	ResizablePanel,
@@ -11,6 +11,7 @@ import {
 	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { getPanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Panels/registry';
 import {
 	PANEL_KIND_TO_PANEL_TYPE,
@@ -18,6 +19,7 @@ import {
 } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelKind';
 import { getBuilderQueries } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/getBuilderQueries';
 
+import { getExecStats } from '../queryV5/v5ResponseData';
 import { usePanelInteractions } from '../PanelsAndSectionsLayout/Panel/hooks/usePanelInteractions';
 import ConfigPane from './ConfigPane/ConfigPane';
 import Header from './Header/Header';
@@ -66,6 +68,10 @@ function PanelEditorContainer({
 	onSaved,
 }: PanelEditorContainerProps): JSX.Element {
 	const { draft, spec, setSpec, isSpecDirty } = usePanelEditorDraft(panel);
+	// Live query type (the selected tab) — the type switcher disables kinds that can't be
+	// authored in it. Read from the provider, not the spec: a new panel's spec carries no
+	// query until staged, so the spec would lag the tab.
+	const { currentQuery } = useQueryBuilder();
 	const { save, isSaving } = usePanelEditorSave({
 		dashboardId,
 		panelId,
@@ -150,6 +156,14 @@ function PanelEditorContainer({
 	const legendSeries = useLegendSeries(draft, data);
 	const tableColumns = useTableColumns(draft, data);
 
+	// Smallest query step interval (seconds) — the floor for the span-gaps
+	// threshold. Undefined until results carry step metadata.
+	const stepInterval = useMemo((): number | undefined => {
+		const intervals = getExecStats(data.response)?.stepIntervals;
+		const values = intervals ? Object.values(intervals) : [];
+		return values.length ? Math.min(...values) : undefined;
+	}, [data.response]);
+
 	const onSave = useCallback(async (): Promise<void> => {
 		try {
 			// Bake the live query into the spec so unstaged edits are saved too.
@@ -201,7 +215,8 @@ function PanelEditorContainer({
 							<ResizableHandle withHandle className={styles.handle} />
 							<ResizablePanel minSize="35%" maxSize="45%" defaultSize="40%">
 								<PanelEditorQueryBuilder
-									panelType={panelType}
+									panelKind={fullKind}
+									signal={listSignal}
 									isLoadingQueries={isFetching}
 									onStageRunQuery={runQuery}
 									onCancelQuery={cancelQuery}
@@ -231,8 +246,10 @@ function PanelEditorContainer({
 						spec={spec}
 						onChangeSpec={setSpec}
 						onChangePanelKind={onChangePanelKind}
+						queryType={currentQuery.queryType}
 						legendSeries={legendSeries}
 						tableColumns={tableColumns}
+						stepInterval={stepInterval}
 					/>
 				</ResizablePanel>
 			</ResizablePanelGroup>

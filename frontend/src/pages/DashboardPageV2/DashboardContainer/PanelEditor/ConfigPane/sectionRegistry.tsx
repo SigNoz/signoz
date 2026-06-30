@@ -16,6 +16,7 @@ import {
 	type SectionSpecMap,
 } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/sections';
 
+import type { SectionEditorContext } from './sectionContext';
 import AxesSection from './sections/AxesSection/AxesSection';
 import BucketsSection from './sections/BucketsSection/BucketsSection';
 import ChartAppearanceSection from './sections/ChartAppearanceSection/ChartAppearanceSection';
@@ -142,26 +143,13 @@ export const SECTION_REGISTRY: {
  * `get` → `Component` → `update` without any further casts.
  */
 export interface ErasedSectionDescriptor {
-	Component: ComponentType<{
-		value: unknown;
-		controls?: unknown;
-		onChange: (next: unknown) => void;
-		// Forwarded to every editor; only sections that need the panel's resolved series
-		// (legend colors) read it. Optional so editors can ignore it.
-		legendSeries?: unknown;
-		// The panel's formatting unit; read by editors that scope to it (thresholds).
-		yAxisUnit?: unknown;
-		// The Table panel's resolved value columns; read by the table-only editors
-		// (column units, per-column thresholds) to offer real columns.
-		tableColumns?: unknown;
-		// The panel's telemetry signal; read by editors that fetch field-key
-		// suggestions scoped to it (List column picker).
-		signal?: unknown;
-		// Current panel kind + switch handler; read by the visualization section's
-		// type switcher.
-		panelKind?: unknown;
-		onChangePanelKind?: unknown;
-	}>;
+	Component: ComponentType<
+		{
+			value: unknown;
+			controls?: unknown;
+			onChange: (next: unknown) => void;
+		} & SectionEditorContext
+	>;
 	get: (spec: PanelSpec) => unknown;
 	update: (spec: PanelSpec, value: unknown) => PanelSpec;
 }

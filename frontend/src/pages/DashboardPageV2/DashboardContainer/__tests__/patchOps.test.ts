@@ -107,7 +107,7 @@ describe('createPanelOps', () => {
 		expect(value.y).toBe(6);
 	});
 
-	it('falls back to the last section when no index is requested', () => {
+	it('falls back to the root (first) section when no index is requested', () => {
 		const layouts = [section([]), section([item(0, 6)])];
 		const ops = createPanelOps({
 			layouts,
@@ -116,11 +116,11 @@ describe('createPanelOps', () => {
 			panel,
 		});
 
-		expect(ops[1].path).toBe('/spec/layouts/1/spec/items/-');
+		expect(ops[1].path).toBe('/spec/layouts/0/spec/items/-');
 	});
 
-	it('falls back to the last section when the requested index is out of range', () => {
-		const layouts = [section([])];
+	it('falls back to the root (first) section when the requested index is out of range', () => {
+		const layouts = [section([item(0, 6)]), section([])];
 		const ops = createPanelOps({ layouts, layoutIndex: 5, panelId: 'p1', panel });
 		expect(ops[1].path).toBe('/spec/layouts/0/spec/items/-');
 	});

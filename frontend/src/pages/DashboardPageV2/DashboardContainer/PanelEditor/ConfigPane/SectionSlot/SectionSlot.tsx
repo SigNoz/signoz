@@ -1,7 +1,4 @@
-import type {
-	DashboardtypesPanelSpecDTO,
-	TelemetrytypesSignalDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
 import {
 	type PanelFormattingSlice,
 	SECTION_METADATA,
@@ -9,26 +6,16 @@ import {
 	SectionKind,
 } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/sections';
 
-import type { PanelKind } from '../../../Panels/types/panelKind';
-import type { LegendSeries } from '../../hooks/useLegendSeries';
-import type { TableColumnOption } from '../../hooks/useTableColumns';
+import type { SectionEditorContext } from '../sectionContext';
 import { resolveSectionEditor } from '../sectionRegistry';
 import SettingsSection from '../SettingsSection/SettingsSection';
 
-interface SectionSlotProps {
+// `yAxisUnit` is derived from the spec below, not forwarded, so it's omitted.
+type SectionSlotProps = {
 	config: SectionConfig;
 	spec: DashboardtypesPanelSpecDTO;
 	onChangeSpec: (next: DashboardtypesPanelSpecDTO) => void;
-	/** Resolved series, forwarded to editors that need them (legend colors). */
-	legendSeries: LegendSeries[];
-	/** Table panel's resolved value columns, for the table-only editors. */
-	tableColumns: TableColumnOption[];
-	/** Panel's telemetry signal, for editors that fetch field suggestions (List columns). */
-	signal?: TelemetrytypesSignalDTO;
-	/** Current panel kind + switch handler, for the visualization section's type switcher. */
-	panelKind: PanelKind;
-	onChangePanelKind: (kind: PanelKind) => void;
-}
+} & Omit<SectionEditorContext, 'yAxisUnit'>;
 
 /**
  * Renders one configuration section: its collapsible wrapper plus the registered editor
@@ -45,6 +32,8 @@ function SectionSlot({
 	signal,
 	panelKind,
 	onChangePanelKind,
+	queryType,
+	stepInterval,
 }: SectionSlotProps): JSX.Element | null {
 	// A kind can hide a section based on current spec state (e.g. Histogram legend once
 	// queries are merged) — skip it before resolving the editor.
@@ -83,6 +72,8 @@ function SectionSlot({
 				signal={signal}
 				panelKind={panelKind}
 				onChangePanelKind={onChangePanelKind}
+				queryType={queryType}
+				stepInterval={stepInterval}
 			/>
 		</SettingsSection>
 	);

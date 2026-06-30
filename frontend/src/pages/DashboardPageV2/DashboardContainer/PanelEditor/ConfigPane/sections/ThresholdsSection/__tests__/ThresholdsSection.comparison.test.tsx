@@ -123,6 +123,25 @@ describe('ComparisonThresholdsSection', () => {
 		]);
 	});
 
+	it('lets the value input be cleared instead of snapping back to 0', async () => {
+		const user = userEvent.setup();
+		render(
+			<ComparisonThresholdsSection value={THRESHOLDS} onChange={jest.fn()} />,
+		);
+
+		await user.click(screen.getByTestId('comparison-threshold-edit-0'));
+		const valueInput = screen.getByTestId('comparison-threshold-value-0');
+
+		// Regression: clearing used to coerce "" → 0 and refill the field, so the
+		// seeded value could never be removed.
+		await user.clear(valueInput);
+		expect(valueInput).toHaveValue(null);
+
+		// And a fresh value can be typed into the now-empty field.
+		await user.type(valueInput, '5');
+		expect(valueInput).toHaveValue(5);
+	});
+
 	it('does not commit edits when Discard is clicked', async () => {
 		const user = userEvent.setup();
 		const onChange = jest.fn();

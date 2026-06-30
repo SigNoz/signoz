@@ -4,6 +4,7 @@ import {
 	CloudDownload,
 	Copy,
 	FolderInput,
+	FolderOutput,
 	Fullscreen,
 	PenLine,
 	Trash2,
@@ -23,7 +24,10 @@ import type { DashboardSection } from '../../../utils';
 import type { PanelActionsConfig } from '../Panel';
 import { useClonePanel } from '../hooks/useClonePanel';
 import { useDeletePanel } from '../hooks/useDeletePanel';
-import { useMovePanelToSection } from '../hooks/useMovePanelToSection';
+import {
+	type MovePanelArgs,
+	useMovePanelToSection,
+} from '../hooks/useMovePanelToSection';
 import { PANEL_ACTION_META } from './panelActionMeta';
 import { PanelKind } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelKind';
 
@@ -35,6 +39,66 @@ const EMPTY_SECTIONS: DashboardSection[] = [];
 function notImplementedYet(feature: string): void {
 	// eslint-disable-next-line no-alert -- temporary placeholder, see above
 	alert(`${feature} option clicked`);
+}
+
+interface MoveItemsArgs {
+	sections: DashboardSection[];
+	currentLayoutIndex: number;
+	panelId: string;
+	movePanel: (args: MovePanelArgs) => Promise<void>;
+}
+
+/**
+ * The "Move to section" submenu (other titled sections) plus a direct "Move out
+ * of section" to the untitled root, shown only when the panel sits in a titled
+ * section and a root section exists to receive it.
+ */
+function buildMoveItems({
+	sections,
+	currentLayoutIndex,
+	panelId,
+	movePanel,
+}: MoveItemsArgs): MenuItem[] {
+	const targets = sections.filter(
+		(s) => s.title && s.layoutIndex !== currentLayoutIndex,
+	);
+	const items: MenuItem[] = [
+		{
+			key: 'move',
+			label: 'Move to section',
+			icon: <FolderInput size={14} />,
+			...(targets.length === 0
+				? { disabled: true }
+				: {
+						children: targets.map((s) => ({
+							key: `move-${s.layoutIndex}`,
+							label: s.title,
+							onClick: (): void =>
+								void movePanel({
+									panelId,
+									fromLayoutIndex: currentLayoutIndex,
+									toLayoutIndex: s.layoutIndex,
+								}),
+						})),
+					}),
+		},
+	];
+
+	const rootSection = sections.find((s) => !s.title);
+	if (rootSection && rootSection.layoutIndex !== currentLayoutIndex) {
+		items.push({
+			key: 'move-to-root',
+			label: 'Move out of section',
+			icon: <FolderOutput size={14} />,
+			onClick: (): void =>
+				void movePanel({
+					panelId,
+					fromLayoutIndex: currentLayoutIndex,
+					toLayoutIndex: rootSection.layoutIndex,
+				}),
+		});
+	}
+	return items;
 }
 
 interface UsePanelActionItemsArgs {
@@ -155,31 +219,15 @@ export function usePanelActionItems({
 			});
 		}
 
-		const moveGroup: MenuItem[] = [];
-		if (canMove && panelActions) {
-			const targets = sections.filter(
-				(s) => s.title && s.layoutIndex !== panelActions.currentLayoutIndex,
-			);
-			moveGroup.push({
-				key: 'move',
-				label: 'Move to section',
-				icon: <FolderInput size={14} />,
-				...(targets.length === 0
-					? { disabled: true }
-					: {
-							children: targets.map((s) => ({
-								key: `move-${s.layoutIndex}`,
-								label: s.title,
-								onClick: (): void =>
-									void movePanel({
-										panelId,
-										fromLayoutIndex: panelActions.currentLayoutIndex,
-										toLayoutIndex: s.layoutIndex,
-									}),
-							})),
-						}),
-			});
-		}
+		const moveGroup: MenuItem[] =
+			canMove && panelActions
+				? buildMoveItems({
+						sections,
+						currentLayoutIndex: panelActions.currentLayoutIndex,
+						panelId,
+						movePanel,
+					})
+				: [];
 
 		const deleteGroup: MenuItem[] =
 			canDelete && panelActions

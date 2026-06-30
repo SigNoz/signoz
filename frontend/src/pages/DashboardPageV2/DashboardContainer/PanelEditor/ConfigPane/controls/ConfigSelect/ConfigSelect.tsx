@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Select } from 'antd';
+import { Select, Tooltip } from 'antd';
 
 import styles from './ConfigSelect.module.scss';
 
@@ -9,6 +9,8 @@ export interface ConfigSelectItem<T extends string = string> {
 	/** Optional leading icon node rendered before the label. */
 	icon?: ReactNode;
 	disabled?: boolean;
+	/** Hover hint shown on the option — typically the reason a disabled item is disabled. */
+	tooltip?: string;
 }
 
 interface ConfigSelectProps<T extends string = string> {
@@ -39,18 +41,27 @@ function ConfigSelect<T extends string = string>({
 			placeholder={placeholder}
 			onChange={onChange}
 			virtual={false}
-			options={items.map((item) => ({
-				value: item.value,
-				disabled: item.disabled,
-				label: item.icon ? (
+			options={items.map((item) => {
+				const content = item.icon ? (
 					<span className={styles.item}>
 						{item.icon}
 						{item.label}
 					</span>
 				) : (
 					item.label
-				),
-			}))}
+				);
+				return {
+					value: item.value,
+					disabled: item.disabled,
+					label: item.tooltip ? (
+						<Tooltip title={item.tooltip} placement="top">
+							<span className={styles.tooltipTrigger}>{content}</span>
+						</Tooltip>
+					) : (
+						content
+					),
+				};
+			})}
 		/>
 	);
 }

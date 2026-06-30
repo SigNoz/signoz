@@ -1,26 +1,22 @@
 import { Typography } from '@signozhq/ui/typography';
-import type { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 import type {
 	SectionEditorProps,
 	SectionKind,
 } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/sections';
 
-import type { PanelKind } from '../../../../Panels/types/panelKind';
 import ConfigSelect from '../../controls/ConfigSelect/ConfigSelect';
 import ConfigSwitch from '../../controls/ConfigSwitch/ConfigSwitch';
 import PanelTypeSwitcher from '../../PanelTypeSwitcher/PanelTypeSwitcher';
+import type { SectionEditorContext } from '../../sectionContext';
 import { TIME_PREFERENCE_OPTIONS } from './timePreferenceOptions';
 
 import styles from './VisualizationSection.module.scss';
 
-type VisualizationSectionProps =
-	SectionEditorProps<SectionKind.Visualization> & {
-		/** Current panel kind + switch handler, forwarded by SectionSlot for the type switcher. */
-		panelKind?: PanelKind;
-		onChangePanelKind?: (kind: PanelKind) => void;
-		/** Panel's datasource, forwarded by SectionSlot — scopes the switcher's disabled types. */
-		signal?: TelemetrytypesSignalDTO;
-	};
+type VisualizationSectionProps = SectionEditorProps<SectionKind.Visualization> &
+	Pick<
+		SectionEditorContext,
+		'panelKind' | 'onChangePanelKind' | 'signal' | 'queryType'
+	>;
 
 /**
  * Edits the `visualization` slice: the panel-type switcher (`switchPanelKind`, every
@@ -34,6 +30,7 @@ function VisualizationSection({
 	onChange,
 	panelKind,
 	onChangePanelKind,
+	queryType,
 	signal,
 }: VisualizationSectionProps): JSX.Element {
 	return (
@@ -41,6 +38,7 @@ function VisualizationSection({
 			{controls.switchPanelKind && panelKind && onChangePanelKind && (
 				<PanelTypeSwitcher
 					panelKind={panelKind}
+					queryType={queryType}
 					signal={signal}
 					onChange={onChangePanelKind}
 				/>
