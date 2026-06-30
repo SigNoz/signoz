@@ -15,7 +15,7 @@ import APIError from 'types/api/error';
 
 import PermissionEditor from './components/PermissionEditor';
 import { useCreateEditRolePageActions } from './useCreateEditRolePageActions';
-import { useNavigationBlocker } from '../../../hooks/useNavigationBlocker';
+import { useNavigationBlocker } from 'hooks/useNavigationBlocker';
 
 import styles from './CreateEditRolePage.module.scss';
 
@@ -212,8 +212,10 @@ function CreateEditRolePage(): JSX.Element {
 				<ErrorInPlace
 					error={saveError}
 					height="auto"
-					bordered
 					data-testid="save-error-banner"
+					padding={0}
+					bordered={true}
+					className={styles.errorInPlaceContainer}
 				/>
 			)}
 
