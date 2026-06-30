@@ -13,10 +13,11 @@
 </p>
 
 <p align="center">
-  <a href="https://signoz.io/docs/"><b>Dokumentation</b></a> ·
-  <a href="https://github.com/SigNoz/signoz/releases"><b>Releases</b></a> ·
-  <a href="https://signoz.io/slack"><b>Slack Community</b></a> ·
-  <a href="https://github.com/SigNoz/signoz/discussions"><b>GitHub Discussions</b></a>
+  <a href="https://github.com/SigNoz/signoz/issues"><img alt="GitHub issues" src="https://img.shields.io/github/issues/SigNoz/signoz"></a>
+  <a href="https://github.com/SigNoz/signoz/releases"><img alt="GitHub release" src="https://img.shields.io/github/v/release/SigNoz/signoz?label=release"></a>
+  <a href="https://signoz.io/slack"><img alt="Slack community" src="https://img.shields.io/badge/slack-community-4A154B?logo=slack&logoColor=white"></a>
+  <a href="https://www.linkedin.com/company/signoz/"><img alt="LinkedIn" src="https://img.shields.io/badge/linkedin-SigNoz-0A66C2?logo=linkedin&logoColor=white"></a>
+  <a href="https://twitter.com/intent/tweet?text=Monitor%20your%20applications%20and%20troubleshoot%20problems%20with%20SigNoz,%20an%20open-source%20alternative%20to%20DataDog,%20NewRelic.&url=https://signoz.io/&via=SigNozHQ&hashtags=opensource,signoz,observability"><img alt="Tweet" src="https://img.shields.io/twitter/url/http/shields.io.svg?style=social"></a>
 </p>
 
 SigNoz ist eine Open-Source-Observability-Plattform auf Basis von OpenTelemetry. Wir bauen eine Enterprise-taugliche Alternative zu fragmentierten Monitoring-Stacks, mit Logs, Metriken, Traces, Alerts und Dashboards an einem Ort.
@@ -45,7 +46,7 @@ Kostenloses Open-Source-SigNoz, das in deiner eigenen Infrastruktur läuft. Depl
 
 SigNoz hilft Teams, Produktionsprobleme schneller zu debuggen, indem Logs, Metriken, Traces, Alerts, Dashboards, Exceptions und agent-native Workflows an einem Ort verbunden werden.
 
-#### [APM-Überblick](https://signoz.io/docs/apm-and-distributed-tracing/application-details/)
+#### APM-Überblick
 
 Überwache Service-Latenz, Fehlerrate, Durchsatz, Apdex, wichtige Endpunkte, Datenbankaufrufe und externe Aufrufe.
 
@@ -53,7 +54,9 @@ SigNoz hilft Teams, Produktionsprobleme schneller zu debuggen, indem Logs, Metri
   <img alt="SigNoz APM-Dashboard mit Latenz, Durchsatz, Apdex und wichtigen Operationen" src="docs/readme-assets/monitor/apm.png" width="900">
 </p>
 
-#### [Log-Management](https://signoz.io/docs/logs-management/overview/)
+Mehr erfahren: [APM-Dokumentation](https://signoz.io/docs/apm-and-distributed-tracing/application-details/)
+
+#### Log-Management
 
 Erfasse, suche, aggregiere und korreliere Logs mit Traces und Metriken über einen visuellen Query Builder.
 
@@ -61,7 +64,9 @@ Erfasse, suche, aggregiere und korreliere Logs mit Traces und Metriken über ein
   <img alt="SigNoz Logs Explorer mit Filtern, Frequenzdiagramm und Log-Zeilen" src="docs/readme-assets/monitor/log-management.svg" width="900">
 </p>
 
-#### [Metriken und Dashboards](https://signoz.io/docs/metrics-management/overview/)
+Mehr erfahren: [Log-Management-Dokumentation](https://signoz.io/docs/logs-management/overview/)
+
+#### Metriken und Dashboards
 
 Erstelle Dashboards für Anwendungs-, Infrastruktur- und benutzerdefinierte Metriken mit Query Builder, PromQL oder ClickHouse SQL.
 
@@ -69,7 +74,9 @@ Erstelle Dashboards für Anwendungs-, Infrastruktur- und benutzerdefinierte Metr
   <img alt="SigNoz Host-Metrics-Dashboard mit Systemlast- und Netzwerkdiagrammen" src="docs/readme-assets/monitor/metrics.png" width="900">
 </p>
 
-#### [Infrastruktur-Monitoring](https://signoz.io/docs/infrastructure-monitoring/overview/)
+Mehr erfahren: [Metriken-Dokumentation](https://signoz.io/docs/metrics-management/overview/)
+
+#### Infrastruktur-Monitoring
 
 Überwache Kubernetes-Cluster, Pods, Nodes, Workloads sowie Host-CPU, Arbeitsspeicher, Festplatten, Netzwerk, Logs und Traces.
 
@@ -77,7 +84,9 @@ Erstelle Dashboards für Anwendungs-, Infrastruktur- und benutzerdefinierte Metr
   <img alt="SigNoz Kubernetes-Infrastruktur-Dashboard mit Pod- und Node-Metriken" src="docs/readme-assets/monitor/infrastructure.png" width="900">
 </p>
 
-#### [LLM- und AI-Observability](https://signoz.io/docs/llm-observability/)
+Mehr erfahren: [Infrastruktur-Monitoring-Dokumentation](https://signoz.io/docs/infrastructure-monitoring/overview/)
+
+#### LLM- und AI-Observability
 
 Verfolge LLM-Apps, RAG-Pipelines, Prompts, Tool Calls, Tokens, Latenz und Kosten zusammen mit Anwendungs- und Infrastruktur-Telemetrie.
 
@@ -85,17 +94,19 @@ Verfolge LLM-Apps, RAG-Pipelines, Prompts, Tool Calls, Tokens, Latenz und Kosten
   <img alt="SigNoz LLM-Observability-Dashboard für Traces, Token-Nutzung, Latenz und Kosten" src="docs/readme-assets/monitor/llm.png" width="900">
 </p>
 
+Mehr erfahren: [LLM-Observability-Dokumentation](https://signoz.io/docs/llm-observability/)
+
 #### Agent-Native Observability und MCP
 
 Nutze den SigNoz MCP-Server, um Telemetrie in Coding Agents zu bringen, oder nutze Noz in SigNoz, um Incidents zu untersuchen, Alerts zu verbessern und Dashboards mit Produktionskontext zu erstellen. Noz ist nur in SigNoz Cloud verfügbar.
-
-[**SigNoz MCP-Server-Dokumentation**](https://signoz.io/docs/ai/signoz-mcp-server/) · [**Agent-Skills-Dokumentation**](https://signoz.io/docs/ai/agent-skills/#install-the-plugin)
 
 <p align="center">
   <img alt="SigNoz Noz-Oberfläche neben einem MCP-gestützten Agent-Workflow" src="docs/readme-assets/monitor/agent-native.png" width="900">
 </p>
 
-#### [Distributed Tracing](https://signoz.io/docs/apm-and-distributed-tracing/traces-user-guides/)
+Mehr erfahren: [SigNoz MCP-Server-Dokumentation](https://signoz.io/docs/ai/signoz-mcp-server/) · [Agent-Skills-Dokumentation](https://signoz.io/docs/ai/agent-skills/#install-the-plugin)
+
+#### Distributed Tracing
 
 Verfolge Requests über Services hinweg mit Flamegraphs, Waterfalls, Span Events, Filtern und Trace Analytics.
 
@@ -103,13 +114,17 @@ Verfolge Requests über Services hinweg mit Flamegraphs, Waterfalls, Span Events
   <img alt="SigNoz Distributed-Tracing-Ansicht mit Flamegraph und Waterfall-Spans" src="docs/readme-assets/monitor/distributed-tracing.png" width="900">
 </p>
 
-#### [Trace Funnels](https://signoz.io/docs/trace-funnels/overview/)
+Mehr erfahren: [Distributed-Tracing-Dokumentation](https://signoz.io/docs/apm-and-distributed-tracing/traces-user-guides/)
+
+#### Trace Funnels
 
 Erstelle Funnels aus Traces, um Drop-offs im Request-Flow, fehlgeschlagene Übergänge und systemische Workflow-Probleme zu verstehen.
 
 <p align="center">
   <img alt="SigNoz Trace Funnels mit Request-Flow-Drop-offs und fehlgeschlagenen Übergängen" src="docs/readme-assets/monitor/trace-funnels.png" width="900">
 </p>
+
+Mehr erfahren: [Trace-Funnels-Dokumentation](https://signoz.io/docs/trace-funnels/overview/)
 
 Du kannst außerdem [**Exceptions**](https://signoz.io/docs/userguide/exceptions/), [**Alerts**](https://signoz.io/docs/alerts/), [**externe APIs**](https://signoz.io/docs/external-api-monitoring/overview/) und [**Integrationen**](https://signoz.io/docs/integrations/integrations-list/) für OpenTelemetry, Prometheus, Kubernetes, Cloud-Anbieter, Sprach-SDKs, Application Frameworks, Datenbanken und LLM-Tools überwachen.
 
@@ -162,9 +177,11 @@ SigNoz nutzt eine spaltenorientierte Datenbank für effiziente Observability-Ana
 **Loki**<br>
 Im verlinkten Benchmark indexierte SigNoz alle Keys im Test-Setup, während Loki beim Hinzufügen weiterer Labels Max-Stream-Fehler erreichte. Lies die [detaillierte Studie](https://signoz.io/blog/logs-performance-benchmark/?utm_source=github-readme&utm_medium=logs-benchmark).
 
-## Community und Beitrag
+## Mitwirken
 
-Tritt der <a href="https://signoz.io/slack">SigNoz Slack Community</a> bei, lies die <a href="https://signoz.io/docs/">Dokumentation</a>, starte eine Diskussion in <a href="https://github.com/SigNoz/signoz/discussions">GitHub Discussions</a> oder lies <a href="CONTRIBUTING.md">CONTRIBUTING.md</a>, um beizutragen.
+Wir freuen uns über große und kleine Beiträge. Lies bitte [CONTRIBUTING.md](CONTRIBUTING.md), um mit Beiträgen zu SigNoz loszulegen.
+
+Nicht sicher, wie du anfangen sollst? Schreib uns einfach im Channel `#contributing` in unserer [Slack Community](https://signoz.io/slack).
 
 Wie immer: Danke an unsere großartigen Contributors!
 
