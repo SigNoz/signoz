@@ -53,6 +53,7 @@ import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { useGetGlobalConfig } from 'api/generated/services/global';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useNotifications } from 'hooks/useNotifications';
+import { serialize } from 'lib/compositeQuery/serializer';
 import { cloneDeep, isNil, isUndefined } from 'lodash-es';
 import {
 	ArrowUpRight,
@@ -77,6 +78,7 @@ import {
 	UpdateLimitProps,
 } from 'types/api/ingestionKeys/limits/types';
 import { PaginationProps } from 'types/api/ingestionKeys/types';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { MeterAggregateOperator } from 'types/common/queryBuilder';
 import { USER_ROLES } from 'types/roles';
 import { getDaysUntilExpiry } from 'utils/timeUtils';
@@ -896,8 +898,6 @@ function MultiIngestionSettings(): JSX.Element {
 			},
 		};
 
-		const stringifiedQuery = JSON.stringify(query);
-
 		const thresholds = cloneDeep(INITIAL_ALERT_THRESHOLD_STATE.thresholds);
 		thresholds[0].thresholdValue = thresholdValue;
 		thresholds[0].unit = thresholdUnit;
@@ -907,17 +907,12 @@ function MultiIngestionSettings(): JSX.Element {
 			? `[ingestion][${signal.signal}] ${keyName} has exceeded daily ingestion limit`
 			: `[ingestion][${signal.signal}] ${signal.signal} has exceeded daily ingestion limit`;
 
-		const URL = `${ROUTES.ALERTS_NEW}?${
-			QueryParams.compositeQuery
-		}=${encodeURIComponent(stringifiedQuery)}&${
-			QueryParams.thresholds
-		}=${encodeURIComponent(JSON.stringify(thresholds))}&${
-			QueryParams.ruleName
-		}=${encodeURIComponent(ruleName)}&${
-			QueryParams.yAxisUnit
-		}=${encodeURIComponent(yAxisUnit)}`;
+		const params = serialize(query as Query);
+		params.set(QueryParams.thresholds, JSON.stringify(thresholds));
+		params.set(QueryParams.ruleName, ruleName);
+		params.set(QueryParams.yAxisUnit, yAxisUnit);
 
-		history.push(URL);
+		history.push(`${ROUTES.ALERTS_NEW}?${params.toString()}`);
 	};
 
 	const columns: AntDTableProps<GatewaytypesIngestionKeyDTO>['columns'] = [

@@ -1,5 +1,6 @@
 import { GatewaytypesGettableIngestionKeysDTO } from 'api/generated/services/sigNoz.schemas';
 import { QueryParams } from 'constants/query';
+import { deserialize } from 'lib/compositeQuery/serializer';
 import { rest, server } from 'mocks-server/server';
 import {
 	fireEvent,
@@ -132,17 +133,19 @@ describe('MultiIngestionSettings Page', () => {
 		expect(thresholds[0].thresholdValue).toBe(1000);
 		expect(thresholds[0].unit).toBe('{count}');
 
-		const compositeQuery = JSON.parse(
-			urlParams.get(QueryParams.compositeQuery) || '{}',
-		);
-		expect(compositeQuery.unit).toBe('{count}');
-		expect(compositeQuery.builder.queryData).toBeDefined();
+		const compositeQuery = deserialize(urlParams);
+		expect(compositeQuery).not.toBeNull();
+		expect(compositeQuery?.unit).toBe('{count}');
+		expect(compositeQuery?.builder.queryData).toBeDefined();
 
-		const firstQueryData = compositeQuery.builder.queryData[0];
-		expect(firstQueryData.filter.expression).toContain(
+		const firstQueryData = compositeQuery?.builder.queryData[0];
+		expect(firstQueryData?.filter?.expression).toContain(
 			"signoz.workspace.key.id='k1'",
 		);
-		expect(firstQueryData.aggregations[0].metricName).toBe(
+		const firstAggregation = firstQueryData?.aggregations?.[0] as {
+			metricName: string;
+		};
+		expect(firstAggregation.metricName).toBe(
 			'signoz.meter.metric.datapoint.count',
 		);
 
@@ -213,18 +216,18 @@ describe('MultiIngestionSettings Page', () => {
 		expect(thresholds[0].thresholdValue).toBe(400);
 		expect(thresholds[0].unit).toBe('GiBy');
 
-		const compositeQuery = JSON.parse(
-			urlParams.get(QueryParams.compositeQuery) || '{}',
-		);
-		expect(compositeQuery.unit).toBe('bytes');
+		const compositeQuery = deserialize(urlParams);
+		expect(compositeQuery).not.toBeNull();
+		expect(compositeQuery?.unit).toBe('bytes');
 
-		const firstQueryData = compositeQuery.builder.queryData[0];
-		expect(firstQueryData.filter.expression).toContain(
+		const firstQueryData = compositeQuery?.builder.queryData[0];
+		expect(firstQueryData?.filter?.expression).toContain(
 			"signoz.workspace.key.id='k2'",
 		);
-		expect(firstQueryData.aggregations[0].metricName).toBe(
-			'signoz.meter.log.size',
-		);
+		const firstAggregation = firstQueryData?.aggregations?.[0] as {
+			metricName: string;
+		};
+		expect(firstAggregation.metricName).toBe('signoz.meter.log.size');
 
 		expect(urlParams.get(QueryParams.yAxisUnit)).toBe('bytes');
 		expect(urlParams.get(QueryParams.ruleName)).toContain('logs');

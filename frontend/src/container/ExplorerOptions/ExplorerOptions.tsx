@@ -62,6 +62,8 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import useErrorNotification from 'hooks/useErrorNotification';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useNotifications } from 'hooks/useNotifications';
+import { serializeToParams } from 'lib/compositeQuery/serializer';
+import createQueryParams from 'lib/createQueryParams';
 import { mapCompositeQueryFromQuery } from 'lib/newQueryBuilder/queryBuilderMappers/mapCompositeQueryFromQuery';
 import { cloneDeep, isEqual, omit } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
@@ -174,7 +176,7 @@ function ExplorerOptions({
 
 	const handleConditionalQueryModification = useCallback(
 		// eslint-disable-next-line sonarjs/cognitive-complexity
-		(defaultQuery: Query | null): string => {
+		(defaultQuery: Query | null): Record<string, string> => {
 			const queryToUse = defaultQuery || query;
 			if (!queryToUse) {
 				throw new Error('No query provided');
@@ -184,7 +186,7 @@ function ExplorerOptions({
 					StringOperators.NOOP &&
 				sourcepage !== DataSource.LOGS
 			) {
-				return JSON.stringify(queryToUse);
+				return serializeToParams(queryToUse);
 			}
 
 			// Convert NOOP to COUNT for alerts and strip orderBy for logs
@@ -208,14 +210,7 @@ function ExplorerOptions({
 				);
 			}
 
-			try {
-				return JSON.stringify(modifiedQuery);
-			} catch (err) {
-				throw new Error(
-					'Failed to stringify modified query: ' +
-						(err instanceof Error ? err.message : String(err)),
-				);
-			}
+			return serializeToParams(modifiedQuery);
 		},
 		[panelType, query, sourcepage],
 	);
@@ -238,13 +233,9 @@ function ExplorerOptions({
 				});
 			}
 
-			const stringifiedQuery = handleConditionalQueryModification(defaultQuery);
+			const serializedParams = handleConditionalQueryModification(defaultQuery);
 
-			history.push(
-				`${ROUTES.ALERTS_NEW}?${QueryParams.compositeQuery}=${encodeURIComponent(
-					stringifiedQuery,
-				)}`,
-			);
+			history.push(`${ROUTES.ALERTS_NEW}?${createQueryParams(serializedParams)}`);
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[handleConditionalQueryModification, history],

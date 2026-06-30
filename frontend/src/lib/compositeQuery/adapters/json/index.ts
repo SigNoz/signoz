@@ -3,12 +3,9 @@ import {
 	convertFiltersToExpressionWithExistingQuery,
 	convertHavingToExpression,
 } from 'components/QueryBuilderV2/utils';
-import {
-	CompositeQueryAdapter,
-	COMPOSITE_QUERY_KEY,
-} from 'lib/compositeQuery/types';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { CompositeQueryAdapter } from 'lib/compositeQuery/types';
+import type { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 function migrateLegacyFormat(parsed: Query): Query {
 	if (!parsed?.builder?.queryData) {
@@ -46,6 +43,8 @@ function migrateLegacyFormat(parsed: Query): Query {
 	});
 	return next;
 }
+
+export const COMPOSITE_QUERY_KEY = 'compositeQuery';
 
 export const jsonAdapter: CompositeQueryAdapter = {
 	name: 'json(legacy)',

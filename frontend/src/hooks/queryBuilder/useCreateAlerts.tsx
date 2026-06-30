@@ -14,6 +14,10 @@ import { MenuItemKeys } from 'container/GridCardLayout/WidgetHeader/contants';
 import { useDashboardVariables } from 'hooks/dashboard/useDashboardVariables';
 import { useDashboardVariablesByType } from 'hooks/dashboard/useDashboardVariablesByType';
 import { useNotifications } from 'hooks/useNotifications';
+import {
+	applySerializedParams,
+	serialize,
+} from 'lib/compositeQuery/serializer';
 import { getDashboardVariables } from 'lib/dashboardVariables/getDashboardVariables';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { isEmpty } from 'lodash-es';
@@ -86,10 +90,7 @@ const useCreateAlerts = (widget?: Widgets, caller?: string): VoidFunction => {
 				}
 
 				const params = new URLSearchParams();
-				params.set(
-					QueryParams.compositeQuery,
-					encodeURIComponent(JSON.stringify(updatedQuery)),
-				);
+				applySerializedParams(serialize(updatedQuery), params);
 				params.set(QueryParams.panelTypes, widget.panelTypes);
 				params.set(QueryParams.version, ENTITY_VERSION_V5);
 				params.set(QueryParams.source, YAxisSource.DASHBOARDS);

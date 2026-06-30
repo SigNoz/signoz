@@ -8,6 +8,10 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useClickOutside from 'hooks/useClickOutside';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { resourceAttributesToTracesFilterItems } from 'hooks/useResourceAttribute/utils';
+import {
+	applySerializedParams,
+	serialize,
+} from 'lib/compositeQuery/serializer';
 import createQueryParams from 'lib/createQueryParams';
 import { prepareQueryWithDefaultTimestamp } from 'pages/LogsExplorer/utils';
 import { traceFilterKeys } from 'pages/TracesExplorer/Filter/filterUtils';
@@ -60,16 +64,18 @@ export function generateExplorerPath(
 	urlParams: URLSearchParams,
 	servicename: string | undefined,
 	selectedTraceTags: string,
-	JSONCompositeQuery: string,
+	apmToTraceQuery: Query,
 	queryString: string[],
 ): string {
 	const basePath = isViewLogsClicked
 		? ROUTES.LOGS_EXPLORER
 		: ROUTES.TRACES_EXPLORER;
 
-	return `${basePath}?${urlParams.toString()}&selected={"serviceName":["${servicename}"]}&filterToFetchData=["duration","status","serviceName"]&spanAggregateCurrentPage=1&selectedTags=${selectedTraceTags}&${
-		QueryParams.compositeQuery
-	}=${JSONCompositeQuery}&${queryString.join('&')}`;
+	applySerializedParams(serialize(apmToTraceQuery), urlParams);
+
+	return `${basePath}?${urlParams.toString()}&selected={"serviceName":["${servicename}"]}&filterToFetchData=["duration","status","serviceName"]&spanAggregateCurrentPage=1&selectedTags=${selectedTraceTags}&${queryString.join(
+		'&',
+	)}`;
 }
 
 // TODO(@rahul-signoz): update the name of this function once we have view logs button in every panel
@@ -105,16 +111,12 @@ export function onViewTracePopupClick({
 		const avialableParams = routeConfig[ROUTES.TRACE];
 		const queryString = getQueryString(avialableParams, urlParams);
 
-		const JSONCompositeQuery = encodeURIComponent(
-			JSON.stringify(apmToTraceQuery),
-		);
-
 		const newPath = generateExplorerPath(
 			isViewLogsClicked,
 			urlParams,
 			servicename,
 			selectedTraceTags,
-			JSONCompositeQuery,
+			apmToTraceQuery,
 			queryString,
 		);
 
