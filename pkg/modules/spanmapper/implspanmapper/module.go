@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/modules/spanmapper"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
@@ -103,6 +104,52 @@ func (module *module) DeleteMapper(ctx context.Context, orgID, groupID, id value
 	}
 	agentConf.NotifyConfigUpdate(ctx)
 	return nil
+}
+
+func (module *module) TestMappers(ctx context.Context, orgID valuer.UUID, spans []spantypes.SpanMapperTestSpan, groups []*spantypes.SpanMapperGroupWithMappers) ([]spantypes.SpanMapperTestSpan, []string, error) {
+	if len(spans) == 0 {
+		return nil, nil, errors.New(errors.TypeInvalidInput, spantypes.ErrCodeMappingInvalidInput, "'spans' must contain at least one span")
+	}
+
+	resolved, err := module.backfillMappers(ctx, orgID, groups)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	out, collectorLogs, err := spantypes.SimulateSpanMappersProcessing(ctx, resolved, spans)
+	if err != nil {
+		return nil, nil, err
+	}
+	return out, collectorLogs, nil
+}
+
+// backfillMappers loads saved mappers for any group whose Mappers is nil.
+func (module *module) backfillMappers(ctx context.Context, orgID valuer.UUID, groups []*spantypes.SpanMapperGroupWithMappers) ([]*spantypes.SpanMapperGroupWithMappers, error) {
+	savedGroups, err := module.store.ListGroups(ctx, orgID, nil)
+	if err != nil {
+		return nil, err
+	}
+	savedByName := make(map[string]*spantypes.SpanMapperGroup, len(savedGroups))
+	for _, g := range savedGroups {
+		savedByName[g.Name] = g
+	}
+
+	// For each group in the request, if Mappers is nil, load the saved mappers for that group name.
+	for _, g := range groups {
+		if g.Mappers != nil {
+			continue
+		}
+		saved, ok := savedByName[g.Group.Name]
+		if !ok {
+			return nil, errors.Newf(errors.TypeInvalidInput, spantypes.ErrCodeMappingGroupNotFound, "no saved group named %q to load mappers from; send 'mappers' for new or edited groups", g.Group.Name)
+		}
+		loaded, err := module.store.ListMappers(ctx, orgID, saved.ID)
+		if err != nil {
+			return nil, err
+		}
+		g.Mappers = loaded
+	}
+	return groups, nil
 }
 
 func (module *module) AgentFeatureType() agentConf.AgentFeatureType {
