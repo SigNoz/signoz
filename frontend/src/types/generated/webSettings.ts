@@ -7,22 +7,22 @@ export interface WebSettings {
 	sentry: Sentry;
 }
 export interface Appcues {
-	appId: string;
+	appId?: string;
 	enabled: boolean;
 }
 export interface Posthog {
-	apiHost: string;
+	apiHost?: string;
 	enabled: boolean;
-	key: string;
-	uiHost: string;
+	key?: string;
+	uiHost?: string;
 }
 export interface Pylon {
-	appId: string;
+	appId?: string;
 	enabled: boolean;
-	identitySecret: string;
+	identitySecret?: string;
 }
 export interface Sentry {
-	dsn: string;
+	dsn?: string;
 	enabled: boolean;
-	tunnel: string;
+	tunnel?: string;
 }

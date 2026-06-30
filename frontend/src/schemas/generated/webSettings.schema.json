@@ -10,8 +10,7 @@
   "definitions": {
     "Appcues": {
       "required": [
-        "enabled",
-        "appId"
+        "enabled"
       ],
       "additionalProperties": false,
       "properties": {
@@ -26,10 +25,7 @@
     },
     "Posthog": {
       "required": [
-        "enabled",
-        "key",
-        "apiHost",
-        "uiHost"
+        "enabled"
       ],
       "additionalProperties": false,
       "properties": {
@@ -50,9 +46,7 @@
     },
     "Pylon": {
       "required": [
-        "enabled",
-        "appId",
-        "identitySecret"
+        "enabled"
       ],
       "additionalProperties": false,
       "properties": {
@@ -70,9 +64,7 @@
     },
     "Sentry": {
       "required": [
-        "enabled",
-        "dsn",
-        "tunnel"
+        "enabled"
       ],
       "additionalProperties": false,
       "properties": {

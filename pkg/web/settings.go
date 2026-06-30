@@ -9,26 +9,26 @@ type Settings struct {
 
 type Posthog struct {
 	Enabled bool   `json:"enabled" required:"true"`
-	Key     string `json:"key" required:"true"`
-	APIHost string `json:"apiHost" required:"true"`
-	UIHost  string `json:"uiHost" required:"true"`
+	Key     string `json:"key"`
+	APIHost string `json:"apiHost"`
+	UIHost  string `json:"uiHost"`
 }
 
 type Appcues struct {
 	Enabled bool   `json:"enabled" required:"true"`
-	AppID   string `json:"appId" required:"true"`
+	AppID   string `json:"appId"`
 }
 
 type Sentry struct {
 	Enabled bool   `json:"enabled" required:"true"`
-	DSN     string `json:"dsn" required:"true"`
-	Tunnel  string `json:"tunnel" required:"true"`
+	DSN     string `json:"dsn"`
+	Tunnel  string `json:"tunnel"`
 }
 
 type Pylon struct {
 	Enabled        bool   `json:"enabled" required:"true"`
-	AppID          string `json:"appId" required:"true"`
-	IdentitySecret string `json:"identitySecret" required:"true"`
+	AppID          string `json:"appId"`
+	IdentitySecret string `json:"identitySecret"`
 }
 
 func NewSettings(config Config) Settings {
