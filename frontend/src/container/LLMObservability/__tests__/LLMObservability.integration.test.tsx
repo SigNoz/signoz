@@ -37,17 +37,17 @@ describe('LLMObservability (integration)', () => {
 		expect(screen.getByText('LLM Observability')).toBeInTheDocument();
 		expect(screen.getByRole('tab', { name: 'Overview' })).toBeInTheDocument();
 		expect(
-			screen.getByRole('tab', { name: 'Configuration' }),
+			screen.getByRole('tab', { name: 'Model pricing' }),
 		).toBeInTheDocument();
 	});
 
-	it('navigates to the configuration route when the Configuration tab is clicked', async () => {
+	it('navigates to the configuration route when the Model pricing tab is clicked', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		render(<LLMObservability />, undefined, {
 			initialRoute: ROUTES.LLM_OBSERVABILITY_OVERVIEW,
 		});
 
-		await user.click(screen.getByRole('tab', { name: 'Configuration' }));
+		await user.click(screen.getByRole('tab', { name: 'Model pricing' }));
 
 		expect(safeNavigateMock).toHaveBeenCalledWith(
 			ROUTES.LLM_OBSERVABILITY_CONFIGURATION,

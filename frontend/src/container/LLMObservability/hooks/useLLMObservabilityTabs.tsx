@@ -43,7 +43,7 @@ export function useLLMObservabilityTabs(): UseLLMObservabilityTabsResult {
 		},
 		{
 			key: CONFIGURATION_KEY,
-			label: 'Configuration',
+			label: 'Model pricing',
 			children: <LLMObservabilityModelPricing />,
 		},
 	];
