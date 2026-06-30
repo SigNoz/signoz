@@ -28,7 +28,7 @@
 	background: color-mix(in srgb, var(--bg-sienna-500) 10%, transparent);
 	color: var(--bg-sienna-400);
 	font-size: 13px;
-	font-weight: var(--font-weight-medium);
+	font-weight: var(--font-weight-normal);
 	line-height: 20px;
 	cursor: text;
 }
@@ -44,17 +44,25 @@
 	overflow: hidden;
 	max-width: 200px;
 	font-size: 13px;
-	font-weight: var(--font-weight-medium);
+	font-weight: var(--font-weight-normal);
 	text-overflow: ellipsis;
 	white-space: nowrap;
 	cursor: text;
 }
 
 .remove {
+	// Size overrides to fit the chip, plus a sienna-tinted hover — the Button's
+	// default ghost hover is a grey that clashes with the chip. Resting color is
+	// left at the Button default.
 	--button-height: 16px;
 	--button-padding: 0;
 	--button-border-radius: 50%;
-	--button-variant-ghost-color: inherit;
+	--button-variant-ghost-hover-background-color: color-mix(
+		in srgb,
+		var(--bg-sienna-500) 22%,
+		transparent
+	);
+	--button-variant-ghost-hover-color: var(--bg-sienna-400);
 	width: 16px;
 	min-width: 16px;
 	flex: none;
