@@ -4887,11 +4887,6 @@ export interface DashboardtypesGettablePublicDashboardDataDTO {
 	publicDashboard?: DashboardtypesGettablePublicDasbhboardDTO;
 }
 
-export interface DashboardtypesGettablePublicDashboardDataV2DTO {
-	dashboard?: DashboardtypesGettableDashboardV2DTO;
-	publicDashboard?: DashboardtypesGettablePublicDasbhboardDTO;
-}
-
 export enum DashboardtypesPatchOpDTO {
 	add = 'add',
 	remove = 'remove',
@@ -11106,29 +11101,6 @@ export type GetMetricsTreemap200 = {
 
 export type GetMyOrganization200 = {
 	data: TypesOrganizationDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type GetPublicDashboardDataV2PathParameters = {
-	id: string;
-};
-export type GetPublicDashboardDataV2200 = {
-	data: DashboardtypesGettablePublicDashboardDataV2DTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type GetPublicDashboardPanelQueryRangeV2PathParameters = {
-	id: string;
-	key: string;
-};
-export type GetPublicDashboardPanelQueryRangeV2200 = {
-	data: Querybuildertypesv5QueryRangeResponseDTO;
 	/**
 	 * @type string
 	 */

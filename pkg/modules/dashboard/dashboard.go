@@ -81,12 +81,6 @@ type Module interface {
 
 	DeletePreferencesForUser(ctx context.Context, orgID valuer.UUID, userID valuer.UUID) error
 
-	// get the v2 dashboard data by public dashboard id
-	GetDashboardByPublicIDV2(context.Context, valuer.UUID) (*dashboardtypes.DashboardV2, error)
-
-	// gets the query results by panel key and public shared id for a v2 dashboard
-	GetPublicWidgetQueryRangeV2(ctx context.Context, id valuer.UUID, panelKey, startTimeRaw, endTimeRaw string) (*querybuildertypesv5.QueryRangeResponse, error)
-
 	CreateView(ctx context.Context, orgID valuer.UUID, postable dashboardtypes.PostableDashboardView) (*dashboardtypes.DashboardView, error)
 
 	ListViews(ctx context.Context, orgID valuer.UUID) (*dashboardtypes.ListableDashboardView, error)
@@ -106,10 +100,6 @@ type Handler interface {
 	GetPublicData(http.ResponseWriter, *http.Request)
 
 	GetPublicWidgetQueryRange(http.ResponseWriter, *http.Request)
-
-	GetPublicDataV2(http.ResponseWriter, *http.Request)
-
-	GetPublicWidgetQueryRangeV2(http.ResponseWriter, *http.Request)
 
 	UpdatePublic(http.ResponseWriter, *http.Request)
 
