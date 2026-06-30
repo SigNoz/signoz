@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
+	"github.com/SigNoz/signoz/pkg/types/telemetrystoretypes"
 )
 
 type TelemetryStore interface {
@@ -14,13 +15,13 @@ type TelemetryStore interface {
 	Cluster() string
 
 	// Estimate returns the per-table scan estimate from EXPLAIN ESTIMATE.
-	Estimate(ctx context.Context, stmt string, args ...any) ([]EstimateEntry, error)
+	Estimate(ctx context.Context, stmt string, args ...any) ([]telemetrystoretypes.EstimateEntry, error)
 
 	// Plan runs EXPLAIN PLAN to check stmt parses and binds.
 	Plan(ctx context.Context, stmt string, args ...any) error
 
 	// Indexes returns the granule-skip breakdown from EXPLAIN json = 1, indexes = 1.
-	Indexes(ctx context.Context, stmt string, args ...any) (Granules, bool, error)
+	Indexes(ctx context.Context, stmt string, args ...any) (telemetrystoretypes.Granules, bool, error)
 }
 
 type TelemetryStoreHook interface {

@@ -7,6 +7,7 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	cmock "github.com/SigNoz/clickhouse-go-mock"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/types/telemetrystoretypes"
 )
 
 var _ telemetrystore.TelemetryStore = (*Provider)(nil)
@@ -39,7 +40,7 @@ func (p *Provider) Cluster() string {
 }
 
 // Estimate runs EXPLAIN ESTIMATE against the mock connection.
-func (p *Provider) Estimate(ctx context.Context, stmt string, args ...any) ([]telemetrystore.EstimateEntry, error) {
+func (p *Provider) Estimate(ctx context.Context, stmt string, args ...any) ([]telemetrystoretypes.EstimateEntry, error) {
 	return telemetrystore.RunExplainEstimate(ctx, p.clickhouseDB.(clickhouse.Conn), stmt, args...)
 }
 
@@ -49,7 +50,7 @@ func (p *Provider) Plan(ctx context.Context, stmt string, args ...any) error {
 }
 
 // Indexes runs EXPLAIN indexes against the mock connection.
-func (p *Provider) Indexes(ctx context.Context, stmt string, args ...any) (telemetrystore.Granules, bool, error) {
+func (p *Provider) Indexes(ctx context.Context, stmt string, args ...any) (telemetrystoretypes.Granules, bool, error) {
 	return telemetrystore.RunExplainIndexes(ctx, p.clickhouseDB.(clickhouse.Conn), stmt, args...)
 }
 

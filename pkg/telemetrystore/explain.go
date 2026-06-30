@@ -9,47 +9,8 @@ import (
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types/telemetrystoretypes"
 )
-
-// EstimateEntry is ClickHouse's EXPLAIN ESTIMATE for one table read: the parts,
-// rows, and marks it estimates it will scan.
-type EstimateEntry struct {
-	Database string `json:"database" required:"true" nullable:"false"`
-	Table    string `json:"table" required:"true" nullable:"false"`
-	Parts    int64  `json:"parts" required:"true" nullable:"false"`
-	Rows     int64  `json:"rows" required:"true" nullable:"false"`
-	Marks    int64  `json:"marks" required:"true" nullable:"false"`
-}
-
-// Granules is the granule-skip breakdown for one statement, summed from
-// `EXPLAIN json = 1, indexes = 1` across every ReadFromMergeTree node.
-type Granules struct {
-	Initial  int64           `json:"initial" required:"true" nullable:"false"`
-	Selected int64           `json:"selected" required:"true" nullable:"false"`
-	Skipped  int64           `json:"skipped" required:"true" nullable:"false"`
-	Reads    []MergeTreeRead `json:"reads" required:"true" nullable:"false"`
-}
-
-// MergeTreeRead is the index-pruning funnel for one ReadFromMergeTree node. Steps
-// run in sequence, so each step's Initial* matches the previous Selected*.
-type MergeTreeRead struct {
-	Table string      `json:"table" required:"true" nullable:"false"`
-	Steps []IndexStep `json:"steps" required:"true" nullable:"false"`
-}
-
-// IndexStep is one index applied during a MergeTree read: parts and granules
-// entering (Initial*) and surviving (Selected*) it. Type is the index kind
-// (MinMax, Partition, PrimaryKey, or Skip).
-type IndexStep struct {
-	Type             string   `json:"type" required:"true" nullable:"false"`
-	Name             string   `json:"name" required:"true" nullable:"false"`
-	Keys             []string `json:"keys" required:"true" nullable:"false"`
-	Condition        string   `json:"condition" required:"true" nullable:"false"`
-	InitialParts     int64    `json:"initialParts" required:"true" nullable:"false"`
-	SelectedParts    int64    `json:"selectedParts" required:"true" nullable:"false"`
-	InitialGranules  int64    `json:"initialGranules" required:"true" nullable:"false"`
-	SelectedGranules int64    `json:"selectedGranules" required:"true" nullable:"false"`
-}
 
 // ExplainPlanNode is a node in ClickHouse's `EXPLAIN json = 1, indexes = 1`
 // output, parsed to derive the granule-skip breakdown.
@@ -74,7 +35,7 @@ type ExplainPlanIndex struct {
 }
 
 // RunExplainEstimate backs TelemetryStore.Estimate.
-func RunExplainEstimate(ctx context.Context, conn clickhouse.Conn, stmt string, args ...any) ([]EstimateEntry, error) {
+func RunExplainEstimate(ctx context.Context, conn clickhouse.Conn, stmt string, args ...any) ([]telemetrystoretypes.EstimateEntry, error) {
 	if err := ValidateExplainStatement(stmt); err != nil {
 		return nil, err
 	}
@@ -86,7 +47,7 @@ func RunExplainEstimate(ctx context.Context, conn clickhouse.Conn, stmt string, 
 	defer rows.Close()
 
 	colTypes := rows.ColumnTypes()
-	var entries []EstimateEntry
+	var entries []telemetrystoretypes.EstimateEntry
 	for rows.Next() {
 		dest := make([]any, len(colTypes))
 		for i, ct := range colTypes {
@@ -95,7 +56,7 @@ func RunExplainEstimate(ctx context.Context, conn clickhouse.Conn, stmt string, 
 		if err := rows.Scan(dest...); err != nil {
 			return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan EXPLAIN ESTIMATE row")
 		}
-		var entry EstimateEntry
+		var entry telemetrystoretypes.EstimateEntry
 		for i, ct := range colTypes {
 			val := reflect.ValueOf(dest[i]).Elem().Interface()
 			switch strings.ToLower(ct.Name()) {
@@ -136,14 +97,14 @@ func RunExplainPlan(ctx context.Context, conn clickhouse.Conn, stmt string, args
 
 // RunExplainIndexes backs TelemetryStore.Indexes, summing the breakdown
 // across every ReadFromMergeTree node.
-func RunExplainIndexes(ctx context.Context, conn clickhouse.Conn, stmt string, args ...any) (Granules, bool, error) {
+func RunExplainIndexes(ctx context.Context, conn clickhouse.Conn, stmt string, args ...any) (telemetrystoretypes.Granules, bool, error) {
 	if err := ValidateExplainStatement(stmt); err != nil {
-		return Granules{}, false, err
+		return telemetrystoretypes.Granules{}, false, err
 	}
 
 	rows, err := conn.Query(ctx, "EXPLAIN json = 1, indexes = 1 "+stmt, args...)
 	if err != nil {
-		return Granules{}, false, errors.WrapInternalf(err, errors.CodeInternal, "failed to run EXPLAIN for granule stats")
+		return telemetrystoretypes.Granules{}, false, errors.WrapInternalf(err, errors.CodeInternal, "failed to run EXPLAIN for granule stats")
 	}
 	defer rows.Close()
 
@@ -152,30 +113,30 @@ func RunExplainIndexes(ctx context.Context, conn clickhouse.Conn, stmt string, a
 	for rows.Next() {
 		var line string
 		if err := rows.Scan(&line); err != nil {
-			return Granules{}, false, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan EXPLAIN json row")
+			return telemetrystoretypes.Granules{}, false, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan EXPLAIN json row")
 		}
 		sb.WriteString(line)
 		sb.WriteByte('\n')
 	}
 	if err := rows.Err(); err != nil {
-		return Granules{}, false, errors.WrapInternalf(err, errors.CodeInternal, "EXPLAIN json row iteration failed")
+		return telemetrystoretypes.Granules{}, false, errors.WrapInternalf(err, errors.CodeInternal, "EXPLAIN json row iteration failed")
 	}
 
 	var plans []struct {
 		Plan ExplainPlanNode `json:"Plan"`
 	}
 	if err := json.Unmarshal([]byte(sb.String()), &plans); err != nil {
-		return Granules{}, false, errors.WrapInternalf(err, errors.CodeInternal, "failed to parse EXPLAIN json")
+		return telemetrystoretypes.Granules{}, false, errors.WrapInternalf(err, errors.CodeInternal, "failed to parse EXPLAIN json")
 	}
 
 	var totalInitial, totalSelected int64
-	reads := []MergeTreeRead{}
+	reads := []telemetrystoretypes.MergeTreeRead{}
 	for i := range plans {
 		collectMergeTreeReads(&plans[i].Plan, &reads, &totalInitial, &totalSelected)
 	}
 	if totalInitial <= 0 {
 		// No MergeTree index analysis — nothing to report.
-		return Granules{}, false, nil
+		return telemetrystoretypes.Granules{}, false, nil
 	}
 	if totalSelected < 0 {
 		totalSelected = 0
@@ -184,7 +145,7 @@ func RunExplainIndexes(ctx context.Context, conn clickhouse.Conn, stmt string, a
 	if skippedGranules < 0 {
 		skippedGranules = 0
 	}
-	return Granules{
+	return telemetrystoretypes.Granules{
 		Initial:  totalInitial,
 		Selected: totalSelected,
 		Skipped:  skippedGranules,
@@ -192,9 +153,9 @@ func RunExplainIndexes(ctx context.Context, conn clickhouse.Conn, stmt string, a
 	}, true, nil
 }
 
-func collectMergeTreeReads(node *ExplainPlanNode, reads *[]MergeTreeRead, totalInitial, totalSelected *int64) {
+func collectMergeTreeReads(node *ExplainPlanNode, reads *[]telemetrystoretypes.MergeTreeRead, totalInitial, totalSelected *int64) {
 	if node.NodeType == "ReadFromMergeTree" && len(node.Indexes) > 0 {
-		steps := make([]IndexStep, 0, len(node.Indexes))
+		steps := make([]telemetrystoretypes.IndexStep, 0, len(node.Indexes))
 		var initial, selected *int64
 		for i := range node.Indexes {
 			idx := node.Indexes[i]
@@ -204,7 +165,7 @@ func collectMergeTreeReads(node *ExplainPlanNode, reads *[]MergeTreeRead, totalI
 			if idx.SelectedGranules != nil {
 				selected = idx.SelectedGranules
 			}
-			steps = append(steps, IndexStep{
+			steps = append(steps, telemetrystoretypes.IndexStep{
 				Type:             idx.Type,
 				Name:             idx.Name,
 				Keys:             orEmpty(idx.Keys),
@@ -219,7 +180,7 @@ func collectMergeTreeReads(node *ExplainPlanNode, reads *[]MergeTreeRead, totalI
 			*totalInitial += *initial
 			*totalSelected += *selected
 		}
-		*reads = append(*reads, MergeTreeRead{Table: node.Description, Steps: steps})
+		*reads = append(*reads, telemetrystoretypes.MergeTreeRead{Table: node.Description, Steps: steps})
 	}
 	for i := range node.Plans {
 		collectMergeTreeReads(&node.Plans[i], reads, totalInitial, totalSelected)

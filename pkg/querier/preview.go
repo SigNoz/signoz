@@ -8,8 +8,8 @@ import (
 	"sync"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/types/telemetrystoretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -153,12 +153,12 @@ func (q *querier) QueryRangePreview(
 					ps.Warnings = append(ps.Warnings, "could not render underlying ClickHouse SQL: "+pErr.Error())
 				} else {
 					for _, s := range sqlStmts {
-						ps.Statements = append(ps.Statements, qbtypes.PreviewStatement{Query: s.Query, Args: orEmpty(s.Args), Estimate: []telemetrystore.EstimateEntry{}})
+						ps.Statements = append(ps.Statements, qbtypes.PreviewStatement{Query: s.Query, Args: orEmpty(s.Args), Estimate: []telemetrystoretypes.EstimateEntry{}})
 					}
 				}
 			}
 		} else {
-			ps.Statements = []qbtypes.PreviewStatement{{Query: stmt.Query, Args: orEmpty(stmt.Args), Estimate: []telemetrystore.EstimateEntry{}}}
+			ps.Statements = []qbtypes.PreviewStatement{{Query: stmt.Query, Args: orEmpty(stmt.Args), Estimate: []telemetrystoretypes.EstimateEntry{}}}
 		}
 
 		results[name] = ps
@@ -286,8 +286,8 @@ func (q *querier) runPreviewTasks(ctx context.Context, tasks []qbtypes.PreviewTa
 	}
 
 	type outcome struct {
-		granules *telemetrystore.Granules
-		estimate []telemetrystore.EstimateEntry
+		granules *telemetrystoretypes.Granules
+		estimate []telemetrystoretypes.EstimateEntry
 		warnings []string
 	}
 	outcomes := make([]outcome, len(tasks))

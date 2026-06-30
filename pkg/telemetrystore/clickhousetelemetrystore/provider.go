@@ -9,6 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/types/telemetrystoretypes"
 	"go.opentelemetry.io/otel/metric"
 )
 
@@ -143,7 +144,7 @@ func (p *provider) ClickhouseDB() clickhouse.Conn {
 	return p
 }
 
-func (p *provider) Estimate(ctx context.Context, stmt string, args ...any) ([]telemetrystore.EstimateEntry, error) {
+func (p *provider) Estimate(ctx context.Context, stmt string, args ...any) ([]telemetrystoretypes.EstimateEntry, error) {
 	return telemetrystore.RunExplainEstimate(ctx, p, stmt, args...)
 }
 
@@ -151,7 +152,7 @@ func (p *provider) Plan(ctx context.Context, stmt string, args ...any) error {
 	return telemetrystore.RunExplainPlan(ctx, p, stmt, args...)
 }
 
-func (p *provider) Indexes(ctx context.Context, stmt string, args ...any) (telemetrystore.Granules, bool, error) {
+func (p *provider) Indexes(ctx context.Context, stmt string, args ...any) (telemetrystoretypes.Granules, bool, error) {
 	return telemetrystore.RunExplainIndexes(ctx, p, stmt, args...)
 }
 

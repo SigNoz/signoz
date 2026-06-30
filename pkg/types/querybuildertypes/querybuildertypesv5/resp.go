@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/types/telemetrystoretypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/swaggest/jsonschema-go"
@@ -100,10 +100,10 @@ type QueryPreview struct {
 // requested, its EXPLAIN ESTIMATE and granule breakdown. The query/args JSON
 // keys follow the OpenTelemetry db.statement.* convention.
 type PreviewStatement struct {
-	Query    string                         `json:"db.statement.query" required:"true" nullable:"false"`
-	Args     []any                          `json:"db.statement.args" required:"true" nullable:"false"`
-	Estimate []telemetrystore.EstimateEntry `json:"estimate" required:"true" nullable:"false"`
-	Granules *telemetrystore.Granules       `json:"granules" required:"true" nullable:"true"`
+	Query    string                              `json:"db.statement.query" required:"true" nullable:"false"`
+	Args     []any                               `json:"db.statement.args" required:"true" nullable:"false"`
+	Estimate []telemetrystoretypes.EstimateEntry `json:"estimate" required:"true" nullable:"false"`
+	Granules *telemetrystoretypes.Granules       `json:"granules" required:"true" nullable:"true"`
 }
 
 // MarshalJSON renders Error in its structured form (code/message/suggestions)
