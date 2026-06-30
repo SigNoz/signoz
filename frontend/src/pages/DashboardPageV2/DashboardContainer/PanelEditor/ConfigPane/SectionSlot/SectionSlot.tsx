@@ -5,7 +5,6 @@ import {
 	type SectionConfig,
 	SectionKind,
 } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/sections';
-import type { EQueryType } from 'types/common/dashboard';
 
 import type { SectionEditorContext } from '../sectionContext';
 import { resolveSectionEditor } from '../sectionRegistry';
