@@ -28,7 +28,10 @@ type SettingsConfig struct {
 }
 
 type PosthogConfig struct {
-	Enabled bool `mapstructure:"enabled"`
+	Enabled bool   `mapstructure:"enabled"`
+	Key     string `mapstructure:"key"`
+	APIHost string `mapstructure:"api_host"`
+	UIHost  string `mapstructure:"ui_host"`
 }
 
 type AppcuesConfig struct {

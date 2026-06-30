@@ -29,7 +29,12 @@ function devBootDataPlugin(env: Record<string, string>): Plugin {
 		apply: 'serve',
 		transformIndexHtml(html): string {
 			const settings = {
-				posthog: { enabled: env.VITE_POSTHOG_ENABLED !== 'false' },
+				posthog: {
+					enabled: env.VITE_POSTHOG_ENABLED !== 'false',
+					key: env.VITE_POSTHOG_KEY || '',
+					apiHost: env.VITE_POSTHOG_API_HOST || '',
+					uiHost: env.VITE_POSTHOG_UI_HOST || '',
+				},
 				appcues: { enabled: env.VITE_APPCUES_ENABLED !== 'false' },
 				sentry: {
 					enabled: env.VITE_SENTRY_ENABLED !== 'false',
@@ -166,7 +171,6 @@ export default defineConfig(({ mode }): UserConfig => {
 				env.VITE_PYLON_IDENTITY_SECRET,
 			),
 			'process.env.APPCUES_APP_ID': JSON.stringify(env.VITE_APPCUES_APP_ID),
-			'process.env.POSTHOG_KEY': JSON.stringify(env.VITE_POSTHOG_KEY),
 			'process.env.SENTRY_ORG': JSON.stringify(env.VITE_SENTRY_ORG),
 			'process.env.SENTRY_PROJECT_ID': JSON.stringify(env.VITE_SENTRY_PROJECT_ID),
 			'process.env.TUNNEL_DOMAIN': JSON.stringify(env.VITE_TUNNEL_DOMAIN),

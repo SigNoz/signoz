@@ -22,12 +22,24 @@
     },
     "Posthog": {
       "required": [
-        "enabled"
+        "enabled",
+        "key",
+        "apiHost",
+        "uiHost"
       ],
       "additionalProperties": false,
       "properties": {
+        "apiHost": {
+          "type": "string"
+        },
         "enabled": {
           "type": "boolean"
+        },
+        "key": {
+          "type": "string"
+        },
+        "uiHost": {
+          "type": "string"
         }
       },
       "type": "object"

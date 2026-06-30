@@ -119,7 +119,12 @@ func TestServeTemplatedIndex(t *testing.T) {
 				Index:     "valid_template.html",
 				Directory: "testdata",
 				Settings: web.SettingsConfig{
-					Posthog: web.PosthogConfig{Enabled: true},
+					Posthog: web.PosthogConfig{
+						Enabled: true,
+						Key:     "phc_examplekey",
+						APIHost: "https://us.i.posthog.com",
+						UIHost:  "https://us.posthog.com",
+					},
 					Appcues: web.AppcuesConfig{Enabled: true},
 					Sentry: web.SentryConfig{
 						Enabled: true,
@@ -129,7 +134,12 @@ func TestServeTemplatedIndex(t *testing.T) {
 				},
 			},
 			expected: expectedHTML("/", web.Settings{
-				Posthog: web.Posthog{Enabled: true},
+				Posthog: web.Posthog{
+					Enabled: true,
+					Key:     "phc_examplekey",
+					APIHost: "https://us.i.posthog.com",
+					UIHost:  "https://us.posthog.com",
+				},
 				Appcues: web.Appcues{Enabled: true},
 				Sentry: web.Sentry{
 					Enabled: true,

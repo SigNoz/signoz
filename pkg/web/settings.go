@@ -8,7 +8,10 @@ type Settings struct {
 }
 
 type Posthog struct {
-	Enabled bool `json:"enabled" required:"true"`
+	Enabled bool   `json:"enabled" required:"true"`
+	Key     string `json:"key" required:"true"`
+	APIHost string `json:"apiHost" required:"true"`
+	UIHost  string `json:"uiHost" required:"true"`
 }
 
 type Appcues struct {
@@ -29,6 +32,9 @@ func NewSettings(config Config) Settings {
 	return Settings{
 		Posthog: Posthog{
 			Enabled: config.Settings.Posthog.Enabled,
+			Key:     config.Settings.Posthog.Key,
+			APIHost: config.Settings.Posthog.APIHost,
+			UIHost:  config.Settings.Posthog.UIHost,
 		},
 		Appcues: Appcues{
 			Enabled: config.Settings.Appcues.Enabled,

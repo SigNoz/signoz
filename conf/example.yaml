@@ -65,6 +65,12 @@ web:
     posthog:
       # Whether to enable PostHog in web.
       enabled: false
+      # The PostHog project API key.
+      key: ""
+      # The PostHog API host. Defaults to https://us.i.posthog.com when empty.
+      api_host: ""
+      # The PostHog UI host. Used when api_host points at a reverse proxy.
+      ui_host: ""
     appcues:
       # Whether to enable Appcues in web.
       enabled: false

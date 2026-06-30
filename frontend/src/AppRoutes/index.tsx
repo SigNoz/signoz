@@ -336,9 +336,10 @@ function App(): JSX.Element {
 	useEffect(() => {
 		const webSettings = getWebSettings();
 		if (isCloudUser || isEnterpriseSelfHostedUser) {
-			if ((webSettings?.posthog.enabled ?? true) && process.env.POSTHOG_KEY) {
-				posthog.init(process.env.POSTHOG_KEY, {
-					api_host: 'https://us.i.posthog.com',
+			if ((webSettings?.posthog.enabled ?? true) && webSettings?.posthog.key) {
+				posthog.init(webSettings.posthog.key, {
+					api_host: webSettings.posthog.apiHost || 'https://us.i.posthog.com',
+					ui_host: webSettings.posthog.uiHost || undefined,
 					person_profiles: 'identified_only', // or 'always' to create profiles for anonymous users as well
 				});
 			}

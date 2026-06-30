@@ -51,7 +51,10 @@ func TestSettingsConfigWithEnvProvider(t *testing.T) {
 		value    string
 		expected SettingsConfig
 	}{
-		{name: "posthog", env: "SIGNOZ_WEB_SETTINGS_POSTHOG_ENABLED", value: "true", expected: SettingsConfig{Posthog: PosthogConfig{Enabled: true}}},
+		{name: "posthog_enabled", env: "SIGNOZ_WEB_SETTINGS_POSTHOG_ENABLED", value: "true", expected: SettingsConfig{Posthog: PosthogConfig{Enabled: true}}},
+		{name: "posthog_key", env: "SIGNOZ_WEB_SETTINGS_POSTHOG_KEY", value: "phc_examplekey", expected: SettingsConfig{Posthog: PosthogConfig{Key: "phc_examplekey"}}},
+		{name: "posthog_api_host", env: "SIGNOZ_WEB_SETTINGS_POSTHOG_API__HOST", value: "https://eu.i.posthog.com", expected: SettingsConfig{Posthog: PosthogConfig{APIHost: "https://eu.i.posthog.com"}}},
+		{name: "posthog_ui_host", env: "SIGNOZ_WEB_SETTINGS_POSTHOG_UI__HOST", value: "https://eu.posthog.com", expected: SettingsConfig{Posthog: PosthogConfig{UIHost: "https://eu.posthog.com"}}},
 		{name: "appcues", env: "SIGNOZ_WEB_SETTINGS_APPCUES_ENABLED", value: "true", expected: SettingsConfig{Appcues: AppcuesConfig{Enabled: true}}},
 		{name: "sentry_enabled", env: "SIGNOZ_WEB_SETTINGS_SENTRY_ENABLED", value: "true", expected: SettingsConfig{Sentry: SentryConfig{Enabled: true}}},
 		{name: "sentry_dsn", env: "SIGNOZ_WEB_SETTINGS_SENTRY_DSN", value: "https://examplePublicKey@o0.ingest.sentry.io/0", expected: SettingsConfig{Sentry: SentryConfig{DSN: "https://examplePublicKey@o0.ingest.sentry.io/0"}}},

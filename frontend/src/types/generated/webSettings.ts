@@ -10,7 +10,10 @@ export interface Appcues {
 	enabled: boolean;
 }
 export interface Posthog {
+	apiHost: string;
 	enabled: boolean;
+	key: string;
+	uiHost: string;
 }
 export interface Pylon {
 	enabled: boolean;
