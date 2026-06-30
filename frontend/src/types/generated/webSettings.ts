@@ -17,7 +17,9 @@ export interface Posthog {
 	uiHost: string;
 }
 export interface Pylon {
+	appId: string;
 	enabled: boolean;
+	identitySecret: string;
 }
 export interface Sentry {
 	dsn: string;

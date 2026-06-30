@@ -46,7 +46,9 @@ type SentryConfig struct {
 }
 
 type PylonConfig struct {
-	Enabled bool `mapstructure:"enabled"`
+	Enabled        bool   `mapstructure:"enabled"`
+	AppID          string `mapstructure:"app_id"`
+	IdentitySecret string `mapstructure:"identity_secret"`
 }
 
 func NewConfigFactory() factory.ConfigFactory {

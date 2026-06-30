@@ -6,7 +6,6 @@ import type { Plugin, TransformResult, UserConfig } from 'vite';
 import { defineConfig, loadEnv } from 'vite';
 import vitePluginChecker from 'vite-plugin-checker';
 import viteCompression from 'vite-plugin-compression';
-import { createHtmlPlugin } from 'vite-plugin-html';
 import { ViteImageOptimizer } from 'vite-plugin-image-optimizer';
 import tsconfigPaths from 'vite-tsconfig-paths';
 
@@ -44,7 +43,11 @@ function devBootDataPlugin(env: Record<string, string>): Plugin {
 					dsn: env.VITE_SENTRY_DSN || '',
 					tunnel: env.VITE_TUNNEL_URL || '',
 				},
-				pylon: { enabled: env.VITE_PYLON_ENABLED !== 'false' },
+				pylon: {
+					enabled: env.VITE_PYLON_ENABLED !== 'false',
+					appId: env.VITE_PYLON_APP_ID || '',
+					identitySecret: env.VITE_PYLON_IDENTITY_SECRET || '',
+				},
 			};
 			return html.replaceAll('[[.Settings]]', JSON.stringify(settings));
 		},
@@ -77,13 +80,6 @@ export default defineConfig(({ mode }): UserConfig => {
 		devBasePathPlugin(basePath),
 		devBootDataPlugin(env),
 		react(),
-		createHtmlPlugin({
-			inject: {
-				data: {
-					PYLON_APP_ID: env.VITE_PYLON_APP_ID || '',
-				},
-			},
-		}),
 		vitePluginChecker({
 			typescript: true,
 			// this doubles the build tim
@@ -167,10 +163,6 @@ export default defineConfig(({ mode }): UserConfig => {
 			),
 			'process.env.WEBSOCKET_API_ENDPOINT': JSON.stringify(
 				env.VITE_WEBSOCKET_API_ENDPOINT,
-			),
-			'process.env.PYLON_APP_ID': JSON.stringify(env.VITE_PYLON_APP_ID),
-			'process.env.PYLON_IDENTITY_SECRET': JSON.stringify(
-				env.VITE_PYLON_IDENTITY_SECRET,
 			),
 			'process.env.SENTRY_ORG': JSON.stringify(env.VITE_SENTRY_ORG),
 			'process.env.SENTRY_PROJECT_ID': JSON.stringify(env.VITE_SENTRY_PROJECT_ID),

@@ -50,12 +50,20 @@
     },
     "Pylon": {
       "required": [
-        "enabled"
+        "enabled",
+        "appId",
+        "identitySecret"
       ],
       "additionalProperties": false,
       "properties": {
+        "appId": {
+          "type": "string"
+        },
         "enabled": {
           "type": "boolean"
+        },
+        "identitySecret": {
+          "type": "string"
         }
       },
       "type": "object"

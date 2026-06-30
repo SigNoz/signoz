@@ -86,6 +86,10 @@ web:
     pylon:
       # Whether to enable Pylon in web.
       enabled: false
+      # The Pylon app ID.
+      app_id: ""
+      # The Pylon identity verification secret.
+      identity_secret: ""
 
 ##################### Cache #####################
 cache:

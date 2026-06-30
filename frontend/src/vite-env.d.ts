@@ -13,8 +13,6 @@ declare module '*.md?raw' {
 interface ImportMetaEnv {
 	readonly VITE_FRONTEND_API_ENDPOINT: string;
 	readonly VITE_WEBSOCKET_API_ENDPOINT: string;
-	readonly VITE_PYLON_APP_ID: string;
-	readonly VITE_PYLON_IDENTITY_SECRET: string;
 	readonly VITE_SENTRY_AUTH_TOKEN: string;
 	readonly VITE_SENTRY_ORG: string;
 	readonly VITE_SENTRY_PROJECT_ID: string;

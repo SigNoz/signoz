@@ -134,6 +134,11 @@ func TestServeTemplatedIndex(t *testing.T) {
 						DSN:     "https://examplePublicKey@o0.ingest.sentry.io/0",
 						Tunnel:  "https://example.com/tunnel",
 					},
+					Pylon: web.PylonConfig{
+						Enabled:        true,
+						AppID:          "pylon-app-id",
+						IdentitySecret: "pylon-secret",
+					},
 				},
 			},
 			expected: expectedHTML("/", web.Settings{
@@ -151,6 +156,11 @@ func TestServeTemplatedIndex(t *testing.T) {
 					Enabled: true,
 					DSN:     "https://examplePublicKey@o0.ingest.sentry.io/0",
 					Tunnel:  "https://example.com/tunnel",
+				},
+				Pylon: web.Pylon{
+					Enabled:        true,
+					AppID:          "pylon-app-id",
+					IdentitySecret: "pylon-secret",
 				},
 			}),
 		},

@@ -26,7 +26,9 @@ type Sentry struct {
 }
 
 type Pylon struct {
-	Enabled bool `json:"enabled" required:"true"`
+	Enabled        bool   `json:"enabled" required:"true"`
+	AppID          string `json:"appId" required:"true"`
+	IdentitySecret string `json:"identitySecret" required:"true"`
 }
 
 func NewSettings(config Config) Settings {
@@ -47,7 +49,9 @@ func NewSettings(config Config) Settings {
 			Tunnel:  config.Settings.Sentry.Tunnel,
 		},
 		Pylon: Pylon{
-			Enabled: config.Settings.Pylon.Enabled,
+			Enabled:        config.Settings.Pylon.Enabled,
+			AppID:          config.Settings.Pylon.AppID,
+			IdentitySecret: config.Settings.Pylon.IdentitySecret,
 		},
 	}
 }

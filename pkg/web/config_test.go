@@ -60,7 +60,9 @@ func TestSettingsConfigWithEnvProvider(t *testing.T) {
 		{name: "sentry_enabled", env: "SIGNOZ_WEB_SETTINGS_SENTRY_ENABLED", value: "true", expected: SettingsConfig{Sentry: SentryConfig{Enabled: true}}},
 		{name: "sentry_dsn", env: "SIGNOZ_WEB_SETTINGS_SENTRY_DSN", value: "https://examplePublicKey@o0.ingest.sentry.io/0", expected: SettingsConfig{Sentry: SentryConfig{DSN: "https://examplePublicKey@o0.ingest.sentry.io/0"}}},
 		{name: "sentry_tunnel", env: "SIGNOZ_WEB_SETTINGS_SENTRY_TUNNEL", value: "https://example.com/tunnel", expected: SettingsConfig{Sentry: SentryConfig{Tunnel: "https://example.com/tunnel"}}},
-		{name: "pylon", env: "SIGNOZ_WEB_SETTINGS_PYLON_ENABLED", value: "true", expected: SettingsConfig{Pylon: PylonConfig{Enabled: true}}},
+		{name: "pylon_enabled", env: "SIGNOZ_WEB_SETTINGS_PYLON_ENABLED", value: "true", expected: SettingsConfig{Pylon: PylonConfig{Enabled: true}}},
+		{name: "pylon_app_id", env: "SIGNOZ_WEB_SETTINGS_PYLON_APP__ID", value: "pylon-app-id", expected: SettingsConfig{Pylon: PylonConfig{AppID: "pylon-app-id"}}},
+		{name: "pylon_identity_secret", env: "SIGNOZ_WEB_SETTINGS_PYLON_IDENTITY__SECRET", value: "pylon-secret", expected: SettingsConfig{Pylon: PylonConfig{IdentitySecret: "pylon-secret"}}},
 	}
 
 	for _, testCase := range testCases {

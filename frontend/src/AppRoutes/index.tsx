@@ -265,6 +265,7 @@ function App(): JSX.Element {
 
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	useEffect(() => {
+		const webSettings = getWebSettings();
 		// feature flag shouldn't be loading and featureFlags or fetchError any one of this should be true indicating that req is complete
 		// licenses should also be present. there is no check for licenses for loading and error as that is mandatory if not present then routing
 		// to something went wrong which would ideally need a reload.
@@ -293,10 +294,10 @@ function App(): JSX.Element {
 				isChatSupportEnabled &&
 				!showAddCreditCardModal &&
 				(isCloudUser || isEnterpriseSelfHostedUser) &&
-				(window.signozBootData?.settings?.pylon.enabled ?? true)
+				(webSettings?.pylon.enabled ?? true)
 			) {
 				const email = user.email || '';
-				const secret = process.env.PYLON_IDENTITY_SECRET || '';
+				const secret = webSettings?.pylon.identitySecret || '';
 				let emailHash = '';
 
 				if (email && secret) {
@@ -305,7 +306,7 @@ function App(): JSX.Element {
 
 				window.pylon = {
 					chat_settings: {
-						app_id: process.env.PYLON_APP_ID,
+						app_id: webSettings?.pylon.appId,
 						email: user.email,
 						name: user.displayName || user.email,
 						email_hash: emailHash,

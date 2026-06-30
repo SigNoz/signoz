@@ -111,9 +111,9 @@
 		<div id="root"></div>
 
 		<script>
-			var PYLON_APP_ID = '<%- PYLON_APP_ID %>';
 			var pylonSettings =
 				((window.signozBootData || {}).settings || {}).pylon || {};
+			var PYLON_APP_ID = pylonSettings.appId || '';
 			var pylonEnabled = pylonSettings.enabled !== false;
 			if (PYLON_APP_ID && pylonEnabled) {
 				(function () {
