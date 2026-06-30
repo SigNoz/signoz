@@ -24,7 +24,6 @@ import {
 	LicensePage,
 	ListAllALertsPage,
 	LLMObservabilityPage,
-	LLMObservabilityModelPricingPage,
 	LiveLogs,
 	Login,
 	Logs,
@@ -515,17 +514,17 @@ const routes: AppRoutes[] = [
 		isPrivate: true,
 	},
 	{
-		path: ROUTES.LLM_OBSERVABILITY_BASE,
+		path: ROUTES.LLM_OBSERVABILITY_OVERVIEW,
 		exact: true,
 		component: LLMObservabilityPage,
-		key: 'LLM_OBSERVABILITY_BASE',
+		key: 'LLM_OBSERVABILITY_OVERVIEW',
 		isPrivate: true,
 	},
 	{
-		path: ROUTES.LLM_OBSERVABILITY_MODEL_PRICING,
+		path: ROUTES.LLM_OBSERVABILITY_CONFIGURATION,
 		exact: true,
-		component: LLMObservabilityModelPricingPage,
-		key: 'LLM_OBSERVABILITY_MODEL_PRICING',
+		component: LLMObservabilityPage,
+		key: 'LLM_OBSERVABILITY_CONFIGURATION',
 		isPrivate: true,
 	},
 ];
@@ -560,6 +559,9 @@ export const oldNewRoutesMapping: Record<string, string> = {
 	// TODO(H4ad): Update this after https://github.com/SigNoz/engineering-pod/issues/5322
 	'/settings/channels': '/alerts?tab=Channels',
 	'/settings/channels/new': '/alerts/channels/new',
+	'/llm-observability': '/llm-observability/overview',
+	'/llm-observability/settings/model-pricing':
+		'/llm-observability/configuration',
 };
 export const oldRoutes = Object.keys(oldNewRoutesMapping);
 
