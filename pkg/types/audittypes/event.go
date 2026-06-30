@@ -44,7 +44,7 @@ type AuditEvent struct {
 	TransportAttributes TransportAttributes
 }
 
-// NewAuditEvent builds an audit event from pre-built resource attributes (which
+// NewAuditEventFromHTTPRequest builds an audit event from pre-built resource attributes (which
 // may carry attach/target context).
 func NewAuditEventFromHTTPRequest(
 	req *http.Request,

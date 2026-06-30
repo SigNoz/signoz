@@ -87,7 +87,7 @@ func NewResourceAttributes(resource coretypes.Resource, resourceID string) Resou
 	}
 }
 
-// NewAttachResourceAttributes builds resource attributes that additionally name
+// NewRelatedResourceAttributes builds resource attributes that additionally name
 // the target counterpart (used for attach/detach audit events).
 func NewRelatedResourceAttributes(resource coretypes.Resource, resourceID string, targetResource coretypes.Resource, targetResourceID string) ResourceAttributes {
 	return ResourceAttributes{
