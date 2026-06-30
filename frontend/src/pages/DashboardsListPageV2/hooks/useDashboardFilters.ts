@@ -11,7 +11,7 @@ import {
 	DEFAULT_FILTER_STATE,
 	filterStateToQuery,
 	isFilterStateEmpty,
-} from '../filterQuery';
+} from '../utils/filterQuery';
 import type {
 	DashboardFilterState,
 	SelectedTag,

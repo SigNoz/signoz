@@ -10,7 +10,7 @@ import {
 	combineQueries,
 	DEFAULT_FILTER_STATE,
 	filterStateToQuery,
-} from '../filterQuery';
+} from '../utils/filterQuery';
 import type { DashboardFilterState, SavedView } from '../types';
 import {
 	BUILTIN_VIEWS,
@@ -18,7 +18,7 @@ import {
 	builtinViewSnapshot,
 	type BuiltinView,
 	isClientView,
-} from '../views';
+} from '../utils/views';
 import { useSavedViews } from './useSavedViews';
 
 const opts: Options = { history: 'push' };

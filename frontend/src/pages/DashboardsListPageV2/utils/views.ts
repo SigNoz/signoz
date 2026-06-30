@@ -6,8 +6,8 @@
 import { Clock, Layers, Lock, Pin, User } from '@signozhq/icons';
 
 import { DEFAULT_FILTER_STATE } from './filterQuery';
-import type { BuiltinViewId, DashboardFilterState, ViewSection } from './types';
-import type { DashboardListItem } from './utils';
+import type { BuiltinViewId, DashboardFilterState, ViewSection } from '../types';
+import type { DashboardListItem } from './helpers';
 
 // All @signozhq icons share this component type.
 export type ViewIcon = typeof Pin;

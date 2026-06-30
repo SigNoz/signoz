@@ -1,7 +1,7 @@
 // Key-name suggestions for the dashboards-list DSL search box. The reserved keys
 // mirror the backend filter DSL (pkg/.../listfilter_visitor.go); any other key is
 // treated as a tag key, so we also surface the tag keys the list API reports.
-import type { SelectedTag } from './types';
+import type { SelectedTag } from '../types';
 
 // Reserved DSL keys the backend recognises as dashboard columns.
 export const RESERVED_DSL_KEYS: string[] = [

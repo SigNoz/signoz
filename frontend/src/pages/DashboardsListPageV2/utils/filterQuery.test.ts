@@ -5,7 +5,7 @@ import {
 	filterStateToQuery,
 	isFilterStateEmpty,
 } from './filterQuery';
-import type { DashboardFilterState } from './types';
+import type { DashboardFilterState } from '../types';
 
 const state = (patch: Partial<DashboardFilterState>): DashboardFilterState => ({
 	...DEFAULT_FILTER_STATE,
