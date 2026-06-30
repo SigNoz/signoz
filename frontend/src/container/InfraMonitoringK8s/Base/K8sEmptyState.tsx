@@ -8,14 +8,10 @@ import emptyStateUrl from '@/assets/Icons/emptyState.svg';
 import eyesEmojiUrl from '@/assets/Images/eyesEmoji.svg';
 
 import type { K8sBaseListEmptyStateContext } from './K8sBaseList';
-import MissingMetricsContent from './MissingMetricsContent';
 
 import styles from './K8sEmptyState.module.scss';
 
 type K8sEmptyStateProps = Partial<K8sBaseListEmptyStateContext>;
-
-const K8S_METRICS_DOCS_URL =
-	'https://signoz.io/docs/infrastructure-monitoring/k8s-metrics/';
 
 const handleContactSupport = (isCloudUser: boolean): void => {
 	if (isCloudUser) {
@@ -29,7 +25,6 @@ export function K8sEmptyState({
 	isError,
 	error,
 	isLoading,
-	missingMetrics,
 	endTimeBeforeRetention,
 }: K8sEmptyStateProps): JSX.Element | null {
 	const { isCloudUser } = useGetTenantLicense();
@@ -85,15 +80,6 @@ export function K8sEmptyState({
 					</div>
 				</div>
 			</div>
-		);
-	}
-
-	if (missingMetrics && missingMetrics.length > 0) {
-		return (
-			<MissingMetricsContent
-				missingMetrics={missingMetrics}
-				docsUrl={K8S_METRICS_DOCS_URL}
-			/>
 		);
 	}
 

@@ -63,9 +63,6 @@ function K8sVolumesList({
 							: ('list' as const),
 					records: data.records,
 					total: data.total,
-					requiredMetricsCheck: {
-						missingMetrics: data.requiredMetricsCheck?.missingMetrics ?? null,
-					},
 					endTimeBeforeRetention: data.endTimeBeforeRetention,
 					warning: data.warning,
 				};

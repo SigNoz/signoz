@@ -60,9 +60,6 @@ function K8sDaemonSetsList({
 							: ('list' as const),
 					records: data.records,
 					total: data.total,
-					requiredMetricsCheck: {
-						missingMetrics: data.requiredMetricsCheck?.missingMetrics ?? null,
-					},
 					endTimeBeforeRetention: data.endTimeBeforeRetention,
 					warning: data.warning,
 				};

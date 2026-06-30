@@ -41,7 +41,6 @@ export type K8sBaseListEmptyStateContext = {
 	totalCount: number;
 	hasFilters: boolean;
 	isLoading: boolean;
-	missingMetrics?: string[] | null;
 	endTimeBeforeRetention?: boolean;
 	rawData?: unknown;
 };
@@ -64,7 +63,6 @@ export type K8sBaseListProps<T extends K8sEntityData> = {
 		total: number;
 		error?: string | null;
 		rawData?: unknown;
-		requiredMetricsCheck?: { missingMetrics: string[] | null };
 		endTimeBeforeRetention?: boolean;
 		warning?: Querybuildertypesv5QueryWarnDataDTO | null;
 	}>;
@@ -195,7 +193,6 @@ export function K8sBaseList<T extends K8sEntityData>({
 				data: response.records || response.data || [],
 				total: response.total,
 				error: response.error,
-				missingMetrics: response.requiredMetricsCheck?.missingMetrics ?? null,
 				endTimeBeforeRetention: response.endTimeBeforeRetention,
 				rawData: response.rawData ?? response,
 				warning: response.warning ?? null,
@@ -309,7 +306,6 @@ export function K8sBaseList<T extends K8sEntityData>({
 		totalCount,
 		hasFilters,
 		isLoading: showTableLoadingState,
-		missingMetrics: data?.missingMetrics,
 		endTimeBeforeRetention: data?.endTimeBeforeRetention,
 		rawData: data?.rawData,
 	}) || (
@@ -317,7 +313,6 @@ export function K8sBaseList<T extends K8sEntityData>({
 			isError={isError}
 			error={data?.error}
 			isLoading={showTableLoadingState}
-			missingMetrics={data?.missingMetrics}
 			endTimeBeforeRetention={data?.endTimeBeforeRetention}
 		/>
 	);
