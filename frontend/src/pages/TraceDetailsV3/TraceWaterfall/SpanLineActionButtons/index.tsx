@@ -7,12 +7,12 @@ import {
 } from '@signozhq/ui/tooltip';
 import { useCopySpanLink } from 'hooks/trace/useCopySpanLink';
 import { Link } from '@signozhq/icons';
-import { Span } from 'types/api/trace/getTraceV2';
+import { SpanV3 } from 'types/api/trace/getTraceV3';
 
 import styles from './SpanLineActionButtons.module.scss';
 
 export interface SpanLineActionButtonsProps {
-	span: Span;
+	span: SpanV3;
 }
 export default function SpanLineActionButtons({
 	span,

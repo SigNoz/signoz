@@ -2,7 +2,6 @@ import { ReactElement } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { MemoryRouter, Route, Switch, useLocation } from 'react-router-dom';
 import { act, render, screen, waitFor } from '@testing-library/react';
-import { FeatureKeys } from 'constants/features';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { ORG_PREFERENCES } from 'constants/orgPreferences';
 import ROUTES from 'constants/routes';
@@ -1263,80 +1262,6 @@ describe('PrivateRoute', () => {
 		});
 	});
 
-	describe('Get Started Route Redirect', () => {
-		it('should redirect to GET_STARTED_WITH_CLOUD when on GET_STARTED and ONBOARDING_V3 feature flag is active', async () => {
-			renderPrivateRoute({
-				initialRoute: ROUTES.GET_STARTED,
-				appContext: {
-					isLoggedIn: true,
-					featureFlags: [
-						{
-							name: FeatureKeys.ONBOARDING_V3,
-							active: true,
-							usage: 0,
-							usage_limit: -1,
-							route: '',
-						},
-					],
-				},
-			});
-
-			await assertRedirectsTo(ROUTES.GET_STARTED_WITH_CLOUD);
-		});
-
-		it('should not redirect when on GET_STARTED and ONBOARDING_V3 feature flag is inactive', () => {
-			renderPrivateRoute({
-				initialRoute: ROUTES.GET_STARTED,
-				appContext: {
-					isLoggedIn: true,
-					featureFlags: [
-						{
-							name: FeatureKeys.ONBOARDING_V3,
-							active: false,
-							usage: 0,
-							usage_limit: -1,
-							route: '',
-						},
-					],
-				},
-			});
-
-			assertStaysOnRoute(ROUTES.GET_STARTED);
-		});
-
-		it('should not redirect when on GET_STARTED and ONBOARDING_V3 feature flag is not present', () => {
-			renderPrivateRoute({
-				initialRoute: ROUTES.GET_STARTED,
-				appContext: {
-					isLoggedIn: true,
-					featureFlags: [],
-				},
-			});
-
-			assertStaysOnRoute(ROUTES.GET_STARTED);
-		});
-
-		it('should not redirect when on different route even if ONBOARDING_V3 is active', () => {
-			renderPrivateRoute({
-				initialRoute: ROUTES.HOME,
-				appContext: {
-					isLoggedIn: true,
-					featureFlags: [
-						{
-							name: FeatureKeys.ONBOARDING_V3,
-							active: true,
-							usage: 0,
-							usage_limit: -1,
-							route: '',
-						},
-					],
-				},
-			});
-
-			assertStaysOnRoute(ROUTES.HOME);
-		});
-	});
-
 	describe('Loading States', () => {
 		it('should not redirect while license is still being fetched', () => {
 			renderPrivateRoute({
@@ -1496,16 +1421,16 @@ describe('PrivateRoute', () => {
 			await assertRedirectsTo(ROUTES.UN_AUTHORIZED);
 		});
 
-		it('should allow EDITOR to access /get-started route', () => {
+		it('should allow EDITOR to access /get-started-with-signoz-cloud route', () => {
 			renderPrivateRoute({
-				initialRoute: ROUTES.GET_STARTED,
+				initialRoute: ROUTES.GET_STARTED_WITH_CLOUD,
 				appContext: {
 					isLoggedIn: true,
 					user: createMockUser({ role: USER_ROLES.EDITOR as ROLES }),
 				},
 			});
 
-			assertStaysOnRoute(ROUTES.GET_STARTED);
+			assertStaysOnRoute(ROUTES.GET_STARTED_WITH_CLOUD);
 		});
 	});
 

@@ -29,12 +29,21 @@ export function buildObjectString<
 	return `${resource}${ObjectSeparator}${objectId}` as AuthZObject<R>;
 }
 
-export function parsePermission(permission: BrandedPermission): {
+export type ParsedPermissionObject = {
 	relation: AuthZRelation;
 	object: string;
-} {
+};
+
+export function parsePermission(
+	permission: BrandedPermission,
+): ParsedPermissionObject {
 	const [relation, object] = permission.split(PermissionSeparator);
 	return { relation: relation as AuthZRelation, object };
+}
+
+export function formatPermission(permission: BrandedPermission): string {
+	const { relation, object } = parsePermission(permission);
+	return `${relation}:${object}`;
 }
 
 const kindsByType = permissionsType.data.resources.reduce(

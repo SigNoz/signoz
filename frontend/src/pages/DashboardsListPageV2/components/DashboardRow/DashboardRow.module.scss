@@ -62,7 +62,7 @@
 	justify-content: flex-end;
 }
 
-.favBtn {
+.pinBtn {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
@@ -79,16 +79,16 @@
 		color 0.12s;
 }
 
-.row:hover .favBtn {
+.row:hover .pinBtn {
 	color: var(--l3-foreground);
 }
 
-.favBtn:hover {
+.pinBtn:hover {
 	background: var(--l1-background);
 	color: var(--bg-amber-500);
 }
 
-.favBtnOn {
+.pinBtnOn {
 	color: var(--bg-amber-500);
 
 	svg {

@@ -11,14 +11,7 @@ const ROUTES = {
 	TRACE_DETAIL_OLD: '/trace-old/:id',
 	TRACES_EXPLORER: '/traces-explorer',
 	ONBOARDING: '/onboarding',
-	GET_STARTED: '/get-started',
 	GET_STARTED_WITH_CLOUD: '/get-started-with-signoz-cloud',
-	GET_STARTED_APPLICATION_MONITORING: '/get-started/application-monitoring',
-	GET_STARTED_LOGS_MANAGEMENT: '/get-started/logs-management',
-	GET_STARTED_INFRASTRUCTURE_MONITORING:
-		'/get-started/infrastructure-monitoring',
-	GET_STARTED_AWS_MONITORING: '/get-started/aws-monitoring',
-	GET_STARTED_AZURE_MONITORING: '/get-started/azure-monitoring',
 	USAGE_EXPLORER: '/usage-explorer',
 	APPLICATION: '/services',
 	ALL_DASHBOARD: '/dashboard',
@@ -56,7 +49,9 @@ const ROUTES = {
 	TRACE_EXPLORER: '/trace-explorer',
 	BILLING: '/settings/billing',
 	ROLES_SETTINGS: '/settings/roles',
+	ROLE_CREATE: '/settings/roles/new',
 	ROLE_DETAILS: '/settings/roles/:roleId',
+	ROLE_EDIT: '/settings/roles/:roleId/edit',
 	MEMBERS_SETTINGS: '/settings/members',
 	SUPPORT: '/support',
 	LOGS_SAVE_VIEWS: '/logs/saved-views',
@@ -79,6 +74,7 @@ const ROUTES = {
 	METRICS_EXPLORER: '/metrics-explorer/summary',
 	METRICS_EXPLORER_EXPLORER: '/metrics-explorer/explorer',
 	METRICS_EXPLORER_VIEWS: '/metrics-explorer/views',
+	METRICS_EXPLORER_VOLUME_CONTROL: '/metrics-explorer/volume-control',
 	API_MONITORING_BASE: '/api-monitoring',
 	API_MONITORING: '/api-monitoring/explorer',
 	METRICS_EXPLORER_BASE: '/metrics-explorer',
@@ -93,6 +89,8 @@ const ROUTES = {
 	AI_ASSISTANT_BASE: '/ai-assistant',
 	AI_ASSISTANT_ICON_PREVIEW: '/ai-assistant-icon-preview',
 	MCP_SERVER: '/settings/mcp-server',
+	LLM_OBSERVABILITY_BASE: '/llm-observability',
+	LLM_OBSERVABILITY_MODEL_PRICING: '/llm-observability/settings/model-pricing',
 } as const;
 
 export default ROUTES;

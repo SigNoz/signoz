@@ -1,11 +1,11 @@
 import { Spin } from 'antd';
-import { Button } from '@signozhq/ui/button';
-import { Typography } from '@signozhq/ui/typography';
-import { Loader, TriangleAlert } from '@signozhq/icons';
+import { Loader, RotateCw, SquarePlus, TriangleAlert } from '@signozhq/icons';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import { PanelMode } from 'container/DashboardContainer/visualization/panels/types';
+import PanelMessage from 'pages/DashboardPageV2/DashboardContainer/Panels/components/PanelMessage/PanelMessage';
 import type { RenderablePanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelDefinition';
 import type { DashboardPreference } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/rendererProps';
+import { hasRunnableQueries } from 'pages/DashboardPageV2/DashboardContainer/queryV5/buildQueryRangeRequest';
 import type {
 	PanelPagination,
 	PanelQueryData,
@@ -15,13 +15,12 @@ import { panelStatusFromError } from '../PanelStatus/utils';
 import styles from './PanelBody.module.scss';
 
 interface PanelBodyProps {
-	/** Resolved renderer for the panel kind — always present (`Panel` renders the
-	 * unsupported fallback itself when none is registered). */
+	/** Resolved renderer for the panel kind (`Panel` handles the unsupported case). */
 	panelDefinition: RenderablePanelDefinition;
 	panel: DashboardtypesPanelDTO;
 	panelId: string;
 	data: PanelQueryData;
-	isLoading: boolean;
+	isFetching: boolean;
 	error: Error | null;
 	refetch: () => void;
 	onDragSelect: (start: number, end: number) => void;
@@ -36,20 +35,15 @@ interface PanelBodyProps {
 }
 
 /**
- * Renders a panel whose kind has a registered renderer, as an explicit state
- * machine:
- *
- *   error + no data → error message with retry
- *   first load (no data) → loading indicator
- *   otherwise → the kind's renderer (owns its own "No Data" state and keeps
- *               stale data mounted during background refetches)
+ * Renders a panel's body as a state machine: not-configured / error+no-data /
+ * first-load / renderer. The renderer keeps stale data mounted across refetches.
  */
 function PanelBody({
 	panelDefinition,
 	panel,
 	panelId,
 	data,
-	isLoading,
+	isFetching,
 	error,
 	refetch,
 	onDragSelect,
@@ -58,31 +52,44 @@ function PanelBody({
 	searchTerm,
 	pagination,
 }: PanelBodyProps): JSX.Element {
-	// react-query keeps the previous response during background refetches, so
-	// `data.response` presence is the "have something to show" signal — surface a
-	// hard failure only when there's nothing to keep on screen.
+	// react-query keeps the previous response during refetches, so its presence is
+	// the "have something to show" signal — only fail hard when there's nothing.
 	const hasData = !!data.response;
+	const queries = panel.spec.queries;
 
-	if (error && !hasData) {
-		// Parse the API error like the header popover does, so the body shows the
-		// backend message (not the raw axios "status code 4xx").
-		const errorDetail = panelStatusFromError(error);
+	// Not-configured panel: no runnable query, so nothing to error/load on.
+	if (!hasRunnableQueries(queries)) {
 		return (
-			<div className={styles.error} data-testid="panel-error">
-				<TriangleAlert size={20} className={styles.errorIcon} />
-				<Typography.Text className={styles.errorMessage}>
-					{errorDetail?.message || 'Failed to load panel data'}
-				</Typography.Text>
-				<Button variant="outlined" color="secondary" onClick={refetch}>
-					Retry
-				</Button>
-			</div>
+			<PanelMessage
+				icon={<SquarePlus size={18} />}
+				title="Nothing to visualize yet"
+				description="This panel has no query. Add one to start plotting data."
+				data-testid="panel-no-query"
+			/>
 		);
 	}
 
-	// First load only — refetches keep the response populated so the chart stays
-	// mounted instead of blinking.
-	if (isLoading) {
+	if (error && !hasData) {
+		// Parse the API error (as the header popover does) to show the backend
+		// message, not the raw axios "status code 4xx".
+		const errorDetail = panelStatusFromError(error);
+		return (
+			<PanelMessage
+				icon={<TriangleAlert size={18} />}
+				tone="danger"
+				title="Couldn’t load panel data"
+				description={errorDetail?.message || 'Something went wrong while fetching.'}
+				action={{
+					label: 'Retry',
+					onClick: refetch,
+					icon: <RotateCw size={14} />,
+				}}
+				data-testid="panel-error"
+			/>
+		);
+	}
+
+	if (isFetching) {
 		return (
 			<div className={styles.body} data-testid="panel-loading">
 				<Spin indicator={<Loader size={14} className="animate-spin" />} />
@@ -96,8 +103,9 @@ function PanelBody({
 				panelId={panelId}
 				panel={panel}
 				data={data}
-				isLoading={isLoading}
+				isFetching={isFetching}
 				error={error}
+				refetch={refetch}
 				onDragSelect={onDragSelect}
 				panelMode={panelMode}
 				enableDrillDown={false}

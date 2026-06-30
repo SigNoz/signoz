@@ -82,7 +82,7 @@ export function usePanelQuery({
 	// V1 parity: a list query with an explicit `limit` shows without a server pager; without
 	// one it pages server-side at a user-selectable size.
 	const hasExplicitLimit = useMemo(
-		() => !!getBuilderQueries(queries ?? [])[0]?.limit,
+		() => !!getBuilderQueries(queries)[0]?.limit,
 		[queries],
 	);
 	const isPaginated = panelType === PANEL_TYPES.LIST && !hasExplicitLimit;
@@ -135,7 +135,7 @@ export function usePanelQuery({
 	const requestPayload = useMemo(
 		() =>
 			buildQueryRangeRequest({
-				queries: queries ?? [],
+				queries,
 				panelType,
 				startMs,
 				endMs,
@@ -145,9 +145,9 @@ export function usePanelQuery({
 		[queries, panelType, startMs, endMs, fillGaps, isPaginated, offset, pageSize],
 	);
 
-	const legendMap = useMemo(() => extractLegendMap(queries ?? []), [queries]);
+	const legendMap = useMemo(() => extractLegendMap(queries), [queries]);
 
-	const runnable = useMemo(() => hasRunnableQueries(queries ?? []), [queries]);
+	const runnable = useMemo(() => hasRunnableQueries(queries), [queries]);
 
 	const queryKey = useMemo(
 		() => [

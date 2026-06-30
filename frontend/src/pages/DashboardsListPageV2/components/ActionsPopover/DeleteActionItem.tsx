@@ -78,6 +78,11 @@ function DeleteActionItem({
 					runDelete(undefined, { onSettled: () => destroy() });
 				},
 			},
+			cancelButtonProps: {
+				onClick: (e): void => {
+					e.stopPropagation();
+				},
+			},
 			centered: true,
 		});
 	}, [modal, dashboardName, runDelete]);
