@@ -7,9 +7,11 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/modules/llmpricingrule"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/llmpricingruletypes"
 	"github.com/SigNoz/signoz/pkg/types/opamptypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -23,10 +25,11 @@ const unmappedModelsLookback = time.Hour
 type module struct {
 	store   llmpricingruletypes.Store
 	querier querier.Querier
+	flagger flagger.Flagger
 }
 
-func NewModule(store llmpricingruletypes.Store, querier querier.Querier) llmpricingrule.Module {
-	return &module{store: store, querier: querier}
+func NewModule(store llmpricingruletypes.Store, flagger flagger.Flagger, querier querier.Querier) llmpricingrule.Module {
+	return &module{store: store, flagger: flagger}
 }
 
 func (module *module) List(ctx context.Context, orgID valuer.UUID, offset, limit int, search string, isOverride *bool) ([]*llmpricingruletypes.LLMPricingRule, int, error) {
@@ -118,6 +121,16 @@ func (module *module) AgentFeatureType() agentConf.AgentFeatureType {
 // signozllmpricing processor config for deployment to OTel collectors via OpAMP.
 func (module *module) RecommendAgentConfig(orgID valuer.UUID, currentConfYaml []byte, configVersion *opamptypes.AgentConfigVersion) ([]byte, string, error) {
 	ctx := context.Background()
+
+	// Skip the llm pricing processor unless AI observability is enabled for the org.
+	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
+	enabled, err := module.flagger.Boolean(ctx, flagger.FeatureEnableAIObservability, evalCtx)
+	if err != nil {
+		return nil, "", err
+	}
+	if !enabled {
+		return currentConfYaml, "", nil
+	}
 
 	rules, err := module.getEnabledRules(ctx, orgID)
 	if err != nil {

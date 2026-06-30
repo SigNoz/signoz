@@ -48,12 +48,6 @@ import Noz from 'components/Noz/Noz';
 import { NOZ_TOOLTIP_TITLE } from 'components/Noz/Noz.constants';
 
 export const getStartedMenuItem = {
-	key: ROUTES.GET_STARTED,
-	label: 'Get Started',
-	icon: <Rocket size={16} style={{ transform: 'rotate(45deg)' }} />,
-};
-
-export const getStartedV3MenuItem = {
 	key: ROUTES.GET_STARTED_WITH_CLOUD,
 	label: 'Get Started',
 	icon: <Rocket size={16} style={{ transform: 'rotate(45deg)' }} />,
@@ -66,7 +60,7 @@ export const homeMenuItem = {
 };
 
 export const inviteMemberMenuItem = {
-	key: `${ROUTES.ORG_SETTINGS}#invite-team-members`,
+	key: `${ROUTES.MEMBERS_SETTINGS}?invite=true`,
 	label: 'Invite Team Member',
 	icon: <UserPlus size={16} />,
 };

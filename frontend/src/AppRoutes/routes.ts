@@ -11,6 +11,7 @@ import {
 	ChannelsNew,
 	CreateNewAlerts,
 	DashboardPage,
+	DashboardPanelEditorPage,
 	DashboardsListPage,
 	DashboardWidget,
 	EditRulesPage,
@@ -22,6 +23,8 @@ import {
 	IntegrationsDetailsPage,
 	LicensePage,
 	ListAllALertsPage,
+	LLMObservabilityPage,
+	LLMObservabilityModelPricingPage,
 	LiveLogs,
 	Login,
 	Logs,
@@ -32,7 +35,6 @@ import {
 	MeterExplorerPage,
 	MetricsExplorer,
 	OldLogsExplorer,
-	Onboarding,
 	OnboardingV2,
 	OrgOnboarding,
 	PasswordReset,
@@ -68,13 +70,6 @@ const routes: AppRoutes[] = [
 		exact: true,
 		isPrivate: false,
 		key: 'SIGN_UP',
-	},
-	{
-		path: ROUTES.GET_STARTED,
-		exact: false,
-		component: Onboarding,
-		isPrivate: true,
-		key: 'GET_STARTED',
 	},
 	{
 		path: ROUTES.GET_STARTED_WITH_CLOUD,
@@ -195,6 +190,13 @@ const routes: AppRoutes[] = [
 		component: DashboardWidget,
 		isPrivate: true,
 		key: 'DASHBOARD_WIDGET',
+	},
+	{
+		path: ROUTES.DASHBOARD_PANEL_EDITOR,
+		exact: true,
+		component: DashboardPanelEditorPage,
+		isPrivate: true,
+		key: 'DASHBOARD_PANEL_EDITOR',
 	},
 	{
 		path: ROUTES.EDIT_ALERTS,
@@ -469,6 +471,13 @@ const routes: AppRoutes[] = [
 		key: 'METRICS_EXPLORER_VIEWS',
 		isPrivate: true,
 	},
+	{
+		path: ROUTES.METRICS_EXPLORER_VOLUME_CONTROL,
+		exact: true,
+		component: MetricsExplorer,
+		key: 'METRICS_EXPLORER_VOLUME_CONTROL',
+		isPrivate: true,
+	},
 
 	{
 		path: ROUTES.METER,
@@ -503,6 +512,20 @@ const routes: AppRoutes[] = [
 		exact: true,
 		component: AIAssistantPage,
 		key: 'AI_ASSISTANT',
+		isPrivate: true,
+	},
+	{
+		path: ROUTES.LLM_OBSERVABILITY_BASE,
+		exact: true,
+		component: LLMObservabilityPage,
+		key: 'LLM_OBSERVABILITY_BASE',
+		isPrivate: true,
+	},
+	{
+		path: ROUTES.LLM_OBSERVABILITY_MODEL_PRICING,
+		exact: true,
+		component: LLMObservabilityModelPricingPage,
+		key: 'LLM_OBSERVABILITY_MODEL_PRICING',
 		isPrivate: true,
 	},
 ];
