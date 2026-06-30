@@ -15,7 +15,7 @@ import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 import TagKeyValueInput from 'components/TagKeyValueInput/TagKeyValueInput';
 
-import { keyValueStringsToTags } from '../../utils';
+import { keyValueStringsToTags } from '../../utils/helpers';
 
 import styles from './NewDashboardModal.module.scss';
 
@@ -73,7 +73,7 @@ function BlankDashboardPanel({ onClose }: Props): JSX.Element {
 			<div className={styles.form}>
 				<div className={styles.field}>
 					<Typography.Text className={styles.label}>
-						Title <span className={styles.required}>*</span>
+						Title <Typography.Text className={styles.required}>*</Typography.Text>
 					</Typography.Text>
 					<Input
 						value={name}

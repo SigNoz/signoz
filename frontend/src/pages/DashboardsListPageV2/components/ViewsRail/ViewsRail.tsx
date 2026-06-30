@@ -7,7 +7,7 @@ import { Bookmark, CircleAlert, Plus, Search, Trash2 } from '@signozhq/icons';
 import cx from 'classnames';
 
 import type { SavedView } from '../../types';
-import { type BuiltinView } from '../../views';
+import { type BuiltinView } from '../../utils/views';
 import SaveViewPopover from './SaveViewPopover';
 
 import styles from './ViewsRail.module.scss';
@@ -75,11 +75,8 @@ function ViewsRail({
 			const { destroy } = modal.confirm({
 				title: (
 					<Typography.Title level={5}>
-						Delete the
-						<span style={{ color: 'var(--danger-background)', fontWeight: 500 }}>
-							{' '}
-							{label}{' '}
-						</span>
+						Delete the{' '}
+						<Typography.Text className={styles.deleteName}>{label}</Typography.Text>{' '}
 						view?
 					</Typography.Title>
 				),
@@ -118,12 +115,10 @@ function ViewsRail({
 					onClick={(): void => onSelect(row.id)}
 					testId={`dashboards-view-${row.id}`}
 				>
-					<span className={styles.itemIcon}>
-						<Icon size={14} />
-					</span>
-					<span className={styles.itemLabel}>{row.label}</span>
+					<Icon size={16} className={styles.itemIcon} />
+					<Typography.Text className={styles.itemLabel}>{row.label}</Typography.Text>
 					{active && isModified && (
-						<span className={styles.dirtyDot} title="Unsaved changes" />
+						<div className={styles.dirtyDot} title="Unsaved changes" />
 					)}
 				</Button>
 				{row.deletable && (
@@ -168,7 +163,7 @@ function ViewsRail({
 			<div className={styles.search}>
 				<Input
 					value={query}
-					placeholder="Search views"
+					placeholder="Filter views by name"
 					prefix={<Search size={12} />}
 					testId="dashboards-view-search"
 					onChange={(e: ChangeEvent<HTMLInputElement>): void =>
@@ -198,7 +193,9 @@ function ViewsRail({
 					<>
 						<div className={cx(styles.groupLabel, styles.groupLabelSpaced)}>
 							My views
-							<span className={styles.groupCount}>{customViews.length}</span>
+							<Typography.Text className={styles.groupCount}>
+								{customViews.length}
+							</Typography.Text>
 						</div>
 						{customViewsLoading ? (
 							<div className={styles.empty}>Loading views…</div>

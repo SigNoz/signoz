@@ -2,6 +2,7 @@ import { type ChangeEvent, type ReactNode, useEffect, useState } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import { PopoverSimple } from '@signozhq/ui/popover';
+import { Typography } from '@signozhq/ui/typography';
 
 import styles from './ViewsRail.module.scss';
 
@@ -44,7 +45,7 @@ function SaveViewPopover({
 		>
 			<div className={styles.savePopover}>
 				<div className={styles.saveTitle}>Save as view</div>
-				<span className={styles.saveLabel}>Name</span>
+				<Typography.Text className={styles.saveLabel}>Name</Typography.Text>
 				<Input
 					value={name}
 					autoFocus

@@ -1,4 +1,5 @@
 import { type ChangeEvent, type KeyboardEvent, useState } from 'react';
+import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import { Typography } from '@signozhq/ui/typography';
 import { X } from '@signozhq/icons';
@@ -120,22 +121,25 @@ function TagKeyValueInput({
 						/>
 					) : (
 						<div key={tag} className={styles.tag} data-testid={`${testId}-chip`}>
-							<button
-								type="button"
+							<Button
+								variant="ghost"
+								color="secondary"
 								className={styles.tagLabel}
 								title="Double-click to edit"
 								onDoubleClick={(): void => startEdit(index)}
 							>
 								{tag}
-							</button>
-							<button
-								type="button"
+							</Button>
+							<Button
+								variant="ghost"
+								color="secondary"
+								size="icon"
 								className={styles.remove}
 								aria-label={`Remove ${tag}`}
 								onClick={(): void => removeTag(tag)}
 							>
 								<X size={12} />
-							</button>
+							</Button>
 						</div>
 					),
 				)}

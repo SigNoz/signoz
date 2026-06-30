@@ -14,8 +14,8 @@ import { isModifierKeyPressed } from 'utils/app';
 
 import { usePinDashboard } from '../../hooks/usePinDashboard';
 import { useDashboardViewsStore } from '../../store/useDashboardViewsStore';
-import type { DashboardListItem } from '../../utils';
-import { lastUpdatedLabel, tagsToStrings } from '../../utils';
+import type { DashboardListItem } from '../../utils/helpers';
+import { lastUpdatedLabel, tagsToStrings } from '../../utils/helpers';
 import ActionsPopover from '../ActionsPopover/ActionsPopover';
 
 import styles from './DashboardRow.module.scss';
@@ -104,7 +104,7 @@ function DashboardRow({
 							))}
 							{tags.length > 3 && (
 								<Badge className={styles.tag} key={tags[3]}>
-									+ <span> {tags.length - 3} </span>
+									+ <Typography.Text> {tags.length - 3} </Typography.Text>
 								</Badge>
 							)}
 						</div>

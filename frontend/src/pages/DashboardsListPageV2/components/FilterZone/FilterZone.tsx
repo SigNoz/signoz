@@ -6,9 +6,10 @@ import {
 	useState,
 } from 'react';
 import { Button } from '@signozhq/ui/button';
+import { Typography } from '@signozhq/ui/typography';
 import { X } from '@signozhq/icons';
 
-import { buildSuggestionKeys } from '../../dslSuggestions';
+import { buildSuggestionKeys } from '../../utils/dslSuggestions';
 import type { SelectedTag, UpdatedWindow } from '../../types';
 import SearchBar from '../SearchBar/SearchBar';
 import FilterChips, { type CreatorOption } from './FilterChips';
@@ -86,7 +87,7 @@ function FilterZone({
 				{rightSlot}
 			</div>
 			<div className={styles.filtersRow}>
-				<span className={styles.filtersLabel}>Filters</span>
+				<Typography.Text className={styles.filtersLabel}>Filters</Typography.Text>
 				<FilterChips
 					createdBy={createdBy}
 					updated={updated}

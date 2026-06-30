@@ -34,37 +34,37 @@
 }
 
 .tagLabel {
+	--button-height: auto;
+	--button-padding: 0;
+	--button-gap: 0;
+	--button-variant-ghost-background-color: transparent;
+	--button-variant-ghost-hover-background-color: transparent;
+	--button-variant-ghost-color: inherit;
+	--button-variant-ghost-hover-color: inherit;
 	overflow: hidden;
 	max-width: 200px;
-	padding: 0;
-	border: none;
-	background: transparent;
-	color: inherit;
-	font: inherit;
+	font-size: 13px;
+	font-weight: var(--font-weight-medium);
 	text-overflow: ellipsis;
 	white-space: nowrap;
 	cursor: text;
 }
 
 .remove {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
+	--button-height: 16px;
+	--button-padding: 0;
+	--button-border-radius: 50%;
+	--button-variant-ghost-background-color: transparent;
+	--button-variant-ghost-color: inherit;
+	--button-variant-ghost-hover-background-color: color-mix(
+		in srgb,
+		var(--bg-sienna-500) 24%,
+		transparent
+	);
+	--button-variant-ghost-hover-color: var(--bg-sienna-400);
 	width: 16px;
-	height: 16px;
+	min-width: 16px;
 	flex: none;
-	padding: 0;
-	border: none;
-	border-radius: 50%;
-	background: transparent;
-	color: inherit;
-	cursor: pointer;
-	opacity: 0.7;
-	transition: opacity 0.12s;
-
-	&:hover {
-		opacity: 1;
-	}
 }
 
 .input {

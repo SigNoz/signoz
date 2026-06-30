@@ -171,7 +171,7 @@ function ListHeader({
 							)
 						}
 					>
-						<span className={styles.sortPrefix}>Sort:</span>{' '}
+						<Typography.Text className={styles.sortPrefix}>Sort:</Typography.Text>{' '}
 						{SORT_LABELS[sortColumn]}{' '}
 					</Button>
 				</Popover>

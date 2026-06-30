@@ -77,6 +77,11 @@
 	padding: 1px 6px;
 }
 
+.deleteName {
+	color: var(--danger-background);
+	font-weight: var(--font-weight-medium);
+}
+
 .row {
 	position: relative;
 	display: flex;
@@ -122,7 +127,7 @@
 	flex: 1;
 	min-width: 0;
 	width: 100%;
-	font-size: var(--font-size-sm);
+	font-size: var(--font-size-base);
 }
 
 .row:hover .item,
@@ -140,7 +145,6 @@
 }
 
 .itemLabel {
-	flex: 1;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
