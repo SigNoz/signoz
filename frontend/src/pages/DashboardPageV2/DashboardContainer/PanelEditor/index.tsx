@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import {
 	ResizableHandle,
 	ResizablePanel,
@@ -6,11 +6,12 @@ import {
 	useDefaultLayout,
 } from '@signozhq/ui/resizable';
 import { toast } from '@signozhq/ui/sonner';
-import type {
-	DashboardtypesPanelDTO,
+import {
+	type DashboardtypesPanelDTO,
 	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { getPanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Panels/registry';
 import {
 	PANEL_KIND_TO_PANEL_TYPE,
@@ -18,6 +19,7 @@ import {
 } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelKind';
 import { getBuilderQueries } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/getBuilderQueries';
 
+import { getExecStats } from '../queryV5/v5ResponseData';
 import { usePanelInteractions } from '../PanelsAndSectionsLayout/Panel/hooks/usePanelInteractions';
 import ConfigPane from './ConfigPane/ConfigPane';
 import Header from './Header/Header';
@@ -29,6 +31,8 @@ import { usePanelQuery } from '../hooks/usePanelQuery';
 import { usePanelEditorDraft } from './hooks/usePanelEditorDraft';
 import { usePanelEditorQuerySync } from './hooks/usePanelEditorQuerySync';
 import { usePanelEditorSave } from './hooks/usePanelEditorSave';
+import { usePanelTypeSwitch } from './hooks/usePanelTypeSwitch';
+import { useSeedNewListColumns } from './hooks/useSeedNewListColumns';
 import { useSwitchColumnsOnSignalChange } from './hooks/useSwitchColumnsOnSignalChange';
 import { useTableColumns } from './hooks/useTableColumns';
 import ListColumnsEditor from './ListColumnsEditor/ListColumnsEditor';
@@ -39,6 +43,10 @@ interface PanelEditorContainerProps {
 	dashboardId: string;
 	panelId: string;
 	panel: DashboardtypesPanelDTO;
+	/** Creating a new panel (seeded default) vs editing an existing one. */
+	isNew?: boolean;
+	/** Target section for a new panel; falls back to the last/new section. */
+	layoutIndex?: number;
 	/** Leave the editor (navigate back to the dashboard) without saving. */
 	onClose: () => void;
 	/** Called after a successful save — navigates back to the dashboard. */
@@ -46,19 +54,30 @@ interface PanelEditorContainerProps {
 }
 
 /**
- * V2 panel editor page body (rendered full-page by `PanelEditorPage`): a resizable
- * split with the live preview + query builder on the left and the config pane on the
- * right. Owns the draft state and the save round-trip.
+ * V2 panel editor page body: a resizable split with the live preview + query
+ * builder on the left and the config pane on the right. Owns the draft state and
+ * the save round-trip.
  */
 function PanelEditorContainer({
 	dashboardId,
 	panelId,
 	panel,
+	isNew = false,
+	layoutIndex,
 	onClose,
 	onSaved,
 }: PanelEditorContainerProps): JSX.Element {
 	const { draft, spec, setSpec, isSpecDirty } = usePanelEditorDraft(panel);
-	const { save, isSaving } = usePanelEditorSave({ dashboardId, panelId });
+	// Live query type (the selected tab) — the type switcher disables kinds that can't be
+	// authored in it. Read from the provider, not the spec: a new panel's spec carries no
+	// query until staged, so the spec would lag the tab.
+	const { currentQuery } = useQueryBuilder();
+	const { save, isSaving } = usePanelEditorSave({
+		dashboardId,
+		panelId,
+		isNew,
+		layoutIndex,
+	});
 	const { defaultLayout, onLayoutChanged } = useDefaultLayout({
 		id: 'panel-editor-v2',
 		storage: layoutStorage,
@@ -79,50 +98,55 @@ function PanelEditorContainer({
 		PANEL_TYPES.TIME_SERIES;
 
 	// One shared query result for the whole editor; the preview renders it.
-	const panelDef = getPanelDefinition(draft.spec.plugin.kind);
-	const {
-		data,
-		isLoading,
-		isFetching,
-		error,
-		cancelQuery,
-		refetch,
-		pagination,
-	} = usePanelQuery({
-		panel: draft,
-		panelId,
-		enabled: !!panelDef,
-	});
+	const panelDefinition = getPanelDefinition(draft.spec.plugin.kind);
+	const { data, isFetching, error, cancelQuery, refetch, pagination } =
+		usePanelQuery({
+			panel: draft,
+			panelId,
+			enabled: !!panelDefinition,
+		});
 
-	// Seed the shared query builder from the draft and expose the Stage-&-Run action.
+	// A new panel's default signal (its kind's first supported) — seeds the query and columns.
+	const defaultSignal = panelDefinition.supportedSignals[0];
+
 	const { runQuery, isQueryDirty, buildSaveSpec } = usePanelEditorQuerySync({
 		draft,
 		panelType,
 		setSpec,
 		refetch,
+		// New panel's seed query is the builder default, not a real saved query —
+		// always serialize it on save.
+		alwaysSerializeQuery: isNew,
+		signal: defaultSignal,
 	});
 
+	// Switch the panel's visualization kind in place (reversible per session).
+	const { onChangePanelKind } = usePanelTypeSwitch({ spec, panelType, setSpec });
+
 	// Spec and query dirtiness are tracked independently so query re-serialization
-	// never false-dirties.
-	const isDirty = isSpecDirty || isQueryDirty;
-	// The List panel edits its columns below the query builder (V1 parity), so the
-	// editor container resolves the committed query's signal once and shares it
-	// with both the columns control and the datasource-switch effect below.
+	// never false-dirties. A new panel is always savable (you're creating it).
+	const isDirty = isNew || isSpecDirty || isQueryDirty;
 	const isListPanel = fullKind === 'signoz/ListPanel';
 	// The builder-query `signal` literal matches the TelemetrytypesSignalDTO enum
 	// values; cast at this boundary (as ConfigPane does) so the columns editor's
 	// field-key lookup is typed.
-	const listSignal = getBuilderQueries(spec.queries)[0]?.signal as
-		| TelemetrytypesSignalDTO
-		| undefined;
+	const listSignal =
+		(getBuilderQueries(spec.queries)[0]?.signal as TelemetrytypesSignalDTO) ||
+		TelemetrytypesSignalDTO.logs;
 
-	// When the List panel's datasource changes, swap its columns to the new
-	// source's defaults (V1 kept a per-datasource field list; V2 has one
-	// `selectFields`). Driven by the committed query's signal, so it lives in the
-	// editor container alongside the query sync — ConfigPane stays presentational.
+	// Swap the List panel's columns to the new signal's defaults on signal change
+	// (V1 had a per-signal field list; V2 has one `selectFields`).
 	useSwitchColumnsOnSignalChange({
 		enabled: isListPanel,
 		signal: listSignal,
+		spec,
+		onChangeSpec: setSpec,
+	});
+
+	// Seed a new List panel's default columns so the Columns control isn't empty.
+	useSeedNewListColumns({
+		enabled: isNew && isListPanel,
+		signal: defaultSignal,
 		spec,
 		onChangeSpec: setSpec,
 	});
@@ -131,6 +155,14 @@ function PanelEditorContainer({
 	const { onDragSelect } = usePanelInteractions();
 	const legendSeries = useLegendSeries(draft, data);
 	const tableColumns = useTableColumns(draft, data);
+
+	// Smallest query step interval (seconds) — the floor for the span-gaps
+	// threshold. Undefined until results carry step metadata.
+	const stepInterval = useMemo((): number | undefined => {
+		const intervals = getExecStats(data.response)?.stepIntervals;
+		const values = intervals ? Object.values(intervals) : [];
+		return values.length ? Math.min(...values) : undefined;
+	}, [data.response]);
 
 	const onSave = useCallback(async (): Promise<void> => {
 		try {
@@ -166,22 +198,25 @@ function PanelEditorContainer({
 							onLayoutChanged={onMainLayoutChanged}
 						>
 							<ResizablePanel minSize="55%" maxSize="65%" defaultSize="60%">
-								<PreviewPane
-									panelId={panelId}
-									panel={draft}
-									panelDef={panelDef}
-									data={data}
-									isLoading={isLoading}
-									error={error}
-									refetch={refetch}
-									onDragSelect={onDragSelect}
-									pagination={pagination}
-								/>
+								{panelDefinition && (
+									<PreviewPane
+										panelId={panelId}
+										panel={draft}
+										panelDefinition={panelDefinition}
+										data={data}
+										isFetching={isFetching}
+										error={error}
+										refetch={refetch}
+										onDragSelect={onDragSelect}
+										pagination={pagination}
+									/>
+								)}
 							</ResizablePanel>
 							<ResizableHandle withHandle className={styles.handle} />
 							<ResizablePanel minSize="35%" maxSize="45%" defaultSize="40%">
 								<PanelEditorQueryBuilder
-									panelType={panelType}
+									panelKind={fullKind}
+									signal={listSignal}
 									isLoadingQueries={isFetching}
 									onStageRunQuery={runQuery}
 									onCancelQuery={cancelQuery}
@@ -210,8 +245,11 @@ function PanelEditorContainer({
 						panelKind={draft.spec.plugin.kind}
 						spec={spec}
 						onChangeSpec={setSpec}
+						onChangePanelKind={onChangePanelKind}
+						queryType={currentQuery.queryType}
 						legendSeries={legendSeries}
 						tableColumns={tableColumns}
+						stepInterval={stepInterval}
 					/>
 				</ResizablePanel>
 			</ResizablePanelGroup>

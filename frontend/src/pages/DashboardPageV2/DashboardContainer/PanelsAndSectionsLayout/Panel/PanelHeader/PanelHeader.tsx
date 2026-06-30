@@ -1,7 +1,7 @@
-import { useMemo, type ReactNode } from 'react';
+import { useMemo } from 'react';
+import { Info, Loader } from '@signozhq/icons';
 import { Typography } from '@signozhq/ui/typography';
 import type { Querybuildertypesv5QueryWarnDataDTO as WarningDTO } from 'api/generated/services/sigNoz.schemas';
-import { Loader } from '@signozhq/icons';
 import cx from 'classnames';
 import type { PanelTimePreferenceLabel } from 'pages/DashboardPageV2/DashboardContainer/hooks/resolvePanelTimeWindow';
 
@@ -18,9 +18,10 @@ import { PanelKind } from 'pages/DashboardPageV2/DashboardContainer/Panels/types
 import { TooltipSimple } from '@signozhq/ui/tooltip';
 
 interface PanelHeaderProps {
-	title: ReactNode;
+	name: string;
+	description?: string;
 	panelId: string;
-	/** Full plugin kind — drives kind-gated menu actions; */
+	/** Full plugin kind — drives kind-gated menu actions. */
 	panelKind: PanelKind;
 	/** Background refresh in flight — shows a spinner without blinking the chart. */
 	isFetching: boolean;
@@ -38,11 +39,18 @@ interface PanelHeaderProps {
 	searchTerm?: string;
 	/** Pushes a new search term up to the shell. */
 	onSearchChange?: (value: string) => void;
+	/**
+	 * Suppress the actions menu entirely — for the editor preview, where
+	 * panel-level actions don't apply (some survive their gates without
+	 * `panelActions`, so omitting it isn't enough).
+	 */
+	hideActions?: boolean;
 }
 
 /** Panel chrome: drag handle, title, refetch + status indicators, actions. */
 function PanelHeader({
-	title,
+	name,
+	description,
 	panelId,
 	panelKind,
 	isFetching,
@@ -53,6 +61,7 @@ function PanelHeader({
 	searchable,
 	searchTerm = '',
 	onSearchChange,
+	hideActions,
 }: PanelHeaderProps): JSX.Element {
 	const errorDetail = useMemo(() => panelStatusFromError(error), [error]);
 
@@ -64,7 +73,20 @@ function PanelHeader({
 	return (
 		<div className={cx(styles.header, 'panel-drag-handle')}>
 			<div className={styles.headerLeft}>
-				<Typography.Text className={styles.headerTitle}>{title}</Typography.Text>
+				<Typography.Text className={styles.headerTitle}>{name}</Typography.Text>
+				{description && (
+					<TooltipSimple
+						title={description}
+						arrow
+						tooltipContentProps={{ className: styles.descriptionTooltip }}
+					>
+						<Info
+							className={styles.headerInfoIcon}
+							size={14}
+							data-testid="panel-header-info-icon"
+						/>
+					</TooltipSimple>
+				)}
 				{isFetching && (
 					<Loader
 						size={12}
@@ -73,8 +95,8 @@ function PanelHeader({
 					/>
 				)}
 			</div>
-			{/* `panel-no-drag` opts this region out of the grid drag handle so the
-			    actions menu is clickable instead of starting a panel drag. */}
+			{/* `panel-no-drag` opts this region out of the drag handle so clicks hit
+			    the controls instead of starting a panel drag. */}
 			<div className={cx('panel-no-drag', styles.actions)}>
 				{searchable && onSearchChange && (
 					<PanelHeaderSearch value={searchTerm ?? ''} onChange={onSearchChange} />
@@ -91,11 +113,13 @@ function PanelHeader({
 					<PanelStatusPopover variant="warning" detail={warningDetail} />
 				)}
 				{/* Renders nothing when no action survives its gates (kind/role/context). */}
-				<PanelActionsMenu
-					panelId={panelId}
-					panelKind={panelKind}
-					panelActions={panelActions}
-				/>
+				{!hideActions && (
+					<PanelActionsMenu
+						panelId={panelId}
+						panelKind={panelKind}
+						panelActions={panelActions}
+					/>
+				)}
 			</div>
 		</div>
 	);

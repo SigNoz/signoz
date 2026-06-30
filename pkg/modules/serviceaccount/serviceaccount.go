@@ -13,7 +13,7 @@ import (
 
 type Getter interface {
 	// OnBeforeRoleDelete checks if any service accounts are assigned to the role and rejects deletion if so.
-	OnBeforeRoleDelete(ctx context.Context, orgID valuer.UUID, roleID valuer.UUID) error
+	OnBeforeRoleDelete(ctx context.Context, orgID valuer.UUID, roleID valuer.UUID, roleName string) error
 }
 
 type Module interface {

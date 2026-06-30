@@ -1,11 +1,16 @@
 import type {
 	DashboardtypesQueryDTO,
+	Querybuildertypesv5BuilderQuerySpecDTO,
+	Querybuildertypesv5ClickHouseQueryDTO,
 	Querybuildertypesv5CompositeQueryDTO,
+	Querybuildertypesv5PromQueryDTO,
 	Querybuildertypesv5QueryEnvelopeDTO,
 	Querybuildertypesv5QueryRangeRequestDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import {
-	Querybuildertypesv5QueryTypeDTO,
+	Querybuildertypesv5QueryEnvelopeBuilderDTOType,
+	Querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType,
+	Querybuildertypesv5QueryEnvelopePromQLDTOType,
 	Querybuildertypesv5RequestTypeDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -54,7 +59,10 @@ export function toQueryEnvelopes(
 	queries: DashboardtypesQueryDTO[],
 ): Querybuildertypesv5QueryEnvelopeDTO[] {
 	// Backend invariant: panel.queries.length === 1. Only the first entry is consumed.
-	const plugin = queries[0]?.spec?.plugin;
+	if (queries.length === 0) {
+		return [];
+	}
+	const plugin = queries[0].spec.plugin;
 	if (!plugin?.spec) {
 		return [];
 	}
@@ -63,19 +71,26 @@ export function toQueryEnvelopes(
 		case 'signoz/CompositeQuery':
 			return (plugin.spec as Querybuildertypesv5CompositeQueryDTO).queries ?? [];
 		case 'signoz/BuilderQuery':
+			// plugin.spec is the (un-narrowed) plugin-spec union, so pick the builder
+			// spec out of it — mirroring the CompositeQuery case above.
 			return [
 				{
-					type: Querybuildertypesv5QueryTypeDTO.builder_query,
-					spec: plugin.spec,
+					type: Querybuildertypesv5QueryEnvelopeBuilderDTOType.builder_query,
+					spec: plugin.spec as Querybuildertypesv5BuilderQuerySpecDTO,
 				},
 			];
 		case 'signoz/PromQLQuery':
-			return [{ type: Querybuildertypesv5QueryTypeDTO.promql, spec: plugin.spec }];
+			return [
+				{
+					type: Querybuildertypesv5QueryEnvelopePromQLDTOType.promql,
+					spec: plugin.spec as Querybuildertypesv5PromQueryDTO,
+				},
+			];
 		case 'signoz/ClickHouseSQL':
 			return [
 				{
-					type: Querybuildertypesv5QueryTypeDTO.clickhouse_sql,
-					spec: plugin.spec,
+					type: Querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType.clickhouse_sql,
+					spec: plugin.spec as Querybuildertypesv5ClickHouseQueryDTO,
 				},
 			];
 		case 'signoz/Formula':
@@ -131,14 +146,22 @@ function withBarStepInterval(
 ): Querybuildertypesv5QueryEnvelopeDTO[] {
 	const stepInterval = getBarStepIntervalSeconds(startMs, endMs);
 	return envelopes.map((envelope) => {
-		if (envelope.type !== Querybuildertypesv5QueryTypeDTO.builder_query) {
+		if (
+			envelope.type !==
+			Querybuildertypesv5QueryEnvelopeBuilderDTOType.builder_query
+		) {
 			return envelope;
 		}
-		const spec = envelope.spec as QuerySpecView;
-		if (spec.stepInterval) {
+		if (envelope.spec?.stepInterval) {
 			return envelope;
 		}
-		return { ...envelope, spec: { ...spec, stepInterval } };
+		return {
+			...envelope,
+			spec: {
+				...envelope.spec,
+				stepInterval,
+			} as Querybuildertypesv5BuilderQuerySpecDTO,
+		};
 	});
 }
 
@@ -151,12 +174,19 @@ function withPagination(
 	{ offset, limit }: { offset: number; limit: number },
 ): Querybuildertypesv5QueryEnvelopeDTO[] {
 	return envelopes.map((envelope) => {
-		if (envelope.type !== Querybuildertypesv5QueryTypeDTO.builder_query) {
+		if (
+			envelope.type !==
+			Querybuildertypesv5QueryEnvelopeBuilderDTOType.builder_query
+		) {
 			return envelope;
 		}
 		return {
 			...envelope,
-			spec: { ...(envelope.spec as Record<string, unknown>), offset, limit },
+			spec: {
+				...envelope.spec,
+				offset,
+				limit,
+			} as Querybuildertypesv5BuilderQuerySpecDTO,
 		};
 	});
 }
@@ -235,7 +265,8 @@ export function hasRunnableQueries(queries: DashboardtypesQueryDTO[]): boolean {
 	const metricsSpecs = envelopes
 		.filter(
 			(envelope) =>
-				envelope.type === Querybuildertypesv5QueryTypeDTO.builder_query,
+				envelope.type ===
+				Querybuildertypesv5QueryEnvelopeBuilderDTOType.builder_query,
 		)
 		.map((envelope) => envelope.spec as QuerySpecView)
 		.filter((spec) => spec.signal === 'metrics');

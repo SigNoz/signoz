@@ -51,7 +51,7 @@ func (p *PanelPlugin) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	p.Kind = PanelPluginKind(kind)
-	p.Spec = spec
+	p.Spec = *spec
 	return nil
 }
 
@@ -110,7 +110,7 @@ func (p *QueryPlugin) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	p.Kind = QueryPluginKind(kind)
-	p.Spec = spec
+	p.Spec = *spec
 	return nil
 }
 
@@ -165,7 +165,7 @@ func (p *VariablePlugin) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	p.Kind = VariablePluginKind(kind)
-	p.Spec = spec
+	p.Spec = *spec
 	return nil
 }
 
@@ -197,7 +197,7 @@ type DatasourcePlugin struct {
 
 func (DatasourcePlugin) PrepareJSONSchema(s *jsonschema.Schema) error {
 	return markDiscriminator(s, "kind", map[string]string{
-		string(DatasourceKindSigNoz): schemaRef("DashboardtypesDatasourcePluginVariantStruct"),
+		string(DatasourceKindSigNoz): schemaRef("DashboardtypesDatasourcePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesSigNozDatasourceSpec"),
 	})
 }
 
@@ -215,13 +215,13 @@ func (p *DatasourcePlugin) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	p.Kind = DatasourcePluginKind(kind)
-	p.Spec = spec
+	p.Spec = *spec
 	return nil
 }
 
 func (DatasourcePlugin) JSONSchemaOneOf() []any {
 	return []any{
-		DatasourcePluginVariant[struct{}]{Kind: string(DatasourceKindSigNoz)},
+		DatasourcePluginVariant[SigNozDatasourceSpec]{Kind: string(DatasourceKindSigNoz)},
 	}
 }
 
@@ -262,7 +262,7 @@ var (
 		VariableKindCustom:  func() any { return new(CustomVariableSpec) },
 	}
 	datasourcePluginSpecs = map[DatasourcePluginKind]func() any{
-		DatasourceKindSigNoz: func() any { return new(struct{}) },
+		DatasourceKindSigNoz: func() any { return new(SigNozDatasourceSpec) },
 	}
 
 	allowedQueryKinds = map[PanelPluginKind][]QueryPluginKind{
@@ -297,8 +297,7 @@ func extractKindAndSpec(data []byte) (string, []byte, error) {
 	return head.Kind, head.Spec, nil
 }
 
-// decodeSpec strict-decodes a spec JSON into target and runs struct-tag validation (go-playground/validator).
-func decodeSpec(specJSON []byte, target any, kind string) (any, error) {
+func decodeSpec[T any](specJSON []byte, target T, kind string) (*T, error) {
 	if len(specJSON) == 0 {
 		return nil, errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "kind %q: spec is required", kind)
 	}
@@ -310,7 +309,12 @@ func decodeSpec(specJSON []byte, target any, kind string) (any, error) {
 	if err := validator.New().Struct(target); err != nil {
 		return nil, errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "kind %q: spec failed validation", kind)
 	}
-	return target, nil
+	if v, ok := any(target).(interface{ validate() error }); ok {
+		if err := v.validate(); err != nil {
+			return nil, errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "kind %q: %s", kind, err.Error())
+		}
+	}
+	return &target, nil
 }
 
 // signozDiscriminatorKey is the extension key that signoz.attachDiscriminators
