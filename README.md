@@ -98,7 +98,7 @@ Learn more: [LLM observability documentation](https://signoz.io/docs/llm-observa
 
 #### Agent-Native Observability and MCP
 
-Use the SigNoz MCP server to bring telemetry into coding agents, or use Noz inside SigNoz to investigate incidents, tune alerts, and build dashboards with production context. Noz is available only on SigNoz Cloud.
+Use the SigNoz MCP server to bring telemetry into coding agents, or use Noz inside SigNoz to investigate incidents, tune alerts, and build dashboards with production context. [Noz](https://signoz.io/docs/ai/noz/) is available only on SigNoz Cloud.
 
 <p align="center">
   <img alt="SigNoz Noz interface alongside MCP-powered agent workflow" src="docs/readme-assets/monitor/agent-native.png" width="900">

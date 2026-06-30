@@ -98,7 +98,7 @@ SigNoz 将日志、指标、链路追踪、告警、仪表盘、异常和面向 
 
 #### Agent 原生可观测性和 MCP
 
-使用 SigNoz MCP server 将遥测数据带入编程 Agent，或在 SigNoz 中使用 Noz，基于生产上下文调查事故、优化告警并构建仪表盘。Noz 仅适用于 SigNoz Cloud。
+使用 SigNoz MCP server 将遥测数据带入编程 Agent，或在 SigNoz 中使用 Noz，基于生产上下文调查事故、优化告警并构建仪表盘。[Noz](https://signoz.io/docs/ai/noz/) 仅适用于 SigNoz Cloud。
 
 <p align="center">
   <img alt="SigNoz Noz 界面与基于 MCP 的 Agent 工作流" src="docs/readme-assets/monitor/agent-native.png" width="900">
