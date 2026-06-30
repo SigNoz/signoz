@@ -11,12 +11,27 @@ import {
 	DEFAULT_FILTER_STATE,
 	filterStateToQuery,
 	isFilterStateEmpty,
-} from '../filterQuery';
-import type { DashboardFilterState, UpdatedWindow } from '../types';
+} from '../utils/filterQuery';
+import type {
+	DashboardFilterState,
+	SelectedTag,
+	UpdatedWindow,
+} from '../types';
 
 const UPDATED_WINDOWS: UpdatedWindow[] = ['any', 'today', '7d', '30d'];
 
 const opts: Options = { history: 'push' };
+
+// Tags are carried in the URL as `key:value` strings; split on the first colon.
+const parseTag = (raw: string): SelectedTag | null => {
+	const idx = raw.indexOf(':');
+	if (idx <= 0) {
+		return null;
+	}
+	return { key: raw.slice(0, idx), value: raw.slice(idx + 1) };
+};
+
+const serializeTag = (tag: SelectedTag): string => `${tag.key}:${tag.value}`;
 
 export interface UseDashboardFiltersResult {
 	filters: DashboardFilterState;
@@ -26,6 +41,7 @@ export interface UseDashboardFiltersResult {
 	setSearch: (value: string) => void;
 	setCreatedBy: (emails: string[]) => void;
 	setUpdated: (window: UpdatedWindow) => void;
+	setTags: (tags: SelectedTag[]) => void;
 	// Replace the whole filter state at once — used when applying a saved view.
 	applyFilters: (next: DashboardFilterState) => void;
 	clearAll: () => void;
@@ -47,10 +63,19 @@ export function useDashboardFilters(): UseDashboardFiltersResult {
 		'updated',
 		parseAsStringLiteral(UPDATED_WINDOWS).withDefault('any').withOptions(opts),
 	);
+	const [tagStrings, setTagStringsState] = useQueryState(
+		'tags',
+		parseAsArrayOf(parseAsString).withDefault([]).withOptions(opts),
+	);
+
+	const tags = useMemo<SelectedTag[]>(
+		() => tagStrings.map(parseTag).filter((t): t is SelectedTag => t !== null),
+		[tagStrings],
+	);
 
 	const filters = useMemo<DashboardFilterState>(
-		() => ({ search, createdBy, updated }),
-		[search, createdBy, updated],
+		() => ({ search, createdBy, updated, tags }),
+		[search, createdBy, updated, tags],
 	);
 
 	const query = useMemo(() => filterStateToQuery(filters), [filters]);
@@ -76,13 +101,23 @@ export function useDashboardFilters(): UseDashboardFiltersResult {
 		[setUpdatedState],
 	);
 
+	const setTags = useCallback(
+		(next: SelectedTag[]): void => {
+			void setTagStringsState(next.length ? next.map(serializeTag) : null);
+		},
+		[setTagStringsState],
+	);
+
 	const applyFilters = useCallback(
 		(next: DashboardFilterState): void => {
 			void setSearchState(next.search || null);
 			void setCreatedByState(next.createdBy.length ? next.createdBy : null);
 			void setUpdatedState(next.updated);
+			void setTagStringsState(
+				next.tags.length ? next.tags.map(serializeTag) : null,
+			);
 		},
-		[setSearchState, setCreatedByState, setUpdatedState],
+		[setSearchState, setCreatedByState, setUpdatedState, setTagStringsState],
 	);
 
 	const clearAll = useCallback((): void => {
@@ -96,6 +131,7 @@ export function useDashboardFilters(): UseDashboardFiltersResult {
 		setSearch,
 		setCreatedBy,
 		setUpdated,
+		setTags,
 		applyFilters,
 		clearAll,
 	};

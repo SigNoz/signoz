@@ -57,8 +57,8 @@ export function usePanelEditorQuerySync({
 	const { currentQuery, stagedQuery, handleRunQuery } = useQueryBuilder();
 
 	// Saved queries, captured once: seed the builder and serve as the restore target.
-	// eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only snapshot
-	const savedQueries = useMemo(() => draft.spec?.queries ?? [], []);
+	const savedQueries = draft.spec.queries;
+
 	// A new panel has no saved query: seed from the kind's first supported signal
 	// instead of letting `fromPerses` fall back to the metrics default (which List
 	// doesn't support).
@@ -93,7 +93,7 @@ export function usePanelEditorQuerySync({
 			// No-op guard at the V5 envelope level: equivalent wrappers (bare
 			// `signoz/BuilderQuery` vs `signoz/CompositeQuery`) unwrap to the same
 			// envelopes, so a structural compare would falsely dirty the draft.
-			const current = draft.spec?.queries ?? [];
+			const current = draft.spec.queries;
 			if (isEqual(toQueryEnvelopes(next), toQueryEnvelopes(current))) {
 				return false;
 			}

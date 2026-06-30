@@ -59,7 +59,7 @@ export function toQueryEnvelopes(
 	queries: DashboardtypesQueryDTO[],
 ): Querybuildertypesv5QueryEnvelopeDTO[] {
 	// Backend invariant: panel.queries.length === 1. Only the first entry is consumed.
-	if (!queries || queries.length === 0) {
+	if (queries.length === 0) {
 		return [];
 	}
 	const plugin = queries[0].spec.plugin;

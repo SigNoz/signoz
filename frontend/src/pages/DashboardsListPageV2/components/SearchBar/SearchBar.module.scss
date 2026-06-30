@@ -1,24 +1,58 @@
-.submit {
-	display: inline-flex;
+.wrapper {
+	position: relative;
+	width: 100%;
+}
+
+.input::placeholder {
+	color: var(--l3-foreground);
+}
+
+// Flatten the input's bottom corners while the dropdown is attached below it.
+.inputOpen {
+	border-bottom-left-radius: 0;
+	border-bottom-right-radius: 0;
+}
+
+.suggestions {
+	position: absolute;
+	top: 100%;
+	left: 0;
+	right: 0;
+	z-index: 1000;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	max-height: 260px;
+	overflow-y: auto;
+	padding: 4px;
+	border: 1px solid var(--l2-border);
+	border-top: none;
+	border-radius: 0 0 6px 6px;
+	background: var(--l1-background);
+	/* stylelint-disable-next-line local/prefer-css-variables -- matches the V2 dashboard dropdown shadow */
+	box-shadow: 4px 10px 16px 2px rgba(0, 0, 0, 0.2);
+}
+
+.suggestion {
+	display: flex;
 	align-items: center;
-	justify-content: center;
-	width: 18px;
-	height: 18px;
-	padding: 0;
-	background: transparent;
+	padding: 8px 10px;
 	border: none;
-	border-radius: 3px;
-	color: inherit;
+	border-radius: 4px;
+	background: transparent;
+	color: var(--l2-foreground);
+	font-family: 'Space Mono', monospace;
+	font-size: var(--font-size-sm);
+	text-align: left;
 	cursor: pointer;
-	transition: background 120ms ease;
+	transition: background 0.1s;
+}
 
-	&:hover,
-	&:focus-visible {
-		background: color-mix(in srgb, var(--l1-foreground) 12%, transparent);
-		outline: none;
-	}
+.suggestionActive {
+	background: var(--l2-background);
+	color: var(--l1-foreground);
+}
 
-	&:active {
-		background: color-mix(in srgb, var(--l1-foreground) 20%, transparent);
-	}
+.submit {
+	color: var(--bg-vanilla-400);
 }

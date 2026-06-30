@@ -10,7 +10,7 @@ import { sections as barSections } from '../../kinds/BarChartPanel/sections';
 import { sections as histogramSections } from '../../kinds/HistogramPanel/sections';
 import { sections as listSections } from '../../kinds/ListPanel/sections';
 import { sections as timeSeriesSections } from '../../kinds/TimeSeriesPanel/sections';
-import type { SectionConfig } from '../../types/sections';
+import { SectionKind, type SectionConfig } from '../../types/sections';
 import { buildDefaultPluginSpec } from '../buildDefaultPluginSpec';
 
 describe('buildDefaultPluginSpec', () => {
@@ -50,17 +50,17 @@ describe('buildDefaultPluginSpec', () => {
 	it('does not seed controls that already show a clear default', () => {
 		// `axes` and `formatting` stay unset — their empty state is the chart default.
 		const sections: SectionConfig[] = [
-			{ kind: 'axes', controls: { minMax: true, logScale: true } },
-			{ kind: 'formatting', controls: { unit: true, decimals: true } },
-			{ kind: 'thresholds', controls: { variant: 'label' } },
-			{ kind: 'contextLinks' },
+			{ kind: SectionKind.Axes, controls: { minMax: true, logScale: true } },
+			{ kind: SectionKind.Formatting, controls: { unit: true, decimals: true } },
+			{ kind: SectionKind.Thresholds, controls: { variant: 'label' } },
+			{ kind: SectionKind.ContextLinks },
 		];
 		expect(buildDefaultPluginSpec(sections)).toStrictEqual({});
 	});
 
 	it('only seeds the legend position when the kind exposes that control', () => {
 		const sections: SectionConfig[] = [
-			{ kind: 'legend', controls: { colors: true } },
+			{ kind: SectionKind.Legend, controls: { colors: true } },
 		];
 		expect(buildDefaultPluginSpec(sections)).toStrictEqual({});
 	});
