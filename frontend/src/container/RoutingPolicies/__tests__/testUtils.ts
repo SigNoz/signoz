@@ -143,10 +143,7 @@ export function mockQueryParams(
 		}
 	});
 
-	return Object.create(URLSearchParams.prototype, {
-		toString: { value: (): string => realUrlQuery.toString() },
-		get: { value: (key: string): string | null => realUrlQuery.get(key) },
-	});
+	return realUrlQuery;
 }
 
 export function convertRoutingPolicyToApiResponse(

@@ -1,5 +1,7 @@
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
+import { serialize } from 'lib/compositeQuery/serializer';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { getAutoContexts } from '../getAutoContexts';
 
@@ -51,8 +53,8 @@ describe('getAutoContexts', () => {
 	it('includes the query in alert edit context', () => {
 		const ruleId = 'rule-edit';
 		const query = { queryType: 'builder', builder: { queryData: [] } };
-		const compositeQuery = encodeURIComponent(JSON.stringify(query));
-		const search = `?${QueryParams.ruleId}=${ruleId}&${QueryParams.compositeQuery}=${compositeQuery}`;
+		const serializedParams = serialize(query as unknown as Query);
+		const search = `?${QueryParams.ruleId}=${ruleId}&${serializedParams.toString()}`;
 
 		const contexts = getAutoContexts(ROUTES.EDIT_ALERTS, search);
 
@@ -72,8 +74,8 @@ describe('getAutoContexts', () => {
 
 	it('includes the query in alert new context (no ruleId)', () => {
 		const query = { queryType: 'builder', builder: { queryData: [] } };
-		const compositeQuery = encodeURIComponent(JSON.stringify(query));
-		const search = `?${QueryParams.compositeQuery}=${compositeQuery}`;
+		const serializedParams = serialize(query as unknown as Query);
+		const search = `?${serializedParams.toString()}`;
 
 		const contexts = getAutoContexts(ROUTES.ALERTS_NEW, search);
 
@@ -188,5 +190,25 @@ describe('getAutoContexts', () => {
 				'?selectedItem=host-1',
 			),
 		).toStrictEqual([]);
+	});
+
+	it('decodes the serialized composite query into metadata.query', () => {
+		const query = { builder: { queryData: [] } } as unknown as Query;
+		const search = `?${serialize(query).toString()}`;
+
+		const [context] = getAutoContexts(ROUTES.LOGS_EXPLORER, search);
+
+		expect(context.metadata?.query).toStrictEqual(query);
+	});
+
+	it('omits metadata.query when no serialized query is in the URL', () => {
+		// Detection no longer gates on the `compositeQuery` key — it routes
+		// through `deserialize`/the adapter list — so non-query params (time
+		// range, etc.) must not be mistaken for a query.
+		const search = `?${QueryParams.startTime}=1700000000000&${QueryParams.endTime}=1700003600000`;
+
+		const [context] = getAutoContexts(ROUTES.LOGS_EXPLORER, search);
+
+		expect(context.metadata).not.toHaveProperty('query');
 	});
 });

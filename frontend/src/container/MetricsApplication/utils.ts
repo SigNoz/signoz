@@ -1,5 +1,6 @@
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
+import { serialize } from 'lib/compositeQuery/serializer';
 import { withBasePath } from 'utils/basePath';
 
 import { TopOperationList } from './TopOperationsTable';
@@ -29,13 +30,11 @@ export const navigateToTrace = ({
 	);
 	urlParams.set(QueryParams.endTime, Math.floor(maxTime / 1_000_000).toString());
 
-	const JSONCompositeQuery = encodeURIComponent(JSON.stringify(apmToTraceQuery));
-
 	const newTraceExplorerPath = `${
 		ROUTES.TRACES_EXPLORER
-	}?${urlParams.toString()}&selected={"serviceName":["${servicename}"],"operation":["${operation}"]}&filterToFetchData=["duration","status","serviceName","operation"]&spanAggregateCurrentPage=1&selectedTags=${selectedTraceTags}&${
-		QueryParams.compositeQuery
-	}=${JSONCompositeQuery}`;
+	}?${urlParams.toString()}&selected={"serviceName":["${servicename}"],"operation":["${operation}"]}&filterToFetchData=["duration","status","serviceName","operation"]&spanAggregateCurrentPage=1&selectedTags=${selectedTraceTags}&${serialize(
+		apmToTraceQuery,
+	).toString()}`;
 
 	if (openInNewTab) {
 		window.open(withBasePath(newTraceExplorerPath), '_blank');
