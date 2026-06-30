@@ -54,14 +54,7 @@
 	--button-height: 16px;
 	--button-padding: 0;
 	--button-border-radius: 50%;
-	--button-variant-ghost-background-color: transparent;
 	--button-variant-ghost-color: inherit;
-	--button-variant-ghost-hover-background-color: color-mix(
-		in srgb,
-		var(--bg-sienna-500) 24%,
-		transparent
-	);
-	--button-variant-ghost-hover-color: var(--bg-sienna-400);
 	width: 16px;
 	min-width: 16px;
 	flex: none;
