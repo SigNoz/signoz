@@ -35,7 +35,6 @@ import { PreferenceContextProvider } from 'providers/preferences/context/Prefere
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import { LicenseStatus } from 'types/api/licensesV3/getActive';
 import { extractDomain } from 'utils/app';
-import { getWebSettings } from 'utils/bootSettings';
 
 import { Home } from './pageComponents';
 import PrivateRoute from './Private';
@@ -265,7 +264,6 @@ function App(): JSX.Element {
 
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	useEffect(() => {
-		const webSettings = getWebSettings();
 		// feature flag shouldn't be loading and featureFlags or fetchError any one of this should be true indicating that req is complete
 		// licenses should also be present. there is no check for licenses for loading and error as that is mandatory if not present then routing
 		// to something went wrong which would ideally need a reload.
@@ -294,10 +292,10 @@ function App(): JSX.Element {
 				isChatSupportEnabled &&
 				!showAddCreditCardModal &&
 				(isCloudUser || isEnterpriseSelfHostedUser) &&
-				(webSettings?.pylon.enabled ?? true)
+				(window.signozBootData?.settings?.pylon.enabled ?? true)
 			) {
 				const email = user.email || '';
-				const secret = webSettings?.pylon.identitySecret || '';
+				const secret = process.env.PYLON_IDENTITY_SECRET || '';
 				let emailHash = '';
 
 				if (email && secret) {
@@ -306,7 +304,7 @@ function App(): JSX.Element {
 
 				window.pylon = {
 					chat_settings: {
-						app_id: webSettings?.pylon.appId,
+						app_id: process.env.PYLON_APP_ID,
 						email: user.email,
 						name: user.displayName || user.email,
 						email_hash: emailHash,
@@ -335,20 +333,24 @@ function App(): JSX.Element {
 	}, [user, isFetchingUser, isCloudUser, enableAnalytics]);
 
 	useEffect(() => {
-		const webSettings = getWebSettings();
 		if (isCloudUser || isEnterpriseSelfHostedUser) {
-			if ((webSettings?.posthog.enabled ?? true) && webSettings?.posthog.key) {
-				posthog.init(webSettings.posthog.key, {
-					api_host: webSettings.posthog.apiHost || 'https://us.i.posthog.com',
-					ui_host: webSettings.posthog.uiHost || undefined,
+			if (
+				(window.signozBootData?.settings?.posthog.enabled ?? true) &&
+				process.env.POSTHOG_KEY
+			) {
+				posthog.init(process.env.POSTHOG_KEY, {
+					api_host: 'https://us.i.posthog.com',
 					person_profiles: 'identified_only', // or 'always' to create profiles for anonymous users as well
 				});
 			}
 
-			if (!isSentryInitialized && (webSettings?.sentry.enabled ?? true)) {
+			if (
+				!isSentryInitialized &&
+				(window.signozBootData?.settings?.sentry.enabled ?? true)
+			) {
 				Sentry.init({
-					dsn: webSettings?.sentry.dsn,
-					tunnel: webSettings?.sentry.tunnel,
+					dsn: process.env.SENTRY_DSN,
+					tunnel: process.env.TUNNEL_URL,
 					environment: process.env.ENVIRONMENT,
 					release: process.env.VERSION,
 					integrations: [

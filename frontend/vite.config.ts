@@ -6,6 +6,7 @@ import type { Plugin, TransformResult, UserConfig } from 'vite';
 import { defineConfig, loadEnv } from 'vite';
 import vitePluginChecker from 'vite-plugin-checker';
 import viteCompression from 'vite-plugin-compression';
+import { createHtmlPlugin } from 'vite-plugin-html';
 import { ViteImageOptimizer } from 'vite-plugin-image-optimizer';
 import tsconfigPaths from 'vite-tsconfig-paths';
 
@@ -28,26 +29,10 @@ function devBootDataPlugin(env: Record<string, string>): Plugin {
 		apply: 'serve',
 		transformIndexHtml(html): string {
 			const settings = {
-				posthog: {
-					enabled: env.VITE_POSTHOG_ENABLED !== 'false',
-					key: env.VITE_POSTHOG_KEY || '',
-					apiHost: env.VITE_POSTHOG_API_HOST || '',
-					uiHost: env.VITE_POSTHOG_UI_HOST || '',
-				},
-				appcues: {
-					enabled: env.VITE_APPCUES_ENABLED !== 'false',
-					appId: env.VITE_APPCUES_APP_ID || '',
-				},
-				sentry: {
-					enabled: env.VITE_SENTRY_ENABLED !== 'false',
-					dsn: env.VITE_SENTRY_DSN || '',
-					tunnel: env.VITE_TUNNEL_URL || '',
-				},
-				pylon: {
-					enabled: env.VITE_PYLON_ENABLED !== 'false',
-					appId: env.VITE_PYLON_APP_ID || '',
-					identitySecret: env.VITE_PYLON_IDENTITY_SECRET || '',
-				},
+				posthog: { enabled: env.VITE_POSTHOG_ENABLED !== 'false' },
+				appcues: { enabled: env.VITE_APPCUES_ENABLED !== 'false' },
+				sentry: { enabled: env.VITE_SENTRY_ENABLED !== 'false' },
+				pylon: { enabled: env.VITE_PYLON_ENABLED !== 'false' },
 			};
 			return html.replaceAll('[[.Settings]]', JSON.stringify(settings));
 		},
@@ -80,6 +65,14 @@ export default defineConfig(({ mode }): UserConfig => {
 		devBasePathPlugin(basePath),
 		devBootDataPlugin(env),
 		react(),
+		createHtmlPlugin({
+			inject: {
+				data: {
+					PYLON_APP_ID: env.VITE_PYLON_APP_ID || '',
+					APPCUES_APP_ID: env.VITE_APPCUES_APP_ID || '',
+				},
+			},
+		}),
 		vitePluginChecker({
 			typescript: true,
 			// this doubles the build tim
@@ -164,8 +157,17 @@ export default defineConfig(({ mode }): UserConfig => {
 			'process.env.WEBSOCKET_API_ENDPOINT': JSON.stringify(
 				env.VITE_WEBSOCKET_API_ENDPOINT,
 			),
+			'process.env.PYLON_APP_ID': JSON.stringify(env.VITE_PYLON_APP_ID),
+			'process.env.PYLON_IDENTITY_SECRET': JSON.stringify(
+				env.VITE_PYLON_IDENTITY_SECRET,
+			),
+			'process.env.APPCUES_APP_ID': JSON.stringify(env.VITE_APPCUES_APP_ID),
+			'process.env.POSTHOG_KEY': JSON.stringify(env.VITE_POSTHOG_KEY),
 			'process.env.SENTRY_ORG': JSON.stringify(env.VITE_SENTRY_ORG),
 			'process.env.SENTRY_PROJECT_ID': JSON.stringify(env.VITE_SENTRY_PROJECT_ID),
+			'process.env.SENTRY_DSN': JSON.stringify(env.VITE_SENTRY_DSN),
+			'process.env.TUNNEL_URL': JSON.stringify(env.VITE_TUNNEL_URL),
+			'process.env.TUNNEL_DOMAIN': JSON.stringify(env.VITE_TUNNEL_DOMAIN),
 			'process.env.DOCS_BASE_URL': JSON.stringify(env.VITE_DOCS_BASE_URL),
 			'process.env.ENVIRONMENT': JSON.stringify(env.VITE_ENVIRONMENT),
 			'process.env.VERSION': JSON.stringify(env.VITE_VERSION),
