@@ -1,11 +1,12 @@
 import dayjs from 'dayjs';
 import { isEmpty } from 'lodash-es';
 import type {
-	DashboardtypesListedDashboardV2DTO,
+	DashboardtypesListedDashboardForUserV2DTO,
 	TagtypesPostableTagDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
-export type DashboardListItem = DashboardtypesListedDashboardV2DTO;
+// The list is fetched via the per-user endpoint, so every row carries `pinned`.
+export type DashboardListItem = DashboardtypesListedDashboardForUserV2DTO;
 
 export const tagsToStrings = (
 	tags: { key: string; value: string }[] | null | undefined,
@@ -14,23 +15,23 @@ export const tagsToStrings = (
 		tag.key === tag.value ? tag.key : `${tag.key}:${tag.value}`,
 	);
 
-// Inverse of `tagsToStrings`: each comma-separated tag is "key:value" or a bare
-// label (key === value).
-export const toPostableTags = (raw: string): TagtypesPostableTagDTO[] =>
-	raw
-		.split(',')
-		.map((label) => label.trim())
-		.filter(Boolean)
-		.map((label) => {
-			const sep = label.indexOf(':');
-			if (sep > 0) {
-				return {
-					key: label.slice(0, sep).trim(),
-					value: label.slice(sep + 1).trim(),
-				};
+// Convert validated `key:value` tag strings (from TagKeyValueInput) into the
+// postable tag DTO shape. The first colon separates key from value.
+export const keyValueStringsToTags = (
+	tags: string[],
+): TagtypesPostableTagDTO[] =>
+	tags
+		.map((tag) => {
+			const idx = tag.indexOf(':');
+			if (idx <= 0) {
+				return null;
 			}
-			return { key: label, value: label };
-		});
+			return {
+				key: tag.slice(0, idx).trim(),
+				value: tag.slice(idx + 1).trim(),
+			};
+		})
+		.filter((t): t is TagtypesPostableTagDTO => !!t?.key && !!t.value);
 
 export const lastUpdatedLabel = (time: string | undefined): string => {
 	if (!time || isEmpty(time)) {
