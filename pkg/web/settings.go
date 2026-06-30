@@ -15,7 +15,8 @@ type Posthog struct {
 }
 
 type Appcues struct {
-	Enabled bool `json:"enabled" required:"true"`
+	Enabled bool   `json:"enabled" required:"true"`
+	AppID   string `json:"appId" required:"true"`
 }
 
 type Sentry struct {
@@ -38,6 +39,7 @@ func NewSettings(config Config) Settings {
 		},
 		Appcues: Appcues{
 			Enabled: config.Settings.Appcues.Enabled,
+			AppID:   config.Settings.Appcues.AppID,
 		},
 		Sentry: Sentry{
 			Enabled: config.Settings.Sentry.Enabled,

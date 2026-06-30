@@ -150,9 +150,9 @@
 			window.AppcuesSettings = { enableURLDetection: true };
 		</script>
 		<script>
-			var APPCUES_APP_ID = '<%- APPCUES_APP_ID %>';
 			var appcuesSettings =
 				((window.signozBootData || {}).settings || {}).appcues || {};
+			var APPCUES_APP_ID = appcuesSettings.appId || '';
 			var appcuesEnabled = appcuesSettings.enabled !== false;
 			if (APPCUES_APP_ID && appcuesEnabled) {
 				(function (d, t) {

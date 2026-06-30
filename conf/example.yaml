@@ -74,6 +74,8 @@ web:
     appcues:
       # Whether to enable Appcues in web.
       enabled: false
+      # The Appcues account/app ID.
+      app_id: ""
     sentry:
       # Whether to enable Sentry in web.
       enabled: false

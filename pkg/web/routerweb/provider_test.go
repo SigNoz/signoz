@@ -125,7 +125,10 @@ func TestServeTemplatedIndex(t *testing.T) {
 						APIHost: "https://us.i.posthog.com",
 						UIHost:  "https://us.posthog.com",
 					},
-					Appcues: web.AppcuesConfig{Enabled: true},
+					Appcues: web.AppcuesConfig{
+						Enabled: true,
+						AppID:   "12345-abcde",
+					},
 					Sentry: web.SentryConfig{
 						Enabled: true,
 						DSN:     "https://examplePublicKey@o0.ingest.sentry.io/0",
@@ -140,7 +143,10 @@ func TestServeTemplatedIndex(t *testing.T) {
 					APIHost: "https://us.i.posthog.com",
 					UIHost:  "https://us.posthog.com",
 				},
-				Appcues: web.Appcues{Enabled: true},
+				Appcues: web.Appcues{
+					Enabled: true,
+					AppID:   "12345-abcde",
+				},
 				Sentry: web.Sentry{
 					Enabled: true,
 					DSN:     "https://examplePublicKey@o0.ingest.sentry.io/0",

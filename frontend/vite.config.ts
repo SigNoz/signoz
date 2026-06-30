@@ -35,7 +35,10 @@ function devBootDataPlugin(env: Record<string, string>): Plugin {
 					apiHost: env.VITE_POSTHOG_API_HOST || '',
 					uiHost: env.VITE_POSTHOG_UI_HOST || '',
 				},
-				appcues: { enabled: env.VITE_APPCUES_ENABLED !== 'false' },
+				appcues: {
+					enabled: env.VITE_APPCUES_ENABLED !== 'false',
+					appId: env.VITE_APPCUES_APP_ID || '',
+				},
 				sentry: {
 					enabled: env.VITE_SENTRY_ENABLED !== 'false',
 					dsn: env.VITE_SENTRY_DSN || '',
@@ -78,7 +81,6 @@ export default defineConfig(({ mode }): UserConfig => {
 			inject: {
 				data: {
 					PYLON_APP_ID: env.VITE_PYLON_APP_ID || '',
-					APPCUES_APP_ID: env.VITE_APPCUES_APP_ID || '',
 				},
 			},
 		}),
@@ -170,7 +172,6 @@ export default defineConfig(({ mode }): UserConfig => {
 			'process.env.PYLON_IDENTITY_SECRET': JSON.stringify(
 				env.VITE_PYLON_IDENTITY_SECRET,
 			),
-			'process.env.APPCUES_APP_ID': JSON.stringify(env.VITE_APPCUES_APP_ID),
 			'process.env.SENTRY_ORG': JSON.stringify(env.VITE_SENTRY_ORG),
 			'process.env.SENTRY_PROJECT_ID': JSON.stringify(env.VITE_SENTRY_PROJECT_ID),
 			'process.env.TUNNEL_DOMAIN': JSON.stringify(env.VITE_TUNNEL_DOMAIN),

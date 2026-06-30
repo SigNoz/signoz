@@ -7,6 +7,7 @@ export interface WebSettings {
 	sentry: Sentry;
 }
 export interface Appcues {
+	appId: string;
 	enabled: boolean;
 }
 export interface Posthog {

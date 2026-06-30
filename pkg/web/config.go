@@ -35,7 +35,8 @@ type PosthogConfig struct {
 }
 
 type AppcuesConfig struct {
-	Enabled bool `mapstructure:"enabled"`
+	Enabled bool   `mapstructure:"enabled"`
+	AppID   string `mapstructure:"app_id"`
 }
 
 type SentryConfig struct {

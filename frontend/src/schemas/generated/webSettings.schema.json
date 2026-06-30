@@ -10,10 +10,14 @@
   "definitions": {
     "Appcues": {
       "required": [
-        "enabled"
+        "enabled",
+        "appId"
       ],
       "additionalProperties": false,
       "properties": {
+        "appId": {
+          "type": "string"
+        },
         "enabled": {
           "type": "boolean"
         }
