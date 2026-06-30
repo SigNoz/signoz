@@ -10,40 +10,11 @@ import requests
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.fs import get_testdata_file_path
+from fixtures.inframonitoring import expected_status_counts
 from fixtures.metrics import Metrics
 from fixtures.querier import compare_values, get_all_warnings
 
 ENDPOINT = "/api/v2/infra_monitoring/clusters"
-
-# All 19 PodCountsByStatus buckets (camelCase, matches the API response).
-_STATUS_BUCKETS = (
-    "pending",
-    "running",
-    "succeeded",
-    "failed",
-    "unknown",
-    "crashLoopBackOff",
-    "imagePullBackOff",
-    "errImagePull",
-    "createContainerConfigError",
-    "containerCreating",
-    "oomKilled",
-    "completed",
-    "error",
-    "containerCannotRun",
-    "evicted",
-    "nodeAffinity",
-    "nodeLost",
-    "shutdown",
-    "unexpectedAdmissionError",
-)
-
-
-def _expected_status_counts(**nonzero: int) -> dict:
-    """Full 19-bucket PodCountsByStatus with the given buckets set, rest 0."""
-    counts = {bucket: 0 for bucket in _STATUS_BUCKETS}
-    counts.update(nonzero)
-    return counts
 
 
 def test_clusters_accuracy(
@@ -470,7 +441,7 @@ def test_clusters_pod_status_aggregation(
     assert data["total"] == 1
     rec = data["records"][0]
     assert rec["clusterName"] == "pp-cluster"
-    assert rec["podCountsByStatus"] == _expected_status_counts(running=3, crashLoopBackOff=1, error=1, evicted=1, pending=1)
+    assert rec["podCountsByStatus"] == expected_status_counts(running=3, crashLoopBackOff=1, error=1, evicted=1, pending=1)
     # Phase counts unchanged by the status enrichment.
     assert rec["podCountsByPhase"] == {"pending": 1, "running": 4, "succeeded": 0, "failed": 2, "unknown": 0}
     # All status metrics present -> gate satisfied -> no status warning.

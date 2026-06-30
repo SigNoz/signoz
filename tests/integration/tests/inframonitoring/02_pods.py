@@ -10,6 +10,7 @@ import requests
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.fs import get_testdata_file_path
+from fixtures.inframonitoring import STATUS_BUCKETS, STATUS_TO_BUCKET
 from fixtures.metrics import Metrics
 from fixtures.querier import compare_values, get_all_warnings
 from fixtures.time import parse_timestamp
@@ -18,29 +19,6 @@ ENDPOINT = "/api/v2/infra_monitoring/pods"
 
 # Placeholder in JSONL labels that gets substituted with a runtime ISO string.
 START_TIME_PLACEHOLDER = "__START_TIME__"
-
-# All buckets in PodCountsByStatus (matches inframonitoringtypes.PodCountsByStatus).
-_STATUS_BUCKETS = (
-    "pending",
-    "running",
-    "succeeded",
-    "failed",
-    "unknown",
-    "crashLoopBackOff",
-    "imagePullBackOff",
-    "errImagePull",
-    "createContainerConfigError",
-    "containerCreating",
-    "oomKilled",
-    "completed",
-    "error",
-    "containerCannotRun",
-    "evicted",
-    "nodeAffinity",
-    "nodeLost",
-    "shutdown",
-    "unexpectedAdmissionError",
-)
 
 
 def _load_pods_metrics(
@@ -158,7 +136,7 @@ def test_pods_accuracy(
             assert isinstance(record["podCountsByPhase"][bucket], int)
 
         # All status buckets always present, integer-typed.
-        for bucket in _STATUS_BUCKETS:
+        for bucket in STATUS_BUCKETS:
             assert bucket in record["podCountsByStatus"], f"missing status bucket {bucket} in {record['podCountsByStatus']!r}"
             assert isinstance(record["podCountsByStatus"][bucket], int)
 
@@ -829,30 +807,6 @@ def test_pods_validation_errors(
     assert err_substr.lower() in error["message"].lower(), f"expected substring {err_substr!r} not found in: {error['message']!r}"
 
 
-# Maps a PodStatus wire value (lowercase) to its PodCountsByStatus bucket key (camelCase).
-_STATUS_TO_BUCKET = {
-    "pending": "pending",
-    "running": "running",
-    "succeeded": "succeeded",
-    "failed": "failed",
-    "unknown": "unknown",
-    "crashloopbackoff": "crashLoopBackOff",
-    "imagepullbackoff": "imagePullBackOff",
-    "errimagepull": "errImagePull",
-    "createcontainerconfigerror": "createContainerConfigError",
-    "containercreating": "containerCreating",
-    "oomkilled": "oomKilled",
-    "completed": "completed",
-    "error": "error",
-    "containercannotrun": "containerCannotRun",
-    "evicted": "evicted",
-    "nodeaffinity": "nodeAffinity",
-    "nodelost": "nodeLost",
-    "shutdown": "shutdown",
-    "unexpectedadmissionerror": "unexpectedAdmissionError",
-}
-
-
 @pytest.mark.parametrize(
     "pod_name,expected_status",
     [
@@ -916,9 +870,9 @@ def test_pods_status_list_mode(
     assert rec["podStatus"] == expected_status
 
     # List mode: pod is its own group -> exactly its status bucket is 1.
-    bucket = _STATUS_TO_BUCKET[expected_status]
+    bucket = STATUS_TO_BUCKET[expected_status]
     assert rec["podCountsByStatus"][bucket] == 1
-    for other in _STATUS_BUCKETS:
+    for other in STATUS_BUCKETS:
         if other != bucket:
             assert rec["podCountsByStatus"][other] == 0, f"expected {other}=0 when status={expected_status}, got {rec['podCountsByStatus']}"
 
@@ -1090,7 +1044,7 @@ def test_pods_status_grouped_mode(
     assert rec["meta"].get("k8s.namespace.name") == "ns-mixed"
     assert rec["podStatus"] == "no_data"
 
-    expected_counts = {bucket: 0 for bucket in _STATUS_BUCKETS}
+    expected_counts = {bucket: 0 for bucket in STATUS_BUCKETS}
     expected_counts.update(
         {
             "running": 2,
@@ -1188,6 +1142,6 @@ def test_pods_status_missing_metric_warning(
     rec = data["records"][0]
     assert rec["meta"]["k8s.pod.name"] == "miss-p1"
     assert rec["podStatus"] == "no_data"
-    for bucket in _STATUS_BUCKETS:
+    for bucket in STATUS_BUCKETS:
         assert rec["podCountsByStatus"][bucket] == 0, f"expected {bucket}=0 when gated off, got {rec['podCountsByStatus']}"
     assert rec["podRestarts"] == -1
