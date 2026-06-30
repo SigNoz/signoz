@@ -77,7 +77,7 @@ export function usePanelQuery({
 	const fullKind = panel.spec.plugin.kind;
 	const panelType =
 		(fullKind && PANEL_KIND_TO_PANEL_TYPE[fullKind]) ?? PANEL_TYPES.TIME_SERIES;
-	const queries = useMemo(() => panel.spec.queries || [], [panel.spec.queries]);
+	const queries = panel.spec.queries;
 
 	// V1 parity: a list query with an explicit `limit` shows without a server pager; without
 	// one it pages server-side at a user-selectable size.

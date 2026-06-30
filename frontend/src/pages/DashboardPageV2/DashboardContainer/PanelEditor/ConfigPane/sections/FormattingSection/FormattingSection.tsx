@@ -2,7 +2,10 @@ import { Typography } from '@signozhq/ui/typography';
 import { DashboardtypesPrecisionOptionDTO } from 'api/generated/services/sigNoz.schemas';
 import YAxisUnitSelector from 'components/YAxisUnitSelector';
 import { YAxisSource } from 'components/YAxisUnitSelector/types';
-import type { SectionEditorProps } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/sections';
+import type {
+	SectionEditorProps,
+	SectionKind,
+} from 'pages/DashboardPageV2/DashboardContainer/Panels/types/sections';
 
 import type { TableColumnOption } from '../../../hooks/useTableColumns';
 import ConfigSelect from '../../controls/ConfigSelect/ConfigSelect';
@@ -10,7 +13,7 @@ import ColumnUnits from './ColumnUnits';
 
 import styles from './FormattingSection.module.scss';
 
-type FormattingSectionProps = SectionEditorProps<'formatting'> & {
+type FormattingSectionProps = SectionEditorProps<SectionKind.Formatting> & {
 	/** Table panel's resolved value columns; required for the column-units editor. */
 	tableColumns?: TableColumnOption[];
 };
@@ -65,7 +68,7 @@ function FormattingSection({
 						onChange={(next): void =>
 							onChange({
 								...value,
-								decimalPrecision: next as DashboardtypesPrecisionOptionDTO,
+								decimalPrecision: next,
 							})
 						}
 					/>
