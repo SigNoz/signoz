@@ -181,7 +181,7 @@ Im verlinkten Benchmark indexierte SigNoz alle Keys im Test-Setup, während Loki
 
 Wir freuen uns über große und kleine Beiträge. Lies bitte [CONTRIBUTING.md](CONTRIBUTING.md), um mit Beiträgen zu SigNoz loszulegen.
 
-Nicht sicher, wie du anfangen sollst? Schreib uns einfach im Channel `#contributing` in unserer [Slack Community](https://signoz.io/slack).
+Nicht sicher, wie du anfangen sollst? **Schreib uns einfach im Channel `#contributing` in unserer [Slack Community](https://signoz.io/slack).**
 
 Wie immer: Danke an unsere großartigen Contributors!
 

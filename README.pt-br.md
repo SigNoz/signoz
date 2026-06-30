@@ -181,7 +181,7 @@ No benchmark vinculado, o SigNoz indexou todas as chaves na configuração de te
 
 Adoramos contribuições grandes ou pequenas. Leia [CONTRIBUTING.md](CONTRIBUTING.md) para começar a contribuir com o SigNoz.
 
-Não sabe como começar? Fale conosco no `#contributing` na nossa [comunidade Slack](https://signoz.io/slack).
+Não sabe como começar? **Fale conosco no `#contributing` na nossa [comunidade Slack](https://signoz.io/slack).**
 
 Como sempre, obrigado aos nossos incríveis contribuidores!
 
