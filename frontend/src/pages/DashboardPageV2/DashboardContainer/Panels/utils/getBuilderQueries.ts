@@ -40,11 +40,11 @@ export function resolveSignal(
 	queries: DashboardtypesQueryDTO[],
 	defaultSignal: TelemetrytypesSignalDTO,
 ): TelemetrytypesSignalDTO | undefined {
-	const builderSignal = getBuilderQueries(queries ?? [])[0]?.signal as
+	const builderSignal = getBuilderQueries(queries)[0]?.signal as
 		| TelemetrytypesSignalDTO
 		| undefined;
 	if (builderSignal) {
 		return builderSignal;
 	}
-	return queries?.length ? undefined : defaultSignal;
+	return queries.length ? undefined : defaultSignal;
 }

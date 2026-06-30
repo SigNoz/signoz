@@ -13,6 +13,7 @@ import ConfigSegmented from '../../controls/ConfigSegmented/ConfigSegmented';
 import ConfigSelect from '../../controls/ConfigSelect/ConfigSelect';
 import ConfigSwitch from '../../controls/ConfigSwitch/ConfigSwitch';
 import { SegmentIcon } from '../../controls/segmentIcons';
+import type { SectionEditorContext } from '../../sectionContext';
 import DisconnectValuesField from './DisconnectValuesField';
 
 import styles from './ChartAppearanceSection.module.scss';
@@ -81,10 +82,8 @@ function ChartAppearanceSection({
 	controls,
 	onChange,
 	stepInterval,
-}: SectionEditorProps<SectionKind.ChartAppearance> & {
-	/** Query step interval (seconds) for the span-gaps threshold floor. */
-	stepInterval?: number;
-}): JSX.Element {
+}: SectionEditorProps<SectionKind.ChartAppearance> &
+	Pick<SectionEditorContext, 'stepInterval'>): JSX.Element {
 	return (
 		<>
 			{controls.lineStyle && (

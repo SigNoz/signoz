@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { DashboardtypesLineStyleDTO } from 'api/generated/services/sigNoz.schemas';
 
@@ -60,7 +60,8 @@ describe('ChartAppearanceSection', () => {
 		).not.toBeInTheDocument();
 	});
 
-	it('writes the chosen fill mode through the segmented control', () => {
+	it('writes the chosen fill mode through the segmented control', async () => {
+		const user = userEvent.setup();
 		const onChange = jest.fn();
 		render(
 			<ChartAppearanceSection
@@ -70,7 +71,7 @@ describe('ChartAppearanceSection', () => {
 			/>,
 		);
 
-		fireEvent.click(screen.getByText('Gradient'));
+		await user.click(screen.getByText('Gradient'));
 
 		expect(onChange).toHaveBeenCalledWith({
 			lineStyle: 'solid',
@@ -93,7 +94,8 @@ describe('ChartAppearanceSection', () => {
 		expect(onChange).toHaveBeenCalledWith({ lineInterpolation: 'spline' });
 	});
 
-	it('toggles show points through onChange', () => {
+	it('toggles show points through onChange', async () => {
+		const user = userEvent.setup();
 		const onChange = jest.fn();
 		render(
 			<ChartAppearanceSection
@@ -103,7 +105,7 @@ describe('ChartAppearanceSection', () => {
 			/>,
 		);
 
-		fireEvent.click(screen.getByTestId('panel-editor-v2-show-points'));
+		await user.click(screen.getByTestId('panel-editor-v2-show-points'));
 
 		expect(onChange).toHaveBeenCalledWith({ showPoints: true });
 	});
@@ -123,7 +125,8 @@ describe('ChartAppearanceSection', () => {
 		).not.toBeInTheDocument();
 	});
 
-	it('switching to "Threshold" seeds the default 1m threshold', () => {
+	it('switching to "Threshold" seeds the default 1m threshold', async () => {
+		const user = userEvent.setup();
 		const onChange = jest.fn();
 		render(
 			<ChartAppearanceSection
@@ -133,14 +136,15 @@ describe('ChartAppearanceSection', () => {
 			/>,
 		);
 
-		fireEvent.click(screen.getByText('Threshold'));
+		await user.click(screen.getByText('Threshold'));
 
 		expect(onChange).toHaveBeenLastCalledWith({
 			spanGaps: { fillLessThan: '1m' },
 		});
 	});
 
-	it('stores the threshold as a duration string (not seconds)', () => {
+	it('stores the threshold as a duration string (not seconds)', async () => {
+		const user = userEvent.setup();
 		const onChange = jest.fn();
 		render(
 			<ChartAppearanceSection
@@ -153,15 +157,17 @@ describe('ChartAppearanceSection', () => {
 		const input = screen.getByTestId('panel-editor-v2-span-gaps-value');
 		expect(input).toHaveValue('1m');
 
-		fireEvent.change(input, { target: { value: '5m' } });
-		fireEvent.blur(input);
+		await user.clear(input);
+		await user.type(input, '5m');
+		await user.tab();
 
 		expect(onChange).toHaveBeenLastCalledWith({
 			spanGaps: { fillLessThan: '5m' },
 		});
 	});
 
-	it('stores the entry verbatim (bare number kept as typed, not converted)', () => {
+	it('stores the entry verbatim (bare number kept as typed, not converted)', async () => {
+		const user = userEvent.setup();
 		const onChange = jest.fn();
 		render(
 			<ChartAppearanceSection
@@ -172,15 +178,17 @@ describe('ChartAppearanceSection', () => {
 		);
 
 		const input = screen.getByTestId('panel-editor-v2-span-gaps-value');
-		fireEvent.change(input, { target: { value: '300' } });
-		fireEvent.blur(input);
+		await user.clear(input);
+		await user.type(input, '300');
+		await user.tab();
 
 		expect(onChange).toHaveBeenLastCalledWith({
 			spanGaps: { fillLessThan: '300' },
 		});
 	});
 
-	it('switching back to "Never" clears the threshold', () => {
+	it('switching back to "Never" clears the threshold', async () => {
+		const user = userEvent.setup();
 		const onChange = jest.fn();
 		render(
 			<ChartAppearanceSection
@@ -190,12 +198,13 @@ describe('ChartAppearanceSection', () => {
 			/>,
 		);
 
-		fireEvent.click(screen.getByText('Never'));
+		await user.click(screen.getByText('Never'));
 
 		expect(onChange).toHaveBeenLastCalledWith({ spanGaps: undefined });
 	});
 
-	it('shows an error and does not commit an invalid duration', () => {
+	it('shows an error and does not commit an invalid duration', async () => {
+		const user = userEvent.setup();
 		const onChange = jest.fn();
 		render(
 			<ChartAppearanceSection
@@ -206,14 +215,16 @@ describe('ChartAppearanceSection', () => {
 		);
 
 		const input = screen.getByTestId('panel-editor-v2-span-gaps-value');
-		fireEvent.change(input, { target: { value: 'abc' } });
-		fireEvent.blur(input);
+		await user.clear(input);
+		await user.type(input, 'abc');
+		await user.tab();
 
 		expect(screen.getByText(/valid duration/i)).toBeInTheDocument();
 		expect(onChange).not.toHaveBeenCalled();
 	});
 
-	it('rejects a threshold below the query step interval', () => {
+	it('rejects a threshold below the query step interval', async () => {
+		const user = userEvent.setup();
 		const onChange = jest.fn();
 		render(
 			<ChartAppearanceSection
@@ -226,8 +237,9 @@ describe('ChartAppearanceSection', () => {
 
 		const input = screen.getByTestId('panel-editor-v2-span-gaps-value');
 		// 1m (60s) is below the 2m (120s) step interval.
-		fireEvent.change(input, { target: { value: '1m' } });
-		fireEvent.blur(input);
+		await user.clear(input);
+		await user.type(input, '1m');
+		await user.tab();
 
 		expect(screen.getByText(/Threshold should be >/)).toBeInTheDocument();
 		expect(onChange).not.toHaveBeenCalled();

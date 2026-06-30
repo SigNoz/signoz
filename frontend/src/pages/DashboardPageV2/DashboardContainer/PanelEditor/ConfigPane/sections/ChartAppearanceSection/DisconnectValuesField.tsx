@@ -9,11 +9,13 @@ import DisconnectValuesThresholdInput from './DisconnectValuesThresholdInput';
 import styles from './ChartAppearanceSection.module.scss';
 
 const DEFAULT_THRESHOLD = '1m';
-const MODE_NEVER = 'never';
-const MODE_THRESHOLD = 'threshold';
+enum DisconnectValuesMode {
+	NEVER = 'never',
+	THRESHOLD = 'threshold',
+}
 const MODE_OPTIONS = [
-	{ value: MODE_NEVER, label: 'Never' },
-	{ value: MODE_THRESHOLD, label: 'Threshold' },
+	{ value: DisconnectValuesMode.NEVER, label: 'Never' },
+	{ value: DisconnectValuesMode.THRESHOLD, label: 'Threshold' },
 ];
 
 interface DisconnectValuesFieldProps {
@@ -56,9 +58,9 @@ function DisconnectValuesField({
 		}
 	}, [duration]);
 
-	const handleMode = (mode: string): void => {
+	const handleMode = (mode: DisconnectValuesMode): void => {
 		onChange(
-			mode === MODE_THRESHOLD
+			mode === DisconnectValuesMode.THRESHOLD
 				? { ...value, fillLessThan: lastDuration }
 				: undefined,
 		);
@@ -70,7 +72,9 @@ function DisconnectValuesField({
 				<Typography.Text>Disconnect values</Typography.Text>
 				<ConfigSegmented
 					testId={testId}
-					value={isThreshold ? MODE_THRESHOLD : MODE_NEVER}
+					value={
+						isThreshold ? DisconnectValuesMode.THRESHOLD : DisconnectValuesMode.NEVER
+					}
 					items={MODE_OPTIONS}
 					onChange={handleMode}
 				/>
