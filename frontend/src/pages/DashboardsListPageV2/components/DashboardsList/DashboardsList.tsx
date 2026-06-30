@@ -10,7 +10,8 @@ import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useAppContext } from 'providers/App/App';
 import { toAPIError } from 'utils/errorUtils';
 
-import { combineQueries } from '../../filterQuery';
+import { combineQueries } from '../../utils/filterQuery';
+import { useAccumulatedTags } from '../../hooks/useAccumulatedTags';
 import { useActiveView } from '../../hooks/useActiveView';
 import { useDashboardFilters } from '../../hooks/useDashboardFilters';
 import {
@@ -21,8 +22,8 @@ import {
 import { useDashboardViewsStore } from '../../store/useDashboardViewsStore';
 import { useDashboardsListVisibleColumnsStore } from '../../store/useVisibleColumnsStore';
 import type { SelectedTag, UpdatedWindow } from '../../types';
-import type { DashboardListItem } from '../../utils';
-import { applyClientView } from '../../views';
+import type { DashboardListItem } from '../../utils/helpers';
+import { applyClientView } from '../../utils/views';
 import type { CreatorOption } from '../FilterZone/FilterChips';
 import FilterZone from '../FilterZone/FilterZone';
 import NewDashboardModal from '../NewDashboardModal/NewDashboardModal';
@@ -213,12 +214,14 @@ function DashboardsList(): JSX.Element {
 	}, [rawDashboards, user.email]);
 
 	// All key:value tags the API reports for the org's dashboards, powering the
-	// Tags filter chip's options.
-	const availableTags = useMemo<SelectedTag[]>(
+	// Tags filter chip and DSL key suggestions. Accumulated across refetches so
+	// previously-seen tags stay selectable even when a filtered page omits them.
+	const responseTags = useMemo<SelectedTag[]>(
 		() =>
 			(response?.data?.tags ?? []).map((t) => ({ key: t.key, value: t.value })),
 		[response],
 	);
+	const availableTags = useAccumulatedTags(responseTags);
 
 	const [isCreateOpen, setIsCreateOpen] = useState(false);
 	const visibleColumns = useDashboardsListVisibleColumnsStore(
