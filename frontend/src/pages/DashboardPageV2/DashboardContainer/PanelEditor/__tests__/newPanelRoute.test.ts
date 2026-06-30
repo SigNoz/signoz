@@ -1,4 +1,5 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { deserialize } from 'lib/compositeQuery/serializer';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import {
@@ -49,13 +50,9 @@ describe('newPanelRoute', () => {
 			return { path, params: new URLSearchParams(search) };
 		};
 
-		// Mirrors useGetCompositeQueryParam: it decodes the param twice.
-		const readCompositeQuery = (params: URLSearchParams): unknown =>
-			JSON.parse(
-				decodeURIComponent(
-					(params.get('compositeQuery') as string).replace(/\+/g, ' '),
-				),
-			);
+		// The real reader — the same entry point `useGetCompositeQueryParam` uses.
+		const readCompositeQuery = (params: URLSearchParams): Query | null =>
+			deserialize(params);
 
 		it.each([
 			[PANEL_TYPES.TIME_SERIES, 'signoz/TimeSeriesPanel'],
@@ -85,15 +82,14 @@ describe('newPanelRoute', () => {
 			expect(readCompositeQuery(params)).toStrictEqual(query);
 		});
 
-		// Regression: a bare `%`/`+` must survive the reader's double-decode.
+		// Regression: a bare `%`/`+` must survive URL encode/decode intact.
 		it('round-trips a filter expression containing % and + literals', () => {
+			const expression = "severity_text ILIKE 'Inf%' AND path = 'a+b'";
 			const queryWithLiterals = {
 				id: 'q1',
 				queryType: 'builder',
 				builder: {
-					queryData: [
-						{ filter: { expression: "severity_text ILIKE 'Inf%' AND path = 'a+b'" } },
-					],
+					queryData: [{ filter: { expression } }],
 				},
 			} as unknown as Query;
 			const link = buildExportPanelLink({
@@ -102,7 +98,9 @@ describe('newPanelRoute', () => {
 				query: queryWithLiterals,
 			});
 			const { params } = parseLink(link);
-			expect(readCompositeQuery(params)).toStrictEqual(queryWithLiterals);
+			expect(
+				readCompositeQuery(params)?.builder.queryData[0].filter?.expression,
+			).toBe(expression);
 		});
 
 		it('returns null for a panel type with no V2 kind', () => {

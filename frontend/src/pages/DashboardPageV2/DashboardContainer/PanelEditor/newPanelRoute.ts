@@ -1,7 +1,7 @@
 import { generatePath } from 'react-router-dom';
-import { QueryParams } from 'constants/query';
 import type { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import { serialize } from 'lib/compositeQuery/serializer';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import {
@@ -45,11 +45,8 @@ export function parseNewPanelKind(
 
 /**
  * New-panel editor link that exports an explorer query into a V2 dashboard. Carries the
- * raw `Query` as `compositeQuery` (conversion happens in the editor). `null` when the panel
- * type has no V2 kind, so the caller skips the export instead of landing on an unrelated kind.
- *
- * Double-encoded on purpose: `useGetCompositeQueryParam` decodes twice, so a single encode
- * would let a bare `%`/`+` (e.g. `ILIKE 'Inf%'`) break its second decode and drop the query.
+ * raw `Query` (conversion happens in the editor). `null` when the panel type has no V2
+ * kind, so the caller skips the export instead of landing on an unrelated kind.
  */
 export function buildExportPanelLink({
 	dashboardId,
@@ -68,9 +65,7 @@ export function buildExportPanelLink({
 		dashboardId,
 		panelId: NEW_PANEL_ID,
 	});
-	return `${path}${newPanelSearch(kind)}&${
-		QueryParams.compositeQuery
-	}=${encodeURIComponent(encodeURIComponent(JSON.stringify(query)))}`;
+	return `${path}${newPanelSearch(kind)}&${serialize(query).toString()}`;
 }
 
 /** Target section index for a new panel, or undefined when unset/invalid. */

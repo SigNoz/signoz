@@ -7,6 +7,11 @@ import type { PANEL_TYPES } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
+import {
+	applySerializedParams,
+	clearSerializedParams,
+	serialize,
+} from 'lib/compositeQuery/serializer';
 import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 import { getPanelBuilderQuery } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/getPanelBuilderQuery';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -49,14 +54,14 @@ export function useViewPanel(): UseViewPanelApi {
 			// Copy before mutating: useUrlQuery returns a memoized instance.
 			const next = new URLSearchParams(urlQuery);
 			next.set(QueryParams.expandedWidgetId, panelId);
+			// Drop leftover in-modal query/kind + the editor's handoff so a plain View opens
+			// on the saved panel, not stale state the modal would otherwise hydrate from.
+			clearSerializedParams(next);
 			// Only a drilldown retargets the panel type.
 			next.delete(QueryParams.graphType);
 			clearViewPanelHandoff();
 			const query = getPanelBuilderQuery(panel);
-			next.set(
-				QueryParams.compositeQuery,
-				encodeURIComponent(JSON.stringify(query)),
-			);
+			applySerializedParams(serialize(query), next);
 			// The provider applies the URL in an effect, a tick after the builder's fields have
 			// mounted and read the query they keep. `resetQuery` — not `initQueryBuilderData`:
 			// swapping one staged id for another re-anchors global time and refetches the grid.
@@ -78,12 +83,10 @@ export function useViewPanel(): UseViewPanelApi {
 			// below carries this query's own id, and a staged query with a matching id
 			// makes the provider skip the hydration that normalises legacy filter fields.
 			resetQuery(query);
-			// Same encoding the query builder uses (see `useGetCompositeQueryParam`): the URL
-			// value is `encodeURIComponent(JSON.stringify(query))`, decoded once on read.
-			next.set(
-				QueryParams.compositeQuery,
-				encodeURIComponent(JSON.stringify(query)),
-			);
+			// Clear first: an adapter can explode a query into many content-dependent keys,
+			// so overwriting alone would leave the previous query's keys in the URL.
+			clearSerializedParams(next);
+			applySerializedParams(serialize(query), next);
 			safeNavigate(`${pathname}?${next.toString()}`);
 		},
 		[pathname, safeNavigate, urlQuery, resetQuery],
@@ -94,7 +97,7 @@ export function useViewPanel(): UseViewPanelApi {
 		next.delete(QueryParams.expandedWidgetId);
 		// Drop the drilldown editor's URL state so it doesn't leak to the dashboard
 		// (the in-modal query builder writes compositeQuery, V1 parity).
-		next.delete(QueryParams.compositeQuery);
+		clearSerializedParams(next);
 		next.delete(QueryParams.graphType);
 		clearViewPanelHandoff();
 		const search = next.toString();

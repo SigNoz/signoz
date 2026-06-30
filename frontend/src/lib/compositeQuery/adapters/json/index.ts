@@ -3,6 +3,7 @@ import {
 	convertFiltersToExpressionWithExistingQuery,
 	convertHavingToExpression,
 } from 'components/QueryBuilderV2/utils';
+import { COMPOSITE_QUERY_KEY } from 'lib/compositeQuery/constants';
 import type { CompositeQueryAdapter } from 'lib/compositeQuery/types';
 import type { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -44,8 +45,6 @@ function migrateLegacyFormat(parsed: Query): Query {
 	return next;
 }
 
-export const COMPOSITE_QUERY_KEY = 'compositeQuery';
-
 export const jsonAdapter: CompositeQueryAdapter = {
 	name: 'json(legacy)',
 	encode: (query) => {
@@ -55,14 +54,21 @@ export const jsonAdapter: CompositeQueryAdapter = {
 	},
 	matches: () => true,
 	decode: (params) => {
-		const raw = params.get(COMPOSITE_QUERY_KEY) ?? '';
-		let parsed: Query;
+		const raw = params.get(COMPOSITE_QUERY_KEY);
+		if (!raw) {
+			return null;
+		}
 
 		try {
-			parsed = JSON.parse(raw);
-		} catch (e) {
-			parsed = JSON.parse(decodeURIComponent(raw.replace(/\+/g, ' ')));
+			let parsed: Query;
+			try {
+				parsed = JSON.parse(raw);
+			} catch {
+				parsed = JSON.parse(decodeURIComponent(raw.replace(/\+/g, ' ')));
+			}
+			return migrateLegacyFormat(parsed);
+		} catch {
+			return null;
 		}
-		return migrateLegacyFormat(parsed);
 	},
 };

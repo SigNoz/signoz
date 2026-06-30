@@ -1,5 +1,5 @@
 import { initialQueriesMap } from 'constants/queryBuilder';
-import { COMPOSITE_QUERY_KEY } from 'lib/compositeQuery/types';
+import { COMPOSITE_QUERY_KEY } from 'lib/compositeQuery/constants';
 import {
 	clearSerializedParams,
 	deserialize,

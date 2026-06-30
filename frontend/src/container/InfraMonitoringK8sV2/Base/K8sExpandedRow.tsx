@@ -10,9 +10,12 @@ import TanStackTable, {
 	TableColumnDef,
 	TanStackTableStateProvider,
 } from 'components/TanStackTableView';
-import { QueryParams } from 'constants/query';
 import { CornerDownRight } from '@signozhq/icons';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import {
+	applySerializedParams,
+	serialize,
+} from 'lib/compositeQuery/serializer';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { v4 as uuid } from 'uuid';
@@ -259,10 +262,7 @@ export function K8sExpandedRow<
 		};
 
 		const newUrlQuery = new URLSearchParams(urlQuery.toString());
-		newUrlQuery.set(
-			QueryParams.compositeQuery,
-			encodeURIComponent(JSON.stringify(updatedQuery)),
-		);
+		applySerializedParams(serialize(updatedQuery), newUrlQuery);
 
 		safeNavigate(`${location.pathname}?${newUrlQuery.toString()}`);
 	};

@@ -6,11 +6,14 @@ import {
 	InfraMonitoringEvents,
 	logInfraFilterCustomizedEvent,
 } from 'constants/events';
-import { QueryParams } from 'constants/query';
 import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryBtn';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import {
+	applySerializedParams,
+	serialize,
+} from 'lib/compositeQuery/serializer';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { v4 as uuid } from 'uuid';
 import { useGlobalTimeQueryInvalidate } from 'store/globalTime';
@@ -85,10 +88,7 @@ function K8sHeader({
 
 			// Use window.location.search to get fresh URL params (avoids stale hook state)
 			const newUrlQuery = new URLSearchParams(window.location.search);
-			newUrlQuery.set(
-				QueryParams.compositeQuery,
-				encodeURIComponent(JSON.stringify(updatedQuery)),
-			);
+			applySerializedParams(serialize(updatedQuery), newUrlQuery);
 
 			safeNavigate(`${location.pathname}?${newUrlQuery.toString()}`);
 			void invalidateQueries();

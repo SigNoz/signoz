@@ -1,11 +1,16 @@
 import { initialQueriesMap } from 'constants/queryBuilder';
-import { COMPOSITE_QUERY_KEY } from 'lib/compositeQuery/types';
+import { COMPOSITE_QUERY_KEY } from 'lib/compositeQuery/constants';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { jsonAdapter } from './index';
 
-const roundTrip = (query: Query): Query =>
-	jsonAdapter.decode(jsonAdapter.encode(query));
+const roundTrip = (query: Query): Query => {
+	const decoded = jsonAdapter.decode(jsonAdapter.encode(query));
+	if (!decoded) {
+		throw new Error('roundTrip: decode returned null');
+	}
+	return decoded;
+};
 
 describe('jsonAdapter', () => {
 	describe('round-trip', () => {
@@ -14,7 +19,7 @@ describe('jsonAdapter', () => {
 			(source) => {
 				const query = initialQueriesMap[source];
 				const decoded = roundTrip(query);
-				expect(decoded.builder.queryData[0].dataSource).toBe(source);
+				expect(decoded?.builder.queryData[0].dataSource).toBe(source);
 			},
 		);
 	});
@@ -41,7 +46,7 @@ describe('jsonAdapter', () => {
 			params.set(COMPOSITE_QUERY_KEY, JSON.stringify(query));
 
 			const decoded = jsonAdapter.decode(params);
-			expect(decoded.builder.queryData[0].dataSource).toBe('logs');
+			expect(decoded?.builder.queryData[0].dataSource).toBe('logs');
 		});
 	});
 
@@ -54,7 +59,7 @@ describe('jsonAdapter', () => {
 			params.set(COMPOSITE_QUERY_KEY, doubleEncoded);
 
 			const decoded = jsonAdapter.decode(params);
-			expect(decoded.builder.queryData[0].dataSource).toBe('logs');
+			expect(decoded?.builder.queryData[0].dataSource).toBe('logs');
 		});
 
 		it('double-encoded with special chars decodes correctly', () => {
@@ -86,7 +91,7 @@ describe('jsonAdapter', () => {
 			params.set(COMPOSITE_QUERY_KEY, doubleEncoded);
 
 			const decoded = jsonAdapter.decode(params);
-			const filter = decoded.builder.queryData[0].filters?.items[0];
+			const filter = decoded?.builder.queryData[0].filters?.items[0];
 			expect(filter?.value).toBe('hello world & foo=bar');
 		});
 	});
@@ -133,7 +138,7 @@ describe('jsonAdapter', () => {
 			// Current format (single encode) - + becomes %2B
 			const params = jsonAdapter.encode(queryWithPlus as Query);
 			const decoded = jsonAdapter.decode(params);
-			expect(decoded.builder.queryData[0].filters?.items[0]?.value).toBe('1+2=3');
+			expect(decoded?.builder.queryData[0].filters?.items[0]?.value).toBe('1+2=3');
 		});
 
 		it('legacy double-encoded + in values preserved', () => {
@@ -163,7 +168,7 @@ describe('jsonAdapter', () => {
 			params.set(COMPOSITE_QUERY_KEY, doubleEncoded);
 
 			const decoded = jsonAdapter.decode(params);
-			expect(decoded.builder.queryData[0].filters?.items[0]?.value).toBe('a+b');
+			expect(decoded?.builder.queryData[0].filters?.items[0]?.value).toBe('a+b');
 		});
 	});
 
@@ -204,8 +209,8 @@ describe('jsonAdapter', () => {
 			const params = new URLSearchParams();
 			params.set(COMPOSITE_QUERY_KEY, JSON.stringify(legacy));
 			const decoded = jsonAdapter.decode(params);
-			expect(decoded.builder.queryData[0].filter).toBeDefined();
-			expect(decoded.builder.queryData[0].aggregations).toBeDefined();
+			expect(decoded?.builder.queryData[0].filter).toBeDefined();
+			expect(decoded?.builder.queryData[0].aggregations).toBeDefined();
 		});
 	});
 });

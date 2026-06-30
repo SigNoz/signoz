@@ -6,6 +6,10 @@ import type { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
+import {
+	applySerializedParams,
+	serialize,
+} from 'lib/compositeQuery/serializer';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { writeViewPanelHandoff } from '../../PanelsAndSectionsLayout/Panel/ViewPanelModal/viewPanelHandoffStore';
@@ -44,10 +48,7 @@ export function useSwitchToViewMode({
 		}
 		params.set(QueryParams.expandedWidgetId, panelId);
 		params.set(QueryParams.graphType, panelType);
-		params.set(
-			QueryParams.compositeQuery,
-			encodeURIComponent(JSON.stringify(query)),
-		);
+		applySerializedParams(serialize(query), params);
 		safeNavigate(
 			`${generatePath(ROUTES.DASHBOARD, { dashboardId })}?${params.toString()}`,
 		);

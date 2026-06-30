@@ -11,6 +11,8 @@ import {
 export const isOrder = (order: string | null): order is Order =>
 	!!(order === 'ascending' || order === 'descending');
 
+// The serialized query is deliberately absent: its param keys are owned by the
+// compositeQuery serializer (see lib/compositeQuery), not spelled out here.
 export const urlKey = {
 	order: 'order',
 	offset: 'offset',
@@ -18,7 +20,6 @@ export const urlKey = {
 	pageSize: 'pageSize',
 	exceptionType: 'exceptionType',
 	serviceName: 'serviceName',
-	compositeQuery: 'compositeQuery',
 };
 
 export const isOrderParams = (orderBy: string | null): orderBy is OrderBy =>

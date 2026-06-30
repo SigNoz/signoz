@@ -4,8 +4,8 @@ import type {
 	DashboardtypesQueryDTO,
 	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import { serialize } from 'lib/compositeQuery/serializer';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { AllTheProviders } from 'tests/test-utils';
@@ -50,11 +50,7 @@ function makePanel(queries: DashboardtypesQueryDTO[]): DashboardtypesPanelDTO {
 function makeUrlWrapper(
 	query: Query,
 ): ({ children }: { children: React.ReactNode }) => JSX.Element {
-	const params = new URLSearchParams();
-	params.set(
-		QueryParams.compositeQuery,
-		encodeURIComponent(JSON.stringify(query)),
-	);
+	const params = serialize(query);
 	return function UrlWrapper({
 		children,
 	}: {

@@ -5,6 +5,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { Button } from 'antd';
 import ROUTES from 'constants/routes';
+import { deserialize } from 'lib/compositeQuery/serializer';
 import ContextMenu, { useCoordinates } from 'periscope/components/ContextMenu';
 import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
 import store from 'store';
@@ -189,12 +190,7 @@ describe('TableDrilldown', () => {
 		// Parse the URL to check query parameters
 		const urlObj = new URL(url, 'http://localhost');
 
-		// Check that compositeQuery parameter exists and contains the query with filters
-		expect(urlObj.searchParams.has('compositeQuery')).toBe(true);
-
-		const compositeQuery = JSON.parse(
-			decodeURIComponent(urlObj.searchParams.get('compositeQuery') || '{}'),
-		);
+		const compositeQuery = deserialize(urlObj.searchParams) as Query;
 
 		// Verify the query structure includes the filters from clicked data
 		expect(compositeQuery.builder).toBeDefined();
@@ -265,12 +261,7 @@ describe('TableDrilldown', () => {
 		// Parse the URL to check query parameters
 		const urlObj = new URL(url, 'http://localhost');
 
-		// Check that compositeQuery parameter exists and contains the query with filters
-		expect(urlObj.searchParams.has('compositeQuery')).toBe(true);
-
-		const compositeQuery = JSON.parse(
-			decodeURIComponent(urlObj.searchParams.get('compositeQuery') || '{}'),
-		);
+		const compositeQuery = deserialize(urlObj.searchParams) as Query;
 		// Verify the query structure includes the filters from clicked data
 		expect(compositeQuery.builder).toBeDefined();
 		expect(compositeQuery.builder.queryData).toBeDefined();
@@ -278,7 +269,7 @@ describe('TableDrilldown', () => {
 		// Check that the query contains the correct filter expression
 		// The filter should include the clicked data filters (service.name = 'adservice', trace_id = 'df2cfb0e57bb8736207689851478cd50')
 		const firstQueryData = compositeQuery.builder.queryData[0];
-		expect(firstQueryData.filter.expression).toStrictEqual(
+		expect(firstQueryData.filter?.expression).toStrictEqual(
 			MOCK_QUERY_WITH_FILTER,
 		);
 

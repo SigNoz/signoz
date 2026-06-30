@@ -7,6 +7,10 @@ import { ENTITY_VERSION_V5 } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import {
+	applySerializedParams,
+	serialize,
+} from 'lib/compositeQuery/serializer';
 import { PANEL_KIND_TO_PANEL_TYPE } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelKind';
 import { fromPerses } from 'pages/DashboardPageV2/DashboardContainer/queryV5/persesQueryAdapters';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -44,10 +48,7 @@ export function buildAlertUrl(
 	}
 
 	const params = new URLSearchParams();
-	params.set(
-		QueryParams.compositeQuery,
-		encodeURIComponent(JSON.stringify(query)),
-	);
+	applySerializedParams(serialize(query), params);
 	params.set(QueryParams.panelTypes, panelType);
 	params.set(QueryParams.version, ENTITY_VERSION_V5);
 	params.set(QueryParams.source, YAxisSource.DASHBOARDS);

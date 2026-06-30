@@ -1,5 +1,5 @@
 import { deserialize } from 'lib/compositeQuery/serializer';
-import { COMPOSITE_QUERY_KEY } from 'lib/compositeQuery/types';
+import { COMPOSITE_QUERY_KEY } from 'lib/compositeQuery/constants';
 import { isEqual } from 'lodash-es';
 
 /**

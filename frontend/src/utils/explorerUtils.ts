@@ -1,6 +1,10 @@
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import {
+	applySerializedParams,
+	serialize,
+} from 'lib/compositeQuery/serializer';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -67,10 +71,7 @@ export const getMetricsExplorerUrl = ({
 	endTimeMs,
 }: MetricsExplorerUrlParams): string => {
 	const params = new URLSearchParams();
-	params.set(
-		QueryParams.compositeQuery,
-		encodeURIComponent(JSON.stringify(query)),
-	);
+	applySerializedParams(serialize(query), params);
 
 	if (relativeTime) {
 		params.set(QueryParams.relativeTime, relativeTime);

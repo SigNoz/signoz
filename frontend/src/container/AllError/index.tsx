@@ -27,6 +27,7 @@ import {
 } from 'hooks/useResourceAttribute/utils';
 import { TimestampInput } from 'hooks/useTimezoneFormatter/useTimezoneFormatter';
 import useUrlQuery from 'hooks/useUrlQuery';
+import { deserialize, serializeToParams } from 'lib/compositeQuery/serializer';
 import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
 import { isUndefined } from 'lodash-es';
@@ -61,7 +62,6 @@ type QueryParams = {
 	pageSize: number;
 	exceptionType?: string;
 	serviceName?: string;
-	compositeQuery?: string;
 };
 
 function AllErrors(): JSX.Element {
@@ -78,7 +78,6 @@ function AllErrors(): JSX.Element {
 		getUpdatedPageSize,
 		getUpdatedExceptionType,
 		getUpdatedServiceName,
-		getUpdatedCompositeQuery,
 	} = useMemo(
 		() => ({
 			updatedOrder: getOrder(params.get(urlKey.order)),
@@ -87,7 +86,6 @@ function AllErrors(): JSX.Element {
 			getUpdatedPageSize: getUpdatePageSize(params.get(urlKey.pageSize)),
 			getUpdatedExceptionType: getFilterString(params.get(urlKey.exceptionType)),
 			getUpdatedServiceName: getFilterString(params.get(urlKey.serviceName)),
-			getUpdatedCompositeQuery: getFilterString(params.get(urlKey.compositeQuery)),
 		}),
 		[params],
 	);
@@ -213,7 +211,6 @@ function AllErrors(): JSX.Element {
 					offset: getUpdatedOffset,
 					orderParam: getUpdatedParams,
 					pageSize: getUpdatedPageSize,
-					compositeQuery: getUpdatedCompositeQuery,
 				};
 
 				if (exceptionFilterValue && exceptionFilterValue !== 'undefined') {
@@ -224,7 +221,13 @@ function AllErrors(): JSX.Element {
 					queryParams.serviceName = serviceFilterValue;
 				}
 
-				history.replace(`${pathname}?${createQueryParams(queryParams)}`);
+				// Carry the active query across the filter change so the trace context survives.
+				history.replace(
+					`${pathname}?${createQueryParams({
+						...queryParams,
+						...(compositeData ? serializeToParams(compositeData) : {}),
+					})}`,
+				);
 				confirm();
 			},
 		[
@@ -233,7 +236,7 @@ function AllErrors(): JSX.Element {
 			getUpdatedPageSize,
 			getUpdatedParams,
 			getUpdatedServiceName,
-			getUpdatedCompositeQuery,
+			compositeData,
 			pathname,
 			updatedOrder,
 		],
@@ -438,7 +441,9 @@ function AllErrors(): JSX.Element {
 					serviceName: getFilterString(params.get(urlKey.serviceName)),
 					exceptionType: getFilterString(params.get(urlKey.exceptionType)),
 				});
-				const compositeQuery = params.get(urlKey.compositeQuery) || '';
+				// Re-serialize from the live URL rather than forwarding the raw param, so
+				// every key the adapter owns is carried over.
+				const compositeQuery = deserialize(params);
 				history.replace(
 					`${pathname}?${createQueryParams({
 						order: updatedOrder,
@@ -447,7 +452,7 @@ function AllErrors(): JSX.Element {
 						pageSize,
 						exceptionType,
 						serviceName,
-						compositeQuery,
+						...(compositeQuery ? serializeToParams(compositeQuery) : {}),
 					})}`,
 				);
 			}
