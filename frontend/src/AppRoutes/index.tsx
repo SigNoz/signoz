@@ -35,6 +35,7 @@ import { PreferenceContextProvider } from 'providers/preferences/context/Prefere
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import { LicenseStatus } from 'types/api/licensesV3/getActive';
 import { extractDomain } from 'utils/app';
+import { getWebSettings } from 'utils/bootSettings';
 
 import { Home } from './pageComponents';
 import PrivateRoute from './Private';
@@ -333,24 +334,19 @@ function App(): JSX.Element {
 	}, [user, isFetchingUser, isCloudUser, enableAnalytics]);
 
 	useEffect(() => {
+		const webSettings = getWebSettings();
 		if (isCloudUser || isEnterpriseSelfHostedUser) {
-			if (
-				(window.signozBootData?.settings?.posthog.enabled ?? true) &&
-				process.env.POSTHOG_KEY
-			) {
+			if ((webSettings?.posthog.enabled ?? true) && process.env.POSTHOG_KEY) {
 				posthog.init(process.env.POSTHOG_KEY, {
 					api_host: 'https://us.i.posthog.com',
 					person_profiles: 'identified_only', // or 'always' to create profiles for anonymous users as well
 				});
 			}
 
-			if (
-				!isSentryInitialized &&
-				(window.signozBootData?.settings?.sentry.enabled ?? true)
-			) {
+			if (!isSentryInitialized && (webSettings?.sentry.enabled ?? true)) {
 				Sentry.init({
-					dsn: process.env.SENTRY_DSN,
-					tunnel: process.env.TUNNEL_URL,
+					dsn: webSettings?.sentry.dsn,
+					tunnel: webSettings?.sentry.tunnel,
 					environment: process.env.ENVIRONMENT,
 					release: process.env.VERSION,
 					integrations: [

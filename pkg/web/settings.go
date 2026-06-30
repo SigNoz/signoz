@@ -16,7 +16,9 @@ type Appcues struct {
 }
 
 type Sentry struct {
-	Enabled bool `json:"enabled" required:"true"`
+	Enabled bool   `json:"enabled" required:"true"`
+	DSN     string `json:"dsn" required:"true"`
+	Tunnel  string `json:"tunnel" required:"true"`
 }
 
 type Pylon struct {
@@ -33,6 +35,8 @@ func NewSettings(config Config) Settings {
 		},
 		Sentry: Sentry{
 			Enabled: config.Settings.Sentry.Enabled,
+			DSN:     config.Settings.Sentry.DSN,
+			Tunnel:  config.Settings.Sentry.Tunnel,
 		},
 		Pylon: Pylon{
 			Enabled: config.Settings.Pylon.Enabled,

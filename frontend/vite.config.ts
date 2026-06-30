@@ -31,7 +31,11 @@ function devBootDataPlugin(env: Record<string, string>): Plugin {
 			const settings = {
 				posthog: { enabled: env.VITE_POSTHOG_ENABLED !== 'false' },
 				appcues: { enabled: env.VITE_APPCUES_ENABLED !== 'false' },
-				sentry: { enabled: env.VITE_SENTRY_ENABLED !== 'false' },
+				sentry: {
+					enabled: env.VITE_SENTRY_ENABLED !== 'false',
+					dsn: env.VITE_SENTRY_DSN || '',
+					tunnel: env.VITE_TUNNEL_URL || '',
+				},
 				pylon: { enabled: env.VITE_PYLON_ENABLED !== 'false' },
 			};
 			return html.replaceAll('[[.Settings]]', JSON.stringify(settings));
@@ -165,8 +169,6 @@ export default defineConfig(({ mode }): UserConfig => {
 			'process.env.POSTHOG_KEY': JSON.stringify(env.VITE_POSTHOG_KEY),
 			'process.env.SENTRY_ORG': JSON.stringify(env.VITE_SENTRY_ORG),
 			'process.env.SENTRY_PROJECT_ID': JSON.stringify(env.VITE_SENTRY_PROJECT_ID),
-			'process.env.SENTRY_DSN': JSON.stringify(env.VITE_SENTRY_DSN),
-			'process.env.TUNNEL_URL': JSON.stringify(env.VITE_TUNNEL_URL),
 			'process.env.TUNNEL_DOMAIN': JSON.stringify(env.VITE_TUNNEL_DOMAIN),
 			'process.env.DOCS_BASE_URL': JSON.stringify(env.VITE_DOCS_BASE_URL),
 			'process.env.ENVIRONMENT': JSON.stringify(env.VITE_ENVIRONMENT),

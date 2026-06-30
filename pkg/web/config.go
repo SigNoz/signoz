@@ -36,7 +36,9 @@ type AppcuesConfig struct {
 }
 
 type SentryConfig struct {
-	Enabled bool `mapstructure:"enabled"`
+	Enabled bool   `mapstructure:"enabled"`
+	DSN     string `mapstructure:"dsn"`
+	Tunnel  string `mapstructure:"tunnel"`
 }
 
 type PylonConfig struct {

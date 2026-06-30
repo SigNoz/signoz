@@ -20,8 +20,6 @@ interface ImportMetaEnv {
 	readonly VITE_SENTRY_AUTH_TOKEN: string;
 	readonly VITE_SENTRY_ORG: string;
 	readonly VITE_SENTRY_PROJECT_ID: string;
-	readonly VITE_SENTRY_DSN: string;
-	readonly VITE_TUNNEL_URL: string;
 	readonly VITE_TUNNEL_DOMAIN: string;
 	readonly VITE_DOCS_BASE_URL: string;
 	readonly VITE_ENVIRONMENT: string;

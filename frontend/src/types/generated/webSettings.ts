@@ -16,5 +16,7 @@ export interface Pylon {
 	enabled: boolean;
 }
 export interface Sentry {
+	dsn: string;
 	enabled: boolean;
+	tunnel: string;
 }

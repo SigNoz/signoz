@@ -121,11 +121,21 @@ func TestServeTemplatedIndex(t *testing.T) {
 				Settings: web.SettingsConfig{
 					Posthog: web.PosthogConfig{Enabled: true},
 					Appcues: web.AppcuesConfig{Enabled: true},
+					Sentry: web.SentryConfig{
+						Enabled: true,
+						DSN:     "https://examplePublicKey@o0.ingest.sentry.io/0",
+						Tunnel:  "https://example.com/tunnel",
+					},
 				},
 			},
 			expected: expectedHTML("/", web.Settings{
 				Posthog: web.Posthog{Enabled: true},
 				Appcues: web.Appcues{Enabled: true},
+				Sentry: web.Sentry{
+					Enabled: true,
+					DSN:     "https://examplePublicKey@o0.ingest.sentry.io/0",
+					Tunnel:  "https://example.com/tunnel",
+				},
 			}),
 		},
 	}

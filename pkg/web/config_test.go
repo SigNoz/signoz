@@ -48,17 +48,20 @@ func TestSettingsConfigWithEnvProvider(t *testing.T) {
 	testCases := []struct {
 		name     string
 		env      string
+		value    string
 		expected SettingsConfig
 	}{
-		{name: "posthog", env: "SIGNOZ_WEB_SETTINGS_POSTHOG_ENABLED", expected: SettingsConfig{Posthog: PosthogConfig{Enabled: true}}},
-		{name: "appcues", env: "SIGNOZ_WEB_SETTINGS_APPCUES_ENABLED", expected: SettingsConfig{Appcues: AppcuesConfig{Enabled: true}}},
-		{name: "sentry", env: "SIGNOZ_WEB_SETTINGS_SENTRY_ENABLED", expected: SettingsConfig{Sentry: SentryConfig{Enabled: true}}},
-		{name: "pylon", env: "SIGNOZ_WEB_SETTINGS_PYLON_ENABLED", expected: SettingsConfig{Pylon: PylonConfig{Enabled: true}}},
+		{name: "posthog", env: "SIGNOZ_WEB_SETTINGS_POSTHOG_ENABLED", value: "true", expected: SettingsConfig{Posthog: PosthogConfig{Enabled: true}}},
+		{name: "appcues", env: "SIGNOZ_WEB_SETTINGS_APPCUES_ENABLED", value: "true", expected: SettingsConfig{Appcues: AppcuesConfig{Enabled: true}}},
+		{name: "sentry_enabled", env: "SIGNOZ_WEB_SETTINGS_SENTRY_ENABLED", value: "true", expected: SettingsConfig{Sentry: SentryConfig{Enabled: true}}},
+		{name: "sentry_dsn", env: "SIGNOZ_WEB_SETTINGS_SENTRY_DSN", value: "https://examplePublicKey@o0.ingest.sentry.io/0", expected: SettingsConfig{Sentry: SentryConfig{DSN: "https://examplePublicKey@o0.ingest.sentry.io/0"}}},
+		{name: "sentry_tunnel", env: "SIGNOZ_WEB_SETTINGS_SENTRY_TUNNEL", value: "https://example.com/tunnel", expected: SettingsConfig{Sentry: SentryConfig{Tunnel: "https://example.com/tunnel"}}},
+		{name: "pylon", env: "SIGNOZ_WEB_SETTINGS_PYLON_ENABLED", value: "true", expected: SettingsConfig{Pylon: PylonConfig{Enabled: true}}},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			t.Setenv(testCase.env, "true")
+			t.Setenv(testCase.env, testCase.value)
 
 			conf, err := config.New(
 				context.Background(),

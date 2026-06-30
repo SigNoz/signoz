@@ -71,6 +71,10 @@ web:
     sentry:
       # Whether to enable Sentry in web.
       enabled: false
+      # The Sentry DSN.
+      dsn: ""
+      # The Sentry tunnel URL.
+      tunnel: ""
     pylon:
       # Whether to enable Pylon in web.
       enabled: false
