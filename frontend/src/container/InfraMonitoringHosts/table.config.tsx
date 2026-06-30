@@ -124,7 +124,7 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 			</div>
 		),
 		accessorFn: (row): string => row.status,
-		width: { min: 150, default: 150 },
+		width: { min: 180, default: 180 },
 		enableSort: false,
 		cell: ({ value, groupMeta, row }): React.ReactNode => {
 			const status = value as InframonitoringtypesHostStatusDTO;

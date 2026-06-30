@@ -36,7 +36,7 @@ export function GroupedStatusCounts({
 					<TooltipSimple title={`${item.label}: ${item.value}`}>
 						<span>
 							<TanStackTable.Text className={styles.value}>
-								{item.value}
+								{item.value || '-'}
 							</TanStackTable.Text>
 						</span>
 					</TooltipSimple>

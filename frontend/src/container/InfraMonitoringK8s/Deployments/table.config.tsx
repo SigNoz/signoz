@@ -100,7 +100,7 @@ export const k8sDeploymentsColumnsConfig: TableColumnDef<InframonitoringtypesDep
 			id: 'podCountsByPhase',
 			header: 'Pod Phases',
 			accessorFn: (row): object | undefined => row.podCountsByPhase,
-			width: { min: 220 },
+			width: { min: 250 },
 			enableSort: false,
 			enableResize: true,
 			cell: ({ row }): React.ReactNode => {

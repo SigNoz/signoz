@@ -106,7 +106,7 @@ export const k8sDaemonSetsColumnsConfig: DaemonSetTableColumnConfig[] = [
 			row,
 		): InframonitoringtypesDaemonSetRecordDTO['podCountsByPhase'] =>
 			row.podCountsByPhase,
-		width: { min: 220 },
+		width: { min: 250 },
 		enableSort: false,
 		enableResize: true,
 		cell: ({ row }): React.ReactNode => {

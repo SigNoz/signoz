@@ -110,7 +110,7 @@ export const k8sStatefulSetsColumnsConfig: TableColumnDef<InframonitoringtypesSt
 				row,
 			): InframonitoringtypesStatefulSetRecordDTO['podCountsByPhase'] =>
 				row.podCountsByPhase,
-			width: { min: 220 },
+			width: { min: 250 },
 			enableSort: false,
 			enableResize: true,
 			cell: ({ row }): React.ReactNode => {

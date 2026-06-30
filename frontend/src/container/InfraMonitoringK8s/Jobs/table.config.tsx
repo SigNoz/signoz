@@ -100,7 +100,7 @@ export const k8sJobsColumnsConfig: JobTableColumnConfig[] = [
 		header: 'Pod Phases',
 		accessorFn: (row): InframonitoringtypesJobRecordDTO['podCountsByPhase'] =>
 			row.podCountsByPhase,
-		width: { min: 220 },
+		width: { min: 250 },
 		enableSort: false,
 		enableResize: true,
 		cell: ({ row }): React.ReactNode => {
