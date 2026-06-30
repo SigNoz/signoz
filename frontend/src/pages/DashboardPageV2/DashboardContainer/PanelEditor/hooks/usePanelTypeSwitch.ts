@@ -28,7 +28,7 @@ import {
 /** What a kind looks like when you leave it; restored verbatim if you return. */
 interface KindState {
 	pluginSpec: DashboardtypesPanelPluginDTO['spec'];
-	queries: DashboardtypesQueryDTO[] | null;
+	queries: DashboardtypesQueryDTO[];
 	builderQuery: Query;
 }
 
@@ -78,7 +78,7 @@ export function usePanelTypeSwitch({
 
 			cacheRef.current.set(oldKind, {
 				pluginSpec: currentSpec.plugin.spec,
-				queries: currentSpec.queries ?? null,
+				queries: currentSpec.queries,
 				builderQuery: query,
 			});
 
@@ -89,7 +89,7 @@ export function usePanelTypeSwitch({
 			// `createDefaultPanel`). The surrounding spec stays fully typed.
 			const buildSpec = (
 				pluginSpec: DashboardtypesPanelPluginDTO['spec'] | SwitchedPluginSpec,
-				queries: DashboardtypesQueryDTO[] | null,
+				queries: DashboardtypesQueryDTO[],
 			): DashboardtypesPanelSpecDTO => ({
 				...currentSpec,
 				plugin: {
@@ -119,7 +119,7 @@ export function usePanelTypeSwitch({
 				{ ...query, queryType },
 				panelTypeRef.current,
 			);
-			const signal = getBuilderQueries(currentSpec.queries || [])[0]
+			const signal = getBuilderQueries(currentSpec.queries)[0]
 				?.signal as TelemetrytypesSignalDTO;
 
 			setSpec(
