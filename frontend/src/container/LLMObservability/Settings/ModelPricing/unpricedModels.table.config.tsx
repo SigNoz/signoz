@@ -4,7 +4,6 @@ import type { TableColumnDef } from 'components/TanStackTableView';
 import MapToBillingModelSelect from './MapToBillingModelSelect';
 import styles from './LLMObservabilityModelPricing.module.scss';
 import type { PricingRule, UnpricedModel } from './types';
-import UnpricedModelActionCell from './UnpricedModelActionCell';
 import { formatSpanCount } from './utils';
 
 export interface UnpricedColumnsConfig {
@@ -12,27 +11,17 @@ export interface UnpricedColumnsConfig {
 	// modelName -> selected target rule. Carries the full rule (not just an id)
 	// because the per-row dropdown searches server-side and there's no global map.
 	selections: Record<string, PricingRule>;
-	// modelName whose action cell is showing the inline confirm panel, if any.
-	confirmingModel: string | null;
-	// modelName currently being committed, so its confirm button shows a spinner.
-	mappingModelName: string | null;
 	onSelectRule: (modelName: string, rule: PricingRule) => void;
-	onStartConfirm: (modelName: string) => void;
-	onCancelConfirm: () => void;
-	onConfirm: (model: UnpricedModel) => void;
 }
 
 // Column definitions for the unpriced-models TanStackTable. Sorting is off — the
 // unmapped-models endpoint returns the full set in one shot with no ordering knob.
+// Each row only picks a target billing model here; committing all picks happens
+// from the tab's top-level Save button, so there's no per-row action column.
 export function getUnpricedModelsColumns({
 	canManage,
 	selections,
-	confirmingModel,
-	mappingModelName,
 	onSelectRule,
-	onStartConfirm,
-	onCancelConfirm,
-	onConfirm,
 }: UnpricedColumnsConfig): TableColumnDef<UnpricedModel>[] {
 	return [
 		{
@@ -77,33 +66,15 @@ export function getUnpricedModelsColumns({
 		{
 			id: 'mapTo',
 			header: 'Map to billing model',
-			width: { min: 280 },
+			width: { min: 280, default: '100%' },
 			enableMove: false,
+			enableRemove: false,
 			cell: ({ row }): JSX.Element => (
 				<MapToBillingModelSelect
 					modelName={row.modelName}
 					selectedRule={selections[row.modelName]}
 					disabled={!canManage}
 					onSelect={(rule): void => onSelectRule(row.modelName, rule)}
-				/>
-			),
-		},
-		{
-			id: 'action',
-			header: 'Action',
-			width: { min: 200, default: '100%' },
-			enableMove: false,
-			enableRemove: false,
-			cell: ({ row }): JSX.Element | null => (
-				<UnpricedModelActionCell
-					model={row}
-					targetRule={selections[row.modelName]}
-					isConfirming={confirmingModel === row.modelName}
-					isMapping={mappingModelName === row.modelName}
-					canManage={canManage}
-					onStartConfirm={onStartConfirm}
-					onCancelConfirm={onCancelConfirm}
-					onConfirm={onConfirm}
 				/>
 			),
 		},

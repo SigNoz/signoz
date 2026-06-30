@@ -16,29 +16,15 @@
 	margin: 0;
 }
 
-// ─── Unpriced models tab ─────────────────────────────────────────────────────
+// ─── Unpriced models table cells ─────────────────────────────────────────────
 
-.unpricedBanner {
-	display: flex;
-	align-items: flex-start;
-	gap: 10px;
-	padding: 12px 16px;
-	border-radius: 6px;
-	border: 1px solid color-mix(in srgb, var(--bg-amber-400) 30%, transparent);
-	background: color-mix(in srgb, var(--bg-amber-400) 8%, transparent);
-	color: var(--bg-amber-300, var(--bg-amber-400));
-	font-size: 13px;
-	line-height: 1.5;
-
-	code {
-		font-family: var(--code-font-family, monospace);
-		font-size: 12px;
-	}
-}
-
-.unpricedBannerIcon {
-	flex-shrink: 0;
-	margin-top: 2px;
+.modelCellName {
+	max-width: 100%;
+	overflow: hidden;
+	color: var(--text-vanilla-100);
+	font-weight: var(--font-weight-semibold);
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .spansBadge {
@@ -53,46 +39,4 @@
 
 .mapToDropdown {
 	width: 280px;
-}
-
-.confirmPanel {
-	display: flex;
-	flex-direction: column;
-	gap: 8px;
-	padding: 12px;
-	border-radius: 6px;
-	border: 1px solid color-mix(in srgb, var(--bg-forest-500) 40%, transparent);
-	background: color-mix(in srgb, var(--bg-forest-500) 10%, transparent);
-}
-
-.confirmText {
-	font-size: 13px;
-	color: var(--bg-vanilla-100);
-
-	strong {
-		font-family: var(--code-font-family, monospace);
-		font-weight: 600;
-	}
-}
-
-.confirmPricing {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	gap: 8px;
-	font-size: 12px;
-	color: var(--bg-vanilla-400);
-}
-
-.confirmBucket {
-	padding: 1px 6px;
-	border-radius: 4px;
-	background: color-mix(in srgb, var(--bg-vanilla-400) 14%, transparent);
-	font-family: var(--code-font-family, monospace);
-}
-
-.confirmActions {
-	display: flex;
-	align-items: center;
-	gap: 8px;
 }

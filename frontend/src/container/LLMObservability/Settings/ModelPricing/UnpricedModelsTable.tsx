@@ -2,8 +2,8 @@ import { useMemo } from 'react';
 import TanStackTable from 'components/TanStackTableView';
 
 import { SKELETON_ROW_COUNT } from './constants';
-import styles from './LLMObservabilityModelPricing.module.scss';
 import type { UnpricedModel } from './types';
+import styles from './UnpricedModelsTable.module.scss';
 import {
 	getUnpricedModelsColumns,
 	type UnpricedColumnsConfig,
@@ -30,7 +30,10 @@ function UnpricedModelsTable({
 
 	if (!isLoading && models.length === 0) {
 		return (
-			<div className={styles.modelCostsTable} data-testid="unpriced-models-empty">
+			<div
+				className={styles.unpricedModelsEmpty}
+				data-testid="unpriced-models-empty"
+			>
 				All models in your traces are priced.
 			</div>
 		);
@@ -38,7 +41,7 @@ function UnpricedModelsTable({
 
 	return (
 		<TanStackTable<UnpricedModel>
-			className={styles.modelCostsTable}
+			className={styles.unpricedModelsTable}
 			data={models}
 			columns={columns}
 			isLoading={isLoading}

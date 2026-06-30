@@ -181,16 +181,21 @@ export const getRuleOptionLabel = (rule: PricingRule): string =>
 		rule.pricing?.input,
 	)}/${formatPricePerMillion(rule.pricing?.output)})`;
 
-// Builds the CreateOrUpdate payload that maps an unpriced model onto an existing
-// rule by appending its name as a match pattern. The rule's other fields
-// (pricing, provider, etc.) are preserved so the PUT overwrite doesn't wipe them.
+// Builds the CreateOrUpdate payload that maps unpriced models onto an existing
+// rule by appending their names as match patterns. Several models can map onto
+// the same rule in one save, so all new names are appended in a single payload —
+// committing them one PUT at a time would clobber each other. The rule's other
+// fields (pricing, provider, etc.) are preserved so the overwrite doesn't wipe them.
 export const buildPatternMappingPayload = (
 	rule: PricingRule,
-	modelName: string,
+	modelNames: string[],
 ): LlmpricingruletypesUpdatableLLMPricingRuleDTO => {
 	const draft = draftFromRule(rule);
-	const patterns = draft.patterns.includes(modelName)
-		? draft.patterns
-		: [...draft.patterns, modelName];
+	const patterns = [...draft.patterns];
+	modelNames.forEach((modelName) => {
+		if (!patterns.includes(modelName)) {
+			patterns.push(modelName);
+		}
+	});
 	return buildRulePayload({ ...draft, patterns });
 };

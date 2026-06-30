@@ -1,18 +1,24 @@
 import { useCallback, useMemo, useState } from 'react';
-import { TriangleAlert } from '@signozhq/icons';
+import { Button } from '@signozhq/ui/button';
+import { ArrowRight, TriangleAlert } from '@signozhq/icons';
 import { useListUnmappedLLMModels } from 'api/generated/services/llmpricingrules';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useAppContext } from 'providers/App/App';
 
-import styles from './LLMObservabilityModelPricing.module.scss';
+import styles from './UnpricedModelsTab.module.scss';
 import type { PricingRule, UnpricedModel } from './types';
 import type { UnpricedColumnsConfig } from './unpricedModels.table.config';
+import UnpricedMappingConfirmDrawer from './UnpricedMappingConfirmDrawer';
 import UnpricedModelsTable from './UnpricedModelsTable';
-import { useUnpricedModelMapping } from './useUnpricedModelMapping';
+import {
+	useUnpricedModelMapping,
+	type UnpricedModelMapping,
+} from './useUnpricedModelMapping';
 
 // "Unpriced models" tab: models seen in traces (gen_ai.request.model) that no
-// pricing rule matches. Each row can be mapped onto an existing billing model,
-// which appends the model name as a match pattern to that rule.
+// pricing rule matches. Each row picks an existing billing model to map onto;
+// a single top-level Save commits every pick at once (after a confirm dialog),
+// appending each model name as a match pattern to its chosen rule.
 function UnpricedModelsTab(): JSX.Element {
 	const { data, isLoading, isError } = useListUnmappedLLMModels();
 
@@ -27,8 +33,8 @@ function UnpricedModelsTab(): JSX.Element {
 	// modelName -> the rule picked in that row's dropdown. Holds the full rule
 	// (the per-row dropdown searches server-side, so there's no global lookup map).
 	const [selections, setSelections] = useState<Record<string, PricingRule>>({});
-	const [confirmingModel, setConfirmingModel] = useState<string | null>(null);
-	const { mapModel, mappingModelName } = useUnpricedModelMapping();
+	const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+	const { mapModels, isSaving } = useUnpricedModelMapping();
 
 	const onSelectRule = useCallback(
 		(modelName: string, rule: PricingRule): void => {
@@ -37,49 +43,61 @@ function UnpricedModelsTab(): JSX.Element {
 		[],
 	);
 
-	const onStartConfirm = useCallback((modelName: string): void => {
-		setConfirmingModel(modelName);
-	}, []);
-
-	const onCancelConfirm = useCallback((): void => {
-		setConfirmingModel(null);
-	}, []);
-
-	const onConfirm = useCallback(
-		async (model: UnpricedModel): Promise<void> => {
-			const rule = selections[model.modelName];
-			if (!rule) {
-				return;
-			}
-			await mapModel(model, rule);
-			setConfirmingModel(null);
-		},
-		[selections, mapModel],
+	// Only rows still present in the list with a selection are committable; built
+	// from `models` so the order is stable and stale keys (mapped-away models) drop.
+	const mappings: UnpricedModelMapping[] = useMemo(
+		() =>
+			models
+				.filter((model) => selections[model.modelName])
+				.map((model) => ({ model, rule: selections[model.modelName] })),
+		[models, selections],
 	);
+
+	const onConfirm = useCallback(async (): Promise<void> => {
+		const didSave = await mapModels(mappings);
+		if (didSave) {
+			setSelections({});
+			setIsConfirmOpen(false);
+		}
+	}, [mapModels, mappings]);
 
 	const columnsConfig: UnpricedColumnsConfig = {
 		canManage: canManagePricing,
 		selections,
-		confirmingModel,
-		mappingModelName,
 		onSelectRule,
-		onStartConfirm,
-		onCancelConfirm,
-		onConfirm,
 	};
 
+	const selectedCount = mappings.length;
+
 	return (
-		<>
-			<div className={styles.unpricedBanner}>
-				<TriangleAlert size={16} className={styles.unpricedBannerIcon} />
-				<span>
-					Models detected in traces without pricing. Add costs so{' '}
-					<code>gen_ai.estimated_total_cost</code> can be computed.
-				</span>
+		<div className={styles.unpricedModelsTab}>
+			<div className={styles.toolbar}>
+				<div className={styles.banner}>
+					<TriangleAlert size={16} className={styles.bannerIcon} />
+					<span>
+						Models detected in traces without pricing. Add costs so{' '}
+						<code>gen_ai.estimated_total_cost</code> can be computed.
+					</span>
+				</div>
+
+				{canManagePricing && (
+					<Button
+						variant="solid"
+						color="primary"
+						suffix={<ArrowRight size={14} />}
+						disabled={selectedCount === 0}
+						onClick={(): void => setIsConfirmOpen(true)}
+						testId="unpriced-save-btn"
+					>
+						{selectedCount > 0
+							? `Save ${selectedCount} model${selectedCount === 1 ? '' : 's'}`
+							: 'Save models'}
+					</Button>
+				)}
 			</div>
 
 			{isError && (
-				<div className={styles.pageError} role="alert">
+				<div className={styles.error} role="alert">
 					Failed to load unpriced models. Please try again.
 				</div>
 			)}
@@ -89,7 +107,15 @@ function UnpricedModelsTab(): JSX.Element {
 				isLoading={isLoading}
 				columnsConfig={columnsConfig}
 			/>
-		</>
+
+			<UnpricedMappingConfirmDrawer
+				open={isConfirmOpen}
+				mappings={mappings}
+				isSaving={isSaving}
+				onConfirm={onConfirm}
+				onCancel={(): void => setIsConfirmOpen(false)}
+			/>
+		</div>
 	);
 }
 
