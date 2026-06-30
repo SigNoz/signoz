@@ -559,9 +559,6 @@ export const oldNewRoutesMapping: Record<string, string> = {
 	// TODO(H4ad): Update this after https://github.com/SigNoz/engineering-pod/issues/5322
 	'/settings/channels': '/alerts?tab=Channels',
 	'/settings/channels/new': '/alerts/channels/new',
-	'/llm-observability': '/llm-observability/overview',
-	'/llm-observability/settings/model-pricing':
-		'/llm-observability/configuration',
 };
 export const oldRoutes = Object.keys(oldNewRoutesMapping);
 
