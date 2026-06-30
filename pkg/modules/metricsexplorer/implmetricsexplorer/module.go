@@ -23,6 +23,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
+	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	"github.com/SigNoz/signoz/pkg/types/metricsexplorertypes"
@@ -417,14 +418,14 @@ func (m *module) GetMetricDashboardsV2(ctx context.Context, orgID valuer.UUID, m
 	return metricsexplorertypes.NewMetricDashboardPanelsResponse(data[metricName]), nil
 }
 
-func newMetricDashboardsResponse(dashboardList []map[string]string) *metricsexplorertypes.MetricDashboardsResponse {
+func newMetricDashboardsResponse(dashboardList []dashboardtypes.DashboardPanelRef) *metricsexplorertypes.MetricDashboardsResponse {
 	dashboards := make([]metricsexplorertypes.MetricDashboard, 0, len(dashboardList))
 	for _, item := range dashboardList {
 		dashboards = append(dashboards, metricsexplorertypes.MetricDashboard{
-			DashboardName: item["dashboard_name"],
-			DashboardID:   item["dashboard_id"],
-			WidgetID:      item["widget_id"],
-			WidgetName:    item["widget_name"],
+			DashboardName: item.DashboardName,
+			DashboardID:   item.DashboardID,
+			WidgetID:      item.PanelID,
+			WidgetName:    item.PanelName,
 		})
 	}
 

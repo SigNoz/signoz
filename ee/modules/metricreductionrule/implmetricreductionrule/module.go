@@ -4,7 +4,6 @@ import (
 	"context"
 	"log/slog"
 	"sort"
-	"strings"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -467,12 +466,12 @@ func (m *module) relatedAssetImpact(ctx context.Context, orgID valuer.UUID, metr
 		m.logger.WarnContext(ctx, "failed to fetch related dashboards for reduction preview", slog.String("metric_name", metricName), errors.Attr(err))
 	} else {
 		for _, item := range dashboards[metricName] {
-			usedLabels := append(splitCSV(item["group_by"]), splitCSV(item["filter_by"])...)
+			usedLabels := append(append([]string{}, item.GroupBy...), item.FilterBy...)
 			affected = append(affected, metricreductionruletypes.AffectedAsset{
 				Type:           metricreductionruletypes.AssetTypeDashboard,
-				ID:             item["dashboard_id"],
-				Name:           item["dashboard_name"],
-				Widget:         &metricreductionruletypes.AffectedWidget{ID: item["widget_id"], Name: item["widget_name"]},
+				ID:             item.DashboardID,
+				Name:           item.DashboardName,
+				Widget:         &metricreductionruletypes.AffectedWidget{ID: item.PanelID, Name: item.PanelName},
 				ImpactedLabels: intersectLabels(usedLabels, droppedSet),
 			})
 		}
@@ -535,13 +534,6 @@ func intersectLabels(keys []string, droppedSet map[string]struct{}) []string {
 		out = append(out, key)
 	}
 	return out
-}
-
-func splitCSV(s string) []string {
-	if s == "" {
-		return nil
-	}
-	return strings.Split(s, ",")
 }
 
 func resolveDroppedKept(matchType metricreductionruletypes.MatchType, ruleLabels, keys []string) (dropped, kept []string) {
