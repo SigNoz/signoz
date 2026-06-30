@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/modules/inframonitoring"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
@@ -26,6 +27,7 @@ type module struct {
 	condBuilder            qbtypes.ConditionBuilder
 	logger                 *slog.Logger
 	config                 inframonitoring.Config
+	fl                     flagger.Flagger
 }
 
 // NewModule constructs the inframonitoring module with the provided dependencies.
@@ -33,6 +35,7 @@ func NewModule(
 	telemetryStore telemetrystore.TelemetryStore,
 	telemetryMetadataStore telemetrytypes.MetadataStore,
 	querier querier.Querier,
+	fl flagger.Flagger,
 	providerSettings factory.ProviderSettings,
 	cfg inframonitoring.Config,
 ) inframonitoring.Module {
@@ -46,6 +49,7 @@ func NewModule(
 		condBuilder:            condBuilder,
 		logger:                 providerSettings.Logger,
 		config:                 cfg,
+		fl:                     fl,
 	}
 }
 
@@ -186,7 +190,7 @@ func (m *module) ListHosts(ctx context.Context, orgID valuer.UUID, req *inframon
 		return resp, nil
 	}
 
-	metadataMap, err := m.getHostsTableMetadata(ctx, req)
+	metadataMap, err := m.getHostsTableMetadata(ctx, orgID, req)
 	if err != nil {
 		return nil, err
 	}
@@ -222,7 +226,7 @@ func (m *module) ListHosts(ctx context.Context, orgID valuer.UUID, req *inframon
 	hostCounts := make(map[string]groupHostStatusCounts)
 	isHostNameInGroupBy := isKeyInGroupByAttrs(req.GroupBy, inframonitoringtypes.HostNameAttrKey)
 	if !isHostNameInGroupBy {
-		hostCounts, err = m.getPerGroupHostStatusCounts(ctx, req, hostsTableMetricNamesList, pageGroups, sinceUnixMilli)
+		hostCounts, err = m.getPerGroupHostStatusCounts(ctx, orgID, req, hostsTableMetricNamesList, pageGroups, sinceUnixMilli)
 		if err != nil {
 			return nil, err
 		}
@@ -272,7 +276,7 @@ func (m *module) ListPods(ctx context.Context, orgID valuer.UUID, req *inframoni
 		return resp, nil
 	}
 
-	metadataMap, err := m.getPodsTableMetadata(ctx, req)
+	metadataMap, err := m.getPodsTableMetadata(ctx, orgID, req)
 	if err != nil {
 		return nil, err
 	}
@@ -350,7 +354,7 @@ func (m *module) ListNodes(ctx context.Context, orgID valuer.UUID, req *inframon
 		return resp, nil
 	}
 
-	metadataMap, err := m.getNodesTableMetadata(ctx, req)
+	metadataMap, err := m.getNodesTableMetadata(ctx, orgID, req)
 	if err != nil {
 		return nil, err
 	}
@@ -433,7 +437,7 @@ func (m *module) ListNamespaces(ctx context.Context, orgID valuer.UUID, req *inf
 		return resp, nil
 	}
 
-	metadataMap, err := m.getNamespacesTableMetadata(ctx, req)
+	metadataMap, err := m.getNamespacesTableMetadata(ctx, orgID, req)
 	if err != nil {
 		return nil, err
 	}
@@ -510,7 +514,7 @@ func (m *module) ListClusters(ctx context.Context, orgID valuer.UUID, req *infra
 		return resp, nil
 	}
 
-	metadataMap, err := m.getClustersTableMetadata(ctx, req)
+	metadataMap, err := m.getClustersTableMetadata(ctx, orgID, req)
 	if err != nil {
 		return nil, err
 	}
@@ -600,7 +604,7 @@ func (m *module) ListVolumes(ctx context.Context, orgID valuer.UUID, req *infram
 		return resp, nil
 	}
 
-	metadataMap, err := m.getVolumesTableMetadata(ctx, req)
+	metadataMap, err := m.getVolumesTableMetadata(ctx, orgID, req)
 	if err != nil {
 		return nil, err
 	}
@@ -678,7 +682,7 @@ func (m *module) ListDeployments(ctx context.Context, orgID valuer.UUID, req *in
 		return resp, nil
 	}
 
-	metadataMap, err := m.getDeploymentsTableMetadata(ctx, req)
+	metadataMap, err := m.getDeploymentsTableMetadata(ctx, orgID, req)
 	if err != nil {
 		return nil, err
 	}
@@ -761,7 +765,7 @@ func (m *module) ListStatefulSets(ctx context.Context, orgID valuer.UUID, req *i
 		return resp, nil
 	}
 
-	metadataMap, err := m.getStatefulSetsTableMetadata(ctx, req)
+	metadataMap, err := m.getStatefulSetsTableMetadata(ctx, orgID, req)
 	if err != nil {
 		return nil, err
 	}
@@ -846,7 +850,7 @@ func (m *module) ListJobs(ctx context.Context, orgID valuer.UUID, req *inframoni
 		return resp, nil
 	}
 
-	metadataMap, err := m.getJobsTableMetadata(ctx, req)
+	metadataMap, err := m.getJobsTableMetadata(ctx, orgID, req)
 	if err != nil {
 		return nil, err
 	}
@@ -931,7 +935,7 @@ func (m *module) ListDaemonSets(ctx context.Context, orgID valuer.UUID, req *inf
 		return resp, nil
 	}
 
-	metadataMap, err := m.getDaemonSetsTableMetadata(ctx, req)
+	metadataMap, err := m.getDaemonSetsTableMetadata(ctx, orgID, req)
 	if err != nil {
 		return nil, err
 	}

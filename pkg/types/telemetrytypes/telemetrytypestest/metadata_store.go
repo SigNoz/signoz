@@ -181,7 +181,7 @@ func (m *MockMetadataStore) GetRelatedValues(ctx context.Context, fieldValueSele
 }
 
 // GetAllValues returns all values for a given field.
-func (m *MockMetadataStore) GetAllValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, bool, error) {
+func (m *MockMetadataStore) GetAllValues(ctx context.Context, _ valuer.UUID, fieldValueSelector *telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, bool, error) {
 	if fieldValueSelector == nil {
 		return &telemetrytypes.TelemetryFieldValues{}, true, nil
 	}

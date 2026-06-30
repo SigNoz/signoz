@@ -35,7 +35,7 @@ const (
 	// the collector, so the user doesn't see "active" before reduced data is actually flowing. The
 	// user-facing pending window is effectiveFromMargin + uiActivationDelay (~5m).
 	uiActivationDelay      = 3 * time.Minute
-	defaultPreviewLookback = 24 * time.Hour
+	defaultPreviewLookback = 1 * time.Hour
 	statsLookback          = 1 * time.Hour
 	timeseriesLookback     = 6 * time.Hour
 
@@ -154,6 +154,8 @@ func (m *module) listSortedByVolume(ctx context.Context, orgID valuer.UUID, para
 	for _, row := range ranked {
 		pageMetricNames = append(pageMetricNames, row.MetricName)
 	}
+
+	// TODO(srikanthccv): do we need to run this query? can we just get the same from RankByVolume?
 	sampleVolumes, err := m.ch.SampleVolumeByMetric(ctx, pageMetricNames, effectiveFrom, startMs, endMs)
 	if err != nil {
 		return nil, err
