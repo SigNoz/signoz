@@ -21,6 +21,7 @@ import {
 } from '../../hooks/useDashboardsListQueryParams';
 import { useDashboardViewsStore } from '../../store/useDashboardViewsStore';
 import { useDashboardsListVisibleColumnsStore } from '../../store/useVisibleColumnsStore';
+import { BuiltinViewId } from '../../types';
 import type { SelectedTag, UpdatedWindow } from '../../types';
 import type { DashboardListItem } from '../../utils/helpers';
 import { applyClientView } from '../../utils/views';
@@ -268,7 +269,7 @@ function DashboardsList(): JSX.Element {
 	const showWorkspaceEmpty =
 		!error &&
 		dashboards.length === 0 &&
-		activeViewId === 'all' &&
+		activeViewId === BuiltinViewId.All &&
 		filtersEmpty &&
 		page === 1;
 

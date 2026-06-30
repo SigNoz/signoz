@@ -11,6 +11,7 @@ import {
 	DEFAULT_FILTER_STATE,
 	filterStateToQuery,
 } from '../utils/filterQuery';
+import { BuiltinViewId } from '../types';
 import type { DashboardFilterState, SavedView } from '../types';
 import {
 	BUILTIN_VIEWS,
@@ -73,7 +74,7 @@ export function useActiveView({
 }: UseActiveViewArgs): UseActiveViewResult {
 	const [activeViewId, setActiveViewId] = useQueryState(
 		'view',
-		parseAsString.withDefault('all').withOptions(opts),
+		parseAsString.withDefault(BuiltinViewId.All).withOptions(opts),
 	);
 
 	const {
@@ -192,7 +193,7 @@ export function useActiveView({
 		(id: string): void => {
 			deleteView(id);
 			if (activeViewId === id) {
-				void setActiveViewId('all');
+				void setActiveViewId(BuiltinViewId.All);
 				applyFilters(DEFAULT_FILTER_STATE);
 			}
 		},

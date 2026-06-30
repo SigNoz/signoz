@@ -6,11 +6,8 @@
 import { Clock, Layers, Lock, Pin, User } from '@signozhq/icons';
 
 import { DEFAULT_FILTER_STATE } from './filterQuery';
-import type {
-	BuiltinViewId,
-	DashboardFilterState,
-	ViewSection,
-} from '../types';
+import { BuiltinViewId } from '../types';
+import type { DashboardFilterState, ViewSection } from '../types';
 import type { DashboardListItem } from './helpers';
 
 // All @signozhq icons share this component type.
@@ -24,22 +21,37 @@ export interface BuiltinView {
 }
 
 export const BUILTIN_VIEWS: BuiltinView[] = [
-	{ id: 'mine', label: 'My dashboards', icon: User, section: 'personal' },
-	{ id: 'pinned', label: 'Pinned', icon: Pin, section: 'personal' },
-	{ id: 'recent', label: 'Recently viewed', icon: Clock, section: 'personal' },
-	{ id: 'all', label: 'All dashboards', icon: Layers, section: 'system' },
-	{ id: 'locked', label: 'Locked', icon: Lock, section: 'system' },
+	{
+		id: BuiltinViewId.Mine,
+		label: 'My dashboards',
+		icon: User,
+		section: 'personal',
+	},
+	{ id: BuiltinViewId.Pinned, label: 'Pinned', icon: Pin, section: 'personal' },
+	{
+		id: BuiltinViewId.Recent,
+		label: 'Recently viewed',
+		icon: Clock,
+		section: 'personal',
+	},
+	{
+		id: BuiltinViewId.All,
+		label: 'All dashboards',
+		icon: Layers,
+		section: 'system',
+	},
+	{ id: BuiltinViewId.Locked, label: 'Locked', icon: Lock, section: 'system' },
 ];
 
 // Pinned/Recently-viewed constrain client-side — Pinned by the per-row `pinned`
 // flag, Recently-viewed by a localStorage id set — so they filter the fetched
 // rows rather than adding a server clause.
 export const isClientView = (id: string): boolean =>
-	id === 'pinned' || id === 'recent';
+	id === BuiltinViewId.Pinned || id === BuiltinViewId.Recent;
 
 // Extra server query fragment a built-in view contributes (AND-ed with chips).
 export const builtinViewQuery = (id: string): string =>
-	id === 'locked' ? 'locked = true' : '';
+	id === BuiltinViewId.Locked ? 'locked = true' : '';
 
 // The canonical filter snapshot a built-in view applies when selected. `null`
 // for ids that aren't built-in (custom views carry their own snapshot).
@@ -48,15 +60,15 @@ export const builtinViewSnapshot = (
 	userEmail: string,
 ): DashboardFilterState | null => {
 	switch (id) {
-		case 'mine':
+		case BuiltinViewId.Mine:
 			return {
 				...DEFAULT_FILTER_STATE,
 				createdBy: userEmail ? [userEmail] : [],
 			};
-		case 'all':
-		case 'pinned':
-		case 'recent':
-		case 'locked':
+		case BuiltinViewId.All:
+		case BuiltinViewId.Pinned:
+		case BuiltinViewId.Recent:
+		case BuiltinViewId.Locked:
 			return { ...DEFAULT_FILTER_STATE };
 		default:
 			return null;
@@ -83,22 +95,22 @@ export const noResultsCopy = (
 		};
 	}
 	switch (activeViewId) {
-		case 'pinned':
+		case BuiltinViewId.Pinned:
 			return {
 				title: 'No pinned dashboards yet',
 				description: 'Pin a dashboard to keep it handy here.',
 			};
-		case 'recent':
+		case BuiltinViewId.Recent:
 			return {
 				title: 'No recently viewed dashboards',
 				description: 'Dashboards you open will appear here.',
 			};
-		case 'locked':
+		case BuiltinViewId.Locked:
 			return {
 				title: 'No locked dashboards',
 				description: 'Dashboards locked for editing will appear here.',
 			};
-		case 'mine':
+		case BuiltinViewId.Mine:
 			return {
 				title: "You haven't created any dashboards",
 				description: 'Dashboards you create will appear here.',
@@ -124,10 +136,10 @@ export const applyClientView = (
 	id: string,
 	recent: string[],
 ): DashboardListItem[] => {
-	if (id === 'pinned') {
+	if (id === BuiltinViewId.Pinned) {
 		return items.filter((d) => d.pinned);
 	}
-	if (id === 'recent') {
+	if (id === BuiltinViewId.Recent) {
 		const order = new Map(recent.map((rid, index) => [rid, index]));
 		return items
 			.filter((d) => order.has(d.id))
