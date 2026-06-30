@@ -17,15 +17,11 @@ describe('resolveSignal', () => {
 	const DEFAULT = TelemetrytypesSignalDTO.metrics;
 
 	it("uses the first builder query's signal when present", () => {
-		expect(
-			resolveSignal([builderQuery('logs')], DEFAULT),
-		).toBe('logs');
+		expect(resolveSignal([builderQuery('logs')], DEFAULT)).toBe('logs');
 	});
 
-	it("prefers the builder signal over the default", () => {
-		expect(resolveSignal([builderQuery('traces')], DEFAULT)).toBe(
-			'traces',
-		);
+	it('prefers the builder signal over the default', () => {
+		expect(resolveSignal([builderQuery('traces')], DEFAULT)).toBe('traces');
 	});
 
 	it('stays undefined when queries exist but none are builder queries (PromQL/ClickHouse)', () => {
