@@ -371,7 +371,7 @@ func (m *module) buildSamplesTblFingerprintSubQuery(metricNames []string, sample
 }
 
 // buildReducedSamplesTblFingerprintSubQuery is like buildSamplesTblFingerprintSubQuery
-// but for the reduced tables
+// but for the reduced tables.
 func (m *module) buildReducedSamplesTblFingerprintSubQuery(metricNames []string, flooredStart, flooredEnd uint64) *sqlbuilder.SelectBuilder {
 	lastSB := sqlbuilder.NewSelectBuilder()
 	lastSB.Select("reduced_fingerprint")

@@ -496,7 +496,7 @@ func (c *clickhouse) ruledIngestedSamplesByBucket(ctx context.Context, metricNam
 	return c.scanBuckets(ctx, sb)
 }
 
-// reduced 60s rows are versioned by computed_at, so count distinct buckets
+// reduced 60s rows are versioned by computed_at, so count distinct buckets.
 func (c *clickhouse) ruledRetainedSamplesByBucket(ctx context.Context, metricNames []string, effectiveFrom map[string]int64, startMs, endMs int64) (map[int64]uint64, error) {
 	out := make(map[int64]uint64)
 	for _, table := range []string{telemetrymetrics.SamplesV4ReducedLastTableName, telemetrymetrics.SamplesV4ReducedSumTableName} {
