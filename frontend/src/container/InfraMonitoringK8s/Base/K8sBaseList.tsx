@@ -16,6 +16,7 @@ import { useGlobalTimeStore } from 'store/globalTime';
 import { NANO_SECOND_MULTIPLIER } from 'store/globalTime/utils';
 import { Querybuildertypesv5QueryWarnDataDTO } from 'api/generated/services/sigNoz.schemas';
 import { openInNewTab } from 'utils/navigation';
+import { Color } from '@signozhq/design-tokens';
 
 import {
 	INFRA_MONITORING_K8S_PARAMS_KEYS,
@@ -34,6 +35,7 @@ import { getGroupedByMeta } from './utils';
 
 import styles from './K8sBaseList.module.scss';
 import cx from 'classnames';
+import TriangleAlert from '@signozhq/icons/TriangleAlert';
 
 export type K8sBaseListEmptyStateContext = {
 	isError: boolean;
@@ -334,7 +336,16 @@ export function K8sBaseList<T extends K8sEntityData>({
 						warnings:
 							warning.warnings?.map((w) => ({ message: w.message ?? '' })) ?? [],
 					}}
-				/>
+				>
+					<div className={styles.paginationWarning}>
+						Your data contains some warnings
+						<TriangleAlert
+							size={16}
+							style={{ cursor: 'pointer' }}
+							color={Color.BG_AMBER_500}
+						/>
+					</div>
+				</WarningPopover>
 			</span>
 		);
 	}, [data?.warning]);
