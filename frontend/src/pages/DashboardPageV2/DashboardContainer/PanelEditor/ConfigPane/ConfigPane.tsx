@@ -1,11 +1,9 @@
 import { Input } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
-import type {
-	DashboardtypesPanelSpecDTO,
-	TelemetrytypesSignalDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
 import { getPanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Panels/registry';
-import { getBuilderQueries } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/getBuilderQueries';
+import { resolveSignal } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/getBuilderQueries';
+import type { EQueryType } from 'types/common/dashboard';
 
 import type { LegendSeries } from '../hooks/useLegendSeries';
 import type { TableColumnOption } from '../hooks/useTableColumns';
@@ -22,10 +20,18 @@ interface ConfigPaneProps {
 	onChangeSpec: (next: DashboardtypesPanelSpecDTO) => void;
 	/** Switch the panel to another visualization kind. */
 	onChangePanelKind: (kind: PanelKind) => void;
+	/**
+	 * Active query type from the query-builder provider (the selected tab). Drives which
+	 * panel types the visualization switcher disables — read from the provider, not the
+	 * spec, because a new panel's spec has no query until staged.
+	 */
+	queryType: EQueryType;
 	/** Panel's resolved series, provided to sections that need them (legend colors). */
 	legendSeries: LegendSeries[];
 	/** Table panel's resolved value columns, for the table-only editors. */
 	tableColumns: TableColumnOption[];
+	/** Query step interval (seconds), for the chart-appearance span-gaps floor. */
+	stepInterval?: number;
 }
 
 /**
@@ -39,15 +45,15 @@ function ConfigPane({
 	spec,
 	onChangeSpec,
 	onChangePanelKind,
+	queryType,
 	legendSeries,
 	tableColumns,
+	stepInterval,
 }: ConfigPaneProps): JSX.Element {
 	const definition = getPanelDefinition(panelKind);
 	const sections = definition.sections;
 
-	const signal = getBuilderQueries(spec.queries)[0]?.signal as
-		| TelemetrytypesSignalDTO
-		| undefined;
+	const signal = resolveSignal(spec.queries, definition.supportedSignals[0]);
 
 	// Title/description are just a slice of the spec — edit them through the same
 	// onChangeSpec path the sections use, so there's a single editing surface.
@@ -100,6 +106,8 @@ function ConfigPane({
 									signal={signal}
 									panelKind={panelKind}
 									onChangePanelKind={onChangePanelKind}
+									queryType={queryType}
+									stepInterval={stepInterval}
 								/>
 							))}
 						</div>

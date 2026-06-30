@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Table } from 'antd';
 import type { TableProps } from 'antd/lib';
 
-import type { DashboardListItem } from '../../utils';
+import type { DashboardListItem } from '../../utils/helpers';
 import DashboardRow from '../DashboardRow/DashboardRow';
 
 interface Props {

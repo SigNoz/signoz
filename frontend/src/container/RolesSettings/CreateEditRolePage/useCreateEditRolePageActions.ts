@@ -125,8 +125,10 @@ export function useCreateEditRolePageActions(
 				...prev,
 				[field]: value,
 			}));
+			clearValidationErrors();
+			setSaveError(null);
 		},
-		[],
+		[clearValidationErrors],
 	);
 
 	const handleModeChange = useCallback(
@@ -139,8 +141,10 @@ export function useCreateEditRolePageActions(
 	const handleResourcesChange = useCallback(
 		(resources: ResourcePermissions[]): void => {
 			setLocalResources(resources);
+			clearValidationErrors();
+			setSaveError(null);
 		},
-		[],
+		[clearValidationErrors],
 	);
 
 	const hasUnsavedChanges = useRoleUnsavedChanges(
@@ -153,7 +157,17 @@ export function useCreateEditRolePageActions(
 
 	const handleSave = useCallback(async (): Promise<boolean> => {
 		if (!formData.name.trim()) {
-			toast.error('Role name is required', { position: 'bottom-center' });
+			setSaveError(
+				new APIError({
+					httpStatusCode: 400,
+					error: {
+						code: 'VALIDATION_ERROR',
+						message: 'Role name is required',
+						url: '',
+						errors: [],
+					},
+				}),
+			);
 			return false;
 		}
 
