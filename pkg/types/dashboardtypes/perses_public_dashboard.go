@@ -149,7 +149,7 @@ func (d *DashboardV2) GetPanelQuery(startTime, endTime uint64, panelKey string) 
 	}
 
 	query := panel.Spec.Queries[0]
-	composite, err := buildV5CompositeQueryFromPlugin(query.Spec.Plugin)
+	composite, err := query.Spec.Plugin.buildV5CompositeQueryFromPlugin()
 	if err != nil {
 		return nil, err
 	}
@@ -178,32 +178,4 @@ func (d *DashboardV2) GetPanelQuery(startTime, endTime uint64, panelKey string) 
 			FormatTableResultForUI: panel.Spec.Plugin.Kind == PanelKindTable,
 		},
 	}, nil
-}
-
-func buildV5CompositeQueryFromPlugin(plugin QueryPlugin) (qb.CompositeQuery, error) {
-	switch spec := plugin.Spec.(type) {
-	case *qb.CompositeQuery:
-		if spec == nil {
-			return qb.CompositeQuery{}, errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardInvalidWidgetQuery, "composite query is empty")
-		}
-		return *spec, nil
-	case *BuilderQuerySpec:
-		if spec == nil {
-			return qb.CompositeQuery{}, errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardInvalidWidgetQuery, "builder query is empty")
-		}
-		return wrapEnvelope(qb.QueryTypeBuilder, spec.Spec), nil
-	case *qb.PromQuery:
-		return wrapEnvelope(qb.QueryTypePromQL, *spec), nil
-	case *qb.ClickHouseQuery:
-		return wrapEnvelope(qb.QueryTypeClickHouseSQL, *spec), nil
-	case *qb.QueryBuilderFormula:
-		return wrapEnvelope(qb.QueryTypeFormula, *spec), nil
-	case *qb.QueryBuilderTraceOperator:
-		return wrapEnvelope(qb.QueryTypeTraceOperator, *spec), nil
-	}
-	return qb.CompositeQuery{}, errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardInvalidWidgetQuery, "unsupported query kind %q", plugin.Kind)
-}
-
-func wrapEnvelope(queryType qb.QueryType, spec any) qb.CompositeQuery {
-	return qb.CompositeQuery{Queries: []qb.QueryEnvelope{{Type: queryType, Spec: spec}}}
 }
