@@ -216,6 +216,47 @@ describe('CreateRolePage', () => {
 			);
 		});
 
+		it('shows error banner with "Role name is required" when saving with empty name', async () => {
+			const user = userEvent.setup();
+			renderCreatePage();
+
+			const descInput = screen.getByTestId('role-description-input');
+			await user.type(descInput, 'Description only');
+
+			const saveBtn = screen.getByTestId('save-button');
+			await user.click(saveBtn);
+
+			await expect(
+				screen.findByTestId('save-error-banner'),
+			).resolves.toBeInTheDocument();
+
+			await expect(
+				screen.findByText('Role name is required'),
+			).resolves.toBeInTheDocument();
+		});
+
+		it('clears error banner when user starts typing in name field', async () => {
+			const user = userEvent.setup();
+			renderCreatePage();
+
+			const descInput = screen.getByTestId('role-description-input');
+			await user.type(descInput, 'Description only');
+
+			const saveBtn = screen.getByTestId('save-button');
+			await user.click(saveBtn);
+
+			await expect(
+				screen.findByTestId('save-error-banner'),
+			).resolves.toBeInTheDocument();
+
+			const nameInput = screen.getByTestId('role-name-input');
+			await user.type(nameInput, 'a');
+
+			await waitFor(() => {
+				expect(screen.queryByTestId('save-error-banner')).not.toBeInTheDocument();
+			});
+		});
+
 		it('shows error banner when API fails', async () => {
 			server.use(
 				rest.post(rolesApiBase, (_req, res, ctx) =>

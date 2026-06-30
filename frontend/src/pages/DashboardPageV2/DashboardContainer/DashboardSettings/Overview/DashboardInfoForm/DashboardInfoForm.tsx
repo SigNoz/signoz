@@ -9,7 +9,7 @@ import {
 import { Typography } from '@signozhq/ui/typography';
 // eslint-disable-next-line signoz/no-antd-components -- multiline TextArea has no @signozhq/ui equivalent yet
 import { Input as AntdInput } from 'antd';
-import AddTags from 'container/DashboardContainer/DashboardSettings/General/AddBadges';
+import TagKeyValueInput from 'components/TagKeyValueInput/TagKeyValueInput';
 
 import { Base64Icons } from '../utils';
 import settingsStyles from '../../DashboardSettings.module.scss';
@@ -89,9 +89,7 @@ function DashboardInfoForm({
 
 				<div className={styles.infoItemContainer}>
 					<Typography className={styles.infoTitle}>Tags</Typography>
-					<div className={styles.tagsField}>
-						<AddTags tags={tags} setTags={onTagsChange} />
-					</div>
+					<TagKeyValueInput tags={tags} onTagsChange={onTagsChange} />
 				</div>
 			</div>
 		</div>

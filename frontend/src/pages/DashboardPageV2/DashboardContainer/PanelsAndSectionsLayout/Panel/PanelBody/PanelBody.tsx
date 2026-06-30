@@ -55,7 +55,7 @@ function PanelBody({
 	// react-query keeps the previous response during refetches, so its presence is
 	// the "have something to show" signal — only fail hard when there's nothing.
 	const hasData = !!data.response;
-	const queries = panel.spec.queries || [];
+	const queries = panel.spec.queries;
 
 	// Not-configured panel: no runnable query, so nothing to error/load on.
 	if (!hasRunnableQueries(queries)) {
