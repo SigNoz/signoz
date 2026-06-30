@@ -29,6 +29,7 @@ import { usePanelQuery } from '../hooks/usePanelQuery';
 import { usePanelEditorDraft } from './hooks/usePanelEditorDraft';
 import { usePanelEditorQuerySync } from './hooks/usePanelEditorQuerySync';
 import { usePanelEditorSave } from './hooks/usePanelEditorSave';
+import { usePanelTypeSwitch } from './hooks/usePanelTypeSwitch';
 import { useSeedNewListColumns } from './hooks/useSeedNewListColumns';
 import { useSwitchColumnsOnSignalChange } from './hooks/useSwitchColumnsOnSignalChange';
 import { useTableColumns } from './hooks/useTableColumns';
@@ -113,6 +114,9 @@ function PanelEditorContainer({
 		signal: defaultSignal,
 	});
 
+	// Switch the panel's visualization kind in place (reversible per session).
+	const { onChangePanelKind } = usePanelTypeSwitch({ spec, panelType, setSpec });
+
 	// Spec and query dirtiness are tracked independently so query re-serialization
 	// never false-dirties. A new panel is always savable (you're creating it).
 	const isDirty = isNew || isSpecDirty || isQueryDirty;
@@ -121,8 +125,8 @@ function PanelEditorContainer({
 	// values; cast at this boundary (as ConfigPane does) so the columns editor's
 	// field-key lookup is typed.
 	const listSignal =
-		(getBuilderQueries(spec.queries || [])[0]
-			?.signal as TelemetrytypesSignalDTO) || TelemetrytypesSignalDTO.logs;
+		(getBuilderQueries(spec.queries)[0]?.signal as TelemetrytypesSignalDTO) ||
+		TelemetrytypesSignalDTO.logs;
 
 	// Swap the List panel's columns to the new signal's defaults on signal change
 	// (V1 had a per-signal field list; V2 has one `selectFields`).
@@ -226,6 +230,7 @@ function PanelEditorContainer({
 						panelKind={draft.spec.plugin.kind}
 						spec={spec}
 						onChangeSpec={setSpec}
+						onChangePanelKind={onChangePanelKind}
 						legendSeries={legendSeries}
 						tableColumns={tableColumns}
 					/>

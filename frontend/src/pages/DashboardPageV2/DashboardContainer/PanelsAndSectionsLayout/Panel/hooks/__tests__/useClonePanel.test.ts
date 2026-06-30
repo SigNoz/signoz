@@ -63,9 +63,10 @@ describe('useClonePanel', () => {
 				op: 'add',
 				path: '/spec/layouts/0/spec/items/-',
 				value: {
-					// Same dimensions as the source panel (p1: 8x5).
+					// Same dimensions as the source panel (p1: 8x5). The last row is
+					// full (8 + 4 = 12 cols), so the 8-wide clone wraps to a fresh row
+					// at the section bottom: max(y + height) = 5.
 					x: 0,
-					// Bottom of the section: max(y + height) over existing items = 5.
 					y: 5,
 					width: 8,
 					height: 5,
@@ -73,6 +74,27 @@ describe('useClonePanel', () => {
 				},
 			},
 		]);
+	});
+
+	it('places the clone beside the last row when it fits', async () => {
+		const oneNarrowItem: DashboardSection[] = [
+			{
+				id: 'section-0',
+				layoutIndex: 0,
+				title: 'Overview',
+				repeatVariable: undefined,
+				items: [{ id: 'p1', x: 0, y: 0, width: 4, height: 5, panel: sourcePanel }],
+			},
+		];
+		const { result } = renderHook(() =>
+			useClonePanel({ sections: oneNarrowItem }),
+		);
+
+		await result.current({ panelId: 'p1', layoutIndex: 0 });
+
+		const ops = mockPatch.mock.calls[0][1];
+		// Room in the last row (4 + 4 = 8 ≤ 12 cols) → sits to the right at y:0.
+		expect(ops[1].value).toMatchObject({ x: 4, y: 0, width: 4, height: 5 });
 	});
 
 	it('deep-copies the spec — the cloned value is not the same object reference', async () => {

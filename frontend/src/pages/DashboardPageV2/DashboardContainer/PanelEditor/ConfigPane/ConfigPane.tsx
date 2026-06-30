@@ -20,6 +20,8 @@ interface ConfigPaneProps {
 	/** The panel spec — the single editing surface (title/description + section slices). */
 	spec: DashboardtypesPanelSpecDTO;
 	onChangeSpec: (next: DashboardtypesPanelSpecDTO) => void;
+	/** Switch the panel to another visualization kind. */
+	onChangePanelKind: (kind: PanelKind) => void;
 	/** Panel's resolved series, provided to sections that need them (legend colors). */
 	legendSeries: LegendSeries[];
 	/** Table panel's resolved value columns, for the table-only editors. */
@@ -36,13 +38,14 @@ function ConfigPane({
 	panelKind,
 	spec,
 	onChangeSpec,
+	onChangePanelKind,
 	legendSeries,
 	tableColumns,
 }: ConfigPaneProps): JSX.Element {
 	const definition = getPanelDefinition(panelKind);
 	const sections = definition.sections;
 
-	const signal = getBuilderQueries(spec.queries || [])[0]?.signal as
+	const signal = getBuilderQueries(spec.queries)[0]?.signal as
 		| TelemetrytypesSignalDTO
 		| undefined;
 
@@ -95,6 +98,8 @@ function ConfigPane({
 									legendSeries={legendSeries}
 									tableColumns={tableColumns}
 									signal={signal}
+									panelKind={panelKind}
+									onChangePanelKind={onChangePanelKind}
 								/>
 							))}
 						</div>
