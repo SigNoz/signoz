@@ -113,26 +113,14 @@
 }
 
 .item {
-	// Neutralise the signoz Button defaults so it reads as a full-width,
-	// left-aligned list row; the row coordinates hover/active colours below.
 	--button-display: flex;
 	--button-justify-content: flex-start;
 	--button-height: auto;
 	--button-padding: 9px 10px;
-	--button-gap: 10px;
-	--button-variant-ghost-background-color: transparent;
-	--button-variant-ghost-hover-background-color: transparent;
-	--button-variant-ghost-color: var(--l2-foreground);
-	--button-variant-ghost-hover-color: var(--l1-foreground);
 	flex: 1;
 	min-width: 0;
 	width: 100%;
 	font-size: var(--font-size-base);
-}
-
-.row:hover .item,
-.rowActive .item {
-	--button-variant-ghost-color: var(--l1-foreground);
 }
 
 .itemIcon {
@@ -159,12 +147,11 @@
 }
 
 .itemAction {
-	// Square icon button that surfaces on row hover and turns red on its own
-	// hover; colours flow through the signoz Button tokens.
-	--button-height: auto;
+	// Blended ghost icon: transparent so the row's hover background shows through,
+	// surfaces on row hover, and turns red only on its own hover.
+	--button-height: 20px;
 	--button-padding: 0;
 	--button-border-radius: 4px;
-	--button-variant-ghost-background-color: transparent;
 	--button-variant-ghost-color: var(--l3-foreground);
 	--button-variant-ghost-hover-background-color: var(--danger-background);
 	--button-variant-ghost-hover-color: var(--danger-color, #fff);

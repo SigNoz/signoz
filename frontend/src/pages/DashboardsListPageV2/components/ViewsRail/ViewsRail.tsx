@@ -129,7 +129,10 @@ function ViewsRail({
 						className={styles.itemAction}
 						aria-label="Delete view"
 						title="Delete view"
-						onClick={(): void => confirmDelete(row.id, row.label)}
+						onClick={(e): void => {
+							e.stopPropagation();
+							confirmDelete(row.id, row.label);
+						}}
 					>
 						<Trash2 size={12} />
 					</Button>
