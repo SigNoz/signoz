@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { ReactNode, useEffect, useRef } from 'react';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
@@ -15,12 +15,15 @@ interface EmptyLogsSearchProps {
 	dataSource: DataSource;
 	panelType: PanelTypeKeys;
 	customMessage?: EmptyLogsListConfig;
+	// Optional action rendered between the message and the resources card.
+	action?: ReactNode;
 }
 
 export default function EmptyLogsSearch({
 	dataSource,
 	panelType,
 	customMessage,
+	action,
 }: EmptyLogsSearchProps): JSX.Element {
 	const logEventCalledRef = useRef(false);
 	useEffect(() => {
@@ -99,6 +102,7 @@ export default function EmptyLogsSearch({
 						</Typography.Text>
 					)}
 				</div>
+				{action && <div className="empty-logs-search__action">{action}</div>}
 				{customMessage?.documentationLinks && (
 					<div className="empty-logs-search__resources-card">
 						<div className="empty-logs-search__resources-title">RESOURCES</div>
@@ -116,4 +120,5 @@ export default function EmptyLogsSearch({
 
 EmptyLogsSearch.defaultProps = {
 	customMessage: null,
+	action: null,
 };
