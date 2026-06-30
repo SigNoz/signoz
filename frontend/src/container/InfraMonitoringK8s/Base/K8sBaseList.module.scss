@@ -26,7 +26,8 @@
 
 	--tanstack-cell-padding-top-override: 5px;
 	--tanstack-cell-padding-bottom-override: 5px;
-	--tanstack-cell-padding-left-override: 5px;
+	--tanstack-cell-header-padding-left-override: 5px;
+	--tanstack-cell-padding-left-override: 26px;
 	--tanstack-cell-padding-right-override: 5px;
 
 	--tanstack-expansion-first-col-padding-left: 30px;
@@ -43,4 +44,16 @@
 	ul {
 		margin: 0;
 	}
+}
+
+.paginationWarning {
+	border: 1px solid var(--callout-warning-border);
+	background-color: var(--callout-warning-background);
+
+	padding: var(--spacing-2) var(--spacing-4);
+	display: flex;
+	justify-content: center;
+	align-items: center;
+
+	gap: var(--spacing-4);
 }
