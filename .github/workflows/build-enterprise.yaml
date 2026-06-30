@@ -63,7 +63,6 @@ jobs:
           echo 'VITE_SENTRY_PROJECT_ID="${{ secrets.SENTRY_PROJECT_ID }}"' >> frontend/.env
           echo 'VITE_SENTRY_DSN="${{ secrets.SENTRY_DSN }}"' >> frontend/.env
           echo 'VITE_TUNNEL_URL="${{ secrets.TUNNEL_URL }}"' >> frontend/.env
-          echo 'VITE_TUNNEL_DOMAIN="${{ secrets.TUNNEL_DOMAIN }}"' >> frontend/.env
           echo 'VITE_POSTHOG_KEY="${{ secrets.POSTHOG_KEY }}"' >> frontend/.env
           echo 'VITE_PYLON_APP_ID="${{ secrets.PYLON_APP_ID }}"' >> frontend/.env
           echo 'VITE_APPCUES_APP_ID="${{ secrets.APPCUES_APP_ID }}"' >> frontend/.env

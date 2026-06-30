@@ -166,7 +166,6 @@ export default defineConfig(({ mode }): UserConfig => {
 			),
 			'process.env.SENTRY_ORG': JSON.stringify(env.VITE_SENTRY_ORG),
 			'process.env.SENTRY_PROJECT_ID': JSON.stringify(env.VITE_SENTRY_PROJECT_ID),
-			'process.env.TUNNEL_DOMAIN': JSON.stringify(env.VITE_TUNNEL_DOMAIN),
 			'process.env.DOCS_BASE_URL': JSON.stringify(env.VITE_DOCS_BASE_URL),
 			'process.env.ENVIRONMENT': JSON.stringify(env.VITE_ENVIRONMENT),
 			'process.env.VERSION': JSON.stringify(env.VITE_VERSION),
