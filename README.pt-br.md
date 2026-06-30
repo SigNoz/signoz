@@ -54,7 +54,7 @@ Monitore latência de serviço, taxa de erro, throughput, Apdex, principais endp
   <img alt="Dashboard de APM do SigNoz mostrando latência, throughput, Apdex e operações principais" src="docs/readme-assets/monitor/apm.png" width="900">
 </p>
 
-Saiba mais: [documentação de APM](https://signoz.io/docs/apm-and-distributed-tracing/application-details/)
+Saiba mais: [documentação de APM](https://signoz.io/docs/instrumentation/overview/)
 
 #### Gerenciamento de logs
 
@@ -114,7 +114,7 @@ Acompanhe requisições entre serviços com flamegraphs, waterfalls, eventos de 
   <img alt="Visualização de tracing distribuído do SigNoz com flamegraph e spans em waterfall" src="docs/readme-assets/monitor/distributed-tracing.png" width="900">
 </p>
 
-Saiba mais: [documentação de tracing distribuído](https://signoz.io/docs/apm-and-distributed-tracing/traces-user-guides/)
+Saiba mais: [documentação de tracing distribuído](https://signoz.io/docs/instrumentation/)
 
 #### Trace Funnels
 

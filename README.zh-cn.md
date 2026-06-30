@@ -54,7 +54,7 @@ SigNoz 将日志、指标、链路追踪、告警、仪表盘、异常和面向 
   <img alt="SigNoz APM 仪表盘，展示延迟、吞吐量、Apdex 和关键操作" src="docs/readme-assets/monitor/apm.png" width="900">
 </p>
 
-了解更多：[APM 文档](https://signoz.io/docs/apm-and-distributed-tracing/application-details/)
+了解更多：[APM 文档](https://signoz.io/docs/instrumentation/overview/)
 
 #### 日志管理
 
@@ -114,7 +114,7 @@ SigNoz 将日志、指标、链路追踪、告警、仪表盘、异常和面向 
   <img alt="SigNoz 分布式链路追踪视图，包含火焰图和瀑布图 Span" src="docs/readme-assets/monitor/distributed-tracing.png" width="900">
 </p>
 
-了解更多：[分布式链路追踪文档](https://signoz.io/docs/apm-and-distributed-tracing/traces-user-guides/)
+了解更多：[分布式链路追踪文档](https://signoz.io/docs/instrumentation/)
 
 #### Trace Funnels
 

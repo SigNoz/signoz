@@ -54,7 +54,7 @@ SigNoz hilft Teams, Produktionsprobleme schneller zu debuggen, indem Logs, Metri
   <img alt="SigNoz APM-Dashboard mit Latenz, Durchsatz, Apdex und wichtigen Operationen" src="docs/readme-assets/monitor/apm.png" width="900">
 </p>
 
-Mehr erfahren: [APM-Dokumentation](https://signoz.io/docs/apm-and-distributed-tracing/application-details/)
+Mehr erfahren: [APM-Dokumentation](https://signoz.io/docs/instrumentation/overview/)
 
 #### Log-Management
 
@@ -114,7 +114,7 @@ Verfolge Requests über Services hinweg mit Flamegraphs, Waterfalls, Span Events
   <img alt="SigNoz Distributed-Tracing-Ansicht mit Flamegraph und Waterfall-Spans" src="docs/readme-assets/monitor/distributed-tracing.png" width="900">
 </p>
 
-Mehr erfahren: [Distributed-Tracing-Dokumentation](https://signoz.io/docs/apm-and-distributed-tracing/traces-user-guides/)
+Mehr erfahren: [Distributed-Tracing-Dokumentation](https://signoz.io/docs/instrumentation/)
 
 #### Trace Funnels
 
