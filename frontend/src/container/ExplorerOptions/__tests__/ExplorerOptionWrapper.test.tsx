@@ -2,6 +2,7 @@ import { useHistory } from 'react-router-dom';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { MOCK_QUERY } from 'container/QueryTable/Drilldown/__tests__/mockTableData';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
+import { serialize } from 'lib/compositeQuery/serializer';
 import { rest, server } from 'mocks-server/server';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 import { Dashboard } from 'types/api/dashboard/getAll';
@@ -362,9 +363,9 @@ describe('ExplorerOptionWrapper', () => {
 			await waitFor(() => {
 				expect(mockSafeNavigate).toHaveBeenCalledTimes(1);
 				expect(mockSafeNavigate).toHaveBeenCalledWith(
-					`/dashboard/test-dashboard-id/new?graphType=${panelTypeParam}&widgetId=${widgetId}&compositeQuery=${encodeURIComponent(
-						JSON.stringify(query),
-					)}`,
+					`/dashboard/test-dashboard-id/new?graphType=${panelTypeParam}&widgetId=${widgetId}&${serialize(
+						query,
+					).toString()}`,
 				);
 			});
 

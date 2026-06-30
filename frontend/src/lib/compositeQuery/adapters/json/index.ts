@@ -55,14 +55,21 @@ export const jsonAdapter: CompositeQueryAdapter = {
 	},
 	matches: () => true,
 	decode: (params) => {
-		const raw = params.get(COMPOSITE_QUERY_KEY) ?? '';
-		let parsed: Query;
+		const raw = params.get(COMPOSITE_QUERY_KEY);
+		if (!raw) {
+			return null;
+		}
 
 		try {
-			parsed = JSON.parse(raw);
-		} catch (e) {
-			parsed = JSON.parse(decodeURIComponent(raw.replace(/\+/g, ' ')));
+			let parsed: Query;
+			try {
+				parsed = JSON.parse(raw);
+			} catch {
+				parsed = JSON.parse(decodeURIComponent(raw.replace(/\+/g, ' ')));
+			}
+			return migrateLegacyFormat(parsed);
+		} catch {
+			return null;
 		}
-		return migrateLegacyFormat(parsed);
 	},
 };

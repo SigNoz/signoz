@@ -25,7 +25,7 @@ export function serialize(query: Query): URLSearchParams {
  * Decode URLSearchParams back to a Query. Total: returns null on any failure.
  */
 export function deserialize(params: URLSearchParams): Query | null {
-	const hasParams = Array.from(params.keys()).length > 0;
+	const hasParams = params.toString().length > 0;
 	if (!hasParams) {
 		return null;
 	}
@@ -56,7 +56,12 @@ export function applySerializedParams(
 export function clearSerializedParams(target: URLSearchParams): void {
 	const adapter = adapterFor(target);
 	try {
-		adapter.encode(adapter.decode(target)).forEach((_value, key) => {
+		const decoded = adapter.decode(target);
+		if (!decoded) {
+			target.delete(COMPOSITE_QUERY_KEY);
+			return;
+		}
+		adapter.encode(decoded).forEach((_value, key) => {
 			target.delete(key);
 		});
 	} catch {
