@@ -125,7 +125,7 @@ export const k8sPodColumnsConfig: PodTableColumnConfig[] = [
 		header: 'Phases',
 		accessorFn: (row): InframonitoringtypesPodRecordDTO['podCountsByPhase'] =>
 			row.podCountsByPhase,
-		width: { min: 220 },
+		width: { min: 250 },
 		enableSort: false,
 		visibilityBehavior: 'hidden-on-collapse',
 		cell: ({ row }): React.ReactNode => {

@@ -84,7 +84,7 @@ export const k8sClustersColumnsConfig: ClusterTableColumnConfig[] = [
 		header: 'Pod Phases',
 		accessorFn: (row): InframonitoringtypesClusterRecordDTO['podCountsByPhase'] =>
 			row.podCountsByPhase,
-		width: { min: 220 },
+		width: { min: 250 },
 		enableSort: false,
 		cell: ({ row }): React.ReactNode => {
 			const podCountsByPhase = row.podCountsByPhase;
@@ -179,7 +179,7 @@ export const k8sClustersColumnsConfig: ClusterTableColumnConfig[] = [
 			row,
 		): InframonitoringtypesClusterRecordDTO['nodeCountsByReadiness'] =>
 			row.nodeCountsByReadiness,
-		width: { min: 180 },
+		width: { min: 210 },
 		enableSort: false,
 		cell: ({ row }): React.ReactNode => {
 			if (!row.nodeCountsByReadiness) {

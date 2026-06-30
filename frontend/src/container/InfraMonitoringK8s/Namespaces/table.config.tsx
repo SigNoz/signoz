@@ -95,7 +95,7 @@ export const k8sNamespacesColumnsConfig: NamespaceTableColumnConfig[] = [
 			row,
 		): InframonitoringtypesNamespaceRecordDTO['podCountsByPhase'] =>
 			row.podCountsByPhase,
-		width: { min: 220 },
+		width: { min: 250 },
 		enableSort: false,
 		cell: ({ row }): React.ReactNode => {
 			const podCountsByPhase = row.podCountsByPhase;
