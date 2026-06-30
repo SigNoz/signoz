@@ -23,6 +23,10 @@ import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useNotifications } from 'hooks/useNotifications';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
+import {
+	clearSerializedParams,
+	serializeToParams,
+} from 'lib/compositeQuery/serializer';
 import createQueryParams from 'lib/createQueryParams';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import {
@@ -213,9 +217,7 @@ function WidgetGraphComponent({
 						[QueryParams.graphType]: clonedWidget?.panelTypes,
 						[QueryParams.widgetId]: uuid,
 						...(clonedWidget?.query && {
-							[QueryParams.compositeQuery]: encodeURIComponent(
-								JSON.stringify(clonedWidget.query),
-							),
+							...serializeToParams(clonedWidget.query),
 						}),
 					};
 					safeNavigate(`${pathname}/new?${createQueryParams(queryParams)}`);
@@ -256,7 +258,7 @@ function WidgetGraphComponent({
 	const onToggleModelHandler = (): void => {
 		const existingSearchParams = new URLSearchParams(search);
 		existingSearchParams.delete(QueryParams.expandedWidgetId);
-		existingSearchParams.delete(QueryParams.compositeQuery);
+		clearSerializedParams(existingSearchParams);
 		existingSearchParams.delete(QueryParams.graphType);
 		const updatedQueryParams = Object.fromEntries(existingSearchParams.entries());
 		if (queryResponse.data?.payload) {

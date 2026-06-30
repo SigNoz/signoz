@@ -1,5 +1,6 @@
 import { renderHook } from '@testing-library/react';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import { deserialize } from 'lib/compositeQuery/serializer';
 import { NANO_SECOND_MULTIPLIER } from 'store/globalTime';
 import { EQueryType } from 'types/common/dashboard';
 
@@ -108,10 +109,9 @@ describe('useOpenPanelEditor', () => {
 		result.current('panel-9', { panel });
 
 		const [url] = mockSafeNavigate.mock.calls[0];
-		const carried = new URLSearchParams(url.split('?')[1]).get('compositeQuery');
-		const parsed = JSON.parse(decodeURIComponent(carried as string));
-		expect(parsed.queryType).toBe(EQueryType.PROM);
-		expect(parsed.promql[0].query).toBe('up{job="alpha"}');
+		const parsed = deserialize(new URLSearchParams(url.split('?')[1]));
+		expect(parsed?.queryType).toBe(EQueryType.PROM);
+		expect(parsed?.promql[0].query).toBe('up{job="alpha"}');
 	});
 
 	it('merges search with the time window (leading ? tolerated)', () => {

@@ -18,7 +18,6 @@ export enum QueryParams {
 	q = 'q',
 	activeLogId = 'activeLogId',
 	timeRange = 'timeRange',
-	compositeQuery = 'compositeQuery',
 	panelTypes = 'panelTypes',
 	pageSize = 'pageSize',
 	viewMode = 'viewMode',

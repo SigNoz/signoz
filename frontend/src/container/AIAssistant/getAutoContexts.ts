@@ -1,6 +1,7 @@
 import type { MessageContext } from 'api/ai-assistant/chat';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
+import { deserialize } from 'lib/compositeQuery/serializer';
 import { AlertListTabs } from 'pages/AlertList/types';
 import { NEW_PANEL_ID } from 'pages/DashboardPageV2/DashboardContainer/PanelEditor/newPanelRoute';
 import { matchPath } from 'react-router-dom';
@@ -345,15 +346,9 @@ function collectSharedMetadata(
 		out.timeRange = { start: startTime, end: endTime };
 	}
 
-	// Query Builder state — URL-encoded JSON written by `QueryBuilderProvider`.
-	const compositeQueryRaw = params.get(QueryParams.compositeQuery);
-	if (compositeQueryRaw) {
-		try {
-			out.query = JSON.parse(decodeURIComponent(compositeQueryRaw));
-		} catch {
-			// Malformed JSON in the URL — drop silently rather than throw
-			// inside a context-collection helper.
-		}
+	const decodedQuery = deserialize(params);
+	if (decodedQuery) {
+		out.query = decodedQuery;
 	}
 
 	// Saved view selectors (logs / traces explorer) and dashboard variables.

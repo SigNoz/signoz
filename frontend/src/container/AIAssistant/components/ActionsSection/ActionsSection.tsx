@@ -24,7 +24,7 @@ import {
 	undoExecution,
 } from 'api/ai-assistant/chat';
 import ROUTES from 'constants/routes';
-import { QueryParams } from 'constants/query';
+import { serialize } from 'lib/compositeQuery/serializer';
 import { openInNewTab } from 'utils/navigation';
 import {
 	ArchiveRestore,
@@ -363,8 +363,8 @@ function applyFilter(action: MessageActionDTO, deps: ApplyFilterDeps): void {
 	}
 	// eslint-disable-next-line no-console
 	console.log('[apply_filter] off-page → history.push', base);
-	const encoded = encodeURIComponent(JSON.stringify(normalized));
-	deps.history.push(`${base}?${QueryParams.compositeQuery}=${encoded}`);
+	const params = serialize(normalized);
+	deps.history.push(`${base}?${params.toString()}`);
 }
 
 /** Picks the right rollback API call for a given action kind. */

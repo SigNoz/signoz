@@ -48,6 +48,7 @@ import styles from './EntityLogs.module.scss';
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import { serializeToParams } from 'lib/compositeQuery/serializer';
 import createQueryParams from 'lib/createQueryParams';
 import { isModifierKeyPressed } from 'utils/app';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
@@ -185,7 +186,7 @@ function EntityLogsContent({
 				[QueryParams.activeLogId]: `"${log?.id}"`,
 				[QueryParams.startTime]: timeRange.startTime.toString(),
 				[QueryParams.endTime]: timeRange.endTime.toString(),
-				[QueryParams.compositeQuery]: JSON.stringify({
+				...serializeToParams({
 					...baseQuery,
 					builder: {
 						...baseQuery.builder,

@@ -1,7 +1,9 @@
 import { useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom-v5-compat';
-import { cloneDeep, isEqual } from 'lodash-es';
 import { withBasePath } from 'utils/basePath';
+import { COMPOSITE_QUERY_KEY } from 'lib/compositeQuery/types';
+import { deserialize } from 'lib/compositeQuery/serializer';
+import { isEqual } from 'lodash-es';
 
 interface NavigateOptions {
 	replace?: boolean;
@@ -18,7 +20,49 @@ interface UseSafeNavigateProps {
 	preventSameUrlNavigation?: boolean;
 }
 
-const areUrlsEffectivelySame = (url1: URL, url2: URL): boolean => {
+/**
+ * Compare the (optional) `compositeQuery` param of two URLSearchParams
+ * semantically. Its serialized form is not byte-stable — the volatile `id` and
+ * the adapter choice both vary — so we decode and deep-compare, ignoring `id`.
+ *
+ * compositeQuery is not guaranteed to be present: absent on both sides counts
+ * as equal, present on only one side counts as different. When either side is
+ * present but can't be decoded, we fall back to comparing the raw values.
+ */
+const compositeQueriesEqual = (
+	params1: URLSearchParams,
+	params2: URLSearchParams,
+): boolean => {
+	const raw1 = params1.get(COMPOSITE_QUERY_KEY);
+	const raw2 = params2.get(COMPOSITE_QUERY_KEY);
+
+	if (!raw1 && !raw2) {
+		return true;
+	}
+	if (!raw1 || !raw2) {
+		return false;
+	}
+
+	try {
+		const decoded1 = deserialize(params1);
+		const decoded2 = deserialize(params2);
+
+		if (decoded1 && decoded2) {
+			// Ignore the volatile `id` when comparing queries.
+			const { id: _id1, ...rest1 } = decoded1;
+			const { id: _id2, ...rest2 } = decoded2;
+
+			return isEqual(rest1, rest2);
+		}
+	} catch (error) {
+		console.warn('Error comparing compositeQuery:', error);
+	}
+
+	// One or both could not be decoded — compare the raw encoded values.
+	return raw1 === raw2;
+};
+
+export const areUrlsEffectivelySame = (url1: URL, url2: URL): boolean => {
 	if (url1.pathname !== url2.pathname) {
 		return false;
 	}
@@ -26,36 +70,19 @@ const areUrlsEffectivelySame = (url1: URL, url2: URL): boolean => {
 	const params1 = new URLSearchParams(url1.search);
 	const params2 = new URLSearchParams(url2.search);
 
-	const allParams = new Set([...params1.keys(), ...params2.keys()]);
+	// The compositeQuery is compared semantically (it round-trips through a
+	// non-stable serialized form); every other param is compared by raw value.
+	if (!compositeQueriesEqual(params1, params2)) {
+		return false;
+	}
 
-	return [...allParams].every((param) => {
-		if (param === 'compositeQuery') {
-			try {
-				const query1 = params1.get('compositeQuery');
-				const query2 = params2.get('compositeQuery');
+	const otherKeys = new Set(
+		[...params1.keys(), ...params2.keys()].filter(
+			(key) => key !== COMPOSITE_QUERY_KEY,
+		),
+	);
 
-				if (!query1 || !query2) {
-					return false;
-				}
-
-				const decoded1 = JSON.parse(decodeURIComponent(query1));
-				const decoded2 = JSON.parse(decodeURIComponent(query2));
-
-				const filtered1 = cloneDeep(decoded1);
-				const filtered2 = cloneDeep(decoded2);
-
-				delete filtered1.id;
-				delete filtered2.id;
-
-				return isEqual(filtered1, filtered2);
-			} catch (error) {
-				console.warn('Error comparing compositeQuery:', error);
-				return false;
-			}
-		}
-
-		return params1.get(param) === params2.get(param);
-	});
+	return [...otherKeys].every((key) => params1.get(key) === params2.get(key));
 };
 
 /**
@@ -66,7 +93,10 @@ const areUrlsEffectivelySame = (url1: URL, url2: URL): boolean => {
  *    - Current URL has no params and target URL has params, or
  *    - Target URL has new params that didn't exist in current URL
  */
-const isDefaultNavigation = (currentUrl: URL, targetUrl: URL): boolean => {
+export const isDefaultNavigation = (
+	currentUrl: URL,
+	targetUrl: URL,
+): boolean => {
 	// Different pathnames means it's not a default navigation
 	if (currentUrl.pathname !== targetUrl.pathname) {
 		return false;

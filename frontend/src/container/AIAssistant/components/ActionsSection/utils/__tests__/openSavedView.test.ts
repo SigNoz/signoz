@@ -8,6 +8,7 @@ import { getViewById } from 'api/saveView/getViewById';
 import ROUTES from 'constants/routes';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { deserialize } from 'lib/compositeQuery/serializer';
 import { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
 import { AllViewsProps, ViewProps } from 'types/api/saveViews/types';
 import { DataSource } from 'types/common/queryBuilder';
@@ -218,7 +219,9 @@ describe('buildExplorerNavigationUrl', () => {
 		);
 
 		expect(url).toContain(ROUTES.LOGS_EXPLORER);
-		expect(url).toContain(`${QueryParams.compositeQuery}=`);
+
+		const params = new URLSearchParams(new URL(url, 'http://x').search);
+		expect(deserialize(params)).not.toBeNull();
 		expect(url).toContain(`${QueryParams.viewKey}=`);
 	});
 });

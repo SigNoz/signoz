@@ -18,6 +18,7 @@ import { LogsLoading } from 'container/LogsLoading/LogsLoading';
 import { FontSize } from 'container/OptionsMenu/types';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { serializeToParams } from 'lib/compositeQuery/serializer';
 import createQueryParams from 'lib/createQueryParams';
 import { Compass } from '@signozhq/icons';
 import { ILog } from 'types/api/logs/log';
@@ -138,7 +139,7 @@ function SpanLogs({
 				[QueryParams.activeLogId]: `"${log.id}"`,
 				[QueryParams.startTime]: timeRange.startTime.toString(),
 				[QueryParams.endTime]: timeRange.endTime.toString(),
-				[QueryParams.compositeQuery]: JSON.stringify(updatedQuery),
+				...serializeToParams(updatedQuery),
 			};
 
 			const url = `${ROUTES.LOGS_EXPLORER}?${createQueryParams(queryParams)}`;

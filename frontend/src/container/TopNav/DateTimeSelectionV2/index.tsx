@@ -35,6 +35,11 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { addCustomTimeRange } from 'utils/customTimeRangeUtils';
 import { persistTimeDurationForRoute } from 'utils/metricsTimeStorageUtils';
 import { normalizeTimeToMs } from 'utils/timeUtils';
+import {
+	applySerializedParams,
+	deserialize,
+	serialize,
+} from 'lib/compositeQuery/serializer';
 import { v4 as uuid } from 'uuid';
 
 import AutoRefresh from '../AutoRefreshV2';
@@ -278,7 +283,7 @@ function DateTimeSelection({
 		return `Refreshed ${secondsDiff} sec ago`;
 	}, [maxTime, minTime, selectedTime]);
 
-	const getUpdatedCompositeQuery = useCallback((): string => {
+	const getUpdatedCompositeQuery = useCallback((): URLSearchParams => {
 		let updatedCompositeQuery = cloneDeep(currentQuery);
 		updatedCompositeQuery.id = uuid();
 		// Remove the filters
@@ -299,7 +304,7 @@ function DateTimeSelection({
 				})),
 			},
 		};
-		return encodeURIComponent(JSON.stringify(updatedCompositeQuery));
+		return serialize(updatedCompositeQuery);
 	}, [currentQuery]);
 
 	const onSelectHandler = useCallback(
@@ -334,9 +339,9 @@ function DateTimeSelection({
 			// Remove Hidden Filters from URL query parameters on time change
 			urlQuery.delete(QueryParams.activeLogId);
 
-			if (urlQuery.has(QueryParams.compositeQuery)) {
-				const updatedCompositeQuery = getUpdatedCompositeQuery();
-				urlQuery.set(QueryParams.compositeQuery, updatedCompositeQuery);
+			const staledQuery = deserialize(urlQuery);
+			if (staledQuery) {
+				applySerializedParams(getUpdatedCompositeQuery(), urlQuery);
 			}
 
 			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
@@ -424,9 +429,9 @@ function DateTimeSelection({
 				urlQuery.set(QueryParams.endTime, endTime?.toDate().getTime().toString());
 				urlQuery.delete(QueryParams.relativeTime);
 
-				if (urlQuery.has(QueryParams.compositeQuery)) {
-					const updatedCompositeQuery = getUpdatedCompositeQuery();
-					urlQuery.set(QueryParams.compositeQuery, updatedCompositeQuery);
+				const staledQuery = deserialize(urlQuery);
+				if (staledQuery) {
+					applySerializedParams(getUpdatedCompositeQuery(), urlQuery);
 				}
 
 				const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;

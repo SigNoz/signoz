@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import { serializeToParams } from 'lib/compositeQuery/serializer';
 import createQueryParams from 'lib/createQueryParams';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -49,7 +50,7 @@ const useBaseDrilldownNavigate = ({
 
 			const timeRange = aggregateData?.timeRange;
 			let queryParams: Record<string, string> = {
-				[QueryParams.compositeQuery]: encodeURIComponent(JSON.stringify(viewQuery)),
+				...serializeToParams(viewQuery),
 				...(timeRange && {
 					[QueryParams.startTime]: timeRange.startTime.toString(),
 					[QueryParams.endTime]: timeRange.endTime.toString(),
@@ -94,7 +95,7 @@ export function buildDrilldownUrl(
 
 	const timeRange = aggregateData?.timeRange;
 	let queryParams: Record<string, string> = {
-		[QueryParams.compositeQuery]: encodeURIComponent(JSON.stringify(viewQuery)),
+		...serializeToParams(viewQuery),
 		...(timeRange && {
 			[QueryParams.startTime]: timeRange.startTime.toString(),
 			[QueryParams.endTime]: timeRange.endTime.toString(),
