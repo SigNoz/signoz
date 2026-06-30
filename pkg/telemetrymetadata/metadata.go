@@ -1372,9 +1372,6 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, fieldValueSel
 		instrumentationtypes.CodeFunctionName: "getRelatedValues",
 	})
 
-	// TODO(Tushar): thread orgID here to evaluate correctly
-	bodyJSONEnabled := t.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{}))
-
 	// nothing to return as "related" value if there is nothing to filter on
 	if fieldValueSelector.ExistingQuery == "" {
 		return nil, true, nil
@@ -1424,7 +1421,6 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, fieldValueSel
 			FieldMapper:      t.fm,
 			ConditionBuilder: t.conditionBuilder,
 			FieldKeys:        keys,
-			BodyJSONEnabled:  bodyJSONEnabled,
 		})
 		if err != nil {
 			t.logger.WarnContext(ctx, "error parsing existing query for related values", errors.Attr(err))
@@ -1450,22 +1446,22 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, fieldValueSel
 
 			// search on attributes
 			key.FieldContext = telemetrytypes.FieldContextAttribute
-			cond, err := t.conditionBuilder.ConditionFor(ctx, 0, 0, key, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb)
+			attrConds, _, err := t.conditionBuilder.ConditionFor(ctx, 0, 0, key, []*telemetrytypes.TelemetryFieldKey{key}, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb)
 			if err == nil {
-				conds = append(conds, cond)
+				conds = append(conds, attrConds...)
 			}
 
 			// search on resource
 			key.FieldContext = telemetrytypes.FieldContextResource
-			cond, err = t.conditionBuilder.ConditionFor(ctx, 0, 0, key, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb)
+			resourceConds, _, err := t.conditionBuilder.ConditionFor(ctx, 0, 0, key, []*telemetrytypes.TelemetryFieldKey{key}, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb)
 			if err == nil {
-				conds = append(conds, cond)
+				conds = append(conds, resourceConds...)
 			}
 			key.FieldContext = origContext
 		} else {
-			cond, err := t.conditionBuilder.ConditionFor(ctx, 0, 0, key, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb)
+			keyConds, _, err := t.conditionBuilder.ConditionFor(ctx, 0, 0, key, []*telemetrytypes.TelemetryFieldKey{key}, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb)
 			if err == nil {
-				conds = append(conds, cond)
+				conds = append(conds, keyConds...)
 			}
 		}
 

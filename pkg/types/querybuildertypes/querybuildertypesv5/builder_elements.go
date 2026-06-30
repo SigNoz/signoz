@@ -111,6 +111,13 @@ const (
 
 	FilterOperatorContains
 	FilterOperatorNotContains
+
+	// has/hasAny/hasAll are array membership functions; hasToken is a full-text token
+	// search (not array membership), so it is excluded from IsArrayFunctionOperator.
+	FilterOperatorHas
+	FilterOperatorHasToken
+	FilterOperatorHasAny
+	FilterOperatorHasAll
 )
 
 var operatorInverseMapping = map[FilterOperator]FilterOperator{
@@ -218,6 +225,17 @@ func (f FilterOperator) IsArrayOperator() bool {
 	switch f {
 	case FilterOperatorIn, FilterOperatorNotIn,
 		FilterOperatorBetween, FilterOperatorNotBetween:
+		return true
+	default:
+		return false
+	}
+}
+
+// IsArrayFunctionOperator reports whether the operator is one of the array
+// membership functions (has/hasAny/hasAll) that operate over array fields.
+func (f FilterOperator) IsArrayFunctionOperator() bool {
+	switch f {
+	case FilterOperatorHas, FilterOperatorHasAny, FilterOperatorHasAll:
 		return true
 	default:
 		return false

@@ -205,8 +205,8 @@ func TestConditionBuilder(t *testing.T) {
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
 		t.Run(tc.name, func(t *testing.T) {
-			cond, err := conditionBuilder.ConditionFor(context.Background(), 0, 0, tc.key, tc.op, tc.value, sb)
-			sb.Where(cond)
+			cond, _, err := conditionBuilder.ConditionFor(context.Background(), 0, 0, tc.key, []*telemetrytypes.TelemetryFieldKey{tc.key}, tc.op, tc.value, sb)
+			sb.Where(cond...)
 
 			if tc.expectedErr != nil {
 				assert.Error(t, err)
