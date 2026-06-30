@@ -10,10 +10,16 @@ const THRESHOLDS: DashboardtypesThresholdWithLabelDTO[] = [
 	{ value: 80, color: '#F5B225', label: 'High', unit: 'percent' },
 ];
 
-// Stateful harness for flows that depend on the value updating (add/discard);
+// Stateful harness for flows that depend on the value updating (add/discard/live);
 // omits `controls` to exercise the default `label` variant.
-function Harness({ yAxisUnit }: { yAxisUnit?: string }): JSX.Element {
-	const [value, setValue] = useState<AnyThreshold[]>([]);
+function Harness({
+	yAxisUnit,
+	initial = [],
+}: {
+	yAxisUnit?: string;
+	initial?: AnyThreshold[];
+}): JSX.Element {
+	const [value, setValue] = useState<AnyThreshold[]>(initial);
 	return (
 		<ThresholdsSection value={value} onChange={setValue} yAxisUnit={yAxisUnit} />
 	);
@@ -70,7 +76,7 @@ describe('ThresholdsSection', () => {
 		]);
 	});
 
-	it('does not commit edits when Discard is clicked', () => {
+	it('reflects edits live (before Save) so the preview can react', () => {
 		const onChange = jest.fn();
 		render(<ThresholdsSection value={THRESHOLDS} onChange={onChange} />);
 
@@ -78,11 +84,26 @@ describe('ThresholdsSection', () => {
 		fireEvent.change(screen.getByTestId('threshold-value-0'), {
 			target: { value: '90' },
 		});
+
+		// No Save click — the edit is already pushed up for the preview to render.
+		expect(onChange).toHaveBeenLastCalledWith([
+			{ value: 90, color: '#F5B225', label: 'High', unit: 'percent' },
+		]);
+	});
+
+	it('reverts the live edits to the saved value on Discard', () => {
+		render(<Harness initial={THRESHOLDS} />);
+
+		fireEvent.click(screen.getByTestId('threshold-edit-0'));
+		fireEvent.change(screen.getByTestId('threshold-value-0'), {
+			target: { value: '90' },
+		});
 		fireEvent.click(screen.getByTestId('threshold-discard-0'));
 
-		expect(onChange).not.toHaveBeenCalled();
+		// Back to view mode, and re-opening shows the rolled-back 80, not 90.
 		expect(screen.queryByTestId('threshold-value-0')).not.toBeInTheDocument();
-		expect(screen.getByTestId('threshold-edit-0')).toBeInTheDocument();
+		fireEvent.click(screen.getByTestId('threshold-edit-0'));
+		expect(screen.getByTestId('threshold-value-0')).toHaveValue(80);
 	});
 
 	it('removes a threshold from view mode', () => {

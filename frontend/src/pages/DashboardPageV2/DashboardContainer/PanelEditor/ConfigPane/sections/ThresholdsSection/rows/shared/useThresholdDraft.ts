@@ -9,12 +9,14 @@ interface ThresholdDraft<T> {
 
 /**
  * Local draft for a threshold row, shared by every variant. Snapshots the saved
- * threshold on each entry into edit mode (so Discard simply drops the draft and the
- * next edit starts clean) and exposes the numeric `value` setter all variants use.
+ * threshold on each entry into edit mode and exposes the numeric `value` setter all
+ * variants use. `onLiveChange` mirrors the draft into the spec as the user edits, so the
+ * panel preview updates live (without Save); the section reverts it on Discard.
  */
 export function useThresholdDraft<T extends { value: number }>(
 	threshold: T,
 	isEditing: boolean,
+	onLiveChange?: (draft: T) => void,
 ): ThresholdDraft<T> {
 	const [draft, setDraft] = useState<T>(threshold);
 
@@ -24,6 +26,13 @@ export function useThresholdDraft<T extends { value: number }>(
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps -- snapshot only on edit entry
 	}, [isEditing]);
+
+	useEffect(() => {
+		if (isEditing) {
+			onLiveChange?.(draft);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- propagate on draft change only
+	}, [draft]);
 
 	const setValue = (raw: string): void => {
 		const next = Number(raw);

@@ -36,9 +36,16 @@ const THRESHOLDS: DashboardtypesComparisonThresholdDTO[] = [
 	},
 ];
 
-// Stateful harness for flows that depend on the value updating (add/discard).
-function Harness({ yAxisUnit }: { yAxisUnit?: string }): JSX.Element {
-	const [value, setValue] = useState<DashboardtypesComparisonThresholdDTO[]>([]);
+// Stateful harness for flows that depend on the value updating (add/discard/live).
+function Harness({
+	yAxisUnit,
+	initial = [],
+}: {
+	yAxisUnit?: string;
+	initial?: DashboardtypesComparisonThresholdDTO[];
+}): JSX.Element {
+	const [value, setValue] =
+		useState<DashboardtypesComparisonThresholdDTO[]>(initial);
 	return (
 		<ComparisonThresholdsSection
 			value={value}
@@ -142,7 +149,7 @@ describe('ComparisonThresholdsSection', () => {
 		expect(valueInput).toHaveValue(5);
 	});
 
-	it('does not commit edits when Discard is clicked', async () => {
+	it('reflects edits live (before Save) so the preview can react', async () => {
 		const user = userEvent.setup();
 		const onChange = jest.fn();
 		render(
@@ -152,14 +159,34 @@ describe('ComparisonThresholdsSection', () => {
 		await user.click(screen.getByTestId('comparison-threshold-edit-0'));
 		await user.clear(screen.getByTestId('comparison-threshold-value-0'));
 		await user.type(screen.getByTestId('comparison-threshold-value-0'), '90');
+
+		// No Save click — the latest edit is already pushed up for the preview.
+		expect(onChange).toHaveBeenLastCalledWith([
+			{
+				value: 90,
+				color: '#F5B225',
+				operator: DashboardtypesComparisonOperatorDTO.above,
+				unit: 'percent',
+				format: DashboardtypesThresholdFormatDTO.background,
+			},
+		]);
+	});
+
+	it('reverts the live edits to the saved value on Discard', async () => {
+		const user = userEvent.setup();
+		render(<Harness initial={THRESHOLDS} />);
+
+		await user.click(screen.getByTestId('comparison-threshold-edit-0'));
+		await user.clear(screen.getByTestId('comparison-threshold-value-0'));
+		await user.type(screen.getByTestId('comparison-threshold-value-0'), '90');
 		await user.click(screen.getByTestId('comparison-threshold-discard-0'));
 
-		expect(onChange).not.toHaveBeenCalled();
-		// Back to view mode.
+		// Back to view mode, and re-opening shows the rolled-back 80, not 90.
 		expect(
 			screen.queryByTestId('comparison-threshold-value-0'),
 		).not.toBeInTheDocument();
-		expect(screen.getByTestId('comparison-threshold-edit-0')).toBeInTheDocument();
+		await user.click(screen.getByTestId('comparison-threshold-edit-0'));
+		expect(screen.getByTestId('comparison-threshold-value-0')).toHaveValue(80);
 	});
 
 	it('removes a threshold from view mode', async () => {
