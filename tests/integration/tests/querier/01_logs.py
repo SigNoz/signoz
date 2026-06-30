@@ -2306,9 +2306,11 @@ def test_logs_list_filter_by_trace_id(
     """
     Tests that filtering logs by trace_id uses the trace_summary lookup to
     narrow the query window before scanning the logs table:
-    1. Returns the matching log (narrow window, single bucket).
+    1. Returns the matching logs (narrow window, single bucket), including a log
+       flushed shortly after the span ends — kept by the configured padding.
     2. Does not return duplicate logs when the query window should span multiple
-       exponential buckets (>1 h). But is clamped to the timerange of trace.
+       exponential buckets (>1 h). The window is clamped to the trace's recorded
+       range widened by the padding, so the post-span log survives the clamp.
     3. Returns no results when the query window does not contain the trace.
     4. Logs carrying a trace_id whose trace is NOT in trace_summary (e.g.
        traces disabled) are still returned — the lookup miss must not
@@ -2366,6 +2368,9 @@ def test_logs_list_filter_by_trace_id(
     # Insert logs:
     # - one with the target trace_id, at a timestamp within the trace's
     #   recorded window (now-10s..now-5s, padded ±1s).
+    # - one with the target trace_id flushed ~3s AFTER the span's recorded end
+    #   (now-2s). This is outside the ±1s base pad but inside the multi-minute
+    #   log_trace_id_window_padding, so it must still be returned.
     # - one with an orphan trace_id whose trace was never ingested — used to
     #   verify the lookup miss does NOT short-circuit logs queries.
     insert_logs(
@@ -2375,6 +2380,15 @@ def test_logs_list_filter_by_trace_id(
                 resources=common_resources,
                 attributes={"http.method": "GET"},
                 body="log inside the target trace window",
+                severity_text="INFO",
+                trace_id=target_trace_id,
+                span_id=target_root_span_id,
+            ),
+            Logs(
+                timestamp=now - timedelta(seconds=2),
+                resources=common_resources,
+                attributes={"http.method": "POST"},
+                body="log flushed after the span ends, within padding window",
                 severity_text="INFO",
                 trace_id=target_trace_id,
                 span_id=target_root_span_id,
@@ -2429,23 +2443,31 @@ def test_logs_list_filter_by_trace_id(
 
     now_ms = int(now.timestamp() * 1000)
 
+    inside_window_body = "log inside the target trace window"
+    post_span_body = "log flushed after the span ends, within padding window"
+
     # --- Test 1: narrow window (single bucket, <1 h) ---
     narrow_start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     narrow_rows, narrow_warnings = _query(narrow_start_ms, now_ms, target_trace_id)
 
-    assert len(narrow_rows) == 1, f"Expected 1 log for trace_id filter (narrow window), got {len(narrow_rows)}"
-    assert narrow_rows[0]["data"]["trace_id"] == target_trace_id
-    assert narrow_rows[0]["data"]["span_id"] == target_root_span_id
+    assert len(narrow_rows) == 2, f"Expected 2 logs for trace_id filter (narrow window), got {len(narrow_rows)}"
+    assert {r["data"]["trace_id"] for r in narrow_rows} == {target_trace_id}
+    narrow_bodies = {r["data"]["body"] for r in narrow_rows}
+    assert inside_window_body in narrow_bodies
+    assert post_span_body in narrow_bodies, "post-span log should be returned within the padding window"
     assert not any(outside_range_msg in m for m in narrow_warnings), f"Did not expect outside-range warning, got {narrow_warnings}"
 
-    # --- Test 2: wide window (>1 h, clamp to the timerange from trace_summary) ---
-    # Should still return exactly one log — no duplicates from multi-bucket scan.
+    # --- Test 2: wide window (>1 h, clamp to the padded timerange from trace_summary) ---
+    # Should return exactly the two target logs — no duplicates from multi-bucket
+    # scan, and the post-span log survives the clamp only because of the padding.
     wide_start_ms = int((now - timedelta(hours=12)).timestamp() * 1000)
     wide_rows, wide_warnings = _query(wide_start_ms, now_ms, target_trace_id)
 
-    assert len(wide_rows) == 1, f"Expected 1 log for trace_id filter (wide window, multi-bucket), got {len(wide_rows)} — possible duplicate-log regression"
-    assert wide_rows[0]["data"]["trace_id"] == target_trace_id
-    assert wide_rows[0]["data"]["span_id"] == target_root_span_id
+    assert len(wide_rows) == 2, f"Expected 2 logs for trace_id filter (wide window, multi-bucket), got {len(wide_rows)} — possible duplicate-log regression or padding not applied"
+    assert {r["data"]["trace_id"] for r in wide_rows} == {target_trace_id}
+    wide_bodies = {r["data"]["body"] for r in wide_rows}
+    assert inside_window_body in wide_bodies
+    assert post_span_body in wide_bodies, "post-span log should survive the clamp because of the padding"
     assert not any(outside_range_msg in m for m in wide_warnings), f"Did not expect outside-range warning, got {wide_warnings}"
 
     # --- Test 3: window that does not contain the trace returns no results + warning ---

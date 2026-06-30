@@ -44,3 +44,7 @@ type Handler interface {
 	Update(http.ResponseWriter, *http.Request)
 	Delete(http.ResponseWriter, *http.Request)
 }
+
+type Getter interface {
+	OnBeforeRoleDelete(ctx context.Context, orgID valuer.UUID, roleID valuer.UUID, roleName string) error
+}

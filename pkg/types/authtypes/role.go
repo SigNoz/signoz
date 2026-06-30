@@ -25,6 +25,7 @@ var (
 	ErrCodeRoleUnsupported                  = errors.MustNewCode("role_unsupported")
 	ErrCodeRoleHasUserAssignees             = errors.MustNewCode("role_has_user_assignees")
 	ErrCodeRoleHasServiceAccountAssignees   = errors.MustNewCode("role_has_service_account_assignees")
+	ErrCodeRoleHasAuthDomainMappings        = errors.MustNewCode("role_has_auth_domain_mappings")
 )
 
 var (
@@ -135,6 +136,20 @@ func NewManagedRoles(orgID valuer.UUID) []*Role {
 
 }
 
+func NewStatsFromRoles(roles []*Role) map[string]any {
+	stats := make(map[string]any)
+	for _, role := range roles {
+		key := "role." + role.Type.StringValue() + ".count"
+		if value, ok := stats[key]; ok {
+			stats[key] = value.(int64) + 1
+		} else {
+			stats[key] = int64(1)
+		}
+	}
+	stats["role.count"] = int64(len(roles))
+	return stats
+}
+
 func (role *Role) PatchMetadata(description string) error {
 	err := role.ErrIfManaged()
 	if err != nil {
@@ -206,8 +221,8 @@ func (role *PostableRole) UnmarshalJSON(data []byte) error {
 
 func (role *UpdatableRole) UnmarshalJSON(data []byte) error {
 	shadow := struct {
-		Description       *string           `json:"description"`
-		TransactionGroups TransactionGroups `json:"transactionGroups"`
+		Description       *string          `json:"description"`
+		TransactionGroups *json.RawMessage `json:"transactionGroups"`
 	}{}
 
 	if err := json.Unmarshal(data, &shadow); err != nil {
@@ -222,8 +237,13 @@ func (role *UpdatableRole) UnmarshalJSON(data []byte) error {
 		return errors.New(errors.TypeInvalidInput, ErrCodeRoleInvalidInput, "transactionGroups is required").WithAdditional("send an empty array to clear the role's transaction groups")
 	}
 
+	transactionGroups, err := NewTransactionGroups(*shadow.TransactionGroups)
+	if err != nil {
+		return err
+	}
+
 	role.Description = *shadow.Description
-	role.TransactionGroups = shadow.TransactionGroups
+	role.TransactionGroups = transactionGroups
 	return nil
 }
 
@@ -298,6 +318,20 @@ func MustGetSigNozManagedRoleFromExistingRole(role types.Role) string {
 	managedRole, ok := ExistingRoleToSigNozManagedRoleMap[role]
 	if !ok {
 		panic(errors.Newf(errors.TypeInternal, errors.CodeInternal, "invalid role: %s", role.String()))
+	}
+
+	return managedRole
+}
+
+func NormalizeRoleName(role string) string {
+	legacyRole, err := types.NewRole(strings.ToUpper(role))
+	if err != nil {
+		return role
+	}
+
+	managedRole, ok := ExistingRoleToSigNozManagedRoleMap[legacyRole]
+	if !ok {
+		return role
 	}
 
 	return managedRole

@@ -2553,17 +2553,6 @@ components:
         url:
           type: string
       type: object
-    DashboardTextVariableSpec:
-      properties:
-        constant:
-          type: boolean
-        display:
-          $ref: '#/components/schemas/VariableDisplay'
-        name:
-          type: string
-        value:
-          type: string
-      type: object
     DashboardtypesAxes:
       properties:
         isLogScale:
@@ -2673,6 +2662,22 @@ components:
         updatedBy:
           type: string
       type: object
+    DashboardtypesDashboardPanelRef:
+      properties:
+        dashboardId:
+          type: string
+        dashboardName:
+          type: string
+        panelId:
+          type: string
+        panelName:
+          type: string
+      required:
+      - dashboardId
+      - dashboardName
+      - panelId
+      - panelName
+      type: object
     DashboardtypesDashboardSpec:
       properties:
         datasources:
@@ -2745,24 +2750,23 @@ components:
     DashboardtypesDatasourcePlugin:
       discriminator:
         mapping:
-          signoz/Datasource: '#/components/schemas/DashboardtypesDatasourcePluginVariantStruct'
+          signoz/Datasource: '#/components/schemas/DashboardtypesDatasourcePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesSigNozDatasourceSpec'
         propertyName: kind
       oneOf:
-      - $ref: '#/components/schemas/DashboardtypesDatasourcePluginVariantStruct'
+      - $ref: '#/components/schemas/DashboardtypesDatasourcePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesSigNozDatasourceSpec'
       type: object
     DashboardtypesDatasourcePluginKind:
       enum:
       - signoz/Datasource
       type: string
-    DashboardtypesDatasourcePluginVariantStruct:
+    DashboardtypesDatasourcePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesSigNozDatasourceSpec:
       properties:
         kind:
           enum:
           - signoz/Datasource
           type: string
         spec:
-          nullable: true
-          type: object
+          $ref: '#/components/schemas/DashboardtypesSigNozDatasourceSpec'
       required:
       - kind
       - spec
@@ -2928,9 +2932,15 @@ components:
             type: string
           nullable: true
           type: object
+        mode:
+          $ref: '#/components/schemas/DashboardtypesLegendMode'
         position:
           $ref: '#/components/schemas/DashboardtypesLegendPosition'
       type: object
+    DashboardtypesLegendMode:
+      enum:
+      - list
+      type: string
     DashboardtypesLegendPosition:
       enum:
       - bottom
@@ -2977,19 +2987,30 @@ components:
         customAllValue:
           type: string
         defaultValue:
-          $ref: '#/components/schemas/VariableDefaultValue'
+          $ref: '#/components/schemas/DashboardtypesVariableDefaultValue'
         display:
           $ref: '#/components/schemas/DashboardtypesDisplay'
         name:
+          minLength: 1
           type: string
         plugin:
           $ref: '#/components/schemas/DashboardtypesVariablePlugin'
         sort:
-          nullable: true
-          type: string
+          $ref: '#/components/schemas/DashboardtypesListVariableSpecSort'
       required:
       - display
+      - name
       type: object
+    DashboardtypesListVariableSpecSort:
+      enum:
+      - none
+      - alphabetical-asc
+      - alphabetical-desc
+      - numerical-asc
+      - numerical-desc
+      - alphabetical-ci-asc
+      - alphabetical-ci-desc
+      type: string
     DashboardtypesListableDashboardForUserV2:
       properties:
         dashboards:
@@ -3287,7 +3308,6 @@ components:
         queries:
           items:
             $ref: '#/components/schemas/DashboardtypesQuery'
-          nullable: true
           type: array
       required:
       - display
@@ -3490,6 +3510,8 @@ components:
       required:
       - queryValue
       type: object
+    DashboardtypesSigNozDatasourceSpec:
+      type: object
     DashboardtypesSource:
       enum:
       - user
@@ -3499,8 +3521,13 @@ components:
     DashboardtypesSpanGaps:
       properties:
         fillLessThan:
+          description: The maximum gap size to connect when fillOnlyBelow is true.
+            Gaps larger than this duration are left disconnected.
           type: string
         fillOnlyBelow:
+          description: Controls whether lines connect across null values. When false
+            (default), all gaps are connected. When true, only gaps smaller than fillLessThan
+            are connected.
           type: boolean
       type: object
     DashboardtypesStorableDashboardData:
@@ -3548,6 +3575,22 @@ components:
       - color
       - columnName
       type: object
+    DashboardtypesTextVariableSpec:
+      properties:
+        constant:
+          type: boolean
+        display:
+          $ref: '#/components/schemas/DashboardtypesDisplay'
+        name:
+          minLength: 1
+          type: string
+        value:
+          type: string
+      required:
+      - display
+      - value
+      - name
+      type: object
     DashboardtypesThresholdFormat:
       enum:
       - text
@@ -3567,7 +3610,6 @@ components:
       required:
       - value
       - color
-      - label
       type: object
     DashboardtypesTimePreference:
       enum:
@@ -3652,24 +3694,18 @@ components:
       discriminator:
         mapping:
           ListVariable: '#/components/schemas/DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpec'
-          TextVariable: '#/components/schemas/DashboardtypesVariableEnvelopeGithubComPersesSpecGoDashboardTextVariableSpec'
+          TextVariable: '#/components/schemas/DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesTextVariableSpec'
         propertyName: kind
       oneOf:
       - $ref: '#/components/schemas/DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpec'
-      - $ref: '#/components/schemas/DashboardtypesVariableEnvelopeGithubComPersesSpecGoDashboardTextVariableSpec'
+      - $ref: '#/components/schemas/DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesTextVariableSpec'
       type: object
-    DashboardtypesVariableEnvelopeGithubComPersesSpecGoDashboardTextVariableSpec:
-      properties:
-        kind:
-          enum:
-          - TextVariable
+    DashboardtypesVariableDefaultValue:
+      oneOf:
+      - type: string
+      - items:
           type: string
-        spec:
-          $ref: '#/components/schemas/DashboardTextVariableSpec'
-      required:
-      - kind
-      - spec
-      type: object
+        type: array
     DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpec:
       properties:
         kind:
@@ -3678,6 +3714,18 @@ components:
           type: string
         spec:
           $ref: '#/components/schemas/DashboardtypesListVariableSpec'
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesTextVariableSpec:
+      properties:
+        kind:
+          enum:
+          - TextVariable
+          type: string
+        spec:
+          $ref: '#/components/schemas/DashboardtypesTextVariableSpec'
       required:
       - kind
       - spec
@@ -3757,8 +3805,11 @@ components:
         url:
           type: string
       required:
+      - type
       - code
       - message
+      - errors
+      - suggestions
       type: object
     ErrorsResponseerroradditional:
       properties:
@@ -3768,11 +3819,16 @@ components:
           items:
             type: string
           type: array
+      required:
+      - message
+      - suggestions
       type: object
     ErrorsResponseretryjson:
       properties:
         delay:
           $ref: '#/components/schemas/TimeDuration'
+      required:
+      - delay
       type: object
     FactoryResponse:
       properties:
@@ -5237,6 +5293,221 @@ components:
       required:
       - rules
       type: object
+    MetricreductionruletypesAffectedAsset:
+      properties:
+        id:
+          type: string
+        impactedLabels:
+          items:
+            type: string
+          nullable: true
+          type: array
+        name:
+          type: string
+        type:
+          $ref: '#/components/schemas/MetricreductionruletypesAssetType'
+        widget:
+          $ref: '#/components/schemas/MetricreductionruletypesAffectedWidget'
+      required:
+      - type
+      - id
+      - name
+      - impactedLabels
+      type: object
+    MetricreductionruletypesAffectedWidget:
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+      required:
+      - id
+      - name
+      type: object
+    MetricreductionruletypesAssetType:
+      enum:
+      - dashboard
+      - alert_rule
+      type: string
+    MetricreductionruletypesGettableReductionRule:
+      properties:
+        active:
+          type: boolean
+        createdAt:
+          format: date-time
+          type: string
+        createdBy:
+          type: string
+        effectiveFrom:
+          format: date-time
+          type: string
+        id:
+          type: string
+        ingestedSeries:
+          minimum: 0
+          type: integer
+        labels:
+          items:
+            type: string
+          nullable: true
+          type: array
+        matchType:
+          $ref: '#/components/schemas/MetricreductionruletypesMatchType'
+        metricName:
+          type: string
+        reductionPercent:
+          format: double
+          type: number
+        retainedSeries:
+          minimum: 0
+          type: integer
+        updatedAt:
+          format: date-time
+          type: string
+        updatedBy:
+          type: string
+      required:
+      - id
+      - metricName
+      - matchType
+      - labels
+      - effectiveFrom
+      - active
+      - ingestedSeries
+      - retainedSeries
+      - reductionPercent
+      type: object
+    MetricreductionruletypesGettableReductionRulePreview:
+      properties:
+        affectedAssets:
+          items:
+            $ref: '#/components/schemas/MetricreductionruletypesAffectedAsset'
+          nullable: true
+          type: array
+        currentRetainedSeries:
+          minimum: 0
+          type: integer
+        droppedLabels:
+          items:
+            type: string
+          nullable: true
+          type: array
+        effectiveFrom:
+          format: date-time
+          type: string
+        ingestedSeries:
+          minimum: 0
+          type: integer
+        reductionPercent:
+          format: double
+          type: number
+        retainedSeries:
+          minimum: 0
+          type: integer
+      required:
+      - ingestedSeries
+      - currentRetainedSeries
+      - retainedSeries
+      - reductionPercent
+      - droppedLabels
+      - affectedAssets
+      - effectiveFrom
+      type: object
+    MetricreductionruletypesGettableReductionRuleStats:
+      properties:
+        estimatedMonthlySavingsUsd:
+          format: double
+          type: number
+        ingestedSeries:
+          minimum: 0
+          type: integer
+        retainedSeries:
+          minimum: 0
+          type: integer
+      required:
+      - ingestedSeries
+      - retainedSeries
+      - estimatedMonthlySavingsUsd
+      type: object
+    MetricreductionruletypesGettableReductionRules:
+      properties:
+        rules:
+          items:
+            $ref: '#/components/schemas/MetricreductionruletypesGettableReductionRule'
+          nullable: true
+          type: array
+        total:
+          type: integer
+      required:
+      - rules
+      - total
+      type: object
+    MetricreductionruletypesMatchType:
+      enum:
+      - drop
+      - keep
+      type: string
+    MetricreductionruletypesOrder:
+      enum:
+      - asc
+      - desc
+      type: string
+    MetricreductionruletypesPostableReductionRule:
+      properties:
+        labels:
+          items:
+            type: string
+          nullable: true
+          type: array
+        matchType:
+          $ref: '#/components/schemas/MetricreductionruletypesMatchType'
+        metricName:
+          type: string
+      required:
+      - metricName
+      - matchType
+      - labels
+      type: object
+    MetricreductionruletypesPostableReductionRulePreview:
+      properties:
+        labels:
+          items:
+            type: string
+          nullable: true
+          type: array
+        lookbackMs:
+          format: int64
+          type: integer
+        matchType:
+          $ref: '#/components/schemas/MetricreductionruletypesMatchType'
+        metricName:
+          type: string
+      required:
+      - metricName
+      - matchType
+      - labels
+      type: object
+    MetricreductionruletypesReductionRuleOrderBy:
+      enum:
+      - metric
+      - ingested_volume
+      - reduced_volume
+      - reduction
+      - last_updated
+      type: string
+    MetricreductionruletypesUpdatableReductionRule:
+      properties:
+        labels:
+          items:
+            type: string
+          nullable: true
+          type: array
+        matchType:
+          $ref: '#/components/schemas/MetricreductionruletypesMatchType'
+      required:
+      - matchType
+      - labels
+      type: object
     MetricsexplorertypesInspectMetricsRequest:
       properties:
         end:
@@ -5362,6 +5633,16 @@ components:
       - dashboardId
       - widgetId
       - widgetName
+      type: object
+    MetricsexplorertypesMetricDashboardPanelsResponse:
+      properties:
+        dashboards:
+          items:
+            $ref: '#/components/schemas/DashboardtypesDashboardPanelRef'
+          nullable: true
+          type: array
+      required:
+      - dashboards
       type: object
     MetricsexplorertypesMetricDashboardsResponse:
       properties:
@@ -5701,6 +5982,18 @@ components:
           format: double
           type: number
       type: object
+    Querybuildertypesv5BuilderQuerySpec:
+      discriminator:
+        mapping:
+          logs: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregation'
+          metrics: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregation'
+          traces: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregation'
+        propertyName: signal
+      oneOf:
+      - $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregation'
+      - $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregation'
+      - $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregation'
+      type: object
     Querybuildertypesv5ClickHouseQuery:
       properties:
         disabled:
@@ -5800,7 +6093,10 @@ components:
       properties:
         name:
           type: string
-        value: {}
+        value:
+          oneOf:
+          - type: number
+          - type: string
       type: object
     Querybuildertypesv5FunctionName:
       enum:
@@ -5849,7 +6145,11 @@ components:
       properties:
         key:
           $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
-        value: {}
+        value:
+          oneOf:
+          - type: string
+          - type: number
+          - type: boolean
       type: object
     Querybuildertypesv5LimitBy:
       properties:
@@ -6172,39 +6472,29 @@ components:
           type: array
       type: object
     Querybuildertypesv5QueryEnvelope:
+      discriminator:
+        mapping:
+          builder_formula: '#/components/schemas/Querybuildertypesv5QueryEnvelopeFormula'
+          builder_query: '#/components/schemas/Querybuildertypesv5QueryEnvelopeBuilder'
+          builder_trace_operator: '#/components/schemas/Querybuildertypesv5QueryEnvelopeTraceOperator'
+          clickhouse_sql: '#/components/schemas/Querybuildertypesv5QueryEnvelopeClickHouseSQL'
+          promql: '#/components/schemas/Querybuildertypesv5QueryEnvelopePromQL'
+        propertyName: type
       oneOf:
-      - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopeBuilderTrace'
-      - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopeBuilderLog'
-      - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopeBuilderMetric'
+      - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopeBuilder'
       - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopeFormula'
       - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopeTraceOperator'
       - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopePromQL'
       - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopeClickHouseSQL'
-      properties:
-        spec: {}
-        type:
-          $ref: '#/components/schemas/Querybuildertypesv5QueryType'
       type: object
-    Querybuildertypesv5QueryEnvelopeBuilderLog:
+    Querybuildertypesv5QueryEnvelopeBuilder:
       properties:
         spec:
-          $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregation'
+          $ref: '#/components/schemas/Querybuildertypesv5BuilderQuerySpec'
         type:
           $ref: '#/components/schemas/Querybuildertypesv5QueryType'
-      type: object
-    Querybuildertypesv5QueryEnvelopeBuilderMetric:
-      properties:
-        spec:
-          $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregation'
-        type:
-          $ref: '#/components/schemas/Querybuildertypesv5QueryType'
-      type: object
-    Querybuildertypesv5QueryEnvelopeBuilderTrace:
-      properties:
-        spec:
-          $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregation'
-        type:
-          $ref: '#/components/schemas/Querybuildertypesv5QueryType'
+      required:
+      - type
       type: object
     Querybuildertypesv5QueryEnvelopeClickHouseSQL:
       properties:
@@ -6212,6 +6502,8 @@ components:
           $ref: '#/components/schemas/Querybuildertypesv5ClickHouseQuery'
         type:
           $ref: '#/components/schemas/Querybuildertypesv5QueryType'
+      required:
+      - type
       type: object
     Querybuildertypesv5QueryEnvelopeFormula:
       properties:
@@ -6219,6 +6511,8 @@ components:
           $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderFormula'
         type:
           $ref: '#/components/schemas/Querybuildertypesv5QueryType'
+      required:
+      - type
       type: object
     Querybuildertypesv5QueryEnvelopePromQL:
       properties:
@@ -6226,6 +6520,8 @@ components:
           $ref: '#/components/schemas/Querybuildertypesv5PromQuery'
         type:
           $ref: '#/components/schemas/Querybuildertypesv5QueryType'
+      required:
+      - type
       type: object
     Querybuildertypesv5QueryEnvelopeTraceOperator:
       properties:
@@ -6233,6 +6529,8 @@ components:
           $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderTraceOperator'
         type:
           $ref: '#/components/schemas/Querybuildertypesv5QueryType'
+      required:
+      - type
       type: object
     Querybuildertypesv5QueryRangeRequest:
       description: Request body for the v5 query range endpoint. Supports builder
@@ -6436,7 +6734,17 @@ components:
       properties:
         type:
           $ref: '#/components/schemas/Querybuildertypesv5VariableType'
-        value: {}
+        value:
+          oneOf:
+          - type: string
+          - type: number
+          - type: boolean
+          - items:
+              oneOf:
+              - type: string
+              - type: number
+              - type: boolean
+            type: array
       type: object
     Querybuildertypesv5VariableType:
       enum:
@@ -7863,17 +8171,6 @@ components:
           type: string
       required:
       - id
-      type: object
-    VariableDefaultValue:
-      type: object
-    VariableDisplay:
-      properties:
-        description:
-          type: string
-        hidden:
-          type: boolean
-        name:
-          type: string
       type: object
     ZeustypesGettableHost:
       properties:
@@ -15785,6 +16082,566 @@ paths:
       summary: Liveness check
       tags:
       - health
+  /api/v2/metric_reduction_rules:
+    get:
+      deprecated: false
+      description: Returns active metric volume-control (label reduction) rules.
+      operationId: ListMetricReductionRules
+      parameters:
+      - in: query
+        name: orderBy
+        schema:
+          $ref: '#/components/schemas/MetricreductionruletypesReductionRuleOrderBy'
+      - in: query
+        name: order
+        schema:
+          $ref: '#/components/schemas/MetricreductionruletypesOrder'
+      - in: query
+        name: search
+        schema:
+          type: string
+      - in: query
+        name: metricName
+        schema:
+          type: string
+      - in: query
+        name: offset
+        schema:
+          type: integer
+      - in: query
+        name: limit
+        schema:
+          type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/MetricreductionruletypesGettableReductionRules'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "451":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unavailable For Legal Reasons
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+        "501":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Implemented
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: List metric reduction rules
+      tags:
+      - metrics
+    post:
+      deprecated: false
+      description: Creates a volume-control rule for a metric and returns it with
+        its id; fails if the metric already has a rule.
+      operationId: CreateMetricReductionRule
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MetricreductionruletypesPostableReductionRule'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/MetricreductionruletypesGettableReductionRule'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Conflict
+        "451":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unavailable For Legal Reasons
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+        "501":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Implemented
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Create a metric reduction rule
+      tags:
+      - metrics
+  /api/v2/metric_reduction_rules/{id}:
+    delete:
+      deprecated: false
+      description: Deletes a volume-control rule by its id.
+      operationId: DeleteMetricReductionRuleByID
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No Content
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "451":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unavailable For Legal Reasons
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+        "501":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Implemented
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Delete a metric reduction rule by id
+      tags:
+      - metrics
+    get:
+      deprecated: false
+      description: Returns a single volume-control rule by its id.
+      operationId: GetMetricReductionRuleByID
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/MetricreductionruletypesGettableReductionRule'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "451":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unavailable For Legal Reasons
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+        "501":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Implemented
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get a metric reduction rule by id
+      tags:
+      - metrics
+    put:
+      deprecated: false
+      description: Updates the match type and labels of a volume-control rule by its
+        id; the metric name is immutable.
+      operationId: UpdateMetricReductionRuleByID
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MetricreductionruletypesUpdatableReductionRule'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/MetricreductionruletypesGettableReductionRule'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "451":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unavailable For Legal Reasons
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+        "501":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Implemented
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Update a metric reduction rule by id
+      tags:
+      - metrics
+  /api/v2/metric_reduction_rules/preview:
+    post:
+      deprecated: false
+      description: Estimates the series reduction and related-asset impact of a candidate
+        volume-control rule without persisting it.
+      operationId: PreviewMetricReductionRule
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MetricreductionruletypesPostableReductionRulePreview'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/MetricreductionruletypesGettableReductionRulePreview'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "451":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unavailable For Legal Reasons
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+        "501":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Implemented
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Preview a metric reduction rule
+      tags:
+      - metrics
+  /api/v2/metric_reduction_rules/stats:
+    get:
+      deprecated: false
+      description: Returns total ingested vs retained series and the estimated monthly
+        savings across all volume-control rules.
+      operationId: GetMetricReductionRuleStats
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/MetricreductionruletypesGettableReductionRuleStats'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "451":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unavailable For Legal Reasons
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+        "501":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Implemented
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Metric reduction stats
+      tags:
+      - metrics
+  /api/v2/metric_reduction_rules/timeseries:
+    get:
+      deprecated: false
+      description: Returns ingested vs retained series over time across all volume-control
+        rules (hourly buckets), in the query-range time-series response shape.
+      operationId: GetMetricReductionRuleTimeseries
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Querybuildertypesv5QueryRangeResponse'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "451":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unavailable For Legal Reasons
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+        "501":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Implemented
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Metric reduction volume over time
+      tags:
+      - metrics
   /api/v2/metrics:
     get:
       deprecated: false
@@ -21949,6 +22806,75 @@ paths:
       summary: Put profile in Zeus for a deployment.
       tags:
       - zeus
+  /api/v3/metrics/dashboards:
+    get:
+      deprecated: false
+      description: This endpoint returns associated v2 dashboards for a specified
+        metric
+      operationId: GetMetricDashboardsV2
+      parameters:
+      - description: The name of the metric. May contain slashes (e.g. cloud-provider
+          metrics like run.googleapis.com/request_latencies).
+        in: query
+        name: metricName
+        required: true
+        schema:
+          description: The name of the metric. May contain slashes (e.g. cloud-provider
+            metrics like run.googleapis.com/request_latencies).
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/MetricsexplorertypesMetricDashboardPanelsResponse'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get metric dashboards (v2)
+      tags:
+      - metrics
   /api/v3/traces/{traceID}/flamegraph:
     post:
       deprecated: false

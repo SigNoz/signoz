@@ -1,0 +1,7 @@
+.pageError {
+	padding: var(--spacing-6) var(--spacing-8);
+	border-radius: var(--radius-2);
+	background: color-mix(in srgb, var(--bg-cherry-400) 8%, transparent);
+	color: var(--text-cherry-400);
+	font-size: var(--periscope-font-size-base);
+}

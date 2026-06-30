@@ -405,6 +405,7 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 		out, err := decode(t, `[
 			{"op": "replace", "path": "/spec/display/name", "value": "Multi-step"},
 			{"op": "remove",  "path": "/spec/panels/p2"},
+			{"op": "remove",  "path": "/spec/layouts/0/spec/items/1"},
 			{"op": "add",     "path": "/tags/-", "value": {"key": "env", "value": "staging"}}
 		]`).Apply(base)
 		require.NoError(t, err)
