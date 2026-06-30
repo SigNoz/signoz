@@ -167,6 +167,7 @@ describe('InviteMembers - Submission', () => {
 							success: false,
 						}),
 					]),
+					expect.any(Array),
 				);
 			});
 		});
@@ -243,6 +244,7 @@ describe('InviteMembers - Submission', () => {
 						error: 'User already exists',
 					}),
 				]),
+				expect.any(Array),
 			);
 
 			await expect(
