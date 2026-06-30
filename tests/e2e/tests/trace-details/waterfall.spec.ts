@@ -32,7 +32,7 @@ test.describe('Trace details — waterfall', () => {
 		await expect(page.getByRole('tab', { name: /overview/i })).toBeVisible();
 	});
 
-	test('TC-03 deep-linking a deeply-nested span auto-expands ancestors and scrolls it into view', async ({
+	test('TC-02 deep-linking a deeply-nested span auto-expands ancestors and scrolls it into view', async ({
 		authedPage: page,
 	}) => {
 		// deepLeaf sits ~34 levels down; rendering its row at all proves every

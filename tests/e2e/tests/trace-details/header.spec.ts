@@ -29,7 +29,7 @@ test.describe('Trace details — header analytics panel', () => {
 		);
 	});
 
-	test('TC-02 the analytics panel can be dragged by its header', async ({
+	test('TC-01 the analytics panel can be dragged by its header', async ({
 		authedPage: page,
 	}) => {
 		await page.getByRole('button', { name: 'Analytics' }).click();

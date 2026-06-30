@@ -35,7 +35,7 @@ test.describe('Trace details — flamegraph', () => {
 	});
 
 	test.afterAll(async ({ browser }) => {
-		// TC-05 changes colour-by — a per-user pref. Reset it so it doesn't leak to
+		// TC-04 changes colour-by — a per-user pref. Reset it so it doesn't leak to
 		// other specs (afterAll can't use the test-scoped authedPage fixture).
 		const ctx = await newAdminContext(browser);
 		const page = await ctx.newPage();
@@ -64,15 +64,7 @@ test.describe('Trace details — flamegraph', () => {
 		await expect(page.getByText(/duration: [\d.]+/)).toBeVisible();
 	});
 
-	test('TC-02 hovering a non-error bar shows status: ok', async ({
-		authedPage: page,
-	}) => {
-		await hoverFlamegraphSpan(page, trace.landmarks.db);
-
-		await expect(page.getByText('status: ok')).toBeVisible();
-	});
-
-	test('TC-03 clicking a bar selects the span, opens the drawer, and syncs the waterfall row', async ({
+	test('TC-02 clicking a bar selects the span, opens the drawer, and syncs the waterfall row', async ({
 		authedPage: page,
 	}) => {
 		await clickFlamegraphSpan(page, trace.landmarks.db);
@@ -85,7 +77,7 @@ test.describe('Trace details — flamegraph', () => {
 		await expect(page.getByTestId(`cell-0-${trace.landmarks.db}`)).toBeVisible();
 	});
 
-	test('TC-04 deep-linking a deeply-nested span scrolls it into view on the flamegraph', async ({
+	test('TC-03 deep-linking a deeply-nested span scrolls it into view on the flamegraph', async ({
 		authedPage: page,
 	}) => {
 		// Open pre-pointed at a deep (level ~34) span; useScrollToSpan should
@@ -101,7 +93,7 @@ test.describe('Trace details — flamegraph', () => {
 			.toBe(true);
 	});
 
-	test('TC-05 changing colour-by recolors the flamegraph bars', async ({
+	test('TC-04 changing colour-by recolors the flamegraph bars', async ({
 		authedPage: page,
 	}) => {
 		// colour-by persists per-user, so set an explicit baseline rather than

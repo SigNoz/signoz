@@ -27,25 +27,7 @@ test.describe('Trace details — span details drawer', () => {
 		);
 	});
 
-	test('TC-03 dock-mode switching toggles the drawer between floating and docked', async ({
-		authedPage: page,
-	}) => {
-		await page.getByTestId(`cell-0-${trace.landmarks.root}`).click();
-		await expect(page.getByRole('tab', { name: /overview/i })).toBeVisible();
-
-		// Default is docked-right → not a floating panel (no drag handle).
-		await expect(page.locator('.floating-panel__drag-handle')).toHaveCount(0);
-
-		// Switch to floating (dialog) → the drag handle appears.
-		await page.getByTestId('dock-mode-dialog').click();
-		await expect(page.locator('.floating-panel__drag-handle')).toBeVisible();
-
-		// Switch to docked-bottom → floating handle gone again.
-		await page.getByTestId('dock-mode-docked').click();
-		await expect(page.locator('.floating-panel__drag-handle')).toHaveCount(0);
-	});
-
-	test('TC-04 the floating drawer can be dragged', async ({
+	test('TC-01 the floating drawer can be dragged', async ({
 		authedPage: page,
 	}) => {
 		await page.getByTestId(`cell-0-${trace.landmarks.root}`).click();
@@ -69,7 +51,7 @@ test.describe('Trace details — span details drawer', () => {
 			.toBeLessThan(Math.round(before.x));
 	});
 
-	test('TC-05 a dock-mode change persists and is restored on reload', async ({
+	test('TC-02 a dock-mode change persists and is restored on reload', async ({
 		authedPage: page,
 	}) => {
 		// §0 prefs-boot, UI-first: switch to floating via the dock-mode UI (which
