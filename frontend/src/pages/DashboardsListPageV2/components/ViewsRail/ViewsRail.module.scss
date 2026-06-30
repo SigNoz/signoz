@@ -115,7 +115,6 @@
 .item {
 	--button-display: flex;
 	--button-justify-content: flex-start;
-	--button-height: auto;
 	--button-padding: 9px 10px;
 	flex: 1;
 	min-width: 0;
@@ -147,8 +146,13 @@
 }
 
 .itemAction {
-	// Blended ghost icon: transparent so the row's hover background shows through,
-	// surfaces on row hover, and turns red only on its own hover.
+	// Blended ghost icon overlaid on the row's right edge — absolutely positioned
+	// so it never reserves layout space or affects the row height. Transparent so
+	// the row's hover background shows through; turns red only on its own hover.
+	position: absolute;
+	right: 6px;
+	top: 50%;
+	transform: translateY(-50%);
 	--button-height: 20px;
 	--button-padding: 0;
 	--button-border-radius: 4px;
@@ -157,13 +161,16 @@
 	--button-variant-ghost-hover-color: var(--danger-color, #fff);
 	width: 20px;
 	height: 20px;
-	margin-right: 8px;
 	opacity: 0;
+	// Hidden until row hover, and inert while hidden so it can't intercept clicks
+	// meant for the row.
+	pointer-events: none;
 	transition: opacity 0.1s;
 }
 
 .row:hover .itemAction {
 	opacity: 1;
+	pointer-events: auto;
 }
 
 .empty {
