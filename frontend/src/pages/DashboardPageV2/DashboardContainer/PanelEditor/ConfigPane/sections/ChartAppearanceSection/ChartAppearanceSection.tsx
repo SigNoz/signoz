@@ -6,11 +6,15 @@ import {
 	DashboardtypesLineInterpolationDTO,
 	DashboardtypesLineStyleDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import type { SectionEditorProps } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/sections';
+import type {
+	SectionEditorProps,
+	SectionKind,
+} from 'pages/DashboardPageV2/DashboardContainer/Panels/types/sections';
 
 import ConfigSegmented from '../../controls/ConfigSegmented/ConfigSegmented';
 import ConfigSelect from '../../controls/ConfigSelect/ConfigSelect';
 import ConfigSwitch from '../../controls/ConfigSwitch/ConfigSwitch';
+import { SegmentIcon } from '../../controls/segmentIcons';
 
 import styles from './ChartAppearanceSection.module.scss';
 
@@ -31,22 +35,22 @@ const LINE_INTERPOLATION_OPTIONS = [
 	{
 		value: DashboardtypesLineInterpolationDTO.linear,
 		label: 'Linear',
-		icon: 'interp-linear' as const,
+		icon: <SegmentIcon name="interp-linear" />,
 	},
 	{
 		value: DashboardtypesLineInterpolationDTO.spline,
 		label: 'Spline',
-		icon: 'interp-spline' as const,
+		icon: <SegmentIcon name="interp-spline" />,
 	},
 	{
 		value: DashboardtypesLineInterpolationDTO.step_before,
 		label: 'Step before',
-		icon: 'interp-step-before' as const,
+		icon: <SegmentIcon name="interp-step-before" />,
 	},
 	{
 		value: DashboardtypesLineInterpolationDTO.step_after,
 		label: 'Step after',
-		icon: 'interp-step-after' as const,
+		icon: <SegmentIcon name="interp-step-after" />,
 	},
 ];
 
@@ -77,7 +81,7 @@ function ChartAppearanceSection({
 	value,
 	controls,
 	onChange,
-}: SectionEditorProps<'chartAppearance'>): JSX.Element {
+}: SectionEditorProps<SectionKind.ChartAppearance>): JSX.Element {
 	// `spanGaps.fillLessThan` is a stringified seconds threshold: empty means "connect
 	// every gap" (the chart default), a number means "only bridge gaps shorter than this".
 	const handleSpanGaps = (e: ChangeEvent<HTMLInputElement>): void => {
@@ -114,7 +118,7 @@ function ChartAppearanceSection({
 						onChange={(next): void =>
 							onChange({
 								...value,
-								lineInterpolation: next as DashboardtypesLineInterpolationDTO,
+								lineInterpolation: next,
 							})
 						}
 					/>

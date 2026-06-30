@@ -21,6 +21,7 @@ function renderConfigPane(
 		panelKind: 'signoz/TimeSeriesPanel',
 		spec: spec(),
 		onChangeSpec: jest.fn(),
+		onChangePanelKind: jest.fn(),
 		legendSeries: [],
 		tableColumns: [],
 		...overrides,
