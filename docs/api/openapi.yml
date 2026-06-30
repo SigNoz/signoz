@@ -5952,10 +5952,10 @@ components:
           type: string
         estimate:
           items:
-            $ref: '#/components/schemas/TelemetrystoreEstimateEntry'
+            $ref: '#/components/schemas/TelemetrystoretypesEstimateEntry'
           type: array
         granules:
-          $ref: '#/components/schemas/TelemetrystoreGranules'
+          $ref: '#/components/schemas/TelemetrystoretypesGranules'
       required:
       - db.statement.query
       - db.statement.args
@@ -7666,7 +7666,7 @@ components:
       - key
       - value
       type: object
-    TelemetrystoreEstimateEntry:
+    TelemetrystoretypesEstimateEntry:
       properties:
         database:
           type: string
@@ -7688,7 +7688,7 @@ components:
       - rows
       - marks
       type: object
-    TelemetrystoreGranules:
+    TelemetrystoretypesGranules:
       nullable: true
       properties:
         initial:
@@ -7696,7 +7696,7 @@ components:
           type: integer
         reads:
           items:
-            $ref: '#/components/schemas/TelemetrystoreMergeTreeRead'
+            $ref: '#/components/schemas/TelemetrystoretypesMergeTreeRead'
           type: array
         selected:
           format: int64
@@ -7710,7 +7710,7 @@ components:
       - skipped
       - reads
       type: object
-    TelemetrystoreIndexStep:
+    TelemetrystoretypesIndexStep:
       properties:
         condition:
           type: string
@@ -7744,11 +7744,11 @@ components:
       - initialGranules
       - selectedGranules
       type: object
-    TelemetrystoreMergeTreeRead:
+    TelemetrystoretypesMergeTreeRead:
       properties:
         steps:
           items:
-            $ref: '#/components/schemas/TelemetrystoreIndexStep'
+            $ref: '#/components/schemas/TelemetrystoretypesIndexStep'
           type: array
         table:
           type: string
