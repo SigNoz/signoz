@@ -12,6 +12,13 @@
   <a href="README.pt-br.md">Português</a>
 </p>
 
+<p align="center">
+  <a href="https://signoz.io/docs/"><b>Documentation</b></a> ·
+  <a href="https://github.com/SigNoz/signoz/releases"><b>Releases</b></a> ·
+  <a href="https://signoz.io/slack"><b>Slack Community</b></a> ·
+  <a href="https://github.com/SigNoz/signoz/discussions"><b>GitHub Discussions</b></a>
+</p>
+
 SigNoz is an open-source observability platform built on OpenTelemetry. We’re building an enterprise-grade alternative to fragmented monitoring stacks, with logs, metrics, traces, alerts, and dashboards in one place.
 
 ### Choose how to run SigNoz
@@ -38,7 +45,7 @@ Free open-source SigNoz that runs in your own infrastructure. Deploy with Docker
 
 SigNoz helps teams debug production issues faster by connecting logs, metrics, traces, alerts, dashboards, exceptions, and agent-native workflows in one place.
 
-#### APM Overview
+#### [APM Overview](https://signoz.io/docs/apm-and-distributed-tracing/application-details/)
 
 Monitor service latency, error rate, throughput, Apdex, top endpoints, database calls, and external calls.
 
@@ -46,7 +53,7 @@ Monitor service latency, error rate, throughput, Apdex, top endpoints, database 
   <img alt="SigNoz APM dashboard showing latency, throughput, Apdex, and key operations" src="docs/readme-assets/monitor/apm.png" width="900">
 </p>
 
-#### Log Management
+#### [Log Management](https://signoz.io/docs/logs-management/overview/)
 
 Ingest, search, aggregate, and correlate logs with traces and metrics using a visual query builder.
 
@@ -54,7 +61,7 @@ Ingest, search, aggregate, and correlate logs with traces and metrics using a vi
   <img alt="SigNoz logs explorer with filters, frequency chart, and log lines" src="docs/readme-assets/monitor/log-management.svg" width="900">
 </p>
 
-#### Metrics and Dashboards
+#### [Metrics and Dashboards](https://signoz.io/docs/metrics-management/overview/)
 
 Build dashboards for application, infrastructure, and custom metrics using Query Builder, PromQL, or ClickHouse SQL.
 
@@ -62,7 +69,7 @@ Build dashboards for application, infrastructure, and custom metrics using Query
   <img alt="SigNoz host metrics dashboard with system load and network charts" src="docs/readme-assets/monitor/metrics.png" width="900">
 </p>
 
-#### Infrastructure Monitoring
+#### [Infrastructure Monitoring](https://signoz.io/docs/infrastructure-monitoring/overview/)
 
 Monitor Kubernetes clusters, pods, nodes, workloads, and host-level CPU, memory, disk, network, logs, and traces.
 
@@ -70,7 +77,7 @@ Monitor Kubernetes clusters, pods, nodes, workloads, and host-level CPU, memory,
   <img alt="SigNoz Kubernetes infrastructure dashboard with pod and node metrics" src="docs/readme-assets/monitor/infrastructure.png" width="900">
 </p>
 
-#### LLM and AI Observability
+#### [LLM and AI Observability](https://signoz.io/docs/llm-observability/)
 
 Trace LLM apps, RAG pipelines, prompts, tool calls, tokens, latency, and costs alongside application and infrastructure telemetry.
 
@@ -82,11 +89,13 @@ Trace LLM apps, RAG pipelines, prompts, tool calls, tokens, latency, and costs a
 
 Use the SigNoz MCP server to bring telemetry into coding agents, or use Noz inside SigNoz to investigate incidents, tune alerts, and build dashboards with production context. Noz is available only on SigNoz Cloud.
 
+[**SigNoz MCP server docs**](https://signoz.io/docs/ai/signoz-mcp-server/) · [**Agent skills docs**](https://signoz.io/docs/ai/agent-skills/#install-the-plugin)
+
 <p align="center">
   <img alt="SigNoz Noz interface alongside MCP-powered agent workflow" src="docs/readme-assets/monitor/agent-native.png" width="900">
 </p>
 
-#### Distributed Tracing
+#### [Distributed Tracing](https://signoz.io/docs/apm-and-distributed-tracing/traces-user-guides/)
 
 Follow requests across services with flamegraphs, waterfalls, span events, filters, and trace analytics.
 
@@ -94,7 +103,7 @@ Follow requests across services with flamegraphs, waterfalls, span events, filte
   <img alt="SigNoz distributed trace view with flamegraph and waterfall spans" src="docs/readme-assets/monitor/distributed-tracing.png" width="900">
 </p>
 
-#### Trace Funnels
+#### [Trace Funnels](https://signoz.io/docs/trace-funnels/overview/)
 
 Create funnels from traces to understand request-flow drop-offs, failed transitions, and systemic workflow issues.
 
@@ -102,7 +111,7 @@ Create funnels from traces to understand request-flow drop-offs, failed transiti
   <img alt="SigNoz trace funnels showing request-flow drop-offs and failed transitions" src="docs/readme-assets/monitor/trace-funnels.png" width="900">
 </p>
 
-Also monitor: **exceptions**, **alerts**, **external APIs**, and **integrations** for OpenTelemetry, Prometheus, Kubernetes, cloud providers, language SDKs, application frameworks, databases, and LLM tools.
+Also monitor: [**exceptions**](https://signoz.io/docs/userguide/exceptions/), [**alerts**](https://signoz.io/docs/alerts/), [**external APIs**](https://signoz.io/docs/external-api-monitoring/overview/), and [**integrations**](https://signoz.io/docs/integrations/integrations-list/) for OpenTelemetry, Prometheus, Kubernetes, cloud providers, language SDKs, application frameworks, databases, and LLM tools.
 
 ### Why teams use SigNoz
 
@@ -153,11 +162,9 @@ SigNoz uses columnar database for efficient observability analytics and high-car
 **Loki**<br>
 In the linked benchmark, SigNoz indexed all keys in the test setup, while Loki hit max stream errors when more labels were added. Check the [detailed study](https://signoz.io/blog/logs-performance-benchmark/?utm_source=github-readme&utm_medium=logs-benchmark).
 
----
+## Community and contribution
 
-Join the <a href="https://signoz.io/slack">SigNoz Slack community</a>, read the <a href="https://signoz.io/docs/">docs</a>, or start a thread in <a href="https://github.com/SigNoz/signoz/discussions">GitHub Discussions</a>.
-
-Contributions are welcome. Read <a href="CONTRIBUTING.md">CONTRIBUTING.md</a> to get started.
+Join the <a href="https://signoz.io/slack">SigNoz Slack community</a>, read the <a href="https://signoz.io/docs/">docs</a>, start a thread in <a href="https://github.com/SigNoz/signoz/discussions">GitHub Discussions</a>, or read <a href="CONTRIBUTING.md">CONTRIBUTING.md</a> to contribute.
 
 As always, thanks to our amazing contributors!
 
