@@ -138,7 +138,7 @@ go.mod @therealpandey
 /tests/integration/ @therealpandey
 
 # e2e tests
-/tests/e2e/ @AshwinBhatkal
+/tests/e2e/ @SigNoz/frontend-maintainers
 
 # Flagger Owners
 
