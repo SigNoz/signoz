@@ -3,6 +3,7 @@ import type { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.sche
 import type { PanelKind } from '../../Panels/types/panelKind';
 import type { LegendSeries } from '../hooks/useLegendSeries';
 import type { TableColumnOption } from '../hooks/useTableColumns';
+import { EQueryType } from 'types/common/dashboard';
 
 /**
  * Context `SectionSlot` forwards to every section editor (not spec-slice fields — those
@@ -16,5 +17,6 @@ export interface SectionEditorContext {
 	panelKind?: PanelKind;
 	onChangePanelKind?: (kind: PanelKind) => void;
 	yAxisUnit?: string;
+	queryType?: EQueryType;
 	stepInterval?: number;
 }

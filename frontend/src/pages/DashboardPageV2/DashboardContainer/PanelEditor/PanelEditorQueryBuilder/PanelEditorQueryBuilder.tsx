@@ -8,23 +8,35 @@ import { Color } from '@signozhq/design-tokens';
 import { Atom, Terminal } from '@signozhq/icons';
 import { Tabs } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
+import type { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 import PromQLIcon from 'assets/Dashboard/PromQl';
 import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
 import TextToolTip from 'components/TextToolTip';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ClickHouseQueryContainer from 'container/NewWidget/LeftContainer/QuerySection/QueryBuilder/ClickHouse';
 import PromQLQueryContainer from 'container/NewWidget/LeftContainer/QuerySection/QueryBuilder/promQL';
-import { PANEL_TYPE_TO_QUERY_TYPES } from 'container/NewWidget/utils';
 import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryBtn';
 import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { EQueryType } from 'types/common/dashboard';
 
+import {
+	getHiddenQueryBuilderFields,
+	getSupportedQueryTypes,
+} from '../../Panels/capabilities';
+import {
+	PANEL_KIND_TO_PANEL_TYPE,
+	type PanelKind,
+} from '../../Panels/types/panelKind';
+
 import styles from './PanelEditorQueryBuilder.module.scss';
 
 interface PanelEditorQueryBuilderProps {
-	panelType: PANEL_TYPES;
+	/** The edited panel's visualization kind — drives supported query types + field visibility via the capabilities guard. */
+	panelKind: PanelKind;
+	/** The panel's current signal; selects per-signal query-builder field rules. */
+	signal: TelemetrytypesSignalDTO;
 	/** Preview fetch in flight — drives the Stage & Run button's loading/cancel state. */
 	isLoadingQueries: boolean;
 	/** Run the current query (Stage & Run button / ⌘↵). Always re-runs. */
@@ -41,12 +53,15 @@ interface PanelEditorQueryBuilderProps {
  * `QueryBuilderProvider`. `usePanelEditorQuerySync` owns the panel↔provider sync.
  */
 function PanelEditorQueryBuilder({
-	panelType,
+	panelKind,
+	signal,
 	isLoadingQueries,
 	onStageRunQuery,
 	onCancelQuery,
 	footer,
 }: PanelEditorQueryBuilderProps): JSX.Element {
+	// The shared QueryBuilderV2 / list-view checks still speak the legacy PANEL_TYPES.
+	const panelType = PANEL_KIND_TO_PANEL_TYPE[panelKind];
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
 	const isDarkMode = useIsDarkMode();
 
@@ -74,13 +89,15 @@ function PanelEditorQueryBuilder({
 		[onStageRunQuery],
 	);
 
+	// Per-kind query-builder field rules from the guard (e.g. List hides step interval
+	// and having), passed to QueryBuilderV2 as its `filterConfigs`.
 	const filterConfigs: QueryBuilderProps['filterConfigs'] = useMemo(
-		() => ({ stepInterval: { isHidden: false, isDisabled: false } }),
-		[],
+		() => getHiddenQueryBuilderFields(panelKind, signal),
+		[panelKind, signal],
 	);
 
 	const items = useMemo(() => {
-		const supportedQueryTypes = PANEL_TYPE_TO_QUERY_TYPES[panelType] || [];
+		const supportedQueryTypes = getSupportedQueryTypes(panelKind);
 
 		const queryTypeComponents = {
 			[EQueryType.QUERY_BUILDER]: {
@@ -127,7 +144,7 @@ function PanelEditorQueryBuilder({
 			),
 			children: queryTypeComponents[queryType].component,
 		}));
-	}, [panelType, filterConfigs, isDarkMode]);
+	}, [panelKind, panelType, filterConfigs, isDarkMode]);
 
 	return (
 		<div

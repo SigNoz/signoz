@@ -5,6 +5,7 @@ import {
 	type SectionConfig,
 	SectionKind,
 } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/sections';
+import type { EQueryType } from 'types/common/dashboard';
 
 import type { SectionEditorContext } from '../sectionContext';
 import { resolveSectionEditor } from '../sectionRegistry';
@@ -32,6 +33,7 @@ function SectionSlot({
 	signal,
 	panelKind,
 	onChangePanelKind,
+	queryType,
 	stepInterval,
 }: SectionSlotProps): JSX.Element | null {
 	// A kind can hide a section based on current spec state (e.g. Histogram legend once
@@ -71,6 +73,7 @@ function SectionSlot({
 				signal={signal}
 				panelKind={panelKind}
 				onChangePanelKind={onChangePanelKind}
+				queryType={queryType}
 				stepInterval={stepInterval}
 			/>
 		</SettingsSection>
