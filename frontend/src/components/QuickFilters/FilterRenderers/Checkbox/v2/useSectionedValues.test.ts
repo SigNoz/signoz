@@ -52,10 +52,10 @@ describe('useSectionedValues', () => {
 			expect(item.badge?.key).toBe('related');
 		});
 
-		// Other values should have other badge
+		// Other values should have no badge
 		otherItems.forEach((item) => {
 			expect(item.orderIndex).toBe(2);
-			expect(item.badge?.key).toBe('other');
+			expect(item.badge).toBeNull();
 		});
 	});
 

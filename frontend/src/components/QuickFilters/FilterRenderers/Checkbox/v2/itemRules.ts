@@ -69,7 +69,7 @@ const ITEM_RULES: ItemRule[] = [
 		condition: (ctx): boolean => ctx.hasExistingQuery,
 		config: {
 			orderIndex: 2,
-			badge: { key: 'other', label: 'Other', color: 'secondary' },
+			badge: null,
 			checkedState: 'unchecked',
 		},
 	},

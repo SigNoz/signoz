@@ -402,7 +402,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 			expect(onFilterChange).toHaveBeenCalled();
 		});
 
-		it('accumulates both values in NOT IN when toggling indeterminate (related) then unchecked (other)', async () => {
+		it('creates IN filter when toggling indeterminate (related) item with no existing filter', async () => {
 			const user = userEvent.setup();
 			const onFilterChange = jest.fn();
 
@@ -411,8 +411,8 @@ describe('CheckboxFilterV2 - interactions', () => {
 				stringValues: ['valueB'],
 			});
 
-			// Step 1: Start with no filter, toggle indeterminate A
-			const { unmount } = renderWithFilter(onFilterChange);
+			// Start with no filter, toggle indeterminate A → should create IN
+			renderWithFilter(onFilterChange);
 
 			const rowA = await screen.findByTestId('checkbox-value-row-valueA');
 			expect(rowA).toHaveAttribute('data-state', 'indeterminate');
@@ -420,14 +420,21 @@ describe('CheckboxFilterV2 - interactions', () => {
 			await user.click(within(rowA).getByRole('checkbox'));
 
 			expect(onFilterChange).toHaveBeenCalledTimes(1);
-			const firstFilter = getFilterFromCall(onFilterChange);
-			expect(firstFilter?.op).toBe('not in');
-			expect(firstFilter?.value).toBe('valueA');
+			const filter = getFilterFromCall(onFilterChange);
+			expect(filter?.op).toBe('in');
+			expect(filter?.value).toBe('valueA');
+		});
 
-			unmount();
+		it('converts NOT IN to IN when toggling unchecked (other) item', async () => {
+			const user = userEvent.setup();
+			const onFilterChange = jest.fn();
 
-			// Step 2: Re-render with updated query (NOT IN valueA), toggle unchecked B
-			onFilterChange.mockClear();
+			mockFieldsValuesAPI({
+				relatedValues: ['valueA'],
+				stringValues: ['valueB'],
+			});
+
+			// Clicking unchecked "Other" item with NOT IN filter should convert to IN [B]
 			renderWithFilter(onFilterChange, { op: 'not in', value: ['valueA'] });
 
 			const rowB = await screen.findByTestId('checkbox-value-row-valueB');
@@ -436,9 +443,9 @@ describe('CheckboxFilterV2 - interactions', () => {
 			await user.click(within(rowB).getByRole('checkbox'));
 
 			expect(onFilterChange).toHaveBeenCalledTimes(1);
-			const secondFilter = getFilterFromCall(onFilterChange);
-			expect(secondFilter?.op).toBe('not in');
-			expect(secondFilter?.value).toStrictEqual(['valueA', 'valueB']);
+			const filter = getFilterFromCall(onFilterChange);
+			expect(filter?.op).toBe('in');
+			expect(filter?.value).toBe('valueB');
 		});
 
 		it('accumulates both values in IN when toggling indeterminate (related) then unchecked (other)', async () => {
@@ -466,6 +473,30 @@ describe('CheckboxFilterV2 - interactions', () => {
 			const filter = getFilterFromCall(onFilterChange);
 			expect(filter?.op).toBe('in');
 			expect(filter?.value).toStrictEqual(['valueA', 'valueB']);
+		});
+
+		it('adds to NOT IN when toggling indeterminate (related) with existing NOT IN filter', async () => {
+			const user = userEvent.setup();
+			const onFilterChange = jest.fn();
+
+			mockFieldsValuesAPI({
+				relatedValues: ['valueA'],
+				stringValues: ['valueB'],
+			});
+
+			// Start with NOT IN filter for valueB
+			renderWithFilter(onFilterChange, { op: 'not in', value: ['valueB'] });
+
+			const rowA = await screen.findByTestId('checkbox-value-row-valueA');
+			expect(rowA).toHaveAttribute('data-state', 'indeterminate');
+
+			// Toggle A (indeterminate -> should add to NOT IN)
+			await user.click(within(rowA).getByRole('checkbox'));
+
+			expect(onFilterChange).toHaveBeenCalledTimes(1);
+			const filter = getFilterFromCall(onFilterChange);
+			expect(filter?.op).toBe('not in');
+			expect(filter?.value).toStrictEqual(['valueB', 'valueA']);
 		});
 	});
 
