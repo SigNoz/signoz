@@ -2230,13 +2230,6 @@ export interface AuthtypesOrgSessionContextDTO {
 	warning?: ErrorsJSONDTO;
 }
 
-export interface AuthtypesPatchableRoleDTO {
-	/**
-	 * @type string
-	 */
-	description: string;
-}
-
 export interface AuthtypesPostableAuthDomainDTO {
 	config?: AuthtypesAuthDomainConfigDTO;
 	/**
@@ -3247,17 +3240,6 @@ export interface CommonJSONRefDTO {
 	 * @type string
 	 */
 	$ref?: string;
-}
-
-export interface CoretypesPatchableObjectsDTO {
-	/**
-	 * @type array,null
-	 */
-	additions: CoretypesObjectGroupDTO[] | null;
-	/**
-	 * @type array,null
-	 */
-	deletions: CoretypesObjectGroupDTO[] | null;
 }
 
 export interface DashboardGridItemDTO {
@@ -10270,30 +10252,8 @@ export type GetRole200 = {
 	status: string;
 };
 
-export type PatchRolePathParameters = {
-	id: string;
-};
 export type UpdateRolePathParameters = {
 	id: string;
-};
-export type GetObjectsPathParameters = {
-	id: string;
-	relation: string;
-};
-export type GetObjects200 = {
-	/**
-	 * @type array
-	 */
-	data: CoretypesObjectGroupDTO[];
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type PatchObjectsPathParameters = {
-	id: string;
-	relation: string;
 };
 export type GetAllRoutePolicies200 = {
 	/**
