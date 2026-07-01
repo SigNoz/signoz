@@ -1024,6 +1024,8 @@ components:
           $ref: '#/components/schemas/CloudintegrationtypesAWSAccountConfig'
         azure:
           $ref: '#/components/schemas/CloudintegrationtypesAzureAccountConfig'
+        gcp:
+          $ref: '#/components/schemas/CloudintegrationtypesGCPAccountConfig'
       type: object
     CloudintegrationtypesAgentReport:
       nullable: true
@@ -1169,6 +1171,8 @@ components:
           $ref: '#/components/schemas/CloudintegrationtypesAWSConnectionArtifact'
         azure:
           $ref: '#/components/schemas/CloudintegrationtypesAzureConnectionArtifact'
+        gcp:
+          $ref: '#/components/schemas/CloudintegrationtypesGCPConnectionArtifact'
       type: object
     CloudintegrationtypesCredentials:
       properties:
@@ -1198,6 +1202,46 @@ components:
             $ref: '#/components/schemas/CloudintegrationtypesCollectedMetric'
           nullable: true
           type: array
+      type: object
+    CloudintegrationtypesGCPAccountConfig:
+      properties:
+        deploymentProjectId:
+          type: string
+        deploymentRegion:
+          type: string
+        projectIds:
+          items:
+            type: string
+          type: array
+      required:
+      - deploymentProjectId
+      - deploymentRegion
+      - projectIds
+      type: object
+    CloudintegrationtypesGCPConnectionArtifact:
+      type: object
+    CloudintegrationtypesGCPIntegrationConfig:
+      type: object
+    CloudintegrationtypesGCPServiceConfig:
+      properties:
+        logs:
+          $ref: '#/components/schemas/CloudintegrationtypesGCPServiceLogsConfig'
+        metrics:
+          $ref: '#/components/schemas/CloudintegrationtypesGCPServiceMetricsConfig'
+      type: object
+    CloudintegrationtypesGCPServiceLogsConfig:
+      properties:
+        enabled:
+          type: boolean
+      required:
+      - enabled
+      type: object
+    CloudintegrationtypesGCPServiceMetricsConfig:
+      properties:
+        enabled:
+          type: boolean
+      required:
+      - enabled
       type: object
     CloudintegrationtypesGettableAccountWithConnectionArtifact:
       properties:
@@ -1331,6 +1375,8 @@ components:
           $ref: '#/components/schemas/CloudintegrationtypesAWSPostableAccountConfig'
         azure:
           $ref: '#/components/schemas/CloudintegrationtypesAzureAccountConfig'
+        gcp:
+          $ref: '#/components/schemas/CloudintegrationtypesGCPAccountConfig'
       type: object
     CloudintegrationtypesPostableAgentCheckIn:
       properties:
@@ -1355,6 +1401,8 @@ components:
           $ref: '#/components/schemas/CloudintegrationtypesAWSIntegrationConfig'
         azure:
           $ref: '#/components/schemas/CloudintegrationtypesAzureIntegrationConfig'
+        gcp:
+          $ref: '#/components/schemas/CloudintegrationtypesGCPIntegrationConfig'
       type: object
     CloudintegrationtypesService:
       properties:
@@ -1399,6 +1447,8 @@ components:
           $ref: '#/components/schemas/CloudintegrationtypesAWSServiceConfig'
         azure:
           $ref: '#/components/schemas/CloudintegrationtypesAzureServiceConfig'
+        gcp:
+          $ref: '#/components/schemas/CloudintegrationtypesGCPServiceConfig'
       type: object
     CloudintegrationtypesServiceDashboard:
       properties:
@@ -1441,6 +1491,7 @@ components:
       - cosmosdb
       - cassandradb
       - redis
+      - cloudsql
       type: string
     CloudintegrationtypesServiceMetadata:
       properties:
@@ -1502,6 +1553,8 @@ components:
           $ref: '#/components/schemas/CloudintegrationtypesAWSAccountConfig'
         azure:
           $ref: '#/components/schemas/CloudintegrationtypesUpdatableAzureAccountConfig'
+        gcp:
+          $ref: '#/components/schemas/CloudintegrationtypesUpdatableGCPAccountConfig'
       type: object
     CloudintegrationtypesUpdatableAzureAccountConfig:
       properties:
@@ -1511,6 +1564,22 @@ components:
           type: array
       required:
       - resourceGroups
+      type: object
+    CloudintegrationtypesUpdatableGCPAccountConfig:
+      properties:
+        deploymentProjectId:
+          type: string
+        deploymentRegion:
+          type: string
+        projectIds:
+          items:
+            type: string
+          nullable: true
+          type: array
+      required:
+      - deploymentProjectId
+      - deploymentRegion
+      - projectIds
       type: object
     CloudintegrationtypesUpdatableService:
       properties:
@@ -2668,6 +2737,14 @@ components:
           type: string
         dashboardName:
           type: string
+        filterBy:
+          items:
+            type: string
+          type: array
+        groupBy:
+          items:
+            type: string
+          type: array
         panelId:
           type: string
         panelName:
@@ -5454,6 +5531,9 @@ components:
           type: string
         id:
           type: string
+        ingestedSamples:
+          minimum: 0
+          type: integer
         ingestedSeries:
           minimum: 0
           type: integer
@@ -5466,9 +5546,9 @@ components:
           $ref: '#/components/schemas/MetricreductionruletypesMatchType'
         metricName:
           type: string
-        reductionPercent:
-          format: double
-          type: number
+        retainedSamples:
+          minimum: 0
+          type: integer
         retainedSeries:
           minimum: 0
           type: integer
@@ -5486,7 +5566,8 @@ components:
       - active
       - ingestedSeries
       - retainedSeries
-      - reductionPercent
+      - ingestedSamples
+      - retainedSamples
       type: object
     MetricreductionruletypesGettableReductionRulePreview:
       properties:
@@ -5529,7 +5610,13 @@ components:
         estimatedMonthlySavingsUsd:
           format: double
           type: number
+        ingestedSamples:
+          minimum: 0
+          type: integer
         ingestedSeries:
+          minimum: 0
+          type: integer
+        retainedSamples:
           minimum: 0
           type: integer
         retainedSeries:
@@ -5538,6 +5625,8 @@ components:
       required:
       - ingestedSeries
       - retainedSeries
+      - ingestedSamples
+      - retainedSamples
       - estimatedMonthlySavingsUsd
       type: object
     MetricreductionruletypesGettableReductionRules:
@@ -5603,7 +5692,6 @@ components:
       - metric
       - ingested_volume
       - reduced_volume
-      - reduction
       - last_updated
       type: string
     MetricreductionruletypesUpdatableReductionRule:
@@ -6323,6 +6411,25 @@ components:
       - asc
       - desc
       type: string
+    Querybuildertypesv5PreviewStatement:
+      properties:
+        db.statement.args:
+          items: {}
+          type: array
+        db.statement.query:
+          type: string
+        estimate:
+          items:
+            $ref: '#/components/schemas/TelemetrystoretypesEstimateEntry'
+          type: array
+        granules:
+          $ref: '#/components/schemas/TelemetrystoretypesGranules'
+      required:
+      - db.statement.query
+      - db.statement.args
+      - estimate
+      - granules
+      type: object
     Querybuildertypesv5PromQuery:
       properties:
         disabled:
@@ -6642,6 +6749,40 @@ components:
           $ref: '#/components/schemas/Querybuildertypesv5QueryType'
       required:
       - type
+      type: object
+    Querybuildertypesv5QueryPreview:
+      properties:
+        error: {}
+        statements:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5PreviewStatement'
+          type: array
+        valid:
+          type: boolean
+        warnings:
+          items:
+            type: string
+          type: array
+      required:
+      - valid
+      - error
+      - warnings
+      - statements
+      type: object
+    Querybuildertypesv5QueryRangePreviewResponse:
+      description: Response from the v5 query range preview (dry-run) endpoint. For
+        each query in the composite query, returns the underlying ClickHouse statement(s)
+        it renders to without executing them (one per PromQL metric selector; exactly
+        one for builder/ClickHouse/trace-operator queries), with the optional EXPLAIN
+        ESTIMATE and granule analysis attached per statement when requested.
+      properties:
+        compositeQuery:
+          additionalProperties:
+            $ref: '#/components/schemas/Querybuildertypesv5QueryPreview'
+          nullable: true
+          type: object
+      required:
+      - compositeQuery
       type: object
     Querybuildertypesv5QueryRangeRequest:
       description: Request body for the v5 query range endpoint. Supports builder
@@ -7992,6 +8133,96 @@ components:
       required:
       - key
       - value
+      type: object
+    TelemetrystoretypesEstimateEntry:
+      properties:
+        database:
+          type: string
+        marks:
+          format: int64
+          type: integer
+        parts:
+          format: int64
+          type: integer
+        rows:
+          format: int64
+          type: integer
+        table:
+          type: string
+      required:
+      - database
+      - table
+      - parts
+      - rows
+      - marks
+      type: object
+    TelemetrystoretypesGranules:
+      nullable: true
+      properties:
+        initial:
+          format: int64
+          type: integer
+        reads:
+          items:
+            $ref: '#/components/schemas/TelemetrystoretypesMergeTreeRead'
+          type: array
+        selected:
+          format: int64
+          type: integer
+        skipped:
+          format: int64
+          type: integer
+      required:
+      - initial
+      - selected
+      - skipped
+      - reads
+      type: object
+    TelemetrystoretypesIndexStep:
+      properties:
+        condition:
+          type: string
+        initialGranules:
+          format: int64
+          type: integer
+        initialParts:
+          format: int64
+          type: integer
+        keys:
+          items:
+            type: string
+          type: array
+        name:
+          type: string
+        selectedGranules:
+          format: int64
+          type: integer
+        selectedParts:
+          format: int64
+          type: integer
+        type:
+          type: string
+      required:
+      - type
+      - name
+      - keys
+      - condition
+      - initialParts
+      - selectedParts
+      - initialGranules
+      - selectedGranules
+      type: object
+    TelemetrystoretypesMergeTreeRead:
+      properties:
+        steps:
+          items:
+            $ref: '#/components/schemas/TelemetrystoretypesIndexStep'
+          type: array
+        table:
+          type: string
+      required:
+      - table
+      - steps
       type: object
     TelemetrytypesFieldContext:
       enum:
@@ -23522,6 +23753,75 @@ paths:
       - tokenizer:
         - VIEWER
       summary: Query range
+      tags:
+      - querier
+  /api/v5/query_range/preview:
+    post:
+      deprecated: false
+      description: 'Validate a composite query without executing it. Accepts the same
+        payload as the query range endpoint. By default (verbose=true) returns, for
+        each query, the rendered underlying ClickHouse statement(s) with each statement''s
+        EXPLAIN ESTIMATE (per-table parts/rows/marks) and granule index analysis (candidate/surviving
+        granules and the per-index pruning funnel). Pass ?verbose=false for the lightweight
+        per-query verdict (valid/error/warnings) with no rendered SQL and no ClickHouse
+        round trips. Intended for agentic/dry-run consumption: per-query errors are
+        reported in the response rather than failing the whole request.'
+      operationId: QueryRangePreviewV5
+      parameters:
+      - in: query
+        name: verbose
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Querybuildertypesv5QueryRangeRequest'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Querybuildertypesv5QueryRangePreviewResponse'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Query range preview
       tags:
       - querier
   /api/v5/substitute_vars:

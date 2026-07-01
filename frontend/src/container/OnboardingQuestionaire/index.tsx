@@ -11,7 +11,6 @@ import { AxiosError } from 'axios';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { ORG_PREFERENCES } from 'constants/orgPreferences';
 import ROUTES from 'constants/routes';
-import { InviteTeamMembersProps } from 'container/OrganizationSettings/utils';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { useAppContext } from 'providers/App/App';
@@ -71,9 +70,6 @@ function OnboardingQuestionaire(): JSX.Element {
 
 	const [optimiseSignozDetails, setOptimiseSignozDetails] =
 		useState<OptimiseSignozDetails>(INITIAL_OPTIMISE_SIGNOZ_DETAILS);
-	const [teamMembers, setTeamMembers] = useState<
-		InviteTeamMembersProps[] | null
-	>(null);
 
 	const [updatingOrgOnboardingStatus, setUpdatingOrgOnboardingStatus] =
 		useState<boolean>(false);
@@ -232,8 +228,6 @@ function OnboardingQuestionaire(): JSX.Element {
 				{currentStep === 4 && (
 					<InviteTeamMembers
 						isLoading={updatingOrgOnboardingStatus}
-						teamMembers={teamMembers}
-						setTeamMembers={setTeamMembers}
 						onNext={handleOnboardingComplete}
 					/>
 				)}

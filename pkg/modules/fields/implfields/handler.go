@@ -7,7 +7,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/fields"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type handler struct {
@@ -54,7 +56,13 @@ func (handler *handler) GetFieldsValues(rw http.ResponseWriter, req *http.Reques
 
 	fieldValueSelector := telemetrytypes.NewFieldValueSelectorFromPostableFieldValueParams(params)
 
-	allValues, allComplete, err := handler.telemetryMetadataStore.GetAllValues(ctx, fieldValueSelector)
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	allValues, allComplete, err := handler.telemetryMetadataStore.GetAllValues(ctx, valuer.MustNewUUID(claims.OrgID), fieldValueSelector)
 	if err != nil {
 		render.Error(rw, err)
 		return

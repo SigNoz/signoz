@@ -58,3 +58,8 @@ type TraceOperatorStatementBuilder interface {
 	// Build builds the trace operator query.
 	Build(ctx context.Context, start, end uint64, requestType RequestType, query QueryBuilderTraceOperator, compositeQuery *CompositeQuery) (*Statement, error)
 }
+
+// StatementProvider renders a query's underlying statement without executing it.
+type StatementProvider interface {
+	Statement(ctx context.Context) (*Statement, error)
+}

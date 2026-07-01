@@ -1,6 +1,8 @@
+import { Info } from '@signozhq/icons';
 import { Typography } from '@signozhq/ui/typography';
-import { Spin } from 'antd';
+import { Spin, Tooltip } from 'antd';
 import { MetricreductionruletypesGettableReductionRulePreviewDTO } from 'api/generated/services/sigNoz.schemas';
+import { popupContainer } from 'utils/selectPopupContainer';
 
 import { formatCompact } from '../../../configUtils';
 import { RuleMode } from '../../../types';
@@ -27,6 +29,7 @@ function ImpactPanel({
 		);
 	}
 
+	const full = preview?.ingestedSeries ?? 0;
 	const current = preview?.currentRetainedSeries ?? 0;
 	const proposed = preview?.retainedSeries ?? 0;
 	const deltaPct = current > 0 ? (1 - proposed / current) * 100 : 0;
@@ -40,31 +43,59 @@ function ImpactPanel({
 			{!isLoading && preview && (
 				<div className={styles.meterGrid}>
 					<div className={styles.meter}>
-						<Typography.Text size="xs" color="muted" className={styles.meterLabel}>
-							Current series
+						<div className={styles.meterLabelRow}>
+							<Typography.Text size="xs" color="muted" className={styles.meterLabel}>
+								Full series
+							</Typography.Text>
+							<Tooltip
+								title="Total number of series for this metric before any reduction."
+								getPopupContainer={popupContainer}
+							>
+								<Info size={12} className={styles.meterInfo} />
+							</Tooltip>
+						</div>
+						<Typography.Text size="2xl" className={styles.meterValue}>
+							{formatCompact(full)}
 						</Typography.Text>
+					</div>
+					<div className={styles.meter}>
+						<div className={styles.meterLabelRow}>
+							<Typography.Text size="xs" color="muted" className={styles.meterLabel}>
+								Current retained
+							</Typography.Text>
+							<Tooltip
+								title="Series kept today under the metric's existing rule, or all of them if it has no rule yet."
+								getPopupContainer={popupContainer}
+							>
+								<Info size={12} className={styles.meterInfo} />
+							</Tooltip>
+						</div>
 						<Typography.Text size="2xl" className={styles.meterValue}>
 							{formatCompact(current)}
 						</Typography.Text>
 					</div>
 					<div className={styles.meter}>
-						<Typography.Text size="xs" color="muted" className={styles.meterLabel}>
-							Proposed series
-						</Typography.Text>
+						<div className={styles.meterLabelRow}>
+							<Typography.Text size="xs" color="muted" className={styles.meterLabel}>
+								Potential retained
+							</Typography.Text>
+							<Tooltip
+								title="Series that would be kept if you save this rule, with the reduction vs what's retained today."
+								getPopupContainer={popupContainer}
+							>
+								<Info size={12} className={styles.meterInfo} />
+							</Tooltip>
+						</div>
 						<Typography.Text size="2xl" className={styles.meterValue}>
 							{formatCompact(proposed)}
-						</Typography.Text>
-					</div>
-					<div className={styles.meter}>
-						<Typography.Text size="xs" color="muted" className={styles.meterLabel}>
-							Reduction
-						</Typography.Text>
-						<Typography.Text
-							size="2xl"
-							color={deltaPct >= 0 ? 'success' : undefined}
-							className={styles.meterValue}
-						>
-							{reductionLabel}
+							{deltaPct !== 0 && (
+								<Typography.Text
+									size="small"
+									color={deltaPct >= 0 ? 'success' : undefined}
+								>
+									{reductionLabel}
+								</Typography.Text>
+							)}
 						</Typography.Text>
 					</div>
 				</div>

@@ -2630,9 +2630,25 @@ export interface CloudintegrationtypesAzureAccountConfigDTO {
 	resourceGroups: string[];
 }
 
+export interface CloudintegrationtypesGCPAccountConfigDTO {
+	/**
+	 * @type string
+	 */
+	deploymentProjectId: string;
+	/**
+	 * @type string
+	 */
+	deploymentRegion: string;
+	/**
+	 * @type array
+	 */
+	projectIds: string[];
+}
+
 export interface CloudintegrationtypesAccountConfigDTO {
 	aws?: CloudintegrationtypesAWSAccountConfigDTO;
 	azure?: CloudintegrationtypesAzureAccountConfigDTO;
+	gcp?: CloudintegrationtypesGCPAccountConfigDTO;
 }
 
 export interface CloudintegrationtypesAccountDTO {
@@ -2740,9 +2756,29 @@ export interface CloudintegrationtypesAzureServiceConfigDTO {
 	metrics: CloudintegrationtypesAzureServiceMetricsConfigDTO;
 }
 
+export interface CloudintegrationtypesGCPServiceLogsConfigDTO {
+	/**
+	 * @type boolean
+	 */
+	enabled: boolean;
+}
+
+export interface CloudintegrationtypesGCPServiceMetricsConfigDTO {
+	/**
+	 * @type boolean
+	 */
+	enabled: boolean;
+}
+
+export interface CloudintegrationtypesGCPServiceConfigDTO {
+	logs?: CloudintegrationtypesGCPServiceLogsConfigDTO;
+	metrics?: CloudintegrationtypesGCPServiceMetricsConfigDTO;
+}
+
 export interface CloudintegrationtypesServiceConfigDTO {
 	aws?: CloudintegrationtypesAWSServiceConfigDTO;
 	azure?: CloudintegrationtypesAzureServiceConfigDTO;
+	gcp?: CloudintegrationtypesGCPServiceConfigDTO;
 }
 
 export enum CloudintegrationtypesServiceIDDTO {
@@ -2773,6 +2809,7 @@ export enum CloudintegrationtypesServiceIDDTO {
 	cosmosdb = 'cosmosdb',
 	cassandradb = 'cassandradb',
 	redis = 'redis',
+	cloudsql = 'cloudsql',
 }
 export type CloudintegrationtypesCloudIntegrationServiceDTOAnyOf = {
 	/**
@@ -2837,9 +2874,14 @@ export interface CloudintegrationtypesCollectedMetricDTO {
 	unit?: string;
 }
 
+export interface CloudintegrationtypesGCPConnectionArtifactDTO {
+	[key: string]: unknown;
+}
+
 export interface CloudintegrationtypesConnectionArtifactDTO {
 	aws?: CloudintegrationtypesAWSConnectionArtifactDTO;
 	azure?: CloudintegrationtypesAzureConnectionArtifactDTO;
+	gcp?: CloudintegrationtypesGCPConnectionArtifactDTO;
 }
 
 export interface CloudintegrationtypesCredentialsDTO {
@@ -2870,6 +2912,10 @@ export interface CloudintegrationtypesDataCollectedDTO {
 	 * @type array,null
 	 */
 	metrics?: CloudintegrationtypesCollectedMetricDTO[] | null;
+}
+
+export interface CloudintegrationtypesGCPIntegrationConfigDTO {
+	[key: string]: unknown;
 }
 
 export interface CloudintegrationtypesGettableAccountWithConnectionArtifactDTO {
@@ -2963,6 +3009,7 @@ export type CloudintegrationtypesIntegrationConfigDTO =
 export interface CloudintegrationtypesProviderIntegrationConfigDTO {
 	aws?: CloudintegrationtypesAWSIntegrationConfigDTO;
 	azure?: CloudintegrationtypesAzureIntegrationConfigDTO;
+	gcp?: CloudintegrationtypesGCPIntegrationConfigDTO;
 }
 
 export interface CloudintegrationtypesGettableAgentCheckInDTO {
@@ -3025,6 +3072,7 @@ export interface CloudintegrationtypesGettableServicesMetadataDTO {
 export interface CloudintegrationtypesPostableAccountConfigDTO {
 	aws?: CloudintegrationtypesAWSPostableAccountConfigDTO;
 	azure?: CloudintegrationtypesAzureAccountConfigDTO;
+	gcp?: CloudintegrationtypesGCPAccountConfigDTO;
 }
 
 export interface CloudintegrationtypesPostableAccountDTO {
@@ -3154,9 +3202,25 @@ export interface CloudintegrationtypesUpdatableAzureAccountConfigDTO {
 	resourceGroups: string[];
 }
 
+export interface CloudintegrationtypesUpdatableGCPAccountConfigDTO {
+	/**
+	 * @type string
+	 */
+	deploymentProjectId: string;
+	/**
+	 * @type string
+	 */
+	deploymentRegion: string;
+	/**
+	 * @type array,null
+	 */
+	projectIds: string[] | null;
+}
+
 export interface CloudintegrationtypesUpdatableAccountConfigDTO {
 	aws?: CloudintegrationtypesAWSAccountConfigDTO;
 	azure?: CloudintegrationtypesUpdatableAzureAccountConfigDTO;
+	gcp?: CloudintegrationtypesUpdatableGCPAccountConfigDTO;
 }
 
 export interface CloudintegrationtypesUpdatableAccountDTO {
@@ -3931,6 +3995,14 @@ export interface DashboardtypesDashboardPanelRefDTO {
 	 * @type string
 	 */
 	dashboardName: string;
+	/**
+	 * @type array
+	 */
+	filterBy?: string[];
+	/**
+	 * @type array
+	 */
+	groupBy?: string[];
 	/**
 	 * @type string
 	 */
@@ -6969,6 +7041,11 @@ export interface MetricreductionruletypesGettableReductionRuleDTO {
 	 * @type integer
 	 * @minimum 0
 	 */
+	ingestedSamples: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
 	ingestedSeries: number;
 	/**
 	 * @type array,null
@@ -6980,10 +7057,10 @@ export interface MetricreductionruletypesGettableReductionRuleDTO {
 	 */
 	metricName: string;
 	/**
-	 * @type number
-	 * @format double
+	 * @type integer
+	 * @minimum 0
 	 */
-	reductionPercent: number;
+	retainedSamples: number;
 	/**
 	 * @type integer
 	 * @minimum 0
@@ -7046,7 +7123,17 @@ export interface MetricreductionruletypesGettableReductionRuleStatsDTO {
 	 * @type integer
 	 * @minimum 0
 	 */
+	ingestedSamples: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
 	ingestedSeries: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	retainedSamples: number;
 	/**
 	 * @type integer
 	 * @minimum 0
@@ -7102,7 +7189,6 @@ export enum MetricreductionruletypesReductionRuleOrderByDTO {
 	metric = 'metric',
 	ingested_volume = 'ingested_volume',
 	reduced_volume = 'reduced_volume',
-	reduction = 'reduction',
 	last_updated = 'last_updated',
 }
 export interface MetricreductionruletypesUpdatableReductionRuleDTO {
@@ -7665,6 +7751,126 @@ export interface Querybuildertypesv5FormatOptionsDTO {
 	formatTableResultForUI?: boolean;
 }
 
+export interface TelemetrystoretypesEstimateEntryDTO {
+	/**
+	 * @type string
+	 */
+	database: string;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	marks: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	parts: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	rows: number;
+	/**
+	 * @type string
+	 */
+	table: string;
+}
+
+export interface TelemetrystoretypesIndexStepDTO {
+	/**
+	 * @type string
+	 */
+	condition: string;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	initialGranules: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	initialParts: number;
+	/**
+	 * @type array
+	 */
+	keys: string[];
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	selectedGranules: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	selectedParts: number;
+	/**
+	 * @type string
+	 */
+	type: string;
+}
+
+export interface TelemetrystoretypesMergeTreeReadDTO {
+	/**
+	 * @type array
+	 */
+	steps: TelemetrystoretypesIndexStepDTO[];
+	/**
+	 * @type string
+	 */
+	table: string;
+}
+
+export type TelemetrystoretypesGranulesDTOAnyOf = {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	initial: number;
+	/**
+	 * @type array
+	 */
+	reads: TelemetrystoretypesMergeTreeReadDTO[];
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	selected: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	skipped: number;
+};
+
+/**
+ * @nullable
+ */
+export type TelemetrystoretypesGranulesDTO =
+	TelemetrystoretypesGranulesDTOAnyOf | null;
+
+export interface Querybuildertypesv5PreviewStatementDTO {
+	/**
+	 * @type array
+	 */
+	'db.statement.args': unknown[];
+	/**
+	 * @type string
+	 */
+	'db.statement.query': string;
+	/**
+	 * @type array
+	 */
+	estimate: TelemetrystoretypesEstimateEntryDTO[];
+	granules: TelemetrystoretypesGranulesDTO | null;
+}
+
 export interface Querybuildertypesv5TimeSeriesDataDTO {
 	/**
 	 * @type array,null
@@ -7745,6 +7951,41 @@ export type Querybuildertypesv5QueryDataDTO =
 			 */
 			results?: unknown[] | null;
 	  });
+
+export interface Querybuildertypesv5QueryPreviewDTO {
+	error: unknown;
+	/**
+	 * @type array
+	 */
+	statements: Querybuildertypesv5PreviewStatementDTO[];
+	/**
+	 * @type boolean
+	 */
+	valid: boolean;
+	/**
+	 * @type array
+	 */
+	warnings: string[];
+}
+
+export type Querybuildertypesv5QueryRangePreviewResponseDTOCompositeQueryAnyOf =
+	{ [key: string]: Querybuildertypesv5QueryPreviewDTO };
+
+/**
+ * @nullable
+ */
+export type Querybuildertypesv5QueryRangePreviewResponseDTOCompositeQuery =
+	Querybuildertypesv5QueryRangePreviewResponseDTOCompositeQueryAnyOf | null;
+
+/**
+ * Response from the v5 query range preview (dry-run) endpoint. For each query in the composite query, returns the underlying ClickHouse statement(s) it renders to without executing them (one per PromQL metric selector; exactly one for builder/ClickHouse/trace-operator queries), with the optional EXPLAIN ESTIMATE and granule analysis attached per statement when requested.
+ */
+export interface Querybuildertypesv5QueryRangePreviewResponseDTO {
+	/**
+	 * @type object,null
+	 */
+	compositeQuery: Querybuildertypesv5QueryRangePreviewResponseDTOCompositeQuery;
+}
 
 export enum Querybuildertypesv5VariableTypeDTO {
 	query = 'query',
@@ -11614,6 +11855,22 @@ export type GetWaterfallV4200 = {
 
 export type QueryRangeV5200 = {
 	data: Querybuildertypesv5QueryRangeResponseDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type QueryRangePreviewV5Params = {
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	verbose?: string;
+};
+
+export type QueryRangePreviewV5200 = {
+	data: Querybuildertypesv5QueryRangePreviewResponseDTO;
 	/**
 	 * @type string
 	 */
