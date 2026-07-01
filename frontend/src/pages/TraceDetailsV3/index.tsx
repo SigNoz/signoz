@@ -1,7 +1,12 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { ChartNoAxesGantt, TriangleAlert } from '@signozhq/icons';
+import {
+	ChartNoAxesGantt,
+	ChevronDown,
+	ChevronRight,
+	TriangleAlert,
+} from '@signozhq/icons';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageKey from 'api/browser/localstorage/set';
 import { Collapse } from 'antd';
@@ -33,6 +38,16 @@ import { getAvailableColorByFieldNames } from './utils';
 import cx from 'classnames';
 
 import styles from './TraceDetailsV3.module.scss';
+
+// Lucide chevrons for the flame/waterfall accordion headers, matching the
+// span-tree chevrons in the waterfall.
+function renderPanelExpandIcon({
+	isActive,
+}: {
+	isActive?: boolean;
+}): JSX.Element {
+	return isActive ? <ChevronDown size={14} /> : <ChevronRight size={14} />;
+}
 
 function TraceDetailsV3(): JSX.Element {
 	const { id: traceId } = useParams<TraceDetailV3URLProps>();
@@ -389,6 +404,7 @@ function TraceDetailsV3(): JSX.Element {
 									activeKey={activeKeys.filter((k) => k === 'flame')}
 									onChange={(): void => handleCollapseChange('flame')}
 									size="small"
+									expandIcon={renderPanelExpandIcon}
 									className={styles.flameCollapse}
 									items={[
 										{
@@ -443,6 +459,7 @@ function TraceDetailsV3(): JSX.Element {
 									activeKey={activeKeys.filter((k) => k === 'waterfall')}
 									onChange={(): void => handleCollapseChange('waterfall')}
 									size="small"
+									expandIcon={renderPanelExpandIcon}
 									className={cx(styles.waterfallCollapse, {
 										[styles.isDocked]: isWaterfallDocked,
 									})}
