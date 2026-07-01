@@ -6,7 +6,11 @@ import {
 	DashboardtypesTimePreferenceDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
-import type { SectionConfig, SectionSpecMap } from '../types/sections';
+import {
+	SectionKind,
+	type SectionConfig,
+	type SectionSpecMap,
+} from '../types/sections';
 
 /**
  * Seeded plugin-spec slices, typed as canonical section slices so each value is
@@ -14,9 +18,9 @@ import type { SectionConfig, SectionSpecMap } from '../types/sections';
  * so the union cast stays localized to `createDefaultPanel`.
  */
 export interface DefaultPluginSpec {
-	visualization?: SectionSpecMap['visualization'];
-	legend?: SectionSpecMap['legend'];
-	chartAppearance?: SectionSpecMap['chartAppearance'];
+	visualization?: SectionSpecMap[SectionKind.Visualization];
+	legend?: SectionSpecMap[SectionKind.Legend];
+	chartAppearance?: SectionSpecMap[SectionKind.ChartAppearance];
 }
 
 /**
@@ -31,20 +35,20 @@ export function buildDefaultPluginSpec(
 
 	sections.forEach((section) => {
 		switch (section.kind) {
-			case 'visualization':
+			case SectionKind.Visualization:
 				if (section.controls.timePreference) {
 					spec.visualization = {
 						timePreference: DashboardtypesTimePreferenceDTO.global_time,
 					};
 				}
 				break;
-			case 'legend':
+			case SectionKind.Legend:
 				if (section.controls.position) {
 					spec.legend = { position: DashboardtypesLegendPositionDTO.bottom };
 				}
 				break;
-			case 'chartAppearance': {
-				const chartAppearance: SectionSpecMap['chartAppearance'] = {};
+			case SectionKind.ChartAppearance: {
+				const chartAppearance: SectionSpecMap[SectionKind.ChartAppearance] = {};
 				if (section.controls.lineStyle) {
 					chartAppearance.lineStyle = DashboardtypesLineStyleDTO.solid;
 				}

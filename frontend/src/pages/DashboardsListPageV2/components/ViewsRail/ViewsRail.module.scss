@@ -28,6 +28,7 @@
 	font-weight: var(--font-weight-semibold);
 	letter-spacing: -0.01em;
 	color: var(--l1-foreground);
+	text-align: left;
 }
 
 .search {
@@ -76,7 +77,13 @@
 	padding: 1px 6px;
 }
 
+.deleteName {
+	color: var(--danger-background);
+	font-weight: var(--font-weight-medium);
+}
+
 .row {
+	position: relative;
 	display: flex;
 	align-items: center;
 	margin: 3px 0;
@@ -92,27 +99,27 @@
 	background: var(--l2-background);
 }
 
+// A left accent bar reads the active row more clearly than background alone.
+.rowActive::before {
+	content: '';
+	position: absolute;
+	left: 0;
+	top: 50%;
+	transform: translateY(-50%);
+	width: 3px;
+	height: 18px;
+	border-radius: 0 3px 3px 0;
+	background: var(--primary-background);
+}
+
 .item {
-	// Neutralise the signoz Button defaults so it reads as a full-width,
-	// left-aligned list row; the row coordinates hover/active colours below.
 	--button-display: flex;
 	--button-justify-content: flex-start;
-	--button-height: auto;
 	--button-padding: 9px 10px;
-	--button-gap: 10px;
-	--button-variant-ghost-background-color: transparent;
-	--button-variant-ghost-hover-background-color: transparent;
-	--button-variant-ghost-color: var(--l2-foreground);
-	--button-variant-ghost-hover-color: var(--l1-foreground);
 	flex: 1;
 	min-width: 0;
 	width: 100%;
-	font-size: var(--font-size-sm);
-}
-
-.row:hover .item,
-.rowActive .item {
-	--button-variant-ghost-color: var(--l1-foreground);
+	font-size: var(--font-size-base);
 }
 
 .itemIcon {
@@ -125,7 +132,6 @@
 }
 
 .itemLabel {
-	flex: 1;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
@@ -140,24 +146,31 @@
 }
 
 .itemAction {
-	// Square icon button that surfaces on row hover and turns red on its own
-	// hover; colours flow through the signoz Button tokens.
-	--button-height: auto;
+	// Blended ghost icon overlaid on the row's right edge — absolutely positioned
+	// so it never reserves layout space or affects the row height. Transparent so
+	// the row's hover background shows through; turns red only on its own hover.
+	position: absolute;
+	right: 6px;
+	top: 50%;
+	transform: translateY(-50%);
+	--button-height: 20px;
 	--button-padding: 0;
 	--button-border-radius: 4px;
-	--button-variant-ghost-background-color: transparent;
 	--button-variant-ghost-color: var(--l3-foreground);
 	--button-variant-ghost-hover-background-color: var(--danger-background);
 	--button-variant-ghost-hover-color: var(--danger-color, #fff);
 	width: 20px;
 	height: 20px;
-	margin-right: 8px;
 	opacity: 0;
+	// Hidden until row hover, and inert while hidden so it can't intercept clicks
+	// meant for the row.
+	pointer-events: none;
 	transition: opacity 0.1s;
 }
 
 .row:hover .itemAction {
 	opacity: 1;
+	pointer-events: auto;
 }
 
 .empty {
@@ -215,37 +228,6 @@
 	font-size: var(--font-size-xs);
 	color: var(--l3-foreground);
 	margin-top: 2px;
-}
-
-.iconGrid {
-	display: grid;
-	grid-template-columns: repeat(5, 1fr);
-	gap: 6px;
-}
-
-.iconCell {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	height: 34px;
-	border: 1px solid var(--l2-border);
-	border-radius: 6px;
-	background: var(--l2-background);
-	color: var(--l2-foreground);
-	cursor: pointer;
-	transition:
-		border-color 0.12s,
-		color 0.12s;
-}
-
-.iconCell:hover {
-	color: var(--l1-foreground);
-	border-color: var(--l3-foreground);
-}
-
-.iconCellOn {
-	border-color: var(--primary-background);
-	color: var(--primary-background);
 }
 
 .saveActions {

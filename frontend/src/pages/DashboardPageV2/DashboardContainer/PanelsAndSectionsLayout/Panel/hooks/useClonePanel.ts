@@ -5,7 +5,11 @@ import { v4 as uuid } from 'uuid';
 
 import { patchDashboardV2 } from 'api/generated/services/dashboard';
 
-import { addPanelToSectionOps, panelRef } from '../../../patchOps';
+import {
+	addPanelToSectionOps,
+	findFreeSlot,
+	panelRef,
+} from '../../../patchOps';
 import { useDashboardStore } from '../../../store/useDashboardStore';
 import type { DashboardSection } from '../../../utils';
 
@@ -20,8 +24,9 @@ export interface ClonePanelArgs {
 
 /**
  * Duplicates a panel: deep-copies the source spec under a fresh id and drops a
- * same-size grid item at the bottom of the section, as one atomic patch. Mirrors
- * V1's clone (verbatim spec copy, no rename).
+ * same-size grid item into the section via `findFreeSlot` (beside the last row
+ * if it fits, else a fresh row), as one atomic patch. Mirrors V1's clone
+ * (verbatim spec copy, no rename).
  */
 export function useClonePanel({
 	sections,
@@ -38,10 +43,7 @@ export function useClonePanel({
 			}
 
 			const newPanelId = uuid();
-			const nextY = section.items.reduce(
-				(max, i) => Math.max(max, i.y + i.height),
-				0,
-			);
+			const { x, y } = findFreeSlot(section.items, source.width);
 
 			const clone = patchDashboardV2(
 				{ id: dashboardId },
@@ -50,8 +52,8 @@ export function useClonePanel({
 					panel: cloneDeep(source.panel),
 					layoutIndex,
 					item: {
-						x: 0,
-						y: nextY,
+						x,
+						y,
 						width: source.width,
 						height: source.height,
 						content: { $ref: panelRef(newPanelId) },
