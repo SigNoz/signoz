@@ -5,7 +5,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, X } from '@signozhq/icons';
 
 import KeySearchInput from './KeySearchInput';
-import styles from './MapperFormDrawer.module.scss';
+import styles from './SourceAttributeRow.module.scss';
 import {
 	FieldContext,
 	FieldContextValue,

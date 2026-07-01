@@ -1,33 +1,33 @@
 .form {
 	display: flex;
 	flex-direction: column;
-	gap: 20px;
-	padding: 4px 0;
+	gap: var(--spacing-10);
+	padding: var(--spacing-2) 0;
 }
 
 .field {
 	display: flex;
 	flex-direction: column;
-	gap: 8px;
+	gap: var(--spacing-4);
 }
 
 .label {
-	font-size: 12px;
-	font-weight: 600;
+	font-size: var(--font-size-xs);
+	font-weight: var(--font-weight-semibold);
 	text-transform: uppercase;
 	letter-spacing: 0.04em;
-	color: var(--bg-vanilla-400);
+	color: var(--l3-foreground);
 }
 
 .labelHint {
-	font-weight: 400;
+	font-weight: var(--font-weight-normal);
 	text-transform: none;
 	letter-spacing: normal;
 }
 
 .hint {
-	font-size: 12px;
-	color: var(--bg-vanilla-400);
+	font-size: var(--font-size-xs);
+	color: var(--l3-foreground);
 }
 
 .fieldContext {
@@ -37,56 +37,15 @@
 .sources {
 	display: flex;
 	flex-direction: column;
-	gap: 8px;
-}
-
-.source {
-	display: flex;
-	align-items: center;
-	gap: 6px;
-}
-
-.sourceHandle {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	padding: 4px;
-	border: none;
-	background: transparent;
-	color: var(--bg-vanilla-400);
-	cursor: grab;
-	touch-action: none;
-	user-select: none;
-
-	&:active {
-		cursor: grabbing;
-	}
-}
-
-.sourceIndex {
-	width: 20px;
-	text-align: center;
-	font-size: 12px;
-	color: var(--bg-vanilla-400);
-}
-
-.sourceInput {
-	flex: 1;
-	min-width: 0;
-	font-family: 'Geist Mono', monospace;
-}
-
-.sourceSelect {
-	flex: 0 0 auto;
-	width: 120px;
+	gap: var(--spacing-4);
 }
 
 .error {
-	padding: 10px 12px;
-	border-radius: 4px;
+	padding: var(--spacing-5) var(--spacing-6);
+	border-radius: var(--radius-2);
 	background: var(--callout-error-background);
 	color: var(--callout-error-title);
-	font-size: 13px;
+	font-size: var(--periscope-font-size-base);
 }
 
 .footer {
@@ -94,11 +53,11 @@
 	align-items: center;
 	justify-content: space-between;
 	width: 100%;
-	gap: 8px;
+	gap: var(--spacing-4);
 }
 
 .footerActions {
 	display: flex;
-	gap: 8px;
+	gap: var(--spacing-4);
 	margin-left: auto;
 }
