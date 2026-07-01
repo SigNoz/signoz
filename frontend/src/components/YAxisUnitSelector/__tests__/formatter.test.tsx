@@ -681,9 +681,9 @@ describe('formatUniversalUnit', () => {
 
 	describe('Datetime', () => {
 		it('formats datetime units', () => {
-			expect(formatUniversalUnit(900, UniversalYAxisUnit.DATETIME_FROM_NOW)).toBe(
-				'56 years ago',
-			);
+			expect(
+				formatUniversalUnit(900, UniversalYAxisUnit.DATETIME_FROM_NOW),
+			).toMatch(/^\d+ years ago$/);
 		});
 	});
 
