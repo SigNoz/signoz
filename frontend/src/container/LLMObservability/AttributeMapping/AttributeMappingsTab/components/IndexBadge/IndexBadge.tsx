@@ -1,4 +1,4 @@
-import styles from './LLMObservabilityAttributeMapping.module.scss';
+import styles from './IndexBadge.module.scss';
 
 interface IndexBadgeProps {
 	index: number;

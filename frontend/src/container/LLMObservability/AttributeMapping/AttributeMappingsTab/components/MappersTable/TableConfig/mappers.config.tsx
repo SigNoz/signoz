@@ -2,8 +2,8 @@ import { Badge } from '@signozhq/ui/badge';
 import type { TableColumnDef } from 'components/TanStackTableView';
 import cx from 'classnames';
 
-import styles from './LLMObservabilityAttributeMapping.module.scss';
-import { DraftMapper, FieldContext } from './types';
+import { DraftMapper, FieldContext } from '../../../../types';
+import styles from './tableConfig.module.scss';
 
 const MAX_VISIBLE_SOURCES = 3;
 

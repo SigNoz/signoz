@@ -4,7 +4,7 @@ import { type TabItemProps } from '@signozhq/ui/tabs';
 import ROUTES from 'constants/routes';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 
-import LLMObservabilityAttributeMapping from '../../LLMObservabilityAttributeMapping/LLMObservabilityAttributeMapping';
+import LLMObservabilityAttributeMapping from '../AttributeMapping/LLMObservabilityAttributeMapping';
 import Overview from '../Overview/Overview';
 import LLMObservabilityModelPricing from '../Settings/ModelPricing/LLMObservabilityModelPricing';
 

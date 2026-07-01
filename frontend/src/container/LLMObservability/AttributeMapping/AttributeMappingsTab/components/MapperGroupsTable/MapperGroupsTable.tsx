@@ -1,11 +1,11 @@
 import { useMemo } from 'react';
 import TanStackTable from 'components/TanStackTableView';
 
-import styles from './LLMObservabilityAttributeMapping.module.scss';
-import { getMapperGroupsColumns } from './mapperGroups.config';
-import MappersTable from './MappersTable';
-import { DraftGroup } from './types';
-import { AttributeMappingStore } from './useAttributeMappingStore';
+import { DraftGroup } from '../../../types';
+import { AttributeMappingStore } from '../../hooks/useAttributeMappingStore';
+import MappersTable from '../MappersTable';
+import styles from './MapperGroupsTable.module.scss';
+import { getMapperGroupsColumns } from './TableConfig';
 
 const SKELETON_ROW_COUNT = 5;
 

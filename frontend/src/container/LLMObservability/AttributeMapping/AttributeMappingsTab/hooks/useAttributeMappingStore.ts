@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 import { useListSpanMapperGroups } from 'api/generated/services/spanmapper';
 
-import { DraftGroup, MapperGroup } from './types';
-import { buildDraftGroup } from './utils';
+import { DraftGroup, MapperGroup } from '../../types';
+import { buildDraftGroup } from '../../utils';
 
 export interface AttributeMappingStore {
 	groups: DraftGroup[];

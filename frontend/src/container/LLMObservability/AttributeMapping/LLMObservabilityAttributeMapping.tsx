@@ -1,6 +1,6 @@
 import { Tabs } from '@signozhq/ui/tabs';
 
-import AttributeMappingHeader from './AttributeMappingHeader';
+import AttributeMappingHeader from './components/AttributeMappingHeader';
 import AttributeMappingsTab from './AttributeMappingsTab';
 import styles from './LLMObservabilityAttributeMapping.module.scss';
 

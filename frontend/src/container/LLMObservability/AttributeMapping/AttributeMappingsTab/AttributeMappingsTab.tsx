@@ -1,6 +1,6 @@
-import styles from './LLMObservabilityAttributeMapping.module.scss';
-import MapperGroupsTable from './MapperGroupsTable';
-import { useAttributeMappingStore } from './useAttributeMappingStore';
+import MapperGroupsTable from './components/MapperGroupsTable';
+import { useAttributeMappingStore } from './hooks/useAttributeMappingStore';
+import styles from './AttributeMappingsTab.module.scss';
 
 // "Attribute mappings" tab: the mapping-groups listing, its load/error states
 // and footer summary. Lives in its own tab so siblings (e.g. "Test") can be

@@ -3,9 +3,9 @@ import { Button } from '@signozhq/ui/button';
 import { ChevronDown, ChevronRight } from '@signozhq/icons';
 import type { TableColumnDef } from 'components/TanStackTableView';
 
-import styles from './LLMObservabilityAttributeMapping.module.scss';
-import type { DraftGroup } from './types';
-import { conditionFiltersFromGroup } from './utils';
+import type { DraftGroup } from '../../../../types';
+import { conditionFiltersFromGroup } from '../../../../utils';
+import styles from './tableConfig.module.scss';
 
 // Column definitions for the mapping-groups TanStackTable. Sorting is off across
 // the board — the groups list API returns the full set unordered, so there's no

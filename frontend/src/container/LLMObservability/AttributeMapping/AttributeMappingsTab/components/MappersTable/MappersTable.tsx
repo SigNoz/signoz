@@ -3,12 +3,16 @@ import { useListSpanMappers } from 'api/generated/services/spanmapper';
 import TanStackTable from 'components/TanStackTableView';
 import { motion, useReducedMotion } from 'motion/react';
 
-import styles from './LLMObservabilityAttributeMapping.module.scss';
-import { getMappersColumns } from './mappers.config';
-import { DraftGroup, DraftMapper, Mapper } from './types';
-import { buildDraftMapper } from './utils';
+import { DraftGroup, DraftMapper, Mapper } from '../../../types';
+import { buildDraftMapper } from '../../../utils';
+import styles from './MappersTable.module.scss';
+import { getMappersColumns } from './TableConfig';
 
 const SKELETON_ROW_COUNT = 3;
+
+// Expand reveal: the panel mounts already-open, so this mount transition IS the
+// group's expand animation (height + fade).
+const EXPAND_TRANSITION = { duration: 0.18, ease: 'easeOut' } as const;
 
 interface MappersTableProps {
 	group: DraftGroup;
@@ -72,7 +76,7 @@ function MappersTable({ group }: MappersTableProps): JSX.Element {
 			className={styles.mappersTableWrapper}
 			initial={prefersReducedMotion ? false : { height: 0, opacity: 0 }}
 			animate={{ height: 'auto', opacity: 1 }}
-			transition={{ duration: 0.18, ease: 'easeOut' }}
+			transition={EXPAND_TRANSITION}
 		>
 			{content}
 		</motion.div>

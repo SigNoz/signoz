@@ -1,0 +1,35 @@
+.mappersTableTarget {
+	font-family: 'Geist Mono', monospace;
+	font-weight: var(--font-weight-semibold);
+}
+
+.mappersTableSources {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--spacing-3);
+}
+
+.mappersTableSourceChip {
+	display: inline-flex;
+	align-items: center;
+	max-width: 220px;
+	padding: 2px var(--padding-2);
+	border: 1px solid var(--l2-border);
+	border-radius: 6px;
+	background: var(--l3-background);
+	font-family: 'Geist Mono', monospace;
+	font-size: var(--font-size-xs);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.mappersTableSourceMore {
+	font-size: var(--font-size-xs);
+	white-space: nowrap;
+}
+
+.muted {
+	color: var(--l3-foreground);
+}
