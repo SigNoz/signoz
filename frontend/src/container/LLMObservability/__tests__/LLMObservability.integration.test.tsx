@@ -39,6 +39,9 @@ describe('LLMObservability (integration)', () => {
 		expect(
 			screen.getByRole('tab', { name: 'Model pricing' }),
 		).toBeInTheDocument();
+		expect(
+			screen.getByRole('tab', { name: 'Attribute Mapping' }),
+		).toBeInTheDocument();
 	});
 
 	it('navigates to the configuration route when the Model pricing tab is clicked', async () => {
@@ -52,6 +55,29 @@ describe('LLMObservability (integration)', () => {
 		expect(safeNavigateMock).toHaveBeenCalledWith(
 			ROUTES.LLM_OBSERVABILITY_CONFIGURATION,
 		);
+	});
+
+	it('navigates to the attribute mapping route when that tab is clicked', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		render(<LLMObservability />, undefined, {
+			initialRoute: ROUTES.LLM_OBSERVABILITY_OVERVIEW,
+		});
+
+		await user.click(screen.getByRole('tab', { name: 'Attribute Mapping' }));
+
+		expect(safeNavigateMock).toHaveBeenCalledWith(
+			ROUTES.LLM_OBSERVABILITY_ATTRIBUTE_MAPPING,
+		);
+	});
+
+	it('renders the attribute mapping page on the attribute mapping route', () => {
+		render(<LLMObservability />, undefined, {
+			initialRoute: ROUTES.LLM_OBSERVABILITY_ATTRIBUTE_MAPPING,
+		});
+
+		expect(
+			screen.getByTestId('llm-observability-attribute-mapping-page'),
+		).toBeInTheDocument();
 	});
 
 	it('renders the model-pricing page on the configuration route', async () => {

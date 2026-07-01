@@ -323,13 +323,6 @@ export const AIAssistantPage = Loadable(
 		),
 );
 
-export const LLMObservabilityAttributeMappingPage = Loadable(
-	() =>
-		import(
-			/* webpackChunkName: "LLM Observability Attribute Mapping Page" */ 'pages/LLMObservabilityAttributeMapping'
-		),
-);
-
 export const LLMObservabilityPage = Loadable(
 	() =>
 		import(
