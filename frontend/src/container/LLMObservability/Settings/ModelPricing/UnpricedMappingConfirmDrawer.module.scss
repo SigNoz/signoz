@@ -1,0 +1,53 @@
+.confirmTable {
+	--tanstack-table-row-height: 48px;
+	height: 100%;
+	overflow-y: auto;
+
+	:global(table) tbody tr {
+		cursor: default;
+	}
+}
+
+.modelCell {
+	max-width: 100%;
+	overflow: hidden;
+	color: var(--text-vanilla-100);
+	font-weight: var(--font-weight-semibold);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.billingCell {
+	font-family: var(--code-font-family, monospace);
+	color: var(--text-vanilla-100);
+}
+
+.priceCell {
+	font-family: var(--code-font-family, monospace);
+	color: var(--text-vanilla-400);
+}
+
+.cacheBuckets {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+
+.cacheBucket {
+	padding: 1px 6px;
+	border-radius: 4px;
+	background: color-mix(in srgb, var(--bg-vanilla-400) 14%, transparent);
+	font-family: var(--code-font-family, monospace);
+	font-size: 12px;
+}
+
+.muted {
+	color: var(--text-vanilla-400);
+}
+
+.footer {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 8px;
+}

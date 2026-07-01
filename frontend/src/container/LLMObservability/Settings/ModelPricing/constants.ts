@@ -30,6 +30,16 @@ export const SOURCE_FILTER_TO_IS_OVERRIDE: Record<
 // loaded page renders — otherwise the table height jumps on load.
 export const SKELETON_ROW_COUNT = PAGE_SIZE;
 
+// Page size for the searchable "Map to billing model" dropdown. The dropdown
+// searches server-side (via the rules API `q` param), so it only ever loads one
+// small page at a time rather than the full rule set.
+export const RULE_OPTIONS_LIMIT = 10;
+
+// URL-backed key for the active tab on the model-pricing page.
+export const TAB_KEY = 'tab';
+export const MODEL_COSTS_TAB = 'model-costs';
+export const UNPRICED_MODELS_TAB = 'unpriced-models';
+
 export const PROVIDER_OPTIONS = [
 	{ value: 'OpenAI', label: 'OpenAI' },
 	{ value: 'Anthropic', label: 'Anthropic' },
