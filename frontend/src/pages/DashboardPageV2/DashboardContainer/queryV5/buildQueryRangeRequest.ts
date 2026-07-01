@@ -6,6 +6,7 @@ import type {
 	Querybuildertypesv5PromQueryDTO,
 	Querybuildertypesv5QueryEnvelopeDTO,
 	Querybuildertypesv5QueryRangeRequestDTO,
+	Querybuildertypesv5QueryRangeRequestDTOVariables,
 } from 'api/generated/services/sigNoz.schemas';
 import {
 	Querybuildertypesv5QueryEnvelopeBuilderDTOType,
@@ -202,11 +203,13 @@ export interface BuildQueryRangeRequestArgs {
 	fillGaps?: boolean;
 	/** Server-side paging for raw/list panels, written onto the builder queries' `offset`/`limit`. */
 	pagination?: { offset: number; limit: number };
+	/** Runtime variable values (name → {type,value}) substituted server-side; built by `buildVariablesPayload`. */
+	variables?: Querybuildertypesv5QueryRangeRequestDTOVariables;
 }
 
 /**
  * Builds the V5 query-range request DTO directly from the panel's perses queries (no V1 `Query`
- * intermediary). Variables are absent (`variables: {}`) until V2 grows its own variable plumbing.
+ * intermediary). `variables` carries the runtime selection (empty when the dashboard has none).
  */
 export function buildQueryRangeRequest({
 	queries,
@@ -215,6 +218,7 @@ export function buildQueryRangeRequest({
 	endMs,
 	fillGaps = false,
 	pagination,
+	variables = {},
 }: BuildQueryRangeRequestArgs): Querybuildertypesv5QueryRangeRequestDTO {
 	let envelopes = toQueryEnvelopes(queries);
 	if (panelType === PANEL_TYPES.BAR) {
@@ -234,7 +238,7 @@ export function buildQueryRangeRequest({
 			formatTableResultForUI: panelType === PANEL_TYPES.TABLE,
 			fillGaps,
 		},
-		variables: {},
+		variables,
 	};
 }
 

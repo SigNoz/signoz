@@ -22,9 +22,9 @@ export interface FooterRenderProps {
 
 export interface UseInviteMembersOptions {
 	initialRowCount?: number;
-	onSuccess?: () => void;
-	onPartialSuccess?: (results: InviteResult[]) => void;
-	onAllFailed?: (results: InviteResult[]) => void;
+	onSuccess?: (results: InviteResult[], rows: InviteMemberRow[]) => void;
+	onPartialSuccess?: (results: InviteResult[], rows: InviteMemberRow[]) => void;
+	onAllFailed?: (results: InviteResult[], rows: InviteMemberRow[]) => void;
 }
 
 export interface UseInviteMembersReturn {
@@ -56,9 +56,9 @@ export interface InviteMembersProps {
 	showHeader?: boolean;
 	showAddButton?: boolean;
 
-	onSuccess?: () => void;
-	onPartialSuccess?: (results: InviteResult[]) => void;
-	onAllFailed?: (results: InviteResult[]) => void;
+	onSuccess?: (results: InviteResult[], rows: InviteMemberRow[]) => void;
+	onPartialSuccess?: (results: InviteResult[], rows: InviteMemberRow[]) => void;
+	onAllFailed?: (results: InviteResult[], rows: InviteMemberRow[]) => void;
 
 	renderFooter?: (props: FooterRenderProps) => ReactNode;
 }
