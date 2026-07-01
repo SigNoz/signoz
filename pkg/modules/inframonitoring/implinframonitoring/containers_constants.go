@@ -9,6 +9,27 @@ import (
 
 const containerNameAttrKey = inframonitoringtypes.ContainerNameAttrKey
 
+const (
+	containerStatusStateAttrKey  = "k8s.container.status.state"
+	containerStatusReasonAttrKey = "k8s.container.status.reason"
+)
+
+const (
+	containerStatusStateMetricName  = "k8s.container.status.state"
+	containerStatusReasonMetricName = "k8s.container.status.reason"
+	containerReadyMetricName        = "k8s.container.ready"
+	containerRestartsMetricName     = "k8s.container.restarts"
+)
+
+// containerStatusMetricNamesList are the metrics required to derive the
+// kubectl-style container display status. Gated by
+// getPerGroupContainerStatusCountsWithReqMetricChecks — if either is missing,
+// status is skipped and a warning is returned.
+var containerStatusMetricNamesList = []string{
+	containerStatusStateMetricName,
+	containerStatusReasonMetricName,
+}
+
 var containerNameGroupByKey = qbtypes.GroupByKey{
 	TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
 		Name:          containerNameAttrKey,
