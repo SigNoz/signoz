@@ -1,3 +1,10 @@
+.filtersBar {
+	display: flex;
+	gap: var(--spacing-6);
+	align-items: center;
+	justify-content: space-between;
+}
+
 .pageError {
 	padding: var(--spacing-6) var(--spacing-8);
 	border-radius: var(--radius-2);

@@ -1,14 +1,27 @@
 import { useMemo } from 'react';
+import { Button } from '@signozhq/ui/button';
+import { Typography } from '@signozhq/ui/typography';
+import { Plus } from '@signozhq/icons';
 import { useListLLMPricingRules } from 'api/generated/services/llmpricingrules';
 import { type ListLLMPricingRulesParams } from 'api/generated/services/sigNoz.schemas';
 import { useTableParams } from 'components/TanStackTableView';
-import { Typography } from '@signozhq/ui/typography';
+import useComponentPermission from 'hooks/useComponentPermission';
+import { useAppContext } from 'providers/App/App';
 
 import { LIMIT_KEY, PAGE_KEY, PAGE_SIZE } from '../constants';
-import styles from './ModelCostTabPanel.module.scss';
+import type { PricingRule } from '../types';
+import DeleteConfirmDialog from './components/DeleteConfirmDialog';
+import ModelCostDrawer, {
+	useModelCostDrawer,
+} from './components/ModelCostDrawer';
 import ModelCostsTable from './components/ModelCostsTable';
-import { type LlmpricingruletypesLLMPricingRuleDTO } from 'api/generated/services/sigNoz.schemas';
+import { useModelCostDelete } from './hooks/useModelCostDelete';
+import styles from './ModelCostTabPanel.module.scss';
 
+// "Model costs" tab: the priced-model listing, the add/edit drawer, and
+// pagination. Page and page size live in the URL (shareable/reload-safe) and are
+// owned by TanStackTable via enableQueryParams — this tab reads them back through
+// the same useTableParams hook so the two stay in lockstep.
 function ModelCostTabPanel(): JSX.Element {
 	const { page, limit } = useTableParams(
 		{ page: PAGE_KEY, limit: LIMIT_KEY },
@@ -24,29 +37,48 @@ function ModelCostTabPanel(): JSX.Element {
 
 	const { data, isLoading, isError } = useListLLMPricingRules(listParams);
 
-	const rules: LlmpricingruletypesLLMPricingRuleDTO[] = useMemo(
-		() => data?.data?.items || [],
-		[data],
+	const { user } = useAppContext();
+	const [canManagePricing] = useComponentPermission(
+		['manage_llm_pricing'],
+		user.role,
 	);
+
+	const rules: PricingRule[] = useMemo(() => data?.data?.items || [], [data]);
 	const total = data?.data?.total ?? 0;
+
+	const drawer = useModelCostDrawer();
+	const deletion = useModelCostDelete();
 
 	return (
 		<>
+			<div className={styles.filtersBar}>
+				{canManagePricing && (
+					<Button
+						variant="solid"
+						color="primary"
+						prefix={<Plus size={14} />}
+						onClick={(): void => drawer.openForAdd()}
+						testId="add-model-cost-btn"
+					>
+						Add model cost
+					</Button>
+				)}
+			</div>
+
 			{isError && (
 				<div className={styles.pageError} role="alert">
 					Failed to load pricing rules. Please try again.
 				</div>
 			)}
 
-			{/* Read-only listing. Edit/Add wiring + the drawer land in the next PR. */}
 			<ModelCostsTable
 				rules={rules}
 				isLoading={isLoading}
 				total={total}
-				selectedRuleId={null}
-				canManage={false}
-				onEdit={(): void => undefined}
-				onDelete={(): void => undefined}
+				selectedRuleId={drawer.selectedRuleId}
+				canManage={canManagePricing}
+				onEdit={drawer.openForEdit}
+				onDelete={deletion.requestDelete}
 			/>
 
 			<footer>
@@ -54,6 +86,29 @@ function ModelCostTabPanel(): JSX.Element {
 					All prices per 1M tokens (USD)
 				</Typography.Text>
 			</footer>
+
+			{drawer.isOpen && (
+				<ModelCostDrawer
+					isOpen={drawer.isOpen}
+					mode={drawer.mode}
+					initialDraft={drawer.initialDraft}
+					onClose={drawer.close}
+					onSave={drawer.save}
+					isSaving={drawer.isSaving}
+					saveError={drawer.saveError}
+					canManage={canManagePricing}
+				/>
+			)}
+
+			{deletion.pendingDelete && (
+				<DeleteConfirmDialog
+					open
+					modelName={deletion.pendingDelete.modelName}
+					isDeleting={deletion.isDeleting}
+					onConfirm={deletion.confirmDelete}
+					onCancel={deletion.cancelDelete}
+				/>
+			)}
 		</>
 	);
 }
