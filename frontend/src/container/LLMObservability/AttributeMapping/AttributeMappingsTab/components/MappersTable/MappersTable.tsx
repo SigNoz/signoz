@@ -30,8 +30,6 @@ function MappersTable({ group }: MappersTableProps): JSX.Element {
 	);
 
 	const mappers = useMemo<DraftMapper[]>(() => {
-		// The generated schema mis-types this list response with the groups DTO;
-		// the runtime payload is mappers.
 		const items = (data?.data?.items ?? []) as unknown as Mapper[];
 		return items.map(buildDraftMapper);
 	}, [data]);

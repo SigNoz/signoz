@@ -1,4 +1,5 @@
 import { Badge } from '@signozhq/ui/badge';
+import { Typography } from '@signozhq/ui/typography';
 import type { TableColumnDef } from 'components/TanStackTableView';
 import cx from 'classnames';
 
@@ -19,12 +20,13 @@ export function getMappersColumns(): TableColumnDef<DraftMapper>[] {
 			width: { min: 200, default: '100%' },
 			enableMove: false,
 			cell: ({ row }): JSX.Element => (
-				<span
+				<Typography.Text
+					weight="semibold"
 					className={styles.mappersTableTarget}
 					data-testid={`mapper-target-${row.localId}`}
 				>
 					{row.name}
-				</span>
+				</Typography.Text>
 			),
 		},
 		{
