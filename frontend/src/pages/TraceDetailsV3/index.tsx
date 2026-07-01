@@ -329,6 +329,7 @@ function TraceDetailsV3(): JSX.Element {
 			rootServiceName: payload.rootServiceName,
 			rootServiceEntryPoint: payload.rootServiceEntryPoint,
 			rootSpanStatusCode: rootSpan?.response_status_code || '',
+			hasMissingSpans: payload.hasMissingSpans || false,
 		};
 	}, [traceData?.payload]);
 

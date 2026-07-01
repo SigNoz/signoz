@@ -33,14 +33,7 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { colorToRgb } from 'lib/uPlotLib/utils/generateColor';
-import {
-	ArrowUpRight,
-	ChevronDown,
-	ChevronRight,
-	CircleAlert,
-	Link,
-	ListPlus,
-} from '@signozhq/icons';
+import { ChevronDown, ChevronRight, Link, ListPlus } from '@signozhq/icons';
 import { useTraceStore } from 'pages/TraceDetailsV3/stores/traceStore';
 import { resolveSpanColor } from 'pages/TraceDetailsV3/utils';
 import { useBoundaryPagination } from 'pages/TraceDetailsV3/TraceWaterfall/hooks/useBoundaryPagination';
@@ -854,28 +847,6 @@ function Success(props: ISuccessProps): JSX.Element {
 
 	return (
 		<div className={styles.root}>
-			{traceMetadata.hasMissingSpans && (
-				<div className={styles.missingSpans}>
-					<section className={styles.leftInfo}>
-						<CircleAlert size={14} />
-						<span className={styles.text}>This trace has missing spans</span>
-					</section>
-					<Button
-						variant="ghost"
-						color="secondary"
-						className={styles.rightInfo}
-						suffix={<ArrowUpRight size={14} />}
-						onClick={(): WindowProxy | null =>
-							window.open(
-								'https://signoz.io/docs/userguide/traces/#missing-spans',
-								'_blank',
-							)
-						}
-					>
-						Learn More
-					</Button>
-				</div>
-			)}
 			{isFetching && <div className={styles.loadingBar} />}
 			<div className={styles.splitPanel} ref={scrollContainerRef}>
 				{/* Sticky header row */}
