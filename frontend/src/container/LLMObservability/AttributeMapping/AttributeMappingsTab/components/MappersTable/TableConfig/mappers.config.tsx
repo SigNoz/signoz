@@ -1,18 +1,29 @@
 import { Badge } from '@signozhq/ui/badge';
 import { SpantypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
+import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
 import type { TableColumnDef } from 'components/TanStackTableView';
 import cx from 'classnames';
 
 import { DraftMapper } from '../../../../types';
+import MapperActionsMenu from '../MapperActionsMenu';
 import styles from './tableConfig.module.scss';
 
 const MAX_VISIBLE_SOURCES = 3;
 
+interface ColumnsConfig {
+	onEdit: (mapper: DraftMapper) => void;
+	onRemove: (localId: string) => void;
+	onToggle: (localId: string, enabled: boolean) => void;
+}
+
 // Column definitions for the per-group mappers TanStackTable (rendered inside an
-// expanded group row). Sorting is off — priority order is positional (top wins)
-// and surfaced by the leading index column.
-export function getMappersColumns(): TableColumnDef<DraftMapper>[] {
+// expanded group row). Sorting is off — priority order is positional (top wins).
+export function getMappersColumns({
+	onEdit,
+	onRemove,
+	onToggle,
+}: ColumnsConfig): TableColumnDef<DraftMapper>[] {
 	return [
 		{
 			id: 'target',
@@ -91,17 +102,26 @@ export function getMappersColumns(): TableColumnDef<DraftMapper>[] {
 			),
 		},
 		{
-			id: 'status',
-			header: 'Status',
-			// Opt the trailing column out of the "last column fills 100%" rule so the
-			// spare width flows into Target / Sources instead of leaving a large empty
-			// Status column on the right.
-			width: { min: 120, ignoreLastColumnFill: true },
+			id: 'actions',
+			header: 'Actions',
+			// Compact, right-aligned action cluster — opt out of the "last column
+			// fills 100%" rule so the spare width flows into Target / Sources.
+			width: { fixed: '160px', ignoreLastColumnFill: true },
 			enableMove: false,
+			enableRemove: false,
 			cell: ({ row }): JSX.Element => (
-				<Badge color={row.enabled ? 'forest' : 'vanilla'} variant="outline">
-					{row.enabled ? 'Enabled' : 'Disabled'}
-				</Badge>
+				<div className={styles.rowActions}>
+					<Switch
+						value={row.enabled}
+						onChange={(checked): void => onToggle(row.localId, checked)}
+						testId={`mapper-enabled-${row.localId}`}
+					/>
+					<MapperActionsMenu
+						mapper={row}
+						onEdit={onEdit}
+						onRemove={onRemove}
+					/>
+				</div>
 			),
 		},
 	];

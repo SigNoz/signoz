@@ -2,8 +2,8 @@ import { Button } from '@signozhq/ui/button';
 import { Plus, X } from '@signozhq/icons';
 
 import styles from './GroupFormDrawer.module.scss';
-import KeySearchInput from './KeySearchInput';
-import { FieldContextValue } from './types';
+import KeySearchInput from '../KeySearchInput';
+import { FieldContextValue } from '../../types';
 
 interface ConditionKeyListProps {
 	label: string;

@@ -12,6 +12,8 @@ export type MapperGroup = SpantypesSpanMapperGroupDTO;
 export type Mapper = SpantypesSpanMapperDTO;
 export const FieldContext = SpantypesFieldContextDTO;
 export type FieldContextValue = SpantypesFieldContextDTO;
+export const MapperOperation = SpantypesSpanMapperOperationDTO;
+export type MapperOperationValue = SpantypesSpanMapperOperationDTO;
 
 // A single human-readable condition clause shown in the group's Filters column.
 export interface ConditionFilter {

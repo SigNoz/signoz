@@ -10,7 +10,7 @@ import Spinner from 'components/Spinner';
 import useDebounce from 'hooks/useDebounce';
 
 import styles from './KeySearchInput.module.scss';
-import { FieldContext, FieldContextValue } from './types';
+import { FieldContext, FieldContextValue } from '../../types';
 
 const SUGGESTION_LIMIT = 50;
 const DEBOUNCE_MS = 300;
