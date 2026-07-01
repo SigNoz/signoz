@@ -13,7 +13,7 @@ func TestListReductionRulesParamsSortDefaults(t *testing.T) {
 	var params metricreductionruletypes.ListReductionRulesParams
 	require.NoError(t, binding.Query.BindQuery(map[string][]string{"limit": {"10"}}, &params))
 
-	assert.Equal(t, metricreductionruletypes.OrderByReduction, params.OrderBy, "orderBy defaults to reduction")
+	assert.Equal(t, metricreductionruletypes.OrderByIngestedVolume, params.OrderBy, "orderBy defaults to ingested volume")
 	assert.Equal(t, metricreductionruletypes.OrderDesc, params.Order, "order defaults to desc")
 }
 

@@ -2714,6 +2714,14 @@ components:
           type: string
         dashboardName:
           type: string
+        filterBy:
+          items:
+            type: string
+          type: array
+        groupBy:
+          items:
+            type: string
+          type: array
         panelId:
           type: string
         panelName:
@@ -5389,6 +5397,9 @@ components:
           type: string
         id:
           type: string
+        ingestedSamples:
+          minimum: 0
+          type: integer
         ingestedSeries:
           minimum: 0
           type: integer
@@ -5401,9 +5412,9 @@ components:
           $ref: '#/components/schemas/MetricreductionruletypesMatchType'
         metricName:
           type: string
-        reductionPercent:
-          format: double
-          type: number
+        retainedSamples:
+          minimum: 0
+          type: integer
         retainedSeries:
           minimum: 0
           type: integer
@@ -5421,7 +5432,8 @@ components:
       - active
       - ingestedSeries
       - retainedSeries
-      - reductionPercent
+      - ingestedSamples
+      - retainedSamples
       type: object
     MetricreductionruletypesGettableReductionRulePreview:
       properties:
@@ -5464,7 +5476,13 @@ components:
         estimatedMonthlySavingsUsd:
           format: double
           type: number
+        ingestedSamples:
+          minimum: 0
+          type: integer
         ingestedSeries:
+          minimum: 0
+          type: integer
+        retainedSamples:
           minimum: 0
           type: integer
         retainedSeries:
@@ -5473,6 +5491,8 @@ components:
       required:
       - ingestedSeries
       - retainedSeries
+      - ingestedSamples
+      - retainedSamples
       - estimatedMonthlySavingsUsd
       type: object
     MetricreductionruletypesGettableReductionRules:
@@ -5538,7 +5558,6 @@ components:
       - metric
       - ingested_volume
       - reduced_volume
-      - reduction
       - last_updated
       type: string
     MetricreductionruletypesUpdatableReductionRule:
