@@ -13,8 +13,10 @@
 	font-family: 'Geist Mono', monospace;
 }
 
-.reductionCell {
-	font-family: 'Geist Mono', monospace;
+.volumeCell {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
 }
 
 .empty {

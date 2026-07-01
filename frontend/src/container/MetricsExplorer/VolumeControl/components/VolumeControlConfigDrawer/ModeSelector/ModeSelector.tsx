@@ -18,12 +18,12 @@ const MODE_OPTIONS: ModeOption[] = [
 	},
 	{
 		mode: 'include',
-		title: 'Include attributes',
+		title: 'Include',
 		description: 'Allowlist: only the selected attributes stay queryable.',
 	},
 	{
 		mode: 'exclude',
-		title: 'Exclude attributes',
+		title: 'Exclude',
 		description: 'Blocklist: the selected attributes are aggregated away.',
 	},
 ];

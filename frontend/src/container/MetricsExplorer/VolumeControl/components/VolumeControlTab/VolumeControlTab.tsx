@@ -36,7 +36,7 @@ type VolumeControlTableParams = Required<
 >;
 
 const DEFAULT_PARAMS: VolumeControlTableParams = {
-	orderBy: OrderBy.reduction,
+	orderBy: OrderBy.ingested_volume,
 	order: SortOrder.desc,
 	search: '',
 	offset: 0,
@@ -60,11 +60,20 @@ function VolumeControlTab(): JSX.Element {
 		);
 	}, [debouncedSearch]);
 
-	const { data, isLoading } = useListMetricReductionRules(params, {
+	const {
+		data,
+		isLoading,
+		isError: isListError,
+	} = useListMetricReductionRules(params, {
 		query: { enabled: isVolumeControlEnabled },
 	});
 
-	const { data: statsData } = useGetMetricReductionRuleStats({
+	const {
+		data: statsData,
+		isLoading: isStatsLoading,
+		isFetching: isStatsFetching,
+		isError: isStatsError,
+	} = useGetMetricReductionRuleStats({
 		query: { enabled: isVolumeControlEnabled },
 	});
 	const stats = statsData?.data;
@@ -111,7 +120,7 @@ function VolumeControlTab(): JSX.Element {
 				{
 					title: 'MODE',
 					key: 'mode',
-					width: 160,
+					width: 110,
 					render: (
 						_value: unknown,
 						rule: MetricreductionruletypesGettableReductionRuleDTO,
@@ -138,7 +147,14 @@ function VolumeControlTab(): JSX.Element {
 					),
 				},
 				{
-					title: 'INGESTED',
+					title: (
+						<>
+							INGESTED{' '}
+							<Typography.Text size="small" color="muted">
+								(1h)
+							</Typography.Text>
+						</>
+					),
 					key: OrderBy.ingested_volume,
 					width: 130,
 					sorter: true,
@@ -147,13 +163,28 @@ function VolumeControlTab(): JSX.Element {
 						_value: unknown,
 						rule: MetricreductionruletypesGettableReductionRuleDTO,
 					): JSX.Element => (
-						<Typography.Text size="small" color="muted">
-							{formatCompact(rule.ingestedSeries)}
-						</Typography.Text>
+						<div className={styles.volumeCell}>
+							<Typography.Text size="small">
+								{formatCompact(rule.ingestedSeries)}{' '}
+								<Typography.Text size="small" color="muted">
+									series
+								</Typography.Text>
+							</Typography.Text>
+							<Typography.Text size="small" color="muted">
+								{formatCompact(rule.ingestedSamples)} samples
+							</Typography.Text>
+						</div>
 					),
 				},
 				{
-					title: 'RETAINED',
+					title: (
+						<>
+							RETAINED{' '}
+							<Typography.Text size="small" color="muted">
+								(1h)
+							</Typography.Text>
+						</>
+					),
 					key: OrderBy.reduced_volume,
 					width: 130,
 					sorter: true,
@@ -162,22 +193,35 @@ function VolumeControlTab(): JSX.Element {
 						_value: unknown,
 						rule: MetricreductionruletypesGettableReductionRuleDTO,
 					): JSX.Element => (
-						<Typography.Text size="small">
-							{formatCompact(rule.retainedSeries)}
-						</Typography.Text>
+						<div className={styles.volumeCell}>
+							<Typography.Text size="small">
+								{formatCompact(rule.retainedSeries)}{' '}
+								<Typography.Text size="small" color="muted">
+									series
+								</Typography.Text>
+							</Typography.Text>
+							<Typography.Text size="small" color="muted">
+								{formatCompact(rule.retainedSamples)} samples
+							</Typography.Text>
+						</div>
 					),
 				},
 				{
 					title: 'CHANGE',
-					key: OrderBy.reduction,
-					width: 110,
-					sorter: true,
-					sortOrder: sortOrderFor(OrderBy.reduction),
+					width: 140,
 					render: (
 						_value: unknown,
 						rule: MetricreductionruletypesGettableReductionRuleDTO,
 					): JSX.Element => {
-						if (rule.reductionPercent <= 0) {
+						const seriesReduction =
+							rule.ingestedSeries > 0
+								? (1 - rule.retainedSeries / rule.ingestedSeries) * 100
+								: 0;
+						const samplesReduction =
+							rule.ingestedSamples > 0
+								? (1 - rule.retainedSamples / rule.ingestedSamples) * 100
+								: 0;
+						if (seriesReduction <= 0 && samplesReduction <= 0) {
 							return (
 								<Typography.Text size="small" color="muted">
 									—
@@ -185,14 +229,18 @@ function VolumeControlTab(): JSX.Element {
 							);
 						}
 						return (
-							<Typography.Text
-								size="small"
-								weight="semibold"
-								color="success"
-								className={styles.reductionCell}
-							>
-								−{Math.round(rule.reductionPercent)}%
-							</Typography.Text>
+							<div className={styles.volumeCell}>
+								<Typography.Text size="small" weight="semibold" color="success">
+									{seriesReduction > 0 ? `−${Math.round(seriesReduction)}%` : '0%'}{' '}
+									<Typography.Text size="small" color="muted">
+										series
+									</Typography.Text>
+								</Typography.Text>
+								<Typography.Text size="small" color="muted">
+									{samplesReduction > 0 ? `−${Math.round(samplesReduction)}%` : '0%'}{' '}
+									samples
+								</Typography.Text>
+							</div>
 						);
 					},
 				},
@@ -273,7 +321,11 @@ function VolumeControlTab(): JSX.Element {
 				activeRules={total}
 				ingestedSeries={stats?.ingestedSeries ?? 0}
 				retainedSeries={stats?.retainedSeries ?? 0}
+				ingestedSamples={stats?.ingestedSamples ?? 0}
+				retainedSamples={stats?.retainedSamples ?? 0}
 				estimatedMonthlySavingsUsd={stats?.estimatedMonthlySavingsUsd ?? 0}
+				isLoading={isStatsLoading || isStatsFetching}
+				isError={isStatsError}
 			/>
 
 			<VolumeControlChart enabled={isVolumeControlEnabled} />
@@ -293,7 +345,13 @@ function VolumeControlTab(): JSX.Element {
 					showSizeChanger: false,
 				}}
 				locale={{
-					emptyText: (
+					emptyText: isListError ? (
+						<div className={styles.empty} data-testid="volume-control-tab-error">
+							<Typography.Text color="danger">
+								Failed to load volume control rules. Please try again.
+							</Typography.Text>
+						</div>
+					) : (
 						<div className={styles.empty} data-testid="volume-control-tab-empty">
 							<Typography.Text color="muted">
 								No volume control rules yet. Open a metric and set one up to start

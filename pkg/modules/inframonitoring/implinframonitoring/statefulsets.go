@@ -140,12 +140,12 @@ func (m *module) getTopStatefulSetGroups(
 	return paginateWithBackfill(allMetricGroups, metadataMap, req.GroupBy, req.Offset, req.Limit), nil
 }
 
-func (m *module) getStatefulSetsTableMetadata(ctx context.Context, req *inframonitoringtypes.PostableStatefulSets) (map[string]map[string]string, error) {
+func (m *module) getStatefulSetsTableMetadata(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableStatefulSets) (map[string]map[string]string, error) {
 	var nonGroupByAttrs []string
 	for _, key := range statefulSetAttrKeysForMetadata {
 		if !isKeyInGroupByAttrs(req.GroupBy, key) {
 			nonGroupByAttrs = append(nonGroupByAttrs, key)
 		}
 	}
-	return m.getMetadata(ctx, statefulSetsTableMetricNamesList, req.GroupBy, nonGroupByAttrs, req.Filter, req.Start, req.End)
+	return m.getMetadata(ctx, orgID, statefulSetsTableMetricNamesList, req.GroupBy, nonGroupByAttrs, req.Filter, req.Start, req.End)
 }

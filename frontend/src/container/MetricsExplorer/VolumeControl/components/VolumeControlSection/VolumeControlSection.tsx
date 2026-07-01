@@ -22,7 +22,7 @@ function VolumeControlSection({
 		useVolumeControlFeatureGate();
 	const [isConfigOpen, setIsConfigOpen] = useState(false);
 
-	const { data, isLoading, error } = useListMetricReductionRules(
+	const { data, isLoading, isError } = useListMetricReductionRules(
 		{ metricName },
 		{
 			query: {
@@ -37,7 +37,7 @@ function VolumeControlSection({
 	}
 
 	const rule = data?.data.rules?.[0];
-	const hasRule = !!rule && !error;
+	const hasRule = !!rule && !isError;
 
 	const openConfig = (): void => setIsConfigOpen(true);
 	const closeConfig = (): void => setIsConfigOpen(false);
@@ -53,6 +53,16 @@ function VolumeControlSection({
 
 			{isLoading && <Skeleton active title={false} paragraph={{ rows: 2 }} />}
 
+			{!isLoading && isError && (
+				<Typography.Text
+					size="small"
+					color="danger"
+					data-testid="volume-control-section-error"
+				>
+					Failed to load volume control. Please try again.
+				</Typography.Text>
+			)}
+
 			{!isLoading && hasRule && rule && !rule.active && (
 				<PendingActivationBanner />
 			)}
@@ -65,7 +75,7 @@ function VolumeControlSection({
 				/>
 			)}
 
-			{!isLoading && !hasRule && (
+			{!isLoading && !isError && !hasRule && (
 				<NoRuleEmptyState canManage={canManageVolumeControl} onSetup={openConfig} />
 			)}
 

@@ -1,17 +1,17 @@
 import { EllipsisVertical } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { DropdownMenuSimple } from '@signozhq/ui/dropdown-menu';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 
 import ConfirmDeleteDialog from '../../../components/ConfirmDeleteDialog/ConfirmDeleteDialog';
 import type { PanelActionsConfig } from '../Panel';
 import { usePanelActionItems } from './usePanelActionItems';
 import styles from './PanelActionsMenu.module.scss';
-import { PanelKind } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelKind';
 
 interface PanelActionsMenuProps {
 	panelId: string;
-	/** Full plugin kind (e.g. `signoz/TimeSeriesPanel`);*/
-	panelKind: PanelKind;
+	/** The panel itself — its query seeds "Create Alerts". */
+	panel: DashboardtypesPanelDTO;
 	/** Layout context for move/delete — absent outside editable sectioned mode. */
 	panelActions?: PanelActionsConfig;
 }
@@ -23,12 +23,12 @@ interface PanelActionsMenuProps {
  */
 function PanelActionsMenu({
 	panelId,
-	panelKind,
+	panel,
 	panelActions,
 }: PanelActionsMenuProps): JSX.Element | null {
 	const { items, deleteConfirm } = usePanelActionItems({
 		panelId,
-		panelKind,
+		panel,
 		panelActions,
 	});
 
