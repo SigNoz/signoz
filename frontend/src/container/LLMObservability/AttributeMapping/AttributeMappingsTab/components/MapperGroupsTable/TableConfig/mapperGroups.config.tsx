@@ -60,7 +60,14 @@ export function getMapperGroupsColumns({
 			cell: ({ row }): JSX.Element => {
 				const filters = conditionFiltersFromGroup(row);
 				if (filters.length === 0) {
-					return <span className={styles.muted}>No condition · always runs</span>;
+					return (
+						<span
+							className={styles.muted}
+							data-testid={`group-filters-${row.localId}`}
+						>
+							No condition · always runs
+						</span>
+					);
 				}
 				return (
 					<div

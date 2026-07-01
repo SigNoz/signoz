@@ -1,10 +1,11 @@
 import { Badge } from '@signozhq/ui/badge';
+import { SpantypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
 import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
 import type { TableColumnDef } from 'components/TanStackTableView';
 import cx from 'classnames';
 
-import { DraftMapper, FieldContext } from '../../../../types';
+import { DraftMapper } from '../../../../types';
 import MapperActionsMenu from '../MapperActionsMenu';
 import styles from './tableConfig.module.scss';
 
@@ -33,7 +34,6 @@ export function getMappersColumns({
 			cell: ({ row }): JSX.Element => (
 				<Typography.Text
 					weight="semibold"
-					className={styles.mappersTableTarget}
 					data-testid={`mapper-target-${row.localId}`}
 				>
 					{row.name}
@@ -50,7 +50,14 @@ export function getMappersColumns({
 				// `sources` can be undefined — default to empty.
 				const sources = row.sources ?? [];
 				if (sources.length === 0) {
-					return <span className={styles.muted}>—</span>;
+					return (
+						<span
+							className={styles.muted}
+							data-testid={`mapper-sources-${row.localId}`}
+						>
+							—
+						</span>
+					);
 				}
 				const visible = sources.slice(0, MAX_VISIBLE_SOURCES);
 				const remaining = sources.length - visible.length;
@@ -85,7 +92,9 @@ export function getMappersColumns({
 			enableMove: false,
 			cell: ({ row }): JSX.Element => (
 				<Badge
-					color={row.fieldContext === FieldContext.resource ? 'amber' : 'robin'}
+					color={
+						row.fieldContext === SpantypesFieldContextDTO.resource ? 'amber' : 'robin'
+					}
 					variant="outline"
 				>
 					{row.fieldContext}
