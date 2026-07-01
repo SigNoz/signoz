@@ -546,6 +546,18 @@
 	opacity: 0.15;
 }
 
+// A dimmed span must still show the full-opacity hover state when hovered.
+// These win over `.isDimmed` on specificity so brightness is restored across
+// the whole row (name column, status cell, and timeline bar) on hover.
+.treeRow:hover .isDimmed,
+.treeRow.hoveredSpan .isDimmed,
+.timelineRow:hover .isDimmed,
+.timelineRow.hoveredSpan .isDimmed,
+.statusCell:hover.isDimmed,
+.statusCell.hoveredSpan.isDimmed {
+	opacity: 1;
+}
+
 .isHighlighted {
 	opacity: 1;
 }
