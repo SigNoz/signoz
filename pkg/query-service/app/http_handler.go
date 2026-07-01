@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/google/uuid"
+
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/modules/thirdpartyapi"
@@ -799,6 +801,10 @@ func (aH *APIHandler) testRule(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) getRuleStats(w http.ResponseWriter, r *http.Request) {
 	ruleID := mux.Vars(r)["id"]
+	if _, err := uuid.Parse(ruleID); err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("invalid rule id format")}, nil)
+		return
+	}
 	params := model.QueryRuleStateHistory{}
 	err := json.NewDecoder(r.Body).Decode(&params)
 	if err != nil {
@@ -881,6 +887,10 @@ func (aH *APIHandler) getRuleStats(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) getOverallStateTransitions(w http.ResponseWriter, r *http.Request) {
 	ruleID := mux.Vars(r)["id"]
+	if _, err := uuid.Parse(ruleID); err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("invalid rule id format")}, nil)
+		return
+	}
 	params := model.QueryRuleStateHistory{}
 	err := json.NewDecoder(r.Body).Decode(&params)
 	if err != nil {
