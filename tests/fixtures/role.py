@@ -1,76 +1,56 @@
-"""Fixtures and helpers for role tests."""
+"""Fixtures and data helpers for role tests: role lookup, request-body builder, grant comparison, and the golden managed-role matrix."""
 
+import json
+from collections.abc import Callable
 from http import HTTPStatus
 
+import pytest
 import requests
 
 from fixtures import types
-from fixtures.logger import setup_logger
-
-logger = setup_logger(__name__)
-
-ROLES_BASE = "/api/v1/roles"
+from fixtures.fs import get_testdata_file_path
 
 
-def find_role_by_name(signoz: types.SigNoz, token: str, name: str) -> str:
-    """Find a role by name from the roles endpoint and return its UUID."""
-    resp = requests.get(
-        signoz.self.host_configs["8080"].get(ROLES_BASE),
-        headers={"Authorization": f"Bearer {token}"},
-        timeout=5,
-    )
-    assert resp.status_code == HTTPStatus.OK, resp.text
-    roles = resp.json()["data"]
-    role = next(r for r in roles if r["name"] == name)
-    return role["id"]
+@pytest.fixture(name="find_role_id", scope="function")
+def find_role_id(signoz: types.SigNoz) -> Callable[[str, str], str]:
+    def _find(token: str, name: str) -> str:
+        resp = requests.get(
+            signoz.self.host_configs["8080"].get("/api/v1/roles"),
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        )
+        assert resp.status_code == HTTPStatus.OK, resp.text
+        return next(r["id"] for r in resp.json()["data"] if r["name"] == name)
+
+    return _find
 
 
-def create_custom_role(signoz: types.SigNoz, token: str, name: str) -> str:
-    """Create a custom role and return its ID. transactionGroups is required (send [] for none)."""
-    resp = requests.post(
-        signoz.self.host_configs["8080"].get(ROLES_BASE),
-        json={"name": name, "transactionGroups": []},
-        headers={"Authorization": f"Bearer {token}"},
-        timeout=5,
-    )
-    assert resp.status_code == HTTPStatus.CREATED, resp.text
-    return resp.json()["data"]["id"]
+def transaction_group(relation: str, type_name: str, kind_name: str, selectors: list[str]) -> dict:
+    return {"relation": relation, "objectGroup": {"resource": {"type": type_name, "kind": kind_name}, "selectors": selectors}}
 
 
-def delete_custom_role(signoz: types.SigNoz, token: str, role_id: str) -> None:
-    """Delete a custom role."""
-    resp = requests.delete(
-        signoz.self.host_configs["8080"].get(f"{ROLES_BASE}/{role_id}"),
-        headers={"Authorization": f"Bearer {token}"},
-        timeout=5,
-    )
-    assert resp.status_code == HTTPStatus.NO_CONTENT, resp.text
+def flatten_transaction_groups(groups: list[dict]) -> set[tuple[str, str, str, str]]:
+    flat: set[tuple[str, str, str, str]] = set()
+    for group in groups or []:
+        resource = group["objectGroup"]["resource"]
+        for selector in group["objectGroup"]["selectors"]:
+            flat.add((group["relation"], resource["type"], resource["kind"], selector))
+    return flat
 
 
-def patch_role_objects(
-    signoz: types.SigNoz,
-    token: str,
-    role_id: str,
-    relation: str,
-    additions=None,
-    deletions=None,
-) -> None:
-    """PATCH /api/v1/roles/{id}/relations/{relation}/objects."""
-    body = {}
-    if additions is not None:
-        body["additions"] = additions
-    if deletions is not None:
-        body["deletions"] = deletions
-
-    resp = requests.patch(
-        signoz.self.host_configs["8080"].get(f"{ROLES_BASE}/{role_id}/relations/{relation}/objects"),
-        json=body,
-        headers={"Authorization": f"Bearer {token}"},
-        timeout=5,
-    )
-    assert resp.status_code == HTTPStatus.NO_CONTENT, f"PatchObjects {relation} failed: {resp.text}"
+def load_managed_role_grants() -> dict[str, list[dict]]:
+    with open(get_testdata_file_path("role/managed_role_grants.json"), encoding="utf-8") as file:
+        raw = json.load(file)
+    return {name: grants for name, grants in raw.items() if not name.startswith("_")}
 
 
-def object_group(type_name: str, kind_name: str, selectors: list[str]) -> dict:
-    """Build an ObjectGroup dict for PatchObjects."""
-    return {"resource": {"type": type_name, "kind": kind_name}, "selectors": selectors}
+def managed_role_names() -> set[str]:
+    return set(load_managed_role_grants().keys())
+
+
+def expected_managed_grant_keys(role_name: str) -> set[tuple[str, str, str, str]]:
+    keys: set[tuple[str, str, str, str]] = set()
+    for grant in load_managed_role_grants()[role_name]:
+        for verb in grant["verbs"]:
+            keys.add((verb, grant["type"], grant["kind"], "*"))
+    return keys
