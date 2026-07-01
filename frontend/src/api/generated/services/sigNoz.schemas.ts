@@ -2185,14 +2185,9 @@ export interface ErrorsResponseerroradditionalDTO {
 	suggestions: string[];
 }
 
-export type ErrorsResponseretryjsonDTOAnyOf = {
+export interface ErrorsResponseretryjsonDTO {
 	delay: TimeDurationDTO;
-};
-
-/**
- * @nullable
- */
-export type ErrorsResponseretryjsonDTO = ErrorsResponseretryjsonDTOAnyOf | null;
+}
 
 export interface ErrorsJSONDTO {
 	/**
@@ -2207,7 +2202,7 @@ export interface ErrorsJSONDTO {
 	 * @type string
 	 */
 	message: string;
-	retry: ErrorsResponseretryjsonDTO | null;
+	retry?: ErrorsResponseretryjsonDTO;
 	/**
 	 * @type array
 	 */
@@ -2217,9 +2212,9 @@ export interface ErrorsJSONDTO {
 	 */
 	type: string;
 	/**
-	 * @type string,null
+	 * @type string
 	 */
-	url: string | null;
+	url?: string;
 }
 
 export interface AuthtypesOrgSessionContextDTO {
@@ -2635,9 +2630,25 @@ export interface CloudintegrationtypesAzureAccountConfigDTO {
 	resourceGroups: string[];
 }
 
+export interface CloudintegrationtypesGCPAccountConfigDTO {
+	/**
+	 * @type string
+	 */
+	deploymentProjectId: string;
+	/**
+	 * @type string
+	 */
+	deploymentRegion: string;
+	/**
+	 * @type array
+	 */
+	projectIds: string[];
+}
+
 export interface CloudintegrationtypesAccountConfigDTO {
 	aws?: CloudintegrationtypesAWSAccountConfigDTO;
 	azure?: CloudintegrationtypesAzureAccountConfigDTO;
+	gcp?: CloudintegrationtypesGCPAccountConfigDTO;
 }
 
 export interface CloudintegrationtypesAccountDTO {
@@ -2745,9 +2756,29 @@ export interface CloudintegrationtypesAzureServiceConfigDTO {
 	metrics: CloudintegrationtypesAzureServiceMetricsConfigDTO;
 }
 
+export interface CloudintegrationtypesGCPServiceLogsConfigDTO {
+	/**
+	 * @type boolean
+	 */
+	enabled: boolean;
+}
+
+export interface CloudintegrationtypesGCPServiceMetricsConfigDTO {
+	/**
+	 * @type boolean
+	 */
+	enabled: boolean;
+}
+
+export interface CloudintegrationtypesGCPServiceConfigDTO {
+	logs?: CloudintegrationtypesGCPServiceLogsConfigDTO;
+	metrics?: CloudintegrationtypesGCPServiceMetricsConfigDTO;
+}
+
 export interface CloudintegrationtypesServiceConfigDTO {
 	aws?: CloudintegrationtypesAWSServiceConfigDTO;
 	azure?: CloudintegrationtypesAzureServiceConfigDTO;
+	gcp?: CloudintegrationtypesGCPServiceConfigDTO;
 }
 
 export enum CloudintegrationtypesServiceIDDTO {
@@ -2778,6 +2809,7 @@ export enum CloudintegrationtypesServiceIDDTO {
 	cosmosdb = 'cosmosdb',
 	cassandradb = 'cassandradb',
 	redis = 'redis',
+	cloudsql = 'cloudsql',
 }
 export type CloudintegrationtypesCloudIntegrationServiceDTOAnyOf = {
 	/**
@@ -2842,9 +2874,14 @@ export interface CloudintegrationtypesCollectedMetricDTO {
 	unit?: string;
 }
 
+export interface CloudintegrationtypesGCPConnectionArtifactDTO {
+	[key: string]: unknown;
+}
+
 export interface CloudintegrationtypesConnectionArtifactDTO {
 	aws?: CloudintegrationtypesAWSConnectionArtifactDTO;
 	azure?: CloudintegrationtypesAzureConnectionArtifactDTO;
+	gcp?: CloudintegrationtypesGCPConnectionArtifactDTO;
 }
 
 export interface CloudintegrationtypesCredentialsDTO {
@@ -2875,6 +2912,10 @@ export interface CloudintegrationtypesDataCollectedDTO {
 	 * @type array,null
 	 */
 	metrics?: CloudintegrationtypesCollectedMetricDTO[] | null;
+}
+
+export interface CloudintegrationtypesGCPIntegrationConfigDTO {
+	[key: string]: unknown;
 }
 
 export interface CloudintegrationtypesGettableAccountWithConnectionArtifactDTO {
@@ -2968,6 +3009,7 @@ export type CloudintegrationtypesIntegrationConfigDTO =
 export interface CloudintegrationtypesProviderIntegrationConfigDTO {
 	aws?: CloudintegrationtypesAWSIntegrationConfigDTO;
 	azure?: CloudintegrationtypesAzureIntegrationConfigDTO;
+	gcp?: CloudintegrationtypesGCPIntegrationConfigDTO;
 }
 
 export interface CloudintegrationtypesGettableAgentCheckInDTO {
@@ -3030,6 +3072,7 @@ export interface CloudintegrationtypesGettableServicesMetadataDTO {
 export interface CloudintegrationtypesPostableAccountConfigDTO {
 	aws?: CloudintegrationtypesAWSPostableAccountConfigDTO;
 	azure?: CloudintegrationtypesAzureAccountConfigDTO;
+	gcp?: CloudintegrationtypesGCPAccountConfigDTO;
 }
 
 export interface CloudintegrationtypesPostableAccountDTO {
@@ -3159,9 +3202,25 @@ export interface CloudintegrationtypesUpdatableAzureAccountConfigDTO {
 	resourceGroups: string[];
 }
 
+export interface CloudintegrationtypesUpdatableGCPAccountConfigDTO {
+	/**
+	 * @type string
+	 */
+	deploymentProjectId: string;
+	/**
+	 * @type string
+	 */
+	deploymentRegion: string;
+	/**
+	 * @type array,null
+	 */
+	projectIds: string[] | null;
+}
+
 export interface CloudintegrationtypesUpdatableAccountConfigDTO {
 	aws?: CloudintegrationtypesAWSAccountConfigDTO;
 	azure?: CloudintegrationtypesUpdatableAzureAccountConfigDTO;
+	gcp?: CloudintegrationtypesUpdatableGCPAccountConfigDTO;
 }
 
 export interface CloudintegrationtypesUpdatableAccountDTO {
@@ -3271,37 +3330,6 @@ export interface DashboardLinkDTO {
 	url?: string;
 }
 
-export interface VariableDisplayDTO {
-	/**
-	 * @type string
-	 */
-	description?: string;
-	/**
-	 * @type boolean
-	 */
-	hidden?: boolean;
-	/**
-	 * @type string
-	 */
-	name?: string;
-}
-
-export interface DashboardTextVariableSpecDTO {
-	/**
-	 * @type boolean
-	 */
-	constant?: boolean;
-	display?: VariableDisplayDTO;
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type string
-	 */
-	value?: string;
-}
-
 export interface DashboardtypesAxesDTO {
 	/**
 	 * @type boolean
@@ -3333,6 +3361,9 @@ export interface DashboardtypesPanelFormattingDTO {
 	unit?: string;
 }
 
+export enum DashboardtypesLegendModeDTO {
+	list = 'list',
+}
 export enum DashboardtypesLegendPositionDTO {
 	bottom = 'bottom',
 	right = 'right',
@@ -3352,6 +3383,7 @@ export interface DashboardtypesLegendDTO {
 	 * @type object,null
 	 */
 	customColors?: DashboardtypesLegendDTOCustomColors;
+	mode?: DashboardtypesLegendModeDTO;
 	position?: DashboardtypesLegendPositionDTO;
 }
 
@@ -3363,7 +3395,7 @@ export interface DashboardtypesThresholdWithLabelDTO {
 	/**
 	 * @type string
 	 */
-	label: string;
+	label?: string;
 	/**
 	 * @type string
 	 */
@@ -3954,33 +3986,43 @@ export interface DashboardtypesDashboardDTO {
 	updatedBy?: string;
 }
 
-export enum DashboardtypesDatasourcePluginVariantStructDTOKind {
+export interface DashboardtypesDashboardPanelRefDTO {
+	/**
+	 * @type string
+	 */
+	dashboardId: string;
+	/**
+	 * @type string
+	 */
+	dashboardName: string;
+	/**
+	 * @type string
+	 */
+	panelId: string;
+	/**
+	 * @type string
+	 */
+	panelName: string;
+}
+
+export enum DashboardtypesDatasourcePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesSigNozDatasourceSpecDTOKind {
 	'signoz/Datasource' = 'signoz/Datasource',
 }
-export type DashboardtypesDatasourcePluginVariantStructDTOSpecAnyOf = {
+export interface DashboardtypesSigNozDatasourceSpecDTO {
 	[key: string]: unknown;
-};
+}
 
-/**
- * @nullable
- */
-export type DashboardtypesDatasourcePluginVariantStructDTOSpec =
-	DashboardtypesDatasourcePluginVariantStructDTOSpecAnyOf | null;
-
-export interface DashboardtypesDatasourcePluginVariantStructDTO {
+export interface DashboardtypesDatasourcePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesSigNozDatasourceSpecDTO {
 	/**
 	 * @enum signoz/Datasource
 	 * @type string
 	 */
-	kind: DashboardtypesDatasourcePluginVariantStructDTOKind;
-	/**
-	 * @type object,null
-	 */
-	spec: DashboardtypesDatasourcePluginVariantStructDTOSpec;
+	kind: DashboardtypesDatasourcePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesSigNozDatasourceSpecDTOKind;
+	spec: DashboardtypesSigNozDatasourceSpecDTO;
 }
 
 export type DashboardtypesDatasourcePluginDTO =
-	DashboardtypesDatasourcePluginVariantStructDTO;
+	DashboardtypesDatasourcePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesSigNozDatasourceSpecDTO;
 
 export interface DashboardtypesDatasourceSpecDTO {
 	/**
@@ -4030,10 +4072,12 @@ export enum DashboardtypesLineStyleDTO {
 export interface DashboardtypesSpanGapsDTO {
 	/**
 	 * @type string
+	 * @description The maximum gap size to connect when fillOnlyBelow is true. Gaps larger than this duration are left disconnected.
 	 */
 	fillLessThan?: string;
 	/**
 	 * @type boolean
+	 * @description Controls whether lines connect across null values. When false (default), all gaps are connected. When true, only gaps smaller than fillLessThan are connected.
 	 */
 	fillOnlyBelow?: boolean;
 }
@@ -4573,9 +4617,9 @@ export interface DashboardtypesPanelSpecDTO {
 	links?: DashboardLinkDTO[];
 	plugin: DashboardtypesPanelPluginDTO;
 	/**
-	 * @type array,null
+	 * @type array
 	 */
-	queries: DashboardtypesQueryDTO[] | null;
+	queries: DashboardtypesQueryDTO[];
 }
 
 export interface DashboardtypesPanelDTO {
@@ -4605,9 +4649,7 @@ export type DashboardtypesLayoutDTO =
 export enum DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpecDTOKind {
 	ListVariable = 'ListVariable',
 }
-export interface VariableDefaultValueDTO {
-	[key: string]: unknown;
-}
+export type DashboardtypesVariableDefaultValueDTO = string | string[];
 
 export enum DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDynamicVariableSpecDTOKind {
 	'signoz/DynamicVariable' = 'signoz/DynamicVariable',
@@ -4665,6 +4707,15 @@ export type DashboardtypesVariablePluginDTO =
 	| DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesQueryVariableSpecDTO
 	| DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesCustomVariableSpecDTO;
 
+export enum DashboardtypesListVariableSpecSortDTO {
+	none = 'none',
+	'alphabetical-asc' = 'alphabetical-asc',
+	'alphabetical-desc' = 'alphabetical-desc',
+	'numerical-asc' = 'numerical-asc',
+	'numerical-desc' = 'numerical-desc',
+	'alphabetical-ci-asc' = 'alphabetical-ci-asc',
+	'alphabetical-ci-desc' = 'alphabetical-ci-desc',
+}
 export interface DashboardtypesListVariableSpecDTO {
 	/**
 	 * @type boolean
@@ -4682,17 +4733,15 @@ export interface DashboardtypesListVariableSpecDTO {
 	 * @type string
 	 */
 	customAllValue?: string;
-	defaultValue?: VariableDefaultValueDTO;
+	defaultValue?: DashboardtypesVariableDefaultValueDTO;
 	display: DashboardtypesDisplayDTO;
 	/**
 	 * @type string
+	 * @minLength 1
 	 */
-	name?: string;
+	name: string;
 	plugin?: DashboardtypesVariablePluginDTO;
-	/**
-	 * @type string,null
-	 */
-	sort?: string | null;
+	sort?: DashboardtypesListVariableSpecSortDTO;
 }
 
 export interface DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpecDTO {
@@ -4704,21 +4753,38 @@ export interface DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDash
 	spec: DashboardtypesListVariableSpecDTO;
 }
 
-export enum DashboardtypesVariableEnvelopeGithubComPersesSpecGoDashboardTextVariableSpecDTOKind {
+export enum DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesTextVariableSpecDTOKind {
 	TextVariable = 'TextVariable',
 }
-export interface DashboardtypesVariableEnvelopeGithubComPersesSpecGoDashboardTextVariableSpecDTO {
+export interface DashboardtypesTextVariableSpecDTO {
+	/**
+	 * @type boolean
+	 */
+	constant?: boolean;
+	display: DashboardtypesDisplayDTO;
+	/**
+	 * @type string
+	 * @minLength 1
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	value: string;
+}
+
+export interface DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesTextVariableSpecDTO {
 	/**
 	 * @enum TextVariable
 	 * @type string
 	 */
-	kind: DashboardtypesVariableEnvelopeGithubComPersesSpecGoDashboardTextVariableSpecDTOKind;
-	spec: DashboardTextVariableSpecDTO;
+	kind: DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesTextVariableSpecDTOKind;
+	spec: DashboardtypesTextVariableSpecDTO;
 }
 
 export type DashboardtypesVariableDTO =
 	| DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpecDTO
-	| DashboardtypesVariableEnvelopeGithubComPersesSpecGoDashboardTextVariableSpecDTO;
+	| DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesTextVariableSpecDTO;
 
 export interface DashboardtypesDashboardSpecDTO {
 	/**
@@ -7174,6 +7240,13 @@ export interface MetricsexplorertypesMetricDashboardDTO {
 	widgetName: string;
 }
 
+export interface MetricsexplorertypesMetricDashboardPanelsResponseDTO {
+	/**
+	 * @type array,null
+	 */
+	dashboards: DashboardtypesDashboardPanelRefDTO[] | null;
+}
+
 export interface MetricsexplorertypesMetricDashboardsResponseDTO {
 	/**
 	 * @type array,null
@@ -7546,6 +7619,126 @@ export interface Querybuildertypesv5FormatOptionsDTO {
 	formatTableResultForUI?: boolean;
 }
 
+export interface TelemetrystoretypesEstimateEntryDTO {
+	/**
+	 * @type string
+	 */
+	database: string;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	marks: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	parts: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	rows: number;
+	/**
+	 * @type string
+	 */
+	table: string;
+}
+
+export interface TelemetrystoretypesIndexStepDTO {
+	/**
+	 * @type string
+	 */
+	condition: string;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	initialGranules: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	initialParts: number;
+	/**
+	 * @type array
+	 */
+	keys: string[];
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	selectedGranules: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	selectedParts: number;
+	/**
+	 * @type string
+	 */
+	type: string;
+}
+
+export interface TelemetrystoretypesMergeTreeReadDTO {
+	/**
+	 * @type array
+	 */
+	steps: TelemetrystoretypesIndexStepDTO[];
+	/**
+	 * @type string
+	 */
+	table: string;
+}
+
+export type TelemetrystoretypesGranulesDTOAnyOf = {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	initial: number;
+	/**
+	 * @type array
+	 */
+	reads: TelemetrystoretypesMergeTreeReadDTO[];
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	selected: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	skipped: number;
+};
+
+/**
+ * @nullable
+ */
+export type TelemetrystoretypesGranulesDTO =
+	TelemetrystoretypesGranulesDTOAnyOf | null;
+
+export interface Querybuildertypesv5PreviewStatementDTO {
+	/**
+	 * @type array
+	 */
+	'db.statement.args': unknown[];
+	/**
+	 * @type string
+	 */
+	'db.statement.query': string;
+	/**
+	 * @type array
+	 */
+	estimate: TelemetrystoretypesEstimateEntryDTO[];
+	granules: TelemetrystoretypesGranulesDTO | null;
+}
+
 export interface Querybuildertypesv5TimeSeriesDataDTO {
 	/**
 	 * @type array,null
@@ -7626,6 +7819,41 @@ export type Querybuildertypesv5QueryDataDTO =
 			 */
 			results?: unknown[] | null;
 	  });
+
+export interface Querybuildertypesv5QueryPreviewDTO {
+	error: unknown;
+	/**
+	 * @type array
+	 */
+	statements: Querybuildertypesv5PreviewStatementDTO[];
+	/**
+	 * @type boolean
+	 */
+	valid: boolean;
+	/**
+	 * @type array
+	 */
+	warnings: string[];
+}
+
+export type Querybuildertypesv5QueryRangePreviewResponseDTOCompositeQueryAnyOf =
+	{ [key: string]: Querybuildertypesv5QueryPreviewDTO };
+
+/**
+ * @nullable
+ */
+export type Querybuildertypesv5QueryRangePreviewResponseDTOCompositeQuery =
+	Querybuildertypesv5QueryRangePreviewResponseDTOCompositeQueryAnyOf | null;
+
+/**
+ * Response from the v5 query range preview (dry-run) endpoint. For each query in the composite query, returns the underlying ClickHouse statement(s) it renders to without executing them (one per PromQL metric selector; exactly one for builder/ClickHouse/trace-operator queries), with the optional EXPLAIN ESTIMATE and granule analysis attached per statement when requested.
+ */
+export interface Querybuildertypesv5QueryRangePreviewResponseDTO {
+	/**
+	 * @type object,null
+	 */
+	compositeQuery: Querybuildertypesv5QueryRangePreviewResponseDTOCompositeQuery;
+}
 
 export enum Querybuildertypesv5VariableTypeDTO {
 	query = 'query',
@@ -11455,6 +11683,22 @@ export type GetHosts200 = {
 	status: string;
 };
 
+export type GetMetricDashboardsV2Params = {
+	/**
+	 * @type string
+	 * @description The name of the metric. May contain slashes (e.g. cloud-provider metrics like run.googleapis.com/request_latencies).
+	 */
+	metricName: string;
+};
+
+export type GetMetricDashboardsV2200 = {
+	data: MetricsexplorertypesMetricDashboardPanelsResponseDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type GetFlamegraphPathParameters = {
 	traceID: string;
 };
@@ -11479,6 +11723,22 @@ export type GetWaterfallV4200 = {
 
 export type QueryRangeV5200 = {
 	data: Querybuildertypesv5QueryRangeResponseDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type QueryRangePreviewV5Params = {
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	verbose?: string;
+};
+
+export type QueryRangePreviewV5200 = {
+	data: Querybuildertypesv5QueryRangePreviewResponseDTO;
 	/**
 	 * @type string
 	 */

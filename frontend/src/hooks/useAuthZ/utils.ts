@@ -41,6 +41,11 @@ export function parsePermission(
 	return { relation: relation as AuthZRelation, object };
 }
 
+export function formatPermission(permission: BrandedPermission): string {
+	const { relation, object } = parsePermission(permission);
+	return `${relation}:${object}`;
+}
+
 const kindsByType = permissionsType.data.resources.reduce(
 	(acc, r) => {
 		if (!acc[r.type]) {

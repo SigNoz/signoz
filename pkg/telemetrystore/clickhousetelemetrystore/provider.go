@@ -9,6 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/types/telemetrystoretypes"
 	"go.opentelemetry.io/otel/metric"
 )
 
@@ -130,16 +131,29 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 		return nil, err
 	}
 
-	return &provider{
+	p := &provider{
 		settings:       settings,
 		clickHouseConn: chConn,
 		cluster:        config.Clickhouse.Cluster,
 		hooks:          hooks,
-	}, nil
+	}
+	return p, nil
 }
 
 func (p *provider) ClickhouseDB() clickhouse.Conn {
 	return p
+}
+
+func (p *provider) Estimate(ctx context.Context, stmt string, args ...any) ([]telemetrystoretypes.EstimateEntry, error) {
+	return RunExplainEstimate(ctx, p, stmt, args...)
+}
+
+func (p *provider) Plan(ctx context.Context, stmt string, args ...any) error {
+	return RunExplainPlan(ctx, p, stmt, args...)
+}
+
+func (p *provider) Indexes(ctx context.Context, stmt string, args ...any) (telemetrystoretypes.Granules, bool, error) {
+	return RunExplainIndexes(ctx, p, stmt, args...)
 }
 
 func (p *provider) Cluster() string {

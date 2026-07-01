@@ -52,6 +52,8 @@ function section(
 }
 
 const TWO_TITLED_SECTIONS = [section(0, 'Overview'), section(1, 'Latency')];
+// Index 0 is the untitled root (free-flow) section; index 1 is a titled section.
+const TITLED_WITH_ROOT = [section(0, undefined), section(1, 'Latency')];
 
 const baseArgs = {
 	panelId: 'panel-1',
@@ -175,6 +177,49 @@ describe('usePanelActionItems', () => {
 			fromLayoutIndex: 0,
 			toLayoutIndex: 1,
 		});
+	});
+
+	it('offers "Move out of section" for a panel in a titled section when an untitled root exists', () => {
+		const { result } = renderHook(() =>
+			usePanelActionItems({
+				...baseArgs,
+				panelActions: { currentLayoutIndex: 1, sections: TITLED_WITH_ROOT },
+			}),
+		);
+		expect(itemKeys(result.current)).toContain('move-to-root');
+	});
+
+	it('"Move out of section" moves the panel to the untitled root section', () => {
+		const { result } = renderHook(() =>
+			usePanelActionItems({
+				...baseArgs,
+				panelActions: { currentLayoutIndex: 1, sections: TITLED_WITH_ROOT },
+			}),
+		);
+		const moveOut = result.current.items.find(
+			(i) => 'key' in i && i.key === 'move-to-root',
+		);
+		(moveOut as { onClick: () => void }).onClick();
+		expect(mockMovePanel).toHaveBeenCalledWith({
+			panelId: 'panel-1',
+			fromLayoutIndex: 1,
+			toLayoutIndex: 0,
+		});
+	});
+
+	it('hides "Move out of section" when the panel already sits in the root section', () => {
+		const { result } = renderHook(() =>
+			usePanelActionItems({
+				...baseArgs,
+				panelActions: { currentLayoutIndex: 0, sections: TITLED_WITH_ROOT },
+			}),
+		);
+		expect(itemKeys(result.current)).not.toContain('move-to-root');
+	});
+
+	it('hides "Move out of section" when every section is titled (no root)', () => {
+		const { result } = renderHook(() => usePanelActionItems(baseArgs));
+		expect(itemKeys(result.current)).not.toContain('move-to-root');
 	});
 
 	it('delete defers to a confirmation: the item opens the dialog, confirm runs the mutation', async () => {

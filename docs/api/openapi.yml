@@ -1024,6 +1024,8 @@ components:
           $ref: '#/components/schemas/CloudintegrationtypesAWSAccountConfig'
         azure:
           $ref: '#/components/schemas/CloudintegrationtypesAzureAccountConfig'
+        gcp:
+          $ref: '#/components/schemas/CloudintegrationtypesGCPAccountConfig'
       type: object
     CloudintegrationtypesAgentReport:
       nullable: true
@@ -1169,6 +1171,8 @@ components:
           $ref: '#/components/schemas/CloudintegrationtypesAWSConnectionArtifact'
         azure:
           $ref: '#/components/schemas/CloudintegrationtypesAzureConnectionArtifact'
+        gcp:
+          $ref: '#/components/schemas/CloudintegrationtypesGCPConnectionArtifact'
       type: object
     CloudintegrationtypesCredentials:
       properties:
@@ -1198,6 +1202,46 @@ components:
             $ref: '#/components/schemas/CloudintegrationtypesCollectedMetric'
           nullable: true
           type: array
+      type: object
+    CloudintegrationtypesGCPAccountConfig:
+      properties:
+        deploymentProjectId:
+          type: string
+        deploymentRegion:
+          type: string
+        projectIds:
+          items:
+            type: string
+          type: array
+      required:
+      - deploymentProjectId
+      - deploymentRegion
+      - projectIds
+      type: object
+    CloudintegrationtypesGCPConnectionArtifact:
+      type: object
+    CloudintegrationtypesGCPIntegrationConfig:
+      type: object
+    CloudintegrationtypesGCPServiceConfig:
+      properties:
+        logs:
+          $ref: '#/components/schemas/CloudintegrationtypesGCPServiceLogsConfig'
+        metrics:
+          $ref: '#/components/schemas/CloudintegrationtypesGCPServiceMetricsConfig'
+      type: object
+    CloudintegrationtypesGCPServiceLogsConfig:
+      properties:
+        enabled:
+          type: boolean
+      required:
+      - enabled
+      type: object
+    CloudintegrationtypesGCPServiceMetricsConfig:
+      properties:
+        enabled:
+          type: boolean
+      required:
+      - enabled
       type: object
     CloudintegrationtypesGettableAccountWithConnectionArtifact:
       properties:
@@ -1331,6 +1375,8 @@ components:
           $ref: '#/components/schemas/CloudintegrationtypesAWSPostableAccountConfig'
         azure:
           $ref: '#/components/schemas/CloudintegrationtypesAzureAccountConfig'
+        gcp:
+          $ref: '#/components/schemas/CloudintegrationtypesGCPAccountConfig'
       type: object
     CloudintegrationtypesPostableAgentCheckIn:
       properties:
@@ -1355,6 +1401,8 @@ components:
           $ref: '#/components/schemas/CloudintegrationtypesAWSIntegrationConfig'
         azure:
           $ref: '#/components/schemas/CloudintegrationtypesAzureIntegrationConfig'
+        gcp:
+          $ref: '#/components/schemas/CloudintegrationtypesGCPIntegrationConfig'
       type: object
     CloudintegrationtypesService:
       properties:
@@ -1399,6 +1447,8 @@ components:
           $ref: '#/components/schemas/CloudintegrationtypesAWSServiceConfig'
         azure:
           $ref: '#/components/schemas/CloudintegrationtypesAzureServiceConfig'
+        gcp:
+          $ref: '#/components/schemas/CloudintegrationtypesGCPServiceConfig'
       type: object
     CloudintegrationtypesServiceDashboard:
       properties:
@@ -1441,6 +1491,7 @@ components:
       - cosmosdb
       - cassandradb
       - redis
+      - cloudsql
       type: string
     CloudintegrationtypesServiceMetadata:
       properties:
@@ -1502,6 +1553,8 @@ components:
           $ref: '#/components/schemas/CloudintegrationtypesAWSAccountConfig'
         azure:
           $ref: '#/components/schemas/CloudintegrationtypesUpdatableAzureAccountConfig'
+        gcp:
+          $ref: '#/components/schemas/CloudintegrationtypesUpdatableGCPAccountConfig'
       type: object
     CloudintegrationtypesUpdatableAzureAccountConfig:
       properties:
@@ -1511,6 +1564,22 @@ components:
           type: array
       required:
       - resourceGroups
+      type: object
+    CloudintegrationtypesUpdatableGCPAccountConfig:
+      properties:
+        deploymentProjectId:
+          type: string
+        deploymentRegion:
+          type: string
+        projectIds:
+          items:
+            type: string
+          nullable: true
+          type: array
+      required:
+      - deploymentProjectId
+      - deploymentRegion
+      - projectIds
       type: object
     CloudintegrationtypesUpdatableService:
       properties:
@@ -2553,17 +2622,6 @@ components:
         url:
           type: string
       type: object
-    DashboardTextVariableSpec:
-      properties:
-        constant:
-          type: boolean
-        display:
-          $ref: '#/components/schemas/VariableDisplay'
-        name:
-          type: string
-        value:
-          type: string
-      type: object
     DashboardtypesAxes:
       properties:
         isLogScale:
@@ -2673,6 +2731,22 @@ components:
         updatedBy:
           type: string
       type: object
+    DashboardtypesDashboardPanelRef:
+      properties:
+        dashboardId:
+          type: string
+        dashboardName:
+          type: string
+        panelId:
+          type: string
+        panelName:
+          type: string
+      required:
+      - dashboardId
+      - dashboardName
+      - panelId
+      - panelName
+      type: object
     DashboardtypesDashboardSpec:
       properties:
         datasources:
@@ -2745,24 +2819,23 @@ components:
     DashboardtypesDatasourcePlugin:
       discriminator:
         mapping:
-          signoz/Datasource: '#/components/schemas/DashboardtypesDatasourcePluginVariantStruct'
+          signoz/Datasource: '#/components/schemas/DashboardtypesDatasourcePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesSigNozDatasourceSpec'
         propertyName: kind
       oneOf:
-      - $ref: '#/components/schemas/DashboardtypesDatasourcePluginVariantStruct'
+      - $ref: '#/components/schemas/DashboardtypesDatasourcePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesSigNozDatasourceSpec'
       type: object
     DashboardtypesDatasourcePluginKind:
       enum:
       - signoz/Datasource
       type: string
-    DashboardtypesDatasourcePluginVariantStruct:
+    DashboardtypesDatasourcePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesSigNozDatasourceSpec:
       properties:
         kind:
           enum:
           - signoz/Datasource
           type: string
         spec:
-          nullable: true
-          type: object
+          $ref: '#/components/schemas/DashboardtypesSigNozDatasourceSpec'
       required:
       - kind
       - spec
@@ -2928,9 +3001,15 @@ components:
             type: string
           nullable: true
           type: object
+        mode:
+          $ref: '#/components/schemas/DashboardtypesLegendMode'
         position:
           $ref: '#/components/schemas/DashboardtypesLegendPosition'
       type: object
+    DashboardtypesLegendMode:
+      enum:
+      - list
+      type: string
     DashboardtypesLegendPosition:
       enum:
       - bottom
@@ -2977,19 +3056,30 @@ components:
         customAllValue:
           type: string
         defaultValue:
-          $ref: '#/components/schemas/VariableDefaultValue'
+          $ref: '#/components/schemas/DashboardtypesVariableDefaultValue'
         display:
           $ref: '#/components/schemas/DashboardtypesDisplay'
         name:
+          minLength: 1
           type: string
         plugin:
           $ref: '#/components/schemas/DashboardtypesVariablePlugin'
         sort:
-          nullable: true
-          type: string
+          $ref: '#/components/schemas/DashboardtypesListVariableSpecSort'
       required:
       - display
+      - name
       type: object
+    DashboardtypesListVariableSpecSort:
+      enum:
+      - none
+      - alphabetical-asc
+      - alphabetical-desc
+      - numerical-asc
+      - numerical-desc
+      - alphabetical-ci-asc
+      - alphabetical-ci-desc
+      type: string
     DashboardtypesListableDashboardForUserV2:
       properties:
         dashboards:
@@ -3287,7 +3377,6 @@ components:
         queries:
           items:
             $ref: '#/components/schemas/DashboardtypesQuery'
-          nullable: true
           type: array
       required:
       - display
@@ -3490,6 +3579,8 @@ components:
       required:
       - queryValue
       type: object
+    DashboardtypesSigNozDatasourceSpec:
+      type: object
     DashboardtypesSource:
       enum:
       - user
@@ -3499,8 +3590,13 @@ components:
     DashboardtypesSpanGaps:
       properties:
         fillLessThan:
+          description: The maximum gap size to connect when fillOnlyBelow is true.
+            Gaps larger than this duration are left disconnected.
           type: string
         fillOnlyBelow:
+          description: Controls whether lines connect across null values. When false
+            (default), all gaps are connected. When true, only gaps smaller than fillLessThan
+            are connected.
           type: boolean
       type: object
     DashboardtypesStorableDashboardData:
@@ -3548,6 +3644,22 @@ components:
       - color
       - columnName
       type: object
+    DashboardtypesTextVariableSpec:
+      properties:
+        constant:
+          type: boolean
+        display:
+          $ref: '#/components/schemas/DashboardtypesDisplay'
+        name:
+          minLength: 1
+          type: string
+        value:
+          type: string
+      required:
+      - display
+      - value
+      - name
+      type: object
     DashboardtypesThresholdFormat:
       enum:
       - text
@@ -3567,7 +3679,6 @@ components:
       required:
       - value
       - color
-      - label
       type: object
     DashboardtypesTimePreference:
       enum:
@@ -3652,24 +3763,18 @@ components:
       discriminator:
         mapping:
           ListVariable: '#/components/schemas/DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpec'
-          TextVariable: '#/components/schemas/DashboardtypesVariableEnvelopeGithubComPersesSpecGoDashboardTextVariableSpec'
+          TextVariable: '#/components/schemas/DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesTextVariableSpec'
         propertyName: kind
       oneOf:
       - $ref: '#/components/schemas/DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpec'
-      - $ref: '#/components/schemas/DashboardtypesVariableEnvelopeGithubComPersesSpecGoDashboardTextVariableSpec'
+      - $ref: '#/components/schemas/DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesTextVariableSpec'
       type: object
-    DashboardtypesVariableEnvelopeGithubComPersesSpecGoDashboardTextVariableSpec:
-      properties:
-        kind:
-          enum:
-          - TextVariable
+    DashboardtypesVariableDefaultValue:
+      oneOf:
+      - type: string
+      - items:
           type: string
-        spec:
-          $ref: '#/components/schemas/DashboardTextVariableSpec'
-      required:
-      - kind
-      - spec
-      type: object
+        type: array
     DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpec:
       properties:
         kind:
@@ -3678,6 +3783,18 @@ components:
           type: string
         spec:
           $ref: '#/components/schemas/DashboardtypesListVariableSpec'
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesTextVariableSpec:
+      properties:
+        kind:
+          enum:
+          - TextVariable
+          type: string
+        spec:
+          $ref: '#/components/schemas/DashboardtypesTextVariableSpec'
       required:
       - kind
       - spec
@@ -3755,15 +3872,12 @@ components:
         type:
           type: string
         url:
-          nullable: true
           type: string
       required:
       - type
       - code
       - message
-      - url
       - errors
-      - retry
       - suggestions
       type: object
     ErrorsResponseerroradditional:
@@ -3779,7 +3893,6 @@ components:
       - suggestions
       type: object
     ErrorsResponseretryjson:
-      nullable: true
       properties:
         delay:
           $ref: '#/components/schemas/TimeDuration'
@@ -5590,6 +5703,16 @@ components:
       - widgetId
       - widgetName
       type: object
+    MetricsexplorertypesMetricDashboardPanelsResponse:
+      properties:
+        dashboards:
+          items:
+            $ref: '#/components/schemas/DashboardtypesDashboardPanelRef'
+          nullable: true
+          type: array
+      required:
+      - dashboards
+      type: object
     MetricsexplorertypesMetricDashboardsResponse:
       properties:
         dashboards:
@@ -6158,6 +6281,25 @@ components:
       - asc
       - desc
       type: string
+    Querybuildertypesv5PreviewStatement:
+      properties:
+        db.statement.args:
+          items: {}
+          type: array
+        db.statement.query:
+          type: string
+        estimate:
+          items:
+            $ref: '#/components/schemas/TelemetrystoretypesEstimateEntry'
+          type: array
+        granules:
+          $ref: '#/components/schemas/TelemetrystoretypesGranules'
+      required:
+      - db.statement.query
+      - db.statement.args
+      - estimate
+      - granules
+      type: object
     Querybuildertypesv5PromQuery:
       properties:
         disabled:
@@ -6477,6 +6619,40 @@ components:
           $ref: '#/components/schemas/Querybuildertypesv5QueryType'
       required:
       - type
+      type: object
+    Querybuildertypesv5QueryPreview:
+      properties:
+        error: {}
+        statements:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5PreviewStatement'
+          type: array
+        valid:
+          type: boolean
+        warnings:
+          items:
+            type: string
+          type: array
+      required:
+      - valid
+      - error
+      - warnings
+      - statements
+      type: object
+    Querybuildertypesv5QueryRangePreviewResponse:
+      description: Response from the v5 query range preview (dry-run) endpoint. For
+        each query in the composite query, returns the underlying ClickHouse statement(s)
+        it renders to without executing them (one per PromQL metric selector; exactly
+        one for builder/ClickHouse/trace-operator queries), with the optional EXPLAIN
+        ESTIMATE and granule analysis attached per statement when requested.
+      properties:
+        compositeQuery:
+          additionalProperties:
+            $ref: '#/components/schemas/Querybuildertypesv5QueryPreview'
+          nullable: true
+          type: object
+      required:
+      - compositeQuery
       type: object
     Querybuildertypesv5QueryRangeRequest:
       description: Request body for the v5 query range endpoint. Supports builder
@@ -7828,6 +8004,96 @@ components:
       - key
       - value
       type: object
+    TelemetrystoretypesEstimateEntry:
+      properties:
+        database:
+          type: string
+        marks:
+          format: int64
+          type: integer
+        parts:
+          format: int64
+          type: integer
+        rows:
+          format: int64
+          type: integer
+        table:
+          type: string
+      required:
+      - database
+      - table
+      - parts
+      - rows
+      - marks
+      type: object
+    TelemetrystoretypesGranules:
+      nullable: true
+      properties:
+        initial:
+          format: int64
+          type: integer
+        reads:
+          items:
+            $ref: '#/components/schemas/TelemetrystoretypesMergeTreeRead'
+          type: array
+        selected:
+          format: int64
+          type: integer
+        skipped:
+          format: int64
+          type: integer
+      required:
+      - initial
+      - selected
+      - skipped
+      - reads
+      type: object
+    TelemetrystoretypesIndexStep:
+      properties:
+        condition:
+          type: string
+        initialGranules:
+          format: int64
+          type: integer
+        initialParts:
+          format: int64
+          type: integer
+        keys:
+          items:
+            type: string
+          type: array
+        name:
+          type: string
+        selectedGranules:
+          format: int64
+          type: integer
+        selectedParts:
+          format: int64
+          type: integer
+        type:
+          type: string
+      required:
+      - type
+      - name
+      - keys
+      - condition
+      - initialParts
+      - selectedParts
+      - initialGranules
+      - selectedGranules
+      type: object
+    TelemetrystoretypesMergeTreeRead:
+      properties:
+        steps:
+          items:
+            $ref: '#/components/schemas/TelemetrystoretypesIndexStep'
+          type: array
+        table:
+          type: string
+      required:
+      - table
+      - steps
+      type: object
     TelemetrytypesFieldContext:
       enum:
       - metric
@@ -8117,17 +8383,6 @@ components:
           type: string
       required:
       - id
-      type: object
-    VariableDefaultValue:
-      type: object
-    VariableDisplay:
-      properties:
-        description:
-          type: string
-        hidden:
-          type: boolean
-        name:
-          type: string
       type: object
     ZeustypesGettableHost:
       properties:
@@ -22763,6 +23018,75 @@ paths:
       summary: Put profile in Zeus for a deployment.
       tags:
       - zeus
+  /api/v3/metrics/dashboards:
+    get:
+      deprecated: false
+      description: This endpoint returns associated v2 dashboards for a specified
+        metric
+      operationId: GetMetricDashboardsV2
+      parameters:
+      - description: The name of the metric. May contain slashes (e.g. cloud-provider
+          metrics like run.googleapis.com/request_latencies).
+        in: query
+        name: metricName
+        required: true
+        schema:
+          description: The name of the metric. May contain slashes (e.g. cloud-provider
+            metrics like run.googleapis.com/request_latencies).
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/MetricsexplorertypesMetricDashboardPanelsResponse'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get metric dashboards (v2)
+      tags:
+      - metrics
   /api/v3/traces/{traceID}/flamegraph:
     post:
       deprecated: false
@@ -23299,6 +23623,75 @@ paths:
       - tokenizer:
         - VIEWER
       summary: Query range
+      tags:
+      - querier
+  /api/v5/query_range/preview:
+    post:
+      deprecated: false
+      description: 'Validate a composite query without executing it. Accepts the same
+        payload as the query range endpoint. By default (verbose=true) returns, for
+        each query, the rendered underlying ClickHouse statement(s) with each statement''s
+        EXPLAIN ESTIMATE (per-table parts/rows/marks) and granule index analysis (candidate/surviving
+        granules and the per-index pruning funnel). Pass ?verbose=false for the lightweight
+        per-query verdict (valid/error/warnings) with no rendered SQL and no ClickHouse
+        round trips. Intended for agentic/dry-run consumption: per-query errors are
+        reported in the response rather than failing the whole request.'
+      operationId: QueryRangePreviewV5
+      parameters:
+      - in: query
+        name: verbose
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Querybuildertypesv5QueryRangeRequest'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Querybuildertypesv5QueryRangePreviewResponse'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Query range preview
       tags:
       - querier
   /api/v5/substitute_vars:

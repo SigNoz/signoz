@@ -8,3 +8,11 @@
 	align-items: center;
 	gap: 9px;
 }
+
+// Wraps a tooltip-bearing option so the hover target fills the row and still receives
+// pointer events when the option is disabled (antd dims it but doesn't block events).
+.tooltipTrigger {
+	display: block;
+	width: 100%;
+	pointer-events: auto;
+}

@@ -4,7 +4,10 @@ import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
 import { Input } from 'antd';
 import type { DashboardLinkDTO } from 'api/generated/services/sigNoz.schemas';
-import type { SectionEditorProps } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/sections';
+import type {
+	SectionEditorProps,
+	SectionKind,
+} from 'pages/DashboardPageV2/DashboardContainer/Panels/types/sections';
 
 import styles from './ContextLinksSection.module.scss';
 
@@ -17,7 +20,7 @@ import styles from './ContextLinksSection.module.scss';
 function ContextLinksSection({
 	value,
 	onChange,
-}: SectionEditorProps<'contextLinks'>): JSX.Element {
+}: SectionEditorProps<SectionKind.ContextLinks>): JSX.Element {
 	const links = value ?? [];
 
 	const updateAt = (index: number, patch: Partial<DashboardLinkDTO>): void =>

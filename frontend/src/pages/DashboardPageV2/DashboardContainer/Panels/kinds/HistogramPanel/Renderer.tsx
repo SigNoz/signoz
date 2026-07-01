@@ -41,7 +41,7 @@ function HistogramPanelRenderer({
 	);
 
 	const builderQueries = useMemo(
-		() => getBuilderQueries(panel.spec.queries || []),
+		() => getBuilderQueries(panel.spec.queries),
 		[panel.spec.queries],
 	);
 
