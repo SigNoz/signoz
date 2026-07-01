@@ -33,6 +33,7 @@ def test_create_get_list_roundtrip(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
+    create_role: Callable[..., str],
 ):
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
@@ -41,14 +42,7 @@ def test_create_get_list_roundtrip(
         transaction_group("list", "metaresource", "dashboard", ["*"]),
         transaction_group("read", "metaresource", "rule", ["*"]),
     ]
-    resp = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/roles"),
-        json={"name": CRUD_ROLE_NAME, "description": "crud role", "transactionGroups": groups},
-        headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=5,
-    )
-    assert resp.status_code == HTTPStatus.CREATED, resp.text
-    role_id = resp.json()["data"]["id"]
+    role_id = create_role(admin_token, CRUD_ROLE_NAME, groups, "crud role")
 
     resp = requests.get(signoz.self.host_configs["8080"].get(f"/api/v1/roles/{role_id}"), headers={"Authorization": f"Bearer {admin_token}"}, timeout=5)
     assert resp.status_code == HTTPStatus.OK, resp.text
@@ -111,18 +105,12 @@ def test_update_changes_description(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
+    create_role: Callable[..., str],
 ):
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     groups = [transaction_group("read", "metaresource", "dashboard", ["*"])]
-    resp = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/roles"),
-        json={"name": "crud-desc-role", "description": "initial", "transactionGroups": groups},
-        headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=5,
-    )
-    assert resp.status_code == HTTPStatus.CREATED, resp.text
-    role_id = resp.json()["data"]["id"]
+    role_id = create_role(admin_token, "crud-desc-role", groups, "initial")
 
     resp = requests.put(
         signoz.self.host_configs["8080"].get(f"/api/v1/roles/{role_id}"),
@@ -197,17 +185,11 @@ def test_duplicate_name_conflict(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
+    create_role: Callable[..., str],
 ):
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    resp = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/roles"),
-        json={"name": "crud-dup-role", "transactionGroups": []},
-        headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=5,
-    )
-    assert resp.status_code == HTTPStatus.CREATED, resp.text
-    role_id = resp.json()["data"]["id"]
+    role_id = create_role(admin_token, "crud-dup-role")
 
     try:
         resp = requests.post(
@@ -247,20 +229,11 @@ def test_delete_role_with_assignee_guarded(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
+    create_role: Callable[..., str],
 ):
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    resp = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/roles"),
-        json={
-            "name": CRUD_ASSIGNEE_ROLE_NAME,
-            "transactionGroups": [transaction_group("read", "metaresource", "dashboard", ["*"])],
-        },
-        headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=5,
-    )
-    assert resp.status_code == HTTPStatus.CREATED, resp.text
-    role_id = resp.json()["data"]["id"]
+    role_id = create_role(admin_token, CRUD_ASSIGNEE_ROLE_NAME, [transaction_group("read", "metaresource", "dashboard", ["*"])])
 
     user_id = create_active_user(
         signoz,
@@ -300,17 +273,11 @@ def test_delete_removes_role(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
+    create_role: Callable[..., str],
 ):
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    resp = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/roles"),
-        json={"name": "crud-del-role", "transactionGroups": []},
-        headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=5,
-    )
-    assert resp.status_code == HTTPStatus.CREATED, resp.text
-    role_id = resp.json()["data"]["id"]
+    role_id = create_role(admin_token, "crud-del-role")
 
     resp = requests.delete(signoz.self.host_configs["8080"].get(f"/api/v1/roles/{role_id}"), headers={"Authorization": f"Bearer {admin_token}"}, timeout=5)
     assert resp.status_code == HTTPStatus.NO_CONTENT, resp.text

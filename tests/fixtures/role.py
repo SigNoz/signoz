@@ -25,6 +25,21 @@ def find_role_id(signoz: types.SigNoz) -> Callable[[str, str], str]:
     return _find
 
 
+@pytest.fixture(name="create_role", scope="function")
+def create_role(signoz: types.SigNoz) -> Callable[..., str]:
+    def _create(token: str, name: str, transaction_groups: list[dict] | None = None, description: str = "") -> str:
+        resp = requests.post(
+            signoz.self.host_configs["8080"].get("/api/v1/roles"),
+            json={"name": name, "description": description, "transactionGroups": transaction_groups or []},
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        )
+        assert resp.status_code == HTTPStatus.CREATED, resp.text
+        return resp.json()["data"]["id"]
+
+    return _create
+
+
 def transaction_group(relation: str, type_name: str, kind_name: str, selectors: list[str]) -> dict:
     return {"relation": relation, "objectGroup": {"resource": {"type": type_name, "kind": kind_name}, "selectors": selectors}}
 
