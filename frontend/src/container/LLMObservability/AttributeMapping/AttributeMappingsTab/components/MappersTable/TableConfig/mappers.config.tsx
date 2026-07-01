@@ -1,12 +1,11 @@
 import { Badge } from '@signozhq/ui/badge';
-import { Button } from '@signozhq/ui/button';
 import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
-import { Pencil, Trash2 } from '@signozhq/icons';
 import type { TableColumnDef } from 'components/TanStackTableView';
 import cx from 'classnames';
 
 import { DraftMapper, FieldContext } from '../../../../types';
+import MapperActionsMenu from '../MapperActionsMenu';
 import styles from './tableConfig.module.scss';
 
 const MAX_VISIBLE_SOURCES = 3;
@@ -103,30 +102,15 @@ export function getMappersColumns({
 			enableRemove: false,
 			cell: ({ row }): JSX.Element => (
 				<div className={styles.rowActions}>
-					<Button
-						variant="ghost"
-						color="secondary"
-						size="icon"
-						aria-label="Edit mapping"
-						onClick={(): void => onEdit(row)}
-						testId={`mapper-edit-${row.localId}`}
-					>
-						<Pencil size={14} />
-					</Button>
-					<Button
-						variant="ghost"
-						color="destructive"
-						size="icon"
-						aria-label="Delete mapping"
-						onClick={(): void => onRemove(row.localId)}
-						testId={`mapper-delete-${row.localId}`}
-					>
-						<Trash2 size={14} />
-					</Button>
 					<Switch
 						value={row.enabled}
 						onChange={(checked): void => onToggle(row.localId, checked)}
 						testId={`mapper-enabled-${row.localId}`}
+					/>
+					<MapperActionsMenu
+						mapper={row}
+						onEdit={onEdit}
+						onRemove={onRemove}
 					/>
 				</div>
 			),
