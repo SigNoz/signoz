@@ -1,13 +1,22 @@
-import MapperGroupsTable from './components/MapperGroupsTable';
-import { useAttributeMappingStore } from './hooks/useAttributeMappingStore';
+import { DraftGroup } from '../types';
 import styles from './AttributeMappingsTab.module.scss';
+import MapperGroupsTable from './components/MapperGroupsTable';
+import { AttributeMappingStore } from './hooks/useAttributeMappingStore';
 
-// "Attribute mappings" tab: the mapping-groups listing, its load/error states
-// and footer summary. Lives in its own tab so siblings (e.g. "Test") can be
-// added alongside without entangling this view's data fetching.
-function AttributeMappingsTab(): JSX.Element {
-	const store = useAttributeMappingStore();
+interface AttributeMappingsTabProps {
+	store: AttributeMappingStore;
+	onEditGroup: (group: DraftGroup) => void;
+	onAddGroup: () => void;
+}
 
+// "Attribute mappings" tab: the mapping-groups listing, its error state and
+// footer summary. The store is owned by the container (the header's save/
+// discard share it), so it's passed in rather than created here.
+function AttributeMappingsTab({
+	store,
+	onEditGroup,
+	onAddGroup,
+}: AttributeMappingsTabProps): JSX.Element {
 	return (
 		<div data-testid="attribute-mappings-tab">
 			{store.isError && (
@@ -16,7 +25,15 @@ function AttributeMappingsTab(): JSX.Element {
 				</div>
 			)}
 
-			<MapperGroupsTable store={store} />
+			<MapperGroupsTable
+				store={store}
+				onEditGroup={onEditGroup}
+				onAddGroup={onAddGroup}
+			/>
+
+			<footer className={styles.pageFooter}>
+				Showing {store.groups.length} group{store.groups.length === 1 ? '' : 's'}
+			</footer>
 		</div>
 	);
 }

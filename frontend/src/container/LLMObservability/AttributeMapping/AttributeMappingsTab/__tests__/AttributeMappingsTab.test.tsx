@@ -11,11 +11,28 @@ import {
 } from '../../__tests__/fixtures';
 import AttributeMappingsTab from '../AttributeMappingsTab';
 
+import { useAttributeMappingStore } from '../hooks/useAttributeMappingStore';
+
 function setupGroups(): void {
 	server.use(
 		rest.get(GROUPS_ENDPOINT, (_req, res, ctx) =>
 			res(ctx.status(200), ctx.json(makeGroupsResponse(mockGroups))),
 		),
+	);
+}
+
+// The tab is a presentational view over a store owned by the container, so the
+// harness creates the store (via the hook, backed by the mocked API) and wires
+// the edit/add callbacks the tab needs. This suite only exercises the listing,
+// so the callbacks are no-ops.
+function AttributeMappingHarness(): JSX.Element {
+	const store = useAttributeMappingStore();
+	return (
+		<AttributeMappingsTab
+			store={store}
+			onEditGroup={jest.fn()}
+			onAddGroup={jest.fn()}
+		/>
 	);
 }
 
@@ -30,7 +47,7 @@ describe('AttributeMappingsTab (integration)', () => {
 
 	it('renders no error banner on a successful load', async () => {
 		setupGroups();
-		render(<AttributeMappingsTab />);
+		render(<AttributeMappingHarness />);
 
 		await waitFor(() =>
 			expect(screen.getByTestId('group-name-group-1')).toBeInTheDocument(),
@@ -42,7 +59,7 @@ describe('AttributeMappingsTab (integration)', () => {
 		server.use(
 			rest.get(GROUPS_ENDPOINT, (_req, res, ctx) => res(ctx.status(500))),
 		);
-		render(<AttributeMappingsTab />);
+		render(<AttributeMappingHarness />);
 
 		await expect(screen.findByRole('alert')).resolves.toHaveTextContent(
 			'Failed to load mapping groups. Please try again.',
@@ -57,7 +74,7 @@ describe('AttributeMappingsTab (integration)', () => {
 				res(ctx.status(200), ctx.json(makeMappersResponse(mockMappers))),
 			),
 		);
-		render(<AttributeMappingsTab />);
+		render(<AttributeMappingHarness />);
 
 		await waitFor(() =>
 			expect(screen.getByTestId('group-name-group-1')).toBeInTheDocument(),

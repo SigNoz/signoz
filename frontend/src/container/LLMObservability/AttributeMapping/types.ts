@@ -1,7 +1,17 @@
 import {
 	SpantypesFieldContextDTO,
+	SpantypesSpanMapperDTO,
+	SpantypesSpanMapperGroupDTO,
 	SpantypesSpanMapperOperationDTO,
 } from 'api/generated/services/sigNoz.schemas';
+
+// Convenience aliases over the generated DTOs. The read-only listing consumes
+// the generated types directly, but the group-drawer form code reads better
+// against these domain names (and FieldContext is used as a value/enum).
+export type MapperGroup = SpantypesSpanMapperGroupDTO;
+export type Mapper = SpantypesSpanMapperDTO;
+export const FieldContext = SpantypesFieldContextDTO;
+export type FieldContextValue = SpantypesFieldContextDTO;
 
 // A single human-readable condition clause shown in the group's Filters column.
 export interface ConditionFilter {

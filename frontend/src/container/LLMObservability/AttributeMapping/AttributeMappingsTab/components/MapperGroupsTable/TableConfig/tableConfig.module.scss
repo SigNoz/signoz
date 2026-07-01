@@ -41,3 +41,9 @@
 .muted {
 	color: var(--l3-foreground);
 }
+
+.rowActions {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-3);
+}

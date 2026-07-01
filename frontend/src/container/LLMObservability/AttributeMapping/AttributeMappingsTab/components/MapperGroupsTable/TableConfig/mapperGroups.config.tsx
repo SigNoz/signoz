@@ -1,16 +1,28 @@
 import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
+import { Switch } from '@signozhq/ui/switch';
 import { ChevronDown, ChevronRight } from '@signozhq/icons';
 import type { TableColumnDef } from 'components/TanStackTableView';
 
 import type { DraftGroup } from '../../../../types';
 import { conditionFiltersFromGroup } from '../../../../utils';
+import MapperGroupActionsMenu from '../MapperGroupActionsMenu';
 import styles from './tableConfig.module.scss';
+
+interface ColumnsConfig {
+	onEditGroup: (group: DraftGroup) => void;
+	onRemoveGroup: (localId: string) => void;
+	onToggleGroup: (localId: string, enabled: boolean) => void;
+}
 
 // Column definitions for the mapping-groups TanStackTable. Sorting is off across
 // the board — the groups list API returns the full set unordered, so there's no
 // server-side ordering to back a sortable header yet.
-export function getMapperGroupsColumns(): TableColumnDef<DraftGroup>[] {
+export function getMapperGroupsColumns({
+	onEditGroup,
+	onRemoveGroup,
+	onToggleGroup,
+}: ColumnsConfig): TableColumnDef<DraftGroup>[] {
 	return [
 		{
 			id: 'name',
@@ -83,14 +95,26 @@ export function getMapperGroupsColumns(): TableColumnDef<DraftGroup>[] {
 			},
 		},
 		{
-			id: 'status',
-			header: 'Status',
-			width: { min: 120, ignoreLastColumnFill: true },
+			id: 'actions',
+			header: 'Actions',
+			// Compact, right-aligned action cluster — opt out of the "last column
+			// fills 100%" rule so the spare width flows into Group name / Filters.
+			width: { fixed: '160px', ignoreLastColumnFill: true },
 			enableMove: false,
+			enableRemove: false,
 			cell: ({ row }): JSX.Element => (
-				<Badge color={row.enabled ? 'forest' : 'vanilla'} variant="outline">
-					{row.enabled ? 'Enabled' : 'Disabled'}
-				</Badge>
+				<div className={styles.rowActions}>
+					<Switch
+						value={row.enabled}
+						onChange={(checked): void => onToggleGroup(row.localId, checked)}
+						testId={`group-enabled-${row.localId}`}
+					/>
+					<MapperGroupActionsMenu
+						group={row}
+						onEdit={onEditGroup}
+						onRemove={onRemoveGroup}
+					/>
+				</div>
 			),
 		},
 	];
