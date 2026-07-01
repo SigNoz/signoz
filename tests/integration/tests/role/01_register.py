@@ -8,7 +8,7 @@ from wiremock.resources.mappings import Mapping
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD, add_license
 from fixtures.role import (
-    expected_managed_grant_keys,
+    expected_managed_transaction_keys,
     flatten_transaction_groups,
     managed_role_names,
 )
@@ -63,7 +63,7 @@ def test_apply_license(
 
 
 @pytest.mark.parametrize("role_name", managed_role_names())
-def test_managed_role_grants_match_expected(
+def test_managed_role_transactions_match_expected(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
@@ -83,5 +83,5 @@ def test_managed_role_grants_match_expected(
     assert role["type"] == "managed"
 
     actual = flatten_transaction_groups(role.get("transactionGroups") or [])
-    expected = expected_managed_grant_keys(role_name)
-    assert actual == expected, f"{role_name} grants mismatch:\n  missing={expected - actual}\n  unexpected={actual - expected}"
+    expected = expected_managed_transaction_keys(role_name)
+    assert actual == expected, f"{role_name} transactions mismatch:\n  missing={expected - actual}\n  unexpected={actual - expected}"

@@ -1,11 +1,3 @@
-"""Resource-level FGA on service account endpoints, scoped to a specific SA id.
-
-Grants target one service account by id (serviceaccount selectors are the SA id),
-so the custom role can act on that SA but not another. list is collection-scoped
-(list on "*") and always returns every SA. Role assignment/removal is a dual
-check: it needs attach/detach on BOTH the SA id AND the role name.
-"""
-
 from collections.abc import Callable
 from http import HTTPStatus
 

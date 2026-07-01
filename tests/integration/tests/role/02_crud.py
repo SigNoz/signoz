@@ -57,7 +57,7 @@ def test_create_get_list_roundtrip(
     assert CRUD_ROLE_NAME in {r["name"] for r in resp.json()["data"]}
 
 
-def test_declarative_update_adds_and_removes_grants(
+def test_declarative_update_adds_and_removes_transactions(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
@@ -66,7 +66,7 @@ def test_declarative_update_adds_and_removes_grants(
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     role_id = find_role_id(admin_token, CRUD_ROLE_NAME)
 
-    def put_grants(groups: list[dict]) -> None:
+    def put_transactions(groups: list[dict]) -> None:
         resp = requests.put(
             signoz.self.host_configs["8080"].get(f"/api/v1/roles/{role_id}"),
             json={"description": "crud role", "transactionGroups": groups},
@@ -75,7 +75,7 @@ def test_declarative_update_adds_and_removes_grants(
         )
         assert resp.status_code == HTTPStatus.NO_CONTENT, resp.text
 
-    def current_grants() -> set:
+    def current_transactions() -> set:
         resp = requests.get(signoz.self.host_configs["8080"].get(f"/api/v1/roles/{role_id}"), headers={"Authorization": f"Bearer {admin_token}"}, timeout=5)
         assert resp.status_code == HTTPStatus.OK, resp.text
         return flatten_transaction_groups(resp.json()["data"]["transactionGroups"])
@@ -87,15 +87,15 @@ def test_declarative_update_adds_and_removes_grants(
         transaction_group("update", "metaresource", "dashboard", ["*"]),
         transaction_group("read", "metaresource", "rule", ["*"]),
     ]
-    put_grants(superset)
-    assert current_grants() == flatten_transaction_groups(superset)
+    put_transactions(superset)
+    assert current_transactions() == flatten_transaction_groups(superset)
 
     subset = [transaction_group("read", "metaresource", "dashboard", ["*"])]
-    put_grants(subset)
-    assert current_grants() == flatten_transaction_groups(subset)
+    put_transactions(subset)
+    assert current_transactions() == flatten_transaction_groups(subset)
 
-    put_grants([])
-    assert current_grants() == set()
+    put_transactions([])
+    assert current_transactions() == set()
 
     resp = requests.delete(signoz.self.host_configs["8080"].get(f"/api/v1/roles/{role_id}"), headers={"Authorization": f"Bearer {admin_token}"}, timeout=5)
     assert resp.status_code == HTTPStatus.NO_CONTENT, resp.text

@@ -1,4 +1,4 @@
-"""Fixtures and data helpers for role tests: role lookup, request-body builder, grant comparison, and the golden managed-role matrix."""
+"""Fixtures and helpers for role tests."""
 
 import json
 from collections.abc import Callable
@@ -53,19 +53,19 @@ def flatten_transaction_groups(groups: list[dict]) -> set[tuple[str, str, str, s
     return flat
 
 
-def load_managed_role_grants() -> dict[str, list[dict]]:
-    with open(get_testdata_file_path("role/managed_role_grants.json"), encoding="utf-8") as file:
+def load_managed_role_transactions() -> dict[str, list[dict]]:
+    with open(get_testdata_file_path("role/managed_role_transactions.json"), encoding="utf-8") as file:
         raw = json.load(file)
-    return {name: grants for name, grants in raw.items() if not name.startswith("_")}
+    return {name: transactions for name, transactions in raw.items() if not name.startswith("_")}
 
 
 def managed_role_names() -> set[str]:
-    return set(load_managed_role_grants().keys())
+    return set(load_managed_role_transactions().keys())
 
 
-def expected_managed_grant_keys(role_name: str) -> set[tuple[str, str, str, str]]:
+def expected_managed_transaction_keys(role_name: str) -> set[tuple[str, str, str, str]]:
     keys: set[tuple[str, str, str, str]] = set()
-    for grant in load_managed_role_grants()[role_name]:
-        for verb in grant["verbs"]:
-            keys.add((verb, grant["type"], grant["kind"], "*"))
+    for transaction in load_managed_role_transactions()[role_name]:
+        for verb in transaction["verbs"]:
+            keys.add((verb, transaction["type"], transaction["kind"], "*"))
     return keys
