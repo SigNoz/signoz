@@ -220,7 +220,8 @@ export function applyCheckboxToggle({
 			if (currentFilter) {
 				const runningOperator = currentFilter?.op;
 
-				// Indeterminate items get added to the existing operator (in or not in)
+				// Indeterminate items follow existing operator (IN or NOT IN)
+				// No filter for key defaults to IN (handled in else branch below)
 				if (previousState === 'indeterminate') {
 					if (isArray(currentFilter.value)) {
 						const newFilter = {
@@ -312,7 +313,28 @@ export function applyCheckboxToggle({
 								? currentFilter.value.includes(value)
 								: currentFilter.value === value;
 
-							if (!checked || !isValueInFilter) {
+							// When clicking unchecked "Other" item, user wants to SELECT it
+							// Replace NOT IN filter with IN [value]
+							if (previousState === 'unchecked' && checked) {
+								const newFilter: TagFilterItem = {
+									id: uuid(),
+									op: getOperatorValue(OPERATORS.IN),
+									key: filter.attributeKey,
+									value,
+								};
+								query.filters.items = query.filters.items.map((item) => {
+									if (isKeyMatch(item.key?.key, filter.attributeKey.key)) {
+										return newFilter;
+									}
+									return item;
+								});
+								if (query.filter?.expression) {
+									query.filter.expression = removeKeysFromExpression(
+										query.filter.expression,
+										[filter.attributeKey.key],
+									);
+								}
+							} else if (!checked || !isValueInFilter) {
 								// Add to NOT IN when:
 								// - checked=false (user explicitly unchecked to exclude)
 								// - checked=true but value not in filter (clicking "other" value to exclude)
@@ -428,9 +450,13 @@ export function applyCheckboxToggle({
 			}
 		} else {
 			// case  - when there is no filter for the current key that means all are selected right now.
+			// Indeterminate items use IN (select), others use NOT IN (exclude)
 			const newFilterItem: TagFilterItem = {
 				id: uuid(),
-				op: getNotInOperator(source),
+				op:
+					previousState === 'indeterminate'
+						? getOperatorValue(OPERATORS.IN)
+						: getNotInOperator(source),
 				key: filter.attributeKey,
 				value,
 			};

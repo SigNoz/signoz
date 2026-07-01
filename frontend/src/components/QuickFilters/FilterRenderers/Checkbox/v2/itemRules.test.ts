@@ -89,7 +89,7 @@ describe('itemRules', () => {
 			});
 		});
 
-		it('has query, not in related → orderIndex 2, other badge', () => {
+		it('has query, not in related → orderIndex 2, no badge', () => {
 			const ctx: ItemContext = {
 				isSelectedOnFilter: false,
 				isInRelatedValues: false,
@@ -101,14 +101,10 @@ describe('itemRules', () => {
 			const result = deriveItemConfig(ctx);
 
 			expect(result.orderIndex).toBe(2);
-			expect(result.badge).toStrictEqual({
-				key: 'other',
-				label: 'Other',
-				color: 'secondary',
-			});
+			expect(result.badge).toBeNull();
 		});
 
-		it('has query + filter for key, not selected, not in related → orderIndex 2, other badge', () => {
+		it('has query + filter for key, not selected, not in related → orderIndex 2, no badge', () => {
 			const ctx: ItemContext = {
 				isSelectedOnFilter: false,
 				isInRelatedValues: false,
@@ -120,11 +116,7 @@ describe('itemRules', () => {
 			const result = deriveItemConfig(ctx);
 
 			expect(result.orderIndex).toBe(2);
-			expect(result.badge).toStrictEqual({
-				key: 'other',
-				label: 'Other',
-				color: 'secondary',
-			});
+			expect(result.badge).toBeNull();
 		});
 
 		it('no query but has filter for key, not selected → fallback to checked (DEFAULT_CONFIG)', () => {
