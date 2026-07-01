@@ -994,8 +994,8 @@ function Success(props: ISuccessProps): JSX.Element {
 										transform: `translateY(${virtualRow.start}px)`,
 									}}
 									data-span-id={span.span_id}
-									onMouseEnter={(): void => handleRowMouseEnter(span.span_id)}
-									onMouseLeave={handleRowMouseLeave}
+									onMouseEnter={(): void => applyHoverClass(span.span_id)}
+									onMouseLeave={(): void => applyHoverClass(null)}
 									onClick={(): void => handleSpanClick(span)}
 								>
 									{span.response_status_code && (
