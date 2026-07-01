@@ -16,6 +16,7 @@ import { getPanelDefinition } from '../DashboardContainer/Panels/registry';
 import { buildPluginSpec } from '../DashboardContainer/Panels/utils/buildPluginSpec';
 import { buildDefaultQueries } from '../DashboardContainer/Panels/utils/buildDefaultQueries';
 import PanelEditorContainer from '../DashboardContainer/PanelEditor';
+import type { PanelEditorHandoffState } from '../DashboardContainer/PanelEditor/panelEditorHandoff';
 import {
 	parseNewPanelKind,
 	parseNewPanelLayoutIndex,
@@ -32,8 +33,12 @@ function PanelEditorPage(): JSX.Element {
 		dashboardId: string;
 		panelId: string;
 	}>();
-	const { search } = useLocation();
+	const { search, state } = useLocation();
 	const { safeNavigate } = useSafeNavigate();
+
+	// Edits handed off from the View modal's drilldown — open the editor on these
+	// instead of the saved panel. Lost on refresh/new-tab, which falls back to saved.
+	const handoffSpec = (state as PanelEditorHandoffState | null)?.editSpec;
 
 	const { data, isLoading, isError, error } = useGetDashboardV2({
 		id: dashboardId,
@@ -44,17 +49,20 @@ function PanelEditorPage(): JSX.Element {
 	// kind rather than looking one up. Persisted (with a real id) only on save.
 	const newKind = parseNewPanelKind(panelId, search);
 	const existingPanel = dashboard?.spec.panels[panelId];
-	const panel = useMemo(
-		() =>
-			newKind
-				? createDefaultPanel(
-						newKind,
-						buildPluginSpec(getPanelDefinition(newKind).sections),
-						buildDefaultQueries(newKind),
-					)
-				: existingPanel,
-		[newKind, existingPanel],
-	);
+	const panel = useMemo(() => {
+		if (newKind) {
+			return createDefaultPanel(
+				newKind,
+				buildPluginSpec(getPanelDefinition(newKind).sections),
+				buildDefaultQueries(newKind),
+			);
+		}
+		if (!existingPanel) {
+			return undefined;
+		}
+		// Open on the modal's drilldown edits when handed off; else the saved panel.
+		return handoffSpec ? { ...existingPanel, spec: handoffSpec } : existingPanel;
+	}, [newKind, existingPanel, handoffSpec]);
 
 	// Target section for a newly-created panel (set by the "Add panel" trigger).
 	const layoutIndex = parseNewPanelLayoutIndex(search);
