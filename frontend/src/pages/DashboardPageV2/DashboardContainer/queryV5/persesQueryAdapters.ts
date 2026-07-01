@@ -74,14 +74,14 @@ export function deriveQueryType(
 }
 
 /**
- * Perses panel queries → V1 `Query` (to seed the query builder), via the V5 envelope
- * list + `mapQueryDataFromApi`. An empty panel opens on a fresh metrics builder query.
+ * V5 query-envelope list → V1 `Query`, via `mapQueryDataFromApi`. An empty list opens
+ * on a fresh metrics builder query. Used by `fromPerses` and by the envelopes a
+ * `/substitute_vars` round-trip returns with dashboard variables resolved.
  */
-export function fromPerses(
-	queries: DashboardtypesQueryDTO[],
+export function envelopesToQuery(
+	envelopes: Querybuildertypesv5QueryEnvelopeDTO[],
 	panelType: PANEL_TYPES,
 ): Query {
-	const envelopes = toQueryEnvelopes(queries);
 	if (envelopes.length === 0) {
 		return initialQueriesMap[DataSource.METRICS];
 	}
@@ -97,6 +97,17 @@ export function fromPerses(
 	};
 
 	return mapQueryDataFromApi(composite);
+}
+
+/**
+ * Perses panel queries → V1 `Query` (to seed the query builder), via the V5 envelope
+ * list + `mapQueryDataFromApi`. An empty panel opens on a fresh metrics builder query.
+ */
+export function fromPerses(
+	queries: DashboardtypesQueryDTO[],
+	panelType: PANEL_TYPES,
+): Query {
+	return envelopesToQuery(toQueryEnvelopes(queries), panelType);
 }
 
 /**

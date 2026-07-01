@@ -1,10 +1,13 @@
-import type { DashboardtypesQueryDTO } from 'api/generated/services/sigNoz.schemas';
+import type {
+	DashboardtypesQueryDTO,
+	Querybuildertypesv5QueryEnvelopeDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 
-import { fromPerses, toPerses } from '../persesQueryAdapters';
+import { envelopesToQuery, fromPerses, toPerses } from '../persesQueryAdapters';
 
 /** A bare perses query (single plugin, not wrapped in a CompositeQuery). */
 function bareQuery(
@@ -54,6 +57,26 @@ describe('persesQueryAdapters', () => {
 			];
 			expect(fromPerses(queries, PANEL_TYPES.TIME_SERIES).queryType).toBe(
 				EQueryType.CLICKHOUSE,
+			);
+		});
+	});
+
+	describe('envelopesToQuery', () => {
+		it('returns the metrics default for an empty envelope list', () => {
+			expect(envelopesToQuery([], PANEL_TYPES.TIME_SERIES)).toStrictEqual(
+				initialQueriesMap[DataSource.METRICS],
+			);
+		});
+
+		it('maps a promql envelope to a PromQL query', () => {
+			const envelopes: Querybuildertypesv5QueryEnvelopeDTO[] = [
+				{
+					type: 'promql',
+					spec: { name: 'A', query: 'up', disabled: false },
+				} as unknown as Querybuildertypesv5QueryEnvelopeDTO,
+			];
+			expect(envelopesToQuery(envelopes, PANEL_TYPES.TIME_SERIES).queryType).toBe(
+				EQueryType.PROM,
 			);
 		});
 	});
