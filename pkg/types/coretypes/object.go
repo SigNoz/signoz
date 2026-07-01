@@ -46,18 +46,33 @@ func MustNewObject(resource ResourceRef, inputSelector string) *Object {
 }
 
 func MustNewObjectFromString(input string) *Object {
+	typeParts := strings.SplitN(input, ":", 2)
+	if len(typeParts) != 2 {
+		panic(errors.Newf(errors.TypeInternal, errors.CodeInternal, "invalid type format: %s", input))
+	}
+
+	typed := MustNewType(typeParts[0])
+
+	// The organization resource is the root entity and encodes its object as
+	// "organization:organization/<selector>" — without the orgID and kind
+	// segments used by every other resource ("<type>:organization/<orgID>/<kind>/<selector>").
+	if typed.Equals(TypeOrganization) {
+		orgParts := strings.Split(typeParts[1], "/")
+		if len(orgParts) != 2 {
+			panic(errors.Newf(errors.TypeInternal, errors.CodeInternal, "invalid input format: %s", input))
+		}
+
+		resource := ResourceRef{Type: typed, Kind: MustNewKind(orgParts[0])}
+		return &Object{Resource: resource, Selector: typed.MustSelector(orgParts[1])}
+	}
+
 	parts := strings.Split(input, "/")
 	if len(parts) != 4 {
 		panic(errors.Newf(errors.TypeInternal, errors.CodeInternal, "invalid input format: %s", input))
 	}
 
-	typeParts := strings.Split(parts[0], ":")
-	if len(typeParts) != 2 {
-		panic(errors.Newf(errors.TypeInternal, errors.CodeInternal, "invalid type format: %s", parts[0]))
-	}
-
 	resource := ResourceRef{
-		Type: MustNewType(typeParts[0]),
+		Type: typed,
 		Kind: MustNewKind(parts[2]),
 	}
 
