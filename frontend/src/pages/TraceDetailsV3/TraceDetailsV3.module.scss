@@ -98,6 +98,13 @@
 	flex-direction: column;
 	overflow: hidden;
 
+	// The flamegraph's ResizableBox above renders a 1px resize handle at its
+	// bottom edge; drop the header's own top border so the two don't stack
+	// into a double border at the flamegraph/waterfall juncture.
+	:global(.ant-collapse-header) {
+		border-top: none;
+	}
+
 	:global(.ant-collapse-item) {
 		flex: 1;
 		display: flex;
