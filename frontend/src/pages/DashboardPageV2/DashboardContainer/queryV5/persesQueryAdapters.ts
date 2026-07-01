@@ -81,7 +81,7 @@ export function fromPerses(
 	queries: DashboardtypesQueryDTO[],
 	panelType: PANEL_TYPES,
 ): Query {
-	const envelopes = toQueryEnvelopes(queries ?? []);
+	const envelopes = toQueryEnvelopes(queries);
 	if (envelopes.length === 0) {
 		return initialQueriesMap[DataSource.METRICS];
 	}

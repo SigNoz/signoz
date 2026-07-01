@@ -13,8 +13,9 @@ import ROUTES from 'constants/routes';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
+import TagKeyValueInput from 'components/TagKeyValueInput/TagKeyValueInput';
 
-import { toPostableTags } from '../../utils';
+import { keyValueStringsToTags } from '../../utils/helpers';
 
 import styles from './NewDashboardModal.module.scss';
 
@@ -30,7 +31,7 @@ function BlankDashboardPanel({ onClose }: Props): JSX.Element {
 
 	const [name, setName] = useState(DEFAULT_NAME);
 	const [description, setDescription] = useState('');
-	const [tags, setTags] = useState('');
+	const [tags, setTags] = useState<string[]>([]);
 	const [submitting, setSubmitting] = useState(false);
 
 	const canSubmit = name.trim().length > 0 && !submitting;
@@ -42,7 +43,7 @@ function BlankDashboardPanel({ onClose }: Props): JSX.Element {
 		try {
 			setSubmitting(true);
 			logEvent('Dashboard List: Create dashboard clicked', {});
-			const postableTags = toPostableTags(tags);
+			const postableTags = keyValueStringsToTags(tags);
 			const created = await createDashboardV2({
 				schemaVersion: 'v6',
 				generateName: true,
@@ -72,7 +73,7 @@ function BlankDashboardPanel({ onClose }: Props): JSX.Element {
 			<div className={styles.form}>
 				<div className={styles.field}>
 					<Typography.Text className={styles.label}>
-						Title <span className={styles.required}>*</span>
+						Title <Typography.Text className={styles.required}>*</Typography.Text>
 					</Typography.Text>
 					<Input
 						value={name}
@@ -104,16 +105,14 @@ function BlankDashboardPanel({ onClose }: Props): JSX.Element {
 
 				<div className={styles.field}>
 					<Typography.Text className={styles.label}>Tags</Typography.Text>
-					<Input
-						value={tags}
-						placeholder="team:jarvis, prod"
+					<TagKeyValueInput
+						tags={tags}
+						onTagsChange={setTags}
+						placeholder="team:jarvis (press Enter)"
 						testId="create-dashboard-tags"
-						onChange={(e: ChangeEvent<HTMLInputElement>): void =>
-							setTags(e.target.value)
-						}
 					/>
 					<Typography.Text className={styles.hint}>
-						Comma-separated. Use key:value (e.g. team:jarvis) or a single label.
+						Use key:value (e.g. team:jarvis) and press Enter to add.
 					</Typography.Text>
 				</div>
 			</div>

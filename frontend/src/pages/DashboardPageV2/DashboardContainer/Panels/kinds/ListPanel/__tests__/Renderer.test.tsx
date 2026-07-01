@@ -20,7 +20,7 @@ function panelWith(
 ): PanelOfKind<'signoz/ListPanel'> {
 	return {
 		kind: 'Panel',
-		spec: { plugin: { kind: 'signoz/ListPanel', spec } },
+		spec: { plugin: { kind: 'signoz/ListPanel', spec }, queries: [] },
 	} as unknown as PanelOfKind<'signoz/ListPanel'>;
 }
 

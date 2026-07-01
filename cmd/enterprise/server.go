@@ -177,9 +177,11 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 				return nil, err
 			}
 			azureCloudProviderModule := implcloudprovider.NewAzureCloudProvider(defStore)
+			gcpCloudProviderModule := implcloudprovider.NewGCPCloudProvider(defStore)
 			cloudProvidersMap := map[cloudintegrationtypes.CloudProviderType]cloudintegration.CloudProviderModule{
 				cloudintegrationtypes.CloudProviderTypeAWS:   awsCloudProviderModule,
 				cloudintegrationtypes.CloudProviderTypeAzure: azureCloudProviderModule,
+				cloudintegrationtypes.CloudProviderTypeGCP:   gcpCloudProviderModule,
 			}
 
 			return implcloudintegration.NewModule(pkgcloudintegration.NewStore(sqlStore), dashboardModule, global, zeus, gateway, licensing, serviceAccount, cloudProvidersMap, config)
