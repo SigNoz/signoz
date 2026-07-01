@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
@@ -13,6 +14,10 @@ const (
 	FieldContextDataTypesDocURL = "https://signoz.io/docs/userguide/field-context-data-types/"
 	// KeyNotFoundDocURL documents the "key not found" error.
 	KeyNotFoundDocURL = "https://signoz.io/docs/userguide/search-troubleshooting/#key-fieldname-not-found"
+
+	// Doc URLs for the has/hasAny/hasAll and hasToken "unsupported" errors.
+	functionBodyJSONSearchDocURL = "https://signoz.io/docs/userguide/search-troubleshooting/#function-supports-only-body-json-search"
+	hasTokenFunctionDocURL       = "https://signoz.io/docs/userguide/functions-reference/#hastoken-function"
 )
 
 // ResolveKeys picks which matching field keys a filter term builds conditions for.
@@ -61,4 +66,17 @@ func ResolveKeys(field *telemetrytypes.TelemetryFieldKey, fieldKeysForName []*te
 // references a key it has no matching field key for.
 func NewKeyNotFoundError(name string) error {
 	return errors.NewInvalidInputf(errors.CodeInvalidInput, "key `%s` not found", name).WithUrl(KeyNotFoundDocURL)
+}
+
+// NewFunctionUnsupportedError returns the error for a has/hasAny/hasAll/hasToken operator
+// on a builder that doesn't support it (logs body only), or nil for other operators.
+func NewFunctionUnsupportedError(operator qbtypes.FilterOperator) error {
+	switch operator {
+	case qbtypes.FilterOperatorHasToken:
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "function `hasToken` only supports body field as first parameter").WithUrl(hasTokenFunctionDocURL)
+	case qbtypes.FilterOperatorHas, qbtypes.FilterOperatorHasAny, qbtypes.FilterOperatorHasAll:
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "function `%s` supports only body JSON search", operator.FunctionName()).WithUrl(functionBodyJSONSearchDocURL)
+	default:
+		return nil
+	}
 }

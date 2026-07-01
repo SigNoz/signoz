@@ -40,17 +40,6 @@ func isBodyJSONSearch(key *telemetrytypes.TelemetryFieldKey, columns []*schema.C
 	return false
 }
 
-func arrayFunctionName(operator qbtypes.FilterOperator) string {
-	switch operator {
-	case qbtypes.FilterOperatorHasAny:
-		return "hasAny"
-	case qbtypes.FilterOperatorHasAll:
-		return "hasAll"
-	default:
-		return "has"
-	}
-}
-
 // conditionForArrayFunction builds `has/hasAny/hasAll(<arrayFieldExpr>, value)` over a
 // body JSON array field. The field expression uses the JSON accessor (flag on) or
 // legacy string extraction (flag off); value[0] is the needle.
@@ -65,7 +54,7 @@ func (c *conditionBuilder) conditionForArrayFunction(
 ) (string, error) {
 	if !isBodyJSONSearch(key, columns) {
 		return "", errors.NewInvalidInputf(errors.CodeInvalidInput,
-			"function `%s` supports only body JSON search", arrayFunctionName(operator)).WithUrl(functionBodyJSONSearchDocURL)
+			"function `%s` supports only body JSON search", operator.FunctionName()).WithUrl(functionBodyJSONSearchDocURL)
 	}
 
 	needle := value
@@ -85,7 +74,7 @@ func (c *conditionBuilder) conditionForArrayFunction(
 		fieldExpr, _ = GetBodyJSONKey(ctx, key, qbtypes.FilterOperatorUnknown, value)
 	}
 
-	return fmt.Sprintf("%s(%s, %s)", arrayFunctionName(operator), fieldExpr, sb.Var(needle)), nil
+	return fmt.Sprintf("%s(%s, %s)", operator.FunctionName(), fieldExpr, sb.Var(needle)), nil
 }
 
 // conditionForHasToken builds `hasToken(LOWER(<bodyColumn>), LOWER(<needle>))`, a

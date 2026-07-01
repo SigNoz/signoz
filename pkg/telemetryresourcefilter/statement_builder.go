@@ -165,12 +165,11 @@ func (b *resourceFilterStatementBuilder[T]) addConditions(
 			FieldKeys:          keys,
 			FullTextColumn:     b.fullTextColumn,
 			SkipFullTextFilter: true,
-			SkipFunctionCalls:  true,
-			// the resource-filter condition builder ignores keys it can't resolve, so
-			// no "key not found" error arises here.
+			// the resource-filter condition builder ignores keys it can't resolve (and
+			// skips function calls), so no "key not found" error arises here.
 			Variables: variables,
-			StartNs:            start,
-			EndNs:              end,
+			StartNs:   start,
+			EndNs:     end,
 		})
 
 		if err != nil {

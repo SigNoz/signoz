@@ -54,6 +54,12 @@ func (b *defaultConditionBuilder) ConditionFor(
 	sb *sqlbuilder.SelectBuilder,
 ) ([]string, []string, error) {
 
+	// has/hasAny/hasAll/hasToken are logs-body-only functions; they never apply to the
+	// resource fingerprint table, so skip them (the main query still evaluates them).
+	if op.IsFunctionOperator() {
+		return nil, nil, nil
+	}
+
 	keys, warning := querybuilder.ResolveKeys(key, fieldKeysForName)
 	var warnings []string
 	if warning != "" {

@@ -36,7 +36,6 @@ type filterExpressionVisitor struct {
 	fullTextColumn     *telemetrytypes.TelemetryFieldKey
 	skipResourceFilter bool
 	skipFullTextFilter bool
-	skipFunctionCalls  bool
 	variables          map[string]qbtypes.VariableItem
 
 	keysWithWarnings map[string]bool
@@ -54,7 +53,6 @@ type FilterExprVisitorOpts struct {
 	FullTextColumn     *telemetrytypes.TelemetryFieldKey
 	SkipResourceFilter bool
 	SkipFullTextFilter bool
-	SkipFunctionCalls  bool
 	Variables          map[string]qbtypes.VariableItem
 	StartNs            uint64
 	EndNs              uint64
@@ -71,7 +69,6 @@ func newFilterExpressionVisitor(opts FilterExprVisitorOpts) *filterExpressionVis
 		fullTextColumn:     opts.FullTextColumn,
 		skipResourceFilter: opts.SkipResourceFilter,
 		skipFullTextFilter: opts.SkipFullTextFilter,
-		skipFunctionCalls:  opts.SkipFunctionCalls,
 		variables:          opts.Variables,
 		keysWithWarnings:   make(map[string]bool),
 		startNs:            opts.StartNs,
@@ -699,10 +696,6 @@ func (v *filterExpressionVisitor) VisitFullText(ctx *grammar.FullTextContext) an
 
 // VisitFunctionCall handles function calls like has(), hasAny(), etc.
 func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallContext) any {
-	if v.skipFunctionCalls {
-		return SkipConditionLiteral
-	}
-
 	// Get function name based on which token is present
 	var functionName string
 	var operator qbtypes.FilterOperator
@@ -743,6 +736,9 @@ func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallCon
 		return ErrorConditionLiteral
 	}
 
+	if len(conds) == 0 {
+		return SkipConditionLiteral
+	}
 	if len(conds) == 1 {
 		return conds[0]
 	}

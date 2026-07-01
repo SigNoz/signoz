@@ -691,13 +691,12 @@ func TestVisitKey(t *testing.T) {
 // This suite exercises the visitor with two different configurations
 // side-by-side for each expression, asserting both expected outputs:
 //
-//   resourceConditionBuilder (wantRSB) — returns TrueConditionLiteral for
-//   non-resource keys and "{name}_cond" for resource keys (x, y, z).
-//   Opts: SkipFullTextFilter:true, SkipFunctionCalls:true, IgnoreNotFoundKeys:true.
+//   resourceConditionBuilder (wantRSB) — produces "{name}_cond" only for resource
+//   keys (x, y, z); non-resource keys, unknown keys, and function calls yield no
+//   condition. Opts: SkipFullTextFilter:true.
 //
 //   conditionBuilder (wantSB) — returns "{name}_cond" for every key regardless
-//   of FieldContext. Opts: SkipFullTextFilter:false, SkipFunctionCalls:false,
-//   IgnoreNotFoundKeys:false, FullTextColumn:bodyCol.
+//   of FieldContext. Opts: SkipFullTextFilter:false, FullTextColumn:bodyCol.
 //
 // Key behavioral rules:
 //
@@ -751,10 +750,15 @@ func (b *resourceConditionBuilder) ConditionFor(
 	_ uint64,
 	key *telemetrytypes.TelemetryFieldKey,
 	fieldKeysForName []*telemetrytypes.TelemetryFieldKey,
-	_ qbtypes.FilterOperator,
+	operator qbtypes.FilterOperator,
 	_ any,
 	_ *sqlbuilder.SelectBuilder,
 ) ([]string, []string, error) {
+
+	// mirror the real resource builder: function operators never apply to resources
+	if operator.IsFunctionOperator() {
+		return nil, nil, nil
+	}
 
 	keys, warning := ResolveKeys(key, fieldKeysForName)
 	var warnings []string
@@ -816,8 +820,8 @@ func (b *conditionBuilder) ConditionFor(
 // visitComparisonCase is a single test case for the TestVisitComparison_* family.
 // Each case is run under two independent configurations:
 //
-//   - rsbOpts (resourceConditionBuilder): skips full-text and function calls,
-//     ignores unknown keys, produces conditions only for resource-context keys.
+//   - rsbOpts (resourceConditionBuilder): skips full-text; its builder skips function
+//     calls and unknown keys, producing conditions only for resource-context keys.
 //
 //   - sbOpts (conditionBuilder): skips resource-context keys (unless OR is present),
 //     evaluates full-text, errors on unknown keys.
@@ -853,7 +857,6 @@ func visitComparisonOpts(t *testing.T) (rsbOpts, sbOpts FilterExprVisitorOpts) {
 		Variables:          allVariable,
 		SkipResourceFilter: false,
 		SkipFullTextFilter: true,
-		SkipFunctionCalls:  true,
 	}
 	sbOpts = FilterExprVisitorOpts{
 		Context:            t.Context(),
@@ -862,7 +865,6 @@ func visitComparisonOpts(t *testing.T) (rsbOpts, sbOpts FilterExprVisitorOpts) {
 		Variables:          allVariable,
 		SkipResourceFilter: true,
 		SkipFullTextFilter: false,
-		SkipFunctionCalls:  false,
 		FullTextColumn:     bodyCol,
 	}
 	return
@@ -1589,9 +1591,9 @@ func TestVisitComparison_AllVariable(t *testing.T) {
 }
 
 // TestVisitComparison_FunctionCalls covers function call expressions (has, hasAny, hasAll).
-// rsbOpts has SkipFunctionCalls=true → TrueConditionLiteral (function never evaluated).
-// sbOpts has SkipFunctionCalls=false; has/hasAny/hasAll only support FieldContextBody,
-// so calls on attribute/resource keys return an error.
+// The resource builder skips function operators, so they yield no condition in RSB.
+// In SB, has/hasAny/hasAll only support FieldContextBody, so calls on attribute/resource
+// keys return an error.
 func TestVisitComparison_FunctionCalls(t *testing.T) {
 	rsbOpts, sbOpts := visitComparisonOpts(t)
 	tests := []visitComparisonCase{

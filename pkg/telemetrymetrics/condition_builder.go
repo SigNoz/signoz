@@ -152,6 +152,11 @@ func (c *conditionBuilder) ConditionFor(
 	sb *sqlbuilder.SelectBuilder,
 ) ([]string, []string, error) {
 
+	// has/hasAny/hasAll/hasToken are logs-body-only; reject for metrics.
+	if err := querybuilder.NewFunctionUnsupportedError(operator); err != nil {
+		return nil, nil, err
+	}
+
 	keys, warning := querybuilder.ResolveKeys(key, fieldKeysForName)
 	var warnings []string
 	if warning != "" {

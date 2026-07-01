@@ -29,6 +29,11 @@ func (c *conditionBuilder) ConditionFor(
 	sb *sqlbuilder.SelectBuilder,
 ) ([]string, []string, error) {
 
+	// has/hasAny/hasAll/hasToken are logs-body-only; reject to avoid malformed related-values SQL.
+	if err := querybuilder.NewFunctionUnsupportedError(operator); err != nil {
+		return nil, nil, err
+	}
+
 	// metadata builds best-effort filters for related-values lookups; an unknown key
 	// simply yields no condition rather than an error.
 	keys, warning := querybuilder.ResolveKeys(key, fieldKeysForName)
