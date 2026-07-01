@@ -1,9 +1,10 @@
 import { useMemo } from 'react';
+import type { SpantypesSpanMapperDTO } from 'api/generated/services/sigNoz.schemas';
 import { useListSpanMappers } from 'api/generated/services/spanmapper';
 import TanStackTable from 'components/TanStackTableView';
 import { motion, useReducedMotion } from 'motion/react';
 
-import { DraftGroup, DraftMapper, Mapper } from '../../../types';
+import { DraftGroup, DraftMapper } from '../../../types';
 import { buildDraftMapper } from '../../../utils';
 import styles from './MappersTable.module.scss';
 import { getMappersColumns } from './TableConfig';
@@ -30,7 +31,8 @@ function MappersTable({ group }: MappersTableProps): JSX.Element {
 	);
 
 	const mappers = useMemo<DraftMapper[]>(() => {
-		const items = (data?.data?.items ?? []) as unknown as Mapper[];
+		const items = (data?.data?.items ??
+			[]) as unknown as SpantypesSpanMapperDTO[];
 		return items.map(buildDraftMapper);
 	}, [data]);
 

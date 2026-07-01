@@ -1,25 +1,7 @@
 import {
 	SpantypesFieldContextDTO,
-	SpantypesSpanMapperConfigDTO,
-	SpantypesSpanMapperDTO,
-	SpantypesSpanMapperGroupConditionDTO,
-	SpantypesSpanMapperGroupDTO,
 	SpantypesSpanMapperOperationDTO,
-	SpantypesSpanMapperSourceDTO,
 } from 'api/generated/services/sigNoz.schemas';
-
-export type MapperGroup = SpantypesSpanMapperGroupDTO;
-export type MapperGroupCondition =
-	NonNullable<SpantypesSpanMapperGroupConditionDTO>;
-export type Mapper = SpantypesSpanMapperDTO;
-export type MapperConfig = SpantypesSpanMapperConfigDTO;
-export type MapperSource = SpantypesSpanMapperSourceDTO;
-
-export const FieldContext = SpantypesFieldContextDTO;
-export const MapperOperation = SpantypesSpanMapperOperationDTO;
-
-export type FieldContextValue = SpantypesFieldContextDTO;
-export type MapperOperationValue = SpantypesSpanMapperOperationDTO;
 
 // A single human-readable condition clause shown in the group's Filters column.
 export interface ConditionFilter {

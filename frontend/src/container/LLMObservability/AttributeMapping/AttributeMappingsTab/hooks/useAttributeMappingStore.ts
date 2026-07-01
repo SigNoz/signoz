@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
+import { SpantypesSpanMapperGroupDTO } from 'api/generated/services/sigNoz.schemas';
 import { useListSpanMapperGroups } from 'api/generated/services/spanmapper';
 
-import { DraftGroup, MapperGroup } from '../../types';
+import { DraftGroup } from '../../types';
 import { buildDraftGroup } from '../../utils';
 
 export interface AttributeMappingStore {
@@ -19,7 +20,8 @@ export function useAttributeMappingStore(): AttributeMappingStore {
 	const groupsQuery = useListSpanMapperGroups();
 
 	const groups = useMemo<DraftGroup[]>(() => {
-		const serverGroups: MapperGroup[] = groupsQuery.data?.data?.items ?? [];
+		const serverGroups: SpantypesSpanMapperGroupDTO[] =
+			groupsQuery.data?.data?.items ?? [];
 		// Mappers load lazily per group, so seed the tree with empty mappers.
 		return serverGroups.map((group) => buildDraftGroup(group, []));
 	}, [groupsQuery.data]);

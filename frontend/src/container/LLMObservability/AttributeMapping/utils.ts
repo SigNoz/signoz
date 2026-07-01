@@ -1,9 +1,12 @@
 import {
+	SpantypesSpanMapperDTO,
+	SpantypesSpanMapperGroupDTO,
+} from 'api/generated/services/sigNoz.schemas';
+
+import {
 	ConditionFilter,
 	DraftGroup,
 	DraftMapper,
-	Mapper,
-	MapperGroup,
 	SourceConfig,
 } from './types';
 
@@ -30,7 +33,9 @@ export function conditionFiltersFromGroup(group: {
 
 // Source configs for a mapper, highest priority first (first match wins at
 // evaluation time).
-export function getMapperSources(mapper: Mapper): SourceConfig[] {
+export function getMapperSources(
+	mapper: SpantypesSpanMapperDTO,
+): SourceConfig[] {
 	const sources = mapper.config?.sources ?? [];
 	return [...sources]
 		.sort((a, b) => b.priority - a.priority)
@@ -43,7 +48,7 @@ export function getMapperSources(mapper: Mapper): SourceConfig[] {
 
 // ---- working-copy (draft tree) helpers ----
 
-export function buildDraftMapper(mapper: Mapper): DraftMapper {
+export function buildDraftMapper(mapper: SpantypesSpanMapperDTO): DraftMapper {
 	return {
 		localId: mapper.id,
 		serverId: mapper.id,
@@ -55,8 +60,8 @@ export function buildDraftMapper(mapper: Mapper): DraftMapper {
 }
 
 export function buildDraftGroup(
-	group: MapperGroup,
-	mappers: Mapper[],
+	group: SpantypesSpanMapperGroupDTO,
+	mappers: SpantypesSpanMapperDTO[],
 ): DraftGroup {
 	return {
 		localId: group.id,
