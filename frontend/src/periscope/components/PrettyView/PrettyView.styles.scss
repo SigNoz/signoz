@@ -50,6 +50,9 @@
 	> ul,
 	&__pinned > ul {
 		padding-left: 0 !important;
+		// Clip the hover bleed to the panel width. `clip` (not `hidden`) does
+		// not create a scroll container, so the sticky search stays working.
+		overflow-x: clip;
 	}
 
 	// Force font on all tree elements
@@ -74,18 +77,24 @@
 		margin-right: 16px;
 	}
 
-	// Leaf node row — hover highlights only this row
+	// Leaf node row — full-width hover highlight
 	&__row {
-		border-radius: 2px;
 		display: flex !important;
 		align-items: baseline;
+		position: relative;
+		isolation: isolate; // own stacking context so ::before sits behind content, not the panel bg
 
-		&:hover {
-			background-color: var(--l3-background);
+		&:hover .pretty-view__actions {
+			opacity: 1;
+		}
 
-			.pretty-view__actions {
-				opacity: 1;
-			}
+		// Edge-to-edge highlight, bled past indentation, clipped by `> ul`
+		&:hover::before {
+			content: '';
+			position: absolute;
+			inset: 0 -9999px;
+			background: var(--l3-background);
+			z-index: -1;
 		}
 
 		// Push actions to the right edge
@@ -94,19 +103,28 @@
 		}
 	}
 
-	// Nested node (object/array) — hover only on the label line, not children
+	// Nested node (object/array) — full-width hover on the header line only
 	&__nested-row {
+		position: relative;
+		isolation: isolate;
+
 		> label,
 		> span:not(ul span) {
-			border-radius: 2px;
 			padding: 1px 2px;
 			display: inline !important; // keep item string inline with label
 		}
 
-		// Highlight label + item string on hover, show actions
-		&:hover > label,
-		&:hover > label + span {
-			background-color: var(--l3-background);
+		// Edge-to-edge highlight, capped to the header line so it doesn't
+		// cover the children this <li> contains.
+		&:hover::before {
+			content: '';
+			position: absolute;
+			top: 0;
+			height: 20px; // 18px line-height + 2px top padding
+			left: -9999px;
+			right: -9999px;
+			background: var(--l3-background);
+			z-index: -1;
 		}
 
 		&:hover > label + span .pretty-view__actions {
@@ -175,6 +193,7 @@
 		display: inline-flex;
 		align-items: baseline;
 		gap: 6px;
+		padding-left: 6px !important;
 	}
 
 	&__pinned-icon {
