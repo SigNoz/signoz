@@ -33,14 +33,23 @@ describe('useLLMObservabilityTabs', () => {
 		expect(result.current.activeTab).toBe(ROUTES.LLM_OBSERVABILITY_CONFIGURATION);
 	});
 
-	it('exposes both route-keyed tab items', () => {
+	it('marks the attribute mapping tab active on the attribute mapping route', () => {
+		const { result } = renderTabsAt(ROUTES.LLM_OBSERVABILITY_ATTRIBUTE_MAPPING);
+
+		expect(result.current.activeTab).toBe(
+			ROUTES.LLM_OBSERVABILITY_ATTRIBUTE_MAPPING,
+		);
+	});
+
+	it('exposes all route-keyed tab items', () => {
 		const { result } = renderTabsAt(ROUTES.LLM_OBSERVABILITY_OVERVIEW);
 
-		expect(result.current.items).toHaveLength(2);
+		expect(result.current.items).toHaveLength(3);
 		const keys = result.current.items.map((item) => item.key);
 		expect(keys).toStrictEqual([
 			ROUTES.LLM_OBSERVABILITY_OVERVIEW,
 			ROUTES.LLM_OBSERVABILITY_CONFIGURATION,
+			ROUTES.LLM_OBSERVABILITY_ATTRIBUTE_MAPPING,
 		]);
 	});
 
