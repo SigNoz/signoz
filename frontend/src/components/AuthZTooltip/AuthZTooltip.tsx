@@ -7,7 +7,8 @@ import {
 } from '@signozhq/ui/tooltip';
 import type { BrandedPermission } from 'hooks/useAuthZ/types';
 import { useAuthZ } from 'hooks/useAuthZ/useAuthZ';
-import { parsePermission } from 'hooks/useAuthZ/utils';
+import { formatPermission } from 'hooks/useAuthZ/utils';
+import { useAppContext } from 'providers/App/App';
 import styles from './AuthZTooltip.module.scss';
 
 interface AuthZTooltipProps {
@@ -19,19 +20,14 @@ interface AuthZTooltipProps {
 
 function formatDeniedMessage(
 	denied: BrandedPermission[],
+	userId: string,
 	override?: string,
 ): string {
 	if (override) {
 		return override;
 	}
-	const labels = denied.map((p) => {
-		const { relation, object } = parsePermission(p);
-		const resource = object.split(':')[0];
-		return `${relation} ${resource}`;
-	});
-	return labels.length === 1
-		? `You don't have ${labels[0]} permission`
-		: `You don't have ${labels.join(', ')} permissions`;
+	const permissions = denied.map(formatPermission).join(', ');
+	return `user/${userId} is not authorized to perform ${permissions}`;
 }
 
 function AuthZTooltip({
@@ -40,6 +36,7 @@ function AuthZTooltip({
 	enabled = true,
 	tooltipMessage,
 }: AuthZTooltipProps): JSX.Element {
+	const { user } = useAppContext();
 	const shouldCheck = enabled && checks.length > 0;
 
 	const { permissions, isLoading } = useAuthZ(checks, { enabled: shouldCheck });
@@ -75,7 +72,7 @@ function AuthZTooltip({
 					</span>
 				</TooltipTrigger>
 				<TooltipContent className={styles.errorContent}>
-					{formatDeniedMessage(deniedPermissions, tooltipMessage)}
+					{formatDeniedMessage(deniedPermissions, user.id, tooltipMessage)}
 				</TooltipContent>
 			</TooltipRoot>
 		</TooltipProvider>

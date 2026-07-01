@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Typography } from '@signozhq/ui/typography';
 import { Input } from 'antd';
 
@@ -16,6 +17,12 @@ function ThresholdValueField({
 	value,
 	onChange,
 }: ThresholdValueFieldProps): JSX.Element {
+	const [raw, setRaw] = useState(String(value));
+
+	useEffect(() => {
+		setRaw((prev) => (Number(prev) === value ? prev : String(value)));
+	}, [value]);
+
 	return (
 		<div className={styles.field}>
 			<Typography.Text className={styles.fieldLabel}>Value</Typography.Text>
@@ -23,8 +30,11 @@ function ThresholdValueField({
 				data-testid={testId}
 				type="number"
 				placeholder="Value"
-				value={value}
-				onChange={(e): void => onChange(e.target.value)}
+				value={raw}
+				onChange={(e): void => {
+					setRaw(e.target.value);
+					onChange(e.target.value);
+				}}
 			/>
 		</div>
 	);

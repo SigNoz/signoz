@@ -1,8 +1,11 @@
-import type { SectionConfig } from '../../types/sections';
+import { SectionKind, type SectionConfig } from '../../types/sections';
 
 export const sections: SectionConfig[] = [
-	{ kind: 'visualization', controls: { timePreference: true } },
-	{ kind: 'formatting', controls: { unit: true, decimals: true } },
-	{ kind: 'thresholds', controls: { variant: 'comparison' } },
-	{ kind: 'contextLinks' },
+	{
+		kind: SectionKind.Visualization,
+		controls: { switchPanelKind: true, timePreference: true },
+	},
+	{ kind: SectionKind.Formatting, controls: { unit: true, decimals: true } },
+	{ kind: SectionKind.Thresholds, controls: { variant: 'comparison' } },
+	{ kind: SectionKind.ContextLinks },
 ];
