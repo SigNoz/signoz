@@ -21,6 +21,21 @@ export enum InfraMonitoringEntity {
 	VOLUMES = 'volumes',
 }
 
+export const METRIC_NAMESPACE_BY_ENTITY: Record<InfraMonitoringEntity, string> =
+	{
+		[InfraMonitoringEntity.HOSTS]: 'system.',
+		[InfraMonitoringEntity.PODS]: 'k8s.pod.',
+		[InfraMonitoringEntity.NODES]: 'k8s.node.',
+		[InfraMonitoringEntity.NAMESPACES]: 'k8s.pod.',
+		[InfraMonitoringEntity.CLUSTERS]: 'k8s.node.',
+		[InfraMonitoringEntity.DEPLOYMENTS]: 'k8s.',
+		[InfraMonitoringEntity.STATEFULSETS]: 'k8s.',
+		[InfraMonitoringEntity.DAEMONSETS]: 'k8s.',
+		[InfraMonitoringEntity.CONTAINERS]: 'k8s.pod.',
+		[InfraMonitoringEntity.JOBS]: 'k8s.',
+		[InfraMonitoringEntity.VOLUMES]: 'k8s.volume.',
+	};
+
 export enum VIEWS {
 	METRICS = 'metrics',
 	LOGS = 'logs',

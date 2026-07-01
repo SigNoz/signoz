@@ -11,6 +11,7 @@ import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { v4 as uuid } from 'uuid';
 
 import { isKeyMatch } from './utils';
+import { CheckedState } from '../../types';
 
 export const SELECTED_OPERATORS = [OPERATORS['='], 'in'];
 export const NON_SELECTED_OPERATORS = [OPERATORS['!='], 'not in', 'nin'];
@@ -148,6 +149,7 @@ export function applyCheckboxToggle({
 	value,
 	checked,
 	isOnlyOrAllClicked,
+	previousState,
 }: {
 	currentQuery: Query;
 	activeQueryIndex: number;
@@ -157,6 +159,7 @@ export function applyCheckboxToggle({
 	value: string;
 	checked: boolean;
 	isOnlyOrAllClicked: boolean;
+	previousState?: CheckedState;
 }): Query {
 	const activeItems =
 		currentQuery.builder.queryData?.[activeQueryIndex]?.filters?.items;
@@ -216,49 +219,56 @@ export function applyCheckboxToggle({
 			);
 			if (currentFilter) {
 				const runningOperator = currentFilter?.op;
-				switch (runningOperator) {
-					case 'in':
-						if (checked) {
-							// if it's an IN operator then if we are checking another value it get's added to the
-							// filter clause. example -  key IN [value1, currentSelectedValue]
-							if (isArray(currentFilter.value)) {
-								const newFilter = {
-									...currentFilter,
-									value: [...currentFilter.value, value],
-								};
-								query.filters.items = query.filters.items.map((item) => {
-									if (isKeyMatch(item.key?.key, filter.attributeKey.key)) {
-										return newFilter;
-									}
-									return item;
-								});
-							} else {
-								// if the current state wasn't an array we make it one and add our value
-								const newFilter = {
-									...currentFilter,
-									value: [currentFilter.value as string, value],
-								};
-								query.filters.items = query.filters.items.map((item) => {
-									if (isKeyMatch(item.key?.key, filter.attributeKey.key)) {
-										return newFilter;
-									}
-									return item;
-								});
-							}
-						} else if (!checked) {
-							// if we are removing some value when the running operator is IN we filter.
-							// example - key IN [value1,currentSelectedValue] becomes key IN [value1] in case of array
-							if (isArray(currentFilter.value)) {
-								const newFilter = {
-									...currentFilter,
-									value: currentFilter.value.filter((val) => val !== value),
-								};
 
-								if (newFilter.value.length === 0) {
-									query.filters.items = query.filters.items.filter(
-										(item) => !isKeyMatch(item.key?.key, filter.attributeKey.key),
-									);
+				// Indeterminate items follow existing operator (IN or NOT IN)
+				// No filter for key defaults to IN (handled in else branch below)
+				if (previousState === 'indeterminate') {
+					if (isArray(currentFilter.value)) {
+						const newFilter = {
+							...currentFilter,
+							value: [...currentFilter.value, value],
+						};
+						query.filters.items = query.filters.items.map((item) => {
+							if (isKeyMatch(item.key?.key, filter.attributeKey.key)) {
+								return newFilter;
+							}
+							return item;
+						});
+					} else {
+						const newFilter = {
+							...currentFilter,
+							value: [currentFilter.value as string, value],
+						};
+						query.filters.items = query.filters.items.map((item) => {
+							if (isKeyMatch(item.key?.key, filter.attributeKey.key)) {
+								return newFilter;
+							}
+							return item;
+						});
+					}
+				} else {
+					switch (runningOperator) {
+						case 'in':
+							if (checked) {
+								// if it's an IN operator then if we are checking another value it get's added to the
+								// filter clause. example -  key IN [value1, currentSelectedValue]
+								if (isArray(currentFilter.value)) {
+									const newFilter = {
+										...currentFilter,
+										value: [...currentFilter.value, value],
+									};
+									query.filters.items = query.filters.items.map((item) => {
+										if (isKeyMatch(item.key?.key, filter.attributeKey.key)) {
+											return newFilter;
+										}
+										return item;
+									});
 								} else {
+									// if the current state wasn't an array we make it one and add our value
+									const newFilter = {
+										...currentFilter,
+										value: [currentFilter.value as string, value],
+									};
 									query.filters.items = query.filters.items.map((item) => {
 										if (isKeyMatch(item.key?.key, filter.attributeKey.key)) {
 											return newFilter;
@@ -266,133 +276,187 @@ export function applyCheckboxToggle({
 										return item;
 									});
 								}
-							} else {
-								// if not an array remove the whole thing altogether!
-								query.filters.items = query.filters.items.filter(
-									(item) => !isKeyMatch(item.key?.key, filter.attributeKey.key),
-								);
-							}
-						}
-						break;
-					case 'nin':
-					case 'not in':
-						// if the current running operator is NIN then when unchecking the value it gets
-						// added to the clause like key NIN [value1 , currentUnselectedValue]
-						if (!checked) {
-							// in case of array add the currentUnselectedValue to the list.
-							if (isArray(currentFilter.value)) {
-								const newFilter = {
-									...currentFilter,
-									value: [...currentFilter.value, value],
-								};
-								query.filters.items = query.filters.items.map((item) => {
-									if (isKeyMatch(item.key?.key, filter.attributeKey.key)) {
-										return newFilter;
-									}
-									return item;
-								});
-							} else {
-								// in case of not an array make it one!
-								const newFilter = {
-									...currentFilter,
-									value: [currentFilter.value as string, value],
-								};
-								query.filters.items = query.filters.items.map((item) => {
-									if (isKeyMatch(item.key?.key, filter.attributeKey.key)) {
-										return newFilter;
-									}
-									return item;
-								});
-							}
-						} else if (checked) {
-							// opposite of above!
-							if (isArray(currentFilter.value)) {
-								const newFilter = {
-									...currentFilter,
-									value: currentFilter.value.filter((val) => val !== value),
-								};
-								if (newFilter.value.length === 0) {
-									query.filters.items = query.filters.items.filter(
-										(item) => !isKeyMatch(item.key?.key, filter.attributeKey.key),
-									);
-									if (query.filter?.expression) {
-										query.filter.expression = removeKeysFromExpression(
-											query.filter.expression,
-											[filter.attributeKey.key],
+							} else if (!checked) {
+								// if we are removing some value when the running operator is IN we filter.
+								// example - key IN [value1,currentSelectedValue] becomes key IN [value1] in case of array
+								if (isArray(currentFilter.value)) {
+									const newFilter = {
+										...currentFilter,
+										value: currentFilter.value.filter((val) => val !== value),
+									};
+
+									if (newFilter.value.length === 0) {
+										query.filters.items = query.filters.items.filter(
+											(item) => !isKeyMatch(item.key?.key, filter.attributeKey.key),
 										);
+									} else {
+										query.filters.items = query.filters.items.map((item) => {
+											if (isKeyMatch(item.key?.key, filter.attributeKey.key)) {
+												return newFilter;
+											}
+											return item;
+										});
 									}
 								} else {
-									query.filters.items = query.filters.items.map((item) => {
-										if (isKeyMatch(item.key?.key, filter.attributeKey.key)) {
-											return newFilter;
-										}
-										return item;
-									});
+									// if not an array remove the whole thing altogether!
+									query.filters.items = query.filters.items.filter(
+										(item) => !isKeyMatch(item.key?.key, filter.attributeKey.key),
+									);
 								}
-							} else {
-								const newFilter = {
-									...currentFilter,
-									value: currentFilter.value === value ? null : currentFilter.value,
+							}
+							break;
+						case 'nin':
+						case 'not in': {
+							// NOT IN means "exclude these values"
+							// Check if value is currently in the exclusion list
+							const isValueInFilter = isArray(currentFilter.value)
+								? currentFilter.value.includes(value)
+								: currentFilter.value === value;
+
+							// When clicking unchecked "Other" item, user wants to SELECT it
+							// Replace NOT IN filter with IN [value]
+							if (previousState === 'unchecked' && checked) {
+								const newFilter: TagFilterItem = {
+									id: uuid(),
+									op: getOperatorValue(OPERATORS.IN),
+									key: filter.attributeKey,
+									value,
 								};
-								if (newFilter.value === null && query.filter?.expression) {
+								query.filters.items = query.filters.items.map((item) => {
+									if (isKeyMatch(item.key?.key, filter.attributeKey.key)) {
+										return newFilter;
+									}
+									return item;
+								});
+								if (query.filter?.expression) {
 									query.filter.expression = removeKeysFromExpression(
 										query.filter.expression,
 										[filter.attributeKey.key],
 									);
 								}
+							} else if (!checked || !isValueInFilter) {
+								// Add to NOT IN when:
+								// - checked=false (user explicitly unchecked to exclude)
+								// - checked=true but value not in filter (clicking "other" value to exclude)
+								if (isArray(currentFilter.value)) {
+									const newFilter = {
+										...currentFilter,
+										value: [...currentFilter.value, value],
+									};
+									query.filters.items = query.filters.items.map((item) => {
+										if (isKeyMatch(item.key?.key, filter.attributeKey.key)) {
+											return newFilter;
+										}
+										return item;
+									});
+								} else {
+									const newFilter = {
+										...currentFilter,
+										value: [currentFilter.value as string, value],
+									};
+									query.filters.items = query.filters.items.map((item) => {
+										if (isKeyMatch(item.key?.key, filter.attributeKey.key)) {
+											return newFilter;
+										}
+										return item;
+									});
+								}
+							} else {
+								// Remove from NOT IN when value IS in filter and checked=true
+								// (user wants to include this value back)
+								if (isArray(currentFilter.value)) {
+									const newFilter = {
+										...currentFilter,
+										value: currentFilter.value.filter((val) => val !== value),
+									};
+									if (newFilter.value.length === 0) {
+										query.filters.items = query.filters.items.filter(
+											(item) => !isKeyMatch(item.key?.key, filter.attributeKey.key),
+										);
+										if (query.filter?.expression) {
+											query.filter.expression = removeKeysFromExpression(
+												query.filter.expression,
+												[filter.attributeKey.key],
+											);
+										}
+									} else {
+										query.filters.items = query.filters.items.map((item) => {
+											if (isKeyMatch(item.key?.key, filter.attributeKey.key)) {
+												return newFilter;
+											}
+											return item;
+										});
+									}
+								} else {
+									const newFilter = {
+										...currentFilter,
+										value: currentFilter.value === value ? null : currentFilter.value,
+									};
+									if (newFilter.value === null && query.filter?.expression) {
+										query.filter.expression = removeKeysFromExpression(
+											query.filter.expression,
+											[filter.attributeKey.key],
+										);
+									}
+									query.filters.items = query.filters.items.filter(
+										(item) => !isKeyMatch(item.key?.key, filter.attributeKey.key),
+									);
+								}
+							}
+							break;
+						}
+						case '=':
+							if (checked) {
+								const newFilter = {
+									...currentFilter,
+									op: getOperatorValue(OPERATORS.IN),
+									value: [currentFilter.value as string, value],
+								};
+								query.filters.items = query.filters.items.map((item) => {
+									if (isKeyMatch(item.key?.key, filter.attributeKey.key)) {
+										return newFilter;
+									}
+									return item;
+								});
+							} else if (!checked) {
 								query.filters.items = query.filters.items.filter(
 									(item) => !isKeyMatch(item.key?.key, filter.attributeKey.key),
 								);
 							}
-						}
-						break;
-					case '=':
-						if (checked) {
-							const newFilter = {
-								...currentFilter,
-								op: getOperatorValue(OPERATORS.IN),
-								value: [currentFilter.value as string, value],
-							};
-							query.filters.items = query.filters.items.map((item) => {
-								if (isKeyMatch(item.key?.key, filter.attributeKey.key)) {
-									return newFilter;
-								}
-								return item;
-							});
-						} else if (!checked) {
-							query.filters.items = query.filters.items.filter(
-								(item) => !isKeyMatch(item.key?.key, filter.attributeKey.key),
-							);
-						}
-						break;
-					case '!=':
-						if (!checked) {
-							const newFilter = {
-								...currentFilter,
-								op: getNotInOperator(source),
-								value: [currentFilter.value as string, value],
-							};
-							query.filters.items = query.filters.items.map((item) => {
-								if (isKeyMatch(item.key?.key, filter.attributeKey.key)) {
-									return newFilter;
-								}
-								return item;
-							});
-						} else if (checked) {
-							query.filters.items = query.filters.items.filter(
-								(item) => !isKeyMatch(item.key?.key, filter.attributeKey.key),
-							);
-						}
-						break;
-					default:
-						break;
+							break;
+						case '!=':
+							if (!checked) {
+								const newFilter = {
+									...currentFilter,
+									op: getNotInOperator(source),
+									value: [currentFilter.value as string, value],
+								};
+								query.filters.items = query.filters.items.map((item) => {
+									if (isKeyMatch(item.key?.key, filter.attributeKey.key)) {
+										return newFilter;
+									}
+									return item;
+								});
+							} else if (checked) {
+								query.filters.items = query.filters.items.filter(
+									(item) => !isKeyMatch(item.key?.key, filter.attributeKey.key),
+								);
+							}
+							break;
+						default:
+							break;
+					}
 				}
 			}
 		} else {
 			// case  - when there is no filter for the current key that means all are selected right now.
+			// Indeterminate items use IN (select), others use NOT IN (exclude)
 			const newFilterItem: TagFilterItem = {
 				id: uuid(),
-				op: getNotInOperator(source),
+				op:
+					previousState === 'indeterminate'
+						? getOperatorValue(OPERATORS.IN)
+						: getNotInOperator(source),
 				key: filter.attributeKey,
 				value,
 			};
