@@ -3,17 +3,22 @@ import type {
 	DashboardtypesJSONPatchOperationDTO,
 	DashboardtypesLayoutDTO,
 	DashboardtypesPanelDTO,
+	DashboardtypesPanelPluginDTO,
+	DashboardtypesQueryDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { DashboardtypesPatchOpDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	DashboardtypesPanelKindDTO,
+	DashboardtypesPatchOpDTO,
+} from 'api/generated/services/sigNoz.schemas';
 
+import type { PanelKind } from './Panels/types/panelKind';
+import type { DefaultPluginSpec } from './Panels/utils/buildDefaultPluginSpec';
 import type { GridItem } from './utils';
 
 /**
- * Pure RFC-6902 JSON-Patch builders for the V2 dashboard spec. These are
- * intentionally side-effect-free (no React, no network) so they can be unit
- * tested and reused by the layout hooks. JSON pointers target the postable
- * shape: `/spec/layouts/...`, `/spec/panels/...` (matches the existing V2
- * patches in DashboardSettings/Overview and DashboardDescription).
+ * Pure (no React/network) RFC-6902 JSON-Patch builders for the V2 dashboard
+ * spec. Pointers target the postable shape: `/spec/layouts/...`,
+ * `/spec/panels/...`.
  */
 
 const { add, replace, remove } = DashboardtypesPatchOpDTO;
@@ -25,29 +30,27 @@ export function panelRef(panelId: string): string {
 }
 
 /**
- * Builds a minimal, backend-valid panel for a given plugin kind. The spec
- * requires exactly one query whose plugin kind is allowed for the panel;
- * `signoz/BuilderQuery` is allowed for every panel kind and its contents are not
- * validated, so an empty builder query is the safe default. The real query is
- * filled in once the panel editor lands.
+ * Builds a fresh panel of the given kind to seed the editor. The caller resolves
+ * `pluginSpec` (config defaults) and `queries` (a kind's seed query) so this stays
+ * free of the React panel registry.
  */
-export function createDefaultPanel(pluginKind: string): DashboardtypesPanelDTO {
-	// The DTO types plugin/query kinds as large generated enum unions; the kind
-	// here is chosen dynamically by the user, so we build the structurally-valid
-	// shape and assert the type.
+export function createDefaultPanel(
+	pluginKind: PanelKind,
+	pluginSpec: DefaultPluginSpec = {},
+	queries: DashboardtypesQueryDTO[] = [],
+): DashboardtypesPanelDTO {
 	return {
-		kind: 'Panel',
+		kind: DashboardtypesPanelKindDTO.Panel,
 		spec: {
 			display: { name: 'New panel' },
-			plugin: { kind: pluginKind, spec: {} },
-			queries: [
-				{
-					kind: 'TimeSeriesQuery',
-					spec: { plugin: { kind: 'signoz/BuilderQuery', spec: { name: 'A' } } },
-				},
-			],
+			// `plugin` is a discriminated union; kind is runtime-chosen, so assert here.
+			plugin: {
+				kind: pluginKind,
+				spec: pluginSpec,
+			} as DashboardtypesPanelPluginDTO,
+			queries,
 		},
-	} as unknown as DashboardtypesPanelDTO;
+	};
 }
 
 /** Converts a UI grid item back into the spec's grid-item DTO shape. */
@@ -113,6 +116,99 @@ export function addPanelToSectionOps({
 		{ op: add, path: `/spec/panels/${panelId}`, value: panel },
 		{ op: add, path: `/spec/layouts/${layoutIndex}/spec/items/-`, value: item },
 	];
+}
+
+interface CreatePanelOpsArgs {
+	/** Current sections, used to resolve the target and the next free row. */
+	layouts: DashboardtypesLayoutDTO[];
+	/** Preferred section (from a section's "Add panel" trigger); falls back to the root (first) section. */
+	layoutIndex: number | undefined;
+	panelId: string;
+	panel: DashboardtypesPanelDTO;
+}
+
+const NEW_PANEL_SIZE = { width: 6, height: 6 };
+
+/** Columns in the section grid — mirrors `cols` on SectionGrid's GridLayout. */
+const GRID_COLS = 12;
+
+/** Minimal placement fields shared by grid-item DTOs and flattened `GridItem`s. */
+type PlacedItem = Pick<DashboardGridItemDTO, 'x' | 'y' | 'width' | 'height'>;
+
+/**
+ * Placement for a new grid item: drop it right of the last row if there's room,
+ * else wrap to a fresh row at the bottom. Only the last row is considered (items
+ * sharing the greatest top-y); gaps in earlier rows are left alone.
+ */
+export function findFreeSlot(
+	items: PlacedItem[],
+	width: number,
+): { x: number; y: number } {
+	const w = Math.min(width, GRID_COLS);
+	if (items.length === 0) {
+		return { x: 0, y: 0 };
+	}
+
+	const bottom = items.reduce(
+		(max, it) => Math.max(max, (it.y ?? 0) + (it.height ?? 0)),
+		0,
+	);
+	const lastRowY = items.reduce((max, it) => Math.max(max, it.y ?? 0), 0);
+	const lastRowRightEdge = items
+		.filter((it) => (it.y ?? 0) === lastRowY)
+		.reduce((max, it) => Math.max(max, (it.x ?? 0) + (it.width ?? 0)), 0);
+
+	if (lastRowRightEdge + w <= GRID_COLS) {
+		return { x: lastRowRightEdge, y: lastRowY };
+	}
+	return { x: 0, y: bottom };
+}
+
+/**
+ * Ops to persist a brand-new panel (editor save path): resolve the target
+ * section (requested index if valid, else the root/first section, else a
+ * freshly-created one) and place the panel via `findFreeSlot`.
+ */
+export function createPanelOps({
+	layouts,
+	layoutIndex,
+	panelId,
+	panel,
+}: CreatePanelOpsArgs): DashboardtypesJSONPatchOperationDTO[] {
+	const ops: DashboardtypesJSONPatchOperationDTO[] = [];
+
+	let targetIndex: number;
+	let items: DashboardGridItemDTO[];
+	if (layoutIndex !== undefined && layouts[layoutIndex] !== undefined) {
+		// Explicit section — a section's own "New Panel" trigger.
+		targetIndex = layoutIndex;
+		items = layouts[layoutIndex]?.spec.items ?? [];
+	} else if (layouts.length > 0) {
+		// No section specified (toolbar "New Panel") → the root (first) section.
+		targetIndex = 0;
+		items = layouts[0]?.spec.items ?? [];
+	} else {
+		// No sections yet — create an untitled one and target it.
+		ops.push(addSectionOp(''));
+		targetIndex = 0;
+		items = [];
+	}
+
+	const { x, y } = findFreeSlot(items, NEW_PANEL_SIZE.width);
+	ops.push(
+		...addPanelToSectionOps({
+			panelId,
+			panel,
+			layoutIndex: targetIndex,
+			item: {
+				x,
+				y,
+				...NEW_PANEL_SIZE,
+				content: { $ref: panelRef(panelId) },
+			},
+		}),
+	);
+	return ops;
 }
 
 interface MovePanelArgs {

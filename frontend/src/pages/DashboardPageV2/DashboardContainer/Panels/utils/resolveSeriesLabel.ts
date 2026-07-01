@@ -31,12 +31,10 @@ export function resolveSeriesLabelV5(
 }
 
 /**
- * Applies the V1 legend matrix: `single-vs-many builder queries ×
- * with/without groupBy × single-vs-many aggregations`. Returns `baseLabel`
- * unchanged for panels without builder queries (PromQL, ClickHouseSQL) and
- * for builder series whose aggregation carries no alias/expression — metric
- * aggregations don't have those fields, so they naturally short-circuit to
- * the base label here.
+ * Applies the V1 legend matrix: single-vs-many builder queries × with/without
+ * groupBy × single-vs-many aggregations. Returns `baseLabel` unchanged for
+ * non-builder panels and for series whose aggregation has no alias/expression
+ * (e.g. metric aggregations, which lack those fields).
  */
 function resolveLabel(
 	identity: SeriesIdentity,
@@ -56,9 +54,8 @@ function resolveLabel(
 	const aggregations = matching.aggregations ?? [];
 	const aggregation = aggregations[aggIndex];
 
-	// `alias` / `expression` exist on Log/Trace aggregations only —
-	// `MetricAggregation` carries `metricName`/`temporality`/… instead. The
-	// `in` guards narrow the union without a cast.
+	// `alias`/`expression` exist on Log/Trace aggregations only (not
+	// `MetricAggregation`); the `in` guards narrow the union without a cast.
 	const aggregationAlias =
 		aggregation && 'alias' in aggregation ? (aggregation.alias ?? '') : '';
 	const aggregationExpression =
@@ -93,7 +90,7 @@ interface FormatContext {
 	singleAggregation: boolean;
 }
 
-// Panel has one builder query — ports V1's `getLegendForSingleAggregation`.
+/** Panel has one builder query — ports V1's `getLegendForSingleAggregation`. */
 function formatForSinglePanelQuery({
 	aggregationAlias,
 	aggregationExpression,
@@ -114,10 +111,11 @@ function formatForSinglePanelQuery({
 	return aggregationAlias || aggregationExpression;
 }
 
-// Panel has multiple builder queries — ports V1's `getLegendForMultipleAggregations`.
-// Differs from the single-query path in two cells: the no-groupBy / single-agg
-// cell falls through to `baseLabel` instead of `legend`, and the no-groupBy /
-// multi-agg cell prepends the base label.
+/**
+ * Multiple builder queries — ports V1's `getLegendForMultipleAggregations`.
+ * Differs from the single-query path in the no-groupBy cells: single-agg falls
+ * through to `baseLabel` (not `legend`), and multi-agg prepends the base label.
+ */
 function formatForMultiplePanelQueries({
 	aggregationAlias,
 	aggregationExpression,

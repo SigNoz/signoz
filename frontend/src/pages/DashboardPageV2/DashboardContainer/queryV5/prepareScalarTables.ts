@@ -3,15 +3,15 @@ import type {
 	Querybuildertypesv5QueryRangeRequestDTO,
 	Querybuildertypesv5ScalarDataDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { Querybuildertypesv5QueryTypeDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	Querybuildertypesv5QueryEnvelopeBuilderDTOType,
+	Querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType,
+} from 'api/generated/services/sigNoz.schemas';
 
 import type { PanelTable, PanelTableColumn } from './types';
 
-/**
- * Narrow view over a builder-query aggregation; the generated envelope spec
- * is `unknown`, so the fields column naming needs are read through this view
- * with a localized cast at the envelope boundary.
- */
+// Narrow view over a builder-query aggregation; envelope spec is `unknown`, so naming reads
+// through this view with a localized cast at the boundary.
 interface AggregationView {
 	alias?: string;
 	expression?: string;
@@ -20,40 +20,63 @@ interface AggregationView {
 type AggregationsPerQuery = Record<string, AggregationView[]>;
 
 /**
- * queryName → aggregations, recovered from the request payload's builder
- * envelopes. Column display names depend on the aggregation alias/expression
- * the query was sent with (V1 parity: `convertV5ResponseToLegacy` derived the
- * same map from `params.compositeQuery`).
+ * queryName → aggregations, recovered from the request payload: column display names depend on
+ * the alias/expression the query was sent with (V1 parity).
  */
 export function extractAggregationsPerQuery(
 	requestPayload: Querybuildertypesv5QueryRangeRequestDTO | undefined,
 ): AggregationsPerQuery {
 	const perQuery: AggregationsPerQuery = {};
 	(requestPayload?.compositeQuery?.queries ?? []).forEach((envelope) => {
-		if (envelope.type !== Querybuildertypesv5QueryTypeDTO.builder_query) {
+		if (
+			envelope.type !==
+			Querybuildertypesv5QueryEnvelopeBuilderDTOType.builder_query
+		) {
 			return;
 		}
-		const spec = envelope.spec as {
-			name?: string;
-			aggregations?: AggregationView[];
-		};
+		const spec = envelope.spec;
 		if (spec?.name && spec.aggregations) {
-			perQuery[spec.name] = spec.aggregations;
+			perQuery[spec.name] = spec.aggregations as AggregationView[];
 		}
 	});
 	return perQuery;
 }
 
 /**
- * Column display name. Group columns keep their field name; aggregation
- * columns resolve alias > legend > expression > queryName — with the legend
- * skipped when the query has multiple aggregations, because one legend can't
- * label several value columns. (Port of V1 `getColName`.)
+ * Names of the request's clickhouse_sql queries. These have no aggregation
+ * metadata, but their value columns carry the user's real SQL alias in the
+ * response `col.name` — so columns of these queries are named/keyed by that
+ * alias rather than collapsing onto the query name. Builder/formula/promql use
+ * placeholder names (`__result`/`__result_N`) and are excluded here.
+ */
+export function extractClickhouseQueryNames(
+	requestPayload: Querybuildertypesv5QueryRangeRequestDTO | undefined,
+): Set<string> {
+	const names = new Set<string>();
+	(requestPayload?.compositeQuery?.queries ?? []).forEach((envelope) => {
+		if (
+			envelope.type !==
+			Querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType.clickhouse_sql
+		) {
+			return;
+		}
+		if (envelope.spec?.name) {
+			names.add(envelope.spec.name);
+		}
+	});
+	return names;
+}
+
+/**
+ * Column display name (port of V1 `getColName`). Group columns keep their field name; aggregation
+ * columns resolve alias > legend > expression > queryName, skipping legend on multi-aggregation
+ * queries (one legend can't label several value columns).
  */
 function getColName(
 	col: Querybuildertypesv5ColumnDescriptorDTO,
 	legendMap: Record<string, string>,
 	aggregationsPerQuery: AggregationsPerQuery,
+	clickhouseQueryNames: Set<string>,
 ): string {
 	if (col.columnType === 'group') {
 		return col.name;
@@ -74,26 +97,40 @@ function getColName(
 		return alias || expression || queryName;
 	}
 
+	// clickhouse_sql value columns carry their real SQL alias in col.name — use
+	// it so each value column keeps its own header instead of collapsing onto
+	// the query name. Formulas/promql use placeholder names, so they fall back
+	// to legend || queryName.
+	if (clickhouseQueryNames.has(queryName)) {
+		return col.name;
+	}
 	return legend || queryName;
 }
 
 /**
- * Stable row-data key for a column. Multi-aggregation queries need
- * `queryName.expression` so the value columns don't collide. (Port of V1
- * `getColId`.)
+ * Stable row-data key (port of V1 `getColId`). Multi-aggregation queries need
+ * `queryName.expression` so value columns don't collide.
  */
 function getColId(
 	col: Querybuildertypesv5ColumnDescriptorDTO,
 	aggregationsPerQuery: AggregationsPerQuery,
+	clickhouseQueryNames: Set<string>,
 ): string {
 	if (col.columnType === 'group') {
 		return col.name;
 	}
 
 	const queryName = col.queryName ?? '';
+
+	// clickhouse_sql value columns are keyed by their real SQL alias so multiple
+	// value columns stay unique instead of all collapsing onto the query name
+	// (which would overwrite every cell in the row with the last column's value).
+	if (clickhouseQueryNames.has(queryName)) {
+		return col.name;
+	}
+
 	const aggregations = aggregationsPerQuery[queryName];
 	const expression = aggregations?.[col.aggregationIndex ?? 0]?.expression || '';
-
 	if ((aggregations?.length || 0) > 1 && expression) {
 		return `${queryName}.${expression}`;
 	}
@@ -107,11 +144,9 @@ export interface PrepareScalarTablesArgs {
 }
 
 /**
- * Converts V5 scalar results (`{columns, data[][]}`) into the keyed
- * table shape Number/Pie/Table panels render: columns with resolved display
- * names + `isValueColumn`, rows keyed by column id. (Port of V1
- * `convertScalarDataArrayToTable`; the `formatForWeb` variant produced the
- * same structure and is collapsed into this one.)
+ * Converts V5 scalar results into the keyed table shape Number/Pie/Table panels render: columns
+ * with resolved display names + `isValueColumn`, rows keyed by column id (port of V1
+ * `convertScalarDataArrayToTable`).
  */
 export function prepareScalarTables({
 	results,
@@ -119,6 +154,7 @@ export function prepareScalarTables({
 	requestPayload,
 }: PrepareScalarTablesArgs): PanelTable[] {
 	const aggregationsPerQuery = extractAggregationsPerQuery(requestPayload);
+	const clickhouseQueryNames = extractClickhouseQueryNames(requestPayload);
 
 	return results.map((scalarData) => {
 		if (!scalarData) {
@@ -132,10 +168,10 @@ export function prepareScalarTables({
 		const queryName = scalarData.columns?.[0]?.queryName ?? '';
 
 		const columns: PanelTableColumn[] = (scalarData.columns ?? []).map((col) => ({
-			name: getColName(col, legendMap, aggregationsPerQuery),
+			name: getColName(col, legendMap, aggregationsPerQuery, clickhouseQueryNames),
 			queryName: col.queryName ?? '',
 			isValueColumn: col.columnType === 'aggregation',
-			id: getColId(col, aggregationsPerQuery),
+			id: getColId(col, aggregationsPerQuery, clickhouseQueryNames),
 		}));
 
 		const rows = (scalarData.data ?? []).map((dataRow) => {

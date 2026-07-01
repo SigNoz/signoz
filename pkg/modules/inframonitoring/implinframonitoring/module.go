@@ -49,6 +49,84 @@ func NewModule(
 	}
 }
 
+// GetChecks runs a per-type readiness check: for the requested
+// infra-monitoring tab, reports which required metrics and attributes are
+// present vs missing, grouped by the collector component that produces them.
+// Ready is true iff every missing list is empty.
+func (m *module) GetChecks(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableChecks) (*inframonitoringtypes.Checks, error) {
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
+	spec, err := getSpecForType(req.Type)
+	if err != nil {
+		return nil, err
+	}
+
+	allMetrics := spec.getAllMetrics()
+	allAttrs := spec.getAllAttrs()
+
+	presentMetrics, err := m.getMetricsExistence(ctx, allMetrics)
+	if err != nil {
+		return nil, err
+	}
+	missingMetricsMap := make(map[string]bool, len(allMetrics))
+	for _, name := range allMetrics {
+		if !presentMetrics[name] {
+			missingMetricsMap[name] = true
+		}
+	}
+
+	presentAttrs, err := m.getAttributesExistence(ctx, allMetrics, allAttrs)
+	if err != nil {
+		return nil, err
+	}
+	missingAttrsMap := make(map[string]bool, len(allAttrs))
+	for _, name := range allAttrs {
+		if !presentAttrs[name] {
+			missingAttrsMap[name] = true
+		}
+	}
+
+	resp := &inframonitoringtypes.Checks{
+		Type:                         req.Type,
+		PresentDefaultEnabledMetrics: []inframonitoringtypes.MetricsComponentEntry{},
+		PresentOptionalMetrics:       []inframonitoringtypes.MetricsComponentEntry{},
+		PresentRequiredAttributes:    []inframonitoringtypes.AttributesComponentEntry{},
+		MissingDefaultEnabledMetrics: []inframonitoringtypes.MissingMetricsComponentEntry{},
+		MissingOptionalMetrics:       []inframonitoringtypes.MissingMetricsComponentEntry{},
+		MissingRequiredAttributes:    []inframonitoringtypes.MissingAttributesComponentEntry{},
+	}
+
+	for _, b := range spec.Buckets {
+		s := splitBucket(b, missingMetricsMap, missingAttrsMap)
+		if s.PresentDefault != nil {
+			resp.PresentDefaultEnabledMetrics = append(resp.PresentDefaultEnabledMetrics, *s.PresentDefault)
+		}
+		if s.PresentOptional != nil {
+			resp.PresentOptionalMetrics = append(resp.PresentOptionalMetrics, *s.PresentOptional)
+		}
+		if s.PresentAttrs != nil {
+			resp.PresentRequiredAttributes = append(resp.PresentRequiredAttributes, *s.PresentAttrs)
+		}
+		if s.MissingDefault != nil {
+			resp.MissingDefaultEnabledMetrics = append(resp.MissingDefaultEnabledMetrics, *s.MissingDefault)
+		}
+		if s.MissingOptional != nil {
+			resp.MissingOptionalMetrics = append(resp.MissingOptionalMetrics, *s.MissingOptional)
+		}
+		if s.MissingAttrs != nil {
+			resp.MissingRequiredAttributes = append(resp.MissingRequiredAttributes, *s.MissingAttrs)
+		}
+	}
+
+	resp.Ready = len(resp.MissingDefaultEnabledMetrics) == 0 &&
+		len(resp.MissingOptionalMetrics) == 0 &&
+		len(resp.MissingRequiredAttributes) == 0
+
+	return resp, nil
+}
+
 func (m *module) ListHosts(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableHosts) (*inframonitoringtypes.Hosts, error) {
 	ctx = m.withInfraMonitoringContext(ctx, "ListHosts")
 
@@ -78,18 +156,11 @@ func (m *module) ListHosts(ctx context.Context, orgID valuer.UUID, req *inframon
 		resp.Type = inframonitoringtypes.ResponseTypeGroupedList
 	}
 
-	// 1. Check which required metrics exist and get earliest retention time.
-	// If any required metric is missing, return early with the list of missing metrics.
-	// 2. If metrics exist but req.End is before the earliest reported time, return early with endTimeBeforeRetention=true.
-	missingMetrics, minFirstReportedUnixMilli, err := m.getMetricsExistenceAndEarliestTime(ctx, hostsTableMetricNamesList)
+	// If req.End is before the earliest reported time for these metrics, return early
+	// with endTimeBeforeRetention=true.
+	minFirstReportedUnixMilli, err := m.getEarliestMetricTime(ctx, hostsTableMetricNamesList)
 	if err != nil {
 		return nil, err
-	}
-	if len(missingMetrics) > 0 {
-		resp.RequiredMetricsCheck = inframonitoringtypes.RequiredMetricsCheck{MissingMetrics: missingMetrics}
-		resp.Records = []inframonitoringtypes.HostRecord{}
-		resp.Total = 0
-		return resp, nil
 	}
 	if req.End < int64(minFirstReportedUnixMilli) {
 		resp.EndTimeBeforeRetention = true
@@ -97,7 +168,6 @@ func (m *module) ListHosts(ctx context.Context, orgID valuer.UUID, req *inframon
 		resp.Total = 0
 		return resp, nil
 	}
-	resp.RequiredMetricsCheck = inframonitoringtypes.RequiredMetricsCheck{MissingMetrics: []string{}}
 
 	// TOD(nikhilmantri0902): replace this separate ClickHouse query with a sub-query inside the main query builder query
 	// once QB supports sub-queries.
@@ -191,15 +261,9 @@ func (m *module) ListPods(ctx context.Context, orgID valuer.UUID, req *inframoni
 		resp.Type = inframonitoringtypes.ResponseTypeGroupedList
 	}
 
-	missingMetrics, minFirstReportedUnixMilli, err := m.getMetricsExistenceAndEarliestTime(ctx, podsTableMetricNamesList)
+	minFirstReportedUnixMilli, err := m.getEarliestMetricTime(ctx, podsTableMetricNamesList)
 	if err != nil {
 		return nil, err
-	}
-	if len(missingMetrics) > 0 {
-		resp.RequiredMetricsCheck = inframonitoringtypes.RequiredMetricsCheck{MissingMetrics: missingMetrics}
-		resp.Records = []inframonitoringtypes.PodRecord{}
-		resp.Total = 0
-		return resp, nil
 	}
 	if req.End < int64(minFirstReportedUnixMilli) {
 		resp.EndTimeBeforeRetention = true
@@ -207,7 +271,6 @@ func (m *module) ListPods(ctx context.Context, orgID valuer.UUID, req *inframoni
 		resp.Total = 0
 		return resp, nil
 	}
-	resp.RequiredMetricsCheck = inframonitoringtypes.RequiredMetricsCheck{MissingMetrics: []string{}}
 
 	metadataMap, err := m.getPodsTableMetadata(ctx, req)
 	if err != nil {
@@ -276,15 +339,9 @@ func (m *module) ListNodes(ctx context.Context, orgID valuer.UUID, req *inframon
 		resp.Type = inframonitoringtypes.ResponseTypeGroupedList
 	}
 
-	missingMetrics, minFirstReportedUnixMilli, err := m.getMetricsExistenceAndEarliestTime(ctx, nodesTableMetricNamesList)
+	minFirstReportedUnixMilli, err := m.getEarliestMetricTime(ctx, nodesTableMetricNamesList)
 	if err != nil {
 		return nil, err
-	}
-	if len(missingMetrics) > 0 {
-		resp.RequiredMetricsCheck = inframonitoringtypes.RequiredMetricsCheck{MissingMetrics: missingMetrics}
-		resp.Records = []inframonitoringtypes.NodeRecord{}
-		resp.Total = 0
-		return resp, nil
 	}
 	if req.End < int64(minFirstReportedUnixMilli) {
 		resp.EndTimeBeforeRetention = true
@@ -292,7 +349,6 @@ func (m *module) ListNodes(ctx context.Context, orgID valuer.UUID, req *inframon
 		resp.Total = 0
 		return resp, nil
 	}
-	resp.RequiredMetricsCheck = inframonitoringtypes.RequiredMetricsCheck{MissingMetrics: []string{}}
 
 	metadataMap, err := m.getNodesTableMetadata(ctx, req)
 	if err != nil {
@@ -366,15 +422,9 @@ func (m *module) ListNamespaces(ctx context.Context, orgID valuer.UUID, req *inf
 		resp.Type = inframonitoringtypes.ResponseTypeGroupedList
 	}
 
-	missingMetrics, minFirstReportedUnixMilli, err := m.getMetricsExistenceAndEarliestTime(ctx, namespacesTableMetricNamesList)
+	minFirstReportedUnixMilli, err := m.getEarliestMetricTime(ctx, namespacesTableMetricNamesList)
 	if err != nil {
 		return nil, err
-	}
-	if len(missingMetrics) > 0 {
-		resp.RequiredMetricsCheck = inframonitoringtypes.RequiredMetricsCheck{MissingMetrics: missingMetrics}
-		resp.Records = []inframonitoringtypes.NamespaceRecord{}
-		resp.Total = 0
-		return resp, nil
 	}
 	if req.End < int64(minFirstReportedUnixMilli) {
 		resp.EndTimeBeforeRetention = true
@@ -382,7 +432,6 @@ func (m *module) ListNamespaces(ctx context.Context, orgID valuer.UUID, req *inf
 		resp.Total = 0
 		return resp, nil
 	}
-	resp.RequiredMetricsCheck = inframonitoringtypes.RequiredMetricsCheck{MissingMetrics: []string{}}
 
 	metadataMap, err := m.getNamespacesTableMetadata(ctx, req)
 	if err != nil {
@@ -450,15 +499,9 @@ func (m *module) ListClusters(ctx context.Context, orgID valuer.UUID, req *infra
 		resp.Type = inframonitoringtypes.ResponseTypeGroupedList
 	}
 
-	missingMetrics, minFirstReportedUnixMilli, err := m.getMetricsExistenceAndEarliestTime(ctx, clustersTableMetricNamesList)
+	minFirstReportedUnixMilli, err := m.getEarliestMetricTime(ctx, clustersTableMetricNamesList)
 	if err != nil {
 		return nil, err
-	}
-	if len(missingMetrics) > 0 {
-		resp.RequiredMetricsCheck = inframonitoringtypes.RequiredMetricsCheck{MissingMetrics: missingMetrics}
-		resp.Records = []inframonitoringtypes.ClusterRecord{}
-		resp.Total = 0
-		return resp, nil
 	}
 	if req.End < int64(minFirstReportedUnixMilli) {
 		resp.EndTimeBeforeRetention = true
@@ -466,7 +509,6 @@ func (m *module) ListClusters(ctx context.Context, orgID valuer.UUID, req *infra
 		resp.Total = 0
 		return resp, nil
 	}
-	resp.RequiredMetricsCheck = inframonitoringtypes.RequiredMetricsCheck{MissingMetrics: []string{}}
 
 	metadataMap, err := m.getClustersTableMetadata(ctx, req)
 	if err != nil {
@@ -547,15 +589,9 @@ func (m *module) ListVolumes(ctx context.Context, orgID valuer.UUID, req *infram
 	}
 	req.Filter.Expression = mergeFilterExpressions(volumesBaseFilterExpr, req.Filter.Expression)
 
-	missingMetrics, minFirstReportedUnixMilli, err := m.getMetricsExistenceAndEarliestTime(ctx, volumesTableMetricNamesList)
+	minFirstReportedUnixMilli, err := m.getEarliestMetricTime(ctx, volumesTableMetricNamesList)
 	if err != nil {
 		return nil, err
-	}
-	if len(missingMetrics) > 0 {
-		resp.RequiredMetricsCheck = inframonitoringtypes.RequiredMetricsCheck{MissingMetrics: missingMetrics}
-		resp.Records = []inframonitoringtypes.VolumeRecord{}
-		resp.Total = 0
-		return resp, nil
 	}
 	if req.End < int64(minFirstReportedUnixMilli) {
 		resp.EndTimeBeforeRetention = true
@@ -563,7 +599,6 @@ func (m *module) ListVolumes(ctx context.Context, orgID valuer.UUID, req *infram
 		resp.Total = 0
 		return resp, nil
 	}
-	resp.RequiredMetricsCheck = inframonitoringtypes.RequiredMetricsCheck{MissingMetrics: []string{}}
 
 	metadataMap, err := m.getVolumesTableMetadata(ctx, req)
 	if err != nil {
@@ -632,15 +667,9 @@ func (m *module) ListDeployments(ctx context.Context, orgID valuer.UUID, req *in
 	}
 	req.Filter.Expression = mergeFilterExpressions(deploymentsBaseFilterExpr, req.Filter.Expression)
 
-	missingMetrics, minFirstReportedUnixMilli, err := m.getMetricsExistenceAndEarliestTime(ctx, deploymentsTableMetricNamesList)
+	minFirstReportedUnixMilli, err := m.getEarliestMetricTime(ctx, deploymentsTableMetricNamesList)
 	if err != nil {
 		return nil, err
-	}
-	if len(missingMetrics) > 0 {
-		resp.RequiredMetricsCheck = inframonitoringtypes.RequiredMetricsCheck{MissingMetrics: missingMetrics}
-		resp.Records = []inframonitoringtypes.DeploymentRecord{}
-		resp.Total = 0
-		return resp, nil
 	}
 	if req.End < int64(minFirstReportedUnixMilli) {
 		resp.EndTimeBeforeRetention = true
@@ -648,7 +677,6 @@ func (m *module) ListDeployments(ctx context.Context, orgID valuer.UUID, req *in
 		resp.Total = 0
 		return resp, nil
 	}
-	resp.RequiredMetricsCheck = inframonitoringtypes.RequiredMetricsCheck{MissingMetrics: []string{}}
 
 	metadataMap, err := m.getDeploymentsTableMetadata(ctx, req)
 	if err != nil {
@@ -722,15 +750,9 @@ func (m *module) ListStatefulSets(ctx context.Context, orgID valuer.UUID, req *i
 	}
 	req.Filter.Expression = mergeFilterExpressions(statefulSetsBaseFilterExpr, req.Filter.Expression)
 
-	missingMetrics, minFirstReportedUnixMilli, err := m.getMetricsExistenceAndEarliestTime(ctx, statefulSetsTableMetricNamesList)
+	minFirstReportedUnixMilli, err := m.getEarliestMetricTime(ctx, statefulSetsTableMetricNamesList)
 	if err != nil {
 		return nil, err
-	}
-	if len(missingMetrics) > 0 {
-		resp.RequiredMetricsCheck = inframonitoringtypes.RequiredMetricsCheck{MissingMetrics: missingMetrics}
-		resp.Records = []inframonitoringtypes.StatefulSetRecord{}
-		resp.Total = 0
-		return resp, nil
 	}
 	if req.End < int64(minFirstReportedUnixMilli) {
 		resp.EndTimeBeforeRetention = true
@@ -738,7 +760,6 @@ func (m *module) ListStatefulSets(ctx context.Context, orgID valuer.UUID, req *i
 		resp.Total = 0
 		return resp, nil
 	}
-	resp.RequiredMetricsCheck = inframonitoringtypes.RequiredMetricsCheck{MissingMetrics: []string{}}
 
 	metadataMap, err := m.getStatefulSetsTableMetadata(ctx, req)
 	if err != nil {
@@ -814,15 +835,9 @@ func (m *module) ListJobs(ctx context.Context, orgID valuer.UUID, req *inframoni
 	}
 	req.Filter.Expression = mergeFilterExpressions(jobsBaseFilterExpr, req.Filter.Expression)
 
-	missingMetrics, minFirstReportedUnixMilli, err := m.getMetricsExistenceAndEarliestTime(ctx, jobsTableMetricNamesList)
+	minFirstReportedUnixMilli, err := m.getEarliestMetricTime(ctx, jobsTableMetricNamesList)
 	if err != nil {
 		return nil, err
-	}
-	if len(missingMetrics) > 0 {
-		resp.RequiredMetricsCheck = inframonitoringtypes.RequiredMetricsCheck{MissingMetrics: missingMetrics}
-		resp.Records = []inframonitoringtypes.JobRecord{}
-		resp.Total = 0
-		return resp, nil
 	}
 	if req.End < int64(minFirstReportedUnixMilli) {
 		resp.EndTimeBeforeRetention = true
@@ -830,7 +845,6 @@ func (m *module) ListJobs(ctx context.Context, orgID valuer.UUID, req *inframoni
 		resp.Total = 0
 		return resp, nil
 	}
-	resp.RequiredMetricsCheck = inframonitoringtypes.RequiredMetricsCheck{MissingMetrics: []string{}}
 
 	metadataMap, err := m.getJobsTableMetadata(ctx, req)
 	if err != nil {
@@ -906,15 +920,9 @@ func (m *module) ListDaemonSets(ctx context.Context, orgID valuer.UUID, req *inf
 	}
 	req.Filter.Expression = mergeFilterExpressions(daemonSetsBaseFilterExpr, req.Filter.Expression)
 
-	missingMetrics, minFirstReportedUnixMilli, err := m.getMetricsExistenceAndEarliestTime(ctx, daemonSetsTableMetricNamesList)
+	minFirstReportedUnixMilli, err := m.getEarliestMetricTime(ctx, daemonSetsTableMetricNamesList)
 	if err != nil {
 		return nil, err
-	}
-	if len(missingMetrics) > 0 {
-		resp.RequiredMetricsCheck = inframonitoringtypes.RequiredMetricsCheck{MissingMetrics: missingMetrics}
-		resp.Records = []inframonitoringtypes.DaemonSetRecord{}
-		resp.Total = 0
-		return resp, nil
 	}
 	if req.End < int64(minFirstReportedUnixMilli) {
 		resp.EndTimeBeforeRetention = true
@@ -922,7 +930,6 @@ func (m *module) ListDaemonSets(ctx context.Context, orgID valuer.UUID, req *inf
 		resp.Total = 0
 		return resp, nil
 	}
-	resp.RequiredMetricsCheck = inframonitoringtypes.RequiredMetricsCheck{MissingMetrics: []string{}}
 
 	metadataMap, err := m.getDaemonSetsTableMetadata(ctx, req)
 	if err != nil {
