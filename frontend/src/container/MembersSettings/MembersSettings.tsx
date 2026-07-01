@@ -6,7 +6,7 @@ import { DropdownMenuSimple, type MenuItem } from '@signozhq/ui/dropdown-menu';
 import { Input } from '@signozhq/ui/input';
 import { useListUsers } from 'api/generated/services/users';
 import EditMemberDrawer from 'components/EditMemberDrawer/EditMemberDrawer';
-import InviteMembersModal from 'components/InviteMembersModal/InviteMembersModal';
+import InviteMembersModal from 'container/MembersSettings/components/InviteMembersModal/InviteMembersModal';
 import MembersTable, { MemberRow } from 'components/MembersTable/MembersTable';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { parseAsBoolean, useQueryState } from 'nuqs';

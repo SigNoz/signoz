@@ -1,0 +1,115 @@
+.drawerSection {
+	composes: drawerSection from '../../shared.module.scss';
+}
+
+.drawerSurface {
+	composes: drawerSurface from '../../shared.module.scss';
+}
+
+.drawerSurfaceHead {
+	composes: drawerSurfaceHead from '../../shared.module.scss';
+}
+
+.managedLabel {
+	composes: managedLabel from '../../shared.module.scss';
+}
+
+.sourceRadioGroup {
+	--radio-group-item-border-color: var(--l2-border);
+
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-4);
+	width: 100%;
+	.sourceRadio {
+		display: flex;
+		flex-direction: row;
+		align-items: flex-start;
+		justify-content: flex-start;
+		gap: var(--spacing-5);
+		padding: var(--spacing-5) var(--spacing-6);
+		border-radius: var(--radius-2);
+		border: 1px solid transparent;
+		background: var(--l3-background);
+		margin: 0;
+		width: 100%;
+		// Include padding + border in the 100% width so the card fits inside
+		// the SOURCE surface instead of overflowing its right edge.
+		box-sizing: border-box;
+		cursor: pointer;
+		transition:
+			background-color 0.12s ease,
+			border-color 0.12s ease;
+
+		// The radio button itself: keep it fixed-size and aligned with the title
+		// baseline (margin-top compensates for align-items: flex-start vs the
+		// title's line-box).
+		> button[role='radio'] {
+			flex: 0 0 16px;
+			width: 16px;
+			height: 16px;
+			margin-top: 3px;
+		}
+
+		// The library wraps children in a <label>. Make it grow into the
+		// remaining width and reset the .drawerSection label typography leak
+		// (set earlier in this file) so the title/desc divs use their own styles.
+		> label {
+			flex: 1 1 auto;
+			min-width: 0;
+			display: block;
+			text-align: left;
+			cursor: pointer;
+			font-size: inherit;
+			font-weight: inherit;
+			color: inherit;
+		}
+
+		// Radix RadioGroupItem renders <button data-state="checked|unchecked">.
+		// Use :has() to highlight the wrapper card when its inner button is checked.
+		&.sourceRadioAuto:has(button[data-state='checked']) {
+			background: color-mix(in srgb, var(--accent-primary) 10%, transparent);
+			border-color: color-mix(in srgb, var(--accent-primary) 30%, transparent);
+		}
+
+		&.sourceRadioOverride:has(button[data-state='checked']) {
+			background: color-mix(in srgb, var(--accent-amber) 10%, transparent);
+			border-color: color-mix(in srgb, var(--accent-amber) 30%, transparent);
+		}
+
+		&:hover {
+			background: var(--l3-background-hover);
+		}
+	}
+}
+
+.sourceRadioTitle {
+	font-weight: var(--font-weight-semibold);
+	font-size: var(--periscope-font-size-base);
+	color: var(--l1-foreground);
+}
+
+.sourceRadioDesc {
+	margin-top: 2px;
+	font-size: 12px;
+	color: var(--l3-foreground);
+}
+
+.resetConfirm {
+	margin-top: var(--spacing-6);
+	padding: var(--spacing-6);
+	border-radius: var(--radius-2);
+	background: color-mix(in srgb, var(--accent-primary) 6%, transparent);
+	border: 1px solid color-mix(in srgb, var(--accent-primary) 20%, transparent);
+
+	p {
+		margin: 0 0 var(--spacing-5);
+		font-size: 12px;
+	}
+}
+
+.resetConfirmActions {
+	display: flex;
+	gap: var(--spacing-4);
+	justify-content: flex-end;
+}

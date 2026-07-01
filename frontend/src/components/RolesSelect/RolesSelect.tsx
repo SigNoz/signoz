@@ -32,10 +32,13 @@ export function useRoles(): {
 	};
 }
 
-export function getRoleOptions(roles: AuthtypesRoleDTO[]): RoleOption[] {
+export function getRoleOptions(
+	roles: AuthtypesRoleDTO[],
+	valueField: 'id' | 'name',
+): RoleOption[] {
 	return roles.map((role) => ({
 		label: role.name ?? '',
-		value: role.id ?? '',
+		value: role[valueField] ?? '',
 	}));
 }
 
@@ -82,6 +85,7 @@ interface BaseProps {
 	error?: APIError;
 	onRefetch?: () => void;
 	disabled?: boolean;
+	valueField?: 'id' | 'name';
 }
 
 interface SingleProps extends BaseProps {
@@ -113,7 +117,7 @@ function RolesSelect(props: RolesSelectProps): JSX.Element {
 	});
 
 	const roles = externalRoles ?? data?.data ?? [];
-	const options = getRoleOptions(roles);
+	const options = getRoleOptions(roles, props.valueField || 'id');
 
 	const {
 		mode,
