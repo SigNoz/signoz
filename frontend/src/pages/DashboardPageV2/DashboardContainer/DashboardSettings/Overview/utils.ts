@@ -1,6 +1,7 @@
 import type { TagtypesPostableTagDTO } from 'api/generated/services/sigNoz.schemas';
 
 export { Base64Icons } from 'container/DashboardContainer/DashboardSettings/General/utils';
+export { parseKeyValueTag } from 'components/TagKeyValueInput/utils';
 
 // tag UX, a string with no ':' is round-tripped as `{key: x, value: x}` and
 // collapsed back to just `x` for display.

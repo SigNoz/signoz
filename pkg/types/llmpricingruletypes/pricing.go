@@ -53,7 +53,8 @@ var (
 	LLMPricingRuleCacheModeSubtract = LLMPricingRuleCacheMode{valuer.NewString("subtract")}
 	// LLMPricingRuleCacheModeAdditive: cached tokens are reported separately (Anthropic-style).
 	LLMPricingRuleCacheModeAdditive = LLMPricingRuleCacheMode{valuer.NewString("additive")}
-	// LLMPricingRuleCacheModeUnknown: provider behaviour is unknown; falls back to subtract.
+	// LLMPricingRuleCacheModeUnknown: provider behaviour is unknown. buildProcessorConfig
+	// normalizes this to an empty mode in the collector config.
 	LLMPricingRuleCacheModeUnknown = LLMPricingRuleCacheMode{valuer.NewString("unknown")}
 )
 
@@ -125,8 +126,10 @@ type UpdatableLLMPricingRules struct {
 }
 
 type ListPricingRulesQuery struct {
-	Offset int `query:"offset" json:"offset"`
-	Limit  int `query:"limit"  json:"limit"`
+	Offset     int    `query:"offset" json:"offset"`
+	Limit      int    `query:"limit"  json:"limit"`
+	Search     string `query:"q" json:"q"`
+	IsOverride *bool  `query:"isOverride" json:"isOverride"`
 }
 
 type GettablePricingRules struct {

@@ -5,12 +5,13 @@ import {
 	AIAssistantPage,
 	AlertHistory,
 	AlertOverview,
-	AllAlertChannels,
 	AllErrors,
 	ApiMonitoring,
-	CreateAlertChannelAlerts,
+	ChannelsEdit,
+	ChannelsNew,
 	CreateNewAlerts,
 	DashboardPage,
+	DashboardPanelEditorPage,
 	DashboardsListPage,
 	DashboardWidget,
 	EditRulesPage,
@@ -22,7 +23,7 @@ import {
 	IntegrationsDetailsPage,
 	LicensePage,
 	ListAllALertsPage,
-	LLMObservabilityAttributeMappingPage,
+	LLMObservabilityPage,
 	LiveLogs,
 	Login,
 	Logs,
@@ -33,7 +34,6 @@ import {
 	MeterExplorerPage,
 	MetricsExplorer,
 	OldLogsExplorer,
-	Onboarding,
 	OnboardingV2,
 	OrgOnboarding,
 	PasswordReset,
@@ -69,13 +69,6 @@ const routes: AppRoutes[] = [
 		exact: true,
 		isPrivate: false,
 		key: 'SIGN_UP',
-	},
-	{
-		path: ROUTES.GET_STARTED,
-		exact: false,
-		component: Onboarding,
-		isPrivate: true,
-		key: 'GET_STARTED',
 	},
 	{
 		path: ROUTES.GET_STARTED_WITH_CLOUD,
@@ -198,6 +191,13 @@ const routes: AppRoutes[] = [
 		key: 'DASHBOARD_WIDGET',
 	},
 	{
+		path: ROUTES.DASHBOARD_PANEL_EDITOR,
+		exact: true,
+		component: DashboardPanelEditorPage,
+		isPrivate: true,
+		key: 'DASHBOARD_PANEL_EDITOR',
+	},
+	{
 		path: ROUTES.EDIT_ALERTS,
 		exact: true,
 		component: EditRulesPage,
@@ -270,16 +270,16 @@ const routes: AppRoutes[] = [
 	{
 		path: ROUTES.CHANNELS_NEW,
 		exact: true,
-		component: CreateAlertChannelAlerts,
+		component: ChannelsNew,
 		isPrivate: true,
 		key: 'CHANNELS_NEW',
 	},
 	{
-		path: ROUTES.ALL_CHANNELS,
+		path: ROUTES.CHANNELS_EDIT,
 		exact: true,
-		component: AllAlertChannels,
+		component: ChannelsEdit,
 		isPrivate: true,
-		key: 'ALL_CHANNELS',
+		key: 'CHANNELS_EDIT',
 	},
 	{
 		path: ROUTES.ALL_ERROR,
@@ -470,6 +470,13 @@ const routes: AppRoutes[] = [
 		key: 'METRICS_EXPLORER_VIEWS',
 		isPrivate: true,
 	},
+	{
+		path: ROUTES.METRICS_EXPLORER_VOLUME_CONTROL,
+		exact: true,
+		component: MetricsExplorer,
+		key: 'METRICS_EXPLORER_VOLUME_CONTROL',
+		isPrivate: true,
+	},
 
 	{
 		path: ROUTES.METER,
@@ -509,8 +516,22 @@ const routes: AppRoutes[] = [
 	{
 		path: ROUTES.LLM_OBSERVABILITY_ATTRIBUTE_MAPPING,
 		exact: true,
-		component: LLMObservabilityAttributeMappingPage,
+		component: LLMObservabilityPage,
 		key: 'LLM_OBSERVABILITY_ATTRIBUTE_MAPPING',
+		isPrivate: true,
+	},
+	{
+		path: ROUTES.LLM_OBSERVABILITY_OVERVIEW,
+		exact: true,
+		component: LLMObservabilityPage,
+		key: 'LLM_OBSERVABILITY_OVERVIEW',
+		isPrivate: true,
+	},
+	{
+		path: ROUTES.LLM_OBSERVABILITY_CONFIGURATION,
+		exact: true,
+		component: LLMObservabilityPage,
+		key: 'LLM_OBSERVABILITY_CONFIGURATION',
 		isPrivate: true,
 	},
 ];
@@ -542,6 +563,9 @@ export const oldNewRoutesMapping: Record<string, string> = {
 	'/messaging-queues': '/messaging-queues/overview',
 	'/alerts/edit': '/alerts/overview',
 	'/alerts/type-selection': '/alerts/new',
+	// TODO(H4ad): Update this after https://github.com/SigNoz/engineering-pod/issues/5322
+	'/settings/channels': '/alerts?tab=Channels',
+	'/settings/channels/new': '/alerts/channels/new',
 };
 export const oldRoutes = Object.keys(oldNewRoutesMapping);
 

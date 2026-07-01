@@ -12,11 +12,9 @@ export interface PreparePieDataArgs {
 }
 
 /**
- * Turns the scalar tables of a V5 response into pie slices: one slice per
- * group row. The aggregation column holds the value, the group column(s)
- * form the label. Colours honour `customColors` then fall back to a
- * deterministic palette colour; non-positive / non-numeric values are
- * dropped.
+ * Turns the scalar tables of a V5 response into pie slices (one per group row):
+ * value column → value, group column(s) → label. Colours honour `customColors`
+ * then fall back to the deterministic palette; non-positive/non-numeric dropped.
  */
 export function preparePieData({
 	tables,

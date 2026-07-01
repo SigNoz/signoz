@@ -794,6 +794,13 @@ notifications	-  2050
 	background: color-mix(in srgb, var(--l3-background) 20%, transparent);
 }
 
+// =================================================================
+// Monaco Editor style overrides
+.monaco-editor .find-widget.visible {
+	top: 30px !important;
+	right: 45px !important;
+}
+
 body.ai-assistant-panel-open {
 	.PylonChat-bubbleFrameContainer,
 	.PylonChat-chatWindowFrameContainer {
@@ -832,4 +839,8 @@ body.ai-assistant-panel-open {
 	// design libraries.
 	--dropdown-menu-content-z-index: 1050;
 	--dropdown-menu-sub-content-z-index: 1050;
+}
+
+div[data-slot='callout'] {
+	box-sizing: border-box;
 }

@@ -68,13 +68,3 @@
 	border-radius: 2px;
 	border: 1px solid var(--l2-border);
 }
-
-// the V1 tags input ships borderless; give the field a visible box to match
-.tagsField {
-	display: flex;
-	align-items: center;
-	padding: 6px 8px;
-	border-radius: 2px;
-	border: 1px solid var(--l2-border);
-	// background: var(--l3-background);
-}

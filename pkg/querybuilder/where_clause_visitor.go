@@ -145,7 +145,7 @@ func PrepareWhereClause(query string, opts FilterExprVisitorOpts) (PreparedWhere
 			"Found %d syntax errors while parsing the search expression.",
 			len(parserErrorListener.SyntaxErrors),
 		)
-		additionals := make([]string, len(parserErrorListener.SyntaxErrors))
+		additionals := make([]string, 0, len(parserErrorListener.SyntaxErrors))
 		for _, err := range parserErrorListener.SyntaxErrors {
 			if err.Error() != "" {
 				additionals = append(additionals, err.Error())

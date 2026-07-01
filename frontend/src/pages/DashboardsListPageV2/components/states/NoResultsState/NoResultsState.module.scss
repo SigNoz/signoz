@@ -3,3 +3,15 @@
 	padding: 105px 190px;
 	gap: 8px;
 }
+
+.title {
+	color: var(--l1-foreground);
+	font-size: var(--font-size-base);
+	font-weight: var(--font-weight-medium);
+}
+
+.description {
+	color: var(--l3-foreground);
+	font-size: var(--font-size-sm);
+	text-align: center;
+}

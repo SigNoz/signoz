@@ -205,7 +205,7 @@ function ServiceAccountsSettings(): JSX.Element {
 	);
 
 	return (
-		<>
+		<div className="sa-settings-page">
 			<div className="sa-settings">
 				<div className="sa-settings__header">
 					<h1 className="sa-settings__title">Service Accounts</h1>
@@ -295,7 +295,7 @@ function ServiceAccountsSettings(): JSX.Element {
 			<CreateServiceAccountModal />
 
 			<ServiceAccountDrawer onSuccess={handleDrawerSuccess} />
-		</>
+		</div>
 	);
 }
 

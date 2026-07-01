@@ -1,0 +1,112 @@
+.createEditRolePage {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-8);
+	padding: var(--spacing-8);
+	width: 100%;
+	max-width: 1400px;
+	margin: 0 auto;
+	height: 100%;
+	min-height: 0;
+}
+
+.createEditRolePageHeader {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--spacing-8);
+}
+
+.createEditRolePageHeaderLeft {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-6);
+}
+
+.backButton {
+	--button-padding: var(--spacing-3);
+}
+
+.createEditRolePageActions {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-6);
+}
+
+.unsavedIndicator {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-3);
+	margin-right: var(--spacing-4);
+}
+
+.unsavedDot {
+	display: block;
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: var(--primary);
+	box-shadow: 0px 0px 6px 0px
+		color-mix(in srgb, var(--primary-background) 40%, transparent);
+	flex-shrink: 0;
+}
+
+.unsavedText {
+	color: var(--primary);
+}
+
+.createEditRolePageContent {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-8);
+	flex: 1;
+	min-height: 0;
+}
+
+.createEditRolePageForm {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-8);
+}
+
+.formRow {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: var(--spacing-8);
+}
+
+.formField {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-2);
+
+	--input-background: var(--l2-background);
+	--input-hover-background: var(--l2-background);
+	--input-focus-background: var(--l2-background);
+	--input-disabled-background: var(--l2-background);
+
+	input::placeholder {
+		color: var(--l3-foreground);
+	}
+}
+
+.formLabel {
+	font-family: Inter;
+	font-size: 12px;
+	font-weight: var(--font-weight-medium);
+	line-height: var(--line-height-20);
+	letter-spacing: 0.48px;
+	text-transform: uppercase;
+	color: var(--l2-foreground);
+}
+
+.createEditRolePageDivider {
+	width: 100%;
+	height: 1px;
+	background: var(--l1-border);
+}
+
+.errorInPlaceContainer {
+	border-color: var(--callout-error-border) !important;
+	background: var(--callout-error-background) !important;
+}

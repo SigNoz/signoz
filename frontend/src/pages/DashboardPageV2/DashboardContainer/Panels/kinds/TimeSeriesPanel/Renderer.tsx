@@ -32,6 +32,7 @@ function TimeSeriesPanelRenderer({
 	panelId,
 	panel,
 	data,
+	refetch,
 	onClick,
 	onDragSelect,
 	dashboardPreference,
@@ -42,12 +43,8 @@ function TimeSeriesPanelRenderer({
 	const isDarkMode = useIsDarkMode();
 	const { timezone } = useTimezone();
 
-	// The registry guarantees this Renderer only runs when
-	// `panel.spec.plugin.kind === 'signoz/TimeSeriesPanel'`, so the cast is a
-	// documented boundary narrowing — not a blind assertion. Memoized so the
-	// `?? {}` fallback doesn't produce a fresh object on each render.
 	const spec = useMemo<DashboardtypesTimeSeriesPanelSpecDTO>(
-		() => (panel.spec.plugin.spec ?? {}) as DashboardtypesTimeSeriesPanelSpecDTO,
+		() => panel.spec.plugin.spec,
 		[panel.spec.plugin.spec],
 	);
 
@@ -56,12 +53,9 @@ function TimeSeriesPanelRenderer({
 		[panel.spec.queries],
 	);
 
-	// X-scale clamps come from the request that produced the data, so each
-	// panel pins to the window it actually fetched — important during
-	// drag-zoom transitions when the time picker has moved but new data
-	// hasn't arrived yet. Falls back to the global picker inside the helper.
-	// The generated request DTO is structurally the hand-written V5 request;
-	// the cast is the documented boundary.
+	// X-scale clamps come from the request that produced the data, so each panel
+	// pins to the window it fetched — matters during drag-zoom transitions before
+	// new data arrives. The generated request DTO is structurally the V5 request.
 	const { minTimeScale, maxTimeScale } = useMemo(() => {
 		const { startTime, endTime } = getTimeRangeFromQueryRangeRequest(
 			data.requestPayload as unknown as QueryRangeRequestV5 | undefined,
@@ -104,10 +98,8 @@ function TimeSeriesPanelRenderer({
 			minTimeScale,
 			maxTimeScale,
 			onDragSelect,
-			// `config` gets mutated by TooltipPlugin (config.setCursor for cursor sync).
-			// Rebuild it on syncMode changes so the new chart instance starts from a
-			// clean config — otherwise switching to "No Sync" would inherit stale sync
-			// settings from the previous mode.
+			// TooltipPlugin mutates `config` for cursor sync; rebuild on syncMode change
+			// so a fresh instance doesn't inherit stale sync settings (e.g. "No Sync").
 			dashboardPreference?.syncMode,
 		],
 	);
@@ -130,12 +122,8 @@ function TimeSeriesPanelRenderer({
 		[panelId],
 	);
 
-	/**
-	 * The uPlot key prop is the only way to force a full teardown and re-mount
-	 * of the chart. By including the syncMode and syncFilterMode in the key,
-	 * we ensure that changes to these preferences trigger a fresh chart instance,
-	 * preventing stale sync settings from being inherited.
-	 */
+	// Keying on sync prefs forces a full chart teardown/re-mount so stale sync
+	// settings aren't inherited — the only way to fully reset the uPlot instance.
 	const key = `${dashboardPreference?.syncMode}-${dashboardPreference?.syncFilterMode}`;
 
 	const handleChartClick = useCallback(
@@ -151,7 +139,7 @@ function TimeSeriesPanelRenderer({
 			data-testid="time-series-renderer"
 			className={PanelStyles.panelContainer}
 		>
-			{flatSeries.length === 0 && <NoData />}
+			{flatSeries.length === 0 && <NoData onRetry={refetch} />}
 			{flatSeries.length > 0 &&
 				containerDimensions.width > 0 &&
 				containerDimensions.height > 0 && (

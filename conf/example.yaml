@@ -65,15 +65,31 @@ web:
     posthog:
       # Whether to enable PostHog in web.
       enabled: false
+      # The PostHog project API key.
+      key: ""
+      # The PostHog API host. Defaults to https://us.i.posthog.com when empty.
+      api_host: ""
+      # The PostHog UI host. Used when api_host points at a reverse proxy.
+      ui_host: ""
     appcues:
       # Whether to enable Appcues in web.
       enabled: false
+      # The Appcues account/app ID.
+      app_id: ""
     sentry:
       # Whether to enable Sentry in web.
       enabled: false
+      # The Sentry DSN.
+      dsn: ""
+      # The Sentry tunnel URL.
+      tunnel: ""
     pylon:
       # Whether to enable Pylon in web.
       enabled: false
+      # The Pylon app ID.
+      app_id: ""
+      # The Pylon identity verification secret.
+      identity_secret: ""
 
 ##################### Cache #####################
 cache:
@@ -141,6 +157,10 @@ querier:
   flux_interval: 5m
   # The maximum number of concurrent queries for missing ranges.
   max_concurrent_queries: 4
+  # When filtering logs by trace_id, clamp the query window to the trace time
+  # range with padding to include slightly delayed log exports. Logs only; set
+  # to 0 to disable.
+  log_trace_id_window_padding: 5m
 
 ##################### TelemetryStore #####################
 telemetrystore:
