@@ -9,6 +9,9 @@ import ROUTES from 'constants/routes';
 import { PANEL_KIND_TO_PANEL_TYPE } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelKind';
 import { fromPerses } from 'pages/DashboardPageV2/DashboardContainer/queryV5/persesQueryAdapters';
 
+/** The `formatting` block shared by every formattable plugin spec, read without narrowing on kind. */
+type FormattablePluginSpec = { formatting?: DashboardtypesPanelFormattingDTO };
+
 /**
  * Builds the `/alerts/new` URL that seeds the alert builder from a panel's query,
  * mirroring V1's `useCreateAlerts`: the panel's V5 queries are translated to the
@@ -20,15 +23,12 @@ import { fromPerses } from 'pages/DashboardPageV2/DashboardContainer/queryV5/per
  */
 export function buildCreateAlertUrl(panel: DashboardtypesPanelDTO): string {
 	const panelType = PANEL_KIND_TO_PANEL_TYPE[panel.spec.plugin.kind];
-	const query = fromPerses(panel.spec.queries ?? [], panelType);
+	const query = fromPerses(panel.spec.queries, panelType);
 
 	// `formatting.unit` is shared by the formattable plugin specs; read it with a
 	// localized cast rather than narrowing on kind (mirrors Panel's time-preference read).
-	const unit = (
-		panel.spec.plugin.spec as
-			| { formatting?: DashboardtypesPanelFormattingDTO }
-			| undefined
-	)?.formatting?.unit;
+	const unit = (panel.spec.plugin.spec as FormattablePluginSpec).formatting
+		?.unit;
 	if (unit) {
 		query.unit = unit;
 	}

@@ -154,7 +154,7 @@ export function usePanelActionItems({
 	const deletePanel = useDeletePanel({ sections });
 	const clonePanel = useClonePanel({ sections });
 
-	const kindActions = getPanelDefinition(panelKind).actions;
+	const panelCapabilities = getPanelDefinition(panelKind).actions;
 
 	// Delete runs on confirm, not on click — the menu item opens a prompt.
 	const deleteConfirm = useConfirmableAction(
@@ -173,7 +173,7 @@ export function usePanelActionItems({
 
 	const items = useMemo<MenuItem[]>(() => {
 		const panelGroup: MenuItem[] = [];
-		if (kindActions.view) {
+		if (panelCapabilities.view) {
 			panelGroup.push({
 				key: 'view-panel',
 				label: 'View',
@@ -181,7 +181,7 @@ export function usePanelActionItems({
 				onClick: (): void => notImplementedYet('View'),
 			});
 		}
-		if (isEditable && canEditWidget && kindActions.edit) {
+		if (isEditable && canEditWidget && panelCapabilities.edit) {
 			panelGroup.push({
 				key: 'edit-panel',
 				label: 'Edit panel',
@@ -191,7 +191,7 @@ export function usePanelActionItems({
 		}
 		// Clone needs the section context (source spec + dimensions) to place the
 		// copy, so — unlike Edit — it requires panelActions.
-		if (isEditable && canEditWidget && panelActions && kindActions.clone) {
+		if (isEditable && canEditWidget && panelActions && panelCapabilities.clone) {
 			panelGroup.push({
 				key: 'clone-panel',
 				label: 'Clone',
@@ -205,7 +205,7 @@ export function usePanelActionItems({
 		}
 
 		const dataGroup: MenuItem[] = [];
-		if (kindActions.download) {
+		if (panelCapabilities.download) {
 			dataGroup.push({
 				key: 'download-panel',
 				label: 'Download as CSV',
@@ -216,7 +216,7 @@ export function usePanelActionItems({
 		// Seeding an alert opens a new tab and never mutates the dashboard, so —
 		// unlike edit/clone — it isn't gated on `isEditable` (V1 parity: available
 		// on locked dashboards too).
-		if (kindActions.createAlert) {
+		if (panelCapabilities.createAlert) {
 			dataGroup.push({
 				key: 'create-alert',
 				label: 'Create Alerts',
@@ -258,7 +258,7 @@ export function usePanelActionItems({
 		canEditWidget,
 		canMove,
 		canDelete,
-		kindActions,
+		panelCapabilities,
 		panel,
 		panelActions,
 		sections,
