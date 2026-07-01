@@ -32,6 +32,8 @@ interface PanelBodyProps {
 	searchTerm?: string;
 	/** Server-side paging handles — only consumed by raw/list renderers. */
 	pagination?: PanelPagination;
+	/** Close the standalone View modal — only consumed by the time-series/bar graph manager. */
+	onCloseStandaloneView?: () => void;
 }
 
 /**
@@ -51,6 +53,7 @@ function PanelBody({
 	panelMode = PanelMode.DASHBOARD_VIEW,
 	searchTerm,
 	pagination,
+	onCloseStandaloneView,
 }: PanelBodyProps): JSX.Element {
 	// react-query keeps the previous response during refetches, so its presence is
 	// the "have something to show" signal — only fail hard when there's nothing.
@@ -112,6 +115,7 @@ function PanelBody({
 				dashboardPreference={dashboardPreference}
 				searchTerm={searchTerm}
 				pagination={pagination}
+				onCloseStandaloneView={onCloseStandaloneView}
 			/>
 		</div>
 	);
