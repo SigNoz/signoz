@@ -286,7 +286,7 @@ func (module *module) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID
 	return module.pkgDashboardModule.Get(ctx, orgID, id)
 }
 
-func (module *module) GetByMetricNames(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string][]map[string]string, error) {
+func (module *module) GetByMetricNames(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string][]dashboardtypes.DashboardPanelRef, error) {
 	return module.pkgDashboardModule.GetByMetricNames(ctx, orgID, metricNames)
 }
 
