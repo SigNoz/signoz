@@ -1,4 +1,5 @@
 import { Button } from '@signozhq/ui/button';
+import { Typography } from '@signozhq/ui/typography';
 
 import styles from './AttributeMappingHeader.module.scss';
 
@@ -17,11 +18,9 @@ function AttributeMappingHeader({
 }: AttributeMappingHeaderProps): JSX.Element {
 	return (
 		<header className={styles.pageHeader}>
-			<div className={styles.pageHeaderTitle}>
-				<p className={styles.description}>
-					Configure source-to-target attribute remapping for LLM traces
-				</p>
-			</div>
+			<Typography.Text as="p" size="base" color="muted">
+				Configure source-to-target attribute remapping for LLM traces
+			</Typography.Text>
 			<div className={styles.pageHeaderActions}>
 				{isDirty && (
 					<span className={styles.unsavedChanges} data-testid="unsaved-changes">
