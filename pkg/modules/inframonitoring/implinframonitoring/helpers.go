@@ -663,3 +663,26 @@ func (m *module) getMetadata(
 
 	return result, nil
 }
+
+// mergeQueryWarnings combines multiple query warnings into one; nil inputs are
+// skipped. The first non-nil warning is the primary; subsequent ones are folded
+// into its Warnings list.
+func mergeQueryWarnings(warnings ...*qbtypes.QueryWarnData) *qbtypes.QueryWarnData {
+	var merged *qbtypes.QueryWarnData
+	for _, w := range warnings {
+		if w == nil {
+			continue
+		}
+		if merged == nil {
+			// Copy so we don't mutate the caller's warning.
+			primary := *w
+			merged = &primary
+			continue
+		}
+		if w.Message != "" {
+			merged.Warnings = append(merged.Warnings, qbtypes.QueryWarnDataAdditional{Message: w.Message})
+		}
+		merged.Warnings = append(merged.Warnings, w.Warnings...)
+	}
+	return merged
+}
