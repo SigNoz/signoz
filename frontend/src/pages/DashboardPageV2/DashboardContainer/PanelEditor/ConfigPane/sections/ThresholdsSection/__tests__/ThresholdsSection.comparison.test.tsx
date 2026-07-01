@@ -5,7 +5,7 @@ import {
 	DashboardtypesThresholdFormatDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import type { AnyThreshold } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/sections';
-import { render, screen, userEvent } from 'tests/test-utils';
+import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import UnifiedThresholdsSection from '../ThresholdsSection';
 
@@ -160,16 +160,18 @@ describe('ComparisonThresholdsSection', () => {
 		await user.clear(screen.getByTestId('comparison-threshold-value-0'));
 		await user.type(screen.getByTestId('comparison-threshold-value-0'), '90');
 
-		// No Save click — the latest edit is already pushed up for the preview.
-		expect(onChange).toHaveBeenLastCalledWith([
-			{
-				value: 90,
-				color: '#F5B225',
-				operator: DashboardtypesComparisonOperatorDTO.above,
-				unit: 'percent',
-				format: DashboardtypesThresholdFormatDTO.background,
-			},
-		]);
+		// No Save click — the latest edit is pushed up (debounced) for the preview.
+		await waitFor(() =>
+			expect(onChange).toHaveBeenLastCalledWith([
+				{
+					value: 90,
+					color: '#F5B225',
+					operator: DashboardtypesComparisonOperatorDTO.above,
+					unit: 'percent',
+					format: DashboardtypesThresholdFormatDTO.background,
+				},
+			]),
+		);
 	});
 
 	it('reverts the live edits to the saved value on Discard', async () => {

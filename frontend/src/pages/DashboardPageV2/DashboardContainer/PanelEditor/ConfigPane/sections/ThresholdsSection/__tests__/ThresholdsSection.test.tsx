@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { DashboardtypesThresholdWithLabelDTO } from 'api/generated/services/sigNoz.schemas';
 import type { AnyThreshold } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/sections';
@@ -43,19 +43,20 @@ describe('ThresholdsSection', () => {
 		expect(screen.queryByTestId('threshold-value-0')).not.toBeInTheDocument();
 	});
 
-	it('edits a threshold value and commits it on Save', () => {
+	it('edits a threshold value and commits it on Save', async () => {
+		const user = userEvent.setup();
 		const onChange = jest.fn();
 		render(<ThresholdsSection value={THRESHOLDS} onChange={onChange} />);
 
-		fireEvent.click(screen.getByTestId('threshold-edit-0'));
-		expect(screen.getByTestId('threshold-value-0')).toHaveValue(80);
+		await user.click(screen.getByTestId('threshold-edit-0'));
+		const valueInput = screen.getByTestId('threshold-value-0');
+		expect(valueInput).toHaveValue(80);
 
-		fireEvent.change(screen.getByTestId('threshold-value-0'), {
-			target: { value: '90' },
-		});
-		fireEvent.click(screen.getByTestId('threshold-save-0'));
+		await user.clear(valueInput);
+		await user.type(valueInput, '90');
+		await user.click(screen.getByTestId('threshold-save-0'));
 
-		expect(onChange).toHaveBeenCalledWith([
+		expect(onChange).toHaveBeenLastCalledWith([
 			{ value: 90, color: '#F5B225', label: 'High', unit: 'percent' },
 		]);
 	});
@@ -76,58 +77,63 @@ describe('ThresholdsSection', () => {
 		]);
 	});
 
-	it('reflects edits live (before Save) so the preview can react', () => {
+	it('reflects edits live (before Save) so the preview can react', async () => {
+		const user = userEvent.setup();
 		const onChange = jest.fn();
 		render(<ThresholdsSection value={THRESHOLDS} onChange={onChange} />);
 
-		fireEvent.click(screen.getByTestId('threshold-edit-0'));
-		fireEvent.change(screen.getByTestId('threshold-value-0'), {
-			target: { value: '90' },
-		});
+		await user.click(screen.getByTestId('threshold-edit-0'));
+		await user.clear(screen.getByTestId('threshold-value-0'));
+		await user.type(screen.getByTestId('threshold-value-0'), '90');
 
-		// No Save click — the edit is already pushed up for the preview to render.
-		expect(onChange).toHaveBeenLastCalledWith([
-			{ value: 90, color: '#F5B225', label: 'High', unit: 'percent' },
-		]);
+		// No Save click — the edit is pushed up (debounced) for the preview to render.
+		await waitFor(() =>
+			expect(onChange).toHaveBeenLastCalledWith([
+				{ value: 90, color: '#F5B225', label: 'High', unit: 'percent' },
+			]),
+		);
 	});
 
-	it('reverts the live edits to the saved value on Discard', () => {
+	it('reverts the live edits to the saved value on Discard', async () => {
+		const user = userEvent.setup();
 		render(<Harness initial={THRESHOLDS} />);
 
-		fireEvent.click(screen.getByTestId('threshold-edit-0'));
-		fireEvent.change(screen.getByTestId('threshold-value-0'), {
-			target: { value: '90' },
-		});
-		fireEvent.click(screen.getByTestId('threshold-discard-0'));
+		await user.click(screen.getByTestId('threshold-edit-0'));
+		await user.clear(screen.getByTestId('threshold-value-0'));
+		await user.type(screen.getByTestId('threshold-value-0'), '90');
+		await user.click(screen.getByTestId('threshold-discard-0'));
 
 		// Back to view mode, and re-opening shows the rolled-back 80, not 90.
 		expect(screen.queryByTestId('threshold-value-0')).not.toBeInTheDocument();
-		fireEvent.click(screen.getByTestId('threshold-edit-0'));
+		await user.click(screen.getByTestId('threshold-edit-0'));
 		expect(screen.getByTestId('threshold-value-0')).toHaveValue(80);
 	});
 
-	it('removes a threshold from view mode', () => {
+	it('removes a threshold from view mode', async () => {
+		const user = userEvent.setup();
 		const onChange = jest.fn();
 		render(<ThresholdsSection value={THRESHOLDS} onChange={onChange} />);
 
-		fireEvent.click(screen.getByTestId('threshold-remove-0'));
+		await user.click(screen.getByTestId('threshold-remove-0'));
 
 		expect(onChange).toHaveBeenCalledWith([]);
 	});
 
-	it('adds a threshold that opens in edit mode, and discards it away', () => {
+	it('adds a threshold that opens in edit mode, and discards it away', async () => {
+		const user = userEvent.setup();
 		render(<Harness />);
 
-		fireEvent.click(screen.getByTestId('panel-editor-v2-add-threshold'));
+		await user.click(screen.getByTestId('panel-editor-v2-add-threshold'));
 		expect(screen.getByTestId('threshold-value-0')).toBeInTheDocument();
 
 		// Discarding a never-saved row removes it entirely.
-		fireEvent.click(screen.getByTestId('threshold-discard-0'));
+		await user.click(screen.getByTestId('threshold-discard-0'));
 		expect(screen.queryByTestId('threshold-value-0')).not.toBeInTheDocument();
 		expect(screen.queryByTestId('threshold-edit-0')).not.toBeInTheDocument();
 	});
 
-	it('flags a threshold unit in a different category than the y-axis unit', () => {
+	it('flags a threshold unit in a different category than the y-axis unit', async () => {
+		const user = userEvent.setup();
 		render(
 			<ThresholdsSection
 				value={[{ value: 80, color: '#F5B225', label: '', unit: 'ms' }]}
@@ -136,11 +142,12 @@ describe('ThresholdsSection', () => {
 			/>,
 		);
 
-		fireEvent.click(screen.getByTestId('threshold-edit-0'));
+		await user.click(screen.getByTestId('threshold-edit-0'));
 		expect(screen.getByTestId('threshold-unit-invalid-0')).toBeInTheDocument();
 	});
 
-	it('does not flag a threshold unit in the same category as the y-axis unit', () => {
+	it('does not flag a threshold unit in the same category as the y-axis unit', async () => {
+		const user = userEvent.setup();
 		render(
 			<ThresholdsSection
 				value={[{ value: 80, color: '#F5B225', label: '', unit: 'ms' }]}
@@ -149,7 +156,7 @@ describe('ThresholdsSection', () => {
 			/>,
 		);
 
-		fireEvent.click(screen.getByTestId('threshold-edit-0'));
+		await user.click(screen.getByTestId('threshold-edit-0'));
 		expect(
 			screen.queryByTestId('threshold-unit-invalid-0'),
 		).not.toBeInTheDocument();
