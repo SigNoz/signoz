@@ -12,11 +12,6 @@
 	gap: var(--spacing-8);
 }
 
-.pageHeaderTitle {
-	display: flex;
-	flex-direction: column;
-}
-
 .title {
 	margin: 0;
 	font-size: var(--periscope-font-size-large);
@@ -59,12 +54,6 @@
 	font-size: var(--periscope-font-size-base);
 }
 
-.pageFooter {
-	margin-top: var(--spacing-8);
-	font-size: var(--font-size-xs);
-	color: var(--l3-foreground);
-}
-
 .indexBadge {
 	display: inline-flex;
 	align-items: center;
@@ -80,6 +69,7 @@
 }
 
 .groupsTableWrapper {
+	--tanstack-table-row-height: 52px;
 	display: flex;
 	flex-direction: column;
 	gap: var(--spacing-4);
@@ -126,10 +116,19 @@
 }
 
 .mappersTableWrapper {
+	--tanstack-expansion-first-col-padding-left: var(--spacing-6);
+	--tanstack-table-row-height: auto;
+
 	display: flex;
 	flex-direction: column;
 	gap: var(--spacing-4);
-	margin: var(--margin-1) 0;
+	margin: var(--spacing-2) var(--spacing-6) var(--spacing-6) var(--spacing-12);
+	padding: var(--spacing-4) 0;
+	border: 1px solid var(--l2-border);
+	border-radius: var(--radius-2);
+	background: var(--l2-background);
+	// Clip content while the panel grows during its expand (height) animation.
+	overflow: hidden;
 }
 
 .mappersTableTarget {

@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useListSpanMappers } from 'api/generated/services/spanmapper';
 import TanStackTable from 'components/TanStackTableView';
+import { motion, useReducedMotion } from 'motion/react';
 
 import styles from './LLMObservabilityAttributeMapping.module.scss';
 import { getMappersColumns } from './mappers.config';
@@ -18,6 +19,7 @@ interface MappersTableProps {
 // lazy by construction — a group's mappers load on first open and are then
 // cached by react-query. New (unsaved) groups have no serverId, so skip.
 function MappersTable({ group }: MappersTableProps): JSX.Element {
+	const prefersReducedMotion = useReducedMotion();
 	const { data, isLoading, isError } = useListSpanMappers(
 		{ groupId: group.serverId ?? '' },
 		{ query: { enabled: group.serverId !== null } },
@@ -32,8 +34,9 @@ function MappersTable({ group }: MappersTableProps): JSX.Element {
 
 	const columns = useMemo(() => getMappersColumns(), []);
 
+	let content: JSX.Element;
 	if (!isLoading && isError) {
-		return (
+		content = (
 			<div
 				className={styles.tableEmpty}
 				data-testid={`mappers-error-${group.localId}`}
@@ -41,10 +44,8 @@ function MappersTable({ group }: MappersTableProps): JSX.Element {
 				Failed to load mappings. Please try again.
 			</div>
 		);
-	}
-
-	if (!isLoading && mappers.length === 0) {
-		return (
+	} else if (!isLoading && mappers.length === 0) {
+		content = (
 			<div
 				className={styles.tableEmpty}
 				data-testid={`mappers-empty-${group.localId}`}
@@ -52,10 +53,8 @@ function MappersTable({ group }: MappersTableProps): JSX.Element {
 				No mappings in this group yet.
 			</div>
 		);
-	}
-
-	return (
-		<div className={styles.mappersTableWrapper}>
+	} else {
+		content = (
 			<TanStackTable<DraftMapper>
 				data={mappers}
 				columns={columns}
@@ -65,7 +64,18 @@ function MappersTable({ group }: MappersTableProps): JSX.Element {
 				disableVirtualScroll
 				testId={`mappers-table-${group.localId}`}
 			/>
-		</div>
+		);
+	}
+
+	return (
+		<motion.div
+			className={styles.mappersTableWrapper}
+			initial={prefersReducedMotion ? false : { height: 0, opacity: 0 }}
+			animate={{ height: 'auto', opacity: 1 }}
+			transition={{ duration: 0.18, ease: 'easeOut' }}
+		>
+			{content}
+		</motion.div>
 	);
 }
 

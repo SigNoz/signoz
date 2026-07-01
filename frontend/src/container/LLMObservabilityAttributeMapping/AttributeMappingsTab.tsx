@@ -17,10 +17,6 @@ function AttributeMappingsTab(): JSX.Element {
 			)}
 
 			<MapperGroupsTable store={store} />
-
-			<footer className={styles.pageFooter}>
-				Showing {store.groups.length} group{store.groups.length === 1 ? '' : 's'}
-			</footer>
 		</div>
 	);
 }

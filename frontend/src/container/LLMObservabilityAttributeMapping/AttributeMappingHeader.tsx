@@ -18,7 +18,6 @@ function AttributeMappingHeader({
 	return (
 		<header className={styles.pageHeader}>
 			<div className={styles.pageHeaderTitle}>
-				<h1 className={styles.title}>Attribute Mapping</h1>
 				<p className={styles.description}>
 					Configure source-to-target attribute remapping for LLM traces
 				</p>
