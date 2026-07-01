@@ -316,6 +316,94 @@ func (m *module) ListPods(ctx context.Context, orgID valuer.UUID, req *inframoni
 	return resp, nil
 }
 
+func (m *module) ListContainers(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableContainers) (*inframonitoringtypes.Containers, error) {
+	ctx = m.withInfraMonitoringContext(ctx, "ListContainers")
+
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
+	resp := &inframonitoringtypes.Containers{}
+
+	if req.OrderBy == nil {
+		req.OrderBy = &qbtypes.OrderBy{
+			Key: qbtypes.OrderByKey{
+				TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+					Name: inframonitoringtypes.ContainersOrderByCPU,
+				},
+			},
+			Direction: qbtypes.OrderDirectionDesc,
+		}
+	}
+
+	if len(req.GroupBy) == 0 {
+		req.GroupBy = containerRowGroupBy
+		resp.Type = inframonitoringtypes.ResponseTypeList
+	} else {
+		resp.Type = inframonitoringtypes.ResponseTypeGroupedList
+	}
+
+	minFirstReportedUnixMilli, err := m.getEarliestMetricTime(ctx, containersTableMetricNamesList)
+	if err != nil {
+		return nil, err
+	}
+	if req.End < int64(minFirstReportedUnixMilli) {
+		resp.EndTimeBeforeRetention = true
+		resp.Records = []inframonitoringtypes.ContainerRecord{}
+		resp.Total = 0
+		return resp, nil
+	}
+
+	metadataMap, err := m.getContainersTableMetadata(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	resp.Total = len(metadataMap)
+
+	pageGroups, err := m.getTopContainerGroups(ctx, orgID, req, metadataMap)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(pageGroups) == 0 {
+		resp.Records = []inframonitoringtypes.ContainerRecord{}
+		return resp, nil
+	}
+
+	filterExpr := ""
+	if req.Filter != nil {
+		filterExpr = req.Filter.Expression
+	}
+
+	fullQueryReq := buildFullQueryRequest(req.Start, req.End, filterExpr, req.GroupBy, pageGroups, m.newContainersTableListQuery())
+	queryResp, err := m.querier.QueryRange(ctx, orgID, fullQueryReq)
+	if err != nil {
+		return nil, err
+	}
+
+	statusCounts, statusWarning, err := m.getPerGroupContainerStatusCountsWithReqMetricChecks(ctx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+	if err != nil {
+		return nil, err
+	}
+
+	restartCounts, err := m.getPerGroupContainerRestartCounts(ctx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+	if err != nil {
+		return nil, err
+	}
+
+	readyCounts, err := m.getPerGroupContainerReadyCounts(ctx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+	if err != nil {
+		return nil, err
+	}
+
+	isContainerRowInGroupBy := isKeyInGroupByAttrs(req.GroupBy, podUIDAttrKey) && isKeyInGroupByAttrs(req.GroupBy, containerNameAttrKey)
+	resp.Records = buildContainerRecords(isContainerRowInGroupBy, queryResp, pageGroups, req.GroupBy, metadataMap, statusCounts, restartCounts, readyCounts)
+	resp.Warning = mergeQueryWarnings(queryResp.Warning, statusWarning)
+
+	return resp, nil
+}
+
 func (m *module) ListNodes(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableNodes) (*inframonitoringtypes.Nodes, error) {
 	ctx = m.withInfraMonitoringContext(ctx, "ListNodes")
 

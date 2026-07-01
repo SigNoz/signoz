@@ -3,13 +3,202 @@ package implinframonitoring
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
+	"github.com/SigNoz/signoz/pkg/types/inframonitoringtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 )
+
+// buildContainerRecords assembles the page records, merging kubeletstats
+// metrics (A-F from the querier) with the k8scluster health signals (status,
+// restarts, ready). In list mode (isContainerRowInGroupBy=true) each group is a
+// single container, so exactly one status/ready bucket is 1 and the single
+// Status/Ready fields are derived from it; otherwise they stay NoData and only
+// the per-group counts are populated.
+func buildContainerRecords(
+	isContainerRowInGroupBy bool,
+	resp *qbtypes.QueryRangeResponse,
+	pageGroups []map[string]string,
+	groupBy []qbtypes.GroupByKey,
+	metadataMap map[string]map[string]string,
+	statusCounts map[string]containerStatusCounts,
+	restartCounts map[string]int64,
+	readyCounts map[string]containerReadyCounts,
+) []inframonitoringtypes.ContainerRecord {
+	metricsMap := parseFullQueryResponse(resp, groupBy)
+
+	records := make([]inframonitoringtypes.ContainerRecord, 0, len(pageGroups))
+	for _, labels := range pageGroups {
+		compositeKey := compositeKeyFromLabels(labels, groupBy)
+
+		record := inframonitoringtypes.ContainerRecord{ // initialize with default values
+			PodUID:                   labels[podUIDAttrKey],
+			ContainerName:            labels[containerNameAttrKey],
+			Status:                   inframonitoringtypes.ContainerStatusNoData,
+			Ready:                    inframonitoringtypes.ContainerReadyNoData,
+			Restarts:                 -1,
+			CPU:                      -1,
+			CPURequestUtilization:    -1,
+			CPULimitUtilization:      -1,
+			Memory:                   -1,
+			MemoryRequestUtilization: -1,
+			MemoryLimitUtilization:   -1,
+			Meta:                     map[string]string{},
+		}
+
+		if metrics, ok := metricsMap[compositeKey]; ok {
+			if v, exists := metrics["A"]; exists {
+				record.CPU = v
+			}
+			if v, exists := metrics["B"]; exists {
+				record.CPURequestUtilization = v
+			}
+			if v, exists := metrics["C"]; exists {
+				record.CPULimitUtilization = v
+			}
+			if v, exists := metrics["D"]; exists {
+				record.Memory = v
+			}
+			if v, exists := metrics["E"]; exists {
+				record.MemoryRequestUtilization = v
+			}
+			if v, exists := metrics["F"]; exists {
+				record.MemoryLimitUtilization = v
+			}
+		}
+
+		if statusCountsForGroup, ok := statusCounts[compositeKey]; ok {
+			record.ContainerCountsByStatus = containerStatusCountsToResponse(statusCountsForGroup)
+
+			// In list mode each group is one container; the count==1 bucket identifies the status.
+			if isContainerRowInGroupBy {
+				switch {
+				case statusCountsForGroup.Running == 1:
+					record.Status = inframonitoringtypes.ContainerStatusRunning
+				case statusCountsForGroup.Waiting == 1:
+					record.Status = inframonitoringtypes.ContainerStatusWaiting
+				case statusCountsForGroup.Terminated == 1:
+					record.Status = inframonitoringtypes.ContainerStatusTerminated
+				case statusCountsForGroup.CrashLoopBackOff == 1:
+					record.Status = inframonitoringtypes.ContainerStatusCrashLoopBackOff
+				case statusCountsForGroup.ImagePullBackOff == 1:
+					record.Status = inframonitoringtypes.ContainerStatusImagePullBackOff
+				case statusCountsForGroup.ErrImagePull == 1:
+					record.Status = inframonitoringtypes.ContainerStatusErrImagePull
+				case statusCountsForGroup.CreateContainerConfigError == 1:
+					record.Status = inframonitoringtypes.ContainerStatusCreateContainerConfigError
+				case statusCountsForGroup.ContainerCreating == 1:
+					record.Status = inframonitoringtypes.ContainerStatusContainerCreating
+				case statusCountsForGroup.OOMKilled == 1:
+					record.Status = inframonitoringtypes.ContainerStatusOOMKilled
+				case statusCountsForGroup.Completed == 1:
+					record.Status = inframonitoringtypes.ContainerStatusCompleted
+				case statusCountsForGroup.Error == 1:
+					record.Status = inframonitoringtypes.ContainerStatusError
+				case statusCountsForGroup.ContainerCannotRun == 1:
+					record.Status = inframonitoringtypes.ContainerStatusContainerCannotRun
+				case statusCountsForGroup.Unknown == 1:
+					record.Status = inframonitoringtypes.ContainerStatusUnknown
+				}
+			}
+		}
+
+		// Restart count: container's own count (list mode) or group sum (grouped mode).
+		if restartCountForGroup, ok := restartCounts[compositeKey]; ok {
+			record.Restarts = restartCountForGroup
+		}
+
+		if readyCountsForGroup, ok := readyCounts[compositeKey]; ok {
+			record.ContainerCountsByReady = containerReadyCountsToResponse(readyCountsForGroup)
+
+			// In list mode each group is one container; exactly one of ready/not_ready is 1.
+			if isContainerRowInGroupBy {
+				switch {
+				case readyCountsForGroup.Ready == 1:
+					record.Ready = inframonitoringtypes.ContainerReadyReady
+				case readyCountsForGroup.NotReady == 1:
+					record.Ready = inframonitoringtypes.ContainerReadyNotReady
+				}
+			}
+		}
+
+		if attrs, ok := metadataMap[compositeKey]; ok {
+			for k, v := range attrs {
+				record.Meta[k] = v
+			}
+		}
+
+		records = append(records, record)
+	}
+	return records
+}
+
+func (m *module) getTopContainerGroups(
+	ctx context.Context,
+	orgID valuer.UUID,
+	req *inframonitoringtypes.PostableContainers,
+	metadataMap map[string]map[string]string,
+) ([]map[string]string, error) {
+	orderByKey := req.OrderBy.Key.Name
+	if orderByKey == inframonitoringtypes.ContainerNameAttrKey {
+		return inframonitoringtypes.PaginateMetadataByName(metadataMap, req.GroupBy, req.OrderBy.Direction, req.Offset, req.Limit, inframonitoringtypes.ContainerNameAttrKey), nil
+	}
+	queryNamesForOrderBy := orderByToContainersQueryNames[orderByKey]
+	rankingQueryName := queryNamesForOrderBy[len(queryNamesForOrderBy)-1]
+
+	topReq := &qbtypes.QueryRangeRequest{
+		Start:       uint64(req.Start),
+		End:         uint64(req.End),
+		RequestType: qbtypes.RequestTypeScalar,
+		CompositeQuery: qbtypes.CompositeQuery{
+			Queries: make([]qbtypes.QueryEnvelope, 0, len(queryNamesForOrderBy)),
+		},
+	}
+
+	for _, envelope := range m.newContainersTableListQuery().CompositeQuery.Queries {
+		if !slices.Contains(queryNamesForOrderBy, envelope.GetQueryName()) {
+			continue
+		}
+		copied := envelope
+		if copied.Type == qbtypes.QueryTypeBuilder {
+			existingExpr := ""
+			if f := copied.GetFilter(); f != nil {
+				existingExpr = f.Expression
+			}
+			reqFilterExpr := ""
+			if req.Filter != nil {
+				reqFilterExpr = req.Filter.Expression
+			}
+			merged := mergeFilterExpressions(existingExpr, reqFilterExpr)
+			copied.SetFilter(&qbtypes.Filter{Expression: merged})
+			copied.SetGroupBy(req.GroupBy)
+		}
+		topReq.CompositeQuery.Queries = append(topReq.CompositeQuery.Queries, copied)
+	}
+
+	resp, err := m.querier.QueryRange(ctx, orgID, topReq)
+	if err != nil {
+		return nil, err
+	}
+
+	allMetricGroups := parseAndSortGroups(resp, rankingQueryName, req.GroupBy, req.OrderBy.Direction)
+	return paginateWithBackfill(allMetricGroups, metadataMap, req.GroupBy, req.Offset, req.Limit), nil
+}
+
+func (m *module) getContainersTableMetadata(ctx context.Context, req *inframonitoringtypes.PostableContainers) (map[string]map[string]string, error) {
+	var nonGroupByAttrs []string
+	for _, key := range containerAttrKeysForMetadata {
+		if !isKeyInGroupByAttrs(req.GroupBy, key) {
+			nonGroupByAttrs = append(nonGroupByAttrs, key)
+		}
+	}
+	return m.getMetadata(ctx, containersTableMetricNamesList, req.GroupBy, nonGroupByAttrs, req.Filter, req.Start, req.End)
+}
 
 // getPerGroupContainerStatusCountsWithReqMetricChecks gates
 // getPerGroupContainerStatusCounts on the required metrics being present. If
