@@ -4,7 +4,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, X } from '@signozhq/icons';
 
-import KeySearchInput from './KeySearchInput';
+import KeySearchInput from '../KeySearchInput';
 import styles from './SourceAttributeRow.module.scss';
 import {
 	FieldContext,
@@ -12,7 +12,7 @@ import {
 	MapperOperation,
 	MapperOperationValue,
 	SourceConfig,
-} from './types';
+} from '../../types';
 
 const CONTEXT_OPTIONS = [
 	{ value: FieldContext.attribute, label: 'Attribute' },

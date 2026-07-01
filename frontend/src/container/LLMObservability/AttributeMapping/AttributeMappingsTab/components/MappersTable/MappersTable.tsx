@@ -5,7 +5,7 @@ import { useListSpanMappers } from 'api/generated/services/spanmapper';
 import TanStackTable from 'components/TanStackTableView';
 import { motion, useReducedMotion } from 'motion/react';
 
-import MapperFormDrawer from '../../../MapperFormDrawer';
+import MapperFormDrawer from '../../../components/MapperFormDrawer';
 import { DraftGroup, DraftMapper, Mapper } from '../../../types';
 import { useMapperFormDrawer } from '../../../useMapperFormDrawer';
 import { AttributeMappingStore } from '../../hooks/useAttributeMappingStore';

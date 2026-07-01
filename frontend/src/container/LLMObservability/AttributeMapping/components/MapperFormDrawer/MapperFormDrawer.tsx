@@ -19,7 +19,7 @@ import {
 import { Plus, Trash2 } from '@signozhq/icons';
 import { v4 as uuid } from 'uuid';
 
-import KeySearchInput from './KeySearchInput';
+import KeySearchInput from '../KeySearchInput';
 import styles from './MapperFormDrawer.module.scss';
 import SourceAttributeRow from './SourceAttributeRow';
 import {
@@ -28,8 +28,8 @@ import {
 	MapperDraft,
 	MapperDraftMode,
 	SourceConfig,
-} from './types';
-import { createEmptySource, isMapperDraftValid } from './utils';
+} from '../../types';
+import { createEmptySource, isMapperDraftValid } from '../../utils';
 
 const FIELD_CONTEXT_OPTIONS = [
 	{ value: FieldContext.attribute, label: 'Span attribute' },

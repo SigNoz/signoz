@@ -6,8 +6,8 @@ import { Trash2 } from '@signozhq/icons';
 
 import ConditionKeyList from './ConditionKeyList';
 import styles from './GroupFormDrawer.module.scss';
-import { FieldContext, GroupDraft, MapperDraftMode } from './types';
-import { isGroupDraftValid } from './utils';
+import { FieldContext, GroupDraft, MapperDraftMode } from '../../types';
+import { isGroupDraftValid } from '../../utils';
 
 interface GroupFormDrawerProps {
 	isOpen: boolean;
