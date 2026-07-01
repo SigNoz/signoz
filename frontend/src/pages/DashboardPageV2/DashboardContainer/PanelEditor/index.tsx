@@ -12,13 +12,7 @@ import {
 	type DashboardtypesPanelSpecDTO,
 	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { getPanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Panels/registry';
-import {
-	PANEL_KIND_TO_PANEL_TYPE,
-	type PanelKind,
-} from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelKind';
 import { getBuilderQueries } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/getBuilderQueries';
 
 import { getExecStats } from '../queryV5/v5ResponseData';
@@ -29,12 +23,9 @@ import layoutStorage from './layoutStorage';
 import PanelEditorQueryBuilder from './PanelEditorQueryBuilder/PanelEditorQueryBuilder';
 import PreviewPane from './PreviewPane/PreviewPane';
 import { useLegendSeries } from './hooks/useLegendSeries';
-import { usePanelQuery } from '../hooks/usePanelQuery';
-import { usePanelEditorDraft } from './hooks/usePanelEditorDraft';
-import { usePanelEditorQuerySync } from './hooks/usePanelEditorQuerySync';
 import { useMetricYAxisUnit } from './hooks/useMetricYAxisUnit';
+import { usePanelEditSession } from './hooks/usePanelEditSession';
 import { usePanelEditorSave } from './hooks/usePanelEditorSave';
-import { usePanelTypeSwitch } from './hooks/usePanelTypeSwitch';
 import { useSeedNewListColumns } from './hooks/useSeedNewListColumns';
 import { useSwitchColumnsOnSignalChange } from './hooks/useSwitchColumnsOnSignalChange';
 import { useTableColumns } from './hooks/useTableColumns';
@@ -70,7 +61,36 @@ function PanelEditorContainer({
 	onClose,
 	onSaved,
 }: PanelEditorContainerProps): JSX.Element {
-	const { draft, spec, setSpec, isSpecDirty } = usePanelEditorDraft(panel);
+	// Shared editing pipeline (draft + query + staged-query sync + kind switch). A new
+	// panel always serializes its seed query and seeds the builder's default signal.
+	const {
+		draft,
+		spec,
+		setSpec,
+		isSpecDirty,
+		panelDefinition,
+		defaultSignal,
+		query,
+		runQuery,
+		isQueryDirty,
+		buildSaveSpec,
+		onChangePanelKind,
+	} = usePanelEditSession({
+		panel,
+		panelId,
+		alwaysSerializeQuery: isNew,
+		seedQuerySignal: true,
+	});
+	const {
+		data,
+		isFetching,
+		isPreviousData,
+		error,
+		cancelQuery,
+		refetch,
+		pagination,
+	} = query;
+
 	// Live query type (the selected tab) — the type switcher disables kinds that can't be
 	// authored in it. Read from the provider, not the spec: a new panel's spec carries no
 	// query until staged, so the spec would lag the tab.
@@ -94,44 +114,7 @@ function PanelEditorContainer({
 		storage: layoutStorage,
 	});
 
-	// Panel kind → V1 panel type, which drives the query builder and preview.
 	const fullKind = draft.spec.plugin.kind;
-	const panelType =
-		(fullKind && PANEL_KIND_TO_PANEL_TYPE[fullKind as PanelKind]) ??
-		PANEL_TYPES.TIME_SERIES;
-
-	// One shared query result for the whole editor; the preview renders it.
-	const panelDefinition = getPanelDefinition(draft.spec.plugin.kind);
-	const {
-		data,
-		isFetching,
-		isPreviousData,
-		error,
-		cancelQuery,
-		refetch,
-		pagination,
-	} = usePanelQuery({
-		panel: draft,
-		panelId,
-		enabled: !!panelDefinition,
-	});
-
-	// A new panel's default signal (its kind's first supported) — seeds the query and columns.
-	const defaultSignal = panelDefinition.supportedSignals[0];
-
-	const { runQuery, isQueryDirty, buildSaveSpec } = usePanelEditorQuerySync({
-		draft,
-		panelType,
-		setSpec,
-		refetch,
-		// New panel's seed query is the builder default, not a real saved query —
-		// always serialize it on save.
-		alwaysSerializeQuery: isNew,
-		signal: defaultSignal,
-	});
-
-	// Switch the panel's visualization kind in place (reversible per session).
-	const { onChangePanelKind } = usePanelTypeSwitch({ spec, panelType, setSpec });
 
 	// At editor level, not the collapsible FormattingSection, so seeding runs while closed.
 	const formattingUnit = (
