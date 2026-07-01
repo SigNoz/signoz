@@ -1,36 +1,41 @@
-import { Tooltip } from 'antd';
+import { FilePenLine } from '@signozhq/icons';
+import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { InframonitoringtypesNamespaceRecordDTO } from 'api/generated/services/sigNoz.schemas';
 import TanStackTable, { TableColumnDef } from 'components/TanStackTableView';
 import { ExpandButtonWrapper } from 'container/InfraMonitoringK8s/components';
 
 import EntityGroupHeader from '../Base/EntityGroupHeader';
 import K8sGroupCell from '../Base/K8sGroupCell';
-import { formatBytes } from '../commonUtils';
-import { ValidateColumnValueWrapper } from '../components';
-import { InfraMonitoringEntity } from '../constants';
-import { K8sNamespacesData, K8sNamespacesListPayload } from './api';
-import { FilePenLine } from '@signozhq/icons';
+import { formatBytes, getPodPhaseStatusItems } from '../commonUtils';
+import { GroupedStatusCounts, ValidateColumnValueWrapper } from '../components';
+import {
+	INFRA_MONITORING_ATTR_KEYS,
+	InfraMonitoringEntity,
+} from '../constants';
 
-export function getK8sNamespaceRowKey(namespace: K8sNamespacesData): string {
-	return namespace.namespaceName || namespace.meta.k8s_namespace_name;
+export function getK8sNamespaceRowKey(
+	namespace: InframonitoringtypesNamespaceRecordDTO,
+): string {
+	return (
+		namespace.namespaceName ||
+		namespace.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ||
+		''
+	);
 }
 
-export function getK8sNamespaceItemKey(namespace: K8sNamespacesData): string {
-	return namespace.meta.k8s_namespace_name;
+export function getK8sNamespaceItemKey(
+	namespace: InframonitoringtypesNamespaceRecordDTO,
+): string {
+	return namespace.namespaceName;
 }
 
-export const getK8sNamespacesListQuery = (): K8sNamespacesListPayload => ({
-	filters: {
-		items: [],
-		op: 'and',
-	},
-	orderBy: { columnName: 'cpu', order: 'desc' },
-});
-
-export const k8sNamespacesColumnsConfig: TableColumnDef<K8sNamespacesData>[] = [
+export type NamespaceTableColumnConfig =
+	TableColumnDef<InframonitoringtypesNamespaceRecordDTO>;
+export const k8sNamespacesColumnsConfig: NamespaceTableColumnConfig[] = [
 	{
 		id: 'namespaceGroup',
 		header: (): React.ReactNode => <EntityGroupHeader title="NAMESPACE GROUP" />,
-		accessorFn: (row): string => row.meta.k8s_namespace_name || '',
+		accessorFn: (row): string => row.namespaceName || '',
 		width: { min: 300 },
 		enableSort: false,
 		enableRemove: false,
@@ -66,16 +71,17 @@ export const k8sNamespacesColumnsConfig: TableColumnDef<K8sNamespacesData>[] = [
 		cell: ({ value }): React.ReactNode => {
 			const namespaceName = value as string;
 			return (
-				<Tooltip title={namespaceName}>
+				<TooltipSimple title={namespaceName}>
 					<TanStackTable.Text>{namespaceName}</TanStackTable.Text>
-				</Tooltip>
+				</TooltipSimple>
 			);
 		},
 	},
 	{
 		id: 'clusterName',
 		header: 'Cluster Name',
-		accessorFn: (row): string => row.meta.k8s_cluster_name || '',
+		accessorFn: (row): string =>
+			row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME] || '',
 		width: { default: 150 },
 		enableSort: false,
 		cell: ({ value }): React.ReactNode => (
@@ -83,20 +89,39 @@ export const k8sNamespacesColumnsConfig: TableColumnDef<K8sNamespacesData>[] = [
 		),
 	},
 	{
+		id: 'podCountsByPhase',
+		header: 'Pod Phases',
+		accessorFn: (
+			row,
+		): InframonitoringtypesNamespaceRecordDTO['podCountsByPhase'] =>
+			row.podCountsByPhase,
+		width: { min: 250 },
+		enableSort: false,
+		cell: ({ row }): React.ReactNode => {
+			const podCountsByPhase = row.podCountsByPhase;
+			if (!podCountsByPhase) {
+				return <TanStackTable.Text>-</TanStackTable.Text>;
+			}
+			return (
+				<GroupedStatusCounts items={getPodPhaseStatusItems(row.podCountsByPhase)} />
+			);
+		},
+	},
+	{
 		id: 'cpu',
 		header: 'CPU Usage (cores)',
-		accessorFn: (row): number => row.cpuUsage,
+		accessorFn: (row): number => row.namespaceCPU,
 		width: { min: 220 },
 		enableSort: true,
 		cell: ({ value }): React.ReactNode => {
-			const cpu = value as number;
+			const cpu = Number(value);
 			return (
 				<ValidateColumnValueWrapper
 					value={cpu}
 					entity={InfraMonitoringEntity.NAMESPACES}
 					attribute="CPU metric"
 				>
-					<TanStackTable.Text>{cpu}</TanStackTable.Text>
+					<TanStackTable.Text>{cpu.toFixed(2)}</TanStackTable.Text>
 				</ValidateColumnValueWrapper>
 			);
 		},
@@ -104,11 +129,11 @@ export const k8sNamespacesColumnsConfig: TableColumnDef<K8sNamespacesData>[] = [
 	{
 		id: 'memory',
 		header: 'Mem Usage (WSS)',
-		accessorFn: (row): number => row.memoryUsage,
+		accessorFn: (row): number => row.namespaceMemory,
 		width: { min: 220 },
 		enableSort: true,
 		cell: ({ value }): React.ReactNode => {
-			const memory = value as number;
+			const memory = Number(value);
 			return (
 				<ValidateColumnValueWrapper
 					value={memory}

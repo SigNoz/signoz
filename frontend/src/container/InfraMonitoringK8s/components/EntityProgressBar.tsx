@@ -36,9 +36,8 @@ export function EntityProgressBar({
 	value: number;
 	type: EntityProgressBarType;
 }): JSX.Element {
-	const percentage = Number.isNaN(+value)
-		? null
-		: Number((value * 100).toFixed(1));
+	const isNoData = value === -1 || Number.isNaN(+value);
+	const percentage = isNoData ? null : Number((value * 100).toFixed(1));
 
 	if (percentage === null) {
 		return (

@@ -26,8 +26,8 @@
 	}
 
 	&::-webkit-scrollbar {
-		width: 0.1rem;
-		height: 0.1rem;
+		width: 8px;
+		height: 8px;
 	}
 
 	&::-webkit-scrollbar-track {
@@ -35,11 +35,12 @@
 	}
 
 	&::-webkit-scrollbar-thumb {
-		background: var(--accent-primary);
+		background: color-mix(in srgb, var(--l1-foreground) 20%, transparent);
+		border-radius: 9999px;
 	}
 
 	&::-webkit-scrollbar-thumb:hover {
-		background: colox-mix(var(--accent-primary), var(--bg-vanilla-100), 20%);
+		background: color-mix(in srgb, var(--l1-foreground) 30%, transparent);
 	}
 }
 
@@ -48,7 +49,6 @@
 	min-width: 280px;
 	border-right: 1px solid var(--l1-border);
 	overflow-y: auto;
-
 	&::-webkit-scrollbar {
 		width: 0.1rem;
 		height: 0.1rem;
@@ -63,7 +63,7 @@
 	}
 
 	&::-webkit-scrollbar-thumb:hover {
-		background: colox-mix(var(--accent-primary), var(--bg-vanilla-100), 20%);
+		background: var(--accent-primary);
 	}
 
 	:global(.ant-collapse-header) {
@@ -98,7 +98,7 @@
 		}
 
 		&::-webkit-scrollbar-thumb:hover {
-			background: colox-mix(var(--accent-primary), var(--bg-vanilla-100), 20%);
+			background: var(--accent-primary);
 		}
 	}
 }
@@ -129,11 +129,12 @@
 
 .listContainer {
 	flex: 1;
-	min-width: 0;
 	max-width: 100%;
 	display: flex;
 	flex-direction: column;
 	align-items: stretch;
+	min-width: 595px;
+	overflow-x: auto;
 
 	> * {
 		min-width: 0;
@@ -159,4 +160,8 @@
 
 .listContainerFiltersVisible {
 	max-width: calc(100% - 280px);
+}
+
+.k8SOpenQuickFilters {
+	grid-area: quickFilters;
 }
