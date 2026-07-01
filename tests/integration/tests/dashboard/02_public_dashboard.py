@@ -1,3 +1,4 @@
+import uuid
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
@@ -8,6 +9,7 @@ from sqlalchemy import sql
 from wiremock.resources.mappings import Mapping
 
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD, add_license
+from fixtures.logs import Logs
 from fixtures.metrics import Metrics
 from fixtures.types import Operation, SigNoz, TestContainerDocker
 
@@ -203,6 +205,147 @@ def test_public_dashboard_widget_query_range(
         timeout=2,
     )
     assert resp.status_code == HTTPStatus.BAD_REQUEST
+
+
+def test_public_dashboard_widget_query_range_multi_aggregation(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    make_http_mocks: Callable[[TestContainerDocker, list[Mapping]], None],
+    get_token: Callable[[str, str], str],
+    insert_logs: Callable[[list[Logs]], None],
+):
+    """
+    A logs/traces widget stores several aggregations as one comma-separated expression
+    (e.g. "count(), sum(latency_ms)"). The public widget query path must split it into
+    one aggregation per call, mirroring the frontend, before handing it to the querier.
+    If the split does not happen the querier receives a single malformed aggregation and
+    the request fails - so a successful response with two aggregations proves the split.
+    """
+    add_license(signoz, make_http_mocks, get_token)
+
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    # Unique per-run service so the widget query only sees this run's logs.
+    service_name = f"multiagg-public-{uuid.uuid4()}"
+
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    insert_logs(
+        [
+            Logs(
+                timestamp=now - timedelta(minutes=5),
+                resources={"service.name": service_name},
+                attributes={"latency_ms": 100},
+                body="multi-agg log 1",
+            ),
+            Logs(
+                timestamp=now - timedelta(minutes=3),
+                resources={"service.name": service_name},
+                attributes={"latency_ms": 200},
+                body="multi-agg log 2",
+            ),
+            Logs(
+                timestamp=now - timedelta(minutes=1),
+                resources={"service.name": service_name},
+                attributes={"latency_ms": 300},
+                body="multi-agg log 3",
+            ),
+        ]
+    )
+
+    dashboard_req = {
+        "title": "Multi Aggregation Public Widget",
+        "description": "Comma-separated aggregations must be split on the public query path",
+        "version": "v5",
+        "widgets": [
+            {
+                "id": "b2c0a1d4-9f3e-4c2a-8a7b-1e2f3a4b5c6d",
+                "panelTypes": "graph",
+                "query": {
+                    "builder": {
+                        "queryData": [
+                            {
+                                "aggregations": [{"expression": "count(), sum(latency_ms)"}],
+                                "dataSource": "logs",
+                                "disabled": False,
+                                "expression": "A",
+                                "filter": {"expression": f"service.name = '{service_name}'"},
+                                "functions": [],
+                                "groupBy": [],
+                                "having": {"expression": ""},
+                                "legend": "",
+                                "limit": 10,
+                                "orderBy": [],
+                                "queryName": "A",
+                                "source": "",
+                                "stepInterval": 60,
+                            }
+                        ],
+                        "queryFormulas": [],
+                        "queryTraceOperator": [],
+                    },
+                    "clickhouse_sql": [{"disabled": False, "legend": "", "name": "A", "query": ""}],
+                    "id": "c3d1b2e5-0a4f-4d3b-9b8c-2f3a4b5c6d7e",
+                    "promql": [{"disabled": False, "legend": "", "name": "A", "query": ""}],
+                    "queryType": "builder",
+                },
+            }
+        ],
+    }
+    create_response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v1/dashboards"),
+        json=dashboard_req,
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=2,
+    )
+    assert create_response.status_code == HTTPStatus.CREATED
+    dashboard_id = create_response.json()["data"]["id"]
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(f"/api/v1/dashboards/{dashboard_id}/public"),
+        json={"timeRangeEnabled": False, "defaultTimeRange": "30m"},
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=2,
+    )
+    assert response.status_code == HTTPStatus.CREATED
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(f"/api/v1/dashboards/{dashboard_id}/public"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=2,
+    )
+    assert response.status_code == HTTPStatus.OK
+    public_path = response.json()["data"]["publicPath"]
+    public_dashboard_id = public_path.split("/public/dashboard/")[-1]
+
+    resp = requests.get(
+        signoz.self.host_configs["8080"].get(f"/api/v1/public/dashboards/{public_dashboard_id}/widgets/0/query_range"),
+        timeout=5,
+    )
+    assert resp.status_code == HTTPStatus.OK
+    body = resp.json()
+    assert body["status"] == "success"
+
+    # The single "count(), sum(latency_ms)" expression must have been split into two
+    # separate aggregations on the way to the querier.
+    results = body["data"]["data"]["results"]
+    assert len(results) == 1
+
+    aggregations = results[0]["aggregations"]
+    assert len(aggregations) == 2
+
+    # With no group-by each aggregation produces a single series.
+    for aggregation in aggregations:
+        assert len(aggregation["series"]) == 1
+        assert len(aggregation["series"][0]["values"]) > 0
+
+    # Each aggregation is computed independently over the three logs: count() totals 3,
+    # sum(latency_ms) totals 100 + 200 + 300 = 600. Summing each aggregation's points is
+    # robust to step bucketing and to the order the aggregations come back in.
+    aggregation_totals = sorted(
+        sum(point["value"] for series in aggregation["series"] for point in series["values"])
+        for aggregation in aggregations
+    )
+    assert aggregation_totals == [3, 600]
 
 
 def test_anonymous_role_has_public_dashboard_permission(
