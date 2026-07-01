@@ -1,0 +1,14 @@
+.llmObservabilityAttributeMapping {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-8);
+	padding: var(--spacing-12);
+}
+
+.pageError {
+	padding: var(--padding-3) var(--padding-4);
+	border-radius: var(--radius-2);
+	background: var(--callout-error-background);
+	color: var(--callout-error-title);
+	font-size: var(--periscope-font-size-base);
+}

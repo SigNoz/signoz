@@ -137,13 +137,3 @@ export function layoutsToSections(
 		})
 		.filter((s): s is DashboardSection => s !== null);
 }
-
-export function getPanelKindLabel(
-	panel: DashboardtypesPanelDTO | undefined,
-): string {
-	const kind = panel?.spec?.plugin?.kind;
-	if (!kind) {
-		return 'unknown';
-	}
-	return kind.replace(/^signoz\//, '');
-}

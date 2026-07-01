@@ -2,6 +2,7 @@ package authtypes
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -13,6 +14,7 @@ import (
 var (
 	ErrCodeUserRoleAlreadyExists = errors.MustNewCode("user_role_already_exists")
 	ErrCodeUserRolesNotFound     = errors.MustNewCode("user_roles_not_found")
+	ErrCodeUserRoleInvalidInput  = errors.MustNewCode("user_role_invalid_input")
 )
 
 type UserRole struct {
@@ -26,6 +28,40 @@ type UserRole struct {
 
 	// read only fields
 	Role *Role `bun:"rel:belongs-to,join:role_id=id" json:"role" required:"true"`
+}
+
+type UserWithRoles struct {
+	*types.User
+	UserRoles []*UserRole `json:"userRoles"`
+}
+
+type PostableUser struct {
+	DisplayName     string              `json:"displayName"`
+	Email           valuer.Email        `json:"email" required:"true"`
+	FrontendBaseUrl string              `json:"frontendBaseUrl"`
+	UserRoles       []*PostableUserRole `json:"userRoles" required:"false" nullable:"false"`
+}
+
+type PostableUserRole struct {
+	ID valuer.UUID `json:"id" required:"true"`
+}
+
+func (p *PostableUser) UnmarshalJSON(data []byte) error {
+	type Alias PostableUser
+
+	var temp Alias
+	if err := json.Unmarshal(data, &temp); err != nil {
+		return err
+	}
+
+	for _, role := range temp.UserRoles {
+		if role == nil {
+			return errors.New(errors.TypeInvalidInput, ErrCodeUserRoleInvalidInput, "userRoles cannot contain null entries")
+		}
+	}
+
+	*p = PostableUser(temp)
+	return nil
 }
 
 func newUserRole(userID valuer.UUID, roleID valuer.UUID) *UserRole {
@@ -46,11 +82,6 @@ func NewUserRoles(userID valuer.UUID, roles []*Role) []*UserRole {
 	}
 
 	return userRoles
-}
-
-type UserWithRoles struct {
-	*types.User
-	UserRoles []*UserRole `json:"userRoles"`
 }
 
 type UserRoleStore interface {
