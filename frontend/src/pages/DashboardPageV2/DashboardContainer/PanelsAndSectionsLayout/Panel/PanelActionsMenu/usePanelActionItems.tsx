@@ -10,6 +10,7 @@ import {
 	Trash2,
 } from '@signozhq/icons';
 import type { MenuItem } from '@signozhq/ui/dropdown-menu';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import useComponentPermission from 'hooks/useComponentPermission';
 import {
 	type ConfirmableAction,
@@ -23,13 +24,13 @@ import { useAppContext } from 'providers/App/App';
 import type { DashboardSection } from '../../../utils';
 import type { PanelActionsConfig } from '../Panel';
 import { useClonePanel } from '../hooks/useClonePanel';
+import { useCreateAlertFromPanel } from '../hooks/useCreateAlertFromPanel';
 import { useDeletePanel } from '../hooks/useDeletePanel';
 import {
 	type MovePanelArgs,
 	useMovePanelToSection,
 } from '../hooks/useMovePanelToSection';
 import { PANEL_ACTION_META } from './panelActionMeta';
-import { PanelKind } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelKind';
 
 // Stable fallback so renders without layout context don't churn the mutation
 // hooks' deps (a fresh [] each render would re-create their callbacks).
@@ -103,8 +104,8 @@ function buildMoveItems({
 
 interface UsePanelActionItemsArgs {
 	panelId: string;
-	/** Full plugin kind (e.g. `signoz/TimeSeriesPanel`); */
-	panelKind: PanelKind;
+	/** The panel itself — its query seeds the "Create Alerts" action. */
+	panel: DashboardtypesPanelDTO;
 	/** Layout context for move/delete — absent outside editable mode. */
 	panelActions?: PanelActionsConfig;
 }
@@ -128,9 +129,10 @@ export interface PanelActionItems {
  */
 export function usePanelActionItems({
 	panelId,
-	panelKind,
+	panel,
 	panelActions,
 }: UsePanelActionItemsArgs): PanelActionItems {
+	const panelKind = panel.spec.plugin.kind;
 	const { user } = useAppContext();
 	const [canEditWidget, canMove, canDelete] = useComponentPermission(
 		[
@@ -143,6 +145,7 @@ export function usePanelActionItems({
 	);
 	const isEditable = useDashboardStore((s) => s.isEditable);
 	const openPanelEditor = useOpenPanelEditor();
+	const createAlert = useCreateAlertFromPanel();
 
 	// Mutations are store-backed (dashboardId/refetch) — the layout tree only
 	// supplies data (`sections`), so no callbacks are threaded through it.
@@ -151,7 +154,7 @@ export function usePanelActionItems({
 	const deletePanel = useDeletePanel({ sections });
 	const clonePanel = useClonePanel({ sections });
 
-	const kindActions = getPanelDefinition(panelKind)?.actions;
+	const panelCapabilities = getPanelDefinition(panelKind).actions;
 
 	// Delete runs on confirm, not on click — the menu item opens a prompt.
 	const deleteConfirm = useConfirmableAction(
@@ -170,7 +173,7 @@ export function usePanelActionItems({
 
 	const items = useMemo<MenuItem[]>(() => {
 		const panelGroup: MenuItem[] = [];
-		if (kindActions?.view) {
+		if (panelCapabilities.view) {
 			panelGroup.push({
 				key: 'view-panel',
 				label: 'View',
@@ -178,7 +181,7 @@ export function usePanelActionItems({
 				onClick: (): void => notImplementedYet('View'),
 			});
 		}
-		if (isEditable && canEditWidget && kindActions?.edit) {
+		if (isEditable && canEditWidget && panelCapabilities.edit) {
 			panelGroup.push({
 				key: 'edit-panel',
 				label: 'Edit panel',
@@ -188,7 +191,7 @@ export function usePanelActionItems({
 		}
 		// Clone needs the section context (source spec + dimensions) to place the
 		// copy, so — unlike Edit — it requires panelActions.
-		if (isEditable && canEditWidget && panelActions && kindActions?.clone) {
+		if (isEditable && canEditWidget && panelActions && panelCapabilities.clone) {
 			panelGroup.push({
 				key: 'clone-panel',
 				label: 'Clone',
@@ -202,7 +205,7 @@ export function usePanelActionItems({
 		}
 
 		const dataGroup: MenuItem[] = [];
-		if (kindActions?.download) {
+		if (panelCapabilities.download) {
 			dataGroup.push({
 				key: 'download-panel',
 				label: 'Download as CSV',
@@ -210,12 +213,15 @@ export function usePanelActionItems({
 				onClick: (): void => notImplementedYet('Download'),
 			});
 		}
-		if (isEditable && kindActions?.createAlert) {
+		// Seeding an alert opens a new tab and never mutates the dashboard, so —
+		// unlike edit/clone — it isn't gated on `isEditable` (V1 parity: available
+		// on locked dashboards too).
+		if (panelCapabilities.createAlert) {
 			dataGroup.push({
 				key: 'create-alert',
 				label: 'Create Alerts',
 				icon: <Bell size={14} />,
-				onClick: (): void => notImplementedYet('Create Alerts'),
+				onClick: (): void => createAlert(panel, panelId),
 			});
 		}
 
@@ -252,11 +258,13 @@ export function usePanelActionItems({
 		canEditWidget,
 		canMove,
 		canDelete,
-		kindActions,
+		panelCapabilities,
+		panel,
 		panelActions,
 		sections,
 		panelId,
 		openPanelEditor,
+		createAlert,
 		movePanel,
 		clonePanel,
 		requestDelete,
