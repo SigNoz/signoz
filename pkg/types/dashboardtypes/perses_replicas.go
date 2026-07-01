@@ -322,6 +322,55 @@ func (l *Layout) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+const (
+	gridColumnCount       = 12
+	maxItemsPerGridLayout = 100
+)
+
+// validateGridLayoutGeometry checks a single grid layout's item geometry (size,
+// position, and intra-section overlap), which Perses does not. It reads only the
+// layout's own items; layoutIndex is supplied by the caller (validateLayouts)
+// solely to name the layout in error paths.
+func validateGridLayoutGeometry(spec *dashboard.GridLayoutSpec, layoutIndex int) error {
+	if len(spec.Items) > maxItemsPerGridLayout {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.layouts[%d].spec.items: has %d items; maximum is %d", layoutIndex, len(spec.Items), maxItemsPerGridLayout)
+	}
+	for i, item := range spec.Items {
+		// The width/x bounds keep x+width small enough not to overflow.
+		switch {
+		case item.Width < 1:
+			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.layouts[%d].spec.items[%d]: width must be at least 1, got %d", layoutIndex, i, item.Width)
+		case item.Height < 1:
+			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.layouts[%d].spec.items[%d]: height must be at least 1, got %d", layoutIndex, i, item.Height)
+		case item.X < 0:
+			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.layouts[%d].spec.items[%d]: x must not be negative, got %d", layoutIndex, i, item.X)
+		case item.Y < 0:
+			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.layouts[%d].spec.items[%d]: y must not be negative, got %d", layoutIndex, i, item.Y)
+		case item.Width > gridColumnCount:
+			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.layouts[%d].spec.items[%d]: width (%d) exceeds grid width %d", layoutIndex, i, item.Width, gridColumnCount)
+		case item.X >= gridColumnCount:
+			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.layouts[%d].spec.items[%d]: x (%d) must be less than grid width %d", layoutIndex, i, item.X, gridColumnCount)
+		case item.X+item.Width > gridColumnCount:
+			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.layouts[%d].spec.items[%d]: x (%d) + width (%d) exceeds grid width %d", layoutIndex, i, item.X, item.Width, gridColumnCount)
+		}
+		// Could cap y/height but skipping for now: the grid grows vertically
+		// without limit (frontend autoSize), so "too big" has no natural bound.
+	}
+	// Two items overlap iff their rectangles intersect on both axes.
+	overlap := func(a, b dashboard.GridItem) bool {
+		return a.X < b.X+b.Width && b.X < a.X+a.Width &&
+			a.Y < b.Y+b.Height && b.Y < a.Y+a.Height
+	}
+	for i := 0; i < len(spec.Items); i++ {
+		for j := i + 1; j < len(spec.Items); j++ {
+			if overlap(spec.Items[i], spec.Items[j]) {
+				return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.layouts[%d].spec.items[%d] and items[%d] overlap", layoutIndex, i, j)
+			}
+		}
+	}
+	return nil
+}
+
 func (Layout) JSONSchemaOneOf() []any {
 	return []any{
 		LayoutEnvelope[dashboard.GridLayoutSpec]{Kind: string(dashboard.KindGridLayout)},
