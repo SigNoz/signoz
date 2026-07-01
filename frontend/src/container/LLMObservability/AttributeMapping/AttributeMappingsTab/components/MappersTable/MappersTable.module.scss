@@ -1,0 +1,22 @@
+.mappersTableWrapper {
+	--tanstack-expansion-first-col-padding-left: var(--spacing-6);
+	--tanstack-table-row-height: auto;
+
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-4);
+	margin: var(--spacing-2) var(--spacing-6) var(--spacing-6) var(--spacing-12);
+	padding: var(--spacing-4) 0;
+	border: 1px solid var(--l2-border);
+	border-radius: var(--radius-2);
+	background: var(--l2-background);
+	// Clip content while the panel grows during its expand (height) animation.
+	overflow: hidden;
+}
+
+.tableEmpty {
+	padding: var(--spacing-12) var(--spacing-6);
+	text-align: center;
+	color: var(--l3-foreground);
+	font-size: var(--periscope-font-size-base);
+}
