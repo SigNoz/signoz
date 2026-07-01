@@ -41,6 +41,7 @@
 	:global(.ant-collapse-header) {
 		border-top: 1px solid var(--l2-border);
 		border-bottom: 1px solid var(--l2-border);
+		border-radius: 0 !important;
 	}
 
 	:global(.ant-collapse-content) {
