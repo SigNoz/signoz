@@ -25,7 +25,7 @@ function setupGroups(): void {
 // harness creates the store (via the hook, backed by the mocked API) and wires
 // the edit/add callbacks the tab needs. This suite only exercises the listing,
 // so the callbacks are no-ops.
-function Harness(): JSX.Element {
+function AttributeMappingHarness(): JSX.Element {
 	const store = useAttributeMappingStore();
 	return (
 		<AttributeMappingsTab
@@ -47,7 +47,7 @@ describe('AttributeMappingsTab (integration)', () => {
 
 	it('renders no error banner on a successful load', async () => {
 		setupGroups();
-		render(<Harness />);
+		render(<AttributeMappingHarness />);
 
 		await waitFor(() =>
 			expect(screen.getByTestId('group-name-group-1')).toBeInTheDocument(),
@@ -59,7 +59,7 @@ describe('AttributeMappingsTab (integration)', () => {
 		server.use(
 			rest.get(GROUPS_ENDPOINT, (_req, res, ctx) => res(ctx.status(500))),
 		);
-		render(<Harness />);
+		render(<AttributeMappingHarness />);
 
 		await expect(screen.findByRole('alert')).resolves.toHaveTextContent(
 			'Failed to load mapping groups. Please try again.',
@@ -74,7 +74,7 @@ describe('AttributeMappingsTab (integration)', () => {
 				res(ctx.status(200), ctx.json(makeMappersResponse(mockMappers))),
 			),
 		);
-		render(<Harness />);
+		render(<AttributeMappingHarness />);
 
 		await waitFor(() =>
 			expect(screen.getByTestId('group-name-group-1')).toBeInTheDocument(),
