@@ -6,6 +6,25 @@ export const PAGE_SIZE = 20;
 
 export const PAGE_KEY = 'page';
 export const LIMIT_KEY = 'limit';
+export const SEARCH_KEY = 'search';
+export const SEARCH_DEBOUNCE_MS = 300;
+export const SOURCE_KEY = 'source';
+
+export type SourceFilter = 'all' | 'override' | 'auto';
+export const SOURCE_FILTER_OPTIONS: { value: SourceFilter; label: string }[] = [
+	{ value: 'all', label: 'All sources' },
+	{ value: 'override', label: 'User override' },
+	{ value: 'auto', label: 'Auto' },
+];
+
+export const SOURCE_FILTER_TO_IS_OVERRIDE: Record<
+	SourceFilter,
+	boolean | undefined
+> = {
+	all: undefined,
+	override: true,
+	auto: false,
+};
 
 // Match the page size so the skeleton reserves the same number of rows the
 // loaded page renders — otherwise the table height jumps on load.

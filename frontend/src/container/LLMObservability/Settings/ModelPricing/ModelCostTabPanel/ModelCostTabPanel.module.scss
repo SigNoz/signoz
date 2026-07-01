@@ -5,10 +5,24 @@
 	justify-content: space-between;
 }
 
+.filtersBarLeft {
+	display: flex;
+	gap: var(--spacing-6);
+	align-items: center;
+}
+
+.filtersBarSearch {
+	width: 280px;
+}
+
+.filtersBarSource {
+	width: 160px;
+}
+
 .pageError {
 	padding: var(--spacing-6) var(--spacing-8);
 	border-radius: var(--radius-2);
-	background: color-mix(in srgb, var(--bg-cherry-400) 8%, transparent);
-	color: var(--text-cherry-400);
+	background: color-mix(in srgb, var(--accent-cherry) 8%, transparent);
+	color: var(--accent-cherry);
 	font-size: var(--periscope-font-size-base);
 }
