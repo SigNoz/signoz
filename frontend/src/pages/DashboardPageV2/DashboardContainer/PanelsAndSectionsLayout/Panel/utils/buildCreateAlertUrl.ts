@@ -1,6 +1,6 @@
 import type {
 	DashboardtypesPanelDTO,
-	DashboardtypesPanelFormattingDTO,
+	DashboardtypesPanelPluginDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { YAxisSource } from 'components/YAxisUnitSelector/types';
 import { ENTITY_VERSION_V5 } from 'constants/app';
@@ -9,8 +9,19 @@ import ROUTES from 'constants/routes';
 import { PANEL_KIND_TO_PANEL_TYPE } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelKind';
 import { fromPerses } from 'pages/DashboardPageV2/DashboardContainer/queryV5/persesQueryAdapters';
 
-/** The `formatting` block shared by every formattable plugin spec, read without narrowing on kind. */
-type FormattablePluginSpec = { formatting?: DashboardtypesPanelFormattingDTO };
+function readPanelUnit(
+	plugin: DashboardtypesPanelPluginDTO,
+): string | undefined {
+	switch (plugin.kind) {
+		case 'signoz/TimeSeriesPanel':
+		case 'signoz/BarChartPanel':
+		case 'signoz/NumberPanel':
+		case 'signoz/PieChartPanel':
+			return plugin.spec.formatting?.unit;
+		default:
+			return undefined;
+	}
+}
 
 /**
  * Builds the `/alerts/new` URL that seeds the alert builder from a panel's query,
@@ -25,10 +36,7 @@ export function buildCreateAlertUrl(panel: DashboardtypesPanelDTO): string {
 	const panelType = PANEL_KIND_TO_PANEL_TYPE[panel.spec.plugin.kind];
 	const query = fromPerses(panel.spec.queries, panelType);
 
-	// `formatting.unit` is shared by the formattable plugin specs; read it with a
-	// localized cast rather than narrowing on kind (mirrors Panel's time-preference read).
-	const unit = (panel.spec.plugin.spec as FormattablePluginSpec).formatting
-		?.unit;
+	const unit = readPanelUnit(panel.spec.plugin);
 	if (unit) {
 		query.unit = unit;
 	}
