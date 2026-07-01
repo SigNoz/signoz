@@ -49,13 +49,14 @@ export function getMappersColumns(): TableColumnDef<DraftMapper>[] {
 						data-testid={`mapper-sources-${row.localId}`}
 					>
 						{visible.map((source) => (
-							<span
+							<Badge
+								variant="outline"
+								color="vanilla"
 								className={styles.mappersTableSourceChip}
 								key={`${source.context}:${source.key}`}
-								title={source.key}
 							>
 								{source.key}
-							</span>
+							</Badge>
 						))}
 						{remaining > 0 && (
 							<span className={cx(styles.mappersTableSourceMore, styles.muted)}>

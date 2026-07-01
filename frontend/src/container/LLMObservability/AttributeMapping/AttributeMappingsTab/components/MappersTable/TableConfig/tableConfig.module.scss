@@ -6,18 +6,10 @@
 }
 
 .mappersTableSourceChip {
-	display: inline-flex;
-	align-items: center;
+	// Badge's outline/vanilla variant supplies the border, background, radius and
+	// padding; textEllipsis measures against this max-width to truncate long keys.
 	max-width: 220px;
-	padding: 2px var(--padding-2);
-	border: 1px solid var(--l2-border);
-	border-radius: 6px;
-	background: var(--l3-background);
 	font-family: 'Geist Mono', monospace;
-	font-size: var(--font-size-xs);
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
 }
 
 .mappersTableSourceMore {
