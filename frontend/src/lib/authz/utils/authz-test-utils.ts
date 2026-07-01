@@ -149,6 +149,8 @@ export function mockUseAuthZGrantAll(
 		permissions: Object.fromEntries(
 			permissions.map((p) => [p, { isGranted: true }]),
 		) as UseAuthZResult['permissions'],
+		allowed: true,
+		deniedPermissions: [],
 		refetchPermissions: jest.fn(),
 	};
 }
@@ -164,6 +166,8 @@ export function mockUseAuthZDenyAll(
 		permissions: Object.fromEntries(
 			permissions.map((p) => [p, { isGranted: false }]),
 		) as UseAuthZResult['permissions'],
+		allowed: false,
+		deniedPermissions: permissions,
 		refetchPermissions: jest.fn(),
 	};
 }
@@ -174,16 +178,23 @@ export function mockUseAuthZGrantByPrefix(
 	permissions: BrandedPermission[],
 	options?: UseAuthZOptions,
 ) => UseAuthZResult {
-	return (permissions, _options) => ({
-		isLoading: false,
-		isFetching: false,
-		error: null,
-		permissions: Object.fromEntries(
-			permissions.map((p) => [
-				p,
-				{ isGranted: prefixes.some((prefix) => p.startsWith(prefix)) },
-			]),
-		) as UseAuthZResult['permissions'],
-		refetchPermissions: jest.fn(),
-	});
+	return (permissions, _options) => {
+		const denied = permissions.filter(
+			(p) => !prefixes.some((prefix) => p.startsWith(prefix)),
+		);
+		return {
+			isLoading: false,
+			isFetching: false,
+			error: null,
+			permissions: Object.fromEntries(
+				permissions.map((p) => [
+					p,
+					{ isGranted: prefixes.some((prefix) => p.startsWith(prefix)) },
+				]),
+			) as UseAuthZResult['permissions'],
+			allowed: denied.length === 0,
+			deniedPermissions: denied,
+			refetchPermissions: jest.fn(),
+		};
+	};
 }
