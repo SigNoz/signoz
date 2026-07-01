@@ -109,8 +109,6 @@ func buildPodRecords(
 					record.PodStatus = inframonitoringtypes.PodStatusPending
 				case statusCountsForGroup.Running == 1:
 					record.PodStatus = inframonitoringtypes.PodStatusRunning
-				case statusCountsForGroup.Succeeded == 1:
-					record.PodStatus = inframonitoringtypes.PodStatusSucceeded
 				case statusCountsForGroup.Failed == 1:
 					record.PodStatus = inframonitoringtypes.PodStatusFailed
 				case statusCountsForGroup.Unknown == 1:
@@ -643,7 +641,7 @@ func (m *module) getPerGroupPodStatusCounts(
 		"pr.reason_value = 5, 'UnexpectedAdmissionError', " +
 		"pp.phase_value = 1, 'Pending', " +
 		"pp.phase_value = 2, 'Running', " +
-		"pp.phase_value = 3, 'Succeeded', " +
+		"pp.phase_value = 3, 'Completed', " +
 		"pp.phase_value = 4, 'Failed', " +
 		"pp.phase_value = 5, 'Unknown', " +
 		"'Unknown')"
@@ -664,7 +662,7 @@ func (m *module) getPerGroupPodStatusCounts(
 	// Fixed status order; MUST match the podStatusCounts assignment in the
 	// scan loop below.
 	displayStatuses := []string{
-		"Pending", "Running", "Succeeded", "Failed", "Unknown",
+		"Pending", "Running", "Failed", "Unknown",
 		"CrashLoopBackOff", "ImagePullBackOff", "ErrImagePull", "CreateContainerConfigError",
 		"ContainerCreating", "OOMKilled", "Completed", "Error", "ContainerCannotRun",
 		"Evicted", "NodeAffinity", "NodeLost", "Shutdown", "UnexpectedAdmissionError",
@@ -727,23 +725,22 @@ func (m *module) getPerGroupPodStatusCounts(
 		result[compositeKeyFromList(groupVals)] = podStatusCounts{
 			Pending:                    int(counts[0]),
 			Running:                    int(counts[1]),
-			Succeeded:                  int(counts[2]),
-			Failed:                     int(counts[3]),
-			Unknown:                    int(counts[4]),
-			CrashLoopBackOff:           int(counts[5]),
-			ImagePullBackOff:           int(counts[6]),
-			ErrImagePull:               int(counts[7]),
-			CreateContainerConfigError: int(counts[8]),
-			ContainerCreating:          int(counts[9]),
-			OOMKilled:                  int(counts[10]),
-			Completed:                  int(counts[11]),
-			Error:                      int(counts[12]),
-			ContainerCannotRun:         int(counts[13]),
-			Evicted:                    int(counts[14]),
-			NodeAffinity:               int(counts[15]),
-			NodeLost:                   int(counts[16]),
-			Shutdown:                   int(counts[17]),
-			UnexpectedAdmissionError:   int(counts[18]),
+			Failed:                     int(counts[2]),
+			Unknown:                    int(counts[3]),
+			CrashLoopBackOff:           int(counts[4]),
+			ImagePullBackOff:           int(counts[5]),
+			ErrImagePull:               int(counts[6]),
+			CreateContainerConfigError: int(counts[7]),
+			ContainerCreating:          int(counts[8]),
+			OOMKilled:                  int(counts[9]),
+			Completed:                  int(counts[10]),
+			Error:                      int(counts[11]),
+			ContainerCannotRun:         int(counts[12]),
+			Evicted:                    int(counts[13]),
+			NodeAffinity:               int(counts[14]),
+			NodeLost:                   int(counts[15]),
+			Shutdown:                   int(counts[16]),
+			UnexpectedAdmissionError:   int(counts[17]),
 		}
 	}
 	if err := rows.Err(); err != nil {

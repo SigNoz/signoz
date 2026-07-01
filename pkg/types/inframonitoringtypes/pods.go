@@ -30,11 +30,10 @@ type PodCountsByPhase struct {
 // status in the time window (see PodStatus). One field per derivable status.
 type PodCountsByStatus struct {
 	// Phase fallback.
-	Pending   int `json:"pending" required:"true"`
-	Running   int `json:"running" required:"true"`
-	Succeeded int `json:"succeeded" required:"true"`
-	Failed    int `json:"failed" required:"true"`
-	Unknown   int `json:"unknown" required:"true"`
+	Pending int `json:"pending" required:"true"`
+	Running int `json:"running" required:"true"`
+	Failed  int `json:"failed" required:"true"`
+	Unknown int `json:"unknown" required:"true"`
 
 	// Container-level reasons.
 	CrashLoopBackOff           int `json:"crashLoopBackOff" required:"true"`

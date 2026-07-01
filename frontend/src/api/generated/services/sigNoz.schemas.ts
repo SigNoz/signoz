@@ -5694,10 +5694,6 @@ export interface InframonitoringtypesPodCountsByStatusDTO {
 	/**
 	 * @type integer
 	 */
-	succeeded: number;
-	/**
-	 * @type integer
-	 */
 	unexpectedAdmissionError: number;
 	/**
 	 * @type integer
@@ -6247,7 +6243,6 @@ export type InframonitoringtypesPodRecordDTOMeta =
 export enum InframonitoringtypesPodStatusDTO {
 	pending = 'pending',
 	running = 'running',
-	succeeded = 'succeeded',
 	failed = 'failed',
 	unknown = 'unknown',
 	crashloopbackoff = 'crashloopbackoff',

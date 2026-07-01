@@ -4729,8 +4729,6 @@ components:
           type: integer
         shutdown:
           type: integer
-        succeeded:
-          type: integer
         unexpectedAdmissionError:
           type: integer
         unknown:
@@ -4738,7 +4736,6 @@ components:
       required:
       - pending
       - running
-      - succeeded
       - failed
       - unknown
       - crashLoopBackOff
@@ -4826,7 +4823,6 @@ components:
       enum:
       - pending
       - running
-      - succeeded
       - failed
       - unknown
       - crashloopbackoff

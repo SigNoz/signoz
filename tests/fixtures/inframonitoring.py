@@ -1,10 +1,9 @@
 """Shared constants/helpers for v2 infra-monitoring pod-status tests."""
 
-# All 19 PodCountsByStatus buckets (camelCase, matches inframonitoringtypes.PodCountsByStatus / the API response).
+# All 18 PodCountsByStatus buckets (camelCase, matches inframonitoringtypes.PodCountsByStatus / the API response).
 STATUS_BUCKETS = (
     "pending",
     "running",
-    "succeeded",
     "failed",
     "unknown",
     "crashLoopBackOff",
@@ -27,7 +26,6 @@ STATUS_BUCKETS = (
 STATUS_TO_BUCKET = {
     "pending": "pending",
     "running": "running",
-    "succeeded": "succeeded",
     "failed": "failed",
     "unknown": "unknown",
     "crashloopbackoff": "crashLoopBackOff",

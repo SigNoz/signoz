@@ -30,11 +30,10 @@ type podPhaseCounts struct {
 // display status in window. Mirrors inframonitoringtypes.PodCountsByStatus.
 type podStatusCounts struct {
 	// Phase fallback.
-	Pending   int
-	Running   int
-	Succeeded int
-	Failed    int
-	Unknown   int
+	Pending int
+	Running int
+	Failed  int
+	Unknown int
 
 	// Container-level reasons.
 	CrashLoopBackOff           int
@@ -62,7 +61,6 @@ func podStatusCountsToResponse(podStatuses podStatusCounts) inframonitoringtypes
 	return inframonitoringtypes.PodCountsByStatus{
 		Pending:                    podStatuses.Pending,
 		Running:                    podStatuses.Running,
-		Succeeded:                  podStatuses.Succeeded,
 		Failed:                     podStatuses.Failed,
 		Unknown:                    podStatuses.Unknown,
 		CrashLoopBackOff:           podStatuses.CrashLoopBackOff,

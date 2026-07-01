@@ -13,7 +13,7 @@
       "podStatus": "running",
       "podRestarts": 0,
       "podCountsByStatus": {
-        "pending": 0, "running": 1, "succeeded": 0, "failed": 0, "unknown": 0,
+        "pending": 0, "running": 1, "failed": 0, "unknown": 0,
         "crashLoopBackOff": 0, "imagePullBackOff": 0, "errImagePull": 0,
         "createContainerConfigError": 0, "containerCreating": 0, "oomKilled": 0,
         "completed": 0, "error": 0, "containerCannotRun": 0,
@@ -34,7 +34,7 @@
       "podStatus": "running",
       "podRestarts": 0,
       "podCountsByStatus": {
-        "pending": 0, "running": 1, "succeeded": 0, "failed": 0, "unknown": 0,
+        "pending": 0, "running": 1, "failed": 0, "unknown": 0,
         "crashLoopBackOff": 0, "imagePullBackOff": 0, "errImagePull": 0,
         "createContainerConfigError": 0, "containerCreating": 0, "oomKilled": 0,
         "completed": 0, "error": 0, "containerCannotRun": 0,

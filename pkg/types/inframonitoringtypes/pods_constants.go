@@ -39,11 +39,10 @@ type PodStatus struct {
 
 var (
 	// Phase fallback.
-	PodStatusPending   = PodStatus{valuer.NewString("Pending")}
-	PodStatusRunning   = PodStatus{valuer.NewString("Running")}
-	PodStatusSucceeded = PodStatus{valuer.NewString("Succeeded")}
-	PodStatusFailed    = PodStatus{valuer.NewString("Failed")}
-	PodStatusUnknown   = PodStatus{valuer.NewString("Unknown")}
+	PodStatusPending = PodStatus{valuer.NewString("Pending")}
+	PodStatusRunning = PodStatus{valuer.NewString("Running")}
+	PodStatusFailed  = PodStatus{valuer.NewString("Failed")}
+	PodStatusUnknown = PodStatus{valuer.NewString("Unknown")}
 
 	// Container-level reasons (k8s.container.status.reason allowlist).
 	PodStatusCrashLoopBackOff           = PodStatus{valuer.NewString("CrashLoopBackOff")}
@@ -71,7 +70,6 @@ func (PodStatus) Enum() []any {
 	return []any{
 		PodStatusPending,
 		PodStatusRunning,
-		PodStatusSucceeded,
 		PodStatusFailed,
 		PodStatusUnknown,
 		PodStatusCrashLoopBackOff,
