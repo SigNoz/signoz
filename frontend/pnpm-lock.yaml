@@ -429,6 +429,9 @@ importers:
       '@typescript/native-preview':
         specifier: 7.0.0-dev.20260430.1
         version: 7.0.0-dev.20260430.1
+      babel-plugin-transform-import-meta:
+        specifier: ^2.3.3
+        version: 2.3.3(@babel/core@7.29.0)
       eslint-plugin-sonarjs:
         specifier: 4.0.2
         version: 4.0.2(eslint@10.2.1(jiti@2.6.1))
@@ -4085,6 +4088,11 @@ packages:
 
   babel-plugin-syntax-jsx@6.18.0:
     resolution: {integrity: sha512-qrPaCSo9c8RHNRHIotaufGbuOBN8rtdC4QrrFFc43vyWCCz7Kl7GL1PGaXtMGQZUXrkCjNEgxDfmAuAabr/rlw==}
+
+  babel-plugin-transform-import-meta@2.3.3:
+    resolution: {integrity: sha512-bbh30qz1m6ZU1ybJoNOhA2zaDvmeXMnGNBMVMDOJ1Fni4+wMBoy/j7MTRVmqAUCIcy54/rEnr9VEBsfcgbpm3Q==}
+    peerDependencies:
+      '@babel/core': ^7.10.0
 
   babel-preset-current-node-syntax@1.2.0:
     resolution: {integrity: sha512-E/VlAEzRrsLEb2+dv8yp3bo4scof3l9nR4lrld+Iy5NyVqgVYUJnDAmunkhPMisRI32Qc4iRiz425d8vM++2fg==}
@@ -12986,6 +12994,12 @@ snapshots:
       - supports-color
 
   babel-plugin-syntax-jsx@6.18.0: {}
+
+  babel-plugin-transform-import-meta@2.3.3(@babel/core@7.29.0):
+    dependencies:
+      '@babel/core': 7.29.0
+      '@babel/template': 7.28.6
+      tslib: 2.8.1
 
   babel-preset-current-node-syntax@1.2.0(@babel/core@7.29.0):
     dependencies:

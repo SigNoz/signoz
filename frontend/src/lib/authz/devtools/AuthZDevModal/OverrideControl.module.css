@@ -1,0 +1,60 @@
+.segmented {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-1);
+	padding: var(--spacing-1);
+	background: var(--l2-background);
+	border: 1px solid var(--l3-border);
+	border-radius: var(--radius-2);
+}
+
+.segment {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-2);
+	height: 22px;
+	padding: 0 var(--spacing-3);
+	color: var(--l2-foreground);
+	background: transparent;
+	border: none;
+	border-radius: calc(var(--radius-2) - 1px);
+	cursor: pointer;
+	transition:
+		background 120ms ease,
+		color 120ms ease;
+}
+
+.segment:not(.segmentActive):hover {
+	color: var(--l2-foreground-hover);
+	background: var(--l2-background);
+}
+
+.segmentIcon {
+	display: inline-flex;
+	align-items: center;
+}
+
+.segment.optAuto {
+	color: var(--l1-foreground);
+	background: var(--l3-background);
+}
+
+.segment.optGranted {
+	color: var(--success-foreground);
+	background: color-mix(in srgb, var(--accent-forest) 22%, transparent);
+}
+
+.segment.optDenied {
+	color: var(--danger-foreground);
+	background: color-mix(in srgb, var(--accent-cherry) 22%, transparent);
+}
+
+.segment.optDelay {
+	color: var(--warning-foreground);
+	background: color-mix(in srgb, var(--accent-amber) 22%, transparent);
+}
+
+.segment.optError {
+	color: var(--danger-foreground);
+	background: color-mix(in srgb, var(--accent-cherry) 22%, transparent);
+}
