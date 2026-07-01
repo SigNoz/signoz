@@ -1,6 +1,6 @@
 import { Button } from '@signozhq/ui/button';
 
-import styles from './LLMObservabilityAttributeMapping.module.scss';
+import styles from './AttributeMappingHeader.module.scss';
 
 interface AttributeMappingHeaderProps {
 	isDirty: boolean;

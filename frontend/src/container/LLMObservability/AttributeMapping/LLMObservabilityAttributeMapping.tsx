@@ -1,4 +1,4 @@
-import AttributeMappingHeader from './AttributeMappingHeader';
+import AttributeMappingHeader from './components/AttributeMappingHeader';
 import styles from './LLMObservabilityAttributeMapping.module.scss';
 
 const noop = (): void => undefined;
