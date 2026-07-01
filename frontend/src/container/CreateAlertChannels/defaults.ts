@@ -1,4 +1,9 @@
-import { EmailChannel, OpsgenieChannel, PagerChannel } from './config';
+import {
+	EmailChannel,
+	GoogleChatChannel,
+	OpsgenieChannel,
+	PagerChannel,
+} from './config';
 
 export const PagerInitialConfig: Partial<PagerChannel> = {
 	description: `[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }} for {{ .CommonLabels.job }}
@@ -445,4 +450,21 @@ export const EmailInitialConfig: Partial<EmailChannel> = {
 	  </table>
 	</body>
   </html>`,
+};
+
+export const GoogleChatInitialConfig: Partial<GoogleChatChannel> = {
+	title: `[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}`,
+	text: `{{ range .Alerts -}}
+*Alert:* {{ .Labels.alertname }}{{ if .Labels.severity }}
+*Severity:* {{ .Labels.severity }}{{ end }}{{ if .Annotations.summary }}
+*Summary:* {{ .Annotations.summary }}{{ end }}{{ if .Annotations.description }}
+*Description:* {{ .Annotations.description }}{{ end }}{{ if .Annotations.related_logs }}
+*Related Logs:* {{ .Annotations.related_logs }}{{ end }}{{ if .Annotations.related_traces }}
+*Related Traces:* {{ .Annotations.related_traces }}{{ end }}
+
+*Labels:*
+{{ range .Labels.SortedPairs -}}
+	• \`{{ .Name }}\`: {{ .Value }}
+{{ end }}
+{{ end }}`,
 };

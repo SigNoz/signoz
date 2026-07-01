@@ -1,14 +1,14 @@
 import { Dispatch, ReactElement, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Input } from '@signozhq/ui/input';
+import { Form, FormInstance, Input, Select } from 'antd';
 import { Switch } from '@signozhq/ui/switch';
-import { Form, FormInstance, Select } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import type { Store } from 'antd/lib/form/interface';
 import ROUTES from 'constants/routes';
 import {
 	ChannelType,
 	EmailChannel,
+	GoogleChatChannel,
 	OpsgenieChannel,
 	PagerChannel,
 	SlackChannel,
@@ -17,6 +17,7 @@ import {
 import history from 'lib/history';
 
 import EmailSettings from './Settings/Email';
+import GoogleChatSettings from './Settings/GoogleChat';
 import MsTeamsSettings from './Settings/MsTeams';
 import OpsgenieSettings from './Settings/Opsgenie';
 import PagerSettings from './Settings/Pager';
@@ -53,6 +54,8 @@ function FormAlertChannels({
 				return <OpsgenieSettings setSelectedConfig={setSelectedConfig} />;
 			case ChannelType.Email:
 				return <EmailSettings setSelectedConfig={setSelectedConfig} />;
+			case ChannelType.GoogleChat:
+				return <GoogleChatSettings setSelectedConfig={setSelectedConfig} />;
 			default:
 				return null;
 		}
@@ -85,7 +88,7 @@ function FormAlertChannels({
 				>
 					<Switch
 						defaultValue={initialValue?.send_resolved}
-						testId="field-send-resolved-checkbox"
+						data-testid="field-send-resolved-checkbox"
 						onChange={(value): void => {
 							setSelectedConfig((state) => ({
 								...state,
@@ -128,6 +131,13 @@ function FormAlertChannels({
 
 						<Select.Option value="msteams" key="msteams" data-testid="select-option">
 							Microsoft Teams
+						</Select.Option>
+						<Select.Option
+							value="googlechat"
+							key="googlechat"
+							data-testid="select-option"
+						>
+							Google Chat
 						</Select.Option>
 					</Select>
 				</Form.Item>
@@ -176,6 +186,7 @@ interface FormAlertChannelsProps {
 					WebhookChannel &
 					PagerChannel &
 					OpsgenieChannel &
+					GoogleChatChannel &
 					EmailChannel
 			>
 		>
