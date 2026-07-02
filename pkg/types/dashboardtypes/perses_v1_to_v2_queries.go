@@ -41,7 +41,7 @@ func (d *v1Decoder) convertV1WidgetQuery(widget map[string]any, panelKind PanelP
 	// Default: wrap in CompositeQuery.
 	composite, err := parseCompositeFromEnvelopes(envelopes)
 	if err != nil || composite == nil {
-		d.note("widget %q: could not build query from %d envelope(s): %v", d.readString(widget, "id"), len(envelopes), err)
+		d.note("widget %q: could not build query from %d envelope(s): %s", d.readString(widget, "id"), len(envelopes), detailErr(err))
 		return nil
 	}
 	return []Query{{

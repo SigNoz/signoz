@@ -47,11 +47,33 @@ func (d *v1Decoder) noteMalformedField(field string, raw any) {
 	d.note("%q has unexpected type %T", field, raw)
 }
 
+// detailErr renders an error for a diagnostic note, unfolding the structured
+// detail our JSON binding attaches via WithAdditional. A plain %v on these
+// errors prints only the innermost message ("request body contains invalid
+// field value") and drops the field/type context that says which field was
+// wrong — the part that actually tells you what to fix.
+func detailErr(err error) string {
+	if err == nil {
+		return ""
+	}
+	j := errors.AsJSON(err)
+	if len(j.Errors) == 0 {
+		return err.Error()
+	}
+	details := make([]string, 0, len(j.Errors))
+	for _, e := range j.Errors {
+		details = append(details, e.Message)
+	}
+	return j.Message + ": " + strings.Join(details, "; ")
+}
+
 func (d *v1Decoder) errIfHasMalformedFields() error {
 	if len(d.bad) == 0 {
 		return nil
 	}
-	return errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardInvalidData, "malformed v1 dashboard fields: %s", strings.Join(d.bad, "; "))
+	// One field per line: these lists run long (a bad widget query is reported
+	// once per widget), and a single "; "-joined line is an unscannable wall.
+	return errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardInvalidData, "malformed v1 dashboard fields:\n  %s", strings.Join(d.bad, "\n  "))
 }
 
 func readField[T any](d *v1Decoder, m map[string]any, key string) T {
