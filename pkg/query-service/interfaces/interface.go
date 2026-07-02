@@ -60,7 +60,7 @@ type Reader interface {
 	) (*model.MetricStatus, *model.ApiError)
 
 	// QB V3 metrics/traces/logs
-	GetTimeSeriesResultV3(ctx context.Context, query string) ([]*v3.Series, error)
+	GetTimeSeriesResultV3(ctx context.Context, query string, args ...any) ([]*v3.Series, error)
 	GetListResultV3(ctx context.Context, query string) ([]*v3.Row, error)
 	// Logs
 	GetLogFields(ctx context.Context) (*model.GetFieldsResponse, *model.ApiError)
