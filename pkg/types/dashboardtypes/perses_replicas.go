@@ -25,11 +25,11 @@ type Display struct {
 	Description string `json:"description,omitempty"`
 }
 
-// Validate bounds the display name length. It's self-contained; path is the
-// caller's JSON path to this display so the error can point at the field.
-func (d Display) Validate(path string) error {
+// Validate bounds the display name length. It's self-contained; label is a
+// user-facing field name (e.g. "panel name") the error message reads back.
+func (d Display) Validate(label string) error {
 	if n := utf8.RuneCountInString(d.Name); n > MaxDisplayNameLen {
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s.name must be at most %d characters, got %d", path, MaxDisplayNameLen, n)
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s must be at most %d characters, got %d", label, MaxDisplayNameLen, n)
 	}
 	return nil
 }
@@ -204,7 +204,7 @@ func (VariableDefaultValue) PrepareJSONSchema(s *jsonschema.Schema) error {
 // validate mirrors perses ListVariableSpec validation (plus the digits-only name
 // check perses only applies to text variables); run by decodeSpec on unmarshal.
 func (s *ListVariableSpec) validate() error {
-	if err := s.Display.Validate("display"); err != nil {
+	if err := s.Display.Validate("variable name"); err != nil {
 		return err
 	}
 	if err := common.ValidateID(s.Name); err != nil {
@@ -283,7 +283,7 @@ type TextVariableSpec struct {
 
 // validate mirrors perses TextVariableSpec validation; run by decodeSpec on unmarshal.
 func (s *TextVariableSpec) validate() error {
-	if err := s.Display.Validate("display"); err != nil {
+	if err := s.Display.Validate("variable name"); err != nil {
 		return err
 	}
 	if err := common.ValidateID(s.Name); err != nil {

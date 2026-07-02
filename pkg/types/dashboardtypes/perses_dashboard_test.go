@@ -1565,9 +1565,9 @@ func TestInvalidateDuplicatePanelReference(t *testing.T) {
 	assert.Contains(t, err.Error(), "spec.layouts[0].spec.items[1].content")
 }
 
-// Every human-readable display name — dashboard, panel, variable — and the grid
+// Every user-facing display name — dashboard, panel, variable — and the grid
 // layout title is bounded at MaxDisplayNameLen. The name is one over the limit
-// in each case, and the error names the field.
+// in each case, and the error reads back a human field label, not a JSON path.
 func TestInvalidateDisplayNameTooLong(t *testing.T) {
 	tooLong := strings.Repeat("x", MaxDisplayNameLen+1)
 	lengthMsg := fmt.Sprintf("must be at most %d characters, got %d", MaxDisplayNameLen, MaxDisplayNameLen+1)
@@ -1575,32 +1575,32 @@ func TestInvalidateDisplayNameTooLong(t *testing.T) {
 	testCases := []struct {
 		scenario      string
 		dashboardJSON string
-		expectedField string
+		expectedLabel string
 	}{
 		{
 			scenario:      "dashboard display name",
 			dashboardJSON: `{"display": {"name": "` + tooLong + `"}, "layouts": []}`,
-			expectedField: "spec.display.name",
+			expectedLabel: "dashboard name",
 		},
 		{
 			scenario:      "panel display name",
 			dashboardJSON: `{"panels": {"p1": {"kind": "Panel", "spec": {"display": {"name": "` + tooLong + `"}, "plugin": {"kind": "signoz/TablePanel", "spec": {}}, "queries": []}}}, "layouts": []}`,
-			expectedField: "spec.panels.p1.spec.display.name",
+			expectedLabel: "panel name",
 		},
 		{
 			scenario:      "list variable display name",
 			dashboardJSON: `{"variables": [{"kind": "ListVariable", "spec": {"name": "svc", "display": {"name": "` + tooLong + `"}, "plugin": {"kind": "signoz/DynamicVariable", "spec": {"name": "service.name", "signal": "metrics"}}}}], "layouts": []}`,
-			expectedField: "display.name",
+			expectedLabel: "variable name",
 		},
 		{
 			scenario:      "text variable display name",
 			dashboardJSON: `{"variables": [{"kind": "TextVariable", "spec": {"name": "mytext", "value": "v", "display": {"name": "` + tooLong + `"}}}], "layouts": []}`,
-			expectedField: "display.name",
+			expectedLabel: "variable name",
 		},
 		{
 			scenario:      "layout title",
 			dashboardJSON: `{"layouts": [{"kind": "Grid", "spec": {"display": {"title": "` + tooLong + `"}, "items": []}}]}`,
-			expectedField: "spec.layouts[0].spec.display.title",
+			expectedLabel: "layout name",
 		},
 	}
 
@@ -1608,8 +1608,7 @@ func TestInvalidateDisplayNameTooLong(t *testing.T) {
 		t.Run(testCase.scenario, func(t *testing.T) {
 			_, err := unmarshalDashboard([]byte(testCase.dashboardJSON))
 			require.Error(t, err)
-			assert.Contains(t, err.Error(), testCase.expectedField)
-			assert.Contains(t, err.Error(), lengthMsg)
+			assert.Contains(t, err.Error(), testCase.expectedLabel+" "+lengthMsg)
 		})
 	}
 }
