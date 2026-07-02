@@ -102,8 +102,8 @@ func (d *v1Decoder) collectV1QueryEnvelopes(widget map[string]any) ([]map[string
 		var out []map[string]any
 		var signal telemetrytypes.Signal
 		for _, q := range d.readObjects(builder, "queryData") {
-			normalizeV1Having(q)
-			normalizeV1LogTraceAggregations(q)
+			normalizePreV5Having(q)
+			normalizePreV5LogTraceAggregations(q)
 			name := d.readString(q, "queryName")
 			out = append(out, qb.WrapInV5Envelope(name, q, string(qb.QueryTypeBuilder.StringValue())))
 			if signal.IsZero() {
@@ -111,12 +111,12 @@ func (d *v1Decoder) collectV1QueryEnvelopes(widget map[string]any) ([]map[string
 			}
 		}
 		for _, f := range d.readObjects(builder, "queryFormulas") {
-			normalizeV1Having(f)
+			normalizePreV5Having(f)
 			name := d.readString(f, "queryName")
 			out = append(out, qb.WrapInV5Envelope(name, f, string(qb.QueryTypeFormula.StringValue())))
 		}
 		for _, op := range d.readObjects(builder, "queryTraceOperator") {
-			normalizeV1Having(op)
+			normalizePreV5Having(op)
 			name := d.readString(op, "queryName")
 			out = append(out, qb.WrapInV5Envelope(name, op, string(qb.QueryTypeTraceOperator.StringValue())))
 		}

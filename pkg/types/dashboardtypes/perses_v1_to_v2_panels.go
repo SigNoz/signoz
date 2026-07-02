@@ -259,6 +259,7 @@ func (d *v1Decoder) mapV1SelectFields(w map[string]any) []telemetrytypes.Telemet
 	if len(raw) == 0 {
 		return nil
 	}
+	normalizePreV5FieldKeys(raw)
 	fields, err := decodeTelemetryFields(raw)
 	if err != nil {
 		d.note("widget %q has malformed %s: %v", d.readString(w, "id"), field, err)
