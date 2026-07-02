@@ -912,7 +912,7 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
         "Zeta Overview",
     }
 
-    # ── stage 11: clone keeps the display name but mints a new, retrievable one ─
+    # ── stage 11: clone suffixes the display name and mints a new, retrievable one ─
     response = requests.post(
         signoz.self.host_configs["8080"].get(f"{BASE_URL}/{ids['lc-alpha']}/clone"),
         headers={"Authorization": f"Bearer {token}"},
@@ -922,7 +922,7 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
     clone = response.json()["data"]
     assert clone["id"] != ids["lc-alpha"]
     assert clone["name"] != "lc-alpha"  # internal name is regenerated
-    assert clone["spec"]["display"]["name"] == "Alpha Overview"  # display name preserved
+    assert clone["spec"]["display"]["name"] == "Alpha Overview - Copy"  # Copy suffix appended
     assert clone["source"] == "user"
     assert clone["locked"] is False
 
