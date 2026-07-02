@@ -148,6 +148,16 @@
 			opacity: 1;
 		}
 
+		// Push the ... to the right edge of the row instead of hugging the key.
+		// Absolute (not flex) so the arrow/label/children layout stays intact;
+		// the row <li> is position: relative (react-json-tree sets it inline).
+		.pretty-view__actions {
+			position: absolute;
+			top: 2px; // align with the header line (li padding-top)
+			right: 0;
+			height: 18px; // line-height — centers the icon (span is align-items: center)
+		}
+
 		// In nested rows, value-row should not take full width
 		.pretty-view__value-row {
 			width: auto;
