@@ -8,7 +8,7 @@ import { toast } from '@signozhq/ui/sonner';
 import { Divider } from '@signozhq/ui/divider';
 import { Typography } from '@signozhq/ui/typography';
 import deleteDashboard from 'api/v1/dashboards/id/delete';
-import { invalidateListDashboardsV2 } from 'api/generated/services/dashboard';
+import { invalidateListDashboardsForUserV2 } from 'api/generated/services/dashboard';
 import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
@@ -44,7 +44,7 @@ function DeleteActionItem({
 			toast.success(
 				t('dashboard:delete_dashboard_success', { name: dashboardName }),
 			);
-			await invalidateListDashboardsV2(queryClient);
+			await invalidateListDashboardsForUserV2(queryClient);
 		},
 		onError: (error: APIError) => {
 			showErrorModal(error);
