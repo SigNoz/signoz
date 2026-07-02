@@ -52,6 +52,8 @@
 	-webkit-line-clamp: 3;
 	-webkit-box-orient: vertical;
 	overflow: hidden;
+	/* Break long unbroken names so they clamp instead of overflowing the row. */
+	overflow-wrap: anywhere;
 }
 
 .tagsWithActions {
