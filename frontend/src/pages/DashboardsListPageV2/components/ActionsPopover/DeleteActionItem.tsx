@@ -7,8 +7,10 @@ import { CircleAlert, Trash2 } from '@signozhq/icons';
 import { toast } from '@signozhq/ui/sonner';
 import { Divider } from '@signozhq/ui/divider';
 import { Typography } from '@signozhq/ui/typography';
-import deleteDashboard from 'api/v1/dashboards/id/delete';
-import { invalidateListDashboardsForUserV2 } from 'api/generated/services/dashboard';
+import {
+	deleteDashboardV2,
+	invalidateListDashboardsForUserV2,
+} from 'api/generated/services/dashboard';
 import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
@@ -39,7 +41,7 @@ function DeleteActionItem({
 	const isDisabled = isLocked || (user.role === USER_ROLES.VIEWER && !isAuthor);
 
 	const { mutate: runDelete } = useMutation({
-		mutationFn: () => deleteDashboard({ id: dashboardId }),
+		mutationFn: () => deleteDashboardV2({ id: dashboardId }),
 		onSuccess: async () => {
 			toast.success(
 				t('dashboard:delete_dashboard_success', { name: dashboardName }),
