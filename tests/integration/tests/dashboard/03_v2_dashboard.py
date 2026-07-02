@@ -173,6 +173,125 @@ def test_create_rejects_too_many_tags(
     assert response.json()["error"]["code"] == "dashboard_invalid_input"
 
 
+def test_create_rejects_invalid_grid_layout(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    def panel(name: str) -> dict:
+        return {
+            "kind": "Panel",
+            "spec": {
+                "display": {"name": name},
+                "plugin": {"kind": "signoz/TablePanel", "spec": {}},
+                "queries": [
+                    {
+                        "kind": "time_series",
+                        "spec": {
+                            "plugin": {
+                                "kind": "signoz/BuilderQuery",
+                                "spec": {
+                                    "name": "A",
+                                    "signal": "logs",
+                                    "aggregations": [{"expression": "count()"}],
+                                },
+                            }
+                        },
+                    }
+                ],
+            },
+        }
+
+    # Two grid items reference valid, distinct panels but share cells, so the
+    # overlap is the only violation.
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json={
+            "schemaVersion": "v6",
+            "name": "rejects-overlap",
+            "spec": {
+                "display": {"name": "Rejects Overlap"},
+                "panels": {"p1": panel("P1"), "p2": panel("P2")},
+                "layouts": [
+                    {
+                        "kind": "Grid",
+                        "spec": {
+                            "items": [
+                                {"x": 0, "y": 0, "width": 6, "height": 6, "content": {"$ref": "#/spec/panels/p1"}},
+                                {"x": 3, "y": 3, "width": 6, "height": 6, "content": {"$ref": "#/spec/panels/p2"}},
+                            ]
+                        },
+                    }
+                ],
+            },
+            "tags": [],
+        },
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.json()["error"]["code"] == "dashboard_invalid_input"
+    assert "overlap" in response.json()["error"]["message"]
+
+    # One panel placed by two grid items (side by side, so they clear the overlap
+    # check first). The frontend keys grid items by panel id, so this is rejected.
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json={
+            "schemaVersion": "v6",
+            "name": "rejects-multiref",
+            "spec": {
+                "display": {"name": "Rejects Multiref"},
+                "panels": {"p1": panel("P1")},
+                "layouts": [
+                    {
+                        "kind": "Grid",
+                        "spec": {
+                            "items": [
+                                {"x": 0, "y": 0, "width": 6, "height": 6, "content": {"$ref": "#/spec/panels/p1"}},
+                                {"x": 6, "y": 0, "width": 6, "height": 6, "content": {"$ref": "#/spec/panels/p1"}},
+                            ]
+                        },
+                    }
+                ],
+            },
+            "tags": [],
+        },
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.json()["error"]["code"] == "dashboard_invalid_input"
+    assert "already placed" in response.json()["error"]["message"]
+
+    # More grid items than allowed. The item-count check runs before the
+    # panel-ref check, so content-less items suffice here.
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json={
+            "schemaVersion": "v6",
+            "name": "rejects-too-many-items",
+            "spec": {
+                "display": {"name": "Rejects Too Many"},
+                "layouts": [
+                    {
+                        "kind": "Grid",
+                        "spec": {"items": [{"x": 0, "y": 0, "width": 1, "height": 1} for _ in range(101)]},
+                    }
+                ],
+            },
+            "tags": [],
+        },
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.json()["error"]["code"] == "dashboard_invalid_input"
+    assert "maximum" in response.json()["error"]["message"]
+
+
 @pytest.mark.parametrize(
     "params",
     [
