@@ -5,6 +5,7 @@ import {
 	ChartNoAxesGantt,
 	ChevronDown,
 	ChevronRight,
+	Info,
 	TriangleAlert,
 } from '@signozhq/icons';
 import getLocalStorageKey from 'api/browser/localstorage/get';
@@ -418,7 +419,13 @@ function TraceDetailsV3(): JSX.Element {
 																<WarningPopover
 																	message="The total span count exceeds the visualization limit. Displaying a sampled subset of spans in flamegraph."
 																	placement="bottomLeft"
-																/>
+																>
+																	<Info
+																		size={16}
+																		color="var(--l2-foreground)"
+																		style={{ cursor: 'pointer' }}
+																	/>
+																</WarningPopover>
 															)}
 													</span>
 													{traceData?.payload?.totalSpansCount ? (
