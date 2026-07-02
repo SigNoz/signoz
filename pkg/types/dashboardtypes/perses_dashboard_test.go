@@ -1563,3 +1563,57 @@ func TestInvalidateDuplicatePanelReference(t *testing.T) {
 	assert.Contains(t, err.Error(), "spec.layouts[0].spec.items[0].content")
 	assert.Contains(t, err.Error(), "spec.layouts[0].spec.items[1].content")
 }
+
+// Every human-readable display name — dashboard, panel, variable — and the grid
+// layout title is bounded at MaxDisplayNameLen. The name is one over the limit
+// in each case, and the error names the field.
+func TestInvalidateDisplayNameTooLong(t *testing.T) {
+	tooLong := strings.Repeat("x", MaxDisplayNameLen+1)
+
+	testCases := []struct {
+		scenario            string
+		dashboardJSON       string
+		expectedErrFragment string
+	}{
+		{
+			scenario:            "dashboard display name",
+			dashboardJSON:       `{"display": {"name": "` + tooLong + `"}, "layouts": []}`,
+			expectedErrFragment: "spec.display.name must be at most 63 characters, got 64",
+		},
+		{
+			scenario:            "panel display name",
+			dashboardJSON:       `{"panels": {"p1": {"kind": "Panel", "spec": {"display": {"name": "` + tooLong + `"}, "plugin": {"kind": "signoz/TablePanel", "spec": {}}, "queries": []}}}, "layouts": []}`,
+			expectedErrFragment: "spec.panels.p1.spec.display.name must be at most 63 characters, got 64",
+		},
+		{
+			scenario:            "list variable display name",
+			dashboardJSON:       `{"variables": [{"kind": "ListVariable", "spec": {"name": "svc", "display": {"name": "` + tooLong + `"}, "plugin": {"kind": "signoz/DynamicVariable", "spec": {"name": "service.name", "signal": "metrics"}}}}], "layouts": []}`,
+			expectedErrFragment: "display.name must be at most 63 characters, got 64",
+		},
+		{
+			scenario:            "text variable display name",
+			dashboardJSON:       `{"variables": [{"kind": "TextVariable", "spec": {"name": "mytext", "value": "v", "display": {"name": "` + tooLong + `"}}}], "layouts": []}`,
+			expectedErrFragment: "display.name must be at most 63 characters, got 64",
+		},
+		{
+			scenario:            "layout title",
+			dashboardJSON:       `{"layouts": [{"kind": "Grid", "spec": {"display": {"title": "` + tooLong + `"}, "items": []}}]}`,
+			expectedErrFragment: "spec.layouts[0].spec.display.title must be at most 63 characters, got 64",
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.scenario, func(t *testing.T) {
+			_, err := unmarshalDashboard([]byte(testCase.dashboardJSON))
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), testCase.expectedErrFragment)
+		})
+	}
+}
+
+// A display name at exactly the limit is accepted.
+func TestValidateDisplayNameAtMaxLength(t *testing.T) {
+	atLimit := strings.Repeat("x", MaxDisplayNameLen)
+	_, err := unmarshalDashboard([]byte(`{"display": {"name": "` + atLimit + `"}, "layouts": []}`))
+	assert.NoError(t, err)
+}

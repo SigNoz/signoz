@@ -173,6 +173,30 @@ def test_create_rejects_too_many_tags(
     assert response.json()["error"]["code"] == "dashboard_invalid_input"
 
 
+def test_create_rejects_long_display_name(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    # Display names are bounded at 63 characters; one over must be rejected.
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json={
+            "schemaVersion": "v6",
+            "name": "long-display-name",
+            "spec": {"display": {"name": "x" * 64}},
+        },
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.json()["error"]["code"] == "dashboard_invalid_input"
+    assert "must be at most 63 characters" in response.json()["error"]["message"]
+
+
 def test_create_rejects_invalid_grid_layout(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument

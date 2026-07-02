@@ -5,6 +5,7 @@ import (
 	"maps"
 	"slices"
 	"strconv"
+	"unicode/utf8"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	qb "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -15,9 +16,22 @@ import (
 	"github.com/swaggest/jsonschema-go"
 )
 
+// MaxDisplayNameLen bounds every human-readable display name — dashboard, panel,
+// and variable display names, plus the grid layout title.
+const MaxDisplayNameLen = 63
+
 type Display struct {
 	Name        string `json:"name" required:"true"`
 	Description string `json:"description,omitempty"`
+}
+
+// Validate bounds the display name length. It's self-contained; path is the
+// caller's JSON path to this display so the error can point at the field.
+func (d Display) Validate(path string) error {
+	if n := utf8.RuneCountInString(d.Name); n > MaxDisplayNameLen {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s.name must be at most %d characters, got %d", path, MaxDisplayNameLen, n)
+	}
+	return nil
 }
 
 // ══════════════════════════════════════════════
@@ -190,6 +204,9 @@ func (VariableDefaultValue) PrepareJSONSchema(s *jsonschema.Schema) error {
 // validate mirrors perses ListVariableSpec validation (plus the digits-only name
 // check perses only applies to text variables); run by decodeSpec on unmarshal.
 func (s *ListVariableSpec) validate() error {
+	if err := s.Display.Validate("display"); err != nil {
+		return err
+	}
 	if err := common.ValidateID(s.Name); err != nil {
 		return err
 	}
@@ -266,6 +283,9 @@ type TextVariableSpec struct {
 
 // validate mirrors perses TextVariableSpec validation; run by decodeSpec on unmarshal.
 func (s *TextVariableSpec) validate() error {
+	if err := s.Display.Validate("display"); err != nil {
+		return err
+	}
 	if err := common.ValidateID(s.Name); err != nil {
 		return err
 	}
