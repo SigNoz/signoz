@@ -2,6 +2,7 @@ package dashboardtypes
 
 import (
 	"encoding/json"
+	"fmt"
 	"maps"
 	"slices"
 	"strconv"
@@ -25,11 +26,13 @@ type Display struct {
 	Description string `json:"description,omitempty"`
 }
 
-// Validate bounds the display name length. It's self-contained; label is a
-// user-facing field name (e.g. "panel name") the error message reads back.
-func (d Display) Validate(label string) error {
+// Validate bounds the display name length. label is the user-facing field name
+// the message reads back (e.g. "panel name"); path is the JSON path attached as
+// a locatable detail for clients, kept out of the human message.
+func (d Display) Validate(label, path string) error {
 	if n := utf8.RuneCountInString(d.Name); n > MaxDisplayNameLen {
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s must be at most %d characters, got %d", label, MaxDisplayNameLen, n)
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s name must be at most %d characters, got %d", label, MaxDisplayNameLen, n).
+			WithAdditional(fmt.Sprintf("path: %s", path))
 	}
 	return nil
 }
@@ -202,22 +205,25 @@ func (VariableDefaultValue) PrepareJSONSchema(s *jsonschema.Schema) error {
 }
 
 // validate mirrors perses ListVariableSpec validation (plus the digits-only name
-// check perses only applies to text variables); run by decodeSpec on unmarshal.
-func (s *ListVariableSpec) validate() error {
-	if err := s.Display.Validate("variable name"); err != nil {
+// check perses only applies to text variables). path is the JSON path to this
+// variable (e.g. "spec.variables[0]"). It's called from validateVariables rather
+// than decodeSpec so errors surface from Validate() with clean messages and also
+// run for programmatically built specs (cloning).
+func (s *ListVariableSpec) validate(path string) error {
+	if err := s.Display.Validate("variable", path+".spec.display.name"); err != nil {
 		return err
 	}
 	if err := common.ValidateID(s.Name); err != nil {
-		return err
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "%s", err.Error()).WithAdditional(fmt.Sprintf("path: %s", path))
 	}
 	if _, err := strconv.Atoi(s.Name); err == nil {
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "variable name cannot contain only digits")
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "variable name cannot contain only digits").WithAdditional(fmt.Sprintf("path: %s", path))
 	}
 	if s.CustomAllValue != "" && !s.AllowAllValue {
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "customAllValue cannot be set if allowAllValue is not set to true")
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "customAllValue cannot be set if allowAllValue is not set to true").WithAdditional(fmt.Sprintf("path: %s", path))
 	}
 	if s.DefaultValue != nil && len(s.DefaultValue.SliceValues) > 0 && !s.AllowMultiple {
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "defaultValue cannot be a list if allowMultiple is not set to true")
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "defaultValue cannot be a list if allowMultiple is not set to true").WithAdditional(fmt.Sprintf("path: %s", path))
 	}
 	return nil
 }
@@ -281,19 +287,22 @@ type TextVariableSpec struct {
 	Name     string  `json:"name" required:"true" minLength:"1"`
 }
 
-// validate mirrors perses TextVariableSpec validation; run by decodeSpec on unmarshal.
-func (s *TextVariableSpec) validate() error {
-	if err := s.Display.Validate("variable name"); err != nil {
+// validate mirrors perses TextVariableSpec validation. path is the JSON path to
+// this variable (e.g. "spec.variables[0]"). It's called from validateVariables
+// rather than decodeSpec so errors surface from Validate() with clean messages
+// and also run for programmatically built specs (cloning).
+func (s *TextVariableSpec) validate(path string) error {
+	if err := s.Display.Validate("variable", path+".spec.display.name"); err != nil {
 		return err
 	}
 	if err := common.ValidateID(s.Name); err != nil {
-		return err
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "%s", err.Error()).WithAdditional(fmt.Sprintf("path: %s", path))
 	}
 	if _, err := strconv.Atoi(s.Name); err == nil {
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "variable name cannot contain only digits")
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "variable name cannot contain only digits").WithAdditional(fmt.Sprintf("path: %s", path))
 	}
 	if s.Value == "" && s.Constant {
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "value for a constant text variable cannot be empty")
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "value for a constant text variable cannot be empty").WithAdditional(fmt.Sprintf("path: %s", path))
 	}
 	return nil
 }
