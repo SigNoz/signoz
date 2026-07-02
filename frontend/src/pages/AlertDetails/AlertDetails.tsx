@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Divider } from '@signozhq/ui/divider';
 import logEvent from 'api/common/logEvent';
@@ -11,6 +11,7 @@ import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { CreateAlertProvider } from 'container/CreateAlertV2/context';
 import { getCreateAlertLocalStateFromAlertDef } from 'container/CreateAlertV2/utils';
+import { usePageTitle } from 'hooks/usePageTitle';
 import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import { useAlertRule } from 'providers/Alert';
@@ -37,7 +38,7 @@ function AlertDetails(): JSX.Element {
 		return params.get(QueryParams.isTestAlert) === 'true';
 	}, [params]);
 
-	const getDocumentTitle = useMemo(() => {
+	const pageTitle = useMemo(() => {
 		const alertTitle = alertRuleName ?? alertDetailsResponse?.data?.alert;
 		if (alertTitle) {
 			return alertTitle;
@@ -46,14 +47,12 @@ function AlertDetails(): JSX.Element {
 			return 'Test Alert';
 		}
 		if (isLoading) {
-			return document.title;
+			return undefined;
 		}
 		return 'Alert Not Found';
 	}, [alertRuleName, alertDetailsResponse?.data?.alert, isTestAlert, isLoading]);
 
-	useEffect(() => {
-		document.title = getDocumentTitle;
-	}, [getDocumentTitle]);
+	usePageTitle(pageTitle);
 
 	const alertRuleDetails = useMemo(
 		() =>

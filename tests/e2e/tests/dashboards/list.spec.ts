@@ -79,7 +79,7 @@ test.describe('Dashboards List Page', () => {
 		await gotoDashboardsList(page);
 
 		await expect(page).toHaveURL('/dashboard');
-		await expect(page).toHaveTitle('SigNoz | All Dashboards');
+		await expect(page).toHaveTitle('All Dashboards | SigNoz');
 
 		await expect(
 			page.getByRole('heading', { name: 'Dashboards', level: 1 }),
@@ -533,7 +533,7 @@ test.describe('Dashboards List Page', () => {
 			.filter({ hasText: /^Dashboards$/ })
 			.click();
 		await expect(page).toHaveURL(/\/dashboard/);
-		await expect(page).toHaveTitle('SigNoz | All Dashboards');
+		await expect(page).toHaveTitle('All Dashboards | SigNoz');
 	});
 
 	// ─── URL state and deep linking ──────────────────────────────────────────
