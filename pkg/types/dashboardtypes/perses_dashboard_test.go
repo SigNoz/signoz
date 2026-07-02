@@ -1558,7 +1558,7 @@ func TestInvalidateDuplicatePanelReference(t *testing.T) {
 	}`)
 	_, err := unmarshalDashboard(data)
 	require.Error(t, err)
-	require.Contains(t, err.Error(), "already placed")
+	assert.Contains(t, err.Error(), "already placed")
 	// Both offending grid items are named.
 	assert.Contains(t, err.Error(), "spec.layouts[0].spec.items[0].content")
 	assert.Contains(t, err.Error(), "spec.layouts[0].spec.items[1].content")
