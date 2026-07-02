@@ -179,8 +179,7 @@ func (d *DashboardSpec) validateLayouts() error {
 		}
 		if grid.Display != nil {
 			if n := utf8.RuneCountInString(grid.Display.Title); n > MaxDisplayNameLen {
-				return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "layout name must be at most %d characters, got %d", MaxDisplayNameLen, n).
-					WithAdditional(fmt.Sprintf("path: spec.layouts[%d].spec.display.title", li))
+				return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.layouts[%d].spec.display.title: layout name must be at most %d characters, got %d", li, MaxDisplayNameLen, n)
 			}
 		}
 		if err := validateGridLayoutGeometry(grid, li); err != nil {
