@@ -7,6 +7,7 @@ import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import { isEmpty } from 'lodash-es';
+import { openInNewTab } from 'utils/navigation';
 
 import styles from './DashboardInfo.module.scss';
 import { useVisibleTagCount } from './useVisibleTagCount';
@@ -18,7 +19,11 @@ interface DashboardInfoProps {
 	tags: string[];
 	description: string;
 	isPublicDashboard: boolean;
+	/** Absolute URL of the public dashboard page; opened when the globe is clicked. */
+	publicUrl: string;
 	isDashboardLocked: boolean;
+	/** When provided, the lock icon becomes a click-to-unlock control (gated to author/admin by the caller). */
+	onToggleLock?: () => void;
 	isEditing: boolean;
 	draft: string;
 	onDraftChange: (value: string) => void;
@@ -33,7 +38,9 @@ function DashboardInfo({
 	tags,
 	description,
 	isPublicDashboard,
+	publicUrl,
 	isDashboardLocked,
+	onToggleLock,
 	isEditing,
 	draft,
 	onDraftChange,
@@ -125,14 +132,37 @@ function DashboardInfo({
 			)}
 
 			{isPublicDashboard && (
-				<TooltipSimple title="This dashboard is publicly accessible">
-					<Globe size={14} />
+				<TooltipSimple title="This dashboard is publicly accessible. Click to open the public page.">
+					<button
+						type="button"
+						className={styles.publicLink}
+						aria-label="Open public dashboard"
+						data-testid="dashboard-public-link"
+						onClick={(): void => openInNewTab(publicUrl)}
+					>
+						<Globe size={14} />
+					</button>
 				</TooltipSimple>
 			)}
 
 			{isDashboardLocked && (
-				<TooltipSimple title="This dashboard is locked">
-					<LockKeyhole size={14} />
+				<TooltipSimple
+					title={
+						onToggleLock
+							? 'This dashboard is locked. Click to unlock.'
+							: 'This dashboard is locked'
+					}
+				>
+					<button
+						type="button"
+						className={styles.lockButton}
+						aria-label={onToggleLock ? 'Unlock dashboard' : 'Dashboard locked'}
+						data-testid="dashboard-lock"
+						disabled={!onToggleLock}
+						onClick={onToggleLock}
+					>
+						<LockKeyhole size={14} />
+					</button>
 				</TooltipSimple>
 			)}
 
@@ -145,14 +175,14 @@ function DashboardInfo({
 						data-testid="dashboard-tags"
 					>
 						{visibleTags.map((tag) => (
-							<Badge key={tag} color="warning" variant="outline">
+							<Badge key={tag} color="sienna" variant="outline">
 								{tag}
 							</Badge>
 						))}
 						{remainingTags.length > 0 && (
 							<TooltipSimple title={remainingTags.join(', ')}>
 								<Badge
-									color="warning"
+									color="sienna"
 									variant="outline"
 									data-testid="dashboard-tags-overflow"
 								>

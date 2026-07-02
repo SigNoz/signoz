@@ -1,7 +1,7 @@
 import { Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { Badge } from '@signozhq/ui/badge';
-import { CalendarClock, Pin, PinOff } from '@signozhq/icons';
+import { CalendarClock, LockKeyhole, Pin, PinOff } from '@signozhq/icons';
 import cx from 'classnames';
 import logEvent from 'api/common/logEvent';
 import { generatePath } from 'react-router-dom';
@@ -111,6 +111,14 @@ function DashboardRow({
 					)}
 				</div>
 
+				{isLocked && (
+					<Tooltip title="This dashboard is locked" placement="top">
+						<span className={styles.lockIcon} data-testid={`dashboard-lock-${index}`}>
+							<LockKeyhole size={14} />
+						</span>
+					</Tooltip>
+				)}
+
 				<button
 					type="button"
 					className={cx(styles.pinBtn, { [styles.pinBtnOn]: isPinned })}
@@ -120,7 +128,14 @@ function DashboardRow({
 					disabled={isUpdating}
 					onClick={onTogglePin}
 				>
-					{isPinned ? <PinOff size={14} /> : <Pin size={14} />}
+					{isPinned ? (
+						<>
+							<Pin size={14} className={styles.pinnedIcon} />
+							<PinOff size={14} className={styles.unpinIcon} />
+						</>
+					) : (
+						<Pin size={14} />
+					)}
 				</button>
 
 				{canAct && (

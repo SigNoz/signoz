@@ -52,6 +52,8 @@
 	-webkit-line-clamp: 3;
 	-webkit-box-orient: vertical;
 	overflow: hidden;
+	/* Break long unbroken names so they clamp instead of overflowing the row. */
+	overflow-wrap: anywhere;
 }
 
 .tagsWithActions {
@@ -60,6 +62,14 @@
 	flex: 0 1 auto;
 	min-width: 0;
 	justify-content: flex-end;
+}
+
+.lockIcon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: none;
+	color: var(--l3-foreground);
 }
 
 .pinBtn {
@@ -94,6 +104,24 @@
 	svg {
 		fill: currentColor;
 	}
+}
+
+/* Pinned rows show the filled pin by default; the unpin action only appears when
+   the pin button itself is hovered. */
+.pinnedIcon {
+	display: inline-flex;
+}
+
+.unpinIcon {
+	display: none;
+}
+
+.pinBtn:hover .pinnedIcon {
+	display: none;
+}
+
+.pinBtn:hover .unpinIcon {
+	display: inline-flex;
 }
 
 .tags {
