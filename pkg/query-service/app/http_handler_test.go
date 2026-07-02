@@ -9,6 +9,8 @@ import (
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/gorilla/mux"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestPrepareQuery(t *testing.T) {
@@ -127,6 +129,48 @@ func TestPrepareQuery(t *testing.T) {
 					t.Errorf("expected query: %s, but got: %s", tc.query, query)
 				}
 			}
+		})
+	}
+}
+
+func TestGetRuleStats_InvalidUUID(t *testing.T) {
+	reqCases := []struct {
+		desc           string
+		ruleID         string
+		expectedStatus int
+	}{
+		{
+			desc:           "SQL Injection payload",
+			ruleID:         "123' OR 1=1 --",
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			desc:           "Malformed text",
+			ruleID:         "not-a-valid-uuid",
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			desc:           "Empty string",
+			ruleID:         " ",
+			expectedStatus: http.StatusBadRequest,
+		},
+	}
+
+	aH := &APIHandler{}
+
+	for _, reqCase := range reqCases {
+		t.Run(reqCase.desc, func(t *testing.T) {
+			var b bytes.Buffer
+			_ = json.NewEncoder(&b).Encode(model.QueryRuleStateHistory{})
+
+			req := httptest.NewRequest("POST", "/api/v1/rules/dummy-id/history/stats", &b)
+
+			req = mux.SetURLVars(req, map[string]string{"id": reqCase.ruleID})
+
+			rr := httptest.NewRecorder()
+			aH.getRuleStats(rr, req)
+
+			assert.Equal(t, reqCase.expectedStatus, rr.Code)
 		})
 	}
 }

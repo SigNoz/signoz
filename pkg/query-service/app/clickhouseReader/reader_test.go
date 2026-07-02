@@ -1,8 +1,10 @@
 package clickhouseReader
 
 import (
+	"context"
 	"testing"
 
+	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -25,5 +27,27 @@ func TestGetStatusFilters(t *testing.T) {
 	}
 	for _, test := range tests {
 		assert.Equal(getStatusFilters(test.query, test.statusParams, test.excludeMap), test.expected)
+	}
+}
+
+func TestReadRuleStateHistoryByRuleID_InvalidOrder(t *testing.T) {
+	assert := assert.New(t)
+	r := &ClickHouseReader{}
+
+	tests := []struct {
+		name  string
+		order string
+	}{
+		{"sql injection attempt", "asc' OR '1'='1"},
+		{"garbage word", "ascending"},
+		{"numeric", "1"},
+		{"semicolon injection", "asc; DROP TABLE users"},
+	}
+
+	for _, tt := range tests {
+		params := &model.QueryRuleStateHistory{Start: 0, End: 1, Order: tt.order}
+		_, err := r.ReadRuleStateHistoryByRuleID(context.Background(), "some-rule-id", params)
+		assert.Error(err, tt.name)
+		assert.Contains(err.Error(), "invalid order parameter", tt.name)
 	}
 }
