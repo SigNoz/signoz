@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import RGL, { WidthProvider } from 'react-grid-layout';
 import { useInterval } from 'react-use';
 import { Typography } from '@signozhq/ui/typography';
@@ -16,6 +16,7 @@ import {
 import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import GetMinMax from 'lib/getMinMax';
+import { NANO_SECOND_MULTIPLIER } from 'store/globalTime/utils';
 import { SuccessResponseV2 } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { PublicDashboardDataProps } from 'types/api/dashboard/public/get';
@@ -124,8 +125,8 @@ function PublicDashboardContainer({
 			const { maxTime, minTime } = GetMinMax(interval);
 
 			setSelectedTimeRange({
-				startTime: Math.floor(minTime / 1000000000),
-				endTime: Math.floor(maxTime / 1000000000),
+				startTime: Math.floor(minTime / NANO_SECOND_MULTIPLIER / 1000),
+				endTime: Math.floor(maxTime / NANO_SECOND_MULTIPLIER / 1000),
 			});
 		}
 
@@ -145,19 +146,10 @@ function PublicDashboardContainer({
 		[refreshIntervalKey],
 	);
 
-	const refreshTimeRange = useCallback((): void => {
-		if (selectedTimeRangeLabel === 'custom') {
-			return;
-		}
-		const { maxTime, minTime } = GetMinMax(selectedTimeRangeLabel as Time);
-		setSelectedTimeRange({
-			startTime: Math.floor(minTime / 1000000000),
-			endTime: Math.floor(maxTime / 1000000000),
-		});
-	}, [selectedTimeRangeLabel]);
-
+	// Re-run the existing time-change handler with the current relative range so
+	// the rolling window advances — no need to duplicate the GetMinMax logic.
 	useInterval(
-		refreshTimeRange,
+		() => handleTimeChange(selectedTimeRangeLabel as Time),
 		isAutoRefreshPaused || refreshIntervalMs === 0 ? null : refreshIntervalMs,
 	);
 

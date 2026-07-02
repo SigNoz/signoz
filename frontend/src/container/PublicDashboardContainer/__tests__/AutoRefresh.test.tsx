@@ -1,4 +1,5 @@
-import { fireEvent, render, screen } from 'tests/test-utils';
+import userEvent from '@testing-library/user-event';
+import { render, screen } from 'tests/test-utils';
 
 import AutoRefresh from '../AutoRefresh';
 
@@ -10,12 +11,12 @@ describe('Public dashboard AutoRefresh', () => {
 		).toBeInTheDocument();
 	});
 
-	it('lets the viewer pick a refresh interval', () => {
+	it('lets the viewer pick a refresh interval', async () => {
 		const onChange = jest.fn();
 		render(<AutoRefresh value="off" onChange={onChange} />);
 
-		fireEvent.click(screen.getByTestId('public-dashboard-auto-refresh'));
-		fireEvent.click(screen.getByText('30 seconds'));
+		await userEvent.click(screen.getByTestId('public-dashboard-auto-refresh'));
+		await userEvent.click(screen.getByText('30 seconds'));
 
 		expect(onChange).toHaveBeenCalledWith('30s');
 	});
