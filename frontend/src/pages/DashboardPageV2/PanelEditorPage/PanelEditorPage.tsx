@@ -20,6 +20,7 @@ import {
 	parseNewPanelKind,
 	parseNewPanelLayoutIndex,
 } from '../DashboardContainer/PanelEditor/newPanelRoute';
+import { useSyncVariablesForSuggestions } from '../DashboardContainer/hooks/useSyncVariablesForSuggestions';
 import { createDefaultPanel } from '../DashboardContainer/patchOps';
 import styles from './PanelEditorPage.module.scss';
 
@@ -39,6 +40,9 @@ function PanelEditorPage(): JSX.Element {
 		id: dashboardId,
 	});
 	const dashboard = data?.data;
+
+	// Feed variables to the query builder autocomplete inside the editor.
+	useSyncVariablesForSuggestions(dashboard);
 
 	// A `panel/new?panelKind=…` route means "create": seed a default panel of that
 	// kind rather than looking one up. Persisted (with a real id) only on save.
