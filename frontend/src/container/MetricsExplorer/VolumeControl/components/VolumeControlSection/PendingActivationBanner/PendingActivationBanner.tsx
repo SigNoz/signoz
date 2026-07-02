@@ -8,8 +8,8 @@ function PendingActivationBanner(): JSX.Element {
 		<div className={styles.banner} data-testid="volume-control-pending-banner">
 			<Info size={13} />
 			<Typography.Text size="sm" color="muted">
-				This metric&apos;s configuration was recently updated. Volume changes will
-				take effect within a few minutes.
+				This metric&apos;s configuration was recently updated. Volume changes take
+				effect within about 5 minutes.
 			</Typography.Text>
 		</div>
 	);

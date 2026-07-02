@@ -3,11 +3,11 @@ import { Modal } from 'antd';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import { Typography } from '@signozhq/ui/typography';
-import { CircleAlert, Plus, Search, Trash2 } from '@signozhq/icons';
+import { Bookmark, CircleAlert, Plus, Search, Trash2 } from '@signozhq/icons';
 import cx from 'classnames';
 
 import type { SavedView } from '../../types';
-import { type BuiltinView, iconByName } from '../../views';
+import { type BuiltinView } from '../../utils/views';
 import SaveViewPopover from './SaveViewPopover';
 
 import styles from './ViewsRail.module.scss';
@@ -16,11 +16,12 @@ interface Props {
 	activeViewId: string;
 	builtinViews: BuiltinView[];
 	customViews: SavedView[];
+	customViewsLoading: boolean;
 	isCustomActive: boolean;
 	isModified: boolean;
 	collapsed?: boolean;
 	onSelect: (id: string) => void;
-	onSave: (name: string, icon: string) => void;
+	onSave: (name: string) => void;
 	onSaveChanges: () => void;
 	onReset: () => void;
 	onClearFilters: () => void;
@@ -40,6 +41,7 @@ function ViewsRail({
 	activeViewId,
 	builtinViews,
 	customViews,
+	customViewsLoading,
 	isCustomActive,
 	isModified,
 	collapsed = false,
@@ -73,11 +75,8 @@ function ViewsRail({
 			const { destroy } = modal.confirm({
 				title: (
 					<Typography.Title level={5}>
-						Delete the
-						<span style={{ color: 'var(--danger-background)', fontWeight: 500 }}>
-							{' '}
-							{label}{' '}
-						</span>
+						Delete the{' '}
+						<Typography.Text className={styles.deleteName}>{label}</Typography.Text>{' '}
 						view?
 					</Typography.Title>
 				),
@@ -116,12 +115,10 @@ function ViewsRail({
 					onClick={(): void => onSelect(row.id)}
 					testId={`dashboards-view-${row.id}`}
 				>
-					<span className={styles.itemIcon}>
-						<Icon size={14} />
-					</span>
-					<span className={styles.itemLabel}>{row.label}</span>
+					<Icon size={16} className={styles.itemIcon} />
+					<Typography.Text className={styles.itemLabel}>{row.label}</Typography.Text>
 					{active && isModified && (
-						<span className={styles.dirtyDot} title="Unsaved changes" />
+						<div className={styles.dirtyDot} title="Unsaved changes" />
 					)}
 				</Button>
 				{row.deletable && (
@@ -132,7 +129,10 @@ function ViewsRail({
 						className={styles.itemAction}
 						aria-label="Delete view"
 						title="Delete view"
-						onClick={(): void => confirmDelete(row.id, row.label)}
+						onClick={(e): void => {
+							e.stopPropagation();
+							confirmDelete(row.id, row.label);
+						}}
 					>
 						<Trash2 size={12} />
 					</Button>
@@ -166,7 +166,7 @@ function ViewsRail({
 			<div className={styles.search}>
 				<Input
 					value={query}
-					placeholder="Search views"
+					placeholder="Filter views by name"
 					prefix={<Search size={12} />}
 					testId="dashboards-view-search"
 					onChange={(e: ChangeEvent<HTMLInputElement>): void =>
@@ -196,9 +196,13 @@ function ViewsRail({
 					<>
 						<div className={cx(styles.groupLabel, styles.groupLabelSpaced)}>
 							My views
-							<span className={styles.groupCount}>{customViews.length}</span>
+							<Typography.Text className={styles.groupCount}>
+								{customViews.length}
+							</Typography.Text>
 						</div>
-						{customViews.length === 0 ? (
+						{customViewsLoading ? (
+							<div className={styles.empty}>Loading views…</div>
+						) : customViews.length === 0 ? (
 							<div className={styles.empty}>
 								No saved views yet. Filter the list, then save it as a view.
 							</div>
@@ -207,7 +211,7 @@ function ViewsRail({
 								renderItem({
 									id: v.id,
 									label: v.name,
-									icon: iconByName(v.icon),
+									icon: Bookmark,
 									deletable: true,
 								}),
 							)

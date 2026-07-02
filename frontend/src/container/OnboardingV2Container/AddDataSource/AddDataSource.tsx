@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Check, Goal, Search, UserPlus, X } from '@signozhq/icons';
+import { ArrowRight, Check, Goal, Search, UserPlus, X } from '@signozhq/icons';
 import {
 	Button,
 	Flex,
@@ -10,6 +10,8 @@ import {
 	Space,
 	Steps,
 } from 'antd';
+import { Button as SignozButton } from '@signozhq/ui/button';
+import { toast } from '@signozhq/ui/sonner';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
@@ -27,7 +29,7 @@ import { isModifierKeyPressed } from 'utils/app';
 import signozBrandLogoUrl from '@/assets/Logos/signoz-brand-logo.svg';
 
 import OnboardingIngestionDetails from '../IngestionDetails/IngestionDetails';
-import InviteTeamMembers from '../InviteTeamMembers/InviteTeamMembers';
+import InviteMembers from 'components/InviteMembers/InviteMembers';
 import onboardingConfigWithLinks from '../onboarding-configs/onboarding-config-with-links';
 
 import '../OnboardingV2.styles.scss';
@@ -119,6 +121,10 @@ const ONBOARDING_V3_ANALYTICS_EVENTS_MAP = {
 	GET_HELP_BUTTON_CLICKED: 'Get help clicked',
 	GET_EXPERT_ASSISTANCE_BUTTON_CLICKED: 'Get expert assistance clicked',
 	INVITE_TEAM_MEMBER_BUTTON_CLICKED: 'Invite team member clicked',
+	INVITE_TEAM_MEMBER_SEND_CLICKED: 'Send invites clicked',
+	INVITE_TEAM_MEMBER_SUCCESS: 'Invite team members success',
+	INVITE_TEAM_MEMBER_PARTIAL_SUCCESS: 'Invite team members partial success',
+	INVITE_TEAM_MEMBER_FAILED: 'Invite team members failed',
 	CLOSE_ONBOARDING_CLICKED: 'Close onboarding clicked',
 	DATA_SOURCE_REQUESTED: 'Datasource requested',
 	DATA_SOURCE_SEARCHED: 'Searched',
@@ -1147,12 +1153,54 @@ function OnboardingAddDataSource(): JSX.Element {
 					destroyOnClose
 				>
 					<div className="invite-team-member-modal-content">
-						<InviteTeamMembers
-							isLoading={false}
-							teamMembers={null}
-							setTeamMembers={(): void => {}}
-							onNext={(): void => setShowInviteTeamMembersModal(false)}
-							onClose={(): void => setShowInviteTeamMembersModal(false)}
+						<InviteMembers
+							onSuccess={(): void => {
+								void logEvent(
+									`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.INVITE_TEAM_MEMBER_SUCCESS}`,
+									{},
+								);
+								setShowInviteTeamMembersModal(false);
+
+								toast.success('Invites sent successfully', { position: 'top-center' });
+							}}
+							onPartialSuccess={(): void => {
+								void logEvent(
+									`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.INVITE_TEAM_MEMBER_PARTIAL_SUCCESS}`,
+									{},
+								);
+							}}
+							onAllFailed={(): void => {
+								void logEvent(
+									`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.INVITE_TEAM_MEMBER_FAILED}`,
+									{},
+								);
+							}}
+							renderFooter={({ submit, canSubmit, isSubmitting }): JSX.Element => (
+								<div className="invite-team-member-modal-footer">
+									<SignozButton
+										variant="solid"
+										color="secondary"
+										onClick={(): void => setShowInviteTeamMembersModal(false)}
+									>
+										Cancel
+									</SignozButton>
+									<SignozButton
+										variant="solid"
+										onClick={(): void => {
+											void logEvent(
+												`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.INVITE_TEAM_MEMBER_SEND_CLICKED}`,
+												{},
+											);
+											void submit();
+										}}
+										disabled={!canSubmit}
+										loading={isSubmitting}
+										suffix={<ArrowRight size={14} />}
+									>
+										Send Invites
+									</SignozButton>
+								</div>
+							)}
 						/>
 					</div>
 				</Modal>

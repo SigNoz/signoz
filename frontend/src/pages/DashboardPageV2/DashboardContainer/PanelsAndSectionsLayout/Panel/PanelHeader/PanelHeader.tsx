@@ -1,7 +1,10 @@
 import { useMemo } from 'react';
 import { Info, Loader } from '@signozhq/icons';
 import { Typography } from '@signozhq/ui/typography';
-import type { Querybuildertypesv5QueryWarnDataDTO as WarningDTO } from 'api/generated/services/sigNoz.schemas';
+import type {
+	DashboardtypesPanelDTO,
+	Querybuildertypesv5QueryWarnDataDTO as WarningDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import cx from 'classnames';
 import type { PanelTimePreferenceLabel } from 'pages/DashboardPageV2/DashboardContainer/hooks/resolvePanelTimeWindow';
 
@@ -14,15 +17,12 @@ import {
 	panelStatusFromWarning,
 } from '../PanelStatus/utils';
 import styles from './PanelHeader.module.scss';
-import { PanelKind } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelKind';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
 
 interface PanelHeaderProps {
-	name: string;
-	description?: string;
 	panelId: string;
-	/** Full plugin kind — drives kind-gated menu actions. */
-	panelKind: PanelKind;
+	/** The panel itself — its query seeds the menu's "Create Alerts" action. */
+	panel: DashboardtypesPanelDTO;
 	/** Background refresh in flight — shows a spinner without blinking the chart. */
 	isFetching: boolean;
 	/** Latest query error — surfaced as a header error indicator. */
@@ -49,10 +49,8 @@ interface PanelHeaderProps {
 
 /** Panel chrome: drag handle, title, refetch + status indicators, actions. */
 function PanelHeader({
-	name,
-	description,
 	panelId,
-	panelKind,
+	panel,
 	isFetching,
 	error,
 	warning,
@@ -63,6 +61,8 @@ function PanelHeader({
 	onSearchChange,
 	hideActions,
 }: PanelHeaderProps): JSX.Element {
+	const name = panel.spec.display.name;
+	const description = panel.spec.display.description;
 	const errorDetail = useMemo(() => panelStatusFromError(error), [error]);
 
 	const warningDetail = useMemo(
@@ -116,7 +116,7 @@ function PanelHeader({
 				{!hideActions && (
 					<PanelActionsMenu
 						panelId={panelId}
-						panelKind={panelKind}
+						panel={panel}
 						panelActions={panelActions}
 					/>
 				)}

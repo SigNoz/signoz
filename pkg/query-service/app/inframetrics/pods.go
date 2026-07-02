@@ -71,7 +71,7 @@ func NewPodsRepo(reader interfaces.Reader, querierV2 interfaces.Querier) *PodsRe
 	return &PodsRepo{reader: reader, querierV2: querierV2}
 }
 
-func (p *PodsRepo) GetPodAttributeKeys(ctx context.Context, req v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
+func (p *PodsRepo) GetPodAttributeKeys(ctx context.Context, orgID valuer.UUID, req v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
 	// TODO(srikanthccv): remove hardcoded metric name and support keys from any pod metric
 	req.DataSource = v3.DataSourceMetrics
 	req.AggregateAttribute = metricToUseForPods
@@ -79,7 +79,7 @@ func (p *PodsRepo) GetPodAttributeKeys(ctx context.Context, req v3.FilterAttribu
 		req.Limit = 50
 	}
 
-	attributeKeysResponse, err := p.reader.GetMetricAttributeKeys(ctx, &req)
+	attributeKeysResponse, err := p.reader.GetMetricAttributeKeys(ctx, orgID, &req)
 	if err != nil {
 		return nil, err
 	}
@@ -97,14 +97,14 @@ func (p *PodsRepo) GetPodAttributeKeys(ctx context.Context, req v3.FilterAttribu
 	return &v3.FilterAttributeKeyResponse{AttributeKeys: filteredKeys}, nil
 }
 
-func (p *PodsRepo) GetPodAttributeValues(ctx context.Context, req v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
+func (p *PodsRepo) GetPodAttributeValues(ctx context.Context, orgID valuer.UUID, req v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
 	req.DataSource = v3.DataSourceMetrics
 	req.AggregateAttribute = metricToUseForPods
 	if req.Limit == 0 {
 		req.Limit = 50
 	}
 
-	attributeValuesResponse, err := p.reader.GetMetricAttributeValues(ctx, &req)
+	attributeValuesResponse, err := p.reader.GetMetricAttributeValues(ctx, orgID, &req)
 	if err != nil {
 		return nil, err
 	}
