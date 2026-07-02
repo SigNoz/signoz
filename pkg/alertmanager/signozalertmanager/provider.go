@@ -55,6 +55,7 @@ func New(
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanager")
 	configStore := sqlalertmanagerstore.NewConfigStore(sqlstore)
 	stateStore := sqlalertmanagerstore.NewStateStore(sqlstore)
+
 	p := &provider{
 		service: alertmanager.New(
 			settings,

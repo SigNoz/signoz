@@ -594,17 +594,32 @@ type jiraProjectItem struct {
 }
 
 func buildJiraProjectsURL(apiURL string) (*url.URL, error) {
-	baseURL, err := jiraV3BaseURL(apiURL)
+	parsed, err := url.Parse(apiURL)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid api_url: %v", err)
 	}
 
-	baseURL.Path += "/project/search"
-	query := baseURL.Query()
-	query.Set("maxResults", "200")
-	baseURL.RawQuery = query.Encode()
+	if isJiraCloud("auto", parsed.Host) {
+		baseURL, err := jiraV3BaseURL(apiURL)
+		if err != nil {
+			return nil, err
+		}
 
-	return baseURL, nil
+		baseURL.Path += "/project/search"
+		query := baseURL.Query()
+		query.Set("maxResults", "200")
+		baseURL.RawQuery = query.Encode()
+
+		return baseURL, nil
+	}
+
+	path := strings.TrimSuffix(parsed.Path, "/")
+	if !strings.Contains(path, "/rest/api/") {
+		path += "/rest/api/2"
+	}
+	parsed.Path = strings.TrimSuffix(path, "/") + "/project"
+
+	return parsed, nil
 }
 
 // jiraV3BaseURL parses apiURL and normalizes its path to target the Jira v3 REST API.
@@ -654,7 +669,7 @@ func doJiraRequest(ctx context.Context, url, username, password string) ([]byte,
 
 func parseJiraProjects(responseBody []byte) ([]alertmanagertypes.JiraProject, error) {
 	var searchResponse jiraProjectSearchResponse
-	if err := json.Unmarshal(responseBody, &searchResponse); err == nil && len(searchResponse.Values) > 0 {
+	if err := json.Unmarshal(responseBody, &searchResponse); err == nil && searchResponse.Values != nil {
 		projects := make([]alertmanagertypes.JiraProject, 0, len(searchResponse.Values))
 		for _, project := range searchResponse.Values {
 			projects = append(projects, alertmanagertypes.JiraProject{

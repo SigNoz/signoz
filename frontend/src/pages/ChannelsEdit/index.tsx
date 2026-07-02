@@ -31,7 +31,7 @@ function ChannelsEdit(): JSX.Element {
 		path: ROUTES.CHANNELS_EDIT,
 	})?.params?.channelId;
 
-	const { isLoading, isError, data, error } = useQuery<
+	const { isFetching, isError, data, error } = useQuery<
 		SuccessResponseV2<Channels>,
 		APIError
 	>(['getChannel', channelId], {
@@ -40,9 +40,6 @@ function ChannelsEdit(): JSX.Element {
 				id: channelId || '',
 			}),
 		enabled: !!channelId,
-		refetchOnWindowFocus: false,
-		cacheTime: 0,
-		staleTime: 0,
 	});
 
 	if (isError) {
@@ -53,7 +50,7 @@ function ChannelsEdit(): JSX.Element {
 		);
 	}
 
-	if (isLoading || !data?.data) {
+	if (isFetching || !data?.data) {
 		return <Spinner tip="Loading Channels..." />;
 	}
 
@@ -77,7 +74,7 @@ function ChannelsEdit(): JSX.Element {
 			name: '',
 		};
 
-		if ('jira_configs' in value) {
+		if (value && 'jira_configs' in value) {
 			const jiraConfig = value.jira_configs[0];
 			channel = {
 				...(jiraConfig as unknown as JiraChannel),
@@ -95,7 +92,7 @@ function ChannelsEdit(): JSX.Element {
 			};
 		}
 
-		if ('slack_configs' in value) {
+		if (value && 'slack_configs' in value) {
 			const slackConfig = value.slack_configs[0];
 			channel = slackConfig;
 			return {
@@ -104,7 +101,7 @@ function ChannelsEdit(): JSX.Element {
 			};
 		}
 
-		if ('msteamsv2_configs' in value) {
+		if (value && 'msteamsv2_configs' in value) {
 			const msteamsConfig = value.msteamsv2_configs[0];
 			channel = msteamsConfig;
 			return {
@@ -112,7 +109,7 @@ function ChannelsEdit(): JSX.Element {
 				channel,
 			};
 		}
-		if ('pagerduty_configs' in value) {
+		if (value && 'pagerduty_configs' in value) {
 			const pagerConfig = value.pagerduty_configs[0];
 			channel = pagerConfig;
 			channel.details = JSON.stringify(pagerConfig.details);
@@ -123,7 +120,7 @@ function ChannelsEdit(): JSX.Element {
 			};
 		}
 
-		if ('opsgenie_configs' in value) {
+		if (value && 'opsgenie_configs' in value) {
 			const opsgenieConfig = value.opsgenie_configs[0];
 			channel = opsgenieConfig;
 			return {
@@ -132,7 +129,7 @@ function ChannelsEdit(): JSX.Element {
 			};
 		}
 
-		if ('email_configs' in value) {
+		if (value && 'email_configs' in value) {
 			const emailConfig = value.email_configs[0];
 			channel = emailConfig;
 			return {
@@ -141,7 +138,7 @@ function ChannelsEdit(): JSX.Element {
 			};
 		}
 
-		if ('webhook_configs' in value) {
+		if (value && 'webhook_configs' in value) {
 			const webhookConfig = value.webhook_configs[0];
 			channel = webhookConfig;
 			channel.api_url = webhookConfig.url;
@@ -178,12 +175,13 @@ function ChannelsEdit(): JSX.Element {
 			/>
 			<div className="edit-alert-channels-container">
 				<EditAlertChannels
-					key={channelId}
-					channelId={channelId || ''}
-					initialValue={{
-						...target.channel,
-						type: target.type,
-						name: value.name,
+					{...{
+						channelId: channelId || '',
+						initialValue: {
+							...target.channel,
+							type: target.type,
+							name: value.name,
+						},
 					}}
 				/>
 			</div>

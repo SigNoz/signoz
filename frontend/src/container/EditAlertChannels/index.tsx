@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Form } from 'antd';
 import editEmail from 'api/channels/editEmail';
@@ -66,15 +66,10 @@ function EditAlertChannels({
 		setType(value as ChannelType);
 	}, []);
 
-	const formInitializedRef = useRef(false);
 	useEffect(() => {
-		if (formInitializedRef.current) {
-			return;
-		}
 		formInstance.setFieldsValue({
 			...initialValue,
 		});
-		formInitializedRef.current = true;
 	}, [formInstance, initialValue]);
 
 	const prepareSlackRequest = useCallback(
@@ -593,6 +588,13 @@ function EditAlertChannels({
 		],
 	);
 
+	const onTestHandler = useCallback(
+		async (value: ChannelType) => {
+			performChannelTest(value);
+		},
+		[performChannelTest],
+	);
+
 	return (
 		<FormAlertChannels
 			{...{
@@ -600,7 +602,7 @@ function EditAlertChannels({
 				onTypeChangeHandler,
 				setSelectedConfig,
 				type,
-				onTestHandler: performChannelTest,
+				onTestHandler,
 				onSaveHandler,
 				testingState,
 				savingState,

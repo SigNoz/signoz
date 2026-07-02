@@ -136,15 +136,14 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 		return 'json';
 	};
 
-	// coerceRowValue finalises the value stored on a CustomFieldRow after mode
-	// and extraction have been resolved.
+	// coerceRowValue finalises the value stored on a CustomFieldRow after mode and extraction have been resolved.
 	const coerceRowValue = (
 		mode: FieldMode,
 		extracted: { value: string | string[]; mode: FieldMode },
 		isArrayField: boolean,
 	): string | string[] => {
 		if (mode === 'json' && extracted.mode !== 'json') {
-			return JSON.stringify(extracted.value);
+			return extracted.value ? JSON.stringify(extracted.value) : '';
 		}
 		if (
 			extracted.mode !== 'json' &&
@@ -476,8 +475,7 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 		}
 	};
 
-	// Reload projects whenever the credentials change so an edited API URL or
-	// token does not keep serving the previously loaded list.
+	// Reload projects whenever the credentials change.
 	useEffect(() => {
 		if (!apiUrl || !username || !password) {
 			return undefined;
@@ -613,8 +611,9 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 				<pre
 					style={{
 						margin: 0,
-						background: 'rgba(255, 255, 255, 0.06)',
-						border: '1px solid rgba(255, 255, 255, 0.08)',
+						background: 'var(--l1-background)',
+						border: '1px solid var(--l1-border)',
+						color: 'var(--l1-foreground)',
 						padding: 8,
 						borderRadius: 4,
 					}}
@@ -669,9 +668,6 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 		);
 	};
 
-	// renderCustomFieldRow renders a single custom field. The same markup serves
-	// both required and optional fields; required fields simply never expose the
-	// "none" mode and so always show the value editor.
 	const renderCustomFieldRow = (
 		row: CustomFieldRow,
 		index: number,
@@ -776,9 +772,13 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 						setSelectedConfig((current) => ({
 							...current,
 							project: value,
+							issue_type: undefined,
 						}));
+						form.setFieldValue('issue_type', undefined);
 						setIssueTypes([]);
 						setIssueTypesError('');
+						setCustomFieldRows([]);
+						setMetadataError('');
 					}}
 					options={projects.map((proj) => ({
 						label: `${proj.key} - ${proj.name}`,
@@ -904,35 +904,41 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 			</Form.Item>
 
 			<Form.Item>
+				{(requiredRows.length > 0 || optionalRows.length > 0) && (
+					<div style={{ marginBottom: 12, marginTop: 12 }}>
+						{t('jira_custom_fields_heading')}
+					</div>
+				)}
 				{requiredRows.length > 0 && (
-					<>
-						<div style={{ marginBottom: 12, fontWeight: 600 }}>
-							{t('jira_custom_fields_required_heading')}
-						</div>
-						<Collapse
-							accordion={false}
-							items={requiredRows.map(({ row, index }) => ({
-								key: row.fieldId || `${row.label}-${index}`,
-								label: row.label,
-								children: renderCustomFieldRow(row, index),
-							}))}
-						/>
-					</>
+					<Collapse
+						accordion={false}
+						bordered={false}
+						size="small"
+						style={{ background: 'transparent' }}
+						items={requiredRows.map(({ row, index }) => ({
+							key: row.fieldId || `${row.label}-${index}`,
+							label: row.label,
+							style: { background: 'transparent', border: 'none' },
+							children: renderCustomFieldRow(row, index),
+						}))}
+					/>
 				)}
 				{optionalRows.length > 0 && (
-					<>
-						<div style={{ margin: '16px 0 12px', fontWeight: 600 }}>
-							{t('jira_custom_fields_optional_heading')}
-						</div>
-						<Collapse
-							accordion={false}
-							items={optionalRows.map(({ row, index }) => ({
-								key: row.fieldId || `${row.label}-${index}`,
-								label: row.label,
-								children: renderCustomFieldRow(row, index),
-							}))}
-						/>
-					</>
+					<Collapse
+						accordion={false}
+						bordered={false}
+						size="small"
+						style={{
+							background: 'transparent',
+							marginTop: requiredRows.length > 0 ? 8 : 0,
+						}}
+						items={optionalRows.map(({ row, index }) => ({
+							key: row.fieldId || `${row.label}-${index}`,
+							label: row.label,
+							style: { background: 'transparent', border: 'none' },
+							children: renderCustomFieldRow(row, index),
+						}))}
+					/>
 				)}
 			</Form.Item>
 		</>

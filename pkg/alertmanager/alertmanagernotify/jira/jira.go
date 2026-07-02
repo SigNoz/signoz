@@ -179,13 +179,13 @@ func New(c *config.JiraConfig, t *template.Template, l *slog.Logger, httpOpts ..
 		return nil, errors.NewInternalf(errors.CodeInternal, "jira config nil")
 	}
 
-	var apiURL *config.URL
-	if c.APIURL != nil {
-		apiURL = c.APIURL.Copy()
-		path := strings.TrimSuffix(apiURL.Path, "/")
-		if !strings.HasSuffix(path, "/rest/api/2") {
-			apiURL.Path = path + "/rest/api/2"
-		}
+	if c.APIURL == nil {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "missing api_url in jira config")
+	}
+	apiURL := c.APIURL.Copy()
+	path := strings.TrimSuffix(apiURL.Path, "/")
+	if !strings.Contains(path, "/rest/api/") {
+		apiURL.Path = path + "/rest/api/2"
 	}
 
 	client, err := notify.NewClientWithTracing(*c.HTTPConfig, Integration, httpOpts...)
