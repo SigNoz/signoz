@@ -17,10 +17,11 @@ import {
 } from './types';
 import {
 	createQuery,
+	getEnvironmentTagKeys,
 	getResourceAttributeQueriesFromURL,
-	getResourceDeploymentKeys,
 	GetTagKeys,
 	GetTagValues,
+	isEnvironmentMetricResourceKey,
 	mappingWithRoutesAndKeys,
 	OperatorSchema,
 } from './utils';
@@ -166,23 +167,36 @@ function ResourceProvider({ children }: Props): JSX.Element {
 
 	const handleEnvironmentChange = useCallback(
 		(environments: string[]): void => {
-			const staging = [getResourceDeploymentKeys(dotMetricsEnabled), 'IN'];
+			void getEnvironmentTagKeys(dotMetricsEnabled).then((envKeys) => {
+				const resolvedKey = envKeys[0]?.value;
+				const knownEnvMetricKeys = envKeys.map((key) => key.value);
 
-			const queriesCopy = queries.filter(
-				(query) => query.tagKey !== getResourceDeploymentKeys(dotMetricsEnabled),
-			);
+				const queriesCopy = queries.filter(
+					(query) =>
+						!isEnvironmentMetricResourceKey(query.tagKey, knownEnvMetricKeys),
+				);
 
-			if (environments && Array.isArray(environments) && environments.length > 0) {
-				const generatedQuery = createQuery([...staging, environments]);
+				if (
+					environments &&
+					Array.isArray(environments) &&
+					environments.length > 0 &&
+					resolvedKey
+				) {
+					const generatedQuery = createQuery([
+						resolvedKey,
+						'IN',
+						environments,
+					]);
 
-				if (generatedQuery) {
-					dispatchQueries([...queriesCopy, generatedQuery]);
+					if (generatedQuery) {
+						dispatchQueries([...queriesCopy, generatedQuery]);
+					}
+				} else {
+					dispatchQueries([...queriesCopy]);
 				}
-			} else {
-				dispatchQueries([...queriesCopy]);
-			}
 
-			setStep('Idle');
+				setStep('Idle');
+			});
 		},
 		[dispatchQueries, dotMetricsEnabled, queries],
 	);

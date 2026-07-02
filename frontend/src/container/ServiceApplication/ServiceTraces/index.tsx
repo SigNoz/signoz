@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import localStorageGet from 'api/browser/localstorage/get';
@@ -8,17 +8,12 @@ import { SKIP_ONBOARDING } from 'constants/onboarding';
 import useErrorNotification from 'hooks/useErrorNotification';
 import { useQueryService } from 'hooks/useQueryService';
 import useResourceAttribute from 'hooks/useResourceAttribute';
-import {
-	convertRawQueriesToTraceSelectedTags,
-	getResourceDeploymentKeys,
-} from 'hooks/useResourceAttribute/utils';
+import { isEnvironmentMetricResourceKey } from 'hooks/useResourceAttribute/utils';
+import { useServicesListSelectedTags } from 'hooks/useServicesListSelectedTags';
 import { isUndefined } from 'lodash-es';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
-import { Tags } from 'types/reducer/trace';
 
-import { FeatureKeys } from '../../../constants/features';
-import { useAppContext } from '../../../providers/App/App';
 import SkipOnBoardingModal from '../SkipOnBoardModal';
 import ServiceTraceTable from './ServiceTracesTable';
 
@@ -28,22 +23,17 @@ function ServiceTraces(): JSX.Element {
 		GlobalReducer
 	>((state) => state.globalTime);
 	const { queries } = useResourceAttribute();
-	const selectedTags = useMemo(
-		() => (convertRawQueriesToTraceSelectedTags(queries) as Tags[]) || [],
-		[queries],
-	);
+	const { selectedTags, isReady } = useServicesListSelectedTags();
 
 	const { data, error, isLoading, isError } = useQueryService({
 		minTime,
 		maxTime,
 		selectedTime,
 		selectedTags,
+		options: {
+			enabled: isReady,
+		},
 	});
-
-	const { featureFlags } = useAppContext();
-	const dotMetricsEnabled =
-		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
-			?.active || false;
 
 	useErrorNotification(error);
 
@@ -61,8 +51,8 @@ function ServiceTraces(): JSX.Element {
 	const logEventCalledRef = useRef(false);
 	useEffect(() => {
 		if (!logEventCalledRef.current && !isUndefined(data)) {
-			const selectedEnvironments = queries.find(
-				(val) => val.tagKey === getResourceDeploymentKeys(dotMetricsEnabled),
+			const selectedEnvironments = queries.find((val) =>
+				isEnvironmentMetricResourceKey(val.tagKey),
 			)?.tagValue;
 
 			const rps = data.reduce((total, service) => total + service.callRate, 0);
