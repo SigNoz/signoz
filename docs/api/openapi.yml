@@ -15870,7 +15870,7 @@ paths:
       summary: List Jobs for Infra Monitoring
       tags:
       - inframonitoring
-  /api/v2/infra_monitoring/kubernetes_containers:
+  /api/v2/infra_monitoring/kube_containers:
     post:
       deprecated: false
       description: 'Returns a paginated list of Kubernetes containers with key kubeletstats

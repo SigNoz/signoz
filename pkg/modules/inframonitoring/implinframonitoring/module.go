@@ -397,8 +397,8 @@ func (m *module) ListContainers(ctx context.Context, orgID valuer.UUID, req *inf
 		return nil, err
 	}
 
-	isContainerRowInGroupBy := isKeyInGroupByAttrs(req.GroupBy, podUIDAttrKey) && isKeyInGroupByAttrs(req.GroupBy, containerNameAttrKey)
-	resp.Records = buildContainerRecords(isContainerRowInGroupBy, queryResp, pageGroups, req.GroupBy, metadataMap, statusCounts, restartCounts, readyCounts)
+	isContainerNameAndPodUIDInGroupBy := isKeyInGroupByAttrs(req.GroupBy, containerNameAttrKey) && isKeyInGroupByAttrs(req.GroupBy, podUIDAttrKey)
+	resp.Records = buildContainerRecords(isContainerNameAndPodUIDInGroupBy, queryResp, pageGroups, req.GroupBy, metadataMap, statusCounts, restartCounts, readyCounts)
 	resp.Warning = mergeQueryWarnings(queryResp.Warning, statusWarning)
 
 	return resp, nil
