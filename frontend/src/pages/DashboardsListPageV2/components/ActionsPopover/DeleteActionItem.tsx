@@ -101,23 +101,25 @@ function DeleteActionItem({
 		<>
 			<Divider />
 			<Tooltip placement="left" title={tooltip}>
-				<Button
-					variant="ghost"
-					color="destructive"
-					className={styles.menuItem}
-					prefix={<Trash2 size={14} />}
-					disabled={isDisabled}
-					onClick={(e): void => {
-						e.preventDefault();
-						e.stopPropagation();
-						if (!isDisabled) {
-							openConfirm();
-						}
-					}}
-					testId="dashboard-action-delete"
-				>
-					Delete Dashboard
-				</Button>
+				<span className={styles.menuItemWrap}>
+					<Button
+						variant="ghost"
+						color="destructive"
+						className={styles.menuItem}
+						prefix={<Trash2 size={14} />}
+						disabled={isDisabled}
+						onClick={(e): void => {
+							e.preventDefault();
+							e.stopPropagation();
+							if (!isDisabled) {
+								openConfirm();
+							}
+						}}
+						testId="dashboard-action-delete"
+					>
+						Delete Dashboard
+					</Button>
+				</span>
 			</Tooltip>
 			{contextHolder}
 		</>

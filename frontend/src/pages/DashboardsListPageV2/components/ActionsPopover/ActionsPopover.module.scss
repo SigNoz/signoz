@@ -32,3 +32,13 @@
 	justify-content: flex-end;
 	gap: 8px;
 }
+
+/* Wrap so the tooltip has a hoverable target even when the button is disabled. */
+.menuItemWrap {
+	display: block;
+	width: 100%;
+}
+
+.menuItemWrap button:disabled {
+	pointer-events: none;
+}

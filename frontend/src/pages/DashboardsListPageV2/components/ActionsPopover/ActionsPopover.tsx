@@ -141,22 +141,24 @@ function ActionsPopover({
 								isLocked ? 'This dashboard is locked, so it cannot be renamed.' : ''
 							}
 						>
-							<Button
-								color="secondary"
-								className={styles.menuItem}
-								prefix={<PenLine size={14} />}
-								disabled={isLocked}
-								onClick={(e): void => {
-									e.stopPropagation();
-									e.preventDefault();
-									if (!isLocked) {
-										setIsRenameOpen(true);
-									}
-								}}
-								testId="dashboard-action-rename"
-							>
-								Rename
-							</Button>
+							<span className={styles.menuItemWrap}>
+								<Button
+									color="secondary"
+									className={styles.menuItem}
+									prefix={<PenLine size={14} />}
+									disabled={isLocked}
+									onClick={(e): void => {
+										e.stopPropagation();
+										e.preventDefault();
+										if (!isLocked) {
+											setIsRenameOpen(true);
+										}
+									}}
+									testId="dashboard-action-rename"
+								>
+									Rename
+								</Button>
+							</span>
 						</Tooltip>
 						<Button
 							color="secondary"
