@@ -128,7 +128,14 @@ function DashboardRow({
 					disabled={isUpdating}
 					onClick={onTogglePin}
 				>
-					{isPinned ? <PinOff size={14} /> : <Pin size={14} />}
+					{isPinned ? (
+						<>
+							<Pin size={14} className={styles.pinnedIcon} />
+							<PinOff size={14} className={styles.unpinIcon} />
+						</>
+					) : (
+						<Pin size={14} />
+					)}
 				</button>
 
 				{canAct && (
