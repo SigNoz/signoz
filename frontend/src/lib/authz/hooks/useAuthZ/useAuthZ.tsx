@@ -1,13 +1,15 @@
 import { useCallback, useMemo } from 'react';
 import { useQueries } from 'react-query';
+import { isAxiosError } from 'axios';
 import { authzCheck } from 'api/generated/services/authz';
 import type {
 	CoretypesObjectDTO,
 	AuthtypesTransactionDTO,
 } from 'api/generated/services/sigNoz.schemas';
+import { IS_DEV } from 'lib/env';
 
 import { AUTHZ_CACHE_TIME, SINGLE_FLIGHT_WAIT_TIME_MS } from './constants';
-import {
+import type {
 	AuthZCheckResponse,
 	BrandedPermission,
 	UseAuthZOptions,
@@ -18,6 +20,59 @@ import {
 	permissionToTransactionDto,
 } from './utils';
 
+let devStoreRef:
+	| typeof import('../../devtools/useAuthZDevStore').useAuthZDevStore
+	| null = null;
+type OverrideState = 'granted' | 'denied' | 'delay' | 'error' | 'reset';
+
+if (IS_DEV) {
+	void import('../../devtools/useAuthZDevStore').then((mod) => {
+		devStoreRef = mod.useAuthZDevStore;
+		return mod;
+	});
+}
+
+const DEV_DELAY_MS = 2000;
+
+function getDevOverride(permission: BrandedPermission): OverrideState | null {
+	if (!IS_DEV || !devStoreRef) {
+		return null;
+	}
+	return devStoreRef.getState().overrides[permission] ?? null;
+}
+
+async function applyDevOverrideToQuery(
+	permission: BrandedPermission,
+	fetchFn: () => Promise<AuthZCheckResponse>,
+): Promise<AuthZCheckResponse> {
+	const override = getDevOverride(permission);
+
+	if (override === 'error') {
+		throw new Error(`[AuthZ DevTools] Simulated error for: ${permission}`);
+	}
+
+	if (override === 'delay') {
+		await new Promise((resolve) => setTimeout(resolve, DEV_DELAY_MS));
+	}
+
+	const response = await fetchFn();
+
+	if (IS_DEV && devStoreRef) {
+		const apiValue = response[permission]?.isGranted ?? false;
+		devStoreRef.getState().registerObserved(permission, apiValue);
+	}
+
+	if (override === 'granted') {
+		return { [permission]: { isGranted: true } };
+	}
+
+	if (override === 'denied') {
+		return { [permission]: { isGranted: false } };
+	}
+
+	return response;
+}
+
 let ctx: Promise<AuthZCheckResponse> | null;
 let pendingPermissions: BrandedPermission[] = [];
 
@@ -27,10 +82,11 @@ function dispatchPermission(
 	pendingPermissions.push(permission);
 
 	if (!ctx) {
-		let resolve: (v: AuthZCheckResponse) => void, reject: (reason?: any) => void;
-		ctx = new Promise<AuthZCheckResponse>((r, re) => {
-			resolve = r;
-			reject = re;
+		let promiseResolve: (v: AuthZCheckResponse) => void,
+			promiseReject: (reason?: unknown) => void;
+		ctx = new Promise<AuthZCheckResponse>((resolve, reject) => {
+			promiseResolve = resolve;
+			promiseReject = reject;
 		});
 
 		setTimeout(() => {
@@ -38,7 +94,9 @@ function dispatchPermission(
 			pendingPermissions = [];
 			ctx = null;
 
-			fetchManyPermissions(copiedPermissions).then(resolve).catch(reject);
+			fetchManyPermissions(copiedPermissions)
+				.then(promiseResolve)
+				.catch(promiseReject);
 		}, SINGLE_FLIGHT_WAIT_TIME_MS);
 	}
 
@@ -85,19 +143,44 @@ export function useAuthZ(
 			return {
 				queryKey: ['authz', permission],
 				cacheTime: AUTHZ_CACHE_TIME,
+				staleTime: AUTHZ_CACHE_TIME,
+				// Keep errored state in cache instead of refetching when new observers subscribe
+				retryOnMount: false,
+				retry: (failureCount: number, error: unknown): boolean => {
+					// Don't retry simulated dev errors - they will always fail
+					if (error instanceof Error && error.message.includes('[AuthZ DevTools]')) {
+						return false;
+					}
+					// Don't retry server errors (5xx) - they won't recover
+					if (
+						isAxiosError(error) &&
+						error.response?.status &&
+						error.response.status >= 500
+					) {
+						return false;
+					}
+					return failureCount < 3;
+				},
 				refetchOnMount: false,
 				refetchIntervalInBackground: false,
 				refetchOnWindowFocus: false,
 				refetchOnReconnect: true,
 				enabled,
 				queryFn: async (): Promise<AuthZCheckResponse> => {
-					const response = await dispatchPermission(permission);
-
-					return {
-						[permission]: {
-							isGranted: response[permission].isGranted,
-						},
+					const fetchFn = async (): Promise<AuthZCheckResponse> => {
+						const response = await dispatchPermission(permission);
+						return {
+							[permission]: {
+								isGranted: response[permission].isGranted,
+							},
+						};
 					};
+
+					if (IS_DEV) {
+						return applyDevOverrideToQuery(permission, fetchFn);
+					}
+
+					return fetchFn();
 				},
 			};
 		}),
@@ -107,6 +190,7 @@ export function useAuthZ(
 		() => queryResults.some((q) => q.isLoading),
 		[queryResults],
 	);
+
 	const isFetching = useMemo(
 		() => queryResults.some((q) => q.isFetching),
 		[queryResults],
@@ -139,15 +223,31 @@ export function useAuthZ(
 
 	const refetchPermissions = useCallback(() => {
 		for (const query of queryResults) {
-			query.refetch();
+			void query.refetch();
 		}
 	}, [queryResults]);
+
+	const allowed = useMemo(() => {
+		if (isLoading || error || !data) {
+			return false;
+		}
+		return permissions.every((check) => data[check]?.isGranted === true);
+	}, [permissions, data, isLoading, error]);
+
+	const deniedPermissions = useMemo(() => {
+		if (!data) {
+			return [];
+		}
+		return permissions.filter((check) => data[check]?.isGranted !== true);
+	}, [permissions, data]);
 
 	return {
 		isLoading,
 		isFetching,
 		error,
 		permissions: data ?? null,
+		allowed,
+		deniedPermissions,
 		refetchPermissions,
 	};
 }
