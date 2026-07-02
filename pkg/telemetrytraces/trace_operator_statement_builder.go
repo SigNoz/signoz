@@ -44,7 +44,6 @@ func NewTraceOperatorStatementBuilder(
 		telemetrytypes.SourceUnspecified,
 		metadataStore,
 		nil,
-		nil,
 		flagger,
 	)
 
