@@ -9,7 +9,17 @@
       "podMemoryRequest": 0.5,
       "podMemoryLimit": 0.25,
       "podPhase": "running",
-      "podCountsByPhase": {"pending": 0, "running": 1, "succeeded": 0, "failed": 0, "unknown": 0}
+      "podCountsByPhase": {"pending": 0, "running": 1, "succeeded": 0, "failed": 0, "unknown": 0},
+      "podStatus": "running",
+      "podRestarts": 0,
+      "podCountsByStatus": {
+        "pending": 0, "running": 1, "failed": 0, "unknown": 0,
+        "crashLoopBackOff": 0, "imagePullBackOff": 0, "errImagePull": 0,
+        "createContainerConfigError": 0, "containerCreating": 0, "oomKilled": 0,
+        "completed": 0, "error": 0, "containerCannotRun": 0,
+        "evicted": 0, "nodeAffinity": 0, "nodeLost": 0, "shutdown": 0,
+        "unexpectedAdmissionError": 0
+      }
     },
     {
       "podName": "acc-p2",
@@ -20,7 +30,17 @@
       "podMemoryRequest": 0.75,
       "podMemoryLimit": 0.5,
       "podPhase": "running",
-      "podCountsByPhase": {"pending": 0, "running": 1, "succeeded": 0, "failed": 0, "unknown": 0}
+      "podCountsByPhase": {"pending": 0, "running": 1, "succeeded": 0, "failed": 0, "unknown": 0},
+      "podStatus": "running",
+      "podRestarts": 0,
+      "podCountsByStatus": {
+        "pending": 0, "running": 1, "failed": 0, "unknown": 0,
+        "crashLoopBackOff": 0, "imagePullBackOff": 0, "errImagePull": 0,
+        "createContainerConfigError": 0, "containerCreating": 0, "oomKilled": 0,
+        "completed": 0, "error": 0, "containerCannotRun": 0,
+        "evicted": 0, "nodeAffinity": 0, "nodeLost": 0, "shutdown": 0,
+        "unexpectedAdmissionError": 0
+      }
     }
   ]
 }

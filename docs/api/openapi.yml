@@ -4234,6 +4234,8 @@ components:
           $ref: '#/components/schemas/InframonitoringtypesNodeCountsByReadiness'
         podCountsByPhase:
           $ref: '#/components/schemas/InframonitoringtypesPodCountsByPhase'
+        podCountsByStatus:
+          $ref: '#/components/schemas/InframonitoringtypesPodCountsByStatus'
       required:
       - clusterName
       - clusterCPU
@@ -4242,6 +4244,7 @@ components:
       - clusterMemoryAllocatable
       - nodeCountsByReadiness
       - podCountsByPhase
+      - podCountsByStatus
       - meta
       type: object
     InframonitoringtypesClusters:
@@ -4297,6 +4300,8 @@ components:
           type: object
         podCountsByPhase:
           $ref: '#/components/schemas/InframonitoringtypesPodCountsByPhase'
+        podCountsByStatus:
+          $ref: '#/components/schemas/InframonitoringtypesPodCountsByStatus'
       required:
       - daemonSetName
       - daemonSetCPU
@@ -4308,6 +4313,7 @@ components:
       - desiredNodes
       - currentNodes
       - podCountsByPhase
+      - podCountsByStatus
       - meta
       type: object
     InframonitoringtypesDaemonSets:
@@ -4363,6 +4369,8 @@ components:
           type: object
         podCountsByPhase:
           $ref: '#/components/schemas/InframonitoringtypesPodCountsByPhase'
+        podCountsByStatus:
+          $ref: '#/components/schemas/InframonitoringtypesPodCountsByStatus'
       required:
       - deploymentName
       - deploymentCPU
@@ -4374,6 +4382,7 @@ components:
       - desiredPods
       - availablePods
       - podCountsByPhase
+      - podCountsByStatus
       - meta
       type: object
     InframonitoringtypesDeployments:
@@ -4506,6 +4515,8 @@ components:
           type: object
         podCountsByPhase:
           $ref: '#/components/schemas/InframonitoringtypesPodCountsByPhase'
+        podCountsByStatus:
+          $ref: '#/components/schemas/InframonitoringtypesPodCountsByStatus'
         successfulPods:
           type: integer
       required:
@@ -4521,6 +4532,7 @@ components:
       - failedPods
       - successfulPods
       - podCountsByPhase
+      - podCountsByStatus
       - meta
       type: object
     InframonitoringtypesJobs:
@@ -4611,11 +4623,14 @@ components:
           type: string
         podCountsByPhase:
           $ref: '#/components/schemas/InframonitoringtypesPodCountsByPhase'
+        podCountsByStatus:
+          $ref: '#/components/schemas/InframonitoringtypesPodCountsByStatus'
       required:
       - namespaceName
       - namespaceCPU
       - namespaceMemory
       - podCountsByPhase
+      - podCountsByStatus
       - meta
       type: object
     InframonitoringtypesNamespaces:
@@ -4681,11 +4696,14 @@ components:
           type: string
         podCountsByPhase:
           $ref: '#/components/schemas/InframonitoringtypesPodCountsByPhase'
+        podCountsByStatus:
+          $ref: '#/components/schemas/InframonitoringtypesPodCountsByStatus'
       required:
       - nodeName
       - condition
       - nodeCountsByReadiness
       - podCountsByPhase
+      - podCountsByStatus
       - nodeCPU
       - nodeCPUAllocatable
       - nodeMemory
@@ -4731,6 +4749,64 @@ components:
       - failed
       - unknown
       type: object
+    InframonitoringtypesPodCountsByStatus:
+      properties:
+        completed:
+          type: integer
+        containerCannotRun:
+          type: integer
+        containerCreating:
+          type: integer
+        crashLoopBackOff:
+          type: integer
+        createContainerConfigError:
+          type: integer
+        errImagePull:
+          type: integer
+        error:
+          type: integer
+        evicted:
+          type: integer
+        failed:
+          type: integer
+        imagePullBackOff:
+          type: integer
+        nodeAffinity:
+          type: integer
+        nodeLost:
+          type: integer
+        oomKilled:
+          type: integer
+        pending:
+          type: integer
+        running:
+          type: integer
+        shutdown:
+          type: integer
+        unexpectedAdmissionError:
+          type: integer
+        unknown:
+          type: integer
+      required:
+      - pending
+      - running
+      - failed
+      - unknown
+      - crashLoopBackOff
+      - imagePullBackOff
+      - errImagePull
+      - createContainerConfigError
+      - containerCreating
+      - oomKilled
+      - completed
+      - error
+      - containerCannotRun
+      - evicted
+      - nodeAffinity
+      - nodeLost
+      - shutdown
+      - unexpectedAdmissionError
+      type: object
     InframonitoringtypesPodPhase:
       enum:
       - pending
@@ -4761,6 +4837,8 @@ components:
           type: number
         podCountsByPhase:
           $ref: '#/components/schemas/InframonitoringtypesPodCountsByPhase'
+        podCountsByStatus:
+          $ref: '#/components/schemas/InframonitoringtypesPodCountsByStatus'
         podMemory:
           format: double
           type: number
@@ -4772,6 +4850,11 @@ components:
           type: number
         podPhase:
           $ref: '#/components/schemas/InframonitoringtypesPodPhase'
+        podRestarts:
+          format: int64
+          type: integer
+        podStatus:
+          $ref: '#/components/schemas/InframonitoringtypesPodStatus'
         podUID:
           type: string
       required:
@@ -4784,9 +4867,34 @@ components:
       - podMemoryLimit
       - podPhase
       - podCountsByPhase
+      - podStatus
+      - podCountsByStatus
+      - podRestarts
       - podAge
       - meta
       type: object
+    InframonitoringtypesPodStatus:
+      enum:
+      - pending
+      - running
+      - failed
+      - unknown
+      - crashloopbackoff
+      - imagepullbackoff
+      - errimagepull
+      - createcontainerconfigerror
+      - containercreating
+      - oomkilled
+      - completed
+      - error
+      - containercannotrun
+      - evicted
+      - nodeaffinity
+      - nodelost
+      - shutdown
+      - unexpectedadmissionerror
+      - no_data
+      type: string
     InframonitoringtypesPods:
       properties:
         endTimeBeforeRetention:
@@ -5085,6 +5193,8 @@ components:
           type: object
         podCountsByPhase:
           $ref: '#/components/schemas/InframonitoringtypesPodCountsByPhase'
+        podCountsByStatus:
+          $ref: '#/components/schemas/InframonitoringtypesPodCountsByStatus'
         statefulSetCPU:
           format: double
           type: number
@@ -5116,6 +5226,7 @@ components:
       - desiredPods
       - currentPods
       - podCountsByPhase
+      - podCountsByStatus
       - meta
       type: object
     InframonitoringtypesStatefulSets:
