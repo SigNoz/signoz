@@ -559,7 +559,7 @@ export const listContainers = (
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<ListContainers200>({
-		url: `/api/v2/infra_monitoring/kubernetes_containers`,
+		url: `/api/v2/infra_monitoring/kube_containers`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
 		data: inframonitoringtypesPostableContainersDTO,

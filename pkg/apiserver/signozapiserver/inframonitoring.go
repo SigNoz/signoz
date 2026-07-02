@@ -48,7 +48,7 @@ func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/infra_monitoring/kubernetes_containers", handler.New(
+	if err := router.Handle("/api/v2/infra_monitoring/kube_containers", handler.New(
 		provider.authzMiddleware.ViewAccess(provider.infraMonitoringHandler.ListContainers),
 		handler.OpenAPIDef{
 			ID:                  "ListContainers",

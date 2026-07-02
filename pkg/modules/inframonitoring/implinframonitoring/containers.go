@@ -21,7 +21,7 @@ import (
 // Status/Ready fields are derived from it; otherwise they stay NoData and only
 // the per-group counts are populated.
 func buildContainerRecords(
-	isContainerRowInGroupBy bool,
+	isContainerNameAndPodUIDInGroupBy bool,
 	resp *qbtypes.QueryRangeResponse,
 	pageGroups []map[string]string,
 	groupBy []qbtypes.GroupByKey,
@@ -76,7 +76,7 @@ func buildContainerRecords(
 			record.ContainerCountsByStatus = containerStatusCountsToResponse(statusCountsForGroup)
 
 			// In list mode each group is one container; the count==1 bucket identifies the status.
-			if isContainerRowInGroupBy {
+			if isContainerNameAndPodUIDInGroupBy {
 				switch {
 				case statusCountsForGroup.Running == 1:
 					record.Status = inframonitoringtypes.ContainerStatusRunning
@@ -117,7 +117,7 @@ func buildContainerRecords(
 			record.ContainerCountsByReady = containerReadyCountsToResponse(readyCountsForGroup)
 
 			// In list mode each group is one container; exactly one of ready/not_ready is 1.
-			if isContainerRowInGroupBy {
+			if isContainerNameAndPodUIDInGroupBy {
 				switch {
 				case readyCountsForGroup.Ready == 1:
 					record.Ready = inframonitoringtypes.ContainerReadyReady
