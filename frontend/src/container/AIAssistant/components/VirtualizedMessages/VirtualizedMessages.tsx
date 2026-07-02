@@ -37,6 +37,9 @@ export default function VirtualizedMessages({
 	const regenerateAssistantMessage = useAIAssistantStore(
 		(s) => s.regenerateAssistantMessage,
 	);
+	const retryAssistantMessage = useAIAssistantStore(
+		(s) => s.retryAssistantMessage,
+	);
 	const { threadId } = useAIAssistantAnalyticsContext(conversationId);
 	const streamingStatus = useAIAssistantStore(
 		(s) => s.streams[conversationId]?.streamingStatus ?? '',
@@ -84,6 +87,14 @@ export default function VirtualizedMessages({
 		},
 		[conversationId, isStreaming, regenerateAssistantMessage, threadId],
 	);
+
+	const handleRetry = useCallback((): void => {
+		if (isStreaming) {
+			return;
+		}
+		void logEvent(AIAssistantEvents.RetryClicked, { threadId });
+		void retryAssistantMessage(conversationId);
+	}, [conversationId, isStreaming, retryAssistantMessage, threadId]);
 
 	// Scroll all the way to the actual bottom — including the 64px of bottom
 	// padding on the scroller — so the last bubble has visible breathing room
@@ -204,6 +215,11 @@ export default function VirtualizedMessages({
 							onRegenerate={
 								isLastAssistant && !showStreamingSlot
 									? (): void => handleRegenerate(msg.id)
+									: undefined
+							}
+							onRetry={
+								msg.isError && isLastAssistant && !showStreamingSlot
+									? handleRetry
 									: undefined
 							}
 							isLastAssistant={isLastAssistant}

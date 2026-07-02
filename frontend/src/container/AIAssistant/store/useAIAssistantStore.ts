@@ -8,6 +8,7 @@ import type {
 	MessageActionDTO,
 	MessageSummaryDTOBlocksAnyOfItem,
 } from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
+import { RetryActionDTO } from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
 
 import {
 	approveExecution,
@@ -35,7 +36,10 @@ import {
 	MessageBlock,
 	MessageRole,
 } from '../types';
-import { resolveAssistantErrorMessage } from '../utils/resolveAssistantErrorMessage';
+import {
+	resolveAssistantError,
+	type AssistantErrorResolution,
+} from '../utils/resolveAssistantError';
 
 // ---------------------------------------------------------------------------
 // Types used by module-level helpers
@@ -55,6 +59,15 @@ interface SSEStreamCtx {
 // ---------------------------------------------------------------------------
 
 const streamControllers = new Map<string, AbortController>();
+
+/**
+ * Per-conversation retry thunks for the most recent failed turn. Populated by
+ * `finalizeStreamingError` when the error is manually retryable; consumed by
+ * the `retryAssistantMessage` action when the user clicks Retry. Transient
+ * (not persisted) — it shares the in-memory lifetime of the error bubble it
+ * backs, so a page reload drops both together.
+ */
+const retryRegistry = new Map<string, () => Promise<void>>();
 
 function abortStream(conversationId: string): void {
 	const ctrl = streamControllers.get(conversationId);
@@ -197,7 +210,7 @@ function resetStreamingState(
  * Marker thrown by `runStreamingLoop` when an SSE event reports
  * `invalid_token`. Callers that own an originating action (sendMessage /
  * approve / clarify / regenerate) catch this and re-issue that action via
- * `streamWithAuthRetry`; the retry's first REST call will 401, at which point
+ * `streamWithRetry`; the retry's first REST call will 401, at which point
  * the shared axios `interceptorRejected` rotates the access token and replays.
  */
 class AuthExpiredError extends Error {
@@ -207,27 +220,50 @@ class AuthExpiredError extends Error {
 	}
 }
 
+/** Capped silent re-attempts for backend-flagged transient (`auto`) errors. */
+const MAX_AUTO_RETRIES = 2;
+/** Backoff before each auto re-attempt, indexed by prior auto-retry count. */
+const AUTO_RETRY_BACKOFF_MS = [500, 1500];
+
+function delay(ms: number): Promise<void> {
+	return new Promise((resolve) => {
+		setTimeout(resolve, ms);
+	});
+}
+
+/** True when the SSE error carries the backend's `retryAction: 'auto'` flag. */
+function isAutoRetryableError(err: unknown): boolean {
+	return (
+		(err as { retryAction?: unknown } | undefined)?.retryAction ===
+		RetryActionDTO.auto
+	);
+}
+
 /**
  * Runs the originating action (e.g. sendMessage POST) and streams the
- * resulting execution. On `AuthExpiredError`, re-issues `start` once — the
- * retry's REST call hits 401, the shared axios interceptor rotates the
- * access token and replays, and the new SSE picks up the rotated token from
- * localStorage. Backend signals `retryAction: 'manual'` for `invalid_token`,
- * so the dead execution can't be resumed — only a fresh one helps.
+ * resulting execution, with two independent retry budgets:
+ *
+ *   • Auth — on `AuthExpiredError` (SSE `invalid_token`), re-issues `start`
+ *     once. The retry's REST call 401s, the shared axios interceptor rotates
+ *     the access token + replays, and the new SSE picks up the rotated token.
+ *     Backend flags `invalid_token` as `manual`, so only a fresh execution helps.
+ *   • Auto — on an SSE error the backend flagged `retryAction: 'auto'`
+ *     (transient), silently re-issues `start` up to `MAX_AUTO_RETRIES` times
+ *     with backoff. Once exhausted the error propagates so the caller can
+ *     surface a manual Retry affordance.
+ *
+ * Both reset the stream state before re-attempting so a dead execution's
+ * partial output isn't concatenated onto the retry.
  */
-async function streamWithAuthRetry(
+async function streamWithRetry(
 	conversationId: string,
 	start: () => Promise<string>,
 	set: StoreSetter,
 ): Promise<void> {
-	for (let attempt = 0; attempt <= 1; attempt += 1) {
-		if (attempt > 0) {
-			// Drop any partial content/events from the previous attempt so the
-			// retried execution's stream isn't concatenated with the dead one.
-			set((s) => {
-				resetStreamingState(s, conversationId);
-			});
-		}
+	let authRetried = false;
+	let autoRetries = 0;
+
+	for (;;) {
 		// eslint-disable-next-line no-await-in-loop
 		const executionId = await start();
 		const ctrl = newStreamController(conversationId);
@@ -242,10 +278,28 @@ async function streamWithAuthRetry(
 			return;
 		} catch (err) {
 			streamControllers.delete(conversationId);
-			if (err instanceof AuthExpiredError && attempt < 1) {
-				continue;
+
+			if (err instanceof AuthExpiredError && !authRetried) {
+				authRetried = true;
+			} else if (isAutoRetryableError(err) && autoRetries < MAX_AUTO_RETRIES) {
+				// eslint-disable-next-line no-await-in-loop
+				await delay(AUTO_RETRY_BACKOFF_MS[autoRetries] ?? 1500);
+				autoRetries += 1;
+			} else {
+				if (isAutoRetryableError(err)) {
+					// Auto-retry budget spent — present the failure as manually
+					// retryable so the caller surfaces a Retry button rather than
+					// silently giving up.
+					(err as { retryAction?: RetryActionDTO }).retryAction =
+						RetryActionDTO.manual;
+				}
+				throw err;
 			}
-			throw err;
+
+			// Drop partial content/events from the failed attempt before retrying.
+			set((s) => {
+				resetStreamingState(s, conversationId);
+			});
 		}
 	}
 }
@@ -258,7 +312,7 @@ async function streamWithAuthRetry(
  *
  * On an `invalid_token` error event (e.g. MCP auth expired mid-execution),
  * throws `AuthExpiredError` so the caller can re-issue the originating
- * action via `streamWithAuthRetry`. We don't refresh here ourselves — the
+ * action via `streamWithRetry`. We don't refresh here ourselves — the
  * retry's REST call will 401 and the shared axios `interceptorRejected`
  * handles rotation + replay. Throws on any other `error` event — the
  * caller's catch block handles UI feedback.
@@ -484,26 +538,77 @@ function hasPendingInput(conversationId: string, get: StoreGetter): boolean {
 	return Boolean(stream?.pendingApproval || stream?.pendingClarification);
 }
 
+/**
+ * Commits a failed turn as an error message and removes the stream entry.
+ * When the failure is manually retryable and a `retry` thunk is supplied, the
+ * thunk is stashed in `retryRegistry` so the bubble's Retry button can replay
+ * the originating action.
+ */
 function finalizeStreamingError(
 	conversationId: string,
-	errorContent: string,
+	resolution: AssistantErrorResolution,
 	set: StoreSetter,
-	isRateLimit = false,
+	retry?: () => Promise<void>,
 ): void {
+	const { message, code, retryAction, isRateLimit } = resolution;
+
+	if (retryAction === RetryActionDTO.manual && retry) {
+		retryRegistry.set(conversationId, retry);
+	} else {
+		retryRegistry.delete(conversationId);
+	}
+
 	set((s) => {
 		const conv = s.conversations[conversationId];
 		if (conv) {
 			conv.messages.push({
 				id: uuidv4(),
 				role: 'assistant',
-				content: errorContent,
+				content: message,
 				createdAt: Date.now(),
+				isError: true,
+				retryAction,
+				...(code ? { errorCode: code } : {}),
 				...(isRateLimit ? { isRateLimitError: true } : {}),
 			});
 			conv.updatedAt = Date.now();
 		}
 		delete s.streams[conversationId];
 	});
+}
+
+/**
+ * Shared streaming wrapper for actions that have no pre-stream setup beyond
+ * resetting state (approve / clarify / regenerate). Streams the execution,
+ * finalizes the message on success, and on failure resolves the error +
+ * registers `retry` (the caller's own re-invocation) so the bubble can replay
+ * it. `sendMessage` does not use this — it owns thread-creation/re-keying and
+ * runs its own equivalent loop.
+ */
+async function streamAndFinalize(
+	conversationId: string,
+	start: () => Promise<string>,
+	fallback: string,
+	logLabel: string,
+	set: StoreSetter,
+	get: StoreGetter,
+	retry: () => Promise<void>,
+): Promise<void> {
+	try {
+		await streamWithRetry(conversationId, start, set);
+		if (!hasPendingInput(conversationId, get)) {
+			finalizeStreamingMessage(conversationId, set, get);
+		}
+	} catch (err) {
+		// Abort errors are expected when the user cancels — not a failure.
+		if (err instanceof DOMException && err.name === 'AbortError') {
+			return;
+		}
+		// eslint-disable-next-line no-console
+		console.error(logLabel, err);
+		const resolution = resolveAssistantError(err, fallback);
+		finalizeStreamingError(conversationId, resolution, set, retry);
+	}
 }
 
 // ---------------------------------------------------------------------------
@@ -564,6 +669,8 @@ export interface AIAssistantStore {
 		conversationId: string,
 		messageId: string,
 	) => Promise<void>;
+	/** Replays the originating action for a manually-retryable error bubble. */
+	retryAssistantMessage: (conversationId: string) => Promise<void>;
 	submitMessageFeedback: (
 		messageId: string,
 		rating: FeedbackRating,
@@ -877,7 +984,7 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 					// there's no "originating action" to redo — reopening the
 					// same dead executionId would just re-emit the failure.
 					// Let the error bubble; the user can send a new message,
-					// which will go through `streamWithAuthRetry`.
+					// which will go through `streamWithRetry`.
 					if (
 						detail.activeExecutionId &&
 						!streamControllers.has(threadId) &&
@@ -1060,7 +1167,7 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 				attachments?: MessageAttachment[],
 				contexts?: MessageContext[],
 			): Promise<void> => {
-				let convId = get().activeConversationId;
+				const convId = get().activeConversationId;
 				if (!convId || !get().conversations[convId]) {
 					return;
 				}
@@ -1093,63 +1200,75 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 				};
 
 				set((state) => {
-					const conv = state.conversations[convId!];
+					const conv = state.conversations[convId];
 					conv.messages.push(userMessage);
 					conv.updatedAt = Date.now();
 					if (!conv.title && text.trim()) {
 						conv.title = deriveTitle(text);
 					}
-					resetStreamingState(state, convId!);
+					resetStreamingState(state, convId);
 				});
 
-				try {
-					let { threadId } = get().conversations[convId];
-					if (!threadId) {
-						threadId = await createThread();
-						// Re-key the conversation from client UUID to backend threadId
-						// so fetchThreads won't create a duplicate entry later.
-						const oldId = convId;
-						convId = threadId;
-						set((s) => {
-							const conv = s.conversations[oldId];
-							if (conv) {
-								conv.id = convId!;
-								conv.threadId = convId!;
-								s.conversations[convId!] = conv;
-								delete s.conversations[oldId];
-								if (s.activeConversationId === oldId) {
-									s.activeConversationId = convId!;
+				// The full send — ensure a backend thread exists (re-keying the
+				// optimistic client UUID on first send), POST the message, and
+				// stream the reply. Defined as a closure so the error bubble's
+				// Retry button can replay it without re-pushing the user message.
+				const runSend = async (cid: string): Promise<void> => {
+					let targetConvId = cid;
+					try {
+						let { threadId } = get().conversations[targetConvId];
+						if (!threadId) {
+							threadId = await createThread();
+							// Re-key the conversation from client UUID to backend threadId
+							// so fetchThreads won't create a duplicate entry later.
+							const oldId = targetConvId;
+							const newId = threadId;
+							set((s) => {
+								const conv = s.conversations[oldId];
+								if (conv) {
+									conv.id = newId;
+									conv.threadId = newId;
+									s.conversations[newId] = conv;
+									delete s.conversations[oldId];
+									if (s.activeConversationId === oldId) {
+										s.activeConversationId = newId;
+									}
+									const stream = s.streams[oldId];
+									if (stream) {
+										s.streams[newId] = stream;
+										delete s.streams[oldId];
+									}
 								}
-								const stream = s.streams[oldId];
-								if (stream) {
-									s.streams[convId!] = stream;
-									delete s.streams[oldId];
-								}
-							}
-						});
-					}
-					const tid = threadId;
-					await streamWithAuthRetry(
-						convId,
-						() => sendMessageToThread(tid, text, contexts),
-						set,
-					);
+							});
+							targetConvId = newId;
+						}
+						const tid = threadId;
+						await streamWithRetry(
+							targetConvId,
+							() => sendMessageToThread(tid, text, contexts),
+							set,
+						);
 
-					if (!hasPendingInput(convId, get)) {
-						finalizeStreamingMessage(convId, set, get);
+						if (!hasPendingInput(targetConvId, get)) {
+							finalizeStreamingMessage(targetConvId, set, get);
+						}
+					} catch (err) {
+						// Abort errors are expected when the user cancels — not a failure.
+						if (err instanceof DOMException && err.name === 'AbortError') {
+							return;
+						}
+						console.error('[AIAssistant] sendMessage failed:', err);
+						const resolution = resolveAssistantError(
+							err,
+							'Something went wrong while fetching the response. Please try again.',
+						);
+						finalizeStreamingError(targetConvId, resolution, set, () =>
+							runSend(targetConvId),
+						);
 					}
-				} catch (err) {
-					// Abort errors are expected when the user cancels — not a failure
-					if (err instanceof DOMException && err.name === 'AbortError') {
-						return;
-					}
-					console.error('[AIAssistant] sendMessage failed:', err);
-					const { message, isRateLimit } = resolveAssistantErrorMessage(
-						err,
-						'Something went wrong while fetching the response. Please try again.',
-					);
-					finalizeStreamingError(convId, message, set, isRateLimit);
-				}
+				};
+
+				await runSend(convId);
 			},
 
 			approveAction: async (
@@ -1167,26 +1286,17 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 					}
 				});
 
-				try {
-					await streamWithAuthRetry(
+				const run = (): Promise<void> =>
+					streamAndFinalize(
 						conversationId,
 						() => approveExecution(approvalId),
-						set,
-					);
-					if (!hasPendingInput(conversationId, get)) {
-						finalizeStreamingMessage(conversationId, set, get);
-					}
-				} catch (err) {
-					if (err instanceof DOMException && err.name === 'AbortError') {
-						return;
-					}
-					console.error('[AIAssistant] approveAction failed:', err);
-					const { message, isRateLimit } = resolveAssistantErrorMessage(
-						err,
 						'Something went wrong while processing the approval. Please try again.',
+						'[AIAssistant] approveAction failed:',
+						set,
+						get,
+						run,
 					);
-					finalizeStreamingError(conversationId, message, set, isRateLimit);
-				}
+				await run();
 			},
 
 			rejectAction: async (
@@ -1246,26 +1356,17 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 					resetStreamingState(s, conversationId);
 				});
 
-				try {
-					await streamWithAuthRetry(
+				const run = (): Promise<void> =>
+					streamAndFinalize(
 						conversationId,
 						() => regenerateMessage(messageId),
-						set,
-					);
-					if (!hasPendingInput(conversationId, get)) {
-						finalizeStreamingMessage(conversationId, set, get);
-					}
-				} catch (err) {
-					if (err instanceof DOMException && err.name === 'AbortError') {
-						return;
-					}
-					console.error('[AIAssistant] regenerateAssistantMessage failed:', err);
-					const { message, isRateLimit } = resolveAssistantErrorMessage(
-						err,
 						'Something went wrong while regenerating the response. Please try again.',
+						'[AIAssistant] regenerateAssistantMessage failed:',
+						set,
+						get,
+						run,
 					);
-					finalizeStreamingError(conversationId, message, set, isRateLimit);
-				}
+				await run();
 			},
 
 			submitMessageFeedback: async (
@@ -1312,26 +1413,42 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 					}
 				});
 
-				try {
-					await streamWithAuthRetry(
+				const run = (): Promise<void> =>
+					streamAndFinalize(
 						conversationId,
 						() => clarifyExecution(clarificationId, answers),
-						set,
-					);
-					if (!hasPendingInput(conversationId, get)) {
-						finalizeStreamingMessage(conversationId, set, get);
-					}
-				} catch (err) {
-					if (err instanceof DOMException && err.name === 'AbortError') {
-						return;
-					}
-					console.error('[AIAssistant] submitClarification failed:', err);
-					const { message, isRateLimit } = resolveAssistantErrorMessage(
-						err,
 						'Something went wrong while processing your answers. Please try again.',
+						'[AIAssistant] submitClarification failed:',
+						set,
+						get,
+						run,
 					);
-					finalizeStreamingError(conversationId, message, set, isRateLimit);
+				await run();
+			},
+
+			retryAssistantMessage: async (conversationId: string): Promise<void> => {
+				const retry = retryRegistry.get(conversationId);
+				if (!retry) {
+					return;
 				}
+				retryRegistry.delete(conversationId);
+
+				// Drop the trailing error bubble we're retrying from and reset the
+				// stream so the in-progress retry renders immediately. The retry
+				// thunk replays the originating action without re-pushing the
+				// user's message.
+				set((s) => {
+					const conv = s.conversations[conversationId];
+					if (conv) {
+						const last = conv.messages[conv.messages.length - 1];
+						if (last?.isError) {
+							conv.messages.pop();
+						}
+					}
+					resetStreamingState(s, conversationId);
+				});
+
+				await retry();
 			},
 		})),
 		{
