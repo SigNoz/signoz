@@ -1,10 +1,12 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import RGL, { WidthProvider } from 'react-grid-layout';
+import { useInterval } from 'react-use';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
 import { themeColors } from 'constants/theme';
 import { Card, CardContainer } from 'container/GridCardLayout/styles';
+import { refreshIntervalOptions } from 'container/TopNav/AutoRefreshV2/constants';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { DEFAULT_TIME_RANGE } from 'container/TopNav/DateTimeSelectionV2/constants';
 import {
@@ -20,6 +22,7 @@ import { PublicDashboardDataProps } from 'types/api/dashboard/public/get';
 
 import signozBrandLogoUrl from '@/assets/Logos/signoz-brand-logo.svg';
 
+import AutoRefresh from './AutoRefresh';
 import Panel from './Panel';
 
 import './PublicDashboardContainer.styles.scss';
@@ -129,6 +132,35 @@ function PublicDashboardContainer({
 		setSelectedTimeRangeLabel(interval as string);
 	};
 
+	const [refreshIntervalKey, setRefreshIntervalKey] = useState<string>('off');
+
+	// Auto-refresh only makes sense for a rolling relative range, not a fixed
+	// custom window — pause it (and disable the control) when 'custom' is picked.
+	const isAutoRefreshPaused = selectedTimeRangeLabel === 'custom';
+
+	const refreshIntervalMs = useMemo(
+		() =>
+			refreshIntervalOptions.find((option) => option.key === refreshIntervalKey)
+				?.value || 0,
+		[refreshIntervalKey],
+	);
+
+	const refreshTimeRange = useCallback((): void => {
+		if (selectedTimeRangeLabel === 'custom') {
+			return;
+		}
+		const { maxTime, minTime } = GetMinMax(selectedTimeRangeLabel as Time);
+		setSelectedTimeRange({
+			startTime: Math.floor(minTime / 1000000000),
+			endTime: Math.floor(maxTime / 1000000000),
+		});
+	}, [selectedTimeRangeLabel]);
+
+	useInterval(
+		refreshTimeRange,
+		isAutoRefreshPaused || refreshIntervalMs === 0 ? null : refreshIntervalMs,
+	);
+
 	return (
 		<div className="public-dashboard-container">
 			<div className="public-dashboard-header">
@@ -148,6 +180,11 @@ function PublicDashboardContainer({
 
 				{isTimeRangeEnabled && (
 					<div className="public-dashboard-header-right">
+						<AutoRefresh
+							value={refreshIntervalKey}
+							disabled={isAutoRefreshPaused}
+							onChange={setRefreshIntervalKey}
+						/>
 						<div className="datetime-section">
 							<DateTimeSelectionV2
 								showAutoRefresh={false}
