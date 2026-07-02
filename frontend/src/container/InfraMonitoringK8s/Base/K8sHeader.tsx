@@ -255,9 +255,9 @@ function K8sHeader<TData>({
 
 				<Button
 					type="button"
-					variant="ghost"
+					variant="outlined"
 					size="icon"
-					color="none"
+					color="secondary"
 					data-testid="k8s-list-filters-button"
 					onClick={(): void => setIsFiltersSidePanelOpen(true)}
 					className={styles.k8SFiltersButton}
