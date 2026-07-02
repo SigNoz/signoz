@@ -23,8 +23,7 @@ interface VariablesBarProps {
  * either way so auto-selection and option fetching keep driving the panels.
  */
 function VariablesBar({ dashboard }: VariablesBarProps): JSX.Element | null {
-	const { variables, dependencyData, selection, setSelection } =
-		useVariableSelection(dashboard);
+	const { variables, selection, setSelection } = useVariableSelection(dashboard);
 	const [expanded, setExpanded] = useState(false);
 	const { containerRef, visibleCount, overflowCount } = useInlineOverflowCount({
 		itemCount: variables.length,
@@ -57,7 +56,6 @@ function VariablesBar({ dashboard }: VariablesBarProps): JSX.Element | null {
 						<VariableSelector
 							variable={variable}
 							variables={variables}
-							parents={dependencyData.parentGraph[variable.name] ?? []}
 							selections={selection}
 							selection={
 								selection[variable.name] ?? {

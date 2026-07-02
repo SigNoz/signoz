@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
+import { useQuery } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { useGetFieldValues } from 'hooks/dynamicVariables/useGetFieldValues';
+import { getFieldValues } from 'api/dynamicVariables/getFieldValues';
 import type { AppState } from 'store/reducers';
 import type { GlobalReducer } from 'types/reducer/globalTime';
 
@@ -10,12 +11,14 @@ import {
 	sortValuesByOrder,
 } from '../../DashboardSettings/Variables/variableFormModel';
 import type { VariableFormModel } from '../../DashboardSettings/Variables/variableFormModel';
+import { useDashboardStore } from '../../store/useDashboardStore';
 import { buildExistingDynamicVariableQuery } from '../dynamicFilter';
 import type {
 	VariableSelection,
 	VariableSelectionMap,
 } from '../selectionTypes';
 import { useAutoSelect } from '../useAutoSelect';
+import { useVariableFetchState } from '../useVariableFetchState';
 import ValueSelector from './ValueSelector';
 
 interface DynamicSelectorProps {
@@ -30,7 +33,9 @@ interface DynamicSelectorProps {
 /**
  * Dynamic-variable options sourced from live telemetry field values for the
  * chosen signal + attribute, scoped by the other dynamic variables' selections
- * (so e.g. `pod` narrows to the chosen `namespace`).
+ * (so e.g. `pod` narrows to the chosen `namespace`). WHEN to fetch is owned by
+ * the runtime fetch engine: dynamics fetch together once the query variables have
+ * values, and refetch (via a `cycleId` bump) whenever any variable value changes.
  */
 function DynamicSelector({
 	variable,
@@ -48,14 +53,51 @@ function DynamicSelector({
 		[variables, selections, variable.name],
 	);
 
-	const { data, isFetching } = useGetFieldValues({
-		signal: signalForApi(variable.dynamicSignal),
-		name: variable.dynamicAttribute,
-		startUnixMilli: minTime,
-		endUnixMilli: maxTime,
-		existingQuery: existingQuery || undefined,
-		enabled: !!variable.dynamicAttribute,
-	});
+	const {
+		variableFetchCycleId,
+		isVariableFetching,
+		isVariableSettled,
+		isVariableWaiting,
+		hasVariableFetchedOnce,
+	} = useVariableFetchState(variable.name);
+	const onVariableFetchComplete = useDashboardStore(
+		(s) => s.onVariableFetchComplete,
+	);
+	const onVariableFetchFailure = useDashboardStore(
+		(s) => s.onVariableFetchFailure,
+	);
+
+	const { data, isFetching } = useQuery(
+		[
+			'dashboard-variable-dynamic',
+			variable.name,
+			variable.dynamicSignal,
+			variable.dynamicAttribute,
+			existingQuery,
+			minTime,
+			maxTime,
+			variableFetchCycleId,
+		],
+		() =>
+			getFieldValues(
+				signalForApi(variable.dynamicSignal),
+				variable.dynamicAttribute,
+				undefined,
+				minTime,
+				maxTime,
+				existingQuery || undefined,
+			),
+		{
+			enabled:
+				!!variable.dynamicAttribute &&
+				(isVariableFetching || (isVariableSettled && hasVariableFetchedOnce)),
+			refetchOnWindowFocus: false,
+			onSettled: (_, error) =>
+				error
+					? onVariableFetchFailure(variable.name)
+					: onVariableFetchComplete(variable.name),
+		},
+	);
 
 	const options = useMemo(() => {
 		const payload = data?.data;
@@ -71,7 +113,7 @@ function DynamicSelector({
 			options={options}
 			multiSelect={variable.multiSelect}
 			showAllOption={variable.showAllOption}
-			loading={isFetching}
+			loading={isFetching || isVariableWaiting}
 			selection={selection}
 			onChange={onChange}
 			testId={`variable-select-${variable.name}`}
