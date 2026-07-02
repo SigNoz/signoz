@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/perses/spec/go/dashboard"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/util/validation"
@@ -1441,4 +1442,124 @@ func TestPanelTypeQueryTypeCompatibility(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestValidateGridGeometry(t *testing.T) {
+	tests := []struct {
+		scenario         string
+		items            []dashboard.GridItem
+		expectErrContain string
+	}{
+		{
+			scenario:         "valid side-by-side items",
+			items:            []dashboard.GridItem{{X: 0, Y: 0, Width: 6, Height: 6}, {X: 6, Y: 0, Width: 6, Height: 6}},
+			expectErrContain: "",
+		},
+		{
+			scenario:         "valid full-width item",
+			items:            []dashboard.GridItem{{X: 0, Y: 0, Width: 12, Height: 6}},
+			expectErrContain: "",
+		},
+		{
+			scenario:         "stacked items do not overlap",
+			items:            []dashboard.GridItem{{X: 0, Y: 0, Width: 6, Height: 6}, {X: 0, Y: 6, Width: 6, Height: 6}},
+			expectErrContain: "",
+		},
+		{
+			scenario:         "zero width",
+			items:            []dashboard.GridItem{{X: 0, Y: 0, Width: 0, Height: 6}},
+			expectErrContain: "width must be at least 1",
+		},
+		{
+			scenario:         "zero height",
+			items:            []dashboard.GridItem{{X: 0, Y: 0, Width: 6, Height: 0}},
+			expectErrContain: "height must be at least 1",
+		},
+		{
+			scenario:         "negative x",
+			items:            []dashboard.GridItem{{X: -1, Y: 0, Width: 6, Height: 6}},
+			expectErrContain: "x must not be negative",
+		},
+		{
+			scenario:         "negative y",
+			items:            []dashboard.GridItem{{X: 0, Y: -1, Width: 6, Height: 6}},
+			expectErrContain: "y must not be negative",
+		},
+		{
+			scenario:         "width wider than grid",
+			items:            []dashboard.GridItem{{X: 0, Y: 0, Width: 13, Height: 6}},
+			expectErrContain: "width (13) exceeds grid width 12",
+		},
+		{
+			scenario:         "x at grid width",
+			items:            []dashboard.GridItem{{X: 12, Y: 0, Width: 1, Height: 6}},
+			expectErrContain: "x (12) must be less than grid width 12",
+		},
+		{
+			scenario:         "x plus width overflows grid",
+			items:            []dashboard.GridItem{{X: 8, Y: 0, Width: 6, Height: 6}},
+			expectErrContain: "x (8) + width (6) exceeds grid width 12",
+		},
+		{
+			scenario:         "overlapping items",
+			items:            []dashboard.GridItem{{X: 0, Y: 0, Width: 6, Height: 6}, {X: 3, Y: 3, Width: 6, Height: 6}},
+			expectErrContain: "items[0] and items[1] overlap",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.scenario, func(t *testing.T) {
+			err := validateGridLayoutGeometry(&dashboard.GridLayoutSpec{Items: test.items}, 0)
+			if test.expectErrContain == "" {
+				require.NoError(t, err)
+				return
+			}
+			require.Error(t, err)
+			require.Contains(t, err.Error(), test.expectErrContain)
+		})
+	}
+}
+
+func TestValidateGridItemLimit(t *testing.T) {
+	err := validateGridLayoutGeometry(&dashboard.GridLayoutSpec{Items: make([]dashboard.GridItem, maxItemsPerGridLayout+1)}, 0)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "maximum is")
+}
+
+// Both panel refs are valid, so this errors only if geometry validation runs on
+// the unmarshal path — it does, via DashboardSpec.Validate -> validateLayouts.
+func TestInvalidateLayoutOverlapViaUnmarshal(t *testing.T) {
+	data := []byte(`{
+		"panels": {
+			"p1": {"kind": "Panel", "spec": {"plugin": {"kind": "signoz/TablePanel", "spec": {}}, "queries": [{"kind": "time_series", "spec": {"plugin": {"kind": "signoz/BuilderQuery", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]}}}}]}},
+			"p2": {"kind": "Panel", "spec": {"plugin": {"kind": "signoz/TablePanel", "spec": {}}, "queries": [{"kind": "time_series", "spec": {"plugin": {"kind": "signoz/BuilderQuery", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]}}}}]}}
+		},
+		"layouts": [{"kind": "Grid", "spec": {"items": [
+			{"x": 0, "y": 0, "width": 6, "height": 6, "content": {"$ref": "#/spec/panels/p1"}},
+			{"x": 3, "y": 3, "width": 6, "height": 6, "content": {"$ref": "#/spec/panels/p2"}}
+		]}}]
+	}`)
+	_, err := unmarshalDashboard(data)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "overlap")
+}
+
+// The frontend keys each grid item by its panel id, so the same panel placed by
+// two grid items crashes the section; the backend rejects it dashboard-wide. The
+// two items are side by side so they clear the overlap check first.
+func TestInvalidateDuplicatePanelReference(t *testing.T) {
+	data := []byte(`{
+		"panels": {
+			"p1": {"kind": "Panel", "spec": {"plugin": {"kind": "signoz/TablePanel", "spec": {}}, "queries": [{"kind": "time_series", "spec": {"plugin": {"kind": "signoz/BuilderQuery", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]}}}}]}}
+		},
+		"layouts": [{"kind": "Grid", "spec": {"items": [
+			{"x": 0, "y": 0, "width": 6, "height": 6, "content": {"$ref": "#/spec/panels/p1"}},
+			{"x": 6, "y": 0, "width": 6, "height": 6, "content": {"$ref": "#/spec/panels/p1"}}
+		]}}]
+	}`)
+	_, err := unmarshalDashboard(data)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "already placed")
+	// Both offending grid items are named.
+	assert.Contains(t, err.Error(), "spec.layouts[0].spec.items[0].content")
+	assert.Contains(t, err.Error(), "spec.layouts[0].spec.items[1].content")
 }
