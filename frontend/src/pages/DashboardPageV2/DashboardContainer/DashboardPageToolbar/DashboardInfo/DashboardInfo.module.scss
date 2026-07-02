@@ -32,6 +32,18 @@
 	cursor: help;
 }
 
+.publicLink {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	padding: 0;
+	border: none;
+	background: transparent;
+	color: inherit;
+	cursor: pointer;
+}
+
 .divider {
 	flex-shrink: 0;
 	width: 1px;
