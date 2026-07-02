@@ -907,6 +907,26 @@ func TestStatementBuilderListQueryWithCorruptData(t *testing.T) {
 				Args:  []any{"1.0.0", "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10},
 			},
 		},
+		{
+			// Regression test: scope.version in selectFields with no metadata (isColumn=true filters it out)
+			// must still produce scope.version::String, not scope.attributes.version::String
+			name:        "scope.version in selectFields only, no metadata (intrinsic field fallback)",
+			requestType: qbtypes.RequestTypeRaw,
+			keysMap:     map[string][]*telemetrytypes.TelemetryFieldKey{},
+			query: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+				Signal:       telemetrytypes.SignalTraces,
+				StepInterval: qbtypes.Step{Duration: 30 * time.Second},
+				Filter:       &qbtypes.Filter{},
+				SelectFields: []telemetrytypes.TelemetryFieldKey{
+					{Name: "scope.version", FieldContext: telemetrytypes.FieldContextUnspecified},
+				},
+				Limit: 10,
+			},
+			expected: qbtypes.Statement{
+				Query: "SELECT timestamp AS `timestamp`, trace_id AS `trace_id`, span_id AS `span_id`, scope.version::String AS `scope.version` FROM signoz_traces.distributed_signoz_index_v3 WHERE timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:  []any{"1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10},
+			},
+		},
 	}
 
 	for _, c := range cases {
