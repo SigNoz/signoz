@@ -32,7 +32,6 @@
 	display: flex;
 	align-items: center;
 	gap: 8px;
-	min-width: 0;
 }
 
 .icon {
@@ -49,11 +48,11 @@
 	font-weight: var(--font-weight-medium);
 	line-height: 20px;
 	letter-spacing: -0.07px;
-	/* Single line, truncated with an ellipsis (full name shown via the row tooltip). */
-	min-width: 0;
-	white-space: nowrap;
+	display: -webkit-box;
+	-webkit-line-clamp: 3;
+	-webkit-box-orient: vertical;
 	overflow: hidden;
-	text-overflow: ellipsis;
+	overflow-wrap: anywhere;
 }
 
 .tagsWithActions {

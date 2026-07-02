@@ -78,7 +78,7 @@ function DashboardRow({
 			<div className={styles.titleWithAction}>
 				<div className={styles.titleBlock}>
 					<Tooltip
-						title={name}
+						title={name.length > 50 ? name : ''}
 						placement="bottom"
 						overlayClassName="titleTooltipOverlay"
 					>
