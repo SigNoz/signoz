@@ -32,6 +32,8 @@ import { v4 as uuid } from 'uuid';
 
 import noDataUrl from '@/assets/Icons/no-data.svg';
 
+import OpenInLogsExplorer from './OpenInLogsExplorer';
+
 import styles from './SpanLogs.module.scss';
 
 interface SpanLogsProps {
@@ -267,11 +269,13 @@ function SpanLogs({
 
 		if (logs.length === 0) {
 			if (emptyStateConfig) {
+				// "No trace logs" state: the action sits inline within the empty state.
 				return (
 					<EmptyLogsSearch
 						dataSource={DataSource.LOGS}
 						panelType="LIST"
 						customMessage={emptyStateConfig}
+						action={<OpenInLogsExplorer onClick={handleExplorerPageRedirect} />}
 					/>
 				);
 			}
@@ -281,7 +285,17 @@ function SpanLogs({
 		return renderContent;
 	};
 
-	return <div className={styles.spanLogs}>{renderSpanLogsContent()}</div>;
+	return (
+		<div className={styles.spanLogs}>
+			{/* Over the log list only; the empty states render their own action. */}
+			{logs.length > 0 && !isLoading && !isFetching && !isError && (
+				<div className={styles.logsToolbar}>
+					<OpenInLogsExplorer onClick={handleExplorerPageRedirect} />
+				</div>
+			)}
+			<div className={styles.spanLogsContent}>{renderSpanLogsContent()}</div>
+		</div>
+	);
 }
 SpanLogs.defaultProps = {
 	emptyStateConfig: undefined,
