@@ -354,7 +354,7 @@ func (m *module) ListContainers(ctx context.Context, orgID valuer.UUID, req *inf
 		return resp, nil
 	}
 
-	metadataMap, err := m.getContainersTableMetadata(ctx, req)
+	metadataMap, err := m.getContainersTableMetadata(ctx, orgID, req)
 	if err != nil {
 		return nil, err
 	}
