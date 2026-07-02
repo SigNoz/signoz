@@ -145,14 +145,14 @@ function DashboardInfo({
 						data-testid="dashboard-tags"
 					>
 						{visibleTags.map((tag) => (
-							<Badge key={tag} color="warning" variant="outline">
+							<Badge key={tag} color="sienna" variant="outline">
 								{tag}
 							</Badge>
 						))}
 						{remainingTags.length > 0 && (
 							<TooltipSimple title={remainingTags.join(', ')}>
 								<Badge
-									color="warning"
+									color="sienna"
 									variant="outline"
 									data-testid="dashboard-tags-overflow"
 								>
