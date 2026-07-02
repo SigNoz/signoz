@@ -10,6 +10,7 @@ import { PANEL_TYPES } from './constants';
 import SectionPicker from './SectionPicker';
 import { buildSectionOptions, resolveDefaultSectionValue } from './utils';
 import styles from './PanelTypeSelectionModal.module.scss';
+import { Plus } from '@signozhq/icons';
 
 interface PanelTypeSelectionModalProps {
 	open: boolean;
@@ -70,44 +71,36 @@ function PanelTypeSelectionModal({
 		}, CONFIRM_LOADER_MS);
 	};
 
-	const selectedPanel = PANEL_TYPES.find(
-		(p) => p.panelKind === selectedPanelKind,
-	);
-	const ConfirmIcon = selectedPanel?.Icon;
-
-	const footer =
-		selectedPanelKind !== null ? (
-			<div className={styles.footerActions}>
-				{hasSectionPicker && (
-					<div className={styles.footerPicker}>
-						<span className={styles.pickerLabel}>Add panel to</span>
-						<SectionPicker
-							options={options}
-							value={selectedValue}
-							onChange={setSelectedValue}
-						/>
-					</div>
-				)}
-				<div className={styles.footerConfirm}>
-					<Button
-						className={styles.confirmButton}
-						color="primary"
-						size="md"
-						loading={isSubmitting}
-						prefix={ConfirmIcon ? <ConfirmIcon size={16} /> : undefined}
-						onClick={handleConfirm}
-						testId="panel-type-confirm"
-					>
-						Add Panel
-					</Button>
+	// Footer is always shown; the confirm button is disabled until a panel type is picked.
+	const footer = (
+		<div className={styles.footerActions}>
+			{hasSectionPicker && (
+				<div className={styles.footerPicker}>
+					<span className={styles.pickerLabel}>Add panel to</span>
+					<SectionPicker
+						options={options}
+						value={selectedValue}
+						onChange={setSelectedValue}
+					/>
 				</div>
-			</div>
-		) : undefined;
+			)}
+			<Button
+				color="primary"
+				size="md"
+				disabled={selectedPanelKind === null}
+				loading={isSubmitting}
+				prefix={<Plus size={16} />}
+				onClick={handleConfirm}
+				testId="panel-type-confirm"
+			>
+				Add Panel
+			</Button>
+		</div>
+	);
 
 	return (
 		<DialogWrapper
 			open={open}
-			width="wide"
 			onOpenChange={(isOpen): void => {
 				if (!isOpen) {
 					onClose();
@@ -116,22 +109,25 @@ function PanelTypeSelectionModal({
 			title="New Panel"
 			footer={footer}
 		>
-			<div className={styles.grid}>
-				{PANEL_TYPES.map(({ panelKind, label, Icon }) => (
-					<button
-						key={panelKind}
-						type="button"
-						className={cx(styles.panelTypeCard, {
-							[styles.panelTypeCardSelected]: panelKind === selectedPanelKind,
-						})}
-						data-testid={`panel-type-${panelKind}`}
-						aria-pressed={panelKind === selectedPanelKind}
-						onClick={(): void => setSelectedPanelKind(panelKind)}
-					>
-						<Icon size={24} color={Color.BG_ROBIN_400} />
-						{label}
-					</button>
-				))}
+			<div className={styles.panelTypeSection}>
+				<span className={styles.pickerLabel}>Select panel type</span>
+				<div className={styles.grid}>
+					{PANEL_TYPES.map(({ panelKind, label, Icon }) => (
+						<button
+							key={panelKind}
+							type="button"
+							className={cx(styles.panelTypeCard, {
+								[styles.panelTypeCardSelected]: panelKind === selectedPanelKind,
+							})}
+							data-testid={`panel-type-${panelKind}`}
+							aria-pressed={panelKind === selectedPanelKind}
+							onClick={(): void => setSelectedPanelKind(panelKind)}
+						>
+							<Icon size={24} color={Color.BG_ROBIN_400} />
+							{label}
+						</button>
+					))}
+				</div>
 			</div>
 		</DialogWrapper>
 	);

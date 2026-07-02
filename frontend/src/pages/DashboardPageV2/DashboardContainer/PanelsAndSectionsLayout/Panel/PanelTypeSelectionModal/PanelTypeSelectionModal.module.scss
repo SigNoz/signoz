@@ -1,4 +1,12 @@
+.panelTypeSection {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	align-items: center;
+}
+
 .grid {
+	align-self: stretch;
 	display: grid;
 	grid-template-columns: repeat(2, 1fr);
 	gap: 8px;
@@ -22,11 +30,10 @@
 
 	&:hover {
 		background-color: var(--l2-background-hover);
-		transform: translateY(-2px);
 		border-color: var(--bg-robin-400);
 	}
 	&:active {
-		transform: translateY(0px);
+		transform: translateY(2px);
 	}
 }
 
@@ -39,11 +46,13 @@
 .footerActions {
 	display: flex;
 	align-items: flex-end;
+	justify-content: flex-end;
 	gap: 8px;
 	width: 100%;
 }
 
 .footerPicker {
+	// Take all the width left over by the (natural-width) confirm button.
 	display: flex;
 	flex: 1;
 	flex-direction: column;
@@ -57,14 +66,4 @@
 	font-weight: 500;
 	letter-spacing: 0.06em;
 	text-transform: uppercase;
-}
-
-.footerConfirm {
-	display: flex;
-	flex: 1;
-	min-width: 0;
-}
-
-.confirmButton {
-	width: 100%;
 }
