@@ -43,8 +43,13 @@ var containerNameGroupByKey = qbtypes.GroupByKey{
 // podUIDGroupByKey is shared with the pods module (pods_constants.go).
 var containerRowGroupBy = []qbtypes.GroupByKey{podUIDGroupByKey, containerNameGroupByKey}
 
-// containersTableMetricNamesList are the kubeletstats metrics that carry the
-// container attributes; used for metadata resolution and the retention check.
+// containersTableMetricNamesList are the metrics that carry the container
+// attributes; used for metadata resolution and the retention check. Includes
+// kubeletstats usage metrics AND the k8scluster default-on health metrics
+// (restarts/ready) so that containers with no usage samples — never-ran
+// (ImagePullBackOff, CreateContainerConfigError) or terminated (Completed,
+// OOMKilled) — still appear in the list (backfilled with usage=-1, health
+// populated from the k8scluster queries).
 var containersTableMetricNamesList = []string{
 	"container.cpu.usage",
 	"k8s.container.cpu_request_utilization",
@@ -52,6 +57,10 @@ var containersTableMetricNamesList = []string{
 	"container.memory.working_set",
 	"k8s.container.memory_request_utilization",
 	"k8s.container.memory_limit_utilization",
+	"k8s.container.restarts",
+	"k8s.container.ready",
+	"k8s.container.status.reason",
+	"k8s.container.status.state",
 }
 
 var containerAttrKeysForMetadata = []string{
