@@ -82,10 +82,11 @@ function dispatchPermission(
 	pendingPermissions.push(permission);
 
 	if (!ctx) {
-		let resolve: (v: AuthZCheckResponse) => void, reject: (reason?: any) => void;
-		ctx = new Promise<AuthZCheckResponse>((r, re) => {
-			resolve = r;
-			reject = re;
+		let promiseResolve: (v: AuthZCheckResponse) => void,
+			promiseReject: (reason?: unknown) => void;
+		ctx = new Promise<AuthZCheckResponse>((resolve, reject) => {
+			promiseResolve = resolve;
+			promiseReject = reject;
 		});
 
 		setTimeout(() => {
@@ -93,7 +94,9 @@ function dispatchPermission(
 			pendingPermissions = [];
 			ctx = null;
 
-			fetchManyPermissions(copiedPermissions).then(resolve).catch(reject);
+			fetchManyPermissions(copiedPermissions)
+				.then(promiseResolve)
+				.catch(promiseReject);
 		}, SINGLE_FLIGHT_WAIT_TIME_MS);
 	}
 
@@ -220,7 +223,7 @@ export function useAuthZ(
 
 	const refetchPermissions = useCallback(() => {
 		for (const query of queryResults) {
-			query.refetch();
+			void query.refetch();
 		}
 	}, [queryResults]);
 

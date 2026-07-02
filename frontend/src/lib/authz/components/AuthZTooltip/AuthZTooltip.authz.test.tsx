@@ -16,6 +16,8 @@ const noPermissions = {
 	isFetching: false,
 	error: null,
 	permissions: null,
+	allowed: false,
+	deniedPermissions: [],
 	refetchPermissions: jest.fn(),
 };
 
