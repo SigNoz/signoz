@@ -566,6 +566,28 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
         "Epsilon Metrics",
         "Zeta Overview",
     }
+    # top-level tags = org-wide distinct tag set, sorted case-insensitively
+    # by (key, value). Asserting the exact list (not a set) locks in the sort.
+    assert body["data"]["tags"] == [
+        {"key": "env", "value": "dev"},
+        {"key": "env", "value": "prod"},
+        {"key": "env", "value": "staging"},
+        {"key": "team", "value": "metrics"},
+        {"key": "team", "value": "pulse"},
+        {"key": "team", "value": "storage"},
+        {"key": "tier", "value": "critical"},
+    ]
+    # reserved keywords = the filterable column-level DSL keys, sorted
+    # alphabetically. Static (independent of the dashboards), so this is the
+    # full expected set.
+    assert body["data"]["reservedKeywords"] == [
+        "created_at",
+        "created_by",
+        "description",
+        "locked",
+        "name",
+        "updated_at",
+    ]
 
     # ── stage 4: filter DSL ──────────────────────────────────────────────────
     cases = [

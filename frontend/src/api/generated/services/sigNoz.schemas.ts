@@ -5034,6 +5034,10 @@ export interface DashboardtypesListableDashboardForUserV2DTO {
 	/**
 	 * @type array
 	 */
+	reservedKeywords: string[];
+	/**
+	 * @type array
+	 */
 	tags: TagtypesGettableTagDTO[];
 	/**
 	 * @type integer
@@ -5098,6 +5102,10 @@ export interface DashboardtypesListableDashboardV2DTO {
 	 * @type array
 	 */
 	dashboards: DashboardtypesListedDashboardV2DTO[];
+	/**
+	 * @type array
+	 */
+	reservedKeywords: string[];
 	/**
 	 * @type array
 	 */
