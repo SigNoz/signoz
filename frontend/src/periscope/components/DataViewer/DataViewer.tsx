@@ -1,23 +1,24 @@
 import { useMemo, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
-import { ChevronDown, Copy } from '@signozhq/icons';
-import { Button } from '@signozhq/ui/button';
-import { DropdownMenuSimple as Dropdown } from '@signozhq/ui/dropdown-menu';
+import { Copy } from '@signozhq/icons';
 import { toast } from '@signozhq/ui/sonner';
+import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
 import logEvent from 'api/common/logEvent';
 import { JsonView } from 'periscope/components/JsonView';
-import { PrettyView } from 'periscope/components/PrettyView';
-import { PrettyViewProps } from 'periscope/components/PrettyView';
+import { PrettyView, PrettyViewProps } from 'periscope/components/PrettyView';
 
 import './DataViewer.styles.scss';
 
-type ViewMode = 'pretty' | 'json';
+enum ViewMode {
+	Pretty = 'pretty',
+	Json = 'json',
+}
 
 const VIEW_MODE_CHANGED_EVENT = 'Data Viewer: View mode changed';
 
 const VIEW_MODE_OPTIONS: { label: string; value: ViewMode }[] = [
-	{ label: 'Pretty', value: 'pretty' },
-	{ label: 'JSON', value: 'json' },
+	{ label: 'Pretty', value: ViewMode.Pretty },
+	{ label: 'JSON', value: ViewMode.Json },
 ];
 
 export interface DataViewerProps {
@@ -32,13 +33,18 @@ function DataViewer({
 	drawerKey = 'default',
 	prettyViewProps,
 }: DataViewerProps): JSX.Element {
-	const [viewMode, setViewMode] = useState<ViewMode>('pretty');
+	const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Pretty);
 	const [, setCopy] = useCopyToClipboard();
 
 	const jsonString = useMemo(() => JSON.stringify(data, null, 2), [data]);
 
 	const handleViewModeChange = (value: string): void => {
 		const next = value as ViewMode;
+		// A single-select toggle can emit '' when the active item is toggled off;
+		// ignore it so one mode is always selected.
+		if (next !== ViewMode.Pretty && next !== ViewMode.Json) {
+			return;
+		}
 		setViewMode(next);
 		try {
 			logEvent(VIEW_MODE_CHANGED_EVENT, {
@@ -59,41 +65,17 @@ function DataViewer({
 		});
 	};
 
-	const currentLabel =
-		VIEW_MODE_OPTIONS.find((opt) => opt.value === viewMode)?.label ?? 'Pretty';
-
 	return (
 		<div className="data-viewer">
 			<div className="data-viewer__toolbar">
-				<Dropdown
-					align="start"
-					className="data-viewer__mode-dropdown"
-					menu={{
-						items: [
-							{
-								type: 'radio-group',
-								value: viewMode,
-								onChange: handleViewModeChange,
-								children: VIEW_MODE_OPTIONS.map((opt) => ({
-									type: 'radio',
-									key: opt.value,
-									value: opt.value,
-									label: opt.label,
-								})),
-							},
-						],
-					}}
-				>
-					<Button
-						variant="outlined"
-						size="sm"
-						color="secondary"
-						className="data-viewer__mode-select"
-						suffix={<ChevronDown size={12} />}
-					>
-						{currentLabel}
-					</Button>
-				</Dropdown>
+				<ToggleGroupSimple
+					type="single"
+					size="sm"
+					value={viewMode}
+					onChange={handleViewModeChange}
+					items={VIEW_MODE_OPTIONS}
+					testId="data-viewer-view-mode"
+				/>
 				<button
 					type="button"
 					className="data-viewer__copy-btn"
@@ -105,10 +87,10 @@ function DataViewer({
 			</div>
 
 			<div className="data-viewer__content">
-				{viewMode === 'pretty' && (
+				{viewMode === ViewMode.Pretty && (
 					<PrettyView data={data} drawerKey={drawerKey} {...prettyViewProps} />
 				)}
-				{viewMode === 'json' && <JsonView data={jsonString} />}
+				{viewMode === ViewMode.Json && <JsonView data={jsonString} />}
 			</div>
 		</div>
 	);

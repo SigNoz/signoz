@@ -12,16 +12,6 @@
 		padding-bottom: 8px;
 	}
 
-	&__mode-select {
-		min-width: 90px;
-	}
-
-	// Dropdown content is rendered in a portal; bump above FloatingPanel
-	// (z-index 999) so it stays visible when the consumer panel is floating.
-	&__mode-dropdown {
-		--dropdown-menu-content-z-index: 1000;
-	}
-
 	&__copy-btn {
 		display: flex;
 		align-items: center;
