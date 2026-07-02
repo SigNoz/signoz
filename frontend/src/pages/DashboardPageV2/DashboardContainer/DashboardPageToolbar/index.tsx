@@ -16,8 +16,10 @@ import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
+import { getAbsoluteUrl } from 'utils/basePath';
 
 import { useCreatePanel } from '../hooks/useCreatePanel';
+import { usePublicDashboardMeta } from '../DashboardSettings/PublicDashboard/usePublicDashboardMeta';
 import PanelTypeSelectionModal from '../PanelsAndSectionsLayout/Panel/PanelTypeSelectionModal/PanelTypeSelectionModal';
 import DashboardActions from './DashboardActions/DashboardActions';
 import DashboardInfo from './DashboardInfo/DashboardInfo';
@@ -56,6 +58,10 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 
 	const isAuthor =
 		!!user?.email && !!dashboard.createdBy && dashboard.createdBy === user.email;
+
+	// Public-sharing meta (deduped react-query read); drives the header globe.
+	const { isPublic, publicMeta } = usePublicDashboardMeta(id);
+	const publicUrl = getAbsoluteUrl(publicMeta?.publicPath ?? '');
 
 	const handleLockDashboardToggle = useCallback(async (): Promise<void> => {
 		if (!id) {
@@ -119,7 +125,8 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 					image={image}
 					tags={tags}
 					description={description}
-					isPublicDashboard={false}
+					isPublicDashboard={isPublic}
+					publicUrl={publicUrl}
 					isDashboardLocked={isDashboardLocked}
 					isEditing={isEditing}
 					draft={draft}

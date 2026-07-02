@@ -7,6 +7,7 @@ import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import { isEmpty } from 'lodash-es';
+import { openInNewTab } from 'utils/navigation';
 
 import styles from './DashboardInfo.module.scss';
 import { useVisibleTagCount } from './useVisibleTagCount';
@@ -18,6 +19,8 @@ interface DashboardInfoProps {
 	tags: string[];
 	description: string;
 	isPublicDashboard: boolean;
+	/** Absolute URL of the public dashboard page; opened when the globe is clicked. */
+	publicUrl: string;
 	isDashboardLocked: boolean;
 	isEditing: boolean;
 	draft: string;
@@ -33,6 +36,7 @@ function DashboardInfo({
 	tags,
 	description,
 	isPublicDashboard,
+	publicUrl,
 	isDashboardLocked,
 	isEditing,
 	draft,
@@ -125,8 +129,16 @@ function DashboardInfo({
 			)}
 
 			{isPublicDashboard && (
-				<TooltipSimple title="This dashboard is publicly accessible">
-					<Globe size={14} />
+				<TooltipSimple title="This dashboard is publicly accessible. Click to open the public page.">
+					<button
+						type="button"
+						className={styles.publicLink}
+						aria-label="Open public dashboard"
+						data-testid="dashboard-public-link"
+						onClick={(): void => openInNewTab(publicUrl)}
+					>
+						<Globe size={14} />
+					</button>
 				</TooltipSimple>
 			)}
 
