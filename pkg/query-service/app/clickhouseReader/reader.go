@@ -4650,13 +4650,17 @@ func (r *ClickHouseReader) ReadRuleStateHistoryByRuleID(
 		instrumentationtypes.CodeFunctionName: "ReadRuleStateHistoryByRuleID",
 	})
 	var conditions []string
+	var args []any
 
-	conditions = append(conditions, fmt.Sprintf("rule_id = '%s'", ruleID))
+	conditions = append(conditions, "rule_id = ?")
+	args = append(args, ruleID)
 
-	conditions = append(conditions, fmt.Sprintf("unix_milli >= %d AND unix_milli < %d", params.Start, params.End))
+	conditions = append(conditions, "unix_milli >= ? AND unix_milli < ?")
+	args = append(args, params.Start, params.End)
 
 	if params.State != "" {
-		conditions = append(conditions, fmt.Sprintf("state = '%s'", params.State))
+		conditions = append(conditions, "state = ?")
+		args = append(args, params.State)
 	}
 
 	if params.Filters != nil && len(params.Filters.Items) != 0 {
@@ -4669,50 +4673,73 @@ func (r *ClickHouseReader) ReadRuleStateHistoryByRuleID(
 			fmtVal := utils.ClickHouseFormattedValue(toFormat)
 			switch op {
 			case v3.FilterOperatorEqual:
-				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') = %s", item.Key.Key, fmtVal))
+				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, ?) = %s", fmtVal))
+				args = append(args, item.Key.Key)
 			case v3.FilterOperatorNotEqual:
-				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') != %s", item.Key.Key, fmtVal))
+				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, ?) != %s", fmtVal))
+				args = append(args, item.Key.Key)
 			case v3.FilterOperatorIn:
-				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') IN %s", item.Key.Key, fmtVal))
+				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, ?) IN %s", fmtVal))
+				args = append(args, item.Key.Key)
 			case v3.FilterOperatorNotIn:
-				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') NOT IN %s", item.Key.Key, fmtVal))
+				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, ?) NOT IN %s", fmtVal))
+				args = append(args, item.Key.Key)
 			case v3.FilterOperatorLike:
-				conditions = append(conditions, fmt.Sprintf("like(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
+				conditions = append(conditions, fmt.Sprintf("like(JSONExtractString(labels, ?), %s)", fmtVal))
+				args = append(args, item.Key.Key)
 			case v3.FilterOperatorNotLike:
-				conditions = append(conditions, fmt.Sprintf("notLike(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
+				conditions = append(conditions, fmt.Sprintf("notLike(JSONExtractString(labels, ?), %s)", fmtVal))
+				args = append(args, item.Key.Key)
 			case v3.FilterOperatorRegex:
-				conditions = append(conditions, fmt.Sprintf("match(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
+				conditions = append(conditions, fmt.Sprintf("match(JSONExtractString(labels, ?), %s)", fmtVal))
+				args = append(args, item.Key.Key)
 			case v3.FilterOperatorNotRegex:
-				conditions = append(conditions, fmt.Sprintf("not match(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
+				conditions = append(conditions, fmt.Sprintf("not match(JSONExtractString(labels, ?), %s)", fmtVal))
+				args = append(args, item.Key.Key)
 			case v3.FilterOperatorGreaterThan:
-				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') > %s", item.Key.Key, fmtVal))
+				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, ?) > %s", fmtVal))
+				args = append(args, item.Key.Key)
 			case v3.FilterOperatorGreaterThanOrEq:
-				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') >= %s", item.Key.Key, fmtVal))
+				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, ?) >= %s", fmtVal))
+				args = append(args, item.Key.Key)
 			case v3.FilterOperatorLessThan:
-				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') < %s", item.Key.Key, fmtVal))
+				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, ?) < %s", fmtVal))
+				args = append(args, item.Key.Key)
 			case v3.FilterOperatorLessThanOrEq:
-				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') <= %s", item.Key.Key, fmtVal))
+				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, ?) <= %s", fmtVal))
+				args = append(args, item.Key.Key)
 			case v3.FilterOperatorContains:
-				conditions = append(conditions, fmt.Sprintf("like(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
+				conditions = append(conditions, fmt.Sprintf("like(JSONExtractString(labels, ?), %s)", fmtVal))
+				args = append(args, item.Key.Key)
 			case v3.FilterOperatorNotContains:
-				conditions = append(conditions, fmt.Sprintf("notLike(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
+				conditions = append(conditions, fmt.Sprintf("notLike(JSONExtractString(labels, ?), %s)", fmtVal))
+				args = append(args, item.Key.Key)
 			case v3.FilterOperatorExists:
-				conditions = append(conditions, fmt.Sprintf("has(JSONExtractKeys(labels), '%s')", item.Key.Key))
+				conditions = append(conditions, "has(JSONExtractKeys(labels), ?)")
+				args = append(args, item.Key.Key)
 			case v3.FilterOperatorNotExists:
-				conditions = append(conditions, fmt.Sprintf("not has(JSONExtractKeys(labels), '%s')", item.Key.Key))
+				conditions = append(conditions, "not has(JSONExtractKeys(labels), ?)")
+				args = append(args, item.Key.Key)
 			default:
 				return nil, fmt.Errorf("unsupported filter operator")
 			}
 		}
 	}
+	order := strings.ToLower(params.Order)
+	if order == "" {
+		order = "asc"
+	}
+	if order != "asc" && order != "desc" {
+		return nil, fmt.Errorf("invalid order parameter")
+	}
 	whereClause := strings.Join(conditions, " AND ")
 
 	query := fmt.Sprintf("SELECT * FROM %s.%s WHERE %s ORDER BY unix_milli %s LIMIT %d OFFSET %d",
-		signozHistoryDBName, ruleStateHistoryTableName, whereClause, params.Order, params.Limit, params.Offset)
+		signozHistoryDBName, ruleStateHistoryTableName, whereClause, order, params.Limit, params.Offset)
 
 	history := []model.RuleStateHistory{}
 	r.logger.Debug("rule state history query", "query", query)
-	err := r.db.Select(ctx, &history, query)
+	err := r.db.Select(ctx, &history, query, args...)
 	if err != nil {
 		r.logger.Error("Error while reading rule state history", errorsV2.Attr(err))
 		return nil, err
@@ -4722,7 +4749,7 @@ func (r *ClickHouseReader) ReadRuleStateHistoryByRuleID(
 	r.logger.Debug("rule state history total query", "query", fmt.Sprintf("SELECT count(*) FROM %s.%s WHERE %s",
 		signozHistoryDBName, ruleStateHistoryTableName, whereClause))
 	err = r.db.QueryRow(ctx, fmt.Sprintf("SELECT count(*) FROM %s.%s WHERE %s",
-		signozHistoryDBName, ruleStateHistoryTableName, whereClause)).Scan(&total)
+		signozHistoryDBName, ruleStateHistoryTableName, whereClause), args...).Scan(&total)
 	if err != nil {
 		return nil, err
 	}
