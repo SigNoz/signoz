@@ -618,13 +618,6 @@ components:
         provider:
           $ref: '#/components/schemas/AuthtypesAuthNProvider'
       type: object
-    AuthtypesPatchableRole:
-      properties:
-        description:
-          type: string
-      required:
-      - description
-      type: object
     AuthtypesPostableAuthDomain:
       properties:
         config:
@@ -2536,22 +2529,6 @@ components:
       - resource
       - selectors
       type: object
-    CoretypesPatchableObjects:
-      properties:
-        additions:
-          items:
-            $ref: '#/components/schemas/CoretypesObjectGroup'
-          nullable: true
-          type: array
-        deletions:
-          items:
-            $ref: '#/components/schemas/CoretypesObjectGroup'
-          nullable: true
-          type: array
-      required:
-      - additions
-      - deletions
-      type: object
     CoretypesResourceRef:
       properties:
         kind:
@@ -2737,6 +2714,14 @@ components:
           type: string
         dashboardName:
           type: string
+        filterBy:
+          items:
+            type: string
+          type: array
+        groupBy:
+          items:
+            type: string
+          type: array
         panelId:
           type: string
         panelName:
@@ -3586,7 +3571,7 @@ components:
       - user
       - system
       - integration
-      type: object
+      type: string
     DashboardtypesSpanGaps:
       properties:
         fillLessThan:
@@ -5412,6 +5397,9 @@ components:
           type: string
         id:
           type: string
+        ingestedSamples:
+          minimum: 0
+          type: integer
         ingestedSeries:
           minimum: 0
           type: integer
@@ -5424,9 +5412,9 @@ components:
           $ref: '#/components/schemas/MetricreductionruletypesMatchType'
         metricName:
           type: string
-        reductionPercent:
-          format: double
-          type: number
+        retainedSamples:
+          minimum: 0
+          type: integer
         retainedSeries:
           minimum: 0
           type: integer
@@ -5444,7 +5432,8 @@ components:
       - active
       - ingestedSeries
       - retainedSeries
-      - reductionPercent
+      - ingestedSamples
+      - retainedSamples
       type: object
     MetricreductionruletypesGettableReductionRulePreview:
       properties:
@@ -5487,7 +5476,13 @@ components:
         estimatedMonthlySavingsUsd:
           format: double
           type: number
+        ingestedSamples:
+          minimum: 0
+          type: integer
         ingestedSeries:
+          minimum: 0
+          type: integer
+        retainedSamples:
           minimum: 0
           type: integer
         retainedSeries:
@@ -5496,6 +5491,8 @@ components:
       required:
       - ingestedSeries
       - retainedSeries
+      - ingestedSamples
+      - retainedSamples
       - estimatedMonthlySavingsUsd
       type: object
     MetricreductionruletypesGettableReductionRules:
@@ -5561,7 +5558,6 @@ components:
       - metric
       - ingested_volume
       - reduced_volume
-      - reduction
       - last_updated
       type: string
     MetricreductionruletypesUpdatableReductionRule:
@@ -11825,68 +11821,6 @@ paths:
       summary: Get role
       tags:
       - role
-    patch:
-      deprecated: true
-      description: This endpoint patches a role
-      operationId: PatchRole
-      parameters:
-      - in: path
-        name: id
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AuthtypesPatchableRole'
-      responses:
-        "204":
-          description: No Content
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Not Found
-        "451":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unavailable For Legal Reasons
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-        "501":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Not Implemented
-      security:
-      - api_key:
-        - role:update
-      - tokenizer:
-        - role:update
-      summary: Patch role
-      tags:
-      - role
     put:
       deprecated: false
       description: This endpoint updates a role
@@ -11947,158 +11881,6 @@ paths:
       - tokenizer:
         - role:update
       summary: Update role
-      tags:
-      - role
-  /api/v1/roles/{id}/relations/{relation}/objects:
-    get:
-      deprecated: false
-      description: Gets all objects connected to the specified role via a given relation
-        type
-      operationId: GetObjects
-      parameters:
-      - in: path
-        name: id
-        required: true
-        schema:
-          type: string
-      - in: path
-        name: relation
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    items:
-                      $ref: '#/components/schemas/CoretypesObjectGroup'
-                    type: array
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: OK
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Not Found
-        "451":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unavailable For Legal Reasons
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-        "501":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Not Implemented
-      security:
-      - api_key:
-        - role:read
-      - tokenizer:
-        - role:read
-      summary: Get objects for a role by relation
-      tags:
-      - role
-    patch:
-      deprecated: true
-      description: Patches the objects connected to the specified role via a given
-        relation type
-      operationId: PatchObjects
-      parameters:
-      - in: path
-        name: id
-        required: true
-        schema:
-          type: string
-      - in: path
-        name: relation
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CoretypesPatchableObjects'
-      responses:
-        "204":
-          description: No Content
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Not Found
-        "451":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unavailable For Legal Reasons
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-        "501":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Not Implemented
-      security:
-      - api_key:
-        - role:update
-      - tokenizer:
-        - role:update
-      summary: Patch objects for a role by relation
       tags:
       - role
   /api/v1/route_policies:

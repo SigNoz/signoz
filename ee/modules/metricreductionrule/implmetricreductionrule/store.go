@@ -35,7 +35,7 @@ func (s *store) List(ctx context.Context, orgID valuer.UUID, params *metricreduc
 		Where("org_id = ?", orgID).
 		Order(column + " " + direction)
 	if params.Search != "" {
-		query = query.Where("metric_name LIKE ?", "%"+params.Search+"%")
+		query = query.Where("metric_name LIKE ? ESCAPE '\\'", "%"+s.sqlstore.Formatter().EscapeLikePattern(params.Search)+"%")
 	}
 	if params.MetricName != "" {
 		query = query.Where("metric_name = ?", params.MetricName)
