@@ -1390,11 +1390,23 @@ func TestSpanGaps(t *testing.T) {
 }
 
 func TestPanelTypeQueryTypeCompatibility(t *testing.T) {
+	// A panel's query carries the request type implied by the panel kind: list panels
+	// are raw (no aggregation), table-like panels are scalar, the rest time series.
+	requestKind := func(panelKind string) string {
+		switch panelKind {
+		case "signoz/ListPanel":
+			return "raw"
+		case "signoz/TablePanel", "signoz/NumberPanel", "signoz/PieChartPanel", "signoz/HistogramPanel":
+			return "scalar"
+		default:
+			return "time_series"
+		}
+	}
 	mkQuery := func(panelKind, queryKind, querySpec string) []byte {
 		return []byte(`{
 			"panels": {"p1": {"kind": "Panel", "spec": {
 				"plugin": {"kind": "` + panelKind + `", "spec": {}},
-				"queries": [{"kind": "time_series", "spec": {"plugin": {"kind": "` + queryKind + `", "spec": ` + querySpec + `}}}]
+				"queries": [{"kind": "` + requestKind(panelKind) + `", "spec": {"plugin": {"kind": "` + queryKind + `", "spec": ` + querySpec + `}}}]
 			}}},
 			"layouts": []
 		}`)
@@ -1403,7 +1415,7 @@ func TestPanelTypeQueryTypeCompatibility(t *testing.T) {
 		return []byte(`{
 			"panels": {"p1": {"kind": "Panel", "spec": {
 				"plugin": {"kind": "` + panelKind + `", "spec": {}},
-				"queries": [{"kind": "time_series", "spec": {"plugin": {"kind": "signoz/CompositeQuery", "spec": {
+				"queries": [{"kind": "` + requestKind(panelKind) + `", "spec": {"plugin": {"kind": "signoz/CompositeQuery", "spec": {
 					"queries": [{"type": "` + subType + `", "spec": ` + subSpec + `}]
 				}}}}]
 			}}},
@@ -1441,4 +1453,43 @@ func TestPanelTypeQueryTypeCompatibility(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestCommaSeparatedAggregationRejectedOnWrite asserts the write path (unmarshalDashboard
+// runs DashboardSpec.Validate) rejects an aggregation that packs several comma-separated
+// calls into one expression, while accepting a single call and a properly pre-split list.
+func TestCommaSeparatedAggregationRejectedOnWrite(t *testing.T) {
+	buildDashboardWithLogsAggregation := func(aggregationsJSON string) []byte {
+		return []byte(`{
+		"panels": {"p1": {"kind": "Panel", "spec": {
+			"plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
+			"queries": [{"kind": "time_series", "spec": {"plugin": {"kind": "signoz/BuilderQuery", "spec": {
+				"name": "A", "signal": "logs", "aggregations": ` + aggregationsJSON + `
+			}}}}]
+		}}},
+		"layouts": []
+	}`)
+	}
+
+	t.Run("comma-separated expression is rejected", func(t *testing.T) {
+		_, err := unmarshalDashboard(buildDashboardWithLogsAggregation(`[{"expression": "count(), sum(bytes)"}]`))
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "single function call")
+		assert.True(t, errors.Ast(err, errors.TypeInvalidInput))
+	})
+
+	t.Run("single-call expression is accepted", func(t *testing.T) {
+		_, err := unmarshalDashboard(buildDashboardWithLogsAggregation(`[{"expression": "count()"}]`))
+		require.NoError(t, err)
+	})
+
+	t.Run("pre-split aggregations are accepted", func(t *testing.T) {
+		_, err := unmarshalDashboard(buildDashboardWithLogsAggregation(`[{"expression": "count()"}, {"expression": "sum(bytes)"}]`))
+		require.NoError(t, err)
+	})
+
+	t.Run("comma inside function args is not mistaken for multiple calls", func(t *testing.T) {
+		_, err := unmarshalDashboard(buildDashboardWithLogsAggregation(`[{"expression": "countIf(day > 10, status)"}]`))
+		require.NoError(t, err)
+	})
 }

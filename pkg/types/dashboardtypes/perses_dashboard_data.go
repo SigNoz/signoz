@@ -94,11 +94,21 @@ func (d *DashboardSpec) validatePanels() error {
 		}
 		allowed := allowedQueryKinds[panelKind]
 		for qi, q := range panel.Spec.Queries {
-			queryPath := fmt.Sprintf("%s.spec.queries[%d].spec.plugin", path, qi)
-			if err := validateQueryAllowedForPanel(q.Spec.Plugin, allowed, panelKind, queryPath); err != nil {
+			if err := d.validateQuery(qi, q, panelKind, path, allowed); err != nil {
 				return err
 			}
 		}
+	}
+	return nil
+}
+
+func (d *DashboardSpec) validateQuery(qi int, q Query, panelKind PanelPluginKind, path string, allowed []QueryPluginKind) error {
+	queryPath := fmt.Sprintf("%s.spec.queries[%d].spec.plugin", path, qi)
+	if err := validateQueryAllowedForPanel(q.Spec.Plugin, allowed, panelKind, queryPath); err != nil {
+		return err
+	}
+	if err := validateQueryContent(q, queryPath); err != nil {
+		return err
 	}
 	return nil
 }
@@ -134,6 +144,24 @@ func validateQueryAllowedForPanel(plugin QueryPlugin, allowed []QueryPluginKind,
 				"%s.spec.queries[%d]: sub-query type %q is not supported by panel kind %q",
 				path, si, sub.Type, panelKind)
 		}
+	}
+	return nil
+}
+
+// validateQueryContent runs the query-builder type's own validation on the panel's
+// query - whatever its kind - by assembling the same v5 composite query the panel would
+// execute and delegating to it. The rules (aggregations, group by, order by, promql /
+// clickhouse / formula / trace-operator specifics, ...) live on querybuildertypesv5; this
+// only delegates, scoped to the query's request type, so a dashboard cannot persist a
+// query the querier would later reject. Request-type options keep e.g. a list (raw) panel
+// from being forced to carry an aggregation.
+func validateQueryContent(q Query, path string) error {
+	composite, err := q.Spec.Plugin.buildV5CompositeQueryFromPlugin()
+	if err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "%s: %s", path, err.Error())
+	}
+	if err := composite.Validate(qb.GetValidationOptions(q.Kind)...); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "%s: %s", path, err.Error())
 	}
 	return nil
 }
