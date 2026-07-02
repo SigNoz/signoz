@@ -43,7 +43,7 @@
 
 				&__title {
 					color: var(--l1-foreground);
-					font-size: 14px;
+					font-size: var(--periscope-font-size-base);
 					font-weight: 500;
 					line-height: 20px;
 					letter-spacing: -0.07px;
@@ -51,14 +51,14 @@
 
 				&__subtitle {
 					color: var(--l2-foreground);
-					font-size: 14px;
+					font-size: var(--periscope-font-size-base);
 					font-weight: 400;
 					line-height: 20px;
 					letter-spacing: -0.07px;
 				}
 
 				&__description {
-					font-size: 14px;
+					font-size: var(--periscope-font-size-base);
 					color: var(--l2-foreground);
 					line-height: 20px;
 				}
@@ -67,7 +67,7 @@
 					margin: 0;
 					margin-top: 8px;
 					color: var(--l2-foreground);
-					font-size: 14px;
+					font-size: var(--periscope-font-size-base);
 					font-weight: 400;
 					line-height: 20px;
 					letter-spacing: -0.07px;
@@ -106,7 +106,7 @@
 					border: 1px dashed var(--l1-border);
 					background: transparent;
 					color: var(--l2-foreground);
-					font-size: 14px;
+					font-size: var(--periscope-font-size-base);
 					font-weight: 400;
 					line-height: 18px;
 					letter-spacing: -0.07px;
@@ -136,11 +136,6 @@
 					flex-direction: column;
 					gap: 4px;
 					min-width: 260px;
-				}
-
-				// Inline action (e.g. Open in Logs Explorer), left-aligned.
-				&__action {
-					display: flex;
 				}
 
 				&__resources-card {

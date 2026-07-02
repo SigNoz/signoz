@@ -269,13 +269,11 @@ function SpanLogs({
 
 		if (logs.length === 0) {
 			if (emptyStateConfig) {
-				// "No trace logs" state: the action sits inline within the empty state.
 				return (
 					<EmptyLogsSearch
 						dataSource={DataSource.LOGS}
 						panelType="LIST"
 						customMessage={emptyStateConfig}
-						action={<OpenInLogsExplorer onClick={handleExplorerPageRedirect} />}
 					/>
 				);
 			}
@@ -287,13 +285,11 @@ function SpanLogs({
 
 	return (
 		<div className={styles.spanLogs}>
-			{/* Over the log list only; the empty states render their own action. */}
-			{logs.length > 0 && !isLoading && !isFetching && !isError && (
-				<div className={styles.logsToolbar}>
-					<OpenInLogsExplorer onClick={handleExplorerPageRedirect} />
-				</div>
-			)}
 			<div className={styles.spanLogsContent}>{renderSpanLogsContent()}</div>
+			{/* Persistent footer — Open in Logs Explorer, visible in every state. */}
+			<div className={styles.logsFooter}>
+				<OpenInLogsExplorer onClick={handleExplorerPageRedirect} />
+			</div>
 		</div>
 	);
 }
