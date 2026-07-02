@@ -1,5 +1,12 @@
 import { KeyboardEvent } from 'react';
-import { Check, Globe, LockKeyhole, SolidInfoCircle, X } from '@signozhq/icons';
+import {
+	Check,
+	Globe,
+	LockKeyhole,
+	LockKeyholeOpen,
+	SolidInfoCircle,
+	X,
+} from '@signozhq/icons';
 import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
@@ -22,7 +29,9 @@ interface DashboardInfoProps {
 	/** Absolute URL of the public dashboard page; opened when the globe is clicked. */
 	publicUrl: string;
 	isDashboardLocked: boolean;
-	/** When provided, the lock icon becomes a click-to-unlock control (gated to author/admin by the caller). */
+	/** Whether to render the lock toggle at all (hidden for never-locked dashboards). */
+	showLockToggle: boolean;
+	/** When provided, the lock icon toggles lock/unlock (author/admin only). */
 	onToggleLock?: () => void;
 	isEditing: boolean;
 	draft: string;
@@ -40,6 +49,7 @@ function DashboardInfo({
 	isPublicDashboard,
 	publicUrl,
 	isDashboardLocked,
+	showLockToggle,
 	onToggleLock,
 	isEditing,
 	draft,
@@ -57,6 +67,17 @@ function DashboardInfo({
 	const needsOverflow = tags.length > visibleCount;
 	const visibleTags = needsOverflow ? tags.slice(0, visibleCount) : tags;
 	const remainingTags = needsOverflow ? tags.slice(visibleCount) : [];
+
+	let lockTooltip: string;
+	if (onToggleLock) {
+		lockTooltip = isDashboardLocked
+			? 'Locked — click to unlock'
+			: 'Unlocked — click to lock';
+	} else {
+		lockTooltip = isDashboardLocked
+			? 'This dashboard is locked'
+			: 'This dashboard is unlocked';
+	}
 
 	const onKeyDown = (event: KeyboardEvent<HTMLInputElement>): void => {
 		if (event.key === 'Enter') {
@@ -145,23 +166,21 @@ function DashboardInfo({
 				</TooltipSimple>
 			)}
 
-			{isDashboardLocked && (
-				<TooltipSimple
-					title={
-						onToggleLock
-							? 'This dashboard is locked. Click to unlock.'
-							: 'This dashboard is locked'
-					}
-				>
+			{showLockToggle && (
+				<TooltipSimple title={lockTooltip}>
 					<button
 						type="button"
 						className={styles.lockButton}
-						aria-label={onToggleLock ? 'Unlock dashboard' : 'Dashboard locked'}
+						aria-label={isDashboardLocked ? 'Unlock dashboard' : 'Lock dashboard'}
 						data-testid="dashboard-lock"
 						disabled={!onToggleLock}
 						onClick={onToggleLock}
 					>
-						<LockKeyhole size={14} />
+						{isDashboardLocked ? (
+							<LockKeyhole size={14} />
+						) : (
+							<LockKeyholeOpen size={14} />
+						)}
 					</button>
 				</TooltipSimple>
 			)}

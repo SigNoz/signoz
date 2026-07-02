@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FullScreenHandle } from 'react-full-screen';
 import { toast } from '@signozhq/ui/sonner';
 import logEvent from 'api/common/logEvent';
@@ -39,7 +39,15 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 	const { dashboard, handle, refetch } = props;
 
 	const id = dashboard.id;
-	const isDashboardLocked = !!dashboard.locked;
+
+	// Session-local lock state: the toggle appears once locked and persists for the page.
+	const [isDashboardLocked, setIsDashboardLocked] = useState(!!dashboard.locked);
+	const [showLockToggle, setShowLockToggle] = useState(!!dashboard.locked);
+	useEffect(() => {
+		setIsDashboardLocked(!!dashboard.locked);
+		setShowLockToggle(!!dashboard.locked);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [dashboard.id]);
 
 	const title = dashboard.spec.display.name;
 	const description = dashboard.spec.display.description ?? '';
@@ -75,16 +83,22 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 		if (!id) {
 			return;
 		}
+		const next = !isDashboardLocked;
+		setIsDashboardLocked(next);
+		if (next) {
+			setShowLockToggle(true);
+		}
 		try {
-			if (isDashboardLocked) {
-				await unlockDashboardV2({ id });
-				toast.success('Dashboard unlocked');
-			} else {
+			if (next) {
 				await lockDashboardV2({ id });
 				toast.success('Dashboard locked');
+			} else {
+				await unlockDashboardV2({ id });
+				toast.success('Dashboard unlocked');
 			}
 			refetch();
 		} catch (error) {
+			setIsDashboardLocked(!next);
 			showErrorModal(error as APIError);
 		}
 	}, [id, isDashboardLocked, refetch, showErrorModal]);
@@ -135,6 +149,7 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 					isPublicDashboard={isPublic}
 					publicUrl={publicUrl}
 					isDashboardLocked={isDashboardLocked}
+					showLockToggle={showLockToggle}
 					onToggleLock={canToggleLock ? handleLockDashboardToggle : undefined}
 					isEditing={isEditing}
 					draft={draft}
