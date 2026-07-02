@@ -1,4 +1,4 @@
-import { render, screen } from 'tests/test-utils';
+import { render, screen, waitFor } from 'tests/test-utils';
 
 import ViewRolePage from '../ViewRolePage';
 
@@ -38,28 +38,34 @@ describe('ViewRolePage - Custom Role', () => {
 		).resolves.toBeInTheDocument();
 	});
 
-	it('shows Update button for custom roles', () => {
+	it('shows Update button for custom roles', async () => {
 		render(<ViewRolePage />, undefined, {
 			initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
 		});
 
-		expect(screen.getByTestId('save-button')).toBeInTheDocument();
+		await waitFor(() => {
+			expect(screen.getByTestId('save-button')).toBeInTheDocument();
+		});
 	});
 
-	it('shows Cancel button', () => {
+	it('shows Cancel button', async () => {
 		render(<ViewRolePage />, undefined, {
 			initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
 		});
 
-		expect(screen.getByTestId('cancel-button')).toBeInTheDocument();
+		await waitFor(() => {
+			expect(screen.getByTestId('cancel-button')).toBeInTheDocument();
+		});
 	});
 
-	it('shows Delete button', () => {
+	it('shows Delete button', async () => {
 		render(<ViewRolePage />, undefined, {
 			initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
 		});
 
-		expect(screen.getByTestId('delete-button')).toBeInTheDocument();
+		await waitFor(() => {
+			expect(screen.getByTestId('delete-button')).toBeInTheDocument();
+		});
 	});
 
 	it('renders created/updated timestamps labels', async () => {

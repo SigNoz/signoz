@@ -3,17 +3,20 @@ import cx from 'classnames';
 import styles from './PermissionDeniedCallout.module.scss';
 import { useAppContext } from 'providers/App/App';
 import { Typography } from '@signozhq/ui/typography';
+import { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
+import { formatPermission } from 'lib/authz/hooks/useAuthZ/utils';
 
 interface PermissionDeniedCalloutProps {
-	permissionName: string;
+	deniedPermissions: BrandedPermission[];
 	className?: string;
 }
 
 function PermissionDeniedCallout({
-	permissionName,
+	deniedPermissions,
 	className,
 }: PermissionDeniedCalloutProps): JSX.Element {
 	const { user } = useAppContext();
+	const formattedPermissions = deniedPermissions.map(formatPermission);
 
 	return (
 		<Callout
@@ -25,7 +28,12 @@ function PermissionDeniedCallout({
 			<Typography.Text className={styles.permission}>
 				<code className={styles.permissionCode}>user/{user.id}</code> is not
 				authorized to perform{' '}
-				<code className={styles.permissionCode}>{permissionName}</code>
+				{formattedPermissions.map((perm, idx) => (
+					<span key={perm}>
+						<code className={styles.permissionCode}>{perm}</code>
+						{idx < formattedPermissions.length - 1 && ', '}
+					</span>
+				))}
 			</Typography.Text>
 		</Callout>
 	);
