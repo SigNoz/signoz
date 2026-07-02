@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from 'react-query';
 import { generatePath } from 'react-router-dom';
-import { Popover } from 'antd';
+import { Popover, Tooltip } from 'antd';
 import { Button } from '@signozhq/ui/button';
 import { toast } from '@signozhq/ui/sonner';
 import {
@@ -96,7 +96,10 @@ function ActionsPopover({
 		<>
 			<Popover
 				content={
-					<div className={styles.content}>
+					// Stop clicks inside the menu (incl. disabled items) from bubbling to the
+					// row's onClick, which would navigate to the dashboard.
+					// eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events -- wrapper only guards propagation, not an interactive control
+					<div className={styles.content} onClick={(e): void => e.stopPropagation()}>
 						<Button
 							color="secondary"
 							className={styles.menuItem}
@@ -132,21 +135,29 @@ function ActionsPopover({
 						>
 							Copy Link
 						</Button>
-						{!isLocked && (
+						<Tooltip
+							placement="left"
+							title={
+								isLocked ? 'This dashboard is locked, so it cannot be renamed.' : ''
+							}
+						>
 							<Button
 								color="secondary"
 								className={styles.menuItem}
 								prefix={<PenLine size={14} />}
+								disabled={isLocked}
 								onClick={(e): void => {
 									e.stopPropagation();
 									e.preventDefault();
-									setIsRenameOpen(true);
+									if (!isLocked) {
+										setIsRenameOpen(true);
+									}
 								}}
 								testId="dashboard-action-rename"
 							>
 								Rename
 							</Button>
-						)}
+						</Tooltip>
 						<Button
 							color="secondary"
 							className={styles.menuItem}
@@ -174,7 +185,7 @@ function ActionsPopover({
 								}}
 								testId="dashboard-action-lock"
 							>
-								{isLocked ? 'Unlock dashboard' : 'Lock dashboard'}
+								{isLocked ? 'Unlock Dashboard' : 'Lock Dashboard'}
 							</Button>
 						)}
 						<DeleteActionItem
