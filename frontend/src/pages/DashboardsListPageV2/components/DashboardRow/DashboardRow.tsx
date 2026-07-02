@@ -119,24 +119,28 @@ function DashboardRow({
 					</Tooltip>
 				)}
 
-				<button
-					type="button"
-					className={cx(styles.pinBtn, { [styles.pinBtnOn]: isPinned })}
-					aria-label={isPinned ? 'Unpin dashboard' : 'Pin dashboard'}
+				<Tooltip
 					title={isPinned ? 'Unpin dashboard' : 'Pin dashboard'}
-					data-testid={`dashboard-pin-${index}`}
-					disabled={isUpdating}
-					onClick={onTogglePin}
+					placement="top"
 				>
-					{isPinned ? (
-						<>
-							<Pin size={14} className={styles.pinnedIcon} />
-							<PinOff size={14} className={styles.unpinIcon} />
-						</>
-					) : (
-						<Pin size={14} />
-					)}
-				</button>
+					<button
+						type="button"
+						className={cx(styles.pinBtn, { [styles.pinBtnOn]: isPinned })}
+						aria-label={isPinned ? 'Unpin dashboard' : 'Pin dashboard'}
+						data-testid={`dashboard-pin-${index}`}
+						disabled={isUpdating}
+						onClick={onTogglePin}
+					>
+						{isPinned ? (
+							<>
+								<Pin size={14} className={styles.pinnedIcon} />
+								<PinOff size={14} className={styles.unpinIcon} />
+							</>
+						) : (
+							<Pin size={14} />
+						)}
+					</button>
+				</Tooltip>
 
 				{canAct && (
 					<ActionsPopover
