@@ -1,0 +1,4 @@
+{
+    "name_of_the_view": "Nome da visualização",
+    "delete_confirm_message": "Tem certeza de que deseja excluir a visualização {{viewName}}? A exclusão de uma visualização é irreversível e não pode ser desfeita."
+}

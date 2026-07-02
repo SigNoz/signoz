@@ -1,0 +1,18 @@
+{
+	"display_name": "Nome de Exibição",
+	"signoz": "SigNoz",
+	"email_address": "Endereço de e-mail",
+	"name_optional": "Nome (opcional)",
+	"role": "Cargo / Papel",
+	"email_placeholder": "joao@signoz.io",
+	"name_placeholder": "João",
+	"add_another_team_member": "Adicionar outro membro à equipe",
+	"invite_team_members": "Convidar membros para a equipe",
+	"invite_members": "Convidar Membros",
+	"pending_invites": "Convites Pendentes",
+	"authenticated_domains": "Domínios Autenticados",
+	"delete_domain_message": "Tem certeza de que deseja excluir este domínio?",
+	"delete_domain": "Excluir Domínio",
+	"add_domain": "Adicionar Domínios",
+	"saml_settings": "Suas configurações de SAML foram salvas. Por favor, faça login em uma janela anônima para confirmar se tudo foi configurado corretamente."
+}
