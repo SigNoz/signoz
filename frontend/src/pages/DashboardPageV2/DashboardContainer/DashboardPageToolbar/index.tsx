@@ -4,7 +4,6 @@ import { toast } from '@signozhq/ui/sonner';
 import logEvent from 'api/common/logEvent';
 import {
 	lockDashboardV2,
-	patchDashboardV2,
 	unlockDashboardV2,
 } from 'api/generated/services/dashboard';
 import type {
@@ -18,6 +17,7 @@ import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 
 import { useCreatePanel } from '../hooks/useCreatePanel';
+import { useOptimisticPatch } from '../hooks/useOptimisticPatch';
 import PanelTypeSelectionModal from '../PanelsAndSectionsLayout/Panel/PanelTypeSelectionModal/PanelTypeSelectionModal';
 import DashboardActions from './DashboardActions/DashboardActions';
 import DashboardInfo from './DashboardInfo/DashboardInfo';
@@ -51,6 +51,7 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 
 	const { user } = useAppContext();
 	const { showErrorModal } = useErrorModal();
+	const { patchAsync } = useOptimisticPatch();
 	const { isPickerOpen, openPicker, closePicker, createPanel } =
 		useCreatePanel();
 
@@ -88,14 +89,13 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 						value: next,
 					},
 				];
-				await patchDashboardV2({ id }, patch);
+				await patchAsync(patch);
 				toast.success('Dashboard renamed successfully');
-				refetch();
 			} catch (error) {
 				showErrorModal(error as APIError);
 			}
 		},
-		[id, refetch, showErrorModal],
+		[id, patchAsync, showErrorModal],
 	);
 
 	const { isEditing, draft, setDraft, startEdit, cancel, commit } =

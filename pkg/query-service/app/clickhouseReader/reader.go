@@ -17,11 +17,13 @@ import (
 
 	"github.com/uptrace/bun"
 
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	"github.com/SigNoz/signoz/pkg/types/retentiontypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -97,6 +99,8 @@ const (
 	signozTSLocalTableNameV41Week = "time_series_v4_1week"
 	signozTSTableNameV41Week      = "distributed_time_series_v4_1week"
 
+	signozTSTableNameV4Reduced = "distributed_time_series_v4_reduced"
+
 	signozTableAttributesMetadata      = "distributed_attributes_metadata"
 	signozLocalTableAttributesMetadata = "attributes_metadata"
 
@@ -162,6 +166,8 @@ type ClickHouseReader struct {
 	cache         cache.Cache
 	metadataDB    string
 	metadataTable string
+
+	fl flagger.Flagger
 }
 
 // NewTraceReader returns a TraceReader for the database
@@ -172,6 +178,7 @@ func NewReader(
 	prometheus prometheus.Prometheus,
 	cluster string,
 	cache cache.Cache,
+	fl flagger.Flagger,
 	options *Options,
 ) *ClickHouseReader {
 	if options == nil {
@@ -221,6 +228,7 @@ func NewReader(
 		cache:                    cache,
 		metadataDB:               options.primary.MetadataDB,
 		metadataTable:            options.primary.MetadataTable,
+		fl:                       fl,
 	}
 }
 
@@ -2953,23 +2961,33 @@ func (r *ClickHouseReader) GetMetricAggregateAttributes(ctx context.Context, org
 		instrumentationtypes.CodeFunctionName: "GetMetricAggregateAttributes",
 	})
 	var response v3.AggregateAttributeResponse
-	normalized := true
-	if constants.IsDotMetricsEnabled {
-		normalized = false
-	}
 
-	// Query all relevant metric names from time_series_v4, but leave metadata retrieval to cache/db
-	query := fmt.Sprintf(
-		`SELECT DISTINCT metric_name
-		 FROM %s.%s
-		 WHERE metric_name ILIKE $1 AND __normalized = $2`,
-		signozMetricDBName, signozTSTableNameV41Day)
+	reductionEnabled := r.fl.BooleanOrEmpty(ctx, flagger.FeatureEnableMetricsReduction, featuretypes.NewFlaggerEvaluationContext(orgID))
+
+	// Query all relevant metric names from time_series_v4, but leave metadata retrieval to cache/db.
+	var query string
+	if reductionEnabled {
+		query = fmt.Sprintf(
+			`SELECT DISTINCT metric_name FROM (
+				SELECT metric_name FROM %s.%s WHERE metric_name ILIKE $1
+				UNION ALL
+				SELECT metric_name FROM %s.%s WHERE metric_name ILIKE $1
+			 )`,
+			signozMetricDBName, signozTSTableNameV41Day,
+			signozMetricDBName, signozTSTableNameV4Reduced)
+	} else {
+		query = fmt.Sprintf(
+			`SELECT DISTINCT metric_name
+			 FROM %s.%s
+			 WHERE metric_name ILIKE $1`,
+			signozMetricDBName, signozTSTableNameV41Day)
+	}
 
 	if req.Limit != 0 {
 		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
 	}
 
-	rows, err := r.db.Query(ctx, query, fmt.Sprintf("%%%s%%", req.SearchText), normalized)
+	rows, err := r.db.Query(ctx, query, fmt.Sprintf("%%%s%%", req.SearchText))
 	if err != nil {
 		r.logger.Error("Error while querying metric names", errorsV2.Attr(err))
 		return nil, fmt.Errorf("error while executing metric name query: %s", err.Error())
@@ -3082,7 +3100,7 @@ func (r *ClickHouseReader) GetMeterAggregateAttributes(ctx context.Context, orgI
 	return &response, nil
 }
 
-func (r *ClickHouseReader) GetMetricAttributeKeys(ctx context.Context, req *v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
+func (r *ClickHouseReader) GetMetricAttributeKeys(ctx context.Context, orgID valuer.UUID, req *v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
 		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
@@ -3093,17 +3111,18 @@ func (r *ClickHouseReader) GetMetricAttributeKeys(ctx context.Context, req *v3.F
 	var rows driver.Rows
 	var response v3.FilterAttributeKeyResponse
 
-	normalized := true
-	if constants.IsDotMetricsEnabled {
-		normalized = false
-	}
+	reductionEnabled := r.fl.BooleanOrEmpty(ctx, flagger.FeatureEnableMetricsReduction, featuretypes.NewFlaggerEvaluationContext(orgID))
 
 	// skips the internal attributes i.e attributes starting with __
-	query = fmt.Sprintf("SELECT arrayJoin(tagKeys) AS distinctTagKey FROM (SELECT JSONExtractKeys(labels) AS tagKeys FROM %s.%s WHERE metric_name=$1 AND unix_milli >= $2 AND __normalized = $3 GROUP BY tagKeys) WHERE distinctTagKey ILIKE $4 AND distinctTagKey NOT LIKE '\\_\\_%%' GROUP BY distinctTagKey", signozMetricDBName, signozTSTableNameV41Day)
+	if reductionEnabled {
+		query = fmt.Sprintf("SELECT arrayJoin(tagKeys) AS distinctTagKey FROM (SELECT JSONExtractKeys(labels) AS tagKeys FROM %s.%s WHERE metric_name=$1 AND unix_milli >= $2 GROUP BY tagKeys UNION ALL SELECT JSONExtractKeys(labels) AS tagKeys FROM %s.%s WHERE metric_name=$1 AND unix_milli >= $2 GROUP BY tagKeys) WHERE distinctTagKey ILIKE $3 AND distinctTagKey NOT LIKE '\\_\\_%%' GROUP BY distinctTagKey", signozMetricDBName, signozTSTableNameV41Day, signozMetricDBName, signozTSTableNameV4Reduced)
+	} else {
+		query = fmt.Sprintf("SELECT arrayJoin(tagKeys) AS distinctTagKey FROM (SELECT JSONExtractKeys(labels) AS tagKeys FROM %s.%s WHERE metric_name=$1 AND unix_milli >= $2 GROUP BY tagKeys) WHERE distinctTagKey ILIKE $3 AND distinctTagKey NOT LIKE '\\_\\_%%' GROUP BY distinctTagKey", signozMetricDBName, signozTSTableNameV41Day)
+	}
 	if req.Limit != 0 {
 		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
 	}
-	rows, err = r.db.Query(ctx, query, req.AggregateAttribute, common.PastDayRoundOff(), normalized, fmt.Sprintf("%%%s%%", req.SearchText))
+	rows, err = r.db.Query(ctx, query, req.AggregateAttribute, common.PastDayRoundOff(), fmt.Sprintf("%%%s%%", req.SearchText))
 	if err != nil {
 		r.logger.Error("Error while executing query", errorsV2.Attr(err))
 		return nil, fmt.Errorf("error while executing query: %s", err.Error())
@@ -3167,7 +3186,7 @@ func (r *ClickHouseReader) GetMeterAttributeKeys(ctx context.Context, req *v3.Fi
 	return &response, nil
 }
 
-func (r *ClickHouseReader) GetMetricAttributeValues(ctx context.Context, req *v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
+func (r *ClickHouseReader) GetMetricAttributeValues(ctx context.Context, orgID valuer.UUID, req *v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
 
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
@@ -3184,14 +3203,20 @@ func (r *ClickHouseReader) GetMetricAttributeValues(ctx context.Context, req *v3
 		normalized = false
 	}
 
-	query = fmt.Sprintf("SELECT JSONExtractString(labels, $1) AS tagValue FROM %s.%s WHERE metric_name IN $2 AND JSONExtractString(labels, $3) ILIKE $4 AND unix_milli >= $5 AND __normalized=$6 GROUP BY tagValue", signozMetricDBName, signozTSTableNameV41Day)
+	reductionEnabled := r.fl.BooleanOrEmpty(ctx, flagger.FeatureEnableMetricsReduction, featuretypes.NewFlaggerEvaluationContext(orgID))
+
+	if reductionEnabled {
+		query = fmt.Sprintf("SELECT tagValue FROM (SELECT JSONExtractString(labels, $1) AS tagValue FROM %s.%s WHERE metric_name IN $2 AND JSONExtractString(labels, $3) ILIKE $4 AND unix_milli >= $5 UNION ALL SELECT JSONExtractString(labels, $1) AS tagValue FROM %s.%s WHERE metric_name IN $2 AND JSONExtractString(labels, $3) ILIKE $4 AND unix_milli >= $5) GROUP BY tagValue", signozMetricDBName, signozTSTableNameV41Day, signozMetricDBName, signozTSTableNameV4Reduced)
+	} else {
+		query = fmt.Sprintf("SELECT JSONExtractString(labels, $1) AS tagValue FROM %s.%s WHERE metric_name IN $2 AND JSONExtractString(labels, $3) ILIKE $4 AND unix_milli >= $5 GROUP BY tagValue", signozMetricDBName, signozTSTableNameV41Day)
+	}
 	if req.Limit != 0 {
 		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
 	}
 	names := []string{req.AggregateAttribute}
 	names = append(names, metrics.GetTransitionedMetric(req.AggregateAttribute, normalized))
 
-	rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, names, req.FilterAttributeKey, fmt.Sprintf("%%%s%%", req.SearchText), common.PastDayRoundOff(), normalized)
+	rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, names, req.FilterAttributeKey, fmt.Sprintf("%%%s%%", req.SearchText), common.PastDayRoundOff())
 
 	if err != nil {
 		r.logger.Error("Error while executing query", errorsV2.Attr(err))
@@ -3255,7 +3280,31 @@ func (r *ClickHouseReader) GetMetricMetadata(ctx context.Context, orgID valuer.U
 	// 2. Only for Histograms, get `le` buckets
 	var leFloat64 []float64
 	if metricType == string(v3.MetricTypeHistogram) {
-		query := fmt.Sprintf(`
+		reductionEnabled := r.fl.BooleanOrEmpty(ctx, flagger.FeatureEnableMetricsReduction, featuretypes.NewFlaggerEvaluationContext(orgID))
+
+		var query string
+		if reductionEnabled {
+			// `le` is a protected label that survives reduction
+			query = fmt.Sprintf(`
+				SELECT le FROM (
+					SELECT JSONExtractString(labels, 'le') AS le
+					FROM %s.%s
+					WHERE metric_name = $1
+						AND unix_milli >= $2
+						AND type = 'Histogram'
+						AND (JSONExtractString(labels, 'service_name') = $3 OR JSONExtractString(labels, 'service.name') = $4)
+					UNION ALL
+					SELECT JSONExtractString(labels, 'le') AS le
+					FROM %s.%s
+					WHERE metric_name = $1
+						AND unix_milli >= $2
+						AND type = 'Histogram'
+						AND (JSONExtractString(labels, 'service_name') = $3 OR JSONExtractString(labels, 'service.name') = $4)
+				)
+				GROUP BY le
+				ORDER BY le`, signozMetricDBName, signozTSTableNameV41Day, signozMetricDBName, signozTSTableNameV4Reduced)
+		} else {
+			query = fmt.Sprintf(`
 			SELECT JSONExtractString(labels, 'le') AS le
 			FROM %s.%s
 			WHERE metric_name = $1
@@ -3264,6 +3313,7 @@ func (r *ClickHouseReader) GetMetricMetadata(ctx context.Context, orgID valuer.U
 				AND (JSONExtractString(labels, 'service_name') = $3 OR JSONExtractString(labels, 'service.name') = $4)
 			GROUP BY le
 			ORDER BY le`, signozMetricDBName, signozTSTableNameV41Day)
+		}
 
 		rows, err := r.db.Query(ctx, query, metricName, unixMilli, serviceName, serviceName)
 		if err != nil {
@@ -3352,7 +3402,7 @@ func (r *ClickHouseReader) GetActiveHostsFromMetricMetadata(ctx context.Context,
 }
 
 func (r *ClickHouseReader) GetLatestReceivedMetric(
-	ctx context.Context, metricNames []string, labelValues map[string]string,
+	ctx context.Context, orgID valuer.UUID, metricNames []string, labelValues map[string]string,
 ) (*model.MetricStatus, *model.ApiError) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
@@ -3375,13 +3425,11 @@ func (r *ClickHouseReader) GetLatestReceivedMetric(
 		fmt.Sprintf(`metric_name in (%s)`, commaSeparatedMetricNames),
 	}
 
-	if labelValues != nil {
-		for label, val := range labelValues {
-			whereClauseParts = append(
-				whereClauseParts,
-				fmt.Sprintf(`JSONExtractString(labels, '%s') = '%s'`, label, val),
-			)
-		}
+	for label, val := range labelValues {
+		whereClauseParts = append(
+			whereClauseParts,
+			fmt.Sprintf(`JSONExtractString(labels, '%s') = '%s'`, label, val),
+		)
 	}
 
 	if len(whereClauseParts) < 1 {
@@ -3390,14 +3438,32 @@ func (r *ClickHouseReader) GetLatestReceivedMetric(
 
 	whereClause := strings.Join(whereClauseParts, " AND ")
 
-	query := fmt.Sprintf(`
+	reductionEnabled := r.fl.BooleanOrEmpty(ctx, flagger.FeatureEnableMetricsReduction, featuretypes.NewFlaggerEvaluationContext(orgID))
+
+	var query string
+	if reductionEnabled {
+		query = fmt.Sprintf(`
+		SELECT metric_name, anyLast(labels), max(unix_milli)
+		from (
+			SELECT metric_name, labels, unix_milli FROM %s.%s WHERE %s
+			UNION ALL
+			SELECT metric_name, labels, unix_milli FROM %s.%s WHERE %s
+		)
+		group by metric_name
+		limit 1
+		`, signozMetricDBName, signozTSTableNameV4, whereClause,
+			signozMetricDBName, signozTSTableNameV4Reduced, whereClause,
+		)
+	} else {
+		query = fmt.Sprintf(`
 		SELECT metric_name, anyLast(labels), max(unix_milli)
 		from %s.%s
 		where %s
 		group by metric_name
 		limit 1
 		`, signozMetricDBName, signozTSTableNameV4, whereClause,
-	)
+		)
+	}
 
 	rows, err := r.db.Query(ctx, query)
 	if err != nil {
@@ -5052,7 +5118,7 @@ func (r *ClickHouseReader) UpdateMetricsMetadata(ctx context.Context, orgID valu
 	})
 	if req.MetricType == v3.MetricTypeHistogram {
 		labels := []string{"le"}
-		hasLabels, apiError := r.CheckForLabelsInMetric(ctx, req.MetricName, labels)
+		hasLabels, apiError := r.CheckForLabelsInMetric(ctx, orgID, req.MetricName, labels)
 		if apiError != nil {
 			return apiError
 		}
@@ -5066,7 +5132,7 @@ func (r *ClickHouseReader) UpdateMetricsMetadata(ctx context.Context, orgID valu
 
 	if req.MetricType == v3.MetricTypeSummary {
 		labels := []string{"quantile"}
-		hasLabels, apiError := r.CheckForLabelsInMetric(ctx, req.MetricName, labels)
+		hasLabels, apiError := r.CheckForLabelsInMetric(ctx, orgID, req.MetricName, labels)
 		if apiError != nil {
 			return apiError
 		}
@@ -5093,7 +5159,7 @@ VALUES ( ?, ?, ?, ?, ?, ?, ?);`, signozMetricDBName, signozUpdatedMetricsMetadat
 	return nil
 }
 
-func (r *ClickHouseReader) CheckForLabelsInMetric(ctx context.Context, metricName string, labels []string) (bool, *model.ApiError) {
+func (r *ClickHouseReader) CheckForLabelsInMetric(ctx context.Context, orgID valuer.UUID, metricName string, labels []string) (bool, *model.ApiError) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
 		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
@@ -5108,16 +5174,39 @@ func (r *ClickHouseReader) CheckForLabelsInMetric(ctx context.Context, metricNam
 		conditions += " AND JSONHas(labels, ?) = 1"
 	}
 
-	query := fmt.Sprintf(`
+	reductionEnabled := r.fl.BooleanOrEmpty(ctx, flagger.FeatureEnableMetricsReduction, featuretypes.NewFlaggerEvaluationContext(orgID))
+
+	var query string
+	var args []interface{}
+	if reductionEnabled {
+		query = fmt.Sprintf(`
+        SELECT count(*) > 0 as has_le
+        FROM (
+            SELECT 1 FROM %s.%s WHERE %s
+            UNION ALL
+            SELECT 1 FROM %s.%s WHERE %s
+        )
+        LIMIT 1`, signozMetricDBName, signozTSTableNameV41Day, conditions, signozMetricDBName, signozTSTableNameV4Reduced, conditions)
+
+		args = make([]interface{}, 0, (len(labels)+1)*2)
+		for i := 0; i < 2; i++ {
+			args = append(args, metricName)
+			for _, label := range labels {
+				args = append(args, label)
+			}
+		}
+	} else {
+		query = fmt.Sprintf(`
         SELECT count(*) > 0 as has_le
         FROM %s.%s
         WHERE %s
         LIMIT 1`, signozMetricDBName, signozTSTableNameV41Day, conditions)
 
-	args := make([]interface{}, 0, len(labels)+1)
-	args = append(args, metricName)
-	for _, label := range labels {
-		args = append(args, label)
+		args = make([]interface{}, 0, len(labels)+1)
+		args = append(args, metricName)
+		for _, label := range labels {
+			args = append(args, label)
+		}
 	}
 
 	var hasLE bool
@@ -5211,9 +5300,20 @@ func (r *ClickHouseReader) GetUpdatedMetricsMetadata(ctx context.Context, orgID 
 	// 3. Fallback: Try time_series_v4_1week table
 	if len(stillMissing) > 0 {
 		metricList := "'" + strings.Join(stillMissing, "', '") + "'"
-		query := fmt.Sprintf(`SELECT DISTINCT metric_name, type, description, temporality, is_monotonic, unit
+		reductionEnabled := r.fl.BooleanOrEmpty(ctx, flagger.FeatureEnableMetricsReduction, featuretypes.NewFlaggerEvaluationContext(orgID))
+		var query string
+		if reductionEnabled {
+			query = fmt.Sprintf(`SELECT DISTINCT metric_name, type, description, temporality, is_monotonic, unit
+			FROM (
+				SELECT metric_name, type, description, temporality, is_monotonic, unit FROM %s.%s WHERE metric_name IN (%s)
+				UNION ALL
+				SELECT metric_name, type, description, temporality, is_monotonic, unit FROM %s.%s WHERE metric_name IN (%s)
+			)`, signozMetricDBName, signozTSTableNameV4, metricList, signozMetricDBName, signozTSTableNameV4Reduced, metricList)
+		} else {
+			query = fmt.Sprintf(`SELECT DISTINCT metric_name, type, description, temporality, is_monotonic, unit
 			FROM %s.%s
 			WHERE metric_name IN (%s)`, signozMetricDBName, signozTSTableNameV4, metricList)
+		}
 		valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
 		rows, err := r.db.Query(valueCtx, query)
 		if err != nil {
@@ -5392,13 +5492,30 @@ func (r *ClickHouseReader) GetNormalizedStatus(
 
 	placeholders := "'" + strings.Join(uncached, "', '") + "'"
 
-	q := fmt.Sprintf(
-		`SELECT metric_name, toUInt8(__normalized)
+	reductionEnabled := r.fl.BooleanOrEmpty(ctx, flagger.FeatureEnableMetricsReduction, featuretypes.NewFlaggerEvaluationContext(orgID))
+
+	var q string
+	if reductionEnabled {
+		q = fmt.Sprintf(
+			`SELECT metric_name, toUInt8(__normalized)
+           FROM (
+               SELECT metric_name, __normalized FROM %s.%s WHERE metric_name IN (%s)
+               UNION ALL
+               SELECT metric_name, __normalized FROM %s.%s WHERE metric_name IN (%s)
+           )
+          GROUP BY metric_name, __normalized`,
+			signozMetricDBName, signozTSTableNameV41Day, placeholders,
+			signozMetricDBName, signozTSTableNameV4Reduced, placeholders,
+		)
+	} else {
+		q = fmt.Sprintf(
+			`SELECT metric_name, toUInt8(__normalized)
            FROM %s.%s
           WHERE metric_name IN (%s)
           GROUP BY metric_name, __normalized`,
-		signozMetricDBName, signozTSTableNameV41Day, placeholders,
-	)
+			signozMetricDBName, signozTSTableNameV41Day, placeholders,
+		)
+	}
 
 	rows, err := r.db.Query(ctx, q)
 	if err != nil {

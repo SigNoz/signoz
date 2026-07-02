@@ -2230,13 +2230,6 @@ export interface AuthtypesOrgSessionContextDTO {
 	warning?: ErrorsJSONDTO;
 }
 
-export interface AuthtypesPatchableRoleDTO {
-	/**
-	 * @type string
-	 */
-	description: string;
-}
-
 export interface AuthtypesPostableAuthDomainDTO {
 	config?: AuthtypesAuthDomainConfigDTO;
 	/**
@@ -3249,17 +3242,6 @@ export interface CommonJSONRefDTO {
 	$ref?: string;
 }
 
-export interface CoretypesPatchableObjectsDTO {
-	/**
-	 * @type array,null
-	 */
-	additions: CoretypesObjectGroupDTO[] | null;
-	/**
-	 * @type array,null
-	 */
-	deletions: CoretypesObjectGroupDTO[] | null;
-}
-
 export interface DashboardGridItemDTO {
 	content?: CommonJSONRefDTO;
 	/**
@@ -3995,6 +3977,14 @@ export interface DashboardtypesDashboardPanelRefDTO {
 	 * @type string
 	 */
 	dashboardName: string;
+	/**
+	 * @type array
+	 */
+	filterBy?: string[];
+	/**
+	 * @type array
+	 */
+	groupBy?: string[];
 	/**
 	 * @type string
 	 */
@@ -6923,6 +6913,11 @@ export interface MetricreductionruletypesGettableReductionRuleDTO {
 	 * @type integer
 	 * @minimum 0
 	 */
+	ingestedSamples: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
 	ingestedSeries: number;
 	/**
 	 * @type array,null
@@ -6934,10 +6929,10 @@ export interface MetricreductionruletypesGettableReductionRuleDTO {
 	 */
 	metricName: string;
 	/**
-	 * @type number
-	 * @format double
+	 * @type integer
+	 * @minimum 0
 	 */
-	reductionPercent: number;
+	retainedSamples: number;
 	/**
 	 * @type integer
 	 * @minimum 0
@@ -7000,7 +6995,17 @@ export interface MetricreductionruletypesGettableReductionRuleStatsDTO {
 	 * @type integer
 	 * @minimum 0
 	 */
+	ingestedSamples: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
 	ingestedSeries: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	retainedSamples: number;
 	/**
 	 * @type integer
 	 * @minimum 0
@@ -7056,7 +7061,6 @@ export enum MetricreductionruletypesReductionRuleOrderByDTO {
 	metric = 'metric',
 	ingested_volume = 'ingested_volume',
 	reduced_volume = 'reduced_volume',
-	reduction = 'reduction',
 	last_updated = 'last_updated',
 }
 export interface MetricreductionruletypesUpdatableReductionRuleDTO {
@@ -10248,30 +10252,8 @@ export type GetRole200 = {
 	status: string;
 };
 
-export type PatchRolePathParameters = {
-	id: string;
-};
 export type UpdateRolePathParameters = {
 	id: string;
-};
-export type GetObjectsPathParameters = {
-	id: string;
-	relation: string;
-};
-export type GetObjects200 = {
-	/**
-	 * @type array
-	 */
-	data: CoretypesObjectGroupDTO[];
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type PatchObjectsPathParameters = {
-	id: string;
-	relation: string;
 };
 export type GetAllRoutePolicies200 = {
 	/**

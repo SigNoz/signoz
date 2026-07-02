@@ -1,6 +1,8 @@
 import {
-	TelemetrytypesSignalDTO,
+	DashboardtypesComparisonOperatorDTO,
 	type DashboardtypesPanelSpecDTO,
+	DashboardtypesThresholdFormatDTO,
+	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { getPanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Panels/registry';
 
@@ -94,5 +96,142 @@ describe('getSwitchedPluginSpec', () => {
 		);
 
 		expect(result.legend?.position).toBe('bottom');
+	});
+
+	describe('thresholds', () => {
+		it('does not carry thresholds when the new kind has no thresholds section', () => {
+			mockGetPanelDefinition.mockReturnValue({ sections: [{ kind: 'columns' }] });
+			const old = specWith({
+				thresholds: [{ value: 80, color: '#F1575F', label: 'warn' }],
+			});
+
+			const result = getSwitchedPluginSpec(
+				old,
+				'signoz/ListPanel',
+				TelemetrytypesSignalDTO.logs,
+			);
+
+			expect(result.thresholds).toBeUndefined();
+		});
+
+		it('carries thresholds verbatim within the label variant (color/value/unit/label)', () => {
+			mockGetPanelDefinition.mockReturnValue({
+				sections: [{ kind: 'thresholds', controls: { variant: 'label' } }],
+			});
+			const old = specWith({
+				thresholds: [{ value: 80, color: '#F1575F', unit: 'ms', label: 'warn' }],
+			});
+
+			const result = getSwitchedPluginSpec(
+				old,
+				'signoz/BarChartPanel',
+				TelemetrytypesSignalDTO.logs,
+			);
+
+			expect(result.thresholds).toStrictEqual([
+				{ value: 80, color: '#F1575F', unit: 'ms', label: 'warn' },
+			]);
+		});
+
+		it('remaps label thresholds into the comparison variant, defaulting operator + format', () => {
+			mockGetPanelDefinition.mockReturnValue({
+				sections: [{ kind: 'thresholds', controls: { variant: 'comparison' } }],
+			});
+			const old = specWith({
+				thresholds: [{ value: 80, color: '#F1575F', label: 'warn' }],
+			});
+
+			const result = getSwitchedPluginSpec(
+				old,
+				'signoz/NumberPanel',
+				TelemetrytypesSignalDTO.logs,
+			);
+
+			// The label is dropped; operator/format are seeded so the threshold can match.
+			expect(result.thresholds).toStrictEqual([
+				{
+					value: 80,
+					color: '#F1575F',
+					operator: DashboardtypesComparisonOperatorDTO.above,
+					format: DashboardtypesThresholdFormatDTO.text,
+				},
+			]);
+		});
+
+		it('remaps comparison thresholds into the table variant, keeping operator/format and seeding a column', () => {
+			mockGetPanelDefinition.mockReturnValue({
+				sections: [{ kind: 'thresholds', controls: { variant: 'table' } }],
+			});
+			const old = specWith({
+				thresholds: [
+					{
+						value: 80,
+						color: '#F1575F',
+						operator: DashboardtypesComparisonOperatorDTO.below,
+						format: DashboardtypesThresholdFormatDTO.text,
+					},
+				],
+			});
+
+			const result = getSwitchedPluginSpec(
+				old,
+				'signoz/TablePanel',
+				TelemetrytypesSignalDTO.logs,
+			);
+
+			expect(result.thresholds).toStrictEqual([
+				{
+					value: 80,
+					color: '#F1575F',
+					operator: DashboardtypesComparisonOperatorDTO.below,
+					format: DashboardtypesThresholdFormatDTO.text,
+					columnName: '',
+				},
+			]);
+		});
+
+		it('drops the table-only columnName when remapping into the label variant', () => {
+			mockGetPanelDefinition.mockReturnValue({
+				sections: [{ kind: 'thresholds', controls: { variant: 'label' } }],
+			});
+			const old = specWith({
+				thresholds: [
+					{
+						value: 80,
+						color: '#F1575F',
+						operator: DashboardtypesComparisonOperatorDTO.above,
+						format: DashboardtypesThresholdFormatDTO.background,
+						columnName: 'p99',
+					},
+				],
+			});
+
+			const result = getSwitchedPluginSpec(
+				old,
+				'signoz/TimeSeriesPanel',
+				TelemetrytypesSignalDTO.logs,
+			);
+
+			expect(result.thresholds).toStrictEqual([{ value: 80, color: '#F1575F' }]);
+		});
+
+		it('defaults the variant to label when the thresholds section omits controls', () => {
+			mockGetPanelDefinition.mockReturnValue({
+				sections: [{ kind: 'thresholds', controls: {} }],
+			});
+			const old = specWith({
+				thresholds: [{ value: 80, color: '#F1575F', label: 'warn' }],
+			});
+
+			const result = getSwitchedPluginSpec(
+				old,
+				'signoz/TimeSeriesPanel',
+				TelemetrytypesSignalDTO.logs,
+			);
+
+			expect(result.thresholds).toStrictEqual([
+				{ value: 80, color: '#F1575F', label: 'warn' },
+			]);
+		});
 	});
 });

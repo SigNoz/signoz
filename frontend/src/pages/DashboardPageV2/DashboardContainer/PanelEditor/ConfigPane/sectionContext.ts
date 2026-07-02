@@ -19,4 +19,6 @@ export interface SectionEditorContext {
 	yAxisUnit?: string;
 	queryType?: EQueryType;
 	stepInterval?: number;
+	/** Unit the selected metric was sent with; drives the unit selector's mismatch warning. */
+	metricUnit?: string;
 }

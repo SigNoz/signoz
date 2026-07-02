@@ -7,11 +7,14 @@ import (
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 )
 
@@ -367,6 +370,33 @@ func (m *module) buildSamplesTblFingerprintSubQuery(metricNames []string, sample
 	return fpSB
 }
 
+// buildReducedSamplesTblFingerprintSubQuery is like buildSamplesTblFingerprintSubQuery
+// but for the reduced tables.
+func (m *module) buildReducedSamplesTblFingerprintSubQuery(metricNames []string, flooredStart, flooredEnd uint64) *sqlbuilder.SelectBuilder {
+	lastSB := sqlbuilder.NewSelectBuilder()
+	lastSB.Select("reduced_fingerprint")
+	lastSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.SamplesV4ReducedLastTableName))
+	lastSB.Where(
+		lastSB.In("metric_name", sqlbuilder.List(metricNames)),
+		lastSB.GE("unix_milli", flooredStart),
+		lastSB.L("unix_milli", flooredEnd),
+	)
+
+	sumSB := sqlbuilder.NewSelectBuilder()
+	sumSB.Select("reduced_fingerprint")
+	sumSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.SamplesV4ReducedSumTableName))
+	sumSB.Where(
+		sumSB.In("metric_name", sqlbuilder.List(metricNames)),
+		sumSB.GE("unix_milli", flooredStart),
+		sumSB.L("unix_milli", flooredEnd),
+	)
+
+	fpSB := sqlbuilder.NewSelectBuilder()
+	fpSB.Select("DISTINCT reduced_fingerprint AS fingerprint")
+	fpSB.From(fpSB.BuilderAs(sqlbuilder.UnionAll(lastSB, sumSB), "reduced_samples"))
+	return fpSB
+}
+
 func (m *module) buildFilterClause(ctx context.Context, filter *qbtypes.Filter, startMillis, endMillis int64) (*sqlbuilder.WhereClause, error) {
 	expression := ""
 	if filter != nil {
@@ -533,6 +563,7 @@ func (m *module) getAttributesExistence(ctx context.Context, metricNames, attrNa
 // mapping to a flat map of attr_name -> attr_value (includes both groupBy and additional cols).
 func (m *module) getMetadata(
 	ctx context.Context,
+	orgID valuer.UUID,
 	metricNames []string,
 	groupBy []qbtypes.GroupByKey,
 	additionalCols []string,
@@ -545,6 +576,8 @@ func (m *module) getMetadata(
 	if len(groupBy) == 0 {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "groupBy must not be empty")
 	}
+
+	reductionEnabled := m.fl.BooleanOrEmpty(ctx, flagger.FeatureEnableMetricsReduction, featuretypes.NewFlaggerEvaluationContext(orgID))
 
 	// Step-floor the window and pick the right tables — matches the bounds the
 	// QB v5 metric querier uses, so metadataMap covers the same universe the
@@ -583,22 +616,64 @@ func (m *module) getMetadata(
 	}
 
 	innerSB.Select(innerSelectCols...)
-	innerSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, distributedTableName))
-	innerSB.Where(
-		innerSB.In("metric_name", sqlbuilder.List(metricNames)),
-		innerSB.GE("unix_milli", tsAdjustedStartMs),
-		innerSB.LE("unix_milli", flooredEndMs),
-		fmt.Sprintf("fingerprint IN (%s)", innerSB.Var(fpSB)),
-	)
 
-	// Apply optional filter expression
-	if filter != nil && strings.TrimSpace(filter.Expression) != "" {
-		filterClause, err := m.buildFilterClause(ctx, filter, startMs, endMs)
-		if err != nil {
-			return nil, err
+	if reductionEnabled {
+		var filterClause *sqlbuilder.WhereClause
+		if filter != nil && strings.TrimSpace(filter.Expression) != "" {
+			var err error
+			filterClause, err = m.buildFilterClause(ctx, filter, startMs, endMs)
+			if err != nil {
+				return nil, err
+			}
 		}
+
+		reducedFpSB := m.buildReducedSamplesTblFingerprintSubQuery(metricNames, samplesStartMs, flooredEndMs)
+
+		rawSrc := sqlbuilder.NewSelectBuilder()
+		rawSrc.Select("labels", "unix_milli")
+		rawSrc.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, distributedTableName))
+		rawSrc.Where(
+			rawSrc.In("metric_name", sqlbuilder.List(metricNames)),
+			rawSrc.GE("unix_milli", tsAdjustedStartMs),
+			rawSrc.LE("unix_milli", flooredEndMs),
+			fmt.Sprintf("fingerprint IN (%s)", rawSrc.Var(fpSB)),
+		)
 		if filterClause != nil {
-			innerSB.AddWhereClause(filterClause)
+			rawSrc.AddWhereClause(sqlbuilder.CopyWhereClause(filterClause))
+		}
+
+		reducedSrc := sqlbuilder.NewSelectBuilder()
+		reducedSrc.Select("labels", "unix_milli")
+		reducedSrc.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.TimeseriesV4ReducedTableName))
+		reducedSrc.Where(
+			reducedSrc.In("metric_name", sqlbuilder.List(metricNames)),
+			reducedSrc.GE("unix_milli", tsAdjustedStartMs),
+			reducedSrc.LE("unix_milli", flooredEndMs),
+			fmt.Sprintf("fingerprint IN (%s)", reducedSrc.Var(reducedFpSB)),
+		)
+		if filterClause != nil {
+			reducedSrc.AddWhereClause(sqlbuilder.CopyWhereClause(filterClause))
+		}
+
+		// Inner query reads over the union of raw + reduced series.
+		innerSB.From(innerSB.BuilderAs(sqlbuilder.UnionAll(rawSrc, reducedSrc), "series"))
+	} else {
+		innerSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, distributedTableName))
+		innerSB.Where(
+			innerSB.In("metric_name", sqlbuilder.List(metricNames)),
+			innerSB.GE("unix_milli", tsAdjustedStartMs),
+			innerSB.LE("unix_milli", flooredEndMs),
+			fmt.Sprintf("fingerprint IN (%s)", innerSB.Var(fpSB)),
+		)
+
+		if filter != nil && strings.TrimSpace(filter.Expression) != "" {
+			filterClause, err := m.buildFilterClause(ctx, filter, startMs, endMs)
+			if err != nil {
+				return nil, err
+			}
+			if filterClause != nil {
+				innerSB.AddWhereClause(filterClause)
+			}
 		}
 	}
 

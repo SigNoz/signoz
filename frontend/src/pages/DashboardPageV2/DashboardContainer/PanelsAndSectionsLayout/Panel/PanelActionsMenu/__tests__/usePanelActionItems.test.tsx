@@ -1,10 +1,10 @@
 import { act, renderHook } from '@testing-library/react';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import type { ROLES } from 'types/roles';
 
 import type { DashboardSection } from '../../../../utils';
 import { useDashboardStore } from '../../../../store/useDashboardStore';
 import { usePanelActionItems } from '../usePanelActionItems';
-import { PanelKind } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelKind';
 
 const mockOpenEditor = jest.fn();
 jest.mock(
@@ -27,6 +27,11 @@ jest.mock('../../hooks/useDeletePanel', () => ({
 const mockClonePanel = jest.fn();
 jest.mock('../../hooks/useClonePanel', () => ({
 	useClonePanel: (): jest.Mock => mockClonePanel,
+}));
+
+const mockCreateAlert = jest.fn();
+jest.mock('../../hooks/useCreateAlertFromPanel', () => ({
+	useCreateAlertFromPanel: (): jest.Mock => mockCreateAlert,
 }));
 
 // Role is the only thing read off the app context; useComponentPermission runs
@@ -55,9 +60,20 @@ const TWO_TITLED_SECTIONS = [section(0, 'Overview'), section(1, 'Latency')];
 // Index 0 is the untitled root (free-flow) section; index 1 is a titled section.
 const TITLED_WITH_ROOT = [section(0, undefined), section(1, 'Latency')];
 
+// Minimal panel — only its presence gates "Create Alerts"; the query→URL
+// translation it drives is covered by buildCreateAlertUrl's own tests.
+const mockPanel = {
+	kind: 'Panel',
+	spec: {
+		display: { name: 'CPU' },
+		plugin: { kind: 'signoz/TimeSeriesPanel', spec: {} },
+		queries: [],
+	},
+} as unknown as DashboardtypesPanelDTO;
+
 const baseArgs = {
 	panelId: 'panel-1',
-	panelKind: 'signoz/TimeSeriesPanel' as PanelKind,
+	panel: mockPanel,
 	panelActions: { currentLayoutIndex: 0, sections: TWO_TITLED_SECTIONS },
 };
 
@@ -115,29 +131,18 @@ describe('usePanelActionItems', () => {
 		]);
 	});
 
-	it('unknown panel kind hides all kind-gated actions (incl. clone), keeping only move/delete', () => {
-		const { result } = renderHook(() =>
-			// A kind with no registered definition — exercises the "unsupported kind"
-			// branch. Clone is kind-gated (needs the kind to declare actions.clone),
-			// so it drops too; only the kind-agnostic layout actions remain.
-			usePanelActionItems({
-				...baseArgs,
-				panelKind: 'signoz/UnsupportedPanel' as PanelKind,
-			}),
-		);
-		expect(itemKeys(result.current)).toStrictEqual([
-			'move',
-			'divider',
-			'delete-panel',
-		]);
-	});
-
-	it('read-only dashboard keeps only View (V1 parity)', () => {
+	it('read-only dashboard keeps View and Create Alerts (V1 parity: both survive a lock)', () => {
 		useDashboardStore.setState({ isEditable: false });
 		const { result } = renderHook(() =>
 			usePanelActionItems({ ...baseArgs, panelActions: undefined }),
 		);
-		expect(itemKeys(result.current)).toStrictEqual(['view-panel']);
+		// Create Alerts opens a new tab and never mutates the dashboard, so it
+		// isn't gated on edit access — matching V1's locked-dashboard menu.
+		expect(itemKeys(result.current)).toStrictEqual([
+			'view-panel',
+			'divider',
+			'create-alert',
+		]);
 	});
 
 	it('move is disabled when there is no other titled section to move to', () => {
@@ -259,18 +264,26 @@ describe('usePanelActionItems', () => {
 		});
 	});
 
-	it('not-yet-implemented actions (view/create-alert) fire the placeholder alert with the feature name', () => {
+	it('not-yet-implemented actions (view) fire the placeholder alert with the feature name', () => {
 		const alertSpy = jest.spyOn(window, 'alert').mockImplementation(() => {});
 		const { result } = renderHook(() => usePanelActionItems(baseArgs));
 
-		['view-panel', 'create-alert'].forEach((key) => {
-			const item = result.current.items.find((i) => 'key' in i && i.key === key);
-			(item as { onClick: () => void }).onClick();
-		});
+		const view = result.current.items.find(
+			(i) => 'key' in i && i.key === 'view-panel',
+		);
+		(view as { onClick: () => void }).onClick();
 
-		expect(alertSpy).toHaveBeenCalledTimes(2);
+		expect(alertSpy).toHaveBeenCalledTimes(1);
 		expect(alertSpy).toHaveBeenCalledWith('View option clicked');
-		expect(alertSpy).toHaveBeenCalledWith('Create Alerts option clicked');
 		alertSpy.mockRestore();
+	});
+
+	it('create-alert seeds an alert from this panel', () => {
+		const { result } = renderHook(() => usePanelActionItems(baseArgs));
+		const createAlert = result.current.items.find(
+			(i) => 'key' in i && i.key === 'create-alert',
+		);
+		(createAlert as { onClick: () => void }).onClick();
+		expect(mockCreateAlert).toHaveBeenCalledWith(mockPanel, 'panel-1');
 	});
 });
