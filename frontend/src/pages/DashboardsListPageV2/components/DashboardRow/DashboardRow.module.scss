@@ -104,6 +104,24 @@
 	}
 }
 
+/* Pinned rows show the filled pin by default; the unpin action only appears when
+   the pin button itself is hovered. */
+.pinnedIcon {
+	display: inline-flex;
+}
+
+.unpinIcon {
+	display: none;
+}
+
+.pinBtn:hover .pinnedIcon {
+	display: none;
+}
+
+.pinBtn:hover .unpinIcon {
+	display: inline-flex;
+}
+
 .tags {
 	display: flex;
 	flex-wrap: wrap;
