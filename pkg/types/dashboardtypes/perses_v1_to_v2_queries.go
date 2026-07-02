@@ -2,7 +2,6 @@ package dashboardtypes
 
 import (
 	"encoding/json"
-	"fmt"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -104,6 +103,7 @@ func (d *v1Decoder) collectV1QueryEnvelopes(widget map[string]any) ([]map[string
 		var signal telemetrytypes.Signal
 		for _, q := range d.readObjects(builder, "queryData") {
 			normalizeV1Having(q)
+			normalizeV1LogTraceAggregations(q)
 			name := d.readString(q, "queryName")
 			out = append(out, qb.WrapInV5Envelope(name, q, string(qb.QueryTypeBuilder.StringValue())))
 			if signal.IsZero() {
@@ -247,47 +247,4 @@ func signalFromDataSource(raw any) telemetrytypes.Signal {
 		return telemetrytypes.SignalMetrics
 	}
 	return telemetrytypes.Signal{}
-}
-
-// normalizeV1Having rewrites a builder query's v4 having (an array of
-// {columnName, op, value} clauses) into the v5 {"expression": ...} shape in
-// place. The v5 decoder wants an object, but a query can still carry the array
-// form — e.g. a dashboard stamped version:"v5" whose bodies predate v5, which
-// the v4→v5 migrator skips wholesale on the version tag. Mirrors the frontend's
-// convertHavingToExpression (QueryBuilderV2/utils.ts): each clause becomes
-// "columnName op value", clauses join with " AND ", array values render as
-// "[v1, v2]". A having that is already an object (or absent) is left untouched.
-func normalizeV1Having(query map[string]any) {
-	clauses, ok := query["having"].([]any)
-	if !ok {
-		return
-	}
-	exprs := make([]string, 0, len(clauses))
-	for _, c := range clauses {
-		clause, ok := c.(map[string]any)
-		if !ok {
-			continue
-		}
-		col, _ := clause["columnName"].(string)
-		if col == "" {
-			continue
-		}
-		op, _ := clause["op"].(string)
-		exprs = append(exprs, fmt.Sprintf("%s %s %s", col, op, formatHavingValue(clause["value"])))
-	}
-	query["having"] = map[string]any{"expression": strings.Join(exprs, " AND ")}
-}
-
-// formatHavingValue renders a having clause value: an array as "[v1, v2]", any
-// scalar as its default string form.
-func formatHavingValue(value any) string {
-	arr, ok := value.([]any)
-	if !ok {
-		return fmt.Sprintf("%v", value)
-	}
-	parts := make([]string, len(arr))
-	for i, v := range arr {
-		parts[i] = fmt.Sprintf("%v", v)
-	}
-	return "[" + strings.Join(parts, ", ") + "]"
 }
