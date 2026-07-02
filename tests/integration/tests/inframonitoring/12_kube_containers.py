@@ -212,6 +212,41 @@ def test_kube_containers_status_recency(
     assert rec["restarts"] == 5, f"recency: expected restarts=5 (history preserved), got {rec['restarts']}"
 
 
+def test_kube_containers_status_state_only_fallback(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token,
+    insert_metrics,
+) -> None:
+    """When a container has a state but NO active reason, display status falls
+    through to the state itself: state='terminated' -> 'terminated',
+    state='waiting' -> 'waiting'. Exercises the state-fallback branches of the
+    multiIf and the container_reason LEFT-JOIN miss (containers.go:410)."""
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    insert_metrics(
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/kube_containers_state_fallback.jsonl"),
+            base_time=now - timedelta(minutes=4),
+        )
+    )
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = _post(
+        signoz,
+        token,
+        {
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+        },
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    data = response.json()["data"]
+    by_pod = {r["meta"]["k8s.pod.name"]: r for r in data["records"]}
+    assert {"cterm", "cwait"}.issubset(set(by_pod)), f"fallback containers missing: {list(by_pod)}"
+    assert by_pod["cterm"]["status"] == "terminated", f"terminated fallback: got {by_pod['cterm']['status']}"
+    assert by_pod["cwait"]["status"] == "waiting", f"waiting fallback: got {by_pod['cwait']['status']}"
+
+
 def test_kube_containers_status_warning_missing_metrics(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
