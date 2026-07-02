@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from 'react-query';
 import {
 	getGetDashboardV2QueryKey,
+	// eslint-disable-next-line no-restricted-imports -- this hook is the one sanctioned caller of patchDashboardV2; everything else goes through patchAsync.
 	patchDashboardV2,
 } from 'api/generated/services/dashboard';
 import type {

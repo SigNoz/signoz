@@ -1,5 +1,6 @@
 import { renderHook } from '@testing-library/react';
 import { useMutation, useQueryClient } from 'react-query';
+// eslint-disable-next-line no-restricted-imports -- the hook's own test mocks and asserts the underlying patchDashboardV2 call.
 import { patchDashboardV2 } from 'api/generated/services/dashboard';
 import type { GetDashboardV2200 } from 'api/generated/services/sigNoz.schemas';
 import { DashboardtypesPatchOpDTO } from 'api/generated/services/sigNoz.schemas';
