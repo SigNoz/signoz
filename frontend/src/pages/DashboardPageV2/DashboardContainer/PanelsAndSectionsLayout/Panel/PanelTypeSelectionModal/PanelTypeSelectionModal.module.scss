@@ -25,4 +25,46 @@
 		transform: translateY(-2px);
 		border-color: var(--bg-robin-400);
 	}
+	&:active {
+		transform: translateY(0px);
+	}
+}
+
+.panelTypeCardSelected {
+	border-color: var(--bg-robin-400);
+	background-color: var(--l2-background-hover);
+	box-shadow: inset 0 0 0 1px var(--bg-robin-400);
+}
+
+.footerActions {
+	display: flex;
+	align-items: flex-end;
+	gap: 8px;
+	width: 100%;
+}
+
+.footerPicker {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	gap: 6px;
+	min-width: 0;
+}
+
+.pickerLabel {
+	color: var(--l3-foreground);
+	font-size: 11px;
+	font-weight: 500;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+}
+
+.footerConfirm {
+	display: flex;
+	flex: 1;
+	min-width: 0;
+}
+
+.confirmButton {
+	width: 100%;
 }

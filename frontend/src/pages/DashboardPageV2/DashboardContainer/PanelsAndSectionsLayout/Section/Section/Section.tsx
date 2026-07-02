@@ -29,8 +29,13 @@ interface SectionProps {
 
 function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
 	const isEditable = useDashboardStore((s) => s.isEditable);
-	const { isPickerOpen, openPicker, closePicker, createPanel } =
-		useCreatePanel();
+	const {
+		isPickerOpen,
+		openPicker,
+		closePicker,
+		createPanel,
+		targetLayoutIndex,
+	} = useCreatePanel();
 	const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 	const containerRef = useRef<HTMLDivElement>(null);
 	// Placeholder signal for lazy panel query-loading (consumed in a later PR):
@@ -141,6 +146,7 @@ function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
 				open={isPickerOpen}
 				onClose={closePicker}
 				onSelect={createPanel}
+				defaultLayoutIndex={targetLayoutIndex}
 			/>
 			<ConfirmDeleteDialog
 				open={isDeleteOpen}
