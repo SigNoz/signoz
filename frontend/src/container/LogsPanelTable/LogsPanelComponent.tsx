@@ -34,6 +34,7 @@ function LogsPanelComponent({
 	setRequestData,
 	queryResponse,
 	onColumnWidthsChange,
+	hidePagination,
 }: LogsPanelComponentProps): JSX.Element {
 	const [pageSize, setPageSize] = useState<number>(10);
 	const [offset, setOffset] = useState<number>(0);
@@ -158,7 +159,7 @@ function LogsPanelComponent({
 						/>
 					</OverlayScrollbar>
 				</div>
-				{!widget.query.builder.queryData[0].limit && (
+				{!hidePagination && !widget.query.builder.queryData[0].limit && (
 					<div className="controller">
 						<Controls
 							totalCount={totalCount}
@@ -198,6 +199,7 @@ export type LogsPanelComponentProps = {
 	>;
 	widget: Widgets;
 	onColumnWidthsChange?: (widths: Record<string, number>) => void;
+	hidePagination?: boolean;
 };
 
 export default LogsPanelComponent;
