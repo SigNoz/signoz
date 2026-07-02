@@ -1,3 +1,4 @@
+import ROUTES from 'constants/routes';
 import { getEmptyLogsListConfig } from 'container/LogsExplorerList/utils';
 import { server } from 'mocks-server/server';
 import { render, screen, userEvent } from 'tests/test-utils';
@@ -219,6 +220,24 @@ describe('SpanLogs', () => {
 		await user.click(logExplorerButton);
 
 		expect(mockHandleExplorerPageRedirect).toHaveBeenCalledTimes(1);
+	});
+
+	it('opens a new tab to Logs Explorer with the trace_id + span_id query when a log row is clicked', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+
+		render(<SpanLogs {...defaultProps} logs={[sampleLog]} />);
+
+		await user.click(screen.getByTestId(`raw-log-${sampleLog.id}`));
+
+		expect(mockWindowOpen).toHaveBeenCalledTimes(1);
+		const [url, target] = mockWindowOpen.mock.calls[0];
+		// Opens Logs Explorer in a new tab, filtered to this trace/span, and
+		// deep-links to the clicked log.
+		expect(url).toContain(ROUTES.LOGS_EXPLORER);
+		expect(url).toContain(TEST_TRACE_ID);
+		expect(url).toContain(TEST_SPAN_ID);
+		expect(url).toContain(sampleLog.id); // activeLogId
+		expect(target).toBe('_blank');
 	});
 
 	describe('Open in Logs Explorer footer button', () => {
