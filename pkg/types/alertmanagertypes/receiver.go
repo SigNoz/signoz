@@ -73,7 +73,7 @@ func defaultedBaseReceiver(base *config.Receiver) (*config.Receiver, error) {
 		return nil, err
 	}
 
-	if err := withDefaults.UnmarshalYAML(func(i interface{}) error { return nil }); err != nil {
+	if err := withDefaults.UnmarshalYAML(func(i any) error { return nil }); err != nil {
 		return nil, err
 	}
 
@@ -93,7 +93,6 @@ func defaultedNotifierConfig[T any](cfg *T) (*T, error) {
 	}
 	return out, nil
 }
-
 
 func TestReceiver(ctx context.Context, receiver *Receiver, receiverIntegrationsFunc ReceiverIntegrationsFunc, config *Config, tmpl *template.Template, logger *slog.Logger, templater Templater, lSet model.LabelSet, alert ...*Alert) error {
 	ctx = notify.WithGroupKey(ctx, fmt.Sprintf("%s-%s-%d", receiver.Name, lSet.Fingerprint(), time.Now().Unix()))

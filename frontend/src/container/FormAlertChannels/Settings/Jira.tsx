@@ -54,6 +54,7 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 	const currentCustomFieldsRef = useRef<Record<string, unknown>>(
 		(form.getFieldValue('custom_fields') as Record<string, unknown>) ?? {},
 	);
+	const customFieldsSeededRef = useRef(false);
 
 	const standardFieldIds = useMemo(
 		() =>
@@ -100,12 +101,6 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 			return { value: JSON.stringify(value), mode: 'json' };
 		}
 		if (value && typeof value === 'object') {
-			if ('value' in (value as Record<string, unknown>)) {
-				const raw = (value as Record<string, unknown>).value;
-				if (typeof raw === 'string') {
-					return { value: raw, mode: 'text' };
-				}
-			}
 			return { value: JSON.stringify(value), mode: 'json' };
 		}
 		return { value: typeof value === 'string' ? value : '', mode: 'text' };
@@ -118,18 +113,11 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 		return String(value).trim() !== '';
 	};
 
-	const hasOptions = (allowedValues?: JiraAllowedValue[]): boolean =>
-		!!allowedValues && allowedValues.length > 0;
-
 	const isSelectField = (field: JiraFieldMetadata): boolean =>
-		hasOptions(field.allowed_values);
+		!!field.allowed_values && field.allowed_values.length > 0;
 
 	const isTextField = (field: JiraFieldMetadata): boolean => {
-		if (
-			!field.schema_type ||
-			field.schema_type === 'string' ||
-			field.schema_type === 'text'
-		) {
+		if (field.schema_type === 'string' || field.schema_type === 'text') {
 			return true;
 		}
 		if (field.schema_type === 'array') {
@@ -148,9 +136,27 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 		return 'json';
 	};
 
-	// shapeSelectValue coerces extracted plain value(s) into the shape the SELECT
-	// widget expects: an array for multi-select array fields, a single string
-	// otherwise.
+	// coerceRowValue finalises the value stored on a CustomFieldRow after mode
+	// and extraction have been resolved.
+	const coerceRowValue = (
+		mode: FieldMode,
+		extracted: { value: string | string[]; mode: FieldMode },
+		isArrayField: boolean,
+	): string | string[] => {
+		if (mode === 'json' && extracted.mode !== 'json') {
+			return JSON.stringify(extracted.value);
+		}
+		if (
+			extracted.mode !== 'json' &&
+			isArrayField &&
+			!Array.isArray(extracted.value)
+		) {
+			return extracted.value ? [extracted.value] : [];
+		}
+		return extracted.value;
+	};
+
+	// shapeSelectValue coerces extracted plain value(s) into the shape the SELECT widget expects.
 	const shapeSelectValue = (
 		plain: string | string[],
 		isArrayField: boolean,
@@ -228,14 +234,7 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 						? defaultMode
 						: 'none';
 
-				const value =
-					extracted.mode !== 'json' &&
-					isArrayField &&
-					!Array.isArray(extracted.value)
-						? extracted.value
-							? [extracted.value]
-							: []
-						: extracted.value;
+				const value = coerceRowValue(mode, extracted, isArrayField);
 				return { ...meta, value, mode };
 			});
 
@@ -251,7 +250,11 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 				.filter((value) => value !== '');
 		};
 
-		if (hasOptions(row.allowedValues)) {
+		if (
+			row.mode === 'select' &&
+			row.allowedValues &&
+			row.allowedValues.length > 0
+		) {
 			const wrap = (value: string): Record<string, string> => ({ value });
 			if (isArrayField) {
 				return toTrimmedValues().map(wrap);
@@ -320,6 +323,9 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 	};
 
 	useEffect(() => {
+		if (!customFieldsSeededRef.current) {
+			return;
+		}
 		const customFields = buildCustomFields(customFieldRows);
 		currentCustomFieldsRef.current = customFields;
 		setSelectedConfig((value) => ({
@@ -384,16 +390,20 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 			return;
 		}
 
-		if (
-			nextMode === 'select' &&
-			row.schemaType === 'array' &&
-			!Array.isArray(row.value)
-		) {
-			const values = String(row.value)
-				.split(',')
-				.map((item) => item.trim())
-				.filter((item) => item !== '');
-			updateCustomFieldRow(index, { mode: nextMode, value: values });
+		if (nextMode === 'select') {
+			// Normalise any plain text value into the shape the select widget expects.
+			if (row.schemaType === 'array') {
+				const values = Array.isArray(row.value)
+					? row.value
+					: String(row.value)
+							.split(',')
+							.map((item) => item.trim())
+							.filter((item) => item !== '');
+				updateCustomFieldRow(index, { mode: nextMode, value: values });
+			} else {
+				const single = Array.isArray(row.value) ? (row.value[0] ?? '') : row.value;
+				updateCustomFieldRow(index, { mode: nextMode, value: single });
+			}
 			return;
 		}
 		updateCustomFieldRow(index, { mode: nextMode });
@@ -420,6 +430,21 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 				issue_type: issueType,
 			});
 			const fields = response.data.data?.fields || [];
+			if (!customFieldsSeededRef.current) {
+				const raw =
+					(form.getFieldValue('custom_fields') as Record<string, unknown>) ?? {};
+				// Strip empty-string values that were saved by older code so they
+				// don't seed fields as if they had actual values.
+				const savedCustomFields = Object.fromEntries(
+					Object.entries(raw).filter(
+						([, v]) => v !== '' && v !== null && v !== undefined,
+					),
+				);
+				if (Object.keys(savedCustomFields).length > 0) {
+					currentCustomFieldsRef.current = savedCustomFields;
+				}
+				customFieldsSeededRef.current = true;
+			}
 			setCustomFieldRows(
 				resolveMetadataRows(fields, currentCustomFieldsRef.current),
 			);
@@ -455,9 +480,12 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 	// token does not keep serving the previously loaded list.
 	useEffect(() => {
 		if (!apiUrl || !username || !password) {
-			return;
+			return undefined;
 		}
-		void loadProjects();
+		const handle = setTimeout((): void => {
+			void loadProjects();
+		}, 500);
+		return (): void => clearTimeout(handle);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [apiUrl, username, password]);
 
@@ -505,19 +533,20 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [project, issueType]);
 
-	const metadataRows = useMemo(
-		() => customFieldRows.map((row, index) => ({ row, index })),
+	const requiredRows = useMemo(
+		() =>
+			customFieldRows.flatMap((row, index) =>
+				row.required ? [{ row, index }] : [],
+			),
 		[customFieldRows],
 	);
 
-	const requiredRows = useMemo(
-		() => metadataRows.filter(({ row }) => row.required),
-		[metadataRows],
-	);
-
 	const optionalRows = useMemo(
-		() => metadataRows.filter(({ row }) => !row.required),
-		[metadataRows],
+		() =>
+			customFieldRows.flatMap((row, index) =>
+				!row.required ? [{ row, index }] : [],
+			),
+		[customFieldRows],
 	);
 
 	const getModeOptions = (row: CustomFieldRow): FieldMode[] => {
@@ -525,17 +554,14 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 		if (!row.required) {
 			modes.push('none');
 		}
-		const isSelect = hasOptions(row.allowedValues);
-		const isText =
-			!isSelect &&
-			(!row.schemaType ||
-				row.schemaType === 'string' ||
-				row.schemaType === 'text' ||
-				(row.schemaType === 'array' && row.schemaItems === 'string'));
-		if (isSelect) {
+		const rowAsField = {
+			allowed_values: row.allowedValues,
+			schema_type: row.schemaType,
+			schema_items: row.schemaItems,
+		} as JiraFieldMetadata;
+		if (isSelectField(rowAsField)) {
 			modes.push('select');
-		}
-		if (isText) {
+		} else if (isTextField(rowAsField)) {
 			modes.push('text');
 		}
 		modes.push('json');
@@ -562,10 +588,28 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 			schema.allowedValues = row.allowedValues.map((option) => option.label);
 		}
 		return (
-			<div style={{ marginTop: 12 }}>
-				<div style={{ fontWeight: 600, marginBottom: 4 }}>
-					{t('jira_custom_field_schema_heading')}
-				</div>
+			<Form.Item
+				label={t('jira_custom_field_schema_heading')}
+				tooltip={{
+					title: (
+						<span>
+							Describes the JSON format that Jira requires.
+							<br />
+							For help, see the{' '}
+							<a
+								href="https://support.atlassian.com/cloud-automation/docs/advanced-field-editing-using-json/"
+								target="_blank"
+								rel="noopener noreferrer"
+							>
+								Jira documentation
+							</a>
+							.
+						</span>
+					),
+					overlayInnerStyle: { maxWidth: 400 },
+				}}
+				style={{ marginTop: 12, marginBottom: 0 }}
+			>
 				<pre
 					style={{
 						margin: 0,
@@ -577,7 +621,7 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 				>
 					{JSON.stringify(schema, null, 2)}
 				</pre>
-			</div>
+			</Form.Item>
 		);
 	};
 
@@ -717,7 +761,13 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 				/>
 			</Form.Item>
 
-			<Form.Item name="project" label={t('field_jira_project')} required>
+			<Form.Item
+				name="project"
+				label={t('field_jira_project')}
+				required
+				validateStatus={projectsError ? 'error' : ''}
+				help={projectsError || undefined}
+			>
 				<Select
 					showSearch
 					optionFilterProp="label"
@@ -736,10 +786,15 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 					}))}
 					placeholder={t('jira_project_placeholder')}
 				/>
-				{projectsError && <div>{projectsError}</div>}
 			</Form.Item>
 
-			<Form.Item name="issue_type" label={t('field_jira_issue_type')} required>
+			<Form.Item
+				name="issue_type"
+				label={t('field_jira_issue_type')}
+				required
+				validateStatus={issueTypesError ? 'error' : ''}
+				help={issueTypesError || undefined}
+			>
 				<Select
 					showSearch
 					optionFilterProp="label"
@@ -756,7 +811,6 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 					}))}
 					placeholder={t('jira_issue_type_placeholder')}
 				/>
-				{issueTypesError && <div>{issueTypesError}</div>}
 			</Form.Item>
 
 			{metadataError && <div>{metadataError}</div>}

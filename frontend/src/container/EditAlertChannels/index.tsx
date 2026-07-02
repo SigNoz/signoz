@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Form } from 'antd';
 import editEmail from 'api/channels/editEmail';
@@ -66,10 +66,15 @@ function EditAlertChannels({
 		setType(value as ChannelType);
 	}, []);
 
+	const formInitializedRef = useRef(false);
 	useEffect(() => {
+		if (formInitializedRef.current) {
+			return;
+		}
 		formInstance.setFieldsValue({
 			...initialValue,
 		});
+		formInitializedRef.current = true;
 	}, [formInstance, initialValue]);
 
 	const prepareSlackRequest = useCallback(
@@ -352,12 +357,12 @@ function EditAlertChannels({
 		if (hasJiraUsername !== hasJiraPassword) {
 			notifications.error({
 				message: 'Error',
-				description: 'Username and API token must both be set or both be empty',
+				description: t('username_no_password'),
 			});
 			setSavingState(false);
 			return {
 				status: 'failed',
-				statusMessage: 'Username and API token must both be set or both be empty',
+				statusMessage: t('username_no_password'),
 			};
 		}
 
@@ -588,13 +593,6 @@ function EditAlertChannels({
 		],
 	);
 
-	const onTestHandler = useCallback(
-		async (value: ChannelType) => {
-			performChannelTest(value);
-		},
-		[performChannelTest],
-	);
-
 	return (
 		<FormAlertChannels
 			{...{
@@ -602,7 +600,7 @@ function EditAlertChannels({
 				onTypeChangeHandler,
 				setSelectedConfig,
 				type,
-				onTestHandler,
+				onTestHandler: performChannelTest,
 				onSaveHandler,
 				testingState,
 				savingState,

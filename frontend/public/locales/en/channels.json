@@ -76,6 +76,7 @@
   "jira_custom_fields_optional_heading": "Optional fields",
   "jira_custom_field_id_label": "Field ID",
   "jira_custom_field_schema_heading": "Schema",
+  "jira_custom_field_schema_tooltip": "Describes the JSON format that Jira requires.\nFor help, see the <1>Jira documentation</1>",
   "jira_credentials_required": "Jira email and API token are required",
   "jira_custom_field_id_required": "Field ID is required when a value is provided",
   "jira_custom_field_value_required": "Value is required when a field ID is provided",

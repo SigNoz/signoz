@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -118,25 +119,23 @@ func (handler *handler) GetJiraMetadata(rw http.ResponseWriter, req *http.Reques
 		return
 	}
 
-	metadataURL, err := buildJiraCreateMetaURL(metadataRequest.APIURL, metadataRequest.APIType, metadataRequest.Project, metadataRequest.IssueType)
+	baseURL, err := url.Parse(metadataRequest.APIURL)
+	if err != nil {
+		render.Error(rw, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid api_url: %v", err))
+		return
+	}
+
+	var fields []alertmanagertypes.JiraFieldMetadata
+	if isJiraCloud(metadataRequest.APIType, baseURL.Host) {
+		fields, err = fetchJiraCloudFieldMetadata(ctx, metadataRequest)
+	} else {
+		fields, err = fetchJiraDCFieldMetadata(ctx, metadataRequest)
+	}
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	respBody, err := doJiraRequest(ctx, metadataURL.String(), metadataRequest.Username, metadataRequest.Password)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	var jiraMeta jiraCreateMetaResponse
-	if err := json.Unmarshal(respBody, &jiraMeta); err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	fields := flattenJiraFields(jiraMeta)
 	response := alertmanagertypes.JiraMetadataResponse{
 		Project:   metadataRequest.Project,
 		IssueType: metadataRequest.IssueType,
@@ -223,30 +222,21 @@ func (handler *handler) ListJiraProjectIssueTypes(rw http.ResponseWriter, req *h
 		return
 	}
 
-	issueTypesURL, err := buildJiraProjectIssueTypesURL(request.APIURL, request.ProjectKey)
+	baseURL, err := url.Parse(request.APIURL)
+	if err != nil {
+		render.Error(rw, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid api_url: %v", err))
+		return
+	}
+
+	var issueTypes []alertmanagertypes.JiraIssueType
+	if isJiraCloud("auto", baseURL.Host) {
+		issueTypes, err = listJiraCloudIssueTypes(ctx, request)
+	} else {
+		issueTypes, err = listJiraDCIssueTypes(ctx, request)
+	}
 	if err != nil {
 		render.Error(rw, err)
 		return
-	}
-
-	responseBody, err := doJiraRequest(ctx, issueTypesURL.String(), request.Username, request.Password)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	var projectResponse jiraProjectDetailResponse
-	if err := json.Unmarshal(responseBody, &projectResponse); err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	issueTypes := make([]alertmanagertypes.JiraIssueType, 0, len(projectResponse.IssueTypes))
-	for _, issueType := range projectResponse.IssueTypes {
-		issueTypes = append(issueTypes, alertmanagertypes.JiraIssueType{
-			ID:   issueType.ID,
-			Name: issueType.Name,
-		})
 	}
 
 	render.Success(rw, http.StatusOK, alertmanagertypes.JiraProjectIssueTypesResponse{
@@ -265,6 +255,7 @@ type jiraCreateMetaProject struct {
 }
 
 type jiraCreateMetaIssue struct {
+	ID     string                         `json:"id"`
 	Name   string                         `json:"name"`
 	Fields map[string]jiraCreateMetaField `json:"fields"`
 }
@@ -284,7 +275,232 @@ type jiraCreateMetaSchema struct {
 	CustomID int    `json:"customId"`
 }
 
-func buildJiraCreateMetaURL(apiURL, apiType, project, issueType string) (*url.URL, error) {
+// isJiraCloud reports whether the target is Jira Cloud.
+func isJiraCloud(apiType, host string) bool {
+	return apiType == "cloud" ||
+		(apiType == "auto" && strings.HasSuffix(host, "atlassian.net"))
+}
+
+// fetchJiraDCFieldMetadata loads create-issue field metadata from Jira Data Center.
+func fetchJiraDCFieldMetadata(ctx context.Context, req alertmanagertypes.JiraMetadataRequest) ([]alertmanagertypes.JiraFieldMetadata, error) {
+	metadataURL, err := buildJiraCreateMetaURL(req.APIURL, req.Project, req.IssueType)
+	if err != nil {
+		return nil, err
+	}
+
+	respBody, err := doJiraRequest(ctx, metadataURL.String(), req.Username, req.Password)
+	if err != nil {
+		return nil, err
+	}
+
+	var jiraMeta jiraCreateMetaResponse
+	if err := json.Unmarshal(respBody, &jiraMeta); err != nil {
+		return nil, err
+	}
+
+	return flattenJiraFields(jiraMeta), nil
+}
+
+// jiraCloudPage holds the common pagination envelope returned by the Jira Cloud createmeta endpoints.
+type jiraCloudPage struct {
+	StartAt int  `json:"startAt"`
+	Total   int  `json:"total"`
+	IsLast  bool `json:"isLast"`
+}
+
+type jiraCloudIssueType struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
+type jiraCloudIssueTypesPage struct {
+	jiraCloudPage
+	IssueTypes []jiraCloudIssueType `json:"issueTypes"`
+}
+
+type jiraCloudField struct {
+	FieldID       string               `json:"fieldId"`
+	Name          string               `json:"name"`
+	Required      bool                 `json:"required"`
+	Schema        jiraCreateMetaSchema `json:"schema"`
+	AllowedValues []map[string]any     `json:"allowedValues"`
+}
+
+type jiraCloudFieldsPage struct {
+	jiraCloudPage
+	Fields []jiraCloudField `json:"fields"`
+}
+
+// maxJiraCloudPages bounds pagination so a misbehaving server cannot loop forever.
+const maxJiraCloudPages = 50
+
+// fetchJiraCloudFieldMetadata loads create-issue field metadata from Jira Cloud.
+func fetchJiraCloudFieldMetadata(ctx context.Context, req alertmanagertypes.JiraMetadataRequest) ([]alertmanagertypes.JiraFieldMetadata, error) {
+	baseURL, err := jiraV3BaseURL(req.APIURL)
+	if err != nil {
+		return nil, err
+	}
+
+	issueTypeID, err := resolveJiraCloudIssueTypeID(ctx, baseURL, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return fetchJiraCloudFields(ctx, baseURL, req, issueTypeID)
+}
+
+// jiraCloudCreateMetaURL builds a paginated createmeta URL under the v3 base.
+func jiraCloudCreateMetaURL(baseURL *url.URL, startAt int, segments ...string) string {
+	pageURL := *baseURL
+	base := strings.TrimSuffix(baseURL.Path, "/")
+	pageURL.Path = strings.Join(append([]string{base, "issue", "createmeta"}, segments...), "/")
+	query := pageURL.Query()
+	query.Set("startAt", strconv.Itoa(startAt))
+	pageURL.RawQuery = query.Encode()
+	return pageURL.String()
+}
+
+// pageJiraCloudIssueTypes pages through the Jira Cloud issuetypes endpoint and returns every creatable
+// issue type for the project.
+func pageJiraCloudIssueTypes(ctx context.Context, baseURL *url.URL, project, username, password string) ([]jiraCloudIssueType, error) {
+	issueTypes := make([]jiraCloudIssueType, 0)
+	startAt := 0
+	for range maxJiraCloudPages {
+		pageURL := jiraCloudCreateMetaURL(baseURL, startAt, project, "issuetypes")
+		body, err := doJiraRequest(ctx, pageURL, username, password)
+		if err != nil {
+			return nil, err
+		}
+
+		var result jiraCloudIssueTypesPage
+		if err := json.Unmarshal(body, &result); err != nil {
+			return nil, err
+		}
+
+		issueTypes = append(issueTypes, result.IssueTypes...)
+
+		startAt += len(result.IssueTypes)
+		if result.IsLast || len(result.IssueTypes) == 0 || startAt >= result.Total {
+			break
+		}
+	}
+
+	return issueTypes, nil
+}
+
+func resolveJiraCloudIssueTypeID(ctx context.Context, baseURL *url.URL, req alertmanagertypes.JiraMetadataRequest) (string, error) {
+	issueTypes, err := pageJiraCloudIssueTypes(ctx, baseURL, req.Project, req.Username, req.Password)
+	if err != nil {
+		return "", err
+	}
+
+	for _, issueType := range issueTypes {
+		if strings.EqualFold(issueType.Name, req.IssueType) {
+			return issueType.ID, nil
+		}
+	}
+
+	return "", errors.NewNotFoundf(errors.CodeNotFound, "issue type %q not found in project %q", req.IssueType, req.Project)
+}
+
+// listJiraCloudIssueTypes returns the creatable issue types for a Jira Cloud
+// project, used to populate the issue-type dropdown.
+func listJiraCloudIssueTypes(ctx context.Context, req alertmanagertypes.JiraProjectIssueTypesRequest) ([]alertmanagertypes.JiraIssueType, error) {
+	baseURL, err := jiraV3BaseURL(req.APIURL)
+	if err != nil {
+		return nil, err
+	}
+
+	cloudTypes, err := pageJiraCloudIssueTypes(ctx, baseURL, req.ProjectKey, req.Username, req.Password)
+	if err != nil {
+		return nil, err
+	}
+
+	issueTypes := make([]alertmanagertypes.JiraIssueType, 0, len(cloudTypes))
+	for _, issueType := range cloudTypes {
+		issueTypes = append(issueTypes, alertmanagertypes.JiraIssueType{
+			ID:   issueType.ID,
+			Name: issueType.Name,
+		})
+	}
+
+	return issueTypes, nil
+}
+
+// listJiraDCIssueTypes returns the creatable issue types for a Jira Data Center project.
+func listJiraDCIssueTypes(ctx context.Context, req alertmanagertypes.JiraProjectIssueTypesRequest) ([]alertmanagertypes.JiraIssueType, error) {
+	metadataURL, err := buildJiraCreateMetaURL(req.APIURL, req.ProjectKey, "")
+	if err != nil {
+		return nil, err
+	}
+
+	body, err := doJiraRequest(ctx, metadataURL.String(), req.Username, req.Password)
+	if err != nil {
+		return nil, err
+	}
+
+	var meta jiraCreateMetaResponse
+	if err := json.Unmarshal(body, &meta); err != nil {
+		return nil, err
+	}
+
+	issueTypes := make([]alertmanagertypes.JiraIssueType, 0)
+	for _, project := range meta.Projects {
+		for _, issueType := range project.IssueTypes {
+			issueTypes = append(issueTypes, alertmanagertypes.JiraIssueType{
+				ID:   issueType.ID,
+				Name: issueType.Name,
+			})
+		}
+	}
+
+	return issueTypes, nil
+}
+
+func fetchJiraCloudFields(ctx context.Context, baseURL *url.URL, req alertmanagertypes.JiraMetadataRequest, issueTypeID string) ([]alertmanagertypes.JiraFieldMetadata, error) {
+	fields := make([]alertmanagertypes.JiraFieldMetadata, 0)
+	startAt := 0
+	for range maxJiraCloudPages {
+		pageURL := jiraCloudCreateMetaURL(baseURL, startAt, req.Project, "issuetypes", issueTypeID)
+		body, err := doJiraRequest(ctx, pageURL, req.Username, req.Password)
+		if err != nil {
+			return nil, err
+		}
+
+		var result jiraCloudFieldsPage
+		if err := json.Unmarshal(body, &result); err != nil {
+			return nil, err
+		}
+
+		for _, field := range result.Fields {
+			fields = append(fields, alertmanagertypes.JiraFieldMetadata{
+				ID:             field.FieldID,
+				Name:           field.Name,
+				Required:       field.Required,
+				SchemaType:     field.Schema.Type,
+				SchemaItems:    field.Schema.Items,
+				SchemaSystem:   field.Schema.System,
+				SchemaCustom:   field.Schema.Custom,
+				SchemaCustomID: field.Schema.CustomID,
+				AllowedValues:  extractJiraAllowedValues(field.AllowedValues),
+			})
+		}
+
+		startAt += len(result.Fields)
+		if result.IsLast || len(result.Fields) == 0 || startAt >= result.Total {
+			break
+		}
+	}
+
+	sort.Slice(fields, func(i, j int) bool {
+		return strings.ToLower(fields[i].Name) < strings.ToLower(fields[j].Name)
+	})
+
+	return fields, nil
+}
+
+// buildJiraCreateMetaURL builds the Jira Data Center bulk createmeta URL.
+func buildJiraCreateMetaURL(apiURL, project, issueType string) (*url.URL, error) {
 	baseURL, err := url.Parse(apiURL)
 	if err != nil {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid api_url: %v", err)
@@ -292,24 +508,16 @@ func buildJiraCreateMetaURL(apiURL, apiType, project, issueType string) (*url.UR
 
 	path := strings.TrimSuffix(baseURL.Path, "/")
 	if !strings.Contains(path, "/rest/api/") {
-		version := "2"
-		if apiType == "cloud" || (apiType == "auto" && strings.HasSuffix(baseURL.Host, "atlassian.net")) {
-			version = "3"
-		}
-		if apiType == "datacenter" {
-			version = "2"
-		}
-		path = path + "/rest/api/" + version
-	} else if apiType == "cloud" && strings.Contains(path, "/rest/api/2") {
-		path = strings.Replace(path, "/rest/api/2", "/rest/api/3", 1)
-	} else if apiType == "datacenter" && strings.Contains(path, "/rest/api/3") {
-		path = strings.Replace(path, "/rest/api/3", "/rest/api/2", 1)
+		path = path + "/rest/api/2"
 	}
 
 	baseURL.Path = strings.TrimSuffix(path, "/") + "/issue/createmeta"
 	query := baseURL.Query()
 	query.Set("projectKeys", project)
-	query.Set("issuetypeNames", issueType)
+	// When no issue type is given, omit the filter so the response includes every creatable issue type.
+	if issueType != "" {
+		query.Set("issuetypeNames", issueType)
+	}
 	query.Set("expand", "projects.issuetypes.fields")
 	baseURL.RawQuery = query.Encode()
 
@@ -362,13 +570,12 @@ func extractJiraAllowedValues(values []map[string]any) []alertmanagertypes.JiraA
 
 	allowed := make([]alertmanagertypes.JiraAllowedValue, 0, len(values))
 	for _, value := range values {
-		label := stringField(value, "value", "name", "key", "id")
-		val := stringField(value, "id", "key", "value", "name")
-		if label == "" && val == "" {
+		val := stringField(value, "value", "name", "key", "id")
+		if val == "" {
 			continue
 		}
 		allowed = append(allowed, alertmanagertypes.JiraAllowedValue{
-			Label: label,
+			Label: val,
 			Value: val,
 		})
 	}
@@ -386,15 +593,6 @@ type jiraProjectItem struct {
 	Name string `json:"name"`
 }
 
-type jiraProjectDetailResponse struct {
-	IssueTypes []jiraIssueTypeItem `json:"issueTypes"`
-}
-
-type jiraIssueTypeItem struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
-}
-
 func buildJiraProjectsURL(apiURL string) (*url.URL, error) {
 	baseURL, err := jiraV3BaseURL(apiURL)
 	if err != nil {
@@ -406,16 +604,6 @@ func buildJiraProjectsURL(apiURL string) (*url.URL, error) {
 	query.Set("maxResults", "200")
 	baseURL.RawQuery = query.Encode()
 
-	return baseURL, nil
-}
-
-func buildJiraProjectIssueTypesURL(apiURL, projectKey string) (*url.URL, error) {
-	baseURL, err := jiraV3BaseURL(apiURL)
-	if err != nil {
-		return nil, err
-	}
-
-	baseURL.Path += "/project/" + projectKey
 	return baseURL, nil
 }
 

@@ -46,16 +46,47 @@ const (
 	maxDescriptionLenRunes = 32767
 )
 
+// jiraUpdateVerbs are the operation verbs Jira accepts inside the "update" block of an edit-issue request.
+// https://developer.atlassian.com/server/jira/platform/jira-rest-api-example-edit-issues-6291632/
+var jiraUpdateVerbs = map[string]struct{}{
+	"add":    {},
+	"set":    {},
+	"remove": {},
+	"edit":   {},
+	"copy":   {},
+}
+
+// isUpdateOperationValue reports whether v is shaped as a Jira "update" block.
+func isUpdateOperationValue(v any) bool {
+	arr, ok := v.([]any)
+	if !ok || len(arr) == 0 {
+		return false
+	}
+	for _, elem := range arr {
+		obj, ok := elem.(map[string]any)
+		if !ok || len(obj) == 0 {
+			return false
+		}
+		for key := range obj {
+			if _, ok := jiraUpdateVerbs[key]; !ok {
+				return false
+			}
+		}
+	}
+	return true
+}
+
 // Jira API types
 
 type issue struct {
-	Key        string       `json:"key,omitempty"`
-	Fields     *issueFields `json:"fields,omitempty"`
-	Transition *idNameValue `json:"transition,omitempty"`
+	Key        string         `json:"key,omitempty"`
+	Fields     *issueFields   `json:"fields,omitempty"`
+	Update     map[string]any `json:"update,omitempty"`
+	Transition *idNameValue   `json:"transition,omitempty"`
 }
 
 type issueFields struct {
-	Description *string       `json:"description,omitempty"`
+	Description any           `json:"description,omitempty"`
 	Issuetype   *idNameValue  `json:"issuetype,omitempty"`
 	Labels      []string      `json:"labels,omitempty"`
 	Priority    *idNameValue  `json:"priority,omitempty"`
@@ -104,7 +135,7 @@ func (i issueFields) MarshalJSON() ([]byte, error) {
 		jsonFields["summary"] = *i.Summary
 	}
 	if i.Description != nil {
-		jsonFields["description"] = *i.Description
+		jsonFields["description"] = i.Description
 	}
 	if i.Issuetype != nil {
 		jsonFields["issuetype"] = i.Issuetype
@@ -211,18 +242,20 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 		return false, err
 	}
 
-	if method == http.MethodPut && requestBody.Fields != nil {
-		if !n.conf.Description.EnableUpdateValue() {
-			requestBody.Fields.Description = nil
-		}
-		if !n.conf.Summary.EnableUpdateValue() {
-			requestBody.Fields.Summary = nil
+	if method == http.MethodPut {
+		if requestBody.Fields != nil {
+			if !n.conf.Description.EnableUpdateValue() {
+				requestBody.Fields.Description = nil
+			}
+			if !n.conf.Summary.EnableUpdateValue() {
+				requestBody.Fields.Summary = nil
+			}
 		}
 	}
 
 	responseBody, shouldRetry, err := n.doAPIRequest(ctx, method, path, requestBody)
 	if err != nil {
-		return shouldRetry, errors.WrapInternalf(err, errors.CodeInternal, "failed to create Jira issue: %v", err)
+		return shouldRetry, errors.WrapInternalf(err, errors.CodeInternal, "failed to %s Jira issue: %v", method, err)
 	}
 
 	// Log the created issue with a browse URL for operator convenience.
@@ -245,6 +278,26 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 	return n.transitionIssue(ctx, logger, existingIssue, alerts.HasFiring())
 }
 
+// adfDocument wraps plain text into a minimal Atlassian Document Format document.
+func adfDocument(text string) map[string]any {
+	content := make([]any, 0)
+	for line := range strings.SplitSeq(text, "\n") {
+		paragraph := map[string]any{"type": "paragraph"}
+		if line != "" {
+			paragraph["content"] = []any{
+				map[string]any{"type": "text", "text": line},
+			}
+		}
+		content = append(content, paragraph)
+	}
+
+	return map[string]any{
+		"type":    "doc",
+		"version": 1,
+		"content": content,
+	}
+}
+
 func (n *Notifier) prepareIssueRequestBody(ctx context.Context, logger *slog.Logger, groupID string, tmplTextFunc template.TemplateFunc) (issue, error) {
 	summary, err := tmplTextFunc(n.conf.Summary.Template)
 	if err != nil {
@@ -261,13 +314,22 @@ func (n *Notifier) prepareIssueRequestBody(ctx context.Context, logger *slog.Log
 	}
 
 	fieldsWithStringKeys := make(map[string]any, len(n.conf.Fields))
-	if n.conf.Fields != nil {
-		for k, v := range n.conf.Fields {
-			fieldsWithStringKeys[k], err = template.DeepCopyWithTemplate(v, tmplTextFunc)
-			if err != nil {
-				return issue{}, errors.WrapInternalf(err, errors.CodeInternal, "fields template")
-			}
+	updateFields := make(map[string]any)
+	for k, v := range n.conf.Fields {
+		// Skip fields saved with empty values — they carry no intent and
+		// would be rejected or misinterpreted by the Jira API.
+		if s, ok := v.(string); ok && s == "" {
+			continue
 		}
+		copied, err := template.DeepCopyWithTemplate(v, tmplTextFunc)
+		if err != nil {
+			return issue{}, errors.WrapInternalf(err, errors.CodeInternal, "fields template")
+		}
+		if isUpdateOperationValue(copied) {
+			updateFields[k] = copied
+			continue
+		}
+		fieldsWithStringKeys[k] = copied
 	}
 
 	summary, truncated := notify.TruncateInRunes(summary, maxSummaryLenRunes)
@@ -282,6 +344,9 @@ func (n *Notifier) prepareIssueRequestBody(ctx context.Context, logger *slog.Log
 		Labels:    make([]string, 0, len(n.conf.Labels)+1),
 		Fields:    fieldsWithStringKeys,
 	}}
+	if len(updateFields) > 0 {
+		requestBody.Update = updateFields
+	}
 
 	descriptionText, err := tmplTextFunc(n.conf.Description.Template)
 	if err != nil {
@@ -292,7 +357,11 @@ func (n *Notifier) prepareIssueRequestBody(ctx context.Context, logger *slog.Log
 		logger.WarnContext(ctx, "truncated description", slog.Int("max_runes", maxDescriptionLenRunes))
 	}
 	if descriptionText != "" {
-		requestBody.Fields.Description = &descriptionText
+		if n.isCloud() {
+			requestBody.Fields.Description = adfDocument(descriptionText)
+		} else {
+			requestBody.Fields.Description = descriptionText
+		}
 	}
 
 	for i, label := range n.conf.Labels {
@@ -376,17 +445,11 @@ func (n *Notifier) prepareSearchRequest(jql string) (issueSearch, string) {
 		Fields:     []string{"status"},
 	}
 
-	baseURL := n.apiURL.Copy()
+	baseURL := n.versionedAPIURL()
 	baseURL.Path = strings.TrimSuffix(baseURL.Path, "/")
 
-	if n.conf.APIType == "datacenter" {
-		baseURL.Path += "/search"
-		return requestBody, baseURL.String()
-	}
-
-	if n.conf.APIType == "cloud" || (n.conf.APIType == "auto" && strings.HasSuffix(n.apiURL.Host, "atlassian.net")) {
-		// For Jira Cloud, use API v3 for search
-		baseURL.Path = strings.Replace(baseURL.Path, "/rest/api/2", "/rest/api/3", 1)
+	if n.isCloud() {
+		// Jira Cloud uses the v3 /search/jql endpoint.
 		baseURL.Path += "/search/jql"
 		return requestBody, baseURL.String()
 	}
@@ -459,8 +522,23 @@ func (n *Notifier) transitionIssue(ctx context.Context, logger *slog.Logger, iss
 	return false, nil
 }
 
+// isCloud reports whether this notifier targets a Jira Cloud instance.
+func (n *Notifier) isCloud() bool {
+	return n.conf.APIType == "cloud" ||
+		(n.conf.APIType == "auto" && strings.HasSuffix(n.apiURL.Host, "atlassian.net"))
+}
+
+// versionedAPIURL returns the base API URL with the correct REST version.
+func (n *Notifier) versionedAPIURL() *config.URL {
+	baseURL := n.apiURL.Copy()
+	if n.isCloud() {
+		baseURL.Path = strings.Replace(baseURL.Path, "/rest/api/2", "/rest/api/3", 1)
+	}
+	return baseURL
+}
+
 func (n *Notifier) doAPIRequest(ctx context.Context, method, path string, requestBody any) ([]byte, bool, error) {
-	url := n.apiURL.Copy()
+	url := n.versionedAPIURL()
 	// Ensure path starts with /
 	if !strings.HasPrefix(path, "/") {
 		path = "/" + path
