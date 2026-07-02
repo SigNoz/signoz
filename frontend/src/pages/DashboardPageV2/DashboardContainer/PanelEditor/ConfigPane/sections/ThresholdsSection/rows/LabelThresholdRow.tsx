@@ -20,6 +20,7 @@ interface LabelThresholdRowProps {
 	isEditing: boolean;
 	onEdit: () => void;
 	onSave: (next: DashboardtypesThresholdWithLabelDTO) => void;
+	onLiveChange: (next: DashboardtypesThresholdWithLabelDTO) => void;
 	onDiscard: () => void;
 	onRemove: () => void;
 }
@@ -32,10 +33,15 @@ function LabelThresholdRow({
 	isEditing,
 	onEdit,
 	onSave,
+	onLiveChange,
 	onDiscard,
 	onRemove,
 }: LabelThresholdRowProps): JSX.Element {
-	const { draft, setDraft, setValue } = useThresholdDraft(threshold, isEditing);
+	const { draft, setDraft, setValue } = useThresholdDraft(
+		threshold,
+		isEditing,
+		onLiveChange,
+	);
 
 	// Persist an empty-string label when none was entered — the spec requires a string.
 	const handleSave = useCallback((): void => {

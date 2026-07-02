@@ -40,6 +40,8 @@ interface ConfigPaneProps {
 	 */
 	panel: DashboardtypesPanelDTO;
 	panelId: string;
+	/** Unit the selected metric was sent with; drives the unit selector's mismatch warning. */
+	metricUnit?: string;
 }
 
 /**
@@ -58,6 +60,7 @@ function ConfigPane({
 	stepInterval,
 	panel,
 	panelId,
+	metricUnit,
 }: ConfigPaneProps): JSX.Element {
 	const panelKind = spec.plugin.kind;
 	const definition = getPanelDefinition(panelKind);
@@ -118,6 +121,7 @@ function ConfigPane({
 									onChangePanelKind={onChangePanelKind}
 									queryType={queryType}
 									stepInterval={stepInterval}
+									metricUnit={metricUnit}
 								/>
 							))}
 						</div>

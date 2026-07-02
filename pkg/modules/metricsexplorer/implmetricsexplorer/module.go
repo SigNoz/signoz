@@ -1100,23 +1100,24 @@ func (m *module) fetchMetricsStatsWithSamples(
 		reducedSumSB.Where(reducedSumSB.Between("unix_milli", req.Start, req.End))
 		reducedSumSB.Where("NOT startsWith(metric_name, 'signoz')")
 
-		if filterWhereClause == nil {
-			reducedTsSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.TimeseriesV4ReducedTableName))
-			reducedTsSB.Where(reducedTsSB.Between("unix_milli", start, end))
-			reducedTsSB.Where("NOT startsWith(metric_name, 'signoz')")
-			reducedTsSB.GroupBy("metric_name")
-		} else {
+		// separate query for reduced series counts
+		reducedTsSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.TimeseriesV4ReducedTableName))
+		reducedTsSB.Where(reducedTsSB.Between("unix_milli", start, end))
+		reducedTsSB.Where("NOT startsWith(metric_name, 'signoz')")
+		reducedTsSB.GroupBy("metric_name")
+
+		if filterWhereClause != nil {
+			reducedTsSB.AddWhereClause(sqlbuilder.CopyWhereClause(filterWhereClause))
+
+			// samples uses a separate cte with local table
 			reducedFpSB := sqlbuilder.NewSelectBuilder()
-			reducedFpSB.Select("metric_name", "fingerprint")
-			reducedFpSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.TimeseriesV4ReducedTableName))
+			reducedFpSB.Select("fingerprint")
+			reducedFpSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.TimeseriesV4ReducedLocalTableName))
 			reducedFpSB.Where(reducedFpSB.Between("unix_milli", start, end))
 			reducedFpSB.Where("NOT startsWith(metric_name, 'signoz')")
 			reducedFpSB.AddWhereClause(sqlbuilder.CopyWhereClause(filterWhereClause))
-			reducedFpSB.GroupBy("metric_name", "fingerprint")
+			reducedFpSB.GroupBy("fingerprint")
 			ctes = append(ctes, sqlbuilder.CTEQuery("__reduced_filtered_fingerprints").As(reducedFpSB))
-
-			reducedTsSB.From("__reduced_filtered_fingerprints")
-			reducedTsSB.GroupBy("metric_name")
 
 			reducedLastSB.Where("reduced_fingerprint IN (SELECT fingerprint FROM __reduced_filtered_fingerprints)")
 			reducedSumSB.Where("reduced_fingerprint IN (SELECT fingerprint FROM __reduced_filtered_fingerprints)")
@@ -1422,7 +1423,7 @@ func (m *module) computeSamplesTreemap(ctx context.Context, orgID valuer.UUID, r
 		if reductionEnabled {
 			reducedFingerprintSB := sqlbuilder.NewSelectBuilder()
 			reducedFingerprintSB.Select("fingerprint")
-			reducedFingerprintSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.TimeseriesV4ReducedTableName))
+			reducedFingerprintSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.TimeseriesV4ReducedLocalTableName))
 			reducedFingerprintSB.Where(reducedFingerprintSB.Between("unix_milli", start, end))
 			reducedFingerprintSB.Where("NOT startsWith(metric_name, 'signoz')")
 			reducedFingerprintSB.AddWhereClause(sqlbuilder.CopyWhereClause(filterWhereClause))
