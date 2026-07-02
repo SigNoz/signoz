@@ -254,9 +254,9 @@ func (m *module) getPerGroupContainerStatusCountsWithReqMetricChecks(
 //	state_fps / container_state:   current k8s.container.status.state per container
 //	                               (argMaxIf(state, unix_milli, value=1) — safe because a
 //	                               container always has exactly one active state).
-//	reason_fps / container_reason: highest-priority active k8s.container.status.reason per
-//	                               container (two-level: HAVING is_active=1 excludes stale
-//	                               reasons of recovered containers).
+//	reason_fps / container_reason: current active k8s.container.status.reason per container
+//	                               (two-level: HAVING is_active=1 excludes stale reasons of
+//	                               recovered containers, then recency picks the latest).
 //	container_status:              display status per container (reason > state fallback).
 //	countContainersPerStatus:      per-group uniqExactIf over distinct (pod_uid, container_name).
 //
@@ -373,26 +373,19 @@ func (m *module) getPerGroupContainerStatusCounts(
 
 	// ----- container_reason -----
 	// Inner: latest value per (pod, container, reason) -> kills stale fingerprints
-	// from old container incarnations; keep only active (=1). Outer:
-	// highest-priority active reason per container (waiting > terminated).
-	priorityCase := "CASE fps.reason " +
-		"WHEN 'CrashLoopBackOff' THEN 8 " +
-		"WHEN 'ImagePullBackOff' THEN 7 " +
-		"WHEN 'ErrImagePull' THEN 6 " +
-		"WHEN 'CreateContainerConfigError' THEN 5 " +
-		"WHEN 'ContainerCreating' THEN 4 " +
-		"WHEN 'OOMKilled' THEN 3 " +
-		"WHEN 'Error' THEN 2 " +
-		"WHEN 'ContainerCannotRun' THEN 1 " +
-		"WHEN 'Completed' THEN 0 " +
-		"ELSE -1 END"
+	// from old container incarnations; keep only active (=1). Outer: the current
+	// incarnation's reason wins via recency (argMax by last_active_ms). We do NOT
+	// priority-rank reasons at container grain -- "worst wins" is a pod-level concept
+	// (aggregating multiple containers into one status); a single container has one
+	// reason at a time, and multiple only appear active via container.id churn on
+	// restart, where the latest (current) incarnation is the right answer.
 	reasonInner := sqlbuilder.NewSelectBuilder()
 	reasonInner.Select(
 		"fps.pod_uid AS pod_uid",
 		"fps.container_name AS container_name",
 		"fps.reason AS reason",
 		fmt.Sprintf("argMax(samples.%s, samples.unix_milli) AS is_active", valueCol),
-		priorityCase+" AS priority",
+		"max(samples.unix_milli) AS last_active_ms",
 	)
 	reasonInner.From(fmt.Sprintf(
 		"%s.%s AS samples INNER JOIN reason_fps AS fps ON samples.fingerprint = fps.fingerprint",
@@ -408,18 +401,18 @@ func (m *module) getPerGroupContainerStatusCounts(
 	reasonInner.Having("is_active = 1")
 	reasonInnerSQL, reasonInnerArgs := reasonInner.BuildWithFlavor(sqlbuilder.ClickHouse)
 	containerReasonSQL := fmt.Sprintf(
-		"SELECT pod_uid, container_name, argMax(reason, priority) AS active_reason FROM (%s) GROUP BY pod_uid, container_name",
+		"SELECT pod_uid, container_name, argMax(reason, last_active_ms) AS active_reason FROM (%s) GROUP BY pod_uid, container_name",
 		reasonInnerSQL,
 	)
 
 	// ----- container_status (display status per container) -----
 	// container reason > state fallback (running/terminated/waiting).
-	displayStatusExpr := "multiIf(" +
-		"cr.active_reason != '', cr.active_reason, " +
-		"st.state = 'running', 'Running', " +
-		"st.state = 'terminated', 'Terminated', " +
-		"st.state = 'waiting', 'Waiting', " +
-		"'Unknown')"
+	displayStatusExpr := `multiIf(
+		cr.active_reason != '', cr.active_reason,
+		st.state = 'running', 'Running',
+		st.state = 'terminated', 'Terminated',
+		st.state = 'waiting', 'Waiting',
+		'Unknown')`
 	containerStatusSelectCols := []string{
 		"st.pod_uid AS pod_uid",
 		"st.container_name AS container_name",
@@ -430,31 +423,35 @@ func (m *module) getPerGroupContainerStatusCounts(
 	}
 	containerStatusSelectCols = append(containerStatusSelectCols, displayStatusExpr+" AS display_status")
 	containerStatusSQL := fmt.Sprintf(
-		"SELECT %s FROM container_state AS st "+
-			"LEFT JOIN container_reason AS cr ON st.pod_uid = cr.pod_uid AND st.container_name = cr.container_name",
+		"SELECT %s FROM container_state AS st LEFT JOIN container_reason AS cr ON st.pod_uid = cr.pod_uid AND st.container_name = cr.container_name",
 		strings.Join(containerStatusSelectCols, ", "),
 	)
 
 	// ----- countContainersPerStatus (outer SELECT) -----
 	// Fixed status order; MUST match the containerStatusCounts assignment below.
-	displayStatuses := []string{
-		"Running", "Waiting", "Terminated",
-		"CrashLoopBackOff", "ImagePullBackOff", "ErrImagePull", "CreateContainerConfigError",
-		"ContainerCreating", "OOMKilled", "Completed", "Error", "ContainerCannotRun",
-		"Unknown",
+	statusCountCols := []string{
+		"uniqExactIf((pod_uid, container_name), display_status = 'Running') AS running_count",
+		"uniqExactIf((pod_uid, container_name), display_status = 'Waiting') AS waiting_count",
+		"uniqExactIf((pod_uid, container_name), display_status = 'Terminated') AS terminated_count",
+		"uniqExactIf((pod_uid, container_name), display_status = 'CrashLoopBackOff') AS crash_loop_back_off_count",
+		"uniqExactIf((pod_uid, container_name), display_status = 'ImagePullBackOff') AS image_pull_back_off_count",
+		"uniqExactIf((pod_uid, container_name), display_status = 'ErrImagePull') AS err_image_pull_count",
+		"uniqExactIf((pod_uid, container_name), display_status = 'CreateContainerConfigError') AS create_container_config_error_count",
+		"uniqExactIf((pod_uid, container_name), display_status = 'ContainerCreating') AS container_creating_count",
+		"uniqExactIf((pod_uid, container_name), display_status = 'OOMKilled') AS oom_killed_count",
+		"uniqExactIf((pod_uid, container_name), display_status = 'Completed') AS completed_count",
+		"uniqExactIf((pod_uid, container_name), display_status = 'Error') AS error_count",
+		"uniqExactIf((pod_uid, container_name), display_status = 'ContainerCannotRun') AS container_cannot_run_count",
+		"uniqExactIf((pod_uid, container_name), display_status = 'Unknown') AS unknown_count",
 	}
-	countSelectCols := make([]string, 0, len(groupBy)+len(displayStatuses))
+	countSelectCols := make([]string, 0, len(groupBy)+len(statusCountCols))
 	countGroupBy := make([]string, 0, len(groupBy))
 	for _, key := range groupBy {
 		col := quoteIdentifier(key.Name)
 		countSelectCols = append(countSelectCols, col)
 		countGroupBy = append(countGroupBy, col)
 	}
-	for i, st := range displayStatuses {
-		countSelectCols = append(countSelectCols,
-			fmt.Sprintf("uniqExactIf((pod_uid, container_name), display_status = '%s') AS c%d", st, i),
-		)
-	}
+	countSelectCols = append(countSelectCols, statusCountCols...)
 	countSQL := fmt.Sprintf(
 		"SELECT %s FROM container_status GROUP BY %s",
 		strings.Join(countSelectCols, ", "),
@@ -483,8 +480,8 @@ func (m *module) getPerGroupContainerStatusCounts(
 	result := make(map[string]containerStatusCounts)
 	for rows.Next() {
 		groupVals := make([]string, len(groupBy))
-		counts := make([]uint64, len(displayStatuses))
-		scanPtrs := make([]any, 0, len(groupBy)+len(displayStatuses))
+		counts := make([]uint64, len(statusCountCols))
+		scanPtrs := make([]any, 0, len(groupBy)+len(statusCountCols))
 		for i := range groupVals {
 			scanPtrs = append(scanPtrs, &groupVals[i])
 		}
