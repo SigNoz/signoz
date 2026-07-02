@@ -94,12 +94,17 @@ function TimelineV3(props: ITimelineV3Props): JSX.Element {
 						>
 							<text
 								x={index === intervals.length - 1 ? -10 : 0}
-								y={timelineHeight * 2}
+								y={timelineHeight * 2 - 3}
 								fill={strokeColor}
 							>
 								{interval.label}
 							</text>
-							<line y1={0} y2={timelineHeight} stroke={strokeColor} strokeWidth="1" />
+							<line
+								y1={0}
+								y2={timelineHeight - 3}
+								stroke={strokeColor}
+								strokeWidth="1"
+							/>
 						</g>
 					))}
 			</svg>
