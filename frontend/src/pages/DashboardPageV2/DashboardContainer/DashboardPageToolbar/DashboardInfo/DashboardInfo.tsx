@@ -22,6 +22,8 @@ interface DashboardInfoProps {
 	/** Absolute URL of the public dashboard page; opened when the globe is clicked. */
 	publicUrl: string;
 	isDashboardLocked: boolean;
+	/** When provided, the lock icon becomes a click-to-unlock control (gated to author/admin by the caller). */
+	onToggleLock?: () => void;
 	isEditing: boolean;
 	draft: string;
 	onDraftChange: (value: string) => void;
@@ -38,6 +40,7 @@ function DashboardInfo({
 	isPublicDashboard,
 	publicUrl,
 	isDashboardLocked,
+	onToggleLock,
 	isEditing,
 	draft,
 	onDraftChange,
@@ -143,8 +146,23 @@ function DashboardInfo({
 			)}
 
 			{isDashboardLocked && (
-				<TooltipSimple title="This dashboard is locked">
-					<LockKeyhole size={14} />
+				<TooltipSimple
+					title={
+						onToggleLock
+							? 'This dashboard is locked. Click to unlock.'
+							: 'This dashboard is locked'
+					}
+				>
+					<button
+						type="button"
+						className={styles.lockButton}
+						aria-label={onToggleLock ? 'Unlock dashboard' : 'Dashboard locked'}
+						data-testid="dashboard-lock"
+						disabled={!onToggleLock}
+						onClick={onToggleLock}
+					>
+						<LockKeyhole size={14} />
+					</button>
 				</TooltipSimple>
 			)}
 

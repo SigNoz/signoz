@@ -15,6 +15,7 @@ import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
+import { USER_ROLES } from 'types/roles';
 import { getAbsoluteUrl } from 'utils/basePath';
 
 import { useCreatePanel } from '../hooks/useCreatePanel';
@@ -59,6 +60,12 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 
 	const isAuthor =
 		!!user?.email && !!dashboard.createdBy && dashboard.createdBy === user.email;
+
+	// Author/admin can lock-unlock (mirrors the Actions menu gate); integration-owned
+	// dashboards are never toggleable.
+	const canToggleLock =
+		(isAuthor || user.role === USER_ROLES.ADMIN) &&
+		dashboard.createdBy !== 'integration';
 
 	// Public-sharing meta (deduped react-query read); drives the header globe.
 	const { isPublic, publicMeta } = usePublicDashboardMeta(id);
@@ -128,6 +135,7 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 					isPublicDashboard={isPublic}
 					publicUrl={publicUrl}
 					isDashboardLocked={isDashboardLocked}
+					onToggleLock={canToggleLock ? handleLockDashboardToggle : undefined}
 					isEditing={isEditing}
 					draft={draft}
 					onDraftChange={setDraft}
