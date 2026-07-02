@@ -17,7 +17,7 @@ const noPermissions = {
 	error: null,
 	permissions: null,
 	allowed: false,
-	deniedPermissions: [],
+	deniedPermissions: [] as BrandedPermission[],
 	refetchPermissions: jest.fn(),
 };
 
