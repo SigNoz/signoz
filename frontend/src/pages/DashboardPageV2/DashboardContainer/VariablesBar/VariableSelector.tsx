@@ -18,8 +18,6 @@ interface VariableSelectorProps {
 	variable: VariableFormModel;
 	/** All variables (Dynamic uses them to scope options by sibling selections). */
 	variables: VariableFormModel[];
-	/** Names this variable depends on (for Query gating). */
-	parents: string[];
 	/** All current selections (Query passes them as the request payload). */
 	selections: VariableSelectionMap;
 	selection: VariableSelection;
@@ -30,7 +28,6 @@ interface VariableSelectorProps {
 function VariableSelector({
 	variable,
 	variables,
-	parents,
 	selections,
 	selection,
 	onChange,
@@ -61,7 +58,6 @@ function VariableSelector({
 				return (
 					<QuerySelector
 						variable={variable}
-						parents={parents}
 						selections={selections}
 						selection={selection}
 						onChange={onChange}
