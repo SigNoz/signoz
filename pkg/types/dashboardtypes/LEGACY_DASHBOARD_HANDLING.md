@@ -23,13 +23,20 @@ Legacy-vs-plumbing is a judgment call; verify a specific site before relying on 
 |---|---|---|---|
 | 1 | `having` array `[{columnName,op,value}]` → `{expression}` | `convertHavingToExpression` (`QueryBuilderV2/utils.ts`) | ✅ `normalizePreV5Having` |
 | 2 | `filters {items:[{key,op,value}]}` → `filter {expression}` | `convertFiltersToExpression` (`prepareQueryRangePayloadV5.ts`) | ❌ not mirrored |
-| 3 | flat v4 aggregation fields (`aggregateAttribute`/`aggregateOperator`/`timeAggregation`/`spaceAggregation`/`reduceTo`) → `aggregations[]`; empty → `count()` | `prepareQueryRangePayloadV5.ts` `createAggregation` | ✅ `normalizePreV5LogTraceAggregations` (logs/traces only) |
-| 4 | old field key `{key,dataType,type}` → `{name,fieldContext,fieldDataType}` (via `name ?? key` fallbacks) | `convertNewToOldQueryBuilder.ts`, `prepareQueryRangePayloadV5.ts` | ✅ `normalizePreV5FieldKeys` |
-| 5 | deprecated operators remapped (`regex→REGEXP`, `nin→NOT IN`, `nlike`, `nhas`, …) | `DEPRECATED_OPERATORS_MAP` (`constants/antlrQueryConstants.ts`) | ❌ not mirrored |
-| 6 | deprecated intrinsic trace fields stripped (`traceID`/`spanID`/`parentSpanID`/`statusCode`…) | `prepareQueryRangePayloadV5.ts` | ❌ not mirrored |
-| 7 | `limit ← pageSize` (old field name) | `prepareQueryRangePayloadV5.ts` | ❌ not mirrored |
-| 8 | `adjustQueryForV5` — strip leftover v4 fields off the query root, re-hang on the aggregation | `QueryBuilderV2/utils.ts` | partial (via 3) |
-| 9 | legacy V3 composite (`builderQueries`/`promQueries`/`chQueries` objects) → v5 `queries[]` | `mapQueryFromV3` (`mapQueryDataFromApi.ts`) | n/a (backend consumes v5-shaped envelopes) |
+| 3 | logs/traces aggregation expression: parse `func(args)`, lift inline `as alias` → `alias`, split multi-part, discard junk (`sum(x) ) )` → `sum(x)`), empty → `count()` | `parseAggregations` / `createAggregation` (`prepareQueryRangePayloadV5.ts`) | ✅ `normalizePreV5LogTraceAggregations` + `parseAggregations` (logs/traces only) |
+| 4 | old field key `{key,dataType,type}` → `{name,fieldContext,fieldDataType}` (via `name ?? key` fallbacks) | `convertNewToOldQueryBuilder.ts`, `prepareQueryRangePayloadV5.ts` | ✅ `normalizePreV5FieldKeys` (list-panel fields) |
+| 5 | `selectColumns` stored v5-shape (`{name,…}`) → readable by the old `{key,…}` mapper; drop empty columns | `name ?? key` read + empty filter (`prepareQueryRangePayloadV5.ts`) | ✅ `normalizePreV5SelectColumns` |
+| 6 | deprecated operators remapped (`regex→REGEXP`, `nin→NOT IN`, `nlike`, `nhas`, …) | `DEPRECATED_OPERATORS_MAP` (`constants/antlrQueryConstants.ts`) | ❌ not mirrored |
+| 7 | deprecated intrinsic trace fields stripped (`traceID`/`spanID`/`parentSpanID`/`statusCode`…) | `prepareQueryRangePayloadV5.ts` | ❌ not mirrored |
+| 8 | `limit ← pageSize` (old field name) | `prepareQueryRangePayloadV5.ts` | ❌ not mirrored |
+| 9 | flat v4 aggregation fields (`aggregateAttribute`/`aggregateOperator`/`timeAggregation`/`spaceAggregation`/`reduceTo`) → `aggregations[]` | `createAggregation`, `adjustQueryForV5` | n/a — the v4→v5 migrator (`pkg/transition`) already does this; only mislabeled-v5 bodies bypass it |
+| 10 | legacy V3 composite (`builderQueries`/`promQueries`/`chQueries` objects) → v5 `queries[]` | `mapQueryFromV3` (`mapQueryDataFromApi.ts`) | n/a (backend consumes v5-shaped envelopes) |
+
+### Confirmed NOT frontend-repaired (broken source data — fails in the live UI too, so not mirrored)
+
+- **Malformed `filter.expression`** — clauses juxtaposed with no `AND`/`OR` (e.g. `a in $x b in $y`). The frontend passes `filter.expression` verbatim to the query API and its ANTLR path returns the string unchanged on parse error; there is no repair. Manifests as `Found N errors while parsing the search expression`.
+- **Dotted variable substitution** (`$k8s.cluster.name`) — handled by the backend `substitute_vars`, not the frontend; not a migration concern.
+- **`field not found` (non-empty)** — the referenced metric/attribute genuinely doesn't exist in the query instance; data-dependent, not a shape issue.
 
 ## Variables (old saved variable shapes)
 

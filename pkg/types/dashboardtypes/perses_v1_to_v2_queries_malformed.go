@@ -2,6 +2,7 @@ package dashboardtypes
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -49,16 +50,25 @@ func normalizePreV5Having(query map[string]any) {
 	query["having"] = map[string]any{"expression": strings.Join(exprs, " AND ")}
 }
 
+// aggExprRe extracts a single "func(args)" aggregation with an optional
+// "as alias" (bare word or quoted). Mirrors the regex in the frontend's
+// parseAggregations (prepareQueryRangePayloadV5.ts). Because it only matches
+// well-formed func(args), it naturally discards trailing junk like the stray
+// ")" some source expressions carry ("sum(x) ) )" → "sum(x)").
+var aggExprRe = regexp.MustCompile(`([a-zA-Z0-9_]+\([^)]*\))(?:\s*as\s+('[^']*'|"[^"]*"|[a-zA-Z0-9_-]+))?`)
+
 // normalizePreV5LogTraceAggregations reshapes a logs/traces builder query's
 // aggregations into the v5 {"expression", "alias"} form in place, dropping the
 // metric-only fields (metricName/temporality/timeAggregation/spaceAggregation/
 // reduceTo) that some dashboards carry on non-metric queries — a logs query
 // with a metric-shaped aggregation fails the strict v5 decode ("unknown field
 // metricName"). Mirrors the frontend's createAggregation
-// (prepareQueryRangePayloadV5.ts): logs/traces read only the expression and
-// default an empty one to "count()". Metric queries are left untouched, since a
-// metric-shaped aggregation is correct for them. Idempotent on aggregations
-// that are already expression-only.
+// (prepareQueryRangePayloadV5.ts): each source expression is run through
+// parseAggregations, which extracts the well-formed func(args) parts, lifts any
+// inline "as alias" into the alias field, and splits a comma-joined multi-part
+// expression into separate aggregations. An expression that yields nothing
+// falls back to "count()". Metric queries are left untouched, since a
+// metric-shaped aggregation is correct for them.
 func normalizePreV5LogTraceAggregations(query map[string]any) {
 	switch signalFromDataSource(query["dataSource"]) {
 	case telemetrytypes.SignalLogs, telemetrytypes.SignalTraces:
@@ -69,21 +79,88 @@ func normalizePreV5LogTraceAggregations(query map[string]any) {
 	if !ok {
 		return
 	}
-	for i, a := range aggs {
+	out := make([]any, 0, len(aggs))
+	for _, a := range aggs {
 		agg, ok := a.(map[string]any)
 		if !ok {
 			continue
 		}
 		expr, _ := agg["expression"].(string)
-		if strings.TrimSpace(expr) == "" {
-			expr = "count()"
+		alias, _ := agg["alias"].(string)
+		parsed := parseAggregations(expr, alias)
+		if len(parsed) == 0 {
+			parsed = []any{map[string]any{"expression": "count()"}}
 		}
-		normalized := map[string]any{"expression": expr}
-		if alias, ok := agg["alias"].(string); ok && alias != "" {
-			normalized["alias"] = alias
-		}
-		aggs[i] = normalized
+		out = append(out, parsed...)
 	}
+	query["aggregations"] = out
+}
+
+// parseAggregations extracts every func(args) aggregation from a v1 expression
+// string, pulling an inline "as alias" (or the passed-through availableAlias)
+// into a separate alias field and stripping surrounding quotes. Mirrors the
+// frontend's parseAggregations (prepareQueryRangePayloadV5.ts). Returns nil when
+// the expression contains no well-formed aggregation.
+func parseAggregations(expression, availableAlias string) []any {
+	matches := aggExprRe.FindAllStringSubmatch(expression, -1)
+	out := make([]any, 0, len(matches))
+	for _, m := range matches {
+		alias := m[2]
+		if alias == "" {
+			alias = availableAlias
+		}
+		agg := map[string]any{"expression": m[1]}
+		if alias != "" {
+			agg["alias"] = strings.Trim(alias, `'"`)
+		}
+		out = append(out, agg)
+	}
+	return out
+}
+
+// normalizePreV5SelectColumns fixes a builder query's selectColumns in place so
+// WrapInV5Envelope maps them correctly. That mapper reads the old
+// {key, dataType, type} shape, but some queries store selectColumns the v5 way
+// ({name, fieldDataType, fieldContext}) — those come out with an empty name
+// ("field `` not found"). Backfill the old keys from the v5 ones (so both
+// shapes work) and drop columns with no resolvable name, mirroring the
+// frontend's `name ?? key` read plus its empty-column filter
+// (prepareQueryRangePayloadV5.ts). This runs before WrapInV5Envelope; note it
+// is the inverse direction of normalizePreV5FieldKeys because the two consumers
+// (WrapInV5Envelope vs. the list-panel TelemetryFieldKey decode) expect
+// opposite shapes.
+func normalizePreV5SelectColumns(query map[string]any) {
+	cols, ok := query["selectColumns"].([]any)
+	if !ok {
+		return
+	}
+	out := make([]any, 0, len(cols))
+	for _, c := range cols {
+		col, ok := c.(map[string]any)
+		if !ok {
+			continue
+		}
+		if _, ok := col["key"]; !ok {
+			if name, ok := col["name"]; ok {
+				col["key"] = name
+			}
+		}
+		if _, ok := col["dataType"]; !ok {
+			if fdt, ok := col["fieldDataType"]; ok {
+				col["dataType"] = fdt
+			}
+		}
+		if _, ok := col["type"]; !ok {
+			if fc, ok := col["fieldContext"]; ok {
+				col["type"] = fc
+			}
+		}
+		if key, _ := col["key"].(string); key == "" {
+			continue
+		}
+		out = append(out, col)
+	}
+	query["selectColumns"] = out
 }
 
 // normalizePreV5FieldKeys renames telemetry field keys from the pre-v5

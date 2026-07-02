@@ -104,6 +104,7 @@ func (d *v1Decoder) collectV1QueryEnvelopes(widget map[string]any) ([]map[string
 		for _, q := range d.readObjects(builder, "queryData") {
 			normalizePreV5Having(q)
 			normalizePreV5LogTraceAggregations(q)
+			normalizePreV5SelectColumns(q)
 			name := d.readString(q, "queryName")
 			out = append(out, qb.WrapInV5Envelope(name, q, string(qb.QueryTypeBuilder.StringValue())))
 			if signal.IsZero() {
