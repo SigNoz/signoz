@@ -57,6 +57,12 @@ jest.mock('../hooks/useLegendSeries', () => ({
 jest.mock('../hooks/useTableColumns', () => ({
 	useTableColumns: (): [] => [],
 }));
+jest.mock('../hooks/useMetricYAxisUnit', () => ({
+	useMetricYAxisUnit: (): unknown => ({
+		metricUnit: undefined,
+		isLoading: false,
+	}),
+}));
 jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	useQueryBuilder: (): unknown => ({ currentQuery: { queryType: 'builder' } }),
 }));
