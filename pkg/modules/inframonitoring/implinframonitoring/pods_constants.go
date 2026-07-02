@@ -44,6 +44,9 @@ var podsTableMetricNamesList = []string{
 	"k8s.pod.memory_request_utilization",
 	"k8s.pod.memory_limit_utilization",
 	"k8s.pod.phase",
+	"k8s.pod.status_reason",
+	"k8s.container.status.reason",
+	"k8s.container.restarts",
 }
 
 var podAttrKeysForMetadata = []string{
