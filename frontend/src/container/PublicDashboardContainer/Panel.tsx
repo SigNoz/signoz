@@ -115,6 +115,7 @@ function Panel({
 					isWarning={false}
 					isFetchingResponse={queryResponse.isFetching || queryResponse.isLoading}
 					setRequestData={setRequestData}
+					hidePagination
 					onDragSelect={onDragSelect}
 				/>
 			)}
