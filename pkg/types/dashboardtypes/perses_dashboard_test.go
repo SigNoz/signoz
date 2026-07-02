@@ -1560,6 +1560,6 @@ func TestInvalidateDuplicatePanelReference(t *testing.T) {
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "already placed")
 	// Both offending grid items are named.
-	require.Contains(t, err.Error(), "spec.layouts[0].spec.items[0].content")
-	require.Contains(t, err.Error(), "spec.layouts[0].spec.items[1].content")
+	assert.Contains(t, err.Error(), "spec.layouts[0].spec.items[0].content")
+	assert.Contains(t, err.Error(), "spec.layouts[0].spec.items[1].content")
 }
