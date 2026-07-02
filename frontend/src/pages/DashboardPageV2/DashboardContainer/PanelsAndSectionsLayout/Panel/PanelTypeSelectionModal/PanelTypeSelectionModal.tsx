@@ -1,5 +1,5 @@
-import { Modal } from 'antd';
-import { Button } from '@signozhq/ui/button';
+import { Color } from '@signozhq/design-tokens';
+import { DialogWrapper } from '@signozhq/ui/dialog';
 
 import type { PanelKind } from '../../../Panels/types/panelKind';
 import { PANEL_TYPES } from './constants';
@@ -17,29 +17,30 @@ function PanelTypeSelectionModal({
 	onSelect,
 }: PanelTypeSelectionModalProps): JSX.Element {
 	return (
-		<Modal
+		<DialogWrapper
 			open={open}
+			onOpenChange={(isOpen): void => {
+				if (!isOpen) {
+					onClose();
+				}
+			}}
 			title="Select a panel type"
-			onCancel={onClose}
-			footer={null}
-			destroyOnClose
 		>
 			<div className={styles.grid}>
 				{PANEL_TYPES.map(({ panelKind, label, Icon }) => (
-					<Button
+					<button
 						key={panelKind}
 						type="button"
-						variant="ghost"
-						className={styles.typeButton}
+						className={styles.panelTypeCard}
 						data-testid={`panel-type-${panelKind}`}
 						onClick={(): void => onSelect(panelKind)}
 					>
-						<Icon size={14} />
+						<Icon size={24} color={Color.BG_ROBIN_400} />
 						{label}
-					</Button>
+					</button>
 				))}
 			</div>
-		</Modal>
+		</DialogWrapper>
 	);
 }
 

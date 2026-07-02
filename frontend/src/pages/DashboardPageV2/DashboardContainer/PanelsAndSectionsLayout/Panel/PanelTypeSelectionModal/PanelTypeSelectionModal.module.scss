@@ -4,19 +4,25 @@
 	gap: 8px;
 }
 
-.typeButton {
+.panelTypeCard {
 	display: flex;
+	flex-direction: column;
 	align-items: center;
-	gap: 8px;
+	border: 1px solid var(--l2-border);
+	background: var(--l2-background);
 	padding: 12px;
-	background: var(--bg-ink-400, #0b0c0e);
-	border: 1px solid var(--l1-border);
+	gap: 12px;
+	cursor: pointer;
+	font: inherit;
 	border-radius: 4px;
 	color: var(--l1-foreground);
-	cursor: pointer;
-	text-align: left;
+	transition:
+		transform 180ms ease,
+		border-color 180ms ease;
 
 	&:hover {
-		border-color: var(--bg-robin-500);
+		background-color: var(--l2-background-hover);
+		transform: translateY(-2px);
+		border-color: var(--bg-robin-400);
 	}
 }
