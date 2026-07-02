@@ -709,6 +709,26 @@ def test_traces_list(
                 x[1].trace_id,
             ],  # type: Callable[[List[Traces]], List[Any]]
         ),
+        # Case 9: filter on the intrinsic scope.version. Only x[1] should match
+        pytest.param(
+            {
+                "type": "builder_query",
+                "spec": {
+                    "name": "A",
+                    "signal": "traces",
+                    "disabled": False,
+                    "selectFields": [{"name": "timestamp"}],
+                    "filter": {"expression": "scope.version = '1.0.0'"},
+                    "limit": 1,
+                },
+            },
+            HTTPStatus.OK,
+            lambda x: [
+                x[1].span_id,
+                format_timestamp(x[1].timestamp),
+                x[1].trace_id,
+            ],  # type: Callable[[List[Traces]], List[Any]]
+        ),
     ],
 )
 def test_traces_list_with_corrupt_data(
@@ -753,6 +773,153 @@ def test_traces_list_with_corrupt_data(
             # Cannot compare values as they are randomly generated
             for key, value in zip(list(data.keys()), results(traces)):
                 assert data[key] == value
+
+
+@pytest.mark.parametrize(
+    "filter_expression,expected_indices",
+    [
+        # Intrinsic scope.name / scope.version resolve to the JSON sub-columns.
+        pytest.param("scope.name = 'io.signoz.payment'", [1]),
+        pytest.param("scope.version = '2.3.1'", [0]),
+        # A scope attribute resolves against the scope JSON column's attributes.
+        pytest.param("scope.telemetry.sdk.language = 'python'", [1]),
+        # `env.tier` is a span attribute on span 0 and a scope attribute on
+        # span 1. Unprefixed -> no explicit context, so it is checked in every
+        # applicable context (attribute OR scope) and both spans match.
+        pytest.param("env.tier = 'gold'", [0, 1]),
+        # The explicit `scope.` prefix forces scope context only, so span 0's
+        # span attribute is ignored — only span 1 matches.
+        pytest.param("scope.env.tier = 'gold'", [1]),
+        # `scope.name` matches BOTH the intrinsic scope.name field (span 0) and a
+        # scope attribute literally named `name` (span 1's scope attribute
+        # name='io.signoz.checkout').
+        pytest.param("scope.name = 'io.signoz.checkout'", [0, 1]),
+        # `scope.name` also matches a span attribute literally named `scope.name`
+        # (attribute context) — span 2 carries attribute scope.name='attr-scope-name'.
+        pytest.param("scope.name = 'attr-scope-name'", [2]),
+        # An unprefixed `name` resolves to the intrinsic span `name` column and a
+        # `name` scope attribute, but NOT the scope.name field. Span 2's span
+        # name and span 1's scope attribute `name` both equal 'io.signoz.checkout';
+        # span 0's scope.name field equals it too but is NOT matched.
+        pytest.param("name = 'io.signoz.checkout'", [1, 2]),
+        # A value that no resolvable key holds (scope.name/scope.version field,
+        # a `name`/`version` scope attribute, or a same-named attribute/resource)
+        # returns nothing.
+        pytest.param("scope.version = 'corrupt_data'", []),
+        pytest.param("scope.name = 'corrupt_data'", []),
+    ],
+)
+def test_traces_list_with_scope_filter(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_traces: Callable[[list[Traces]], None],
+    filter_expression: str,
+    expected_indices: list[int],
+) -> None:
+    """
+    Setup three spans that have different scope key resolution.
+    Tests:
+    - Filtering on scope.name / scope.version / a scope attribute.
+    - An unprefixed key is resolved across contexts (scope checked alongside
+      attribute / intrinsic), while a `scope.`-prefixed key is scope-only.
+    - `scope.name` hits the intrinsic field, a `name` scope attribute, and a
+      span attribute `scope.name` (cross-context), while a bare
+      `name` hits the span name column (and a `name` scope attribute) but never
+      the scope.name field.
+    """
+    trace_id = TraceIdGenerator.trace_id()
+    span_ids = [TraceIdGenerator.span_id() for _ in range(3)]
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+
+    traces = [
+        Traces(
+            timestamp=now - timedelta(seconds=4),
+            duration=timedelta(seconds=2),
+            trace_id=trace_id,
+            span_id=span_ids[0],
+            parent_span_id="",
+            name="GET /checkout",
+            kind=TracesKind.SPAN_KIND_SERVER,
+            status_code=TracesStatusCode.STATUS_CODE_OK,
+            resources={"service.name": "checkout"},
+            attributes={"http.request.method": "GET", "env.tier": "gold"},
+            scope={
+                "name": "io.signoz.checkout",
+                "version": "2.3.1",
+                "attributes": {"telemetry.sdk.language": "go"},
+            },
+        ),
+        Traces(
+            timestamp=now - timedelta(seconds=2),
+            duration=timedelta(seconds=1),
+            trace_id=trace_id,
+            span_id=span_ids[1],
+            parent_span_id="",
+            name="POST /pay",
+            kind=TracesKind.SPAN_KIND_SERVER,
+            status_code=TracesStatusCode.STATUS_CODE_OK,
+            resources={"service.name": "payment"},
+            attributes={"http.request.method": "POST"},
+            # env.tier is a scope attribute here (cross-context with span 0);
+            # `name` is a scope attribute colliding with span 0's scope.name.
+            scope={
+                "name": "io.signoz.payment",
+                "version": "4.5.6",
+                "attributes": {
+                    "telemetry.sdk.language": "python",
+                    "env.tier": "gold",
+                    "name": "io.signoz.checkout",
+                },
+            },
+        ),
+        Traces(
+            timestamp=now - timedelta(seconds=1),
+            duration=timedelta(seconds=1),
+            trace_id=trace_id,
+            span_id=span_ids[2],
+            parent_span_id="",
+            # span name collides with span 0's scope.name value
+            name="io.signoz.checkout",
+            kind=TracesKind.SPAN_KIND_SERVER,
+            status_code=TracesStatusCode.STATUS_CODE_OK,
+            resources={"service.name": "probe"},
+            # a span attribute named `scope.name`
+            attributes={"scope.name": "attr-scope-name"},
+            scope={"name": "span-gamma", "version": "9.9.9"},
+        ),
+    ]
+    insert_traces(traces)
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    response = make_query_request(
+        signoz,
+        token,
+        start_ms=int((datetime.now(tz=UTC) - timedelta(minutes=5)).timestamp() * 1000),
+        end_ms=int(datetime.now(tz=UTC).timestamp() * 1000),
+        request_type="raw",
+        queries=[
+            {
+                "type": "builder_query",
+                "spec": {
+                    "name": "A",
+                    "signal": "traces",
+                    "disabled": False,
+                    "selectFields": [{"name": "timestamp"}],
+                    "filter": {"expression": filter_expression},
+                    "limit": 10,
+                },
+            }
+        ],
+    )
+
+    assert response.status_code == HTTPStatus.OK
+
+    rows = response.json()["data"]["data"]["results"][0]["rows"] or []
+    got_span_ids = {row["data"]["span_id"] for row in rows}
+    expected_span_ids = {traces[i].span_id for i in expected_indices}
+    assert got_span_ids == expected_span_ids
 
 
 def _verify_events_links_full(rows: list[dict], traces: list[Traces]) -> None:

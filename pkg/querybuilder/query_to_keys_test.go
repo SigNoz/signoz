@@ -72,6 +72,23 @@ func TestQueryToKeys(t *testing.T) {
 				},
 			},
 		},
+		{
+			query: `scope.version = '1.0.0'`,
+			expectedKeys: []telemetrytypes.FieldKeySelector{
+				{
+					Name:          "version",
+					Signal:        telemetrytypes.SignalUnspecified,
+					FieldContext:  telemetrytypes.FieldContextScope,
+					FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
+				},
+				{
+					Name:          "scope.version",
+					Signal:        telemetrytypes.SignalUnspecified,
+					FieldContext:  telemetrytypes.FieldContextUnspecified,
+					FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
+				},
+			},
+		},
 	}
 
 	for _, testCase := range testCases {
