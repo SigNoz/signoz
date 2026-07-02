@@ -419,9 +419,7 @@ class Traces(ABC):
                     number_value=None,
                 )
             )
-            self.attribute_keys.append(
-                TracesResourceOrAttributeKeys(name=k, datatype="string", tag_type="scope")
-            )
+            self.attribute_keys.append(TracesResourceOrAttributeKeys(name=k, datatype="string", tag_type="scope"))
 
         # Process attributes by type and populate custom fields
         self.attribute_string = {}
