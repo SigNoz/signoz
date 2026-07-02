@@ -4,6 +4,7 @@ import {
 	BarChart,
 	ChartLine,
 	ChartPie,
+	Grid3X3,
 	List,
 	SquareSigma,
 	Table,
@@ -44,6 +45,11 @@ export const PanelTypesWithData: ItemsProps[] = [
 		name: PANEL_TYPES.HISTOGRAM,
 		icon: <BarChart size={16} color={Color.BG_ROBIN_400} />,
 		display: PanelDisplay.HISTOGRAM,
+	},
+	{
+		name: PANEL_TYPES.HEATMAP,
+		icon: <Grid3X3 size={16} color={Color.BG_ROBIN_400} />,
+		display: PanelDisplay.HEATMAP,
 	},
 ];
 

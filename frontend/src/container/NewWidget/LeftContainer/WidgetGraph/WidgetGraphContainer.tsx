@@ -11,6 +11,38 @@ import { NotFoundContainer } from './styles';
 import { populateMultipleResults } from './util';
 import WidgetGraph from './WidgetGraphs';
 
+function NoDataMessage(): JSX.Element {
+	return (
+		<NotFoundContainer>
+			<Typography>No Data</Typography>
+		</NotFoundContainer>
+	);
+}
+
+function shouldShowNoDataForStandardPanels(
+	selectedGraph: PANEL_TYPES,
+	queryResponse: any,
+): boolean {
+	return (
+		selectedGraph !== PANEL_TYPES.LIST &&
+		selectedGraph !== PANEL_TYPES.VALUE &&
+		selectedGraph !== PANEL_TYPES.HEATMAP &&
+		queryResponse.data?.payload.data?.result?.length === 0
+	);
+}
+
+function shouldShowNoDataForNewResultPanels(
+	selectedGraph: PANEL_TYPES,
+	queryResponse: any,
+): boolean {
+	return (
+		(selectedGraph === PANEL_TYPES.LIST ||
+			selectedGraph === PANEL_TYPES.VALUE ||
+			selectedGraph === PANEL_TYPES.HEATMAP) &&
+		queryResponse.data?.payload?.data?.newResult?.data?.result?.length === 0
+	);
+}
+
 function WidgetGraphContainer({
 	selectedGraph,
 	queryResponse,
@@ -50,12 +82,12 @@ function WidgetGraphContainer({
 		return <Spinner size="large" tip="Loading..." />;
 	}
 
-	if (queryResponse.isIdle) {
-		return (
-			<NotFoundContainer>
-				<Typography>No Data</Typography>
-			</NotFoundContainer>
-		);
+	if (
+		shouldShowNoDataForStandardPanels(selectedGraph, queryResponse) ||
+		shouldShowNoDataForNewResultPanels(selectedGraph, queryResponse) ||
+		queryResponse.isIdle
+	) {
+		return <NoDataMessage />;
 	}
 
 	return (

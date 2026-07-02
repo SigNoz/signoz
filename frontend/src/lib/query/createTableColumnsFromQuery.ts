@@ -445,6 +445,7 @@ const fillLabelsData = (
 	});
 };
 
+/* eslint-disable sonarjs/cognitive-complexity */
 const fillDataFromSeries = (
 	currentQuery: QueryDataV3,
 	queryTableData: QueryDataV3[],
@@ -469,9 +470,11 @@ const fillDataFromSeries = (
 					return;
 				}
 
+				const firstValue = seria.values[0];
+				const valueStr = 'value' in firstValue ? firstValue.value : '0';
 				fillAggregationData(
 					column,
-					parseFloat(seria.values[0].value).toFixed(2),
+					parseFloat(valueStr).toFixed(2),
 					unusedColumnsKeys,
 				);
 				return;
@@ -527,6 +530,7 @@ const fillDataFromList = (
 		});
 	});
 };
+/* eslint-enable sonarjs/cognitive-complexity */
 
 const processTableRowValue = (value: any, column: DynamicColumn): void => {
 	if (value !== null && value !== undefined && value !== '') {

@@ -164,6 +164,7 @@ export enum TracesAggregatorOperator {
 	RATE_AVG = 'rate_avg',
 	RATE_MIN = 'rate_min',
 	RATE_MAX = 'rate_max',
+	HEATMAP = 'heatmap',
 }
 
 export enum LogsAggregatorOperator {
@@ -188,6 +189,7 @@ export enum LogsAggregatorOperator {
 	RATE_AVG = 'rate_avg',
 	RATE_MIN = 'rate_min',
 	RATE_MAX = 'rate_max',
+	HEATMAP = 'heatmap',
 }
 
 export enum QueryFunctionsTypes {

@@ -119,6 +119,13 @@ function convertTimeSeriesData(
 					timestamp: value.timestamp,
 					value: String(value.value),
 				})),
+				bounds: series.bounds,
+				heatmapValues: series.bounds
+					? series.values.map((value: any) => ({
+							timestamp: value.timestamp,
+							values: value.values,
+						}))
+					: undefined,
 				metaData: {
 					alias,
 					index,
@@ -364,6 +371,15 @@ function convertV5DataByType(
 				resultType: 'distribution',
 				result: distributionData.map((distribution) =>
 					convertDistributionData(distribution, legendMap),
+				),
+			};
+		}
+		case 'heatmap': {
+			const heatmapData = v5Data.data.results as TimeSeriesData[];
+			return {
+				resultType: 'heatmap',
+				result: heatmapData.map((heatmap) =>
+					convertTimeSeriesData(heatmap, legendMap),
 				),
 			};
 		}

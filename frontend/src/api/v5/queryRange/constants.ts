@@ -26,6 +26,7 @@ export const REQUEST_TYPES: Record<string, RequestType> = {
 	TIME_SERIES: 'time_series',
 	RAW: 'raw',
 	DISTRIBUTION: 'distribution',
+	HEATMAP: 'heatmap',
 } as const;
 
 // ===================== Signal Type Constants =====================
