@@ -78,8 +78,8 @@ function DashboardRow({
 			<div className={styles.titleWithAction}>
 				<div className={styles.titleBlock}>
 					<Tooltip
-						title={name.length > 50 ? name : ''}
-						placement="left"
+						title={name}
+						placement="bottom"
 						overlayClassName="titleTooltipOverlay"
 					>
 						<div className={styles.titleLink} onClick={onClickHandler}>
