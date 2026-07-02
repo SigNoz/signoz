@@ -86,7 +86,7 @@ var orderByToContainersQueryNames = map[string][]string{
 // newContainersTableListQuery builds the composite QB v5 request for the
 // containers list (kubeletstats usage/utilization). Status, restarts and ready
 // come from k8sclusterreceiver via dedicated queries (works for both list and
-// grouped_list modes), so no health query is included here.
+// grouped_list modes), so not included here.
 func (m *module) newContainersTableListQuery() *qbtypes.QueryRangeRequest {
 	queries := []qbtypes.QueryEnvelope{
 		// Query A: CPU usage (cores)
