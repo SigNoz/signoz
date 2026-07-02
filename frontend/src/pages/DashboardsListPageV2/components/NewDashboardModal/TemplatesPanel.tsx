@@ -23,7 +23,11 @@ import styles from './NewDashboardModal.module.scss';
 
 // Browse the template gallery (mock data until the API lands): pick one on the
 // left to preview its JSON on the right, then use it or open the docs.
-function TemplatesPanel(): JSX.Element {
+interface Props {
+	onClose: () => void;
+}
+
+function TemplatesPanel({ onClose }: Props): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
 	const { showErrorModal } = useErrorModal();
 	const { data, isLoading } = useDashboardTemplates(true);
@@ -43,6 +47,7 @@ function TemplatesPanel(): JSX.Element {
 			logEvent('Dashboard List: Use template clicked', { template: selected.id });
 			const parsed = JSON.parse(selected.json) as Record<string, unknown>;
 			const created = await createDashboardV2(normalizeToPostable(parsed));
+			onClose();
 			safeNavigate(
 				generatePath(ROUTES.DASHBOARD, { dashboardId: created.data.id }),
 			);
