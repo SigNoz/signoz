@@ -5553,6 +5553,7 @@ export enum InframonitoringtypesCheckTypeDTO {
 	namespaces = 'namespaces',
 	clusters = 'clusters',
 	volumes = 'volumes',
+	kube_containers = 'kube_containers',
 }
 export interface InframonitoringtypesMissingMetricsComponentEntryDTO {
 	associatedComponent: InframonitoringtypesAssociatedComponentDTO;

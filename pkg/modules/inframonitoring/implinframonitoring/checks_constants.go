@@ -49,17 +49,18 @@ var (
 // checkSpecs is the single lookup table the module consults for a type's
 // readiness contract. Every CheckType value must have an entry here.
 var checkSpecs = map[inframonitoringtypes.CheckType]checkSpec{
-	inframonitoringtypes.CheckTypeHosts:        hostsSpec,
-	inframonitoringtypes.CheckTypeProcesses:    processesSpec,
-	inframonitoringtypes.CheckTypePods:         podsSpec,
-	inframonitoringtypes.CheckTypeNodes:        nodesSpec,
-	inframonitoringtypes.CheckTypeDeployments:  deploymentsSpec,
-	inframonitoringtypes.CheckTypeDaemonsets:   daemonsetsSpec,
-	inframonitoringtypes.CheckTypeStatefulsets: statefulsetsSpec,
-	inframonitoringtypes.CheckTypeJobs:         jobsSpec,
-	inframonitoringtypes.CheckTypeNamespaces:   namespacesSpec,
-	inframonitoringtypes.CheckTypeClusters:     clustersSpec,
-	inframonitoringtypes.CheckTypeVolumes:      volumesSpec,
+	inframonitoringtypes.CheckTypeHosts:          hostsSpec,
+	inframonitoringtypes.CheckTypeProcesses:      processesSpec,
+	inframonitoringtypes.CheckTypePods:           podsSpec,
+	inframonitoringtypes.CheckTypeNodes:          nodesSpec,
+	inframonitoringtypes.CheckTypeDeployments:    deploymentsSpec,
+	inframonitoringtypes.CheckTypeDaemonsets:     daemonsetsSpec,
+	inframonitoringtypes.CheckTypeStatefulsets:   statefulsetsSpec,
+	inframonitoringtypes.CheckTypeJobs:           jobsSpec,
+	inframonitoringtypes.CheckTypeNamespaces:     namespacesSpec,
+	inframonitoringtypes.CheckTypeClusters:       clustersSpec,
+	inframonitoringtypes.CheckTypeVolumes:        volumesSpec,
+	inframonitoringtypes.CheckTypeKubeContainers: kubeContainersSpec,
 }
 
 // Per-type specs. Every metric and attribute is spelled out in its own spec
@@ -96,6 +97,42 @@ var processesSpec = checkSpec{
 			},
 			RequiredAttrs:     []string{"process.pid"},
 			DocumentationLink: docLinkHostMetricsReceiver,
+		},
+	},
+}
+
+var kubeContainersSpec = checkSpec{
+	Buckets: []checkComponentBucket{
+		{
+			Component: componentKubeletStatsReceiver,
+			DefaultMetrics: []string{
+				"container.cpu.usage",
+				"container.memory.working_set",
+			},
+			OptionalMetrics: []string{
+				"k8s.container.cpu_request_utilization",
+				"k8s.container.cpu_limit_utilization",
+				"k8s.container.memory_request_utilization",
+				"k8s.container.memory_limit_utilization",
+			},
+			DocumentationLink: docLinkKubeletStatsReceiver,
+		},
+		{
+			Component: componentK8sClusterReceiver,
+			DefaultMetrics: []string{
+				"k8s.container.restarts",
+				"k8s.container.ready",
+			},
+			OptionalMetrics: []string{
+				"k8s.container.status.state",
+				"k8s.container.status.reason",
+			},
+			DocumentationLink: docLinkK8sClusterReceiver,
+		},
+		{
+			Component:         componentK8sAttributesProcessor,
+			RequiredAttrs:     []string{"k8s.pod.uid", "k8s.container.name"},
+			DocumentationLink: docLinkK8sAttributesProcessor,
 		},
 	},
 }

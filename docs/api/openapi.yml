@@ -4162,6 +4162,7 @@ components:
       - namespaces
       - clusters
       - volumes
+      - kube_containers
       type: string
     InframonitoringtypesChecks:
       properties:
