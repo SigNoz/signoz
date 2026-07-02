@@ -661,24 +661,34 @@ func (m *module) getPerGroupPodStatusCounts(
 	// ----- countPodsPerStatus (outer SELECT) -----
 	// Fixed status order; MUST match the podStatusCounts assignment in the
 	// scan loop below.
-	displayStatuses := []string{
-		"Pending", "Running", "Failed", "Unknown",
-		"CrashLoopBackOff", "ImagePullBackOff", "ErrImagePull", "CreateContainerConfigError",
-		"ContainerCreating", "OOMKilled", "Completed", "Error", "ContainerCannotRun",
-		"Evicted", "NodeAffinity", "NodeLost", "Shutdown", "UnexpectedAdmissionError",
+	statusCountCols := []string{
+		"uniqExactIf(pod_uid, display_status = 'Pending') AS pending_count",
+		"uniqExactIf(pod_uid, display_status = 'Running') AS running_count",
+		"uniqExactIf(pod_uid, display_status = 'Failed') AS failed_count",
+		"uniqExactIf(pod_uid, display_status = 'Unknown') AS unknown_count",
+		"uniqExactIf(pod_uid, display_status = 'CrashLoopBackOff') AS crash_loop_back_off_count",
+		"uniqExactIf(pod_uid, display_status = 'ImagePullBackOff') AS image_pull_back_off_count",
+		"uniqExactIf(pod_uid, display_status = 'ErrImagePull') AS err_image_pull_count",
+		"uniqExactIf(pod_uid, display_status = 'CreateContainerConfigError') AS create_container_config_error_count",
+		"uniqExactIf(pod_uid, display_status = 'ContainerCreating') AS container_creating_count",
+		"uniqExactIf(pod_uid, display_status = 'OOMKilled') AS oom_killed_count",
+		"uniqExactIf(pod_uid, display_status = 'Completed') AS completed_count",
+		"uniqExactIf(pod_uid, display_status = 'Error') AS error_count",
+		"uniqExactIf(pod_uid, display_status = 'ContainerCannotRun') AS container_cannot_run_count",
+		"uniqExactIf(pod_uid, display_status = 'Evicted') AS evicted_count",
+		"uniqExactIf(pod_uid, display_status = 'NodeAffinity') AS node_affinity_count",
+		"uniqExactIf(pod_uid, display_status = 'NodeLost') AS node_lost_count",
+		"uniqExactIf(pod_uid, display_status = 'Shutdown') AS shutdown_count",
+		"uniqExactIf(pod_uid, display_status = 'UnexpectedAdmissionError') AS unexpected_admission_error_count",
 	}
-	countSelectCols := make([]string, 0, len(groupBy)+len(displayStatuses))
+	countSelectCols := make([]string, 0, len(groupBy)+len(statusCountCols))
 	countGroupBy := make([]string, 0, len(groupBy))
 	for _, key := range groupBy {
 		col := quoteIdentifier(key.Name)
 		countSelectCols = append(countSelectCols, col)
 		countGroupBy = append(countGroupBy, col)
 	}
-	for i, st := range displayStatuses {
-		countSelectCols = append(countSelectCols,
-			fmt.Sprintf("uniqExactIf(pod_uid, display_status = '%s') AS c%d", st, i),
-		)
-	}
+	countSelectCols = append(countSelectCols, statusCountCols...)
 	countSQL := fmt.Sprintf(
 		"SELECT %s FROM pod_status GROUP BY %s",
 		strings.Join(countSelectCols, ", "),
@@ -711,8 +721,8 @@ func (m *module) getPerGroupPodStatusCounts(
 	result := make(map[string]podStatusCounts)
 	for rows.Next() {
 		groupVals := make([]string, len(groupBy))
-		counts := make([]uint64, len(displayStatuses))
-		scanPtrs := make([]any, 0, len(groupBy)+len(displayStatuses))
+		counts := make([]uint64, len(statusCountCols))
+		scanPtrs := make([]any, 0, len(groupBy)+len(statusCountCols))
 		for i := range groupVals {
 			scanPtrs = append(scanPtrs, &groupVals[i])
 		}
