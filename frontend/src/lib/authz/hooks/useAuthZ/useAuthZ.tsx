@@ -6,7 +6,7 @@ import type {
 	CoretypesObjectDTO,
 	AuthtypesTransactionDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { IS_DEV } from 'lib/env';
+import { IS_DEV, MODE } from 'lib/env';
 
 import { AUTHZ_CACHE_TIME, SINGLE_FLIGHT_WAIT_TIME_MS } from './constants';
 import type {
@@ -82,10 +82,11 @@ function dispatchPermission(
 	pendingPermissions.push(permission);
 
 	if (!ctx) {
-		let resolve: (v: AuthZCheckResponse) => void, reject: (reason?: any) => void;
-		ctx = new Promise<AuthZCheckResponse>((r, re) => {
-			resolve = r;
-			reject = re;
+		let promiseResolve: (v: AuthZCheckResponse) => void,
+			promiseReject: (reason?: unknown) => void;
+		ctx = new Promise<AuthZCheckResponse>((resolve, reject) => {
+			promiseResolve = resolve;
+			promiseReject = reject;
 		});
 
 		setTimeout(() => {
@@ -93,7 +94,9 @@ function dispatchPermission(
 			pendingPermissions = [];
 			ctx = null;
 
-			fetchManyPermissions(copiedPermissions).then(resolve).catch(reject);
+			fetchManyPermissions(copiedPermissions)
+				.then(promiseResolve)
+				.catch(promiseReject);
 		}, SINGLE_FLIGHT_WAIT_TIME_MS);
 	}
 
@@ -143,21 +146,27 @@ export function useAuthZ(
 				staleTime: AUTHZ_CACHE_TIME,
 				// Keep errored state in cache instead of refetching when new observers subscribe
 				retryOnMount: false,
-				retry: (failureCount: number, error: unknown): boolean => {
-					// Don't retry simulated dev errors - they will always fail
-					if (error instanceof Error && error.message.includes('[AuthZ DevTools]')) {
-						return false;
-					}
-					// Don't retry server errors (5xx) - they won't recover
-					if (
-						isAxiosError(error) &&
-						error.response?.status &&
-						error.response.status >= 500
-					) {
-						return false;
-					}
-					return failureCount < 3;
-				},
+				// Only override retry in non-test mode to avoid interfering with test-utils QueryClient defaults
+				...(MODE !== 'test' && {
+					retry: (failureCount: number, error: unknown): boolean => {
+						// Don't retry simulated dev errors - they will always fail
+						if (
+							error instanceof Error &&
+							error.message.includes('[AuthZ DevTools]')
+						) {
+							return false;
+						}
+						// Don't retry server errors (5xx) - they won't recover
+						if (
+							isAxiosError(error) &&
+							error.response?.status &&
+							error.response.status >= 500
+						) {
+							return false;
+						}
+						return failureCount < 3;
+					},
+				}),
 				refetchOnMount: false,
 				refetchIntervalInBackground: false,
 				refetchOnWindowFocus: false,
@@ -220,7 +229,7 @@ export function useAuthZ(
 
 	const refetchPermissions = useCallback(() => {
 		for (const query of queryResults) {
-			query.refetch();
+			void query.refetch();
 		}
 	}, [queryResults]);
 
