@@ -204,6 +204,53 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 			const inputs = logsRow.querySelectorAll('input[type="number"]');
 			expect(inputs).toHaveLength(2); // Total + S3
 		});
+
+		it('should send cold storage payload when cold_storage_ttl_days is -1', async () => {
+			render(
+				<GeneralSettings
+					metricsTtlValuesPayload={mockMetricsRetention}
+					tracesTtlValuesPayload={mockTracesRetention}
+					logsTtlValuesPayload={mockLogsRetentionWithoutS3}
+					getAvailableDiskPayload={mockDisksWithObjectStorage}
+					metricsTtlValuesRefetch={jest.fn()}
+					tracesTtlValuesRefetch={jest.fn()}
+					logsTtlValuesRefetch={jest.fn()}
+				/>,
+			);
+
+			const logsRow = getLogsRow();
+			const inputs = logsRow.querySelectorAll('input[type="number"]');
+			expect(inputs).toHaveLength(2);
+
+			const s3Input = inputs[1] as HTMLInputElement;
+			expect(s3Input.value).toBe('');
+
+			fireEvent.change(s3Input, { target: { value: '14' } });
+
+			const saveButton = logsRow.querySelector(
+				'button:not([disabled])',
+			) as HTMLButtonElement;
+			expect(saveButton).toBeInTheDocument();
+
+			await waitFor(() => {
+				expect(saveButton).not.toBeDisabled();
+			});
+
+			fireEvent.click(saveButton);
+
+			const okButton = await screen.findByRole('button', { name: /ok/i });
+			fireEvent.click(okButton);
+
+			await waitFor(() => {
+				expect(setRetentionApiV2).toHaveBeenCalledWith({
+					type: 'logs',
+					defaultTTLDays: 30,
+					coldStorageVolume: 's3',
+					coldStorageDurationDays: 14,
+					ttlConditions: [],
+				});
+			});
+		});
 	});
 
 	describe('Test 2: S3 Disabled - Field Hidden', () => {
