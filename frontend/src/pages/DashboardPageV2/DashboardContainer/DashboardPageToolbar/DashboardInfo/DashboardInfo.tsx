@@ -129,7 +129,7 @@ function DashboardInfo({
 					</Button>
 				</div>
 			) : (
-				<TooltipSimple title={title}>
+				<TooltipSimple title={title} disableHoverableContent>
 					<Typography.Text
 						className={cx(styles.dashboardTitle, {
 							[styles.dashboardTitleHover]: canEdit,
@@ -143,7 +143,7 @@ function DashboardInfo({
 			)}
 
 			{hasDescription && (
-				<TooltipSimple title={description}>
+				<TooltipSimple title={description} disableHoverableContent>
 					<SolidInfoCircle
 						className={styles.descriptionIcon}
 						size={14}
@@ -153,7 +153,10 @@ function DashboardInfo({
 			)}
 
 			{isPublicDashboard && (
-				<TooltipSimple title="This dashboard is publicly accessible. Click to open the public page.">
+				<TooltipSimple
+					title="This dashboard is publicly accessible. Click to open the public page."
+					disableHoverableContent
+				>
 					<button
 						type="button"
 						className={styles.publicLink}
@@ -167,7 +170,7 @@ function DashboardInfo({
 			)}
 
 			{showLockToggle && (
-				<TooltipSimple title={lockTooltip}>
+				<TooltipSimple title={lockTooltip} disableHoverableContent>
 					<button
 						type="button"
 						className={styles.lockButton}
