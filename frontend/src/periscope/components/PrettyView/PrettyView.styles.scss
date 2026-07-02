@@ -84,12 +84,17 @@
 		position: relative;
 		isolation: isolate; // own stacking context so ::before sits behind content, not the panel bg
 
-		&:hover .pretty-view__actions {
+		// Keep actions visible on hover, or while this row's menu is open
+		&:hover .pretty-view__actions,
+		&:has(> span [data-state='open']) .pretty-view__actions {
 			opacity: 1;
 		}
 
-		// Edge-to-edge highlight, bled past indentation, clipped by `> ul`
-		&:hover::before {
+		// Edge-to-edge highlight, bled past indentation, clipped by `> ul`.
+		// Persists while this row's ... menu is open (the trigger stays in the
+		// row and carries data-state=open, even though the menu is portaled out).
+		&:hover::before,
+		&:has(> span [data-state='open'])::before {
 			content: '';
 			position: absolute;
 			inset: 0 -9999px;
@@ -100,6 +105,14 @@
 		// Push actions to the right edge
 		> span {
 			flex: 1;
+		}
+
+		// Brighten the value text from its default grey to foreground-hover
+		// while the row is active (hover, or its ... menu open). !important
+		// overrides react-json-tree's per-type inline color on the value span.
+		&:hover > span,
+		&:has(> span [data-state='open']) > span {
+			color: var(--l1-foreground-hover) !important;
 		}
 	}
 
@@ -115,8 +128,11 @@
 		}
 
 		// Edge-to-edge highlight, capped to the header line so it doesn't
-		// cover the children this <li> contains.
-		&:hover::before {
+		// cover the children this <li> contains. Persists while this row's own
+		// menu is open — `> span` scopes it so a child row's open menu (nested
+		// in `> ul`) doesn't light up this parent.
+		&:hover::before,
+		&:has(> span [data-state='open'])::before {
 			content: '';
 			position: absolute;
 			top: 0;
@@ -127,7 +143,8 @@
 			z-index: -1;
 		}
 
-		&:hover > label + span .pretty-view__actions {
+		&:hover > label + span .pretty-view__actions,
+		&:has(> span [data-state='open']) > label + span .pretty-view__actions {
 			opacity: 1;
 		}
 
