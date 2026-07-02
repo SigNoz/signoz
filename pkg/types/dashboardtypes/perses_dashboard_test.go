@@ -2,6 +2,7 @@ package dashboardtypes
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"strings"
 	"testing"
@@ -1569,36 +1570,37 @@ func TestInvalidateDuplicatePanelReference(t *testing.T) {
 // in each case, and the error names the field.
 func TestInvalidateDisplayNameTooLong(t *testing.T) {
 	tooLong := strings.Repeat("x", MaxDisplayNameLen+1)
+	lengthMsg := fmt.Sprintf("must be at most %d characters, got %d", MaxDisplayNameLen, MaxDisplayNameLen+1)
 
 	testCases := []struct {
-		scenario            string
-		dashboardJSON       string
-		expectedErrFragment string
+		scenario      string
+		dashboardJSON string
+		expectedField string
 	}{
 		{
-			scenario:            "dashboard display name",
-			dashboardJSON:       `{"display": {"name": "` + tooLong + `"}, "layouts": []}`,
-			expectedErrFragment: "spec.display.name must be at most 63 characters, got 64",
+			scenario:      "dashboard display name",
+			dashboardJSON: `{"display": {"name": "` + tooLong + `"}, "layouts": []}`,
+			expectedField: "spec.display.name",
 		},
 		{
-			scenario:            "panel display name",
-			dashboardJSON:       `{"panels": {"p1": {"kind": "Panel", "spec": {"display": {"name": "` + tooLong + `"}, "plugin": {"kind": "signoz/TablePanel", "spec": {}}, "queries": []}}}, "layouts": []}`,
-			expectedErrFragment: "spec.panels.p1.spec.display.name must be at most 63 characters, got 64",
+			scenario:      "panel display name",
+			dashboardJSON: `{"panels": {"p1": {"kind": "Panel", "spec": {"display": {"name": "` + tooLong + `"}, "plugin": {"kind": "signoz/TablePanel", "spec": {}}, "queries": []}}}, "layouts": []}`,
+			expectedField: "spec.panels.p1.spec.display.name",
 		},
 		{
-			scenario:            "list variable display name",
-			dashboardJSON:       `{"variables": [{"kind": "ListVariable", "spec": {"name": "svc", "display": {"name": "` + tooLong + `"}, "plugin": {"kind": "signoz/DynamicVariable", "spec": {"name": "service.name", "signal": "metrics"}}}}], "layouts": []}`,
-			expectedErrFragment: "display.name must be at most 63 characters, got 64",
+			scenario:      "list variable display name",
+			dashboardJSON: `{"variables": [{"kind": "ListVariable", "spec": {"name": "svc", "display": {"name": "` + tooLong + `"}, "plugin": {"kind": "signoz/DynamicVariable", "spec": {"name": "service.name", "signal": "metrics"}}}}], "layouts": []}`,
+			expectedField: "display.name",
 		},
 		{
-			scenario:            "text variable display name",
-			dashboardJSON:       `{"variables": [{"kind": "TextVariable", "spec": {"name": "mytext", "value": "v", "display": {"name": "` + tooLong + `"}}}], "layouts": []}`,
-			expectedErrFragment: "display.name must be at most 63 characters, got 64",
+			scenario:      "text variable display name",
+			dashboardJSON: `{"variables": [{"kind": "TextVariable", "spec": {"name": "mytext", "value": "v", "display": {"name": "` + tooLong + `"}}}], "layouts": []}`,
+			expectedField: "display.name",
 		},
 		{
-			scenario:            "layout title",
-			dashboardJSON:       `{"layouts": [{"kind": "Grid", "spec": {"display": {"title": "` + tooLong + `"}, "items": []}}]}`,
-			expectedErrFragment: "spec.layouts[0].spec.display.title must be at most 63 characters, got 64",
+			scenario:      "layout title",
+			dashboardJSON: `{"layouts": [{"kind": "Grid", "spec": {"display": {"title": "` + tooLong + `"}, "items": []}}]}`,
+			expectedField: "spec.layouts[0].spec.display.title",
 		},
 	}
 
@@ -1606,7 +1608,8 @@ func TestInvalidateDisplayNameTooLong(t *testing.T) {
 		t.Run(testCase.scenario, func(t *testing.T) {
 			_, err := unmarshalDashboard([]byte(testCase.dashboardJSON))
 			require.Error(t, err)
-			assert.Contains(t, err.Error(), testCase.expectedErrFragment)
+			assert.Contains(t, err.Error(), testCase.expectedField)
+			assert.Contains(t, err.Error(), lengthMsg)
 		})
 	}
 }
