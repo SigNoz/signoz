@@ -18,7 +18,7 @@ import (
 
 // MaxDisplayNameLen bounds every human-readable display name — dashboard, panel,
 // and variable display names, plus the grid layout title.
-const MaxDisplayNameLen = 63
+const MaxDisplayNameLen = 128
 
 type Display struct {
 	Name        string `json:"name" required:"true"`
