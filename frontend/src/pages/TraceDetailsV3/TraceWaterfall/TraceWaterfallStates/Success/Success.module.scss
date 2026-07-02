@@ -72,6 +72,9 @@
 
 .sidebarHeader {
 	flex-shrink: 0;
+	// Matches the body `.sidebar` border-right so the span-name / timeline
+	// divider is continuous from the top of the container through the ruler.
+	border-right: 1px solid var(--l2-border);
 }
 
 .resizeHandleHeader {
@@ -117,7 +120,7 @@
 	overflow-x: auto;
 	overflow-y: hidden;
 	flex-shrink: 0;
-	border-right: 1px solid var(--l1-border);
+	border-right: 1px solid var(--l2-border);
 
 	// ResizableBox child renders with a global `.resizable-box__content` class
 	// — give it independent horizontal scrolling.
@@ -130,6 +133,18 @@
 		}
 
 		scrollbar-width: none;
+	}
+
+	// The drag handle is painted --l2-border by default, which would stack with
+	// our border-right into a 2px divider. Keep it as a hover-only affordance so
+	// the border-right stays the sole 1px divider (matching the header segment).
+	:global(.resizable-box__handle--right) {
+		background: transparent;
+
+		&:hover,
+		&:active {
+			background: var(--primary);
+		}
 	}
 
 	&::-webkit-scrollbar {
