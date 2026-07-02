@@ -17,6 +17,8 @@ import type { PanelPagination, PanelQueryData } from '../queryV5/types';
 import { getRawResults } from '../queryV5/v5ResponseData';
 import { getBuilderQueries } from '../Panels/utils/getBuilderQueries';
 import { PANEL_KIND_TO_PANEL_TYPE } from '../Panels/types/panelKind';
+import { selectResolvedVariables } from '../store/slices/variableSelectionSlice';
+import { useDashboardStore } from '../store/useDashboardStore';
 import { resolvePanelTimeWindow } from './resolvePanelTimeWindow';
 import { useGetQueryRangeV5 } from './useGetQueryRangeV5';
 
@@ -65,8 +67,9 @@ export interface UsePanelQueryResult {
 /**
  * Fetches query-range data for a V2 panel over the pure-V5 contract: builds the request DTO
  * from the panel's perses queries (no V1 `Query` intermediary), reads global time from Redux,
- * and posts via `useGetQueryRangeV5`. Variable substitution is deferred until V2 has its own
- * variable plumbing. Renderers consume the raw response through the `queryV5` prep utils.
+ * substitutes the dashboard's resolved variable values (published to the store by
+ * `useResolvedVariables`), and posts via `useGetQueryRangeV5`. Renderers consume the raw
+ * response through the `queryV5` prep utils.
  */
 export function usePanelQuery({
 	panel,
@@ -77,7 +80,7 @@ export function usePanelQuery({
 	const fullKind = panel.spec.plugin.kind;
 	const panelType =
 		(fullKind && PANEL_KIND_TO_PANEL_TYPE[fullKind]) ?? PANEL_TYPES.TIME_SERIES;
-	const queries = useMemo(() => panel.spec.queries || [], [panel.spec.queries]);
+	const queries = panel.spec.queries;
 
 	// V1 parity: a list query with an explicit `limit` shows without a server pager; without
 	// one it pages server-side at a user-selectable size.
@@ -104,6 +107,11 @@ export function usePanelQuery({
 		maxTime,
 		minTime,
 	} = useSelector<AppState, GlobalReducer>((state) => state.globalTime);
+
+	// Resolved variable values for this dashboard, published by useResolvedVariables.
+	// Substituted into the request and keyed into the cache so a selection change refetches.
+	const dashboardId = useDashboardStore((s) => s.dashboardId);
+	const variables = useDashboardStore(selectResolvedVariables(dashboardId));
 
 	// `visualization` exists only on variants that declare it — read via `in` narrowing over the
 	// generated union (no cast). `fillSpans` (TimeSeries/Bar only) → formatOptions.fillGaps.
@@ -141,8 +149,19 @@ export function usePanelQuery({
 				endMs,
 				fillGaps,
 				pagination: isPaginated ? { offset, limit: pageSize } : undefined,
+				variables,
 			}),
-		[queries, panelType, startMs, endMs, fillGaps, isPaginated, offset, pageSize],
+		[
+			queries,
+			panelType,
+			startMs,
+			endMs,
+			fillGaps,
+			isPaginated,
+			offset,
+			pageSize,
+			variables,
+		],
 	);
 
 	const legendMap = useMemo(() => extractLegendMap(queries), [queries]);
@@ -167,6 +186,8 @@ export function usePanelQuery({
 			// Each page is its own cache entry (0/default for non-paged kinds).
 			offset,
 			pageSize,
+			// Variable selection changes the request, so it must re-key the cache (refetch).
+			variables,
 		],
 		[
 			panelId,
@@ -182,6 +203,7 @@ export function usePanelQuery({
 			queries,
 			offset,
 			pageSize,
+			variables,
 		],
 	);
 

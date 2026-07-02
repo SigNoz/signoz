@@ -259,7 +259,10 @@ function Filters({
 	);
 
 	const highlightErrorsToggle = (
-		<div className={styles.highlightErrorsToggle}>
+		<div
+			className={styles.highlightErrorsToggle}
+			data-testid="highlight-errors-toggle"
+		>
 			<Typography.Text>Highlight errors</Typography.Text>
 			<Switch
 				color="cherry"

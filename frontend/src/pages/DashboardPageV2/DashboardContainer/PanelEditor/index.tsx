@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import {
 	ResizableHandle,
 	ResizablePanel,
@@ -8,9 +8,12 @@ import {
 import { toast } from '@signozhq/ui/sonner';
 import {
 	type DashboardtypesPanelDTO,
+	type DashboardtypesPanelFormattingDTO,
+	type DashboardtypesPanelSpecDTO,
 	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { getPanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Panels/registry';
 import {
 	PANEL_KIND_TO_PANEL_TYPE,
@@ -18,6 +21,7 @@ import {
 } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelKind';
 import { getBuilderQueries } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/getBuilderQueries';
 
+import { getExecStats } from '../queryV5/v5ResponseData';
 import { usePanelInteractions } from '../PanelsAndSectionsLayout/Panel/hooks/usePanelInteractions';
 import ConfigPane from './ConfigPane/ConfigPane';
 import Header from './Header/Header';
@@ -28,7 +32,9 @@ import { useLegendSeries } from './hooks/useLegendSeries';
 import { usePanelQuery } from '../hooks/usePanelQuery';
 import { usePanelEditorDraft } from './hooks/usePanelEditorDraft';
 import { usePanelEditorQuerySync } from './hooks/usePanelEditorQuerySync';
+import { useMetricYAxisUnit } from './hooks/useMetricYAxisUnit';
 import { usePanelEditorSave } from './hooks/usePanelEditorSave';
+import { usePanelTypeSwitch } from './hooks/usePanelTypeSwitch';
 import { useSeedNewListColumns } from './hooks/useSeedNewListColumns';
 import { useSwitchColumnsOnSignalChange } from './hooks/useSwitchColumnsOnSignalChange';
 import { useTableColumns } from './hooks/useTableColumns';
@@ -65,6 +71,10 @@ function PanelEditorContainer({
 	onSaved,
 }: PanelEditorContainerProps): JSX.Element {
 	const { draft, spec, setSpec, isSpecDirty } = usePanelEditorDraft(panel);
+	// Live query type (the selected tab) — the type switcher disables kinds that can't be
+	// authored in it. Read from the provider, not the spec: a new panel's spec carries no
+	// query until staged, so the spec would lag the tab.
+	const { currentQuery } = useQueryBuilder();
 	const { save, isSaving } = usePanelEditorSave({
 		dashboardId,
 		panelId,
@@ -113,6 +123,36 @@ function PanelEditorContainer({
 		signal: defaultSignal,
 	});
 
+	// Switch the panel's visualization kind in place (reversible per session).
+	const { onChangePanelKind } = usePanelTypeSwitch({ spec, panelType, setSpec });
+
+	// At editor level, not the collapsible FormattingSection, so seeding runs while closed.
+	const formattingUnit = (
+		spec.plugin.spec as {
+			formatting?: DashboardtypesPanelFormattingDTO;
+		}
+	).formatting?.unit;
+	const seedFormattingUnit = useCallback(
+		(unit: string): void => {
+			const pluginSpec = spec.plugin.spec as {
+				formatting?: DashboardtypesPanelFormattingDTO;
+			};
+			setSpec({
+				...spec,
+				plugin: {
+					...spec.plugin,
+					spec: { ...pluginSpec, formatting: { ...pluginSpec.formatting, unit } },
+				},
+			} as DashboardtypesPanelSpecDTO);
+		},
+		[spec, setSpec],
+	);
+	const { metricUnit } = useMetricYAxisUnit({
+		isNewPanel: isNew,
+		unit: formattingUnit,
+		onSelectUnit: seedFormattingUnit,
+	});
+
 	// Spec and query dirtiness are tracked independently so query re-serialization
 	// never false-dirties. A new panel is always savable (you're creating it).
 	const isDirty = isNew || isSpecDirty || isQueryDirty;
@@ -121,8 +161,8 @@ function PanelEditorContainer({
 	// values; cast at this boundary (as ConfigPane does) so the columns editor's
 	// field-key lookup is typed.
 	const listSignal =
-		(getBuilderQueries(spec.queries || [])[0]
-			?.signal as TelemetrytypesSignalDTO) || TelemetrytypesSignalDTO.logs;
+		(getBuilderQueries(spec.queries)[0]?.signal as TelemetrytypesSignalDTO) ||
+		TelemetrytypesSignalDTO.logs;
 
 	// Swap the List panel's columns to the new signal's defaults on signal change
 	// (V1 had a per-signal field list; V2 has one `selectFields`).
@@ -145,6 +185,14 @@ function PanelEditorContainer({
 	const { onDragSelect } = usePanelInteractions();
 	const legendSeries = useLegendSeries(draft, data);
 	const tableColumns = useTableColumns(draft, data);
+
+	// Smallest query step interval (seconds) — the floor for the span-gaps
+	// threshold. Undefined until results carry step metadata.
+	const stepInterval = useMemo((): number | undefined => {
+		const intervals = getExecStats(data.response)?.stepIntervals;
+		const values = intervals ? Object.values(intervals) : [];
+		return values.length ? Math.min(...values) : undefined;
+	}, [data.response]);
 
 	const onSave = useCallback(async (): Promise<void> => {
 		try {
@@ -197,7 +245,8 @@ function PanelEditorContainer({
 							<ResizableHandle withHandle className={styles.handle} />
 							<ResizablePanel minSize="35%" maxSize="45%" defaultSize="40%">
 								<PanelEditorQueryBuilder
-									panelType={panelType}
+									panelKind={fullKind}
+									signal={listSignal}
 									isLoadingQueries={isFetching}
 									onStageRunQuery={runQuery}
 									onCancelQuery={cancelQuery}
@@ -223,11 +272,16 @@ function PanelEditorContainer({
 					className={styles.right}
 				>
 					<ConfigPane
-						panelKind={draft.spec.plugin.kind}
+						panel={draft}
+						panelId={panelId}
 						spec={spec}
 						onChangeSpec={setSpec}
+						onChangePanelKind={onChangePanelKind}
+						queryType={currentQuery.queryType}
 						legendSeries={legendSeries}
 						tableColumns={tableColumns}
+						stepInterval={stepInterval}
+						metricUnit={metricUnit}
 					/>
 				</ResizablePanel>
 			</ResizablePanelGroup>

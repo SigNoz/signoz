@@ -49,6 +49,7 @@ export interface UseVolumeControlConfigResult {
 const PREVIEW_DEBOUNCE_MS = 400;
 const SAVE_ERROR_MESSAGE = 'Failed to save volume control rule';
 const REMOVE_ERROR_MESSAGE = 'Failed to remove volume control rule';
+const PREVIEW_ERROR_MESSAGE = 'Failed to preview volume control rule';
 
 export function useVolumeControlConfig({
 	metricName,
@@ -95,11 +96,25 @@ export function useVolumeControlConfig({
 		const timer = setTimeout(() => {
 			previewMutate(
 				{ data: { metricName, matchType: matchTypeForMode(mode), labels } },
-				{ onSettled: () => setIsPreviewPending(false) },
+				{
+					onError: (error) =>
+						notifications.error({
+							message: error.response?.data?.error?.message ?? PREVIEW_ERROR_MESSAGE,
+						}),
+					onSettled: () => setIsPreviewPending(false),
+				},
 			);
 		}, PREVIEW_DEBOUNCE_MS);
 		return (): void => clearTimeout(timer);
-	}, [open, mode, labels, metricName, previewMutate, previewReset]);
+	}, [
+		open,
+		mode,
+		labels,
+		metricName,
+		previewMutate,
+		previewReset,
+		notifications,
+	]);
 
 	const createMutation = useCreateMetricReductionRule();
 	const updateMutation = useUpdateMetricReductionRuleByID();
@@ -142,7 +157,10 @@ export function useVolumeControlConfig({
 		}
 
 		const onSuccess = (): void => {
-			notifications.success({ message: 'Volume control rule saved' });
+			notifications.success({
+				message:
+					'Volume control rule saved. It takes about 5 minutes to take effect.',
+			});
 			invalidate();
 			onClose();
 		};
