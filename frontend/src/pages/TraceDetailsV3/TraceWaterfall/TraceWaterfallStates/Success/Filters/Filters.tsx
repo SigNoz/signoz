@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
-import { ChevronsRight, Copy, Search, X } from '@signozhq/icons';
+import { ArrowRightFromLine, Copy, Search, X } from '@signozhq/icons';
 import { Switch } from '@signozhq/ui/switch';
 import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
 import { toast } from '@signozhq/ui/sonner';
@@ -421,7 +421,7 @@ function Filters({
 										color="secondary"
 										onClick={onCollapse}
 									>
-										<ChevronsRight size={14} />
+										<ArrowRightFromLine size={14} />
 									</Button>
 								</TooltipTrigger>
 								<TooltipContent>Collapse filters</TooltipContent>
