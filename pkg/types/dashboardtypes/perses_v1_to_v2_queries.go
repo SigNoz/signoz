@@ -25,7 +25,7 @@ import (
 // equivalents and adds the `signal` field required by BuilderQuerySpec's
 // per-signal dispatch.
 func (d *v1Decoder) convertV1WidgetQuery(widget map[string]any, panelKind PanelPluginKind) []Query {
-	envelopes, signal := d.collectV1QueryEnvelopes(widget)
+	envelopes, signal := d.collectV1QueryEnvelopes(widget, panelKind)
 	if len(envelopes) == 0 {
 		return nil
 	}
@@ -72,11 +72,12 @@ func requestTypeForPanel(panelKind PanelPluginKind) qb.RequestType {
 // collectV1QueryEnvelopes inspects widget.query.queryType and produces a
 // flattened list of v5-shaped envelopes. The returned signal is the dominant
 // builder signal (if any), used for typed builder-query dispatch.
-func (d *v1Decoder) collectV1QueryEnvelopes(widget map[string]any) ([]map[string]any, telemetrytypes.Signal) {
+func (d *v1Decoder) collectV1QueryEnvelopes(widget map[string]any, panelKind PanelPluginKind) ([]map[string]any, telemetrytypes.Signal) {
 	queryMap := d.readObject(widget, "query")
 	if queryMap == nil {
 		return nil, telemetrytypes.Signal{}
 	}
+	rowLimitPanel := panelKind == PanelKindList || panelKind == PanelKindTable
 
 	queryType := d.readString(queryMap, "queryType")
 	switch queryType {
@@ -103,8 +104,11 @@ func (d *v1Decoder) collectV1QueryEnvelopes(widget map[string]any) ([]map[string
 		var signal telemetrytypes.Signal
 		for _, q := range d.readObjects(builder, "queryData") {
 			normalizePreV5Having(q)
+			normalizePreV5Filters(q)
 			normalizePreV5LogTraceAggregations(q)
+			normalizePreV5MetricAggregations(q)
 			normalizePreV5SelectColumns(q)
+			normalizePreV5PageSize(q, rowLimitPanel)
 			name := d.readString(q, "queryName")
 			out = append(out, qb.WrapInV5Envelope(name, q, string(qb.QueryTypeBuilder.StringValue())))
 			if signal.IsZero() {

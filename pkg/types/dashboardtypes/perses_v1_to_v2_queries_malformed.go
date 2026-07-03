@@ -118,6 +118,80 @@ func parseAggregations(expression, availableAlias string) []any {
 	return out
 }
 
+// preV5MetricOpToAggregation maps a legacy v3 compound metric operator to its
+// (timeAggregation, spaceAggregation) pair, for bodies too old to carry those
+// fields of their own. Mirrors the operator switch in the migrator's
+// createAggregations metric branch (pkg/transition).
+var preV5MetricOpToAggregation = map[string][2]string{
+	"sum_rate": {"rate", "sum"}, "rate_sum": {"rate", "sum"},
+	"avg_rate": {"rate", "avg"}, "rate_avg": {"rate", "avg"},
+	"min_rate": {"rate", "min"}, "rate_min": {"rate", "min"},
+	"max_rate": {"rate", "max"}, "rate_max": {"rate", "max"},
+	"hist_quantile_50": {"", "p50"}, "hist_quantile_75": {"", "p75"},
+	"hist_quantile_90": {"", "p90"}, "hist_quantile_95": {"", "p95"},
+	"hist_quantile_99": {"", "p99"},
+	"rate":             {"rate", "sum"},
+	"min":              {"min", "min"}, "max": {"max", "max"},
+	"avg": {"avg", "avg"}, "sum": {"sum", "sum"},
+	"count": {"count", "sum"}, "count_distinct": {"count_distinct", "sum"},
+	"noop": {"max", "max"},
+}
+
+// normalizePreV5MetricAggregations rebuilds a metric builder query's v5
+// aggregations[] from the flat v4/v3 aggregation fields (aggregateOperator,
+// aggregateAttribute, timeAggregation, spaceAggregation, temporality, reduceTo)
+// in place. WrapInV5Envelope copies a v5 aggregations[] through but drops those
+// flat fields, so a metric query stored in the old flat shape — e.g. a dashboard
+// mislabeled version:"v5" that skipped the v4→v5 migrator — would otherwise
+// migrate to a metric query with no aggregation at all: a silently empty panel,
+// not a loud decode error. Mirrors the migrator's createAggregations metric
+// branch (pkg/transition): prefer the query's own timeAggregation/
+// spaceAggregation, else derive them from the compound operator. A query already
+// carrying a non-empty aggregations[] (or lacking the flat operator/attribute)
+// is left untouched. The metric-shaped result is correct only for metric
+// queries; logs/traces go through normalizePreV5LogTraceAggregations instead.
+func normalizePreV5MetricAggregations(query map[string]any) {
+	if signalFromDataSource(query["dataSource"]) != telemetrytypes.SignalMetrics {
+		return
+	}
+	if aggs, ok := query["aggregations"].([]any); ok && len(aggs) > 0 {
+		return
+	}
+	op, hasOp := query["aggregateOperator"].(string)
+	attr, hasAttr := query["aggregateAttribute"].(map[string]any)
+	if !hasOp || !hasAttr {
+		return
+	}
+
+	timeAgg, _ := query["timeAggregation"].(string)
+	spaceAgg, _ := query["spaceAggregation"].(string)
+	switch {
+	case timeAgg != "" || spaceAgg != "":
+		if spaceAgg == "" {
+			spaceAgg = op // migrator's default when spaceAggregation is absent
+		}
+	default:
+		mapped, ok := preV5MetricOpToAggregation[op]
+		if !ok {
+			return // too old to recognize; leave it to fail validation
+		}
+		timeAgg, spaceAgg = mapped[0], mapped[1]
+	}
+
+	agg := map[string]any{
+		"metricName":       attr["key"],
+		"timeAggregation":  timeAgg,
+		"spaceAggregation": spaceAgg,
+	}
+	if temporality, ok := query["temporality"]; ok && temporality != nil {
+		agg["temporality"] = temporality
+	}
+	if reduceTo, ok := query["reduceTo"].(string); ok && reduceTo != "" {
+		agg["reduceTo"] = reduceTo
+	}
+	query["aggregations"] = []any{agg}
+}
+
 // normalizePreV5SelectColumns fixes a builder query's selectColumns in place so
 // WrapInV5Envelope maps them correctly. That mapper reads the old
 // {key, dataType, type} shape, but some queries store selectColumns the v5 way
@@ -187,6 +261,196 @@ func normalizePreV5FieldKeys(fields []any) {
 		if typ, ok := field["type"]; ok {
 			field["fieldContext"] = typ
 		}
+	}
+}
+
+// normalizePreV5Filters rewrites a builder query's v4 filters (an object
+// {items:[{key:{key,dataType,type}, op, value}], op}) into the v5
+// filter {"expression": ...} shape in place. WrapInV5Envelope copies a v5
+// `filter` through but ignores the v4 plural `filters`, so an un-normalized v4
+// body silently loses its filter entirely. Mirrors the backend v4→v5 migrator's
+// createFilterExpression (pkg/transition), which the mislabeled-v5 bodies
+// bypass; buildPreV5FilterCondition also folds the deprecated operators
+// (nin→NOT IN, regex→REGEXP, nlike/ncontains/nregex/nexists/nhas) into their v5
+// forms. A query already carrying `filter` (or with no items) is left untouched.
+func normalizePreV5Filters(query map[string]any) {
+	if _, ok := query["filter"]; ok {
+		return
+	}
+	filters, ok := query["filters"].(map[string]any)
+	if !ok {
+		return
+	}
+	items, ok := filters["items"].([]any)
+	if !ok || len(items) == 0 {
+		return
+	}
+	op, _ := filters["op"].(string)
+	if op == "" {
+		op = "AND"
+	}
+	conditions := make([]string, 0, len(items))
+	for _, it := range items {
+		item, ok := it.(map[string]any)
+		if !ok {
+			continue
+		}
+		key, ok := item["key"].(map[string]any)
+		if !ok {
+			continue
+		}
+		keyStr, _ := key["key"].(string)
+		value, valueOk := item["value"]
+		if keyStr == "" || !valueOk {
+			continue
+		}
+		operator, _ := item["op"].(string)
+		dataType, _ := key["dataType"].(string)
+		if cond := buildPreV5FilterCondition(keyStr, operator, value, dataType); cond != "" {
+			conditions = append(conditions, cond)
+		}
+	}
+	if len(conditions) == 0 {
+		return
+	}
+	expr := conditions[0]
+	if len(conditions) > 1 {
+		expr = "(" + strings.Join(conditions, " "+op+" ") + ")"
+	}
+	query["filter"] = map[string]any{"expression": expr}
+	delete(query, "filters")
+}
+
+// buildPreV5FilterCondition renders one v4 filter item as a v5 expression
+// clause. Mirrors the backend migrator's buildCondition (pkg/transition): the
+// operator switch normalizes deprecated tokens (nin/nlike/regex/nregex/
+// ncontains/nexists/nhas) and downgrades a single-value IN/NOT IN to =/!=. It
+// omits the migrator's data-source ambiguity prefixing (needs per-signal config
+// we don't carry) and variable normalization (dotted vars are a backend
+// substitute_vars concern, left verbatim).
+func buildPreV5FilterCondition(key, operator string, value any, dataType string) string {
+	fv := formatPreV5FilterValue(value, dataType)
+	switch operator {
+	case "=", "!=", ">", ">=", "<", "<=":
+		return fmt.Sprintf("%s %s %s", key, operator, fv)
+	case "in", "IN":
+		if !strings.HasPrefix(fv, "[") && !isPreV5Variable(fv) {
+			return fmt.Sprintf("%s = %s", key, fv)
+		}
+		return fmt.Sprintf("%s IN %s", key, fv)
+	case "nin", "NOT IN":
+		if !strings.HasPrefix(fv, "[") && !isPreV5Variable(fv) {
+			return fmt.Sprintf("%s != %s", key, fv)
+		}
+		return fmt.Sprintf("%s NOT IN %s", key, fv)
+	case "like", "LIKE":
+		return fmt.Sprintf("%s LIKE %s", key, fv)
+	case "nlike", "NOT LIKE":
+		return fmt.Sprintf("%s NOT LIKE %s", key, fv)
+	case "contains":
+		return fmt.Sprintf("%s CONTAINS %s", key, fv)
+	case "ncontains":
+		return fmt.Sprintf("%s NOT CONTAINS %s", key, fv)
+	case "regex":
+		return fmt.Sprintf("%s REGEXP %s", key, fv)
+	case "nregex":
+		return fmt.Sprintf("%s NOT REGEXP %s", key, fv)
+	case "exists":
+		return fmt.Sprintf("%s EXISTS", key)
+	case "nexists":
+		return fmt.Sprintf("%s NOT EXISTS", key)
+	case "has":
+		return fmt.Sprintf("has(%s, %s)", key, fv)
+	case "nhas":
+		return fmt.Sprintf("NOT has(%s, %s)", key, fv)
+	default:
+		return fmt.Sprintf("%s %s %s", key, operator, fv)
+	}
+}
+
+// formatPreV5FilterValue renders a filter value for a v5 expression. Mirrors the
+// migrator's formatValue: variables pass through verbatim, numeric-typed numeric
+// strings stay unquoted, other strings are single-quoted (escaping embedded
+// quotes), a single-element array collapses to its element, and a multi-element
+// array becomes "[v1, v2]".
+func formatPreV5FilterValue(value any, dataType string) string {
+	switch v := value.(type) {
+	case string:
+		if isPreV5Variable(v) {
+			return v
+		}
+		if isNumericDataType(dataType) {
+			if _, err := fmt.Sscanf(v, "%f", new(float64)); err == nil {
+				return v
+			}
+		}
+		return "'" + strings.ReplaceAll(v, "'", `\'`) + "'"
+	case bool:
+		return fmt.Sprintf("%t", v)
+	case []any:
+		if len(v) == 1 {
+			return formatPreV5FilterValue(v[0], dataType)
+		}
+		parts := make([]string, len(v))
+		for i, item := range v {
+			parts[i] = formatPreV5FilterValue(item, dataType)
+		}
+		return "[" + strings.Join(parts, ", ") + "]"
+	default:
+		return fmt.Sprintf("%v", v)
+	}
+}
+
+// preV5VariablePatterns are the dashboard-variable syntaxes a filter value may
+// carry ({var}, {{var}}, $var, [[var]], ${{var}}); such values are passed
+// through unquoted. Mirrors the migrator's isVariable patterns verbatim.
+var preV5VariablePatterns = []*regexp.Regexp{
+	regexp.MustCompile(`^\{.*\}$`),
+	regexp.MustCompile(`^\{\{.*\}\}$`),
+	regexp.MustCompile(`^\$.*$`),
+	regexp.MustCompile(`^\[\[.*\]\]$`),
+	regexp.MustCompile(`^\$\{\{.*\}\}$`),
+}
+
+func isPreV5Variable(s string) bool {
+	s = strings.TrimSpace(s)
+	for _, re := range preV5VariablePatterns {
+		if re.MatchString(s) {
+			return true
+		}
+	}
+	return false
+}
+
+// isNumericDataType reports whether a v1 field dataType names a numeric type, in
+// which case a numeric-looking value renders unquoted. Mirrors the migrator's
+// isNumericType.
+func isNumericDataType(dataType string) bool {
+	switch dataType {
+	case "int", "int8", "int16", "int32", "int64",
+		"uint", "uint8", "uint16", "uint32", "uint64",
+		"float", "float32", "float64",
+		"number", "numeric", "integer":
+		return true
+	default:
+		return false
+	}
+}
+
+// normalizePreV5PageSize backfills a builder query's limit from the legacy
+// pageSize field in place, matching the frontend's `limit || pageSize` read in
+// prepareQueryRangePayloadV5.ts — which applies only to the row-limited panels
+// (list/table), so rowLimitPanel gates it. A query already carrying limit, or a
+// non-row-limited panel, is left untouched.
+func normalizePreV5PageSize(query map[string]any, rowLimitPanel bool) {
+	if !rowLimitPanel {
+		return
+	}
+	if _, ok := query["limit"]; ok {
+		return
+	}
+	if ps, ok := query["pageSize"]; ok {
+		query["limit"] = ps
 	}
 }
 

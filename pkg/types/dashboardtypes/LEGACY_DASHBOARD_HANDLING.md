@@ -22,14 +22,14 @@ Legacy-vs-plumbing is a judgment call; verify a specific site before relying on 
 | # | Legacy shape → v5 | Frontend location | Backend converter |
 |---|---|---|---|
 | 1 | `having` array `[{columnName,op,value}]` → `{expression}` | `convertHavingToExpression` (`QueryBuilderV2/utils.ts`) | ✅ `normalizePreV5Having` |
-| 2 | `filters {items:[{key,op,value}]}` → `filter {expression}` | `convertFiltersToExpression` (`prepareQueryRangePayloadV5.ts`) | ❌ not mirrored |
+| 2 | `filters {items:[{key,op,value}]}` → `filter {expression}` | `convertFiltersToExpression` (`prepareQueryRangePayloadV5.ts`) | ✅ `normalizePreV5Filters` (mirrors the backend migrator's `createFilterExpression`) |
 | 3 | logs/traces aggregation expression: parse `func(args)`, lift inline `as alias` → `alias`, split multi-part, discard junk (`sum(x) ) )` → `sum(x)`), empty → `count()` | `parseAggregations` / `createAggregation` (`prepareQueryRangePayloadV5.ts`) | ✅ `normalizePreV5LogTraceAggregations` + `parseAggregations` (logs/traces only) |
 | 4 | old field key `{key,dataType,type}` → `{name,fieldContext,fieldDataType}` (via `name ?? key` fallbacks) | `convertNewToOldQueryBuilder.ts`, `prepareQueryRangePayloadV5.ts` | ✅ `normalizePreV5FieldKeys` (list-panel fields) |
 | 5 | `selectColumns` stored v5-shape (`{name,…}`) → readable by the old `{key,…}` mapper; drop empty columns | `name ?? key` read + empty filter (`prepareQueryRangePayloadV5.ts`) | ✅ `normalizePreV5SelectColumns` |
-| 6 | deprecated operators remapped (`regex→REGEXP`, `nin→NOT IN`, `nlike`, `nhas`, …) | `DEPRECATED_OPERATORS_MAP` (`constants/antlrQueryConstants.ts`) | ❌ not mirrored |
+| 6 | deprecated operators remapped (`regex→REGEXP`, `nin→NOT IN`, `nlike`, `nhas`, …) | `DEPRECATED_OPERATORS_MAP` (`constants/antlrQueryConstants.ts`) | ✅ folded into `buildPreV5FilterCondition` (the operator switch normalizes them) |
 | 7 | deprecated intrinsic trace fields stripped (`traceID`/`spanID`/`parentSpanID`/`statusCode`…) | `prepareQueryRangePayloadV5.ts` | ❌ not mirrored |
-| 8 | `limit ← pageSize` (old field name) | `prepareQueryRangePayloadV5.ts` | ❌ not mirrored |
-| 9 | flat v4 aggregation fields (`aggregateAttribute`/`aggregateOperator`/`timeAggregation`/`spaceAggregation`/`reduceTo`) → `aggregations[]` | `createAggregation`, `adjustQueryForV5` | n/a — the v4→v5 migrator (`pkg/transition`) already does this; only mislabeled-v5 bodies bypass it |
+| 8 | `limit ← pageSize` (old field name) | `prepareQueryRangePayloadV5.ts` | ✅ `normalizePreV5PageSize` (list/table panels only) |
+| 9 | flat v4 aggregation fields (`aggregateAttribute`/`aggregateOperator`/`timeAggregation`/`spaceAggregation`/`reduceTo`) → `aggregations[]` | `createAggregation`, `adjustQueryForV5` | ✅ logs/traces via `normalizePreV5LogTraceAggregations`, metrics via `normalizePreV5MetricAggregations` (both mirror the migrator's `createAggregations`; the migrator handles it on the normal path — these cover mislabeled-v5 bodies that bypass it) |
 | 10 | legacy V3 composite (`builderQueries`/`promQueries`/`chQueries` objects) → v5 `queries[]` | `mapQueryFromV3` (`mapQueryDataFromApi.ts`) | n/a (backend consumes v5-shaped envelopes) |
 
 ### Confirmed NOT frontend-repaired (broken source data — fails in the live UI too, so not mirrored)
@@ -40,34 +40,52 @@ Legacy-vs-plumbing is a judgment call; verify a specific site before relying on 
 
 ## Variables (old saved variable shapes)
 
-| # | Legacy handling | Frontend location |
-|---|---|---|
-| 10 | TEXTBOX `textboxValue` → `defaultValue` (explicit BWC) | `useTransformDashboardVariables.ts` |
-| 11 | backfill missing `id` (UUID) / `order` (pre-UUID, unordered legacy variables) | `useTransformDashboardVariables.ts` |
-| 12 | `name`-vs-key duality lookup (legacy mismatched variable name/key) | `useTransformDashboardVariables.ts` |
-| 13 | `selectedValue` string\|array polymorphic normalization against `multiSelect` | `normalizeUrlValue.ts` |
-| 14 | CUSTOM `"label : value"` comma parsing (legacy value syntax) | `customCommaValuesParser.ts` |
+| # | Legacy handling | Frontend location | Backend converter |
+|---|---|---|---|
+| 10 | TEXTBOX `textboxValue` → `defaultValue` (explicit BWC) | `useTransformDashboardVariables.ts` | ✅ `convertV1Variable` reads `textboxValue` into `Value` (variables.go:74) |
+| 11 | backfill missing `id` (UUID) / `order` (pre-UUID, unordered legacy variables) | `useTransformDashboardVariables.ts` | ✅ order via sort-by-`order`-then-UUID-key tiebreak (variables.go:44); `id` n/a — v2 keys variables by `Name`, not a UUID |
+| 12 | `name`-vs-key duality lookup (legacy mismatched variable name/key) | `useTransformDashboardVariables.ts` | n/a — runtime URL-param lookup, not saved-dashboard shape |
+| 13 | `selectedValue` string\|array polymorphic normalization against `multiSelect` | `normalizeUrlValue.ts` | ✅ `mapV1VariableDefault`/`defaultValueFromAny` type-switch |
 
 ## Widget / panel (old widget fields)
 
-| # | Legacy handling | Frontend location |
-|---|---|---|
-| 15 | `spanGaps` bool (legacy) — default `true`; polymorphic with newer numeric form | `UPlotSeriesBuilder.ts`, `NewWidget` |
-| 16 | `fillSpans` (legacy bool) promoted to `spanGaps`/`fillGaps` | `NewWidget/index.tsx` |
-| 17 | `decimalPrecision` string (legacy) \| number polymorphic | `NewWidget`, `getDefaultWidgetData` |
-| 18 | `timePreferance` (misspelled legacy field) → `GLOBAL_TIME` fallback | `GridCard`, `NewWidget` |
-| 19 | `selectedLogFields`/`selectedTracesFields` legacy null-default + `key→name` on list panels | `NewWidget/index.tsx` |
+| # | Legacy handling | Frontend location | Backend converter |
+|---|---|---|---|
+| 15 | `spanGaps` bool (legacy) — default `true`; polymorphic with newer numeric form | `UPlotSeriesBuilder.ts`, `NewWidget` | ✅ `mapV1SpanGaps` |
+| 16 | `fillSpans` (legacy bool) promoted to `spanGaps`/`fillGaps` | `NewWidget/index.tsx` | ✅ `readBool` (panels.go:82) |
+| 17 | `decimalPrecision` string (legacy) \| number polymorphic | `NewWidget`, `getDefaultWidgetData` | ✅ `mapV1Precision` |
+| 18 | `timePreferance` (misspelled legacy field) → `GLOBAL_TIME` fallback | `GridCard`, `NewWidget` | ✅ `mapV1TimePreference` |
+| 19 | `selectedLogFields`/`selectedTracesFields` legacy null-default + `key→name` on list panels | `NewWidget/index.tsx` | ✅ `mapV1SelectFields` + `normalizePreV5FieldKeys` |
 
-Items **1, 3, 4** are the ones the backend converter implements today. Items **2,
-5, 6** are legacy handlings the backend does **not** yet mirror — none surfaced in
-the 122-dashboard repo run, but they are the same class of shape and could affect
-other dashboards.
+## Layouts & sections (old react-grid-layout / section shapes)
+
+| # | Legacy shape | Frontend location | Backend converter |
+|---|---|---|---|
+| L1 | orphan `layout` entries — `i` for a deleted widget or the `__dropping-elem__`/`'empty'` drag placeholder | `getUpdatedLayout.ts` (filters `i==='empty'`) | ✅ dropped: `layout` id must be a real widget (layouts.go:60) |
+| L2 | duplicate `layout` `i` (same widget listed twice) | `getUpdatedLayout.ts` (dedupe, keep first) | ✅ deduped in stored order before sort, first occurrence wins (layouts.go) |
+| L3 | undefined `x`/`y`/`w`/`h` on a layout entry | `GridCardLayout/utils.ts` (strip undefined) | ✅ `readInt` defaults missing coords to 0 |
+| L4 | unsorted / non-zero-based positions | `providers/Dashboard/util.ts` (`sortLayout`) | ✅ `sortByPosition` + `y` rebased to 0 (layouts.go:132) |
+| L5 | `panelMap` missing, or `panelMap[id]` stored as a bare `[]widgetID` | `GridCardLayout/utils.ts`, `useDashboardBootstrap.ts` | ✅ lenient read → "not collapsed" (layouts.go:104) |
+| L6 | `layout` entry for a widget that never becomes a panel (unknown/`EMPTY_WIDGET` type, or failed conversion) | frontend only renders panels it holds | ✅ layout pass gates on panel-created, not widget-exists (`panels` map + `panelBackedItems` for collapsed children) |
+| S1 | pre-collapsible-sections dashboard (no section metadata) | `useDashboardBootstrap.ts` (`defaultTo({})`) | ✅ positional grouping; unnamed grid for panels above the first row |
+
+The backend converter mirrors nearly all of the above. Query body: it now
+handles every shape-normalizing item (1–6, 8, 9); item 10 is n/a (the converter
+builds v5 envelopes itself), and item 7 (deprecated trace-field stripping) stays
+unmirrored on purpose — it is a live-request concern, not a decode blocker, and
+stripping fields on a persisted migration would silently drop user-configured
+columns/group-bys. Variables and widgets are handled in the structural passes
+(`perses_v1_to_v2_variables.go` / `_panels.go`), not the malformed-queries file.
+
+**Open items:** none. L2 (duplicate `layout` ids) and L6 (dangling grid ref) are
+now handled; neither surfaced in the 122-dashboard repo run.
 
 ## Excluded (not legacy-content handling)
 
 - **`schemaVersion → 'v6'` default**, Perses adapters (`persesQueryAdapters`),
-  `titleUntitledSectionOp` / sections, wrapped-vs-bare import — the new v2 Perses
-  (v6) path.
+  `titleUntitledSectionOp`, wrapped-vs-bare import — the new v2 Perses (v6) path.
+  (Legacy *section/layout* coping is now catalogued above under "Layouts &
+  sections" — only the v6 write path is excluded here.)
 - **`convertV5ResponseToLegacy`** — adapts a current v5 *response* to the internal
   model; not dashboard JSON.
 - **v5 ↔ internal adapter renames** (`signal↔dataSource`, `name↔queryName`,

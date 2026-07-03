@@ -752,6 +752,123 @@ func TestConvertV1WidgetQueryListPanelUsesBuilderDirectly(t *testing.T) {
 	assert.Equal(t, "A", spec.Name)
 }
 
+func TestConvertV1WidgetQueryNormalizesV4FiltersAndPageSize(t *testing.T) {
+	widget := map[string]any{
+		"id":         "l-1",
+		"panelTypes": "list",
+		"query": map[string]any{
+			"queryType": "builder",
+			"builder": map[string]any{
+				"queryData": []any{
+					map[string]any{
+						"queryName":  "A",
+						"expression": "A",
+						"dataSource": "logs",
+						"pageSize":   float64(50),
+						"filters": map[string]any{
+							"op": "AND",
+							"items": []any{
+								map[string]any{
+									"key":   map[string]any{"key": "service.name", "dataType": "string", "type": "tag"},
+									"op":    "=",
+									"value": "frontend",
+								},
+								map[string]any{
+									"key":   map[string]any{"key": "status.code", "dataType": "int64", "type": "tag"},
+									"op":    "nin",
+									"value": []any{float64(4), float64(5)},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	queries := (&v1Decoder{}).convertV1WidgetQuery(widget, PanelKindList)
+	require.Len(t, queries, 1)
+
+	wrapper, ok := queries[0].Spec.Plugin.Spec.(*BuilderQuerySpec)
+	require.True(t, ok)
+	spec, ok := wrapper.Spec.(qb.QueryBuilderQuery[qb.LogAggregation])
+	require.True(t, ok, "list logs query should dispatch to LogAggregation, got %T", wrapper.Spec)
+
+	require.NotNil(t, spec.Filter, "v4 filters should become a v5 filter expression")
+	assert.Equal(t, "(service.name = 'frontend' AND status.code NOT IN [4, 5])", spec.Filter.Expression, "v4 filters normalize to a v5 expression and the deprecated nin folds to NOT IN")
+	assert.Equal(t, 50, spec.Limit, "pageSize backfills limit on a list panel")
+}
+
+func TestConvertV1WidgetQueryIgnoresPageSizeOnNonRowLimitPanel(t *testing.T) {
+	widget := map[string]any{
+		"id":         "b-1",
+		"panelTypes": "graph",
+		"query": map[string]any{
+			"queryType": "builder",
+			"builder": map[string]any{
+				"queryData": []any{
+					map[string]any{
+						"queryName":    "A",
+						"expression":   "A",
+						"dataSource":   "logs",
+						"pageSize":     float64(50),
+						"aggregations": []any{map[string]any{"expression": "count()"}},
+					},
+				},
+			},
+		},
+	}
+
+	queries := (&v1Decoder{}).convertV1WidgetQuery(widget, PanelKindTimeSeries)
+	require.Len(t, queries, 1)
+
+	wrapper, ok := queries[0].Spec.Plugin.Spec.(*BuilderQuerySpec)
+	require.True(t, ok)
+	spec, ok := wrapper.Spec.(qb.QueryBuilderQuery[qb.LogAggregation])
+	require.True(t, ok, "got %T", wrapper.Spec)
+	assert.Zero(t, spec.Limit, "pageSize is a list/table concern; a graph panel must not adopt it as limit")
+}
+
+func TestConvertV1WidgetQueryRebuildsFlatMetricAggregation(t *testing.T) {
+	// A metric query stored in the flat v4 shape (aggregateOperator/
+	// aggregateAttribute/timeAggregation/… instead of aggregations[]) — the shape
+	// a dashboard mislabeled version:"v5" carries when it skips the v4→v5 migrator.
+	widget := map[string]any{
+		"id":         "m-1",
+		"panelTypes": "graph",
+		"query": map[string]any{
+			"queryType": "builder",
+			"builder": map[string]any{
+				"queryData": []any{
+					map[string]any{
+						"queryName":          "A",
+						"expression":         "A",
+						"dataSource":         "metrics",
+						"aggregateOperator":  "avg",
+						"aggregateAttribute": map[string]any{"key": "signoz_calls_total"},
+						"timeAggregation":    "rate",
+						"spaceAggregation":   "sum",
+						"temporality":        "cumulative",
+					},
+				},
+			},
+		},
+	}
+
+	queries := (&v1Decoder{}).convertV1WidgetQuery(widget, PanelKindTimeSeries)
+	require.Len(t, queries, 1)
+
+	wrapper, ok := queries[0].Spec.Plugin.Spec.(*BuilderQuerySpec)
+	require.True(t, ok)
+	spec, ok := wrapper.Spec.(qb.QueryBuilderQuery[qb.MetricAggregation])
+	require.True(t, ok, "metric query should dispatch to MetricAggregation, got %T", wrapper.Spec)
+
+	require.Len(t, spec.Aggregations, 1, "flat v4 metric fields should rebuild into one aggregation")
+	assert.Equal(t, "signoz_calls_total", spec.Aggregations[0].MetricName)
+	assert.Equal(t, "rate", spec.Aggregations[0].TimeAggregation.StringValue())
+	assert.Equal(t, "sum", spec.Aggregations[0].SpaceAggregation.StringValue())
+}
+
 func TestConvertV1WidgetQueryNoQuery(t *testing.T) {
 	widget := map[string]any{"id": "x", "panelTypes": "graph"}
 	queries := (&v1Decoder{}).convertV1WidgetQuery(widget, PanelKindTimeSeries)
@@ -775,7 +892,7 @@ func TestConvertV1LayoutsRootOnly(t *testing.T) {
 	}
 
 	d := &v1Decoder{}
-	layouts := d.convertV1Layouts(data)
+	layouts := d.convertV1Layouts(data, d.convertV1Panels(data["widgets"]))
 	require.NoError(t, d.errIfHasMalformedFields())
 	require.Len(t, layouts, 1)
 	assert.Equal(t, dashboard.KindGridLayout, layouts[0].Kind)
@@ -786,6 +903,43 @@ func TestConvertV1LayoutsRootOnly(t *testing.T) {
 	assert.Equal(t, "#/spec/panels/p-1", spec.Items[0].Content.Ref)
 	assert.Equal(t, 6, spec.Items[1].Width)
 	assert.Nil(t, spec.Display, "root-only grid should have no display block")
+}
+
+func TestConvertV1LayoutsDropsDuplicateWidgetIDs(t *testing.T) {
+	// Two layout entries reference the same widget id with different geometry.
+	// Mirroring the frontend's getUpdatedLayout, the first in stored order wins
+	// and the rest are dropped whole — the loser's geometry is discarded, not
+	// merged.
+	data := StorableDashboardData{
+		"layout": []any{
+			map[string]any{"i": "p-1", "x": float64(0), "y": float64(0), "w": float64(6), "h": float64(6)},
+			map[string]any{"i": "p-1", "x": float64(6), "y": float64(0), "w": float64(3), "h": float64(9)},
+			map[string]any{"i": "p-2", "x": float64(6), "y": float64(0), "w": float64(6), "h": float64(6)},
+		},
+		"widgets": []any{
+			map[string]any{"id": "p-1", "panelTypes": "graph"},
+			map[string]any{"id": "p-2", "panelTypes": "graph"},
+		},
+	}
+
+	d := &v1Decoder{}
+	layouts := d.convertV1Layouts(data, d.convertV1Panels(data["widgets"]))
+	require.NoError(t, d.errIfHasMalformedFields())
+	require.Len(t, layouts, 1)
+
+	spec, ok := layouts[0].Spec.(*dashboard.GridLayoutSpec)
+	require.True(t, ok)
+	require.Len(t, spec.Items, 2, "the duplicate p-1 entry should be dropped, leaving p-1 and p-2")
+
+	var p1 *dashboard.GridItem
+	for i := range spec.Items {
+		if spec.Items[i].Content.Ref == "#/spec/panels/p-1" {
+			p1 = &spec.Items[i]
+		}
+	}
+	require.NotNil(t, p1)
+	assert.Equal(t, 6, p1.Width, "first occurrence (w=6) wins, not the dropped duplicate (w=3)")
+	assert.Equal(t, 6, p1.Height, "first occurrence (h=6) wins, not the dropped duplicate (h=9)")
 }
 
 func TestConvertV1LayoutsWithCollapsedSection(t *testing.T) {
@@ -811,7 +965,7 @@ func TestConvertV1LayoutsWithCollapsedSection(t *testing.T) {
 	}
 
 	d := &v1Decoder{}
-	layouts := d.convertV1Layouts(data)
+	layouts := d.convertV1Layouts(data, d.convertV1Panels(data["widgets"]))
 	require.NoError(t, d.errIfHasMalformedFields())
 	require.Len(t, layouts, 2, "one root grid (p-2) + one section grid (row-1 with p-1)")
 
@@ -856,7 +1010,7 @@ func TestConvertV1LayoutsExpandedSectionsNoPanelMap(t *testing.T) {
 	}
 
 	d := &v1Decoder{}
-	layouts := d.convertV1Layouts(data)
+	layouts := d.convertV1Layouts(data, d.convertV1Panels(data["widgets"]))
 	require.NoError(t, d.errIfHasMalformedFields())
 	require.Len(t, layouts, 2, "two row sections, no root grid")
 
@@ -909,7 +1063,7 @@ func TestConvertV1LayoutsToleratesNonObjectPanelMap(t *testing.T) {
 	}
 
 	d := &v1Decoder{}
-	layouts := d.convertV1Layouts(data)
+	layouts := d.convertV1Layouts(data, d.convertV1Panels(data["widgets"]))
 	require.NoError(t, d.errIfHasMalformedFields(), "a non-object panelMap entry must not be flagged malformed")
 	require.Len(t, layouts, 1, "one expanded section grid for row_overview")
 
@@ -924,9 +1078,73 @@ func TestConvertV1LayoutsToleratesNonObjectPanelMap(t *testing.T) {
 	assert.Equal(t, "#/spec/panels/v_version", section.Items[1].Content.Ref)
 }
 
+func TestConvertV1LayoutsDropsEntryForUnrenderableWidget(t *testing.T) {
+	// e-1 is a widget that exists but produces no panel (unknown/EMPTY_WIDGET
+	// type). Its layout entry must not become a grid item — the ref would point
+	// at a panel that was never created. (Through ConvertV1ToV2 such a widget also
+	// records a malformed-field note; here we exercise the layout pass directly.)
+	data := StorableDashboardData{
+		"widgets": []any{
+			map[string]any{"id": "p-1", "panelTypes": "graph"},
+			map[string]any{"id": "e-1", "panelTypes": "EMPTY_WIDGET"},
+		},
+		"layout": []any{
+			map[string]any{"i": "p-1", "x": float64(0), "y": float64(0), "w": float64(6), "h": float64(6)},
+			map[string]any{"i": "e-1", "x": float64(6), "y": float64(0), "w": float64(6), "h": float64(6)},
+		},
+	}
+
+	d := &v1Decoder{}
+	panels := d.convertV1Panels(data["widgets"])
+	require.NotContains(t, panels, "e-1", "an unknown widget type produces no panel")
+
+	layouts := d.convertV1Layouts(data, panels)
+	require.Len(t, layouts, 1)
+	spec, ok := layouts[0].Spec.(*dashboard.GridLayoutSpec)
+	require.True(t, ok)
+	require.Len(t, spec.Items, 1, "e-1 has no panel → its layout entry is dropped, not emitted as a dangling ref")
+	assert.Equal(t, "#/spec/panels/p-1", spec.Items[0].Content.Ref)
+}
+
+func TestConvertV1LayoutsDropsCollapsedChildWithNoPanel(t *testing.T) {
+	// A collapsed section lists a child ("ghost") that has no widget at all — a
+	// deleted widget still referenced in panelMap. It produces no panel and no
+	// malformed-field note, so the dashboard is NOT skipped; the section grid
+	// must drop it rather than emit a dangling ref. Collapsed children bypass the
+	// main layout loop, so this exercises the panelBackedItems filter.
+	data := StorableDashboardData{
+		"widgets": []any{
+			map[string]any{"id": "row-1", "panelTypes": "row", "title": "S"},
+			map[string]any{"id": "p-1", "panelTypes": "graph"},
+		},
+		"layout": []any{
+			map[string]any{"i": "row-1", "x": float64(0), "y": float64(0), "w": float64(12), "h": float64(1)},
+		},
+		"panelMap": map[string]any{
+			"row-1": map[string]any{
+				"collapsed": true,
+				"widgets": []any{
+					map[string]any{"i": "p-1", "x": float64(0), "y": float64(1), "w": float64(6), "h": float64(6)},
+					map[string]any{"i": "ghost", "x": float64(6), "y": float64(1), "w": float64(6), "h": float64(6)},
+				},
+			},
+		},
+	}
+
+	d := &v1Decoder{}
+	layouts := d.convertV1Layouts(data, d.convertV1Panels(data["widgets"]))
+	require.NoError(t, d.errIfHasMalformedFields(), "a stale collapsed-child ref must not be flagged malformed")
+	require.Len(t, layouts, 1, "the collapsed section")
+
+	spec, ok := layouts[0].Spec.(*dashboard.GridLayoutSpec)
+	require.True(t, ok)
+	require.Len(t, spec.Items, 1, "ghost has no panel → dropped; only p-1 remains")
+	assert.Equal(t, "#/spec/panels/p-1", spec.Items[0].Content.Ref)
+}
+
 func TestConvertV1LayoutsEmpty(t *testing.T) {
 	d := &v1Decoder{}
-	layouts := d.convertV1Layouts(StorableDashboardData{})
+	layouts := d.convertV1Layouts(StorableDashboardData{}, nil)
 	require.NoError(t, d.errIfHasMalformedFields())
 	assert.Nil(t, layouts)
 }
