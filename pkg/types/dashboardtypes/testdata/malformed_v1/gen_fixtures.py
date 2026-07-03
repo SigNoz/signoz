@@ -132,7 +132,8 @@ dash("08_old_field_keys_list_panel", "08 old field keys (selectedLogFields)",
                                 {"key": "trace_id", "dataType": "string", "type": ""}])],
      grid("w1"))
 
-# 09 — DYNAMIC variable missing dynamicVariablesAttribute (expected: whole-dashboard migration fails)
+# 09 — DYNAMIC variable missing dynamicVariablesAttribute (expected: that variable is
+# skipped, the rest of the dashboard still migrates)
 variables = {
     "dyn": {"id": "dyn", "order": 0, "type": "DYNAMIC", "name": "node", "description": "",
             "dynamicVariablesSource": "Traces", "sort": "DISABLED", "multiSelect": True, "showALLOption": True},
@@ -182,5 +183,13 @@ dash("13_unrenderable_widget_type", "13 unrenderable widget type (whole-dashboar
      [widget("w-real", "real", "graph", {"queryData": [metrics_qd()]}),
       widget("w-empty", "empty widget", "EMPTY_WIDGET", {"queryData": []})],
      grid("w-real", "w-empty"))
+
+# 14 — overlapping layout rectangles. The v1 UI (react-grid-layout) compacts these on
+# load; the converter mirrors that, so migration yields a valid non-overlapping grid.
+dash("14_layout_overlapping", "14 overlapping layout rectangles",
+     [widget("w1", "a", "graph", {"queryData": [metrics_qd()]}),
+      widget("w2", "b", "graph", {"queryData": [metrics_qd()]})],
+     [{"i": "w1", "x": 0, "y": 0, "w": 6, "h": 6},
+      {"i": "w2", "x": 3, "y": 3, "w": 6, "h": 6}])
 
 print("done")

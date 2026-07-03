@@ -41,11 +41,12 @@ var expectedFixtureOutcomes = map[string]string{
 	"06_pagesize_to_limit.json":                          outcomeOK,
 	"07_trace_list_old_field_keys.json":                  outcomeOK,
 	"08_old_field_keys_list_panel.json":                  outcomeOK,
-	"09_variable_dynamic_missing_attribute.json":         outcomeConvertFail,
+	"09_variable_dynamic_missing_attribute.json":         outcomeOK,
 	"10_layout_duplicate_i.json":                         outcomeOK,
 	"11_layout_orphan_entries.json":                      outcomeOK,
 	"12_layout_collapsed_ghost_child_bare_panelmap.json": outcomeOK,
 	"13_unrenderable_widget_type.json":                   outcomeConvertFail,
+	"14_layout_overlapping.json":                         outcomeOK,
 }
 
 // TestMalformedV1FixturesMigrate migrates every fixture under testdata/malformed_v1
