@@ -631,7 +631,7 @@ func (m *module) getPerGroupPodStatusCounts(
 
 	// ----- pod_status (display status per pod) -----
 	// container reason > pod-level reason > phase fallback. Numeric literals
-	// match PodStatusReasonNum* / PodPhaseNum* in inframonitoringtypes.
+	// match the k8s.pod.status_reason and k8s.pod.phase metric encodings.
 	displayStatusExpr := "multiIf(" +
 		"cr.active_reason != '', cr.active_reason, " +
 		"pr.reason_value = 1, 'Evicted', " +

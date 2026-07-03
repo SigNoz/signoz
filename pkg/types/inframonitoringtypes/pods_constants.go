@@ -90,16 +90,6 @@ func (PodStatus) Enum() []any {
 	}
 }
 
-// Numeric pod status_reason values emitted by the k8s.pod.status_reason metric.
-const (
-	PodStatusReasonNumEvicted                  = 1
-	PodStatusReasonNumNodeAffinity             = 2
-	PodStatusReasonNumNodeLost                 = 3
-	PodStatusReasonNumShutdown                 = 4
-	PodStatusReasonNumUnexpectedAdmissionError = 5
-	PodStatusReasonNumUnknown                  = 6
-)
-
 // Numeric pod phase values emitted by the k8s.pod.phase metric
 // (source: OTel kubeletstats receiver).
 const (
