@@ -21,15 +21,15 @@ Legacy-vs-plumbing is a judgment call; verify a specific site before relying on 
 
 | # | Legacy shape → v5 | Frontend location | Backend converter |
 |---|---|---|---|
-| 1 | `having` array `[{columnName,op,value}]` → `{expression}` | `convertHavingToExpression` (`QueryBuilderV2/utils.ts`) | ✅ `normalizePreV5Having` |
-| 2 | `filters {items:[{key,op,value}]}` → `filter {expression}` | `convertFiltersToExpression` (`prepareQueryRangePayloadV5.ts`) | ✅ `normalizePreV5Filters` (mirrors the backend migrator's `createFilterExpression`) |
-| 3 | logs/traces aggregation expression: parse `func(args)`, lift inline `as alias` → `alias`, split multi-part, discard junk (`sum(x) ) )` → `sum(x)`), empty → `count()` | `parseAggregations` / `createAggregation` (`prepareQueryRangePayloadV5.ts`) | ✅ `normalizePreV5LogTraceAggregations` + `parseAggregations` (logs/traces only) |
+| 1 | `having` array `[{columnName,op,value}]` → `{expression}` | `convertHavingToExpression` (`QueryBuilderV2/utils.ts`) | ✅ `transition.MigrateQueryDataShapeSafe` (`createHavingExpressionShapeSafe`) |
+| 2 | `filters {items:[{key,op,value}]}` → `filter {expression}` | `convertFiltersToExpression` (`prepareQueryRangePayloadV5.ts`) | ✅ `transition.MigrateQueryDataShapeSafe` (`createFilterExpression`) |
+| 3 | logs/traces aggregation expression: parse `func(args)`, lift inline `as alias` → `alias`, split multi-part, discard junk (`sum(x) ) )` → `sum(x)`), empty → `count()` | `parseAggregations` / `createAggregation` (`prepareQueryRangePayloadV5.ts`) | ✅ `normalizePreV5LogTraceAggregations` + `parseAggregations` — reshapes an existing malformed `aggregations[]` the migrator skips |
 | 4 | old field key `{key,dataType,type}` → `{name,fieldContext,fieldDataType}` (via `name ?? key` fallbacks) | `convertNewToOldQueryBuilder.ts`, `prepareQueryRangePayloadV5.ts` | ✅ `normalizePreV5FieldKeys` (list-panel fields) |
 | 5 | `selectColumns` stored v5-shape (`{name,…}`) → readable by the old `{key,…}` mapper; drop empty columns | `name ?? key` read + empty filter (`prepareQueryRangePayloadV5.ts`) | ✅ `normalizePreV5SelectColumns` |
-| 6 | deprecated operators remapped (`regex→REGEXP`, `nin→NOT IN`, `nlike`, `nhas`, …) | `DEPRECATED_OPERATORS_MAP` (`constants/antlrQueryConstants.ts`) | ✅ folded into `buildPreV5FilterCondition` (the operator switch normalizes them) |
+| 6 | deprecated operators remapped (`regex→REGEXP`, `nin→NOT IN`, `nlike`, `nhas`, …) | `DEPRECATED_OPERATORS_MAP` (`constants/antlrQueryConstants.ts`) | ✅ `transition.MigrateQueryDataShapeSafe` (`buildCondition`'s operator switch) |
 | 7 | deprecated intrinsic trace fields stripped (`traceID`/`spanID`/`parentSpanID`/`statusCode`…) | `prepareQueryRangePayloadV5.ts` | ❌ not mirrored |
 | 8 | `limit ← pageSize` (old field name) | `prepareQueryRangePayloadV5.ts` | ✅ `normalizePreV5PageSize` (list/table panels only) |
-| 9 | flat v4 aggregation fields (`aggregateAttribute`/`aggregateOperator`/`timeAggregation`/`spaceAggregation`/`reduceTo`) → `aggregations[]` | `createAggregation`, `adjustQueryForV5` | ✅ logs/traces via `normalizePreV5LogTraceAggregations`, metrics via `normalizePreV5MetricAggregations` (both mirror the migrator's `createAggregations`; the migrator handles it on the normal path — these cover mislabeled-v5 bodies that bypass it) |
+| 9 | flat v4 aggregation fields (`aggregateAttribute`/`aggregateOperator`/`timeAggregation`/`spaceAggregation`/`reduceTo`) → `aggregations[]` | `createAggregation`, `adjustQueryForV5` | ✅ `transition.MigrateQueryDataShapeSafe` (`createAggregationsShapeSafe`, metrics + logs/traces) |
 | 10 | legacy V3 composite (`builderQueries`/`promQueries`/`chQueries` objects) → v5 `queries[]` | `mapQueryFromV3` (`mapQueryDataFromApi.ts`) | n/a (backend consumes v5-shaped envelopes) |
 
 ### Confirmed NOT frontend-repaired (broken source data — fails in the live UI too, so not mirrored)
@@ -69,13 +69,21 @@ Legacy-vs-plumbing is a judgment call; verify a specific site before relying on 
 | L6 | `layout` entry for a widget that never becomes a panel (unknown/`EMPTY_WIDGET` type, or failed conversion) | frontend only renders panels it holds | ✅ layout pass gates on panel-created, not widget-exists (`panels` map + `panelBackedItems` for collapsed children) |
 | S1 | pre-collapsible-sections dashboard (no section metadata) | `useDashboardBootstrap.ts` (`defaultTo({})`) | ✅ positional grouping; unnamed grid for panels above the first row |
 
-The backend converter mirrors nearly all of the above. Query body: it now
-handles every shape-normalizing item (1–6, 8, 9); item 10 is n/a (the converter
-builds v5 envelopes itself), and item 7 (deprecated trace-field stripping) stays
-unmirrored on purpose — it is a live-request concern, not a decode blocker, and
-stripping fields on a persisted migration would silently drop user-configured
-columns/group-bys. Variables and widgets are handled in the structural passes
-(`perses_v1_to_v2_variables.go` / `_panels.go`), not the malformed-queries file.
+The backend converter mirrors nearly all of the above. Query body: the bulk of
+the pre-v5 upgrade (items 1, 2, 6, 9, plus orderBy/functions) is **delegated to
+the shared migrator** — `transition.MigrateQueryDataShapeSafe`, the shape-safe
+(idempotent) entry point added so the converter reuses `pkg/transition`'s v4→v5
+logic instead of duplicating it (`perses_v1_to_v2_queries.go` calls it per query
+via `normalizePreV5QueryData`). What remains in `perses_v1_to_v2_queries_malformed.go`
+are the reshapes the migrator does not do: item 3 (reshaping an already-present
+but malformed `aggregations[]`), item 5 (`selectColumns`), item 4 (list-panel
+field keys), and item 8 (`pageSize`) — each specific to how this converter
+consumes the result. Item 10 is n/a (the converter builds v5 envelopes itself),
+and item 7 (deprecated trace-field stripping) stays unmirrored on purpose — a
+live-request concern, not a decode blocker, and stripping fields on a persisted
+migration would silently drop user-configured columns/group-bys. Variables and
+widgets are handled in the structural passes (`perses_v1_to_v2_variables.go` /
+`_panels.go`), not the malformed-queries file.
 
 **Open items:** none. L2 (duplicate `layout` ids) and L6 (dangling grid ref) are
 now handled; neither surfaced in the 122-dashboard repo run.

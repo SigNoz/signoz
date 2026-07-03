@@ -102,11 +102,9 @@ func (d *v1Decoder) collectV1QueryEnvelopes(widget map[string]any, panelKind Pan
 		}
 		var out []map[string]any
 		var signal telemetrytypes.Signal
+		widgetType := d.readString(widget, "panelTypes")
 		for _, q := range d.readObjects(builder, "queryData") {
-			normalizePreV5Having(q)
-			normalizePreV5Filters(q)
-			normalizePreV5LogTraceAggregations(q)
-			normalizePreV5MetricAggregations(q)
+			normalizePreV5QueryData(q, widgetType)
 			normalizePreV5SelectColumns(q)
 			normalizePreV5PageSize(q, rowLimitPanel)
 			name := d.readString(q, "queryName")
@@ -116,12 +114,12 @@ func (d *v1Decoder) collectV1QueryEnvelopes(widget map[string]any, panelKind Pan
 			}
 		}
 		for _, f := range d.readObjects(builder, "queryFormulas") {
-			normalizePreV5Having(f)
+			normalizePreV5QueryData(f, widgetType)
 			name := d.readString(f, "queryName")
 			out = append(out, qb.WrapInV5Envelope(name, f, string(qb.QueryTypeFormula.StringValue())))
 		}
 		for _, op := range d.readObjects(builder, "queryTraceOperator") {
-			normalizePreV5Having(op)
+			normalizePreV5QueryData(op, widgetType)
 			name := d.readString(op, "queryName")
 			out = append(out, qb.WrapInV5Envelope(name, op, string(qb.QueryTypeTraceOperator.StringValue())))
 		}

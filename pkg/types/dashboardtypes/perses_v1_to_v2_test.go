@@ -869,6 +869,42 @@ func TestConvertV1WidgetQueryRebuildsFlatMetricAggregation(t *testing.T) {
 	assert.Equal(t, "sum", spec.Aggregations[0].SpaceAggregation.StringValue())
 }
 
+func TestConvertV1WidgetQueryRebuildsFlatLogsAggregation(t *testing.T) {
+	// A logs query stored in the flat v4 shape (aggregateOperator/
+	// aggregateAttribute instead of aggregations[]). Without a flat-field builder
+	// the aggregation is dropped entirely (empty panel); it must rebuild into an
+	// expression aggregation, mirroring the migrator's createAggregations.
+	widget := map[string]any{
+		"id":         "l-1",
+		"panelTypes": "graph",
+		"query": map[string]any{
+			"queryType": "builder",
+			"builder": map[string]any{
+				"queryData": []any{
+					map[string]any{
+						"queryName":          "A",
+						"expression":         "A",
+						"dataSource":         "logs",
+						"aggregateOperator":  "sum",
+						"aggregateAttribute": map[string]any{"key": "bytes"},
+					},
+				},
+			},
+		},
+	}
+
+	queries := (&v1Decoder{}).convertV1WidgetQuery(widget, PanelKindTimeSeries)
+	require.Len(t, queries, 1)
+
+	wrapper, ok := queries[0].Spec.Plugin.Spec.(*BuilderQuerySpec)
+	require.True(t, ok)
+	spec, ok := wrapper.Spec.(qb.QueryBuilderQuery[qb.LogAggregation])
+	require.True(t, ok, "logs query should dispatch to LogAggregation, got %T", wrapper.Spec)
+
+	require.Len(t, spec.Aggregations, 1, "flat v4 logs fields should rebuild into one aggregation")
+	assert.Equal(t, "sum(bytes)", spec.Aggregations[0].Expression)
+}
+
 func TestConvertV1WidgetQueryNoQuery(t *testing.T) {
 	widget := map[string]any{"id": "x", "panelTypes": "graph"}
 	queries := (&v1Decoder{}).convertV1WidgetQuery(widget, PanelKindTimeSeries)
