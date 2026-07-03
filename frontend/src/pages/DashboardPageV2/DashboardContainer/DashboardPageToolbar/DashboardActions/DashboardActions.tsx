@@ -1,14 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { FullScreenHandle } from 'react-full-screen';
-import { useTranslation } from 'react-i18next';
 import { generatePath } from 'react-router-dom';
-import { useCopyToClipboard } from 'react-use';
 import {
 	Braces,
-	ClipboardCopy,
 	Configure,
 	Copy,
-	FileJson,
 	Fullscreen,
 	Grid3X3,
 	LockKeyhole,
@@ -64,7 +60,6 @@ function DashboardActions({
 }: DashboardActionsProps): JSX.Element {
 	const canEdit = useDashboardStore((s) => s.isEditable);
 	const { user } = useAppContext();
-	const { t } = useTranslation(['dashboard', 'common']);
 	const { safeNavigate } = useSafeNavigate();
 	const { showErrorModal } = useErrorModal();
 
@@ -74,7 +69,6 @@ function DashboardActions({
 	const [isCloning, setIsCloning] = useState<boolean>(false);
 	const [isNewSectionOpen, setIsNewSectionOpen] = useState<boolean>(false);
 
-	const [state, setCopy] = useCopyToClipboard();
 	const [isDeleteOpen, setIsDeleteOpen] = useState<boolean>(false);
 	const deleteDashboardMutation = useDeleteDashboard(dashboard.id);
 
@@ -89,32 +83,6 @@ function DashboardActions({
 		},
 		[addSection],
 	);
-
-	useEffect(() => {
-		if (state.error) {
-			toast.error(t('something_went_wrong', { ns: 'common' }));
-		}
-		if (state.value) {
-			toast.success(t('success', { ns: 'common' }));
-		}
-	}, [state.error, state.value, t]);
-
-	const dashboardDataJSON = useCallback(
-		(): string => JSON.stringify(dashboard, null, 2),
-		[dashboard],
-	);
-
-	const exportJSON = useCallback((): void => {
-		const blob = new Blob([dashboardDataJSON()], { type: 'application/json' });
-		const url = URL.createObjectURL(blob);
-		const link = document.createElement('a');
-		link.href = url;
-		link.download = `${title || 'dashboard'}.json`;
-		document.body.appendChild(link);
-		link.click();
-		document.body.removeChild(link);
-		URL.revokeObjectURL(url);
-	}, [dashboardDataJSON, title]);
 
 	const handleClone = useCallback(async (): Promise<void> => {
 		if (!dashboard.id) {
@@ -176,21 +144,6 @@ function DashboardActions({
 			onClick: handle.enter,
 		});
 
-		const dataGroup: MenuItem[] = [
-			{
-				key: 'export',
-				label: 'Export JSON',
-				icon: <FileJson size={14} />,
-				onClick: exportJSON,
-			},
-			{
-				key: 'copy',
-				label: 'Copy as JSON',
-				icon: <ClipboardCopy size={14} />,
-				onClick: (): void => setCopy(dashboardDataJSON()),
-			},
-		];
-
 		const layoutGroup: MenuItem[] = [];
 		if (canEdit) {
 			layoutGroup.push({
@@ -208,7 +161,6 @@ function DashboardActions({
 				label: 'Dashboard',
 				children: dashboardGroup,
 			},
-			{ type: 'group', key: 'group-data', label: 'Data', children: dataGroup },
 		];
 		if (layoutGroup.length > 0) {
 			items.push({
@@ -240,9 +192,6 @@ function DashboardActions({
 		handleClone,
 		onLockToggle,
 		handle.enter,
-		exportJSON,
-		setCopy,
-		dashboardDataJSON,
 	]);
 
 	return (
@@ -287,7 +236,7 @@ function DashboardActions({
 				onClick={(): void => setIsJsonEditorOpen(true)}
 				size="md"
 			>
-				Edit as JSON
+				JSON
 			</Button>
 			{!isDashboardLocked && (
 				<Button
