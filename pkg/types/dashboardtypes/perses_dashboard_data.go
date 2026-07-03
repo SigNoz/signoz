@@ -138,13 +138,32 @@ func validateQueryAllowedForPanel(plugin QueryPlugin, allowed []QueryPluginKind,
 	return nil
 }
 
-// validateLayouts rejects grid items referencing a panel that doesn't exist.
+const maxLayoutsPerDashboard = 500
+
+// validateLayouts validates the dashboard's layouts: bounded section count,
+// per-item geometry, resolvable panel references, and no panel placed twice.
+// Geometry (validateGridLayoutGeometry) needs only each layout's own data but
+// runs here so its errors can name the layout by index.
 func (d *DashboardSpec) validateLayouts() error {
+	if len(d.Layouts) > maxLayoutsPerDashboard {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.layouts: dashboard has %d layouts; maximum is %d", len(d.Layouts), maxLayoutsPerDashboard)
+	}
+
+	// Could enforce this but skipping for now: panels in no grid item (orphans)
+	// are allowed.
+
+	// The frontend keys each grid item by its panel id, so placing one panel in
+	// two grid items collides; reject duplicate references dashboard-wide. Maps
+	// each referenced panel key to the path of the item that first placed it.
+	referencedPanels := make(map[string]string, len(d.Panels))
 	for li, layout := range d.Layouts {
 		grid, ok := layout.Spec.(*dashboard.GridLayoutSpec)
 		if !ok {
 			// Unreachable via UnmarshalJSON; reaching here means a Go caller broke the Kind/Spec pairing.
 			return errors.NewInternalf(errors.CodeInternal, "spec.layouts[%d].spec: unexpected layout spec type %T", li, layout.Spec)
+		}
+		if err := validateGridLayoutGeometry(grid, li); err != nil {
+			return err
 		}
 		for ii, item := range grid.Items {
 			path := fmt.Sprintf("spec.layouts[%d].spec.items[%d].content", li, ii)
@@ -158,6 +177,10 @@ func (d *DashboardSpec) validateLayouts() error {
 			if _, ok := d.Panels[key]; !ok {
 				return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s: references unknown panel %q", path, key)
 			}
+			if firstPath, dup := referencedPanels[key]; dup {
+				return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s: panel %q is already placed by %s", path, key, firstPath)
+			}
+			referencedPanels[key] = path
 		}
 	}
 	return nil

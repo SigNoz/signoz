@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/perses/spec/go/dashboard"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/util/validation"
@@ -25,19 +26,19 @@ func TestValidateBigExample(t *testing.T) {
 	data, err := os.ReadFile("testdata/perses.json")
 	require.NoError(t, err, "reading example file")
 	_, err = unmarshalDashboard(data)
-	require.NoError(t, err, "expected valid dashboard")
+	assert.NoError(t, err, "expected valid dashboard")
 }
 
 func TestValidateDashboardWithSections(t *testing.T) {
 	data, err := os.ReadFile("testdata/perses_with_sections.json")
 	require.NoError(t, err, "reading example file")
 	_, err = unmarshalDashboard(data)
-	require.NoError(t, err, "expected valid dashboard")
+	assert.NoError(t, err, "expected valid dashboard")
 }
 
 func TestInvalidateNotAJSON(t *testing.T) {
 	_, err := unmarshalDashboard([]byte("not json"))
-	require.Error(t, err, "expected error for invalid JSON")
+	assert.Error(t, err, "expected error for invalid JSON")
 }
 
 // TestUnmarshalErrorPreservesNestedMessage guards the wrap on dec.Decode in
@@ -60,11 +61,11 @@ func TestUnmarshalErrorPreservesNestedMessage(t *testing.T) {
 	_, err := unmarshalDashboard(data)
 	require.Error(t, err)
 
-	require.Contains(t, err.Error(), "unknown panel plugin kind",
+	assert.Contains(t, err.Error(), "unknown panel plugin kind",
 		"outer wrap should not smother the inner UnmarshalJSON message")
-	require.Contains(t, err.Error(), `"NonExistentPanel"`,
+	assert.Contains(t, err.Error(), `"NonExistentPanel"`,
 		"the offending value should still appear in the error")
-	require.Contains(t, err.Error(), "allowed values:",
+	assert.Contains(t, err.Error(), "allowed values:",
 		"the allowed-values hint should still appear in the error")
 
 	assert.True(t, errors.Ast(err, errors.TypeInvalidInput),
@@ -77,7 +78,7 @@ func TestValidateEmptySpec(t *testing.T) {
 	// no variables no panels
 	data := []byte(`{}`)
 	_, err := unmarshalDashboard(data)
-	require.NoError(t, err, "expected valid")
+	assert.NoError(t, err, "expected valid")
 }
 
 func TestValidateOnlyVariables(t *testing.T) {
@@ -109,7 +110,7 @@ func TestValidateOnlyVariables(t *testing.T) {
 		"layouts": []
 	}`)
 	_, err := unmarshalDashboard(data)
-	require.NoError(t, err, "expected valid")
+	assert.NoError(t, err, "expected valid")
 }
 
 func TestInvalidateDuplicateVariableNames(t *testing.T) {
@@ -136,7 +137,7 @@ func TestInvalidateDuplicateVariableNames(t *testing.T) {
 	}`)
 	_, err := unmarshalDashboard(data)
 	require.Error(t, err, "expected error for duplicate variable name")
-	require.Contains(t, err.Error(), `duplicate variable name "env"`)
+	assert.Contains(t, err.Error(), `duplicate variable name "env"`)
 }
 
 func TestInvalidateVariableNameWithInvalidChars(t *testing.T) {
@@ -163,19 +164,19 @@ func TestInvalidateVariableNameWithInvalidChars(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			_, err := unmarshalDashboard(listVarWithName(name))
 			require.Error(t, err, "expected error for invalid variable name %q", name)
-			require.Contains(t, err.Error(), "is not a correct name")
+			assert.Contains(t, err.Error(), "is not a correct name")
 		})
 	}
 	for _, name := range []string{"service", "my_var", "MY_VAR", "MixedCase9", "with-hyphen", "with.dot"} {
 		t.Run(name, func(t *testing.T) {
 			_, err := unmarshalDashboard(listVarWithName(name))
-			require.NoError(t, err, "expected valid variable name %q", name)
+			assert.NoError(t, err, "expected valid variable name %q", name)
 		})
 	}
 	t.Run("digits only", func(t *testing.T) {
 		_, err := unmarshalDashboard(listVarWithName("123"))
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "cannot contain only digits")
+		assert.Contains(t, err.Error(), "cannot contain only digits")
 	})
 }
 
@@ -199,7 +200,7 @@ func TestInvalidatePanelKey(t *testing.T) {
 	}`)
 	_, err := unmarshalDashboard(data)
 	require.Error(t, err, "expected error for invalid panel key")
-	require.Contains(t, err.Error(), "is not a correct name")
+	assert.Contains(t, err.Error(), "is not a correct name")
 }
 
 func TestInvalidateListVariableCrossFields(t *testing.T) {
@@ -225,30 +226,30 @@ func TestInvalidateListVariableCrossFields(t *testing.T) {
 	t.Run("customAllValue without allowAllValue", func(t *testing.T) {
 		_, err := unmarshalDashboard(listVar(`"allowAllValue": false, "allowMultiple": false, "customAllValue": "*",`))
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "customAllValue cannot be set")
+		assert.Contains(t, err.Error(), "customAllValue cannot be set")
 	})
 
 	t.Run("list defaultValue without allowMultiple", func(t *testing.T) {
 		_, err := unmarshalDashboard(listVar(`"allowAllValue": false, "allowMultiple": false, "defaultValue": ["a", "b"],`))
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "allowMultiple")
+		assert.Contains(t, err.Error(), "allowMultiple")
 	})
 
 	t.Run("single-element list default without allowMultiple", func(t *testing.T) {
 		_, err := unmarshalDashboard(listVar(`"allowAllValue": false, "allowMultiple": false, "defaultValue": ["only"],`))
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "allowMultiple")
+		assert.Contains(t, err.Error(), "allowMultiple")
 	})
 
 	t.Run("valid sort is accepted", func(t *testing.T) {
 		_, err := unmarshalDashboard(listVar(`"sort": "alphabetical-asc",`))
-		require.NoError(t, err)
+		assert.NoError(t, err)
 	})
 
 	t.Run("unknown sort is rejected", func(t *testing.T) {
 		_, err := unmarshalDashboard(listVar(`"sort": "bogus",`))
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "unknown sort")
+		assert.Contains(t, err.Error(), "unknown sort")
 	})
 }
 
@@ -275,7 +276,7 @@ func TestInvalidateEmptyVariableName(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			_, err := unmarshalDashboard(data)
 			require.Error(t, err, "expected error for empty variable name")
-			require.Contains(t, err.Error(), "name cannot be empty")
+			assert.Contains(t, err.Error(), "name cannot be empty")
 		})
 	}
 }
@@ -414,7 +415,7 @@ func TestInvalidateUnknownPluginKind(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			_, err := unmarshalDashboard([]byte(tt.data))
 			require.Error(t, err, "expected error containing %q, got nil", tt.wantContain)
-			require.Contains(t, err.Error(), tt.wantContain, "error should mention %q", tt.wantContain)
+			assert.Contains(t, err.Error(), tt.wantContain, "error should mention %q", tt.wantContain)
 		})
 	}
 }
@@ -435,7 +436,7 @@ func TestInvalidateOneInvalidPanel(t *testing.T) {
 	}`)
 	_, err := unmarshalDashboard(data)
 	require.Error(t, err, "expected error for invalid panel plugin kind")
-	require.Contains(t, err.Error(), "FakePanel", "error should mention FakePanel")
+	assert.Contains(t, err.Error(), "FakePanel", "error should mention FakePanel")
 }
 
 func TestInvalidateLayoutPanelReferences(t *testing.T) {
@@ -488,11 +489,11 @@ func TestInvalidateLayoutPanelReferences(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			_, err := unmarshalDashboard(tt.data)
 			if tt.wantContain == "" {
-				require.NoError(t, err)
+				assert.NoError(t, err)
 				return
 			}
 			require.Error(t, err)
-			require.Contains(t, err.Error(), tt.wantContain)
+			assert.Contains(t, err.Error(), tt.wantContain)
 		})
 	}
 }
@@ -570,7 +571,7 @@ func TestRejectUnknownFieldsInPluginSpec(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			_, err := unmarshalDashboard([]byte(tt.data))
 			require.Error(t, err, "expected error for unknown field")
-			require.Contains(t, err.Error(), tt.wantContain, "error should mention %q", tt.wantContain)
+			assert.Contains(t, err.Error(), tt.wantContain, "error should mention %q", tt.wantContain)
 		})
 	}
 }
@@ -649,7 +650,7 @@ func TestInvalidateWrongFieldTypeInPluginSpec(t *testing.T) {
 			_, err := unmarshalDashboard([]byte(tt.data))
 			require.Error(t, err, "expected validation error")
 			if tt.wantContain != "" {
-				require.Contains(t, err.Error(), tt.wantContain, "error should mention %q", tt.wantContain)
+				assert.Contains(t, err.Error(), tt.wantContain, "error should mention %q", tt.wantContain)
 			}
 		})
 	}
@@ -874,7 +875,7 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			_, err := unmarshalDashboard([]byte(tt.data))
 			require.Error(t, err, "expected error containing %q, got nil", tt.wantContain)
-			require.Contains(t, err.Error(), tt.wantContain, "error should mention %q", tt.wantContain)
+			assert.Contains(t, err.Error(), tt.wantContain, "error should mention %q", tt.wantContain)
 		})
 	}
 }
@@ -907,7 +908,7 @@ func TestThresholdLabelOptional(t *testing.T) {
 
 			spec := d.Panels["p1"].Spec.Plugin.Spec.(*TimeSeriesPanelSpec)
 			require.Len(t, spec.Thresholds, 1)
-			require.Empty(t, spec.Thresholds[0].Label, "label should remain empty")
+			assert.Empty(t, spec.Thresholds[0].Label, "label should remain empty")
 		})
 	}
 }
@@ -924,7 +925,7 @@ func TestInvalidatePanelWithoutQueries(t *testing.T) {
 	}`)
 	_, err := unmarshalDashboard(data)
 	require.Error(t, err, "expected panel-without-queries to be rejected")
-	require.Contains(t, err.Error(), "panel must have one query")
+	assert.Contains(t, err.Error(), "panel must have one query")
 }
 
 func TestInvalidatePanelWithEmptyQueriesArray(t *testing.T) {
@@ -942,7 +943,7 @@ func TestInvalidatePanelWithEmptyQueriesArray(t *testing.T) {
 	}`)
 	_, err := unmarshalDashboard(data)
 	require.Error(t, err, "expected panel with explicit empty queries array to be rejected")
-	require.Contains(t, err.Error(), "panel must have one query")
+	assert.Contains(t, err.Error(), "panel must have one query")
 }
 
 // Rendering multiple data sources in a single panel is supported via
@@ -965,7 +966,7 @@ func TestInvalidatePanelWithMultipleDirectQueries(t *testing.T) {
 	}`)
 	_, err := unmarshalDashboard(data)
 	require.Error(t, err, "expected panel with two top-level queries to be rejected")
-	require.Contains(t, err.Error(), "panel must have one query")
+	assert.Contains(t, err.Error(), "panel must have one query")
 }
 
 func TestValidateRequiredFields(t *testing.T) {
@@ -1053,7 +1054,7 @@ func TestValidateRequiredFields(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			_, err := unmarshalDashboard([]byte(tt.data))
 			require.Error(t, err, "expected error containing %q, got nil", tt.wantContain)
-			require.Contains(t, err.Error(), tt.wantContain, "error should mention %q", tt.wantContain)
+			assert.Contains(t, err.Error(), tt.wantContain, "error should mention %q", tt.wantContain)
 		})
 	}
 }
@@ -1109,14 +1110,14 @@ func TestTimeSeriesPanelDefaults(t *testing.T) {
 	require.IsType(t, &TimeSeriesPanelSpec{}, d.Panels["p1"].Spec.Plugin.Spec)
 	spec := d.Panels["p1"].Spec.Plugin.Spec.(*TimeSeriesPanelSpec)
 
-	require.Equal(t, "2", spec.Formatting.DecimalPrecision.ValueOrDefault(), "expected DecimalPrecision default 2")
-	require.Equal(t, "spline", spec.ChartAppearance.LineInterpolation.ValueOrDefault(), "expected LineInterpolation default spline")
-	require.Equal(t, "solid", spec.ChartAppearance.LineStyle.ValueOrDefault(), "expected LineStyle default solid")
-	require.Equal(t, "none", spec.ChartAppearance.FillMode.ValueOrDefault(), "expected FillMode default none")
-	require.False(t, spec.ChartAppearance.SpanGaps.FillOnlyBelow, "expected SpanGaps.FillOnlyBelow default false")
-	require.Equal(t, "global_time", spec.Visualization.TimePreference.ValueOrDefault(), "expected TimePreference default global_time")
-	require.Equal(t, "bottom", spec.Legend.Position.ValueOrDefault(), "expected LegendPosition default bottom")
-	require.Equal(t, "list", spec.Legend.Mode.ValueOrDefault(), "expected LegendMode default list")
+	assert.Equal(t, "2", spec.Formatting.DecimalPrecision.ValueOrDefault(), "expected DecimalPrecision default 2")
+	assert.Equal(t, "spline", spec.ChartAppearance.LineInterpolation.ValueOrDefault(), "expected LineInterpolation default spline")
+	assert.Equal(t, "solid", spec.ChartAppearance.LineStyle.ValueOrDefault(), "expected LineStyle default solid")
+	assert.Equal(t, "none", spec.ChartAppearance.FillMode.ValueOrDefault(), "expected FillMode default none")
+	assert.False(t, spec.ChartAppearance.SpanGaps.FillOnlyBelow, "expected SpanGaps.FillOnlyBelow default false")
+	assert.Equal(t, "global_time", spec.Visualization.TimePreference.ValueOrDefault(), "expected TimePreference default global_time")
+	assert.Equal(t, "bottom", spec.Legend.Position.ValueOrDefault(), "expected LegendPosition default bottom")
+	assert.Equal(t, "list", spec.Legend.Mode.ValueOrDefault(), "expected LegendMode default list")
 
 	// Re-marshal the full dashboard (what we'd store in DB / return in API response)
 	// and verify the output contains the default values.
@@ -1159,8 +1160,8 @@ func TestNumberPanelDefaults(t *testing.T) {
 	spec := d.Panels["p1"].Spec.Plugin.Spec.(*NumberPanelSpec)
 
 	require.Len(t, spec.Thresholds, 1, "expected 1 threshold")
-	require.Equal(t, "above", spec.Thresholds[0].Operator.ValueOrDefault(), "expected ComparisonOperator default above")
-	require.Equal(t, "text", spec.Thresholds[0].Format.ValueOrDefault(), "expected ThresholdFormat default text")
+	assert.Equal(t, "above", spec.Thresholds[0].Operator.ValueOrDefault(), "expected ComparisonOperator default above")
+	assert.Equal(t, "text", spec.Thresholds[0].Format.ValueOrDefault(), "expected ThresholdFormat default text")
 
 	// Marshal back and verify defaults in JSON output.
 	output, err := json.Marshal(d)
@@ -1191,7 +1192,7 @@ func TestPersesFixtureStorageRoundTrip(t *testing.T) {
 	require.NoError(t, err, "map → JSON (read-back shape)")
 
 	var roundtripped DashboardSpec
-	require.NoError(t, json.Unmarshal(remarshaled, &roundtripped), "JSON → typed (the failure mode)")
+	assert.NoError(t, json.Unmarshal(remarshaled, &roundtripped), "JSON → typed (the failure mode)")
 }
 
 // TestStorageRoundTrip simulates the future DB store/load cycle:
@@ -1357,9 +1358,9 @@ func TestGenerateDashboardName(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.scenario, func(t *testing.T) {
 			got := generateDashboardName(tt.input)
-			require.NotEmpty(t, got)
-			require.LessOrEqual(t, len(got), 63)
-			require.Empty(t, validation.IsDNS1123Label(got), "result must be a valid DNS-1123 label")
+			assert.NotEmpty(t, got)
+			assert.LessOrEqual(t, len(got), 63)
+			assert.Empty(t, validation.IsDNS1123Label(got), "result must be a valid DNS-1123 label")
 
 			if tt.wantPrefix == "" {
 				assert.Len(t, got, dashboardNameSuffixLen, "expected the bare random suffix")
@@ -1374,8 +1375,8 @@ func TestGenerateDashboardName(t *testing.T) {
 	t.Run("prefix is truncated to leave room for the suffix", func(t *testing.T) {
 		input := strings.Repeat("a", 100)
 		got := generateDashboardName(input)
-		require.LessOrEqual(t, len(got), 63)
-		require.Empty(t, validation.IsDNS1123Label(got))
+		assert.LessOrEqual(t, len(got), 63)
+		assert.Empty(t, validation.IsDNS1123Label(got))
 		assert.Equal(t, len(got), 63, "expected the result to be padded to the max DNS-1123 length")
 	})
 
@@ -1463,10 +1464,130 @@ func TestPanelTypeQueryTypeCompatibility(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			_, err := unmarshalDashboard(tc.data)
 			if tc.wantErr {
-				require.Error(t, err)
+				assert.Error(t, err)
 			} else {
-				require.NoError(t, err)
+				assert.NoError(t, err)
 			}
 		})
 	}
+}
+
+func TestValidateGridGeometry(t *testing.T) {
+	tests := []struct {
+		scenario         string
+		items            []dashboard.GridItem
+		expectErrContain string
+	}{
+		{
+			scenario:         "valid side-by-side items",
+			items:            []dashboard.GridItem{{X: 0, Y: 0, Width: 6, Height: 6}, {X: 6, Y: 0, Width: 6, Height: 6}},
+			expectErrContain: "",
+		},
+		{
+			scenario:         "valid full-width item",
+			items:            []dashboard.GridItem{{X: 0, Y: 0, Width: 12, Height: 6}},
+			expectErrContain: "",
+		},
+		{
+			scenario:         "stacked items do not overlap",
+			items:            []dashboard.GridItem{{X: 0, Y: 0, Width: 6, Height: 6}, {X: 0, Y: 6, Width: 6, Height: 6}},
+			expectErrContain: "",
+		},
+		{
+			scenario:         "zero width",
+			items:            []dashboard.GridItem{{X: 0, Y: 0, Width: 0, Height: 6}},
+			expectErrContain: "width must be at least 1",
+		},
+		{
+			scenario:         "zero height",
+			items:            []dashboard.GridItem{{X: 0, Y: 0, Width: 6, Height: 0}},
+			expectErrContain: "height must be at least 1",
+		},
+		{
+			scenario:         "negative x",
+			items:            []dashboard.GridItem{{X: -1, Y: 0, Width: 6, Height: 6}},
+			expectErrContain: "x must not be negative",
+		},
+		{
+			scenario:         "negative y",
+			items:            []dashboard.GridItem{{X: 0, Y: -1, Width: 6, Height: 6}},
+			expectErrContain: "y must not be negative",
+		},
+		{
+			scenario:         "width wider than grid",
+			items:            []dashboard.GridItem{{X: 0, Y: 0, Width: 13, Height: 6}},
+			expectErrContain: "width (13) exceeds grid width 12",
+		},
+		{
+			scenario:         "x at grid width",
+			items:            []dashboard.GridItem{{X: 12, Y: 0, Width: 1, Height: 6}},
+			expectErrContain: "x (12) must be less than grid width 12",
+		},
+		{
+			scenario:         "x plus width overflows grid",
+			items:            []dashboard.GridItem{{X: 8, Y: 0, Width: 6, Height: 6}},
+			expectErrContain: "x (8) + width (6) exceeds grid width 12",
+		},
+		{
+			scenario:         "overlapping items",
+			items:            []dashboard.GridItem{{X: 0, Y: 0, Width: 6, Height: 6}, {X: 3, Y: 3, Width: 6, Height: 6}},
+			expectErrContain: "items[0] and items[1] overlap",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.scenario, func(t *testing.T) {
+			err := validateGridLayoutGeometry(&dashboard.GridLayoutSpec{Items: test.items}, 0)
+			if test.expectErrContain == "" {
+				assert.NoError(t, err)
+				return
+			}
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), test.expectErrContain)
+		})
+	}
+}
+
+func TestValidateGridItemLimit(t *testing.T) {
+	err := validateGridLayoutGeometry(&dashboard.GridLayoutSpec{Items: make([]dashboard.GridItem, maxItemsPerGridLayout+1)}, 0)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "maximum is")
+}
+
+// Both panel refs are valid, so this errors only if geometry validation runs on
+// the unmarshal path — it does, via DashboardSpec.Validate -> validateLayouts.
+func TestInvalidateLayoutOverlapViaUnmarshal(t *testing.T) {
+	data := []byte(`{
+		"panels": {
+			"p1": {"kind": "Panel", "spec": {"plugin": {"kind": "signoz/TablePanel", "spec": {}}, "queries": [{"kind": "time_series", "spec": {"plugin": {"kind": "signoz/BuilderQuery", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]}}}}]}},
+			"p2": {"kind": "Panel", "spec": {"plugin": {"kind": "signoz/TablePanel", "spec": {}}, "queries": [{"kind": "time_series", "spec": {"plugin": {"kind": "signoz/BuilderQuery", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]}}}}]}}
+		},
+		"layouts": [{"kind": "Grid", "spec": {"items": [
+			{"x": 0, "y": 0, "width": 6, "height": 6, "content": {"$ref": "#/spec/panels/p1"}},
+			{"x": 3, "y": 3, "width": 6, "height": 6, "content": {"$ref": "#/spec/panels/p2"}}
+		]}}]
+	}`)
+	_, err := unmarshalDashboard(data)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "overlap")
+}
+
+// The frontend keys each grid item by its panel id, so the same panel placed by
+// two grid items crashes the section; the backend rejects it dashboard-wide. The
+// two items are side by side so they clear the overlap check first.
+func TestInvalidateDuplicatePanelReference(t *testing.T) {
+	data := []byte(`{
+		"panels": {
+			"p1": {"kind": "Panel", "spec": {"plugin": {"kind": "signoz/TablePanel", "spec": {}}, "queries": [{"kind": "time_series", "spec": {"plugin": {"kind": "signoz/BuilderQuery", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]}}}}]}}
+		},
+		"layouts": [{"kind": "Grid", "spec": {"items": [
+			{"x": 0, "y": 0, "width": 6, "height": 6, "content": {"$ref": "#/spec/panels/p1"}},
+			{"x": 6, "y": 0, "width": 6, "height": 6, "content": {"$ref": "#/spec/panels/p1"}}
+		]}}]
+	}`)
+	_, err := unmarshalDashboard(data)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "already placed")
+	// Both offending grid items are named.
+	assert.Contains(t, err.Error(), "spec.layouts[0].spec.items[0].content")
+	assert.Contains(t, err.Error(), "spec.layouts[0].spec.items[1].content")
 }
