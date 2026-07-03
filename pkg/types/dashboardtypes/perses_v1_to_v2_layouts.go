@@ -17,24 +17,32 @@ import (
 // panels below it until the next row; panels above the first row form an unnamed
 // grid with no section header. Collapsed rows are the exception — their children
 // live in panelMap[rowID].widgets, not `layout`.
-func (d *v1Decoder) convertV1Layouts(data StorableDashboardData) []Layout {
+func (d *v1Decoder) convertV1Layouts(data StorableDashboardData, panels map[string]*Panel) []Layout {
 	layout := d.readObjects(data, "layout")
 	if len(layout) == 0 {
 		return nil
 	}
 
-	rows := d.extractRowsAndCollapsedWidgets(data)
-
-	// `layout` ids must correspond to a real widget. react-grid-layout leaks a
-	// "__dropping-elem__" drag placeholder (and stale entries can outlive a
-	// deleted widget) into the saved layout; both would otherwise become grid
-	// items referencing a non-existent panel.
-	widgetIDs := make(map[string]bool)
-	for _, w := range d.readObjects(data, "widgets") {
-		if id := d.readString(w, "id"); id != "" {
-			widgetIDs[id] = true
+	// react-grid-layout can persist the same widget id more than once. Drop the
+	// duplicates, mirroring the frontend's getUpdatedLayout: keep the first
+	// occurrence in stored order and discard the rest (the losing entry's
+	// geometry is thrown away, not merged). Dedupe here, before sortByPosition,
+	// so "first" means first-in-stored-order as the frontend sees it — not
+	// topmost. Entries with no id are left for the main loop to drop.
+	seen := make(map[string]bool, len(layout))
+	deduped := layout[:0]
+	for _, item := range layout {
+		if id := d.readString(item, "i"); id != "" {
+			if seen[id] {
+				continue
+			}
+			seen[id] = true
 		}
+		deduped = append(deduped, item)
 	}
+	layout = deduped
+
+	rows := d.extractRowsAndCollapsedWidgets(data)
 
 	// Skip collapsed-row children a malformed dashboard lists in `layout` too.
 	isWidgetCollapsed := make(map[string]bool)
@@ -57,11 +65,11 @@ func (d *v1Decoder) convertV1Layouts(data StorableDashboardData) []Layout {
 	currentRowHeader := topSectionWithoutHeader
 	for _, item := range layout {
 		id := d.readString(item, "i")
-		if id == "" || isWidgetCollapsed[id] || !widgetIDs[id] {
+		if id == "" || isWidgetCollapsed[id] {
 			continue
 		}
 		if row, ok := rows[id]; ok {
-			newRowHeader := &section{row: row, items: row.collapsedWidgets}
+			newRowHeader := &section{row: row, items: d.panelBackedItems(row.collapsedWidgets, panels)}
 			sectionsWithHeader = append(sectionsWithHeader, newRowHeader)
 			// A collapsed row owns only its stashed children; later panels → ungrouped.
 			if row.collapsed {
@@ -69,6 +77,15 @@ func (d *v1Decoder) convertV1Layouts(data StorableDashboardData) []Layout {
 			} else {
 				currentRowHeader = newRowHeader
 			}
+			continue
+		}
+		// Keep a layout entry only if the widget became a panel. A widget that was
+		// skipped (unknown/EMPTY_WIDGET type, or failed conversion) or a stale
+		// `layout` id with no widget at all (a deleted widget, or react-grid-layout's
+		// "__dropping-elem__" drag placeholder) would otherwise emit a grid item
+		// referencing a panel that does not exist. Rows are the exception, handled
+		// above — they are section headers, not panels.
+		if _, ok := panels[id]; !ok {
 			continue
 		}
 		currentRowHeader.items = append(currentRowHeader.items, item)
@@ -80,6 +97,21 @@ func (d *v1Decoder) convertV1Layouts(data StorableDashboardData) []Layout {
 	}
 	for _, sec := range sectionsWithHeader {
 		out = append(out, d.buildV2GridLayout(sec.row, sec.items))
+	}
+	return out
+}
+
+// panelBackedItems keeps only the layout items whose widget became a panel, so a
+// grid never references a panel that was never created. Used for collapsed-row
+// children (which bypass the main layout loop's per-item panel check).
+func (d *v1Decoder) panelBackedItems(items []map[string]any, panels map[string]*Panel) []map[string]any {
+	out := make([]map[string]any, 0, len(items))
+	for _, item := range items {
+		if id := d.readString(item, "i"); id != "" {
+			if _, ok := panels[id]; ok {
+				out = append(out, item)
+			}
+		}
 	}
 	return out
 }

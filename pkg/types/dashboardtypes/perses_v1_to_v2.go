@@ -52,11 +52,12 @@ func (storable StorableDashboard) ConvertV1ToV2() (result *DashboardV2, err erro
 	description := d.readString(storable.Data, "description")
 	image := d.readString(storable.Data, "image")
 
+	panels := d.convertV1Panels(storable.Data["widgets"])
 	spec := DashboardSpec{
 		Display:   Display{Name: title, Description: description},
 		Variables: d.convertV1Variables(storable.Data["variables"]),
-		Panels:    d.convertV1Panels(storable.Data["widgets"]),
-		Layouts:   d.convertV1Layouts(storable.Data),
+		Panels:    panels,
+		Layouts:   d.convertV1Layouts(storable.Data, panels),
 	}
 	tags := d.convertV1TagsForOrg(storable.OrgID, storable.Data["tags"])
 
