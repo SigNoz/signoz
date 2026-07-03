@@ -13,6 +13,7 @@ import { enrichChartClick } from '../enrichChartClick';
 import { enrichNumberClick } from '../enrichNumberClick';
 import { enrichPieClick } from '../enrichPieClick';
 import { enrichTableClick } from '../enrichTableClick';
+import { getDataLinks } from '../getDataLinks';
 import { resolvePanelContextLinks } from '../resolvePanelContextLinks';
 import { resolveDrilldownSignal } from '../signal';
 
@@ -416,5 +417,30 @@ describe('stepClickTimeRange', () => {
 				],
 			}),
 		).toStrictEqual({ startTime: 1000, endTime: 1060 });
+	});
+});
+
+describe('getDataLinks', () => {
+	it('adds a "View Trace Details" link when the filters carry a trace_id', () => {
+		expect(
+			getDataLinks([
+				{ filterKey: 'service.name', filterValue: 'frontend', operator: '=' },
+				{ filterKey: 'trace_id', filterValue: 'abc123', operator: '=' },
+			]),
+		).toStrictEqual([
+			{
+				id: 'view-trace-details',
+				label: 'View Trace Details',
+				url: '/trace/abc123',
+			},
+		]);
+	});
+
+	it('returns no links when there is no trace_id', () => {
+		expect(
+			getDataLinks([
+				{ filterKey: 'service.name', filterValue: 'frontend', operator: '=' },
+			]),
+		).toStrictEqual([]);
 	});
 });

@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { act, render, renderHook, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {
@@ -13,6 +14,13 @@ const mockOpenViewWithQuery = jest.fn();
 const mockNavigate = jest.fn();
 const mockGetBuilderQueries = jest.fn();
 let mockResolved = { resolvedQuery: 'RESOLVED_QUERY', isResolving: false };
+let mockDashboardVariables: {
+	hasFieldVariables: boolean;
+	items: ReactNode;
+} = {
+	hasFieldVariables: true,
+	items: <div data-testid="dashboard-variables-submenu" />,
+};
 
 // Boundaries tested elsewhere / needing external context — mocked so this suite isolates
 // useDrilldown's orchestration (gating, which menu shows, the View-modal handoff).
@@ -32,6 +40,13 @@ jest.mock('../hooks/useDrilldownBreakout', () => ({
 jest.mock('../DrilldownMenu/DrilldownBreakoutMenu', () => ({
 	__esModule: true,
 	default: (): JSX.Element => <div data-testid="breakout-submenu" />,
+}));
+jest.mock('../hooks/useDrilldownDashboardVariables', () => ({
+	useDrilldownDashboardVariables: (): unknown => mockDashboardVariables,
+}));
+// Context-link variable map (redux global time + store) — out of scope for this suite.
+jest.mock('../hooks/useDrilldownContextVariables', () => ({
+	useDrilldownContextVariables: (): unknown => ({}),
 }));
 jest.mock('container/QueryTable/Drilldown/useBaseDrilldownNavigate', () => ({
 	__esModule: true,
@@ -116,6 +131,10 @@ describe('useDrilldown', () => {
 		jest.clearAllMocks();
 		mockGetBuilderQueries.mockReturnValue([{ name: 'A' }]);
 		mockResolved = { resolvedQuery: 'RESOLVED_QUERY', isResolving: false };
+		mockDashboardVariables = {
+			hasFieldVariables: true,
+			items: <div data-testid="dashboard-variables-submenu" />,
+		};
 	});
 
 	describe('enableDrillDown', () => {
@@ -200,6 +219,56 @@ describe('useDrilldown', () => {
 			view.rerender(<div>{result.current.contextMenuProps.items}</div>);
 
 			expect(screen.getByTestId('breakout-submenu')).toBeInTheDocument();
+		});
+
+		it('shows the Dashboard Variables entry when the click has group-by fields', () => {
+			const { result } = renderHook(() => useDrilldown(tsPanel, 'p1'));
+			act(() =>
+				result.current.onPanelClick({
+					coordinates: { x: 1, y: 1 },
+					context: aggregateContext,
+				}),
+			);
+			render(<div>{result.current.contextMenuProps.items}</div>);
+
+			expect(
+				screen.getByTestId('drilldown-dashboard-variables'),
+			).toBeInTheDocument();
+		});
+
+		it('hides the Dashboard Variables entry when there are no group-by fields', () => {
+			mockDashboardVariables = { hasFieldVariables: false, items: null };
+			const { result } = renderHook(() => useDrilldown(tsPanel, 'p1'));
+			act(() =>
+				result.current.onPanelClick({
+					coordinates: { x: 1, y: 1 },
+					context: aggregateContext,
+				}),
+			);
+			render(<div>{result.current.contextMenuProps.items}</div>);
+
+			expect(
+				screen.queryByTestId('drilldown-dashboard-variables'),
+			).not.toBeInTheDocument();
+		});
+
+		it('swaps to the Dashboard Variables submenu when clicked', async () => {
+			const user = userEvent.setup();
+			const { result } = renderHook(() => useDrilldown(tsPanel, 'p1'));
+			act(() =>
+				result.current.onPanelClick({
+					coordinates: { x: 1, y: 1 },
+					context: aggregateContext,
+				}),
+			);
+			const view = render(<div>{result.current.contextMenuProps.items}</div>);
+
+			await user.click(screen.getByTestId('drilldown-dashboard-variables'));
+			view.rerender(<div>{result.current.contextMenuProps.items}</div>);
+
+			expect(
+				screen.getByTestId('dashboard-variables-submenu'),
+			).toBeInTheDocument();
 		});
 	});
 

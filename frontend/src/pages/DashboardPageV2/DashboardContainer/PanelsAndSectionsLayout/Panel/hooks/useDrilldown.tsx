@@ -24,6 +24,7 @@ import DrilldownBreakoutMenu from '../DrilldownMenu/DrilldownBreakoutMenu';
 import DrilldownFilterMenu from '../DrilldownMenu/DrilldownFilterMenu';
 import { useDrilldownBreakout } from './useDrilldownBreakout';
 import { useDrilldownCoordinates } from './useDrilldownCoordinates';
+import { useDrilldownDashboardVariables } from './useDrilldownDashboardVariables';
 import { useDrilldownFilter } from './useDrilldownFilter';
 import { useResolvedDrilldownQuery } from './useResolvedDrilldownQuery';
 import { useViewPanel } from './useViewPanel';
@@ -32,6 +33,7 @@ import { useViewPanel } from './useViewPanel';
 enum DrilldownSubMenu {
 	Base = 'base',
 	Breakout = 'breakout',
+	DashboardVariables = 'dashboardVariables',
 }
 
 /** Props the panel shell spreads onto `<ContextMenu>`. */
@@ -102,6 +104,10 @@ export function useDrilldown(
 		(): void => setSubMenu(DrilldownSubMenu.Base),
 		[],
 	);
+	const openDashboardVariables = useCallback(
+		(): void => setSubMenu(DrilldownSubMenu.DashboardVariables),
+		[],
+	);
 
 	const onPanelClick = useCallback(
 		(payload: DrilldownClickPayload): void => {
@@ -136,6 +142,12 @@ export function useDrilldown(
 		onClose: handleClose,
 	});
 
+	const dashboardVariables = useDrilldownDashboardVariables({
+		context,
+		onBack: backToBase,
+		onClose: handleClose,
+	});
+
 	// The aggregate menu (View in Logs/Traces) shows for a non-group click on the base menu; the
 	// group click routes to filter-by-value instead. Only that menu resolves variables —
 	// filter/breakout open the View modal, which resolves at query-run time.
@@ -165,6 +177,9 @@ export function useDrilldown(
 				/>
 			) : null;
 		}
+		if (subMenu === 'dashboardVariables') {
+			return dashboardVariables.items;
+		}
 		if (filter.isGroupColumnClick && context?.clickedKey) {
 			return (
 				<DrilldownFilterMenu
@@ -183,9 +198,11 @@ export function useDrilldown(
 				query={v1Query}
 				isResolving={isResolving}
 				links={panel.spec.links}
+				canSetDashboardVariables={dashboardVariables.hasFieldVariables}
 				onViewLogs={(): void => navigate('view_logs')}
 				onViewTraces={(): void => navigate('view_traces')}
 				onBreakout={openBreakout}
+				onSetDashboardVariables={openDashboardVariables}
 				onClose={handleClose}
 			/>
 		);
@@ -194,6 +211,8 @@ export function useDrilldown(
 		breakout.queryData,
 		breakout.onBreakout,
 		backToBase,
+		dashboardVariables.items,
+		dashboardVariables.hasFieldVariables,
 		filter.isGroupColumnClick,
 		filter.onFilter,
 		context,
@@ -202,6 +221,7 @@ export function useDrilldown(
 		panel.spec.links,
 		navigate,
 		openBreakout,
+		openDashboardVariables,
 		handleClose,
 	]);
 
