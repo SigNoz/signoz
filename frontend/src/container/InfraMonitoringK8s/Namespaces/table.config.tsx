@@ -128,7 +128,7 @@ export const k8sNamespacesColumnsConfig: NamespaceTableColumnConfig[] = [
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.namespaceCPU,
-		width: { min: 160 },
+		width: { min: 190 },
 		enableSort: true,
 		cell: ({ value }): React.ReactNode => {
 			const cpu = Number(value);

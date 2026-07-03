@@ -124,7 +124,7 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 			</ColumnHeader>
 		),
 		accessorFn: (row): string => row.status,
-		width: { min: 180, default: 180 },
+		width: { min: 140 },
 		enableSort: false,
 		cell: ({ value, groupMeta, row }): React.ReactNode => {
 			const status = value as InframonitoringtypesHostStatusDTO;
@@ -272,21 +272,21 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.diskUsage,
-		width: { min: 120, default: 120 },
+		width: { min: 220 },
 		enableSort: true,
 		cell: ({ value }): React.ReactNode => {
 			const diskUsage = value as number;
 
 			return (
-				<ValidateColumnValueWrapper
-					value={diskUsage}
-					entity={InfraMonitoringEntity.HOSTS}
-					attribute="disk usage metric"
-				>
-					<TanStackTable.Text>
-						{`${Number((diskUsage * 100).toFixed(1))}%`}
-					</TanStackTable.Text>
-				</ValidateColumnValueWrapper>
+				<div className={styles.progressContainer}>
+					<ValidateColumnValueWrapper
+						value={diskUsage}
+						entity={InfraMonitoringEntity.HOSTS}
+						attribute="disk usage metric"
+					>
+						<EntityProgressBar value={diskUsage} type="disk" />
+					</ValidateColumnValueWrapper>
+				</div>
 			);
 		},
 	},

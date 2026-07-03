@@ -12,7 +12,7 @@ import {
 
 import styles from './EntityProgressBar.module.scss';
 
-type EntityProgressBarType = 'request' | 'limit' | 'cpu' | 'memory';
+type EntityProgressBarType = 'request' | 'limit' | 'cpu' | 'memory' | 'disk';
 
 function getStrokeColor(type: EntityProgressBarType, value: number): string {
 	switch (type) {
@@ -24,6 +24,8 @@ function getStrokeColor(type: EntityProgressBarType, value: number): string {
 			return getProgressColor(Number((value * 100).toFixed(1)));
 		case 'memory':
 			return getMemoryProgressColor(Number((value * 100).toFixed(1)));
+		case 'disk':
+			return getProgressColor(Number((value * 100).toFixed(1)));
 		default:
 			return getStrokeColorForRequestUtilization(value);
 	}

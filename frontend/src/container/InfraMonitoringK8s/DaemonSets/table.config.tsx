@@ -194,7 +194,7 @@ export const k8sDaemonSetsColumnsConfig: DaemonSetTableColumnConfig[] = [
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.daemonSetCPULimit,
-		width: { min: 200, default: 200 },
+		width: { min: 160 },
 		enableSort: true,
 		enableResize: true,
 		cell: ({ value }): React.ReactNode => {
@@ -296,7 +296,7 @@ export const k8sDaemonSetsColumnsConfig: DaemonSetTableColumnConfig[] = [
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.daemonSetMemory,
-		width: { min: 160 },
+		width: { min: 180 },
 		enableSort: true,
 		enableResize: true,
 		cell: ({ value }): React.ReactNode => {
