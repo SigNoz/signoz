@@ -1,6 +1,8 @@
 package dashboardtypes
 
 import (
+	"encoding/json"
+
 	"github.com/SigNoz/signoz/pkg/errors"
 )
 
@@ -58,6 +60,15 @@ func (storable StorableDashboard) ConvertV1ToV2() (result *DashboardV2, err erro
 		Variables: d.convertV1Variables(storable.Data["variables"]),
 		Panels:    panels,
 		Layouts:   d.convertV1Layouts(storable.Data, panels),
+	}
+
+	// marshal and unmarshal cycle to confirm full validation
+	raw, marshalErr := json.Marshal(spec)
+	if marshalErr != nil {
+		return nil, errors.WrapInternalf(marshalErr, errors.CodeInternal, "marshal converted dashboard %s", storable.ID)
+	}
+	if err := json.Unmarshal(raw, new(DashboardSpec)); err != nil {
+		return nil, errors.WrapInvalidInputf(err, ErrCodeDashboardMigrationFailed, "converted dashboard %s is invalid", storable.ID)
 	}
 	tags := d.convertV1TagsForOrg(storable.OrgID, storable.Data["tags"])
 

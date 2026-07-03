@@ -345,9 +345,20 @@ func TestConvertV1ToV2HappyPath(t *testing.T) {
 					"id":         "panel-1",
 					"panelTypes": "graph",
 					"title":      "Latency",
+					"query": map[string]any{
+						"queryType":      "clickhouse_sql",
+						"clickhouse_sql": []any{map[string]any{"name": "A", "query": "SELECT now(), 1"}},
+					},
 				},
 				// table widget → Table panel
-				map[string]any{"id": "panel-2", "panelTypes": "table"},
+				map[string]any{
+					"id":         "panel-2",
+					"panelTypes": "table",
+					"query": map[string]any{
+						"queryType":      "clickhouse_sql",
+						"clickhouse_sql": []any{map[string]any{"name": "A", "query": "SELECT now(), 1"}},
+					},
+				},
 				// widget with missing id — dropped
 				map[string]any{"panelTypes": "graph", "title": "no id"},
 			},
