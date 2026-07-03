@@ -1,0 +1,260 @@
+{
+  "id": "11_widget_display_fields",
+  "uuid": "11_widget_display_fields",
+  "title": "11 widget display field shapes",
+  "description": "11 widget display field shapes",
+  "tags": [
+    "malformed-fixture"
+  ],
+  "version": "v5",
+  "widgets": [
+    {
+      "id": "w-num",
+      "title": "spanGaps=number",
+      "description": "spanGaps=number",
+      "panelTypes": "graph",
+      "opacity": "1",
+      "nullZeroValues": "zero",
+      "timePreferance": "GLOBAL_TIME",
+      "softMin": null,
+      "softMax": null,
+      "selectedLogFields": null,
+      "selectedTracesFields": null,
+      "query": {
+        "queryType": "builder",
+        "builder": {
+          "queryData": [
+            {
+              "queryName": "A",
+              "expression": "A",
+              "dataSource": "metrics",
+              "disabled": false,
+              "legend": "",
+              "stepInterval": 60,
+              "groupBy": [],
+              "orderBy": [],
+              "aggregations": [
+                {
+                  "metricName": "system_memory_usage",
+                  "temporality": "",
+                  "timeAggregation": "avg",
+                  "spaceAggregation": "sum",
+                  "reduceTo": "avg"
+                }
+              ],
+              "filter": {
+                "expression": ""
+              },
+              "having": {
+                "expression": ""
+              },
+              "limit": null,
+              "functions": []
+            }
+          ],
+          "queryFormulas": []
+        },
+        "promql": [],
+        "clickhouse_sql": [],
+        "id": "w-num-q"
+      },
+      "spanGaps": 60,
+      "fillSpans": true
+    },
+    {
+      "id": "w-bool",
+      "title": "spanGaps=bool",
+      "description": "spanGaps=bool",
+      "panelTypes": "graph",
+      "opacity": "1",
+      "nullZeroValues": "zero",
+      "timePreferance": "GLOBAL_TIME",
+      "softMin": null,
+      "softMax": null,
+      "selectedLogFields": null,
+      "selectedTracesFields": null,
+      "query": {
+        "queryType": "builder",
+        "builder": {
+          "queryData": [
+            {
+              "queryName": "A",
+              "expression": "A",
+              "dataSource": "metrics",
+              "disabled": false,
+              "legend": "",
+              "stepInterval": 60,
+              "groupBy": [],
+              "orderBy": [],
+              "aggregations": [
+                {
+                  "metricName": "system_memory_usage",
+                  "temporality": "",
+                  "timeAggregation": "avg",
+                  "spaceAggregation": "sum",
+                  "reduceTo": "avg"
+                }
+              ],
+              "filter": {
+                "expression": ""
+              },
+              "having": {
+                "expression": ""
+              },
+              "limit": null,
+              "functions": []
+            }
+          ],
+          "queryFormulas": []
+        },
+        "promql": [],
+        "clickhouse_sql": [],
+        "id": "w-bool-q"
+      },
+      "spanGaps": true
+    },
+    {
+      "id": "w-prec",
+      "title": "decimalPrecision=string",
+      "description": "decimalPrecision=string",
+      "panelTypes": "value",
+      "opacity": "1",
+      "nullZeroValues": "zero",
+      "timePreferance": "GLOBAL_TIME",
+      "softMin": null,
+      "softMax": null,
+      "selectedLogFields": null,
+      "selectedTracesFields": null,
+      "query": {
+        "queryType": "builder",
+        "builder": {
+          "queryData": [
+            {
+              "queryName": "A",
+              "expression": "A",
+              "dataSource": "metrics",
+              "disabled": false,
+              "legend": "",
+              "stepInterval": 60,
+              "groupBy": [],
+              "orderBy": [],
+              "aggregations": [
+                {
+                  "metricName": "system_memory_usage",
+                  "temporality": "",
+                  "timeAggregation": "avg",
+                  "spaceAggregation": "sum",
+                  "reduceTo": "avg"
+                }
+              ],
+              "filter": {
+                "expression": ""
+              },
+              "having": {
+                "expression": ""
+              },
+              "limit": null,
+              "functions": []
+            }
+          ],
+          "queryFormulas": []
+        },
+        "promql": [],
+        "clickhouse_sql": [],
+        "id": "w-prec-q"
+      },
+      "decimalPrecision": "3"
+    },
+    {
+      "id": "w-tp",
+      "title": "timePreferance set",
+      "description": "timePreferance set",
+      "panelTypes": "graph",
+      "opacity": "1",
+      "nullZeroValues": "zero",
+      "timePreferance": "LAST_1_HR",
+      "softMin": null,
+      "softMax": null,
+      "selectedLogFields": null,
+      "selectedTracesFields": null,
+      "query": {
+        "queryType": "builder",
+        "builder": {
+          "queryData": [
+            {
+              "queryName": "A",
+              "expression": "A",
+              "dataSource": "metrics",
+              "disabled": false,
+              "legend": "",
+              "stepInterval": 60,
+              "groupBy": [],
+              "orderBy": [],
+              "aggregations": [
+                {
+                  "metricName": "system_memory_usage",
+                  "temporality": "",
+                  "timeAggregation": "avg",
+                  "spaceAggregation": "sum",
+                  "reduceTo": "avg"
+                }
+              ],
+              "filter": {
+                "expression": ""
+              },
+              "having": {
+                "expression": ""
+              },
+              "limit": null,
+              "functions": []
+            }
+          ],
+          "queryFormulas": []
+        },
+        "promql": [],
+        "clickhouse_sql": [],
+        "id": "w-tp-q"
+      }
+    }
+  ],
+  "layout": [
+    {
+      "i": "w-num",
+      "x": 0,
+      "y": 0,
+      "w": 6,
+      "h": 6,
+      "moved": false,
+      "static": false
+    },
+    {
+      "i": "w-bool",
+      "x": 6,
+      "y": 0,
+      "w": 6,
+      "h": 6,
+      "moved": false,
+      "static": false
+    },
+    {
+      "i": "w-prec",
+      "x": 0,
+      "y": 6,
+      "w": 6,
+      "h": 6,
+      "moved": false,
+      "static": false
+    },
+    {
+      "i": "w-tp",
+      "x": 6,
+      "y": 6,
+      "w": 6,
+      "h": 6,
+      "moved": false,
+      "static": false
+    }
+  ],
+  "panelMap": {},
+  "variables": {}
+}

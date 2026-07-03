@@ -1,0 +1,84 @@
+{
+  "id": "07_selectcolumns_v5shape_and_empty",
+  "uuid": "07_selectcolumns_v5shape_and_empty",
+  "title": "07 selectColumns v5-shape + empty",
+  "description": "07 selectColumns v5-shape + empty",
+  "tags": [
+    "malformed-fixture"
+  ],
+  "version": "v5",
+  "widgets": [
+    {
+      "id": "w1",
+      "title": "selectColumns",
+      "description": "selectColumns",
+      "panelTypes": "table",
+      "opacity": "1",
+      "nullZeroValues": "zero",
+      "timePreferance": "GLOBAL_TIME",
+      "softMin": null,
+      "softMax": null,
+      "selectedLogFields": null,
+      "selectedTracesFields": null,
+      "query": {
+        "queryType": "builder",
+        "builder": {
+          "queryData": [
+            {
+              "queryName": "A",
+              "expression": "A",
+              "dataSource": "logs",
+              "disabled": false,
+              "legend": "",
+              "stepInterval": 60,
+              "groupBy": [],
+              "orderBy": [],
+              "aggregations": [
+                {
+                  "expression": "count()"
+                }
+              ],
+              "filter": {
+                "expression": ""
+              },
+              "having": {
+                "expression": ""
+              },
+              "limit": null,
+              "functions": [],
+              "selectColumns": [
+                {
+                  "name": "body",
+                  "fieldDataType": "string",
+                  "fieldContext": ""
+                },
+                {
+                  "name": "",
+                  "fieldDataType": "string",
+                  "fieldContext": ""
+                }
+              ]
+            }
+          ],
+          "queryFormulas": []
+        },
+        "promql": [],
+        "clickhouse_sql": [],
+        "id": "w1-q"
+      }
+    }
+  ],
+  "layout": [
+    {
+      "i": "w1",
+      "x": 0,
+      "y": 0,
+      "w": 6,
+      "h": 6,
+      "moved": false,
+      "static": false
+    }
+  ],
+  "panelMap": {},
+  "variables": {}
+}

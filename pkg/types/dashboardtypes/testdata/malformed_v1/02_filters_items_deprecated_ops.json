@@ -1,0 +1,113 @@
+{
+  "id": "02_filters_items_deprecated_ops",
+  "uuid": "02_filters_items_deprecated_ops",
+  "title": "02 filters{items} + deprecated ops",
+  "description": "02 filters{items} + deprecated ops",
+  "tags": [
+    "malformed-fixture"
+  ],
+  "version": "v5",
+  "widgets": [
+    {
+      "id": "w1",
+      "title": "filters items",
+      "description": "filters items",
+      "panelTypes": "graph",
+      "opacity": "1",
+      "nullZeroValues": "zero",
+      "timePreferance": "GLOBAL_TIME",
+      "softMin": null,
+      "softMax": null,
+      "selectedLogFields": null,
+      "selectedTracesFields": null,
+      "query": {
+        "queryType": "builder",
+        "builder": {
+          "queryData": [
+            {
+              "queryName": "A",
+              "expression": "A",
+              "dataSource": "logs",
+              "disabled": false,
+              "legend": "",
+              "stepInterval": 60,
+              "groupBy": [],
+              "orderBy": [],
+              "aggregations": [
+                {
+                  "expression": "count()"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "limit": null,
+              "functions": [],
+              "filters": {
+                "op": "AND",
+                "items": [
+                  {
+                    "key": {
+                      "key": "service.name",
+                      "dataType": "string",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "frontend"
+                  },
+                  {
+                    "key": {
+                      "key": "http.status_code",
+                      "dataType": "int64",
+                      "type": "tag"
+                    },
+                    "op": "nin",
+                    "value": [
+                      500,
+                      502
+                    ]
+                  },
+                  {
+                    "key": {
+                      "key": "http.route",
+                      "dataType": "string",
+                      "type": "tag"
+                    },
+                    "op": "regex",
+                    "value": "^/api"
+                  },
+                  {
+                    "key": {
+                      "key": "body",
+                      "dataType": "string",
+                      "type": ""
+                    },
+                    "op": "nlike",
+                    "value": "%health%"
+                  }
+                ]
+              }
+            }
+          ],
+          "queryFormulas": []
+        },
+        "promql": [],
+        "clickhouse_sql": [],
+        "id": "w1-q"
+      }
+    }
+  ],
+  "layout": [
+    {
+      "i": "w1",
+      "x": 0,
+      "y": 0,
+      "w": 6,
+      "h": 6,
+      "moved": false,
+      "static": false
+    }
+  ],
+  "panelMap": {},
+  "variables": {}
+}

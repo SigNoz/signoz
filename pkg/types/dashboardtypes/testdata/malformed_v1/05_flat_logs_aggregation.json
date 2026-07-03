@@ -1,0 +1,73 @@
+{
+  "id": "05_flat_logs_aggregation",
+  "uuid": "05_flat_logs_aggregation",
+  "title": "05 flat logs aggregation (v4)",
+  "description": "05 flat logs aggregation (v4)",
+  "tags": [
+    "malformed-fixture"
+  ],
+  "version": "v5",
+  "widgets": [
+    {
+      "id": "w1",
+      "title": "flat logs agg",
+      "description": "flat logs agg",
+      "panelTypes": "graph",
+      "opacity": "1",
+      "nullZeroValues": "zero",
+      "timePreferance": "GLOBAL_TIME",
+      "softMin": null,
+      "softMax": null,
+      "selectedLogFields": null,
+      "selectedTracesFields": null,
+      "query": {
+        "queryType": "builder",
+        "builder": {
+          "queryData": [
+            {
+              "queryName": "A",
+              "expression": "A",
+              "dataSource": "logs",
+              "disabled": false,
+              "legend": "",
+              "stepInterval": 60,
+              "groupBy": [],
+              "orderBy": [],
+              "filter": {
+                "expression": ""
+              },
+              "having": {
+                "expression": ""
+              },
+              "limit": null,
+              "functions": [],
+              "aggregateOperator": "count",
+              "aggregateAttribute": {
+                "key": "",
+                "dataType": "",
+                "type": ""
+              }
+            }
+          ],
+          "queryFormulas": []
+        },
+        "promql": [],
+        "clickhouse_sql": [],
+        "id": "w1-q"
+      }
+    }
+  ],
+  "layout": [
+    {
+      "i": "w1",
+      "x": 0,
+      "y": 0,
+      "w": 6,
+      "h": 6,
+      "moved": false,
+      "static": false
+    }
+  ],
+  "panelMap": {},
+  "variables": {}
+}

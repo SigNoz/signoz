@@ -1,0 +1,79 @@
+{
+  "id": "08_old_field_keys_list_panel",
+  "uuid": "08_old_field_keys_list_panel",
+  "title": "08 old field keys (selectedLogFields)",
+  "description": "08 old field keys (selectedLogFields)",
+  "tags": [
+    "malformed-fixture"
+  ],
+  "version": "v5",
+  "widgets": [
+    {
+      "id": "w1",
+      "title": "old field keys",
+      "description": "old field keys",
+      "panelTypes": "list",
+      "opacity": "1",
+      "nullZeroValues": "zero",
+      "timePreferance": "GLOBAL_TIME",
+      "softMin": null,
+      "softMax": null,
+      "selectedLogFields": [
+        {
+          "key": "body",
+          "dataType": "string",
+          "type": ""
+        },
+        {
+          "key": "trace_id",
+          "dataType": "string",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": null,
+      "query": {
+        "queryType": "builder",
+        "builder": {
+          "queryData": [
+            {
+              "queryName": "A",
+              "expression": "A",
+              "dataSource": "logs",
+              "disabled": false,
+              "legend": "",
+              "stepInterval": 60,
+              "groupBy": [],
+              "orderBy": [],
+              "aggregations": [],
+              "filter": {
+                "expression": ""
+              },
+              "having": {
+                "expression": ""
+              },
+              "limit": null,
+              "functions": []
+            }
+          ],
+          "queryFormulas": []
+        },
+        "promql": [],
+        "clickhouse_sql": [],
+        "id": "w1-q"
+      }
+    }
+  ],
+  "layout": [
+    {
+      "i": "w1",
+      "x": 0,
+      "y": 0,
+      "w": 6,
+      "h": 6,
+      "moved": false,
+      "static": false
+    }
+  ],
+  "panelMap": {},
+  "variables": {}
+}

@@ -1,0 +1,111 @@
+{
+  "id": "09_variables_textbox_order_selectedvalue",
+  "uuid": "09_variables_textbox_order_selectedvalue",
+  "title": "09 variable shapes (textbox/order/id/selectedValue)",
+  "description": "09 variable shapes (textbox/order/id/selectedValue)",
+  "tags": [
+    "malformed-fixture"
+  ],
+  "version": "v5",
+  "widgets": [
+    {
+      "id": "w1",
+      "title": "uses vars",
+      "description": "uses vars",
+      "panelTypes": "graph",
+      "opacity": "1",
+      "nullZeroValues": "zero",
+      "timePreferance": "GLOBAL_TIME",
+      "softMin": null,
+      "softMax": null,
+      "selectedLogFields": null,
+      "selectedTracesFields": null,
+      "query": {
+        "queryType": "builder",
+        "builder": {
+          "queryData": [
+            {
+              "queryName": "A",
+              "expression": "A",
+              "dataSource": "metrics",
+              "disabled": false,
+              "legend": "",
+              "stepInterval": 60,
+              "groupBy": [],
+              "orderBy": [],
+              "aggregations": [
+                {
+                  "metricName": "system_memory_usage",
+                  "temporality": "",
+                  "timeAggregation": "avg",
+                  "spaceAggregation": "sum",
+                  "reduceTo": "avg"
+                }
+              ],
+              "filter": {
+                "expression": ""
+              },
+              "having": {
+                "expression": ""
+              },
+              "limit": null,
+              "functions": []
+            }
+          ],
+          "queryFormulas": []
+        },
+        "promql": [],
+        "clickhouse_sql": [],
+        "id": "w1-q"
+      }
+    }
+  ],
+  "layout": [
+    {
+      "i": "w1",
+      "x": 0,
+      "y": 0,
+      "w": 6,
+      "h": 6,
+      "moved": false,
+      "static": false
+    }
+  ],
+  "panelMap": {},
+  "variables": {
+    "v-textbox": {
+      "type": "TEXTBOX",
+      "name": "env",
+      "description": "",
+      "textboxValue": "prod",
+      "sort": "DISABLED",
+      "multiSelect": false,
+      "showALLOption": false
+    },
+    "no-order-id": {
+      "type": "CUSTOM",
+      "name": "region",
+      "description": "",
+      "customValue": "us,eu,ap",
+      "sort": "DISABLED",
+      "multiSelect": true,
+      "showALLOption": true,
+      "selectedValue": [
+        "us",
+        "eu"
+      ]
+    },
+    "single-sel": {
+      "id": "single-sel",
+      "order": 1,
+      "type": "QUERY",
+      "name": "service",
+      "description": "",
+      "queryValue": "SELECT DISTINCT service_name FROM x",
+      "sort": "ASC",
+      "multiSelect": false,
+      "showALLOption": false,
+      "selectedValue": "frontend"
+    }
+  }
+}
