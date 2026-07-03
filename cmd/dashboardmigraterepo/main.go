@@ -9,9 +9,14 @@
 //
 // Throwaway tooling for the schema migration; not part of the build.
 //
+// Flags default to environment variables so the command is portable across
+// machines: DASHBOARDS_IN (-in), DASHBOARDS_OUT (-out), DASHBOARDS_ONLY (-only).
+// Explicit flags always override the env vars.
+//
 // Usage:
 //
-//	go run ./cmd/dashboardmigraterepo -in /Users/NamanVerma/Desktop/dashboards -out /tmp/dashboards-v2
+//	DASHBOARDS_IN=~/dashboards DASHBOARDS_OUT=/tmp/dashboards-v2 go run ./cmd/dashboardmigraterepo
+//	go run ./cmd/dashboardmigraterepo -in ~/dashboards -out /tmp/dashboards-v2
 package main
 
 import (
@@ -39,10 +44,16 @@ type outcome struct {
 }
 
 func main() {
-	inDir := flag.String("in", "/Users/NamanVerma/Desktop/dashboards", "dashboards repo root to scan for v1 JSON")
-	outDir := flag.String("out", "", "directory to write migrated v2 JSON (mirrors -in layout); empty = don't write, report only. Set equal to -in to overwrite in place")
-	only := flag.String("only", "", "restrict the scan to this subfolder of -in (e.g. redis); empty = whole repo")
+	inDir := flag.String("in", os.Getenv("DASHBOARDS_IN"), "dashboards repo root to scan for v1 JSON (default $DASHBOARDS_IN)")
+	outDir := flag.String("out", os.Getenv("DASHBOARDS_OUT"), "directory to write migrated v2 JSON (mirrors -in layout); empty = don't write, report only. Set equal to -in to overwrite in place (default $DASHBOARDS_OUT)")
+	only := flag.String("only", os.Getenv("DASHBOARDS_ONLY"), "restrict the scan to this subfolder of -in (e.g. redis); empty = whole repo (default $DASHBOARDS_ONLY)")
 	flag.Parse()
+
+	if *inDir == "" {
+		fmt.Fprintln(os.Stderr, "error: -in is required (or set $DASHBOARDS_IN) — path to the dashboards repo root")
+		flag.Usage()
+		os.Exit(2)
+	}
 
 	// Scan the whole repo, or a single subfolder when -only is set. rel paths are
 	// always computed against -in so -out mirrors the repo layout either way.
