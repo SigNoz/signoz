@@ -158,7 +158,7 @@ func normalizePreV5PageSize(query map[string]any, rowLimitPanel bool) {
 	if !rowLimitPanel {
 		return
 	}
-	if _, ok := query["limit"]; ok {
+	if limit, ok := query["limit"]; ok && limit != nil {
 		return
 	}
 	if ps, ok := query["pageSize"]; ok {
