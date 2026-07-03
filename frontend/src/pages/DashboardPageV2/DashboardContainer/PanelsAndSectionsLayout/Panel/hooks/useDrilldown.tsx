@@ -21,7 +21,9 @@ import { getBuilderQueries } from 'pages/DashboardPageV2/DashboardContainer/Pane
 import { fromPerses } from 'pages/DashboardPageV2/DashboardContainer/queryV5/persesQueryAdapters';
 
 import DrilldownAggregateMenu from '../DrilldownMenu/DrilldownAggregateMenu';
+import { useDrilldownFilter } from './useDrilldownFilter';
 import { useResolvedDrilldownQuery } from './useResolvedDrilldownQuery';
+import { useViewPanel } from './useViewPanel';
 
 /** Props the panel shell spreads onto `<ContextMenu>`. */
 export interface DrilldownContextMenuProps {
@@ -40,12 +42,12 @@ export interface UseDrilldownResult {
 }
 
 /**
- * Orchestrates panel drill-down: owns the popover and renders the base aggregate menu
- * (View in Logs/Traces) at the clicked point.
+ * Orchestrates panel drill-down: owns the popover and routes the clicked point to the base
+ * aggregate menu (View in Logs/Traces) or the group filter-by-value menu.
  */
 export function useDrilldown(
 	panel: DashboardtypesPanelDTO,
-	_panelId: string,
+	panelId: string,
 ): UseDrilldownResult {
 	const kind = panel.spec.plugin.kind as PanelKind;
 	const panelType = PANEL_KIND_TO_PANEL_TYPE[kind];
@@ -75,13 +77,27 @@ export function useDrilldown(
 		[context],
 	);
 
-	// Resolve the panel's dashboard-variable refs before View-in-X builds the explorer URL
-	// (V1 parity); fires only while the menu is open.
+	const { openViewWithQuery } = useViewPanel();
+
+	const filter = useDrilldownFilter({
+		context,
+		v1Query,
+		panelId,
+		panelType,
+		openViewWithQuery,
+		onClose,
+	});
+
+	// The aggregate menu (View in Logs/Traces) shows for a non-group click; the group click
+	// routes to filter-by-value instead. Only that menu resolves variables — filter/breakout
+	// open the View modal, which resolves at query-run time.
+	const showAggregateMenu = !!context && !filter.items;
+
 	const { resolvedQuery, isResolving } = useResolvedDrilldownQuery({
 		queries,
 		panelType,
 		v1Query,
-		enabled: !!context,
+		enabled: showAggregateMenu,
 	});
 
 	const navigate = useBaseDrilldownNavigate({
@@ -91,6 +107,9 @@ export function useDrilldown(
 	});
 
 	const items = useMemo<ReactNode>(() => {
+		if (filter.items) {
+			return filter.items;
+		}
 		if (!context) {
 			return null;
 		}
@@ -103,7 +122,7 @@ export function useDrilldown(
 				onViewTraces={(): void => navigate('view_traces')}
 			/>
 		);
-	}, [context, v1Query, isResolving, navigate]);
+	}, [filter.items, context, v1Query, isResolving, navigate]);
 
 	const onPanelClick = useCallback(
 		(payload: DrilldownClickPayload): void =>
