@@ -57,10 +57,13 @@ function TimelineV3(props: ITimelineV3Props): JSX.Element {
 		}
 
 		const timeAtCursor = offsetTimestamp + cursorXPercent * spread;
-		const unit = getIntervalUnit(spread, offsetTimestamp);
+		// Use the same width-derived interval spread the ticks use, so the badge
+		// unit always matches the tick unit (narrow rulers pick fewer intervals).
+		const intervalSpread = spread / getMinimumIntervalsBasedOnWidth(width);
+		const unit = getIntervalUnit(intervalSpread, offsetTimestamp);
 		const formatted = toFixed(resolveTimeFromInterval(timeAtCursor, unit), 2);
 		return `${formatted}${unit.name}`;
-	}, [cursorXPercent, spread, offsetTimestamp]);
+	}, [cursorXPercent, spread, offsetTimestamp, width]);
 
 	if (endTimestamp < startTimestamp) {
 		console.error(
