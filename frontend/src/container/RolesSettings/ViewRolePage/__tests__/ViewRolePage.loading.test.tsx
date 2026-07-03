@@ -1,6 +1,6 @@
 import * as roleApi from 'api/generated/services/role';
-import * as useAuthZModule from 'hooks/useAuthZ/useAuthZ';
-import { mockUseAuthZGrantAll } from 'tests/authz-test-utils';
+import * as useAuthZModule from 'lib/authz/hooks/useAuthZ/useAuthZ';
+import { mockUseAuthZGrantAll } from 'lib/authz/utils/authz-test-utils';
 import { render } from 'tests/test-utils';
 
 import ViewRolePage from '../ViewRolePage';

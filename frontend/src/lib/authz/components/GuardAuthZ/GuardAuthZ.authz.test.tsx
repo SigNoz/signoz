@@ -1,10 +1,13 @@
 import { ReactElement } from 'react';
-import { BrandedPermission } from 'hooks/useAuthZ/types';
-import { buildPermission } from 'hooks/useAuthZ/utils';
+import { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
+import { buildPermission } from 'lib/authz/hooks/useAuthZ/utils';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { render, screen, waitFor } from 'tests/test-utils';
-import { AUTHZ_CHECK_URL, authzMockResponse } from 'tests/authz-test-utils';
+import {
+	AUTHZ_CHECK_URL,
+	authzMockResponse,
+} from 'lib/authz/utils/authz-test-utils';
 
 import { GuardAuthZ } from './GuardAuthZ';
 

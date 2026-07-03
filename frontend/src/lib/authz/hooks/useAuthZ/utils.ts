@@ -3,7 +3,7 @@ import {
 	CoretypesTypeDTO,
 	AuthtypesRelationDTO,
 	CoretypesKindDTO,
-} from '../../api/generated/services/sigNoz.schemas';
+} from '../../../../api/generated/services/sigNoz.schemas';
 import permissionsType from './permissions.type';
 import {
 	AuthZObject,
