@@ -79,7 +79,7 @@ function ColumnHeader({
 	};
 
 	return (
-		<div className={cx(styles.columnHeader, className)}>
+		<div className={cx(styles.columnHeader, className)} data-slot="column-header">
 			<span className={styles.columnHeaderLabel}>{renderContent()}</span>
 			{renderInfoIcon()}
 		</div>

@@ -59,8 +59,11 @@ function EntityGroupHeader({
 	};
 
 	return (
-		<div className={styles.entityGroupHeader}>
-			{icon || <Group size={14} data-hide-expanded="true" />} {title}
+		<div className={styles.entityGroupHeader} data-slot="entity-group-header">
+			<span data-slot="icon">
+				{icon || <Group size={14} data-hide-expanded="true" />}
+			</span>{' '}
+			{title}
 			{renderInfoIcon()}
 		</div>
 	);
