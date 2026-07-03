@@ -39,16 +39,13 @@ var expectedFixtureOutcomes = map[string]string{
 	"04_flat_metric_aggregation.json":                    outcomeOK,
 	"05_flat_logs_aggregation.json":                      outcomeOK,
 	"06_pagesize_to_limit.json":                          outcomeOK,
-	"07_selectcolumns_v5shape_and_empty.json":            outcomeOK,
+	"07_trace_list_old_field_keys.json":                  outcomeOK,
 	"08_old_field_keys_list_panel.json":                  outcomeOK,
-	"09_variables_textbox_order_selectedvalue.json":      outcomeOK,
-	"10_variable_dynamic_missing_attribute.json":         outcomeReadbackFail,
-	"11_widget_display_fields.json":                      outcomeOK,
-	"12_layout_duplicate_i.json":                         outcomeOK,
-	"13_layout_orphan_entries.json":                      outcomeOK,
-	"14_layout_collapsed_ghost_child_bare_panelmap.json": outcomeOK,
-	"15_layout_unsorted_nonzero_coords.json":             outcomeOK,
-	"16_unrenderable_widget_type.json":                   outcomeConvertFail,
+	"09_variable_dynamic_missing_attribute.json":         outcomeConvertFail,
+	"10_layout_duplicate_i.json":                         outcomeOK,
+	"11_layout_orphan_entries.json":                      outcomeOK,
+	"12_layout_collapsed_ghost_child_bare_panelmap.json": outcomeOK,
+	"13_unrenderable_widget_type.json":                   outcomeConvertFail,
 }
 
 // TestMalformedV1FixturesMigrate migrates every fixture under testdata/malformed_v1

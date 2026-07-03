@@ -43,7 +43,7 @@
               "functions": [],
               "aggregateOperator": "avg",
               "aggregateAttribute": {
-                "key": "system_memory_usage",
+                "key": "system.cpu.time",
                 "dataType": "float64",
                 "type": "",
                 "isColumn": true

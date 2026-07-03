@@ -1,8 +1,8 @@
 {
-  "id": "07_selectcolumns_v5shape_and_empty",
-  "uuid": "07_selectcolumns_v5shape_and_empty",
-  "title": "07 selectColumns v5-shape + empty",
-  "description": "07 selectColumns v5-shape + empty",
+  "id": "07_trace_list_old_field_keys",
+  "uuid": "07_trace_list_old_field_keys",
+  "title": "07 trace list selectedTracesFields old {key,...} + empty",
+  "description": "07 trace list selectedTracesFields old {key,...} + empty",
   "tags": [
     "malformed-fixture"
   ],
@@ -10,16 +10,32 @@
   "widgets": [
     {
       "id": "w1",
-      "title": "selectColumns",
-      "description": "selectColumns",
-      "panelTypes": "table",
+      "title": "trace list fields",
+      "description": "trace list fields",
+      "panelTypes": "list",
       "opacity": "1",
       "nullZeroValues": "zero",
       "timePreferance": "GLOBAL_TIME",
       "softMin": null,
       "softMax": null,
       "selectedLogFields": null,
-      "selectedTracesFields": null,
+      "selectedTracesFields": [
+        {
+          "key": "service.name",
+          "dataType": "string",
+          "type": "resource"
+        },
+        {
+          "key": "http.method",
+          "dataType": "string",
+          "type": "tag"
+        },
+        {
+          "key": "",
+          "dataType": "",
+          "type": ""
+        }
+      ],
       "query": {
         "queryType": "builder",
         "builder": {
@@ -27,17 +43,18 @@
             {
               "queryName": "A",
               "expression": "A",
-              "dataSource": "logs",
+              "dataSource": "traces",
               "disabled": false,
               "legend": "",
               "stepInterval": 60,
               "groupBy": [],
-              "orderBy": [],
-              "aggregations": [
+              "orderBy": [
                 {
-                  "expression": "count()"
+                  "columnName": "timestamp",
+                  "order": "desc"
                 }
               ],
+              "aggregations": [],
               "filter": {
                 "expression": ""
               },
@@ -45,19 +62,7 @@
                 "expression": ""
               },
               "limit": null,
-              "functions": [],
-              "selectColumns": [
-                {
-                  "name": "body",
-                  "fieldDataType": "string",
-                  "fieldContext": ""
-                },
-                {
-                  "name": "",
-                  "fieldDataType": "string",
-                  "fieldContext": ""
-                }
-              ]
+              "functions": []
             }
           ],
           "queryFormulas": []

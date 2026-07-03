@@ -1,23 +1,17 @@
 {
-  "id": "14_layout_collapsed_ghost_child_bare_panelmap",
-  "uuid": "14_layout_collapsed_ghost_child_bare_panelmap",
-  "title": "14 collapsed ghost child + bare-array panelMap",
-  "description": "14 collapsed ghost child + bare-array panelMap",
+  "id": "10_layout_duplicate_i",
+  "uuid": "10_layout_duplicate_i",
+  "title": "10 duplicate layout id",
+  "description": "10 duplicate layout id",
   "tags": [
     "malformed-fixture"
   ],
   "version": "v5",
   "widgets": [
     {
-      "id": "row-1",
-      "panelTypes": "row",
-      "title": "Collapsed section",
-      "description": ""
-    },
-    {
-      "id": "p-1",
-      "title": "in collapsed",
-      "description": "in collapsed",
+      "id": "w1",
+      "title": "dup layout",
+      "description": "dup layout",
       "panelTypes": "graph",
       "opacity": "1",
       "nullZeroValues": "zero",
@@ -41,7 +35,7 @@
               "orderBy": [],
               "aggregations": [
                 {
-                  "metricName": "system_memory_usage",
+                  "metricName": "system.cpu.time",
                   "temporality": "",
                   "timeAggregation": "avg",
                   "spaceAggregation": "sum",
@@ -62,19 +56,13 @@
         },
         "promql": [],
         "clickhouse_sql": [],
-        "id": "p-1-q"
+        "id": "w1-q"
       }
     },
     {
-      "id": "row-2",
-      "panelTypes": "row",
-      "title": "Bare-array section",
-      "description": ""
-    },
-    {
-      "id": "p-2",
-      "title": "in bare-array",
-      "description": "in bare-array",
+      "id": "w2",
+      "title": "clean",
+      "description": "clean",
       "panelTypes": "graph",
       "opacity": "1",
       "nullZeroValues": "zero",
@@ -98,7 +86,7 @@
               "orderBy": [],
               "aggregations": [
                 {
-                  "metricName": "system_memory_usage",
+                  "metricName": "system.cpu.time",
                   "temporality": "",
                   "timeAggregation": "avg",
                   "spaceAggregation": "sum",
@@ -119,56 +107,33 @@
         },
         "promql": [],
         "clickhouse_sql": [],
-        "id": "p-2-q"
+        "id": "w2-q"
       }
     }
   ],
   "layout": [
     {
-      "i": "row-1",
+      "i": "w1",
       "x": 0,
       "y": 0,
-      "w": 12,
-      "h": 1
+      "w": 6,
+      "h": 6
     },
     {
-      "i": "row-2",
-      "x": 0,
-      "y": 1,
-      "w": 12,
-      "h": 1
+      "i": "w1",
+      "x": 6,
+      "y": 0,
+      "w": 3,
+      "h": 9
     },
     {
-      "i": "p-2",
+      "i": "w2",
       "x": 0,
-      "y": 2,
+      "y": 6,
       "w": 6,
       "h": 6
     }
   ],
-  "panelMap": {
-    "row-1": {
-      "collapsed": true,
-      "widgets": [
-        {
-          "i": "p-1",
-          "x": 0,
-          "y": 2,
-          "w": 6,
-          "h": 6
-        },
-        {
-          "i": "ghost",
-          "x": 6,
-          "y": 2,
-          "w": 6,
-          "h": 6
-        }
-      ]
-    },
-    "row-2": [
-      "p-2"
-    ]
-  },
+  "panelMap": {},
   "variables": {}
 }

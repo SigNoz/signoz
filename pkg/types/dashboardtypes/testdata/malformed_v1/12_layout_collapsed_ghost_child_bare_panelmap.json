@@ -1,17 +1,23 @@
 {
-  "id": "15_layout_unsorted_nonzero_coords",
-  "uuid": "15_layout_unsorted_nonzero_coords",
-  "title": "15 unsorted / non-zero layout coords",
-  "description": "15 unsorted / non-zero layout coords",
+  "id": "12_layout_collapsed_ghost_child_bare_panelmap",
+  "uuid": "12_layout_collapsed_ghost_child_bare_panelmap",
+  "title": "12 collapsed ghost child + bare-array panelMap",
+  "description": "12 collapsed ghost child + bare-array panelMap",
   "tags": [
     "malformed-fixture"
   ],
   "version": "v5",
   "widgets": [
     {
-      "id": "a",
-      "title": "a",
-      "description": "a",
+      "id": "row-1",
+      "panelTypes": "row",
+      "title": "Collapsed section",
+      "description": ""
+    },
+    {
+      "id": "p-1",
+      "title": "in collapsed",
+      "description": "in collapsed",
       "panelTypes": "graph",
       "opacity": "1",
       "nullZeroValues": "zero",
@@ -35,7 +41,7 @@
               "orderBy": [],
               "aggregations": [
                 {
-                  "metricName": "system_memory_usage",
+                  "metricName": "system.cpu.time",
                   "temporality": "",
                   "timeAggregation": "avg",
                   "spaceAggregation": "sum",
@@ -56,64 +62,19 @@
         },
         "promql": [],
         "clickhouse_sql": [],
-        "id": "a-q"
+        "id": "p-1-q"
       }
     },
     {
-      "id": "b",
-      "title": "b",
-      "description": "b",
-      "panelTypes": "graph",
-      "opacity": "1",
-      "nullZeroValues": "zero",
-      "timePreferance": "GLOBAL_TIME",
-      "softMin": null,
-      "softMax": null,
-      "selectedLogFields": null,
-      "selectedTracesFields": null,
-      "query": {
-        "queryType": "builder",
-        "builder": {
-          "queryData": [
-            {
-              "queryName": "A",
-              "expression": "A",
-              "dataSource": "metrics",
-              "disabled": false,
-              "legend": "",
-              "stepInterval": 60,
-              "groupBy": [],
-              "orderBy": [],
-              "aggregations": [
-                {
-                  "metricName": "system_memory_usage",
-                  "temporality": "",
-                  "timeAggregation": "avg",
-                  "spaceAggregation": "sum",
-                  "reduceTo": "avg"
-                }
-              ],
-              "filter": {
-                "expression": ""
-              },
-              "having": {
-                "expression": ""
-              },
-              "limit": null,
-              "functions": []
-            }
-          ],
-          "queryFormulas": []
-        },
-        "promql": [],
-        "clickhouse_sql": [],
-        "id": "b-q"
-      }
+      "id": "row-2",
+      "panelTypes": "row",
+      "title": "Bare-array section",
+      "description": ""
     },
     {
-      "id": "c",
-      "title": "c",
-      "description": "c",
+      "id": "p-2",
+      "title": "in bare-array",
+      "description": "in bare-array",
       "panelTypes": "graph",
       "opacity": "1",
       "nullZeroValues": "zero",
@@ -137,7 +98,7 @@
               "orderBy": [],
               "aggregations": [
                 {
-                  "metricName": "system_memory_usage",
+                  "metricName": "system.cpu.time",
                   "temporality": "",
                   "timeAggregation": "avg",
                   "spaceAggregation": "sum",
@@ -158,33 +119,56 @@
         },
         "promql": [],
         "clickhouse_sql": [],
-        "id": "c-q"
+        "id": "p-2-q"
       }
     }
   ],
   "layout": [
     {
-      "i": "b",
+      "i": "row-1",
       "x": 0,
-      "y": 20,
-      "w": 6,
-      "h": 6
+      "y": 0,
+      "w": 12,
+      "h": 1
     },
     {
-      "i": "a",
+      "i": "row-2",
       "x": 0,
-      "y": 10,
-      "w": 6,
-      "h": 6
+      "y": 1,
+      "w": 12,
+      "h": 1
     },
     {
-      "i": "c",
-      "x": 6,
-      "y": 10,
+      "i": "p-2",
+      "x": 0,
+      "y": 2,
       "w": 6,
       "h": 6
     }
   ],
-  "panelMap": {},
+  "panelMap": {
+    "row-1": {
+      "collapsed": true,
+      "widgets": [
+        {
+          "i": "p-1",
+          "x": 0,
+          "y": 2,
+          "w": 6,
+          "h": 6
+        },
+        {
+          "i": "ghost",
+          "x": 6,
+          "y": 2,
+          "w": 6,
+          "h": 6
+        }
+      ]
+    },
+    "row-2": [
+      "p-2"
+    ]
+  },
   "variables": {}
 }

@@ -1,17 +1,17 @@
 {
-  "id": "16_unrenderable_widget_type",
-  "uuid": "16_unrenderable_widget_type",
-  "title": "16 unrenderable widget type (whole-dashboard reject)",
-  "description": "16 unrenderable widget type (whole-dashboard reject)",
+  "id": "09_variable_dynamic_missing_attribute",
+  "uuid": "09_variable_dynamic_missing_attribute",
+  "title": "09 DYNAMIC missing dynamicVariablesAttribute",
+  "description": "09 DYNAMIC missing dynamicVariablesAttribute",
   "tags": [
     "malformed-fixture"
   ],
   "version": "v5",
   "widgets": [
     {
-      "id": "w-real",
-      "title": "real",
-      "description": "real",
+      "id": "w1",
+      "title": "uses dyn var",
+      "description": "uses dyn var",
       "panelTypes": "graph",
       "opacity": "1",
       "nullZeroValues": "zero",
@@ -35,7 +35,7 @@
               "orderBy": [],
               "aggregations": [
                 {
-                  "metricName": "system_memory_usage",
+                  "metricName": "system.cpu.time",
                   "temporality": "",
                   "timeAggregation": "avg",
                   "spaceAggregation": "sum",
@@ -56,46 +56,14 @@
         },
         "promql": [],
         "clickhouse_sql": [],
-        "id": "w-real-q"
-      }
-    },
-    {
-      "id": "w-empty",
-      "title": "empty widget",
-      "description": "empty widget",
-      "panelTypes": "EMPTY_WIDGET",
-      "opacity": "1",
-      "nullZeroValues": "zero",
-      "timePreferance": "GLOBAL_TIME",
-      "softMin": null,
-      "softMax": null,
-      "selectedLogFields": null,
-      "selectedTracesFields": null,
-      "query": {
-        "queryType": "builder",
-        "builder": {
-          "queryData": [],
-          "queryFormulas": []
-        },
-        "promql": [],
-        "clickhouse_sql": [],
-        "id": "w-empty-q"
+        "id": "w1-q"
       }
     }
   ],
   "layout": [
     {
-      "i": "w-real",
+      "i": "w1",
       "x": 0,
-      "y": 0,
-      "w": 6,
-      "h": 6,
-      "moved": false,
-      "static": false
-    },
-    {
-      "i": "w-empty",
-      "x": 6,
       "y": 0,
       "w": 6,
       "h": 6,
@@ -104,5 +72,17 @@
     }
   ],
   "panelMap": {},
-  "variables": {}
+  "variables": {
+    "dyn": {
+      "id": "dyn",
+      "order": 0,
+      "type": "DYNAMIC",
+      "name": "node",
+      "description": "",
+      "dynamicVariablesSource": "Traces",
+      "sort": "DISABLED",
+      "multiSelect": true,
+      "showALLOption": true
+    }
+  }
 }

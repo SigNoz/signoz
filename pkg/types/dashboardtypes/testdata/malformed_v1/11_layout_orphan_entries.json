@@ -1,17 +1,17 @@
 {
-  "id": "09_variables_textbox_order_selectedvalue",
-  "uuid": "09_variables_textbox_order_selectedvalue",
-  "title": "09 variable shapes (textbox/order/id/selectedValue)",
-  "description": "09 variable shapes (textbox/order/id/selectedValue)",
+  "id": "11_layout_orphan_entries",
+  "uuid": "11_layout_orphan_entries",
+  "title": "11 orphan layout entries (deleted / dropping-elem)",
+  "description": "11 orphan layout entries (deleted / dropping-elem)",
   "tags": [
     "malformed-fixture"
   ],
   "version": "v5",
   "widgets": [
     {
-      "id": "w1",
-      "title": "uses vars",
-      "description": "uses vars",
+      "id": "w-real",
+      "title": "real",
+      "description": "real",
       "panelTypes": "graph",
       "opacity": "1",
       "nullZeroValues": "zero",
@@ -35,7 +35,7 @@
               "orderBy": [],
               "aggregations": [
                 {
-                  "metricName": "system_memory_usage",
+                  "metricName": "system.cpu.time",
                   "temporality": "",
                   "timeAggregation": "avg",
                   "spaceAggregation": "sum",
@@ -56,56 +56,33 @@
         },
         "promql": [],
         "clickhouse_sql": [],
-        "id": "w1-q"
+        "id": "w-real-q"
       }
     }
   ],
   "layout": [
     {
-      "i": "w1",
+      "i": "w-real",
       "x": 0,
       "y": 0,
       "w": 6,
-      "h": 6,
-      "moved": false,
-      "static": false
+      "h": 6
+    },
+    {
+      "i": "w-deleted",
+      "x": 6,
+      "y": 0,
+      "w": 6,
+      "h": 6
+    },
+    {
+      "i": "__dropping-elem__",
+      "x": 0,
+      "y": 6,
+      "w": 6,
+      "h": 6
     }
   ],
   "panelMap": {},
-  "variables": {
-    "v-textbox": {
-      "type": "TEXTBOX",
-      "name": "env",
-      "description": "",
-      "textboxValue": "prod",
-      "sort": "DISABLED",
-      "multiSelect": false,
-      "showALLOption": false
-    },
-    "no-order-id": {
-      "type": "CUSTOM",
-      "name": "region",
-      "description": "",
-      "customValue": "us,eu,ap",
-      "sort": "DISABLED",
-      "multiSelect": true,
-      "showALLOption": true,
-      "selectedValue": [
-        "us",
-        "eu"
-      ]
-    },
-    "single-sel": {
-      "id": "single-sel",
-      "order": 1,
-      "type": "QUERY",
-      "name": "service",
-      "description": "",
-      "queryValue": "SELECT DISTINCT service_name FROM x",
-      "sort": "ASC",
-      "multiSelect": false,
-      "showALLOption": false,
-      "selectedValue": "frontend"
-    }
-  }
+  "variables": {}
 }

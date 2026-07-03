@@ -35,7 +35,7 @@
               "orderBy": [],
               "aggregations": [
                 {
-                  "metricName": "system_memory_usage",
+                  "metricName": "system.cpu.time",
                   "temporality": "",
                   "timeAggregation": "avg",
                   "spaceAggregation": "sum",

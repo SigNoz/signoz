@@ -1,8 +1,8 @@
 {
-  "id": "13_layout_orphan_entries",
-  "uuid": "13_layout_orphan_entries",
-  "title": "13 orphan layout entries (deleted / dropping-elem)",
-  "description": "13 orphan layout entries (deleted / dropping-elem)",
+  "id": "13_unrenderable_widget_type",
+  "uuid": "13_unrenderable_widget_type",
+  "title": "13 unrenderable widget type (whole-dashboard reject)",
+  "description": "13 unrenderable widget type (whole-dashboard reject)",
   "tags": [
     "malformed-fixture"
   ],
@@ -35,7 +35,7 @@
               "orderBy": [],
               "aggregations": [
                 {
-                  "metricName": "system_memory_usage",
+                  "metricName": "system.cpu.time",
                   "temporality": "",
                   "timeAggregation": "avg",
                   "spaceAggregation": "sum",
@@ -58,6 +58,29 @@
         "clickhouse_sql": [],
         "id": "w-real-q"
       }
+    },
+    {
+      "id": "w-empty",
+      "title": "empty widget",
+      "description": "empty widget",
+      "panelTypes": "EMPTY_WIDGET",
+      "opacity": "1",
+      "nullZeroValues": "zero",
+      "timePreferance": "GLOBAL_TIME",
+      "softMin": null,
+      "softMax": null,
+      "selectedLogFields": null,
+      "selectedTracesFields": null,
+      "query": {
+        "queryType": "builder",
+        "builder": {
+          "queryData": [],
+          "queryFormulas": []
+        },
+        "promql": [],
+        "clickhouse_sql": [],
+        "id": "w-empty-q"
+      }
     }
   ],
   "layout": [
@@ -66,21 +89,18 @@
       "x": 0,
       "y": 0,
       "w": 6,
-      "h": 6
+      "h": 6,
+      "moved": false,
+      "static": false
     },
     {
-      "i": "w-deleted",
+      "i": "w-empty",
       "x": 6,
       "y": 0,
       "w": 6,
-      "h": 6
-    },
-    {
-      "i": "__dropping-elem__",
-      "x": 0,
-      "y": 6,
-      "w": 6,
-      "h": 6
+      "h": 6,
+      "moved": false,
+      "static": false
     }
   ],
   "panelMap": {},
