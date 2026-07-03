@@ -299,19 +299,22 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 	// Layout edits
 	// ─────────────────────────────────────────────────────────────────
 
-	t.Run("move panel by editing layout x coordinate", func(t *testing.T) {
-		out, err := decode(t, `[{"op": "replace", "path": "/spec/layouts/0/spec/items/0/x", "value": 6}]`).Apply(base)
+	t.Run("move panel by editing layout y coordinate", func(t *testing.T) {
+		// p2 fills the right half of row 0, so p1 can only move to a fresh row
+		// without tripping overlap validation.
+		out, err := decode(t, `[{"op": "replace", "path": "/spec/layouts/0/spec/items/0/y", "value": 6}]`).Apply(base)
 		require.NoError(t, err)
 		raw := jsonOf(t, out)
-		// The first item used to live at x=0, now lives at x=6.
-		assert.Contains(t, raw, `"x":6,"y":0,"width":6,"height":6,"content":{"$ref":"#/spec/panels/p1"}`)
+		// The first item used to live at y=0, now lives at y=6.
+		assert.Contains(t, raw, `"x":0,"y":6,"width":6,"height":6,"content":{"$ref":"#/spec/panels/p1"}`)
 	})
 
 	t.Run("resize panel by editing layout width", func(t *testing.T) {
-		out, err := decode(t, `[{"op": "replace", "path": "/spec/layouts/0/spec/items/0/width", "value": 12}]`).Apply(base)
+		// p2 sits at x=6, so p1 (at x=0) can only shrink; widening it would overlap.
+		out, err := decode(t, `[{"op": "replace", "path": "/spec/layouts/0/spec/items/0/width", "value": 3}]`).Apply(base)
 		require.NoError(t, err)
 		raw := jsonOf(t, out)
-		assert.Contains(t, raw, `"width":12`)
+		assert.Contains(t, raw, `"width":3`)
 	})
 
 	t.Run("rename layout row title", func(t *testing.T) {
@@ -321,11 +324,12 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 	})
 
 	t.Run("append layout item", func(t *testing.T) {
-		out, err := decode(t, `[{
-			"op": "add",
-			"path": "/spec/layouts/0/spec/items/-",
-			"value": {"x": 0, "y": 6, "width": 12, "height": 6, "content": {"$ref": "#/spec/panels/p1"}}
-		}]`).Apply(base)
+		// Appending needs a not-yet-placed panel, so add one in the same patch;
+		// re-placing p1 or p2 would be a duplicate reference.
+		out, err := decode(t, `[
+			{"op": "add", "path": "/spec/panels/p3", "value": {"kind": "Panel", "spec": {"plugin": {"kind": "signoz/TablePanel", "spec": {}}, "queries": [{"kind": "time_series", "spec": {"plugin": {"kind": "signoz/BuilderQuery", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]}}}}]}}},
+			{"op": "add", "path": "/spec/layouts/0/spec/items/-", "value": {"x": 0, "y": 6, "width": 12, "height": 6, "content": {"$ref": "#/spec/panels/p3"}}}
+		]`).Apply(base)
 		require.NoError(t, err)
 		// Item count went 2 → 3.
 		raw := jsonOf(t, out)

@@ -3045,7 +3045,7 @@ func (aH *APIHandler) calculateConnectionStatus(
 		}
 
 		statusForLastReceivedMetric, apiErr := aH.reader.GetLatestReceivedMetric(
-			ctx, connectionTests.Metrics, nil,
+			ctx, orgID, connectionTests.Metrics, nil,
 		)
 
 		resultLock.Lock()
@@ -3514,9 +3514,16 @@ func (aH *APIHandler) autoCompleteAttributeKeys(w http.ResponseWriter, r *http.R
 		return
 	}
 
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		aH.HandleError(w, err, http.StatusInternalServerError)
+		return
+	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
 	switch req.DataSource {
 	case v3.DataSourceMetrics:
-		response, err = aH.reader.GetMetricAttributeKeys(r.Context(), req)
+		response, err = aH.reader.GetMetricAttributeKeys(r.Context(), orgID, req)
 	case v3.DataSourceMeter:
 		response, err = aH.reader.GetMeterAttributeKeys(r.Context(), req)
 	case v3.DataSourceLogs:
@@ -3545,9 +3552,16 @@ func (aH *APIHandler) autoCompleteAttributeValues(w http.ResponseWriter, r *http
 		return
 	}
 
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		aH.HandleError(w, err, http.StatusInternalServerError)
+		return
+	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
 	switch req.DataSource {
 	case v3.DataSourceMetrics:
-		response, err = aH.reader.GetMetricAttributeValues(r.Context(), req)
+		response, err = aH.reader.GetMetricAttributeValues(r.Context(), orgID, req)
 	case v3.DataSourceLogs:
 		response, err = aH.reader.GetLogAttributeValues(r.Context(), req)
 	case v3.DataSourceTraces:
@@ -3574,9 +3588,16 @@ func (aH *APIHandler) autoCompleteAttributeValuesPost(w http.ResponseWriter, r *
 		return
 	}
 
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		aH.HandleError(w, err, http.StatusInternalServerError)
+		return
+	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
 	switch req.DataSource {
 	case v3.DataSourceMetrics:
-		response, err = aH.reader.GetMetricAttributeValues(r.Context(), req)
+		response, err = aH.reader.GetMetricAttributeValues(r.Context(), orgID, req)
 	case v3.DataSourceLogs:
 		response, err = aH.reader.GetLogAttributeValues(r.Context(), req)
 	case v3.DataSourceTraces:

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Plus } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import {
@@ -82,12 +82,26 @@ function ThresholdsSection({
 	// Which row is being edited, and whether it was just added (so Discard removes it).
 	const [editingIndex, setEditingIndex] = useState<number | null>(null);
 	const [unsavedIndex, setUnsavedIndex] = useState<number | null>(null);
+	// The saved threshold captured on edit entry, restored if the edit is discarded
+	// (edits stream into the spec live, so Discard can't just drop a local draft).
+	const editSnapshot = useRef<AnyThreshold | null>(null);
+
+	const updateAt =
+		(index: number) =>
+		(next: AnyThreshold): void => {
+			onChange(thresholds.map((t, i) => (i === index ? next : t)));
+		};
 
 	const addThreshold = (): void => {
 		const nextIndex = thresholds.length;
 		onChange([...thresholds, defaultThreshold(variant, tableColumns)]);
 		setEditingIndex(nextIndex);
 		setUnsavedIndex(nextIndex);
+	};
+
+	const beginEdit = (index: number): void => {
+		editSnapshot.current = thresholds[index] ?? null;
+		setEditingIndex(index);
 	};
 
 	const saveAt =
@@ -105,10 +119,14 @@ function ThresholdsSection({
 	};
 
 	const discardAt = (index: number) => (): void => {
-		// Discarding a row that was never saved removes it; otherwise just exit edit.
+		// A never-saved row is removed; otherwise revert the live edits to the snapshot.
 		if (index === unsavedIndex) {
 			removeAt(index);
 			return;
+		}
+		const original = editSnapshot.current;
+		if (original) {
+			onChange(thresholds.map((t, i) => (i === index ? original : t)));
 		}
 		setEditingIndex(null);
 	};
@@ -120,8 +138,9 @@ function ThresholdsSection({
 			index,
 			yAxisUnit,
 			isEditing: editingIndex === index,
-			onEdit: (): void => setEditingIndex(index),
+			onEdit: (): void => beginEdit(index),
 			onSave: saveAt(index),
+			onLiveChange: updateAt(index),
 			onDiscard: discardAt(index),
 			onRemove: (): void => removeAt(index),
 		};
