@@ -21,6 +21,7 @@ import { getBuilderQueries } from 'pages/DashboardPageV2/DashboardContainer/Pane
 import { fromPerses } from 'pages/DashboardPageV2/DashboardContainer/queryV5/persesQueryAdapters';
 
 import DrilldownAggregateMenu from '../DrilldownMenu/DrilldownAggregateMenu';
+import { useResolvedDrilldownQuery } from './useResolvedDrilldownQuery';
 
 /** Props the panel shell spreads onto `<ContextMenu>`. */
 export interface DrilldownContextMenuProps {
@@ -74,8 +75,17 @@ export function useDrilldown(
 		[context],
 	);
 
+	// Resolve the panel's dashboard-variable refs before View-in-X builds the explorer URL
+	// (V1 parity); fires only while the menu is open.
+	const { resolvedQuery, isResolving } = useResolvedDrilldownQuery({
+		queries,
+		panelType,
+		v1Query,
+		enabled: !!context,
+	});
+
 	const navigate = useBaseDrilldownNavigate({
-		resolvedQuery: v1Query,
+		resolvedQuery,
 		aggregateData,
 		callback: onClose,
 	});
@@ -88,11 +98,12 @@ export function useDrilldown(
 			<DrilldownAggregateMenu
 				context={context}
 				query={v1Query}
+				isResolving={isResolving}
 				onViewLogs={(): void => navigate('view_logs')}
 				onViewTraces={(): void => navigate('view_traces')}
 			/>
 		);
-	}, [context, v1Query, navigate]);
+	}, [context, v1Query, isResolving, navigate]);
 
 	const onPanelClick = useCallback(
 		(payload: DrilldownClickPayload): void =>

@@ -10,12 +10,17 @@ import { useDrilldown } from '../hooks/useDrilldown';
 
 const mockNavigate = jest.fn();
 const mockGetBuilderQueries = jest.fn();
+let mockResolved = { resolvedQuery: 'RESOLVED_QUERY', isResolving: false };
 
 // Boundaries tested elsewhere / needing external context — mocked so this suite isolates
 // useDrilldown's orchestration (gating, the aggregate menu, navigation).
 jest.mock('container/QueryTable/Drilldown/useBaseDrilldownNavigate', () => ({
 	__esModule: true,
 	default: (): unknown => mockNavigate,
+}));
+// Variable-substitution boundary (redux/store/react-query) — its own logic is out of scope here.
+jest.mock('../hooks/useResolvedDrilldownQuery', () => ({
+	useResolvedDrilldownQuery: (): unknown => mockResolved,
 }));
 jest.mock('container/QueryTable/Drilldown/drilldownUtils', () => ({
 	getAggregateColumnHeader: (): unknown => ({
@@ -65,6 +70,7 @@ describe('useDrilldown', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
 		mockGetBuilderQueries.mockReturnValue([{ name: 'A' }]);
+		mockResolved = { resolvedQuery: 'RESOLVED_QUERY', isResolving: false };
 	});
 
 	describe('enableDrillDown', () => {
@@ -115,6 +121,22 @@ describe('useDrilldown', () => {
 
 			await user.click(screen.getByTestId('drilldown-view-logs'));
 			expect(mockNavigate).toHaveBeenCalledWith('view_logs');
+		});
+
+		it('disables navigation while dashboard variables resolve', async () => {
+			mockResolved = { resolvedQuery: 'RESOLVED_QUERY', isResolving: true };
+			const user = userEvent.setup();
+			const { result } = renderHook(() => useDrilldown(tsPanel, 'p1'));
+			act(() =>
+				result.current.onPanelClick({
+					coordinates: { x: 1, y: 1 },
+					context: aggregateContext,
+				}),
+			);
+			render(<div>{result.current.contextMenuProps.items}</div>);
+
+			await user.click(screen.getByTestId('drilldown-view-logs'));
+			expect(mockNavigate).not.toHaveBeenCalled();
 		});
 	});
 });
