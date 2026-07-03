@@ -2,6 +2,7 @@
 // which steals input focus and dismisses on every keystroke. PopoverAnchor is a passive
 // positioning element that leaves the wrapped input fully interactive.
 import { ReactNode, useRef, useState } from 'react';
+import { Button } from '@signozhq/ui/button';
 import { Popover, PopoverAnchor, PopoverContent } from '@signozhq/ui/popover';
 import { Typography } from '@signozhq/ui/typography';
 
@@ -82,12 +83,15 @@ function VariablesPopover({
 						<div className={styles.empty}>No variables available</div>
 					) : (
 						variables.map((v) => (
-							<button
+							<Button
 								key={`${v.source}-${v.name}`}
 								type="button"
+								variant="ghost"
+								color="secondary"
+								size="md"
 								className={styles.item}
 								aria-label={`Insert {{${v.name}}}`}
-								data-testid={`context-link-variable-${v.name}`}
+								testId={`context-link-variable-${v.name}`}
 								// Prevent the input from losing focus when clicking an item.
 								onMouseDown={(e): void => e.preventDefault()}
 								onClick={(): void => {
@@ -101,7 +105,7 @@ function VariablesPopover({
 									>{`{{${v.name}}}`}</Typography.Text>
 									<Typography.Text className={styles.source}>{v.source}</Typography.Text>
 								</div>
-							</button>
+							</Button>
 						))
 					)}
 				</PopoverContent>

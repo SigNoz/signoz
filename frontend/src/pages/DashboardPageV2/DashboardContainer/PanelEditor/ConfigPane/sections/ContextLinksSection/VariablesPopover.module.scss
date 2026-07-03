@@ -23,25 +23,21 @@
 }
 
 .item {
-	all: unset;
-	display: block;
-	box-sizing: border-box;
-	width: 100%;
-	padding: 8px 12px;
-	cursor: pointer;
-	color: var(--text-vanilla-100);
-	font-size: 13px;
-	line-height: 1.4;
-	overflow: hidden;
+	--button-display: flex;
+	--button-justify-content: flex-start;
+	--button-height: auto;
+	--button-padding: 8px 12px;
+	--button-border-radius: 0;
+	--button-font-size: 13px;
+	--button-line-height: 1.4;
 
-	&:hover,
-	&:focus {
-		background-color: var(--bg-slate-400);
-	}
+	width: 100%;
+	overflow: hidden;
 }
 
 .row {
 	display: flex;
+	flex: 1 1 auto;
 	align-items: center;
 	justify-content: space-between;
 	gap: 8px;
@@ -58,10 +54,11 @@
 
 .name {
 	flex: 1 1 auto;
+	text-align: start;
 }
 
 .source {
-	color: var(--text-vanilla-400);
+	color: var(--l3-foreground);
 	font-size: 12px;
 	flex: 0 1 auto;
 }

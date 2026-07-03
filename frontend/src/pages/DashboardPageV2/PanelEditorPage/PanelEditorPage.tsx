@@ -6,12 +6,12 @@ import {
 	useParams,
 } from 'react-router-dom';
 import { Typography } from '@signozhq/ui/typography';
-import { useGetDashboardV2 } from 'api/generated/services/dashboard';
 import Spinner from 'components/Spinner';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 
+import { useDashboardV2 } from '../DashboardContainer/hooks/useDashboardV2';
 import { getPanelDefinition } from '../DashboardContainer/Panels/registry';
 import { buildPluginSpec } from '../DashboardContainer/Panels/utils/buildPluginSpec';
 import { buildDefaultQueries } from '../DashboardContainer/Panels/utils/buildDefaultQueries';
@@ -40,10 +40,7 @@ function PanelEditorPage(): JSX.Element {
 	// instead of the saved panel. Lost on refresh/new-tab, which falls back to saved.
 	const handoffSpec = (state as PanelEditorHandoffState | null)?.editSpec;
 
-	const { data, isLoading, isError, error } = useGetDashboardV2({
-		id: dashboardId,
-	});
-	const dashboard = data?.data;
+	const { dashboard, isLoading, isError, error } = useDashboardV2(dashboardId);
 
 	// A `panel/new?panelKind=…` route means "create": seed a default panel of that
 	// kind rather than looking one up. Persisted (with a real id) only on save.

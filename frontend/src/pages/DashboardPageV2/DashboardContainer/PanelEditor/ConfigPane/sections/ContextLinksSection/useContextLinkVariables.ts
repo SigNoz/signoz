@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
-import { useGetDashboardV2 } from 'api/generated/services/dashboard';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { dtoToFormModel } from 'pages/DashboardPageV2/DashboardContainer/DashboardSettings/Variables/variableAdapters';
+import { useDashboardV2 } from 'pages/DashboardPageV2/DashboardContainer/hooks/useDashboardV2';
 import { useDashboardStore } from 'pages/DashboardPageV2/DashboardContainer/store/useDashboardStore';
 
 import type { VariableItem } from './types';
@@ -24,15 +24,11 @@ export function useContextLinkVariables(): VariableItem[] {
 	const dashboardId = useDashboardStore((s) => s.dashboardId);
 	const { currentQuery } = useQueryBuilder();
 
-	const { data } = useGetDashboardV2(
-		{ id: dashboardId },
-		{ query: { enabled: !!dashboardId } },
-	);
-	const variableDtos = data?.data?.spec?.variables;
+	const { variables: variableDtos } = useDashboardV2(dashboardId);
 
 	const dashboardVariableNames = useMemo(
 		() =>
-			(variableDtos ?? [])
+			variableDtos
 				.map((dto) => dtoToFormModel(dto).name)
 				.filter((name): name is string => !!name),
 		[variableDtos],
