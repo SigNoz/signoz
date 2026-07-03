@@ -29,18 +29,18 @@ func (d *v1Decoder) convertV1Layouts(data StorableDashboardData, panels map[stri
 	// geometry is thrown away, not merged). Dedupe here, before sortByPosition,
 	// so "first" means first-in-stored-order as the frontend sees it — not
 	// topmost. Entries with no id are left for the main loop to drop.
-	seen := make(map[string]bool, len(layout))
-	deduped := layout[:0]
+	seenWidgetIds := make(map[string]bool, len(layout))
+	dedupedLayouts := layout[:0]
 	for _, item := range layout {
 		if id := d.readString(item, "i"); id != "" {
-			if seen[id] {
+			if seenWidgetIds[id] {
 				continue
 			}
-			seen[id] = true
+			seenWidgetIds[id] = true
 		}
-		deduped = append(deduped, item)
+		dedupedLayouts = append(dedupedLayouts, item)
 	}
-	layout = deduped
+	layout = dedupedLayouts
 
 	rows := d.extractRowsAndCollapsedWidgets(data)
 
