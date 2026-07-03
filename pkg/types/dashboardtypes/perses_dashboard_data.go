@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"slices"
+	"unicode/utf8"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	qb "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -48,6 +49,9 @@ func (d *DashboardSpec) UnmarshalJSON(data []byte) error {
 // ══════════════════════════════════════════════
 
 func (d *DashboardSpec) Validate() error {
+	if err := d.Display.Validate("dashboard", "spec.display.name"); err != nil {
+		return err
+	}
 	if err := d.validateVariables(); err != nil {
 		return err
 	}
@@ -62,14 +66,22 @@ func (d *DashboardSpec) validateVariables() error {
 	seen := make(map[string]struct{}, len(d.Variables))
 	for i, v := range d.Variables {
 		var name string
+		var err error
+		// Validated here, not by decodeSpec on decode, so variable errors surface from
+		// Validate() with clean messages (not buried under the decoder's "invalid
+		// dashboard spec" wrap) and also run for programmatically built specs (cloning).
+		path := fmt.Sprintf("spec.variables[%d]", i)
 		switch s := v.Spec.(type) {
 		case *ListVariableSpec:
-			name = s.Name
+			name, err = s.Name, s.validate(path)
 		case *TextVariableSpec:
-			name = s.Name
+			name, err = s.Name, s.validate(path)
 		default:
 			// Unreachable via UnmarshalJSON; reaching here means a Go caller broke the Kind/Spec pairing.
 			return errors.NewInternalf(errors.CodeInternal, "spec.variables[%d].spec: unexpected variable spec type %T", i, v.Spec)
+		}
+		if err != nil {
+			return err
 		}
 		if _, dup := seen[name]; dup {
 			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.variables[%d]: duplicate variable name %q", i, name)
@@ -88,6 +100,9 @@ func (d *DashboardSpec) validatePanels() error {
 			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.panels.%s: panel must not be null", key)
 		}
 		path := fmt.Sprintf("spec.panels.%s", key)
+		if err := panel.Spec.Display.Validate("panel", path+".spec.display.name"); err != nil {
+			return err
+		}
 		panelKind := panel.Spec.Plugin.Kind
 		if len(panel.Spec.Queries) != 1 {
 			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s.spec.queries: panel must have one query", path)
@@ -161,6 +176,11 @@ func (d *DashboardSpec) validateLayouts() error {
 		if !ok {
 			// Unreachable via UnmarshalJSON; reaching here means a Go caller broke the Kind/Spec pairing.
 			return errors.NewInternalf(errors.CodeInternal, "spec.layouts[%d].spec: unexpected layout spec type %T", li, layout.Spec)
+		}
+		if grid.Display != nil {
+			if n := utf8.RuneCountInString(grid.Display.Title); n > MaxDisplayNameLen {
+				return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.layouts[%d].spec.display.title: layout name must be at most %d characters, got %d", li, MaxDisplayNameLen, n)
+			}
 		}
 		if err := validateGridLayoutGeometry(grid, li); err != nil {
 			return err

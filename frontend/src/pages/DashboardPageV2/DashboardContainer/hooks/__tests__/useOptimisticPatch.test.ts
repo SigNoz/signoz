@@ -100,8 +100,23 @@ describe('useOptimisticPatch', () => {
 		expect(queryClient.setQueryData).not.toHaveBeenCalled();
 	});
 
-	it('onSettled invalidates the dashboard query to reconcile', () => {
-		captured.options.onSettled();
-		expect(queryClient.invalidateQueries).toHaveBeenCalledWith(QUERY_KEY);
+	it('onSuccess reconciles the cache from the PATCH response without a refetch', () => {
+		const response = {
+			data: { spec: { display: { name: 'B' } } },
+			status: 'success',
+		};
+		captured.options.onSuccess(response);
+
+		expect(queryClient.setQueryData).toHaveBeenCalledWith(
+			QUERY_KEY,
+			expect.any(Function),
+		);
+		// The updater merges the server data into the existing envelope.
+		const updater = queryClient.setQueryData.mock.calls[0][1];
+		expect(
+			updater({ data: { spec: { display: { name: 'A' } } }, foo: 1 }),
+		).toStrictEqual({ data: { spec: { display: { name: 'B' } } }, foo: 1 });
+		// No follow-up GET (that could read stale data and flicker the UI back).
+		expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
 	});
 });
