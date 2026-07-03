@@ -2,7 +2,6 @@ package dashboardtypes
 
 import (
 	"context"
-	"io"
 	"log/slog"
 	"regexp"
 	"strings"
@@ -23,7 +22,7 @@ import (
 // preV5Migrator runs transition's shape-safe (idempotent) v4→v5 upgrade. Stateless
 // after construction, so a shared instance with a discard logger / no ambiguity
 // keys is fine.
-var preV5Migrator = transition.NewDashboardMigrateV5(slog.New(slog.NewTextHandler(io.Discard, nil)), nil, nil)
+var preV5Migrator = transition.NewDashboardMigrateV5(slog.New(slog.DiscardHandler), nil, nil)
 
 // normalizePreV5QueryData upgrades one builder queryData/formula in place: the
 // shared migrator, then a reshape of any existing aggregations[] it leaves alone.
