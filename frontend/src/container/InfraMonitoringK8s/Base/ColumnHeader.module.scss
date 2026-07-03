@@ -1,8 +1,7 @@
-.entityGroupHeader {
-	display: flex;
+.columnHeader {
+	display: inline-flex;
 	align-items: center;
-	gap: var(--spacing-5);
-	padding-left: 4px;
+	gap: var(--spacing-2);
 }
 
 .infoIcon {
@@ -14,4 +13,9 @@
 	&:hover {
 		color: var(--text-slate-primary);
 	}
+}
+
+.columnHeaderLabel {
+	text-align: center;
+	padding: var(--spacing-2) var(--spacing-2) var(--spacing-2) 0px;
 }

@@ -5,6 +5,7 @@ import { InframonitoringtypesNodeRecordDTO } from 'api/generated/services/sigNoz
 import TanStackTable, { TableColumnDef } from 'components/TanStackTableView';
 import { ExpandButtonWrapper } from 'container/InfraMonitoringK8s/components';
 
+import ColumnHeader from '../Base/ColumnHeader';
 import EntityGroupHeader from '../Base/EntityGroupHeader';
 import K8sGroupCell from '../Base/K8sGroupCell';
 import { formatBytes, getPodPhaseStatusItems } from '../commonUtils';
@@ -44,7 +45,7 @@ export type NodeTableColumnConfig =
 export const k8sNodesColumnsConfig: NodeTableColumnConfig[] = [
 	{
 		id: 'nodeGroup',
-		header: (): React.ReactNode => <EntityGroupHeader title="NODE GROUP" />,
+		header: (): React.ReactNode => <EntityGroupHeader title="Node Group" />,
 		accessorFn: (row): string => row.nodeName || '',
 		width: { min: 300 },
 		enableSort: false,
@@ -69,6 +70,7 @@ export const k8sNodesColumnsConfig: NodeTableColumnConfig[] = [
 			<EntityGroupHeader
 				title="Node Name"
 				icon={<Workflow data-hide-expanded="true" size={14} />}
+				docPath="/infrastructure-monitoring/kubernetes/nodes#node-name"
 			/>
 		),
 		accessorFn: (row): string => row.nodeName || '',
@@ -89,7 +91,11 @@ export const k8sNodesColumnsConfig: NodeTableColumnConfig[] = [
 	},
 	{
 		id: 'condition',
-		header: 'Status',
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/nodes#node-condition">
+				Status
+			</ColumnHeader>
+		),
 		accessorFn: (row): string => row.condition,
 		width: { min: 120 },
 		enableSort: false,
@@ -124,7 +130,11 @@ export const k8sNodesColumnsConfig: NodeTableColumnConfig[] = [
 	},
 	{
 		id: 'podCountsByPhase',
-		header: 'Pod Phases',
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/nodes#pod-counts-by-phase">
+				Pod Phases
+			</ColumnHeader>
+		),
 		accessorFn: (row): InframonitoringtypesNodeRecordDTO['podCountsByPhase'] =>
 			row.podCountsByPhase,
 		width: { min: 250 },
@@ -141,20 +151,30 @@ export const k8sNodesColumnsConfig: NodeTableColumnConfig[] = [
 	},
 	{
 		id: 'clusterName',
-		header: 'Cluster Name',
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/nodes#cluster-name">
+				Cluster Name
+			</ColumnHeader>
+		),
 		accessorFn: (row): string =>
 			row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME] || '',
 		width: { min: 150, default: 150 },
 		enableSort: false,
+		defaultVisibility: false,
 		cell: ({ value }): React.ReactNode => (
 			<TanStackTable.Text>{value as string}</TanStackTable.Text>
 		),
 	},
 	{
 		id: 'cpu',
-		header: 'CPU Usage (cores)',
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/nodes#cpu-usage-cores">
+				CPU Usage
+				<br /> (cores)
+			</ColumnHeader>
+		),
 		accessorFn: (row): number => row.nodeCPU,
-		width: { min: 200, default: 200 },
+		width: { min: 160, default: 160 },
 		enableSort: true,
 		cell: ({ value }): React.ReactNode => {
 			const cpu = Number(value);
@@ -171,9 +191,14 @@ export const k8sNodesColumnsConfig: NodeTableColumnConfig[] = [
 	},
 	{
 		id: 'cpu_allocatable',
-		header: 'CPU Allocatable (cores)',
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/nodes#cpu-alloc-cores">
+				CPU Allocatable
+				<br /> (cores)
+			</ColumnHeader>
+		),
 		accessorFn: (row): number => row.nodeCPUAllocatable,
-		width: { min: 200, default: 200 },
+		width: { min: 160, default: 180 },
 		enableSort: true,
 		cell: ({ value }): React.ReactNode => {
 			const cpuAllocatable = Number(value);
@@ -190,9 +215,14 @@ export const k8sNodesColumnsConfig: NodeTableColumnConfig[] = [
 	},
 	{
 		id: 'memory',
-		header: 'Memory Usage (WSS)',
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/nodes#memory-usage-wss">
+				Memory Usage
+				<br /> (WSS)
+			</ColumnHeader>
+		),
 		accessorFn: (row): number => row.nodeMemory,
-		width: { min: 240, default: 240 },
+		width: { min: 220, default: 220 },
 		enableSort: true,
 		cell: ({ value }): React.ReactNode => {
 			const memory = value as number;
@@ -209,9 +239,14 @@ export const k8sNodesColumnsConfig: NodeTableColumnConfig[] = [
 	},
 	{
 		id: 'memory_allocatable',
-		header: 'Memory Allocatable',
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/nodes#memory-allocatable">
+				Memory
+				<br /> Allocatable
+			</ColumnHeader>
+		),
 		accessorFn: (row): number => row.nodeMemoryAllocatable,
-		width: { min: 240, default: 240 },
+		width: { min: 200, default: 200 },
 		enableSort: true,
 		cell: ({ value }): React.ReactNode => {
 			const memoryAllocatable = value as number;

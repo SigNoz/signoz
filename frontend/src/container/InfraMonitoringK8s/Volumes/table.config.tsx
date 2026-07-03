@@ -4,6 +4,7 @@ import { InframonitoringtypesVolumeRecordDTO } from 'api/generated/services/sigN
 import TanStackTable from 'components/TanStackTableView';
 import { ExpandButtonWrapper } from 'container/InfraMonitoringK8s/components';
 
+import ColumnHeader from '../Base/ColumnHeader';
 import EntityGroupHeader from '../Base/EntityGroupHeader';
 import K8sGroupCell from '../Base/K8sGroupCell';
 import { formatBytes } from '../commonUtils';
@@ -35,7 +36,7 @@ export type VolumeTableColumnConfig =
 export const k8sVolumesColumnsConfig: VolumeTableColumnConfig[] = [
 	{
 		id: 'volumeGroup',
-		header: (): React.ReactNode => <EntityGroupHeader title="VOLUME GROUP" />,
+		header: (): React.ReactNode => <EntityGroupHeader title="Volume Group" />,
 		accessorFn: (row): string => row.persistentVolumeClaimName || '',
 		width: { min: 300 },
 		enableSort: false,
@@ -60,6 +61,7 @@ export const k8sVolumesColumnsConfig: VolumeTableColumnConfig[] = [
 			<EntityGroupHeader
 				title="PVC Name"
 				icon={<HardDrive data-hide-expanded="true" size={14} />}
+				docPath="/infrastructure-monitoring/kubernetes/volumes#pvc-name"
 			/>
 		),
 		accessorFn: (row): string => row.persistentVolumeClaimName || '',
@@ -80,7 +82,11 @@ export const k8sVolumesColumnsConfig: VolumeTableColumnConfig[] = [
 	},
 	{
 		id: 'namespaceName',
-		header: 'Namespace Name',
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/volumes#namespace-name">
+				Namespace
+			</ColumnHeader>
+		),
 		accessorFn: (row): string =>
 			row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
 		width: { min: 220 },
@@ -96,7 +102,11 @@ export const k8sVolumesColumnsConfig: VolumeTableColumnConfig[] = [
 	},
 	{
 		id: 'capacity',
-		header: 'Capacity',
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/volumes#volume-capacity">
+				Capacity
+			</ColumnHeader>
+		),
 		accessorFn: (row): number => row.volumeCapacity,
 		width: { min: 140 },
 		enableSort: true,
@@ -115,7 +125,11 @@ export const k8sVolumesColumnsConfig: VolumeTableColumnConfig[] = [
 	},
 	{
 		id: 'usage',
-		header: 'Used',
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/volumes#volume-used">
+				Used
+			</ColumnHeader>
+		),
 		accessorFn: (row): number => row.volumeUsage,
 		width: { min: 140 },
 		enableSort: true,
@@ -134,7 +148,11 @@ export const k8sVolumesColumnsConfig: VolumeTableColumnConfig[] = [
 	},
 	{
 		id: 'available',
-		header: 'Available',
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/volumes#volume-available">
+				Available
+			</ColumnHeader>
+		),
 		accessorFn: (row): number => row.volumeAvailable,
 		width: { min: 140 },
 		enableSort: true,
@@ -153,7 +171,11 @@ export const k8sVolumesColumnsConfig: VolumeTableColumnConfig[] = [
 	},
 	{
 		id: 'inodes',
-		header: 'Inodes',
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/volumes#volume-inodes">
+				Inodes
+			</ColumnHeader>
+		),
 		accessorFn: (row): number => row.volumeInodes,
 		width: { min: 140 },
 		enableSort: true,
@@ -172,7 +194,11 @@ export const k8sVolumesColumnsConfig: VolumeTableColumnConfig[] = [
 	},
 	{
 		id: 'inodesUsed',
-		header: 'Inodes Used',
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/volumes#volume-inodes-used">
+				Inodes Used
+			</ColumnHeader>
+		),
 		accessorFn: (row): number => row.volumeInodesUsed,
 		width: { min: 160 },
 		enableSort: true,
@@ -191,7 +217,11 @@ export const k8sVolumesColumnsConfig: VolumeTableColumnConfig[] = [
 	},
 	{
 		id: 'inodesFree',
-		header: 'Inodes Free',
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/volumes#volume-inodes-free">
+				Inodes Free
+			</ColumnHeader>
+		),
 		accessorFn: (row): number => row.volumeInodesFree,
 		width: { min: 160 },
 		enableSort: true,

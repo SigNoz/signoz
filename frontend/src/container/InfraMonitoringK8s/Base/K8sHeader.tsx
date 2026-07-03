@@ -38,6 +38,7 @@ import {
 import K8sFiltersSidePanel from './K8sFiltersSidePanel';
 
 import styles from './K8sHeader.module.scss';
+import { TooltipSimple } from '@signozhq/ui/tooltip';
 
 interface K8sHeaderProps<TData> {
 	controlListPrefix?: React.ReactNode;
@@ -253,17 +254,19 @@ function K8sHeader<TData>({
 					className={styles.k8SRunButton}
 				/>
 
-				<Button
-					type="button"
-					variant="outlined"
-					size="icon"
-					color="secondary"
-					data-testid="k8s-list-filters-button"
-					onClick={(): void => setIsFiltersSidePanelOpen(true)}
-					className={styles.k8SFiltersButton}
-				>
-					<SlidersHorizontal size={14} />
-				</Button>
+				<TooltipSimple title="Click to add more columns to this table">
+					<Button
+						type="button"
+						variant="outlined"
+						size="icon"
+						color="secondary"
+						data-testid="k8s-list-filters-button"
+						onClick={(): void => setIsFiltersSidePanelOpen(true)}
+						className={styles.k8SFiltersButton}
+					>
+						<SlidersHorizontal size={14} />
+					</Button>
+				</TooltipSimple>
 			</div>
 
 			<div className={styles.k8SQbSearchContainer}>

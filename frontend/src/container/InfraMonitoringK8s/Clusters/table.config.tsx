@@ -6,6 +6,7 @@ import { TableColumnDef } from 'components/TanStackTableView';
 import TanStackTable from 'components/TanStackTableView';
 import { ExpandButtonWrapper } from 'container/InfraMonitoringK8s/components';
 
+import ColumnHeader from '../Base/ColumnHeader';
 import EntityGroupHeader from '../Base/EntityGroupHeader';
 import K8sGroupCell from '../Base/K8sGroupCell';
 import { formatBytes, getPodPhaseStatusItems } from '../commonUtils';
@@ -36,9 +37,9 @@ export type ClusterTableColumnConfig =
 export const k8sClustersColumnsConfig: ClusterTableColumnConfig[] = [
 	{
 		id: 'clusterGroup',
-		header: (): React.ReactNode => <EntityGroupHeader title="CLUSTER GROUP" />,
+		header: (): React.ReactNode => <EntityGroupHeader title="Cluster Group" />,
 		accessorFn: (row): string => row.clusterName || '',
-		width: { min: 300 },
+		width: { min: 210 },
 		enableSort: false,
 		enableRemove: false,
 		enableMove: false,
@@ -61,10 +62,11 @@ export const k8sClustersColumnsConfig: ClusterTableColumnConfig[] = [
 			<EntityGroupHeader
 				title="Cluster Name"
 				icon={<Boxes data-hide-expanded="true" size={14} />}
+				docPath="/infrastructure-monitoring/kubernetes/clusters#cluster-name"
 			/>
 		),
 		accessorFn: (row): string => row.clusterName || '',
-		width: { min: 290 },
+		width: { min: 200 },
 		enableSort: false,
 		enableRemove: false,
 		enableMove: false,
@@ -80,106 +82,17 @@ export const k8sClustersColumnsConfig: ClusterTableColumnConfig[] = [
 		},
 	},
 	{
-		id: 'podCountsByPhase',
-		header: 'Pod Phases',
-		accessorFn: (row): InframonitoringtypesClusterRecordDTO['podCountsByPhase'] =>
-			row.podCountsByPhase,
-		width: { min: 250 },
-		enableSort: false,
-		cell: ({ row }): React.ReactNode => {
-			const podCountsByPhase = row.podCountsByPhase;
-			if (!podCountsByPhase) {
-				return <TanStackTable.Text>-</TanStackTable.Text>;
-			}
-			return (
-				<GroupedStatusCounts items={getPodPhaseStatusItems(row.podCountsByPhase)} />
-			);
-		},
-	},
-	{
-		id: 'cpu',
-		header: 'CPU Usage (cores)',
-		accessorFn: (row): number => row.clusterCPU,
-		width: { min: 220 },
-		enableSort: true,
-		cell: ({ value }): React.ReactNode => {
-			const cpu = Number(value);
-			return (
-				<ValidateColumnValueWrapper
-					value={cpu}
-					entity={InfraMonitoringEntity.CLUSTERS}
-					attribute="CPU metric"
-				>
-					<TanStackTable.Text>{cpu.toFixed(2)}</TanStackTable.Text>
-				</ValidateColumnValueWrapper>
-			);
-		},
-	},
-	{
-		id: 'cpu_allocatable',
-		header: 'CPU Allocatable (cores)',
-		accessorFn: (row): number => row.clusterCPUAllocatable,
-		width: { min: 220 },
-		enableSort: true,
-		cell: ({ value }): React.ReactNode => {
-			const cpuAllocatable = Number(value);
-			return (
-				<ValidateColumnValueWrapper
-					value={cpuAllocatable}
-					entity={InfraMonitoringEntity.CLUSTERS}
-					attribute="CPU allocatable metric"
-				>
-					<TanStackTable.Text>{cpuAllocatable.toFixed(2)}</TanStackTable.Text>
-				</ValidateColumnValueWrapper>
-			);
-		},
-	},
-	{
-		id: 'memory',
-		header: 'Memory Usage (WSS)',
-		accessorFn: (row): number => row.clusterMemory,
-		width: { min: 220 },
-		enableSort: true,
-		cell: ({ value }): React.ReactNode => {
-			const memory = value as number;
-			return (
-				<ValidateColumnValueWrapper
-					value={memory}
-					entity={InfraMonitoringEntity.CLUSTERS}
-					attribute="memory metric"
-				>
-					<TanStackTable.Text>{formatBytes(memory)}</TanStackTable.Text>
-				</ValidateColumnValueWrapper>
-			);
-		},
-	},
-	{
-		id: 'memory_allocatable',
-		header: 'Memory Allocatable',
-		accessorFn: (row): number => row.clusterMemoryAllocatable,
-		width: { min: 220 },
-		enableSort: true,
-		cell: ({ value }): React.ReactNode => {
-			const memoryAllocatable = value as number;
-			return (
-				<ValidateColumnValueWrapper
-					value={memoryAllocatable}
-					entity={InfraMonitoringEntity.CLUSTERS}
-					attribute="memory allocatable metric"
-				>
-					<TanStackTable.Text>{formatBytes(memoryAllocatable)}</TanStackTable.Text>
-				</ValidateColumnValueWrapper>
-			);
-		},
-	},
-	{
 		id: 'nodeCountsByReadiness',
-		header: 'Node Readiness',
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/clusters#node-readiness">
+				Node Readiness
+			</ColumnHeader>
+		),
 		accessorFn: (
 			row,
 		): InframonitoringtypesClusterRecordDTO['nodeCountsByReadiness'] =>
 			row.nodeCountsByReadiness,
-		width: { min: 210 },
+		width: { min: 180 },
 		enableSort: false,
 		cell: ({ row }): React.ReactNode => {
 			if (!row.nodeCountsByReadiness) {
@@ -201,6 +114,123 @@ export const k8sClustersColumnsConfig: ClusterTableColumnConfig[] = [
 						},
 					]}
 				/>
+			);
+		},
+	},
+	{
+		id: 'podCountsByPhase',
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/clusters#pod-counts-by-phase">
+				Pod Phases
+			</ColumnHeader>
+		),
+		accessorFn: (row): InframonitoringtypesClusterRecordDTO['podCountsByPhase'] =>
+			row.podCountsByPhase,
+		width: { min: 250 },
+		enableSort: false,
+		cell: ({ row }): React.ReactNode => {
+			const podCountsByPhase = row.podCountsByPhase;
+			if (!podCountsByPhase) {
+				return <TanStackTable.Text>-</TanStackTable.Text>;
+			}
+			return (
+				<GroupedStatusCounts items={getPodPhaseStatusItems(row.podCountsByPhase)} />
+			);
+		},
+	},
+	{
+		id: 'cpu',
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/clusters#cpu-usage-cores">
+				CPU Usage
+				<br /> (cores)
+			</ColumnHeader>
+		),
+		accessorFn: (row): number => row.clusterCPU,
+		width: { min: 160 },
+		enableSort: true,
+		cell: ({ value }): React.ReactNode => {
+			const cpu = Number(value);
+			return (
+				<ValidateColumnValueWrapper
+					value={cpu}
+					entity={InfraMonitoringEntity.CLUSTERS}
+					attribute="CPU metric"
+				>
+					<TanStackTable.Text>{cpu.toFixed(2)}</TanStackTable.Text>
+				</ValidateColumnValueWrapper>
+			);
+		},
+	},
+	{
+		id: 'cpu_allocatable',
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/clusters#cpu-alloc-cores">
+				CPU Allocatable
+				<br /> (cores)
+			</ColumnHeader>
+		),
+		accessorFn: (row): number => row.clusterCPUAllocatable,
+		width: { min: 200 },
+		enableSort: true,
+		cell: ({ value }): React.ReactNode => {
+			const cpuAllocatable = Number(value);
+			return (
+				<ValidateColumnValueWrapper
+					value={cpuAllocatable}
+					entity={InfraMonitoringEntity.CLUSTERS}
+					attribute="CPU allocatable metric"
+				>
+					<TanStackTable.Text>{cpuAllocatable.toFixed(2)}</TanStackTable.Text>
+				</ValidateColumnValueWrapper>
+			);
+		},
+	},
+	{
+		id: 'memory',
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/clusters#memory-usage-wss">
+				Memory Usage
+				<br /> (WSS)
+			</ColumnHeader>
+		),
+		accessorFn: (row): number => row.clusterMemory,
+		width: { min: 180 },
+		enableSort: true,
+		cell: ({ value }): React.ReactNode => {
+			const memory = value as number;
+			return (
+				<ValidateColumnValueWrapper
+					value={memory}
+					entity={InfraMonitoringEntity.CLUSTERS}
+					attribute="memory metric"
+				>
+					<TanStackTable.Text>{formatBytes(memory)}</TanStackTable.Text>
+				</ValidateColumnValueWrapper>
+			);
+		},
+	},
+	{
+		id: 'memory_allocatable',
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/clusters#memory-allocatable">
+				Memory
+				<br /> Allocatable
+			</ColumnHeader>
+		),
+		accessorFn: (row): number => row.clusterMemoryAllocatable,
+		width: { min: 180 },
+		enableSort: true,
+		cell: ({ value }): React.ReactNode => {
+			const memoryAllocatable = value as number;
+			return (
+				<ValidateColumnValueWrapper
+					value={memoryAllocatable}
+					entity={InfraMonitoringEntity.CLUSTERS}
+					attribute="memory allocatable metric"
+				>
+					<TanStackTable.Text>{formatBytes(memoryAllocatable)}</TanStackTable.Text>
+				</ValidateColumnValueWrapper>
 			);
 		},
 	},

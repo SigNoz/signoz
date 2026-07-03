@@ -1,8 +1,10 @@
+import { Color } from '@signozhq/design-tokens';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { InframonitoringtypesJobRecordDTO } from 'api/generated/services/sigNoz.schemas';
 import TanStackTable, { TableColumnDef } from 'components/TanStackTableView';
 import { ExpandButtonWrapper } from 'container/InfraMonitoringK8s/components';
 
+import ColumnHeader from '../Base/ColumnHeader';
 import EntityGroupHeader from '../Base/EntityGroupHeader';
 import K8sGroupCell from '../Base/K8sGroupCell';
 import { formatBytes, getPodPhaseStatusItems } from '../commonUtils';
@@ -34,7 +36,7 @@ export type JobTableColumnConfig =
 export const k8sJobsColumnsConfig: JobTableColumnConfig[] = [
 	{
 		id: 'jobGroup',
-		header: (): React.ReactNode => <EntityGroupHeader title="JOB GROUP" />,
+		header: (): React.ReactNode => <EntityGroupHeader title="Job Group" />,
 		accessorFn: (row): string =>
 			row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_JOB_NAME] || '',
 		width: { min: 270 },
@@ -60,6 +62,7 @@ export const k8sJobsColumnsConfig: JobTableColumnConfig[] = [
 			<EntityGroupHeader
 				title="Job Name"
 				icon={<Bolt data-hide-expanded="true" size={14} />}
+				docPath="/infrastructure-monitoring/kubernetes/jobs#job-name"
 			/>
 		),
 		accessorFn: (row): string =>
@@ -81,11 +84,16 @@ export const k8sJobsColumnsConfig: JobTableColumnConfig[] = [
 	},
 	{
 		id: 'namespaceName',
-		header: 'Namespace Name',
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/jobs#namespace-name">
+				Namespace Name
+			</ColumnHeader>
+		),
 		accessorFn: (row): string =>
 			row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
 		width: { default: 150 },
 		enableSort: false,
+		enableResize: true,
 		cell: ({ value }): React.ReactNode => {
 			const namespaceName = value as string;
 			return (
@@ -97,7 +105,11 @@ export const k8sJobsColumnsConfig: JobTableColumnConfig[] = [
 	},
 	{
 		id: 'pod_counts_by_phase',
-		header: 'Pod Phases',
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/jobs#pod-counts-by-phase">
+				Pod Phases
+			</ColumnHeader>
+		),
 		accessorFn: (row): InframonitoringtypesJobRecordDTO['podCountsByPhase'] =>
 			row.podCountsByPhase,
 		width: { min: 250 },
@@ -114,87 +126,48 @@ export const k8sJobsColumnsConfig: JobTableColumnConfig[] = [
 		},
 	},
 	{
-		id: 'successful_pods',
-		header: 'Successful Pods',
+		id: 'completion_status',
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/jobs#completion-status">
+				Completion Status
+			</ColumnHeader>
+		),
 		accessorFn: (row): number => row.successfulPods,
-		width: { min: 120 },
-		enableSort: true,
-		cell: ({ value }): React.ReactNode => {
-			const successfulPods = value as number;
-			return (
-				<ValidateColumnValueWrapper
-					value={successfulPods}
-					entity={InfraMonitoringEntity.JOBS}
-					attribute="successful pod"
-				>
-					<TanStackTable.Text>{successfulPods}</TanStackTable.Text>
-				</ValidateColumnValueWrapper>
-			);
-		},
-	},
-	{
-		id: 'failed_pods',
-		header: 'Failed Pods',
-		accessorFn: (row): number => row.failedPods,
-		width: { min: 100 },
-		enableSort: true,
-		cell: ({ value }): React.ReactNode => {
-			const failedPods = value as number;
-			return (
-				<ValidateColumnValueWrapper
-					value={failedPods}
-					entity={InfraMonitoringEntity.JOBS}
-					attribute="failed pod"
-				>
-					<TanStackTable.Text>{failedPods}</TanStackTable.Text>
-				</ValidateColumnValueWrapper>
-			);
-		},
-	},
-	{
-		id: 'desired_successful_pods',
-		header: 'Desired Successful Pods',
-		accessorFn: (row): number => row.desiredSuccessfulPods,
-		width: { min: 160 },
-		enableSort: true,
-		cell: ({ value }): React.ReactNode => {
-			const desiredSuccessfulPods = value as number;
-			return (
-				<ValidateColumnValueWrapper
-					value={desiredSuccessfulPods}
-					entity={InfraMonitoringEntity.JOBS}
-					attribute="desired successful pod"
-				>
-					<TanStackTable.Text>{desiredSuccessfulPods}</TanStackTable.Text>
-				</ValidateColumnValueWrapper>
-			);
-		},
-	},
-	{
-		id: 'active_pods',
-		header: 'Active Pods',
-		accessorFn: (row): number => row.activePods,
-		width: { min: 100 },
-		enableSort: true,
-		cell: ({ value }): React.ReactNode => {
-			const activePods = value as number;
-			return (
-				<ValidateColumnValueWrapper
-					value={activePods}
-					entity={InfraMonitoringEntity.JOBS}
-					attribute="active pod"
-				>
-					<TanStackTable.Text>{activePods}</TanStackTable.Text>
-				</ValidateColumnValueWrapper>
-			);
-		},
+		width: { min: 210 },
+		enableSort: false,
+		enableResize: true,
+		cell: ({ row }): React.ReactNode => (
+			<GroupedStatusCounts
+				items={[
+					{ value: row.activePods, label: 'Active', color: Color.BG_ROBIN_500 },
+					{ value: row.failedPods, label: 'Failed', color: Color.BG_CHERRY_500 },
+					{
+						value: row.successfulPods,
+						label: 'Successful',
+						color: Color.BG_FOREST_500,
+					},
+					{
+						value: row.desiredSuccessfulPods,
+						label: 'Desired',
+						color: Color.BG_ROBIN_500,
+					},
+				]}
+			/>
+		),
 	},
 	{
 		id: 'cpu_request',
-		header: 'CPU Req Usage (%)',
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/jobs#cpu-req-usage-">
+				CPU Request
+				<br /> Usage (%)
+			</ColumnHeader>
+		),
 		accessorFn: (row): number => row.jobCPURequest,
 		width: { min: 200, default: 200 },
 		enableSort: true,
+		enableResize: true,
+		defaultVisibility: false,
 		cell: ({ value }): React.ReactNode => {
 			const cpuRequest = value as number;
 			return (
@@ -210,10 +183,16 @@ export const k8sJobsColumnsConfig: JobTableColumnConfig[] = [
 	},
 	{
 		id: 'cpu_limit',
-		header: 'CPU Limit Usage (%)',
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/jobs#cpu-limit-usage-">
+				CPU Limit
+				<br /> Usage (%)
+			</ColumnHeader>
+		),
 		accessorFn: (row): number => row.jobCPULimit,
 		width: { min: 200, default: 200 },
 		enableSort: true,
+		enableResize: true,
 		cell: ({ value }): React.ReactNode => {
 			const cpuLimit = value as number;
 			return (
@@ -229,10 +208,16 @@ export const k8sJobsColumnsConfig: JobTableColumnConfig[] = [
 	},
 	{
 		id: 'cpu',
-		header: 'CPU Usage (cores)',
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/jobs#cpu-usage-cores">
+				CPU Usage
+				<br /> (cores)
+			</ColumnHeader>
+		),
 		accessorFn: (row): number => row.jobCPU,
-		width: { min: 190 },
+		width: { min: 160 },
 		enableSort: true,
+		enableResize: true,
 		cell: ({ value }): React.ReactNode => {
 			const cpu = Number(value);
 			return (
@@ -248,10 +233,17 @@ export const k8sJobsColumnsConfig: JobTableColumnConfig[] = [
 	},
 	{
 		id: 'memory_request',
-		header: 'Mem Req Usage (%)',
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/jobs#mem-req-usage-">
+				Memory Request
+				<br /> Usage (%)
+			</ColumnHeader>
+		),
 		accessorFn: (row): number => row.jobMemoryRequest,
 		width: { min: 190 },
 		enableSort: true,
+		enableResize: true,
+		defaultVisibility: false,
 		cell: ({ value }): React.ReactNode => {
 			const memoryRequest = value as number;
 			return (
@@ -267,10 +259,16 @@ export const k8sJobsColumnsConfig: JobTableColumnConfig[] = [
 	},
 	{
 		id: 'memory_limit',
-		header: 'Mem Limit Usage (%)',
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/jobs#mem-limit-usage-">
+				Memory Limit
+				<br /> Usage (%)
+			</ColumnHeader>
+		),
 		accessorFn: (row): number => row.jobMemoryLimit,
 		width: { min: 180 },
 		enableSort: true,
+		enableResize: true,
 		cell: ({ value }): React.ReactNode => {
 			const memoryLimit = value as number;
 			return (
@@ -286,10 +284,16 @@ export const k8sJobsColumnsConfig: JobTableColumnConfig[] = [
 	},
 	{
 		id: 'memory',
-		header: 'Mem Usage (WSS)',
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/jobs#mem-usage-wss">
+				Memory Usage
+				<br /> (WSS)
+			</ColumnHeader>
+		),
 		accessorFn: (row): number => row.jobMemory,
 		width: { min: 160 },
 		enableSort: true,
+		enableResize: true,
 		cell: ({ value }): React.ReactNode => {
 			const memory = value as number;
 			return (
@@ -299,6 +303,102 @@ export const k8sJobsColumnsConfig: JobTableColumnConfig[] = [
 					attribute="memory metric"
 				>
 					<TanStackTable.Text>{formatBytes(memory)}</TanStackTable.Text>
+				</ValidateColumnValueWrapper>
+			);
+		},
+	},
+	{
+		id: 'active_pods',
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/jobs#active">
+				Active Pods
+			</ColumnHeader>
+		),
+		accessorFn: (row): number => row.activePods,
+		width: { min: 100 },
+		enableSort: true,
+		defaultVisibility: false,
+		cell: ({ value }): React.ReactNode => {
+			const activePods = value as number;
+			return (
+				<ValidateColumnValueWrapper
+					value={activePods}
+					entity={InfraMonitoringEntity.JOBS}
+					attribute="active pod"
+				>
+					<TanStackTable.Text>{activePods}</TanStackTable.Text>
+				</ValidateColumnValueWrapper>
+			);
+		},
+	},
+	{
+		id: 'failed_pods',
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/jobs#failed">
+				Failed Pods
+			</ColumnHeader>
+		),
+		accessorFn: (row): number => row.failedPods,
+		width: { min: 100 },
+		enableSort: true,
+		defaultVisibility: false,
+		cell: ({ value }): React.ReactNode => {
+			const failedPods = value as number;
+			return (
+				<ValidateColumnValueWrapper
+					value={failedPods}
+					entity={InfraMonitoringEntity.JOBS}
+					attribute="failed pod"
+				>
+					<TanStackTable.Text>{failedPods}</TanStackTable.Text>
+				</ValidateColumnValueWrapper>
+			);
+		},
+	},
+	{
+		id: 'successful_pods',
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/jobs#successful">
+				Successful Pods
+			</ColumnHeader>
+		),
+		accessorFn: (row): number => row.successfulPods,
+		width: { min: 120 },
+		enableSort: true,
+		defaultVisibility: false,
+		cell: ({ value }): React.ReactNode => {
+			const successfulPods = value as number;
+			return (
+				<ValidateColumnValueWrapper
+					value={successfulPods}
+					entity={InfraMonitoringEntity.JOBS}
+					attribute="successful pod"
+				>
+					<TanStackTable.Text>{successfulPods}</TanStackTable.Text>
+				</ValidateColumnValueWrapper>
+			);
+		},
+	},
+	{
+		id: 'desired_successful_pods',
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/jobs#desired-successful">
+				Desired Successful Pods
+			</ColumnHeader>
+		),
+		accessorFn: (row): number => row.desiredSuccessfulPods,
+		width: { min: 160 },
+		enableSort: true,
+		defaultVisibility: false,
+		cell: ({ value }): React.ReactNode => {
+			const desiredSuccessfulPods = value as number;
+			return (
+				<ValidateColumnValueWrapper
+					value={desiredSuccessfulPods}
+					entity={InfraMonitoringEntity.JOBS}
+					attribute="desired successful pod"
+				>
+					<TanStackTable.Text>{desiredSuccessfulPods}</TanStackTable.Text>
 				</ValidateColumnValueWrapper>
 			);
 		},

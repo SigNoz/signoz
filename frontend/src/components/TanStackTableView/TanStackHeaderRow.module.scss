@@ -251,6 +251,7 @@
 	text-overflow: ellipsis;
 	white-space: nowrap;
 	min-width: 0;
+	width: var(--tanstack-table-header-label-width);
 }
 
 .tanstackSortIndicator {

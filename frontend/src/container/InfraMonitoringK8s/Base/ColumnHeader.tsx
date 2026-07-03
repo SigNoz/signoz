@@ -1,23 +1,43 @@
-import { Group, Info } from '@signozhq/icons';
+import { Info } from '@signozhq/icons';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
 
-import styles from './EntityGroupHeader.module.scss';
-
+import styles from './ColumnHeader.module.scss';
+import cx from 'classnames';
 const DOCS_BASE_URL = 'https://signoz.io/docs';
 
-interface EntityGroupHeaderProps {
-	title: string;
-	icon?: React.ReactNode;
+interface ColumnHeaderProps {
+	children?: React.ReactNode;
+	title?: string;
 	docPath?: string;
 	tooltip?: string;
+	className?: string;
 }
 
-function EntityGroupHeader({
+function ColumnHeader({
+	children,
 	title,
-	icon,
 	docPath,
 	tooltip,
-}: EntityGroupHeaderProps): JSX.Element {
+	className,
+}: ColumnHeaderProps): JSX.Element {
+	const renderContent = (): React.ReactNode => {
+		if (children) {
+			return children;
+		}
+
+		if (title) {
+			const parts = title.split('\n');
+			return parts.map((part, index) => (
+				<span key={`${part}-${index}`}>
+					{part}
+					{index < parts.length - 1 && <br />}
+				</span>
+			));
+		}
+
+		return null;
+	};
+
 	const renderInfoIcon = (): React.ReactNode => {
 		if (docPath) {
 			const tooltipTitle = tooltip || 'Not sure what this means?';
@@ -59,11 +79,11 @@ function EntityGroupHeader({
 	};
 
 	return (
-		<div className={styles.entityGroupHeader}>
-			{icon || <Group size={14} data-hide-expanded="true" />} {title}
+		<div className={cx(styles.columnHeader, className)}>
+			<span className={styles.columnHeaderLabel}>{renderContent()}</span>
 			{renderInfoIcon()}
 		</div>
 	);
 }
 
-export default EntityGroupHeader;
+export default ColumnHeader;

@@ -1,7 +1,6 @@
 import React from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { Container, Info } from '@signozhq/icons';
-import { Tooltip } from 'antd';
+import { Container } from '@signozhq/icons';
 import {
 	InframonitoringtypesHostRecordDTO,
 	InframonitoringtypesHostStatusDTO,
@@ -19,6 +18,7 @@ import {
 	InfraMonitoringEntity,
 } from 'container/InfraMonitoringK8s/constants';
 import { useInfraMonitoringGroupBy } from 'container/InfraMonitoringK8s/hooks';
+import ColumnHeader from 'container/InfraMonitoringK8s/Base/ColumnHeader';
 import EntityGroupHeader from 'container/InfraMonitoringK8s/Base/EntityGroupHeader';
 
 import { HostnameCell } from './utils';
@@ -83,7 +83,7 @@ export type HostColumnConfigType =
 export const hostColumnsConfig: HostColumnConfigType[] = [
 	{
 		id: 'hostGroup',
-		header: (): React.ReactNode => <EntityGroupHeader title="HOST GROUP" />,
+		header: (): React.ReactNode => <EntityGroupHeader title="Host Group" />,
 		accessorFn: (row): string => row.hostName ?? '',
 		width: { min: 300 },
 		enableSort: false,
@@ -116,12 +116,12 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 	{
 		id: 'status',
 		header: (): React.ReactNode => (
-			<div className={styles.statusHeader}>
+			<ColumnHeader
+				tooltip="Sent system metrics in last 10 mins."
+				docPath="/infrastructure-monitoring/host-monitoring#status"
+			>
 				Status
-				<Tooltip title="Sent system metrics in last 10 mins">
-					<Info size="md" />
-				</Tooltip>
-			</div>
+			</ColumnHeader>
 		),
 		accessorFn: (row): string => row.status,
 		width: { min: 180, default: 180 },
@@ -163,7 +163,9 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 	{
 		id: 'cpu',
 		header: (): React.ReactNode => (
-			<div className={styles.columnHeaderRight}>CPU Usage</div>
+			<ColumnHeader docPath="/infrastructure-monitoring/host-monitoring#cpu-usage">
+				CPU Usage
+			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.cpu,
 		width: { min: 220 },
@@ -186,15 +188,16 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 	{
 		id: 'memory',
 		header: (): React.ReactNode => (
-			<div className={`${styles.columnHeaderRight} ${styles.memoryUsageHeader}`}>
-				Memory Usage
-				<Tooltip title="Excluding cache memory">
-					<Info size="md" />
-				</Tooltip>
-			</div>
+			<ColumnHeader
+				tooltip="Excluding cache memory."
+				docPath="/infrastructure-monitoring/host-monitoring#memory-usage"
+				className={styles.memoryUsageHeader}
+			>
+				Memory Usage (WSS)
+			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.memory,
-		width: { min: 220 },
+		width: { min: 240 },
 		enableSort: true,
 		cell: ({ value }): React.ReactNode => {
 			const memory = value as number;
@@ -214,7 +217,9 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 	{
 		id: 'wait',
 		header: (): React.ReactNode => (
-			<div className={styles.columnHeaderRight}>IOWait</div>
+			<ColumnHeader docPath="/infrastructure-monitoring/host-monitoring#iowait">
+				IOWait
+			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.wait,
 		width: { min: 100, default: 100 },
@@ -238,7 +243,9 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 	{
 		id: 'load15',
 		header: (): React.ReactNode => (
-			<div className={styles.columnHeaderRight}>Load Avg (15min)</div>
+			<ColumnHeader docPath="/infrastructure-monitoring/host-monitoring#load-avg">
+				Load Avg (15min)
+			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.load15,
 		width: { min: 170, default: 100 },
@@ -260,7 +267,9 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 	{
 		id: 'diskUsage',
 		header: (): React.ReactNode => (
-			<div className={styles.columnHeaderRight}>Disk Usage</div>
+			<ColumnHeader docPath="/infrastructure-monitoring/host-monitoring#disk-usage">
+				Disk Usage
+			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.diskUsage,
 		width: { min: 120, default: 120 },
