@@ -71,10 +71,8 @@ function PreviewPane({
 			<div className={styles.container}>
 				<div className={styles.surface}>
 					<PanelHeader
-						name={panel.spec.display.name}
-						description={panel.spec.display.description}
 						panelId={panelId}
-						panelKind={panel.spec.plugin.kind}
+						panel={panel}
 						isFetching={isFetching}
 						error={error}
 						warning={data.response?.data?.warning}

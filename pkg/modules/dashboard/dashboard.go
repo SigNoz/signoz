@@ -49,7 +49,7 @@ type Module interface {
 	// DeleteUnsafe deletes a dashboard bypassing the guards. Intended for internal system callers.
 	DeleteUnsafe(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error
 
-	GetByMetricNames(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string][]map[string]string, error)
+	GetByMetricNames(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string][]dashboardtypes.DashboardPanelRef, error)
 
 	statsreporter.StatsCollector
 

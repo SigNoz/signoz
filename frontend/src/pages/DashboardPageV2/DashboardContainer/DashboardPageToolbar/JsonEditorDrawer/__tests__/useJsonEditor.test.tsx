@@ -44,7 +44,9 @@ const dashboard = {
 	},
 } as unknown as DashboardtypesGettableDashboardV2DTO;
 
-const serialized = JSON.stringify(dashboard, null, 2);
+// The editor only exposes `tags` and `spec`; every other key is redacted.
+const redacted = { tags: dashboard.tags, spec: dashboard.spec };
+const serialized = JSON.stringify(redacted, null, 2);
 
 describe('useJsonEditor', () => {
 	beforeEach(() => {
@@ -61,6 +63,19 @@ describe('useJsonEditor', () => {
 		expect(result.current.isDirty).toBe(false);
 		expect(result.current.validity.valid).toBe(true);
 		expect(result.current.validity.lineCount).toBe(serialized.split('\n').length);
+	});
+
+	it('redacts server-owned keys from the editable draft', () => {
+		const { result } = renderHook(() =>
+			useJsonEditor({ dashboard, isOpen: true, onApplied: jest.fn() }),
+		);
+
+		const parsed = JSON.parse(result.current.draft);
+		expect(Object.keys(parsed).sort()).toStrictEqual(['spec', 'tags']);
+		expect(parsed.id).toBeUndefined();
+		expect(parsed.name).toBeUndefined();
+		expect(parsed.schemaVersion).toBeUndefined();
+		expect(parsed.image).toBeUndefined();
 	});
 
 	it('flags invalid JSON with a line number and marks the draft dirty', () => {
@@ -119,14 +134,23 @@ describe('useJsonEditor', () => {
 		expect(mockUpdate).not.toHaveBeenCalled();
 	});
 
-	it('apply() PUTs the narrowed body, toasts, refetches and calls onApplied', async () => {
+	it('apply() PUTs the edited spec/tags while preserving redacted keys, toasts, refetches and calls onApplied', async () => {
 		const onApplied = jest.fn();
 		const { result } = renderHook(() =>
 			useJsonEditor({ dashboard, isOpen: true, onApplied }),
 		);
 
-		const next = { ...dashboard, name: 'Renamed' };
-		act(() => result.current.setDraft(JSON.stringify(next)));
+		// Edit only what the redacted view exposes (spec/tags).
+		const editedSpec = {
+			...dashboard.spec,
+			display: { name: 'Renamed' },
+		};
+		const editedTags = [{ key: 'env', value: 'staging' }];
+		act(() =>
+			result.current.setDraft(
+				JSON.stringify({ tags: editedTags, spec: editedSpec }),
+			),
+		);
 		await act(async () => {
 			await result.current.apply();
 		});
@@ -135,10 +159,13 @@ describe('useJsonEditor', () => {
 		expect(mockUpdate).toHaveBeenCalledWith(
 			{ id: 'dash-1' },
 			expect.objectContaining({
-				name: 'Renamed',
+				// preserved from the original dashboard (redacted from the editor)
+				name: 'My dashboard',
 				schemaVersion: 'v6',
-				spec: next.spec,
-				tags: next.tags,
+				image: 'icon.png',
+				// edited via the draft
+				spec: editedSpec,
+				tags: editedTags,
 			}),
 		);
 		expect(mockToastSuccess).toHaveBeenCalled();

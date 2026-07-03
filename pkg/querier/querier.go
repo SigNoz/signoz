@@ -413,7 +413,7 @@ func (q *querier) resolveMetricMetadata(ctx context.Context, orgID valuer.UUID, 
 
 	// Classify each missing metric: never-seen -> warning with empty result;
 	// seen-but-no-data-in-window -> dormant warning.
-	lastSeenInfo, _ := q.metadataStore.FetchLastSeenInfoMulti(ctx, externalMissingMetrics...)
+	lastSeenInfo, _ := q.metadataStore.FetchLastSeenInfoMulti(ctx, orgID, externalMissingMetrics...)
 	var nonExistentMetrics []string
 	var dormantMetrics []string
 	for _, name := range externalMissingMetrics {

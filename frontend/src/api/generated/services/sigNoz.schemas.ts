@@ -2230,13 +2230,6 @@ export interface AuthtypesOrgSessionContextDTO {
 	warning?: ErrorsJSONDTO;
 }
 
-export interface AuthtypesPatchableRoleDTO {
-	/**
-	 * @type string
-	 */
-	description: string;
-}
-
 export interface AuthtypesPostableAuthDomainDTO {
 	config?: AuthtypesAuthDomainConfigDTO;
 	/**
@@ -2630,9 +2623,25 @@ export interface CloudintegrationtypesAzureAccountConfigDTO {
 	resourceGroups: string[];
 }
 
+export interface CloudintegrationtypesGCPAccountConfigDTO {
+	/**
+	 * @type string
+	 */
+	deploymentProjectId: string;
+	/**
+	 * @type string
+	 */
+	deploymentRegion: string;
+	/**
+	 * @type array
+	 */
+	projectIds: string[];
+}
+
 export interface CloudintegrationtypesAccountConfigDTO {
 	aws?: CloudintegrationtypesAWSAccountConfigDTO;
 	azure?: CloudintegrationtypesAzureAccountConfigDTO;
+	gcp?: CloudintegrationtypesGCPAccountConfigDTO;
 }
 
 export interface CloudintegrationtypesAccountDTO {
@@ -2740,9 +2749,29 @@ export interface CloudintegrationtypesAzureServiceConfigDTO {
 	metrics: CloudintegrationtypesAzureServiceMetricsConfigDTO;
 }
 
+export interface CloudintegrationtypesGCPServiceLogsConfigDTO {
+	/**
+	 * @type boolean
+	 */
+	enabled: boolean;
+}
+
+export interface CloudintegrationtypesGCPServiceMetricsConfigDTO {
+	/**
+	 * @type boolean
+	 */
+	enabled: boolean;
+}
+
+export interface CloudintegrationtypesGCPServiceConfigDTO {
+	logs?: CloudintegrationtypesGCPServiceLogsConfigDTO;
+	metrics?: CloudintegrationtypesGCPServiceMetricsConfigDTO;
+}
+
 export interface CloudintegrationtypesServiceConfigDTO {
 	aws?: CloudintegrationtypesAWSServiceConfigDTO;
 	azure?: CloudintegrationtypesAzureServiceConfigDTO;
+	gcp?: CloudintegrationtypesGCPServiceConfigDTO;
 }
 
 export enum CloudintegrationtypesServiceIDDTO {
@@ -2773,6 +2802,7 @@ export enum CloudintegrationtypesServiceIDDTO {
 	cosmosdb = 'cosmosdb',
 	cassandradb = 'cassandradb',
 	redis = 'redis',
+	cloudsql = 'cloudsql',
 }
 export type CloudintegrationtypesCloudIntegrationServiceDTOAnyOf = {
 	/**
@@ -2837,9 +2867,14 @@ export interface CloudintegrationtypesCollectedMetricDTO {
 	unit?: string;
 }
 
+export interface CloudintegrationtypesGCPConnectionArtifactDTO {
+	[key: string]: unknown;
+}
+
 export interface CloudintegrationtypesConnectionArtifactDTO {
 	aws?: CloudintegrationtypesAWSConnectionArtifactDTO;
 	azure?: CloudintegrationtypesAzureConnectionArtifactDTO;
+	gcp?: CloudintegrationtypesGCPConnectionArtifactDTO;
 }
 
 export interface CloudintegrationtypesCredentialsDTO {
@@ -2870,6 +2905,10 @@ export interface CloudintegrationtypesDataCollectedDTO {
 	 * @type array,null
 	 */
 	metrics?: CloudintegrationtypesCollectedMetricDTO[] | null;
+}
+
+export interface CloudintegrationtypesGCPIntegrationConfigDTO {
+	[key: string]: unknown;
 }
 
 export interface CloudintegrationtypesGettableAccountWithConnectionArtifactDTO {
@@ -2963,6 +3002,7 @@ export type CloudintegrationtypesIntegrationConfigDTO =
 export interface CloudintegrationtypesProviderIntegrationConfigDTO {
 	aws?: CloudintegrationtypesAWSIntegrationConfigDTO;
 	azure?: CloudintegrationtypesAzureIntegrationConfigDTO;
+	gcp?: CloudintegrationtypesGCPIntegrationConfigDTO;
 }
 
 export interface CloudintegrationtypesGettableAgentCheckInDTO {
@@ -3025,6 +3065,7 @@ export interface CloudintegrationtypesGettableServicesMetadataDTO {
 export interface CloudintegrationtypesPostableAccountConfigDTO {
 	aws?: CloudintegrationtypesAWSPostableAccountConfigDTO;
 	azure?: CloudintegrationtypesAzureAccountConfigDTO;
+	gcp?: CloudintegrationtypesGCPAccountConfigDTO;
 }
 
 export interface CloudintegrationtypesPostableAccountDTO {
@@ -3154,9 +3195,25 @@ export interface CloudintegrationtypesUpdatableAzureAccountConfigDTO {
 	resourceGroups: string[];
 }
 
+export interface CloudintegrationtypesUpdatableGCPAccountConfigDTO {
+	/**
+	 * @type string
+	 */
+	deploymentProjectId: string;
+	/**
+	 * @type string
+	 */
+	deploymentRegion: string;
+	/**
+	 * @type array,null
+	 */
+	projectIds: string[] | null;
+}
+
 export interface CloudintegrationtypesUpdatableAccountConfigDTO {
 	aws?: CloudintegrationtypesAWSAccountConfigDTO;
 	azure?: CloudintegrationtypesUpdatableAzureAccountConfigDTO;
+	gcp?: CloudintegrationtypesUpdatableGCPAccountConfigDTO;
 }
 
 export interface CloudintegrationtypesUpdatableAccountDTO {
@@ -3183,17 +3240,6 @@ export interface CommonJSONRefDTO {
 	 * @type string
 	 */
 	$ref?: string;
-}
-
-export interface CoretypesPatchableObjectsDTO {
-	/**
-	 * @type array,null
-	 */
-	additions: CoretypesObjectGroupDTO[] | null;
-	/**
-	 * @type array,null
-	 */
-	deletions: CoretypesObjectGroupDTO[] | null;
 }
 
 export interface DashboardGridItemDTO {
@@ -3931,6 +3977,14 @@ export interface DashboardtypesDashboardPanelRefDTO {
 	 * @type string
 	 */
 	dashboardName: string;
+	/**
+	 * @type array
+	 */
+	filterBy?: string[];
+	/**
+	 * @type array
+	 */
+	groupBy?: string[];
 	/**
 	 * @type string
 	 */
@@ -4980,6 +5034,10 @@ export interface DashboardtypesListableDashboardForUserV2DTO {
 	/**
 	 * @type array
 	 */
+	reservedKeywords: string[];
+	/**
+	 * @type array
+	 */
 	tags: TagtypesGettableTagDTO[];
 	/**
 	 * @type integer
@@ -5044,6 +5102,10 @@ export interface DashboardtypesListableDashboardV2DTO {
 	 * @type array
 	 */
 	dashboards: DashboardtypesListedDashboardV2DTO[];
+	/**
+	 * @type array
+	 */
+	reservedKeywords: string[];
 	/**
 	 * @type array
 	 */
@@ -6859,6 +6921,11 @@ export interface MetricreductionruletypesGettableReductionRuleDTO {
 	 * @type integer
 	 * @minimum 0
 	 */
+	ingestedSamples: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
 	ingestedSeries: number;
 	/**
 	 * @type array,null
@@ -6870,10 +6937,10 @@ export interface MetricreductionruletypesGettableReductionRuleDTO {
 	 */
 	metricName: string;
 	/**
-	 * @type number
-	 * @format double
+	 * @type integer
+	 * @minimum 0
 	 */
-	reductionPercent: number;
+	retainedSamples: number;
 	/**
 	 * @type integer
 	 * @minimum 0
@@ -6936,7 +7003,17 @@ export interface MetricreductionruletypesGettableReductionRuleStatsDTO {
 	 * @type integer
 	 * @minimum 0
 	 */
+	ingestedSamples: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
 	ingestedSeries: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	retainedSamples: number;
 	/**
 	 * @type integer
 	 * @minimum 0
@@ -6992,7 +7069,6 @@ export enum MetricreductionruletypesReductionRuleOrderByDTO {
 	metric = 'metric',
 	ingested_volume = 'ingested_volume',
 	reduced_volume = 'reduced_volume',
-	reduction = 'reduction',
 	last_updated = 'last_updated',
 }
 export interface MetricreductionruletypesUpdatableReductionRuleDTO {
@@ -10184,30 +10260,8 @@ export type GetRole200 = {
 	status: string;
 };
 
-export type PatchRolePathParameters = {
-	id: string;
-};
 export type UpdateRolePathParameters = {
 	id: string;
-};
-export type GetObjectsPathParameters = {
-	id: string;
-	relation: string;
-};
-export type GetObjects200 = {
-	/**
-	 * @type array
-	 */
-	data: CoretypesObjectGroupDTO[];
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type PatchObjectsPathParameters = {
-	id: string;
-	relation: string;
 };
 export type GetAllRoutePolicies200 = {
 	/**

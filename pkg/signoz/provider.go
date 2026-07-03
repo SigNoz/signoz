@@ -217,6 +217,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddDashboardViewFactory(sqlstore, sqlschema),
 		sqlmigration.NewMigrateSSORoleMappingNamesFactory(sqlstore),
 		sqlmigration.NewAddMetricReductionRulesFactory(sqlstore, sqlschema),
+		sqlmigration.NewRemoveOrganizationTuplesFactory(sqlstore),
 	)
 }
 
