@@ -194,10 +194,7 @@ def test_create_rejects_long_display_name(
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
     assert response.json()["error"]["code"] == "dashboard_invalid_input"
-    assert (
-        "spec.display.name: dashboard name must be at most 128 characters"
-        in response.json()["error"]["message"]
-    )
+    assert "spec.display.name: dashboard name must be at most 128 characters" in response.json()["error"]["message"]
 
 
 def test_create_rejects_invalid_grid_layout(
