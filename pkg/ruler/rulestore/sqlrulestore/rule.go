@@ -67,13 +67,13 @@ func (r *rule) EditRule(ctx context.Context, storedRule *ruletypes.StorableRule,
 	})
 }
 
-func (r *rule) DeleteRule(ctx context.Context, id valuer.UUID, cb func(context.Context) error) error {
+func (r *rule) DeleteRule(ctx context.Context, orgID string, id valuer.UUID, cb func(context.Context) error) error {
 	if err := r.sqlstore.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
 		_, err := r.sqlstore.
 			BunDBCtx(ctx).
 			NewDelete().
 			Model(new(ruletypes.StorableRule)).
-			Where("id = ?", id.StringValue()).
+			Where("id = ? AND org_id = ?", id.StringValue(), orgID).
 			Exec(ctx)
 		if err != nil {
 			return r.sqlstore.WrapAlreadyExistsErrf(err, errors.CodeAlreadyExists, "cannot delete rule because it is referenced by a planned maintenance, remove the rule from the planned maintenance first")
@@ -102,13 +102,13 @@ func (r *rule) GetStoredRules(ctx context.Context, orgID string) ([]*ruletypes.S
 	return rules, nil
 }
 
-func (r *rule) GetStoredRule(ctx context.Context, id valuer.UUID) (*ruletypes.StorableRule, error) {
+func (r *rule) GetStoredRule(ctx context.Context, orgID string, id valuer.UUID) (*ruletypes.StorableRule, error) {
 	rule := new(ruletypes.StorableRule)
 	err := r.sqlstore.
 		BunDB().
 		NewSelect().
 		Model(rule).
-		Where("id = ?", id.StringValue()).
+		Where("id = ? AND org_id = ?", id.StringValue(), orgID).
 		Scan(ctx)
 	if err != nil {
 		return nil, r.sqlstore.WrapNotFoundErrf(err, errors.CodeNotFound, "rule with ID: %s does not exist", id.StringValue())
