@@ -166,6 +166,34 @@ func (r *QueryRuleStateHistory) Validate() error {
 	if r.Order != "asc" && r.Order != "desc" {
 		return fmt.Errorf("order must be asc or desc")
 	}
+	if r.State != "" {
+		validStates := map[string]bool{
+			"inactive":   true,
+			"pending":    true,
+			"firing":     true,
+			"nodata":     true,
+			"disabled":   true,
+			"recovering": true,
+		}
+		if !validStates[r.State] {
+			return fmt.Errorf("invalid state: %s", r.State)
+		}
+	}
+	if r.Filters != nil {
+		for _, item := range r.Filters.Items {
+			if item.Key.Key == "" {
+				return fmt.Errorf("filter key cannot be empty")
+			}
+			for _, char := range item.Key.Key {
+				if !((char >= 'a' && char <= 'z') ||
+					(char >= 'A' && char <= 'Z') ||
+					(char >= '0' && char <= '9') ||
+					char == '_' || char == '-' || char == '.' || char == '/' || char == '@' || char == '$') {
+					return fmt.Errorf("invalid character in filter key: %s", item.Key.Key)
+				}
+			}
+		}
+	}
 	return nil
 }
 

@@ -798,10 +798,20 @@ func (aH *APIHandler) testRule(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) getRuleStats(w http.ResponseWriter, r *http.Request) {
-	ruleID := mux.Vars(r)["id"]
-	params := model.QueryRuleStateHistory{}
-	err := json.NewDecoder(r.Body).Decode(&params)
+	idStr := mux.Vars(r)["id"]
+	id, err := valuer.NewUUID(idStr)
 	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+	ruleID := id.StringValue()
+	params := model.QueryRuleStateHistory{}
+	err = json.NewDecoder(r.Body).Decode(&params)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+	if err := params.Validate(); err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
@@ -880,15 +890,24 @@ func (aH *APIHandler) getRuleStats(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) getOverallStateTransitions(w http.ResponseWriter, r *http.Request) {
-	ruleID := mux.Vars(r)["id"]
-	params := model.QueryRuleStateHistory{}
-	err := json.NewDecoder(r.Body).Decode(&params)
+	idStr := mux.Vars(r)["id"]
+	id, err := valuer.NewUUID(idStr)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
+	params := model.QueryRuleStateHistory{}
+	err = json.NewDecoder(r.Body).Decode(&params)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+	if err := params.Validate(); err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
 
-	stateItems, err := aH.reader.GetOverallStateTransitions(r.Context(), ruleID, &params)
+	stateItems, err := aH.reader.GetOverallStateTransitions(r.Context(), id.StringValue(), &params)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -995,6 +1014,10 @@ func (aH *APIHandler) getRuleStateHistoryTopContributors(w http.ResponseWriter, 
 	params := model.QueryRuleStateHistory{}
 	err = json.NewDecoder(r.Body).Decode(&params)
 	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+	if err := params.Validate(); err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
@@ -1202,8 +1225,10 @@ func (aH *APIHandler) queryRangeMetrics(w http.ResponseWriter, r *http.Request) 
 		switch res.Err.(type) {
 		case promql.ErrQueryCanceled:
 			RespondError(w, &model.ApiError{Typ: model.ErrorCanceled, Err: res.Err}, nil)
+			return
 		case promql.ErrQueryTimeout:
 			RespondError(w, &model.ApiError{Typ: model.ErrorTimeout, Err: res.Err}, nil)
+			return
 		}
 		RespondError(w, &model.ApiError{Typ: model.ErrorExec, Err: res.Err}, nil)
 		return
@@ -1257,10 +1282,13 @@ func (aH *APIHandler) queryMetrics(w http.ResponseWriter, r *http.Request) {
 		switch res.Err.(type) {
 		case promql.ErrQueryCanceled:
 			RespondError(w, &model.ApiError{Typ: model.ErrorCanceled, Err: res.Err}, nil)
+			return
 		case promql.ErrQueryTimeout:
 			RespondError(w, &model.ApiError{Typ: model.ErrorTimeout, Err: res.Err}, nil)
+			return
 		}
 		RespondError(w, &model.ApiError{Typ: model.ErrorExec, Err: res.Err}, nil)
+		return
 	}
 
 	responseData := &model.QueryData{
