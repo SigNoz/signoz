@@ -85,7 +85,7 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 		id: 'hostGroup',
 		header: (): React.ReactNode => <EntityGroupHeader title="Host Group" />,
 		accessorFn: (row): string => row.hostName ?? '',
-		width: { min: 300 },
+		width: { min: 290 },
 		enableSort: false,
 		enableRemove: false,
 		enableMove: false,

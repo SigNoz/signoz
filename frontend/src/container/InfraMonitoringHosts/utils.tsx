@@ -8,6 +8,7 @@ import {
 } from 'components/QuickFilters/types';
 import { TriangleAlert } from '@signozhq/icons';
 import { INFRA_MONITORING_ATTR_KEYS } from 'container/InfraMonitoringK8s/constants';
+import { CellValueTooltip } from 'container/InfraMonitoringK8s/components';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
 import TanStackTable from 'components/TanStackTableView';
@@ -22,7 +23,11 @@ export function HostnameCell({
 }): React.ReactElement {
 	const isEmpty = !hostName || !hostName.trim();
 	if (!isEmpty) {
-		return <TanStackTable.Text title={hostName}>{hostName}</TanStackTable.Text>;
+		return (
+			<CellValueTooltip value={hostName}>
+				<TanStackTable.Text>{hostName}</TanStackTable.Text>
+			</CellValueTooltip>
+		);
 	}
 	return (
 		<>

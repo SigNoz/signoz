@@ -1,5 +1,4 @@
 import { FilePenLine } from '@signozhq/icons';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { InframonitoringtypesNamespaceRecordDTO } from 'api/generated/services/sigNoz.schemas';
 import TanStackTable, { TableColumnDef } from 'components/TanStackTableView';
 import { ExpandButtonWrapper } from 'container/InfraMonitoringK8s/components';
@@ -8,7 +7,11 @@ import ColumnHeader from '../Base/ColumnHeader';
 import EntityGroupHeader from '../Base/EntityGroupHeader';
 import K8sGroupCell from '../Base/K8sGroupCell';
 import { formatBytes, getPodPhaseStatusItems } from '../commonUtils';
-import { GroupedStatusCounts, ValidateColumnValueWrapper } from '../components';
+import {
+	CellValueTooltip,
+	GroupedStatusCounts,
+	ValidateColumnValueWrapper,
+} from '../components';
 import {
 	INFRA_MONITORING_ATTR_KEYS,
 	InfraMonitoringEntity,
@@ -37,7 +40,7 @@ export const k8sNamespacesColumnsConfig: NamespaceTableColumnConfig[] = [
 		id: 'namespaceGroup',
 		header: (): React.ReactNode => <EntityGroupHeader title="Namespace Group" />,
 		accessorFn: (row): string => row.namespaceName || '',
-		width: { min: 300 },
+		width: { min: 290 },
 		enableSort: false,
 		enableRemove: false,
 		enableMove: false,
@@ -73,9 +76,9 @@ export const k8sNamespacesColumnsConfig: NamespaceTableColumnConfig[] = [
 		cell: ({ value }): React.ReactNode => {
 			const namespaceName = value as string;
 			return (
-				<TooltipSimple title={namespaceName}>
+				<CellValueTooltip value={namespaceName}>
 					<TanStackTable.Text>{namespaceName}</TanStackTable.Text>
-				</TooltipSimple>
+				</CellValueTooltip>
 			);
 		},
 	},

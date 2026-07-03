@@ -1,6 +1,5 @@
 import { Color } from '@signozhq/design-tokens';
 import { Boxes } from '@signozhq/icons';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { InframonitoringtypesClusterRecordDTO } from 'api/generated/services/sigNoz.schemas';
 import { TableColumnDef } from 'components/TanStackTableView';
 import TanStackTable from 'components/TanStackTableView';
@@ -10,7 +9,11 @@ import ColumnHeader from '../Base/ColumnHeader';
 import EntityGroupHeader from '../Base/EntityGroupHeader';
 import K8sGroupCell from '../Base/K8sGroupCell';
 import { formatBytes, getPodPhaseStatusItems } from '../commonUtils';
-import { GroupedStatusCounts, ValidateColumnValueWrapper } from '../components';
+import {
+	CellValueTooltip,
+	GroupedStatusCounts,
+	ValidateColumnValueWrapper,
+} from '../components';
 import {
 	INFRA_MONITORING_ATTR_KEYS,
 	InfraMonitoringEntity,
@@ -39,7 +42,7 @@ export const k8sClustersColumnsConfig: ClusterTableColumnConfig[] = [
 		id: 'clusterGroup',
 		header: (): React.ReactNode => <EntityGroupHeader title="Cluster Group" />,
 		accessorFn: (row): string => row.clusterName || '',
-		width: { min: 210 },
+		width: { min: 290 },
 		enableSort: false,
 		enableRemove: false,
 		enableMove: false,
@@ -66,7 +69,7 @@ export const k8sClustersColumnsConfig: ClusterTableColumnConfig[] = [
 			/>
 		),
 		accessorFn: (row): string => row.clusterName || '',
-		width: { min: 200 },
+		width: { min: 290 },
 		enableSort: false,
 		enableRemove: false,
 		enableMove: false,
@@ -75,9 +78,9 @@ export const k8sClustersColumnsConfig: ClusterTableColumnConfig[] = [
 		cell: ({ value }): React.ReactNode => {
 			const clusterName = value as string;
 			return (
-				<TooltipSimple title={clusterName}>
+				<CellValueTooltip value={clusterName}>
 					<TanStackTable.Text>{clusterName}</TanStackTable.Text>
-				</TooltipSimple>
+				</CellValueTooltip>
 			);
 		},
 	},

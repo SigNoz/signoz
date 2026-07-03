@@ -27,6 +27,7 @@ import {
 	useInfraMonitoringOrderBy,
 	useInfraMonitoringStatusFilter,
 } from '../hooks';
+import { useInfraMonitoringLineClamp } from '../components';
 import { K8sEmptyState } from './K8sEmptyState';
 import { K8sExpandedRow } from './K8sExpandedRow';
 import K8sHeader from './K8sHeader';
@@ -93,6 +94,7 @@ export function K8sBaseList<T extends K8sEntityData>({
 }: K8sBaseListProps<T>): JSX.Element {
 	const { currentQuery } = useQueryBuilder();
 	const expression = currentQuery.builder.queryData[0]?.filter?.expression || '';
+	const lineClamp = useInfraMonitoringLineClamp();
 	const [groupBy] = useInfraMonitoringGroupBy();
 	const [orderBy] = useInfraMonitoringOrderBy();
 	const [statusFilter] = useInfraMonitoringStatusFilter();
@@ -399,6 +401,7 @@ export function K8sBaseList<T extends K8sEntityData>({
 							calculatedPageSize,
 							onLimitChange: setLimit,
 						}}
+						plainTextCellLineClamp={lineClamp}
 						prefixPaginationContent={paginationWarningContent}
 						paginationClassname={styles.paginationContainer}
 					/>

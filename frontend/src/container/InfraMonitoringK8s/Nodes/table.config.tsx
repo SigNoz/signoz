@@ -1,6 +1,5 @@
 import { Color } from '@signozhq/design-tokens';
 import { Badge, BadgeColor } from '@signozhq/ui/badge';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { InframonitoringtypesNodeRecordDTO } from 'api/generated/services/sigNoz.schemas';
 import TanStackTable, { TableColumnDef } from 'components/TanStackTableView';
 import { ExpandButtonWrapper } from 'container/InfraMonitoringK8s/components';
@@ -10,7 +9,11 @@ import EntityGroupHeader from '../Base/EntityGroupHeader';
 import K8sGroupCell from '../Base/K8sGroupCell';
 import { formatBytes, getPodPhaseStatusItems } from '../commonUtils';
 import { INFRA_MONITORING_ATTR_KEYS } from '../constants';
-import { GroupedStatusCounts, ValidateColumnValueWrapper } from '../components';
+import {
+	CellValueTooltip,
+	GroupedStatusCounts,
+	ValidateColumnValueWrapper,
+} from '../components';
 import { InfraMonitoringEntity } from '../constants';
 import { Workflow } from '@signozhq/icons';
 
@@ -47,7 +50,7 @@ export const k8sNodesColumnsConfig: NodeTableColumnConfig[] = [
 		id: 'nodeGroup',
 		header: (): React.ReactNode => <EntityGroupHeader title="Node Group" />,
 		accessorFn: (row): string => row.nodeName || '',
-		width: { min: 300 },
+		width: { min: 290 },
 		enableSort: false,
 		enableRemove: false,
 		enableMove: false,
@@ -83,9 +86,9 @@ export const k8sNodesColumnsConfig: NodeTableColumnConfig[] = [
 		cell: ({ value }): React.ReactNode => {
 			const nodeName = value as string;
 			return (
-				<TooltipSimple title={nodeName}>
+				<CellValueTooltip value={nodeName}>
 					<TanStackTable.Text>{nodeName}</TanStackTable.Text>
-				</TooltipSimple>
+				</CellValueTooltip>
 			);
 		},
 	},

@@ -1,5 +1,4 @@
 import { Color } from '@signozhq/design-tokens';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { InframonitoringtypesDaemonSetRecordDTO } from 'api/generated/services/sigNoz.schemas';
 import TanStackTable, { TableColumnDef } from 'components/TanStackTableView';
 import { ExpandButtonWrapper } from 'container/InfraMonitoringK8s/components';
@@ -9,6 +8,7 @@ import EntityGroupHeader from '../Base/EntityGroupHeader';
 import K8sGroupCell from '../Base/K8sGroupCell';
 import { formatBytes, getPodPhaseStatusItems } from '../commonUtils';
 import {
+	CellValueTooltip,
 	EntityProgressBar,
 	GroupedStatusCounts,
 	ValidateColumnValueWrapper,
@@ -43,7 +43,7 @@ export const k8sDaemonSetsColumnsConfig: DaemonSetTableColumnConfig[] = [
 		header: (): React.ReactNode => <EntityGroupHeader title="DaemonSet Group" />,
 		accessorFn: (row): string =>
 			row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_NAME] || '',
-		width: { min: 300 },
+		width: { min: 290 },
 		enableSort: false,
 		enableRemove: false,
 		enableMove: false,
@@ -80,9 +80,9 @@ export const k8sDaemonSetsColumnsConfig: DaemonSetTableColumnConfig[] = [
 		cell: ({ value }): React.ReactNode => {
 			const daemonsetName = value as string;
 			return (
-				<TooltipSimple title={daemonsetName}>
+				<CellValueTooltip value={daemonsetName}>
 					<TanStackTable.Text>{daemonsetName}</TanStackTable.Text>
-				</TooltipSimple>
+				</CellValueTooltip>
 			);
 		},
 	},
@@ -101,9 +101,9 @@ export const k8sDaemonSetsColumnsConfig: DaemonSetTableColumnConfig[] = [
 		cell: ({ value }): React.ReactNode => {
 			const namespaceName = value as string;
 			return (
-				<TooltipSimple title={namespaceName}>
+				<CellValueTooltip value={namespaceName}>
 					<TanStackTable.Text>{namespaceName}</TanStackTable.Text>
-				</TooltipSimple>
+				</CellValueTooltip>
 			);
 		},
 	},

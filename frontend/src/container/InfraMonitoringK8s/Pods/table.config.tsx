@@ -13,6 +13,7 @@ import EntityGroupHeader from '../Base/EntityGroupHeader';
 import K8sGroupCell from '../Base/K8sGroupCell';
 import { formatAge, formatBytes, getPodPhaseStatusItems } from '../commonUtils';
 import {
+	CellValueTooltip,
 	EntityProgressBar,
 	GroupedStatusCounts,
 	ValidateColumnValueWrapper,
@@ -55,7 +56,7 @@ export const k8sPodColumnsConfig: PodTableColumnConfig[] = [
 		header: (): React.ReactNode => <EntityGroupHeader title="Pod Group" />,
 		accessorFn: (row): string =>
 			row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME] || '',
-		width: { min: 300 },
+		width: { min: 290 },
 		enableSort: false,
 		enableRemove: false,
 		enableMove: false,
@@ -92,9 +93,9 @@ export const k8sPodColumnsConfig: PodTableColumnConfig[] = [
 		cell: ({ value }): React.ReactNode => {
 			const podName = value as string;
 			return (
-				<TooltipSimple title={podName}>
+				<CellValueTooltip value={podName}>
 					<TanStackTable.Text>{podName}</TanStackTable.Text>
-				</TooltipSimple>
+				</CellValueTooltip>
 			);
 		},
 	},

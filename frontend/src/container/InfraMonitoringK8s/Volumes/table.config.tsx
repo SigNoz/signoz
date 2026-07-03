@@ -1,5 +1,4 @@
 import { TableColumnDef } from 'components/TanStackTableView';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { InframonitoringtypesVolumeRecordDTO } from 'api/generated/services/sigNoz.schemas';
 import TanStackTable from 'components/TanStackTableView';
 import { ExpandButtonWrapper } from 'container/InfraMonitoringK8s/components';
@@ -8,7 +7,7 @@ import ColumnHeader from '../Base/ColumnHeader';
 import EntityGroupHeader from '../Base/EntityGroupHeader';
 import K8sGroupCell from '../Base/K8sGroupCell';
 import { formatBytes } from '../commonUtils';
-import { ValidateColumnValueWrapper } from '../components';
+import { CellValueTooltip, ValidateColumnValueWrapper } from '../components';
 import {
 	INFRA_MONITORING_ATTR_KEYS,
 	InfraMonitoringEntity,
@@ -38,7 +37,7 @@ export const k8sVolumesColumnsConfig: VolumeTableColumnConfig[] = [
 		id: 'volumeGroup',
 		header: (): React.ReactNode => <EntityGroupHeader title="Volume Group" />,
 		accessorFn: (row): string => row.persistentVolumeClaimName || '',
-		width: { min: 300 },
+		width: { min: 290 },
 		enableSort: false,
 		enableRemove: false,
 		enableMove: false,
@@ -74,9 +73,9 @@ export const k8sVolumesColumnsConfig: VolumeTableColumnConfig[] = [
 		cell: ({ value }): React.ReactNode => {
 			const pvcName = value as string;
 			return (
-				<TooltipSimple title={pvcName}>
+				<CellValueTooltip value={pvcName}>
 					<TanStackTable.Text>{pvcName}</TanStackTable.Text>
-				</TooltipSimple>
+				</CellValueTooltip>
 			);
 		},
 	},
@@ -94,9 +93,9 @@ export const k8sVolumesColumnsConfig: VolumeTableColumnConfig[] = [
 		cell: ({ value }): React.ReactNode => {
 			const namespaceName = value as string;
 			return (
-				<TooltipSimple title={namespaceName}>
+				<CellValueTooltip value={namespaceName}>
 					<TanStackTable.Text>{namespaceName}</TanStackTable.Text>
-				</TooltipSimple>
+				</CellValueTooltip>
 			);
 		},
 	},

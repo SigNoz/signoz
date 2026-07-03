@@ -1,5 +1,4 @@
 import { Color } from '@signozhq/design-tokens';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { InframonitoringtypesJobRecordDTO } from 'api/generated/services/sigNoz.schemas';
 import TanStackTable, { TableColumnDef } from 'components/TanStackTableView';
 import { ExpandButtonWrapper } from 'container/InfraMonitoringK8s/components';
@@ -9,6 +8,7 @@ import EntityGroupHeader from '../Base/EntityGroupHeader';
 import K8sGroupCell from '../Base/K8sGroupCell';
 import { formatBytes, getPodPhaseStatusItems } from '../commonUtils';
 import {
+	CellValueTooltip,
 	EntityProgressBar,
 	GroupedStatusCounts,
 	ValidateColumnValueWrapper,
@@ -39,7 +39,7 @@ export const k8sJobsColumnsConfig: JobTableColumnConfig[] = [
 		header: (): React.ReactNode => <EntityGroupHeader title="Job Group" />,
 		accessorFn: (row): string =>
 			row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_JOB_NAME] || '',
-		width: { min: 270 },
+		width: { min: 290 },
 		enableSort: false,
 		enableRemove: false,
 		enableMove: false,
@@ -67,7 +67,7 @@ export const k8sJobsColumnsConfig: JobTableColumnConfig[] = [
 		),
 		accessorFn: (row): string =>
 			row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_JOB_NAME] || '',
-		width: { min: 260 },
+		width: { min: 290 },
 		enableSort: false,
 		enableRemove: false,
 		enableMove: false,
@@ -76,9 +76,9 @@ export const k8sJobsColumnsConfig: JobTableColumnConfig[] = [
 		cell: ({ value }): React.ReactNode => {
 			const jobName = value as string;
 			return (
-				<TooltipSimple title={jobName}>
+				<CellValueTooltip value={jobName}>
 					<TanStackTable.Text>{jobName}</TanStackTable.Text>
-				</TooltipSimple>
+				</CellValueTooltip>
 			);
 		},
 	},
@@ -97,9 +97,9 @@ export const k8sJobsColumnsConfig: JobTableColumnConfig[] = [
 		cell: ({ value }): React.ReactNode => {
 			const namespaceName = value as string;
 			return (
-				<TooltipSimple title={namespaceName}>
+				<CellValueTooltip value={namespaceName}>
 					<TanStackTable.Text>{namespaceName}</TanStackTable.Text>
-				</TooltipSimple>
+				</CellValueTooltip>
 			);
 		},
 	},
