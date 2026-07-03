@@ -61,6 +61,9 @@ type Module interface {
 
 	CloneV2(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, id valuer.UUID) (*dashboardtypes.DashboardV2, error)
 
+	// ConvertAllV1ToV2 is a temporary dry-run that converts every dashboard in the org from v1 to v2 without persisting.
+	ConvertAllV1ToV2(ctx context.Context, orgID valuer.UUID) (*dashboardtypes.V1ToV2MigrationResult, error)
+
 	GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.DashboardV2, error)
 
 	ListV2(ctx context.Context, orgID valuer.UUID, params *dashboardtypes.ListDashboardsV2Params) (*dashboardtypes.ListableDashboardV2, error)
@@ -119,6 +122,8 @@ type Handler interface {
 	CreateV2(http.ResponseWriter, *http.Request)
 
 	CloneV2(http.ResponseWriter, *http.Request)
+
+	ConvertAllV1ToV2(http.ResponseWriter, *http.Request)
 
 	GetV2(http.ResponseWriter, *http.Request)
 
