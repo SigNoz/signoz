@@ -50,6 +50,7 @@ func (d *v1Decoder) convertV1Layouts(data StorableDashboardData, panels map[stri
 		for _, child := range row.collapsedWidgets {
 			if id := d.readString(child, "i"); id != "" {
 				isWidgetCollapsed[id] = true
+				break
 			}
 		}
 	}
@@ -66,10 +67,11 @@ func (d *v1Decoder) convertV1Layouts(data StorableDashboardData, panels map[stri
 	for _, item := range layout {
 		id := d.readString(item, "i")
 		if id == "" || isWidgetCollapsed[id] {
+			// widgets in collapsed sectinos will be added when those sections' row widgets are handled.
 			continue
 		}
 		if row, ok := rows[id]; ok {
-			newRowHeader := &section{row: row, items: d.panelBackedItems(row.collapsedWidgets, panels)}
+			newRowHeader := &section{row: row, items: d.extractValidLayoutItemsForCollapsedSection(row.collapsedWidgets, panels)}
 			sectionsWithHeader = append(sectionsWithHeader, newRowHeader)
 			// A collapsed row owns only its stashed children; later panels → ungrouped.
 			if row.collapsed {
@@ -79,12 +81,9 @@ func (d *v1Decoder) convertV1Layouts(data StorableDashboardData, panels map[stri
 			}
 			continue
 		}
-		// Keep a layout entry only if the widget became a panel. A widget that was
-		// skipped (unknown/EMPTY_WIDGET type, or failed conversion) or a stale
-		// `layout` id with no widget at all (a deleted widget, or react-grid-layout's
-		// "__dropping-elem__" drag placeholder) would otherwise emit a grid item
-		// referencing a panel that does not exist. Rows are the exception, handled
-		// above — they are section headers, not panels.
+		// Keep a layout entry only if its widget became a panel; otherwise (skipped
+		// widget, deleted id, or the "__dropping-elem__" drag placeholder) it would
+		// reference a panel that does not exist. Rows are handled above.
 		if _, ok := panels[id]; !ok {
 			continue
 		}
@@ -101,10 +100,10 @@ func (d *v1Decoder) convertV1Layouts(data StorableDashboardData, panels map[stri
 	return out
 }
 
-// panelBackedItems keeps only the layout items whose widget became a panel, so a
-// grid never references a panel that was never created. Used for collapsed-row
-// children (which bypass the main layout loop's per-item panel check).
-func (d *v1Decoder) panelBackedItems(items []map[string]any, panels map[string]*Panel) []map[string]any {
+// extractValidLayoutItemsForCollapsedSection keeps only the collapsed-row children
+// backed by a real panel, dropping ghosts. These come from panelMap and skip the
+// main loop's per-item panel check, so a grid never references a missing panel.
+func (d *v1Decoder) extractValidLayoutItemsForCollapsedSection(items []map[string]any, panels map[string]*Panel) []map[string]any {
 	out := make([]map[string]any, 0, len(items))
 	for _, item := range items {
 		if id := d.readString(item, "i"); id != "" {

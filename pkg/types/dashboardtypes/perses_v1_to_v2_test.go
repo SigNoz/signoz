@@ -1158,7 +1158,7 @@ func TestConvertV1LayoutsDropsCollapsedChildWithNoPanel(t *testing.T) {
 	// deleted widget still referenced in panelMap. It produces no panel and no
 	// malformed-field note, so the dashboard is NOT skipped; the section grid
 	// must drop it rather than emit a dangling ref. Collapsed children bypass the
-	// main layout loop, so this exercises the panelBackedItems filter.
+	// main layout loop, so this exercises the extractValidLayoutItemsForCollapsedSection filter.
 	data := StorableDashboardData{
 		"widgets": []any{
 			map[string]any{"id": "row-1", "panelTypes": "row", "title": "S"},
