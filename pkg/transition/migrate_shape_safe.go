@@ -4,7 +4,6 @@ package transition
 import (
 	"context"
 	"log/slog"
-	"strings"
 )
 
 // ══════════════════════════════════════════════
@@ -21,73 +20,12 @@ import (
 // (createFilterExpression, fixGroupBy, buildAggregationExpression, orderByExpr) are
 // already v5-safe.
 
-// MigrateShapeSafe copies Migrate, minus the `version == "v5"` skip gate.
-func (m *dashboardMigrateV5) MigrateShapeSafe(ctx context.Context, dashboardData map[string]any) bool {
-	updated := false
-
-	// Same as Migrate: strip spaces from variable names.
-	if variables, ok := dashboardData["variables"].(map[string]any); ok {
-		for _, variable := range variables {
-			if varMap, ok := variable.(map[string]any); ok {
-				if name, ok := varMap["name"].(string); ok && strings.Contains(name, " ") {
-					varMap["name"] = strings.ReplaceAll(name, " ", "")
-					updated = true
-				}
-			}
-		}
-	}
-
-	if widgets, ok := dashboardData["widgets"].([]any); ok {
-		for _, widget := range widgets {
-			if widgetMap, ok := widget.(map[string]any); ok {
-				if m.updateWidgetShapeSafe(ctx, widgetMap) {
-					updated = true
-				}
-			}
-		}
-	}
-	dashboardData["version"] = "v5"
-	return updated
-}
-
 // MigrateQueryDataShapeSafe is the per-query entry point (the core of
 // updateQueryDataShapeSafe) for callers that process queries one at a time (the
 // v1→v2 converter). widgetType is the v1 panelTypes (metric reduceTo on tables);
 // "" is safe.
 func (m *dashboardMigrateV5) MigrateQueryDataShapeSafe(ctx context.Context, queryData map[string]any, widgetType string) bool {
 	return m.updateQueryDataShapeSafe(ctx, queryData, widgetType)
-}
-
-// updateWidgetShapeSafe copies updateWidget (drops the unused version param).
-func (mc *migrateCommon) updateWidgetShapeSafe(ctx context.Context, widget map[string]any) bool {
-	query, ok := widget["query"].(map[string]any)
-	if !ok {
-		return false
-	}
-	if qType, ok := query["queryType"]; ok {
-		if qType == "promql" || qType == "clickhouse_sql" {
-			return false
-		}
-	}
-	builder, ok := query["builder"].(map[string]any)
-	if !ok {
-		return false
-	}
-	queryData, ok := builder["queryData"].([]any)
-	if !ok {
-		return false
-	}
-	widgetType, _ := widget["panelTypes"].(string)
-
-	updated := false
-	for _, qd := range queryData {
-		if queryDataMap, ok := qd.(map[string]any); ok {
-			if mc.updateQueryDataShapeSafe(ctx, queryDataMap, widgetType) {
-				updated = true
-			}
-		}
-	}
-	return updated
 }
 
 // updateQueryDataShapeSafe copies updateQueryData, with each destructive step
