@@ -315,7 +315,7 @@ func TestConvertGraphWidgetDefaultsForMissingFields(t *testing.T) {
 	assert.Equal(t, PrecisionOption2, spec.Formatting.DecimalPrecision)
 	assert.Equal(t, LineInterpolationSpline, spec.ChartAppearance.LineInterpolation)
 	assert.Equal(t, LineStyleSolid, spec.ChartAppearance.LineStyle)
-	assert.Equal(t, FillModeSolid, spec.ChartAppearance.FillMode)
+	assert.Equal(t, FillModeNone, spec.ChartAppearance.FillMode)
 	assert.Equal(t, LegendPositionBottom, spec.Legend.Position)
 	assert.False(t, spec.ChartAppearance.SpanGaps.FillOnlyBelow)
 	assert.Nil(t, spec.Axes.SoftMin)

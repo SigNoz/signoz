@@ -87,7 +87,7 @@ func (d *v1Decoder) convertGraphWidget(w map[string]any) *Panel {
 							LineInterpolationLinear, LineInterpolationSpline, LineInterpolationStepAfter, LineInterpolationStepBefore),
 						ShowPoints: d.readBool(w, "showPoints"),
 						LineStyle:  mapV1Enum(d.readString(w, "lineStyle"), LineStyleSolid, LineStyleSolid, LineStyleDashed),
-						FillMode:   mapV1Enum(d.readString(w, "fillMode"), FillModeSolid, FillModeSolid, FillModeGradient, FillModeNone),
+						FillMode:   mapV1Enum(d.readString(w, "fillMode"), FillModeNone, FillModeSolid, FillModeGradient, FillModeNone),
 						SpanGaps:   mapV1SpanGaps(w["spanGaps"]),
 					},
 					Axes:       d.axesFromWidget(w),
@@ -265,7 +265,15 @@ func (d *v1Decoder) mapV1SelectFields(w map[string]any) []telemetrytypes.Telemet
 		d.note("widget %q has malformed %s: %v", d.readString(w, "id"), field, err)
 		return nil
 	}
-	return fields
+	// Drop nameless entries (blank column rows) — v2 requires a name, and the v1
+	// UI renders nothing for them anyway.
+	out := fields[:0]
+	for _, f := range fields {
+		if f.Name != "" {
+			out = append(out, f)
+		}
+	}
+	return out
 }
 
 func decodeTelemetryFields(raw []any) ([]telemetrytypes.TelemetryFieldKey, error) {
