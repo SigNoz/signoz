@@ -544,7 +544,9 @@ function Success(props: ISuccessProps): JSX.Element {
 		cursorX,
 		onMouseMove: onCrosshairMove,
 		onMouseLeave: onCrosshairLeave,
-	} = useCrosshair({ containerRef: timelineAreaRef, enabled: false });
+		// Rows are padded 0 15px while `.timeline` spans full width — inset the
+		// crosshair by the same 15px so it aligns with the ruler ticks and bars.
+	} = useCrosshair({ containerRef: timelineAreaRef, insetX: 15 });
 
 	// Imperative DOM class toggling for hover highlights (avoids React re-renders)
 	const applyHoverClass = useCallback((spanId: string | null): void => {
