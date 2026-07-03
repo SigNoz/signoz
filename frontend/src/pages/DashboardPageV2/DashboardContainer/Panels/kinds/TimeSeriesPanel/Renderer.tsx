@@ -14,8 +14,6 @@ import {
 } from 'pages/DashboardPageV2/DashboardContainer/queryV5/v5ResponseData';
 import { prepareAlignedData } from 'pages/DashboardPageV2/DashboardContainer/queryV5/uplotData';
 import { useTimezone } from 'providers/Timezone';
-import type { QueryRangeRequestV5 } from 'types/api/v5/queryRange';
-import { getTimeRangeFromQueryRangeRequest } from 'utils/getTimeRange';
 
 import NoData from '../../components/NoData/NoData';
 import { useGroupByPerQuery } from '../../hooks/useGroupByPerQuery';
@@ -25,7 +23,10 @@ import {
 	resolveDecimalPrecision,
 	resolveLegendPosition,
 } from '../../utils/chartAppearance/resolvers';
+import { stepClickTimeRange } from '../../utils/drilldown/chartClickTimeRange';
+import { enrichChartClick } from '../../utils/drilldown/enrichChartClick';
 import { getBuilderQueries } from '../../utils/getBuilderQueries';
+import { getPanelTimeRange } from '../../utils/getPanelTimeRange';
 
 import { buildTimeSeriesConfig } from './utils/buildConfig';
 import { ChartClickData } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
@@ -40,6 +41,7 @@ function TimeSeriesPanelRenderer({
 	dashboardPreference,
 	panelMode,
 	onCloseStandaloneView,
+	enableDrillDown,
 }: PanelRendererProps<'signoz/TimeSeriesPanel'>): JSX.Element {
 	const graphRef = useRef<HTMLDivElement>(null);
 	const containerDimensions = useResizeObserver(graphRef);
@@ -58,11 +60,9 @@ function TimeSeriesPanelRenderer({
 
 	// X-scale clamps come from the request that produced the data, so each panel
 	// pins to the window it fetched — matters during drag-zoom transitions before
-	// new data arrives. The generated request DTO is structurally the V5 request.
+	// new data arrives.
 	const { minTimeScale, maxTimeScale } = useMemo(() => {
-		const { startTime, endTime } = getTimeRangeFromQueryRangeRequest(
-			data.requestPayload as unknown as QueryRangeRequestV5 | undefined,
-		);
+		const { startTime, endTime } = getPanelTimeRange(data.requestPayload);
 		return { minTimeScale: startTime, maxTimeScale: endTime };
 	}, [data.requestPayload]);
 
@@ -156,10 +156,27 @@ function TimeSeriesPanelRenderer({
 	const key = `${dashboardPreference?.syncMode}-${dashboardPreference?.syncFilterMode}`;
 
 	const handleChartClick = useCallback(
-		(args: ChartClickData) => {
-			onClick?.(args);
+		(args: ChartClickData): void => {
+			if (!onClick) {
+				return;
+			}
+			const payload = enrichChartClick({
+				clickData: args,
+				series: flatSeries,
+				builderQueries,
+			});
+			if (!payload) {
+				return;
+			}
+			const timeRange = stepClickTimeRange({
+				clickedDataTimestamp: args.clickedDataTimestamp,
+				queryName: payload.context.queryName,
+				builderQueries,
+				stepIntervals: getExecStats(data.response)?.stepIntervals,
+			});
+			onClick({ ...payload, context: { ...payload.context, timeRange } });
 		},
-		[onClick],
+		[onClick, flatSeries, builderQueries, data.response],
 	);
 
 	return (
@@ -188,7 +205,7 @@ function TimeSeriesPanelRenderer({
 						syncMode={dashboardPreference?.syncMode}
 						syncFilterMode={dashboardPreference?.syncFilterMode}
 						renderTooltipFooter={renderTooltipFooter}
-						onClick={handleChartClick}
+						onClick={enableDrillDown ? handleChartClick : undefined}
 					/>
 				)}
 		</div>
