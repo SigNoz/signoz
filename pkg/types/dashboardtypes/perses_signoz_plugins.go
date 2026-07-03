@@ -146,6 +146,11 @@ func (DatasourcePluginKind) Enum() []any {
 	return []any{DatasourceKindSigNoz}
 }
 
+// SigNozDatasourceSpec is the (empty) signoz/Datasource plugin spec. Naming the
+// type gives the variant a concrete, non-nullable spec schema instead of an
+// inline free-form one.
+type SigNozDatasourceSpec struct{}
+
 type TimeSeriesPanelSpec struct {
 	Visualization   TimeSeriesVisualization   `json:"visualization"`
 	Formatting      PanelFormatting           `json:"formatting"`
@@ -241,6 +246,7 @@ type TableFormatting struct {
 
 type Legend struct {
 	Position     LegendPosition    `json:"position"`
+	Mode         LegendMode        `json:"mode"`
 	CustomColors map[string]string `json:"customColors"`
 }
 
@@ -248,7 +254,7 @@ type ThresholdWithLabel struct {
 	Value float64 `json:"value" validate:"required" required:"true"`
 	Unit  string  `json:"unit"`
 	Color string  `json:"color" validate:"required" required:"true"`
-	Label string  `json:"label" validate:"required" required:"true"`
+	Label string  `json:"label"`
 }
 
 type ComparisonThreshold struct {
@@ -355,6 +361,47 @@ func (l *LegendPosition) UnmarshalJSON(data []byte) error {
 		return nil
 	default:
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid legend position %q: must be `bottom` or `right`", v)
+	}
+}
+
+type LegendMode struct{ valuer.String }
+
+var (
+	LegendModeList  = LegendMode{valuer.NewString("list")} // default
+	LegendModeTable = LegendMode{valuer.NewString("table")}
+)
+
+func (LegendMode) Enum() []any {
+	return []any{LegendModeList} // others are not supported in UI yet
+}
+
+func (m LegendMode) ValueOrDefault() string {
+	if m.IsZero() {
+		return LegendModeList.StringValue()
+	}
+	return m.StringValue()
+}
+
+func (m LegendMode) MarshalJSON() ([]byte, error) {
+	return json.Marshal(m.ValueOrDefault())
+}
+
+func (m *LegendMode) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid legend mode: must be a string, one of `list` or `table`")
+	}
+	if v == "" {
+		*m = LegendModeList
+		return nil
+	}
+	lm := LegendMode{valuer.NewString(v)}
+	switch lm {
+	case LegendModeList, LegendModeTable:
+		*m = lm
+		return nil
+	default:
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid legend mode %q: must be `list` or `table`", v)
 	}
 }
 
@@ -534,9 +581,9 @@ func (ls *LineStyle) UnmarshalJSON(data []byte) error {
 type FillMode struct{ valuer.String }
 
 var (
-	FillModeSolid    = FillMode{valuer.NewString("solid")} // default
+	FillModeSolid    = FillMode{valuer.NewString("solid")}
 	FillModeGradient = FillMode{valuer.NewString("gradient")}
-	FillModeNone     = FillMode{valuer.NewString("none")}
+	FillModeNone     = FillMode{valuer.NewString("none")} // default
 )
 
 func (FillMode) Enum() []any {
@@ -545,7 +592,7 @@ func (FillMode) Enum() []any {
 
 func (fm FillMode) ValueOrDefault() string {
 	if fm.IsZero() {
-		return FillModeSolid.StringValue()
+		return FillModeNone.StringValue()
 	}
 	return fm.StringValue()
 }
@@ -560,7 +607,7 @@ func (fm *FillMode) UnmarshalJSON(data []byte) error {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid fill mode: must be a string, one of `solid`, `gradient`, or `none`")
 	}
 	if v == "" {
-		*fm = FillModeSolid
+		*fm = FillModeNone
 		return nil
 	}
 	val := FillMode{valuer.NewString(v)}
@@ -573,12 +620,9 @@ func (fm *FillMode) UnmarshalJSON(data []byte) error {
 	}
 }
 
-// SpanGaps controls whether lines connect across null values.
-// When FillOnlyBelow is false (default), all gaps are connected.
-// When FillOnlyBelow is true, only gaps smaller than FillLessThan are connected.
 type SpanGaps struct {
-	FillOnlyBelow bool                `json:"fillOnlyBelow"`
-	FillLessThan  valuer.TextDuration `json:"fillLessThan"`
+	FillOnlyBelow bool                `json:"fillOnlyBelow" description:"Controls whether lines connect across null values. When false (default), all gaps are connected. When true, only gaps smaller than fillLessThan are connected."`
+	FillLessThan  valuer.TextDuration `json:"fillLessThan" description:"The maximum gap size to connect when fillOnlyBelow is true. Gaps larger than this duration are left disconnected."`
 }
 
 type PrecisionOption struct{ valuer.String }

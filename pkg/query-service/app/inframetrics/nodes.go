@@ -53,14 +53,14 @@ func NewNodesRepo(reader interfaces.Reader, querierV2 interfaces.Querier) *Nodes
 	return &NodesRepo{reader: reader, querierV2: querierV2}
 }
 
-func (n *NodesRepo) GetNodeAttributeKeys(ctx context.Context, req v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
+func (n *NodesRepo) GetNodeAttributeKeys(ctx context.Context, orgID valuer.UUID, req v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
 	req.DataSource = v3.DataSourceMetrics
 	req.AggregateAttribute = metricToUseForNodes
 	if req.Limit == 0 {
 		req.Limit = 50
 	}
 
-	attributeKeysResponse, err := n.reader.GetMetricAttributeKeys(ctx, &req)
+	attributeKeysResponse, err := n.reader.GetMetricAttributeKeys(ctx, orgID, &req)
 	if err != nil {
 		return nil, err
 	}
@@ -82,14 +82,14 @@ func (n *NodesRepo) DidSendNodeMetrics(ctx context.Context) (bool, error) {
 	return count > 0, nil
 }
 
-func (n *NodesRepo) GetNodeAttributeValues(ctx context.Context, req v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
+func (n *NodesRepo) GetNodeAttributeValues(ctx context.Context, orgID valuer.UUID, req v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
 	req.DataSource = v3.DataSourceMetrics
 	req.AggregateAttribute = metricToUseForNodes
 	if req.Limit == 0 {
 		req.Limit = 50
 	}
 
-	attributeValuesResponse, err := n.reader.GetMetricAttributeValues(ctx, &req)
+	attributeValuesResponse, err := n.reader.GetMetricAttributeValues(ctx, orgID, &req)
 	if err != nil {
 		return nil, err
 	}

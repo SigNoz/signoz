@@ -246,6 +246,19 @@ const SpanOverview = memo(function SpanOverview({
 		onAddSpanToFunnel(span);
 	};
 
+	// e2e hook: expose the filter highlight/dim state as a stable attribute, since
+	// the styles.* classes are hashed at build time and can't be asserted.
+	let spanState = 'default';
+	if (isHighlighted) {
+		spanState = 'highlighted';
+	} else if (isDimmed) {
+		spanState = 'dimmed';
+	} else if (isSelectedNonMatching) {
+		spanState = 'selected-non-matching';
+	} else if (isSelected) {
+		spanState = 'selected';
+	}
+
 	return (
 		<div
 			className={cx(styles.spanOverview, {
@@ -254,6 +267,7 @@ const SpanOverview = memo(function SpanOverview({
 				[styles.isSelectedNonMatching]: isSelectedNonMatching,
 				[styles.isDimmed]: isDimmed,
 			})}
+			data-span-state={spanState}
 			onClick={(): void => handleSpanClick(span)}
 			onMouseEnter={(): void => onHoverEnter(span.span_id)}
 			onMouseLeave={(): void => onHoverLeave()}
@@ -301,6 +315,7 @@ const SpanOverview = memo(function SpanOverview({
 				{span.has_children && (
 					<span
 						className={styles.treeArrow}
+						data-testid={`cell-collapse-${span.span_id}`}
 						onClick={(event): void => {
 							event.stopPropagation();
 							event.preventDefault();

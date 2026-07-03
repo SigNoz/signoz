@@ -4,7 +4,6 @@ import { toast } from '@signozhq/ui/sonner';
 import logEvent from 'api/common/logEvent';
 import {
 	lockDashboardV2,
-	patchDashboardV2,
 	unlockDashboardV2,
 } from 'api/generated/services/dashboard';
 import type {
@@ -12,15 +11,18 @@ import type {
 	DashboardtypesJSONPatchOperationDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { Base64Icons } from 'container/DashboardContainer/DashboardSettings/General/utils';
+import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { useAppContext } from 'providers/App/App';
-import { usePanelTypeSelectionModalStore } from 'providers/Dashboard/helpers/panelTypeSelectionModalHelper';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 
+import { useCreatePanel } from '../hooks/useCreatePanel';
+import { useOptimisticPatch } from '../hooks/useOptimisticPatch';
+import PanelTypeSelectionModal from '../PanelsAndSectionsLayout/Panel/PanelTypeSelectionModal/PanelTypeSelectionModal';
 import DashboardActions from './DashboardActions/DashboardActions';
 import DashboardInfo from './DashboardInfo/DashboardInfo';
 import { useEditableTitle } from './DashboardInfo/useEditableTitle';
-import { usePublicDashboardMeta } from '../DashboardSettings/PublicDashboard/usePublicDashboardMeta';
+import VariablesBar from '../VariablesBar/VariablesBar';
 
 import styles from './DashboardPageToolbar.module.scss';
 
@@ -49,13 +51,9 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 
 	const { user } = useAppContext();
 	const { showErrorModal } = useErrorModal();
-	const setIsPanelTypeSelectionModalOpen = usePanelTypeSelectionModalStore(
-		(s) => s.setIsPanelTypeSelectionModalOpen,
-	);
-
-	// Single global fetch of the public-sharing meta (the drawer reuses this cache);
-	// drives the public-access badge.
-	const { isPublic: isPublicDashboard } = usePublicDashboardMeta(id);
+	const { patchAsync } = useOptimisticPatch();
+	const { isPickerOpen, openPicker, closePicker, createPanel } =
+		useCreatePanel();
 
 	const isAuthor =
 		!!user?.email && !!dashboard.createdBy && dashboard.createdBy === user.email;
@@ -91,14 +89,13 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 						value: next,
 					},
 				];
-				await patchDashboardV2({ id }, patch);
+				await patchAsync(patch);
 				toast.success('Dashboard renamed successfully');
-				refetch();
 			} catch (error) {
 				showErrorModal(error as APIError);
 			}
 		},
-		[id, refetch, showErrorModal],
+		[id, patchAsync, showErrorModal],
 	);
 
 	const { isEditing, draft, setDraft, startEdit, cancel, commit } =
@@ -111,8 +108,8 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 		void logEvent('Dashboard Detail V2: Add new panel clicked', {
 			dashboardId: id,
 		});
-		setIsPanelTypeSelectionModalOpen(true);
-	}, [id, setIsPanelTypeSelectionModalOpen]);
+		openPicker();
+	}, [id, openPicker]);
 
 	return (
 		<section className={styles.dashboardPageToolbarContainer}>
@@ -122,7 +119,7 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 					image={image}
 					tags={tags}
 					description={description}
-					isPublicDashboard={isPublicDashboard}
+					isPublicDashboard={false}
 					isDashboardLocked={isDashboardLocked}
 					isEditing={isEditing}
 					draft={draft}
@@ -142,6 +139,21 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 					onOpenRename={startEdit}
 				/>
 			</div>
+
+			{/* Row 2: the time selector floats top-right (declared first so the
+			    variables bar's content wraps around it); the variables bar
+			    collapses to one line and, when expanded, wraps full-width under it. */}
+			<div className={styles.toolbarRow2}>
+				<div className={styles.timeCluster}>
+					<DateTimeSelectionV2 showAutoRefresh hideShareModal />
+				</div>
+				<VariablesBar dashboard={dashboard} />
+			</div>
+			<PanelTypeSelectionModal
+				open={isPickerOpen}
+				onClose={closePicker}
+				onSelect={createPanel}
+			/>
 		</section>
 	);
 }

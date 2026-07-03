@@ -1,5 +1,5 @@
 import { ReactElement } from 'react';
-import { render, screen } from 'tests/test-utils';
+import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 import { buildPermission } from 'hooks/useAuthZ/utils';
 import type { AuthZObject, BrandedPermission } from 'hooks/useAuthZ/types';
 import { useAuthZ } from 'hooks/useAuthZ/useAuthZ';
@@ -64,6 +64,29 @@ describe('AuthZTooltip — single check', () => {
 		);
 
 		expect(screen.getByRole('button', { name: 'Action' })).toBeDisabled();
+	});
+
+	it('shows formatted permission message in tooltip when denied', async () => {
+		mockUseAuthZ.mockReturnValue({
+			...noPermissions,
+			permissions: { [createPerm]: { isGranted: false } },
+		});
+
+		render(
+			<AuthZTooltip checks={[createPerm]}>
+				<TestButton />
+			</AuthZTooltip>,
+		);
+
+		const user = userEvent.setup();
+		await user.hover(screen.getByRole('button', { name: 'Action' }));
+
+		const expectedMessage =
+			'user/some-user-id is not authorized to perform create:serviceaccount:*';
+		await waitFor(() => {
+			const matches = screen.queryAllByText(expectedMessage);
+			expect(matches.length).toBeGreaterThan(0);
+		});
 	});
 
 	it('disables child while loading', () => {
@@ -141,5 +164,32 @@ describe('AuthZTooltip — multi-check (checks array)', () => {
 		expect(wrapper?.getAttribute('data-denied-permissions')).toContain(
 			attachRolePerm,
 		);
+	});
+
+	it('shows multiple formatted permissions in tooltip when both denied', async () => {
+		const sa = attachSAPerm('sa-1');
+		mockUseAuthZ.mockReturnValue({
+			...noPermissions,
+			permissions: {
+				[sa]: { isGranted: false },
+				[attachRolePerm]: { isGranted: false },
+			},
+		});
+
+		render(
+			<AuthZTooltip checks={[sa, attachRolePerm]}>
+				<TestButton />
+			</AuthZTooltip>,
+		);
+
+		const user = userEvent.setup();
+		await user.hover(screen.getByRole('button', { name: 'Action' }));
+
+		const expectedMessage =
+			'user/some-user-id is not authorized to perform attach:serviceaccount:sa-1, attach:role:*';
+		await waitFor(() => {
+			const matches = screen.queryAllByText(expectedMessage);
+			expect(matches.length).toBeGreaterThan(0);
+		});
 	});
 });

@@ -82,7 +82,11 @@
 	"TRACE_DETAIL_OLD": "SigNoz | Trace Detail",
 	"SERVICE_TOP_LEVEL_OPERATIONS": "SigNoz | Service Operations",
 	"ROLE_DETAILS": "SigNoz | Role Details",
+	"ROLE_CREATE": "SigNoz | Create Role",
+	"ROLE_EDIT": "SigNoz | Edit Role",
 	"TRACES_FUNNELS_DETAIL": "SigNoz | Funnel",
 	"INTEGRATIONS_DETAIL": "SigNoz | Integration",
-	"PUBLIC_DASHBOARD": "SigNoz | Dashboard"
+	"PUBLIC_DASHBOARD": "SigNoz | Dashboard",
+	"LLM_OBSERVABILITY_BASE": "SigNoz | LLM Observability",
+	"LLM_OBSERVABILITY_MODEL_PRICING": "SigNoz | Model Pricing"
 }

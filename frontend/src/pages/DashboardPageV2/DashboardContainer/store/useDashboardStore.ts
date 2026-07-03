@@ -9,25 +9,36 @@ import {
 	createCollapseSlice,
 	type CollapseSlice,
 } from './slices/collapseSlice';
+import {
+	createVariableSelectionSlice,
+	type VariableSelectionSlice,
+} from './slices/variableSelectionSlice';
 
-export type DashboardStore = EditContextSlice & CollapseSlice;
+export type DashboardStore = EditContextSlice &
+	CollapseSlice &
+	VariableSelectionSlice;
 
 /**
  * V2 dashboard session store. Holds cross-cutting client state only — never the
- * dashboard spec (that stays in react-query via useGetDashboardV2). Two slices:
+ * dashboard spec (that stays in react-query via useGetDashboardV2). Slices:
  * - edit-context: dashboardId / isEditable / refetch (set once, not persisted).
  * - collapse: per-section open state (frontend-only, persisted to localStorage).
+ * - variable-selection: runtime variable values (frontend-only, persisted).
  */
 export const useDashboardStore = create<DashboardStore>()(
 	persist(
 		(...a) => ({
 			...createEditContextSlice(...a),
 			...createCollapseSlice(...a),
+			...createVariableSelectionSlice(...a),
 		}),
 		{
 			name: '@signoz/dashboard-v2',
-			// Persist only the collapse map — context (incl. the refetch fn) is transient.
-			partialize: (state) => ({ collapsed: state.collapsed }),
+			// Persist UI-only state (context incl. the refetch fn is transient).
+			partialize: (state) => ({
+				collapsed: state.collapsed,
+				variableValues: state.variableValues,
+			}),
 		},
 	),
 );

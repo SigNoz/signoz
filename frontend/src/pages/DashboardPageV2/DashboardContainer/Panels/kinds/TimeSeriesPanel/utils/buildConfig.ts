@@ -31,10 +31,7 @@ const DEFAULT_POINT_SIZE = 5;
 export interface BuildTimeSeriesConfigArgs {
 	panelId: string;
 	spec: DashboardtypesTimeSeriesPanelSpecDTO;
-	/**
-	 * Flat list of builder queries on this panel (see `getBuilderQueries`).
-	 * Powers per-query legend resolution; empty for non-builder panels.
-	 */
+	/** Flat list of builder queries (see `getBuilderQueries`); powers per-query legend resolution. */
 	builderQueries: BuilderQuery[];
 	/** Flattened V5 series (see `flattenTimeSeries`). */
 	series: PanelSeries[];
@@ -49,14 +46,7 @@ export interface BuildTimeSeriesConfigArgs {
 	maxTimeScale?: number;
 }
 
-/**
- * Builds a fully-wired `UPlotConfigBuilder` for a TimeSeries panel.
- *
- * Delegates the panel-agnostic scaffolding (scales, thresholds, axes,
- * drag-to-zoom, click plugin) to the shared `buildBaseConfig`, then layers
- * in the TimeSeries-specific concern: one series per result, with visuals
- * resolved from `spec.chartAppearance`.
- */
+/** Builds a `UPlotConfigBuilder` for a TimeSeries panel: shared scaffolding plus one series per result. */
 export function buildTimeSeriesConfig({
 	panelId,
 	spec,
@@ -104,11 +94,7 @@ interface AddSeriesArgs {
 }
 
 /**
- * Adds one uPlot series per flattened V5 series to the scaffolded builder.
- * The visual resolution (line style, interpolation, fill mode, span gaps)
- * reads from `spec.chartAppearance`; the label is resolved via the legend
- * matrix in `resolveSeriesLabelV5`. Mutates the builder in place.
- *
+ * Adds one uPlot series per flattened V5 series; mutates the builder in place.
  * Order must match `prepareAlignedData` — both iterate the same flat list.
  */
 function addSeries({
@@ -122,7 +108,9 @@ function addSeries({
 	// `customColors` is nullable on the spec; coerce so `addSeries` always gets
 	// a defined record (it dereferences keys without a guard).
 	const colorMapping = spec.legend?.customColors ?? {};
-	const spanGaps = resolveSpanGaps(chartAppearance?.spanGaps?.fillLessThan);
+	const spanGaps = chartAppearance?.spanGaps
+		? resolveSpanGaps(chartAppearance?.spanGaps)
+		: true;
 
 	const lineStyle = chartAppearance?.lineStyle
 		? LINE_STYLE_MAP[chartAppearance.lineStyle]
