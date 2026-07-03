@@ -5,7 +5,7 @@ import { memo, useCallback, useMemo } from 'react';
 
 import type { BrandedPermission } from '../../hooks/useAuthZ/types';
 import { parsePermission } from '../../hooks/useAuthZ/utils';
-import type { ObservedPermission, OverrideState } from '../types';
+import { OverrideState, type ObservedPermission } from '../types';
 
 import { OverrideControl } from './OverrideControl';
 
@@ -20,11 +20,11 @@ type PermissionRowProps = {
 };
 
 const ROW_OVERRIDE_CLASSES: Record<OverrideState, string | null> = {
-	reset: null,
-	granted: styles.rowGranted,
-	denied: styles.rowDenied,
-	delay: styles.rowDelay,
-	error: styles.rowError,
+	[OverrideState.Reset]: null,
+	[OverrideState.Granted]: styles.rowGranted,
+	[OverrideState.Denied]: styles.rowDenied,
+	[OverrideState.Delay]: styles.rowDelay,
+	[OverrideState.Error]: styles.rowError,
 };
 
 export const PermissionRow = memo(function PermissionRow({
@@ -34,7 +34,7 @@ export const PermissionRow = memo(function PermissionRow({
 	onSetOverride,
 	onSelect,
 }: PermissionRowProps): JSX.Element {
-	const currentState = override ?? 'reset';
+	const currentState = override ?? OverrideState.Reset;
 
 	const { relation, objectId } = useMemo(() => {
 		const parsed = parsePermission(observed.permission);

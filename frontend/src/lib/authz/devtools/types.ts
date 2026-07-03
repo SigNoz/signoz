@@ -1,6 +1,12 @@
 import type { BrandedPermission } from '../hooks/useAuthZ/types';
 
-export type OverrideState = 'granted' | 'denied' | 'delay' | 'error' | 'reset';
+export enum OverrideState {
+	Granted = 'granted',
+	Denied = 'denied',
+	Delay = 'delay',
+	Error = 'error',
+	Reset = 'reset',
+}
 
 export type ObservedPermission = {
 	permission: BrandedPermission;
@@ -32,9 +38,9 @@ export type AuthZDevStore = {
 };
 
 export const OVERRIDE_CYCLE: OverrideState[] = [
-	'reset',
-	'granted',
-	'denied',
-	'delay',
-	'error',
+	OverrideState.Reset,
+	OverrideState.Granted,
+	OverrideState.Denied,
+	OverrideState.Delay,
+	OverrideState.Error,
 ];

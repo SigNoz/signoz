@@ -53,9 +53,8 @@ export function AuthZDevFloatingIndicator(): JSX.Element | null {
 				className={styles.closeButton}
 				aria-label="Dismiss indicator"
 				data-testid="authz-dev-floating-dismiss"
-			>
-				<X size={14} />
-			</Button>
+				prefix={<X />}
+			/>
 		</div>,
 		document.body,
 	);

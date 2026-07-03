@@ -11,9 +11,6 @@
 }
 
 .button {
-	display: flex;
-	align-items: center;
-	gap: 8px;
 	box-shadow:
 		0 4px 12px rgb(0 0 0 / 15%),
 		0 0 0 1px rgb(0 0 0 / 5%);
@@ -24,15 +21,8 @@
 }
 
 .closeButton {
-	padding: 4px;
-	min-width: auto;
-	background: var(--bg-vanilla-300);
 	border-radius: 4px;
 	box-shadow:
 		0 4px 12px rgb(0 0 0 / 15%),
 		0 0 0 1px rgb(0 0 0 / 5%);
-}
-
-.closeButton:hover {
-	background: var(--bg-vanilla-400);
 }

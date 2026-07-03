@@ -3,7 +3,7 @@ import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 
 import type { BrandedPermission } from '../../hooks/useAuthZ/types';
-import type { OverrideState } from '../types';
+import { OverrideState } from '../types';
 
 import styles from './OverrideControl.module.css';
 
@@ -22,31 +22,31 @@ type OverrideOption = {
 
 const OVERRIDE_OPTIONS: OverrideOption[] = [
 	{
-		state: 'reset',
+		state: OverrideState.Reset,
 		label: 'Auto',
 		icon: <RotateCcw size={13} />,
 		activeClassName: styles.optAuto,
 	},
 	{
-		state: 'granted',
+		state: OverrideState.Granted,
 		label: 'Grant',
 		icon: <Check size={13} />,
 		activeClassName: styles.optGranted,
 	},
 	{
-		state: 'denied',
+		state: OverrideState.Denied,
 		label: 'Deny',
 		icon: <X size={13} />,
 		activeClassName: styles.optDenied,
 	},
 	{
-		state: 'delay',
+		state: OverrideState.Delay,
 		label: 'Delay',
 		icon: <Clock size={13} />,
 		activeClassName: styles.optDelay,
 	},
 	{
-		state: 'error',
+		state: OverrideState.Error,
 		label: 'Error',
 		icon: <Zap size={13} />,
 		activeClassName: styles.optError,

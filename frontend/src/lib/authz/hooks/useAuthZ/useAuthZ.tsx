@@ -19,11 +19,11 @@ import {
 	gettableTransactionToPermission,
 	permissionToTransactionDto,
 } from './utils';
+import { OverrideState } from '../../devtools/types';
 
 let devStoreRef:
 	| typeof import('../../devtools/useAuthZDevStore').useAuthZDevStore
 	| null = null;
-type OverrideState = 'granted' | 'denied' | 'delay' | 'error' | 'reset';
 
 if (IS_DEV) {
 	void import('../../devtools/useAuthZDevStore').then((mod) => {
@@ -47,11 +47,11 @@ async function applyDevOverrideToQuery(
 ): Promise<AuthZCheckResponse> {
 	const override = getDevOverride(permission);
 
-	if (override === 'error') {
+	if (override === OverrideState.Error) {
 		throw new Error(`[AuthZ DevTools] Simulated error for: ${permission}`);
 	}
 
-	if (override === 'delay') {
+	if (override === OverrideState.Delay) {
 		await new Promise((resolve) => setTimeout(resolve, DEV_DELAY_MS));
 	}
 
@@ -62,11 +62,11 @@ async function applyDevOverrideToQuery(
 		devStoreRef.getState().registerObserved(permission, apiValue);
 	}
 
-	if (override === 'granted') {
+	if (override === OverrideState.Granted) {
 		return { [permission]: { isGranted: true } };
 	}
 
-	if (override === 'denied') {
+	if (override === OverrideState.Denied) {
 		return { [permission]: { isGranted: false } };
 	}
 

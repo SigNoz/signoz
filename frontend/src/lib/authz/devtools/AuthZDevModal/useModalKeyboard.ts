@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import type { BrandedPermission } from '../../hooks/useAuthZ/types';
-import type { OverrideState } from '../types';
-import { OVERRIDE_CYCLE } from '../types';
+import { OverrideState, OVERRIDE_CYCLE } from '../types';
 
 type UseModalKeyboardOptions = {
 	permissions: BrandedPermission[];
@@ -67,7 +66,7 @@ function handleArrowKey(key: string, ctx: KeyContext): void {
 	const direction = key === 'ArrowLeft' ? -1 : 1;
 	ctx.onSetOverride(
 		selected,
-		stepOverrideState(ctx.overrides[selected] ?? 'reset', direction),
+		stepOverrideState(ctx.overrides[selected] ?? OverrideState.Reset, direction),
 	);
 }
 

@@ -2,8 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 import type { BrandedPermission } from '../hooks/useAuthZ/types';
-import type { AuthZDevStore, OverrideState } from './types';
-import { OVERRIDE_CYCLE } from './types';
+import { OverrideState, OVERRIDE_CYCLE, type AuthZDevStore } from './types';
 import { getScopedKey } from 'utils/storage';
 
 export const useAuthZDevStore = create<AuthZDevStore>()(
@@ -42,7 +41,7 @@ export const useAuthZDevStore = create<AuthZDevStore>()(
 			},
 
 			setOverride: (permission: BrandedPermission, state: OverrideState): void => {
-				if (state === 'reset') {
+				if (state === OverrideState.Reset) {
 					get().clearOverride(permission);
 					return;
 				}
@@ -82,7 +81,7 @@ export const useAuthZDevStore = create<AuthZDevStore>()(
 						...state.overrides,
 					};
 					for (const key of keys) {
-						newOverrides[key] = 'granted';
+						newOverrides[key] = OverrideState.Granted;
 					}
 					return { overrides: newOverrides };
 				});
@@ -95,14 +94,14 @@ export const useAuthZDevStore = create<AuthZDevStore>()(
 						...state.overrides,
 					};
 					for (const key of keys) {
-						newOverrides[key] = 'denied';
+						newOverrides[key] = OverrideState.Denied;
 					}
 					return { overrides: newOverrides };
 				});
 			},
 
 			cycleOverride: (permission: BrandedPermission): void => {
-				const currentOverride = get().overrides[permission] ?? 'reset';
+				const currentOverride = get().overrides[permission] ?? OverrideState.Reset;
 				const currentIndex = OVERRIDE_CYCLE.indexOf(currentOverride);
 				const nextIndex = (currentIndex + 1) % OVERRIDE_CYCLE.length;
 				const nextState = OVERRIDE_CYCLE[nextIndex];
