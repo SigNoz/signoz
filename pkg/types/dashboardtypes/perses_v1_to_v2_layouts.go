@@ -147,8 +147,8 @@ func (d *v1Decoder) extractRowsAndCollapsedWidgets(data StorableDashboardData) m
 }
 
 // buildV2GridLayout builds one v2 grid. row is nil for the unnamed grid (no
-// display); otherwise the grid takes the row's title and collapse state. Items
-// are sorted by (y, x) and their y's normalized so the topmost sits at 0.
+// display); otherwise the grid takes the row's title and collapse state. Items are
+// sorted by (y, x) then vertically compacted (see compactGridItemsVertically).
 func (d *v1Decoder) buildV2GridLayout(row *rowInfo, items []map[string]any) Layout {
 	d.sortByPosition(items)
 
@@ -160,20 +160,64 @@ func (d *v1Decoder) buildV2GridLayout(row *rowInfo, items []map[string]any) Layo
 		}
 	}
 
-	minY := 0
-	if len(items) > 0 {
-		minY = d.readInt(items[0], "y") // sorted by y, so the first item is topmost
-	}
 	for _, item := range items {
 		spec.Items = append(spec.Items, dashboard.GridItem{
 			X:       d.readInt(item, "x"),
-			Y:       d.readInt(item, "y") - minY,
+			Y:       d.readInt(item, "y"),
 			Width:   d.readInt(item, "w"),
 			Height:  d.readInt(item, "h"),
 			Content: &common.JSONRef{Ref: fmt.Sprintf("#/spec/panels/%s", d.readString(item, "i"))},
 		})
 	}
+	compactGridItemsVertically(spec.Items)
 	return Layout{Kind: dashboard.KindGridLayout, Spec: &spec}
+}
+
+// compactGridItemsVertically mirrors react-grid-layout's correctBounds+compact
+// (compactType "vertical", allowOverlap false): clamp each item into the grid (x,y>=0;
+// x+width<=cols by shifting left), then move sorted-first items up to fill space and
+// down past collisions. Fixes overlaps, gaps, and out-of-bounds coords so the migrated
+// grid matches the v1 UI and passes v2 validation.
+func compactGridItemsVertically(items []dashboard.GridItem) {
+	collides := func(a, b dashboard.GridItem) bool {
+		return a.X < b.X+b.Width && b.X < a.X+a.Width && a.Y < b.Y+b.Height && b.Y < a.Y+a.Height
+	}
+	firstCollision := func(l dashboard.GridItem, placed []dashboard.GridItem) (dashboard.GridItem, bool) {
+		for _, p := range placed {
+			if collides(l, p) {
+				return p, true
+			}
+		}
+		return dashboard.GridItem{}, false
+	}
+	for i := range items {
+		l := items[i]
+		if l.X+l.Width > gridColumnCount { // overflows right → shift left to fit
+			l.X = gridColumnCount - l.Width
+		}
+		if l.X < 0 {
+			l.X = 0
+		}
+		if l.Y < 0 {
+			l.Y = 0
+		}
+		for l.Y > 0 { // move up to fill space above
+			up := l
+			up.Y--
+			if _, hit := firstCollision(up, items[:i]); hit {
+				break
+			}
+			l.Y--
+		}
+		for { // then down past any collision with an already-placed item
+			c, hit := firstCollision(l, items[:i])
+			if !hit {
+				break
+			}
+			l.Y = c.Y + c.Height
+		}
+		items[i] = l
+	}
 }
 
 func (d *v1Decoder) sortByPosition(items []map[string]any) {

@@ -1085,6 +1085,79 @@ func TestConvertV1LayoutsExpandedSectionsNoPanelMap(t *testing.T) {
 	assert.Equal(t, 0, s2.Items[1].Y)
 }
 
+func TestConvertV1LayoutsCompactsOverlapping(t *testing.T) {
+	data := StorableDashboardData{
+		"widgets": []any{
+			map[string]any{"id": "w1", "panelTypes": "graph"},
+			map[string]any{"id": "w2", "panelTypes": "graph"},
+		},
+		"layout": []any{
+			map[string]any{"i": "w1", "x": float64(0), "y": float64(0), "w": float64(6), "h": float64(6)},
+			map[string]any{"i": "w2", "x": float64(3), "y": float64(3), "w": float64(6), "h": float64(6)},
+		},
+	}
+
+	d := &v1Decoder{}
+	layouts := d.convertV1Layouts(data, d.convertV1Panels(data["widgets"]))
+	require.NoError(t, d.errIfHasMalformedFields())
+	require.Len(t, layouts, 1)
+
+	grid, ok := layouts[0].Spec.(*dashboard.GridLayoutSpec)
+	require.True(t, ok)
+	require.Len(t, grid.Items, 2)
+	// w1 stays top-left; the overlapping w2 is pushed below it, keeping its x.
+	assert.Equal(t, "#/spec/panels/w1", grid.Items[0].Content.Ref)
+	assert.Equal(t, 0, grid.Items[0].Y)
+	assert.Equal(t, "#/spec/panels/w2", grid.Items[1].Content.Ref)
+	assert.Equal(t, 3, grid.Items[1].X)
+	assert.Equal(t, 6, grid.Items[1].Y)
+}
+
+func TestConvertV1LayoutsClampsNegativeY(t *testing.T) {
+	data := StorableDashboardData{
+		"widgets": []any{map[string]any{"id": "w1", "panelTypes": "graph"}},
+		"layout": []any{
+			map[string]any{"i": "w1", "x": float64(0), "y": float64(-1), "w": float64(6), "h": float64(6)},
+		},
+	}
+
+	d := &v1Decoder{}
+	layouts := d.convertV1Layouts(data, d.convertV1Panels(data["widgets"]))
+	require.NoError(t, d.errIfHasMalformedFields())
+	require.Len(t, layouts, 1)
+
+	grid, ok := layouts[0].Spec.(*dashboard.GridLayoutSpec)
+	require.True(t, ok)
+	require.Len(t, grid.Items, 1)
+	assert.Equal(t, 0, grid.Items[0].Y) // negative y clamped, as react-grid-layout does
+}
+
+func TestConvertV1LayoutsClampsXBounds(t *testing.T) {
+	data := StorableDashboardData{
+		"widgets": []any{
+			map[string]any{"id": "w1", "panelTypes": "graph"},
+			map[string]any{"id": "w2", "panelTypes": "graph"},
+		},
+		"layout": []any{
+			map[string]any{"i": "w1", "x": float64(-2), "y": float64(0), "w": float64(6), "h": float64(6)},
+			map[string]any{"i": "w2", "x": float64(10), "y": float64(1), "w": float64(6), "h": float64(6)},
+		},
+	}
+
+	d := &v1Decoder{}
+	layouts := d.convertV1Layouts(data, d.convertV1Panels(data["widgets"]))
+	require.NoError(t, d.errIfHasMalformedFields())
+	require.Len(t, layouts, 1)
+
+	grid, ok := layouts[0].Spec.(*dashboard.GridLayoutSpec)
+	require.True(t, ok)
+	require.Len(t, grid.Items, 2)
+	assert.Equal(t, "#/spec/panels/w1", grid.Items[0].Content.Ref)
+	assert.Equal(t, 0, grid.Items[0].X) // x=-2 clamped to 0
+	assert.Equal(t, "#/spec/panels/w2", grid.Items[1].Content.Ref)
+	assert.Equal(t, 6, grid.Items[1].X) // x+w=16>12 shifted left to 12-6
+}
+
 // TestConvertV1LayoutsToleratesNonObjectPanelMap covers templates that store
 // panelMap as {rowID: []widgetID} instead of the canonical {rowID: {widgets,
 // collapsed}}. The frontend reads such an entry as "not collapsed" (it accesses
@@ -1279,6 +1352,19 @@ func TestConvertV1VariablesSkipsUnnamed(t *testing.T) {
 	d := &v1Decoder{}
 	vars := d.convertV1Variables(raw)
 	require.NoError(t, d.errIfHasMalformedFields())
+	require.Len(t, vars, 1)
+	spec := vars[0].Spec.(*ListVariableSpec)
+	assert.Equal(t, "good", spec.Name)
+}
+
+func TestConvertV1VariablesSkipsDynamicMissingAttribute(t *testing.T) {
+	raw := map[string]any{
+		"u-1": map[string]any{"name": "node", "type": "DYNAMIC", "dynamicVariablesSource": "Traces"},
+		"u-2": map[string]any{"name": "good", "type": "CUSTOM", "customValue": "a"},
+	}
+	d := &v1Decoder{}
+	vars := d.convertV1Variables(raw)
+	require.NoError(t, d.errIfHasMalformedFields()) // skipped silently, dashboard not failed
 	require.Len(t, vars, 1)
 	spec := vars[0].Spec.(*ListVariableSpec)
 	assert.Equal(t, "good", spec.Name)
