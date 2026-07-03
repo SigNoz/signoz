@@ -77,6 +77,10 @@ func (d *v1Decoder) convertV1Variable(v map[string]any) (Variable, bool) {
 		return Variable{Kind: variable.KindText, Spec: spec}, true
 
 	case "QUERY", "CUSTOM", "DYNAMIC":
+		// Drop (don't fail on) a dynamic variable with no attribute — it can't resolve.
+		if kind == "DYNAMIC" && d.readString(v, "dynamicVariablesAttribute") == "" {
+			return Variable{}, false
+		}
 		listSpec := &ListVariableSpec{
 			Display:         Display{Name: name, Description: description},
 			AllowAllValue:   d.readBool(v, "showALLOption"),
