@@ -36,6 +36,7 @@ func (d *v1Decoder) convertV1Panels(raw any) map[string]*Panel {
 		}
 		id := d.readString(widget, "id")
 		if id == "" {
+			// dead widget that can't be referenced anywhere, skipping.
 			continue
 		}
 		var panel *Panel

@@ -345,9 +345,20 @@ func TestConvertV1ToV2HappyPath(t *testing.T) {
 					"id":         "panel-1",
 					"panelTypes": "graph",
 					"title":      "Latency",
+					"query": map[string]any{
+						"queryType":      "clickhouse_sql",
+						"clickhouse_sql": []any{map[string]any{"name": "A", "query": "SELECT now(), 1"}},
+					},
 				},
 				// table widget → Table panel
-				map[string]any{"id": "panel-2", "panelTypes": "table"},
+				map[string]any{
+					"id":         "panel-2",
+					"panelTypes": "table",
+					"query": map[string]any{
+						"queryType":      "clickhouse_sql",
+						"clickhouse_sql": []any{map[string]any{"name": "A", "query": "SELECT now(), 1"}},
+					},
+				},
 				// widget with missing id — dropped
 				map[string]any{"panelTypes": "graph", "title": "no id"},
 			},
@@ -1147,7 +1158,7 @@ func TestConvertV1LayoutsDropsCollapsedChildWithNoPanel(t *testing.T) {
 	// deleted widget still referenced in panelMap. It produces no panel and no
 	// malformed-field note, so the dashboard is NOT skipped; the section grid
 	// must drop it rather than emit a dangling ref. Collapsed children bypass the
-	// main layout loop, so this exercises the panelBackedItems filter.
+	// main layout loop, so this exercises the extractValidLayoutItemsForCollapsedSection filter.
 	data := StorableDashboardData{
 		"widgets": []any{
 			map[string]any{"id": "row-1", "panelTypes": "row", "title": "S"},

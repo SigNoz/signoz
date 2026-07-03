@@ -4,7 +4,6 @@ package transition
 import (
 	"context"
 	"log/slog"
-	"strings"
 )
 
 // ══════════════════════════════════════════════
@@ -21,73 +20,12 @@ import (
 // (createFilterExpression, fixGroupBy, buildAggregationExpression, orderByExpr) are
 // already v5-safe.
 
-// MigrateShapeSafe copies Migrate, minus the `version == "v5"` skip gate.
-func (m *dashboardMigrateV5) MigrateShapeSafe(ctx context.Context, dashboardData map[string]any) bool {
-	updated := false
-
-	// Same as Migrate: strip spaces from variable names.
-	if variables, ok := dashboardData["variables"].(map[string]any); ok {
-		for _, variable := range variables {
-			if varMap, ok := variable.(map[string]any); ok {
-				if name, ok := varMap["name"].(string); ok && strings.Contains(name, " ") {
-					varMap["name"] = strings.ReplaceAll(name, " ", "")
-					updated = true
-				}
-			}
-		}
-	}
-
-	if widgets, ok := dashboardData["widgets"].([]any); ok {
-		for _, widget := range widgets {
-			if widgetMap, ok := widget.(map[string]any); ok {
-				if m.updateWidgetShapeSafe(ctx, widgetMap) {
-					updated = true
-				}
-			}
-		}
-	}
-	dashboardData["version"] = "v5"
-	return updated
-}
-
 // MigrateQueryDataShapeSafe is the per-query entry point (the core of
 // updateQueryDataShapeSafe) for callers that process queries one at a time (the
 // v1→v2 converter). widgetType is the v1 panelTypes (metric reduceTo on tables);
 // "" is safe.
 func (m *dashboardMigrateV5) MigrateQueryDataShapeSafe(ctx context.Context, queryData map[string]any, widgetType string) bool {
 	return m.updateQueryDataShapeSafe(ctx, queryData, widgetType)
-}
-
-// updateWidgetShapeSafe copies updateWidget (drops the unused version param).
-func (mc *migrateCommon) updateWidgetShapeSafe(ctx context.Context, widget map[string]any) bool {
-	query, ok := widget["query"].(map[string]any)
-	if !ok {
-		return false
-	}
-	if qType, ok := query["queryType"]; ok {
-		if qType == "promql" || qType == "clickhouse_sql" {
-			return false
-		}
-	}
-	builder, ok := query["builder"].(map[string]any)
-	if !ok {
-		return false
-	}
-	queryData, ok := builder["queryData"].([]any)
-	if !ok {
-		return false
-	}
-	widgetType, _ := widget["panelTypes"].(string)
-
-	updated := false
-	for _, qd := range queryData {
-		if queryDataMap, ok := qd.(map[string]any); ok {
-			if mc.updateQueryDataShapeSafe(ctx, queryDataMap, widgetType) {
-				updated = true
-			}
-		}
-	}
-	return updated
 }
 
 // updateQueryDataShapeSafe copies updateQueryData, with each destructive step
@@ -117,24 +55,27 @@ func (mc *migrateCommon) updateQueryDataShapeSafe(ctx context.Context, queryData
 		updated = true
 	}
 
-	// orderBy: reprocess only while v4-shaped (see orderByIsPreV5).
-	if orderBy, ok := queryData["orderBy"].([]any); ok && orderByIsPreV5(orderBy) {
-		if hasAggregation {
+	if hasAggregation {
+		if orderBy, ok := queryData["orderBy"].([]any); ok && orderByIsPreV5(orderBy) {
 			newOrderBy := make([]any, 0)
 			for _, order := range orderBy {
 				if orderMap, ok := order.(map[string]any); ok {
 					columnName, _ := orderMap["columnName"].(string)
+					// skip timestamp, id (logs, traces), samples(metrics) ordering for aggregation queries
 					if columnName != "timestamp" && columnName != "samples" && columnName != "id" {
 						if columnName == "#SIGNOZ_VALUE" {
 							if expr, has := mc.orderByExpr(queryData); has {
 								orderMap["columnName"] = expr
 							}
 						} else {
+							// if the order by key is not part of the group by keys, remove it
 							present := false
+
 							groupBy, ok := queryData["groupBy"].([]any)
 							if !ok {
-								return updated
+								return false
 							}
+
 							for idx := range groupBy {
 								item, ok := groupBy[idx].(map[string]any)
 								if !ok {
@@ -148,6 +89,7 @@ func (mc *migrateCommon) updateQueryDataShapeSafe(ctx context.Context, queryData
 									present = true
 								}
 							}
+
 							if !present {
 								mc.logger.WarnContext(ctx, "found a order by without group by, skipping", slog.String("order_col_name", columnName))
 								continue
@@ -159,18 +101,27 @@ func (mc *migrateCommon) updateQueryDataShapeSafe(ctx context.Context, queryData
 			}
 			queryData["orderBy"] = newOrderBy
 			updated = true
-		} else {
-			dataSource, _ := queryData["dataSource"].(string)
+		}
+	} else {
+		dataSource, _ := queryData["dataSource"].(string)
+
+		if orderBy, ok := queryData["orderBy"].([]any); ok && orderByIsPreV5(orderBy) {
 			newOrderBy := make([]any, 0)
 			for _, order := range orderBy {
 				if orderMap, ok := order.(map[string]any); ok {
 					columnName, _ := orderMap["columnName"].(string)
+					// skip id and timestamp for (traces)
 					if (columnName == "id" || columnName == "timestamp") && dataSource == "traces" {
+						mc.logger.InfoContext(ctx, "skipping `id` order by for traces")
 						continue
 					}
+
+					// skip id for (logs)
 					if (columnName == "id" || columnName == "timestamp") && dataSource == "logs" {
+						mc.logger.InfoContext(ctx, "skipping `id`/`timestamp` order by for logs")
 						continue
 					}
+
 					newOrderBy = append(newOrderBy, orderMap)
 				}
 			}
@@ -179,29 +130,45 @@ func (mc *migrateCommon) updateQueryDataShapeSafe(ctx context.Context, queryData
 		}
 	}
 
-	// functions: convert only while v4-shaped (see functionsArePreV5).
+	// Only the `&& functionsArePreV5(functions)` guard differs from updateQueryData.
 	if functions, ok := queryData["functions"].([]any); ok && functionsArePreV5(functions) {
 		v5Functions := make([]any, len(functions))
 		for i, fn := range functions {
 			if fnMap, ok := fn.(map[string]any); ok {
-				v5Function := map[string]any{"name": fnMap["name"]}
+				v5Function := map[string]any{
+					"name": fnMap["name"],
+				}
+
+				// Convert args from v4 format to v5 FunctionArg format
 				if args, ok := fnMap["args"].([]any); ok {
 					v5Args := make([]any, len(args))
 					for j, arg := range args {
-						v5Args[j] = map[string]any{"name": "", "value": arg}
+						// In v4, args were just values. In v5, they are FunctionArg objects
+						v5Args[j] = map[string]any{
+							"name":  "", // v4 didn't have named args
+							"value": arg,
+						}
 					}
 					v5Function["args"] = v5Args
 				}
+
+				// Handle namedArgs if present (some functions might have used this)
 				if namedArgs, ok := fnMap["namedArgs"].(map[string]any); ok {
+					// Convert named args to the new format
 					existingArgs, _ := v5Function["args"].([]any)
 					if existingArgs == nil {
 						existingArgs = []any{}
 					}
+
 					for name, value := range namedArgs {
-						existingArgs = append(existingArgs, map[string]any{"name": name, "value": value})
+						existingArgs = append(existingArgs, map[string]any{
+							"name":  name,
+							"value": value,
+						})
 					}
 					v5Function["args"] = existingArgs
 				}
+
 				v5Functions[i] = v5Function
 			}
 		}
@@ -235,10 +202,13 @@ func (mc *migrateCommon) createHavingExpressionShapeSafe(queryData map[string]an
 		queryData["having"] = map[string]any{"expression": ""}
 		return true
 	}
+
 	dataSource, _ := queryData["dataSource"].(string)
+
 	for idx := range having {
 		if havingItem, ok := having[idx].(map[string]any); ok {
-			if havingCol, has := mc.orderByExpr(queryData); has {
+			havingCol, has := mc.orderByExpr(queryData)
+			if has {
 				havingItem["columnName"] = havingCol
 				havingItem["key"] = map[string]any{"key": havingCol}
 			}
@@ -270,12 +240,12 @@ func (mc *migrateCommon) createAggregationsShapeSafe(ctx context.Context, queryD
 	}
 
 	var aggregation map[string]any
+
 	switch dataSource {
 	case "metrics":
 		_, hasTime := queryData["timeAggregation"]
 		_, hasSpace := queryData["spaceAggregation"]
-		if hasTime || hasSpace {
-			// v4 shape: the body carries its own time/space aggregation.
+		if hasTime || hasSpace { // acts as a check for v4 shape: the body carries its own time/space aggregation.
 			if _, ok := queryData["spaceAggregation"]; !ok {
 				queryData["spaceAggregation"] = aggregateOp
 			}
