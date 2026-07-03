@@ -30,6 +30,11 @@ export interface PanelActionCapabilities {
 	 * tabular kinds). Not a menu action — the renderer must consume `searchTerm`.
 	 */
 	search: boolean;
+	/**
+	 * Kind supports click-to-drilldown (context menu + View/Breakout). V1 parity: charts + scalar
+	 * Pie/Value/Table; Histogram/List opt out. AND-ed with "has a builder query" in `useDrilldown`.
+	 */
+	drilldown: boolean;
 }
 
 export interface PanelDefinition<K extends PanelKind = PanelKind> {
