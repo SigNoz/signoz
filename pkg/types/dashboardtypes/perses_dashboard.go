@@ -148,13 +148,14 @@ func (d DashboardV2) ToPostableForCloning() PostableDashboardV2 {
 	}
 }
 
+// cloneCopySuffixRegex matches a " - Copy" or " - Copy (n)" suffix on a display name.
+var cloneCopySuffixRegex = regexp.MustCompile(`^(.*) - Copy(?: \((\d+)\))?$`)
+
 // nextCloneDisplayName appends " - Copy" to a clone's display name, bumping an
 // existing " - Copy (n)" counter, then truncates the base to fit MaxDisplayNameLen.
 func nextCloneDisplayName(name string) string {
-	cloneCopySuffix := regexp.MustCompile(`^(.*) - Copy(?: \((\d+)\))?$`)
-
 	base, count := name, 0
-	if m := cloneCopySuffix.FindStringSubmatch(name); m != nil {
+	if m := cloneCopySuffixRegex.FindStringSubmatch(name); m != nil {
 		base = m[1]
 		count = 1 // bare " - Copy"
 		if m[2] != "" {
