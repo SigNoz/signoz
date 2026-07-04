@@ -1467,8 +1467,19 @@ def test_dashboard_v2_rejects_comma_separated_aggregation(
     )
     assert accepted.status_code == HTTPStatus.CREATED, accepted.text
 
-    requests.delete(
-        signoz.self.host_configs["8080"].get(f"{BASE_URL}/{accepted.json()['data']['id']}"),
+    # a single call whose string literal contains parentheses is accepted (the check
+    # parses rather than counting "word(", so it does not mistake ')...(' for a second call)
+    literal_parens = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json=make_dashboard([{"expression": "countIf(body = 'a)b(c)')"}]),
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
+    assert literal_parens.status_code == HTTPStatus.CREATED, literal_parens.text
+
+    for dashboard_id in (accepted.json()["data"]["id"], literal_parens.json()["data"]["id"]):
+        requests.delete(
+            signoz.self.host_configs["8080"].get(f"{BASE_URL}/{dashboard_id}"),
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        )
