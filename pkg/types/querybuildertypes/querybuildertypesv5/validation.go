@@ -378,7 +378,6 @@ var aggregationCallRegexp = regexp.MustCompile(`[a-zA-Z0-9_]+\([^)]*\)`)
 // aggregations as a single comma-separated string and splits them before querying;
 // anything persisted server-side must already be split into one call per entry.
 func validateSingleExpressionAggregation(expression string) error {
-
 	if len(aggregationCallRegexp.FindAllString(expression, -1)) > 1 {
 		return errors.NewInvalidInputf(
 			errors.CodeInvalidInput,
