@@ -6,6 +6,7 @@ import (
 
 	qb "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/perses/spec/go/dashboard/variable"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -202,5 +203,50 @@ func TestRedactPanelQueries(t *testing.T) {
 		panel, ok := spec.Panels["panel-1"]
 		assert.True(t, ok)
 		assert.Nil(t, panel)
+	})
+}
+
+func TestRedactVariableQueries(t *testing.T) {
+	t.Run("drops the query-variable query without mutating the source spec", func(t *testing.T) {
+		spec := DashboardSpec{Variables: []Variable{{
+			Kind: variable.KindList,
+			Spec: ListVariableSpec{
+				Name:   "namespace",
+				Plugin: VariablePlugin{Kind: VariableKindQuery, Spec: QueryVariableSpec{QueryValue: "SELECT DISTINCT namespace FROM secret_table"}},
+			},
+		}}}
+
+		redactVariableQueries(&spec)
+
+		redacted := spec.Variables[0].Spec.(ListVariableSpec)
+		assert.Equal(t, "namespace", redacted.Name)
+		assert.Equal(t, VariableKindQuery, redacted.Plugin.Kind)
+		assert.Empty(t, redacted.Plugin.Spec.(QueryVariableSpec).QueryValue)
+	})
+
+	t.Run("leaves non-query variables untouched", func(t *testing.T) {
+		spec := DashboardSpec{Variables: []Variable{
+			{
+				Kind: variable.KindList,
+				Spec: ListVariableSpec{
+					Name:   "signal",
+					Plugin: VariablePlugin{Kind: VariableKindDynamic, Spec: DynamicVariableSpec{Name: "service.name", Signal: telemetrytypes.SignalTraces}},
+				},
+			},
+			{
+				Kind: variable.KindList,
+				Spec: ListVariableSpec{
+					Name:   "env",
+					Plugin: VariablePlugin{Kind: VariableKindCustom, Spec: CustomVariableSpec{CustomValue: "prod,staging"}},
+				},
+			},
+		}}
+
+		redactVariableQueries(&spec)
+
+		dynamic := spec.Variables[0].Spec.(ListVariableSpec).Plugin.Spec.(DynamicVariableSpec)
+		assert.Equal(t, "service.name", dynamic.Name)
+		custom := spec.Variables[1].Spec.(ListVariableSpec).Plugin.Spec.(CustomVariableSpec)
+		assert.Equal(t, "prod,staging", custom.CustomValue)
 	})
 }

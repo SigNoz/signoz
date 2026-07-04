@@ -17,10 +17,12 @@ type GettablePublicDashboardDataV2 struct {
 }
 
 // NewPublicDashboardDataFromDashboardV2 builds the anonymous v2 payload: panel queries
-// are redacted, and only the body fields v1 exposed (name, metadata, tags, spec) are set.
+// and query-variable queries are redacted, and only the body fields v1 exposed (name,
+// metadata, tags, spec) are set.
 func NewPublicDashboardDataFromDashboardV2(dashboard *DashboardV2, publicDashboard *PublicDashboard) *GettablePublicDashboardDataV2 {
 	spec := dashboard.Spec
 	redactPanelQueries(&spec)
+	redactVariableQueries(&spec)
 
 	return &GettablePublicDashboardDataV2{
 		Dashboard: &GettableDashboardV2{
@@ -58,6 +60,26 @@ func redactPanelQueries(spec *DashboardSpec) {
 		panels[key] = &redacted
 	}
 	spec.Panels = panels
+}
+
+// redactVariableQueries strips the raw query from query-kind list variables. The
+// query is the same class of secret as a panel query, and the anonymous viewer
+// never runs variable queries. Rebuilds the slice rather than mutating in place:
+// spec shares its Variables backing array with the stored dashboard.
+func redactVariableQueries(spec *DashboardSpec) {
+	variables := make([]Variable, len(spec.Variables))
+	copy(variables, spec.Variables)
+	for i := range variables {
+		list, ok := variables[i].Spec.(ListVariableSpec)
+		if !ok || list.Plugin.Kind != VariableKindQuery {
+			continue
+		}
+		if _, ok := list.Plugin.Spec.(QueryVariableSpec); ok {
+			list.Plugin.Spec = QueryVariableSpec{}
+			variables[i].Spec = list
+		}
+	}
+	spec.Variables = variables
 }
 
 func redactQuery(spec any) any {
