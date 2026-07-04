@@ -1,3 +1,9 @@
+.statsSection {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
 .stats {
 	display: flex;
 	flex-wrap: wrap;
@@ -21,9 +27,22 @@
 	background: var(--callout-success-background);
 }
 
+.statCardLabelRow {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+
 .statCardLabel {
 	text-transform: uppercase;
 	letter-spacing: 0.05em;
+}
+
+.statCardInfo {
+	flex-shrink: 0;
+	color: var(--bg-vanilla-400, #c0c1c3);
+	line-height: 1;
+	cursor: help;
 }
 
 .statCardValue {

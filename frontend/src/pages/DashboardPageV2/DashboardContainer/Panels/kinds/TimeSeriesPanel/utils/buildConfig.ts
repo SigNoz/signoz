@@ -108,7 +108,9 @@ function addSeries({
 	// `customColors` is nullable on the spec; coerce so `addSeries` always gets
 	// a defined record (it dereferences keys without a guard).
 	const colorMapping = spec.legend?.customColors ?? {};
-	const spanGaps = resolveSpanGaps(chartAppearance?.spanGaps?.fillLessThan);
+	const spanGaps = chartAppearance?.spanGaps
+		? resolveSpanGaps(chartAppearance?.spanGaps)
+		: true;
 
 	const lineStyle = chartAppearance?.lineStyle
 		? LINE_STYLE_MAP[chartAppearance.lineStyle]

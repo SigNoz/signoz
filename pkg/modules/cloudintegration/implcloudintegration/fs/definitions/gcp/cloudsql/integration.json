@@ -1,0 +1,27 @@
+{
+  "id": "cloudsql",
+  "title": "GCP Cloud SQL",
+  "icon": "file://icon.svg",
+  "overview": "file://overview.md",
+  "supportedSignals": {
+    "metrics": true,
+    "logs": true
+  },
+  "dataCollected": {
+    "metrics": [],
+    "logs": []
+  },
+  "telemetryCollectionStrategy": {
+    "gcp": {}
+  },
+  "assets": {
+    "dashboards": [
+      {
+        "id": "overview",
+        "title": "GCP Cloud SQL Overview",
+        "description": "Overview of GCP Cloud SQL metrics",
+        "definition": "file://assets/dashboards/overview.json"
+      }
+    ]
+  }
+}
