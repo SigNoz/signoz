@@ -207,46 +207,34 @@ func TestRedactPanelQueries(t *testing.T) {
 }
 
 func TestRedactVariableQueries(t *testing.T) {
-	t.Run("drops the query-variable query without mutating the source spec", func(t *testing.T) {
-		spec := DashboardSpec{Variables: []Variable{{
-			Kind: variable.KindList,
-			Spec: ListVariableSpec{
-				Name:   "namespace",
-				Plugin: VariablePlugin{Kind: VariableKindQuery, Spec: QueryVariableSpec{QueryValue: "SELECT DISTINCT namespace FROM secret_table"}},
-			},
-		}}}
+	// Spec fields are pointers (*ListVariableSpec, *QueryVariableSpec) to match what
+	// the store produces after JSON decode; value types would slip past the type
+	// assertions in redactVariableQueries.
+	t.Run("drops the query-variable query without mutating the source", func(t *testing.T) {
+		source := &ListVariableSpec{
+			Name:   "namespace",
+			Plugin: VariablePlugin{Kind: VariableKindQuery, Spec: &QueryVariableSpec{QueryValue: "SELECT DISTINCT namespace FROM secret_table"}},
+		}
+		spec := DashboardSpec{Variables: []Variable{{Kind: variable.KindList, Spec: source}}}
 
 		redactVariableQueries(&spec)
 
-		redacted := spec.Variables[0].Spec.(ListVariableSpec)
+		redacted := spec.Variables[0].Spec.(*ListVariableSpec)
+		assert.Empty(t, redacted.Plugin.Spec.(*QueryVariableSpec).QueryValue)
 		assert.Equal(t, "namespace", redacted.Name)
-		assert.Equal(t, VariableKindQuery, redacted.Plugin.Kind)
-		assert.Empty(t, redacted.Plugin.Spec.(QueryVariableSpec).QueryValue)
+		// source pointee is untouched
+		assert.Equal(t, "SELECT DISTINCT namespace FROM secret_table", source.Plugin.Spec.(*QueryVariableSpec).QueryValue)
 	})
 
 	t.Run("leaves non-query variables untouched", func(t *testing.T) {
 		spec := DashboardSpec{Variables: []Variable{
-			{
-				Kind: variable.KindList,
-				Spec: ListVariableSpec{
-					Name:   "signal",
-					Plugin: VariablePlugin{Kind: VariableKindDynamic, Spec: DynamicVariableSpec{Name: "service.name", Signal: telemetrytypes.SignalTraces}},
-				},
-			},
-			{
-				Kind: variable.KindList,
-				Spec: ListVariableSpec{
-					Name:   "env",
-					Plugin: VariablePlugin{Kind: VariableKindCustom, Spec: CustomVariableSpec{CustomValue: "prod,staging"}},
-				},
-			},
+			{Kind: variable.KindList, Spec: &ListVariableSpec{Name: "signal", Plugin: VariablePlugin{Kind: VariableKindDynamic, Spec: &DynamicVariableSpec{Name: "service.name", Signal: telemetrytypes.SignalTraces}}}},
+			{Kind: variable.KindList, Spec: &ListVariableSpec{Name: "env", Plugin: VariablePlugin{Kind: VariableKindCustom, Spec: &CustomVariableSpec{CustomValue: "prod,staging"}}}},
 		}}
 
 		redactVariableQueries(&spec)
 
-		dynamic := spec.Variables[0].Spec.(ListVariableSpec).Plugin.Spec.(DynamicVariableSpec)
-		assert.Equal(t, "service.name", dynamic.Name)
-		custom := spec.Variables[1].Spec.(ListVariableSpec).Plugin.Spec.(CustomVariableSpec)
-		assert.Equal(t, "prod,staging", custom.CustomValue)
+		assert.Equal(t, "service.name", spec.Variables[0].Spec.(*ListVariableSpec).Plugin.Spec.(*DynamicVariableSpec).Name)
+		assert.Equal(t, "prod,staging", spec.Variables[1].Spec.(*ListVariableSpec).Plugin.Spec.(*CustomVariableSpec).CustomValue)
 	})
 }

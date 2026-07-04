@@ -70,13 +70,14 @@ func redactVariableQueries(spec *DashboardSpec) {
 	variables := make([]Variable, len(spec.Variables))
 	copy(variables, spec.Variables)
 	for i := range variables {
-		list, ok := variables[i].Spec.(ListVariableSpec)
+		list, ok := variables[i].Spec.(*ListVariableSpec)
 		if !ok || list.Plugin.Kind != VariableKindQuery {
 			continue
 		}
-		if _, ok := list.Plugin.Spec.(QueryVariableSpec); ok {
-			list.Plugin.Spec = QueryVariableSpec{}
-			variables[i].Spec = list
+		if _, ok := list.Plugin.Spec.(*QueryVariableSpec); ok {
+			redacted := *list
+			redacted.Plugin.Spec = &QueryVariableSpec{}
+			variables[i].Spec = &redacted
 		}
 	}
 	spec.Variables = variables
