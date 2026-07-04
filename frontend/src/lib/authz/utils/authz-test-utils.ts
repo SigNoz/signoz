@@ -3,12 +3,12 @@ import type {
 	AuthtypesTransactionDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { ENVIRONMENT } from 'constants/env';
-import { gettableTransactionToPermission } from 'hooks/useAuthZ/utils';
+import { gettableTransactionToPermission } from 'lib/authz/hooks/useAuthZ/utils';
 import type {
 	BrandedPermission,
 	UseAuthZOptions,
 	UseAuthZResult,
-} from 'hooks/useAuthZ/types';
+} from 'lib/authz/hooks/useAuthZ/types';
 import { rest } from 'msw';
 import type { RestHandler } from 'msw';
 import {

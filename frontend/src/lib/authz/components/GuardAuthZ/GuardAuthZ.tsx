@@ -3,9 +3,9 @@ import {
 	AuthZObject,
 	AuthZRelation,
 	BrandedPermission,
-} from 'hooks/useAuthZ/types';
-import { useAuthZ } from 'hooks/useAuthZ/useAuthZ';
-import { buildPermission } from 'hooks/useAuthZ/utils';
+} from 'lib/authz/hooks/useAuthZ/types';
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
+import { buildPermission } from 'lib/authz/hooks/useAuthZ/utils';
 
 export type GuardAuthZProps<R extends AuthZRelation> = {
 	children: ReactElement;
