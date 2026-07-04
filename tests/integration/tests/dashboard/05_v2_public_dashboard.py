@@ -59,7 +59,19 @@ def test_public_dashboard_v2(
             "spec": {
                 "display": {"name": "Sample Dashboard", "description": "Used for integration tests"},
                 "duration": "1h",
-                "variables": [],
+                "variables": [
+                    {
+                        "kind": "ListVariable",
+                        "spec": {
+                            "name": "ns",
+                            "display": {"name": "ns"},
+                            "plugin": {
+                                "kind": "signoz/QueryVariable",
+                                "spec": {"queryValue": "SELECT DISTINCT service.name FROM signoz_logs"},
+                            },
+                        },
+                    }
+                ],
                 "panels": {
                     PANEL_KEY: {
                         "kind": "Panel",
@@ -162,6 +174,12 @@ def test_public_dashboard_v2(
     assert builder["signal"] == "metrics"
     assert builder["aggregations"][0]["metricName"] == "system.cpu.time"
     assert builder["groupBy"][0]["name"] == "service.name"
+
+    # The query variable's query is redacted; its identity remains.
+    variable = dashboard["spec"]["variables"][0]["spec"]
+    assert variable["name"] == "ns"
+    assert variable["plugin"]["kind"] == "signoz/QueryVariable"
+    assert variable["plugin"]["spec"]["queryValue"] == ""
 
     # ── anonymous panel query range ──────────────────────────────────────────
     start_time = int((now - timedelta(minutes=15)).timestamp() * 1000)
