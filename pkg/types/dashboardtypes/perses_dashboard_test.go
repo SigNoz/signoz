@@ -1679,3 +1679,30 @@ func TestValidateDisplayNameAtMaxLength(t *testing.T) {
 	_, err := unmarshalDashboard([]byte(`{"display": {"name": "` + atLimit + `"}, "layouts": []}`))
 	assert.NoError(t, err)
 }
+
+func TestEnsureSingleExpressionAggregation(t *testing.T) {
+	testCases := []struct {
+		description    string
+		expression     string
+		expectRejected bool
+	}{
+		{description: "single call is accepted", expression: "count()", expectRejected: false},
+		{description: "comma-separated calls are rejected", expression: "count(), sum(bytes)", expectRejected: true},
+		{description: "comma inside function args is a single call", expression: "countIf(day > 10, status)", expectRejected: false},
+		{description: "nested function call is a single aggregation", expression: "sum(toFloat64(x))", expectRejected: false},
+		{description: "parenthesis inside a string literal is not a call", expression: "countIf(body LIKE '%(done)%')", expectRejected: false},
+		{description: "closing paren inside a string literal followed by word-paren is not a second call", expression: "countIf(body = 'a)b(c)')", expectRejected: false},
+		{description: "unparseable expression is rejected", expression: "count(", expectRejected: true},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			err := ensureSingleExpressionAggregation(testCase.expression)
+			if testCase.expectRejected {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}

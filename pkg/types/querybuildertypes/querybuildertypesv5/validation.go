@@ -2,7 +2,6 @@ package querybuildertypesv5
 
 import (
 	"fmt"
-	"regexp"
 	"slices"
 	"strings"
 
@@ -256,10 +255,6 @@ func (q *QueryBuilderQuery[T]) validateAggregations(cfg validationConfig) error 
 		// TODO: add url with docs
 	}
 
-	if err := q.ValidateAggregationExpressions(); err != nil {
-		return err
-	}
-
 	// Check for duplicate aliases
 	aliases := make(map[string]bool)
 	for i, agg := range q.Aggregations {
@@ -343,48 +338,6 @@ func (q *QueryBuilderQuery[T]) validateAggregations(cfg validationConfig) error 
 		}
 	}
 
-	return nil
-}
-
-// ValidateAggregationExpressions checks only that no logs/traces aggregation packs
-// multiple comma-separated function calls into a single expression. Unlike Validate,
-// it imposes no request-type rules and does not require aggregations to be present,
-// so write-time callers (e.g. dashboard validation) can enforce just this invariant
-// without rejecting otherwise-valid queries (e.g. a list panel with no aggregation).
-func (q QueryBuilderQuery[T]) ValidateAggregationExpressions() error {
-	for _, agg := range q.Aggregations {
-		switch v := any(agg).(type) {
-		case TraceAggregation:
-			if err := validateSingleExpressionAggregation(v.Expression); err != nil {
-				return err
-			}
-		case LogAggregation:
-			if err := validateSingleExpressionAggregation(v.Expression); err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-// aggregationCallRegexp matches a single function-style aggregation call such as
-// count() or sum(field). It is used to detect expressions that pack several
-// comma-separated calls into one aggregation (e.g. "count(), sum(field)"), which
-// must instead be provided as separate aggregation entries.
-var aggregationCallRegexp = regexp.MustCompile(`[a-zA-Z0-9_]+\([^)]*\)`)
-
-// validateSingleExpressionAggregation rejects a logs/traces aggregation whose
-// expression contains more than one function call. The frontend stores multiple
-// aggregations as a single comma-separated string and splits them before querying;
-// anything persisted server-side must already be split into one call per entry.
-func validateSingleExpressionAggregation(expression string) error {
-	if len(aggregationCallRegexp.FindAllString(expression, -1)) > 1 {
-		return errors.NewInvalidInputf(
-			errors.CodeInvalidInput,
-			"aggregation expression %q must contain a single function call; provide multiple aggregations as separate entries",
-			expression,
-		)
-	}
 	return nil
 }
 
