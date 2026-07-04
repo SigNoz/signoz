@@ -154,7 +154,13 @@ func (module *module) GetPublicWidgetQueryRangeV2(ctx context.Context, id valuer
 		instrumentationtypes.CodeFunctionName: "GetPublicWidgetQueryRangeV2",
 	})
 
-	dashboard, err := module.GetDashboardByPublicIDV2(ctx, id)
+	storableDashboard, err := module.store.GetDashboardByPublicID(ctx, id.StringValue())
+	if err != nil {
+		return nil, err
+	}
+
+	// tags are not needed for query range.
+	dashboard, err := storableDashboard.ToDashboardV2(nil)
 	if err != nil {
 		return nil, err
 	}
