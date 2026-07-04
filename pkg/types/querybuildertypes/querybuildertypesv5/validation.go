@@ -367,16 +367,17 @@ func (q QueryBuilderQuery[T]) ValidateAggregationExpressions() error {
 	return nil
 }
 
+// aggregationCallRegexp matches a single function-style aggregation call such as
+// count() or sum(field). It is used to detect expressions that pack several
+// comma-separated calls into one aggregation (e.g. "count(), sum(field)"), which
+// must instead be provided as separate aggregation entries.
+var aggregationCallRegexp = regexp.MustCompile(`[a-zA-Z0-9_]+\([^)]*\)`)
+
 // validateSingleExpressionAggregation rejects a logs/traces aggregation whose
 // expression contains more than one function call. The frontend stores multiple
 // aggregations as a single comma-separated string and splits them before querying;
 // anything persisted server-side must already be split into one call per entry.
 func validateSingleExpressionAggregation(expression string) error {
-	// aggregationCallRegexp matches a single function-style aggregation call such as
-	// count() or sum(field). It is used to detect expressions that pack several
-	// comma-separated calls into one aggregation (e.g. "count(), sum(field)"), which
-	// must instead be provided as separate aggregation entries.
-	var aggregationCallRegexp = regexp.MustCompile(`[a-zA-Z0-9_]+\([^)]*\)`)
 
 	if len(aggregationCallRegexp.FindAllString(expression, -1)) > 1 {
 		return errors.NewInvalidInputf(
