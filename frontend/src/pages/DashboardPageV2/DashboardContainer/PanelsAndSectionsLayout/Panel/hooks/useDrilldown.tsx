@@ -21,6 +21,7 @@ import { getBuilderQueries } from 'pages/DashboardPageV2/DashboardContainer/Pane
 import { fromPerses } from 'pages/DashboardPageV2/DashboardContainer/queryV5/persesQueryAdapters';
 
 import DrilldownAggregateMenu from '../DrilldownMenu/DrilldownAggregateMenu';
+import DrilldownFilterMenu from '../DrilldownMenu/DrilldownFilterMenu';
 import { useDrilldownFilter } from './useDrilldownFilter';
 import { useResolvedDrilldownQuery } from './useResolvedDrilldownQuery';
 import { useViewPanel } from './useViewPanel';
@@ -91,7 +92,7 @@ export function useDrilldown(
 	// The aggregate menu (View in Logs/Traces) shows for a non-group click; the group click
 	// routes to filter-by-value instead. Only that menu resolves variables — filter/breakout
 	// open the View modal, which resolves at query-run time.
-	const showAggregateMenu = !!context && !filter.items;
+	const showAggregateMenu = !!context && !filter.isGroupColumnClick;
 
 	const { resolvedQuery, isResolving } = useResolvedDrilldownQuery({
 		queries,
@@ -107,8 +108,14 @@ export function useDrilldown(
 	});
 
 	const items = useMemo<ReactNode>(() => {
-		if (filter.items) {
-			return filter.items;
+		if (filter.isGroupColumnClick && context?.clickedKey) {
+			return (
+				<DrilldownFilterMenu
+					v1Query={v1Query}
+					clickedKey={context.clickedKey}
+					onFilter={filter.onFilter}
+				/>
+			);
 		}
 		if (!context) {
 			return null;
@@ -122,7 +129,14 @@ export function useDrilldown(
 				onViewTraces={(): void => navigate('view_traces')}
 			/>
 		);
-	}, [filter.items, context, v1Query, isResolving, navigate]);
+	}, [
+		filter.isGroupColumnClick,
+		filter.onFilter,
+		context,
+		v1Query,
+		isResolving,
+		navigate,
+	]);
 
 	const onPanelClick = useCallback(
 		(payload: DrilldownClickPayload): void =>

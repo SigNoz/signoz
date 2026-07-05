@@ -1,13 +1,10 @@
-import { useCallback, useMemo } from 'react';
-import type { ReactNode } from 'react';
+import { useCallback } from 'react';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { getGroupContextMenuConfig } from 'container/QueryTable/Drilldown/contextConfig';
 import {
 	addFilterToQuery,
 	getBaseMeta,
 	isNumberDataType,
 } from 'container/QueryTable/Drilldown/drilldownUtils';
-import type { ClickedData } from 'periscope/components/ContextMenu';
 import type { DrilldownContext } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/drilldown';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -30,14 +27,16 @@ interface UseDrilldownFilterArgs {
 }
 
 export interface UseDrilldownFilterApi {
-	/** The filter-by-value operator menu for a group-column click; `null` otherwise. */
-	items: ReactNode;
+	/** True for a group-column click — the caller renders the filter-by-value menu. */
+	isGroupColumnClick: boolean;
+	/** Apply the chosen operator: add `key <op> value` and open the refined result in the View modal. */
+	onFilter: (operator: string) => void;
 }
 
 /**
- * The group-column "filter by value" drill-down (V1 parity): adds `key <op> value` to the
- * panel's query and opens the refined result in the View modal. Reuses V1's read-only
- * `getGroupContextMenuConfig` for the operator menu.
+ * The group-column "filter by value" drill-down (V1 parity): adds `key <op> value` to the panel's
+ * query and opens the refined result in the View modal. The caller renders `DrilldownFilterMenu`
+ * (V1's read-only `getGroupContextMenuConfig`) from this hook's return.
  */
 export function useDrilldownFilter({
 	context,
@@ -47,7 +46,7 @@ export function useDrilldownFilter({
 	openViewWithQuery,
 	onClose,
 }: UseDrilldownFilterArgs): UseDrilldownFilterApi {
-	const handleFilterDrilldown = useCallback(
+	const onFilter = useCallback(
 		(operator: string): void => {
 			if (!context?.clickedKey) {
 				return;
@@ -66,23 +65,8 @@ export function useDrilldownFilter({
 		[context, v1Query, panelType, panelId, openViewWithQuery, onClose],
 	);
 
-	const items = useMemo<ReactNode>(() => {
-		if (!context || context.columnKind !== 'group' || !context.clickedKey) {
-			return null;
-		}
-		const clickedData: ClickedData = {
-			column: { dataIndex: context.clickedKey },
-			record: { key: context.clickedKey, timestamp: 0 },
-		};
-		return (
-			getGroupContextMenuConfig({
-				query: v1Query,
-				clickedData,
-				panelType: PANEL_TYPES.TABLE,
-				onColumnClick: handleFilterDrilldown,
-			}).items ?? null
-		);
-	}, [context, v1Query, handleFilterDrilldown]);
+	const isGroupColumnClick =
+		!!context && context.columnKind === 'group' && !!context.clickedKey;
 
-	return { items };
+	return { isGroupColumnClick, onFilter };
 }
