@@ -84,8 +84,16 @@ describe('enrichChartClick', () => {
 			clickData: chartClick(focused(2)),
 			series,
 			builderQueries: [
-				builderQuery({ name: 'A', signal: 'metrics' }),
-				builderQuery({ name: 'B', signal: 'logs' }),
+				builderQuery({
+					name: 'A',
+					signal: 'metrics',
+					groupBy: [{ name: 'service.name' }],
+				}),
+				builderQuery({
+					name: 'B',
+					signal: 'logs',
+					groupBy: [{ name: 'service.name' }],
+				}),
 			],
 		});
 
@@ -143,15 +151,38 @@ describe('enrichChartClick', () => {
 		).toBeNull();
 	});
 
-	it('emits empty filters for an ungrouped series', () => {
+	it('emits empty filters for an ungrouped series (drops the legend backfill label)', () => {
 		const payload = enrichChartClick({
 			clickData: chartClick(focused(1)),
-			series: [panelSeries({ queryName: 'A', labels: {} })],
+			series: [panelSeries({ queryName: 'A', labels: { A: 'A' } })],
 			builderQueries: [builderQuery({ name: 'A', signal: 'metrics' })],
 		});
 
 		expect(payload?.context.filters).toStrictEqual([]);
 		expect(payload?.context.queryName).toBe('A');
+	});
+
+	it('drops labels that are not group-by dimensions', () => {
+		const payload = enrichChartClick({
+			clickData: chartClick(focused(1)),
+			series: [
+				panelSeries({
+					queryName: 'A',
+					labels: { 'service.name': 'frontend', __name__: 'http_requests' },
+				}),
+			],
+			builderQueries: [
+				builderQuery({
+					name: 'A',
+					signal: 'metrics',
+					groupBy: [{ name: 'service.name' }],
+				}),
+			],
+		});
+
+		expect(payload?.context.filters).toStrictEqual([
+			{ filterKey: 'service.name', filterValue: 'frontend', operator: '=' },
+		]);
 	});
 });
 
@@ -330,7 +361,13 @@ describe('enrichPieClick', () => {
 				queryName: 'A',
 				labels: { 'service.name': 'frontend' },
 			},
-			builderQueries: [builderQuery({ name: 'A', signal: 'traces' })],
+			builderQueries: [
+				builderQuery({
+					name: 'A',
+					signal: 'traces',
+					groupBy: [{ name: 'service.name' }],
+				}),
+			],
 			coordinates: { x: 7, y: 8 },
 			timeRange: { startTime: 1, endTime: 2 },
 		});
