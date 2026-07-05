@@ -515,6 +515,13 @@ components:
         url:
           type: string
       type: object
+    AuthtypesDeprecatedPostableUserRole:
+      properties:
+        id:
+          type: string
+      required:
+      - id
+      type: object
     AuthtypesGettableAuthDomain:
       properties:
         authNProviderInfo:
@@ -660,17 +667,20 @@ components:
           type: string
         userRoles:
           items:
-            $ref: '#/components/schemas/AuthtypesPostableUserRole'
+            $ref: '#/components/schemas/AuthtypesDeprecatedPostableUserRole'
           type: array
       required:
       - email
       type: object
     AuthtypesPostableUserRole:
       properties:
-        id:
+        roleId:
+          type: string
+        userId:
           type: string
       required:
-      - id
+      - userId
+      - roleId
       type: object
     AuthtypesRelation:
       enum:
@@ -7400,6 +7410,13 @@ components:
       enum:
       - basic
       type: string
+    ServiceaccounttypesDeprecatedPostableServiceAccountRole:
+      properties:
+        id:
+          type: string
+      required:
+      - id
+      type: object
     ServiceaccounttypesGettableFactorAPIKey:
       properties:
         createdAt:
@@ -7456,10 +7473,13 @@ components:
       type: object
     ServiceaccounttypesPostableServiceAccountRole:
       properties:
-        id:
+        roleId:
+          type: string
+        serviceAccountId:
           type: string
       required:
-      - id
+      - serviceAccountId
+      - roleId
       type: object
     ServiceaccounttypesServiceAccount:
       properties:
@@ -12168,6 +12188,188 @@ paths:
       summary: Update route policy
       tags:
       - routepolicies
+  /api/v1/service_account_roles:
+    post:
+      deprecated: false
+      description: This endpoint assigns a role to a service account
+      operationId: CreateServiceAccountRole
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServiceaccounttypesPostableServiceAccountRole'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TypesIdentifiable'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - serviceaccount:attach
+        - role:attach
+      - tokenizer:
+        - serviceaccount:attach
+        - role:attach
+      summary: Create service account role
+      tags:
+      - serviceaccount
+  /api/v1/service_account_roles/{id}:
+    delete:
+      deprecated: false
+      description: This endpoint revokes a role from a service account
+      operationId: DeleteServiceAccountRole
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - serviceaccount:detach
+        - role:detach
+      - tokenizer:
+        - serviceaccount:detach
+        - role:detach
+      summary: Delete service account role
+      tags:
+      - serviceaccount
+    get:
+      deprecated: false
+      description: This endpoint gets an existing service account role
+      operationId: GetServiceAccountRole
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ServiceaccounttypesServiceAccountRole'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - serviceaccount:read
+      - tokenizer:
+        - serviceaccount:read
+      summary: Get service account role
+      tags:
+      - serviceaccount
   /api/v1/service_accounts:
     get:
       deprecated: false
@@ -12737,9 +12939,9 @@ paths:
       tags:
       - serviceaccount
     post:
-      deprecated: false
+      deprecated: true
       description: This endpoint assigns a role to a service account
-      operationId: CreateServiceAccountRole
+      operationId: CreateServiceAccountRoleDeprecated
       parameters:
       - in: path
         name: id
@@ -12750,7 +12952,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ServiceaccounttypesPostableServiceAccountRole'
+              $ref: '#/components/schemas/ServiceaccounttypesDeprecatedPostableServiceAccountRole'
       responses:
         "201":
           content:
@@ -12802,9 +13004,9 @@ paths:
       - serviceaccount
   /api/v1/service_accounts/{id}/roles/{rid}:
     delete:
-      deprecated: false
+      deprecated: true
       description: This endpoint revokes a role from service account
-      operationId: DeleteServiceAccountRole
+      operationId: DeleteServiceAccountRoleDeprecated
       parameters:
       - in: path
         name: id
@@ -13969,6 +14171,184 @@ paths:
       summary: Update user preference
       tags:
       - preferences
+  /api/v1/user_roles:
+    post:
+      deprecated: false
+      description: This endpoint assigns a role to a user
+      operationId: CreateUserRole
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthtypesPostableUserRole'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TypesIdentifiable'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Create user role
+      tags:
+      - users
+  /api/v1/user_roles/{id}:
+    delete:
+      deprecated: false
+      description: This endpoint revokes a role from a user
+      operationId: DeleteUserRole
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Delete user role
+      tags:
+      - users
+    get:
+      deprecated: false
+      description: This endpoint gets an existing user role
+      operationId: GetUserRole
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AuthtypesUserRole'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Get user role
+      tags:
+      - users
   /api/v2/dashboard_views:
     get:
       deprecated: false
@@ -22227,7 +22607,7 @@ paths:
       tags:
       - users
     post:
-      deprecated: false
+      deprecated: true
       description: This endpoint assigns the role to the user roles by user id
       operationId: SetRoleByUserID
       parameters:
@@ -22278,7 +22658,7 @@ paths:
       - users
   /api/v2/users/{id}/roles/{roleId}:
     delete:
-      deprecated: false
+      deprecated: true
       description: This endpoint removes a role from the user by user id and role
         id
       operationId: RemoveUserRoleByUserIDAndRoleID

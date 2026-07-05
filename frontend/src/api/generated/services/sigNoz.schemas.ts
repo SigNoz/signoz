@@ -2048,6 +2048,13 @@ export interface AuthtypesAuthNSupportDTO {
 	password?: AuthtypesPasswordAuthNSupportDTO[] | null;
 }
 
+export interface AuthtypesDeprecatedPostableUserRoleDTO {
+	/**
+	 * @type string
+	 */
+	id: string;
+}
+
 export interface AuthtypesGettableAuthDomainDTO {
 	authNProviderInfo?: AuthtypesAuthNProviderInfoDTO;
 	config?: AuthtypesAuthDomainConfigDTO;
@@ -2287,13 +2294,6 @@ export interface AuthtypesPostableRotateTokenDTO {
 	refreshToken?: string;
 }
 
-export interface AuthtypesPostableUserRoleDTO {
-	/**
-	 * @type string
-	 */
-	id: string;
-}
-
 export interface AuthtypesPostableUserDTO {
 	/**
 	 * @type string
@@ -2310,7 +2310,18 @@ export interface AuthtypesPostableUserDTO {
 	/**
 	 * @type array
 	 */
-	userRoles?: AuthtypesPostableUserRoleDTO[];
+	userRoles?: AuthtypesDeprecatedPostableUserRoleDTO[];
+}
+
+export interface AuthtypesPostableUserRoleDTO {
+	/**
+	 * @type string
+	 */
+	roleId: string;
+	/**
+	 * @type string
+	 */
+	userId: string;
 }
 
 export interface AuthtypesRoleDTO {
@@ -8480,6 +8491,13 @@ export interface RuletypesRuleDTO {
 export enum RuletypesThresholdKindDTO {
 	basic = 'basic',
 }
+export interface ServiceaccounttypesDeprecatedPostableServiceAccountRoleDTO {
+	/**
+	 * @type string
+	 */
+	id: string;
+}
+
 export interface ServiceaccounttypesGettableFactorAPIKeyDTO {
 	/**
 	 * @type string
@@ -8549,7 +8567,11 @@ export interface ServiceaccounttypesPostableServiceAccountRoleDTO {
 	/**
 	 * @type string
 	 */
-	id: string;
+	roleId: string;
+	/**
+	 * @type string
+	 */
+	serviceAccountId: string;
 }
 
 export interface ServiceaccounttypesServiceAccountDTO {
@@ -10307,6 +10329,28 @@ export type UpdateRoutePolicy200 = {
 	status: string;
 };
 
+export type CreateServiceAccountRole201 = {
+	data: TypesIdentifiableDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type DeleteServiceAccountRolePathParameters = {
+	id: string;
+};
+export type GetServiceAccountRolePathParameters = {
+	id: string;
+};
+export type GetServiceAccountRole200 = {
+	data: ServiceaccounttypesServiceAccountRoleDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type ListServiceAccounts200 = {
 	/**
 	 * @type array
@@ -10390,10 +10434,10 @@ export type GetServiceAccountRoles200 = {
 	status: string;
 };
 
-export type CreateServiceAccountRolePathParameters = {
+export type CreateServiceAccountRoleDeprecatedPathParameters = {
 	id: string;
 };
-export type CreateServiceAccountRole201 = {
+export type CreateServiceAccountRoleDeprecated201 = {
 	data: TypesIdentifiableDTO;
 	/**
 	 * @type string
@@ -10401,7 +10445,7 @@ export type CreateServiceAccountRole201 = {
 	status: string;
 };
 
-export type DeleteServiceAccountRolePathParameters = {
+export type DeleteServiceAccountRoleDeprecatedPathParameters = {
 	id: string;
 	rid: string;
 };
@@ -10566,6 +10610,28 @@ export type GetUserPreference200 = {
 export type UpdateUserPreferencePathParameters = {
 	name: string;
 };
+export type CreateUserRole201 = {
+	data: TypesIdentifiableDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type DeleteUserRolePathParameters = {
+	id: string;
+};
+export type GetUserRolePathParameters = {
+	id: string;
+};
+export type GetUserRole200 = {
+	data: AuthtypesUserRoleDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type ListDashboardViews200 = {
 	data: DashboardtypesListableDashboardViewDTO;
 	/**

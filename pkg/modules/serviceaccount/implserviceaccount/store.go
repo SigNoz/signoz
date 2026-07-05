@@ -207,6 +207,27 @@ func (store *store) CreateServiceAccountRole(ctx context.Context, serviceAccount
 	return nil
 }
 
+func (store *store) GetServiceAccountRoleByOrgIDAndID(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*serviceaccounttypes.ServiceAccountRole, error) {
+	serviceAccountRole := new(serviceaccounttypes.ServiceAccountRole)
+
+	err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(serviceAccountRole).
+		Join("JOIN service_account").
+		JoinOn("service_account.id = service_account_role.service_account_id").
+		Where("service_account.org_id = ?", orgID).
+		Where("service_account_role.id = ?", id).
+		Relation("Role").
+		Scan(ctx)
+	if err != nil {
+		return nil, store.sqlstore.WrapNotFoundErrf(err, serviceaccounttypes.ErrCodeServiceAccountRoleNotFound, "service account role with id: %s doesn't exist in org: %s", id, orgID)
+	}
+
+	return serviceAccountRole, nil
+}
+
 func (store *store) DeleteServiceAccountRole(ctx context.Context, serviceAccountID valuer.UUID, roleID valuer.UUID) error {
 	_, err := store.
 		sqlstore.

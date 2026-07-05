@@ -2,8 +2,8 @@ import { useCallback, useMemo } from 'react';
 import { useQueryClient } from 'react-query';
 import {
 	getGetServiceAccountRolesQueryKey,
-	useCreateServiceAccountRole,
-	useDeleteServiceAccountRole,
+	useCreateServiceAccountRoleDeprecated,
+	useDeleteServiceAccountRoleDeprecated,
 	useGetServiceAccountRoles,
 } from 'api/generated/services/serviceaccount';
 import type { AuthtypesRoleDTO } from 'api/generated/services/sigNoz.schemas';
@@ -46,10 +46,10 @@ export function useServiceAccountRoleManager(
 	);
 
 	// the retry for these mutations is safe due to being idempotent on backend
-	const { mutateAsync: createRole } = useCreateServiceAccountRole({
+	const { mutateAsync: createRole } = useCreateServiceAccountRoleDeprecated({
 		mutation: { retry: retryOn429 },
 	});
-	const { mutateAsync: deleteRole } = useDeleteServiceAccountRole({
+	const { mutateAsync: deleteRole } = useDeleteServiceAccountRoleDeprecated({
 		mutation: { retry: retryOn429 },
 	});
 

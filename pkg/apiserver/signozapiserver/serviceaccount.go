@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
@@ -141,17 +142,17 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 	if err := router.Handle("/api/v1/service_accounts/{id}/roles", handler.New(
 		provider.authzMiddleware.CheckResources(provider.serviceAccountHandler.SetRole, authtypes.SigNozAdminRoleName),
 		handler.OpenAPIDef{
-			ID:                  "CreateServiceAccountRole",
+			ID:                  "CreateServiceAccountRoleDeprecated",
 			Tags:                []string{"serviceaccount"},
 			Summary:             "Create service account role",
 			Description:         "This endpoint assigns a role to a service account",
-			Request:             new(serviceaccounttypes.PostableServiceAccountRole),
+			Request:             new(serviceaccounttypes.DeprecatedPostableServiceAccountRole),
 			RequestContentType:  "",
 			Response:            new(types.Identifiable),
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusCreated,
 			ErrorStatusCodes:    []int{http.StatusBadRequest},
-			Deprecated:          false,
+			Deprecated:          true,
 			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceServiceAccount.Scope(coretypes.VerbAttach), coretypes.ResourceRole.Scope(coretypes.VerbAttach)}),
 		},
 		handler.WithResourceDefs(handler.AttachDetachSiblingResourceDef{
@@ -171,7 +172,7 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 	if err := router.Handle("/api/v1/service_accounts/{id}/roles/{rid}", handler.New(
 		provider.authzMiddleware.CheckResources(provider.serviceAccountHandler.DeleteRole, authtypes.SigNozAdminRoleName),
 		handler.OpenAPIDef{
-			ID:                  "DeleteServiceAccountRole",
+			ID:                  "DeleteServiceAccountRoleDeprecated",
 			Tags:                []string{"serviceaccount"},
 			Summary:             "Delete service account role",
 			Description:         "This endpoint revokes a role from service account",
@@ -181,7 +182,7 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusNoContent,
 			ErrorStatusCodes:    []int{},
-			Deprecated:          false,
+			Deprecated:          true,
 			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceServiceAccount.Scope(coretypes.VerbDetach), coretypes.ResourceRole.Scope(coretypes.VerbDetach)}),
 		},
 		handler.WithResourceDefs(handler.AttachDetachSiblingResourceDef{
@@ -398,13 +399,134 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 		return err
 	}
 
+	if err := router.Handle("/api/v1/service_account_roles", handler.New(
+		provider.authzMiddleware.CheckResources(provider.serviceAccountHandler.CreateServiceAccountRole, authtypes.SigNozAdminRoleName),
+		handler.OpenAPIDef{
+			ID:                  "CreateServiceAccountRole",
+			Tags:                []string{"serviceaccount"},
+			Summary:             "Create service account role",
+			Description:         "This endpoint assigns a role to a service account",
+			Request:             new(serviceaccounttypes.PostableServiceAccountRole),
+			RequestContentType:  "",
+			Response:            new(types.Identifiable),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusCreated,
+			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+			Deprecated:          false,
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceServiceAccount.Scope(coretypes.VerbAttach), coretypes.ResourceRole.Scope(coretypes.VerbAttach)}),
+		},
+		handler.WithResourceDefs(handler.AttachDetachSiblingResourceDef{
+			Verb:           coretypes.VerbAttach,
+			Category:       coretypes.ActionCategoryAccessControl,
+			SourceResource: coretypes.ResourceServiceAccount,
+			SourceIDs:      coretypes.OneID(coretypes.BodyJSONPath("serviceAccountId")),
+			SourceSelector: coretypes.IDSelector,
+			TargetResource: coretypes.ResourceRole,
+			TargetIDs:      coretypes.OneID(coretypes.BodyJSONPath("roleId")),
+			TargetSelector: provider.roleSelector,
+		}),
+	)).Methods(http.MethodPost).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v1/service_account_roles/{id}", handler.New(
+		provider.authzMiddleware.CheckResources(provider.serviceAccountHandler.GetServiceAccountRole, authtypes.SigNozAdminRoleName),
+		handler.OpenAPIDef{
+			ID:                  "GetServiceAccountRole",
+			Tags:                []string{"serviceaccount"},
+			Summary:             "Get service account role",
+			Description:         "This endpoint gets an existing service account role",
+			Request:             nil,
+			RequestContentType:  "",
+			Response:            new(serviceaccounttypes.ServiceAccountRole),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusOK,
+			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+			Deprecated:          false,
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceServiceAccount.Scope(coretypes.VerbRead)}),
+		},
+		handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceServiceAccount,
+			Verb:     coretypes.VerbRead,
+			Category: coretypes.ActionCategoryAccessControl,
+			ID:       coretypes.PathParam("id"),
+			Selector: provider.serviceAccountRoleServiceAccountSelector,
+		}),
+	)).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v1/service_account_roles/{id}", handler.New(
+		provider.authzMiddleware.CheckResources(provider.serviceAccountHandler.DeleteServiceAccountRole, authtypes.SigNozAdminRoleName),
+		handler.OpenAPIDef{
+			ID:                  "DeleteServiceAccountRole",
+			Tags:                []string{"serviceaccount"},
+			Summary:             "Delete service account role",
+			Description:         "This endpoint revokes a role from a service account",
+			Request:             nil,
+			RequestContentType:  "",
+			Response:            nil,
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusNoContent,
+			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+			Deprecated:          false,
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceServiceAccount.Scope(coretypes.VerbDetach), coretypes.ResourceRole.Scope(coretypes.VerbDetach)}),
+		},
+		handler.WithResourceDefs(handler.AttachDetachSiblingResourceDef{
+			Verb:           coretypes.VerbDetach,
+			Category:       coretypes.ActionCategoryAccessControl,
+			SourceResource: coretypes.ResourceServiceAccount,
+			SourceIDs:      coretypes.OneID(coretypes.PathParam("id")),
+			SourceSelector: provider.serviceAccountRoleServiceAccountSelector,
+			TargetResource: coretypes.ResourceRole,
+			TargetIDs:      coretypes.OneID(coretypes.PathParam("id")),
+			TargetSelector: provider.serviceAccountRoleRoleSelector,
+		}),
+	)).Methods(http.MethodDelete).GetError(); err != nil {
+		return err
+	}
+
 	return nil
 }
 
-// roleSelector resolves the FGA selectors for a role from its UUID. The id is
-// already extracted by the ResourceDef (path or body); this only does the
-// UUID -> name lookup the FGA object string requires. Shared by service account
-// and role routes.
+func (provider *provider) serviceAccountRoleServiceAccountSelector(ctx context.Context, resource coretypes.Resource, id string, orgID valuer.UUID) ([]coretypes.Selector, error) {
+	serviceAccountRoleID, err := valuer.NewUUID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	serviceAccountRole, err := provider.serviceAccountGetter.GetServiceAccountRole(ctx, orgID, serviceAccountRoleID)
+	if err != nil {
+		return nil, err
+	}
+
+	return []coretypes.Selector{
+		resource.Type().MustSelector(serviceAccountRole.ServiceAccountID.String()),
+		resource.Type().MustSelector(coretypes.WildCardSelectorString),
+	}, nil
+}
+
+func (provider *provider) serviceAccountRoleRoleSelector(ctx context.Context, resource coretypes.Resource, id string, orgID valuer.UUID) ([]coretypes.Selector, error) {
+	serviceAccountRoleID, err := valuer.NewUUID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	serviceAccountRole, err := provider.serviceAccountGetter.GetServiceAccountRole(ctx, orgID, serviceAccountRoleID)
+	if err != nil {
+		return nil, err
+	}
+
+	if serviceAccountRole.Role == nil {
+		return nil, errors.New(errors.TypeInternal, authtypes.ErrCodeRoleNotFound, "role not found for service account role")
+	}
+
+	return []coretypes.Selector{
+		resource.Type().MustSelector(serviceAccountRole.Role.Name),
+		resource.Type().MustSelector(coretypes.WildCardSelectorString),
+	}, nil
+}
+
 func (provider *provider) roleSelector(ctx context.Context, resource coretypes.Resource, id string, orgID valuer.UUID) ([]coretypes.Selector, error) {
 	roleID, err := valuer.NewUUID(id)
 	if err != nil {
