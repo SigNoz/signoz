@@ -63,11 +63,11 @@ def test_public_dashboard_v2(
                     {
                         "kind": "ListVariable",
                         "spec": {
-                            "name": "ns",
-                            "display": {"name": "ns"},
+                            "name": "host.name",
+                            "display": {"name": "Host Name"},
                             "plugin": {
                                 "kind": "signoz/QueryVariable",
-                                "spec": {"queryValue": "SELECT DISTINCT temporality FROM signoz_metrics.distributed_time_series_v4"},
+                                "spec": {"queryValue": "SELECT JSONExtractString(labels, 'host.name') AS `host.name` FROM signoz_metrics.distributed_time_series_v4_1day WHERE metric_name = 'system.cpu.time' GROUP BY `host.name`"},
                             },
                         },
                     }
@@ -177,7 +177,7 @@ def test_public_dashboard_v2(
 
     # The query variable's query is redacted; its identity remains.
     variable = dashboard["spec"]["variables"][0]["spec"]
-    assert variable["name"] == "ns"
+    assert variable["name"] == "host.name"
     assert variable["plugin"]["kind"] == "signoz/QueryVariable"
     assert variable["plugin"]["spec"]["queryValue"] == ""
 
