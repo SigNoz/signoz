@@ -1,11 +1,13 @@
 import { useCallback, useMemo } from 'react';
-import type { ReactNode } from 'react';
-import { ArrowLeft, Plus, Settings, X } from '@signozhq/icons';
 import { toast } from '@signozhq/ui/sonner';
 import { useGetDashboardV2 } from 'api/generated/services/dashboard';
-import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
+import {
+	type DashboardtypesListVariableSpecDTO,
+	DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDynamicVariableSpecDTOKind as DynamicPluginKind,
+	type TelemetrytypesSignalDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import type { FilterData } from 'container/QueryTable/Drilldown/drilldownUtils';
 import { useQueryState } from 'nuqs';
-import type { DrilldownContext } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/drilldown';
 import {
 	dtoToFormModel,
 	formModelToDto,
@@ -24,45 +26,62 @@ import {
 	ALL_SELECTED,
 	variablesUrlParser,
 } from 'pages/DashboardPageV2/DashboardContainer/VariablesBar/useVariableSelection';
-import ContextMenu from 'periscope/components/ContextMenu';
 
 interface UseDrilldownDashboardVariablesArgs {
-	context: DrilldownContext | null;
-	/** Return to the base aggregate menu. */
-	onBack: () => void;
+	/** Group-by field filters from the clicked point (empty when the click has no group-by). */
+	filters: FilterData[];
+	/** Clicked query's telemetry signal — seeds a created variable's `dynamicSignal`. */
+	signal?: TelemetrytypesSignalDTO;
 	/** Close the popover after an action. */
 	onClose: () => void;
+}
+
+/** Set/Unset a matching dynamic variable's value, or Create one when none matches. */
+export enum DrilldownVariableActionKind {
+	Set = 'set',
+	Unset = 'unset',
+	Create = 'create',
+}
+
+/** A resolved "Dashboard Variables" menu entry; the caller renders it. */
+export interface DrilldownVariableAction {
+	fieldName: string;
+	fieldValue: string | number;
+	kind: DrilldownVariableActionKind;
+	/** Applies the action and closes the popover. */
+	onClick: () => void;
 }
 
 export interface UseDrilldownDashboardVariablesApi {
 	/** Whether the clicked point exposes any field to bind to a variable (gates the base-menu entry). */
 	hasFieldVariables: boolean;
-	/** The "Dashboard Variables" submenu content. */
-	items: ReactNode;
+	/** Resolved menu entries, one per group-by field on the clicked point. */
+	actions: DrilldownVariableAction[];
 }
 
 /**
- * The "Dashboard Variables" drilldown submenu — V1 `useDashboardVarConfig` parity. For each group-by
- * field on the clicked point it offers, against a matching dynamic variable, Set/Unset the value, or
- * Create the variable when none matches. Set/Unset are runtime-only (store + URL, never the spec, as
- * V2 selections don't persist); Create is the one persisted path — it appends a dynamic variable to
- * `spec.variables`.
+ * "Dashboard Variables" submenu logic (V1 `useDashboardVarConfig` parity). Set/Unset are runtime-only
+ * (store + URL — V2 selections don't persist); Create is the one path that patches `spec.variables`.
  */
 export function useDrilldownDashboardVariables({
-	context,
-	onBack,
+	filters,
+	signal,
 	onClose,
 }: UseDrilldownDashboardVariablesArgs): UseDrilldownDashboardVariablesApi {
 	const dashboardId = useDashboardStore((state) => state.dashboardId);
-	const { data } = useGetDashboardV2(
-		{ id: dashboardId },
-		{ query: { enabled: !!dashboardId } },
-	);
+	// The generated hook already gates itself on `enabled: !!id`, so no manual guard is needed.
+	const { data } = useGetDashboardV2({ id: dashboardId });
 	const variables = data?.data.spec?.variables;
 
 	const dynamicVariables = useMemo(
 		() =>
-			(variables ?? []).map(dtoToFormModel).filter((v) => v.type === 'DYNAMIC'),
+			(variables ?? [])
+				.filter(
+					(v) =>
+						(v.spec as DashboardtypesListVariableSpecDTO).plugin?.kind ===
+						DynamicPluginKind['signoz/DynamicVariable'],
+				)
+				.map(dtoToFormModel),
 		[variables],
 	);
 	const existingNames = useMemo(
@@ -78,19 +97,17 @@ export function useDrilldownDashboardVariables({
 	);
 	const { patchAsync } = useOptimisticPatch();
 
-	// Group-by field values on the clicked point — the candidates to bind to a variable. In V2 the
-	// enriched filters are already the clicked series'/row's group-by keys (V1 intersected manually).
 	const fieldVariables = useMemo<[string, string | number][]>(
 		() =>
-			(context?.filters ?? [])
+			filters
 				.filter(
 					(f) => f.filterKey && f.filterValue !== undefined && f.filterValue !== '',
 				)
 				.map((f) => [f.filterKey, f.filterValue]),
-		[context?.filters],
+		[filters],
 	);
 
-	// Runtime selection write — store + URL, mirroring VariablesBar's setSelection (no spec write).
+	// Runtime-only write (store + URL), never the spec — mirrors VariablesBar's setSelection.
 	const setSelection = useCallback(
 		(name: string, next: VariableSelection): void => {
 			setVariableValue(dashboardId, name, next);
@@ -115,14 +132,13 @@ export function useDrilldownDashboardVariables({
 				type: 'DYNAMIC',
 				multiSelect: true,
 				dynamicAttribute: fieldName,
-				dynamicSignal: context?.signal ?? DYNAMIC_SIGNAL_ALL,
+				dynamicSignal: signal ?? DYNAMIC_SIGNAL_ALL,
 			};
 			try {
 				await patchAsync(
 					buildVariablesPatch([...(variables ?? []), formModelToDto(model)]),
 				);
-				// Seed the new variable's runtime value to what was clicked. The created var is
-				// multi-select, so the value must be an array (the selector renders scalars as empty).
+				// Multi-select var → seed the value as an array (the selector renders scalars as empty).
 				setSelection(fieldName, { value: [fieldValue], allSelected: false });
 				toast.success(`Created variable "${fieldName}"`);
 			} catch {
@@ -130,86 +146,50 @@ export function useDrilldownDashboardVariables({
 			}
 			onClose();
 		},
-		[
-			existingNames,
-			context?.signal,
-			variables,
-			patchAsync,
-			setSelection,
-			onClose,
-		],
+		[existingNames, signal, variables, patchAsync, setSelection, onClose],
 	);
 
-	const contextItems = useMemo<JSX.Element>(
-		() => (
-			<>
-				{fieldVariables.map(([fieldName, fieldValue]) => {
-					const existing = dynamicVariables.find(
-						(v) => v.dynamicAttribute === fieldName,
-					);
+	const actions = useMemo<DrilldownVariableAction[]>(
+		() =>
+			fieldVariables.map(([fieldName, fieldValue]) => {
+				const existing = dynamicVariables.find(
+					(v) => v.dynamicAttribute === fieldName,
+				);
+				if (!existing) {
+					return {
+						fieldName,
+						fieldValue,
+						kind: DrilldownVariableActionKind.Create,
+						onClick: (): void => {
+							void handleCreate(fieldName, fieldValue);
+						},
+					};
+				}
 
-					if (existing) {
-						const current = selection[existing.name]?.value;
-						const isSame = Array.isArray(current)
-							? current.length === 1 && current[0] === fieldValue
-							: current === fieldValue;
+				const current = selection[existing.name]?.value;
+				const isSame = Array.isArray(current)
+					? current.length === 1 && current[0] === fieldValue
+					: current === fieldValue;
 
-						if (isSame) {
-							return (
-								<ContextMenu.Item
-									key={fieldName}
-									icon={<X size={16} />}
-									onClick={(): void => {
-										setSelection(existing.name, {
-											value: existing.multiSelect ? [] : '',
-											allSelected: false,
-										});
-										onClose();
-									}}
-								>
-									<span data-testid="drilldown-var-unset">
-										Unset <strong>${fieldName}</strong>
-									</span>
-								</ContextMenu.Item>
-							);
-						}
-						return (
-							<ContextMenu.Item
-								key={fieldName}
-								icon={<Settings size={16} />}
-								onClick={(): void => {
-									// Match the variable's shape: a multi-select selector renders a scalar
-									// value as empty, so wrap it in an array.
-									setSelection(existing.name, {
-										value: existing.multiSelect ? [fieldValue] : fieldValue,
-										allSelected: false,
-									});
-									onClose();
-								}}
-							>
-								<span data-testid="drilldown-var-set">
-									Set <strong>${fieldName}</strong> to <strong>{fieldValue}</strong>
-								</span>
-							</ContextMenu.Item>
-						);
-					}
+				// Multi-select values must be arrays (a scalar renders as empty in the selector).
+				const cleared = existing.multiSelect ? [] : '';
+				const assigned = existing.multiSelect ? [fieldValue] : fieldValue;
 
-					return (
-						<ContextMenu.Item
-							key={fieldName}
-							icon={<Plus size={16} />}
-							onClick={(): void => {
-								void handleCreate(fieldName, fieldValue);
-							}}
-						>
-							<span data-testid="drilldown-var-create">
-								Create var <strong>${fieldName}</strong>:<strong>{fieldValue}</strong>
-							</span>
-						</ContextMenu.Item>
-					);
-				})}
-			</>
-		),
+				return {
+					fieldName,
+					fieldValue,
+					kind: isSame
+						? DrilldownVariableActionKind.Unset
+						: DrilldownVariableActionKind.Set,
+					onClick: (): void => {
+						setSelection(existing.name, {
+							value: isSame ? cleared : assigned,
+							allSelected: false,
+						});
+						onClose();
+					},
+				};
+			}),
 		[
 			fieldVariables,
 			dynamicVariables,
@@ -220,25 +200,5 @@ export function useDrilldownDashboardVariables({
 		],
 	);
 
-	const items = useMemo<ReactNode>(
-		() => (
-			<>
-				<ContextMenu.Header>
-					<div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-						<ArrowLeft size={14} style={{ cursor: 'pointer' }} onClick={onBack} />
-						<span>Dashboard Variables</span>
-					</div>
-				</ContextMenu.Header>
-				<OverlayScrollbar
-					style={{ maxHeight: '200px' }}
-					options={{ overflow: { x: 'hidden' } }}
-				>
-					{contextItems}
-				</OverlayScrollbar>
-			</>
-		),
-		[contextItems, onBack],
-	);
-
-	return { hasFieldVariables: fieldVariables.length > 0, items };
+	return { hasFieldVariables: fieldVariables.length > 0, actions };
 }

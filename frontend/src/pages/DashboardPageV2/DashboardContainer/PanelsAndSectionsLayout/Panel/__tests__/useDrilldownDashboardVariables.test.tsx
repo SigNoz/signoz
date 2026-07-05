@@ -1,17 +1,19 @@
 import { render, renderHook, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
-import type { DrilldownContext } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/drilldown';
+import type { FilterData } from 'container/QueryTable/Drilldown/drilldownUtils';
 
+import DrilldownDashboardVariablesMenu from '../DrilldownMenu/DrilldownDashboardVariablesMenu';
 import { useDrilldownDashboardVariables } from '../hooks/useDrilldownDashboardVariables';
 
 // Fake dashboard variables + runtime selection, mutated per test. `dtoToFormModel` is mocked as
-// identity, so these DTOs are shaped like form models directly.
+// identity, so these DTOs carry both the plugin discriminant (for the dynamic filter) and the flat
+// form-model fields the hook reads.
 let mockVariables: Array<{
 	name: string;
-	type: string;
 	dynamicAttribute?: string;
 	multiSelect?: boolean;
+	spec: { plugin: { kind: string } };
 }> = [];
 let mockSelectionMap: Record<string, { value: unknown; allSelected: boolean }> =
 	{};
@@ -19,6 +21,9 @@ let mockSelectionMap: Record<string, { value: unknown; allSelected: boolean }> =
 const mockSetVariableValue = jest.fn();
 const mockSetUrlValues = jest.fn();
 const mockPatchAsync = jest.fn().mockResolvedValue(undefined);
+
+const DYNAMIC_KIND = 'signoz/DynamicVariable';
+const QUERY_KIND = 'signoz/QueryVariable';
 
 jest.mock('api/generated/services/dashboard', () => ({
 	useGetDashboardV2: (): unknown => ({
@@ -76,23 +81,24 @@ jest.mock('@signozhq/ui/sonner', () => ({
 	toast: { success: jest.fn(), error: jest.fn() },
 }));
 
-const context: DrilldownContext = {
-	queryName: 'A',
-	signal: TelemetrytypesSignalDTO.metrics,
-	filters: [
-		{ filterKey: 'service.name', filterValue: 'frontend', operator: '=' },
-	],
-};
+const filters: FilterData[] = [
+	{ filterKey: 'service.name', filterValue: 'frontend', operator: '=' },
+];
 
 function renderItems(): void {
 	const { result } = renderHook(() =>
 		useDrilldownDashboardVariables({
-			context,
-			onBack: jest.fn(),
+			filters,
+			signal: TelemetrytypesSignalDTO.metrics,
 			onClose: jest.fn(),
 		}),
 	);
-	render(<div>{result.current.items}</div>);
+	render(
+		<DrilldownDashboardVariablesMenu
+			actions={result.current.actions}
+			onBack={jest.fn()}
+		/>,
+	);
 }
 
 describe('useDrilldownDashboardVariables', () => {
@@ -104,20 +110,12 @@ describe('useDrilldownDashboardVariables', () => {
 
 	it('hasFieldVariables reflects the clicked point group-by fields', () => {
 		const withFields = renderHook(() =>
-			useDrilldownDashboardVariables({
-				context,
-				onBack: jest.fn(),
-				onClose: jest.fn(),
-			}),
+			useDrilldownDashboardVariables({ filters, onClose: jest.fn() }),
 		);
 		expect(withFields.result.current.hasFieldVariables).toBe(true);
 
 		const noFields = renderHook(() =>
-			useDrilldownDashboardVariables({
-				context: { ...context, filters: [] },
-				onBack: jest.fn(),
-				onClose: jest.fn(),
-			}),
+			useDrilldownDashboardVariables({ filters: [], onClose: jest.fn() }),
 		);
 		expect(noFields.result.current.hasFieldVariables).toBe(false);
 	});
@@ -126,9 +124,9 @@ describe('useDrilldownDashboardVariables', () => {
 		mockVariables = [
 			{
 				name: 'svc',
-				type: 'DYNAMIC',
 				dynamicAttribute: 'service.name',
 				multiSelect: true,
+				spec: { plugin: { kind: DYNAMIC_KIND } },
 			},
 		];
 		mockSelectionMap = { svc: { value: ['backend'], allSelected: false } };
@@ -145,9 +143,9 @@ describe('useDrilldownDashboardVariables', () => {
 		mockVariables = [
 			{
 				name: 'svc',
-				type: 'DYNAMIC',
 				dynamicAttribute: 'service.name',
 				multiSelect: false,
+				spec: { plugin: { kind: DYNAMIC_KIND } },
 			},
 		];
 		mockSelectionMap = { svc: { value: 'backend', allSelected: false } };
@@ -164,9 +162,9 @@ describe('useDrilldownDashboardVariables', () => {
 		mockVariables = [
 			{
 				name: 'svc',
-				type: 'DYNAMIC',
 				dynamicAttribute: 'service.name',
 				multiSelect: true,
+				spec: { plugin: { kind: DYNAMIC_KIND } },
 			},
 		];
 		mockSelectionMap = { svc: { value: ['frontend'], allSelected: false } };
@@ -195,7 +193,11 @@ describe('useDrilldownDashboardVariables', () => {
 
 	it('ignores a non-dynamic variable with the same attribute (still offers Create)', () => {
 		mockVariables = [
-			{ name: 'svc', type: 'QUERY', dynamicAttribute: 'service.name' },
+			{
+				name: 'svc',
+				dynamicAttribute: 'service.name',
+				spec: { plugin: { kind: QUERY_KIND } },
+			},
 		];
 		renderItems();
 

@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import type { FilterData } from 'container/QueryTable/Drilldown/drilldownUtils';
 import useBaseDrilldownNavigate from 'container/QueryTable/Drilldown/useBaseDrilldownNavigate';
 import type {
 	Coordinates,
@@ -10,10 +11,7 @@ import type {
 	DrilldownClickPayload,
 	DrilldownContext,
 } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/drilldown';
-import {
-	PANEL_KIND_TO_PANEL_TYPE,
-	type PanelKind,
-} from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelKind';
+import { PANEL_KIND_TO_PANEL_TYPE } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelKind';
 import { getPanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Panels/registry';
 import { buildAggregateData } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/drilldown/buildAggregateData';
 import { getBuilderQueries } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/getBuilderQueries';
@@ -21,6 +19,7 @@ import { fromPerses } from 'pages/DashboardPageV2/DashboardContainer/queryV5/per
 
 import DrilldownAggregateMenu from '../DrilldownMenu/DrilldownAggregateMenu';
 import DrilldownBreakoutMenu from '../DrilldownMenu/DrilldownBreakoutMenu';
+import DrilldownDashboardVariablesMenu from '../DrilldownMenu/DrilldownDashboardVariablesMenu';
 import DrilldownFilterMenu from '../DrilldownMenu/DrilldownFilterMenu';
 import { useDrilldownBreakout } from './useDrilldownBreakout';
 import { useDrilldownCoordinates } from './useDrilldownCoordinates';
@@ -35,6 +34,9 @@ enum DrilldownSubMenu {
 	Breakout = 'breakout',
 	DashboardVariables = 'dashboardVariables',
 }
+
+/** Stable empty-filters ref so the dashboard-variables hook doesn't re-run on every no-click render. */
+const EMPTY_FILTERS: FilterData[] = [];
 
 /** Props the panel shell spreads onto `<ContextMenu>`. */
 export interface DrilldownContextMenuProps {
@@ -60,11 +62,9 @@ export function useDrilldown(
 	panel: DashboardtypesPanelDTO,
 	panelId: string,
 ): UseDrilldownResult {
-	const kind = panel.spec.plugin.kind as PanelKind;
+	const kind = panel.spec.plugin.kind;
 	const panelType = PANEL_KIND_TO_PANEL_TYPE[kind];
-	// Stable ref so the conversions below don't re-run every render (the `?? []` fallback would
-	// otherwise be a fresh array each time).
-	const queries = useMemo(() => panel.spec.queries ?? [], [panel.spec.queries]);
+	const queries = panel.spec.queries;
 
 	// Kind must opt in via its capability AND have a builder query to drill into.
 	const enableDrillDown = useMemo(
@@ -143,8 +143,8 @@ export function useDrilldown(
 	});
 
 	const dashboardVariables = useDrilldownDashboardVariables({
-		context,
-		onBack: backToBase,
+		filters: context?.filters ?? EMPTY_FILTERS,
+		signal: context?.signal,
 		onClose: handleClose,
 	});
 
@@ -177,8 +177,13 @@ export function useDrilldown(
 				/>
 			) : null;
 		}
-		if (subMenu === 'dashboardVariables') {
-			return dashboardVariables.items;
+		if (subMenu === DrilldownSubMenu.DashboardVariables) {
+			return (
+				<DrilldownDashboardVariablesMenu
+					actions={dashboardVariables.actions}
+					onBack={backToBase}
+				/>
+			);
 		}
 		if (filter.isGroupColumnClick && context?.clickedKey) {
 			return (
@@ -210,8 +215,7 @@ export function useDrilldown(
 		subMenu,
 		breakout.queryData,
 		breakout.onBreakout,
-		backToBase,
-		dashboardVariables.items,
+		dashboardVariables.actions,
 		dashboardVariables.hasFieldVariables,
 		filter.isGroupColumnClick,
 		filter.onFilter,
@@ -222,6 +226,7 @@ export function useDrilldown(
 		navigate,
 		openBreakout,
 		openDashboardVariables,
+		backToBase,
 		handleClose,
 	]);
 

@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react';
 import { act, render, renderHook, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {
@@ -16,10 +15,10 @@ const mockGetBuilderQueries = jest.fn();
 let mockResolved = { resolvedQuery: 'RESOLVED_QUERY', isResolving: false };
 let mockDashboardVariables: {
 	hasFieldVariables: boolean;
-	items: ReactNode;
+	actions: unknown[];
 } = {
 	hasFieldVariables: true,
-	items: <div data-testid="dashboard-variables-submenu" />,
+	actions: [],
 };
 
 // Boundaries tested elsewhere / needing external context — mocked so this suite isolates
@@ -43,6 +42,10 @@ jest.mock('../DrilldownMenu/DrilldownBreakoutMenu', () => ({
 }));
 jest.mock('../hooks/useDrilldownDashboardVariables', () => ({
 	useDrilldownDashboardVariables: (): unknown => mockDashboardVariables,
+}));
+jest.mock('../DrilldownMenu/DrilldownDashboardVariablesMenu', () => ({
+	__esModule: true,
+	default: (): JSX.Element => <div data-testid="dashboard-variables-submenu" />,
 }));
 // Context-link variable map (redux global time + store) — out of scope for this suite.
 jest.mock('../hooks/useDrilldownContextVariables', () => ({
@@ -133,7 +136,7 @@ describe('useDrilldown', () => {
 		mockResolved = { resolvedQuery: 'RESOLVED_QUERY', isResolving: false };
 		mockDashboardVariables = {
 			hasFieldVariables: true,
-			items: <div data-testid="dashboard-variables-submenu" />,
+			actions: [],
 		};
 	});
 
@@ -237,7 +240,7 @@ describe('useDrilldown', () => {
 		});
 
 		it('hides the Dashboard Variables entry when there are no group-by fields', () => {
-			mockDashboardVariables = { hasFieldVariables: false, items: null };
+			mockDashboardVariables = { hasFieldVariables: false, actions: [] };
 			const { result } = renderHook(() => useDrilldown(tsPanel, 'p1'));
 			act(() =>
 				result.current.onPanelClick({
