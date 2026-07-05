@@ -9,7 +9,7 @@ import { useOpenPanelEditor } from 'pages/DashboardPageV2/DashboardContainer/hoo
 
 import { usePanelInteractions } from '../hooks/usePanelInteractions';
 import ViewPanelModalHeader from './ViewPanelModalHeader';
-import { useViewPanelEditor } from './useViewPanelEditor';
+import { useViewPanelMode } from './useViewPanelMode';
 import { useViewPanelTimeWindow } from './useViewPanelTimeWindow';
 import styles from './ViewPanelModal.module.scss';
 
@@ -42,14 +42,13 @@ function ViewPanelModalContent({
 		draft,
 		panelDefinition,
 		signal,
-		defaultSignal,
 		queryType,
 		query,
 		runQuery,
 		onChangePanelKind,
 		resetQuery,
 		buildSaveSpec,
-	} = useViewPanelEditor({ panel, panelId, time: timeOverride });
+	} = useViewPanelMode({ panel, panelId, time: timeOverride });
 	const { data, isFetching, error, refetch, cancelQuery, pagination } = query;
 
 	// Drag-to-zoom stays inside the modal; opt the chart out of the dashboard's
@@ -96,7 +95,7 @@ function ViewPanelModalContent({
 			<div className={styles.queryBuilder}>
 				<PanelEditorQueryBuilder
 					panelKind={draft.spec.plugin.kind}
-					signal={signal ?? defaultSignal}
+					signal={signal}
 					isLoadingQueries={isFetching}
 					onStageRunQuery={runQuery}
 					onCancelQuery={cancelQuery}

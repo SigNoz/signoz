@@ -21,8 +21,8 @@ jest.mock(
 );
 
 // Isolate from the draft/query-builder plumbing (its own suite covers it).
-jest.mock('../ViewPanelModal/useViewPanelEditor', () => ({
-	useViewPanelEditor: (args: {
+jest.mock('../ViewPanelModal/useViewPanelMode', () => ({
+	useViewPanelMode: (args: {
 		panel: { spec: { plugin: { kind: string } } };
 	}): unknown => {
 		const { kind } = args.panel.spec.plugin;
@@ -45,8 +45,7 @@ jest.mock('../ViewPanelModal/useViewPanelEditor', () => ({
 			runQuery: jest.fn(),
 			onChangePanelKind: jest.fn(),
 			resetQuery: jest.fn(),
-			signal: undefined,
-			defaultSignal: 'logs',
+			signal: 'logs',
 			buildSaveSpec: (spec: unknown): unknown => spec,
 		};
 	},

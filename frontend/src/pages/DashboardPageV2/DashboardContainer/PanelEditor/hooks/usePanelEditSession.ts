@@ -31,7 +31,7 @@ interface UsePanelEditSessionArgs {
 	seedQuerySignal?: boolean;
 }
 
-export interface UsePanelEditSessionApi {
+export interface UsePanelEditSessionReturn {
 	/** Local editable copy of the panel — the preview renders this, not the saved panel. */
 	draft: DashboardtypesPanelDTO;
 	spec: DashboardtypesPanelSpecDTO;
@@ -70,13 +70,13 @@ export function usePanelEditSession({
 	time,
 	alwaysSerializeQuery = false,
 	seedQuerySignal = false,
-}: UsePanelEditSessionArgs): UsePanelEditSessionApi {
+}: UsePanelEditSessionArgs): UsePanelEditSessionReturn {
 	const { draft, spec, setSpec, isSpecDirty, reset } =
 		usePanelEditorDraft(panel);
 
-	const fullKind = draft.spec.plugin.kind;
-	const panelDefinition = getPanelDefinition(fullKind);
-	const panelType = PANEL_KIND_TO_PANEL_TYPE[fullKind];
+	const panelKind = draft.spec.plugin.kind;
+	const panelDefinition = getPanelDefinition(panelKind);
+	const panelType = PANEL_KIND_TO_PANEL_TYPE[panelKind];
 	const defaultSignal = panelDefinition.supportedSignals[0];
 
 	const query = usePanelQuery({

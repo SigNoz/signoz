@@ -114,7 +114,7 @@ function PanelEditorContainer({
 		storage: layoutStorage,
 	});
 
-	const fullKind = draft.spec.plugin.kind;
+	const panelKind = draft.spec.plugin.kind;
 
 	// At editor level, not the collapsible FormattingSection, so seeding runs while closed.
 	const formattingUnit = (
@@ -146,7 +146,7 @@ function PanelEditorContainer({
 	// Spec and query dirtiness are tracked independently so query re-serialization
 	// never false-dirties. A new panel is always savable (you're creating it).
 	const isDirty = isNew || isSpecDirty || isQueryDirty;
-	const isListPanel = fullKind === 'signoz/ListPanel';
+	const isListPanel = panelKind === 'signoz/ListPanel';
 	// The builder-query `signal` literal matches the TelemetrytypesSignalDTO enum
 	// values; cast at this boundary (as ConfigPane does) so the columns editor's
 	// field-key lookup is typed.
@@ -236,7 +236,7 @@ function PanelEditorContainer({
 							<ResizableHandle withHandle className={styles.handle} />
 							<ResizablePanel minSize="35%" maxSize="45%" defaultSize="40%">
 								<PanelEditorQueryBuilder
-									panelKind={fullKind}
+									panelKind={panelKind}
 									signal={listSignal}
 									isLoadingQueries={isFetching}
 									onStageRunQuery={runQuery}

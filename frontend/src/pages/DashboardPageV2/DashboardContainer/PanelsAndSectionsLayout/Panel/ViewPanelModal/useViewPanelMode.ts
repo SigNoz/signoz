@@ -19,22 +19,24 @@ import {
 } from 'pages/DashboardPageV2/DashboardContainer/hooks/usePanelQuery';
 import type { EQueryType } from 'types/common/dashboard';
 
-interface UseViewPanelEditorArgs {
+interface UseViewPanelModeArgs {
 	panel: DashboardtypesPanelDTO;
 	panelId: string;
 	/** Per-view time window (epoch ms); isolates the preview from the dashboard. */
 	time: PanelQueryTimeOverride;
 }
 
-export interface UseViewPanelEditorApi {
+export interface UseViewPanelModeReturn {
 	/** Local editable copy of the panel — the preview renders this, not the saved panel. */
 	draft: DashboardtypesPanelDTO;
-	/** Resolved renderer for the draft's current kind. */
-	panelDefinition: RenderablePanelDefinition | undefined;
-	/** Current builder datasource — drives the panel-type selector's disabled rule. */
-	signal?: TelemetrytypesSignalDTO;
-	/** The kind's first supported signal — the query builder's fallback datasource. */
-	defaultSignal: TelemetrytypesSignalDTO;
+	/** Resolved renderer for the draft's current kind (registry always resolves a kind). */
+	panelDefinition: RenderablePanelDefinition;
+	/**
+	 * Builder datasource driving the query builder and the panel-type selector's
+	 * disabled rule. Resolved from the query, falling back to the kind's default
+	 * signal, so it's always defined.
+	 */
+	signal: TelemetrytypesSignalDTO;
 	/** Active query type (selected builder tab) — drives the panel-type selector's disabled rule. */
 	queryType: EQueryType;
 	/** Query result for the draft over the per-view window. */
@@ -52,18 +54,18 @@ export interface UseViewPanelEditorApi {
 }
 
 /**
- * Turns the View modal into a compact, drilldown panel editor on top of the shared
+ * Powers the panel View modal's drilldown editing on top of the shared
  * `usePanelEditSession`: the same draft/query/query-sync/type-switch pipeline the
  * full editor uses, scoped to a per-view time window, plus drilldown-only extras
  * (the saved-query snapshot for Reset, and the builder signal for the type selector).
  * Edits are temporary — they live in the builder/URL and the draft, never the
  * dashboard, matching V1.
  */
-export function useViewPanelEditor({
+export function useViewPanelMode({
 	panel,
 	panelId,
 	time,
-}: UseViewPanelEditorArgs): UseViewPanelEditorApi {
+}: UseViewPanelModeArgs): UseViewPanelModeReturn {
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
 
 	const {
@@ -94,15 +96,16 @@ export function useViewPanelEditor({
 		redirectWithQueryBuilderData(savedQuery);
 	}, [reset, redirectWithQueryBuilderData, savedQuery]);
 
-	// Current builder datasource for the panel-type disabled rule — resolved the same
-	// way as the full editor's ConfigPane so the two selectors stay in sync.
-	const signal = resolveSignal(draft.spec.queries, defaultSignal);
+	// Current builder datasource — resolved the same way as the full editor's
+	// ConfigPane so the two selectors stay in sync, then defaulted to the kind's first
+	// signal (PromQL/ClickHouse carry none) so the query builder always has one.
+	const signal =
+		resolveSignal(draft.spec.queries, defaultSignal) ?? defaultSignal;
 
 	return {
 		draft,
 		panelDefinition,
 		signal,
-		defaultSignal,
 		queryType: currentQuery.queryType,
 		query,
 		runQuery,

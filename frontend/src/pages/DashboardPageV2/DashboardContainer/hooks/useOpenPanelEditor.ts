@@ -9,22 +9,22 @@ import { useDashboardStore } from '../store/useDashboardStore';
 /**
  * Returns a callback that opens the V2 panel editor by navigating to its full-page route
  * (`/dashboard/:dashboardId/panel/:panelId`). The dashboard id comes from the store, so any
- * caller can open the editor with just the panel id. The optional `state` is passed as router
- * location state — the View modal uses it to hand off its drilldown-edited spec so the editor
- * opens on those edits rather than the saved panel.
+ * caller can open the editor with just the panel id. The optional `handoffState` is passed as
+ * router location state — the View modal uses it to hand its drilldown-edited spec off to the
+ * editor (view → edit) so the editor opens on those edits rather than the saved panel.
  */
 export function useOpenPanelEditor(): (
 	panelId: string,
-	state?: PanelEditorHandoffState,
+	handoffState?: PanelEditorHandoffState,
 ) => void {
 	const { safeNavigate } = useSafeNavigate();
 	const dashboardId = useDashboardStore((s) => s.dashboardId);
 
 	return useCallback(
-		(panelId: string, state?: PanelEditorHandoffState): void => {
+		(panelId: string, handoffState?: PanelEditorHandoffState): void => {
 			safeNavigate(
 				generatePath(ROUTES.DASHBOARD_PANEL_EDITOR, { dashboardId, panelId }),
-				state ? { state } : undefined,
+				handoffState ? { state: handoffState } : undefined,
 			);
 		},
 		[safeNavigate, dashboardId],

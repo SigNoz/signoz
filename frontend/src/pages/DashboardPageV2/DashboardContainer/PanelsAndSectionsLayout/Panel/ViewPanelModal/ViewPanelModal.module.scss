@@ -6,6 +6,17 @@
 	}
 }
 
+// Truncate a long panel name so the header stays on one line; the wrapping tooltip
+// then surfaces the full name on hover.
+.title {
+	display: inline-block;
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	vertical-align: bottom;
+}
+
 // Tall, fixed-height column so the renderer's resize observer measures real
 // dimensions — the chart self-sizes to fill whatever space it's given.
 .content {

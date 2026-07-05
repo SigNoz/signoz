@@ -1,9 +1,10 @@
+import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Typography } from '@signozhq/ui/typography';
 import { Modal } from 'antd';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 
 import ViewPanelModalContent from './ViewPanelModalContent';
 import styles from './ViewPanelModal.module.scss';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
 
 interface ViewPanelModalProps {
 	/**
@@ -35,7 +36,9 @@ function ViewPanelModal({
 			className={styles.modal}
 			title={
 				<TooltipSimple title={name} arrow>
-					<span className={styles.title}>{name} - (View mode)</span>
+					<Typography.Text className={styles.title}>
+						{name} - (View mode)
+					</Typography.Text>
 				</TooltipSimple>
 			}
 		>
