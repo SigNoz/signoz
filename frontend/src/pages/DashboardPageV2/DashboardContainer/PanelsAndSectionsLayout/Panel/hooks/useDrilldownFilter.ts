@@ -70,10 +70,10 @@ export function useDrilldownFilter({
 		if (!context || context.columnKind !== 'group' || !context.clickedKey) {
 			return null;
 		}
-		const clickedData = {
-			column: { dataIndex: context.clickedKey, title: context.clickedKey },
-			record: {},
-		} as unknown as ClickedData;
+		const clickedData: ClickedData = {
+			column: { dataIndex: context.clickedKey },
+			record: { key: context.clickedKey, timestamp: 0 },
+		};
 		return (
 			getGroupContextMenuConfig({
 				query: v1Query,
