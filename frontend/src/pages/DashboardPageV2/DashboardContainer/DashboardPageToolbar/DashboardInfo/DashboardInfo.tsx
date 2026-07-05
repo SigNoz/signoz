@@ -157,25 +157,31 @@ function DashboardInfo({
 					title="This dashboard is publicly accessible. Click to open the public page."
 					disableHoverableContent
 				>
-					<button
+					<Button
 						type="button"
+						variant="ghost"
+						color="secondary"
+						size="icon"
 						className={styles.publicLink}
 						aria-label="Open public dashboard"
-						data-testid="dashboard-public-link"
+						testId="dashboard-public-link"
 						onClick={(): void => openInNewTab(publicUrl)}
 					>
 						<Globe size={14} />
-					</button>
+					</Button>
 				</TooltipSimple>
 			)}
 
 			{showLockToggle && (
 				<TooltipSimple title={lockTooltip} disableHoverableContent>
-					<button
+					<Button
 						type="button"
+						variant="ghost"
+						color="secondary"
+						size="icon"
 						className={styles.lockButton}
 						aria-label={isDashboardLocked ? 'Unlock dashboard' : 'Lock dashboard'}
-						data-testid="dashboard-lock"
+						testId="dashboard-lock"
 						disabled={!onToggleLock}
 						onClick={onToggleLock}
 					>
@@ -184,7 +190,7 @@ function DashboardInfo({
 						) : (
 							<LockKeyholeOpen size={14} />
 						)}
-					</button>
+					</Button>
 				</TooltipSimple>
 			)}
 

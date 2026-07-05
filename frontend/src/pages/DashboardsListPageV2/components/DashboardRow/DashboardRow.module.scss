@@ -71,7 +71,7 @@
 	color: var(--l3-foreground);
 }
 
-.pinBtn {
+.pinButton {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
@@ -88,16 +88,16 @@
 		color 0.12s;
 }
 
-.row:hover .pinBtn {
+.row:hover .pinButton {
 	color: var(--l3-foreground);
 }
 
-.pinBtn:hover {
+.pinButton:hover {
 	background: var(--l1-background);
 	color: var(--bg-amber-500);
 }
 
-.pinBtnOn {
+.pinButtonOn {
 	color: var(--bg-amber-500);
 
 	svg {
@@ -115,11 +115,11 @@
 	display: none;
 }
 
-.pinBtn:hover .pinnedIcon {
+.pinButton:hover .pinnedIcon {
 	display: none;
 }
 
-.pinBtn:hover .unpinIcon {
+.pinButton:hover .unpinIcon {
 	display: inline-flex;
 }
 
@@ -208,11 +208,4 @@
 	display: flex;
 	align-items: center;
 	gap: 6px;
-}
-
-:global(.titleTooltipOverlay) {
-	:global(.ant-tooltip-content) :global(.ant-tooltip-inner) {
-		max-height: 400px;
-		overflow: auto;
-	}
 }
