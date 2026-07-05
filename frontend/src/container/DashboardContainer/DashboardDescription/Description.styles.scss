@@ -149,6 +149,41 @@
 		line-height: 22px; /* 157.143% */
 		letter-spacing: -0.07px;
 		padding: 20px 16px 0px 16px;
+
+		a {
+			color: var(--bg-robin-400);
+			text-decoration: underline;
+
+			&:hover {
+				color: var(--bg-robin-500);
+			}
+		}
+
+		p {
+			margin: 0;
+
+			& + p {
+				margin-top: 4px;
+			}
+		}
+
+		h1, h2, h3, h4, h5, h6 {
+			margin: 0;
+			font-size: inherit;
+			font-weight: 600;
+		}
+
+		ul, ol {
+			margin: 4px 0;
+			padding-left: 20px;
+		}
+
+		code {
+			background: var(--bg-ink-400);
+			padding: 1px 4px;
+			border-radius: 4px;
+			font-size: 13px;
+		}
 	}
 
 	.dashboard-variables {

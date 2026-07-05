@@ -1,10 +1,12 @@
 import { KeyboardEvent } from 'react';
+import ReactMarkdown from 'react-markdown';
 import { Check, Globe, LockKeyhole, SolidInfoCircle, X } from '@signozhq/icons';
 import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
+import { Popover } from 'antd';
 import cx from 'classnames';
 import { isEmpty } from 'lodash-es';
 
@@ -115,13 +117,32 @@ function DashboardInfo({
 			)}
 
 			{hasDescription && (
-				<TooltipSimple title={description}>
+				<Popover
+					content={
+						<div className={styles.descriptionPopover}>
+							<ReactMarkdown
+								components={{
+									a: ({ href, children }): JSX.Element => (
+										<a href={href} target="_blank" rel="noopener noreferrer">
+											{children}
+										</a>
+									),
+								}}
+							>
+								{description}
+							</ReactMarkdown>
+						</div>
+					}
+					trigger="hover"
+					placement="bottomLeft"
+					arrow={false}
+				>
 					<SolidInfoCircle
 						className={styles.descriptionIcon}
 						size={14}
 						data-testid="dashboard-description-info"
 					/>
-				</TooltipSimple>
+				</Popover>
 			)}
 
 			{isPublicDashboard && (

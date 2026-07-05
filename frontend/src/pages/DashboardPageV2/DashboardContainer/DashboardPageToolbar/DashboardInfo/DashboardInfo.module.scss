@@ -66,3 +66,47 @@
 	min-width: 0;
 	overflow: hidden;
 }
+
+.descriptionPopover {
+	max-width: 400px;
+	max-height: 300px;
+	overflow-y: auto;
+	font-size: 13px;
+	line-height: 1.5;
+	color: var(--l2-foreground);
+
+	a {
+		color: var(--bg-robin-400);
+		text-decoration: underline;
+
+		&:hover {
+			color: var(--bg-robin-500);
+		}
+	}
+
+	p {
+		margin: 0 0 8px;
+
+		&:last-child {
+			margin-bottom: 0;
+		}
+	}
+
+	h1, h2, h3, h4, h5, h6 {
+		margin: 0 0 4px;
+		font-size: inherit;
+		font-weight: 600;
+	}
+
+	ul, ol {
+		margin: 4px 0;
+		padding-left: 20px;
+	}
+
+	code {
+		background: var(--bg-ink-400);
+		padding: 1px 4px;
+		border-radius: 4px;
+		font-size: 12px;
+	}
+}

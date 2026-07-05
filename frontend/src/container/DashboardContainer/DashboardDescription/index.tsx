@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import ReactMarkdown from 'react-markdown';
 import { FullScreenHandle } from 'react-full-screen';
 import { Layout } from 'react-grid-layout';
 import { useTranslation } from 'react-i18next';
@@ -515,7 +516,19 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 				</div>
 			)}
 			{!isEmpty(description) && (
-				<section className="dashboard-description-section">{description}</section>
+				<section className="dashboard-description-section">
+					<ReactMarkdown
+						components={{
+							a: ({ href, children }): JSX.Element => (
+								<a href={href} target="_blank" rel="noopener noreferrer">
+									{children}
+								</a>
+							),
+						}}
+					>
+						{description ?? ''}
+					</ReactMarkdown>
+				</section>
 			)}
 
 			{!isEmpty(dashboardVariables) && (
