@@ -8,7 +8,7 @@ import {
 	DashboardtypesThresholdFormatDTO,
 	type DashboardtypesThresholdWithLabelDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import type {
+import {
 	AnyThreshold,
 	ThresholdVariant,
 } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/sections';
@@ -77,7 +77,7 @@ function ThresholdsSection({
 	yAxisUnit,
 	tableColumns = [],
 }: ThresholdsSectionProps): JSX.Element {
-	const variant = controls?.variant ?? 'label';
+	const variant = controls?.variant ?? ThresholdVariant.LABEL;
 	const thresholds = value ?? [];
 	// Which row is being edited, and whether it was just added (so Discard removes it).
 	const [editingIndex, setEditingIndex] = useState<number | null>(null);

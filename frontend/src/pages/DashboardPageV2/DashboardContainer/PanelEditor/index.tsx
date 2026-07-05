@@ -102,12 +102,19 @@ function PanelEditorContainer({
 
 	// One shared query result for the whole editor; the preview renders it.
 	const panelDefinition = getPanelDefinition(draft.spec.plugin.kind);
-	const { data, isFetching, error, cancelQuery, refetch, pagination } =
-		usePanelQuery({
-			panel: draft,
-			panelId,
-			enabled: !!panelDefinition,
-		});
+	const {
+		data,
+		isFetching,
+		isPreviousData,
+		error,
+		cancelQuery,
+		refetch,
+		pagination,
+	} = usePanelQuery({
+		panel: draft,
+		panelId,
+		enabled: !!panelDefinition,
+	});
 
 	// A new panel's default signal (its kind's first supported) — seeds the query and columns.
 	const defaultSignal = panelDefinition.supportedSignals[0];
@@ -235,6 +242,7 @@ function PanelEditorContainer({
 										panelDefinition={panelDefinition}
 										data={data}
 										isFetching={isFetching}
+										isPreviousData={isPreviousData}
 										error={error}
 										refetch={refetch}
 										onDragSelect={onDragSelect}
