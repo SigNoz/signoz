@@ -1,11 +1,12 @@
 import { Plus } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
-import { usePanelTypeSelectionModalStore } from 'providers/Dashboard/helpers/panelTypeSelectionModalHelper';
 
 import dashboardEmojiUrl from '@/assets/Icons/dashboard_emoji.svg';
 import landscapeUrl from '@/assets/Icons/landscape.svg';
 
+import { useCreatePanel } from '../../hooks/useCreatePanel';
+import PanelTypeSelectionModal from '../Panel/PanelTypeSelectionModal/PanelTypeSelectionModal';
 import styles from './DashboardEmptyState.module.scss';
 
 interface DashboardEmptyStateProps {
@@ -15,9 +16,8 @@ interface DashboardEmptyStateProps {
 function DashboardEmptyState({
 	canAddPanel,
 }: DashboardEmptyStateProps): JSX.Element {
-	const setIsPanelTypeSelectionModalOpen = usePanelTypeSelectionModalStore(
-		(s) => s.setIsPanelTypeSelectionModalOpen,
-	);
+	const { isPickerOpen, openPicker, closePicker, createPanel } =
+		useCreatePanel();
 
 	return (
 		<section className={styles.emptyState}>
@@ -48,7 +48,7 @@ function DashboardEmptyState({
 						<Button
 							color="primary"
 							prefix={<Plus size="md" />}
-							onClick={(): void => setIsPanelTypeSelectionModalOpen(true)}
+							onClick={(): void => openPicker()}
 							testId="add-panel"
 						>
 							New Panel
@@ -56,6 +56,11 @@ function DashboardEmptyState({
 					)}
 				</div>
 			</div>
+			<PanelTypeSelectionModal
+				open={isPickerOpen}
+				onClose={closePicker}
+				onSelect={createPanel}
+			/>
 		</section>
 	);
 }

@@ -5,8 +5,8 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
 	cmock "github.com/SigNoz/clickhouse-go-mock"
+	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
 	"github.com/stretchr/testify/require"
 
 	"github.com/DATA-DOG/go-sqlmock"

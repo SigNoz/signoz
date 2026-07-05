@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { patchDashboardV2 } from 'api/generated/services/dashboard';
 import type {
 	DashboardtypesGettableDashboardV2DTO,
 	DashboardtypesJSONPatchOperationDTO,
@@ -9,7 +8,7 @@ import { isEqual } from 'lodash-es';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 
-import { useDashboardStore } from '../../store/useDashboardStore';
+import { useOptimisticPatch } from '../../hooks/useOptimisticPatch';
 import CrossPanelSync from './CrossPanelSync/CrossPanelSync';
 import DashboardInfoForm from './DashboardInfoForm/DashboardInfoForm';
 import UnsavedChangesFooter from './UnsavedChangesFooter/UnsavedChangesFooter';
@@ -23,7 +22,7 @@ interface OverviewProps {
 function Overview({ dashboard }: OverviewProps): JSX.Element {
 	const id = dashboard.id;
 
-	const refetch = useDashboardStore((s) => s.refetch);
+	const { patchAsync } = useOptimisticPatch();
 
 	const title = dashboard.spec.display.name;
 	const description = dashboard.spec.display.description ?? '';
@@ -96,15 +95,14 @@ function Overview({ dashboard }: OverviewProps): JSX.Element {
 
 		try {
 			setIsSaving(true);
-			await patchDashboardV2({ id }, ops);
+			await patchAsync(ops);
 			toast.success('Dashboard updated');
-			refetch();
 		} catch (error) {
 			showErrorModal(error as APIError);
 		} finally {
 			setIsSaving(false);
 		}
-	}, [id, buildPatch, refetch, showErrorModal]);
+	}, [buildPatch, patchAsync, showErrorModal]);
 
 	useEffect(() => {
 		let numberOfUnsavedChanges = 0;

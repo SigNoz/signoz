@@ -23,7 +23,7 @@ import {
 	Timer,
 } from '@signozhq/icons';
 import KeyValueLabel from 'periscope/components/KeyValueLabel';
-import { TraceDetailV2URLProps } from 'types/api/trace/getTraceV2';
+import { TraceDetailV3URLProps } from 'types/api/trace/getTraceV3';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { TraceDetailEventKeys, TraceDetailEvents } from '../events';
@@ -81,7 +81,7 @@ function TraceDetailsHeader({
 	isDataLoaded,
 	traceMetadata,
 }: TraceDetailsHeaderProps): JSX.Element {
-	const { id: traceID } = useParams<TraceDetailV2URLProps>();
+	const { id: traceID } = useParams<TraceDetailV3URLProps>();
 	const [showTraceDetails, setShowTraceDetails] = useState(true);
 	const [isFilterExpanded, setIsFilterExpanded] = useState(false);
 	const [isPreviewFieldsOpen, setIsPreviewFieldsOpen] = useState(false);

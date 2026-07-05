@@ -11,23 +11,9 @@ from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.fs import get_testdata_file_path
 from fixtures.metrics import Metrics
-from fixtures.querier import compare_values
+from fixtures.querier import compare_values, get_all_warnings
 
 ENDPOINT = "/api/v2/infra_monitoring/statefulsets"
-
-# Required metrics for the v2 statefulsets endpoint
-# (pkg/modules/inframonitoring/implinframonitoring/statefulsets_constants.go:24-34).
-REQUIRED_METRICS = {
-    "k8s.pod.phase",
-    "k8s.pod.cpu.usage",
-    "k8s.pod.cpu_request_utilization",
-    "k8s.pod.cpu_limit_utilization",
-    "k8s.pod.memory.working_set",
-    "k8s.pod.memory_request_utilization",
-    "k8s.pod.memory_limit_utilization",
-    "k8s.statefulset.desired_pods",
-    "k8s.statefulset.current_pods",
-}
 
 
 def test_statefulsets_accuracy(
@@ -75,7 +61,8 @@ def test_statefulsets_accuracy(
     # Shape/contract.
     assert data["total"] == len(expected["records"])
     assert len(data["records"]) == len(expected["records"])
-    assert data["requiredMetricsCheck"]["missingMetrics"] == []
+    # Full data present -> no warnings surfaced.
+    assert get_all_warnings(response.json()) == []
     assert data["endTimeBeforeRetention"] is False
     assert {r["statefulSetName"] for r in data["records"]} == set(exp_by_name.keys())
 
@@ -121,40 +108,6 @@ def test_statefulsets_accuracy(
         assert record["desiredPods"] == exp["desiredPods"]
         assert record["currentPods"] == exp["currentPods"]
         assert record["podCountsByPhase"] == exp["podCountsByPhase"]
-
-
-def test_statefulsets_missing_metrics(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token,
-    insert_metrics,
-) -> None:
-    """Seed only k8s.pod.cpu.usage; assert other 8 required metrics flagged missing."""
-    now = datetime.now(tz=UTC).replace(microsecond=0)
-    insert_metrics(
-        Metrics.load_from_file(
-            get_testdata_file_path("inframonitoring/statefulsets_missing_metrics.jsonl"),
-            base_time=now - timedelta(minutes=4),
-        )
-    )
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = requests.post(
-        signoz.self.host_configs["8080"].get(ENDPOINT),
-        headers={"authorization": f"Bearer {token}"},
-        json={
-            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "limit": 50,
-        },
-        timeout=5,
-    )
-    assert response.status_code == HTTPStatus.OK, response.text
-    data = response.json()["data"]
-
-    assert set(data["requiredMetricsCheck"]["missingMetrics"]) == (REQUIRED_METRICS - {"k8s.pod.cpu.usage"})
-    assert data["records"] == []
-    assert data["total"] == 0
 
 
 @pytest.mark.parametrize(

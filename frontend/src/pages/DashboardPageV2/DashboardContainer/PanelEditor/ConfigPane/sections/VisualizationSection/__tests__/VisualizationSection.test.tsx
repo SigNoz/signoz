@@ -4,6 +4,15 @@ import { DashboardtypesTimePreferenceDTO } from 'api/generated/services/sigNoz.s
 
 import VisualizationSection from '../VisualizationSection';
 
+// The type switcher resolves each kind's supported signals + query types; stub it so
+// the test doesn't pull the whole panel registry (renderers, chart libs).
+jest.mock('pages/DashboardPageV2/DashboardContainer/Panels/registry', () => ({
+	getPanelDefinition: jest.fn(() => ({
+		supportedSignals: ['metrics', 'logs', 'traces'],
+		supportedQueryTypes: ['builder', 'clickhouse_sql', 'promql'],
+	})),
+}));
+
 // Open the antd Select by clicking its selector, then pick the option by label.
 async function pickOption(triggerTestId: string, label: string): Promise<void> {
 	const user = userEvent.setup();
@@ -17,7 +26,12 @@ describe('VisualizationSection', () => {
 		render(
 			<VisualizationSection
 				value={undefined}
-				controls={{ timePreference: true, stacking: true, fillSpans: true }}
+				controls={{
+					switchPanelKind: true,
+					timePreference: true,
+					stacking: true,
+					fillSpans: true,
+				}}
 				onChange={jest.fn()}
 			/>,
 		);
@@ -35,7 +49,10 @@ describe('VisualizationSection', () => {
 		render(
 			<VisualizationSection
 				value={undefined}
-				controls={{ timePreference: true }}
+				controls={{
+					switchPanelKind: true,
+					timePreference: true,
+				}}
 				onChange={jest.fn()}
 			/>,
 		);
@@ -56,7 +73,10 @@ describe('VisualizationSection', () => {
 		render(
 			<VisualizationSection
 				value={undefined}
-				controls={{ timePreference: true }}
+				controls={{
+					switchPanelKind: true,
+					timePreference: true,
+				}}
 				onChange={onChange}
 			/>,
 		);
@@ -74,7 +94,10 @@ describe('VisualizationSection', () => {
 					timePreference: DashboardtypesTimePreferenceDTO.global_time,
 					stackedBarChart: false,
 				}}
-				controls={{ stacking: true }}
+				controls={{
+					switchPanelKind: true,
+					stacking: true,
+				}}
 				onChange={onChange}
 			/>,
 		);
@@ -92,7 +115,10 @@ describe('VisualizationSection', () => {
 		render(
 			<VisualizationSection
 				value={{ fillSpans: false }}
-				controls={{ fillSpans: true }}
+				controls={{
+					switchPanelKind: true,
+					fillSpans: true,
+				}}
 				onChange={onChange}
 			/>,
 		);
@@ -100,5 +126,44 @@ describe('VisualizationSection', () => {
 		fireEvent.click(screen.getByTestId('panel-editor-v2-fill-spans'));
 
 		expect(onChange).toHaveBeenCalledWith({ fillSpans: true });
+	});
+
+	it('renders the type switcher and switches kind when switchPanelKind is set', async () => {
+		const onChangePanelKind = jest.fn();
+		render(
+			<VisualizationSection
+				value={undefined}
+				controls={{ switchPanelKind: true }}
+				onChange={jest.fn()}
+				panelKind="signoz/TimeSeriesPanel"
+				onChangePanelKind={onChangePanelKind}
+			/>,
+		);
+
+		expect(
+			screen.getByTestId('panel-editor-v2-type-switcher'),
+		).toBeInTheDocument();
+
+		await pickOption('panel-editor-v2-type-switcher', 'Table');
+		expect(onChangePanelKind).toHaveBeenCalledWith('signoz/TablePanel');
+	});
+
+	it('hides the type switcher when switchPanelKind is not set', () => {
+		render(
+			<VisualizationSection
+				value={undefined}
+				controls={{
+					switchPanelKind: false,
+					timePreference: true,
+				}}
+				onChange={jest.fn()}
+				panelKind="signoz/TimeSeriesPanel"
+				onChangePanelKind={jest.fn()}
+			/>,
+		);
+
+		expect(
+			screen.queryByTestId('panel-editor-v2-type-switcher'),
+		).not.toBeInTheDocument();
 	});
 });

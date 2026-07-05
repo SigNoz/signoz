@@ -1,0 +1,133 @@
+{
+  "title": "TransactionGroups",
+  "items": {
+    "$ref": "#/definitions/AuthtypesTransactionGroup"
+  },
+  "definitions": {
+    "AuthtypesRelation": {
+      "additionalProperties": false,
+      "enum": [
+        "create",
+        "read",
+        "update",
+        "delete",
+        "list",
+        "assignee",
+        "attach",
+        "detach"
+      ],
+      "type": "string"
+    },
+    "AuthtypesTransactionGroup": {
+      "required": [
+        "relation",
+        "objectGroup"
+      ],
+      "properties": {
+        "objectGroup": {
+          "$ref": "#/definitions/CoretypesObjectGroup"
+        },
+        "relation": {
+          "$ref": "#/definitions/AuthtypesRelation"
+        }
+      },
+      "type": "object"
+    },
+    "CoretypesKind": {
+      "additionalProperties": false,
+      "enum": [
+        "anonymous",
+        "organization",
+        "role",
+        "serviceaccount",
+        "user",
+        "notification-channel",
+        "route-policy",
+        "apdex-setting",
+        "auth-domain",
+        "session",
+        "cloud-integration",
+        "cloud-integration-service",
+        "integration",
+        "dashboard",
+        "public-dashboard",
+        "ingestion-key",
+        "ingestion-limit",
+        "pipeline",
+        "user-preference",
+        "org-preference",
+        "quick-filter",
+        "ttl-setting",
+        "rule",
+        "planned-maintenance",
+        "saved-view",
+        "trace-funnel",
+        "factor-password",
+        "factor-api-key",
+        "license",
+        "subscription",
+        "logs",
+        "traces",
+        "metrics",
+        "audit-logs",
+        "meter-metrics",
+        "logs-field",
+        "traces-field"
+      ],
+      "type": "string"
+    },
+    "CoretypesObjectGroup": {
+      "required": [
+        "resource",
+        "selectors"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "resource": {
+          "$ref": "#/definitions/CoretypesResourceRef"
+        },
+        "selectors": {
+          "items": {
+            "$ref": "#/definitions/CoretypesSelector"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "CoretypesResourceRef": {
+      "required": [
+        "type",
+        "kind"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "$ref": "#/definitions/CoretypesKind"
+        },
+        "type": {
+          "$ref": "#/definitions/CoretypesType"
+        }
+      },
+      "type": "object"
+    },
+    "CoretypesSelector": {
+      "additionalProperties": false,
+      "type": "string"
+    },
+    "CoretypesType": {
+      "additionalProperties": false,
+      "enum": [
+        "user",
+        "serviceaccount",
+        "anonymous",
+        "role",
+        "organization",
+        "metaresource",
+        "telemetryresource"
+      ],
+      "type": "string"
+    }
+  },
+  "type": "array"
+}
