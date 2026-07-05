@@ -67,7 +67,7 @@ def test_public_dashboard_v2(
                             "display": {"name": "ns"},
                             "plugin": {
                                 "kind": "signoz/QueryVariable",
-                                "spec": {"queryValue": "SELECT DISTINCT service.name FROM signoz_logs"},
+                                "spec": {"queryValue": "SELECT DISTINCT temporality FROM signoz_metrics.distributed_time_series_v4"},
                             },
                         },
                     }
