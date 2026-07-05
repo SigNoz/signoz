@@ -136,10 +136,14 @@ function applyOperation(
 	const key = tokens[tokens.length - 1];
 
 	// move / copy / test are never emitted by our builders → no-op (reconciled by refetch).
+	// Clone the inserted value: a later op in the same batch can target a node we
+	// just added (e.g. add an empty section, then add an item into it), and writing
+	// the value by reference would mutate the caller's `op.value` — corrupting the
+	// ops still queued for the network request.
 	if (op.op === DashboardtypesPatchOpDTO.add) {
-		addAt(parent, key, op.value);
+		addAt(parent, key, cloneDeep(op.value));
 	} else if (op.op === DashboardtypesPatchOpDTO.replace) {
-		replaceAt(parent, key, op.value);
+		replaceAt(parent, key, cloneDeep(op.value));
 	} else if (op.op === DashboardtypesPatchOpDTO.remove) {
 		removeAt(parent, key);
 	}
