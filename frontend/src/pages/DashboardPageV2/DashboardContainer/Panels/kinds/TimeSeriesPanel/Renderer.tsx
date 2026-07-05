@@ -172,7 +172,9 @@ function TimeSeriesPanelRenderer({
 				clickedDataTimestamp: args.clickedDataTimestamp,
 				queryName: payload.context.queryName,
 				builderQueries,
-				stepIntervals: getExecStats(data.response)?.stepIntervals,
+				stepInterval: getExecStats(data.response)?.stepIntervals?.[
+					payload.context.queryName
+				],
 			});
 			onClick({ ...payload, context: { ...payload.context, timeRange } });
 		},

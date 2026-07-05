@@ -10,11 +10,11 @@ const DEFAULT_STEP_INTERVAL = 60;
 interface StepClickTimeRangeArgs {
 	/** Clicked bucket timestamp, in the chart's x-unit (epoch seconds). */
 	clickedDataTimestamp: number;
-	/** The clicked series' query — selects its step and detects APM metrics. */
+	/** The clicked series' query — used to detect APM metrics. */
 	queryName: string;
 	builderQueries: BuilderQuery[];
-	/** Per-query step intervals (seconds) from the response exec stats. */
-	stepIntervals?: Record<string, number>;
+	/** Clicked series' step (seconds); falls back to DEFAULT_STEP_INTERVAL. */
+	stepInterval?: number;
 }
 
 /**
@@ -26,10 +26,9 @@ export function stepClickTimeRange({
 	clickedDataTimestamp,
 	queryName,
 	builderQueries,
-	stepIntervals,
+	stepInterval = DEFAULT_STEP_INTERVAL,
 }: StepClickTimeRangeArgs): { startTime: number; endTime: number } {
 	const builderQuery = builderQueries.find((query) => query.name === queryName);
-	const stepInterval = stepIntervals?.[queryName] ?? DEFAULT_STEP_INTERVAL;
 	const isApm =
 		builderQuery?.signal === 'metrics' &&
 		isApmMetric(

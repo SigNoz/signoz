@@ -358,7 +358,7 @@ describe('stepClickTimeRange', () => {
 				clickedDataTimestamp: 1000,
 				queryName: 'A',
 				builderQueries: [builderQuery({ name: 'A', signal: 'logs' })],
-				stepIntervals: { A: 30 },
+				stepInterval: 30,
 			}),
 		).toStrictEqual({ startTime: 1000, endTime: 1030 });
 	});
