@@ -150,7 +150,7 @@ export function useVariableForm({
 		const next: VariableFormModel = {
 			...model,
 			name: trimmedName,
-			defaultValue: defaultValue ? { value: defaultValue } : undefined,
+			defaultValue: defaultValue || undefined,
 		};
 
 		const cycle = detectVariableCycle([...siblings, next]);

@@ -328,6 +328,11 @@
           {
             "name": "immer",
             "message": "[State mgmt] Direct immer usage is deprecated. Use Zustand (which integrates immer via the immer middleware) instead."
+          },
+          {
+            "name": "api/generated/services/dashboard",
+            "importNames": ["patchDashboardV2", "usePatchDashboardV2"],
+            "message": "[dashboard-v2] Don't call patchDashboardV2/usePatchDashboardV2 directly — use useOptimisticPatch().patchAsync so spec edits update the react-query cache optimistically and reconcile on settle."
           }
         ]
       }

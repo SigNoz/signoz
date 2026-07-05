@@ -132,12 +132,12 @@ func (m *module) getTopClusterGroups(
 	return paginateWithBackfill(allMetricGroups, metadataMap, req.GroupBy, req.Offset, req.Limit), nil
 }
 
-func (m *module) getClustersTableMetadata(ctx context.Context, req *inframonitoringtypes.PostableClusters) (map[string]map[string]string, error) {
+func (m *module) getClustersTableMetadata(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableClusters) (map[string]map[string]string, error) {
 	var nonGroupByAttrs []string
 	for _, key := range clusterAttrKeysForMetadata {
 		if !isKeyInGroupByAttrs(req.GroupBy, key) {
 			nonGroupByAttrs = append(nonGroupByAttrs, key)
 		}
 	}
-	return m.getMetadata(ctx, clustersTableMetricNamesList, req.GroupBy, nonGroupByAttrs, req.Filter, req.Start, req.End)
+	return m.getMetadata(ctx, orgID, clustersTableMetricNamesList, req.GroupBy, nonGroupByAttrs, req.Filter, req.Start, req.End)
 }

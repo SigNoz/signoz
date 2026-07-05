@@ -11,6 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/tag"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
@@ -168,13 +169,13 @@ func (module *module) DeleteUnsafe(ctx context.Context, orgID valuer.UUID, id va
 	return module.store.Delete(ctx, orgID, id)
 }
 
-func (module *module) GetByMetricNames(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string][]map[string]string, error) {
+func (module *module) GetByMetricNames(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string][]dashboardtypes.DashboardPanelRef, error) {
 	dashboards, err := module.List(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}
 
-	result := make(map[string][]map[string]string)
+	result := make(map[string][]dashboardtypes.DashboardPanelRef)
 
 	for _, dashboard := range dashboards {
 		dashData := dashboard.Data
@@ -198,21 +199,27 @@ func (module *module) GetByMetricNames(ctx context.Context, orgID valuer.UUID, m
 				continue
 			}
 
-			// Track which metrics were found in this widget
+			// Track which metrics were found in this widget, along with the
+			// group-by and filter labels referenced for each metric. CH/PromQL
+			// paths are presence-only and leave the label sets empty.
 			foundMetrics := make(map[string]bool)
+			groupByByMetric := make(map[string][]string)
+			filterByByMetric := make(map[string][]string)
 
 			// Check all three query types
-			module.checkBuilderQueriesForMetricNames(query, metricNames, foundMetrics)
+			module.checkBuilderQueriesForMetricNames(query, metricNames, foundMetrics, groupByByMetric, filterByByMetric)
 			module.checkClickHouseQueriesForMetricNames(ctx, query, metricNames, foundMetrics)
 			module.checkPromQLQueriesForMetricNames(ctx, query, metricNames, foundMetrics)
 
 			// Add widget to results for all found metrics
 			for metricName := range foundMetrics {
-				result[metricName] = append(result[metricName], map[string]string{
-					"dashboard_id":   dashboard.ID,
-					"widget_name":    widgetTitle,
-					"widget_id":      widgetID,
-					"dashboard_name": dashTitle,
+				result[metricName] = append(result[metricName], dashboardtypes.DashboardPanelRef{
+					DashboardID:   dashboard.ID,
+					DashboardName: dashTitle,
+					PanelID:       widgetID,
+					PanelName:     widgetTitle,
+					GroupBy:       groupByByMetric[metricName],
+					FilterBy:      filterByByMetric[metricName],
 				})
 			}
 		}
@@ -260,7 +267,10 @@ func (module *module) DeletePublic(_ context.Context, _ valuer.UUID, _ valuer.UU
 }
 
 // checkBuilderQueriesForMetricNames checks builder.queryData[] for aggregations[].metricName.
-func (module *module) checkBuilderQueriesForMetricNames(query map[string]interface{}, metricNames []string, foundMetrics map[string]bool) {
+// For each queryData entry whose dataSource is "metrics" and that references a
+// target metric, it accumulates (deduped) the group-by and filter labels used
+// by that entry into groupByByMetric/filterByByMetric, keyed by metric name.
+func (module *module) checkBuilderQueriesForMetricNames(query map[string]interface{}, metricNames []string, foundMetrics map[string]bool, groupByByMetric, filterByByMetric map[string][]string) {
 	builder, ok := query["builder"].(map[string]interface{})
 	if !ok {
 		return
@@ -288,6 +298,7 @@ func (module *module) checkBuilderQueriesForMetricNames(query map[string]interfa
 			continue
 		}
 
+		entryMetrics := make([]string, 0, len(aggregations))
 		for _, agg := range aggregations {
 			aggMap, ok := agg.(map[string]interface{})
 			if !ok {
@@ -301,9 +312,98 @@ func (module *module) checkBuilderQueriesForMetricNames(query map[string]interfa
 
 			if slices.Contains(metricNames, metricName) {
 				foundMetrics[metricName] = true
+				entryMetrics = append(entryMetrics, metricName)
+			}
+		}
+
+		if len(entryMetrics) == 0 {
+			continue
+		}
+
+		groupBy := extractBuilderGroupByLabels(data)
+		filterBy := extractBuilderFilterLabels(data)
+		for _, metricName := range entryMetrics {
+			groupByByMetric[metricName] = appendDedup(groupByByMetric[metricName], groupBy...)
+			filterByByMetric[metricName] = appendDedup(filterByByMetric[metricName], filterBy...)
+		}
+	}
+}
+
+func extractBuilderGroupByLabels(data map[string]interface{}) []string {
+	gb, ok := data["groupBy"].([]interface{})
+	if !ok {
+		return nil
+	}
+
+	out := make([]string, 0, len(gb))
+	for _, g := range gb {
+		gm, ok := g.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		if name, ok := gm["name"].(string); ok && name != "" {
+			out = append(out, name)
+			continue
+		}
+		// v3: groupBy[].key may be a plain string ...
+		if key, ok := gm["key"].(string); ok && key != "" {
+			out = append(out, key)
+			continue
+		}
+		// ... or a nested object {key: "<name>"}.
+		if km, ok := gm["key"].(map[string]interface{}); ok {
+			if key, ok := km["key"].(string); ok && key != "" {
+				out = append(out, key)
 			}
 		}
 	}
+	return out
+}
+
+func extractBuilderFilterLabels(data map[string]interface{}) []string {
+	out := []string{}
+
+	// v5: filter.expression
+	if f, ok := data["filter"].(map[string]interface{}); ok {
+		if expr, ok := f["expression"].(string); ok && expr != "" {
+			for _, sel := range querybuilder.QueryStringToKeysSelectors(expr) {
+				if sel != nil && sel.Name != "" {
+					out = append(out, sel.Name)
+				}
+			}
+		}
+	}
+
+	// v3: filters.items[].key.key
+	if f, ok := data["filters"].(map[string]interface{}); ok {
+		if items, ok := f["items"].([]interface{}); ok {
+			for _, it := range items {
+				im, ok := it.(map[string]interface{})
+				if !ok {
+					continue
+				}
+				km, ok := im["key"].(map[string]interface{})
+				if !ok {
+					continue
+				}
+				if key, ok := km["key"].(string); ok && key != "" {
+					out = append(out, key)
+				}
+			}
+		}
+	}
+
+	return out
+}
+
+func appendDedup(dst []string, values ...string) []string {
+	for _, v := range values {
+		if v == "" || slices.Contains(dst, v) {
+			continue
+		}
+		dst = append(dst, v)
+	}
+	return dst
 }
 
 // checkClickHouseQueriesForMetricNames checks clickhouse_sql[] array for metric names in query strings.

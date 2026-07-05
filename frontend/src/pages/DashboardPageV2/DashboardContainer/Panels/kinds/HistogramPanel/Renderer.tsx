@@ -26,6 +26,7 @@ function HistogramPanelRenderer({
 	panelId,
 	panel,
 	data,
+	refetch,
 	panelMode,
 	onClick,
 }: PanelRendererProps<'signoz/HistogramPanel'>): JSX.Element {
@@ -34,9 +35,8 @@ function HistogramPanelRenderer({
 	const isDarkMode = useIsDarkMode();
 	const { timezone } = useTimezone();
 
-	// The registry guarantees the kind, so the cast is a boundary narrowing.
 	const spec = useMemo<DashboardtypesHistogramPanelSpecDTO>(
-		() => panel.spec.plugin.spec as DashboardtypesHistogramPanelSpecDTO,
+		() => panel.spec.plugin.spec,
 		[panel.spec.plugin.spec],
 	);
 
@@ -113,7 +113,7 @@ function HistogramPanelRenderer({
 			data-testid="histogram-panel-renderer"
 			className={PanelStyles.panelContainer}
 		>
-			{flatSeries.length === 0 && <NoData />}
+			{flatSeries.length === 0 && <NoData onRetry={refetch} />}
 			{flatSeries.length > 0 &&
 				containerDimensions.width > 0 &&
 				containerDimensions.height > 0 && (

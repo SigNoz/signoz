@@ -192,5 +192,6 @@ func newProvider(
 		traceOperatorStmtBuilder,
 		bucketCache,
 		flagger,
+		cfg.LogTraceIDWindowPadding,
 	), nil
 }
