@@ -1,15 +1,25 @@
-import { DataSource } from 'types/common/queryBuilder';
-
 import type { PanelDefinition } from '../../types/panelDefinition';
 import Renderer from './Renderer';
 import { sections } from './sections';
+import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
+import { EQueryType } from 'types/common/dashboard';
 
 export const definition: PanelDefinition<'signoz/BarChartPanel'> = {
 	kind: 'signoz/BarChartPanel',
 	displayName: 'Bar Chart',
 	Renderer,
 	sections,
-	supportedSignals: [DataSource.METRICS, DataSource.LOGS, DataSource.TRACES],
+	supportedSignals: [
+		TelemetrytypesSignalDTO.metrics,
+		TelemetrytypesSignalDTO.logs,
+		TelemetrytypesSignalDTO.traces,
+	],
+	supportedQueryTypes: [
+		EQueryType.QUERY_BUILDER,
+		EQueryType.CLICKHOUSE,
+		EQueryType.PROM,
+	],
+	queryBuilderFields: {},
 	actions: {
 		view: true,
 		edit: true,

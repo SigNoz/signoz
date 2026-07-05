@@ -1,18 +1,25 @@
 import { useCallback } from 'react';
 import { useQueryClient } from 'react-query';
-import {
-	getGetDashboardV2QueryKey,
-	usePatchDashboardV2,
-} from 'api/generated/services/dashboard';
+import { v4 as uuid } from 'uuid';
+import { getGetDashboardV2QueryKey } from 'api/generated/services/dashboard';
 import {
 	type DashboardtypesJSONPatchOperationDTO,
 	type DashboardtypesPanelSpecDTO,
+	DashboardtypesPanelKindDTO,
 	DashboardtypesPatchOpDTO,
+	type GetDashboardV2200,
 } from 'api/generated/services/sigNoz.schemas';
+
+import { useOptimisticPatch } from '../../hooks/useOptimisticPatch';
+import { createPanelOps } from '../../patchOps';
 
 interface UsePanelEditorSaveArgs {
 	dashboardId: string;
 	panelId: string;
+	/** Creating a new panel (vs editing an existing one) — adds panel + layout. */
+	isNew?: boolean;
+	/** Target section for a new panel; falls back to the last/new section. */
+	layoutIndex?: number;
 }
 
 interface UsePanelEditorSaveApi {
@@ -22,35 +29,49 @@ interface UsePanelEditorSaveApi {
 }
 
 /**
- * Persists panel edits via a single RFC-6902 `add` op that replaces the whole panel
- * spec at `/spec/panels/{panelId}/spec`, so every config-pane edit is saved (not just
- * title/description). `add` doubles as create-or-replace, avoiding a separate
- * existence check.
+ * Persists panel edits for the V2 editor via RFC-6902 JSON Patch. Editing: one
+ * `add` op replaces the whole spec. Creating (`isNew`): mints a fresh id and adds
+ * a grid item in the target section. Persists only on save — cancelling never
+ * touches the dashboard.
  */
 export function usePanelEditorSave({
 	dashboardId,
 	panelId,
+	isNew = false,
+	layoutIndex,
 }: UsePanelEditorSaveArgs): UsePanelEditorSaveApi {
 	const queryClient = useQueryClient();
-	const { mutateAsync, isLoading, error } = usePatchDashboardV2();
+	const { patchAsync, isPatching, error } = useOptimisticPatch(dashboardId);
 
 	const save = useCallback(
 		async (spec: DashboardtypesPanelSpecDTO): Promise<void> => {
-			const ops: DashboardtypesJSONPatchOperationDTO[] = [
-				{
-					op: DashboardtypesPatchOpDTO.add,
-					path: `/spec/panels/${panelId}/spec`,
-					value: spec,
-				},
-			];
+			let ops: DashboardtypesJSONPatchOperationDTO[];
+			if (isNew) {
+				// Resolve the target section against the freshest dashboard we have.
+				const dashboardQueryKey = getGetDashboardV2QueryKey({ id: dashboardId });
+				const cached =
+					queryClient.getQueryData<GetDashboardV2200>(dashboardQueryKey);
+				ops = createPanelOps({
+					layouts: cached?.data.spec.layouts ?? [],
+					layoutIndex,
+					panelId: uuid(),
+					panel: { kind: DashboardtypesPanelKindDTO.Panel, spec },
+				});
+			} else {
+				ops = [
+					{
+						op: DashboardtypesPatchOpDTO.add,
+						path: `/spec/panels/${panelId}/spec`,
+						value: spec,
+					},
+				];
+			}
 
-			await mutateAsync({ pathParams: { id: dashboardId }, data: ops });
-			await queryClient.invalidateQueries(
-				getGetDashboardV2QueryKey({ id: dashboardId }),
-			);
+			// Optimistic cache write + settle refetch (replaces the manual invalidate).
+			await patchAsync(ops);
 		},
-		[dashboardId, panelId, mutateAsync, queryClient],
+		[dashboardId, panelId, isNew, layoutIndex, patchAsync, queryClient],
 	);
 
-	return { save, isSaving: isLoading, error: (error as Error) ?? null };
+	return { save, isSaving: isPatching, error };
 }

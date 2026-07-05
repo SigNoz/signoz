@@ -1,9 +1,11 @@
 import type { ComponentType } from 'react';
-import { DataSource } from 'types/common/queryBuilder';
+import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
+import type { EQueryType } from 'types/common/dashboard';
 
 import type { SectionConfig } from './sections';
 import type { AnyPanelInteractionProps } from './interactions';
 import type { PanelKind } from './panelKind';
+import type { QueryBuilderFieldRule } from './panelCapabilities';
 import type { BaseRendererProps, PanelRendererProps } from './rendererProps';
 
 /**
@@ -35,12 +37,18 @@ export interface PanelDefinition<K extends PanelKind = PanelKind> {
 	displayName: string;
 	Renderer: ComponentType<PanelRendererProps<K>>;
 	sections: SectionConfig[];
-	supportedSignals: DataSource[];
+	/** Signals this kind can visualize. */
+	supportedSignals: TelemetrytypesSignalDTO[];
+	/** Query languages this kind supports (Query Builder / ClickHouse / PromQL). */
+	supportedQueryTypes: EQueryType[];
+	/** Query-builder fields this kind hides/disables, optionally per signal (`{}` hides none). */
+	queryBuilderFields: QueryBuilderFieldRule;
 	actions: PanelActionCapabilities;
 }
 
-// Indexing with a literal kind yields that kind's exactly-typed PanelDefinition.
-export type PanelRegistry = { [K in PanelKind]?: PanelDefinition<K> };
+// Total over PanelKind: every kind must be registered (missing → compile error),
+// so getPanelDefinition never returns undefined.
+export type PanelRegistry = { [K in PanelKind]: PanelDefinition<K> };
 
 // PanelDefinition with its Renderer widened to the kind-agnostic prop surface.
 // getPanelDefinition resolves to this, concentrating the unavoidable cast in one

@@ -66,9 +66,10 @@ test.describe('Dashboard Detail — Edit Panel (entry-point only)', () => {
 		await container.hover();
 
 		const options = container.getByTestId('widget-header-options');
-		// The ⋮ uses an antd `Dropdown` with `trigger=['hover']`; firing a real
-		// hover (not `dispatchEvent('click')`) is what opens the menu.
-		await options.hover({ force: true });
+		// The ⋮ is a `@signozhq/ui` `DropdownMenuSimple` (Radix-based); it opens
+		// on click, not hover. The container hover above only reveals the icon
+		// (it's `visibility: hidden` until then) — the click toggles the menu.
+		await options.click();
 
 		await page.getByRole('menuitem', { name: 'Edit' }).click();
 

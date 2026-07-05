@@ -16,10 +16,10 @@ import ValueDisplay from './components/ValueDisplay/ValueDisplay';
 function NumberPanelRenderer({
 	panel,
 	data,
+	refetch,
 }: PanelRendererProps<'signoz/NumberPanel'>): JSX.Element {
-	// The registry guarantees the kind, so the cast is a boundary narrowing.
 	const spec = useMemo<DashboardtypesNumberPanelSpecDTO>(
-		() => panel.spec.plugin.spec as DashboardtypesNumberPanelSpecDTO,
+		() => panel.spec.plugin.spec,
 		[panel.spec.plugin.spec],
 	);
 
@@ -60,7 +60,7 @@ function NumberPanelRenderer({
 			className={PanelStyles.panelContainer}
 		>
 			{value === null ? (
-				<NoData data-testid="number-panel-no-data" />
+				<NoData data-testid="number-panel-no-data" onRetry={refetch} />
 			) : (
 				<ValueDisplay
 					value={formattedValue}

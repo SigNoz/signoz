@@ -101,6 +101,10 @@ func (h *handler) QueryRange(rw http.ResponseWriter, req *http.Request) {
 	h.community.QueryRange(rw, req)
 }
 
+func (h *handler) QueryRangePreview(rw http.ResponseWriter, req *http.Request) {
+	h.community.QueryRangePreview(rw, req)
+}
+
 func (h *handler) QueryRawStream(rw http.ResponseWriter, req *http.Request) {
 	h.community.QueryRawStream(rw, req)
 }

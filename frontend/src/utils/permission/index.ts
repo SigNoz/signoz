@@ -20,7 +20,8 @@ export type ComponentTypes =
 	| 'add_panel'
 	| 'page_pipelines'
 	| 'edit_locked_dashboard'
-	| 'add_panel_locked_dashboard';
+	| 'add_panel_locked_dashboard'
+	| 'manage_llm_pricing';
 
 export const componentPermission: Record<ComponentTypes, ROLES[]> = {
 	current_org_settings: ['ADMIN'],
@@ -42,6 +43,7 @@ export const componentPermission: Record<ComponentTypes, ROLES[]> = {
 	page_pipelines: ['ADMIN', 'EDITOR'],
 	edit_locked_dashboard: ['ADMIN', 'AUTHOR'],
 	add_panel_locked_dashboard: ['ADMIN', 'AUTHOR'],
+	manage_llm_pricing: ['ADMIN'],
 };
 
 export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {
@@ -89,18 +91,14 @@ export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {
 	LOGS_INDEX_FIELDS: ['ADMIN', 'EDITOR', 'VIEWER'],
 	LOGS_PIPELINES: ['ADMIN', 'EDITOR', 'VIEWER'],
 	TRACE_EXPLORER: ['ADMIN', 'EDITOR', 'VIEWER'],
-	GET_STARTED: ['ADMIN', 'EDITOR'],
 	ONBOARDING: ['ADMIN'],
 	GET_STARTED_WITH_CLOUD: ['ADMIN', 'EDITOR'],
-	GET_STARTED_APPLICATION_MONITORING: ['ADMIN', 'EDITOR', 'VIEWER'],
-	GET_STARTED_INFRASTRUCTURE_MONITORING: ['ADMIN', 'EDITOR', 'VIEWER'],
-	GET_STARTED_LOGS_MANAGEMENT: ['ADMIN', 'EDITOR', 'VIEWER'],
-	GET_STARTED_AWS_MONITORING: ['ADMIN', 'EDITOR', 'VIEWER'],
-	GET_STARTED_AZURE_MONITORING: ['ADMIN', 'EDITOR', 'VIEWER'],
 	WORKSPACE_LOCKED: ['ADMIN', 'EDITOR', 'VIEWER'],
 	WORKSPACE_SUSPENDED: ['ADMIN', 'EDITOR', 'VIEWER'],
 	ROLES_SETTINGS: ['ADMIN', 'EDITOR', 'VIEWER', 'ANONYMOUS'],
+	ROLE_CREATE: ['ADMIN', 'EDITOR', 'VIEWER', 'ANONYMOUS'],
 	ROLE_DETAILS: ['ADMIN', 'EDITOR', 'VIEWER', 'ANONYMOUS'],
+	ROLE_EDIT: ['ADMIN', 'EDITOR', 'VIEWER', 'ANONYMOUS'],
 	MEMBERS_SETTINGS: ['ADMIN'],
 	SERVICE_ACCOUNTS_SETTINGS: ['ADMIN', 'EDITOR', 'VIEWER', 'ANONYMOUS'],
 	BILLING: ['ADMIN'],
@@ -123,6 +121,7 @@ export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {
 	METRICS_EXPLORER: ['ADMIN', 'EDITOR', 'VIEWER'],
 	METRICS_EXPLORER_EXPLORER: ['ADMIN', 'EDITOR', 'VIEWER'],
 	METRICS_EXPLORER_VIEWS: ['ADMIN', 'EDITOR', 'VIEWER'],
+	METRICS_EXPLORER_VOLUME_CONTROL: ['ADMIN', 'EDITOR', 'VIEWER'],
 	API_MONITORING: ['ADMIN', 'EDITOR', 'VIEWER'],
 	WORKSPACE_ACCESS_RESTRICTED: ['ADMIN', 'EDITOR', 'VIEWER'],
 	METRICS_EXPLORER_BASE: ['ADMIN', 'EDITOR', 'VIEWER'],
@@ -137,4 +136,6 @@ export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {
 	AI_ASSISTANT_ICON_PREVIEW: ['ADMIN', 'EDITOR', 'VIEWER'],
 	MCP_SERVER: ['ADMIN', 'EDITOR', 'VIEWER'],
 	AI_ASSISTANT_BASE: ['ADMIN', 'EDITOR', 'VIEWER'],
+	LLM_OBSERVABILITY_BASE: ['ADMIN', 'EDITOR', 'VIEWER'],
+	LLM_OBSERVABILITY_MODEL_PRICING: ['ADMIN', 'EDITOR', 'VIEWER'],
 };

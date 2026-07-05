@@ -1,52 +1,31 @@
 import { useEffect, useRef } from 'react';
-import {
-	type DashboardtypesPanelSpecDTO,
+
+import type {
+	DashboardtypesPanelSpecDTO,
 	TelemetrytypesSignalDTO,
-	type TelemetrytypesTelemetryFieldKeyDTO,
+	TelemetrytypesTelemetryFieldKeyDTO,
 } from 'api/generated/services/sigNoz.schemas';
+
 import {
-	defaultLogsSelectedColumns,
-	defaultTraceSelectedColumns,
-} from 'container/OptionsMenu/constants';
+	defaultColumnsForSignal,
+	readSelectFields,
+	writeSelectFields,
+} from '../ListColumnsEditor/selectFields';
 
-import { sanitizeSelectFields } from '../ListColumnsEditor/selectFields';
-
-/**
- * The datasource's default List columns (V1 parity), sanitized to the field-key
- * DTO — the V1 constants carry extra keys (isIndexed) the save contract rejects.
- * Other signals (metrics) don't produce a list, so they clear the selection.
- */
-function defaultColumnsForSignal(
-	signal: TelemetrytypesSignalDTO,
-): TelemetrytypesTelemetryFieldKeyDTO[] {
-	if (signal === TelemetrytypesSignalDTO.logs) {
-		return sanitizeSelectFields(
-			defaultLogsSelectedColumns as TelemetrytypesTelemetryFieldKeyDTO[],
-		);
-	}
-	if (signal === TelemetrytypesSignalDTO.traces) {
-		return sanitizeSelectFields(
-			defaultTraceSelectedColumns as TelemetrytypesTelemetryFieldKeyDTO[],
-		);
-	}
-	return [];
-}
-
-interface UseSwitchColumnsOnSignalChangeArgs {
+export interface UseSwitchColumnsOnSignalChangeArgs {
 	/** Gate so the switch only runs for the List kind (the only one with columns). */
 	enabled: boolean;
 	/** The panel's current telemetry signal (logs / traces / metrics). */
-	signal: TelemetrytypesSignalDTO | undefined;
+	signal: TelemetrytypesSignalDTO;
 	spec: DashboardtypesPanelSpecDTO;
 	onChangeSpec: (next: DashboardtypesPanelSpecDTO) => void;
 }
 
 /**
- * Switches the List panel's chosen columns to the new datasource's defaults when
- * the panel's telemetry signal changes (e.g. logs → traces). V1 kept a separate
- * field list per datasource; V2 stores a single `selectFields`, so columns picked
- * for one signal are meaningless after switching — replace them with the new
- * source's sensible defaults (matching V1's logs/traces list defaults).
+ * Swaps the List panel's columns when the telemetry signal changes. V2 stores a
+ * single `selectFields`, so each signal's columns are stashed and restored on
+ * switch-back; a signal seen for the first time gets the datasource defaults (V1
+ * parity).
  */
 export function useSwitchColumnsOnSignalChange({
 	enabled,
@@ -55,28 +34,28 @@ export function useSwitchColumnsOnSignalChange({
 	onChangeSpec,
 }: UseSwitchColumnsOnSignalChangeArgs): void {
 	const prevSignalRef = useRef(signal);
+	const columnsBySignalRef = useRef<
+		Map<string, TelemetrytypesTelemetryFieldKeyDTO[]>
+	>(new Map());
 
 	useEffect(() => {
-		const prev = prevSignalRef.current;
-		prevSignalRef.current = signal;
-
 		if (!enabled) {
 			return;
 		}
-		// Only an actual switch between two known signals swaps the columns;
-		// transient `undefined` states (mid query-edit) leave the selection intact.
-		if (!prev || !signal || prev === signal) {
+		const prev = prevSignalRef.current;
+		// Track only real signals: a transient `undefined` (mid query-edit) must
+		// not become `prev`, or stash/restore would lose a step.
+		prevSignalRef.current = signal;
+
+		if (!prev || prev === signal) {
 			return;
 		}
-		onChangeSpec({
-			...spec,
-			plugin: {
-				...spec.plugin,
-				spec: {
-					...spec.plugin.spec,
-					selectFields: defaultColumnsForSignal(signal),
-				},
-			},
-		} as DashboardtypesPanelSpecDTO);
+
+		// Stash the leaving signal's columns; restore the entering one's, or its
+		// datasource defaults the first time it's seen.
+		columnsBySignalRef.current.set(prev, readSelectFields(spec));
+		const restored =
+			columnsBySignalRef.current.get(signal) ?? defaultColumnsForSignal(signal);
+		onChangeSpec(writeSelectFields(spec, restored));
 	}, [enabled, signal, spec, onChangeSpec]);
 }

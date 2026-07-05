@@ -6,7 +6,7 @@ import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import KeysTab from '../KeysTab';
 
-jest.mock('components/AuthZTooltip/AuthZTooltip', () => ({
+jest.mock('lib/authz/components/AuthZTooltip/AuthZTooltip', () => ({
 	__esModule: true,
 	default: ({
 		children,
