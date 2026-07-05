@@ -27,8 +27,11 @@ import { useDrilldownFilter } from './useDrilldownFilter';
 import { useResolvedDrilldownQuery } from './useResolvedDrilldownQuery';
 import { useViewPanel } from './useViewPanel';
 
-/** Which menu the popover shows; extend the union as submenus are added (e.g. dashboard variables). */
-type DrilldownSubMenu = 'base' | 'breakout';
+/** Which menu the popover shows; extend as submenus are added (e.g. dashboard variables). */
+enum DrilldownSubMenu {
+	Base = 'base',
+	Breakout = 'breakout',
+}
 
 /** Props the panel shell spreads onto `<ContextMenu>`. */
 export interface DrilldownContextMenuProps {
@@ -87,20 +90,28 @@ export function useDrilldown(
 	);
 
 	// A fresh click and any close reset to the base menu.
-	const [subMenu, setSubMenu] = useState<DrilldownSubMenu>('base');
-	const openBreakout = useCallback((): void => setSubMenu('breakout'), []);
-	const backToBase = useCallback((): void => setSubMenu('base'), []);
+	const [subMenu, setSubMenu] = useState<DrilldownSubMenu>(
+		DrilldownSubMenu.Base,
+	);
+	const openBreakout = useCallback(
+		(): void => setSubMenu(DrilldownSubMenu.Breakout),
+		[],
+	);
+	const backToBase = useCallback(
+		(): void => setSubMenu(DrilldownSubMenu.Base),
+		[],
+	);
 
 	const onPanelClick = useCallback(
 		(payload: DrilldownClickPayload): void => {
-			setSubMenu('base');
+			setSubMenu(DrilldownSubMenu.Base);
 			onClick(payload.coordinates, payload.context);
 		},
 		[onClick],
 	);
 
 	const handleClose = useCallback((): void => {
-		setSubMenu('base');
+		setSubMenu(DrilldownSubMenu.Base);
 		onClose();
 	}, [onClose]);
 
@@ -129,7 +140,7 @@ export function useDrilldown(
 	// group click routes to filter-by-value instead. Only that menu resolves variables —
 	// filter/breakout open the View modal, which resolves at query-run time.
 	const showAggregateMenu =
-		subMenu === 'base' && !!context && !filter.isGroupColumnClick;
+		subMenu === DrilldownSubMenu.Base && !!context && !filter.isGroupColumnClick;
 
 	const { resolvedQuery, isResolving } = useResolvedDrilldownQuery({
 		queries,
@@ -145,7 +156,7 @@ export function useDrilldown(
 	});
 
 	const items = useMemo<ReactNode>(() => {
-		if (subMenu === 'breakout') {
+		if (subMenu === DrilldownSubMenu.Breakout) {
 			return breakout.items;
 		}
 		if (filter.isGroupColumnClick && context?.clickedKey) {
