@@ -38,7 +38,7 @@ export function buildViewPanelSpec({
 
 	// The plugin cast mirrors the editor's type-switch — a dynamically chosen kind can't be
 	// correlated with its spec statically.
-	const signal = getBuilderQueries(spec.queries ?? [])[0]
+	const signal = getBuilderQueries(spec.queries)[0]
 		?.signal as TelemetrytypesSignalDTO;
 	return {
 		...spec,
