@@ -1,8 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import type { ReactNode } from 'react';
-import { ArrowLeft } from '@signozhq/icons';
 import type { PANEL_TYPES } from 'constants/queryBuilder';
-import BreakoutOptions from 'container/QueryTable/Drilldown/BreakoutOptions';
 import { getQueryData } from 'container/QueryTable/Drilldown/drilldownUtils';
 import {
 	getBreakoutPanelType,
@@ -10,8 +7,10 @@ import {
 } from 'container/QueryTable/Drilldown/tableDrilldownUtils';
 import type { BreakoutAttributeType } from 'container/QueryTable/Drilldown/types';
 import type { AggregateData } from 'container/QueryTable/Drilldown/useAggregateDrilldown';
-import ContextMenu from 'periscope/components/ContextMenu';
-import type { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type {
+	IBuilderQuery,
+	Query,
+} from 'types/api/queryBuilder/queryBuilderData';
 
 interface UseDrilldownBreakoutArgs {
 	panelId: string;
@@ -26,21 +25,21 @@ interface UseDrilldownBreakoutArgs {
 		query: Query,
 		panelType: PANEL_TYPES,
 	) => void;
-	/** Return to the base aggregate menu — the back arrow. */
-	onBack: () => void;
 	/** Close the popover after navigating to the View modal. */
 	onClose: () => void;
 }
 
 export interface UseDrilldownBreakoutApi {
-	/** The picker submenu content (back header + attribute list); shown by the parent when the breakout submenu is active. */
-	items: ReactNode;
+	/** The clicked query's builder data for the attribute picker; `undefined` when there's no aggregate to break out. */
+	queryData: IBuilderQuery | undefined;
+	/** Regroup the clicked query by the picked attribute and open the result in the View modal. */
+	onBreakout: (groupBy: BreakoutAttributeType) => void;
 }
 
 /**
- * The "Breakout by .." submenu: pick an attribute, regroup the clicked query by it, and open
- * the result in the View modal. Reuses V1's read-only `BreakoutOptions` picker +
- * `getBreakoutQuery`/`getBreakoutPanelType`; the parent (`useDrilldown`) owns which submenu is open.
+ * The "Breakout by .." submenu logic: regroup the clicked query by a picked attribute and open the
+ * result in the View modal. Reuses V1's read-only `getBreakoutQuery`/`getBreakoutPanelType`; the
+ * caller renders `DrilldownBreakoutMenu` (V1's `BreakoutOptions` picker) from this hook's return.
  */
 export function useDrilldownBreakout({
 	panelId,
@@ -48,10 +47,9 @@ export function useDrilldownBreakout({
 	panelType,
 	aggregateData,
 	openViewWithQuery,
-	onBack,
 	onClose,
 }: UseDrilldownBreakoutArgs): UseDrilldownBreakoutApi {
-	const handleBreakoutClick = useCallback(
+	const onBreakout = useCallback(
 		(groupBy: BreakoutAttributeType): void => {
 			if (!aggregateData) {
 				return;
@@ -68,30 +66,11 @@ export function useDrilldownBreakout({
 		[aggregateData, v1Query, panelType, panelId, openViewWithQuery, onClose],
 	);
 
-	const items = useMemo<ReactNode>(() => {
-		if (!aggregateData) {
-			return null;
-		}
-		return (
-			<>
-				<ContextMenu.Header>
-					<div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-						<ArrowLeft
-							size={14}
-							style={{ cursor: 'pointer' }}
-							onClick={onBack}
-							data-testid="drilldown-breakout-back"
-						/>
-						<span>Breakout by</span>
-					</div>
-				</ContextMenu.Header>
-				<BreakoutOptions
-					queryData={getQueryData(v1Query, aggregateData.queryName)}
-					onColumnClick={handleBreakoutClick}
-				/>
-			</>
-		);
-	}, [aggregateData, v1Query, onBack, handleBreakoutClick]);
+	const queryData = useMemo(
+		() =>
+			aggregateData ? getQueryData(v1Query, aggregateData.queryName) : undefined,
+		[aggregateData, v1Query],
+	);
 
-	return { items };
+	return { queryData, onBreakout };
 }

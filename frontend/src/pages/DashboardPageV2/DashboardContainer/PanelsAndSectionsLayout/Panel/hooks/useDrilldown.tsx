@@ -20,6 +20,7 @@ import { getBuilderQueries } from 'pages/DashboardPageV2/DashboardContainer/Pane
 import { fromPerses } from 'pages/DashboardPageV2/DashboardContainer/queryV5/persesQueryAdapters';
 
 import DrilldownAggregateMenu from '../DrilldownMenu/DrilldownAggregateMenu';
+import DrilldownBreakoutMenu from '../DrilldownMenu/DrilldownBreakoutMenu';
 import DrilldownFilterMenu from '../DrilldownMenu/DrilldownFilterMenu';
 import { useDrilldownBreakout } from './useDrilldownBreakout';
 import { useDrilldownCoordinates } from './useDrilldownCoordinates';
@@ -123,7 +124,6 @@ export function useDrilldown(
 		panelType,
 		aggregateData,
 		openViewWithQuery,
-		onBack: backToBase,
 		onClose: handleClose,
 	});
 
@@ -157,7 +157,13 @@ export function useDrilldown(
 
 	const items = useMemo<ReactNode>(() => {
 		if (subMenu === DrilldownSubMenu.Breakout) {
-			return breakout.items;
+			return breakout.queryData ? (
+				<DrilldownBreakoutMenu
+					queryData={breakout.queryData}
+					onBreakout={breakout.onBreakout}
+					onBack={backToBase}
+				/>
+			) : null;
 		}
 		if (filter.isGroupColumnClick && context?.clickedKey) {
 			return (
@@ -183,7 +189,9 @@ export function useDrilldown(
 		);
 	}, [
 		subMenu,
-		breakout.items,
+		breakout.queryData,
+		breakout.onBreakout,
+		backToBase,
 		filter.isGroupColumnClick,
 		filter.onFilter,
 		context,

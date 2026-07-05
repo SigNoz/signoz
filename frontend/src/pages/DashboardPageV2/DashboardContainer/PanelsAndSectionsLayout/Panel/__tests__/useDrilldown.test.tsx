@@ -25,8 +25,13 @@ jest.mock('../hooks/useResolvedDrilldownQuery', () => ({
 }));
 jest.mock('../hooks/useDrilldownBreakout', () => ({
 	useDrilldownBreakout: (): unknown => ({
-		items: <div data-testid="breakout-submenu" />,
+		queryData: { queryName: 'A' },
+		onBreakout: jest.fn(),
 	}),
+}));
+jest.mock('../DrilldownMenu/DrilldownBreakoutMenu', () => ({
+	__esModule: true,
+	default: (): JSX.Element => <div data-testid="breakout-submenu" />,
 }));
 jest.mock('container/QueryTable/Drilldown/useBaseDrilldownNavigate', () => ({
 	__esModule: true,
