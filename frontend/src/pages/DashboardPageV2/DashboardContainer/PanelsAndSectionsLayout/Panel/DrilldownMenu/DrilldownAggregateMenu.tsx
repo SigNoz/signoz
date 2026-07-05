@@ -5,6 +5,8 @@ import ContextMenu from 'periscope/components/ContextMenu';
 import type { DrilldownContext } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/drilldown';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
+import styles from './DrilldownAggregateMenu.module.scss';
+
 interface DrilldownAggregateMenuProps {
 	context: DrilldownContext;
 	/** Panel's V5→V1 query — supplies the aggregation-expression header fallback. */
@@ -34,16 +36,8 @@ function DrilldownAggregateMenu({
 	return (
 		<>
 			<ContextMenu.Header>
-				<div style={{ textTransform: 'capitalize' }}>{context.signal}</div>
-				<div
-					style={{
-						fontWeight: 'normal',
-						overflow: 'hidden',
-						textOverflow: 'ellipsis',
-						whiteSpace: 'nowrap',
-						color: context.seriesColor,
-					}}
-				>
+				<div className={styles.signal}>{context.signal}</div>
+				<div className={styles.label} style={{ color: context.seriesColor }}>
 					{context.label || aggregations}
 				</div>
 			</ContextMenu.Header>
