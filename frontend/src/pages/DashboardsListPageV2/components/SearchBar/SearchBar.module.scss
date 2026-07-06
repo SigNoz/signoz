@@ -54,5 +54,17 @@
 }
 
 .submit {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
 	color: var(--bg-vanilla-400);
+}
+
+.cmdHint {
+	display: inline-flex;
+	align-items: center;
+	gap: 2px;
+	padding: 2px 4px;
+	border-radius: 4px;
+	background: var(--l2-background);
 }
