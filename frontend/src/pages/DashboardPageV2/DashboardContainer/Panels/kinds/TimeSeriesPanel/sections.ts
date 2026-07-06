@@ -1,4 +1,8 @@
-import { SectionKind, type SectionConfig } from '../../types/sections';
+import {
+	SectionKind,
+	ThresholdVariant,
+	type SectionConfig,
+} from '../../types/sections';
 
 export const sections: SectionConfig[] = [
 	{
@@ -18,6 +22,9 @@ export const sections: SectionConfig[] = [
 			spanGaps: true,
 		},
 	},
-	{ kind: SectionKind.Thresholds, controls: { variant: 'label' } },
+	{
+		kind: SectionKind.Thresholds,
+		controls: { variant: ThresholdVariant.LABEL },
+	},
 	{ kind: SectionKind.ContextLinks },
 ];

@@ -58,6 +58,7 @@ function BlankDashboardPanel({ onClose }: Props): JSX.Element {
 					variables: [],
 				},
 			});
+			onClose();
 			safeNavigate(
 				generatePath(ROUTES.DASHBOARD, { dashboardId: created.data.id }),
 			);

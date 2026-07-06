@@ -3,6 +3,8 @@ import userEvent from '@testing-library/user-event';
 
 import FormattingSection from '../FormattingSection';
 
+// Auto-seeding is covered by useMetricYAxisUnit's tests; here `metricUnit` is just a prop.
+
 // Open the Decimals select (clicking its antd selector) and pick the option with the
 // given visible label.
 async function pickDecimal(label: string): Promise<void> {
@@ -70,5 +72,32 @@ describe('FormattingSection', () => {
 			unit: 'bytes',
 			decimalPrecision: '2',
 		});
+	});
+
+	it('warns when the selected unit mismatches the metric unit', () => {
+		// metric sent in seconds, but bytes is selected.
+		render(
+			<FormattingSection
+				value={{ unit: 'By' }}
+				controls={{ unit: true }}
+				metricUnit="s"
+				onChange={jest.fn()}
+			/>,
+		);
+
+		expect(screen.getByLabelText('warning')).toBeInTheDocument();
+	});
+
+	it('shows no warning when the selected unit matches the metric unit', () => {
+		render(
+			<FormattingSection
+				value={{ unit: 's' }}
+				controls={{ unit: true }}
+				metricUnit="s"
+				onChange={jest.fn()}
+			/>,
+		);
+
+		expect(screen.queryByLabelText('warning')).not.toBeInTheDocument();
 	});
 });

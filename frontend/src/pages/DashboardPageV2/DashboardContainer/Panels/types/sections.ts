@@ -58,7 +58,11 @@ export enum SectionKind {
  * - `comparison` — value crosses an operator → recolor (Number)
  * - `table` — per-column comparison (Table)
  */
-export type ThresholdVariant = 'label' | 'comparison' | 'table';
+export enum ThresholdVariant {
+	LABEL = 'label',
+	COMPARISON = 'comparison',
+	TABLE = 'table',
+}
 
 /** Union of every threshold element shape stored under `plugin.spec.thresholds`. */
 export type AnyThreshold =

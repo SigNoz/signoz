@@ -1,9 +1,9 @@
 import { useCallback, useState } from 'react';
-import { patchDashboardV2 } from 'api/generated/services/dashboard';
 import { toast } from '@signozhq/ui/sonner';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 
+import { useOptimisticPatch } from '../../hooks/useOptimisticPatch';
 import { useDashboardStore } from '../../store/useDashboardStore';
 import { formModelToDto } from './variableAdapters';
 import type { VariableFormModel } from './variableFormModel';
@@ -14,14 +14,9 @@ interface UseSaveVariables {
 	isSaving: boolean;
 }
 
-/**
- * Persists the dashboard's variable list via a single `/spec/variables` patch,
- * then refetches. Mirrors the General-settings save flow (patch → toast →
- * refetch → surface errors).
- */
 export function useSaveVariables(): UseSaveVariables {
 	const dashboardId = useDashboardStore((s) => s.dashboardId);
-	const refetch = useDashboardStore((s) => s.refetch);
+	const { patchAsync } = useOptimisticPatch();
 	const { showErrorModal } = useErrorModal();
 	const [isSaving, setIsSaving] = useState(false);
 
@@ -33,9 +28,8 @@ export function useSaveVariables(): UseSaveVariables {
 			const dtos = variables.map(formModelToDto);
 			try {
 				setIsSaving(true);
-				await patchDashboardV2({ id: dashboardId }, buildVariablesPatch(dtos));
+				await patchAsync(buildVariablesPatch(dtos));
 				toast.success('Variables updated');
-				refetch();
 				return true;
 			} catch (error) {
 				showErrorModal(error as APIError);
@@ -44,7 +38,7 @@ export function useSaveVariables(): UseSaveVariables {
 				setIsSaving(false);
 			}
 		},
-		[dashboardId, refetch, showErrorModal],
+		[dashboardId, patchAsync, showErrorModal],
 	);
 
 	return { save, isSaving };

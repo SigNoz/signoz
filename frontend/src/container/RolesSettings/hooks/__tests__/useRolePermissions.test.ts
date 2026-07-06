@@ -4,7 +4,7 @@ import {
 	CoretypesKindDTO,
 	CoretypesTypeDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import type { AuthZResource, AuthZVerb } from 'hooks/useAuthZ/types';
+import type { AuthZResource, AuthZVerb } from 'lib/authz/hooks/useAuthZ/types';
 
 import {
 	ActionConfig,

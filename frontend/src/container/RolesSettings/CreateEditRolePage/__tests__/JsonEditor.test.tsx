@@ -1,13 +1,13 @@
 import { Route, Switch } from 'react-router-dom';
 import ROUTES from 'constants/routes';
 import { render, screen, userEvent, within } from 'tests/test-utils';
-import { useAuthZ } from 'hooks/useAuthZ/useAuthZ';
-import { mockUseAuthZGrantAll } from 'tests/authz-test-utils';
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
+import { mockUseAuthZGrantAll } from 'lib/authz/utils/authz-test-utils';
 
 import CreateEditRolePage from '../CreateEditRolePage';
 import { TooltipProvider } from '@signozhq/ui/tooltip';
 
-jest.mock('hooks/useAuthZ/useAuthZ');
+jest.mock('lib/authz/hooks/useAuthZ/useAuthZ');
 const mockUseAuthZ = useAuthZ as jest.MockedFunction<typeof useAuthZ>;
 
 beforeEach(() => {
