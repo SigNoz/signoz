@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { isEqual } from 'lodash-es';
 import { toast } from '@signozhq/ui/sonner';
 import { useQueryClient } from 'react-query';
 import {
@@ -144,7 +145,7 @@ export function useAttributeMappingStore(): AttributeMappingStore {
 	}, [draft, snapshot, mutations, queryClient]);
 
 	const isDirty = useMemo(
-		() => draft !== null && JSON.stringify(draft) !== JSON.stringify(snapshot),
+		() => draft !== null && !isEqual(draft, snapshot),
 		[draft, snapshot],
 	);
 
