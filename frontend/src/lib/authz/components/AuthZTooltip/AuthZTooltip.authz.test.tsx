@@ -1,11 +1,14 @@
 import { ReactElement } from 'react';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
-import { buildPermission } from 'hooks/useAuthZ/utils';
-import type { AuthZObject, BrandedPermission } from 'hooks/useAuthZ/types';
-import { useAuthZ } from 'hooks/useAuthZ/useAuthZ';
+import { buildPermission } from 'lib/authz/hooks/useAuthZ/utils';
+import type {
+	AuthZObject,
+	BrandedPermission,
+} from 'lib/authz/hooks/useAuthZ/types';
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import AuthZTooltip from './AuthZTooltip';
 
-jest.mock('hooks/useAuthZ/useAuthZ');
+jest.mock('lib/authz/hooks/useAuthZ/useAuthZ');
 const mockUseAuthZ = useAuthZ as jest.MockedFunction<typeof useAuthZ>;
 
 const noPermissions = {

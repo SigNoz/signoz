@@ -5,7 +5,7 @@ import { ConfirmDialog } from '@signozhq/ui/dialog';
 import { RadioGroup, RadioGroupItem } from '@signozhq/ui/radio-group';
 import { Typography } from '@signozhq/ui/typography';
 import { Skeleton } from 'antd';
-import type { AuthZResource, AuthZVerb } from 'hooks/useAuthZ/types';
+import type { AuthZResource, AuthZVerb } from 'lib/authz/hooks/useAuthZ/types';
 
 import { PermissionScope, ResourcePermissions } from '../../types';
 import type { EditorMode, JsonEditorRef } from './JsonEditor.types';

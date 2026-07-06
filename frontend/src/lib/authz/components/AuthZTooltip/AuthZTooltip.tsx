@@ -5,9 +5,9 @@ import {
 	TooltipProvider,
 	TooltipTrigger,
 } from '@signozhq/ui/tooltip';
-import type { BrandedPermission } from 'hooks/useAuthZ/types';
-import { useAuthZ } from 'hooks/useAuthZ/useAuthZ';
-import { formatPermission } from 'hooks/useAuthZ/utils';
+import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
+import { formatPermission } from 'lib/authz/hooks/useAuthZ/utils';
 import { useAppContext } from 'providers/App/App';
 import styles from './AuthZTooltip.module.scss';
 

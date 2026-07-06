@@ -26,7 +26,9 @@ export interface UseOptimisticPatch {
 
 /**
  * Central optimistic mutation for V2 dashboard spec edits: writes the ops to the
- * cached dashboard immediately, rolls back on error, reconciles on settle.
+ * cached dashboard immediately, rolls back on error, and reconciles from the PATCH
+ * response (which returns the updated dashboard) rather than a follow-up GET — an
+ * immediate refetch can read stale, pre-mutation data and flicker the UI back.
  * `dashboardId` defaults to the edit-context store; the panel editor passes its own.
  */
 export function useOptimisticPatch(
@@ -60,8 +62,10 @@ export function useOptimisticPatch(
 				queryClient.setQueryData(queryKey, context.previous);
 			}
 		},
-		onSettled: () => {
-			void queryClient.invalidateQueries(queryKey);
+		onSuccess: (response) => {
+			queryClient.setQueryData<GetDashboardV2200>(queryKey, (prev) =>
+				prev ? { ...prev, data: response.data } : (response as GetDashboardV2200),
+			);
 		},
 	});
 

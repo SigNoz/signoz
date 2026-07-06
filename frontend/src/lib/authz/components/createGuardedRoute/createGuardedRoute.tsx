@@ -4,13 +4,13 @@ import {
 	AuthZObject,
 	AuthZRelation,
 	BrandedPermission,
-} from 'hooks/useAuthZ/types';
-import { formatPermission } from 'hooks/useAuthZ/utils';
+} from 'lib/authz/hooks/useAuthZ/types';
+import { formatPermission } from 'lib/authz/hooks/useAuthZ/utils';
 import { useAppContext } from 'providers/App/App';
 
-import noDataUrl from '@/assets/Icons/no-data.svg';
+import noDataUrl from 'assets/Icons/no-data.svg';
 
-import AppLoading from '../AppLoading/AppLoading';
+import AppLoading from '../../../../components/AppLoading/AppLoading';
 import { GuardAuthZ } from '../GuardAuthZ/GuardAuthZ';
 
 import './createGuardedRoute.styles.scss';

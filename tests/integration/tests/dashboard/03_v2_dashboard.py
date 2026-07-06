@@ -173,6 +173,30 @@ def test_create_rejects_too_many_tags(
     assert response.json()["error"]["code"] == "dashboard_invalid_input"
 
 
+def test_create_rejects_long_display_name(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    # Display names are bounded at 128 characters; one over must be rejected.
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json={
+            "schemaVersion": "v6",
+            "name": "long-display-name",
+            "spec": {"display": {"name": "x" * 129}},
+        },
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.json()["error"]["code"] == "dashboard_invalid_input"
+    assert "spec.display.name: dashboard name must be at most 128 characters" in response.json()["error"]["message"]
+
+
 def test_create_rejects_invalid_grid_layout(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
@@ -566,6 +590,28 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
         "Epsilon Metrics",
         "Zeta Overview",
     }
+    # top-level tags = org-wide distinct tag set, sorted case-insensitively
+    # by (key, value). Asserting the exact list (not a set) locks in the sort.
+    assert body["data"]["tags"] == [
+        {"key": "env", "value": "dev"},
+        {"key": "env", "value": "prod"},
+        {"key": "env", "value": "staging"},
+        {"key": "team", "value": "metrics"},
+        {"key": "team", "value": "pulse"},
+        {"key": "team", "value": "storage"},
+        {"key": "tier", "value": "critical"},
+    ]
+    # reserved keywords = the filterable column-level DSL keys, sorted
+    # alphabetically. Static (independent of the dashboards), so this is the
+    # full expected set.
+    assert body["data"]["reservedKeywords"] == [
+        "created_at",
+        "created_by",
+        "description",
+        "locked",
+        "name",
+        "updated_at",
+    ]
 
     # ── stage 4: filter DSL ──────────────────────────────────────────────────
     cases = [
@@ -866,7 +912,7 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
         "Zeta Overview",
     }
 
-    # ── stage 11: clone keeps the display name but mints a new, retrievable one ─
+    # ── stage 11: clone suffixes the display name and mints a new, retrievable one ─
     response = requests.post(
         signoz.self.host_configs["8080"].get(f"{BASE_URL}/{ids['lc-alpha']}/clone"),
         headers={"Authorization": f"Bearer {token}"},
@@ -876,7 +922,7 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
     clone = response.json()["data"]
     assert clone["id"] != ids["lc-alpha"]
     assert clone["name"] != "lc-alpha"  # internal name is regenerated
-    assert clone["spec"]["display"]["name"] == "Alpha Overview"  # display name preserved
+    assert clone["spec"]["display"]["name"] == "Alpha Overview - Copy"  # Copy suffix appended
     assert clone["source"] == "user"
     assert clone["locked"] is False
 

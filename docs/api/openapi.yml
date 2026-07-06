@@ -3071,6 +3071,10 @@ components:
           items:
             $ref: '#/components/schemas/DashboardtypesListedDashboardForUserV2'
           type: array
+        reservedKeywords:
+          items:
+            type: string
+          type: array
         tags:
           items:
             $ref: '#/components/schemas/TagtypesGettableTag'
@@ -3082,6 +3086,7 @@ components:
       - dashboards
       - total
       - tags
+      - reservedKeywords
       type: object
     DashboardtypesListableDashboardV2:
       properties:
@@ -3089,6 +3094,10 @@ components:
           items:
             $ref: '#/components/schemas/DashboardtypesListedDashboardV2'
           type: array
+        reservedKeywords:
+          items:
+            type: string
+          type: array
         tags:
           items:
             $ref: '#/components/schemas/TagtypesGettableTag'
@@ -3100,6 +3109,7 @@ components:
       - dashboards
       - total
       - tags
+      - reservedKeywords
       type: object
     DashboardtypesListableDashboardView:
       properties:

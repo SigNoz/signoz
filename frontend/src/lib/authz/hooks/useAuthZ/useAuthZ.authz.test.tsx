@@ -3,7 +3,10 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { AllTheProviders } from 'tests/test-utils';
-import { AUTHZ_CHECK_URL, authzMockResponse } from 'tests/authz-test-utils';
+import {
+	AUTHZ_CHECK_URL,
+	authzMockResponse,
+} from 'lib/authz/utils/authz-test-utils';
 
 import { BrandedPermission } from './types';
 import { useAuthZ } from './useAuthZ';

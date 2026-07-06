@@ -4,9 +4,12 @@ import {
 	buildRoleReadPermission,
 	buildRoleUpdatePermission,
 	RoleCreatePermission,
-} from 'hooks/useAuthZ/permissions/role.permissions';
-import { useAuthZ } from 'hooks/useAuthZ/useAuthZ';
-import { ParsedPermissionObject, parsePermission } from 'hooks/useAuthZ/utils';
+} from 'lib/authz/hooks/useAuthZ/permissions/role.permissions';
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
+import {
+	ParsedPermissionObject,
+	parsePermission,
+} from 'lib/authz/hooks/useAuthZ/utils';
 
 interface UseRoleAuthZResult {
 	readRolePermission: ParsedPermissionObject;
