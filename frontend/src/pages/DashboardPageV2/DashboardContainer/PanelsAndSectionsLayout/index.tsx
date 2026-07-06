@@ -30,7 +30,9 @@ function PanelsAndSectionsLayout({
 
 	// Single View-modal host for the whole dashboard, driven by the URL
 	// (`expandedWidgetId`). One mounted modal beats one-per-panel: no N location
-	// subscriptions, and the expanded panel is looked up by id from the map.
+	// subscriptions, and the expanded panel is looked up by id from the map. A
+	// drilldown refinement rides in the URL (`compositeQuery`/`graphType`) and is
+	// hydrated inside the modal, so the host just hands it the saved panel.
 	const { expandedPanelId, closeView } = useViewPanel();
 	const expandedPanel = expandedPanelId ? panels[expandedPanelId] : undefined;
 
