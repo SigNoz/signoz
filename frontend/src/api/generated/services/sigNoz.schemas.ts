@@ -10610,28 +10610,6 @@ export type GetUserPreference200 = {
 export type UpdateUserPreferencePathParameters = {
 	name: string;
 };
-export type CreateUserRole201 = {
-	data: TypesIdentifiableDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type DeleteUserRolePathParameters = {
-	id: string;
-};
-export type GetUserRolePathParameters = {
-	id: string;
-};
-export type GetUserRole200 = {
-	data: AuthtypesUserRoleDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
 export type ListDashboardViews200 = {
 	data: DashboardtypesListableDashboardViewDTO;
 	/**
@@ -11598,6 +11576,28 @@ export type CreateSessionByEmailPassword200 = {
 
 export type RotateSession200 = {
 	data: AuthtypesGettableTokenDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type CreateUserRole201 = {
+	data: TypesIdentifiableDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type DeleteUserRolePathParameters = {
+	id: string;
+};
+export type GetUserRolePathParameters = {
+	id: string;
+};
+export type GetUserRole200 = {
+	data: AuthtypesUserRoleDTO;
 	/**
 	 * @type string
 	 */

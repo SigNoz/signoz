@@ -434,7 +434,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/user_roles", handler.New(provider.authzMiddleware.AdminAccess(provider.userHandler.CreateUserRole), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/user_roles", handler.New(provider.authzMiddleware.AdminAccess(provider.userHandler.CreateUserRole), handler.OpenAPIDef{
 		ID:                  "CreateUserRole",
 		Tags:                []string{"users"},
 		Summary:             "Create user role",
@@ -451,7 +451,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/user_roles/{id}", handler.New(provider.authzMiddleware.AdminAccess(provider.userHandler.GetUserRole), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/user_roles/{id}", handler.New(provider.authzMiddleware.AdminAccess(provider.userHandler.GetUserRole), handler.OpenAPIDef{
 		ID:                  "GetUserRole",
 		Tags:                []string{"users"},
 		Summary:             "Get user role",
@@ -468,7 +468,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/user_roles/{id}", handler.New(provider.authzMiddleware.AdminAccess(provider.userHandler.DeleteUserRole), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/user_roles/{id}", handler.New(provider.authzMiddleware.AdminAccess(provider.userHandler.DeleteUserRole), handler.OpenAPIDef{
 		ID:                  "DeleteUserRole",
 		Tags:                []string{"users"},
 		Summary:             "Delete user role",
