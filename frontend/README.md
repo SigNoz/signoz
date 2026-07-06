@@ -1,105 +1,116 @@
-# Configuring Over Local
-1. Docker
-1. Without Docker
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="../docs/readme-assets/signoz-hero-dark.png" width="700">
+    <source media="(prefers-color-scheme: light)" srcset="../docs/readme-assets/signoz-hero-light.png" width="700">
+    <img alt="SigNoz - Observability on Your Terms" src="../docs/readme-assets/signoz-hero-light.png" width="700">
+  </picture>
+</p>
 
-## With Docker
+<p align="center">
+  <a href="https://github.com/SigNoz/signoz/issues"><img alt="GitHub issues" src="https://img.shields.io/github/issues/SigNoz/signoz"></a>
+  <a href="https://signoz.io/slack"><img alt="Slack community" src="https://img.shields.io/badge/slack-community-4A154B?logo=slack&logoColor=white"></a>
+</p>
 
-**Building image**
+# SigNoz Frontend
 
-``docker compose up`
-/ This will also run
+React-based web interface for [SigNoz](https://signoz.io), the open-source observability platform.
 
-or
-`docker build . -t tagname`
+## Tech Stack
 
-**Tag to remote url- Introduce versioning later on**
+- **Framework:** React 18 + TypeScript
+- **Build:** Vite
+- **State:** React Query, Zustand, Redux Toolkit (legacy)
+- **Styling:** CSS Modules, Ant Design (legacy)
+- **Charts:** uPlot
+- **Testing:** Jest
+
+## Local Development Setup
+
+1. Run SigNoz backend locally — see [Self-Host Docs](https://signoz.io/docs/install/self-host/)
+
+2. Configure environment:
+   ```bash
+   cp example.env .env
+   ```
+   
+   Key variables in `.env`:
+   ```bash
+   # Backend API endpoint (required)
+   VITE_FRONTEND_API_ENDPOINT="http://localhost:8080"
+   
+   # Enable bundle analyzer (optional)
+   BUNDLE_ANALYSER="true"
+   ```
+
+3. Install and run:
+   ```bash
+   pnpm install
+   pnpm dev
+   ```
+
+## Development
+
+```bash
+pnpm dev
+```
+
+Opens [http://localhost:3301](http://localhost:3301).
+
+## Build
+
+```bash
+pnpm build
+```
+
+Output in `build/` folder.
+
+## Bundle Size Analysis
+
+Set in `.env`:
+```bash
+BUNDLE_ANALYSER="true"
+```
+
+Then run build:
+```bash
+pnpm build
+```
+
+Opens bundle analyzer visualization automatically.
+
+## Testing
+
+```bash
+# Unit tests
+pnpm test
+
+# Type checking
+pnpm tsgo --noEmit
+```
+
+## Linting
+
+```bash
+# Run all linters (oxlint + stylelint)
+pnpm lint
+```
+
+## Project Structure
 
 ```
-docker tag signoz/frontend:latest 7296823551/signoz:latest
+src/
+├── api/          # API clients and react-query hooks
+├── components/   # Shared UI components
+├── container/    # Page-level containers
+├── hooks/        # Custom React hooks
+├── pages/        # Route pages
+├── providers/    # React context providers
+├── store/        # Redux store
+└── types/        # TypeScript definitions
 ```
 
-```
-docker compose up
-```
+## Contributing
 
-## Without Docker
-Follow the steps below
+See [CONTRIBUTING.md](../CONTRIBUTING.md) in the root repo.
 
-1. ```git clone https://github.com/SigNoz/signoz.git && cd signoz/frontend```
-1. change baseURL to ```<test environment URL>``` in file ```src/constants/env.ts```
-
-1. ```pnpm install```
-1. ```pnpm dev```
-
-```Note: Please ping us in #contributing channel in our slack community and we will DM you with <test environment URL>```
-
-# Getting Started with Create React App
-
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
-
-## Available Scripts
-
-In the project directory, you can run:
-
-### `pnpm start`
-
-Runs the app in the development mode.\
-Open [http://localhost:3301](http://localhost:3301) to view it in the browser.
-
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
-
-### `pnpm test`
-
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
-
-### `pnpm build`
-
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `pnpm eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
-
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
-
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `pnpm build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+Questions? Join our [Slack community](https://signoz.io/slack).

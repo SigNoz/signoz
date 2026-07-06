@@ -1,0 +1,1069 @@
+{
+  "id": "postgresqlflexibleserver",
+  "title": "PostgreSQL - Flexible Server",
+  "icon": "file://icon.svg",
+  "overview": "file://overview.md",
+  "supportedSignals": {
+    "metrics": true,
+    "logs": true
+  },
+  "dataCollected": {
+    "metrics": [
+      {
+        "name": "azure_longest_query_time_sec_maximum",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": "Age in seconds of the longest query currently running."
+      },
+      {
+        "name": "azure_longest_transaction_time_sec_maximum",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": "Age in seconds of the longest transaction (including idle transactions)."
+      },
+      {
+        "name": "azure_oldest_backend_time_sec_maximum",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": "Age in seconds of the oldest backend, irrespective of state."
+      },
+      {
+        "name": "azure_oldest_backend_xmin_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Actual value of the oldest xmin."
+      },
+      {
+        "name": "azure_oldest_backend_xmin_age_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Age in units of the oldest xmin (transactions since oldest xmin)."
+      },
+      {
+        "name": "azure_sessions_by_state_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Overall state of the backends (split by State)."
+      },
+      {
+        "name": "azure_sessions_by_state_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Overall state of the backends (split by State)."
+      },
+      {
+        "name": "azure_sessions_by_state_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Overall state of the backends (split by State)."
+      },
+      {
+        "name": "azure_sessions_by_wait_event_type_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Sessions by the type of event the backend is waiting for."
+      },
+      {
+        "name": "azure_sessions_by_wait_event_type_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Sessions by the type of event the backend is waiting for."
+      },
+      {
+        "name": "azure_sessions_by_wait_event_type_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Sessions by the type of event the backend is waiting for."
+      },
+      {
+        "name": "azure_analyze_count_user_tables_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of times user tables have been manually analyzed in this database."
+      },
+      {
+        "name": "azure_analyze_count_user_tables_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of times user tables have been manually analyzed in this database."
+      },
+      {
+        "name": "azure_analyze_count_user_tables_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of times user tables have been manually analyzed in this database."
+      },
+      {
+        "name": "azure_autoanalyze_count_user_tables_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of times user tables have been analyzed by the autovacuum daemon."
+      },
+      {
+        "name": "azure_autoanalyze_count_user_tables_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of times user tables have been analyzed by the autovacuum daemon."
+      },
+      {
+        "name": "azure_autoanalyze_count_user_tables_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of times user tables have been analyzed by the autovacuum daemon."
+      },
+      {
+        "name": "azure_autovacuum_count_user_tables_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of times user tables have been vacuumed by the autovacuum daemon."
+      },
+      {
+        "name": "azure_autovacuum_count_user_tables_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of times user tables have been vacuumed by the autovacuum daemon."
+      },
+      {
+        "name": "azure_autovacuum_count_user_tables_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of times user tables have been vacuumed by the autovacuum daemon."
+      },
+      {
+        "name": "azure_bloat_percent_maximum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Estimated bloat percentage for user tables in this database (Preview)."
+      },
+      {
+        "name": "azure_n_dead_tup_user_tables_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Estimated number of dead rows for user tables in this database."
+      },
+      {
+        "name": "azure_n_dead_tup_user_tables_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Estimated number of dead rows for user tables in this database."
+      },
+      {
+        "name": "azure_n_dead_tup_user_tables_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Estimated number of dead rows for user tables in this database."
+      },
+      {
+        "name": "azure_n_live_tup_user_tables_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Estimated number of live rows for user tables in this database."
+      },
+      {
+        "name": "azure_n_live_tup_user_tables_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Estimated number of live rows for user tables in this database."
+      },
+      {
+        "name": "azure_n_live_tup_user_tables_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Estimated number of live rows for user tables in this database."
+      },
+      {
+        "name": "azure_n_mod_since_analyze_user_tables_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Estimated rows modified since user tables were last analyzed."
+      },
+      {
+        "name": "azure_n_mod_since_analyze_user_tables_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Estimated rows modified since user tables were last analyzed."
+      },
+      {
+        "name": "azure_n_mod_since_analyze_user_tables_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Estimated rows modified since user tables were last analyzed."
+      },
+      {
+        "name": "azure_tables_analyzed_user_tables_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of user tables that have been analyzed in this database."
+      },
+      {
+        "name": "azure_tables_analyzed_user_tables_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of user tables that have been analyzed in this database."
+      },
+      {
+        "name": "azure_tables_analyzed_user_tables_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of user tables that have been analyzed in this database."
+      },
+      {
+        "name": "azure_tables_autoanalyzed_user_tables_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of user tables analyzed by the autovacuum daemon."
+      },
+      {
+        "name": "azure_tables_autoanalyzed_user_tables_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of user tables analyzed by the autovacuum daemon."
+      },
+      {
+        "name": "azure_tables_autoanalyzed_user_tables_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of user tables analyzed by the autovacuum daemon."
+      },
+      {
+        "name": "azure_tables_autovacuumed_user_tables_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of user tables vacuumed by the autovacuum daemon."
+      },
+      {
+        "name": "azure_tables_autovacuumed_user_tables_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of user tables vacuumed by the autovacuum daemon."
+      },
+      {
+        "name": "azure_tables_autovacuumed_user_tables_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of user tables vacuumed by the autovacuum daemon."
+      },
+      {
+        "name": "azure_tables_counter_user_tables_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of user tables in this database."
+      },
+      {
+        "name": "azure_tables_counter_user_tables_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of user tables in this database."
+      },
+      {
+        "name": "azure_tables_counter_user_tables_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of user tables in this database."
+      },
+      {
+        "name": "azure_tables_vacuumed_user_tables_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of user tables that have been vacuumed in this database."
+      },
+      {
+        "name": "azure_tables_vacuumed_user_tables_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of user tables that have been vacuumed in this database."
+      },
+      {
+        "name": "azure_tables_vacuumed_user_tables_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of user tables that have been vacuumed in this database."
+      },
+      {
+        "name": "azure_vacuum_count_user_tables_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of times user tables have been manually vacuumed (excluding VACUUM FULL)."
+      },
+      {
+        "name": "azure_vacuum_count_user_tables_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of times user tables have been manually vacuumed (excluding VACUUM FULL)."
+      },
+      {
+        "name": "azure_vacuum_count_user_tables_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of times user tables have been manually vacuumed (excluding VACUUM FULL)."
+      },
+      {
+        "name": "azure_is_db_alive_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Indicates if the database is up (1) or not (0)."
+      },
+      {
+        "name": "azure_is_db_alive_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Indicates if the database is up (1) or not (0)."
+      },
+      {
+        "name": "azure_is_db_alive_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Indicates if the database is up (1) or not (0)."
+      },
+      {
+        "name": "azure_blks_hit_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Number of times disk blocks were found in the buffer cache (no read needed)."
+      },
+      {
+        "name": "azure_blks_read_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Number of disk blocks read in this database."
+      },
+      {
+        "name": "azure_database_size_bytes_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Total database size."
+      },
+      {
+        "name": "azure_database_size_bytes_maximum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Total database size."
+      },
+      {
+        "name": "azure_database_size_bytes_minimum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Total database size."
+      },
+      {
+        "name": "azure_deadlocks_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Number of deadlocks detected in this database."
+      },
+      {
+        "name": "azure_numbackends_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of backends connected to this database."
+      },
+      {
+        "name": "azure_numbackends_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of backends connected to this database."
+      },
+      {
+        "name": "azure_numbackends_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of backends connected to this database."
+      },
+      {
+        "name": "azure_temp_bytes_total",
+        "unit": "Bytes",
+        "type": "Sum",
+        "description": "Total amount of data written to temporary files by queries."
+      },
+      {
+        "name": "azure_temp_files_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Number of temporary files created by queries in this database."
+      },
+      {
+        "name": "azure_tps_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of transactions executed per second (Preview)."
+      },
+      {
+        "name": "azure_tps_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of transactions executed per second (Preview)."
+      },
+      {
+        "name": "azure_tps_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Number of transactions executed per second (Preview)."
+      },
+      {
+        "name": "azure_tup_deleted_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Number of rows deleted by queries in this database."
+      },
+      {
+        "name": "azure_tup_fetched_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Number of rows fetched by queries in this database."
+      },
+      {
+        "name": "azure_tup_inserted_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Number of rows inserted by queries in this database."
+      },
+      {
+        "name": "azure_tup_returned_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Number of rows returned by queries in this database."
+      },
+      {
+        "name": "azure_tup_updated_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Number of rows updated by queries in this database."
+      },
+      {
+        "name": "azure_xact_commit_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Number of transactions committed in this database."
+      },
+      {
+        "name": "azure_xact_rollback_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Number of transactions rolled back in this database."
+      },
+      {
+        "name": "azure_xact_total_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Total number of transactions executed in this database."
+      },
+      {
+        "name": "azure_connections_failed_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Number of failed connections."
+      },
+      {
+        "name": "azure_logical_replication_delay_in_bytes_maximum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Maximum lag in bytes across all logical replication slots."
+      },
+      {
+        "name": "azure_logical_replication_delay_in_bytes_minimum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Maximum lag in bytes across all logical replication slots."
+      },
+      {
+        "name": "azure_logical_replication_delay_in_bytes_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Maximum lag in bytes across all logical replication slots."
+      },
+      {
+        "name": "azure_logical_replication_slot_sync_status_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Status of logical replication slots in HA (Preview)."
+      },
+      {
+        "name": "azure_logical_replication_slot_sync_status_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Status of logical replication slots in HA (Preview)."
+      },
+      {
+        "name": "azure_logical_replication_slot_sync_status_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Status of logical replication slots in HA (Preview)."
+      },
+      {
+        "name": "azure_client_connections_active_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Client connections associated with a PostgreSQL connection (PgBouncer)."
+      },
+      {
+        "name": "azure_client_connections_active_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Client connections associated with a PostgreSQL connection (PgBouncer)."
+      },
+      {
+        "name": "azure_client_connections_active_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Client connections associated with a PostgreSQL connection (PgBouncer)."
+      },
+      {
+        "name": "azure_client_connections_waiting_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Client connections waiting for a PostgreSQL connection (PgBouncer)."
+      },
+      {
+        "name": "azure_client_connections_waiting_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Client connections waiting for a PostgreSQL connection (PgBouncer)."
+      },
+      {
+        "name": "azure_client_connections_waiting_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Client connections waiting for a PostgreSQL connection (PgBouncer)."
+      },
+      {
+        "name": "azure_num_pools_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Total number of connection pools (PgBouncer)."
+      },
+      {
+        "name": "azure_num_pools_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Total number of connection pools (PgBouncer)."
+      },
+      {
+        "name": "azure_num_pools_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Total number of connection pools (PgBouncer)."
+      },
+      {
+        "name": "azure_server_connections_active_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Connections to PostgreSQL in use by a client connection (PgBouncer)."
+      },
+      {
+        "name": "azure_server_connections_active_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Connections to PostgreSQL in use by a client connection (PgBouncer)."
+      },
+      {
+        "name": "azure_server_connections_active_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Connections to PostgreSQL in use by a client connection (PgBouncer)."
+      },
+      {
+        "name": "azure_server_connections_idle_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Idle connections to PostgreSQL, ready to service a client (PgBouncer)."
+      },
+      {
+        "name": "azure_server_connections_idle_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Idle connections to PostgreSQL, ready to service a client (PgBouncer)."
+      },
+      {
+        "name": "azure_server_connections_idle_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Idle connections to PostgreSQL, ready to service a client (PgBouncer)."
+      },
+      {
+        "name": "azure_total_pooled_connections_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Current number of pooled connections (PgBouncer)."
+      },
+      {
+        "name": "azure_total_pooled_connections_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Current number of pooled connections (PgBouncer)."
+      },
+      {
+        "name": "azure_total_pooled_connections_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Current number of pooled connections (PgBouncer)."
+      },
+      {
+        "name": "azure_physical_replication_delay_in_bytes_maximum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Maximum lag in bytes across all asynchronous physical replication slots."
+      },
+      {
+        "name": "azure_physical_replication_delay_in_bytes_minimum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Maximum lag in bytes across all asynchronous physical replication slots."
+      },
+      {
+        "name": "azure_physical_replication_delay_in_bytes_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Maximum lag in bytes across all asynchronous physical replication slots."
+      },
+      {
+        "name": "azure_physical_replication_delay_in_seconds_maximum",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": "Read replica lag in seconds."
+      },
+      {
+        "name": "azure_physical_replication_delay_in_seconds_minimum",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": "Read replica lag in seconds."
+      },
+      {
+        "name": "azure_physical_replication_delay_in_seconds_average",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": "Read replica lag in seconds."
+      },
+      {
+        "name": "azure_backup_storage_used_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Backup storage used."
+      },
+      {
+        "name": "azure_backup_storage_used_maximum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Backup storage used."
+      },
+      {
+        "name": "azure_backup_storage_used_minimum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Backup storage used."
+      },
+      {
+        "name": "azure_cpu_credits_consumed_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Total CPU credits consumed by the database server (Burstable SKU)."
+      },
+      {
+        "name": "azure_cpu_credits_consumed_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Total CPU credits consumed by the database server (Burstable SKU)."
+      },
+      {
+        "name": "azure_cpu_credits_consumed_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Total CPU credits consumed by the database server (Burstable SKU)."
+      },
+      {
+        "name": "azure_cpu_credits_remaining_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Total CPU credits available to burst (Burstable SKU)."
+      },
+      {
+        "name": "azure_cpu_credits_remaining_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Total CPU credits available to burst (Burstable SKU)."
+      },
+      {
+        "name": "azure_cpu_credits_remaining_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Total CPU credits available to burst (Burstable SKU)."
+      },
+      {
+        "name": "azure_cpu_percent_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "CPU percent."
+      },
+      {
+        "name": "azure_cpu_percent_maximum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "CPU percent."
+      },
+      {
+        "name": "azure_cpu_percent_minimum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "CPU percent."
+      },
+      {
+        "name": "azure_disk_bandwidth_consumed_percentage_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Percentage of disk bandwidth consumed per minute."
+      },
+      {
+        "name": "azure_disk_bandwidth_consumed_percentage_maximum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Percentage of disk bandwidth consumed per minute."
+      },
+      {
+        "name": "azure_disk_bandwidth_consumed_percentage_minimum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Percentage of disk bandwidth consumed per minute."
+      },
+      {
+        "name": "azure_disk_iops_consumed_percentage_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Percentage of disk I/Os consumed per minute."
+      },
+      {
+        "name": "azure_disk_iops_consumed_percentage_maximum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Percentage of disk I/Os consumed per minute."
+      },
+      {
+        "name": "azure_disk_iops_consumed_percentage_minimum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Percentage of disk I/Os consumed per minute."
+      },
+      {
+        "name": "azure_disk_queue_depth_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of outstanding I/O operations to the data disk."
+      },
+      {
+        "name": "azure_disk_queue_depth_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of outstanding I/O operations to the data disk."
+      },
+      {
+        "name": "azure_disk_queue_depth_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of outstanding I/O operations to the data disk."
+      },
+      {
+        "name": "azure_iops_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "I/O operations per second."
+      },
+      {
+        "name": "azure_iops_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "I/O operations per second."
+      },
+      {
+        "name": "azure_iops_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "I/O operations per second."
+      },
+      {
+        "name": "azure_memory_percent_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Memory percent."
+      },
+      {
+        "name": "azure_memory_percent_maximum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Memory percent."
+      },
+      {
+        "name": "azure_memory_percent_minimum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Memory percent."
+      },
+      {
+        "name": "azure_postmaster_process_cpu_usage_percent_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "CPU usage of the Postmaster process (not applicable for Burstable SKU)."
+      },
+      {
+        "name": "azure_postmaster_process_cpu_usage_percent_maximum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "CPU usage of the Postmaster process (not applicable for Burstable SKU)."
+      },
+      {
+        "name": "azure_postmaster_process_cpu_usage_percent_minimum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "CPU usage of the Postmaster process (not applicable for Burstable SKU)."
+      },
+      {
+        "name": "azure_read_iops_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of data disk I/O read operations per second."
+      },
+      {
+        "name": "azure_read_iops_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of data disk I/O read operations per second."
+      },
+      {
+        "name": "azure_read_iops_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of data disk I/O read operations per second."
+      },
+      {
+        "name": "azure_read_throughput_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Bytes read per second from the data disk."
+      },
+      {
+        "name": "azure_read_throughput_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Bytes read per second from the data disk."
+      },
+      {
+        "name": "azure_read_throughput_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Bytes read per second from the data disk."
+      },
+      {
+        "name": "azure_storage_free_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Storage free."
+      },
+      {
+        "name": "azure_storage_free_maximum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Storage free."
+      },
+      {
+        "name": "azure_storage_free_minimum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Storage free."
+      },
+      {
+        "name": "azure_storage_percent_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Storage percent."
+      },
+      {
+        "name": "azure_storage_percent_maximum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Storage percent."
+      },
+      {
+        "name": "azure_storage_percent_minimum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Storage percent."
+      },
+      {
+        "name": "azure_storage_used_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Storage used."
+      },
+      {
+        "name": "azure_storage_used_maximum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Storage used."
+      },
+      {
+        "name": "azure_storage_used_minimum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Storage used."
+      },
+      {
+        "name": "azure_txlogs_storage_used_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Transaction log storage used."
+      },
+      {
+        "name": "azure_txlogs_storage_used_maximum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Transaction log storage used."
+      },
+      {
+        "name": "azure_txlogs_storage_used_minimum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Transaction log storage used."
+      },
+      {
+        "name": "azure_write_iops_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of data disk I/O write operations per second."
+      },
+      {
+        "name": "azure_write_iops_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of data disk I/O write operations per second."
+      },
+      {
+        "name": "azure_write_iops_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of data disk I/O write operations per second."
+      },
+      {
+        "name": "azure_write_throughput_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Bytes written per second to the data disk."
+      },
+      {
+        "name": "azure_write_throughput_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Bytes written per second to the data disk."
+      },
+      {
+        "name": "azure_write_throughput_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Bytes written per second to the data disk."
+      },
+      {
+        "name": "azure_active_connections_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Active connections."
+      },
+      {
+        "name": "azure_active_connections_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Active connections."
+      },
+      {
+        "name": "azure_active_connections_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Active connections."
+      },
+      {
+        "name": "azure_connections_succeeded_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Number of succeeded connections."
+      },
+      {
+        "name": "azure_max_connections_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Max connections."
+      },
+      {
+        "name": "azure_maximum_used_transactionids_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Maximum used transaction IDs."
+      },
+      {
+        "name": "azure_maximum_used_transactionids_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Maximum used transaction IDs."
+      },
+      {
+        "name": "azure_maximum_used_transactionids_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Maximum used transaction IDs."
+      },
+      {
+        "name": "azure_network_bytes_egress_total",
+        "unit": "Bytes",
+        "type": "Sum",
+        "description": "Network out across active connections."
+      },
+      {
+        "name": "azure_network_bytes_ingress_total",
+        "unit": "Bytes",
+        "type": "Sum",
+        "description": "Network in across active connections."
+      },
+      {
+        "name": "azure_tcp_connection_backlog_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Pending TCP connections waiting to be processed (8 vcore and above)."
+      },
+      {
+        "name": "azure_tcp_connection_backlog_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Pending TCP connections waiting to be processed (8 vcore and above)."
+      },
+      {
+        "name": "azure_tcp_connection_backlog_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Pending TCP connections waiting to be processed (8 vcore and above)."
+      }
+    ],
+    "logs": [
+      {
+        "name": "Resource ID",
+        "path": "resources.azure.resource.id",
+        "type": "string"
+      }
+    ]
+  },
+  "telemetryCollectionStrategy": {
+    "azure": {
+      "resourceProvider": "Microsoft.DBforPostgreSQL",
+      "resourceType": "flexibleServers",
+      "metrics": {},
+      "logs": {
+        "categoryGroups": [
+          "allLogs"
+        ]
+      }
+    }
+  },
+  "assets": {
+    "dashboards": [
+      {
+        "id": "overview",
+        "title": "Azure Database for PostgreSQL - Flexible Server Overview",
+        "description": "Overview of Azure Database for PostgreSQL - Flexible Server metrics",
+        "definition": "file://assets/dashboards/overview.json"
+      }
+    ]
+  }
+}

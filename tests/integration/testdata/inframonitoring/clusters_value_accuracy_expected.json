@@ -1,0 +1,40 @@
+{
+  "records": [
+    {
+      "clusterName": "acc-cluster-1",
+      "clusterCPU": 1.0,
+      "clusterCPUAllocatable": 8.0,
+      "clusterMemory": 2000000000.0,
+      "clusterMemoryAllocatable": 16000000000.0,
+      "nodeCountsByReadiness": {
+        "ready": 2,
+        "notReady": 0
+      },
+      "podCountsByPhase": {
+        "pending": 0,
+        "running": 2,
+        "succeeded": 0,
+        "failed": 0,
+        "unknown": 0
+      }
+    },
+    {
+      "clusterName": "acc-cluster-2",
+      "clusterCPU": 3.0,
+      "clusterCPUAllocatable": 24.0,
+      "clusterMemory": 6000000000.0,
+      "clusterMemoryAllocatable": 48000000000.0,
+      "nodeCountsByReadiness": {
+        "ready": 3,
+        "notReady": 0
+      },
+      "podCountsByPhase": {
+        "pending": 0,
+        "running": 3,
+        "succeeded": 0,
+        "failed": 0,
+        "unknown": 0
+      }
+    }
+  ]
+}

@@ -1,7 +1,5 @@
 import { ReactNode, useMemo } from 'react';
 
-import { Empty } from 'antd';
-import { Typography } from '@signozhq/ui/typography';
 import type {
 	DashboardtypesLayoutDTO,
 	DashboardtypesPanelDTO,
@@ -9,7 +7,9 @@ import type {
 
 import { useDashboardStore } from '../store/useDashboardStore';
 import { layoutsToSections } from '../utils';
-import AddSectionControl from './Section/AddSectionControl/AddSectionControl';
+import DashboardEmptyState from './DashboardEmptyState/DashboardEmptyState';
+import { useViewPanel } from './Panel/hooks/useViewPanel';
+import ViewPanelModal from './Panel/ViewPanelModal/ViewPanelModal';
 import Section from './Section/Section/Section';
 import SectionList from './Section/SectionList';
 import styles from './PanelsAndSectionsLayout.module.scss';
@@ -17,13 +17,24 @@ import styles from './PanelsAndSectionsLayout.module.scss';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 
-interface Props {
+interface PanelsAndSectionsLayoutProps {
 	layouts: DashboardtypesLayoutDTO[];
 	panels: Record<string, DashboardtypesPanelDTO | undefined>;
 }
 
-function PanelsAndSectionsLayout({ layouts, panels }: Props): JSX.Element {
+function PanelsAndSectionsLayout({
+	layouts,
+	panels,
+}: PanelsAndSectionsLayoutProps): JSX.Element {
 	const isEditable = useDashboardStore((s) => s.isEditable);
+
+	// Single View-modal host for the whole dashboard, driven by the URL
+	// (`expandedWidgetId`). One mounted modal beats one-per-panel: no N location
+	// subscriptions, and the expanded panel is looked up by id from the map. A
+	// drilldown refinement rides in the URL (`compositeQuery`/`graphType`) and is
+	// hydrated inside the modal, so the host just hands it the saved panel.
+	const { expandedPanelId, closeView } = useViewPanel();
+	const expandedPanel = expandedPanelId ? panels[expandedPanelId] : undefined;
 
 	const sections = useMemo(
 		() => layoutsToSections(layouts, panels),
@@ -40,37 +51,30 @@ function PanelsAndSectionsLayout({ layouts, panels }: Props): JSX.Element {
 
 	const renderContent = (): ReactNode => {
 		if (isEmpty) {
-			return (
-				<div className={styles.emptyState}>
-					<Empty
-						image={Empty.PRESENTED_IMAGE_SIMPLE}
-						description={
-							<Typography.Text>No panels in this dashboard yet</Typography.Text>
-						}
-					/>
-				</div>
-			);
+			return <DashboardEmptyState canAddPanel={isEditable} />;
 		}
 
 		if (isSectioned) {
 			return <SectionList sections={sections} layouts={layouts} />;
 		}
 
+		// Free-flow (no titled sections): panels still get the layout context so
+		// the menu's delete action can patch the section's items (previously a
+		// silent noop in this mode).
 		return sections.map((section) => (
-			<Section key={section.id} section={section} />
+			<Section key={section.id} section={section} sections={sections} />
 		));
 	};
 
 	return (
 		<div className={styles.body}>
 			{renderContent()}
-			{isEditable ? (
-				<AddSectionControl
-					sections={sections}
-					layouts={layouts}
-					isSectioned={isSectioned}
-				/>
-			) : null}
+			<ViewPanelModal
+				open={!!expandedPanel}
+				panel={expandedPanel}
+				panelId={expandedPanelId ?? undefined}
+				onClose={closeView}
+			/>
 		</div>
 	);
 }

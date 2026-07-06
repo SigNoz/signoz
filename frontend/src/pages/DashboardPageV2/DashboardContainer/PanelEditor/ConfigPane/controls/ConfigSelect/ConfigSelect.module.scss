@@ -1,0 +1,18 @@
+// Fill the section field so the select lines up with the other full-width controls.
+.select {
+	width: 100%;
+}
+
+.item {
+	display: inline-flex;
+	align-items: center;
+	gap: 9px;
+}
+
+// Wraps a tooltip-bearing option so the hover target fills the row and still receives
+// pointer events when the option is disabled (antd dims it but doesn't block events).
+.tooltipTrigger {
+	display: block;
+	width: 100%;
+	pointer-events: auto;
+}

@@ -1,0 +1,45 @@
+@use '../../../../../styles/scrollbar' as *;
+.container {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	min-height: 0;
+	overflow: auto;
+	background-color: var(--l1-background);
+	@include custom-scrollbar;
+}
+
+.scrollArea {
+	padding: 12px;
+}
+
+.tabsContainer {
+	width: 100%;
+
+	:global(.ant-tabs-tab) {
+		background-color: var(--l2-background) !important;
+		border-color: var(--l2-border) !important;
+	}
+	:global(.ant-tabs-tab-active) {
+		background-color: var(--l1-background) !important;
+	}
+	:global(.ant-tabs-nav) {
+		&::before {
+			border-color: var(--l2-border);
+		}
+	}
+}
+.queryTypeTab {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 4px;
+}
+.runQueryBtnContainer {
+	padding: 4px 0 8px 0;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	gap: 1rem;
+}

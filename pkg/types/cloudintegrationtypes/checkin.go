@@ -50,6 +50,7 @@ type IntegrationConfig struct {
 type ProviderIntegrationConfig struct {
 	AWS   *AWSIntegrationConfig   `json:"aws,omitempty" required:"false" nullable:"false"`
 	Azure *AzureIntegrationConfig `json:"azure,omitempty" required:"false" nullable:"false"`
+	GCP   *GCPIntegrationConfig   `json:"gcp,omitempty" required:"false" nullable:"false"`
 }
 
 // NewGettableAgentCheckIn constructs a backward-compatible response from an AgentCheckInResponse.

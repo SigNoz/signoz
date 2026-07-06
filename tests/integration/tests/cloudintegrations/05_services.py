@@ -341,7 +341,7 @@ def test_list_services_unsupported_provider(
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/cloud_integrations/gcp/services"),
+        signoz.self.host_configs["8080"].get("/api/v1/cloud_integrations/unknown/services"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=10,
     )
@@ -483,7 +483,7 @@ def test_enable_metrics_provisions_dashboards(
     assert isinstance(dashboards_in_service, list) and len(dashboards_in_service) > 0, "assets.dashboards should be non-empty after enabling metrics"
     provisioned_ids = set()
     for dash in dashboards_in_service:
-        assert "integrationDashboard" in dash, f"Integration dashboard entry missing"
+        assert "integrationDashboard" in dash, "Integration dashboard entry missing"
         try:
             uuid.UUID(dash["integrationDashboard"]["id"])
         except ValueError as err:

@@ -20,6 +20,7 @@ import azureOpenaiUrl from '@/assets/Logos/azure-openai.svg';
 import azureSqlDatabaseMetricsUrl from '@/assets/Logos/azure-sql-database-metrics.svg';
 import azureVmUrl from '@/assets/Logos/azure-vm.svg';
 import basetenUrl from '@/assets/Logos/baseten.svg';
+import cassandraUrl from '@/assets/Logos/cassandra.svg';
 import celeryUrl from '@/assets/Logos/celery.svg';
 import certManagerUrl from '@/assets/Logos/cert-manager.svg';
 import claudeCodeUrl from '@/assets/Logos/claude-code.svg';
@@ -51,6 +52,7 @@ import externalApiMonitoringUrl from '@/assets/Logos/external-api-monitoring.svg
 import fluentbitUrl from '@/assets/Logos/fluentbit.svg';
 import fluentdUrl from '@/assets/Logos/fluentd.svg';
 import flutterMonitoringUrl from '@/assets/Logos/flutter-monitoring.svg';
+import fluxcdUrl from '@/assets/Logos/fluxcd.svg';
 import flyIoUrl from '@/assets/Logos/fly-io.svg';
 import fromLogFileUrl from '@/assets/Logos/from-log-file.svg';
 import gcpAppEngineUrl from '@/assets/Logos/gcp-app-engine.svg';
@@ -94,6 +96,7 @@ import langtraceUrl from '@/assets/Logos/langtrace.svg';
 import litellmUrl from '@/assets/Logos/litellm.svg';
 import livekitUrl from '@/assets/Logos/livekit.svg';
 import llamaindexUrl from '@/assets/Logos/llamaindex.svg';
+import llmMonitoringUrl from '@/assets/Logos/llm-monitoring.svg';
 import logrusUrl from '@/assets/Logos/logrus.svg';
 import logsUrl from '@/assets/Logos/logs.svg';
 import logstashUrl from '@/assets/Logos/logstash.svg';
@@ -120,6 +123,7 @@ import opentelemetryUrl from '@/assets/Logos/opentelemetry.svg';
 import phpUrl from '@/assets/Logos/php.svg';
 import pinoUrl from '@/assets/Logos/pino.svg';
 import pipecatUrl from '@/assets/Logos/pipecat.svg';
+import planetscaleUrl from '@/assets/Logos/planetscale.svg';
 import postgresqlUrl from '@/assets/Logos/postgresql.svg';
 import prometheusUrl from '@/assets/Logos/prometheus.svg';
 import pydanticAiUrl from '@/assets/Logos/pydantic-ai.svg';
@@ -1527,6 +1531,28 @@ const onboardingConfigWithLinks = [
 		link: '/docs/instrumentation/opentelemetry-nginx/',
 	},
 	{
+		dataSource: 'nginx-ingress-controller',
+		label: 'NGINX Ingress Controller',
+		imgUrl: nginxUrl,
+		tags: ['infrastructure monitoring'],
+		module: 'metrics',
+		relatedSearchKeywords: [
+			'ingress',
+			'ingress controller',
+			'kubernetes ingress',
+			'monitoring',
+			'nginx ingress',
+			'nginx ingress controller',
+			'nginx ingress metrics',
+			'nginx ingress monitoring',
+			'nginx ingress observability',
+			'observability',
+			'opentelemetry nginx ingress',
+		],
+		id: 'nginx-ingress-controller',
+		link: '/docs/metrics-management/nginx-ingress-controller/',
+	},
+	{
 		dataSource: 'opentelemetry-cloudflare',
 		label: 'Cloudflare Tracing',
 		imgUrl: cloudflareUrl,
@@ -1585,6 +1611,119 @@ const onboardingConfigWithLinks = [
 		],
 		id: 'opentelemetry-cloudflare-logs',
 		link: '/docs/logs-management/send-logs/cloudflare-logs/',
+	},
+	{
+		dataSource: 'cloudflare-workers',
+		label: 'Cloudflare Workers',
+		imgUrl: cloudflareUrl,
+		tags: ['apm/traces'],
+		module: 'apm',
+		relatedSearchKeywords: [
+			'cloudflare',
+			'cloudflare workers',
+			'cloudflare workers monitoring',
+			'cloudflare workers observability',
+			'cloudflare workers otlp',
+			'edge computing monitoring',
+			'monitor cloudflare workers',
+			'monitoring',
+			'observability',
+			'opentelemetry cloudflare workers',
+			'otlp',
+			'serverless monitoring',
+		],
+		id: 'cloudflare-workers',
+		link: '/docs/integrations/outposts/cloudflare-workers/',
+	},
+	{
+		dataSource: 'opentelemetry-cassandra',
+		label: 'Cassandra',
+		imgUrl: cassandraUrl,
+		tags: ['database'],
+		module: 'apm',
+		relatedSearchKeywords: [
+			'apache cassandra',
+			'cassandra',
+			'cassandra database',
+			'cassandra logs',
+			'cassandra metrics',
+			'cassandra monitoring',
+			'cassandra observability',
+			'database',
+			'monitoring',
+			'nosql',
+			'observability',
+			'opentelemetry cassandra',
+		],
+		id: 'opentelemetry-cassandra',
+		link: '/docs/integrations/opentelemetry-cassandra/',
+	},
+	{
+		dataSource: 'fluxcd',
+		label: 'FluxCD',
+		imgUrl: fluxcdUrl,
+		tags: ['infrastructure monitoring'],
+		module: 'metrics',
+		relatedSearchKeywords: [
+			'continuous delivery',
+			'flux',
+			'fluxcd',
+			'fluxcd dashboard',
+			'fluxcd metrics',
+			'fluxcd monitoring',
+			'fluxcd observability',
+			'gitops',
+			'kubernetes',
+			'monitoring',
+			'observability',
+			'opentelemetry fluxcd',
+		],
+		id: 'fluxcd',
+		link: '/docs/metrics-management/fluxcd-metrics/',
+	},
+	{
+		dataSource: 'planetscale',
+		label: 'PlanetScale',
+		imgUrl: planetscaleUrl,
+		tags: ['database'],
+		module: 'apm',
+		relatedSearchKeywords: [
+			'database',
+			'monitoring',
+			'mysql',
+			'observability',
+			'opentelemetry planetscale',
+			'planetscale',
+			'planetscale database',
+			'planetscale metrics',
+			'planetscale monitoring',
+			'planetscale observability',
+			'serverless database',
+		],
+		id: 'planetscale',
+		link: '/docs/metrics-management/opentelemetry-planetscale/',
+	},
+	{
+		dataSource: 'hermes-agent',
+		label: 'Hermes Agent',
+		imgUrl: llmMonitoringUrl,
+		tags: ['LLM Monitoring'],
+		module: 'apm',
+		relatedSearchKeywords: [
+			'ai agent monitoring',
+			'hermes',
+			'hermes agent',
+			'hermes agent monitoring',
+			'hermes agent observability',
+			'hermes monitoring',
+			'llm monitoring',
+			'monitoring',
+			'nous research',
+			'observability',
+			'opentelemetry hermes',
+		],
+		id: 'hermes-agent',
+		link: '/docs/hermes-monitoring/',
 	},
 	{
 		dataSource: 'convex-logs',

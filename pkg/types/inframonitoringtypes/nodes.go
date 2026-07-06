@@ -12,7 +12,6 @@ type Nodes struct {
 	Type                   ResponseType           `json:"type" required:"true"`
 	Records                []NodeRecord           `json:"records" required:"true" nullable:"false"`
 	Total                  int                    `json:"total" required:"true"`
-	RequiredMetricsCheck   RequiredMetricsCheck   `json:"requiredMetricsCheck" required:"true"`
 	EndTimeBeforeRetention bool                   `json:"endTimeBeforeRetention" required:"true"`
 	Warning                *qbtypes.QueryWarnData `json:"warning,omitempty"`
 }

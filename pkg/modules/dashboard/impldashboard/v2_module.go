@@ -6,6 +6,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
+	"github.com/SigNoz/signoz/pkg/types/tagtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -42,6 +43,70 @@ func (m *module) CreateV2(ctx context.Context, orgID valuer.UUID, createdBy stri
 	return dashboard, nil
 }
 
+func (m *module) CloneV2(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, id valuer.UUID) (*dashboardtypes.DashboardV2, error) {
+	existing, err := m.GetV2(ctx, orgID, id)
+	if err != nil {
+		return nil, err
+	}
+	if err := existing.ErrIfNotClonable(); err != nil {
+		return nil, err
+	}
+
+	return m.CreateV2(ctx, orgID, createdBy, creator, dashboardtypes.SourceUser, existing.ToPostableForCloning())
+}
+
+func (module *module) ListV2(ctx context.Context, orgID valuer.UUID, params *dashboardtypes.ListDashboardsV2Params) (*dashboardtypes.ListableDashboardV2, error) {
+	dashboards, total, err := module.store.ListV2(ctx, orgID, params)
+	if err != nil {
+		return nil, err
+	}
+
+	dashboardIDs := make([]valuer.UUID, len(dashboards))
+	for i, d := range dashboards {
+		dashboardIDs[i] = d.ID
+	}
+
+	tagsByDashboard, allTags, err := module.fetchDashboardTags(ctx, orgID, dashboardIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	return dashboardtypes.NewListableDashboardV2(dashboards, total, tagsByDashboard, allTags)
+}
+
+func (module *module) ListForUserV2(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, params *dashboardtypes.ListDashboardsV2Params) (*dashboardtypes.ListableDashboardForUserV2, error) {
+	rows, total, err := module.store.ListForUser(ctx, orgID, userID, params)
+	if err != nil {
+		return nil, err
+	}
+
+	dashboardIDs := make([]valuer.UUID, len(rows))
+	for i, r := range rows {
+		dashboardIDs[i] = r.Dashboard.ID
+	}
+
+	tagsByDashboard, allTags, err := module.fetchDashboardTags(ctx, orgID, dashboardIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	return dashboardtypes.NewListableDashboardForUserV2(rows, total, tagsByDashboard, allTags)
+}
+
+func (module *module) fetchDashboardTags(ctx context.Context, orgID valuer.UUID, dashboardIDs []valuer.UUID) (map[valuer.UUID][]*tagtypes.Tag, []*tagtypes.Tag, error) {
+	tagsByDashboard, err := module.tagModule.ListForResources(ctx, orgID, coretypes.KindDashboard, dashboardIDs)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	allTags, err := module.tagModule.List(ctx, orgID, coretypes.KindDashboard)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return tagsByDashboard, allTags, nil
+}
+
 func (module *module) GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.DashboardV2, error) {
 	storable, err := module.store.Get(ctx, orgID, id)
 	if err != nil {
@@ -66,7 +131,7 @@ func (module *module) UpdateV2(ctx context.Context, orgID valuer.UUID, id valuer
 		return nil, err
 	}
 	// Locked-dashboard / state gate — independent of tags, so run it before the tx.
-	if err := existing.CanUpdate(); err != nil {
+	if err := existing.ErrIfNotUpdatable(); err != nil {
 		return nil, err
 	}
 
@@ -101,7 +166,7 @@ func (module *module) PatchV2(ctx context.Context, orgID valuer.UUID, id valuer.
 		return nil, err
 	}
 	// Locked-dashboard / state gate — independent of tags, so run it before the tx.
-	if err := existing.CanUpdate(); err != nil {
+	if err := existing.ErrIfNotUpdatable(); err != nil {
 		return nil, err
 	}
 
@@ -135,6 +200,27 @@ func (module *module) PatchV2(ctx context.Context, orgID valuer.UUID, id valuer.
 	return existing, nil
 }
 
+func (module *module) DeleteV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {
+	existing, err := module.GetV2(ctx, orgID, id)
+	if err != nil {
+		return err
+	}
+	if err := existing.ErrIfNotDeletable(); err != nil {
+		return err
+	}
+
+	return module.store.RunInTx(ctx, func(ctx context.Context) error {
+		// Syncing to an empty tag set drops every tag link for the dashboard.
+		if _, err := module.tagModule.SyncTags(ctx, orgID, coretypes.KindDashboard, id, nil); err != nil {
+			return err
+		}
+		if err := module.store.DeletePreferencesForDashboard(ctx, orgID, id); err != nil {
+			return err
+		}
+		return module.store.Delete(ctx, orgID, id)
+	})
+}
+
 func (module *module) LockUnlockV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, isAdmin bool, lock bool) error {
 	existing, err := module.GetV2(ctx, orgID, id)
 	if err != nil {
@@ -148,4 +234,19 @@ func (module *module) LockUnlockV2(ctx context.Context, orgID valuer.UUID, id va
 		return err
 	}
 	return module.store.Update(ctx, orgID, storable)
+}
+
+func (module *module) PinV2(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, id valuer.UUID) error {
+	if _, err := module.GetV2(ctx, orgID, id); err != nil {
+		return err
+	}
+	return module.store.PinForUser(ctx, dashboardtypes.NewUserDashboardPreference(userID, id))
+}
+
+func (module *module) UnpinV2(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, id valuer.UUID) error {
+	return module.store.UnpinForUser(ctx, orgID, userID, id)
+}
+
+func (module *module) DeletePreferencesForUser(ctx context.Context, orgID valuer.UUID, userID valuer.UUID) error {
+	return module.store.DeletePreferencesForUser(ctx, orgID, userID)
 }

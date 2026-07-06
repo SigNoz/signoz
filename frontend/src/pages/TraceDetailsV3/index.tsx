@@ -11,12 +11,12 @@ import { LOCALSTORAGE } from 'constants/localStorage';
 import useGetTraceV4 from 'hooks/trace/useGetTraceV4';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
-import NoData from 'pages/TraceDetailV2/NoData/NoData';
 import { ResizableBox } from 'periscope/components/ResizableBox';
 import { SpanV3, TraceDetailV3URLProps } from 'types/api/trace/getTraceV3';
 
 import { TraceDetailEventKeys, TraceDetailEvents } from './events';
 import { useTraceDetailLogEvent } from './hooks/useTraceDetailLogEvent';
+import NoData from './NoData/NoData';
 import TraceStoreSync from './stores/TraceStoreSync';
 import { useTraceStore } from './stores/traceStore';
 import { SpanDetailVariant } from './SpanDetailsPanel/constants';
@@ -179,8 +179,6 @@ function TraceDetailsV3(): JSX.Element {
 				SpanDetailVariant.DOCKED_RIGHT,
 			[TraceDetailEventKeys.ColorByField]: colorByField.name,
 			[TraceDetailEventKeys.PreviewFieldsCount]: previewFieldsCount,
-			[TraceDetailEventKeys.EntryPreferOldView]:
-				getLocalStorageKey(LOCALSTORAGE.TRACE_DETAILS_PREFER_OLD_VIEW) === 'true',
 		});
 	}, [
 		traceId,

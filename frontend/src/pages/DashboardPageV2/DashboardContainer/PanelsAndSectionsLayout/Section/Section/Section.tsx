@@ -1,45 +1,37 @@
-import { useRef, useState } from 'react';
-import { Modal } from 'antd';
+import { useCallback, useRef, useState } from 'react';
+import { Plus } from '@signozhq/icons';
+import { Button } from '@signozhq/ui/button';
 
 import { useIntersectionObserver } from 'hooks/useIntersectionObserver';
 
+import ConfirmDeleteDialog from '../../../components/ConfirmDeleteDialog/ConfirmDeleteDialog';
+import { useCreatePanel } from '../../../hooks/useCreatePanel';
 import type { DashboardSection } from '../../../utils';
-import type { AddPanelArgs } from '../../Panel/hooks/useAddPanelToSection';
-import type { DeletePanelArgs } from '../../Panel/hooks/useDeletePanel';
-import type { MovePanelArgs } from '../../Panel/hooks/useMovePanelToSection';
 import PanelTypeSelectionModal from '../../Panel/PanelTypeSelectionModal/PanelTypeSelectionModal';
 import { useDashboardStore } from '../../../store/useDashboardStore';
 import { useDeleteSection } from '../hooks/useDeleteSection';
 import { useRenameSection } from '../hooks/useRenameSection';
 import { useToggleSectionCollapse } from '../hooks/useToggleSectionCollapse';
-import RenameSectionModal from '../RenameSectionModal';
+import SectionTitleModal from '../SectionTitleModal';
 import SectionGrid from '../SectionGrid/SectionGrid';
 import SectionHeader, {
 	type SectionDragHandle,
 } from '../SectionHeader/SectionHeader';
 import styles from './Section.module.scss';
 
-interface Props {
+interface SectionProps {
 	section: DashboardSection;
-	/** Adds a panel to this section; present only in editable sectioned mode. */
-	onAddPanel?: (args: AddPanelArgs) => void;
-	/** All sections + per-panel handlers, for the panel "Move to section" / delete actions. */
+	/** All sections — layout context for the panel menu's move/delete actions. */
 	sections?: DashboardSection[];
-	onMovePanel?: (args: MovePanelArgs) => void;
-	onDeletePanel?: (args: DeletePanelArgs) => void;
 	/** Provided by SortableSection in sectioned mode; absent for untitled/free-flow. */
 	dragHandle?: SectionDragHandle;
 }
 
-function Section({
-	section,
-	onAddPanel,
-	sections,
-	onMovePanel,
-	onDeletePanel,
-	dragHandle,
-}: Props): JSX.Element {
+function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
 	const isEditable = useDashboardStore((s) => s.isEditable);
+	const { isPickerOpen, openPicker, closePicker, createPanel } =
+		useCreatePanel();
+	const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 	const containerRef = useRef<HTMLDivElement>(null);
 	// Placeholder signal for lazy panel query-loading (consumed in a later PR):
 	// true once the section scrolls into (or near) the viewport.
@@ -54,30 +46,21 @@ function Section({
 		layoutIndex: section.layoutIndex,
 	});
 
-	const handleRenameSubmit = async (title: string): Promise<void> => {
-		const ok = await rename(title);
-		if (ok) {
-			setIsRenaming(false);
-		}
-	};
-
-	const [isAddingPanel, setIsAddingPanel] = useState(false);
-	const handleSelectPanelType = (pluginKind: string): void => {
-		onAddPanel?.({ layoutIndex: section.layoutIndex, pluginKind });
-		setIsAddingPanel(false);
-	};
+	const handleRenameSubmit = useCallback(
+		async (title: string): Promise<void> => {
+			const ok = await rename(title);
+			if (ok) {
+				setIsRenaming(false);
+			}
+		},
+		[rename],
+	);
 
 	const { deleteSection } = useDeleteSection({ section });
-	const confirmDeleteSection = (): void => {
-		Modal.confirm({
-			title: `Delete section "${section.title ?? ''}"?`,
-			content: 'Panels in this section will be removed.',
-			okText: 'Delete',
-			okButtonProps: { danger: true },
-			centered: true,
-			onOk: () => deleteSection(),
-		});
-	};
+	const handleDeleteSection = useCallback((): void => {
+		void deleteSection();
+		setIsDeleteOpen(false);
+	}, [deleteSection]);
 
 	const grid = (
 		<SectionGrid
@@ -85,8 +68,6 @@ function Section({
 			layoutIndex={section.layoutIndex}
 			isVisible={isVisible}
 			sections={sections}
-			onMovePanel={onMovePanel}
-			onDeletePanel={onDeletePanel}
 		/>
 	);
 
@@ -118,24 +99,55 @@ function Section({
 				onToggle={toggle}
 				repeatVariable={section.repeatVariable}
 				dragHandle={dragHandle}
-				onRename={isEditable ? (): void => setIsRenaming(true) : undefined}
-				onAddPanel={
-					isEditable && onAddPanel ? (): void => setIsAddingPanel(true) : undefined
+				actions={
+					isEditable
+						? {
+								onRename: (): void => setIsRenaming(true),
+								onAddPanel: (): void => openPicker(section.layoutIndex),
+								onDeleteSection: (): void => setIsDeleteOpen(true),
+							}
+						: undefined
 				}
-				onDeleteSection={isEditable ? confirmDeleteSection : undefined}
 			/>
-			{open ? grid : null}
-			<RenameSectionModal
+			{open &&
+				(section.items.length > 0 ? (
+					grid
+				) : (
+					<div className={styles.emptySection}>
+						{isEditable && (
+							<Button
+								type="button"
+								variant="dashed"
+								color="secondary"
+								prefix={<Plus size="md" />}
+								onClick={(): void => openPicker(section.layoutIndex)}
+								testId={`section-add-panel-${section.id}`}
+							>
+								New Panel
+							</Button>
+						)}
+					</div>
+				))}
+			<SectionTitleModal
 				open={isRenaming}
+				heading="Rename section"
+				okText="Rename"
 				initialValue={section.title}
 				isSaving={isSaving}
 				onClose={(): void => setIsRenaming(false)}
 				onSubmit={handleRenameSubmit}
 			/>
 			<PanelTypeSelectionModal
-				open={isAddingPanel}
-				onClose={(): void => setIsAddingPanel(false)}
-				onSelect={handleSelectPanelType}
+				open={isPickerOpen}
+				onClose={closePicker}
+				onSelect={createPanel}
+			/>
+			<ConfirmDeleteDialog
+				open={isDeleteOpen}
+				title={`Delete section "${section.title ?? ''}"?`}
+				description="Panels in this section will be removed."
+				onConfirm={handleDeleteSection}
+				onClose={(): void => setIsDeleteOpen(false)}
 			/>
 		</div>
 	);

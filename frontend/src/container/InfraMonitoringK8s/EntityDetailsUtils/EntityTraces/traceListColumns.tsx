@@ -1,15 +1,14 @@
 import { TableColumnsType as ColumnsType } from 'antd';
 import { Badge } from '@signozhq/ui/badge';
 import { Typography } from '@signozhq/ui/typography';
-import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { getMs } from 'container/Trace/Filters/Panel/PanelBody/Duration/util';
 import {
 	BlockLink,
 	getTraceLink,
 } from 'container/TracesExplorer/ListView/utils';
-import dayjs from 'dayjs';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { FormatTimezoneAdjustedTimestamp } from 'hooks/useTimezoneFormatter/useTimezoneFormatter';
 
 const keyToLabelMap: Record<string, string> = {
 	timestamp: 'Timestamp',
@@ -59,6 +58,7 @@ const getValueForKey = (data: Record<string, any>, key: string): any => {
 
 export const getTraceListColumns = (
 	selectedColumns: BaseAutocompleteData[],
+	formatTimezoneAdjustedTimestamp: FormatTimezoneAdjustedTimestamp,
 ): ColumnsType<RowData> => {
 	const columns: ColumnsType<RowData> =
 		selectedColumns.map(({ dataType, key, type }) => ({
@@ -73,8 +73,8 @@ export const getTraceListColumns = (
 				if (primaryKey === 'timestamp') {
 					const date =
 						typeof value === 'string'
-							? dayjs(value).format(DATE_TIME_FORMATS.ISO_DATETIME_MS)
-							: dayjs(value / 1e6).format(DATE_TIME_FORMATS.ISO_DATETIME_MS);
+							? formatTimezoneAdjustedTimestamp(value)
+							: formatTimezoneAdjustedTimestamp(value / 1e6);
 
 					return (
 						<BlockLink to={getTraceLink(itemData)} openInNewTab>

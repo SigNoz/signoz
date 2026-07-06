@@ -1,5 +1,8 @@
+import {
+	SpantypesEventDTO as FlamegraphEvent,
+	SpantypesFlamegraphSpanDTO as FlamegraphSpan,
+} from 'api/generated/services/sigNoz.schemas';
 import { Dispatch, SetStateAction } from 'react';
-import { Event, FlamegraphSpan } from 'types/api/trace/getTraceFlamegraph';
 
 import { VisualLayout } from './computeVisualLayout';
 
@@ -25,10 +28,13 @@ export interface SpanRect {
 	width: number;
 	height: number;
 	level: number;
+	// Resting fill color for the current colour-by grouping. Optional: only the
+	// draw path sets it; consumers (e.g. the e2e colour-by hook) read it.
+	color?: string;
 }
 
 export interface EventRect {
-	event: Event;
+	event: FlamegraphEvent;
 	span: FlamegraphSpan;
 	cx: number;
 	cy: number;

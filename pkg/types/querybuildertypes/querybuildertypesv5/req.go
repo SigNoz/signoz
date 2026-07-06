@@ -1,11 +1,14 @@
 package querybuildertypesv5
 
 import (
+	"bytes"
 	"encoding/json"
 	"strings"
 
 	"github.com/SigNoz/govaluate"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/http/binding"
+	signozjsonschema "github.com/SigNoz/signoz/pkg/jsonschema"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -19,69 +22,111 @@ type QueryEnvelope struct {
 	Spec any `json:"spec"`
 }
 
-// queryEnvelopeBuilderTrace is the OpenAPI schema for a QueryEnvelope with type=builder_query and signal=traces.
-type queryEnvelopeBuilderTrace struct {
-	Type QueryType                           `json:"type" description:"The type of the query."`
-	Spec QueryBuilderQuery[TraceAggregation] `json:"spec" description:"The trace builder query specification."`
+// builderQuerySpec is a signal-discriminated oneOf of the three
+// QueryBuilderQuery[T]; schema-only (runtime dispatch is in QueryEnvelope.UnmarshalJSON).
+type builderQuerySpec struct{}
+
+var (
+	_ jsonschema.OneOfExposer = builderQuerySpec{}
+	_ jsonschema.Preparer     = builderQuerySpec{}
+)
+
+func (builderQuerySpec) JSONSchemaOneOf() []any {
+	return []any{
+		QueryBuilderQuery[TraceAggregation]{},
+		QueryBuilderQuery[LogAggregation]{},
+		QueryBuilderQuery[MetricAggregation]{},
+	}
 }
 
-// queryEnvelopeBuilderLog is the OpenAPI schema for a QueryEnvelope with type=builder_query and signal=logs.
-type queryEnvelopeBuilderLog struct {
-	Type QueryType                         `json:"type" description:"The type of the query."`
-	Spec QueryBuilderQuery[LogAggregation] `json:"spec" description:"The log builder query specification."`
+func (builderQuerySpec) PrepareJSONSchema(s *jsonschema.Schema) error {
+	if s.ExtraProperties == nil {
+		s.ExtraProperties = map[string]any{}
+	}
+	s.ExtraProperties["x-signoz-discriminator"] = map[string]any{
+		"propertyName": "signal",
+		"mapping": map[string]string{
+			telemetrytypes.SignalTraces.StringValue():  "#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregation",
+			telemetrytypes.SignalLogs.StringValue():    "#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregation",
+			telemetrytypes.SignalMetrics.StringValue(): "#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregation",
+		},
+	}
+	return nil
 }
 
-// queryEnvelopeBuilderMetric is the OpenAPI schema for a QueryEnvelope with type=builder_query and signal=metrics.
-type queryEnvelopeBuilderMetric struct {
-	Type QueryType                            `json:"type" description:"The type of the query."`
-	Spec QueryBuilderQuery[MetricAggregation] `json:"spec" description:"The metric builder query specification."`
+// queryEnvelopeBuilder is the OpenAPI schema for a builder_query QueryEnvelope
+// (spec is the signal-discriminated builderQuerySpec). `type` is required:"true"
+// on every variant so oapi-codegen renders the discriminator non-pointer.
+type queryEnvelopeBuilder struct {
+	Type QueryType        `json:"type" required:"true" description:"The type of the query."`
+	Spec builderQuerySpec `json:"spec" description:"The builder query specification."`
 }
 
 // queryEnvelopeFormula is the OpenAPI schema for a QueryEnvelope with type=builder_formula.
 type queryEnvelopeFormula struct {
-	Type QueryType           `json:"type" description:"The type of the query."`
+	Type QueryType           `json:"type" required:"true" description:"The type of the query."`
 	Spec QueryBuilderFormula `json:"spec" description:"The formula specification."`
 }
 
-// queryEnvelopeJoin is the OpenAPI schema for a QueryEnvelope with type=builder_join.
+// queryEnvelopeJoin (builder_join) is deferred: its aggregations are an
+// undiscriminable oneOf (see JoinAggregation in join.go). Re-add to
+// JSONSchemaOneOf and the discriminator mapping when joins are supported.
 // type queryEnvelopeJoin struct {
-// 	Type QueryType        `json:"type" description:"The type of the query."`
+// 	Type QueryType        `json:"type" required:"true" description:"The type of the query."`
 // 	Spec QueryBuilderJoin `json:"spec" description:"The join specification."`
 // }
 
 // queryEnvelopeTraceOperator is the OpenAPI schema for a QueryEnvelope with type=builder_trace_operator.
 type queryEnvelopeTraceOperator struct {
-	Type QueryType                 `json:"type" description:"The type of the query."`
+	Type QueryType                 `json:"type" required:"true" description:"The type of the query."`
 	Spec QueryBuilderTraceOperator `json:"spec" description:"The trace operator specification."`
 }
 
 // queryEnvelopePromQL is the OpenAPI schema for a QueryEnvelope with type=promql.
 type queryEnvelopePromQL struct {
-	Type QueryType `json:"type" description:"The type of the query."`
+	Type QueryType `json:"type" required:"true" description:"The type of the query."`
 	Spec PromQuery `json:"spec" description:"The PromQL query specification."`
 }
 
 // queryEnvelopeClickHouseSQL is the OpenAPI schema for a QueryEnvelope with type=clickhouse_sql.
 type queryEnvelopeClickHouseSQL struct {
-	Type QueryType       `json:"type" description:"The type of the query."`
+	Type QueryType       `json:"type" required:"true" description:"The type of the query."`
 	Spec ClickHouseQuery `json:"spec" description:"The ClickHouse SQL query specification."`
 }
 
 var _ jsonschema.OneOfExposer = QueryEnvelope{}
 
-// JSONSchemaOneOf returns the oneOf variants for the QueryEnvelope discriminated union.
-// Each variant represents a different query type with its corresponding spec schema.
+// JSONSchemaOneOf returns the variants of the QueryEnvelope discriminated union.
 func (QueryEnvelope) JSONSchemaOneOf() []any {
 	return []any{
-		queryEnvelopeBuilderTrace{},
-		queryEnvelopeBuilderLog{},
-		queryEnvelopeBuilderMetric{},
+		queryEnvelopeBuilder{},
 		queryEnvelopeFormula{},
-		// queryEnvelopeJoin{},
+		// queryEnvelopeJoin{}, // deferred — see commented queryEnvelopeJoin above
 		queryEnvelopeTraceOperator{},
 		queryEnvelopePromQL{},
 		queryEnvelopeClickHouseSQL{},
 	}
+}
+
+var _ jsonschema.Preparer = QueryEnvelope{}
+
+// PrepareJSONSchema marks the envelope as a `type`-discriminated union;
+// signoz.attachDiscriminators promotes it and strips the base properties.
+func (QueryEnvelope) PrepareJSONSchema(s *jsonschema.Schema) error {
+	if s.ExtraProperties == nil {
+		s.ExtraProperties = map[string]any{}
+	}
+	s.ExtraProperties["x-signoz-discriminator"] = map[string]any{
+		"propertyName": "type",
+		"mapping": map[string]string{
+			QueryTypeBuilder.StringValue():       "#/components/schemas/Querybuildertypesv5QueryEnvelopeBuilder",
+			QueryTypeFormula.StringValue():       "#/components/schemas/Querybuildertypesv5QueryEnvelopeFormula",
+			QueryTypeTraceOperator.StringValue(): "#/components/schemas/Querybuildertypesv5QueryEnvelopeTraceOperator",
+			QueryTypePromQL.StringValue():        "#/components/schemas/Querybuildertypesv5QueryEnvelopePromQL",
+			QueryTypeClickHouseSQL.StringValue(): "#/components/schemas/Querybuildertypesv5QueryEnvelopeClickHouseSQL",
+		},
+	}
+	return nil
 }
 
 // implement custom json unmarshaler for the QueryEnvelope.
@@ -90,7 +135,7 @@ func (q *QueryEnvelope) UnmarshalJSON(data []byte) error {
 		Type QueryType       `json:"type"`
 		Spec json.RawMessage `json:"spec"`
 	}
-	if err := UnmarshalJSONWithSuggestions(data, &shadow); err != nil {
+	if err := binding.JSON.BindBody(bytes.NewReader(data), &shadow, binding.WithDisallowUnknownFields(true)); err != nil {
 		return err
 	}
 
@@ -107,40 +152,39 @@ func (q *QueryEnvelope) UnmarshalJSON(data []byte) error {
 
 	case QueryTypeFormula:
 		var spec QueryBuilderFormula
-		// TODO(srikanthccv): use json.Unmarshal here after implementing custom unmarshaler for QueryBuilderFormula
-		if err := UnmarshalJSONWithContext(shadow.Spec, &spec, "formula spec"); err != nil {
-			return wrapUnmarshalError(err, "invalid formula spec: %v", err)
+		if err := json.Unmarshal(shadow.Spec, &spec); err != nil {
+			return err
 		}
 		q.Spec = spec
 
 	case QueryTypeJoin:
 		var spec QueryBuilderJoin
 		// TODO(srikanthccv): use json.Unmarshal here after implementing custom unmarshaler for QueryBuilderJoin
-		if err := UnmarshalJSONWithContext(shadow.Spec, &spec, "join spec"); err != nil {
-			return wrapUnmarshalError(err, "invalid join spec: %v", err)
+		if err := binding.JSON.BindBody(bytes.NewReader(shadow.Spec), &spec, binding.WithDisallowUnknownFields(true), binding.WithUnknownFieldContext("join spec")); err != nil {
+			return err
 		}
 		q.Spec = spec
 
 	case QueryTypeTraceOperator:
 		var spec QueryBuilderTraceOperator
 		if err := json.Unmarshal(shadow.Spec, &spec); err != nil {
-			return wrapUnmarshalError(err, "invalid trace operator spec: %v", err)
+			return err
 		}
 		q.Spec = spec
 
 	case QueryTypePromQL:
 		var spec PromQuery
 		// TODO(srikanthccv): use json.Unmarshal here after implementing custom unmarshaler for PromQuery
-		if err := UnmarshalJSONWithContext(shadow.Spec, &spec, "PromQL spec"); err != nil {
-			return wrapUnmarshalError(err, "invalid PromQL spec: %v", err)
+		if err := binding.JSON.BindBody(bytes.NewReader(shadow.Spec), &spec, binding.WithDisallowUnknownFields(true), binding.WithUnknownFieldContext("PromQL spec")); err != nil {
+			return err
 		}
 		q.Spec = spec
 
 	case QueryTypeClickHouseSQL:
 		var spec ClickHouseQuery
 		// TODO(srikanthccv): use json.Unmarshal here after implementing custom unmarshaler for ClickHouseQuery
-		if err := UnmarshalJSONWithContext(shadow.Spec, &spec, "ClickHouse SQL spec"); err != nil {
-			return wrapUnmarshalError(err, "invalid ClickHouse SQL spec: %v", err)
+		if err := binding.JSON.BindBody(bytes.NewReader(shadow.Spec), &spec, binding.WithDisallowUnknownFields(true), binding.WithUnknownFieldContext("ClickHouse SQL spec")); err != nil {
+			return err
 		}
 		q.Spec = spec
 
@@ -151,7 +195,7 @@ func (q *QueryEnvelope) UnmarshalJSON(data []byte) error {
 			shadow.Type,
 		).WithAdditional(
 			"Valid query types are: builder_query, builder_sub_query, builder_formula, builder_join, builder_trace_operator, promql, clickhouse_sql",
-		)
+		).WithSuggestions(errors.NewValidReferences(errors.NounQueryTypes, QueryType{}.Enum()...))
 	}
 
 	return nil
@@ -175,28 +219,27 @@ func UnmarshalBuilderQueryBySignal(data []byte) (any, error) {
 	case telemetrytypes.SignalTraces:
 		var spec QueryBuilderQuery[TraceAggregation]
 		if err := json.Unmarshal(data, &spec); err != nil {
-			return nil, wrapUnmarshalError(err, "invalid trace builder query spec: %v", err)
+			return nil, err
 		}
 		return spec, nil
 	case telemetrytypes.SignalLogs:
 		var spec QueryBuilderQuery[LogAggregation]
 		if err := json.Unmarshal(data, &spec); err != nil {
-			return nil, wrapUnmarshalError(err, "invalid log builder query spec: %v", err)
+			return nil, err
 		}
 		return spec, nil
 	case telemetrytypes.SignalMetrics:
 		var spec QueryBuilderQuery[MetricAggregation]
 		if err := json.Unmarshal(data, &spec); err != nil {
-			return nil, wrapUnmarshalError(err, "invalid metric builder query spec: %v", err)
+			return nil, err
 		}
 		return spec, nil
 	default:
 		return nil, errors.NewInvalidInputf(
 			errors.CodeInvalidInput,
-			"invalid signal %q; allowed values: %v",
+			"invalid signal %q",
 			header.Signal.StringValue(),
-			telemetrytypes.Signal{}.Enum(),
-		)
+		).WithSuggestions(errors.NewValidReferences(errors.NounSignals, telemetrytypes.Signal{}.Enum()...))
 	}
 }
 
@@ -227,36 +270,24 @@ func (c *CompositeQuery) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	// Check for unknown fields at this level
-	validFields := map[string]bool{
-		"queries": true,
+	// Valid field names are derived from the struct itself so this stays in
+	// sync with the schema (and the generated OpenAPI spec) automatically.
+	fieldNames := signozjsonschema.JSONFieldNames((*CompositeQuery)(nil))
+	validFields := make(map[string]bool, len(fieldNames))
+	for _, f := range fieldNames {
+		validFields[f] = true
 	}
 
 	for field := range check {
 		if !validFields[field] {
-			// Find closest match
-			var fieldNames []string
-			for f := range validFields {
-				fieldNames = append(fieldNames, f)
-			}
-
-			if suggestion, found := telemetrytypes.SuggestCorrection(field, fieldNames); found {
-				return errors.NewInvalidInputf(
-					errors.CodeInvalidInput,
-					"unknown field %q in composite query",
-					field,
-				).WithAdditional(
-					suggestion,
-				)
-			}
-
-			return errors.NewInvalidInputf(
+			unknownFieldErr := errors.NewInvalidInputf(
 				errors.CodeInvalidInput,
 				"unknown field %q in composite query",
 				field,
 			).WithAdditional(
 				"Valid fields are: " + strings.Join(fieldNames, ", "),
-			)
+			).WithSuggestions(errors.NewSuggestionsOnLevenshteinDistance(field, errors.NounFields, fieldNames)...)
+			return unknownFieldErr
 		}
 	}
 
@@ -286,6 +317,40 @@ func (VariableType) Enum() []any {
 type VariableItem struct {
 	Type  VariableType `json:"type"`
 	Value any          `json:"value"`
+}
+
+var _ jsonschema.Preparer = VariableItem{}
+
+// PrepareJSONSchema types `value` as a scalar-or-scalar-list instead of an
+// untyped {}. The Go field stays `any`; this only shapes the generated schema.
+func (VariableItem) PrepareJSONSchema(s *jsonschema.Schema) error {
+	if _, ok := s.Properties["value"]; !ok {
+		return nil
+	}
+
+	item := jsonschema.Schema{}
+	item.OneOf = []jsonschema.SchemaOrBool{
+		jsonschema.String.ToSchemaOrBool(),
+		jsonschema.Number.ToSchemaOrBool(),
+		jsonschema.Boolean.ToSchemaOrBool(),
+	}
+
+	list := jsonschema.Schema{}
+	list.WithType(jsonschema.Array.Type())
+	items := jsonschema.Items{}
+	items.WithSchemaOrBool(item.ToSchemaOrBool())
+	list.WithItems(items)
+
+	value := jsonschema.Schema{}
+	value.OneOf = []jsonschema.SchemaOrBool{
+		jsonschema.String.ToSchemaOrBool(),
+		jsonschema.Number.ToSchemaOrBool(),
+		jsonschema.Boolean.ToSchemaOrBool(),
+		list.ToSchemaOrBool(),
+	}
+	s.Properties["value"] = value.ToSchemaOrBool()
+
+	return nil
 }
 
 type QueryRangeRequest struct {
@@ -573,43 +638,24 @@ func (r *QueryRangeRequest) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	// Check for unknown fields at the top level
-	validFields := map[string]bool{
-		"schemaVersion":  true,
-		"start":          true,
-		"end":            true,
-		"requestType":    true,
-		"compositeQuery": true,
-		"variables":      true,
-		"noCache":        true,
-		"formatOptions":  true,
+	// Valid field names are derived from the struct itself so this stays in
+	// sync with the schema (and the generated OpenAPI spec) automatically.
+	fieldNames := signozjsonschema.JSONFieldNames((*QueryRangeRequest)(nil))
+	validFields := make(map[string]bool, len(fieldNames))
+	for _, f := range fieldNames {
+		validFields[f] = true
 	}
 
 	for field := range check {
 		if !validFields[field] {
-			// Find closest match
-			var fieldNames []string
-			for f := range validFields {
-				fieldNames = append(fieldNames, f)
-			}
-
-			if suggestion, found := telemetrytypes.SuggestCorrection(field, fieldNames); found {
-				return errors.NewInvalidInputf(
-					errors.CodeInvalidInput,
-					"unknown field %q",
-					field,
-				).WithAdditional(
-					suggestion,
-				)
-			}
-
-			return errors.NewInvalidInputf(
+			unknownFieldErr := errors.NewInvalidInputf(
 				errors.CodeInvalidInput,
 				"unknown field %q",
 				field,
 			).WithAdditional(
 				"Valid fields are: " + strings.Join(fieldNames, ", "),
-			)
+			).WithSuggestions(errors.NewSuggestionsOnLevenshteinDistance(field, errors.NounFields, fieldNames)...)
+			return unknownFieldErr
 		}
 	}
 

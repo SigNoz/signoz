@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 	"net/url"
+	"path"
 
 	"github.com/coreos/go-oidc/v3/oidc"
 	"golang.org/x/oauth2"
@@ -14,6 +15,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/authn"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/http/client"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -29,12 +31,13 @@ var scopes []string = []string{"email", "profile"}
 var _ authn.CallbackAuthN = (*AuthN)(nil)
 
 type AuthN struct {
-	store      authtypes.AuthNStore
-	settings   factory.ScopedProviderSettings
-	httpClient *client.Client
+	store        authtypes.AuthNStore
+	settings     factory.ScopedProviderSettings
+	httpClient   *client.Client
+	globalConfig global.Config
 }
 
-func New(ctx context.Context, store authtypes.AuthNStore, providerSettings factory.ProviderSettings) (*AuthN, error) {
+func New(ctx context.Context, store authtypes.AuthNStore, providerSettings factory.ProviderSettings, globalConfig global.Config) (*AuthN, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/authn/callbackauthn/googlecallbackauthn")
 
 	httpClient, err := client.New(settings.Logger(), providerSettings.TracerProvider, providerSettings.MeterProvider)
@@ -43,9 +46,10 @@ func New(ctx context.Context, store authtypes.AuthNStore, providerSettings facto
 	}
 
 	return &AuthN{
-		store:      store,
-		settings:   settings,
-		httpClient: httpClient,
+		store:        store,
+		settings:     settings,
+		httpClient:   httpClient,
+		globalConfig: globalConfig,
 	}, nil
 }
 
@@ -178,7 +182,7 @@ func (a *AuthN) oauth2Config(siteURL *url.URL, authDomain *authtypes.AuthDomain,
 		RedirectURL: (&url.URL{
 			Scheme: siteURL.Scheme,
 			Host:   siteURL.Host,
-			Path:   redirectPath,
+			Path:   path.Join(a.globalConfig.ExternalPath(), redirectPath),
 		}).String(),
 	}
 }

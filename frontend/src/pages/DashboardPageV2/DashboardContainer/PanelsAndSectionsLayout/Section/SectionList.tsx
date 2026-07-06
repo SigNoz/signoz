@@ -11,21 +11,18 @@ import {
 import type { DashboardtypesLayoutDTO } from 'api/generated/services/sigNoz.schemas';
 
 import type { DashboardSection } from '../../utils';
-import { useAddPanelToSection } from '../Panel/hooks/useAddPanelToSection';
-import { useDeletePanel } from '../Panel/hooks/useDeletePanel';
-import { useMovePanelToSection } from '../Panel/hooks/useMovePanelToSection';
 import { useDashboardStore } from '../../store/useDashboardStore';
 import { useSectionDragReorder } from './hooks/useSectionDragReorder';
 import Section from './Section/Section';
 import SectionDragPreview from './SectionDragPreview/SectionDragPreview';
 import SortableSection from './SortableSection';
 
-interface Props {
+interface SectionListProps {
 	sections: DashboardSection[];
 	layouts: DashboardtypesLayoutDTO[] | undefined | null;
 }
 
-function SectionList({ sections, layouts }: Props): JSX.Element {
+function SectionList({ sections, layouts }: SectionListProps): JSX.Element {
 	const isEditable = useDashboardStore((s) => s.isEditable);
 
 	const {
@@ -36,10 +33,6 @@ function SectionList({ sections, layouts }: Props): JSX.Element {
 		onDragEnd,
 		onDragCancel,
 	} = useSectionDragReorder({ sections, layouts });
-
-	const onAddPanel = useAddPanelToSection({ sections });
-	const onMovePanel = useMovePanelToSection({ sections });
-	const onDeletePanel = useDeletePanel({ sections });
 
 	// Only titled sections participate in reordering; untitled (free-flow)
 	// blocks render in place without a drag handle.
@@ -70,23 +63,9 @@ function SectionList({ sections, layouts }: Props): JSX.Element {
 			<SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
 				{orderedSections.map((section) =>
 					section.title ? (
-						<SortableSection
-							key={section.id}
-							section={section}
-							sections={sections}
-							onAddPanel={onAddPanel}
-							onMovePanel={onMovePanel}
-							onDeletePanel={onDeletePanel}
-						/>
+						<SortableSection key={section.id} section={section} sections={sections} />
 					) : (
-						<Section
-							key={section.id}
-							section={section}
-							sections={sections}
-							onAddPanel={onAddPanel}
-							onMovePanel={onMovePanel}
-							onDeletePanel={onDeletePanel}
-						/>
+						<Section key={section.id} section={section} sections={sections} />
 					),
 				)}
 			</SortableContext>

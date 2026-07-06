@@ -82,7 +82,7 @@ export function K8sEmptyState({
 						<span className={styles.message}>
 							Please refer to{' '}
 							<a
-								href="https://signoz.io/docs/userguide/hostmetrics/"
+								href="https://signoz.io/docs/infrastructure-monitoring/hostmetrics/"
 								target="_blank"
 								rel="noreferrer"
 							>

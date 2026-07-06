@@ -1,7 +1,7 @@
 import React, { RefObject, useCallback, useMemo, useRef } from 'react';
 import { generateColorPair } from 'pages/TraceDetailsV3/utils/generateColorPair';
 import { useTraceStore } from 'pages/TraceDetailsV3/stores/traceStore';
-import { FlamegraphSpan } from 'types/api/trace/getTraceFlamegraph';
+import { SpantypesFlamegraphSpanDTO as FlamegraphSpan } from 'api/generated/services/sigNoz.schemas';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 
 import { ConnectorLine } from '../computeVisualLayout';
@@ -200,7 +200,7 @@ function drawConnectorLines(args: DrawConnectorLinesArgs): void {
 		}
 
 		const groupValue = getFlamegraphSpanGroupValue(
-			{ serviceName: conn.serviceName, resource: conn.resource },
+			{ resource: conn.resource },
 			colorByField,
 		);
 		const pair = generateColorPair(groupValue);

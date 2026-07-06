@@ -4,15 +4,18 @@ import (
 	"bytes"
 	"crypto/rand"
 	"encoding/json"
+	"fmt"
+	"regexp"
+	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/tagtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/perses/spec/go/common"
 	"k8s.io/apimachinery/pkg/util/validation"
 )
 
@@ -31,7 +34,7 @@ const (
 	DSLKeyUpdatedAt   DSLKey = "updated_at"
 	DSLKeyCreatedBy   DSLKey = "created_by"
 	DSLKeyLocked      DSLKey = "locked"
-	DSLKeyPublic      DSLKey = "public"
+	DSLKeySource      DSLKey = "source"
 )
 
 // reservedDSLKeys are dashboard column-level filter names in the list-query DSL.
@@ -44,7 +47,7 @@ var reservedDSLKeys = map[DSLKey]struct{}{
 	DSLKeyUpdatedAt:   {},
 	DSLKeyCreatedBy:   {},
 	DSLKeyLocked:      {},
-	DSLKeyPublic:      {},
+	DSLKeySource:      {},
 }
 
 type DashboardV2 struct {
@@ -62,9 +65,16 @@ type DashboardV2 struct {
 	Spec DashboardSpec   `json:"spec" required:"true"`
 }
 
-func (d *DashboardV2) CanUpdate() error {
+func (d *DashboardV2) ErrIfNotMutable() error {
 	if d.Source == SourceIntegration {
 		return errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardImmutable, "integration dashboards cannot be modified")
+	}
+	return nil
+}
+
+func (d *DashboardV2) ErrIfNotUpdatable() error {
+	if err := d.ErrIfNotMutable(); err != nil {
+		return err
 	}
 	if d.Locked {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot update a locked dashboard, please unlock the dashboard to update")
@@ -73,7 +83,7 @@ func (d *DashboardV2) CanUpdate() error {
 }
 
 func (d *DashboardV2) Update(updatable UpdatableDashboardV2, updatedBy string, resolvedTags []*tagtypes.Tag) error {
-	if err := d.CanUpdate(); err != nil {
+	if err := d.ErrIfNotUpdatable(); err != nil {
 		return err
 	}
 	if updatable.Name != d.Name {
@@ -87,7 +97,7 @@ func (d *DashboardV2) Update(updatable UpdatableDashboardV2, updatedBy string, r
 	return nil
 }
 
-func (d *DashboardV2) CanLockUnlock(isAdmin bool, updatedBy string) error {
+func (d *DashboardV2) ErrIfNotLockable(isAdmin bool, updatedBy string) error {
 	if d.Source == SourceIntegration {
 		return errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardImmutable, "integration dashboards cannot be locked or unlocked")
 	}
@@ -101,13 +111,68 @@ func (d *DashboardV2) CanLockUnlock(isAdmin bool, updatedBy string) error {
 }
 
 func (d *DashboardV2) LockUnlock(lock bool, isAdmin bool, updatedBy string) error {
-	if err := d.CanLockUnlock(isAdmin, updatedBy); err != nil {
+	if err := d.ErrIfNotLockable(isAdmin, updatedBy); err != nil {
 		return err
 	}
 	d.Locked = lock
 	d.UpdatedBy = updatedBy
 	d.UpdatedAt = time.Now()
 	return nil
+}
+
+func (d *DashboardV2) ErrIfNotDeletable() error {
+	if d.Locked {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot delete a locked dashboard, please unlock the dashboard to delete")
+	}
+	if !d.Source.isUserDeletable() {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardImmutable, "%s dashboards cannot be deleted", d.Source)
+	}
+	return nil
+}
+
+func (d *DashboardV2) ErrIfNotClonable() error {
+	if !d.Source.isClonable() {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardImmutable, "%s dashboards cannot be cloned", d.Source)
+	}
+	return nil
+}
+
+func (d DashboardV2) ToPostableForCloning() PostableDashboardV2 {
+	spec := d.Spec
+	spec.Display.Name = nextCloneDisplayName(spec.Display.Name)
+	return PostableDashboardV2{
+		DashboardV2MetadataBase: d.DashboardV2MetadataBase,
+		GenerateName:            true,
+		Tags:                    tagtypes.NewPostableTagsFromTags(d.Tags),
+		Spec:                    spec,
+	}
+}
+
+// cloneCopySuffixRegex matches a " - Copy" or " - Copy (n)" suffix on a display name.
+var cloneCopySuffixRegex = regexp.MustCompile(`^(.*) - Copy(?: \((\d+)\))?$`)
+
+// nextCloneDisplayName appends " - Copy" to a clone's display name, bumping an
+// existing " - Copy (n)" counter, then truncates the base to fit MaxDisplayNameLen.
+func nextCloneDisplayName(name string) string {
+	base, count := name, 0
+	if m := cloneCopySuffixRegex.FindStringSubmatch(name); m != nil {
+		base = m[1]
+		count = 1 // bare " - Copy"
+		if m[2] != "" {
+			count, _ = strconv.Atoi(m[2])
+		}
+	}
+
+	suffix := " - Copy"
+	if count++; count > 1 {
+		suffix = fmt.Sprintf(" - Copy (%d)", count)
+	}
+
+	limit := max(MaxDisplayNameLen-utf8.RuneCountInString(suffix), 0)
+	if runes := []rune(base); len(runes) > limit {
+		base = strings.TrimRight(string(runes[:limit]), " ")
+	}
+	return base + suffix
 }
 
 type DashboardV2MetadataBase struct {
@@ -158,9 +223,6 @@ func (p *PostableDashboardV2) UnmarshalJSON(data []byte) error {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "%s", err.Error())
 	}
 	*p = PostableDashboardV2(tmp)
-	if p.Spec.Display == nil {
-		p.Spec.Display = &common.Display{}
-	}
 	if !p.GenerateName && p.Spec.Display.Name == "" {
 		p.Spec.Display.Name = p.Name
 	}
@@ -187,7 +249,7 @@ func (p *PostableDashboardV2) validateName() error {
 	if p.Name != "" {
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "name must be empty when generateName is true, got %q", p.Name)
 	}
-	if p.Spec.Display == nil || p.Spec.Display.Name == "" {
+	if p.Spec.Display.Name == "" {
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.display.name is required when generateName is true")
 	}
 	return nil
@@ -331,9 +393,6 @@ func (u *UpdatableDashboardV2) UnmarshalJSON(data []byte) error {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "%s", err.Error())
 	}
 	*u = UpdatableDashboardV2(tmp)
-	if u.Spec.Display == nil {
-		u.Spec.Display = &common.Display{}
-	}
 	if u.Spec.Display.Name == "" {
 		u.Spec.Display.Name = u.Name
 	}

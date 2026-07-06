@@ -45,9 +45,13 @@ type Setter interface {
 	// invite
 	CreateBulkInvite(ctx context.Context, orgID valuer.UUID, identityID valuer.UUID, identityEmail valuer.Email, bulkInvites *types.PostableBulkInviteRequest) ([]*types.Invite, error)
 
+	// Creates a pending invite user with the roles given via opts and emails them the invite link.
+	CreatePendingInviteUser(ctx context.Context, identityID valuer.UUID, identityEmail valuer.Email, frontendBaseURL string, user *types.User, opts ...CreateUserOption) (*types.User, error)
+
 	// Roles
 	UpdateUserRoles(ctx context.Context, orgID, userID valuer.UUID, finalRoleNames []string) error
-	AddUserRole(ctx context.Context, orgID, userID valuer.UUID, roleName string) error
+	AddUserRole(ctx context.Context, orgID, userID valuer.UUID, roleName string) (*authtypes.UserRole, error)
+	AddUserRoleByRoleID(ctx context.Context, orgID, userID valuer.UUID, roleID valuer.UUID) (*authtypes.UserRole, error)
 	RemoveUserRole(ctx context.Context, orgID, userID valuer.UUID, roleID valuer.UUID) error
 
 	statsreporter.StatsCollector
@@ -89,11 +93,14 @@ type Getter interface {
 	// Gets user_role with roles entries from db
 	GetRolesByUserID(ctx context.Context, userID valuer.UUID) ([]*authtypes.UserRole, error)
 
+	// Gets a single user role by org id and id.
+	GetUserRoleByOrgIDAndID(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*authtypes.UserRole, error)
+
 	// Gets all the user with role using role id in an org id
 	GetUsersByOrgIDAndRoleID(ctx context.Context, orgID valuer.UUID, roleID valuer.UUID) ([]*types.User, error)
 
 	// OnBeforeRoleDelete checks if any users are assigned to the role and rejects deletion if so.
-	OnBeforeRoleDelete(ctx context.Context, orgID valuer.UUID, roleID valuer.UUID) error
+	OnBeforeRoleDelete(ctx context.Context, orgID valuer.UUID, roleID valuer.UUID, roleName string) error
 
 	// VerifyResetPasswordToken checks if a reset password token exists and is not expired.
 	VerifyResetPasswordToken(ctx context.Context, token string) error
@@ -107,6 +114,7 @@ type Handler interface {
 	// users
 	ListUsersDeprecated(http.ResponseWriter, *http.Request)
 	ListUsers(http.ResponseWriter, *http.Request)
+	CreateUser(http.ResponseWriter, *http.Request)
 	UpdateUserDeprecated(http.ResponseWriter, *http.Request)
 	UpdateUser(http.ResponseWriter, *http.Request)
 	DeleteUser(http.ResponseWriter, *http.Request)
@@ -120,6 +128,11 @@ type Handler interface {
 	RemoveUserRoleByRoleID(http.ResponseWriter, *http.Request)
 	GetUsersByRoleID(http.ResponseWriter, *http.Request)
 
+	// user roles
+	CreateUserRole(http.ResponseWriter, *http.Request)
+	GetUserRole(http.ResponseWriter, *http.Request)
+	DeleteUserRole(http.ResponseWriter, *http.Request)
+
 	// Reset Password
 	GetResetPasswordTokenDeprecated(http.ResponseWriter, *http.Request)
 	GetResetPasswordToken(http.ResponseWriter, *http.Request)
@@ -129,3 +142,6 @@ type Handler interface {
 	ChangePassword(http.ResponseWriter, *http.Request)
 	ForgotPassword(http.ResponseWriter, *http.Request)
 }
+
+// OnDeleteUser lets other modules clean up data tied to a deleted user.
+type OnDeleteUser func(ctx context.Context, orgID valuer.UUID, userID valuer.UUID) error

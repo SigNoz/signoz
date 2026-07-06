@@ -37,7 +37,7 @@ export const handleExportRawDataPOST = (
 	params?: HandleExportRawDataPOSTParams,
 	signal?: AbortSignal,
 ) => {
-	return GeneratedAPIInstance<string>({
+	return GeneratedAPIInstance<void>({
 		url: `/api/v1/export_raw_data`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
