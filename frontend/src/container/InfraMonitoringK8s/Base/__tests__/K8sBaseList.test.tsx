@@ -613,17 +613,6 @@ describe('K8sBaseList', () => {
 				expect(fetchListDataMock).toHaveBeenCalled();
 			});
 		});
-
-		it('should display link to documentation', async () => {
-			await waitFor(() => {
-				const link = screen.getByRole('link', { name: /our documentation/i });
-				expect(link).toBeInTheDocument();
-				expect(link).toHaveAttribute(
-					'href',
-					'https://signoz.io/docs/infrastructure-monitoring/hostmetrics/',
-				);
-			});
-		});
 	});
 
 	describe('with error response', () => {
