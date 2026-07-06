@@ -25,5 +25,6 @@ export const definition: PanelDefinition<'signoz/TablePanel'> = {
 		createAlert: false,
 		// V1 parity: only tables (and lists) expose the header search box.
 		search: true,
+		drilldown: true,
 	},
 };

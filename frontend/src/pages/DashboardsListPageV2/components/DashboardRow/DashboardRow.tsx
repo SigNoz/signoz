@@ -1,4 +1,4 @@
-import { Badge } from '@signozhq/ui/badge';
+import TagBadge from 'components/TagBadge/TagBadge';
 import { Button } from '@signozhq/ui/button';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
@@ -105,14 +105,10 @@ function DashboardRow({
 					{tags.length > 0 && (
 						<div className={styles.tags}>
 							{tags.slice(0, 3).map((tag) => (
-								<Badge className={styles.tag} key={tag}>
-									{tag}
-								</Badge>
+								<TagBadge key={tag}>{tag}</TagBadge>
 							))}
 							{tags.length > 3 && (
-								<Badge className={styles.tag} key={tags[3]}>
-									+ <Typography.Text> {tags.length - 3} </Typography.Text>
-								</Badge>
+								<TagBadge key={tags[3]}>+{tags.length - 3}</TagBadge>
 							)}
 						</div>
 					)}
