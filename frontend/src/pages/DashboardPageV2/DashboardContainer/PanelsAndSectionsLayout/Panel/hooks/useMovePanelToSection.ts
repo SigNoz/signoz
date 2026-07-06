@@ -1,9 +1,9 @@
 import { useCallback } from 'react';
 
-import { patchDashboardV2 } from 'api/generated/services/dashboard';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 
+import { useOptimisticPatch } from '../../../hooks/useOptimisticPatch';
 import { movePanelBetweenSectionsOps } from '../../../patchOps';
 import { useDashboardStore } from '../../../store/useDashboardStore';
 import type { DashboardSection } from '../../../utils';
@@ -27,7 +27,7 @@ export function useMovePanelToSection({
 	sections,
 }: Params): (args: MovePanelArgs) => Promise<void> {
 	const dashboardId = useDashboardStore((s) => s.dashboardId);
-	const refetch = useDashboardStore((s) => s.refetch);
+	const { patchAsync } = useOptimisticPatch();
 	const { showErrorModal } = useErrorModal();
 
 	return useCallback(
@@ -60,8 +60,7 @@ export function useMovePanelToSection({
 			const targetItems = [...target.items, { ...moved, x: 0, y: nextY }];
 
 			try {
-				await patchDashboardV2(
-					{ id: dashboardId },
+				await patchAsync(
 					movePanelBetweenSectionsOps({
 						sourceIndex: fromLayoutIndex,
 						sourceItems,
@@ -69,11 +68,10 @@ export function useMovePanelToSection({
 						targetItems,
 					}),
 				);
-				refetch();
 			} catch (error) {
 				showErrorModal(error as APIError);
 			}
 		},
-		[sections, dashboardId, refetch, showErrorModal],
+		[sections, dashboardId, patchAsync, showErrorModal],
 	);
 }

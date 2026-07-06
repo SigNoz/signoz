@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { ChevronDown, ChevronRight } from '@signozhq/icons';
-import type { AuthZResource, AuthZVerb } from 'hooks/useAuthZ/types';
+import type { AuthZResource, AuthZVerb } from 'lib/authz/hooks/useAuthZ/types';
 
 import { Typography } from '@signozhq/ui/typography';
 

@@ -173,6 +173,149 @@ def test_create_rejects_too_many_tags(
     assert response.json()["error"]["code"] == "dashboard_invalid_input"
 
 
+def test_create_rejects_long_display_name(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    # Display names are bounded at 128 characters; one over must be rejected.
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json={
+            "schemaVersion": "v6",
+            "name": "long-display-name",
+            "spec": {"display": {"name": "x" * 129}},
+        },
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.json()["error"]["code"] == "dashboard_invalid_input"
+    assert "spec.display.name: dashboard name must be at most 128 characters" in response.json()["error"]["message"]
+
+
+def test_create_rejects_invalid_grid_layout(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    def panel(name: str) -> dict:
+        return {
+            "kind": "Panel",
+            "spec": {
+                "display": {"name": name},
+                "plugin": {"kind": "signoz/TablePanel", "spec": {}},
+                "queries": [
+                    {
+                        "kind": "time_series",
+                        "spec": {
+                            "plugin": {
+                                "kind": "signoz/BuilderQuery",
+                                "spec": {
+                                    "name": "A",
+                                    "signal": "logs",
+                                    "aggregations": [{"expression": "count()"}],
+                                },
+                            }
+                        },
+                    }
+                ],
+            },
+        }
+
+    # Two grid items reference valid, distinct panels but share cells, so the
+    # overlap is the only violation.
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json={
+            "schemaVersion": "v6",
+            "name": "rejects-overlap",
+            "spec": {
+                "display": {"name": "Rejects Overlap"},
+                "panels": {"p1": panel("P1"), "p2": panel("P2")},
+                "layouts": [
+                    {
+                        "kind": "Grid",
+                        "spec": {
+                            "items": [
+                                {"x": 0, "y": 0, "width": 6, "height": 6, "content": {"$ref": "#/spec/panels/p1"}},
+                                {"x": 3, "y": 3, "width": 6, "height": 6, "content": {"$ref": "#/spec/panels/p2"}},
+                            ]
+                        },
+                    }
+                ],
+            },
+            "tags": [],
+        },
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.json()["error"]["code"] == "dashboard_invalid_input"
+    assert "overlap" in response.json()["error"]["message"]
+
+    # One panel placed by two grid items (side by side, so they clear the overlap
+    # check first). The frontend keys grid items by panel id, so this is rejected.
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json={
+            "schemaVersion": "v6",
+            "name": "rejects-multiref",
+            "spec": {
+                "display": {"name": "Rejects Multiref"},
+                "panels": {"p1": panel("P1")},
+                "layouts": [
+                    {
+                        "kind": "Grid",
+                        "spec": {
+                            "items": [
+                                {"x": 0, "y": 0, "width": 6, "height": 6, "content": {"$ref": "#/spec/panels/p1"}},
+                                {"x": 6, "y": 0, "width": 6, "height": 6, "content": {"$ref": "#/spec/panels/p1"}},
+                            ]
+                        },
+                    }
+                ],
+            },
+            "tags": [],
+        },
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.json()["error"]["code"] == "dashboard_invalid_input"
+    assert "already placed" in response.json()["error"]["message"]
+
+    # More grid items than allowed. The item-count check runs before the
+    # panel-ref check, so content-less items suffice here.
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json={
+            "schemaVersion": "v6",
+            "name": "rejects-too-many-items",
+            "spec": {
+                "display": {"name": "Rejects Too Many"},
+                "layouts": [
+                    {
+                        "kind": "Grid",
+                        "spec": {"items": [{"x": 0, "y": 0, "width": 1, "height": 1} for _ in range(101)]},
+                    }
+                ],
+            },
+            "tags": [],
+        },
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.json()["error"]["code"] == "dashboard_invalid_input"
+    assert "maximum" in response.json()["error"]["message"]
+
+
 @pytest.mark.parametrize(
     "params",
     [
@@ -447,6 +590,28 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
         "Epsilon Metrics",
         "Zeta Overview",
     }
+    # top-level tags = org-wide distinct tag set, sorted case-insensitively
+    # by (key, value). Asserting the exact list (not a set) locks in the sort.
+    assert body["data"]["tags"] == [
+        {"key": "env", "value": "dev"},
+        {"key": "env", "value": "prod"},
+        {"key": "env", "value": "staging"},
+        {"key": "team", "value": "metrics"},
+        {"key": "team", "value": "pulse"},
+        {"key": "team", "value": "storage"},
+        {"key": "tier", "value": "critical"},
+    ]
+    # reserved keywords = the filterable column-level DSL keys, sorted
+    # alphabetically. Static (independent of the dashboards), so this is the
+    # full expected set.
+    assert body["data"]["reservedKeywords"] == [
+        "created_at",
+        "created_by",
+        "description",
+        "locked",
+        "name",
+        "updated_at",
+    ]
 
     # ── stage 4: filter DSL ──────────────────────────────────────────────────
     cases = [
@@ -747,7 +912,7 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
         "Zeta Overview",
     }
 
-    # ── stage 11: clone keeps the display name but mints a new, retrievable one ─
+    # ── stage 11: clone suffixes the display name and mints a new, retrievable one ─
     response = requests.post(
         signoz.self.host_configs["8080"].get(f"{BASE_URL}/{ids['lc-alpha']}/clone"),
         headers={"Authorization": f"Bearer {token}"},
@@ -757,7 +922,7 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
     clone = response.json()["data"]
     assert clone["id"] != ids["lc-alpha"]
     assert clone["name"] != "lc-alpha"  # internal name is regenerated
-    assert clone["spec"]["display"]["name"] == "Alpha Overview"  # display name preserved
+    assert clone["spec"]["display"]["name"] == "Alpha Overview - Copy"  # Copy suffix appended
     assert clone["source"] == "user"
     assert clone["locked"] is False
 
@@ -1238,3 +1403,83 @@ def test_dashboard_v2_get_by_metric_name(
     assert sorted(by_dashboard[d1_id]) == ["D1 builder target"]
     assert sorted(by_dashboard[d2_id]) == ["D2 clickhouse target", "D2 promql target"]
     assert sorted(by_dashboard[d3_id]) == ["D3 promql target"]
+
+
+# ─── aggregation expression validation ───────────────────────────────────────
+
+
+def test_dashboard_v2_rejects_comma_separated_aggregation(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    """The querier never splits aggregation expressions, so each aggregation entry must
+    be a single function call. A comma-separated expression ("count(), sum(...)") is
+    rejected at create time; the pre-split form of the same panel is accepted."""
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    def make_dashboard(aggregations: list[dict]) -> dict:
+        return {
+            "schemaVersion": "v6",
+            "name": f"agg-{uuid.uuid4().hex[:8]}",
+            "tags": [],
+            "spec": {
+                "display": {"name": "Aggregation"},
+                "panels": {
+                    "p-agg": {
+                        "kind": "Panel",
+                        "spec": {
+                            "display": {"name": "agg"},
+                            "plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
+                            "queries": [
+                                {
+                                    "kind": "time_series",
+                                    "spec": {
+                                        "plugin": {
+                                            "kind": "signoz/BuilderQuery",
+                                            "spec": {"name": "A", "signal": "logs", "aggregations": aggregations},
+                                        }
+                                    },
+                                }
+                            ],
+                        },
+                    }
+                },
+            },
+        }
+
+    # a single comma-separated expression is rejected
+    rejected = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json=make_dashboard([{"expression": "count(), sum(latency_ms)"}]),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert rejected.status_code == HTTPStatus.BAD_REQUEST, rejected.text
+    assert "single function call" in rejected.text, rejected.text
+
+    # the pre-split form of the same panel is accepted
+    accepted = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json=make_dashboard([{"expression": "count()"}, {"expression": "sum(latency_ms)"}]),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert accepted.status_code == HTTPStatus.CREATED, accepted.text
+
+    # a single call whose string literal contains parentheses is accepted (the check
+    # parses rather than counting "word(", so it does not mistake ')...(' for a second call)
+    literal_parens = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json=make_dashboard([{"expression": "countIf(body = 'a)b(c)')"}]),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert literal_parens.status_code == HTTPStatus.CREATED, literal_parens.text
+
+    for dashboard_id in (accepted.json()["data"]["id"], literal_parens.json()["data"]["id"]):
+        requests.delete(
+            signoz.self.host_configs["8080"].get(f"{BASE_URL}/{dashboard_id}"),
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        )

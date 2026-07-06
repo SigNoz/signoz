@@ -30,6 +30,7 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import GetMinMax from 'lib/getMinMax';
 import getTimeString from 'lib/getTimeString';
 import history from 'lib/history';
+import { stackSeries } from 'container/DashboardContainer/visualization/charts/utils/stackSeriesUtils';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
 import { isEmpty } from 'lodash-es';
@@ -57,6 +58,7 @@ function TimeSeriesView({
 	dataSource,
 	setWarning,
 	panelType = PANEL_TYPES.TIME_SERIES,
+	stackBarChart = false,
 }: TimeSeriesViewProps): JSX.Element {
 	const graphRef = useRef<HTMLDivElement>(null);
 
@@ -65,10 +67,22 @@ function TimeSeriesView({
 	const location = useLocation();
 	const { currentQuery } = useQueryBuilder();
 
-	const chartData = useMemo(
+	const rawChartData = useMemo(
 		() => getUPlotChartData(data?.payload),
 		[data?.payload],
 	);
+
+	const { chartData, stackedBands } = useMemo(() => {
+		if (!stackBarChart || !rawChartData || rawChartData.length < 2) {
+			return { chartData: rawChartData, stackedBands: null };
+		}
+		const noSeriesHidden = (): boolean => false;
+		const { data: stacked, bands } = stackSeries(
+			rawChartData as uPlot.AlignedData,
+			noSeriesHidden,
+		);
+		return { chartData: stacked, stackedBands: bands };
+	}, [rawChartData, stackBarChart]);
 
 	useEffect(() => {
 		if (data?.payload) {
@@ -189,7 +203,7 @@ function TimeSeriesView({
 
 	const { timezone } = useTimezone();
 
-	const chartOptions = getUPlotChartOptions({
+	const baseChartOptions = getUPlotChartOptions({
 		id: 'time-series-explorer',
 		onDragSelect,
 		yAxisUnit: yAxisUnit || '',
@@ -221,6 +235,14 @@ function TimeSeriesView({
 			legendScrollPositionRef.current = position;
 		},
 	});
+
+	const chartOptions = useMemo(
+		() =>
+			stackedBands
+				? { ...baseChartOptions, bands: stackedBands }
+				: baseChartOptions,
+		[baseChartOptions, stackedBands],
+	);
 
 	return (
 		<div className="time-series-view">
@@ -282,6 +304,7 @@ interface TimeSeriesViewProps {
 	dataSource: DataSource;
 	setWarning?: Dispatch<SetStateAction<Warning | undefined>>;
 	panelType?: PANEL_TYPES;
+	stackBarChart?: boolean;
 }
 
 TimeSeriesView.defaultProps = {
@@ -290,6 +313,7 @@ TimeSeriesView.defaultProps = {
 	error: undefined,
 	setWarning: undefined,
 	panelType: PANEL_TYPES.TIME_SERIES,
+	stackBarChart: false,
 };
 
 export default TimeSeriesView;
