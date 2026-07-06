@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Button } from '@signozhq/ui/button';
+import { Typography } from '@signozhq/ui/typography';
 import { ArrowRight, TriangleAlert } from '@signozhq/icons';
 import { useListUnmappedLLMModels } from 'api/generated/services/llmpricingrules';
 import useComponentPermission from 'hooks/useComponentPermission';
@@ -15,10 +16,6 @@ import {
 	type UnpricedModelMapping,
 } from './hooks/useUnpricedModelMapping';
 
-// "Unpriced models" tab: models seen in traces (gen_ai.request.model) that no
-// pricing rule matches. Each row picks an existing billing model to map onto;
-// a single top-level Save commits every pick at once (after a confirm dialog),
-// appending each model name as a match pattern to its chosen rule.
 function UnpricedModelsTab(): JSX.Element {
 	const { data, isLoading, isError } = useListUnmappedLLMModels();
 
@@ -30,8 +27,6 @@ function UnpricedModelsTab(): JSX.Element {
 
 	const models: UnpricedModel[] = useMemo(() => data?.data?.items || [], [data]);
 
-	// modelName -> the rule picked in that row's dropdown. Holds the full rule
-	// (the per-row dropdown searches server-side, so there's no global lookup map).
 	const [selections, setSelections] = useState<Record<string, PricingRule>>({});
 	const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 	const { mapModels, isSaving } = useUnpricedModelMapping();
@@ -43,8 +38,6 @@ function UnpricedModelsTab(): JSX.Element {
 		[],
 	);
 
-	// Only rows still present in the list with a selection are committable; built
-	// from `models` so the order is stable and stale keys (mapped-away models) drop.
 	const mappings: UnpricedModelMapping[] = useMemo(
 		() =>
 			models
@@ -73,11 +66,11 @@ function UnpricedModelsTab(): JSX.Element {
 		<div className={styles.unpricedModelsTab}>
 			<div className={styles.toolbar}>
 				<div className={styles.banner}>
-					<TriangleAlert size={16} className={styles.bannerIcon} />
-					<span>
+					<TriangleAlert size="sm" className={styles.bannerIcon} />
+					<Typography.Text as="span" size="small" color="warning">
 						Models detected in traces without pricing. Add costs so estimated cost can
 						be computed.
-					</span>
+					</Typography.Text>
 				</div>
 
 				{canManagePricing && (
@@ -97,8 +90,10 @@ function UnpricedModelsTab(): JSX.Element {
 			</div>
 
 			{isError && (
-				<div className={styles.error} role="alert">
-					Failed to load unpriced models. Please try again.
+				<div className={styles.error}>
+					<Typography.Text as="p" size="small" color="danger" role="alert">
+						Failed to load unpriced models. Please try again.
+					</Typography.Text>
 				</div>
 			)}
 

@@ -162,11 +162,6 @@ export const validatePricing = (
 	return true;
 };
 
-// ─── Unpriced-models helpers ─────────────────────────────────────────────────
-
-// Compact span count for the "Spans" badge, e.g. 1234 → "1.2K", 1_200_000 → "1.2M".
-// Intl compact rounds cleanly at the magnitude boundary (999,999 → "1M", not the
-// "1000.0K" a manual divide would produce) and drops trailing ".0" (1000 → "1K").
 const spanCountFormatter = new Intl.NumberFormat('en', {
 	notation: 'compact',
 	maximumFractionDigits: 1,
@@ -181,11 +176,6 @@ export const getRuleOptionLabel = (rule: PricingRule): string =>
 		rule.pricing?.input,
 	)}/${formatPricePerMillion(rule.pricing?.output)})`;
 
-// Builds the CreateOrUpdate payload that maps unpriced models onto an existing
-// rule by appending their names as match patterns. Several models can map onto
-// the same rule in one save, so all new names are appended in a single payload —
-// committing them one PUT at a time would clobber each other. The rule's other
-// fields (pricing, provider, etc.) are preserved so the overwrite doesn't wipe them.
 export const buildPatternMappingPayload = (
 	rule: PricingRule,
 	modelNames: string[],
