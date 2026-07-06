@@ -11,6 +11,7 @@ import {
 	clearFilterFromQuery,
 } from './checkboxFilterQuery';
 import { CheckedState } from '../../types';
+import { SectionType } from './v2/itemRules';
 
 interface UseCheckboxFilterActionsProps {
 	filter: IQuickFiltersConfig;
@@ -26,6 +27,7 @@ interface UseCheckboxFilterActionsReturn {
 		checked: boolean,
 		isOnlyOrAllClicked: boolean,
 		previousState?: CheckedState,
+		sectionType?: SectionType,
 	) => void;
 	onClear: () => void;
 }
@@ -56,6 +58,7 @@ function useCheckboxFilterActions({
 		checked: boolean,
 		isOnlyOrAllClicked: boolean,
 		previousState?: CheckedState,
+		sectionType?: SectionType,
 	): void => {
 		dispatch(
 			applyCheckboxToggle({
@@ -68,6 +71,7 @@ function useCheckboxFilterActions({
 				checked,
 				isOnlyOrAllClicked,
 				previousState,
+				sectionType,
 			}),
 		);
 	};

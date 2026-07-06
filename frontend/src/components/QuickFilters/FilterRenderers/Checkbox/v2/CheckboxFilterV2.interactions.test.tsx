@@ -141,7 +141,8 @@ describe('CheckboxFilterV2 - interactions', () => {
 			);
 
 			await screen.findByTestId('checkbox-value-row-production');
-			expect(screen.getByTestId('badge-related')).toBeInTheDocument();
+			// Related values now appear in "Related" section (no badge, uses divider instead)
+			expect(screen.getByTestId('section-divider-related')).toBeInTheDocument();
 
 			const searchInput = screen.getByTestId('checkbox-filter-search');
 			await user.type(searchInput, 'prod');
@@ -150,11 +151,100 @@ describe('CheckboxFilterV2 - interactions', () => {
 				expect(
 					screen.queryByTestId('checkbox-value-row-staging'),
 				).not.toBeInTheDocument();
+				expect(
+					screen.getByTestId('checkbox-value-row-production'),
+				).toBeInTheDocument();
 			});
+		});
 
-			expect(
-				screen.getByTestId('checkbox-value-row-production'),
-			).toBeInTheDocument();
+		it('shows search_results section when searching with existingQuery', async () => {
+			const user = userEvent.setup();
+
+			server.use(
+				rest.get('http://localhost/api/v1/fields/values', (req, res, ctx) => {
+					const searchText = req.url.searchParams.get('searchText') || '';
+
+					return res(
+						ctx.status(200),
+						ctx.json({
+							status: 'success',
+							data: {
+								values: {
+									relatedValues: [],
+									stringValues: searchText === '' ? ['prod', 'staging'] : ['prod-match'],
+									numberValues: [],
+								},
+							},
+						}),
+					);
+				}),
+			);
+
+			render(
+				<CheckboxFilterV2
+					filter={DEFAULT_FILTER}
+					source={QuickFiltersSource.TRACES_EXPLORER}
+					useFieldApis={{
+						...DEFAULT_USE_FIELD_APIS,
+						existingQuery: 'service.name = "api"',
+					}}
+				/>,
+			);
+
+			await screen.findByTestId('checkbox-value-row-prod');
+
+			const searchInput = screen.getByTestId('checkbox-filter-search');
+			await user.type(searchInput, 'prod');
+
+			await waitFor(() => {
+				expect(screen.getByTestId('section-search_results')).toBeInTheDocument();
+				expect(
+					screen.getByTestId('checkbox-value-row-prod-match'),
+				).toBeInTheDocument();
+			});
+		});
+
+		it('shows empty search results message when no matches found', async () => {
+			const user = userEvent.setup();
+
+			server.use(
+				rest.get('http://localhost/api/v1/fields/values', (req, res, ctx) => {
+					const searchText = req.url.searchParams.get('searchText') || '';
+
+					return res(
+						ctx.status(200),
+						ctx.json({
+							status: 'success',
+							data: {
+								values: {
+									relatedValues: [],
+									stringValues: searchText === '' ? ['prod', 'staging'] : [],
+									numberValues: [],
+								},
+							},
+						}),
+					);
+				}),
+			);
+
+			render(
+				<CheckboxFilterV2
+					filter={DEFAULT_FILTER}
+					source={QuickFiltersSource.TRACES_EXPLORER}
+					useFieldApis={DEFAULT_USE_FIELD_APIS}
+				/>,
+			);
+
+			await screen.findByTestId('checkbox-value-row-prod');
+
+			const searchInput = screen.getByTestId('checkbox-filter-search');
+			await user.type(searchInput, 'xyz-no-match');
+
+			await waitFor(() => {
+				expect(
+					screen.getByTestId('checkbox-filter-no-search-results'),
+				).toBeInTheDocument();
+			});
 		});
 	});
 
@@ -402,7 +492,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 			expect(onFilterChange).toHaveBeenCalled();
 		});
 
-		it('creates IN filter when toggling indeterminate (related) item with no existing filter', async () => {
+		it('creates NOT IN filter when unchecking related item with no existing filter', async () => {
 			const user = userEvent.setup();
 			const onFilterChange = jest.fn();
 
@@ -411,17 +501,18 @@ describe('CheckboxFilterV2 - interactions', () => {
 				stringValues: ['valueB'],
 			});
 
-			// Start with no filter, toggle indeterminate A → should create IN
+			// Start with no filter, related items show as checked
+			// Clicking unchecks them → creates NOT IN filter to exclude
 			renderWithFilter(onFilterChange);
 
 			const rowA = await screen.findByTestId('checkbox-value-row-valueA');
-			expect(rowA).toHaveAttribute('data-state', 'indeterminate');
+			expect(rowA).toHaveAttribute('data-state', 'checked');
 
 			await user.click(within(rowA).getByRole('checkbox'));
 
 			expect(onFilterChange).toHaveBeenCalledTimes(1);
 			const filter = getFilterFromCall(onFilterChange);
-			expect(filter?.op).toBe('in');
+			expect(filter?.op).toBe('not in');
 			expect(filter?.value).toBe('valueA');
 		});
 
@@ -448,7 +539,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 			expect(filter?.value).toBe('valueB');
 		});
 
-		it('accumulates both values in IN when toggling indeterminate (related) then unchecked (other)', async () => {
+		it('accumulates both values in IN when toggling checked (related) then unchecked (other)', async () => {
 			const user = userEvent.setup();
 			const onFilterChange = jest.fn();
 
@@ -475,7 +566,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 			expect(filter?.value).toStrictEqual(['valueA', 'valueB']);
 		});
 
-		it('adds to NOT IN when toggling indeterminate (related) with existing NOT IN filter', async () => {
+		it('adds to NOT IN when toggling checked (related) with existing NOT IN filter', async () => {
 			const user = userEvent.setup();
 			const onFilterChange = jest.fn();
 
@@ -488,15 +579,46 @@ describe('CheckboxFilterV2 - interactions', () => {
 			renderWithFilter(onFilterChange, { op: 'not in', value: ['valueB'] });
 
 			const rowA = await screen.findByTestId('checkbox-value-row-valueA');
-			expect(rowA).toHaveAttribute('data-state', 'indeterminate');
+			// Related values show as checked
+			expect(rowA).toHaveAttribute('data-state', 'checked');
 
-			// Toggle A (indeterminate -> should add to NOT IN)
+			// Toggle A (checked -> should add to NOT IN)
 			await user.click(within(rowA).getByRole('checkbox'));
 
 			expect(onFilterChange).toHaveBeenCalledTimes(1);
 			const filter = getFilterFromCall(onFilterChange);
 			expect(filter?.op).toBe('not in');
 			expect(filter?.value).toStrictEqual(['valueB', 'valueA']);
+		});
+
+		it('creates NOT IN for single value when toggling related item with existing IN filter', async () => {
+			const user = userEvent.setup();
+			const onFilterChange = jest.fn();
+
+			mockFieldsValuesAPI({
+				relatedValues: ['relatedValue'],
+				stringValues: ['otherValue'],
+			});
+
+			// Start with IN filter for otherValue (Selected section)
+			// relatedValue is in Related section (checked visually)
+			renderWithFilter(onFilterChange, { op: 'in', value: ['otherValue'] });
+
+			const selectedRow = await screen.findByTestId(
+				'checkbox-value-row-otherValue',
+			);
+			expect(selectedRow).toHaveAttribute('data-state', 'checked');
+
+			const relatedRow = screen.getByTestId('checkbox-value-row-relatedValue');
+			expect(relatedRow).toHaveAttribute('data-state', 'checked');
+
+			// Toggle related item (checked -> should create NOT IN with just this value)
+			await user.click(within(relatedRow).getByRole('checkbox'));
+
+			expect(onFilterChange).toHaveBeenCalledTimes(1);
+			const filter = getFilterFromCall(onFilterChange);
+			expect(filter?.op).toBe('not in');
+			expect(filter?.value).toBe('relatedValue');
 		});
 	});
 

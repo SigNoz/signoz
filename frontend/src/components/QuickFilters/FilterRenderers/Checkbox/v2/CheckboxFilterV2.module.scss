@@ -32,7 +32,19 @@
 .values {
 	display: flex;
 	flex-direction: column;
+}
+
+.sectionValues {
+	display: flex;
+	flex-direction: column;
 	gap: var(--spacing-4);
+}
+
+.loadingValues {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: var(--spacing-6) 0;
 }
 
 .loadingMore {

@@ -39,15 +39,6 @@ describe('CheckboxFilterV2ValueRow', () => {
 			const row = screen.getByTestId('checkbox-value-row-production');
 			expect(row).toHaveAttribute('data-state', 'checked');
 		});
-
-		it('sets data-state="indeterminate" for indeterminate state', () => {
-			render(
-				<CheckboxFilterV2ValueRow {...defaultProps} checkedState="indeterminate" />,
-			);
-
-			const row = screen.getByTestId('checkbox-value-row-production');
-			expect(row).toHaveAttribute('data-state', 'indeterminate');
-		});
 	});
 
 	describe('badge variations', () => {
@@ -289,18 +280,6 @@ describe('CheckboxFilterV2ValueRow', () => {
 			);
 
 			expect(screen.getByTestId('badge-not_in')).toBeInTheDocument();
-		});
-
-		it('indeterminate + related badge', () => {
-			render(
-				<CheckboxFilterV2ValueRow
-					{...defaultProps}
-					checkedState="indeterminate"
-					badge={{ key: 'related', label: 'Related', color: 'robin' }}
-				/>,
-			);
-
-			expect(screen.getByTestId('badge-related')).toBeInTheDocument();
 		});
 
 		it('disabled + badge still shows badge', () => {

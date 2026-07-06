@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { BadgeConfig, deriveItems } from './itemRules';
+import { BadgeConfig, deriveItems, SectionType } from './itemRules';
 import { CheckedState } from '../../../types';
 
 interface SectionedValuesInput {
@@ -16,14 +16,47 @@ interface SectionedValuesInput {
 
 export interface SectionedItem {
 	value: string;
-	orderIndex: number;
+	section: SectionType;
 	badge: BadgeConfig | null;
 	checkedState: CheckedState;
 }
 
+export interface Section {
+	type: SectionType;
+	items: SectionedItem[];
+}
+
 interface SectionedValuesOutput {
-	sectionedItems: SectionedItem[];
+	sections: Section[];
 	totalCount: number;
+}
+
+const SECTION_ORDER: SectionType[] = [
+	SectionType.SELECTED,
+	SectionType.RELATED,
+	SectionType.ALL_VALUES,
+	SectionType.SEARCH_RESULTS,
+];
+
+function buildSelectedSet(
+	currentFilterState: Record<string, boolean>,
+	isSomeFilterPresentForCurrentAttribute: boolean,
+	isNotInOperator: boolean,
+): Set<string> {
+	const selectedSet = new Set<string>();
+	if (!isSomeFilterPresentForCurrentAttribute) {
+		return selectedSet;
+	}
+
+	for (const [val, isChecked] of Object.entries(currentFilterState)) {
+		// NOT IN: unchecked = explicitly excluded
+		// IN: checked = explicitly selected
+		const shouldAdd = isNotInOperator ? !isChecked : isChecked;
+		if (shouldAdd) {
+			selectedSet.add(val);
+		}
+	}
+	return selectedSet;
 }
 
 export function useSectionedValues({
@@ -38,46 +71,25 @@ export function useSectionedValues({
 }: SectionedValuesInput): SectionedValuesOutput {
 	const items = useMemo(() => {
 		const allUniqueValues = Array.from(new Set([...relatedValues, ...allValues]));
-
-		// When searching, only use allValues (API filtered)
 		const valuesToProcess = searchText ? allValues : allUniqueValues;
 
-		// Build selected set based on operator
-		// Only populate when filter exists for this key
-		const selectedSet = new Set<string>();
-		if (isSomeFilterPresentForCurrentAttribute) {
-			for (const [val, isChecked] of Object.entries(currentFilterState)) {
-				if (isNotInOperator) {
-					// NOT IN: unchecked = explicitly excluded
-					if (!isChecked) {
-						selectedSet.add(val);
-					}
-				} else {
-					// IN: checked = explicitly selected
-					if (isChecked) {
-						selectedSet.add(val);
-					}
-				}
-			}
-		}
+		const selectedSet = buildSelectedSet(
+			currentFilterState,
+			isSomeFilterPresentForCurrentAttribute,
+			isNotInOperator,
+		);
 
-		// Always include selected values at top - they may not be in API response
-		// (e.g., NOT IN filter excludes them from results)
+		// Include selected values at top - may not be in API response
 		const finalValues = [
 			...new Set([...Array.from(selectedSet), ...valuesToProcess]),
 		];
-
 		const relatedSet = new Set(relatedValues);
 
-		const derived = deriveItems(finalValues, relatedSet, selectedSet, {
+		return deriveItems(finalValues, relatedSet, selectedSet, {
 			isNotInOperator,
 			hasExistingQuery,
 			hasFilterForThisKey: isSomeFilterPresentForCurrentAttribute,
 		});
-
-		return derived.sort(
-			(a, b) => a.orderIndex - b.orderIndex || a.value.localeCompare(b.value),
-		);
 	}, [
 		relatedValues,
 		allValues,
@@ -88,10 +100,67 @@ export function useSectionedValues({
 		searchText,
 	]);
 
-	const sectionedItems = useMemo(
-		() => items.slice(0, visibleItemsCount),
-		[items, visibleItemsCount],
-	);
+	const sections = useMemo(() => {
+		// Group items by section
+		const sectionMap = new Map<SectionType, SectionedItem[]>();
+		for (const sectionType of SECTION_ORDER) {
+			sectionMap.set(sectionType, []);
+		}
 
-	return { sectionedItems, totalCount: items.length };
+		const isSearching = !!searchText;
+
+		for (const item of items) {
+			if (isSearching) {
+				// During search: only show SELECTED if there's an actual filter for this key
+				// Otherwise all items go to SEARCH_RESULTS
+				const keepInSelected =
+					isSomeFilterPresentForCurrentAttribute &&
+					item.section === SectionType.SELECTED;
+
+				if (keepInSelected) {
+					sectionMap.get(SectionType.SELECTED)?.push(item);
+				} else {
+					sectionMap.get(SectionType.SEARCH_RESULTS)?.push(item);
+				}
+			} else {
+				sectionMap.get(item.section)?.push(item);
+			}
+		}
+
+		// Sort items within each section alphabetically
+		for (const sectionItems of sectionMap.values()) {
+			sectionItems.sort((a, b) => a.value.localeCompare(b.value));
+		}
+
+		// Apply visibleItemsCount across all sections
+		let remaining = visibleItemsCount;
+		const result: Section[] = [];
+
+		for (const sectionType of SECTION_ORDER) {
+			const sectionItems = sectionMap.get(sectionType) || [];
+
+			// Always include SEARCH_RESULTS when searching (for loading/empty feedback)
+			const forceInclude =
+				isSearching && sectionType === SectionType.SEARCH_RESULTS;
+
+			if (sectionItems.length === 0 && !forceInclude) {
+				continue;
+			}
+
+			const itemsToTake = Math.min(sectionItems.length, remaining);
+			if (itemsToTake === 0 && !forceInclude) {
+				break;
+			}
+
+			result.push({
+				type: sectionType,
+				items: sectionItems.slice(0, itemsToTake),
+			});
+			remaining -= itemsToTake;
+		}
+
+		return result;
+	}, [items, searchText, visibleItemsCount]);
+
+	return { sections, totalCount: items.length };
 }

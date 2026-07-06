@@ -1,5 +1,12 @@
 import { CheckedState } from '../../../types';
 
+export enum SectionType {
+	SELECTED = 'selected',
+	RELATED = 'related',
+	ALL_VALUES = 'all_values',
+	SEARCH_RESULTS = 'search_results',
+}
+
 export interface BadgeConfig {
 	key: string;
 	label: string;
@@ -7,7 +14,7 @@ export interface BadgeConfig {
 }
 
 export interface ItemConfig {
-	orderIndex: number;
+	section: SectionType;
 	badge: BadgeConfig | null;
 	checkedState: CheckedState;
 }
@@ -30,45 +37,48 @@ interface ItemRule {
 }
 
 const ITEM_RULES: ItemRule[] = [
+	// No existing query and no filter → all checked (selected section)
 	{
 		condition: (ctx): boolean =>
 			!ctx.hasExistingQuery && !ctx.hasFilterForThisKey,
-		config: { orderIndex: 0, badge: null, checkedState: 'checked' },
+		config: {
+			section: SectionType.SELECTED,
+			badge: null,
+			checkedState: 'checked',
+		},
 	},
+	// Selected with NOT IN operator → unchecked, no badge
 	{
 		condition: (ctx): boolean => ctx.isSelectedOnFilter && ctx.isNotInOperator,
 		config: {
-			orderIndex: 0,
-			badge: { key: 'not_in', label: 'Not in', color: 'warning' },
+			section: SectionType.SELECTED,
+			badge: null,
 			checkedState: 'unchecked',
 		},
 	},
+	// Selected with IN operator → checked
 	{
 		condition: (ctx): boolean => ctx.isSelectedOnFilter && !ctx.isNotInOperator,
-		config: { orderIndex: 0, badge: null, checkedState: 'checked' },
-	},
-	{
-		condition: (ctx): boolean =>
-			ctx.hasExistingQuery && !ctx.hasFilterForThisKey && ctx.isInRelatedValues,
 		config: {
-			orderIndex: 1,
-			badge: { key: 'related', label: 'Related', color: 'robin' },
-			checkedState: 'indeterminate',
+			section: SectionType.SELECTED,
+			badge: null,
+			checkedState: 'checked',
 		},
 	},
+	// Related values (from existing query) → checked
 	{
-		condition: (ctx): boolean =>
-			ctx.hasExistingQuery && ctx.hasFilterForThisKey && ctx.isInRelatedValues,
+		condition: (ctx): boolean => ctx.hasExistingQuery && ctx.isInRelatedValues,
 		config: {
-			orderIndex: 1,
-			badge: { key: 'related', label: 'Related', color: 'robin' },
-			checkedState: 'indeterminate',
+			section: SectionType.RELATED,
+			badge: null,
+			checkedState: 'checked',
 		},
 	},
+	// All values (has existing query but not related) → unchecked
 	{
 		condition: (ctx): boolean => ctx.hasExistingQuery,
 		config: {
-			orderIndex: 2,
+			section: SectionType.ALL_VALUES,
 			badge: null,
 			checkedState: 'unchecked',
 		},
@@ -77,7 +87,7 @@ const ITEM_RULES: ItemRule[] = [
 
 // Fallback when no rule matches
 const DEFAULT_CONFIG: ItemConfig = {
-	orderIndex: 0,
+	section: SectionType.SELECTED,
 	badge: null,
 	checkedState: 'checked',
 };

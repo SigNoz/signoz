@@ -37,13 +37,18 @@ describe('CheckboxFilterV2 - item rules', () => {
 			expect(productionRow).toHaveAttribute('data-state', 'checked');
 			expect(stagingRow).toHaveAttribute('data-state', 'checked');
 
-			expect(screen.queryByTestId('badge-related')).not.toBeInTheDocument();
-			expect(screen.queryByTestId('badge-other')).not.toBeInTheDocument();
+			// No section dividers when no existing query (all in "selected" section)
+			expect(
+				screen.queryByTestId('section-divider-related'),
+			).not.toBeInTheDocument();
+			expect(
+				screen.queryByTestId('section-divider-all-values'),
+			).not.toBeInTheDocument();
 		});
 	});
 
 	describe('with existing query (related values)', () => {
-		it('shows "Related" badge with indeterminate state for values in relatedValues', async () => {
+		it('shows related values in "Related" section with checked state', async () => {
 			mockFieldsValuesAPI({
 				relatedValues: ['production'],
 				stringValues: ['staging', 'development'],
@@ -80,14 +85,17 @@ describe('CheckboxFilterV2 - item rules', () => {
 			);
 			expect(within(productionRow).getByText('production')).toBeInTheDocument();
 
-			expect(screen.getByTestId('badge-related')).toBeInTheDocument();
-			expect(productionRow).toHaveAttribute('data-state', 'indeterminate');
+			// Related values show as checked in "Related" section
+			expect(screen.getByTestId('section-divider-related')).toBeInTheDocument();
+			expect(productionRow).toHaveAttribute('data-state', 'checked');
 
+			// Other values show as unchecked in "All values" section
+			expect(screen.getByTestId('section-divider-all-values')).toBeInTheDocument();
 			const stagingRow = screen.getByTestId('checkbox-value-row-staging');
 			expect(stagingRow).toHaveAttribute('data-state', 'unchecked');
 		});
 
-		it('shows no badge for values not in relatedValues (unchecked state)', async () => {
+		it('shows no badge for values not in relatedValues (unchecked state in All values section)', async () => {
 			mockFieldsValuesAPI({
 				relatedValues: ['production'],
 				stringValues: ['staging'],
@@ -125,7 +133,7 @@ describe('CheckboxFilterV2 - item rules', () => {
 			expect(within(stagingRow).queryByTestId(/^badge-/)).not.toBeInTheDocument();
 		});
 
-		it('shows "Related" badge with indeterminate when hasFilterForThisKey=true and isInRelatedValues=true (Rule 5)', async () => {
+		it('shows related values as checked when hasFilterForThisKey=true and isInRelatedValues=true', async () => {
 			mockFieldsValuesAPI({
 				relatedValues: ['production', 'staging'],
 				stringValues: ['development'],
@@ -166,14 +174,16 @@ describe('CheckboxFilterV2 - item rules', () => {
 				},
 			);
 
+			// production is selected - in selected section
 			const productionRow = await screen.findByTestId(
 				'checkbox-value-row-production',
 			);
 			expect(productionRow).toHaveAttribute('data-state', 'checked');
 
+			// staging is related - in related section with checked state
 			const stagingRow = screen.getByTestId('checkbox-value-row-staging');
-			expect(stagingRow).toHaveAttribute('data-state', 'indeterminate');
-			expect(within(stagingRow).getByTestId('badge-related')).toBeInTheDocument();
+			expect(stagingRow).toHaveAttribute('data-state', 'checked');
+			expect(screen.getByTestId('section-divider-related')).toBeInTheDocument();
 		});
 	});
 
@@ -228,7 +238,7 @@ describe('CheckboxFilterV2 - item rules', () => {
 	});
 
 	describe('selected values with NOT IN operator', () => {
-		it('shows "Not in" badge with unchecked state for NOT_IN-selected values', async () => {
+		it('shows unchecked state with no badge for NOT_IN-selected values', async () => {
 			mockFieldsValuesAPI({
 				stringValues: ['production', 'staging'],
 			});
@@ -268,7 +278,9 @@ describe('CheckboxFilterV2 - item rules', () => {
 				'checkbox-value-row-production',
 			);
 			expect(productionRow).toHaveAttribute('data-state', 'unchecked');
-			expect(screen.getByTestId('badge-not_in')).toBeInTheDocument();
+			expect(
+				within(productionRow).queryByTestId(/^badge-/),
+			).not.toBeInTheDocument();
 
 			const stagingRow = screen.getByTestId('checkbox-value-row-staging');
 			expect(stagingRow).toHaveAttribute('data-state', 'unchecked');
@@ -276,8 +288,8 @@ describe('CheckboxFilterV2 - item rules', () => {
 		});
 	});
 
-	describe('ordering by orderIndex', () => {
-		it('orders selected values (orderIndex 0) before related (orderIndex 1) before other (orderIndex 2)', async () => {
+	describe('section ordering', () => {
+		it('orders selected section before related section before other section', async () => {
 			mockFieldsValuesAPI({
 				relatedValues: ['related-value'],
 				stringValues: ['other-value', 'selected-value'],
@@ -330,7 +342,7 @@ describe('CheckboxFilterV2 - item rules', () => {
 			expect(values[2]).toBe('other-value');
 		});
 
-		it('sorts alphabetically within same orderIndex', async () => {
+		it('sorts alphabetically within same section', async () => {
 			mockFieldsValuesAPI({
 				relatedValues: ['zebra', 'alpha', 'mike'],
 				stringValues: [],
@@ -421,9 +433,10 @@ describe('CheckboxFilterV2 - item rules', () => {
 			expect(selectedRow).toHaveAttribute('data-state', 'checked');
 			expect(within(selectedRow).queryByTestId(/^badge-/)).not.toBeInTheDocument();
 
+			// Related values now show as checked
 			const relatedRow = screen.getByTestId('checkbox-value-row-related-env');
-			expect(relatedRow).toHaveAttribute('data-state', 'indeterminate');
-			expect(within(relatedRow).getByTestId('badge-related')).toBeInTheDocument();
+			expect(relatedRow).toHaveAttribute('data-state', 'checked');
+			expect(screen.getByTestId('section-divider-related')).toBeInTheDocument();
 
 			const otherRow = screen.getByTestId('checkbox-value-row-other-env');
 			expect(otherRow).toHaveAttribute('data-state', 'unchecked');
@@ -475,11 +488,12 @@ describe('CheckboxFilterV2 - item rules', () => {
 				'checkbox-value-row-excluded-env',
 			);
 			expect(excludedRow).toHaveAttribute('data-state', 'unchecked');
-			expect(within(excludedRow).getByTestId('badge-not_in')).toBeInTheDocument();
+			expect(within(excludedRow).queryByTestId(/^badge-/)).not.toBeInTheDocument();
 
+			// Related values show as checked
 			const relatedRow = screen.getByTestId('checkbox-value-row-related-env');
-			expect(relatedRow).toHaveAttribute('data-state', 'indeterminate');
-			expect(within(relatedRow).getByTestId('badge-related')).toBeInTheDocument();
+			expect(relatedRow).toHaveAttribute('data-state', 'checked');
+			expect(screen.getByTestId('section-divider-related')).toBeInTheDocument();
 		});
 	});
 });

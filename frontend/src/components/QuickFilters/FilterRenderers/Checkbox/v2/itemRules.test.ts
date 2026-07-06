@@ -1,8 +1,8 @@
-import { deriveItemConfig, ItemContext } from './itemRules';
+import { deriveItemConfig, ItemContext, SectionType } from './itemRules';
 
 describe('itemRules', () => {
 	describe('deriveItemConfig', () => {
-		it('no query at all → orderIndex 0, no badge', () => {
+		it('no query at all → section selected, no badge', () => {
 			const ctx: ItemContext = {
 				isSelectedOnFilter: false,
 				isInRelatedValues: true,
@@ -13,11 +13,11 @@ describe('itemRules', () => {
 
 			const result = deriveItemConfig(ctx);
 
-			expect(result.orderIndex).toBe(0);
+			expect(result.section).toBe(SectionType.SELECTED);
 			expect(result.badge).toBeNull();
 		});
 
-		it('selected + IN operator → orderIndex 0, no badge', () => {
+		it('selected + IN operator → section selected, no badge', () => {
 			const ctx: ItemContext = {
 				isSelectedOnFilter: true,
 				isInRelatedValues: true,
@@ -28,11 +28,11 @@ describe('itemRules', () => {
 
 			const result = deriveItemConfig(ctx);
 
-			expect(result.orderIndex).toBe(0);
+			expect(result.section).toBe(SectionType.SELECTED);
 			expect(result.badge).toBeNull();
 		});
 
-		it('selected + NOT IN operator → orderIndex 0, not_in badge', () => {
+		it('selected + NOT IN operator → section selected, no badge, unchecked', () => {
 			const ctx: ItemContext = {
 				isSelectedOnFilter: true,
 				isInRelatedValues: false,
@@ -43,15 +43,12 @@ describe('itemRules', () => {
 
 			const result = deriveItemConfig(ctx);
 
-			expect(result.orderIndex).toBe(0);
-			expect(result.badge).toStrictEqual({
-				key: 'not_in',
-				label: 'Not in',
-				color: 'warning',
-			});
+			expect(result.section).toBe(SectionType.SELECTED);
+			expect(result.badge).toBeNull();
+			expect(result.checkedState).toBe('unchecked');
 		});
 
-		it('has query, no filter for this key, in related → orderIndex 1, related badge', () => {
+		it('has query, not selected, in related → section related, checked', () => {
 			const ctx: ItemContext = {
 				isSelectedOnFilter: false,
 				isInRelatedValues: true,
@@ -62,15 +59,12 @@ describe('itemRules', () => {
 
 			const result = deriveItemConfig(ctx);
 
-			expect(result.orderIndex).toBe(1);
-			expect(result.badge).toStrictEqual({
-				key: 'related',
-				label: 'Related',
-				color: 'robin',
-			});
+			expect(result.section).toBe(SectionType.RELATED);
+			expect(result.badge).toBeNull();
+			expect(result.checkedState).toBe('checked');
 		});
 
-		it('has query, has filter for this key, in related → orderIndex 1, related badge', () => {
+		it('has query, has filter for this key, in related → section related, checked', () => {
 			const ctx: ItemContext = {
 				isSelectedOnFilter: false,
 				isInRelatedValues: true,
@@ -81,15 +75,12 @@ describe('itemRules', () => {
 
 			const result = deriveItemConfig(ctx);
 
-			expect(result.orderIndex).toBe(1);
-			expect(result.badge).toStrictEqual({
-				key: 'related',
-				label: 'Related',
-				color: 'robin',
-			});
+			expect(result.section).toBe(SectionType.RELATED);
+			expect(result.badge).toBeNull();
+			expect(result.checkedState).toBe('checked');
 		});
 
-		it('has query, not in related → orderIndex 2, no badge', () => {
+		it('has query, not in related → section all_values, unchecked', () => {
 			const ctx: ItemContext = {
 				isSelectedOnFilter: false,
 				isInRelatedValues: false,
@@ -100,11 +91,12 @@ describe('itemRules', () => {
 
 			const result = deriveItemConfig(ctx);
 
-			expect(result.orderIndex).toBe(2);
+			expect(result.section).toBe(SectionType.ALL_VALUES);
 			expect(result.badge).toBeNull();
+			expect(result.checkedState).toBe('unchecked');
 		});
 
-		it('has query + filter for key, not selected, not in related → orderIndex 2, no badge', () => {
+		it('has query + filter for key, not selected, not in related → section all_values, unchecked', () => {
 			const ctx: ItemContext = {
 				isSelectedOnFilter: false,
 				isInRelatedValues: false,
@@ -115,8 +107,9 @@ describe('itemRules', () => {
 
 			const result = deriveItemConfig(ctx);
 
-			expect(result.orderIndex).toBe(2);
+			expect(result.section).toBe(SectionType.ALL_VALUES);
 			expect(result.badge).toBeNull();
+			expect(result.checkedState).toBe('unchecked');
 		});
 
 		it('no query but has filter for key, not selected → fallback to checked (DEFAULT_CONFIG)', () => {
@@ -130,7 +123,7 @@ describe('itemRules', () => {
 
 			const result = deriveItemConfig(ctx);
 
-			expect(result.orderIndex).toBe(0);
+			expect(result.section).toBe(SectionType.SELECTED);
 			expect(result.badge).toBeNull();
 			expect(result.checkedState).toBe('checked');
 		});

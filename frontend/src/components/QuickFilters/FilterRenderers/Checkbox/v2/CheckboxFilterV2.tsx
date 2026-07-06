@@ -23,7 +23,7 @@ import { useExistingQuery } from './useExistingQuery';
 import { isKeyMatch } from '../utils';
 
 import { CheckboxFilterV2Header } from './CheckboxFilterV2Header';
-import { CheckboxFilterV2ValueRow } from './CheckboxFilterV2ValueRow';
+import { CheckboxFilterV2Section } from './CheckboxFilterV2Section';
 import { useSectionedValues } from './useSectionedValues';
 
 import styles from './CheckboxFilterV2.module.scss';
@@ -123,7 +123,7 @@ export default function CheckboxFilterV2(
 
 	const isNotInOperator = NON_SELECTED_OPERATORS.includes(currentFilterOp || '');
 
-	const { sectionedItems, totalCount } = useSectionedValues({
+	const { sections, totalCount } = useSectionedValues({
 		relatedValues,
 		allValues,
 		currentFilterState,
@@ -171,54 +171,46 @@ export default function CheckboxFilterV2(
 						/>
 					</section>
 
-					{totalCount > 0 && (
+					{(totalCount > 0 || searchText) && (
 						<section className={styles.values}>
-							{sectionedItems.map(({ value, badge, checkedState }) => {
-								const isChecked = checkedState === 'checked';
-
-								return (
-									<CheckboxFilterV2ValueRow
-										key={value}
-										value={value}
-										checkedState={checkedState}
-										disabled={isFilterDisabled}
-										title={filter.title}
-										badge={badge}
-										onlyButtonLabel={
-											isSomeFilterPresentForCurrentAttribute
-												? isChecked && !isMultipleValuesTrueForTheKey
-													? 'All'
-													: 'Only'
-												: 'Only'
-										}
-										customRendererForValue={filter.customRendererForValue}
-										onCheckboxChange={(checked, previousState): void =>
-											onChange(value, checked, false, previousState)
-										}
-										onOnlyOrAllClick={(): void => onChange(value, isChecked, true)}
-									/>
-								);
-							})}
+							{sections.map((section, index) => (
+								<CheckboxFilterV2Section
+									key={section.type}
+									section={section}
+									index={index}
+									searchText={searchText}
+									isLoading={isLoading}
+									isFetching={isFetching}
+									isFilterDisabled={isFilterDisabled}
+									filter={filter}
+									isSomeFilterPresentForCurrentAttribute={
+										isSomeFilterPresentForCurrentAttribute
+									}
+									isMultipleValuesTrueForTheKey={isMultipleValuesTrueForTheKey}
+									onChange={onChange}
+								/>
+							))}
 						</section>
 					)}
 
-					{totalCount === 0 && hasLoadedOnce.current && (
+					{totalCount === 0 && !searchText && hasLoadedOnce.current && (
 						<section className={styles.noData} data-testid="checkbox-filter-empty">
 							<Typography.Text>No values found</Typography.Text>
 						</section>
 					)}
 
-					{visibleItemsCount < totalCount && (
-						<section className={styles.showMore}>
-							<Typography.Text
-								className={styles.showMoreText}
-								onClick={onShowMore}
-								data-testid="checkbox-filter-show-more"
-							>
-								Show More...
-							</Typography.Text>
-						</section>
-					)}
+					{visibleItemsCount < totalCount &&
+						!(searchText && (isLoading || isFetching)) && (
+							<section className={styles.showMore}>
+								<Typography.Text
+									className={styles.showMoreText}
+									onClick={onShowMore}
+									data-testid="checkbox-filter-show-more"
+								>
+									Show More...
+								</Typography.Text>
+							</section>
+						)}
 				</>
 			)}
 		</div>
