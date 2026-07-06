@@ -17,7 +17,7 @@ const noPermissions = {
 	error: null,
 	permissions: null,
 	allowed: false,
-	deniedPermissions: [],
+	deniedPermissions: [] as BrandedPermission[],
 	refetchPermissions: jest.fn(),
 };
 
@@ -162,11 +162,11 @@ describe('AuthZTooltip — multi-check (checks array)', () => {
 			</AuthZTooltip>,
 		);
 
-		expect(screen.getByRole('button', { name: 'Action' })).toBeDisabled();
+		const button = screen.getByRole('button', { name: 'Action' });
+		expect(button).toBeDisabled();
 
-		const wrapper = screen.getByRole('button', { name: 'Action' }).parentElement;
-		expect(wrapper?.getAttribute('data-denied-permissions')).toContain(sa);
-		expect(wrapper?.getAttribute('data-denied-permissions')).toContain(
+		expect(button.getAttribute('data-denied-permissions')).toContain(sa);
+		expect(button.getAttribute('data-denied-permissions')).toContain(
 			attachRolePerm,
 		);
 	});

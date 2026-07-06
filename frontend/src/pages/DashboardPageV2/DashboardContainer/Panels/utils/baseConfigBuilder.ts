@@ -178,11 +178,11 @@ export function mapThresholds(
 }
 
 /**
- * Smallest per-query step interval, fed to uPlot so tick density matches the
+ * Smallest per-query step interval (seconds), fed to uPlot so tick density matches the
  * densest query. Falls back to `undefined` (uPlot "auto") on an empty map, since
  * `Math.min` returns `Infinity` there and would corrupt scale math.
  */
-function minStepInterval(
+export function minStepInterval(
 	stepIntervals: Record<string, number>,
 ): number | undefined {
 	const values = Object.values(stepIntervals);

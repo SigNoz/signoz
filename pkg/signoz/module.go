@@ -86,9 +86,10 @@ type Modules struct {
 	MetricsExplorer     metricsexplorer.Module
 	MetricReductionRule metricreductionrule.Module
 	InfraMonitoring     inframonitoring.Module
-	Promote             promote.Module
-	ServiceAccount      serviceaccount.Module
-	CloudIntegration    cloudintegration.Module
+	Promote              promote.Module
+	ServiceAccount       serviceaccount.Module
+	ServiceAccountGetter serviceaccount.Getter
+	CloudIntegration     cloudintegration.Module
 	LogsPipeline        logspipeline.Module
 	RuleStateHistory    rulestatehistory.Module
 	TraceDetail         tracedetail.Module
@@ -117,6 +118,7 @@ func NewModules(
 	userGetter user.Getter,
 	userRoleStore authtypes.UserRoleStore,
 	serviceAccount serviceaccount.Module,
+	serviceAccountGetter serviceaccount.Getter,
 	cloudIntegrationModule cloudintegration.Module,
 	retentionGetter retention.Getter,
 	fl flagger.Flagger,
@@ -154,13 +156,14 @@ func NewModules(
 		MetricReductionRule: metricReductionRule,
 		InfraMonitoring:     implinframonitoring.NewModule(telemetryStore, telemetryMetadataStore, querier, fl, providerSettings, config.InfraMonitoring),
 		Promote:             implpromote.NewModule(telemetryMetadataStore, telemetryStore),
-		ServiceAccount:      serviceAccount,
+		ServiceAccount:       serviceAccount,
+		ServiceAccountGetter: serviceAccountGetter,
 		LogsPipeline:        impllogspipeline.NewModule(sqlstore),
 		RuleStateHistory:    implrulestatehistory.NewModule(implrulestatehistory.NewStore(telemetryStore, telemetryMetadataStore, providerSettings.Logger)),
 		CloudIntegration:    cloudIntegrationModule,
 		TraceDetail:         impltracedetail.NewModule(impltracedetail.NewTraceStore(telemetryStore), providerSettings, config.TraceDetail),
 		SpanMapper:          implspanmapper.NewModule(implspanmapper.NewStore(sqlstore), fl),
-		LLMPricingRule:      impllmpricingrule.NewModule(impllmpricingrule.NewStore(sqlstore), fl),
+		LLMPricingRule:      impllmpricingrule.NewModule(impllmpricingrule.NewStore(sqlstore), fl, querier),
 		Tag:                 tagModule,
 	}
 }

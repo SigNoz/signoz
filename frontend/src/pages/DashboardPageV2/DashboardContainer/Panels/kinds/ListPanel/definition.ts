@@ -37,5 +37,6 @@ export const definition: PanelDefinition<'signoz/ListPanel'> = {
 		download: false,
 		createAlert: false,
 		search: true,
+		drilldown: false,
 	},
 };

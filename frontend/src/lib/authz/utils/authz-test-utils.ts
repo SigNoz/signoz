@@ -104,6 +104,25 @@ export function setupAuthzAllow(
 	});
 }
 
+/** Grants permissions that start with any of the given prefixes. */
+export function setupAuthzGrantByPrefix(...prefixes: string[]): RestHandler {
+	return rest.post(AUTHZ_CHECK_URL, async (req, res, ctx) => {
+		const payload = (await req.json()) as AuthtypesTransactionDTO[];
+		return res(
+			ctx.status(200),
+			ctx.json(
+				authzMockResponse(
+					payload,
+					payload.map((txn) => {
+						const perm = gettableTransactionToPermission(txn);
+						return prefixes.some((prefix) => perm.startsWith(prefix));
+					}),
+				),
+			),
+		);
+	});
+}
+
 export function buildLicense(
 	overrides?: Partial<LicenseResModel>,
 ): LicenseResModel {

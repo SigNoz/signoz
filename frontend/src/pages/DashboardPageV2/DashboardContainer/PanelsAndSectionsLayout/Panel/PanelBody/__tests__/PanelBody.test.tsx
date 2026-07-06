@@ -42,8 +42,8 @@ describe('PanelBody', () => {
 		expect(screen.queryByTestId('mock-renderer')).not.toBeInTheDocument();
 	});
 
-	it('renders the kind renderer once a runnable query is present', () => {
-		const panel = panelWith([
+	const runnablePanel = (): DashboardtypesPanelDTO =>
+		panelWith([
 			{
 				spec: {
 					plugin: {
@@ -58,9 +58,62 @@ describe('PanelBody', () => {
 			},
 		]);
 
-		render(<PanelBody {...baseProps} panel={panel} />);
+	it('renders the kind renderer once a runnable query is present', () => {
+		render(<PanelBody {...baseProps} panel={runnablePanel()} />);
 
 		expect(screen.getByTestId('mock-renderer')).toBeInTheDocument();
 		expect(screen.queryByTestId('panel-no-query')).not.toBeInTheDocument();
+	});
+
+	it('shows the full-panel loader only on the first fetch (no data yet)', () => {
+		render(
+			<PanelBody
+				{...baseProps}
+				panel={runnablePanel()}
+				data={{} as PanelQueryData}
+				isFetching
+			/>,
+		);
+
+		expect(screen.getByTestId('panel-loading')).toBeInTheDocument();
+		expect(screen.queryByTestId('mock-renderer')).not.toBeInTheDocument();
+	});
+
+	it('keeps the renderer mounted during a refetch over existing data (e.g. list page change)', () => {
+		render(
+			<PanelBody
+				{...baseProps}
+				panel={runnablePanel()}
+				data={
+					{
+						response: { data: { type: 'raw' } },
+						requestPayload: { requestType: 'raw' },
+					} as unknown as PanelQueryData
+				}
+				isFetching
+			/>,
+		);
+
+		expect(screen.getByTestId('mock-renderer')).toBeInTheDocument();
+		expect(screen.queryByTestId('panel-loading')).not.toBeInTheDocument();
+	});
+
+	it('shows the loader (not a NoData flash) while a stale cross-type response is replaced on a kind switch', () => {
+		render(
+			<PanelBody
+				{...baseProps}
+				panel={runnablePanel()}
+				data={
+					{
+						response: { data: { type: 'time_series' } },
+						requestPayload: { requestType: 'raw' },
+					} as unknown as PanelQueryData
+				}
+				isFetching
+			/>,
+		);
+
+		expect(screen.getByTestId('panel-loading')).toBeInTheDocument();
+		expect(screen.queryByTestId('mock-renderer')).not.toBeInTheDocument();
 	});
 });
