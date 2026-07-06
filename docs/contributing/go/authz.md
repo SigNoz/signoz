@@ -1,6 +1,6 @@
 # Authz
 
-SigNoz uses [OpenFGA](https://openfga.dev/), a relationship-based access control (ReBAC) system, to authorize every request. Permissions are never attached to users directly — they are attached to **roles** (as relationship tuples in OpenFGA), and users or service accounts are made **assignees** of those roles. The central interface is `AuthZ` in [pkg/authz/authz.go](/pkg/authz/authz.go), backed by an embedded OpenFGA server in [pkg/authz/openfgaserver](/pkg/authz/openfgaserver/server.go).
+SigNoz uses [OpenFGA](https://openfga.dev/), a relationship-based access control (ReBAC) system, to authorize every request. Transactions are never attached to users directly — they are attached to **roles** (as relationship tuples in OpenFGA), and users or service accounts (principals) are made **assignees** of those roles. The central interface is `AuthZ` in [pkg/authz/authz.go](/pkg/authz/authz.go), backed by an embedded OpenFGA server in [pkg/authz/openfgaserver](/pkg/authz/openfgaserver/server.go).
 
 As a feature author, you will rarely touch OpenFGA directly. You interact with two layers:
 
@@ -121,7 +121,7 @@ The pieces:
 - **`ResourceDef`** — declares the resource, verb, audit category, how to extract the instance ID, and how to turn that ID into selectors. ID extractors live in [pkg/types/coretypes/extractor.go](/pkg/types/coretypes/extractor.go): `PathParam("id")`, `BodyJSONPath("data.id")`, `BodyJSONArray("ids")`, and `ResponseJSONPath("data.id")` for IDs only known after the handler runs (e.g. `create`).
 - **`SecuritySchemes`** — advertises the required scope (`resource.Scope(verb)`, e.g. `serviceaccount:create`) in the OpenAPI spec.
 
-For routes that link two resources, use `AttachDetachSiblingResourceDef` (both sides are authz-checked, e.g. attaching a role to a service account requires `attach` on **both** the service account and the role) or `AttachDetachParentChildResourceDef` (only the parent is checked; the child is recorded for audit, e.g. creating an API key under a service account).
+For routes that link two resources, use `AttachDetachSiblingResourceDef` (both sides are authz-checked, e.g. attaching a role to a service account requires `attach` on **both** the service account and the role). For parent-child routes (e.g. creating an API key under a service account), both sides are checked too, but with different verbs: declare a `BasicResourceDef` checking the child with `create`/`delete`, alongside an `AttachDetachParentChildResourceDef` checking the parent with `attach`/`detach` (within that def the child is only recorded for audit) — see the `/api/v1/service_accounts/{id}/keys` route in [pkg/apiserver/signozapiserver/serviceaccount.go](/pkg/apiserver/signozapiserver/serviceaccount.go).
 
 Prefer `CheckResources` with a `ResourceDef` for anything resource-shaped. The older coarse gates `ViewAccess`/`EditAccess`/`AdminAccess` only check "does the caller hold one of these roles" and give up per-resource granularity; `OpenAccess` performs no authorization (authentication still applies); `CheckWithoutClaims` serves anonymous routes such as public dashboards.
 
@@ -145,5 +145,5 @@ Because both paths go through the same middleware and the same `ResourceDef` dec
 - A new kind never needs an OpenFGA schema change; only a new type does, and then **both** [pkg/authz/openfgaschema/base.fga](/pkg/authz/openfgaschema/base.fga) and [ee/authz/openfgaschema/base.fga](/ee/authz/openfgaschema/base.fga) must be updated together.
 - Prefer `CheckResources` + `ResourceDef` over the coarse `ViewAccess`/`EditAccess`/`AdminAccess` gates for new routes.
 - Use `WildcardSelector` for `create`/`list`, `IDSelector` for instance operations, and a custom `SelectorFunc` when the request ID is not the FGA selector.
-- Attach/detach routes between peer resources must check **both** sides (`AttachDetachSiblingResourceDef`); parent-child creation checks only the parent (`AttachDetachParentChildResourceDef`).
+- Linking routes check **both** sides: peers via `AttachDetachSiblingResourceDef` (same verb on both), parent-child via a `BasicResourceDef` on the child (`create`/`delete`) paired with an `AttachDetachParentChildResourceDef` on the parent (`attach`/`detach`).
 - Changing `ManagedRoleToTransactions` only affects organizations created afterwards — add a [pkg/sqlmigration](/pkg/sqlmigration) migration to backfill existing ones.
