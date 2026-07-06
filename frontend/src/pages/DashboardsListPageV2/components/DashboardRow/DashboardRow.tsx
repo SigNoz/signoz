@@ -1,7 +1,8 @@
-import { Tooltip } from 'antd';
-import { Typography } from '@signozhq/ui/typography';
 import { Badge } from '@signozhq/ui/badge';
-import { CalendarClock, Pin, PinOff } from '@signozhq/icons';
+import { Button } from '@signozhq/ui/button';
+import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Typography } from '@signozhq/ui/typography';
+import { CalendarClock, LockKeyhole, Pin, PinOff } from '@signozhq/icons';
 import cx from 'classnames';
 import logEvent from 'api/common/logEvent';
 import { generatePath } from 'react-router-dom';
@@ -73,25 +74,31 @@ function DashboardRow({
 		togglePin(id, isPinned);
 	};
 
+	// Only long titles are truncated, so only they need the full-name tooltip;
+	// wrapping conditionally avoids an empty hanging tooltip for short names.
+	const titleLink = (
+		<div className={styles.titleLink} onClick={onClickHandler}>
+			<img src={image} alt="dashboard-image" className={styles.icon} />
+			<Typography.Text
+				data-testid={`dashboard-title-${index}`}
+				className={styles.title}
+			>
+				{name}
+			</Typography.Text>
+		</div>
+	);
+
 	return (
 		<div className={styles.row} onClick={onClickHandler}>
 			<div className={styles.titleWithAction}>
 				<div className={styles.titleBlock}>
-					<Tooltip
-						title={name.length > 50 ? name : ''}
-						placement="left"
-						overlayClassName="titleTooltipOverlay"
-					>
-						<div className={styles.titleLink} onClick={onClickHandler}>
-							<img src={image} alt="dashboard-image" className={styles.icon} />
-							<Typography.Text
-								data-testid={`dashboard-title-${index}`}
-								className={styles.title}
-							>
-								{name}
-							</Typography.Text>
-						</div>
-					</Tooltip>
+					{name.length > 50 ? (
+						<TooltipSimple title={name} side="bottom" disableHoverableContent>
+							{titleLink}
+						</TooltipSimple>
+					) : (
+						titleLink
+					)}
 				</div>
 
 				<div className={styles.tagsWithActions}>
@@ -111,17 +118,44 @@ function DashboardRow({
 					)}
 				</div>
 
-				<button
-					type="button"
-					className={cx(styles.pinBtn, { [styles.pinBtnOn]: isPinned })}
-					aria-label={isPinned ? 'Unpin dashboard' : 'Pin dashboard'}
+				{isLocked && (
+					<TooltipSimple
+						title="This dashboard is locked"
+						side="top"
+						disableHoverableContent
+					>
+						<span className={styles.lockIcon} data-testid={`dashboard-lock-${index}`}>
+							<LockKeyhole size={14} />
+						</span>
+					</TooltipSimple>
+				)}
+
+				<TooltipSimple
 					title={isPinned ? 'Unpin dashboard' : 'Pin dashboard'}
-					data-testid={`dashboard-pin-${index}`}
-					disabled={isUpdating}
-					onClick={onTogglePin}
+					side="top"
+					disableHoverableContent
 				>
-					{isPinned ? <PinOff size={14} /> : <Pin size={14} />}
-				</button>
+					<Button
+						type="button"
+						variant="ghost"
+						color="secondary"
+						size="icon"
+						className={cx(styles.pinButton, { [styles.pinButtonOn]: isPinned })}
+						aria-label={isPinned ? 'Unpin dashboard' : 'Pin dashboard'}
+						data-testid={`dashboard-pin-${index}`}
+						disabled={isUpdating}
+						onClick={onTogglePin}
+					>
+						{isPinned ? (
+							<>
+								<Pin size={14} className={styles.pinnedIcon} />
+								<PinOff size={14} className={styles.unpinIcon} />
+							</>
+						) : (
+							<Pin size={14} />
+						)}
+					</Button>
+				</TooltipSimple>
 
 				{canAct && (
 					<ActionsPopover
