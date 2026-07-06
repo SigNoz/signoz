@@ -17,6 +17,7 @@ import (
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"golang.org/x/sync/errgroup"
 )
 
 type module struct {
@@ -213,23 +214,37 @@ func (m *module) ListHosts(ctx context.Context, orgID valuer.UUID, req *inframon
 	}
 
 	fullQueryReq := buildFullQueryRequest(req.Start, req.End, hostsFilterExpr, req.GroupBy, pageGroups, m.newListHostsQuery())
-	queryResp, err := m.querier.QueryRange(ctx, orgID, fullQueryReq)
-	if err != nil {
-		return nil, err
-	}
 
 	// Compute per-group active/inactive host counts.
 	// When host.name is in groupBy, each row = one host, so counts are derived
 	// directly from activeHostsMap in buildHostRecords (no extra query needed).
 	// When host.name is not in groupBy, we need to run an additional query to get the counts per group for the current page,
 	// using the same filter expression as the main query (including user filters + page groups IN clause).
-	hostCounts := make(map[string]groupHostStatusCounts)
 	isHostNameInGroupBy := isKeyInGroupByAttrs(req.GroupBy, inframonitoringtypes.HostNameAttrKey)
+
+	var (
+		queryResp  *qbtypes.QueryRangeResponse
+		hostCounts = make(map[string]groupHostStatusCounts)
+	)
+
+	g, gCtx := errgroup.WithContext(ctx)
+
+	g.Go(func() error {
+		var err error
+		queryResp, err = m.querier.QueryRange(gCtx, orgID, fullQueryReq)
+		return err
+	})
+
 	if !isHostNameInGroupBy {
-		hostCounts, err = m.getPerGroupHostStatusCounts(ctx, orgID, req, hostsTableMetricNamesList, pageGroups, sinceUnixMilli)
-		if err != nil {
-			return nil, err
-		}
+		g.Go(func() error {
+			var err error
+			hostCounts, err = m.getPerGroupHostStatusCounts(gCtx, orgID, req, hostsTableMetricNamesList, pageGroups, sinceUnixMilli)
+			return err
+		})
+	}
+
+	if err := g.Wait(); err != nil {
+		return nil, err
 	}
 
 	resp.Records = buildHostRecords(isHostNameInGroupBy, queryResp, pageGroups, req.GroupBy, metadataMap, activeHostsMap, hostCounts)
