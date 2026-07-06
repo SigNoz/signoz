@@ -394,7 +394,21 @@ func (module *module) setRole(ctx context.Context, orgID valuer.UUID, id valuer.
 
 	err = module.store.CreateServiceAccountRole(ctx, serviceAccountRole)
 	if err != nil {
-		return nil, err
+		if !errors.Ast(err, errors.TypeAlreadyExists) {
+			return nil, err
+		}
+
+		serviceAccountWithRoles, err := module.GetWithRoles(ctx, orgID, id)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, existingServiceAccountRole := range serviceAccountWithRoles.ServiceAccountRoles {
+			if existingServiceAccountRole.RoleID == role.ID {
+				serviceAccountRole = existingServiceAccountRole
+				break
+			}
+		}
 	}
 
 	return serviceAccountRole, nil

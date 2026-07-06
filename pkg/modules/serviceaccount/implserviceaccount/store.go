@@ -198,10 +198,9 @@ func (store *store) CreateServiceAccountRole(ctx context.Context, serviceAccount
 		BunDBCtx(ctx).
 		NewInsert().
 		Model(serviceAccountRole).
-		On("CONFLICT (service_account_id, role_id) DO NOTHING").
 		Exec(ctx)
 	if err != nil {
-		return err
+		return store.sqlstore.WrapAlreadyExistsErrf(err, serviceaccounttypes.ErrCodeServiceAccountRoleAlreadyExists, "role: %s is already assigned to service account: %s", serviceAccountRole.RoleID, serviceAccountRole.ServiceAccountID)
 	}
 
 	return nil
