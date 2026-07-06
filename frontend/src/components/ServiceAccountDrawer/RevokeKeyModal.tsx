@@ -1,11 +1,11 @@
 import { useQueryClient } from 'react-query';
 import { Trash2, X } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import AuthZTooltip from 'components/AuthZTooltip/AuthZTooltip';
+import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import {
 	buildAPIKeyDeletePermission,
 	buildSADetachPermission,
-} from 'hooks/useAuthZ/permissions/service-account.permissions';
+} from 'lib/authz/hooks/useAuthZ/permissions/service-account.permissions';
 import { DialogWrapper } from '@signozhq/ui/dialog';
 import { toast } from '@signozhq/ui/sonner';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';

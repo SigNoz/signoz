@@ -201,7 +201,7 @@ export default function SavedViews({
 								});
 
 								window.open(
-									'https://signoz.io/docs/product-features/saved-view/',
+									'https://signoz.io/docs/metrics-management/metrics-explorer/#saved-views-in-metrics-explorer',
 									'_blank',
 									'noopener noreferrer',
 								);

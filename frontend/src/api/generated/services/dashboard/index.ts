@@ -38,6 +38,10 @@ import type {
 	GetPublicDashboard200,
 	GetPublicDashboardData200,
 	GetPublicDashboardDataPathParameters,
+	GetPublicDashboardDataV2200,
+	GetPublicDashboardDataV2PathParameters,
+	GetPublicDashboardPanelQueryRangeV2200,
+	GetPublicDashboardPanelQueryRangeV2PathParameters,
 	GetPublicDashboardPathParameters,
 	GetPublicDashboardWidgetQueryRange200,
 	GetPublicDashboardWidgetQueryRangePathParameters,
@@ -1799,6 +1803,217 @@ export const useLockDashboardV2 = <
 > => {
 	return useMutation(getLockDashboardV2MutationOptions(options));
 };
+/**
+ * This endpoint returns the sanitized v2-shape dashboard data for public access. Each panel query is reduced to a safe field subset, so filters and raw query strings are not exposed.
+ * @summary Get public dashboard data (v2)
+ */
+export const getPublicDashboardDataV2 = (
+	{ id }: GetPublicDashboardDataV2PathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<GetPublicDashboardDataV2200>({
+		url: `/api/v2/public/dashboards/${id}`,
+		method: 'GET',
+		signal,
+	});
+};
+
+export const getGetPublicDashboardDataV2QueryKey = ({
+	id,
+}: GetPublicDashboardDataV2PathParameters) => {
+	return [`/api/v2/public/dashboards/${id}`] as const;
+};
+
+export const getGetPublicDashboardDataV2QueryOptions = <
+	TData = Awaited<ReturnType<typeof getPublicDashboardDataV2>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ id }: GetPublicDashboardDataV2PathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getPublicDashboardDataV2>>,
+			TError,
+			TData
+		>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ?? getGetPublicDashboardDataV2QueryKey({ id });
+
+	const queryFn: QueryFunction<
+		Awaited<ReturnType<typeof getPublicDashboardDataV2>>
+	> = ({ signal }) => getPublicDashboardDataV2({ id }, signal);
+
+	return {
+		queryKey,
+		queryFn,
+		enabled: !!id,
+		...queryOptions,
+	} as UseQueryOptions<
+		Awaited<ReturnType<typeof getPublicDashboardDataV2>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type GetPublicDashboardDataV2QueryResult = NonNullable<
+	Awaited<ReturnType<typeof getPublicDashboardDataV2>>
+>;
+export type GetPublicDashboardDataV2QueryError =
+	ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Get public dashboard data (v2)
+ */
+
+export function useGetPublicDashboardDataV2<
+	TData = Awaited<ReturnType<typeof getPublicDashboardDataV2>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ id }: GetPublicDashboardDataV2PathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getPublicDashboardDataV2>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getGetPublicDashboardDataV2QueryOptions({ id }, options);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get public dashboard data (v2)
+ */
+export const invalidateGetPublicDashboardDataV2 = async (
+	queryClient: QueryClient,
+	{ id }: GetPublicDashboardDataV2PathParameters,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getGetPublicDashboardDataV2QueryKey({ id }) },
+		options,
+	);
+
+	return queryClient;
+};
+
+/**
+ * This endpoint returns query range results for a panel of a v2-shape public dashboard. The panel is addressed by its key in spec.panels.
+ * @summary Get query range result (v2)
+ */
+export const getPublicDashboardPanelQueryRangeV2 = (
+	{ id, key }: GetPublicDashboardPanelQueryRangeV2PathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<GetPublicDashboardPanelQueryRangeV2200>({
+		url: `/api/v2/public/dashboards/${id}/panels/${key}/query_range`,
+		method: 'GET',
+		signal,
+	});
+};
+
+export const getGetPublicDashboardPanelQueryRangeV2QueryKey = ({
+	id,
+	key,
+}: GetPublicDashboardPanelQueryRangeV2PathParameters) => {
+	return [`/api/v2/public/dashboards/${id}/panels/${key}/query_range`] as const;
+};
+
+export const getGetPublicDashboardPanelQueryRangeV2QueryOptions = <
+	TData = Awaited<ReturnType<typeof getPublicDashboardPanelQueryRangeV2>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ id, key }: GetPublicDashboardPanelQueryRangeV2PathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getPublicDashboardPanelQueryRangeV2>>,
+			TError,
+			TData
+		>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ??
+		getGetPublicDashboardPanelQueryRangeV2QueryKey({ id, key });
+
+	const queryFn: QueryFunction<
+		Awaited<ReturnType<typeof getPublicDashboardPanelQueryRangeV2>>
+	> = ({ signal }) => getPublicDashboardPanelQueryRangeV2({ id, key }, signal);
+
+	return {
+		queryKey,
+		queryFn,
+		enabled: !!(id && key),
+		...queryOptions,
+	} as UseQueryOptions<
+		Awaited<ReturnType<typeof getPublicDashboardPanelQueryRangeV2>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type GetPublicDashboardPanelQueryRangeV2QueryResult = NonNullable<
+	Awaited<ReturnType<typeof getPublicDashboardPanelQueryRangeV2>>
+>;
+export type GetPublicDashboardPanelQueryRangeV2QueryError =
+	ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Get query range result (v2)
+ */
+
+export function useGetPublicDashboardPanelQueryRangeV2<
+	TData = Awaited<ReturnType<typeof getPublicDashboardPanelQueryRangeV2>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ id, key }: GetPublicDashboardPanelQueryRangeV2PathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getPublicDashboardPanelQueryRangeV2>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getGetPublicDashboardPanelQueryRangeV2QueryOptions(
+		{ id, key },
+		options,
+	);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get query range result (v2)
+ */
+export const invalidateGetPublicDashboardPanelQueryRangeV2 = async (
+	queryClient: QueryClient,
+	{ id, key }: GetPublicDashboardPanelQueryRangeV2PathParameters,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getGetPublicDashboardPanelQueryRangeV2QueryKey({ id, key }) },
+		options,
+	);
+
+	return queryClient;
+};
+
 /**
  * Same as ListDashboardsV2 but personalized for the calling user: each dashboard carries the caller's `pinned` state, and pinned dashboards float to the top of the requested ordering. Supports the same filter DSL, sort, order, and pagination.
  * @summary List dashboards for the current user (v2)

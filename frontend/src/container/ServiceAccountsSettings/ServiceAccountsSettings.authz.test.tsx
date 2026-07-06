@@ -3,7 +3,10 @@ import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { render, screen, waitFor } from 'tests/test-utils';
-import { AUTHZ_CHECK_URL, authzMockResponse } from 'tests/authz-test-utils';
+import {
+	AUTHZ_CHECK_URL,
+	authzMockResponse,
+} from 'lib/authz/utils/authz-test-utils';
 import ServiceAccountsSettings from './ServiceAccountsSettings';
 
 const SA_LIST_URL = 'http://localhost/api/v1/service_accounts';

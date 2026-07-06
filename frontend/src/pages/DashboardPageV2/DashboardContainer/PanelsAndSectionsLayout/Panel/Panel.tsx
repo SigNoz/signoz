@@ -3,11 +3,13 @@ import type {
 	DashboardtypesPanelDTO,
 	DashboardtypesTimePreferenceDTO,
 } from 'api/generated/services/sigNoz.schemas';
+import ContextMenu from 'periscope/components/ContextMenu';
 import { getPanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Panels/registry';
 import { panelTimePreferenceLabel } from 'pages/DashboardPageV2/DashboardContainer/hooks/resolvePanelTimeWindow';
 import { usePanelQuery } from 'pages/DashboardPageV2/DashboardContainer/hooks/usePanelQuery';
 
 import type { DashboardSection } from '../../utils';
+import { useDrilldown } from './hooks/useDrilldown';
 import { usePanelInteractions } from './hooks/usePanelInteractions';
 import PanelBody from './PanelBody/PanelBody';
 import PanelHeader from './PanelHeader/PanelHeader';
@@ -41,10 +43,6 @@ function Panel({
 	isVisible,
 	panelActions,
 }: PanelProps): JSX.Element {
-	const name = panel.spec.display.name;
-	const description = panel.spec.display?.description;
-	const fullKind = panel.spec.plugin.kind;
-
 	// A per-panel time preference is surfaced as a header pill. `visualization` is
 	// common to every plugin-spec variant — localized cast reads it without
 	// narrowing on kind.
@@ -55,21 +53,24 @@ function Panel({
 	)?.visualization?.timePreference;
 	const timeLabel = panelTimePreferenceLabel(timePreference);
 
-	const panelDefinition = getPanelDefinition(fullKind);
+	const panelKind = panel.spec.plugin.kind;
+	const panelDefinition = getPanelDefinition(panelKind);
 
 	// Header search: only kinds that declare it render the box. The term is owned
 	// here and threaded to both the header (input) and renderer (filter).
 	const searchable = !!panelDefinition?.actions.search;
 	const [searchTerm, setSearchTerm] = useState('');
 
-	const { data, isFetching, error, refetch, pagination } = usePanelQuery({
-		panel,
-		panelId,
-		// Lazy: fetch only once on screen (undefined → visible) and a renderer exists.
-		enabled: !!panelDefinition && isVisible !== false,
-	});
+	const { data, isFetching, isPreviousData, error, refetch, pagination } =
+		usePanelQuery({
+			panel,
+			panelId,
+			// Lazy: fetch only once on screen (undefined → visible) and a renderer exists.
+			enabled: !!panelDefinition && isVisible !== false,
+		});
 
 	const { onDragSelect, dashboardPreference } = usePanelInteractions();
+	const drilldown = useDrilldown(panel, panelId);
 
 	return (
 		<div
@@ -77,10 +78,8 @@ function Panel({
 			data-panel-visible={isVisible ? 'true' : 'false'}
 		>
 			<PanelHeader
-				name={name}
-				description={description}
 				panelId={panelId}
-				panelKind={fullKind}
+				panel={panel}
 				isFetching={isFetching}
 				error={error}
 				warning={data.response?.data?.warning}
@@ -97,14 +96,18 @@ function Panel({
 					panelId={panelId}
 					data={data}
 					isFetching={isFetching}
+					isPreviousData={isPreviousData}
 					error={error}
 					refetch={refetch}
 					onDragSelect={onDragSelect}
 					dashboardPreference={dashboardPreference}
 					searchTerm={searchable ? searchTerm : undefined}
 					pagination={pagination}
+					onClick={drilldown.onPanelClick}
+					enableDrillDown={drilldown.enableDrillDown}
 				/>
 			)}
+			<ContextMenu {...drilldown.contextMenuProps} />
 		</div>
 	);
 }

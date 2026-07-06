@@ -15,6 +15,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
@@ -22,6 +23,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
+	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	"github.com/SigNoz/signoz/pkg/types/metricsexplorertypes"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
@@ -40,11 +43,12 @@ type module struct {
 	cache                  cache.Cache
 	ruleStore              ruletypes.RuleStore
 	dashboardModule        dashboard.Module
+	fl                     flagger.Flagger
 	config                 metricsexplorer.Config
 }
 
 // NewModule constructs the metrics module with the provided dependencies.
-func NewModule(ts telemetrystore.TelemetryStore, telemetryMetadataStore telemetrytypes.MetadataStore, cache cache.Cache, ruleStore ruletypes.RuleStore, dashboardModule dashboard.Module, providerSettings factory.ProviderSettings, cfg metricsexplorer.Config) metricsexplorer.Module {
+func NewModule(ts telemetrystore.TelemetryStore, telemetryMetadataStore telemetrytypes.MetadataStore, cache cache.Cache, ruleStore ruletypes.RuleStore, dashboardModule dashboard.Module, fl flagger.Flagger, providerSettings factory.ProviderSettings, cfg metricsexplorer.Config) metricsexplorer.Module {
 	fieldMapper := telemetrymetrics.NewFieldMapper()
 	condBuilder := telemetrymetrics.NewConditionBuilder(fieldMapper)
 	return &module{
@@ -56,6 +60,7 @@ func NewModule(ts telemetrystore.TelemetryStore, telemetryMetadataStore telemetr
 		cache:                  cache,
 		ruleStore:              ruleStore,
 		dashboardModule:        dashboardModule,
+		fl:                     fl,
 		config:                 cfg,
 	}
 }
@@ -137,30 +142,55 @@ func (m *module) listMeterMetrics(ctx context.Context, params *metricsexplorerty
 }
 
 func (m *module) listMetrics(ctx context.Context, orgID valuer.UUID, params *metricsexplorertypes.ListMetricsParams) (*metricsexplorertypes.ListMetricsResponse, error) {
-	sb := sqlbuilder.NewSelectBuilder()
-	sb.Select("DISTINCT metric_name")
+	reductionEnabled := m.fl.BooleanOrEmpty(ctx, flagger.FeatureEnableMetricsReduction, featuretypes.NewFlaggerEvaluationContext(orgID))
 
-	if params.Start != nil && params.End != nil {
-		start, end, distributedTsTable, _ := telemetrymetrics.WhichTSTableToUse(uint64(*params.Start), uint64(*params.End), false, nil)
-		sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, distributedTsTable))
-		sb.Where(sb.Between("unix_milli", start, end))
+	applyListFilters := func(b *sqlbuilder.SelectBuilder) {
+		if params.Search != "" {
+			searchLower := strings.ToLower(params.Search)
+			searchLower = strings.ReplaceAll(searchLower, "%", "\\%")
+			searchLower = strings.ReplaceAll(searchLower, "_", "\\_")
+			b.Where(b.Like("lower(metric_name)", fmt.Sprintf("%%%s%%", searchLower)))
+		}
+	}
+
+	rawSB := sqlbuilder.NewSelectBuilder()
+	rawSB.Select("DISTINCT metric_name")
+
+	var rangeStart, rangeEnd uint64
+	hasRange := params.Start != nil && params.End != nil
+	if hasRange {
+		var distributedTsTable string
+		rangeStart, rangeEnd, distributedTsTable, _ = telemetrymetrics.WhichTSTableToUse(uint64(*params.Start), uint64(*params.End), false, nil)
+		rawSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, distributedTsTable))
+		rawSB.Where(rawSB.Between("unix_milli", rangeStart, rangeEnd))
 	} else {
-		sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.TimeseriesV41weekTableName))
+		rawSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.TimeseriesV41weekTableName))
 	}
 
-	sb.Where(sb.E("__normalized", false))
+	applyListFilters(rawSB)
 
-	if params.Search != "" {
-		searchLower := strings.ToLower(params.Search)
-		searchLower = strings.ReplaceAll(searchLower, "%", "\\%")
-		searchLower = strings.ReplaceAll(searchLower, "_", "\\_")
-		sb.Where(sb.Like("lower(metric_name)", fmt.Sprintf("%%%s%%", searchLower)))
+	var query string
+	var args []any
+	if reductionEnabled {
+		reducedSB := sqlbuilder.NewSelectBuilder()
+		reducedSB.Select("DISTINCT metric_name")
+		reducedSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.TimeseriesV4ReducedTableName))
+		if hasRange {
+			reducedSB.Where(reducedSB.Between("unix_milli", rangeStart, rangeEnd))
+		}
+		applyListFilters(reducedSB)
+
+		sb := sqlbuilder.NewSelectBuilder()
+		sb.Select("DISTINCT metric_name")
+		sb.From(sb.BuilderAs(sqlbuilder.UnionAll(rawSB, reducedSB), "__all_metrics"))
+		sb.OrderBy("metric_name ASC")
+		sb.Limit(params.Limit)
+		query, args = sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+	} else {
+		rawSB.OrderBy("metric_name ASC")
+		rawSB.Limit(params.Limit)
+		query, args = rawSB.BuildWithFlavor(sqlbuilder.ClickHouse)
 	}
-
-	sb.OrderBy("metric_name ASC")
-	sb.Limit(params.Limit)
-
-	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
 	valueCtx := ctxtypes.SetClickhouseMaxThreads(ctx, m.config.TelemetryStore.Threads)
 	db := m.telemetryStore.ClickhouseDB()
@@ -219,7 +249,7 @@ func (m *module) GetStats(ctx context.Context, orgID valuer.UUID, req *metricsex
 		return nil, err
 	}
 
-	metricStats, total, err := m.fetchMetricsStatsWithSamples(ctx, req, false)
+	metricStats, total, err := m.fetchMetricsStatsWithSamples(ctx, orgID, req)
 	if err != nil {
 		return nil, err
 	}
@@ -259,13 +289,13 @@ func (m *module) GetTreemap(ctx context.Context, orgID valuer.UUID, req *metrics
 	resp := &metricsexplorertypes.TreemapResponse{}
 	switch req.Mode {
 	case metricsexplorertypes.TreemapModeSamples:
-		entries, err := m.computeSamplesTreemap(ctx, req)
+		entries, err := m.computeSamplesTreemap(ctx, orgID, req)
 		if err != nil {
 			return nil, err
 		}
 		resp.Samples = entries
 	default: // TreemapModeTimeSeries
-		entries, err := m.computeTimeseriesTreemap(ctx, req)
+		entries, err := m.computeTimeseriesTreemap(ctx, orgID, req)
 		if err != nil {
 			return nil, err
 		}
@@ -388,14 +418,14 @@ func (m *module) GetMetricDashboardsV2(ctx context.Context, orgID valuer.UUID, m
 	return metricsexplorertypes.NewMetricDashboardPanelsResponse(data[metricName]), nil
 }
 
-func newMetricDashboardsResponse(dashboardList []map[string]string) *metricsexplorertypes.MetricDashboardsResponse {
+func newMetricDashboardsResponse(dashboardList []dashboardtypes.DashboardPanelRef) *metricsexplorertypes.MetricDashboardsResponse {
 	dashboards := make([]metricsexplorertypes.MetricDashboard, 0, len(dashboardList))
 	for _, item := range dashboardList {
 		dashboards = append(dashboards, metricsexplorertypes.MetricDashboard{
-			DashboardName: item["dashboard_name"],
-			DashboardID:   item["dashboard_id"],
-			WidgetID:      item["widget_id"],
-			WidgetName:    item["widget_name"],
+			DashboardName: item.DashboardName,
+			DashboardID:   item.DashboardID,
+			WidgetID:      item.PanelID,
+			WidgetName:    item.PanelName,
 		})
 	}
 
@@ -969,10 +999,12 @@ func (m *module) buildFilterClause(ctx context.Context, filter *qbtypes.Filter, 
 
 func (m *module) fetchMetricsStatsWithSamples(
 	ctx context.Context,
+	orgID valuer.UUID,
 	req *metricsexplorertypes.StatsRequest,
-	normalized bool,
 ) ([]metricsexplorertypes.Stat, uint64, error) {
 	ctx = m.withMetricsExplorerContext(ctx, "fetchMetricsStatsWithSamples")
+
+	reductionEnabled := m.fl.BooleanOrEmpty(ctx, flagger.FeatureEnableMetricsReduction, featuretypes.NewFlaggerEvaluationContext(orgID))
 
 	hasFilter := req.Filter != nil && strings.TrimSpace(req.Filter.Expression) != ""
 	var filterWhereClause *sqlbuilder.WhereClause
@@ -997,7 +1029,6 @@ func (m *module) fetchMetricsStatsWithSamples(
 	tsSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, distributedTsTable))
 	tsSB.Where(tsSB.Between("unix_milli", start, end))
 	tsSB.Where("NOT startsWith(metric_name, 'signoz')")
-	tsSB.Where(tsSB.E("__normalized", normalized))
 	if filterWhereClause != nil {
 		tsSB.AddWhereClause(sqlbuilder.CopyWhereClause(filterWhereClause))
 	}
@@ -1025,7 +1056,6 @@ func (m *module) fetchMetricsStatsWithSamples(
 		fingerprintSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, localTsTable))
 		fingerprintSB.Where(fingerprintSB.Between("unix_milli", start, end))
 		fingerprintSB.Where("NOT startsWith(metric_name, 'signoz')")
-		fingerprintSB.Where(fingerprintSB.E("__normalized", normalized))
 		fingerprintSB.AddWhereClause(sqlbuilder.CopyWhereClause(filterWhereClause))
 		fingerprintSB.GroupBy("fingerprint")
 
@@ -1037,28 +1067,99 @@ func (m *module) fetchMetricsStatsWithSamples(
 		metricNamesSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, localTsTable))
 		metricNamesSB.Where(metricNamesSB.Between("unix_milli", start, end))
 		metricNamesSB.Where("NOT startsWith(metric_name, 'signoz')")
-		metricNamesSB.Where(metricNamesSB.E("__normalized", normalized))
 
 		samplesSB.Where(fmt.Sprintf("metric_name IN (%s)", samplesSB.Var(metricNamesSB)))
 	}
 	samplesSB.GroupBy("metric_name")
 
 	ctes = append(ctes, sqlbuilder.CTEQuery("__sample_counts").As(samplesSB))
-	cteBuilder := sqlbuilder.With(ctes...)
-
-	finalSB := cteBuilder.Select(
-		"COALESCE(ts.metric_name, s.metric_name) AS metric_name",
-		"COALESCE(ts.timeseries, 0) AS timeseries",
-		"COALESCE(s.samples, 0) AS samples",
-		"COUNT(*) OVER() AS total",
-	)
-	finalSB.From("__time_series_counts ts")
-	finalSB.JoinWithOption(sqlbuilder.FullOuterJoin, "__sample_counts s", "ts.metric_name = s.metric_name")
-	finalSB.Where("(COALESCE(ts.timeseries, 0) > 0 OR COALESCE(s.samples, 0) > 0)")
 
 	orderByColumn, orderDirection, err := getStatsOrderByColumn(req.OrderBy)
 	if err != nil {
 		return nil, 0, err
+	}
+
+	var finalSB *sqlbuilder.SelectBuilder
+	if reductionEnabled {
+		reducedTsSB := sqlbuilder.NewSelectBuilder()
+		reducedTsSB.Select(
+			"metric_name",
+			"uniq(fingerprint) AS timeseries",
+		)
+
+		// the data lands either of the _reduced_last/_reduced_sum tables
+		reducedLastSB := sqlbuilder.NewSelectBuilder()
+		reducedLastSB.Select("metric_name", "uniq(reduced_fingerprint, unix_milli) AS cnt")
+		reducedLastSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.SamplesV4ReducedLastTableName))
+		reducedLastSB.Where(reducedLastSB.Between("unix_milli", req.Start, req.End))
+		reducedLastSB.Where("NOT startsWith(metric_name, 'signoz')")
+
+		reducedSumSB := sqlbuilder.NewSelectBuilder()
+		reducedSumSB.Select("metric_name", "uniq(reduced_fingerprint, unix_milli) AS cnt")
+		reducedSumSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.SamplesV4ReducedSumTableName))
+		reducedSumSB.Where(reducedSumSB.Between("unix_milli", req.Start, req.End))
+		reducedSumSB.Where("NOT startsWith(metric_name, 'signoz')")
+
+		// separate query for reduced series counts
+		reducedTsSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.TimeseriesV4ReducedTableName))
+		reducedTsSB.Where(reducedTsSB.Between("unix_milli", start, end))
+		reducedTsSB.Where("NOT startsWith(metric_name, 'signoz')")
+		reducedTsSB.GroupBy("metric_name")
+
+		if filterWhereClause != nil {
+			reducedTsSB.AddWhereClause(sqlbuilder.CopyWhereClause(filterWhereClause))
+
+			// samples uses a separate cte with local table
+			reducedFpSB := sqlbuilder.NewSelectBuilder()
+			reducedFpSB.Select("fingerprint")
+			reducedFpSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.TimeseriesV4ReducedLocalTableName))
+			reducedFpSB.Where(reducedFpSB.Between("unix_milli", start, end))
+			reducedFpSB.Where("NOT startsWith(metric_name, 'signoz')")
+			reducedFpSB.AddWhereClause(sqlbuilder.CopyWhereClause(filterWhereClause))
+			reducedFpSB.GroupBy("fingerprint")
+			ctes = append(ctes, sqlbuilder.CTEQuery("__reduced_filtered_fingerprints").As(reducedFpSB))
+
+			reducedLastSB.Where("reduced_fingerprint IN (SELECT fingerprint FROM __reduced_filtered_fingerprints)")
+			reducedSumSB.Where("reduced_fingerprint IN (SELECT fingerprint FROM __reduced_filtered_fingerprints)")
+		}
+		reducedLastSB.GroupBy("metric_name")
+		reducedSumSB.GroupBy("metric_name")
+
+		reducedSamplesSB := sqlbuilder.NewSelectBuilder()
+		reducedSamplesSB.Select("metric_name", "sum(cnt) AS samples")
+		reducedSamplesSB.From(reducedSamplesSB.BuilderAs(sqlbuilder.UnionAll(reducedLastSB, reducedSumSB), "reduced_samples"))
+		reducedSamplesSB.GroupBy("metric_name")
+
+		ctes = append(ctes,
+			sqlbuilder.CTEQuery("__reduced_time_series_counts").As(reducedTsSB),
+			sqlbuilder.CTEQuery("__reduced_sample_counts").As(reducedSamplesSB),
+		)
+
+		cteBuilder := sqlbuilder.With(ctes...)
+
+		finalSB = cteBuilder.Select(
+			"COALESCE(ts.metric_name, rts.metric_name, s.metric_name, rs.metric_name) AS metric_name",
+			"COALESCE(ts.timeseries, 0) + COALESCE(rts.timeseries, 0) AS timeseries",
+			"COALESCE(s.samples, 0) + COALESCE(rs.samples, 0) AS samples",
+			"COUNT(*) OVER() AS total",
+		)
+		finalSB.From("__time_series_counts ts")
+		finalSB.JoinWithOption(sqlbuilder.FullOuterJoin, "__reduced_time_series_counts rts", "ts.metric_name = rts.metric_name")
+		finalSB.JoinWithOption(sqlbuilder.FullOuterJoin, "__sample_counts s", "COALESCE(ts.metric_name, rts.metric_name) = s.metric_name")
+		finalSB.JoinWithOption(sqlbuilder.FullOuterJoin, "__reduced_sample_counts rs", "COALESCE(ts.metric_name, rts.metric_name, s.metric_name) = rs.metric_name")
+		finalSB.Where("(COALESCE(ts.timeseries, 0) + COALESCE(rts.timeseries, 0) > 0 OR COALESCE(s.samples, 0) + COALESCE(rs.samples, 0) > 0)")
+	} else {
+		cteBuilder := sqlbuilder.With(ctes...)
+
+		finalSB = cteBuilder.Select(
+			"COALESCE(ts.metric_name, s.metric_name) AS metric_name",
+			"COALESCE(ts.timeseries, 0) AS timeseries",
+			"COALESCE(s.samples, 0) AS samples",
+			"COUNT(*) OVER() AS total",
+		)
+		finalSB.From("__time_series_counts ts")
+		finalSB.JoinWithOption(sqlbuilder.FullOuterJoin, "__sample_counts s", "ts.metric_name = s.metric_name")
+		finalSB.Where("(COALESCE(ts.timeseries, 0) > 0 OR COALESCE(s.samples, 0) > 0)")
 	}
 
 	finalSB.OrderBy(
@@ -1069,6 +1170,10 @@ func (m *module) fetchMetricsStatsWithSamples(
 	finalSB.Offset(req.Offset)
 
 	query, args := finalSB.BuildWithFlavor(sqlbuilder.ClickHouse)
+	if reductionEnabled {
+		// unmatched FULL JOIN columns must be NULL (not '') for the COALESCE name/keys to resolve
+		query += " SETTINGS join_use_nulls = 1"
+	}
 
 	valueCtx := ctxtypes.SetClickhouseMaxThreads(ctx, m.config.TelemetryStore.Threads)
 	db := m.telemetryStore.ClickhouseDB()
@@ -1100,8 +1205,10 @@ func (m *module) fetchMetricsStatsWithSamples(
 	return metricStats, total, nil
 }
 
-func (m *module) computeTimeseriesTreemap(ctx context.Context, req *metricsexplorertypes.TreemapRequest) ([]metricsexplorertypes.TreemapEntry, error) {
+func (m *module) computeTimeseriesTreemap(ctx context.Context, orgID valuer.UUID, req *metricsexplorertypes.TreemapRequest) ([]metricsexplorertypes.TreemapEntry, error) {
 	ctx = m.withMetricsExplorerContext(ctx, "computeTimeseriesTreemap")
+
+	reductionEnabled := m.fl.BooleanOrEmpty(ctx, flagger.FeatureEnableMetricsReduction, featuretypes.NewFlaggerEvaluationContext(orgID))
 
 	hasFilter := req.Filter != nil && strings.TrimSpace(req.Filter.Expression) != ""
 	var filterWhereClause *sqlbuilder.WhereClause
@@ -1119,7 +1226,6 @@ func (m *module) computeTimeseriesTreemap(ctx context.Context, req *metricsexplo
 	totalTSBuilder.Select("uniq(fingerprint) AS total_time_series")
 	totalTSBuilder.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, distributedTsTable))
 	totalTSBuilder.Where(totalTSBuilder.Between("unix_milli", start, end))
-	totalTSBuilder.Where(totalTSBuilder.E("__normalized", false))
 
 	metricsSB := sqlbuilder.NewSelectBuilder()
 	metricsSB.Select(
@@ -1129,28 +1235,69 @@ func (m *module) computeTimeseriesTreemap(ctx context.Context, req *metricsexplo
 	metricsSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, distributedTsTable))
 	metricsSB.Where(metricsSB.Between("unix_milli", start, end))
 	metricsSB.Where("NOT startsWith(metric_name, 'signoz')")
-	metricsSB.Where(metricsSB.E("__normalized", false))
 	if filterWhereClause != nil {
 		metricsSB.WhereClause.AddWhereClause(sqlbuilder.CopyWhereClause(filterWhereClause))
 	}
 	metricsSB.GroupBy("metric_name")
 
-	cteBuilder := sqlbuilder.With(
-		sqlbuilder.CTEQuery("__total_time_series").As(totalTSBuilder),
-		sqlbuilder.CTEQuery("__metric_totals").As(metricsSB),
-	)
+	var finalSB *sqlbuilder.SelectBuilder
+	if reductionEnabled {
+		reducedTotalTSBuilder := sqlbuilder.NewSelectBuilder()
+		reducedTotalTSBuilder.Select("uniq(fingerprint) AS total_time_series")
+		reducedTotalTSBuilder.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.TimeseriesV4ReducedTableName))
+		reducedTotalTSBuilder.Where(reducedTotalTSBuilder.Between("unix_milli", start, end))
 
-	finalSB := cteBuilder.Select(
-		"mt.metric_name",
-		"mt.total_value",
-		"CASE WHEN tts.total_time_series = 0 THEN 0 ELSE (mt.total_value * 100.0 / tts.total_time_series) END AS percentage",
-	)
-	finalSB.From("__metric_totals mt")
-	finalSB.Join("__total_time_series tts", "1=1")
+		reducedMetricsSB := sqlbuilder.NewSelectBuilder()
+		reducedMetricsSB.Select(
+			"metric_name",
+			"uniq(fingerprint) AS total_value",
+		)
+		reducedMetricsSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.TimeseriesV4ReducedTableName))
+		reducedMetricsSB.Where(reducedMetricsSB.Between("unix_milli", start, end))
+		reducedMetricsSB.Where("NOT startsWith(metric_name, 'signoz')")
+		if filterWhereClause != nil {
+			reducedMetricsSB.WhereClause.AddWhereClause(sqlbuilder.CopyWhereClause(filterWhereClause))
+		}
+		reducedMetricsSB.GroupBy("metric_name")
+
+		cteBuilder := sqlbuilder.With(
+			sqlbuilder.CTEQuery("__total_time_series").As(totalTSBuilder),
+			sqlbuilder.CTEQuery("__metric_totals").As(metricsSB),
+			sqlbuilder.CTEQuery("__reduced_total_time_series").As(reducedTotalTSBuilder),
+			sqlbuilder.CTEQuery("__reduced_metric_totals").As(reducedMetricsSB),
+		)
+
+		finalSB = cteBuilder.Select(
+			"COALESCE(mt.metric_name, rmt.metric_name) AS metric_name",
+			"COALESCE(mt.total_value, 0) + COALESCE(rmt.total_value, 0) AS total_value",
+			"CASE WHEN (tts.total_time_series + rtts.total_time_series) = 0 THEN 0 ELSE ((COALESCE(mt.total_value, 0) + COALESCE(rmt.total_value, 0)) * 100.0 / (tts.total_time_series + rtts.total_time_series)) END AS percentage",
+		)
+		finalSB.From("__metric_totals mt")
+		finalSB.JoinWithOption(sqlbuilder.FullOuterJoin, "__reduced_metric_totals rmt", "mt.metric_name = rmt.metric_name")
+		finalSB.Join("__total_time_series tts", "1=1")
+		finalSB.Join("__reduced_total_time_series rtts", "1=1")
+	} else {
+		cteBuilder := sqlbuilder.With(
+			sqlbuilder.CTEQuery("__total_time_series").As(totalTSBuilder),
+			sqlbuilder.CTEQuery("__metric_totals").As(metricsSB),
+		)
+
+		finalSB = cteBuilder.Select(
+			"mt.metric_name",
+			"mt.total_value",
+			"CASE WHEN tts.total_time_series = 0 THEN 0 ELSE (mt.total_value * 100.0 / tts.total_time_series) END AS percentage",
+		)
+		finalSB.From("__metric_totals mt")
+		finalSB.Join("__total_time_series tts", "1=1")
+	}
 	finalSB.OrderByDesc("percentage")
 	finalSB.Limit(req.Limit)
 
 	query, args := finalSB.BuildWithFlavor(sqlbuilder.ClickHouse)
+	if reductionEnabled {
+		// unmatched FULL JOIN columns must be NULL (not '') so COALESCE on metric_name resolves
+		query += " SETTINGS join_use_nulls = 1"
+	}
 
 	valueCtx := ctxtypes.SetClickhouseMaxThreads(ctx, m.config.TelemetryStore.Threads)
 	db := m.telemetryStore.ClickhouseDB()
@@ -1176,8 +1323,10 @@ func (m *module) computeTimeseriesTreemap(ctx context.Context, req *metricsexplo
 	return entries, nil
 }
 
-func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsexplorertypes.TreemapRequest) ([]metricsexplorertypes.TreemapEntry, error) {
+func (m *module) computeSamplesTreemap(ctx context.Context, orgID valuer.UUID, req *metricsexplorertypes.TreemapRequest) ([]metricsexplorertypes.TreemapEntry, error) {
 	ctx = m.withMetricsExplorerContext(ctx, "computeSamplesTreemap")
+
+	reductionEnabled := m.fl.BooleanOrEmpty(ctx, flagger.FeatureEnableMetricsReduction, featuretypes.NewFlaggerEvaluationContext(orgID))
 
 	hasFilter := req.Filter != nil && strings.TrimSpace(req.Filter.Expression) != ""
 	var filterWhereClause *sqlbuilder.WhereClause
@@ -1199,7 +1348,6 @@ func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsexplorer
 	metricCandidatesSB.Select("metric_name")
 	metricCandidatesSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, distributedTsTable))
 	metricCandidatesSB.Where("NOT startsWith(metric_name, 'signoz')")
-	metricCandidatesSB.Where(metricCandidatesSB.E("__normalized", false))
 	metricCandidatesSB.Where(metricCandidatesSB.Between("unix_milli", start, end))
 	if filterWhereClause != nil {
 		metricCandidatesSB.AddWhereClause(sqlbuilder.CopyWhereClause(filterWhereClause))
@@ -1210,6 +1358,23 @@ func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsexplorer
 
 	cteQueries := []*sqlbuilder.CTEQueryBuilder{
 		sqlbuilder.CTEQuery("__metric_candidates").As(metricCandidatesSB),
+	}
+
+	var reducedCandidatesSB *sqlbuilder.SelectBuilder
+	if reductionEnabled {
+		reducedCandidatesSB = sqlbuilder.NewSelectBuilder()
+		reducedCandidatesSB.Select("metric_name")
+		reducedCandidatesSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.TimeseriesV4ReducedTableName))
+		reducedCandidatesSB.Where("NOT startsWith(metric_name, 'signoz')")
+		reducedCandidatesSB.Where(reducedCandidatesSB.Between("unix_milli", start, end))
+		if filterWhereClause != nil {
+			reducedCandidatesSB.AddWhereClause(sqlbuilder.CopyWhereClause(filterWhereClause))
+		}
+		reducedCandidatesSB.GroupBy("metric_name")
+		reducedCandidatesSB.OrderBy("uniq(fingerprint) DESC")
+		reducedCandidatesSB.Limit(candidateLimit)
+
+		cteQueries = append(cteQueries, sqlbuilder.CTEQuery("__reduced_metric_candidates").As(reducedCandidatesSB))
 	}
 
 	totalSamplesSB := sqlbuilder.NewSelectBuilder()
@@ -1226,43 +1391,136 @@ func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsexplorer
 	sampleCountsSB.Where(sampleCountsSB.Between("unix_milli", req.Start, req.End))
 	sampleCountsSB.Where("metric_name GLOBAL IN (SELECT metric_name FROM __metric_candidates)")
 
+	// Reduced sample rows land in either the _reduced_last_60s or
+	// _reduced_sum_60s table
+	var reducedLastSB, reducedSumSB *sqlbuilder.SelectBuilder
+	if reductionEnabled {
+		reducedLastSB = sqlbuilder.NewSelectBuilder()
+		reducedLastSB.Select("metric_name", "uniq(reduced_fingerprint, unix_milli) AS cnt")
+		reducedLastSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.SamplesV4ReducedLastTableName))
+		reducedLastSB.Where(reducedLastSB.Between("unix_milli", req.Start, req.End))
+		reducedLastSB.Where("metric_name GLOBAL IN (SELECT metric_name FROM __reduced_metric_candidates)")
+
+		reducedSumSB = sqlbuilder.NewSelectBuilder()
+		reducedSumSB.Select("metric_name", "uniq(reduced_fingerprint, unix_milli) AS cnt")
+		reducedSumSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.SamplesV4ReducedSumTableName))
+		reducedSumSB.Where(reducedSumSB.Between("unix_milli", req.Start, req.End))
+		reducedSumSB.Where("metric_name GLOBAL IN (SELECT metric_name FROM __reduced_metric_candidates)")
+	}
+
 	if filterWhereClause != nil {
 		fingerprintSB := sqlbuilder.NewSelectBuilder()
 		fingerprintSB.Select("fingerprint")
 		fingerprintSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, localTsTable))
 		fingerprintSB.Where(fingerprintSB.Between("unix_milli", start, end))
 		fingerprintSB.Where("NOT startsWith(metric_name, 'signoz')")
-		fingerprintSB.Where(fingerprintSB.E("__normalized", false))
 		fingerprintSB.AddWhereClause(sqlbuilder.CopyWhereClause(filterWhereClause))
 		fingerprintSB.Where("metric_name GLOBAL IN (SELECT metric_name FROM __metric_candidates)")
 		fingerprintSB.GroupBy("fingerprint")
 
 		sampleCountsSB.Where("fingerprint IN (SELECT fingerprint FROM __filtered_fingerprints)")
 
-		cteQueries = append(cteQueries, sqlbuilder.CTEQuery("__filtered_fingerprints").As(fingerprintSB))
+		if reductionEnabled {
+			reducedFingerprintSB := sqlbuilder.NewSelectBuilder()
+			reducedFingerprintSB.Select("fingerprint")
+			reducedFingerprintSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.TimeseriesV4ReducedLocalTableName))
+			reducedFingerprintSB.Where(reducedFingerprintSB.Between("unix_milli", start, end))
+			reducedFingerprintSB.Where("NOT startsWith(metric_name, 'signoz')")
+			reducedFingerprintSB.AddWhereClause(sqlbuilder.CopyWhereClause(filterWhereClause))
+			reducedFingerprintSB.Where("metric_name GLOBAL IN (SELECT metric_name FROM __reduced_metric_candidates)")
+			reducedFingerprintSB.GroupBy("fingerprint")
+
+			reducedLastSB.Where("reduced_fingerprint IN (SELECT fingerprint FROM __reduced_filtered_fingerprints)")
+			reducedSumSB.Where("reduced_fingerprint IN (SELECT fingerprint FROM __reduced_filtered_fingerprints)")
+
+			cteQueries = append(cteQueries,
+				sqlbuilder.CTEQuery("__filtered_fingerprints").As(fingerprintSB),
+				sqlbuilder.CTEQuery("__reduced_filtered_fingerprints").As(reducedFingerprintSB),
+			)
+		} else {
+			cteQueries = append(cteQueries, sqlbuilder.CTEQuery("__filtered_fingerprints").As(fingerprintSB))
+		}
 	}
 
 	sampleCountsSB.GroupBy("metric_name")
 
-	cteQueries = append(cteQueries,
-		sqlbuilder.CTEQuery("__sample_counts").As(sampleCountsSB),
-		sqlbuilder.CTEQuery("__total_samples").As(totalSamplesSB),
-	)
+	var finalSB *sqlbuilder.SelectBuilder
+	if reductionEnabled {
+		reducedLastSB.GroupBy("metric_name")
+		reducedSumSB.GroupBy("metric_name")
 
-	cteBuilder := sqlbuilder.With(cteQueries...)
+		reducedSampleCountsSB := sqlbuilder.NewSelectBuilder()
+		reducedSampleCountsSB.Select("metric_name", "sum(cnt) AS samples")
+		reducedSampleCountsSB.From(reducedSampleCountsSB.BuilderAs(sqlbuilder.UnionAll(reducedLastSB, reducedSumSB), "reduced_samples"))
+		reducedSampleCountsSB.GroupBy("metric_name")
 
-	finalSB := cteBuilder.Select(
-		"mc.metric_name",
-		"COALESCE(sc.samples, 0) AS samples",
-		"CASE WHEN ts.total_samples = 0 THEN 0 ELSE (COALESCE(sc.samples, 0) * 100.0 / ts.total_samples) END AS percentage",
-	)
-	finalSB.From("__metric_candidates mc")
-	finalSB.JoinWithOption(sqlbuilder.LeftJoin, "__sample_counts sc", "mc.metric_name = sc.metric_name")
-	finalSB.Join("__total_samples ts", "1=1")
+		// Grand total includes reduced sample volume so percentages stay consistent.
+		reducedTotalLastSB := sqlbuilder.NewSelectBuilder()
+		reducedTotalLastSB.Select("uniq(reduced_fingerprint, unix_milli) AS cnt")
+		reducedTotalLastSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.SamplesV4ReducedLastTableName))
+		reducedTotalLastSB.Where(reducedTotalLastSB.Between("unix_milli", req.Start, req.End))
+
+		reducedTotalSumSB := sqlbuilder.NewSelectBuilder()
+		reducedTotalSumSB.Select("uniq(reduced_fingerprint, unix_milli) AS cnt")
+		reducedTotalSumSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.SamplesV4ReducedSumTableName))
+		reducedTotalSumSB.Where(reducedTotalSumSB.Between("unix_milli", req.Start, req.End))
+
+		reducedTotalSamplesSB := sqlbuilder.NewSelectBuilder()
+		reducedTotalSamplesSB.Select("sum(cnt) AS total_samples")
+		reducedTotalSamplesSB.From(reducedTotalSamplesSB.BuilderAs(sqlbuilder.UnionAll(reducedTotalLastSB, reducedTotalSumSB), "reduced_total"))
+
+		allCandidatesSB := sqlbuilder.NewSelectBuilder()
+		allCandidatesSB.Select("DISTINCT metric_name")
+		allCandidatesSB.From(allCandidatesSB.BuilderAs(sqlbuilder.UnionAll(
+			sqlbuilder.NewSelectBuilder().Select("metric_name").From("__metric_candidates"),
+			sqlbuilder.NewSelectBuilder().Select("metric_name").From("__reduced_metric_candidates"),
+		), "candidates"))
+
+		cteQueries = append(cteQueries,
+			sqlbuilder.CTEQuery("__sample_counts").As(sampleCountsSB),
+			sqlbuilder.CTEQuery("__reduced_sample_counts").As(reducedSampleCountsSB),
+			sqlbuilder.CTEQuery("__total_samples").As(totalSamplesSB),
+			sqlbuilder.CTEQuery("__reduced_total_samples").As(reducedTotalSamplesSB),
+			sqlbuilder.CTEQuery("__all_candidates").As(allCandidatesSB),
+		)
+
+		cteBuilder := sqlbuilder.With(cteQueries...)
+
+		finalSB = cteBuilder.Select(
+			"ac.metric_name",
+			"COALESCE(sc.samples, 0) + COALESCE(rsc.samples, 0) AS samples",
+			"CASE WHEN (ts.total_samples + rts.total_samples) = 0 THEN 0 ELSE ((COALESCE(sc.samples, 0) + COALESCE(rsc.samples, 0)) * 100.0 / (ts.total_samples + rts.total_samples)) END AS percentage",
+		)
+		finalSB.From("__all_candidates ac")
+		finalSB.JoinWithOption(sqlbuilder.LeftJoin, "__sample_counts sc", "ac.metric_name = sc.metric_name")
+		finalSB.JoinWithOption(sqlbuilder.LeftJoin, "__reduced_sample_counts rsc", "ac.metric_name = rsc.metric_name")
+		finalSB.Join("__total_samples ts", "1=1")
+		finalSB.Join("__reduced_total_samples rts", "1=1")
+	} else {
+		cteQueries = append(cteQueries,
+			sqlbuilder.CTEQuery("__sample_counts").As(sampleCountsSB),
+			sqlbuilder.CTEQuery("__total_samples").As(totalSamplesSB),
+		)
+
+		cteBuilder := sqlbuilder.With(cteQueries...)
+
+		finalSB = cteBuilder.Select(
+			"mc.metric_name",
+			"COALESCE(sc.samples, 0) AS samples",
+			"CASE WHEN ts.total_samples = 0 THEN 0 ELSE (COALESCE(sc.samples, 0) * 100.0 / ts.total_samples) END AS percentage",
+		)
+		finalSB.From("__metric_candidates mc")
+		finalSB.JoinWithOption(sqlbuilder.LeftJoin, "__sample_counts sc", "mc.metric_name = sc.metric_name")
+		finalSB.Join("__total_samples ts", "1=1")
+	}
 	finalSB.OrderBy("percentage DESC")
 	finalSB.Limit(req.Limit)
 
 	query, args := finalSB.BuildWithFlavor(sqlbuilder.ClickHouse)
+	if reductionEnabled {
+		// unmatched LEFT JOIN sample columns must be NULL (not 0/'') so COALESCE applies
+		query += " SETTINGS join_use_nulls = 1"
+	}
 
 	valueCtx := ctxtypes.SetClickhouseMaxThreads(ctx, m.config.TelemetryStore.Threads)
 	db := m.telemetryStore.ClickhouseDB()

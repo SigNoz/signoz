@@ -1,32 +1,99 @@
 .list {
 	display: flex;
 	flex-direction: column;
-	gap: 12px;
+	gap: 8px;
 }
 
-.row {
+/* --- Saved-link list item --- */
+.listItem {
 	display: flex;
-	flex-direction: column;
+	align-items: center;
+	justify-content: space-between;
 	gap: 8px;
-	padding: 10px;
+	padding: 8px 10px;
 	border: 1px solid var(--l2-border);
 	border-radius: 6px;
 }
 
-.rowFooter {
+.listItemText {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	min-width: 0;
+}
+
+.listItemLabel,
+.listItemUrl {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	max-width: 100%;
+}
+
+.listItemLabel {
+	font-size: 13px;
+	color: var(--text-vanilla-100);
+}
+
+.listItemUrl {
+	font-size: 11px;
+	color: var(--text-vanilla-400);
+}
+
+.listItemActions {
 	display: flex;
 	align-items: center;
-	justify-content: space-between;
+	gap: 2px;
+	flex-shrink: 0;
+}
+
+/* --- Dialog form --- */
+.form {
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+}
+
+.formField {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.formLabel {
+	font-size: 12px;
+	color: var(--l2-foreground);
+}
+
+.required {
+	color: var(--bg-cherry-400);
+}
+
+.urlError {
+	font-size: 11px;
+	color: var(--bg-cherry-400);
+}
+
+.params {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.paramRow {
+	display: grid;
+	grid-template-columns: 1fr 1fr auto;
+	align-items: center;
+	gap: 6px;
 }
 
 .newTab {
 	display: flex;
 	align-items: center;
 	gap: 8px;
-	cursor: pointer;
 }
 
 .newTabLabel {
 	font-size: 12px;
-	color: var(--text-vanilla-400);
+	color: var(--l2-foreground);
 }
