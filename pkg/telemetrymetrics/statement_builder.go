@@ -338,19 +338,24 @@ func (b *MetricQueryStatementBuilder) buildReducedTemporalAggregationCTE(
 
 	// dedup recomputed buckets: latest computed_at wins per (series, 60s bucket)
 	dedup := sqlbuilder.NewSelectBuilder()
-	dedup.Select("reduced_fingerprint AS fingerprint", "unix_milli")
-	dedup.SelectMore(fmt.Sprintf("argMax(%s, computed_at) AS value", value))
-	if weight != "" {
-		dedup.SelectMore(fmt.Sprintf("argMax(%s, computed_at) AS weight", weight))
+	dedup.Select("points.reduced_fingerprint AS fingerprint", "points.unix_milli AS unix_milli")
+	for _, g := range query.GroupBy {
+		dedup.SelectMore(fmt.Sprintf("`%s`", g.Name))
 	}
-	dedup.From(fmt.Sprintf("%s.%s", DBName, WhichReducedSamplesTableToUse(agg.Type)))
+	dedup.SelectMore(fmt.Sprintf("argMax(%s, points.computed_at) AS value", value))
+	if weight != "" {
+		dedup.SelectMore(fmt.Sprintf("argMax(%s, points.computed_at) AS weight", weight))
+	}
+	dedup.From(fmt.Sprintf("%s.%s AS points", DBName, WhichReducedSamplesTableToUse(agg.Type)))
+	dedup.JoinWithOption(sqlbuilder.InnerJoin, timeSeriesCTE, "points.reduced_fingerprint = filtered_time_series.fingerprint")
 	dedup.Where(
 		dedup.In("metric_name", agg.MetricName),
 		dedup.GTE("unix_milli", start),
 		dedup.LT("unix_milli", end),
 	)
-	dedup.GroupBy("reduced_fingerprint", "unix_milli")
-	dedupQuery, dedupArgs := dedup.BuildWithFlavor(sqlbuilder.ClickHouse)
+	dedup.GroupBy("fingerprint", "unix_milli")
+	dedup.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
+	dedupQuery, dedupArgs := dedup.BuildWithFlavor(sqlbuilder.ClickHouse, timeSeriesCTEArgs...)
 
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select("fingerprint")
@@ -364,13 +369,11 @@ func (b *MetricQueryStatementBuilder) buildReducedTemporalAggregationCTE(
 		// denominator is reduced with avg
 		sb.SelectMore("avg(weight) AS per_series_weight")
 	}
-	sb.From(fmt.Sprintf("(%s) AS points", dedupQuery))
-	sb.JoinWithOption(sqlbuilder.InnerJoin, timeSeriesCTE, "points.fingerprint = filtered_time_series.fingerprint")
+	sb.From(fmt.Sprintf("(%s)", dedupQuery))
 	sb.GroupBy("fingerprint", "ts")
 	sb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
 
-	initArgs := append(append([]any{}, dedupArgs...), timeSeriesCTEArgs...)
-	q, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse, initArgs...)
+	q, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse, dedupArgs...)
 	return fmt.Sprintf("__temporal_aggregation_cte AS (%s)", q), args, true
 }
 
