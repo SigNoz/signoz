@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	qb "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/swaggest/jsonschema-go"
@@ -123,6 +124,34 @@ func (QueryPlugin) JSONSchemaOneOf() []any {
 		QueryPluginVariant[ClickHouseSQLQuerySpec]{Kind: string(QueryKindClickHouseSQL)},
 		QueryPluginVariant[TraceOperatorSpec]{Kind: string(QueryKindTraceOperator)},
 	}
+}
+
+func (plugin QueryPlugin) buildV5CompositeQueryFromPlugin() (qb.CompositeQuery, error) {
+	switch spec := plugin.Spec.(type) {
+	case *qb.CompositeQuery:
+		if spec == nil {
+			return qb.CompositeQuery{}, errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardInvalidWidgetQuery, "composite query is empty")
+		}
+		return *spec, nil
+	case *BuilderQuerySpec:
+		if spec == nil {
+			return qb.CompositeQuery{}, errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardInvalidWidgetQuery, "builder query is empty")
+		}
+		return wrapEnvelope(qb.QueryTypeBuilder, spec.Spec), nil
+	case *qb.PromQuery:
+		return wrapEnvelope(qb.QueryTypePromQL, *spec), nil
+	case *qb.ClickHouseQuery:
+		return wrapEnvelope(qb.QueryTypeClickHouseSQL, *spec), nil
+	case *qb.QueryBuilderFormula:
+		return wrapEnvelope(qb.QueryTypeFormula, *spec), nil
+	case *qb.QueryBuilderTraceOperator:
+		return wrapEnvelope(qb.QueryTypeTraceOperator, *spec), nil
+	}
+	return qb.CompositeQuery{}, errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardInvalidWidgetQuery, "unsupported query kind %q", plugin.Kind)
+}
+
+func wrapEnvelope(queryType qb.QueryType, spec any) qb.CompositeQuery {
+	return qb.CompositeQuery{Queries: []qb.QueryEnvelope{{Type: queryType, Spec: spec}}}
 }
 
 type QueryPluginVariant[S any] struct {
