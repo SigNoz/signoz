@@ -1,12 +1,10 @@
 import type { PieSlice } from 'container/DashboardContainer/visualization/charts/types';
-import {
-	getFiltersFromMetric,
-	isValidQueryName,
-} from 'container/QueryTable/Drilldown/drilldownUtils';
+import { isValidQueryName } from 'container/QueryTable/Drilldown/drilldownUtils';
 import type { BuilderQuery } from 'types/api/v5/queryRange';
 
 import type { DrilldownClickPayload } from '../../types/drilldown';
 
+import { getGroupByFilters } from './getGroupByFilters';
 import { resolveDrilldownSignal } from './signal';
 
 interface EnrichPieClickArgs {
@@ -18,8 +16,9 @@ interface EnrichPieClickArgs {
 }
 
 /**
- * Turns a pie-slice click into a drilldown payload, using the slice's source-row labels (carried by
- * `preparePieData`) as equality filters. Returns `null` when the slice has no drillable query.
+ * Turns a pie-slice click into a drilldown payload, using the slice's source-row group-by label
+ * values (carried by `preparePieData`) as equality filters. Returns `null` when the slice has no
+ * drillable query.
  */
 export function enrichPieClick({
 	slice,
@@ -33,12 +32,16 @@ export function enrichPieClick({
 	}
 
 	const builderQuery = builderQueries.find((query) => query.name === queryName);
+
+	const filters = builderQuery
+		? getGroupByFilters(slice.labels ?? {}, builderQuery)
+		: [];
 	return {
 		coordinates,
 		context: {
 			queryName,
 			signal: resolveDrilldownSignal(builderQuery),
-			filters: getFiltersFromMetric(slice.labels ?? {}),
+			filters: filters,
 			timeRange,
 			label: slice.label,
 			seriesColor: slice.color,
