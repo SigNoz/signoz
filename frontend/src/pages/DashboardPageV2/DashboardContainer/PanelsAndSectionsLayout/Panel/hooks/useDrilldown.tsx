@@ -2,7 +2,6 @@ import { useCallback, useMemo } from 'react';
 import type { ReactNode } from 'react';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import useBaseDrilldownNavigate from 'container/QueryTable/Drilldown/useBaseDrilldownNavigate';
-import { useCoordinates } from 'periscope/components/ContextMenu';
 import type {
 	Coordinates,
 	PopoverPosition,
@@ -22,6 +21,7 @@ import { fromPerses } from 'pages/DashboardPageV2/DashboardContainer/queryV5/per
 
 import DrilldownAggregateMenu from '../DrilldownMenu/DrilldownAggregateMenu';
 import DrilldownFilterMenu from '../DrilldownMenu/DrilldownFilterMenu';
+import { useDrilldownCoordinates } from './useDrilldownCoordinates';
 import { useDrilldownFilter } from './useDrilldownFilter';
 import { useResolvedDrilldownQuery } from './useResolvedDrilldownQuery';
 import { useViewPanel } from './useViewPanel';
@@ -69,9 +69,13 @@ export function useDrilldown(
 		[queries, panelType],
 	);
 
-	const { coordinates, popoverPosition, clickedData, onClick, onClose } =
-		useCoordinates();
-	const context = clickedData as DrilldownContext | null;
+	const {
+		coordinates,
+		popoverPosition,
+		clickedData: context,
+		onClick,
+		onClose,
+	} = useDrilldownCoordinates<DrilldownContext>();
 
 	const aggregateData = useMemo(
 		() => (context ? buildAggregateData(context) : null),
