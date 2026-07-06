@@ -40,6 +40,9 @@ type BaseRule struct {
 	// holdDuration is the duration for which the alert waits before firing
 	holdDuration valuer.TextDuration
 
+	// keepFiringFor is the duration for which the alert keeps firing after condition is no longer met
+	keepFiringFor valuer.TextDuration
+
 	// evalDelay is the delay in evaluation of the rule
 	// this is useful in cases where the data is not available immediately
 	evalDelay valuer.TextDuration
@@ -163,6 +166,7 @@ func NewBaseRule(
 		typ:               p.AlertType,
 		ruleCondition:     p.RuleCondition,
 		evalWindow:        p.EvalWindow,
+		keepFiringFor:     p.KeepFiringFor,
 		labels:            ruletypes.FromMap(p.Labels),
 		annotations:       ruletypes.FromMap(p.Annotations),
 		preferredChannels: p.PreferredChannels,
@@ -237,6 +241,10 @@ func (r *BaseRule) EvalWindow() valuer.TextDuration {
 
 func (r *BaseRule) HoldDuration() valuer.TextDuration {
 	return r.holdDuration
+}
+
+func (r *BaseRule) KeepFiringFor() valuer.TextDuration {
+	return r.keepFiringFor
 }
 
 func (r *BaseRule) ID() string                          { return r.id }

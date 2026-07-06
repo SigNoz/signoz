@@ -373,6 +373,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 			Receivers:         ruleReceiverMap[lbs.Map()[ruletypes.LabelThresholdName]],
 			Missing:           smpl.IsMissing,
 			IsRecovering:      smpl.IsRecovering,
+			ConditionMetAt:    ts,
 		}
 	}
 
@@ -389,6 +390,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 			// Update the recovering and missing state of existing alert
 			alert.IsRecovering = a.IsRecovering
 			alert.Missing = a.Missing
+			alert.ConditionMetAt = ts
 			if v, ok := alert.Labels.Map()[ruletypes.LabelThresholdName]; ok {
 				alert.Receivers = ruleReceiverMap[v]
 			}
@@ -407,6 +409,9 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 			r.logger.ErrorContext(ctx, "error marshaling labels", errors.Attr(err), slog.Any("alert.labels", a.Labels))
 		}
 		if _, ok := resultFPs[fp]; !ok {
+			if a.State != ruletypes.StateInactive && a.State != ruletypes.StatePending && r.KeepFiringFor().Duration() > 0 && ts.Sub(a.ConditionMetAt) <= r.KeepFiringFor().Duration() {
+				continue
+			}
 			// If the alert was previously firing, keep it around for a given
 			// retention time so it is reported as resolved to the AlertManager.
 			if a.State == ruletypes.StatePending || (!a.ResolvedAt.IsZero() && ts.Sub(a.ResolvedAt) > ruletypes.ResolvedRetention) {

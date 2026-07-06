@@ -60,6 +60,8 @@ type PostableRule struct {
 	Labels        map[string]string `json:"labels,omitempty"`
 	Annotations   map[string]string `json:"annotations,omitempty"`
 
+	KeepFiringFor valuer.TextDuration `json:"keepFiringFor,omitzero"`
+
 	Disabled bool `json:"disabled"`
 
 	// Source captures the source url where rule has been created

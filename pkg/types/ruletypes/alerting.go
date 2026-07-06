@@ -38,6 +38,8 @@ type Alert struct {
 
 	Missing      bool
 	IsRecovering bool
+
+	ConditionMetAt time.Time
 }
 
 type NamedAlert struct {
