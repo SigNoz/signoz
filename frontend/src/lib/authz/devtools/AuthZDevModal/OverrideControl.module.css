@@ -9,24 +9,20 @@
 }
 
 .segment {
-	display: inline-flex;
-	align-items: center;
-	gap: var(--spacing-2);
-	height: 22px;
-	padding: 0 var(--spacing-3);
-	color: var(--l2-foreground);
-	background: transparent;
+	--button-height: 22px;
+	--button-padding: 0 var(--spacing-3);
+	--button-secondary-ghost-hover-foreground: var(--l2-foreground);
+	--button-variant-ghost-background-color: transparent;
 	border: none;
-	border-radius: calc(var(--radius-2) - 1px);
-	cursor: pointer;
+	--button-border-radius: calc(var(--radius-2) - 1px);
 	transition:
 		background 120ms ease,
 		color 120ms ease;
 }
 
 .segment:not(.segmentActive):hover {
-	color: var(--l2-foreground-hover);
-	background: var(--l2-background);
+	--button-secondary-ghost-hover-foreground: var(--l2-foreground-hover);
+	--button-variant-ghost-background-color: var(--l2-background);
 }
 
 .segmentIcon {
@@ -35,26 +31,42 @@
 }
 
 .segment.optAuto {
-	color: var(--l1-foreground);
-	background: var(--l3-background);
+	--button-secondary-ghost-hover-foreground: var(--l1-foreground);
+	--button-variant-ghost-background-color: var(--l3-background);
 }
 
 .segment.optGranted {
-	color: var(--success-foreground);
-	background: color-mix(in srgb, var(--accent-forest) 22%, transparent);
+	--button-secondary-ghost-hover-foreground: var(--success-foreground);
+	--button-variant-ghost-background-color: color-mix(
+		in srgb,
+		var(--accent-forest) 22%,
+		transparent
+	);
 }
 
 .segment.optDenied {
-	color: var(--danger-foreground);
-	background: color-mix(in srgb, var(--accent-cherry) 22%, transparent);
+	--button-secondary-ghost-hover-foreground: var(--danger-foreground);
+	--button-variant-ghost-background-color: color-mix(
+		in srgb,
+		var(--accent-cherry) 22%,
+		transparent
+	);
 }
 
 .segment.optDelay {
-	color: var(--warning-foreground);
-	background: color-mix(in srgb, var(--accent-amber) 22%, transparent);
+	--button-secondary-ghost-hover-foreground: var(--warning-foreground);
+	--button-variant-ghost-background-color: color-mix(
+		in srgb,
+		var(--accent-amber) 22%,
+		transparent
+	);
 }
 
 .segment.optError {
-	color: var(--danger-foreground);
-	background: color-mix(in srgb, var(--accent-cherry) 22%, transparent);
+	--button-secondary-ghost-hover-foreground: var(--danger-foreground);
+	--button-variant-ghost-background-color: color-mix(
+		in srgb,
+		var(--accent-cherry) 22%,
+		transparent
+	);
 }

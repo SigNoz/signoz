@@ -6,6 +6,7 @@ import type { BrandedPermission } from '../../hooks/useAuthZ/types';
 import { OverrideState } from '../types';
 
 import styles from './OverrideControl.module.css';
+import { Button } from '@signozhq/ui/button';
 
 type OverrideControlProps = {
 	permission: BrandedPermission;
@@ -63,7 +64,7 @@ export function OverrideControl({
 			{OVERRIDE_OPTIONS.map((option) => {
 				const isActive = value === option.state;
 				return (
-					<button
+					<Button
 						key={option.state}
 						type="button"
 						aria-pressed={isActive}
@@ -73,16 +74,18 @@ export function OverrideControl({
 							[styles.segmentActive]: isActive,
 							[option.activeClassName]: isActive,
 						})}
+						variant="ghost"
+						color="secondary"
 						onClick={(): void => onSelect(permission, option.state)}
 						data-testid={`override-${option.state}-${permission}`}
 					>
-						<span className={styles.segmentIcon}>{option.icon}</span>
+						<div className={styles.segmentIcon}>{option.icon}</div>
 						{isActive && (
 							<Typography.Text as="span" size="small" weight="medium">
 								{option.label}
 							</Typography.Text>
 						)}
-					</button>
+					</Button>
 				);
 			})}
 		</div>
