@@ -11,8 +11,8 @@ import { usePanelTypeSelectItems } from './usePanelTypeSelectItems';
 interface PanelTypeSwitcherProps {
 	/** The current panel kind (selected value). */
 	panelKind: PanelKind;
-	/** Active query type — a kind that can't be authored in it is disabled (e.g. List is Query-Builder-only, so PromQL/ClickHouse disable it). Defaults to Query Builder. */
-	queryType?: EQueryType;
+	/** Active query type — a kind that can't be authored in it is disabled (e.g. List is Query-Builder-only, so PromQL/ClickHouse disable it). */
+	queryType: EQueryType;
 	/** Panel's current signal — also gates the disabled rule (List needs logs/traces, not metrics). */
 	signal?: TelemetrytypesSignalDTO;
 	onChange: (kind: PanelKind) => void;

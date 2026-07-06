@@ -32,9 +32,9 @@ interface ViewPanelModalHeaderProps {
 	/**
 	 * The active query-builder tab (Query Builder / PromQL / ClickHouse). The type
 	 * selector greys out kinds that can't be authored in it — e.g. List is
-	 * Query-Builder-only, so PromQL/ClickHouse disable it. Defaults to Query Builder.
+	 * Query-Builder-only, so PromQL/ClickHouse disable it.
 	 */
-	queryType?: EQueryType;
+	queryType: EQueryType;
 	/** Current builder datasource — greys out kinds that don't support it (e.g. List needs logs/traces, not metrics). */
 	signal: TelemetrytypesSignalDTO;
 	onChangePanelKind: (kind: PanelKind) => void;
