@@ -27,5 +27,6 @@ export const definition: PanelDefinition<'signoz/NumberPanel'> = {
 		download: false,
 		createAlert: true,
 		search: false,
+		drilldown: true,
 	},
 };

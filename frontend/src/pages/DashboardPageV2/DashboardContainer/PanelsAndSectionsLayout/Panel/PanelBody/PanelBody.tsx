@@ -3,6 +3,7 @@ import { Loader, RotateCw, SquarePlus, TriangleAlert } from '@signozhq/icons';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import { PanelMode } from 'container/DashboardContainer/visualization/panels/types';
 import PanelMessage from 'pages/DashboardPageV2/DashboardContainer/Panels/components/PanelMessage/PanelMessage';
+import type { AnyPanelInteractionProps } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/interactions';
 import type { RenderablePanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelDefinition';
 import type { DashboardPreference } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/rendererProps';
 import { hasRunnableQueries } from 'pages/DashboardPageV2/DashboardContainer/queryV5/buildQueryRangeRequest';
@@ -35,6 +36,12 @@ interface PanelBodyProps {
 	searchTerm?: string;
 	/** Server-side paging handles — only consumed by raw/list renderers. */
 	pagination?: PanelPagination;
+	/** Close the standalone View modal — only consumed by the time-series/bar graph manager. */
+	onCloseStandaloneView?: () => void;
+	/** Opens the drill-down context menu; threaded to interactive renderers. */
+	onClick?: AnyPanelInteractionProps['onClick'];
+	/** Gate for the drill-down menu — kind supported and the panel has a builder query. */
+	enableDrillDown?: boolean;
 }
 
 /**
@@ -55,6 +62,9 @@ function PanelBody({
 	panelMode = PanelMode.DASHBOARD_VIEW,
 	searchTerm,
 	pagination,
+	onCloseStandaloneView,
+	onClick,
+	enableDrillDown = false,
 }: PanelBodyProps): JSX.Element {
 	// A retained response (keepPreviousData) counts as data only if its type matches the current
 	// request — else a prior panel kind's response (time_series → raw) flashes NoData on switch.
@@ -117,10 +127,12 @@ function PanelBody({
 				refetch={refetch}
 				onDragSelect={onDragSelect}
 				panelMode={panelMode}
-				enableDrillDown={false}
+				enableDrillDown={enableDrillDown}
+				onClick={onClick}
 				dashboardPreference={dashboardPreference}
 				searchTerm={searchTerm}
 				pagination={pagination}
+				onCloseStandaloneView={onCloseStandaloneView}
 			/>
 		</div>
 	);
