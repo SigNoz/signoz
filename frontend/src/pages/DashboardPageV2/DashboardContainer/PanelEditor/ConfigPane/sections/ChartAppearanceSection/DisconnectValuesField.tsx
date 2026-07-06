@@ -46,11 +46,10 @@ function DisconnectValuesField({
 	onChange,
 }: DisconnectValuesFieldProps): JSX.Element {
 	const duration = value?.fillLessThan || undefined;
-	const isThreshold = !!duration;
-	// Remember the last threshold so toggling Never → Threshold restores it.
-	const [lastDuration, setLastDuration] = useState(
-		duration ?? defaultDuration(stepInterval),
-	);
+	// `fillOnlyBelow` is authoritative; fall back to a stored duration for legacy panels.
+	const isThreshold = value?.fillOnlyBelow ?? !!duration;
+	// Remember the last committed threshold so Never → Threshold restores it.
+	const [lastDuration, setLastDuration] = useState<string | undefined>(duration);
 
 	useEffect(() => {
 		if (duration) {
@@ -59,11 +58,17 @@ function DisconnectValuesField({
 	}, [duration]);
 
 	const handleMode = (mode: DisconnectValuesMode): void => {
-		onChange(
-			mode === DisconnectValuesMode.THRESHOLD
-				? { ...value, fillLessThan: lastDuration }
-				: undefined,
-		);
+		if (mode === DisconnectValuesMode.THRESHOLD) {
+			onChange({
+				...value,
+				fillOnlyBelow: true,
+				// Seed from the live stepInterval (async — undefined until results load), not mount.
+				fillLessThan: lastDuration ?? defaultDuration(stepInterval),
+			});
+			return;
+		}
+		// Never spans every gap; drop the duration so the renderer reads a clean "span all".
+		onChange({ ...value, fillOnlyBelow: false, fillLessThan: undefined });
 	};
 
 	return (
@@ -79,14 +84,16 @@ function DisconnectValuesField({
 					onChange={handleMode}
 				/>
 			</div>
-			{isThreshold && (
+			{isThreshold && duration && (
 				<div className={styles.field}>
 					<Typography.Text>Threshold value</Typography.Text>
 					<DisconnectValuesThresholdInput
 						testId={`${testId}-value`}
-						value={lastDuration}
+						value={duration}
 						minValue={stepInterval}
-						onChange={(next): void => onChange({ ...value, fillLessThan: next })}
+						onChange={(next): void =>
+							onChange({ ...value, fillOnlyBelow: true, fillLessThan: next })
+						}
 					/>
 				</div>
 			)}

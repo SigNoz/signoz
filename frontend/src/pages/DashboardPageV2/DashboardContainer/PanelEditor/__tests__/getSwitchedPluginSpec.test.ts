@@ -1,6 +1,6 @@
 import {
-	TelemetrytypesSignalDTO,
 	type DashboardtypesPanelSpecDTO,
+	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { getPanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Panels/registry';
 
@@ -26,20 +26,21 @@ function specWith(pluginSpec: unknown): DashboardtypesPanelSpecDTO {
 	} as unknown as DashboardtypesPanelSpecDTO;
 }
 
+// Thin wrapper — only prove delegation; seeding rules are covered in buildPluginSpec.test.ts.
 describe('getSwitchedPluginSpec', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
 		mockDefaultColumnsForSignal.mockReturnValue([]);
 	});
 
-	it('carries only unit + decimalPrecision when the new kind has a formatting section', () => {
+	it("resolves the target kind's sections and carries the old spec through them", () => {
 		mockGetPanelDefinition.mockReturnValue({
-			sections: [{ kind: 'formatting', controls: { unit: true, decimals: true } }],
+			sections: [
+				{ kind: 'legend', controls: { position: true } },
+				{ kind: 'formatting', controls: { unit: true, decimals: true } },
+			],
 		});
-		const old = specWith({
-			formatting: { unit: 'ms', decimalPrecision: 2, columnUnits: { A: 'bytes' } },
-			axes: { logScale: true },
-		});
+		const old = specWith({ formatting: { unit: 'ms', decimalPrecision: 2 } });
 
 		const result = getSwitchedPluginSpec(
 			old,
@@ -47,25 +48,12 @@ describe('getSwitchedPluginSpec', () => {
 			TelemetrytypesSignalDTO.logs,
 		);
 
+		expect(mockGetPanelDefinition).toHaveBeenCalledWith('signoz/TimeSeriesPanel');
+		expect(result.legend?.position).toBe('bottom');
 		expect(result.formatting).toStrictEqual({ unit: 'ms', decimalPrecision: 2 });
-		// Type-specific config from the old kind is dropped.
-		expect((result as { axes?: unknown }).axes).toBeUndefined();
 	});
 
-	it('does not carry formatting when the new kind has no formatting section', () => {
-		mockGetPanelDefinition.mockReturnValue({ sections: [{ kind: 'columns' }] });
-		const old = specWith({ formatting: { unit: 'ms' } });
-
-		const result = getSwitchedPluginSpec(
-			old,
-			'signoz/ListPanel',
-			TelemetrytypesSignalDTO.logs,
-		);
-
-		expect(result.formatting).toBeUndefined();
-	});
-
-	it('seeds List columns from the signal when switching into a List', () => {
+	it('forwards the signal to seed List columns', () => {
 		const columns = [{ name: 'body' }];
 		mockDefaultColumnsForSignal.mockReturnValue(columns);
 		mockGetPanelDefinition.mockReturnValue({ sections: [{ kind: 'columns' }] });
@@ -80,19 +68,5 @@ describe('getSwitchedPluginSpec', () => {
 			TelemetrytypesSignalDTO.logs,
 		);
 		expect(result.selectFields).toBe(columns);
-	});
-
-	it('includes the kind section defaults (e.g. legend position)', () => {
-		mockGetPanelDefinition.mockReturnValue({
-			sections: [{ kind: 'legend', controls: { position: true } }],
-		});
-
-		const result = getSwitchedPluginSpec(
-			specWith({}),
-			'signoz/PieChartPanel',
-			TelemetrytypesSignalDTO.logs,
-		);
-
-		expect(result.legend?.position).toBe('bottom');
 	});
 });

@@ -296,7 +296,7 @@ func (b *MetricQueryStatementBuilder) buildReducedTimeSeriesCTE(
 		}
 	}
 
-	sb.From(fmt.Sprintf("%s.%s", DBName, TimeseriesV4ReducedTableName))
+	sb.From(fmt.Sprintf("%s.%s", DBName, TimeseriesV4ReducedLocalTableName))
 	sb.Select("fingerprint")
 	for _, g := range query.GroupBy {
 		col, err := b.fm.ColumnExpressionFor(ctx, start, end, &g.TelemetryFieldKey, keys)

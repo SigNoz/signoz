@@ -23,6 +23,8 @@ interface PreviewPaneProps {
 	data: PanelQueryData;
 	/** Any fetch in flight — drives the header spinner and the body's loading state. */
 	isFetching: boolean;
+	/** Showing a prior page's data while the next loads; forwarded so the list shows skeleton rows. */
+	isPreviousData?: boolean;
 	error: Error | null;
 	/** Re-run the query (drives PanelBody's error-state retry). */
 	refetch: () => void;
@@ -43,6 +45,7 @@ function PreviewPane({
 	panelDefinition,
 	data,
 	isFetching,
+	isPreviousData,
 	error,
 	refetch,
 	onDragSelect,
@@ -71,10 +74,8 @@ function PreviewPane({
 			<div className={styles.container}>
 				<div className={styles.surface}>
 					<PanelHeader
-						name={panel.spec.display.name}
-						description={panel.spec.display.description}
 						panelId={panelId}
-						panelKind={panel.spec.plugin.kind}
+						panel={panel}
 						isFetching={isFetching}
 						error={error}
 						warning={data.response?.data?.warning}
@@ -89,6 +90,7 @@ function PreviewPane({
 						panelId={panelId}
 						data={data}
 						isFetching={isFetching}
+						isPreviousData={isPreviousData}
 						error={error}
 						refetch={refetch}
 						onDragSelect={onDragSelect}

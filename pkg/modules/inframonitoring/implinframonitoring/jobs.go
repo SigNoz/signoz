@@ -148,12 +148,12 @@ func (m *module) getTopJobGroups(
 	return paginateWithBackfill(allMetricGroups, metadataMap, req.GroupBy, req.Offset, req.Limit), nil
 }
 
-func (m *module) getJobsTableMetadata(ctx context.Context, req *inframonitoringtypes.PostableJobs) (map[string]map[string]string, error) {
+func (m *module) getJobsTableMetadata(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableJobs) (map[string]map[string]string, error) {
 	var nonGroupByAttrs []string
 	for _, key := range jobAttrKeysForMetadata {
 		if !isKeyInGroupByAttrs(req.GroupBy, key) {
 			nonGroupByAttrs = append(nonGroupByAttrs, key)
 		}
 	}
-	return m.getMetadata(ctx, jobsTableMetricNamesList, req.GroupBy, nonGroupByAttrs, req.Filter, req.Start, req.End)
+	return m.getMetadata(ctx, orgID, jobsTableMetricNamesList, req.GroupBy, nonGroupByAttrs, req.Filter, req.Start, req.End)
 }

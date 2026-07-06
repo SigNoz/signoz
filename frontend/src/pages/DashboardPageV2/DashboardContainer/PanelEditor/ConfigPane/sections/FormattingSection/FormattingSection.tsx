@@ -14,7 +14,7 @@ import ColumnUnits from './ColumnUnits';
 import styles from './FormattingSection.module.scss';
 
 type FormattingSectionProps = SectionEditorProps<SectionKind.Formatting> &
-	Pick<SectionEditorContext, 'tableColumns'>;
+	Pick<SectionEditorContext, 'tableColumns' | 'metricUnit'>;
 
 // `full` means "show the raw value, no rounding"; the digits round to that many places.
 const DECIMAL_OPTIONS: {
@@ -39,6 +39,7 @@ function FormattingSection({
 	controls,
 	onChange,
 	tableColumns = [],
+	metricUnit,
 }: FormattingSectionProps): JSX.Element {
 	return (
 		<>
@@ -50,6 +51,7 @@ function FormattingSection({
 						data-testid="panel-editor-v2-unit"
 						source={YAxisSource.DASHBOARDS}
 						value={value?.unit}
+						initialValue={metricUnit}
 						onChange={(unit): void => onChange({ ...value, unit })}
 					/>
 				</div>

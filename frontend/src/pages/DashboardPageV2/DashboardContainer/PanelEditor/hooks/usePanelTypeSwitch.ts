@@ -11,7 +11,10 @@ import {
 	type PartialPanelTypes,
 } from 'container/NewWidget/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import type { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type {
+	OrderByPayload,
+	Query,
+} from 'types/api/queryBuilder/queryBuilderData';
 
 import { resolveQueryType } from '../../Panels/capabilities';
 import {
@@ -24,6 +27,25 @@ import {
 	getSwitchedPluginSpec,
 	type SwitchedPluginSpec,
 } from '../getSwitchedPluginSpec';
+
+// V1's handleQueryChange clears orderBy for lists; re-seed the fresh-list default (timestamp desc).
+const DEFAULT_LIST_ORDER_BY: OrderByPayload[] = [
+	{ columnName: 'timestamp', order: 'desc' },
+];
+
+function withDefaultListOrder(query: Query): Query {
+	return {
+		...query,
+		builder: {
+			...query.builder,
+			queryData: query.builder.queryData.map((qd) =>
+				qd.orderBy && qd.orderBy.length > 0
+					? qd
+					: { ...qd, orderBy: DEFAULT_LIST_ORDER_BY },
+			),
+		},
+	};
+}
 
 /** What a kind looks like when you leave it; restored verbatim if you return. */
 interface KindState {
@@ -116,16 +138,21 @@ export function usePanelTypeSwitch({
 				{ ...query, queryType },
 				panelTypeRef.current,
 			);
+			// Match a fresh list panel's default order so the builder's Order By isn't empty.
+			const nextQuery =
+				newPanelType === PANEL_TYPES.LIST
+					? withDefaultListOrder(transformed)
+					: transformed;
 			const signal = getBuilderQueries(currentSpec.queries)[0]
 				?.signal as TelemetrytypesSignalDTO;
 
 			setSpec(
 				buildSpec(
 					getSwitchedPluginSpec(currentSpec, newKind, signal),
-					toPerses(transformed, newPanelType),
+					toPerses(nextQuery, newPanelType),
 				),
 			);
-			redirectWithQueryBuilderData(transformed);
+			redirectWithQueryBuilderData(nextQuery);
 		},
 		[setSpec, redirectWithQueryBuilderData],
 	);

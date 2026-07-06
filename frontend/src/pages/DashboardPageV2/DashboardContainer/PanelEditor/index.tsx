@@ -8,6 +8,8 @@ import {
 import { toast } from '@signozhq/ui/sonner';
 import {
 	type DashboardtypesPanelDTO,
+	type DashboardtypesPanelFormattingDTO,
+	type DashboardtypesPanelSpecDTO,
 	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -30,6 +32,7 @@ import { useLegendSeries } from './hooks/useLegendSeries';
 import { usePanelQuery } from '../hooks/usePanelQuery';
 import { usePanelEditorDraft } from './hooks/usePanelEditorDraft';
 import { usePanelEditorQuerySync } from './hooks/usePanelEditorQuerySync';
+import { useMetricYAxisUnit } from './hooks/useMetricYAxisUnit';
 import { usePanelEditorSave } from './hooks/usePanelEditorSave';
 import { usePanelTypeSwitch } from './hooks/usePanelTypeSwitch';
 import { useSeedNewListColumns } from './hooks/useSeedNewListColumns';
@@ -99,12 +102,19 @@ function PanelEditorContainer({
 
 	// One shared query result for the whole editor; the preview renders it.
 	const panelDefinition = getPanelDefinition(draft.spec.plugin.kind);
-	const { data, isFetching, error, cancelQuery, refetch, pagination } =
-		usePanelQuery({
-			panel: draft,
-			panelId,
-			enabled: !!panelDefinition,
-		});
+	const {
+		data,
+		isFetching,
+		isPreviousData,
+		error,
+		cancelQuery,
+		refetch,
+		pagination,
+	} = usePanelQuery({
+		panel: draft,
+		panelId,
+		enabled: !!panelDefinition,
+	});
 
 	// A new panel's default signal (its kind's first supported) — seeds the query and columns.
 	const defaultSignal = panelDefinition.supportedSignals[0];
@@ -122,6 +132,33 @@ function PanelEditorContainer({
 
 	// Switch the panel's visualization kind in place (reversible per session).
 	const { onChangePanelKind } = usePanelTypeSwitch({ spec, panelType, setSpec });
+
+	// At editor level, not the collapsible FormattingSection, so seeding runs while closed.
+	const formattingUnit = (
+		spec.plugin.spec as {
+			formatting?: DashboardtypesPanelFormattingDTO;
+		}
+	).formatting?.unit;
+	const seedFormattingUnit = useCallback(
+		(unit: string): void => {
+			const pluginSpec = spec.plugin.spec as {
+				formatting?: DashboardtypesPanelFormattingDTO;
+			};
+			setSpec({
+				...spec,
+				plugin: {
+					...spec.plugin,
+					spec: { ...pluginSpec, formatting: { ...pluginSpec.formatting, unit } },
+				},
+			} as DashboardtypesPanelSpecDTO);
+		},
+		[spec, setSpec],
+	);
+	const { metricUnit } = useMetricYAxisUnit({
+		isNewPanel: isNew,
+		unit: formattingUnit,
+		onSelectUnit: seedFormattingUnit,
+	});
 
 	// Spec and query dirtiness are tracked independently so query re-serialization
 	// never false-dirties. A new panel is always savable (you're creating it).
@@ -205,6 +242,7 @@ function PanelEditorContainer({
 										panelDefinition={panelDefinition}
 										data={data}
 										isFetching={isFetching}
+										isPreviousData={isPreviousData}
 										error={error}
 										refetch={refetch}
 										onDragSelect={onDragSelect}
@@ -242,7 +280,8 @@ function PanelEditorContainer({
 					className={styles.right}
 				>
 					<ConfigPane
-						panelKind={draft.spec.plugin.kind}
+						panel={draft}
+						panelId={panelId}
 						spec={spec}
 						onChangeSpec={setSpec}
 						onChangePanelKind={onChangePanelKind}
@@ -250,6 +289,7 @@ function PanelEditorContainer({
 						legendSeries={legendSeries}
 						tableColumns={tableColumns}
 						stepInterval={stepInterval}
+						metricUnit={metricUnit}
 					/>
 				</ResizablePanel>
 			</ResizablePanelGroup>
