@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import type { FilterData } from 'container/QueryTable/Drilldown/drilldownUtils';
 import useBaseDrilldownNavigate from 'container/QueryTable/Drilldown/useBaseDrilldownNavigate';
 import type {
 	Coordinates,
@@ -10,10 +11,7 @@ import type {
 	DrilldownClickPayload,
 	DrilldownContext,
 } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/drilldown';
-import {
-	PANEL_KIND_TO_PANEL_TYPE,
-	type PanelKind,
-} from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelKind';
+import { PANEL_KIND_TO_PANEL_TYPE } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelKind';
 import { getPanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Panels/registry';
 import { buildAggregateData } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/drilldown/buildAggregateData';
 import { getBuilderQueries } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/getBuilderQueries';
@@ -21,9 +19,11 @@ import { fromPerses } from 'pages/DashboardPageV2/DashboardContainer/queryV5/per
 
 import DrilldownAggregateMenu from '../DrilldownMenu/DrilldownAggregateMenu';
 import DrilldownBreakoutMenu from '../DrilldownMenu/DrilldownBreakoutMenu';
+import DrilldownDashboardVariablesMenu from '../DrilldownMenu/DrilldownDashboardVariablesMenu';
 import DrilldownFilterMenu from '../DrilldownMenu/DrilldownFilterMenu';
 import { useDrilldownBreakout } from './useDrilldownBreakout';
 import { useDrilldownCoordinates } from './useDrilldownCoordinates';
+import { useDrilldownDashboardVariables } from './useDrilldownDashboardVariables';
 import { useDrilldownFilter } from './useDrilldownFilter';
 import { useResolvedDrilldownQuery } from './useResolvedDrilldownQuery';
 import { useViewPanel } from './useViewPanel';
@@ -32,7 +32,11 @@ import { useViewPanel } from './useViewPanel';
 enum DrilldownSubMenu {
 	Base = 'base',
 	Breakout = 'breakout',
+	DashboardVariables = 'dashboardVariables',
 }
+
+/** Stable empty-filters ref so the dashboard-variables hook doesn't re-run on every no-click render. */
+const EMPTY_FILTERS: FilterData[] = [];
 
 /** Props the panel shell spreads onto `<ContextMenu>`. */
 export interface DrilldownContextMenuProps {
@@ -58,11 +62,9 @@ export function useDrilldown(
 	panel: DashboardtypesPanelDTO,
 	panelId: string,
 ): UseDrilldownResult {
-	const kind = panel.spec.plugin.kind as PanelKind;
+	const kind = panel.spec.plugin.kind;
 	const panelType = PANEL_KIND_TO_PANEL_TYPE[kind];
-	// Stable ref so the conversions below don't re-run every render (the `?? []` fallback would
-	// otherwise be a fresh array each time).
-	const queries = useMemo(() => panel.spec.queries ?? [], [panel.spec.queries]);
+	const queries = panel.spec.queries;
 
 	// Kind must opt in via its capability AND have a builder query to drill into.
 	const enableDrillDown = useMemo(
@@ -102,6 +104,10 @@ export function useDrilldown(
 		(): void => setSubMenu(DrilldownSubMenu.Base),
 		[],
 	);
+	const openDashboardVariables = useCallback(
+		(): void => setSubMenu(DrilldownSubMenu.DashboardVariables),
+		[],
+	);
 
 	const onPanelClick = useCallback(
 		(payload: DrilldownClickPayload): void => {
@@ -136,6 +142,12 @@ export function useDrilldown(
 		onClose: handleClose,
 	});
 
+	const dashboardVariables = useDrilldownDashboardVariables({
+		filters: context?.filters ?? EMPTY_FILTERS,
+		signal: context?.signal,
+		onClose: handleClose,
+	});
+
 	// The aggregate menu (View in Logs/Traces) shows for a non-group click on the base menu; the
 	// group click routes to filter-by-value instead. Only that menu resolves variables —
 	// filter/breakout open the View modal, which resolves at query-run time.
@@ -165,6 +177,14 @@ export function useDrilldown(
 				/>
 			) : null;
 		}
+		if (subMenu === DrilldownSubMenu.DashboardVariables) {
+			return (
+				<DrilldownDashboardVariablesMenu
+					actions={dashboardVariables.actions}
+					onBack={backToBase}
+				/>
+			);
+		}
 		if (filter.isGroupColumnClick && context?.clickedKey) {
 			return (
 				<DrilldownFilterMenu
@@ -183,9 +203,11 @@ export function useDrilldown(
 				query={v1Query}
 				isResolving={isResolving}
 				links={panel.spec.links}
+				canSetDashboardVariables={dashboardVariables.hasFieldVariables}
 				onViewLogs={(): void => navigate('view_logs')}
 				onViewTraces={(): void => navigate('view_traces')}
 				onBreakout={openBreakout}
+				onSetDashboardVariables={openDashboardVariables}
 				onClose={handleClose}
 			/>
 		);
@@ -193,7 +215,8 @@ export function useDrilldown(
 		subMenu,
 		breakout.queryData,
 		breakout.onBreakout,
-		backToBase,
+		dashboardVariables.actions,
+		dashboardVariables.hasFieldVariables,
 		filter.isGroupColumnClick,
 		filter.onFilter,
 		context,
@@ -202,6 +225,8 @@ export function useDrilldown(
 		panel.spec.links,
 		navigate,
 		openBreakout,
+		openDashboardVariables,
+		backToBase,
 		handleClose,
 	]);
 
