@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { isEqual } from 'lodash-es';
+import { cloneDeep, isEqual } from 'lodash-es';
 import { toast } from '@signozhq/ui/sonner';
 import { useQueryClient } from 'react-query';
 import {
@@ -16,7 +16,7 @@ import { buildDraftGroup, nodeFromGroupDraft } from '../../utils';
 const GROUPS_KEY_PREFIX = '/api/v1/span_mapper_groups';
 
 function clone(groups: DraftGroup[]): DraftGroup[] {
-	return JSON.parse(JSON.stringify(groups)) as DraftGroup[];
+	return cloneDeep(groups);
 }
 
 export interface AttributeMappingStore {
