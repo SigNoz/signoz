@@ -54,7 +54,7 @@ function DeleteActionItem({
 	});
 
 	const openConfirm = useCallback((): void => {
-		const { destroy } = modal.confirm({
+		modal.confirm({
 			title: (
 				<Typography.Title level={5}>
 					Are you sure you want to delete the
@@ -72,14 +72,13 @@ function DeleteActionItem({
 				/>
 			),
 			okText: 'Delete',
-			okButtonProps: {
-				danger: true,
-				onClick: (e): void => {
-					e.preventDefault();
-					e.stopPropagation();
-					runDelete(undefined, { onSettled: () => destroy() });
-				},
-			},
+			okButtonProps: { danger: true },
+			// Returning a promise keeps the Delete button in a loading state and blocks
+			// re-clicks until the mutation settles, then closes the confirm.
+			onOk: () =>
+				new Promise<void>((resolve) => {
+					runDelete(undefined, { onSettled: () => resolve() });
+				}),
 			cancelButtonProps: {
 				onClick: (e): void => {
 					e.stopPropagation();
