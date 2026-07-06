@@ -16,6 +16,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
@@ -35,6 +37,10 @@ func createTestTemplate(t *testing.T, externalURL *url.URL) *template.Template {
 	return tmpl
 }
 
+func newTestTemplater(tmpl *template.Template) alertmanagertypes.Templater {
+	return alertmanagertemplate.New(tmpl, slog.New(slog.DiscardHandler))
+}
+
 func newTestConfig(serverURL string) *config.JiraConfig {
 	apiURL, _ := url.Parse(serverURL + "/rest/api/2/")
 	return &config.JiraConfig{
@@ -52,7 +58,8 @@ func newTestConfig(serverURL string) *config.JiraConfig {
 
 func TestNewRejectsNilConfig(t *testing.T) {
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	_, err := New(nil, &template.Template{}, logger)
+	tmpl := &template.Template{}
+	_, err := New(nil, tmpl, logger, newTestTemplater(tmpl))
 	require.Error(t, err)
 }
 
@@ -62,7 +69,8 @@ func TestJiraRetry(t *testing.T) {
 
 	cfg := newTestConfig(srv.URL)
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	notifier, err := New(cfg, createTestTemplate(t, cfg.APIURL.URL), logger)
+	tmpl := createTestTemplate(t, cfg.APIURL.URL)
+	notifier, err := New(cfg, tmpl, logger, newTestTemplater(tmpl))
 	require.NoError(t, err)
 
 	for _, tc := range []struct {
@@ -125,7 +133,8 @@ func TestPrepareSearchRequest(t *testing.T) {
 				Description: config.JiraFieldConfig{Template: "d"},
 			}
 			logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-			notifier, err := New(cfg, &template.Template{}, logger)
+			tmpl := &template.Template{}
+			notifier, err := New(cfg, tmpl, logger, newTestTemplater(tmpl))
 			require.NoError(t, err)
 
 			_, searchURL := notifier.prepareSearchRequest("project=TEST")
@@ -163,7 +172,8 @@ func TestWontFixResolutionJQL(t *testing.T) {
 	cfg.WontFixResolution = "Won't Do"
 
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	notifier, err := New(cfg, createTestTemplate(t, cfg.APIURL.URL), logger)
+	tmpl := createTestTemplate(t, cfg.APIURL.URL)
+	notifier, err := New(cfg, tmpl, logger, newTestTemplater(tmpl))
 	require.NoError(t, err)
 
 	ctx := notify.WithGroupKey(context.Background(), "g1")
@@ -227,7 +237,8 @@ func TestSummarySuppressionOnUpdate(t *testing.T) {
 	}
 
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	notifier, err := New(cfg, createTestTemplate(t, cfg.APIURL.URL), logger)
+	tmpl := createTestTemplate(t, cfg.APIURL.URL)
+	notifier, err := New(cfg, tmpl, logger, newTestTemplater(tmpl))
 	require.NoError(t, err)
 
 	ctx := notify.WithGroupKey(context.Background(), "g1")
@@ -279,7 +290,8 @@ func TestJiraNotifierCreatesIssueWithGroupLabel(t *testing.T) {
 	cfg.Labels = []string{"signoz"}
 
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	notifier, err := New(cfg, createTestTemplate(t, cfg.APIURL.URL), logger)
+	tmpl := createTestTemplate(t, cfg.APIURL.URL)
+	notifier, err := New(cfg, tmpl, logger, newTestTemplater(tmpl))
 	require.NoError(t, err)
 
 	ctx := notify.WithGroupKey(context.Background(), "test-group-1")
@@ -340,7 +352,8 @@ func TestJiraNotifierResolvesExistingIssue(t *testing.T) {
 	cfg.ResolveTransition = "Done"
 
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	notifier, err := New(cfg, createTestTemplate(t, cfg.APIURL.URL), logger)
+	tmpl := createTestTemplate(t, cfg.APIURL.URL)
+	notifier, err := New(cfg, tmpl, logger, newTestTemplater(tmpl))
 	require.NoError(t, err)
 
 	now := time.Now()
@@ -383,7 +396,8 @@ func TestReopenDurationZeroUsesStatusFilter(t *testing.T) {
 	cfg.ReopenDuration = 0
 
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	notifier, err := New(cfg, createTestTemplate(t, cfg.APIURL.URL), logger)
+	tmpl := createTestTemplate(t, cfg.APIURL.URL)
+	notifier, err := New(cfg, tmpl, logger, newTestTemplater(tmpl))
 	require.NoError(t, err)
 
 	ctx := notify.WithGroupKey(context.Background(), "g1")
@@ -429,7 +443,8 @@ func TestReopenDurationSetUsesResolutiondateFilter(t *testing.T) {
 	cfg.ReopenDuration = model.Duration(7 * 24 * time.Hour)
 
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	notifier, err := New(cfg, createTestTemplate(t, cfg.APIURL.URL), logger)
+	tmpl := createTestTemplate(t, cfg.APIURL.URL)
+	notifier, err := New(cfg, tmpl, logger, newTestTemplater(tmpl))
 	require.NoError(t, err)
 
 	ctx := notify.WithGroupKey(context.Background(), "g1")

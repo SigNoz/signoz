@@ -7,7 +7,7 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import { Collapse, Form, Input, Select } from 'antd';
 import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
 import {
@@ -590,21 +590,23 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 				label={t('jira_custom_field_schema_heading')}
 				tooltip={{
 					title: (
-						<span>
-							Describes the JSON format that Jira requires.
-							<br />
-							For help, see the{' '}
-							<a
-								href="https://support.atlassian.com/cloud-automation/docs/advanced-field-editing-using-json/"
-								target="_blank"
-								rel="noopener noreferrer"
-							>
-								Jira documentation
-							</a>
-							.
-						</span>
+						<Trans
+							i18nKey="jira_custom_field_schema_tooltip"
+							ns="channels"
+							components={{
+								1: (
+									<a
+										href="https://support.atlassian.com/cloud-automation/docs/advanced-field-editing-using-json/"
+										target="_blank"
+										rel="noopener noreferrer"
+									>
+										Jira documentation
+									</a>
+								),
+							}}
+						/>
 					),
-					overlayInnerStyle: { maxWidth: 400 },
+					overlayInnerStyle: { maxWidth: 400, whiteSpace: 'pre-line' },
 				}}
 				style={{ marginTop: 12, marginBottom: 0 }}
 			>
@@ -871,7 +873,7 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 
 			<Form.Item
 				name="reopen_transition"
-				help={t('help_jira_resolve_transition')}
+				help={t('help_jira_reopen_transition')}
 				label={t('field_jira_reopen_transition')}
 			>
 				<Input

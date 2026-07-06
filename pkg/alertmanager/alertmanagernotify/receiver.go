@@ -69,7 +69,7 @@ func NewReceiverIntegrations(nc *alertmanagertypes.Receiver, tmpl *template.Temp
 		add(opsgenie.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) { return opsgenie.New(c, tmpl, l, templater) })
 	}
 	for i, c := range nc.JiraConfigs {
-		add(jira.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) { return jira.New(c, tmpl, l) })
+		add(jira.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) { return jira.New(c, tmpl, l, templater) })
 	}
 	for i, c := range nc.SlackConfigs {
 		add(slack.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) { return slack.New(c, tmpl, l, templater) })

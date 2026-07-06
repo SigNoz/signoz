@@ -73,7 +73,7 @@ func defaultedBaseReceiver(base *config.Receiver) (*config.Receiver, error) {
 		return nil, err
 	}
 
-	if err := withDefaults.UnmarshalYAML(func(i any) error { return nil }); err != nil {
+	if err := withDefaults.UnmarshalYAML(func(i interface{}) error { return nil }); err != nil {
 		return nil, err
 	}
 

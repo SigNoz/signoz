@@ -4,6 +4,12 @@ import { AxiosError } from 'axios';
 import { ErrorV2Resp, SuccessResponseV2 } from 'types/api';
 import { PayloadProps, Props } from 'types/api/channels/createJira';
 
+/**
+ * @deprecated Targets the deprecated `/testChannel` endpoint. No generated replacement
+ * exists yet; migrate this once one is added to `api/generated/services/channels`.
+ *
+ * Part of https://github.com/SigNoz/engineering-pod/issues/5289, add a comment or update when removing this method.
+ */
 const testJira = async (
 	props: Props,
 ): Promise<SuccessResponseV2<PayloadProps>> => {

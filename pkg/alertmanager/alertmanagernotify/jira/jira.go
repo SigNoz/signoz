@@ -27,7 +27,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	commoncfg "github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
 
@@ -165,16 +167,17 @@ func (i issueFields) MarshalJSON() ([]byte, error) {
 
 // Notifier implements a Notifier for Jira notifications.
 type Notifier struct {
-	conf    *config.JiraConfig
-	apiURL  *config.URL
-	tmpl    *template.Template
-	logger  *slog.Logger
-	client  *http.Client
-	retrier *notify.Retrier
+	conf      *config.JiraConfig
+	apiURL    *config.URL
+	tmpl      *template.Template
+	logger    *slog.Logger
+	client    *http.Client
+	retrier   *notify.Retrier
+	templater alertmanagertypes.Templater
 }
 
 // New returns a new Jira notifier.
-func New(c *config.JiraConfig, t *template.Template, l *slog.Logger, httpOpts ...commoncfg.HTTPClientOption) (*Notifier, error) {
+func New(c *config.JiraConfig, t *template.Template, l *slog.Logger, templater alertmanagertypes.Templater, httpOpts ...commoncfg.HTTPClientOption) (*Notifier, error) {
 	if c == nil {
 		return nil, errors.NewInternalf(errors.CodeInternal, "jira config nil")
 	}
@@ -194,12 +197,13 @@ func New(c *config.JiraConfig, t *template.Template, l *slog.Logger, httpOpts ..
 	}
 
 	return &Notifier{
-		conf:    c,
-		apiURL:  apiURL,
-		tmpl:    t,
-		logger:  l,
-		client:  client,
-		retrier: &notify.Retrier{RetryCodes: []int{http.StatusTooManyRequests}},
+		conf:      c,
+		apiURL:    apiURL,
+		tmpl:      t,
+		logger:    l,
+		client:    client,
+		retrier:   &notify.Retrier{RetryCodes: []int{http.StatusTooManyRequests}},
+		templater: templater,
 	}, nil
 }
 
@@ -237,7 +241,13 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 		method = http.MethodPut
 	}
 
-	requestBody, err := n.prepareIssueRequestBody(ctx, logger, key.Hash(), tmplTextFunc)
+	summary, descriptionText, err := n.expandSummaryAndDescription(ctx, logger, as)
+	if err != nil {
+		n.logger.ErrorContext(ctx, "failed to prepare notification content", errors.Attr(err))
+		return false, err
+	}
+
+	requestBody, err := n.prepareIssueRequestBody(key.Hash(), summary, descriptionText, tmplTextFunc)
 	if err != nil {
 		return false, err
 	}
@@ -253,29 +263,11 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 		}
 	}
 
-	responseBody, shouldRetry, err := n.doAPIRequest(ctx, method, path, requestBody)
-	if err != nil {
+	if _, shouldRetry, err := n.doAPIRequest(ctx, method, path, requestBody); err != nil {
 		return shouldRetry, errors.WrapInternalf(err, errors.CodeInternal, "failed to %s Jira issue: %v", method, err)
 	}
 
-	// Log the created issue with a browse URL for operator convenience.
-	if method == http.MethodPost {
-		var createResponse struct {
-			Key string `json:"key"`
-		}
-		if err := json.Unmarshal(responseBody, &createResponse); err == nil && createResponse.Key != "" {
-			baseURL := n.apiURL.String()
-			if idx := strings.Index(baseURL, "/rest/api/"); idx != -1 {
-				baseURL = baseURL[:idx]
-			}
-			logger.InfoContext(ctx, "created jira issue",
-				slog.String("issue_key", createResponse.Key),
-				slog.String("issue_url", baseURL+"/browse/"+createResponse.Key),
-			)
-		}
-	}
-
-	return n.transitionIssue(ctx, logger, existingIssue, alerts.HasFiring())
+	return n.transitionIssue(ctx, existingIssue, alerts.HasFiring())
 }
 
 // adfDocument wraps plain text into a minimal Atlassian Document Format document.
@@ -298,12 +290,45 @@ func adfDocument(text string) map[string]any {
 	}
 }
 
-func (n *Notifier) prepareIssueRequestBody(ctx context.Context, logger *slog.Logger, groupID string, tmplTextFunc template.TemplateFunc) (issue, error) {
-	summary, err := tmplTextFunc(n.conf.Summary.Template)
+// expandSummaryAndDescription renders the issue summary and description.
+func (n *Notifier) expandSummaryAndDescription(ctx context.Context, logger *slog.Logger, alerts []*types.Alert) (string, string, error) {
+	customTitle, customBody := alertmanagertemplate.ExtractTemplatesFromAnnotations(alerts)
+	result, err := n.templater.Expand(ctx, alertmanagertypes.ExpandRequest{
+		TitleTemplate:        customTitle,
+		BodyTemplate:         customBody,
+		DefaultTitleTemplate: n.conf.Summary.Template,
+		DefaultBodyTemplate:  n.conf.Description.Template,
+	}, alerts)
 	if err != nil {
-		return issue{}, errors.WrapInternalf(err, errors.CodeInternal, "summary template")
+		return "", "", err
 	}
 
+	summary, truncated := notify.TruncateInRunes(result.Title, maxSummaryLenRunes)
+	if truncated {
+		logger.WarnContext(ctx, "truncated summary", slog.Int("max_runes", maxSummaryLenRunes))
+	}
+
+	var descriptionText string
+	if result.IsDefaultBody {
+		descriptionText = result.Body[0]
+	} else {
+		parts := make([]string, 0, len(result.Body))
+		for _, part := range result.Body {
+			if part != "" {
+				parts = append(parts, part)
+			}
+		}
+		descriptionText = strings.Join(parts, "\n\n")
+	}
+	descriptionText, truncated = notify.TruncateInRunes(descriptionText, maxDescriptionLenRunes)
+	if truncated {
+		logger.WarnContext(ctx, "truncated description", slog.Int("max_runes", maxDescriptionLenRunes))
+	}
+
+	return summary, descriptionText, nil
+}
+
+func (n *Notifier) prepareIssueRequestBody(groupID string, summary string, descriptionText string, tmplTextFunc template.TemplateFunc) (issue, error) {
 	project, err := tmplTextFunc(n.conf.Project)
 	if err != nil {
 		return issue{}, errors.WrapInternalf(err, errors.CodeInternal, "project template")
@@ -332,11 +357,6 @@ func (n *Notifier) prepareIssueRequestBody(ctx context.Context, logger *slog.Log
 		fieldsWithStringKeys[k] = copied
 	}
 
-	summary, truncated := notify.TruncateInRunes(summary, maxSummaryLenRunes)
-	if truncated {
-		logger.WarnContext(ctx, "truncated summary", slog.Int("max_runes", maxSummaryLenRunes))
-	}
-
 	requestBody := issue{Fields: &issueFields{
 		Project:   &issueProject{Key: project},
 		Issuetype: &idNameValue{Name: issueType},
@@ -348,14 +368,6 @@ func (n *Notifier) prepareIssueRequestBody(ctx context.Context, logger *slog.Log
 		requestBody.Update = updateFields
 	}
 
-	descriptionText, err := tmplTextFunc(n.conf.Description.Template)
-	if err != nil {
-		return issue{}, errors.WrapInternalf(err, errors.CodeInternal, "description template")
-	}
-	descriptionText, truncated = notify.TruncateInRunes(descriptionText, maxDescriptionLenRunes)
-	if truncated {
-		logger.WarnContext(ctx, "truncated description", slog.Int("max_runes", maxDescriptionLenRunes))
-	}
 	if descriptionText != "" {
 		if n.isCloud() {
 			requestBody.Fields.Description = adfDocument(descriptionText)
@@ -480,7 +492,7 @@ func (n *Notifier) getIssueTransitionByName(ctx context.Context, issueKey, trans
 	return "", false, errors.NewInternalf(errors.CodeInternal, "can't find transition %s for issue %s", transitionName, issueKey)
 }
 
-func (n *Notifier) transitionIssue(ctx context.Context, logger *slog.Logger, issueToTransition *issue, firing bool) (bool, error) {
+func (n *Notifier) transitionIssue(ctx context.Context, issueToTransition *issue, firing bool) (bool, error) {
 	if issueToTransition == nil || issueToTransition.Key == "" || issueToTransition.Fields == nil || issueToTransition.Fields.Status == nil {
 		return false, nil
 	}
@@ -524,8 +536,7 @@ func (n *Notifier) transitionIssue(ctx context.Context, logger *slog.Logger, iss
 
 // isCloud reports whether this notifier targets a Jira Cloud instance.
 func (n *Notifier) isCloud() bool {
-	return n.conf.APIType == "cloud" ||
-		(n.conf.APIType == "auto" && strings.HasSuffix(n.apiURL.Host, "atlassian.net"))
+	return isCloudHost(n.conf.APIType, n.apiURL.Host)
 }
 
 // versionedAPIURL returns the base API URL with the correct REST version.
