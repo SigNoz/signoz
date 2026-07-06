@@ -309,9 +309,19 @@ func (m *module) ListPods(ctx context.Context, orgID valuer.UUID, req *inframoni
 		return nil, err
 	}
 
+	statusCounts, statusWarning, err := m.getPerGroupPodStatusCountsWithReqMetricChecks(ctx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+	if err != nil {
+		return nil, err
+	}
+
+	restartCounts, err := m.getPerGroupPodRestartCounts(ctx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+	if err != nil {
+		return nil, err
+	}
+
 	isPodUIDInGroupBy := isKeyInGroupByAttrs(req.GroupBy, podUIDAttrKey)
-	resp.Records = buildPodRecords(isPodUIDInGroupBy, queryResp, pageGroups, req.GroupBy, metadataMap, phaseCounts, req.End)
-	resp.Warning = queryResp.Warning
+	resp.Records = buildPodRecords(isPodUIDInGroupBy, queryResp, pageGroups, req.GroupBy, metadataMap, phaseCounts, statusCounts, restartCounts, req.End)
+	resp.Warning = mergeQueryWarnings(queryResp.Warning, statusWarning)
 
 	return resp, nil
 }
@@ -392,9 +402,14 @@ func (m *module) ListNodes(ctx context.Context, orgID valuer.UUID, req *inframon
 		return nil, err
 	}
 
+	podStatusCounts, podStatusWarning, err := m.getPerGroupPodStatusCountsWithReqMetricChecks(ctx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+	if err != nil {
+		return nil, err
+	}
+
 	isNodeNameInGroupBy := isKeyInGroupByAttrs(req.GroupBy, inframonitoringtypes.NodeNameAttrKey)
-	resp.Records = buildNodeRecords(isNodeNameInGroupBy, queryResp, pageGroups, req.GroupBy, metadataMap, nodeConditionCounts, podPhaseCounts)
-	resp.Warning = queryResp.Warning
+	resp.Records = buildNodeRecords(isNodeNameInGroupBy, queryResp, pageGroups, req.GroupBy, metadataMap, nodeConditionCounts, podPhaseCounts, podStatusCounts)
+	resp.Warning = mergeQueryWarnings(queryResp.Warning, podStatusWarning)
 
 	return resp, nil
 }
@@ -470,8 +485,13 @@ func (m *module) ListNamespaces(ctx context.Context, orgID valuer.UUID, req *inf
 		return nil, err
 	}
 
-	resp.Records = buildNamespaceRecords(queryResp, pageGroups, req.GroupBy, metadataMap, phaseCounts)
-	resp.Warning = queryResp.Warning
+	podStatusCounts, podStatusWarning, err := m.getPerGroupPodStatusCountsWithReqMetricChecks(ctx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+	if err != nil {
+		return nil, err
+	}
+
+	resp.Records = buildNamespaceRecords(queryResp, pageGroups, req.GroupBy, metadataMap, phaseCounts, podStatusCounts)
+	resp.Warning = mergeQueryWarnings(queryResp.Warning, podStatusWarning)
 
 	return resp, nil
 }
@@ -554,8 +574,13 @@ func (m *module) ListClusters(ctx context.Context, orgID valuer.UUID, req *infra
 		return nil, err
 	}
 
-	resp.Records = buildClusterRecords(queryResp, pageGroups, req.GroupBy, metadataMap, nodeConditionCountsMap, podPhaseCountsMap)
-	resp.Warning = queryResp.Warning
+	podStatusCounts, podStatusWarning, err := m.getPerGroupPodStatusCountsWithReqMetricChecks(ctx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+	if err != nil {
+		return nil, err
+	}
+
+	resp.Records = buildClusterRecords(queryResp, pageGroups, req.GroupBy, metadataMap, nodeConditionCountsMap, podPhaseCountsMap, podStatusCounts)
+	resp.Warning = mergeQueryWarnings(queryResp.Warning, podStatusWarning)
 
 	return resp, nil
 }
@@ -715,8 +740,13 @@ func (m *module) ListDeployments(ctx context.Context, orgID valuer.UUID, req *in
 		return nil, err
 	}
 
-	resp.Records = buildDeploymentRecords(queryResp, pageGroups, req.GroupBy, metadataMap, phaseCounts)
-	resp.Warning = queryResp.Warning
+	podStatusCounts, podStatusWarning, err := m.getPerGroupPodStatusCountsWithReqMetricChecks(ctx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+	if err != nil {
+		return nil, err
+	}
+
+	resp.Records = buildDeploymentRecords(queryResp, pageGroups, req.GroupBy, metadataMap, phaseCounts, podStatusCounts)
+	resp.Warning = mergeQueryWarnings(queryResp.Warning, podStatusWarning)
 
 	return resp, nil
 }
@@ -800,8 +830,13 @@ func (m *module) ListStatefulSets(ctx context.Context, orgID valuer.UUID, req *i
 		return nil, err
 	}
 
-	resp.Records = buildStatefulSetRecords(queryResp, pageGroups, req.GroupBy, metadataMap, phaseCounts)
-	resp.Warning = queryResp.Warning
+	podStatusCounts, podStatusWarning, err := m.getPerGroupPodStatusCountsWithReqMetricChecks(ctx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+	if err != nil {
+		return nil, err
+	}
+
+	resp.Records = buildStatefulSetRecords(queryResp, pageGroups, req.GroupBy, metadataMap, phaseCounts, podStatusCounts)
+	resp.Warning = mergeQueryWarnings(queryResp.Warning, podStatusWarning)
 
 	return resp, nil
 }
@@ -885,8 +920,13 @@ func (m *module) ListJobs(ctx context.Context, orgID valuer.UUID, req *inframoni
 		return nil, err
 	}
 
-	resp.Records = buildJobRecords(queryResp, pageGroups, req.GroupBy, metadataMap, phaseCounts)
-	resp.Warning = queryResp.Warning
+	podStatusCounts, podStatusWarning, err := m.getPerGroupPodStatusCountsWithReqMetricChecks(ctx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+	if err != nil {
+		return nil, err
+	}
+
+	resp.Records = buildJobRecords(queryResp, pageGroups, req.GroupBy, metadataMap, phaseCounts, podStatusCounts)
+	resp.Warning = mergeQueryWarnings(queryResp.Warning, podStatusWarning)
 
 	return resp, nil
 }
@@ -970,8 +1010,13 @@ func (m *module) ListDaemonSets(ctx context.Context, orgID valuer.UUID, req *inf
 		return nil, err
 	}
 
-	resp.Records = buildDaemonSetRecords(queryResp, pageGroups, req.GroupBy, metadataMap, phaseCounts)
-	resp.Warning = queryResp.Warning
+	podStatusCounts, podStatusWarning, err := m.getPerGroupPodStatusCountsWithReqMetricChecks(ctx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+	if err != nil {
+		return nil, err
+	}
+
+	resp.Records = buildDaemonSetRecords(queryResp, pageGroups, req.GroupBy, metadataMap, phaseCounts, podStatusCounts)
+	resp.Warning = mergeQueryWarnings(queryResp.Warning, podStatusWarning)
 
 	return resp, nil
 }
