@@ -13,6 +13,8 @@ import { enrichChartClick } from '../enrichChartClick';
 import { enrichNumberClick } from '../enrichNumberClick';
 import { enrichPieClick } from '../enrichPieClick';
 import { enrichTableClick } from '../enrichTableClick';
+import { getDataLinks } from '../getDataLinks';
+import { resolvePanelContextLinks } from '../resolvePanelContextLinks';
 import { resolveDrilldownSignal } from '../signal';
 
 // The v5 BuilderQuery union is too verbose to construct field-typed inline; cast at the boundary.
@@ -82,8 +84,16 @@ describe('enrichChartClick', () => {
 			clickData: chartClick(focused(2)),
 			series,
 			builderQueries: [
-				builderQuery({ name: 'A', signal: 'metrics' }),
-				builderQuery({ name: 'B', signal: 'logs' }),
+				builderQuery({
+					name: 'A',
+					signal: 'metrics',
+					groupBy: [{ name: 'service.name' }],
+				}),
+				builderQuery({
+					name: 'B',
+					signal: 'logs',
+					groupBy: [{ name: 'service.name' }],
+				}),
 			],
 		});
 
@@ -141,15 +151,38 @@ describe('enrichChartClick', () => {
 		).toBeNull();
 	});
 
-	it('emits empty filters for an ungrouped series', () => {
+	it('emits empty filters for an ungrouped series (drops the legend backfill label)', () => {
 		const payload = enrichChartClick({
 			clickData: chartClick(focused(1)),
-			series: [panelSeries({ queryName: 'A', labels: {} })],
+			series: [panelSeries({ queryName: 'A', labels: { A: 'A' } })],
 			builderQueries: [builderQuery({ name: 'A', signal: 'metrics' })],
 		});
 
 		expect(payload?.context.filters).toStrictEqual([]);
 		expect(payload?.context.queryName).toBe('A');
+	});
+
+	it('drops labels that are not group-by dimensions', () => {
+		const payload = enrichChartClick({
+			clickData: chartClick(focused(1)),
+			series: [
+				panelSeries({
+					queryName: 'A',
+					labels: { 'service.name': 'frontend', __name__: 'http_requests' },
+				}),
+			],
+			builderQueries: [
+				builderQuery({
+					name: 'A',
+					signal: 'metrics',
+					groupBy: [{ name: 'service.name' }],
+				}),
+			],
+		});
+
+		expect(payload?.context.filters).toStrictEqual([
+			{ filterKey: 'service.name', filterValue: 'frontend', operator: '=' },
+		]);
 	});
 });
 
@@ -328,7 +361,13 @@ describe('enrichPieClick', () => {
 				queryName: 'A',
 				labels: { 'service.name': 'frontend' },
 			},
-			builderQueries: [builderQuery({ name: 'A', signal: 'traces' })],
+			builderQueries: [
+				builderQuery({
+					name: 'A',
+					signal: 'traces',
+					groupBy: [{ name: 'service.name' }],
+				}),
+			],
 			coordinates: { x: 7, y: 8 },
 			timeRange: { startTime: 1, endTime: 2 },
 		});
@@ -348,6 +387,44 @@ describe('enrichPieClick', () => {
 				coordinates: { x: 0, y: 0 },
 			}),
 		).toBeNull();
+	});
+});
+
+describe('resolvePanelContextLinks', () => {
+	it('substitutes the clicked field value (_-prefixed) into the label and URL', () => {
+		const resolved = resolvePanelContextLinks(
+			[
+				{
+					name: 'Runbook for {{_service.name}}',
+					url: 'https://wiki/{{_service.name}}',
+				},
+			],
+			{ '_service.name': 'frontend' },
+		);
+
+		expect(resolved).toHaveLength(1);
+		expect(resolved[0].label).toBe('Runbook for frontend');
+		expect(resolved[0].url).toBe('https://wiki/frontend');
+	});
+
+	it('drops links without a URL', () => {
+		expect(resolvePanelContextLinks([{ name: 'No URL' }], {})).toStrictEqual([]);
+		expect(resolvePanelContextLinks(undefined, {})).toStrictEqual([]);
+	});
+
+	it('keeps the raw URL when renderVariables is false', () => {
+		const resolved = resolvePanelContextLinks(
+			[
+				{
+					name: 'Literal',
+					url: 'https://wiki/{{_service.name}}',
+					renderVariables: false,
+				},
+			],
+			{ '_service.name': 'frontend' },
+		);
+
+		expect(resolved[0].url).toBe('https://wiki/{{_service.name}}');
 	});
 });
 
@@ -377,5 +454,30 @@ describe('stepClickTimeRange', () => {
 				],
 			}),
 		).toStrictEqual({ startTime: 1000, endTime: 1060 });
+	});
+});
+
+describe('getDataLinks', () => {
+	it('adds a "View Trace Details" link when the filters carry a trace_id', () => {
+		expect(
+			getDataLinks([
+				{ filterKey: 'service.name', filterValue: 'frontend', operator: '=' },
+				{ filterKey: 'trace_id', filterValue: 'abc123', operator: '=' },
+			]),
+		).toStrictEqual([
+			{
+				id: 'view-trace-details',
+				label: 'View Trace Details',
+				url: '/trace/abc123',
+			},
+		]);
+	});
+
+	it('returns no links when there is no trace_id', () => {
+		expect(
+			getDataLinks([
+				{ filterKey: 'service.name', filterValue: 'frontend', operator: '=' },
+			]),
+		).toStrictEqual([]);
 	});
 });

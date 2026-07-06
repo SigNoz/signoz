@@ -294,4 +294,13 @@ describe('usePanelActionItems', () => {
 		(createAlert as { onClick: () => void }).onClick();
 		expect(mockCreateAlert).toHaveBeenCalledWith(mockPanel, 'panel-1');
 	});
+
+	it('create-alert seeds an alert from this panel', () => {
+		const { result } = renderHook(() => usePanelActionItems(baseArgs));
+		const createAlert = result.current.items.find(
+			(i) => 'key' in i && i.key === 'create-alert',
+		);
+		(createAlert as { onClick: () => void }).onClick();
+		expect(mockCreateAlert).toHaveBeenCalledWith(mockPanel, 'panel-1');
+	});
 });
