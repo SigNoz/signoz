@@ -79,13 +79,11 @@ function Panel({
 		},
 		ENTITY_VERSION_V5,
 		{
-			queryKey: [
-				widget?.query,
-				widget?.panelTypes,
-				requestData,
-				startTime,
-				endTime,
-			],
+			// Public data is fetched by index and the payload redacts each widget's
+			// filters, so query bodies are identical across panels. Key on panel
+			// identity + time — the only inputs that determine the response — so
+			// panels don't collapse onto one cache entry.
+			queryKey: [widget?.id, index, startTime, endTime],
 			retry(failureCount, error): boolean {
 				if (
 					String(error).includes('status: error') &&

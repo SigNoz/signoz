@@ -3,12 +3,13 @@ import type { ComponentTypes } from 'utils/permission';
 
 /**
  * Every action the panel menu can offer: per-kind gated capabilities (minus
- * `search`, a header control) plus the chrome actions every kind gets. The
- * `Record<PanelActionId, …>` below forces a meta entry per id, so adding an
- * action without declaring its gates is a compile error.
+ * `search` and `drilldown`, which are renderer-wired controls, not menu items)
+ * plus the chrome actions every kind gets. The `Record<PanelActionId, …>` below
+ * forces a meta entry per id, so adding an action without declaring its gates is
+ * a compile error.
  */
 export type PanelActionId =
-	| Exclude<keyof PanelActionCapabilities, 'search'>
+	| Exclude<keyof PanelActionCapabilities, 'search' | 'drilldown'>
 	| 'move'
 	| 'delete';
 

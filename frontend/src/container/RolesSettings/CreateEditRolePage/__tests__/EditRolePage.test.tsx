@@ -4,12 +4,12 @@ import { customRoleResponse } from 'mocks-server/__mockdata__/roles';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
-import { useAuthZ } from 'hooks/useAuthZ/useAuthZ';
-import { mockUseAuthZGrantAll } from 'tests/authz-test-utils';
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
+import { mockUseAuthZGrantAll } from 'lib/authz/utils/authz-test-utils';
 
 import CreateEditRolePage from '../CreateEditRolePage';
 
-jest.mock('hooks/useAuthZ/useAuthZ');
+jest.mock('lib/authz/hooks/useAuthZ/useAuthZ');
 const mockUseAuthZ = useAuthZ as jest.MockedFunction<typeof useAuthZ>;
 
 const CUSTOM_ROLE_ID = '019c24aa-3333-0001-aaaa-111111111111';

@@ -65,6 +65,7 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 		signoz.Prometheus,
 		signoz.TelemetryStore.Cluster(),
 		signoz.Cache,
+		signoz.Flagger,
 		nil,
 	)
 

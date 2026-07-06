@@ -9,7 +9,7 @@ export function isKeepMode(
 export function getMatchTypeLabel(
 	matchType: MetricreductionruletypesMatchTypeDTO,
 ): string {
-	return isKeepMode(matchType) ? 'Include attributes' : 'Exclude attributes';
+	return isKeepMode(matchType) ? 'Include' : 'Exclude';
 }
 
 export function getLabelVerb(

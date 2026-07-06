@@ -6,6 +6,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/swaggest/jsonschema-go"
 )
 
 type Source struct {
@@ -20,6 +21,23 @@ var (
 
 func (Source) Enum() []any {
 	return []any{SourceUser, SourceSystem, SourceIntegration}
+}
+
+// JSONSchema exposes Source as a string enum. Without this the reflector sees the
+// unexported valuer.String field and emits `type: object`. The enum values are
+// derived from Enum() so the list of sources lives in exactly one place.
+func (Source) JSONSchema() (jsonschema.Schema, error) {
+	sources := Source{}.Enum()
+	enum := make([]any, 0, len(sources))
+	for _, source := range sources {
+		enum = append(enum, source.(Source).StringValue())
+	}
+
+	schema := jsonschema.Schema{}
+	schema.WithType(jsonschema.String.Type())
+	schema.WithEnum(enum...)
+
+	return schema, nil
 }
 
 func (s Source) IsValid() bool {

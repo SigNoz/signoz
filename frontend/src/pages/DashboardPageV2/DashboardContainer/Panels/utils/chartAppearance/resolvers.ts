@@ -2,6 +2,7 @@ import { rangeUtil } from '@grafana/data';
 import {
 	DashboardtypesLegendPositionDTO,
 	DashboardtypesPrecisionOptionDTO,
+	type DashboardtypesSpanGapsDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { PrecisionOption, PrecisionOptionsEnum } from 'components/Graph/types';
 import { LegendPosition } from 'lib/uPlotV2/components/types';
@@ -39,15 +40,14 @@ export function resolveDecimalPrecision(
 }
 
 /**
- * `spec.chartAppearance.spanGaps.fillLessThan` is a duration string on the wire
- * ("10m", "5s"). Empty/missing → span all gaps (default); otherwise forward the
- * threshold in seconds so uPlot only bridges short runs of nulls. Tolerates a
- * bare seconds number for back-compat.
+ * Resolves `spanGaps` to uPlot's value. `fillOnlyBelow: false` spans every gap regardless
+ * of `fillLessThan`; a duration with no flag still thresholds (panels predating the flag).
  */
 export function resolveSpanGaps(
-	fillLessThan: string | undefined,
+	spanGaps: DashboardtypesSpanGapsDTO,
 ): boolean | number {
-	if (!fillLessThan) {
+	const fillLessThan = spanGaps.fillLessThan;
+	if (spanGaps.fillOnlyBelow === false || !fillLessThan) {
 		return true;
 	}
 	const seconds = rangeUtil.isValidTimeSpan(fillLessThan)

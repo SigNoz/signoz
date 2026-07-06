@@ -5,11 +5,11 @@ import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import { useCopyToClipboard } from 'react-use';
 import type { AuthtypesRoleDTO } from 'api/generated/services/sigNoz.schemas';
-import AuthZTooltip from 'components/AuthZTooltip/AuthZTooltip';
+import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import RolesSelect from 'components/RolesSelect';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { ServiceAccountRow } from 'container/ServiceAccountsSettings/utils';
-import { buildSAUpdatePermission } from 'hooks/useAuthZ/permissions/service-account.permissions';
+import { buildSAUpdatePermission } from 'lib/authz/hooks/useAuthZ/permissions/service-account.permissions';
 import { useTimezone } from 'providers/Timezone';
 import APIError from 'types/api/error';
 
