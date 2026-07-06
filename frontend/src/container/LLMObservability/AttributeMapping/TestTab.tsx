@@ -1,5 +1,6 @@
 import { Play } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
+import Editor from 'components/Editor';
 
 import styles from './TestTab.module.scss';
 import TestResult from './TestResult';
@@ -25,14 +26,29 @@ function TestTab({ store }: TestTabProps): JSX.Element {
 				which source key matched.
 			</p>
 
-			<textarea
+			<div
 				className={styles.editor}
 				data-testid="test-span-input"
-				value={input}
-				onChange={(event): void => setInput(event.target.value)}
-				spellCheck={false}
 				aria-label="Sample span JSON"
-			/>
+			>
+				<Editor
+					language="json"
+					value={input}
+					onChange={setInput}
+					height="100%"
+					options={{
+						minimap: { enabled: false },
+						fontSize: 12,
+						lineNumbers: 'on',
+						wordWrap: 'on',
+						scrollBeyondLastLine: false,
+						formatOnPaste: true,
+						tabSize: 2,
+						automaticLayout: true,
+						scrollbar: { alwaysConsumeMouseWheel: false },
+					}}
+				/>
+			</div>
 
 			<div className={styles.actions}>
 				<Button

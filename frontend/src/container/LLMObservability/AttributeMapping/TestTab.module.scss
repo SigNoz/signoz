@@ -20,23 +20,16 @@
 	color: var(--l3-foreground);
 }
 
+// Wrapper around the Monaco JSON editor. The editor fills this box (height 100%);
+// the box grows with the viewport (leaving room for the header/tabs/actions) and
+// never collapses below min-height on short screens. overflow clips the corners.
 .editor {
 	width: 100%;
+	height: calc(100vh - 350px);
 	min-height: 260px;
-	padding: var(--padding-4);
 	border: 1px solid var(--l2-border);
 	border-radius: var(--radius-2);
-	background: var(--l1-background);
-	color: var(--l1-foreground);
-	font-family: 'Geist Mono', monospace;
-	font-size: var(--font-size-xs);
-	line-height: 1.6;
-	resize: vertical;
-
-	&:focus {
-		outline: none;
-		border-color: var(--robin-500);
-	}
+	overflow: hidden;
 }
 
 .actions {
