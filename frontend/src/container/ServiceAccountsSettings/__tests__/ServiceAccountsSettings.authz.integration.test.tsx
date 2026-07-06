@@ -4,7 +4,7 @@ import { listRolesSuccessResponse } from 'mocks-server/__mockdata__/roles';
 import { rest, server } from 'mocks-server/server';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { fireEvent, render, screen, waitFor } from 'tests/test-utils';
-import { setupAuthzAdmin } from 'tests/authz-test-utils';
+import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
 
 import ServiceAccountsSettings from '../ServiceAccountsSettings';
 

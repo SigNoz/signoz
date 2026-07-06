@@ -30,10 +30,6 @@ function AttributeMappingsTab({
 				onEditGroup={onEditGroup}
 				onAddGroup={onAddGroup}
 			/>
-
-			<footer className={styles.pageFooter}>
-				Showing {store.groups.length} group{store.groups.length === 1 ? '' : 's'}
-			</footer>
 		</div>
 	);
 }

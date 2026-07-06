@@ -22,6 +22,8 @@ var (
 
 const timeSeriesBucketMilli = int64(time.Hour / time.Millisecond)
 
+const sampleBucketExpr = "toInt64(toUnixTimestamp(toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalMinute(10)))) * 1000 AS bucket"
+
 type volumeRow struct {
 	MetricName string
 	Ingested   uint64
@@ -289,12 +291,9 @@ func (c *clickhouse) RankByVolume(ctx context.Context, metricNames []string, eff
 	}
 	ctx = c.withThreads(ctx)
 
-	orderExpr := "ingested"
-	switch orderBy {
-	case metricreductionruletypes.OrderByReducedVolume:
-		orderExpr = "reduced"
-	case metricreductionruletypes.OrderByReduction:
-		orderExpr = "if(ingested = 0, 0, (toFloat64(ingested) - toFloat64(reduced)) / toFloat64(ingested))"
+	orderExpr := "ifNull(i.samples, 0)"
+	if orderBy == metricreductionruletypes.OrderByReducedVolume {
+		orderExpr = "if(ifNull(d.samples, 0) = 0 OR ifNull(d.samples, 0) > ifNull(i.samples, 0), ifNull(i.samples, 0), ifNull(d.samples, 0))"
 	}
 	direction := "ASC"
 	if order == metricreductionruletypes.OrderDesc {
@@ -310,17 +309,17 @@ func (c *clickhouse) RankByVolume(ctx context.Context, metricNames []string, eff
 	sb.From("(SELECT arrayJoin(" + sb.Var(metricNames) + ") AS metric_name) AS base")
 	sb.JoinWithOption(
 		sqlbuilder.LeftJoin,
-		"(SELECT metric_name, uniq(fingerprint) AS cnt FROM "+ingestedTable+" WHERE has("+sb.Var(metricNames)+", metric_name) AND unix_milli >= "+sb.Var(startMs)+" AND unix_milli < "+sb.Var(endMs)+" AND "+strictEffectiveFrom(sb, metricNames, effectiveFrom)+" GROUP BY metric_name) AS i",
+		"(SELECT metric_name, uniq(fingerprint) AS cnt, count() AS samples FROM "+ingestedTable+" WHERE has("+sb.Var(metricNames)+", metric_name) AND unix_milli >= "+sb.Var(startMs)+" AND unix_milli < "+sb.Var(endMs)+" AND "+strictEffectiveFrom(sb, metricNames, effectiveFrom)+" GROUP BY metric_name) AS i",
 		"base.metric_name = i.metric_name",
 	)
 	// Reduced series are spread across two type-specific tables; union the per-table distinct
 	// reduced_fingerprints and sum per metric (a metric only lands in the table matching its type).
 	sb.JoinWithOption(
 		sqlbuilder.LeftJoin,
-		"(SELECT metric_name, sum(cnt) AS cnt FROM ("+
-			"SELECT metric_name, uniq(reduced_fingerprint) AS cnt FROM "+reducedLast+" WHERE has("+sb.Var(metricNames)+", metric_name) AND unix_milli >= "+sb.Var(startMs)+" AND unix_milli < "+sb.Var(endMs)+" AND "+strictEffectiveFrom(sb, metricNames, effectiveFrom)+" GROUP BY metric_name"+
+		"(SELECT metric_name, sum(cnt) AS cnt, sum(samples) AS samples FROM ("+
+			"SELECT metric_name, uniq(reduced_fingerprint) AS cnt, uniq(reduced_fingerprint, unix_milli) AS samples FROM "+reducedLast+" WHERE has("+sb.Var(metricNames)+", metric_name) AND unix_milli >= "+sb.Var(startMs)+" AND unix_milli < "+sb.Var(endMs)+" AND "+strictEffectiveFrom(sb, metricNames, effectiveFrom)+" GROUP BY metric_name"+
 			" UNION ALL "+
-			"SELECT metric_name, uniq(reduced_fingerprint) AS cnt FROM "+reducedSum+" WHERE has("+sb.Var(metricNames)+", metric_name) AND unix_milli >= "+sb.Var(startMs)+" AND unix_milli < "+sb.Var(endMs)+" AND "+strictEffectiveFrom(sb, metricNames, effectiveFrom)+" GROUP BY metric_name"+
+			"SELECT metric_name, uniq(reduced_fingerprint) AS cnt, uniq(reduced_fingerprint, unix_milli) AS samples FROM "+reducedSum+" WHERE has("+sb.Var(metricNames)+", metric_name) AND unix_milli >= "+sb.Var(startMs)+" AND unix_milli < "+sb.Var(endMs)+" AND "+strictEffectiveFrom(sb, metricNames, effectiveFrom)+" GROUP BY metric_name"+
 			") GROUP BY metric_name) AS d",
 		"base.metric_name = d.metric_name",
 	)
@@ -347,120 +346,184 @@ func (c *clickhouse) RankByVolume(ctx context.Context, metricNames []string, eff
 	return out, rows.Err()
 }
 
-func (c *clickhouse) SampleVolume(ctx context.Context, metricNames []string, effectiveFrom map[string]int64, startMs, endMs int64) (uint64, uint64, error) {
+func (c *clickhouse) SampleVolumeByMetric(ctx context.Context, metricNames []string, effectiveFrom map[string]int64, startMs, endMs int64) (map[string]volumeRow, error) {
 	if len(metricNames) == 0 {
-		return 0, 0, nil
+		return map[string]volumeRow{}, nil
 	}
 	ctx = c.withThreads(ctx)
 
-	ingested, err := c.countRawSamples(ctx, telemetrymetrics.DBName+"."+telemetrymetrics.SamplesV4BufferTableName, metricNames, effectiveFrom, startMs, endMs)
-	if err != nil {
-		return 0, 0, err
-	}
-
-	last, err := c.countReducedSamples(ctx, telemetrymetrics.DBName+"."+telemetrymetrics.SamplesV4ReducedLastTableName, metricNames, effectiveFrom, startMs, endMs)
-	if err != nil {
-		return 0, 0, err
-	}
-	sum, err := c.countReducedSamples(ctx, telemetrymetrics.DBName+"."+telemetrymetrics.SamplesV4ReducedSumTableName, metricNames, effectiveFrom, startMs, endMs)
-	if err != nil {
-		return 0, 0, err
-	}
-
-	return ingested, min(last+sum, ingested), nil
-}
-
-func (c *clickhouse) countRawSamples(ctx context.Context, table string, metricNames []string, effectiveFrom map[string]int64, startMs, endMs int64) (uint64, error) {
-	names := make([]any, len(metricNames))
-	for i, name := range metricNames {
-		names[i] = name
-	}
-
-	sb := sqlbuilder.NewSelectBuilder()
-	sb.Select("count()")
-	sb.From(table)
-	conds := []string{sb.In("metric_name", names...), sb.GE("unix_milli", startMs), sb.LT("unix_milli", endMs)}
-	if len(effectiveFrom) > 0 {
-		conds = append(conds, strictEffectiveFrom(sb, metricNames, effectiveFrom))
-	}
-	sb.Where(conds...)
-
-	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-	var count uint64
-	if err := c.telemetryStore.ClickhouseDB().QueryRow(ctx, query, args...).Scan(&count); err != nil {
-		return 0, errors.WrapInternalf(err, errors.CodeInternal, "failed to count ingested samples")
-	}
-	return count, nil
-}
-
-func (c *clickhouse) countReducedSamples(ctx context.Context, table string, metricNames []string, effectiveFrom map[string]int64, startMs, endMs int64) (uint64, error) {
-	names := make([]any, len(metricNames))
-	for i, name := range metricNames {
-		names[i] = name
-	}
-
-	sb := sqlbuilder.NewSelectBuilder()
-	// Reduced tables key the series on reduced_fingerprint (not fingerprint); dedupe ReplacingMergeTree recomputes.
-	sb.Select("uniq(reduced_fingerprint, unix_milli)")
-	sb.From(table)
-	conds := []string{sb.In("metric_name", names...), sb.GE("unix_milli", startMs), sb.LT("unix_milli", endMs)}
-	if len(effectiveFrom) > 0 {
-		conds = append(conds, strictEffectiveFrom(sb, metricNames, effectiveFrom))
-	}
-	sb.Where(conds...)
-
-	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-	var count uint64
-	if err := c.telemetryStore.ClickhouseDB().QueryRow(ctx, query, args...).Scan(&count); err != nil {
-		return 0, errors.WrapInternalf(err, errors.CodeInternal, "failed to count reduced samples")
-	}
-	return count, nil
-}
-
-// SeriesTimeseries returns ingested vs reduced series per 60s bucket from the samples tables, gated
-// to each metric's strict effective_from (see strictEffectiveFrom).
-func (c *clickhouse) SeriesTimeseries(ctx context.Context, allMetrics, reducedMetrics []string, effectiveFrom map[string]int64, startMs, endMs int64) ([]volumePoint, error) {
-	if len(allMetrics) == 0 {
-		return []volumePoint{}, nil
-	}
-	ctx = c.withThreads(ctx)
-
-	ingested, err := c.ingestedSeriesByBucket(ctx, allMetrics, effectiveFrom, startMs, endMs)
+	ingested, err := c.countSamplesByMetric(ctx, telemetrymetrics.DBName+"."+telemetrymetrics.SamplesV4BufferTableName, "count()", metricNames, effectiveFrom, startMs, endMs)
 	if err != nil {
 		return nil, err
 	}
 
-	retained := make(map[int64]uint64)
-	if len(reducedMetrics) > 0 {
-		reduced, err := c.reducedSeriesByBucket(ctx, reducedMetrics, effectiveFrom, startMs, endMs)
+	last, err := c.countSamplesByMetric(ctx, telemetrymetrics.DBName+"."+telemetrymetrics.SamplesV4ReducedLastTableName, "uniq(reduced_fingerprint, unix_milli)", metricNames, effectiveFrom, startMs, endMs)
+	if err != nil {
+		return nil, err
+	}
+	sum, err := c.countSamplesByMetric(ctx, telemetrymetrics.DBName+"."+telemetrymetrics.SamplesV4ReducedSumTableName, "uniq(reduced_fingerprint, unix_milli)", metricNames, effectiveFrom, startMs, endMs)
+	if err != nil {
+		return nil, err
+	}
+
+	out := make(map[string]volumeRow, len(metricNames))
+	for _, name := range metricNames {
+		out[name] = volumeRow{MetricName: name, Ingested: ingested[name], Reduced: last[name] + sum[name]}
+	}
+	return out, nil
+}
+
+func (c *clickhouse) countSamplesByMetric(ctx context.Context, table, countExpr string, metricNames []string, effectiveFrom map[string]int64, startMs, endMs int64) (map[string]uint64, error) {
+	names := make([]any, len(metricNames))
+	for i, name := range metricNames {
+		names[i] = name
+	}
+
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select("metric_name", countExpr)
+	sb.From(table)
+	conds := []string{
+		sb.In("metric_name", names...),
+		sb.GE("unix_milli", startMs),
+		sb.LT("unix_milli", endMs),
+	}
+	if len(effectiveFrom) > 0 {
+		conds = append(conds, strictEffectiveFrom(sb, metricNames, effectiveFrom))
+	}
+	sb.Where(conds...)
+	sb.GroupBy("metric_name")
+
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+	rows, err := c.telemetryStore.ClickhouseDB().Query(ctx, query, args...)
+	if err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to count samples")
+	}
+	defer rows.Close()
+
+	out := make(map[string]uint64, len(metricNames))
+	for rows.Next() {
+		var (
+			metricName string
+			count      uint64
+		)
+		if err := rows.Scan(&metricName, &count); err != nil {
+			return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan series count")
+		}
+		out[metricName] = count
+	}
+	return out, rows.Err()
+}
+
+func (c *clickhouse) TotalVolume(ctx context.Context, startMs, endMs int64) (uint64, uint64, error) {
+	ctx = c.withThreads(ctx)
+
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select("uniq(fingerprint)", "count()")
+	sb.From(telemetrymetrics.DBName + "." + telemetrymetrics.SamplesV4BufferTableName)
+	sb.Where(sb.GE("unix_milli", startMs), sb.LT("unix_milli", endMs))
+
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+	var series, samples uint64
+	if err := c.telemetryStore.ClickhouseDB().QueryRow(ctx, query, args...).Scan(&series, &samples); err != nil {
+		return 0, 0, errors.WrapInternalf(err, errors.CodeInternal, "failed to count total ingested volume")
+	}
+	return series, samples, nil
+}
+
+func (c *clickhouse) SampleTimeseries(ctx context.Context, ruledMetrics []string, effectiveFrom map[string]int64, startMs, endMs int64) ([]volumePoint, error) {
+	ctx = c.withThreads(ctx)
+
+	ingested, err := c.totalSamplesByBucket(ctx, startMs, endMs)
+	if err != nil {
+		return nil, err
+	}
+
+	ruledIngested := make(map[int64]uint64)
+	ruledRetained := make(map[int64]uint64)
+	if len(ruledMetrics) > 0 {
+		ruledIngested, err = c.ruledIngestedSamplesByBucket(ctx, ruledMetrics, effectiveFrom, startMs, endMs)
 		if err != nil {
 			return nil, err
 		}
-		for ts, count := range reduced {
-			retained[ts] += count
-		}
-	}
-	reducedSet := make(map[string]struct{}, len(reducedMetrics))
-	for _, name := range reducedMetrics {
-		reducedSet[name] = struct{}{}
-	}
-	nonReduced := make([]string, 0, len(allMetrics))
-	for _, name := range allMetrics {
-		if _, ok := reducedSet[name]; !ok {
-			nonReduced = append(nonReduced, name)
-		}
-	}
-	if len(nonReduced) > 0 {
-		nonReducedIngested, err := c.ingestedSeriesByBucket(ctx, nonReduced, effectiveFrom, startMs, endMs)
+		ruledRetained, err = c.ruledRetainedSamplesByBucket(ctx, ruledMetrics, effectiveFrom, startMs, endMs)
 		if err != nil {
 			return nil, err
 		}
-		for ts, count := range nonReducedIngested {
-			retained[ts] += count
+	}
+
+	retained := make(map[int64]uint64, len(ingested))
+	for ts, total := range ingested {
+		shed := uint64(0)
+		if ri := ruledIngested[ts]; ri > ruledRetained[ts] {
+			shed = ri - ruledRetained[ts]
+		}
+		if total > shed {
+			retained[ts] = total - shed
+		} else {
+			retained[ts] = 0
 		}
 	}
 
 	return mergeVolumePoints(ingested, retained), nil
+}
+
+func (c *clickhouse) totalSamplesByBucket(ctx context.Context, startMs, endMs int64) (map[int64]uint64, error) {
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select(sampleBucketExpr, "count()")
+	sb.From(telemetrymetrics.DBName + "." + telemetrymetrics.SamplesV4BufferTableName)
+	sb.Where(sb.GE("unix_milli", startMs), sb.LT("unix_milli", endMs))
+	sb.GroupBy("bucket")
+
+	return c.scanBuckets(ctx, sb)
+}
+
+func (c *clickhouse) ruledIngestedSamplesByBucket(ctx context.Context, metricNames []string, effectiveFrom map[string]int64, startMs, endMs int64) (map[int64]uint64, error) {
+	names := make([]any, len(metricNames))
+	for i, name := range metricNames {
+		names[i] = name
+	}
+
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select(sampleBucketExpr, "count()")
+	sb.From(telemetrymetrics.DBName + "." + telemetrymetrics.SamplesV4BufferTableName)
+	conds := []string{sb.In("metric_name", names...), sb.GE("unix_milli", startMs), sb.LT("unix_milli", endMs)}
+	if len(effectiveFrom) > 0 {
+		conds = append(conds, strictEffectiveFrom(sb, metricNames, effectiveFrom))
+	}
+	sb.Where(conds...)
+	sb.GroupBy("bucket")
+
+	return c.scanBuckets(ctx, sb)
+}
+
+// reduced 60s rows are versioned by computed_at, so count distinct buckets.
+func (c *clickhouse) ruledRetainedSamplesByBucket(ctx context.Context, metricNames []string, effectiveFrom map[string]int64, startMs, endMs int64) (map[int64]uint64, error) {
+	out := make(map[int64]uint64)
+	for _, table := range []string{telemetrymetrics.SamplesV4ReducedLastTableName, telemetrymetrics.SamplesV4ReducedSumTableName} {
+		names := make([]any, len(metricNames))
+		for i, name := range metricNames {
+			names[i] = name
+		}
+
+		sb := sqlbuilder.NewSelectBuilder()
+		sb.Select(sampleBucketExpr, "uniq(reduced_fingerprint, unix_milli)")
+		sb.From(telemetrymetrics.DBName + "." + table)
+		conds := []string{sb.In("metric_name", names...), sb.GE("unix_milli", startMs), sb.LT("unix_milli", endMs)}
+		if len(effectiveFrom) > 0 {
+			conds = append(conds, strictEffectiveFrom(sb, metricNames, effectiveFrom))
+		}
+		sb.Where(conds...)
+		sb.GroupBy("bucket")
+
+		counts, err := c.scanBuckets(ctx, sb)
+		if err != nil {
+			return nil, err
+		}
+		for ts, count := range counts {
+			out[ts] += count
+		}
+	}
+	return out, nil
 }
 
 func mergeVolumePoints(ingested, reduced map[int64]uint64) []volumePoint {
@@ -486,60 +549,6 @@ func mergeVolumePoints(ingested, reduced map[int64]uint64) []volumePoint {
 		})
 	}
 	return points
-}
-
-// ingestedSeriesByBucket counts distinct raw fingerprints per hourly bucket from the samples buffer.
-func (c *clickhouse) ingestedSeriesByBucket(ctx context.Context, metricNames []string, effectiveFrom map[string]int64, startMs, endMs int64) (map[int64]uint64, error) {
-	names := make([]any, len(metricNames))
-	for i, name := range metricNames {
-		names[i] = name
-	}
-
-	sb := sqlbuilder.NewSelectBuilder()
-	bucketExpr := "toInt64(toUnixTimestamp(toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalHour(1)))) * 1000 AS bucket"
-	sb.Select(bucketExpr, "uniq(fingerprint)")
-	sb.From(telemetrymetrics.DBName + "." + telemetrymetrics.SamplesV4BufferTableName)
-	conds := []string{sb.In("metric_name", names...), sb.GE("unix_milli", startMs), sb.LT("unix_milli", endMs)}
-	if len(effectiveFrom) > 0 {
-		conds = append(conds, strictEffectiveFrom(sb, metricNames, effectiveFrom))
-	}
-	sb.Where(conds...)
-	sb.GroupBy("bucket")
-
-	return c.scanBuckets(ctx, sb)
-}
-
-// reducedSeriesByBucket counts distinct reduced_fingerprints per hourly bucket, summed across the two
-// reduced sample tables (a metric only lands in the table matching its type, so per-bucket sums are
-// exact).
-func (c *clickhouse) reducedSeriesByBucket(ctx context.Context, metricNames []string, effectiveFrom map[string]int64, startMs, endMs int64) (map[int64]uint64, error) {
-	out := make(map[int64]uint64)
-	for _, table := range []string{telemetrymetrics.SamplesV4ReducedLastTableName, telemetrymetrics.SamplesV4ReducedSumTableName} {
-		names := make([]any, len(metricNames))
-		for i, name := range metricNames {
-			names[i] = name
-		}
-
-		sb := sqlbuilder.NewSelectBuilder()
-		bucketExpr := "toInt64(toUnixTimestamp(toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalHour(1)))) * 1000 AS bucket"
-		sb.Select(bucketExpr, "uniq(reduced_fingerprint)")
-		sb.From(telemetrymetrics.DBName + "." + table)
-		conds := []string{sb.In("metric_name", names...), sb.GE("unix_milli", startMs), sb.LT("unix_milli", endMs)}
-		if len(effectiveFrom) > 0 {
-			conds = append(conds, strictEffectiveFrom(sb, metricNames, effectiveFrom))
-		}
-		sb.Where(conds...)
-		sb.GroupBy("bucket")
-
-		counts, err := c.scanBuckets(ctx, sb)
-		if err != nil {
-			return nil, err
-		}
-		for ts, count := range counts {
-			out[ts] += count
-		}
-	}
-	return out, nil
 }
 
 func (c *clickhouse) scanBuckets(ctx context.Context, sb *sqlbuilder.SelectBuilder) (map[int64]uint64, error) {

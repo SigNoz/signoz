@@ -102,7 +102,8 @@ type GettableReductionRule struct {
 	Active           bool      `json:"active" required:"true"`
 	IngestedSeries   uint64    `json:"ingestedSeries" required:"true"`
 	RetainedSeries   uint64    `json:"retainedSeries" required:"true"`
-	ReductionPercent float64   `json:"reductionPercent" required:"true"`
+	IngestedSamples  uint64    `json:"ingestedSamples" required:"true"`
+	RetainedSamples  uint64    `json:"retainedSamples" required:"true"`
 }
 
 type GettableReductionRules struct {

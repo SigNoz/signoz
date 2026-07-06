@@ -150,9 +150,9 @@ func NewModules(
 		Session:             implsession.NewModule(providerSettings, authNs, userSetter, userGetter, authDomainModule, tokenizer, orgGetter, authz),
 		SpanPercentile:      implspanpercentile.NewModule(querier, providerSettings),
 		Services:            implservices.NewModule(querier, telemetryStore),
-		MetricsExplorer:     implmetricsexplorer.NewModule(telemetryStore, telemetryMetadataStore, cache, ruleStore, dashboard, providerSettings, config.MetricsExplorer),
+		MetricsExplorer:     implmetricsexplorer.NewModule(telemetryStore, telemetryMetadataStore, cache, ruleStore, dashboard, fl, providerSettings, config.MetricsExplorer),
 		MetricReductionRule: metricReductionRule,
-		InfraMonitoring:     implinframonitoring.NewModule(telemetryStore, telemetryMetadataStore, querier, providerSettings, config.InfraMonitoring),
+		InfraMonitoring:     implinframonitoring.NewModule(telemetryStore, telemetryMetadataStore, querier, fl, providerSettings, config.InfraMonitoring),
 		Promote:             implpromote.NewModule(telemetryMetadataStore, telemetryStore),
 		ServiceAccount:      serviceAccount,
 		LogsPipeline:        impllogspipeline.NewModule(sqlstore),
@@ -160,7 +160,7 @@ func NewModules(
 		CloudIntegration:    cloudIntegrationModule,
 		TraceDetail:         impltracedetail.NewModule(impltracedetail.NewTraceStore(telemetryStore), providerSettings, config.TraceDetail),
 		SpanMapper:          implspanmapper.NewModule(implspanmapper.NewStore(sqlstore), fl),
-		LLMPricingRule:      impllmpricingrule.NewModule(impllmpricingrule.NewStore(sqlstore), fl),
+		LLMPricingRule:      impllmpricingrule.NewModule(impllmpricingrule.NewStore(sqlstore), fl, querier),
 		Tag:                 tagModule,
 	}
 }

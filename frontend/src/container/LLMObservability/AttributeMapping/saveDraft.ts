@@ -1,3 +1,4 @@
+import { isEqual } from 'lodash-es';
 import {
 	SpantypesPostableSpanMapperDTO,
 	SpantypesPostableSpanMapperGroupDTO,
@@ -34,10 +35,6 @@ export interface SaveMutations {
 	deleteMapper: (groupId: string, mapperId: string) => Promise<void>;
 }
 
-function arraysEqual(a: string[], b: string[]): boolean {
-	return a.length === b.length && a.every((value, index) => value === b[index]);
-}
-
 function sourcesEqual(a: SourceConfig[], b: SourceConfig[]): boolean {
 	return (
 		a.length === b.length &&
@@ -54,8 +51,8 @@ function groupChanged(snapshot: DraftGroup, draft: DraftGroup): boolean {
 	return (
 		snapshot.name !== draft.name ||
 		snapshot.enabled !== draft.enabled ||
-		!arraysEqual(snapshot.attributes, draft.attributes) ||
-		!arraysEqual(snapshot.resource, draft.resource)
+		!isEqual(snapshot.attributes, draft.attributes) ||
+		!isEqual(snapshot.resource, draft.resource)
 	);
 }
 

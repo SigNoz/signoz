@@ -41,10 +41,6 @@ function Panel({
 	isVisible,
 	panelActions,
 }: PanelProps): JSX.Element {
-	const name = panel.spec.display.name;
-	const description = panel.spec.display?.description;
-	const fullKind = panel.spec.plugin.kind;
-
 	// A per-panel time preference is surfaced as a header pill. `visualization` is
 	// common to every plugin-spec variant — localized cast reads it without
 	// narrowing on kind.
@@ -55,19 +51,21 @@ function Panel({
 	)?.visualization?.timePreference;
 	const timeLabel = panelTimePreferenceLabel(timePreference);
 
-	const panelDefinition = getPanelDefinition(fullKind);
+	const panelKind = panel.spec.plugin.kind;
+	const panelDefinition = getPanelDefinition(panelKind);
 
 	// Header search: only kinds that declare it render the box. The term is owned
 	// here and threaded to both the header (input) and renderer (filter).
 	const searchable = !!panelDefinition?.actions.search;
 	const [searchTerm, setSearchTerm] = useState('');
 
-	const { data, isFetching, error, refetch, pagination } = usePanelQuery({
-		panel,
-		panelId,
-		// Lazy: fetch only once on screen (undefined → visible) and a renderer exists.
-		enabled: !!panelDefinition && isVisible !== false,
-	});
+	const { data, isFetching, isPreviousData, error, refetch, pagination } =
+		usePanelQuery({
+			panel,
+			panelId,
+			// Lazy: fetch only once on screen (undefined → visible) and a renderer exists.
+			enabled: !!panelDefinition && isVisible !== false,
+		});
 
 	const { onDragSelect, dashboardPreference } = usePanelInteractions();
 
@@ -77,10 +75,8 @@ function Panel({
 			data-panel-visible={isVisible ? 'true' : 'false'}
 		>
 			<PanelHeader
-				name={name}
-				description={description}
 				panelId={panelId}
-				panelKind={fullKind}
+				panel={panel}
 				isFetching={isFetching}
 				error={error}
 				warning={data.response?.data?.warning}
@@ -97,6 +93,7 @@ function Panel({
 					panelId={panelId}
 					data={data}
 					isFetching={isFetching}
+					isPreviousData={isPreviousData}
 					error={error}
 					refetch={refetch}
 					onDragSelect={onDragSelect}

@@ -63,7 +63,7 @@ function MapperGroupsTable({
 			)}
 
 			<Button
-				variant="ghost"
+				variant="link"
 				color="primary"
 				prefix={<Plus size={14} />}
 				className={styles.addRow}

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { cloneDeep, isEqual } from 'lodash-es';
 import { toast } from '@signozhq/ui/sonner';
 import { useQueryClient } from 'react-query';
 import {
@@ -29,7 +30,7 @@ import {
 const GROUPS_KEY_PREFIX = '/api/v1/span_mapper_groups';
 
 function clone(groups: DraftGroup[]): DraftGroup[] {
-	return JSON.parse(JSON.stringify(groups)) as DraftGroup[];
+	return cloneDeep(groups);
 }
 
 export interface AttributeMappingStore {
@@ -290,7 +291,7 @@ export function useAttributeMappingStore(): AttributeMappingStore {
 	}, [draft, snapshot, mutations, queryClient]);
 
 	const isDirty = useMemo(
-		() => draft !== null && JSON.stringify(draft) !== JSON.stringify(snapshot),
+		() => draft !== null && !isEqual(draft, snapshot),
 		[draft, snapshot],
 	);
 

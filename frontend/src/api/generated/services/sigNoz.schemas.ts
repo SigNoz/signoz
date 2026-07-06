@@ -2230,13 +2230,6 @@ export interface AuthtypesOrgSessionContextDTO {
 	warning?: ErrorsJSONDTO;
 }
 
-export interface AuthtypesPatchableRoleDTO {
-	/**
-	 * @type string
-	 */
-	description: string;
-}
-
 export interface AuthtypesPostableAuthDomainDTO {
 	config?: AuthtypesAuthDomainConfigDTO;
 	/**
@@ -3249,17 +3242,6 @@ export interface CommonJSONRefDTO {
 	$ref?: string;
 }
 
-export interface CoretypesPatchableObjectsDTO {
-	/**
-	 * @type array,null
-	 */
-	additions: CoretypesObjectGroupDTO[] | null;
-	/**
-	 * @type array,null
-	 */
-	deletions: CoretypesObjectGroupDTO[] | null;
-}
-
 export interface DashboardGridItemDTO {
 	content?: CommonJSONRefDTO;
 	/**
@@ -3995,6 +3977,14 @@ export interface DashboardtypesDashboardPanelRefDTO {
 	 * @type string
 	 */
 	dashboardName: string;
+	/**
+	 * @type array
+	 */
+	filterBy?: string[];
+	/**
+	 * @type array
+	 */
+	groupBy?: string[];
 	/**
 	 * @type string
 	 */
@@ -4951,6 +4941,11 @@ export interface DashboardtypesGettablePublicDashboardDataDTO {
 	publicDashboard?: DashboardtypesGettablePublicDasbhboardDTO;
 }
 
+export interface DashboardtypesGettablePublicDashboardDataV2DTO {
+	dashboard?: DashboardtypesGettableDashboardV2DTO;
+	publicDashboard?: DashboardtypesGettablePublicDasbhboardDTO;
+}
+
 export enum DashboardtypesPatchOpDTO {
 	add = 'add',
 	remove = 'remove',
@@ -5044,6 +5039,10 @@ export interface DashboardtypesListableDashboardForUserV2DTO {
 	/**
 	 * @type array
 	 */
+	reservedKeywords: string[];
+	/**
+	 * @type array
+	 */
 	tags: TagtypesGettableTagDTO[];
 	/**
 	 * @type integer
@@ -5108,6 +5107,10 @@ export interface DashboardtypesListableDashboardV2DTO {
 	 * @type array
 	 */
 	dashboards: DashboardtypesListedDashboardV2DTO[];
+	/**
+	 * @type array
+	 */
+	reservedKeywords: string[];
 	/**
 	 * @type array
 	 */
@@ -6820,6 +6823,29 @@ export interface LlmpricingruletypesGettablePricingRulesDTO {
 	total: number;
 }
 
+export interface LlmpricingruletypesUnmappedModelDTO {
+	/**
+	 * @type string
+	 */
+	modelName: string;
+	/**
+	 * @type string
+	 */
+	provider?: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	spanCount: number;
+}
+
+export interface LlmpricingruletypesGettableUnmappedModelsDTO {
+	/**
+	 * @type array,null
+	 */
+	items: LlmpricingruletypesUnmappedModelDTO[] | null;
+}
+
 export interface LlmpricingruletypesUpdatableLLMPricingRuleDTO {
 	/**
 	 * @type boolean
@@ -6923,6 +6949,11 @@ export interface MetricreductionruletypesGettableReductionRuleDTO {
 	 * @type integer
 	 * @minimum 0
 	 */
+	ingestedSamples: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
 	ingestedSeries: number;
 	/**
 	 * @type array,null
@@ -6934,10 +6965,10 @@ export interface MetricreductionruletypesGettableReductionRuleDTO {
 	 */
 	metricName: string;
 	/**
-	 * @type number
-	 * @format double
+	 * @type integer
+	 * @minimum 0
 	 */
-	reductionPercent: number;
+	retainedSamples: number;
 	/**
 	 * @type integer
 	 * @minimum 0
@@ -7000,7 +7031,17 @@ export interface MetricreductionruletypesGettableReductionRuleStatsDTO {
 	 * @type integer
 	 * @minimum 0
 	 */
+	ingestedSamples: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
 	ingestedSeries: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	retainedSamples: number;
 	/**
 	 * @type integer
 	 * @minimum 0
@@ -7056,7 +7097,6 @@ export enum MetricreductionruletypesReductionRuleOrderByDTO {
 	metric = 'metric',
 	ingested_volume = 'ingested_volume',
 	reduced_volume = 'reduced_volume',
-	reduction = 'reduction',
 	last_updated = 'last_updated',
 }
 export interface MetricreductionruletypesUpdatableReductionRuleDTO {
@@ -10156,6 +10196,14 @@ export type GetLLMPricingRule200 = {
 	status: string;
 };
 
+export type ListUnmappedLLMModels200 = {
+	data: LlmpricingruletypesGettableUnmappedModelsDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type ListPromotedAndIndexedPaths200 = {
 	/**
 	 * @type array,null
@@ -10248,30 +10296,8 @@ export type GetRole200 = {
 	status: string;
 };
 
-export type PatchRolePathParameters = {
-	id: string;
-};
 export type UpdateRolePathParameters = {
 	id: string;
-};
-export type GetObjectsPathParameters = {
-	id: string;
-	relation: string;
-};
-export type GetObjects200 = {
-	/**
-	 * @type array
-	 */
-	data: CoretypesObjectGroupDTO[];
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type PatchObjectsPathParameters = {
-	id: string;
-	relation: string;
 };
 export type GetAllRoutePolicies200 = {
 	/**
@@ -11165,6 +11191,29 @@ export type GetMetricsTreemap200 = {
 
 export type GetMyOrganization200 = {
 	data: TypesOrganizationDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetPublicDashboardDataV2PathParameters = {
+	id: string;
+};
+export type GetPublicDashboardDataV2200 = {
+	data: DashboardtypesGettablePublicDashboardDataV2DTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetPublicDashboardPanelQueryRangeV2PathParameters = {
+	id: string;
+	key: string;
+};
+export type GetPublicDashboardPanelQueryRangeV2200 = {
+	data: Querybuildertypesv5QueryRangeResponseDTO;
 	/**
 	 * @type string
 	 */

@@ -3,6 +3,7 @@ import type {
 	SectionEditorProps,
 	SectionKind,
 } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/sections';
+import { EQueryType } from 'types/common/dashboard';
 
 import ConfigSelect from '../../controls/ConfigSelect/ConfigSelect';
 import ConfigSwitch from '../../controls/ConfigSwitch/ConfigSwitch';
@@ -38,7 +39,9 @@ function VisualizationSection({
 			{controls.switchPanelKind && panelKind && onChangePanelKind && (
 				<PanelTypeSwitcher
 					panelKind={panelKind}
-					queryType={queryType}
+					// queryType is optional on the kind-erased section context, but always
+					// supplied in practice; default to Query Builder at this boundary.
+					queryType={queryType ?? EQueryType.QUERY_BUILDER}
 					signal={signal}
 					onChange={onChangePanelKind}
 				/>

@@ -22,9 +22,13 @@ function DashboardContainer({
 	dashboard,
 	refetch,
 }: DashboardContainerProps): JSX.Element {
+	const spec = dashboard.spec;
+	const image = dashboard.image || Base64Icons[0];
+	const name = spec.display.name;
+
 	useEffect(() => {
-		document.title = dashboard.name;
-	}, [dashboard.name]);
+		document.title = name;
+	}, [name]);
 
 	const fullScreenHandle = useFullScreenHandle();
 
@@ -54,10 +58,6 @@ function DashboardContainer({
 	// Resolve the variable selection into the V5 query payload and publish it to
 	// the store, so each panel's query substitutes the bar's selected values.
 	useResolvedVariables(dashboard);
-
-	const spec = dashboard.spec;
-	const image = dashboard.image || Base64Icons[0];
-	const name = spec.display.name;
 
 	return (
 		<FullScreen handle={fullScreenHandle}>
