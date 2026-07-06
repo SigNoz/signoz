@@ -40,9 +40,8 @@ function PanelEditorPage(): JSX.Element {
 	// instead of the saved panel. Lost on refresh/new-tab, which falls back to saved.
 	const handoffSpec = (state as PanelEditorHandoffState | null)?.editSpec;
 
-	const { dashboard, isLoading, isError, error } = useDashboardFetch(
-		dashboardId,
-	);
+	const { dashboard, isLoading, isError, error } =
+		useDashboardFetch(dashboardId);
 
 	// A `panel/new?panelKind=…` route means "create": seed a default panel of that
 	// kind rather than looking one up. Persisted (with a real id) only on save.
