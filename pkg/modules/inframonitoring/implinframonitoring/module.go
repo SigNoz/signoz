@@ -17,6 +17,7 @@ import (
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"golang.org/x/sync/errgroup"
 )
 
 type module struct {
@@ -377,23 +378,39 @@ func (m *module) ListContainers(ctx context.Context, orgID valuer.UUID, req *inf
 	}
 
 	fullQueryReq := buildFullQueryRequest(req.Start, req.End, filterExpr, req.GroupBy, pageGroups, m.newContainersTableListQuery())
-	queryResp, err := m.querier.QueryRange(ctx, orgID, fullQueryReq)
-	if err != nil {
-		return nil, err
-	}
 
-	statusCounts, statusWarning, err := m.getPerGroupContainerStatusCountsWithReqMetricChecks(ctx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
-	if err != nil {
-		return nil, err
-	}
+	var (
+		queryResp     *qbtypes.QueryRangeResponse
+		statusCounts  map[string]containerStatusCounts
+		statusWarning *qbtypes.QueryWarnData
+		restartCounts map[string]int64
+		readyCounts   map[string]containerReadyCounts
+	)
 
-	restartCounts, err := m.getPerGroupContainerRestartCounts(ctx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
-	if err != nil {
-		return nil, err
-	}
+	g, gCtx := errgroup.WithContext(ctx)
 
-	readyCounts, err := m.getPerGroupContainerReadyCounts(ctx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
-	if err != nil {
+	g.Go(func() error {
+		var err error
+		queryResp, err = m.querier.QueryRange(gCtx, orgID, fullQueryReq)
+		return err
+	})
+	g.Go(func() error {
+		var err error
+		statusCounts, statusWarning, err = m.getPerGroupContainerStatusCountsWithReqMetricChecks(gCtx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		return err
+	})
+	g.Go(func() error {
+		var err error
+		restartCounts, err = m.getPerGroupContainerRestartCounts(gCtx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		return err
+	})
+	g.Go(func() error {
+		var err error
+		readyCounts, err = m.getPerGroupContainerReadyCounts(gCtx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		return err
+	})
+
+	if err := g.Wait(); err != nil {
 		return nil, err
 	}
 
