@@ -72,6 +72,26 @@ describe('UnpricedModelsTab (integration)', () => {
 		expect(saveBtn).toHaveTextContent('Save 1 model');
 	});
 
+	it('clears a selection via the row clear button, re-disabling Save', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		render(<UnpricedModelsTab />);
+
+		await screen.findByTestId(`unpriced-model-name-${MODEL}`);
+
+		const saveBtn = screen.getByTestId('unpriced-save-btn');
+		// The clear button only shows once a rule is picked.
+		expect(screen.queryByTestId(`map-to-clear-${MODEL}`)).not.toBeInTheDocument();
+
+		await selectRule(user, MODEL, 'rule-openai');
+		await waitFor(() => expect(saveBtn).not.toBeDisabled());
+
+		await user.click(await screen.findByTestId(`map-to-clear-${MODEL}`));
+
+		await waitFor(() => expect(saveBtn).toBeDisabled());
+		expect(saveBtn).toHaveTextContent('Save models');
+		expect(screen.queryByTestId(`map-to-clear-${MODEL}`)).not.toBeInTheDocument();
+	});
+
 	it('opens a confirm dialog and commits the mapping in one request', async () => {
 		const sent: LlmpricingruletypesUpdatableLLMPricingRulesDTO[] = [];
 		server.use(

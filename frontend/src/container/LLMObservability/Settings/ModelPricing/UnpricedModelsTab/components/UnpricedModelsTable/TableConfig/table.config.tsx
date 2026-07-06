@@ -13,6 +13,7 @@ export interface UnpricedColumnsConfig {
 	// because the per-row dropdown searches server-side and there's no global map.
 	selections: Record<string, PricingRule>;
 	onSelectRule: (modelName: string, rule: PricingRule) => void;
+	onClearRule: (modelName: string) => void;
 }
 
 // Column definitions for the unpriced-models TanStackTable. Sorting is off — the
@@ -23,7 +24,11 @@ export function getUnpricedModelsColumns({
 	canManage,
 	selections,
 	onSelectRule,
+	onClearRule,
 }: UnpricedColumnsConfig): TableColumnDef<UnpricedModel>[] {
+	const getSelectedRuleId = (row: UnpricedModel): string =>
+		selections[row.modelName]?.id ?? '';
+
 	return [
 		{
 			id: 'model',
@@ -68,6 +73,7 @@ export function getUnpricedModelsColumns({
 		{
 			id: 'mapTo',
 			header: 'Map to billing model',
+			accessorFn: getSelectedRuleId,
 			width: { min: 280, default: '100%' },
 			enableMove: false,
 			enableRemove: false,
@@ -77,6 +83,7 @@ export function getUnpricedModelsColumns({
 					selectedRule={selections[row.modelName]}
 					disabled={!canManage}
 					onSelect={(rule): void => onSelectRule(row.modelName, rule)}
+					onClear={(): void => onClearRule(row.modelName)}
 				/>
 			),
 		},

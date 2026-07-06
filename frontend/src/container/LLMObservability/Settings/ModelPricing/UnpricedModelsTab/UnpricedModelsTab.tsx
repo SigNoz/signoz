@@ -38,6 +38,18 @@ function UnpricedModelsTab(): JSX.Element {
 		[],
 	);
 
+	// Drop a row's pick so it's no longer committed (and the Save count updates).
+	const onClearRule = useCallback((modelName: string): void => {
+		setSelections((prev) => {
+			if (!(modelName in prev)) {
+				return prev;
+			}
+			const next = { ...prev };
+			delete next[modelName];
+			return next;
+		});
+	}, []);
+
 	const mappings: UnpricedModelMapping[] = useMemo(
 		() =>
 			models
@@ -58,6 +70,7 @@ function UnpricedModelsTab(): JSX.Element {
 		canManage: canManagePricing,
 		selections,
 		onSelectRule,
+		onClearRule,
 	};
 
 	const selectedCount = mappings.length;

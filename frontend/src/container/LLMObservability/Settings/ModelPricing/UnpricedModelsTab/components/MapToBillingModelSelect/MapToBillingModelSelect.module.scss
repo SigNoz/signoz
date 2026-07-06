@@ -1,3 +1,10 @@
+.mapToCell {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-1);
+	min-width: 0;
+}
+
 .mapToSelect {
 	width: 100%;
 	max-width: 280px;

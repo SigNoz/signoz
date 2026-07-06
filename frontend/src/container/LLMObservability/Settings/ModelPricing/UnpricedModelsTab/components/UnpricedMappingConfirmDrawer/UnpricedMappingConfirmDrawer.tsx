@@ -66,6 +66,7 @@ function UnpricedMappingConfirmDrawer({
 			direction="right"
 			width="wide"
 			footer={footer}
+			drawerDescriptionProps={{ className: styles.confirmBody }}
 			title={`Map ${count} model${count === 1 ? '' : 's'} to billing models`}
 		>
 			<TanStackTable<UnpricedModelMapping>
