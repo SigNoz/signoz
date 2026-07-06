@@ -78,11 +78,10 @@ export const mockUnpricedModels: UnpricedModel[] = [
 // Wraps unpriced models in the envelope the unmapped-models query reads.
 export function makeUnmappedResponse(
 	items: UnpricedModel[] = mockUnpricedModels,
-	total = items.length,
 ): ListUnmappedLLMModels200 {
 	return {
 		status: 'success',
-		data: { items, total },
+		data: { items },
 	};
 }
 

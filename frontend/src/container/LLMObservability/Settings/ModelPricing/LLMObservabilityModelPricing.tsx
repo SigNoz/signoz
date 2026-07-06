@@ -18,7 +18,7 @@ function LLMObservabilityModelPricing(): JSX.Element {
 
 	// Count powers the tab badge; deduped with the tab's own fetch by react-query.
 	const { data } = useListUnmappedLLMModels();
-	const unpricedCount = data?.data?.total ?? 0;
+	const unpricedCount = data?.data?.items?.length ?? 0;
 
 	return (
 		<div
