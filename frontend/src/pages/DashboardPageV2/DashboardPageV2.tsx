@@ -4,14 +4,14 @@ import { Typography } from '@signozhq/ui/typography';
 import Spinner from 'components/Spinner';
 
 import DashboardContainer from './DashboardContainer';
-import { useDashboardV2 } from './DashboardContainer/hooks/useDashboardV2';
+import { useDashboardFetch } from './DashboardContainer/hooks/useDashboardFetch';
 import styles from './DashboardPageV2.module.scss';
 
 function DashboardPageV2(): JSX.Element {
 	const { dashboardId } = useParams<{ dashboardId: string }>();
 
 	const { dashboard, isLoading, isError, error, refetch } =
-		useDashboardV2(dashboardId);
+		useDashboardFetch(dashboardId);
 
 	if (isLoading) {
 		return <Spinner tip="Loading dashboard..." />;

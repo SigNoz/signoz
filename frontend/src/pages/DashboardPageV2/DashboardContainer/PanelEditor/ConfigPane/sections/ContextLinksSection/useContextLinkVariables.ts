@@ -1,8 +1,7 @@
 import { useMemo } from 'react';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { dtoToFormModel } from 'pages/DashboardPageV2/DashboardContainer/DashboardSettings/Variables/variableAdapters';
-import { useDashboardV2 } from 'pages/DashboardPageV2/DashboardContainer/hooks/useDashboardV2';
-import { useDashboardStore } from 'pages/DashboardPageV2/DashboardContainer/store/useDashboardStore';
+import { useDashboardFetchRequired } from 'pages/DashboardPageV2/DashboardContainer/hooks/useDashboardFetchRequired';
 
 import type { VariableItem } from './types';
 
@@ -21,10 +20,9 @@ const GLOBAL_TIMESTAMP_VARIABLES: VariableItem[] = [
  * section registry. The dashboard fetch dedupes against the editor page's own query.
  */
 export function useContextLinkVariables(): VariableItem[] {
-	const dashboardId = useDashboardStore((s) => s.dashboardId);
 	const { currentQuery } = useQueryBuilder();
 
-	const { variables: variableDtos } = useDashboardV2(dashboardId);
+	const { variables: variableDtos } = useDashboardFetchRequired();
 
 	const dashboardVariableNames = useMemo(
 		() =>

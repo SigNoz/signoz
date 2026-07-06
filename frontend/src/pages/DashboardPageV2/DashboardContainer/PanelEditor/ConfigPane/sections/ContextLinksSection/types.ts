@@ -1,4 +1,15 @@
-/** Where a context-link variable comes from — shown as the right-hand label in the popover. */
+/**
+ * Where a context-link variable comes from — shown as the right-hand label in the popover.
+ *
+ * - `Global timestamp` — the dashboard's selected time range: `timestamp_start` /
+ *   `timestamp_end`. Always available, independent of the panel or its queries.
+ * - `Query variable` — a `groupBy` field from the panel's own queries, `_`-prefixed
+ *   (e.g. `_service_name`). Resolved at click time from the data point the user clicked,
+ *   so it reflects the current query definition and changes as the queries are edited.
+ * - `Dashboard variable` — a user-defined dashboard variable from Dashboard Settings
+ *   (e.g. `env`, `region`). Shared across every panel and driven by the dashboard's
+ *   variable selectors rather than by an individual query.
+ */
 export type VariableSource =
 	| 'Global timestamp'
 	| 'Query variable'

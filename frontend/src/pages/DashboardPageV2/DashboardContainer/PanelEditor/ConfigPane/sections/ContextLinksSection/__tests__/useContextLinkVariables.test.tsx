@@ -69,7 +69,9 @@ describe('useContextLinkVariables', () => {
 		mockUseQueryBuilder.mockReturnValue({
 			currentQuery: { builder: { queryData: [] } },
 		});
-		mockUseGetDashboardV2.mockReturnValue({ data: undefined });
+		// Loaded dashboard with no variables — useDashboardFetchRequired guarantees the
+		// dashboard is present, so the empty case is an empty spec, not `undefined`.
+		mockUseGetDashboardV2.mockReturnValue({ data: { data: { spec: {} } } });
 
 		const { result } = renderHook(() => useContextLinkVariables());
 
