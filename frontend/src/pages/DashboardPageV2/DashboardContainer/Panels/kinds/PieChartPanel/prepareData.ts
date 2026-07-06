@@ -2,6 +2,7 @@ import { themeColors } from 'constants/theme';
 import type { PieSlice } from 'container/DashboardContainer/visualization/charts/types';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import type { PanelTable } from 'pages/DashboardPageV2/DashboardContainer/queryV5/types';
+import { coerceToString } from 'utils/stringUtils';
 
 export interface PreparePieDataArgs {
 	/** Scalar tables from the V5 response (see `prepareScalarTables`). */
