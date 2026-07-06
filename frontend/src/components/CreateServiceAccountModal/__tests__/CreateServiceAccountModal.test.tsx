@@ -11,7 +11,7 @@ import {
 
 import CreateServiceAccountModal from '../CreateServiceAccountModal';
 
-jest.mock('components/AuthZTooltip/AuthZTooltip', () => ({
+jest.mock('lib/authz/components/AuthZTooltip/AuthZTooltip', () => ({
 	__esModule: true,
 	default: ({
 		children,

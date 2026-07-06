@@ -4,11 +4,11 @@ import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
 import { DatePicker } from 'antd';
-import AuthZTooltip from 'components/AuthZTooltip/AuthZTooltip';
+import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import {
 	APIKeyCreatePermission,
 	buildSAAttachPermission,
-} from 'hooks/useAuthZ/permissions/service-account.permissions';
+} from 'lib/authz/hooks/useAuthZ/permissions/service-account.permissions';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import { disabledDate } from '../utils';

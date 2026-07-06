@@ -34,6 +34,7 @@ function SectionSlot({
 	onChangePanelKind,
 	queryType,
 	stepInterval,
+	metricUnit,
 }: SectionSlotProps): JSX.Element | null {
 	// A kind can hide a section based on current spec state (e.g. Histogram legend once
 	// queries are merged) — skip it before resolving the editor.
@@ -74,6 +75,7 @@ function SectionSlot({
 				onChangePanelKind={onChangePanelKind}
 				queryType={queryType}
 				stepInterval={stepInterval}
+				metricUnit={metricUnit}
 			/>
 		</SettingsSection>
 	);

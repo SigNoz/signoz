@@ -3,12 +3,16 @@ from http import HTTPStatus
 
 import pytest
 import requests
-from sqlalchemy import sql
+from wiremock.resources.mappings import Mapping
 
-from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
+from fixtures import types
+from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD, add_license
+from fixtures.role import (
+    expected_managed_transaction_keys,
+    flatten_transaction_groups,
+    managed_role_names,
+)
 from fixtures.types import Operation, SigNoz
-
-ANONYMOUS_USER_ID = "00000000-0000-0000-0000-000000000000"
 
 
 def test_managed_roles_create_on_register(
@@ -18,135 +22,66 @@ def test_managed_roles_create_on_register(
 ):
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    # get the list of all roles.
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v1/roles"),
-        headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=2,
-    )
-
-    assert response.status_code == HTTPStatus.OK
-    assert response.json()["status"] == "success"
-    data = response.json()["data"]
-
-    # since this check happens immediately post registeration, all the managed roles should be present.
-    assert len(data) == 4
-    role_names = {role["name"] for role in data}
-    expected_names = {
-        "signoz-admin",
-        "signoz-viewer",
-        "signoz-editor",
-        "signoz-anonymous",
-    }
-    # do the set mapping as this is order insensitive, direct list match is order-sensitive.
-    assert set(role_names) == expected_names
-
-
-def test_root_user_signoz_admin_assignment(
-    request: pytest.FixtureRequest,
-    signoz: SigNoz,
-    create_user_admin: Operation,  # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str],
-):
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-
-    # Get the user from the v2 /users/me endpoint and extract the id
-    response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v2/users/me"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=5,
     )
     assert response.status_code == HTTPStatus.OK
-    user_data = response.json()["data"]
-    user_id = user_data["id"]
-
-    response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/roles"),
-        headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=2,
-    )
-
-    # this validates to some extent that the role assignment is complete under the assumption that middleware is functioning as expected.
-    assert response.status_code == HTTPStatus.OK
     assert response.json()["status"] == "success"
+    data = response.json()["data"]
 
-    # Loop over the roles and get the org_id and id for signoz-admin role
-    roles = response.json()["data"]
-    admin_role_entry = next((role for role in roles if role["name"] == "signoz-admin"), None)
-    assert admin_role_entry is not None
-    org_id = admin_role_entry["orgId"]
-
-    # to be super sure of authorization server, let's validate the tuples in DB as well.
-    # todo[@vikrantgupta25]: replace this with role memebers handler once built.
-    with signoz.sqlstore.conn.connect() as conn:
-        # verify the entry present for role assignment
-        tuple_object_id = f"organization/{org_id}/role/signoz-admin"
-        tuple_result = conn.execute(
-            sql.text("SELECT * FROM tuple WHERE object_id = :object_id"),
-            {"object_id": tuple_object_id},
-        )
-
-        tuple_row = tuple_result.mappings().fetchone()
-        assert tuple_row is not None
-        # check that the tuple if for role assignment
-        assert tuple_row["object_type"] == "role"
-        assert tuple_row["relation"] == "assignee"
-
-        if request.config.getoption("--sqlstore-provider") == "sqlite":
-            user_object_id = f"organization/{org_id}/user/{user_id}"
-            assert tuple_row["user_object_type"] == "user"
-            assert tuple_row["user_object_id"] == user_object_id
-        else:
-            _user = f"user:organization/{org_id}/user/{user_id}"
-            assert tuple_row["user_type"] == "user"
-            assert tuple_row["_user"] == _user
+    assert len(data) == 4
+    assert {role["name"] for role in data} == managed_role_names()
+    for role in data:
+        assert role["type"] == "managed"
 
 
-def test_anonymous_user_signoz_anonymous_assignment(
-    request: pytest.FixtureRequest,
+def test_custom_role_create_requires_license(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ):
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    response = requests.get(
+    resp = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/roles"),
+        json={"name": "role-no-license", "transactionGroups": []},
         headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=2,
+        timeout=5,
     )
+    assert resp.status_code == HTTPStatus.UNAVAILABLE_FOR_LEGAL_REASONS, f"expected 451 without license, got {resp.status_code}: {resp.text}"
 
-    # this validates to some extent that the role assignment is complete under the assumption that middleware is functioning as expected.
-    assert response.status_code == HTTPStatus.OK
-    assert response.json()["status"] == "success"
 
-    # Loop over the roles and get the org_id and id for signoz-admin role
-    roles = response.json()["data"]
-    admin_role_entry = next((role for role in roles if role["name"] == "signoz-anonymous"), None)
-    assert admin_role_entry is not None
-    org_id = admin_role_entry["orgId"]
+def test_apply_license(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    make_http_mocks: Callable[[types.TestContainerDocker, list[Mapping]], None],
+    get_token: Callable[[str, str], str],
+) -> None:
+    add_license(signoz, make_http_mocks, get_token)
 
-    # to be super sure of authorization server, let's validate the tuples in DB as well.
-    # todo[@vikrantgupta25]: replace this with role memebers handler once built.
-    with signoz.sqlstore.conn.connect() as conn:
-        # verify the entry present for role assignment
-        tuple_object_id = f"organization/{org_id}/role/signoz-anonymous"
-        tuple_result = conn.execute(
-            sql.text("SELECT * FROM tuple WHERE object_id = :object_id"),
-            {"object_id": tuple_object_id},
-        )
 
-        tuple_row = tuple_result.mappings().fetchone()
-        assert tuple_row is not None
-        # check that the tuple if for role assignment
-        assert tuple_row["object_type"] == "role"
-        assert tuple_row["relation"] == "assignee"
+@pytest.mark.parametrize("role_name", managed_role_names())
+def test_managed_role_transactions_match_expected(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    find_role_id: Callable[[str, str], str],
+    role_name: str,
+):
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    role_id = find_role_id(admin_token, role_name)
 
-        if request.config.getoption("--sqlstore-provider") == "sqlite":
-            user_object_id = f"organization/{org_id}/anonymous/{ANONYMOUS_USER_ID}"
-            assert tuple_row["user_object_type"] == "anonymous"
-            assert tuple_row["user_object_id"] == user_object_id
-        else:
-            _user = f"anonymous:organization/{org_id}/anonymous/{ANONYMOUS_USER_ID}"
-            assert tuple_row["user_type"] == "user"
-            assert tuple_row["_user"] == _user
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(f"/api/v1/roles/{role_id}"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    role = response.json()["data"]
+    assert role["type"] == "managed"
+
+    actual = flatten_transaction_groups(role.get("transactionGroups") or [])
+    expected = expected_managed_transaction_keys(role_name)
+    assert actual == expected, f"{role_name} transactions mismatch:\n  missing={expected - actual}\n  unexpected={actual - expected}"
