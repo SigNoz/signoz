@@ -13,7 +13,7 @@ import ROUTES from 'constants/routes';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 
 import { getPanelDefinition } from '../DashboardContainer/Panels/registry';
-import { buildDefaultPluginSpec } from '../DashboardContainer/Panels/utils/buildDefaultPluginSpec';
+import { buildPluginSpec } from '../DashboardContainer/Panels/utils/buildPluginSpec';
 import { buildDefaultQueries } from '../DashboardContainer/Panels/utils/buildDefaultQueries';
 import PanelEditorContainer from '../DashboardContainer/PanelEditor';
 import {
@@ -49,7 +49,7 @@ function PanelEditorPage(): JSX.Element {
 			newKind
 				? createDefaultPanel(
 						newKind,
-						buildDefaultPluginSpec(getPanelDefinition(newKind)?.sections ?? []),
+						buildPluginSpec(getPanelDefinition(newKind).sections),
 						buildDefaultQueries(newKind),
 					)
 				: existingPanel,

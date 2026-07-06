@@ -3,7 +3,7 @@ import { Popover, Tooltip } from 'antd';
 import { Button } from '@signozhq/ui/button';
 import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
-import { ArrowDown, ArrowUp, Check, HdmiPort } from '@signozhq/icons';
+import { ArrowDown, ArrowUp, Check, Columns3 } from '@signozhq/icons';
 
 import {
 	DashboardtypesListOrderDTO,
@@ -191,7 +191,7 @@ function ListHeader({
 							aria-label="Columns"
 							testId="configure-columns-trigger"
 						>
-							<HdmiPort size={14} />
+							<Columns3 size={14} />
 						</Button>
 					</Tooltip>
 				</Popover>

@@ -12,7 +12,7 @@ import {
 } from 'api/generated/services/sigNoz.schemas';
 
 import type { PanelKind } from './Panels/types/panelKind';
-import type { DefaultPluginSpec } from './Panels/utils/buildDefaultPluginSpec';
+import type { SeededPluginSpec } from './Panels/utils/buildPluginSpec';
 import type { GridItem } from './utils';
 
 /**
@@ -36,7 +36,7 @@ export function panelRef(panelId: string): string {
  */
 export function createDefaultPanel(
 	pluginKind: PanelKind,
-	pluginSpec: DefaultPluginSpec = {},
+	pluginSpec: SeededPluginSpec = {},
 	queries: DashboardtypesQueryDTO[] = [],
 ): DashboardtypesPanelDTO {
 	return {

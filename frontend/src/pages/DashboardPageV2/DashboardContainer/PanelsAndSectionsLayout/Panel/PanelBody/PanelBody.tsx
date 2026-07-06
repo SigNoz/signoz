@@ -6,6 +6,7 @@ import PanelMessage from 'pages/DashboardPageV2/DashboardContainer/Panels/compon
 import type { RenderablePanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelDefinition';
 import type { DashboardPreference } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/rendererProps';
 import { hasRunnableQueries } from 'pages/DashboardPageV2/DashboardContainer/queryV5/buildQueryRangeRequest';
+import { getResponseType } from 'pages/DashboardPageV2/DashboardContainer/queryV5/v5ResponseData';
 import type {
 	PanelPagination,
 	PanelQueryData,
@@ -21,6 +22,8 @@ interface PanelBodyProps {
 	panelId: string;
 	data: PanelQueryData;
 	isFetching: boolean;
+	/** Showing a prior page's data while the next loads; forwarded so list renderers can show skeletons. */
+	isPreviousData?: boolean;
 	error: Error | null;
 	refetch: () => void;
 	onDragSelect: (start: number, end: number) => void;
@@ -44,6 +47,7 @@ function PanelBody({
 	panelId,
 	data,
 	isFetching,
+	isPreviousData,
 	error,
 	refetch,
 	onDragSelect,
@@ -52,9 +56,11 @@ function PanelBody({
 	searchTerm,
 	pagination,
 }: PanelBodyProps): JSX.Element {
-	// react-query keeps the previous response during refetches, so its presence is
-	// the "have something to show" signal — only fail hard when there's nothing.
-	const hasData = !!data.response;
+	// A retained response (keepPreviousData) counts as data only if its type matches the current
+	// request — else a prior panel kind's response (time_series → raw) flashes NoData on switch.
+	const hasData =
+		!!data.response &&
+		getResponseType(data.response) === data.requestPayload?.requestType;
 	const queries = panel.spec.queries;
 
 	// Not-configured panel: no runnable query, so nothing to error/load on.
@@ -89,7 +95,9 @@ function PanelBody({
 		);
 	}
 
-	if (isFetching) {
+	// Full-panel loader only on first fetch; a refetch over existing data keeps the renderer
+	// mounted (e.g. list page change) with the header carrying the in-flight indicator.
+	if (isFetching && !hasData) {
 		return (
 			<div className={styles.body} data-testid="panel-loading">
 				<Spin indicator={<Loader size={14} className="animate-spin" />} />
@@ -104,6 +112,7 @@ function PanelBody({
 				panel={panel}
 				data={data}
 				isFetching={isFetching}
+				isPreviousData={isPreviousData}
 				error={error}
 				refetch={refetch}
 				onDragSelect={onDragSelect}
