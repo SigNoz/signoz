@@ -7,7 +7,7 @@ import {
 	SolidInfoCircle,
 	X,
 } from '@signozhq/icons';
-import { Badge } from '@signozhq/ui/badge';
+import TagBadge from 'components/TagBadge/TagBadge';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
@@ -203,19 +203,13 @@ function DashboardInfo({
 						data-testid="dashboard-tags"
 					>
 						{visibleTags.map((tag) => (
-							<Badge key={tag} color="sienna" variant="outline">
-								{tag}
-							</Badge>
+							<TagBadge key={tag}>{tag}</TagBadge>
 						))}
 						{remainingTags.length > 0 && (
 							<TooltipSimple title={remainingTags.join(', ')}>
-								<Badge
-									color="sienna"
-									variant="outline"
-									data-testid="dashboard-tags-overflow"
-								>
-									+{remainingTags.length}
-								</Badge>
+								<span data-testid="dashboard-tags-overflow">
+									<TagBadge>+{remainingTags.length}</TagBadge>
+								</span>
 							</TooltipSimple>
 						)}
 					</div>
