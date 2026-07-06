@@ -418,23 +418,39 @@ func (m *module) ListNodes(ctx context.Context, orgID valuer.UUID, req *inframon
 	}
 
 	fullQueryReq := buildFullQueryRequest(req.Start, req.End, filterExpr, req.GroupBy, pageGroups, m.newNodesTableListQuery())
-	queryResp, err := m.querier.QueryRange(ctx, orgID, fullQueryReq)
-	if err != nil {
-		return nil, err
-	}
 
-	nodeConditionCounts, err := m.getPerGroupNodeConditionCounts(ctx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
-	if err != nil {
-		return nil, err
-	}
+	var (
+		queryResp           *qbtypes.QueryRangeResponse
+		nodeConditionCounts map[string]nodeConditionCounts
+		podPhaseCounts      map[string]podPhaseCounts
+		podStatusCounts     map[string]podStatusCounts
+		podStatusWarning    *qbtypes.QueryWarnData
+	)
 
-	podPhaseCounts, err := m.getPerGroupPodPhaseCounts(ctx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
-	if err != nil {
-		return nil, err
-	}
+	g, gCtx := errgroup.WithContext(ctx)
 
-	podStatusCounts, podStatusWarning, err := m.getPerGroupPodStatusCountsWithReqMetricChecks(ctx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
-	if err != nil {
+	g.Go(func() error {
+		var err error
+		queryResp, err = m.querier.QueryRange(gCtx, orgID, fullQueryReq)
+		return err
+	})
+	g.Go(func() error {
+		var err error
+		nodeConditionCounts, err = m.getPerGroupNodeConditionCounts(gCtx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		return err
+	})
+	g.Go(func() error {
+		var err error
+		podPhaseCounts, err = m.getPerGroupPodPhaseCounts(gCtx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		return err
+	})
+	g.Go(func() error {
+		var err error
+		podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		return err
+	})
+
+	if err := g.Wait(); err != nil {
 		return nil, err
 	}
 
