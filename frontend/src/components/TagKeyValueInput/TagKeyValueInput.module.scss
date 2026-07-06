@@ -28,8 +28,8 @@
 	--button-gap: 0;
 	--button-variant-ghost-background-color: transparent;
 	--button-variant-ghost-hover-background-color: transparent;
-	--button-variant-ghost-color: inherit;
-	--button-variant-ghost-hover-color: inherit;
+	--button-variant-ghost-color: currentColor;
+	--button-variant-ghost-hover-color: currentColor;
 	overflow: hidden;
 	max-width: 200px;
 	text-overflow: ellipsis;
