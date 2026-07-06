@@ -7,7 +7,7 @@ import useUrlQuery from 'hooks/useUrlQuery';
 export interface UseViewPanelApi {
 	/** Panel id currently expanded in the View modal; null when none is open. */
 	expandedPanelId: string | null;
-	/** Open the View modal for a panel by writing its id to the URL. */
+	/** Open the View modal on the saved panel (clears any leftover in-modal query/kind). */
 	openView: (panelId: string) => void;
 	/** Close the View modal by clearing the URL param. */
 	closeView: () => void;
@@ -30,6 +30,10 @@ export function useViewPanel(): UseViewPanelApi {
 			// Copy before mutating: useUrlQuery returns a memoized instance.
 			const next = new URLSearchParams(urlQuery);
 			next.set(QueryParams.expandedWidgetId, panelId);
+			// Drop any leftover in-modal query/kind so a plain View opens on the saved
+			// panel, not a stale URL query the modal would otherwise hydrate from.
+			next.delete(QueryParams.compositeQuery);
+			next.delete(QueryParams.graphType);
 			safeNavigate(`${pathname}?${next.toString()}`);
 		},
 		[pathname, safeNavigate, urlQuery],
