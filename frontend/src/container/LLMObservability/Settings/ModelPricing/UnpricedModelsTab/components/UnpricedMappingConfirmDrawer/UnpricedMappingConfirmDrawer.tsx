@@ -5,8 +5,8 @@ import { Check, X } from '@signozhq/icons';
 import TanStackTable from 'components/TanStackTableView';
 
 import styles from './UnpricedMappingConfirmDrawer.module.scss';
-import { getUnpricedMappingColumns } from './unpricedMappingConfirm.table.config';
-import type { UnpricedModelMapping } from './useUnpricedModelMapping';
+import { getUnpricedMappingColumns } from './TableConfig';
+import type { UnpricedModelMapping } from '../../hooks/useUnpricedModelMapping';
 
 interface UnpricedMappingConfirmDrawerProps {
 	open: boolean;
@@ -65,7 +65,6 @@ function UnpricedMappingConfirmDrawer({
 			}}
 			direction="right"
 			width="wide"
-			className={styles.confirmDrawer}
 			footer={footer}
 			title={`Map ${count} model${count === 1 ? '' : 's'} to billing models`}
 		>

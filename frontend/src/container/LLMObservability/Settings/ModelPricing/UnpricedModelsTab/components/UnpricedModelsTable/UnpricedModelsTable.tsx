@@ -1,13 +1,13 @@
 import { useMemo } from 'react';
 import TanStackTable from 'components/TanStackTableView';
 
-import { SKELETON_ROW_COUNT } from './constants';
-import type { UnpricedModel } from './types';
+import { SKELETON_ROW_COUNT } from '../../../constants';
+import type { UnpricedModel } from '../../../types';
 import styles from './UnpricedModelsTable.module.scss';
 import {
 	getUnpricedModelsColumns,
 	type UnpricedColumnsConfig,
-} from './unpricedModels.table.config';
+} from './TableConfig';
 
 interface UnpricedModelsTableProps {
 	models: UnpricedModel[];

@@ -11,10 +11,10 @@ import {
 	ComboboxTrigger,
 } from '@signozhq/ui/combobox';
 
-import styles from './LLMObservabilityModelPricing.module.scss';
-import type { PricingRule } from './types';
+import styles from './MapToBillingModelSelect.module.scss';
+import type { PricingRule } from '../../../types';
 import { useMapToBillingModelSearch } from './useMapToBillingModelSearch';
-import { getRuleOptionLabel } from './utils';
+import { getRuleOptionLabel } from '../../../utils';
 
 interface MapToBillingModelSelectProps {
 	modelName: string;

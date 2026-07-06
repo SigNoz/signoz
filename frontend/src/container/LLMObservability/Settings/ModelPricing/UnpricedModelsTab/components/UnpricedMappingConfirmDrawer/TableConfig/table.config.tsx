@@ -1,17 +1,20 @@
+import { Badge } from '@signozhq/ui/badge';
+import { Typography } from '@signozhq/ui/typography';
 import { startCase } from 'lodash-es';
 import type { TableColumnDef } from 'components/TanStackTableView';
 
-import styles from './UnpricedMappingConfirmDrawer.module.scss';
-import type { UnpricedModelMapping } from './useUnpricedModelMapping';
+import styles from './tableConfig.module.scss';
+import type { UnpricedModelMapping } from '../../../hooks/useUnpricedModelMapping';
 import {
 	formatPricePerMillion,
 	getCanonicalId,
 	getExtraBuckets,
-} from './utils';
+} from '../../../../utils';
 
 // Columns for the confirm drawer's review table: each pending mapping shown as a
 // row (model from spans -> chosen billing model + that rule's pricing). Read-only,
-// so there are no actions, sorting, or row interactions.
+// so there are no actions, sorting, or row interactions. Cells mirror the
+// model-costs table so a rule's pricing renders identically in both places.
 export function getUnpricedMappingColumns(): TableColumnDef<UnpricedModelMapping>[] {
 	return [
 		{
@@ -22,12 +25,13 @@ export function getUnpricedMappingColumns(): TableColumnDef<UnpricedModelMapping
 			enableMove: false,
 			enableRemove: false,
 			cell: ({ row }): JSX.Element => (
-				<div
-					className={styles.modelCell}
-					data-testid={`unpriced-map-confirm-item-${row.model.modelName}`}
+				<Typography.Text
+					weight="semibold"
+					truncate={1}
+					testId={`unpriced-map-confirm-item-${row.model.modelName}`}
 				>
 					{row.model.modelName}
-				</div>
+				</Typography.Text>
 			),
 		},
 		{
@@ -37,7 +41,7 @@ export function getUnpricedMappingColumns(): TableColumnDef<UnpricedModelMapping
 			enableMove: false,
 			enableRemove: false,
 			cell: ({ row }): JSX.Element => (
-				<span className={styles.billingCell}>{getCanonicalId(row.rule)}</span>
+				<Typography.Text truncate={1}>{getCanonicalId(row.rule)}</Typography.Text>
 			),
 		},
 		{
@@ -46,9 +50,9 @@ export function getUnpricedMappingColumns(): TableColumnDef<UnpricedModelMapping
 			width: { min: 110 },
 			enableMove: false,
 			cell: ({ row }): JSX.Element => (
-				<span className={styles.priceCell}>
+				<Typography.Text>
 					{formatPricePerMillion(row.rule.pricing?.input)}
-				</span>
+				</Typography.Text>
 			),
 		},
 		{
@@ -57,27 +61,41 @@ export function getUnpricedMappingColumns(): TableColumnDef<UnpricedModelMapping
 			width: { min: 110 },
 			enableMove: false,
 			cell: ({ row }): JSX.Element => (
-				<span className={styles.priceCell}>
+				<Typography.Text>
 					{formatPricePerMillion(row.rule.pricing?.output)}
-				</span>
+				</Typography.Text>
 			),
 		},
 		{
-			id: 'cache',
-			header: 'Cache',
+			id: 'extraBuckets',
+			header: 'Extra buckets',
 			width: { min: 180 },
 			enableMove: false,
 			cell: ({ row }): JSX.Element => {
 				const buckets = getExtraBuckets(row.rule);
 				if (buckets.length === 0) {
-					return <span className={styles.muted}>—</span>;
+					return (
+						<Typography.Text color="muted" as="span">
+							—
+						</Typography.Text>
+					);
 				}
 				return (
-					<div className={styles.cacheBuckets}>
+					<div className={styles.extraBuckets}>
 						{buckets.map((bucket) => (
-							<span key={bucket.key} className={styles.cacheBucket}>
-								{startCase(bucket.key)} {formatPricePerMillion(bucket.pricePerMillion)}
-							</span>
+							<Badge
+								key={bucket.key}
+								color="vanilla"
+								variant="outline"
+								className={styles.extraBucketsChip}
+							>
+								<Typography.Text as="span" size="small">
+									{startCase(bucket.key)}
+								</Typography.Text>
+								<Typography.Text as="span" size="small" weight="semibold">
+									{formatPricePerMillion(bucket.pricePerMillion)}
+								</Typography.Text>
+							</Badge>
 						))}
 					</div>
 				);

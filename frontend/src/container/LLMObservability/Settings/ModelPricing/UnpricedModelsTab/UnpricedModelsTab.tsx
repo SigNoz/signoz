@@ -6,14 +6,14 @@ import useComponentPermission from 'hooks/useComponentPermission';
 import { useAppContext } from 'providers/App/App';
 
 import styles from './UnpricedModelsTab.module.scss';
-import type { PricingRule, UnpricedModel } from './types';
-import type { UnpricedColumnsConfig } from './unpricedModels.table.config';
-import UnpricedMappingConfirmDrawer from './UnpricedMappingConfirmDrawer';
-import UnpricedModelsTable from './UnpricedModelsTable';
+import type { PricingRule, UnpricedModel } from '../types';
+import type { UnpricedColumnsConfig } from './components/UnpricedModelsTable/TableConfig';
+import UnpricedMappingConfirmDrawer from './components/UnpricedMappingConfirmDrawer';
+import UnpricedModelsTable from './components/UnpricedModelsTable';
 import {
 	useUnpricedModelMapping,
 	type UnpricedModelMapping,
-} from './useUnpricedModelMapping';
+} from './hooks/useUnpricedModelMapping';
 
 // "Unpriced models" tab: models seen in traces (gen_ai.request.model) that no
 // pricing rule matches. Each row picks an existing billing model to map onto;

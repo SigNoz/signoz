@@ -9,7 +9,7 @@ import {
 	makeListResponse,
 	makeUnmappedResponse,
 	mockRules,
-} from './fixtures';
+} from '../../__tests__/fixtures';
 
 const toastSuccess = jest.fn();
 const toastError = jest.fn();

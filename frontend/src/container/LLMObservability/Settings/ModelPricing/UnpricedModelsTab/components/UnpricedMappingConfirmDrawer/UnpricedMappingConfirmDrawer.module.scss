@@ -1,0 +1,20 @@
+.confirmTable {
+	--tanstack-table-row-height: 48px;
+	// Size to content so a short batch (the common case) sits snug at the top
+	// with no scrollbar or reserved empty space. The drawer body flexes to the
+	// viewport, so `max-height: 100%` only kicks in — with an inner scroll and
+	// the footer still pinned — when a large batch would overflow.
+	max-height: 100%;
+	overflow-y: auto;
+
+	:global(table) tbody tr {
+		cursor: default;
+	}
+}
+
+.footer {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 8px;
+}

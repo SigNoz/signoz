@@ -1,10 +1,11 @@
 import { Badge } from '@signozhq/ui/badge';
+import { Typography } from '@signozhq/ui/typography';
 import type { TableColumnDef } from 'components/TanStackTableView';
 
-import MapToBillingModelSelect from './MapToBillingModelSelect';
-import styles from './LLMObservabilityModelPricing.module.scss';
-import type { PricingRule, UnpricedModel } from './types';
-import { formatSpanCount } from './utils';
+import MapToBillingModelSelect from '../../MapToBillingModelSelect';
+import styles from './tableConfig.module.scss';
+import type { PricingRule, UnpricedModel } from '../../../../types';
+import { formatSpanCount } from '../../../../utils';
 
 export interface UnpricedColumnsConfig {
 	canManage: boolean;
@@ -32,12 +33,13 @@ export function getUnpricedModelsColumns({
 			enableMove: false,
 			enableRemove: false,
 			cell: ({ row }): JSX.Element => (
-				<div
-					className={styles.modelCellName}
-					data-testid={`unpriced-model-name-${row.modelName}`}
+				<Typography.Text
+					weight="semibold"
+					truncate={1}
+					testId={`unpriced-model-name-${row.modelName}`}
 				>
 					{row.modelName}
-				</div>
+				</Typography.Text>
 			),
 		},
 		{

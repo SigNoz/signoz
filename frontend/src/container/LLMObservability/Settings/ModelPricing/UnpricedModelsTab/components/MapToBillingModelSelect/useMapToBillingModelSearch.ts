@@ -2,8 +2,8 @@ import { useMemo, useState } from 'react';
 import { useListLLMPricingRules } from 'api/generated/services/llmpricingrules';
 import useDebounce from 'hooks/useDebounce';
 
-import { RULE_OPTIONS_LIMIT, SEARCH_DEBOUNCE_MS } from './constants';
-import type { PricingRule } from './types';
+import { RULE_OPTIONS_LIMIT, SEARCH_DEBOUNCE_MS } from '../../../constants';
+import type { PricingRule } from '../../../types';
 
 interface UseMapToBillingModelSearch {
 	searchText: string;
