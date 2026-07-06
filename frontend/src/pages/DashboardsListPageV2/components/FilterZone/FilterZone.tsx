@@ -102,8 +102,8 @@ function FilterZone({
 				/>
 				{!isEmpty && (
 					<Button
-						variant="ghost"
-						color="secondary"
+						variant="outlined"
+						color="primary"
 						size="sm"
 						prefix={<X size={12} />}
 						onClick={onClearAll}

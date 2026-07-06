@@ -1,0 +1,63 @@
+@use '../../../../../../styles/scrollbar' as *;
+
+.modal {
+	:global(.ant-modal-body) {
+		padding: 0px;
+	}
+}
+
+// Truncate a long panel name so the header stays on one line; the wrapping tooltip
+// then surfaces the full name on hover.
+.title {
+	display: inline-block;
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	vertical-align: bottom;
+}
+
+// Tall, fixed-height column so the renderer's resize observer measures real
+// dimensions — the chart self-sizes to fill whatever space it's given.
+.content {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	height: 78vh;
+	overflow: auto;
+	padding: 12px;
+
+	@include custom-scrollbar;
+}
+
+.queryBuilder {
+	flex: 0 0 auto;
+	overflow: auto;
+	display: flex;
+	flex-direction: column;
+}
+
+.toolbar {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 8px;
+	flex: 0 0 auto;
+}
+
+.toolbarTime {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.body {
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 auto;
+	min-height: 480px;
+}
+
+.panelTypeSelector {
+	width: 240px;
+}

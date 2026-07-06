@@ -7,11 +7,11 @@ import {
 	setupAuthzAdmin,
 	setupAuthzDeny,
 	setupAuthzDenyAll,
-} from 'tests/authz-test-utils';
+} from 'lib/authz/utils/authz-test-utils';
 import {
 	APIKeyListPermission,
 	buildSADeletePermission,
-} from 'hooks/useAuthZ/permissions/service-account.permissions';
+} from 'lib/authz/hooks/useAuthZ/permissions/service-account.permissions';
 
 import ServiceAccountDrawer from '../ServiceAccountDrawer';
 
