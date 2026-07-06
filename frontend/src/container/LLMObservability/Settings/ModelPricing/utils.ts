@@ -165,15 +165,15 @@ export const validatePricing = (
 // ─── Unpriced-models helpers ─────────────────────────────────────────────────
 
 // Compact span count for the "Spans" badge, e.g. 1234 → "1.2K", 1_200_000 → "1.2M".
-export const formatSpanCount = (count: number): string => {
-	if (count >= 1_000_000) {
-		return `${(count / 1_000_000).toFixed(1)}M`;
-	}
-	if (count >= 1_000) {
-		return `${(count / 1_000).toFixed(1)}K`;
-	}
-	return `${count}`;
-};
+// Intl compact rounds cleanly at the magnitude boundary (999,999 → "1M", not the
+// "1000.0K" a manual divide would produce) and drops trailing ".0" (1000 → "1K").
+const spanCountFormatter = new Intl.NumberFormat('en', {
+	notation: 'compact',
+	maximumFractionDigits: 1,
+});
+
+export const formatSpanCount = (count: number): string =>
+	spanCountFormatter.format(count);
 
 // Label for the "Map to billing model" dropdown, e.g. "openai:gpt-4o ($15.00/$60.00)".
 export const getRuleOptionLabel = (rule: PricingRule): string =>

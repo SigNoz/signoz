@@ -12,8 +12,9 @@ import {
 
 // Columns for the confirm drawer's review table: each pending mapping shown as a
 // row (model from spans -> chosen billing model + that rule's pricing). Read-only,
-// so there are no actions, sorting, or row interactions. Cells mirror the
-// model-costs table so a rule's pricing renders identically in both places.
+// so there are no actions, sorting, or row interactions. Pricing is derived from
+// the same helpers as the model-costs table, but this is a compact review view:
+// extra buckets render as plain inline text rather than the model-costs Badge chips.
 export function getUnpricedMappingColumns(): TableColumnDef<UnpricedModelMapping>[] {
 	return [
 		{

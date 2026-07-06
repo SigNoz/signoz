@@ -7,8 +7,11 @@
 	overflow: hidden;
 }
 .extraBucketContainer {
-	display: flex;
+	// Non-wrapping inline-flex so each bucket's label + price stay on one line and
+	// the row keeps the table's fixed height.
+	display: inline-flex;
+	align-items: center;
 	gap: var(--spacing-1);
 	flex-direction: row;
-	flex-wrap: wrap;
+	flex-wrap: nowrap;
 }
