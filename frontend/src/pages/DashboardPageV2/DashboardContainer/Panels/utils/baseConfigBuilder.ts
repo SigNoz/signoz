@@ -20,11 +20,9 @@ import {
 } from './selectionPreferences';
 
 /**
- * Inputs for the shared V2 chart pipeline. Mirrors the V1 helper of the same
- * name but accepts perses-shaped inputs directly (so callers don't translate
- * once per panel). The series-rendering step is panel-specific and lives in
- * each panel's `utils.ts` — this helper only wires the scaffolding (scales,
- * thresholds, axes, drag-to-zoom, click plugin).
+ * Inputs for the shared V2 chart pipeline. Accepts perses-shaped inputs directly
+ * so callers don't translate per panel. Wires only the scaffolding (scales,
+ * thresholds, axes, drag-to-zoom, click plugin); series rendering is per-panel.
  */
 export interface BuildBaseConfigArgs {
 	panelId: string;
@@ -46,10 +44,7 @@ export interface BuildBaseConfigArgs {
 
 	/** Per-query step intervals from the response exec stats. */
 	stepIntervals?: Record<string, number>;
-	/**
-	 * Tuple-shaped payload for the shared click plugin (see
-	 * `toClickPluginPayload`). Omitted by panels without click interactions.
-	 */
+	/** Payload for the shared click plugin; omitted by panels without click interactions. */
 	clickPayload?: MetricRangePayloadProps;
 
 	/** Time-range clamps for the X scale (typically from `getTimeRange(apiResponse)`). */
@@ -62,10 +57,9 @@ export interface BuildBaseConfigArgs {
 }
 
 /**
- * Builds the panel-agnostic scaffolding of a uPlot chart: scales, thresholds,
- * axes, drag-to-zoom, click plugin. Callers (TimeSeriesPanel, BarPanel, …)
- * then call `addSeries`/`addPlugin` on the returned builder for their own
- * panel-specific rendering.
+ * Builds the panel-agnostic scaffolding of a uPlot chart (scales, thresholds,
+ * axes, drag-to-zoom, click plugin). Callers then `addSeries`/`addPlugin` on the
+ * returned builder for their own rendering.
  */
 export function buildBaseConfig({
 	panelId,
@@ -165,9 +159,10 @@ function makeTzDate(
 		uPlot.tzDate(new Date(timestamp * 1e3), timezone.value);
 }
 
-// Perses-shape thresholds → the draw-hook shape uPlotV2 consumes. Exported so
-// panels that need to feed the same threshold list elsewhere (e.g. to a series
-// `addSeries` thresholds hook) don't have to redo the mapping.
+/**
+ * Perses-shape thresholds → the draw-hook shape uPlotV2 consumes. Exported so
+ * panels feeding the same list elsewhere don't redo the mapping.
+ */
 export function mapThresholds(
 	thresholds: DashboardtypesThresholdWithLabelDTO[] | null | undefined,
 ): ThresholdsDrawHookOptions['thresholds'] {
@@ -183,12 +178,11 @@ export function mapThresholds(
 }
 
 /**
- * V5 backend reports per-query step intervals; we feed the smallest one through
- * to uPlot so the X-axis tick density matches the densest query. An empty map
- * yields `Infinity` from `Math.min`, which would corrupt downstream scale math —
- * fall back to `undefined` (uPlot's "auto") in that case.
+ * Smallest per-query step interval (seconds), fed to uPlot so tick density matches the
+ * densest query. Falls back to `undefined` (uPlot "auto") on an empty map, since
+ * `Math.min` returns `Infinity` there and would corrupt scale math.
  */
-function minStepInterval(
+export function minStepInterval(
 	stepIntervals: Record<string, number>,
 ): number | undefined {
 	const values = Object.values(stepIntervals);

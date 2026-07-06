@@ -1,0 +1,2482 @@
+[
+ {
+  "span_id": "5476d0c821eb5812",
+  "parent_span_id": "",
+  "name": "large-trace-root",
+  "kind": 1,
+  "status_code": 0,
+  "duration": "PT3.764059S",
+  "offset_ms": 0,
+  "resources": {
+   "host.name": "ip-10-0-3-78",
+   "k8s.container.name": "sidecar",
+   "k8s.node.name": "gke-prod-pool-a-1",
+   "service.name": "frontend",
+   "service.namespace": "ecommerce",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "target.spans": 99
+  }
+ },
+ {
+  "span_id": "5a48159d3b5a1cc9",
+  "parent_span_id": "5476d0c821eb5812",
+  "name": "messaging.publish/d1",
+  "kind": 4,
+  "status_code": 0,
+  "duration": "PT0.080000S",
+  "offset_ms": 4,
+  "resources": {
+   "host.name": "ip-10-0-5-23",
+   "k8s.container.name": "server",
+   "k8s.node.name": "gke-prod-pool-a-2",
+   "service.name": "shipping-service",
+   "service.namespace": "ecommerce",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "messaging.system": "rabbitmq",
+   "span.depth": 1,
+   "span.operation": "messaging.publish",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "54b50f3539dcb031",
+  "parent_span_id": "5a48159d3b5a1cc9",
+  "name": "db.query/d2",
+  "kind": 3,
+  "status_code": 0,
+  "duration": "PT0.071000S",
+  "offset_ms": 8,
+  "resources": {
+   "host.name": "ip-10-0-4-91",
+   "k8s.container.name": "sidecar",
+   "k8s.node.name": "gke-prod-pool-c-1",
+   "service.name": "billing-service",
+   "service.namespace": "checkout",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "db.system": "redis",
+   "span.depth": 2,
+   "span.operation": "db.query",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "d11f3f8e5e33fef6",
+  "parent_span_id": "5476d0c821eb5812",
+  "name": "db.query/d1",
+  "kind": 3,
+  "status_code": 0,
+  "duration": "PT3.651000S",
+  "offset_ms": 95,
+  "resources": {
+   "host.name": "ip-10-0-4-91",
+   "k8s.container.name": "main",
+   "k8s.node.name": "gke-prod-pool-b-1",
+   "service.name": "payment-service",
+   "service.namespace": "ecommerce",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "db.system": "cassandra",
+   "span.depth": 1,
+   "span.operation": "db.query",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "eb3eee3fd704958f",
+  "parent_span_id": "d11f3f8e5e33fef6",
+  "name": "messaging.publish/d2",
+  "kind": 4,
+  "status_code": 0,
+  "duration": "PT3.638000S",
+  "offset_ms": 105,
+  "resources": {
+   "host.name": "ip-10-0-4-91",
+   "k8s.container.name": "main",
+   "k8s.node.name": "gke-prod-pool-b-1",
+   "service.name": "payment-service",
+   "service.namespace": "ecommerce",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "messaging.system": "sqs",
+   "span.depth": 2,
+   "span.operation": "messaging.publish",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "f22a61b51c13eb63",
+  "parent_span_id": "eb3eee3fd704958f",
+  "name": "messaging.publish/d3",
+  "kind": 4,
+  "status_code": 2,
+  "duration": "PT0.117000S",
+  "offset_ms": 116,
+  "resources": {
+   "host.name": "ip-10-0-3-78",
+   "k8s.container.name": "sidecar",
+   "k8s.node.name": "gke-prod-pool-a-1",
+   "service.name": "frontend",
+   "service.namespace": "ecommerce",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "messaging.system": "sqs",
+   "span.depth": 3,
+   "span.operation": "messaging.publish",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "be985d6d8d196a13",
+  "parent_span_id": "f22a61b51c13eb63",
+  "name": "db.query/d4",
+  "kind": 3,
+  "status_code": 0,
+  "duration": "PT0.102000S",
+  "offset_ms": 126,
+  "resources": {
+   "host.name": "ip-10-0-4-91",
+   "k8s.container.name": "sidecar",
+   "k8s.node.name": "gke-prod-pool-b-2",
+   "service.name": "catalog-service",
+   "service.namespace": "checkout",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "db.system": "mysql",
+   "span.depth": 4,
+   "span.operation": "db.query",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "1f3f7aa65e4db18f",
+  "parent_span_id": "eb3eee3fd704958f",
+  "name": "internal.compute/d3",
+  "kind": 1,
+  "status_code": 0,
+  "duration": "PT3.492000S",
+  "offset_ms": 241,
+  "resources": {
+   "host.name": "ip-10-0-4-91",
+   "k8s.container.name": "sidecar",
+   "k8s.node.name": "gke-prod-pool-c-1",
+   "service.name": "billing-service",
+   "service.namespace": "checkout",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "span.depth": 3,
+   "span.operation": "internal.compute",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "cb00daf5a25f7b26",
+  "parent_span_id": "1f3f7aa65e4db18f",
+  "name": "http.request/d4",
+  "kind": 2,
+  "status_code": 0,
+  "duration": "PT0.075000S",
+  "offset_ms": 248,
+  "resources": {
+   "host.name": "ip-10-0-4-91",
+   "k8s.container.name": "server",
+   "k8s.node.name": "gke-prod-pool-b-1",
+   "service.name": "auth-service",
+   "service.namespace": "checkout",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "http.method": "PATCH",
+   "span.depth": 4,
+   "span.operation": "http.request",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "d8f824fffbd26a6d",
+  "parent_span_id": "1f3f7aa65e4db18f",
+  "name": "http.request/d4",
+  "kind": 2,
+  "status_code": 0,
+  "duration": "PT3.392000S",
+  "offset_ms": 332,
+  "resources": {
+   "host.name": "ip-10-0-4-91",
+   "k8s.container.name": "main",
+   "k8s.node.name": "gke-prod-pool-b-1",
+   "service.name": "payment-service",
+   "service.namespace": "ecommerce",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "http.method": "GET",
+   "span.depth": 4,
+   "span.operation": "http.request",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "4efe72a09b7c3776",
+  "parent_span_id": "d8f824fffbd26a6d",
+  "name": "db.query/d5",
+  "kind": 3,
+  "status_code": 0,
+  "duration": "PT0.095000S",
+  "offset_ms": 340,
+  "resources": {
+   "host.name": "ip-10-0-3-78",
+   "k8s.container.name": "worker",
+   "k8s.node.name": "gke-prod-pool-b-1",
+   "service.name": "cart-service",
+   "service.namespace": "identity",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "db.system": "redis",
+   "span.depth": 5,
+   "span.operation": "db.query",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "ae8c2948c03cf545",
+  "parent_span_id": "d8f824fffbd26a6d",
+  "name": "messaging.publish/d5",
+  "kind": 4,
+  "status_code": 0,
+  "duration": "PT3.272000S",
+  "offset_ms": 444,
+  "resources": {
+   "host.name": "ip-10-0-3-78",
+   "k8s.container.name": "worker",
+   "k8s.node.name": "gke-prod-pool-c-1",
+   "service.name": "order-service",
+   "service.namespace": "platform",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "messaging.system": "pubsub",
+   "span.depth": 5,
+   "span.operation": "messaging.publish",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "40ee27cf2d122a4d",
+  "parent_span_id": "ae8c2948c03cf545",
+  "name": "gen_ai.chat/d6",
+  "kind": 3,
+  "status_code": 2,
+  "duration": "PT3.265000S",
+  "offset_ms": 449,
+  "resources": {
+   "host.name": "ip-10-0-4-91",
+   "k8s.container.name": "main",
+   "k8s.node.name": "gke-prod-pool-b-1",
+   "service.name": "payment-service",
+   "service.namespace": "ecommerce",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "gen_ai.request.model": "claude-opus-4-8",
+   "span.depth": 6,
+   "span.operation": "gen_ai.chat",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "57a733c5c63eaca1",
+  "parent_span_id": "40ee27cf2d122a4d",
+  "name": "gen_ai.chat/d7",
+  "kind": 3,
+  "status_code": 0,
+  "duration": "PT0.086000S",
+  "offset_ms": 453,
+  "resources": {
+   "host.name": "ip-10-0-2-45",
+   "k8s.container.name": "server",
+   "k8s.node.name": "gke-prod-pool-b-1",
+   "service.name": "search-service",
+   "service.namespace": "platform",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "gen_ai.request.model": "gemini-1.5-pro",
+   "span.depth": 7,
+   "span.operation": "gen_ai.chat",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "2ba341c1e7345471",
+  "parent_span_id": "40ee27cf2d122a4d",
+  "name": "internal.compute/d7",
+  "kind": 1,
+  "status_code": 0,
+  "duration": "PT3.162000S",
+  "offset_ms": 543,
+  "resources": {
+   "host.name": "ip-10-0-6-56",
+   "k8s.container.name": "app",
+   "k8s.node.name": "gke-prod-pool-b-1",
+   "service.name": "recommendation-service",
+   "service.namespace": "identity",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "span.depth": 7,
+   "span.operation": "internal.compute",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "ac7b2d88a76ed35a",
+  "parent_span_id": "2ba341c1e7345471",
+  "name": "http.request/d8",
+  "kind": 2,
+  "status_code": 0,
+  "duration": "PT3.146000S",
+  "offset_ms": 549,
+  "resources": {
+   "host.name": "ip-10-0-4-91",
+   "k8s.container.name": "main",
+   "k8s.node.name": "gke-prod-pool-c-1",
+   "service.name": "inventory-service",
+   "service.namespace": "checkout",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "http.method": "PUT",
+   "span.depth": 8,
+   "span.operation": "http.request",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "169350f73ac0a178",
+  "parent_span_id": "ac7b2d88a76ed35a",
+  "name": "gen_ai.chat/d9",
+  "kind": 3,
+  "status_code": 0,
+  "duration": "PT0.047000S",
+  "offset_ms": 556,
+  "resources": {
+   "host.name": "ip-10-0-5-23",
+   "k8s.container.name": "app",
+   "k8s.node.name": "gke-prod-pool-b-1",
+   "service.name": "api-gateway",
+   "service.namespace": "identity",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "gen_ai.request.model": "claude-opus-4-8",
+   "span.depth": 9,
+   "span.operation": "gen_ai.chat",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "3d8758c6b23f5161",
+  "parent_span_id": "ac7b2d88a76ed35a",
+  "name": "db.query/d9",
+  "kind": 3,
+  "status_code": 0,
+  "duration": "PT3.078000S",
+  "offset_ms": 609,
+  "resources": {
+   "host.name": "ip-10-0-3-78",
+   "k8s.container.name": "main",
+   "k8s.node.name": "gke-prod-pool-a-1",
+   "service.name": "email-service",
+   "service.namespace": "data",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "db.system": "redis",
+   "span.depth": 9,
+   "span.operation": "db.query",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "aa19b354b1ab370f",
+  "parent_span_id": "3d8758c6b23f5161",
+  "name": "gen_ai.chat/d10",
+  "kind": 3,
+  "status_code": 0,
+  "duration": "PT3.060000S",
+  "offset_ms": 620,
+  "resources": {
+   "host.name": "ip-10-0-2-45",
+   "k8s.container.name": "server",
+   "k8s.node.name": "gke-prod-pool-b-1",
+   "service.name": "search-service",
+   "service.namespace": "platform",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "gen_ai.request.model": "gemini-1.5-pro",
+   "span.depth": 10,
+   "span.operation": "gen_ai.chat",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "b65eb276ca848f91",
+  "parent_span_id": "aa19b354b1ab370f",
+  "name": "messaging.publish/d11",
+  "kind": 4,
+  "status_code": 0,
+  "duration": "PT3.041000S",
+  "offset_ms": 632,
+  "resources": {
+   "host.name": "ip-10-0-1-12",
+   "k8s.container.name": "app",
+   "k8s.node.name": "gke-prod-pool-b-2",
+   "service.name": "user-service",
+   "service.namespace": "identity",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "messaging.system": "sqs",
+   "span.depth": 11,
+   "span.operation": "messaging.publish",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "cbab2daed3f6f598",
+  "parent_span_id": "b65eb276ca848f91",
+  "name": "gen_ai.chat/d12",
+  "kind": 3,
+  "status_code": 0,
+  "duration": "PT3.027000S",
+  "offset_ms": 640,
+  "resources": {
+   "host.name": "ip-10-0-6-56",
+   "k8s.container.name": "worker",
+   "k8s.node.name": "gke-prod-pool-b-2",
+   "service.name": "analytics-service",
+   "service.namespace": "ecommerce",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "gen_ai.request.model": "gpt-4o",
+   "span.depth": 12,
+   "span.operation": "gen_ai.chat",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "8f9ba7f2ad2473df",
+  "parent_span_id": "cbab2daed3f6f598",
+  "name": "db.query/d13",
+  "kind": 3,
+  "status_code": 0,
+  "duration": "PT3.013000S",
+  "offset_ms": 646,
+  "resources": {
+   "host.name": "ip-10-0-6-56",
+   "k8s.container.name": "app",
+   "k8s.node.name": "gke-prod-pool-b-1",
+   "service.name": "recommendation-service",
+   "service.namespace": "identity",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "db.system": "mongodb",
+   "span.depth": 13,
+   "span.operation": "db.query",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "6c7106c304dcad9f",
+  "parent_span_id": "8f9ba7f2ad2473df",
+  "name": "db.query/d14",
+  "kind": 3,
+  "status_code": 0,
+  "duration": "PT2.997000S",
+  "offset_ms": 651,
+  "resources": {
+   "host.name": "ip-10-0-2-45",
+   "k8s.container.name": "server",
+   "k8s.node.name": "gke-prod-pool-b-1",
+   "service.name": "search-service",
+   "service.namespace": "platform",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "db.system": "redis",
+   "span.depth": 14,
+   "span.operation": "db.query",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "af7e3a78897bd6ed",
+  "parent_span_id": "6c7106c304dcad9f",
+  "name": "db.query/d15",
+  "kind": 3,
+  "status_code": 0,
+  "duration": "PT0.078000S",
+  "offset_ms": 662,
+  "resources": {
+   "host.name": "ip-10-0-6-56",
+   "k8s.container.name": "worker",
+   "k8s.node.name": "gke-prod-pool-c-1",
+   "service.name": "review-service",
+   "service.namespace": "ecommerce",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "db.system": "postgresql",
+   "span.depth": 15,
+   "span.operation": "db.query",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "7dd1a07633248185",
+  "parent_span_id": "af7e3a78897bd6ed",
+  "name": "gen_ai.chat/d16",
+  "kind": 3,
+  "status_code": 0,
+  "duration": "PT0.061000S",
+  "offset_ms": 670,
+  "resources": {
+   "host.name": "ip-10-0-4-91",
+   "k8s.container.name": "sidecar",
+   "k8s.node.name": "gke-prod-pool-b-2",
+   "service.name": "catalog-service",
+   "service.namespace": "checkout",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "gen_ai.request.model": "gpt-4o",
+   "span.depth": 16,
+   "span.operation": "gen_ai.chat",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "5286dc80a08a2c9c",
+  "parent_span_id": "6c7106c304dcad9f",
+  "name": "db.query/d15",
+  "kind": 3,
+  "status_code": 0,
+  "duration": "PT0.089000S",
+  "offset_ms": 753,
+  "resources": {
+   "host.name": "ip-10-0-3-78",
+   "k8s.container.name": "main",
+   "k8s.node.name": "gke-prod-pool-a-1",
+   "service.name": "email-service",
+   "service.namespace": "data",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "db.system": "mongodb",
+   "span.depth": 15,
+   "span.operation": "db.query",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "76958c21193c04e5",
+  "parent_span_id": "6c7106c304dcad9f",
+  "name": "gen_ai.chat/d15",
+  "kind": 3,
+  "status_code": 0,
+  "duration": "PT0.487000S",
+  "offset_ms": 854,
+  "resources": {
+   "host.name": "ip-10-0-2-45",
+   "k8s.container.name": "server",
+   "k8s.node.name": "gke-prod-pool-b-1",
+   "service.name": "search-service",
+   "service.namespace": "platform",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "gen_ai.request.model": "claude-opus-4-8",
+   "span.depth": 15,
+   "span.operation": "gen_ai.chat",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "cf398fa4ad2f2326",
+  "parent_span_id": "76958c21193c04e5",
+  "name": "gen_ai.chat/d16",
+  "kind": 3,
+  "status_code": 0,
+  "duration": "PT0.378000S",
+  "offset_ms": 858,
+  "resources": {
+   "host.name": "ip-10-0-6-56",
+   "k8s.container.name": "worker",
+   "k8s.node.name": "gke-prod-pool-c-1",
+   "service.name": "review-service",
+   "service.namespace": "ecommerce",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "gen_ai.request.model": "claude-opus-4-8",
+   "span.depth": 16,
+   "span.operation": "gen_ai.chat",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "f693cb6ea14c673b",
+  "parent_span_id": "cf398fa4ad2f2326",
+  "name": "messaging.publish/d17",
+  "kind": 4,
+  "status_code": 0,
+  "duration": "PT0.183000S",
+  "offset_ms": 860,
+  "resources": {
+   "host.name": "ip-10-0-3-78",
+   "k8s.container.name": "worker",
+   "k8s.node.name": "gke-prod-pool-b-1",
+   "service.name": "cart-service",
+   "service.namespace": "identity",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "messaging.system": "kafka",
+   "span.depth": 17,
+   "span.operation": "messaging.publish",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "488fe43b03c53096",
+  "parent_span_id": "f693cb6ea14c673b",
+  "name": "db.query/d18",
+  "kind": 3,
+  "status_code": 0,
+  "duration": "PT0.012000S",
+  "offset_ms": 873,
+  "resources": {
+   "host.name": "ip-10-0-3-78",
+   "k8s.container.name": "sidecar",
+   "k8s.node.name": "gke-prod-pool-a-1",
+   "service.name": "frontend",
+   "service.namespace": "ecommerce",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "db.system": "mongodb",
+   "span.depth": 18,
+   "span.operation": "db.query",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "6e4ec0a013003b94",
+  "parent_span_id": "f693cb6ea14c673b",
+  "name": "gen_ai.chat/d18",
+  "kind": 3,
+  "status_code": 0,
+  "duration": "PT0.101000S",
+  "offset_ms": 890,
+  "resources": {
+   "host.name": "ip-10-0-1-12",
+   "k8s.container.name": "app",
+   "k8s.node.name": "gke-prod-pool-b-2",
+   "service.name": "user-service",
+   "service.namespace": "identity",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "gen_ai.request.model": "claude-opus-4-8",
+   "span.depth": 18,
+   "span.operation": "gen_ai.chat",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "475f4c8ab5a72d29",
+  "parent_span_id": "6e4ec0a013003b94",
+  "name": "gen_ai.chat/d19",
+  "kind": 3,
+  "status_code": 0,
+  "duration": "PT0.041000S",
+  "offset_ms": 894,
+  "resources": {
+   "host.name": "ip-10-0-1-12",
+   "k8s.container.name": "app",
+   "k8s.node.name": "gke-prod-pool-b-2",
+   "service.name": "user-service",
+   "service.namespace": "identity",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "gen_ai.request.model": "llama-3.1-70b",
+   "span.depth": 19,
+   "span.operation": "gen_ai.chat",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "da094f4be6638fa0",
+  "parent_span_id": "6e4ec0a013003b94",
+  "name": "gen_ai.chat/d19",
+  "kind": 3,
+  "status_code": 0,
+  "duration": "PT0.044000S",
+  "offset_ms": 939,
+  "resources": {
+   "host.name": "ip-10-0-3-78",
+   "k8s.container.name": "main",
+   "k8s.node.name": "gke-prod-pool-a-1",
+   "service.name": "email-service",
+   "service.namespace": "data",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "gen_ai.request.model": "gpt-4o",
+   "span.depth": 19,
+   "span.operation": "gen_ai.chat",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "8892e5cd094f6e1e",
+  "parent_span_id": "da094f4be6638fa0",
+  "name": "internal.compute/d20",
+  "kind": 1,
+  "status_code": 0,
+  "duration": "PT0.029000S",
+  "offset_ms": 949,
+  "resources": {
+   "host.name": "ip-10-0-6-56",
+   "k8s.container.name": "worker",
+   "k8s.node.name": "gke-prod-pool-b-2",
+   "service.name": "analytics-service",
+   "service.namespace": "ecommerce",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "span.depth": 20,
+   "span.operation": "internal.compute",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "1b6aede060e05186",
+  "parent_span_id": "f693cb6ea14c673b",
+  "name": "gen_ai.chat/d18",
+  "kind": 3,
+  "status_code": 0,
+  "duration": "PT0.028000S",
+  "offset_ms": 1004,
+  "resources": {
+   "host.name": "ip-10-0-3-78",
+   "k8s.container.name": "worker",
+   "k8s.node.name": "gke-prod-pool-b-1",
+   "service.name": "cart-service",
+   "service.namespace": "identity",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "gen_ai.request.model": "gpt-4o",
+   "span.depth": 18,
+   "span.operation": "gen_ai.chat",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "033f73f4abb643e1",
+  "parent_span_id": "cf398fa4ad2f2326",
+  "name": "http.request/d17",
+  "kind": 2,
+  "status_code": 2,
+  "duration": "PT0.047000S",
+  "offset_ms": 1049,
+  "resources": {
+   "host.name": "ip-10-0-6-56",
+   "k8s.container.name": "worker",
+   "k8s.node.name": "gke-prod-pool-b-2",
+   "service.name": "analytics-service",
+   "service.namespace": "ecommerce",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "http.method": "POST",
+   "span.depth": 17,
+   "span.operation": "http.request",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "94fb61954db3602a",
+  "parent_span_id": "cf398fa4ad2f2326",
+  "name": "internal.compute/d17",
+  "kind": 1,
+  "status_code": 0,
+  "duration": "PT0.096000S",
+  "offset_ms": 1108,
+  "resources": {
+   "host.name": "ip-10-0-5-23",
+   "k8s.container.name": "server",
+   "k8s.node.name": "gke-prod-pool-a-2",
+   "service.name": "shipping-service",
+   "service.namespace": "ecommerce",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "span.depth": 17,
+   "span.operation": "internal.compute",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "0e96ac20a69f0127",
+  "parent_span_id": "cf398fa4ad2f2326",
+  "name": "db.query/d17",
+  "kind": 3,
+  "status_code": 0,
+  "duration": "PT0.014000S",
+  "offset_ms": 1211,
+  "resources": {
+   "host.name": "ip-10-0-3-78",
+   "k8s.container.name": "worker",
+   "k8s.node.name": "gke-prod-pool-b-1",
+   "service.name": "cart-service",
+   "service.namespace": "identity",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "db.system": "redis",
+   "span.depth": 17,
+   "span.operation": "db.query",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "1e3cdfca0f96390d",
+  "parent_span_id": "76958c21193c04e5",
+  "name": "gen_ai.chat/d16",
+  "kind": 3,
+  "status_code": 0,
+  "duration": "PT0.091000S",
+  "offset_ms": 1244,
+  "resources": {
+   "host.name": "ip-10-0-6-56",
+   "k8s.container.name": "app",
+   "k8s.node.name": "gke-prod-pool-b-1",
+   "service.name": "recommendation-service",
+   "service.namespace": "identity",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "gen_ai.request.model": "gemini-1.5-pro",
+   "span.depth": 16,
+   "span.operation": "gen_ai.chat",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "5912950f8bfde379",
+  "parent_span_id": "1e3cdfca0f96390d",
+  "name": "http.request/d17",
+  "kind": 2,
+  "status_code": 0,
+  "duration": "PT0.074000S",
+  "offset_ms": 1253,
+  "resources": {
+   "host.name": "ip-10-0-4-91",
+   "k8s.container.name": "sidecar",
+   "k8s.node.name": "gke-prod-pool-b-2",
+   "service.name": "catalog-service",
+   "service.namespace": "checkout",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "http.method": "GET",
+   "span.depth": 17,
+   "span.operation": "http.request",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "312bf5f76575bec5",
+  "parent_span_id": "6c7106c304dcad9f",
+  "name": "gen_ai.chat/d15",
+  "kind": 3,
+  "status_code": 0,
+  "duration": "PT2.293000S",
+  "offset_ms": 1351,
+  "resources": {
+   "host.name": "ip-10-0-4-91",
+   "k8s.container.name": "main",
+   "k8s.node.name": "gke-prod-pool-c-1",
+   "service.name": "inventory-service",
+   "service.namespace": "checkout",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "gen_ai.request.model": "gemini-1.5-pro",
+   "span.depth": 15,
+   "span.operation": "gen_ai.chat",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "94f3beaacd156a7c",
+  "parent_span_id": "312bf5f76575bec5",
+  "name": "db.query/d16",
+  "kind": 3,
+  "status_code": 0,
+  "duration": "PT2.276000S",
+  "offset_ms": 1361,
+  "resources": {
+   "host.name": "ip-10-0-4-91",
+   "k8s.container.name": "main",
+   "k8s.node.name": "gke-prod-pool-b-1",
+   "service.name": "payment-service",
+   "service.namespace": "ecommerce",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "db.system": "redis",
+   "span.depth": 16,
+   "span.operation": "db.query",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "6711d70c811da346",
+  "parent_span_id": "94f3beaacd156a7c",
+  "name": "internal.compute/d17",
+  "kind": 1,
+  "status_code": 0,
+  "duration": "PT0.055000S",
+  "offset_ms": 1373,
+  "resources": {
+   "host.name": "ip-10-0-1-12",
+   "k8s.container.name": "app",
+   "k8s.node.name": "gke-prod-pool-b-2",
+   "service.name": "user-service",
+   "service.namespace": "identity",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "span.depth": 17,
+   "span.operation": "internal.compute",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "e04ffb797a05c926",
+  "parent_span_id": "94f3beaacd156a7c",
+  "name": "http.request/d17",
+  "kind": 2,
+  "status_code": 0,
+  "duration": "PT2.190000S",
+  "offset_ms": 1437,
+  "resources": {
+   "host.name": "ip-10-0-4-91",
+   "k8s.container.name": "sidecar",
+   "k8s.node.name": "gke-prod-pool-b-2",
+   "service.name": "catalog-service",
+   "service.namespace": "checkout",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "http.method": "GET",
+   "span.depth": 17,
+   "span.operation": "http.request",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "f141590b754f76f6",
+  "parent_span_id": "e04ffb797a05c926",
+  "name": "messaging.publish/d18",
+  "kind": 4,
+  "status_code": 0,
+  "duration": "PT0.084000S",
+  "offset_ms": 1440,
+  "resources": {
+   "host.name": "ip-10-0-6-56",
+   "k8s.container.name": "app",
+   "k8s.node.name": "gke-prod-pool-b-1",
+   "service.name": "recommendation-service",
+   "service.namespace": "identity",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "messaging.system": "rabbitmq",
+   "span.depth": 18,
+   "span.operation": "messaging.publish",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "55dcde70beaf34e2",
+  "parent_span_id": "e04ffb797a05c926",
+  "name": "internal.compute/d18",
+  "kind": 1,
+  "status_code": 2,
+  "duration": "PT2.091000S",
+  "offset_ms": 1533,
+  "resources": {
+   "host.name": "ip-10-0-5-23",
+   "k8s.container.name": "app",
+   "k8s.node.name": "gke-prod-pool-b-1",
+   "service.name": "api-gateway",
+   "service.namespace": "identity",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "span.depth": 18,
+   "span.operation": "internal.compute",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "f6a281cc4629bcd9",
+  "parent_span_id": "55dcde70beaf34e2",
+  "name": "db.query/d19",
+  "kind": 3,
+  "status_code": 0,
+  "duration": "PT2.068000S",
+  "offset_ms": 1546,
+  "resources": {
+   "host.name": "ip-10-0-4-91",
+   "k8s.container.name": "main",
+   "k8s.node.name": "gke-prod-pool-c-1",
+   "service.name": "inventory-service",
+   "service.namespace": "checkout",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "db.system": "mysql",
+   "span.depth": 19,
+   "span.operation": "db.query",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "80b77786e58abd4b",
+  "parent_span_id": "f6a281cc4629bcd9",
+  "name": "gen_ai.chat/d20",
+  "kind": 3,
+  "status_code": 0,
+  "duration": "PT2.056000S",
+  "offset_ms": 1555,
+  "resources": {
+   "host.name": "ip-10-0-4-91",
+   "k8s.container.name": "main",
+   "k8s.node.name": "gke-prod-pool-b-1",
+   "service.name": "payment-service",
+   "service.namespace": "ecommerce",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "gen_ai.request.model": "claude-opus-4-8",
+   "span.depth": 20,
+   "span.operation": "gen_ai.chat",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "20b8f57a060f388b",
+  "parent_span_id": "80b77786e58abd4b",
+  "name": "db.query/d21",
+  "kind": 3,
+  "status_code": 0,
+  "duration": "PT2.043000S",
+  "offset_ms": 1565,
+  "resources": {
+   "host.name": "ip-10-0-3-78",
+   "k8s.container.name": "main",
+   "k8s.node.name": "gke-prod-pool-a-1",
+   "service.name": "email-service",
+   "service.namespace": "data",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "db.system": "mongodb",
+   "span.depth": 21,
+   "span.operation": "db.query",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "f12207bb1aa931ab",
+  "parent_span_id": "20b8f57a060f388b",
+  "name": "internal.compute/d22",
+  "kind": 1,
+  "status_code": 0,
+  "duration": "PT2.035000S",
+  "offset_ms": 1571,
+  "resources": {
+   "host.name": "ip-10-0-1-12",
+   "k8s.container.name": "app",
+   "k8s.node.name": "gke-prod-pool-b-2",
+   "service.name": "user-service",
+   "service.namespace": "identity",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "span.depth": 22,
+   "span.operation": "internal.compute",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "cec3994c2b4f6180",
+  "parent_span_id": "f12207bb1aa931ab",
+  "name": "internal.compute/d23",
+  "kind": 1,
+  "status_code": 0,
+  "duration": "PT0.069000S",
+  "offset_ms": 1577,
+  "resources": {
+   "host.name": "ip-10-0-3-78",
+   "k8s.container.name": "sidecar",
+   "k8s.node.name": "gke-prod-pool-a-1",
+   "service.name": "frontend",
+   "service.namespace": "ecommerce",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "span.depth": 23,
+   "span.operation": "internal.compute",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "77923cb5ab1c7791",
+  "parent_span_id": "f12207bb1aa931ab",
+  "name": "messaging.publish/d23",
+  "kind": 4,
+  "status_code": 0,
+  "duration": "PT0.041000S",
+  "offset_ms": 1659,
+  "resources": {
+   "host.name": "ip-10-0-3-78",
+   "k8s.container.name": "worker",
+   "k8s.node.name": "gke-prod-pool-c-1",
+   "service.name": "order-service",
+   "service.namespace": "platform",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "messaging.system": "sqs",
+   "span.depth": 23,
+   "span.operation": "messaging.publish",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "91e1e5be6d646409",
+  "parent_span_id": "f12207bb1aa931ab",
+  "name": "http.request/d23",
+  "kind": 2,
+  "status_code": 0,
+  "duration": "PT1.888000S",
+  "offset_ms": 1712,
+  "resources": {
+   "host.name": "ip-10-0-3-78",
+   "k8s.container.name": "sidecar",
+   "k8s.node.name": "gke-prod-pool-a-1",
+   "service.name": "frontend",
+   "service.namespace": "ecommerce",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "http.method": "DELETE",
+   "span.depth": 23,
+   "span.operation": "http.request",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "fea8602c618de415",
+  "parent_span_id": "91e1e5be6d646409",
+  "name": "internal.compute/d24",
+  "kind": 1,
+  "status_code": 0,
+  "duration": "PT1.873000S",
+  "offset_ms": 1720,
+  "resources": {
+   "host.name": "ip-10-0-6-56",
+   "k8s.container.name": "worker",
+   "k8s.node.name": "gke-prod-pool-c-1",
+   "service.name": "review-service",
+   "service.namespace": "ecommerce",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "span.depth": 24,
+   "span.operation": "internal.compute",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "173bd5604516e3c0",
+  "parent_span_id": "fea8602c618de415",
+  "name": "db.query/d25",
+  "kind": 3,
+  "status_code": 0,
+  "duration": "PT1.857000S",
+  "offset_ms": 1730,
+  "resources": {
+   "host.name": "ip-10-0-3-78",
+   "k8s.container.name": "sidecar",
+   "k8s.node.name": "gke-prod-pool-a-1",
+   "service.name": "frontend",
+   "service.namespace": "ecommerce",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "db.system": "redis",
+   "span.depth": 25,
+   "span.operation": "db.query",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "b0ba971b32cc9825",
+  "parent_span_id": "173bd5604516e3c0",
+  "name": "messaging.publish/d26",
+  "kind": 4,
+  "status_code": 2,
+  "duration": "PT0.098000S",
+  "offset_ms": 1737,
+  "resources": {
+   "host.name": "ip-10-0-3-78",
+   "k8s.container.name": "worker",
+   "k8s.node.name": "gke-prod-pool-b-1",
+   "service.name": "cart-service",
+   "service.namespace": "identity",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "messaging.system": "sqs",
+   "span.depth": 26,
+   "span.operation": "messaging.publish",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "88fc30f518446d75",
+  "parent_span_id": "173bd5604516e3c0",
+  "name": "db.query/d26",
+  "kind": 3,
+  "status_code": 0,
+  "duration": "PT1.735000S",
+  "offset_ms": 1842,
+  "resources": {
+   "host.name": "ip-10-0-5-23",
+   "k8s.container.name": "app",
+   "k8s.node.name": "gke-prod-pool-b-1",
+   "service.name": "api-gateway",
+   "service.namespace": "identity",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "db.system": "redis",
+   "span.depth": 26,
+   "span.operation": "db.query",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "df406c83a1e20da9",
+  "parent_span_id": "88fc30f518446d75",
+  "name": "internal.compute/d27",
+  "kind": 1,
+  "status_code": 0,
+  "duration": "PT1.719000S",
+  "offset_ms": 1848,
+  "resources": {
+   "host.name": "ip-10-0-4-91",
+   "k8s.container.name": "sidecar",
+   "k8s.node.name": "gke-prod-pool-c-1",
+   "service.name": "billing-service",
+   "service.namespace": "checkout",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "span.depth": 27,
+   "span.operation": "internal.compute",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "5ece93c7ef503f4b",
+  "parent_span_id": "df406c83a1e20da9",
+  "name": "db.query/d28",
+  "kind": 3,
+  "status_code": 0,
+  "duration": "PT1.550000S",
+  "offset_ms": 1852,
+  "resources": {
+   "host.name": "ip-10-0-6-56",
+   "k8s.container.name": "worker",
+   "k8s.node.name": "gke-prod-pool-b-2",
+   "service.name": "analytics-service",
+   "service.namespace": "ecommerce",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "db.system": "redis",
+   "span.depth": 28,
+   "span.operation": "db.query",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "200d892c68265660",
+  "parent_span_id": "5ece93c7ef503f4b",
+  "name": "db.query/d29",
+  "kind": 3,
+  "status_code": 0,
+  "duration": "PT0.396000S",
+  "offset_ms": 1855,
+  "resources": {
+   "host.name": "ip-10-0-4-91",
+   "k8s.container.name": "main",
+   "k8s.node.name": "gke-prod-pool-b-1",
+   "service.name": "payment-service",
+   "service.namespace": "ecommerce",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "db.system": "redis",
+   "span.depth": 29,
+   "span.operation": "db.query",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "e99cf02303ceff62",
+  "parent_span_id": "200d892c68265660",
+  "name": "db.query/d30",
+  "kind": 3,
+  "status_code": 0,
+  "duration": "PT0.387000S",
+  "offset_ms": 1857,
+  "resources": {
+   "host.name": "ip-10-0-2-45",
+   "k8s.container.name": "server",
+   "k8s.node.name": "gke-prod-pool-b-1",
+   "service.name": "search-service",
+   "service.namespace": "platform",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "db.system": "redis",
+   "span.depth": 30,
+   "span.operation": "db.query",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "628e7a63ed682d83",
+  "parent_span_id": "e99cf02303ceff62",
+  "name": "messaging.publish/d31",
+  "kind": 4,
+  "status_code": 0,
+  "duration": "PT0.018000S",
+  "offset_ms": 1863,
+  "resources": {
+   "host.name": "ip-10-0-3-78",
+   "k8s.container.name": "worker",
+   "k8s.node.name": "gke-prod-pool-c-1",
+   "service.name": "order-service",
+   "service.namespace": "platform",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "messaging.system": "rabbitmq",
+   "span.depth": 31,
+   "span.operation": "messaging.publish",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "3affca42b9640c73",
+  "parent_span_id": "e99cf02303ceff62",
+  "name": "gen_ai.chat/d31",
+  "kind": 3,
+  "status_code": 0,
+  "duration": "PT0.060000S",
+  "offset_ms": 1887,
+  "resources": {
+   "host.name": "ip-10-0-6-56",
+   "k8s.container.name": "worker",
+   "k8s.node.name": "gke-prod-pool-b-2",
+   "service.name": "analytics-service",
+   "service.namespace": "ecommerce",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "gen_ai.request.model": "gpt-4o",
+   "span.depth": 31,
+   "span.operation": "gen_ai.chat",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "856369367e1f3a05",
+  "parent_span_id": "e99cf02303ceff62",
+  "name": "http.request/d31",
+  "kind": 2,
+  "status_code": 0,
+  "duration": "PT0.284000S",
+  "offset_ms": 1956,
+  "resources": {
+   "host.name": "ip-10-0-4-91",
+   "k8s.container.name": "main",
+   "k8s.node.name": "gke-prod-pool-c-1",
+   "service.name": "inventory-service",
+   "service.namespace": "checkout",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "http.method": "POST",
+   "span.depth": 31,
+   "span.operation": "http.request",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "142bef10a7f41eca",
+  "parent_span_id": "856369367e1f3a05",
+  "name": "gen_ai.chat/d32",
+  "kind": 3,
+  "status_code": 0,
+  "duration": "PT0.029000S",
+  "offset_ms": 1962,
+  "resources": {
+   "host.name": "ip-10-0-3-78",
+   "k8s.container.name": "worker",
+   "k8s.node.name": "gke-prod-pool-b-1",
+   "service.name": "cart-service",
+   "service.namespace": "identity",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "gen_ai.request.model": "gemini-1.5-pro",
+   "span.depth": 32,
+   "span.operation": "gen_ai.chat",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "9612b61068457701",
+  "parent_span_id": "142bef10a7f41eca",
+  "name": "db.query/d33",
+  "kind": 3,
+  "status_code": 0,
+  "duration": "PT0.012000S",
+  "offset_ms": 1970,
+  "resources": {
+   "host.name": "ip-10-0-3-78",
+   "k8s.container.name": "worker",
+   "k8s.node.name": "gke-prod-pool-c-1",
+   "service.name": "order-service",
+   "service.namespace": "platform",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "db.system": "cassandra",
+   "span.depth": 33,
+   "span.operation": "db.query",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "84af64e330a1f38e",
+  "parent_span_id": "856369367e1f3a05",
+  "name": "http.request/d32",
+  "kind": 2,
+  "status_code": 0,
+  "duration": "PT0.058000S",
+  "offset_ms": 2008,
+  "resources": {
+   "host.name": "ip-10-0-3-78",
+   "k8s.container.name": "worker",
+   "k8s.node.name": "gke-prod-pool-b-1",
+   "service.name": "cart-service",
+   "service.namespace": "identity",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "http.method": "PATCH",
+   "span.depth": 32,
+   "span.operation": "http.request",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "f62e4b84cafb4f31",
+  "parent_span_id": "84af64e330a1f38e",
+  "name": "internal.compute/d33",
+  "kind": 1,
+  "status_code": 0,
+  "duration": "PT0.038000S",
+  "offset_ms": 2017,
+  "resources": {
+   "host.name": "ip-10-0-4-91",
+   "k8s.container.name": "sidecar",
+   "k8s.node.name": "gke-prod-pool-b-2",
+   "service.name": "catalog-service",
+   "service.namespace": "checkout",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "span.depth": 33,
+   "span.operation": "internal.compute",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "14e1dd235a89c26b",
+  "parent_span_id": "856369367e1f3a05",
+  "name": "gen_ai.chat/d32",
+  "kind": 3,
+  "status_code": 0,
+  "duration": "PT0.094000S",
+  "offset_ms": 2069,
+  "resources": {
+   "host.name": "ip-10-0-4-91",
+   "k8s.container.name": "sidecar",
+   "k8s.node.name": "gke-prod-pool-b-2",
+   "service.name": "catalog-service",
+   "service.namespace": "checkout",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "gen_ai.request.model": "claude-opus-4-8",
+   "span.depth": 32,
+   "span.operation": "gen_ai.chat",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "b31ae7054f701488",
+  "parent_span_id": "856369367e1f3a05",
+  "name": "messaging.publish/d32",
+  "kind": 4,
+  "status_code": 2,
+  "duration": "PT0.060000S",
+  "offset_ms": 2176,
+  "resources": {
+   "host.name": "ip-10-0-3-78",
+   "k8s.container.name": "worker",
+   "k8s.node.name": "gke-prod-pool-b-1",
+   "service.name": "cart-service",
+   "service.namespace": "identity",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "messaging.system": "rabbitmq",
+   "span.depth": 32,
+   "span.operation": "messaging.publish",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "13b8dcd3e1d6233d",
+  "parent_span_id": "b31ae7054f701488",
+  "name": "gen_ai.chat/d33",
+  "kind": 3,
+  "status_code": 0,
+  "duration": "PT0.046000S",
+  "offset_ms": 2182,
+  "resources": {
+   "host.name": "ip-10-0-5-23",
+   "k8s.container.name": "app",
+   "k8s.node.name": "gke-prod-pool-b-1",
+   "service.name": "api-gateway",
+   "service.namespace": "identity",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "gen_ai.request.model": "gemini-1.5-pro",
+   "span.depth": 33,
+   "span.operation": "gen_ai.chat",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "84d6061ac9477b6e",
+  "parent_span_id": "5ece93c7ef503f4b",
+  "name": "messaging.publish/d29",
+  "kind": 4,
+  "status_code": 0,
+  "duration": "PT0.039000S",
+  "offset_ms": 2260,
+  "resources": {
+   "host.name": "ip-10-0-1-12",
+   "k8s.container.name": "app",
+   "k8s.node.name": "gke-prod-pool-b-2",
+   "service.name": "notification-service",
+   "service.namespace": "identity",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "messaging.system": "sqs",
+   "span.depth": 29,
+   "span.operation": "messaging.publish",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "bd31ad40a28cc788",
+  "parent_span_id": "84d6061ac9477b6e",
+  "name": "http.request/d30",
+  "kind": 2,
+  "status_code": 0,
+  "duration": "PT0.024000S",
+  "offset_ms": 2270,
+  "resources": {
+   "host.name": "ip-10-0-1-12",
+   "k8s.container.name": "app",
+   "k8s.node.name": "gke-prod-pool-b-2",
+   "service.name": "user-service",
+   "service.namespace": "identity",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "http.method": "DELETE",
+   "span.depth": 30,
+   "span.operation": "http.request",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "1f3050b53671f47e",
+  "parent_span_id": "5ece93c7ef503f4b",
+  "name": "http.request/d29",
+  "kind": 2,
+  "status_code": 0,
+  "duration": "PT1.082000S",
+  "offset_ms": 2311,
+  "resources": {
+   "host.name": "ip-10-0-4-91",
+   "k8s.container.name": "sidecar",
+   "k8s.node.name": "gke-prod-pool-c-1",
+   "service.name": "billing-service",
+   "service.namespace": "checkout",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "http.method": "GET",
+   "span.depth": 29,
+   "span.operation": "http.request",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "5da03b83c7342ce5",
+  "parent_span_id": "1f3050b53671f47e",
+  "name": "gen_ai.chat/d30",
+  "kind": 3,
+  "status_code": 0,
+  "duration": "PT0.024000S",
+  "offset_ms": 2316,
+  "resources": {
+   "host.name": "ip-10-0-3-78",
+   "k8s.container.name": "sidecar",
+   "k8s.node.name": "gke-prod-pool-a-1",
+   "service.name": "frontend",
+   "service.namespace": "ecommerce",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "gen_ai.request.model": "gpt-4o",
+   "span.depth": 30,
+   "span.operation": "gen_ai.chat",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "15c158acb7b7ebde",
+  "parent_span_id": "1f3050b53671f47e",
+  "name": "internal.compute/d30",
+  "kind": 1,
+  "status_code": 0,
+  "duration": "PT0.521000S",
+  "offset_ms": 2348,
+  "resources": {
+   "host.name": "ip-10-0-4-91",
+   "k8s.container.name": "main",
+   "k8s.node.name": "gke-prod-pool-c-1",
+   "service.name": "inventory-service",
+   "service.namespace": "checkout",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "span.depth": 30,
+   "span.operation": "internal.compute",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "8875af25e4f33dd2",
+  "parent_span_id": "15c158acb7b7ebde",
+  "name": "messaging.publish/d31",
+  "kind": 4,
+  "status_code": 0,
+  "duration": "PT0.330000S",
+  "offset_ms": 2355,
+  "resources": {
+   "host.name": "ip-10-0-4-91",
+   "k8s.container.name": "sidecar",
+   "k8s.node.name": "gke-prod-pool-c-1",
+   "service.name": "billing-service",
+   "service.namespace": "checkout",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "messaging.system": "rabbitmq",
+   "span.depth": 31,
+   "span.operation": "messaging.publish",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "70330dd280996fe5",
+  "parent_span_id": "8875af25e4f33dd2",
+  "name": "db.query/d32",
+  "kind": 3,
+  "status_code": 0,
+  "duration": "PT0.180000S",
+  "offset_ms": 2368,
+  "resources": {
+   "host.name": "ip-10-0-2-45",
+   "k8s.container.name": "worker",
+   "k8s.node.name": "gke-prod-pool-b-1",
+   "service.name": "fraud-detection",
+   "service.namespace": "ecommerce",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "db.system": "redis",
+   "span.depth": 32,
+   "span.operation": "db.query",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "62306e305566d3f5",
+  "parent_span_id": "70330dd280996fe5",
+  "name": "messaging.publish/d33",
+  "kind": 4,
+  "status_code": 0,
+  "duration": "PT0.168000S",
+  "offset_ms": 2373,
+  "resources": {
+   "host.name": "ip-10-0-6-56",
+   "k8s.container.name": "app",
+   "k8s.node.name": "gke-prod-pool-b-1",
+   "service.name": "recommendation-service",
+   "service.namespace": "identity",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "messaging.system": "pubsub",
+   "span.depth": 33,
+   "span.operation": "messaging.publish",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "194edb1119b57a98",
+  "parent_span_id": "62306e305566d3f5",
+  "name": "messaging.publish/d34",
+  "kind": 4,
+  "status_code": 0,
+  "duration": "PT0.067000S",
+  "offset_ms": 2384,
+  "resources": {
+   "host.name": "ip-10-0-3-78",
+   "k8s.container.name": "sidecar",
+   "k8s.node.name": "gke-prod-pool-a-1",
+   "service.name": "frontend",
+   "service.namespace": "ecommerce",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "messaging.system": "pubsub",
+   "span.depth": 34,
+   "span.operation": "messaging.publish",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "ccdb7266c2152bb7",
+  "parent_span_id": "62306e305566d3f5",
+  "name": "gen_ai.chat/d34",
+  "kind": 3,
+  "status_code": 0,
+  "duration": "PT0.077000S",
+  "offset_ms": 2462,
+  "resources": {
+   "host.name": "ip-10-0-5-23",
+   "k8s.container.name": "server",
+   "k8s.node.name": "gke-prod-pool-a-2",
+   "service.name": "shipping-service",
+   "service.namespace": "ecommerce",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "gen_ai.request.model": "gpt-4o",
+   "span.depth": 34,
+   "span.operation": "gen_ai.chat",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "a0def7ce3aaec4de",
+  "parent_span_id": "8875af25e4f33dd2",
+  "name": "db.query/d32",
+  "kind": 3,
+  "status_code": 2,
+  "duration": "PT0.094000S",
+  "offset_ms": 2552,
+  "resources": {
+   "host.name": "ip-10-0-6-56",
+   "k8s.container.name": "worker",
+   "k8s.node.name": "gke-prod-pool-b-2",
+   "service.name": "analytics-service",
+   "service.namespace": "ecommerce",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "db.system": "redis",
+   "span.depth": 32,
+   "span.operation": "db.query",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "1e043d5df6fb2e17",
+  "parent_span_id": "a0def7ce3aaec4de",
+  "name": "messaging.publish/d33",
+  "kind": 4,
+  "status_code": 0,
+  "duration": "PT0.080000S",
+  "offset_ms": 2554,
+  "resources": {
+   "host.name": "ip-10-0-6-56",
+   "k8s.container.name": "worker",
+   "k8s.node.name": "gke-prod-pool-b-2",
+   "service.name": "analytics-service",
+   "service.namespace": "ecommerce",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "messaging.system": "pubsub",
+   "span.depth": 33,
+   "span.operation": "messaging.publish",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "5c18caec1deda8ce",
+  "parent_span_id": "8875af25e4f33dd2",
+  "name": "internal.compute/d32",
+  "kind": 1,
+  "status_code": 0,
+  "duration": "PT0.023000S",
+  "offset_ms": 2659,
+  "resources": {
+   "host.name": "ip-10-0-1-12",
+   "k8s.container.name": "app",
+   "k8s.node.name": "gke-prod-pool-b-2",
+   "service.name": "notification-service",
+   "service.namespace": "identity",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "span.depth": 32,
+   "span.operation": "internal.compute",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "0313f80fa6b17461",
+  "parent_span_id": "15c158acb7b7ebde",
+  "name": "gen_ai.chat/d31",
+  "kind": 3,
+  "status_code": 0,
+  "duration": "PT0.163000S",
+  "offset_ms": 2697,
+  "resources": {
+   "host.name": "ip-10-0-5-23",
+   "k8s.container.name": "app",
+   "k8s.node.name": "gke-prod-pool-b-1",
+   "service.name": "api-gateway",
+   "service.namespace": "identity",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "gen_ai.request.model": "claude-opus-4-8",
+   "span.depth": 31,
+   "span.operation": "gen_ai.chat",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "8d632410a7c964c3",
+  "parent_span_id": "0313f80fa6b17461",
+  "name": "http.request/d32",
+  "kind": 2,
+  "status_code": 0,
+  "duration": "PT0.052000S",
+  "offset_ms": 2699,
+  "resources": {
+   "host.name": "ip-10-0-4-91",
+   "k8s.container.name": "main",
+   "k8s.node.name": "gke-prod-pool-b-1",
+   "service.name": "payment-service",
+   "service.namespace": "ecommerce",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "http.method": "PUT",
+   "span.depth": 32,
+   "span.operation": "http.request",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "87be07c3b8e992b0",
+  "parent_span_id": "0313f80fa6b17461",
+  "name": "db.query/d32",
+  "kind": 3,
+  "status_code": 2,
+  "duration": "PT0.087000S",
+  "offset_ms": 2762,
+  "resources": {
+   "host.name": "ip-10-0-2-45",
+   "k8s.container.name": "worker",
+   "k8s.node.name": "gke-prod-pool-b-1",
+   "service.name": "fraud-detection",
+   "service.namespace": "ecommerce",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "db.system": "cassandra",
+   "span.depth": 32,
+   "span.operation": "db.query",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "5c8be1009aa3e419",
+  "parent_span_id": "1f3050b53671f47e",
+  "name": "internal.compute/d30",
+  "kind": 1,
+  "status_code": 0,
+  "duration": "PT0.512000S",
+  "offset_ms": 2875,
+  "resources": {
+   "host.name": "ip-10-0-2-45",
+   "k8s.container.name": "worker",
+   "k8s.node.name": "gke-prod-pool-b-1",
+   "service.name": "fraud-detection",
+   "service.namespace": "ecommerce",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "span.depth": 30,
+   "span.operation": "internal.compute",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "3cac93ebb854ab29",
+  "parent_span_id": "5c8be1009aa3e419",
+  "name": "internal.compute/d31",
+  "kind": 1,
+  "status_code": 0,
+  "duration": "PT0.490000S",
+  "offset_ms": 2886,
+  "resources": {
+   "host.name": "ip-10-0-3-78",
+   "k8s.container.name": "sidecar",
+   "k8s.node.name": "gke-prod-pool-a-1",
+   "service.name": "frontend",
+   "service.namespace": "ecommerce",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "span.depth": 31,
+   "span.operation": "internal.compute",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "da1d7d63b7d7a61f",
+  "parent_span_id": "3cac93ebb854ab29",
+  "name": "messaging.publish/d32",
+  "kind": 4,
+  "status_code": 0,
+  "duration": "PT0.125000S",
+  "offset_ms": 2895,
+  "resources": {
+   "host.name": "ip-10-0-4-91",
+   "k8s.container.name": "sidecar",
+   "k8s.node.name": "gke-prod-pool-c-1",
+   "service.name": "billing-service",
+   "service.namespace": "checkout",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "messaging.system": "pubsub",
+   "span.depth": 32,
+   "span.operation": "messaging.publish",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "07b99de5c9e5a339",
+  "parent_span_id": "da1d7d63b7d7a61f",
+  "name": "gen_ai.chat/d33",
+  "kind": 3,
+  "status_code": 0,
+  "duration": "PT0.106000S",
+  "offset_ms": 2905,
+  "resources": {
+   "host.name": "ip-10-0-3-78",
+   "k8s.container.name": "worker",
+   "k8s.node.name": "gke-prod-pool-b-1",
+   "service.name": "cart-service",
+   "service.namespace": "identity",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "gen_ai.request.model": "llama-3.1-70b",
+   "span.depth": 33,
+   "span.operation": "gen_ai.chat",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "ac5e4ffe5d1d8d78",
+  "parent_span_id": "3cac93ebb854ab29",
+  "name": "internal.compute/d32",
+  "kind": 1,
+  "status_code": 0,
+  "duration": "PT0.055000S",
+  "offset_ms": 3029,
+  "resources": {
+   "host.name": "ip-10-0-3-78",
+   "k8s.container.name": "sidecar",
+   "k8s.node.name": "gke-prod-pool-a-1",
+   "service.name": "frontend",
+   "service.namespace": "ecommerce",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "span.depth": 32,
+   "span.operation": "internal.compute",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "2f48c28ec4c31489",
+  "parent_span_id": "3cac93ebb854ab29",
+  "name": "messaging.publish/d32",
+  "kind": 4,
+  "status_code": 0,
+  "duration": "PT0.186000S",
+  "offset_ms": 3090,
+  "resources": {
+   "host.name": "ip-10-0-6-56",
+   "k8s.container.name": "worker",
+   "k8s.node.name": "gke-prod-pool-c-1",
+   "service.name": "review-service",
+   "service.namespace": "ecommerce",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "messaging.system": "kafka",
+   "span.depth": 32,
+   "span.operation": "messaging.publish",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "ef5181f0c49d4195",
+  "parent_span_id": "2f48c28ec4c31489",
+  "name": "internal.compute/d33",
+  "kind": 1,
+  "status_code": 0,
+  "duration": "PT0.029000S",
+  "offset_ms": 3103,
+  "resources": {
+   "host.name": "ip-10-0-2-45",
+   "k8s.container.name": "server",
+   "k8s.node.name": "gke-prod-pool-b-1",
+   "service.name": "search-service",
+   "service.namespace": "platform",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "span.depth": 33,
+   "span.operation": "internal.compute",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "3c41f0e98b63ff72",
+  "parent_span_id": "2f48c28ec4c31489",
+  "name": "messaging.publish/d33",
+  "kind": 4,
+  "status_code": 0,
+  "duration": "PT0.069000S",
+  "offset_ms": 3140,
+  "resources": {
+   "host.name": "ip-10-0-4-91",
+   "k8s.container.name": "main",
+   "k8s.node.name": "gke-prod-pool-c-1",
+   "service.name": "inventory-service",
+   "service.namespace": "checkout",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "messaging.system": "rabbitmq",
+   "span.depth": 33,
+   "span.operation": "messaging.publish",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "e75512c171d64323",
+  "parent_span_id": "2f48c28ec4c31489",
+  "name": "messaging.publish/d33",
+  "kind": 4,
+  "status_code": 0,
+  "duration": "PT0.053000S",
+  "offset_ms": 3212,
+  "resources": {
+   "host.name": "ip-10-0-4-91",
+   "k8s.container.name": "server",
+   "k8s.node.name": "gke-prod-pool-b-1",
+   "service.name": "auth-service",
+   "service.namespace": "checkout",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "messaging.system": "rabbitmq",
+   "span.depth": 33,
+   "span.operation": "messaging.publish",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "3c1f1253435f24d2",
+  "parent_span_id": "3cac93ebb854ab29",
+  "name": "db.query/d32",
+  "kind": 3,
+  "status_code": 0,
+  "duration": "PT0.080000S",
+  "offset_ms": 3291,
+  "resources": {
+   "host.name": "ip-10-0-4-91",
+   "k8s.container.name": "main",
+   "k8s.node.name": "gke-prod-pool-b-1",
+   "service.name": "payment-service",
+   "service.namespace": "ecommerce",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "db.system": "postgresql",
+   "span.depth": 32,
+   "span.operation": "db.query",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "b8dc7f03b4aa1f64",
+  "parent_span_id": "df406c83a1e20da9",
+  "name": "http.request/d28",
+  "kind": 2,
+  "status_code": 0,
+  "duration": "PT0.047000S",
+  "offset_ms": 3405,
+  "resources": {
+   "host.name": "ip-10-0-2-45",
+   "k8s.container.name": "server",
+   "k8s.node.name": "gke-prod-pool-b-1",
+   "service.name": "search-service",
+   "service.namespace": "platform",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "http.method": "POST",
+   "span.depth": 28,
+   "span.operation": "http.request",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "4fbacfbfe53984d9",
+  "parent_span_id": "b8dc7f03b4aa1f64",
+  "name": "db.query/d29",
+  "kind": 3,
+  "status_code": 0,
+  "duration": "PT0.034000S",
+  "offset_ms": 3410,
+  "resources": {
+   "host.name": "ip-10-0-5-23",
+   "k8s.container.name": "app",
+   "k8s.node.name": "gke-prod-pool-b-1",
+   "service.name": "api-gateway",
+   "service.namespace": "identity",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "db.system": "cassandra",
+   "span.depth": 29,
+   "span.operation": "db.query",
+   "span.structure": "tree"
+  }
+ },
+ {
+  "span_id": "f1f9881574a8525e",
+  "parent_span_id": "df406c83a1e20da9",
+  "name": "messaging.publish/d28",
+  "kind": 4,
+  "status_code": 0,
+  "duration": "PT0.092000S",
+  "offset_ms": 3469,
+  "resources": {
+   "host.name": "ip-10-0-2-45",
+   "k8s.container.name": "worker",
+   "k8s.node.name": "gke-prod-pool-b-1",
+   "service.name": "fraud-detection",
+   "service.namespace": "ecommerce",
+   "service.version": "1.1.0",
+   "signoz.workspace.key.id": "019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+   "signoz.workspace.tag.cluster.name": "saas-us-central1-c"
+  },
+  "attributes": {
+   "messaging.system": "kafka",
+   "span.depth": 28,
+   "span.operation": "messaging.publish",
+   "span.structure": "tree"
+  }
+ }
+]

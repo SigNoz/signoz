@@ -8,6 +8,8 @@ import type {
 import { useDashboardStore } from '../store/useDashboardStore';
 import { layoutsToSections } from '../utils';
 import DashboardEmptyState from './DashboardEmptyState/DashboardEmptyState';
+import { useViewPanel } from './Panel/hooks/useViewPanel';
+import ViewPanelModal from './Panel/ViewPanelModal/ViewPanelModal';
 import Section from './Section/Section/Section';
 import SectionList from './Section/SectionList';
 import styles from './PanelsAndSectionsLayout.module.scss';
@@ -25,6 +27,14 @@ function PanelsAndSectionsLayout({
 	panels,
 }: PanelsAndSectionsLayoutProps): JSX.Element {
 	const isEditable = useDashboardStore((s) => s.isEditable);
+
+	// Single View-modal host for the whole dashboard, driven by the URL
+	// (`expandedWidgetId`). One mounted modal beats one-per-panel: no N location
+	// subscriptions, and the expanded panel is looked up by id from the map. A
+	// drilldown refinement rides in the URL (`compositeQuery`/`graphType`) and is
+	// hydrated inside the modal, so the host just hands it the saved panel.
+	const { expandedPanelId, closeView } = useViewPanel();
+	const expandedPanel = expandedPanelId ? panels[expandedPanelId] : undefined;
 
 	const sections = useMemo(
 		() => layoutsToSections(layouts, panels),
@@ -48,12 +58,25 @@ function PanelsAndSectionsLayout({
 			return <SectionList sections={sections} layouts={layouts} />;
 		}
 
+		// Free-flow (no titled sections): panels still get the layout context so
+		// the menu's delete action can patch the section's items (previously a
+		// silent noop in this mode).
 		return sections.map((section) => (
-			<Section key={section.id} section={section} />
+			<Section key={section.id} section={section} sections={sections} />
 		));
 	};
 
-	return <div className={styles.body}>{renderContent()}</div>;
+	return (
+		<div className={styles.body}>
+			{renderContent()}
+			<ViewPanelModal
+				open={!!expandedPanel}
+				panel={expandedPanel}
+				panelId={expandedPanelId ?? undefined}
+				onClose={closeView}
+			/>
+		</div>
+	);
 }
 
 export default PanelsAndSectionsLayout;

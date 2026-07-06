@@ -11,15 +11,15 @@ export interface UseGetQueryRangeV5Args {
 	requestPayload: Querybuildertypesv5QueryRangeRequestDTO;
 	queryKey: unknown[];
 	enabled: boolean;
+	/** Retain prior data across a key change (list paging) so the table + pager stay mounted. */
+	keepPreviousData?: boolean;
 }
 
-// 4xx responses are deterministic (bad query, auth) — retrying re-sends a
-// request that will fail identically. Same policy as V1's useGetQueryRange.
-// react-query hands the retry callback the *raw* thrown value, which on this
-// path is the AxiosError the generated client rejects with (it is not yet
-// normalized to APIError) — so we inspect it at the axios level for the cancel
-// signal and the HTTP status. Normalization to APIError happens later, at the
-// display boundary (see PanelStatus `panelStatusFromError`).
+/**
+ * Don't retry deterministic 4xx (bad query, auth) — they fail identically (V1 parity).
+ * The retry callback gets the raw AxiosError this path rejects with (not yet normalized to
+ * APIError — that happens later at the display boundary), so inspect it at the axios level.
+ */
 function retryUnlessClientError(failureCount: number, error: Error): boolean {
 	if (isAxiosError(error)) {
 		if (error.code === 'ERR_CANCELED') {
@@ -34,21 +34,21 @@ function retryUnlessClientError(failureCount: number, error: Error): boolean {
 }
 
 /**
- * Pure-V5 query-range fetch: posts the generated request DTO via the
- * generated `queryRangeV5` call and returns the raw generated response —
- * no V1 `Query` shape on either leg. Wrapped in `useQuery` (not the
- * generated `useQueryRangeV5` mutation hook) because panel fetches need
- * caching, `enabled` gating, and refetch semantics.
+ * Pure-V5 query-range fetch: posts the generated request DTO and returns the raw response.
+ * Wrapped in `useQuery` (not the generated `useQueryRangeV5` mutation) for caching, `enabled`
+ * gating, and refetch.
  */
 export function useGetQueryRangeV5({
 	requestPayload,
 	queryKey,
 	enabled,
+	keepPreviousData,
 }: UseGetQueryRangeV5Args): UseQueryResult<QueryRangeV5200, Error> {
 	return useQuery<QueryRangeV5200, Error>({
 		queryKey,
 		queryFn: ({ signal }) => queryRangeV5(requestPayload, signal),
 		enabled,
 		retry: retryUnlessClientError,
+		keepPreviousData,
 	});
 }

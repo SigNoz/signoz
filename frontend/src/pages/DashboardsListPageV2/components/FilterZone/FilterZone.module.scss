@@ -1,0 +1,50 @@
+.filterZone {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	width: 100%;
+}
+
+.searchRow {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	width: 100%;
+}
+
+.searchInput {
+	flex: 1;
+	min-width: 0;
+}
+
+.filtersRow {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+
+.filtersLabel {
+	font-size: var(--font-size-xs);
+	font-weight: var(--font-weight-medium);
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--l2-foreground);
+	margin-right: 2px;
+}
+
+.chips {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+
+.chip {
+	font-size: var(--font-size-sm);
+}
+
+.chipActive {
+	border-color: var(--primary-background) !important;
+	color: var(--l1-foreground) !important;
+}

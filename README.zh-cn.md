@@ -1,208 +1,190 @@
-<img src="https://res.cloudinary.com/dcv3epinx/image/upload/v1618904450/signoz-images/LogoGithub_sigfbu.svg" alt="SigNoz-logo" width="240" />
-
-<p align="center">监控你的应用，并且可排查已部署应用的问题，这是一个可替代 DataDog、NewRelic 的开源方案</p>
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/readme-assets/signoz-hero-dark.png" width="900">
+    <source media="(prefers-color-scheme: light)" srcset="docs/readme-assets/signoz-hero-light.png" width="900">
+    <img alt="SigNoz - 按你的方式运行的可观测性，由开放标准驱动。" src="docs/readme-assets/signoz-hero-light.png" width="900">
+  </picture>
 </p>
 
 <p align="center">
-    <img alt="Downloads" src="https://img.shields.io/docker/pulls/signoz/query-service?label=Docker Downloads"> </a>
-    <img alt="GitHub issues" src="https://img.shields.io/github/issues/signoz/signoz"> </a>
-    <a href="https://twitter.com/intent/tweet?text=Monitor%20your%20applications%20and%20troubleshoot%20problems%20with%20SigNoz,%20an%20open-source%20alternative%20to%20DataDog,%20NewRelic.&url=https://signoz.io/&via=SigNozHQ&hashtags=opensource,signoz,observability"> 
-        <img alt="tweet" src="https://img.shields.io/twitter/url/http/shields.io.svg?style=social"> </a> 
+  <a href="README.md">English</a> ·
+  <a href="README.de-de.md">Deutsch</a> ·
+  <a href="README.pt-br.md">Português</a>
 </p>
 
-<h3 align="center">
-  <a href="https://signoz.io/docs"><b>文档</b></a> •
-  <a href="https://github.com/SigNoz/signoz/blob/main/README.zh-cn.md"><b>中文ReadMe</b></a> •
-  <a href="https://github.com/SigNoz/signoz/blob/main/README.de-de.md"><b>德文ReadMe</b></a> •
-  <a href="https://github.com/SigNoz/signoz/blob/main/README.pt-br.md"><b>葡萄牙语ReadMe</b></a> •
-  <a href="https://signoz.io/slack"><b>Slack 社区</b></a> •
-  <a href="https://twitter.com/SigNozHq"><b>Twitter</b></a>
-</h3>
+<p align="center">
+  <a href="https://github.com/SigNoz/signoz/issues"><img alt="GitHub issues" src="https://img.shields.io/github/issues/SigNoz/signoz"></a>
+  <a href="https://github.com/SigNoz/signoz/releases"><img alt="GitHub release" src="https://img.shields.io/github/v/release/SigNoz/signoz?label=release"></a>
+  <a href="https://signoz.io/slack"><img alt="Slack community" src="https://img.shields.io/badge/slack-community-4A154B?logo=slack&logoColor=white"></a>
+  <a href="https://www.linkedin.com/company/signozio/"><img alt="LinkedIn" src="https://img.shields.io/badge/linkedin-SigNoz-0A66C2?logo=linkedin&logoColor=white"></a>
+  <a href="https://twitter.com/intent/tweet?text=Monitor%20your%20applications%20and%20troubleshoot%20problems%20with%20SigNoz,%20an%20open-source%20alternative%20to%20DataDog,%20NewRelic.&url=https://signoz.io/&via=SigNozHQ&hashtags=opensource,signoz,observability"><img alt="Tweet" src="https://img.shields.io/twitter/url/http/shields.io.svg?style=social"></a>
+</p>
 
-##
+SigNoz 是一个基于 OpenTelemetry 构建的开源可观测性平台。我们正在构建一个企业级替代方案，用来替代分散的监控工具栈，把日志、指标、链路追踪、告警和仪表盘放在同一个地方。
 
-SigNoz 帮助开发人员监控应用并排查已部署应用的问题。你可以使用 SigNoz 实现如下能力:
+### 选择 SigNoz 的运行方式
 
-👉 在同一块面板上，可视化 Metrics, Traces 和 Logs 内容。
+#### SigNoz Cloud（推荐）
 
-👉 你可以关注服务的 p99 延迟和错误率， 包括外部 API 调用和个别的端点。
+完全托管的 SigNoz，提供 30 天免费试用，无需信用卡，按用量计费，起价为 49 美元，并支持区域化数据托管。
 
-👉 你可以找到问题的根因，通过提取相关问题的 traces 日志、单独查看请求 traces 的火焰图详情。
+[**免费开始 →**](https://signoz.io/teams/)
 
-👉 执行 trace 数据聚合，以获取业务相关的 metrics
+#### 企业版
 
-👉 对日志过滤和查询，通过日志的属性建立看板和告警
+Enterprise Cloud、BYOC 或 Enterprise Self-Hosted，提供合规、支持、自定义保留期、RBAC、摄取控制、数据驻留和区域选择。
 
-👉 通过 Python，java，Ruby 和 Javascript 自动记录异常
+[**了解企业版 →**](https://signoz.io/enterprise/)
 
-👉 轻松的自定义查询和设置告警
+#### 社区版
 
-### 应用 Metrics 展示
+免费的开源 SigNoz，可运行在你自己的基础设施中。使用 Docker、Kubernetes 或 Linux 部署，并完全掌控你的数据平面。
 
-![application_metrics](https://user-images.githubusercontent.com/83692067/226637410-900dbc5e-6705-4b11-a10c-bd0faeb2a92f.png)
+[**安装 SigNoz →**](https://signoz.io/docs/install/self-host/)
 
-### 分布式追踪
+### 你可以监控什么？
 
-<img width="2068" alt="distributed_tracing_2 2" src="https://user-images.githubusercontent.com/83692067/226536447-bae58321-6a22-4ed3-af80-e3e964cb3489.png">
+SigNoz 将日志、指标、链路追踪、告警、仪表盘、异常和面向 Agent 的工作流连接在一起，帮助团队更快地调试生产问题。
 
-<img width="2068" alt="distributed_tracing_1" src="https://user-images.githubusercontent.com/83692067/226536462-939745b6-4f9d-45a6-8016-814837e7f7b4.png">
+#### APM 概览
 
-### 日志管理
+监控服务延迟、错误率、吞吐量、Apdex、核心端点、数据库调用和外部调用。
 
-<img width="2068" alt="logs_management" src="https://user-images.githubusercontent.com/83692067/226536482-b8a5c4af-b69c-43d5-969c-338bd5eaf1a5.png">
+<p align="center">
+  <img alt="SigNoz APM 仪表盘，展示延迟、吞吐量、Apdex 和关键操作" src="docs/readme-assets/monitor/apm.png" width="900">
+</p>
 
-### 基础设施监控
+了解更多：[APM 文档](https://signoz.io/docs/instrumentation/overview/)
 
-<img width="2068" alt="infrastructure_monitoring" src="https://user-images.githubusercontent.com/83692067/226536496-f38c4dbf-e03c-4158-8be0-32d4a61158c7.png">
+#### 日志管理
 
-### 异常监控
+摄取、搜索、聚合日志，并通过可视化查询构建器将日志与链路追踪和指标关联起来。
 
-![exceptions_light](https://user-images.githubusercontent.com/83692067/226637967-4188d024-3ac9-4799-be95-f5ea9c45436f.png)
+<p align="center">
+  <img alt="SigNoz 日志浏览器，包含过滤器、频率图和日志行" src="docs/readme-assets/monitor/log-management.svg" width="900">
+</p>
 
-### 告警
+了解更多：[日志管理文档](https://signoz.io/docs/logs-management/overview/)
 
-<img width="2068" alt="alerts_management" src="https://user-images.githubusercontent.com/83692067/226536548-2c81e2e8-c12d-47e8-bad7-c6be79055def.png">
+#### 指标和仪表盘
 
-<br /><br />
+使用 Query Builder、PromQL 或 ClickHouse SQL 为应用、基础设施和自定义指标构建仪表盘。
 
-## 加入我们 Slack 社区
+<p align="center">
+  <img alt="SigNoz 主机指标仪表盘，展示系统负载和网络图表" src="docs/readme-assets/monitor/metrics.png" width="900">
+</p>
 
-来 [Slack](https://signoz.io/slack) 和我们打招呼吧 👋
+了解更多：[指标文档](https://signoz.io/docs/metrics-management/overview/)
 
-<br /><br />
+#### 基础设施监控
 
-## 特性:
+监控 Kubernetes 集群、Pod、节点、工作负载，以及主机级 CPU、内存、磁盘、网络、日志和链路追踪。
 
-- 为 metrics, traces and logs 制定统一的 UI。 无需切换 Prometheus 到 Jaeger 去查找问题，也无需使用想 Elastic 这样的日志工具分开你的 metrics 和 traces
+<p align="center">
+  <img alt="SigNoz Kubernetes 基础设施仪表盘，展示 Pod 和节点指标" src="docs/readme-assets/monitor/infrastructure.png" width="900">
+</p>
 
-- 默认统计应用的 metrics 数据，像 RPS (每秒请求数)， 50th/90th/99th 的分位数延迟数据，还有相关的错误率
+了解更多：[基础设施监控文档](https://signoz.io/docs/infrastructure-monitoring/overview/)
 
-- 找到应用中最慢的端点
+#### LLM 和 AI 可观测性
 
-- 查看准确的请求跟踪数据，找到下游服务的问题了，比如 DB 慢查询，或者调用第三方的支付网关等
+追踪 LLM 应用、RAG 流水线、Prompt、工具调用、Token、延迟和成本，并与应用和基础设施遥测数据放在一起分析。
 
-- 通过 服务名、操作方式、延迟、错误、标签/注释 过滤 traces 数据
+<p align="center">
+  <img alt="SigNoz LLM 可观测性仪表盘，展示链路追踪、Token 使用、延迟和成本" src="docs/readme-assets/monitor/llm.png" width="900">
+</p>
 
-- 通过聚合 trace 数据而获得业务相关的 metrics。 比如你可以通过 `customer_type: gold` 或者 `deployment_version: v2` 或者 `external_call: paypal` 获取错误率和 P99 延迟数据
+了解更多：[LLM 可观测性文档](https://signoz.io/docs/llm-observability/)
 
-- 原生支持 OpenTelemetry 日志，高级日志查询，自动收集 k8s 相关日志
+#### Agent 原生可观测性和 MCP
 
-- 快如闪电的日志分析 ([Logs Perf. Benchmark](https://signoz.io/blog/logs-performance-benchmark/))
+使用 SigNoz MCP server 将遥测数据带入编程 Agent，或在 SigNoz 中使用 Noz，基于生产上下文调查事故、优化告警并构建仪表盘。[Noz](https://signoz.io/docs/ai/noz/) 仅适用于 SigNoz Cloud。
 
-- 可视化点到点的基础设施性能，提取有所有类型机器的 metrics 数据
+<p align="center">
+  <img alt="SigNoz Noz 界面与基于 MCP 的 Agent 工作流" src="docs/readme-assets/monitor/agent-native.png" width="900">
+</p>
 
-- 轻易自定义告警查询
+了解更多：[SigNoz MCP server 文档](https://signoz.io/docs/ai/signoz-mcp-server/) · [Agent skills 文档](https://signoz.io/docs/ai/agent-skills/#install-the-plugin)
 
-<br /><br />
+#### 分布式链路追踪
 
-## 为什么使用 SigNoz?
+通过火焰图、瀑布图、Span 事件、过滤器和 Trace 分析，跟踪请求在各个服务之间的流转。
 
-作为开发者, 我们发现 SaaS 厂商对一些大家想要的小功能都是闭源的，这种行为真的让人有点恼火。 闭源厂商还会在月底给你一张没有明细的巨额账单。
+<p align="center">
+  <img alt="SigNoz 分布式链路追踪视图，包含火焰图和瀑布图 Span" src="docs/readme-assets/monitor/distributed-tracing.png" width="900">
+</p>
 
-我们想做一个自托管并且可开源的工具，像 DataDog 和 NewRelic 那样， 为那些担心数据隐私和安全的公司提供第三方服务。
+了解更多：[分布式链路追踪文档](https://signoz.io/docs/instrumentation/)
 
-作为开源的项目，你完全可以自己掌控你的配置、样本和更新。你同样可以基于 SigNoz 拓展特定的业务模块。
+#### Trace Funnels
 
-### 支持的编程语言:
+基于链路追踪创建漏斗，用于理解请求流中的掉点、失败转换和系统性工作流问题。
 
-我们支持 [OpenTelemetry](https://opentelemetry.io)。作为一个观测你应用的库文件。所以任何 OpenTelemetry 支持的框架和语言，对于 SigNoz 也同样支持。 一些主要支持的语言如下：
+<p align="center">
+  <img alt="SigNoz Trace Funnels，展示请求流掉点和失败转换" src="docs/readme-assets/monitor/trace-funnels.png" width="900">
+</p>
 
-- Java
-- Python
-- NodeJS
-- Go
-- PHP
-- .NET
-- Ruby
-- Elixir
-- Rust
+了解更多：[Trace Funnels 文档](https://signoz.io/docs/trace-funnels/overview/)
 
-你可以在这里找到全部支持的语言列表 - https://opentelemetry.io/docs/
+你还可以监控：[**异常**](https://signoz.io/docs/userguide/exceptions/)、[**告警**](https://signoz.io/docs/alerts/)、[**外部 API**](https://signoz.io/docs/external-api-monitoring/overview/)，以及面向 OpenTelemetry、Prometheus、Kubernetes、云服务商、语言 SDK、应用框架、数据库和 LLM 工具的[**集成**](https://signoz.io/docs/integrations/integrations-list/)。
 
-<br /><br />
+### 为什么团队选择 SigNoz
 
-## 让我们开始吧
+1. **OpenTelemetry 原生**<br>
+   用开放标准完成一次接入，并保持对遥测数据的所有权。
+2. **信号关联**<br>
+   在服务图表、链路追踪、日志、基础设施指标和异常之间切换时，不需要更换工具。
+3. **单一列式数据库**<br>
+   为高基数、高吞吐量的可观测性工作负载而构建。
+4. **可预测的定价**<br>
+   不按主机收费，不按用户席位收费，也不对自定义指标设置特殊价格。
+5. **企业就绪**<br>
+   SOC 2 Type II 和 HIPAA 合规、RBAC、摄取控制、自定义保留期、支持、BYOC 和自托管。
 
-### 使用 Docker 部署
+### 快速开始
 
-请一步步跟随 [这里](https://signoz.io/docs/install/docker/) 通过 docker 来安装。
+#### 从 Cloud 开始
 
-这个 [排障说明书](https://signoz.io/docs/install/troubleshooting/) 可以帮助你解决碰到的问题。
+创建一个托管的 SigNoz 工作区，无需运行可观测性基础设施，即可获得第一个仪表盘。
 
-<p>&nbsp  </p>
+[**免费开始使用 SigNoz Cloud**](https://signoz.io/teams/)
 
-### 使用 Helm 在 Kubernetes 部署
+#### 自托管 SigNoz
 
-请一步步跟随 [这里](https://signoz.io/docs/deployment/helm_chart) 通过 helm 来安装
+在你自己的基础设施中通过 Foundry、Docker、Kubernetes 或 Linux 运行 SigNoz。
 
-<br /><br />
+[**Foundry**](https://github.com/SigNoz/foundry) · [**Docker**](https://signoz.io/docs/install/docker/) · [**Kubernetes**](https://signoz.io/docs/install/kubernetes/) · [**Linux**](https://signoz.io/docs/install/linux/)
 
-## 比较相似的工具
+#### 发送数据
 
-### SigNoz vs Prometheus
+使用 OpenTelemetry、Prometheus、语言 SDK 和集成来接入应用与基础设施。
 
-Prometheus 是一个针对 metrics 监控的强大工具。但是如果你想无缝的切换 metrics 和 traces 查询，你当前大概率需要在 Prometheus 和 Jaeger 之间切换。
+[**接入文档**](https://signoz.io/docs/instrumentation/) · [**集成列表**](https://signoz.io/docs/integrations/integrations-list/)
 
-我们的目标是提供一个客户观测 metrics 和 traces 整合的 UI。就像 SaaS 供应商 DataDog，它提供很多 jaeger 缺失的功能，比如针对 traces 过滤功能和聚合功能。
+### 与常见工具的对比
 
-<p>&nbsp  </p>
+许多团队在从单一用途工具或价格不可预测的商业平台迁移时，会选择 SigNoz。
 
-### SigNoz vs Jaeger
+**Prometheus**<br>
+如果你只需要指标，Prometheus 很合适。SigNoz 将指标、日志、链路追踪、仪表盘和告警放在一起，让团队可以通过关联上下文进行调试。
 
-Jaeger 仅仅是一个分布式追踪系统。 但是 SigNoz 可以提供 metrics, traces 和 logs 所有的观测。
+**Jaeger**<br>
+Jaeger 只做分布式链路追踪。SigNoz 增加了指标、日志、Trace 分析、仪表盘、告警、异常和 Trace 到日志的工作流。
 
-而且, SigNoz 相较于 Jaeger 拥有更对的高级功能:
+**Elastic**<br>
+SigNoz 使用列式数据库来高效处理可观测性分析和高基数日志工作负载。在摄取阶段，相比 Elastic 可降低 50% 的资源需求。查看[详细评测](https://signoz.io/blog/logs-performance-benchmark/?utm_source=github-readme&utm_medium=logs-benchmark)。
 
-- Jaegar UI 不能提供任何基于 traces 的 metrics 查询和过滤。
-
-- Jaeger 不能针对过滤的 traces 做聚合。 比如， p99 延迟的请求有个标签是 customer_type='premium'。 而这些在 SigNoz 可以轻松做到。
-
-<p>&nbsp  </p>
-
-### SigNoz vs Elastic
-
-- SigNoz 的日志管理是基于 ClickHouse 实现的，可以使日志的聚合更加高效，因为它是基于 OLAP 的数据仓储。
-
-- 与 Elastic 相比，可以节省 50% 的资源成本
-
-我们已经公布了 Elastic 和 SigNoz 的性能对比。 请点击 [这里](https://signoz.io/blog/logs-performance-benchmark/?utm_source=github-readme&utm_medium=logs-benchmark)
-
-<p>&nbsp  </p>
-
-### SigNoz vs Loki
-
-- SigNoz 支持大容量高基数的聚合，但是 loki 是不支持的。
-
-- SigNoz 支持索引的高基数查询，并且对索引没有数量限制，而 Loki 会在添加部分索引后到达最大上限。
-
-- 相较于 SigNoz，Loki 在搜索大量数据下既困难又缓慢。
-
-我们已经发布了基准测试对比 Loki 和 SigNoz 性能。请点击 [这里](https://signoz.io/blog/logs-performance-benchmark/?utm_source=github-readme&utm_medium=logs-benchmark)
-
-<br /><br />
+**Loki**<br>
+在链接的评测中，SigNoz 在测试设置中索引了所有键，而 Loki 在增加更多标签时遇到了 max stream 错误。查看[详细评测](https://signoz.io/blog/logs-performance-benchmark/?utm_source=github-readme&utm_medium=logs-benchmark)。
 
 ## 贡献
 
-我们 ❤️ 你的贡献，无论大小。 请先阅读 [CONTRIBUTING.md](CONTRIBUTING.md) 再开始给 SigNoz 做贡献。
+无论贡献大小，我们都非常欢迎。请阅读 [CONTRIBUTING.md](CONTRIBUTING.md)，开始为 SigNoz 做贡献。
 
-如果你不知道如何开始？ 只需要在 [slack 社区](https://signoz.io/slack) 通过 `#contributing` 频道联系我们。
+不确定如何开始？**可以在我们的 [Slack 社区](https://signoz.io/slack)中通过 `#contributing` 联系我们。**
 
-<br /><br />
-
-## 文档
-
-你可以通过 https://signoz.io/docs/ 找到相关文档。如果你需要阐述问题或者发现一些确实的事件， 通过标签为 `documentation` 提交 Github 问题。或者通过 slack 社区频道。
-
-<br /><br />
-
-## 社区
-
-加入 [slack 社区](https://signoz.io/slack) 去了解更多关于分布式追踪、可观测性系统 。或者与 SigNoz 其他用户和贡献者交流。
-
-如果你有任何想法、问题、或者任何反馈， 请通过 [Github Discussions](https://github.com/SigNoz/signoz/discussions) 分享。
-
-不管怎么样，感谢这个项目的所有贡献者!
+一如既往，感谢所有出色的贡献者！
 
 <a href="https://github.com/signoz/signoz/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=signoz/signoz" />
+  <img alt="SigNoz 贡献者" src="https://contrib.rocks/image?repo=signoz/signoz" />
 </a>

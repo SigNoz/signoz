@@ -17,14 +17,25 @@ func NewStore(sqlstore sqlstore.SQLStore) llmpricingruletypes.Store {
 	return &store{sqlstore: sqlstore}
 }
 
-func (store *store) List(ctx context.Context, orgID valuer.UUID, offset, limit int) ([]*llmpricingruletypes.LLMPricingRule, int, error) {
+func (store *store) List(ctx context.Context, orgID valuer.UUID, offset, limit int, search string, isOverride *bool) ([]*llmpricingruletypes.LLMPricingRule, int, error) {
 	rules := make([]*llmpricingruletypes.LLMPricingRule, 0)
 
-	count, err := store.sqlstore.
+	query := store.sqlstore.
 		BunDBCtx(ctx).
 		NewSelect().
 		Model(&rules).
-		Where("org_id = ?", orgID).
+		Where("org_id = ?", orgID)
+
+	if search != "" {
+		like := "%" + search + "%"
+		query = query.Where("(LOWER(model) LIKE LOWER(?) OR LOWER(provider) LIKE LOWER(?))", like, like)
+	}
+
+	if isOverride != nil {
+		query = query.Where("is_override = ?", *isOverride)
+	}
+
+	count, err := query.
 		Order("created_at DESC").
 		Offset(offset).
 		Limit(limit).

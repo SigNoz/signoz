@@ -24,11 +24,20 @@ export const createEditContextSlice: StateCreator<
 	[['zustand/persist', unknown]],
 	[],
 	EditContextSlice
-> = (set) => ({
+> = (set, get) => ({
 	dashboardId: '',
 	isEditable: false,
 	refetch: (): void => undefined,
+	// Idempotent (no-op when unchanged) so it's safe to call during render.
 	setEditContext: (ctx): void => {
+		const { dashboardId, isEditable, refetch } = get();
+		if (
+			dashboardId === ctx.dashboardId &&
+			isEditable === ctx.isEditable &&
+			refetch === ctx.refetch
+		) {
+			return;
+		}
 		set({
 			dashboardId: ctx.dashboardId,
 			isEditable: ctx.isEditable,

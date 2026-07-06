@@ -3,10 +3,7 @@ import { TFunction } from 'i18next';
 import { ROLES, USER_ROLES } from 'types/roles';
 
 import {
-	alertChannels,
 	billingSettings,
-	createAlertChannels,
-	editAlertChannels,
 	generalSettings,
 	ingestionSettings,
 	keyboardShortcuts,
@@ -15,7 +12,9 @@ import {
 	multiIngestionSettings,
 	mySettings,
 	organizationSettings,
+	roleCreate,
 	roleDetails,
+	roleEdit,
 	rolesSettings,
 	serviceAccountsSettings,
 } from './config';
@@ -60,13 +59,13 @@ export const getRoutes = (
 		settings.push(...ingestionSettings(t));
 	}
 
-	settings.push(...alertChannels(t));
-
 	// Visible to all authenticated users
 	settings.push(
 		...serviceAccountsSettings(t),
 		...rolesSettings(t),
+		...roleCreate(t),
 		...roleDetails(t),
+		...roleEdit(t),
 	);
 
 	// Admin-only: members management
@@ -80,8 +79,6 @@ export const getRoutes = (
 
 	settings.push(
 		...mySettings(t),
-		...createAlertChannels(t),
-		...editAlertChannels(t),
 		...keyboardShortcuts(t),
 		...mcpServerSettings(t),
 	);
