@@ -8,8 +8,9 @@ import {
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import { Color } from '@signozhq/design-tokens';
-import { CornerDownLeft, Search } from '@signozhq/icons';
+import { ChevronUp, Command, CornerDownLeft, Search } from '@signozhq/icons';
 import cx from 'classnames';
+import { getUserOperatingSystem, UserOperatingSystem } from 'utils/getUserOS';
 
 import {
 	applyKeySuggestion,
@@ -40,6 +41,8 @@ function SearchBar({
 	// than picking a suggestion (arrow keys engage selection).
 	const [highlighted, setHighlighted] = useState(-1);
 
+	const isMac = getUserOperatingSystem() === UserOperatingSystem.MACOS;
+
 	const active = useMemo(() => getActiveKeyToken(value), [value]);
 	const suggestions = useMemo(
 		() => (active ? matchKeys(suggestionKeys, active.token) : []),
@@ -55,6 +58,11 @@ function SearchBar({
 	};
 
 	const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>): void => {
+		if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+			e.preventDefault();
+			onSubmit();
+			return;
+		}
 		if (showSuggestions && e.key === 'ArrowDown') {
 			e.preventDefault();
 			setHighlighted((h) => Math.min(h + 1, suggestions.length - 1));
@@ -90,7 +98,7 @@ function SearchBar({
 					<Button
 						variant="ghost"
 						color="secondary"
-						size="icon"
+						size="sm"
 						className={styles.submit}
 						aria-label="Run search"
 						testId="dashboards-list-search-submit"
@@ -100,7 +108,15 @@ function SearchBar({
 						}}
 						onClick={onSubmit}
 					>
-						<CornerDownLeft size={12} color={Color.BG_VANILLA_400} />
+						Run query
+						<span className={styles.cmdHint}>
+							{isMac ? (
+								<Command size={12} color={Color.BG_VANILLA_400} />
+							) : (
+								<ChevronUp size={12} color={Color.BG_VANILLA_400} />
+							)}
+							<CornerDownLeft size={12} color={Color.BG_VANILLA_400} />
+						</span>
 					</Button>
 				}
 				value={value}

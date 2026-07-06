@@ -16,7 +16,7 @@ import {
 import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
-import PermissionDeniedCallout from 'components/PermissionDeniedCallout/PermissionDeniedCallout';
+import PermissionDeniedCallout from 'lib/authz/components/PermissionDeniedCallout/PermissionDeniedCallout';
 import { useRoles } from 'components/RolesSelect';
 import { SA_QUERY_PARAMS } from 'container/ServiceAccountsSettings/constants';
 import {
@@ -35,8 +35,8 @@ import {
 	buildSADeletePermission,
 	buildSAReadPermission,
 	buildSAUpdatePermission,
-} from 'hooks/useAuthZ/permissions/service-account.permissions';
-import { useAuthZ } from 'hooks/useAuthZ/useAuthZ';
+} from 'lib/authz/hooks/useAuthZ/permissions/service-account.permissions';
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import {
 	parseAsBoolean,
 	parseAsInteger,
@@ -47,7 +47,7 @@ import {
 import APIError from 'types/api/error';
 import { toAPIError } from 'utils/errorUtils';
 
-import AuthZTooltip from 'components/AuthZTooltip/AuthZTooltip';
+import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import AddKeyModal from './AddKeyModal';
 import DeleteAccountModal from './DeleteAccountModal';
 import KeysTab from './KeysTab';

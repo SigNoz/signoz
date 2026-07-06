@@ -3,12 +3,14 @@ import type {
 	Querybuildertypesv5BuilderQuerySpecDTO,
 	Querybuildertypesv5ClickHouseQueryDTO,
 	Querybuildertypesv5CompositeQueryDTO,
+	Querybuildertypesv5OrderByDTO,
 	Querybuildertypesv5PromQueryDTO,
 	Querybuildertypesv5QueryEnvelopeDTO,
 	Querybuildertypesv5QueryRangeRequestDTO,
 	Querybuildertypesv5QueryRangeRequestDTOVariables,
 } from 'api/generated/services/sigNoz.schemas';
 import {
+	Querybuildertypesv5OrderDirectionDTO,
 	Querybuildertypesv5QueryEnvelopeBuilderDTOType,
 	Querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType,
 	Querybuildertypesv5QueryEnvelopePromQLDTOType,
@@ -24,6 +26,7 @@ interface QuerySpecView {
 	signal?: string;
 	stepInterval?: number | string;
 	aggregations?: { metricName?: string }[];
+	order?: Querybuildertypesv5OrderByDTO[];
 }
 
 /**
@@ -167,6 +170,48 @@ function withBarStepInterval(
 }
 
 /**
+ * Enforces a total order on logs-list requests so offset paging can't duplicate/drop
+ * same-millisecond rows: default the primary to `timestamp desc`, then always append `id`
+ * (logs-explorer parity). Request-only; traces keep their order.
+ */
+function withListOrderTiebreaker(
+	envelopes: Querybuildertypesv5QueryEnvelopeDTO[],
+): Querybuildertypesv5QueryEnvelopeDTO[] {
+	return envelopes.map((envelope) => {
+		if (
+			envelope.type !==
+			Querybuildertypesv5QueryEnvelopeBuilderDTOType.builder_query
+		) {
+			return envelope;
+		}
+		const spec = envelope.spec as QuerySpecView;
+		const order = spec.order ?? [];
+		if (spec.signal !== 'logs' || order.some((o) => o.key?.name === 'id')) {
+			return envelope;
+		}
+		const primary =
+			order.length > 0
+				? order
+				: [
+						{
+							key: { name: 'timestamp' },
+							direction: Querybuildertypesv5OrderDirectionDTO.desc,
+						},
+					];
+		return {
+			...envelope,
+			spec: {
+				...envelope.spec,
+				order: [
+					...primary,
+					{ key: { name: 'id' }, direction: primary[0].direction },
+				],
+			} as Querybuildertypesv5BuilderQuerySpecDTO,
+		};
+	});
+}
+
+/**
  * Stamps offset/limit onto builder-query envelopes (server-side paging for raw/list); other
  * kinds pass through.
  */
@@ -223,6 +268,9 @@ export function buildQueryRangeRequest({
 	let envelopes = toQueryEnvelopes(queries);
 	if (panelType === PANEL_TYPES.BAR) {
 		envelopes = withBarStepInterval(envelopes, startMs, endMs);
+	}
+	if (panelType === PANEL_TYPES.LIST) {
+		envelopes = withListOrderTiebreaker(envelopes);
 	}
 	if (pagination) {
 		envelopes = withPagination(envelopes, pagination);

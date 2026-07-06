@@ -43,12 +43,12 @@ function NewDashboardModal({ open, onClose }: Props): JSX.Element {
 					{
 						key: 'template',
 						label: 'From a template',
-						children: <TemplatesPanel />,
+						children: <TemplatesPanel onClose={onClose} />,
 					},
 					{
 						key: 'import',
 						label: 'Import JSON',
-						children: <ImportJsonPanel />,
+						children: <ImportJsonPanel onClose={onClose} />,
 					},
 				]}
 			/>

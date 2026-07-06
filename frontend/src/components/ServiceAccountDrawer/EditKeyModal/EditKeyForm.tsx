@@ -7,12 +7,12 @@ import { Input } from '@signozhq/ui/input';
 import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
 import { DatePicker } from 'antd';
 import type { ServiceaccounttypesGettableFactorAPIKeyDTO } from 'api/generated/services/sigNoz.schemas';
-import AuthZTooltip from 'components/AuthZTooltip/AuthZTooltip';
+import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import {
 	buildAPIKeyDeletePermission,
 	buildAPIKeyUpdatePermission,
 	buildSADetachPermission,
-} from 'hooks/useAuthZ/permissions/service-account.permissions';
+} from 'lib/authz/hooks/useAuthZ/permissions/service-account.permissions';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import { disabledDate, formatLastObservedAt } from '../utils';

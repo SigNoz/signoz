@@ -21,6 +21,7 @@ import {
 	buildCreateAlertUrl,
 	readPanelUnit,
 } from '../utils/buildCreateAlertUrl';
+import { NANO_SECOND_MULTIPLIER } from '@/store/globalTime';
 
 /**
  * Callback that seeds the alert builder from a panel's query in a new tab (V1 parity
@@ -61,8 +62,8 @@ export function useCreateAlertFromPanel(): (
 			const request = buildQueryRangeRequest({
 				queries: panel.spec.queries,
 				panelType,
-				startMs: minTime / 1e6,
-				endMs: maxTime / 1e6,
+				startMs: Math.floor(minTime / NANO_SECOND_MULTIPLIER),
+				endMs: Math.floor(maxTime / NANO_SECOND_MULTIPLIER),
 				variables,
 			});
 
