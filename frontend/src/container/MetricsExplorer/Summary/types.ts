@@ -48,6 +48,7 @@ export interface MetricsTreemapInternalProps {
 	data: MetricsexplorertypesTreemapResponseDTO | undefined;
 	viewType: MetricsexplorertypesTreemapModeDTO;
 	openMetricDetails: (metricName: string, view: 'list' | 'treemap') => void;
+	containerWidth: number;
 }
 
 export interface OrderByPayload {
