@@ -1,9 +1,11 @@
 import type { ComponentType } from 'react';
 import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
+import type { EQueryType } from 'types/common/dashboard';
 
 import type { SectionConfig } from './sections';
 import type { AnyPanelInteractionProps } from './interactions';
 import type { PanelKind } from './panelKind';
+import type { QueryBuilderFieldRule } from './panelCapabilities';
 import type { BaseRendererProps, PanelRendererProps } from './rendererProps';
 
 /**
@@ -28,6 +30,11 @@ export interface PanelActionCapabilities {
 	 * tabular kinds). Not a menu action — the renderer must consume `searchTerm`.
 	 */
 	search: boolean;
+	/**
+	 * Kind supports click-to-drilldown (context menu + View/Breakout). V1 parity: charts + scalar
+	 * Pie/Value/Table; Histogram/List opt out. AND-ed with "has a builder query" in `useDrilldown`.
+	 */
+	drilldown: boolean;
 }
 
 export interface PanelDefinition<K extends PanelKind = PanelKind> {
@@ -35,7 +42,12 @@ export interface PanelDefinition<K extends PanelKind = PanelKind> {
 	displayName: string;
 	Renderer: ComponentType<PanelRendererProps<K>>;
 	sections: SectionConfig[];
+	/** Signals this kind can visualize. */
 	supportedSignals: TelemetrytypesSignalDTO[];
+	/** Query languages this kind supports (Query Builder / ClickHouse / PromQL). */
+	supportedQueryTypes: EQueryType[];
+	/** Query-builder fields this kind hides/disables, optionally per signal (`{}` hides none). */
+	queryBuilderFields: QueryBuilderFieldRule;
 	actions: PanelActionCapabilities;
 }
 

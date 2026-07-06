@@ -1,13 +1,13 @@
 import { Route, Switch } from 'react-router-dom';
 import ROUTES from 'constants/routes';
 import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
-import { useAuthZ } from 'hooks/useAuthZ/useAuthZ';
-import { mockUseAuthZGrantAll } from 'tests/authz-test-utils';
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
+import { mockUseAuthZGrantAll } from 'lib/authz/utils/authz-test-utils';
 import { TooltipProvider } from '@signozhq/ui/tooltip';
 
 import CreateEditRolePage from '../CreateEditRolePage';
 
-jest.mock('hooks/useAuthZ/useAuthZ');
+jest.mock('lib/authz/hooks/useAuthZ/useAuthZ');
 const mockUseAuthZ = useAuthZ as jest.MockedFunction<typeof useAuthZ>;
 
 async function expandAllCards(): Promise<void> {
@@ -518,6 +518,117 @@ describe('PermissionEditor', () => {
 				'resource-card-header-factor-api-key',
 			);
 			expect(header).toHaveAttribute('aria-expanded', 'true');
+		});
+	});
+
+	describe('resource card error states', () => {
+		it('shows error border on collapsed card with validation error', async () => {
+			const user = userEvent.setup();
+			renderPage();
+
+			const nameInput = screen.getByTestId('role-name-input');
+			await user.type(nameInput, 'valid-role');
+
+			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
+			const header = within(apiKeyCard).getByTestId(
+				'resource-card-header-factor-api-key',
+			);
+			await user.click(header);
+
+			const readToggle = within(apiKeyCard).getByTestId(
+				'action-toggle-factor-api-key-read',
+			);
+			const onlySelectedBtn = await within(readToggle).findByText('Only selected');
+			await user.click(onlySelectedBtn);
+
+			await user.click(header);
+
+			const saveBtn = screen.getByTestId('save-button');
+			await user.click(saveBtn);
+
+			await waitFor(() => {
+				const card = screen.getByTestId('resource-card-factor-api-key');
+				expect(card).toHaveAttribute('data-state', 'error');
+			});
+		});
+
+		it('hides error border when card is expanded', async () => {
+			const user = userEvent.setup();
+			renderPage();
+
+			const nameInput = screen.getByTestId('role-name-input');
+			await user.type(nameInput, 'valid-role');
+
+			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
+			const header = within(apiKeyCard).getByTestId(
+				'resource-card-header-factor-api-key',
+			);
+			await user.click(header);
+
+			const readToggle = within(apiKeyCard).getByTestId(
+				'action-toggle-factor-api-key-read',
+			);
+			const onlySelectedBtn = await within(readToggle).findByText('Only selected');
+			await user.click(onlySelectedBtn);
+
+			await user.click(header);
+
+			const saveBtn = screen.getByTestId('save-button');
+			await user.click(saveBtn);
+
+			await waitFor(() => {
+				const card = screen.getByTestId('resource-card-factor-api-key');
+				expect(card).toHaveAttribute('data-state', 'error');
+			});
+
+			await user.click(header);
+
+			await waitFor(() => {
+				const card = screen.getByTestId('resource-card-factor-api-key');
+				expect(card).not.toHaveAttribute('data-state');
+			});
+		});
+
+		it('clears validation error when permission is changed', async () => {
+			const user = userEvent.setup();
+			renderPage();
+
+			const nameInput = screen.getByTestId('role-name-input');
+			await user.type(nameInput, 'valid-role');
+
+			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
+			const header = within(apiKeyCard).getByTestId(
+				'resource-card-header-factor-api-key',
+			);
+			await user.click(header);
+
+			const readToggle = within(apiKeyCard).getByTestId(
+				'action-toggle-factor-api-key-read',
+			);
+			const onlySelectedBtn = await within(readToggle).findByText('Only selected');
+			await user.click(onlySelectedBtn);
+
+			await user.click(header);
+
+			const saveBtn = screen.getByTestId('save-button');
+			await user.click(saveBtn);
+
+			await expect(
+				screen.findByTestId('save-error-banner'),
+			).resolves.toBeInTheDocument();
+
+			await user.click(header);
+
+			const freshCard = screen.getByTestId('resource-card-factor-api-key');
+			const freshToggle = within(freshCard).getByTestId(
+				'action-toggle-factor-api-key-read',
+			);
+			const noneBtn = await within(freshToggle).findByText('None');
+			await user.click(noneBtn);
+
+			await waitFor(() => {
+				expect(screen.queryByTestId('save-error-banner')).not.toBeInTheDocument();
+			});
 		});
 	});
 });

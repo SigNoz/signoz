@@ -1,10 +1,9 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FullScreenHandle } from 'react-full-screen';
 import { toast } from '@signozhq/ui/sonner';
 import logEvent from 'api/common/logEvent';
 import {
 	lockDashboardV2,
-	patchDashboardV2,
 	unlockDashboardV2,
 } from 'api/generated/services/dashboard';
 import type {
@@ -16,8 +15,12 @@ import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
+import { USER_ROLES } from 'types/roles';
+import { getAbsoluteUrl } from 'utils/basePath';
 
 import { useCreatePanel } from '../hooks/useCreatePanel';
+import { useOptimisticPatch } from '../hooks/useOptimisticPatch';
+import { usePublicDashboardMeta } from '../DashboardSettings/PublicDashboard/usePublicDashboardMeta';
 import PanelTypeSelectionModal from '../PanelsAndSectionsLayout/Panel/PanelTypeSelectionModal/PanelTypeSelectionModal';
 import DashboardActions from './DashboardActions/DashboardActions';
 import DashboardInfo from './DashboardInfo/DashboardInfo';
@@ -36,7 +39,15 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 	const { dashboard, handle, refetch } = props;
 
 	const id = dashboard.id;
-	const isDashboardLocked = !!dashboard.locked;
+
+	// Session-local lock state: the toggle appears once locked and persists for the page.
+	const [isDashboardLocked, setIsDashboardLocked] = useState(!!dashboard.locked);
+	const [showLockToggle, setShowLockToggle] = useState(!!dashboard.locked);
+	useEffect(() => {
+		setIsDashboardLocked(!!dashboard.locked);
+		setShowLockToggle(!!dashboard.locked);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [dashboard.id]);
 
 	const title = dashboard.spec.display.name;
 	const description = dashboard.spec.display.description ?? '';
@@ -51,26 +62,43 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 
 	const { user } = useAppContext();
 	const { showErrorModal } = useErrorModal();
+	const { patchAsync } = useOptimisticPatch();
 	const { isPickerOpen, openPicker, closePicker, createPanel } =
 		useCreatePanel();
 
 	const isAuthor =
 		!!user?.email && !!dashboard.createdBy && dashboard.createdBy === user.email;
 
+	// Author/admin can lock-unlock (mirrors the Actions menu gate); integration-owned
+	// dashboards are never toggleable.
+	const canToggleLock =
+		(isAuthor || user.role === USER_ROLES.ADMIN) &&
+		dashboard.createdBy !== 'integration';
+
+	// Public-sharing meta (deduped react-query read); drives the header globe.
+	const { isPublic, publicMeta } = usePublicDashboardMeta(id);
+	const publicUrl = getAbsoluteUrl(publicMeta?.publicPath ?? '');
+
 	const handleLockDashboardToggle = useCallback(async (): Promise<void> => {
 		if (!id) {
 			return;
 		}
+		const next = !isDashboardLocked;
+		setIsDashboardLocked(next);
+		if (next) {
+			setShowLockToggle(true);
+		}
 		try {
-			if (isDashboardLocked) {
-				await unlockDashboardV2({ id });
-				toast.success('Dashboard unlocked');
-			} else {
+			if (next) {
 				await lockDashboardV2({ id });
 				toast.success('Dashboard locked');
+			} else {
+				await unlockDashboardV2({ id });
+				toast.success('Dashboard unlocked');
 			}
 			refetch();
 		} catch (error) {
+			setIsDashboardLocked(!next);
 			showErrorModal(error as APIError);
 		}
 	}, [id, isDashboardLocked, refetch, showErrorModal]);
@@ -88,14 +116,13 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 						value: next,
 					},
 				];
-				await patchDashboardV2({ id }, patch);
+				await patchAsync(patch);
 				toast.success('Dashboard renamed successfully');
-				refetch();
 			} catch (error) {
 				showErrorModal(error as APIError);
 			}
 		},
-		[id, refetch, showErrorModal],
+		[id, patchAsync, showErrorModal],
 	);
 
 	const { isEditing, draft, setDraft, startEdit, cancel, commit } =
@@ -119,8 +146,11 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 					image={image}
 					tags={tags}
 					description={description}
-					isPublicDashboard={false}
+					isPublicDashboard={isPublic}
+					publicUrl={publicUrl}
 					isDashboardLocked={isDashboardLocked}
+					showLockToggle={showLockToggle}
+					onToggleLock={canToggleLock ? handleLockDashboardToggle : undefined}
 					isEditing={isEditing}
 					draft={draft}
 					onDraftChange={setDraft}

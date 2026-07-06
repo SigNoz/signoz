@@ -14,6 +14,9 @@
       ],
       "additionalProperties": false,
       "properties": {
+        "appId": {
+          "type": "string"
+        },
         "enabled": {
           "type": "boolean"
         }
@@ -26,8 +29,17 @@
       ],
       "additionalProperties": false,
       "properties": {
+        "apiHost": {
+          "type": "string"
+        },
         "enabled": {
           "type": "boolean"
+        },
+        "key": {
+          "type": "string"
+        },
+        "uiHost": {
+          "type": "string"
         }
       },
       "type": "object"
@@ -38,8 +50,14 @@
       ],
       "additionalProperties": false,
       "properties": {
+        "appId": {
+          "type": "string"
+        },
         "enabled": {
           "type": "boolean"
+        },
+        "identitySecret": {
+          "type": "string"
         }
       },
       "type": "object"
@@ -50,8 +68,14 @@
       ],
       "additionalProperties": false,
       "properties": {
+        "dsn": {
+          "type": "string"
+        },
         "enabled": {
           "type": "boolean"
+        },
+        "tunnel": {
+          "type": "string"
         }
       },
       "type": "object"

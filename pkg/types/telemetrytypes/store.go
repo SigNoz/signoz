@@ -24,7 +24,7 @@ type MetadataStore interface {
 	GetRelatedValues(ctx context.Context, fieldValueSelector *FieldValueSelector) ([]string, bool, error)
 
 	// GetAllValues returns a list of all values.
-	GetAllValues(ctx context.Context, fieldValueSelector *FieldValueSelector) (*TelemetryFieldValues, bool, error)
+	GetAllValues(ctx context.Context, orgID valuer.UUID, fieldValueSelector *FieldValueSelector) (*TelemetryFieldValues, bool, error)
 
 	// FetchTemporality fetches the temporality for metric
 	FetchTemporality(ctx context.Context, orgID valuer.UUID, queryTimeRangeStartTs, queryTimeRangeEndTs uint64, metricName string) (metrictypes.Temporality, error)
@@ -46,7 +46,7 @@ type MetadataStore interface {
 	// GetFirstSeenFromMetricMetadata gets the first seen timestamp for a metric metadata lookup key.
 	GetFirstSeenFromMetricMetadata(ctx context.Context, lookupKeys []MetricMetadataLookupKey) (map[MetricMetadataLookupKey]int64, error)
 
-	FetchLastSeenInfoMulti(ctx context.Context, metricNames ...string) (map[string]int64, error)
+	FetchLastSeenInfoMulti(ctx context.Context, orgID valuer.UUID, metricNames ...string) (map[string]int64, error)
 }
 
 type MetricMetadataLookupKey struct {

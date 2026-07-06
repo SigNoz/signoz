@@ -2,6 +2,7 @@ import type { PanelDefinition } from '../../types/panelDefinition';
 import Renderer from './Renderer';
 import { sections } from './sections';
 import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
+import { EQueryType } from 'types/common/dashboard';
 
 export const definition: PanelDefinition<'signoz/HistogramPanel'> = {
 	kind: 'signoz/HistogramPanel',
@@ -13,6 +14,12 @@ export const definition: PanelDefinition<'signoz/HistogramPanel'> = {
 		TelemetrytypesSignalDTO.logs,
 		TelemetrytypesSignalDTO.traces,
 	],
+	supportedQueryTypes: [
+		EQueryType.QUERY_BUILDER,
+		EQueryType.CLICKHOUSE,
+		EQueryType.PROM,
+	],
+	queryBuilderFields: {},
 	actions: {
 		view: true,
 		edit: true,
@@ -20,5 +27,6 @@ export const definition: PanelDefinition<'signoz/HistogramPanel'> = {
 		download: false,
 		createAlert: true,
 		search: false,
+		drilldown: false,
 	},
 };

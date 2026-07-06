@@ -4,10 +4,10 @@ import { Button } from '@signozhq/ui/button';
 import { DropdownMenuSimple, type MenuItem } from '@signozhq/ui/dropdown-menu';
 import { Input } from '@signozhq/ui/input';
 import { useListServiceAccounts } from 'api/generated/services/serviceaccount';
-import AuthZTooltip from 'components/AuthZTooltip/AuthZTooltip';
+import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import CreateServiceAccountModal from 'components/CreateServiceAccountModal/CreateServiceAccountModal';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
-import PermissionDeniedFullPage from 'components/PermissionDeniedFullPage/PermissionDeniedFullPage';
+import PermissionDeniedFullPage from 'lib/authz/components/PermissionDeniedFullPage/PermissionDeniedFullPage';
 import Spinner from 'components/Spinner';
 import ServiceAccountDrawer from 'components/ServiceAccountDrawer/ServiceAccountDrawer';
 import ServiceAccountsTable, {
@@ -16,8 +16,8 @@ import ServiceAccountsTable, {
 import {
 	SACreatePermission,
 	SAListPermission,
-} from 'hooks/useAuthZ/permissions/service-account.permissions';
-import { useAuthZ } from 'hooks/useAuthZ/useAuthZ';
+} from 'lib/authz/hooks/useAuthZ/permissions/service-account.permissions';
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import {
 	parseAsBoolean,
 	parseAsInteger,

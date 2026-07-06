@@ -7,7 +7,7 @@ import { Input } from '@signozhq/ui/input';
 import { Typography } from '@signozhq/ui/typography';
 import { Skeleton } from 'antd';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
-import PermissionDeniedFullPage from 'components/PermissionDeniedFullPage/PermissionDeniedFullPage';
+import PermissionDeniedFullPage from 'lib/authz/components/PermissionDeniedFullPage/PermissionDeniedFullPage';
 import ROUTES from 'constants/routes';
 import { useRolesFeatureGate } from 'hooks/useRolesFeatureGate';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -15,7 +15,7 @@ import APIError from 'types/api/error';
 
 import PermissionEditor from './components/PermissionEditor';
 import { useCreateEditRolePageActions } from './useCreateEditRolePageActions';
-import { useNavigationBlocker } from '../../../hooks/useNavigationBlocker';
+import { useNavigationBlocker } from 'hooks/useNavigationBlocker';
 
 import styles from './CreateEditRolePage.module.scss';
 
@@ -212,8 +212,10 @@ function CreateEditRolePage(): JSX.Element {
 				<ErrorInPlace
 					error={saveError}
 					height="auto"
-					bordered
 					data-testid="save-error-banner"
+					padding={0}
+					bordered={true}
+					className={styles.errorInPlaceContainer}
 				/>
 			)}
 

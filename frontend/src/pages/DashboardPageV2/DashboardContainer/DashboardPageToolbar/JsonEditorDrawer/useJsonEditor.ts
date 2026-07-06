@@ -33,8 +33,20 @@ interface Result {
 	apply: () => Promise<void>;
 }
 
+/**
+ * The editable, user-facing view: only `tags` and `spec`. Everything else
+ * (id, orgId, name, timestamps, locked, schemaVersion, image, …) is redacted so it
+ * can't be seen, copied, exported or edited; those keys are preserved on save (see `apply`).
+ */
+const redact = (
+	dashboard: DashboardtypesGettableDashboardV2DTO,
+): Pick<DashboardtypesGettableDashboardV2DTO, 'tags' | 'spec'> => ({
+	tags: dashboard.tags,
+	spec: dashboard.spec,
+});
+
 const serialize = (dashboard: DashboardtypesGettableDashboardV2DTO): string =>
-	JSON.stringify(dashboard, null, 2);
+	JSON.stringify(redact(dashboard), null, 2);
 
 /** Derive a 1-based line number from a `JSON.parse` "position N" error message. */
 function errorLineFromMessage(
@@ -115,8 +127,13 @@ export function useJsonEditor({
 		}
 		try {
 			setIsSaving(true);
-			const parsed = JSON.parse(draft) as Record<string, unknown>;
-			await updateDashboardV2({ id: dashboardId }, dashboardToUpdatable(parsed));
+			// The draft only carries name/tags/spec; overlay it on the current dashboard
+			// so the redacted fields (schemaVersion, image, …) are preserved on save.
+			const edited = JSON.parse(draft) as Record<string, unknown>;
+			await updateDashboardV2(
+				{ id: dashboardId },
+				dashboardToUpdatable({ ...dashboard, ...edited }),
+			);
 			toast.success('Dashboard updated');
 			refetch();
 			onApplied();
@@ -126,6 +143,7 @@ export function useJsonEditor({
 			setIsSaving(false);
 		}
 	}, [
+		dashboard,
 		dashboardId,
 		validity.valid,
 		isDirty,

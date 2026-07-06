@@ -5,6 +5,7 @@ import (
 	"maps"
 	"slices"
 	"strconv"
+	"unicode/utf8"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	qb "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -15,9 +16,20 @@ import (
 	"github.com/swaggest/jsonschema-go"
 )
 
+// MaxDisplayNameLen bounds every human-readable display name — dashboard, panel,
+// and variable display names, plus the grid layout title.
+const MaxDisplayNameLen = 128
+
 type Display struct {
 	Name        string `json:"name" required:"true"`
 	Description string `json:"description,omitempty"`
+}
+
+func (d Display) Validate(label, path string) error {
+	if n := utf8.RuneCountInString(d.Name); n > MaxDisplayNameLen {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s: %s name must be at most %d characters, got %d", path, label, MaxDisplayNameLen, n)
+	}
+	return nil
 }
 
 // ══════════════════════════════════════════════
@@ -188,19 +200,25 @@ func (VariableDefaultValue) PrepareJSONSchema(s *jsonschema.Schema) error {
 }
 
 // validate mirrors perses ListVariableSpec validation (plus the digits-only name
-// check perses only applies to text variables); run by decodeSpec on unmarshal.
-func (s *ListVariableSpec) validate() error {
-	if err := common.ValidateID(s.Name); err != nil {
+// check perses only applies to text variables). path is the JSON path to this
+// variable (e.g. "spec.variables[0]") and prefixes each message. Taking a param
+// keeps it out of decodeSpec's validate() hook, so errors surface from Validate()
+// with clean messages and also run for programmatically built specs (cloning).
+func (s *ListVariableSpec) validate(path string) error {
+	if err := s.Display.Validate("variable", path+".spec.display.name"); err != nil {
 		return err
 	}
+	if err := common.ValidateID(s.Name); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "%s: %s", path, err.Error())
+	}
 	if _, err := strconv.Atoi(s.Name); err == nil {
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "variable name cannot contain only digits")
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s: variable name cannot contain only digits", path)
 	}
 	if s.CustomAllValue != "" && !s.AllowAllValue {
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "customAllValue cannot be set if allowAllValue is not set to true")
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s: customAllValue cannot be set if allowAllValue is not set to true", path)
 	}
 	if s.DefaultValue != nil && len(s.DefaultValue.SliceValues) > 0 && !s.AllowMultiple {
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "defaultValue cannot be a list if allowMultiple is not set to true")
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s: defaultValue cannot be a list if allowMultiple is not set to true", path)
 	}
 	return nil
 }
@@ -264,16 +282,21 @@ type TextVariableSpec struct {
 	Name     string  `json:"name" required:"true" minLength:"1"`
 }
 
-// validate mirrors perses TextVariableSpec validation; run by decodeSpec on unmarshal.
-func (s *TextVariableSpec) validate() error {
-	if err := common.ValidateID(s.Name); err != nil {
+// validate mirrors perses TextVariableSpec validation. path is the JSON path to
+// this variable (e.g. "spec.variables[0]") and prefixes each message. See
+// ListVariableSpec.validate for why it takes a param.
+func (s *TextVariableSpec) validate(path string) error {
+	if err := s.Display.Validate("variable", path+".spec.display.name"); err != nil {
 		return err
 	}
+	if err := common.ValidateID(s.Name); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "%s: %s", path, err.Error())
+	}
 	if _, err := strconv.Atoi(s.Name); err == nil {
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "variable name cannot contain only digits")
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s: variable name cannot contain only digits", path)
 	}
 	if s.Value == "" && s.Constant {
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "value for a constant text variable cannot be empty")
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s: value for a constant text variable cannot be empty", path)
 	}
 	return nil
 }
@@ -319,6 +342,55 @@ func (l *Layout) UnmarshalJSON(data []byte) error {
 	}
 	l.Kind = dashboard.LayoutKind(kind)
 	l.Spec = *spec
+	return nil
+}
+
+const (
+	gridColumnCount       = 12
+	maxItemsPerGridLayout = 100
+)
+
+// validateGridLayoutGeometry checks a single grid layout's item geometry (size,
+// position, and intra-section overlap), which Perses does not. It reads only the
+// layout's own items; layoutIndex is supplied by the caller (validateLayouts)
+// solely to name the layout in error paths.
+func validateGridLayoutGeometry(spec *dashboard.GridLayoutSpec, layoutIndex int) error {
+	if len(spec.Items) > maxItemsPerGridLayout {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.layouts[%d].spec.items: has %d items; maximum is %d", layoutIndex, len(spec.Items), maxItemsPerGridLayout)
+	}
+	for i, item := range spec.Items {
+		// The width/x bounds keep x+width small enough not to overflow.
+		switch {
+		case item.Width < 1:
+			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.layouts[%d].spec.items[%d]: width must be at least 1, got %d", layoutIndex, i, item.Width)
+		case item.Height < 1:
+			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.layouts[%d].spec.items[%d]: height must be at least 1, got %d", layoutIndex, i, item.Height)
+		case item.X < 0:
+			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.layouts[%d].spec.items[%d]: x must not be negative, got %d", layoutIndex, i, item.X)
+		case item.Y < 0:
+			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.layouts[%d].spec.items[%d]: y must not be negative, got %d", layoutIndex, i, item.Y)
+		case item.Width > gridColumnCount:
+			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.layouts[%d].spec.items[%d]: width (%d) exceeds grid width %d", layoutIndex, i, item.Width, gridColumnCount)
+		case item.X >= gridColumnCount:
+			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.layouts[%d].spec.items[%d]: x (%d) must be less than grid width %d", layoutIndex, i, item.X, gridColumnCount)
+		case item.X+item.Width > gridColumnCount:
+			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.layouts[%d].spec.items[%d]: x (%d) + width (%d) exceeds grid width %d", layoutIndex, i, item.X, item.Width, gridColumnCount)
+		}
+		// Could cap y/height but skipping for now: the grid grows vertically
+		// without limit (frontend autoSize), so "too big" has no natural bound.
+	}
+	// Two items overlap iff their rectangles intersect on both axes.
+	overlap := func(a, b dashboard.GridItem) bool {
+		return a.X < b.X+b.Width && b.X < a.X+a.Width &&
+			a.Y < b.Y+b.Height && b.Y < a.Y+a.Height
+	}
+	for i := 0; i < len(spec.Items); i++ {
+		for j := i + 1; j < len(spec.Items); j++ {
+			if overlap(spec.Items[i], spec.Items[j]) {
+				return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.layouts[%d].spec.items[%d] and items[%d] overlap", layoutIndex, i, j)
+			}
+		}
+	}
 	return nil
 }
 

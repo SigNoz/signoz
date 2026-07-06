@@ -1,8 +1,11 @@
 import * as roleApi from 'api/generated/services/role';
 import { FeatureKeys } from 'constants/features';
-import * as useAuthZModule from 'hooks/useAuthZ/useAuthZ';
+import * as useAuthZModule from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import { defaultFeatureFlags, render, screen } from 'tests/test-utils';
-import { invalidLicense, mockUseAuthZGrantAll } from 'tests/authz-test-utils';
+import {
+	invalidLicense,
+	mockUseAuthZGrantAll,
+} from 'lib/authz/utils/authz-test-utils';
 
 import ViewRolePage from '../ViewRolePage';
 
