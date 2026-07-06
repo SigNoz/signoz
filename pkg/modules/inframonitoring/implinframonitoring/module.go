@@ -1016,20 +1016,35 @@ func (m *module) ListJobs(ctx context.Context, orgID valuer.UUID, req *inframoni
 	}
 
 	fullQueryReq := buildFullQueryRequest(req.Start, req.End, filterExpr, req.GroupBy, pageGroups, m.newJobsTableListQuery())
-	queryResp, err := m.querier.QueryRange(ctx, orgID, fullQueryReq)
-	if err != nil {
-		return nil, err
-	}
 
 	// Pods owned by a Job carry k8s.job.name as a resource attribute, so default-groupBy
 	// gives per-job phase counts automatically.
-	phaseCounts, err := m.getPerGroupPodPhaseCounts(ctx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
-	if err != nil {
-		return nil, err
-	}
+	var (
+		queryResp        *qbtypes.QueryRangeResponse
+		phaseCounts      map[string]podPhaseCounts
+		podStatusCounts  map[string]podStatusCounts
+		podStatusWarning *qbtypes.QueryWarnData
+	)
 
-	podStatusCounts, podStatusWarning, err := m.getPerGroupPodStatusCountsWithReqMetricChecks(ctx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
-	if err != nil {
+	g, gCtx := errgroup.WithContext(ctx)
+
+	g.Go(func() error {
+		var err error
+		queryResp, err = m.querier.QueryRange(gCtx, orgID, fullQueryReq)
+		return err
+	})
+	g.Go(func() error {
+		var err error
+		phaseCounts, err = m.getPerGroupPodPhaseCounts(gCtx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		return err
+	})
+	g.Go(func() error {
+		var err error
+		podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		return err
+	})
+
+	if err := g.Wait(); err != nil {
 		return nil, err
 	}
 
@@ -1106,20 +1121,35 @@ func (m *module) ListDaemonSets(ctx context.Context, orgID valuer.UUID, req *inf
 	}
 
 	fullQueryReq := buildFullQueryRequest(req.Start, req.End, filterExpr, req.GroupBy, pageGroups, m.newDaemonSetsTableListQuery())
-	queryResp, err := m.querier.QueryRange(ctx, orgID, fullQueryReq)
-	if err != nil {
-		return nil, err
-	}
 
 	// Pods owned by a DaemonSet carry k8s.daemonset.name as a resource attribute,
 	// so default-groupBy gives per-daemonset phase counts automatically.
-	phaseCounts, err := m.getPerGroupPodPhaseCounts(ctx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
-	if err != nil {
-		return nil, err
-	}
+	var (
+		queryResp        *qbtypes.QueryRangeResponse
+		phaseCounts      map[string]podPhaseCounts
+		podStatusCounts  map[string]podStatusCounts
+		podStatusWarning *qbtypes.QueryWarnData
+	)
 
-	podStatusCounts, podStatusWarning, err := m.getPerGroupPodStatusCountsWithReqMetricChecks(ctx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
-	if err != nil {
+	g, gCtx := errgroup.WithContext(ctx)
+
+	g.Go(func() error {
+		var err error
+		queryResp, err = m.querier.QueryRange(gCtx, orgID, fullQueryReq)
+		return err
+	})
+	g.Go(func() error {
+		var err error
+		phaseCounts, err = m.getPerGroupPodPhaseCounts(gCtx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		return err
+	})
+	g.Go(func() error {
+		var err error
+		podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		return err
+	})
+
+	if err := g.Wait(); err != nil {
 		return nil, err
 	}
 
