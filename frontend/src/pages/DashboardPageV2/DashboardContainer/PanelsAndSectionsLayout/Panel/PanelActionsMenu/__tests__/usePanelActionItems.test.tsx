@@ -14,6 +14,19 @@ jest.mock(
 	}),
 );
 
+const mockOpenView = jest.fn();
+jest.mock('../../hooks/useViewPanel', () => ({
+	useViewPanel: (): {
+		openView: jest.Mock;
+		closeView: jest.Mock;
+		expandedPanelId: string | null;
+	} => ({
+		openView: mockOpenView,
+		closeView: jest.fn(),
+		expandedPanelId: null,
+	}),
+}));
+
 const mockMovePanel = jest.fn();
 jest.mock('../../hooks/useMovePanelToSection', () => ({
 	useMovePanelToSection: (): jest.Mock => mockMovePanel,
@@ -264,18 +277,13 @@ describe('usePanelActionItems', () => {
 		});
 	});
 
-	it('not-yet-implemented actions (view) fire the placeholder alert with the feature name', () => {
-		const alertSpy = jest.spyOn(window, 'alert').mockImplementation(() => {});
+	it('view opens the View modal for the panel', () => {
 		const { result } = renderHook(() => usePanelActionItems(baseArgs));
-
 		const view = result.current.items.find(
 			(i) => 'key' in i && i.key === 'view-panel',
 		);
 		(view as { onClick: () => void }).onClick();
-
-		expect(alertSpy).toHaveBeenCalledTimes(1);
-		expect(alertSpy).toHaveBeenCalledWith('View option clicked');
-		alertSpy.mockRestore();
+		expect(mockOpenView).toHaveBeenCalledWith('panel-1');
 	});
 
 	it('create-alert seeds an alert from this panel', () => {

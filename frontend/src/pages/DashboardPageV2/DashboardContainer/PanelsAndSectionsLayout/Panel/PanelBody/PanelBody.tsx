@@ -35,6 +35,8 @@ interface PanelBodyProps {
 	searchTerm?: string;
 	/** Server-side paging handles — only consumed by raw/list renderers. */
 	pagination?: PanelPagination;
+	/** Close the standalone View modal — only consumed by the time-series/bar graph manager. */
+	onCloseStandaloneView?: () => void;
 }
 
 /**
@@ -55,6 +57,7 @@ function PanelBody({
 	panelMode = PanelMode.DASHBOARD_VIEW,
 	searchTerm,
 	pagination,
+	onCloseStandaloneView,
 }: PanelBodyProps): JSX.Element {
 	// A retained response (keepPreviousData) counts as data only if its type matches the current
 	// request — else a prior panel kind's response (time_series → raw) flashes NoData on switch.
@@ -121,6 +124,7 @@ function PanelBody({
 				dashboardPreference={dashboardPreference}
 				searchTerm={searchTerm}
 				pagination={pagination}
+				onCloseStandaloneView={onCloseStandaloneView}
 			/>
 		</div>
 	);
