@@ -1,10 +1,10 @@
 import { type ChangeEvent, type KeyboardEvent, useState } from 'react';
-import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 
+import TagBadge from '../TagBadge/TagBadge';
 import { parseKeyValueTag } from './utils';
 
 import styles from './TagKeyValueInput.module.scss';
@@ -120,10 +120,8 @@ function TagKeyValueInput({
 							onBlur={commitEdit}
 						/>
 					) : (
-						<Badge
+						<TagBadge
 							key={tag}
-							color="sienna"
-							variant="outline"
 							className={styles.tag}
 							closable
 							onClose={(): void => removeTag(tag)}
@@ -138,7 +136,7 @@ function TagKeyValueInput({
 							>
 								{tag}
 							</Button>
-						</Badge>
+						</TagBadge>
 					),
 				)}
 				<Input
