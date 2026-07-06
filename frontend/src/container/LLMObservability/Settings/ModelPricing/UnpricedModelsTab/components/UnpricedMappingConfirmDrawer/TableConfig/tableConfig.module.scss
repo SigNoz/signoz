@@ -6,10 +6,9 @@
 	gap: var(--spacing-3);
 	overflow: hidden;
 }
-
-.extraBucketsChip {
-	display: inline-flex;
-	align-items: center;
-	gap: var(--spacing-3);
-	margin: 0;
+.extraBucketContainer {
+	display: flex;
+	gap: var(--spacing-1);
+	flex-direction: row;
+	flex-wrap: wrap;
 }

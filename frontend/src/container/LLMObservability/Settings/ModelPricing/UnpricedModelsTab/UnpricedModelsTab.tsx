@@ -75,8 +75,8 @@ function UnpricedModelsTab(): JSX.Element {
 				<div className={styles.banner}>
 					<TriangleAlert size={16} className={styles.bannerIcon} />
 					<span>
-						Models detected in traces without pricing. Add costs so{' '}
-						<code>gen_ai.estimated_total_cost</code> can be computed.
+						Models detected in traces without pricing. Add costs so estimated cost can
+						be computed.
 					</span>
 				</div>
 

@@ -1,4 +1,3 @@
-import { Badge } from '@signozhq/ui/badge';
 import { Typography } from '@signozhq/ui/typography';
 import { startCase } from 'lodash-es';
 import type { TableColumnDef } from 'components/TanStackTableView';
@@ -83,19 +82,14 @@ export function getUnpricedMappingColumns(): TableColumnDef<UnpricedModelMapping
 				return (
 					<div className={styles.extraBuckets}>
 						{buckets.map((bucket) => (
-							<Badge
-								key={bucket.key}
-								color="vanilla"
-								variant="outline"
-								className={styles.extraBucketsChip}
-							>
+							<div className={styles.extraBucketContainer} key={bucket.key}>
 								<Typography.Text as="span" size="small">
 									{startCase(bucket.key)}
 								</Typography.Text>
 								<Typography.Text as="span" size="small" weight="semibold">
 									{formatPricePerMillion(bucket.pricePerMillion)}
 								</Typography.Text>
-							</Badge>
+							</div>
 						))}
 					</div>
 				);
