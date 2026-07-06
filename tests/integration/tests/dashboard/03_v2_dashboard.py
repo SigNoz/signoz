@@ -1403,3 +1403,83 @@ def test_dashboard_v2_get_by_metric_name(
     assert sorted(by_dashboard[d1_id]) == ["D1 builder target"]
     assert sorted(by_dashboard[d2_id]) == ["D2 clickhouse target", "D2 promql target"]
     assert sorted(by_dashboard[d3_id]) == ["D3 promql target"]
+
+
+# ─── aggregation expression validation ───────────────────────────────────────
+
+
+def test_dashboard_v2_rejects_comma_separated_aggregation(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    """The querier never splits aggregation expressions, so each aggregation entry must
+    be a single function call. A comma-separated expression ("count(), sum(...)") is
+    rejected at create time; the pre-split form of the same panel is accepted."""
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    def make_dashboard(aggregations: list[dict]) -> dict:
+        return {
+            "schemaVersion": "v6",
+            "name": f"agg-{uuid.uuid4().hex[:8]}",
+            "tags": [],
+            "spec": {
+                "display": {"name": "Aggregation"},
+                "panels": {
+                    "p-agg": {
+                        "kind": "Panel",
+                        "spec": {
+                            "display": {"name": "agg"},
+                            "plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
+                            "queries": [
+                                {
+                                    "kind": "time_series",
+                                    "spec": {
+                                        "plugin": {
+                                            "kind": "signoz/BuilderQuery",
+                                            "spec": {"name": "A", "signal": "logs", "aggregations": aggregations},
+                                        }
+                                    },
+                                }
+                            ],
+                        },
+                    }
+                },
+            },
+        }
+
+    # a single comma-separated expression is rejected
+    rejected = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json=make_dashboard([{"expression": "count(), sum(latency_ms)"}]),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert rejected.status_code == HTTPStatus.BAD_REQUEST, rejected.text
+    assert "single function call" in rejected.text, rejected.text
+
+    # the pre-split form of the same panel is accepted
+    accepted = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json=make_dashboard([{"expression": "count()"}, {"expression": "sum(latency_ms)"}]),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert accepted.status_code == HTTPStatus.CREATED, accepted.text
+
+    # a single call whose string literal contains parentheses is accepted (the check
+    # parses rather than counting "word(", so it does not mistake ')...(' for a second call)
+    literal_parens = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json=make_dashboard([{"expression": "countIf(body = 'a)b(c)')"}]),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert literal_parens.status_code == HTTPStatus.CREATED, literal_parens.text
+
+    for dashboard_id in (accepted.json()["data"]["id"], literal_parens.json()["data"]["id"]):
+        requests.delete(
+            signoz.self.host_configs["8080"].get(f"{BASE_URL}/{dashboard_id}"),
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        )

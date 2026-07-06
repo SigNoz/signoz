@@ -2917,6 +2917,13 @@ components:
         publicDashboard:
           $ref: '#/components/schemas/DashboardtypesGettablePublicDasbhboard'
       type: object
+    DashboardtypesGettablePublicDashboardDataV2:
+      properties:
+        dashboard:
+          $ref: '#/components/schemas/DashboardtypesGettableDashboardV2'
+        publicDashboard:
+          $ref: '#/components/schemas/DashboardtypesGettablePublicDasbhboard'
+      type: object
     DashboardtypesHistogramBuckets:
       properties:
         bucketCount:
@@ -17518,6 +17525,138 @@ paths:
       summary: Update my organization
       tags:
       - orgs
+  /api/v2/public/dashboards/{id}:
+    get:
+      deprecated: false
+      description: This endpoint returns the sanitized v2-shape dashboard data for
+        public access. Each panel query is reduced to a safe field subset, so filters
+        and raw query strings are not exposed.
+      operationId: GetPublicDashboardDataV2
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DashboardtypesGettablePublicDashboardDataV2'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - anonymous:
+        - public-dashboard:read
+      summary: Get public dashboard data (v2)
+      tags:
+      - dashboard
+  /api/v2/public/dashboards/{id}/panels/{key}/query_range:
+    get:
+      deprecated: false
+      description: This endpoint returns query range results for a panel of a v2-shape
+        public dashboard. The panel is addressed by its key in spec.panels.
+      operationId: GetPublicDashboardPanelQueryRangeV2
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: key
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Querybuildertypesv5QueryRangeResponse'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - anonymous:
+        - public-dashboard:read
+      summary: Get query range result (v2)
+      tags:
+      - dashboard
   /api/v2/readyz:
     get:
       operationId: Readyz
