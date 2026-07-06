@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
@@ -449,8 +448,8 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 			Resource: coretypes.ResourceServiceAccount,
 			Verb:     coretypes.VerbRead,
 			Category: coretypes.ActionCategoryAccessControl,
-			ID:       coretypes.PathParam("id"),
-			Selector: provider.serviceAccountRoleServiceAccountSelector,
+			ID:       provider.serviceAccountIDExtractor(),
+			Selector: coretypes.IDSelector,
 		}),
 	)).Methods(http.MethodGet).GetError(); err != nil {
 		return err
@@ -476,55 +475,17 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 			Verb:           coretypes.VerbDetach,
 			Category:       coretypes.ActionCategoryAccessControl,
 			SourceResource: coretypes.ResourceServiceAccount,
-			SourceIDs:      coretypes.OneID(coretypes.PathParam("id")),
-			SourceSelector: provider.serviceAccountRoleServiceAccountSelector,
+			SourceIDs:      coretypes.OneID(provider.serviceAccountIDExtractor()),
+			SourceSelector: coretypes.IDSelector,
 			TargetResource: coretypes.ResourceRole,
-			TargetIDs:      coretypes.OneID(coretypes.PathParam("id")),
-			TargetSelector: provider.serviceAccountRoleRoleSelector,
+			TargetIDs:      coretypes.OneID(provider.roleIDExtractor()),
+			TargetSelector: provider.roleSelector,
 		}),
 	)).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}
 
 	return nil
-}
-
-func (provider *provider) serviceAccountRoleServiceAccountSelector(ctx context.Context, resource coretypes.Resource, id string, orgID valuer.UUID) ([]coretypes.Selector, error) {
-	serviceAccountRoleID, err := valuer.NewUUID(id)
-	if err != nil {
-		return nil, err
-	}
-
-	serviceAccountRole, err := provider.serviceAccountGetter.GetServiceAccountRole(ctx, orgID, serviceAccountRoleID)
-	if err != nil {
-		return nil, err
-	}
-
-	return []coretypes.Selector{
-		resource.Type().MustSelector(serviceAccountRole.ServiceAccountID.String()),
-		resource.Type().MustSelector(coretypes.WildCardSelectorString),
-	}, nil
-}
-
-func (provider *provider) serviceAccountRoleRoleSelector(ctx context.Context, resource coretypes.Resource, id string, orgID valuer.UUID) ([]coretypes.Selector, error) {
-	serviceAccountRoleID, err := valuer.NewUUID(id)
-	if err != nil {
-		return nil, err
-	}
-
-	serviceAccountRole, err := provider.serviceAccountGetter.GetServiceAccountRole(ctx, orgID, serviceAccountRoleID)
-	if err != nil {
-		return nil, err
-	}
-
-	if serviceAccountRole.Role == nil {
-		return nil, errors.New(errors.TypeInternal, authtypes.ErrCodeRoleNotFound, "role not found for service account role")
-	}
-
-	return []coretypes.Selector{
-		resource.Type().MustSelector(serviceAccountRole.Role.Name),
-		resource.Type().MustSelector(coretypes.WildCardSelectorString),
-	}, nil
 }
 
 func (provider *provider) roleSelector(ctx context.Context, resource coretypes.Resource, id string, orgID valuer.UUID) ([]coretypes.Selector, error) {
@@ -542,4 +503,54 @@ func (provider *provider) roleSelector(ctx context.Context, resource coretypes.R
 		resource.Type().MustSelector(role.Name),
 		resource.Type().MustSelector(coretypes.WildCardSelectorString),
 	}, nil
+}
+
+func (provider *provider) roleIDExtractor() coretypes.ResourceIDExtractor {
+	return coretypes.NewResourceIDExtractor(coretypes.PhaseRequest, func(ec coretypes.ExtractorContext) (string, error) {
+		if ec.Request == nil {
+			return "", nil
+		}
+
+		claims, err := authtypes.ClaimsFromContext(ec.Request.Context())
+		if err != nil {
+			return "", err
+		}
+
+		serviceAccountRoleID, err := valuer.NewUUID(mux.Vars(ec.Request)["id"])
+		if err != nil {
+			return "", err
+		}
+
+		serviceAccountRole, err := provider.serviceAccountGetter.GetServiceAccountRole(ec.Request.Context(), valuer.MustNewUUID(claims.OrgID), serviceAccountRoleID)
+		if err != nil {
+			return "", err
+		}
+
+		return serviceAccountRole.RoleID.String(), nil
+	})
+}
+
+func (provider *provider) serviceAccountIDExtractor() coretypes.ResourceIDExtractor {
+	return coretypes.NewResourceIDExtractor(coretypes.PhaseRequest, func(ec coretypes.ExtractorContext) (string, error) {
+		if ec.Request == nil {
+			return "", nil
+		}
+
+		claims, err := authtypes.ClaimsFromContext(ec.Request.Context())
+		if err != nil {
+			return "", err
+		}
+
+		serviceAccountRoleID, err := valuer.NewUUID(mux.Vars(ec.Request)["id"])
+		if err != nil {
+			return "", err
+		}
+
+		serviceAccountRole, err := provider.serviceAccountGetter.GetServiceAccountRole(ec.Request.Context(), valuer.MustNewUUID(claims.OrgID), serviceAccountRoleID)
+		if err != nil {
+			return "", err
+		}
+
+		return serviceAccountRole.ServiceAccountID.String(), nil
+	})
 }
