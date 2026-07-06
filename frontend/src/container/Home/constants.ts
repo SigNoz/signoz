@@ -29,12 +29,12 @@ export const checkListStepToPreferenceKeyMap = {
 
 export const DOCS_LINKS = {
 	ADD_DATA_SOURCE: 'https://signoz.io/docs/instrumentation/overview/',
-	SEND_LOGS: 'https://signoz.io/docs/userguide/logs/',
+	SEND_LOGS: 'https://signoz.io/docs/userguide/logs_query_builder/',
 	SEND_TRACES: 'https://signoz.io/docs/userguide/traces/',
 	SEND_METRICS: 'https://signoz.io/docs/metrics-management/metrics-explorer/',
-	SETUP_ALERTS: 'https://signoz.io/docs/userguide/alerts-management/',
+	SETUP_ALERTS: 'https://signoz.io/docs/alerts/',
 	SETUP_SAVED_VIEWS:
-		'https://signoz.io/docs/product-features/saved-view/#step-2-save-your-view',
+		'https://signoz.io/docs/metrics-management/metrics-explorer/#saved-views-in-metrics-explorer',
 	SETUP_DASHBOARDS: 'https://signoz.io/docs/userguide/manage-dashboards/',
 };
 
