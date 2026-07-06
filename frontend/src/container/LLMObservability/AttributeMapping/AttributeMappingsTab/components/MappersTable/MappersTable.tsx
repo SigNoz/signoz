@@ -31,7 +31,8 @@ interface MappersTableProps {
 function MappersTable({ group, store }: MappersTableProps): JSX.Element {
 	const prefersReducedMotion = useReducedMotion();
 	const drawer = useMapperFormDrawer();
-	const { hydrateGroupMappers, upsertMapper, removeMapper, toggleMapper } = store;
+	const { hydrateGroupMappers, upsertMapper, removeMapper, toggleMapper } =
+		store;
 
 	const hasServerId = group.serverId !== null;
 	const { data, isLoading, isError } = useListSpanMappers(
@@ -117,7 +118,7 @@ function MappersTable({ group, store }: MappersTableProps): JSX.Element {
 			{content}
 
 			<Button
-				variant="ghost"
+				variant="link"
 				color="primary"
 				size="sm"
 				prefix={<Plus size={14} />}

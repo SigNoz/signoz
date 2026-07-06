@@ -4,6 +4,7 @@ import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 import {
 	GROUPS_ENDPOINT,
 	makeGroupsResponse,
+	makeMapper,
 	makeMappersResponse,
 	mappersEndpoint,
 	mockGroups,
@@ -33,6 +34,30 @@ function AttributeMappingHarness(): JSX.Element {
 			onEditGroup={jest.fn()}
 			onAddGroup={jest.fn()}
 		/>
+	);
+}
+
+// The real Save button lives in the page header; this harness exposes the same
+// store.save() path the header wires up, so the tab suite can exercise it.
+function SaveableHarness(): JSX.Element {
+	const store = useAttributeMappingStore();
+	return (
+		<>
+			<button
+				type="button"
+				data-testid="save-button"
+				onClick={(): void => {
+					void store.save();
+				}}
+			>
+				Save
+			</button>
+			<AttributeMappingsTab
+				store={store}
+				onEditGroup={jest.fn()}
+				onAddGroup={jest.fn()}
+			/>
+		</>
 	);
 }
 
@@ -88,5 +113,46 @@ describe('AttributeMappingsTab (integration)', () => {
 		await expect(
 			screen.findByTestId('mapper-target-mapper-1'),
 		).resolves.toHaveTextContent('gen_ai.request.model');
+	});
+
+	it("re-fetches an open group's mappers on save instead of showing stale rows", async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		setupGroups();
+
+		// The mapper list changes server-side between the first open and the save
+		// (e.g. another edit landed, or the save reconciled ids). The open table
+		// must reflect the latest list — not the list cached on first expand.
+		let mappers = mockMappers;
+		server.use(
+			rest.get(mappersEndpoint('group-1'), (_req, res, ctx) =>
+				res(ctx.status(200), ctx.json(makeMappersResponse(mappers))),
+			),
+		);
+		render(<SaveableHarness />);
+
+		await waitFor(() =>
+			expect(screen.getByTestId('group-name-group-1')).toBeInTheDocument(),
+		);
+
+		await user.click(screen.getByTestId('group-expand-group-1'));
+		await expect(
+			screen.findByTestId('mapper-target-mapper-1'),
+		).resolves.toBeInTheDocument();
+
+		// Server now returns a different mapper for the group.
+		mappers = [
+			makeMapper({ id: 'mapper-2', name: 'gen_ai.response.model' }),
+		];
+
+		await user.click(screen.getByTestId('save-button'));
+
+		// Fresh row appears; the stale one is gone. Without removeQueries the table
+		// would keep showing mapper-1 (the hydrate once-guard blocks the update).
+		await expect(
+			screen.findByTestId('mapper-target-mapper-2'),
+		).resolves.toHaveTextContent('gen_ai.response.model');
+		expect(
+			screen.queryByTestId('mapper-target-mapper-1'),
+		).not.toBeInTheDocument();
 	});
 });

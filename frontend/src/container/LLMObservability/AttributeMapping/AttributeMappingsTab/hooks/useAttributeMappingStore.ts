@@ -270,16 +270,28 @@ export function useAttributeMappingStore(): AttributeMappingStore {
 		setSaveError(null);
 		try {
 			await persistDraft(snapshot, draft, mutations);
+			// Refetch the groups list in place — it stays mounted, so this just
+			// swaps in fresh data without a loading flash. Exact-match the key so
+			// this doesn't also touch the per-group mapper lists (handled below).
 			await queryClient.invalidateQueries({
-				predicate: (query) =>
-					typeof query.queryKey?.[0] === 'string' &&
-					(query.queryKey[0] as string).startsWith(GROUPS_KEY_PREFIX),
+				predicate: (query) => query.queryKey?.[0] === GROUPS_KEY_PREFIX,
 			});
-			// Drop lazily-loaded mappers and re-initialise the working copy from the
-			// freshly-fetched server data; expanded rows re-hydrate on next render.
+			// Reset the working copy and the lazily-loaded mapper mirror *before*
+			// the mapper queries re-emit, so the re-hydrate isn't clobbered.
 			loadedRef.current = new Set();
 			setLoadedMappers({});
 			setDraft(null);
+			// removeQueries (not invalidate) for the per-group mapper lists: an
+			// expanded group's table only re-hydrates when its query `data` changes
+			// reference, but react-query's structural sharing keeps `data` stable
+			// when the list is unchanged — so invalidate alone leaves the table
+			// empty. Removing the cache forces undefined -> refetch -> fresh, which
+			// always fires the hydrate effect. Also fixes stale mappers on re-expand.
+			queryClient.removeQueries({
+				predicate: (query) =>
+					typeof query.queryKey?.[0] === 'string' &&
+					(query.queryKey[0] as string).startsWith(`${GROUPS_KEY_PREFIX}/`),
+			});
 			toast.success('Attribute mapping changes saved');
 		} catch (error) {
 			const message = error instanceof Error ? error.message : 'Save failed';
