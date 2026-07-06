@@ -3,6 +3,7 @@ import { FullScreen, useFullScreenHandle } from 'react-full-screen';
 
 import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
 import useComponentPermission from 'hooks/useComponentPermission';
+import { usePageTitle } from 'hooks/usePageTitle';
 import { useAppContext } from 'providers/App/App';
 
 import DashboardPageToolbar from './DashboardPageToolbar';
@@ -22,9 +23,7 @@ function DashboardContainer({
 	dashboard,
 	refetch,
 }: DashboardContainerProps): JSX.Element {
-	useEffect(() => {
-		document.title = dashboard.name;
-	}, [dashboard.name]);
+	usePageTitle(dashboard.name);
 
 	const fullScreenHandle = useFullScreenHandle();
 
