@@ -2,7 +2,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { useQueryClient } from 'react-query';
 import { X } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
+import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
 import { SACreatePermission } from 'lib/authz/hooks/useAuthZ/permissions/service-account.permissions';
 import { DialogFooter, DialogWrapper } from '@signozhq/ui/dialog';
 import { Input } from '@signozhq/ui/input';
@@ -134,18 +134,17 @@ function CreateServiceAccountModal(): JSX.Element {
 					Cancel
 				</Button>
 
-				<AuthZTooltip checks={[SACreatePermission]}>
-					<Button
-						type="submit"
-						form="create-sa-form"
-						variant="solid"
-						color="primary"
-						loading={isSubmitting}
-						disabled={!isValid}
-					>
-						Create Service Account
-					</Button>
-				</AuthZTooltip>
+				<AuthZButton
+					checks={[SACreatePermission]}
+					type="submit"
+					form="create-sa-form"
+					variant="solid"
+					color="primary"
+					loading={isSubmitting}
+					disabled={!isValid}
+				>
+					Create Service Account
+				</AuthZButton>
 			</DialogFooter>
 		</DialogWrapper>
 	);
