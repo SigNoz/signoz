@@ -22,6 +22,9 @@ export type PanelClickEvent =
 
 type DragSelect = (start: number, end: number) => void;
 
+/** Close the standalone View modal — fired by the chart's graph-manager Save/Cancel. */
+type CloseStandaloneView = () => void;
+
 /**
  * Per-kind interaction props — each kind exposes only the gestures it supports.
  * Keyed by `PanelKind`; `PanelRendererProps<K>` indexes this, so a missing kind
@@ -31,10 +34,12 @@ export type PanelInteractionMap = Record<PanelKind, object> & {
 	'signoz/TimeSeriesPanel': {
 		onClick?: (event: ChartClickEvent) => void;
 		onDragSelect?: DragSelect;
+		onCloseStandaloneView?: CloseStandaloneView;
 	};
 	'signoz/BarChartPanel': {
 		onClick?: (event: ChartClickEvent) => void;
 		onDragSelect?: DragSelect;
+		onCloseStandaloneView?: CloseStandaloneView;
 	};
 	'signoz/HistogramPanel': { onClick?: (event: ChartClickEvent) => void };
 	'signoz/TablePanel': { onClick?: (event: TableClickEvent) => void };
@@ -50,4 +55,5 @@ export type PanelInteractionMap = Record<PanelKind, object> & {
 export interface AnyPanelInteractionProps {
 	onClick?: (event: PanelClickEvent) => void;
 	onDragSelect?: DragSelect;
+	onCloseStandaloneView?: CloseStandaloneView;
 }

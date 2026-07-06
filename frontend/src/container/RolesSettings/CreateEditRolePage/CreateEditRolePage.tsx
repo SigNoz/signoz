@@ -7,7 +7,7 @@ import { Input } from '@signozhq/ui/input';
 import { Typography } from '@signozhq/ui/typography';
 import { Skeleton } from 'antd';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
-import PermissionDeniedFullPage from 'components/PermissionDeniedFullPage/PermissionDeniedFullPage';
+import PermissionDeniedFullPage from 'lib/authz/components/PermissionDeniedFullPage/PermissionDeniedFullPage';
 import ROUTES from 'constants/routes';
 import { useRolesFeatureGate } from 'hooks/useRolesFeatureGate';
 import useUrlQuery from 'hooks/useUrlQuery';
