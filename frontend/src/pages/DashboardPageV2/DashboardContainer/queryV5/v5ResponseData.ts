@@ -2,6 +2,7 @@ import type {
 	Querybuildertypesv5AggregationBucketDTO,
 	Querybuildertypesv5ExecStatsDTO,
 	Querybuildertypesv5RawDataDTO,
+	Querybuildertypesv5RequestTypeDTO,
 	Querybuildertypesv5ScalarDataDTO,
 	Querybuildertypesv5TimeSeriesDataDTO,
 	Querybuildertypesv5TimeSeriesDTO,
@@ -42,6 +43,13 @@ export function getRawResults(
 		return [];
 	}
 	return (data.data?.results ?? []) as Querybuildertypesv5RawDataDTO[];
+}
+
+/** Response request-type discriminator (raw/trace/scalar/time_series); detects a stale cross-type response. */
+export function getResponseType(
+	response: QueryRangeV5200 | undefined,
+): Querybuildertypesv5RequestTypeDTO | undefined {
+	return response?.data?.type;
 }
 
 /** Exec stats (incl. per-query `stepIntervals`) from the response top level. */

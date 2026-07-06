@@ -109,10 +109,7 @@ go.mod @therealpandey
 /pkg/modules/role/ @therealpandey
 /pkg/types/coretypes/ @therealpandey @vikrantgupta25
 
-/frontend/src/hooks/useAuthZ/ @H4ad
-/frontend/src/components/GuardAuthZ/ @H4ad
-/frontend/src/components/AuthZTooltip/ @H4ad
-/frontend/src/components/createGuardedRoute/ @H4ad
+/frontend/src/lib/authz/ @H4ad
 /frontend/src/container/RolesSettings/ @H4ad
 /frontend/src/components/RolesSelect/ @H4ad
 /frontend/src/pages/MembersSettings/ @H4ad

@@ -4941,6 +4941,11 @@ export interface DashboardtypesGettablePublicDashboardDataDTO {
 	publicDashboard?: DashboardtypesGettablePublicDasbhboardDTO;
 }
 
+export interface DashboardtypesGettablePublicDashboardDataV2DTO {
+	dashboard?: DashboardtypesGettableDashboardV2DTO;
+	publicDashboard?: DashboardtypesGettablePublicDasbhboardDTO;
+}
+
 export enum DashboardtypesPatchOpDTO {
 	add = 'add',
 	remove = 'remove',
@@ -5034,6 +5039,10 @@ export interface DashboardtypesListableDashboardForUserV2DTO {
 	/**
 	 * @type array
 	 */
+	reservedKeywords: string[];
+	/**
+	 * @type array
+	 */
 	tags: TagtypesGettableTagDTO[];
 	/**
 	 * @type integer
@@ -5098,6 +5107,10 @@ export interface DashboardtypesListableDashboardV2DTO {
 	 * @type array
 	 */
 	dashboards: DashboardtypesListedDashboardV2DTO[];
+	/**
+	 * @type array
+	 */
+	reservedKeywords: string[];
 	/**
 	 * @type array
 	 */
@@ -6918,6 +6931,29 @@ export interface LlmpricingruletypesGettablePricingRulesDTO {
 	 * @type integer
 	 */
 	total: number;
+}
+
+export interface LlmpricingruletypesUnmappedModelDTO {
+	/**
+	 * @type string
+	 */
+	modelName: string;
+	/**
+	 * @type string
+	 */
+	provider?: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	spanCount: number;
+}
+
+export interface LlmpricingruletypesGettableUnmappedModelsDTO {
+	/**
+	 * @type array,null
+	 */
+	items: LlmpricingruletypesUnmappedModelDTO[] | null;
 }
 
 export interface LlmpricingruletypesUpdatableLLMPricingRuleDTO {
@@ -10270,6 +10306,14 @@ export type GetLLMPricingRule200 = {
 	status: string;
 };
 
+export type ListUnmappedLLMModels200 = {
+	data: LlmpricingruletypesGettableUnmappedModelsDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type ListPromotedAndIndexedPaths200 = {
 	/**
 	 * @type array,null
@@ -11257,6 +11301,29 @@ export type GetMetricsTreemap200 = {
 
 export type GetMyOrganization200 = {
 	data: TypesOrganizationDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetPublicDashboardDataV2PathParameters = {
+	id: string;
+};
+export type GetPublicDashboardDataV2200 = {
+	data: DashboardtypesGettablePublicDashboardDataV2DTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetPublicDashboardPanelQueryRangeV2PathParameters = {
+	id: string;
+	key: string;
+};
+export type GetPublicDashboardPanelQueryRangeV2200 = {
+	data: Querybuildertypesv5QueryRangeResponseDTO;
 	/**
 	 * @type string
 	 */

@@ -55,6 +55,8 @@ export interface UsePanelQueryResult {
 	isLoading: boolean;
 	/** Any request in flight, including a background refetch over stale data — drives a "refreshing" affordance, never a blank panel. */
 	isFetching: boolean;
+	/** Showing a prior page's data (keepPreviousData) while the next page loads — list renderers swap in skeleton rows. */
+	isPreviousData: boolean;
 	error: Error | null;
 	/** Re-run the query (e.g. a retry button on the error state). */
 	refetch: () => void;
@@ -211,6 +213,8 @@ export function usePanelQuery({
 		requestPayload,
 		queryKey,
 		enabled: enabled && runnable,
+		// Hold the current page while the next loads (offset re-keys) so the pager doesn't flash.
+		keepPreviousData: isPaginated,
 	});
 
 	const queryClient = useQueryClient();
@@ -232,8 +236,8 @@ export function usePanelQuery({
 		[pageSize],
 	);
 
-	// Paging handles for raw/list panels. `canNext` is a heuristic (no total count on the wire):
-	// a full page or a response `nextCursor` implies more rows.
+	// Paging handles for raw/list panels. The backend sets `nextCursor` iff the page filled,
+	// so it's the authoritative has-more signal (there's no total count on the wire).
 	const pagination = useMemo<PanelPagination | undefined>(() => {
 		if (!isPaginated) {
 			return undefined;
@@ -246,11 +250,10 @@ export function usePanelQuery({
 		// `getRawResults` returns [] for a missing/non-raw response, so this stays
 		// defined and zero-rowed rather than throwing while data is absent.
 		const result = getRawResults(response.data)[0];
-		const rowCount = result?.rows?.length ?? 0;
 		return {
 			pageIndex: Math.floor(safeOffset / safePageSize),
 			canPrev: safeOffset > 0,
-			canNext: !!result?.nextCursor || rowCount >= safePageSize,
+			canNext: !!result?.nextCursor,
 			goPrev,
 			goNext,
 			pageSize: safePageSize,
@@ -271,6 +274,7 @@ export function usePanelQuery({
 		data,
 		isLoading: response.isLoading,
 		isFetching: response.isFetching,
+		isPreviousData: response.isPreviousData,
 		error: response.error ?? null,
 		refetch: response.refetch,
 		cancelQuery,
