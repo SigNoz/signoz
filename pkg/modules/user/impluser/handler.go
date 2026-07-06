@@ -588,7 +588,7 @@ func (handler *handler) SetRoleByUserID(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	if err := handler.setter.AddUserRole(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(userID), postableRole.Name); err != nil {
+	if _, err := handler.setter.AddUserRole(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(userID), postableRole.Name); err != nil {
 		render.Error(w, err)
 		return
 	}
@@ -641,4 +641,94 @@ func (handler *handler) GetUsersByRoleID(w http.ResponseWriter, r *http.Request)
 	}
 
 	render.Success(w, http.StatusOK, users)
+}
+
+func (handler *handler) CreateUserRole(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	req := new(authtypes.PostableUserRole)
+	if err := binding.JSON.BindBody(r.Body, req); err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	if req.UserID.String() == claims.UserID {
+		render.Error(w, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "users cannot call this api on self"))
+		return
+	}
+
+	userRole, err := handler.setter.AddUserRoleByRoleID(ctx, valuer.MustNewUUID(claims.OrgID), req.UserID, req.RoleID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	render.Success(w, http.StatusCreated, types.Identifiable{ID: userRole.ID})
+}
+
+func (handler *handler) GetUserRole(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	id, err := valuer.NewUUID(mux.Vars(r)["id"])
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	userRole, err := handler.getter.GetUserRoleByOrgIDAndID(ctx, valuer.MustNewUUID(claims.OrgID), id)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	render.Success(w, http.StatusOK, userRole)
+}
+
+func (handler *handler) DeleteUserRole(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	id, err := valuer.NewUUID(mux.Vars(r)["id"])
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	userRole, err := handler.getter.GetUserRoleByOrgIDAndID(ctx, valuer.MustNewUUID(claims.OrgID), id)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	if userRole.UserID.String() == claims.UserID {
+		render.Error(w, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "users cannot call this api on self"))
+		return
+	}
+
+	if err := handler.setter.RemoveUserRole(ctx, valuer.MustNewUUID(claims.OrgID), userRole.UserID, userRole.RoleID); err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	render.Success(w, http.StatusNoContent, nil)
 }
