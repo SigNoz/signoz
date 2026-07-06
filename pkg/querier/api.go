@@ -130,6 +130,8 @@ func (handler *handler) QueryRawStream(rw http.ResponseWriter, req *http.Request
 		return
 	}
 
+	queryRangeRequest.Normalize()
+
 	// Validate the query request
 	if err := queryRangeRequest.Validate(); err != nil {
 		render.Error(rw, err)

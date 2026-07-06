@@ -89,9 +89,7 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 	// Normalize Start/End to ms. UnmarshalJSON covers HTTP requests; callers
 	// that build the request programmatically skip it, so this is the catch-all
 	// (idempotent for the already-normalized path).
-	if err := req.Normalize(); err != nil {
-		return nil, err
-	}
+	req.Normalize()
 
 	tmplVars := req.Variables
 	if tmplVars == nil {
@@ -430,10 +428,7 @@ func (q *querier) QueryRawStream(ctx context.Context, orgID valuer.UUID, req *qb
 
 	// Catch-all normalization for programmatic callers (see QueryRange). End is
 	// 0 here for the open-ended stream, which Normalize leaves untouched.
-	if err := req.Normalize(); err != nil {
-		client.Error <- err
-		return
-	}
+	req.Normalize()
 
 	event := &qbtypes.QBEvent{
 		Version:         "v5",

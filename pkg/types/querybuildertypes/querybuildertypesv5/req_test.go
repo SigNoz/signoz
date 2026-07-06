@@ -1911,7 +1911,6 @@ func TestQueryRangeRequest_Normalize(t *testing.T) {
 		end       uint64
 		wantStart uint64
 		wantEnd   uint64
-		wantErr   bool
 	}{
 		{
 			name:      "seconds are scaled up to ms",
@@ -1948,25 +1947,70 @@ func TestQueryRangeRequest_Normalize(t *testing.T) {
 			wantStart: 1672531200000,
 			wantEnd:   0,
 		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &QueryRangeRequest{Start: tt.start, End: tt.end}
+			r.Normalize()
+			assert.Equal(t, tt.wantStart, r.Start)
+			assert.Equal(t, tt.wantEnd, r.End)
+		})
+	}
+}
+
+func TestQueryRangeRequest_ValidateTimeRange(t *testing.T) {
+	tests := []struct {
+		name    string
+		start   uint64
+		end     uint64
+		wantErr bool
+	}{
 		{
-			name:    "out-of-range timestamp is rejected",
-			start:   5_000_000_000_000, // ~year 2128 in ms, beyond the 2100 bound
-			end:     5_000_000_000_000,
+			name:  "in-range ms timestamps pass",
+			start: 1672531200000, // 2023-01-01
+			end:   1716638400000, // 2024-05-25
+		},
+		{
+			name:    "start below the 1990 bound is rejected",
+			start:   1000, // ~1970
+			end:     1716638400000,
+			wantErr: true,
+		},
+		{
+			name:    "end beyond the 2100 bound is rejected",
+			start:   1672531200000,
+			end:     5_000_000_000_000, // ~year 2128 in ms
 			wantErr: true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r := &QueryRangeRequest{Start: tt.start, End: tt.end}
-			err := r.Normalize()
+			r := &QueryRangeRequest{
+				Start:       tt.start,
+				End:         tt.end,
+				RequestType: RequestTypeTimeSeries,
+				CompositeQuery: CompositeQuery{
+					Queries: []QueryEnvelope{
+						{
+							Type: QueryTypeBuilder,
+							Spec: QueryBuilderQuery[LogAggregation]{
+								Name:         "A",
+								Signal:       telemetrytypes.SignalLogs,
+								Aggregations: []LogAggregation{{Expression: "count()"}},
+							},
+						},
+					},
+				},
+			}
+			err := r.Validate()
 			if tt.wantErr {
 				require.Error(t, err)
+				assert.Contains(t, err.Error(), "outside the supported range")
 				return
 			}
 			require.NoError(t, err)
-			assert.Equal(t, tt.wantStart, r.Start)
-			assert.Equal(t, tt.wantEnd, r.End)
 		})
 	}
 }

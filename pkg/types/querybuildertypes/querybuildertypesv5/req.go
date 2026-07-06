@@ -12,13 +12,6 @@ import (
 	"github.com/swaggest/jsonschema-go"
 )
 
-const (
-	// minEpochMs and maxEpochMs bound a plausible ms timestamp to
-	// 1990-01-01 .. 2100-01-01, used to reject malformed Start/End values.
-	minEpochMs uint64 = 631_152_000_000
-	maxEpochMs uint64 = 4_102_444_800_000
-)
-
 type QueryEnvelope struct {
 	// Type is the type of the query.
 	Type QueryType `json:"type"` // "builder_query" | "builder_formula" | "builder_sub_query" | "builder_join" | "promql" | "clickhouse_sql"
@@ -557,20 +550,11 @@ func (r *QueryRangeRequest) SkipFillGaps(name string) bool {
 }
 
 // Normalize coerces Start and End to epoch milliseconds, inferring the source
-// resolution (s/ms/µs/ns) from each value's magnitude, and rejects non-zero
-// values outside the plausible 1990-2100 range. Lets downstream consumers
-// assume ms regardless of what the caller sent.
-func (r *QueryRangeRequest) Normalize() error {
-	start, err := toMilliSecs(r.Start)
-	if err != nil {
-		return err
-	}
-	end, err := toMilliSecs(r.End)
-	if err != nil {
-		return err
-	}
-	r.Start, r.End = start, end
-	return nil
+// resolution (s/ms/µs/ns) from each value's magnitude. Lets downstream consumers
+// assume ms regardless of what the caller sent. This is a pure transformation;
+// range validation of the resulting values lives in Validate.
+func (r *QueryRangeRequest) Normalize() {
+	r.Start, r.End = toMilliSecs(r.Start), toMilliSecs(r.End)
 }
 
 func (r *QueryRangeRequest) UnmarshalJSON(data []byte) error {
@@ -632,10 +616,9 @@ func (r *QueryRangeRequest) UnmarshalJSON(data []byte) error {
 	// Copy the decoded values back to the original struct
 	*r = QueryRangeRequest(temp)
 
-	// Coerce Start/End to ms (and validate) at decode time for HTTP requests.
-	if err := r.Normalize(); err != nil {
-		return err
-	}
+	// Coerce Start/End to ms at decode time for HTTP requests. Range validation
+	// of the coerced values happens later in Validate.
+	r.Normalize()
 
 	return nil
 }
@@ -693,21 +676,16 @@ func (r *QueryRangeRequest) GetQueriesSupportingZeroDefault() map[string]bool {
 
 // toMilliSecs scales an epoch to milliseconds based on its magnitude: seconds are
 // scaled up, micro/nanoseconds down, milliseconds left as-is. Zero is returned
-// unchanged. A non-zero result outside 1990-2100 is rejected as malformed.
-func toMilliSecs(epoch uint64) (uint64, error) {
-	var ms uint64
+// unchanged.
+func toMilliSecs(epoch uint64) uint64 {
 	switch {
 	case epoch < 1e12: // seconds
-		ms = epoch * 1_000
+		return epoch * 1_000
 	case epoch < 1e15: // milliseconds
-		ms = epoch
+		return epoch
 	case epoch < 1e18: // microseconds
-		ms = epoch / 1_000
+		return epoch / 1_000
 	default: // nanoseconds
-		ms = epoch / 1_000_000
+		return epoch / 1_000_000
 	}
-	if epoch != 0 && (ms < minEpochMs || ms > maxEpochMs) {
-		return 0, errors.NewInvalidInputf(errors.CodeInvalidInput, "timestamp %d is outside the supported range (1990-2100)", epoch)
-	}
-	return ms, nil
 }
