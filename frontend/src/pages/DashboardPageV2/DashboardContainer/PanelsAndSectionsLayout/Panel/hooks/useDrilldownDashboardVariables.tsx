@@ -1,11 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { toast } from '@signozhq/ui/sonner';
-import { useGetDashboardV2 } from 'api/generated/services/dashboard';
-import {
-	type DashboardtypesListVariableSpecDTO,
-	DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDynamicVariableSpecDTOKind as DynamicPluginKind,
-	type TelemetrytypesSignalDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 import type { FilterData } from 'container/QueryTable/Drilldown/drilldownUtils';
 import { useQueryState } from 'nuqs';
 import {
@@ -18,6 +13,7 @@ import {
 	type VariableFormModel,
 } from 'pages/DashboardPageV2/DashboardContainer/DashboardSettings/Variables/variableFormModel';
 import { buildVariablesPatch } from 'pages/DashboardPageV2/DashboardContainer/DashboardSettings/Variables/variablePatchOps';
+import { useDashboardFetchRequired } from 'pages/DashboardPageV2/DashboardContainer/hooks/useDashboardFetchRequired';
 import { useOptimisticPatch } from 'pages/DashboardPageV2/DashboardContainer/hooks/useOptimisticPatch';
 import { selectVariableValues } from 'pages/DashboardPageV2/DashboardContainer/store/slices/variableSelectionSlice';
 import { useDashboardStore } from 'pages/DashboardPageV2/DashboardContainer/store/useDashboardStore';
@@ -69,23 +65,14 @@ export function useDrilldownDashboardVariables({
 	onClose,
 }: UseDrilldownDashboardVariablesArgs): UseDrilldownDashboardVariablesApi {
 	const dashboardId = useDashboardStore((state) => state.dashboardId);
-	// The generated hook already gates itself on `enabled: !!id`, so no manual guard is needed.
-	const { data } = useGetDashboardV2({ id: dashboardId });
-	const variables = data?.data.spec?.variables;
+	const { variables } = useDashboardFetchRequired();
 
 	const dynamicVariables = useMemo(
-		() =>
-			(variables ?? [])
-				.filter(
-					(v) =>
-						(v.spec as DashboardtypesListVariableSpecDTO).plugin?.kind ===
-						DynamicPluginKind['signoz/DynamicVariable'],
-				)
-				.map(dtoToFormModel),
+		() => variables.map(dtoToFormModel).filter((v) => v.type === 'DYNAMIC'),
 		[variables],
 	);
 	const existingNames = useMemo(
-		() => new Set((variables ?? []).map((v) => dtoToFormModel(v).name)),
+		() => new Set(variables.map((v) => dtoToFormModel(v).name)),
 		[variables],
 	);
 
@@ -136,7 +123,7 @@ export function useDrilldownDashboardVariables({
 			};
 			try {
 				await patchAsync(
-					buildVariablesPatch([...(variables ?? []), formModelToDto(model)]),
+					buildVariablesPatch([...variables, formModelToDto(model)]),
 				);
 				// Multi-select var → seed the value as an array (the selector renders scalars as empty).
 				setSelection(fieldName, { value: [fieldValue], allSelected: false });

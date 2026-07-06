@@ -6,9 +6,9 @@ import type { FilterData } from 'container/QueryTable/Drilldown/drilldownUtils';
 import DrilldownDashboardVariablesMenu from '../DrilldownMenu/DrilldownDashboardVariablesMenu';
 import { useDrilldownDashboardVariables } from '../hooks/useDrilldownDashboardVariables';
 
-// Fake dashboard variables + runtime selection, mutated per test. `dtoToFormModel` is mocked as
-// identity, so these DTOs carry both the plugin discriminant (for the dynamic filter) and the flat
-// form-model fields the hook reads.
+// Fake dashboard variables + runtime selection, mutated per test. `dtoToFormModel` is mocked to
+// derive `type` from the plugin kind (like the real adapter), so these DTOs carry the plugin
+// discriminant plus the flat form-model fields the hook reads.
 let mockVariables: Array<{
 	name: string;
 	dynamicAttribute?: string;
@@ -50,7 +50,13 @@ jest.mock(
 jest.mock(
 	'pages/DashboardPageV2/DashboardContainer/DashboardSettings/Variables/variableAdapters',
 	() => ({
-		dtoToFormModel: (dto: unknown): unknown => dto,
+		dtoToFormModel: (dto: {
+			spec?: { plugin?: { kind?: string } };
+		}): unknown => ({
+			...dto,
+			type:
+				dto.spec?.plugin?.kind === 'signoz/DynamicVariable' ? 'DYNAMIC' : 'QUERY',
+		}),
 		formModelToDto: (model: { name: string }): unknown => ({ dto: model.name }),
 	}),
 );
