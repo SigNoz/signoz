@@ -337,6 +337,9 @@ func (b *MetricQueryStatementBuilder) buildReducedTemporalAggregationCTE(
 	}
 
 	// dedup recomputed buckets: latest computed_at wins per (series, 60s bucket)
+	// TODO(srikanthccv): add _5m/_30m tables similar to samples_v4
+	// and wrie them up in querier before GA
+	// TODO(srikanthccv): FINAL clause for the reduced table.
 	dedup := sqlbuilder.NewSelectBuilder()
 	dedup.Select("points.reduced_fingerprint AS fingerprint", "points.unix_milli AS unix_milli")
 	for _, g := range query.GroupBy {
