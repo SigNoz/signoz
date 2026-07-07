@@ -1,9 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
+import { toast } from '@signozhq/ui/sonner';
 import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
 import cx from 'classnames';
 
 import settingsStyles from '../DashboardSettings.module.scss';
+import { useOptimisticPatch } from '../../hooks/useOptimisticPatch';
 import { useDashboardStore } from '../../store/useDashboardStore';
+import {
+	buildApplyVariableToPanelsPatch,
+	buildSyncVariableToPanelsPatch,
+	getPanelIdsReferencingVariable,
+} from './applyVariableToPanelsPatch';
 import { useSaveVariables } from './useSaveVariables';
 import { dtoToFormModel } from './variableAdapters';
 import {
@@ -14,6 +21,7 @@ import VariableForm from './VariableForm/VariableForm';
 import VariablesList from './VariablesList';
 import styles from './Variables.module.scss';
 import AddVariableButton from './components/AddVariableButton';
+import ApplyToAllDialog from './components/ApplyToAllDialog/ApplyToAllDialog';
 import NoVariablesCard from './components/NoVariablesCard/NoVariablesCard';
 import { EditingState } from './types';
 
@@ -29,6 +37,7 @@ function VariablesSettings({ dashboard }: VariablesSettingsProps): JSX.Element {
 		(s) => s.settingsRequest?.addVariable ?? false,
 	);
 	const { save, isSaving } = useSaveVariables();
+	const { patchAsync, isPatching } = useOptimisticPatch();
 
 	const initialFormModels = useMemo(
 		() => dashboard.spec.variables.map(dtoToFormModel),
@@ -49,6 +58,7 @@ function VariablesSettings({ dashboard }: VariablesSettingsProps): JSX.Element {
 	const [confirmDeleteIndex, setConfirmDeleteIndex] = useState<number | null>(
 		null,
 	);
+	const [applyToAllIndex, setApplyToAllIndex] = useState<number | null>(null);
 
 	const editingFormModel: VariableFormModel | null = useMemo(() => {
 		if (!isEditing) {
@@ -64,20 +74,64 @@ function VariablesSettings({ dashboard }: VariablesSettingsProps): JSX.Element {
 		return variables.filter((_, i) => i !== self);
 	}, [variables, isEditing]);
 
+	const panelOptions = useMemo(
+		() =>
+			Object.entries(dashboard.spec.panels ?? {}).map(([id, panel]) => ({
+				value: id,
+				label: panel.spec?.display?.name || id,
+			})),
+		[dashboard.spec.panels],
+	);
+
+	// Panels the edited variable is already applied to — pre-checks the picker.
+	const appliedPanelIds = useMemo(() => {
+		if (!editingFormModel || editingFormModel.type !== 'DYNAMIC') {
+			return [];
+		}
+		return getPanelIdsReferencingVariable(
+			dashboard.spec.panels,
+			editingFormModel.dynamicAttribute,
+			editingFormModel.name,
+		);
+	}, [editingFormModel, dashboard.spec.panels]);
+
 	const persist = (next: VariableFormModel[]): void => {
 		setVariables(next);
 		void save(next);
 	};
 
-	const handleFormSave = (Formmodel: VariableFormModel): void => {
+	const handleFormSave = (
+		formModel: VariableFormModel,
+		selectedPanelIds: string[],
+	): void => {
 		const next = [...variables];
 		if (isEditing?.type === 'new') {
-			next.push(Formmodel);
+			next.push(formModel);
 		} else if (isEditing?.type === 'edit') {
-			next[isEditing.index] = Formmodel;
+			next[isEditing.index] = formModel;
 		}
 		setIsEditing(null);
-		persist(next);
+		setVariables(next);
+		void (async (): Promise<void> => {
+			const saved = await save(next);
+			if (!saved || formModel.type !== 'DYNAMIC') {
+				return;
+			}
+			const ops = buildSyncVariableToPanelsPatch(
+				dashboard.spec.panels,
+				formModel.dynamicAttribute,
+				formModel.name,
+				selectedPanelIds,
+			);
+			if (ops.length === 0) {
+				return;
+			}
+			try {
+				await patchAsync(ops);
+			} catch {
+				toast.error('Could not update panels');
+			}
+		})();
 	};
 
 	const handleMove = (from: number, to: number): void => {
@@ -95,6 +149,32 @@ function VariablesSettings({ dashboard }: VariablesSettingsProps): JSX.Element {
 		setConfirmDeleteIndex(null);
 	};
 
+	const applyToAllVariable =
+		applyToAllIndex === null ? null : variables[applyToAllIndex];
+
+	const handleConfirmApplyToAll = async (): Promise<void> => {
+		if (!applyToAllVariable) {
+			return;
+		}
+		const ops = buildApplyVariableToPanelsPatch(
+			dashboard.spec.panels,
+			applyToAllVariable.dynamicAttribute,
+			applyToAllVariable.name,
+		);
+		if (ops.length === 0) {
+			toast.info('No panels needed this filter.');
+			setApplyToAllIndex(null);
+			return;
+		}
+		try {
+			await patchAsync(ops);
+			toast.success(`Applied $${applyToAllVariable.name} to all panels`);
+		} catch {
+			toast.error('Could not apply the variable to panels');
+		}
+		setApplyToAllIndex(null);
+	};
+
 	if (editingFormModel) {
 		return (
 			<VariableForm
@@ -102,6 +182,8 @@ function VariablesSettings({ dashboard }: VariablesSettingsProps): JSX.Element {
 				siblings={siblings}
 				isNew={isEditing?.type === 'new'}
 				isSaving={isSaving}
+				panelOptions={panelOptions}
+				appliedPanelIds={appliedPanelIds}
 				onClose={(): void => setIsEditing(null)}
 				onSave={handleFormSave}
 			/>
@@ -115,9 +197,6 @@ function VariablesSettings({ dashboard }: VariablesSettingsProps): JSX.Element {
 				<NoVariablesCard isEditable={isEditable} setIsEditing={setIsEditing} />
 			) : (
 				<>
-					<div className={styles.header}>
-						<AddVariableButton isEditable={isEditable} setIsEditing={setIsEditing} />
-					</div>
 					<VariablesList
 						variables={variables}
 						canEdit={isEditable}
@@ -127,9 +206,20 @@ function VariablesSettings({ dashboard }: VariablesSettingsProps): JSX.Element {
 						onConfirmDelete={handleConfirmDelete}
 						onCancelDelete={(): void => setConfirmDeleteIndex(null)}
 						onMove={handleMove}
+						onApplyToAll={(index): void => setApplyToAllIndex(index)}
 					/>
+					<div className={styles.footer}>
+						<AddVariableButton isEditable={isEditable} setIsEditing={setIsEditing} />
+					</div>
 				</>
 			)}
+			<ApplyToAllDialog
+				open={applyToAllVariable !== null}
+				variableName={applyToAllVariable?.name ?? ''}
+				isLoading={isPatching}
+				onConfirm={(): void => void handleConfirmApplyToAll()}
+				onClose={(): void => setApplyToAllIndex(null)}
+			/>
 		</div>
 	);
 }
