@@ -18,22 +18,16 @@ from fixtures.logger import setup_logger
 logger = setup_logger(__name__)
 
 
-ZEUS_NETWORK_ALIAS = "signoz-zeus-it"
-
-
 def create_zeus(
     network: Network,
     request: pytest.FixtureRequest,
     pytestconfig: pytest.Config,
     cache_key: str = "zeus",
-    alias: str | None = None,
 ) -> types.TestContainerDocker:
 
     def create() -> types.TestContainerDocker:
         container = WireMockContainer(image="wiremock/wiremock:2.35.1-1", secure=False)
         container.with_network(network)
-        if alias:
-            container.with_network_aliases(alias)
         container.start()
 
         return types.TestContainerDocker(
@@ -45,7 +39,7 @@ def create_zeus(
                     container.get_exposed_port(8080),
                 )
             },
-            container_configs={"8080": types.TestContainerUrlConfig("http", alias or container.get_wrapped_container().name, 8080)},
+            container_configs={"8080": types.TestContainerUrlConfig("http", container.get_wrapped_container().name, 8080)},
         )
 
     def delete(container: types.TestContainerDocker):

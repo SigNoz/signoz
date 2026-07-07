@@ -5,7 +5,8 @@ import pytest
 from testcontainers.core.container import Network
 
 from fixtures import types
-from fixtures.clickhouse import create_clickhouse_cluster, create_clickhouse_keeper
+from fixtures.clickhouse import create_clickhouse_cluster
+from fixtures.keeper import create_clickhouse_keeper
 
 CLICKHOUSE_VERSION = "25.12.5"
 

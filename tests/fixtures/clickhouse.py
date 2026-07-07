@@ -11,7 +11,7 @@ import docker
 import docker.errors
 import pytest
 from testcontainers.clickhouse import ClickHouseContainer
-from testcontainers.core.container import DockerContainer, Network
+from testcontainers.core.container import Network
 
 from fixtures import reuse, types
 from fixtures.logger import setup_logger
@@ -91,12 +91,14 @@ def render_remote_servers(shard_hosts: list[tuple[str, int]], secret: str | None
 
 
 def render_node_config(
-    zookeeper_address: str,
-    zookeeper_port: int,
+    keeper_address: str,
+    keeper_port: int,
     shard: str,
     remote_servers: str,
     distributed_ddl_path: str = "/clickhouse/task_queue/ddl",
 ) -> str:
+    # <zookeeper> is ClickHouse's config section name for any coordination
+    # service, including ClickHouse Keeper.
     return f"""
         <clickhouse>
             <logger>
@@ -118,8 +120,8 @@ def render_node_config(
 
             <zookeeper>
                 <node>
-                    <host>{zookeeper_address}</host>
-                    <port>{zookeeper_port}</port>
+                    <host>{keeper_address}</host>
+                    <port>{keeper_port}</port>
                 </node>
             </zookeeper>
 {remote_servers}
@@ -215,8 +217,8 @@ def create_clickhouse(  # pylint: disable=too-many-arguments,too-many-positional
         )
 
         cluster_config = render_node_config(
-            zookeeper_address=coordinator.address,
-            zookeeper_port=coordinator.port,
+            keeper_address=coordinator.address,
+            keeper_port=coordinator.port,
             shard="01",
             remote_servers=render_remote_servers([("127.0.0.1", 9000)]),
         )
@@ -324,7 +326,7 @@ def create_clickhouse(  # pylint: disable=too-many-arguments,too-many-positional
 def clickhouse(
     tmpfs: Generator[types.LegacyPath, Any],
     network: Network,
-    zookeeper: types.TestContainerDocker,
+    keeper: types.TestContainerDocker,
     request: pytest.FixtureRequest,
     pytestconfig: pytest.Config,
 ) -> types.TestContainerClickhouse:
@@ -334,40 +336,10 @@ def clickhouse(
     return create_clickhouse(
         tmpfs=tmpfs,
         network=network,
-        keeper=zookeeper,
+        keeper=keeper,
         request=request,
         pytestconfig=pytestconfig,
     )
-
-
-def local_series_counts(
-    node_conns: list[clickhouse_connect.driver.client.Client],
-    table: str,
-    metric_name: str,
-) -> list[int]:
-    """Distinct series per node via the LOCAL (non-distributed) table."""
-    return [
-        int(
-            conn.query(
-                f"SELECT count(DISTINCT fingerprint) FROM signoz_metrics.{table} WHERE metric_name = %(metric_name)s",
-                parameters={"metric_name": metric_name},
-            ).result_rows[0][0]
-        )
-        for conn in node_conns
-    ]
-
-
-def assert_spans_shards(
-    node_conns: list[clickhouse_connect.driver.client.Client],
-    table: str,
-    metric_name: str,
-    total: int,
-) -> None:
-    """Guard for distributed tests: a green run on a cluster proves nothing
-    unless the seeded series actually landed on more than one shard."""
-    counts = local_series_counts(node_conns, table, metric_name)
-    assert sum(counts) == total, f"expected {total} series in {table} across shards, got {counts}"
-    assert min(counts) > 0, f"seeded series in {table} all landed on one shard: {counts}"
 
 
 @pytest.fixture(name="clickhouse_node_conns", scope="function")
@@ -391,97 +363,6 @@ def clickhouse_node_conns(
         conn.close()
 
 
-KEEPER_CONFIG = """
-<clickhouse>
-    <listen_host>0.0.0.0</listen_host>
-    <keeper_server>
-        <tcp_port>9181</tcp_port>
-        <server_id>1</server_id>
-        <log_storage_path>/var/lib/clickhouse-keeper/coordination/log</log_storage_path>
-        <snapshot_storage_path>/var/lib/clickhouse-keeper/coordination/snapshots</snapshot_storage_path>
-        <coordination_settings>
-            <operation_timeout_ms>10000</operation_timeout_ms>
-            <session_timeout_ms>30000</session_timeout_ms>
-            <raft_logs_level>warning</raft_logs_level>
-        </coordination_settings>
-        <raft_configuration>
-            <server>
-                <id>1</id>
-                <hostname>localhost</hostname>
-                <port>9234</port>
-            </server>
-        </raft_configuration>
-    </keeper_server>
-</clickhouse>
-"""
-
-
-def create_clickhouse_keeper(
-    tmpfs: Generator[types.LegacyPath, Any],
-    network: Network,
-    request: pytest.FixtureRequest,
-    pytestconfig: pytest.Config,
-    cache_key: str = "clickhousekeeper",
-    version: str | None = None,
-) -> types.TestContainerDocker:
-
-    def create() -> types.TestContainerDocker:
-        keeper_version = version or request.config.getoption("--clickhouse-version")
-
-        tmp_dir = tmpfs(cache_key)
-        keeper_config_file_path = os.path.join(tmp_dir, "keeper_config.xml")
-        with open(keeper_config_file_path, "w", encoding="utf-8") as f:
-            f.write(KEEPER_CONFIG)
-
-        container = DockerContainer(image=f"clickhouse/clickhouse-keeper:{keeper_version}")
-        container.with_volume_mapping(keeper_config_file_path, "/etc/clickhouse-keeper/keeper_config.xml")
-        container.with_exposed_ports(9181)
-        container.with_network(network=network)
-
-        container.start()
-        return types.TestContainerDocker(
-            id=container.get_wrapped_container().id,
-            host_configs={
-                "9181": types.TestContainerUrlConfig(
-                    scheme="tcp",
-                    address=container.get_container_host_ip(),
-                    port=container.get_exposed_port(9181),
-                )
-            },
-            container_configs={
-                "9181": types.TestContainerUrlConfig(
-                    scheme="tcp",
-                    address=container.get_wrapped_container().name,
-                    port=9181,
-                )
-            },
-        )
-
-    def delete(container: types.TestContainerDocker):
-        client = docker.from_env()
-        try:
-            client.containers.get(container_id=container.id).stop()
-            client.containers.get(container_id=container.id).remove(v=True)
-        except docker.errors.NotFound:
-            logger.info(
-                "Skipping removal of ClickHouse Keeper, Keeper(%s) not found. Maybe it was manually removed?",
-                {"id": container.id},
-            )
-
-    def restore(cache: dict) -> types.TestContainerDocker:
-        return types.TestContainerDocker.from_cache(cache)
-
-    return reuse.wrap(
-        request,
-        pytestconfig,
-        cache_key,
-        lambda: types.TestContainerDocker(id="", host_configs={}, container_configs={}),
-        create,
-        delete,
-        restore,
-    )
-
-
 def create_clickhouse_cluster(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     tmpfs: Generator[types.LegacyPath, Any],
     network: Network,
@@ -500,8 +381,7 @@ def create_clickhouse_cluster(  # pylint: disable=too-many-arguments,too-many-po
 
     `conn`/`env` point at node 1 i.e the initiator every query-service query and
     migration goes through. Per-node containers are exposed via `nodes` so
-    tests can assert shard-local state. `keeper` is any coordination service
-    (ZooKeeper or ClickHouse Keeper).
+    tests can assert shard-local state.
     """
     coordinator = next(iter(keeper.container_configs.values()))
 
@@ -523,8 +403,8 @@ def create_clickhouse_cluster(  # pylint: disable=too-many-arguments,too-many-po
         try:
             for i, alias in enumerate(aliases, start=1):
                 node_config = render_node_config(
-                    zookeeper_address=coordinator.address,
-                    zookeeper_port=coordinator.port,
+                    keeper_address=coordinator.address,
+                    keeper_port=coordinator.port,
                     shard=f"{i:02d}",
                     remote_servers=remote_servers,
                     distributed_ddl_path=distributed_ddl_path,

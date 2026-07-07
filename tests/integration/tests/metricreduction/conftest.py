@@ -6,8 +6,8 @@ from testcontainers.core.container import Network
 
 from fixtures import types
 from fixtures.auth import register_admin
-from fixtures.clickhouse import create_clickhouse_cluster, create_clickhouse_keeper
-from fixtures.http import ZEUS_NETWORK_ALIAS, create_zeus
+from fixtures.clickhouse import create_clickhouse_cluster
+from fixtures.keeper import create_clickhouse_keeper
 from fixtures.migrator import create_migrator
 from fixtures.signoz import create_signoz
 
@@ -29,21 +29,6 @@ def keeper_metricreduction(
         pytestconfig=pytestconfig,
         cache_key="keeper_metricreduction",
         version=CLICKHOUSE_VERSION,
-    )
-
-
-@pytest.fixture(name="zeus", scope="package")
-def zeus_metricreduction(
-    network: Network,
-    request: pytest.FixtureRequest,
-    pytestconfig: pytest.Config,
-) -> types.TestContainerDocker:
-    return create_zeus(
-        network=network,
-        request=request,
-        pytestconfig=pytestconfig,
-        cache_key="zeus_metricreduction",
-        alias=ZEUS_NETWORK_ALIAS,
     )
 
 

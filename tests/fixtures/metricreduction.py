@@ -1,7 +1,39 @@
 import datetime
 from collections.abc import Sequence
 
+import clickhouse_connect.driver.client
+
 from fixtures.metrics import MetricsBufferSample, MetricsBufferTimeSeries
+
+
+def local_series_counts(
+    node_conns: list[clickhouse_connect.driver.client.Client],
+    table: str,
+    metric_name: str,
+) -> list[int]:
+    """Distinct series per node via the LOCAL (non-distributed) table."""
+    return [
+        int(
+            conn.query(
+                f"SELECT count(DISTINCT fingerprint) FROM signoz_metrics.{table} WHERE metric_name = %(metric_name)s",
+                parameters={"metric_name": metric_name},
+            ).result_rows[0][0]
+        )
+        for conn in node_conns
+    ]
+
+
+def assert_spans_shards(
+    node_conns: list[clickhouse_connect.driver.client.Client],
+    table: str,
+    metric_name: str,
+    total: int,
+) -> None:
+    """Guard for distributed tests: a green run on a cluster proves nothing
+    unless the seeded series actually landed on more than one shard."""
+    counts = local_series_counts(node_conns, table, metric_name)
+    assert sum(counts) == total, f"expected {total} series in {table} across shards, got {counts}"
+    assert min(counts) > 0, f"seeded series in {table} all landed on one shard: {counts}"
 
 
 def build_recent_gauge_data(

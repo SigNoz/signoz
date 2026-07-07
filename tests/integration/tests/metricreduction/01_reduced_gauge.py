@@ -6,7 +6,7 @@ import pytest
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
-from fixtures.clickhouse import assert_spans_shards
+from fixtures.metricreduction import assert_spans_shards
 from fixtures.metrics import (
     Metrics,
     MetricsReducedSampleLast60s,
