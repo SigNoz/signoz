@@ -28,8 +28,8 @@ export function useAutoSelect(
 		if (isValid) {
 			return;
 		}
-		const fallback = (variable.defaultValue as { value?: string } | undefined)
-			?.value;
+		const dv = variable.defaultValue;
+		const fallback = Array.isArray(dv) ? dv[0] : dv;
 		const initial =
 			fallback && options.includes(fallback) ? fallback : options[0];
 		onChange({
