@@ -8,6 +8,7 @@ import { useAppContext } from 'providers/App/App';
 import DashboardPageToolbar from './DashboardPageToolbar';
 import PanelsAndSectionsLayout from './PanelsAndSectionsLayout';
 import { useResolvedVariables } from './hooks/useResolvedVariables';
+import { useSyncVariablesForSuggestions } from './hooks/useSyncVariablesForSuggestions';
 import { useDashboardStore } from './store/useDashboardStore';
 import styles from './DashboardContainer.module.scss';
 import DashboardPageHeader from './components/DashboardPageHeader/DashboardPageHeader';
@@ -50,6 +51,10 @@ function DashboardContainer({
 	// Resolve the variable selection into the V5 query payload and publish it to
 	// the store, so each panel's query substitutes the bar's selected values.
 	useResolvedVariables(dashboard);
+
+	// Publish variables to the shared store so the query builder autocomplete
+	// suggests them ($variable) in the panel editor and dashboards-page builder.
+	useSyncVariablesForSuggestions(dashboard);
 
 	return (
 		<FullScreen handle={fullScreenHandle}>
