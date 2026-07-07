@@ -66,4 +66,17 @@ describe('LLMObservability (integration)', () => {
 			).toBeInTheDocument(),
 		);
 	});
+
+	it('defaults to the Model costs sub-tab and disables Unpriced models', async () => {
+		setupList();
+		render(<LLMObservability />, undefined, {
+			initialRoute: ROUTES.LLM_OBSERVABILITY_CONFIGURATION,
+		});
+
+		const modelCostsTab = await screen.findByRole('tab', {
+			name: 'Model costs',
+		});
+		expect(modelCostsTab).toHaveAttribute('data-state', 'active');
+		expect(screen.getByRole('tab', { name: /Unpriced models/ })).toBeDisabled();
+	});
 });

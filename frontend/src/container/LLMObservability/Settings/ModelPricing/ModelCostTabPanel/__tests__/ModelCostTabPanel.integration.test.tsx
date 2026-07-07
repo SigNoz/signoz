@@ -1,3 +1,4 @@
+import { LlmpricingruletypesLLMPricingRuleUnitDTO as UnitDTO } from 'api/generated/services/sigNoz.schemas';
 import { rest, server } from 'mocks-server/server';
 import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
 
@@ -225,5 +226,57 @@ describe('ModelCostTabPanel (integration)', () => {
 		).closest('tr') as HTMLElement;
 		expect(within(anthropicRow).getByText(/Cache Read/i)).toBeInTheDocument();
 		expect(within(anthropicRow).getByText(/Cache Write/i)).toBeInTheDocument();
+	});
+
+	it('formats per-million prices in the row', async () => {
+		setupList();
+		render(<ModelCostTabPanel />);
+
+		const openaiRow = (
+			await screen.findByTestId('model-cell-name-rule-openai')
+		).closest('tr') as HTMLElement;
+		// mockRules gpt-4o has input cost 3 → rendered as $3.00.
+		expect(within(openaiRow).getByText('$3.00')).toBeInTheDocument();
+	});
+
+	it('sends a normalized create payload when adding a rule', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		let body: Record<string, unknown> | null = null;
+		setupList();
+		server.use(
+			rest.put(LLM_PRICING_ENDPOINT, async (req, res, ctx) => {
+				body = await req.json();
+				return res(ctx.status(200), ctx.json({ status: 'success' }));
+			}),
+		);
+		render(<ModelCostTabPanel />);
+
+		await screen.findByTestId('model-cell-name-rule-openai');
+		await user.click(screen.getByTestId('add-model-cost-btn'));
+
+		// Leading/trailing whitespace should be trimmed off the model id.
+		await user.type(
+			await screen.findByTestId('drawer-model-id-input'),
+			'  gpt-4o-mini  ',
+		);
+		await user.type(screen.getByTestId('drawer-input-cost'), '3');
+		await user.type(screen.getByTestId('drawer-output-cost'), '9');
+		await user.click(screen.getByTestId('drawer-save-btn'));
+
+		await waitFor(() => expect(body).not.toBeNull());
+		// The create call submits a bulk `rules` array of normalized payloads.
+		const [payload] = (
+			body as unknown as {
+				rules: Record<string, unknown>[];
+			}
+		).rules;
+		expect(payload).toMatchObject({
+			modelName: 'gpt-4o-mini',
+			provider: 'OpenAI',
+			isOverride: true,
+			enabled: true,
+			unit: UnitDTO.per_million_tokens,
+			pricing: { input: 3, output: 9 },
+		});
 	});
 });
