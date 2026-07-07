@@ -79,6 +79,7 @@ function DashboardsList(): JSX.Element {
 		saveActiveView,
 		resetView,
 		removeView,
+		renameView,
 	} = useActiveView({
 		filters,
 		applyFilters,
@@ -289,8 +290,8 @@ function DashboardsList(): JSX.Element {
 				onSave={saveView}
 				onSaveChanges={saveActiveView}
 				onReset={handleResetView}
-				onClearFilters={handleClearAll}
 				onDelete={handleRemoveView}
+				onRename={renameView}
 			/>
 			<div className={styles.main}>
 				<div className={styles.mainScroll}>

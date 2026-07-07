@@ -51,6 +51,7 @@ export interface UseActiveViewResult {
 	saveActiveView: () => void;
 	resetView: () => void;
 	removeView: (id: string) => void;
+	renameView: (id: string, name: string) => void;
 }
 
 // The canonical filter snapshot a saved view "is": the backend stores a flat
@@ -200,6 +201,23 @@ export function useActiveView({
 		[deleteView, activeViewId, setActiveViewId, applyFilters],
 	);
 
+	// Rename only touches the view's name; its stored query/sort/order are preserved.
+	const renameView = useCallback(
+		(id: string, name: string): void => {
+			const view = customViews.find((v) => v.id === id);
+			if (!view) {
+				return;
+			}
+			updateView(id, {
+				name,
+				query: view.query,
+				sort: view.sort,
+				order: view.order,
+			});
+		},
+		[customViews, updateView],
+	);
+
 	return {
 		activeViewId,
 		builtinViews: BUILTIN_VIEWS,
@@ -214,5 +232,6 @@ export function useActiveView({
 		saveActiveView,
 		resetView,
 		removeView,
+		renameView,
 	};
 }
