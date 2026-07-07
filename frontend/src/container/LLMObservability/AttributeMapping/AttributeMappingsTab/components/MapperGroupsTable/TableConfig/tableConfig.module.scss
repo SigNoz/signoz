@@ -32,7 +32,7 @@
 
 .groupsTableFilterKey {
 	min-width: 0;
-	font-family: 'Geist Mono', monospace;
+	font-family: var(--font-mono, monospace);
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;

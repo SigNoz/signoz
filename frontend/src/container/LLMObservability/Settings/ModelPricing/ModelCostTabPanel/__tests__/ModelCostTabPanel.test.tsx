@@ -1,12 +1,17 @@
-import { rest, server } from 'mocks-server/server';
-import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
-
+import { LlmpricingruletypesLLMPricingRuleUnitDTO as UnitDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	TOAST_MODEL_COST_DELETED,
+	TOAST_MODEL_COST_UPDATED,
+} from 'container/LLMObservability/Settings/ModelPricing/constants';
 import {
 	LLM_PRICING_ENDPOINT,
 	LLM_PRICING_RULE_ENDPOINT,
 	makeListResponse,
 	mockRules,
-} from '../../__tests__/fixtures';
+} from 'container/LLMObservability/Settings/ModelPricing/__tests__/fixtures';
+import { rest, server } from 'mocks-server/server';
+import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
+
 import ModelCostTabPanel from '../ModelCostTabPanel';
 
 const toastSuccess = jest.fn();
@@ -27,14 +32,10 @@ function setupList(items = mockRules, total = items.length): void {
 	);
 }
 
-// The list panel keeps page/search/source in the URL via nuqs, which reads
-// window.location. jsdom shares that across tests in a file, so reset it.
 function resetUrl(): void {
 	window.history.pushState(null, '', '/');
 }
 
-// The row kebab is a DropdownMenuSimple trigger; its testId isn't forwarded, so
-// select it as the row's only button and open the Edit/Delete menu.
 async function openRowMenu(
 	user: ReturnType<typeof userEvent.setup>,
 	ruleId: string,
@@ -212,7 +213,7 @@ describe('ModelCostTabPanel (integration)', () => {
 
 		await waitFor(() => expect(deletedId).toBe('rule-openai'));
 		await waitFor(() =>
-			expect(toastSuccess).toHaveBeenCalledWith('Model cost deleted'),
+			expect(toastSuccess).toHaveBeenCalledWith(TOAST_MODEL_COST_DELETED),
 		);
 	});
 
@@ -225,5 +226,101 @@ describe('ModelCostTabPanel (integration)', () => {
 		).closest('tr') as HTMLElement;
 		expect(within(anthropicRow).getByText(/Cache Read/i)).toBeInTheDocument();
 		expect(within(anthropicRow).getByText(/Cache Write/i)).toBeInTheDocument();
+	});
+
+	it('formats per-million prices in the row', async () => {
+		setupList();
+		render(<ModelCostTabPanel />);
+
+		const openaiRow = (
+			await screen.findByTestId('model-cell-name-rule-openai')
+		).closest('tr') as HTMLElement;
+		// mockRules gpt-4o has input cost 3 → rendered as $3.00.
+		expect(within(openaiRow).getByText('$3.00')).toBeInTheDocument();
+	});
+
+	it('sends a normalized create payload when adding a rule', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		let body: Record<string, unknown> | null = null;
+		setupList();
+		server.use(
+			rest.put(LLM_PRICING_ENDPOINT, async (req, res, ctx) => {
+				body = await req.json();
+				return res(ctx.status(200), ctx.json({ status: 'success' }));
+			}),
+		);
+		render(<ModelCostTabPanel />);
+
+		await screen.findByTestId('model-cell-name-rule-openai');
+		await user.click(screen.getByTestId('add-model-cost-btn'));
+
+		// Leading/trailing whitespace should be trimmed off the model id.
+		await user.type(
+			await screen.findByTestId('drawer-model-id-input'),
+			'  gpt-4o-mini  ',
+		);
+		await user.type(screen.getByTestId('drawer-input-cost'), '3');
+		await user.type(screen.getByTestId('drawer-output-cost'), '9');
+		await user.click(screen.getByTestId('drawer-save-btn'));
+
+		await waitFor(() => expect(body).not.toBeNull());
+		// The create call submits a bulk `rules` array of normalized payloads.
+		const [payload] = (
+			body as unknown as {
+				rules: Record<string, unknown>[];
+			}
+		).rules;
+		expect(payload).toMatchObject({
+			modelName: 'gpt-4o-mini',
+			provider: 'OpenAI',
+			isOverride: true,
+			enabled: true,
+			unit: UnitDTO.per_million_tokens,
+			pricing: { input: 3, output: 9 },
+		});
+	});
+
+	it('sends an updated payload when editing a rule', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		let body: Record<string, unknown> | null = null;
+		setupList();
+		server.use(
+			rest.put(LLM_PRICING_ENDPOINT, async (req, res, ctx) => {
+				body = await req.json();
+				return res(ctx.status(200), ctx.json({ status: 'success' }));
+			}),
+		);
+		render(<ModelCostTabPanel />);
+
+		await screen.findByTestId('model-cell-name-rule-openai');
+		await openRowMenu(user, 'rule-openai');
+		await user.click(await screen.findByText('Edit'));
+
+		// Model id + provider are locked in edit mode; change the prefilled input cost.
+		const inputCost = await screen.findByTestId('drawer-input-cost');
+		await user.clear(inputCost);
+		await user.type(inputCost, '5');
+		await user.click(screen.getByTestId('drawer-save-btn'));
+
+		await waitFor(() => expect(body).not.toBeNull());
+		const [payload] = (
+			body as unknown as {
+				rules: Record<string, unknown>[];
+			}
+		).rules;
+		// Edit carries the rule id; disabled model/provider are still submitted and
+		// the edited price flows through, while output keeps its prefilled value.
+		expect(payload).toMatchObject({
+			id: 'rule-openai',
+			modelName: 'gpt-4o',
+			provider: 'OpenAI',
+			isOverride: true,
+			enabled: true,
+			unit: UnitDTO.per_million_tokens,
+			pricing: { input: 5, output: 9 },
+		});
+		await waitFor(() =>
+			expect(toastSuccess).toHaveBeenCalledWith(TOAST_MODEL_COST_UPDATED),
+		);
 	});
 });

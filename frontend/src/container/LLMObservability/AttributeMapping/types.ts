@@ -30,16 +30,6 @@ export interface SourceConfig {
 	operation: SpantypesSpanMapperOperationDTO;
 }
 
-// Editable form state for a mapper. `sources` is ordered highest priority
-// first; `fieldContext` is where the standardized target is written.
-export interface MapperDraft {
-	id: string | null;
-	name: string;
-	fieldContext: SpantypesFieldContextDTO;
-	sources: SourceConfig[];
-	enabled: boolean;
-}
-
 // Editable form state for a group. The group runs when a span carries a
 // span-attribute key matching `attributes` OR a resource key matching
 // `resource` (plain substring match).

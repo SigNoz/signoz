@@ -1,13 +1,13 @@
 import { safeNavigateMock } from '__tests__/safeNavigateMock';
 import ROUTES from 'constants/routes';
-import { rest, server } from 'mocks-server/server';
-import { render, screen, userEvent, waitFor } from 'tests/test-utils';
-
 import {
 	LLM_PRICING_ENDPOINT,
 	makeListResponse,
 	mockRules,
-} from '../Settings/ModelPricing/__tests__/fixtures';
+} from 'container/LLMObservability/Settings/ModelPricing/__tests__/fixtures';
+import { rest, server } from 'mocks-server/server';
+import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+
 import LLMObservability from '../LLMObservability';
 
 function setupList(items = mockRules): void {
