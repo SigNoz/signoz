@@ -6,7 +6,7 @@ import ContextMenu from 'periscope/components/ContextMenu';
 import PanelEditorQueryBuilder from 'pages/DashboardPageV2/DashboardContainer/PanelEditor/PanelEditorQueryBuilder/PanelEditorQueryBuilder';
 import PreviewPane from 'pages/DashboardPageV2/DashboardContainer/PanelEditor/PreviewPane/PreviewPane';
 import type { DashboardPreference } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/rendererProps';
-import { useDashboardStore } from 'pages/DashboardPageV2/DashboardContainer/store/useDashboardStore';
+import { useViewSessionStore } from 'pages/DashboardPageV2/DashboardContainer/store/useViewSessionStore';
 import { useOpenPanelEditor } from 'pages/DashboardPageV2/DashboardContainer/hooks/useOpenPanelEditor';
 
 import { useDrilldown } from '../hooks/useDrilldown';
@@ -72,7 +72,7 @@ function ViewPanelModalContent({
 	const openPanelEditor = useOpenPanelEditor();
 
 	// Publish the modal's local extender for the nested no-data state; cleared on close.
-	const setViewPanelExtendWindow = useDashboardStore(
+	const setViewPanelExtendWindow = useViewSessionStore(
 		(s) => s.setViewPanelExtendWindow,
 	);
 	useEffect(() => {
