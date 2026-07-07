@@ -8,10 +8,10 @@ import {
 	isSettled,
 	resolveFetchState,
 	unlockWaitingDynamicVariables,
-	type VariableFetchState,
+	VariableFetchState,
 } from './variableFetchSlice.utils';
 
-export type { VariableFetchState } from './variableFetchSlice.utils';
+export { VariableFetchState } from './variableFetchSlice.utils';
 
 /**
  * Runtime fetch orchestration for dashboard variables — native port of V1's
@@ -71,7 +71,7 @@ export const createVariableFetchSlice: StateCreator<
 		// Initialize new variables to idle, preserving existing states.
 		names.forEach((name) => {
 			if (!maps.states[name]) {
-				maps.states[name] = 'idle';
+				maps.states[name] = VariableFetchState.Idle;
 			}
 		});
 		// Drop entries for variables that no longer exist.
@@ -110,7 +110,7 @@ export const createVariableFetchSlice: StateCreator<
 			const parents = dependencyData.parentGraph[name] || [];
 			const hasQueryParents = parents.some((p) => variableTypes[p] === 'QUERY');
 			maps.states[name] = hasQueryParents
-				? 'waiting'
+				? VariableFetchState.Waiting
 				: resolveFetchState(maps, name);
 		});
 
@@ -120,7 +120,7 @@ export const createVariableFetchSlice: StateCreator<
 			maps.cycleIds[name] = (maps.cycleIds[name] || 0) + 1;
 			maps.states[name] = doAllQueryVariablesHaveValuesSelected
 				? resolveFetchState(maps, name)
-				: 'waiting';
+				: VariableFetchState.Waiting;
 		});
 
 		set({
@@ -133,7 +133,7 @@ export const createVariableFetchSlice: StateCreator<
 	onVariableFetchComplete: (name): void => {
 		const { variableFetchContext } = get();
 		const maps = cloneMaps(get());
-		maps.states[name] = 'idle';
+		maps.states[name] = VariableFetchState.Idle;
 		maps.lastUpdated[name] = Date.now();
 
 		if (variableFetchContext) {
@@ -141,7 +141,10 @@ export const createVariableFetchSlice: StateCreator<
 				variableFetchContext;
 			// Unblock waiting query-type children.
 			(dependencyData.graph[name] || []).forEach((child) => {
-				if (variableTypes[child] === 'QUERY' && maps.states[child] === 'waiting') {
+				if (
+					variableTypes[child] === 'QUERY' &&
+					maps.states[child] === VariableFetchState.Waiting
+				) {
 					maps.states[child] = resolveFetchState(maps, child);
 				}
 			});
@@ -164,7 +167,7 @@ export const createVariableFetchSlice: StateCreator<
 	onVariableFetchFailure: (name): void => {
 		const { variableFetchContext } = get();
 		const maps = cloneMaps(get());
-		maps.states[name] = 'error';
+		maps.states[name] = VariableFetchState.Error;
 
 		if (variableFetchContext) {
 			const { dependencyData, variableTypes, dynamicVariableOrder } =
@@ -172,7 +175,7 @@ export const createVariableFetchSlice: StateCreator<
 			// Query descendants can't proceed without this parent — idle them.
 			(dependencyData.transitiveDescendants[name] || []).forEach((desc) => {
 				if (variableTypes[desc] === 'QUERY') {
-					maps.states[desc] = 'idle';
+					maps.states[desc] = VariableFetchState.Idle;
 				}
 			});
 			if (
@@ -219,7 +222,7 @@ export const createVariableFetchSlice: StateCreator<
 			const allParentsSettled = parents.every((p) => isSettled(maps.states[p]));
 			maps.states[desc] = allParentsSettled
 				? resolveFetchState(maps, desc)
-				: 'waiting';
+				: VariableFetchState.Waiting;
 		});
 
 		// Dynamics implicitly depend on all query values: refetch now if the query
@@ -231,7 +234,7 @@ export const createVariableFetchSlice: StateCreator<
 				variableTypes,
 			)
 				? resolveFetchState(maps, dynName)
-				: 'waiting';
+				: VariableFetchState.Waiting;
 		});
 
 		set({
@@ -246,7 +249,7 @@ export const createVariableFetchSlice: StateCreator<
 export const selectVariableFetchState =
 	(name: string) =>
 	(state: DashboardStore): VariableFetchState =>
-		state.variableFetchStates[name] ?? 'idle';
+		state.variableFetchStates[name] ?? VariableFetchState.Idle;
 
 /** Selector: the current fetch cycle id for a single variable (defaults to 0). */
 export const selectVariableCycleId =

@@ -4,6 +4,7 @@ import {
 } from '../../../DashboardSettings/Variables/variableFormModel';
 import { deriveFetchContext } from '../../../VariablesBar/variableDependencies';
 import { useDashboardStore } from '../../useDashboardStore';
+import { VariableFetchState } from '../variableFetchSlice.utils';
 
 function model(overrides: Partial<VariableFormModel>): VariableFormModel {
 	return { ...emptyVariableFormModel(), ...overrides };
@@ -34,31 +35,43 @@ beforeEach(() => {
 
 describe('variableFetchSlice', () => {
 	it('initializes every variable to idle', () => {
-		expect(states()).toStrictEqual({ q1: 'idle', q2: 'idle', d1: 'idle' });
+		expect(states()).toStrictEqual({
+			q1: VariableFetchState.Idle,
+			q2: VariableFetchState.Idle,
+			d1: VariableFetchState.Idle,
+		});
 	});
 
 	it('enqueueFetchAll loads roots, waits dependents and (ungated) dynamics', () => {
 		store().enqueueFetchAll(false);
 		expect(states()).toStrictEqual({
-			q1: 'loading',
-			q2: 'waiting',
-			d1: 'waiting',
+			q1: VariableFetchState.Loading,
+			q2: VariableFetchState.Waiting,
+			d1: VariableFetchState.Waiting,
 		});
 		expect(store().variableCycleIds).toStrictEqual({ q1: 1, q2: 1, d1: 1 });
 	});
 
 	it('enqueueFetchAll loads dynamics immediately when query values exist', () => {
 		store().enqueueFetchAll(true);
-		expect(states().d1).toBe('loading');
+		expect(states().d1).toBe(VariableFetchState.Loading);
 	});
 
 	it('completing a parent unblocks its query child, then unlocks dynamics', () => {
 		store().enqueueFetchAll(false);
 		store().onVariableFetchComplete('q1');
-		expect(states()).toMatchObject({ q1: 'idle', q2: 'loading', d1: 'waiting' });
+		expect(states()).toMatchObject({
+			q1: VariableFetchState.Idle,
+			q2: VariableFetchState.Loading,
+			d1: VariableFetchState.Waiting,
+		});
 
 		store().onVariableFetchComplete('q2');
-		expect(states()).toMatchObject({ q1: 'idle', q2: 'idle', d1: 'loading' });
+		expect(states()).toMatchObject({
+			q1: VariableFetchState.Idle,
+			q2: VariableFetchState.Idle,
+			d1: VariableFetchState.Loading,
+		});
 	});
 
 	it('enqueueDescendants revalidates only descendants + dynamics', () => {
@@ -69,8 +82,8 @@ describe('variableFetchSlice', () => {
 
 		store().enqueueDescendants('q1');
 		// q2 depends on q1 (settled) → revalidates; d1 waits (q2 no longer settled).
-		expect(states().q2).toBe('revalidating');
-		expect(states().d1).toBe('waiting');
+		expect(states().q2).toBe(VariableFetchState.Revalidating);
+		expect(states().d1).toBe(VariableFetchState.Waiting);
 	});
 
 	it('enqueueDescendantsBatch bumps each descendant + dynamic exactly once', () => {
@@ -91,7 +104,7 @@ describe('variableFetchSlice', () => {
 	it('a failed parent idles its query descendants', () => {
 		store().enqueueFetchAll(false);
 		store().onVariableFetchFailure('q1');
-		expect(states().q1).toBe('error');
-		expect(states().q2).toBe('idle');
+		expect(states().q1).toBe(VariableFetchState.Error);
+		expect(states().q2).toBe(VariableFetchState.Idle);
 	});
 });

@@ -2,7 +2,7 @@ import {
 	selectVariableCycleId,
 	selectVariableFetchedOnce,
 	selectVariableFetchState,
-	type VariableFetchState,
+	VariableFetchState,
 } from '../store/slices/variableFetchSlice';
 import { useDashboardStore } from '../store/useDashboardStore';
 
@@ -36,9 +36,10 @@ export function useVariableFetchState(name: string): VariableFetchStateResult {
 		variableFetchState,
 		variableFetchCycleId,
 		isVariableFetching:
-			variableFetchState === 'loading' || variableFetchState === 'revalidating',
-		isVariableSettled: variableFetchState === 'idle',
-		isVariableWaiting: variableFetchState === 'waiting',
+			variableFetchState === VariableFetchState.Loading ||
+			variableFetchState === VariableFetchState.Revalidating,
+		isVariableSettled: variableFetchState === VariableFetchState.Idle,
+		isVariableWaiting: variableFetchState === VariableFetchState.Waiting,
 		hasVariableFetchedOnce,
 	};
 }
