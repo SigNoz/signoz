@@ -4,6 +4,10 @@ import type { CacheBucketDef, DrawerDraft } from './types';
 
 export const PAGE_SIZE = 20;
 
+export const TOAST_MODEL_COST_ADDED = 'Model cost added';
+export const TOAST_MODEL_COST_UPDATED = 'Model cost updated';
+export const TOAST_MODEL_COST_DELETED = 'Model cost deleted';
+
 export const PAGE_KEY = 'page';
 export const LIMIT_KEY = 'limit';
 export const SEARCH_KEY = 'search';
