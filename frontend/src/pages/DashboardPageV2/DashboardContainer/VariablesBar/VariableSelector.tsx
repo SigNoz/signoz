@@ -22,6 +22,8 @@ interface VariableSelectorProps {
 	selections: VariableSelectionMap;
 	selection: VariableSelection;
 	onChange: (selection: VariableSelection) => void;
+	/** Batched fill applied when options resolve (Query/Dynamic auto-selection). */
+	onAutoSelect: (selection: VariableSelection) => void;
 }
 
 /** One labelled variable control; dispatches on the variable type. */
@@ -31,6 +33,7 @@ function VariableSelector({
 	selections,
 	selection,
 	onChange,
+	onAutoSelect,
 }: VariableSelectorProps): JSX.Element {
 	const customOptions = useMemo(
 		() =>
@@ -61,6 +64,7 @@ function VariableSelector({
 						selections={selections}
 						selection={selection}
 						onChange={onChange}
+						onAutoSelect={onAutoSelect}
 					/>
 				);
 			case 'DYNAMIC':
@@ -71,6 +75,7 @@ function VariableSelector({
 						selections={selections}
 						selection={selection}
 						onChange={onChange}
+						onAutoSelect={onAutoSelect}
 					/>
 				);
 			case 'CUSTOM':

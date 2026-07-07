@@ -38,6 +38,12 @@ export interface VariableFetchSlice {
 	onVariableFetchFailure: (name: string) => void;
 	/** Cascade a value change to a variable's query descendants + the dynamics. */
 	enqueueDescendants: (name: string) => void;
+	/**
+	 * Batched value-change cascade: refresh the union of the given variables'
+	 * query descendants plus the dynamics, each exactly once. Used to collapse the
+	 * initial burst of auto-selections into a single downstream fetch.
+	 */
+	enqueueDescendantsBatch: (names: string[]) => void;
 }
 
 /** Snapshot the three fetch maps into mutable clones for a single action. */
@@ -185,25 +191,36 @@ export const createVariableFetchSlice: StateCreator<
 	},
 
 	enqueueDescendants: (name): void => {
+		get().enqueueDescendantsBatch([name]);
+	},
+
+	enqueueDescendantsBatch: (names): void => {
 		const { variableFetchContext } = get();
-		if (!variableFetchContext) {
+		if (!variableFetchContext || names.length === 0) {
 			return;
 		}
 		const { dependencyData, variableTypes, dynamicVariableOrder } =
 			variableFetchContext;
 		const maps = cloneMaps(get());
 
-		// Query descendants: refetch when all their parents are settled, else wait.
-		(dependencyData.transitiveDescendants[name] || [])
-			.filter((desc) => variableTypes[desc] === 'QUERY')
-			.forEach((desc) => {
-				maps.cycleIds[desc] = (maps.cycleIds[desc] || 0) + 1;
-				const parents = dependencyData.parentGraph[desc] || [];
-				const allParentsSettled = parents.every((p) => isSettled(maps.states[p]));
-				maps.states[desc] = allParentsSettled
-					? resolveFetchState(maps, desc)
-					: 'waiting';
+		// Union of the changed variables' query descendants, refreshed once each:
+		// refetch when all their parents are settled, else wait.
+		const queryDescendants = new Set<string>();
+		names.forEach((name) => {
+			(dependencyData.transitiveDescendants[name] || []).forEach((desc) => {
+				if (variableTypes[desc] === 'QUERY') {
+					queryDescendants.add(desc);
+				}
 			});
+		});
+		queryDescendants.forEach((desc) => {
+			maps.cycleIds[desc] = (maps.cycleIds[desc] || 0) + 1;
+			const parents = dependencyData.parentGraph[desc] || [];
+			const allParentsSettled = parents.every((p) => isSettled(maps.states[p]));
+			maps.states[desc] = allParentsSettled
+				? resolveFetchState(maps, desc)
+				: 'waiting';
+		});
 
 		// Dynamics implicitly depend on all query values: refetch now if the query
 		// variables are settled, otherwise wait for them.

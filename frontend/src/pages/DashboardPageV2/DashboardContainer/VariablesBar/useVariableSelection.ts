@@ -54,6 +54,12 @@ interface UseVariableSelection {
 	variables: VariableFormModel[];
 	selection: VariableSelectionMap;
 	setSelection: (name: string, selection: VariableSelection) => void;
+	/**
+	 * Auto-selection fill (default/first-option) applied when options arrive. Unlike
+	 * {@link UseVariableSelection.setSelection}, fills from the initial load burst are
+	 * coalesced into one store write + one downstream refresh.
+	 */
+	autoSelect: (name: string, selection: VariableSelection) => void;
 }
 
 /**
@@ -78,6 +84,9 @@ export function useVariableSelection(
 	const initVariableFetch = useDashboardStore((s) => s.initVariableFetch);
 	const enqueueFetchAll = useDashboardStore((s) => s.enqueueFetchAll);
 	const enqueueDescendants = useDashboardStore((s) => s.enqueueDescendants);
+	const enqueueDescendantsBatch = useDashboardStore(
+		(s) => s.enqueueDescendantsBatch,
+	);
 
 	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
@@ -146,5 +155,51 @@ export function useVariableSelection(
 		[dashboardId, setVariableValue, enqueueDescendants, setUrlValues],
 	);
 
-	return { variables, selection, setSelection };
+	// Coalesce the initial load burst of auto-selections: each selector fills its
+	// value as its options resolve (at different times). Collecting them into one
+	// store write + one `enqueueDescendantsBatch` means dependents re-fetch once
+	// with the settled parent values, instead of once per fill.
+	const pendingAutoFillRef = useRef<VariableSelectionMap>({});
+	const autoFillFrameRef = useRef<number | null>(null);
+
+	const flushAutoFills = useCallback((): void => {
+		autoFillFrameRef.current = null;
+		const fills = pendingAutoFillRef.current;
+		pendingAutoFillRef.current = {};
+		const names = Object.keys(fills);
+		if (names.length === 0 || !dashboardId) {
+			return;
+		}
+		setVariableValues(dashboardId, { ...selectionRef.current, ...fills });
+		void setUrlValues((prev) => {
+			const next = { ...(prev ?? {}) };
+			names.forEach((name) => {
+				const sel = fills[name];
+				next[name] = sel.allSelected ? ALL_SELECTED : sel.value;
+			});
+			return next;
+		});
+		enqueueDescendantsBatch(names);
+	}, [dashboardId, setVariableValues, setUrlValues, enqueueDescendantsBatch]);
+
+	const autoSelect = useCallback(
+		(name: string, next: VariableSelection): void => {
+			pendingAutoFillRef.current[name] = next;
+			if (autoFillFrameRef.current == null) {
+				autoFillFrameRef.current = requestAnimationFrame(flushAutoFills);
+			}
+		},
+		[flushAutoFills],
+	);
+
+	useEffect(
+		() => (): void => {
+			if (autoFillFrameRef.current != null) {
+				cancelAnimationFrame(autoFillFrameRef.current);
+			}
+		},
+		[],
+	);
+
+	return { variables, selection, setSelection, autoSelect };
 }

@@ -28,6 +28,8 @@ interface DynamicSelectorProps {
 	selections: VariableSelectionMap;
 	selection: VariableSelection;
 	onChange: (selection: VariableSelection) => void;
+	/** Batched auto-selection fill applied when options resolve. */
+	onAutoSelect: (selection: VariableSelection) => void;
 }
 
 /**
@@ -43,6 +45,7 @@ function DynamicSelector({
 	selections,
 	selection,
 	onChange,
+	onAutoSelect,
 }: DynamicSelectorProps): JSX.Element {
 	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
@@ -106,7 +109,7 @@ function DynamicSelector({
 		return sortValuesByOrder(values, variable.sort).map(String);
 	}, [data, variable.sort]);
 
-	useAutoSelect(variable, options, selection, onChange);
+	useAutoSelect(variable, options, selection, onAutoSelect);
 
 	return (
 		<ValueSelector

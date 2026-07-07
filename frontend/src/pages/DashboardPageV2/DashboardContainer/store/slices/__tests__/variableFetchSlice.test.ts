@@ -73,6 +73,21 @@ describe('variableFetchSlice', () => {
 		expect(states().d1).toBe('waiting');
 	});
 
+	it('enqueueDescendantsBatch bumps each descendant + dynamic exactly once', () => {
+		store().enqueueFetchAll(false);
+		store().onVariableFetchComplete('q1');
+		store().onVariableFetchComplete('q2');
+		store().onVariableFetchComplete('d1');
+		const before = { ...store().variableCycleIds };
+
+		// q1 and q2 auto-select together: q2 is a descendant of q1 but is also in
+		// the batch — it should still bump only once, as should the dynamic.
+		store().enqueueDescendantsBatch(['q1', 'q2']);
+		const after = store().variableCycleIds;
+		expect(after.q2).toBe(before.q2 + 1);
+		expect(after.d1).toBe(before.d1 + 1);
+	});
+
 	it('a failed parent idles its query descendants', () => {
 		store().enqueueFetchAll(false);
 		store().onVariableFetchFailure('q1');

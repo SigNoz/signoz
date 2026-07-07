@@ -24,6 +24,8 @@ interface QuerySelectorProps {
 	selections: VariableSelectionMap;
 	selection: VariableSelection;
 	onChange: (selection: VariableSelection) => void;
+	/** Batched auto-selection fill applied when options resolve. */
+	onAutoSelect: (selection: VariableSelection) => void;
 }
 
 /**
@@ -39,6 +41,7 @@ function QuerySelector({
 	selections,
 	selection,
 	onChange,
+	onAutoSelect,
 }: QuerySelectorProps): JSX.Element {
 	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
@@ -93,7 +96,7 @@ function QuerySelector({
 		).map(String);
 	}, [data, variable.sort]);
 
-	useAutoSelect(variable, options, selection, onChange);
+	useAutoSelect(variable, options, selection, onAutoSelect);
 
 	return (
 		<ValueSelector
