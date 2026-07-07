@@ -203,4 +203,47 @@ describe('useJsonEditor', () => {
 		rerender({ isOpen: true });
 		expect(result.current.draft).toBe(serialized);
 	});
+
+	it('reports panels not placed in any layout as dangling', () => {
+		const withDangling = {
+			...dashboard,
+			spec: { ...dashboard.spec, panels: { p1: {} }, layouts: [] },
+		} as unknown as DashboardtypesGettableDashboardV2DTO;
+		const { result } = renderHook(() =>
+			useJsonEditor({
+				dashboard: withDangling,
+				isOpen: true,
+				onApplied: jest.fn(),
+			}),
+		);
+
+		expect(result.current.danglingPanelIds).toStrictEqual(['p1']);
+		expect(result.current.missingPanelRefs).toStrictEqual([]);
+	});
+
+	it('reports layout refs to panels that no longer exist as missing', () => {
+		const withMissing = {
+			...dashboard,
+			spec: {
+				...dashboard.spec,
+				panels: {},
+				layouts: [
+					{
+						kind: 'Grid',
+						spec: { items: [{ content: { $ref: '#/spec/panels/ghost' } }] },
+					},
+				],
+			},
+		} as unknown as DashboardtypesGettableDashboardV2DTO;
+		const { result } = renderHook(() =>
+			useJsonEditor({
+				dashboard: withMissing,
+				isOpen: true,
+				onApplied: jest.fn(),
+			}),
+		);
+
+		expect(result.current.missingPanelRefs).toStrictEqual(['ghost']);
+		expect(result.current.danglingPanelIds).toStrictEqual([]);
+	});
 });
