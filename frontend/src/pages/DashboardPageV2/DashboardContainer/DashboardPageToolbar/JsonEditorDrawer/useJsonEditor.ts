@@ -1,11 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from '@signozhq/ui/sonner';
 import { updateDashboardV2 } from 'api/generated/services/dashboard';
-import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
+import type {
+	DashboardtypesDashboardSpecDTO,
+	DashboardtypesGettableDashboardV2DTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { toAPIError } from 'utils/errorUtils';
 
 import { dashboardToUpdatable } from './dashboardToUpdatable';
+import { findPanelLayoutIssues } from './danglingPanels';
 import { useDashboardStore } from '../../store/useDashboardStore';
 
 export interface JsonValidity {
@@ -28,6 +32,10 @@ interface Result {
 	validity: JsonValidity;
 	isDirty: boolean;
 	isSaving: boolean;
+	// Panel ids in the draft's `spec.panels` referenced by no layout — orphaned.
+	danglingPanelIds: string[];
+	// Panel ids a layout references that are missing from the draft's `spec.panels`.
+	missingPanelRefs: string[];
 	format: () => void;
 	reset: () => void;
 	apply: () => Promise<void>;
@@ -109,6 +117,23 @@ export function useJsonEditor({
 
 	const isDirty = draft !== appliedText;
 
+	const { danglingPanelIds, missingPanelRefs } = useMemo<{
+		danglingPanelIds: string[];
+		missingPanelRefs: string[];
+	}>(() => {
+		if (!validity.valid) {
+			return { danglingPanelIds: [], missingPanelRefs: [] };
+		}
+		try {
+			const parsed = JSON.parse(draft) as {
+				spec?: DashboardtypesDashboardSpecDTO;
+			};
+			return findPanelLayoutIssues(parsed.spec);
+		} catch {
+			return { danglingPanelIds: [], missingPanelRefs: [] };
+		}
+	}, [draft, validity.valid]);
+
 	const format = useCallback((): void => {
 		try {
 			setDraft(JSON.stringify(JSON.parse(draft), null, 2));
@@ -159,6 +184,8 @@ export function useJsonEditor({
 		validity,
 		isDirty,
 		isSaving,
+		danglingPanelIds,
+		missingPanelRefs,
 		format,
 		reset,
 		apply,
