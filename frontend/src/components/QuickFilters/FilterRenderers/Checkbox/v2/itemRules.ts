@@ -4,7 +4,6 @@ export enum SectionType {
 	SELECTED = 'selected',
 	RELATED = 'related',
 	ALL_VALUES = 'all_values',
-	SEARCH_RESULTS = 'search_results',
 }
 
 export interface BadgeConfig {

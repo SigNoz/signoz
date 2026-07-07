@@ -1,6 +1,3 @@
-import { Typography } from '@signozhq/ui/typography';
-import { LoaderCircle } from '@signozhq/icons';
-
 import {
 	IQuickFiltersConfig,
 	CheckedState,
@@ -22,8 +19,6 @@ function getSectionConfig(type: SectionType): SectionConfig | null {
 	switch (type) {
 		case SectionType.SELECTED:
 			return { label: 'Selected' };
-		case SectionType.SEARCH_RESULTS:
-			return { label: 'Search Results' };
 		case SectionType.RELATED:
 			return {
 				label: 'Related',
@@ -39,9 +34,6 @@ function getSectionConfig(type: SectionType): SectionConfig | null {
 interface CheckboxFilterV2SectionProps {
 	section: Section;
 	index: number;
-	searchText: string;
-	isLoading: boolean;
-	isFetching: boolean;
 	isFilterDisabled: boolean;
 	filter: IQuickFiltersConfig;
 	isSomeFilterPresentForCurrentAttribute: boolean;
@@ -61,9 +53,6 @@ export function CheckboxFilterV2Section(
 	const {
 		section,
 		index,
-		searchText,
-		isLoading,
-		isFetching,
 		isFilterDisabled,
 		filter,
 		isSomeFilterPresentForCurrentAttribute,
@@ -71,85 +60,47 @@ export function CheckboxFilterV2Section(
 		onChange,
 	} = props;
 
-	const isSearching = !!searchText;
-	const isEmpty = section.items.length === 0;
-
-	// Non-search mode: hide empty sections, no loading states
-	if (!isSearching && isEmpty) {
+	if (section.items.length === 0) {
 		return null;
 	}
 
 	const config = getSectionConfig(section.type);
 
-	// Show divider if:
-	// - Not the first section (when not searching and section is selected)
-	// - Or when searching (both selected and search results get dividers)
+	// Show divider for all sections except first SELECTED section
 	const showDivider =
-		config !== null &&
-		(isSearching || index > 0 || section.type !== SectionType.SELECTED);
-
-	const isSearchResultsSection = section.type === SectionType.SEARCH_RESULTS;
-
-	const renderItems = (): JSX.Element[] =>
-		section.items.map(({ value, badge, checkedState }) => {
-			const isChecked = checkedState === 'checked';
-
-			return (
-				<CheckboxFilterV2ValueRow
-					key={value}
-					value={value}
-					checkedState={checkedState}
-					disabled={isFilterDisabled}
-					title={filter.title}
-					badge={badge}
-					onlyButtonLabel={
-						isSomeFilterPresentForCurrentAttribute
-							? isChecked && !isMultipleValuesTrueForTheKey
-								? 'All'
-								: 'Only'
-							: 'Only'
-					}
-					customRendererForValue={filter.customRendererForValue}
-					onCheckboxChange={(checked, previousState): void =>
-						onChange(value, checked, false, previousState, section.type)
-					}
-					onOnlyOrAllClick={(): void => onChange(value, isChecked, true)}
-				/>
-			);
-		});
-
-	const renderSearchResultsContent = (): JSX.Element | JSX.Element[] => {
-		if (isLoading || isFetching) {
-			return (
-				<div
-					className={styles.noData}
-					data-testid="checkbox-filter-search-results-loading"
-				>
-					<LoaderCircle size={16} className={styles.searchSpinner} />
-				</div>
-			);
-		}
-
-		if (isEmpty) {
-			return (
-				<div
-					className={styles.noData}
-					data-testid="checkbox-filter-no-search-results"
-				>
-					<Typography.Text>No values found</Typography.Text>
-				</div>
-			);
-		}
-
-		return renderItems();
-	};
+		config !== null && (index > 0 || section.type !== SectionType.SELECTED);
 
 	return (
 		<div data-testid={`section-${section.type}`} className={styles.sectionValues}>
 			{showDivider && config && (
 				<SectionDivider label={config.label} tooltip={config.tooltip} />
 			)}
-			{isSearchResultsSection ? renderSearchResultsContent() : renderItems()}
+			{section.items.map(({ value, badge, checkedState }) => {
+				const isChecked = checkedState === 'checked';
+
+				return (
+					<CheckboxFilterV2ValueRow
+						key={value}
+						value={value}
+						checkedState={checkedState}
+						disabled={isFilterDisabled}
+						title={filter.title}
+						badge={badge}
+						onlyButtonLabel={
+							isSomeFilterPresentForCurrentAttribute
+								? isChecked && !isMultipleValuesTrueForTheKey
+									? 'All'
+									: 'Only'
+								: 'Only'
+						}
+						customRendererForValue={filter.customRendererForValue}
+						onCheckboxChange={(checked, previousState): void =>
+							onChange(value, checked, false, previousState, section.type)
+						}
+						onOnlyOrAllClick={(): void => onChange(value, isChecked, true)}
+					/>
+				);
+			})}
 		</div>
 	);
 }

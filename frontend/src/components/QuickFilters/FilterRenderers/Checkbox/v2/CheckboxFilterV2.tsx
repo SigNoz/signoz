@@ -130,7 +130,6 @@ export default function CheckboxFilterV2(
 		isSomeFilterPresentForCurrentAttribute,
 		isNotInOperator,
 		hasExistingQuery,
-		searchText,
 		visibleItemsCount,
 	});
 
@@ -178,9 +177,6 @@ export default function CheckboxFilterV2(
 									key={section.type}
 									section={section}
 									index={index}
-									searchText={searchText}
-									isLoading={isLoading}
-									isFetching={isFetching}
 									isFilterDisabled={isFilterDisabled}
 									filter={filter}
 									isSomeFilterPresentForCurrentAttribute={
@@ -193,8 +189,15 @@ export default function CheckboxFilterV2(
 						</section>
 					)}
 
-					{totalCount === 0 && !searchText && hasLoadedOnce.current && (
-						<section className={styles.noData} data-testid="checkbox-filter-empty">
+					{totalCount === 0 && hasLoadedOnce.current && !isFetching && (
+						<section
+							className={styles.noData}
+							data-testid={
+								searchText
+									? 'checkbox-filter-no-search-results'
+									: 'checkbox-filter-empty'
+							}
+						>
 							<Typography.Text>No values found</Typography.Text>
 						</section>
 					)}

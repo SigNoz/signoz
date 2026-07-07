@@ -17,7 +17,6 @@ describe('useSectionedValues', () => {
 		isSomeFilterPresentForCurrentAttribute: false,
 		isNotInOperator: false,
 		hasExistingQuery: false,
-		searchText: '',
 		visibleItemsCount: 10,
 	};
 
@@ -120,28 +119,24 @@ describe('useSectionedValues', () => {
 		expect(values).toStrictEqual(['apple', 'mango', 'zebra']);
 	});
 
-	describe('search mode', () => {
-		it('routes selected items to SELECTED, others to SEARCH_RESULTS', () => {
+	describe('filtered results from API', () => {
+		it('keeps items in their natural sections with filtered API results', () => {
 			const { result } = renderHook(() =>
 				useSectionedValues({
 					...baseInput,
 					hasExistingQuery: true,
 					isSomeFilterPresentForCurrentAttribute: true,
 					currentFilterState: { val1: true },
-					searchText: 'val',
 				}),
 			);
 
 			const sectionTypes = result.current.sections.map((s) => s.type);
 			expect(sectionTypes).toContain(SectionType.SELECTED);
-			expect(sectionTypes).toContain(SectionType.SEARCH_RESULTS);
-			expect(sectionTypes).not.toContain(SectionType.RELATED);
-			expect(sectionTypes).not.toContain(SectionType.ALL_VALUES);
+			expect(sectionTypes).toContain(SectionType.RELATED);
 		});
 
-		it('always includes SEARCH_RESULTS when searching for loading/empty feedback', () => {
-			// When there are no items at all, show empty SEARCH_RESULTS
-			const { result: emptyResult } = renderHook(() =>
+		it('returns empty sections array when no values', () => {
+			const { result } = renderHook(() =>
 				useSectionedValues({
 					...baseInput,
 					relatedValues: [],
@@ -149,35 +144,14 @@ describe('useSectionedValues', () => {
 					hasExistingQuery: true,
 					isSomeFilterPresentForCurrentAttribute: false,
 					currentFilterState: {},
-					searchText: 'xyz',
 				}),
 			);
 
-			const emptySearchResults = emptyResult.current.sections.find(
-				(s) => s.type === SectionType.SEARCH_RESULTS,
-			);
-			expect(emptySearchResults).toBeDefined();
-			expect(emptySearchResults?.items).toHaveLength(0);
-
-			// When items exist in SELECTED, still show empty SEARCH_RESULTS for feedback
-			const { result: withSelectedResult } = renderHook(() =>
-				useSectionedValues({
-					...baseInput,
-					relatedValues: [],
-					allValues: ['selected-val'],
-					hasExistingQuery: true,
-					isSomeFilterPresentForCurrentAttribute: true,
-					currentFilterState: { 'selected-val': true },
-					searchText: 'nomatch',
-				}),
-			);
-
-			const sectionTypes = withSelectedResult.current.sections.map((s) => s.type);
-			expect(sectionTypes).toContain(SectionType.SELECTED);
-			expect(sectionTypes).toContain(SectionType.SEARCH_RESULTS);
+			expect(result.current.sections).toHaveLength(0);
+			expect(result.current.totalCount).toBe(0);
 		});
 
-		it('non-selected items go to SEARCH_RESULTS during search', () => {
+		it('non-related items go to ALL_VALUES section', () => {
 			const { result } = renderHook(() =>
 				useSectionedValues({
 					...baseInput,
@@ -185,15 +159,123 @@ describe('useSectionedValues', () => {
 					allValues: ['other1', 'other2', 'other3'],
 					hasExistingQuery: true,
 					isSomeFilterPresentForCurrentAttribute: false,
-					searchText: 'search',
 				}),
 			);
 
-			const searchResultsSection = result.current.sections.find(
-				(s) => s.type === SectionType.SEARCH_RESULTS,
+			const allValuesSection = result.current.sections.find(
+				(s) => s.type === SectionType.ALL_VALUES,
 			);
-			// All items go to SEARCH_RESULTS (no filter = no selected)
-			expect(searchResultsSection?.items).toHaveLength(3);
+			expect(allValuesSection?.items).toHaveLength(3);
+		});
+
+		it('handles non-overlapping relatedValues and allValues correctly', () => {
+			// This tests the bug where different pod names in relatedValues vs allValues
+			// caused all items to go to ALL_VALUES instead of RELATED
+			const { result } = renderHook(() =>
+				useSectionedValues({
+					...baseInput,
+					relatedValues: ['pod-a-1', 'pod-b-1', 'pod-c-1'],
+					allValues: ['pod-a-2', 'pod-b-2', 'pod-c-2'],
+					hasExistingQuery: true,
+					isSomeFilterPresentForCurrentAttribute: false,
+				}),
+			);
+
+			const sectionTypes = result.current.sections.map((s) => s.type);
+
+			// RELATED section should exist with relatedValues items
+			expect(sectionTypes).toContain(SectionType.RELATED);
+			const relatedSection = result.current.sections.find(
+				(s) => s.type === SectionType.RELATED,
+			);
+			expect(relatedSection?.items).toHaveLength(3);
+			expect(relatedSection?.items.map((i) => i.value)).toStrictEqual(
+				expect.arrayContaining(['pod-a-1', 'pod-b-1', 'pod-c-1']),
+			);
+
+			// ALL_VALUES section should exist with allValues items
+			expect(sectionTypes).toContain(SectionType.ALL_VALUES);
+			const allValuesSection = result.current.sections.find(
+				(s) => s.type === SectionType.ALL_VALUES,
+			);
+			expect(allValuesSection?.items).toHaveLength(3);
+			expect(allValuesSection?.items.map((i) => i.value)).toStrictEqual(
+				expect.arrayContaining(['pod-a-2', 'pod-b-2', 'pod-c-2']),
+			);
+		});
+	});
+
+	describe('section ordering', () => {
+		it('sections appear in order: SELECTED → RELATED → ALL_VALUES', () => {
+			const { result } = renderHook(() =>
+				useSectionedValues({
+					...baseInput,
+					relatedValues: ['related1'],
+					allValues: ['all1'],
+					hasExistingQuery: true,
+					isSomeFilterPresentForCurrentAttribute: true,
+					currentFilterState: { selected1: true },
+				}),
+			);
+
+			const sectionTypes = result.current.sections.map((s) => s.type);
+
+			// Verify order
+			const selectedIdx = sectionTypes.indexOf(SectionType.SELECTED);
+			const relatedIdx = sectionTypes.indexOf(SectionType.RELATED);
+			const allValuesIdx = sectionTypes.indexOf(SectionType.ALL_VALUES);
+
+			expect(selectedIdx).toBeLessThan(relatedIdx);
+			expect(relatedIdx).toBeLessThan(allValuesIdx);
+		});
+
+		it('RELATED section appears before ALL_VALUES even with many items', () => {
+			const { result } = renderHook(() =>
+				useSectionedValues({
+					...baseInput,
+					relatedValues: ['r1', 'r2', 'r3', 'r4', 'r5'],
+					allValues: ['a1', 'a2', 'a3', 'a4', 'a5'],
+					hasExistingQuery: true,
+					isSomeFilterPresentForCurrentAttribute: false,
+					visibleItemsCount: 100,
+				}),
+			);
+
+			const sectionTypes = result.current.sections.map((s) => s.type);
+
+			expect(sectionTypes[0]).toBe(SectionType.RELATED);
+			expect(sectionTypes[1]).toBe(SectionType.ALL_VALUES);
+		});
+
+		it('visibleItemsCount limits total items across sections', () => {
+			const { result } = renderHook(() =>
+				useSectionedValues({
+					...baseInput,
+					relatedValues: ['r1', 'r2', 'r3'],
+					allValues: ['a1', 'a2', 'a3'],
+					hasExistingQuery: true,
+					isSomeFilterPresentForCurrentAttribute: false,
+					visibleItemsCount: 4,
+				}),
+			);
+
+			const totalItems = result.current.sections.reduce(
+				(sum, s) => sum + s.items.length,
+				0,
+			);
+			expect(totalItems).toBe(4);
+
+			// RELATED section should get priority (3 items)
+			const relatedSection = result.current.sections.find(
+				(s) => s.type === SectionType.RELATED,
+			);
+			expect(relatedSection?.items).toHaveLength(3);
+
+			// ALL_VALUES gets remaining (1 item)
+			const allValuesSection = result.current.sections.find(
+				(s) => s.type === SectionType.ALL_VALUES,
+			);
+			expect(allValuesSection?.items).toHaveLength(1);
 		});
 	});
 });

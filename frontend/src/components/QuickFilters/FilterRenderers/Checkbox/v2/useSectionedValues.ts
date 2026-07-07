@@ -10,7 +10,6 @@ interface SectionedValuesInput {
 	isSomeFilterPresentForCurrentAttribute: boolean;
 	isNotInOperator: boolean;
 	hasExistingQuery: boolean;
-	searchText: string;
 	visibleItemsCount: number;
 }
 
@@ -35,7 +34,6 @@ const SECTION_ORDER: SectionType[] = [
 	SectionType.SELECTED,
 	SectionType.RELATED,
 	SectionType.ALL_VALUES,
-	SectionType.SEARCH_RESULTS,
 ];
 
 function buildSelectedSet(
@@ -66,22 +64,21 @@ export function useSectionedValues({
 	isSomeFilterPresentForCurrentAttribute,
 	isNotInOperator,
 	hasExistingQuery,
-	searchText,
 	visibleItemsCount,
 }: SectionedValuesInput): SectionedValuesOutput {
 	const items = useMemo(() => {
-		const allUniqueValues = Array.from(new Set([...relatedValues, ...allValues]));
-		const valuesToProcess = searchText ? allValues : allUniqueValues;
-
 		const selectedSet = buildSelectedSet(
 			currentFilterState,
 			isSomeFilterPresentForCurrentAttribute,
 			isNotInOperator,
 		);
 
+		// Combine all values - API already filters both arrays by searchText
+		const allUniqueValues = Array.from(new Set([...relatedValues, ...allValues]));
+
 		// Include selected values at top - may not be in API response
 		const finalValues = [
-			...new Set([...Array.from(selectedSet), ...valuesToProcess]),
+			...new Set([...Array.from(selectedSet), ...allUniqueValues]),
 		];
 		const relatedSet = new Set(relatedValues);
 
@@ -97,7 +94,6 @@ export function useSectionedValues({
 		isSomeFilterPresentForCurrentAttribute,
 		isNotInOperator,
 		hasExistingQuery,
-		searchText,
 	]);
 
 	const sections = useMemo(() => {
@@ -107,24 +103,8 @@ export function useSectionedValues({
 			sectionMap.set(sectionType, []);
 		}
 
-		const isSearching = !!searchText;
-
 		for (const item of items) {
-			if (isSearching) {
-				// During search: only show SELECTED if there's an actual filter for this key
-				// Otherwise all items go to SEARCH_RESULTS
-				const keepInSelected =
-					isSomeFilterPresentForCurrentAttribute &&
-					item.section === SectionType.SELECTED;
-
-				if (keepInSelected) {
-					sectionMap.get(SectionType.SELECTED)?.push(item);
-				} else {
-					sectionMap.get(SectionType.SEARCH_RESULTS)?.push(item);
-				}
-			} else {
-				sectionMap.get(item.section)?.push(item);
-			}
+			sectionMap.get(item.section)?.push(item);
 		}
 
 		// Sort items within each section alphabetically
@@ -139,16 +119,12 @@ export function useSectionedValues({
 		for (const sectionType of SECTION_ORDER) {
 			const sectionItems = sectionMap.get(sectionType) || [];
 
-			// Always include SEARCH_RESULTS when searching (for loading/empty feedback)
-			const forceInclude =
-				isSearching && sectionType === SectionType.SEARCH_RESULTS;
-
-			if (sectionItems.length === 0 && !forceInclude) {
+			if (sectionItems.length === 0) {
 				continue;
 			}
 
 			const itemsToTake = Math.min(sectionItems.length, remaining);
-			if (itemsToTake === 0 && !forceInclude) {
+			if (itemsToTake === 0) {
 				break;
 			}
 
@@ -160,7 +136,7 @@ export function useSectionedValues({
 		}
 
 		return result;
-	}, [items, searchText, visibleItemsCount]);
+	}, [items, visibleItemsCount]);
 
 	return { sections, totalCount: items.length };
 }

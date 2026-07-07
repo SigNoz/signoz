@@ -157,7 +157,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 			});
 		});
 
-		it('shows search_results section when searching with existingQuery', async () => {
+		it('shows filtered results in all_values section when searching with existingQuery', async () => {
 			const user = userEvent.setup();
 
 			server.use(
@@ -197,7 +197,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 			await user.type(searchInput, 'prod');
 
 			await waitFor(() => {
-				expect(screen.getByTestId('section-search_results')).toBeInTheDocument();
+				expect(screen.getByTestId('section-all_values')).toBeInTheDocument();
 				expect(
 					screen.getByTestId('checkbox-value-row-prod-match'),
 				).toBeInTheDocument();
@@ -244,6 +244,127 @@ describe('CheckboxFilterV2 - interactions', () => {
 				expect(
 					screen.getByTestId('checkbox-filter-no-search-results'),
 				).toBeInTheDocument();
+			});
+		});
+
+		it('shows both RELATED and ALL_VALUES sections with non-overlapping values', async () => {
+			// This tests the bug fix where different pod names in relatedValues vs stringValues
+			// caused all items to go to ALL_VALUES instead of showing RELATED section
+			server.use(
+				rest.get('http://localhost/api/v1/fields/values', (req, res, ctx) =>
+					res(
+						ctx.status(200),
+						ctx.json({
+							status: 'success',
+							data: {
+								values: {
+									// Non-overlapping: different pod instances
+									relatedValues: ['pod-a-instance-1', 'pod-b-instance-1'],
+									stringValues: ['pod-a-instance-2', 'pod-b-instance-2'],
+									numberValues: [],
+								},
+							},
+						}),
+					),
+				),
+			);
+
+			render(
+				<CheckboxFilterV2
+					filter={DEFAULT_FILTER}
+					source={QuickFiltersSource.TRACES_EXPLORER}
+					useFieldApis={{
+						...DEFAULT_USE_FIELD_APIS,
+						existingQuery: 'service.name = "api"',
+					}}
+				/>,
+			);
+
+			// Wait for values to load
+			await screen.findByTestId('checkbox-value-row-pod-a-instance-1');
+
+			// RELATED section should exist with relatedValues
+			expect(screen.getByTestId('section-related')).toBeInTheDocument();
+			expect(
+				screen.getByTestId('checkbox-value-row-pod-a-instance-1'),
+			).toBeInTheDocument();
+			expect(
+				screen.getByTestId('checkbox-value-row-pod-b-instance-1'),
+			).toBeInTheDocument();
+
+			// ALL_VALUES section should exist with stringValues
+			expect(screen.getByTestId('section-all_values')).toBeInTheDocument();
+			expect(
+				screen.getByTestId('checkbox-value-row-pod-a-instance-2'),
+			).toBeInTheDocument();
+			expect(
+				screen.getByTestId('checkbox-value-row-pod-b-instance-2'),
+			).toBeInTheDocument();
+		});
+
+		it('shows both sections during search with filtered non-overlapping values', async () => {
+			const user = userEvent.setup();
+
+			server.use(
+				rest.get('http://localhost/api/v1/fields/values', (req, res, ctx) => {
+					const searchText = req.url.searchParams.get('searchText') || '';
+
+					// Simulate API filtering - both arrays filtered but remain non-overlapping
+					const relatedValues =
+						searchText === '' ? ['pod-a-v1', 'pod-b-v1', 'pod-c-v1'] : ['pod-a-v1']; // filtered to match 'pod-a'
+					const stringValues =
+						searchText === '' ? ['pod-a-v2', 'pod-b-v2', 'pod-c-v2'] : ['pod-a-v2']; // filtered to match 'pod-a'
+
+					return res(
+						ctx.status(200),
+						ctx.json({
+							status: 'success',
+							data: {
+								values: {
+									relatedValues,
+									stringValues,
+									numberValues: [],
+								},
+							},
+						}),
+					);
+				}),
+			);
+
+			render(
+				<CheckboxFilterV2
+					filter={DEFAULT_FILTER}
+					source={QuickFiltersSource.TRACES_EXPLORER}
+					useFieldApis={{
+						...DEFAULT_USE_FIELD_APIS,
+						existingQuery: 'service.name = "api"',
+					}}
+				/>,
+			);
+
+			await screen.findByTestId('checkbox-value-row-pod-a-v1');
+
+			const searchInput = screen.getByTestId('checkbox-filter-search');
+			await user.type(searchInput, 'pod-a');
+
+			// After search, both sections should still appear with filtered results
+			await waitFor(() => {
+				// RELATED section with filtered relatedValues
+				expect(screen.getByTestId('section-related')).toBeInTheDocument();
+				expect(
+					screen.getByTestId('checkbox-value-row-pod-a-v1'),
+				).toBeInTheDocument();
+
+				// ALL_VALUES section with filtered stringValues
+				expect(screen.getByTestId('section-all_values')).toBeInTheDocument();
+				expect(
+					screen.getByTestId('checkbox-value-row-pod-a-v2'),
+				).toBeInTheDocument();
+
+				// Other values should be filtered out
+				expect(
+					screen.queryByTestId('checkbox-value-row-pod-b-v1'),
+				).not.toBeInTheDocument();
 			});
 		});
 	});
