@@ -3,7 +3,7 @@ import { toast } from '@signozhq/ui/sonner';
 import { updateDashboardV2 } from 'api/generated/services/dashboard';
 import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
 import { useErrorModal } from 'providers/ErrorModalProvider';
-import APIError from 'types/api/error';
+import { toAPIError } from 'utils/errorUtils';
 
 import { dashboardToUpdatable } from './dashboardToUpdatable';
 import { useDashboardStore } from '../../store/useDashboardStore';
@@ -138,7 +138,7 @@ export function useJsonEditor({
 			refetch();
 			onApplied();
 		} catch (error) {
-			showErrorModal(error as APIError);
+			showErrorModal(toAPIError(error as Parameters<typeof toAPIError>[0]));
 		} finally {
 			setIsSaving(false);
 		}
