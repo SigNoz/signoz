@@ -23,6 +23,11 @@ interface VariablesSettingsProps {
 
 function VariablesSettings({ dashboard }: VariablesSettingsProps): JSX.Element {
 	const isEditable = useDashboardStore((s) => s.isEditable);
+	// The drawer destroys on close, so reading this once on mount is enough to
+	// open the add-form when deep-linked (e.g. the bar's "Add variable" button).
+	const openAddOnMount = useDashboardStore(
+		(s) => s.settingsRequest?.addVariable ?? false,
+	);
 	const { save, isSaving } = useSaveVariables();
 
 	const initialFormModels = useMemo(
@@ -38,7 +43,9 @@ function VariablesSettings({ dashboard }: VariablesSettingsProps): JSX.Element {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [dashboard.updatedAt]);
 
-	const [isEditing, setIsEditing] = useState<EditingState>(null);
+	const [isEditing, setIsEditing] = useState<EditingState>(
+		openAddOnMount && isEditable ? { type: 'new' } : null,
+	);
 	const [confirmDeleteIndex, setConfirmDeleteIndex] = useState<number | null>(
 		null,
 	);

@@ -1,4 +1,10 @@
-import { type ReactNode, useCallback, useMemo, useState } from 'react';
+import {
+	type ReactNode,
+	useCallback,
+	useEffect,
+	useMemo,
+	useState,
+} from 'react';
 import { FullScreenHandle } from 'react-full-screen';
 import { generatePath } from 'react-router-dom';
 import {
@@ -63,6 +69,8 @@ function DashboardActions({
 }: DashboardActionsProps): JSX.Element {
 	const canEditDashboard = useDashboardStore((s) => s.canEditDashboard);
 	const isLocked = useDashboardStore((s) => s.isLocked);
+	const settingsRequest = useDashboardStore((s) => s.settingsRequest);
+	const clearSettingsRequest = useDashboardStore((s) => s.clearSettingsRequest);
 	const { user } = useAppContext();
 	const { safeNavigate } = useSafeNavigate();
 	const { showErrorModal } = useErrorModal();
@@ -75,6 +83,14 @@ function DashboardActions({
 
 	const [isDeleteOpen, setIsDeleteOpen] = useState<boolean>(false);
 	const deleteDashboardMutation = useDeleteDashboard(dashboard.id);
+
+	// Open the settings drawer when something in the tree requests it (e.g. the
+	// variables bar's "Add variable" button).
+	useEffect(() => {
+		if (settingsRequest) {
+			setIsSettingsDrawerOpen(true);
+		}
+	}, [settingsRequest]);
 
 	const { addSection, isSaving: isAddingSection } = useAddSection({
 		layouts: dashboard.spec.layouts,
@@ -249,7 +265,11 @@ function DashboardActions({
 					<SettingsDrawer
 						drawerTitle="Dashboard Configuration"
 						isOpen={isSettingsDrawerOpen}
-						onClose={(): void => setIsSettingsDrawerOpen(false)}
+						destroyOnClose
+						onClose={(): void => {
+							setIsSettingsDrawerOpen(false);
+							clearSettingsRequest();
+						}}
 					>
 						<DashboardSettings dashboard={dashboard} />
 					</SettingsDrawer>

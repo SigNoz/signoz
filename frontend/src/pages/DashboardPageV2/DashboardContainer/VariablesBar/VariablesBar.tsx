@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { ChevronLeft } from '@signozhq/icons';
+import { ChevronLeft, Plus } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
 import cx from 'classnames';
 import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
 import { useInlineOverflowCount } from 'hooks/useInlineOverflowCount';
 
+import { useDashboardStore } from '../store/useDashboardStore';
 import type { VariableSelection } from './selectionTypes';
 import { useVariableSelection } from './useVariableSelection';
 import VariableSelector from './VariableSelector';
@@ -44,6 +45,8 @@ interface VariablesBarProps {
 function VariablesBar({ dashboard }: VariablesBarProps): JSX.Element | null {
 	const { variables, selection, setSelection, autoSelect } =
 		useVariableSelection(dashboard);
+	const isEditable = useDashboardStore((s) => s.isEditable);
+	const requestSettings = useDashboardStore((s) => s.requestSettings);
 	const [expanded, setExpanded] = useState(false);
 	const { containerRef, visibleCount, overflowCount } = useInlineOverflowCount({
 		itemCount: variables.length,
@@ -52,9 +55,27 @@ function VariablesBar({ dashboard }: VariablesBarProps): JSX.Element | null {
 		enabled: !expanded,
 	});
 
-	if (variables.length === 0) {
+	// Editors can add a variable even before any exist; viewers with no variables
+	// have nothing to show.
+	if (variables.length === 0 && !isEditable) {
 		return null;
 	}
+
+	const addVariableButton = isEditable ? (
+		<Button
+			variant="outlined"
+			color="secondary"
+			size="md"
+			className={styles.addVariable}
+			prefix={<Plus size={14} />}
+			testId="dashboard-variables-add"
+			onClick={(): void =>
+				requestSettings({ tab: 'Variables', addVariable: true })
+			}
+		>
+			Add variable
+		</Button>
+	) : null;
 
 	const hasOverflow = overflowCount > 0;
 	const hiddenVariables =
@@ -76,6 +97,7 @@ function VariablesBar({ dashboard }: VariablesBarProps): JSX.Element | null {
 
 	return (
 		<div className={styles.bar} data-testid="dashboard-variables-bar">
+			{addVariableButton}
 			<div
 				ref={containerRef}
 				className={cx(styles.strip, { [styles.stripExpanded]: expanded })}

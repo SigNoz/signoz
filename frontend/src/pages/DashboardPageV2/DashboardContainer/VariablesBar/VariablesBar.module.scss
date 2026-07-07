@@ -1,5 +1,13 @@
 .bar {
+	display: flex;
+	align-items: flex-start;
+	gap: 8px;
 	min-width: 0;
+}
+
+.addVariable {
+	flex: none;
+	border-style: dashed !important;
 }
 
 .strip {
