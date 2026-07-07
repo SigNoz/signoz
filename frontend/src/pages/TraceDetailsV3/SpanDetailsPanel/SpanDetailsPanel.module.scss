@@ -69,7 +69,7 @@
 	// Static count, not interactive — cancel the Badge's hover background change.
 	--badge-hover-background: var(--badge-background) !important;
 
-	margin-left: 6px;
+	margin-left: var(--spacing-3);
 	min-width: 18px;
 	height: 18px;
 	vertical-align: middle;
