@@ -13,6 +13,9 @@ interface ValueSelectorProps {
 	selection: VariableSelection;
 	onChange: (selection: VariableSelection) => void;
 	testId?: string;
+	/** Option-fetch error surfaced in the dropdown, with a retry action. */
+	errorMessage?: string | null;
+	onRetry?: () => void;
 }
 
 /**
@@ -28,6 +31,8 @@ function ValueSelector({
 	selection,
 	onChange,
 	testId,
+	errorMessage,
+	onRetry,
 }: ValueSelectorProps): JSX.Element {
 	const optionData = useMemo<OptionData[]>(
 		() => options.map((option) => ({ label: option, value: option })),
@@ -48,6 +53,8 @@ function ValueSelector({
 				options={optionData}
 				value={value}
 				loading={loading}
+				errorMessage={errorMessage}
+				onRetry={onRetry}
 				showSearch
 				placeholder="Select value"
 				enableAllSelection={showAllOption}
@@ -84,6 +91,8 @@ function ValueSelector({
 					: String(selection.value)
 			}
 			loading={loading}
+			errorMessage={errorMessage}
+			onRetry={onRetry}
 			showSearch
 			placeholder="Select value"
 			onChange={(next): void =>

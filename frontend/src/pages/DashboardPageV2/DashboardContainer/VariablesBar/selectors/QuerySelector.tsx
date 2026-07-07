@@ -62,7 +62,7 @@ function QuerySelector({
 		(s) => s.onVariableFetchFailure,
 	);
 
-	const { data, isFetching } = useQuery(
+	const { data, isFetching, error, refetch } = useQuery(
 		[
 			'dashboard-variable',
 			variable.name,
@@ -104,6 +104,10 @@ function QuerySelector({
 			multiSelect={variable.multiSelect}
 			showAllOption={variable.showAllOption}
 			loading={isFetching || isVariableWaiting}
+			errorMessage={error ? (error as Error).message || null : null}
+			onRetry={(): void => {
+				void refetch();
+			}}
 			selection={selection}
 			onChange={onChange}
 			testId={`variable-select-${variable.name}`}
