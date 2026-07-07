@@ -48,6 +48,10 @@ jest.mock('../hooks/usePanelEditorSave', () => ({
 jest.mock('../hooks/useSwitchColumnsOnSignalChange', () => ({
 	useSwitchColumnsOnSignalChange: jest.fn(),
 }));
+const mockOnSwitchToView = jest.fn();
+jest.mock('../hooks/useSwitchToViewMode', () => ({
+	useSwitchToViewMode: (): (() => void) => mockOnSwitchToView,
+}));
 jest.mock('../hooks/useSeedNewListColumns', () => ({
 	useSeedNewListColumns: jest.fn(),
 }));
@@ -138,13 +142,16 @@ jest.mock('../ListColumnsEditor/ListColumnsEditor', () => ({
 	default: (): JSX.Element => <div data-testid="list-columns" />,
 }));
 
-function makePanel(kind: string): DashboardtypesPanelDTO {
+function makePanel(
+	kind: string,
+	queries: unknown[] = [],
+): DashboardtypesPanelDTO {
 	return {
 		kind: 'Panel',
 		spec: {
 			display: { name: 'CPU' },
 			plugin: { kind, spec: {} },
-			queries: [],
+			queries,
 		},
 	} as unknown as DashboardtypesPanelDTO;
 }
@@ -159,12 +166,13 @@ const baseProps = {
 function setup(
 	panel: DashboardtypesPanelDTO,
 	overrides?: Partial<React.ComponentProps<typeof PanelEditorContainer>>,
+	draftOverrides?: { isSpecDirty?: boolean },
 ): void {
 	mockUseDraft.mockReturnValue({
 		draft: panel,
 		spec: panel.spec,
 		setSpec: mockSetSpec,
-		isSpecDirty: false,
+		isSpecDirty: draftOverrides?.isSpecDirty ?? false,
 	});
 	mockUseQuery.mockReturnValue({
 		data: { response: undefined },
@@ -240,12 +248,38 @@ describe('PanelEditorContainer composition', () => {
 		);
 	});
 
-	it('marks a new panel dirty and always serializes its query', () => {
+	it('keeps a query-less new panel unsaveable but still serializes its seed query', () => {
 		setup(makePanel('signoz/TimeSeriesPanel'), { isNew: true });
 
 		expect(mockUseQuerySync).toHaveBeenCalledWith(
 			expect.objectContaining({ alwaysSerializeQuery: true }),
 		);
+		// No query and no edits yet → nothing to save, so Save stays disabled.
+		expect(mockHeaderProps).toHaveBeenCalledWith(
+			expect.objectContaining({ isDirty: false }),
+		);
+	});
+
+	it('marks a new panel that already has a query saveable (e.g. list auto-runs one)', () => {
+		const seededQuery = {
+			spec: { plugin: { kind: 'signoz/BuilderQuery', spec: { signal: 'logs' } } },
+		};
+		setup(makePanel('signoz/ListPanel', [seededQuery]), { isNew: true });
+
+		expect(mockHeaderProps).toHaveBeenCalledWith(
+			expect.objectContaining({ isDirty: true }),
+		);
+	});
+
+	it('marks a new panel dirty once the user edits its spec', () => {
+		setup(
+			makePanel('signoz/TimeSeriesPanel'),
+			{ isNew: true },
+			{
+				isSpecDirty: true,
+			},
+		);
+
 		expect(mockHeaderProps).toHaveBeenCalledWith(
 			expect.objectContaining({ isDirty: true }),
 		);
@@ -258,8 +292,28 @@ describe('PanelEditorContainer composition', () => {
 		await userEvent.click(screen.getByTestId('editor-save'));
 
 		await waitFor(() => expect(baseProps.onSaved).toHaveBeenCalled());
+
 		expect(mockBuildSaveSpec).toHaveBeenCalledWith(panel.spec);
 		expect(mockSave).toHaveBeenCalledWith(panel.spec);
+	});
+
+	it('offers Switch to View Mode for an existing panel', () => {
+		setup(makePanel('signoz/TimeSeriesPanel'));
+
+		expect(mockHeaderProps).toHaveBeenCalledWith(
+			expect.objectContaining({
+				showSwitchToView: true,
+				onSwitchToView: expect.any(Function),
+			}),
+		);
+	});
+
+	it('hides Switch to View Mode for a new (unsaved) panel', () => {
+		setup(makePanel('signoz/TimeSeriesPanel'), { isNew: true });
+
+		expect(mockHeaderProps).toHaveBeenCalledWith(
+			expect.objectContaining({ showSwitchToView: false }),
+		);
 	});
 
 	it('renders the list-columns editor only for list panels', () => {
