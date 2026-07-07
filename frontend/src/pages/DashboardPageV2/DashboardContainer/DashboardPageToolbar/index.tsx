@@ -63,8 +63,13 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 	const { user } = useAppContext();
 	const { showErrorModal } = useErrorModal();
 	const { patchAsync } = useOptimisticPatch();
-	const { isPickerOpen, openPicker, closePicker, createPanel } =
-		useCreatePanel();
+	const {
+		isPickerOpen,
+		openPicker,
+		closePicker,
+		createPanel,
+		targetLayoutIndex,
+	} = useCreatePanel();
 
 	const isAuthor =
 		!!user?.email && !!dashboard.createdBy && dashboard.createdBy === user.email;
@@ -183,6 +188,7 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 				open={isPickerOpen}
 				onClose={closePicker}
 				onSelect={createPanel}
+				defaultLayoutIndex={targetLayoutIndex}
 			/>
 		</section>
 	);

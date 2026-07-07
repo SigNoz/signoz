@@ -14,6 +14,7 @@ import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import { isEmpty } from 'lodash-es';
+import { linkifyText } from 'utils/linkifyText';
 import { openInNewTab } from 'utils/navigation';
 
 import styles from './DashboardInfo.module.scss';
@@ -143,7 +144,14 @@ function DashboardInfo({
 			)}
 
 			{hasDescription && (
-				<TooltipSimple title={description} disableHoverableContent>
+				<TooltipSimple
+					side="bottom"
+					title={
+						<span className={styles.descriptionTooltip}>
+							{linkifyText(description)}
+						</span>
+					}
+				>
 					<SolidInfoCircle
 						className={styles.descriptionIcon}
 						size={14}

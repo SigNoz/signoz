@@ -10,6 +10,8 @@ import { formatPanelValue } from '../../utils/formatPanelValue';
 import { getColumnUnit } from '../../utils/getColumnUnit';
 import { toPanelThreshold } from '../../utils/mapComparisonThreshold';
 
+import styles from './TablePanel.module.scss';
+
 /** A prepared scalar-table row flattened for the antd Table, with the antd key. */
 export type TableRowData = Record<string, unknown> & { key: number };
 
@@ -120,7 +122,7 @@ export function buildTableColumns({
 				if (onCellClick) {
 					cellProps.onClick = (event): void =>
 						onCellClick({ columnId: key, record, event });
-					cellProps.style = { ...cellProps.style, cursor: 'pointer' };
+					cellProps.className = styles.clickableCell;
 				}
 
 				return cellProps;
