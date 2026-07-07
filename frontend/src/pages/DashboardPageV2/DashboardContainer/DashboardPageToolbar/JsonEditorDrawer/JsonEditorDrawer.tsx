@@ -60,6 +60,7 @@ function JsonEditorDrawer({
 
 	const onKeyDown = useCallback(
 		(event: KeyboardEvent<HTMLDivElement>): void => {
+			event.stopPropagation();
 			if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
 				event.preventDefault();
 				void apply();
