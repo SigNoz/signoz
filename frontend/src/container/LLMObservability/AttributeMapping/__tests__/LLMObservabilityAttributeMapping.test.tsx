@@ -34,7 +34,7 @@ describe('LLMObservabilityAttributeMapping', () => {
 		render(<LLMObservabilityAttributeMapping />);
 
 		expect(
-			screen.getByRole('tab', { name: 'Attribute mappings' }),
+			screen.getByRole('tab', { name: 'Attribute Mappings' }),
 		).toBeInTheDocument();
 		expect(screen.getByRole('tab', { name: 'Test' })).toBeInTheDocument();
 	});
@@ -43,7 +43,7 @@ describe('LLMObservabilityAttributeMapping', () => {
 		render(<LLMObservabilityAttributeMapping />);
 
 		const attributeMappingsTab = screen.getByRole('tab', {
-			name: 'Attribute mappings',
+			name: 'Attribute Mappings',
 		});
 		expect(attributeMappingsTab).toHaveAttribute('data-state', 'active');
 		await expect(

@@ -116,11 +116,7 @@ export function getMappersColumns({
 						onChange={(checked): void => onToggle(row.localId, checked)}
 						testId={`mapper-enabled-${row.localId}`}
 					/>
-					<MapperActionsMenu
-						mapper={row}
-						onEdit={onEdit}
-						onRemove={onRemove}
-					/>
+					<MapperActionsMenu mapper={row} onEdit={onEdit} onRemove={onRemove} />
 				</div>
 			),
 		},

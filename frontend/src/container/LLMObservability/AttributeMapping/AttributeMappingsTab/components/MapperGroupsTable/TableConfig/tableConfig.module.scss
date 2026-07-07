@@ -5,16 +5,17 @@
 }
 
 .groupsTableName {
-	font-weight: var(--font-weight-semibold);
+	color: var(--l1-foreground);
 }
 
 .groupsTableFilters {
 	display: flex;
 	flex-direction: column;
-	gap: var(--spacing-3);
+	gap: var(--spacing-4);
 	// Allow this column to shrink within the cell so long keys wrap
 	// instead of forcing the cell wider than its allotted width.
 	min-width: 0;
+	margin: var(--spacing-4);
 }
 
 .groupsTableFilter {

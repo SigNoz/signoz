@@ -42,6 +42,19 @@ function MapperGroupsTable({
 
 	return (
 		<div className={styles.groupsTableWrapper}>
+			<div className={styles.addRowWrapper}>
+				<Button
+					variant="link"
+					color="primary"
+					prefix={<Plus size={14} />}
+					className={styles.addRow}
+					onClick={onAddGroup}
+					testId="add-group-row"
+					disabled={store.isLoading}
+				>
+					Add a new group
+				</Button>
+			</div>
 			{isEmpty ? (
 				<div className={styles.tableEmpty} data-testid="mapper-groups-empty">
 					No mapping groups yet.
@@ -61,18 +74,6 @@ function MapperGroupsTable({
 					testId="mapper-groups-table"
 				/>
 			)}
-
-			<Button
-				variant="link"
-				color="primary"
-				prefix={<Plus size={14} />}
-				className={styles.addRow}
-				onClick={onAddGroup}
-				testId="add-group-row"
-				disabled={store.isLoading}
-			>
-				Add a new group
-			</Button>
 		</div>
 	);
 }

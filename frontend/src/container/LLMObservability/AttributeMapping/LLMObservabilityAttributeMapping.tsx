@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { Divider } from '@signozhq/ui/divider';
 import { Tabs } from '@signozhq/ui/tabs';
 
 import AttributeMappingHeader from './components/AttributeMappingHeader';
@@ -27,7 +28,7 @@ function LLMObservabilityAttributeMapping(): JSX.Element {
 	const tabItems = [
 		{
 			key: 'attribute-mappings',
-			label: 'Attribute mappings',
+			label: 'Attribute Mappings',
 			children: (
 				<AttributeMappingsTab
 					store={store}
@@ -62,6 +63,7 @@ function LLMObservabilityAttributeMapping(): JSX.Element {
 					{store.saveError}
 				</div>
 			)}
+			<Divider />
 
 			<Tabs
 				testId="attribute-mapping-tabs"

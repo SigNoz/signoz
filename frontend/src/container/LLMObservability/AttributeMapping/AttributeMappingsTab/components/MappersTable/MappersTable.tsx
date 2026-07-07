@@ -115,19 +115,20 @@ function MappersTable({ group, store }: MappersTableProps): JSX.Element {
 			animate={{ height: 'auto', opacity: 1 }}
 			transition={EXPAND_TRANSITION}
 		>
+			<div className={styles.addRowWrapper}>
+				<Button
+					variant="link"
+					color="primary"
+					size="sm"
+					prefix={<Plus size={14} />}
+					className={styles.addRow}
+					onClick={drawer.openForAdd}
+					testId={`add-mapper-${group.localId}`}
+				>
+					Add mapping
+				</Button>
+			</div>
 			{content}
-
-			<Button
-				variant="link"
-				color="primary"
-				size="sm"
-				prefix={<Plus size={14} />}
-				className={styles.addRow}
-				onClick={drawer.openForAdd}
-				testId={`add-mapper-${group.localId}`}
-			>
-				Add mapping
-			</Button>
 
 			{drawer.isOpen && (
 				<MapperFormDrawer

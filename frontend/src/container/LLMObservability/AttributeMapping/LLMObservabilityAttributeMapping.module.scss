@@ -1,8 +1,14 @@
 .llmObservabilityAttributeMapping {
 	display: flex;
 	flex-direction: column;
-	gap: var(--spacing-8);
-	padding: var(--spacing-12);
+	gap: var(--spacing-4);
+	padding: var(--spacing-2) var(--spacing-2);
+
+	// Match Model pricing: strip the sub-tab content padding (the page owns its
+	// spacing) and keep the sub-tab labels on the l1 foreground.
+	--tab-content-padding: 0;
+	--tab-text-color: var(--l1-foreground);
+	--tab-active-text-color: var(--l1-foreground);
 }
 
 .pageError {

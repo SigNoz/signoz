@@ -1,5 +1,6 @@
 .mappersTableWrapper {
 	--tanstack-expansion-first-col-padding-left: var(--spacing-6);
+	--tanstack-expansion-last-col-padding-right: var(--spacing-6);
 	--tanstack-table-row-height: auto;
 
 	display: flex;
@@ -7,11 +8,13 @@
 	gap: var(--spacing-4);
 	margin: var(--spacing-2) var(--spacing-6) var(--spacing-6) var(--spacing-12);
 	padding: var(--spacing-4) 0;
-	border: 1px solid var(--l2-border);
-	border-radius: var(--radius-2);
-	background: var(--l2-background);
 	// Clip content while the panel grows during its expand (height) animation.
 	overflow: hidden;
+
+	// Column headings use the l2 foreground token.
+	:global(.tanstack-header-title) {
+		color: var(--l2-foreground);
+	}
 }
 
 .tableEmpty {
@@ -23,4 +26,12 @@
 
 .addRow {
 	align-self: flex-start;
+}
+
+.addRowWrapper {
+	display: flex;
+	padding: var(--spacing-4);
+	justify-content: flex-end;
+	align-items: center;
+	width: 95%;
 }

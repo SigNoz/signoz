@@ -6,6 +6,19 @@
 	display: flex;
 	flex-direction: column;
 	gap: var(--spacing-4);
+
+	// Column headings use the l2 foreground token.
+	:global(.tanstack-header-title) {
+		color: var(--l2-foreground);
+	}
+
+	:global(tbody) > tr > td {
+		border-top: 1px solid var(--l2-border) !important;
+	}
+
+	:global(tbody) > tr:last-child > td {
+		border-bottom: 1px solid var(--l2-border) !important;
+	}
 }
 
 .tableEmpty {
@@ -17,4 +30,11 @@
 
 .addRow {
 	align-self: flex-start;
+}
+
+.addRowWrapper {
+	display: flex;
+	padding: var(--spacing-4);
+	justify-content: flex-end;
+	align-items: center;
 }
