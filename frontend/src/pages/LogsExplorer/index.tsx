@@ -250,6 +250,7 @@ function LogsExplorer(): JSX.Element {
 							maxWidth={QUICK_FILTERS_MAX_WIDTH}
 							onResize={persistQuickFiltersWidth}
 							resetToDefaultOnDoubleClick
+							withHandle
 							className="log-quick-filter-left-section"
 							handleTestId="quick-filters-resize-handle"
 						>

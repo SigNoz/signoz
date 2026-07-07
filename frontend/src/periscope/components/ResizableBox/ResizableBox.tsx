@@ -1,3 +1,4 @@
+import { GripVertical } from '@signozhq/icons';
 import { useCallback, useRef, useState } from 'react';
 
 import './ResizableBox.styles.scss';
@@ -26,6 +27,9 @@ export interface ResizableBoxProps {
 	// When true, double-clicking the handle resets the size to
 	// defaultWidth/defaultHeight and fires onResize with that value.
 	resetToDefaultOnDoubleClick?: boolean;
+	// When true, renders a visible grip indicator on the handle so it is
+	// discoverable as a draggable affordance.
+	withHandle?: boolean;
 	onResize?: (size: number) => void;
 	disabled?: boolean;
 	className?: string;
@@ -44,6 +48,7 @@ function ResizableBox({
 	initialWidth,
 	initialHeight,
 	resetToDefaultOnDoubleClick = false,
+	withHandle = false,
 	onResize,
 	disabled = false,
 	className,
@@ -134,11 +139,19 @@ function ResizableBox({
 			<div className="resizable-box__content">{children}</div>
 			{!disabled && (
 				<div
+					role="separator"
+					aria-orientation={isHorizontal ? 'vertical' : 'horizontal'}
 					className={handleClass}
 					onMouseDown={handleMouseDown}
 					onDoubleClick={handleDoubleClick}
 					data-testid={handleTestId}
-				/>
+				>
+					{withHandle && (
+						<span className="resizable-box__grip">
+							<GripVertical size={12} />
+						</span>
+					)}
+				</div>
 			)}
 		</div>
 	);

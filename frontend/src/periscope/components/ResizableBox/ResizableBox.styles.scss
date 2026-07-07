@@ -66,4 +66,29 @@
 			right: 0;
 		}
 	}
+
+	// Visible grip indicator (opt-in via the `withHandle` prop). Purely visual —
+	// pointer events fall through to the handle so it still owns drag + reset.
+	&__grip {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 14px;
+		height: 26px;
+		border: 1px solid var(--l2-border);
+		border-radius: 4px;
+		background: var(--l1-background);
+		color: var(--l2-foreground);
+		pointer-events: none;
+	}
+
+	&__handle:hover &__grip,
+	&__handle:active &__grip {
+		border-color: var(--primary);
+		color: var(--primary);
+	}
 }

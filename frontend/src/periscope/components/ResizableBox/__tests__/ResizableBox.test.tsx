@@ -84,6 +84,31 @@ describe('ResizableBox', () => {
 		expect(onResize).not.toHaveBeenCalled();
 	});
 
+	it('renders a visible grip only when withHandle is set', () => {
+		const { rerender, container } = render(
+			<ResizableBox
+				handle="right"
+				defaultWidth={260}
+				handleTestId={HANDLE_TEST_ID}
+			>
+				<div>content</div>
+			</ResizableBox>,
+		);
+		expect(container.querySelector('.resizable-box__grip')).toBeNull();
+
+		rerender(
+			<ResizableBox
+				handle="right"
+				defaultWidth={260}
+				withHandle
+				handleTestId={HANDLE_TEST_ID}
+			>
+				<div>content</div>
+			</ResizableBox>,
+		);
+		expect(container.querySelector('.resizable-box__grip')).not.toBeNull();
+	});
+
 	it('clamps drag to maxWidth and reports the clamped size via onResize', () => {
 		const onResize = jest.fn();
 		render(
