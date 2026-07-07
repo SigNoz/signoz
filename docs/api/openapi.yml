@@ -4252,6 +4252,30 @@ components:
           type: number
         clusterName:
           type: string
+        counts:
+          properties:
+            daemonSets:
+              format: int64
+              type: integer
+            deployments:
+              format: int64
+              type: integer
+            jobs:
+              format: int64
+              type: integer
+            namespaces:
+              format: int64
+              type: integer
+            statefulSets:
+              format: int64
+              type: integer
+          required:
+          - namespaces
+          - deployments
+          - daemonSets
+          - jobs
+          - statefulSets
+          type: object
         meta:
           additionalProperties:
             type: string
@@ -4272,6 +4296,7 @@ components:
       - nodeCountsByReadiness
       - podCountsByPhase
       - podCountsByStatus
+      - counts
       - meta
       type: object
     InframonitoringtypesClusters:
@@ -4635,6 +4660,26 @@ components:
       type: object
     InframonitoringtypesNamespaceRecord:
       properties:
+        counts:
+          properties:
+            daemonSets:
+              format: int64
+              type: integer
+            deployments:
+              format: int64
+              type: integer
+            jobs:
+              format: int64
+              type: integer
+            statefulSets:
+              format: int64
+              type: integer
+          required:
+          - deployments
+          - daemonSets
+          - jobs
+          - statefulSets
+          type: object
         meta:
           additionalProperties:
             type: string
@@ -4658,6 +4703,7 @@ components:
       - namespaceMemory
       - podCountsByPhase
       - podCountsByStatus
+      - counts
       - meta
       type: object
     InframonitoringtypesNamespaces:
