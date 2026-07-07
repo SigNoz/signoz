@@ -1,5 +1,6 @@
 import { act, renderHook } from '@testing-library/react';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import type { PanelQueryData } from 'pages/DashboardPageV2/DashboardContainer/queryV5/types';
 import type { ROLES } from 'types/roles';
 
 import type { DashboardSection } from '../../../../utils';
@@ -47,6 +48,13 @@ jest.mock('../../hooks/useCreateAlertFromPanel', () => ({
 	useCreateAlertFromPanel: (): jest.Mock => mockCreateAlert,
 }));
 
+const mockDownloadImage = jest.fn();
+jest.mock('../../hooks/useDownloadPanelImage', () => ({
+	useDownloadPanelImage: (): { downloadPanelImage: jest.Mock } => ({
+		downloadPanelImage: mockDownloadImage,
+	}),
+}));
+
 // Role is the only thing read off the app context; useComponentPermission runs
 // for real so the tests exercise the actual role → permission mapping.
 let mockRole: ROLES = 'ADMIN';
@@ -84,9 +92,16 @@ const mockPanel = {
 	},
 } as unknown as DashboardtypesPanelDTO;
 
+const mockData = {
+	response: undefined,
+	requestPayload: undefined,
+	legendMap: {},
+} as PanelQueryData;
+
 const baseArgs = {
 	panelId: 'panel-1',
 	panel: mockPanel,
+	data: mockData,
 	panelActions: { currentLayoutIndex: 0, sections: TWO_TITLED_SECTIONS },
 };
 
@@ -110,14 +125,15 @@ describe('usePanelActionItems', () => {
 			'edit-panel',
 			'clone-panel',
 			'divider',
+			'download',
 			'create-alert',
 			'divider',
 			'move',
 			'divider',
 			'delete-panel',
 		]);
-		// download stays hidden: no current kind declares the capability
-		// (V1 parity — CSV export was table-only).
+		// The single "Download" entry is a submenu (PNG/SVG, plus CSV on tables);
+		// it's present for every renderable kind.
 	});
 
 	it('AUTHOR loses edit and clone (edit_widget excludes AUTHOR) but keeps the rest', () => {
@@ -126,6 +142,7 @@ describe('usePanelActionItems', () => {
 		expect(itemKeys(result.current)).toStrictEqual([
 			'view-panel',
 			'divider',
+			'download',
 			'create-alert',
 			'divider',
 			'move',
@@ -134,26 +151,28 @@ describe('usePanelActionItems', () => {
 		]);
 	});
 
-	it('VIEWER keeps only the role-ungated actions (view, create-alert)', () => {
+	it('VIEWER keeps only the role-ungated actions (view, download, create-alert)', () => {
 		mockRole = 'VIEWER';
 		const { result } = renderHook(() => usePanelActionItems(baseArgs));
 		expect(itemKeys(result.current)).toStrictEqual([
 			'view-panel',
 			'divider',
+			'download',
 			'create-alert',
 		]);
 	});
 
-	it('read-only dashboard keeps View and Create Alerts (V1 parity: both survive a lock)', () => {
+	it('read-only dashboard keeps the non-mutating actions (View, Download, Create Alerts)', () => {
 		useDashboardStore.setState({ isEditable: false });
 		const { result } = renderHook(() =>
 			usePanelActionItems({ ...baseArgs, panelActions: undefined }),
 		);
-		// Create Alerts opens a new tab and never mutates the dashboard, so it
-		// isn't gated on edit access — matching V1's locked-dashboard menu.
+		// View, the Download submenu (PNG/SVG) and Create Alerts are all
+		// non-mutating, so they survive on a read-only dashboard (V1 parity).
 		expect(itemKeys(result.current)).toStrictEqual([
 			'view-panel',
 			'divider',
+			'download',
 			'create-alert',
 		]);
 	});
@@ -277,6 +296,25 @@ describe('usePanelActionItems', () => {
 		});
 	});
 
+	it('the Download submenu captures the panel by id, name and chosen format', () => {
+		const { result } = renderHook(() => usePanelActionItems(baseArgs));
+		const download = result.current.items.find(
+			(i) => 'key' in i && i.key === 'download',
+		) as { children: { key: string; onClick: () => void }[] };
+
+		// TimeSeries declares no CSV capability, so the submenu is just PNG + SVG.
+		expect(download.children.map((c) => c.key)).toStrictEqual([
+			'download-png',
+			'download-svg',
+		]);
+
+		download.children.find((c) => c.key === 'download-png')?.onClick();
+		expect(mockDownloadImage).toHaveBeenCalledWith('panel-1', 'CPU', 'png');
+
+		download.children.find((c) => c.key === 'download-svg')?.onClick();
+		expect(mockDownloadImage).toHaveBeenCalledWith('panel-1', 'CPU', 'svg');
+	});
+
 	it('view opens the View modal for the panel', () => {
 		const { result } = renderHook(() => usePanelActionItems(baseArgs));
 		const view = result.current.items.find(
@@ -284,15 +322,6 @@ describe('usePanelActionItems', () => {
 		);
 		(view as { onClick: () => void }).onClick();
 		expect(mockOpenView).toHaveBeenCalledWith('panel-1');
-	});
-
-	it('create-alert seeds an alert from this panel', () => {
-		const { result } = renderHook(() => usePanelActionItems(baseArgs));
-		const createAlert = result.current.items.find(
-			(i) => 'key' in i && i.key === 'create-alert',
-		);
-		(createAlert as { onClick: () => void }).onClick();
-		expect(mockCreateAlert).toHaveBeenCalledWith(mockPanel, 'panel-1');
 	});
 
 	it('create-alert seeds an alert from this panel', () => {

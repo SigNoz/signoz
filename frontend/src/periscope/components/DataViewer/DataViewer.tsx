@@ -1,13 +1,11 @@
 import { useMemo, useState } from 'react';
-import { useCopyToClipboard } from 'react-use';
-import { ChevronDown, Copy } from '@signozhq/icons';
+import { ChevronDown } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { DropdownMenuSimple as Dropdown } from '@signozhq/ui/dropdown-menu';
-import { toast } from '@signozhq/ui/sonner';
 import logEvent from 'api/common/logEvent';
+import CopyButton from 'periscope/components/CopyButton/CopyButton';
 import { JsonView } from 'periscope/components/JsonView';
-import { PrettyView } from 'periscope/components/PrettyView';
-import { PrettyViewProps } from 'periscope/components/PrettyView';
+import { PrettyView, PrettyViewProps } from 'periscope/components/PrettyView';
 
 import './DataViewer.styles.scss';
 
@@ -33,7 +31,6 @@ function DataViewer({
 	prettyViewProps,
 }: DataViewerProps): JSX.Element {
 	const [viewMode, setViewMode] = useState<ViewMode>('pretty');
-	const [, setCopy] = useCopyToClipboard();
 
 	const jsonString = useMemo(() => JSON.stringify(data, null, 2), [data]);
 
@@ -49,14 +46,6 @@ function DataViewer({
 		} catch {
 			// No op
 		}
-	};
-
-	const handleCopy = (): void => {
-		const text = JSON.stringify(data, null, 2);
-		setCopy(text);
-		toast.success('Copied to clipboard', {
-			position: 'top-right',
-		});
 	};
 
 	const currentLabel =
@@ -94,14 +83,7 @@ function DataViewer({
 						{currentLabel}
 					</Button>
 				</Dropdown>
-				<button
-					type="button"
-					className="data-viewer__copy-btn"
-					onClick={handleCopy}
-					aria-label="Copy JSON"
-				>
-					<Copy size={14} />
-				</button>
+				<CopyButton value={jsonString} ariaLabel="Copy JSON" />
 			</div>
 
 			<div className="data-viewer__content">

@@ -37,6 +37,8 @@ export const PANEL_ACTION_META: Record<PanelActionId, PanelActionMeta> = {
 	view: { capability: 'view' },
 	edit: { permission: 'edit_widget', capability: 'edit' },
 	clone: { permission: 'edit_widget' },
+	// Single entry for every export format (CSV/PNG/SVG); like view it isn't
+	// role-gated (V1 parity). The per-format options live in usePanelActionItems.
 	download: { capability: 'download' },
 	createAlert: { capability: 'createAlert' },
 	// Moving a panel between sections mutates the dashboard layout.

@@ -76,10 +76,14 @@ function Panel({
 		<div
 			className={styles.panel}
 			data-panel-visible={isVisible ? 'true' : 'false'}
+			// Stable locator so the "Download as PNG" action can find this node to
+			// capture, without threading a ref through the header/actions chain.
+			data-panel-root={panelId}
 		>
 			<PanelHeader
 				panelId={panelId}
 				panel={panel}
+				data={data}
 				isFetching={isFetching}
 				error={error}
 				warning={data.response?.data?.warning}

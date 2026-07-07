@@ -11,14 +11,18 @@ import styles from './Header.module.scss';
 interface HeaderProps {
 	isDirty: boolean;
 	isSaving: boolean;
+	showSwitchToView?: boolean;
 	onSave: () => void;
+	onSwitchToView?: () => void;
 	onClose: () => void;
 }
 
 function Header({
 	isDirty,
 	isSaving,
+	showSwitchToView = false,
 	onSave,
+	onSwitchToView,
 	onClose,
 }: HeaderProps): JSX.Element {
 	const discard = useConfirmableAction(
@@ -49,6 +53,16 @@ function Header({
 				<Typography.Text>Configure panel</Typography.Text>
 			</div>
 			<div className={styles.actions}>
+				{showSwitchToView && (
+					<Button
+						variant="outlined"
+						color="secondary"
+						data-testid="panel-editor-v2-switch-to-view"
+						onClick={onSwitchToView}
+					>
+						Switch to View Mode
+					</Button>
+				)}
 				<Button
 					variant="solid"
 					color="primary"

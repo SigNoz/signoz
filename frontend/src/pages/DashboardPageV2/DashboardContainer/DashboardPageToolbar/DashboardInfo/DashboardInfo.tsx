@@ -19,6 +19,7 @@ import { openInNewTab } from 'utils/navigation';
 
 import styles from './DashboardInfo.module.scss';
 import { useVisibleTagCount } from './useVisibleTagCount';
+import { DASHBOARD_NAME_MAX_LENGTH } from '../../constants';
 import { useDashboardStore } from '../../store/useDashboardStore';
 
 interface DashboardInfoProps {
@@ -99,7 +100,7 @@ function DashboardInfo({
 						autoFocus
 						value={draft}
 						testId="dashboard-title-input"
-						maxLength={120}
+						maxLength={DASHBOARD_NAME_MAX_LENGTH}
 						className={styles.dashboardTitleInput}
 						onChange={(e): void => onDraftChange(e.target.value)}
 						onKeyDown={onKeyDown}

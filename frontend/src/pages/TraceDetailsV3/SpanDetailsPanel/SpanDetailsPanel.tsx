@@ -1,4 +1,5 @@
 import { useCallback, useMemo } from 'react';
+import { Badge } from '@signozhq/ui/badge';
 import {
 	TabsContent,
 	TabsList,
@@ -281,6 +282,8 @@ function SpanDetailsContent({
 	// 		.map((key) => ({ key, value: allAttrs[key] }));
 	// }, [selectedSpan]);
 
+	const eventsCount = selectedSpan.events?.length || 0;
+
 	return (
 		<div className={styles.body}>
 			<div className={styles.detailsSection}>
@@ -397,7 +400,12 @@ function SpanDetailsContent({
 							<Bookmark size={14} /> Overview
 						</TabsTrigger>
 						<TabsTrigger value="events" variant="secondary">
-							<ScrollText size={14} /> Events ({selectedSpan.events?.length || 0})
+							<ScrollText size={14} /> Events
+							{eventsCount > 0 && (
+								<Badge color="secondary" className={styles.eventsBadge}>
+									{eventsCount}
+								</Badge>
+							)}
 						</TabsTrigger>
 						<TabsTrigger value="logs" variant="secondary">
 							<List size={14} /> Logs
