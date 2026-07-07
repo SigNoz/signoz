@@ -15,7 +15,7 @@ from fixtures.querier import aligned_epoch, query_metric_values
 @pytest.mark.parametrize(
     "time_agg, expected",
     [
-        # 2 groups x 5 buckets x 30.0 per 300s step
+        # 2 groups x 5 minutes x 30.0 per 300s step
         ("rate", 1.0),  # 300 / 300s
         ("increase", 300.0),
     ],

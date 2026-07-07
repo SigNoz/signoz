@@ -15,7 +15,7 @@ from fixtures.metrics import (
 from fixtures.querier import aligned_epoch, query_metric_values
 
 
-def test_stitch_across_epoch(
+def test_query_spanning_rule_activation_combines_raw_and_reduced_data(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
@@ -23,18 +23,18 @@ def test_stitch_across_epoch(
     insert_reduced_metrics: Callable[..., None],
     clickhouse_node_conns: list[clickhouse_connect.driver.client.Client],
 ) -> None:
-    """Before the rule activates, samples live in the raw tables; after, only
-    the reduced 60s tables have data. One query spanning the boundary must
-    stitch the two branches into a continuous series with no gap and no double
-    counting: 32 raw series at 2.0 collapse into 16 groups whose sum_last is
-    4.0, so the summed value stays 320 per step across the epoch. Enough
-    series to guarantee both shards hold data (guarded below), so the totals
-    also prove the raw and reduced joins execute shard-local."""
-    metric_name = "test_reduction_stitch"
+    """Before a reduction rule activates, data lives in the raw tables; after,
+    only the reduced tables have data. A single query spanning the activation
+    time must return one continuous series with no gap and no double counting:
+    32 raw series at 2.0 collapse into 16 groups whose per-minute total is
+    4.0, so the summed value stays 320 per step on both sides. Enough series
+    are seeded that both shards hold data (checked below), so correct totals
+    also prove the queries read every shard."""
+    metric_name = "test_reduction_activation_boundary"
     base_epoch = aligned_epoch(timedelta(hours=30), step_seconds=300)
     services = [f"svc-{i:02d}" for i in range(16)]
 
-    # first 30 minutes: raw samples (2 pods per service, one sample per minute)
+    # first 30 minutes: raw data (2 pods per service, one sample per minute)
     insert_metrics(
         [
             Metrics(
@@ -51,7 +51,7 @@ def test_stitch_across_epoch(
         ]
     )
 
-    # next 30 minutes: reduced 60s buckets (one group per service)
+    # next 30 minutes: reduced data only (one row per service per minute)
     time_series = [
         MetricsReducedTimeSeries(
             metric_name=metric_name,
@@ -98,7 +98,7 @@ def test_stitch_across_epoch(
         ("max", 6.0),  # max(max)
     ],
 )
-def test_space_aggregations(
+def test_aggregations_across_series(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
@@ -106,10 +106,10 @@ def test_space_aggregations(
     space_agg: str,
     expected: float,
 ) -> None:
-    """Space aggregations read the reduced pre-aggregated columns: sum/avg
-    from sum_last with the count_series weight, min/max from the min/max
-    columns."""
-    metric_name = f"test_reduction_space_{space_agg}"
+    """Aggregating across series reads the pre-aggregated reduced columns:
+    sum/avg from sum_last with the count_series weight, min/max from the
+    min/max columns."""
+    metric_name = f"test_reduction_across_series_{space_agg}"
     base_epoch = aligned_epoch(timedelta(hours=30), step_seconds=300)
 
     groups = [
@@ -151,17 +151,17 @@ def test_space_aggregations(
     assert [v["value"] for v in values] == [expected] * 4
 
 
-def test_dedup_latest_computed_at_wins(
+def test_recomputed_minutes_use_only_the_newest_values(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_reduced_metrics: Callable[..., None],
 ) -> None:
-    """The refreshable MVs re-emit every bucket on each refresh with a newer
-    computed_at (APPEND mode); reads must dedup to the latest version per
-    (series, bucket). Recompute the same buckets with a newer computed_at and
-    a different value: only the newer value may be counted."""
-    metric_name = "test_reduction_dedup"
+    """The collector rewrites recent minutes on every refresh, so the same
+    minute exists multiple times with increasing computed_at. Queries must
+    count each minute once, using its newest version: write the same minutes
+    twice with different values and only the second write may show up."""
+    metric_name = "test_reduction_recompute"
     base_epoch = aligned_epoch(timedelta(hours=30), step_seconds=300)
 
     time_series = [
@@ -173,7 +173,7 @@ def test_dedup_latest_computed_at_wins(
         for service in ("a", "b")
     ]
 
-    def buckets(sum_last: float, computed_at_offset_seconds: int) -> list[MetricsReducedSampleLast60s]:
+    def minute_rows(sum_last: float, computed_at_offset_seconds: int) -> list[MetricsReducedSampleLast60s]:
         return [
             MetricsReducedSampleLast60s(
                 metric_name=metric_name,
@@ -191,13 +191,13 @@ def test_dedup_latest_computed_at_wins(
             for minute in range(10)
         ]
 
-    # first refresh emits 1.0; a later refresh recomputes the same buckets to 5.0
-    insert_reduced_metrics(time_series, buckets(sum_last=1.0, computed_at_offset_seconds=120))
-    insert_reduced_metrics(time_series, buckets(sum_last=5.0, computed_at_offset_seconds=180))
+    # first write says 1.0; a later rewrite of the same minutes says 5.0
+    insert_reduced_metrics(time_series, minute_rows(sum_last=1.0, computed_at_offset_seconds=120))
+    insert_reduced_metrics(time_series, minute_rows(sum_last=5.0, computed_at_offset_seconds=180))
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     values = query_metric_values(signoz, token, metric_name, base_epoch, base_epoch + 10 * 60, "sum", "sum", step_interval=300)
 
-    # 2 groups x 5 buckets x 5.0 per step; 1.0 rows must not contribute
+    # 2 groups x 5 minutes x 5.0 per step; the 1.0 rows must not contribute
     assert [v["timestamp"] for v in values] == [(base_epoch + step * 300) * 1000 for step in range(2)]
     assert [v["value"] for v in values] == [50.0] * 2

@@ -4,7 +4,7 @@ from http import HTTPStatus
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
-from fixtures.metricreduction import build_ruled_gauge_buffer
+from fixtures.metricreduction import build_recent_gauge_data
 from fixtures.querier import (
     aligned_epoch,
     build_builder_query,
@@ -19,28 +19,28 @@ PODS_PER_SERVICE = 2
 MINUTES = 20
 
 
-def test_recent_window_reads_buffer_totals(
+def test_recent_queries_return_full_resolution_totals(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_buffer_metrics: Callable[..., None],
 ) -> None:
-    metric_name = "test_reduction_buffer_totals"
+    metric_name = "test_reduction_recent_totals"
     # samples span [now-25m, now-5m); the query window sits inside the last 24h
     base_epoch = aligned_epoch(timedelta(minutes=25), step_seconds=300)
-    insert_buffer_metrics(*build_ruled_gauge_buffer(metric_name, base_epoch, SERVICES, PODS_PER_SERVICE, MINUTES))
+    insert_buffer_metrics(*build_recent_gauge_data(metric_name, base_epoch, SERVICES, PODS_PER_SERVICE, MINUTES))
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     values = query_metric_values(signoz, token, metric_name, base_epoch, base_epoch + MINUTES * 60, "sum", "sum", step_interval=300)
 
     # 4 raw series x 5 samples x 1.0 per step: full raw resolution, and the
-    # is_reduced=true series rows must not join in (their fingerprints match
-    # no samples, and the ts CTE filters them out)
+    # reduced series rows must not be counted (their fingerprints match no
+    # samples, and the time-series lookup filters them out)
     assert [v["timestamp"] for v in values] == [(base_epoch + step * 300) * 1000 for step in range(4)]
     assert [v["value"] for v in values] == [float(len(SERVICES) * PODS_PER_SERVICE * 5)] * 4
 
 
-def test_recent_window_group_by_raw_label(
+def test_recent_queries_group_by_full_labels(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
@@ -48,9 +48,9 @@ def test_recent_window_group_by_raw_label(
 ) -> None:
     """Group-by resolves against the raw buffer series rows (full labels), so
     grouping by the kept label still sees every raw series underneath."""
-    metric_name = "test_reduction_buffer_groupby"
+    metric_name = "test_reduction_recent_groupby"
     base_epoch = aligned_epoch(timedelta(minutes=25), step_seconds=300)
-    insert_buffer_metrics(*build_ruled_gauge_buffer(metric_name, base_epoch, SERVICES, PODS_PER_SERVICE, MINUTES))
+    insert_buffer_metrics(*build_recent_gauge_data(metric_name, base_epoch, SERVICES, PODS_PER_SERVICE, MINUTES))
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     response = make_query_request(

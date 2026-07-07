@@ -4,7 +4,7 @@ from collections.abc import Sequence
 from fixtures.metrics import MetricsBufferSample, MetricsBufferTimeSeries
 
 
-def build_ruled_gauge_buffer(
+def build_recent_gauge_data(
     metric_name: str,
     base_epoch: int,
     services: Sequence[str],
