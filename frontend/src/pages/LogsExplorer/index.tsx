@@ -26,6 +26,8 @@ import {
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
 import { defaultTo, isEmpty, isNull } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
+import { ResizableBox } from 'periscope/components/ResizableBox';
+import usePanelWidth from 'periscope/components/ResizableBox/usePanelWidth';
 import { EventSourceProvider } from 'providers/EventSource';
 import { Warning } from 'types/api';
 import { DataSource } from 'types/common/queryBuilder';
@@ -44,8 +46,22 @@ import { ExplorerViews } from './utils';
 
 import './LogsExplorer.styles.scss';
 
+const QUICK_FILTERS_DEFAULT_WIDTH = 260;
+const QUICK_FILTERS_MIN_WIDTH = 240;
+const QUICK_FILTERS_MAX_WIDTH = 500;
+
 function LogsExplorer(): JSX.Element {
 	const [showLiveLogs, setShowLiveLogs] = useState<boolean>(false);
+
+	const {
+		initialWidth: quickFiltersInitialWidth,
+		persistWidth: persistQuickFiltersWidth,
+	} = usePanelWidth({
+		storageKey: LOCALSTORAGE.QUICK_FILTERS_WIDTH_LOGS,
+		defaultWidth: QUICK_FILTERS_DEFAULT_WIDTH,
+		minWidth: QUICK_FILTERS_MIN_WIDTH,
+		maxWidth: QUICK_FILTERS_MAX_WIDTH,
+	});
 
 	// Get panel type from URL
 	const panelTypesFromUrl = useGetPanelTypesQueryParam(PANEL_TYPES.LIST);
@@ -226,14 +242,25 @@ function LogsExplorer(): JSX.Element {
 					className={cx('logs-module-page', showFilters ? 'filter-visible' : '')}
 				>
 					{showFilters && (
-						<section className={cx('log-quick-filter-left-section')}>
+						<ResizableBox
+							handle="right"
+							defaultWidth={QUICK_FILTERS_DEFAULT_WIDTH}
+							initialWidth={quickFiltersInitialWidth}
+							minWidth={QUICK_FILTERS_MIN_WIDTH}
+							maxWidth={QUICK_FILTERS_MAX_WIDTH}
+							onResize={persistQuickFiltersWidth}
+							resetToDefaultOnDoubleClick
+							withHandle
+							className="log-quick-filter-left-section"
+							handleTestId="quick-filters-resize-handle"
+						>
 							<QuickFilters
 								className="qf-logs-explorer"
 								signal={SignalType.LOGS}
 								source={QuickFiltersSource.LOGS_EXPLORER}
 								handleFilterVisibilityChange={handleFilterVisibilityChange}
 							/>
-						</section>
+						</ResizableBox>
 					)}
 					<section className={cx('log-module-right-section')}>
 						<Toolbar
