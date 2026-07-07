@@ -1,14 +1,16 @@
-import { Switch, Typography } from 'antd';
-import LogsDownloadOptionsMenu from 'components/LogsDownloadOptionsMenu/LogsDownloadOptionsMenu';
+import { useState } from 'react';
+import { Switch } from '@signozhq/ui/switch';
+import { Typography } from '@signozhq/ui/typography';
+import DownloadOptionsMenu from 'components/DownloadOptionsMenu/DownloadOptionsMenu';
+import FieldsSelector from 'components/FieldsSelector';
 import LogsFormatOptionsMenu from 'components/LogsFormatOptionsMenu/LogsFormatOptionsMenu';
 import ListViewOrderBy from 'components/OrderBy/ListViewOrderBy';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useOptionsMenu } from 'container/OptionsMenu';
-import { ArrowUp10, Minus } from 'lucide-react';
+import { LOGS_REQUIRED_COLUMNS } from 'container/OptionsMenu/constants';
+import { ArrowUp10, Minus } from '@signozhq/icons';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
-
-import QueryStatus from './QueryStatus';
 
 function LogsActionsContainer({
 	listQuery,
@@ -17,12 +19,6 @@ function LogsActionsContainer({
 	handleToggleFrequencyChart,
 	orderBy,
 	setOrderBy,
-	isFetching,
-	isLoading,
-	isError,
-	isSuccess,
-	minTime,
-	maxTime,
 }: {
 	listQuery: any;
 	selectedPanelType: PANEL_TYPES;
@@ -30,18 +26,14 @@ function LogsActionsContainer({
 	handleToggleFrequencyChart: () => void;
 	orderBy: string;
 	setOrderBy: (value: string) => void;
-	isFetching: boolean;
-	isLoading: boolean;
-	isError: boolean;
-	isSuccess: boolean;
-	minTime: number;
-	maxTime: number;
 }): JSX.Element {
 	const { options, config } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
 		dataSource: DataSource.LOGS,
 		aggregateOperator: listQuery?.aggregateOperator || StringOperators.NOOP,
 	});
+
+	const [isFieldsSelectorOpen, setIsFieldsSelectorOpen] = useState(false);
 
 	const formatItems = [
 		{
@@ -72,9 +64,8 @@ function LogsActionsContainer({
 						<div className="frequency-chart-view-controller">
 							<Typography>Frequency chart</Typography>
 							<Switch
-								size="small"
-								checked={showFrequencyChart}
-								defaultChecked
+								value={showFrequencyChart}
+								defaultValue
 								onChange={handleToggleFrequencyChart}
 							/>
 						</div>
@@ -96,12 +87,9 @@ function LogsActionsContainer({
 								/>
 							</div>
 							<div className="download-options-container">
-								<LogsDownloadOptionsMenu
-									startTime={minTime}
-									endTime={maxTime}
-									filter={listQuery?.filter?.expression || ''}
-									columns={config.addColumn?.value || []}
-									orderBy={orderBy}
+								<DownloadOptionsMenu
+									dataSource={DataSource.LOGS}
+									selectedColumns={options?.selectColumns}
 								/>
 							</div>
 							<div className="format-options-container">
@@ -109,23 +97,24 @@ function LogsActionsContainer({
 									items={formatItems}
 									selectedOptionFormat={options.format}
 									config={config}
+									onOpenColumns={(): void => setIsFieldsSelectorOpen(true)}
 								/>
 							</div>
 						</>
 					)}
-
-					{(selectedPanelType === PANEL_TYPES.TIME_SERIES ||
-						selectedPanelType === PANEL_TYPES.TABLE) && (
-						<div className="query-stats">
-							<QueryStatus
-								loading={isLoading || isFetching}
-								error={isError}
-								success={isSuccess}
-							/>
-						</div>
-					)}
 				</div>
 			</div>
+			{config.fieldsSelector && (
+				<FieldsSelector
+					isOpen={isFieldsSelectorOpen}
+					title="Edit columns"
+					fields={config.fieldsSelector.value}
+					onFieldsChange={config.fieldsSelector.onFieldsChange}
+					onClose={(): void => setIsFieldsSelectorOpen(false)}
+					signal={DataSource.LOGS}
+					requiredFields={LOGS_REQUIRED_COLUMNS}
+				/>
+			)}
 		</div>
 	);
 }

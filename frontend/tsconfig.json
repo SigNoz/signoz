@@ -5,51 +5,82 @@
 		"noImplicitAny": true,
 		"noImplicitReturns": true,
 		"module": "esnext",
-		"target": "es5",
+		"target": "es2018",
 		"jsx": "react-jsx",
 		"allowJs": true,
 		"strict": true,
 		"esModuleInterop": true,
 		"skipLibCheck": true,
 		"forceConsistentCasingInFileNames": true,
-		"lib": ["dom", "dom.iterable", "esnext"],
+		"lib": [
+			"dom",
+			"dom.iterable",
+			"esnext"
+		],
 		"allowSyntheticDefaultImports": true,
 		"noFallthroughCasesInSwitch": true,
-		"moduleResolution": "node",
+		"moduleResolution": "bundler",
 		"resolveJsonModule": true,
 		"isolatedModules": true,
 		"noEmit": true,
-		"baseUrl": "./src",
+		"incremental": true,
+		"tsBuildInfoFile": "./node_modules/.cache/ts/tsconfig.tsbuildinfo",
 		"paths": {
-			"@constants/*": ["/container/OnboardingContainer/constants/*"]
+			"@constants/*": [
+				"./src/container/OnboardingContainer/constants/*"
+			],
+			"@/*": [
+				"./src/*"
+			],
+			"test-mocks/*": [
+				"./__mocks__/*"
+			],
+			"api": ["./src/api"],
+			"AppRoutes": ["./src/AppRoutes"],
+			"ReactI18": ["./src/ReactI18"],
+			"store": ["./src/store"],
+			"styles.scss": ["./src/styles.scss"],
+			"api/*": ["./src/api/*"],
+			"AppRoutes/*": ["./src/AppRoutes/*"],
+			"assets/*": ["./src/assets/*"],
+			"components/*": ["./src/components/*"],
+			"constants/*": ["./src/constants/*"],
+			"container/*": ["./src/container/*"],
+			"hooks/*": ["./src/hooks/*"],
+			"lib/*": ["./src/lib/*"],
+			"mocks-server/*": ["./src/mocks-server/*"],
+			"modules/*": ["./src/modules/*"],
+			"pages/*": ["./src/pages/*"],
+			"parser/*": ["./src/parser/*"],
+			"periscope/*": ["./src/periscope/*"],
+			"providers/*": ["./src/providers/*"],
+			"schemas/*": ["./src/schemas/*"],
+			"store/*": ["./src/store/*"],
+			"__tests__/*": ["./src/__tests__/*"],
+			"tests/*": ["./src/tests/*"],
+			"types/*": ["./src/types/*"],
+			"utils/*": ["./src/utils/*"]
 		},
-		"downlevelIteration": true,
 		"plugins": [
 			{
 				"name": "typescript-plugin-css-modules"
 			}
 		],
-		"types": ["node", "jest"]
+		"types": ["vite/client", "node", "jest", "testing-library__jest-dom"]
 	},
-	"exclude": ["node_modules", "src/parser/*.ts", "src/parser/TraceOperatorParser/*.ts"],
+	"exclude": [
+		"node_modules",
+		"src/parser/*.ts",
+		"src/parser/TraceOperatorParser/*.ts",
+		"orval.config.ts"
+	],
 	"include": [
 		"./src",
-		"./src/**/*.ts",
-		"src/**/*.tsx",
-		"src/**/*.d.ts",
-		"./babel.config.js",
-		"./jest.config.ts",
-		"./.eslintrc.js",
 		"./__mocks__",
-		"./conf/default.conf",
-		"./public",
-		"./commitlint.config.ts",
-		"./webpack.config.js",
-		"./webpack.config.prod.js",
+		"./babel.config.cjs",
+		"./jest.config.ts",
 		"./jest.setup.ts",
-		"./tests/**.ts",
-		"./**/*.d.ts",
-		"./playwright.config.ts",
-		"./e2e/**/*.ts"
+		"./vite.config.ts",
+		"./commitlint.config.ts"
 	]
 }

@@ -1,4 +1,3 @@
-import { Form, Input, InputProps, InputRef } from 'antd';
 import {
 	ChangeEventHandler,
 	FocusEventHandler,
@@ -7,6 +6,7 @@ import {
 	ReactNode,
 	Ref,
 } from 'react';
+import { Form, Input, InputProps, InputRef } from 'antd';
 
 function InputComponent({
 	value,
@@ -34,7 +34,6 @@ function InputComponent({
 				addonBefore={addonBefore}
 				onBlur={onBlurHandler}
 				onPressEnter={onPressEnterHandler}
-				// eslint-disable-next-line react/jsx-props-no-spreading
 				{...props}
 			/>
 		</Form.Item>

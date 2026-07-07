@@ -1,6 +1,7 @@
-import { Chart, TimeUnit } from 'chart.js';
 import { useMemo } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
+import { Chart, TimeUnit } from 'chart.js';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 

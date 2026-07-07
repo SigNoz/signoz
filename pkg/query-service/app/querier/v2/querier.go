@@ -7,6 +7,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/prometheus"
+
 	logsV4 "github.com/SigNoz/signoz/pkg/query-service/app/logs/v4"
 	metricsV4 "github.com/SigNoz/signoz/pkg/query-service/app/metrics/v4"
 	"github.com/SigNoz/signoz/pkg/query-service/app/queryBuilder"
@@ -18,12 +20,13 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"github.com/SigNoz/signoz/pkg/valuer"
 
+	"log/slog"
+
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"go.uber.org/multierr"
-	"go.uber.org/zap"
 )
 
 type channelResult struct {
@@ -43,6 +46,9 @@ type querier struct {
 	fluxInterval time.Duration
 
 	builder *queryBuilder.QueryBuilder
+
+	parser prometheus.Parser
+	logger *slog.Logger
 
 	// used for testing
 	// TODO(srikanthccv): remove this once we have a proper mock
@@ -85,6 +91,9 @@ func NewQuerier(opts QuerierOptions) interfaces.Querier {
 			BuildMetricQuery: metricsV4.PrepareMetricQuery,
 		}),
 
+		parser: prometheus.NewParser(),
+		logger: slog.Default(),
+
 		testingMode:    opts.TestingMode,
 		returnedSeries: opts.ReturnedSeries,
 		returnedErr:    opts.ReturnedErr,
@@ -115,7 +124,7 @@ func (q *querier) execClickHouseQuery(ctx context.Context, query string) ([]*v3.
 		series.Points = points
 	}
 	if pointsWithNegativeTimestamps > 0 {
-		zap.L().Error("found points with negative timestamps for query", zap.String("query", query))
+		q.logger.ErrorContext(ctx, "found points with negative timestamps for query", "query", query)
 	}
 	return result, err
 }
@@ -167,7 +176,7 @@ func (q *querier) runBuilderQueries(ctx context.Context, orgID valuer.UUID, para
 
 	wg.Wait()
 	close(ch)
-	zap.L().Info("time taken to run builder queries", zap.Duration("multiQueryDuration", time.Since(now)), zap.Int("num_queries", len(params.CompositeQuery.BuilderQueries)))
+	q.logger.InfoContext(ctx, "time taken to run builder queries", "multi_query_duration", time.Since(now), "num_queries", len(params.CompositeQuery.BuilderQueries))
 
 	results := make([]*v3.Result, 0)
 	errQueriesByName := make(map[string]error)
@@ -208,14 +217,14 @@ func (q *querier) runPromQueries(ctx context.Context, orgID valuer.UUID, params 
 			cacheKey, ok := cacheKeys[queryName]
 
 			if !ok || params.NoCache {
-				zap.L().Info("skipping cache for metrics prom query", zap.String("queryName", queryName), zap.Int64("start", params.Start), zap.Int64("end", params.End), zap.Int64("step", params.Step), zap.Bool("noCache", params.NoCache), zap.String("cacheKey", cacheKeys[queryName]))
+				q.logger.InfoContext(ctx, "skipping cache for metrics prom query", "query_name", queryName, "start", params.Start, "end", params.End, "step", params.Step, "no_cache", params.NoCache, "cache_key", cacheKeys[queryName])
 				query := metricsV4.BuildPromQuery(promQuery, params.Step, params.Start, params.End)
 				series, err := q.execPromQuery(ctx, query)
 				channelResults <- channelResult{Err: err, Name: queryName, Query: query.Query, Series: series}
 				return
 			}
 			misses := q.queryCache.FindMissingTimeRanges(orgID, params.Start, params.End, params.Step, cacheKey)
-			zap.L().Info("cache misses for metrics prom query", zap.Any("misses", misses))
+			q.logger.InfoContext(ctx, "cache misses for metrics prom query", "misses", misses)
 			missedSeries := make([]querycache.CachedSeriesData, 0)
 			for _, miss := range misses {
 				query := metricsV4.BuildPromQuery(promQuery, params.Step, miss.Start, miss.End)

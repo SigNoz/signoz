@@ -1,5 +1,3 @@
-/* eslint-disable sonarjs/no-collapsible-if */
-/* eslint-disable no-continue */
 import { CharStreams, CommonTokenStream } from 'antlr4';
 import FilterQueryLexer from 'parser/FilterQueryLexer';
 import FilterQueryParser from 'parser/FilterQueryParser';
@@ -69,13 +67,10 @@ class QueryErrorListener {
 		return normalize(msg1) === normalize(msg2);
 	};
 
-	// eslint-disable-next-line @typescript-eslint/no-empty-function
 	reportAmbiguity = (): void => {};
 
-	// eslint-disable-next-line @typescript-eslint/no-empty-function
 	reportAttemptingFullContext = (): void => {};
 
-	// eslint-disable-next-line @typescript-eslint/no-empty-function
 	reportContextSensitivity = (): void => {};
 
 	getErrors(): IDetailedError[] {

@@ -51,7 +51,11 @@ describe('tracesLoaderConfig', () => {
 	});
 
 	it('should have priority order: local, url, default', () => {
-		expect(tracesLoaderConfig.priority).toEqual(['local', 'url', 'default']);
+		expect(tracesLoaderConfig.priority).toStrictEqual([
+			'local',
+			'url',
+			'default',
+		]);
 	});
 
 	it('should load from localStorage when available', async () => {
@@ -69,7 +73,7 @@ describe('tracesLoaderConfig', () => {
 
 		const result = await tracesLoaderConfig.local();
 
-		expect(result).toEqual({
+		expect(result).toStrictEqual({
 			columns: mockColumns,
 		});
 	});
@@ -80,7 +84,7 @@ describe('tracesLoaderConfig', () => {
 
 		const result = await tracesLoaderConfig.local();
 
-		expect(result).toEqual({
+		expect(result).toStrictEqual({
 			columns: [] as BaseAutocompleteData[],
 		});
 	});
@@ -103,7 +107,7 @@ describe('tracesLoaderConfig', () => {
 
 		const result = await tracesLoaderConfig.url();
 
-		expect(result).toEqual({
+		expect(result).toStrictEqual({
 			columns: mockColumns,
 		});
 	});
@@ -114,7 +118,7 @@ describe('tracesLoaderConfig', () => {
 
 		const result = await tracesLoaderConfig.url();
 
-		expect(result).toEqual({
+		expect(result).toStrictEqual({
 			columns: [] as BaseAutocompleteData[],
 		});
 	});
@@ -122,8 +126,116 @@ describe('tracesLoaderConfig', () => {
 	it('should provide default values when no other source is available', async () => {
 		const result = await tracesLoaderConfig.default();
 
-		expect(result).toEqual({
+		expect(result).toStrictEqual({
 			columns: defaultTraceSelectedColumns as TelemetryFieldKey[],
+		});
+	});
+
+	describe('Column validation - filtering Logs columns', () => {
+		it('should filter out Logs columns (body) from URL', async () => {
+			const logsColumns = [
+				{ name: 'timestamp', signal: 'logs', fieldContext: 'log' },
+				{ name: 'body', signal: 'logs', fieldContext: 'log' },
+			];
+
+			mockedLocation.search = `?options=${encodeURIComponent(
+				JSON.stringify({
+					selectColumns: logsColumns,
+				}),
+			)}`;
+
+			const result = await tracesLoaderConfig.url();
+
+			// Should filter out all Logs columns
+			expect(result.columns).toStrictEqual([]);
+		});
+
+		it('should filter out Logs columns (timestamp with logs signal) from URL', async () => {
+			const mixedColumns = [
+				{ name: 'timestamp', signal: 'logs', fieldContext: 'log' },
+				{ name: 'service.name', signal: 'traces', fieldContext: 'resource' },
+			];
+
+			mockedLocation.search = `?options=${encodeURIComponent(
+				JSON.stringify({
+					selectColumns: mixedColumns,
+				}),
+			)}`;
+
+			const result = await tracesLoaderConfig.url();
+
+			// Should only keep trace columns
+			expect(result.columns).toStrictEqual([
+				{ name: 'service.name', signal: 'traces', fieldContext: 'resource' },
+			]);
+		});
+
+		it('should filter out Logs columns from localStorage', async () => {
+			const logsColumns = [
+				{ name: 'body', signal: 'logs', fieldContext: 'log' },
+				{ name: 'timestamp', signal: 'logs', fieldContext: 'log' },
+			];
+
+			mockLocalStorage[LOCALSTORAGE.TRACES_LIST_OPTIONS] = JSON.stringify({
+				selectColumns: logsColumns,
+			});
+
+			const result = await tracesLoaderConfig.local();
+
+			// Should filter out all Logs columns
+			expect(result.columns).toStrictEqual([]);
+		});
+
+		it('should accept valid Trace columns from URL', async () => {
+			const traceColumns = [
+				{ name: 'service.name', signal: 'traces', fieldContext: 'resource' },
+				{ name: 'name', signal: 'traces', fieldContext: 'span' },
+			];
+
+			mockedLocation.search = `?options=${encodeURIComponent(
+				JSON.stringify({
+					selectColumns: traceColumns,
+				}),
+			)}`;
+
+			const result = tracesLoaderConfig.url();
+
+			expect(result.columns).toStrictEqual(traceColumns);
+		});
+
+		it('should fall back to defaults when all columns are filtered out from URL', async () => {
+			const logsColumns = [{ name: 'body', signal: 'logs' }];
+
+			mockedLocation.search = `?options=${encodeURIComponent(
+				JSON.stringify({
+					selectColumns: logsColumns,
+				}),
+			)}`;
+
+			const result = tracesLoaderConfig.url();
+
+			// Should return empty array, which triggers fallback to defaults in preferencesLoader
+			expect(result.columns).toStrictEqual([]);
+		});
+
+		it('should handle columns without signal field (legacy data)', async () => {
+			const columnsWithoutSignal = [
+				{ name: 'service.name', fieldContext: 'resource' },
+				{ name: 'body', fieldContext: 'log' },
+			];
+
+			mockedLocation.search = `?options=${encodeURIComponent(
+				JSON.stringify({
+					selectColumns: columnsWithoutSignal,
+				}),
+			)}`;
+
+			const result = tracesLoaderConfig.url();
+
+			// Without signal field, columns pass through validation
+			// This matches the current implementation behavior where only columns
+			// with signal !== 'traces' are filtered out
+			expect(result.columns).toStrictEqual(columnsWithoutSignal);
 		});
 	});
 });

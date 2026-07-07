@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -31,12 +32,19 @@ type Module interface {
 	Delete(context.Context, valuer.UUID, valuer.UUID) error
 
 	// Get the IDP info of the domain provided.
-	GetAuthNProviderInfo(context.Context, *authtypes.AuthDomain) (*authtypes.AuthNProviderInfo)
+	GetAuthNProviderInfo(context.Context, *authtypes.AuthDomain) *authtypes.AuthNProviderInfo
+
+	statsreporter.StatsCollector
 }
 
 type Handler interface {
 	List(http.ResponseWriter, *http.Request)
+	Get(http.ResponseWriter, *http.Request)
 	Create(http.ResponseWriter, *http.Request)
 	Update(http.ResponseWriter, *http.Request)
 	Delete(http.ResponseWriter, *http.Request)
+}
+
+type Getter interface {
+	OnBeforeRoleDelete(ctx context.Context, orgID valuer.UUID, roleID valuer.UUID, roleName string) error
 }

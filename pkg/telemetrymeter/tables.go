@@ -3,6 +3,7 @@ package telemetrymeter
 import (
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 )
 
@@ -20,7 +21,7 @@ var (
 	// when the query requests for almost 1 day, but not exactly 1 day, we need to add an offset to the end time
 	// to make sure that we are using the correct table
 	// this is because the start gets adjusted to the nearest step interval and uses the 5m table for 4m step interval
-	// leading to time series that doesn't best represent the rate of change
+	// leading to time series that doesn't best represent the rate of change.
 	offsetBucket = uint64(1 * time.Hour.Milliseconds())
 )
 
@@ -28,7 +29,7 @@ var (
 // we have two tables for samples
 // 1. distributed_samples
 // 2. distributed_samples_agg_1d - for queries with time range above or equal to 30 days
-// if the `timeAggregation` is `count_distinct` we can't use the aggregated tables because they don't support it
+// if the `timeAggregation` is `count_distinct` we can't use the aggregated tables because they don't support it.
 func WhichSamplesTableToUse(
 	start, end uint64,
 	metricType metrictypes.Type,
@@ -63,7 +64,7 @@ func AggregationColumnForSamplesTable(
 	temporality metrictypes.Temporality,
 	timeAggregation metrictypes.TimeAggregation,
 	tableHints *metrictypes.MetricTableHints,
-) string {
+) (string, error) {
 	tableName := WhichSamplesTableToUse(start, end, metricType, timeAggregation, tableHints)
 	var aggregationColumn string
 	switch temporality {
@@ -190,5 +191,13 @@ func AggregationColumnForSamplesTable(
 		}
 
 	}
-	return aggregationColumn
+
+	if aggregationColumn == "" {
+		return "", errors.Newf(
+			errors.TypeInvalidInput,
+			errors.CodeInvalidInput,
+			"invalid time aggregation, should be one of the following: [`latest`, `sum`, `avg`, `min`, `max`, `count`, `rate`, `increase`]",
+		)
+	}
+	return aggregationColumn, nil
 }

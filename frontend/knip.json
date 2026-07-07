@@ -1,0 +1,8 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "project": ["src/**/*.ts", "src/**/*.tsx"],
+  "ignore": ["src/api/generated/**/*.ts", "src/typings/*.ts"],
+  "ignoreDependencies": [
+    "@typescript/native-preview"
+  ]
+}

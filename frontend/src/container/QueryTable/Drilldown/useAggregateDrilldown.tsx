@@ -1,10 +1,9 @@
-import { PANEL_TYPES } from 'constants/queryBuilder';
-import useDashboardVarConfig from 'container/QueryTable/Drilldown/useDashboardVarConfig';
 import { useMemo } from 'react';
 import { UseQueryResult } from 'react-query';
-import { SuccessResponse } from 'types/api';
+import { PANEL_TYPES } from 'constants/queryBuilder';
+import useDashboardVarConfig from 'container/QueryTable/Drilldown/useDashboardVarConfig';
 import { ContextLinksData } from 'types/api/dashboard/getAll';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { getTimeRange } from 'utils/getTimeRange';
 
@@ -22,6 +21,7 @@ export interface AggregateData {
 		endTime: number;
 	};
 	label?: string | React.ReactNode;
+	seriesColor?: string;
 }
 
 const useAggregateDrilldown = ({
@@ -43,10 +43,7 @@ const useAggregateDrilldown = ({
 	aggregateData: AggregateData | null;
 	contextLinks?: ContextLinksData;
 	panelType?: PANEL_TYPES;
-	queryRange?: UseQueryResult<
-		SuccessResponse<MetricRangePayloadProps, unknown>,
-		Error
-	>;
+	queryRange?: UseQueryResult<MetricQueryRangeSuccessResponse, Error>;
 }): {
 	aggregateDrilldownConfig: {
 		header?: string | React.ReactNode;
@@ -55,10 +52,14 @@ const useAggregateDrilldown = ({
 } => {
 	// Ensure aggregateData has timeRange, fallback to widget time or global time if not provided
 	const aggregateDataWithTimeRange = useMemo(() => {
-		if (!aggregateData) return null;
+		if (!aggregateData) {
+			return null;
+		}
 
 		// If timeRange is already provided, use it
-		if (aggregateData.timeRange) return aggregateData;
+		if (aggregateData.timeRange) {
+			return aggregateData;
+		}
 
 		// Try to get widget-specific time range first, then fall back to global time
 		const timeRangeData = getTimeRange(queryRange);
@@ -83,7 +84,9 @@ const useAggregateDrilldown = ({
 	});
 
 	const fieldVariables = useMemo(() => {
-		if (!aggregateDataWithTimeRange?.filters) return {};
+		if (!aggregateDataWithTimeRange?.filters) {
+			return {};
+		}
 
 		// Extract field variables from aggregation data filters
 		const fieldVars: Record<string, string | number | boolean> = {};
@@ -130,7 +133,6 @@ const useAggregateDrilldown = ({
 		query,
 		// panelType,
 		aggregateData: aggregateDataWithTimeRange,
-		widgetId,
 		onClose,
 	});
 

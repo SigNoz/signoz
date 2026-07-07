@@ -5,20 +5,21 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/query-service/model"
-	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
-	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"log/slog"
+
 	"github.com/google/uuid"
-	"go.uber.org/zap"
+
+	"github.com/SigNoz/signoz/pkg/errors"
+	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 )
 
 // TestNotification prepares a dummy rule for given rule parameters and
 // sends a test notification. returns alert count and error (if any)
-func defaultTestNotification(opts PrepareTestRuleOptions) (int, *model.ApiError) {
+func defaultTestNotification(opts PrepareTestRuleOptions) (int, error) {
 	ctx := context.Background()
 
 	if opts.Rule == nil {
-		return 0, model.BadRequest(fmt.Errorf("rule is required"))
+		return 0, errors.NewInvalidInputf(errors.CodeInvalidInput, "rule is required")
 	}
 
 	parsedRule := opts.Rule
@@ -38,25 +39,27 @@ func defaultTestNotification(opts PrepareTestRuleOptions) (int, *model.ApiError)
 	if parsedRule.RuleType == ruletypes.RuleTypeThreshold {
 
 		// add special labels for test alerts
-		parsedRule.Labels[labels.RuleSourceLabel] = ""
-		parsedRule.Labels[labels.AlertRuleIdLabel] = ""
+		parsedRule.Labels[ruletypes.RuleSourceLabel] = ""
+		parsedRule.Labels[ruletypes.AlertRuleIDLabel] = ""
 
 		// create a threshold rule
 		rule, err = NewThresholdRule(
 			alertname,
 			opts.OrgID,
 			parsedRule,
-			opts.Reader,
 			opts.Querier,
-			opts.SLogger,
+			opts.Logger,
+			opts.ManagerOpts.Alertmanager.Config().ExternalURL,
 			WithSendAlways(),
 			WithSendUnmatched(),
 			WithSQLStore(opts.SQLStore),
+			WithQueryParser(opts.ManagerOpts.QueryParser),
+			WithMetadataStore(opts.ManagerOpts.MetadataStore),
 		)
 
 		if err != nil {
-			zap.L().Error("failed to prepare a new threshold rule for test", zap.Error(err))
-			return 0, model.BadRequest(err)
+			slog.Error("failed to prepare a new threshold rule for test", errors.Attr(err))
+			return 0, err
 		}
 
 	} else if parsedRule.RuleType == ruletypes.RuleTypeProm {
@@ -66,33 +69,31 @@ func defaultTestNotification(opts PrepareTestRuleOptions) (int, *model.ApiError)
 			alertname,
 			opts.OrgID,
 			parsedRule,
-			opts.SLogger,
-			opts.Reader,
+			opts.Logger,
 			opts.ManagerOpts.Prometheus,
+			opts.ManagerOpts.Alertmanager.Config().ExternalURL,
 			WithSendAlways(),
 			WithSendUnmatched(),
 			WithSQLStore(opts.SQLStore),
+			WithQueryParser(opts.ManagerOpts.QueryParser),
+			WithMetadataStore(opts.ManagerOpts.MetadataStore),
 		)
 
 		if err != nil {
-			zap.L().Error("failed to prepare a new promql rule for test", zap.Error(err))
-			return 0, model.BadRequest(err)
+			slog.Error("failed to prepare a new promql rule for test", errors.Attr(err))
+			return 0, err
 		}
 	} else {
-		return 0, model.BadRequest(fmt.Errorf("failed to derive ruletype with given information"))
+		return 0, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid rule type")
 	}
 
 	// set timestamp to current utc time
 	ts := time.Now().UTC()
 
-	count, err := rule.Eval(ctx, ts)
+	alertsFound, err := rule.Eval(ctx, ts)
 	if err != nil {
-		zap.L().Error("evaluating rule failed", zap.String("rule", rule.Name()), zap.Error(err))
-		return 0, model.InternalError(fmt.Errorf("rule evaluation failed"))
-	}
-	alertsFound, ok := count.(int)
-	if !ok {
-		return 0, model.InternalError(fmt.Errorf("something went wrong"))
+		slog.Error("evaluating rule failed", slog.String("rule.id", rule.ID()), errors.Attr(err))
+		return 0, err
 	}
 	rule.SendAlerts(ctx, ts, 0, time.Duration(1*time.Minute), opts.NotifyFunc)
 

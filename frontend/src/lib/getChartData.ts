@@ -74,7 +74,9 @@ const getChartData = ({
 
 				const diff = avearageOfArray(a.second) - avearageOfArray(b.second); // calculating the difference
 
-				if (diff !== 0) return diff;
+				if (diff !== 0) {
+					return diff;
+				}
 			}
 
 			return a.second.length - b.second.length;

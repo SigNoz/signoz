@@ -1,7 +1,7 @@
+import RGL, { WidthProvider } from 'react-grid-layout';
 import { Button as ButtonComponent, Card as CardComponent, Space } from 'antd';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { StyledCSS } from 'container/GantChart/Trace/styles';
-import RGL, { WidthProvider } from 'react-grid-layout';
 import styled, { css } from 'styled-components';
 
 const ReactGridLayoutComponent = WidthProvider(RGL);
@@ -31,10 +31,10 @@ export const Card = styled(CardComponent)<CardProps>`
 			$panelType === PANEL_TYPES.TABLE
 				? css`
 						height: 100%;
-				  `
+					`
 				: css`
 						height: calc(100% - 30px);
-				  `}
+					`}
 		padding: 0;
 	}
 `;

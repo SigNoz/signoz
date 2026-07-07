@@ -1,42 +1,108 @@
-import { DefaultOptionType } from 'antd/es/select';
-import { omitIdFromQuery } from 'components/ExplorerCard/utils';
+import { Layout } from 'react-grid-layout';
 import { PrecisionOptionsEnum } from 'components/Graph/types';
+import { YAxisCategoryNames } from 'components/YAxisUnitSelector/constants';
+import {
+	UniversalYAxisUnit,
+	YAxisCategory,
+	YAxisSource,
+} from 'components/YAxisUnitSelector/types';
+import { getYAxisCategories } from 'components/YAxisUnitSelector/utils';
 import {
 	initialQueryBuilderFormValuesMap,
 	PANEL_TYPES,
-} from 'constants/queryBuilder';
-import {
-	listViewInitialLogQuery,
 	PANEL_TYPES_INITIAL_QUERY,
-} from 'container/NewDashboard/ComponentsSlider/constants';
+} from 'constants/queryBuilder';
 import {
 	defaultLogsSelectedColumns,
 	defaultTraceSelectedColumns,
 } from 'container/OptionsMenu/constants';
 import { categoryToSupport } from 'container/QueryBuilder/filters/BuilderUnitsFilter/config';
 import { cloneDeep, defaultTo, isEmpty, isEqual, set, unset } from 'lodash-es';
-import { Layout } from 'react-grid-layout';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 
-import {
-	dataTypeCategories,
-	getCategoryName,
-} from './RightContainer/dataFormatCategories';
-import { CategoryNames } from './RightContainer/types';
+import { getCategoryName } from './RightContainer/dataFormatCategories';
+
+// Asks "would saving the current panel change the persisted widget spec?".
+//
+// `adjustQueryForV5` is deliberately not reused here: in addition to stripping
+// the legacy v4 fields, it also resurrects them onto each metric
+// `aggregations[i]`. That migration step is correct on save but bleeds
+// asymmetrically across a comparator — the live query still carries the
+// legacy defaults from `initialQueryBuilderFormValuesMap` while a previously
+// saved widget had them stripped.
+const stripQueryDataForCompare = (
+	queryData: IBuilderQuery,
+): Record<string, unknown> => {
+	const {
+		aggregateAttribute: _aggregateAttribute,
+		aggregateOperator: _aggregateOperator,
+		timeAggregation: _timeAggregation,
+		spaceAggregation: _spaceAggregation,
+		reduceTo: _reduceTo,
+		filters: _filters,
+		...retained
+	} = queryData ?? ({} as IBuilderQuery);
+
+	const groupBy = (retained.groupBy ?? []).map((entry) => {
+		const { id: _id, ...rest } = entry;
+		return rest;
+	});
+
+	return {
+		...retained,
+		groupBy,
+		source: retained.source || '',
+	};
+};
+
+const normalizeForDirtyCheck = (query: Query): Record<string, unknown> => {
+	const { id: _id, unit, builder, ...rest } = query;
+	return {
+		...rest,
+		// `id` is regenerated on every Stage and Run; `unit` flips between ''
+		// and undefined depending on whether the user has touched the selector.
+		unit: unit || '',
+		builder: {
+			...builder,
+			queryData: (builder?.queryData ?? []).map(stripQueryDataForCompare),
+		},
+	};
+};
+
+// `lodash.isEqual` distinguishes `{a: undefined}` from `{}`; for the dirty
+// check those are the same. Initial-values spreads on the live query
+// frequently leave such explicit-undefined keys.
+const stripUndefined = (value: unknown): unknown => {
+	if (Array.isArray(value)) {
+		return value.map(stripUndefined);
+	}
+	if (value && typeof value === 'object') {
+		const out: Record<string, unknown> = {};
+		Object.entries(value as Record<string, unknown>).forEach(([k, v]) => {
+			if (v === undefined) {
+				return;
+			}
+			out[k] = stripUndefined(v);
+		});
+		return out;
+	}
+	return value;
+};
 
 export const getIsQueryModified = (
 	currentQuery: Query,
-	stagedQuery: Query | null,
+	baselineQuery: Query | null | undefined,
 ): boolean => {
-	if (!stagedQuery) {
+	if (!baselineQuery) {
 		return false;
 	}
-	const omitIdFromStageQuery = omitIdFromQuery(stagedQuery);
-	const omitIdFromCurrentQuery = omitIdFromQuery(currentQuery);
-	return !isEqual(omitIdFromStageQuery, omitIdFromCurrentQuery);
+	return !isEqual(
+		stripUndefined(normalizeForDirtyCheck(baselineQuery)),
+		stripUndefined(normalizeForDirtyCheck(currentQuery)),
+	);
 };
 
 export type PartialPanelTypes = {
@@ -547,10 +613,7 @@ export const getDefaultWidgetData = (
 	nullZeroValues: '',
 	opacity: '',
 	panelTypes: name,
-	query:
-		name === PANEL_TYPES.LIST
-			? listViewInitialLogQuery
-			: PANEL_TYPES_INITIAL_QUERY[name],
+	query: PANEL_TYPES_INITIAL_QUERY[name],
 	timePreferance: 'GLOBAL_TIME',
 	softMax: null,
 	softMin: null,
@@ -606,14 +669,21 @@ export const PANEL_TYPE_TO_QUERY_TYPES: Record<PANEL_TYPES, EQueryType[]> = {
  * the label and value for each format.
  */
 export const getCategorySelectOptionByName = (
-	name?: CategoryNames | string,
-): DefaultOptionType[] =>
-	dataTypeCategories
-		.find((category) => category.name === name)
-		?.formats.map((format) => ({
-			label: format.name,
-			value: format.id,
-		})) || [];
+	name?: YAxisCategoryNames,
+): { name: string; id: UniversalYAxisUnit }[] => {
+	const categories = getYAxisCategories(YAxisSource.DASHBOARDS);
+	if (!categories.length) {
+		return [];
+	}
+	return (
+		categories
+			.find((category) => category.name === name)
+			?.units.map((unit) => ({
+				name: unit.name,
+				id: unit.id,
+			})) || []
+	);
+};
 
 /**
  * Generates unit options based on the provided column unit.
@@ -622,19 +692,19 @@ export const getCategorySelectOptionByName = (
  * select options. If a valid category is found, it filters the supported categories
  * to return only the options for the matched category.
  */
-export const unitOptions = (columnUnit: string): DefaultOptionType[] => {
+export const unitOptions = (columnUnit: string): YAxisCategory[] => {
 	const category = getCategoryName(columnUnit);
 	if (isEmpty(category)) {
 		return categoryToSupport.map((category) => ({
-			label: category,
-			options: getCategorySelectOptionByName(category),
+			name: category,
+			units: getCategorySelectOptionByName(category),
 		}));
 	}
 	return categoryToSupport
 		.filter((supportedCategory) => supportedCategory === category)
 		.map((filteredCategory) => ({
-			label: filteredCategory,
-			options: getCategorySelectOptionByName(filteredCategory),
+			name: filteredCategory,
+			units: getCategorySelectOptionByName(filteredCategory),
 		}));
 };
 

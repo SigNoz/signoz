@@ -52,21 +52,6 @@ func TestFromGlobs(t *testing.T) {
 			expected: "http://localhost:8080/alerts/edit?ruleId=2d8edca5-4f24-4266-afd1-28cefadcfa88",
 		},
 		{
-			name: "SingleAlertWithInvalidRuleId",
-			alerts: []*types.Alert{
-				{
-					Alert: model.Alert{
-						Labels: model.LabelSet{
-							"ruleId": "43textabc",
-						},
-					},
-					UpdatedAt: time.Now(),
-					Timeout:   false,
-				},
-			},
-			expected: "http://localhost:8080/alerts",
-		},
-		{
 			name: "MultipleAlertsWithMismatchingRuleId",
 			alerts: []*types.Alert{
 				{
@@ -130,6 +115,68 @@ func TestFromGlobs(t *testing.T) {
 					Alert: model.Alert{
 						Labels: model.LabelSet{
 							"label2": "2",
+						},
+					},
+					UpdatedAt: time.Now(),
+					Timeout:   false,
+				},
+			},
+			expected: "http://localhost:8080/alerts",
+		},
+		{
+			name: "TestAlertWithNoRuleId",
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels: model.LabelSet{
+							"testalert": "true",
+						},
+					},
+					UpdatedAt: time.Now(),
+					Timeout:   false,
+				},
+			},
+			expected: "http://localhost:8080/alerts",
+		},
+		{
+			name: "TestAlertWithRuleId",
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels: model.LabelSet{
+							"testalert": "true",
+							"ruleId":    "01961575-461c-7668-875f-05d374062bfc",
+						},
+					},
+					UpdatedAt: time.Now(),
+					Timeout:   false,
+				},
+			},
+			expected: "http://localhost:8080/alerts/edit?ruleId=01961575-461c-7668-875f-05d374062bfc&isTestAlert=true",
+		},
+		{
+			name: "TestAlertWithRuleIdWithSpacesAndSymbol",
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels: model.LabelSet{
+							"testalert": "true",
+							"ruleId":    "Prom + Alert & Rule",
+						},
+					},
+					UpdatedAt: time.Now(),
+					Timeout:   false,
+				},
+			},
+			expected: "http://localhost:8080/alerts/edit?ruleId=Prom+%2B+Alert+%26+Rule&isTestAlert=true",
+		},
+		{
+			name: "AlertWithBlankRuleId",
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels: model.LabelSet{
+							"ruleId": "",
 						},
 					},
 					UpdatedAt: time.Now(),

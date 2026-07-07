@@ -1,3 +1,6 @@
+import getLocalStorageKey from 'api/browser/localstorage/get';
+import removeLocalStorageKey from 'api/browser/localstorage/remove';
+import setLocalStorageKey from 'api/browser/localstorage/set';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { DateTimeRangeType } from 'container/TopNav/CustomDateTimeModal';
 import dayjs from 'dayjs';
@@ -16,10 +19,10 @@ const MAX_STORED_RANGES = 3;
  */
 export const getCustomTimeRanges = (): CustomTimeRange[] => {
 	try {
-		const stored = localStorage.getItem(
-			LOCALSTORAGE.LAST_USED_CUSTOM_TIME_RANGES,
-		);
-		if (!stored) return [];
+		const stored = getLocalStorageKey(LOCALSTORAGE.LAST_USED_CUSTOM_TIME_RANGES);
+		if (!stored) {
+			return [];
+		}
 
 		const parsed = JSON.parse(stored);
 
@@ -76,7 +79,7 @@ export const addCustomTimeRange = (
 
 	// Store in localStorage
 	try {
-		localStorage.setItem(
+		setLocalStorageKey(
 			LOCALSTORAGE.LAST_USED_CUSTOM_TIME_RANGES,
 			JSON.stringify(updatedRanges),
 		);
@@ -92,7 +95,7 @@ export const addCustomTimeRange = (
  */
 export const clearCustomTimeRanges = (): void => {
 	try {
-		localStorage.removeItem(LOCALSTORAGE.LAST_USED_CUSTOM_TIME_RANGES);
+		removeLocalStorageKey(LOCALSTORAGE.LAST_USED_CUSTOM_TIME_RANGES);
 	} catch (error) {
 		console.warn('Failed to clear custom time ranges from localStorage:', error);
 	}
@@ -110,7 +113,7 @@ export const removeCustomTimeRange = (timestamp: number): CustomTimeRange[] => {
 	);
 
 	try {
-		localStorage.setItem(
+		setLocalStorageKey(
 			LOCALSTORAGE.LAST_USED_CUSTOM_TIME_RANGES,
 			JSON.stringify(updatedRanges),
 		);

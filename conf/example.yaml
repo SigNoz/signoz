@@ -3,6 +3,19 @@
 # Do not modify this file
 #
 
+##################### Global #####################
+global:
+  # the url under which the signoz apiserver is externally reachable.
+  # the path component (e.g. /signoz in https://example.com/signoz) is used
+  # as the base path for all HTTP routes (both API and web frontend).
+  external_url: <unset>
+  # the url where the SigNoz backend receives telemetry data (traces, metrics, logs) from instrumented applications.
+  ingestion_url: <unset>
+  # the url of the SigNoz MCP server. when unset, the MCP settings page is hidden in the frontend.
+  # mcp_url: <unset>
+  # the url of the SigNoz AI Assistant server. when unset, the AI Assistant is hidden in the frontend.
+  # ai_assistant_url: <unset>
+
 ##################### Version #####################
 version:
   banner:
@@ -32,14 +45,51 @@ instrumentation:
             host: "0.0.0.0"
             port: 9090
 
+##################### PProf #####################
+pprof:
+  # Whether to enable the pprof server.
+  enabled: true
+  # The address on which the pprof server listens.
+  address: 0.0.0.0:6060
+
 ##################### Web #####################
 web:
   # Whether to enable the web frontend
   enabled: true
-  # The prefix to serve web on
-  prefix: /
+  # The index file to use as the SPA entrypoint.
+  index: index.html
   # The directory containing the static build files.
   directory: /etc/signoz/web
+  # Settings exposed to the web.
+  settings:
+    posthog:
+      # Whether to enable PostHog in web.
+      enabled: false
+      # The PostHog project API key.
+      key: ""
+      # The PostHog API host. Defaults to https://us.i.posthog.com when empty.
+      api_host: ""
+      # The PostHog UI host. Used when api_host points at a reverse proxy.
+      ui_host: ""
+    appcues:
+      # Whether to enable Appcues in web.
+      enabled: false
+      # The Appcues account/app ID.
+      app_id: ""
+    sentry:
+      # Whether to enable Sentry in web.
+      enabled: false
+      # The Sentry DSN.
+      dsn: ""
+      # The Sentry tunnel URL.
+      tunnel: ""
+    pylon:
+      # Whether to enable Pylon in web.
+      enabled: false
+      # The Pylon app ID.
+      app_id: ""
+      # The Pylon identity verification secret.
+      identity_secret: ""
 
 ##################### Cache #####################
 cache:
@@ -68,13 +118,18 @@ sqlstore:
   provider: sqlite
   # The maximum number of open connections to the database.
   max_open_conns: 100
+  # The maximum amount of time a connection may be reused.
+  # If max_conn_lifetime == 0, connections are not closed due to a connection's age.
+  max_conn_lifetime: 0
   sqlite:
     # The path to the SQLite database file.
     path: /var/lib/signoz/signoz.db
-    # Mode is the mode to use for the sqlite database.
-    mode: delete
-    # BusyTimeout is the timeout for the sqlite database to wait for a lock.
+    # The journal mode for the sqlite database. Supported values: delete, wal.
+    mode: wal
+    # The timeout for the sqlite database to wait for a lock.
     busy_timeout: 10s
+    # The default transaction locking behavior. Supported values: deferred, immediate, exclusive.
+    transaction_mode: deferred
 
 ##################### APIServer #####################
 apiserver:
@@ -102,6 +157,10 @@ querier:
   flux_interval: 5m
   # The maximum number of concurrent queries for missing ranges.
   max_concurrent_queries: 4
+  # When filtering logs by trace_id, clamp the query window to the trace time
+  # range with padding to include slightly delayed log exports. Logs only; set
+  # to 0 to disable.
+  log_trace_id_window_padding: 5m
 
 ##################### TelemetryStore #####################
 telemetrystore:
@@ -130,6 +189,8 @@ telemetrystore:
 
 ##################### Prometheus #####################
 prometheus:
+  # The maximum time a PromQL query is allowed to run before being aborted.
+  timeout: 2m
   active_query_tracker:
     # Whether to enable the active query tracker.
     enabled: true
@@ -147,6 +208,11 @@ alertmanager:
     poll_interval: 1m
     # The URL under which Alertmanager is externally reachable (for example, if Alertmanager is served via a reverse proxy). Used for generating relative and absolute links back to Alertmanager itself.
     external_url: http://localhost:8080
+    # The list of globs from which SigNoz's alertmanager notification templates are loaded (e.g. the email.signoz.html layout).
+    # This mirrors the upstream alertmanager `templates` config option. The upstream default templates (default.tmpl, email.tmpl)
+    # are always loaded from the embedded alertmanager assets, so only SigNoz's own templates need to be listed here.
+    templates:
+      - /opt/signoz/conf/templates/alertmanager/*.gotmpl
     # The global configuration for the alertmanager. All the exahustive fields can be found in the upstream: https://github.com/prometheus/alertmanager/blob/efa05feffd644ba4accb526e98a8c6545d26a783/config/config.go#L833
     global:
       # ResolveTimeout is the time after which an alert is declared resolved if it has not been updated.
@@ -186,6 +252,15 @@ emailing:
   templates:
     # The directory containing the email templates. This directory should contain a list of files defined at pkg/types/emailtypes/template.go.
     directory: /opt/signoz/conf/templates/email
+    format:
+      header:
+        enabled: false
+        logo_url: ""
+      help:
+        enabled: false
+        email: ""
+      footer:
+        enabled: false
   smtp:
     # The SMTP server address.
     address: localhost:25
@@ -271,3 +346,148 @@ tokenizer:
     token:
       # The maximum number of tokens a user can have. This limits the number of concurrent sessions a user can have.
       max_per_user: 5
+
+##################### Flagger #####################
+flagger:
+  # Config are the overrides for the feature flags which come directly from the config file.
+  config:
+    boolean:
+      use_span_metrics: true
+      kafka_span_eval: false
+    string:
+    float:
+    integer:
+    object:
+
+##################### User #####################
+user:
+  password:
+    reset:
+      # Whether to allow users to reset their password themselves.
+      allow_self: true
+      # The duration within which a user can reset their password.
+      max_token_lifetime: 6h
+    invite:
+      # The duration within which a user can accept their invite.
+      max_token_lifetime: 48h
+  root:
+    # Whether to enable the root user. When enabled, a root user is provisioned
+    # on startup using the email and password below. The root user cannot be
+    # deleted, updated, or have their password changed through the UI.
+    enabled: false
+    # The email address of the root user.
+    email: ""
+    # The password of the root user. Must meet password requirements.
+    password: ""
+    # The name of the organization to create or look up for the root user.
+    org:
+      name: default
+      id: 00000000-0000-0000-0000-000000000000
+
+##################### IdentN #####################
+identn:
+  tokenizer:
+    # toggle tokenizer identN
+    enabled: true
+    # headers to use for tokenizer identN resolver
+    headers:
+      - Authorization
+      - Sec-WebSocket-Protocol
+  apikey:
+    # toggle apikey identN
+    enabled: true
+    # headers to use for apikey identN resolver
+    headers:
+      - SIGNOZ-API-KEY
+  impersonation:
+    # toggle impersonation identN, when enabled, all requests will impersonate the root user
+    enabled: false
+
+##################### Service Account #####################
+serviceaccount:
+  email:
+    # email domain for the service account principal
+    domain: signozserviceaccount.com
+
+  analytics:
+    # toggle service account analytics
+    enabled: true
+
+##################### Auditor #####################
+auditor:
+  # Specifies the auditor provider to use.
+  # noop: discards all audit events (community default).
+  # otlphttp: exports audit events via OTLP HTTP (enterprise).
+  provider: noop
+  # The async channel capacity for audit events. Events are dropped when full (fail-open).
+  buffer_size: 1000
+  # The maximum number of events per export batch.
+  batch_size: 100
+  # The maximum time between export flushes.
+  flush_interval: 1s
+  otlphttp:
+    # The target scheme://host:port/path of the OTLP HTTP endpoint.
+    endpoint: http://localhost:4318/v1/logs
+    # Whether to use HTTP instead of HTTPS.
+    insecure: false
+    # The maximum duration for an export attempt.
+    timeout: 10s
+    # Additional HTTP headers sent with every export request.
+    headers: {}
+    retry:
+      # Whether to retry on transient failures.
+      enabled: true
+      # The initial wait time before the first retry.
+      initial_interval: 5s
+      # The upper bound on backoff interval.
+      max_interval: 30s
+      # The total maximum time spent retrying.
+      max_elapsed_time: 60s
+
+##################### Cloud Integration #####################
+cloudintegration:
+  # cloud integration agent configuration
+  agent:
+    # The version of the cloud integration agent.
+    version: v0.0.8
+
+##################### Trace Detail #####################
+traces:
+  waterfall:
+    # Number of spans returned per request when the trace is too large to show all at once.
+    span_page_size: 500
+    # Maximum depth of descendents to auto-expand for the selected span.
+    max_depth_to_auto_expand: 5
+    # Threshold below which all spans are returned without windowing.
+    max_limit_to_select_all_spans: 10000
+  flamegraph:
+    # Maximum number of BFS depth levels included in a windowed response.
+    max_selected_levels: 50
+    # Maximum spans per level before sampling is applied.
+    max_spans_per_level: 100
+    # Number of highest-latency spans always included when sampling a level.
+    sampling_top_latency_count: 5
+    # Number of timestamp buckets used for uniform sampling within a level.
+    sampling_bucket_count: 50
+    # Threshold below which all spans are returned without windowing or sampling.
+    select_all_spans_limit: 100000
+
+##################### Authz #################################
+authz:
+  # Specifies the authz provider to use.
+  provider: openfga
+  openfga:
+    # maximum tuples allowed per openfga write operation.
+    max_tuples_per_write: 300
+
+##################### Meter Reporter #####################
+meterreporter:
+  # The interval between collection ticks. Minimum 10m, maximum 24h.
+  interval: 6h
+  # Whether to backfill sealed days from the license creation day.
+  backfill: true
+  # Random jitter applied to the first collect and to every subsequent cycle.
+  # The first collect fires at a random time in [0, jitter); each cycle then takes
+  # interval - random(0, jitter). Must be between 10m and interval. Defaults to
+  # min(interval, 2h) when unset.
+  jitter: 2h

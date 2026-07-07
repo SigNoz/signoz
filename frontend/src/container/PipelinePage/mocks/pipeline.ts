@@ -120,7 +120,6 @@ export const pipelineApiResponseMockData: Pipeline = {
 			deployResult: 'deploy successful',
 			lastHash: '',
 			lastConf: '',
-			// eslint-disable-next-line sonarjs/no-duplicate-string
 			createdAt: '2021-03-07T16:56:53.36071141Z',
 			createdByName: 'test2',
 		},

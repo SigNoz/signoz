@@ -1,12 +1,12 @@
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { INFRA_SHORT_TO_LONG_OPERATOR_MAP } from 'constants/queryBuilder';
 import {
 	checkCommaInValue,
 	getTagToken,
 } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { Option } from 'container/QueryBuilder/type';
+import { useDashboardVariablesByType } from 'hooks/dashboard/useDashboardVariablesByType';
 import { isEmpty } from 'lodash-es';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import { WhereClauseConfig } from './useAutoComplete';
@@ -26,22 +26,19 @@ export const useOptions = (
 	result: string[],
 	isFetching: boolean,
 	whereClauseConfig?: WhereClauseConfig,
+	isInfraMonitoring?: boolean,
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): Option[] => {
 	const [options, setOptions] = useState<Option[]>([]);
 	const operators = useOperators(key, keys);
 
 	// get matching dynamic variables to suggest
-	const { selectedDashboard } = useDashboard();
-
-	const dynamicVariables = useMemo(
-		() =>
-			Object.values(selectedDashboard?.data?.variables || {})?.filter(
-				(variable: IDashboardVariable) => variable.type === 'DYNAMIC',
-			),
-		[selectedDashboard],
+	const dashboardDynamicVariables = useDashboardVariablesByType(
+		'DYNAMIC',
+		'values',
 	);
-	const variableName = dynamicVariables?.find(
+
+	const variableName = dashboardDynamicVariables?.find(
 		(variable) => variable?.dynamicVariablesAttribute === key,
 	)?.name;
 
@@ -90,14 +87,14 @@ export const useOptions = (
 							label: searchValue,
 							value: searchValue,
 						},
-				  ]
+					]
 				: [
 						{
 							label: searchValue,
 							value: searchValue,
 						},
 						...values,
-				  ];
+					];
 		},
 		[getKeyOpValue, result, variableAsValue],
 	);
@@ -110,12 +107,18 @@ export const useOptions = (
 			const filteredOperators = !isEmpty(partialOperator)
 				? operators?.filter((operator) =>
 						operator.startsWith(partialOperator?.toUpperCase()),
-				  )
+					)
 				: operators;
-			const operatorsOptions = filteredOperators?.map((operator) => ({
-				value: `${partialKey} ${operator} `,
-				label: `${partialKey} ${operator} `,
-			}));
+			const operatorsOptions = filteredOperators?.map((op) => {
+				const labelOp =
+					isInfraMonitoring && INFRA_SHORT_TO_LONG_OPERATOR_MAP[op]
+						? INFRA_SHORT_TO_LONG_OPERATOR_MAP[op]
+						: op;
+				return {
+					value: `${partialKey} ${op} `,
+					label: `${partialKey} ${labelOp} `,
+				};
+			});
 			if (whereClauseConfig) {
 				return [
 					{
@@ -127,7 +130,7 @@ export const useOptions = (
 			}
 			return operatorsOptions;
 		},
-		[operators, searchValue, whereClauseConfig],
+		[isInfraMonitoring, operators, searchValue, whereClauseConfig],
 	);
 
 	useEffect(() => {
@@ -141,7 +144,7 @@ export const useOptions = (
 							value: `${searchValue} `,
 						},
 						...getOptionsFromKeys(keys),
-				  ]
+					]
 				: getOptionsFromKeys(keys);
 		} else if (key && !operator) {
 			newOptions = getKeyOperatorOptions(key);
@@ -193,7 +196,11 @@ export const useOptions = (
 					(option, index, self) =>
 						index ===
 							self.findIndex(
-								(o) => o.label === option.label && o.value === option.value, // to remove duplicate & empty options from list
+								(o) =>
+									o.label === option.label &&
+									o.value === option.value &&
+									(o.type || '') === (option.type || '') &&
+									(o.dataType || '') === (option.dataType || ''), // keep entries with same key but different type/dataType
 							) && option.value !== '',
 				) || []
 			).map((option) => {

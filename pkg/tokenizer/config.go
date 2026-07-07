@@ -93,6 +93,16 @@ func newConfig() factory.Config {
 }
 
 func (c Config) Validate() error {
+	// Ensure that lifetime idle is not negative
+	if c.Lifetime.Idle < 0 {
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "lifetime::idle must not be negative")
+	}
+
+	// Ensure that lifetime max is not negative
+	if c.Lifetime.Max < 0 {
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "lifetime::max must not be negative")
+	}
+
 	// Ensure that rotation interval is smaller than lifetime idle
 	if c.Rotation.Interval >= c.Lifetime.Idle {
 		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "rotation::interval must be smaller than lifetime::idle")

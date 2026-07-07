@@ -7,10 +7,16 @@ import { createMockAlertContextState } from 'container/CreateAlertV2/EvaluationS
 
 import * as createAlertState from '../../context';
 import Footer from '../Footer';
+import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
 
 // Mock the hooks used by Footer component
 jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	useQueryBuilder: jest.fn(),
+}));
+jest.mock('providers/ErrorModalProvider', () => ({
+	useErrorModal: (): { showErrorModal: jest.Mock } => ({
+		showErrorModal: jest.fn(),
+	}),
 }));
 
 jest.mock('hooks/useSafeNavigate', () => ({
@@ -59,6 +65,12 @@ const mockAlertContextState = createMockAlertContextState({
 	},
 });
 
+const WrappedFooter = (): JSX.Element => (
+	<MockQueryClientProvider>
+		<Footer />
+	</MockQueryClientProvider>
+);
+
 jest
 	.spyOn(createAlertState, 'useCreateAlertState')
 	.mockReturnValue(mockAlertContextState);
@@ -67,9 +79,10 @@ const SAVE_ALERT_RULE_TEXT = 'Save Alert Rule';
 const TEST_NOTIFICATION_TEXT = 'Test Notification';
 const DISCARD_TEXT = 'Discard';
 
-const LOADER_ICON_SELECTOR = 'svg.lucide-loader';
-const CHECK_ICON_SELECTOR = 'svg.lucide-check';
-const PLAY_ICON_SELECTOR = 'svg.lucide-play';
+const SAVE_ALERT_RULE_CHECK_ICON = 'save-alert-rule-check-icon';
+const SAVE_ALERT_RULE_LOADER_ICON = 'save-alert-rule-loader-icon';
+const TEST_NOTIFICATION_LOADER_ICON = 'test-notification-loader-icon';
+const TEST_NOTIFICATION_SEND_ICON = 'test-notification-send-icon';
 
 describe('Footer', () => {
 	beforeEach(() => {
@@ -91,20 +104,20 @@ describe('Footer', () => {
 	});
 
 	it('should render the component with 3 buttons', () => {
-		render(<Footer />);
+		render(<WrappedFooter />);
 		expect(screen.getByText(SAVE_ALERT_RULE_TEXT)).toBeInTheDocument();
 		expect(screen.getByText(TEST_NOTIFICATION_TEXT)).toBeInTheDocument();
 		expect(screen.getByText(DISCARD_TEXT)).toBeInTheDocument();
 	});
 
 	it('discard action works correctly', () => {
-		render(<Footer />);
+		render(<WrappedFooter />);
 		fireEvent.click(screen.getByText(DISCARD_TEXT));
 		expect(mockDiscardAlertRule).toHaveBeenCalled();
 	});
 
 	it('save alert rule action works correctly', () => {
-		render(<Footer />);
+		render(<WrappedFooter />);
 		fireEvent.click(screen.getByText(SAVE_ALERT_RULE_TEXT));
 		expect(mockCreateAlertRule).toHaveBeenCalled();
 	});
@@ -114,13 +127,13 @@ describe('Footer', () => {
 			...mockAlertContextState,
 			isEditMode: true,
 		});
-		render(<Footer />);
+		render(<WrappedFooter />);
 		fireEvent.click(screen.getByText(SAVE_ALERT_RULE_TEXT));
 		expect(mockUpdateAlertRule).toHaveBeenCalled();
 	});
 
 	it('test notification action works correctly', () => {
-		render(<Footer />);
+		render(<WrappedFooter />);
 		fireEvent.click(screen.getByText(TEST_NOTIFICATION_TEXT));
 		expect(mockTestAlertRule).toHaveBeenCalled();
 	});
@@ -130,7 +143,7 @@ describe('Footer', () => {
 			...mockAlertContextState,
 			isCreatingAlertRule: true,
 		});
-		render(<Footer />);
+		render(<WrappedFooter />);
 
 		expect(
 			screen.getByRole('button', { name: /save alert rule/i }),
@@ -146,7 +159,7 @@ describe('Footer', () => {
 			...mockAlertContextState,
 			isUpdatingAlertRule: true,
 		});
-		render(<Footer />);
+		render(<WrappedFooter />);
 
 		// Target the button elements directly instead of the text spans inside them
 		expect(
@@ -163,7 +176,7 @@ describe('Footer', () => {
 			...mockAlertContextState,
 			isTestingAlertRule: true,
 		});
-		render(<Footer />);
+		render(<WrappedFooter />);
 
 		// Target the button elements directly instead of the text spans inside them
 		expect(
@@ -183,7 +196,7 @@ describe('Footer', () => {
 				name: '',
 			},
 		});
-		render(<Footer />);
+		render(<WrappedFooter />);
 
 		expect(
 			screen.getByRole('button', { name: /save alert rule/i }),
@@ -211,7 +224,7 @@ describe('Footer', () => {
 			},
 		});
 
-		render(<Footer />);
+		render(<WrappedFooter />);
 
 		expect(
 			screen.getByRole('button', { name: /save alert rule/i }),
@@ -239,7 +252,7 @@ describe('Footer', () => {
 			},
 		});
 
-		render(<Footer />);
+		render(<WrappedFooter />);
 
 		expect(
 			screen.getByRole('button', { name: /save alert rule/i }),
@@ -255,18 +268,14 @@ describe('Footer', () => {
 			...mockAlertContextState,
 			isTestingAlertRule: true,
 		});
-		const { container } = render(<Footer />);
+		render(<WrappedFooter />);
 
 		// When testing alert rule, the play icon is replaced with a loader icon
-		const playIconForTestNotificationButton = container.querySelector(
-			PLAY_ICON_SELECTOR,
-		);
-		expect(playIconForTestNotificationButton).not.toBeInTheDocument();
+		expect(
+			screen.queryByTestId(TEST_NOTIFICATION_SEND_ICON),
+		).not.toBeInTheDocument();
 
-		const loaderIconForTestNotificationButton = container.querySelector(
-			LOADER_ICON_SELECTOR,
-		);
-		expect(loaderIconForTestNotificationButton).toBeInTheDocument();
+		expect(screen.getByTestId(TEST_NOTIFICATION_LOADER_ICON)).toBeInTheDocument();
 	});
 
 	it('should not show check icon on save alert rule button when updating alert rule', () => {
@@ -274,18 +283,14 @@ describe('Footer', () => {
 			...mockAlertContextState,
 			isUpdatingAlertRule: true,
 		});
-		const { container } = render(<Footer />);
+		render(<WrappedFooter />);
 
 		// When updating alert rule, the check icon is replaced with a loader icon
-		const checkIconForSaveAlertRuleButton = container.querySelector(
-			CHECK_ICON_SELECTOR,
-		);
-		expect(checkIconForSaveAlertRuleButton).not.toBeInTheDocument();
+		expect(
+			screen.queryByTestId(SAVE_ALERT_RULE_CHECK_ICON),
+		).not.toBeInTheDocument();
 
-		const loaderIconForSaveAlertRuleButton = container.querySelector(
-			LOADER_ICON_SELECTOR,
-		);
-		expect(loaderIconForSaveAlertRuleButton).toBeInTheDocument();
+		expect(screen.getByTestId(SAVE_ALERT_RULE_LOADER_ICON)).toBeInTheDocument();
 	});
 
 	it('should not show check icon on save alert rule button when creating alert rule', () => {
@@ -293,17 +298,13 @@ describe('Footer', () => {
 			...mockAlertContextState,
 			isCreatingAlertRule: true,
 		});
-		const { container } = render(<Footer />);
+		render(<WrappedFooter />);
 
 		// When creating alert rule, the check icon is replaced with a loader icon
-		const checkIconForSaveAlertRuleButton = container.querySelector(
-			CHECK_ICON_SELECTOR,
-		);
-		expect(checkIconForSaveAlertRuleButton).not.toBeInTheDocument();
+		expect(
+			screen.queryByTestId(SAVE_ALERT_RULE_CHECK_ICON),
+		).not.toBeInTheDocument();
 
-		const loaderIconForSaveAlertRuleButton = container.querySelector(
-			LOADER_ICON_SELECTOR,
-		);
-		expect(loaderIconForSaveAlertRuleButton).toBeInTheDocument();
+		expect(screen.getByTestId(SAVE_ALERT_RULE_LOADER_ICON)).toBeInTheDocument();
 	});
 });

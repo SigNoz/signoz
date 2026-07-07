@@ -13,7 +13,9 @@ function MessageTip({
 	message,
 	action,
 }: MessageTipProps): JSX.Element | null {
-	if (!show) return null;
+	if (!show) {
+		return null;
+	}
 
 	return (
 		<StyledAlert showIcon description={message} type="info" action={action} />

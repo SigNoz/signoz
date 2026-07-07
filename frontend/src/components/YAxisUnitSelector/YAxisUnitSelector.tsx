@@ -1,11 +1,18 @@
-import './styles.scss';
-
-import { Select } from 'antd';
-import { DefaultOptionType } from 'antd/es/select';
+import { useMemo } from 'react';
+import { SolidAlertTriangle } from '@signozhq/icons';
+import { Select, Tooltip } from 'antd';
+import type { DefaultOptionType } from 'antd/es/select';
+import cx from 'classnames';
 
 import { UniversalYAxisUnitMappings } from './constants';
 import { UniversalYAxisUnit, YAxisUnitSelectorProps } from './types';
-import { getYAxisCategories, mapMetricUnitToUniversalUnit } from './utils';
+import {
+	getUniversalNameFromMetricUnit,
+	getYAxisCategories,
+	mapMetricUnitToUniversalUnit,
+} from './utils';
+
+import './styles.scss';
 
 function YAxisUnitSelector({
 	value,
@@ -14,21 +21,43 @@ function YAxisUnitSelector({
 	loading = false,
 	'data-testid': dataTestId,
 	source,
+	initialValue,
+	categoriesOverride,
+	containerClassName,
 }: YAxisUnitSelectorProps): JSX.Element {
 	const universalUnit = mapMetricUnitToUniversalUnit(value);
+
+	const incompatibleUnitMessage = useMemo(() => {
+		if (!initialValue || !value || loading) {
+			return '';
+		}
+		const initialUniversalUnit = mapMetricUnitToUniversalUnit(initialValue);
+		const currentUniversalUnit = mapMetricUnitToUniversalUnit(value);
+		if (initialUniversalUnit !== currentUniversalUnit) {
+			const initialUniversalUnitName =
+				getUniversalNameFromMetricUnit(initialValue);
+			const currentUniversalUnitName = getUniversalNameFromMetricUnit(value);
+			return `Unit mismatch. The metric was sent with unit ${initialUniversalUnitName}, but ${currentUniversalUnitName} is selected.`;
+		}
+		return '';
+	}, [initialValue, value, loading]);
 
 	const handleSearch = (
 		searchTerm: string,
 		currentOption: DefaultOptionType | undefined,
 	): boolean => {
-		if (!currentOption?.value) return false;
+		if (!currentOption?.value) {
+			return false;
+		}
 
 		const search = searchTerm.toLowerCase();
 		const unitId = currentOption.value.toString().toLowerCase();
 		const unitLabel = currentOption.children?.toString().toLowerCase() || '';
 
 		// Check label and id
-		if (unitId.includes(search) || unitLabel.includes(search)) return true;
+		if (unitId.includes(search) || unitLabel.includes(search)) {
+			return true;
+		}
 
 		// Check aliases (from the mapping) using array iteration
 		const aliases = Array.from(
@@ -38,10 +67,12 @@ function YAxisUnitSelector({
 		return aliases.some((alias) => alias.toLowerCase().includes(search));
 	};
 
-	const categories = getYAxisCategories(source);
+	const categoriesToRender = useMemo(() => {
+		return categoriesOverride || getYAxisCategories(source);
+	}, [categoriesOverride, source]);
 
 	return (
-		<div className="y-axis-unit-selector-component">
+		<div className={cx('y-axis-unit-selector-component', containerClassName)}>
 			<Select
 				showSearch
 				value={universalUnit}
@@ -49,9 +80,25 @@ function YAxisUnitSelector({
 				placeholder={placeholder}
 				filterOption={(input, option): boolean => handleSearch(input, option)}
 				loading={loading}
+				suffixIcon={
+					incompatibleUnitMessage ? (
+						<Tooltip
+							title={incompatibleUnitMessage}
+							overlayClassName="y-axis-unit-warning-tooltip"
+						>
+							<span className="y-axis-unit-warning" role="img" aria-label="warning">
+								<SolidAlertTriangle size="md" />
+							</span>
+						</Tooltip>
+					) : undefined
+				}
+				className={cx({
+					'warning-state': incompatibleUnitMessage,
+				})}
 				data-testid={dataTestId}
+				allowClear
 			>
-				{categories.map((category) => (
+				{categoriesToRender.map((category) => (
 					<Select.OptGroup key={category.name} label={category.name}>
 						{category.units.map((unit) => (
 							<Select.Option key={unit.id} value={unit.id}>

@@ -1,16 +1,18 @@
-import { FastBackwardOutlined } from '@ant-design/icons';
-import { Button, Divider } from 'antd';
+import { memo, useMemo } from 'react';
+// eslint-disable-next-line no-restricted-imports
+import { useDispatch, useSelector } from 'react-redux';
+import { Button, Flex } from 'antd';
+import { Divider } from '@signozhq/ui/divider';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import Controls from 'container/Controls';
 import Download from 'container/Download/Download';
 import { getGlobalTime } from 'container/LogsSearchFilter/utils';
-import { getMinMax } from 'container/TopNav/AutoRefresh/config';
 import dayjs from 'dayjs';
 import { Pagination } from 'hooks/queryPagination';
+import { getMinMaxForSelectedTime } from 'lib/getMinMax';
 import { FlatLogData } from 'lib/logs/flatLogData';
 import { OrderPreferenceItems } from 'pages/Logs/config';
-import { memo, useMemo } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+// eslint-disable-next-line no-restricted-imports
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
@@ -24,6 +26,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { ILogsReducer } from 'types/reducer/logs';
 
 import { Container } from './styles';
+import { SkipBack } from '@signozhq/icons';
 
 function LogControls(): JSX.Element | null {
 	const {
@@ -50,7 +53,7 @@ function LogControls(): JSX.Element | null {
 	};
 
 	const handleGoToLatest = (): void => {
-		const { maxTime, minTime } = getMinMax(
+		const { maxTime, minTime } = getMinMaxForSelectedTime(
 			globalTime.selectedTime,
 			globalTime.minTime,
 			globalTime.maxTime,
@@ -113,7 +116,9 @@ function LogControls(): JSX.Element | null {
 				disabled={order === OrderPreferenceItems.ASC}
 				onClick={handleGoToLatest}
 			>
-				<FastBackwardOutlined /> Go to latest
+				<Flex align="center" gap="4px">
+					<SkipBack size="md" /> Go to latest
+				</Flex>
 			</Button>
 			<Divider type="vertical" />
 			<Controls

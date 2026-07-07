@@ -1,3 +1,5 @@
+import { ReduceOperators } from 'types/common/queryBuilder';
+
 export const explorerView = {
 	status: 'success',
 	data: [
@@ -60,7 +62,7 @@ export const explorerView = {
 								order: 'desc',
 							},
 						],
-						reduceTo: 'sum',
+						reduceTo: ReduceOperators.SUM,
 						ShiftBy: 0,
 					},
 				},
@@ -116,7 +118,7 @@ export const explorerView = {
 								order: 'desc',
 							},
 						],
-						reduceTo: 'avg',
+						reduceTo: ReduceOperators.AVG,
 						timeAggregation: 'rate',
 						spaceAggregation: 'sum',
 						ShiftBy: 0,

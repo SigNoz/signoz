@@ -64,7 +64,9 @@ export const onHandleRemoveInterest = async ({
 	fieldData,
 	fieldIndex,
 }: OnHandleRemoveInterestProps): Promise<void> => {
-	if (RESTRICTED_SELECTED_FIELDS.includes(fieldData.name)) return;
+	if (RESTRICTED_SELECTED_FIELDS.includes(fieldData.name)) {
+		return;
+	}
 
 	const { dispatch } = store;
 

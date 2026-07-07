@@ -1,12 +1,14 @@
-import { Input, InputProps } from 'antd';
 import { ChangeEventHandler, useState } from 'react';
+// TODO(@signozhq/ui-input): migrate to @signozhq/ui Input once the antd
+// `InputProps` spread (`size`, etc.) is no longer needed on this wrapper.
+import { Input, InputProps } from 'antd';
 
 function CSVInput({ value, onChange, ...otherProps }: InputProps): JSX.Element {
 	const [inputValue, setInputValue] = useState(
 		((value as string[]) || []).join(', '),
 	);
 
-	const onChangeHandler = (onChange as unknown) as (v: string[]) => void;
+	const onChangeHandler = onChange as unknown as (v: string[]) => void;
 
 	const onInputChange: ChangeEventHandler<HTMLInputElement> = (e) => {
 		const newValue = e.target.value;
@@ -18,7 +20,6 @@ function CSVInput({ value, onChange, ...otherProps }: InputProps): JSX.Element {
 		}
 	};
 
-	// eslint-disable-next-line react/jsx-props-no-spreading
 	return <Input value={inputValue} onChange={onInputChange} {...otherProps} />;
 }
 

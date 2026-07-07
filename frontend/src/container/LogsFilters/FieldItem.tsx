@@ -1,7 +1,8 @@
-import { LoadingOutlined } from '@ant-design/icons';
-import { Button, Popover, Spin, Typography } from 'antd';
-import { useIsDarkMode } from 'hooks/useDarkMode';
 import { ReactNode, useCallback, useMemo, useState } from 'react';
+import { Loader } from '@signozhq/icons';
+import { Button, Popover, Spin } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import {
 	IField,
 	IInterestingFields,
@@ -24,12 +25,20 @@ function FieldItem({
 	const isDarkMode = useIsDarkMode();
 
 	const onClickHandler = useCallback(() => {
-		if (!isLoading && buttonOnClick) buttonOnClick({ fieldData, fieldIndex });
+		if (!isLoading && buttonOnClick) {
+			buttonOnClick({ fieldData, fieldIndex });
+		}
 	}, [buttonOnClick, fieldData, fieldIndex, isLoading]);
 
 	const renderContent = useMemo(() => {
 		if (isLoading) {
-			return <Spin spinning size="small" indicator={<LoadingOutlined spin />} />;
+			return (
+				<Spin
+					spinning
+					size="small"
+					indicator={<Loader className="animate-spin" />}
+				/>
+			);
 		}
 
 		if (isHovered) {

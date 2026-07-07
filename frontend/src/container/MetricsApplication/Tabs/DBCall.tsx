@@ -1,3 +1,7 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+// eslint-disable-next-line no-restricted-imports
+import { useDispatch } from 'react-redux';
+import { useLocation, useParams } from 'react-router-dom';
 import { Col } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { ENTITY_VERSION_V4 } from 'constants/app';
@@ -18,9 +22,6 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import getStep from 'lib/getStep';
 import history from 'lib/history';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useDispatch } from 'react-redux';
-import { useLocation, useParams } from 'react-router-dom';
 import store from 'store';
 import { UpdateTimeInterval } from 'store/actions';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
@@ -29,7 +30,12 @@ import { v4 as uuid } from 'uuid';
 
 import { FeatureKeys } from '../../../constants/features';
 import { useAppContext } from '../../../providers/App/App';
-import { GraphTitle, MENU_ITEMS, SERVICE_CHART_ID } from '../constant';
+import {
+	GraphTitle,
+	MENU_ITEMS,
+	SERVICE_CHART_ID,
+	SERVICE_DETAIL_DRILLDOWN_ENABLED,
+} from '../constant';
 import { getWidgetQueryBuilder } from '../MetricsApplication.factory';
 import { Card, GraphContainer, Row } from '../styles';
 import { Button } from './styles';
@@ -205,6 +211,7 @@ function DBCall(): JSX.Element {
 							}}
 							onDragSelect={onDragSelect}
 							version={ENTITY_VERSION_V4}
+							enableDrillDown={SERVICE_DETAIL_DRILLDOWN_ENABLED}
 						/>
 					</GraphContainer>
 				</Card>
@@ -243,6 +250,7 @@ function DBCall(): JSX.Element {
 							}}
 							onDragSelect={onDragSelect}
 							version={ENTITY_VERSION_V4}
+							enableDrillDown={SERVICE_DETAIL_DRILLDOWN_ENABLED}
 						/>
 					</GraphContainer>
 				</Card>

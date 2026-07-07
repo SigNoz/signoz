@@ -1,0 +1,204 @@
+@use '../../../../styles/scrollbar' as *;
+
+.legend-search-container {
+	flex-shrink: 0;
+	width: 100%;
+	padding-right: 8px;
+
+	.legend-search-input {
+		font-size: 12px;
+	}
+}
+
+.legend-container {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 12px;
+	height: 100%;
+	width: 100%;
+	// Allow the flex children to shrink below their content height so the
+	// virtualized grid scrolls within the capped legend height instead of
+	// overflowing the wrapper (default min-height:auto would block the shrink).
+	min-height: 0;
+
+	&:has(.legend-item-focused) .legend-item {
+		opacity: 0.3;
+	}
+
+	&:has(.legend-item-focused) .legend-item.legend-item-focused {
+		opacity: 1;
+	}
+
+	.legend-empty-state {
+		font-size: 12px;
+		color: var(--l2-foreground);
+		text-align: center;
+		padding: 12px;
+		padding: 2rem 0;
+	}
+
+	.legend-virtuoso-container {
+		// flex:1 + min-height:0 pins the scroller to the space left after the
+		// search box (RIGHT legend) and lets it scroll instead of growing to fit
+		// every row — without this the grid overflows a BOTTOM legend's fixed height.
+		flex: 1;
+		min-height: 0;
+		height: 100%;
+		width: 100%;
+
+		.virtuoso-grid-list {
+			min-width: 0;
+			display: grid;
+			grid-auto-flow: row;
+			grid-template-columns: repeat(
+				auto-fill,
+				minmax(var(--legend-average-width, 240px), 1fr)
+			);
+			column-gap: 12px;
+		}
+
+		.virtuoso-grid-item {
+			min-width: 0;
+		}
+
+		&.legend-virtuoso-container-right {
+			.virtuoso-grid-list {
+				grid-template-columns: 1fr;
+			}
+		}
+
+		&.legend-virtuoso-container-single-row {
+			.virtuoso-grid-list {
+				grid-template-columns: repeat(
+					auto-fit,
+					minmax(var(--legend-average-width, 240px), max-content)
+				);
+				justify-content: center;
+			}
+		}
+
+		@include custom-scrollbar;
+	}
+}
+
+.legend-row {
+	padding: 4px 0;
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 8px 16px;
+
+	&.legend-single-row {
+		justify-content: center;
+	}
+
+	&.legend-row-right {
+		flex-direction: column;
+		align-items: flex-start;
+		justify-content: flex-start;
+	}
+	&.legend-row-bottom {
+		flex-direction: row;
+	}
+}
+
+.legend-item {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 4px 8px;
+	// Include padding within the width so a full-width row (legend-item-right) fits its
+	// column instead of overflowing by the 16px horizontal padding — there is no global
+	// border-box reset, so the default content-box would make it overflow.
+	box-sizing: border-box;
+	max-width: 100%;
+	overflow: hidden;
+	border-radius: 4px;
+	cursor: pointer;
+
+	&.legend-item-right {
+		width: 100%;
+	}
+
+	&.legend-item-off {
+		opacity: 0.3;
+		text-decoration: line-through;
+		text-decoration-thickness: 1px;
+	}
+
+	&.legend-item-focused {
+		opacity: 1;
+	}
+
+	.legend-item-label-trigger {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		flex: 1;
+		min-width: 0;
+		cursor: pointer;
+	}
+
+	.legend-marker {
+		border-width: 2px;
+		border-style: solid;
+		border-radius: 50%;
+		min-width: 11px;
+		min-height: 11px;
+		width: 11px;
+		height: 11px;
+		flex-shrink: 0;
+		cursor: pointer;
+		transition: transform 0.2s ease;
+		position: relative;
+
+		&:hover {
+			transform: scale(1.2);
+			box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
+		}
+
+		&:active {
+			transform: scale(0.9);
+		}
+	}
+
+	.legend-label {
+		flex: 1;
+		font-size: 12px;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		min-width: 0;
+		user-select: none;
+	}
+
+	.legend-copy-button {
+		// Always laid out (space reserved) but transparent, so revealing it on
+		// hover fades the icon in without reflowing the row / shifting the label.
+		// Shrink the shared icon Button (defaults to a 2rem square) to the
+		// compact legend row via its size tokens.
+		--button-height: auto;
+		--button-width: auto;
+		--button-padding: 2px;
+
+		opacity: 0;
+		flex-shrink: 0;
+		color: var(--l2-foreground);
+		border-radius: 4px;
+		transition:
+			opacity 0.15s ease,
+			color 0.15s ease;
+
+		&:hover {
+			color: var(--l1-foreground);
+		}
+	}
+
+	&:hover {
+		background: var(--l3-background);
+		.legend-copy-button {
+			opacity: 1;
+		}
+	}
+}

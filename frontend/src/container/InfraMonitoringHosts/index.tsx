@@ -1,13 +1,11 @@
-import './InfraMonitoring.styles.scss';
-
+import { useEffect } from 'react';
 import * as Sentry from '@sentry/react';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
-import { useEffect } from 'react';
 import { DataSource } from 'types/common/queryBuilder';
 
-import HostsList from './HostsList';
+import Hosts from './Hosts';
 
 function InfraMonitoringHosts(): JSX.Element {
 	const {
@@ -63,11 +61,7 @@ function InfraMonitoringHosts(): JSX.Element {
 
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
-			<div className="infra-monitoring-container">
-				<div className="hosts-list-container">
-					<HostsList />
-				</div>
-			</div>
+			<Hosts />
 		</Sentry.ErrorBoundary>
 	);
 }

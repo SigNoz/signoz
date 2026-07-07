@@ -17,7 +17,9 @@ import { v4 } from 'uuid';
 export const getListQuery = (
 	stagedQuery: Query | null,
 ): IBuilderQuery | null => {
-	if (!stagedQuery || stagedQuery.builder.queryData.length < 1) return null;
+	if (!stagedQuery || stagedQuery.builder.queryData.length < 1) {
+		return null;
+	}
 
 	return stagedQuery.builder.queryData[0] ?? null;
 };
@@ -37,7 +39,8 @@ export const getFrequencyChartData = (
 
 	let updatedFilterExpression = baseFirstQuery.filter?.expression || '';
 	if (activeLogId) {
-		updatedFilterExpression = `${updatedFilterExpression} id <= '${activeLogId}'`.trim();
+		updatedFilterExpression =
+			`${updatedFilterExpression} id <= '${activeLogId}'`.trim();
 	}
 
 	const modifiedQueryData: IBuilderQuery = {
@@ -105,7 +108,9 @@ export const getQueryByPanelType = (
 		orderBy?: string;
 	},
 ): Query | null => {
-	if (!query) return null;
+	if (!query) {
+		return null;
+	}
 
 	let queryData: IBuilderQuery[] = query.builder.queryData.map((item) => ({
 		...item,
@@ -139,7 +144,8 @@ export const getQueryByPanelType = (
 				],
 				op: 'AND',
 			};
-			updatedFilterExpression = `${updatedFilterExpression} id <= '${activeLogId}'`.trim();
+			updatedFilterExpression =
+				`${updatedFilterExpression} id <= '${activeLogId}'`.trim();
 		}
 
 		// Create orderBy array based on orderDirection
@@ -181,11 +187,15 @@ export const getExportQueryData = (
 	query: Query | null,
 	panelType: PANEL_TYPES,
 ): Query | null => {
-	if (!query) return null;
+	if (!query) {
+		return null;
+	}
 
 	if (panelType === PANEL_TYPES.LIST) {
 		const listQuery = getListQuery(query);
-		if (!listQuery) return null;
+		if (!listQuery) {
+			return null;
+		}
 
 		return {
 			...query,

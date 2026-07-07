@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 // MetadataStore is the interface for the telemetry metadata store.
@@ -23,11 +24,33 @@ type MetadataStore interface {
 	GetRelatedValues(ctx context.Context, fieldValueSelector *FieldValueSelector) ([]string, bool, error)
 
 	// GetAllValues returns a list of all values.
-	GetAllValues(ctx context.Context, fieldValueSelector *FieldValueSelector) (*TelemetryFieldValues, bool, error)
+	GetAllValues(ctx context.Context, orgID valuer.UUID, fieldValueSelector *FieldValueSelector) (*TelemetryFieldValues, bool, error)
 
 	// FetchTemporality fetches the temporality for metric
-	FetchTemporality(ctx context.Context, metricName string) (metrictypes.Temporality, error)
+	FetchTemporality(ctx context.Context, orgID valuer.UUID, queryTimeRangeStartTs, queryTimeRangeEndTs uint64, metricName string) (metrictypes.Temporality, error)
 
 	// FetchTemporalityMulti fetches the temporality for multiple metrics
-	FetchTemporalityMulti(ctx context.Context, metricNames ...string) (map[string]metrictypes.Temporality, error)
+	FetchTemporalityMulti(ctx context.Context, orgID valuer.UUID, queryTimeRangeStartTs, queryTimeRangeEndTs uint64, metricNames ...string) (map[string]metrictypes.Temporality, error)
+
+	FetchTemporalityAndTypeMulti(ctx context.Context, orgID valuer.UUID, queryTimeRangeStartTs, queryTimeRangeEndTs uint64, metricNames ...string) (map[string]metrictypes.Temporality, map[string]metrictypes.Type, map[string]bool, error)
+
+	// ListLogsJSONIndexes lists the JSON indexes for the logs table.
+	ListLogsJSONIndexes(ctx context.Context, filters ...string) ([]TelemetryFieldKeySkipIndex, error)
+
+	// ListPromotedPaths lists the promoted paths.
+	GetPromotedPaths(ctx context.Context, paths ...string) (map[string]bool, error)
+
+	// PromotePaths promotes the paths.
+	PromotePaths(ctx context.Context, paths ...string) error
+
+	// GetFirstSeenFromMetricMetadata gets the first seen timestamp for a metric metadata lookup key.
+	GetFirstSeenFromMetricMetadata(ctx context.Context, lookupKeys []MetricMetadataLookupKey) (map[MetricMetadataLookupKey]int64, error)
+
+	FetchLastSeenInfoMulti(ctx context.Context, orgID valuer.UUID, metricNames ...string) (map[string]int64, error)
+}
+
+type MetricMetadataLookupKey struct {
+	MetricName     string
+	AttributeName  string
+	AttributeValue string
 }

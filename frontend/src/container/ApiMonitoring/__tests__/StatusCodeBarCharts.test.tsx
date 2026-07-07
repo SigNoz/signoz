@@ -21,10 +21,15 @@ interface MockQueryResult {
 }
 
 // Mocks
-jest.mock('components/Uplot', () => ({
-	__esModule: true,
-	default: jest.fn().mockImplementation(() => <div data-testid="uplot-mock" />),
-}));
+jest.mock(
+	'container/DashboardContainer/visualization/charts/BarChart/BarChart',
+	() => ({
+		__esModule: true,
+		default: jest
+			.fn()
+			.mockImplementation(() => <div data-testid="bar-chart-mock" />),
+	}),
+);
 
 jest.mock('components/CeleryTask/useGetGraphCustomSeries', () => ({
 	useGetGraphCustomSeries: (): { getCustomSeries: jest.Mock } => ({
@@ -68,6 +73,24 @@ jest.mock('hooks/useDimensions', () => ({
 
 jest.mock('hooks/useNotifications', () => ({
 	useNotifications: (): { notifications: [] } => ({ notifications: [] }),
+}));
+
+jest.mock('providers/Timezone', () => ({
+	useTimezone: (): {
+		timezone: {
+			name: string;
+			value: string;
+			offset: string;
+			searchIndex: string;
+		};
+	} => ({
+		timezone: {
+			name: 'UTC',
+			value: 'UTC',
+			offset: '+00:00',
+			searchIndex: 'UTC',
+		},
+	}),
 }));
 
 jest.mock('lib/uPlotLib/getUplotChartOptions', () => ({
@@ -142,7 +165,6 @@ describe('StatusCodeBarCharts', () => {
 		endTime: 1609545600000,
 	};
 	const mockDomainName = 'test-domain';
-	const mockEndPointName = '/api/test';
 	const onDragSelectMock = jest.fn();
 	const refetchFn = jest.fn();
 
@@ -232,7 +254,6 @@ describe('StatusCodeBarCharts', () => {
 				endPointStatusCodeBarChartsDataQuery={mockStatusCodeQuery as any}
 				endPointStatusCodeLatencyBarChartsDataQuery={mockLatencyQuery as any}
 				domainName={mockDomainName}
-				endPointName={mockEndPointName}
 				filters={mockFilters}
 				timeRange={mockTimeRange}
 				onDragSelect={onDragSelectMock}
@@ -268,7 +289,6 @@ describe('StatusCodeBarCharts', () => {
 				endPointStatusCodeBarChartsDataQuery={mockStatusCodeQuery as any}
 				endPointStatusCodeLatencyBarChartsDataQuery={mockLatencyQuery as any}
 				domainName={mockDomainName}
-				endPointName={mockEndPointName}
 				filters={mockFilters}
 				timeRange={mockTimeRange}
 				onDragSelect={onDragSelectMock}
@@ -311,7 +331,6 @@ describe('StatusCodeBarCharts', () => {
 				endPointStatusCodeBarChartsDataQuery={mockStatusCodeQuery as any}
 				endPointStatusCodeLatencyBarChartsDataQuery={mockLatencyQuery as any}
 				domainName={mockDomainName}
-				endPointName={mockEndPointName}
 				filters={mockFilters}
 				timeRange={mockTimeRange}
 				onDragSelect={onDragSelectMock}
@@ -323,7 +342,7 @@ describe('StatusCodeBarCharts', () => {
 			mockData.payload,
 			'sum',
 		);
-		expect(screen.getByTestId('uplot-mock')).toBeInTheDocument();
+		expect(screen.getByTestId('bar-chart-mock')).toBeInTheDocument();
 		expect(screen.getByText('Number of calls')).toBeInTheDocument();
 		expect(screen.getByText('Latency')).toBeInTheDocument();
 	});
@@ -356,7 +375,6 @@ describe('StatusCodeBarCharts', () => {
 				endPointStatusCodeBarChartsDataQuery={mockStatusCodeQuery as any}
 				endPointStatusCodeLatencyBarChartsDataQuery={mockLatencyQuery as any}
 				domainName={mockDomainName}
-				endPointName={mockEndPointName}
 				filters={mockFilters}
 				timeRange={mockTimeRange}
 				onDragSelect={onDragSelectMock}
@@ -404,7 +422,6 @@ describe('StatusCodeBarCharts', () => {
 				endPointStatusCodeBarChartsDataQuery={mockStatusCodeQuery as any}
 				endPointStatusCodeLatencyBarChartsDataQuery={mockLatencyQuery as any}
 				domainName={mockDomainName}
-				endPointName={mockEndPointName}
 				filters={mockFilters}
 				timeRange={mockTimeRange}
 				onDragSelect={onDragSelectMock}
@@ -419,7 +436,6 @@ describe('StatusCodeBarCharts', () => {
 		// but we've confirmed the function is mocked and ready to be tested
 		expect(getStatusCodeBarChartWidgetData).toHaveBeenCalledWith(
 			mockDomainName,
-			mockEndPointName,
 			expect.objectContaining({
 				items: [],
 				op: 'AND',
@@ -467,7 +483,6 @@ describe('StatusCodeBarCharts', () => {
 				endPointStatusCodeBarChartsDataQuery={mockStatusCodeQuery as any}
 				endPointStatusCodeLatencyBarChartsDataQuery={mockLatencyQuery as any}
 				domainName={mockDomainName}
-				endPointName={mockEndPointName}
 				filters={mockCustomFilters as IBuilderQuery['filters']}
 				timeRange={mockTimeRange}
 				onDragSelect={onDragSelectMock}
@@ -477,7 +492,6 @@ describe('StatusCodeBarCharts', () => {
 		// Assert widget creation was called with the correct parameters
 		expect(getStatusCodeBarChartWidgetData).toHaveBeenCalledWith(
 			mockDomainName,
-			mockEndPointName,
 			expect.objectContaining({
 				items: expect.arrayContaining([
 					expect.objectContaining({ id: 'custom-filter' }),

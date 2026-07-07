@@ -52,7 +52,9 @@ const buildClickHouseQuery = (
 ): ICompositeMetricQuery => {
 	const chQueries: BuilderClickHouseResource = {};
 	query.clickhouse_sql.forEach((query: IClickHouseQuery) => {
-		if (!query.query) return;
+		if (!query.query) {
+			return;
+		}
 		chQueries[query.name] = query;
 	});
 
@@ -70,7 +72,9 @@ const buildPromQuery = (
 ): ICompositeMetricQuery => {
 	const promQueries: BuilderPromQLResource = {};
 	query.promql.forEach((query) => {
-		if (!query.query) return;
+		if (!query.query) {
+			return;
+		}
 		promQueries[query.name] = {
 			legend: query.legend,
 			name: query.name,

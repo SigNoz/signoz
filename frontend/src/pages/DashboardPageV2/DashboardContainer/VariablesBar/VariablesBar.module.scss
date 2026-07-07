@@ -1,0 +1,114 @@
+.bar {
+	min-width: 0;
+}
+
+.strip {
+	display: flow-root;
+}
+
+.stripExpanded {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	padding-top: 12px;
+	overflow: visible;
+	clear: both;
+
+	.variableSlot,
+	.moreButton {
+		margin: 0;
+	}
+
+	@media (prefers-reduced-motion: no-preference) {
+		animation: variablesExpandIn 200ms ease-out;
+	}
+}
+
+@keyframes variablesExpandIn {
+	from {
+		opacity: 0;
+		transform: translateY(-6px);
+	}
+
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+.variableSlot {
+	display: inline-flex;
+	align-items: center;
+	margin-right: 8px;
+	vertical-align: top;
+}
+
+.variableSlotHidden {
+	display: none;
+}
+
+.moreButton {
+	display: inline-flex;
+	vertical-align: top;
+}
+
+.variableItem {
+	display: flex;
+	align-items: center;
+}
+
+.variableName {
+	display: flex;
+	min-width: 56px;
+	height: 32px;
+	align-items: center;
+	gap: 4px;
+	padding: 6px 6px 6px 8px;
+	border: 1px solid var(--l3-border);
+	border-radius: 2px 0 0 2px;
+	background: var(--l3-background);
+	color: var(--bg-robin-300);
+	font-family: Inter;
+	font-size: 12px;
+	font-weight: 400;
+	line-height: 16px;
+	white-space: nowrap;
+}
+
+.infoIcon {
+	display: inline-flex;
+	margin-left: 2px;
+	color: var(--l2-foreground);
+	vertical-align: middle;
+}
+
+.variableValue {
+	display: flex;
+	min-width: 120px;
+	height: 32px;
+	align-items: center;
+	border: 1px solid var(--l3-border);
+	border-left: none;
+	border-radius: 0 2px 2px 0;
+	background: var(--l2-background);
+	color: var(--l2-foreground);
+	font-size: 12px;
+
+	&:hover,
+	&:focus-within {
+		outline: 1px solid var(--bg-robin-400);
+	}
+}
+
+.control {
+	width: 100%;
+	min-width: 120px;
+
+	:global(.ant-select-selector),
+	:global(.ant-input),
+	&:global(.ant-input) {
+		border: none !important;
+		background: transparent !important;
+		box-shadow: none !important;
+	}
+}

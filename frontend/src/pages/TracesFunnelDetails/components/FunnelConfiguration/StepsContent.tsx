@@ -1,15 +1,15 @@
-import './StepsContent.styles.scss';
-
+import { memo, useCallback } from 'react';
 import { Button, Steps, Tooltip } from 'antd';
 import logEvent from 'api/common/logEvent';
-import { PlusIcon, Undo2 } from 'lucide-react';
+import { Plus, Undo2 } from '@signozhq/icons';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
 import { useAppContext } from 'providers/App/App';
-import { memo, useCallback } from 'react';
-import { Span } from 'types/api/trace/getTraceV2';
+import { SpanV3 } from 'types/api/trace/getTraceV3';
 
 import FunnelStep from './FunnelStep';
 import InterStepConfig from './InterStepConfig';
+
+import './StepsContent.styles.scss';
 
 const { Step } = Steps;
 
@@ -18,17 +18,19 @@ function StepsContent({
 	span,
 }: {
 	isTraceDetailsPage?: boolean;
-	span?: Span;
+	span?: SpanV3;
 }): JSX.Element {
 	const { steps, handleAddStep, handleReplaceStep } = useFunnelContext();
 	const { hasEditPermission } = useAppContext();
 
 	const handleAddForNewStep = useCallback(() => {
-		if (!span || !hasEditPermission) return;
+		if (!span || !hasEditPermission) {
+			return;
+		}
 
 		const stepWasAdded = handleAddStep();
 		if (stepWasAdded) {
-			handleReplaceStep(steps.length, span.serviceName, span.name);
+			handleReplaceStep(steps.length, span['service.name'], span.name);
 		}
 		logEvent(
 			'Trace Funnels: span added for a new step from trace details page',
@@ -59,12 +61,12 @@ function StepsContent({
 												className="funnel-step-wrapper__replace-button"
 												icon={<Undo2 size={12} />}
 												disabled={
-													(step.service_name === span.serviceName &&
+													(step.service_name === span['service.name'] &&
 														step.span_name === span.name) ||
 													!hasEditPermission
 												}
 												onClick={(): void =>
-													handleReplaceStep(index, span.serviceName, span.name)
+													handleReplaceStep(index, span['service.name'], span.name)
 												}
 											>
 												Replace
@@ -93,7 +95,7 @@ function StepsContent({
 								type="default"
 								className="steps-content__add-btn"
 								onClick={isTraceDetailsPage ? handleAddForNewStep : handleAddStep}
-								icon={<PlusIcon size={14} />}
+								icon={<Plus size={14} />}
 								disabled={!hasEditPermission}
 							>
 								{isTraceDetailsPage ? 'Add for new Step' : 'Add Funnel Step'}

@@ -1,9 +1,7 @@
-import './QueryAggregation.styles.scss';
-
+import { useMemo } from 'react';
 import { Tooltip } from 'antd';
 import InputWithLabel from 'components/InputWithLabel/InputWithLabel';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { useMemo } from 'react';
 import {
 	IBuilderQuery,
 	IBuilderTraceOperator,
@@ -11,6 +9,8 @@ import {
 import { DataSource } from 'types/common/queryBuilder';
 
 import QueryAggregationSelect from './QueryAggregationSelect';
+
+import './QueryAggregation.styles.scss';
 
 function QueryAggregationOptions({
 	dataSource,
@@ -26,7 +26,6 @@ function QueryAggregationOptions({
 	queryData: IBuilderQuery | IBuilderTraceOperator;
 }): JSX.Element {
 	const showAggregationInterval = useMemo(() => {
-		// eslint-disable-next-line sonarjs/prefer-single-boolean-return
 		if (panelType === PANEL_TYPES.VALUE) {
 			return false;
 		}
@@ -43,7 +42,10 @@ function QueryAggregationOptions({
 	};
 
 	return (
-		<div className="query-aggregation-container">
+		<div
+			className="query-aggregation-container"
+			data-testid="query-aggregation-container"
+		>
 			<div className="aggregation-container">
 				<QueryAggregationSelect
 					onChange={onChange}
@@ -63,7 +65,7 @@ function QueryAggregationOptions({
 									Set the time interval for aggregation
 									<br />
 									<a
-										href="https://signoz.io/docs/userguide/query-builder-v5/#time-aggregation-windows"
+										href="https://signoz.io/docs/userguide/query-builder-v5/#temporal-aggregation-within-each-time-series"
 										target="_blank"
 										rel="noopener noreferrer"
 										style={{ color: '#1890ff', textDecoration: 'underline' }}

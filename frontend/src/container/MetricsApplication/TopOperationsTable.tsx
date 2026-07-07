@@ -1,8 +1,16 @@
-import './TopOperationsTable.styles.scss';
-
-import { SearchOutlined } from '@ant-design/icons';
-import { InputRef, Switch, Tooltip, Typography } from 'antd';
-import { ColumnsType, ColumnType } from 'antd/lib/table';
+import { useRef } from 'react';
+// eslint-disable-next-line no-restricted-imports
+import { useSelector } from 'react-redux';
+import { useParams } from 'react-router-dom';
+import { Search } from '@signozhq/icons';
+import {
+	InputRef,
+	TableColumnsType as ColumnsType,
+	TableColumnType as ColumnType,
+	Tooltip,
+} from 'antd';
+import { Switch } from '@signozhq/ui/switch';
+import { Typography } from '@signozhq/ui/typography';
 import { ResizeTable } from 'components/ResizeTable';
 import TextToolTip from 'components/TextToolTip';
 import Download from 'container/Download/Download';
@@ -10,9 +18,6 @@ import { filterDropdown } from 'container/ServiceApplication/Filter/FilterDropdo
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import { useRef } from 'react';
-import { useSelector } from 'react-redux';
-import { useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
@@ -26,6 +31,8 @@ import {
 	getErrorRate,
 	navigateToTrace,
 } from './utils';
+
+import './TopOperationsTable.styles.scss';
 
 function TopOperationsTable({
 	data,
@@ -97,7 +104,7 @@ function TopOperationsTable({
 
 	const getSearchOption = (): ColumnType<TopOperationList> => ({
 		filterDropdown,
-		filterIcon: <SearchOutlined />,
+		filterIcon: <Search size="md" />,
 		onFilter: (value, record): boolean =>
 			record.name
 				.toString()
@@ -190,8 +197,7 @@ function TopOperationsTable({
 
 	const entryPointSpanInfo = {
 		text: 'Shows the spans where requests enter new services for the first time',
-		url:
-			'https://signoz.io/docs/traces-management/guides/entry-point-spans-service-overview/',
+		url: 'https://signoz.io/docs/apm-and-distributed-tracing/application-details/',
 		urlText: 'Learn more about Entrypoint Spans.',
 	};
 
@@ -206,11 +212,7 @@ function TopOperationsTable({
 					/>
 				</div>
 				<div className="top-operation__entry-point">
-					<Switch
-						checked={isEntryPoint}
-						onChange={onEntryPointToggle}
-						size="small"
-					/>
+					<Switch value={isEntryPoint} onChange={onEntryPointToggle} />
 					<span className="top-operation__entry-point-label">Entrypoint Spans</span>
 					<TextToolTip
 						text={entryPointSpanInfo.text}

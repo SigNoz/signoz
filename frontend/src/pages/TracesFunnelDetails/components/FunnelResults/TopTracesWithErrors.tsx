@@ -13,7 +13,6 @@ interface TopTracesWithErrorsProps {
 function TopTracesWithErrors(props: TopTracesWithErrorsProps): JSX.Element {
 	return (
 		<FunnelTopTracesTable
-			// eslint-disable-next-line react/jsx-props-no-spreading
 			{...props}
 			title="Traces with errors"
 			tooltip="A list of the traces with errors in the funnel"

@@ -1,0 +1,40 @@
+.chart-manager-series-label {
+	width: 100%;
+	min-width: 0;
+	max-width: 100%;
+	cursor: pointer;
+	border: none;
+	background-color: transparent;
+	color: inherit;
+	text-align: left;
+	padding: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+
+	&:disabled {
+		cursor: not-allowed;
+	}
+}
+
+.chart-manager-container {
+	width: 100%;
+	max-height: calc(40% - 40px);
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+
+	.chart-manager-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		gap: 16px;
+
+		.chart-manager-actions-container {
+			display: flex;
+			justify-content: flex-end;
+			align-items: center;
+			gap: 8px;
+		}
+	}
+}

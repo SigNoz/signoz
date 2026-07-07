@@ -2,17 +2,18 @@ package opamp
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/instrumentation"
-	model "github.com/SigNoz/signoz/pkg/query-service/app/opamp/model"
-	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/open-telemetry/opamp-go/protobufs"
 	"github.com/open-telemetry/opamp-go/server"
 	"github.com/open-telemetry/opamp-go/server/types"
 
-	"go.uber.org/zap"
+	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/instrumentation"
+	model "github.com/SigNoz/signoz/pkg/query-service/app/opamp/model"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 var opAmpServer *Server
@@ -20,6 +21,7 @@ var opAmpServer *Server
 type Server struct {
 	server server.OpAMPServer
 	agents *model.Agents
+	logger *slog.Logger
 
 	agentConfigProvider AgentConfigProvider
 
@@ -43,6 +45,7 @@ func InitializeServer(
 	opAmpServer = &Server{
 		agents:              agents,
 		agentConfigProvider: agentConfigProvider,
+		logger:              instrumentation.Logger(),
 	}
 	opAmpServer.server = server.New(wrappedLogger(instrumentation.Logger()))
 	return opAmpServer
@@ -70,8 +73,8 @@ func (srv *Server) Start(listener string) error {
 	unsubscribe := srv.agentConfigProvider.SubscribeToConfigUpdates(func() {
 		err := srv.agents.RecommendLatestConfigToAll(srv.agentConfigProvider)
 		if err != nil {
-			zap.L().Error(
-				"could not roll out latest config recommendation to connected agents", zap.Error(err),
+			srv.logger.Error(
+				"could not roll out latest config recommendation to connected agents", errors.Attr(err),
 			)
 		}
 	})
@@ -114,7 +117,7 @@ func (srv *Server) OnMessage(ctx context.Context, conn types.Connection, msg *pr
 	// agents sends the effective config when we processStatusUpdate.
 	agent, created, err := srv.agents.FindOrCreateAgent(agentID.String(), conn, orgID)
 	if err != nil {
-		zap.L().Error("Failed to find or create agent", zap.String("agentID", agentID.String()), zap.Error(err))
+		srv.logger.Error("failed to find or create agent", "agent_id", agentID.String(), errors.Attr(err))
 
 		// Return error response according to OpAMP protocol
 		return &protobufs.ServerToAgent{
@@ -134,10 +137,10 @@ func (srv *Server) OnMessage(ctx context.Context, conn types.Connection, msg *pr
 
 	if created {
 		agent.CanLB = model.ExtractLbFlag(msg.AgentDescription)
-		zap.L().Debug(
-			"New agent added", zap.Bool("canLb", agent.CanLB),
-			zap.String("agentID", agent.AgentID),
-			zap.Any("status", agent.Status),
+		srv.logger.Debug(
+			"new agent added", "can_lb", agent.CanLB,
+			"agent_id", agent.AgentID,
+			"status", agent.Status,
 		)
 	}
 
@@ -158,7 +161,7 @@ func Ready() bool {
 		return false
 	}
 	if opAmpServer.agents.Count() == 0 {
-		zap.L().Warn("no agents available, all agent config requests will be rejected")
+		slog.Warn("no agents available, all agent config requests will be rejected")
 		return false
 	}
 	return true

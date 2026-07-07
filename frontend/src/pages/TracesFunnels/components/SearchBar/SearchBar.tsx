@@ -1,8 +1,10 @@
-import { Color } from '@signozhq/design-tokens';
-import { Button, Input, Popover, Tooltip, Typography } from 'antd';
-import { ArrowDownWideNarrow, Check, Plus, Search } from 'lucide-react';
-import { useAppContext } from 'providers/App/App';
 import { ChangeEvent } from 'react';
+import { Color } from '@signozhq/design-tokens';
+import { Input } from '@signozhq/ui/input';
+import { Button, Popover, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
+import { ArrowDownWideNarrow, Check, Plus, Search } from '@signozhq/icons';
+import { useAppContext } from 'providers/App/App';
 
 interface SearchBarProps {
 	searchQuery: string;

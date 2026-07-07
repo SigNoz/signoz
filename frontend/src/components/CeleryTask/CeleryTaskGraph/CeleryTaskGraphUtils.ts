@@ -1,22 +1,33 @@
-/* eslint-disable sonarjs/no-duplicate-string */
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { getWidgetQuery } from 'pages/MessagingQueues/MQDetails/MetricPage/MetricPageUtil';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { DataSource } from 'types/common/queryBuilder';
+import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { v4 as uuidv4 } from 'uuid';
 
 // dynamic step interval
 export const getStepInterval = (startTime: number, endTime: number): number => {
 	const diffInMinutes = (endTime - startTime) / 1000000 / (60 * 1000); // Convert to minutes
 
-	if (diffInMinutes <= 15) return 60; // 15 min or less
-	if (diffInMinutes <= 30) return 60; // 30 min or less
-	if (diffInMinutes <= 60) return 120; // 1 hour or less
-	if (diffInMinutes <= 360) return 520; // 6 hours or less
-	if (diffInMinutes <= 1440) return 2440; // 1 day or less
-	if (diffInMinutes <= 10080) return 10080; // 1 week or less
+	if (diffInMinutes <= 15) {
+		return 60;
+	} // 15 min or less
+	if (diffInMinutes <= 30) {
+		return 60;
+	} // 30 min or less
+	if (diffInMinutes <= 60) {
+		return 120;
+	} // 1 hour or less
+	if (diffInMinutes <= 360) {
+		return 520;
+	} // 6 hours or less
+	if (diffInMinutes <= 1440) {
+		return 2440;
+	} // 1 day or less
+	if (diffInMinutes <= 10080) {
+		return 10080;
+	} // 1 week or less
 	return 54000; // More than a week (use monthly interval)
 };
 
@@ -57,7 +68,7 @@ export const celeryAllStateWidgetData = (
 					limit: null,
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'sum',
 					stepInterval: getStepInterval(startTime, endTime),
 					timeAggregation: 'rate',
@@ -121,7 +132,7 @@ export const celeryRetryStateWidgetData = (
 					limit: null,
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'sum',
 					stepInterval: getStepInterval(startTime, endTime),
 					timeAggregation: 'count',
@@ -181,7 +192,7 @@ export const celeryFailedStateWidgetData = (
 					limit: null,
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'sum',
 					stepInterval: getStepInterval(startTime, endTime),
 					timeAggregation: 'rate',
@@ -241,7 +252,7 @@ export const celerySuccessStateWidgetData = (
 					limit: null,
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'sum',
 					stepInterval: getStepInterval(startTime, endTime),
 					timeAggregation: 'rate',
@@ -288,7 +299,7 @@ export const celeryTasksByWorkerWidgetData = (
 					limit: 10,
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'sum',
 					stepInterval: getStepInterval(startTime, endTime),
 					timeAggregation: 'rate',
@@ -351,7 +362,7 @@ export const celeryErrorByWorkerWidgetData = (
 						},
 					],
 					legend: '',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 				},
 				{
 					dataSource: 'traces',
@@ -385,7 +396,7 @@ export const celeryErrorByWorkerWidgetData = (
 						},
 					],
 					legend: '',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 				},
 				{
 					queryName: 'F1',
@@ -436,7 +447,7 @@ export const celeryLatencyByWorkerWidgetData = (
 					limit: 10,
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'sum',
 					stepInterval: getStepInterval(startTime, endTime),
 					timeAggregation: 'p99',
@@ -458,8 +469,7 @@ export const celeryActiveTasksWidgetData = (
 				{
 					aggregateAttribute: {
 						dataType: DataTypes.Float64,
-						id:
-							'flower_worker_number_of_currently_executing_tasks--float64--Gauge--true',
+						id: 'flower_worker_number_of_currently_executing_tasks--float64--Gauge--true',
 						key: 'flower_worker_number_of_currently_executing_tasks',
 						type: 'Gauge',
 					},
@@ -485,7 +495,7 @@ export const celeryActiveTasksWidgetData = (
 					limit: null,
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'avg',
 					stepInterval: getStepInterval(startTime, endTime),
 					timeAggregation: 'latest',
@@ -539,7 +549,7 @@ export const celeryTaskLatencyWidgetData = (
 						},
 					],
 					queryName: 'A',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'sum',
 					stepInterval: getStepInterval(startTime, endTime),
 					timeAggregation: type || 'p99',
@@ -590,7 +600,7 @@ export const celerySlowestTasksTableWidgetData = getWidgetQueryBuilder(
 					},
 				],
 				queryName: 'A',
-				reduceTo: 'avg',
+				reduceTo: ReduceOperators.AVG,
 				spaceAggregation: 'sum',
 				stepInterval: 60,
 				timeAggregation: 'avg',
@@ -652,7 +662,7 @@ export const celeryRetryTasksTableWidgetData = getWidgetQueryBuilder(
 					},
 				],
 				queryName: 'A',
-				reduceTo: 'avg',
+				reduceTo: ReduceOperators.AVG,
 				spaceAggregation: 'sum',
 				stepInterval: 60,
 				timeAggregation: 'avg',
@@ -715,7 +725,7 @@ export const celeryFailedTasksTableWidgetData = getWidgetQueryBuilder(
 					},
 				],
 				queryName: 'A',
-				reduceTo: 'avg',
+				reduceTo: ReduceOperators.AVG,
 				spaceAggregation: 'sum',
 				stepInterval: 60,
 				timeAggregation: 'avg',
@@ -776,7 +786,7 @@ export const celerySuccessTasksTableWidgetData = getWidgetQueryBuilder(
 					},
 				],
 				queryName: 'A',
-				reduceTo: 'avg',
+				reduceTo: ReduceOperators.AVG,
 				spaceAggregation: 'sum',
 				stepInterval: 60,
 				timeAggregation: 'avg',
@@ -838,7 +848,7 @@ export const celeryTimeSeriesTablesWidgetData = (
 					limit: null,
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'sum',
 					stepInterval: 60,
 					timeAggregation: 'avg',
@@ -877,7 +887,7 @@ export const celeryAllStateCountWidgetData = getWidgetQueryBuilder(
 				limit: null,
 				orderBy: [],
 				queryName: 'A',
-				reduceTo: 'last',
+				reduceTo: ReduceOperators.LAST,
 				spaceAggregation: 'sum',
 				stepInterval: 60,
 				timeAggregation: 'count_distinct',
@@ -926,7 +936,7 @@ export const celerySuccessStateCountWidgetData = getWidgetQueryBuilder(
 				limit: null,
 				orderBy: [],
 				queryName: 'A',
-				reduceTo: 'last',
+				reduceTo: ReduceOperators.LAST,
 				spaceAggregation: 'sum',
 				stepInterval: 60,
 				timeAggregation: 'count_distinct',
@@ -975,7 +985,7 @@ export const celeryFailedStateCountWidgetData = getWidgetQueryBuilder(
 				limit: null,
 				orderBy: [],
 				queryName: 'A',
-				reduceTo: 'last',
+				reduceTo: ReduceOperators.LAST,
 				spaceAggregation: 'sum',
 				stepInterval: 60,
 				timeAggregation: 'count_distinct',
@@ -1024,7 +1034,7 @@ export const celeryRetryStateCountWidgetData = getWidgetQueryBuilder(
 				limit: null,
 				orderBy: [],
 				queryName: 'A',
-				reduceTo: 'last',
+				reduceTo: ReduceOperators.LAST,
 				spaceAggregation: 'sum',
 				stepInterval: 60,
 				timeAggregation: 'count_distinct',

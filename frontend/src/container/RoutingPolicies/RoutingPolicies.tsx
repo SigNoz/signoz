@@ -1,17 +1,18 @@
-import './styles.scss';
-
-import { PlusOutlined } from '@ant-design/icons';
-import { Color } from '@signozhq/design-tokens';
-import { Button, Flex, Input, Tooltip, Typography } from 'antd';
-import { Search } from 'lucide-react';
-import { useAppContext } from 'providers/App/App';
 import { ChangeEvent, useMemo } from 'react';
+import { Plus, Search } from '@signozhq/icons';
+import { Color } from '@signozhq/design-tokens';
+import { Input } from '@signozhq/ui/input';
+import { Button, Flex, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
+import { useAppContext } from 'providers/App/App';
 import { USER_ROLES } from 'types/roles';
 
 import DeleteRoutingPolicy from './DeleteRoutingPolicy';
 import RoutingPolicyDetails from './RoutingPolicyDetails';
 import RoutingPolicyList from './RoutingPolicyList';
 import useRoutingPolicies from './useRoutingPolicies';
+
+import './styles.scss';
 
 function RoutingPolicies(): JSX.Element {
 	const { user } = useAppContext();
@@ -74,12 +75,14 @@ function RoutingPolicies(): JSX.Element {
 					/>
 					<Tooltip title={tooltipTitle}>
 						<Button
-							icon={<PlusOutlined />}
 							type="primary"
 							onClick={(): void => handlePolicyDetailsModalOpen('create', null)}
 							disabled={disableCreateButton}
 						>
-							New routing policy
+							<Flex gap={4} align="center">
+								<Plus size={16} />
+								New routing policy
+							</Flex>
 						</Button>
 					</Tooltip>
 				</Flex>

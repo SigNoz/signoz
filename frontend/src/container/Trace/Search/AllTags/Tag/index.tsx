@@ -1,6 +1,6 @@
-import { CloseOutlined } from '@ant-design/icons';
-import { Select } from 'antd';
 import { Dispatch, SetStateAction } from 'react';
+import { X } from '@signozhq/icons';
+import { Select } from 'antd';
 import { TraceReducer } from 'types/reducer/trace';
 
 import { Container, IconContainer, SelectComponent } from './styles';
@@ -94,13 +94,8 @@ export const AllMenu: AllMenuProps[] = [
 ];
 
 function SingleTags(props: AllTagsProps): JSX.Element {
-	const {
-		tag,
-		onCloseHandler,
-		setLocalSelectedTags,
-		index,
-		localSelectedTags,
-	} = props;
+	const { tag, onCloseHandler, setLocalSelectedTags, index, localSelectedTags } =
+		props;
 	const {
 		Key: selectedKey,
 		Operator: selectedOperator,
@@ -162,7 +157,7 @@ function SingleTags(props: AllTagsProps): JSX.Element {
 			)}
 
 			<IconContainer role="button" onClick={(): void => onDeleteTagHandler(index)}>
-				<CloseOutlined />
+				<X size="md" />
 			</IconContainer>
 		</Container>
 	);

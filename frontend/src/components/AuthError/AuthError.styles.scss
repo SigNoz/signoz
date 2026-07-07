@@ -1,0 +1,118 @@
+.auth-error-container {
+	margin-top: 24px;
+	width: 100%;
+	animation: horizontal-shaking 300ms ease-out;
+
+	.error-content {
+		background: color-mix(in srgb, var(--danger-background) 10%, transparent);
+		border: 1px solid
+			color-mix(in srgb, var(--danger-background) 20%, transparent);
+		border-radius: 4px;
+
+		&__summary-section {
+			border-bottom: 1px solid
+				color-mix(in srgb, var(--danger-background) 20%, transparent);
+		}
+
+		&__summary {
+			padding: 16px;
+		}
+
+		&__summary-left {
+			gap: 10px;
+		}
+
+		&__icon-wrapper {
+			width: 12px;
+			height: 12px;
+			flex-shrink: 0;
+		}
+
+		&__summary-text {
+			gap: 6px;
+		}
+
+		&__error-code {
+			color: var(--bg-cherry-100);
+			font-size: 13px;
+			font-weight: 500;
+			line-height: 1;
+			letter-spacing: -0.065px;
+		}
+
+		&__error-message {
+			color: var(--bg-cherry-300);
+			font-size: 13px;
+			font-weight: 400;
+			line-height: 20px;
+			letter-spacing: -0.065px;
+		}
+
+		&__message-badge {
+			padding: 0px 16px 16px;
+		}
+
+		&__message-badge-label-text {
+			color: var(--bg-cherry-100);
+		}
+
+		&__message-badge-line {
+			background-image: radial-gradient(
+				circle,
+				color-mix(in srgb, var(--danger-background) 30%, transparent) 1px,
+				transparent 2px
+			);
+		}
+
+		&__messages-section {
+			padding: 0;
+		}
+
+		&__message-list {
+			max-height: 200px;
+		}
+
+		&__message-item {
+			color: var(--bg-cherry-300);
+			font-size: 13px;
+			font-weight: 400;
+			line-height: 20px;
+			letter-spacing: -0.065px;
+
+			&::before {
+				background: var(--bg-cherry-300);
+			}
+		}
+
+		&__scroll-hint {
+			background: color-mix(in srgb, var(--danger-background) 20%, transparent);
+		}
+
+		&__scroll-hint-text {
+			color: var(--bg-cherry-100);
+		}
+	}
+
+	.auth-error-icon {
+		color: var(--bg-cherry-300);
+		padding-top: 1px;
+	}
+}
+
+@keyframes horizontal-shaking {
+	0% {
+		transform: translateX(0);
+	}
+	25% {
+		transform: translateX(5px);
+	}
+	50% {
+		transform: translateX(-5px);
+	}
+	75% {
+		transform: translateX(5px);
+	}
+	100% {
+		transform: translateX(0);
+	}
+}

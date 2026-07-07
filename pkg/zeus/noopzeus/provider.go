@@ -5,6 +5,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/types/zeustypes"
 	"github.com/SigNoz/signoz/pkg/zeus"
 )
 
@@ -36,14 +37,30 @@ func (provider *provider) GetDeployment(_ context.Context, _ string) ([]byte, er
 	return nil, errors.New(errors.TypeUnsupported, zeus.ErrCodeUnsupported, "getting the deployment is not supported")
 }
 
+func (provider *provider) GetMeters(_ context.Context, _ string) ([]byte, error) {
+	return nil, errors.New(errors.TypeUnsupported, zeus.ErrCodeUnsupported, "getting meters is not supported")
+}
+
 func (provider *provider) PutMeters(_ context.Context, _ string, _ []byte) error {
 	return errors.New(errors.TypeUnsupported, zeus.ErrCodeUnsupported, "putting meters is not supported")
 }
 
-func (provider *provider) PutProfile(_ context.Context, _ string, _ []byte) error {
+func (provider *provider) PutMetersV2(_ context.Context, _ string, _ []byte) error {
+	return errors.New(errors.TypeUnsupported, zeus.ErrCodeUnsupported, "putting meters v2 is not supported")
+}
+
+func (provider *provider) PutMetersV3(_ context.Context, _ string, _ string, _ []byte) error {
+	return errors.New(errors.TypeUnsupported, zeus.ErrCodeUnsupported, "putting meters v3 is not supported")
+}
+
+func (provider *provider) ListMeterCheckpoints(_ context.Context, _ string) ([]zeustypes.MeterCheckpoint, error) {
+	return nil, errors.New(errors.TypeUnsupported, zeus.ErrCodeUnsupported, "list meter checkpoints is not supported")
+}
+
+func (provider *provider) PutProfile(_ context.Context, _ string, _ *zeustypes.PostableProfile) error {
 	return errors.New(errors.TypeUnsupported, zeus.ErrCodeUnsupported, "putting profile is not supported")
 }
 
-func (provider *provider) PutHost(_ context.Context, _ string, _ []byte) error {
+func (provider *provider) PutHost(_ context.Context, _ string, _ *zeustypes.PostableHost) error {
 	return errors.New(errors.TypeUnsupported, zeus.ErrCodeUnsupported, "putting host is not supported")
 }

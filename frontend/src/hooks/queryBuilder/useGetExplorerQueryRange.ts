@@ -1,13 +1,13 @@
+import { MutableRefObject, useMemo } from 'react';
+import { UseQueryOptions, UseQueryResult } from 'react-query';
+// eslint-disable-next-line no-restricted-imports
+import { useSelector } from 'react-redux';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
-import { MutableRefObject, useMemo } from 'react';
-import { UseQueryOptions, UseQueryResult } from 'react-query';
-import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
-import { SuccessResponse, Warning } from 'types/api';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
@@ -18,21 +18,19 @@ export const useGetExplorerQueryRange = (
 	requestData: Query | null,
 	panelType: PANEL_TYPES | null,
 	version: string,
-	options?: UseQueryOptions<SuccessResponse<MetricRangePayloadProps>, Error>,
+	options?: UseQueryOptions<MetricQueryRangeSuccessResponse, Error>,
 	params?: Record<string, unknown>,
 	isDependentOnQB = true,
 	keyRef?: MutableRefObject<any>,
 	headers?: Record<string, string>,
 	selectedTimeInterval?: GetQueryResultsProps['globalSelectedInterval'],
-): UseQueryResult<
-	SuccessResponse<MetricRangePayloadProps> & { warning?: Warning },
-	Error
-> => {
+): UseQueryResult<MetricQueryRangeSuccessResponse, Error> => {
 	const { isEnabledQuery } = useQueryBuilder();
-	const { selectedTime: globalSelectedInterval, minTime, maxTime } = useSelector<
-		AppState,
-		GlobalReducer
-	>((state) => state.globalTime);
+	const {
+		selectedTime: globalSelectedInterval,
+		minTime,
+		maxTime,
+	} = useSelector<AppState, GlobalReducer>((state) => state.globalTime);
 
 	const key =
 		typeof options?.queryKey === 'string'
@@ -40,7 +38,9 @@ export const useGetExplorerQueryRange = (
 			: REACT_QUERY_KEY.GET_QUERY_RANGE;
 
 	const isEnabled = useMemo(() => {
-		if (!options) return isEnabledQuery;
+		if (!options) {
+			return isEnabledQuery;
+		}
 		if (typeof options.enabled === 'boolean') {
 			return options.enabled && (!isDependentOnQB || isEnabledQuery);
 		}
@@ -49,7 +49,6 @@ export const useGetExplorerQueryRange = (
 	}, [options, isEnabledQuery, isDependentOnQB]);
 
 	if (keyRef) {
-		// eslint-disable-next-line no-param-reassign
 		keyRef.current = [key, globalSelectedInterval, requestData, minTime, maxTime];
 	}
 

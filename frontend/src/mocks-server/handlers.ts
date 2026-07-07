@@ -3,13 +3,14 @@ import { rest } from 'msw';
 import commonEnTranslation from '../../public/locales/en/common.json';
 import enTranslation from '../../public/locales/en/translation.json';
 import { allAlertChannels } from './__mockdata__/alerts';
+import { alertRulesFixture } from './__mockdata__/alert_rules';
+import { triggeredAlertsFixture } from './__mockdata__/triggered_alerts';
 import { billingSuccessResponse } from './__mockdata__/billing';
 import {
 	dashboardSuccessResponse,
 	getDashboardById,
 } from './__mockdata__/dashboards';
 import { explorerView } from './__mockdata__/explorer_views';
-import { inviteUser } from './__mockdata__/invite_user';
 import { licensesSuccessResponse } from './__mockdata__/licenses';
 import { membersResponse } from './__mockdata__/members';
 import { queryRangeSuccessResponse } from './__mockdata__/query_range';
@@ -175,11 +176,23 @@ export const handlers = [
 		res(ctx.status(200), ctx.json(getDashboardById)),
 	),
 
-	rest.get('http://localhost/api/v1/invite', (_, res, ctx) =>
-		res(ctx.status(200), ctx.json(inviteUser)),
+	rest.post('http://localhost/api/v2/users', (_, res, ctx) =>
+		res(
+			ctx.status(201),
+			ctx.json({
+				data: { id: 'user-123' },
+			}),
+		),
 	),
+
 	rest.post('http://localhost/api/v1/invite', (_, res, ctx) =>
-		res(ctx.status(200), ctx.json(inviteUser)),
+		res(
+			ctx.status(200),
+			ctx.json({
+				status: 'success',
+				data: 'invite sent successfully',
+			}),
+		),
 	),
 	rest.put('http://localhost/api/v1/user/:id', (_, res, ctx) =>
 		res(
@@ -189,17 +202,6 @@ export const handlers = [
 			}),
 		),
 	),
-	rest.post('http://localhost/api/v1/changePassword', (_, res, ctx) =>
-		res(
-			ctx.status(403),
-			ctx.json({
-				status: 'error',
-				errorType: 'forbidden',
-				error: 'invalid credentials',
-			}),
-		),
-	),
-
 	rest.get(
 		'http://localhost/api/v3/autocomplete/aggregate_attributes',
 		(req, res, ctx) =>
@@ -244,6 +246,38 @@ export const handlers = [
 
 	rest.get('http://localhost/api/v1/channels', (_, res, ctx) =>
 		res(ctx.status(200), ctx.json({ data: allAlertChannels, status: 'success' })),
+	),
+	rest.get('http://localhost/api/v1/alerts', (_, res, ctx) =>
+		res(
+			ctx.status(200),
+			ctx.json({ data: triggeredAlertsFixture, status: 'success' }),
+		),
+	),
+	rest.get('http://localhost/api/v2/rules', (_, res, ctx) =>
+		res(
+			ctx.status(200),
+			ctx.json({ data: alertRulesFixture, status: 'success' }),
+		),
+	),
+	rest.post('http://localhost/api/v2/rules', async (req, res, ctx) => {
+		const body = (await req.json()) as { alert?: string };
+		return res(
+			ctx.status(201),
+			ctx.json({
+				data: {
+					...alertRulesFixture[0],
+					id: 'new-rule-id',
+					alert: body?.alert ?? 'New Rule',
+				},
+				status: 'success',
+			}),
+		);
+	}),
+	rest.patch('http://localhost/api/v2/rules/:id', (_, res, ctx) =>
+		res(ctx.status(200), ctx.json({ status: 'success' })),
+	),
+	rest.delete('http://localhost/api/v2/rules/:id', (_, res, ctx) =>
+		res(ctx.status(200), ctx.json({ status: 'success' })),
 	),
 	rest.delete('http://localhost/api/v1/channels/:id', (_, res, ctx) =>
 		res(

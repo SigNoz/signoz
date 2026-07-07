@@ -1,3 +1,4 @@
+import { memo, useCallback, useMemo, useRef } from 'react';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import EmptyWidget from 'container/GridCardLayout/EmptyWidget';
@@ -5,7 +6,6 @@ import WidgetGraphComponent from 'container/GridCardLayout/GridCard/WidgetGraphC
 import { populateMultipleResults } from 'container/NewWidget/LeftContainer/WidgetGraph/util';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
-import { memo, useCallback, useMemo, useRef } from 'react';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { DataSource } from 'types/common/queryBuilder';
 import { getGraphType } from 'utils/getGraphType';
@@ -42,11 +42,19 @@ function Panel({
 			};
 		}
 
-		updatedQuery.builder.queryData[0].pageSize = 10;
 		const initialDataSource = updatedQuery.builder.queryData[0].dataSource;
+		const updatedQueryForList = {
+			...updatedQuery,
+			builder: {
+				...updatedQuery.builder,
+				queryData: updatedQuery.builder.queryData.map((qd, i) =>
+					i === 0 ? { ...qd, pageSize: 10 } : qd,
+				),
+			},
+		};
 
 		return {
-			query: updatedQuery,
+			query: updatedQueryForList,
 			graphType: PANEL_TYPES.LIST,
 			selectedTime: widget.timePreferance || 'GLOBAL_TIME',
 			tableParams: {
@@ -71,13 +79,11 @@ function Panel({
 		},
 		ENTITY_VERSION_V5,
 		{
-			queryKey: [
-				widget?.query,
-				widget?.panelTypes,
-				requestData,
-				startTime,
-				endTime,
-			],
+			// Public data is fetched by index and the payload redacts each widget's
+			// filters, so query bodies are identical across panels. Key on panel
+			// identity + time — the only inputs that determine the response — so
+			// panels don't collapse onto one cache entry.
+			queryKey: [widget?.id, index, startTime, endTime],
 			retry(failureCount, error): boolean {
 				if (
 					String(error).includes('status: error') &&
@@ -111,11 +117,9 @@ function Panel({
 
 	if (queryResponse.data && widget.panelTypes === PANEL_TYPES.PIE) {
 		const transformedData = populateMultipleResults(queryResponse?.data);
-		// eslint-disable-next-line no-param-reassign
 		queryResponse.data = transformedData;
 	}
 
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	const onDragSelect = useCallback((_start: number, _end: number): void => {
 		// Handle drag select if needed - no-op for public dashboards
 	}, []);

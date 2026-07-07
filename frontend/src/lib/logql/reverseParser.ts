@@ -1,12 +1,10 @@
-/* eslint-disable  */
-// @ts-ignore
 // @ts-nocheck
 
 import { QueryTypes, StringTypeQueryOperators } from './tokens';
 
 export const reverseParser = (
 	parserQueryArr: { type: string; value: any }[] = [],
-) => {
+): string => {
 	let queryString = '';
 	let lastToken: { type: string; value: any };
 	parserQueryArr.forEach((query) => {
@@ -17,7 +15,8 @@ export const reverseParser = (
 		if (Array.isArray(query.value) && query.value.length > 0) {
 			// if the values are array type, here we spread them in
 			// ('a', 'b') format
-			queryString += `(${query.value.map((val) => `'${val}'`).join(',')})`;
+			const queryValuesMapped = query.value.map((val) => `'${val}'`).join(',');
+			queryString += `(${queryValuesMapped})`;
 		} else {
 			if (
 				query.type === QueryTypes.QUERY_VALUE &&

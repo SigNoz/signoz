@@ -1,19 +1,3 @@
-import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplorer';
-import { ToggleGraphProps } from 'components/Graph/types';
-import { QueryParams } from 'constants/query';
-import { PANEL_TYPES } from 'constants/queryBuilder';
-import { handleGraphClick } from 'container/GridCardLayout/GridCard/utils';
-import { useGraphClickToShowButton } from 'container/GridCardLayout/useGraphClickToShowButton';
-import useNavigateToExplorerPages from 'container/GridCardLayout/useNavigateToExplorerPages';
-import PanelWrapper from 'container/PanelWrapper/PanelWrapper';
-import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/config';
-import { useIsDarkMode } from 'hooks/useDarkMode';
-import { useNotifications } from 'hooks/useNotifications';
-import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import useUrlQuery from 'hooks/useUrlQuery';
-import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
-import GetMinMax from 'lib/getMinMax';
-import getTimeString from 'lib/getTimeString';
 import {
 	Dispatch,
 	SetStateAction,
@@ -23,12 +7,29 @@ import {
 	useState,
 } from 'react';
 import { UseQueryResult } from 'react-query';
+// eslint-disable-next-line no-restricted-imports
 import { useDispatch } from 'react-redux';
 import { useLocation } from 'react-router-dom';
+import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplorer';
+import { ToggleGraphProps } from 'components/Graph/types';
+import { QueryParams } from 'constants/query';
+import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PanelMode } from 'container/DashboardContainer/visualization/panels/types';
+import { handleGraphClick } from 'container/GridCardLayout/GridCard/utils';
+import { useGraphClickToShowButton } from 'container/GridCardLayout/useGraphClickToShowButton';
+import useNavigateToExplorerPages from 'container/GridCardLayout/useNavigateToExplorerPages';
+import PanelWrapper from 'container/PanelWrapper/PanelWrapper';
+import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/types';
+import { useIsDarkMode } from 'hooks/useDarkMode';
+import { useNotifications } from 'hooks/useNotifications';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import useUrlQuery from 'hooks/useUrlQuery';
+import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
+import GetMinMax from 'lib/getMinMax';
+import getTimeString from 'lib/getTimeString';
 import { UpdateTimeInterval } from 'store/actions';
-import { SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
 function WidgetGraph({
@@ -63,7 +64,9 @@ function WidgetGraph({
 
 	// Apply graph visibility when lineChartRef is available
 	useEffect(() => {
-		if (!lineChartRef.current) return;
+		if (!lineChartRef.current) {
+			return;
+		}
 
 		graphVisibility.forEach((state, index) => {
 			lineChartRef.current?.toggleGraph(index, state);
@@ -181,6 +184,7 @@ function WidgetGraph({
 			}}
 		>
 			<PanelWrapper
+				panelMode={PanelMode.DASHBOARD_EDIT}
 				widget={selectedWidget}
 				queryResponse={queryResponse}
 				setRequestData={setRequestData}
@@ -197,10 +201,7 @@ function WidgetGraph({
 
 interface WidgetGraphProps {
 	selectedWidget: Widgets;
-	queryResponse: UseQueryResult<
-		SuccessResponse<MetricRangePayloadProps, unknown>,
-		Error
-	>;
+	queryResponse: UseQueryResult<MetricQueryRangeSuccessResponse, Error>;
 	setRequestData: Dispatch<SetStateAction<GetQueryResultsProps>>;
 	selectedGraph: PANEL_TYPES;
 	enableDrillDown?: boolean;

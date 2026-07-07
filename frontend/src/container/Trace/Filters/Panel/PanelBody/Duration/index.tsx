@@ -1,7 +1,3 @@
-import { Slider } from 'antd';
-import { SliderRangeProps } from 'antd/lib/slider';
-import getFilters from 'api/trace/getFilters';
-import useDebouncedFn from 'hooks/useDebouncedFunction';
 import {
 	ChangeEventHandler,
 	useCallback,
@@ -10,7 +6,12 @@ import {
 	useRef,
 	useState,
 } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
+import { Slider } from '@signozhq/ui/slider';
+import getFilters from 'api/trace/getFilters';
+import useDebouncedFn from 'hooks/useDebouncedFunction';
+// eslint-disable-next-line no-restricted-imports
 import { Dispatch } from 'redux';
 import { getFilter, updateURL } from 'store/actions/trace/util';
 import { AppState } from 'store/reducers';
@@ -167,16 +168,15 @@ function Duration(): JSX.Element {
 		debouncedFunction(min, max);
 	};
 
-	const onRangeHandler: SliderRangeProps['onChange'] = ([min, max]) => {
+	const onRangeHandler = (value: number | number[]): void => {
+		const [min, max] = value as number[];
 		updatedUrl(min, max);
 	};
 
-	const TipComponent = useCallback((value: undefined | number) => {
-		if (value === undefined) {
-			return <div />;
-		}
-		return <div>{`${value?.toString()}ms`}</div>;
-	}, []);
+	const TipComponent = useCallback(
+		(value: number) => <div>{`${value.toString()}ms`}</div>,
+		[],
+	);
 
 	return (
 		<div>
@@ -208,7 +208,8 @@ function Duration(): JSX.Element {
 					max={Number(getMs(String(preLocalMaxDuration.current || 0)))}
 					range
 					tooltip={{ formatter: TipComponent }}
-					onChange={([min, max]): void => {
+					onChange={(value): void => {
+						const [min, max] = value as number[];
 						onRangeSliderHandler([String(min), String(max)]);
 					}}
 					onAfterChange={onRangeHandler}

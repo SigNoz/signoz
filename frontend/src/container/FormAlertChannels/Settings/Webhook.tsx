@@ -1,7 +1,8 @@
-import { Form, Input } from 'antd';
-import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 import { Dispatch, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Input } from '@signozhq/ui/input';
+import { Form } from 'antd';
+import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 
 import { WebhookChannel } from '../../CreateAlertChannels/config';
 

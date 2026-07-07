@@ -28,8 +28,8 @@
 
 	.explorer-show-btn {
 		border-radius: 6px 6px 0px 0px;
-		border: 1px solid var(--bg-slate-400);
-		background: rgba(22, 24, 29, 0.4);
+		border: 1px solid var(--l1-border);
+		background: color-mix(in srgb, var(--l1-border) 40%, transparent);
 		box-shadow: 0px 4px 16px 0px rgba(0, 0, 0, 0.25);
 		backdrop-filter: blur(20px);
 		align-self: center;
@@ -38,17 +38,9 @@
 
 		.menu-bar {
 			border-radius: 50px;
-			background: var(--bg-slate-200);
+			background: var(--l3-background);
 			height: 4px;
 			width: 50px;
-		}
-	}
-}
-
-.lightMode {
-	.explorer-option-droppable-container {
-		.explorer-show-btn {
-			background: var(--bg-vanilla-200);
 		}
 	}
 }

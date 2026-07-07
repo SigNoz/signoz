@@ -16,7 +16,9 @@ export const useKeyboardNavigationForEvaluationWindowPopover = ({
 	const firstItemRef = useRef<HTMLDivElement>(null);
 
 	const getFocusableItems = useCallback((): HTMLElement[] => {
-		if (!containerRef.current) return [];
+		if (!containerRef.current) {
+			return [];
+		}
 
 		return Array.from(
 			containerRef.current.querySelectorAll(
@@ -26,12 +28,16 @@ export const useKeyboardNavigationForEvaluationWindowPopover = ({
 	}, []);
 
 	const getInteractiveElements = useCallback((): HTMLElement[] => {
-		if (!containerRef.current) return [];
+		if (!containerRef.current) {
+			return [];
+		}
 
 		const detailsSection = containerRef.current.querySelector(
 			'.evaluation-window-details',
 		);
-		if (!detailsSection) return [];
+		if (!detailsSection) {
+			return [];
+		}
 
 		return Array.from(
 			detailsSection.querySelectorAll(
@@ -48,7 +54,9 @@ export const useKeyboardNavigationForEvaluationWindowPopover = ({
 	const navigateWithinSection = useCallback(
 		(direction: 'up' | 'down'): void => {
 			const items = getFocusableItems();
-			if (items.length === 0) return;
+			if (items.length === 0) {
+				return;
+			}
 
 			const currentIndex = getCurrentIndex(items);
 			let nextIndex: number;
@@ -84,7 +92,9 @@ export const useKeyboardNavigationForEvaluationWindowPopover = ({
 			}
 
 			const items = getFocusableItems();
-			if (items.length === 0) return;
+			if (items.length === 0) {
+				return;
+			}
 
 			const currentIndex = getCurrentIndex(items);
 			const DATA_ATTR = 'data-section-id';
@@ -114,7 +124,9 @@ export const useKeyboardNavigationForEvaluationWindowPopover = ({
 
 	const handleSelection = useCallback((): void => {
 		const activeElement = document.activeElement as HTMLElement;
-		if (!activeElement || !onSelect) return;
+		if (!activeElement || !onSelect) {
+			return;
+		}
 
 		const value = activeElement.getAttribute('data-value');
 		const sectionId = activeElement.getAttribute('data-section-id');
@@ -161,7 +173,9 @@ export const useKeyboardNavigationForEvaluationWindowPopover = ({
 
 	useEffect((): (() => void) | undefined => {
 		const container = containerRef.current;
-		if (!container) return undefined;
+		if (!container) {
+			return undefined;
+		}
 
 		container.addEventListener('keydown', handleKeyDown);
 		return (): void => container.removeEventListener('keydown', handleKeyDown);

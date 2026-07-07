@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
 import { QueryFunctionsTypes } from 'types/common/queryBuilder';
 import { SelectOption } from 'types/common/select';
 
@@ -68,8 +67,8 @@ export const metricQueryFunctionOptions: SelectOption<string, string>[] = [
 		label: 'Time Shift',
 	},
 	{
-		value: QueryFunctionsTypes.TIME_SHIFT,
-		label: 'Time Shift',
+		value: QueryFunctionsTypes.FILL_ZERO,
+		label: 'Fill Zero',
 	},
 ];
 
@@ -155,5 +154,8 @@ export const queryFunctionsTypesConfig: QueryFunctionConfigType = {
 	timeShift: {
 		showInput: true,
 		inputType: 'text',
+	},
+	fillZero: {
+		showInput: false,
 	},
 };

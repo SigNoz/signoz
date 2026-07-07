@@ -336,9 +336,10 @@ func (dialect *dialect) UpdatePrimaryKey(ctx context.Context, bun bun.IDB, oldMo
 	}
 
 	fkReference := ""
-	if reference == Org {
+	switch reference {
+	case Org:
 		fkReference = OrgReference
-	} else if reference == User {
+	case User:
 		fkReference = UserReference
 	}
 
@@ -392,9 +393,10 @@ func (dialect *dialect) AddPrimaryKey(ctx context.Context, bun bun.IDB, oldModel
 	}
 
 	fkReference := ""
-	if reference == Org {
+	switch reference {
+	case Org:
 		fkReference = OrgReference
-	} else if reference == User {
+	case User:
 		fkReference = UserReference
 	}
 

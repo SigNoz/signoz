@@ -1,3 +1,4 @@
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Select } from 'antd';
 import { HAVING_OPERATORS, initialHavingValues } from 'constants/queryBuilder';
 import { HavingFilterTag } from 'container/QueryBuilder/components';
@@ -6,7 +7,6 @@ import {
 	transformFromStringToHaving,
 	transformHavingToStringValue,
 } from 'lib/query/transformQueryBuilderData';
-import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Having, HavingForm } from 'types/api/queryBuilder/queryBuilderData';
 import { SelectOption } from 'types/common/select';
 import { popupContainer } from 'utils/selectPopupContainer';
@@ -18,9 +18,8 @@ function HavingFilter({ formula, onChange }: HavingFilterProps): JSX.Element {
 	const { having } = formula;
 	const [searchText, setSearchText] = useState<string>('');
 	const [localValues, setLocalValues] = useState<string[]>([]);
-	const [currentFormValue, setCurrentFormValue] = useState<HavingForm>(
-		initialHavingValues,
-	);
+	const [currentFormValue, setCurrentFormValue] =
+		useState<HavingForm>(initialHavingValues);
 	const [options, setOptions] = useState<SelectOption<string, string>[]>([]);
 
 	const { isMulti } = useTagValidation(

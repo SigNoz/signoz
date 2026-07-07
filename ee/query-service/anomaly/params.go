@@ -50,7 +50,7 @@ type GetAnomaliesResponse struct {
 //
 //	                  ^                                  ^
 //		              |                                  |
-//			(rounded value for past peiod)    +      (seasonal growth)
+//			(rounded value for past period)    +      (seasonal growth)
 //
 // score = abs(value - prediction) / stddev (current_season_query)
 type anomalyQueryParams struct {
@@ -74,12 +74,12 @@ type anomalyQueryParams struct {
 	//        : For daily seasonality, this is the query range params for the (now-2d-5m, now-1d)
 	//        : For hourly seasonality, this is the query range params for the (now-2h-5m, now-1h)
 	PastSeasonQuery *v3.QueryRangeParamsV3
-	// Past2SeasonQuery is the query range params for past 2 seasonal period to the current season
+	// Past2SeasonQuery is the query range params for past 2 seasonal periods to the current season
 	// Example: For weekly seasonality, this is the query range params for the (now-3w-5m, now-2w)
 	//        : For daily seasonality, this is the query range params for the (now-3d-5m, now-2d)
 	//        : For hourly seasonality, this is the query range params for the (now-3h-5m, now-2h)
 	Past2SeasonQuery *v3.QueryRangeParamsV3
-	// Past3SeasonQuery is the query range params for past 3 seasonal period to the current season
+	// Past3SeasonQuery is the query range params for past 3 seasonal periods to the current season
 	// Example: For weekly seasonality, this is the query range params for the (now-4w-5m, now-3w)
 	//        : For daily seasonality, this is the query range params for the (now-4d-5m, now-3d)
 	//        : For hourly seasonality, this is the query range params for the (now-4h-5m, now-3h)

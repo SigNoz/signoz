@@ -43,9 +43,13 @@ export const ValidTypeValue = (
 	op: string,
 	value: string | string[],
 ): boolean => {
-	if (!op) return true;
+	if (!op) {
+		return true;
+	}
 	if (Object.values(NumTypeQueryOperators).includes(op)) {
-		if (Array.isArray(value)) return false;
+		if (Array.isArray(value)) {
+			return false;
+		}
 		return !Number.isNaN(Number(value));
 	}
 	return true;
@@ -62,20 +66,30 @@ export const ValidTypeSequence = (
 	switch (current) {
 		case QueryTypes.QUERY_KEY:
 			// query key can have an empty prior
-			if (!prior) return true;
+			if (!prior) {
+				return true;
+			}
 			return [QueryTypes.CONDITIONAL_OPERATOR].includes(prior);
 		case QueryTypes.QUERY_OPERATOR:
 			// empty prior is not allowed
-			if (!prior || ![QueryTypes.QUERY_KEY].includes(prior)) return false;
-			if (!next || ![QueryTypes.QUERY_VALUE].includes(next)) return false;
+			if (!prior || ![QueryTypes.QUERY_KEY].includes(prior)) {
+				return false;
+			}
+			if (!next || ![QueryTypes.QUERY_VALUE].includes(next)) {
+				return false;
+			}
 			return true;
 		case QueryTypes.QUERY_VALUE:
 			// empty prior is not allowed
-			if (!prior) return false;
+			if (!prior) {
+				return false;
+			}
 			return [QueryTypes.QUERY_OPERATOR].includes(prior);
 		case QueryTypes.CONDITIONAL_OPERATOR:
 			// empty prior is not allowed
-			if (!next) return false;
+			if (!next) {
+				return false;
+			}
 			return [QueryTypes.QUERY_KEY].includes(next);
 		default:
 			return false;

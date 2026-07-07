@@ -9,7 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-// ValidateTimestamp validates a timestamp
+// ValidateTimestamp validates a timestamp.
 func ValidateTimestamp(timestamp int64, fieldName string) error {
 	if timestamp == 0 {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "%s is required", fieldName)
@@ -20,7 +20,7 @@ func ValidateTimestamp(timestamp int64, fieldName string) error {
 	return nil
 }
 
-// ValidateTimestampIsMilliseconds validates that a timestamp is in milliseconds
+// ValidateTimestampIsMilliseconds validates that a timestamp is in milliseconds.
 func ValidateTimestampIsMilliseconds(timestamp int64) bool {
 	return timestamp >= 1000000000000 && timestamp <= 9999999999999
 }

@@ -63,7 +63,7 @@ func (module *module) Get(ctx context.Context, orgID string, services []string) 
 
 func (module *module) Set(ctx context.Context, orgID string, apdexSettings *apdextypes.Settings) error {
 	apdexSettings.OrgID = orgID
-	apdexSettings.Identifiable.ID = valuer.GenerateUUID()
+	apdexSettings.ID = valuer.GenerateUUID()
 
 	_, err := module.
 		sqlstore.

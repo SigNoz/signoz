@@ -1,29 +1,23 @@
-/* eslint-disable sonarjs/no-duplicate-string */
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import ROUTES from 'constants/routes';
+import { sanitizeDashboardData } from 'container/DashboardContainer/DashboardDescription/utils';
 import DashboardsList from 'container/ListOfDashboard';
-import * as dashboardUtils from 'container/NewDashboard/DashboardDescription';
 import {
 	dashboardEmptyState,
 	dashboardSuccessResponse,
 } from 'mocks-server/__mockdata__/dashboards';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { DashboardProvider } from 'providers/Dashboard/Dashboard';
-import { MemoryRouter, useLocation } from 'react-router-dom';
-import { fireEvent, render, waitFor } from 'tests/test-utils';
+import { fireEvent, render, userEvent, waitFor } from 'tests/test-utils';
 
-jest.mock('container/NewDashboard/DashboardDescription', () => ({
-	sanitizeDashboardData: jest.fn(),
+jest.mock('container/DashboardContainer/DashboardDescription/utils', () => ({
+	sanitizeDashboardData: jest.fn((data) => data),
+	downloadObjectAsJson: jest.fn(),
 }));
 
 jest.mock('react-router-dom', () => ({
 	...jest.requireActual('react-router-dom'),
 	useLocation: jest.fn(),
-	useRouteMatch: jest.fn().mockReturnValue({
-		params: {
-			dashboardId: 4,
-		},
-	}),
 }));
 
 const mockWindowOpen = jest.fn();
@@ -47,9 +41,7 @@ describe('dashboard list page', () => {
 			<MemoryRouter
 				initialEntries={['/dashbords?columnKey=asgard&order=stones&page=1']}
 			>
-				<DashboardProvider>
-					<DashboardsList />
-				</DashboardProvider>
+				<DashboardsList />
 			</MemoryRouter>,
 		);
 
@@ -71,9 +63,7 @@ describe('dashboard list page', () => {
 			<MemoryRouter
 				initialEntries={['/dashbords?columnKey=createdAt&order=descend&page=1']}
 			>
-				<DashboardProvider>
-					<DashboardsList />
-				</DashboardProvider>
+				<DashboardsList />
 			</MemoryRouter>,
 		);
 
@@ -92,9 +82,7 @@ describe('dashboard list page', () => {
 					'/dashbords?columnKey=createdAt&order=descend&page=1&search=tho',
 				]}
 			>
-				<DashboardProvider>
-					<DashboardsList />
-				</DashboardProvider>
+				<DashboardsList />
 			</MemoryRouter>,
 		);
 
@@ -135,9 +123,7 @@ describe('dashboard list page', () => {
 					'/dashbords?columnKey=createdAt&order=descend&page=1&search=tho',
 				]}
 			>
-				<DashboardProvider>
-					<DashboardsList />
-				</DashboardProvider>
+				<DashboardsList />
 			</MemoryRouter>,
 		);
 
@@ -164,9 +150,7 @@ describe('dashboard list page', () => {
 					'/dashbords?columnKey=createdAt&order=descend&page=1&search=tho',
 				]}
 			>
-				<DashboardProvider>
-					<DashboardsList />
-				</DashboardProvider>
+				<DashboardsList />
 			</MemoryRouter>,
 		);
 
@@ -196,9 +180,7 @@ describe('dashboard list page', () => {
 					'/dashbords?columnKey=createdAt&order=descend&page=1&search=tho',
 				]}
 			>
-				<DashboardProvider>
-					<DashboardsList />
-				</DashboardProvider>
+				<DashboardsList />
 			</MemoryRouter>,
 		);
 
@@ -220,19 +202,23 @@ describe('dashboard list page', () => {
 	});
 
 	it('ensure that the export JSON popover action works correctly', async () => {
+		const user = userEvent.setup();
 		const { getByText, getAllByTestId } = render(<DashboardsList />);
 
+		let popoverTrigger: HTMLElement | undefined;
 		await waitFor(() => {
 			const popovers = getAllByTestId('dashboard-action-icon');
 			expect(popovers).toHaveLength(dashboardSuccessResponse.data.length);
-			fireEvent.click([...popovers[0].children][0]);
+			popoverTrigger = popovers[0];
 		});
 
-		const exportJsonBtn = getByText('Export JSON');
+		await user.click(popoverTrigger!);
+
+		const exportJsonBtn = await waitFor(() => getByText('Export JSON'));
 		expect(exportJsonBtn).toBeInTheDocument();
 		fireEvent.click(exportJsonBtn);
 		const firstDashboardData = dashboardSuccessResponse.data[0];
-		expect(dashboardUtils.sanitizeDashboardData).toHaveBeenCalledWith(
+		expect(sanitizeDashboardData).toHaveBeenCalledWith(
 			expect.objectContaining({
 				title: firstDashboardData.data.title,
 				createdAt: firstDashboardData.createdAt,

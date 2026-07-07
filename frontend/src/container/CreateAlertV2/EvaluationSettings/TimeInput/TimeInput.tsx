@@ -1,7 +1,6 @@
-import './TimeInput.scss';
-
-import { Input } from 'antd';
 import React, { useEffect, useState } from 'react';
+import { Input } from '@signozhq/ui/input';
+import './TimeInput.scss';
 
 export interface TimeInputProps {
 	value?: string; // Format: "HH:MM:SS"

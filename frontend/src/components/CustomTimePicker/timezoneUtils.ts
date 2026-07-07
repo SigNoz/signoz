@@ -19,7 +19,7 @@ const TIMEZONE_TYPES = {
 	STANDARD: 'STANDARD',
 } as const;
 
-type TimezoneType = typeof TIMEZONE_TYPES[keyof typeof TIMEZONE_TYPES];
+type TimezoneType = (typeof TIMEZONE_TYPES)[keyof typeof TIMEZONE_TYPES];
 
 export const UTC_TIMEZONE: Timezone = {
 	name: 'Coordinated Universal Time — UTC, GMT',
@@ -38,7 +38,9 @@ const normalizeTimezoneName = (timezone: string): string => {
 };
 
 const formatOffset = (offsetMinutes: number): string => {
-	if (offsetMinutes === 0) return 'UTC';
+	if (offsetMinutes === 0) {
+		return 'UTC';
+	}
 
 	const hours = Math.floor(Math.abs(offsetMinutes) / 60);
 	const minutes = Math.abs(offsetMinutes) % 60;
@@ -122,7 +124,6 @@ const filterAndSortTimezones = (
 export const generateTimezoneData = (
 	includeEtcTimezones = false,
 ): Timezone[] => {
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const allTimezones = (Intl as any).supportedValuesOf('timeZone');
 	const timezones: Timezone[] = [];
 

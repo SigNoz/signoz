@@ -1,262 +1,191 @@
-<h1 align="center" style="border-bottom: none">
-    <a href="https://signoz.io" target="_blank">
-        <img alt="SigNoz" src="https://github.com/user-attachments/assets/ef9a33f7-12d7-4c94-8908-0a02b22f0c18" width="100" height="100">
-    </a>
-    <br>SigNoz
-</h1>
-
-<p align="center">ログ、メトリクス、トレースをすべて一箇所で管理。アプリケーションを監視し、問題が発生する前に検知し、豊富なコンテキストでダウンタイムを迅速にトラブルシューティング。SigNozはDatadogやNew Relicに代わるコスト効率の高いオープンソースソリューションです。完全なドキュメント、チュートリアル、ガイドは<a href="https://signoz.io" target="_blank">signoz.io</a>をご覧ください。</p>
-
 <p align="center">
-    <img alt="GitHub issues" src="https://img.shields.io/github/issues/signoz/signoz"> </a>
-    <a href="https://twitter.com/intent/tweet?text=Monitor%20your%20applications%20and%20troubleshoot%20problems%20with%20SigNoz,%20an%20open-source%20alternative%20to%20DataDog,%20NewRelic.&url=https://signoz.io/&via=SigNozHQ&hashtags=opensource,signoz,observability">
-        <img alt="tweet" src="https://img.shields.io/twitter/url/http/shields.io.svg?style=social"> </a>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/readme-assets/signoz-hero-dark.png" width="900">
+    <source media="(prefers-color-scheme: light)" srcset="docs/readme-assets/signoz-hero-light.png" width="900">
+    <img alt="SigNoz - オープン標準を基盤とした、あなたの流儀で使えるオブザーバビリティ。" src="docs/readme-assets/signoz-hero-light.png" width="900">
+  </picture>
 </p>
 
+<p align="center">
+  <a href="README.md">English</a> ·
+  <a href="README.zh-cn.md">中文</a> ·
+  <a href="README.de-de.md">Deutsch</a> ·
+  <a href="README.pt-br.md">Português</a>
+</p>
 
-<h3 align="center">
-  <a href="https://signoz.io/docs"><b>ドキュメント</b></a> &bull;
-  <a href="https://github.com/SigNoz/signoz/blob/main/README.md"><b>英語版README</b></a> &bull;
-  <a href="https://github.com/SigNoz/signoz/blob/main/README.zh-cn.md"><b>中国語版README</b></a> &bull;
-  <a href="https://github.com/SigNoz/signoz/blob/main/README.de-de.md"><b>ドイツ語版README</b></a> &bull;
-  <a href="https://github.com/SigNoz/signoz/blob/main/README.pt-br.md"><b>ポルトガル語版README</b></a> &bull;
-  <a href="https://signoz.io/slack"><b>Slackコミュニティ</b></a> &bull;
-  <a href="https://twitter.com/SigNozHq"><b>Twitter</b></a>
-</h3>
+<p align="center">
+  <a href="https://github.com/SigNoz/signoz/issues"><img alt="GitHub issues" src="https://img.shields.io/github/issues/SigNoz/signoz"></a>
+  <a href="https://github.com/SigNoz/signoz/releases"><img alt="GitHub release" src="https://img.shields.io/github/v/release/SigNoz/signoz?label=release"></a>
+  <a href="https://signoz.io/slack"><img alt="Slack community" src="https://img.shields.io/badge/slack-community-4A154B?logo=slack&logoColor=white"></a>
+  <a href="https://www.linkedin.com/company/signozio/"><img alt="LinkedIn" src="https://img.shields.io/badge/linkedin-SigNoz-0A66C2?logo=linkedin&logoColor=white"></a>
+  <a href="https://twitter.com/intent/tweet?text=Monitor%20your%20applications%20and%20troubleshoot%20problems%20with%20SigNoz,%20an%20open-source%20alternative%20to%20DataDog,%20NewRelic.&url=https://signoz.io/&via=SigNozHQ&hashtags=opensource,signoz,observability"><img alt="Tweet" src="https://img.shields.io/twitter/url/http/shields.io.svg?style=social"></a>
+</p>
 
-## 機能
+SigNoz は OpenTelemetry を基盤に構築されたオープンソースのオブザーバビリティプラットフォームです。ログ、メトリクス、トレース、アラート、ダッシュボードを一箇所に集約し、分断された監視スタックに代わるエンタープライズグレードの選択肢を提供します。
 
+### SigNoz の利用形態を選ぶ
 
-### アプリケーションパフォーマンスモニタリング
+#### SigNoz Cloud（推奨）
 
-SigNoz APMを使用してアプリケーションとサービスを監視できます。p99レイテンシ、エラー率、Apdex、毎秒オペレーション数などの主要なアプリケーションメトリクスのチャートがすぐに利用可能です。アプリケーションからのデータベースや外部呼び出しも監視できます。詳細は[こちら](https://signoz.io/application-performance-monitoring/)をご覧ください。
+フルマネージドの SigNoz。30 日間の無料トライアル（クレジットカード不要）、$49 からの従量課金制、リージョン別のデータホスティングを提供します。
 
-OpenTelemetryでアプリケーションを[計装](https://signoz.io/docs/instrumentation/)して始めましょう。
+[**無料で始める →**](https://signoz.io/teams/)
 
-![apm-cover](https://github.com/user-attachments/assets/fa5c0396-0854-4c8b-b972-9b62fd2a70d2)
+#### Enterprise
 
+Enterprise Cloud、BYOC、Enterprise Self-Hosted。コンプライアンス、サポート、カスタム保持期間、RBAC、取り込み制御、データレジデンシー、リージョン選択に対応します。
 
-### ログ管理
+[**Enterprise を見る →**](https://signoz.io/enterprise/)
 
-SigNozは一元化されたログ管理ソリューションとして使用できます。データストアにはClickHouse（UberやCloudflareなどが使用）を採用しており、ログデータに対して極めて高速で高度に最適化されたストレージです。クイックフィルターと強力なクエリビルダーを使用して、すべてのログを瞬時に検索できます。
+#### Community
 
-ログに対してチャートを作成し、カスタマイズしたダッシュボードで監視することもできます。詳細は[こちら](https://signoz.io/log-management/)をご覧ください。
+自社インフラで動かせる無料のオープンソース版 SigNoz。Docker、Kubernetes、Linux でデプロイでき、データプレーンを完全に自分で管理できます。
 
-![logs-management-cover](https://github.com/user-attachments/assets/343588ee-98fb-4310-b3d2-c5bacf9c7384)
+[**SigNoz をインストール →**](https://signoz.io/docs/install/self-host/)
 
+### 何を監視できるか
 
-### 分散トレーシング
+SigNoz はログ、メトリクス、トレース、アラート、ダッシュボード、例外、エージェントネイティブなワークフローを一箇所でつなぎ、本番環境の問題をより速くデバッグできるようにします。
 
-分散トレーシングは、マイクロサービスアプリケーションの問題をトラブルシューティングするために不可欠です。OpenTelemetryを基盤としたSigNozの分散トレーシングは、サービス間のユーザーリクエストを追跡し、パフォーマンスのボトルネックを特定するのに役立ちます。
+#### APM 概要
 
-フレームグラフとガントチャートを使用して、ユーザーリクエストを詳細に分解して確認できます。任意のスパンをクリックすると、トレース全体が美しく表示され、リクエストフローのどこで実際に問題が発生したかを把握できます。
+サービスのレイテンシ、エラー率、スループット、Apdex、主要エンドポイント、データベース呼び出し、外部呼び出しを監視します。
 
-詳細は[こちら](https://signoz.io/distributed-tracing/)をご覧ください。
+<p align="center">
+  <img alt="レイテンシ、スループット、Apdex、主要オペレーションを表示する SigNoz APM ダッシュボード" src="docs/readme-assets/monitor/apm.png" width="900">
+</p>
 
-![distributed-tracing-cover](https://github.com/user-attachments/assets/9bfe060a-0c40-4922-9b55-8a97e1a4076c)
+詳細: [APM ドキュメント](https://signoz.io/docs/instrumentation/overview/)
 
+#### ログ管理
 
+ビジュアルなクエリビルダーを使って、ログの取り込み・検索・集計を行い、トレースやメトリクスと相関付けます。
 
-### メトリクスとダッシュボード
+<p align="center">
+  <img alt="フィルター、頻度チャート、ログ行を備えた SigNoz ログエクスプローラー" src="docs/readme-assets/monitor/log-management.svg" width="900">
+</p>
 
-インフラストラクチャやアプリケーションからメトリクスを取り込み、カスタマイズしたダッシュボードで監視できます。円グラフ、時系列、棒グラフなど、さまざまなパネルタイプでニーズに合った可視化を作成できます。
+詳細: [ログ管理ドキュメント](https://signoz.io/docs/logs-management/overview/)
 
-使いやすいメトリクスクエリビルダーで、メトリクスデータに対するクエリを素早く作成できます。複数のクエリを追加し、数式で組み合わせることで、複雑なクエリも素早く作成できます。
+#### メトリクスとダッシュボード
 
-詳細は[こちら](https://signoz.io/metrics-and-dashboards/)をご覧ください。
+Query Builder、PromQL、ClickHouse SQL を使って、アプリケーション、インフラ、カスタムメトリクスのダッシュボードを構築します。
 
-![metrics-n-dashboards-cover](https://github.com/user-attachments/assets/a536fd71-1d2c-4681-aa7e-516d754c47a5)
+<p align="center">
+  <img alt="システム負荷とネットワークのチャートを備えた SigNoz ホストメトリクスダッシュボード" src="docs/readme-assets/monitor/metrics.png" width="900">
+</p>
 
-### アラート
+詳細: [メトリクスドキュメント](https://signoz.io/docs/metrics-management/overview/)
 
-SigNozのアラートを使用して、アプリケーションで異常が発生したときに通知を受け取れます。あらゆる種類のテレメトリシグナル（ログ、メトリクス、トレース）にアラートを設定し、しきい値を作成し、通知チャネルを設定できます。アラート履歴や異常検知などの高度な機能で、よりスマートなアラートを作成できます。
+#### インフラ監視
 
-SigNozのアラートは、問題を事前に特定し、顧客に影響が及ぶ前に対処するのに役立ちます。
+Kubernetes のクラスター、Pod、ノード、ワークロードに加え、ホストレベルの CPU、メモリ、ディスク、ネットワーク、ログ、トレースを監視します。
 
-詳細は[こちら](https://signoz.io/alerts-management/)をご覧ください。
+<p align="center">
+  <img alt="Pod とノードのメトリクスを表示する SigNoz Kubernetes インフラダッシュボード" src="docs/readme-assets/monitor/infrastructure.png" width="900">
+</p>
 
-![alerts-cover](https://github.com/user-attachments/assets/03873bb8-1b62-4adf-8f56-28bb7b1750ea)
+詳細: [インフラ監視ドキュメント](https://signoz.io/docs/infrastructure-monitoring/overview/)
 
-### 例外モニタリング
+#### LLM / AI オブザーバビリティ
 
-Python、Java、Ruby、Javascriptで例外を自動的に監視できます。その他の言語では、数行のコードを追加するだけで例外の監視を開始できます。
+LLM アプリ、RAG パイプライン、プロンプト、ツール呼び出し、トークン、レイテンシ、コストを、アプリケーションやインフラのテレメトリと並べてトレースします。
 
-アプリケーションでキャッチされたすべての例外の詳細なスタックトレースを確認できます。カスタム属性をログに記録して、例外にさらなるコンテキストを追加することもできます。例えば、例外が発生したユーザーを特定するための属性を追加できます。
+<p align="center">
+  <img alt="トレース、トークン使用量、レイテンシ、コストを表示する SigNoz LLM オブザーバビリティダッシュボード" src="docs/readme-assets/monitor/llm.png" width="900">
+</p>
 
-詳細は[こちら](https://signoz.io/exceptions-monitoring/)をご覧ください。
+詳細: [LLM オブザーバビリティドキュメント](https://signoz.io/docs/llm-observability/)
 
+#### エージェントネイティブなオブザーバビリティと MCP
 
-![exceptions-cover](https://github.com/user-attachments/assets/4be37864-59f2-4e8a-8d6e-e29ad04298c5)
+SigNoz MCP サーバーを使ってコーディングエージェントにテレメトリを取り込んだり、SigNoz 内の Noz を使って本番環境のコンテキストとともにインシデント調査、アラート調整、ダッシュボード構築を行えます。[Noz](https://signoz.io/docs/ai/noz/) は SigNoz Cloud でのみ利用できます。
 
+<p align="center">
+  <img alt="MCP を活用したエージェントワークフローと並ぶ SigNoz Noz インターフェース" src="docs/readme-assets/monitor/agent-native.png" width="900">
+</p>
 
-<br /><br />
+詳細: [SigNoz MCP サーバードキュメント](https://signoz.io/docs/ai/signoz-mcp-server/) · [エージェントスキルドキュメント](https://signoz.io/docs/ai/agent-skills/#install-the-plugin)
 
-## なぜSigNozなのか？
+#### 分散トレーシング
 
-SigNozは、すべての監視とオブザーバビリティのニーズに対応する単一のツールです。SigNozを選ぶ理由は以下の通りです：
+フレームグラフ、ウォーターフォール、スパンイベント、フィルター、トレース分析を使って、サービスをまたぐリクエストを追跡します。
 
-- オブザーバビリティ（ログ、メトリクス、トレース）のための単一ツール
+<p align="center">
+  <img alt="フレームグラフとウォーターフォールスパンを表示する SigNoz 分散トレースビュー" src="docs/readme-assets/monitor/distributed-tracing.png" width="900">
+</p>
 
-- [OpenTelemetry](https://opentelemetry.io/)の上に構築されており、あらゆる種類のベンダーロックインから解放されるオープンソース標準
+詳細: [分散トレーシングドキュメント](https://signoz.io/docs/instrumentation/)
 
-- ログ、メトリクス、トレースの相関により、デバッグ時により豊富なコンテキストを提供
+#### トレースファネル
 
-- データストアにClickHouse（UberやCloudflareなどが使用）を採用 - オブザーバビリティデータに対して極めて高速で高度に最適化されたストレージ
+トレースからファネルを作成し、リクエストフローの離脱、失敗した遷移、システム的なワークフローの問題を把握します。
 
-- DIYクエリビルダー、PromQL、ClickHouseクエリで、オブザーバビリティデータのクエリに関するあらゆるユースケースに対応
+<p align="center">
+  <img alt="リクエストフローの離脱と失敗した遷移を表示する SigNoz トレースファネル" src="docs/readme-assets/monitor/trace-funnels.png" width="900">
+</p>
 
-- オープンソース - ユースケースに応じて、オープンソース、[クラウドサービス](https://signoz.io/teams/)、または両方の組み合わせを使用可能
+詳細: [トレースファネルドキュメント](https://signoz.io/docs/trace-funnels/overview/)
 
+さらに、[**例外**](https://signoz.io/docs/userguide/exceptions/)、[**アラート**](https://signoz.io/docs/alerts/)、[**外部 API**](https://signoz.io/docs/external-api-monitoring/overview/)、および OpenTelemetry、Prometheus、Kubernetes、クラウドプロバイダー、各言語 SDK、アプリケーションフレームワーク、データベース、LLM ツール向けの[**インテグレーション**](https://signoz.io/docs/integrations/integrations-list/)も監視できます。
 
-## はじめに
+### チームが SigNoz を選ぶ理由
 
-### SigNoz Cloudアカウントの作成
+1. **OpenTelemetry ネイティブ**<br>
+   オープン標準で一度計装すれば、テレメトリの所有権を保ち続けられます。
+2. **シグナルの相関**<br>
+   ツールを切り替えることなく、サービスのチャートからトレース、ログ、インフラメトリクス、例外へ移動できます。
+3. **単一のカラムナーデータベース**<br>
+   高カーディナリティかつ大容量のオブザーバビリティワークロード向けに構築されています。
+4. **予測可能な料金体系**<br>
+   ホスト単位の課金なし、ユーザーシート課金なし、カスタムメトリクスの特別料金もありません。
+5. **エンタープライズ対応**<br>
+   SOC 2 Type II および HIPAA 準拠、RBAC、取り込み制御、カスタム保持期間、サポート、BYOC、セルフホスティング。
 
-SigNoz Cloudは、SigNozを始める最も簡単な方法です。クラウドサービスは、メンテナンスを気にせずにアプリケーションパフォーマンスの洞察を得ることに集中したいユーザー向けです。
+### はじめる
 
-[無料で始める](https://signoz.io/teams/)
+#### Cloud で始める
 
-### Docker（セルフホスト）でデプロイ
+マネージドな SigNoz ワークスペースを作成し、オブザーバビリティ基盤を自前で運用することなく最初のダッシュボードを手に入れましょう。
 
-Dockerを使用してインストールするには、[こちら](https://signoz.io/docs/install/docker/)の手順に従ってください。
+[**SigNoz Cloud を無料で始める**](https://signoz.io/teams/)
 
-問題が発生した場合は、[トラブルシューティングガイド](https://signoz.io/docs/install/troubleshooting/)が参考になります。
+#### SigNoz をセルフホストする
 
-<p>&nbsp  </p>
+Foundry、Docker、Kubernetes、Linux を使って、自社インフラで SigNoz を実行します。
 
+[**Foundry**](https://github.com/SigNoz/foundry) · [**Docker**](https://signoz.io/docs/install/docker/) · [**Kubernetes**](https://signoz.io/docs/install/kubernetes/) · [**Linux**](https://signoz.io/docs/install/linux/)
 
-### Helmを使用してKubernetesにデプロイ（セルフホスト）
+#### データを送信する
 
-Helmチャートを使用してインストールするには、[こちら](https://signoz.io/docs/deployment/helm_chart)の手順に従ってください。
+OpenTelemetry、Prometheus、各言語 SDK、インテグレーションを使って、アプリケーションとインフラを計装します。
 
-<br /><br />
+[**計装**](https://signoz.io/docs/instrumentation/) · [**インテグレーション**](https://signoz.io/docs/integrations/integrations-list/)
 
-お客様のインフラストラクチャでのマネージドサービスも提供しています。詳細は[料金プラン](https://signoz.io/pricing/)をご確認ください。
+### 既存ツールとの比較
 
+SigNoz は、単機能ツールの寄せ集めや、料金が予測しづらい商用プラットフォームからの移行先としてよく採用されています。
 
-## Slackコミュニティに参加
+**Prometheus**<br>
+メトリクスだけが必要なら Prometheus で十分です。SigNoz はメトリクス、ログ、トレース、ダッシュボード、アラートをまとめて扱えるため、チームは相関付けられたコンテキストでデバッグできます。
 
-[Slack](https://signoz.io/slack)でお気軽にご連絡ください 👋
+**Jaeger**<br>
+Jaeger は分散トレーシング専用です。SigNoz はそれに加えて、メトリクス、ログ、トレース分析、ダッシュボード、アラート、例外、トレースからログへのワークフローを提供します。
 
-<br /><br />
+**Elastic**<br>
+SigNoz はカラムナーデータベースを採用し、効率的なオブザーバビリティ分析と高カーディナリティなログワークロードを実現します。取り込み時のリソース要件は Elastic と比較して 50% 低くなっています。[詳細な調査](https://signoz.io/blog/logs-performance-benchmark/?utm_source=github-readme&utm_medium=logs-benchmark)をご覧ください。
 
-
-### 対応言語：
-
-SigNozは、主要なすべてのプログラミング言語の監視をサポートしています。OpenTelemetryでサポートされているフレームワークと言語はすべてSigNozでサポートされています。各言語の計装手順は以下をご覧ください：
-
-- [Java](https://signoz.io/docs/instrumentation/java/)
-- [Python](https://signoz.io/docs/instrumentation/python/)
-- [Node.js / Javascript](https://signoz.io/docs/instrumentation/javascript/)
-- [Go](https://signoz.io/docs/instrumentation/golang/)
-- [PHP](https://signoz.io/docs/instrumentation/php/)
-- [.NET](https://signoz.io/docs/instrumentation/dotnet/)
-- [Ruby](https://signoz.io/docs/instrumentation/ruby-on-rails/)
-- [Elixir](https://signoz.io/docs/instrumentation/elixir/)
-- [Rust](https://signoz.io/docs/instrumentation/rust/)
-- [Swift](https://signoz.io/docs/instrumentation/swift/)
-
-完全なドキュメントは[こちら](https://signoz.io/docs/introduction/)でご覧いただけます。
-
-<br /><br />
-
-
-## 類似ツールとの比較
-
-### SigNoz vs Prometheus
-
-Prometheusはメトリクスだけを扱う場合に適しています。しかし、メトリクス、ログ、トレース間でシームレスな体験を求める場合、Prometheusと他のツールを組み合わせる現在の方法は最適ではありません。
-
-SigNozは、メトリクスとその他のテレメトリシグナルのためのワンストップソリューションです。すべてのテレメトリシグナルを収集するために同じ標準（OpenTelemetry）を使用するため、これらのシグナルを相関させて迅速にトラブルシューティングできます。
-
-例えば、あるタイムスタンプでk8sクラスタのインフラストラクチャメトリクスに問題があることがわかった場合、ログやトレースなどの他のシグナルにジャンプして問題を素早く理解できます。
-
-<p>&nbsp  </p>
-
-### SigNoz vs Jaeger
-
-Jaegerは分散トレーシングのみを行います。SigNozはメトリクス、トレース、ログの3つのオブザーバビリティの柱すべてをサポートしています。
-
-さらに、SigNozはJaegerと比較していくつかの高度な機能があります：
-
-- Jaeger UIはトレースやフィルタリングされたトレースに対してメトリクスを表示しません
-- Jaegerはフィルタリングされたトレースに対して集計を取得できません。例えば、customer_type='premium'というタグを持つリクエストのp99レイテンシなどです。SigNozではこれを簡単に行えます
-- SigNozではトレースからログへの移動も簡単です
-
-<p>&nbsp  </p>
-
-### SigNoz vs Elastic
-
-- SigNozのログ管理は、列指向OLAPデータストアであるClickHouseをベースにしており、集計ログ分析クエリがより効率的です
-- 取り込み時のリソース要件がElasticと比較して50%削減
-
-ElasticとSigNozを比較したベンチマークを公開しています。[こちら](https://signoz.io/blog/logs-performance-benchmark/?utm_source=github-readme&utm_medium=logs-benchmark)でご確認ください。
-
-<p>&nbsp  </p>
-
-### SigNoz vs Loki
-
-- SigNozは大量のデータに対する高カーディナリティデータの集計をサポートしていますが、Lokiはサポートしていません
-- SigNozは高カーディナリティデータに対するインデックスをサポートし、インデックス数に制限がありませんが、Lokiは少数のインデックスを追加しただけで最大ストリームに達します
-- Lokiでは、大量のデータに対する検索が困難で、SigNozと比較して遅くなります
-
-LokiとSigNozを比較したベンチマークを公開しています。[こちら](https://signoz.io/blog/logs-performance-benchmark/?utm_source=github-readme&utm_medium=logs-benchmark)でご確認ください。
-
-<br /><br />
-
+**Loki**<br>
+リンク先のベンチマークでは、SigNoz はテスト環境のすべてのキーをインデックス化できた一方、Loki はラベルを増やすと最大ストリームエラーに達しました。[詳細な調査](https://signoz.io/blog/logs-performance-benchmark/?utm_source=github-readme&utm_medium=logs-benchmark)をご覧ください。
 
 ## コントリビューション
 
-大小問わずコントリビューションを歓迎します。SigNozへのコントリビューションを始めるには、[CONTRIBUTING.md](CONTRIBUTING.md)をお読みください。
+大小を問わず、コントリビューションを歓迎します ❤️ SigNoz への貢献を始めるには [CONTRIBUTING.md](CONTRIBUTING.md) をお読みください。
 
-始め方がわからない場合は、[Slackコミュニティ](https://signoz.io/slack)の`#contributing`でお気軽にご質問ください。
+始め方がわからない場合は、[Slack コミュニティ](https://signoz.io/slack)の **`#contributing` チャンネルで気軽に声をかけてください。**
 
-### プロジェクトメンテナー
-
-#### バックエンド
-
-- [Ankit Nayan](https://github.com/ankitnayan)
-- [Nityananda Gohain](https://github.com/nityanandagohain)
-- [Srikanth Chekuri](https://github.com/srikanthccv)
-- [Vishal Sharma](https://github.com/makeavish)
-- [Shivanshu Raj Shrivastava](https://github.com/shivanshuraj1333)
-- [Ekansh Gupta](https://github.com/eKuG)
-- [Aniket Agarwal](https://github.com/aniketio-ctrl)
-
-#### フロントエンド
-
-- [Yunus M](https://github.com/YounixM)
-- [Vikrant Gupta](https://github.com/vikrantgupta25)
-- [Sagar Rajput](https://github.com/SagarRajput-7)
-- [Shaheer Kochai](https://github.com/ahmadshaheer)
-- [Amlan Kumar Nandy](https://github.com/amlannandy)
-- [Sahil Khan](https://github.com/sawhil)
-- [Aditya Singh](https://github.com/aks07)
-- [Abhi Kumar](https://github.com/ahrefabhi)
-
-#### DevOps
-
-- [Prashant Shahi](https://github.com/prashant-shahi)
-- [Vibhu Pandey](https://github.com/therealpandey)
-
-<br /><br />
-
-
-## ドキュメント
-
-ドキュメントは https://signoz.io/docs/ でご覧いただけます。不明な点や不足している情報がある場合は、`documentation`ラベルを付けてGitHub issueを作成するか、Slackコミュニティチャンネルでお問い合わせください。
-
-<br /><br />
-
-
-## コミュニティ
-
-分散トレーシング、オブザーバビリティ、SigNozについて詳しく知りたい方、また他のユーザーやコントリビューターとつながりたい方は、[Slackコミュニティ](https://signoz.io/slack)にご参加ください。
-
-アイデア、質問、フィードバックがある場合は、[GitHub Discussions](https://github.com/SigNoz/signoz/discussions)で共有してください。
-
-いつもながら、素晴らしいコントリビューターの皆さんに感謝します！
+いつも支えてくれる素晴らしいコントリビューターの皆さんに感謝します！
 
 <a href="https://github.com/signoz/signoz/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=signoz/signoz" />
+  <img alt="SigNoz contributors" src="https://contrib.rocks/image?repo=signoz/signoz" />
 </a>

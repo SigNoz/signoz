@@ -2,6 +2,8 @@ package querybuildertypesv5
 
 import (
 	"context"
+
+	"github.com/swaggest/jsonschema-go"
 )
 
 type Query interface {
@@ -23,9 +25,18 @@ type Result struct {
 }
 
 type ExecStats struct {
-	RowsScanned  uint64 `json:"rowsScanned"`
-	BytesScanned uint64 `json:"bytesScanned"`
-	DurationMS   uint64 `json:"durationMs"`
+	RowsScanned   uint64            `json:"rowsScanned"`
+	BytesScanned  uint64            `json:"bytesScanned"`
+	DurationMS    uint64            `json:"durationMs"`
+	StepIntervals map[string]uint64 `json:"stepIntervals,omitempty"`
+}
+
+var _ jsonschema.Preparer = &ExecStats{}
+
+// PrepareJSONSchema adds description to the ExecStats schema.
+func (e *ExecStats) PrepareJSONSchema(schema *jsonschema.Schema) error {
+	schema.WithDescription("Execution statistics for the query, including rows scanned, bytes scanned, and duration.")
+	return nil
 }
 
 type TimeRange struct{ From, To uint64 } // ms since epoch

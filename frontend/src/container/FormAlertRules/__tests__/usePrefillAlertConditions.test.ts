@@ -1,4 +1,5 @@
 import { renderHook } from '@testing-library/react';
+import { ReduceOperators } from 'types/common/queryBuilder';
 
 import { usePrefillAlertConditions } from '../usePrefillAlertConditions';
 
@@ -55,7 +56,7 @@ const mockStagedQuery = {
 	builder: {
 		queryData: [
 			{
-				reduceTo: 'avg',
+				reduceTo: ReduceOperators.AVG,
 			},
 		],
 	},
@@ -75,7 +76,7 @@ describe('usePrefillAlertConditions', () => {
 				builder: { queryData: [{ reduceTo: 'p90' }] },
 			} as any),
 		);
-		expect(result.current.matchType).toBe(null);
+		expect(result.current.matchType).toBeNull();
 	});
 
 	it('returns the correct matchType for multiple queries with same time aggregation', () => {
@@ -84,10 +85,10 @@ describe('usePrefillAlertConditions', () => {
 				builder: {
 					queryData: [
 						{
-							reduceTo: 'avg',
+							reduceTo: ReduceOperators.AVG,
 						},
 						{
-							reduceTo: 'avg',
+							reduceTo: ReduceOperators.AVG,
 						},
 					],
 				},
@@ -102,16 +103,16 @@ describe('usePrefillAlertConditions', () => {
 				builder: {
 					queryData: [
 						{
-							reduceTo: 'avg',
+							reduceTo: ReduceOperators.AVG,
 						},
 						{
-							reduceTo: 'sum',
+							reduceTo: ReduceOperators.SUM,
 						},
 					],
 				},
 			} as any),
 		);
-		expect(result.current.matchType).toBe(null);
+		expect(result.current.matchType).toBeNull();
 	});
 
 	it('returns the correct op, target, targetUnit from the higher priority threshold for multiple thresholds', () => {

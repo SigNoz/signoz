@@ -1,10 +1,10 @@
-import '../Graph/Graph.styles.scss';
-
 import useUrlQuery from 'hooks/useUrlQuery';
 import { useGetAlertRuleDetailsTimelineGraphData } from 'pages/AlertDetails/hooks';
 import DataStateRenderer from 'periscope/components/DataStateRenderer/DataStateRenderer';
 
 import Graph from '../Graph/Graph';
+
+import '../Graph/Graph.styles.scss';
 
 function GraphWrapper({
 	totalCurrentTriggers,
@@ -15,14 +15,8 @@ function GraphWrapper({
 
 	const relativeTime = urlQuery.get('relativeTime');
 
-	const {
-		isLoading,
-		isRefetching,
-		isError,
-		data,
-		isValidRuleId,
-		ruleId,
-	} = useGetAlertRuleDetailsTimelineGraphData();
+	const { isLoading, isRefetching, isError, data, isValidRuleId, ruleId } =
+		useGetAlertRuleDetailsTimelineGraphData();
 
 	// TODO(shaheer): uncomment when the API is ready for
 	// const { startTime } = useAlertHistoryQueryParams();

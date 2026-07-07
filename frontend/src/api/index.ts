@@ -1,6 +1,5 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-/* eslint-disable no-param-reassign */
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import { QueryClient } from 'react-query';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import post from 'api/v2/sessions/rotate/post';
 import afterLogin from 'AppRoutes/utils';
@@ -12,18 +11,11 @@ import axios, {
 import { ENVIRONMENT } from 'constants/env';
 import { Events } from 'constants/events';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import { QueryClient } from 'react-query';
+import { getBasePath } from 'utils/basePath';
 import { eventEmitter } from 'utils/getEventEmitter';
+import { getIsNoAuthMode } from 'utils/noAuthMode';
 
-import apiV1, {
-	apiAlertManager,
-	apiV2,
-	apiV3,
-	apiV4,
-	apiV5,
-	gatewayApiV1,
-	gatewayApiV2,
-} from './apiV1';
+import apiV1, { apiAlertManager, apiV2, apiV3, apiV4, apiV5 } from './apiV1';
 import { Logout } from './utils';
 
 const RESPONSE_TIMEOUT_THRESHOLD = 5000; // 5 seconds
@@ -36,7 +28,7 @@ const queryClient = new QueryClient({
 	},
 });
 
-const interceptorsResponse = (
+export const interceptorsResponse = (
 	value: AxiosResponse<any>,
 ): Promise<AxiosResponse<any>> => {
 	if ((value.config as any)?.metadata) {
@@ -59,7 +51,7 @@ const interceptorsResponse = (
 	return Promise.resolve(value);
 };
 
-const interceptorsRequestResponse = (
+export const interceptorsRequestResponse = (
 	value: InternalAxiosRequestConfig,
 ): InternalAxiosRequestConfig => {
 	// Attach metadata safely (not sent with the request)
@@ -77,21 +69,59 @@ const interceptorsRequestResponse = (
 	return value;
 };
 
-const interceptorRejected = async (
+// Strips the leading '/' from path and joins with base — idempotent if already prefixed.
+// e.g. prependBase('/signoz/', '/api/v1/') → '/signoz/api/v1/'
+function prependBase(base: string, path: string): string {
+	return path.startsWith(base) ? path : base + path.slice(1);
+}
+
+// Prepends the runtime base path to outgoing requests so API calls work under
+// a URL prefix (e.g. /signoz/api/v1/…). No-op for root deployments and dev
+// (dev baseURL is a full http:// URL, not an absolute path).
+export const interceptorsRequestBasePath = (
+	value: InternalAxiosRequestConfig,
+): InternalAxiosRequestConfig => {
+	const basePath = getBasePath();
+	if (basePath === '/') {
+		return value;
+	}
+
+	if (value.baseURL?.startsWith('/')) {
+		// Production relative baseURL: '/api/v1/' → '/signoz/api/v1/'
+		value.baseURL = prependBase(basePath, value.baseURL);
+	} else if (value.baseURL?.startsWith('http')) {
+		// Dev absolute baseURL (VITE_FRONTEND_API_ENDPOINT): 'https://host/api/v1/' → 'https://host/signoz/api/v1/'
+		const url = new URL(value.baseURL);
+		url.pathname = prependBase(basePath, url.pathname);
+		value.baseURL = url.toString();
+	} else if (!value.baseURL && value.url?.startsWith('/')) {
+		// Orval-generated client (empty baseURL, path in url): '/api/signoz/v1/rules' → '/signoz/api/signoz/v1/rules'
+		value.url = prependBase(basePath, value.url);
+	}
+
+	return value;
+};
+
+export const interceptorRejected = async (
 	value: AxiosResponse<any>,
 ): Promise<AxiosResponse<any>> => {
 	try {
 		if (axios.isAxiosError(value) && value.response) {
 			const { response } = value;
 
+			const isNoAuthMode = getIsNoAuthMode();
+
 			if (
+				!isNoAuthMode &&
 				response.status === 401 &&
 				// if the session rotate call or the create session errors out with 401 or the delete sessions call returns 401 then we do not retry!
 				response.config.url !== '/sessions/rotate' &&
 				response.config.url !== '/sessions/email_password' &&
 				!(
 					response.config.url === '/sessions' && response.config.method === 'delete'
-				)
+				) &&
+				response.config.url !== '/authz/check' &&
+				response.config.url !== '/api/v2/reset_password_tokens/verify'
 			) {
 				try {
 					const accessToken = getLocalStorageApi(LOCALSTORAGE.AUTH_TOKEN);
@@ -104,33 +134,31 @@ const interceptorRejected = async (
 					afterLogin(response.data.accessToken, response.data.refreshToken, true);
 
 					try {
-						const reResponse = await axios(
-							`${value.config.baseURL}${value.config.url?.substring(1)}`,
-							{
-								method: value.config.method,
-								headers: {
-									...value.config.headers,
-									Authorization: `Bearer ${response.data.accessToken}`,
-								},
-								data: {
-									...JSON.parse(value.config.data || '{}'),
-								},
+						const reResponse = await axios({
+							...value.config,
+							headers: {
+								...value.config.headers,
+								Authorization: `Bearer ${response.data.accessToken}`,
 							},
-						);
+						});
 
 						return await Promise.resolve(reResponse);
 					} catch (error) {
 						if ((error as AxiosError)?.response?.status === 401) {
-							Logout();
+							void Logout();
 						}
 					}
 				} catch (error) {
-					Logout();
+					void Logout();
 				}
 			}
 
-			if (response.status === 401 && response.config.url === '/sessions/rotate') {
-				Logout();
+			if (
+				!isNoAuthMode &&
+				response.status === 401 &&
+				response.config.url === '/sessions/rotate'
+			) {
+				void Logout();
 			}
 		}
 		return await Promise.reject(value);
@@ -148,6 +176,7 @@ const instance = axios.create({
 });
 
 instance.interceptors.request.use(interceptorsRequestResponse);
+instance.interceptors.request.use(interceptorsRequestBasePath);
 instance.interceptors.response.use(interceptorsResponse, interceptorRejected);
 
 export const AxiosAlertManagerInstance = axios.create({
@@ -162,6 +191,7 @@ ApiV2Instance.interceptors.response.use(
 	interceptorRejected,
 );
 ApiV2Instance.interceptors.request.use(interceptorsRequestResponse);
+ApiV2Instance.interceptors.request.use(interceptorsRequestBasePath);
 
 // axios V3
 export const ApiV3Instance = axios.create({
@@ -173,6 +203,7 @@ ApiV3Instance.interceptors.response.use(
 	interceptorRejected,
 );
 ApiV3Instance.interceptors.request.use(interceptorsRequestResponse);
+ApiV3Instance.interceptors.request.use(interceptorsRequestBasePath);
 //
 
 // axios V4
@@ -185,6 +216,7 @@ ApiV4Instance.interceptors.response.use(
 	interceptorRejected,
 );
 ApiV4Instance.interceptors.request.use(interceptorsRequestResponse);
+ApiV4Instance.interceptors.request.use(interceptorsRequestBasePath);
 //
 
 // axios V5
@@ -197,6 +229,7 @@ ApiV5Instance.interceptors.response.use(
 	interceptorRejected,
 );
 ApiV5Instance.interceptors.request.use(interceptorsRequestResponse);
+ApiV5Instance.interceptors.request.use(interceptorsRequestBasePath);
 //
 
 // axios Base
@@ -209,32 +242,7 @@ LogEventAxiosInstance.interceptors.response.use(
 	interceptorRejectedBase,
 );
 LogEventAxiosInstance.interceptors.request.use(interceptorsRequestResponse);
-//
-
-// gateway Api V1
-export const GatewayApiV1Instance = axios.create({
-	baseURL: `${ENVIRONMENT.baseURL}${gatewayApiV1}`,
-});
-
-GatewayApiV1Instance.interceptors.response.use(
-	interceptorsResponse,
-	interceptorRejected,
-);
-
-GatewayApiV1Instance.interceptors.request.use(interceptorsRequestResponse);
-//
-
-// gateway Api V2
-export const GatewayApiV2Instance = axios.create({
-	baseURL: `${ENVIRONMENT.baseURL}${gatewayApiV2}`,
-});
-
-GatewayApiV2Instance.interceptors.response.use(
-	interceptorsResponse,
-	interceptorRejected,
-);
-
-GatewayApiV2Instance.interceptors.request.use(interceptorsRequestResponse);
+LogEventAxiosInstance.interceptors.request.use(interceptorsRequestBasePath);
 //
 
 AxiosAlertManagerInstance.interceptors.response.use(
@@ -242,6 +250,7 @@ AxiosAlertManagerInstance.interceptors.response.use(
 	interceptorRejected,
 );
 AxiosAlertManagerInstance.interceptors.request.use(interceptorsRequestResponse);
+AxiosAlertManagerInstance.interceptors.request.use(interceptorsRequestBasePath);
 
 export { apiV1 };
 export default instance;

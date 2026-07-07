@@ -5,10 +5,11 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
-	"github.com/SigNoz/signoz/pkg/querybuilder/resourcefilter"
+	"github.com/SigNoz/signoz/pkg/telemetryaudit"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
 	"github.com/SigNoz/signoz/pkg/telemetrymetadata"
 	"github.com/SigNoz/signoz/pkg/telemetrymeter"
@@ -17,11 +18,12 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrytraces"
 )
 
-// NewFactory creates a new factory for the signoz querier provider
+// NewFactory creates a new factory for the signoz querier provider.
 func NewFactory(
 	telemetryStore telemetrystore.TelemetryStore,
 	prometheus prometheus.Prometheus,
 	cache cache.Cache,
+	flagger flagger.Flagger,
 ) factory.ProviderFactory[querier.Querier, querier.Config] {
 	return factory.NewProviderFactory(
 		factory.MustNewName("signoz"),
@@ -30,7 +32,7 @@ func NewFactory(
 			settings factory.ProviderSettings,
 			cfg querier.Config,
 		) (querier.Querier, error) {
-			return newProvider(ctx, settings, cfg, telemetryStore, prometheus, cache)
+			return newProvider(ctx, settings, cfg, telemetryStore, prometheus, cache, flagger)
 		},
 	)
 }
@@ -42,6 +44,7 @@ func newProvider(
 	telemetryStore telemetrystore.TelemetryStore,
 	prometheus prometheus.Prometheus,
 	cache cache.Cache,
+	flagger flagger.Flagger,
 ) (querier.Querier, error) {
 
 	// Create telemetry metadata store
@@ -61,75 +64,90 @@ func newProvider(
 		telemetrylogs.TagAttributesV2TableName,
 		telemetrylogs.LogAttributeKeysTblName,
 		telemetrylogs.LogResourceKeysTblName,
+		telemetryaudit.DBName,
+		telemetryaudit.AuditLogsTableName,
+		telemetryaudit.TagAttributesTableName,
+		telemetryaudit.LogAttributeKeysTblName,
+		telemetryaudit.LogResourceKeysTblName,
 		telemetrymetadata.DBName,
 		telemetrymetadata.AttributesMetadataLocalTableName,
+		telemetrymetadata.ColumnEvolutionMetadataTableName,
+		flagger,
 	)
 
 	// Create trace statement builder
 	traceFieldMapper := telemetrytraces.NewFieldMapper()
 	traceConditionBuilder := telemetrytraces.NewConditionBuilder(traceFieldMapper)
 
-	resourceFilterFieldMapper := resourcefilter.NewFieldMapper()
-	resourceFilterConditionBuilder := resourcefilter.NewConditionBuilder(resourceFilterFieldMapper)
-	resourceFilterStmtBuilder := resourcefilter.NewTraceResourceFilterStatementBuilder(
-		settings,
-		resourceFilterFieldMapper,
-		resourceFilterConditionBuilder,
-		telemetryMetadataStore,
-	)
-
-	traceAggExprRewriter := querybuilder.NewAggExprRewriter(settings, nil, traceFieldMapper, traceConditionBuilder, "", nil)
+	traceAggExprRewriter := querybuilder.NewAggExprRewriter(settings, nil, traceFieldMapper, traceConditionBuilder, nil, flagger)
 	traceStmtBuilder := telemetrytraces.NewTraceQueryStatementBuilder(
 		settings,
 		telemetryMetadataStore,
 		traceFieldMapper,
 		traceConditionBuilder,
-		resourceFilterStmtBuilder,
 		traceAggExprRewriter,
 		telemetryStore,
+		flagger,
+		cfg.SkipResourceFingerprint.Enabled,
+		cfg.SkipResourceFingerprint.Threshold,
 	)
 
-	// ADD: Create trace operator statement builder
+	// Create trace operator statement builder
 	traceOperatorStmtBuilder := telemetrytraces.NewTraceOperatorStatementBuilder(
 		settings,
 		telemetryMetadataStore,
 		traceFieldMapper,
 		traceConditionBuilder,
-		traceStmtBuilder,          // Pass the regular trace statement builder
-		resourceFilterStmtBuilder, // Pass the resource filter statement builder
+		traceStmtBuilder,
 		traceAggExprRewriter,
+		flagger,
 	)
 
 	// Create log statement builder
-	logFieldMapper := telemetrylogs.NewFieldMapper()
-	logConditionBuilder := telemetrylogs.NewConditionBuilder(logFieldMapper)
-	logResourceFilterStmtBuilder := resourcefilter.NewLogResourceFilterStatementBuilder(
-		settings,
-		resourceFilterFieldMapper,
-		resourceFilterConditionBuilder,
-		telemetryMetadataStore,
-		telemetrylogs.DefaultFullTextColumn,
-		telemetrylogs.BodyJSONStringSearchPrefix,
-		telemetrylogs.GetBodyJSONKey,
-	)
+	logFieldMapper := telemetrylogs.NewFieldMapper(flagger)
+	logConditionBuilder := telemetrylogs.NewConditionBuilder(logFieldMapper, flagger)
 	logAggExprRewriter := querybuilder.NewAggExprRewriter(
 		settings,
 		telemetrylogs.DefaultFullTextColumn,
 		logFieldMapper,
 		logConditionBuilder,
-		telemetrylogs.BodyJSONStringSearchPrefix,
 		telemetrylogs.GetBodyJSONKey,
+		flagger,
 	)
 	logStmtBuilder := telemetrylogs.NewLogQueryStatementBuilder(
 		settings,
 		telemetryMetadataStore,
 		logFieldMapper,
 		logConditionBuilder,
-		logResourceFilterStmtBuilder,
 		logAggExprRewriter,
 		telemetrylogs.DefaultFullTextColumn,
-		telemetrylogs.BodyJSONStringSearchPrefix,
 		telemetrylogs.GetBodyJSONKey,
+		flagger,
+		telemetryStore,
+		cfg.SkipResourceFingerprint.Enabled,
+		cfg.SkipResourceFingerprint.Threshold,
+	)
+
+	// Create audit statement builder
+	auditFieldMapper := telemetryaudit.NewFieldMapper()
+	auditConditionBuilder := telemetryaudit.NewConditionBuilder(auditFieldMapper)
+	auditAggExprRewriter := querybuilder.NewAggExprRewriter(
+		settings,
+		telemetryaudit.DefaultFullTextColumn,
+		auditFieldMapper,
+		auditConditionBuilder,
+		nil,
+		flagger,
+	)
+	auditStmtBuilder := telemetryaudit.NewAuditQueryStatementBuilder(
+		settings,
+		telemetryMetadataStore,
+		auditFieldMapper,
+		auditConditionBuilder,
+		auditAggExprRewriter,
+		telemetryaudit.DefaultFullTextColumn,
+		nil,
+		flagger,
 	)
 
 	// Create metric statement builder
@@ -140,6 +158,7 @@ func newProvider(
 		telemetryMetadataStore,
 		metricFieldMapper,
 		metricConditionBuilder,
+		flagger,
 	)
 
 	// Create meter statement builder
@@ -148,6 +167,7 @@ func newProvider(
 		telemetryMetadataStore,
 		metricFieldMapper,
 		metricConditionBuilder,
+		metricStmtBuilder,
 	)
 
 	// Create bucket cache
@@ -166,9 +186,12 @@ func newProvider(
 		prometheus,
 		traceStmtBuilder,
 		logStmtBuilder,
+		auditStmtBuilder,
 		metricStmtBuilder,
 		meterStmtBuilder,
 		traceOperatorStmtBuilder,
 		bucketCache,
+		flagger,
+		cfg.LogTraceIDWindowPadding,
 	), nil
 }

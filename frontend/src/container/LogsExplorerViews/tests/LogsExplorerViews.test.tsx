@@ -1,3 +1,4 @@
+import { VirtuosoMockContext } from 'react-virtuoso';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
@@ -7,7 +8,6 @@ import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
 import { QueryBuilderContext } from 'providers/QueryBuilder';
-import { VirtuosoMockContext } from 'react-virtuoso';
 import { fireEvent, render, RenderResult, waitFor } from 'tests/test-utils';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { LogsAggregatorOperator } from 'types/common/queryBuilder';
@@ -38,16 +38,16 @@ const lodsQueryServerRequest = (): void =>
 jest.mock(
 	'container/TimeSeriesView/TimeSeriesView',
 	() =>
-		// eslint-disable-next-line func-names, @typescript-eslint/explicit-function-return-type, react/display-name
-		function () {
+		// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+		function TimeSeriesView() {
 			return <div>Time Series Chart</div>;
 		},
 );
 jest.mock(
 	'container/LogsExplorerChart',
 	() =>
-		// eslint-disable-next-line func-names, @typescript-eslint/explicit-function-return-type, react/display-name
-		function () {
+		// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+		function LogsExplorerChart() {
 			return <div>Histogram Chart</div>;
 		},
 );
@@ -65,48 +65,6 @@ jest.mock('hooks/queryBuilder/useGetExplorerQueryRange', () => ({
 	useGetExplorerQueryRange: jest.fn(),
 }));
 
-// Mock ErrorStateComponent to handle APIError properly
-jest.mock(
-	'components/Common/ErrorStateComponent',
-	() =>
-		function MockErrorStateComponent({ error, message }: any): JSX.Element {
-			if (error) {
-				// Mock the getErrorMessage and getErrorDetails methods
-				const getErrorMessage = jest
-					.fn()
-					.mockReturnValue(
-						error.error?.message ||
-							'Something went wrong. Please try again or contact support.',
-					);
-				const getErrorDetails = jest.fn().mockReturnValue(error);
-
-				// Add the methods to the error object
-				const errorWithMethods = {
-					...error,
-					getErrorMessage,
-					getErrorDetails,
-				};
-
-				return (
-					<div data-testid="error-state-component">
-						<div>{errorWithMethods.getErrorMessage()}</div>
-						{errorWithMethods.getErrorDetails().error?.errors?.map((err: any) => (
-							<div key={`error-${err.message}`}>• {err.message}</div>
-						))}
-					</div>
-				);
-			}
-
-			return (
-				<div data-testid="error-state-component">
-					<div>
-						{message || 'Something went wrong. Please try again or contact support.'}
-					</div>
-				</div>
-			);
-		},
-);
-
 jest.mock('hooks/useSafeNavigate', () => ({
 	useSafeNavigate: (): any => ({
 		safeNavigate: jest.fn(),
@@ -119,7 +77,7 @@ jest.mock('providers/preferences/sync/usePreferenceSync', () => ({
 		preferences: {
 			columns: [],
 			formatting: {
-				maxLines: 2,
+				maxLines: 1,
 				format: 'table',
 				fontSize: 'small',
 				version: 1,
@@ -168,7 +126,7 @@ describe('LogsExplorerViews -', () => {
 		lodsQueryServerRequest();
 		const { queryByTestId } = renderer();
 
-		const periscopeDownloadButtonTestId = 'periscope-btn-download-options';
+		const periscopeDownloadButtonTestId = 'periscope-btn-download-logs';
 		const periscopeFormatButtonTestId = 'periscope-btn-format-options';
 
 		// Test that the periscope button is present
@@ -183,7 +141,7 @@ describe('LogsExplorerViews -', () => {
 		// Test that the menu items are present
 		const expectedMenuItemsCount = 3;
 		const menuItems = document.querySelectorAll('.menu-items .item');
-		expect(menuItems.length).toBe(expectedMenuItemsCount);
+		expect(menuItems).toHaveLength(expectedMenuItemsCount);
 
 		// Test that the component renders without crashing
 		expect(queryByTestId(periscopeDownloadButtonTestId)).toBeInTheDocument();
@@ -429,7 +387,7 @@ describe('LogsExplorerViews -', () => {
 					expect(first.groupBy?.length ?? 0).toBe(0);
 					expect(first.having?.expression).toBe('');
 					// Default orderBy should be timestamp desc, then id desc
-					expect(first.orderBy).toEqual([
+					expect(first.orderBy).toStrictEqual([
 						{ columnName: 'timestamp', order: 'desc' },
 						{ columnName: 'id', order: 'desc' },
 					]);

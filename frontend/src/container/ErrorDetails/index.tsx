@@ -1,6 +1,10 @@
-import './styles.scss';
-
-import { Button, Divider, Space, Typography } from 'antd';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useQuery } from 'react-query';
+import { useLocation } from 'react-router-dom';
+import { Button, Space } from 'antd';
+import { Divider } from '@signozhq/ui/divider';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import getNextPrevId from 'api/errors/getNextPrevId';
 import Editor from 'components/Editor';
@@ -13,14 +17,14 @@ import history from 'lib/history';
 import { isUndefined } from 'lodash-es';
 import { urlKey } from 'pages/ErrorDetails/utils';
 import { useTimezone } from 'providers/Timezone';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useQuery } from 'react-query';
-import { useLocation } from 'react-router-dom';
 import { PayloadProps as GetByErrorTypeAndServicePayload } from 'types/api/errors/getByErrorTypeAndService';
+import { isModifierKeyPressed } from 'utils/app';
+import { openInNewTab } from 'utils/navigation';
 
 import { keyToExclude } from './config';
 import { DashedContainer, EditorContainer, EventContainer } from './styles';
+
+import './styles.scss';
 
 function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 	const { idPayload } = props;
@@ -111,14 +115,19 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 			value: errorDetail[key as keyof GetByErrorTypeAndServicePayload],
 		}));
 
-	const onClickTraceHandler = (): void => {
+	const onClickTraceHandler = (event: React.MouseEvent): void => {
 		logEvent('Exception: Navigate to trace detail page', {
 			groupId: errorDetail?.groupID,
 			spanId: errorDetail.spanID,
 			traceId: errorDetail.traceID,
 			exceptionId: errorDetail?.errorId,
 		});
-		history.push(`/trace/${errorDetail.traceID}?spanId=${errorDetail.spanID}`);
+		const path = `/trace/${errorDetail.traceID}?spanId=${errorDetail.spanID}`;
+		if (isModifierKeyPressed(event)) {
+			openInNewTab(path);
+		} else {
+			history.push(path);
+		}
 	};
 
 	const logEventCalledRef = useRef(false);

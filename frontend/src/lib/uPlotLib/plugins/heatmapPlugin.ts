@@ -14,8 +14,8 @@ function heatmapPlugin(): uPlot.Plugin {
 			draw: (u: uPlot): void => {
 				const { ctx, data } = u;
 
-				const yData = (data[3] as unknown) as number[][];
-				const yQtys = (data[4] as unknown) as number[][];
+				const yData = data[3] as unknown as number[][];
+				const yQtys = data[4] as unknown as number[][];
 				const yHgt = Math.floor(
 					u.valToPos(bucketIncr, 'y', true) - u.valToPos(0, 'y', true),
 				);

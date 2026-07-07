@@ -1,24 +1,29 @@
-/* eslint-disable react/jsx-props-no-spreading */
 import { fireEvent, render, screen } from '@testing-library/react';
+import { QueryParams } from 'constants/query';
+import ROUTES from 'constants/routes';
 import { defaultPostableAlertRuleV2 } from 'container/CreateAlertV2/constants';
 import { getCreateAlertLocalStateFromAlertDef } from 'container/CreateAlertV2/utils';
+import * as useSafeNavigateHook from 'hooks/useSafeNavigate';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 
-import * as useCreateAlertRuleHook from '../../../../hooks/alerts/useCreateAlertRule';
-import * as useTestAlertRuleHook from '../../../../hooks/alerts/useTestAlertRule';
-import * as useUpdateAlertRuleHook from '../../../../hooks/alerts/useUpdateAlertRule';
+import * as rulesHook from '../../../../api/generated/services/rules';
 import { CreateAlertProvider } from '../../context';
 import CreateAlertHeader from '../CreateAlertHeader';
 
-jest.spyOn(useCreateAlertRuleHook, 'useCreateAlertRule').mockReturnValue({
+const mockSafeNavigate = jest.fn();
+jest.spyOn(useSafeNavigateHook, 'useSafeNavigate').mockReturnValue({
+	safeNavigate: mockSafeNavigate,
+});
+
+jest.spyOn(rulesHook, 'useCreateRule').mockReturnValue({
 	mutate: jest.fn(),
 	isLoading: false,
 } as any);
-jest.spyOn(useTestAlertRuleHook, 'useTestAlertRule').mockReturnValue({
+jest.spyOn(rulesHook, 'useTestRule').mockReturnValue({
 	mutate: jest.fn(),
 	isLoading: false,
 } as any);
-jest.spyOn(useUpdateAlertRuleHook, 'useUpdateAlertRule').mockReturnValue({
+jest.spyOn(rulesHook, 'useUpdateRuleByID').mockReturnValue({
 	mutate: jest.fn(),
 	isLoading: false,
 } as any);
@@ -99,5 +104,38 @@ describe('CreateAlertHeader', () => {
 		expect(
 			screen.getByPlaceholderText(ENTER_ALERT_RULE_NAME_PLACEHOLDER),
 		).toHaveValue('TEST_ALERT');
+	});
+
+	it('should navigate to classic experience when button is clicked', () => {
+		renderCreateAlertHeader();
+		const switchToClassicExperienceButton = screen.getByText(
+			'Switch to Classic Experience',
+		);
+		expect(switchToClassicExperienceButton).toBeInTheDocument();
+		fireEvent.click(switchToClassicExperienceButton);
+
+		const params = new URLSearchParams();
+		params.set(QueryParams.showClassicCreateAlertsPage, 'true');
+		expect(mockSafeNavigate).toHaveBeenCalledWith(
+			`${ROUTES.ALERTS_NEW}?${params.toString()}`,
+			{ replace: true },
+		);
+	});
+
+	it('should not render "switch to classic experience" button when isEditMode is true', () => {
+		render(
+			<CreateAlertProvider
+				isEditMode
+				initialAlertType={AlertTypes.METRICS_BASED_ALERT}
+				initialAlertState={getCreateAlertLocalStateFromAlertDef(
+					defaultPostableAlertRuleV2,
+				)}
+			>
+				<CreateAlertHeader />
+			</CreateAlertProvider>,
+		);
+		expect(
+			screen.queryByText('Switch to Classic Experience'),
+		).not.toBeInTheDocument();
 	});
 });

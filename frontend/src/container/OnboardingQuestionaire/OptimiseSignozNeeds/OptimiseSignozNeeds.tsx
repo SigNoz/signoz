@@ -1,7 +1,11 @@
-import { Button, Slider, Typography } from 'antd';
-import logEvent from 'api/common/logEvent';
-import { ArrowLeft, ArrowRight, Loader2, Minus } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { Button } from '@signozhq/ui/button';
+import { Slider } from '@signozhq/ui/slider';
+import { Typography } from '@signozhq/ui/typography';
+import logEvent from 'api/common/logEvent';
+import { ArrowRight, LoaderCircle, Minus } from '@signozhq/icons';
+
+import { OnboardingQuestionHeader } from '../OnboardingQuestionHeader';
 
 export interface OptimiseSignozDetails {
 	logsPerDay: number;
@@ -47,7 +51,6 @@ interface OptimiseSignozNeedsProps {
 	optimiseSignozDetails: OptimiseSignozDetails;
 	setOptimiseSignozDetails: (details: OptimiseSignozDetails) => void;
 	onNext: () => void;
-	onBack: () => void;
 	onWillDoLater: () => void;
 	isUpdatingProfile: boolean;
 	isNextDisabled: boolean;
@@ -82,7 +85,6 @@ function OptimiseSignozNeeds({
 	optimiseSignozDetails,
 	setOptimiseSignozDetails,
 	onNext,
-	onBack,
 	onWillDoLater,
 	isNextDisabled,
 }: OptimiseSignozNeedsProps): JSX.Element {
@@ -129,10 +131,6 @@ function OptimiseSignozNeeds({
 		});
 
 		onNext();
-	};
-
-	const handleOnBack = (): void => {
-		onBack();
 	};
 
 	const handleWillDoLater = (): void => {
@@ -189,21 +187,21 @@ function OptimiseSignozNeeds({
 
 	return (
 		<div className="questions-container">
-			<Typography.Title level={3} className="title">
-				Optimize SigNoz for Your Needs
-			</Typography.Title>
-			<Typography.Paragraph className="sub-title">
-				Give us a quick sense of your scale so SigNoz can keep up!
-			</Typography.Paragraph>
+			<OnboardingQuestionHeader
+				title="Set up your workspace"
+				subtitle="Tailor SigNoz to suit your observability needs."
+			/>
 
 			<div className="questions-form-container">
 				<div className="questions-form">
-					<Typography.Paragraph className="question">
-						What does your scale approximately look like?
-					</Typography.Paragraph>
+					<div className="form-group">
+						<Typography.Text className="question">
+							What does your scale approximately look like?
+						</Typography.Text>
+					</div>
 
 					<div className="form-group">
-						<label className="question" htmlFor="organisationName">
+						<label className="question-slider" htmlFor="organisationName">
 							Logs / Day
 						</label>
 						<div className="slider-container">
@@ -213,16 +211,16 @@ function OptimiseSignozNeeds({
 									max={100}
 									value={sliderValues.logsPerDay}
 									marks={marks}
-									onChange={(value: number): void =>
-										handleSliderChange('logsPerDay', value)
+									onChange={(value): void =>
+										handleSliderChange('logsPerDay', value as number)
 									}
 									styles={{
-										track: {
-											background: '#4E74F8',
+										range: {
+											backgroundColor: '#4E74F8',
 										},
 									}}
 									tooltip={{
-										formatter: (): string => `${logsPerDayValue.toLocaleString()} GB`, // Show whole number
+										formatter: (): string => `${logsPerDayValue.toLocaleString()} GB`,
 									}}
 								/>
 							</div>
@@ -230,7 +228,7 @@ function OptimiseSignozNeeds({
 					</div>
 
 					<div className="form-group">
-						<label className="question" htmlFor="organisationName">
+						<label className="question-slider" htmlFor="organisationName">
 							Metrics <Minus size={14} /> Number of Hosts
 						</label>
 						<div className="slider-container">
@@ -240,16 +238,16 @@ function OptimiseSignozNeeds({
 									max={100}
 									value={sliderValues.hostsPerDay}
 									marks={hostMarks}
-									onChange={(value: number): void =>
-										handleSliderChange('hostsPerDay', value)
+									onChange={(value): void =>
+										handleSliderChange('hostsPerDay', value as number)
 									}
 									styles={{
-										track: {
-											background: '#4E74F8',
+										range: {
+											backgroundColor: '#4E74F8',
 										},
 									}}
 									tooltip={{
-										formatter: (): string => `${hostsPerDayValue.toLocaleString()}`, // Show whole number
+										formatter: (): string => `${hostsPerDayValue.toLocaleString()}`,
 									}}
 								/>
 							</div>
@@ -257,7 +255,7 @@ function OptimiseSignozNeeds({
 					</div>
 
 					<div className="form-group">
-						<label className="question" htmlFor="organisationName">
+						<label className="question-slider" htmlFor="organisationName">
 							Number of services
 						</label>
 						<div className="slider-container">
@@ -267,16 +265,16 @@ function OptimiseSignozNeeds({
 									max={100}
 									value={sliderValues.services}
 									marks={serviceMarks}
-									onChange={(value: number): void =>
-										handleSliderChange('services', value)
+									onChange={(value): void =>
+										handleSliderChange('services', value as number)
 									}
 									styles={{
-										track: {
-											background: '#4E74F8',
+										range: {
+											backgroundColor: '#4E74F8',
 										},
 									}}
 									tooltip={{
-										formatter: (): string => `${servicesValue.toLocaleString()}`, // Show whole number
+										formatter: (): string => `${servicesValue.toLocaleString()}`,
 									}}
 								/>
 							</div>
@@ -284,34 +282,32 @@ function OptimiseSignozNeeds({
 					</div>
 				</div>
 
-				<div className="next-prev-container">
+				<div className="onboarding-buttons-container">
 					<Button
-						type="default"
-						className="next-button"
-						onClick={handleOnBack}
-						disabled={isUpdatingProfile}
-					>
-						<ArrowLeft size={14} />
-						Back
-					</Button>
-
-					<Button
-						type="primary"
-						className="next-button"
+						variant="solid"
+						color="primary"
+						className={`onboarding-next-button ${
+							isUpdatingProfile || isNextDisabled ? 'disabled' : ''
+						}`}
 						onClick={handleOnNext}
 						disabled={isUpdatingProfile || isNextDisabled}
+						suffix={
+							isUpdatingProfile ? (
+								<LoaderCircle className="animate-spin" size={12} />
+							) : (
+								<ArrowRight size={12} />
+							)
+						}
 					>
-						Next{' '}
-						{isUpdatingProfile ? (
-							<Loader2 className="animate-spin" />
-						) : (
-							<ArrowRight size={14} />
-						)}
+						Next
 					</Button>
-				</div>
-
-				<div className="do-later-container">
-					<Button type="link" onClick={handleWillDoLater}>
+					<Button
+						variant="ghost"
+						color="secondary"
+						className="onboarding-do-later-button"
+						onClick={handleWillDoLater}
+						disabled={isUpdatingProfile}
+					>
 						I&apos;ll do this later
 					</Button>
 				</div>

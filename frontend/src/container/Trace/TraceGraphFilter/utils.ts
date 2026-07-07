@@ -1,5 +1,5 @@
-import { DefaultOptionType } from 'antd/es/select';
 import { ReactNode } from 'react';
+import type { DefaultOptionType } from 'antd/es/select';
 import store from 'store';
 import {
 	UPDATE_SELECTED_FUNCTION,

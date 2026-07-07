@@ -1,5 +1,15 @@
-import './TimeSeriesView.styles.scss';
-
+import {
+	Dispatch,
+	SetStateAction,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
+// eslint-disable-next-line no-restricted-imports
+import { useDispatch, useSelector } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 import logEvent from 'api/common/logEvent';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import Uplot from 'components/Uplot';
@@ -11,7 +21,7 @@ import { LogsLoading } from 'container/LogsLoading/LogsLoading';
 import EmptyMetricsSearch from 'container/MetricsExplorer/Explorer/EmptyMetricsSearch';
 import { MetricsLoading } from 'container/MetricsExplorer/MetricsLoading/MetricsLoading';
 import NoLogs from 'container/NoLogs/NoLogs';
-import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/config';
+import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/types';
 import { TracesLoading } from 'container/TracesExplorer/TraceLoading/TraceLoading';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -20,21 +30,11 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import GetMinMax from 'lib/getMinMax';
 import getTimeString from 'lib/getTimeString';
 import history from 'lib/history';
+import { stackSeries } from 'container/DashboardContainer/visualization/charts/utils/stackSeriesUtils';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
 import { isEmpty } from 'lodash-es';
 import { useTimezone } from 'providers/Timezone';
-import {
-	Dispatch,
-	SetStateAction,
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { useLocation } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { SuccessResponse, Warning } from 'types/api';
@@ -46,6 +46,8 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import uPlot from 'uplot';
 import { getTimeRange } from 'utils/getTimeRange';
 
+import './TimeSeriesView.styles.scss';
+
 function TimeSeriesView({
 	data,
 	isLoading,
@@ -56,6 +58,7 @@ function TimeSeriesView({
 	dataSource,
 	setWarning,
 	panelType = PANEL_TYPES.TIME_SERIES,
+	stackBarChart = false,
 }: TimeSeriesViewProps): JSX.Element {
 	const graphRef = useRef<HTMLDivElement>(null);
 
@@ -64,9 +67,22 @@ function TimeSeriesView({
 	const location = useLocation();
 	const { currentQuery } = useQueryBuilder();
 
-	const chartData = useMemo(() => getUPlotChartData(data?.payload), [
-		data?.payload,
-	]);
+	const rawChartData = useMemo(
+		() => getUPlotChartData(data?.payload),
+		[data?.payload],
+	);
+
+	const { chartData, stackedBands } = useMemo(() => {
+		if (!stackBarChart || !rawChartData || rawChartData.length < 2) {
+			return { chartData: rawChartData, stackedBands: null };
+		}
+		const noSeriesHidden = (): boolean => false;
+		const { data: stacked, bands } = stackSeries(
+			rawChartData as uPlot.AlignedData,
+			noSeriesHidden,
+		);
+		return { chartData: stacked, stackedBands: bands };
+	}, [rawChartData, stackBarChart]);
 
 	useEffect(() => {
 		if (data?.payload) {
@@ -90,10 +106,11 @@ function TimeSeriesView({
 		scrollLeft: 0,
 	});
 
-	const { minTime, maxTime, selectedTime: globalSelectedInterval } = useSelector<
-		AppState,
-		GlobalReducer
-	>((state) => state.globalTime);
+	const {
+		minTime,
+		maxTime,
+		selectedTime: globalSelectedInterval,
+	} = useSelector<AppState, GlobalReducer>((state) => state.globalTime);
 
 	useEffect((): void => {
 		const { startTime, endTime } = getTimeRange();
@@ -105,12 +122,11 @@ function TimeSeriesView({
 	// Initialize graph visibility from localStorage
 	useEffect(() => {
 		if (data?.payload?.data?.result) {
-			const {
-				graphVisibilityStates: localStoredVisibilityState,
-			} = getLocalStorageGraphVisibilityState({
-				apiResponse: data.payload.data.result,
-				name: 'time-series-explorer',
-			});
+			const { graphVisibilityStates: localStoredVisibilityState } =
+				getLocalStorageGraphVisibilityState({
+					apiResponse: data.payload.data.result,
+					name: 'time-series-explorer',
+				});
 			setGraphVisibility(localStoredVisibilityState);
 		}
 	}, [data?.payload?.data?.result]);
@@ -187,7 +203,7 @@ function TimeSeriesView({
 
 	const { timezone } = useTimezone();
 
-	const chartOptions = getUPlotChartOptions({
+	const baseChartOptions = getUPlotChartOptions({
 		id: 'time-series-explorer',
 		onDragSelect,
 		yAxisUnit: yAxisUnit || '',
@@ -219,6 +235,14 @@ function TimeSeriesView({
 			legendScrollPositionRef.current = position;
 		},
 	});
+
+	const chartOptions = useMemo(
+		() =>
+			stackedBands
+				? { ...baseChartOptions, bands: stackedBands }
+				: baseChartOptions,
+		[baseChartOptions, stackedBands],
+	);
 
 	return (
 		<div className="time-series-view">
@@ -256,7 +280,9 @@ function TimeSeriesView({
 					chartData[0]?.length === 0 &&
 					!isLoading &&
 					!isError &&
-					dataSource === DataSource.METRICS && <EmptyMetricsSearch />}
+					dataSource === DataSource.METRICS && (
+						<EmptyMetricsSearch hasQueryResult={data !== undefined} />
+					)}
 
 				{!isLoading &&
 					!isError &&
@@ -278,6 +304,7 @@ interface TimeSeriesViewProps {
 	dataSource: DataSource;
 	setWarning?: Dispatch<SetStateAction<Warning | undefined>>;
 	panelType?: PANEL_TYPES;
+	stackBarChart?: boolean;
 }
 
 TimeSeriesView.defaultProps = {
@@ -286,6 +313,7 @@ TimeSeriesView.defaultProps = {
 	error: undefined,
 	setWarning: undefined,
 	panelType: PANEL_TYPES.TIME_SERIES,
+	stackBarChart: false,
 };
 
 export default TimeSeriesView;

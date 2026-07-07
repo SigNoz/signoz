@@ -1,8 +1,55 @@
+import userEvent from '@testing-library/user-event';
 import MySettingsContainer from 'container/MySettings';
-import { act, fireEvent, render, screen, waitFor } from 'tests/test-utils';
+import { logEventMock } from '__tests__/logEventMock';
+import {
+	act,
+	fireEvent,
+	render,
+	screen,
+	waitFor,
+	within,
+} from 'tests/test-utils';
+import APIError from 'types/api/error';
+import { toast } from '@signozhq/ui/sonner';
 
 const toggleThemeFunction = jest.fn();
-const logEventFunction = jest.fn();
+const copyToClipboardFn = jest.fn();
+const editUserFn = jest.fn();
+const updateMyPasswordFn = jest.fn();
+const showErrorModalFn = jest.fn();
+
+jest.mock('@signozhq/ui/sonner', () => ({
+	...jest.requireActual('@signozhq/ui/sonner'),
+	toast: {
+		success: jest.fn(),
+		error: jest.fn(),
+	},
+}));
+
+jest.mock('react-use', () => ({
+	__esModule: true,
+	useCopyToClipboard: (): [unknown, (text: string) => void] => [
+		null,
+		copyToClipboardFn,
+	],
+}));
+
+jest.mock('api/generated/services/users', () => ({
+	...jest.requireActual('api/generated/services/users'),
+	updateMyPassword: (...args: unknown[]): Promise<unknown> =>
+		updateMyPasswordFn(...args),
+	useUpdateMyUserV2: jest.fn(() => ({
+		mutateAsync: (...args: unknown[]): Promise<unknown> => editUserFn(...args),
+		isLoading: false,
+	})),
+}));
+
+jest.mock('providers/ErrorModalProvider', () => ({
+	...jest.requireActual('providers/ErrorModalProvider'),
+	useErrorModal: jest.fn(() => ({
+		showErrorModal: showErrorModalFn,
+	})),
+}));
 
 jest.mock('hooks/useDarkMode', () => ({
 	__esModule: true,
@@ -13,11 +60,6 @@ jest.mock('hooks/useDarkMode', () => ({
 		autoSwitch: false,
 		setAutoSwitch: jest.fn(),
 	})),
-}));
-
-jest.mock('api/common/logEvent', () => ({
-	__esModule: true,
-	default: jest.fn((eventName, data) => logEventFunction(eventName, data)),
 }));
 
 const errorNotification = jest.fn();
@@ -39,11 +81,12 @@ const NEW_PASSWORD_TEST_ID = 'new-password-textbox';
 const UPDATE_NAME_BUTTON_TEST_ID = 'update-name-btn';
 const RESET_PASSWORD_BUTTON_TEST_ID = 'reset-password-btn';
 const UPDATE_NAME_BUTTON_TEXT = 'Update name';
-const PASSWORD_VALIDATION_MESSAGE_TEST_ID = 'password-validation-message';
 
 describe('MySettings Flows', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
+		editUserFn.mockResolvedValue({});
+		updateMyPasswordFn.mockResolvedValue({});
 		render(<MySettingsContainer />);
 	});
 
@@ -71,23 +114,23 @@ describe('MySettings Flows', () => {
 
 		it('Should have Dark theme selected by default', async () => {
 			const themeSelector = screen.getByTestId(THEME_SELECTOR_TEST_ID);
-			const darkOption = themeSelector.querySelector(
-				'input[value="dark"]',
-			) as HTMLInputElement;
+			const darkOption = within(themeSelector).getByRole('radio', {
+				name: /Dark/,
+			});
 			expect(darkOption).toBeChecked();
 		});
 
 		it('Should switch theme and log event when Light theme is selected', async () => {
 			const themeSelector = screen.getByTestId(THEME_SELECTOR_TEST_ID);
-			const lightOption = themeSelector.querySelector(
-				'input[value="light"]',
-			) as HTMLInputElement;
+			const lightOption = within(themeSelector).getByRole('radio', {
+				name: /Light/,
+			});
 
 			fireEvent.click(lightOption);
 
 			await waitFor(() => {
 				expect(toggleThemeFunction).toHaveBeenCalled();
-				expect(logEventFunction).toHaveBeenCalledWith(
+				expect(logEventMock).toHaveBeenCalledWith(
 					'Account Settings: Theme Changed',
 					{
 						theme: 'light',
@@ -103,15 +146,9 @@ describe('MySettings Flows', () => {
 			const updateNameButton = screen.getByText(UPDATE_NAME_BUTTON_TEXT);
 			fireEvent.click(updateNameButton);
 
-			// Find the label with class 'ant-typography' and text 'Name'
-			const nameLabels = screen.getAllByText('Name');
-			const nameLabel = nameLabels.find((el) =>
-				el.className.includes('ant-typography'),
-			);
 			const nameTextbox = screen.getByPlaceholderText('e.g. John Doe');
 			const modalUpdateNameButton = screen.getByTestId(UPDATE_NAME_BUTTON_TEST_ID);
 
-			expect(nameLabel).toBeInTheDocument();
 			expect(nameTextbox).toBeInTheDocument();
 			expect(modalUpdateNameButton).toBeInTheDocument();
 		});
@@ -131,9 +168,7 @@ describe('MySettings Flows', () => {
 			fireEvent.click(modalUpdateNameButton);
 
 			await waitFor(() =>
-				expect(successNotification).toHaveBeenCalledWith({
-					message: 'success',
-				}),
+				expect(toast.success).toHaveBeenCalledWith('Name updated successfully'),
 			);
 		});
 	});
@@ -149,10 +184,10 @@ describe('MySettings Flows', () => {
 				screen.getByText((content, element) =>
 					Boolean(
 						element &&
-							'className' in element &&
-							typeof element.className === 'string' &&
-							element.className.includes('title') &&
-							content === RESET_PASSWORD_BUTTON_TEXT,
+						'className' in element &&
+						typeof element.className === 'string' &&
+						element.className.includes('title') &&
+						content === RESET_PASSWORD_BUTTON_TEXT,
 					),
 				),
 			).toBeInTheDocument();
@@ -160,22 +195,131 @@ describe('MySettings Flows', () => {
 			expect(screen.getByTestId(NEW_PASSWORD_TEST_ID)).toBeInTheDocument();
 		});
 
-		it('Should display validation error if password is less than 8 characters', async () => {
+		it('Should show inline error when new password matches current password', async () => {
 			const resetPasswordButtons = screen.getAllByText(RESET_PASSWORD_BUTTON_TEXT);
 			fireEvent.click(resetPasswordButtons[0]);
 
-			const currentPasswordTextbox = screen.getByTestId(CURRENT_PASSWORD_TEST_ID);
 			act(() => {
-				fireEvent.change(currentPasswordTextbox, { target: { value: '123' } });
+				fireEvent.change(screen.getByTestId(CURRENT_PASSWORD_TEST_ID), {
+					target: { value: 'samePassword1' },
+				});
+				fireEvent.change(screen.getByTestId(NEW_PASSWORD_TEST_ID), {
+					target: { value: 'samePassword1' },
+				});
 			});
 
+			expect(
+				screen.getByText('New password must be different from current password'),
+			).toBeInTheDocument();
+			expect(screen.getByTestId(RESET_PASSWORD_BUTTON_TEST_ID)).toBeDisabled();
+		});
+
+		it('Should hide inline error when passwords are changed to be different', async () => {
+			const resetPasswordButtons = screen.getAllByText(RESET_PASSWORD_BUTTON_TEXT);
+			fireEvent.click(resetPasswordButtons[0]);
+
+			act(() => {
+				fireEvent.change(screen.getByTestId(CURRENT_PASSWORD_TEST_ID), {
+					target: { value: 'samePassword1' },
+				});
+				fireEvent.change(screen.getByTestId(NEW_PASSWORD_TEST_ID), {
+					target: { value: 'samePassword1' },
+				});
+			});
+
+			act(() => {
+				fireEvent.change(screen.getByTestId(NEW_PASSWORD_TEST_ID), {
+					target: { value: 'differentPassword1' },
+				});
+			});
+
+			expect(
+				screen.queryByText('New password must be different from current password'),
+			).not.toBeInTheDocument();
+		});
+
+		it('Should show error modal when password reset API returns an error', async () => {
+			updateMyPasswordFn.mockRejectedValue(
+				new Error('Current password is incorrect'),
+			);
+
+			const resetPasswordButtons = screen.getAllByText(RESET_PASSWORD_BUTTON_TEXT);
+			fireEvent.click(resetPasswordButtons[0]);
+
+			act(() => {
+				fireEvent.change(screen.getByTestId(CURRENT_PASSWORD_TEST_ID), {
+					target: { value: 'oldPassword1' },
+				});
+				fireEvent.change(screen.getByTestId(NEW_PASSWORD_TEST_ID), {
+					target: { value: 'newPassword1' },
+				});
+			});
+
+			fireEvent.click(screen.getByTestId(RESET_PASSWORD_BUTTON_TEST_ID));
+
 			await waitFor(() => {
-				// Use getByTestId for the validation message (if present in your modal/component)
-				if (screen.queryByTestId(PASSWORD_VALIDATION_MESSAGE_TEST_ID)) {
-					expect(
-						screen.getByTestId(PASSWORD_VALIDATION_MESSAGE_TEST_ID),
-					).toBeInTheDocument();
-				}
+				expect(showErrorModalFn).toHaveBeenCalledWith(expect.any(APIError));
+			});
+		});
+
+		it('Should show success toast and close modal on successful password reset', async () => {
+			const resetPasswordButtons = screen.getAllByText(RESET_PASSWORD_BUTTON_TEXT);
+			fireEvent.click(resetPasswordButtons[0]);
+
+			act(() => {
+				fireEvent.change(screen.getByTestId(CURRENT_PASSWORD_TEST_ID), {
+					target: { value: 'oldPassword1' },
+				});
+				fireEvent.change(screen.getByTestId(NEW_PASSWORD_TEST_ID), {
+					target: { value: 'newPassword1' },
+				});
+			});
+
+			fireEvent.click(screen.getByTestId(RESET_PASSWORD_BUTTON_TEST_ID));
+
+			await waitFor(() => {
+				expect(toast.success).toHaveBeenCalledWith('Password updated successfully');
+				expect(
+					screen.queryByTestId(CURRENT_PASSWORD_TEST_ID),
+				).not.toBeInTheDocument();
+			});
+		});
+
+		it('Should clear password fields when modal is cancelled', async () => {
+			const resetPasswordButtons = screen.getAllByText(RESET_PASSWORD_BUTTON_TEXT);
+			fireEvent.click(resetPasswordButtons[0]);
+
+			act(() => {
+				fireEvent.change(screen.getByTestId(CURRENT_PASSWORD_TEST_ID), {
+					target: { value: 'somePassword' },
+				});
+				fireEvent.change(screen.getByTestId(NEW_PASSWORD_TEST_ID), {
+					target: { value: 'otherPassword' },
+				});
+			});
+
+			expect(screen.getByTestId(CURRENT_PASSWORD_TEST_ID)).toHaveValue(
+				'somePassword',
+			);
+
+			// Close the modal
+			const closeButton = document.querySelector(
+				'.reset-password-modal .ant-modal-close',
+			) as HTMLElement;
+			fireEvent.click(closeButton);
+
+			// Reopen the modal
+			await waitFor(() => {
+				expect(
+					screen.queryByTestId(CURRENT_PASSWORD_TEST_ID),
+				).not.toBeInTheDocument();
+			});
+
+			fireEvent.click(screen.getAllByText(RESET_PASSWORD_BUTTON_TEXT)[0]);
+
+			await waitFor(() => {
+				expect(screen.getByTestId(CURRENT_PASSWORD_TEST_ID)).toHaveValue('');
+				expect(screen.getByTestId(NEW_PASSWORD_TEST_ID)).toHaveValue('');
 			});
 		});
 
@@ -213,6 +357,73 @@ describe('MySettings Flows', () => {
 			});
 
 			expect(submitButton).not.toBeDisabled();
+		});
+	});
+
+	describe('License section', () => {
+		it('Should render license section content when license key exists', () => {
+			expect(screen.getByText('License')).toBeInTheDocument();
+			expect(screen.getByText('License key')).toBeInTheDocument();
+			expect(screen.getByText('Your SigNoz license key.')).toBeInTheDocument();
+		});
+
+		it('Should not render license section when license key is missing', () => {
+			const { container } = render(<MySettingsContainer />, undefined, {
+				appContextOverrides: {
+					activeLicense: null,
+				},
+			});
+
+			const scoped = within(container);
+			expect(scoped.queryByText('License')).not.toBeInTheDocument();
+			expect(scoped.queryByText('License key')).not.toBeInTheDocument();
+			expect(
+				scoped.queryByText('Your SigNoz license key.'),
+			).not.toBeInTheDocument();
+		});
+
+		it('Should mask license key in the UI', () => {
+			const { container } = render(<MySettingsContainer />, undefined, {
+				appContextOverrides: {
+					activeLicense: {
+						key: 'abcd',
+					} as any,
+				},
+			});
+
+			expect(within(container).getByText('ab·······cd')).toBeInTheDocument();
+		});
+
+		it('Should not mask license key if it is too short', () => {
+			const { container } = render(<MySettingsContainer />, undefined, {
+				appContextOverrides: {
+					activeLicense: {
+						key: 'abc',
+					} as any,
+				},
+			});
+
+			expect(within(container).getByText('abc')).toBeInTheDocument();
+		});
+
+		it('Should copy license key and show success toast', async () => {
+			const user = userEvent.setup();
+			const { container } = render(<MySettingsContainer />, undefined, {
+				appContextOverrides: {
+					activeLicense: {
+						key: 'test-license-key-12345',
+					} as any,
+				},
+			});
+
+			await user.click(within(container).getByTestId('license-key-copy-btn'));
+
+			await waitFor(() => {
+				expect(copyToClipboardFn).toHaveBeenCalledWith('test-license-key-12345');
+				expect(successNotification).toHaveBeenCalledWith({
+					message: 'Copied to clipboard',
+				});
+			});
 		});
 	});
 });

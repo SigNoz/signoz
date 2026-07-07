@@ -1,5 +1,5 @@
-import './ContextLogRenderer.styles.scss';
-
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Virtuoso } from 'react-virtuoso';
 import { Button, Skeleton } from 'antd';
 import RawLogView from 'components/Logs/RawLogView';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
@@ -14,13 +14,14 @@ import { FontSize } from 'container/OptionsMenu/types';
 import { ORDERBY_FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Virtuoso } from 'react-virtuoso';
 import { ILog } from 'types/api/logs/log';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
+import { withBasePath } from 'utils/basePath';
 
 import { useContextLogData } from './useContextLogData';
+
+import './ContextLogRenderer.styles.scss';
 
 function ContextLogRenderer({
 	isEdit,
@@ -35,7 +36,9 @@ function ContextLogRenderer({
 	const { stagedQuery } = useQueryBuilder();
 
 	const listQuery = useMemo(() => {
-		if (!stagedQuery || stagedQuery.builder.queryData.length < 1) return null;
+		if (!stagedQuery || stagedQuery.builder.queryData.length < 1) {
+			return null;
+		}
 
 		return stagedQuery.builder.queryData.find((item) => !item.disabled) || null;
 	}, [stagedQuery]);
@@ -78,12 +81,10 @@ function ContextLogRenderer({
 
 	useEffect(() => {
 		setLogs((prev) => [...previousLogs, ...prev]);
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [previousLogs]);
 
 	useEffect(() => {
 		setLogs((prev) => [...prev, ...afterLogs]);
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [afterLogs]);
 
 	useEffect(() => {
@@ -116,7 +117,7 @@ function ContextLogRenderer({
 			);
 
 			const link = `${ROUTES.LOGS_EXPLORER}?${urlQuery.toString()}`;
-			window.open(link, '_blank', 'noopener,noreferrer');
+			window.open(withBasePath(link), '_blank', 'noopener,noreferrer');
 		},
 		[query, urlQuery],
 	);

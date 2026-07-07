@@ -3,10 +3,10 @@ import { ErrorStatusCode, SuccessStatusCode } from 'types/common';
 
 export type ApiResponse<T> = { data: T };
 
-export interface ErrorResponse {
+export interface ErrorResponse<ErrorObject = string> {
 	statusCode: ErrorStatusCode;
 	payload: null;
-	error: string;
+	error: ErrorObject;
 	message: string | null;
 	body?: string | null;
 }

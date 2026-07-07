@@ -1,13 +1,13 @@
-import './ColorSelector.styles.scss';
-
-import { DownOutlined } from '@ant-design/icons';
-import { Button, ColorPicker, Dropdown, Space } from 'antd';
-import { Color } from 'antd/es/color-picker';
-import { MenuProps } from 'antd/lib';
-import useDebounce from 'hooks/useDebounce';
 import { Dispatch, SetStateAction, useEffect, useState } from 'react';
+import { ChevronDown } from '@signozhq/icons';
+import { DropdownMenuSimple, type MenuItem } from '@signozhq/ui/dropdown-menu';
+import { Button, ColorPicker, Space } from 'antd';
+import type { Color } from 'antd/es/color-picker';
+import useDebounce from 'hooks/useDebounce';
 
 import CustomColor from './CustomColor';
+
+import './ColorSelector.styles.scss';
 
 function ColorSelector({
 	thresholdColor = 'Red',
@@ -27,7 +27,7 @@ function ColorSelector({
 		setColorFromPicker(hex);
 	};
 
-	const items: MenuProps['items'] = [
+	const items: MenuItem[] = [
 		{
 			key: 'Red',
 			label: <CustomColor color="Red" />,
@@ -63,17 +63,17 @@ function ColorSelector({
 	];
 
 	return (
-		<Dropdown menu={{ items }} trigger={['click']}>
+		<DropdownMenuSimple menu={{ items }}>
 			<Button
 				onClick={(e): void => e.preventDefault()}
 				className="color-selector-button"
 			>
 				<Space className="color-selector-space">
 					<CustomColor color={thresholdColor} />
-					<DownOutlined />
+					<ChevronDown size="md" />
 				</Space>
 			</Button>
-		</Dropdown>
+		</DropdownMenuSimple>
 	);
 }
 

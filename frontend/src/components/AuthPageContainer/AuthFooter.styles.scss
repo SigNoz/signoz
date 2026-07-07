@@ -1,0 +1,89 @@
+@import '@signozhq/design-tokens/dist/style.css';
+
+.auth-footer {
+	width: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 24px 0;
+	position: relative;
+	z-index: 10;
+}
+
+.auth-footer-content {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 16px;
+	padding: 12px;
+	background: var(--l2-background);
+	border: 1px solid var(--l1-border);
+	border-radius: 4px;
+}
+
+.auth-footer-item {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	height: 12px;
+}
+
+.auth-footer-status-indicator {
+	width: 6px;
+	height: 6px;
+	border-radius: 9999px;
+	background: var(--bg-forest-500);
+	flex-shrink: 0;
+}
+
+.auth-footer-icon {
+	aspect-ratio: 1.93;
+	width: 29px;
+	flex-shrink: 0;
+	object-fit: contain;
+	opacity: 1;
+}
+
+.auth-footer-text {
+	font-family: var(--font-family-inter, Inter, sans-serif);
+	font-size: 11px;
+	font-weight: 400;
+	line-height: 1;
+	color: var(--l2-foreground);
+	text-align: center;
+}
+
+.auth-footer-link {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	text-decoration: none;
+	transition: opacity 0.2s ease;
+
+	&:hover {
+		opacity: 0.8;
+	}
+}
+
+.auth-footer-link-icon {
+	flex-shrink: 0;
+	color: var(--l1-foreground);
+}
+
+.auth-footer-link-status {
+	.auth-footer-text {
+		color: var(--bg-forest-500);
+	}
+
+	.auth-footer-link-icon {
+		color: var(--bg-forest-500);
+	}
+}
+
+.auth-footer-separator {
+	width: 4px;
+	height: 4px;
+	border-radius: 50%;
+	background: var(--l3-background);
+	flex-shrink: 0;
+}

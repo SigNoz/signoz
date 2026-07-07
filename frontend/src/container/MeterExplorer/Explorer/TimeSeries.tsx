@@ -1,140 +1,156 @@
-import { isAxiosError } from 'axios';
-import { ENTITY_VERSION_V5 } from 'constants/app';
-import { initialQueryMeterWithType, PANEL_TYPES } from 'constants/queryBuilder';
-import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import { BuilderUnitsFilter } from 'container/QueryBuilder/filters/BuilderUnitsFilter';
-import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
-import { convertDataValueToMs } from 'container/TimeSeriesView/utils';
-import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
-import { useErrorModal } from 'providers/ErrorModalProvider';
-import { useMemo, useState } from 'react';
-import { useQueries } from 'react-query';
+import { useMemo, useRef } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
+import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
+import BarChart from 'container/DashboardContainer/visualization/charts/BarChart/BarChart';
+import { BuilderUnitsFilter } from 'container/QueryBuilder/filters/BuilderUnitsFilter';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useIsDarkMode } from 'hooks/useDarkMode';
+import { useResizeObserver } from 'hooks/useDimensions';
+import useUrlYAxisUnit from 'hooks/useUrlYAxisUnit';
+import { LegendPosition } from 'lib/uPlotV2/components/types';
+import { prepareChartData } from 'lib/uPlotV2/utils/dataUtils';
+import { useTimezone } from 'providers/Timezone';
 import { AppState } from 'store/reducers';
-import { SuccessResponse } from 'types/api';
-import APIError from 'types/api/error';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
-import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import uPlot from 'uplot';
 
-function TimeSeries(): JSX.Element {
+import { buildMeterChartConfig } from './configBuilder';
+import EmptyMeterSearch from './EmptyMeterSearch';
+import MeterLoading from './MeterLoading';
+import styles from './TimeSeries.module.scss';
+import { useTimeSeriesQueries } from './useTimeSeriesQueries';
+import { useTimeSeriesTimeManagement } from './useTimeSeriesTimeManagement';
+
+const WIDGET_ID = 'meter-explorer-bar-chart';
+
+interface TimeSeriesProps {
+	onFetchingStateChange?: (isFetching: boolean) => void;
+	isCancelled?: boolean;
+}
+
+function TimeSeries({
+	onFetchingStateChange,
+	isCancelled = false,
+}: TimeSeriesProps): JSX.Element {
+	const graphRef = useRef<HTMLDivElement>(null);
+
 	const { stagedQuery, currentQuery } = useQueryBuilder();
+	const { yAxisUnit, onUnitChange } = useUrlYAxisUnit('');
 
-	const { selectedTime: globalSelectedTime, maxTime, minTime } = useSelector<
-		AppState,
-		GlobalReducer
-	>((state) => state.globalTime);
+	const isDarkMode = useIsDarkMode();
+	const { timezone } = useTimezone();
+	const containerDimensions = useResizeObserver(graphRef);
 
-	const [yAxisUnit, setYAxisUnit] = useState<string>('');
+	const {
+		selectedTime: globalSelectedTime,
+		maxTime,
+		minTime,
+	} = useSelector<AppState, GlobalReducer>((state) => state.globalTime);
 
-	const isValidToConvertToMs = useMemo(() => {
-		const isValid: boolean[] = [];
+	const { minTimeScale, maxTimeScale, onDragSelect } =
+		useTimeSeriesTimeManagement({
+			globalSelectedTime,
+			maxTime,
+			minTime,
+		});
 
-		currentQuery.builder.queryData.forEach(
-			({ aggregateAttribute, aggregateOperator }) => {
-				const isExistDurationNanoAttribute =
-					aggregateAttribute?.key === 'durationNano' ||
-					aggregateAttribute?.key === 'duration_nano';
+	const { responseData, isLoading, isError } = useTimeSeriesQueries({
+		stagedQuery,
+		currentQuery,
+		globalSelectedTime,
+		maxTime,
+		minTime,
+		onFetchingStateChange,
+	});
 
-				const isCountOperator =
-					aggregateOperator === 'count' || aggregateOperator === 'count_distinct';
-
-				isValid.push(!isCountOperator && isExistDurationNanoAttribute);
-			},
-		);
-
-		return isValid.every(Boolean);
-	}, [currentQuery]);
-
-	const queryPayloads = useMemo(
-		() => [stagedQuery || initialQueryMeterWithType],
-		[stagedQuery],
+	const hasMetricSelected = useMemo(
+		() => currentQuery.builder.queryData.some((q) => q.aggregateAttribute?.key),
+		[currentQuery],
 	);
 
-	const { showErrorModal } = useErrorModal();
+	const chartsData = useMemo(() => {
+		return responseData.map((response, index) => {
+			const apiResponse = response?.payload;
 
-	const queries = useQueries(
-		queryPayloads.map((payload, index) => ({
-			queryKey: [
-				REACT_QUERY_KEY.GET_QUERY_RANGE,
-				payload,
-				ENTITY_VERSION_V5,
-				globalSelectedTime,
-				maxTime,
-				minTime,
-				index,
-			],
-			queryFn: (): Promise<SuccessResponse<MetricRangePayloadProps>> =>
-				GetMetricQueryRange(
-					{
-						query: payload,
-						graphType: PANEL_TYPES.BAR,
-						selectedTime: 'GLOBAL_TIME',
-						globalSelectedInterval: globalSelectedTime,
-						params: {
-							dataSource: DataSource.METRICS,
-						},
-					},
-					ENTITY_VERSION_V5,
-				),
-			enabled: !!payload,
-			retry: (failureCount: number, error: Error): boolean => {
-				let status: number | undefined;
+			const config = buildMeterChartConfig({
+				id: `${WIDGET_ID}-${index}`,
+				isDarkMode,
+				currentQuery,
+				onDragSelect,
+				apiResponse,
+				timezone,
+				yAxisUnit: yAxisUnit || 'short',
+				minTimeScale,
+				maxTimeScale,
+			});
 
-				if (error instanceof APIError) {
-					status = error.getHttpStatusCode();
-				} else if (isAxiosError(error)) {
-					status = error.response?.status;
-				}
+			const chartData = apiResponse ? prepareChartData(apiResponse) : [];
 
-				if (status && status >= 400 && status < 500) {
-					return false;
-				}
+			return {
+				config,
+				chartData,
+				hasData: chartData.length > 0 && chartData[0]?.length > 0,
+			};
+		});
+	}, [
+		responseData,
+		currentQuery,
+		yAxisUnit,
+		isDarkMode,
+		onDragSelect,
+		timezone,
+		minTimeScale,
+		maxTimeScale,
+	]);
 
-				return failureCount < 3;
-			},
-			onError: (error: APIError): void => {
-				showErrorModal(error);
-			},
-		})),
-	);
-
-	const data = useMemo(() => queries.map(({ data }) => data) ?? [], [queries]);
-
-	const responseData = useMemo(
-		() =>
-			data.map((datapoint) =>
-				isValidToConvertToMs ? convertDataValueToMs(datapoint) : datapoint,
-			),
-		[data, isValidToConvertToMs],
-	);
-
-	const onUnitChangeHandler = (value: string): void => {
-		setYAxisUnit(value);
-	};
+	const hasAnyData = chartsData.some((chart) => chart.hasData);
 
 	return (
-		<div className="meter-time-series-container">
-			<BuilderUnitsFilter onChange={onUnitChangeHandler} yAxisUnit={yAxisUnit} />
-			<div className="time-series-container">
-				{responseData.map((datapoint, index) => (
-					<div
-						className="time-series-view-panel"
-						// eslint-disable-next-line react/no-array-index-key
-						key={index}
-					>
-						<TimeSeriesView
-							isFilterApplied={false}
-							isError={queries[index].isError}
-							isLoading={queries[index].isLoading}
-							data={datapoint}
-							dataSource={DataSource.METRICS}
-							yAxisUnit={yAxisUnit}
-							panelType={PANEL_TYPES.BAR}
-						/>
-					</div>
-				))}
+		<div className={styles.meterTimeSeriesContainer}>
+			<BuilderUnitsFilter onChange={onUnitChange} yAxisUnit={yAxisUnit} />
+			<div className={styles.timeSeriesContainer} ref={graphRef}>
+				{!hasMetricSelected && <EmptyMeterSearch />}
+				{isCancelled && hasMetricSelected && (
+					<QueryCancelledPlaceholder subText='Click "Run Query" to load metrics.' />
+				)}
+				{isLoading && hasMetricSelected && !isCancelled && <MeterLoading />}
+				{!isCancelled &&
+					hasMetricSelected &&
+					!isLoading &&
+					!isError &&
+					!hasAnyData && (
+						<EmptyMeterSearch hasQueryResult={responseData[0] !== undefined} />
+					)}
+				{!isCancelled &&
+					hasMetricSelected &&
+					!isLoading &&
+					!isError &&
+					containerDimensions.width > 0 &&
+					containerDimensions.height > 0 &&
+					chartsData.map(
+						(chart, index) =>
+							chart.hasData && (
+								<div
+									className={styles.timeSeriesViewPanel}
+									// oxlint-disable-next-line react/no-array-index-key -- query responses have no stable ID
+									key={`${WIDGET_ID}-${index}`}
+								>
+									<BarChart
+										config={chart.config}
+										legendConfig={{
+											position: LegendPosition.BOTTOM,
+										}}
+										data={chart.chartData as uPlot.AlignedData}
+										width={containerDimensions.width}
+										height={containerDimensions.height}
+										isStackedBarChart
+										yAxisUnit={yAxisUnit || 'short'}
+										timezone={timezone}
+									/>
+								</div>
+							),
+					)}
 			</div>
 		</div>
 	);

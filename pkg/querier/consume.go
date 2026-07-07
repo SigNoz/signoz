@@ -12,16 +12,21 @@ import (
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
+	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/types/spantypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/bytedance/sonic"
 )
 
 var (
 	aggRe = regexp.MustCompile(`^__result_(\d+)$`)
 	// legacyReservedColumnTargetAliases identifies result value from a user
 	// written clickhouse query. The column alias indcate which value is
-	// to be considered as final result (or target)
+	// to be considered as final result (or target).
 	legacyReservedColumnTargetAliases = []string{"__result", "__value", "result", "res", "value"}
+
+	CodeFailUnmarshalJSONColumn = errors.MustNewCode("fail_unmarshal_json_column")
 )
 
 // consume reads every row and shapes it into the payload expected for the
@@ -30,7 +35,7 @@ var (
 // * Time-series - *qbtypes.TimeSeriesData
 // * Scalar      - *qbtypes.ScalarData
 // * Raw         - *qbtypes.RawData
-// * Distribution- *qbtypes.DistributionData
+// * Distribution- *qbtypes.DistributionData.
 func consume(rows driver.Rows, kind qbtypes.RequestType, queryWindow *qbtypes.TimeRange, step qbtypes.Step, queryName string) (any, error) {
 	var (
 		payload any
@@ -51,7 +56,6 @@ func consume(rows driver.Rows, kind qbtypes.RequestType, queryWindow *qbtypes.Ti
 }
 
 func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbtypes.Step, queryName string) (*qbtypes.TimeSeriesData, error) {
-
 	colTypes := rows.ColumnTypes()
 	colNames := rows.Columns()
 
@@ -59,7 +63,7 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 	numericColsCount := 0
 	for i, ct := range colTypes {
 		slots[i] = reflect.New(ct.ScanType()).Interface()
-		if numericKind(ct.ScanType().Kind()) {
+		if isNumericKind(ct.ScanType()) {
 			numericColsCount++
 		}
 	}
@@ -70,7 +74,7 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 	}
 	seriesMap := map[sKey]*qbtypes.TimeSeries{}
 
-	stepMs := uint64(step.Duration.Milliseconds())
+	stepMs := uint64(step.Milliseconds())
 
 	// Helper function to check if a timestamp represents a partial value
 	isPartialValue := func(timestamp int64) bool {
@@ -267,8 +271,14 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 	}, nil
 }
 
-func numericKind(k reflect.Kind) bool {
-	switch k {
+func isNumericKind(t reflect.Type) bool {
+	if t == nil {
+		return false
+	}
+	for t.Kind() == reflect.Ptr || t.Kind() == reflect.UnsafePointer {
+		t = t.Elem()
+	}
+	switch t.Kind() {
 	case reflect.Float32, reflect.Float64,
 		reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
 		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
@@ -287,7 +297,13 @@ func readAsScalar(rows driver.Rows, queryName string) (*qbtypes.ScalarData, erro
 	var aggIndex int64
 	for i, name := range colNames {
 		colType := qbtypes.ColumnTypeGroup
-		if aggRe.MatchString(name) {
+		// Builder queries aliases aggregation columns as __result_N (always numeric) and wraps group-by keys with toString (always string);
+		// Raw ClickHouse queries may use any aliases.
+		// Handling Builder queries, If name like __result_N -> aggregation, otherwise group-by column
+		// Handling Raw ClickHouse queries, If type is numeric -> aggregation, otherwise group-by column
+		// NOTE: For clickhouse queries, its wrong to assume that numeric columns are always aggregations, user might be grouping by on integer status_code.
+		// However, we are fine with this for now. If need arises, simplest way would be to solve this on the frontend side by asking user a mapping of column names to column types.
+		if aggRe.MatchString(name) || isNumericKind(colTypes[i].ScanType()) {
 			colType = qbtypes.ColumnTypeAggregation
 		}
 		cd[i] = &qbtypes.ColumnDescriptor{
@@ -354,10 +370,22 @@ func readAsRaw(rows driver.Rows, queryName string) (*qbtypes.RawData, error) {
 	colTypes := rows.ColumnTypes()
 	colCnt := len(colNames)
 
+	// Helper that decides scan target per column based on DB type
+	makeScanTarget := func(i int) any {
+		dbt := strings.ToUpper(colTypes[i].DatabaseTypeName())
+		if strings.HasPrefix(dbt, "JSON") {
+			// Since the driver fails to decode JSON/Dynamic into native Go values, we read it as raw bytes
+			// TODO: check in future if fixed in the driver
+			var v []byte
+			return &v
+		}
+		return reflect.New(colTypes[i].ScanType()).Interface()
+	}
+
 	// Build a template slice of correctly-typed pointers once
 	scanTpl := make([]any, colCnt)
-	for i, ct := range colTypes {
-		scanTpl[i] = reflect.New(ct.ScanType()).Interface()
+	for i := range colTypes {
+		scanTpl[i] = makeScanTarget(i)
 	}
 
 	var outRows []*qbtypes.RawRow
@@ -366,7 +394,7 @@ func readAsRaw(rows driver.Rows, queryName string) (*qbtypes.RawData, error) {
 		// fresh copy of the scan slice (otherwise the driver reuses pointers)
 		scan := make([]any, colCnt)
 		for i := range scanTpl {
-			scan[i] = reflect.New(colTypes[i].ScanType()).Interface()
+			scan[i] = makeScanTarget(i)
 		}
 
 		if err := rows.Scan(scan...); err != nil {
@@ -382,6 +410,20 @@ func readAsRaw(rows driver.Rows, queryName string) (*qbtypes.RawData, error) {
 
 			// de-reference the typed pointer to any
 			val := reflect.ValueOf(cellPtr).Elem().Interface()
+			// Post-process JSON columns: unmarshal bytes into map[string]any
+			if strings.HasPrefix(strings.ToUpper(colTypes[i].DatabaseTypeName()), "JSON") {
+				switch x := val.(type) {
+				case []byte:
+					var m map[string]any
+					err := sonic.Unmarshal(x, &m)
+					if err != nil {
+						return nil, errors.WrapInternalf(err, CodeFailUnmarshalJSONColumn, "failed to unmarshal JSON column %s", name)
+					}
+					val = m
+				default:
+					// already a structured type (map[string]any, []any, etc.)
+				}
+			}
 
 			// special-case: timestamp column
 			if name == "timestamp" || name == "timestamp_datetime" {
@@ -411,7 +453,54 @@ func readAsRaw(rows driver.Rows, queryName string) (*qbtypes.RawData, error) {
 	}, nil
 }
 
-// numericAsFloat converts numeric types to float64 efficiently
+// mergeSpanAttributeColumns merges (attributes_string, attributes_number, attributes_bool, resources_string) into
+// unified "attributes" and "resource" keys, and parses the stringified `events`
+// and `links` columns into structured slices. Raw DB columns are removed.
+func mergeSpanAttributeColumns(data map[string]any) {
+	attrStr, hasStr := data["attributes_string"]
+	attrNum, hasNum := data["attributes_number"]
+	attrBool, hasBool := data["attributes_bool"]
+	// todo(nitya): move to resource json
+	resStr, hasRes := data["resources_string"]
+	if hasStr || hasNum || hasBool || hasRes {
+		attributes := make(map[string]any)
+		if m, ok := attrStr.(map[string]string); ok {
+			for k, v := range m {
+				attributes[k] = v
+			}
+		}
+		if m, ok := attrNum.(map[string]float64); ok {
+			for k, v := range m {
+				attributes[k] = v
+			}
+		}
+		if m, ok := attrBool.(map[string]bool); ok {
+			for k, v := range m {
+				attributes[k] = v
+			}
+		}
+		delete(data, "attributes_string")
+		delete(data, "attributes_number")
+		delete(data, "attributes_bool")
+		data["attributes"] = attributes
+
+		resource := map[string]string{}
+		if m, ok := resStr.(map[string]string); ok {
+			resource = m
+		}
+		data["resource"] = resource
+		delete(data, "resources_string")
+	}
+
+	if raw, ok := data["events"]; ok {
+		data["events"] = spantypes.ParseEvents(raw)
+	}
+	if raw, ok := data["links"]; ok {
+		data["links"] = spantypes.ParseLinks(raw)
+	}
+}
+
+// numericAsFloat converts numeric types to float64 efficiently.
 func numericAsFloat(v any) float64 {
 	switch x := v.(type) {
 	case float64:

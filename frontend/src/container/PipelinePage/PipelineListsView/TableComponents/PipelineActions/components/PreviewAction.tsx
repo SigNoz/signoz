@@ -1,8 +1,9 @@
-import { EyeFilled } from '@ant-design/icons';
-import { Divider, Modal } from 'antd';
+import { useState } from 'react';
+import { EyeOpen } from '@signozhq/icons';
+import { Modal } from 'antd';
+import { Divider } from '@signozhq/ui/divider';
 import logEvent from 'api/common/logEvent';
 import PipelineProcessingPreview from 'container/PipelinePage/PipelineListsView/Preview/PipelineProcessingPreview';
-import { useState } from 'react';
 import { PipelineData } from 'types/api/pipeline/def';
 
 import { iconStyle } from '../../../config';
@@ -28,7 +29,12 @@ function PreviewAction({ pipeline }: PreviewActionProps): JSX.Element | null {
 
 	return (
 		<>
-			<EyeFilled style={iconStyle} onClick={onOpenPreview} />
+			<EyeOpen
+				size="xl"
+				style={iconStyle}
+				onClick={onOpenPreview}
+				data-testid="pipeline-preview-action"
+			/>
 			<Modal
 				open={isModalOpen}
 				onCancel={closeModal}

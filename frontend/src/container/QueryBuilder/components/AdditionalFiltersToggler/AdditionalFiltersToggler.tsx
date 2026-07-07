@@ -1,14 +1,15 @@
-import './AdditionalFiltersToggler.styles.scss';
-
-import { Color } from '@signozhq/design-tokens';
-import { Col, Row, Typography } from 'antd';
-import { Minus, Plus } from 'lucide-react';
 import { Fragment, memo, ReactNode, useState } from 'react';
+import { Color } from '@signozhq/design-tokens';
+import { Col, Row } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
+import { Minus, Plus } from '@signozhq/icons';
 
 // ** Types
 import { AdditionalFiltersProps } from './AdditionalFiltersToggler.interfaces';
 // ** Styles
 import { StyledInner, StyledLink } from './AdditionalFiltersToggler.styled';
+
+import './AdditionalFiltersToggler.styles.scss';
 
 export const AdditionalFiltersToggler = memo(function AdditionalFiltersToggler({
 	children,

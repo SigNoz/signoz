@@ -11,6 +11,12 @@ import { FieldValueResponse } from 'types/api/dynamicVariables/getFieldValues';
  * @param name Name of the attribute for which values are being fetched
  * @param value Optional search text
  * @param existingQuery Optional existing query - across all present dynamic variables
+ *
+ * @deprecated Use the generated `useGetFieldsValues` hook (or `getFieldsValues` fetcher) from
+ * `api/generated/services/fields` instead. This hand-written client targets the
+ * same endpoint and will be removed once call sites migrate.
+ *
+ * Part of https://github.com/SigNoz/engineering-pod/issues/5289, add a comment or update when removing this method.
  */
 export const getFieldValues = async (
 	signal?: 'traces' | 'logs' | 'metrics',
@@ -19,6 +25,7 @@ export const getFieldValues = async (
 	startUnixMilli?: number,
 	endUnixMilli?: number,
 	existingQuery?: string,
+	abortSignal?: AbortSignal,
 ): Promise<SuccessResponseV2<FieldValueResponse>> => {
 	const params: Record<string, string> = {};
 
@@ -47,7 +54,10 @@ export const getFieldValues = async (
 	}
 
 	try {
-		const response = await axios.get('/fields/values', { params });
+		const response = await axios.get('/fields/values', {
+			params,
+			signal: abortSignal,
+		});
 
 		// Normalize values from different types (stringValues, boolValues, etc.)
 		if (response.data?.data?.values) {

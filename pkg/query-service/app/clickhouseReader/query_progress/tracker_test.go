@@ -1,6 +1,7 @@
 package queryprogress
 
 import (
+	"log/slog"
 	"testing"
 	"time"
 
@@ -12,7 +13,7 @@ import (
 func TestQueryProgressTracking(t *testing.T) {
 	require := require.New(t)
 
-	tracker := NewQueryProgressTracker()
+	tracker := NewQueryProgressTracker(slog.Default())
 
 	testQueryId := "test-query"
 

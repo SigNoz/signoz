@@ -172,7 +172,6 @@ func (module *module) GetByUser(ctx context.Context, userID valuer.UUID, name pr
 			return nil, err
 		}
 
-		return nil, err
 	}
 
 	if storableUserPreference != nil {

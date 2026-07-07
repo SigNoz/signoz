@@ -1,17 +1,29 @@
-import './styles.scss';
-
-import classNames from 'classnames';
-import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useCallback, useMemo } from 'react';
+import { Button } from '@signozhq/ui/button';
+import { Input } from '@signozhq/ui/input';
+import logEvent from 'api/common/logEvent';
+import classNames from 'classnames';
+import { QueryParams } from 'constants/query';
+import ROUTES from 'constants/routes';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import useUrlQuery from 'hooks/useUrlQuery';
+import { RotateCcw } from '@signozhq/icons';
+import { useAlertRuleOptional } from 'providers/Alert';
 import { Labels } from 'types/api/alerts/def';
 
 import { useCreateAlertState } from '../context';
 import LabelsInput from './LabelsInput';
 
+import './styles.scss';
+
 function CreateAlertHeader(): JSX.Element {
 	const { alertState, setAlertState, isEditMode } = useCreateAlertState();
+	const alertRuleContext = useAlertRuleOptional();
 
 	const { currentQuery } = useQueryBuilder();
+	const { safeNavigate } = useSafeNavigate();
+	const urlQuery = useUrlQuery();
 
 	const groupByLabels = useMemo(() => {
 		const labels = new Array<string>();
@@ -34,6 +46,14 @@ function CreateAlertHeader(): JSX.Element {
 		[groupByLabels],
 	);
 
+	const handleSwitchToClassicExperience = useCallback(() => {
+		logEvent('Alert: Switch to classic experience button clicked', {});
+
+		urlQuery.set(QueryParams.showClassicCreateAlertsPage, 'true');
+		const url = `${ROUTES.ALERTS_NEW}?${urlQuery.toString()}`;
+		safeNavigate(url, { replace: true });
+	}, [safeNavigate, urlQuery]);
+
 	return (
 		<div
 			className={classNames('alert-header', { 'edit-alert-header': isEditMode })}
@@ -41,15 +61,28 @@ function CreateAlertHeader(): JSX.Element {
 			{!isEditMode && (
 				<div className="alert-header__tab-bar">
 					<div className="alert-header__tab">New Alert Rule</div>
+					<Button
+						prefix={<RotateCcw size={12} />}
+						onClick={handleSwitchToClassicExperience}
+						variant="solid"
+						color="secondary"
+						size="sm"
+					>
+						Switch to Classic Experience
+					</Button>
 				</div>
 			)}
 			<div className="alert-header__content">
-				<input
+				<Input
 					type="text"
 					value={alertState.name}
-					onChange={(e): void =>
-						setAlertState({ type: 'SET_ALERT_NAME', payload: e.target.value })
-					}
+					onChange={(e): void => {
+						const newName = e.target.value;
+						setAlertState({ type: 'SET_ALERT_NAME', payload: newName });
+						if (isEditMode && alertRuleContext?.setAlertRuleName) {
+							alertRuleContext.setAlertRuleName(newName);
+						}
+					}}
 					className="alert-header__input title"
 					placeholder="Enter alert rule name"
 					data-testid="alert-name-input"

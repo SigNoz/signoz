@@ -67,7 +67,9 @@ export const convertHoursValueToRelevantUnit = (
 export const convertHoursValueToRelevantUnitString = (
 	value: number,
 ): string => {
-	if (!value) return '';
+	if (!value) {
+		return '';
+	}
 	const convertedTimeUnit = convertHoursValueToRelevantUnit(value);
 	return `${convertedTimeUnit.value} ${convertedTimeUnit.timeUnitValue}${
 		convertedTimeUnit.value >= 2 ? 's' : ''

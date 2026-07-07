@@ -1,8 +1,8 @@
-import { green, orange, volcano } from '@ant-design/colors';
-import { InfoCircleOutlined } from '@ant-design/icons';
-import { Card, Col } from 'antd';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { green, orange, volcano } from '@ant-design/colors';
+import { SolidInfoCircle } from '@signozhq/icons';
+import { Card, Col } from 'antd';
 import { TStatus } from 'types/api/settings/getRetention';
 
 import { convertHoursValueToRelevantUnitString } from './utils';
@@ -15,9 +15,15 @@ function StatusMessage({
 	const { t } = useTranslation(['generalSettings']);
 
 	const messageColor = useMemo((): string => {
-		if (status === 'success') return green[6];
-		if (status === 'pending') return orange[6];
-		if (status === 'failed') return volcano[6];
+		if (status === 'success') {
+			return green[6];
+		}
+		if (status === 'pending') {
+			return orange[6];
+		}
+		if (status === 'failed') {
+			return volcano[6];
+		}
 		return 'inherit';
 	}, [status]);
 	if (!status) {
@@ -27,14 +33,14 @@ function StatusMessage({
 		s3_retention && s3_retention !== -1
 			? t('status_message.s3_part', {
 					s3_retention: convertHoursValueToRelevantUnitString(s3_retention),
-			  })
+				})
 			: '';
 	const statusMessage =
 		total_retention && total_retention !== -1
 			? t(`status_message.${status}`, {
 					total_retention: convertHoursValueToRelevantUnitString(total_retention),
 					s3_part: s3Part,
-			  })
+				})
 			: null;
 
 	return statusMessage ? (
@@ -52,7 +58,7 @@ function StatusMessage({
 				}}
 			>
 				<Col xs={1}>
-					<InfoCircleOutlined style={{ fontSize: '1rem' }} />
+					<SolidInfoCircle size="md" />
 				</Col>
 
 				<Col

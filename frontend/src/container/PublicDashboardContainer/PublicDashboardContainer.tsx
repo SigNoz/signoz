@@ -1,25 +1,32 @@
-import './PublicDashboardContainer.styles.scss';
-
-import { Typography } from 'antd';
+import { useMemo, useState } from 'react';
+import RGL, { WidthProvider } from 'react-grid-layout';
+import { useInterval } from 'react-use';
+import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
 import { themeColors } from 'constants/theme';
 import { Card, CardContainer } from 'container/GridCardLayout/styles';
+import { refreshIntervalOptions } from 'container/TopNav/AutoRefreshV2/constants';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
+import { DEFAULT_TIME_RANGE } from 'container/TopNav/DateTimeSelectionV2/constants';
 import {
 	CustomTimeType,
 	Time,
-} from 'container/TopNav/DateTimeSelectionV2/config';
+} from 'container/TopNav/DateTimeSelectionV2/types';
 import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import GetMinMax from 'lib/getMinMax';
-import { useMemo, useState } from 'react';
-import RGL, { WidthProvider } from 'react-grid-layout';
+import { NANO_SECOND_MULTIPLIER } from 'store/globalTime/utils';
 import { SuccessResponseV2 } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { PublicDashboardDataProps } from 'types/api/dashboard/public/get';
 
+import signozBrandLogoUrl from '@/assets/Logos/signoz-brand-logo.svg';
+
+import AutoRefresh from './AutoRefresh';
 import Panel from './Panel';
+
+import './PublicDashboardContainer.styles.scss';
 
 const ReactGridLayoutComponent = WidthProvider(RGL);
 
@@ -80,7 +87,7 @@ function PublicDashboardContainer({
 	const { widgets } = dashboard?.data || {};
 
 	const [selectedTimeRangeLabel, setSelectedTimeRangeLabel] = useState<string>(
-		publicDashboard?.defaultTimeRange || '30m',
+		publicDashboard?.defaultTimeRange || DEFAULT_TIME_RANGE,
 	);
 
 	const [selectedTimeRange, setSelectedTimeRange] = useState<{
@@ -88,20 +95,22 @@ function PublicDashboardContainer({
 		endTime: number;
 	}>(
 		getStartTimeAndEndTimeFromTimeRange(
-			publicDashboard?.defaultTimeRange || '30m',
+			publicDashboard?.defaultTimeRange || DEFAULT_TIME_RANGE,
 		),
 	);
 
 	const isTimeRangeEnabled = publicDashboard?.timeRangeEnabled || false;
 
 	// Memoize dashboardLayout to prevent array recreation on every render
-	const dashboardLayout = useMemo(() => dashboard?.data?.layout || [], [
-		dashboard?.data?.layout,
-	]);
+	const dashboardLayout = useMemo(
+		() => dashboard?.data?.layout || [],
+		[dashboard?.data?.layout],
+	);
 
-	const currentPanelMap = useMemo(() => dashboard?.data?.panelMap || {}, [
-		dashboard?.data?.panelMap,
-	]);
+	const currentPanelMap = useMemo(
+		() => dashboard?.data?.panelMap || {},
+		[dashboard?.data?.panelMap],
+	);
 
 	const handleTimeChange = (
 		interval: Time | CustomTimeType,
@@ -116,24 +125,40 @@ function PublicDashboardContainer({
 			const { maxTime, minTime } = GetMinMax(interval);
 
 			setSelectedTimeRange({
-				startTime: Math.floor(minTime / 1000000000),
-				endTime: Math.floor(maxTime / 1000000000),
+				startTime: Math.floor(minTime / NANO_SECOND_MULTIPLIER / 1000),
+				endTime: Math.floor(maxTime / NANO_SECOND_MULTIPLIER / 1000),
 			});
 		}
 
 		setSelectedTimeRangeLabel(interval as string);
 	};
 
+	const [refreshIntervalKey, setRefreshIntervalKey] = useState<string>('off');
+
+	// Auto-refresh only makes sense for a rolling relative range, not a fixed
+	// custom window — pause it (and disable the control) when 'custom' is picked.
+	const isAutoRefreshPaused = selectedTimeRangeLabel === 'custom';
+
+	const refreshIntervalMs = useMemo(
+		() =>
+			refreshIntervalOptions.find((option) => option.key === refreshIntervalKey)
+				?.value || 0,
+		[refreshIntervalKey],
+	);
+
+	// Re-run the existing time-change handler with the current relative range so
+	// the rolling window advances — no need to duplicate the GetMinMax logic.
+	useInterval(
+		() => handleTimeChange(selectedTimeRangeLabel as Time),
+		isAutoRefreshPaused || refreshIntervalMs === 0 ? null : refreshIntervalMs,
+	);
+
 	return (
 		<div className="public-dashboard-container">
 			<div className="public-dashboard-header">
 				<div className="public-dashboard-header-left">
 					<div className="brand-logo">
-						<img
-							src="/Logos/signoz-brand-logo.svg"
-							alt="SigNoz"
-							className="brand-logo-img"
-						/>
+						<img src={signozBrandLogoUrl} alt="SigNoz" className="brand-logo-img" />
 
 						<Typography className="brand-logo-name">SigNoz</Typography>
 					</div>
@@ -147,6 +172,11 @@ function PublicDashboardContainer({
 
 				{isTimeRangeEnabled && (
 					<div className="public-dashboard-header-right">
+						<AutoRefresh
+							value={refreshIntervalKey}
+							disabled={isAutoRefreshPaused}
+							onChange={setRefreshIntervalKey}
+						/>
 						<div className="datetime-section">
 							<DateTimeSelectionV2
 								showAutoRefresh={false}
@@ -158,6 +188,8 @@ function PublicDashboardContainer({
 								modalSelectedInterval={selectedTimeRangeLabel as Time}
 								disableUrlSync
 								showRecentlyUsed={false}
+								modalInitialStartTime={selectedTimeRange.startTime * 1000}
+								modalInitialEndTime={selectedTimeRange.endTime * 1000}
 							/>
 						</div>
 					</div>

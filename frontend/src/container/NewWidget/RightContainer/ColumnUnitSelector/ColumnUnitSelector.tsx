@@ -1,24 +1,26 @@
-import './ColumnUnitSelector.styles.scss';
-
-import { Typography } from 'antd';
+import { Dispatch, SetStateAction, useCallback, useEffect } from 'react';
+import { Typography } from '@signozhq/ui/typography';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useGetQueryLabels } from 'hooks/useGetQueryLabels';
 import { isEmpty } from 'lodash-es';
-import { Dispatch, SetStateAction, useCallback, useEffect } from 'react';
 import { ColumnUnit } from 'types/api/dashboard/getAll';
 
-import YAxisUnitSelector from '../YAxisUnitSelector';
+import YAxisUnitSelectorV2 from '../DashboardYAxisUnitSelectorWrapper';
+
+import './ColumnUnitSelector.styles.scss';
 
 interface ColumnUnitSelectorProps {
 	columnUnits: ColumnUnit;
 	setColumnUnits: Dispatch<SetStateAction<ColumnUnit>>;
+	isNewDashboard: boolean;
+	'data-testid'?: string;
 }
 
 export function ColumnUnitSelector(
 	props: ColumnUnitSelectorProps,
 ): JSX.Element {
 	const { currentQuery } = useQueryBuilder();
-	const { columnUnits, setColumnUnits } = props;
+	const { columnUnits, setColumnUnits, isNewDashboard } = props;
 
 	const aggregationQueries = useGetQueryLabels(currentQuery);
 
@@ -60,10 +62,13 @@ export function ColumnUnitSelector(
 	};
 
 	useEffect(() => {
-		const newColumnUnits = aggregationQueries.reduce((acc, query) => {
-			acc[query.value] = getValues(query.value);
-			return acc;
-		}, {} as Record<string, string>);
+		const newColumnUnits = aggregationQueries.reduce(
+			(acc, query) => {
+				acc[query.value] = getValues(query.value);
+				return acc;
+			},
+			{} as Record<string, string>,
+		);
 		setColumnUnits(newColumnUnits);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [aggregationQueries]);
@@ -71,19 +76,25 @@ export function ColumnUnitSelector(
 	return (
 		<section className="column-unit-selector">
 			<Typography.Text className="heading">Column Units</Typography.Text>
-			{aggregationQueries.map(({ value, label }) => (
-				<YAxisUnitSelector
-					value={columnUnits[value] || ''}
-					onSelect={(unitValue: string): void =>
-						handleColumnUnitSelect(value, unitValue)
-					}
-					fieldLabel={label}
-					key={value}
-					handleClear={(): void => {
-						handleColumnUnitSelect(value, '');
-					}}
-				/>
-			))}
+			<div className="column-unit-selector-content">
+				{aggregationQueries.map(({ value, label }) => {
+					const baseQueryName = value.split('.')[0];
+					return (
+						<YAxisUnitSelectorV2
+							value={columnUnits[value] || ''}
+							onSelect={(unitValue: string): void =>
+								handleColumnUnitSelect(value, unitValue)
+							}
+							fieldLabel={label}
+							key={value}
+							data-testid={props['data-testid']}
+							selectedQueryName={baseQueryName}
+							// Update the column unit value automatically only in create mode
+							shouldUpdateYAxisUnit={isNewDashboard}
+						/>
+					);
+				})}
+			</div>
 		</section>
 	);
 }

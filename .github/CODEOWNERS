@@ -1,17 +1,22 @@
 # CODEOWNERS info: https://help.github.com/en/articles/about-code-owners
-# Owners are automatically requested for review for PRs that changes code
-# that they own.
 
-/frontend/ @YounixM @aks07
+# Owners are automatically requested for review for PRs that changes code that they own.
+
+/frontend/ @SigNoz/frontend-maintainers
 
 # Onboarding
+
 /frontend/src/container/OnboardingV2Container/onboarding-configs/onboarding-config-with-links.json @makeavish
 /frontend/src/container/OnboardingV2Container/AddDataSource/AddDataSource.tsx @makeavish
 
-/deploy/ @SigNoz/devops
-.github @SigNoz/devops
+# CI
+
+/deploy/ @therealpandey
+.github @therealpandey
+go.mod @therealpandey
 
 # Scaffold Owners
+
 /pkg/config/ @therealpandey
 /pkg/errors/ @therealpandey
 /pkg/factory/ @therealpandey
@@ -21,31 +26,261 @@
 .golangci.yml @therealpandey
 
 # Zeus Owners
-/pkg/zeus/ @vikrantgupta25
-/ee/zeus/ @vikrantgupta25
-/pkg/licensing/ @vikrantgupta25
-/ee/licensing/ @vikrantgupta25
+
+/pkg/zeus/ @therealpandey
+/ee/zeus/ @therealpandey
+/pkg/licensing/ @therealpandey
+/ee/licensing/ @therealpandey
 
 # SQL Owners
-/pkg/sqlmigration/ @vikrantgupta25
-/ee/sqlmigration/ @vikrantgupta25
-/pkg/sqlschema/ @vikrantgupta25
-/ee/sqlschema/ @vikrantgupta25
+
+/pkg/sqlmigration/ @therealpandey
+/ee/sqlmigration/ @therealpandey
+/pkg/sqlschema/ @therealpandey
+/ee/sqlschema/ @therealpandey
 
 # Analytics Owners
-/pkg/analytics/ @vikrantgupta25
-/pkg/statsreporter/ @vikrantgupta25
+
+/pkg/analytics/ @therealpandey
+/pkg/statsreporter/ @therealpandey
+
+# Emailing Owners
+
+/pkg/emailing/ @therealpandey
+/pkg/types/emailtypes/ @therealpandey
+/templates/email/ @therealpandey
 
 # Querier Owners
-/pkg/querier/ @srikanthccv
-/pkg/variables/ @srikanthccv
-/pkg/types/querybuildertypes/ @srikanthccv
-/pkg/querybuilder/ @srikanthccv
-/pkg/telemetrylogs/ @srikanthccv
-/pkg/telemetrymetadata/ @srikanthccv
-/pkg/telemetrymetrics/ @srikanthccv
-/pkg/telemetrytraces/ @srikanthccv
 
-# AuthN / AuthZ Owners 
+/pkg/querier/ @srikanthccv @therealpandey
+/pkg/variables/ @srikanthccv @therealpandey
+/pkg/types/querybuildertypes/ @srikanthccv @therealpandey
+/pkg/types/telemetrytypes/ @srikanthccv @therealpandey
+/pkg/querybuilder/ @srikanthccv @therealpandey
+/pkg/telemetrylogs/ @srikanthccv @therealpandey
+/pkg/telemetrymetadata/ @srikanthccv @therealpandey
+/pkg/telemetrymetrics/ @srikanthccv @therealpandey
+/pkg/telemetrytraces/ @srikanthccv @therealpandey
 
-/pkg/authz/ @vikrantgupta25 @therealpandey
+# Metrics
+
+/pkg/types/metrictypes/ @srikanthccv @therealpandey
+/pkg/types/metricsexplorertypes/ @srikanthccv @therealpandey
+/pkg/modules/metricsexplorer/ @srikanthccv @therealpandey
+/pkg/prometheus/ @srikanthccv @therealpandey
+
+# APM
+
+/pkg/types/servicetypes/ @srikanthccv @therealpandey
+/pkg/types/apdextypes/ @srikanthccv @therealpandey
+/pkg/modules/apdex/ @srikanthccv @therealpandey
+/pkg/modules/services/ @srikanthccv @therealpandey
+
+# Dashboard
+
+/pkg/types/dashboardtypes/ @srikanthccv @therealpandey
+/pkg/modules/dashboard/ @srikanthccv @therealpandey
+
+# Rule/Alertmanager
+
+/pkg/types/ruletypes/ @srikanthccv @therealpandey
+/pkg/types/alertmanagertypes @srikanthccv @therealpandey
+/pkg/alertmanager/ @srikanthccv @therealpandey
+/pkg/ruler/ @srikanthccv @therealpandey
+/pkg/modules/rulestatehistory/ @srikanthccv @therealpandey
+/pkg/types/rulestatehistorytypes/ @srikanthccv @therealpandey
+
+# Correlation-adjacent
+
+/pkg/contextlinks/ @srikanthccv @therealpandey
+/pkg/types/parsertypes/ @srikanthccv @therealpandey
+/pkg/queryparser/ @srikanthccv @therealpandey
+
+# AuthN / AuthZ Owners
+
+/pkg/authz/ @therealpandey
+/ee/authz/ @therealpandey
+/pkg/authn/ @therealpandey
+/ee/authn/ @therealpandey
+/pkg/modules/user/ @therealpandey
+/pkg/modules/session/ @therealpandey
+/pkg/modules/organization/ @therealpandey
+/pkg/modules/authdomain/ @therealpandey
+/pkg/modules/role/ @therealpandey
+/pkg/types/coretypes/ @therealpandey @vikrantgupta25
+
+/frontend/src/lib/authz/ @H4ad
+/frontend/src/container/RolesSettings/ @H4ad
+/frontend/src/components/RolesSelect/ @H4ad
+/frontend/src/pages/MembersSettings/ @H4ad
+/frontend/src/container/MembersSettings/ @H4ad
+/frontend/src/components/MembersTable/ @H4ad
+/frontend/src/components/EditMemberDrawer/ @H4ad
+/frontend/src/components/InviteMembersModal/ @H4ad
+/frontend/src/hooks/member/ @H4ad
+/frontend/src/pages/ServiceAccountsSettings/ @H4ad
+/frontend/src/container/ServiceAccountsSettings/ @H4ad
+/frontend/src/components/ServiceAccountsTable/ @H4ad
+/frontend/src/components/ServiceAccountDrawer/ @H4ad
+/frontend/src/components/CreateServiceAccountModal/ @H4ad
+/frontend/src/hooks/serviceAccount/ @H4ad
+
+# IdentN Owners
+
+/pkg/identn/ @therealpandey
+/pkg/http/middleware/identn.go @therealpandey
+
+# Integration tests
+
+/tests/integration/ @therealpandey
+
+# e2e tests
+/tests/e2e/ @AshwinBhatkal
+
+# Flagger Owners
+
+/pkg/flagger/ @therealpandey
+
+# OpenAPI types generator
+
+/frontend/src/api @SigNoz/frontend-maintainers
+
+# Dashboard Owners
+
+/frontend/src/hooks/dashboard/ @SigNoz/pulse-frontend
+/frontend/src/providers/Dashboard/ @SigNoz/pulse-frontend
+
+## Dashboard Types
+
+/frontend/src/api/types/dashboard/ @SigNoz/pulse-frontend
+
+## Dashboard List
+
+/frontend/src/pages/DashboardsListPage/ @SigNoz/pulse-frontend
+/frontend/src/container/ListOfDashboard/ @SigNoz/pulse-frontend
+
+# Dashboard Widget Page
+
+/frontend/src/pages/DashboardWidget/ @SigNoz/pulse-frontend
+/frontend/src/container/NewWidget/ @SigNoz/pulse-frontend
+
+## Dashboard Page
+
+/frontend/src/pages/DashboardPage/ @SigNoz/pulse-frontend
+/frontend/src/container/DashboardContainer/ @SigNoz/pulse-frontend
+/frontend/src/container/GridCardLayout/ @SigNoz/pulse-frontend
+
+## Public Dashboard Page
+
+/frontend/src/pages/PublicDashboard/ @SigNoz/pulse-frontend
+/frontend/src/container/PublicDashboardContainer/ @SigNoz/pulse-frontend
+
+## Dashboard Libs + Components
+
+/frontend/src/lib/uPlotV2/ @SigNoz/pulse-frontend
+/frontend/src/lib/dashboard/ @SigNoz/pulse-frontend
+/frontend/src/lib/dashboardVariables/ @SigNoz/pulse-frontend
+/frontend/src/components/NewSelect/ @SigNoz/pulse-frontend
+
+## Dashboard V2
+/frontend/src/pages/DashboardPageV2/ @SigNoz/pulse-frontend
+/frontend/src/pages/DashboardsListPageV2/ @SigNoz/pulse-frontend
+
+## Infrastructure Monitoring
+/frontend/src/pages/InfrastructureMonitoring/ @SigNoz/pulse-frontend
+/frontend/src/container/InfraMonitoringHosts/ @SigNoz/pulse-frontend
+/frontend/src/container/InfraMonitoringK8s/ @SigNoz/pulse-frontend
+
+## Alerts
+/frontend/src/pages/AlertList/ @SigNoz/pulse-frontend
+/frontend/src/pages/AlertDetails/ @SigNoz/pulse-frontend
+/frontend/src/pages/CreateAlert/ @SigNoz/pulse-frontend
+/frontend/src/pages/EditRules/ @SigNoz/pulse-frontend
+/frontend/src/container/AlertHistory/ @SigNoz/pulse-frontend
+/frontend/src/container/CreateAlertRule/ @SigNoz/pulse-frontend
+/frontend/src/container/CreateAlertV2/ @SigNoz/pulse-frontend
+/frontend/src/container/EditAlertV2/ @SigNoz/pulse-frontend
+/frontend/src/container/FormAlertRules/ @SigNoz/pulse-frontend
+/frontend/src/container/ListAlertRules/ @SigNoz/pulse-frontend
+/frontend/src/container/TriggeredAlerts/ @SigNoz/pulse-frontend
+/frontend/src/container/AnomalyAlertEvaluationView/ @SigNoz/pulse-frontend
+
+## Notification Channels
+/frontend/src/pages/ChannelsEdit/ @SigNoz/pulse-frontend
+/frontend/src/pages/ChannelsNew/ @SigNoz/pulse-frontend
+/frontend/src/container/AllAlertChannels/ @SigNoz/pulse-frontend
+/frontend/src/container/CreateAlertChannels/ @SigNoz/pulse-frontend
+/frontend/src/container/EditAlertChannels/ @SigNoz/pulse-frontend
+
+## OpenAPI Schema - Generated
+/frontend/src/api/generated/services/ @therealpandey @vikrantgupta25 @srikanthccv
+/docs/api/openapi.yml @therealpandey @vikrantgupta25 @srikanthccv
+
+## Logs
+/frontend/src/pages/Logs/ @SigNoz/events-frontend
+/frontend/src/pages/LogsExplorer/ @SigNoz/events-frontend
+/frontend/src/pages/LogsModulePage/ @SigNoz/events-frontend
+/frontend/src/pages/LogsSettings/ @SigNoz/events-frontend
+/frontend/src/pages/LiveLogs/ @SigNoz/events-frontend
+/frontend/src/container/LogsExplorerChart/ @SigNoz/events-frontend
+/frontend/src/container/LogsExplorerContext/ @SigNoz/events-frontend
+/frontend/src/container/LogsExplorerList/ @SigNoz/events-frontend
+/frontend/src/container/LogsExplorerTable/ @SigNoz/events-frontend
+/frontend/src/container/LogsExplorerViews/ @SigNoz/events-frontend
+/frontend/src/container/LogsFilters/ @SigNoz/events-frontend
+/frontend/src/container/LogsSearchFilter/ @SigNoz/events-frontend
+/frontend/src/container/LogsTable/ @SigNoz/events-frontend
+/frontend/src/container/LogsAggregate/ @SigNoz/events-frontend
+/frontend/src/container/LogsContextList/ @SigNoz/events-frontend
+/frontend/src/container/LogsIndexToFields/ @SigNoz/events-frontend
+/frontend/src/container/LogsLoading/ @SigNoz/events-frontend
+/frontend/src/container/LogsPanelTable/ @SigNoz/events-frontend
+/frontend/src/container/LogControls/ @SigNoz/events-frontend
+/frontend/src/container/LogDetailedView/ @SigNoz/events-frontend
+/frontend/src/container/LogExplorerQuerySection/ @SigNoz/events-frontend
+/frontend/src/container/LogLiveTail/ @SigNoz/events-frontend
+/frontend/src/container/LiveLogs/ @SigNoz/events-frontend
+/frontend/src/container/EmptyLogsSearch/ @SigNoz/events-frontend
+/frontend/src/container/NoLogs/ @SigNoz/events-frontend
+/frontend/src/components/Logs/ @SigNoz/events-frontend
+/frontend/src/components/LogDetail/ @SigNoz/events-frontend
+/frontend/src/components/LogsFormatOptionsMenu/ @SigNoz/events-frontend
+/frontend/src/hooks/logs/ @SigNoz/events-frontend
+
+## Logs Pipelines
+/frontend/src/pages/Pipelines/ @SigNoz/events-frontend
+/frontend/src/container/PipelinePage/ @SigNoz/events-frontend
+
+## Traces / Trace Explorer
+/frontend/src/pages/Trace/ @SigNoz/events-frontend
+/frontend/src/pages/TracesExplorer/ @SigNoz/events-frontend
+/frontend/src/pages/TracesModulePage/ @SigNoz/events-frontend
+/frontend/src/container/Trace/ @SigNoz/events-frontend
+/frontend/src/container/TracesExplorer/ @SigNoz/events-frontend
+/frontend/src/container/TracesTableComponent/ @SigNoz/events-frontend
+
+## Trace Funnels
+/frontend/src/pages/TracesFunnels/ @SigNoz/events-frontend
+/frontend/src/pages/TracesFunnelDetails/ @SigNoz/events-frontend
+/frontend/src/hooks/TracesFunnels/ @SigNoz/events-frontend
+
+## Trace Details
+/frontend/src/pages/TraceDetailsV3/ @SigNoz/events-frontend
+/frontend/src/pages/TraceDetailOldRedirect/ @SigNoz/events-frontend
+/frontend/src/hooks/trace/ @SigNoz/events-frontend
+
+## Exceptions
+/frontend/src/pages/AllErrors/ @SigNoz/events-frontend
+/frontend/src/pages/ErrorDetails/ @SigNoz/events-frontend
+/frontend/src/container/AllError/ @SigNoz/events-frontend
+/frontend/src/container/ErrorDetails/ @SigNoz/events-frontend
+
+## External APIs
+/frontend/src/pages/ApiMonitoring/ @SigNoz/events-frontend
+/frontend/src/container/ApiMonitoring/ @SigNoz/events-frontend
+
+## Messaging Queues
+/frontend/src/pages/MessagingQueues/ @SigNoz/events-frontend
+/frontend/src/components/MessagingQueues/ @SigNoz/events-frontend
+/frontend/src/components/MessagingQueueHealthCheck/ @SigNoz/events-frontend
+/frontend/src/hooks/messagingQueue/ @SigNoz/events-frontend

@@ -13,6 +13,6 @@ import (
 // their default values.
 func TestValidateConfig(t *testing.T) {
 	logger := slog.New(slog.DiscardHandler)
-	_, err := NewConfig(context.Background(), logger, configtest.NewResolverConfig(), DeprecatedFlags{})
+	_, err := NewConfig(context.Background(), logger, configtest.NewResolverConfig())
 	assert.NoError(t, err)
 }

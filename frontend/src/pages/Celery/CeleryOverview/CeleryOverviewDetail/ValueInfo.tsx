@@ -1,15 +1,14 @@
-import './ValueInfo.styles.scss';
-
-import { FileSearchOutlined } from '@ant-design/icons';
+import { useCallback, useMemo } from 'react';
+import { useQueries } from 'react-query';
+// eslint-disable-next-line no-restricted-imports
+import { useSelector } from 'react-redux';
+import { FileSearch } from '@signozhq/icons';
 import { Button, Card, Col, Row } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplorer';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
-import { useCallback, useMemo } from 'react';
-import { useQueries } from 'react-query';
-import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
@@ -25,6 +24,8 @@ import {
 	celeryOverviewRequestRateWidgetData,
 } from '../CeleryOverviewGraphUtils';
 import { getQueryPayloadFromWidgetsData } from '../CeleryOverviewUtils';
+
+import './ValueInfo.styles.scss';
 
 export default function ValueInfo({
 	filters,
@@ -86,32 +87,52 @@ export default function ValueInfo({
 	const navigateToExplorer = useNavigateToExplorer();
 
 	const avgLatencyInMs = useMemo(() => {
-		if (avgLatency === 'NaN') return 'NaN';
+		if (avgLatency === 'NaN') {
+			return 'NaN';
+		}
 		const numericValue = parseFloat(avgLatency);
 		return (numericValue / 1000000).toFixed(2);
 	}, [avgLatency]);
 
 	const getColorBasedOnValue = (value: string): string => {
 		const numericValue = parseFloat(value);
-		if (value === 'NaN') return 'gray';
-		if (numericValue < 3) return 'green';
-		if (numericValue < 8) return 'yellow';
+		if (value === 'NaN') {
+			return 'gray';
+		}
+		if (numericValue < 3) {
+			return 'green';
+		}
+		if (numericValue < 8) {
+			return 'yellow';
+		}
 		return 'red';
 	};
 
 	const getColorForLatency = (value: string): string => {
 		const numericValue = parseFloat(value);
-		if (value === 'NaN') return 'gray';
-		if (numericValue < 100) return 'green';
-		if (numericValue < 200) return 'yellow';
+		if (value === 'NaN') {
+			return 'gray';
+		}
+		if (numericValue < 100) {
+			return 'green';
+		}
+		if (numericValue < 200) {
+			return 'yellow';
+		}
 		return 'red';
 	};
 
 	const getColorForErrorRate = (value: string): string => {
 		const numericValue = parseFloat(value);
-		if (value === 'NaN') return 'gray';
-		if (numericValue < 60) return 'green';
-		if (numericValue < 90) return 'yellow';
+		if (value === 'NaN') {
+			return 'gray';
+		}
+		if (numericValue < 60) {
+			return 'green';
+		}
+		if (numericValue < 90) {
+			return 'yellow';
+		}
 		return 'red';
 	};
 
@@ -135,7 +156,7 @@ export default function ValueInfo({
 					</div>
 					<Button
 						type="primary"
-						icon={<FileSearchOutlined />}
+						icon={<FileSearch size="md" />}
 						className="trace-button"
 						disabled={isLoading}
 						onClick={(): void => {
@@ -170,7 +191,7 @@ export default function ValueInfo({
 					</div>
 					<Button
 						type="primary"
-						icon={<FileSearchOutlined />}
+						icon={<FileSearch size="md" />}
 						className="trace-button"
 						disabled={isLoading}
 						onClick={(): void => {
@@ -218,7 +239,7 @@ export default function ValueInfo({
 					</div>
 					<Button
 						type="primary"
-						icon={<FileSearchOutlined />}
+						icon={<FileSearch size="md" />}
 						className="trace-button"
 						disabled={isLoading}
 						onClick={(): void => {

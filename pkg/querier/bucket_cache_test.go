@@ -21,7 +21,7 @@ const (
 	defaultFluxInterval = 5 * time.Minute
 )
 
-// Helper function to create test cache
+// Helper function to create test cache.
 func createTestCache(t *testing.T) cache.Cache {
 	config := cache.Config{
 		Provider: "memory",
@@ -35,7 +35,7 @@ func createTestCache(t *testing.T) cache.Cache {
 	return memCache
 }
 
-// mockQuery implements the Query interface for testing
+// mockQuery implements the Query interface for testing.
 type mockQuery struct {
 	fingerprint string
 	startMs     uint64
@@ -67,7 +67,7 @@ func (m *mockQuery) Execute(ctx context.Context) (*qbtypes.Result, error) {
 	}, nil
 }
 
-// createTestBucketCache creates a test bucket cache
+// createTestBucketCache creates a test bucket cache.
 func createTestBucketCache(t *testing.T) *bucketCache {
 	memCache := createTestCache(t)
 	return NewBucketCache(instrumentationtest.New().ToProviderSettings(), memCache, cacheTTL, defaultFluxInterval).(*bucketCache)
@@ -521,7 +521,7 @@ func TestBucketCache_FindMissingRanges_EdgeCases(t *testing.T) {
 	bc := NewBucketCache(instrumentationtest.New().ToProviderSettings(), memCache, cacheTTL, defaultFluxInterval).(*bucketCache)
 
 	// Test with buckets that have gaps and overlaps
-	buckets := []*cachedBucket{
+	buckets := []*qbtypes.CachedBucket{
 		{StartMs: 1000, EndMs: 2000},
 		{StartMs: 2500, EndMs: 3500},
 		{StartMs: 3000, EndMs: 4000}, // Overlaps with previous
@@ -1097,7 +1097,7 @@ func TestBucketCache_FindMissingRangesWithStep(t *testing.T) {
 
 	tests := []struct {
 		name         string
-		buckets      []*cachedBucket
+		buckets      []*qbtypes.CachedBucket
 		startMs      uint64
 		endMs        uint64
 		stepMs       uint64
@@ -1106,7 +1106,7 @@ func TestBucketCache_FindMissingRangesWithStep(t *testing.T) {
 	}{
 		{
 			name:    "start_not_aligned_to_step",
-			buckets: []*cachedBucket{},
+			buckets: []*qbtypes.CachedBucket{},
 			startMs: 1500, // Not aligned to 1000ms step
 			endMs:   5000,
 			stepMs:  1000,
@@ -1118,7 +1118,7 @@ func TestBucketCache_FindMissingRangesWithStep(t *testing.T) {
 		},
 		{
 			name:    "end_not_aligned_to_step",
-			buckets: []*cachedBucket{},
+			buckets: []*qbtypes.CachedBucket{},
 			startMs: 1000,
 			endMs:   4500, // Not aligned to 1000ms step
 			stepMs:  1000,
@@ -1129,7 +1129,7 @@ func TestBucketCache_FindMissingRangesWithStep(t *testing.T) {
 		},
 		{
 			name: "bucket_boundaries_not_aligned",
-			buckets: []*cachedBucket{
+			buckets: []*qbtypes.CachedBucket{
 				{StartMs: 1500, EndMs: 2500}, // Not aligned
 			},
 			startMs: 1000,
@@ -1143,7 +1143,7 @@ func TestBucketCache_FindMissingRangesWithStep(t *testing.T) {
 		},
 		{
 			name:    "small_window_less_than_step",
-			buckets: []*cachedBucket{},
+			buckets: []*qbtypes.CachedBucket{},
 			startMs: 1000,
 			endMs:   1500, // Less than one step
 			stepMs:  1000,
@@ -1154,7 +1154,7 @@ func TestBucketCache_FindMissingRangesWithStep(t *testing.T) {
 		},
 		{
 			name:    "zero_step_uses_basic_algorithm",
-			buckets: []*cachedBucket{},
+			buckets: []*qbtypes.CachedBucket{},
 			startMs: 1000,
 			endMs:   5000,
 			stepMs:  0,

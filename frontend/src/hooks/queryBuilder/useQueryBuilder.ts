@@ -1,5 +1,8 @@
+import {
+	// eslint-disable-next-line no-restricted-imports
+	useContext,
+} from 'react';
 import { QueryBuilderContext } from 'providers/QueryBuilder';
-import { useContext } from 'react';
 import { QueryBuilderContextType } from 'types/common/queryBuilder';
 
 export function useQueryBuilder(): QueryBuilderContextType {

@@ -1,15 +1,21 @@
-import { Button, Skeleton, Tag } from 'antd';
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Button, Skeleton } from 'antd';
+import { Badge } from '@signozhq/ui/badge';
 import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
 import { useGetAllDashboard } from 'hooks/dashboard/useGetAllDashboard';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import { ArrowRight, ArrowUpRight, Plus } from 'lucide-react';
+import { ArrowRight, ArrowUpRight, Plus } from '@signozhq/icons';
 import Card from 'periscope/components/Card/Card';
 import { useAppContext } from 'providers/App/App';
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { USER_ROLES } from 'types/roles';
+import { openInNewTab } from 'utils/navigation';
+
+import dialsUrl from '@/assets/Icons/dials.svg';
+
+import { getItemIcon } from '../constants';
 
 export default function Dashboards({
 	onUpdateChecklistDoneItem,
@@ -31,7 +37,9 @@ export default function Dashboards({
 	} = useGetAllDashboard();
 
 	useEffect(() => {
-		if (!dashboardsList) return;
+		if (!dashboardsList) {
+			return;
+		}
 
 		const sortedDashboards = dashboardsList.data.sort((a, b) => {
 			const aUpdateAt = new Date(a.updatedAt).getTime();
@@ -50,11 +58,7 @@ export default function Dashboards({
 		<div className="empty-state-container">
 			<div className="empty-state-content-container">
 				<div className="empty-state-content">
-					<img
-						src="/Icons/dials.svg"
-						alt="empty-alert-icon"
-						className="empty-state-icon"
-					/>
+					<img src={dialsUrl} alt="empty-alert-icon" className="empty-state-icon" />
 
 					<div className="empty-title">You don’t have any dashboards yet.</div>
 
@@ -112,7 +116,7 @@ export default function Dashboards({
 							dashboardName: dashboard.data.title,
 						});
 						if (event.metaKey || event.ctrlKey) {
-							window.open(getLink(), '_blank');
+							openInNewTab(getLink());
 						} else {
 							safeNavigate(getLink());
 						}
@@ -127,17 +131,13 @@ export default function Dashboards({
 							onClick={onClickHandler}
 							onKeyDown={(e): void => {
 								if (e.key === 'Enter') {
-									onClickHandler((e as unknown) as React.MouseEvent<HTMLElement>);
+									onClickHandler(e as unknown as React.MouseEvent<HTMLElement>);
 								}
 							}}
 						>
 							<div className="dashboard-item-name-container home-data-item-name-container">
 								<img
-									src={
-										Math.random() % 2 === 0
-											? '/Icons/eight-ball.svg'
-											: '/Icons/circus-tent.svg'
-									}
+									src={getItemIcon(dashboard.id)}
 									alt="alert-rules"
 									className="alert-rules-img"
 								/>
@@ -149,9 +149,9 @@ export default function Dashboards({
 
 							<div className="alert-rule-item-description home-data-item-tag">
 								{dashboard.data.tags?.map((tag) => (
-									<Tag color={tag} key={tag}>
+									<Badge color="sienna" variant="outline" key={tag}>
 										{tag}
-									</Tag>
+									</Badge>
 								))}
 							</div>
 						</div>

@@ -16,11 +16,22 @@ var (
 	JoinTypeCross = JoinType{valuer.NewString("cross")}
 )
 
+// Enum returns the acceptable values for JoinType.
+func (JoinType) Enum() []any {
+	return []any{
+		JoinTypeInner,
+		JoinTypeLeft,
+		JoinTypeRight,
+		JoinTypeFull,
+		JoinTypeCross,
+	}
+}
+
 type QueryRef struct {
 	Name string `json:"name"`
 }
 
-// Copy creates a deep copy of QueryRef
+// Copy creates a deep copy of QueryRef.
 func (q QueryRef) Copy() QueryRef {
 	return q
 }
@@ -37,8 +48,8 @@ type QueryBuilderJoin struct {
 	Type JoinType `json:"type"`
 	On   string   `json:"on"`
 
-	// primary aggregations: if empty ⇒ raw columns
-	// currently supported: []Aggregation, []MetricAggregation
+	// primary aggregations: if empty ⇒ raw columns. Untyped — joins are deferred
+	// (see the commented JoinAggregation below).
 	Aggregations []any `json:"aggregations,omitempty"`
 	// select columns to select
 	SelectFields []telemetrytypes.TelemetryFieldKey `json:"selectFields,omitempty"`
@@ -53,7 +64,33 @@ type QueryBuilderJoin struct {
 	Functions             []Function             `json:"functions,omitempty"`
 }
 
-// Copy creates a deep copy of QueryBuilderJoin
+// JoinAggregation modelled a join aggregation as a trace/log/metric oneOf. Deferred:
+// that oneOf has no discriminator (trace ≡ log, and a join carries no `signal`), so
+// code generators can't map it. TODO: add a discriminator before re-enabling.
+//
+// type JoinAggregation struct {
+// 	value any
+// }
+//
+// var _ jsonschema.OneOfExposer = JoinAggregation{}
+//
+// func (JoinAggregation) JSONSchemaOneOf() []any {
+// 	return []any{
+// 		TraceAggregation{},
+// 		LogAggregation{},
+// 		MetricAggregation{},
+// 	}
+// }
+//
+// func (j JoinAggregation) MarshalJSON() ([]byte, error) {
+// 	return json.Marshal(j.value)
+// }
+//
+// func (j *JoinAggregation) UnmarshalJSON(data []byte) error {
+// 	return json.Unmarshal(data, &j.value)
+// }
+
+// Copy creates a deep copy of QueryBuilderJoin.
 func (q QueryBuilderJoin) Copy() QueryBuilderJoin {
 	c := q
 

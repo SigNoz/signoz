@@ -1,7 +1,7 @@
+import { ChangeEvent, useCallback } from 'react';
 import { Input } from 'antd';
 import { LEGEND } from 'constants/global';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { ChangeEvent, useCallback } from 'react';
 import { IPromQLQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { getFormatedLegend } from 'utils/getFormatedLegend';
@@ -19,10 +19,8 @@ function PromQLQueryBuilder({
 	queryIndex,
 	deletable,
 }: IPromQLQueryBuilderProps): JSX.Element {
-	const {
-		handleSetQueryItemData,
-		removeQueryTypeItemByIndex,
-	} = useQueryBuilder();
+	const { handleSetQueryItemData, removeQueryTypeItemByIndex } =
+		useQueryBuilder();
 
 	const handleRemoveQuery = useCallback(() => {
 		removeQueryTypeItemByIndex(EQueryType.PROM, queryIndex);

@@ -1,24 +1,38 @@
+import { useEffect, useMemo, useState } from 'react';
+// eslint-disable-next-line no-restricted-imports
+import { useSelector } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 import YAxisUnitSelector from 'components/YAxisUnitSelector';
 import { YAxisSource } from 'components/YAxisUnitSelector/types';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { QueryParams } from 'constants/query';
 import { useCreateAlertState } from 'container/CreateAlertV2/context';
 import ChartPreviewComponent from 'container/FormAlertRules/ChartPreview';
 import PlotTag from 'container/NewWidget/LeftContainer/WidgetGraph/PlotTag';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { useState } from 'react';
-import { useSelector } from 'react-redux';
+import useGetYAxisUnit from 'hooks/useGetYAxisUnit';
 import { AppState } from 'store/reducers';
+import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { AlertDef } from 'types/api/alerts/def';
 import { EQueryType } from 'types/common/dashboard';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 export interface ChartPreviewProps {
 	alertDef: AlertDef;
+	source?: YAxisSource;
+	isCancelled?: boolean;
+	onFetchingStateChange?: (isFetching: boolean) => void;
 }
 
-function ChartPreview({ alertDef }: ChartPreviewProps): JSX.Element {
+function ChartPreview({
+	alertDef,
+	source,
+	isCancelled = false,
+	onFetchingStateChange,
+}: ChartPreviewProps): JSX.Element {
 	const { currentQuery, panelType, stagedQuery } = useQueryBuilder();
-	const { thresholdState, alertState, setAlertState } = useCreateAlertState();
+	const { alertType, thresholdState, alertState, setAlertState, isEditMode } =
+		useCreateAlertState();
 	const { selectedTime: globalSelectedInterval } = useSelector<
 		AppState,
 		GlobalReducer
@@ -27,6 +41,35 @@ function ChartPreview({ alertDef }: ChartPreviewProps): JSX.Element {
 
 	const yAxisUnit = alertState.yAxisUnit || '';
 
+	const location = useLocation();
+	const yAxisUnitFromURL = new URLSearchParams(location.search).get(
+		QueryParams.yAxisUnit,
+	);
+
+	// Only update automatically when creating a new metrics-based alert rule.
+	// Skip when yAxisUnit was explicitly provided via URL (e.g. from ingestion settings).
+	const shouldUpdateYAxisUnit = useMemo(() => {
+		if (source === YAxisSource.DASHBOARDS) {
+			return false;
+		}
+		if (yAxisUnitFromURL) {
+			return false;
+		}
+		return !isEditMode && alertType === AlertTypes.METRICS_BASED_ALERT;
+	}, [isEditMode, alertType, source, yAxisUnitFromURL]);
+
+	const selectedQueryName = thresholdState.selectedQuery;
+	const { yAxisUnit: initialYAxisUnit, isLoading } =
+		useGetYAxisUnit(selectedQueryName);
+
+	// Every time a new metric is selected, set the y-axis unit to its unit value if present
+	// Only for metrics-based alerts in create mode
+	useEffect(() => {
+		if (shouldUpdateYAxisUnit) {
+			setAlertState({ type: 'SET_Y_AXIS_UNIT', payload: initialYAxisUnit });
+		}
+	}, [initialYAxisUnit, setAlertState, shouldUpdateYAxisUnit]);
+
 	const headline = (
 		<div className="chart-preview-headline">
 			<PlotTag
@@ -34,11 +77,13 @@ function ChartPreview({ alertDef }: ChartPreviewProps): JSX.Element {
 				panelType={panelType || PANEL_TYPES.TIME_SERIES}
 			/>
 			<YAxisUnitSelector
-				value={alertState.yAxisUnit}
+				value={yAxisUnit}
+				initialValue={initialYAxisUnit}
 				onChange={(value): void => {
 					setAlertState({ type: 'SET_Y_AXIS_UNIT', payload: value });
 				}}
 				source={YAxisSource.ALERTS}
+				loading={isLoading}
 			/>
 		</div>
 	);
@@ -46,7 +91,6 @@ function ChartPreview({ alertDef }: ChartPreviewProps): JSX.Element {
 	const renderQBChartPreview = (): JSX.Element => (
 		<ChartPreviewComponent
 			headline={headline}
-			name=""
 			query={stagedQuery}
 			selectedInterval={globalSelectedInterval}
 			alertDef={alertDef}
@@ -54,13 +98,14 @@ function ChartPreview({ alertDef }: ChartPreviewProps): JSX.Element {
 			graphType={panelType || PANEL_TYPES.TIME_SERIES}
 			setQueryStatus={setQueryStatus}
 			additionalThresholds={thresholdState.thresholds}
+			isCancelled={isCancelled}
+			onFetchingStateChange={onFetchingStateChange}
 		/>
 	);
 
 	const renderPromAndChQueryChartPreview = (): JSX.Element => (
 		<ChartPreviewComponent
 			headline={headline}
-			name="Chart Preview"
 			query={stagedQuery}
 			alertDef={alertDef}
 			selectedInterval={globalSelectedInterval}
@@ -68,6 +113,8 @@ function ChartPreview({ alertDef }: ChartPreviewProps): JSX.Element {
 			graphType={panelType || PANEL_TYPES.TIME_SERIES}
 			setQueryStatus={setQueryStatus}
 			additionalThresholds={thresholdState.thresholds}
+			isCancelled={isCancelled}
+			onFetchingStateChange={onFetchingStateChange}
 		/>
 	);
 

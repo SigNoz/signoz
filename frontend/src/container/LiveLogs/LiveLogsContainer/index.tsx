@@ -1,18 +1,20 @@
-import './LiveLogsContainer.styles.scss';
-
-import { Switch, Typography } from 'antd';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useLocation } from 'react-router-dom';
+import { Switch } from '@signozhq/ui/switch';
+import { Typography } from '@signozhq/ui/typography';
+import FieldsSelector from 'components/FieldsSelector';
 import LogsFormatOptionsMenu from 'components/LogsFormatOptionsMenu/LogsFormatOptionsMenu';
 import { MAX_LOGS_LIST_SIZE } from 'constants/liveTail';
 import { LOCALSTORAGE } from 'constants/localStorage';
+import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
 import GoToTop from 'container/GoToTop';
 import { useOptionsMenu } from 'container/OptionsMenu';
+import { LOGS_REQUIRED_COLUMNS } from 'container/OptionsMenu/constants';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useEventSourceEvent } from 'hooks/useEventSourceEvent';
 import { useEventSource } from 'providers/EventSource';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useLocation } from 'react-router-dom';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 import { validateQuery } from 'utils/queryValidationUtils';
 
@@ -21,16 +23,25 @@ import { ILiveLogsLog } from '../LiveLogsList/types';
 import LiveLogsListChart from '../LiveLogsListChart';
 import { QueryHistoryState } from '../types';
 
-function LiveLogsContainer(): JSX.Element {
+import './LiveLogsContainer.styles.scss';
+
+interface LiveLogsContainerProps {
+	handleChangeSelectedView?: ChangeViewFunctionType;
+}
+
+function LiveLogsContainer({
+	handleChangeSelectedView,
+}: LiveLogsContainerProps): JSX.Element {
 	const location = useLocation();
 	const [logs, setLogs] = useState<ILiveLogsLog[]>([]);
 	const { currentQuery, stagedQuery } = useQueryBuilder();
-	const [showLiveLogsFrequencyChart, setShowLiveLogsFrequencyChart] = useState(
-		true,
-	);
+	const [showLiveLogsFrequencyChart, setShowLiveLogsFrequencyChart] =
+		useState(true);
 
 	const listQuery = useMemo(() => {
-		if (!stagedQuery || stagedQuery.builder.queryData.length < 1) return null;
+		if (!stagedQuery || stagedQuery.builder.queryData.length < 1) {
+			return null;
+		}
 
 		return stagedQuery.builder.queryData.find((item) => !item.disabled) || null;
 	}, [stagedQuery]);
@@ -46,6 +57,8 @@ function LiveLogsContainer(): JSX.Element {
 		dataSource: DataSource.LOGS,
 		aggregateOperator: listQuery?.aggregateOperator || StringOperators.NOOP,
 	});
+
+	const [isFieldsSelectorOpen, setIsFieldsSelectorOpen] = useState(false);
 
 	const formatItems = [
 		{
@@ -219,9 +232,8 @@ function LiveLogsContainer(): JSX.Element {
 					<div className="live-logs-frequency-chart-view-controller">
 						<Typography>Frequency chart</Typography>
 						<Switch
-							size="small"
-							checked={showLiveLogsFrequencyChart}
-							defaultChecked
+							value={showLiveLogsFrequencyChart}
+							defaultValue
 							onChange={handleToggleFrequencyChart}
 						/>
 					</div>
@@ -230,6 +242,7 @@ function LiveLogsContainer(): JSX.Element {
 						items={formatItems}
 						selectedOptionFormat={options.format}
 						config={config}
+						onOpenColumns={(): void => setIsFieldsSelectorOpen(true)}
 					/>
 				</div>
 
@@ -247,13 +260,29 @@ function LiveLogsContainer(): JSX.Element {
 					<LiveLogsList
 						logs={logs}
 						isLoading={initialLoading && logs.length === 0}
+						handleChangeSelectedView={handleChangeSelectedView}
 					/>
 				</div>
 			</div>
 
 			<GoToTop />
+			{config.fieldsSelector && (
+				<FieldsSelector
+					isOpen={isFieldsSelectorOpen}
+					title="Edit columns"
+					fields={config.fieldsSelector.value}
+					onFieldsChange={config.fieldsSelector.onFieldsChange}
+					onClose={(): void => setIsFieldsSelectorOpen(false)}
+					signal={DataSource.LOGS}
+					requiredFields={LOGS_REQUIRED_COLUMNS}
+				/>
+			)}
 		</div>
 	);
 }
+
+LiveLogsContainer.defaultProps = {
+	handleChangeSelectedView: undefined,
+};
 
 export default LiveLogsContainer;

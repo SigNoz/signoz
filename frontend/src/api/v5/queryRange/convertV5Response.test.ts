@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
 import { SuccessResponse } from 'types/api';
 import {
 	MetricRangePayloadV5,
@@ -53,18 +52,18 @@ describe('convertV5ResponseToLegacy', () => {
 					alias: '__result_0',
 					meta: {},
 					series: [
-						({
+						{
 							labels: [
 								{
-									key: ({ name: 'service.name' } as unknown) as TelemetryFieldKey,
+									key: { name: 'service.name' } as unknown as TelemetryFieldKey,
 									value: 'adservice',
 								},
 							],
 							values: [
-								({ timestamp: 1000, value: 10 } as unknown) as TimeSeriesValue,
-								({ timestamp: 2000, value: 12 } as unknown) as TimeSeriesValue,
+								{ timestamp: 1000, value: 10 } as unknown as TimeSeriesValue,
+								{ timestamp: 2000, value: 12 } as unknown as TimeSeriesValue,
 							],
-						} as unknown) as TimeSeries,
+						} as unknown as TimeSeries,
 					],
 				},
 			],
@@ -73,7 +72,7 @@ describe('convertV5ResponseToLegacy', () => {
 		const v5Data: QueryRangeResponseV5 = {
 			type: 'time_series',
 			data: { results: [timeSeries] },
-			meta: { rowsScanned: 0, bytesScanned: 0, durationMs: 0 },
+			meta: { rowsScanned: 0, bytesScanned: 0, durationMs: 0, stepIntervals: {} },
 		};
 
 		const params = makeBaseParams('time_series', [
@@ -89,10 +88,8 @@ describe('convertV5ResponseToLegacy', () => {
 			},
 		]);
 
-		const input: SuccessResponse<
-			MetricRangePayloadV5,
-			QueryRangeRequestV5
-		> = makeBaseSuccess({ data: v5Data }, params);
+		const input: SuccessResponse<MetricRangePayloadV5, QueryRangeRequestV5> =
+			makeBaseSuccess({ data: v5Data }, params);
 
 		const legendMap = { A: '{{service.name}}' };
 		const result = convertV5ResponseToLegacy(input, legendMap, false);
@@ -102,7 +99,7 @@ describe('convertV5ResponseToLegacy', () => {
 		const q = result.payload.data.result[0];
 		expect(q.queryName).toBe('A');
 		expect(q.legend).toBe('{{service.name}}');
-		expect(q.series?.[0]).toEqual(
+		expect(q.series?.[0]).toStrictEqual(
 			expect.objectContaining({
 				labels: { 'service.name': 'adservice' },
 				values: [
@@ -122,33 +119,33 @@ describe('convertV5ResponseToLegacy', () => {
 		const scalar: ScalarData = {
 			columns: [
 				// group column
-				({
+				{
 					name: 'service.name',
 					queryName: 'A',
 					aggregationIndex: 0,
 					columnType: 'group',
-				} as unknown) as ScalarData['columns'][number],
+				} as unknown as ScalarData['columns'][number],
 				// aggregation 0
-				({
+				{
 					name: '__result_0',
 					queryName: 'A',
 					aggregationIndex: 0,
 					columnType: 'aggregation',
-				} as unknown) as ScalarData['columns'][number],
+				} as unknown as ScalarData['columns'][number],
 				// aggregation 1
-				({
+				{
 					name: '__result_1',
 					queryName: 'A',
 					aggregationIndex: 1,
 					columnType: 'aggregation',
-				} as unknown) as ScalarData['columns'][number],
+				} as unknown as ScalarData['columns'][number],
 				// formula F1
-				({
+				{
 					name: '__result',
 					queryName: 'F1',
 					aggregationIndex: 0,
 					columnType: 'aggregation',
-				} as unknown) as ScalarData['columns'][number],
+				} as unknown as ScalarData['columns'][number],
 			],
 			data: [['adservice', 606, 1.452, 151.5]],
 		};
@@ -156,7 +153,7 @@ describe('convertV5ResponseToLegacy', () => {
 		const v5Data: QueryRangeResponseV5 = {
 			type: 'scalar',
 			data: { results: [scalar] },
-			meta: { rowsScanned: 0, bytesScanned: 0, durationMs: 0 },
+			meta: { rowsScanned: 0, bytesScanned: 0, durationMs: 0, stepIntervals: {} },
 		};
 
 		const params = makeBaseParams('scalar', [
@@ -175,23 +172,21 @@ describe('convertV5ResponseToLegacy', () => {
 			},
 			{
 				type: 'builder_formula',
-				spec: ({
+				spec: {
 					name: 'F1',
 					expression: 'A * 0.25',
-				} as unknown) as QueryBuilderFormula,
+				} as unknown as QueryBuilderFormula,
 			},
 		]);
 
-		const input: SuccessResponse<
-			MetricRangePayloadV5,
-			QueryRangeRequestV5
-		> = makeBaseSuccess({ data: v5Data }, params);
+		const input: SuccessResponse<MetricRangePayloadV5, QueryRangeRequestV5> =
+			makeBaseSuccess({ data: v5Data }, params);
 		const legendMap = { A: '{{service.name}}', F1: '' };
 		const result = convertV5ResponseToLegacy(input, legendMap, false);
 
 		expect(result.payload.data.resultType).toBe('scalar');
 		const [tableEntry] = result.payload.data.result;
-		expect(tableEntry.table?.columns).toEqual([
+		expect(tableEntry.table?.columns).toStrictEqual([
 			{
 				name: 'service.name',
 				queryName: 'A',
@@ -207,7 +202,7 @@ describe('convertV5ResponseToLegacy', () => {
 			},
 			{ name: 'F1', queryName: 'F1', isValueColumn: true, id: 'F1' },
 		]);
-		expect(tableEntry.table?.rows?.[0]).toEqual({
+		expect(tableEntry.table?.rows?.[0]).toStrictEqual({
 			data: {
 				'service.name': 'adservice',
 				'A.count()': 606,
@@ -239,7 +234,7 @@ describe('convertV5ResponseToLegacy', () => {
 		const v5Data: QueryRangeResponseV5 = {
 			type: 'scalar',
 			data: { results: [scalar] },
-			meta: { rowsScanned: 0, bytesScanned: 0, durationMs: 0 },
+			meta: { rowsScanned: 0, bytesScanned: 0, durationMs: 0, stepIntervals: {} },
 		};
 
 		const params = makeBaseParams('scalar', [
@@ -255,16 +250,14 @@ describe('convertV5ResponseToLegacy', () => {
 			},
 		]);
 
-		const input: SuccessResponse<
-			MetricRangePayloadV5,
-			QueryRangeRequestV5
-		> = makeBaseSuccess({ data: v5Data }, params);
+		const input: SuccessResponse<MetricRangePayloadV5, QueryRangeRequestV5> =
+			makeBaseSuccess({ data: v5Data }, params);
 		const legendMap = { A: '{{service.name}}' };
 		const result = convertV5ResponseToLegacy(input, legendMap, true);
 
 		expect(result.payload.data.resultType).toBe('scalar');
 		const [tableEntry] = result.payload.data.result;
-		expect(tableEntry.table?.columns).toEqual([
+		expect(tableEntry.table?.columns).toStrictEqual([
 			{
 				name: 'service.name',
 				queryName: 'A',
@@ -274,10 +267,116 @@ describe('convertV5ResponseToLegacy', () => {
 			// Single aggregation: name resolves to legend, id resolves to queryName
 			{ name: '{{service.name}}', queryName: 'A', isValueColumn: true, id: 'A' },
 		]);
-		expect(tableEntry.table?.rows?.[0]).toEqual({
+		expect(tableEntry.table?.rows?.[0]).toStrictEqual({
 			data: {
 				'service.name': 'adservice',
 				A: 580,
+			},
+		});
+	});
+
+	it('clickhouse_sql scalar keeps each value column distinct (regression: all-"A" collapse)', () => {
+		const scalar: ScalarData = {
+			columns: [
+				{
+					name: 'service.name',
+					queryName: 'A',
+					aggregationIndex: 0,
+					columnType: 'group',
+				} as unknown as ScalarData['columns'][number],
+				{
+					name: 'current_availability',
+					queryName: 'A',
+					aggregationIndex: 0,
+					columnType: 'aggregation',
+				} as unknown as ScalarData['columns'][number],
+				{
+					name: 'error_budget_remaining',
+					queryName: 'A',
+					aggregationIndex: 1,
+					columnType: 'aggregation',
+				} as unknown as ScalarData['columns'][number],
+				{
+					name: 'budget_status',
+					queryName: 'A',
+					aggregationIndex: 2,
+					columnType: 'group',
+				} as unknown as ScalarData['columns'][number],
+				{
+					name: 'total_requests',
+					queryName: 'A',
+					aggregationIndex: 4,
+					columnType: 'aggregation',
+				} as unknown as ScalarData['columns'][number],
+			],
+			data: [['kuja-api_gateway-service', 99.985, 0.985, 'Healthy ✅', 2181216]],
+		};
+
+		const v5Data: QueryRangeResponseV5 = {
+			type: 'scalar',
+			data: { results: [scalar] },
+			meta: { rowsScanned: 0, bytesScanned: 0, durationMs: 0, stepIntervals: {} },
+		};
+
+		// A clickhouse_sql envelope contributes no aggregation metadata.
+		const params = makeBaseParams('scalar', [
+			{
+				type: 'clickhouse_sql',
+				spec: {
+					name: 'A',
+					query: 'SELECT ...',
+					disabled: false,
+				},
+			} as unknown as QueryRangeRequestV5['compositeQuery']['queries'][number],
+		]);
+
+		const input: SuccessResponse<MetricRangePayloadV5, QueryRangeRequestV5> =
+			makeBaseSuccess({ data: v5Data }, params);
+		// formatForWeb=true is the table-panel path.
+		const result = convertV5ResponseToLegacy(input, { A: '' }, true);
+
+		const [tableEntry] = result.payload.data.result;
+		// Headers keep their real names instead of collapsing to "A".
+		expect(tableEntry.table?.columns).toStrictEqual([
+			{
+				name: 'service.name',
+				queryName: 'A',
+				isValueColumn: false,
+				id: 'service.name',
+			},
+			{
+				name: 'current_availability',
+				queryName: 'A',
+				isValueColumn: true,
+				id: 'current_availability',
+			},
+			{
+				name: 'error_budget_remaining',
+				queryName: 'A',
+				isValueColumn: true,
+				id: 'error_budget_remaining',
+			},
+			{
+				name: 'budget_status',
+				queryName: 'A',
+				isValueColumn: false,
+				id: 'budget_status',
+			},
+			{
+				name: 'total_requests',
+				queryName: 'A',
+				isValueColumn: true,
+				id: 'total_requests',
+			},
+		]);
+		// Ids are unique, so value columns don't overwrite each other in the row.
+		expect(tableEntry.table?.rows?.[0]).toStrictEqual({
+			data: {
+				'service.name': 'kuja-api_gateway-service',
+				current_availability: 99.985,
+				error_budget_remaining: 0.985,
+				budget_status: 'Healthy ✅',
+				total_requests: 2181216,
 			},
 		});
 	});

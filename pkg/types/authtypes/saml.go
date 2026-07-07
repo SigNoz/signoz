@@ -20,6 +20,9 @@ type SamlConfig struct {
 	// For providers like jumpcloud, this should be set to true.
 	// Note: This is the reverse of WantAuthnRequestsSigned. If WantAuthnRequestsSigned is false, then InsecureSkipAuthNRequestsSigned should be true.
 	InsecureSkipAuthNRequestsSigned bool `json:"insecureSkipAuthNRequestsSigned"`
+
+	// Mapping of SAML assertion attributes
+	AttributeMapping AttributeMapping `json:"attributeMapping"`
 }
 
 func (config *SamlConfig) UnmarshalJSON(data []byte) error {
@@ -40,6 +43,12 @@ func (config *SamlConfig) UnmarshalJSON(data []byte) error {
 
 	if temp.SamlCert == "" {
 		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "samlCert is required")
+	}
+
+	if temp.AttributeMapping == (AttributeMapping{}) {
+		if err := json.Unmarshal([]byte("{}"), &temp.AttributeMapping); err != nil {
+			return err
+		}
 	}
 
 	*config = SamlConfig(temp)

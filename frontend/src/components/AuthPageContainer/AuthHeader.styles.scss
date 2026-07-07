@@ -1,0 +1,68 @@
+@import '@signozhq/design-tokens/dist/style.css';
+
+.auth-header {
+	width: 100%;
+	max-width: 1176px;
+	margin: 0 auto;
+	padding: 12px 0;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	position: relative;
+	z-index: 10;
+}
+
+.auth-header-logo {
+	display: flex;
+	align-items: center;
+	gap: 4.9px;
+	text-decoration: none;
+}
+
+.auth-header-logo-icon {
+	width: 17.5px;
+	height: 17.5px;
+	flex-shrink: 0;
+}
+
+.auth-header-logo-text {
+	font-family: Satoshi, var(--font-family-inter, Inter), sans-serif;
+	font-size: 15.4px;
+	font-weight: 500;
+	line-height: 17.5px;
+	color: var(--l1-foreground);
+	white-space: nowrap;
+}
+
+.auth-header-help-button {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	height: 32px;
+	padding: 10px 16px;
+	background: var(--l2-background);
+	color: var(--l2-foreground);
+	border: none;
+	border-radius: 2px;
+	cursor: pointer;
+	transition: opacity 0.2s ease;
+
+	span {
+		font-family: var(--font-family-inter, Inter, sans-serif);
+		font-size: 11px;
+		font-weight: 500;
+		line-height: 1;
+		color: var(--l2-foreground);
+		text-align: center;
+	}
+
+	svg {
+		flex-shrink: 0;
+		color: var(--l2-foreground);
+	}
+
+	&:hover {
+		opacity: 0.8;
+	}
+}

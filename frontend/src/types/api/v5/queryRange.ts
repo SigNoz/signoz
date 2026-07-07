@@ -1,5 +1,7 @@
 // ===================== Base Types =====================
 
+import { ReduceOperators } from 'types/common/queryBuilder';
+
 import { Warning } from '..';
 
 export type Step = string | number; // Duration string (e.g., "30s") or seconds as number
@@ -121,7 +123,7 @@ export type VariableType = 'query' | 'dynamic' | 'custom' | 'text';
 
 export interface VariableItem {
 	type?: VariableType;
-	value: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+	value: any;
 }
 
 // ===================== Core Interface Types =====================
@@ -190,7 +192,7 @@ export interface MetricAggregation {
 	temporality: Temporality;
 	timeAggregation: TimeAggregation;
 	spaceAggregation: SpaceAggregation;
-	reduceTo?: string;
+	reduceTo?: ReduceOperators;
 }
 
 export interface SecondaryAggregation {
@@ -268,7 +270,7 @@ export interface QueryBuilderJoin {
 	right: QueryRef;
 	type: JoinType;
 	on: string;
-	aggregations?: any[]; // eslint-disable-line @typescript-eslint/no-explicit-any
+	aggregations?: any[];
 	selectFields?: TelemetryFieldKey[];
 	filter?: Filter;
 	groupBy?: GroupByKey[];
@@ -332,11 +334,12 @@ export interface ExecStats {
 	rowsScanned: number;
 	bytesScanned: number;
 	durationMs: number;
+	stepIntervals: Record<string, number>;
 }
 
 export interface Label {
 	key: TelemetryFieldKey;
-	value: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+	value: any;
 }
 
 export interface Bucket {
@@ -359,7 +362,7 @@ export interface TimeSeries {
 export interface AggregationBucket {
 	index: number;
 	alias: string;
-	meta: Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
+	meta: Record<string, any>;
 	series: TimeSeries[];
 	predictedSeries?: TimeSeries[];
 	upperBoundSeries?: TimeSeries[];
@@ -383,12 +386,12 @@ export interface ColumnDescriptor extends TelemetryFieldKey {
 
 export interface ScalarData {
 	columns: ColumnDescriptor[];
-	data: any[][]; // eslint-disable-line @typescript-eslint/no-explicit-any
+	data: any[][];
 }
 
 export interface RawRow {
 	timestamp: string; // ISO date-time
-	data: Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
+	data: Record<string, any>;
 }
 
 export interface RawData {
@@ -399,7 +402,7 @@ export interface RawData {
 
 export interface DistributionData {
 	// Structure to be defined based on requirements
-	[key: string]: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+	[key: string]: any;
 }
 
 // Response data structures with results array

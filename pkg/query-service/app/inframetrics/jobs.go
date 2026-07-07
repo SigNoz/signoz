@@ -11,6 +11,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
+	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"golang.org/x/exp/slices"
 )
@@ -141,7 +143,7 @@ func NewJobsRepo(reader interfaces.Reader, querierV2 interfaces.Querier) *JobsRe
 	return &JobsRepo{reader: reader, querierV2: querierV2}
 }
 
-func (d *JobsRepo) GetJobAttributeKeys(ctx context.Context, req v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
+func (d *JobsRepo) GetJobAttributeKeys(ctx context.Context, orgID valuer.UUID, req v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
 	// TODO(srikanthccv): remove hardcoded metric name and support keys from any pod metric
 	req.DataSource = v3.DataSourceMetrics
 	req.AggregateAttribute = metricToUseForJobs
@@ -149,7 +151,7 @@ func (d *JobsRepo) GetJobAttributeKeys(ctx context.Context, req v3.FilterAttribu
 		req.Limit = 50
 	}
 
-	attributeKeysResponse, err := d.reader.GetMetricAttributeKeys(ctx, &req)
+	attributeKeysResponse, err := d.reader.GetMetricAttributeKeys(ctx, orgID, &req)
 	if err != nil {
 		return nil, err
 	}
@@ -167,14 +169,14 @@ func (d *JobsRepo) GetJobAttributeKeys(ctx context.Context, req v3.FilterAttribu
 	return &v3.FilterAttributeKeyResponse{AttributeKeys: filteredKeys}, nil
 }
 
-func (d *JobsRepo) GetJobAttributeValues(ctx context.Context, req v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
+func (d *JobsRepo) GetJobAttributeValues(ctx context.Context, orgID valuer.UUID, req v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
 	req.DataSource = v3.DataSourceMetrics
 	req.AggregateAttribute = metricToUseForJobs
 	if req.Limit == 0 {
 		req.Limit = 50
 	}
 
-	attributeValuesResponse, err := d.reader.GetMetricAttributeValues(ctx, &req)
+	attributeValuesResponse, err := d.reader.GetMetricAttributeValues(ctx, orgID, &req)
 	if err != nil {
 		return nil, err
 	}
@@ -274,6 +276,10 @@ func (d *JobsRepo) getTopJobGroups(ctx context.Context, orgID valuer.UUID, req m
 		topJobGroupsQueryRangeParams.CompositeQuery.BuilderQueries[queryName] = query
 	}
 
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "inframetrics",
+		instrumentationtypes.CodeFunctionName: "getTopJobGroups",
+	})
 	queryResponse, _, err := d.querierV2.QueryRange(ctx, orgID, topJobGroupsQueryRangeParams)
 	if err != nil {
 		return nil, nil, err
@@ -399,6 +405,10 @@ func (d *JobsRepo) GetJobList(ctx context.Context, orgID valuer.UUID, req model.
 		}
 	}
 
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "inframetrics",
+		instrumentationtypes.CodeFunctionName: "GetJobList",
+	})
 	queryResponse, _, err := d.querierV2.QueryRange(ctx, orgID, query)
 	if err != nil {
 		return resp, err

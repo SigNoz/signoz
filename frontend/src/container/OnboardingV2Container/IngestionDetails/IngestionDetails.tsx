@@ -1,20 +1,18 @@
-import { Skeleton, Typography } from 'antd';
-import logEvent from 'api/common/logEvent';
-import { AxiosError } from 'axios';
-import { useGetDeploymentsData } from 'hooks/CustomDomain/useGetDeploymentsData';
-import { useGetAllIngestionsKeys } from 'hooks/IngestionKeys/useGetAllIngestionKeys';
-import { useNotifications } from 'hooks/useNotifications';
-import {
-	ArrowUpRight,
-	Copy,
-	Info,
-	Key,
-	MapPin,
-	TriangleAlert,
-} from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
-import { IngestionKeyProps } from 'types/api/ingestionKeys/types';
+import { Button, Skeleton, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
+import logEvent from 'api/common/logEvent';
+import { useGetIngestionKeys } from 'api/generated/services/gateway';
+import { GatewaytypesIngestionKeyDTO } from 'api/generated/services/sigNoz.schemas';
+import { DOCS_BASE_URL } from 'constants/app';
+import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
+import { useGetGlobalConfig } from 'api/generated/services/global';
+import { useNotifications } from 'hooks/useNotifications';
+import { ArrowUpRight, Copy, Info, Key, TriangleAlert } from '@signozhq/icons';
+import { withBasePath } from 'utils/basePath';
+
+import './IngestionDetails.styles.scss';
 
 function maskKey(key: string, visibleStart = 4, visibleEnd = 4): string {
 	if (!key) {
@@ -43,27 +41,27 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 	const { notifications } = useNotifications();
 	const [, handleCopyToClipboard] = useCopyToClipboard();
 
-	const [firstIngestionKey, setFirstIngestionKey] = useState<IngestionKeyProps>(
-		{} as IngestionKeyProps,
-	);
+	const [firstIngestionKey, setFirstIngestionKey] =
+		useState<GatewaytypesIngestionKeyDTO>({} as GatewaytypesIngestionKeyDTO);
 
 	const {
 		data: ingestionKeys,
 		isLoading: isIngestionKeysLoading,
 		error,
 		isError,
-	} = useGetAllIngestionsKeys({
-		search: '',
+	} = useGetIngestionKeys({
 		page: 1,
 		per_page: 10,
 	});
 
 	const {
-		data: deploymentsData,
-		isLoading: isLoadingDeploymentsData,
-		isFetching: isFetchingDeploymentsData,
-		isError: isDeploymentsDataError,
-	} = useGetDeploymentsData(true);
+		data: globalConfig,
+		isLoading: isLoadingGlobalConfig,
+		isError: isErrorGlobalConfig,
+		error: globalConfigError,
+	} = useGetGlobalConfig();
+
+	const globalConfigApiError = convertToApiError(globalConfigError);
 
 	const handleCopyKey = (text: string): void => {
 		handleCopyToClipboard(text);
@@ -73,18 +71,21 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 	};
 
 	useEffect(() => {
-		if (ingestionKeys?.data.data && ingestionKeys?.data.data.length > 0) {
-			setFirstIngestionKey(ingestionKeys?.data.data[0]);
+		if (!ingestionKeys || isIngestionKeysLoading) {
+			return;
 		}
-	}, [ingestionKeys]);
+
+		if (ingestionKeys.data.keys && ingestionKeys.data.keys.length > 0) {
+			setFirstIngestionKey(ingestionKeys.data.keys[0]);
+		}
+	}, [isIngestionKeysLoading, ingestionKeys]);
 
 	return (
 		<div className="configure-product-ingestion-section-content">
 			{isError && (
 				<div className="ingestion-endpoint-section-error-container">
 					<Typography.Text className="ingestion-endpoint-section-error-text error">
-						<TriangleAlert size={14} />{' '}
-						{(error as AxiosError)?.message || 'Something went wrong'}
+						<TriangleAlert size={14} /> {error.message || 'Something went wrong'}
 					</Typography.Text>
 
 					<div className="ingestion-setup-details-links">
@@ -93,7 +94,7 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 						<span>
 							Find your ingestion URL and learn more about sending data to SigNoz{' '}
 							<a
-								href="https://signoz.io/docs/ingestion/signoz-cloud/overview/"
+								href={`${DOCS_BASE_URL}/docs/ingestion/signoz-cloud/overview/`}
 								target="_blank"
 								className="learn-more"
 								rel="noreferrer"
@@ -113,9 +114,7 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 						</Typography.Text>
 
 						<div className="ingestion-key-details-section-key">
-							{isIngestionKeysLoading ||
-							isLoadingDeploymentsData ||
-							isFetchingDeploymentsData ? (
+							{isIngestionKeysLoading || isLoadingGlobalConfig ? (
 								<div className="skeleton-container">
 									<Skeleton.Input active className="skeleton-input" />
 									<Skeleton.Input active className="skeleton-input" />
@@ -124,41 +123,65 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 								</div>
 							) : (
 								<div className="ingestion-key-region-details-section">
-									{!isDeploymentsDataError &&
-										!isLoadingDeploymentsData &&
-										!isFetchingDeploymentsData && (
-											<div className="ingestion-region-container">
-												<Typography.Text className="ingestion-region-label">
-													<MapPin size={14} /> Region
-												</Typography.Text>
+									{!isLoadingGlobalConfig && (
+										<div className="ingestion-region-container">
+											<Typography.Text className="ingestion-region-label">
+												Ingestion URL
+											</Typography.Text>
 
+											{!isErrorGlobalConfig && (
 												<Typography.Text className="ingestion-region-value-copy">
-													{deploymentsData?.data?.data?.cluster.region.name}
+													{globalConfig?.data?.ingestion_url}
 
 													<Copy
 														size={14}
 														className="copy-btn"
 														onClick={(): void => {
 															logEvent(
-																`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.REGION_COPIED}`,
+																`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.INGESTION_URL_COPIED}`,
 																{},
 															);
 
-															handleCopyKey(
-																deploymentsData?.data?.data?.cluster.region.name || '',
-															);
+															const ingestionURL = globalConfig?.data?.ingestion_url;
+
+															if (ingestionURL) {
+																handleCopyKey(ingestionURL);
+															}
 														}}
 													/>
 												</Typography.Text>
-											</div>
-										)}
+											)}
+
+											{isErrorGlobalConfig && (
+												<Tooltip
+													rootClassName="ingestion-url-error-tooltip"
+													arrow={false}
+													title={
+														<div className="ingestion-url-error-content">
+															<Typography.Text className="ingestion-url-error-code">
+																{globalConfigApiError?.getErrorCode()}
+															</Typography.Text>
+
+															<Typography.Text className="ingestion-url-error-message">
+																{globalConfigApiError?.getErrorMessage()}
+															</Typography.Text>
+														</div>
+													}
+													placement="topLeft"
+												>
+													<Button type="text" icon={<TriangleAlert size={14} />} />
+												</Tooltip>
+											)}
+										</div>
+									)}
+
 									<div className="ingestion-key-container">
 										<Typography.Text className="ingestion-key-label">
 											<Key size={14} /> Ingestion Key
 										</Typography.Text>
 
 										<Typography.Text className="ingestion-key-value-copy">
-											{maskKey(firstIngestionKey?.value)}
+											{maskKey(firstIngestionKey?.value || '')}
 
 											<Copy
 												size={14}
@@ -168,7 +191,9 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 														`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.INGESTION_KEY_COPIED}`,
 														{},
 													);
-													handleCopyKey(firstIngestionKey?.value);
+													if (firstIngestionKey?.value) {
+														handleCopyKey(firstIngestionKey.value);
+													}
 												}}
 											/>
 										</Typography.Text>
@@ -184,7 +209,7 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 						<span>
 							We support{' '}
 							<a
-								href="https://signoz.io/docs/ingestion/signoz-cloud/keys/"
+								href={`${DOCS_BASE_URL}/docs/ingestion/signoz-cloud/keys/`}
 								target="_blank"
 								className="learn-more"
 								rel="noreferrer"
@@ -193,7 +218,7 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 							</a>
 							. To create a new one,{' '}
 							<a
-								href="/settings/ingestion-settings"
+								href={withBasePath('/settings/ingestion-settings')}
 								target="_blank"
 								className="learn-more"
 								rel="noreferrer"

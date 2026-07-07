@@ -2,8 +2,13 @@ package opaquetokenizer
 
 import (
 	"context"
+	"log/slog"
 	"slices"
 	"time"
+
+	"github.com/dgraph-io/ristretto/v2"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -14,9 +19,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/cachetypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/dgraph-io/ristretto/v2"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
 )
 
 var (
@@ -81,7 +83,7 @@ func (provider *provider) Start(ctx context.Context) error {
 
 			orgs, err := provider.orgGetter.ListByOwnedKeyRange(ctx)
 			if err != nil {
-				provider.settings.Logger().ErrorContext(ctx, "failed to get orgs data", "error", err)
+				provider.settings.Logger().ErrorContext(ctx, "failed to get orgs data", errors.Attr(err))
 				span.End()
 				continue
 			}
@@ -89,12 +91,12 @@ func (provider *provider) Start(ctx context.Context) error {
 			for _, org := range orgs {
 				if err := provider.gc(ctx, org); err != nil {
 					span.RecordError(err)
-					provider.settings.Logger().ErrorContext(ctx, "failed to garbage collect tokens", "error", err, "org_id", org.ID)
+					provider.settings.Logger().ErrorContext(ctx, "failed to garbage collect tokens", errors.Attr(err), slog.Any("org_id", org.ID))
 				}
 
 				if err := provider.flushLastObservedAt(ctx, org); err != nil {
 					span.RecordError(err)
-					provider.settings.Logger().ErrorContext(ctx, "failed to flush tokens", "error", err, "org_id", org.ID)
+					provider.settings.Logger().ErrorContext(ctx, "failed to flush tokens", errors.Attr(err), slog.Any("org_id", org.ID))
 				}
 			}
 
@@ -230,12 +232,12 @@ func (provider *provider) Stop(ctx context.Context) error {
 	for _, org := range orgs {
 		// garbage collect tokens on stop
 		if err := provider.gc(ctx, org); err != nil {
-			provider.settings.Logger().ErrorContext(ctx, "failed to garbage collect tokens", "error", err, "org_id", org.ID)
+			provider.settings.Logger().ErrorContext(ctx, "failed to garbage collect tokens", errors.Attr(err), slog.Any("org_id", org.ID))
 		}
 
 		// flush tokens on stop
 		if err := provider.flushLastObservedAt(ctx, org); err != nil {
-			provider.settings.Logger().ErrorContext(ctx, "failed to flush tokens", "error", err, "org_id", org.ID)
+			provider.settings.Logger().ErrorContext(ctx, "failed to flush tokens", errors.Attr(err), slog.Any("org_id", org.ID))
 		}
 	}
 
@@ -254,7 +256,7 @@ func (provider *provider) SetLastObservedAt(ctx context.Context, accessToken str
 	}
 
 	if ok := provider.lastObservedAtCache.Set(lastObservedAtCacheKey(accessToken, token.UserID), lastObservedAt, 24); !ok {
-		provider.settings.Logger().ErrorContext(ctx, "error caching last observed at timestamp", "user_id", token.UserID)
+		provider.settings.Logger().ErrorContext(ctx, "error caching last observed at timestamp", slog.Any("user_id", token.UserID))
 	}
 
 	err = provider.cache.Set(ctx, emptyOrgID, accessTokenCacheKey(accessToken), token, provider.config.Lifetime.Max)
@@ -410,7 +412,7 @@ func (provider *provider) setToken(ctx context.Context, token *authtypes.Token, 
 }
 
 func (provider *provider) setIdentity(ctx context.Context, identity *authtypes.Identity) error {
-	err := provider.cache.Set(ctx, emptyOrgID, identityCacheKey(identity.UserID), identity, -1)
+	err := provider.cache.Set(ctx, emptyOrgID, identityCacheKey(identity.UserID), identity, 0)
 	if err != nil {
 		return err
 	}
@@ -434,7 +436,7 @@ func (provider *provider) getOrGetSetIdentity(ctx context.Context, userID valuer
 		return nil, err
 	}
 
-	err = provider.cache.Set(ctx, emptyOrgID, identityCacheKey(userID), identity, -1)
+	err = provider.cache.Set(ctx, emptyOrgID, identityCacheKey(userID), identity, 0)
 	if err != nil {
 		return nil, err
 	}

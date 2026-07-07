@@ -45,7 +45,7 @@ describe('useComponentPermission', () => {
 			true, // edit_widget
 			true, // add_panel
 		];
-		expect(result.current).toEqual(expectedResult);
+		expect(result.current).toStrictEqual(expectedResult);
 	});
 
 	it('should return correct permissions for EDITOR role', () => {
@@ -70,7 +70,7 @@ describe('useComponentPermission', () => {
 			true, // edit_widget
 			true, // add_panel
 		];
-		expect(result.current).toEqual(expectedResult);
+		expect(result.current).toStrictEqual(expectedResult);
 	});
 
 	it('should return correct permissions for VIEWER role', () => {
@@ -95,6 +95,6 @@ describe('useComponentPermission', () => {
 			false, // edit_widget
 			false, // add_panel
 		];
-		expect(result.current).toEqual(expectedResult);
+		expect(result.current).toStrictEqual(expectedResult);
 	});
 });

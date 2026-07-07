@@ -11,7 +11,7 @@ export enum LicenseStatus {
 
 export enum LicenseState {
 	DEFAULTED = 'DEFAULTED',
-	ACTIVE = 'ACTIVE',
+	ACTIVATED = 'ACTIVATED',
 	EXPIRED = 'EXPIRED',
 	ISSUED = 'ISSUED',
 	EVALUATING = 'EVALUATING',

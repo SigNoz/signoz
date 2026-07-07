@@ -1,3 +1,4 @@
+import { ForwardedRef, ReactNode } from 'react';
 import {
 	ActiveElement,
 	Chart,
@@ -7,7 +8,6 @@ import {
 	ChartType,
 	TimeUnit,
 } from 'chart.js';
-import { ForwardedRef, ReactNode } from 'react';
 
 import {
 	dragSelectPluginId,

@@ -1,11 +1,9 @@
-import './QueryFunctions.styles.scss';
-
-import { Button, Tooltip, Typography } from 'antd';
-import cx from 'classnames';
-import { useIsDarkMode } from 'hooks/useDarkMode';
-import { cloneDeep, pullAt } from 'lodash-es';
-import { Plus } from 'lucide-react';
 import { useState } from 'react';
+import { Button, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
+import cx from 'classnames';
+import { cloneDeep, pullAt } from 'lodash-es';
+import { Plus } from '@signozhq/icons';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryFunction } from 'types/api/v5/queryRange';
 import { DataSource, QueryFunctionsTypes } from 'types/common/queryBuilder';
@@ -13,6 +11,8 @@ import { normalizeFunctionName } from 'utils/functionNameNormalizer';
 
 import Function from './Function';
 import { toFloat64 } from './utils';
+
+import './QueryFunctions.styles.scss';
 
 const defaultMetricFunctionStruct: QueryFunction = {
 	name: QueryFunctionsTypes.CUTOFF_MIN as any,
@@ -93,9 +93,8 @@ export default function QueryFunctions({
 		})),
 	);
 
-	const isDarkMode = useIsDarkMode();
-
 	const hasAnomalyFunction = functions.some((func) => func.name === 'anomaly');
+	const hasFunctions = functions.length > 0;
 
 	const handleAddNewFunction = (): void => {
 		const defaultFunctionStruct =
@@ -180,14 +179,15 @@ export default function QueryFunctions({
 		<div
 			className={cx(
 				'query-functions-container',
-				functions && functions.length > 0 ? 'hasFunctions' : '',
+				hasFunctions ? 'hasFunctions' : '',
 			)}
 		>
-			<Button className="periscope-btn function-btn">
-				<FunctionIcon
-					className="function-icon"
-					fillColor={!isDarkMode ? '#0B0C0E' : 'white'}
-				/>
+			<Button
+				className="periscope-btn function-btn"
+				disabled={hasFunctions}
+				onClick={handleAddNewFunction}
+			>
+				<FunctionIcon className="function-icon" fillColor="var(--l1-foreground)" />
 			</Button>
 
 			<div className="query-functions-list">
@@ -216,7 +216,7 @@ export default function QueryFunctions({
 							Add new function
 							<Typography.Link
 								style={{ textDecoration: 'underline' }}
-								href="https://signoz.io/docs/userguide/query-builder/?utm_source=product&utm_medium=query-builder#functions-for-extended-data-analysis"
+								href="https://signoz.io/docs/querying/functions-extended-analysis/?utm_source=product&utm_medium=query-builder"
 								target="_blank"
 							>
 								{' '}
@@ -233,7 +233,7 @@ export default function QueryFunctions({
 					disabled={functions && functions.length >= maxFunctions}
 					onClick={handleAddNewFunction}
 				>
-					<Plus size={14} color={!isDarkMode ? '#0B0C0E' : 'white'} />
+					<Plus size={14} color="var(--l1-foreground)" />
 				</Button>
 			</Tooltip>
 		</div>

@@ -1,3 +1,5 @@
+import { ReduceOperators } from 'types/common/queryBuilder';
+
 export const valuePanelWidget = {
 	id: 'b8b93086-ef01-47bf-9044-1e7abd583be4',
 	title: 'signoz latency in ms',
@@ -49,7 +51,7 @@ export const valuePanelWidget = {
 					orderBy: [],
 					groupBy: [],
 					legend: '',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 				},
 			],
 			queryFormulas: [],
@@ -229,7 +231,7 @@ export const valuePanelQueryResponse = {
 						orderBy: [],
 						groupBy: [],
 						legend: '',
-						reduceTo: 'avg',
+						reduceTo: ReduceOperators.AVG,
 					},
 				},
 			},

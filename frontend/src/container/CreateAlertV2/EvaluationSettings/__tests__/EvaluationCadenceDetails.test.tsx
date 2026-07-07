@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { fireEvent, render, screen } from '@testing-library/react';
 import * as alertState from 'container/CreateAlertV2/context';
 import { INITIAL_ADVANCED_OPTIONS_STATE } from 'container/CreateAlertV2/context/constants';
@@ -29,13 +28,14 @@ jest.mock('dayjs', () => {
 	return mockDayjs;
 });
 
-const INITIAL_ADVANCED_OPTIONS_STATE_WITH_CUSTOM_SCHEDULE: AdvancedOptionsState = {
-	...INITIAL_ADVANCED_OPTIONS_STATE,
-	evaluationCadence: {
-		...INITIAL_ADVANCED_OPTIONS_STATE.evaluationCadence,
-		mode: 'custom',
-	},
-};
+const INITIAL_ADVANCED_OPTIONS_STATE_WITH_CUSTOM_SCHEDULE: AdvancedOptionsState =
+	{
+		...INITIAL_ADVANCED_OPTIONS_STATE,
+		evaluationCadence: {
+			...INITIAL_ADVANCED_OPTIONS_STATE.evaluationCadence,
+			mode: 'custom',
+		},
+	};
 
 const mockSetAdvancedOptions = jest.fn();
 jest.spyOn(alertState, 'useCreateAlertState').mockReturnValue(

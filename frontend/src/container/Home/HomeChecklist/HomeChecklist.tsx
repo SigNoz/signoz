@@ -1,15 +1,16 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-import './HomeChecklist.styles.scss';
-
+import { useEffect, useState } from 'react';
 import { Button } from 'antd';
 import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
-import { ArrowRight, ArrowRightToLine, BookOpenText } from 'lucide-react';
+import { ArrowRight, ArrowRightToLine, BookOpenText } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
-import { useEffect, useState } from 'react';
 import { LicensePlatform } from 'types/api/licensesV3/getActive';
 import { USER_ROLES } from 'types/roles';
+import { openInNewTab } from 'utils/navigation';
+
+import './HomeChecklist.styles.scss';
 
 export type ChecklistItem = {
 	id: string;
@@ -99,11 +100,7 @@ function HomeChecklist({
 														) {
 															history.push(item.toRoute || '');
 														} else {
-															window?.open(
-																item.docsLink || '',
-																'_blank',
-																'noopener noreferrer',
-															);
+															openInNewTab(item.docsLink || '');
 														}
 													}}
 												>
@@ -119,7 +116,7 @@ function HomeChecklist({
 																step: item.id,
 															});
 
-															window?.open(item.docsLink, '_blank', 'noopener noreferrer');
+															openInNewTab(item.docsLink ?? '');
 														}}
 													>
 														<BookOpenText size={16} />

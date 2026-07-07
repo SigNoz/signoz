@@ -1,8 +1,14 @@
-function UnAuthorized(): JSX.Element {
+function UnAuthorized({
+	width = 137,
+	height = 137,
+}: {
+	height?: number;
+	width?: number;
+}): JSX.Element {
 	return (
 		<svg
-			width="137"
-			height="137"
+			width={width}
+			height={height}
 			viewBox="0 0 137 137"
 			fill="none"
 			xmlns="http://www.w3.org/2000/svg"

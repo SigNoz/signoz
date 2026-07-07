@@ -1,11 +1,11 @@
-import { Tabs, TabsProps } from 'antd';
-import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 import {
 	generatePath,
 	matchPath,
 	useLocation,
 	useParams,
 } from 'react-router-dom';
+import { Tabs, TabsProps } from 'antd';
+import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 
 import { RouteTabProps } from './types';
 
@@ -70,7 +70,6 @@ function RouteTab({
 					/>
 				)
 			}
-			// eslint-disable-next-line react/jsx-props-no-spreading ---- TODO: remove this once follow the linting rules
 			{...rest}
 		/>
 	);

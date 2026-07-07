@@ -1,0 +1,69 @@
+.drawerSection {
+	composes: drawerSection from '../../shared.module.scss';
+}
+
+.fullWidth {
+	width: 100%;
+}
+
+.pricingField {
+	composes: pricingField from '../../shared.module.scss';
+}
+
+.cacheModeField {
+	margin-top: var(--spacing-5);
+}
+
+.extraBucketsSection {
+	margin-top: var(--spacing-7);
+	gap: var(--spacing-5);
+}
+
+.extraBucketsSectionHead {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.bucketRow {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-2);
+
+	input {
+		flex: 1 auto auto;
+		min-width: 0;
+	}
+}
+
+.bucketRowName {
+	flex: 0 0 110px;
+}
+
+.bucketAddBtn {
+	width: 100%;
+}
+
+.bucketPicker {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: var(--spacing-5);
+	padding: var(--spacing-6);
+	border-radius: 6px;
+	background: var(--l2-background);
+	border: 1px solid var(--l2-border);
+}
+
+.bucketPickerTitle {
+	font-size: var(--periscope-font-size-small);
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: var(--l3-foreground);
+}
+
+.bucketPickerChips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--spacing-4);
+}

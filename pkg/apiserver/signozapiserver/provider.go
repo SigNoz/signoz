@@ -1,0 +1,380 @@
+package signozapiserver
+
+import (
+	"context"
+
+	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/apiserver"
+	"github.com/SigNoz/signoz/pkg/authz"
+	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/flagger"
+	"github.com/SigNoz/signoz/pkg/gateway"
+	"github.com/SigNoz/signoz/pkg/global"
+	"github.com/SigNoz/signoz/pkg/http/handler"
+	"github.com/SigNoz/signoz/pkg/http/middleware"
+	"github.com/SigNoz/signoz/pkg/modules/authdomain"
+	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
+	"github.com/SigNoz/signoz/pkg/modules/dashboard"
+	"github.com/SigNoz/signoz/pkg/modules/fields"
+	"github.com/SigNoz/signoz/pkg/modules/inframonitoring"
+	"github.com/SigNoz/signoz/pkg/modules/llmpricingrule"
+	"github.com/SigNoz/signoz/pkg/modules/metricreductionrule"
+	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
+	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/modules/preference"
+	"github.com/SigNoz/signoz/pkg/modules/promote"
+	"github.com/SigNoz/signoz/pkg/modules/rawdataexport"
+	"github.com/SigNoz/signoz/pkg/modules/rulestatehistory"
+	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
+	"github.com/SigNoz/signoz/pkg/modules/session"
+	"github.com/SigNoz/signoz/pkg/modules/spanmapper"
+	"github.com/SigNoz/signoz/pkg/modules/tracedetail"
+	"github.com/SigNoz/signoz/pkg/modules/user"
+	"github.com/SigNoz/signoz/pkg/querier"
+	"github.com/SigNoz/signoz/pkg/ruler"
+	"github.com/SigNoz/signoz/pkg/statsreporter"
+	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/zeus"
+	"github.com/gorilla/mux"
+)
+
+type provider struct {
+	config                     apiserver.Config
+	settings                   factory.ScopedProviderSettings
+	router                     *mux.Router
+	authzMiddleware            *middleware.AuthZ
+	authzService               authz.AuthZ
+	orgHandler                 organization.Handler
+	userHandler                user.Handler
+	sessionHandler             session.Handler
+	authDomainHandler          authdomain.Handler
+	preferenceHandler          preference.Handler
+	globalHandler              global.Handler
+	promoteHandler             promote.Handler
+	flaggerHandler             flagger.Handler
+	dashboardModule            dashboard.Module
+	dashboardHandler           dashboard.Handler
+	metricsExplorerHandler     metricsexplorer.Handler
+	metricReductionRuleHandler metricreductionrule.Handler
+	infraMonitoringHandler     inframonitoring.Handler
+	gatewayHandler             gateway.Handler
+	fieldsHandler              fields.Handler
+	authzHandler               authz.Handler
+	rawDataExportHandler       rawdataexport.Handler
+	zeusHandler                zeus.Handler
+	querierHandler             querier.Handler
+	serviceAccountHandler      serviceaccount.Handler
+	serviceAccountGetter       serviceaccount.Getter
+	factoryHandler             factory.Handler
+	cloudIntegrationHandler    cloudintegration.Handler
+	ruleStateHistoryHandler    rulestatehistory.Handler
+	spanMapperHandler          spanmapper.Handler
+	alertmanagerHandler        alertmanager.Handler
+	traceDetailHandler         tracedetail.Handler
+	rulerHandler               ruler.Handler
+	llmPricingRuleHandler      llmpricingrule.Handler
+	statsHandler               statsreporter.Handler
+}
+
+func NewFactory(
+	orgGetter organization.Getter,
+	authzService authz.AuthZ,
+	orgHandler organization.Handler,
+	userHandler user.Handler,
+	sessionHandler session.Handler,
+	authDomainHandler authdomain.Handler,
+	preferenceHandler preference.Handler,
+	globalHandler global.Handler,
+	promoteHandler promote.Handler,
+	flaggerHandler flagger.Handler,
+	dashboardModule dashboard.Module,
+	dashboardHandler dashboard.Handler,
+	metricsExplorerHandler metricsexplorer.Handler,
+	metricReductionRuleHandler metricreductionrule.Handler,
+	infraMonitoringHandler inframonitoring.Handler,
+	gatewayHandler gateway.Handler,
+	fieldsHandler fields.Handler,
+	authzHandler authz.Handler,
+	rawDataExportHandler rawdataexport.Handler,
+	zeusHandler zeus.Handler,
+	querierHandler querier.Handler,
+	serviceAccountHandler serviceaccount.Handler,
+	serviceAccountGetter serviceaccount.Getter,
+	factoryHandler factory.Handler,
+	cloudIntegrationHandler cloudintegration.Handler,
+	ruleStateHistoryHandler rulestatehistory.Handler,
+	spanMapperHandler spanmapper.Handler,
+	alertmanagerHandler alertmanager.Handler,
+	llmPricingRuleHandler llmpricingrule.Handler,
+	traceDetailHandler tracedetail.Handler,
+	rulerHandler ruler.Handler,
+	statsHandler statsreporter.Handler,
+) factory.ProviderFactory[apiserver.APIServer, apiserver.Config] {
+	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, providerSettings factory.ProviderSettings, config apiserver.Config) (apiserver.APIServer, error) {
+		return newProvider(
+			ctx,
+			providerSettings,
+			config,
+			orgGetter,
+			authzService,
+			orgHandler,
+			userHandler,
+			sessionHandler,
+			authDomainHandler,
+			preferenceHandler,
+			globalHandler,
+			promoteHandler,
+			flaggerHandler,
+			dashboardModule,
+			dashboardHandler,
+			metricsExplorerHandler,
+			metricReductionRuleHandler,
+			infraMonitoringHandler,
+			gatewayHandler,
+			fieldsHandler,
+			authzHandler,
+			rawDataExportHandler,
+			zeusHandler,
+			querierHandler,
+			serviceAccountHandler,
+			serviceAccountGetter,
+			factoryHandler,
+			cloudIntegrationHandler,
+			ruleStateHistoryHandler,
+			spanMapperHandler,
+			alertmanagerHandler,
+			llmPricingRuleHandler,
+			traceDetailHandler,
+			rulerHandler,
+			statsHandler,
+		)
+	})
+}
+
+func newProvider(
+	_ context.Context,
+	providerSettings factory.ProviderSettings,
+	config apiserver.Config,
+	orgGetter organization.Getter,
+	authzService authz.AuthZ,
+	orgHandler organization.Handler,
+	userHandler user.Handler,
+	sessionHandler session.Handler,
+	authDomainHandler authdomain.Handler,
+	preferenceHandler preference.Handler,
+	globalHandler global.Handler,
+	promoteHandler promote.Handler,
+	flaggerHandler flagger.Handler,
+	dashboardModule dashboard.Module,
+	dashboardHandler dashboard.Handler,
+	metricsExplorerHandler metricsexplorer.Handler,
+	metricReductionRuleHandler metricreductionrule.Handler,
+	infraMonitoringHandler inframonitoring.Handler,
+	gatewayHandler gateway.Handler,
+	fieldsHandler fields.Handler,
+	authzHandler authz.Handler,
+	rawDataExportHandler rawdataexport.Handler,
+	zeusHandler zeus.Handler,
+	querierHandler querier.Handler,
+	serviceAccountHandler serviceaccount.Handler,
+	serviceAccountGetter serviceaccount.Getter,
+	factoryHandler factory.Handler,
+	cloudIntegrationHandler cloudintegration.Handler,
+	ruleStateHistoryHandler rulestatehistory.Handler,
+	spanMapperHandler spanmapper.Handler,
+	alertmanagerHandler alertmanager.Handler,
+	llmPricingRuleHandler llmpricingrule.Handler,
+	traceDetailHandler tracedetail.Handler,
+	rulerHandler ruler.Handler,
+	statsHandler statsreporter.Handler,
+) (apiserver.APIServer, error) {
+	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/apiserver/signozapiserver")
+	router := mux.NewRouter().UseEncodedPath()
+
+	provider := &provider{
+		config:                     config,
+		settings:                   settings,
+		router:                     router,
+		orgHandler:                 orgHandler,
+		userHandler:                userHandler,
+		authzService:               authzService,
+		sessionHandler:             sessionHandler,
+		authDomainHandler:          authDomainHandler,
+		preferenceHandler:          preferenceHandler,
+		globalHandler:              globalHandler,
+		promoteHandler:             promoteHandler,
+		flaggerHandler:             flaggerHandler,
+		dashboardModule:            dashboardModule,
+		dashboardHandler:           dashboardHandler,
+		metricsExplorerHandler:     metricsExplorerHandler,
+		metricReductionRuleHandler: metricReductionRuleHandler,
+		infraMonitoringHandler:     infraMonitoringHandler,
+		gatewayHandler:             gatewayHandler,
+		fieldsHandler:              fieldsHandler,
+		authzHandler:               authzHandler,
+		rawDataExportHandler:       rawDataExportHandler,
+		zeusHandler:                zeusHandler,
+		querierHandler:             querierHandler,
+		serviceAccountHandler:      serviceAccountHandler,
+		serviceAccountGetter:       serviceAccountGetter,
+		factoryHandler:             factoryHandler,
+		cloudIntegrationHandler:    cloudIntegrationHandler,
+		ruleStateHistoryHandler:    ruleStateHistoryHandler,
+		spanMapperHandler:          spanMapperHandler,
+		alertmanagerHandler:        alertmanagerHandler,
+		traceDetailHandler:         traceDetailHandler,
+		rulerHandler:               rulerHandler,
+		llmPricingRuleHandler:      llmPricingRuleHandler,
+		statsHandler:               statsHandler,
+	}
+
+	provider.authzMiddleware = middleware.NewAuthZ(settings.Logger(), orgGetter, authzService)
+
+	if err := provider.AddToRouter(router); err != nil {
+		return nil, err
+	}
+
+	return provider, nil
+}
+
+func (provider *provider) Router() *mux.Router {
+	return provider.router
+}
+
+func (provider *provider) AddToRouter(router *mux.Router) error {
+	if err := provider.addOrgRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addSessionRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addAuthDomainRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addPreferenceRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addUserRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addGlobalRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addPromoteRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addFlaggerRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addDashboardRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addMetricsExplorerRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addMetricReductionRuleRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addInfraMonitoringRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addGatewayRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addRoleRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addAuthzRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addFieldsRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addRawDataExportRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addZeusRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addQuerierRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addServiceAccountRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addRegistryRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addCloudIntegrationRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addRuleStateHistoryRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addSpanMapperRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addAlertmanagerRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addLLMPricingRuleRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addTraceDetailRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addRulerRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addStatsReporterRoutes(router); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func newSecuritySchemes(role types.Role) []handler.OpenAPISecurityScheme {
+	return newScopedSecuritySchemes([]string{role.String()})
+}
+
+func newAnonymousSecuritySchemes(scopes []string) []handler.OpenAPISecurityScheme {
+	return []handler.OpenAPISecurityScheme{
+		{Name: authtypes.IdentNProviderAnonymous.StringValue(), Scopes: scopes},
+	}
+}
+
+func newScopedSecuritySchemes(scopes []string) []handler.OpenAPISecurityScheme {
+	return []handler.OpenAPISecurityScheme{
+		{Name: authtypes.IdentNProviderAPIKey.StringValue(), Scopes: scopes},
+		{Name: authtypes.IdentNProviderTokenizer.StringValue(), Scopes: scopes},
+	}
+}

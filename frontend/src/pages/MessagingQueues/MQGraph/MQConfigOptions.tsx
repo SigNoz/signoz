@@ -1,21 +1,21 @@
-import './MQConfigOptions.styles.scss';
-
+import { useState } from 'react';
+import { useHistory, useLocation } from 'react-router-dom';
+import { useCopyToClipboard } from 'react-use';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Select, Spin, Tooltip } from 'antd';
-import { DefaultOptionType } from 'antd/es/select';
+import type { DefaultOptionType } from 'antd/es/select';
 import { SelectMaxTagPlaceholder } from 'components/MessagingQueues/MQCommon/MQCommon';
 import { QueryParams } from 'constants/query';
 import { History, Location } from 'history';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { Check, Share2 } from 'lucide-react';
-import { useState } from 'react';
-import { useHistory, useLocation } from 'react-router-dom';
-import { useCopyToClipboard } from 'react-use';
+import { Check, Share2 } from '@signozhq/icons';
 
 import { FeatureKeys } from '../../../constants/features';
 import { useAppContext } from '../../../providers/App/App';
 import { useGetAllConfigOptions } from './useGetAllConfigOptions';
+
+import './MQConfigOptions.styles.scss';
 
 type ConfigOptionType = 'group' | 'topic' | 'partition';
 
@@ -219,7 +219,7 @@ function MessagingQueuesConfigOptions(): JSX.Element {
 					}}
 				/>
 			</div>
-			<Tooltip title="Share this" arrow={false}>
+			<Tooltip title="Share This" arrow={false}>
 				<Button
 					className="periscope-btn copy-url-btn"
 					onClick={(): void => {

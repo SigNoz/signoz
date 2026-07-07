@@ -1,11 +1,4 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-import './Uplot.styles.scss';
-
-import * as Sentry from '@sentry/react';
-import { Typography } from 'antd';
-import { ToggleGraphProps } from 'components/Graph/types';
-import { LineChart } from 'lucide-react';
-import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import {
 	forwardRef,
 	memo,
@@ -14,9 +7,16 @@ import {
 	useImperativeHandle,
 	useRef,
 } from 'react';
+import * as Sentry from '@sentry/react';
+import { Typography } from '@signozhq/ui/typography';
+import { ToggleGraphProps } from 'components/Graph/types';
+import { ChartLine } from '@signozhq/icons';
+import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import UPlot from 'uplot';
 
 import { dataMatch, optionsUpdateState } from './utils';
+
+import './Uplot.styles.scss';
 
 export interface UplotProps {
 	options: uPlot.Options;
@@ -93,7 +93,9 @@ const Uplot = forwardRef<ToggleGraphProps | undefined, UplotProps>(
 		}, []);
 
 		const create = useCallback(() => {
-			if (targetRef.current === null) return;
+			if (targetRef.current === null) {
+				return;
+			}
 
 			// If data is empty, hide cursor
 			if (data && data[0] && data[0]?.length === 0) {
@@ -169,7 +171,7 @@ const Uplot = forwardRef<ToggleGraphProps | undefined, UplotProps>(
 		if (data && data[0] && data[0]?.length === 0) {
 			return (
 				<div className="uplot-no-data not-found">
-					<LineChart size={48} strokeWidth={0.5} />
+					<ChartLine size={48} strokeWidth={0.5} />
 
 					<Typography>No Data</Typography>
 				</div>

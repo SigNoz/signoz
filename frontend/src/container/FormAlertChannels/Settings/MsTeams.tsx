@@ -1,7 +1,7 @@
-import { Form, Input } from 'antd';
-import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { Form, Input } from 'antd';
+import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 
 import { MsTeamsChannel } from '../../CreateAlertChannels/config';
 

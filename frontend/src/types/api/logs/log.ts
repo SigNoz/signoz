@@ -1,3 +1,8 @@
+export interface ILogBody {
+	message?: string | null;
+	[key: string]: unknown;
+}
+
 export interface ILog {
 	date: string;
 	timestamp: number | string;
@@ -8,7 +13,7 @@ export interface ILog {
 	traceFlags: number;
 	severityText: string;
 	severityNumber: number;
-	body: string;
+	body: string | ILogBody;
 	resources_string: Record<string, never>;
 	scope_string: Record<string, never>;
 	attributesString: Record<string, never>;
@@ -17,6 +22,7 @@ export interface ILog {
 	attributesFloat: Record<string, never>;
 	severity_text: string;
 	severity_number: number;
+	trace_id?: string;
 }
 
 type OmitAttributesResources = Pick<

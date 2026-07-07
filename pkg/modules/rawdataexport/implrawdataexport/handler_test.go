@@ -2,162 +2,84 @@ package implrawdataexport
 
 import (
 	"net/url"
-	"strconv"
 	"testing"
 
-	"github.com/SigNoz/signoz/pkg/telemetrylogs"
+	"github.com/SigNoz/signoz/pkg/http/binding"
+	"github.com/SigNoz/signoz/pkg/types/exporttypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGetExportQuerySource(t *testing.T) {
-	tests := []struct {
-		name           string
-		queryParams    url.Values
-		expectedSource string
-		expectedError  bool
-	}{
-		{
-			name:           "default logs source",
-			queryParams:    url.Values{},
-			expectedSource: "logs",
-			expectedError:  false,
-		},
-		{
-			name:           "explicit logs source",
-			queryParams:    url.Values{"source": {"logs"}},
-			expectedSource: "logs",
-			expectedError:  false,
-		},
-		{
-			name:           "metrics source - not supported",
-			queryParams:    url.Values{"source": {"metrics"}},
-			expectedSource: "metrics",
-			expectedError:  true,
-		},
-		{
-			name:           "traces source - not supported",
-			queryParams:    url.Values{"source": {"traces"}},
-			expectedSource: "traces",
-			expectedError:  true,
-		},
-		{
-			name:           "invalid source",
-			queryParams:    url.Values{"source": {"invalid"}},
-			expectedSource: "",
-			expectedError:  true,
-		},
-	}
+func TestExportRawDataFormatQueryParam_BindingDefaults(t *testing.T) {
+	var params exporttypes.ExportRawDataFormatQueryParam
+	err := binding.Query.BindQuery(url.Values{}, &params)
+	assert.NoError(t, err)
+	assert.Equal(t, "csv", params.Format)
+}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			source, err := getExportQuerySource(tt.queryParams)
-			assert.Equal(t, tt.expectedSource, source)
-			if tt.expectedError {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-			}
-		})
+func logQuery(limit int) qbtypes.QueryEnvelope {
+	return qbtypes.QueryEnvelope{
+		Type: qbtypes.QueryTypeBuilder,
+		Spec: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{Limit: limit},
 	}
 }
 
-func TestGetExportQueryFormat(t *testing.T) {
-	tests := []struct {
-		name           string
-		queryParams    url.Values
-		expectedFormat string
-		expectedError  bool
-	}{
-		{
-			name:           "default csv format",
-			queryParams:    url.Values{},
-			expectedFormat: "csv",
-			expectedError:  false,
-		},
-		{
-			name:           "explicit csv format",
-			queryParams:    url.Values{"format": {"csv"}},
-			expectedFormat: "csv",
-			expectedError:  false,
-		},
-		{
-			name:           "jsonl format",
-			queryParams:    url.Values{"format": {"jsonl"}},
-			expectedFormat: "jsonl",
-			expectedError:  false,
-		},
-		{
-			name:           "invalid format",
-			queryParams:    url.Values{"format": {"xml"}},
-			expectedFormat: "",
-			expectedError:  true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			format, err := getExportQueryFormat(tt.queryParams)
-			assert.Equal(t, tt.expectedFormat, format)
-			if tt.expectedError {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-			}
-		})
+func traceQuery(limit int) qbtypes.QueryEnvelope {
+	return qbtypes.QueryEnvelope{
+		Type: qbtypes.QueryTypeBuilder,
+		Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{Limit: limit},
 	}
 }
 
-func TestGetExportQueryLimit(t *testing.T) {
+func traceOperatorQuery(limit int) qbtypes.QueryEnvelope {
+	return qbtypes.QueryEnvelope{
+		Type: qbtypes.QueryTypeTraceOperator,
+		Spec: qbtypes.QueryBuilderTraceOperator{Limit: limit, Expression: "A"},
+	}
+}
+
+func makeRequest(queries ...qbtypes.QueryEnvelope) qbtypes.QueryRangeRequest {
+	return qbtypes.QueryRangeRequest{
+		Start:          1000000000000,
+		End:            1000003600000,
+		RequestType:    qbtypes.RequestTypeRaw,
+		CompositeQuery: qbtypes.CompositeQuery{Queries: queries},
+	}
+}
+
+func TestValidateSpecForExport(t *testing.T) {
 	tests := []struct {
 		name          string
-		queryParams   url.Values
-		expectedLimit int
+		req           qbtypes.QueryRangeRequest
 		expectedError bool
 	}{
 		{
-			name:          "default limit",
-			queryParams:   url.Values{},
-			expectedLimit: DefaultExportRowCountLimit,
-			expectedError: false,
+			name: "single log query",
+			req:  makeRequest(logQuery(0)),
 		},
 		{
-			name:          "valid limit",
-			queryParams:   url.Values{"limit": {"5000"}},
-			expectedLimit: 5000,
-			expectedError: false,
+			name: "single trace query",
+			req:  makeRequest(traceQuery(0)),
 		},
 		{
-			name:          "maximum limit",
-			queryParams:   url.Values{"limit": {strconv.Itoa(MaxExportRowCountLimit)}},
-			expectedLimit: MaxExportRowCountLimit,
-			expectedError: false,
+			name: "trace operator alone",
+			req:  makeRequest(traceOperatorQuery(0)),
 		},
 		{
-			name:          "limit exceeds maximum",
-			queryParams:   url.Values{"limit": {"100000"}},
-			expectedLimit: 0,
+			name:          "multiple queries without trace operator",
+			req:           makeRequest(logQuery(0), traceQuery(0)),
 			expectedError: true,
 		},
 		{
-			name:          "invalid limit format",
-			queryParams:   url.Values{"limit": {"invalid"}},
-			expectedLimit: 0,
-			expectedError: true,
-		},
-		{
-			name:          "negative limit",
-			queryParams:   url.Values{"limit": {"-100"}},
-			expectedLimit: 0,
+			name:          "unsupported query type",
+			req:           makeRequest(qbtypes.QueryEnvelope{Type: qbtypes.QueryTypeBuilder, Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{}}),
 			expectedError: true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			limit, err := getExportQueryLimit(tt.queryParams)
-			assert.Equal(t, tt.expectedLimit, limit)
+			err := validateSpecForExport(&tt.req)
 			if tt.expectedError {
 				assert.Error(t, err)
 			} else {
@@ -167,352 +89,69 @@ func TestGetExportQueryLimit(t *testing.T) {
 	}
 }
 
-func TestGetExportQueryTimeRange(t *testing.T) {
-	tests := []struct {
-		name              string
-		queryParams       url.Values
-		expectedStartTime uint64
-		expectedEndTime   uint64
-		expectedError     bool
-	}{
-		{
-			name: "valid time range",
-			queryParams: url.Values{
-				"start": {"1640995200"},
-				"end":   {"1641081600"},
-			},
-			expectedStartTime: 1640995200,
-			expectedEndTime:   1641081600,
-			expectedError:     false,
-		},
-		{
-			name:          "missing start time",
-			queryParams:   url.Values{"end": {"1641081600"}},
-			expectedError: true,
-		},
-		{
-			name:          "missing end time",
-			queryParams:   url.Values{"start": {"1640995200"}},
-			expectedError: true,
-		},
-		{
-			name:          "missing both times",
-			queryParams:   url.Values{},
-			expectedError: true,
-		},
-		{
-			name: "invalid start time format",
-			queryParams: url.Values{
-				"start": {"invalid"},
-				"end":   {"1641081600"},
-			},
-			expectedError: true,
-		},
-		{
-			name: "invalid end time format",
-			queryParams: url.Values{
-				"start": {"1640995200"},
-				"end":   {"invalid"},
-			},
-			expectedError: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			startTime, endTime, err := getExportQueryTimeRange(tt.queryParams)
-			if tt.expectedError {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-				assert.Equal(t, tt.expectedStartTime, startTime)
-				assert.Equal(t, tt.expectedEndTime, endTime)
-			}
-		})
-	}
-}
-
-func TestGetExportQueryColumns(t *testing.T) {
-	tests := []struct {
-		name            string
-		queryParams     url.Values
-		expectedColumns []telemetrytypes.TelemetryFieldKey
-	}{
-		{
-			name:            "no columns specified",
-			queryParams:     url.Values{},
-			expectedColumns: []telemetrytypes.TelemetryFieldKey{},
-		},
-		{
-			name: "single column",
-			queryParams: url.Values{
-				"columns": {"timestamp"},
-			},
-			expectedColumns: []telemetrytypes.TelemetryFieldKey{
-				{Name: "timestamp"},
-			},
-		},
-		{
-			name: "multiple columns",
-			queryParams: url.Values{
-				"columns": {"timestamp", "message", "level"},
-			},
-			expectedColumns: []telemetrytypes.TelemetryFieldKey{
-				{Name: "timestamp"},
-				{Name: "message"},
-				{Name: "level"},
-			},
-		},
-		{
-			name: "empty column name (should be skipped)",
-			queryParams: url.Values{
-				"columns": {"timestamp", "", "level"},
-			},
-			expectedColumns: []telemetrytypes.TelemetryFieldKey{
-				{Name: "timestamp"},
-				{Name: "level"},
-			},
-		},
-		{
-			name: "whitespace column name (should be skipped)",
-			queryParams: url.Values{
-				"columns": {"timestamp", "   ", "level"},
-			},
-			expectedColumns: []telemetrytypes.TelemetryFieldKey{
-				{Name: "timestamp"},
-				{Name: "level"},
-			},
-		},
-		{
-			name: "valid column name with data type",
-			queryParams: url.Values{
-				"columns": {"timestamp", "attribute.user:string", "level"},
-			},
-			expectedColumns: []telemetrytypes.TelemetryFieldKey{
-				{Name: "timestamp"},
-				{Name: "user", FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString},
-				{Name: "level"},
-			},
-		},
-		{
-			name: "valid column name with dot notation",
-			queryParams: url.Values{
-				"columns": {"timestamp", "attribute.user.string", "level"},
-			},
-			expectedColumns: []telemetrytypes.TelemetryFieldKey{
-				{Name: "timestamp"},
-				{Name: "user.string", FieldContext: telemetrytypes.FieldContextAttribute},
-				{Name: "level"},
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			columns := getExportQueryColumns(tt.queryParams)
-			assert.Equal(t, len(tt.expectedColumns), len(columns))
-			for i, expectedCol := range tt.expectedColumns {
-				assert.Equal(t, expectedCol, columns[i])
-			}
-		})
-	}
-}
-
-func TestGetExportQueryOrderBy(t *testing.T) {
+func TestValidateAndApplyDefaultExportLimits(t *testing.T) {
 	tests := []struct {
 		name          string
-		queryParams   url.Values
-		expectedOrder []qbtypes.OrderBy
+		queries       []qbtypes.QueryEnvelope
 		expectedError bool
+		checkQueries  func(t *testing.T, queries []qbtypes.QueryEnvelope)
 	}{
 		{
-			name:        "no order specified",
-			queryParams: url.Values{},
-			expectedOrder: []qbtypes.OrderBy{
-				{
-					Direction: qbtypes.OrderDirectionDesc,
-					Key: qbtypes.OrderByKey{
-						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-							Name: telemetrylogs.LogsV2TimestampColumn,
-						},
-					},
-				},
-				{
-					Direction: qbtypes.OrderDirectionDesc,
-					Key: qbtypes.OrderByKey{
-						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-							Name: telemetrylogs.LogsV2IDColumn,
-						},
-					},
-				},
+			name:    "single log query, zero limit gets default",
+			queries: makeRequest(logQuery(0)).CompositeQuery.Queries,
+			checkQueries: func(t *testing.T, q []qbtypes.QueryEnvelope) {
+				assert.Equal(t, DefaultExportRowCountLimit, q[0].GetLimit())
 			},
-			expectedError: false,
 		},
 		{
-			name: "single order error, direction not specified",
-			queryParams: url.Values{
-				"order_by": {"timestamp"},
+			name:    "single log query, valid limit kept",
+			queries: makeRequest(logQuery(1000)).CompositeQuery.Queries,
+			checkQueries: func(t *testing.T, q []qbtypes.QueryEnvelope) {
+				assert.Equal(t, 1000, q[0].GetLimit())
 			},
-			expectedOrder: nil,
+		},
+		{
+			name:    "single log query, max limit kept",
+			queries: makeRequest(logQuery(MaxExportRowCountLimit)).CompositeQuery.Queries,
+			checkQueries: func(t *testing.T, q []qbtypes.QueryEnvelope) {
+				assert.Equal(t, MaxExportRowCountLimit, q[0].GetLimit())
+			},
+		},
+		{
+			name:          "single log query, limit exceeds max",
+			queries:       makeRequest(logQuery(MaxExportRowCountLimit + 1)).CompositeQuery.Queries,
 			expectedError: true,
 		},
 		{
-			name: "single order no error",
-			queryParams: url.Values{
-				"order_by": {"timestamp:asc"},
-			},
-			expectedOrder: []qbtypes.OrderBy{
-				{
-					Direction: qbtypes.OrderDirectionAsc,
-					Key: qbtypes.OrderByKey{
-						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-							Name: telemetrylogs.LogsV2TimestampColumn,
-						},
-					},
-				},
-				{
-					Direction: qbtypes.OrderDirectionAsc,
-					Key: qbtypes.OrderByKey{
-						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-							Name: telemetrylogs.LogsV2IDColumn,
-						},
-					},
-				},
-			},
-			expectedError: false,
-		},
-		{
-			name: "multiple orders",
-			queryParams: url.Values{
-				"order_by": {"timestamp:asc", "body:desc", "id:asc"},
-			},
-			expectedOrder: []qbtypes.OrderBy{
-				{
-					Direction: qbtypes.OrderDirectionAsc,
-					Key: qbtypes.OrderByKey{
-						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-							Name: telemetrylogs.LogsV2TimestampColumn,
-						},
-					},
-				},
-				{
-					Direction: qbtypes.OrderDirectionAsc,
-					Key: qbtypes.OrderByKey{
-						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-							Name: telemetrylogs.LogsV2IDColumn,
-						},
-					},
-				},
-			},
-			expectedError: false,
-		},
-		{
-			name: "empty order name (should be skipped)",
-			queryParams: url.Values{
-				"order_by": {"timestamp:asc", "", "id:asc"},
-			},
-			expectedOrder: []qbtypes.OrderBy{
-				{
-					Direction: qbtypes.OrderDirectionAsc,
-					Key: qbtypes.OrderByKey{
-						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-							Name: telemetrylogs.LogsV2TimestampColumn,
-						},
-					},
-				},
-				{
-					Direction: qbtypes.OrderDirectionAsc,
-					Key: qbtypes.OrderByKey{
-						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-							Name: telemetrylogs.LogsV2IDColumn,
-						},
-					},
-				},
-			},
-			expectedError: false,
-		},
-		{
-			name: "whitespace order name (should be skipped)",
-			queryParams: url.Values{
-				"order_by": {"timestamp:asc", "   ", "id:asc"},
-			},
-			expectedOrder: []qbtypes.OrderBy{
-				{
-					Direction: qbtypes.OrderDirectionAsc,
-					Key: qbtypes.OrderByKey{
-						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-							Name: telemetrylogs.LogsV2TimestampColumn,
-						},
-					},
-				},
-				{
-					Direction: qbtypes.OrderDirectionAsc,
-					Key: qbtypes.OrderByKey{
-						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-							Name: telemetrylogs.LogsV2IDColumn,
-						},
-					},
-				},
-			},
-			expectedError: false,
-		},
-		{
-			name: "invalid order name (should error out)",
-			queryParams: url.Values{
-				"order_by": {"attributes.user:", "id:asc"},
-			},
-			expectedOrder: nil,
+			name:          "single log query, negative limit",
+			queries:       makeRequest(logQuery(-1)).CompositeQuery.Queries,
 			expectedError: true,
 		},
 		{
-			name: "valid order name (should be included)",
-			queryParams: url.Values{
-				"order_by": {"attribute.user:string:desc", "id:asc"},
+			name:    "single trace query, zero limit gets default",
+			queries: makeRequest(traceQuery(0)).CompositeQuery.Queries,
+			checkQueries: func(t *testing.T, q []qbtypes.QueryEnvelope) {
+				assert.Equal(t, DefaultExportRowCountLimit, q[0].GetLimit())
 			},
-			expectedOrder: []qbtypes.OrderBy{
-				{
-					Direction: qbtypes.OrderDirectionDesc,
-					Key: qbtypes.OrderByKey{
-						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-							Name:          "user",
-							FieldContext:  telemetrytypes.FieldContextAttribute,
-							FieldDataType: telemetrytypes.FieldDataTypeString,
-						},
-					},
-				},
-			},
-			expectedError: false,
 		},
 		{
-			name: "valid order name (should be included)",
-			queryParams: url.Values{
-				"order_by": {"attribute.user.string:desc", "id:asc"},
+			name:    "trace operator alone, zero limit gets default",
+			queries: makeRequest(traceOperatorQuery(0)).CompositeQuery.Queries,
+			checkQueries: func(t *testing.T, q []qbtypes.QueryEnvelope) {
+				assert.Equal(t, DefaultExportRowCountLimit, q[0].GetLimit())
 			},
-			expectedOrder: []qbtypes.OrderBy{
-				{
-					Direction: qbtypes.OrderDirectionDesc,
-					Key: qbtypes.OrderByKey{
-						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-							Name:         "user.string",
-							FieldContext: telemetrytypes.FieldContextAttribute,
-						},
-					},
-				},
-			},
-			expectedError: false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			order, err := getExportQueryOrderBy(tt.queryParams)
+			err := validateAndApplyDefaultExportLimits(tt.queries)
 			if tt.expectedError {
 				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
-				assert.Equal(t, len(tt.expectedOrder), len(order))
-				for i, expectedOrd := range tt.expectedOrder {
-					assert.Equal(t, expectedOrd, order[i])
+				if tt.checkQueries != nil {
+					tt.checkQueries(t, tt.queries)
 				}
 			}
 		})
@@ -529,13 +168,8 @@ func TestConstructCSVHeaderFromQueryResponse(t *testing.T) {
 
 	header := constructCSVHeaderFromQueryResponse(data)
 
-	// Since map iteration order is not guaranteed, check that all expected keys are present
-	expectedKeys := []string{"timestamp", "message", "level", "id"}
-	assert.Equal(t, len(expectedKeys), len(header))
-
-	for _, key := range expectedKeys {
-		assert.Contains(t, header, key)
-	}
+	// Priority columns come first in order, then the rest alphabetically.
+	assert.Equal(t, []string{"timestamp", "id", "level", "message"}, header)
 }
 
 func TestConstructCSVRecordFromQueryResponse(t *testing.T) {

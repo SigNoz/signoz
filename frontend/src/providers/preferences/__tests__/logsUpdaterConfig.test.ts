@@ -1,7 +1,10 @@
 import { TelemetryFieldKey } from 'api/v5/v5';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { LogViewMode } from 'container/LogsTable';
-import { defaultOptionsQuery } from 'container/OptionsMenu/constants';
+import {
+	defaultLogsSelectedColumns,
+	defaultOptionsQuery,
+} from 'container/OptionsMenu/constants';
 import { FontSize } from 'container/OptionsMenu/types';
 import {
 	FormattingOptions,
@@ -41,7 +44,7 @@ describe('logsUpdaterConfig', () => {
 	const mockPreferences: Preferences = {
 		columns: [],
 		formatting: {
-			maxLines: 2,
+			maxLines: 1,
 			format: 'table' as LogViewMode,
 			fontSize: 'small' as FontSize,
 			version: 1,
@@ -80,24 +83,27 @@ describe('logsUpdaterConfig', () => {
 					dataType: DataTypes.String,
 				},
 			],
-			maxLines: 2,
+			maxLines: 1,
 		});
 
 		logsUpdater.updateColumns(newColumns, PreferenceMode.DIRECT);
+
+		// Writer guards body+timestamp via ensureLogsRequiredColumns invariant
+		const guardedColumns = [...defaultLogsSelectedColumns, ...newColumns];
 
 		// Should update URL
 		expect(redirectWithOptionsData).toHaveBeenCalledWith({
 			...defaultOptionsQuery,
 			...mockPreferences.formatting,
-			selectColumns: newColumns,
+			selectColumns: guardedColumns,
 		});
 
-		// Should update localStorage
+		// Should update localStorage with the guarded shape
 		const storedData = JSON.parse(
 			mockLocalStorage[LOCALSTORAGE.LOGS_LIST_OPTIONS],
 		);
-		expect(storedData.selectColumns).toEqual(newColumns);
-		expect(storedData.maxLines).toBe(2); // Should preserve other fields
+		expect(storedData.selectColumns).toStrictEqual(guardedColumns);
+		expect(storedData.maxLines).toBe(1); // Should preserve other fields
 
 		// Should not update saved view preferences
 		expect(setSavedViewPreferences).not.toHaveBeenCalled();
@@ -153,7 +159,7 @@ describe('logsUpdaterConfig', () => {
 					dataType: DataTypes.String,
 				},
 			],
-			maxLines: 2,
+			maxLines: 1,
 			format: 'table',
 		});
 
@@ -174,7 +180,7 @@ describe('logsUpdaterConfig', () => {
 		expect(storedData.format).toBe('json');
 		expect(storedData.fontSize).toBe('large');
 		expect(storedData.version).toBe(1);
-		expect(storedData.selectColumns).toEqual([
+		expect(storedData.selectColumns).toStrictEqual([
 			{
 				key: 'column',
 				type: 'tag',
@@ -206,7 +212,7 @@ describe('logsUpdaterConfig', () => {
 					dataType: DataTypes.String,
 				},
 			],
-			maxLines: 2,
+			maxLines: 1,
 			format: 'table',
 		});
 
@@ -216,7 +222,7 @@ describe('logsUpdaterConfig', () => {
 		const storedData = JSON.parse(
 			mockLocalStorage[LOCALSTORAGE.LOGS_LIST_OPTIONS],
 		);
-		expect(storedData.maxLines).toBe(2); // Should remain the same
+		expect(storedData.maxLines).toBe(1); // Should remain the same
 		expect(storedData.format).toBe('table'); // Should remain the same
 
 		// Should update saved view preferences

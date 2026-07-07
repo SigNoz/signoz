@@ -12,8 +12,8 @@
 		align-items: center;
 		width: 100%;
 		padding: 8px 16px;
-		border-bottom: 1px solid var(--bg-slate-400);
-		background: var(--bg-ink-300);
+		border-bottom: 1px solid var(--l1-border);
+		background: var(--l3-background);
 
 		position: sticky;
 		top: 0;
@@ -96,14 +96,5 @@
 
 	.fullscreen-grid-container {
 		margin: 0px 8px;
-	}
-}
-
-.lightMode {
-	.public-dashboard-container {
-		.public-dashboard-header {
-			background: var(--bg-vanilla-100);
-			border-bottom: 1px solid var(--bg-vanilla-300);
-		}
 	}
 }

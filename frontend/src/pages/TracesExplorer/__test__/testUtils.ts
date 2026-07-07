@@ -1,6 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
-/* eslint-disable no-restricted-syntax */
-/* eslint-disable no-await-in-loop */
 import {
 	initialQueriesMap,
 	initialQueryBuilderFormValues,
@@ -59,7 +56,7 @@ export const optionMenuReturn = {
 				id: 'dbName--string--tag--true',
 			},
 		],
-		maxLines: 2,
+		maxLines: 1,
 		format: 'list',
 	},
 	handleOptionsChange: jest.fn(),

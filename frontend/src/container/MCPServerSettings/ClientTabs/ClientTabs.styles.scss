@@ -1,0 +1,66 @@
+.mcp-client-tabs-root {
+	button[data-variant='primary'] {
+		border: none;
+		background: transparent;
+		box-shadow: none;
+	}
+
+	// Remove default tab content padding/margin — the card provides spacing.
+	--tab-content-padding: 0;
+	--tab-content-margin: var(--spacing-4) 0 0;
+}
+
+.mcp-client-tabs {
+	&__snippet-wrapper {
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-6);
+		margin-top: var(--spacing-2);
+
+		.learn-more {
+			width: fit-content;
+			font-size: var(--font-size-xs);
+		}
+	}
+
+	&__install-row {
+		display: flex;
+		align-items: center;
+		gap: var(--spacing-10);
+		flex-wrap: wrap;
+	}
+
+	&__helper-text {
+		font-size: var(--paragraph-small-400-font-size);
+		color: var(--foreground);
+		line-height: var(--paragraph-small-400-line-height);
+	}
+
+	&__endpoint-value {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--spacing-2);
+		padding: var(--padding-2) var(--padding-3);
+		border: 1px solid var(--l3-border);
+		border-radius: 6px;
+		background: var(--l3-background);
+		font-family: var(--font-family-sf-mono, monospace);
+		font-size: var(--paragraph-base-400-font-size);
+		color: var(--l1-foreground);
+		width: 100%;
+		justify-content: space-between;
+	}
+
+	&__snippet-pre {
+		margin: 0;
+		white-space: pre-wrap;
+		word-break: break-all;
+	}
+
+	&__instructions {
+		font-size: var(--font-size-xs);
+		color: var(--foreground);
+		line-height: var(--line-height-20);
+		margin: 0;
+	}
+}

@@ -9,6 +9,7 @@ import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import {
 	MetricAggregateOperator,
 	QueryBuilderData,
+	ReduceOperators,
 	Temporality,
 } from 'types/common/queryBuilder';
 
@@ -51,7 +52,7 @@ export const getQueryBuilderQueries = ({
 				items: filterItems[index],
 				op: 'AND',
 			},
-			reduceTo: 'avg',
+			reduceTo: ReduceOperators.AVG,
 			spaceAggregation: spaceAggregateOperators[index],
 			timeAggregation: timeAggregateOperators[index],
 			dataSource,
@@ -95,7 +96,7 @@ export const getQueryBuilderQuerieswithFormula = ({
 		aggregateAttribute: autocompleteData[index],
 		queryName: alphabet[index],
 		expression: alphabet[index],
-		reduceTo: 'avg',
+		reduceTo: ReduceOperators.AVG,
 		filters: {
 			items: additionalItems[index],
 			op: 'AND',

@@ -1,4 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import { QueryClient, QueryClientProvider } from 'react-query';
+// eslint-disable-next-line no-restricted-imports
+import { Provider } from 'react-redux';
+import { MemoryRouter } from 'react-router-dom';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryParams } from 'constants/query';
@@ -7,9 +10,6 @@ import {
 	initialQueryPromQLData,
 } from 'constants/queryBuilder';
 import { AlertDetectionTypes } from 'container/FormAlertRules';
-import { QueryClient, QueryClientProvider } from 'react-query';
-import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
 import store from 'store';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { EQueryType } from 'types/common/dashboard';
@@ -333,7 +333,7 @@ describe('QuerySection', () => {
 
 		const result = mockUseQueryBuilder.redirectWithQueryBuilderData.mock.calls[0];
 
-		expect(result[0]).toEqual({
+		expect(result[0]).toStrictEqual({
 			id: MOCK_UUID,
 			queryType: EQueryType.QUERY_BUILDER,
 			unit: undefined,
@@ -351,7 +351,7 @@ describe('QuerySection', () => {
 			clickhouse_sql: [initialClickHouseData],
 		});
 
-		expect(result[1]).toEqual({
+		expect(result[1]).toStrictEqual({
 			[QueryParams.alertType]: AlertTypes.METRICS_BASED_ALERT,
 			[QueryParams.ruleType]: AlertDetectionTypes.THRESHOLD_ALERT,
 		});
@@ -368,11 +368,10 @@ describe('QuerySection', () => {
 			mockUseQueryBuilder.redirectWithQueryBuilderData,
 		).toHaveBeenCalledTimes(1);
 
-		const [
-			queryArg,
-		] = mockUseQueryBuilder.redirectWithQueryBuilderData.mock.calls[0];
+		const [queryArg] =
+			mockUseQueryBuilder.redirectWithQueryBuilderData.mock.calls[0];
 
-		expect(queryArg).toEqual({
+		expect(queryArg).toStrictEqual({
 			...mockUseQueryBuilder.currentQuery,
 			queryType: EQueryType.PROM,
 		});
@@ -423,11 +422,10 @@ describe('QuerySection', () => {
 			mockUseQueryBuilder.redirectWithQueryBuilderData,
 		).toHaveBeenCalledTimes(1);
 
-		const [
-			queryArg,
-		] = mockUseQueryBuilder.redirectWithQueryBuilderData.mock.calls[0];
+		const [queryArg] =
+			mockUseQueryBuilder.redirectWithQueryBuilderData.mock.calls[0];
 
-		expect(queryArg).toEqual({
+		expect(queryArg).toStrictEqual({
 			...mockCurrentQueryWithPromQL,
 			queryType: EQueryType.QUERY_BUILDER,
 		});
@@ -478,11 +476,10 @@ describe('QuerySection', () => {
 			mockUseQueryBuilder.redirectWithQueryBuilderData,
 		).toHaveBeenCalledTimes(1);
 
-		const [
-			queryArg,
-		] = mockUseQueryBuilder.redirectWithQueryBuilderData.mock.calls[0];
+		const [queryArg] =
+			mockUseQueryBuilder.redirectWithQueryBuilderData.mock.calls[0];
 
-		expect(queryArg).toEqual({
+		expect(queryArg).toStrictEqual({
 			...mockCurrentQueryWithClickhouseSQL,
 			queryType: EQueryType.QUERY_BUILDER,
 		});

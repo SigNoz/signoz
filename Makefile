@@ -72,6 +72,12 @@ devenv-up: devenv-clickhouse devenv-signoz-otel-collector ## Start both clickhou
 	@echo "   - ClickHouse: http://localhost:8123"
 	@echo "   - Signoz OTel Collector: grpc://localhost:4317, http://localhost:4318"
 
+.PHONY: devenv-clickhouse-clean
+devenv-clickhouse-clean: ## Clean all ClickHouse data from filesystem
+	@echo "Removing ClickHouse data..."
+	@rm -rf .devenv/docker/clickhouse/fs/tmp/*
+	@echo "ClickHouse data cleaned!"
+
 ##############################################################
 # go commands
 ##############################################################
@@ -80,7 +86,7 @@ go-run-enterprise: ## Runs the enterprise go backend server
 	@SIGNOZ_INSTRUMENTATION_LOGS_LEVEL=debug \
 	SIGNOZ_SQLSTORE_SQLITE_PATH=signoz.db \
 	SIGNOZ_WEB_ENABLED=false \
-	SIGNOZ_JWT_SECRET=secret \
+	SIGNOZ_TOKENIZER_JWT_SECRET=secret \
 	SIGNOZ_ALERTMANAGER_PROVIDER=signoz \
 	SIGNOZ_TELEMETRYSTORE_PROVIDER=clickhouse \
 	SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN=tcp://127.0.0.1:9000 \
@@ -97,7 +103,7 @@ go-run-community: ## Runs the community go backend server
 	@SIGNOZ_INSTRUMENTATION_LOGS_LEVEL=debug \
 	SIGNOZ_SQLSTORE_SQLITE_PATH=signoz.db \
 	SIGNOZ_WEB_ENABLED=false \
-	SIGNOZ_JWT_SECRET=secret \
+	SIGNOZ_TOKENIZER_JWT_SECRET=secret \
 	SIGNOZ_ALERTMANAGER_PROVIDER=signoz \
 	SIGNOZ_TELEMETRYSTORE_PROVIDER=clickhouse \
 	SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN=tcp://127.0.0.1:9000 \
@@ -148,7 +154,7 @@ $(GO_BUILD_ARCHS_ENTERPRISE_RACE): go-build-enterprise-race-%: $(TARGET_DIR)
 .PHONY: js-build
 js-build: ## Builds the js frontend
 	@echo ">> building js frontend"
-	@cd $(JS_BUILD_CONTEXT) && CI=1 yarn install && yarn build
+	@cd $(JS_BUILD_CONTEXT) && CI=1 pnpm install && pnpm build
 
 ##############################################################
 # docker commands
@@ -195,15 +201,39 @@ docker-buildx-enterprise: go-build-enterprise js-build
 # python commands
 ##############################################################
 .PHONY: py-fmt
-py-fmt: ## Run black for integration tests
-	@cd tests/integration && poetry run black .
+py-fmt: ## Run ruff format across the shared tests project
+	@cd tests && uv run ruff format .
 
 .PHONY: py-lint
-py-lint: ## Run lint for integration tests
-	@cd tests/integration && poetry run isort .
-	@cd tests/integration && poetry run autoflake .
-	@cd tests/integration && poetry run pylint .
+py-lint: ## Run ruff check across the shared tests project
+	@cd tests && uv run ruff check --fix .
+
+.PHONY: py-test-setup
+py-test-setup: ## Bring up the shared SigNoz backend used by integration and e2e tests
+	@cd tests && uv run pytest --basetemp=./tmp/ -vv --reuse --capture=no integration/bootstrap/setup.py::test_setup
+
+.PHONY: py-test-teardown
+py-test-teardown: ## Tear down the shared SigNoz backend
+	@cd tests && uv run pytest --basetemp=./tmp/ -vv --teardown --capture=no  integration/bootstrap/setup.py::test_teardown
 
 .PHONY: py-test
 py-test: ## Runs integration tests
-	@cd tests/integration && poetry run pytest --basetemp=./tmp/ -vv --capture=no src/
+	@cd tests && uv run pytest --basetemp=./tmp/ -vv --capture=no integration/tests/
+
+.PHONY: py-clean
+py-clean: ## Clear all pycache and pytest cache from tests directory recursively
+	@echo ">> cleaning python cache files from tests directory"
+	@find tests -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
+	@find tests -type d -name .pytest_cache -exec rm -rf {} + 2>/dev/null || true
+	@find tests -type f -name "*.pyc" -delete 2>/dev/null || true
+	@find tests -type f -name "*.pyo" -delete 2>/dev/null || true
+	@echo ">> python cache cleaned"
+
+
+##############################################################
+# generate commands
+##############################################################
+.PHONY: gen-mocks
+gen-mocks:
+	@echo ">> Generating mocks"
+	@mockery --config .mockery.yml

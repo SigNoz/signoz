@@ -35,7 +35,9 @@ function encodeParams(params: ApiMonitoringParams): string {
 }
 
 function decodeParams(value: string | null): ApiMonitoringParams {
-	if (!value) return DEFAULT_PARAMS;
+	if (!value) {
+		return DEFAULT_PARAMS;
+	}
 	try {
 		return JSON.parse(decodeURIComponent(value));
 	} catch {

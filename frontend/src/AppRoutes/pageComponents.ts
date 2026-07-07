@@ -47,7 +47,6 @@ export const TracesFunnels = Loadable(
 		import(/* webpackChunkName: "Traces Funnels" */ 'pages/TracesModulePage'),
 );
 export const TracesFunnelDetails = Loadable(
-	// eslint-disable-next-line sonarjs/no-identical-functions
 	() =>
 		import(
 			/* webpackChunkName: "Traces Funnel Details" */ 'pages/TracesModulePage'
@@ -58,10 +57,17 @@ export const TraceFilter = Loadable(
 	() => import(/* webpackChunkName: "Trace Filter Page" */ 'pages/Trace'),
 );
 
-export const TraceDetail = Loadable(
+export const TraceDetailOldRedirect = Loadable(
 	() =>
 		import(
-			/* webpackChunkName: "TraceDetail Page" */ 'pages/TraceDetailV2/index'
+			/* webpackChunkName: "TraceDetailOldRedirect" */ 'pages/TraceDetailOldRedirect/index'
+		),
+);
+
+export const TraceDetailV3 = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "TraceDetailV3 Page" */ 'pages/TraceDetailsV3/index'
 		),
 );
 
@@ -77,14 +83,6 @@ export const SettingsPage = Loadable(
 	() => import(/* webpackChunkName: "SettingsPage" */ 'pages/Settings'),
 );
 
-export const GettingStarted = Loadable(
-	() => import(/* webpackChunkName: "GettingStarted" */ 'pages/GettingStarted'),
-);
-
-export const Onboarding = Loadable(
-	() => import(/* webpackChunkName: "Onboarding" */ 'pages/OnboardingPage'),
-);
-
 export const OrgOnboarding = Loadable(
 	() => import(/* webpackChunkName: "OrgOnboarding" */ 'pages/OrgOnboarding'),
 );
@@ -93,18 +91,27 @@ export const OnboardingV2 = Loadable(
 	() => import(/* webpackChunkName: "Onboarding V2" */ 'pages/OnboardingPageV2'),
 );
 
-export const DashboardPage = Loadable(
+export const DashboardsListPage = Loadable(
 	() =>
-		import(/* webpackChunkName: "DashboardPage" */ 'pages/DashboardsListPage'),
+		import(
+			/* webpackChunkName: "DashboardsListPage" */ 'pages/DashboardsListPage'
+		),
 );
 
-export const NewDashboardPage = Loadable(
-	() => import(/* webpackChunkName: "New DashboardPage" */ 'pages/NewDashboard'),
+export const DashboardPage = Loadable(
+	() => import(/* webpackChunkName: "DashboardPage" */ 'pages/DashboardPage'),
 );
 
 export const DashboardWidget = Loadable(
 	() =>
 		import(/* webpackChunkName: "DashboardWidgetPage" */ 'pages/DashboardWidget'),
+);
+
+export const DashboardPanelEditorPage = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "DashboardPanelEditorPage" */ 'pages/DashboardPageV2/PanelEditorPage/PanelEditorPage'
+		),
 );
 
 export const EditRulesPage = Loadable(
@@ -127,12 +134,12 @@ export const AlertOverview = Loadable(
 	() => import(/* webpackChunkName: "Alert Overview" */ 'pages/AlertList'),
 );
 
-export const CreateAlertChannelAlerts = Loadable(
-	() => import(/* webpackChunkName: "Create Channels" */ 'pages/Settings'),
+export const ChannelsNew = Loadable(
+	() => import(/* webpackChunkName: "Create Channels" */ 'pages/AlertList'),
 );
 
-export const AllAlertChannels = Loadable(
-	() => import(/* webpackChunkName: "All Channels" */ 'pages/Settings'),
+export const ChannelsEdit = Loadable(
+	() => import(/* webpackChunkName: "Edit Channels" */ 'pages/AlertList'),
 );
 
 export const AllErrors = Loadable(
@@ -155,17 +162,8 @@ export const IngestionSettings = Loadable(
 	() => import(/* webpackChunkName: "Ingestion Settings" */ 'pages/Settings'),
 );
 
-export const APIKeys = Loadable(
-	() => import(/* webpackChunkName: "All Settings" */ 'pages/Settings'),
-);
-
 export const MySettings = Loadable(
 	() => import(/* webpackChunkName: "All MySettings" */ 'pages/Settings'),
-);
-
-export const CustomDomainSettings = Loadable(
-	() =>
-		import(/* webpackChunkName: "Custom Domain Settings" */ 'pages/Settings'),
 );
 
 export const Logs = Loadable(
@@ -190,6 +188,10 @@ export const PipelinePage = Loadable(
 
 export const Login = Loadable(
 	() => import(/* webpackChunkName: "Login" */ 'pages/Login'),
+);
+
+export const ForgotPassword = Loadable(
+	() => import(/* webpackChunkName: "ForgotPassword" */ 'pages/ForgotPassword'),
 );
 
 export const UnAuthorized = Loadable(
@@ -247,10 +249,16 @@ export const ShortcutsPage = Loadable(
 	() => import(/* webpackChunkName: "ShortcutsPage" */ 'pages/Settings'),
 );
 
-export const InstalledIntegrations = Loadable(
+export const Integrations = Loadable(
 	() =>
 		import(
 			/* webpackChunkName: "InstalledIntegrations" */ 'pages/IntegrationsModulePage'
+		),
+);
+export const IntegrationsDetailsPage = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "IntegrationsDetailsPage" */ 'pages/IntegrationsDetailsPage'
 		),
 );
 
@@ -300,5 +308,31 @@ export const PublicDashboardPage = Loadable(
 	() =>
 		import(
 			/* webpackChunkName: "Public Dashboard Page" */ 'pages/PublicDashboard'
+		),
+);
+
+export const MeterExplorerPage = Loadable(
+	() =>
+		import(/* webpackChunkName: "Meter Explorer Page" */ 'pages/MeterExplorer'),
+);
+
+export const AIAssistantPage = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "AI Assistant Page" */ 'pages/AIAssistantPage/AIAssistantPage'
+		),
+);
+
+export const LLMObservabilityPage = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "LLM Observability Page" */ 'pages/LLMObservability'
+		),
+);
+
+export const LLMObservabilityModelPricingPage = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "LLM Observability Model Pricing Page" */ 'pages/LLMObservabilityModelPricing'
 		),
 );

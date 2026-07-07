@@ -1,6 +1,3 @@
-import { Col, Row, Select } from 'antd';
-import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import { find } from 'lodash-es';
 import {
 	ChangeEvent,
 	Dispatch,
@@ -10,6 +7,10 @@ import {
 	useRef,
 	useState,
 } from 'react';
+import { Input as SignozInput } from '@signozhq/ui/input';
+import { Col, Row, Select } from 'antd';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
+import { find } from 'lodash-es';
 import { TTTLType } from 'types/api/settings/common';
 
 import {
@@ -34,6 +35,7 @@ function Retention({
 	text,
 	hide,
 	isS3Field = false,
+	compact = false,
 }: RetentionProps): JSX.Element | null {
 	// Filter available units based on type and field
 	const availableUnits = useMemo(
@@ -53,10 +55,8 @@ function Retention({
 	);
 
 	// Convert the hours value using only the available units
-	const {
-		value: initialValue,
-		timeUnitValue: initialTimeUnitValue,
-	} = convertHoursValueToRelevantUnit(Number(retentionValue), availableUnits);
+	const { value: initialValue, timeUnitValue: initialTimeUnitValue } =
+		convertHoursValueToRelevantUnit(Number(retentionValue), availableUnits);
 
 	const [selectedTimeUnit, setSelectTimeUnit] = useState(initialTimeUnitValue);
 	const [selectedValue, setSelectedValue] = useState<number | null>(
@@ -67,11 +67,15 @@ function Retention({
 	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 
 	useEffect(() => {
-		if (!interacted.current) setSelectedValue(initialValue);
+		if (!interacted.current) {
+			setSelectedValue(initialValue);
+		}
 	}, [initialValue]);
 
 	useEffect(() => {
-		if (!interacted.current) setSelectTimeUnit(initialTimeUnitValue);
+		if (!interacted.current) {
+			setSelectTimeUnit(initialTimeUnitValue);
+		}
 	}, [initialTimeUnitValue]);
 
 	const menuItems = availableUnits.map((option) => (
@@ -82,7 +86,9 @@ function Retention({
 
 	const currentSelectedOption = (option: SettingPeriod): void => {
 		const selectedValue = find(availableUnits, (e) => e.value === option)?.value;
-		if (selectedValue) setSelectTimeUnit(selectedValue);
+		if (selectedValue) {
+			setSelectTimeUnit(selectedValue);
+		}
 	};
 
 	useEffect(() => {
@@ -90,7 +96,9 @@ function Retention({
 			availableUnits,
 			(timeUnit) => timeUnit.value === selectedTimeUnit,
 		)?.multiplier;
-		if (!selectedValue) setRetentionValue(null);
+		if (!selectedValue) {
+			setRetentionValue(null);
+		}
 		if (selectedValue && inverseMultiplier) {
 			setRetentionValue(selectedValue * (1 / inverseMultiplier));
 		}
@@ -116,6 +124,27 @@ function Retention({
 
 	if (hide) {
 		return null;
+	}
+
+	if (compact) {
+		return (
+			<div className="retention-input-group">
+				<SignozInput
+					type="number"
+					min={0}
+					value={selectedValue && selectedValue >= 0 ? selectedValue : ''}
+					disabled={isCloudUserVal}
+					onChange={(e): void => onChangeHandler(e, setSelectedValue)}
+				/>
+				<Select
+					value={selectedTimeUnit}
+					onChange={currentSelectedOption}
+					disabled={isCloudUserVal}
+				>
+					{menuItems}
+				</Select>
+			</div>
+		);
 	}
 
 	return (
@@ -154,9 +183,11 @@ interface RetentionProps {
 	setRetentionValue: Dispatch<SetStateAction<number | null>>;
 	hide: boolean;
 	isS3Field?: boolean;
+	compact?: boolean;
 }
 
 Retention.defaultProps = {
 	isS3Field: false,
+	compact: false,
 };
 export default Retention;

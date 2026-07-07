@@ -147,7 +147,9 @@ export const OperatorSchema: IOption[] = OperatorConversions.map(
 export const getResourceDeploymentKeys = (
 	dotMetricsEnabled: boolean,
 ): string => {
-	if (dotMetricsEnabled) return 'resource_deployment.environment';
+	if (dotMetricsEnabled) {
+		return 'resource_deployment.environment';
+	}
 	return 'resource_deployment_environment';
 };
 

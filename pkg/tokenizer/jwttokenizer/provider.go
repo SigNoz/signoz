@@ -2,8 +2,13 @@ package jwttokenizer
 
 import (
 	"context"
+	"log/slog"
 	"slices"
+	"sync"
 	"time"
+
+	"github.com/dgraph-io/ristretto/v2"
+	"github.com/golang-jwt/jwt/v5"
 
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -11,8 +16,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/tokenizer"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/dgraph-io/ristretto/v2"
-	"github.com/golang-jwt/jwt/v5"
 )
 
 var (
@@ -29,6 +32,7 @@ type provider struct {
 	cache               cache.Cache
 	tokenStore          authtypes.TokenStore
 	lastObservedAtCache *ristretto.Cache[string, map[valuer.UUID]time.Time]
+	lastObservedAtMtx   sync.RWMutex
 	stopC               chan struct{}
 }
 
@@ -42,7 +46,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/tokenizer/jwttokenizer")
 
 	if config.JWT.Secret == "" {
-		settings.Logger().ErrorContext(ctx, "🚨 CRITICAL SECURITY ISSUE: No JWT secret key specified!", "error", "SIGNOZ_JWT_SECRET environment variable is not set. This has dire consequences for the security of the application. Without a JWT secret, user sessions are vulnerable to tampering and unauthorized access. Please set the SIGNOZ_TOKENIZER_JWT_SECRET environment variable immediately. For more information, please refer to https://github.com/SigNoz/signoz/issues/8400.")
+		settings.Logger().ErrorContext(ctx, "🚨 CRITICAL SECURITY ISSUE: No JWT secret key specified!", slog.String("error", "SIGNOZ_TOKENIZER_JWT_SECRET environment variable is not set. This has dire consequences for the security of the application. Without a JWT secret, user sessions are vulnerable to tampering and unauthorized access. Please set the SIGNOZ_TOKENIZER_JWT_SECRET environment variable immediately. For more information, please refer to https://github.com/SigNoz/signoz/issues/8400."))
 	}
 
 	lastObservedAtCache, err := ristretto.NewCache(&ristretto.Config[string, map[valuer.UUID]time.Time]{
@@ -61,6 +65,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 		cache:               cache,
 		tokenStore:          tokenStore,
 		lastObservedAtCache: lastObservedAtCache,
+		lastObservedAtMtx:   sync.RWMutex{},
 		stopC:               make(chan struct{}),
 	}), nil
 }
@@ -73,7 +78,6 @@ func (provider *provider) Start(ctx context.Context) error {
 func (provider *provider) CreateToken(ctx context.Context, identity *authtypes.Identity, meta map[string]string) (*authtypes.Token, error) {
 	accessTokenClaims := Claims{
 		UserID: identity.UserID.String(),
-		Role:   identity.Role,
 		Email:  identity.Email.String(),
 		OrgID:  identity.OrgID.String(),
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -89,7 +93,6 @@ func (provider *provider) CreateToken(ctx context.Context, identity *authtypes.I
 
 	refreshTokenClaims := Claims{
 		UserID: identity.UserID.String(),
-		Role:   identity.Role,
 		Email:  identity.Email.String(),
 		OrgID:  identity.OrgID.String(),
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -112,21 +115,11 @@ func (provider *provider) GetIdentity(ctx context.Context, accessToken string) (
 		return nil, err
 	}
 
-	// check claimed role
-	identity, err := provider.getOrSetIdentity(ctx, emptyOrgID, valuer.MustNewUUID(claims.UserID))
-	if err != nil {
-		return nil, err
-	}
-
-	if identity.Role != claims.Role {
-		return nil, errors.Newf(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "claim role mismatch")
-	}
-
-	return authtypes.NewIdentity(valuer.MustNewUUID(claims.UserID), valuer.MustNewUUID(claims.OrgID), valuer.MustNewEmail(claims.Email), claims.Role), nil
+	return authtypes.NewPrincipalUserIdentity(valuer.MustNewUUID(claims.UserID), valuer.MustNewUUID(claims.OrgID), valuer.MustNewEmail(claims.Email), authtypes.IdentNProviderTokenizer), nil
 }
 
 func (provider *provider) DeleteToken(ctx context.Context, accessToken string) error {
-	provider.settings.Logger().WarnContext(ctx, "Deleting token by access token is not supported for this tokenizer, this is a no-op", "tokenizer_provider", provider.config.Provider)
+	provider.settings.Logger().WarnContext(ctx, "Deleting token by access token is not supported for this tokenizer, this is a no-op", slog.String("tokenizer_provider", provider.config.Provider))
 	return nil
 }
 
@@ -145,7 +138,7 @@ func (provider *provider) RotateToken(ctx context.Context, _ string, refreshToke
 }
 
 func (provider *provider) DeleteTokensByUserID(ctx context.Context, userID valuer.UUID) error {
-	provider.settings.Logger().WarnContext(ctx, "Deleting token by user id is not supported for this tokenizer, this is a no-op", "tokenizer_provider", provider.config.Provider)
+	provider.settings.Logger().WarnContext(ctx, "Deleting token by user id is not supported for this tokenizer, this is a no-op", slog.String("tokenizer_provider", provider.config.Provider))
 	return nil
 }
 
@@ -157,10 +150,14 @@ func (provider *provider) DeleteIdentity(ctx context.Context, userID valuer.UUID
 func (provider *provider) SetLastObservedAt(ctx context.Context, accessToken string, lastObservedAt time.Time) error {
 	claims, err := provider.getClaimsFromToken(accessToken)
 	if err != nil {
-		provider.settings.Logger().ErrorContext(ctx, "failed to set last observed at", "error", err)
+		provider.settings.Logger().ErrorContext(ctx, "failed to set last observed at", errors.Attr(err))
 		return nil
 	}
 
+	// Ristretto is returning the same map on concurrent calls.
+	// Lock the last observed at cache to avoid race condition on writing to the same map obtained from the cache.
+	provider.lastObservedAtMtx.Lock()
+	defer provider.lastObservedAtMtx.Unlock()
 	cachedLastObservedAts, ok := provider.lastObservedAtCache.Get(claims.OrgID)
 	if !ok {
 		cachedLastObservedAts = make(map[valuer.UUID]time.Time)
@@ -169,7 +166,7 @@ func (provider *provider) SetLastObservedAt(ctx context.Context, accessToken str
 	cachedLastObservedAts[valuer.MustNewUUID(claims.UserID)] = lastObservedAt
 
 	if ok := provider.lastObservedAtCache.Set(claims.OrgID, cachedLastObservedAts, 1); !ok {
-		provider.settings.Logger().ErrorContext(ctx, "error caching last observed at timestamp", "user_id", claims.UserID)
+		provider.settings.Logger().ErrorContext(ctx, "error caching last observed at timestamp", slog.String("user_id", claims.UserID))
 	}
 
 	return nil
@@ -251,7 +248,7 @@ func (provider *provider) getOrSetIdentity(ctx context.Context, orgID, userID va
 
 	err := provider.cache.Get(ctx, orgID, identityCacheKey(userID), identity)
 	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
-		provider.settings.Logger().ErrorContext(ctx, "failed to get identity from cache", "error", err)
+		provider.settings.Logger().ErrorContext(ctx, "failed to get identity from cache", errors.Attr(err))
 	}
 
 	if err == nil {
@@ -263,9 +260,9 @@ func (provider *provider) getOrSetIdentity(ctx context.Context, orgID, userID va
 		return nil, err
 	}
 
-	err = provider.cache.Set(ctx, orgID, identityCacheKey(identity.UserID), identity, -1)
+	err = provider.cache.Set(ctx, orgID, identityCacheKey(identity.UserID), identity, 0)
 	if err != nil {
-		provider.settings.Logger().ErrorContext(ctx, "failed to cache identity", "error", err)
+		provider.settings.Logger().ErrorContext(ctx, "failed to cache identity", errors.Attr(err))
 	}
 
 	return identity, nil

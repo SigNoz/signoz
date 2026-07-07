@@ -1,5 +1,4 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-/* eslint-disable no-continue */
 
 import { CharStreams, CommonTokenStream, Token } from 'antlr4';
 import TraceOperatorGrammarLexer from 'parser/TraceOperatorParser/TraceOperatorGrammarLexer';
@@ -99,9 +98,7 @@ export function createTraceOperatorContext(
 }
 
 // Helper to determine token context
-function determineTraceTokenContext(
-	token: IToken,
-): {
+function determineTraceTokenContext(token: IToken): {
 	isInAtom: boolean;
 	isInOperator: boolean;
 	isInParenthesis: boolean;
@@ -290,7 +287,6 @@ export function getCurrentTraceExpressionPair(
 		// Find the rightmost pair whose end position is before or at the cursor
 		let bestMatch: ITraceExpressionPair | null = null;
 
-		// eslint-disable-next-line no-restricted-syntax
 		for (const pair of expressionPairs) {
 			const { position } = pair;
 			const pairEnd =
@@ -375,7 +371,9 @@ export function getTraceOperatorContextAtCursor(
 		let lastTokenBeforeCursor: IToken | null = null;
 		for (let i = 0; i < allTokens.length; i++) {
 			const token = allTokens[i];
-			if (token.type === TraceOperatorGrammarLexer.EOF) continue;
+			if (token.type === TraceOperatorGrammarLexer.EOF) {
+				continue;
+			}
 
 			if (token.stop < cursorIndex || token.stop + 1 === cursorIndex) {
 				lastTokenBeforeCursor = token;
@@ -390,7 +388,9 @@ export function getTraceOperatorContextAtCursor(
 		let exactToken: IToken | null = null;
 		for (let i = 0; i < allTokens.length; i++) {
 			const token = allTokens[i];
-			if (token.type === TraceOperatorGrammarLexer.EOF) continue;
+			if (token.type === TraceOperatorGrammarLexer.EOF) {
+				continue;
+			}
 
 			if (token.start <= cursorIndex && cursorIndex <= token.stop + 1) {
 				exactToken = token;

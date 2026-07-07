@@ -1,12 +1,10 @@
-/* eslint-disable sonarjs/no-duplicate-string */
-import './QBEntityOptions.styles.scss';
-
+import { useLocation } from 'react-router-dom';
 import { Button, Col, Tooltip } from 'antd';
-import { noop } from 'antd/lib/_util/warning';
 import cx from 'classnames';
 import ROUTES from 'constants/routes';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { isFunction } from 'lodash-es';
+import noop from 'lodash-es/noop';
 import {
 	ChevronDown,
 	ChevronRight,
@@ -14,14 +12,15 @@ import {
 	Eye,
 	EyeOff,
 	Trash2,
-} from 'lucide-react';
-import { useLocation } from 'react-router-dom';
+} from '@signozhq/icons';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryFunction } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { DataSourceDropdown } from '..';
 import QueryFunctions from '../QueryFunctions/QueryFunctions';
+
+import './QBEntityOptions.styles.scss';
 
 interface QBEntityOptionsProps {
 	query?: IBuilderQuery;
@@ -137,6 +136,7 @@ export default function QBEntityOptions({
 												onChangeDataSource(value);
 											}
 										}}
+										data-testid={`query-data-source-selector-${index}`}
 										value={query?.dataSource || DataSource.METRICS}
 										isListViewPanel={isListViewPanel}
 										className="query-data-source-dropdown"

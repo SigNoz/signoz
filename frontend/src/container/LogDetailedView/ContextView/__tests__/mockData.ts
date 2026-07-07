@@ -5,7 +5,7 @@ import {
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
-import { DataSource } from 'types/common/queryBuilder';
+import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 
 export const mockLog: ILog = {
 	id: 'test-log-id',
@@ -54,7 +54,7 @@ export const mockQuery: Query = {
 					op: 'AND',
 				},
 				expression: 'A',
-				reduceTo: 'sum',
+				reduceTo: ReduceOperators.SUM,
 			},
 		],
 		queryFormulas: [],

@@ -1,27 +1,32 @@
-import { Button, Form, Input, Typography } from 'antd';
-import { Logout } from 'api/utils';
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useLocation } from 'react-use';
+import { Button } from '@signozhq/ui/button';
+import { Callout } from '@signozhq/ui/callout';
+import { Form, Input as AntdInput } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import resetPasswordApi from 'api/v1/factor_password/resetPassword';
-import WelcomeLeftContainer from 'components/WelcomeLeftContainer';
+import AuthError from 'components/AuthError/AuthError';
+import AuthPageContainer from 'components/AuthPageContainer';
 import ROUTES from 'constants/routes';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
+import { ArrowRight, CircleAlert, KeyRound } from '@signozhq/icons';
 import { Label } from 'pages/SignUp/styles';
-import { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useLocation } from 'react-use';
 import APIError from 'types/api/error';
 
-import { ButtonContainer, FormContainer, FormWrapper } from './styles';
+import { FormContainer } from './styles';
 
-const { Title } = Typography;
+import './ResetPassword.styles.scss';
 
 type FormValues = { password: string; confirmPassword: string };
 
 function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
-	const [confirmPasswordError, setConfirmPasswordError] = useState<boolean>(
-		false,
-	);
+	const [confirmPasswordError, setConfirmPasswordError] =
+		useState<boolean>(false);
+
+	const [errorMessage, setErrorMessage] = useState<APIError | null>();
 
 	const [isValidPassword, setIsValidPassword] = useState(false);
 	const [loading, setLoading] = useState(false);
@@ -32,16 +37,10 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 	const { notifications } = useNotifications();
 
 	const [form] = Form.useForm<FormValues>();
-	useEffect(() => {
-		if (!token) {
-			Logout();
-			history.push(ROUTES.LOGIN);
-		}
-	}, [token]);
-
 	const handleFormSubmit: () => Promise<void> = async () => {
 		try {
 			setLoading(true);
+			setErrorMessage(null);
 			const { password } = form.getFieldsValue();
 
 			await resetPasswordApi({
@@ -59,10 +58,7 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 			setLoading(false);
 		} catch (error) {
 			setLoading(false);
-			notifications.error({
-				message: (error as APIError).getErrorCode(),
-				description: (error as APIError).getErrorMessage(),
-			});
+			setErrorMessage(error as APIError);
 		}
 	};
 
@@ -90,6 +86,7 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 			setIsValidPassword(false);
 		}
 
+		// Only clear error if passwords match while typing (but don't set error until blur)
 		if (
 			password &&
 			confirmPassword &&
@@ -97,11 +94,38 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 			confirmPassword.trim()
 		) {
 			const isValid = validatePassword();
+			setIsValidPassword(isValid);
 
+			// Only clear error if passwords match, don't set error on mismatch
+			if (isValid) {
+				setConfirmPasswordError(false);
+			}
+		}
+	}, 100);
+
+	const handlePasswordBlur = (): void => {
+		const { confirmPassword } = form.getFieldsValue();
+		// Only validate if confirm password has a value
+		if (confirmPassword && confirmPassword.trim()) {
+			const isValid = validatePassword();
 			setIsValidPassword(isValid);
 			setConfirmPasswordError(!isValid);
 		}
-	}, 100);
+	};
+
+	const handleConfirmPasswordBlur = (): void => {
+		const { password, confirmPassword } = form.getFieldsValue();
+		if (
+			password &&
+			password.trim() &&
+			confirmPassword &&
+			confirmPassword.trim()
+		) {
+			const isValid = validatePassword();
+			setIsValidPassword(isValid);
+			setConfirmPasswordError(!isValid);
+		}
+	};
 
 	const handleSubmit = (): void => {
 		const isValid = validatePassword();
@@ -113,69 +137,101 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 	};
 
 	return (
-		<WelcomeLeftContainer version={version}>
-			<FormWrapper>
-				<FormContainer form={form} onFinish={handleSubmit}>
-					<Title level={4}>Reset Your Password</Title>
-
-					<div>
-						<Label htmlFor="password">Password</Label>
-						<Form.Item
-							name="password"
-							validateTrigger="onBlur"
-							rules={[{ required: true, message: 'Please enter  password!' }]}
-						>
-							<Input.Password
-								tabIndex={0}
-								onChange={handleValuesChange}
-								id="password"
-								data-testid="password"
-							/>
-						</Form.Item>
+		<AuthPageContainer>
+			<div className="reset-password-card">
+				<div className="reset-password-header">
+					<div className="reset-password-header-icon">
+						<KeyRound size={32} />
 					</div>
-					<div>
-						<Label htmlFor="confirmPassword">Confirm Password</Label>
-						<Form.Item
-							name="confirmPassword"
-							// validateTrigger="onChange"
-							validateTrigger="onBlur"
-							rules={[{ required: true, message: 'Please enter confirm password!' }]}
-						>
-							<Input.Password
-								onChange={handleValuesChange}
-								id="confirmPassword"
-								data-testid="confirmPassword"
-							/>
-						</Form.Item>
+					<Typography.Title level={4} className="reset-password-header-title">
+						Reset Your Password
+					</Typography.Title>
+					<Typography.Text className="reset-password-header-subtitle">
+						Monitor your applications. Find what is causing issues.
+					</Typography.Text>
+					{version && (
+						<div className="reset-password-version-badge">SigNoz {version}</div>
+					)}
+				</div>
 
-						{confirmPasswordError && (
-							<Typography.Paragraph
-								italic
-								style={{
-									color: '#D89614',
-									marginTop: '0.50rem',
-								}}
-							>
-								The passwords entered do not match. Please double-check and re-enter
-								your passwords.
-							</Typography.Paragraph>
-						)}
+				<FormContainer
+					form={form}
+					onFinish={handleSubmit}
+					className="reset-password-form"
+				>
+					<div className="reset-password-form-container">
+						<div className="reset-password-form-fields">
+							<div className="reset-password-field-container">
+								<Label htmlFor="password">New Password</Label>
+								<Form.Item
+									name="password"
+									validateTrigger="onBlur"
+									rules={[{ required: true, message: 'Please enter password!' }]}
+								>
+									<AntdInput.Password
+										tabIndex={0}
+										onChange={handleValuesChange}
+										onBlur={handlePasswordBlur}
+										id="password"
+										data-testid="password"
+										placeholder="Enter new password"
+										className="reset-password-form-input"
+									/>
+								</Form.Item>
+							</div>
+
+							<div className="reset-password-field-container">
+								<Label htmlFor="confirmPassword">Confirm New Password</Label>
+								<Form.Item
+									name="confirmPassword"
+									validateTrigger="onBlur"
+									rules={[{ required: true, message: 'Please enter confirm password!' }]}
+								>
+									<AntdInput.Password
+										onChange={handleValuesChange}
+										onBlur={handleConfirmPasswordBlur}
+										id="confirmPassword"
+										data-testid="confirmPassword"
+										placeholder="Confirm your new password"
+										className="reset-password-form-input"
+									/>
+								</Form.Item>
+							</div>
+						</div>
 					</div>
 
-					<ButtonContainer>
+					{confirmPasswordError && (
+						<Callout
+							type="error"
+							size="small"
+							showIcon
+							icon={<CircleAlert size={12} />}
+							className="reset-password-error-callout"
+						>
+							Passwords don&apos;t match. Please try again.
+						</Callout>
+					)}
+
+					{errorMessage && !confirmPasswordError && (
+						<AuthError error={errorMessage} />
+					)}
+
+					<div className="reset-password-form-actions">
 						<Button
-							type="primary"
-							htmlType="submit"
-							data-attr="signup"
-							loading={loading}
+							variant="solid"
+							color="primary"
+							type="submit"
+							data-attr="reset-password"
 							disabled={!isValidPassword || loading}
+							className="reset-password-submit-button"
+							suffix={<ArrowRight size={16} />}
 						>
-							Get Started
+							Reset Password
 						</Button>
-					</ButtonContainer>
+					</div>
 				</FormContainer>
-			</FormWrapper>
-		</WelcomeLeftContainer>
+			</div>
+		</AuthPageContainer>
 	);
 }
 

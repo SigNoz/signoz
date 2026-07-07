@@ -1,5 +1,11 @@
-import { WarningFilled } from '@ant-design/icons';
-import { Flex, Typography } from 'antd';
+import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+// eslint-disable-next-line no-restricted-imports
+import { useSelector } from 'react-redux';
+import { useLocation } from 'react-router-dom';
+import { SolidAlertTriangle } from '@signozhq/icons';
+import { Flex } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import { ResizeTable } from 'components/ResizeTable';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import { MAX_RPS_LIMIT } from 'constants/global';
@@ -8,10 +14,6 @@ import { useGetQueriesRange } from 'hooks/queryBuilder/useGetQueriesRange';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import { useAppContext } from 'providers/App/App';
-import { useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useSelector } from 'react-redux';
-import { useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { ServicesList } from 'types/api/metrics/getService';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -25,10 +27,11 @@ function ServiceMetricTable({
 	topLevelOperations,
 	queryRangeRequestData,
 }: ServiceMetricsTableProps): JSX.Element {
-	const { minTime, maxTime, selectedTime: globalSelectedInterval } = useSelector<
-		AppState,
-		GlobalReducer
-	>((state) => state.globalTime);
+	const {
+		minTime,
+		maxTime,
+		selectedTime: globalSelectedInterval,
+	} = useSelector<AppState, GlobalReducer>((state) => state.globalTime);
 
 	const { notifications } = useNotifications();
 	const { t: getText } = useTranslation(['services']);
@@ -99,8 +102,8 @@ function ServiceMetricTable({
 		<div className="service-metric-table-container">
 			{RPS > MAX_RPS_LIMIT && (
 				<Flex justify="left">
-					<Typography.Title level={5} type="warning" style={{ marginTop: 0 }}>
-						<WarningFilled /> {getText('rps_over_100')}
+					<Typography.Title level={5} color="warning" style={{ marginTop: 0 }}>
+						<SolidAlertTriangle size="md" /> {getText('rps_over_100')}
 						<a href="mailto:cloud-support@signoz.io">email</a>
 					</Typography.Title>
 				</Flex>

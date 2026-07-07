@@ -1,0 +1,90 @@
+.config {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	// padding: 18px 18px 44px;
+	background-color: var(--l1-background);
+	overflow-y: auto;
+	overflow-x: hidden;
+
+	//TODO: replace this with custom-scrollbar mixin
+	// Thin, unobtrusive scrollbar (replaces the chunky native bar).
+	$thumb: color-mix(in srgb, var(--bg-vanilla-100) 16%, transparent);
+
+	scrollbar-width: thin;
+	scrollbar-color: $thumb transparent;
+
+	&::-webkit-scrollbar {
+		width: 8px;
+	}
+
+	&::-webkit-scrollbar-track {
+		background: transparent;
+	}
+
+	&::-webkit-scrollbar-thumb {
+		background: $thumb;
+		border-radius: 999px;
+		border: 2px solid transparent;
+		background-clip: padding-box;
+	}
+}
+
+.heading {
+	margin-bottom: 18px;
+	padding: 16px 16px 0 16px;
+}
+
+.title {
+	display: flex;
+	align-items: baseline;
+	gap: 9px;
+	white-space: nowrap;
+}
+
+.subtitle {
+	font-size: 12px;
+	color: var(--text-vanilla-400);
+}
+
+.eyebrow {
+	display: block;
+	margin: 0 2px 10px;
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--l1-foreground);
+}
+
+.group {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	padding: 0 16px;
+}
+
+.field {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.divider {
+	height: 1px;
+	background: var(--l2-border);
+	margin: 18px 0;
+}
+
+.sectionsContainer {
+	padding: 0 16px;
+}
+
+.sections {
+	display: flex;
+	flex-direction: column;
+
+	& > * + * {
+		border-top: 1px solid var(--l2-border);
+	}
+}

@@ -1,6 +1,8 @@
-import listOverview from 'api/thirdPartyApis/listOverview';
-import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useQuery, UseQueryResult } from 'react-query';
+import listOverview from 'api/thirdPartyApis/listOverview';
+import { isAxiosError } from 'axios';
+import { MAX_QUERY_RETRIES } from 'constants/reactQuery';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { SuccessResponseV2 } from 'types/api';
 import APIError from 'types/api/error';
 import {
@@ -20,12 +22,21 @@ export const useListOverview = (
 			showIp,
 			filter.expression,
 		],
-		queryFn: () =>
-			listOverview({
-				start,
-				end,
-				show_ip: showIp,
-				filter,
-			}),
+		queryFn: ({ signal }) =>
+			listOverview(
+				{
+					start,
+					end,
+					show_ip: showIp,
+					filter,
+				},
+				signal,
+			),
+		retry: (failureCount, error): boolean => {
+			if (isAxiosError(error) && error.code === 'ERR_CANCELED') {
+				return false;
+			}
+			return failureCount < MAX_QUERY_RETRIES;
+		},
 	});
 };

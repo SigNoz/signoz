@@ -1,5 +1,4 @@
-/* eslint-disable no-nested-ternary */
-import { Card, Typography } from 'antd';
+import { Card } from 'antd';
 import { FontSize } from 'container/OptionsMenu/types';
 import styled from 'styled-components';
 import { getActiveLogBackground } from 'utils/logs';
@@ -25,11 +24,16 @@ export const Container = styled(Card)<{
 		fontSize === FontSize.SMALL
 			? `margin-bottom:0.1rem;`
 			: fontSize === FontSize.MEDIUM
-			? `margin-bottom: 0.2rem;`
-			: fontSize === FontSize.LARGE
-			? `margin-bottom:0.3rem;`
-			: ``}
+				? `margin-bottom: 0.2rem;`
+				: fontSize === FontSize.LARGE
+					? `margin-bottom:0.3rem;`
+					: ``}
 	cursor: pointer;
+
+	&:not(:hover) .log-line-action-buttons {
+		display: none;
+	}
+
 	.ant-card-body {
 		padding: 0.3rem 0.6rem;
 
@@ -37,26 +41,19 @@ export const Container = styled(Card)<{
 			fontSize === FontSize.SMALL
 				? `padding:0.1rem 0.6rem;`
 				: fontSize === FontSize.MEDIUM
-				? `padding: 0.2rem 0.6rem;`
-				: fontSize === FontSize.LARGE
-				? `padding:0.3rem 0.6rem;`
-				: ``}
+					? `padding: 0.2rem 0.6rem;`
+					: fontSize === FontSize.LARGE
+						? `padding:0.3rem 0.6rem;`
+						: ``}
 
 		${({ $isActiveLog, $isDarkMode, $logType }): string =>
 			getActiveLogBackground($isActiveLog, $isDarkMode, $logType)}
-`;
-
-export const Text = styled(Typography.Text)`
-	&&& {
-		min-width: 2.5rem;
-		white-space: nowrap;
 	}
-`;
 
-export const TextContainer = styled.div`
-	display: flex;
-	overflow: hidden;
-	width: 100%;
+	&:hover .ant-card-body {
+		${({ $isDarkMode, $logType }): string =>
+			getActiveLogBackground(true, $isDarkMode, $logType)}
+	}
 `;
 
 export const LogContainer = styled.div<LogContainerProps>`
@@ -68,8 +65,8 @@ export const LogContainer = styled.div<LogContainerProps>`
 		fontSize === FontSize.SMALL
 			? `gap: 2px;`
 			: fontSize === FontSize.MEDIUM
-			? ` gap:4px;`
-			: `gap:6px;`}
+				? ` gap:4px;`
+				: `gap:6px;`}
 `;
 
 export const LogText = styled.div<LogTextProps>`

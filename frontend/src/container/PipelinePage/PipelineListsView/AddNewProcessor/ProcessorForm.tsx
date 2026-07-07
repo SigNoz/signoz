@@ -1,8 +1,8 @@
-import './styles.scss';
-
-import { Form, Input, Select, Space, Switch } from 'antd';
-import { ModalFooterTitle } from 'container/PipelinePage/styles';
 import { useTranslation } from 'react-i18next';
+import { Input } from '@signozhq/ui/input';
+import { Switch } from '@signozhq/ui/switch';
+import { Form, Select, Space } from 'antd';
+import { ModalFooterTitle } from 'container/PipelinePage/styles';
 import { ProcessorData } from 'types/api/pipeline/def';
 
 import { formValidationRules } from '../config';
@@ -10,6 +10,8 @@ import { processorFields, ProcessorFormField } from './config';
 import CSVInput from './FormFields/CSVInput';
 import JsonFlattening from './FormFields/JsonFlattening';
 import { FormWrapper, PipelineIndexIcon, StyledSelect } from './styles';
+
+import './styles.scss';
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function ProcessorFieldInput({
@@ -75,9 +77,7 @@ function ProcessorFieldInput({
 			}
 		>
 			{!fieldData?.compact && (
-				<PipelineIndexIcon size="small">
-					{Number(fieldData.id) + 1}
-				</PipelineIndexIcon>
+				<PipelineIndexIcon>{Number(fieldData.id) + 1}</PipelineIndexIcon>
 			)}
 			<FormWrapper>
 				{fieldData.name === 'enable_flattening' ? (
@@ -92,8 +92,7 @@ function ProcessorFieldInput({
 					>
 						<Space>
 							<Switch
-								size="small"
-								checked={form.getFieldValue('enable_flattening')}
+								value={form.getFieldValue('enable_flattening')}
 								onChange={(checked: boolean): void => {
 									form.setFieldValue('enable_flattening', checked);
 								}}

@@ -1,6 +1,6 @@
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
-import { DataSource } from 'types/common/queryBuilder';
+import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 
 import { getBarStepIntervalPoints, updateBarStepInterval } from '../utils';
 
@@ -126,7 +126,7 @@ describe('GridCardLayout Utils', () => {
 						limit: null,
 						offset: 0,
 						pageSize: 0,
-						reduceTo: 'avg',
+						reduceTo: ReduceOperators.AVG,
 						legend: '',
 					},
 				],

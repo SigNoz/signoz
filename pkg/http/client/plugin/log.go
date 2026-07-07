@@ -9,6 +9,8 @@ import (
 
 	"github.com/gojek/heimdall/v7"
 	semconv "go.opentelemetry.io/otel/semconv/v1.27.0"
+
+	"github.com/SigNoz/signoz/pkg/errors"
 )
 
 type reqResLog struct {
@@ -31,7 +33,13 @@ func (plugin *reqResLog) OnRequestStart(request *http.Request) {
 		string(semconv.ServerAddressKey), host,
 		string(semconv.ServerPortKey), port,
 		string(semconv.HTTPRequestSizeKey), request.ContentLength,
-		"http.request.headers", request.Header,
+	}
+
+	// only include all the headers if we are at debug level
+	if plugin.logger.Handler().Enabled(request.Context(), slog.LevelDebug) {
+		fields = append(fields, "http.request.headers", request.Header)
+	} else {
+		fields = append(fields, "http.request.headers", redactSensitiveHeaders(request.Header))
 	}
 
 	plugin.logger.InfoContext(request.Context(), "::SENT-REQUEST::", fields...)
@@ -45,7 +53,7 @@ func (plugin *reqResLog) OnRequestEnd(request *http.Request, response *http.Resp
 
 	bodybytes, err := io.ReadAll(response.Body)
 	if err != nil {
-		plugin.logger.DebugContext(request.Context(), "::UNABLE-TO-LOG-RESPONSE-BODY::", "error", err)
+		plugin.logger.DebugContext(request.Context(), "::UNABLE-TO-LOG-RESPONSE-BODY::", errors.Attr(err))
 	} else {
 		_ = response.Body.Close()
 		response.Body = io.NopCloser(bytes.NewBuffer(bodybytes))
@@ -63,7 +71,7 @@ func (plugin *reqResLog) OnRequestEnd(request *http.Request, response *http.Resp
 func (plugin *reqResLog) OnError(request *http.Request, err error) {
 	host, port, _ := net.SplitHostPort(request.Host)
 	fields := []any{
-		"error", err,
+		errors.Attr(err),
 		string(semconv.HTTPRequestMethodKey), request.Method,
 		string(semconv.URLPathKey), request.URL.Path,
 		string(semconv.URLSchemeKey), request.URL.Scheme,
@@ -74,4 +82,25 @@ func (plugin *reqResLog) OnError(request *http.Request, err error) {
 	}
 
 	plugin.logger.ErrorContext(request.Context(), "::UNABLE-TO-SEND-REQUEST::", fields...)
+}
+
+func redactSensitiveHeaders(headers http.Header) http.Header {
+	// maintained list of headers to redact
+	sensitiveHeaders := map[string]bool{
+		"Authorization":          true,
+		"Cookie":                 true,
+		"X-Signoz-Cloud-Api-Key": true,
+	}
+
+	safeHeaders := make(http.Header)
+
+	for header, value := range headers {
+		if sensitiveHeaders[header] {
+			safeHeaders[header] = []string{"REDACTED"}
+		} else {
+			safeHeaders[header] = value
+		}
+	}
+
+	return safeHeaders
 }

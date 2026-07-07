@@ -12,3 +12,12 @@ var (
 	SignalMetrics     = Signal{valuer.NewString("metrics")}
 	SignalUnspecified = Signal{valuer.NewString("")}
 )
+
+// Enum returns the acceptable values for Signal.
+func (Signal) Enum() []any {
+	return []any{
+		SignalTraces,
+		SignalLogs,
+		SignalMetrics,
+	}
+}

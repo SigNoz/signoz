@@ -1,6 +1,17 @@
-import './ListView.styles.scss';
-
+import {
+	Dispatch,
+	memo,
+	MutableRefObject,
+	SetStateAction,
+	useCallback,
+	useEffect,
+	useMemo,
+	useState,
+} from 'react';
+// eslint-disable-next-line no-restricted-imports
+import { useSelector } from 'react-redux';
 import logEvent from 'api/common/logEvent';
+import DownloadOptionsMenu from 'components/DownloadOptionsMenu/DownloadOptionsMenu';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import ListViewOrderBy from 'components/OrderBy/ListViewOrderBy';
 import { ResizeTable } from 'components/ResizeTable';
@@ -12,30 +23,16 @@ import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import EmptyLogsSearch from 'container/EmptyLogsSearch/EmptyLogsSearch';
 import NoLogs from 'container/NoLogs/NoLogs';
 import { useOptionsMenu } from 'container/OptionsMenu';
-import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/config';
+import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/types';
 import TraceExplorerControls from 'container/TracesExplorer/Controls';
 import { getListViewQuery } from 'container/TracesExplorer/explorerUtils';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Pagination } from 'hooks/queryPagination';
 import { getDefaultPaginationConfig } from 'hooks/queryPagination/utils';
-import useDragColumns from 'hooks/useDragColumns';
-import { getDraggedColumns } from 'hooks/useDragColumns/utils';
 import useUrlQueryData from 'hooks/useUrlQueryData';
-import { RowData } from 'lib/query/createTableColumnsFromQuery';
-import { ArrowUp10, Minus } from 'lucide-react';
+import { ArrowUp10, Minus } from '@signozhq/icons';
 import { useTimezone } from 'providers/Timezone';
-import {
-	Dispatch,
-	memo,
-	MutableRefObject,
-	SetStateAction,
-	useCallback,
-	useEffect,
-	useMemo,
-	useState,
-} from 'react';
-import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { Warning } from 'types/api';
 import APIError from 'types/api/error';
@@ -46,6 +43,8 @@ import { TracesLoading } from '../TraceLoading/TraceLoading';
 import { defaultSelectedColumns, PER_PAGE_OPTIONS } from './configs';
 import { Container, tableStyles } from './styles';
 import { getListColumns, transformDataWithDate } from './utils';
+
+import './ListView.styles.scss';
 
 interface ListViewProps {
 	isFilterApplied: boolean;
@@ -60,10 +59,8 @@ function ListView({
 	setIsLoadingQueries,
 	queryKeyRef,
 }: ListViewProps): JSX.Element {
-	const {
-		stagedQuery,
-		panelType: panelTypeFromQueryBuilder,
-	} = useQueryBuilder();
+	const { stagedQuery, panelType: panelTypeFromQueryBuilder } =
+		useQueryBuilder();
 
 	const panelType = panelTypeFromQueryBuilder || PANEL_TYPES.LIST;
 
@@ -85,10 +82,6 @@ function ListView({
 		},
 	});
 
-	const { draggedColumns, onDragColumns } = useDragColumns<RowData>(
-		LOCALSTORAGE.TRACES_LIST_COLUMNS,
-	);
-
 	const { queryData: paginationQueryData } = useUrlQueryData<Pagination>(
 		QueryParams.pagination,
 	);
@@ -100,6 +93,19 @@ function ListView({
 		[stagedQuery, orderBy],
 	);
 
+	// TEMP — remove after traces moves to TanStack table.
+	// - Drag updates selectColumns; raw queryKey would churn on reorder.
+	// - Trace API fetches only listed columns → add/remove must refetch.
+	// - Sorted-name signature: stable on reorder, changes on add/remove.
+	const selectColumnsSignature = useMemo(
+		() =>
+			(options?.selectColumns ?? [])
+				.map((c) => c.name)
+				.sort()
+				.join(','),
+		[options?.selectColumns],
+	);
+
 	const queryKey = useMemo(
 		() => [
 			REACT_QUERY_KEY.GET_QUERY_RANGE,
@@ -109,7 +115,7 @@ function ListView({
 			stagedQuery,
 			panelType,
 			paginationConfig,
-			options?.selectColumns,
+			selectColumnsSignature,
 			orderBy,
 		],
 		[
@@ -117,7 +123,7 @@ function ListView({
 			panelType,
 			globalSelectedTime,
 			paginationConfig,
-			options?.selectColumns,
+			selectColumnsSignature,
 			maxTime,
 			minTime,
 			orderBy,
@@ -125,7 +131,6 @@ function ListView({
 	);
 
 	if (queryKeyRef) {
-		// eslint-disable-next-line no-param-reassign
 		queryKeyRef.current = queryKey;
 	}
 
@@ -176,19 +181,21 @@ function ListView({
 	const totalCount = useMemo(() => dataLength || 0, [dataLength]);
 
 	const queryTableDataResult = data?.payload?.data?.newResult?.data?.result;
-	const queryTableData = useMemo(() => queryTableDataResult || [], [
-		queryTableDataResult,
-	]);
+	const queryTableData = useMemo(
+		() => queryTableDataResult || [],
+		[queryTableDataResult],
+	);
 
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
-	const columns = useMemo(() => {
-		const updatedColumns = getListColumns(
-			options?.selectColumns || [],
-			formatTimezoneAdjustedTimestamp,
-		);
-		return getDraggedColumns(updatedColumns, draggedColumns);
-	}, [options?.selectColumns, formatTimezoneAdjustedTimestamp, draggedColumns]);
+	const columns = useMemo(
+		() =>
+			getListColumns(
+				options?.selectColumns || [],
+				formatTimezoneAdjustedTimestamp,
+			),
+		[options?.selectColumns, formatTimezoneAdjustedTimestamp],
+	);
 
 	const transformedQueryTableData = useMemo(
 		() => transformDataWithDate(queryTableData) || [],
@@ -196,9 +203,17 @@ function ListView({
 	);
 
 	const handleDragColumn = useCallback(
-		(fromIndex: number, toIndex: number) =>
-			onDragColumns(columns, fromIndex, toIndex),
-		[columns, onDragColumns],
+		(fromIndex: number, toIndex: number): void => {
+			const reordered = [...columns];
+			const [moved] = reordered.splice(fromIndex, 1);
+			reordered.splice(toIndex, 0, moved);
+			// `key` is the composite (fieldContext.name) — disambiguates same-name fields.
+			const orderedIds = reordered
+				.map((c) => String(c.key || ('dataIndex' in c && c.dataIndex) || ''))
+				.filter(Boolean);
+			config?.addColumn?.onReorder(orderedIds);
+		},
+		[columns, config],
 	);
 
 	const handleOrderChange = useCallback((value: string) => {
@@ -237,6 +252,11 @@ function ListView({
 						dataSource={DataSource.TRACES}
 					/>
 				</div>
+
+				<DownloadOptionsMenu
+					dataSource={DataSource.TRACES}
+					selectedColumns={options?.selectColumns}
+				/>
 
 				<TraceExplorerControls
 					isLoading={isFetching}

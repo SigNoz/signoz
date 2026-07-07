@@ -1,11 +1,10 @@
-import './MQDetails.style.scss';
-
-import { Radio } from 'antd';
+import { Dispatch, SetStateAction, useEffect, useMemo, useState } from 'react';
+// eslint-disable-next-line no-restricted-imports
+import { useSelector } from 'react-redux';
+import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
 import { QueryParams } from 'constants/query';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { isEmpty } from 'lodash-es';
-import { Dispatch, SetStateAction, useEffect, useMemo, useState } from 'react';
-import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
@@ -19,6 +18,8 @@ import {
 	SelectedTimelineQuery,
 } from '../MessagingQueuesUtils';
 import MessagingQueuesTable from './MQTables/MQTables';
+
+import './MQDetails.style.scss';
 
 const MQServiceDetailTypePerView = (
 	producerLatencyOption: ProducerLatencyOptions,
@@ -56,24 +57,22 @@ function MessagingQueuesOptions({
 		setCurrentTab(value);
 	};
 
-	const renderRadioButtons = (): JSX.Element[] => {
-		const detailTypes =
-			MQServiceDetailTypePerView(producerLatencyOption)[selectedView] || [];
-		return detailTypes.map((detailType) => (
-			<Radio.Button key={detailType} value={detailType}>
-				{ConsumerLagDetailTitle[detailType]}
-			</Radio.Button>
-		));
-	};
+	const detailTypes =
+		MQServiceDetailTypePerView(producerLatencyOption)[selectedView] || [];
 
 	return (
-		<Radio.Group
-			onChange={(e): void => handleChange(e.target.value)}
+		<ToggleGroupSimple
+			type="single"
+			onChange={(value: string): void =>
+				handleChange(value as MessagingQueueServiceDetailType)
+			}
 			value={currentTab}
 			className="mq-details-options"
-		>
-			{renderRadioButtons()}
-		</Radio.Group>
+			items={detailTypes.map((detailType) => ({
+				value: detailType,
+				label: ConsumerLagDetailTitle[detailType],
+			}))}
+		/>
 	);
 }
 
@@ -84,7 +83,6 @@ const checkValidityOfDetailConfigs = (
 	configDetails?: {
 		[key: string]: string;
 	},
-	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): boolean => {
 	if (selectedView === MessagingQueuesViewType.consumerLag.value) {
 		return !(
@@ -154,9 +152,10 @@ function MessagingQueuesDetails({
 
 	const configDetailQueryData: {
 		[key: string]: string;
-	} = useMemo(() => (configDetails ? JSON.parse(configDetails) : {}), [
-		configDetails,
-	]);
+	} = useMemo(
+		() => (configDetails ? JSON.parse(configDetails) : {}),
+		[configDetails],
+	);
 
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,

@@ -27,6 +27,7 @@ export const normalizeFunctionName = (functionName: string): string => {
 		median5: QueryFunctionsTypes.MEDIAN_5,
 		median7: QueryFunctionsTypes.MEDIAN_7,
 		anomaly: QueryFunctionsTypes.ANOMALY,
+		fillzero: QueryFunctionsTypes.FILL_ZERO,
 	};
 
 	// Convert to lowercase for case-insensitive matching

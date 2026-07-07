@@ -1,5 +1,5 @@
-/* eslint-disable import/no-extraneous-dependencies */
 /* eslint-disable sonarjs/cognitive-complexity */
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
 	autocompletion,
 	closeCompletion,
@@ -17,8 +17,7 @@ import { Button } from 'antd';
 import { Having } from 'api/v5/v5';
 import { useQueryBuilderV2Context } from 'components/QueryBuilderV2/QueryBuilderV2Context';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { ChevronUp } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { ChevronUp } from '@signozhq/icons';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 const havingOperators = [
@@ -51,8 +50,8 @@ const havingOperators = [
 		value: 'IN',
 	},
 	{
-		label: 'NOT_IN',
-		value: 'NOT_IN',
+		label: 'NOT IN',
+		value: 'NOT IN',
 	},
 ];
 
@@ -130,7 +129,7 @@ function HavingFilter({
 				const operator = havingOperators[j];
 				newOptions.push({
 					label: `${opt.func}(${opt.arg}) ${operator.label}`,
-					value: `${opt.func}(${opt.arg}) ${operator.label} `,
+					value: `${opt.func}(${opt.arg}) ${operator.value} `,
 					apply: (
 						view: EditorView,
 						completion: { label: string; value: string },
@@ -157,7 +156,9 @@ function HavingFilter({
 
 	// Helper to check if we're after an operator
 	const isAfterOperator = (tokens: string[]): boolean => {
-		if (tokens.length === 0) return false;
+		if (tokens.length === 0) {
+			return false;
+		}
 		const lastToken = tokens[tokens.length - 1];
 		// Check if the last token is exactly an operator or ends with an operator and space
 		return havingOperators.some((op) => {

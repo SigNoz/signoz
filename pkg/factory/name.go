@@ -5,9 +5,11 @@ import (
 	"regexp"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/swaggest/jsonschema-go"
 )
 
 var _ slog.LogValuer = (Name{})
+var _ jsonschema.Exposer = (Name{})
 
 var (
 	// nameRegex is a regex that matches a valid name.
@@ -25,6 +27,21 @@ func (n Name) LogValue() slog.Value {
 
 func (n Name) String() string {
 	return n.name
+}
+
+// MarshalText implements encoding.TextMarshaler for JSON serialization.
+func (n Name) MarshalText() ([]byte, error) {
+	return []byte(n.name), nil
+}
+
+// MarshalJSON implements json.Marshaler so Name serializes as a JSON string.
+func (n Name) MarshalJSON() ([]byte, error) {
+	return []byte(`"` + n.name + `"`), nil
+}
+
+// JSONSchema implements jsonschema.Exposer so OpenAPI reflects Name as a string.
+func (n Name) JSONSchema() (jsonschema.Schema, error) {
+	return *new(jsonschema.Schema).WithType(jsonschema.String.Type()), nil
 }
 
 // NewName creates a new name.

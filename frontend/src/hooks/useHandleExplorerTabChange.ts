@@ -1,8 +1,8 @@
+import { useCallback } from 'react';
 import { QueryParams } from 'constants/query';
 import { initialAutocompleteData, PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { SIGNOZ_VALUE } from 'container/QueryBuilder/filters/OrderByFilter/constants';
-import { useCallback } from 'react';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -19,7 +19,8 @@ export const useHandleExplorerTabChange = (): {
 	handleExplorerTabChange: (
 		type: string,
 		querySearchParameters?: ICurrentQueryData,
-		redirectToUrl?: typeof ROUTES[keyof typeof ROUTES],
+		redirectToUrl?: (typeof ROUTES)[keyof typeof ROUTES],
+		newTab?: boolean,
 	) => void;
 } => {
 	const {
@@ -62,11 +63,14 @@ export const useHandleExplorerTabChange = (): {
 		(
 			type: string,
 			currentQueryData?: ICurrentQueryData,
-			redirectToUrl?: typeof ROUTES[keyof typeof ROUTES],
+			redirectToUrl?: (typeof ROUTES)[keyof typeof ROUTES],
+			newTab?: boolean,
 		) => {
 			const newPanelType = type as PANEL_TYPES;
 
-			if (newPanelType === panelType && !currentQueryData) return;
+			if (newPanelType === panelType && !currentQueryData) {
+				return;
+			}
 
 			const query = currentQueryData?.query || getUpdateQuery(newPanelType);
 
@@ -79,13 +83,21 @@ export const useHandleExplorerTabChange = (): {
 						[QueryParams.viewKey]: currentQueryData?.id || viewKey,
 					},
 					redirectToUrl,
+					undefined,
+					newTab,
 				);
 			} else {
-				redirectWithQueryBuilderData(query, {
-					[QueryParams.panelTypes]: newPanelType,
-					[QueryParams.viewName]: currentQueryData?.name || viewName,
-					[QueryParams.viewKey]: currentQueryData?.id || viewKey,
-				});
+				redirectWithQueryBuilderData(
+					query,
+					{
+						[QueryParams.panelTypes]: newPanelType,
+						[QueryParams.viewName]: currentQueryData?.name || viewName,
+						[QueryParams.viewKey]: currentQueryData?.id || viewKey,
+					},
+					undefined,
+					undefined,
+					newTab,
+				);
 			}
 		},
 		[panelType, getUpdateQuery, redirectWithQueryBuilderData, viewName, viewKey],

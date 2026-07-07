@@ -1,4 +1,5 @@
-/* eslint-disable sonarjs/no-duplicate-string */
+import { ReduceOperators } from 'types/common/queryBuilder';
+
 export const QueryTableProps: any = {
 	props: {
 		loading: false,
@@ -130,7 +131,7 @@ export const QueryTableProps: any = {
 					limit: null,
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'sum',
 					stepInterval: 60,
 					timeAggregation: 'rate',
@@ -284,7 +285,7 @@ export const WidgetHeaderProps: any = {
 						limit: null,
 						orderBy: [],
 						queryName: 'A',
-						reduceTo: 'avg',
+						reduceTo: ReduceOperators.AVG,
 						spaceAggregation: 'sum',
 						stepInterval: 60,
 						timeAggregation: 'rate',
@@ -363,7 +364,6 @@ export const WidgetHeaderProps: any = {
 		title: 'Table - Panel',
 		yAxisUnit: 'none',
 	},
-	parentHover: false,
 	queryResponse: {
 		status: 'success',
 		isLoading: false,
@@ -614,7 +614,7 @@ export const WidgetHeaderProps: any = {
 							limit: null,
 							orderBy: [],
 							queryName: 'A',
-							reduceTo: 'avg',
+							reduceTo: ReduceOperators.AVG,
 							spaceAggregation: 'sum',
 							stepInterval: 60,
 							timeAggregation: 'rate',

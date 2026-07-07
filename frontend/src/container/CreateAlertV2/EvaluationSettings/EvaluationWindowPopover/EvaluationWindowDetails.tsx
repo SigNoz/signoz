@@ -1,5 +1,7 @@
-import { Input, Select, Typography } from 'antd';
 import { useMemo } from 'react';
+import { Input } from '@signozhq/ui/input';
+import { Select } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 
 import { ADVANCED_OPTIONS_TIME_UNIT_OPTIONS } from '../../context/constants';
 import {

@@ -2,6 +2,7 @@ package kafka
 
 import (
 	"fmt"
+
 	"github.com/SigNoz/signoz/pkg/query-service/common"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
@@ -9,9 +10,9 @@ import (
 
 var defaultStepInterval int64 = 60
 
-func BuildQueryRangeParams(messagingQueue *MessagingQueue, queryContext string) (*v3.QueryRangeParamsV3, error) {
+func BuildQueryRangeParams(messagingQueue *MessagingQueue, queryContext string, kafkaSpanEval bool) (*v3.QueryRangeParamsV3, error) {
 
-	if constants.KafkaSpanEval == "false" && queryContext == "producer-consumer-eval" {
+	if !kafkaSpanEval && queryContext == "producer-consumer-eval" {
 		return nil, fmt.Errorf("span evaluation feature is disabled and is experimental")
 	}
 

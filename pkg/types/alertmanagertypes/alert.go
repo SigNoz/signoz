@@ -1,6 +1,7 @@
 package alertmanagertypes
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -90,8 +91,8 @@ func NewDeprecatedGettableAlertsFromGettableAlerts(gettableAlerts GettableAlerts
 }
 
 // Converts a slice of PostableAlert to a slice of Alert.
-func NewAlertsFromPostableAlerts(postableAlerts PostableAlerts, resolveTimeout time.Duration, now time.Time) ([]*types.Alert, []error) {
-	alerts := v2.OpenAPIAlertsToAlerts(postableAlerts)
+func NewAlertsFromPostableAlerts(ctx context.Context, postableAlerts PostableAlerts, resolveTimeout time.Duration, now time.Time) ([]*types.Alert, []error) {
+	alerts := v2.OpenAPIAlertsToAlerts(ctx, postableAlerts)
 
 	for _, alert := range alerts {
 		alert.UpdatedAt = now
@@ -133,7 +134,7 @@ func NewAlertsFromPostableAlerts(postableAlerts PostableAlerts, resolveTimeout t
 	return validAlerts, errs
 }
 
-func NewTestAlert(receiver Receiver, startsAt time.Time, updatedAt time.Time) *Alert {
+func NewTestAlert(receiver *Receiver, startsAt time.Time, updatedAt time.Time) *Alert {
 	return &Alert{
 		Alert: model.Alert{
 			StartsAt: startsAt,
@@ -169,6 +170,7 @@ func NewGettableAlertsFromAlertProvider(
 	cfg *Config,
 	getAlertStatusFunc func(model.Fingerprint) types.AlertStatus,
 	setAlertStatusFunc func(model.LabelSet),
+	mutedByFunc func(model.LabelSet) []string,
 	params GettableAlertsParams,
 ) (GettableAlerts, error) {
 	res := GettableAlerts{}
@@ -196,8 +198,15 @@ func NewGettableAlertsFromAlertProvider(
 		if err = iterator.Err(); err != nil {
 			break
 		}
+		if a == nil {
+			break
+		}
+		alertData := a.Data
+		if alertData == nil {
+			continue
+		}
 
-		routes := dispatch.NewRoute(cfg.alertmanagerConfig.Route, nil).Match(a.Labels)
+		routes := dispatch.NewRoute(cfg.alertmanagerConfig.Route, nil).Match(alertData.Labels)
 		receivers := make([]string, 0, len(routes))
 		for _, r := range routes {
 			receivers = append(receivers, r.RouteOpts.Receiver)
@@ -207,11 +216,11 @@ func NewGettableAlertsFromAlertProvider(
 			continue
 		}
 
-		if !alertFilter(a, now) {
+		if !alertFilter(alertData, now) {
 			continue
 		}
 
-		alert := v2.AlertToOpenAPIAlert(a, getAlertStatusFunc(a.Fingerprint()), receivers, nil)
+		alert := v2.AlertToOpenAPIAlert(alertData, getAlertStatusFunc(alertData.Fingerprint()), receivers, mutedByFunc(alertData.Labels))
 
 		res = append(res, alert)
 	}

@@ -2,7 +2,6 @@ package prometheus
 
 import (
 	"log/slog"
-	"time"
 
 	"github.com/prometheus/prometheus/promql"
 )
@@ -20,8 +19,9 @@ func NewEngine(logger *slog.Logger, cfg Config) *Engine {
 	return promql.NewEngine(promql.EngineOpts{
 		Logger:             logger,
 		Reg:                nil,
-		MaxSamples:         50000000,
-		Timeout:            time.Duration(2 * time.Minute),
+		MaxSamples:         5_0000_000,
+		Timeout:            cfg.Timeout,
 		ActiveQueryTracker: activeQueryTracker,
+		LookbackDelta:      cfg.LookbackDelta,
 	})
 }

@@ -1,17 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-import './Filter.styles.scss';
-
-import {
-	FilterOutlined,
-	SyncOutlined,
-	VerticalAlignTopOutlined,
-} from '@ant-design/icons';
-import { Button, Flex, Tooltip, Typography } from 'antd';
-import logEvent from 'api/common/logEvent';
-import { getMs } from 'container/Trace/Filters/Panel/PanelBody/Duration/util';
-import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
-import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { cloneDeep, isArray, isEmpty, isEqual } from 'lodash-es';
 import {
 	Dispatch,
 	SetStateAction,
@@ -20,6 +6,18 @@ import {
 	useMemo,
 	useState,
 } from 'react';
+import {
+	ArrowUpToLine,
+	Filter as FilterIcon,
+	RefreshCw,
+} from '@signozhq/icons';
+import { Button, Flex, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
+import logEvent from 'api/common/logEvent';
+import { getMs } from 'container/Trace/Filters/Panel/PanelBody/Duration/util';
+import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { cloneDeep, isArray, isEmpty, isEqual } from 'lodash-es';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { v4 as uuid } from 'uuid';
@@ -34,18 +32,21 @@ import {
 } from './filterUtils';
 import { Section } from './Section';
 
+import './Filter.styles.scss';
+
 interface FilterProps {
 	setOpen: Dispatch<SetStateAction<boolean>>;
 }
 
 export function Filter(props: FilterProps): JSX.Element {
 	const { setOpen } = props;
-	const [selectedFilters, setSelectedFilters] = useState<
-		Record<
-			AllTraceFilterKeys,
-			{ values: string[] | string; keys: BaseAutocompleteData }
-		>
-	>();
+	const [selectedFilters, setSelectedFilters] =
+		useState<
+			Record<
+				AllTraceFilterKeys,
+				{ values: string[] | string; keys: BaseAutocompleteData }
+			>
+		>();
 
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
 	const compositeQuery = useGetCompositeQueryParam();
@@ -246,7 +247,7 @@ export function Filter(props: FilterProps): JSX.Element {
 			<Flex justify="space-between" align="center" className="filter-header">
 				<Flex gap={8} align="center">
 					<div className="filter-title">
-						<FilterOutlined />
+						<FilterIcon size="md" />
 						<Typography.Text>Filters</Typography.Text>
 					</div>
 					<Tooltip title="Reset" placement="right">
@@ -255,7 +256,7 @@ export function Filter(props: FilterProps): JSX.Element {
 							className="sync-icon"
 							data-testid="reset-filters"
 						>
-							<SyncOutlined />
+							<RefreshCw size="md" />
 						</Button>
 					</Tooltip>
 				</Flex>
@@ -265,7 +266,7 @@ export function Filter(props: FilterProps): JSX.Element {
 						className="arrow-icon"
 						data-testid="toggle-filter-panel"
 					>
-						<VerticalAlignTopOutlined rotate={270} />
+						<ArrowUpToLine style={{ rotate: '270deg' }} size="md" />
 					</Button>
 				</Tooltip>
 			</Flex>

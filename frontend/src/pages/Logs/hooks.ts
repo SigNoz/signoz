@@ -1,10 +1,11 @@
 // utils
+import { useCallback, useLayoutEffect, useMemo } from 'react';
+// eslint-disable-next-line no-restricted-imports
+import { useDispatch, useSelector } from 'react-redux';
 import get from 'api/browser/localstorage/get';
 import { LOCALSTORAGE } from 'constants/localStorage';
 // interfaces
 import { LogViewMode } from 'container/LogsTable';
-import { useCallback, useLayoutEffect, useMemo } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 import { setLinesPerRow } from 'store/actions/logs/setLInesPerRow';
 // actions
 import { setViewMode } from 'store/actions/logs/setViewMode';
@@ -40,7 +41,9 @@ export const useSelectedLogView = (): SelectedLogViewData => {
 
 	const handleViewModeOptionChange = useCallback(
 		({ key }: { key: string }) => {
-			if (isLogViewMode(key)) handleViewModeChange(key);
+			if (isLogViewMode(key)) {
+				handleViewModeChange(key);
+			}
 		},
 		[handleViewModeChange],
 	);

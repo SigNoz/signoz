@@ -1,14 +1,14 @@
-import './FunnelResults.styles.scss';
-
+import { useIsMutating } from 'react-query';
 import Spinner from 'components/Spinner';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
-import { useIsMutating } from 'react-query';
 
 import EmptyFunnelResults from './EmptyFunnelResults';
 import FunnelGraph from './FunnelGraph';
 import OverallMetrics from './OverallMetrics';
 import StepsTransitionResults from './StepsTransitionResults';
+
+import './FunnelResults.styles.scss';
 
 function FunnelResults(): JSX.Element {
 	const {
@@ -24,15 +24,18 @@ function FunnelResults(): JSX.Element {
 		funnelId,
 	]);
 
-	if (hasAllEmptyStepFields) return <EmptyFunnelResults />;
+	if (hasAllEmptyStepFields) {
+		return <EmptyFunnelResults />;
+	}
 
-	if (hasIncompleteStepFields)
+	if (hasIncompleteStepFields) {
 		return (
 			<EmptyFunnelResults
 				title="Missing service / span names"
 				description="Fill in the service and span names for all the steps"
 			/>
 		);
+	}
 
 	if (isValidateStepsLoading || isFunnelUpdateMutating) {
 		return <Spinner size="large" />;

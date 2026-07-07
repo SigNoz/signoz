@@ -45,7 +45,7 @@ func NewStore(ctx context.Context, baseDir string, templates []emailtypes.Templa
 
 		t, err := parseTemplateFile(filepath.Join(baseDir, fi.Name()), templateName)
 		if err != nil {
-			logger.ErrorContext(ctx, "failed to parse template file", "template", templateName, "path", filepath.Join(baseDir, fi.Name()), "error", err)
+			logger.ErrorContext(ctx, "failed to parse template file", slog.Any("template", templateName), slog.String("path", filepath.Join(baseDir, fi.Name())), errors.Attr(err))
 			continue
 		}
 
@@ -54,7 +54,7 @@ func NewStore(ctx context.Context, baseDir string, templates []emailtypes.Templa
 	}
 
 	if err := checkMissingTemplates(templates, foundTemplates); err != nil {
-		logger.ErrorContext(ctx, "some templates are missing", "error", err)
+		logger.ErrorContext(ctx, "some templates are missing", errors.Attr(err))
 	}
 
 	return &store{fs: fs}, nil

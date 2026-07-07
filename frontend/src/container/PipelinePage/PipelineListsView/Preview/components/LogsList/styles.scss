@@ -22,7 +22,7 @@
 }
 
 .logs-preview-list-item:not(:first-child) {
-	border-top: 1px solid rgba(253, 253, 253, 0.12);
+	border-top: 1px solid color-mix(in srgb, var(--card) 12%, transparent);
 }
 
 .logs-preview-list-item-timestamp {

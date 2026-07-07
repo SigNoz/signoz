@@ -1,5 +1,3 @@
-/* eslint-disable sonarjs/no-identical-functions */
-/* eslint-disable sonarjs/no-duplicate-string */
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
@@ -52,7 +50,7 @@ describe('CustomSelect - Comprehensive Tests', () => {
 
 	// ===== 1. CUSTOM VALUES SUPPORT =====
 	describe('Custom Values Support (CS)', () => {
-		test('CS-02: Partial matches create custom values', async () => {
+		it('CS-02: Partial matches create custom values', async () => {
 			render(
 				<CustomSelect
 					options={mockOptions}
@@ -112,7 +110,7 @@ describe('CustomSelect - Comprehensive Tests', () => {
 			});
 		});
 
-		test('CS-03: Exact match behavior', async () => {
+		it('CS-03: Exact match behavior', async () => {
 			render(<CustomSelect options={mockOptions} onChange={mockOnChange} />);
 
 			const combobox = screen.getByRole('combobox');
@@ -163,7 +161,7 @@ describe('CustomSelect - Comprehensive Tests', () => {
 
 	// ===== 2. SEARCH AND FILTERING =====
 	describe('Search and Filtering (SF)', () => {
-		test('SF-01: Selected values pushed to top', async () => {
+		it('SF-01: Selected values pushed to top', async () => {
 			render(
 				<CustomSelect
 					options={mockOptions}
@@ -187,7 +185,7 @@ describe('CustomSelect - Comprehensive Tests', () => {
 			});
 		});
 
-		test('SF-02: Real-time search filtering', async () => {
+		it('SF-02: Real-time search filtering', async () => {
 			render(<CustomSelect options={mockOptions} onChange={mockOnChange} />);
 
 			const combobox = screen.getByRole('combobox');
@@ -230,7 +228,7 @@ describe('CustomSelect - Comprehensive Tests', () => {
 			});
 		});
 
-		test('SF-03: Search highlighting', async () => {
+		it('SF-03: Search highlighting', async () => {
 			render(<CustomSelect options={mockOptions} onChange={mockOnChange} />);
 
 			const combobox = screen.getByRole('combobox');
@@ -259,7 +257,7 @@ describe('CustomSelect - Comprehensive Tests', () => {
 			});
 		});
 
-		test('SF-04: Search with partial matches', async () => {
+		it('SF-04: Search with partial matches', async () => {
 			render(<CustomSelect options={mockOptions} onChange={mockOnChange} />);
 
 			const combobox = screen.getByRole('combobox');
@@ -300,7 +298,7 @@ describe('CustomSelect - Comprehensive Tests', () => {
 
 	// ===== 3. KEYBOARD NAVIGATION =====
 	describe('Keyboard Navigation (KN)', () => {
-		test('KN-01: Arrow key navigation in dropdown', async () => {
+		it('KN-01: Arrow key navigation in dropdown', async () => {
 			render(<CustomSelect options={mockOptions} onChange={mockOnChange} />);
 
 			const combobox = screen.getByRole('combobox');
@@ -331,7 +329,7 @@ describe('CustomSelect - Comprehensive Tests', () => {
 			});
 		});
 
-		test('KN-02: Tab navigation to dropdown', async () => {
+		it('KN-02: Tab navigation to dropdown', async () => {
 			render(
 				<div>
 					<input data-testid="prev-input" />
@@ -357,7 +355,7 @@ describe('CustomSelect - Comprehensive Tests', () => {
 			});
 		});
 
-		test('KN-03: Enter selection in dropdown', async () => {
+		it('KN-03: Enter selection in dropdown', async () => {
 			render(<CustomSelect options={mockOptions} onChange={mockOnChange} />);
 
 			const combobox = screen.getByRole('combobox');
@@ -378,7 +376,7 @@ describe('CustomSelect - Comprehensive Tests', () => {
 			});
 		});
 
-		test('KN-04: Space key selection', async () => {
+		it('KN-04: Space key selection', async () => {
 			render(<CustomSelect options={mockOptions} onChange={mockOnChange} />);
 
 			const combobox = screen.getByRole('combobox');
@@ -398,7 +396,7 @@ describe('CustomSelect - Comprehensive Tests', () => {
 			});
 		});
 
-		test('KN-05: Tab navigation within dropdown', async () => {
+		it('KN-05: Tab navigation within dropdown', async () => {
 			render(<CustomSelect options={mockOptions} onChange={mockOnChange} />);
 
 			const combobox = screen.getByRole('combobox');
@@ -419,7 +417,7 @@ describe('CustomSelect - Comprehensive Tests', () => {
 
 	// ===== 4. UI/UX BEHAVIORS =====
 	describe('UI/UX Behaviors (UI)', () => {
-		test('UI-01: Loading state does not block interaction', async () => {
+		it('UI-01: Loading state does not block interaction', async () => {
 			render(
 				<CustomSelect options={mockOptions} onChange={mockOnChange} loading />,
 			);
@@ -431,7 +429,7 @@ describe('CustomSelect - Comprehensive Tests', () => {
 			expect(combobox).toHaveFocus();
 		});
 
-		test('UI-02: Component remains editable in all states', () => {
+		it('UI-02: Component remains editable in all states', () => {
 			render(
 				<CustomSelect
 					options={mockOptions}
@@ -446,7 +444,7 @@ describe('CustomSelect - Comprehensive Tests', () => {
 			expect(combobox).not.toBeDisabled();
 		});
 
-		test('UI-03: Loading state display in footer', async () => {
+		it('UI-03: Loading state display in footer', async () => {
 			render(
 				<CustomSelect options={mockOptions} onChange={mockOnChange} loading />,
 			);
@@ -460,7 +458,7 @@ describe('CustomSelect - Comprehensive Tests', () => {
 			});
 		});
 
-		test('UI-04: Error state display in footer', async () => {
+		it('UI-04: Error state display in footer', async () => {
 			render(
 				<CustomSelect
 					options={mockOptions}
@@ -479,7 +477,7 @@ describe('CustomSelect - Comprehensive Tests', () => {
 			});
 		});
 
-		test('UI-05: No data state display', async () => {
+		it('UI-05: No data state display', async () => {
 			render(
 				<CustomSelect
 					options={[]}
@@ -499,7 +497,7 @@ describe('CustomSelect - Comprehensive Tests', () => {
 
 	// ===== 6. SAVE AND SELECTION TRIGGERS =====
 	describe('Save and Selection Triggers (ST)', () => {
-		test('ST-01: Mouse selection works', async () => {
+		it('ST-01: Mouse selection works', async () => {
 			render(<CustomSelect options={mockOptions} onChange={mockOnChange} />);
 
 			const combobox = screen.getByRole('combobox');
@@ -522,7 +520,7 @@ describe('CustomSelect - Comprehensive Tests', () => {
 
 	// ===== 7. GROUPED OPTIONS SUPPORT =====
 	describe('Grouped Options Support', () => {
-		test('handles grouped options correctly', async () => {
+		it('handles grouped options correctly', async () => {
 			render(
 				<CustomSelect options={mockGroupedOptions} onChange={mockOnChange} />,
 			);
@@ -543,7 +541,7 @@ describe('CustomSelect - Comprehensive Tests', () => {
 			});
 		});
 
-		test('grouped option selection works', async () => {
+		it('grouped option selection works', async () => {
 			render(
 				<CustomSelect options={mockGroupedOptions} onChange={mockOnChange} />,
 			);
@@ -568,7 +566,7 @@ describe('CustomSelect - Comprehensive Tests', () => {
 
 	// ===== 8. ACCESSIBILITY =====
 	describe('Accessibility', () => {
-		test('has proper ARIA attributes', async () => {
+		it('has proper ARIA attributes', async () => {
 			render(<CustomSelect options={mockOptions} onChange={mockOnChange} />);
 
 			const combobox = screen.getByRole('combobox');
@@ -582,7 +580,7 @@ describe('CustomSelect - Comprehensive Tests', () => {
 			});
 		});
 
-		test('supports screen reader navigation', async () => {
+		it('supports screen reader navigation', async () => {
 			render(<CustomSelect options={mockOptions} onChange={mockOnChange} />);
 
 			const combobox = screen.getByRole('combobox');
@@ -598,7 +596,7 @@ describe('CustomSelect - Comprehensive Tests', () => {
 			});
 		});
 
-		test('has proper focus management', async () => {
+		it('has proper focus management', async () => {
 			render(<CustomSelect options={mockOptions} onChange={mockOnChange} />);
 
 			const combobox = screen.getByRole('combobox');
@@ -619,7 +617,7 @@ describe('CustomSelect - Comprehensive Tests', () => {
 
 	// ===== 10. EDGE CASES =====
 	describe('Edge Cases', () => {
-		test('handles special characters in options', async () => {
+		it('handles special characters in options', async () => {
 			const specialOptions = [
 				{ label: 'Option with spaces', value: 'option-with-spaces' },
 				{ label: 'Option-with-dashes', value: 'option-with-dashes' },
@@ -640,7 +638,7 @@ describe('CustomSelect - Comprehensive Tests', () => {
 			});
 		});
 
-		test('handles extremely long option labels', async () => {
+		it('handles extremely long option labels', async () => {
 			const longLabelOptions = [
 				{
 					label:
@@ -665,7 +663,7 @@ describe('CustomSelect - Comprehensive Tests', () => {
 
 	// ===== 11. ADVANCED KEYBOARD NAVIGATION =====
 	describe('Advanced Keyboard Navigation (AKN)', () => {
-		test('AKN-01: Mouse out closes dropdown', async () => {
+		it('AKN-01: Mouse out closes dropdown', async () => {
 			render(<CustomSelect options={mockOptions} onChange={mockOnChange} />);
 
 			const combobox = screen.getByRole('combobox');
@@ -686,7 +684,7 @@ describe('CustomSelect - Comprehensive Tests', () => {
 			});
 		});
 
-		test('AKN-02: TAB navigation from input to dropdown', async () => {
+		it('AKN-02: TAB navigation from input to dropdown', async () => {
 			render(
 				<div>
 					<input data-testid="prev-input" />
@@ -724,7 +722,7 @@ describe('CustomSelect - Comprehensive Tests', () => {
 
 	// ===== 12. ADVANCED FILTERING AND HIGHLIGHTING =====
 	describe('Advanced Filtering and Highlighting (AFH)', () => {
-		test('AFH-01: Highlighted values pushed to top', async () => {
+		it('AFH-01: Highlighted values pushed to top', async () => {
 			render(<CustomSelect options={mockOptions} onChange={mockOnChange} />);
 
 			const combobox = screen.getByRole('combobox');
@@ -778,7 +776,7 @@ describe('CustomSelect - Comprehensive Tests', () => {
 			});
 		});
 
-		test('AFH-02: Distinction between selection Enter and save Enter', async () => {
+		it('AFH-02: Distinction between selection Enter and save Enter', async () => {
 			render(<CustomSelect options={mockOptions} onChange={mockOnChange} />);
 
 			const combobox = screen.getByRole('combobox');
@@ -832,7 +830,7 @@ describe('CustomSelect - Comprehensive Tests', () => {
 
 	// ===== 13. ADVANCED CLEAR ACTIONS =====
 	describe('Advanced Clear Actions (ACA)', () => {
-		test('ACA-01: Clear action waiting behavior', async () => {
+		it('ACA-01: Clear action waiting behavior', async () => {
 			const mockOnChangeWithDelay = jest.fn().mockImplementation(
 				() =>
 					new Promise((resolve) => {
@@ -862,7 +860,7 @@ describe('CustomSelect - Comprehensive Tests', () => {
 			expect(mockOnChangeWithDelay).toHaveBeenCalled();
 		});
 
-		test('ACA-02: Single select clear behavior like text input', async () => {
+		it('ACA-02: Single select clear behavior like text input', async () => {
 			render(
 				<CustomSelect
 					options={mockOptions}
@@ -885,7 +883,7 @@ describe('CustomSelect - Comprehensive Tests', () => {
 
 	// ===== 14. ADVANCED UI STATES =====
 	describe('Advanced UI States (AUS)', () => {
-		test('AUS-01: No data with previous value selected', async () => {
+		it('AUS-01: No data with previous value selected', async () => {
 			render(
 				<CustomSelect
 					options={[]}
@@ -907,7 +905,7 @@ describe('CustomSelect - Comprehensive Tests', () => {
 			expect(screen.getAllByText('previous-value')).toHaveLength(2);
 		});
 
-		test('AUS-02: Always editable accessibility', async () => {
+		it('AUS-02: Always editable accessibility', async () => {
 			render(
 				<CustomSelect options={mockOptions} onChange={mockOnChange} loading />,
 			);
@@ -923,7 +921,7 @@ describe('CustomSelect - Comprehensive Tests', () => {
 			expect(combobox).not.toBeDisabled();
 		});
 
-		test('AUS-03: Sufficient space for search value', async () => {
+		it('AUS-03: Sufficient space for search value', async () => {
 			render(<CustomSelect options={mockOptions} onChange={mockOnChange} />);
 
 			const combobox = screen.getByRole('combobox');
@@ -952,7 +950,7 @@ describe('CustomSelect - Comprehensive Tests', () => {
 			});
 		});
 
-		test('AUS-04: No spinners blocking user interaction', async () => {
+		it('AUS-04: No spinners blocking user interaction', async () => {
 			render(
 				<CustomSelect options={mockOptions} onChange={mockOnChange} loading />,
 			);
@@ -978,7 +976,7 @@ describe('CustomSelect - Comprehensive Tests', () => {
 
 	// ===== 15. REGEX AND CUSTOM VALUES =====
 	describe('Regex and Custom Values (RCV)', () => {
-		test('RCV-01: Regex pattern support', async () => {
+		it('RCV-01: Regex pattern support', async () => {
 			render(<CustomSelect options={mockOptions} onChange={mockOnChange} />);
 
 			const combobox = screen.getByRole('combobox');
@@ -1021,7 +1019,7 @@ describe('CustomSelect - Comprehensive Tests', () => {
 			});
 		});
 
-		test('RCV-02: Custom values treated as normal dropdown values', async () => {
+		it('RCV-02: Custom values treated as normal dropdown values', async () => {
 			const customOptions = [
 				...mockOptions,
 				{ label: 'custom-value', value: 'custom-value', type: 'custom' as const },
@@ -1053,7 +1051,7 @@ describe('CustomSelect - Comprehensive Tests', () => {
 
 	// ===== 16. DROPDOWN PERSISTENCE =====
 	describe('Dropdown Persistence (DP)', () => {
-		test('DP-01: Dropdown closes only on save actions', async () => {
+		it('DP-01: Dropdown closes only on save actions', async () => {
 			render(<CustomSelect options={mockOptions} onChange={mockOnChange} />);
 
 			const combobox = screen.getByRole('combobox');

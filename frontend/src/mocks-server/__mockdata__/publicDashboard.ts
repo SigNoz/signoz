@@ -1,3 +1,5 @@
+import { ReduceOperators } from 'types/common/queryBuilder';
+
 export const publishedPublicDashboardMeta = {
 	status: 'success',
 	data: {
@@ -71,7 +73,7 @@ export const publicDashboardResponse = {
 										aggregations: [
 											{
 												metricName: 'container.cpu.time',
-												reduceTo: 'avg',
+												reduceTo: ReduceOperators.AVG,
 												spaceAggregation: 'sum',
 												temporality: '',
 												timeAggregation: 'rate',

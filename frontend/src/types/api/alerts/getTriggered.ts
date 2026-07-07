@@ -1,5 +1,5 @@
 export interface Alerts {
-	labels: AlertsLabel;
+	labels?: AlertsLabel;
 	annotations: {
 		description: string;
 		summary: string;

@@ -1,8 +1,8 @@
+import { FC, forwardRef, memo, useMemo } from 'react';
 import { ToggleGraphProps } from 'components/Graph/types';
 import { getComponentForPanelType } from 'constants/panelTypes';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GRID_TABLE_CONFIG } from 'container/GridTableComponent/config';
-import { FC, forwardRef, memo, useMemo } from 'react';
 
 import { GridPanelSwitchProps, PropsTypePropsMap } from './types';
 
@@ -60,13 +60,14 @@ const GridPanelSwitch = forwardRef<
 		const Component = getComponentForPanelType(panelType, dataSource) as FC<
 			PropsTypePropsMap[typeof panelType]
 		>;
-		const componentProps = useMemo(() => currentProps[panelType], [
-			panelType,
-			currentProps,
-		]);
+		const componentProps = useMemo(
+			() => currentProps[panelType],
+			[panelType, currentProps],
+		);
 
-		if (!Component || !componentProps) return null;
-		// eslint-disable-next-line react/jsx-props-no-spreading
+		if (!Component || !componentProps) {
+			return null;
+		}
 		return <Component {...componentProps} />;
 	},
 );

@@ -1,9 +1,7 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 /* eslint-disable sonarjs/no-identical-functions */
 
-import '../QuerySearch/QuerySearch.styles.scss';
-
-import { CheckCircleFilled } from '@ant-design/icons';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
 	autocompletion,
 	closeCompletion,
@@ -26,8 +24,6 @@ import {
 } from 'constants/antlrQueryConstants';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { TriangleAlert } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { IDetailedError, IValidationResult } from 'types/antlrQueryTypes';
 import { IBuilderTraceOperator } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
@@ -35,6 +31,9 @@ import { validateTraceOperatorQuery } from 'utils/queryValidationUtils';
 
 import { getTraceOperatorContextAtCursor } from './utils/traceOperatorContextUtils';
 import { getInvolvedQueriesInTraceOperator } from './utils/utils';
+
+import '../QuerySearch/QuerySearch.styles.scss';
+import { CircleCheck, TriangleAlert } from '@signozhq/icons';
 
 // Custom extension to stop events
 const stopEventsExtension = EditorView.domEventHandlers({
@@ -87,7 +86,7 @@ function TraceOperatorEditor({
 	// Track if the query was changed externally (from props) vs internally (user input)
 	const [isExternalQueryChange, setIsExternalQueryChange] = useState(false);
 	const [lastExternalValue, setLastExternalValue] = useState<string>('');
-	const { currentQuery, handleRunQuery } = useQueryBuilder();
+	const { currentQuery } = useQueryBuilder();
 
 	const queryOptions = useMemo(
 		() =>
@@ -104,7 +103,9 @@ function TraceOperatorEditor({
 	const toggleSuggestions = useCallback(
 		(timeout?: number) => {
 			const timeoutId = setTimeout(() => {
-				if (!editorRef.current) return;
+				if (!editorRef.current) {
+					return;
+				}
 				if (isFocused) {
 					startCompletion(editorRef.current);
 				} else {
@@ -152,7 +153,9 @@ function TraceOperatorEditor({
 		// This matches words before the cursor position
 		// eslint-disable-next-line no-useless-escape
 		const word = context.matchBefore(/[a-zA-Z0-9_.:/?&=#%\-\[\]]*/);
-		if (word?.from === word?.to && !context.explicit) return null;
+		if (word?.from === word?.to && !context.explicit) {
+			return null;
+		}
 
 		// Get the trace operator context at the cursor position
 		const queryContext = getTraceOperatorContextAtCursor(value, cursorPos.ch);
@@ -410,8 +413,6 @@ function TraceOperatorEditor({
 									run: (): boolean => {
 										if (onRun && typeof onRun === 'function') {
 											onRun(value);
-										} else {
-											handleRunQuery();
 										}
 										return true;
 									},
@@ -465,7 +466,7 @@ function TraceOperatorEditor({
 							{validation.isValid ? (
 								<Button
 									type="text"
-									icon={<CheckCircleFilled />}
+									icon={<CircleCheck size="md" />}
 									className="periscope-btn ghost"
 								/>
 							) : (

@@ -1,8 +1,3 @@
-import { QueryParams } from 'constants/query';
-import { PANEL_TYPES } from 'constants/queryBuilder';
-import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
-import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import {
 	Dispatch,
 	SetStateAction,
@@ -11,6 +6,11 @@ import {
 	useMemo,
 	useRef,
 } from 'react';
+import { QueryParams } from 'constants/query';
+import { PANEL_TYPES } from 'constants/queryBuilder';
+import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToDashboardLink';
@@ -19,7 +19,7 @@ export interface DrilldownQueryProps {
 	widget: Widgets;
 	setRequestData: Dispatch<SetStateAction<GetQueryResultsProps>>;
 	enableDrillDown: boolean;
-	selectedDashboard: Dashboard | undefined;
+	dashboardData: Dashboard | undefined;
 	selectedPanelType: PANEL_TYPES;
 }
 
@@ -34,7 +34,7 @@ const useDrilldown = ({
 	enableDrillDown,
 	widget,
 	setRequestData,
-	selectedDashboard,
+	dashboardData,
 	selectedPanelType,
 }: DrilldownQueryProps): UseDrilldownReturn => {
 	const isMounted = useRef(false);
@@ -60,13 +60,13 @@ const useDrilldown = ({
 		isMounted.current = true;
 	}, [widget, enableDrillDown, compositeQuery, redirectWithQueryBuilderData]);
 
-	const dashboardEditView = selectedDashboard?.id
+	const dashboardEditView = dashboardData?.id
 		? generateExportToDashboardLink({
 				query: currentQuery,
 				panelType: selectedPanelType,
-				dashboardId: selectedDashboard?.id || '',
+				dashboardId: dashboardData?.id || '',
 				widgetId: widget.id,
-		  })
+			})
 		: '';
 
 	const showResetQuery = useMemo(

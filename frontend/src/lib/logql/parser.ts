@@ -1,5 +1,3 @@
-/* eslint-disable  */
-// @ts-ignore
 // @ts-nocheck
 
 import {
@@ -37,9 +35,10 @@ const validateMultiValue = (queryToken: string): boolean => {
 	}
 	return queryValues;
 };
-export const parseQuery = (queryString) => {
+// eslint-disable-next-line sonarjs/cognitive-complexity
+export const parseQuery = (queryString): any => {
 	let parsedRaw = [];
-	const generateQuery = (queryToken) => {
+	const generateQuery = (queryToken): void => {
 		const prevToken = parsedRaw[parsedRaw.length - 1];
 
 		// Is a QUERY_KEY
@@ -59,12 +58,12 @@ export const parseQuery = (queryString) => {
 					...QueryOperatorsMultiVal,
 					...QueryOperatorsSingleVal,
 				}).find((op) => op.toLowerCase() === queryToken.toLowerCase())
-			)
+			) {
 				parsedRaw.push({
 					type: QueryTypes.QUERY_OPERATOR,
 					value: queryToken,
 				});
-			else {
+			} else {
 				throw new ErrorInvalidQueryPair(
 					'Expected conditional operator received',
 					queryToken,
@@ -103,12 +102,12 @@ export const parseQuery = (queryString) => {
 				Object.values(ConditionalOperators).find(
 					(op) => op.toLowerCase() === queryToken.toLowerCase(),
 				)
-			)
+			) {
 				parsedRaw.push({
 					type: QueryTypes.CONDITIONAL_OPERATOR,
 					value: queryToken,
 				});
-			else {
+			} else {
 				throw new ErrorInvalidQueryPair(
 					'Expected conditional operator received',
 					queryToken,

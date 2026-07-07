@@ -24,6 +24,8 @@ export type GridTableComponentProps = {
 	onOpenTraceBtnClick?: (record: RowData) => void;
 	customOnRowClick?: (record: RowData) => void;
 	widgetId?: string;
+	columnWidths?: Record<string, number>;
+	onColumnWidthsChange?: (widths: Record<string, number>) => void;
 	renderColumnCell?: QueryTableProps['renderColumnCell'];
 	customColTitles?: Record<string, string>;
 	enableDrillDown?: boolean;

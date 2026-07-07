@@ -1,10 +1,8 @@
-import './TracesFunnels.styles.scss';
-
+import { useState } from 'react';
 import { Skeleton } from 'antd';
 import { useFunnelsList } from 'hooks/TracesFunnels/useFunnels';
 import useHandleTraceFunnelsSearch from 'hooks/TracesFunnels/useHandleTraceFunnelsSearch';
 import useHandleTraceFunnelsSort from 'hooks/TracesFunnels/useHandleTraceFunnelsSort';
-import { useState } from 'react';
 import { FunnelData } from 'types/api/traceFunnels';
 
 import CreateFunnel from './components/CreateFunnel/CreateFunnel';
@@ -13,6 +11,8 @@ import FunnelsList from './components/FunnelsList/FunnelsList';
 import Header from './components/Header/Header';
 import SearchBar from './components/SearchBar/SearchBar';
 import { filterFunnelsByQuery } from './utils';
+
+import './TracesFunnels.styles.scss';
 
 interface TracesFunnelsContentRendererProps {
 	isLoading: boolean;

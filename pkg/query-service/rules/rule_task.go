@@ -2,17 +2,18 @@ package rules
 
 import (
 	"context"
-	"fmt"
+	"log/slog"
+	"runtime/debug"
 	"sort"
 	"sync"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
-	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
-	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
 	opentracing "github.com/opentracing/opentracing-go"
-	"go.uber.org/zap"
+
+	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 )
 
 // RuleTask holds a rule (with composite queries)
@@ -23,6 +24,7 @@ type RuleTask struct {
 	frequency          time.Duration
 	rules              []Rule
 	opts               *ManagerOptions
+	logger             *slog.Logger
 	mtx                sync.Mutex
 	evaluationDuration time.Duration
 	evaluationTime     time.Duration
@@ -33,33 +35,28 @@ type RuleTask struct {
 
 	pause  bool
 	notify NotifyFunc
-
-	maintenanceStore ruletypes.MaintenanceStore
-	orgID            valuer.UUID
 }
 
 const DefaultFrequency = 1 * time.Minute
 
 // NewRuleTask makes a new RuleTask with the given name, options, and rules.
-func NewRuleTask(name, file string, frequency time.Duration, rules []Rule, opts *ManagerOptions, notify NotifyFunc, maintenanceStore ruletypes.MaintenanceStore, orgID valuer.UUID) *RuleTask {
-
-	if time.Now() == time.Now().Add(frequency) {
+func NewRuleTask(name, file string, frequency time.Duration, rules []Rule, opts *ManagerOptions, notify NotifyFunc) *RuleTask {
+	if frequency == 0 {
 		frequency = DefaultFrequency
 	}
-	zap.L().Info("initiating a new rule task", zap.String("name", name), zap.Duration("frequency", frequency))
+	opts.Logger.Info("initiating a new rule task", "name", name, "frequency", frequency)
 
 	return &RuleTask{
-		name:             name,
-		file:             file,
-		pause:            false,
-		frequency:        frequency,
-		rules:            rules,
-		opts:             opts,
-		done:             make(chan struct{}),
-		terminated:       make(chan struct{}),
-		notify:           notify,
-		maintenanceStore: maintenanceStore,
-		orgID:            orgID,
+		name:       name,
+		file:       file,
+		pause:      false,
+		frequency:  frequency,
+		rules:      rules,
+		opts:       opts,
+		logger:     opts.Logger,
+		done:       make(chan struct{}),
+		terminated: make(chan struct{}),
+		notify:     notify,
 	}
 }
 
@@ -67,6 +64,7 @@ func NewRuleTask(name, file string, frequency time.Duration, rules []Rule, opts 
 func (g *RuleTask) Name() string { return g.name }
 
 // Key returns the group key
+// TODO(jatinderjit): remove (unused)?
 func (g *RuleTask) Key() string {
 	return g.name + ";" + g.file
 }
@@ -78,6 +76,7 @@ func (g *RuleTask) Type() TaskType { return TaskTypeCh }
 func (g *RuleTask) Rules() []Rule { return g.rules }
 
 // Interval returns the group's interval.
+// TODO(jatinderjit): remove (unused)?
 func (g *RuleTask) Interval() time.Duration { return g.frequency }
 
 func (g *RuleTask) Pause(b bool) {
@@ -88,7 +87,7 @@ func (g *RuleTask) Pause(b bool) {
 
 type QueryOrigin struct{}
 
-func NewQueryOriginContext(ctx context.Context, data map[string]interface{}) context.Context {
+func NewQueryOriginContext(ctx context.Context, data map[string]any) context.Context {
 	return context.WithValue(ctx, QueryOrigin{}, data)
 }
 
@@ -97,14 +96,14 @@ func (g *RuleTask) Run(ctx context.Context) {
 
 	// Wait an initial amount to have consistently slotted intervals.
 	evalTimestamp := g.EvalTimestamp(time.Now().UnixNano()).Add(g.frequency)
-	zap.L().Debug("group run to begin at", zap.Time("evalTimestamp", evalTimestamp))
+	g.logger.DebugContext(ctx, "group run to begin at", "eval_timestamp", evalTimestamp)
 	select {
 	case <-time.After(time.Until(evalTimestamp)):
 	case <-g.done:
 		return
 	}
 
-	ctx = NewQueryOriginContext(ctx, map[string]interface{}{
+	ctx = NewQueryOriginContext(ctx, map[string]any{
 		"ruleRuleTask": map[string]string{
 			"name": g.Name(),
 		},
@@ -156,8 +155,8 @@ func (g *RuleTask) Stop() {
 }
 
 func (g *RuleTask) hash() uint64 {
-	l := labels.New(
-		labels.Label{Name: "name", Value: g.name},
+	l := ruletypes.New(
+		ruletypes.Label{Name: "name", Value: g.name},
 	)
 	return l.Hash()
 }
@@ -173,7 +172,7 @@ func (g *RuleTask) ThresholdRules() []*ThresholdRule {
 		}
 	}
 	sort.Slice(alerts, func(i, j int) bool {
-		return alerts[i].State() > alerts[j].State() ||
+		return alerts[i].State().Severity() > alerts[j].State().Severity() ||
 			(alerts[i].State() == alerts[j].State() &&
 				alerts[i].Name() < alerts[j].Name())
 	})
@@ -255,10 +254,9 @@ func nameAndLabels(rule Rule) string {
 // Rules are matched based on their name and labels. If there are duplicates, the
 // first is matched with the first, second with the second etc.
 func (g *RuleTask) CopyState(fromTask Task) error {
-
 	from, ok := fromTask.(*RuleTask)
 	if !ok {
-		return fmt.Errorf("invalid from task for copy")
+		return errors.NewInternalf(errors.CodeInternal, "invalid from task for copy")
 	}
 	g.evaluationTime = from.evaluationTime
 	g.lastEvaluation = from.lastEvaluation
@@ -300,37 +298,19 @@ func (g *RuleTask) CopyState(fromTask Task) error {
 
 // Eval runs a single evaluation cycle in which all rules are evaluated sequentially.
 func (g *RuleTask) Eval(ctx context.Context, ts time.Time) {
-
 	defer func() {
 		if r := recover(); r != nil {
-			zap.L().Error("panic during threshold rule evaluation", zap.Any("panic", r))
+			g.logger.ErrorContext(
+				ctx, "panic during rule evaluation", slog.Any("panic", r),
+				slog.String("stack", string(debug.Stack())),
+			)
 		}
 	}()
 
-	zap.L().Debug("rule task eval started", zap.String("name", g.name), zap.Time("start time", ts))
-
-	maintenance, err := g.maintenanceStore.GetAllPlannedMaintenance(ctx, g.orgID.StringValue())
-
-	if err != nil {
-		zap.L().Error("Error in processing sql query", zap.Error(err))
-	}
+	g.logger.DebugContext(ctx, "rule task eval started", "name", g.name, "start_time", ts)
 
 	for i, rule := range g.rules {
 		if rule == nil {
-			continue
-		}
-
-		shouldSkip := false
-		for _, m := range maintenance {
-			zap.L().Info("checking if rule should be skipped", zap.String("rule", rule.ID()), zap.Any("maintenance", m))
-			if m.ShouldSkip(rule.ID(), ts) {
-				shouldSkip = true
-				break
-			}
-		}
-
-		if shouldSkip {
-			zap.L().Info("rule should be skipped", zap.String("rule", rule.ID()))
 			continue
 		}
 
@@ -354,7 +334,7 @@ func (g *RuleTask) Eval(ctx context.Context, ts time.Time) {
 
 			comment := ctxtypes.CommentFromContext(ctx)
 			comment.Set("rule_id", rule.ID())
-			comment.Set("auth_type", "internal")
+			comment.Set("identn_provider", authtypes.IdentNProviderInternal.StringValue())
 			ctx = ctxtypes.NewContextWithComment(ctx, comment)
 
 			_, err := rule.Eval(ctx, ts)
@@ -362,7 +342,7 @@ func (g *RuleTask) Eval(ctx context.Context, ts time.Time) {
 				rule.SetHealth(ruletypes.HealthBad)
 				rule.SetLastError(err)
 
-				zap.L().Warn("Evaluating rule failed", zap.String("ruleid", rule.ID()), zap.Error(err))
+				g.logger.WarnContext(ctx, "evaluating rule failed", slog.String("rule.id", rule.ID()), errors.Attr(err))
 
 				// Canceled queries are intentional termination of queries. This normally
 				// happens on shutdown and thus we skip logging of any errors here.
@@ -373,7 +353,6 @@ func (g *RuleTask) Eval(ctx context.Context, ts time.Time) {
 			}
 
 			rule.SendAlerts(ctx, ts, g.opts.ResendDelay, g.frequency, g.notify)
-
 		}(i, rule)
 	}
 }

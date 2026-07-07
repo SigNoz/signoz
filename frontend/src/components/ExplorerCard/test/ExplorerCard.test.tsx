@@ -9,7 +9,6 @@ import ExplorerCard from '../ExplorerCard';
 
 const historyReplace = jest.fn();
 
-// eslint-disable-next-line sonarjs/no-duplicate-string
 jest.mock('react-router-dom', () => ({
 	...jest.requireActual('react-router-dom'),
 	useLocation: (): { pathname: string } => ({
@@ -59,7 +58,7 @@ jest.mock('providers/preferences/sync/usePreferenceSync', () => ({
 		preferences: {
 			columns: [],
 			formatting: {
-				maxLines: 2,
+				maxLines: 1,
 				format: 'table',
 				fontSize: 'small',
 				version: 1,

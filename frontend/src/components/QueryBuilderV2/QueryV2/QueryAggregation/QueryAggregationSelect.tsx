@@ -1,11 +1,7 @@
 /* eslint-disable import/no-extraneous-dependencies */
-/* eslint-disable no-cond-assign */
-/* eslint-disable no-restricted-syntax */
-/* eslint-disable class-methods-use-this */
-/* eslint-disable react/no-this-in-sfc */
 /* eslint-disable sonarjs/cognitive-complexity */
-import './QueryAggregation.styles.scss';
-
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useQuery } from 'react-query';
 import {
 	autocompletion,
 	closeCompletion,
@@ -33,13 +29,13 @@ import { QUERY_BUILDER_KEY_TYPES } from 'constants/antlrQueryConstants';
 import { QueryBuilderKeys } from 'constants/queryBuilder';
 import { tracesAggregateOperatorOptions } from 'constants/queryBuilderOperators';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { Info, TriangleAlert } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useQuery } from 'react-query';
+import { Info, TriangleAlert } from '@signozhq/icons';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { TracesAggregatorOperator } from 'types/common/queryBuilder';
 
 import { useQueryBuilderV2Context } from '../../QueryBuilderV2Context';
+
+import './QueryAggregation.styles.scss';
 
 const chipDecoration = Decoration.mark({
 	class: 'chip-decorator',
@@ -84,25 +80,33 @@ function getFunctionContextAtCursor(
 	let funcName: string | null = null;
 	let parenStack = 0;
 	for (let i = cursorPos - 1; i >= 0; i--) {
-		if (text[i] === ')') parenStack++;
-		else if (text[i] === '(') {
+		if (text[i] === ')') {
+			parenStack++;
+		} else if (text[i] === '(') {
 			if (parenStack === 0) {
 				openParenIndex = i;
 				const before = text.slice(0, i);
 				const match = before.match(/(\w+)\s*$/);
-				if (match) funcName = match[1].toLowerCase();
+				if (match) {
+					funcName = match[1].toLowerCase();
+				}
 				break;
 			}
 			parenStack--;
 		}
 	}
-	if (openParenIndex === -1 || !funcName) return null;
+	if (openParenIndex === -1 || !funcName) {
+		return null;
+	}
 	// Scan forwards to find the matching closing parenthesis
 	let closeParenIndex = -1;
 	let depth = 1;
 	for (let j = openParenIndex + 1; j < text.length; j++) {
-		if (text[j] === '(') depth++;
-		else if (text[j] === ')') depth--;
+		if (text[j] === '(') {
+			depth++;
+		} else if (text[j] === ')') {
+			depth--;
+		}
 		if (depth === 0) {
 			closeParenIndex = j;
 			break;
@@ -141,7 +145,6 @@ const stopEventsExtension = EditorView.domEventHandlers({
 	},
 });
 
-// eslint-disable-next-line react/no-this-in-sfc
 function QueryAggregationSelect({
 	onChange,
 	queryData,
@@ -277,18 +280,22 @@ function QueryAggregationSelect({
 
 	// Transaction filter to limit aggregations
 	const transactionFilterExtension = useMemo(() => {
-		if (maxAggregations === undefined) return [];
+		if (maxAggregations === undefined) {
+			return [];
+		}
 
 		return EditorState.transactionFilter.of((tr: Transaction) => {
-			if (!tr.docChanged) return tr;
+			if (!tr.docChanged) {
+				return tr;
+			}
 
 			const regex = /([a-zA-Z_][\w]*)\s*\(([^)]*)\)/g;
-			const oldMatches = [
-				...tr.startState.doc.toString().matchAll(regex),
-			].filter((match) => validFunctions.includes(match[1].toLowerCase()));
-			const newMatches = [
-				...tr.newDoc.toString().matchAll(regex),
-			].filter((match) => validFunctions.includes(match[1].toLowerCase()));
+			const oldMatches = [...tr.startState.doc.toString().matchAll(regex)].filter(
+				(match) => validFunctions.includes(match[1].toLowerCase()),
+			);
+			const newMatches = [...tr.newDoc.toString().matchAll(regex)].filter(
+				(match) => validFunctions.includes(match[1].toLowerCase()),
+			);
 
 			if (
 				newMatches.length > oldMatches.length &&
@@ -425,7 +432,9 @@ function QueryAggregationSelect({
 		() =>
 			Object.keys(aggregateAttributeData?.data.data.keys || {}).flatMap((key) => {
 				const attributeKeys = aggregateAttributeData?.data.data.keys[key];
-				if (!attributeKeys) return [];
+				if (!attributeKeys) {
+					return [];
+				}
 
 				return attributeKeys.map((attributeKey) => ({
 					label: attributeKey.name,
@@ -482,7 +491,9 @@ function QueryAggregationSelect({
 									const start = match.index ?? 0;
 									return cursorPos >= start && cursorPos <= start + match[0].length;
 								});
-								if (!isEditing) return null;
+								if (!isEditing) {
+									return null;
+								}
 							}
 						}
 
@@ -523,7 +534,9 @@ function QueryAggregationSelect({
 								const argsString = doc.slice(lastOpenParen + 1, cursorPos);
 								argsString.split(',').forEach((arg) => {
 									const trimmed = arg.trim();
-									if (trimmed) usedArgs.add(trimmed);
+									if (trimmed) {
+										usedArgs.add(trimmed);
+									}
 								});
 							}
 
@@ -545,7 +558,7 @@ function QueryAggregationSelect({
 									? availableSuggestions
 									: availableSuggestions.filter((suggestion) =>
 											suggestion.label.toLowerCase().includes(inputText.toLowerCase()),
-									  );
+										);
 
 							return {
 								from: startOfArg,
@@ -663,7 +676,7 @@ function QueryAggregationSelect({
 						</span>
 						<br />
 						<a
-							href="https://signoz.io/docs/userguide/query-builder-v5/#core-aggregation-functions"
+							href="https://signoz.io/docs/querying/aggregation-grouping/#core-aggregation-functions-logs--traces"
 							target="_blank"
 							rel="noopener noreferrer"
 							style={{ color: '#1890ff', textDecoration: 'underline' }}

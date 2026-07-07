@@ -1,13 +1,13 @@
-import './TopNav.styles.scss';
-
-import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
-import ROUTES from 'constants/routes';
 import { useMemo } from 'react';
 import { matchPath, useHistory } from 'react-router-dom';
+import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
+import ROUTES from 'constants/routes';
 
 import NewExplorerCTA from '../NewExplorerCTA';
 import DateTimeSelector from './DateTimeSelectionV2';
-import { routesToDisable, routesToSkip } from './DateTimeSelectionV2/config';
+import { routesToDisable, routesToSkip } from './DateTimeSelectionV2/constants';
+
+import './TopNav.styles.scss';
 
 function TopNav(): JSX.Element | null {
 	const { location } = useHistory();
@@ -33,14 +33,12 @@ function TopNav(): JSX.Element | null {
 		[location.pathname],
 	);
 
-	const isNewAlertsLandingPage = useMemo(
-		() =>
-			matchPath(location.pathname, { path: ROUTES.ALERTS_NEW, exact: true }) &&
-			!location.search,
-		[location.pathname, location.search],
+	const isAlertCreationPage = useMemo(
+		() => matchPath(location.pathname, { path: ROUTES.ALERTS_NEW, exact: true }),
+		[location.pathname],
 	);
 
-	if (isSignUpPage || isDisabled || isRouteToSkip || isNewAlertsLandingPage) {
+	if (isSignUpPage || isDisabled || isRouteToSkip || isAlertCreationPage) {
 		return null;
 	}
 

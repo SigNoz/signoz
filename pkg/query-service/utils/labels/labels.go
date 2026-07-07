@@ -17,6 +17,7 @@ const (
 	MetricNameLabel  = "__name__"
 	TemporalityLabel = "__temporality__"
 	AlertNameLabel   = "alertname"
+	TestAlertLabel   = "testalert"
 	NoDataLabel      = "nodata"
 
 	// AlertStateLabel is the label name indicating the state of an alert.

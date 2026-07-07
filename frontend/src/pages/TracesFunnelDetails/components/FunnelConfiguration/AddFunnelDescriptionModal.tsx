@@ -1,13 +1,13 @@
-import './AddFunnelDescriptionModal.styles.scss';
-
+import { useState } from 'react';
+import { useQueryClient } from 'react-query';
 import { Input } from 'antd';
 import SignozModal from 'components/SignozModal/SignozModal';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useSaveFunnelDescription } from 'hooks/TracesFunnels/useFunnels';
 import { useNotifications } from 'hooks/useNotifications';
-import { Check, X } from 'lucide-react';
-import { useState } from 'react';
-import { useQueryClient } from 'react-query';
+import { Check, X } from '@signozhq/icons';
+
+import './AddFunnelDescriptionModal.styles.scss';
 
 interface AddFunnelDescriptionProps {
 	isOpen: boolean;
@@ -26,10 +26,8 @@ function AddFunnelDescriptionModal({
 	const { notifications } = useNotifications();
 	const queryClient = useQueryClient();
 
-	const {
-		mutate: saveFunnelDescription,
-		isLoading,
-	} = useSaveFunnelDescription();
+	const { mutate: saveFunnelDescription, isLoading } =
+		useSaveFunnelDescription();
 
 	const handleCancel = (): void => {
 		setDescription('');

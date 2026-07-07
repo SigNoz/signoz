@@ -5,16 +5,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-type DeprecatedPostableLogin struct {
-	Email    valuer.Email `json:"email"`
-	Password string       `json:"password"`
-}
-
-type DeprecatedGettableLogin struct {
-	AccessJWT string `json:"accessJwt"`
-	UserID    string `json:"userId"`
-}
-
 type SessionContext struct {
 	Exists bool                 `json:"exists"`
 	Orgs   []*OrgSessionContext `json:"orgs"`

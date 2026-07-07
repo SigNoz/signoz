@@ -1,7 +1,4 @@
-/* eslint-disable no-nested-ternary */
-import './QueryBuilderSearchV2.styles.scss';
-
-import { Typography } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import {
 	ArrowDown,
@@ -10,13 +7,15 @@ import {
 	Command,
 	CornerDownLeft,
 	Slash,
-} from 'lucide-react';
+} from '@signozhq/icons';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { getUserOperatingSystem, UserOperatingSystem } from 'utils/getUserOS';
 
 import ExampleQueriesRendererForLogs from '../QueryBuilderSearch/ExampleQueriesRendererForLogs';
 import { convertExampleQueriesToOptions } from '../QueryBuilderSearch/utils';
 import { ITag, Option } from './QueryBuilderSearchV2';
+
+import './QueryBuilderSearchV2.styles.scss';
 
 interface ICustomDropdownProps {
 	menu: React.ReactElement;

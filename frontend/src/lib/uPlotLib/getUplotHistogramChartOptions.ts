@@ -1,11 +1,11 @@
 /* eslint-disable sonarjs/cognitive-complexity */
+import { Dispatch, SetStateAction } from 'react';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { themeColors } from 'constants/theme';
 import { saveLegendEntriesToLocalStorage } from 'container/GridCardLayout/GridCard/FullView/utils';
 import { Dimensions } from 'hooks/useDimensions';
 import getLabelName from 'lib/getLabelName';
 import _noop from 'lodash-es/noop';
-import { Dispatch, SetStateAction } from 'react';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryData } from 'types/api/widgets/getQuery';
@@ -77,8 +77,11 @@ const getHistogramSeries = ({
 	const newGraphVisibilityStates = graphsVisibilityStates?.slice(1);
 
 	for (let i = 0; i < seriesList?.length; i += 1) {
-		const { metric = {}, queryName = '', legend: lgd } =
-			(widgetMetaData && widgetMetaData[i]) || {};
+		const {
+			metric = {},
+			queryName = '',
+			legend: lgd,
+		} = (widgetMetaData && widgetMetaData[i]) || {};
 
 		const newLegend =
 			currentQuery?.builder.queryData.find((item) => item.queryName === queryName)
@@ -230,9 +233,8 @@ export const getUplotHistogramChartOptions = ({
 											setGraphsVisibilityStates?.((prev) => {
 												const newGraphVisibilityStates = [...prev];
 												// Toggle the specific series visibility (checkbox behavior)
-												newGraphVisibilityStates[index + 1] = !newGraphVisibilityStates[
-													index + 1
-												];
+												newGraphVisibilityStates[index + 1] =
+													!newGraphVisibilityStates[index + 1];
 
 												saveLegendEntriesToLocalStorage({
 													options: self,
@@ -282,4 +284,4 @@ export const getUplotHistogramChartOptions = ({
 			],
 		},
 		axes: getAxes({ isDarkMode, panelType }),
-	} as uPlot.Options);
+	}) as uPlot.Options;

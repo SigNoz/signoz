@@ -1,7 +1,6 @@
-/* eslint-disable react/require-default-props */
-import './QueryAddOns.styles.scss';
-
-import { Button, Radio, RadioChangeEvent, Tooltip } from 'antd';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Button, Tooltip } from 'antd';
+import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
 import InputWithLabel from 'components/InputWithLabel/InputWithLabel';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GroupByFilter } from 'container/QueryBuilder/filters/GroupByFilter/GroupByFilter';
@@ -10,13 +9,15 @@ import { ReduceToFilter } from 'container/QueryBuilder/filters/ReduceToFilter/Re
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { get, isEmpty } from 'lodash-es';
-import { BarChart2, ChevronUp, ExternalLink, ScrollText } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { BarChart, ChevronUp, ExternalLink, ScrollText } from '@signozhq/icons';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { MetricAggregation } from 'types/api/v5/queryRange';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 
 import HavingFilter from './HavingFilter/HavingFilter';
+import { buildDefaultLegendFromGroupBy } from './utils';
+
+import './QueryAddOns.styles.scss';
 
 interface AddOn {
 	icon: React.ReactNode;
@@ -32,6 +33,7 @@ const ADD_ONS_KEYS = {
 	ORDER_BY: 'order_by',
 	LIMIT: 'limit',
 	LEGEND_FORMAT: 'legend_format',
+	REDUCE_TO: 'reduce_to',
 };
 
 const ADD_ONS_KEYS_TO_QUERY_PATH = {
@@ -40,63 +42,64 @@ const ADD_ONS_KEYS_TO_QUERY_PATH = {
 	[ADD_ONS_KEYS.ORDER_BY]: 'orderBy',
 	[ADD_ONS_KEYS.LIMIT]: 'limit',
 	[ADD_ONS_KEYS.LEGEND_FORMAT]: 'legend',
+	[ADD_ONS_KEYS.REDUCE_TO]: 'reduceTo',
 };
 
 const ADD_ONS = [
 	{
-		icon: <BarChart2 size={14} />,
+		icon: <BarChart size={14} />,
 		label: 'Group By',
-		key: 'group_by',
+		key: ADD_ONS_KEYS.GROUP_BY,
 		description:
 			'Break down data by attributes like service name, endpoint, status code, or region. Essential for spotting patterns and comparing performance across different segments.',
-		docLink: 'https://signoz.io/docs/userguide/query-builder-v5/#grouping',
+		docLink: 'https://signoz.io/docs/querying/aggregation-grouping/#grouping',
 	},
 	{
 		icon: <ScrollText size={14} />,
 		label: 'Having',
-		key: 'having',
+		key: ADD_ONS_KEYS.HAVING,
 		description:
 			'Filter grouped results based on aggregate conditions. Show only groups meeting specific criteria, like error rates > 5% or p99 latency > 500',
 		docLink:
-			'https://signoz.io/docs/userguide/query-builder-v5/#conditional-filtering-with-having',
+			'https://signoz.io/docs/querying/result-manipulation/#conditional-filtering-with-having',
 	},
 	{
 		icon: <ScrollText size={14} />,
 		label: 'Order By',
-		key: 'order_by',
+		key: ADD_ONS_KEYS.ORDER_BY,
 		description:
 			'Sort results to surface what matters most. Quickly identify slowest operations, most frequent errors, or highest resource consumers.',
 		docLink:
-			'https://signoz.io/docs/userguide/query-builder-v5/#sorting--limiting',
+			'https://signoz.io/docs/querying/result-manipulation/#sorting--limiting',
 	},
 	{
 		icon: <ScrollText size={14} />,
 		label: 'Limit',
-		key: 'limit',
+		key: ADD_ONS_KEYS.LIMIT,
 		description:
 			'Show only the top/bottom N results. Perfect for focusing on outliers, reducing noise, and improving dashboard performance.',
 		docLink:
-			'https://signoz.io/docs/userguide/query-builder-v5/#sorting--limiting',
+			'https://signoz.io/docs/querying/result-manipulation/#how-limit-works-for-time-series',
 	},
 	{
 		icon: <ScrollText size={14} />,
 		label: 'Legend format',
-		key: 'legend_format',
+		key: ADD_ONS_KEYS.LEGEND_FORMAT,
 		description:
 			'Customize series labels using variables like {{service.name}}-{{endpoint}}. Makes charts readable at a glance during incident investigation.',
 		docLink:
-			'https://signoz.io/docs/userguide/query-builder-v5/#legend-formatting',
+			'https://signoz.io/docs/querying/aggregation-grouping/#legend-formatting',
 	},
 ];
 
 const REDUCE_TO = {
 	icon: <ScrollText size={14} />,
 	label: 'Reduce to',
-	key: 'reduce_to',
+	key: ADD_ONS_KEYS.REDUCE_TO,
 	description:
 		'Apply mathematical operations like sum, average, min, max, or percentiles to reduce multiple time series into a single value.',
 	docLink:
-		'https://signoz.io/docs/userguide/query-builder-v5/#reduce-operations',
+		'https://signoz.io/docs/userguide/query-builder-v5/#result-manipulation',
 };
 
 const hasValue = (value: unknown): boolean =>
@@ -169,6 +172,9 @@ function QueryAddOns({
 
 	const [selectedViews, setSelectedViews] = useState<AddOn[]>([]);
 
+	const initializedRef = useRef(false);
+	const prevAvailableKeysRef = useRef<Set<string> | null>(null);
+
 	const { handleChangeQueryData } = useQueryOperations({
 		index,
 		query,
@@ -198,8 +204,8 @@ function QueryAddOns({
 		} else {
 			filteredAddOns = Object.values(ADD_ONS);
 
-			// Filter out group_by for metrics data source
 			if (query.dataSource === DataSource.METRICS) {
+				// Filter out group_by for metrics data source (handled in MetricsAggregateSection)
 				filteredAddOns = filteredAddOns.filter(
 					(addOn) => addOn.key !== ADD_ONS_KEYS.GROUP_BY,
 				);
@@ -211,32 +217,67 @@ function QueryAddOns({
 		}
 		setAddOns(filteredAddOns);
 
-		const activeAddOnKeys = new Set(
-			Object.entries(ADD_ONS_KEYS_TO_QUERY_PATH)
-				.filter(([, path]) => hasValue(get(query, path)))
-				.map(([key]) => key),
-		);
+		const availableAddOnKeys = new Set(filteredAddOns.map((a) => a.key));
+		const previousKeys = prevAvailableKeysRef.current;
+		const hasAvailabilityItemsChanged =
+			previousKeys !== null &&
+			(previousKeys.size !== availableAddOnKeys.size ||
+				[...availableAddOnKeys].some((key) => !previousKeys.has(key)));
+		prevAvailableKeysRef.current = availableAddOnKeys;
 
-		const availableAddOnKeys = new Set(filteredAddOns.map((addOn) => addOn.key));
+		if (!initializedRef.current || hasAvailabilityItemsChanged) {
+			initializedRef.current = true;
 
-		// Filter and set selected views: add-ons that are both active and available
-		setSelectedViews(
-			ADD_ONS.filter(
-				(addOn) =>
-					activeAddOnKeys.has(addOn.key) && availableAddOnKeys.has(addOn.key),
+			const activeAddOnKeys = new Set(
+				Object.entries(ADD_ONS_KEYS_TO_QUERY_PATH)
+					.filter(([, path]) => hasValue(get(query, path)))
+					.map(([key]) => key),
+			);
+
+			// Initial seeding from query values on mount
+			setSelectedViews(
+				filteredAddOns.filter(
+					(addOn) =>
+						activeAddOnKeys.has(addOn.key) && availableAddOnKeys.has(addOn.key),
+				),
+			);
+			return;
+		}
+
+		setSelectedViews((prev) =>
+			prev.filter((view) =>
+				filteredAddOns.some((addOn) => addOn.key === view.key),
 			),
 		);
+	}, [panelType, isListViewPanel, query, showReduceTo]);
 
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [panelType, isListViewPanel, query]);
+	const handleOptionClick = (clickedAddOn: AddOn): void => {
+		const isAlreadySelected = selectedViews.some(
+			(view) => view.key === clickedAddOn.key,
+		);
 
-	const handleOptionClick = (e: RadioChangeEvent): void => {
-		if (selectedViews.find((view) => view.key === e.target.value.key)) {
-			setSelectedViews(
-				selectedViews.filter((view) => view.key !== e.target.value.key),
+		if (isAlreadySelected) {
+			setSelectedViews((prev) =>
+				prev.filter((view) => view.key !== clickedAddOn.key),
 			);
 		} else {
-			setSelectedViews([...selectedViews, e.target.value]);
+			// When enabling Legend format for the first time with an empty legend
+			// and existing group-by keys, prefill the legend using all group-by keys.
+			// This keeps existing custom legends intact and only helps seed a sensible default.
+			if (
+				clickedAddOn.key === ADD_ONS_KEYS.LEGEND_FORMAT &&
+				isEmpty(query?.legend) &&
+				Array.isArray(query.groupBy) &&
+				query.groupBy.length > 0
+			) {
+				const defaultLegend = buildDefaultLegendFromGroupBy(query.groupBy);
+
+				if (defaultLegend) {
+					handleChangeQueryLegend(defaultLegend);
+				}
+			}
+
+			setSelectedViews((prev) => [...prev, clickedAddOn]);
 		}
 	};
 
@@ -269,12 +310,9 @@ function QueryAddOns({
 		[handleSetQueryData, index, query],
 	);
 
-	const handleRemoveView = useCallback(
-		(key: string): void => {
-			setSelectedViews(selectedViews.filter((view) => view.key !== key));
-		},
-		[selectedViews],
-	);
+	const handleRemoveView = useCallback((key: string): void => {
+		setSelectedViews((prev) => prev.filter((view) => view.key !== key));
+	}, []);
 
 	const handleChangeQueryLegend = useCallback(
 		(value: string) => {
@@ -300,7 +338,7 @@ function QueryAddOns({
 	);
 
 	return (
-		<div className="query-add-ons">
+		<div className="query-add-ons" data-testid="query-add-ons">
 			{selectedViews.length > 0 && (
 				<div className="selected-add-ons-content">
 					{selectedViews.find((view) => view.key === 'group_by') && (
@@ -311,7 +349,7 @@ function QueryAddOns({
 										<TooltipContent
 											label="Group By"
 											description="Break down data by attributes like service name, endpoint, status code, or region. Essential for spotting patterns and comparing performance across different segments."
-											docLink="https://signoz.io/docs/userguide/query-builder-v5/#grouping"
+											docLink="https://signoz.io/docs/querying/aggregation-grouping/#grouping"
 										/>
 									}
 									placement="top"
@@ -347,7 +385,7 @@ function QueryAddOns({
 										<TooltipContent
 											label="Having"
 											description="Filter grouped results based on aggregate conditions. Show only groups meeting specific criteria, like error rates > 5% or p99 latency > 500"
-											docLink="https://signoz.io/docs/userguide/query-builder-v5/#conditional-filtering-with-having"
+											docLink="https://signoz.io/docs/querying/result-manipulation/#conditional-filtering-with-having"
 										/>
 									}
 									placement="top"
@@ -360,8 +398,8 @@ function QueryAddOns({
 								<div className="input">
 									<HavingFilter
 										onClose={(): void => {
-											setSelectedViews(
-												selectedViews.filter((view) => view.key !== 'having'),
+											setSelectedViews((prev) =>
+												prev.filter((view) => view.key !== 'having'),
 											);
 										}}
 										onChange={handleChangeHaving}
@@ -375,11 +413,14 @@ function QueryAddOns({
 						<div className="add-on-content" data-testid="limit-content">
 							<InputWithLabel
 								label="Limit"
+								type="number"
 								onChange={handleChangeLimit}
 								initialValue={query?.limit ?? undefined}
 								placeholder="Enter limit"
 								onClose={(): void => {
-									setSelectedViews(selectedViews.filter((view) => view.key !== 'limit'));
+									setSelectedViews((prev) =>
+										prev.filter((view) => view.key !== 'limit'),
+									);
 								}}
 								closeIcon={<ChevronUp size={16} />}
 							/>
@@ -393,7 +434,7 @@ function QueryAddOns({
 										<TooltipContent
 											label="Order By"
 											description="Sort results to surface what matters most. Quickly identify slowest operations, most frequent errors, or highest resource consumers."
-											docLink="https://signoz.io/docs/userguide/query-builder-v5/#sorting--limiting"
+											docLink="https://signoz.io/docs/querying/result-manipulation/#sorting--limiting"
 										/>
 									}
 									placement="top"
@@ -423,36 +464,37 @@ function QueryAddOns({
 						</div>
 					)}
 
-					{selectedViews.find((view) => view.key === 'reduce_to') && showReduceTo && (
-						<div className="add-on-content" data-testid="reduce-to-content">
-							<div className="periscope-input-with-label">
-								<Tooltip
-									title={
-										<TooltipContent
-											label="Reduce to"
-											description="Apply mathematical operations like sum, average, min, max, or percentiles to reduce multiple time series into a single value."
-											docLink="https://signoz.io/docs/userguide/query-builder-v5/#reduce-operations"
-										/>
-									}
-									placement="top"
-									mouseEnterDelay={0.5}
-								>
-									<div className="label" style={{ cursor: 'help' }}>
-										Reduce to
+					{selectedViews.find((view) => view.key === 'reduce_to') &&
+						showReduceTo && (
+							<div className="add-on-content" data-testid="reduce-to-content">
+								<div className="periscope-input-with-label">
+									<Tooltip
+										title={
+											<TooltipContent
+												label="Reduce to"
+												description="Apply mathematical operations like sum, average, min, max, or percentiles to reduce multiple time series into a single value."
+												docLink="https://signoz.io/docs/userguide/query-builder-v5/#result-manipulation"
+											/>
+										}
+										placement="top"
+										mouseEnterDelay={0.5}
+									>
+										<div className="label" style={{ cursor: 'help' }}>
+											Reduce to
+										</div>
+									</Tooltip>
+									<div className="input">
+										<ReduceToFilter query={query} onChange={handleChangeReduceToV5} />
 									</div>
-								</Tooltip>
-								<div className="input">
-									<ReduceToFilter query={query} onChange={handleChangeReduceToV5} />
-								</div>
 
-								<Button
-									className="close-btn periscope-btn ghost"
-									icon={<ChevronUp size={16} />}
-									onClick={(): void => handleRemoveView('reduce_to')}
-								/>
+									<Button
+										className="close-btn periscope-btn ghost"
+										icon={<ChevronUp size={16} />}
+										onClick={(): void => handleRemoveView('reduce_to')}
+									/>
+								</div>
 							</div>
-						</div>
-					)}
+						)}
 
 					{selectedViews.find((view) => view.key === 'legend_format') && (
 						<div className="add-on-content" data-testid="legend-format-content">
@@ -462,8 +504,8 @@ function QueryAddOns({
 								onChange={handleChangeQueryLegend}
 								initialValue={isEmpty(query?.legend) ? undefined : query?.legend}
 								onClose={(): void => {
-									setSelectedViews(
-										selectedViews.filter((view) => view.key !== 'legend_format'),
+									setSelectedViews((prev) =>
+										prev.filter((view) => view.key !== 'legend_format'),
 									);
 								}}
 								closeIcon={<ChevronUp size={16} />}
@@ -473,15 +515,27 @@ function QueryAddOns({
 				</div>
 			)}
 
-			<div className="add-ons-list">
-				<Radio.Group
-					className="add-ons-tabs"
-					onChange={handleOptionClick}
-					value={selectedViews}
-				>
-					{addOns.map((addOn) => (
+			<ToggleGroupSimple
+				type="multiple"
+				className="add-ons-tabs"
+				value={selectedViews.map((view) => view.key)}
+				onChange={(newKeys: string[]): void => {
+					const oldKeys = selectedViews.map((view) => view.key);
+					const toggledKey =
+						newKeys.find((k) => !oldKeys.includes(k)) ??
+						oldKeys.find((k) => !newKeys.includes(k));
+					if (!toggledKey) {
+						return;
+					}
+					const clickedAddOn = addOns.find((a) => a.key === toggledKey);
+					if (clickedAddOn) {
+						handleOptionClick(clickedAddOn);
+					}
+				}}
+				items={addOns.map((addOn) => ({
+					value: addOn.key,
+					label: (
 						<Tooltip
-							key={addOn.key}
 							title={
 								<TooltipContent
 									label={addOn.label}
@@ -492,26 +546,17 @@ function QueryAddOns({
 							placement="top"
 							mouseEnterDelay={0.5}
 						>
-							<Radio.Button
-								className={
-									selectedViews.find((view) => view.key === addOn.key)
-										? 'selected-view tab'
-										: 'tab'
-								}
-								value={addOn}
+							<span
+								className="add-on-tab-title"
+								data-testid={`query-add-on-${addOn.key}`}
 							>
-								<div
-									className="add-on-tab-title"
-									data-testid={`query-add-on-${addOn.key}`}
-								>
-									{addOn.icon}
-									{addOn.label}
-								</div>
-							</Radio.Button>
+								{addOn.icon}
+								{addOn.label}
+							</span>
 						</Tooltip>
-					))}
-				</Radio.Group>
-			</div>
+					),
+				}))}
+			/>
 		</div>
 	);
 }

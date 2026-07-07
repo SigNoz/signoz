@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from 'react-query';
 import {
 	fireEvent,
 	render,
@@ -7,7 +8,6 @@ import {
 } from '@testing-library/react';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { QueryBuilderContext } from 'providers/QueryBuilder';
-import { QueryClient, QueryClientProvider } from 'react-query';
 import {
 	IBuilderQuery,
 	Query,
@@ -20,12 +20,16 @@ import SpanScopeSelector from '../SpanScopeSelector';
 
 const mockRedirectWithQueryBuilderData = jest.fn();
 
+const SCOPE_KEYS = ['isRoot', 'isEntryPoint'];
+const isScopeFilter = (filter: TagFilterItem): boolean =>
+	SCOPE_KEYS.includes(filter.key?.key ?? '') && String(filter.value) === 'true';
+
 // Helper to create filter items
 const createSpanScopeFilter = (key: string): TagFilterItem => ({
 	id: 'span-filter',
 	key: {
 		key,
-		type: 'spanSearchScope',
+		type: '',
 	},
 	op: '=',
 	value: 'true',
@@ -95,7 +99,6 @@ const renderWithContext = (
 				{
 					currentQuery: initialQuery,
 					redirectWithQueryBuilderData: mockRedirectWithQueryBuilderData,
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				} as any
 			}
 		>
@@ -144,7 +147,6 @@ describe('SpanScopeSelector', () => {
 				expect.objectContaining({
 					key: expect.objectContaining({
 						key: expectedKey,
-						type: 'spanSearchScope',
 					}),
 					op: '=',
 					value: 'true',
@@ -163,16 +165,11 @@ describe('SpanScopeSelector', () => {
 			expect(mockRedirectWithQueryBuilderData).toHaveBeenCalled();
 			const updatedQuery = mockRedirectWithQueryBuilderData.mock.calls[0][0];
 			const filters = updatedQuery.builder.queryData[0].filters.items;
-			expect(filters).not.toContainEqual(
-				expect.objectContaining({
-					key: expect.objectContaining({ type: 'spanSearchScope' }),
-				}),
-			);
+			expect(filters.some(isScopeFilter)).toBe(false);
 		});
 
 		it('should add isRoot filter when selecting ROOT_SPANS', async () => {
 			renderWithContext(defaultQuery, undefined, defaultQueryBuilderQuery);
-			// eslint-disable-next-line sonarjs/no-duplicate-string
 			await selectOption('Root Spans');
 
 			expect(mockRedirectWithQueryBuilderData).toHaveBeenCalled();
@@ -184,7 +181,6 @@ describe('SpanScopeSelector', () => {
 
 		it('should add isEntryPoint filter when selecting ENTRYPOINT_SPANS', async () => {
 			renderWithContext(defaultQuery, undefined, defaultQueryBuilderQuery);
-			// eslint-disable-next-line sonarjs/no-duplicate-string
 			await selectOption('Entrypoint Spans');
 
 			expect(mockRedirectWithQueryBuilderData).toHaveBeenCalled();
@@ -206,7 +202,28 @@ describe('SpanScopeSelector', () => {
 					createSpanScopeFilter(filterKey),
 				]);
 				renderWithContext(queryWithFilter, undefined, defaultQueryBuilderQuery);
-				expect(await screen.findByText(expectedText)).toBeInTheDocument();
+				await expect(screen.findByText(expectedText)).resolves.toBeInTheDocument();
+			},
+		);
+
+		// Round-trip from filter.expression can deserialize the value as a boolean
+		// `true` (unquoted in the expression) instead of the string `'true'` produced
+		// by the dropdown. The dropdown must still recognize that as the scope filter.
+		it.each([
+			['Root Spans', 'isRoot'],
+			['Entrypoint Spans', 'isEntryPoint'],
+		])(
+			'should initialize with %s selected when %s = true (boolean value)',
+			async (expectedText, filterKey) => {
+				const booleanScopeFilter: TagFilterItem = {
+					id: 'span-filter',
+					key: { key: filterKey, type: '' },
+					op: '=',
+					value: true as unknown as string,
+				};
+				const queryWithFilter = createQueryWithFilters([booleanScopeFilter]);
+				renderWithContext(queryWithFilter, undefined, defaultQueryBuilderQuery);
+				await expect(screen.findByText(expectedText)).resolves.toBeInTheDocument();
 			},
 		);
 	});
@@ -236,22 +253,20 @@ describe('SpanScopeSelector', () => {
 				expect(items).toContainEqual(nonScopeItem);
 			});
 
-			const scopeFiltersInPayload = items.filter(
-				(filter) => filter.key?.type === 'spanSearchScope',
-			);
+			const scopeFiltersInPayload = items.filter(isScopeFilter);
 
 			if (expectedScopeKey) {
-				expect(scopeFiltersInPayload.length).toBe(1);
+				expect(scopeFiltersInPayload).toHaveLength(1);
 				expect(scopeFiltersInPayload[0].key?.key).toBe(expectedScopeKey);
 				expect(scopeFiltersInPayload[0].value).toBe('true');
 				expect(scopeFiltersInPayload[0].op).toBe('=');
 			} else {
-				expect(scopeFiltersInPayload.length).toBe(0);
+				expect(scopeFiltersInPayload).toHaveLength(0);
 			}
 
 			const expectedTotalFilters =
 				expectedNonScopeItems.length + (expectedScopeKey ? 1 : 0);
-			expect(items.length).toBe(expectedTotalFilters);
+			expect(items).toHaveLength(expectedTotalFilters);
 		};
 
 		beforeEach(() => {
@@ -262,19 +277,21 @@ describe('SpanScopeSelector', () => {
 		it('should initialize with ALL_SPANS if query prop has no scope filters', async () => {
 			const localQuery = createLocalQuery();
 			renderWithContext(defaultQuery, mockOnChange, localQuery);
-			expect(await screen.findByText('All Spans')).toBeInTheDocument();
+			await expect(screen.findByText('All Spans')).resolves.toBeInTheDocument();
 		});
 
 		it('should initialize with ROOT_SPANS if query prop has isRoot filter', async () => {
 			const localQuery = createLocalQuery([createSpanScopeFilter('isRoot')]);
 			renderWithContext(defaultQuery, mockOnChange, localQuery);
-			expect(await screen.findByText('Root Spans')).toBeInTheDocument();
+			await expect(screen.findByText('Root Spans')).resolves.toBeInTheDocument();
 		});
 
 		it('should initialize with ENTRYPOINT_SPANS if query prop has isEntryPoint filter', async () => {
 			const localQuery = createLocalQuery([createSpanScopeFilter('isEntryPoint')]);
 			renderWithContext(defaultQuery, mockOnChange, localQuery);
-			expect(await screen.findByText('Entrypoint Spans')).toBeInTheDocument();
+			await expect(
+				screen.findByText('Entrypoint Spans'),
+			).resolves.toBeInTheDocument();
 		});
 
 		it('should call onChange and not redirect when selecting ROOT_SPANS (from ALL_SPANS)', async () => {
@@ -285,7 +302,7 @@ describe('SpanScopeSelector', () => {
 				localQuery,
 				true,
 			);
-			expect(await screen.findByText('All Spans')).toBeInTheDocument();
+			await expect(screen.findByText('All Spans')).resolves.toBeInTheDocument();
 
 			await selectOption('Root Spans');
 
@@ -305,7 +322,7 @@ describe('SpanScopeSelector', () => {
 				localQuery,
 				true,
 			);
-			expect(await screen.findByText('Root Spans')).toBeInTheDocument();
+			await expect(screen.findByText('Root Spans')).resolves.toBeInTheDocument();
 
 			await selectOption('All Spans');
 
@@ -326,7 +343,7 @@ describe('SpanScopeSelector', () => {
 				localQuery,
 				true,
 			);
-			expect(await screen.findByText('Root Spans')).toBeInTheDocument();
+			await expect(screen.findByText('Root Spans')).resolves.toBeInTheDocument();
 
 			await selectOption('Entrypoint Spans');
 
@@ -348,7 +365,7 @@ describe('SpanScopeSelector', () => {
 				localQuery,
 				true,
 			);
-			expect(await screen.findByText('Root Spans')).toBeInTheDocument();
+			await expect(screen.findByText('Root Spans')).resolves.toBeInTheDocument();
 
 			await selectOption('Entrypoint Spans');
 
@@ -375,7 +392,9 @@ describe('SpanScopeSelector', () => {
 				localQuery,
 				true,
 			);
-			expect(await screen.findByText('Entrypoint Spans')).toBeInTheDocument();
+			await expect(
+				screen.findByText('Entrypoint Spans'),
+			).resolves.toBeInTheDocument();
 
 			await selectOption('All Spans');
 
@@ -421,7 +440,7 @@ describe('SpanScopeSelector', () => {
 				</QueryClientProvider>,
 			);
 
-			expect(await screen.findByText('All Spans')).toBeInTheDocument();
+			await expect(screen.findByText('All Spans')).resolves.toBeInTheDocument();
 
 			await selectOption('Entrypoint Spans');
 
@@ -433,9 +452,7 @@ describe('SpanScopeSelector', () => {
 				items: [],
 			};
 			// Count non-scope filters
-			const nonScopeFilters = items.filter(
-				(filter) => filter.key?.type !== 'spanSearchScope',
-			);
+			const nonScopeFilters = items.filter((filter) => !isScopeFilter(filter));
 			expect(nonScopeFilters).toHaveLength(1);
 
 			expect(nonScopeFilters).toContainEqual(

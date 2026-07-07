@@ -44,9 +44,10 @@ export const getMetaDataFromSpanTree = (
 	};
 };
 
-export function getTopLeftFromBody(
-	elem: HTMLElement,
-): { top: number; left: number } {
+export function getTopLeftFromBody(elem: HTMLElement): {
+	top: number;
+	left: number;
+} {
 	const box = elem.getBoundingClientRect();
 
 	const { body } = document;
@@ -93,12 +94,13 @@ export const getNodeById = (
 		value: ITraceTree,
 	): ITraceForest => set(newtreeData, path, [value]);
 
-	if (treesData?.spanTree)
+	if (treesData?.spanTree) {
 		treesData.spanTree.forEach((tree) => {
 			traverse(tree, (value) => spanTreeSetCallback(['spanTree'], value), 1);
 		});
+	}
 
-	if (treesData?.missingSpanTree)
+	if (treesData?.missingSpanTree) {
 		treesData.missingSpanTree.forEach((tree) => {
 			traverse(
 				tree,
@@ -106,6 +108,7 @@ export const getNodeById = (
 				1,
 			);
 		});
+	}
 
 	return newtreeData;
 };
@@ -186,7 +189,9 @@ export const getSpanPath = (tree: ITraceTree, spanId: string): string[] => {
 
 		let foundInChild = false;
 		treeNode.children.forEach((childNode) => {
-			if (traverse(childNode)) foundInChild = true;
+			if (traverse(childNode)) {
+				foundInChild = true;
+			}
 		});
 		if (!foundInChild) {
 			spanPath.pop();

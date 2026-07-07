@@ -79,12 +79,11 @@ const getSeries = ({
 				panelType && panelType === PANEL_TYPES.BAR
 					? null
 					: lineInterpolations.spline,
-			// eslint-disable-next-line no-nested-ternary
 			show: newGraphVisibilityStates
 				? newGraphVisibilityStates[i]
 				: !isUndefined(hiddenGraph)
-				? hiddenGraph[i]
-				: true,
+					? hiddenGraph[i]
+					: true,
 			label,
 			fill: panelType && panelType === PANEL_TYPES.BAR ? `${color}` : undefined,
 			stroke: color,

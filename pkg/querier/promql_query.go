@@ -5,23 +5,95 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"regexp"
 	"sort"
 	"strings"
 	"text/template"
 	"time"
 
+	"github.com/prometheus/prometheus/model/labels"
+	"github.com/prometheus/prometheus/promql"
+	"github.com/prometheus/prometheus/promql/parser"
+
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
+	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	qbv5 "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/prometheus/prometheus/promql"
-	"github.com/prometheus/prometheus/promql/parser"
 )
+
+// unquotedDottedNamePattern matches unquoted identifiers containing dots
+// that appear in metric or label name positions. This helps detect queries
+// using the old syntax that needs migration to UTF-8 quoted syntax.
+// Examples it matches: k8s.pod.name, deployment.environment, http.status_code.
+var unquotedDottedNamePattern = regexp.MustCompile(`(?:^|[{,(\s])([a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z0-9_]+)+)(?:[}\s,=!~)\[]|$)`)
+
+// quotedMetricOutsideBracesPattern matches the incorrect syntax where a quoted
+// metric name appears outside of braces followed by a selector block.
+// Example: "kube_pod_status_ready_time"{"condition"="true"}
+// This is a common mistake when migrating to UTF-8 syntax.
+var quotedMetricOutsideBracesPattern = regexp.MustCompile(`"([^"]+)"\s*\{`)
+
+// tryEnhancePromQLExecError attempts to convert a PromQL execution error into
+// a properly typed error. Returns nil if the error is not a recognized execution error.
+func tryEnhancePromQLExecError(execErr error) error {
+	var eqc promql.ErrQueryCanceled
+	var eqt promql.ErrQueryTimeout
+	var es promql.ErrStorage
+	switch {
+	case errors.As(execErr, &eqc):
+		return errors.Newf(errors.TypeCanceled, errors.CodeCanceled, "query canceled").WithAdditional(eqc.Error())
+	case errors.As(execErr, &eqt):
+		return errors.Newf(errors.TypeTimeout, errors.CodeTimeout, "query timed out").WithAdditional(eqt.Error())
+	case errors.Is(execErr, context.DeadlineExceeded):
+		return errors.Newf(errors.TypeTimeout, errors.CodeTimeout, "query timed out")
+	case errors.Is(execErr, context.Canceled):
+		return errors.Newf(errors.TypeCanceled, errors.CodeCanceled, "query canceled")
+	case errors.As(execErr, &es):
+		return errors.Newf(errors.TypeInternal, errors.CodeInternal, "query execution error: %v", execErr)
+	default:
+		return nil
+	}
+}
+
+// enhancePromQLError adds helpful context to PromQL parse errors,
+// particularly for UTF-8 syntax migration issues where metric and label
+// names containing dots need to be quoted.
+func enhancePromQLError(query string, parseErr error) error {
+	errMsg := parseErr.Error()
+
+	if matches := quotedMetricOutsideBracesPattern.FindStringSubmatch(query); len(matches) > 1 {
+		metricName := matches[1]
+		return errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"invalid promql query: %s. Hint: The metric name should be inside the braces. Use {\"__name__\"=\"%s\", ...} or {\"%s\", ...} instead of \"%s\"{...}",
+			errMsg,
+			metricName,
+			metricName,
+			metricName,
+		)
+	}
+
+	if matches := unquotedDottedNamePattern.FindStringSubmatch(query); len(matches) > 1 {
+		dottedName := matches[1]
+		return errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"invalid promql query: %s. Hint: Metric and label names containing dots require quoted notation in the new UTF-8 syntax, e.g., use \"%s\" instead of %s",
+			errMsg,
+			dottedName,
+			dottedName,
+		)
+	}
+
+	return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid promql query: %s", errMsg)
+}
 
 type promqlQuery struct {
 	logger      *slog.Logger
 	promEngine  prometheus.Prometheus
+	parser      parser.Parser
 	query       qbv5.PromQuery
 	tr          qbv5.TimeRange
 	requestType qbv5.RequestType
@@ -29,6 +101,7 @@ type promqlQuery struct {
 }
 
 var _ qbv5.Query = (*promqlQuery)(nil)
+var _ qbv5.StatementProvider = (*promqlQuery)(nil)
 
 func newPromqlQuery(
 	logger *slog.Logger,
@@ -38,19 +111,27 @@ func newPromqlQuery(
 	requestType qbv5.RequestType,
 	variables map[string]qbv5.VariableItem,
 ) *promqlQuery {
-	return &promqlQuery{logger, promEngine, query, tr, requestType, variables}
+	return &promqlQuery{
+		logger:      logger,
+		promEngine:  promEngine,
+		parser:      promEngine.Parser(),
+		query:       query,
+		tr:          tr,
+		requestType: requestType,
+		vars:        variables,
+	}
 }
 
 func (q *promqlQuery) Fingerprint() string {
 	query, err := q.renderVars(q.query.Query, q.vars, q.tr.From, q.tr.To)
 	if err != nil {
-		q.logger.ErrorContext(context.TODO(), "failed render template variables", "query", q.query.Query)
+		q.logger.ErrorContext(context.TODO(), "failed render template variables", slog.String("query", q.query.Query))
 		return ""
 	}
 	parts := []string{
 		"promql",
 		query,
-		q.query.Step.Duration.String(),
+		q.query.Step.String(),
 	}
 
 	return strings.Join(parts, "&")
@@ -79,15 +160,15 @@ func (q *promqlQuery) removeAllVarMatchers(query string, vars map[string]qbv5.Va
 		return query, nil
 	}
 
-	expr, err := parser.ParseExpr(query)
+	expr, err := q.parser.ParseExpr(query)
 	if err != nil {
-		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid promql query %q", query)
+		return "", enhancePromQLError(query, err)
 	}
 
 	// Create visitor and walk the AST
 	visitor := &allVarRemover{allVars: allVars}
 	if err := parser.Walk(visitor, expr, nil); err != nil {
-		q.logger.ErrorContext(context.TODO(), "unexpected error while removing __all__ variable matchers", "error", err, "query", query)
+		q.logger.ErrorContext(context.TODO(), "unexpected error while removing __all__ variable matchers", errors.Attr(err), slog.String("query", query))
 		return "", errors.WrapInternalf(err, errors.CodeInternal, "error while removing __all__ variable matchers")
 	}
 
@@ -95,7 +176,7 @@ func (q *promqlQuery) removeAllVarMatchers(query string, vars map[string]qbv5.Va
 	return expr.String(), nil
 }
 
-// TODO(srikanthccv): cleanup the templating logic
+// TODO(srikanthccv): cleanup the templating logic.
 func (q *promqlQuery) renderVars(query string, vars map[string]qbv5.VariableItem, start, end uint64) (string, error) {
 	// First, remove label matchers that use variables with __all__ value.
 	// This must happen before variable substitution so we can detect variable references
@@ -120,9 +201,9 @@ func (q *promqlQuery) renderVars(query string, vars map[string]qbv5.VariableItem
 	})
 
 	for _, k := range keys {
-		query = strings.Replace(query, fmt.Sprintf("{{%s}}", k), fmt.Sprint(varsData[k]), -1)
-		query = strings.Replace(query, fmt.Sprintf("[[%s]]", k), fmt.Sprint(varsData[k]), -1)
-		query = strings.Replace(query, fmt.Sprintf("$%s", k), fmt.Sprint(varsData[k]), -1)
+		query = strings.ReplaceAll(query, fmt.Sprintf("{{%s}}", k), fmt.Sprint(varsData[k]))
+		query = strings.ReplaceAll(query, fmt.Sprintf("[[%s]]", k), fmt.Sprint(varsData[k]))
+		query = strings.ReplaceAll(query, fmt.Sprintf("$%s", k), fmt.Sprint(varsData[k]))
 	}
 
 	tmpl := template.New("promql-query")
@@ -140,7 +221,68 @@ func (q *promqlQuery) renderVars(query string, vars map[string]qbv5.VariableItem
 	return newQuery.String(), nil
 }
 
+// Statement renders the PromQL string (no SQL args) without executing it, for
+// the preview path.
+func (q *promqlQuery) Statement(_ context.Context) (*qbv5.Statement, error) {
+	rendered, err := q.renderVars(q.query.Query, q.vars, q.tr.From, q.tr.To)
+	if err != nil {
+		return nil, err
+	}
+	return &qbv5.Statement{Query: rendered}, nil
+}
+
+// PreviewStatements returns the ClickHouse statement(s) this PromQL query would
+// run, captured by driving the engine with a Storage that records each selector's
+// SQL and returns no data. Returns nil if capture is unsupported.
+func (q *promqlQuery) PreviewStatements(ctx context.Context) ([]prometheus.CapturedStatement, error) {
+	storer, ok := q.promEngine.(prometheus.StatementCapturer)
+	if !ok {
+		return nil, nil
+	}
+
+	rendered, err := q.renderVars(q.query.Query, q.vars, q.tr.From, q.tr.To)
+	if err != nil {
+		return nil, err
+	}
+
+	start := int64(querybuilder.ToNanoSecs(q.tr.From))
+	end := int64(querybuilder.ToNanoSecs(q.tr.To))
+
+	capStorage, recorder := storer.CapturingStorage()
+	qry, err := q.promEngine.Engine().NewRangeQuery(
+		ctx,
+		capStorage,
+		nil,
+		rendered,
+		time.Unix(0, start),
+		time.Unix(0, end),
+		q.query.Step.Duration,
+	)
+	if err != nil {
+		if e := tryEnhancePromQLExecError(err); e != nil {
+			return nil, e
+		}
+		return nil, enhancePromQLError(rendered, err)
+	}
+	defer qry.Close()
+
+	// Exec drives a Select per selector (recording SQL) but reads no data.
+	if res := qry.Exec(ctx); res.Err != nil {
+		if e := tryEnhancePromQLExecError(res.Err); e != nil {
+			return nil, e
+		}
+		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "query execution error: %v", res.Err)
+	}
+
+	return recorder.Statements(), nil
+}
+
 func (q *promqlQuery) Execute(ctx context.Context) (*qbv5.Result, error) {
+
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal: telemetrytypes.SignalMetrics.StringValue(),
+		instrumentationtypes.QueryDuration:   instrumentationtypes.DurationBucket(q.tr.From, q.tr.To),
+	})
 
 	start := int64(querybuilder.ToNanoSecs(q.tr.From))
 	end := int64(querybuilder.ToNanoSecs(q.tr.To))
@@ -159,27 +301,20 @@ func (q *promqlQuery) Execute(ctx context.Context) (*qbv5.Result, error) {
 		time.Unix(0, end),
 		q.query.Step.Duration,
 	)
-
 	if err != nil {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid promql query %q", query)
+		// NewRangeQuery can fail with execution errors (e.g. context deadline exceeded)
+		// during the query queue/scheduling stage, not just parse errors.
+		if err := tryEnhancePromQLExecError(err); err != nil {
+			return nil, err
+		}
+
+		return nil, enhancePromQLError(query, err)
 	}
 
 	res := qry.Exec(ctx)
 	if res.Err != nil {
-		var eqc promql.ErrQueryCanceled
-		var eqt promql.ErrQueryTimeout
-		var es promql.ErrStorage
-		switch {
-		case errors.As(res.Err, &eqc):
-			return nil, errors.Newf(errors.TypeCanceled, errors.CodeCanceled, "query canceled")
-		case errors.As(res.Err, &eqt):
-			return nil, errors.Newf(errors.TypeTimeout, errors.CodeTimeout, "query timeout")
-		case errors.As(res.Err, &es):
-			return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "query execution error: %v", res.Err)
-		}
-
-		if errors.Is(res.Err, context.Canceled) {
-			return nil, errors.Newf(errors.TypeCanceled, errors.CodeCanceled, "query canceled")
+		if err := tryEnhancePromQLExecError(res.Err); err != nil {
+			return nil, err
 		}
 
 		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "query execution error: %v", res.Err)
@@ -192,17 +327,26 @@ func (q *promqlQuery) Execute(ctx context.Context) (*qbv5.Result, error) {
 		return nil, errors.WrapInternalf(promErr, errors.CodeInternal, "error getting matrix from promql query %q", query)
 	}
 
+	excludeLabel := func(labelName string) bool {
+		if labelName == "__name__" {
+			return false
+		}
+		return strings.HasPrefix(labelName, "__") || labelName == "fingerprint"
+	}
+
 	var series []*qbv5.TimeSeries
 	for _, v := range matrix {
 		var s qbv5.TimeSeries
-		lbls := make([]*qbv5.Label, 0, len(v.Metric))
-		for name, value := range v.Metric.Copy().Map() {
+		lbls := make([]*qbv5.Label, 0, v.Metric.Len())
+		v.Metric.Range(func(l labels.Label) {
+			if excludeLabel(l.Name) {
+				return
+			}
 			lbls = append(lbls, &qbv5.Label{
-				Key:   telemetrytypes.TelemetryFieldKey{Name: name},
-				Value: value,
+				Key:   telemetrytypes.TelemetryFieldKey{Name: l.Name},
+				Value: l.Value,
 			})
-		}
-
+		})
 		s.Labels = lbls
 
 		for idx := range v.Floats {

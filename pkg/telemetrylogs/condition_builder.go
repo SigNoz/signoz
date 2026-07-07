@@ -3,76 +3,86 @@ package telemetrylogs
 import (
 	"context"
 	"fmt"
-	"slices"
-	"strings"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"golang.org/x/exp/maps"
+	"github.com/SigNoz/signoz/pkg/valuer"
 
 	"github.com/huandu/go-sqlbuilder"
 )
 
 type conditionBuilder struct {
 	fm qbtypes.FieldMapper
+	fl flagger.Flagger
 }
 
-func NewConditionBuilder(fm qbtypes.FieldMapper) *conditionBuilder {
-	return &conditionBuilder{fm: fm}
+func NewConditionBuilder(fm qbtypes.FieldMapper, fl flagger.Flagger) *conditionBuilder {
+	return &conditionBuilder{fm: fm, fl: fl}
 }
 
 func (c *conditionBuilder) conditionFor(
 	ctx context.Context,
+	startNs, endNs uint64,
 	key *telemetrytypes.TelemetryFieldKey,
 	operator qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
 ) (string, error) {
+	columns, err := c.fm.ColumnFor(ctx, startNs, endNs, key)
+	if err != nil {
+		return "", err
+	}
 
-	switch operator {
-	case qbtypes.FilterOperatorContains,
-		qbtypes.FilterOperatorNotContains,
-		qbtypes.FilterOperatorILike,
-		qbtypes.FilterOperatorNotILike,
-		qbtypes.FilterOperatorLike,
-		qbtypes.FilterOperatorNotLike:
+	// TODO(Piyush): Update this to support multiple JSON columns based on evolutions
+	for _, column := range columns {
+		// TODO(Tushar): thread orgID here to evaluate correctly
+		if column.Type.GetType() == schema.ColumnTypeEnumJSON && key.FieldContext == telemetrytypes.FieldContextBody && c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{})) && key.Name != messageSubField {
+			valueType, value := InferDataType(value, operator, key)
+			cond, err := NewJSONConditionBuilder(key, valueType).buildJSONCondition(operator, value, sb)
+			if err != nil {
+				return "", err
+			}
+			return cond, nil
+		}
+	}
+
+	if operator.IsStringSearchOperator() {
 		value = querybuilder.FormatValueForContains(value)
 	}
 
-	column, err := c.fm.ColumnFor(ctx, key)
+	fieldExpression, err := c.fm.FieldFor(ctx, startNs, endNs, key)
 	if err != nil {
 		return "", err
 	}
 
-	tblFieldName, err := c.fm.FieldFor(ctx, key)
-	if err != nil {
-		return "", err
+	// Check if this is a body JSON search - either by FieldContext
+	// TODO(Tushar): thread orgID here to evaluate correctly
+	if key.FieldContext == telemetrytypes.FieldContextBody && !c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{})) {
+		fieldExpression, value = GetBodyJSONKey(ctx, key, operator, value)
 	}
 
-	if strings.HasPrefix(key.Name, BodyJSONStringSearchPrefix) {
-		tblFieldName, value = GetBodyJSONKey(ctx, key, operator, value)
-	}
-
-	tblFieldName, value = querybuilder.DataTypeCollisionHandledFieldName(key, value, tblFieldName, operator)
+	fieldExpression, value = querybuilder.DataTypeCollisionHandledFieldName(key, value, fieldExpression, operator)
 
 	// make use of case insensitive index for body
-	if tblFieldName == "body" {
+	if fieldExpression == "body" || fieldExpression == messageSubColumn {
 		switch operator {
 		case qbtypes.FilterOperatorLike:
-			return sb.ILike(tblFieldName, value), nil
+			return sb.ILike(fieldExpression, value), nil
 		case qbtypes.FilterOperatorNotLike:
-			return sb.NotILike(tblFieldName, value), nil
+			return sb.NotILike(fieldExpression, value), nil
 		case qbtypes.FilterOperatorRegexp:
 			// Note: Escape $$ to $$$$ to avoid sqlbuilder interpreting materialized $ signs
 			// Only needed because we are using sprintf instead of sb.Match (not implemented in sqlbuilder)
-			return fmt.Sprintf(`match(LOWER(%s), LOWER(%s))`, sqlbuilder.Escape(tblFieldName), sb.Var(value)), nil
+			return fmt.Sprintf(`match(LOWER(%s), LOWER(%s))`, sqlbuilder.Escape(fieldExpression), sb.Var(value)), nil
 		case qbtypes.FilterOperatorNotRegexp:
 			// Note: Escape $$ to $$$$ to avoid sqlbuilder interpreting materialized $ signs
 			// Only needed because we are using sprintf instead of sb.Match (not implemented in sqlbuilder)
-			return fmt.Sprintf(`NOT match(LOWER(%s), LOWER(%s))`, sqlbuilder.Escape(tblFieldName), sb.Var(value)), nil
+			return fmt.Sprintf(`NOT match(LOWER(%s), LOWER(%s))`, sqlbuilder.Escape(fieldExpression), sb.Var(value)), nil
 		}
 	}
 
@@ -80,41 +90,41 @@ func (c *conditionBuilder) conditionFor(
 	switch operator {
 	// regular operators
 	case qbtypes.FilterOperatorEqual:
-		return sb.E(tblFieldName, value), nil
+		return sb.E(fieldExpression, value), nil
 	case qbtypes.FilterOperatorNotEqual:
-		return sb.NE(tblFieldName, value), nil
+		return sb.NE(fieldExpression, value), nil
 	case qbtypes.FilterOperatorGreaterThan:
-		return sb.G(tblFieldName, value), nil
+		return sb.G(fieldExpression, value), nil
 	case qbtypes.FilterOperatorGreaterThanOrEq:
-		return sb.GE(tblFieldName, value), nil
+		return sb.GE(fieldExpression, value), nil
 	case qbtypes.FilterOperatorLessThan:
-		return sb.LT(tblFieldName, value), nil
+		return sb.LT(fieldExpression, value), nil
 	case qbtypes.FilterOperatorLessThanOrEq:
-		return sb.LE(tblFieldName, value), nil
+		return sb.LE(fieldExpression, value), nil
 
 	// like and not like
 	case qbtypes.FilterOperatorLike:
-		return sb.Like(tblFieldName, value), nil
+		return sb.Like(fieldExpression, value), nil
 	case qbtypes.FilterOperatorNotLike:
-		return sb.NotLike(tblFieldName, value), nil
+		return sb.NotLike(fieldExpression, value), nil
 	case qbtypes.FilterOperatorILike:
-		return sb.ILike(tblFieldName, value), nil
+		return sb.ILike(fieldExpression, value), nil
 	case qbtypes.FilterOperatorNotILike:
-		return sb.NotILike(tblFieldName, value), nil
+		return sb.NotILike(fieldExpression, value), nil
 
 	case qbtypes.FilterOperatorContains:
-		return sb.ILike(tblFieldName, fmt.Sprintf("%%%s%%", value)), nil
+		return sb.ILike(fieldExpression, fmt.Sprintf("%%%s%%", value)), nil
 	case qbtypes.FilterOperatorNotContains:
-		return sb.NotILike(tblFieldName, fmt.Sprintf("%%%s%%", value)), nil
+		return sb.NotILike(fieldExpression, fmt.Sprintf("%%%s%%", value)), nil
 
 	case qbtypes.FilterOperatorRegexp:
 		// Note: Escape $$ to $$$$ to avoid sqlbuilder interpreting materialized $ signs
 		// Only needed because we are using sprintf instead of sb.Match (not implemented in sqlbuilder)
-		return fmt.Sprintf(`match(%s, %s)`, sqlbuilder.Escape(tblFieldName), sb.Var(value)), nil
+		return fmt.Sprintf(`match(%s, %s)`, sqlbuilder.Escape(fieldExpression), sb.Var(value)), nil
 	case qbtypes.FilterOperatorNotRegexp:
 		// Note: Escape $$ to $$$$ to avoid sqlbuilder interpreting materialized $ signs
 		// Only needed because we are using sprintf instead of sb.Match (not implemented in sqlbuilder)
-		return fmt.Sprintf(`NOT match(%s, %s)`, sqlbuilder.Escape(tblFieldName), sb.Var(value)), nil
+		return fmt.Sprintf(`NOT match(%s, %s)`, sqlbuilder.Escape(fieldExpression), sb.Var(value)), nil
 	// between and not between
 	case qbtypes.FilterOperatorBetween:
 		values, ok := value.([]any)
@@ -124,7 +134,7 @@ func (c *conditionBuilder) conditionFor(
 		if len(values) != 2 {
 			return "", qbtypes.ErrBetweenValues
 		}
-		return sb.Between(tblFieldName, values[0], values[1]), nil
+		return sb.Between(fieldExpression, values[0], values[1]), nil
 	case qbtypes.FilterOperatorNotBetween:
 		values, ok := value.([]any)
 		if !ok {
@@ -133,7 +143,7 @@ func (c *conditionBuilder) conditionFor(
 		if len(values) != 2 {
 			return "", qbtypes.ErrBetweenValues
 		}
-		return sb.NotBetween(tblFieldName, values[0], values[1]), nil
+		return sb.NotBetween(fieldExpression, values[0], values[1]), nil
 
 	// in and not in
 	case qbtypes.FilterOperatorIn:
@@ -144,7 +154,7 @@ func (c *conditionBuilder) conditionFor(
 		// instead of using IN, we use `=` + `OR` to make use of index
 		conditions := []string{}
 		for _, value := range values {
-			conditions = append(conditions, sb.E(tblFieldName, value))
+			conditions = append(conditions, sb.E(fieldExpression, value))
 		}
 		return sb.Or(conditions...), nil
 	case qbtypes.FilterOperatorNotIn:
@@ -155,7 +165,7 @@ func (c *conditionBuilder) conditionFor(
 		// instead of using NOT IN, we use `!=` + `AND` to make use of index
 		conditions := []string{}
 		for _, value := range values {
-			conditions = append(conditions, sb.NE(tblFieldName, value))
+			conditions = append(conditions, sb.NE(fieldExpression, value))
 		}
 		return sb.And(conditions...), nil
 
@@ -163,8 +173,8 @@ func (c *conditionBuilder) conditionFor(
 	// in the UI based query builder, `exists` and `not exists` are used for
 	// key membership checks, so depending on the column type, the condition changes
 	case qbtypes.FilterOperatorExists, qbtypes.FilterOperatorNotExists:
-
-		if strings.HasPrefix(key.Name, BodyJSONStringSearchPrefix) {
+		// TODO(Tushar): thread orgID here to evaluate correctly
+		if key.FieldContext == telemetrytypes.FieldContextBody && !c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{})) {
 			if operator == qbtypes.FilterOperatorExists {
 				return GetBodyJSONKeyForExists(ctx, key, operator, value), nil
 			} else {
@@ -173,48 +183,85 @@ func (c *conditionBuilder) conditionFor(
 		}
 
 		var value any
-		switch column.Type {
-		case schema.JSONColumnType{}:
-			if operator == qbtypes.FilterOperatorExists {
-				return sb.IsNotNull(tblFieldName), nil
-			} else {
-				return sb.IsNull(tblFieldName), nil
+		column := columns[0]
+		if len(key.Evolutions) > 0 {
+			// we will use the corresponding column and its evolution entry for the query
+			newColumns, _, err := qbtypes.SelectEvolutionsForColumns(columns, key.Evolutions, startNs, endNs)
+			if err != nil {
+				return "", err
 			}
-		case schema.ColumnTypeString, schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}:
+
+			if len(newColumns) == 0 {
+				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "no valid evolution found for field %s in the given time range", key.Name)
+			}
+
+			// This mean tblFieldName is with multiIf, we just need to do a null check.
+			if len(newColumns) > 1 {
+				if operator == qbtypes.FilterOperatorExists {
+					return sb.IsNotNull(fieldExpression), nil
+				} else {
+					return sb.IsNull(fieldExpression), nil
+				}
+			}
+
+			// otherwise we have to find the correct exist operator based on the column type
+			column = newColumns[0]
+		}
+
+		switch column.Type.GetType() {
+		case schema.ColumnTypeEnumJSON:
+			if operator == qbtypes.FilterOperatorExists {
+				return sb.IsNotNull(fieldExpression), nil
+			}
+			return sb.IsNull(fieldExpression), nil
+		case schema.ColumnTypeEnumLowCardinality:
+			switch elementType := column.Type.(schema.LowCardinalityColumnType).ElementType; elementType.GetType() {
+			case schema.ColumnTypeEnumString:
+				value = ""
+				if operator == qbtypes.FilterOperatorExists {
+					return sb.NE(fieldExpression, value), nil
+				}
+				return sb.E(fieldExpression, value), nil
+			default:
+				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for low cardinality column type %s", elementType)
+			}
+		case schema.ColumnTypeEnumString:
 			value = ""
 			if operator == qbtypes.FilterOperatorExists {
-				return sb.NE(tblFieldName, value), nil
+				return sb.NE(fieldExpression, value), nil
 			} else {
-				return sb.E(tblFieldName, value), nil
+				return sb.E(fieldExpression, value), nil
 			}
-		case schema.ColumnTypeUInt64, schema.ColumnTypeUInt32, schema.ColumnTypeUInt8:
+		case schema.ColumnTypeEnumUInt64, schema.ColumnTypeEnumUInt32, schema.ColumnTypeEnumUInt8:
 			value = 0
 			if operator == qbtypes.FilterOperatorExists {
-				return sb.NE(tblFieldName, value), nil
+				return sb.NE(fieldExpression, value), nil
 			} else {
-				return sb.E(tblFieldName, value), nil
+				return sb.E(fieldExpression, value), nil
 			}
-		case schema.MapColumnType{
-			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-			ValueType: schema.ColumnTypeString,
-		}, schema.MapColumnType{
-			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-			ValueType: schema.ColumnTypeBool,
-		}, schema.MapColumnType{
-			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-			ValueType: schema.ColumnTypeFloat64,
-		}:
-			leftOperand := fmt.Sprintf("mapContains(%s, '%s')", column.Name, key.Name)
-			if key.Materialized {
-				leftOperand = telemetrytypes.FieldKeyToMaterializedColumnNameForExists(key)
+		case schema.ColumnTypeEnumMap:
+			keyType := column.Type.(schema.MapColumnType).KeyType
+			if _, ok := keyType.(schema.LowCardinalityColumnType); !ok {
+				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "key type %s is not supported for map column type %s", keyType, column.Type)
 			}
-			if operator == qbtypes.FilterOperatorExists {
-				return sb.E(leftOperand, true), nil
-			} else {
-				return sb.NE(leftOperand, true), nil
+
+			switch valueType := column.Type.(schema.MapColumnType).ValueType; valueType.GetType() {
+			case schema.ColumnTypeEnumString, schema.ColumnTypeEnumBool, schema.ColumnTypeEnumFloat64:
+				leftOperand := fmt.Sprintf("mapContains(%s, '%s')", column.Name, key.Name)
+				if key.Materialized {
+					leftOperand = telemetrytypes.FieldKeyToMaterializedColumnNameForExists(key)
+				}
+				if operator == qbtypes.FilterOperatorExists {
+					return sb.E(leftOperand, true), nil
+				} else {
+					return sb.NE(leftOperand, true), nil
+				}
+			default:
+				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for map column type %s", valueType)
 			}
 		default:
 			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for column type %s", column.Type)
+
 		}
 	}
 	return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported operator: %v", operator)
@@ -222,31 +269,44 @@ func (c *conditionBuilder) conditionFor(
 
 func (c *conditionBuilder) ConditionFor(
 	ctx context.Context,
+	startNs uint64,
+	endNs uint64,
 	key *telemetrytypes.TelemetryFieldKey,
 	operator qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
-	_ uint64,
-	_ uint64,
 ) (string, error) {
-	condition, err := c.conditionFor(ctx, key, operator, value, sb)
+
+	condition, err := c.conditionFor(ctx, startNs, endNs, key, operator, value, sb)
 	if err != nil {
 		return "", err
 	}
 
-	if operator.AddDefaultExistsFilter() {
-		// skip adding exists filter for intrinsic fields
-		// with an exception for body json search
-		field, _ := c.fm.FieldFor(ctx, key)
-		if slices.Contains(maps.Keys(IntrinsicFields), field) && !strings.HasPrefix(key.Name, BodyJSONStringSearchPrefix) {
+	// Skip adding exists filter for intrinsic fields i.e. Table level log context fields
+	buildExistCondition := operator.AddDefaultExistsFilter()
+	switch key.FieldContext {
+	case telemetrytypes.FieldContextLog, telemetrytypes.FieldContextScope:
+		// pass; No need to build exist condition for top level columns
+		// immediately return
+		return condition, nil
+	case telemetrytypes.FieldContextResource, telemetrytypes.FieldContextAttribute:
+		// build exist condition for resource and attribute fields based on filter operator
+	case telemetrytypes.FieldContextBody:
+		// Querying JSON fields already account for Nullability of fields
+		// so additional exists checks are not needed
+		// TODO(Tushar): thread orgID here to evaluate correctly
+		if c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{})) {
 			return condition, nil
 		}
+	}
 
-		existsCondition, err := c.conditionFor(ctx, key, qbtypes.FilterOperatorExists, nil, sb)
+	if buildExistCondition {
+		existsCondition, err := c.conditionFor(ctx, startNs, endNs, key, qbtypes.FilterOperatorExists, nil, sb)
 		if err != nil {
 			return "", err
 		}
 		return sb.And(condition, existsCondition), nil
 	}
+
 	return condition, nil
 }

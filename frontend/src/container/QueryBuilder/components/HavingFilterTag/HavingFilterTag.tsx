@@ -12,10 +12,17 @@ export function HavingFilterTag({
 	};
 
 	return (
-		<StyledTag closable={closable} onClose={onClose}>
-			<StyledText ellipsis onClick={handleClick}>
-				{value}
-			</StyledText>
+		<StyledTag
+			color="vanilla"
+			closable={closable}
+			onClose={(e): void => {
+				e.preventDefault();
+				onClose();
+			}}
+		>
+			<span role="button" tabIndex={0} onClick={handleClick}>
+				<StyledText>{value}</StyledText>
+			</span>
 		</StyledTag>
 	);
 }

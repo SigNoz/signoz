@@ -9,25 +9,63 @@ on:
       - labeled
 
 jobs:
+  fmtlint:
+    if: |
+      ((github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
+      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))) && contains(github.event.pull_request.labels.*.name, 'safe-to-integrate')
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.13
+      - name: uv
+        uses: astral-sh/setup-uv@v4
+      - name: install
+        run: |
+          cd tests && uv sync
+      - name: fmt
+        run: |
+          make py-fmt
+          git diff --exit-code -- tests/
+      - name: lint
+        run: |
+          make py-lint
   test:
     strategy:
       fail-fast: false
       matrix:
-        src:
-          - bootstrap
-          - passwordauthn
+        suite:
+          - alerts
+          - basepath
           - callbackauthn
           - cloudintegrations
           - dashboard
+          - ingestionkeys
+          - inframonitoring
+          - logspipelines
+          - passwordauthn
+          - preference
           - querier
+          - rawexportdata
+          - role
+          - rootuser
+          - serviceaccount
+          - querier_json_body
+          - querier_skip_resource_fingerprint
           - ttl
         sqlstore-provider:
           - postgres
           - sqlite
+        sqlite-mode:
+          - wal
         clickhouse-version:
           - 25.5.6
+          - 25.12.5
         schema-migrator-version:
-          - v0.129.7
+          - v0.144.3
         postgres-version:
           - 15
     if: |
@@ -41,12 +79,13 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: 3.13
-      - name: poetry
+      - name: uv
+        uses: astral-sh/setup-uv@v4
+      - name: install
         run: |
-          python -m pip install poetry==2.1.2
-          python -m poetry config virtualenvs.in-project true
-          cd tests/integration && poetry install --no-root
+          cd tests && uv sync
       - name: webdriver
+        if: matrix.suite == 'callbackauthn' || matrix.suite == 'basepath'
         run: |
           wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
           echo "deb http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee -a /etc/apt/sources.list.d/google-chrome.list
@@ -58,15 +97,19 @@ jobs:
           sudo rm /etc/apt/sources.list.d/google-chrome.list
           export CHROMEDRIVER_VERSION=`curl -s https://googlechromelabs.github.io/chrome-for-testing/LATEST_RELEASE_${CHROME_MAJOR_VERSION%%.*}`
           curl -L -O "https://storage.googleapis.com/chrome-for-testing-public/${CHROMEDRIVER_VERSION}/linux64/chromedriver-linux64.zip"
-          unzip chromedriver-linux64.zip && chmod +x chromedriver && sudo mv chromedriver /usr/local/bin
+          unzip chromedriver-linux64.zip
+          chmod +x chromedriver-linux64/chromedriver
+          sudo mv chromedriver-linux64/chromedriver /usr/local/bin/chromedriver
           chromedriver -version
+          google-chrome-stable --version
       - name: run
         run: |
-          cd tests/integration && \
-            poetry run pytest \
+          cd tests && \
+            uv run pytest \
             --basetemp=./tmp/ \
-            src/${{matrix.src}} \
+            integration/tests/${{matrix.suite}} \
             --sqlstore-provider ${{matrix.sqlstore-provider}} \
+            --sqlite-mode ${{matrix.sqlite-mode}} \
             --postgres-version ${{matrix.postgres-version}} \
             --clickhouse-version ${{matrix.clickhouse-version}} \
             --schema-migrator-version ${{matrix.schema-migrator-version}}

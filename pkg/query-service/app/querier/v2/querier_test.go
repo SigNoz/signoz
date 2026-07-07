@@ -3,6 +3,7 @@ package v2
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"math"
 	"strings"
 	"testing"
@@ -11,6 +12,7 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/cache/cachetest"
+	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/prometheus/prometheustest"
@@ -25,7 +27,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	cmock "github.com/srikanthccv/ClickHouse-go-mock"
+	cmock "github.com/SigNoz/clickhouse-go-mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -1455,13 +1457,13 @@ func Test_querier_Traces_runWindowBasedListQueryDesc(t *testing.T) {
 
 			// Create reader and querier
 			reader := clickhouseReader.NewReader(
+				slog.Default(),
 				nil,
 				telemetryStore,
-				prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{}, telemetryStore),
+				prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{Timeout: 2 * time.Minute}, telemetryStore),
 				"",
-				time.Duration(time.Second),
 				nil,
-				nil,
+				flaggertest.New(t),
 				options,
 			)
 
@@ -1680,13 +1682,13 @@ func Test_querier_Traces_runWindowBasedListQueryAsc(t *testing.T) {
 
 			// Create reader and querier
 			reader := clickhouseReader.NewReader(
+				slog.Default(),
 				nil,
 				telemetryStore,
-				prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{}, telemetryStore),
+				prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{Timeout: 2 * time.Minute}, telemetryStore),
 				"",
-				time.Duration(time.Second),
 				nil,
-				nil,
+				flaggertest.New(t),
 				options,
 			)
 
@@ -1979,13 +1981,13 @@ func Test_querier_Logs_runWindowBasedListQueryDesc(t *testing.T) {
 
 			// Create reader and querier
 			reader := clickhouseReader.NewReader(
+				slog.Default(),
 				nil,
 				telemetryStore,
-				prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{}, telemetryStore),
+				prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{Timeout: 2 * time.Minute}, telemetryStore),
 				"",
-				time.Duration(time.Second),
 				nil,
-				nil,
+				flaggertest.New(t),
 				options,
 			)
 
@@ -2206,13 +2208,13 @@ func Test_querier_Logs_runWindowBasedListQueryAsc(t *testing.T) {
 
 			// Create reader and querier
 			reader := clickhouseReader.NewReader(
+				slog.Default(),
 				nil,
 				telemetryStore,
-				prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{}, telemetryStore),
+				prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{Timeout: 2 * time.Minute}, telemetryStore),
 				"",
-				time.Duration(time.Second),
 				nil,
-				nil,
+				flaggertest.New(t),
 				options,
 			)
 

@@ -1,147 +1,206 @@
-import { Form, Row } from 'antd';
+import { useCallback, useEffect, useMemo } from 'react';
+import { Form, Tabs, TabsProps } from 'antd';
 import logEvent from 'api/common/logEvent';
+import ConfigureIcon from 'assets/AlertHistory/ConfigureIcon';
+import AlertBreadcrumb from 'components/AlertBreadcrumb';
+import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { QueryParams } from 'constants/query';
+import ROUTES from 'constants/routes';
 import CreateAlertV2 from 'container/CreateAlertV2';
 import FormAlertRules, { AlertDetectionTypes } from 'container/FormAlertRules';
-import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
+import DateTimeSelector from 'container/TopNav/DateTimeSelectionV2';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
-import history from 'lib/history';
-import { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import useUrlQuery from 'hooks/useUrlQuery';
+import { AlertListTabs } from 'pages/AlertList/types';
+import { GalleryVerticalEnd, Pyramid } from '@signozhq/icons';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { AlertDef } from 'types/api/alerts/def';
 
 import { ALERT_TYPE_VS_SOURCE_MAPPING } from './config';
-import {
-	alertDefaults,
-	anamolyAlertDefaults,
-	exceptionAlertDefaults,
-	logAlertDefaults,
-	traceAlertDefaults,
-} from './defaults';
+import { ALERTS_VALUES_MAP, ALERT_TYPE_BREADCRUMB_TITLE } from './defaults';
 import SelectAlertType from './SelectAlertType';
 
+import './CreateAlertRule.styles.scss';
+
 function CreateRules(): JSX.Element {
-	const [initValues, setInitValues] = useState<AlertDef | null>(null);
-
-	const location = useLocation();
-	const queryParams = new URLSearchParams(location.search);
-	const alertTypeFromURL = queryParams.get(QueryParams.ruleType);
-	const version = queryParams.get('version');
-	const alertTypeFromParams =
-		alertTypeFromURL === AlertDetectionTypes.ANOMALY_DETECTION_ALERT
-			? AlertTypes.ANOMALY_BASED_ALERT
-			: queryParams.get(QueryParams.alertType);
-
-	const { thresholds } = (location.state as {
-		thresholds: ThresholdProps[];
-	}) || {
-		thresholds: null,
-	};
-
-	const compositeQuery = useGetCompositeQueryParam();
-	function getAlertTypeFromDataSource(): AlertTypes | null {
-		if (!compositeQuery) {
-			return null;
-		}
-		const dataSource = compositeQuery?.builder?.queryData[0]?.dataSource;
-
-		return ALERT_TYPE_VS_SOURCE_MAPPING[dataSource];
-	}
-
-	const [alertType, setAlertType] = useState<AlertTypes>(
-		(alertTypeFromParams as AlertTypes) || getAlertTypeFromDataSource(),
-	);
-
 	const [formInstance] = Form.useForm();
+	const compositeQuery = useGetCompositeQueryParam();
+	const queryParams = useUrlQuery();
+	const { safeNavigate } = useSafeNavigate();
 
-	const onSelectType = (typ: AlertTypes): void => {
-		setAlertType(typ);
+	const ruleTypeFromURL = queryParams.get(QueryParams.ruleType);
+	const alertTypeFromURL = queryParams.get(QueryParams.alertType);
+	const version = queryParams.get(QueryParams.version);
+	const showClassicCreateAlertsPageFlag =
+		queryParams.get(QueryParams.showClassicCreateAlertsPage) === 'true';
 
-		switch (typ) {
-			case AlertTypes.LOGS_BASED_ALERT:
-				setInitValues(logAlertDefaults);
-				break;
-			case AlertTypes.TRACES_BASED_ALERT:
-				setInitValues(traceAlertDefaults);
-				break;
-			case AlertTypes.EXCEPTIONS_BASED_ALERT:
-				setInitValues(exceptionAlertDefaults);
-				break;
-			case AlertTypes.ANOMALY_BASED_ALERT:
-				setInitValues({
-					...anamolyAlertDefaults,
-					version: version || ENTITY_VERSION_V5,
-					ruleType: AlertDetectionTypes.ANOMALY_DETECTION_ALERT,
-				});
-				break;
-			default:
-				setInitValues({
-					...alertDefaults,
-					version: version || ENTITY_VERSION_V5,
-					ruleType: AlertDetectionTypes.THRESHOLD_ALERT,
-				});
-		}
-
-		queryParams.set(
-			QueryParams.alertType,
-			typ === AlertTypes.ANOMALY_BASED_ALERT
-				? AlertTypes.METRICS_BASED_ALERT
-				: typ,
-		);
-
-		if (
-			typ === AlertTypes.ANOMALY_BASED_ALERT ||
-			alertTypeFromURL === AlertDetectionTypes.ANOMALY_DETECTION_ALERT
-		) {
-			queryParams.set(
-				QueryParams.ruleType,
-				AlertDetectionTypes.ANOMALY_DETECTION_ALERT,
-			);
-		} else {
-			queryParams.set(QueryParams.ruleType, AlertDetectionTypes.THRESHOLD_ALERT);
-		}
-
-		const generatedUrl = `${location.pathname}?${queryParams.toString()}`;
-		history.replace(generatedUrl, {
-			thresholds,
-		});
-	};
+	const isTypeSelectionMode =
+		!alertTypeFromURL && !ruleTypeFromURL && !compositeQuery;
 
 	useEffect(() => {
-		if (alertType) {
-			onSelectType(alertType);
-		} else {
+		if (isTypeSelectionMode) {
 			logEvent('Alert: New alert data source selection page visited', {});
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [alertType]);
+	}, [isTypeSelectionMode]);
 
-	if (!initValues) {
-		return (
-			<Row wrap={false}>
-				<SelectAlertType onSelect={onSelectType} />
-			</Row>
-		);
-	}
+	const alertType = useMemo(() => {
+		if (ruleTypeFromURL === AlertDetectionTypes.ANOMALY_DETECTION_ALERT) {
+			return AlertTypes.ANOMALY_BASED_ALERT;
+		}
+		if (!alertTypeFromURL) {
+			const dataSource = compositeQuery?.builder.queryData?.[0]?.dataSource;
+			if (dataSource) {
+				return ALERT_TYPE_VS_SOURCE_MAPPING[dataSource];
+			}
+			return AlertTypes.METRICS_BASED_ALERT;
+		}
+		return alertTypeFromURL as AlertTypes;
+	}, [alertTypeFromURL, ruleTypeFromURL, compositeQuery?.builder.queryData]);
 
-	const showNewCreateAlertsPageFlag =
-		queryParams.get('showNewCreateAlertsPage') === 'true';
+	const initialAlertValue: AlertDef = useMemo(
+		() => ({
+			...ALERTS_VALUES_MAP[alertType],
+			version: version || ENTITY_VERSION_V5,
+		}),
+		[alertType, version],
+	);
 
-	if (
-		showNewCreateAlertsPageFlag &&
-		alertType !== AlertTypes.ANOMALY_BASED_ALERT
-	) {
+	const handleTabChange = useCallback(
+		(tab: string): void => {
+			queryParams.set('tab', tab);
+			queryParams.delete('subTab');
+			queryParams.delete('search');
+			safeNavigate(`${ROUTES.LIST_ALL_ALERT}?${queryParams.toString()}`);
+		},
+		[safeNavigate, queryParams],
+	);
+
+	const handleSelectType = useCallback(
+		(type: AlertTypes, newTab?: boolean): void => {
+			if (type === AlertTypes.ANOMALY_BASED_ALERT) {
+				queryParams.set(
+					QueryParams.ruleType,
+					AlertDetectionTypes.ANOMALY_DETECTION_ALERT,
+				);
+				queryParams.set(QueryParams.alertType, AlertTypes.METRICS_BASED_ALERT);
+			} else {
+				queryParams.set(QueryParams.ruleType, AlertDetectionTypes.THRESHOLD_ALERT);
+				queryParams.set(QueryParams.alertType, type);
+			}
+
+			safeNavigate(`${ROUTES.ALERTS_NEW}?${queryParams.toString()}`, { newTab });
+		},
+		[queryParams, safeNavigate],
+	);
+
+	const alertContent = useMemo(() => {
+		if (isTypeSelectionMode) {
+			return <SelectAlertType onSelect={handleSelectType} />;
+		}
+
+		if (
+			showClassicCreateAlertsPageFlag ||
+			alertType === AlertTypes.ANOMALY_BASED_ALERT
+		) {
+			return (
+				<FormAlertRules
+					alertType={alertType}
+					formInstance={formInstance}
+					initialValue={initialAlertValue}
+					ruleId=""
+				/>
+			);
+		}
 		return <CreateAlertV2 alertType={alertType} />;
-	}
+	}, [
+		isTypeSelectionMode,
+		handleSelectType,
+		showClassicCreateAlertsPageFlag,
+		alertType,
+		formInstance,
+		initialAlertValue,
+	]);
+
+	const items: TabsProps['items'] = [
+		{
+			label: (
+				<div className="periscope-tab top-level-tab">
+					<GalleryVerticalEnd size={14} />
+					Triggered Alerts
+				</div>
+			),
+			key: AlertListTabs.TRIGGERED_ALERTS,
+			children: null,
+		},
+		{
+			label: (
+				<div className="periscope-tab top-level-tab">
+					<Pyramid size={14} />
+					Alert Rules
+				</div>
+			),
+			key: AlertListTabs.ALERT_RULES,
+			children: (
+				<div className="create-alert-wrapper">
+					<AlertBreadcrumb
+						className="create-alert__breadcrumb"
+						items={
+							isTypeSelectionMode
+								? [
+										{
+											title: 'Alert Rules',
+											route: `${ROUTES.LIST_ALL_ALERT}?tab=${AlertListTabs.ALERT_RULES}`,
+										},
+										{ title: 'Select Alert Type', isLast: true },
+									]
+								: [
+										{
+											title: 'Alert Rules',
+											route: `${ROUTES.LIST_ALL_ALERT}?tab=${AlertListTabs.ALERT_RULES}`,
+										},
+										{ title: 'Select Alert Type', route: ROUTES.ALERTS_NEW },
+										{
+											title: ALERT_TYPE_BREADCRUMB_TITLE[alertType],
+											isLast: true,
+										},
+									]
+						}
+					/>
+					{alertContent}
+				</div>
+			),
+		},
+		{
+			label: (
+				<div className="periscope-tab top-level-tab">
+					<ConfigureIcon width={14} height={14} />
+					Configuration
+				</div>
+			),
+			key: AlertListTabs.CONFIGURATION,
+			children: null,
+		},
+	];
 
 	return (
-		<FormAlertRules
-			alertType={alertType}
-			formInstance={formInstance}
-			initialValue={initValues}
-			ruleId=""
+		<Tabs
+			destroyInactiveTabPane
+			items={items}
+			activeKey={AlertListTabs.ALERT_RULES}
+			onChange={handleTabChange}
+			className="alerts-container create-alert-tabs"
+			tabBarExtraContent={
+				<div className="create-alert-tabs__extra">
+					<DateTimeSelector showAutoRefresh />
+					<HeaderRightSection
+						enableAnnouncements={false}
+						enableShare
+						enableFeedback
+					/>
+				</div>
+			}
 		/>
 	);
 }

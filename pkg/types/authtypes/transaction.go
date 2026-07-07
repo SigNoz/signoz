@@ -2,106 +2,95 @@ package authtypes
 
 import (
 	"encoding/json"
-	"slices"
-	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-type Resource struct {
-	Name Name `json:"name"`
-	Type Type `json:"type"`
-}
-
-type Object struct {
-	Resource Resource `json:"resource"`
-	Selector Selector `json:"selector"`
+type rawTransactionGroup struct {
+	Relation    string `json:"relation"`
+	ObjectGroup struct {
+		Resource struct {
+			Type string `json:"type"`
+			Kind string `json:"kind"`
+		} `json:"resource"`
+		Selectors []string `json:"selectors"`
+	} `json:"objectGroup"`
 }
 
 type Transaction struct {
-	Relation Relation `json:"relation"`
-	Object   Object   `json:"object"`
+	ID       valuer.UUID      `json:"-"`
+	Relation Relation         `json:"relation" required:"true"`
+	Object   coretypes.Object `json:"object" required:"true"`
 }
 
-func NewObject(resource Resource, selector Selector) (*Object, error) {
-	err := IsValidSelector(resource.Type, selector.val)
-	if err != nil {
+type TransactionGroup struct {
+	Relation    Relation              `json:"relation" required:"true"`
+	ObjectGroup coretypes.ObjectGroup `json:"objectGroup" required:"true"`
+}
+
+type TransactionGroups []*TransactionGroup
+
+type GettableTransaction struct {
+	Relation   Relation         `json:"relation" required:"true"`
+	Object     coretypes.Object `json:"object" required:"true"`
+	Authorized bool             `json:"authorized" required:"true"`
+}
+
+type TransactionWithAuthorization struct {
+	Transaction *Transaction
+	Authorized  bool
+}
+
+func NewTransaction(relation Relation, object coretypes.Object) (*Transaction, error) {
+	if err := coretypes.ErrIfVerbNotValidForResource(relation.Verb, object.Resource); err != nil {
 		return nil, err
 	}
 
-	return &Object{Resource: resource, Selector: selector}, nil
+	return &Transaction{ID: valuer.GenerateUUID(), Relation: relation, Object: object}, nil
 }
 
-func MustNewObject(resource Resource, selector Selector) *Object {
-	object, err := NewObject(resource, selector)
-	if err != nil {
-		panic(err)
+func NewTransactionGroups(data []byte) (TransactionGroups, error) {
+	var rawGroups []rawTransactionGroup
+	if err := json.Unmarshal(data, &rawGroups); err != nil {
+		return nil, errors.New(errors.TypeInvalidInput, ErrCodeRoleInvalidInput, "transactionGroups must be an array of {relation, objectGroup} objects")
 	}
 
-	return object
+	groups := make(TransactionGroups, 0, len(rawGroups))
+	for index, rawGroup := range rawGroups {
+		group, err := newTransactionGroup(rawGroup, index)
+		if err != nil {
+			return nil, err
+		}
+
+		groups = append(groups, group)
+	}
+
+	return groups, nil
 }
 
-func MustNewObjectFromString(input string) *Object {
-	parts := strings.Split(input, "/")
-	if len(parts) != 4 {
-		panic(errors.Newf(errors.TypeInternal, errors.CodeInternal, "invalid input format: %s", input))
+func NewGettableTransaction(results []*TransactionWithAuthorization) []*GettableTransaction {
+	gettableTransactions := make([]*GettableTransaction, len(results))
+	for i, result := range results {
+		gettableTransactions[i] = &GettableTransaction{
+			Relation:   result.Transaction.Relation,
+			Object:     result.Transaction.Object,
+			Authorized: result.Authorized,
+		}
 	}
 
-	typeParts := strings.Split(parts[0], ":")
-	if len(typeParts) != 2 {
-		panic(errors.Newf(errors.TypeInternal, errors.CodeInternal, "invalid type format: %s", parts[0]))
-	}
-
-	resource := Resource{
-		Type: MustNewType(typeParts[0]),
-		Name: MustNewName(parts[2]),
-	}
-
-	selector := MustNewSelector(resource.Type, parts[3])
-
-	return &Object{Resource: resource, Selector: selector}
+	return gettableTransactions
 }
 
-func MustNewObjectsFromStringSlice(input []string) []*Object {
-	objects := make([]*Object, 0, len(input))
-	for _, str := range input {
-		objects = append(objects, MustNewObjectFromString(str))
-	}
-	return objects
-}
-
-func NewTransaction(relation Relation, object Object) (*Transaction, error) {
-	if !slices.Contains(TypeableRelations[object.Resource.Type], relation) {
-		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidRelation, "invalid relation %s for type %s", relation.StringValue(), object.Resource.Type.StringValue())
-	}
-
-	return &Transaction{Relation: relation, Object: object}, nil
-}
-
-func (object *Object) UnmarshalJSON(data []byte) error {
-	var shadow = struct {
-		Resource Resource
-		Selector Selector
-	}{}
-
-	err := json.Unmarshal(data, &shadow)
-	if err != nil {
-		return err
-	}
-
-	obj, err := NewObject(shadow.Resource, shadow.Selector)
-	if err != nil {
-		return err
-	}
-
-	*object = *obj
-	return nil
+func (groups TransactionGroups) Diff(desired TransactionGroups) (additions, deletions TransactionGroups) {
+	return desired.subtract(groups), groups.subtract(desired)
 }
 
 func (transaction *Transaction) UnmarshalJSON(data []byte) error {
 	var shadow = struct {
 		Relation Relation
-		Object   Object
+		Object   coretypes.Object
 	}{}
 
 	err := json.Unmarshal(data, &shadow)
@@ -116,4 +105,89 @@ func (transaction *Transaction) UnmarshalJSON(data []byte) error {
 
 	*transaction = *txn
 	return nil
+}
+
+func (transaction *Transaction) TransactionKey() string {
+	return transaction.Relation.StringValue() + ":" + transaction.Object.Resource.Type.StringValue() + ":" + transaction.Object.Resource.Kind.String()
+}
+
+func (groups TransactionGroups) subtract(other TransactionGroups) TransactionGroups {
+	otherSelectors := other.selectorSet()
+
+	order := make([]string, 0)
+	grouped := make(map[string]*TransactionGroup)
+	for _, group := range groups {
+		for _, selector := range group.ObjectGroup.Selectors {
+			if _, ok := otherSelectors[group.selectorKey(selector)]; ok {
+				continue
+			}
+
+			groupKey := group.Relation.StringValue() + "|" + group.ObjectGroup.Resource.String()
+			out, ok := grouped[groupKey]
+			if !ok {
+				out = &TransactionGroup{Relation: group.Relation, ObjectGroup: coretypes.ObjectGroup{Resource: group.ObjectGroup.Resource, Selectors: make([]coretypes.Selector, 0)}}
+				grouped[groupKey] = out
+				order = append(order, groupKey)
+			}
+			out.ObjectGroup.Selectors = append(out.ObjectGroup.Selectors, selector)
+		}
+	}
+
+	result := make(TransactionGroups, 0, len(order))
+	for _, key := range order {
+		result = append(result, grouped[key])
+	}
+
+	return result
+}
+
+func (groups TransactionGroups) selectorSet() map[string]struct{} {
+	set := make(map[string]struct{})
+	for _, group := range groups {
+		for _, selector := range group.ObjectGroup.Selectors {
+			set[group.selectorKey(selector)] = struct{}{}
+		}
+	}
+
+	return set
+}
+
+func (group *TransactionGroup) selectorKey(selector coretypes.Selector) string {
+	return group.Relation.StringValue() + "|" + group.ObjectGroup.Resource.String() + "|" + selector.String()
+}
+
+func newTransactionGroup(raw rawTransactionGroup, index int) (*TransactionGroup, error) {
+	verb, err := coretypes.NewVerb(raw.Relation)
+	if err != nil {
+		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "transactionGroups[%d].relation: %s", index, err.Error())
+	}
+
+	resourceType, err := coretypes.NewType(raw.ObjectGroup.Resource.Type)
+	if err != nil {
+		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "transactionGroups[%d].objectGroup.resource.type: %s", index, err.Error())
+	}
+
+	kind, err := coretypes.NewKind(raw.ObjectGroup.Resource.Kind)
+	if err != nil {
+		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "transactionGroups[%d].objectGroup.resource.kind: %s", index, err.Error())
+	}
+
+	resourceRef := coretypes.ResourceRef{Type: resourceType, Kind: kind}
+	if err := coretypes.ErrIfVerbNotValidForResource(verb, resourceRef); err != nil {
+		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "transactionGroups[%d]: %s", index, err.Error())
+	}
+
+	selectors := make([]coretypes.Selector, 0, len(raw.ObjectGroup.Selectors))
+	for selectorIndex, rawSelector := range raw.ObjectGroup.Selectors {
+		selector, err := resourceType.Selector(rawSelector)
+		if err != nil {
+			return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "transactionGroups[%d].objectGroup.selectors[%d]: %s", index, selectorIndex, err.Error())
+		}
+		selectors = append(selectors, selector)
+	}
+
+	return &TransactionGroup{
+		Relation:    Relation{Verb: verb},
+		ObjectGroup: coretypes.ObjectGroup{Resource: resourceRef, Selectors: selectors},
+	}, nil
 }

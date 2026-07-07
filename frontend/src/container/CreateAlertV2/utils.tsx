@@ -1,9 +1,9 @@
+import { createPortal } from 'react-dom';
 import { Color } from '@signozhq/design-tokens';
 import { Spin } from 'antd';
 import { TIMEZONE_DATA } from 'components/CustomTimePicker/timezoneUtils';
 import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
 import { getRandomColor } from 'container/ExplorerOptions/utils';
-import { createPortal } from 'react-dom';
 import { PostableAlertRuleV2 } from 'types/api/alerts/alertTypesV2';
 import { v4 } from 'uuid';
 
@@ -21,16 +21,18 @@ import {
 	AlertThresholdMatchType,
 	AlertThresholdOperator,
 	AlertThresholdState,
+	CreateAlertState,
 	EvaluationWindowState,
 	NotificationSettingsState,
 } from './context/types';
 import { EVALUATION_WINDOW_TIMEFRAME } from './EvaluationSettings/constants';
-import { GetCreateAlertLocalStateFromAlertDefReturn } from './types';
 
 export function Spinner(): JSX.Element | null {
 	const { isCreatingAlertRule, isUpdatingAlertRule } = useCreateAlertState();
 
-	if (!isCreatingAlertRule && !isUpdatingAlertRule) return null;
+	if (!isCreatingAlertRule && !isUpdatingAlertRule) {
+		return null;
+	}
 
 	return createPortal(
 		<div className="sticky-page-spinner">
@@ -53,9 +55,10 @@ export function getColorForThreshold(thresholdLabel: string): string {
 	return getRandomColor();
 }
 
-export function parseGoTime(
-	input: string,
-): { time: number; unit: UniversalYAxisUnit } {
+export function parseGoTime(input: string): {
+	time: number;
+	unit: UniversalYAxisUnit;
+} {
 	const regex = /(\d+)([hms])/g;
 	const matches = [...input.matchAll(regex)];
 
@@ -235,6 +238,68 @@ export function getAdvancedOptionsStateFromAlertDef(
 	};
 }
 
+// Mirrors the backend's CompareOperator.Normalize() in
+// pkg/types/ruletypes/compare.go. Maps any accepted alias to the enum value
+// the dropdown understands. Returns undefined for aliases the UI does not
+// expose (e.g. above_or_equal, below_or_equal) so callers can keep the raw
+// value on screen instead of silently rewriting it.
+export function normalizeOperator(
+	raw: string | undefined,
+): AlertThresholdOperator | undefined {
+	switch (raw) {
+		case '1':
+		case 'above':
+		case '>':
+			return AlertThresholdOperator.IS_ABOVE;
+		case '2':
+		case 'below':
+		case '<':
+			return AlertThresholdOperator.IS_BELOW;
+		case '3':
+		case 'equal':
+		case 'eq':
+		case '=':
+			return AlertThresholdOperator.IS_EQUAL_TO;
+		case '4':
+		case 'not_equal':
+		case 'not_eq':
+		case '!=':
+			return AlertThresholdOperator.IS_NOT_EQUAL_TO;
+		case '7':
+		case 'outside_bounds':
+			return AlertThresholdOperator.ABOVE_BELOW;
+		default:
+			return undefined;
+	}
+}
+
+// Mirrors the backend's MatchType.Normalize() in pkg/types/ruletypes/match.go.
+export function normalizeMatchType(
+	raw: string | undefined,
+): AlertThresholdMatchType | undefined {
+	switch (raw) {
+		case '1':
+		case 'at_least_once':
+			return AlertThresholdMatchType.AT_LEAST_ONCE;
+		case '2':
+		case 'all_the_times':
+			return AlertThresholdMatchType.ALL_THE_TIME;
+		case '3':
+		case 'on_average':
+		case 'avg':
+			return AlertThresholdMatchType.ON_AVERAGE;
+		case '4':
+		case 'in_total':
+		case 'sum':
+			return AlertThresholdMatchType.IN_TOTAL;
+		case '5':
+		case 'last':
+			return AlertThresholdMatchType.LAST;
+		default:
+			return undefined;
+	}
+}
+
 export function getThresholdStateFromAlertDef(
 	alertDef: PostableAlertRuleV2,
 ): AlertThresholdState {
@@ -252,25 +317,23 @@ export function getThresholdStateFromAlertDef(
 			})) || [],
 		selectedQuery: alertDef.condition.selectedQueryName || '',
 		operator:
-			(alertDef.condition.thresholds?.spec[0].op as AlertThresholdOperator) ||
-			AlertThresholdOperator.IS_ABOVE,
+			alertDef.condition.thresholds?.spec[0].op || AlertThresholdOperator.IS_ABOVE,
 		matchType:
-			(alertDef.condition.thresholds?.spec[0]
-				.matchType as AlertThresholdMatchType) ||
+			alertDef.condition.thresholds?.spec[0].matchType ||
 			AlertThresholdMatchType.AT_LEAST_ONCE,
 	};
 }
 
 export function getCreateAlertLocalStateFromAlertDef(
 	alertDef: PostableAlertRuleV2 | undefined,
-): GetCreateAlertLocalStateFromAlertDefReturn {
+): CreateAlertState {
 	if (!alertDef) {
 		return {
-			basicAlertState: INITIAL_ALERT_STATE,
-			thresholdState: INITIAL_ALERT_THRESHOLD_STATE,
-			advancedOptionsState: INITIAL_ADVANCED_OPTIONS_STATE,
-			evaluationWindowState: INITIAL_EVALUATION_WINDOW_STATE,
-			notificationSettingsState: INITIAL_NOTIFICATION_SETTINGS_STATE,
+			basic: INITIAL_ALERT_STATE,
+			threshold: INITIAL_ALERT_THRESHOLD_STATE,
+			advancedOptions: INITIAL_ADVANCED_OPTIONS_STATE,
+			evaluationWindow: INITIAL_EVALUATION_WINDOW_STATE,
+			notificationSettings: INITIAL_NOTIFICATION_SETTINGS_STATE,
 		};
 	}
 	// Basic alert state
@@ -287,15 +350,14 @@ export function getCreateAlertLocalStateFromAlertDef(
 
 	const evaluationWindowState = getEvaluationWindowStateFromAlertDef(alertDef);
 
-	const notificationSettingsState = getNotificationSettingsStateFromAlertDef(
-		alertDef,
-	);
+	const notificationSettingsState =
+		getNotificationSettingsStateFromAlertDef(alertDef);
 
 	return {
-		basicAlertState,
-		thresholdState,
-		advancedOptionsState,
-		evaluationWindowState,
-		notificationSettingsState,
+		basic: basicAlertState,
+		threshold: thresholdState,
+		advancedOptions: advancedOptionsState,
+		evaluationWindow: evaluationWindowState,
+		notificationSettings: notificationSettingsState,
 	};
 }

@@ -1,9 +1,15 @@
-/* eslint-disable sonarjs/no-duplicate-string */
-import { LoadingOutlined } from '@ant-design/icons';
-import { Button, Card, Col, Divider, Modal, Row, Spin, Typography } from 'antd';
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { UseQueryResult } from 'react-query';
+import { useInterval } from 'react-use';
+import { BarChart, Compass, Loader, ScrollText } from '@signozhq/icons';
+import { Button } from '@signozhq/ui/button';
+import { Modal, Spin } from 'antd';
 import setRetentionApi from 'api/settings/setRetention';
 import setRetentionApiV2 from 'api/settings/setRetentionV2';
 import TextToolTip from 'components/TextToolTip';
+import CustomDomainSettings from 'container/CustomDomainSettings';
+import LicenseKeyRow from 'container/GeneralSettings/LicenseKeyRow/LicenseKeyRow';
 import GeneralSettingsCloud from 'container/GeneralSettingsCloud';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
@@ -11,10 +17,6 @@ import { useNotifications } from 'hooks/useNotifications';
 import { StatusCodes } from 'http-status-codes';
 import find from 'lodash-es/find';
 import { useAppContext } from 'providers/App/App';
-import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { UseQueryResult } from 'react-query';
-import { useInterval } from 'react-use';
 import {
 	ErrorResponse,
 	ErrorResponseV2,
@@ -32,13 +34,18 @@ import {
 	PayloadPropsMetrics as GetRetentionPeriodMetricsPayload,
 	PayloadPropsTraces as GetRetentionPeriodTracesPayload,
 } from 'types/api/settings/getRetention';
+import { USER_ROLES } from 'types/roles';
 
+import LicenseRowDismissibleCallout from './LicenseKeyRow/LicenseRowDismissibleCallout/LicenseRowDismissibleCallout';
 import Retention from './Retention';
 import StatusMessage from './StatusMessage';
 import { ActionItemsContainer, ErrorText, ErrorTextContainer } from './styles';
 
+import './GeneralSettings.styles.scss';
+
 type NumberOrNull = number | null;
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 function GeneralSettings({
 	metricsTtlValuesPayload,
 	tracesTtlValuesPayload,
@@ -53,12 +60,10 @@ function GeneralSettings({
 	const [modalTraces, setModalTraces] = useState<boolean>(false);
 	const [modalLogs, setModalLogs] = useState<boolean>(false);
 
-	const [postApiLoadingMetrics, setPostApiLoadingMetrics] = useState<boolean>(
-		false,
-	);
-	const [postApiLoadingTraces, setPostApiLoadingTraces] = useState<boolean>(
-		false,
-	);
+	const [postApiLoadingMetrics, setPostApiLoadingMetrics] =
+		useState<boolean>(false);
+	const [postApiLoadingTraces, setPostApiLoadingTraces] =
+		useState<boolean>(false);
 	const [postApiLoadingLogs, setPostApiLoadingLogs] = useState<boolean>(false);
 
 	const [availableDisks] = useState<IDiskType[]>(getAvailableDiskPayload);
@@ -70,42 +75,29 @@ function GeneralSettings({
 		tracesTtlValuesPayload,
 	);
 
-	const [logsCurrentTTLValues, setLogsCurrentTTLValues] = useState(
-		logsTtlValuesPayload,
-	);
+	const [logsCurrentTTLValues, setLogsCurrentTTLValues] =
+		useState(logsTtlValuesPayload);
 
-	const { user } = useAppContext();
+	const { user, activeLicense } = useAppContext();
 
 	const [setRetentionPermission] = useComponentPermission(
 		['set_retention_period'],
 		user.role,
 	);
 
-	const [
-		metricsTotalRetentionPeriod,
-		setMetricsTotalRetentionPeriod,
-	] = useState<NumberOrNull>(null);
-	const [
-		metricsS3RetentionPeriod,
-		setMetricsS3RetentionPeriod,
-	] = useState<NumberOrNull>(null);
-	const [
-		tracesTotalRetentionPeriod,
-		setTracesTotalRetentionPeriod,
-	] = useState<NumberOrNull>(null);
-	const [
-		tracesS3RetentionPeriod,
-		setTracesS3RetentionPeriod,
-	] = useState<NumberOrNull>(null);
+	const [metricsTotalRetentionPeriod, setMetricsTotalRetentionPeriod] =
+		useState<NumberOrNull>(null);
+	const [metricsS3RetentionPeriod, setMetricsS3RetentionPeriod] =
+		useState<NumberOrNull>(null);
+	const [tracesTotalRetentionPeriod, setTracesTotalRetentionPeriod] =
+		useState<NumberOrNull>(null);
+	const [tracesS3RetentionPeriod, setTracesS3RetentionPeriod] =
+		useState<NumberOrNull>(null);
 
-	const [
-		logsTotalRetentionPeriod,
-		setLogsTotalRetentionPeriod,
-	] = useState<NumberOrNull>(null);
-	const [
-		logsS3RetentionPeriod,
-		setLogsS3RetentionPeriod,
-	] = useState<NumberOrNull>(null);
+	const [logsTotalRetentionPeriod, setLogsTotalRetentionPeriod] =
+		useState<NumberOrNull>(null);
+	const [logsS3RetentionPeriod, setLogsS3RetentionPeriod] =
+		useState<NumberOrNull>(null);
 
 	useEffect(() => {
 		if (metricsCurrentTTLValues) {
@@ -174,14 +166,26 @@ function GeneralSettings({
 	const { notifications } = useNotifications();
 
 	const onModalToggleHandler = (type: TTTLType): void => {
-		if (type === 'metrics') setModalMetrics((modal) => !modal);
-		if (type === 'traces') setModalTraces((modal) => !modal);
-		if (type === 'logs') setModalLogs((modal) => !modal);
+		if (type === 'metrics') {
+			setModalMetrics((modal) => !modal);
+		}
+		if (type === 'traces') {
+			setModalTraces((modal) => !modal);
+		}
+		if (type === 'logs') {
+			setModalLogs((modal) => !modal);
+		}
 	};
 	const onPostApiLoadingHandler = (type: TTTLType): void => {
-		if (type === 'metrics') setPostApiLoadingMetrics((modal) => !modal);
-		if (type === 'traces') setPostApiLoadingTraces((modal) => !modal);
-		if (type === 'logs') setPostApiLoadingLogs((modal) => !modal);
+		if (type === 'metrics') {
+			setPostApiLoadingMetrics((modal) => !modal);
+		}
+		if (type === 'traces') {
+			setPostApiLoadingTraces((modal) => !modal);
+		}
+		if (type === 'logs') {
+			setPostApiLoadingLogs((modal) => !modal);
+		}
 	};
 
 	const onClickSaveHandler = useCallback(
@@ -282,23 +286,26 @@ function GeneralSettings({
 				metricsTotalRetentionPeriod &&
 			metricsCurrentTTLValues.metrics_move_ttl_duration_hrs ===
 				metricsS3RetentionPeriod
-		)
+		) {
 			isMetricsSaveDisabled = true;
+		}
 
 		if (
 			tracesCurrentTTLValues.traces_ttl_duration_hrs ===
 				tracesTotalRetentionPeriod &&
 			tracesCurrentTTLValues.traces_move_ttl_duration_hrs ===
 				tracesS3RetentionPeriod
-		)
+		) {
 			isTracesSaveDisabled = true;
+		}
 
 		if (
 			logsCurrentTTLValues.default_ttl_days * 24 === logsTotalRetentionPeriod &&
 			logsCurrentTTLValues.cold_storage_ttl_days &&
 			logsCurrentTTLValues.cold_storage_ttl_days * 24 === logsS3RetentionPeriod
-		)
+		) {
 			isLogsSaveDisabled = true;
+		}
 
 		return [
 			isMetricsSaveDisabled,
@@ -395,26 +402,28 @@ function GeneralSettings({
 			if (type === 'metrics') {
 				metricsTtlValuesRefetch();
 
-				if (!hasSetTTLFailed)
+				if (!hasSetTTLFailed) {
 					// Updates the currentTTL Values in order to avoid pushing the same values.
 					setMetricsCurrentTTLValues({
 						metrics_ttl_duration_hrs: metricsTotalRetentionPeriod || -1,
 						metrics_move_ttl_duration_hrs: metricsS3RetentionPeriod || -1,
 						status: '',
 					});
+				}
 			} else if (type === 'traces') {
 				tracesTtlValuesRefetch();
 
-				if (!hasSetTTLFailed)
+				if (!hasSetTTLFailed) {
 					// Updates the currentTTL Values in order to avoid pushing the same values.
 					setTracesCurrentTTLValues({
 						traces_ttl_duration_hrs: tracesTotalRetentionPeriod || -1,
 						traces_move_ttl_duration_hrs: tracesS3RetentionPeriod || -1,
 						status: '',
 					});
+				}
 			} else if (type === 'logs') {
 				logsTtlValuesRefetch();
-				if (!hasSetTTLFailed)
+				if (!hasSetTTLFailed) {
 					// Updates the currentTTL Values in order to avoid pushing the same values.
 					setLogsCurrentTTLValues((prev) => ({
 						...prev,
@@ -425,6 +434,7 @@ function GeneralSettings({
 							? logsTotalRetentionPeriod / 24 // convert Hours to days
 							: -1,
 					}));
+				}
 			}
 		} catch (error) {
 			notifications.error({
@@ -440,10 +450,14 @@ function GeneralSettings({
 
 	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 
+	const isAdmin = user.role === USER_ROLES.ADMIN;
+	const showCustomDomainSettings = isCloudUserVal && isAdmin;
+
 	const renderConfig = [
 		{
 			name: 'Metrics',
 			type: 'metrics',
+			icon: <BarChart size={14} />,
 			retentionFields: [
 				{
 					name: t('total_retention_period'),
@@ -464,7 +478,11 @@ function GeneralSettings({
 				saveButtonText:
 					metricsTtlValuesPayload.status === 'pending' ? (
 						<span>
-							<Spin spinning size="small" indicator={<LoadingOutlined spin />} />{' '}
+							<Spin
+								spinning
+								size="small"
+								indicator={<Loader className="animate-spin" />}
+							/>{' '}
 							{t('retention_save_button.pending', { name: 'metrics' })}
 						</span>
 					) : (
@@ -486,6 +504,7 @@ function GeneralSettings({
 		{
 			name: 'Traces',
 			type: 'traces',
+			icon: <Compass size={14} />,
 			retentionFields: [
 				{
 					name: t('total_retention_period'),
@@ -506,7 +525,11 @@ function GeneralSettings({
 				saveButtonText:
 					tracesTtlValuesPayload.status === 'pending' ? (
 						<span>
-							<Spin spinning size="small" indicator={<LoadingOutlined spin />} />{' '}
+							<Spin
+								spinning
+								size="small"
+								indicator={<Loader className="animate-spin" />}
+							/>{' '}
 							{t('retention_save_button.pending', { name: 'traces' })}
 						</span>
 					) : (
@@ -526,6 +549,7 @@ function GeneralSettings({
 		{
 			name: 'Logs',
 			type: 'logs',
+			icon: <ScrollText size={14} />,
 			retentionFields: [
 				{
 					name: t('total_retention_period'),
@@ -547,7 +571,11 @@ function GeneralSettings({
 				saveButtonText:
 					logsTtlValuesPayload.status === 'pending' ? (
 						<span>
-							<Spin spinning size="small" indicator={<LoadingOutlined spin />} />{' '}
+							<Spin
+								spinning
+								size="small"
+								indicator={<Loader className="animate-spin" />}
+							/>{' '}
 							{t('retention_save_button.pending', { name: 'logs' })}
 						</span>
 					) : (
@@ -570,69 +598,66 @@ function GeneralSettings({
 		) {
 			return (
 				<Fragment key={category.name}>
-					<Col xs={22} xl={11} key={category.name} style={{ margin: '0.5rem' }}>
-						<Card style={{ height: '100%' }}>
-							<Typography.Title style={{ margin: 0 }} level={3}>
-								{category.name}
-							</Typography.Title>
-							<Divider
-								style={{
-									margin: '0.5rem 0',
-									padding: 0,
-									opacity: 0.5,
-									marginBottom: '1rem',
-								}}
-							/>
-							{category.retentionFields.map((retentionField) => (
+					<div className="retention-row">
+						<span className="retention-row-label">
+							{category.icon}
+							{category.name}
+						</span>
+						<div className="retention-row-controls">
+							{category.retentionFields.map((field) => (
 								<Retention
+									key={field.name}
 									type={category.type as TTTLType}
-									key={retentionField.name}
-									text={retentionField.name}
-									retentionValue={retentionField.value}
-									setRetentionValue={retentionField.setValue}
-									hide={!!retentionField.hide}
-									isS3Field={'isS3Field' in retentionField && retentionField.isS3Field}
+									text={field.name}
+									retentionValue={field.value}
+									setRetentionValue={field.setValue}
+									hide={!!field.hide}
+									isS3Field={'isS3Field' in field && !!field.isS3Field}
+									compact
 								/>
 							))}
-
 							{!isCloudUserVal && (
-								<>
-									<ActionItemsContainer>
-										<Button
-											type="primary"
-											onClick={category.save.modalOpen}
-											disabled={category.save.isDisabled}
-										>
-											{category.save.saveButtonText}
-										</Button>
-										{category.statusComponent}
-									</ActionItemsContainer>
-									<Modal
-										title={t('retention_confirmation')}
-										focusTriggerAfterClose
-										forceRender
-										destroyOnClose
-										closable
-										onCancel={(): void =>
-											onModalToggleHandler(category.name.toLowerCase() as TTTLType)
-										}
-										onOk={(): Promise<void> =>
-											onOkHandler(category.name.toLowerCase() as TTTLType)
-										}
-										centered
-										open={category.save.modal}
-										confirmLoading={category.save.apiLoading}
-									>
-										<Typography>
-											{t('retention_confirmation_description', {
-												name: category.name.toLowerCase(),
-											})}
-										</Typography>
-									</Modal>
-								</>
+								<Button
+									variant="solid"
+									size="sm"
+									color="primary"
+									onClick={category.save.modalOpen}
+									disabled={category.save.isDisabled}
+								>
+									{category.save.saveButtonText}
+								</Button>
 							)}
-						</Card>
-					</Col>
+						</div>
+					</div>
+
+					{!isCloudUserVal && (
+						<ActionItemsContainer>{category.statusComponent}</ActionItemsContainer>
+					)}
+
+					{!isCloudUserVal && (
+						<Modal
+							title={t('retention_confirmation')}
+							focusTriggerAfterClose
+							forceRender
+							destroyOnClose
+							closable
+							onCancel={(): void =>
+								onModalToggleHandler(category.name.toLowerCase() as TTTLType)
+							}
+							onOk={(): Promise<void> =>
+								onOkHandler(category.name.toLowerCase() as TTTLType)
+							}
+							centered
+							open={category.save.modal}
+							confirmLoading={category.save.apiLoading}
+						>
+							<p className="retention-modal-description">
+								{t('retention_confirmation_description', {
+									name: category.name.toLowerCase(),
+								})}
+							</p>
+						</Modal>
+					)}
 				</Fragment>
 			);
 		}
@@ -640,9 +665,37 @@ function GeneralSettings({
 	});
 
 	return (
-		<>
-			{Element}
-			<Col xs={24} md={22} xl={20} xxl={18} style={{ margin: 'auto' }}>
+		<div className="general-settings-page">
+			<div className="general-settings-header">
+				<span className="general-settings-title">Workspace</span>
+				<span className="general-settings-subtitle">
+					Manage your workspace settings.
+				</span>
+			</div>
+
+			{(showCustomDomainSettings || activeLicense?.key) && (
+				<div className="custom-domain-card">
+					{showCustomDomainSettings && <CustomDomainSettings />}
+					{showCustomDomainSettings && activeLicense?.key && (
+						<div className="custom-domain-card-divider" />
+					)}
+					{activeLicense?.key && (
+						<>
+							<LicenseKeyRow />
+							<LicenseRowDismissibleCallout />
+						</>
+					)}
+				</div>
+			)}
+
+			<div className="retention-controls-container">
+				<div className="retention-controls-header">
+					<span className="retention-controls-header-label">Retention Controls</span>
+				</div>
+				{renderConfig}
+			</div>
+
+			{(!isCloudUserVal || errorText) && (
 				<ErrorTextContainer>
 					{!isCloudUserVal && (
 						<TextToolTip
@@ -654,12 +707,10 @@ function GeneralSettings({
 					)}
 					{errorText && <ErrorText>{errorText}</ErrorText>}
 				</ErrorTextContainer>
+			)}
 
-				<Row justify="start">{renderConfig}</Row>
-
-				{isCloudUserVal && <GeneralSettingsCloud />}
-			</Col>
-		</>
+			{isCloudUserVal && <GeneralSettingsCloud />}
+		</div>
 	);
 }
 

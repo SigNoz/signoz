@@ -1,16 +1,28 @@
+import { QueryClient, QueryClientProvider } from 'react-query';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import logEvent from 'api/common/logEvent';
+import { logEventMock } from '__tests__/logEventMock';
 import { GlobalShortcuts } from 'constants/shortcuts/globalShortcuts';
 import { USER_PREFERENCES } from 'constants/userPreferences';
 import {
 	KeyboardHotkeysProvider,
 	useKeyboardHotkeys,
 } from 'hooks/hotkeys/useKeyboardHotkeys';
-import { QueryClient, QueryClientProvider } from 'react-query';
 
 // Mock dependencies
-jest.mock('api/common/logEvent', () => jest.fn());
+jest.mock('providers/cmdKProvider', () => ({
+	useCmdK: (): {
+		open: boolean;
+		setOpen: React.Dispatch<React.SetStateAction<boolean>>;
+		openCmdK: () => void;
+		closeCmdK: () => void;
+	} => ({
+		open: false,
+		setOpen: jest.fn(),
+		openCmdK: jest.fn(),
+		closeCmdK: jest.fn(),
+	}),
+}));
 
 // Mock the AppContext
 const mockUpdateUserPreferenceInContext = jest.fn();
@@ -63,7 +75,7 @@ describe('Sidebar Toggle Shortcut', () => {
 
 	describe('Global Shortcuts Constants', () => {
 		it('should have the correct shortcut key combination', () => {
-			expect(GlobalShortcuts.ToggleSidebar).toBe('b+shift');
+			expect(GlobalShortcuts.ToggleSidebar).toBe('shift+b');
 		});
 	});
 
@@ -125,7 +137,7 @@ describe('Sidebar Toggle Shortcut', () => {
 		it('should log the toggle event with correct parameters', async () => {
 			const user = userEvent.setup();
 			const mockHandleShortcut = jest.fn(() => {
-				logEvent('Global Shortcut: Sidebar Toggle', {
+				logEventMock('Global Shortcut: Sidebar Toggle', {
 					previousState: false,
 					newState: true,
 				});
@@ -141,10 +153,13 @@ describe('Sidebar Toggle Shortcut', () => {
 
 			await user.keyboard(SHIFT_B_KEYBOARD_SHORTCUT);
 
-			expect(logEvent).toHaveBeenCalledWith('Global Shortcut: Sidebar Toggle', {
-				previousState: false,
-				newState: true,
-			});
+			expect(logEventMock).toHaveBeenCalledWith(
+				'Global Shortcut: Sidebar Toggle',
+				{
+					previousState: false,
+					newState: true,
+				},
+			);
 		});
 
 		it('should update user preference in context', async () => {

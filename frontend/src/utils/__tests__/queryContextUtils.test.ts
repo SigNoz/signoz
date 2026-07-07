@@ -1,10 +1,9 @@
-/* eslint-disable */
-
 import {
 	createContext,
 	extractQueryPairs,
 	getCurrentQueryPair,
 	getCurrentValueIndexAtCursor,
+	getQueryContextAtCursor,
 } from '../queryContextUtils';
 
 describe('extractQueryPairs', () => {
@@ -12,12 +11,12 @@ describe('extractQueryPairs', () => {
 		jest.clearAllMocks();
 	});
 
-	test('should extract NOT EXISTS and NOT LIKE correctly', () => {
+	it('should extract NOT EXISTS and NOT LIKE correctly', () => {
 		const input = "active NOT EXISTS AND name NOT LIKE '%tmp%'";
 
 		const result = extractQueryPairs(input);
 
-		expect(result).toEqual([
+		expect(result).toStrictEqual([
 			{
 				key: 'active',
 				operator: 'EXISTS',
@@ -36,7 +35,7 @@ describe('extractQueryPairs', () => {
 					valueEnd: undefined,
 					valueStart: undefined,
 				},
-				isComplete: false,
+				isComplete: true,
 			},
 			{
 				key: 'name',
@@ -61,10 +60,62 @@ describe('extractQueryPairs', () => {
 		]);
 	});
 
-	test('should extract IN with numeric list inside parentheses', () => {
+	it('should test for filter expression with freeText', () => {
+		const input = "disconnected deployment.env not in ['mq-kafka']";
+		const result = extractQueryPairs(input);
+		expect(result).toStrictEqual([
+			{
+				key: 'disconnected',
+				operator: '',
+				valueList: [],
+				valuesPosition: [],
+				hasNegation: false,
+				isMultiValue: false,
+				value: undefined,
+				position: {
+					keyStart: 0,
+					keyEnd: 11,
+					operatorStart: 0,
+					operatorEnd: 0,
+					negationStart: 0,
+					negationEnd: 0,
+					valueStart: undefined,
+					valueEnd: undefined,
+				},
+				isComplete: false,
+			},
+			{
+				key: 'deployment.env',
+				operator: 'in',
+				value: "['mq-kafka']",
+				valueList: ["'mq-kafka'"],
+				valuesPosition: [
+					{
+						start: 36,
+						end: 45,
+					},
+				],
+				hasNegation: true,
+				isMultiValue: true,
+				position: {
+					keyStart: 13,
+					keyEnd: 26,
+					operatorStart: 32,
+					operatorEnd: 33,
+					valueStart: 35,
+					valueEnd: 46,
+					negationStart: 28,
+					negationEnd: 30,
+				},
+				isComplete: true,
+			},
+		]);
+	});
+
+	it('should extract IN with numeric list inside parentheses', () => {
 		const input = 'id IN (1, 2, 3)';
 		const result = extractQueryPairs(input);
-		expect(result).toEqual([
+		expect(result).toStrictEqual([
 			expect.objectContaining({
 				key: 'id',
 				operator: 'IN',
@@ -81,10 +132,10 @@ describe('extractQueryPairs', () => {
 		]);
 	});
 
-	test('should handle extra whitespace and separators in IN lists', () => {
+	it('should handle extra whitespace and separators in IN lists', () => {
 		const input = "label IN [ 'a' ,  'b' ,  'c' ]";
 		const result = extractQueryPairs(input);
-		expect(result).toEqual([
+		expect(result).toStrictEqual([
 			expect.objectContaining({
 				key: 'label',
 				operator: 'IN',
@@ -101,10 +152,10 @@ describe('extractQueryPairs', () => {
 		]);
 	});
 
-	test('should extract correct query pairs when the query has space at the start of the value', () => {
+	it('should extract correct query pairs when the query has space at the start of the value', () => {
 		const input = "  label IN [ 'a' ,  'b' ,  'c' ]";
 		const result = extractQueryPairs(input);
-		expect(result).toEqual([
+		expect(result).toStrictEqual([
 			expect.objectContaining({
 				key: 'label',
 				operator: 'IN',
@@ -121,10 +172,10 @@ describe('extractQueryPairs', () => {
 		]);
 	});
 
-	test('should return incomplete pair when value is missing', () => {
+	it('should return incomplete pair when value is missing', () => {
 		const input = 'a =';
 		const result = extractQueryPairs(input);
-		expect(result).toEqual([
+		expect(result).toStrictEqual([
 			expect.objectContaining({
 				key: 'a',
 				operator: '=',
@@ -134,10 +185,10 @@ describe('extractQueryPairs', () => {
 		]);
 	});
 
-	test('should parse pairs within grouping parentheses with conjunctions', () => {
+	it('should parse pairs within grouping parentheses with conjunctions', () => {
 		const input = "(name = 'x' AND age > 10) OR active EXISTS";
 		const result = extractQueryPairs(input);
-		expect(result).toEqual([
+		expect(result).toStrictEqual([
 			expect.objectContaining({
 				key: 'name',
 				operator: '=',
@@ -154,18 +205,18 @@ describe('extractQueryPairs', () => {
 				key: 'active',
 				operator: 'EXISTS',
 				value: undefined,
-				isComplete: false,
+				isComplete: true,
 			}),
 		]);
 	});
 
-	test('should extract query pairs from complex query with IN operator and multiple conditions', () => {
+	it('should extract query pairs from complex query with IN operator and multiple conditions', () => {
 		const input =
 			"service.name IN ['adservice', 'consumer-svc-1'] AND cloud.account.id = 'signoz-staging' code.lineno < 172";
 
 		const result = extractQueryPairs(input);
 
-		expect(result).toEqual([
+		expect(result).toStrictEqual([
 			{
 				key: 'service.name',
 				operator: 'IN',
@@ -238,12 +289,12 @@ describe('extractQueryPairs', () => {
 		]);
 	});
 
-	test('should extract query pairs from complex query with IN operator without brackets', () => {
+	it('should extract query pairs from complex query with IN operator without brackets', () => {
 		const input =
 			"service.name IN 'adservice' AND cloud.account.id = 'signoz-staging' code.lineno < 172";
 
 		const result = extractQueryPairs(input);
-		expect(result).toEqual([
+		expect(result).toStrictEqual([
 			{
 				key: 'service.name',
 				operator: 'IN',
@@ -312,7 +363,7 @@ describe('extractQueryPairs', () => {
 		]);
 	});
 
-	test('should handle recursion guard', () => {
+	it('should handle recursion guard', () => {
 		// This test verifies the recursion protection in the function
 		// We'll mock the function to simulate recursion
 
@@ -328,10 +379,27 @@ describe('extractQueryPairs', () => {
 
 		consoleSpy.mockRestore();
 	});
+
+	it('should treat lowercase exists as non-value operator', () => {
+		const input = 'body exists service.name contains "test"';
+		const result = extractQueryPairs(input);
+
+		expect(result).toHaveLength(2);
+		expect(result[0].key).toBe('body');
+		expect(result[0].operator).toBe('exists');
+		expect(result[0].value).toBeUndefined();
+		expect(result[0].valuesPosition).toStrictEqual([]);
+		expect(result[0].isComplete).toBe(true);
+		expect(result[1].key).toBe('service.name');
+		expect(result[1].operator).toBe('contains');
+		expect(result[1].value).toBe('"test"');
+		expect(result[1].valuesPosition).toStrictEqual([]);
+		expect(result[1].isComplete).toBe(true);
+	});
 });
 
 describe('createContext', () => {
-	test('should create a context object with all parameters', () => {
+	it('should create a context object with all parameters', () => {
 		const mockToken = {
 			type: 29,
 			text: 'test',
@@ -352,7 +420,7 @@ describe('createContext', () => {
 			null, // currentPair
 		);
 
-		expect(result).toEqual({
+		expect(result).toStrictEqual({
 			tokenType: 29,
 			text: 'test',
 			start: 0,
@@ -373,7 +441,7 @@ describe('createContext', () => {
 		});
 	});
 
-	test('should create a context object with minimal parameters', () => {
+	it('should create a context object with minimal parameters', () => {
 		const mockToken = {
 			type: 29,
 			text: 'test',
@@ -383,7 +451,7 @@ describe('createContext', () => {
 
 		const result = createContext(mockToken as any, false, false, false, false);
 
-		expect(result).toEqual({
+		expect(result).toStrictEqual({
 			tokenType: 29,
 			text: 'test',
 			start: 0,
@@ -406,7 +474,7 @@ describe('createContext', () => {
 });
 
 describe('getCurrentValueIndexAtCursor', () => {
-	test('should return correct value index when cursor is within a value range', () => {
+	it('should return correct value index when cursor is within a value range', () => {
 		const valuesPosition = [
 			{ start: 0, end: 10 },
 			{ start: 15, end: 25 },
@@ -418,7 +486,7 @@ describe('getCurrentValueIndexAtCursor', () => {
 		expect(result).toBe(1);
 	});
 
-	test('should return null when cursor is not within any value range', () => {
+	it('should return null when cursor is not within any value range', () => {
 		const valuesPosition = [
 			{ start: 0, end: 10 },
 			{ start: 15, end: 25 },
@@ -429,7 +497,7 @@ describe('getCurrentValueIndexAtCursor', () => {
 		expect(result).toBeNull();
 	});
 
-	test('should return correct index when cursor is at the boundary', () => {
+	it('should return correct index when cursor is at the boundary', () => {
 		const valuesPosition = [
 			{ start: 0, end: 10 },
 			{ start: 15, end: 25 },
@@ -440,7 +508,7 @@ describe('getCurrentValueIndexAtCursor', () => {
 		expect(result).toBe(0);
 	});
 
-	test('should return null for empty valuesPosition array', () => {
+	it('should return null for empty valuesPosition array', () => {
 		const result = getCurrentValueIndexAtCursor([], 5);
 
 		expect(result).toBeNull();
@@ -448,7 +516,7 @@ describe('getCurrentValueIndexAtCursor', () => {
 });
 
 describe('getCurrentQueryPair', () => {
-	test('should return the correct query pair at cursor position', () => {
+	it('should return the correct query pair at cursor position', () => {
 		const queryPairs = [
 			{
 				key: 'a',
@@ -483,10 +551,10 @@ describe('getCurrentQueryPair', () => {
 		const query = 'a = 1 AND b = 2';
 		const result = getCurrentQueryPair(queryPairs, query, 15);
 
-		expect(result).toEqual(queryPairs[1]);
+		expect(result).toStrictEqual(queryPairs[1]);
 	});
 
-	test('should return null when no pairs match cursor position', () => {
+	it('should return null when no pairs match cursor position', () => {
 		const queryPairs = [
 			{
 				key: 'a',
@@ -511,13 +579,13 @@ describe('getCurrentQueryPair', () => {
 		expect(result).toBeNull();
 	});
 
-	test('should return null for empty queryPairs array', () => {
+	it('should return null for empty queryPairs array', () => {
 		const result = getCurrentQueryPair([], 'test query', 5);
 
 		expect(result).toBeNull();
 	});
 
-	test('should return last pair when cursor is at the end', () => {
+	it('should return last pair when cursor is at the end', () => {
 		const queryPairs = [
 			{
 				key: 'a',
@@ -538,6 +606,45 @@ describe('getCurrentQueryPair', () => {
 		const query = 'a = 1';
 		const result = getCurrentQueryPair(queryPairs, query, 5);
 
-		expect(result).toEqual(queryPairs[0]);
+		expect(result).toStrictEqual(queryPairs[0]);
+	});
+});
+
+describe('getQueryContextAtCursor - trailing dot in key/value', () => {
+	// A token ending with "." (e.g. "service.") is lexed as FREETEXT rather than
+	// KEY, which previously collapsed the context to "nothing" and made the
+	// suggestion dropdown render empty (appearing closed). These cases lock in
+	// that a partial key/value still resolves to the correct context.
+	it('keeps key context while typing a key that ends with a dot', () => {
+		['service.', 'k8s.', 'attribute.', 'k8s.pod.'].forEach((q) => {
+			const ctx = getQueryContextAtCursor(q, q.length);
+			expect(ctx.isInKey).toBe(true);
+			expect(ctx.isInValue).toBe(false);
+			expect(ctx.isInOperator).toBe(false);
+			expect(ctx.keyToken).toBe(q);
+		});
+	});
+
+	it('treats a new key after a conjunction as key context', () => {
+		const q = 'a = b AND k8s.';
+		const ctx = getQueryContextAtCursor(q, q.length);
+		expect(ctx.isInKey).toBe(true);
+		expect(ctx.isInValue).toBe(false);
+	});
+
+	it('keeps value context while typing a value that ends with a dot', () => {
+		const q = 'service.name = foo.';
+		const ctx = getQueryContextAtCursor(q, q.length);
+		expect(ctx.isInValue).toBe(true);
+		expect(ctx.isInKey).toBe(false);
+		expect(ctx.keyToken).toBe('service.name');
+		expect(ctx.operatorToken).toBe('=');
+	});
+
+	it('still resolves a complete dotted key to key context', () => {
+		const q = 'k8s.namespace';
+		const ctx = getQueryContextAtCursor(q, q.length);
+		expect(ctx.isInKey).toBe(true);
+		expect(ctx.keyToken).toBe('k8s.namespace');
 	});
 });

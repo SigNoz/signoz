@@ -1,3 +1,5 @@
+import { ReduceOperators } from 'types/common/queryBuilder';
+
 export const tablePanelWidgetQuery = {
 	id: '727533b0-7718-4f99-a1db-a1875649325c',
 	title: '',
@@ -56,7 +58,7 @@ export const tablePanelWidgetQuery = {
 						},
 					],
 					legend: 'latency-per-service',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 				},
 			],
 			queryFormulas: [],
@@ -245,7 +247,7 @@ export const tablePanelQueryResponse = {
 							},
 						],
 						legend: '',
-						reduceTo: 'avg',
+						reduceTo: ReduceOperators.AVG,
 					},
 				},
 			},

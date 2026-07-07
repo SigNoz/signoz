@@ -58,7 +58,7 @@ func (store *store) Create(ctx context.Context, funnel *traceFunnels.StorableFun
 	return nil
 }
 
-// Get retrieves a funnel by ID
+// Get retrieves a funnel by ID.
 func (store *store) Get(ctx context.Context, uuid valuer.UUID, orgID valuer.UUID) (*traceFunnels.StorableFunnel, error) {
 	funnel := &traceFunnels.StorableFunnel{}
 	err := store.
@@ -75,7 +75,7 @@ func (store *store) Get(ctx context.Context, uuid valuer.UUID, orgID valuer.UUID
 	return funnel, nil
 }
 
-// Update updates an existing funnel
+// Update updates an existing funnel.
 func (store *store) Update(ctx context.Context, funnel *traceFunnels.StorableFunnel) error {
 	tx, err := store.sqlstore.BunDB().BeginTx(ctx, nil)
 	if err != nil {
@@ -119,7 +119,7 @@ func (store *store) Update(ctx context.Context, funnel *traceFunnels.StorableFun
 	return nil
 }
 
-// List retrieves all funnels for a given organization
+// List retrieves all funnels for a given organization.
 func (store *store) List(ctx context.Context, orgID valuer.UUID) ([]*traceFunnels.StorableFunnel, error) {
 	var funnels []*traceFunnels.StorableFunnel
 	err := store.
@@ -136,7 +136,7 @@ func (store *store) List(ctx context.Context, orgID valuer.UUID) ([]*traceFunnel
 	return funnels, nil
 }
 
-// Delete removes a funnel by ID
+// Delete removes a funnel by ID.
 func (store *store) Delete(ctx context.Context, funnelID valuer.UUID, orgID valuer.UUID) error {
 	_, err := store.
 		sqlstore.

@@ -1,11 +1,12 @@
-import { Button, Divider, Form, FormInstance, Modal } from 'antd';
-import { useAppContext } from 'providers/App/App';
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Button } from '@signozhq/ui/button';
+import { Form, FormInstance, Modal } from 'antd';
+import { useAppContext } from 'providers/App/App';
 import { ActionMode, ActionType, PipelineData } from 'types/api/pipeline/def';
 import { v4 } from 'uuid';
 
-import { ModalButtonWrapper, ModalTitle } from '../styles';
+import { ModalButtonWrapper } from '../styles';
 import { getEditedDataSource, getRecordIndex } from '../utils';
 import { renderPipelineForm } from './utils';
 
@@ -60,7 +61,9 @@ function AddNewPipeline({
 		}
 		if (isAdd) {
 			setCurrPipelineData((prevState) => {
-				if (prevState) return [...prevState, newPipeLineData];
+				if (prevState) {
+					return [...prevState, newPipeLineData];
+				}
 				return [newPipeLineData];
 			});
 		}
@@ -88,34 +91,39 @@ function AddNewPipeline({
 
 	return (
 		<Modal
-			title={<ModalTitle level={4}>{modalTitle}</ModalTitle>}
+			title={modalTitle}
 			centered
 			open={isOpen}
 			width={800}
 			footer={null}
 			onCancel={onCancelModalHandler}
 		>
-			<Divider plain />
 			<Form
 				name="add-new-pipeline"
 				layout="vertical"
 				onFinish={onFinish}
 				autoComplete="off"
 				form={form}
+				className="add-new-pipeline-form"
 			>
 				{renderPipelineForm()}
-				<Divider plain />
+
 				<Form.Item>
 					<ModalButtonWrapper>
 						<Button
 							key="submit"
-							type="primary"
-							htmlType="submit"
+							variant="solid"
+							color="primary"
 							onClick={onOkModalHandler}
 						>
 							{isEdit ? t('update') : t('create')}
 						</Button>
-						<Button key="cancel" onClick={onCancelModalHandler}>
+						<Button
+							key="cancel"
+							variant="solid"
+							color="secondary"
+							onClick={onCancelModalHandler}
+						>
 							{t('cancel')}
 						</Button>
 					</ModalButtonWrapper>

@@ -87,14 +87,14 @@ func (batcher *Batcher) Add(ctx context.Context, alerts ...*alertmanagertypes.Po
 	// batch could be.
 	if d := len(alerts) - batcher.config.Capacity; d > 0 {
 		alerts = alerts[d:]
-		batcher.logger.WarnContext(ctx, "alert batch larger than queue capacity, dropping alerts", "num_dropped", d, "capacity", batcher.config.Capacity)
+		batcher.logger.WarnContext(ctx, "alert batch larger than queue capacity, dropping alerts", slog.Int("num_dropped", d), slog.Int("capacity", batcher.config.Capacity))
 	}
 
 	// If the queue is full, remove the oldest alerts in favor
 	// of newer ones.
 	if d := (len(batcher.queue) + len(alerts)) - batcher.config.Capacity; d > 0 {
 		batcher.queue = batcher.queue[d:]
-		batcher.logger.WarnContext(ctx, "alert batch queue full, dropping alerts", "num_dropped", d)
+		batcher.logger.WarnContext(ctx, "alert batch queue full, dropping alerts", slog.Int("num_dropped", d))
 	}
 
 	batcher.queue = append(batcher.queue, alerts...)

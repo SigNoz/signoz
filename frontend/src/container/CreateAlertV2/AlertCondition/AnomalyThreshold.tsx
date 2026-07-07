@@ -1,7 +1,8 @@
-import { Select, Typography } from 'antd';
+import { useMemo } from 'react';
+import { Select } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useAppContext } from 'providers/App/App';
-import { useMemo } from 'react';
 
 import { useCreateAlertState } from '../context';
 import {
@@ -11,6 +12,11 @@ import {
 	ANOMALY_THRESHOLD_OPERATOR_OPTIONS,
 	ANOMALY_TIME_DURATION_OPTIONS,
 } from '../context/constants';
+import {
+	AlertThresholdMatchType,
+	AlertThresholdOperator,
+} from '../context/types';
+import { normalizeMatchType, normalizeOperator } from '../utils';
 import { AnomalyAndThresholdProps } from './types';
 import {
 	getQueryNames,
@@ -115,7 +121,10 @@ function AnomalyThreshold({
 						deviations
 					</Typography.Text>
 					<Select
-						value={thresholdState.operator}
+						value={
+							(normalizeOperator(thresholdState.operator) ??
+								thresholdState.operator) as AlertThresholdOperator
+						}
 						data-testid="operator-select"
 						onChange={(value): void => {
 							setThresholdState({
@@ -132,7 +141,10 @@ function AnomalyThreshold({
 						the predicted data
 					</Typography.Text>
 					<Select
-						value={thresholdState.matchType}
+						value={
+							(normalizeMatchType(thresholdState.matchType) ??
+								thresholdState.matchType) as AlertThresholdMatchType
+						}
 						data-testid="match-type-select"
 						onChange={(value): void => {
 							setThresholdState({

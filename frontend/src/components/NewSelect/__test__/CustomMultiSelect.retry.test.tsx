@@ -1,3 +1,4 @@
+import { VirtuosoMockContext } from 'react-virtuoso';
 import {
 	fireEvent,
 	render,
@@ -5,7 +6,6 @@ import {
 	screen,
 	waitFor,
 } from '@testing-library/react';
-import { VirtuosoMockContext } from 'react-virtuoso';
 
 import CustomMultiSelect from '../CustomMultiSelect';
 
@@ -30,7 +30,7 @@ const mockOptions = [
 ];
 
 // CSS selector for retry button
-const RETRY_BUTTON_SELECTOR = '.navigation-icons .anticon-reload';
+const RETRY_BUTTON_SELECTOR = '[data-testid="retry-button"]';
 
 describe('CustomMultiSelect - Retry Functionality', () => {
 	beforeEach(() => {

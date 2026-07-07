@@ -1,6 +1,8 @@
-import './EmptyFunnelResults.styles.scss';
-
 import LearnMore from 'components/LearnMore/LearnMore';
+
+import emptyFunnelIconUrl from '@/assets/Icons/empty-funnel-icon.svg';
+
+import './EmptyFunnelResults.styles.scss';
 
 function EmptyFunnelResults({
 	title,
@@ -13,7 +15,7 @@ function EmptyFunnelResults({
 		<div className="funnel-results funnel-results--empty">
 			<div className="empty-funnel-results">
 				<div className="empty-funnel-results__icon">
-					<img src="/Icons/empty-funnel-icon.svg" alt="Empty funnel results" />
+					<img src={emptyFunnelIconUrl} alt="Empty funnel results" />
 				</div>
 				<div className="empty-funnel-results__title">{title}</div>
 				<div className="empty-funnel-results__description">{description}</div>

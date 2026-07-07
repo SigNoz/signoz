@@ -7,7 +7,6 @@ import (
 )
 
 func TestQueryToKeys(t *testing.T) {
-
 	testCases := []struct {
 		query        string
 		expectedKeys []telemetrytypes.FieldKeySelector
@@ -66,9 +65,9 @@ func TestQueryToKeys(t *testing.T) {
 			query: `body.user_ids[*] = 123`,
 			expectedKeys: []telemetrytypes.FieldKeySelector{
 				{
-					Name:          "body.user_ids[*]",
+					Name:          "user_ids[*]",
 					Signal:        telemetrytypes.SignalUnspecified,
-					FieldContext:  telemetrytypes.FieldContextUnspecified,
+					FieldContext:  telemetrytypes.FieldContextBody,
 					FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
 				},
 			},

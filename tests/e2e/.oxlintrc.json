@@ -1,0 +1,45 @@
+{
+	"$schema": "./node_modules/oxlint/configuration_schema.json",
+	"jsPlugins": ["eslint-plugin-playwright"],
+	"plugins": ["eslint", "typescript", "unicorn", "import", "promise"],
+	"categories": {
+		"correctness": "warn"
+	},
+	"env": {
+		"builtin": true,
+		"es2022": true,
+		"node": true
+	},
+	"options": {
+		"typeAware": true,
+		"typeCheck": false
+	},
+	"rules": {
+		"prefer-const": "error",
+		"no-var": "error",
+		"no-console": ["warn", { "allow": ["warn", "error"] }],
+		"typescript/no-unused-vars": "error",
+		"typescript/no-explicit-any": "warn",
+		"playwright/expect-expect": "error",
+		"playwright/no-conditional-in-test": "error",
+		"playwright/no-page-pause": "error",
+		"playwright/no-wait-for-timeout": "warn",
+		"playwright/prefer-web-first-assertions": "error"
+	},
+	"overrides": [
+		{
+			"files": ["*.config.{js,ts}", "playwright.config.ts"],
+			"rules": {
+				"no-console": "off",
+				"typescript/no-explicit-any": "off"
+			}
+		},
+		{
+			"files": ["**/*.spec.ts", "**/*.test.ts"],
+			"rules": {
+				"typescript/no-explicit-any": "off"
+			}
+		}
+	],
+	"ignorePatterns": ["node_modules", "artifacts", "playwright-report"]
+}

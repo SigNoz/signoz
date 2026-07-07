@@ -1,9 +1,9 @@
+import { ReactNode } from 'react';
+import type { TableColumnsType as ColumnsType } from 'antd';
 import { TableProps } from 'antd';
-import { ColumnsType } from 'antd/es/table';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { DownloadOptions } from 'container/Download/Download.types';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
-import { ReactNode } from 'react';
 import { ContextLinksData } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryRangeRequestV5 } from 'types/api/v5/queryRange';
@@ -24,6 +24,8 @@ export type QueryTableProps = Omit<
 	sticky?: TableProps<RowData>['sticky'];
 	searchTerm?: string;
 	widgetId?: string;
+	columnWidths?: Record<string, number>;
+	onColumnWidthsChange?: (widths: Record<string, number>) => void;
 	enableDrillDown?: boolean;
 	contextLinks?: ContextLinksData;
 	panelType?: PANEL_TYPES;

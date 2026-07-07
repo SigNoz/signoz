@@ -6,17 +6,16 @@ import { AlertTypes } from 'types/api/alerts/alertTypes';
 
 import { ALERT_TYPE_TO_TITLE, ALERT_TYPE_URL_MAP } from './constants';
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useLocation: (): { pathname: string } => ({
-		pathname: `${process.env.FRONTEND_API_ENDPOINT}${ROUTES.ALERTS_NEW}`,
-	}),
-}));
-
-jest.mock('hooks/useSafeNavigate', () => ({
-	useSafeNavigate: (): any => ({
-		safeNavigate: jest.fn(),
-	}),
+jest.mock('react-router-dom-v5-compat', () => ({
+	...jest.requireActual('react-router-dom-v5-compat'),
+	useNavigationType: jest.fn(() => 'PUSH'),
+	useLocation: jest.fn(() => ({
+		pathname: '/alerts/new',
+		search: '',
+		hash: '',
+		state: null,
+	})),
+	useSearchParams: jest.fn(() => [new URLSearchParams(), jest.fn()]),
 }));
 
 jest
@@ -117,18 +116,20 @@ describe('Alert rule documentation redirection', () => {
 
 		expect(mockWindowOpen).toHaveBeenCalledTimes(alertTypeCount);
 	});
+});
 
+describe('Create alert page redirection', () => {
 	Object.values(AlertTypes)
 		.filter((type) => type !== AlertTypes.ANOMALY_BASED_ALERT)
 		.forEach((alertType) => {
 			it(`should redirect to create alert page for ${alertType} and "Check an example alert" should redirect to the correct documentation`, () => {
-				const { getByTestId, getByRole } = renderResult;
-
-				const alertTypeLink = getByTestId(`alert-type-card-${alertType}`);
-
-				act(() => {
-					fireEvent.click(alertTypeLink);
-				});
+				const { getByRole } = render(
+					<CreateAlertPage />,
+					{},
+					{
+						initialRoute: `${ROUTES.ALERTS_NEW}?alertType=${alertType}&showClassicCreateAlertsPage=true`,
+					},
+				);
 
 				act(() => {
 					fireEvent.click(

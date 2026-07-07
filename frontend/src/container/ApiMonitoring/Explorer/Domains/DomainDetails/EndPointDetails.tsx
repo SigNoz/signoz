@@ -1,3 +1,5 @@
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useQueries } from 'react-query';
 import { ENTITY_VERSION_V4, ENTITY_VERSION_V5 } from 'constants/app';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
@@ -13,10 +15,8 @@ import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSea
 import {
 	CustomTimeType,
 	Time,
-} from 'container/TopNav/DateTimeSelectionV2/config';
+} from 'container/TopNav/DateTimeSelectionV2/types';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useQueries } from 'react-query';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
@@ -33,7 +33,7 @@ import { SPAN_ATTRIBUTES } from './constants';
 
 const httpUrlKey = {
 	dataType: DataTypes.String,
-	key: SPAN_ATTRIBUTES.URL_PATH,
+	key: SPAN_ATTRIBUTES.HTTP_URL,
 	type: 'tag',
 };
 
@@ -93,7 +93,7 @@ function EndPointDetails({
 				return currentFilters; // No change needed, prevents loop
 			}
 
-			// Rebuild filters: Keep non-http.url filters and add/update http.url filter based on prop
+			// Rebuild filters: Keep non-http_url filters and add/update http_url filter based on prop
 			const otherFilters = currentFilters?.items?.filter(
 				(item) => item.key?.key !== httpUrlKey.key,
 			);
@@ -125,7 +125,7 @@ function EndPointDetails({
 		(newFilters: IBuilderQuery['filters']): void => {
 			// 1. Update local filters state immediately
 			setFilters(newFilters);
-			// Filter out http.url filter before saving to params
+			// Filter out http_url filter before saving to params
 			const filteredNewFilters = {
 				op: 'AND',
 				items:
@@ -299,7 +299,6 @@ function EndPointDetails({
 					endPointStatusCodeLatencyBarChartsDataQuery
 				}
 				domainName={domainName}
-				endPointName={endPointName}
 				filters={filters}
 				timeRange={timeRange}
 				onDragSelect={onDragSelect}

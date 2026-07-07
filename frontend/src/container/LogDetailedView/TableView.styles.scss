@@ -1,6 +1,6 @@
 .attribute-table-container {
 	.ant-table {
-		background: var(--bg-ink-400);
+		background: var(--l2-background);
 
 		.ant-table-row:hover {
 			.ant-table-cell {
@@ -18,7 +18,8 @@
 		}
 
 		.ant-table-cell {
-			border: 1px solid var(--bg-slate-500);
+			border: 1px solid var(--l1-border);
+			background: var(--l2-background);
 		}
 
 		.attribute-name {
@@ -47,14 +48,18 @@
 					border: none;
 
 					&.pinned svg {
-						fill: var(--bg-robin-500);
+						fill: var(--accent-primary);
 					}
 				}
 			}
 		}
 
 		.value-field-container {
-			background: rgba(22, 25, 34, 0.4);
+			background: var(--l2-background);
+
+			&.attribute-pin {
+				background: var(--l2-background);
+			}
 
 			.value-field {
 				font-family: 'Geist Mono';
@@ -75,37 +80,11 @@
 					border: none;
 					box-shadow: none;
 					border-radius: 2px;
-					background: var(--bg-slate-400);
+					background: var(--l3-background);
 					padding: 2px 3px;
 					gap: 3px;
 					height: 18px;
 					width: 20px;
-				}
-			}
-		}
-	}
-}
-
-.lightMode {
-	.attribute-table-container {
-		.ant-table {
-			background: var(--bg-vanilla-100);
-		}
-
-		.ant-table-cell {
-			border: 1px solid var(--bg-vanilla-200);
-		}
-
-		.value-field-container {
-			background: var(--bg-vanilla-300);
-
-			&.attribute-pin {
-				background: var(--bg-vanilla-100);
-			}
-
-			.action-btn {
-				.filter-btn {
-					background: var(--bg-vanilla-300);
 				}
 			}
 		}

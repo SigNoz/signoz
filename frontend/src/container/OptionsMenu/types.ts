@@ -20,8 +20,10 @@ export interface OptionsQuery {
 	version?: number;
 }
 
-export interface InitialOptions
-	extends Omit<Partial<OptionsQuery>, 'selectColumns'> {
+export interface InitialOptions extends Omit<
+	Partial<OptionsQuery>,
+	'selectColumns'
+> {
 	selectColumns?: string[];
 }
 
@@ -38,5 +40,10 @@ export type OptionsMenuConfig = {
 		isFetching: boolean;
 		value: TelemetryFieldKey[];
 		onRemove: (key: string) => void;
+		onReorder: (orderedIds: string[]) => void;
+	};
+	fieldsSelector?: {
+		value: TelemetryFieldKey[];
+		onFieldsChange: (next: TelemetryFieldKey[]) => void;
 	};
 };

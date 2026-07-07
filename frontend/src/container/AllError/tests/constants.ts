@@ -56,7 +56,9 @@ export const extractCompositeQueryObject = (
 		const urlObj = new URL(`http://dummy-base${url}`); // Add dummy base to parse relative URL
 		const encodedParam = urlObj.searchParams.get('compositeQuery');
 
-		if (!encodedParam) return null;
+		if (!encodedParam) {
+			return null;
+		}
 
 		// Decode twice
 		const firstDecode = decodeURIComponent(encodedParam);

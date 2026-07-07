@@ -1,8 +1,7 @@
-/* eslint-disable sonarjs/cognitive-complexity */
-/* eslint-disable no-empty */
-import { TelemetryFieldKey } from 'api/v5/v5';
-import { has } from 'lodash-es';
 import { useEffect, useState } from 'react';
+import { TelemetryFieldKey } from 'api/v5/v5';
+import { ensureLogsRequiredColumns } from 'container/OptionsMenu/constants';
+import { has } from 'lodash-es';
 import { DataSource } from 'types/common/queryBuilder';
 
 import logsLoaderConfig from '../configs/logsLoaderConfig';
@@ -53,7 +52,11 @@ function logsPreferencesLoader(): {
 	columns: TelemetryFieldKey[];
 	formatting: FormattingOptions;
 } {
-	return preferencesLoader(logsLoaderConfig);
+	const result = preferencesLoader<{
+		columns: TelemetryFieldKey[];
+		formatting: FormattingOptions;
+	}>(logsLoaderConfig);
+	return { ...result, columns: ensureLogsRequiredColumns(result.columns) };
 }
 
 function tracesPreferencesLoader(): {

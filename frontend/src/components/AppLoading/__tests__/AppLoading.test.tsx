@@ -9,7 +9,7 @@ jest.mock('../../../api/browser/localstorage/get', () => ({
 }));
 
 // Access the mocked function
-const mockGet = (getLocal as unknown) as jest.Mock;
+const mockGet = getLocal as unknown as jest.Mock;
 
 describe('AppLoading', () => {
 	const SIGNOZ_TEXT = 'SigNoz';
@@ -47,7 +47,7 @@ describe('AppLoading', () => {
 		// Check for brand logo
 		const logo = screen.getByAltText(SIGNOZ_TEXT);
 		expect(logo).toBeInTheDocument();
-		expect(logo).toHaveAttribute('src', '/Logos/signoz-brand-logo.svg');
+		expect(logo).toHaveAttribute('src', 'test-file-stub');
 
 		// Check for brand title
 		const title = screen.getByText(SIGNOZ_TEXT);

@@ -1,9 +1,15 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 
-import './ClientSideQBSearch.styles.scss';
-
+import {
+	KeyboardEvent,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { Select, Tag, Tooltip } from 'antd';
+import { Select, Tooltip } from 'antd';
 import {
 	OPERATORS,
 	QUERY_BUILDER_OPERATORS_BY_TYPES,
@@ -31,16 +37,8 @@ import { validationMapper } from 'hooks/queryBuilder/useIsValidTag';
 import { operatorTypeMapper } from 'hooks/queryBuilder/useOperatorType';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { isArray, isEmpty, isEqual, isObject } from 'lodash-es';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp } from '@signozhq/icons';
 import type { BaseSelectRef } from 'rc-select';
-import {
-	KeyboardEvent,
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
 import {
 	BaseAutocompleteData,
 	DataTypes,
@@ -51,6 +49,9 @@ import {
 } from 'types/api/queryBuilder/queryBuilderData';
 import { popupContainer } from 'utils/selectPopupContainer';
 import { v4 as uuid } from 'uuid';
+
+import './ClientSideQBSearch.styles.scss';
+import { Badge } from '@signozhq/ui/badge';
 
 export interface AttributeKey {
 	key: string;
@@ -388,7 +389,7 @@ function ClientSideQBSearch(
 						({
 							label: key.key,
 							value: key,
-						} as Option),
+						}) as Option,
 				) || [],
 			);
 		}
@@ -440,9 +441,12 @@ function ClientSideQBSearch(
 			const values: Array<string | number | boolean> = [];
 			const { tagValue } = getTagToken(searchValue);
 			if (isArray(tagValue)) {
-				if (!isEmpty(tagValue[tagValue.length - 1]))
+				if (!isEmpty(tagValue[tagValue.length - 1])) {
 					values.push(tagValue[tagValue.length - 1]);
-			} else if (!isEmpty(tagValue)) values.push(tagValue);
+				}
+			} else if (!isEmpty(tagValue)) {
+				values.push(tagValue);
+			}
 
 			const currentAttributeValues =
 				attributeValues?.stringAttributeValues ||
@@ -459,7 +463,7 @@ function ClientSideQBSearch(
 							({
 								label: checkCommaInValue(String(val)),
 								value: val,
-							} as Option),
+							}) as Option,
 					),
 				);
 			} else {
@@ -487,7 +491,7 @@ function ClientSideQBSearch(
 				Array.isArray(tag.value) &&
 				tag.value[tag.value.length - 1] === ''
 					? tag.value?.slice(0, -1)
-					: tag.value ?? '';
+					: (tag.value ?? '');
 			filterTags.items.push({
 				id: tag.id || uuid().slice(0, 8),
 				key: tag.key,
@@ -544,25 +548,30 @@ function ClientSideQBSearch(
 
 		return (
 			<span className="qb-search-bar-tokenised-tags">
-				<Tag
-					closable={!searchValue && closable}
-					onClose={onCloseHandler}
+				<Badge
+					color="vanilla"
 					className={tagDetails?.key?.type || ''}
+					closable={!searchValue && closable}
+					onClose={(e): void => {
+						e.preventDefault();
+						onCloseHandler();
+					}}
 				>
 					<Tooltip title={chipValue}>
 						<TypographyText
-							ellipsis
 							$isInNin={isInNin}
-							disabled={isDisabled}
 							$isEnabled={!!searchValue}
+							$disabled={isDisabled}
 							onClick={(): void => {
-								if (!isDisabled) tagEditHandler(value);
+								if (!isDisabled) {
+									tagEditHandler(value);
+								}
 							}}
 						>
 							{chipValue}
 						</TypographyText>
 					</Tooltip>
-				</Tag>
+				</Badge>
 			</span>
 		);
 	};

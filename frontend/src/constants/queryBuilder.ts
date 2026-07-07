@@ -1,4 +1,6 @@
 // ** Helpers
+import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
+import { defaultTraceSelectedColumns } from 'container/OptionsMenu/constants';
 import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderItemName';
 import { IAttributeValuesResponse } from 'types/api/queryBuilder/getAttributesValues';
@@ -101,7 +103,6 @@ export const metricsSpaceAggregationOperatorsByType = {
 
 export const mapOfQueryFilters: Record<DataSource, QueryAdditionalFilter[]> = {
 	metrics: [
-		// eslint-disable-next-line sonarjs/no-duplicate-string
 		{ text: 'Aggregation interval', field: 'stepInterval' },
 		{ text: 'Having', field: 'having' },
 	],
@@ -138,11 +139,11 @@ export const mapOfFormulaToFilters: Record<
 };
 
 export const REDUCE_TO_VALUES: SelectOption<ReduceOperators, string>[] = [
-	{ value: 'last', label: 'Latest of values in timeframe' },
-	{ value: 'sum', label: 'Sum of values in timeframe' },
-	{ value: 'avg', label: 'Average of values in timeframe' },
-	{ value: 'max', label: 'Max of values in timeframe' },
-	{ value: 'min', label: 'Min of values in timeframe' },
+	{ value: ReduceOperators.LAST, label: 'Latest of values in timeframe' },
+	{ value: ReduceOperators.SUM, label: 'Sum of values in timeframe' },
+	{ value: ReduceOperators.AVG, label: 'Average of values in timeframe' },
+	{ value: ReduceOperators.MAX, label: 'Max of values in timeframe' },
+	{ value: ReduceOperators.MIN, label: 'Min of values in timeframe' },
 ];
 
 export const initialHavingValues: HavingForm = {
@@ -178,9 +179,9 @@ export const initialQueryBuilderFormValues: IBuilderQuery = {
 		{
 			metricName: '',
 			temporality: '',
-			timeAggregation: MetricAggregateOperator.COUNT,
+			timeAggregation: MetricAggregateOperator.AVG,
 			spaceAggregation: MetricAggregateOperator.SUM,
-			reduceTo: 'avg',
+			reduceTo: ReduceOperators.AVG,
 		},
 	],
 	functions: [],
@@ -196,7 +197,7 @@ export const initialQueryBuilderFormValues: IBuilderQuery = {
 	orderBy: [],
 	groupBy: [],
 	legend: '',
-	reduceTo: 'avg',
+	reduceTo: ReduceOperators.AVG,
 	source: '',
 };
 
@@ -226,9 +227,9 @@ export const initialQueryBuilderFormMeterValues: IBuilderQuery = {
 		{
 			metricName: '',
 			temporality: '',
-			timeAggregation: MeterAggregateOperator.COUNT,
+			timeAggregation: MeterAggregateOperator.AVG,
 			spaceAggregation: MeterAggregateOperator.SUM,
-			reduceTo: 'avg',
+			reduceTo: ReduceOperators.AVG,
 		},
 	],
 	functions: [],
@@ -244,7 +245,7 @@ export const initialQueryBuilderFormMeterValues: IBuilderQuery = {
 	orderBy: [],
 	groupBy: [],
 	legend: '',
-	reduceTo: 'avg',
+	reduceTo: ReduceOperators.AVG,
 };
 
 export const initialQueryBuilderFormValuesMap: Record<
@@ -266,10 +267,11 @@ export const initialFormulaBuilderFormValues: IBuilderFormula = {
 	legend: '',
 };
 
-export const initialQueryBuilderFormTraceOperatorValues: IBuilderTraceOperator = {
-	...initialQueryBuilderFormTracesValues,
-	queryName: TRACE_OPERATOR_QUERY_NAME,
-};
+export const initialQueryBuilderFormTraceOperatorValues: IBuilderTraceOperator =
+	{
+		...initialQueryBuilderFormTracesValues,
+		queryName: TRACE_OPERATOR_QUERY_NAME,
+	};
 
 export const initialQueryPromQLData: IPromQLQuery = {
 	name: createNewBuilderItemName({ existNames: [], sourceNames: alphabet }),
@@ -301,6 +303,7 @@ export const initialQueryState: QueryState = {
 	builder: initialQueryBuilderData,
 	clickhouse_sql: [initialClickHouseData],
 	promql: [initialQueryPromQLData],
+	unit: '',
 };
 
 const initialQueryWithType: Query = {
@@ -348,7 +351,6 @@ export const operatorsByTypes: Record<LocalDataType, string[]> = {
 	bool: Object.values(BoolOperators),
 };
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export enum PANEL_TYPES {
 	TIME_SERIES = 'graph',
 	VALUE = 'value',
@@ -361,17 +363,40 @@ export enum PANEL_TYPES {
 	EMPTY_WIDGET = 'EMPTY_WIDGET',
 }
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export enum PANEL_GROUP_TYPES {
 	ROW = 'row',
 }
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export enum ATTRIBUTE_TYPES {
 	SUM = 'Sum',
 	GAUGE = 'Gauge',
 	HISTOGRAM = 'Histogram',
 	EXPONENTIAL_HISTOGRAM = 'ExponentialHistogram',
+}
+
+const METRIC_TYPE_TO_ATTRIBUTE_TYPE: Record<
+	MetrictypesTypeDTO,
+	ATTRIBUTE_TYPES
+> = {
+	[MetrictypesTypeDTO.sum]: ATTRIBUTE_TYPES.SUM,
+	[MetrictypesTypeDTO.gauge]: ATTRIBUTE_TYPES.GAUGE,
+	[MetrictypesTypeDTO.histogram]: ATTRIBUTE_TYPES.HISTOGRAM,
+	[MetrictypesTypeDTO.summary]: ATTRIBUTE_TYPES.GAUGE,
+	[MetrictypesTypeDTO.exponentialhistogram]:
+		ATTRIBUTE_TYPES.EXPONENTIAL_HISTOGRAM,
+};
+
+export function toAttributeType(
+	metricType: MetrictypesTypeDTO | undefined,
+	isMonotonic?: boolean,
+): ATTRIBUTE_TYPES | '' {
+	if (!metricType) {
+		return '';
+	}
+	if (metricType === MetrictypesTypeDTO.sum && isMonotonic === false) {
+		return ATTRIBUTE_TYPES.GAUGE;
+	}
+	return METRIC_TYPE_TO_ATTRIBUTE_TYPE[metricType] || '';
 }
 
 export type IQueryBuilderState = 'search';
@@ -404,6 +429,31 @@ export const OPERATORS = {
 	NHAS: 'NHAS',
 	ILIKE: 'ILIKE',
 	NOTILIKE: 'NOT_ILIKE',
+};
+
+/**
+ * Maps short-form InfraMonitoring operators to long-form display labels.
+ * InfraMonitoring backend uses short forms (NIN), UI displays long forms (NOT_IN).
+ */
+export const INFRA_SHORT_TO_LONG_OPERATOR_MAP: Record<string, string> = {
+	NIN: 'NOT_IN',
+	NLIKE: 'NOT_LIKE',
+	NOTILIKE: 'NOT_ILIKE',
+	NREGEX: 'NOT_REGEX',
+	NEXISTS: 'NOT_EXISTS',
+	NCONTAINS: 'NOT_CONTAINS',
+};
+
+/**
+ * Maps long-form operators to short-form for InfraMonitoring API.
+ */
+export const INFRA_LONG_TO_SHORT_OPERATOR_MAP: Record<string, string> = {
+	NOT_IN: 'NIN',
+	NOT_LIKE: 'NLIKE',
+	NOT_ILIKE: 'NOTILIKE',
+	NOT_REGEX: 'NREGEX',
+	NOT_EXISTS: 'NEXISTS',
+	NOT_CONTAINS: 'NCONTAINS',
 };
 
 export const QUERY_BUILDER_OPERATORS_BY_TYPES = {
@@ -524,4 +574,50 @@ export const DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY: Record<
 	[DataTypes.ArrayString]: 'stringAttributeValues',
 	[DataTypes.ArrayBool]: 'boolAttributeValues',
 	[DataTypes.EMPTY]: 'stringAttributeValues',
+};
+
+export const listViewInitialLogQuery: Query = {
+	...initialQueriesMap.logs,
+	builder: {
+		...initialQueriesMap.logs.builder,
+		queryData: [
+			{
+				...initialQueriesMap.logs.builder.queryData[0],
+				aggregateOperator: LogsAggregatorOperator.NOOP,
+				orderBy: [{ columnName: 'timestamp', order: 'desc' }],
+				offset: 0,
+				pageSize: 100,
+			},
+		],
+	},
+};
+
+export const PANEL_TYPES_INITIAL_QUERY: Record<PANEL_TYPES, Query> = {
+	[PANEL_TYPES.TIME_SERIES]: initialQueriesMap.metrics,
+	[PANEL_TYPES.VALUE]: initialQueriesMap.metrics,
+	[PANEL_TYPES.TABLE]: initialQueriesMap.metrics,
+	[PANEL_TYPES.LIST]: listViewInitialLogQuery,
+	[PANEL_TYPES.TRACE]: initialQueriesMap.traces,
+	[PANEL_TYPES.BAR]: initialQueriesMap.metrics,
+	[PANEL_TYPES.PIE]: initialQueriesMap.metrics,
+	[PANEL_TYPES.HISTOGRAM]: initialQueriesMap.metrics,
+	[PANEL_TYPES.EMPTY_WIDGET]: initialQueriesMap.metrics,
+};
+
+export const listViewInitialTraceQuery: Query = {
+	// it should be the above commented query
+	...initialQueriesMap.traces,
+	builder: {
+		...initialQueriesMap.traces.builder,
+		queryData: [
+			{
+				...initialQueriesMap.traces.builder.queryData[0],
+				aggregateOperator: LogsAggregatorOperator.NOOP,
+				orderBy: [{ columnName: 'timestamp', order: 'desc' }],
+				offset: 0,
+				pageSize: 10,
+				selectColumns: defaultTraceSelectedColumns,
+			},
+		],
+	},
 };

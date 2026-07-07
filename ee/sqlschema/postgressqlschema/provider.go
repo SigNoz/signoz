@@ -4,10 +4,12 @@ import (
 	"context"
 	"database/sql"
 
+	"github.com/uptrace/bun"
+
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlschema"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/uptrace/bun"
 )
 
 type provider struct {
@@ -32,9 +34,9 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 		fmter:    fmter,
 		settings: settings,
 		operator: sqlschema.NewOperator(fmter, sqlschema.OperatorSupport{
-			DropConstraint:          true,
-			ColumnIfNotExistsExists: true,
-			AlterColumnSetNotNull:   true,
+			SCreateAndDropConstraint:                        true,
+			SAlterTableAddAndDropColumnIfNotExistsAndExists: true,
+			SAlterTableAlterColumnSetAndDrop:                true,
 		}),
 	}, nil
 }
@@ -72,8 +74,9 @@ WHERE
 	if err != nil {
 		return nil, nil, err
 	}
+
 	if len(columns) == 0 {
-		return nil, nil, sql.ErrNoRows
+		return nil, nil, provider.sqlstore.WrapNotFoundErrf(sql.ErrNoRows, errors.CodeNotFound, "table (%s) not found", tableName)
 	}
 
 	sqlschemaColumns := make([]*sqlschema.Column, 0)
@@ -111,7 +114,7 @@ WHERE
 
 	defer func() {
 		if err := constraintsRows.Close(); err != nil {
-			provider.settings.Logger().ErrorContext(ctx, "error closing rows", "error", err)
+			provider.settings.Logger().ErrorContext(ctx, "error closing rows", errors.Attr(err))
 		}
 	}()
 
@@ -172,7 +175,7 @@ WHERE
 
 	defer func() {
 		if err := foreignKeyConstraintsRows.Close(); err != nil {
-			provider.settings.Logger().ErrorContext(ctx, "error closing rows", "error", err)
+			provider.settings.Logger().ErrorContext(ctx, "error closing rows", errors.Attr(err))
 		}
 	}()
 
@@ -220,7 +223,9 @@ SELECT
     ci.relname AS index_name,
     i.indisunique AS unique,
     i.indisprimary AS primary,
-    a.attname AS column_name
+    a.attname AS column_name,
+    array_position(i.indkey, a.attnum) AS column_position,
+    pg_get_expr(i.indpred, i.indrelid) AS predicate
 FROM
     pg_index i
     LEFT JOIN pg_class ct ON ct.oid = i.indrelid
@@ -231,18 +236,24 @@ WHERE
     a.attnum = ANY(i.indkey)
     AND con.oid IS NULL
     AND ct.relkind = 'r'
-    AND ct.relname = ?`, string(name))
+    AND ct.relname = ?
+ORDER BY index_name, column_position`, string(name))
 	if err != nil {
-		return nil, err
+		return nil, provider.sqlstore.WrapNotFoundErrf(err, errors.CodeNotFound, "no indices for table (%s) found", name)
 	}
 
 	defer func() {
 		if err := rows.Close(); err != nil {
-			provider.settings.Logger().ErrorContext(ctx, "error closing rows", "error", err)
+			provider.settings.Logger().ErrorContext(ctx, "error closing rows", errors.Attr(err))
 		}
 	}()
 
-	uniqueIndicesMap := make(map[string]*sqlschema.UniqueIndex)
+	type indexEntry struct {
+		columns   []sqlschema.ColumnName
+		predicate *string
+	}
+
+	uniqueIndicesMap := make(map[string]*indexEntry)
 	for rows.Next() {
 		var (
 			tableName  string
@@ -250,27 +261,53 @@ WHERE
 			unique     bool
 			primary    bool
 			columnName string
+			// starts from 0 and is unused in this function, this is to ensure that the column names are in the correct order
+			columnPosition int
+			predicate      *string
 		)
 
-		if err := rows.Scan(&tableName, &indexName, &unique, &primary, &columnName); err != nil {
+		if err := rows.Scan(&tableName, &indexName, &unique, &primary, &columnName, &columnPosition, &predicate); err != nil {
 			return nil, err
 		}
 
 		if unique {
 			if _, ok := uniqueIndicesMap[indexName]; !ok {
-				uniqueIndicesMap[indexName] = &sqlschema.UniqueIndex{
-					TableName:   name,
-					ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName(columnName)},
+				uniqueIndicesMap[indexName] = &indexEntry{
+					columns:   []sqlschema.ColumnName{sqlschema.ColumnName(columnName)},
+					predicate: predicate,
 				}
 			} else {
-				uniqueIndicesMap[indexName].ColumnNames = append(uniqueIndicesMap[indexName].ColumnNames, sqlschema.ColumnName(columnName))
+				uniqueIndicesMap[indexName].columns = append(uniqueIndicesMap[indexName].columns, sqlschema.ColumnName(columnName))
 			}
 		}
 	}
 
 	indices := make([]sqlschema.Index, 0)
-	for _, index := range uniqueIndicesMap {
-		indices = append(indices, index)
+	for indexName, entry := range uniqueIndicesMap {
+		if entry.predicate != nil {
+			index := &sqlschema.PartialUniqueIndex{
+				TableName:   name,
+				ColumnNames: entry.columns,
+				Where:       *entry.predicate,
+			}
+
+			if index.Name() == indexName {
+				indices = append(indices, index)
+			} else {
+				indices = append(indices, index.Named(indexName))
+			}
+		} else {
+			index := &sqlschema.UniqueIndex{
+				TableName:   name,
+				ColumnNames: entry.columns,
+			}
+
+			if index.Name() == indexName {
+				indices = append(indices, index)
+			} else {
+				indices = append(indices, index.Named(indexName))
+			}
+		}
 	}
 
 	return indices, nil

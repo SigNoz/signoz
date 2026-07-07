@@ -1,10 +1,12 @@
 package querybuildertypesv5
 
 import (
+	"bytes"
 	"regexp"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -30,7 +32,7 @@ var (
 )
 
 const (
-	// MaxTraceOperators defines the maximum number of operators allowed in a trace expression
+	// MaxTraceOperators defines the maximum number of operators allowed in a trace expression.
 	MaxTraceOperators = 10
 )
 
@@ -69,7 +71,7 @@ type QueryBuilderTraceOperator struct {
 	ParsedExpression *TraceOperand `json:"-"`
 }
 
-// TraceOperand represents the internal parsed tree structure
+// TraceOperand represents the internal parsed tree structure.
 type TraceOperand struct {
 	// For leaf nodes - reference to a query
 	QueryRef *TraceOperatorQueryRef `json:"-"`
@@ -80,12 +82,12 @@ type TraceOperand struct {
 	Right    *TraceOperand      `json:"-"`
 }
 
-// TraceOperatorQueryRef represents a reference to another query
+// TraceOperatorQueryRef represents a reference to another query.
 type TraceOperatorQueryRef struct {
 	Name string `json:"name"`
 }
 
-// ParseExpression parses the expression string into a tree structure
+// ParseExpression parses the expression string into a tree structure.
 func (q *QueryBuilderTraceOperator) ParseExpression() error {
 	if q.Expression == "" {
 		return errors.WrapInvalidInputf(
@@ -120,7 +122,7 @@ func (q *QueryBuilderTraceOperator) ParseExpression() error {
 	return nil
 }
 
-// ValidateTraceOperator validates that all referenced queries exist and are trace queries
+// ValidateTraceOperator validates that all referenced queries exist and are trace queries.
 func (q *QueryBuilderTraceOperator) ValidateTraceOperator(queries []QueryEnvelope) error {
 	// Parse the expression - this now includes operator count validation
 	if err := q.ParseExpression(); err != nil {
@@ -222,7 +224,7 @@ func (q *QueryBuilderTraceOperator) ValidateTraceOperator(queries []QueryEnvelop
 	return nil
 }
 
-// ValidateOrderBy validates the orderBy field
+// ValidateOrderBy validates the orderBy field.
 func (q *QueryBuilderTraceOperator) ValidateOrderBy() error {
 	if len(q.Order) == 0 {
 		return nil
@@ -254,7 +256,7 @@ func (q *QueryBuilderTraceOperator) ValidateOrderBy() error {
 	return nil
 }
 
-// ValidatePagination validates pagination parameters (AIP-158 compliance)
+// ValidatePagination validates pagination parameters (AIP-158 compliance).
 func (q *QueryBuilderTraceOperator) ValidatePagination() error {
 	if q.Limit < 0 {
 		return errors.WrapInvalidInputf(
@@ -287,7 +289,7 @@ func (q *QueryBuilderTraceOperator) ValidatePagination() error {
 	return nil
 }
 
-// CollectReferencedQueries collects all query names referenced in the expression tree
+// CollectReferencedQueries collects all query names referenced in the expression tree.
 func (q *QueryBuilderTraceOperator) CollectReferencedQueries(operand *TraceOperand) []string {
 	if operand == nil {
 		return nil
@@ -316,7 +318,7 @@ func (q *QueryBuilderTraceOperator) CollectReferencedQueries(operand *TraceOpera
 	return unique
 }
 
-// Copy creates a deep copy of QueryBuilderTraceOperator
+// Copy creates a deep copy of QueryBuilderTraceOperator.
 func (q QueryBuilderTraceOperator) Copy() QueryBuilderTraceOperator {
 	// Start with a shallow copy
 	c := q
@@ -366,7 +368,46 @@ func (q QueryBuilderTraceOperator) Copy() QueryBuilderTraceOperator {
 	return c
 }
 
-// ValidateUniqueTraceOperator ensures only one trace operator exists in queries
+// UnmarshalJSON implements custom JSON unmarshaling to disallow unknown fields.
+func (q *QueryBuilderTraceOperator) UnmarshalJSON(data []byte) error {
+	// Define a type alias to avoid infinite recursion
+	type Alias QueryBuilderTraceOperator
+
+	var temp Alias
+	// Strict-decode the alias so unknown fields surface with field-name suggestions.
+	if err := binding.JSON.BindBody(bytes.NewReader(data), &temp, binding.WithDisallowUnknownFields(true), binding.WithUnknownFieldContext("query spec")); err != nil {
+		return err
+	}
+
+	// Copy the decoded values back to the original struct
+	*q = QueryBuilderTraceOperator(temp)
+
+	// Nomarlize the query after unmarshaling
+	q.Normalize()
+	return nil
+}
+
+// Normalize normalizes all the field keys in the query.
+func (q *QueryBuilderTraceOperator) Normalize() {
+
+	// normalize select fields
+	for idx := range q.SelectFields {
+		q.SelectFields[idx].Normalize()
+	}
+
+	// normalize group by fields
+	for idx := range q.GroupBy {
+		q.GroupBy[idx].Normalize()
+	}
+
+	// normalize order by fields
+	for idx := range q.Order {
+		q.Order[idx].Key.Normalize()
+	}
+
+}
+
+// ValidateUniqueTraceOperator ensures only one trace operator exists in queries.
 func ValidateUniqueTraceOperator(queries []QueryEnvelope) error {
 	traceOperatorCount := 0
 	var traceOperatorNames []string
@@ -394,7 +435,7 @@ func ValidateUniqueTraceOperator(queries []QueryEnvelope) error {
 	return nil
 }
 
-// Handles precedence: NOT (highest) > || > && > => (lowest)
+// Handles precedence: NOT (highest) > || > && > => (lowest).
 func parseTraceExpression(expr string) (*TraceOperand, int, error) {
 	expr = strings.TrimSpace(expr)
 
@@ -476,13 +517,14 @@ func parseTraceExpression(expr string) (*TraceOperand, int, error) {
 	}, 0, nil
 }
 
-// isBalancedParentheses checks if parentheses are balanced in the expression
+// isBalancedParentheses checks if parentheses are balanced in the expression.
 func isBalancedParentheses(expr string) bool {
 	depth := 0
 	for _, char := range expr {
-		if char == '(' {
+		switch char {
+		case '(':
 			depth++
-		} else if char == ')' {
+		case ')':
 			depth--
 			if depth < 0 {
 				return false
@@ -492,7 +534,7 @@ func isBalancedParentheses(expr string) bool {
 	return depth == 0
 }
 
-// findOperatorPosition finds the position of an operator, respecting parentheses
+// findOperatorPosition finds the position of an operator, respecting parentheses.
 func findOperatorPosition(expr, op string) int {
 	depth := 0
 	opLen := len(op)
@@ -502,9 +544,10 @@ func findOperatorPosition(expr, op string) int {
 		char := expr[i]
 
 		// Update depth based on parentheses (scanning right to left)
-		if char == ')' {
+		switch char {
+		case ')':
 			depth++
-		} else if char == '(' {
+		case '(':
 			depth--
 		}
 

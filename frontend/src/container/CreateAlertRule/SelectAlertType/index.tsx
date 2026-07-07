@@ -1,11 +1,15 @@
-import { Row, Tag, Typography } from 'antd';
+import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Row } from 'antd';
+import { Badge } from '@signozhq/ui/badge';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
 import { FeatureKeys } from 'constants/features';
 import { useAppContext } from 'providers/App/App';
-import { useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
+import { isModifierKeyPressed } from 'utils/app';
+import { openInNewTab } from 'utils/navigation';
 
 import { getOptionList } from './config';
 import { AlertTypeCard, SelectTypeContainer } from './styles';
@@ -25,8 +29,7 @@ function SelectAlertType({ onSelect }: SelectAlertTypeProps): JSX.Element {
 		let url = '';
 		switch (option) {
 			case AlertTypes.ANOMALY_BASED_ALERT:
-				url =
-					'https://signoz.io/docs/alerts-management/anomaly-based-alerts/?utm_source=product&utm_medium=alert-source-selection-page#examples';
+				url = 'https://signoz.io/docs/alerts-management/anomaly-based-alerts/';
 				break;
 			case AlertTypes.METRICS_BASED_ALERT:
 				url =
@@ -54,7 +57,7 @@ function SelectAlertType({ onSelect }: SelectAlertTypeProps): JSX.Element {
 			page: 'New alert data source selection page',
 		});
 
-		window.open(url, '_blank');
+		openInNewTab(url);
 	}
 	const renderOptions = useMemo(
 		() => (
@@ -63,15 +66,9 @@ function SelectAlertType({ onSelect }: SelectAlertTypeProps): JSX.Element {
 					<AlertTypeCard
 						key={option.selection}
 						title={option.title}
-						extra={
-							option.isBeta ? (
-								<Tag bordered={false} color="geekblue">
-									Beta
-								</Tag>
-							) : undefined
-						}
-						onClick={(): void => {
-							onSelect(option.selection);
+						extra={option.isBeta ? <Badge color="robin">Beta</Badge> : undefined}
+						onClick={(e): void => {
+							onSelect(option.selection, isModifierKeyPressed(e));
 						}}
 						data-testid={`alert-type-card-${option.selection}`}
 					>
@@ -108,7 +105,7 @@ function SelectAlertType({ onSelect }: SelectAlertTypeProps): JSX.Element {
 }
 
 interface SelectAlertTypeProps {
-	onSelect: (typ: AlertTypes) => void;
+	onSelect: (type: AlertTypes, newTab?: boolean) => void;
 }
 
 export default SelectAlertType;

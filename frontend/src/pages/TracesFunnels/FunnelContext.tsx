@@ -1,11 +1,24 @@
+import {
+	// eslint-disable-next-line no-restricted-imports
+	createContext,
+	Dispatch,
+	SetStateAction,
+	useCallback,
+	// eslint-disable-next-line no-restricted-imports
+	useContext,
+	useMemo,
+	useState,
+} from 'react';
+import { useQueryClient } from 'react-query';
+// eslint-disable-next-line no-restricted-imports
+import { useSelector } from 'react-redux';
 import logEvent from 'api/common/logEvent';
 import { ValidateFunnelResponse } from 'api/traceFunnels';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import { Time } from 'container/TopNav/DateTimeSelection/config';
 import {
 	CustomTimeType,
-	Time as TimeV2,
-} from 'container/TopNav/DateTimeSelectionV2/config';
+	Time,
+} from 'container/TopNav/DateTimeSelectionV2/types';
 import { normalizeSteps } from 'hooks/TracesFunnels/useFunnelConfiguration';
 import { useValidateFunnelSteps } from 'hooks/TracesFunnels/useFunnels';
 import getStartEndRangeTime from 'lib/getStartEndRangeTime';
@@ -14,17 +27,6 @@ import {
 	createInitialStepsData,
 	createSingleStepData,
 } from 'pages/TracesFunnelDetails/constants';
-import {
-	createContext,
-	Dispatch,
-	SetStateAction,
-	useCallback,
-	useContext,
-	useMemo,
-	useState,
-} from 'react';
-import { useQueryClient } from 'react-query';
-import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { FunnelData, FunnelStepData } from 'types/api/traceFunnels';
@@ -34,7 +36,7 @@ import { v4 } from 'uuid';
 interface FunnelContextType {
 	startTime: number;
 	endTime: number;
-	selectedTime: CustomTimeType | Time | TimeV2;
+	selectedTime: CustomTimeType | Time;
 	validTracesCount: number;
 	funnelId: string;
 	steps: FunnelStepData[];
@@ -104,9 +106,8 @@ export function FunnelProvider({
 	const [steps, setSteps] = useState<FunnelStepData[]>(initialSteps);
 	const [triggerSave, setTriggerSave] = useState<boolean>(false);
 	const [isUpdatingFunnel, setIsUpdatingFunnel] = useState<boolean>(false);
-	const [lastUpdatedSteps, setLastUpdatedSteps] = useState<FunnelStepData[]>(
-		initialSteps,
-	);
+	const [lastUpdatedSteps, setLastUpdatedSteps] =
+		useState<FunnelStepData[]>(initialSteps);
 
 	// Check if there are unsaved changes by comparing with initial steps from API
 	const hasUnsavedChanges = useMemo(() => {
@@ -212,7 +213,9 @@ export function FunnelProvider({
 	}
 
 	const handleRunFunnel = useCallback(async (): Promise<void> => {
-		if (validTracesCount === 0) return;
+		if (validTracesCount === 0) {
+			return;
+		}
 
 		queryClient.refetchQueries([
 			REACT_QUERY_KEY.GET_FUNNEL_OVERVIEW,

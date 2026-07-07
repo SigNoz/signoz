@@ -1,6 +1,7 @@
-import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useMemo } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
+import { useDashboardVariables } from 'hooks/dashboard/useDashboardVariables';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
@@ -38,18 +39,17 @@ interface ResolvedTextUtilsResult {
 
 function useContextVariables({
 	maxValues = 2,
+	// ! To be noted: This customVariables is not Dashboard Custom Variables
 	customVariables,
 }: UseContextVariablesProps): UseContextVariablesResult {
-	const { selectedDashboard } = useDashboard();
+	const { dashboardVariables } = useDashboardVariables();
 	const globalTime = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
 
 	// Extract dashboard variables
-	const dashboardVariables = useMemo(() => {
-		if (!selectedDashboard?.data?.variables) return [];
-
-		return Object.entries(selectedDashboard.data.variables)
+	const processedDashboardVariables = useMemo(() => {
+		return Object.entries(dashboardVariables)
 			.filter(([, value]) => value.name)
 			.map(([, value]) => {
 				let processedValue: string | number | boolean;
@@ -72,7 +72,7 @@ function useContextVariables({
 					originalValue: value.selectedValue,
 				};
 			});
-	}, [selectedDashboard]);
+	}, [dashboardVariables]);
 
 	// Extract global variables
 	const globalVariables = useMemo(
@@ -95,7 +95,9 @@ function useContextVariables({
 
 	// Extract custom variables with '_' prefix to avoid conflicts
 	const customVariablesList = useMemo(() => {
-		if (!customVariables) return [];
+		if (!customVariables) {
+			return [];
+		}
 
 		return Object.entries(customVariables).map(([name, value]) => ({
 			name: `_${name}`, // Add '_' prefix to avoid conflicts
@@ -107,8 +109,12 @@ function useContextVariables({
 
 	// Combine all variables
 	const allVariables = useMemo(
-		() => [...dashboardVariables, ...globalVariables, ...customVariablesList],
-		[dashboardVariables, globalVariables, customVariablesList],
+		() => [
+			...processedDashboardVariables,
+			...globalVariables,
+			...customVariablesList,
+		],
+		[processedDashboardVariables, globalVariables, customVariablesList],
 	);
 
 	// Create processed variables with truncation logic
@@ -147,9 +153,9 @@ function useContextVariables({
 
 	// Helper function to get variable by name
 	const getVariableByName = useMemo(
-		(): ((name: string) => ContextVariable | undefined) => (
-			name: string,
-		): ContextVariable | undefined => allVariables.find((v) => v.name === name),
+		(): ((name: string) => ContextVariable | undefined) =>
+			(name: string): ContextVariable | undefined =>
+				allVariables.find((v) => v.name === name),
 		[allVariables],
 	);
 
@@ -184,16 +190,22 @@ const extractVarName = (
 		const dotMatch = match.match(
 			new RegExp(`\\{\\{\\s*\\.(${varNamePattern})\\s*\\}\\}`),
 		);
-		if (dotMatch) return dotMatch[1].trim();
+		if (dotMatch) {
+			return dotMatch[1].trim();
+		}
 		const normalMatch = match.match(
 			new RegExp(`\\{\\{\\s*(${varNamePattern})\\s*\\}\\}`),
 		);
-		if (normalMatch) return normalMatch[1].trim();
+		if (normalMatch) {
+			return normalMatch[1].trim();
+		}
 	} else if (match.startsWith('[[')) {
 		const bracketMatch = match.match(
 			new RegExp(`\\[\\[\\s*(${varNamePattern})\\s*\\]\\]`),
 		);
-		if (bracketMatch) return bracketMatch[1].trim();
+		if (bracketMatch) {
+			return bracketMatch[1].trim();
+		}
 	} else if (match.startsWith(matcher)) {
 		// For $ variables, we always want to strip the prefix
 		// unless the full match exists in processedVariables

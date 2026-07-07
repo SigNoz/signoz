@@ -1,9 +1,9 @@
+import { useMemo } from 'react';
 import {
 	OPERATORS,
 	QUERY_BUILDER_OPERATORS_BY_TYPES,
 } from 'constants/queryBuilder';
 import { getRemovePrefixFromKey } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
-import { useMemo } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 type IOperators =
@@ -21,12 +21,11 @@ export const useOperators = (
 		const currentKey = keys?.find((el) => el.key === getRemovePrefixFromKey(key));
 		const strippedKey = key.split(' ')[0];
 
-		// eslint-disable-next-line no-nested-ternary
 		return currentKey?.dataType
 			? QUERY_BUILDER_OPERATORS_BY_TYPES[
 					currentKey.dataType as keyof typeof QUERY_BUILDER_OPERATORS_BY_TYPES
-			  ]
+				]
 			: strippedKey.endsWith('[*]') && strippedKey.startsWith('body.')
-			? [OPERATORS.HAS, OPERATORS.NHAS]
-			: QUERY_BUILDER_OPERATORS_BY_TYPES.universal;
+				? [OPERATORS.HAS, OPERATORS.NHAS]
+				: QUERY_BUILDER_OPERATORS_BY_TYPES.universal;
 	}, [keys, key]);

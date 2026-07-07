@@ -1,3 +1,4 @@
+import { RuletypesAlertTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -8,3 +9,17 @@ export const ALERTS_DATA_SOURCE_MAP: Record<AlertTypes, DataSource> = {
 	[AlertTypes.TRACES_BASED_ALERT]: DataSource.TRACES,
 	[AlertTypes.EXCEPTIONS_BASED_ALERT]: DataSource.TRACES,
 };
+
+export function dataSourceForAlertType(
+	alertType: RuletypesAlertTypeDTO | undefined,
+): DataSource {
+	switch (alertType) {
+		case RuletypesAlertTypeDTO.LOGS_BASED_ALERT:
+			return DataSource.LOGS;
+		case RuletypesAlertTypeDTO.TRACES_BASED_ALERT:
+		case RuletypesAlertTypeDTO.EXCEPTIONS_BASED_ALERT:
+			return DataSource.TRACES;
+		default:
+			return DataSource.METRICS;
+	}
+}

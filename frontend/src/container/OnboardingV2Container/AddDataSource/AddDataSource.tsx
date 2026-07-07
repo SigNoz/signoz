@@ -1,6 +1,5 @@
-import '../OnboardingV2.styles.scss';
-
-import { SearchOutlined } from '@ant-design/icons';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { ArrowRight, Check, Goal, Search, UserPlus, X } from '@signozhq/icons';
 import {
 	Button,
 	Flex,
@@ -10,21 +9,30 @@ import {
 	Skeleton,
 	Space,
 	Steps,
-	Typography,
 } from 'antd';
+import { Button as SignozButton } from '@signozhq/ui/button';
+import { toast } from '@signozhq/ui/sonner';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
+import { DOCS_BASE_URL } from 'constants/app';
+import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
+import { useGetGlobalConfig } from 'api/generated/services/global';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
-import history from 'lib/history';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import useUrlQuery from 'hooks/useUrlQuery';
 import { isEmpty } from 'lodash-es';
-import { CheckIcon, Goal, UserPlus, X } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { isModifierKeyPressed } from 'utils/app';
+
+import signozBrandLogoUrl from '@/assets/Logos/signoz-brand-logo.svg';
 
 import OnboardingIngestionDetails from '../IngestionDetails/IngestionDetails';
-import InviteTeamMembers from '../InviteTeamMembers/InviteTeamMembers';
-import onboardingConfigWithLinks from '../onboarding-configs/onboarding-config-with-links.json';
+import InviteMembers from 'components/InviteMembers/InviteMembers';
+import onboardingConfigWithLinks from '../onboarding-configs/onboarding-config-with-links';
+
+import '../OnboardingV2.styles.scss';
 
 const { Header } = Layout;
 
@@ -50,6 +58,15 @@ interface Option {
 	label: string;
 	link?: string;
 	entityID?: string;
+	internalRedirect?: boolean;
+	question?: {
+		desc: string;
+		options: Option[];
+		entityID?: string;
+		helpText?: string;
+		helpLink?: string;
+		helpLinkText?: string;
+	};
 }
 
 interface Entity {
@@ -62,6 +79,9 @@ interface Entity {
 		desc: string;
 		options: Option[];
 		entityID: string;
+		helpText?: string;
+		helpLink?: string;
+		helpLinkText?: string;
 		question?: {
 			desc: string;
 			options: Option[];
@@ -101,18 +121,47 @@ const ONBOARDING_V3_ANALYTICS_EVENTS_MAP = {
 	GET_HELP_BUTTON_CLICKED: 'Get help clicked',
 	GET_EXPERT_ASSISTANCE_BUTTON_CLICKED: 'Get expert assistance clicked',
 	INVITE_TEAM_MEMBER_BUTTON_CLICKED: 'Invite team member clicked',
+	INVITE_TEAM_MEMBER_SEND_CLICKED: 'Send invites clicked',
+	INVITE_TEAM_MEMBER_SUCCESS: 'Invite team members success',
+	INVITE_TEAM_MEMBER_PARTIAL_SUCCESS: 'Invite team members partial success',
+	INVITE_TEAM_MEMBER_FAILED: 'Invite team members failed',
 	CLOSE_ONBOARDING_CLICKED: 'Close onboarding clicked',
 	DATA_SOURCE_REQUESTED: 'Datasource requested',
 	DATA_SOURCE_SEARCHED: 'Searched',
 };
 
+const groupDataSourcesByTags = (
+	dataSources: Entity[],
+): { [tag: string]: Entity[] } => {
+	const groupedDataSources: { [tag: string]: Entity[] } = {};
+
+	dataSources.forEach((dataSource) => {
+		dataSource.tags.forEach((tag) => {
+			if (!groupedDataSources[tag]) {
+				groupedDataSources[tag] = [];
+			}
+			groupedDataSources[tag].push(dataSource);
+		});
+	});
+
+	return groupedDataSources;
+};
+
+const allGroupedDataSources = groupDataSourcesByTags(
+	onboardingConfigWithLinks as Entity[],
+);
+
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function OnboardingAddDataSource(): JSX.Element {
+	const { safeNavigate } = useSafeNavigate();
+	const urlQuery = useUrlQuery();
 	const [groupedDataSources, setGroupedDataSources] = useState<{
 		[tag: string]: Entity[];
-	}>({});
+	}>(allGroupedDataSources);
 
 	const { org } = useAppContext();
+
+	const { data: globalConfig } = useGetGlobalConfig();
 
 	const [setupStepItems, setSetupStepItems] = useState(setupStepItemsBase);
 
@@ -122,9 +171,8 @@ function OnboardingAddDataSource(): JSX.Element {
 	const question3Ref = useRef<HTMLDivElement | null>(null);
 	const configureProdRef = useRef<HTMLDivElement | null>(null);
 
-	const [showConfigureProduct, setShowConfigureProduct] = useState<boolean>(
-		false,
-	);
+	const [showConfigureProduct, setShowConfigureProduct] =
+		useState<boolean>(false);
 
 	const [currentStep, setCurrentStep] = useState(1);
 
@@ -132,18 +180,14 @@ function OnboardingAddDataSource(): JSX.Element {
 
 	const [hasMoreQuestions, setHasMoreQuestions] = useState<boolean>(true);
 
-	const [
-		showRequestDataSourceModal,
-		setShowRequestDataSourceModal,
-	] = useState<boolean>(false);
+	const [showRequestDataSourceModal, setShowRequestDataSourceModal] =
+		useState<boolean>(false);
 
-	const [
-		showInviteTeamMembersModal,
-		setShowInviteTeamMembersModal,
-	] = useState<boolean>(false);
+	const [showInviteTeamMembersModal, setShowInviteTeamMembersModal] =
+		useState<boolean>(false);
 
 	const [docsUrl, setDocsUrl] = useState<string>(
-		'https://signoz.io/docs/instrumentation/',
+		`${DOCS_BASE_URL}/docs/instrumentation/`,
 	);
 
 	const [selectedDataSource, setSelectedDataSource] = useState<Entity | null>(
@@ -160,10 +204,8 @@ function OnboardingAddDataSource(): JSX.Element {
 
 	const [selectedCategory, setSelectedCategory] = useState<string>('All');
 
-	const [
-		dataSourceRequestSubmitted,
-		setDataSourceRequestSubmitted,
-	] = useState<boolean>(false);
+	const [dataSourceRequestSubmitted, setDataSourceRequestSubmitted] =
+		useState<boolean>(false);
 
 	const handleScrollToStep = (ref: React.RefObject<HTMLDivElement>): void => {
 		setTimeout(() => {
@@ -175,12 +217,58 @@ function OnboardingAddDataSource(): JSX.Element {
 		}, 100);
 	};
 
+	const getStartedSource = urlQuery.get(QueryParams.getStartedSource);
+	const getStartedSourceService = urlQuery.get(
+		QueryParams.getStartedSourceService,
+	);
+
 	useEffect(() => {
-		logEvent(
+		void logEvent(
 			`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.STARTED}`,
 			{},
 		);
 	}, []);
+
+	const orgName = org?.[0]?.displayName;
+
+	useEffect(() => {
+		if (!getStartedSource || selectedDataSource) {
+			return;
+		}
+
+		const matchingDataSource = onboardingConfigWithLinks.find(
+			(ds) => ds.dataSource === getStartedSource,
+		) as Entity | undefined;
+
+		if (!matchingDataSource) {
+			return;
+		}
+
+		setSelectedDataSource(matchingDataSource);
+		setHasMoreQuestions(false);
+		updateUrl(matchingDataSource.link || '', null);
+		setCurrentStep(2);
+		setSetupStepItems([
+			{
+				...setupStepItemsBase[0],
+				description: orgName || '',
+			},
+			{
+				...setupStepItemsBase[1],
+				description: matchingDataSource.label,
+			},
+			...setupStepItemsBase.slice(2),
+		]);
+
+		void logEvent(
+			`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.DATA_SOURCE_SELECTED}`,
+			{
+				dataSource: matchingDataSource.label,
+				source: 'query_param',
+			},
+		);
+		// oxlint-disable-next-line react-hooks/exhaustive-deps Ignore update url since it's not stable
+	}, [getStartedSource, orgName, selectedDataSource]);
 
 	const updateUrl = (url: string, selectedEnvironment: string | null): void => {
 		if (!url || url === '') {
@@ -188,13 +276,29 @@ function OnboardingAddDataSource(): JSX.Element {
 		}
 
 		// Step 1: Parse the URL
-		const urlObj = new URL(url);
+		const fullUrl = url.startsWith('/') ? `${DOCS_BASE_URL}${url}` : url;
+
+		const urlObj = new URL(fullUrl);
 
 		// Step 2: Update or add the 'source' parameter
 		urlObj.searchParams.set('source', 'onboarding');
 
 		if (selectedEnvironment) {
 			urlObj.searchParams.set('environment', selectedEnvironment);
+		}
+
+		if (getStartedSourceService) {
+			urlObj.searchParams.set('service', getStartedSourceService);
+		}
+
+		const ingestionUrl = globalConfig?.data?.ingestion_url;
+
+		if (ingestionUrl) {
+			const parts = ingestionUrl.split('.');
+			if (parts?.length > 1 && parts[0]?.includes('ingest')) {
+				const region = parts[1];
+				urlObj.searchParams.set('region', region);
+			}
 		}
 
 		// Step 3: Return the updated URL as a string
@@ -204,52 +308,42 @@ function OnboardingAddDataSource(): JSX.Element {
 	};
 
 	const handleSelectDataSource = (dataSource: Entity): void => {
-		if (dataSource && dataSource.internalRedirect && dataSource.link) {
-			logEvent(
-				`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.DATA_SOURCE_SELECTED}`,
-				{
-					dataSource: dataSource.label,
-				},
-			);
-			history.push(dataSource.link);
+		setSelectedDataSource(dataSource);
+		setSelectedFramework(null);
+		setSelectedEnvironment(null);
+
+		void logEvent(
+			`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.DATA_SOURCE_SELECTED}`,
+			{
+				dataSource: dataSource.label,
+			},
+		);
+
+		if (dataSource.question) {
+			setHasMoreQuestions(true);
+
+			setTimeout(() => {
+				handleScrollToStep(question2Ref);
+			}, 100);
 		} else {
-			setSelectedDataSource(dataSource);
-			setSelectedFramework(null);
-			setSelectedEnvironment(null);
+			setHasMoreQuestions(false);
 
-			logEvent(
-				`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.DATA_SOURCE_SELECTED}`,
-				{
-					dataSource: dataSource.label,
-				},
-			);
+			updateUrl(dataSource?.link || '', null);
 
-			if (dataSource.question) {
-				setHasMoreQuestions(true);
-
-				setTimeout(() => {
-					handleScrollToStep(question2Ref);
-				}, 100);
-			} else {
-				setHasMoreQuestions(false);
-
-				updateUrl(dataSource?.link || '', null);
-
-				setShowConfigureProduct(true);
-			}
+			setShowConfigureProduct(true);
 		}
 	};
 
 	const handleSelectFramework = (option: any): void => {
-		setSelectedFramework(option);
-
-		logEvent(
+		void logEvent(
 			`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.FRAMEWORK_SELECTED}`,
 			{
 				dataSource: selectedDataSource?.label,
 				framework: option.label,
 			},
 		);
+
+		setSelectedFramework(option);
 
 		if (option.question) {
 			setHasMoreQuestions(true);
@@ -274,10 +368,7 @@ function OnboardingAddDataSource(): JSX.Element {
 		selectedEnvironment: any,
 		baseURL?: string,
 	): void => {
-		setSelectedEnvironment(selectedEnvironment);
-		setHasMoreQuestions(false);
-
-		logEvent(
+		void logEvent(
 			`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.ENVIRONMENT_SELECTED}`,
 			{
 				dataSource: selectedDataSource?.label,
@@ -286,35 +377,13 @@ function OnboardingAddDataSource(): JSX.Element {
 			},
 		);
 
+		setSelectedEnvironment(selectedEnvironment);
+		setHasMoreQuestions(false);
+
 		updateUrl(baseURL || docsUrl, selectedEnvironment?.key);
 
 		setShowConfigureProduct(true);
 	};
-
-	const groupDataSourcesByTags = (
-		dataSources: Entity[],
-	): { [tag: string]: Entity[] } => {
-		const groupedDataSources: { [tag: string]: Entity[] } = {};
-
-		dataSources.forEach((dataSource) => {
-			dataSource.tags.forEach((tag) => {
-				if (!groupedDataSources[tag]) {
-					groupedDataSources[tag] = [];
-				}
-				groupedDataSources[tag].push(dataSource);
-			});
-		});
-
-		return groupedDataSources;
-	};
-
-	useEffect(() => {
-		const groupedDataSources = groupDataSourcesByTags(
-			onboardingConfigWithLinks as Entity[],
-		);
-
-		setGroupedDataSources(groupedDataSources);
-	}, []);
 
 	const debouncedUpdate = useDebouncedFn((query) => {
 		setSearchQuery(query as string);
@@ -322,9 +391,7 @@ function OnboardingAddDataSource(): JSX.Element {
 		setDataSourceRequestSubmitted(false);
 
 		if (query === '') {
-			setGroupedDataSources(
-				groupDataSourcesByTags(onboardingConfigWithLinks as Entity[]),
-			);
+			setGroupedDataSources(allGroupedDataSources);
 			return;
 		}
 
@@ -343,7 +410,7 @@ function OnboardingAddDataSource(): JSX.Element {
 			groupDataSourcesByTags(filteredDataSources as Entity[]),
 		);
 
-		logEvent(
+		void logEvent(
 			`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.DATA_SOURCE_SEARCHED}`,
 			{
 				searchedDataSource: query,
@@ -360,31 +427,35 @@ function OnboardingAddDataSource(): JSX.Element {
 		},
 		[debouncedUpdate],
 	);
+
 	const handleFilterByCategory = (category: string): void => {
 		setSelectedDataSource(null);
 		setSelectedFramework(null);
 		setSelectedEnvironment(null);
 
-		if (category === 'All') {
-			setGroupedDataSources(
-				groupDataSourcesByTags(onboardingConfigWithLinks as Entity[]),
-			);
+		setSelectedCategory(category);
 
-			setSelectedCategory('All');
+		if (category === 'All') {
+			setGroupedDataSources(allGroupedDataSources);
 			return;
 		}
 
-		const filteredDataSources = onboardingConfigWithLinks.filter(
-			(dataSource) =>
-				dataSource.tags.includes(category) ||
-				dataSource.tags.some((tag) => tag.toLowerCase().includes(category)),
-		);
-
-		setSelectedCategory(category);
-
-		setGroupedDataSources(
-			groupDataSourcesByTags(filteredDataSources as Entity[]),
-		);
+		if (allGroupedDataSources[category]) {
+			setGroupedDataSources({
+				[category]: allGroupedDataSources[category],
+			});
+		} else {
+			// Fallback if somehow the category key doesn't strictly match or relies on partial match
+			// This preserves the old behavior as a fallback, though sidebar clicks should be exact matches
+			const filteredDataSources = onboardingConfigWithLinks.filter(
+				(dataSource) =>
+					dataSource.tags.includes(category) ||
+					dataSource.tags.some((tag) => tag.toLowerCase().includes(category)),
+			);
+			setGroupedDataSources(
+				groupDataSourcesByTags(filteredDataSources as Entity[]),
+			);
+		}
 	};
 
 	useEffect(() => {
@@ -397,7 +468,10 @@ function OnboardingAddDataSource(): JSX.Element {
 		]);
 	}, [org]);
 
-	const handleUpdateCurrentStep = (step: number): void => {
+	const handleUpdateCurrentStep = (
+		step: number,
+		event?: React.MouseEvent,
+	): void => {
 		setCurrentStep(step);
 
 		if (step === 1) {
@@ -427,48 +501,50 @@ function OnboardingAddDataSource(): JSX.Element {
 				...setupStepItemsBase.slice(2),
 			]);
 		} else if (step === 3) {
+			let targetPath: string;
 			switch (selectedDataSource?.module) {
 				case 'apm':
-					history.push(ROUTES.APPLICATION);
+					targetPath = ROUTES.APPLICATION;
 					break;
 				case 'logs':
-					history.push(ROUTES.LOGS);
+					targetPath = ROUTES.LOGS;
 					break;
 				case 'metrics':
-					history.push(ROUTES.METRICS_EXPLORER);
+					targetPath = ROUTES.METRICS_EXPLORER;
 					break;
 				case 'dashboards':
-					history.push(ROUTES.ALL_DASHBOARD);
+					targetPath = ROUTES.ALL_DASHBOARD;
 					break;
 				case 'infra-monitoring-hosts':
-					history.push(ROUTES.INFRASTRUCTURE_MONITORING_HOSTS);
+					targetPath = ROUTES.INFRASTRUCTURE_MONITORING_HOSTS;
 					break;
 				case 'infra-monitoring-k8s':
-					history.push(ROUTES.INFRASTRUCTURE_MONITORING_KUBERNETES);
+					targetPath = ROUTES.INFRASTRUCTURE_MONITORING_KUBERNETES;
 					break;
 				case 'messaging-queues-kafka':
-					history.push(ROUTES.MESSAGING_QUEUES_KAFKA);
+					targetPath = ROUTES.MESSAGING_QUEUES_KAFKA;
 					break;
 				case 'messaging-queues-celery':
-					history.push(ROUTES.MESSAGING_QUEUES_CELERY_TASK);
+					targetPath = ROUTES.MESSAGING_QUEUES_CELERY_TASK;
 					break;
 				case 'integrations':
-					history.push(ROUTES.INTEGRATIONS);
+					targetPath = ROUTES.INTEGRATIONS;
 					break;
 				case 'home':
-					history.push(ROUTES.HOME);
+					targetPath = ROUTES.HOME;
 					break;
 				case 'api-monitoring':
-					history.push(ROUTES.API_MONITORING);
+					targetPath = ROUTES.API_MONITORING;
 					break;
 				default:
-					history.push(ROUTES.APPLICATION);
+					targetPath = ROUTES.APPLICATION;
 			}
+			safeNavigate(targetPath, { newTab: !!event && isModifierKeyPressed(event) });
 		}
 	};
 
 	const handleShowInviteTeamMembersModal = (): void => {
-		logEvent(
+		void logEvent(
 			`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.INVITE_TEAM_MEMBER_BUTTON_CLICKED}`,
 			{
 				dataSource: selectedDataSource?.label,
@@ -481,7 +557,7 @@ function OnboardingAddDataSource(): JSX.Element {
 	};
 
 	const handleSubmitDataSourceRequest = (): void => {
-		logEvent(
+		void logEvent(
 			`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.DATA_SOURCE_REQUESTED}`,
 			{
 				requestedDataSource: dataSourceRequest,
@@ -496,7 +572,7 @@ function OnboardingAddDataSource(): JSX.Element {
 	};
 
 	const handleRaiseRequest = (): void => {
-		logEvent(
+		void logEvent(
 			`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.DATA_SOURCE_REQUESTED}`,
 			{
 				requestedDataSource: searchQuery,
@@ -546,7 +622,7 @@ function OnboardingAddDataSource(): JSX.Element {
 							<Button
 								type="default"
 								className="periscope-btn request-data-source-btn success"
-								icon={<CheckIcon size={16} />}
+								icon={<Check size={16} />}
 							>
 								Request raised
 							</Button>
@@ -592,7 +668,7 @@ function OnboardingAddDataSource(): JSX.Element {
 							<Button
 								type="default"
 								className="periscope-btn request-data-source-btn success"
-								icon={<CheckIcon size={16} />}
+								icon={<Check size={16} />}
 							>
 								Request raised
 							</Button>
@@ -603,6 +679,11 @@ function OnboardingAddDataSource(): JSX.Element {
 		);
 	};
 
+	const progressText = `Get Started (${Math.min(
+		currentStep + 1,
+		setupStepItems.length,
+	)}/${setupStepItems.length})`;
+
 	return (
 		<div className="onboarding-v2">
 			<Layout>
@@ -612,18 +693,18 @@ function OnboardingAddDataSource(): JSX.Element {
 							<X
 								size={14}
 								className="onboarding-header-container-close-icon"
-								onClick={(): void => {
-									logEvent(
+								onClick={(e): void => {
+									void logEvent(
 										`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.CLOSE_ONBOARDING_CLICKED}`,
 										{
 											currentPage: setupStepItems[currentStep]?.title || '',
 										},
 									);
 
-									history.push(ROUTES.HOME);
+									safeNavigate(ROUTES.HOME, { newTab: isModifierKeyPressed(e) });
 								}}
 							/>
-							<Typography.Text>Get Started (2/4)</Typography.Text>
+							<Typography.Text>{progressText}</Typography.Text>
 						</div>
 
 						<div className="header-right-section">
@@ -700,7 +781,7 @@ function OnboardingAddDataSource(): JSX.Element {
 														placeholder="Search"
 														maxLength={20}
 														onChange={handleSearch}
-														addonAfter={<SearchOutlined />}
+														addonAfter={<Search size="md" />}
 													/>
 												</div>
 
@@ -778,7 +859,7 @@ function OnboardingAddDataSource(): JSX.Element {
 														</Typography.Text>
 													</div>
 
-													{Object.keys(groupedDataSources).map((tag) => (
+													{Object.keys(allGroupedDataSources).map((tag) => (
 														<div
 															key={tag}
 															className="onboarding-data-source-category-item"
@@ -803,7 +884,7 @@ function OnboardingAddDataSource(): JSX.Element {
 															<div className="line-divider" />
 
 															<Typography.Text className="onboarding-filters-item-count">
-																{groupedDataSources[tag].length}
+																{allGroupedDataSources[tag].length}
 															</Typography.Text>
 														</div>
 													))}
@@ -828,6 +909,22 @@ function OnboardingAddDataSource(): JSX.Element {
 																>
 																	{selectedDataSource?.question?.desc}
 																</Typography.Title>
+																{selectedDataSource?.question?.helpText && (
+																	<Typography.Text className="question-help-text">
+																		{selectedDataSource?.question?.helpText}
+																		{selectedDataSource?.question?.helpLink && (
+																			<a
+																				href={`${DOCS_BASE_URL}${selectedDataSource?.question?.helpLink}`}
+																				target="_blank"
+																				rel="noopener noreferrer"
+																				className="question-help-link"
+																			>
+																				{selectedDataSource?.question?.helpLinkText ||
+																					'Learn more →'}
+																			</a>
+																		)}
+																	</Typography.Text>
+																)}
 															</div>
 
 															<div className="onboarding-data-source-options">
@@ -850,7 +947,7 @@ function OnboardingAddDataSource(): JSX.Element {
 																	>
 																		{option.imgUrl && (
 																			<img
-																				src={option.imgUrl || '/Logos/signoz-brand-logo-new.svg'}
+																				src={option.imgUrl || signozBrandLogoUrl}
 																				alt={option.label}
 																				className="onboarding-data-source-button-img"
 																			/>
@@ -882,6 +979,22 @@ function OnboardingAddDataSource(): JSX.Element {
 																>
 																	{selectedFramework?.question?.desc}
 																</Typography.Title>
+																{selectedFramework?.question?.helpText && (
+																	<Typography.Text className="question-help-text">
+																		{selectedFramework?.question?.helpText}
+																		{selectedFramework?.question?.helpLink && (
+																			<a
+																				href={`${DOCS_BASE_URL}${selectedFramework?.question?.helpLink}`}
+																				target="_blank"
+																				rel="noopener noreferrer"
+																				className="question-help-link"
+																			>
+																				{selectedFramework?.question?.helpLinkText ||
+																					'Learn more →'}
+																			</a>
+																		)}
+																	</Typography.Text>
+																)}
 															</div>
 
 															<div className="onboarding-data-source-options">
@@ -892,10 +1005,12 @@ function OnboardingAddDataSource(): JSX.Element {
 																			selectedEnvironment?.label === option.label ? 'selected' : ''
 																		}`}
 																		type="primary"
-																		onClick={(): void => handleSelectEnvironment(option)}
+																		onClick={(): void =>
+																			handleSelectEnvironment(option, option.link)
+																		}
 																	>
 																		<img
-																			src={option.imgUrl || '/Logos/signoz-brand-logo-new.svg'}
+																			src={option.imgUrl || signozBrandLogoUrl}
 																			alt={option.label}
 																			className="onboarding-data-source-button-img"
 																		/>
@@ -913,8 +1028,8 @@ function OnboardingAddDataSource(): JSX.Element {
 													type="primary"
 													disabled={!selectedDataSource}
 													shape="round"
-													onClick={(): void => {
-														logEvent(
+													onClick={(e): void => {
+														void logEvent(
 															`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.CONFIGURED_PRODUCT}`,
 															{
 																dataSource: selectedDataSource?.label,
@@ -923,7 +1038,16 @@ function OnboardingAddDataSource(): JSX.Element {
 															},
 														);
 
-														handleUpdateCurrentStep(2);
+														const currentEntity =
+															selectedEnvironment || selectedFramework || selectedDataSource;
+
+														if (currentEntity?.internalRedirect && currentEntity?.link) {
+															safeNavigate(currentEntity.link, {
+																newTab: isModifierKeyPressed(e),
+															});
+														} else {
+															handleUpdateCurrentStep(2);
+														}
 													}}
 												>
 													Next: Configure your product
@@ -973,7 +1097,7 @@ function OnboardingAddDataSource(): JSX.Element {
 										type="default"
 										shape="round"
 										onClick={(): void => {
-											logEvent(
+											void logEvent(
 												`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BACK_BUTTON_CLICKED}`,
 												{
 													dataSource: selectedDataSource?.label,
@@ -991,8 +1115,8 @@ function OnboardingAddDataSource(): JSX.Element {
 									<Button
 										type="primary"
 										shape="round"
-										onClick={(): void => {
-											logEvent(
+										onClick={(e): void => {
+											void logEvent(
 												`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.CONTINUE_BUTTON_CLICKED}`,
 												{
 													dataSource: selectedDataSource?.label,
@@ -1003,7 +1127,7 @@ function OnboardingAddDataSource(): JSX.Element {
 											);
 
 											handleFilterByCategory('All');
-											handleUpdateCurrentStep(3);
+											handleUpdateCurrentStep(3, e);
 										}}
 									>
 										Continue
@@ -1029,12 +1153,54 @@ function OnboardingAddDataSource(): JSX.Element {
 					destroyOnClose
 				>
 					<div className="invite-team-member-modal-content">
-						<InviteTeamMembers
-							isLoading={false}
-							teamMembers={null}
-							setTeamMembers={(): void => {}}
-							onNext={(): void => setShowInviteTeamMembersModal(false)}
-							onClose={(): void => setShowInviteTeamMembersModal(false)}
+						<InviteMembers
+							onSuccess={(): void => {
+								void logEvent(
+									`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.INVITE_TEAM_MEMBER_SUCCESS}`,
+									{},
+								);
+								setShowInviteTeamMembersModal(false);
+
+								toast.success('Invites sent successfully', { position: 'top-center' });
+							}}
+							onPartialSuccess={(): void => {
+								void logEvent(
+									`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.INVITE_TEAM_MEMBER_PARTIAL_SUCCESS}`,
+									{},
+								);
+							}}
+							onAllFailed={(): void => {
+								void logEvent(
+									`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.INVITE_TEAM_MEMBER_FAILED}`,
+									{},
+								);
+							}}
+							renderFooter={({ submit, canSubmit, isSubmitting }): JSX.Element => (
+								<div className="invite-team-member-modal-footer">
+									<SignozButton
+										variant="solid"
+										color="secondary"
+										onClick={(): void => setShowInviteTeamMembersModal(false)}
+									>
+										Cancel
+									</SignozButton>
+									<SignozButton
+										variant="solid"
+										onClick={(): void => {
+											void logEvent(
+												`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.INVITE_TEAM_MEMBER_SEND_CLICKED}`,
+												{},
+											);
+											void submit();
+										}}
+										disabled={!canSubmit}
+										loading={isSubmitting}
+										suffix={<ArrowRight size={14} />}
+									>
+										Send Invites
+									</SignozButton>
+								</div>
+							)}
 						/>
 					</div>
 				</Modal>
@@ -1062,7 +1228,7 @@ function OnboardingAddDataSource(): JSX.Element {
 							className="periscope-btn primary"
 							disabled={dataSourceRequest.length <= 0}
 							onClick={handleSubmitDataSourceRequest}
-							icon={<CheckIcon size={16} />}
+							icon={<Check size={16} />}
 						>
 							Submit request
 						</Button>,

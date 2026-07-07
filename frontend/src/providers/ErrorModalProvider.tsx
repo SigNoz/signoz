@@ -1,17 +1,20 @@
-import ErrorModal from 'components/ErrorModal/ErrorModal';
 import {
+	// eslint-disable-next-line no-restricted-imports
 	createContext,
 	ReactNode,
 	useCallback,
+	// eslint-disable-next-line no-restricted-imports
 	useContext,
 	useMemo,
 	useState,
 } from 'react';
+import ErrorModal from 'components/ErrorModal/ErrorModal';
 import APIError from 'types/api/error';
 
 interface ErrorModalContextType {
 	showErrorModal: (error: APIError) => void;
 	hideErrorModal: () => void;
+	isErrorModalVisible: boolean;
 }
 
 const ErrorModalContext = createContext<ErrorModalContextType | undefined>(
@@ -36,10 +39,10 @@ export function ErrorModalProvider({
 		setIsVisible(false);
 	}, []);
 
-	const value = useMemo(() => ({ showErrorModal, hideErrorModal }), [
-		showErrorModal,
-		hideErrorModal,
-	]);
+	const value = useMemo(
+		() => ({ showErrorModal, hideErrorModal, isErrorModalVisible: isVisible }),
+		[showErrorModal, hideErrorModal, isVisible],
+	);
 
 	return (
 		<ErrorModalContext.Provider value={value}>

@@ -1,5 +1,5 @@
-import { setApDexSettings } from 'api/metrics/ApDex/apDexSettings';
 import { useMutation, UseMutationResult } from 'react-query';
+import { setApDexSettings } from 'api/metrics/ApDex/apDexSettings';
 import {
 	ApDexPayloadAndSettingsProps,
 	SetApDexPayloadProps,

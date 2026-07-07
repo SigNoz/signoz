@@ -7,7 +7,9 @@ import { MaxLinesFieldWrapper, MaxLinesInput } from './styles';
 function MaxLinesField({ config }: MaxLinesFieldProps): JSX.Element | null {
 	const { t } = useTranslation(['trace']);
 
-	if (!config) return null;
+	if (!config) {
+		return null;
+	}
 
 	return (
 		<MaxLinesFieldWrapper>

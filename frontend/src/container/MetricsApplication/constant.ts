@@ -1,5 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
-
 import { DownloadOptions } from 'container/Download/Download.types';
 import { MenuItemKeys } from 'container/GridCardLayout/WidgetHeader/contants';
 import {
@@ -26,6 +24,8 @@ export const LATENCY_AGGREGATEOPERATOR_SPAN_METRICS = [
 export const OPERATION_LEGENDS = ['Operations'];
 
 export const MENU_ITEMS = [MenuItemKeys.View, MenuItemKeys.CreateAlerts];
+
+export const SERVICE_DETAIL_DRILLDOWN_ENABLED = true;
 
 export enum FORMULA {
 	ERROR_PERCENTAGE = 'A*100/B',

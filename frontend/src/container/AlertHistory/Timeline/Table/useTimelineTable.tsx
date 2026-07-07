@@ -1,7 +1,7 @@
-import { EllipsisOutlined } from '@ant-design/icons';
+import { useMemo } from 'react';
+import { Ellipsis, Search } from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
-import { Button } from 'antd';
-import { ColumnsType } from 'antd/es/table';
+import { Button, TableColumnsType as ColumnsType } from 'antd';
 import ClientSideQBSearch, {
 	AttributeKey,
 } from 'components/ClientSideQBSearch/ClientSideQBSearch';
@@ -10,12 +10,10 @@ import { ConditionalAlertPopover } from 'container/AlertHistory/AlertPopover/Ale
 import { transformKeyValuesToAttributeValuesMap } from 'container/QueryBuilder/filters/utils';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { TimestampInput } from 'hooks/useTimezoneFormatter/useTimezoneFormatter';
-import { Search } from 'lucide-react';
 import AlertLabels, {
 	AlertLabelsProps,
 } from 'pages/AlertDetails/AlertHeader/AlertLabels/AlertLabels';
 import AlertState from 'pages/AlertDetails/AlertHeader/AlertState/AlertState';
-import { useMemo } from 'react';
 import { AlertRuleTimelineTableResponse } from 'types/api/alerts/def';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -127,7 +125,7 @@ export const timelineTableColumns = ({
 				relatedLogsLink={record.relatedLogsLink}
 			>
 				<Button type="text" ghost>
-					<EllipsisOutlined className="dropdown-icon" />
+					<Ellipsis className="dropdown-icon" size="md" />
 				</Button>
 			</ConditionalAlertPopover>
 		),

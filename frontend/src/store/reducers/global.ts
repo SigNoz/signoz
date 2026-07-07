@@ -1,4 +1,4 @@
-import { getDefaultOption } from 'container/TopNav/DateTimeSelection/config';
+import { getDefaultOption } from 'container/TopNav/DateTimeSelectionV2/constants';
 import {
 	GLOBAL_TIME_LOADING_START,
 	GlobalTimeAction,

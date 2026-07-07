@@ -1,12 +1,12 @@
-import './MeterExplorer.styles.scss';
-
+import { useLocation } from 'react-use';
 import RouteTab from 'components/RouteTab';
 import { TabRoutes } from 'components/RouteTab/types';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
-import { useLocation } from 'react-use';
 
 import { Explorer, Meter, Views } from './constants';
+
+import './MeterExplorer.styles.scss';
 
 function MeterExplorerPage(): JSX.Element {
 	const { pathname } = useLocation();

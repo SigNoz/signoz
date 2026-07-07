@@ -1,9 +1,8 @@
-/* eslint-disable sonarjs/no-duplicate-string */
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { EQueryType } from 'types/common/dashboard';
-import { DataSource } from 'types/common/queryBuilder';
+import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 
 export const getPodQueryPayload = (
 	clusterName: string,
@@ -114,7 +113,7 @@ export const getPodQueryPayload = (
 							limit: null,
 							orderBy: [],
 							queryName: 'A',
-							reduceTo: 'avg',
+							reduceTo: ReduceOperators.AVG,
 							spaceAggregation: 'sum',
 							stepInterval: 60,
 							timeAggregation: 'avg',
@@ -191,7 +190,7 @@ export const getPodQueryPayload = (
 							limit: null,
 							orderBy: [],
 							queryName: 'A',
-							reduceTo: 'avg',
+							reduceTo: ReduceOperators.AVG,
 							spaceAggregation: 'sum',
 							stepInterval: 60,
 							timeAggregation: 'avg',
@@ -268,7 +267,7 @@ export const getPodQueryPayload = (
 							limit: null,
 							orderBy: [],
 							queryName: 'A',
-							reduceTo: 'sum',
+							reduceTo: ReduceOperators.SUM,
 							spaceAggregation: 'sum',
 							stepInterval: 60,
 							timeAggregation: 'avg',
@@ -325,7 +324,7 @@ export const getPodQueryPayload = (
 							limit: null,
 							orderBy: [],
 							queryName: 'B',
-							reduceTo: 'avg',
+							reduceTo: ReduceOperators.AVG,
 							spaceAggregation: 'sum',
 							stepInterval: 60,
 							timeAggregation: 'latest',
@@ -409,7 +408,7 @@ export const getPodQueryPayload = (
 							limit: null,
 							orderBy: [],
 							queryName: 'A',
-							reduceTo: 'sum',
+							reduceTo: ReduceOperators.SUM,
 							spaceAggregation: 'sum',
 							stepInterval: 60,
 							timeAggregation: 'avg',
@@ -466,7 +465,7 @@ export const getPodQueryPayload = (
 							limit: null,
 							orderBy: [],
 							queryName: 'B',
-							reduceTo: 'avg',
+							reduceTo: ReduceOperators.AVG,
 							spaceAggregation: 'sum',
 							stepInterval: 60,
 							timeAggregation: 'latest',
@@ -553,7 +552,7 @@ export const getPodQueryPayload = (
 							limit: null,
 							orderBy: [],
 							queryName: 'A',
-							reduceTo: 'sum',
+							reduceTo: ReduceOperators.SUM,
 							spaceAggregation: 'sum',
 							stepInterval: 60,
 							timeAggregation: 'avg',
@@ -614,7 +613,7 @@ export const getPodQueryPayload = (
 							limit: null,
 							orderBy: [],
 							queryName: 'B',
-							reduceTo: 'avg',
+							reduceTo: ReduceOperators.AVG,
 							spaceAggregation: 'sum',
 							stepInterval: 60,
 							timeAggregation: 'latest',
@@ -702,7 +701,7 @@ export const getPodQueryPayload = (
 							limit: null,
 							orderBy: [],
 							queryName: 'A',
-							reduceTo: 'sum',
+							reduceTo: ReduceOperators.SUM,
 							spaceAggregation: 'sum',
 							stepInterval: 60,
 							timeAggregation: 'avg',
@@ -763,7 +762,7 @@ export const getPodQueryPayload = (
 							limit: null,
 							orderBy: [],
 							queryName: 'B',
-							reduceTo: 'avg',
+							reduceTo: ReduceOperators.AVG,
 							spaceAggregation: 'sum',
 							stepInterval: 60,
 							timeAggregation: 'latest',
@@ -851,7 +850,7 @@ export const getPodQueryPayload = (
 							limit: null,
 							orderBy: [],
 							queryName: 'A',
-							reduceTo: 'sum',
+							reduceTo: ReduceOperators.SUM,
 							spaceAggregation: 'sum',
 							stepInterval: 60,
 							timeAggregation: 'avg',
@@ -912,7 +911,7 @@ export const getPodQueryPayload = (
 							limit: null,
 							orderBy: [],
 							queryName: 'B',
-							reduceTo: 'sum',
+							reduceTo: ReduceOperators.SUM,
 							spaceAggregation: 'sum',
 							stepInterval: 60,
 							timeAggregation: 'avg',
@@ -1001,7 +1000,7 @@ export const getPodQueryPayload = (
 							limit: null,
 							orderBy: [],
 							queryName: 'A',
-							reduceTo: 'sum',
+							reduceTo: ReduceOperators.SUM,
 							spaceAggregation: 'sum',
 							stepInterval: 60,
 							timeAggregation: 'rate',
@@ -1122,7 +1121,7 @@ export const getNodeQueryPayload = (
 							limit: null,
 							orderBy: [],
 							queryName: 'A',
-							reduceTo: 'sum',
+							reduceTo: ReduceOperators.SUM,
 							spaceAggregation: 'sum',
 							stepInterval: 60,
 							timeAggregation: 'rate',
@@ -1171,7 +1170,7 @@ export const getNodeQueryPayload = (
 							limit: null,
 							orderBy: [],
 							queryName: 'B',
-							reduceTo: 'sum',
+							reduceTo: ReduceOperators.SUM,
 							spaceAggregation: 'sum',
 							stepInterval: 60,
 							timeAggregation: 'avg',
@@ -1260,7 +1259,7 @@ export const getNodeQueryPayload = (
 							limit: null,
 							orderBy: [],
 							queryName: 'A',
-							reduceTo: 'sum',
+							reduceTo: ReduceOperators.SUM,
 							spaceAggregation: 'sum',
 							stepInterval: 60,
 							timeAggregation: 'avg',
@@ -1309,7 +1308,7 @@ export const getNodeQueryPayload = (
 							limit: null,
 							orderBy: [],
 							queryName: 'B',
-							reduceTo: 'sum',
+							reduceTo: ReduceOperators.SUM,
 							spaceAggregation: 'sum',
 							stepInterval: 60,
 							timeAggregation: 'avg',
@@ -1412,7 +1411,7 @@ export const getNodeQueryPayload = (
 							limit: null,
 							orderBy: [],
 							queryName: 'A',
-							reduceTo: 'sum',
+							reduceTo: ReduceOperators.SUM,
 							spaceAggregation: 'sum',
 							stepInterval: 60,
 							timeAggregation: 'rate',
@@ -1493,7 +1492,7 @@ export const getNodeQueryPayload = (
 							limit: null,
 							orderBy: [],
 							queryName: 'A',
-							reduceTo: 'sum',
+							reduceTo: ReduceOperators.SUM,
 							spaceAggregation: 'sum',
 							stepInterval: 60,
 							timeAggregation: 'avg',
@@ -1554,7 +1553,7 @@ export const getNodeQueryPayload = (
 							limit: null,
 							orderBy: [],
 							queryName: 'B',
-							reduceTo: 'sum',
+							reduceTo: ReduceOperators.SUM,
 							spaceAggregation: 'sum',
 							stepInterval: 60,
 							timeAggregation: 'avg',
@@ -1620,9 +1619,15 @@ export const getHostQueryPayload = (
 	const diskOpTimeKey = dotMetricsEnabled
 		? 'system.disk.operation_time'
 		: 'system_disk_operation_time';
+	const diskOpsKey = dotMetricsEnabled
+		? 'system.disk.operations'
+		: 'system_disk_operations';
 	const diskPendingKey = dotMetricsEnabled
 		? 'system.disk.pending_operations'
 		: 'system_disk_pending_operations';
+	const fsUsageKey = dotMetricsEnabled
+		? 'system.filesystem.usage'
+		: 'system_filesystem_usage';
 
 	return [
 		{
@@ -1675,7 +1680,7 @@ export const getHostQueryPayload = (
 							limit: null,
 							orderBy: [],
 							queryName: 'A',
-							reduceTo: 'avg',
+							reduceTo: ReduceOperators.AVG,
 							spaceAggregation: 'sum',
 							stepInterval: 60,
 							timeAggregation: 'rate',
@@ -1716,7 +1721,7 @@ export const getHostQueryPayload = (
 							limit: null,
 							orderBy: [],
 							queryName: 'B',
-							reduceTo: 'avg',
+							reduceTo: ReduceOperators.AVG,
 							spaceAggregation: 'sum',
 							stepInterval: 60,
 							timeAggregation: 'rate',
@@ -1792,7 +1797,7 @@ export const getHostQueryPayload = (
 							limit: null,
 							orderBy: [],
 							queryName: 'A',
-							reduceTo: 'avg',
+							reduceTo: ReduceOperators.AVG,
 							spaceAggregation: 'sum',
 							stepInterval: 60,
 							timeAggregation: 'avg',
@@ -1853,7 +1858,7 @@ export const getHostQueryPayload = (
 							limit: 30,
 							orderBy: [],
 							queryName: 'A',
-							reduceTo: 'avg',
+							reduceTo: ReduceOperators.AVG,
 							spaceAggregation: 'sum',
 							stepInterval: 60,
 							timeAggregation: 'avg',
@@ -1894,7 +1899,7 @@ export const getHostQueryPayload = (
 							limit: 30,
 							orderBy: [],
 							queryName: 'B',
-							reduceTo: 'avg',
+							reduceTo: ReduceOperators.AVG,
 							spaceAggregation: 'sum',
 							stepInterval: 60,
 							timeAggregation: 'avg',
@@ -1935,7 +1940,7 @@ export const getHostQueryPayload = (
 							limit: 30,
 							orderBy: [],
 							queryName: 'C',
-							reduceTo: 'avg',
+							reduceTo: ReduceOperators.AVG,
 							spaceAggregation: 'sum',
 							stepInterval: 60,
 							timeAggregation: 'avg',
@@ -2017,7 +2022,7 @@ export const getHostQueryPayload = (
 							limit: 30,
 							orderBy: [],
 							queryName: 'A',
-							reduceTo: 'avg',
+							reduceTo: ReduceOperators.AVG,
 							spaceAggregation: 'sum',
 							stepInterval: 60,
 							timeAggregation: 'rate',
@@ -2093,7 +2098,7 @@ export const getHostQueryPayload = (
 							limit: 30,
 							orderBy: [],
 							queryName: 'A',
-							reduceTo: 'avg',
+							reduceTo: ReduceOperators.AVG,
 							spaceAggregation: 'sum',
 							stepInterval: 60,
 							timeAggregation: 'rate',
@@ -2169,7 +2174,7 @@ export const getHostQueryPayload = (
 							limit: 30,
 							orderBy: [],
 							queryName: 'A',
-							reduceTo: 'avg',
+							reduceTo: ReduceOperators.AVG,
 							spaceAggregation: 'sum',
 							stepInterval: 60,
 							timeAggregation: 'rate',
@@ -2245,7 +2250,7 @@ export const getHostQueryPayload = (
 							limit: 30,
 							orderBy: [],
 							queryName: 'A',
-							reduceTo: 'avg',
+							reduceTo: ReduceOperators.AVG,
 							spaceAggregation: 'sum',
 							stepInterval: 60,
 							timeAggregation: 'rate',
@@ -2321,7 +2326,7 @@ export const getHostQueryPayload = (
 							limit: 30,
 							orderBy: [],
 							queryName: 'A',
-							reduceTo: 'avg',
+							reduceTo: ReduceOperators.AVG,
 							spaceAggregation: 'sum',
 							stepInterval: 60,
 							timeAggregation: 'avg',
@@ -2376,13 +2381,28 @@ export const getHostQueryPayload = (
 								op: 'AND',
 							},
 							functions: [],
-							groupBy: [],
+							groupBy: [
+								{
+									dataType: DataTypes.String,
+									id: 'direction--string--tag--false',
+
+									key: 'direction',
+									type: 'tag',
+								},
+								{
+									dataType: DataTypes.String,
+									id: 'device--string--tag--false',
+
+									key: 'device',
+									type: 'tag',
+								},
+							],
 							having: [],
-							legend: 'system disk io',
+							legend: '{{device}}::{{direction}}',
 							limit: null,
 							orderBy: [],
 							queryName: 'A',
-							reduceTo: 'avg',
+							reduceTo: ReduceOperators.AVG,
 							spaceAggregation: 'sum',
 							stepInterval: 60,
 							timeAggregation: 'rate',
@@ -2410,9 +2430,9 @@ export const getHostQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
-								id: 'system_disk_operation_time--float64--Sum--true',
+								id: 'system_disk_operations--float64--Sum--true',
 
-								key: diskOpTimeKey,
+								key: diskOpsKey,
 								type: 'Sum',
 							},
 							aggregateOperator: 'rate',
@@ -2422,7 +2442,7 @@ export const getHostQueryPayload = (
 							filters: {
 								items: [
 									{
-										id: 'diskop_f1',
+										id: 'diskops_f1',
 										key: {
 											dataType: DataTypes.String,
 											id: 'host_name--string--tag--false',
@@ -2455,7 +2475,7 @@ export const getHostQueryPayload = (
 							],
 							having: [
 								{
-									columnName: `SUM(${diskOpTimeKey})`,
+									columnName: `SUM(${diskOpsKey})`,
 									op: '>',
 									value: 0,
 								},
@@ -2464,7 +2484,7 @@ export const getHostQueryPayload = (
 							limit: null,
 							orderBy: [],
 							queryName: 'A',
-							reduceTo: 'avg',
+							reduceTo: ReduceOperators.AVG,
 							spaceAggregation: 'sum',
 							stepInterval: 60,
 							timeAggregation: 'rate',
@@ -2539,7 +2559,7 @@ export const getHostQueryPayload = (
 							limit: null,
 							orderBy: [],
 							queryName: 'A',
-							reduceTo: 'avg',
+							reduceTo: ReduceOperators.AVG,
 							spaceAggregation: 'sum',
 							stepInterval: 60,
 							timeAggregation: 'max',
@@ -2550,6 +2570,237 @@ export const getHostQueryPayload = (
 				},
 				clickhouse_sql: [{ disabled: false, legend: '', name: 'A', query: '' }],
 				id: 'f4cfc2a5-78fc-42cc-8f4a-194c8c916132',
+				promql: [{ disabled: false, legend: '', name: 'A', query: '' }],
+				queryType: EQueryType.QUERY_BUILDER,
+			},
+			variables: {},
+			formatForWeb: false,
+			start,
+			end,
+		},
+		{
+			selectedTime: 'GLOBAL_TIME',
+			graphType: PANEL_TYPES.TIME_SERIES,
+			query: {
+				builder: {
+					queryData: [
+						{
+							aggregateAttribute: {
+								dataType: DataTypes.Float64,
+								id: 'system_disk_operation_time--float64--Sum--true',
+
+								key: diskOpTimeKey,
+								type: 'Sum',
+							},
+							aggregateOperator: 'rate',
+							dataSource: DataSource.METRICS,
+							disabled: false,
+							expression: 'A',
+							filters: {
+								items: [
+									{
+										id: 'diskoptime_f1',
+										key: {
+											dataType: DataTypes.String,
+											id: 'host_name--string--tag--false',
+
+											key: hostNameKey,
+											type: 'tag',
+										},
+										op: '=',
+										value: hostName,
+									},
+								],
+								op: 'AND',
+							},
+							functions: [],
+							groupBy: [
+								{
+									dataType: DataTypes.String,
+									id: 'device--string--tag--false',
+
+									key: 'device',
+									type: 'tag',
+								},
+								{
+									dataType: DataTypes.String,
+									id: 'direction--string--tag--false',
+
+									key: 'direction',
+									type: 'tag',
+								},
+							],
+							having: [
+								{
+									columnName: `SUM(${diskOpTimeKey})`,
+									op: '>',
+									value: 0,
+								},
+							],
+							legend: '{{device}}::{{direction}}',
+							limit: null,
+							orderBy: [],
+							queryName: 'A',
+							reduceTo: ReduceOperators.AVG,
+							spaceAggregation: 'sum',
+							stepInterval: 60,
+							timeAggregation: 'rate',
+						},
+					],
+					queryFormulas: [],
+					queryTraceOperator: [],
+				},
+				clickhouse_sql: [{ disabled: false, legend: '', name: 'A', query: '' }],
+				id: 'a8b3d2e1-4f5c-4a6b-9c8d-7e2f1a0b3c4f',
+				promql: [{ disabled: false, legend: '', name: 'A', query: '' }],
+				queryType: EQueryType.QUERY_BUILDER,
+			},
+			variables: {},
+			formatForWeb: false,
+			start,
+			end,
+		},
+		{
+			selectedTime: 'GLOBAL_TIME',
+			graphType: PANEL_TYPES.TIME_SERIES,
+			query: {
+				builder: {
+					queryData: [
+						{
+							aggregateAttribute: {
+								dataType: DataTypes.Float64,
+								id: 'system_filesystem_usage--float64--Gauge--true',
+
+								key: fsUsageKey,
+								type: 'Gauge',
+							},
+							aggregateOperator: 'avg',
+							dataSource: DataSource.METRICS,
+							disabled: true,
+							expression: 'A',
+							filters: {
+								items: [
+									{
+										id: 'fs_f1',
+										key: {
+											dataType: DataTypes.String,
+											id: 'host_name--string--tag--false',
+
+											key: hostNameKey,
+											type: 'tag',
+										},
+										op: '=',
+										value: hostName,
+									},
+									{
+										id: 'fs_f2',
+										key: {
+											dataType: DataTypes.String,
+											id: 'state--string--tag--false',
+
+											key: 'state',
+											type: 'tag',
+										},
+										op: '=',
+										value: 'used',
+									},
+								],
+								op: 'AND',
+							},
+							functions: [],
+							groupBy: [
+								{
+									dataType: DataTypes.String,
+									id: 'mountpoint--string--tag--false',
+
+									key: 'mountpoint',
+									type: 'tag',
+								},
+							],
+							having: [
+								{
+									columnName: `SUM(${fsUsageKey})`,
+									op: '>',
+									value: 0,
+								},
+							],
+							legend: '{{mountpoint}}',
+							limit: null,
+							orderBy: [],
+							queryName: 'A',
+							reduceTo: ReduceOperators.AVG,
+							spaceAggregation: 'sum',
+							stepInterval: 60,
+							timeAggregation: 'avg',
+						},
+						{
+							aggregateAttribute: {
+								dataType: DataTypes.Float64,
+								id: 'system_filesystem_usage--float64--Gauge--true',
+
+								key: fsUsageKey,
+								type: 'Gauge',
+							},
+							aggregateOperator: 'avg',
+							dataSource: DataSource.METRICS,
+							disabled: true,
+							expression: 'B',
+							filters: {
+								items: [
+									{
+										id: 'fs_f3',
+										key: {
+											dataType: DataTypes.String,
+											id: 'host_name--string--tag--false',
+
+											key: hostNameKey,
+											type: 'tag',
+										},
+										op: '=',
+										value: hostName,
+									},
+								],
+								op: 'AND',
+							},
+							functions: [],
+							groupBy: [
+								{
+									dataType: DataTypes.String,
+									id: 'mountpoint--string--tag--false',
+
+									key: 'mountpoint',
+									type: 'tag',
+								},
+							],
+							having: [
+								{
+									columnName: `SUM(${fsUsageKey})`,
+									op: '>',
+									value: 0,
+								},
+							],
+							legend: '{{mountpoint}}',
+							limit: null,
+							orderBy: [],
+							queryName: 'B',
+							reduceTo: ReduceOperators.AVG,
+							spaceAggregation: 'sum',
+							stepInterval: 60,
+							timeAggregation: 'avg',
+						},
+					],
+					queryFormulas: [
+						{
+							disabled: false,
+							expression: 'A/B',
+							legend: '{{mountpoint}}',
+							queryName: 'F1',
+						},
+					],
+					queryTraceOperator: [],
+				},
+				clickhouse_sql: [{ disabled: false, legend: '', name: 'A', query: '' }],
+				id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
 				promql: [{ disabled: false, legend: '', name: 'A', query: '' }],
 				queryType: EQueryType.QUERY_BUILDER,
 			},
@@ -2632,5 +2883,6 @@ export const hostWidgetInfo = [
 	{ title: 'System disk io (bytes transferred)', yAxisUnit: 'bytes' },
 	{ title: 'System disk operations/s', yAxisUnit: 'short' },
 	{ title: 'Queue size', yAxisUnit: 'short' },
-	{ title: 'Disk operations time', yAxisUnit: 's' },
+	{ title: 'System disk operation time/s', yAxisUnit: 's' },
+	{ title: 'Disk Usage (%) by mountpoint', yAxisUnit: 'percentunit' },
 ];

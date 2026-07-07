@@ -11,6 +11,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
+	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"golang.org/x/exp/slices"
 )
@@ -97,7 +99,7 @@ func NewDaemonSetsRepo(reader interfaces.Reader, querierV2 interfaces.Querier) *
 	return &DaemonSetsRepo{reader: reader, querierV2: querierV2}
 }
 
-func (d *DaemonSetsRepo) GetDaemonSetAttributeKeys(ctx context.Context, req v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
+func (d *DaemonSetsRepo) GetDaemonSetAttributeKeys(ctx context.Context, orgID valuer.UUID, req v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
 	// TODO(srikanthccv): remove hardcoded metric name and support keys from any pod metric
 	req.DataSource = v3.DataSourceMetrics
 	req.AggregateAttribute = metricToUseForDaemonSets
@@ -105,7 +107,7 @@ func (d *DaemonSetsRepo) GetDaemonSetAttributeKeys(ctx context.Context, req v3.F
 		req.Limit = 50
 	}
 
-	attributeKeysResponse, err := d.reader.GetMetricAttributeKeys(ctx, &req)
+	attributeKeysResponse, err := d.reader.GetMetricAttributeKeys(ctx, orgID, &req)
 	if err != nil {
 		return nil, err
 	}
@@ -123,14 +125,14 @@ func (d *DaemonSetsRepo) GetDaemonSetAttributeKeys(ctx context.Context, req v3.F
 	return &v3.FilterAttributeKeyResponse{AttributeKeys: filteredKeys}, nil
 }
 
-func (d *DaemonSetsRepo) GetDaemonSetAttributeValues(ctx context.Context, req v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
+func (d *DaemonSetsRepo) GetDaemonSetAttributeValues(ctx context.Context, orgID valuer.UUID, req v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
 	req.DataSource = v3.DataSourceMetrics
 	req.AggregateAttribute = metricToUseForDaemonSets
 	if req.Limit == 0 {
 		req.Limit = 50
 	}
 
-	attributeValuesResponse, err := d.reader.GetMetricAttributeValues(ctx, &req)
+	attributeValuesResponse, err := d.reader.GetMetricAttributeValues(ctx, orgID, &req)
 	if err != nil {
 		return nil, err
 	}
@@ -230,6 +232,10 @@ func (d *DaemonSetsRepo) getTopDaemonSetGroups(ctx context.Context, orgID valuer
 		topDaemonSetGroupsQueryRangeParams.CompositeQuery.BuilderQueries[queryName] = query
 	}
 
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "inframetrics",
+		instrumentationtypes.CodeFunctionName: "getTopDaemonSetGroups",
+	})
 	queryResponse, _, err := d.querierV2.QueryRange(ctx, orgID, topDaemonSetGroupsQueryRangeParams)
 	if err != nil {
 		return nil, nil, err
@@ -355,6 +361,10 @@ func (d *DaemonSetsRepo) GetDaemonSetList(ctx context.Context, orgID valuer.UUID
 		}
 	}
 
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "inframetrics",
+		instrumentationtypes.CodeFunctionName: "GetDaemonSetList",
+	})
 	queryResponse, _, err := d.querierV2.QueryRange(ctx, orgID, query)
 	if err != nil {
 		return resp, err

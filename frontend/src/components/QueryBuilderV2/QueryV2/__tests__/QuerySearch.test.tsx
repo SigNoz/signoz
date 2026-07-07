@@ -1,11 +1,9 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable sonarjs/cognitive-complexity */
-/* eslint-disable import/named */
+import { EditorView } from '@uiw/react-codemirror';
 import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
 import { getValueSuggestions } from 'api/querySuggestions/getValueSuggestion';
 import { initialQueriesMap } from 'constants/queryBuilder';
-import * as UseQBModule from 'hooks/queryBuilder/useQueryBuilder';
 import { fireEvent, render, userEvent, waitFor } from 'tests/test-utils';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import type { QueryKeyDataSuggestionsProps } from 'types/api/querySuggestions/types';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -38,14 +36,14 @@ beforeAll(() => {
 		const mockRange = {
 			// CodeMirror uses these for text measurement
 			getClientRects: (): DOMRectList =>
-				(({
+				({
 					length: 1,
 					item: (index: number): DOMRect | null => (index === 0 ? mockRect : null),
 					0: mockRect,
 					*[Symbol.iterator](): Generator<DOMRect> {
 						yield mockRect;
 					},
-				} as unknown) as DOMRectList),
+				}) as unknown as DOMRectList,
 			getBoundingClientRect: (): DOMRect => mockRect,
 			// CodeMirror calls these to set up text ranges
 			setStart: (node: Node, offset: number): void => {
@@ -74,7 +72,7 @@ beforeAll(() => {
 			},
 			commonAncestorContainer: document.body,
 		};
-		return (mockRange as unknown) as Range;
+		return mockRange as unknown as Range;
 	};
 
 	// Mock document.createRange to return a new Range instance each time
@@ -88,9 +86,9 @@ jest.mock('hooks/useDarkMode', () => ({
 	useIsDarkMode: (): boolean => false,
 }));
 
-jest.mock('providers/Dashboard/Dashboard', () => ({
-	useDashboard: (): { selectedDashboard: undefined } => ({
-		selectedDashboard: undefined,
+jest.mock('providers/Dashboard/store/useDashboardStore', () => ({
+	useDashboardStore: (): { dashboardData: undefined } => ({
+		dashboardData: undefined,
 	}),
 }));
 
@@ -120,13 +118,8 @@ jest.mock('api/querySuggestions/getValueSuggestion', () => ({
 // Note: We're NOT mocking CodeMirror here - using the real component
 // This provides integration testing with the actual CodeMirror editor
 
-const handleRunQueryMock = ((UseQBModule as unknown) as {
-	handleRunQuery: jest.MockedFunction<() => void>;
-}).handleRunQuery;
-
 const SAMPLE_KEY_TYPING = 'http.';
 const SAMPLE_VALUE_TYPING_INCOMPLETE = "service.name = '";
-const SAMPLE_VALUE_TYPING_COMPLETE = "service.name = 'frontend'";
 const SAMPLE_STATUS_QUERY = "http.status_code = '200'";
 
 describe('QuerySearch (Integration with Real CodeMirror)', () => {
@@ -151,8 +144,6 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 		>;
 		mockedGetKeys.mockClear();
 
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
-
 		render(
 			<QuerySearch
 				onChange={jest.fn() as jest.MockedFunction<(v: string) => void>}
@@ -171,8 +162,8 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 		const editor = document.querySelector(CM_EDITOR_SELECTOR) as HTMLElement;
 
 		// Focus and type into the editor
-		await user.click(editor);
-		await user.type(editor, SAMPLE_KEY_TYPING);
+		await userEvent.click(editor);
+		await userEvent.type(editor, SAMPLE_KEY_TYPING);
 
 		// Wait for debounced API call (300ms debounce + some buffer)
 		await waitFor(() => expect(mockedGetKeys).toHaveBeenCalled(), {
@@ -186,8 +177,6 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 			typeof getValueSuggestions
 		>;
 		mockedGetValues.mockClear();
-
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 		render(
 			<QuerySearch
@@ -204,8 +193,8 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 		});
 
 		const editor = document.querySelector(CM_EDITOR_SELECTOR) as HTMLElement;
-		await user.click(editor);
-		await user.type(editor, SAMPLE_VALUE_TYPING_INCOMPLETE);
+		await userEvent.click(editor);
+		await userEvent.type(editor, SAMPLE_VALUE_TYPING_INCOMPLETE);
 
 		// Wait for debounced API call (300ms debounce + some buffer)
 		await waitFor(() => expect(mockedGetValues).toHaveBeenCalled(), {
@@ -241,7 +230,6 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 
 	it('calls provided onRun on Mod-Enter', async () => {
 		const onRun = jest.fn() as jest.MockedFunction<(q: string) => void>;
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 		render(
 			<QuerySearch
@@ -259,8 +247,8 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 		});
 
 		const editor = document.querySelector(CM_EDITOR_SELECTOR) as HTMLElement;
-		await user.click(editor);
-		await user.type(editor, SAMPLE_STATUS_QUERY);
+		await userEvent.click(editor);
+		await userEvent.type(editor, SAMPLE_STATUS_QUERY);
 
 		// Use fireEvent for keyboard shortcuts as userEvent might not work well with CodeMirror
 		const modKey = navigator.platform.includes('Mac') ? 'metaKey' : 'ctrlKey';
@@ -272,46 +260,6 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 		});
 
 		await waitFor(() => expect(onRun).toHaveBeenCalled(), { timeout: 2000 });
-	});
-
-	it('calls handleRunQuery when Mod-Enter without onRun', async () => {
-		const mockedHandleRunQuery = handleRunQueryMock as jest.MockedFunction<
-			() => void
-		>;
-		mockedHandleRunQuery.mockClear();
-
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
-
-		render(
-			<QuerySearch
-				onChange={jest.fn() as jest.MockedFunction<(v: string) => void>}
-				queryData={initialQueriesMap.logs.builder.queryData[0]}
-				dataSource={DataSource.LOGS}
-			/>,
-		);
-
-		// Wait for CodeMirror to initialize
-		await waitFor(() => {
-			const editor = document.querySelector(CM_EDITOR_SELECTOR);
-			expect(editor).toBeInTheDocument();
-		});
-
-		const editor = document.querySelector(CM_EDITOR_SELECTOR) as HTMLElement;
-		await user.click(editor);
-		await user.type(editor, SAMPLE_VALUE_TYPING_COMPLETE);
-
-		// Use fireEvent for keyboard shortcuts as userEvent might not work well with CodeMirror
-		const modKey = navigator.platform.includes('Mac') ? 'metaKey' : 'ctrlKey';
-		fireEvent.keyDown(editor, {
-			key: 'Enter',
-			code: 'Enter',
-			[modKey]: true,
-			keyCode: 13,
-		});
-
-		await waitFor(() => expect(mockedHandleRunQuery).toHaveBeenCalled(), {
-			timeout: 2000,
-		});
 	});
 
 	it('initializes CodeMirror with expression from queryData.filter.expression on mount', async () => {
@@ -346,6 +294,107 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 				expect(textContent).toContain('service.name');
 			},
 			{ timeout: 3000 },
+		);
+	});
+
+	it('handles queryData.filter.expression changes without triggering onChange', async () => {
+		// Spy on CodeMirror's EditorView.dispatch, which is invoked when updateEditorValue
+		// applies a programmatic change to the editor.
+		const dispatchSpy = jest.spyOn(EditorView.prototype, 'dispatch');
+		const initialExpression = "service.name = 'frontend'";
+		const updatedExpression = "service.name = 'backend'";
+
+		const onChange = jest.fn() as jest.MockedFunction<(v: string) => void>;
+
+		const initialQueryData = {
+			...initialQueriesMap.logs.builder.queryData[0],
+			filter: {
+				expression: initialExpression,
+			},
+		};
+
+		const { rerender } = render(
+			<QuerySearch
+				onChange={onChange}
+				queryData={initialQueryData}
+				dataSource={DataSource.LOGS}
+			/>,
+		);
+
+		// Wait for CodeMirror to initialize with the initial expression
+		await waitFor(
+			() => {
+				const editorContent = document.querySelector(
+					CM_EDITOR_SELECTOR,
+				) as HTMLElement;
+				expect(editorContent).toBeInTheDocument();
+				const textContent = editorContent.textContent || '';
+				expect(textContent).toBe(initialExpression);
+			},
+			{ timeout: 3000 },
+		);
+
+		// Ensure the editor is explicitly blurred (not focused)
+		// Blur the actual CodeMirror editor container so that QuerySearch's onBlur handler runs.
+		// Note: In jsdom + CodeMirror we can't reliably assert the DOM text content changes when
+		// the expression is updated programmatically, but we can assert that:
+		// 1) The component continues to render, and
+		// 2) No onChange is fired for programmatic updates.
+
+		const updatedQueryData = {
+			...initialQueryData,
+			filter: {
+				expression: updatedExpression,
+			},
+		};
+
+		// Re-render with updated queryData.filter.expression
+		rerender(
+			<QuerySearch
+				onChange={onChange}
+				queryData={updatedQueryData}
+				dataSource={DataSource.LOGS}
+			/>,
+		);
+
+		// updateEditorValue should have resulted in a dispatch call + onChange should not have been called
+		await waitFor(() => {
+			expect(dispatchSpy).toHaveBeenCalled();
+			expect(onChange).not.toHaveBeenCalled();
+		});
+
+		dispatchSpy.mockRestore();
+	});
+
+	it('fetches key suggestions for metrics even without aggregateAttribute.key when showFilterSuggestionsWithoutMetric is true', async () => {
+		const mockedGetKeys = getKeySuggestions as jest.MockedFunction<
+			typeof getKeySuggestions
+		>;
+		mockedGetKeys.mockClear();
+
+		const queryData = {
+			...initialQueriesMap.metrics.builder.queryData[0],
+			aggregateAttribute: {
+				key: '',
+				dataType: DataTypes.String,
+				type: 'string',
+			},
+		};
+
+		render(
+			<QuerySearch
+				onChange={jest.fn()}
+				queryData={queryData}
+				dataSource={DataSource.METRICS}
+				showFilterSuggestionsWithoutMetric
+			/>,
+		);
+
+		await waitFor(
+			() => {
+				expect(mockedGetKeys).toHaveBeenCalled();
+			},
+			{ timeout: 2000 },
 		);
 	});
 });

@@ -1,4 +1,5 @@
-import { UniversalYAxisUnit } from '../types';
+import { YAxisCategoryNames } from '../constants';
+import { UniversalYAxisUnit, YAxisCategory } from '../types';
 import {
 	getUniversalNameFromMetricUnit,
 	mapMetricUnitToUniversalUnit,
@@ -15,8 +16,8 @@ describe('YAxisUnitSelector utils', () => {
 
 		it('returns null or self for unknown units', () => {
 			expect(mapMetricUnitToUniversalUnit('unknown_unit')).toBe('unknown_unit');
-			expect(mapMetricUnitToUniversalUnit('')).toBe(null);
-			expect(mapMetricUnitToUniversalUnit(undefined)).toBe(null);
+			expect(mapMetricUnitToUniversalUnit('')).toBeNull();
+			expect(mapMetricUnitToUniversalUnit(undefined)).toBeNull();
 		});
 	});
 
@@ -41,29 +42,29 @@ describe('YAxisUnitSelector utils', () => {
 
 	describe('mergeCategories', () => {
 		it('merges categories correctly', () => {
-			const categories1 = [
+			const categories1: YAxisCategory[] = [
 				{
-					name: 'Data',
+					name: YAxisCategoryNames.Data,
 					units: [
 						{ name: 'bytes', id: UniversalYAxisUnit.BYTES },
 						{ name: 'kilobytes', id: UniversalYAxisUnit.KILOBYTES },
 					],
 				},
 			];
-			const categories2 = [
+			const categories2: YAxisCategory[] = [
 				{
-					name: 'Data',
+					name: YAxisCategoryNames.Data,
 					units: [{ name: 'bits', id: UniversalYAxisUnit.BITS }],
 				},
 				{
-					name: 'Time',
+					name: YAxisCategoryNames.Time,
 					units: [{ name: 'seconds', id: UniversalYAxisUnit.SECONDS }],
 				},
 			];
 			const mergedCategories = mergeCategories(categories1, categories2);
-			expect(mergedCategories).toEqual([
+			expect(mergedCategories).toStrictEqual([
 				{
-					name: 'Data',
+					name: YAxisCategoryNames.Data,
 					units: [
 						{ name: 'bytes', id: UniversalYAxisUnit.BYTES },
 						{ name: 'kilobytes', id: UniversalYAxisUnit.KILOBYTES },
@@ -71,7 +72,7 @@ describe('YAxisUnitSelector utils', () => {
 					],
 				},
 				{
-					name: 'Time',
+					name: YAxisCategoryNames.Time,
 					units: [{ name: 'seconds', id: UniversalYAxisUnit.SECONDS }],
 				},
 			]);

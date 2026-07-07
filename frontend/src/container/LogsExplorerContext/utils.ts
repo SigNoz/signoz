@@ -67,7 +67,9 @@ export const findFirstPriorityItem = (
 
 export const getFallbackItems = (items: TagFilterItem[]): TagFilterItem[] =>
 	items.filter((item) => {
-		if (!item.key?.key) return false;
+		if (!item.key?.key) {
+			return false;
+		}
 
 		const { key } = item.key;
 

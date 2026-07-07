@@ -1,6 +1,9 @@
-import './DateTimeSelectionV2.styles.scss';
-
-import { SyncOutlined } from '@ant-design/icons';
+import { useCallback, useEffect, useState } from 'react';
+// eslint-disable-next-line no-restricted-imports
+import { connect, useDispatch, useSelector } from 'react-redux';
+import { RouteComponentProps, withRouter } from 'react-router-dom';
+import { useNavigationType } from 'react-router-dom-v5-compat';
+import { RefreshCw, Undo } from '@signozhq/icons';
 import { Button } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageKey from 'api/browser/localstorage/set';
@@ -11,42 +14,49 @@ import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import NewExplorerCTA from 'container/NewExplorerCTA';
 import dayjs, { Dayjs } from 'dayjs';
+import {
+	useGlobalTimeQueryInvalidate,
+	useIsGlobalTimeQueryRefreshing,
+} from 'store/globalTime';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useSyncTimeOnStagedQueryChange } from 'hooks/queryBuilder/useSyncTimeOnStagedQueryChange';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import useUrlQuery from 'hooks/useUrlQuery';
-import { isValidTimeFormat } from 'lib/getMinMax';
+import { isValidShortHandDateTimeFormat } from 'lib/getMinMax';
 import getTimeString from 'lib/getTimeString';
 import { cloneDeep, isObject } from 'lodash-es';
-import { Undo } from 'lucide-react';
 import { useTimezone } from 'providers/Timezone';
-import { useCallback, useEffect, useState } from 'react';
-import { connect, useDispatch, useSelector } from 'react-redux';
-import { RouteComponentProps, withRouter } from 'react-router-dom';
-import { useNavigationType, useSearchParams } from 'react-router-dom-v5-compat';
+// eslint-disable-next-line no-restricted-imports
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { GlobalTimeLoading, UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { addCustomTimeRange } from 'utils/customTimeRangeUtils';
+import { persistTimeDurationForRoute } from 'utils/metricsTimeStorageUtils';
 import { normalizeTimeToMs } from 'utils/timeUtils';
 import { v4 as uuid } from 'uuid';
 
 import AutoRefresh from '../AutoRefreshV2';
 import { DateTimeRangeType } from '../CustomDateTimeModal';
-import { RelativeTimeMap } from '../DateTimeSelection/config';
 import {
 	convertOldTimeToNewValidCustomTimeFormat,
-	CustomTimeType,
 	getDefaultOption,
 	getOptions,
-	LocalStorageTimeRange,
 	OLD_RELATIVE_TIME_VALUES,
-	Time,
-	TimeRange,
-} from './config';
+	RelativeTimeMap,
+} from './constants';
 import RefreshText from './Refresh';
 import { Form, FormContainer, FormItem } from './styles';
+import {
+	CustomTimeType,
+	LocalStorageTimeRange,
+	Time,
+	TimeRange,
+} from './types';
+import { getUnstableCurrentSearchParams } from './utils/getUnstableCurrentSearchParams';
+
+import './DateTimeSelectionV2.styles.scss';
 
 function DateTimeSelection({
 	showAutoRefresh,
@@ -73,35 +83,40 @@ function DateTimeSelection({
 	const navigationType = useNavigationType(); // Returns 'POP' for back/forward navigation
 	const dispatch = useDispatch();
 
+	const { maxTime, minTime, selectedTime } = useSelector<
+		AppState,
+		GlobalReducer
+	>((state) => state.globalTime);
+
 	const [hasSelectedTimeError, setHasSelectedTimeError] = useState(false);
 	const [isOpen, setIsOpen] = useState<boolean>(false);
 
-	const urlQuery = useUrlQuery();
-	const searchStartTime = urlQuery.get('startTime');
-	const searchEndTime = urlQuery.get('endTime');
-	const relativeTimeFromUrl = urlQuery.get(QueryParams.relativeTime);
+	const currentSearchParams = getUnstableCurrentSearchParams();
+	const searchStartTime = currentSearchParams.get(QueryParams.startTime);
+	const searchEndTime = currentSearchParams.get(QueryParams.endTime);
+	const relativeTimeFromUrl = currentSearchParams.get(QueryParams.relativeTime);
+	const hasTimeParamsInUrl =
+		(searchStartTime && searchEndTime) || relativeTimeFromUrl;
 
 	// Prioritize props for initial modal time, fallback to URL params
 	let initialModalStartTime = 0;
 	if (modalInitialStartTime !== undefined) {
 		initialModalStartTime = modalInitialStartTime;
 	} else if (searchStartTime) {
-		initialModalStartTime = parseInt(searchStartTime, 10);
+		initialModalStartTime = Number.parseInt(searchStartTime, 10);
 	}
 
 	let initialModalEndTime = 0;
 	if (modalInitialEndTime !== undefined) {
 		initialModalEndTime = modalInitialEndTime;
 	} else if (searchEndTime) {
-		initialModalEndTime = parseInt(searchEndTime, 10);
+		initialModalEndTime = Number.parseInt(searchEndTime, 10);
 	}
 
 	const [modalStartTime, setModalStartTime] = useState<number>(
 		initialModalStartTime,
 	);
 	const [modalEndTime, setModalEndTime] = useState<number>(initialModalEndTime);
-
-	const [searchParams] = useSearchParams();
 
 	// Effect to update modal time state when props change
 	useEffect(() => {
@@ -113,42 +128,42 @@ function DateTimeSelection({
 		}
 	}, [modalInitialStartTime, modalInitialEndTime]);
 
-	const {
-		localstorageStartTime,
-		localstorageEndTime,
-	} = ((): LocalStorageTimeRange => {
-		const routes = getLocalStorageKey(LOCALSTORAGE.METRICS_TIME_IN_DURATION);
+	const { localstorageStartTime, localstorageEndTime } =
+		((): LocalStorageTimeRange => {
+			const routes = getLocalStorageKey(LOCALSTORAGE.METRICS_TIME_IN_DURATION);
 
-		if (routes !== null) {
-			const routesObject = JSON.parse(routes || '{}');
-			const selectedTime = routesObject[location.pathname];
+			if (routes !== null) {
+				const routesObject = JSON.parse(routes || '{}');
+				const selectedTime = routesObject[location.pathname];
 
-			if (selectedTime) {
-				let parsedSelectedTime: TimeRange;
-				try {
-					parsedSelectedTime = JSON.parse(selectedTime);
-				} catch {
-					parsedSelectedTime = selectedTime;
+				if (selectedTime) {
+					let parsedSelectedTime: TimeRange;
+					try {
+						parsedSelectedTime = JSON.parse(selectedTime);
+					} catch {
+						parsedSelectedTime = selectedTime;
+					}
+
+					if (isObject(parsedSelectedTime)) {
+						return {
+							localstorageStartTime: parsedSelectedTime.startTime,
+							localstorageEndTime: parsedSelectedTime.endTime,
+						};
+					}
+					return { localstorageStartTime: null, localstorageEndTime: null };
 				}
-
-				if (isObject(parsedSelectedTime)) {
-					return {
-						localstorageStartTime: parsedSelectedTime.startTime,
-						localstorageEndTime: parsedSelectedTime.endTime,
-					};
-				}
-				return { localstorageStartTime: null, localstorageEndTime: null };
 			}
-		}
-		return { localstorageStartTime: null, localstorageEndTime: null };
-	})();
+			return { localstorageStartTime: null, localstorageEndTime: null };
+		})();
 
 	const getTime = useCallback((): [number, number] | undefined => {
 		if (searchEndTime && searchStartTime) {
 			const startDate = dayjs(
-				new Date(parseInt(getTimeString(searchStartTime), 10)),
+				new Date(Number.parseInt(getTimeString(searchStartTime), 10)),
 			);
-			const endDate = dayjs(new Date(parseInt(getTimeString(searchEndTime), 10)));
+			const endDate = dayjs(
+				new Date(Number.parseInt(getTimeString(searchEndTime), 10)),
+			);
 
 			return [startDate.toDate().getTime() || 0, endDate.toDate().getTime() || 0];
 		}
@@ -168,16 +183,12 @@ function DateTimeSelection({
 
 	const [options, setOptions] = useState(getOptions(location.pathname));
 	const [refreshButtonHidden, setRefreshButtonHidden] = useState<boolean>(false);
-	const [customDateTimeVisible, setCustomDTPickerVisible] = useState<boolean>(
-		false,
-	);
+	const [customDateTimeVisible, setCustomDTPickerVisible] =
+		useState<boolean>(false);
 
 	const { stagedQuery, currentQuery, initQueryBuilderData } = useQueryBuilder();
 
-	const { maxTime, minTime, selectedTime } = useSelector<
-		AppState,
-		GlobalReducer
-	>((state) => state.globalTime);
+	useSyncTimeOnStagedQueryChange(stagedQuery?.id);
 
 	const getInputLabel = (
 		startTime?: Dayjs,
@@ -193,16 +204,6 @@ function DateTimeSelection({
 		}
 		return timeInterval;
 	};
-
-	useEffect(() => {
-		if (selectedTime === 'custom') {
-			setRefreshButtonHidden(true);
-			setCustomDTPickerVisible(true);
-		} else {
-			setRefreshButtonHidden(false);
-			setCustomDTPickerVisible(false);
-		}
-	}, [selectedTime]);
 
 	useEffect(() => {
 		if (isModalTimeSelection && modalSelectedInterval === 'custom') {
@@ -239,20 +240,7 @@ function DateTimeSelection({
 
 	const updateLocalStorageForRoutes = useCallback(
 		(value: Time | string): void => {
-			const preRoutes = getLocalStorageKey(LOCALSTORAGE.METRICS_TIME_IN_DURATION);
-			if (preRoutes !== null) {
-				const preRoutesObject = JSON.parse(preRoutes);
-
-				const preRoute = {
-					...preRoutesObject,
-				};
-				preRoute[location.pathname] = value;
-
-				setLocalStorageKey(
-					LOCALSTORAGE.METRICS_TIME_IN_DURATION,
-					JSON.stringify(preRoute),
-				);
-			}
+			persistTimeDurationForRoute(location.pathname, String(value));
 		},
 		[location.pathname],
 	);
@@ -338,14 +326,15 @@ function DateTimeSelection({
 				return;
 			}
 
-			urlQuery.delete('startTime');
-			urlQuery.delete('endTime');
+			const urlQuery = getUnstableCurrentSearchParams();
+			urlQuery.delete(QueryParams.startTime);
+			urlQuery.delete(QueryParams.endTime);
 
 			urlQuery.set(QueryParams.relativeTime, value);
 			// Remove Hidden Filters from URL query parameters on time change
 			urlQuery.delete(QueryParams.activeLogId);
 
-			if (searchParams.has(QueryParams.compositeQuery)) {
+			if (urlQuery.has(QueryParams.compositeQuery)) {
 				const updatedCompositeQuery = getUpdatedCompositeQuery();
 				urlQuery.set(QueryParams.compositeQuery, updatedCompositeQuery);
 			}
@@ -364,13 +353,18 @@ function DateTimeSelection({
 			getUpdatedCompositeQuery,
 			updateLocalStorageForRoutes,
 			updateTimeInterval,
-			urlQuery,
-			searchParams,
 		],
 	);
 
+	const isRefreshingQueries = useIsGlobalTimeQueryRefreshing();
+	const invalidateQueries = useGlobalTimeQueryInvalidate();
 	const onRefreshHandler = (): void => {
-		onSelectHandler(selectedTime);
+		invalidateQueries();
+		onSelectHandler(
+			isModalTimeSelection && modalSelectedInterval
+				? modalSelectedInterval
+				: selectedTime,
+		);
 		onLastRefreshHandler();
 	};
 	const handleReset = useCallback(() => {
@@ -408,17 +402,21 @@ function DateTimeSelection({
 				const startTime = startTimeMoment;
 				const endTime = endTimeMoment;
 				setCustomDTPickerVisible(false);
+				setRefreshButtonHidden(true);
 
 				updateTimeInterval('custom', [
 					startTime.toDate().getTime(),
 					endTime.toDate().getTime(),
 				]);
 
+				addCustomTimeRange([startTime, endTime]);
+
 				setLocalStorageKey('startTime', startTime.toString());
 				setLocalStorageKey('endTime', endTime.toString());
 
 				updateLocalStorageForRoutes(JSON.stringify({ startTime, endTime }));
 
+				const urlQuery = getUnstableCurrentSearchParams();
 				urlQuery.set(
 					QueryParams.startTime,
 					startTime?.toDate().getTime().toString(),
@@ -426,7 +424,7 @@ function DateTimeSelection({
 				urlQuery.set(QueryParams.endTime, endTime?.toDate().getTime().toString());
 				urlQuery.delete(QueryParams.relativeTime);
 
-				if (searchParams.has(QueryParams.compositeQuery)) {
+				if (urlQuery.has(QueryParams.compositeQuery)) {
 					const updatedCompositeQuery = getUpdatedCompositeQuery();
 					urlQuery.set(QueryParams.compositeQuery, updatedCompositeQuery);
 				}
@@ -446,8 +444,9 @@ function DateTimeSelection({
 		updateTimeInterval(dateTimeStr);
 		updateLocalStorageForRoutes(dateTimeStr);
 
-		urlQuery.delete('startTime');
-		urlQuery.delete('endTime');
+		const urlQuery = getUnstableCurrentSearchParams();
+		urlQuery.delete(QueryParams.startTime);
+		urlQuery.delete(QueryParams.endTime);
 
 		urlQuery.set(QueryParams.relativeTime, dateTimeStr);
 
@@ -469,7 +468,10 @@ function DateTimeSelection({
 	): Time | CustomTimeType => {
 		// if the relativeTime param is present in the url give top most preference to the same
 		// if the relativeTime param is not valid then move to next preference
-		if (relativeTimeFromUrl != null && isValidTimeFormat(relativeTimeFromUrl)) {
+		if (
+			relativeTimeFromUrl != null &&
+			isValidShortHandDateTimeFormat(relativeTimeFromUrl)
+		) {
 			return relativeTimeFromUrl as Time;
 		}
 
@@ -535,7 +537,9 @@ function DateTimeSelection({
 
 	// Sync time picker state with URL on browser navigation
 	useEffect(() => {
-		if (navigationType !== 'POP') return;
+		if (navigationType !== 'POP') {
+			return;
+		}
 
 		if (searchStartTime && searchEndTime) {
 			handleAbsoluteTimeSync(searchStartTime, searchEndTime, minTime, maxTime);
@@ -544,7 +548,7 @@ function DateTimeSelection({
 
 		if (
 			relativeTimeFromUrl &&
-			isValidTimeFormat(relativeTimeFromUrl) &&
+			isValidShortHandDateTimeFormat(relativeTimeFromUrl) &&
 			relativeTimeFromUrl !== selectedTime
 		) {
 			handleRelativeTimeSync(relativeTimeFromUrl);
@@ -588,20 +592,19 @@ function DateTimeSelection({
 			!searchStartTime &&
 			!searchEndTime &&
 			relativeTimeFromUrl &&
-			isValidTimeFormat(relativeTimeFromUrl)
+			isValidShortHandDateTimeFormat(relativeTimeFromUrl)
 		) {
 			handleRelativeTimeSync(relativeTimeFromUrl);
 		}
 
 		// set the default relative time for alert history and overview pages if relative time is not specified
 		if (
-			(!urlQuery.has(QueryParams.startTime) ||
-				!urlQuery.has(QueryParams.endTime)) &&
-			!urlQuery.has(QueryParams.relativeTime) &&
+			!hasTimeParamsInUrl &&
 			(currentRoute === ROUTES.ALERT_OVERVIEW ||
 				currentRoute === ROUTES.ALERT_HISTORY)
 		) {
 			updateTimeInterval(defaultRelativeTime);
+			const urlQuery = getUnstableCurrentSearchParams();
 			urlQuery.set(QueryParams.relativeTime, defaultRelativeTime);
 			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
 			safeNavigate(generatedUrl);
@@ -625,9 +628,10 @@ function DateTimeSelection({
 			updateTimeInterval(updatedTime, [preStartTime, preEndTime]);
 		}
 
+		const urlQuery = getUnstableCurrentSearchParams();
 		if (updatedTime !== 'custom') {
-			urlQuery.delete('startTime');
-			urlQuery.delete('endTime');
+			urlQuery.delete(QueryParams.startTime);
+			urlQuery.delete(QueryParams.endTime);
 			urlQuery.set(QueryParams.relativeTime, updatedTime);
 		} else {
 			const startTime = preStartTime.toString();
@@ -659,6 +663,14 @@ function DateTimeSelection({
 			isModalTimeSelection ? modalSelectedInterval : selectedTime,
 		);
 	};
+
+	const minTimeForDateTimePicker = isModalTimeSelection
+		? modalStartTime * 1000000
+		: minTime;
+
+	const maxTimeForDateTimePicker = isModalTimeSelection
+		? modalEndTime * 1000000
+		: maxTime;
 
 	return (
 		<div className="date-time-selector">
@@ -692,6 +704,7 @@ function DateTimeSelection({
 					/>
 				</div>
 			)}
+
 			<Form
 				form={formSelector}
 				layout="inline"
@@ -724,12 +737,19 @@ function DateTimeSelection({
 						setCustomDTPickerVisible={setCustomDTPickerVisible}
 						onExitLiveLogs={onExitLiveLogs}
 						showRecentlyUsed={showRecentlyUsed}
+						minTime={minTimeForDateTimePicker}
+						maxTime={maxTimeForDateTimePicker}
+						isModalTimeSelection={isModalTimeSelection}
 					/>
 
 					{showAutoRefresh && selectedTime !== 'custom' && (
 						<div className="refresh-actions">
 							<FormItem hidden={refreshButtonHidden} className="refresh-btn">
-								<Button icon={<SyncOutlined />} onClick={onRefreshHandler} />
+								<Button
+									icon={<RefreshCw size={16} />}
+									loading={!!isRefreshingQueries}
+									onClick={onRefreshHandler}
+								/>
 							</FormItem>
 
 							<FormItem>
