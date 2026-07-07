@@ -1038,21 +1038,8 @@ func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params 
 			err := r.setColdStorage(context.Background(), tableName, params.ColdStorageVolume)
 			if err != nil {
 				r.logger.Error("error in setting cold storage", errorsV2.Attr(err))
-				statusItem, apiErr := r.checkTTLStatusItem(ctx, orgID, tableName)
-				if apiErr == nil {
-					_, dbErr := r.
-						sqlDB.
-						BunDB().
-						NewUpdate().
-						Model(new(retentiontypes.TTLSetting)).
-						Set("updated_at = ?", time.Now()).
-						Set("status = ?", retentiontypes.TTLSettingStatusFailed).
-						Where("id = ?", statusItem.ID.StringValue()).
-						Exec(ctx)
-					if dbErr != nil {
-						r.logger.Error("Error in processing ttl_status update sql query", errorsV2.Attr(dbErr))
-						return
-					}
+				if statusItem, apiErr := r.checkTTLStatusItem(ctx, orgID, tableName); apiErr == nil {
+					r.updateTTLStatus(ctx, statusItem, retentiontypes.TTLSettingStatusFailed, err.Error())
 				}
 				return
 			}
@@ -1060,34 +1047,10 @@ func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params 
 			statusItem, _ := r.checkTTLStatusItem(ctx, orgID, tableName)
 			if err := r.db.Exec(ctx, query); err != nil {
 				r.logger.Error("error while setting ttl", errorsV2.Attr(err))
-				_, dbErr := r.
-					sqlDB.
-					BunDB().
-					NewUpdate().
-					Model(new(retentiontypes.TTLSetting)).
-					Set("updated_at = ?", time.Now()).
-					Set("status = ?", retentiontypes.TTLSettingStatusFailed).
-					Where("id = ?", statusItem.ID.StringValue()).
-					Exec(ctx)
-				if dbErr != nil {
-					r.logger.Error("Error in processing ttl_status update sql query", errorsV2.Attr(dbErr))
-					return
-				}
+				r.updateTTLStatus(ctx, statusItem, retentiontypes.TTLSettingStatusFailed, err.Error())
 				return
 			}
-			_, dbErr = r.
-				sqlDB.
-				BunDB().
-				NewUpdate().
-				Model(new(retentiontypes.TTLSetting)).
-				Set("updated_at = ?", time.Now()).
-				Set("status = ?", retentiontypes.TTLSettingStatusSuccess).
-				Where("id = ?", statusItem.ID.StringValue()).
-				Exec(ctx)
-			if dbErr != nil {
-				r.logger.Error("Error in processing ttl_status update sql query", errorsV2.Attr(dbErr))
-				return
-			}
+			r.updateTTLStatus(ctx, statusItem, retentiontypes.TTLSettingStatusSuccess)
 		}
 
 	}(ttlPayload)
@@ -1211,34 +1174,10 @@ func (r *ClickHouseReader) setTTLTraces(ctx context.Context, orgID string, param
 			statusItem, _ := r.checkTTLStatusItem(ctx, orgID, tableName)
 			if err := r.db.Exec(ctx, req); err != nil {
 				r.logger.Error("Error in executing set TTL query", errorsV2.Attr(err))
-				_, dbErr := r.
-					sqlDB.
-					BunDB().
-					NewUpdate().
-					Model(new(retentiontypes.TTLSetting)).
-					Set("updated_at = ?", time.Now()).
-					Set("status = ?", retentiontypes.TTLSettingStatusFailed).
-					Where("id = ?", statusItem.ID.StringValue()).
-					Exec(ctx)
-				if dbErr != nil {
-					r.logger.Error("Error in processing ttl_status update sql query", errorsV2.Attr(dbErr))
-					return
-				}
+				r.updateTTLStatus(ctx, statusItem, retentiontypes.TTLSettingStatusFailed, err.Error())
 				return
 			}
-			_, dbErr = r.
-				sqlDB.
-				BunDB().
-				NewUpdate().
-				Model(new(retentiontypes.TTLSetting)).
-				Set("updated_at = ?", time.Now()).
-				Set("status = ?", retentiontypes.TTLSettingStatusSuccess).
-				Where("id = ?", statusItem.ID.StringValue()).
-				Exec(ctx)
-			if dbErr != nil {
-				r.logger.Error("Error in processing ttl_status update sql query", errorsV2.Attr(dbErr))
-				return
-			}
+			r.updateTTLStatus(ctx, statusItem, retentiontypes.TTLSettingStatusSuccess)
 		}(distributedTableName)
 	}
 	return &retentiontypes.SetTTLResponseItem{Message: "move ttl has been successfully set up"}, nil
@@ -1450,7 +1389,7 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *r
 			err := r.setColdStorage(ctx, tableName, params.ColdStorageVolume)
 			if err != nil {
 				r.logger.Error("error in setting cold storage", errorsV2.Attr(err))
-				r.updateCustomRetentionTTLStatus(ctx, orgID, tableName, retentiontypes.TTLSettingStatusFailed)
+				r.updateCustomRetentionTTLStatus(ctx, orgID, tableName, retentiontypes.TTLSettingStatusFailed, err.Error())
 				return nil, errorsV2.Wrapf(err.Err, errorsV2.TypeInternal, errorsV2.CodeInternal, "error setting cold storage for table %s", tableName)
 			}
 		}
@@ -1459,7 +1398,7 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *r
 			r.logger.Debug("Executing custom retention TTL request: ", "request", query, "step", i+1)
 			if err := r.db.Exec(ctx, query); err != nil {
 				r.logger.Error("error while setting custom retention ttl", errorsV2.Attr(err))
-				r.updateCustomRetentionTTLStatus(ctx, orgID, tableName, retentiontypes.TTLSettingStatusFailed)
+				r.updateCustomRetentionTTLStatus(ctx, orgID, tableName, retentiontypes.TTLSettingStatusFailed, err.Error())
 				return nil, errorsV2.Wrapf(err, errorsV2.TypeInternal, errorsV2.CodeInternal, "error setting custom retention TTL for table %s, query: %s", tableName, query)
 			}
 		}
@@ -1597,6 +1536,7 @@ func (r *ClickHouseReader) GetCustomRetentionTTL(ctx context.Context, orgID stri
 		response.TTLConditions = ttlConditions
 		response.Status = customTTL.Status
 		response.ColdStorageTTLDays = customTTL.ColdStorageTTL
+		response.ErrorMessage = customTTL.ErrorMessage
 
 	} else {
 		// V1 - Traditional TTL
@@ -1648,18 +1588,43 @@ func (r *ClickHouseReader) checkCustomRetentionTTLStatusItem(ctx context.Context
 	return ttl, nil
 }
 
-func (r *ClickHouseReader) updateCustomRetentionTTLStatus(ctx context.Context, orgID, tableName, status string) {
+func (r *ClickHouseReader) updateCustomRetentionTTLStatus(ctx context.Context, orgID, tableName, status string, errMsg ...string) {
 	statusItem, apiErr := r.checkCustomRetentionTTLStatusItem(ctx, orgID, tableName)
 	if apiErr == nil && statusItem != nil {
-		_, dbErr := r.sqlDB.BunDB().NewUpdate().
+		update := r.sqlDB.BunDB().NewUpdate().
 			Model(new(retentiontypes.TTLSetting)).
 			Set("updated_at = ?", time.Now()).
-			Set("status = ?", status).
+			Set("status = ?", status)
+		if len(errMsg) > 0 {
+			update = update.Set("error_message = ?", errMsg[0])
+		}
+		_, dbErr := update.
 			Where("id = ?", statusItem.ID.StringValue()).
 			Exec(ctx)
 		if dbErr != nil {
 			r.logger.Error("Error in processing custom_retention_ttl_status update sql query", errorsV2.Attr(dbErr))
 		}
+	}
+}
+
+// updateTTLStatus persists a status (and optional error message) on an
+// existing TTLSetting row that the caller has already loaded.
+func (r *ClickHouseReader) updateTTLStatus(ctx context.Context, statusItem *retentiontypes.TTLSetting, status string, errMsg ...string) {
+	if statusItem == nil {
+		return
+	}
+	update := r.sqlDB.BunDB().NewUpdate().
+		Model(new(retentiontypes.TTLSetting)).
+		Set("updated_at = ?", time.Now()).
+		Set("status = ?", status)
+	if len(errMsg) > 0 {
+		update = update.Set("error_message = ?", errMsg[0])
+	}
+	_, dbErr := update.
+		Where("id = ?", statusItem.ID.StringValue()).
+		Exec(ctx)
+	if dbErr != nil {
+		r.logger.Error("Error in processing ttl_status update sql query", errorsV2.Attr(dbErr))
 	}
 }
 
@@ -1860,21 +1825,8 @@ func (r *ClickHouseReader) setTTLMetrics(ctx context.Context, orgID string, para
 		err := r.setColdStorage(context.Background(), tableName, params.ColdStorageVolume)
 		if err != nil {
 			r.logger.Error("Error in setting cold storage", errorsV2.Attr(err))
-			statusItem, apiErr := r.checkTTLStatusItem(ctx, orgID, tableName)
-			if apiErr == nil {
-				_, dbErr := r.
-					sqlDB.
-					BunDB().
-					NewUpdate().
-					Model(new(retentiontypes.TTLSetting)).
-					Set("updated_at = ?", time.Now()).
-					Set("status = ?", retentiontypes.TTLSettingStatusFailed).
-					Where("id = ?", statusItem.ID.StringValue()).
-					Exec(ctx)
-				if dbErr != nil {
-					r.logger.Error("Error in processing ttl_status update sql query", errorsV2.Attr(dbErr))
-					return
-				}
+			if statusItem, apiErr := r.checkTTLStatusItem(ctx, orgID, tableName); apiErr == nil {
+				r.updateTTLStatus(ctx, statusItem, retentiontypes.TTLSettingStatusFailed, err.Error())
 			}
 			return
 		}
@@ -1883,34 +1835,10 @@ func (r *ClickHouseReader) setTTLMetrics(ctx context.Context, orgID string, para
 		statusItem, _ := r.checkTTLStatusItem(ctx, orgID, tableName)
 		if err := r.db.Exec(ctx, req); err != nil {
 			r.logger.Error("error while setting ttl.", errorsV2.Attr(err))
-			_, dbErr := r.
-				sqlDB.
-				BunDB().
-				NewUpdate().
-				Model(new(retentiontypes.TTLSetting)).
-				Set("updated_at = ?", time.Now()).
-				Set("status = ?", retentiontypes.TTLSettingStatusFailed).
-				Where("id = ?", statusItem.ID.StringValue()).
-				Exec(ctx)
-			if dbErr != nil {
-				r.logger.Error("Error in processing ttl_status update sql query", errorsV2.Attr(dbErr))
-				return
-			}
+			r.updateTTLStatus(ctx, statusItem, retentiontypes.TTLSettingStatusFailed, err.Error())
 			return
 		}
-		_, dbErr = r.
-			sqlDB.
-			BunDB().
-			NewUpdate().
-			Model(new(retentiontypes.TTLSetting)).
-			Set("updated_at = ?", time.Now()).
-			Set("status = ?", retentiontypes.TTLSettingStatusSuccess).
-			Where("id = ?", statusItem.ID.StringValue()).
-			Exec(ctx)
-		if dbErr != nil {
-			r.logger.Error("Error in processing ttl_status update sql query", errorsV2.Attr(dbErr))
-			return
-		}
+		r.updateTTLStatus(ctx, statusItem, retentiontypes.TTLSettingStatusSuccess)
 	}
 	for _, tableName := range tableNames {
 		go metricTTL(tableName)

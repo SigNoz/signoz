@@ -147,6 +147,7 @@ type TTLSetting struct {
 	Status         string `bun:"status,type:text,notnull"`
 	OrgID          string `json:"-" bun:"org_id,notnull"`
 	Condition      string `bun:"condition,type:text"`
+	ErrorMessage   string `bun:"error_message,type:text"`
 }
 
 type TTLParams struct {
@@ -179,6 +180,7 @@ type GetCustomRetentionTTLResponse struct {
 	TTLConditions      []CustomRetentionRule `json:"ttl_conditions,omitempty"`
 	ColdStorageVolume  string                `json:"cold_storage_volume,omitempty"`
 	ColdStorageTTLDays int                   `json:"cold_storage_ttl_days,omitempty"`
+	ErrorMessage       string                `json:"error_message,omitempty"`
 }
 
 type CustomRetentionTTLResponse struct {
