@@ -10,7 +10,6 @@ import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useAppContext } from 'providers/App/App';
 import { toAPIError } from 'utils/errorUtils';
 
-import { combineQueries } from '../../utils/filterQuery';
 import { useAccumulatedTags } from '../../hooks/useAccumulatedTags';
 import { useActiveView } from '../../hooks/useActiveView';
 import { useDashboardFilters } from '../../hooks/useDashboardFilters';
@@ -72,7 +71,6 @@ function DashboardsList(): JSX.Element {
 		customViewsLoading,
 		isCustomActive,
 		isModified,
-		viewQuery,
 		clientView,
 		selectView,
 		saveView,
@@ -154,13 +152,13 @@ function DashboardsList(): JSX.Element {
 
 	const listParams = useMemo(
 		() => ({
-			query: combineQueries(viewQuery, query) || undefined,
+			query: query || undefined,
 			sort: sortColumn,
 			order: sortOrder,
 			limit: clientView ? CLIENT_VIEW_LIMIT : PAGE_SIZE,
 			offset: clientView ? 0 : (page - 1) * PAGE_SIZE,
 		}),
-		[viewQuery, query, sortColumn, sortOrder, page, clientView],
+		[query, sortColumn, sortOrder, page, clientView],
 	);
 
 	const {
