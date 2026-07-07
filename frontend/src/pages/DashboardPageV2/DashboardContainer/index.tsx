@@ -53,11 +53,17 @@ function DashboardContainer({
 	// suggests them ($variable) in the panel editor and dashboards-page builder.
 	useSyncVariablesForSuggestions(dashboard);
 
+	// In full screen show only the sections and panels — the header/toolbar chrome
+	// is hidden for a clean presentation view (exit with Esc).
 	return (
 		<FullScreen handle={fullScreenHandle}>
 			<div className={styles.container}>
-				<DashboardPageHeader title={name} image={image} />
-				<DashboardPageToolbar dashboard={dashboard} handle={fullScreenHandle} />
+				{!fullScreenHandle.active && (
+					<>
+						<DashboardPageHeader title={name} image={image} />
+						<DashboardPageToolbar dashboard={dashboard} handle={fullScreenHandle} />
+					</>
+				)}
 				<PanelsAndSectionsLayout layouts={spec.layouts} panels={spec.panels} />
 				{isLocked && <LockedIndicator />}
 			</div>
