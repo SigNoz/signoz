@@ -550,7 +550,7 @@ func (m *module) ListNamespaces(ctx context.Context, orgID valuer.UUID, req *inf
 	})
 	g.Go(func() error {
 		var err error
-		resourceCounts, err = m.getPerGroupDistinctCounts(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups, namespaceCountAttrKeys, podsTableMetricNamesList)
+		resourceCounts, err = m.getPerGroupDistinctCounts(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups, namespaceCountAttrKeys, namespacesTableMetricNamesList)
 		return err
 	})
 
@@ -661,7 +661,7 @@ func (m *module) ListClusters(ctx context.Context, orgID valuer.UUID, req *infra
 	})
 	g.Go(func() error {
 		var err error
-		resourceCounts, err = m.getPerGroupDistinctCounts(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups, clusterCountAttrKeys, podsTableMetricNamesList)
+		resourceCounts, err = m.getPerGroupDistinctCounts(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups, clusterCountAttrKeys, clustersTableMetricNamesList)
 		return err
 	})
 
