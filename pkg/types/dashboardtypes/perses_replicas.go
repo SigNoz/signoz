@@ -5,6 +5,7 @@ import (
 	"maps"
 	"slices"
 	"strconv"
+	"unicode/utf8"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	qb "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -15,9 +16,20 @@ import (
 	"github.com/swaggest/jsonschema-go"
 )
 
+// MaxDisplayNameLen bounds every human-readable display name — dashboard, panel,
+// and variable display names, plus the grid layout title.
+const MaxDisplayNameLen = 128
+
 type Display struct {
 	Name        string `json:"name" required:"true"`
 	Description string `json:"description,omitempty"`
+}
+
+func (d Display) Validate(label, path string) error {
+	if n := utf8.RuneCountInString(d.Name); n > MaxDisplayNameLen {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s: %s name must be at most %d characters, got %d", path, label, MaxDisplayNameLen, n)
+	}
+	return nil
 }
 
 // ══════════════════════════════════════════════
@@ -188,19 +200,25 @@ func (VariableDefaultValue) PrepareJSONSchema(s *jsonschema.Schema) error {
 }
 
 // validate mirrors perses ListVariableSpec validation (plus the digits-only name
-// check perses only applies to text variables); run by decodeSpec on unmarshal.
-func (s *ListVariableSpec) validate() error {
-	if err := common.ValidateID(s.Name); err != nil {
+// check perses only applies to text variables). path is the JSON path to this
+// variable (e.g. "spec.variables[0]") and prefixes each message. Taking a param
+// keeps it out of decodeSpec's validate() hook, so errors surface from Validate()
+// with clean messages and also run for programmatically built specs (cloning).
+func (s *ListVariableSpec) validate(path string) error {
+	if err := s.Display.Validate("variable", path+".spec.display.name"); err != nil {
 		return err
 	}
+	if err := common.ValidateID(s.Name); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "%s: %s", path, err.Error())
+	}
 	if _, err := strconv.Atoi(s.Name); err == nil {
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "variable name cannot contain only digits")
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s: variable name cannot contain only digits", path)
 	}
 	if s.CustomAllValue != "" && !s.AllowAllValue {
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "customAllValue cannot be set if allowAllValue is not set to true")
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s: customAllValue cannot be set if allowAllValue is not set to true", path)
 	}
 	if s.DefaultValue != nil && len(s.DefaultValue.SliceValues) > 0 && !s.AllowMultiple {
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "defaultValue cannot be a list if allowMultiple is not set to true")
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s: defaultValue cannot be a list if allowMultiple is not set to true", path)
 	}
 	return nil
 }
@@ -264,16 +282,21 @@ type TextVariableSpec struct {
 	Name     string  `json:"name" required:"true" minLength:"1"`
 }
 
-// validate mirrors perses TextVariableSpec validation; run by decodeSpec on unmarshal.
-func (s *TextVariableSpec) validate() error {
-	if err := common.ValidateID(s.Name); err != nil {
+// validate mirrors perses TextVariableSpec validation. path is the JSON path to
+// this variable (e.g. "spec.variables[0]") and prefixes each message. See
+// ListVariableSpec.validate for why it takes a param.
+func (s *TextVariableSpec) validate(path string) error {
+	if err := s.Display.Validate("variable", path+".spec.display.name"); err != nil {
 		return err
 	}
+	if err := common.ValidateID(s.Name); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "%s: %s", path, err.Error())
+	}
 	if _, err := strconv.Atoi(s.Name); err == nil {
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "variable name cannot contain only digits")
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s: variable name cannot contain only digits", path)
 	}
 	if s.Value == "" && s.Constant {
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "value for a constant text variable cannot be empty")
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s: value for a constant text variable cannot be empty", path)
 	}
 	return nil
 }

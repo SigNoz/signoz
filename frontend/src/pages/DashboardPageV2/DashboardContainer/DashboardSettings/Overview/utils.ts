@@ -3,10 +3,10 @@ import type { TagtypesPostableTagDTO } from 'api/generated/services/sigNoz.schem
 export { Base64Icons } from 'container/DashboardContainer/DashboardSettings/General/utils';
 export { parseKeyValueTag } from 'components/TagKeyValueInput/utils';
 
-// tag UX, a string with no ':' is round-tripped as `{key: x, value: x}` and
-// collapsed back to just `x` for display.
+// The tag editor is strictly key:value, so always render both sides — a
+// `key:key` tag stays `key:key` rather than collapsing to a bare `key`.
 export function tagsToStrings(tags: TagtypesPostableTagDTO[]): string[] {
-	return tags.map((t) => (t.key === t.value ? t.key : `${t.key}:${t.value}`));
+	return tags.map((t) => `${t.key}:${t.value}`);
 }
 
 export function stringsToTags(tagStrings: string[]): TagtypesPostableTagDTO[] {

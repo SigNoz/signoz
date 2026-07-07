@@ -1,0 +1,108 @@
+import { useCallback, useMemo, useState } from 'react';
+// eslint-disable-next-line no-restricted-imports -- global time still lives in redux
+import { useSelector } from 'react-redux';
+import type {
+	CustomTimeType,
+	Time,
+} from 'container/TopNav/DateTimeSelectionV2/types';
+import GetMinMax from 'lib/getMinMax';
+import type { PanelQueryTimeOverride } from 'pages/DashboardPageV2/DashboardContainer/hooks/usePanelQuery';
+import { AppState } from 'store/reducers';
+import { GlobalReducer } from 'types/reducer/globalTime';
+
+const NS_PER_MS = 1e6;
+
+export interface ViewPanelTimeWindow {
+	/** Absolute window (epoch ms) to pass to usePanelQuery as a time override. */
+	timeOverride: PanelQueryTimeOverride;
+	/** Interval shown in the picker — a relative `Time` or `'custom'`. */
+	selectedInterval: Time | CustomTimeType;
+	/** Apply a selection from DateTimeSelectionV2 (modal mode). */
+	onTimeChange: (
+		interval: Time | CustomTimeType,
+		range?: [number, number],
+	) => void;
+	/** Re-anchor a relative window to "now" (manual refresh); no-op for custom. */
+	refreshWindow: () => void;
+	/** Drag-to-zoom on a time chart → set a custom window locally (not the dashboard's). */
+	onDragSelect: (start: number, end: number) => void;
+}
+
+/**
+ * Per-view time window for the panel View modal, isolated from the dashboard's
+ * global time (V1 parity: the modal's time selector doesn't move the grid). Seeded
+ * once from the current global window, then owned locally. Relative intervals
+ * resolve to an absolute ms window via the same `GetMinMax` the app-wide picker uses.
+ */
+export function useViewPanelTimeWindow(): ViewPanelTimeWindow {
+	const { selectedTime, minTime, maxTime } = useSelector<
+		AppState,
+		GlobalReducer
+	>((state) => state.globalTime);
+
+	const [selectedInterval, setSelectedInterval] = useState<
+		Time | CustomTimeType
+	>(selectedTime as Time);
+	const [timeOverride, setTimeOverride] = useState<PanelQueryTimeOverride>(
+		() => ({
+			startMs: Math.floor(minTime / NS_PER_MS),
+			endMs: Math.floor(maxTime / NS_PER_MS),
+		}),
+	);
+
+	const onTimeChange = useCallback(
+		(interval: Time | CustomTimeType, range?: [number, number]): void => {
+			setSelectedInterval(interval);
+			// Absolute range comes through directly (already epoch ms).
+			if (interval === 'custom' && range) {
+				setTimeOverride({
+					startMs: Math.floor(range[0]),
+					endMs: Math.floor(range[1]),
+				});
+				return;
+			}
+			// GetMinMax returns nanoseconds — convert to the ms window we work in.
+			const { minTime: startNs, maxTime: endNs } = GetMinMax(interval);
+			setTimeOverride({
+				startMs: Math.floor(startNs / NS_PER_MS),
+				endMs: Math.floor(endNs / NS_PER_MS),
+			});
+		},
+		[],
+	);
+
+	const refreshWindow = useCallback((): void => {
+		// A custom window is fixed; only relative intervals re-anchor to now.
+		if (selectedInterval === 'custom') {
+			return;
+		}
+		const { minTime: startNs, maxTime: endNs } = GetMinMax(selectedInterval);
+		setTimeOverride({
+			startMs: Math.floor(startNs / NS_PER_MS),
+			endMs: Math.floor(endNs / NS_PER_MS),
+		});
+	}, [selectedInterval]);
+
+	const onDragSelect = useCallback((start: number, end: number): void => {
+		// Drag values are already epoch ms (same as the global custom range).
+		const startMs = Math.floor(start);
+		const endMs = Math.floor(end);
+		// Ignore a click / zero-width or inverted selection.
+		if (startMs >= endMs) {
+			return;
+		}
+		setSelectedInterval('custom');
+		setTimeOverride({ startMs, endMs });
+	}, []);
+
+	return useMemo(
+		() => ({
+			timeOverride,
+			selectedInterval,
+			onTimeChange,
+			refreshWindow,
+			onDragSelect,
+		}),
+		[timeOverride, selectedInterval, onTimeChange, refreshWindow, onDragSelect],
+	);
+}
