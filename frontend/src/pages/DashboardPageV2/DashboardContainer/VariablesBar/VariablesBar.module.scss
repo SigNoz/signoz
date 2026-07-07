@@ -112,3 +112,13 @@
 		box-shadow: none !important;
 	}
 }
+
+.overflowTooltip {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.overflowName {
+	font-weight: var(--font-weight-medium);
+}
