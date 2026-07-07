@@ -35,6 +35,17 @@ var clusterAttrKeysForMetadata = []string{
 	"k8s.cluster.name",
 }
 
+// clusterCountAttrKeys are the resource attributes whose distinct values are
+// counted per cluster. They are read from the pod metric universe, which carries
+// the owner labels (namespace + workload names) for each pod series.
+var clusterCountAttrKeys = []string{
+	inframonitoringtypes.NamespaceNameAttrKey,
+	inframonitoringtypes.DeploymentNameAttrKey,
+	inframonitoringtypes.DaemonSetNameAttrKey,
+	inframonitoringtypes.JobNameAttrKey,
+	inframonitoringtypes.StatefulSetNameAttrKey,
+}
+
 var orderByToClustersQueryNames = map[string][]string{
 	inframonitoringtypes.ClustersOrderByCPU:               {"A"},
 	inframonitoringtypes.ClustersOrderByCPUAllocatable:    {"B"},
