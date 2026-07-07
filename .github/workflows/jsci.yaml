@@ -102,3 +102,44 @@ jobs:
         run: |
           cd frontend && pnpm generate:config:web-settings
           git diff --compact-summary --exit-code || (echo; echo "Unexpected difference in generated web settings types. Run pnpm generate:config:web-settings in frontend/ locally and commit."; exit 1)
+  code-quality:
+    if: |
+      github.event_name == 'merge_group' ||
+      (github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
+      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))
+    runs-on: ubuntu-latest
+    steps:
+      - name: self-checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: node-install
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+      - name: install-pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10
+      - name: install-frontend
+        run: cd frontend && pnpm install
+      - name: get-new-files
+        id: new-files
+        run: |
+          cd frontend
+          NEW_TS=$(git diff --name-only --diff-filter=A origin/main...HEAD -- src/ | grep -E '\.(ts|tsx)$' | tr '\n' ' ' || true)
+          NEW_SCSS=$(git diff --name-only --diff-filter=A origin/main...HEAD -- src/ | grep -E '\.scss$' | tr '\n' ' ' || true)
+          echo "ts=$NEW_TS" >> $GITHUB_OUTPUT
+          echo "scss=$NEW_SCSS" >> $GITHUB_OUTPUT
+          echo "New TS files: $NEW_TS"
+          echo "New SCSS files: $NEW_SCSS"
+      - name: lint-new-ts-files
+        if: steps.new-files.outputs.ts != ''
+        run: |
+          cd frontend
+          pnpm oxlint -c .oxlintrc.strict.json ${{ steps.new-files.outputs.ts }}
+      - name: lint-new-scss-files
+        if: steps.new-files.outputs.scss != ''
+        run: |
+          cd frontend
+          pnpm stylelint --config .stylelintrc.strict.cjs ${{ steps.new-files.outputs.scss }}

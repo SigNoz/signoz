@@ -1,0 +1,18 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "extends": ["./.oxlintrc.json"],
+  "env": {
+    "builtin": true,
+    "es2021": true,
+    "browser": true,
+    "jest": true,
+    "node": true
+  },
+  "rules": {
+    "signoz/no-raw-html-text-elements": "error",
+    "signoz/no-multiple-components": "error",
+    "signoz/no-inline-helpers": "error",
+    "signoz/no-getByText": "error",
+    "signoz/no-fireEvent": "error"
+  }
+}

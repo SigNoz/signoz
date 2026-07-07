@@ -12,11 +12,17 @@ module.exports = {
 		),
 		path.join(__dirname, 'stylelint-rules/css-modules/prefer-css-variables.js'),
 		path.join(__dirname, 'stylelint-rules/css-modules/class-name-pattern.js'),
+		path.join(__dirname, 'stylelint-rules/no-font-properties.js'),
+		path.join(__dirname, 'stylelint-rules/no-primitive-color-tokens.js'),
+		path.join(__dirname, 'stylelint-rules/no-styles-scss.js'),
 	],
 	customSyntax: 'postcss-scss',
 	rules: {
 		// Applies to all SCSS files
 		'local/no-unsupported-asset-url': true,
+		'local/no-font-properties': [true, { severity: 'warning' }],
+		'local/no-primitive-color-tokens': [true, { severity: 'warning' }],
+		'local/no-styles-scss': [true, { severity: 'warning' }],
 	},
 	overrides: [
 		{

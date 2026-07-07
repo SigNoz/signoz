@@ -295,6 +295,18 @@
     // Prevents bracket access on CSS modules (styles['kebab-case']) which fails with camelCaseOnly config
     "signoz/no-dashboard-fetch-outside-root": "error",
     // Forces useDashboardFetchRequired() outside the root V2 pages (allowlisted in overrides below)
+    "signoz/no-raw-html-text-elements": "warn",
+    // Bans raw span/p/h1-6 elements - use Typography component instead
+    "signoz/no-multiple-components": "warn",
+    // Bans multiple component exports per file - split into separate files
+    "signoz/no-inline-helpers": "warn",
+    // Bans too many helper functions in component files - move to utils.ts
+    "signoz/max-component-lines": ["warn", { "max": 300 }],
+    // Warns when component files exceed max lines - split into smaller components
+    "signoz/no-getByText": "warn",
+    // Bans getByText in tests - use getByTestId or getByRole instead
+    "signoz/no-fireEvent": "warn",
+    // Bans fireEvent in tests - use userEvent instead
     "no-restricted-globals": [
       "error",
       {

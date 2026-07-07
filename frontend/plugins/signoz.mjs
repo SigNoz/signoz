@@ -13,6 +13,12 @@ import noAntdComponents from './rules/no-antd-components.mjs';
 import noSignozhqUiBarrel from './rules/no-signozhq-ui-barrel.mjs';
 import noCssModuleBracketAccess from './rules/no-css-module-bracket-access.mjs';
 import noDashboardFetchOutsideRoot from './rules/no-dashboard-fetch-outside-root.mjs';
+import noGetByText from './rules/no-getByText.mjs';
+import noFireEvent from './rules/no-fireEvent.mjs';
+import noRawHtmlTextElements from './rules/no-raw-html-text-elements.mjs';
+import noMultipleComponents from './rules/no-multiple-components.mjs';
+import noInlineHelpers from './rules/no-inline-helpers.mjs';
+import maxComponentLines from './rules/max-component-lines.mjs';
 
 export default {
 	meta: {
@@ -27,5 +33,11 @@ export default {
 		'no-signozhq-ui-barrel': noSignozhqUiBarrel,
 		'no-css-module-bracket-access': noCssModuleBracketAccess,
 		'no-dashboard-fetch-outside-root': noDashboardFetchOutsideRoot,
+		'no-getByText': noGetByText,
+		'no-fireEvent': noFireEvent,
+		'no-raw-html-text-elements': noRawHtmlTextElements,
+		'no-multiple-components': noMultipleComponents,
+		'no-inline-helpers': noInlineHelpers,
+		'max-component-lines': maxComponentLines,
 	},
 };
