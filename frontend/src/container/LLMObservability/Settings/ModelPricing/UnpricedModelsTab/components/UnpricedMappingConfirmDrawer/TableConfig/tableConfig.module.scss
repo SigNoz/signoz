@@ -1,0 +1,17 @@
+.extraBuckets {
+	display: flex;
+	// Keep chips on a single line so the row stays at the table's fixed row
+	// height, mirroring the model-costs table's Extra buckets column.
+	flex-wrap: nowrap;
+	gap: var(--spacing-3);
+	overflow: hidden;
+}
+.extraBucketContainer {
+	// Non-wrapping inline-flex so each bucket's label + price stay on one line and
+	// the row keeps the table's fixed height.
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-1);
+	flex-direction: row;
+	flex-wrap: wrap;
+}
