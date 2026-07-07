@@ -3,9 +3,9 @@ import { useHistory } from 'react-router-dom';
 import { Plus } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
-import AuthZTooltip from 'components/AuthZTooltip/AuthZTooltip';
+import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import ROUTES from 'constants/routes';
-import { RoleCreatePermission } from 'hooks/useAuthZ/permissions/role.permissions';
+import { RoleCreatePermission } from 'lib/authz/hooks/useAuthZ/permissions/role.permissions';
 import { useRolesFeatureGate } from 'hooks/useRolesFeatureGate';
 
 import RolesListingTable from './RolesComponents/RolesListingTable';

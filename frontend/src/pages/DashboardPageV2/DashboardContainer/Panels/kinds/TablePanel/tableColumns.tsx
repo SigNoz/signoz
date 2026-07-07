@@ -10,6 +10,8 @@ import { formatPanelValue } from '../../utils/formatPanelValue';
 import { getColumnUnit } from '../../utils/getColumnUnit';
 import { toPanelThreshold } from '../../utils/mapComparisonThreshold';
 
+import styles from './TablePanel.module.scss';
+
 /** A prepared scalar-table row flattened for the antd Table, with the antd key. */
 export type TableRowData = Record<string, unknown> & { key: number };
 
@@ -52,6 +54,12 @@ export interface BuildTableColumnsArgs {
 	decimalPrecision?: PrecisionOption;
 	/** Thresholds grouped by column name (see `mapTableThresholds`). */
 	thresholdsByColumn: Record<string, PanelThreshold[]>;
+	/** When set, every body cell becomes a drill-down target (keyed by its column id). */
+	onCellClick?: (args: {
+		columnId: string;
+		record: TableRowData;
+		event: React.MouseEvent<HTMLElement>;
+	}) => void;
 }
 
 /**
@@ -65,6 +73,7 @@ export function buildTableColumns({
 	columnUnits,
 	decimalPrecision,
 	thresholdsByColumn,
+	onCellClick,
 }: BuildTableColumnsArgs): TableProps<TableRowData>['columns'] {
 	return table.columns.map((col) => {
 		// Column key = query identifier for value columns, group name otherwise. Units
@@ -97,19 +106,26 @@ export function buildTableColumns({
 				}
 				return text;
 			},
-			onCell: (record: TableRowData): { style?: React.CSSProperties } => {
-				if (!col.isValueColumn || colThresholds.length === 0) {
-					return {};
+			onCell: (record: TableRowData): React.HTMLAttributes<HTMLElement> => {
+				const cellProps: React.HTMLAttributes<HTMLElement> = {};
+
+				if (col.isValueColumn && colThresholds.length > 0) {
+					const num = Number(record[key]);
+					if (Number.isFinite(num)) {
+						const { threshold } = resolveActiveThreshold(colThresholds, num, unit);
+						if (threshold?.format === 'background') {
+							cellProps.style = { backgroundColor: threshold.color };
+						}
+					}
 				}
-				const num = Number(record[key]);
-				if (!Number.isFinite(num)) {
-					return {};
+
+				if (onCellClick) {
+					cellProps.onClick = (event): void =>
+						onCellClick({ columnId: key, record, event });
+					cellProps.className = styles.clickableCell;
 				}
-				const { threshold } = resolveActiveThreshold(colThresholds, num, unit);
-				if (threshold?.format === 'background') {
-					return { style: { backgroundColor: threshold.color } };
-				}
-				return {};
+
+				return cellProps;
 			},
 		};
 	});

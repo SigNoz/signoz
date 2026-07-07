@@ -1,12 +1,12 @@
 import { Bot, Key, Shield } from '@signozhq/icons';
 
-import permissionsType from 'hooks/useAuthZ/permissions.type';
+import permissionsType from 'lib/authz/hooks/useAuthZ/permissions.type';
 import {
 	AuthZResource,
 	AuthZVerb,
 	OBJECT_SCOPED_VERBS,
 	ObjectScopedVerb,
-} from 'hooks/useAuthZ/types';
+} from 'lib/authz/hooks/useAuthZ/types';
 import { CoretypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
 
 /** Shared shape of the icon components exported by `@signozhq/icons`. */
@@ -84,7 +84,7 @@ export function getResourceVerbs(
 	}
 
 	// Role resource cannot have assignee verb
-	// TODO(H4ad): Remove this once we get rid of frontend/src/hooks/useAuthZ/legacy.ts
+	// TODO(H4ad): Remove this once we get rid of frontend/lib/authz/hooks/useAuthZ/legacy.ts
 	if (resource === 'role') {
 		return match.allowedVerbs.filter((verb) => verb !== 'assignee');
 	}

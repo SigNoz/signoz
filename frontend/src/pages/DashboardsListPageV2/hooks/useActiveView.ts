@@ -7,7 +7,6 @@ import type {
 
 import {
 	areFilterStatesEqual,
-	combineQueries,
 	DEFAULT_FILTER_STATE,
 	filterStateToQuery,
 } from '../utils/filterQuery';
@@ -15,7 +14,6 @@ import { BuiltinViewId } from '../types';
 import type { DashboardFilterState, SavedView } from '../types';
 import {
 	BUILTIN_VIEWS,
-	builtinViewQuery,
 	builtinViewSnapshot,
 	type BuiltinView,
 	isClientView,
@@ -42,15 +40,14 @@ export interface UseActiveViewResult {
 	isCustomActive: boolean;
 	// Current filters diverge from the active view's canonical snapshot.
 	isModified: boolean;
-	// Extra server-query fragment the active view contributes, and whether it
-	// constrains the list client-side (pinned/recent).
-	viewQuery: string;
+	// Whether the active view constrains the list client-side (pinned/recent).
 	clientView: boolean;
 	selectView: (id: string) => void;
 	saveView: (name: string) => void;
 	saveActiveView: () => void;
 	resetView: () => void;
 	removeView: (id: string) => void;
+	renameView: (id: string, name: string) => void;
 }
 
 // The canonical filter snapshot a saved view "is": the backend stores a flat
@@ -127,11 +124,9 @@ export function useActiveView({
 
 	const saveView = useCallback(
 		(name: string): void => {
-			// Fold the current built-in clause + chips into a single query string.
-			const query = combineQueries(
-				builtinViewQuery(activeViewId),
-				filterStateToQuery(filters),
-			);
+			// The active view's clause already lives in the filter state (e.g. Locked
+			// seeds `locked = true` into search), so the chips fold into one query.
+			const query = filterStateToQuery(filters);
 			void (async (): Promise<void> => {
 				const created = await createView({
 					name,
@@ -147,15 +142,7 @@ export function useActiveView({
 				}
 			})();
 		},
-		[
-			activeViewId,
-			filters,
-			createView,
-			sortColumn,
-			sortOrder,
-			setActiveViewId,
-			applyFilters,
-		],
+		[filters, createView, sortColumn, sortOrder, setActiveViewId, applyFilters],
 	);
 
 	const saveActiveView = useCallback((): void => {
@@ -200,6 +187,23 @@ export function useActiveView({
 		[deleteView, activeViewId, setActiveViewId, applyFilters],
 	);
 
+	// Rename only touches the view's name; its stored query/sort/order are preserved.
+	const renameView = useCallback(
+		(id: string, name: string): void => {
+			const view = customViews.find((v) => v.id === id);
+			if (!view) {
+				return;
+			}
+			updateView(id, {
+				name,
+				query: view.query,
+				sort: view.sort,
+				order: view.order,
+			});
+		},
+		[customViews, updateView],
+	);
+
 	return {
 		activeViewId,
 		builtinViews: BUILTIN_VIEWS,
@@ -207,12 +211,12 @@ export function useActiveView({
 		customViewsLoading,
 		isCustomActive: !!activeCustom,
 		isModified,
-		viewQuery: builtinViewQuery(activeViewId),
 		clientView: isClientView(activeViewId),
 		selectView,
 		saveView,
 		saveActiveView,
 		resetView,
 		removeView,
+		renameView,
 	};
 }

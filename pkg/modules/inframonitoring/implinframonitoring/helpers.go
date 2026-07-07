@@ -440,6 +440,30 @@ func (m *module) buildFilterClause(ctx context.Context, filter *qbtypes.Filter, 
 	return whereClause.WhereClause, nil
 }
 
+// mergeQueryWarnings combines any number of query warnings. It is nil-safe and
+// skips nil entries. The first non-nil warning becomes the primary; each
+// subsequent one contributes its message (as an additional warning) and its
+// own additional warnings. Returns nil when all inputs are nil.
+func mergeQueryWarnings(warnings ...*qbtypes.QueryWarnData) *qbtypes.QueryWarnData {
+	var merged *qbtypes.QueryWarnData
+	for _, w := range warnings {
+		if w == nil {
+			continue
+		}
+		if merged == nil {
+			// Copy so we don't mutate the caller's warning.
+			primary := *w
+			merged = &primary
+			continue
+		}
+		if w.Message != "" {
+			merged.Warnings = append(merged.Warnings, qbtypes.QueryWarnDataAdditional{Message: w.Message})
+		}
+		merged.Warnings = append(merged.Warnings, w.Warnings...)
+	}
+	return merged
+}
+
 // NOTE: this method is not specific to infra monitoring — it queries attributes_metadata generically.
 // Consider moving to telemetryMetaStore when a second use case emerges.
 //
