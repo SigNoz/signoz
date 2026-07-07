@@ -18,12 +18,15 @@ from fixtures.logger import setup_logger
 logger = setup_logger(__name__)
 
 
-def create_zeus(
+@pytest.fixture(name="zeus", scope="package")
+def zeus(
     network: Network,
     request: pytest.FixtureRequest,
     pytestconfig: pytest.Config,
-    cache_key: str = "zeus",
 ) -> types.TestContainerDocker:
+    """
+    Package-scoped fixture for running zeus
+    """
 
     def create() -> types.TestContainerDocker:
         container = WireMockContainer(image="wiremock/wiremock:2.35.1-1", secure=False)
@@ -59,24 +62,12 @@ def create_zeus(
     return reuse.wrap(
         request,
         pytestconfig,
-        cache_key,
+        "zeus",
         lambda: types.TestContainerDocker(id="", host_configs={}, container_configs={}),
         create,
         delete,
         restore,
     )
-
-
-@pytest.fixture(name="zeus", scope="package")
-def zeus(
-    network: Network,
-    request: pytest.FixtureRequest,
-    pytestconfig: pytest.Config,
-) -> types.TestContainerDocker:
-    """
-    Package-scoped fixture for running zeus
-    """
-    return create_zeus(network=network, request=request, pytestconfig=pytestconfig)
 
 
 @pytest.fixture(name="gateway", scope="package")
