@@ -2,6 +2,7 @@ import { useCallback, useMemo } from 'react';
 import { useQueryClient } from 'react-query';
 import { toast } from '@signozhq/ui/sonner';
 import {
+	getListDashboardViewsQueryKey,
 	invalidateListDashboardViews,
 	useCreateDashboardView,
 	useDeleteDashboardView,
@@ -12,6 +13,7 @@ import {
 	type DashboardtypesDashboardViewDTO,
 	DashboardtypesListOrderDTO,
 	DashboardtypesListSortDTO,
+	type ListDashboardViews200,
 } from 'api/generated/services/sigNoz.schemas';
 
 import type { SavedView, SavedViewInput } from '../types';
@@ -70,9 +72,27 @@ export function useSavedViews(): UseSavedViewsResult {
 			},
 		},
 	});
+	// Rename/save-changes returns the updated view, so patch it into the cached
+	// list inline instead of refetching the whole list.
 	const updateMutation = useUpdateDashboardView({
 		mutation: {
-			onSuccess: invalidate,
+			onSuccess: (response): void => {
+				const updated = response?.data;
+				const key = getListDashboardViewsQueryKey();
+				const prev = queryClient.getQueryData<ListDashboardViews200>(key);
+				if (!updated || !prev) {
+					return;
+				}
+				queryClient.setQueryData<ListDashboardViews200>(key, {
+					...prev,
+					data: {
+						...prev.data,
+						views: (prev.data.views ?? []).map((v) =>
+							v.id === updated.id ? updated : v,
+						),
+					},
+				});
+			},
 			onError: (): void => {
 				toast.error('Failed to update view.');
 			},

@@ -68,7 +68,8 @@
 	display: flex;
 
 	.filter {
-		width: 260px;
+		// Width is owned by ResizableBox (inline style).
+		flex-shrink: 0;
 		height: 100%;
 		min-height: 100vh;
 
@@ -76,9 +77,14 @@
 		border: 1px solid var(--l1-border);
 		background-color: var(--l1-background);
 
-		> .ant-card-body {
-			padding: 0;
-			width: 258px;
+		.resizable-box__content {
+			display: flex;
+			flex-direction: column;
+		}
+
+		.quick-filters-container {
+			flex: 1;
+			min-height: 0;
 		}
 	}
 
@@ -93,6 +99,8 @@
 		border-color: var(--l1-border);
 	}
 	.trace-explorer.filters-expanded {
-		width: calc(100% - 260px);
+		flex: 1;
+		width: auto;
+		min-width: 0;
 	}
 }

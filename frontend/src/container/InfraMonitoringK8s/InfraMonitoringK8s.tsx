@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as Sentry from '@sentry/react';
-import { Button, CollapseProps } from 'antd';
-import { Collapse, Tooltip } from 'antd';
+import { Button, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
 import { QuickFiltersSource } from 'components/QuickFilters/types';
 import { InfraMonitoringEvents } from 'constants/events';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import {
@@ -23,6 +23,8 @@ import {
 	Workflow,
 } from '@signozhq/icons';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
+import { ResizableBox } from 'periscope/components/ResizableBox';
+import usePanelWidth from 'periscope/components/ResizableBox/usePanelWidth';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { FeatureKeys } from '../../constants/features';
@@ -57,8 +59,22 @@ import K8sVolumesList from './Volumes/K8sVolumesList';
 
 import styles from './InfraMonitoringK8s.module.scss';
 
+const QUICK_FILTERS_DEFAULT_WIDTH = 280;
+const QUICK_FILTERS_MIN_WIDTH = 240;
+const QUICK_FILTERS_MAX_WIDTH = 500;
+
 export default function InfraMonitoringK8s(): JSX.Element {
 	const [showFilters, setShowFilters] = useState(true);
+
+	const {
+		initialWidth: quickFiltersInitialWidth,
+		persistWidth: persistQuickFiltersWidth,
+	} = usePanelWidth({
+		storageKey: LOCALSTORAGE.QUICK_FILTERS_WIDTH_INFRA,
+		defaultWidth: QUICK_FILTERS_DEFAULT_WIDTH,
+		minWidth: QUICK_FILTERS_MIN_WIDTH,
+		maxWidth: QUICK_FILTERS_MAX_WIDTH,
+	});
 
 	const [selectedCategory, setSelectedCategory] = useInfraMonitoringCategory();
 	const [urlFilters, setUrlFilters] = useInfraMonitoringFiltersK8s();
@@ -113,192 +129,74 @@ export default function InfraMonitoringK8s(): JSX.Element {
 		});
 	};
 
-	const renderCategoryLabel = (
-		icon: JSX.Element,
-		label: string,
-	): JSX.Element => (
-		<div className={styles.quickFiltersCategoryLabel}>
-			<div className={styles.quickFiltersCategoryLabelContainer}>
-				{icon}
-				<Typography.Text>{label}</Typography.Text>
-			</div>
-		</div>
+	const categories = useMemo(
+		() => [
+			{
+				key: K8sCategories.PODS,
+				label: 'Pods',
+				icon: <Container size={14} />,
+				config: GetPodsQuickFiltersConfig(dotMetricsEnabled),
+			},
+			{
+				key: K8sCategories.NODES,
+				label: 'Nodes',
+				icon: <Workflow size={14} />,
+				config: GetNodesQuickFiltersConfig(dotMetricsEnabled),
+			},
+			{
+				key: K8sCategories.NAMESPACES,
+				label: 'Namespaces',
+				icon: <FilePenLine size={14} />,
+				config: GetNamespaceQuickFiltersConfig(dotMetricsEnabled),
+			},
+			{
+				key: K8sCategories.CLUSTERS,
+				label: 'Clusters',
+				icon: <Boxes size={14} />,
+				config: GetClustersQuickFiltersConfig(dotMetricsEnabled),
+			},
+			{
+				key: K8sCategories.DEPLOYMENTS,
+				label: 'Deployments',
+				icon: <Computer size={14} />,
+				config: GetDeploymentsQuickFiltersConfig(dotMetricsEnabled),
+			},
+			{
+				key: K8sCategories.JOBS,
+				label: 'Jobs',
+				icon: <Bolt size={14} />,
+				config: GetJobsQuickFiltersConfig(dotMetricsEnabled),
+			},
+			{
+				key: K8sCategories.DAEMONSETS,
+				label: 'DaemonSets',
+				icon: <Group size={14} />,
+				config: GetDaemonsetsQuickFiltersConfig(dotMetricsEnabled),
+			},
+			{
+				key: K8sCategories.STATEFULSETS,
+				label: 'StatefulSets',
+				icon: <ArrowUpDown size={14} />,
+				config: GetStatefulsetsQuickFiltersConfig(dotMetricsEnabled),
+			},
+			{
+				key: K8sCategories.VOLUMES,
+				label: 'Volumes',
+				icon: <HardDrive size={14} />,
+				config: GetVolumesQuickFiltersConfig(dotMetricsEnabled),
+			},
+		],
+		[dotMetricsEnabled],
 	);
 
-	const items: CollapseProps['items'] = [
-		{
-			label: renderCategoryLabel(
-				<Container size={14} className={styles.quickFiltersCategoryLabelIcon} />,
-				'Pods',
-			),
-			key: K8sCategories.PODS,
-			showArrow: false,
-			children: (
-				<QuickFilters
-					source={QuickFiltersSource.INFRA_MONITORING}
-					config={GetPodsQuickFiltersConfig(dotMetricsEnabled)}
-					handleFilterVisibilityChange={handleFilterVisibilityChange}
-					onFilterChange={handleFilterChange}
-				/>
-			),
-		},
-		{
-			label: renderCategoryLabel(
-				<Workflow size={14} className={styles.quickFiltersCategoryLabelIcon} />,
-				'Nodes',
-			),
-			key: K8sCategories.NODES,
-			showArrow: false,
-			children: (
-				<QuickFilters
-					source={QuickFiltersSource.INFRA_MONITORING}
-					config={GetNodesQuickFiltersConfig(dotMetricsEnabled)}
-					handleFilterVisibilityChange={handleFilterVisibilityChange}
-					onFilterChange={handleFilterChange}
-				/>
-			),
-		},
-		{
-			label: renderCategoryLabel(
-				<FilePenLine size={14} className={styles.quickFiltersCategoryLabelIcon} />,
-				'Namespaces',
-			),
-			key: K8sCategories.NAMESPACES,
-			showArrow: false,
-			children: (
-				<QuickFilters
-					source={QuickFiltersSource.INFRA_MONITORING}
-					config={GetNamespaceQuickFiltersConfig(dotMetricsEnabled)}
-					handleFilterVisibilityChange={handleFilterVisibilityChange}
-					onFilterChange={handleFilterChange}
-				/>
-			),
-		},
-		{
-			label: renderCategoryLabel(
-				<Boxes size={14} className={styles.quickFiltersCategoryLabelIcon} />,
-				'Clusters',
-			),
-			key: K8sCategories.CLUSTERS,
-			showArrow: false,
-			children: (
-				<QuickFilters
-					source={QuickFiltersSource.INFRA_MONITORING}
-					config={GetClustersQuickFiltersConfig(dotMetricsEnabled)}
-					handleFilterVisibilityChange={handleFilterVisibilityChange}
-					onFilterChange={handleFilterChange}
-				/>
-			),
-		},
-		{
-			label: renderCategoryLabel(
-				<Computer size={14} className={styles.quickFiltersCategoryLabelIcon} />,
-				'Deployments',
-			),
-			key: K8sCategories.DEPLOYMENTS,
-			showArrow: false,
-			children: (
-				<QuickFilters
-					source={QuickFiltersSource.INFRA_MONITORING}
-					config={GetDeploymentsQuickFiltersConfig(dotMetricsEnabled)}
-					handleFilterVisibilityChange={handleFilterVisibilityChange}
-					onFilterChange={handleFilterChange}
-				/>
-			),
-		},
-		{
-			label: renderCategoryLabel(
-				<Bolt size={14} className={styles.quickFiltersCategoryLabelIcon} />,
-				'Jobs',
-			),
-			key: K8sCategories.JOBS,
-			showArrow: false,
-			children: (
-				<QuickFilters
-					source={QuickFiltersSource.INFRA_MONITORING}
-					config={GetJobsQuickFiltersConfig(dotMetricsEnabled)}
-					handleFilterVisibilityChange={handleFilterVisibilityChange}
-					onFilterChange={handleFilterChange}
-				/>
-			),
-		},
-		{
-			label: renderCategoryLabel(
-				<Group size={14} className={styles.quickFiltersCategoryLabelIcon} />,
-				'DaemonSets',
-			),
-			key: K8sCategories.DAEMONSETS,
-			showArrow: false,
-			children: (
-				<QuickFilters
-					source={QuickFiltersSource.INFRA_MONITORING}
-					config={GetDaemonsetsQuickFiltersConfig(dotMetricsEnabled)}
-					handleFilterVisibilityChange={handleFilterVisibilityChange}
-					onFilterChange={handleFilterChange}
-				/>
-			),
-		},
-		{
-			label: renderCategoryLabel(
-				<ArrowUpDown size={14} className={styles.quickFiltersCategoryLabelIcon} />,
-				'StatefulSets',
-			),
-			key: K8sCategories.STATEFULSETS,
-			showArrow: false,
-			children: (
-				<QuickFilters
-					source={QuickFiltersSource.INFRA_MONITORING}
-					config={GetStatefulsetsQuickFiltersConfig(dotMetricsEnabled)}
-					handleFilterVisibilityChange={handleFilterVisibilityChange}
-					onFilterChange={handleFilterChange}
-				/>
-			),
-		},
-		{
-			label: renderCategoryLabel(
-				<HardDrive size={14} className={styles.quickFiltersCategoryLabelIcon} />,
-				'Volumes',
-			),
-			key: K8sCategories.VOLUMES,
-			showArrow: false,
-			children: (
-				<QuickFilters
-					source={QuickFiltersSource.INFRA_MONITORING}
-					config={GetVolumesQuickFiltersConfig(dotMetricsEnabled)}
-					handleFilterVisibilityChange={handleFilterVisibilityChange}
-					onFilterChange={handleFilterChange}
-				/>
-			),
-		},
-		// TODO: Enable once we have implemented containers.
-		// {
-		// 	label: (
-		// 		<div className="k8s-quick-filters-category-label">
-		// 			<div className="k8s-quick-filters-category-label-container">
-		// 				<PackageOpen
-		// 					size={14}
-		// 					className="k8s-quick-filters-category-label-icon"
-		// 				/>
-		// 				<Typography.Text>Containers</Typography.Text>
-		// 			</div>
-		// 		</div>
-		// 	),
-		// 	key: K8sCategories.CONTAINERS,
-		// 	showArrow: false,
-		// 	children: (
-		// 		<QuickFilters
-		// 			source={QuickFiltersSource.INFRA_MONITORING}
-		// 			config={ContainersQuickFiltersConfig}
-		// 			handleFilterVisibilityChange={handleFilterVisibilityChange}
-		// 			onFilterChange={handleFilterChange}
-		// 		/>
-		// 	),
-		// },
-	];
+	const selectedCategoryConfig = useMemo(
+		() => categories.find((cat) => cat.key === selectedCategory)?.config,
+		[categories, selectedCategory],
+	);
 
-	const handleCategoryChange = (key: string | string[]): void => {
-		if (Array.isArray(key) && key.length > 0) {
-			setSelectedCategory(key[0] as string);
+	const handleCategorySelect = (key: string): void => {
+		if (key !== selectedCategory) {
+			setSelectedCategory(key);
 			// Reset filters
 			setUrlFilters(null);
 			setOrderBy(null);
@@ -331,28 +229,71 @@ export default function InfraMonitoringK8s(): JSX.Element {
 			<div className={styles.infraMonitoringContainer}>
 				<div className={styles.infraContentRow}>
 					{showFilters && (
-						<div className={styles.quickFiltersContainer}>
-							<div className={styles.quickFiltersContainerHeader}>
-								<Typography.Text>Filters</Typography.Text>
-
-								<Tooltip title="Collapse Filters">
-									<ArrowUpToLine
-										style={{ transform: 'rotate(270deg)' }}
-										onClick={handleFilterVisibilityChange}
-										size="md"
-									/>
-								</Tooltip>
+						<ResizableBox
+							handle="right"
+							defaultWidth={QUICK_FILTERS_DEFAULT_WIDTH}
+							initialWidth={quickFiltersInitialWidth}
+							minWidth={QUICK_FILTERS_MIN_WIDTH}
+							maxWidth={QUICK_FILTERS_MAX_WIDTH}
+							onResize={persistQuickFiltersWidth}
+							resetToDefaultOnDoubleClick
+							withHandle
+							className={styles.quickFiltersContainer}
+							handleTestId="quick-filters-resize-handle"
+						>
+							<div className={styles.categorySelectorSection}>
+								<div className={styles.sectionHeader} data-type="resource">
+									<Typography.Text className={styles.sectionLabel}>
+										Viewing · Resource
+									</Typography.Text>
+									<div className={styles.sectionLine} />
+									<Tooltip title="Collapse Filters">
+										<ArrowUpToLine
+											style={{ transform: 'rotate(270deg)' }}
+											onClick={handleFilterVisibilityChange}
+											size="md"
+										/>
+									</Tooltip>
+								</div>
+								<div className={styles.categoryCard}>
+									<div className={styles.categoryList}>
+										{categories.map((category) => (
+											<button
+												key={category.key}
+												type="button"
+												className={`${styles.categoryItem} ${
+													selectedCategory === category.key
+														? styles.categoryItemSelected
+														: ''
+												}`}
+												onClick={(): void => handleCategorySelect(category.key)}
+												data-testid={`category-${category.key}`}
+											>
+												{category.icon}
+												<Typography.Text>{category.label}</Typography.Text>
+											</button>
+										))}
+									</div>
+								</div>
 							</div>
-							<Collapse
-								onChange={handleCategoryChange}
-								items={items}
-								defaultActiveKey={[selectedCategory]}
-								activeKey={[selectedCategory]}
-								accordion
-								bordered={false}
-								ghost
-							/>
-						</div>
+
+							<div className={styles.quickFiltersSection}>
+								<div className={styles.sectionHeader} data-type="filter">
+									<Typography.Text className={styles.sectionLabel}>
+										Filter by
+									</Typography.Text>
+									<div className={styles.sectionLine} />
+								</div>
+								{selectedCategoryConfig && (
+									<QuickFilters
+										source={QuickFiltersSource.INFRA_MONITORING}
+										config={selectedCategoryConfig}
+										handleFilterVisibilityChange={handleFilterVisibilityChange}
+										onFilterChange={handleFilterChange}
+									/>
+								)}
+							</div>
+						</ResizableBox>
 					)}
 
 					<div

@@ -12,23 +12,6 @@
 		padding-bottom: 8px;
 	}
 
-	&__copy-btn {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		padding: 4px 8px;
-		border: 1px solid var(--l2-border);
-		border-radius: 4px;
-		background: transparent;
-		color: var(--l2-foreground);
-		cursor: pointer;
-
-		&:hover {
-			color: var(--l1-foreground);
-			background: var(--l3-background);
-		}
-	}
-
 	// Shared content container — no scroll, each view handles its own
 	&__content {
 		flex: 1;

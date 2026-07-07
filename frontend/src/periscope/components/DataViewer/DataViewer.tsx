@@ -1,9 +1,7 @@
 import { useMemo, useState } from 'react';
-import { useCopyToClipboard } from 'react-use';
-import { Copy } from '@signozhq/icons';
-import { toast } from '@signozhq/ui/sonner';
 import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
 import logEvent from 'api/common/logEvent';
+import CopyButton from 'periscope/components/CopyButton/CopyButton';
 import { JsonView } from 'periscope/components/JsonView';
 import { PrettyView, PrettyViewProps } from 'periscope/components/PrettyView';
 
@@ -34,7 +32,6 @@ function DataViewer({
 	prettyViewProps,
 }: DataViewerProps): JSX.Element {
 	const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Pretty);
-	const [, setCopy] = useCopyToClipboard();
 
 	const jsonString = useMemo(() => JSON.stringify(data, null, 2), [data]);
 
@@ -57,14 +54,6 @@ function DataViewer({
 		}
 	};
 
-	const handleCopy = (): void => {
-		const text = JSON.stringify(data, null, 2);
-		setCopy(text);
-		toast.success('Copied to clipboard', {
-			position: 'top-right',
-		});
-	};
-
 	return (
 		<div className="data-viewer">
 			<div className="data-viewer__toolbar">
@@ -76,14 +65,7 @@ function DataViewer({
 					items={VIEW_MODE_OPTIONS}
 					testId="data-viewer-view-mode"
 				/>
-				<button
-					type="button"
-					className="data-viewer__copy-btn"
-					onClick={handleCopy}
-					aria-label="Copy JSON"
-				>
-					<Copy size={14} />
-				</button>
+				<CopyButton value={jsonString} ariaLabel="Copy JSON" />
 			</div>
 
 			<div className="data-viewer__content">

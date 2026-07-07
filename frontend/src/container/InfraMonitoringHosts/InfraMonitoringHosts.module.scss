@@ -44,26 +44,20 @@
 }
 
 .quickFiltersContainer {
-	width: 280px;
-	min-width: 280px;
+	// Width is owned by ResizableBox (inline style). No overflow here: the panel
+	// must not scroll (QuickFilters scrolls its own list internally) — an
+	// overflow on the root would also clip the edge-mounted resize grip.
+	flex-shrink: 0;
 	border-right: 1px solid var(--l1-border);
-	overflow-y: auto;
 
-	&::-webkit-scrollbar {
-		width: 0.1rem;
-		height: 0.1rem;
+	:global(.resizable-box__content) {
+		display: flex;
+		flex-direction: column;
 	}
 
-	&::-webkit-scrollbar-track {
-		background: transparent;
-	}
-
-	&::-webkit-scrollbar-thumb {
-		background: var(--accent-primary);
-	}
-
-	&::-webkit-scrollbar-thumb:hover {
-		background: colox-mix(var(--accent-primary), var(--bg-vanilla-100), 20%);
+	:global(.quick-filters-container) {
+		flex: 1;
+		min-height: 0;
 	}
 
 	:global(.ant-collapse-header) {
@@ -142,7 +136,9 @@
 }
 
 .listContainerFiltersVisible {
-	max-width: calc(100% - 280px);
+	// Width is driven by flex now that the filters panel is resizable; the list
+	// fills whatever space the (variable-width) panel leaves.
+	max-width: 100%;
 }
 
 .quickFiltersToggleContainer {

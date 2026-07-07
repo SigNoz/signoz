@@ -515,6 +515,13 @@ components:
         url:
           type: string
       type: object
+    AuthtypesDeprecatedPostableUserRole:
+      properties:
+        id:
+          type: string
+      required:
+      - id
+      type: object
     AuthtypesGettableAuthDomain:
       properties:
         authNProviderInfo:
@@ -660,17 +667,20 @@ components:
           type: string
         userRoles:
           items:
-            $ref: '#/components/schemas/AuthtypesPostableUserRole'
+            $ref: '#/components/schemas/AuthtypesDeprecatedPostableUserRole'
           type: array
       required:
       - email
       type: object
     AuthtypesPostableUserRole:
       properties:
-        id:
+        roleId:
+          type: string
+        userId:
           type: string
       required:
-      - id
+      - userId
+      - roleId
       type: object
     AuthtypesRelation:
       enum:
@@ -2917,6 +2927,13 @@ components:
         publicDashboard:
           $ref: '#/components/schemas/DashboardtypesGettablePublicDasbhboard'
       type: object
+    DashboardtypesGettablePublicDashboardDataV2:
+      properties:
+        dashboard:
+          $ref: '#/components/schemas/DashboardtypesGettableDashboardV2'
+        publicDashboard:
+          $ref: '#/components/schemas/DashboardtypesGettablePublicDasbhboard'
+      type: object
     DashboardtypesHistogramBuckets:
       properties:
         bucketCount:
@@ -3071,6 +3088,10 @@ components:
           items:
             $ref: '#/components/schemas/DashboardtypesListedDashboardForUserV2'
           type: array
+        reservedKeywords:
+          items:
+            type: string
+          type: array
         tags:
           items:
             $ref: '#/components/schemas/TagtypesGettableTag'
@@ -3082,6 +3103,7 @@ components:
       - dashboards
       - total
       - tags
+      - reservedKeywords
       type: object
     DashboardtypesListableDashboardV2:
       properties:
@@ -3089,6 +3111,10 @@ components:
           items:
             $ref: '#/components/schemas/DashboardtypesListedDashboardV2'
           type: array
+        reservedKeywords:
+          items:
+            type: string
+          type: array
         tags:
           items:
             $ref: '#/components/schemas/TagtypesGettableTag'
@@ -3100,6 +3126,7 @@ components:
       - dashboards
       - total
       - tags
+      - reservedKeywords
       type: object
     DashboardtypesListableDashboardView:
       properties:
@@ -4234,6 +4261,8 @@ components:
           $ref: '#/components/schemas/InframonitoringtypesNodeCountsByReadiness'
         podCountsByPhase:
           $ref: '#/components/schemas/InframonitoringtypesPodCountsByPhase'
+        podCountsByStatus:
+          $ref: '#/components/schemas/InframonitoringtypesPodCountsByStatus'
       required:
       - clusterName
       - clusterCPU
@@ -4242,6 +4271,7 @@ components:
       - clusterMemoryAllocatable
       - nodeCountsByReadiness
       - podCountsByPhase
+      - podCountsByStatus
       - meta
       type: object
     InframonitoringtypesClusters:
@@ -4297,6 +4327,8 @@ components:
           type: object
         podCountsByPhase:
           $ref: '#/components/schemas/InframonitoringtypesPodCountsByPhase'
+        podCountsByStatus:
+          $ref: '#/components/schemas/InframonitoringtypesPodCountsByStatus'
       required:
       - daemonSetName
       - daemonSetCPU
@@ -4308,6 +4340,7 @@ components:
       - desiredNodes
       - currentNodes
       - podCountsByPhase
+      - podCountsByStatus
       - meta
       type: object
     InframonitoringtypesDaemonSets:
@@ -4363,6 +4396,8 @@ components:
           type: object
         podCountsByPhase:
           $ref: '#/components/schemas/InframonitoringtypesPodCountsByPhase'
+        podCountsByStatus:
+          $ref: '#/components/schemas/InframonitoringtypesPodCountsByStatus'
       required:
       - deploymentName
       - deploymentCPU
@@ -4374,6 +4409,7 @@ components:
       - desiredPods
       - availablePods
       - podCountsByPhase
+      - podCountsByStatus
       - meta
       type: object
     InframonitoringtypesDeployments:
@@ -4506,6 +4542,8 @@ components:
           type: object
         podCountsByPhase:
           $ref: '#/components/schemas/InframonitoringtypesPodCountsByPhase'
+        podCountsByStatus:
+          $ref: '#/components/schemas/InframonitoringtypesPodCountsByStatus'
         successfulPods:
           type: integer
       required:
@@ -4521,6 +4559,7 @@ components:
       - failedPods
       - successfulPods
       - podCountsByPhase
+      - podCountsByStatus
       - meta
       type: object
     InframonitoringtypesJobs:
@@ -4611,11 +4650,14 @@ components:
           type: string
         podCountsByPhase:
           $ref: '#/components/schemas/InframonitoringtypesPodCountsByPhase'
+        podCountsByStatus:
+          $ref: '#/components/schemas/InframonitoringtypesPodCountsByStatus'
       required:
       - namespaceName
       - namespaceCPU
       - namespaceMemory
       - podCountsByPhase
+      - podCountsByStatus
       - meta
       type: object
     InframonitoringtypesNamespaces:
@@ -4681,11 +4723,14 @@ components:
           type: string
         podCountsByPhase:
           $ref: '#/components/schemas/InframonitoringtypesPodCountsByPhase'
+        podCountsByStatus:
+          $ref: '#/components/schemas/InframonitoringtypesPodCountsByStatus'
       required:
       - nodeName
       - condition
       - nodeCountsByReadiness
       - podCountsByPhase
+      - podCountsByStatus
       - nodeCPU
       - nodeCPUAllocatable
       - nodeMemory
@@ -4731,6 +4776,64 @@ components:
       - failed
       - unknown
       type: object
+    InframonitoringtypesPodCountsByStatus:
+      properties:
+        completed:
+          type: integer
+        containerCannotRun:
+          type: integer
+        containerCreating:
+          type: integer
+        crashLoopBackOff:
+          type: integer
+        createContainerConfigError:
+          type: integer
+        errImagePull:
+          type: integer
+        error:
+          type: integer
+        evicted:
+          type: integer
+        failed:
+          type: integer
+        imagePullBackOff:
+          type: integer
+        nodeAffinity:
+          type: integer
+        nodeLost:
+          type: integer
+        oomKilled:
+          type: integer
+        pending:
+          type: integer
+        running:
+          type: integer
+        shutdown:
+          type: integer
+        unexpectedAdmissionError:
+          type: integer
+        unknown:
+          type: integer
+      required:
+      - pending
+      - running
+      - failed
+      - unknown
+      - crashLoopBackOff
+      - imagePullBackOff
+      - errImagePull
+      - createContainerConfigError
+      - containerCreating
+      - oomKilled
+      - completed
+      - error
+      - containerCannotRun
+      - evicted
+      - nodeAffinity
+      - nodeLost
+      - shutdown
+      - unexpectedAdmissionError
+      type: object
     InframonitoringtypesPodPhase:
       enum:
       - pending
@@ -4761,6 +4864,8 @@ components:
           type: number
         podCountsByPhase:
           $ref: '#/components/schemas/InframonitoringtypesPodCountsByPhase'
+        podCountsByStatus:
+          $ref: '#/components/schemas/InframonitoringtypesPodCountsByStatus'
         podMemory:
           format: double
           type: number
@@ -4772,6 +4877,11 @@ components:
           type: number
         podPhase:
           $ref: '#/components/schemas/InframonitoringtypesPodPhase'
+        podRestarts:
+          format: int64
+          type: integer
+        podStatus:
+          $ref: '#/components/schemas/InframonitoringtypesPodStatus'
         podUID:
           type: string
       required:
@@ -4784,9 +4894,34 @@ components:
       - podMemoryLimit
       - podPhase
       - podCountsByPhase
+      - podStatus
+      - podCountsByStatus
+      - podRestarts
       - podAge
       - meta
       type: object
+    InframonitoringtypesPodStatus:
+      enum:
+      - pending
+      - running
+      - failed
+      - unknown
+      - crashloopbackoff
+      - imagepullbackoff
+      - errimagepull
+      - createcontainerconfigerror
+      - containercreating
+      - oomkilled
+      - completed
+      - error
+      - containercannotrun
+      - evicted
+      - nodeaffinity
+      - nodelost
+      - shutdown
+      - unexpectedadmissionerror
+      - no_data
+      type: string
     InframonitoringtypesPods:
       properties:
         endTimeBeforeRetention:
@@ -5085,6 +5220,8 @@ components:
           type: object
         podCountsByPhase:
           $ref: '#/components/schemas/InframonitoringtypesPodCountsByPhase'
+        podCountsByStatus:
+          $ref: '#/components/schemas/InframonitoringtypesPodCountsByStatus'
         statefulSetCPU:
           format: double
           type: number
@@ -5116,6 +5253,7 @@ components:
       - desiredPods
       - currentPods
       - podCountsByPhase
+      - podCountsByStatus
       - meta
       type: object
     InframonitoringtypesStatefulSets:
@@ -5214,6 +5352,16 @@ components:
       - offset
       - limit
       type: object
+    LlmpricingruletypesGettableUnmappedModels:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/LlmpricingruletypesUnmappedModel'
+          nullable: true
+          type: array
+      required:
+      - items
+      type: object
     LlmpricingruletypesLLMPricingCacheCosts:
       properties:
         mode:
@@ -5303,6 +5451,19 @@ components:
         type: string
       nullable: true
       type: array
+    LlmpricingruletypesUnmappedModel:
+      properties:
+        modelName:
+          type: string
+        provider:
+          type: string
+        spanCount:
+          minimum: 0
+          type: integer
+      required:
+      - modelName
+      - spanCount
+      type: object
     LlmpricingruletypesUpdatableLLMPricingRule:
       properties:
         enabled:
@@ -7390,6 +7551,13 @@ components:
       enum:
       - basic
       type: string
+    ServiceaccounttypesDeprecatedPostableServiceAccountRole:
+      properties:
+        id:
+          type: string
+      required:
+      - id
+      type: object
     ServiceaccounttypesGettableFactorAPIKey:
       properties:
         createdAt:
@@ -7446,10 +7614,13 @@ components:
       type: object
     ServiceaccounttypesPostableServiceAccountRole:
       properties:
-        id:
+        roleId:
+          type: string
+        serviceAccountId:
           type: string
       required:
-      - id
+      - serviceAccountId
+      - roleId
       type: object
     ServiceaccounttypesServiceAccount:
       properties:
@@ -11180,6 +11351,60 @@ paths:
       summary: Get a pricing rule
       tags:
       - llmpricingrules
+  /api/v1/llm_pricing_rules/unmapped_models:
+    get:
+      deprecated: false
+      description: Returns models seen in the last hour of trace data (gen_ai.request.model)
+        that no pricing rule pattern matches, so the user can add them to an existing
+        rule or create a new one.
+      operationId: ListUnmappedLLMModels
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/LlmpricingruletypesGettableUnmappedModels'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: List unmapped models
+      tags:
+      - llmpricingrules
   /api/v1/logs/promote_paths:
     get:
       deprecated: false
@@ -12158,6 +12383,188 @@ paths:
       summary: Update route policy
       tags:
       - routepolicies
+  /api/v1/service_account_roles:
+    post:
+      deprecated: false
+      description: This endpoint assigns a role to a service account
+      operationId: CreateServiceAccountRole
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServiceaccounttypesPostableServiceAccountRole'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TypesIdentifiable'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - serviceaccount:attach
+        - role:attach
+      - tokenizer:
+        - serviceaccount:attach
+        - role:attach
+      summary: Create service account role
+      tags:
+      - serviceaccount
+  /api/v1/service_account_roles/{id}:
+    delete:
+      deprecated: false
+      description: This endpoint revokes a role from a service account
+      operationId: DeleteServiceAccountRole
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - serviceaccount:detach
+        - role:detach
+      - tokenizer:
+        - serviceaccount:detach
+        - role:detach
+      summary: Delete service account role
+      tags:
+      - serviceaccount
+    get:
+      deprecated: false
+      description: This endpoint gets an existing service account role
+      operationId: GetServiceAccountRole
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ServiceaccounttypesServiceAccountRole'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - serviceaccount:read
+      - tokenizer:
+        - serviceaccount:read
+      summary: Get service account role
+      tags:
+      - serviceaccount
   /api/v1/service_accounts:
     get:
       deprecated: false
@@ -12727,9 +13134,9 @@ paths:
       tags:
       - serviceaccount
     post:
-      deprecated: false
+      deprecated: true
       description: This endpoint assigns a role to a service account
-      operationId: CreateServiceAccountRole
+      operationId: CreateServiceAccountRoleDeprecated
       parameters:
       - in: path
         name: id
@@ -12740,7 +13147,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ServiceaccounttypesPostableServiceAccountRole'
+              $ref: '#/components/schemas/ServiceaccounttypesDeprecatedPostableServiceAccountRole'
       responses:
         "201":
           content:
@@ -12792,9 +13199,9 @@ paths:
       - serviceaccount
   /api/v1/service_accounts/{id}/roles/{rid}:
     delete:
-      deprecated: false
+      deprecated: true
       description: This endpoint revokes a role from service account
-      operationId: DeleteServiceAccountRole
+      operationId: DeleteServiceAccountRoleDeprecated
       parameters:
       - in: path
         name: id
@@ -17431,6 +17838,138 @@ paths:
       summary: Update my organization
       tags:
       - orgs
+  /api/v2/public/dashboards/{id}:
+    get:
+      deprecated: false
+      description: This endpoint returns the sanitized v2-shape dashboard data for
+        public access. Each panel query is reduced to a safe field subset, so filters
+        and raw query strings are not exposed.
+      operationId: GetPublicDashboardDataV2
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DashboardtypesGettablePublicDashboardDataV2'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - anonymous:
+        - public-dashboard:read
+      summary: Get public dashboard data (v2)
+      tags:
+      - dashboard
+  /api/v2/public/dashboards/{id}/panels/{key}/query_range:
+    get:
+      deprecated: false
+      description: This endpoint returns query range results for a panel of a v2-shape
+        public dashboard. The panel is addressed by its key in spec.panels.
+      operationId: GetPublicDashboardPanelQueryRangeV2
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: key
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Querybuildertypesv5QueryRangeResponse'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - anonymous:
+        - public-dashboard:read
+      summary: Get query range result (v2)
+      tags:
+      - dashboard
   /api/v2/readyz:
     get:
       operationId: Readyz
@@ -21764,6 +22303,184 @@ paths:
       summary: Rotate session
       tags:
       - sessions
+  /api/v2/user_roles:
+    post:
+      deprecated: false
+      description: This endpoint assigns a role to a user
+      operationId: CreateUserRole
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthtypesPostableUserRole'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TypesIdentifiable'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Create user role
+      tags:
+      - users
+  /api/v2/user_roles/{id}:
+    delete:
+      deprecated: false
+      description: This endpoint revokes a role from a user
+      operationId: DeleteUserRole
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Delete user role
+      tags:
+      - users
+    get:
+      deprecated: false
+      description: This endpoint gets an existing user role
+      operationId: GetUserRole
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AuthtypesUserRole'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Get user role
+      tags:
+      - users
   /api/v2/users:
     get:
       deprecated: false
@@ -22217,7 +22934,7 @@ paths:
       tags:
       - users
     post:
-      deprecated: false
+      deprecated: true
       description: This endpoint assigns the role to the user roles by user id
       operationId: SetRoleByUserID
       parameters:
@@ -22268,7 +22985,7 @@ paths:
       - users
   /api/v2/users/{id}/roles/{roleId}:
     delete:
-      deprecated: false
+      deprecated: true
       description: This endpoint removes a role from the user by user id and role
         id
       operationId: RemoveUserRoleByUserIDAndRoleID

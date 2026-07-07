@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { SolidAlertTriangle, X } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { ConfirmDialog } from '@signozhq/ui/dialog';
+import { DialogWrapper } from '@signozhq/ui/dialog';
 import { Divider } from '@signozhq/ui/divider';
 import { Typography } from '@signozhq/ui/typography';
 import { useConfirmableAction } from 'hooks/useConfirmableAction';
@@ -11,14 +11,18 @@ import styles from './Header.module.scss';
 interface HeaderProps {
 	isDirty: boolean;
 	isSaving: boolean;
+	showSwitchToView?: boolean;
 	onSave: () => void;
+	onSwitchToView?: () => void;
 	onClose: () => void;
 }
 
 function Header({
 	isDirty,
 	isSaving,
+	showSwitchToView = false,
 	onSave,
+	onSwitchToView,
 	onClose,
 }: HeaderProps): JSX.Element {
 	const discard = useConfirmableAction(
@@ -49,6 +53,16 @@ function Header({
 				<Typography.Text>Configure panel</Typography.Text>
 			</div>
 			<div className={styles.actions}>
+				{showSwitchToView && (
+					<Button
+						variant="outlined"
+						color="secondary"
+						data-testid="panel-editor-v2-switch-to-view"
+						onClick={onSwitchToView}
+					>
+						Switch to View Mode
+					</Button>
+				)}
 				<Button
 					variant="solid"
 					color="primary"
@@ -61,24 +75,42 @@ function Header({
 				</Button>
 			</div>
 
-			<ConfirmDialog
+			<DialogWrapper
 				open={discard.open}
-				onOpenChange={(next): void => {
+				onOpenChange={(next: boolean): void => {
 					if (!next) {
 						discard.cancel();
 					}
 				}}
 				title="Discard changes?"
 				titleIcon={<SolidAlertTriangle size={14} color="#fdd600" />}
-				confirmText="Discard"
-				confirmColor="destructive"
-				cancelText="Keep editing"
-				onConfirm={discard.confirm}
-				onCancel={discard.cancel}
-				data-testid="panel-editor-v2-discard-modal"
+				testId="panel-editor-v2-discard-modal"
+				footer={
+					<>
+						<Button
+							type="button"
+							variant="solid"
+							color="destructive"
+							data-testid="panel-editor-v2-discard-confirm"
+							loading={discard.isPending}
+							onClick={discard.confirm}
+						>
+							Discard
+						</Button>
+						<Button
+							type="button"
+							variant="outlined"
+							color="secondary"
+							data-testid="panel-editor-v2-discard-cancel"
+							onClick={discard.cancel}
+						>
+							Keep editing
+						</Button>
+					</>
+				}
 			>
 				<Typography>Your unsaved edits to this panel will be lost.</Typography>
-			</ConfirmDialog>
+			</DialogWrapper>
 		</div>
 	);
 }

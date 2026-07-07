@@ -79,7 +79,7 @@
     "event-source-polyfill": "1.0.31",
     "eventemitter3": "5.0.1",
     "history": "4.10.1",
-    "http-proxy-middleware": "4.1.1",
+    "html-to-image": "1.11.13",
     "http-status-codes": "2.3.0",
     "i18next": "^21.6.12",
     "i18next-browser-languagedetector": "^6.1.3",

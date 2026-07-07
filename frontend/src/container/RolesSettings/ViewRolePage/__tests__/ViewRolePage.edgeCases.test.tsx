@@ -1,7 +1,7 @@
 import * as roleApi from 'api/generated/services/role';
-import * as useAuthZModule from 'hooks/useAuthZ/useAuthZ';
+import * as useAuthZModule from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import { customRoleResponse } from 'mocks-server/__mockdata__/roles';
-import { mockUseAuthZGrantAll } from 'tests/authz-test-utils';
+import { mockUseAuthZGrantAll } from 'lib/authz/utils/authz-test-utils';
 import { render, screen } from 'tests/test-utils';
 
 import * as useRolePermissionsModule from '../../hooks/useRolePermissions';

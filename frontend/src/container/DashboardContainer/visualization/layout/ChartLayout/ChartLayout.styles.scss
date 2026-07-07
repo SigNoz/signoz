@@ -2,8 +2,16 @@
 	position: relative;
 	display: flex;
 	width: 100%;
-	height: 100%;
+	height: auto;
 	flex-direction: column;
+
+	// Stacked children (the FullView / standalone graph-manager) sit below the chart
+	// in the same container; size the chart region to its content so they aren't
+	// pushed out. Only this case opts out of filling the height — the dashboard grid,
+	// alert preview, and other charts keep 100% so they fill their container.
+	&--with-layout-children {
+		height: auto;
+	}
 
 	&--legend-right {
 		flex-direction: row;
