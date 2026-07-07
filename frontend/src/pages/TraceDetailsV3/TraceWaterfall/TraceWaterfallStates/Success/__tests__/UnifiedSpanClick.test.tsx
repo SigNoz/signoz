@@ -41,19 +41,6 @@ jest.mock('hooks/useUrlQuery', () => (): URLSearchParams => mockUrlQuery);
 
 // React Router is already globally mocked
 
-// Mock complex external dependencies that cause provider issues
-jest.mock('components/SpanHoverCard/SpanHoverCard', () => {
-	function SpanHoverCard({
-		children,
-	}: {
-		children: React.ReactNode;
-	}): JSX.Element {
-		return <div>{children}</div>;
-	}
-	SpanHoverCard.displayName = 'SpanHoverCard';
-	return SpanHoverCard;
-});
-
 // Mock the Filters component that's causing React Query issues
 jest.mock('../Filters/Filters', () => {
 	function Filters(): null {

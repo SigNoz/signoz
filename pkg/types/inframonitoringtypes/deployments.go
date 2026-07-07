@@ -12,7 +12,6 @@ type Deployments struct {
 	Type                   ResponseType           `json:"type" required:"true"`
 	Records                []DeploymentRecord     `json:"records" required:"true" nullable:"false"`
 	Total                  int                    `json:"total" required:"true"`
-	RequiredMetricsCheck   RequiredMetricsCheck   `json:"requiredMetricsCheck" required:"true"`
 	EndTimeBeforeRetention bool                   `json:"endTimeBeforeRetention" required:"true"`
 	Warning                *qbtypes.QueryWarnData `json:"warning,omitempty"`
 }
@@ -28,6 +27,7 @@ type DeploymentRecord struct {
 	DesiredPods             int               `json:"desiredPods" required:"true"`
 	AvailablePods           int               `json:"availablePods" required:"true"`
 	PodCountsByPhase        PodCountsByPhase  `json:"podCountsByPhase" required:"true"`
+	PodCountsByStatus       PodCountsByStatus `json:"podCountsByStatus" required:"true"`
 	Meta                    map[string]string `json:"meta" required:"true"`
 }
 

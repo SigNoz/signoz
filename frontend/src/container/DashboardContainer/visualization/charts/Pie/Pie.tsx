@@ -16,7 +16,7 @@ import PieArc from './PieArc';
 import PieCenterLabel from './PieCenterLabel';
 import styles from './Pie.module.scss';
 import { PieTooltipData } from './types';
-import { getFillColor } from './utils';
+import { getDonutGeometry, getFillColor } from './utils';
 
 /**
  * Donut chart rendered with @visx. Splits its area into chart + legend with the
@@ -78,16 +78,12 @@ export default function Pie({
 			[containerWidth, containerHeight, position, data],
 		);
 
-	// Donut geometry derived from the allocated chart box.
-	const { size, radius, innerRadius } = useMemo(() => {
-		const nextSize = Math.min(width, height);
-		const nextRadius = nextSize * 0.35;
-		return {
-			size: nextSize,
-			radius: nextRadius,
-			innerRadius: nextRadius * 0.6,
-		};
-	}, [width, height]);
+	// Donut geometry derived from the allocated chart box, sized to leave room
+	// for the external leader labels (see getDonutGeometry).
+	const { size, radius, innerRadius } = useMemo(
+		() => getDonutGeometry(width, height),
+		[width, height],
+	);
 
 	const totalValue = useMemo(
 		() => visibleData.reduce((sum, slice) => sum + slice.value, 0),

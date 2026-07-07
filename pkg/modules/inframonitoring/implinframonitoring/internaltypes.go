@@ -1,5 +1,7 @@
 package implinframonitoring
 
+import "github.com/SigNoz/signoz/pkg/types/inframonitoringtypes"
+
 // The types in this file are only used within the implinframonitoring package, and are not exposed outside.
 // They are primarily used for internal processing and structuring of data within the module's implementation.
 
@@ -24,8 +26,109 @@ type podPhaseCounts struct {
 	Unknown   int
 }
 
+// podStatusCounts holds per-group pod counts bucketed by latest kubectl-style
+// display status in window. Mirrors inframonitoringtypes.PodCountsByStatus.
+type podStatusCounts struct {
+	// Phase fallback.
+	Pending int
+	Running int
+	Failed  int
+	Unknown int
+
+	// Container-level reasons.
+	CrashLoopBackOff           int
+	ImagePullBackOff           int
+	ErrImagePull               int
+	CreateContainerConfigError int
+	ContainerCreating          int
+	OOMKilled                  int
+	Completed                  int
+	Error                      int
+	ContainerCannotRun         int
+
+	// Pod-level reasons.
+	Evicted                  int
+	NodeAffinity             int
+	NodeLost                 int
+	Shutdown                 int
+	UnexpectedAdmissionError int
+}
+
+// podStatusCountsToResponse copies the internal per-group status counts into the
+// public response struct. Shared by every entity that surfaces pod status
+// counts (pods, nodes, namespaces, clusters, workloads).
+func podStatusCountsToResponse(podStatuses podStatusCounts) inframonitoringtypes.PodCountsByStatus {
+	return inframonitoringtypes.PodCountsByStatus{
+		Pending:                    podStatuses.Pending,
+		Running:                    podStatuses.Running,
+		Failed:                     podStatuses.Failed,
+		Unknown:                    podStatuses.Unknown,
+		CrashLoopBackOff:           podStatuses.CrashLoopBackOff,
+		ImagePullBackOff:           podStatuses.ImagePullBackOff,
+		ErrImagePull:               podStatuses.ErrImagePull,
+		CreateContainerConfigError: podStatuses.CreateContainerConfigError,
+		ContainerCreating:          podStatuses.ContainerCreating,
+		OOMKilled:                  podStatuses.OOMKilled,
+		Completed:                  podStatuses.Completed,
+		Error:                      podStatuses.Error,
+		ContainerCannotRun:         podStatuses.ContainerCannotRun,
+		Evicted:                    podStatuses.Evicted,
+		NodeAffinity:               podStatuses.NodeAffinity,
+		NodeLost:                   podStatuses.NodeLost,
+		Shutdown:                   podStatuses.Shutdown,
+		UnexpectedAdmissionError:   podStatuses.UnexpectedAdmissionError,
+	}
+}
+
 // nodeConditionCounts holds per-group node counts bucketed by latest condition_ready in window.
 type nodeConditionCounts struct {
 	Ready    int
 	NotReady int
+}
+
+// bucketSplit carries the up-to-six entries a single spec bucket contributes
+// to an checks response. Any field may be nil if the bucket doesn't
+// populate that dimension.
+type bucketSplit struct {
+	PresentDefault  *inframonitoringtypes.MetricsComponentEntry
+	PresentOptional *inframonitoringtypes.MetricsComponentEntry
+	PresentAttrs    *inframonitoringtypes.AttributesComponentEntry
+	MissingDefault  *inframonitoringtypes.MissingMetricsComponentEntry
+	MissingOptional *inframonitoringtypes.MissingMetricsComponentEntry
+	MissingAttrs    *inframonitoringtypes.MissingAttributesComponentEntry
+}
+
+// checkComponentBucket is a single collector component's contribution
+// toward a single infra-monitoring tab's readiness. Any of the three dimension
+// slices (DefaultMetrics, OptionalMetrics, RequiredAttrs) may be empty — the
+// bucketizer in Phase 4 skips empty dimensions.
+type checkComponentBucket struct {
+	Component         inframonitoringtypes.AssociatedComponent
+	DefaultMetrics    []string
+	OptionalMetrics   []string
+	RequiredAttrs     []string
+	DocumentationLink string
+}
+
+// checkSpec defines, for one CheckType, the full set of
+// component-scoped buckets that must be satisfied for the tab to be ready.
+type checkSpec struct {
+	Buckets []checkComponentBucket
+}
+
+func (s checkSpec) getAllMetrics() []string {
+	var out []string
+	for _, b := range s.Buckets {
+		out = append(out, b.DefaultMetrics...)
+		out = append(out, b.OptionalMetrics...)
+	}
+	return out
+}
+
+func (s checkSpec) getAllAttrs() []string {
+	var out []string
+	for _, b := range s.Buckets {
+		out = append(out, b.RequiredAttrs...)
+	}
+	return out
 }

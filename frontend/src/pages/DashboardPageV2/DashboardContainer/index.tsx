@@ -2,12 +2,12 @@ import { useEffect } from 'react';
 import { FullScreen, useFullScreenHandle } from 'react-full-screen';
 
 import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
-import PanelTypeSelectionModal from 'container/DashboardContainer/PanelTypeSelectionModal';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useAppContext } from 'providers/App/App';
 
 import DashboardPageToolbar from './DashboardPageToolbar';
 import PanelsAndSectionsLayout from './PanelsAndSectionsLayout';
+import { useResolvedVariables } from './hooks/useResolvedVariables';
 import { useDashboardStore } from './store/useDashboardStore';
 import styles from './DashboardContainer.module.scss';
 import DashboardPageHeader from './components/DashboardPageHeader/DashboardPageHeader';
@@ -22,9 +22,13 @@ function DashboardContainer({
 	dashboard,
 	refetch,
 }: DashboardContainerProps): JSX.Element {
+	const spec = dashboard.spec;
+	const image = dashboard.image || Base64Icons[0];
+	const name = spec.display.name;
+
 	useEffect(() => {
-		document.title = dashboard.name;
-	}, [dashboard.name]);
+		document.title = name;
+	}, [name]);
 
 	const fullScreenHandle = useFullScreenHandle();
 
@@ -34,26 +38,18 @@ function DashboardContainer({
 		user.role,
 	);
 
-	// Publish edit context to the store so hooks/components read it from there
-	// instead of receiving dashboardId/isEditable/refetch as props down the tree.
+	// Seed during render (not an effect) so the first Panel render already sees the id —
+	// useDashboardFetchRequired throws on a missing id. setEditContext self-guards.
 	const setEditContext = useDashboardStore((s) => s.setEditContext);
-	useEffect(() => {
-		setEditContext({
-			dashboardId: dashboard.id,
-			isEditable: !dashboard.locked && editDashboardPermission,
-			refetch,
-		});
-	}, [
-		dashboard.id,
-		dashboard.locked,
-		editDashboardPermission,
+	setEditContext({
+		dashboardId: dashboard.id,
+		isEditable: !dashboard.locked && editDashboardPermission,
 		refetch,
-		setEditContext,
-	]);
+	});
 
-	const spec = dashboard.spec;
-	const image = dashboard.image || Base64Icons[0];
-	const name = spec.display.name;
+	// Resolve the variable selection into the V5 query payload and publish it to
+	// the store, so each panel's query substitutes the bar's selected values.
+	useResolvedVariables(dashboard);
 
 	return (
 		<FullScreen handle={fullScreenHandle}>
@@ -66,9 +62,6 @@ function DashboardContainer({
 				/>
 				<PanelsAndSectionsLayout layouts={spec.layouts} panels={spec.panels} />
 			</div>
-			{/* Shared panel-type picker (V1 component): opened from any "New Panel"
-			    trigger; navigates to the widget editor route on selection. */}
-			<PanelTypeSelectionModal />
 		</FullScreen>
 	);
 }

@@ -1,11 +1,40 @@
 import {
 	getArcGeometry,
+	getDonutGeometry,
 	getFillColor,
 	getScaledFontSize,
 	lightenColor,
 } from '../utils';
 
 describe('Pie utils', () => {
+	describe('getDonutGeometry', () => {
+		it('keeps the label anchor inside the box (reserves room for leader labels)', () => {
+			const { radius } = getDonutGeometry(400, 300);
+			const half = Math.min(400, 300) / 2; // 150
+			// The label anchor sits at radius * 1.3 and must stay within the box
+			// half-extent so labels are not clipped.
+			expect(radius * 1.3).toBeLessThanOrEqual(half);
+			// And it should use the available room (anchor = half - 22 allowance).
+			expect(radius * 1.3).toBeCloseTo(half - 22);
+		});
+
+		it('derives size and inner radius from the outer radius', () => {
+			const { size, radius, innerRadius } = getDonutGeometry(300, 300);
+			expect(size).toBeCloseTo(radius * 2);
+			expect(innerRadius).toBeCloseTo(radius * 0.6);
+		});
+
+		it('sizes off the smaller dimension so it fits both axes', () => {
+			expect(getDonutGeometry(1000, 200)).toStrictEqual(
+				getDonutGeometry(200, 1000),
+			);
+		});
+
+		it('never returns a negative radius for a box too small for labels', () => {
+			expect(getDonutGeometry(20, 20).radius).toBe(0);
+		});
+	});
+
 	describe('getScaledFontSize', () => {
 		it('returns the base size for empty text', () => {
 			expect(getScaledFontSize({ text: '', baseSize: 30, innerRadius: 100 })).toBe(

@@ -229,6 +229,74 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		return err
 	}
 
+	if err := router.Handle("/api/v2/dashboard_views", handler.New(provider.authzMiddleware.ViewAccess(provider.dashboardHandler.ListViews), handler.OpenAPIDef{
+		ID:                  "ListDashboardViews",
+		Tags:                []string{"dashboard"},
+		Summary:             "List dashboard saved views",
+		Description:         "Returns every saved view in the calling user's org. Saved views are shared org-wide.",
+		Request:             nil,
+		RequestContentType:  "",
+		Response:            new(dashboardtypes.ListableDashboardView),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{},
+		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
+	})).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v2/dashboard_views", handler.New(provider.authzMiddleware.EditAccess(provider.dashboardHandler.CreateView), handler.OpenAPIDef{
+		ID:                  "CreateDashboardView",
+		Tags:                []string{"dashboard"},
+		Summary:             "Create dashboard saved view",
+		Description:         "Persists the calling user's dashboard listing state (query, sort, order) as a named, reusable view shared across the org.",
+		Request:             new(dashboardtypes.PostableDashboardView),
+		RequestContentType:  "application/json",
+		Response:            new(dashboardtypes.DashboardView),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusCreated,
+		ErrorStatusCodes:    []int{http.StatusBadRequest},
+		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
+	})).Methods(http.MethodPost).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v2/dashboard_views/{id}", handler.New(provider.authzMiddleware.EditAccess(provider.dashboardHandler.UpdateView), handler.OpenAPIDef{
+		ID:                  "UpdateDashboardView",
+		Tags:                []string{"dashboard"},
+		Summary:             "Update dashboard saved view",
+		Description:         "Replaces a saved view's name and data. Saved views are shared org-wide.",
+		Request:             new(dashboardtypes.UpdatableDashboardView),
+		RequestContentType:  "application/json",
+		Response:            new(dashboardtypes.DashboardView),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
+	})).Methods(http.MethodPut).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v2/dashboard_views/{id}", handler.New(provider.authzMiddleware.EditAccess(provider.dashboardHandler.DeleteView), handler.OpenAPIDef{
+		ID:                  "DeleteDashboardView",
+		Tags:                []string{"dashboard"},
+		Summary:             "Delete dashboard saved view",
+		Description:         "Removes a saved view. Saved views are shared org-wide. Deleting a non-existent view returns 404.",
+		Request:             nil,
+		RequestContentType:  "",
+		Response:            nil,
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusNoContent,
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
+	})).Methods(http.MethodDelete).GetError(); err != nil {
+		return err
+	}
+
 	if err := router.Handle("/api/v1/dashboards/{id}/public", handler.New(provider.authzMiddleware.AdminAccess(provider.dashboardHandler.CreatePublic), handler.OpenAPIDef{
 		ID:                  "CreatePublicDashboard",
 		Tags:                []string{"dashboard"},
@@ -347,6 +415,62 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{},
+		Deprecated:          false,
+		SecuritySchemes:     newAnonymousSecuritySchemes([]string{coretypes.ResourceMetaResourcePublicDashboard.Scope(coretypes.VerbRead)}),
+	})).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v2/public/dashboards/{id}", handler.New(provider.authzMiddleware.CheckWithoutClaims(
+		provider.dashboardHandler.GetPublicDataV2,
+		authtypes.Relation{Verb: coretypes.VerbRead},
+		coretypes.ResourceMetaResourcePublicDashboard,
+		func(req *http.Request, orgs []*types.Organization) ([]coretypes.Selector, valuer.UUID, error) {
+			id, err := valuer.NewUUID(mux.Vars(req)["id"])
+			if err != nil {
+				return nil, valuer.UUID{}, err
+			}
+
+			return provider.dashboardModule.GetPublicDashboardSelectorsAndOrg(req.Context(), id, orgs)
+		}, []string{}), handler.OpenAPIDef{
+		ID:                  "GetPublicDashboardDataV2",
+		Tags:                []string{"dashboard"},
+		Summary:             "Get public dashboard data (v2)",
+		Description:         "This endpoint returns the sanitized v2-shape dashboard data for public access. Each panel query is reduced to a safe field subset, so filters and raw query strings are not exposed.",
+		Request:             nil,
+		RequestContentType:  "",
+		Response:            new(dashboardtypes.GettablePublicDashboardDataV2),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+		Deprecated:          false,
+		SecuritySchemes:     newAnonymousSecuritySchemes([]string{coretypes.ResourceMetaResourcePublicDashboard.Scope(coretypes.VerbRead)}),
+	})).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v2/public/dashboards/{id}/panels/{key}/query_range", handler.New(provider.authzMiddleware.CheckWithoutClaims(
+		provider.dashboardHandler.GetPublicWidgetQueryRangeV2,
+		authtypes.Relation{Verb: coretypes.VerbRead},
+		coretypes.ResourceMetaResourcePublicDashboard,
+		func(req *http.Request, orgs []*types.Organization) ([]coretypes.Selector, valuer.UUID, error) {
+			id, err := valuer.NewUUID(mux.Vars(req)["id"])
+			if err != nil {
+				return nil, valuer.UUID{}, err
+			}
+
+			return provider.dashboardModule.GetPublicDashboardSelectorsAndOrg(req.Context(), id, orgs)
+		}, []string{}), handler.OpenAPIDef{
+		ID:                  "GetPublicDashboardPanelQueryRangeV2",
+		Tags:                []string{"dashboard"},
+		Summary:             "Get query range result (v2)",
+		Description:         "This endpoint returns query range results for a panel of a v2-shape public dashboard. The panel is addressed by its key in spec.panels.",
+		Request:             nil,
+		RequestContentType:  "",
+		Response:            new(querybuildertypesv5.QueryRangeResponse),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 		Deprecated:          false,
 		SecuritySchemes:     newAnonymousSecuritySchemes([]string{coretypes.ResourceMetaResourcePublicDashboard.Scope(coretypes.VerbRead)}),
 	})).Methods(http.MethodGet).GetError(); err != nil {

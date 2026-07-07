@@ -12,6 +12,7 @@ import { useFlamegraphCrosshair } from './hooks/useFlamegraphCrosshair';
 import { useFlamegraphDrag } from './hooks/useFlamegraphDrag';
 import { useFlamegraphDraw } from './hooks/useFlamegraphDraw';
 import { useFlamegraphHover } from './hooks/useFlamegraphHover';
+import { useFlamegraphTestHook } from './hooks/useFlamegraphTestHook';
 import { useFlamegraphZoom } from './hooks/useFlamegraphZoom';
 import { useScrollToSpan } from './hooks/useScrollToSpan';
 import { EventRect, FlamegraphCanvasProps, SpanRect } from './types';
@@ -158,6 +159,14 @@ function FlamegraphCanvas(props: FlamegraphCanvasProps): JSX.Element {
 	});
 
 	useCanvasSetup(canvasRef, containerRef, drawFlamegraph, overlayCanvasRef);
+
+	// E2E-only: expose the live span→rect map so specs can target canvas bars.
+	// No-op unless window.__SIGNOZ_E2E__ is set (Playwright addInitScript).
+	useFlamegraphTestHook({
+		canvasRef,
+		containerRef,
+		spanRectsRef,
+	});
 
 	const {
 		cursorXPercent,

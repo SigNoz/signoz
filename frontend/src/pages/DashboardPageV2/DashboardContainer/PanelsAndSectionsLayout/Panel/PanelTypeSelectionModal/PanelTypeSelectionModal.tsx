@@ -1,13 +1,14 @@
 import { Modal } from 'antd';
 import { Button } from '@signozhq/ui/button';
 
+import type { PanelKind } from '../../../Panels/types/panelKind';
 import { PANEL_TYPES } from './constants';
 import styles from './PanelTypeSelectionModal.module.scss';
 
 interface PanelTypeSelectionModalProps {
 	open: boolean;
 	onClose: () => void;
-	onSelect: (pluginKind: string) => void;
+	onSelect: (panelKind: PanelKind) => void;
 }
 
 function PanelTypeSelectionModal({
@@ -24,17 +25,17 @@ function PanelTypeSelectionModal({
 			destroyOnClose
 		>
 			<div className={styles.grid}>
-				{PANEL_TYPES.map((type) => (
+				{PANEL_TYPES.map(({ panelKind, label, Icon }) => (
 					<Button
-						key={type.pluginKind}
+						key={panelKind}
 						type="button"
 						variant="ghost"
 						className={styles.typeButton}
-						data-testid={`panel-type-${type.pluginKind}`}
-						onClick={(): void => onSelect(type.pluginKind)}
+						data-testid={`panel-type-${panelKind}`}
+						onClick={(): void => onSelect(panelKind)}
 					>
-						{type.icon}
-						{type.label}
+						<Icon size={14} />
+						{label}
 					</Button>
 				))}
 			</div>

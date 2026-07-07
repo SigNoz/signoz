@@ -1,0 +1,704 @@
+{
+  "signoz-admin": [
+    {
+      "type": "role",
+      "kind": "role",
+      "verbs": [
+        "create",
+        "read",
+        "update",
+        "delete",
+        "list",
+        "attach",
+        "detach"
+      ]
+    },
+    {
+      "type": "user",
+      "kind": "user",
+      "verbs": [
+        "create",
+        "read",
+        "update",
+        "delete",
+        "list",
+        "attach",
+        "detach"
+      ]
+    },
+    {
+      "type": "serviceaccount",
+      "kind": "serviceaccount",
+      "verbs": [
+        "create",
+        "read",
+        "update",
+        "delete",
+        "list",
+        "attach",
+        "detach"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "auth-domain",
+      "verbs": [
+        "create",
+        "read",
+        "update",
+        "delete",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "cloud-integration",
+      "verbs": [
+        "create",
+        "read",
+        "update",
+        "delete",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "cloud-integration-service",
+      "verbs": [
+        "create",
+        "read",
+        "update",
+        "delete",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "integration",
+      "verbs": [
+        "create",
+        "read",
+        "update",
+        "delete",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "factor-api-key",
+      "verbs": [
+        "create",
+        "read",
+        "update",
+        "delete",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "factor-password",
+      "verbs": [
+        "create",
+        "read",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "license",
+      "verbs": [
+        "create",
+        "read",
+        "update",
+        "delete",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "subscription",
+      "verbs": [
+        "create",
+        "read",
+        "update",
+        "delete",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "org-preference",
+      "verbs": [
+        "create",
+        "read",
+        "update",
+        "delete",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "public-dashboard",
+      "verbs": [
+        "create",
+        "read",
+        "update",
+        "delete",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "session",
+      "verbs": [
+        "read",
+        "delete",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "dashboard",
+      "verbs": [
+        "create",
+        "read",
+        "update",
+        "delete",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "pipeline",
+      "verbs": [
+        "create",
+        "read",
+        "update",
+        "delete",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "planned-maintenance",
+      "verbs": [
+        "create",
+        "read",
+        "update",
+        "delete",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "rule",
+      "verbs": [
+        "create",
+        "read",
+        "update",
+        "delete",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "saved-view",
+      "verbs": [
+        "create",
+        "read",
+        "update",
+        "delete",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "trace-funnel",
+      "verbs": [
+        "create",
+        "read",
+        "update",
+        "delete",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "ingestion-key",
+      "verbs": [
+        "create",
+        "read",
+        "update",
+        "delete",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "ingestion-limit",
+      "verbs": [
+        "create",
+        "read",
+        "update",
+        "delete",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "notification-channel",
+      "verbs": [
+        "create",
+        "read",
+        "update",
+        "delete",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "route-policy",
+      "verbs": [
+        "create",
+        "read",
+        "update",
+        "delete",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "apdex-setting",
+      "verbs": [
+        "read",
+        "update",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "quick-filter",
+      "verbs": [
+        "read",
+        "update",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "ttl-setting",
+      "verbs": [
+        "read",
+        "update",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "user-preference",
+      "verbs": [
+        "read",
+        "update",
+        "list"
+      ]
+    },
+    {
+      "type": "telemetryresource",
+      "kind": "logs",
+      "verbs": [
+        "read"
+      ]
+    },
+    {
+      "type": "telemetryresource",
+      "kind": "traces",
+      "verbs": [
+        "read"
+      ]
+    },
+    {
+      "type": "telemetryresource",
+      "kind": "metrics",
+      "verbs": [
+        "read"
+      ]
+    },
+    {
+      "type": "telemetryresource",
+      "kind": "audit-logs",
+      "verbs": [
+        "read"
+      ]
+    },
+    {
+      "type": "telemetryresource",
+      "kind": "meter-metrics",
+      "verbs": [
+        "read"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "logs-field",
+      "verbs": [
+        "read",
+        "update",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "traces-field",
+      "verbs": [
+        "read",
+        "update",
+        "list"
+      ]
+    }
+  ],
+  "signoz-editor": [
+    {
+      "type": "metaresource",
+      "kind": "dashboard",
+      "verbs": [
+        "create",
+        "read",
+        "update",
+        "delete",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "pipeline",
+      "verbs": [
+        "create",
+        "read",
+        "update",
+        "delete",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "planned-maintenance",
+      "verbs": [
+        "create",
+        "read",
+        "update",
+        "delete",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "rule",
+      "verbs": [
+        "create",
+        "read",
+        "update",
+        "delete",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "saved-view",
+      "verbs": [
+        "create",
+        "read",
+        "update",
+        "delete",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "trace-funnel",
+      "verbs": [
+        "create",
+        "read",
+        "update",
+        "delete",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "integration",
+      "verbs": [
+        "create",
+        "read",
+        "update",
+        "delete",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "ingestion-key",
+      "verbs": [
+        "create",
+        "read",
+        "update",
+        "delete",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "ingestion-limit",
+      "verbs": [
+        "create",
+        "read",
+        "update",
+        "delete",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "notification-channel",
+      "verbs": [
+        "read",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "route-policy",
+      "verbs": [
+        "read",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "apdex-setting",
+      "verbs": [
+        "read",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "quick-filter",
+      "verbs": [
+        "read",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "ttl-setting",
+      "verbs": [
+        "read",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "user-preference",
+      "verbs": [
+        "read",
+        "update",
+        "list"
+      ]
+    },
+    {
+      "type": "telemetryresource",
+      "kind": "logs",
+      "verbs": [
+        "read"
+      ]
+    },
+    {
+      "type": "telemetryresource",
+      "kind": "traces",
+      "verbs": [
+        "read"
+      ]
+    },
+    {
+      "type": "telemetryresource",
+      "kind": "metrics",
+      "verbs": [
+        "read"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "logs-field",
+      "verbs": [
+        "read",
+        "update",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "traces-field",
+      "verbs": [
+        "read",
+        "update",
+        "list"
+      ]
+    }
+  ],
+  "signoz-viewer": [
+    {
+      "type": "metaresource",
+      "kind": "dashboard",
+      "verbs": [
+        "read",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "pipeline",
+      "verbs": [
+        "read",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "planned-maintenance",
+      "verbs": [
+        "read",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "rule",
+      "verbs": [
+        "read",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "saved-view",
+      "verbs": [
+        "read",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "trace-funnel",
+      "verbs": [
+        "read",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "integration",
+      "verbs": [
+        "create",
+        "read",
+        "update",
+        "delete",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "notification-channel",
+      "verbs": [
+        "read",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "route-policy",
+      "verbs": [
+        "read",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "apdex-setting",
+      "verbs": [
+        "read",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "quick-filter",
+      "verbs": [
+        "read",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "ttl-setting",
+      "verbs": [
+        "read",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "user-preference",
+      "verbs": [
+        "read",
+        "update",
+        "list"
+      ]
+    },
+    {
+      "type": "telemetryresource",
+      "kind": "logs",
+      "verbs": [
+        "read"
+      ]
+    },
+    {
+      "type": "telemetryresource",
+      "kind": "traces",
+      "verbs": [
+        "read"
+      ]
+    },
+    {
+      "type": "telemetryresource",
+      "kind": "metrics",
+      "verbs": [
+        "read"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "logs-field",
+      "verbs": [
+        "read",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "traces-field",
+      "verbs": [
+        "read",
+        "list"
+      ]
+    }
+  ],
+  "signoz-anonymous": [
+    {
+      "type": "metaresource",
+      "kind": "public-dashboard",
+      "verbs": [
+        "read"
+      ]
+    }
+  ]
+}

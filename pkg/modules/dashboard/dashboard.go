@@ -49,7 +49,7 @@ type Module interface {
 	// DeleteUnsafe deletes a dashboard bypassing the guards. Intended for internal system callers.
 	DeleteUnsafe(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error
 
-	GetByMetricNames(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string][]map[string]string, error)
+	GetByMetricNames(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string][]dashboardtypes.DashboardPanelRef, error)
 
 	statsreporter.StatsCollector
 
@@ -80,6 +80,22 @@ type Module interface {
 	DeleteV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error
 
 	DeletePreferencesForUser(ctx context.Context, orgID valuer.UUID, userID valuer.UUID) error
+
+	// get the v2 dashboard data by public dashboard id
+	GetDashboardByPublicIDV2(context.Context, valuer.UUID) (*dashboardtypes.DashboardV2, error)
+
+	// gets the query results by panel key and public shared id for a v2 dashboard
+	GetPublicWidgetQueryRangeV2(ctx context.Context, id valuer.UUID, panelKey, startTimeRaw, endTimeRaw string) (*querybuildertypesv5.QueryRangeResponse, error)
+
+	CreateView(ctx context.Context, orgID valuer.UUID, postable dashboardtypes.PostableDashboardView) (*dashboardtypes.DashboardView, error)
+
+	ListViews(ctx context.Context, orgID valuer.UUID) (*dashboardtypes.ListableDashboardView, error)
+
+	UpdateView(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updateable dashboardtypes.UpdatableDashboardView) (*dashboardtypes.DashboardView, error)
+
+	DeleteView(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error
+
+	GetByMetricNamesV2(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string][]dashboardtypes.DashboardPanelRef, error)
 }
 
 type Handler interface {
@@ -90,6 +106,10 @@ type Handler interface {
 	GetPublicData(http.ResponseWriter, *http.Request)
 
 	GetPublicWidgetQueryRange(http.ResponseWriter, *http.Request)
+
+	GetPublicDataV2(http.ResponseWriter, *http.Request)
+
+	GetPublicWidgetQueryRangeV2(http.ResponseWriter, *http.Request)
 
 	UpdatePublic(http.ResponseWriter, *http.Request)
 
@@ -129,4 +149,12 @@ type Handler interface {
 	UnpinV2(http.ResponseWriter, *http.Request)
 
 	DeleteV2(http.ResponseWriter, *http.Request)
+
+	CreateView(http.ResponseWriter, *http.Request)
+
+	ListViews(http.ResponseWriter, *http.Request)
+
+	UpdateView(http.ResponseWriter, *http.Request)
+
+	DeleteView(http.ResponseWriter, *http.Request)
 }
