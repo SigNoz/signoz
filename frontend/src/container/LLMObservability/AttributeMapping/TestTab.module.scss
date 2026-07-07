@@ -2,7 +2,21 @@
 	display: flex;
 	flex-direction: column;
 	gap: var(--spacing-6);
-	max-width: 860px;
+}
+
+// Heading + description on the left, Run button pinned to the top-right.
+.header {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: var(--spacing-6);
+}
+
+.headerText {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-2);
+	min-width: 0;
 }
 
 .heading {
@@ -20,22 +34,47 @@
 	color: var(--l3-foreground);
 }
 
-// Wrapper around the Monaco JSON editor. The editor fills this box (height 100%);
-// the box grows with the viewport (leaving room for the header/tabs/actions) and
-// never collapses below min-height on short screens. overflow clips the corners.
+.body {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: var(--spacing-6);
+	height: calc(100vh - 320px);
+	min-height: 320px;
+}
+
 .editor {
 	width: 100%;
-	height: calc(100vh - 350px);
-	min-height: 260px;
+	height: 100%;
 	border: 1px solid var(--l2-border);
 	border-radius: var(--radius-2);
 	overflow: hidden;
 }
 
-.actions {
+.resultsPanel {
+	height: 100%;
+	overflow-y: auto;
+	padding: var(--padding-4);
+	border: 1px solid var(--l2-border);
+	border-radius: var(--radius-2);
+	background: var(--l1-background);
+}
+
+// Pre-run empty state that fills the blank right half.
+.placeholder {
 	display: flex;
+	flex-direction: column;
 	align-items: center;
-	gap: var(--spacing-4);
+	justify-content: center;
+	gap: var(--spacing-2);
+	height: 100%;
+	text-align: center;
+	color: var(--l3-foreground);
+	font-size: var(--periscope-font-size-base);
+}
+
+.placeholderTitle {
+	font-weight: var(--font-weight-semibold);
+	color: var(--l2-foreground);
 }
 
 .error {
@@ -57,7 +96,6 @@
 	flex-direction: column;
 	gap: var(--spacing-4);
 	padding: var(--padding-4);
-	border: 1px solid var(--l2-border);
 	border-radius: var(--radius-2);
 	background: var(--l1-background);
 }
