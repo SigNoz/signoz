@@ -118,6 +118,11 @@ func (middleware *Audit) emitAuditEvent(req *http.Request, writer responseCaptur
 	extractorCtx := coretypes.ExtractorContext{Request: req, ResponseBody: writer.BodyBytes()}
 
 	for _, resource := range resolved {
+		if err := resource.Err(); err != nil {
+			middleware.logger.ErrorContext(req.Context(), "skipping audit event for unresolved resource", "route", routeTemplate, "error", err)
+			continue
+		}
+
 		resource.ResolveResponse(extractorCtx)
 		verb, category := resource.Verb(), resource.Category()
 
