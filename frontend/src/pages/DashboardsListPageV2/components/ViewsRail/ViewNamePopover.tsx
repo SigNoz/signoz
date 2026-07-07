@@ -6,32 +6,45 @@ import { Typography } from '@signozhq/ui/typography';
 
 import styles from './ViewsRail.module.scss';
 
+export const VIEW_NAME_MAX_LENGTH = 128;
+
 interface Props {
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
-	onSave: (name: string) => void;
+	onSubmit: (name: string) => void;
 	trigger: ReactNode;
+	title: string;
+	confirmLabel: string;
+	initialName?: string;
+	testIdPrefix?: string;
 }
 
-function SaveViewPopover({
+// Name-input popover shared by "save as view" and "rename view"; enforces the
+// view-name length cap in one place.
+function ViewNamePopover({
 	open,
 	onOpenChange,
-	onSave,
+	onSubmit,
 	trigger,
+	title,
+	confirmLabel,
+	initialName = '',
+	testIdPrefix = 'view-name',
 }: Props): JSX.Element {
-	const [name, setName] = useState('');
+	const [name, setName] = useState(initialName);
 
 	useEffect(() => {
 		if (open) {
-			setName('');
+			setName(initialName);
 		}
-	}, [open]);
+	}, [open, initialName]);
 
-	const canSave = name.trim().length > 0;
+	const trimmed = name.trim();
+	const canSave = trimmed.length > 0 && trimmed.length <= VIEW_NAME_MAX_LENGTH;
 
 	const handleSave = (): void => {
 		if (canSave) {
-			onSave(name);
+			onSubmit(trimmed);
 			onOpenChange(false);
 		}
 	};
@@ -44,13 +57,14 @@ function SaveViewPopover({
 			trigger={trigger}
 		>
 			<div className={styles.savePopover}>
-				<div className={styles.saveTitle}>Save as view</div>
+				<div className={styles.saveTitle}>{title}</div>
 				<Typography.Text className={styles.saveLabel}>Name</Typography.Text>
 				<Input
 					value={name}
 					autoFocus
+					maxLength={VIEW_NAME_MAX_LENGTH}
 					placeholder="e.g. Prod alerts"
-					testId="save-view-name"
+					testId={`${testIdPrefix}-name`}
 					onChange={(e: ChangeEvent<HTMLInputElement>): void =>
 						setName(e.target.value)
 					}
@@ -74,10 +88,10 @@ function SaveViewPopover({
 						color="primary"
 						size="sm"
 						disabled={!canSave}
-						testId="save-view-confirm"
+						testId={`${testIdPrefix}-confirm`}
 						onClick={handleSave}
 					>
-						Save view
+						{confirmLabel}
 					</Button>
 				</div>
 			</div>
@@ -85,4 +99,4 @@ function SaveViewPopover({
 	);
 }
 
-export default SaveViewPopover;
+export default ViewNamePopover;
