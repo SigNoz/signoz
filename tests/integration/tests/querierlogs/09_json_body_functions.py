@@ -17,10 +17,7 @@ from fixtures.logs import Logs
 
 
 @pytest.mark.xfail(
-    reason="hasAny/hasAll over a body-JSON array return 500 in legacy body mode "
-    "(use_json_body off): ClickHouse 'Argument 0 for hasAny must be an array but has "
-    "type String'. has() handles body arrays here; hasAny/hasAll do not (they work "
-    "only in JSON-body mode).",
+    reason="hasAny/hasAll over a body-JSON array return 500 in legacy body mode (use_json_body off): ClickHouse 'Argument 0 for hasAny must be an array but has type String'. has() handles body arrays here; hasAny/hasAll do not (they work only in JSON-body mode).",
     strict=False,
 )
 def test_logs_json_body_has_any(
@@ -94,10 +91,7 @@ def test_logs_json_body_has_any(
 
 
 @pytest.mark.xfail(
-    reason="hasAny/hasAll over a body-JSON array return 500 in legacy body mode "
-    "(use_json_body off): ClickHouse 'Argument 0 for hasAll must be an array but has "
-    "type String'. has() handles body arrays here; hasAny/hasAll do not (they work "
-    "only in JSON-body mode).",
+    reason="hasAny/hasAll over a body-JSON array return 500 in legacy body mode (use_json_body off): ClickHouse 'Argument 0 for hasAll must be an array but has type String'. has() handles body arrays here; hasAny/hasAll do not (they work only in JSON-body mode).",
     strict=False,
 )
 def test_logs_json_body_has_all(

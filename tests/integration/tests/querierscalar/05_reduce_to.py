@@ -31,15 +31,9 @@ def test_metrics_scalar_reduce_to_sum(
     # distinct 60s step buckets so latest-per-step yields 10, 20, 30.
     insert_metrics(
         [
-            Metrics(metric_name="test.reduce.metric", labels={"service.name": "service-a"},
-                    timestamp=now - timedelta(seconds=121), value=10.0,
-                    temporality="Unspecified", type_="Gauge", is_monotonic=False),
-            Metrics(metric_name="test.reduce.metric", labels={"service.name": "service-a"},
-                    timestamp=now - timedelta(seconds=61), value=20.0,
-                    temporality="Unspecified", type_="Gauge", is_monotonic=False),
-            Metrics(metric_name="test.reduce.metric", labels={"service.name": "service-a"},
-                    timestamp=now - timedelta(seconds=1), value=30.0,
-                    temporality="Unspecified", type_="Gauge", is_monotonic=False),
+            Metrics(metric_name="test.reduce.metric", labels={"service.name": "service-a"}, timestamp=now - timedelta(seconds=121), value=10.0, temporality="Unspecified", type_="Gauge", is_monotonic=False),
+            Metrics(metric_name="test.reduce.metric", labels={"service.name": "service-a"}, timestamp=now - timedelta(seconds=61), value=20.0, temporality="Unspecified", type_="Gauge", is_monotonic=False),
+            Metrics(metric_name="test.reduce.metric", labels={"service.name": "service-a"}, timestamp=now - timedelta(seconds=1), value=30.0, temporality="Unspecified", type_="Gauge", is_monotonic=False),
         ]
     )
     token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)

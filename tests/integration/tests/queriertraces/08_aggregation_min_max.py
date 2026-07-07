@@ -21,26 +21,46 @@ def test_traces_aggregate_min_max(
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     insert_traces(
         [
-            Traces(timestamp=now - timedelta(seconds=4), duration=timedelta(seconds=3),  # 3e9
-                   trace_id=TraceIdGenerator.trace_id(), span_id=TraceIdGenerator.span_id(),
-                   name="POST /x", kind=TracesKind.SPAN_KIND_SERVER,
-                   status_code=TracesStatusCode.STATUS_CODE_OK,
-                   resources={"service.name": "http-service"}),
-            Traces(timestamp=now - timedelta(seconds=3), duration=timedelta(milliseconds=500),  # 0.5e9 (min)
-                   trace_id=TraceIdGenerator.trace_id(), span_id=TraceIdGenerator.span_id(),
-                   name="SELECT", kind=TracesKind.SPAN_KIND_CLIENT,
-                   status_code=TracesStatusCode.STATUS_CODE_OK,
-                   resources={"service.name": "http-service"}),
-            Traces(timestamp=now - timedelta(seconds=2), duration=timedelta(seconds=1),  # 1e9
-                   trace_id=TraceIdGenerator.trace_id(), span_id=TraceIdGenerator.span_id(),
-                   name="PATCH", kind=TracesKind.SPAN_KIND_CLIENT,
-                   status_code=TracesStatusCode.STATUS_CODE_OK,
-                   resources={"service.name": "http-service"}),
-            Traces(timestamp=now - timedelta(seconds=1), duration=timedelta(seconds=4),  # 4e9
-                   trace_id=TraceIdGenerator.trace_id(), span_id=TraceIdGenerator.span_id(),
-                   name="topic publish", kind=TracesKind.SPAN_KIND_PRODUCER,
-                   status_code=TracesStatusCode.STATUS_CODE_OK,
-                   resources={"service.name": "topic-service"}),
+            Traces(
+                timestamp=now - timedelta(seconds=4),
+                duration=timedelta(seconds=3),  # 3e9
+                trace_id=TraceIdGenerator.trace_id(),
+                span_id=TraceIdGenerator.span_id(),
+                name="POST /x",
+                kind=TracesKind.SPAN_KIND_SERVER,
+                status_code=TracesStatusCode.STATUS_CODE_OK,
+                resources={"service.name": "http-service"},
+            ),
+            Traces(
+                timestamp=now - timedelta(seconds=3),
+                duration=timedelta(milliseconds=500),  # 0.5e9 (min)
+                trace_id=TraceIdGenerator.trace_id(),
+                span_id=TraceIdGenerator.span_id(),
+                name="SELECT",
+                kind=TracesKind.SPAN_KIND_CLIENT,
+                status_code=TracesStatusCode.STATUS_CODE_OK,
+                resources={"service.name": "http-service"},
+            ),
+            Traces(
+                timestamp=now - timedelta(seconds=2),
+                duration=timedelta(seconds=1),  # 1e9
+                trace_id=TraceIdGenerator.trace_id(),
+                span_id=TraceIdGenerator.span_id(),
+                name="PATCH",
+                kind=TracesKind.SPAN_KIND_CLIENT,
+                status_code=TracesStatusCode.STATUS_CODE_OK,
+                resources={"service.name": "http-service"},
+            ),
+            Traces(
+                timestamp=now - timedelta(seconds=1),
+                duration=timedelta(seconds=4),  # 4e9
+                trace_id=TraceIdGenerator.trace_id(),
+                span_id=TraceIdGenerator.span_id(),
+                name="topic publish",
+                kind=TracesKind.SPAN_KIND_PRODUCER,
+                status_code=TracesStatusCode.STATUS_CODE_OK,
+                resources={"service.name": "topic-service"},
+            ),
         ]
     )
     token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
