@@ -4,15 +4,8 @@
 	gap: var(--spacing-8);
 }
 
-.toolbar {
-	display: flex;
-	align-items: flex-start;
-	gap: var(--spacing-6);
-}
-
 .banner {
 	display: flex;
-	flex: 1;
 	align-items: flex-start;
 	gap: var(--spacing-5);
 	padding: var(--spacing-6) var(--spacing-8);

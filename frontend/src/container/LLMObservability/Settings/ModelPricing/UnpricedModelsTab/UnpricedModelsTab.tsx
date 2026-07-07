@@ -1,20 +1,26 @@
 import { useCallback, useMemo, useState } from 'react';
-import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
-import { ArrowRight, TriangleAlert } from '@signozhq/icons';
+import { TriangleAlert } from '@signozhq/icons';
 import { useListUnmappedLLMModels } from 'api/generated/services/llmpricingrules';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useAppContext } from 'providers/App/App';
 
 import styles from './UnpricedModelsTab.module.scss';
+import ModelCostDrawer, {
+	useModelCostDrawer,
+} from '../ModelCostTabPanel/components/ModelCostDrawer';
 import type { PricingRule, UnpricedModel } from '../types';
+import MapConfirmDialog from './components/MapConfirmDialog';
 import type { UnpricedColumnsConfig } from './components/UnpricedModelsTable/TableConfig';
-import UnpricedMappingConfirmDrawer from './components/UnpricedMappingConfirmDrawer';
 import UnpricedModelsTable from './components/UnpricedModelsTable';
-import {
-	useUnpricedModelMapping,
-	type UnpricedModelMapping,
-} from './hooks/useUnpricedModelMapping';
+import { useUnpricedModelMapping } from './hooks/useUnpricedModelMapping';
+
+// A model + the billing rule it's about to be mapped onto, held while the confirm
+// dialog is open.
+interface PendingMapping {
+	model: UnpricedModel;
+	rule: PricingRule;
+}
 
 function UnpricedModelsTab(): JSX.Element {
 	const { data, isLoading, isError } = useListUnmappedLLMModels();
@@ -27,79 +33,49 @@ function UnpricedModelsTab(): JSX.Element {
 
 	const models: UnpricedModel[] = useMemo(() => data?.data?.items || [], [data]);
 
-	const [selections, setSelections] = useState<Record<string, PricingRule>>({});
-	const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+	// Picking a billing model stages a single mapping for confirmation; the
+	// mapping only commits once the user confirms in the dialog.
+	const [pendingMapping, setPendingMapping] = useState<PendingMapping | null>(
+		null,
+	);
 	const { mapModels, isSaving } = useUnpricedModelMapping();
 
-	const onSelectRule = useCallback(
-		(modelName: string, rule: PricingRule): void => {
-			setSelections((prev) => ({ ...prev, [modelName]: rule }));
+	// Reuses the "Model costs" add/edit drawer to define brand-new pricing for a
+	// model that has no matching billing model to map onto. Saving resolves the
+	// model, so it drops off this tab (the drawer invalidates the unmapped list).
+	const drawer = useModelCostDrawer();
+
+	const onRequestMap = useCallback(
+		(model: UnpricedModel, rule: PricingRule): void => {
+			setPendingMapping({ model, rule });
 		},
 		[],
 	);
 
-	// Drop a row's pick so it's no longer committed (and the Save count updates).
-	const onClearRule = useCallback((modelName: string): void => {
-		setSelections((prev) => {
-			if (!(modelName in prev)) {
-				return prev;
-			}
-			const next = { ...prev };
-			delete next[modelName];
-			return next;
-		});
-	}, []);
-
-	const mappings: UnpricedModelMapping[] = useMemo(
-		() =>
-			models
-				.filter((model) => selections[model.modelName])
-				.map((model) => ({ model, rule: selections[model.modelName] })),
-		[models, selections],
-	);
-
-	const onConfirm = useCallback(async (): Promise<void> => {
-		const didSave = await mapModels(mappings);
-		if (didSave) {
-			setSelections({});
-			setIsConfirmOpen(false);
+	const onConfirmMap = useCallback(async (): Promise<void> => {
+		if (!pendingMapping) {
+			return;
 		}
-	}, [mapModels, mappings]);
+		const didSave = await mapModels([pendingMapping]);
+		if (didSave) {
+			setPendingMapping(null);
+		}
+	}, [mapModels, pendingMapping]);
 
 	const columnsConfig: UnpricedColumnsConfig = {
 		canManage: canManagePricing,
-		selections,
-		onSelectRule,
-		onClearRule,
+		onRequestMap,
+		onCreateNew: (modelName): void => drawer.openForAdd(modelName),
 	};
-
-	const selectedCount = mappings.length;
 
 	return (
 		<div className={styles.unpricedModelsTab}>
-			<div className={styles.toolbar}>
-				<div className={styles.banner}>
-					<TriangleAlert size="sm" className={styles.bannerIcon} />
-					<Typography.Text as="span" size="small" color="warning">
-						Models detected in traces without pricing. Add costs so estimated cost can
-						be computed.
-					</Typography.Text>
-				</div>
-
-				{canManagePricing && (
-					<Button
-						variant="solid"
-						color="primary"
-						suffix={<ArrowRight size={14} />}
-						disabled={selectedCount === 0}
-						onClick={(): void => setIsConfirmOpen(true)}
-						testId="unpriced-save-btn"
-					>
-						{selectedCount > 0
-							? `Save ${selectedCount} model${selectedCount === 1 ? '' : 's'}`
-							: 'Save models'}
-					</Button>
-				)}
+			<div className={styles.banner}>
+				<TriangleAlert size="sm" className={styles.bannerIcon} />
+				<Typography.Text as="span" size="small" color="warning">
+					Models detected in traces without pricing. Map each to a billing model or
+					create pricing so estimated cost can be computed.
+				</Typography.Text>
 			</div>
 
 			{isError && (
@@ -116,13 +92,29 @@ function UnpricedModelsTab(): JSX.Element {
 				columnsConfig={columnsConfig}
 			/>
 
-			<UnpricedMappingConfirmDrawer
-				open={isConfirmOpen}
-				mappings={mappings}
-				isSaving={isSaving}
-				onConfirm={onConfirm}
-				onCancel={(): void => setIsConfirmOpen(false)}
-			/>
+			{pendingMapping && (
+				<MapConfirmDialog
+					open
+					model={pendingMapping.model}
+					rule={pendingMapping.rule}
+					isSaving={isSaving}
+					onConfirm={onConfirmMap}
+					onCancel={(): void => setPendingMapping(null)}
+				/>
+			)}
+
+			{drawer.isOpen && (
+				<ModelCostDrawer
+					isOpen={drawer.isOpen}
+					mode={drawer.mode}
+					initialDraft={drawer.initialDraft}
+					onClose={drawer.close}
+					onSave={drawer.save}
+					isSaving={drawer.isSaving}
+					saveError={drawer.saveError}
+					canManage={canManagePricing}
+				/>
+			)}
 		</div>
 	);
 }

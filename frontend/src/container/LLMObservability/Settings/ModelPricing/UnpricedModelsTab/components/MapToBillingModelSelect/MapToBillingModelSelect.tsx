@@ -1,44 +1,56 @@
 import { useState } from 'react';
-import { Button } from '@signozhq/ui/button';
 import {
 	Combobox,
 	ComboboxCommand,
 	ComboboxContent,
+	ComboboxCreateItem,
 	ComboboxEmpty,
 	ComboboxInput,
 	ComboboxItem,
 	ComboboxList,
-	ComboboxLoading,
+	ComboboxSeparator,
 	ComboboxTrigger,
 } from '@signozhq/ui/combobox';
-import { X } from '@signozhq/icons';
+import { Plus } from '@signozhq/icons';
+import { Skeleton } from 'antd';
 
 import styles from './MapToBillingModelSelect.module.scss';
 import type { PricingRule } from '../../../types';
 import { useMapToBillingModelSearch } from './useMapToBillingModelSearch';
 import { getRuleOptionLabel } from '../../../utils';
 
+// Stable keys for the placeholder rows shown while options load.
+const SKELETON_ROW_KEYS = [
+	's1',
+	's2',
+	's3',
+	's4',
+	's5',
+	's6',
+	's7',
+	's8',
+	's9',
+	's10',
+];
+
 interface MapToBillingModelSelectProps {
 	modelName: string;
-	// The rule currently chosen for this row, used to render the trigger label.
-	selectedRule: PricingRule | undefined;
 	disabled: boolean;
 	onSelect: (rule: PricingRule) => void;
-	// Drops this row's pick so it's no longer mapped/committed.
-	onClear: () => void;
+	onCreateNew: () => void;
 }
 
 // Searchable, server-paged dropdown for picking the billing model an unpriced
 // model maps onto. Only RULE_OPTIONS_LIMIT rules are fetched at a time; typing
 // narrows the set via the rules API rather than client-side filtering, so cmdk's
-// own filter is disabled (shouldFilter={false}). Once a rule is picked, a clear
-// button next to the trigger lets the row drop its selection.
+// own filter is disabled (shouldFilter={false}). The dropdown is a pure picker —
+// choosing a rule hands it up to the confirm dialog rather than persisting a
+// selection here, so there's no selected-value/clear state on the trigger.
 function MapToBillingModelSelect({
 	modelName,
-	selectedRule,
 	disabled,
 	onSelect,
-	onClear,
+	onCreateNew,
 }: MapToBillingModelSelectProps): JSX.Element {
 	const [open, setOpen] = useState(false);
 	const { searchText, setSearchText, rules, rulesById, isFetching } =
@@ -52,14 +64,18 @@ function MapToBillingModelSelect({
 		setOpen(false);
 	};
 
+	const handleCreateNew = (): void => {
+		setOpen(false);
+		onCreateNew();
+	};
+
 	return (
 		<div className={styles.mapToCell}>
 			<Combobox open={open} onOpenChange={setOpen}>
 				<ComboboxTrigger
 					className={styles.mapToSelect}
 					disabled={disabled}
-					placeholder="Select a billing model"
-					value={selectedRule ? getRuleOptionLabel(selectedRule) : undefined}
+					placeholder="Select / Create a pricing model"
 					testId={`map-to-select-${modelName}`}
 				/>
 				<ComboboxContent className={styles.mapToDropdown}>
@@ -75,34 +91,48 @@ function MapToBillingModelSelect({
 								<ComboboxItem
 									key={rule.id}
 									value={rule.id}
-									isSelected={selectedRule?.id === rule.id}
 									onSelect={(): void => handleSelect(rule.id)}
 									data-testid={`map-to-option-${rule.id}`}
 								>
 									{getRuleOptionLabel(rule)}
 								</ComboboxItem>
 							))}
-							{isFetching && <ComboboxLoading>Loading…</ComboboxLoading>}
+							{isFetching && (
+								<div
+									className={styles.skeletonList}
+									data-testid={`map-to-loading-${modelName}`}
+								>
+									{SKELETON_ROW_KEYS.map((key) => (
+										<Skeleton.Input
+											key={key}
+											active
+											block
+											size="small"
+											className={styles.skeletonRow}
+										/>
+									))}
+								</div>
+							)}
 							{!isFetching && rules.length === 0 && (
 								<ComboboxEmpty>No billing models found</ComboboxEmpty>
 							)}
 						</ComboboxList>
+						{/* Kept outside ComboboxList so it stays pinned as a footer while the
+						    options scroll. Escape hatch when no existing billing model fits:
+						    define this model's own pricing rather than mapping onto another. */}
+						<ComboboxSeparator alwaysRender />
+						<ComboboxCreateItem
+							inputValue={modelName}
+							value={`create-pricing-${modelName}`}
+							prefix={<Plus size={14} />}
+							onSelect={handleCreateNew}
+							testId={`map-to-create-${modelName}`}
+						>
+							Create pricing for &quot;{modelName}&quot;
+						</ComboboxCreateItem>
 					</ComboboxCommand>
 				</ComboboxContent>
 			</Combobox>
-
-			{selectedRule && !disabled && (
-				<Button
-					variant="ghost"
-					color="secondary"
-					size="icon"
-					prefix={<X size={14} />}
-					onClick={onClear}
-					title="Clear selection"
-					aria-label="Clear selection"
-					testId={`map-to-clear-${modelName}`}
-				/>
-			)}
 		</div>
 	);
 }

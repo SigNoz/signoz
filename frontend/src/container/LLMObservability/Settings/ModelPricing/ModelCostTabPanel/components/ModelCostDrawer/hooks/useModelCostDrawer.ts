@@ -3,6 +3,7 @@ import { toast } from '@signozhq/ui/sonner';
 import { useQueryClient } from 'react-query';
 import {
 	getListLLMPricingRulesQueryKey,
+	getListUnmappedLLMModelsQueryKey,
 	useCreateOrUpdateLLMPricingRules,
 } from 'api/generated/services/llmpricingrules';
 
@@ -34,17 +35,26 @@ export function useModelCostDrawer(): UseModelCostDrawerResult {
 	const { mutateAsync: createOrUpdate, isLoading: isSaving } =
 		useCreateOrUpdateLLMPricingRules();
 
+	// Adding pricing can also resolve a model that was showing up as unpriced, so
+	// refresh the unmapped list (and its tab-badge count) alongside the rules list.
 	const invalidateList = useCallback(async (): Promise<void> => {
-		await queryClient.invalidateQueries({
-			queryKey: getListLLMPricingRulesQueryKey(),
-		});
+		await Promise.all([
+			queryClient.invalidateQueries({
+				queryKey: getListLLMPricingRulesQueryKey(),
+			}),
+			queryClient.invalidateQueries({
+				queryKey: getListUnmappedLLMModelsQueryKey(),
+			}),
+		]);
 	}, [queryClient]);
 
-	const openForAdd = useCallback((): void => {
+	// prefillModelName seeds the billing model ID when adding from an unpriced
+	// model row, so the user only has to fill in pricing.
+	const openForAdd = useCallback((prefillModelName?: string): void => {
 		setMode('add');
 		setInitialDraft({
 			...EMPTY_DRAFT,
-			modelName: '',
+			modelName: prefillModelName ?? '',
 			patterns: [],
 		});
 		setSelectedRuleId(null);

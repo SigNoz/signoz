@@ -9,26 +9,22 @@ import { formatSpanCount } from '../../../../utils';
 
 export interface UnpricedColumnsConfig {
 	canManage: boolean;
-	// modelName -> selected target rule. Carries the full rule (not just an id)
-	// because the per-row dropdown searches server-side and there's no global map.
-	selections: Record<string, PricingRule>;
-	onSelectRule: (modelName: string, rule: PricingRule) => void;
-	onClearRule: (modelName: string) => void;
+	// Picking a billing model requests a mapping — the tab opens a confirm dialog
+	// and commits that single mapping there (no batch/selection state here).
+	onRequestMap: (model: UnpricedModel, rule: PricingRule) => void;
+	// Opens the add-cost drawer prefilled with the row's model name.
+	onCreateNew: (modelName: string) => void;
 }
 
 // Column definitions for the unpriced-models TanStackTable. Sorting is off — the
 // unmapped-models endpoint returns the full set in one shot with no ordering knob.
-// Each row only picks a target billing model here; committing all picks happens
-// from the tab's top-level Save button, so there's no per-row action column.
+// Each row's action is self-contained: pick a billing model to map onto (confirmed
+// in a dialog) or create pricing for the model, so there's no bulk-save column.
 export function getUnpricedModelsColumns({
 	canManage,
-	selections,
-	onSelectRule,
-	onClearRule,
+	onRequestMap,
+	onCreateNew,
 }: UnpricedColumnsConfig): TableColumnDef<UnpricedModel>[] {
-	const getSelectedRuleId = (row: UnpricedModel): string =>
-		selections[row.modelName]?.id ?? '';
-
 	return [
 		{
 			id: 'model',
@@ -73,17 +69,15 @@ export function getUnpricedModelsColumns({
 		{
 			id: 'mapTo',
 			header: 'Map to billing model',
-			accessorFn: getSelectedRuleId,
 			width: { min: 280, default: '100%' },
 			enableMove: false,
 			enableRemove: false,
 			cell: ({ row }): JSX.Element => (
 				<MapToBillingModelSelect
 					modelName={row.modelName}
-					selectedRule={selections[row.modelName]}
 					disabled={!canManage}
-					onSelect={(rule): void => onSelectRule(row.modelName, rule)}
-					onClear={(): void => onClearRule(row.modelName)}
+					onSelect={(rule): void => onRequestMap(row, rule)}
+					onCreateNew={(): void => onCreateNew(row.modelName)}
 				/>
 			),
 		},

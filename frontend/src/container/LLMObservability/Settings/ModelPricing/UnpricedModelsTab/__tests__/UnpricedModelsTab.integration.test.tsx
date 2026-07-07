@@ -57,42 +57,27 @@ describe('UnpricedModelsTab (integration)', () => {
 		toastError.mockClear();
 	});
 
-	it('keeps the Save button disabled until a billing model is selected', async () => {
+	it('opens the confirm dialog with the target rule pricing when a model is picked', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		render(<UnpricedModelsTab />);
 
 		await screen.findByTestId(`unpriced-model-name-${MODEL}`);
 
-		const saveBtn = screen.getByTestId('unpriced-save-btn');
-		expect(saveBtn).toBeDisabled();
-
+		// No selection persists on the row — picking a rule stages the mapping in
+		// the confirm dialog instead.
 		await selectRule(user, MODEL, 'rule-openai');
 
-		await waitFor(() => expect(saveBtn).not.toBeDisabled());
-		expect(saveBtn).toHaveTextContent('Save 1 model');
+		const confirmItem = await screen.findByTestId(
+			`unpriced-map-confirm-item-${MODEL}`,
+		);
+		expect(confirmItem).toBeInTheDocument();
+		// Shows the target billing model + its pricing so the user can eyeball it.
+		expect(screen.getByText('openai:gpt-4o')).toBeInTheDocument();
+		expect(screen.getByText('$3.00')).toBeInTheDocument();
+		expect(screen.getByText('$9.00')).toBeInTheDocument();
 	});
 
-	it('clears a selection via the row clear button, re-disabling Save', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		render(<UnpricedModelsTab />);
-
-		await screen.findByTestId(`unpriced-model-name-${MODEL}`);
-
-		const saveBtn = screen.getByTestId('unpriced-save-btn');
-		// The clear button only shows once a rule is picked.
-		expect(screen.queryByTestId(`map-to-clear-${MODEL}`)).not.toBeInTheDocument();
-
-		await selectRule(user, MODEL, 'rule-openai');
-		await waitFor(() => expect(saveBtn).not.toBeDisabled());
-
-		await user.click(await screen.findByTestId(`map-to-clear-${MODEL}`));
-
-		await waitFor(() => expect(saveBtn).toBeDisabled());
-		expect(saveBtn).toHaveTextContent('Save models');
-		expect(screen.queryByTestId(`map-to-clear-${MODEL}`)).not.toBeInTheDocument();
-	});
-
-	it('opens a confirm dialog and commits the mapping in one request', async () => {
+	it('commits the mapping in one request when confirmed', async () => {
 		const sent: LlmpricingruletypesUpdatableLLMPricingRulesDTO[] = [];
 		server.use(
 			rest.put(LLM_PRICING_ENDPOINT, async (req, res, ctx) => {
@@ -107,15 +92,7 @@ describe('UnpricedModelsTab (integration)', () => {
 		await screen.findByTestId(`unpriced-model-name-${MODEL}`);
 		await selectRule(user, MODEL, 'rule-openai');
 
-		await user.click(screen.getByTestId('unpriced-save-btn'));
-
-		// Confirm dialog lists the pending mapping.
-		const confirmItem = await screen.findByTestId(
-			`unpriced-map-confirm-item-${MODEL}`,
-		);
-		expect(confirmItem).toBeInTheDocument();
-
-		await user.click(screen.getByTestId('unpriced-map-confirm-btn'));
+		await user.click(await screen.findByTestId('unpriced-map-confirm-btn'));
 
 		await waitFor(() => expect(sent).toHaveLength(1));
 		expect(sent[0].rules).toHaveLength(1);
@@ -123,5 +100,53 @@ describe('UnpricedModelsTab (integration)', () => {
 		await waitFor(() =>
 			expect(toastSuccess).toHaveBeenCalledWith('Mapped 1 model'),
 		);
+		// Dialog closes on success.
+		await waitFor(() =>
+			expect(
+				screen.queryByTestId(`unpriced-map-confirm-item-${MODEL}`),
+			).not.toBeInTheDocument(),
+		);
+	});
+
+	it('cancels the mapping without committing', async () => {
+		const sent: LlmpricingruletypesUpdatableLLMPricingRulesDTO[] = [];
+		server.use(
+			rest.put(LLM_PRICING_ENDPOINT, async (req, res, ctx) => {
+				sent.push(await req.json());
+				return res(ctx.status(200), ctx.json({ status: 'success' }));
+			}),
+		);
+
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		render(<UnpricedModelsTab />);
+
+		await screen.findByTestId(`unpriced-model-name-${MODEL}`);
+		await selectRule(user, MODEL, 'rule-openai');
+
+		await user.click(await screen.findByTestId('unpriced-map-cancel-btn'));
+
+		await waitFor(() =>
+			expect(
+				screen.queryByTestId(`unpriced-map-confirm-item-${MODEL}`),
+			).not.toBeInTheDocument(),
+		);
+		expect(sent).toHaveLength(0);
+	});
+
+	it('opens the add-cost drawer prefilled when creating pricing for a model', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		render(<UnpricedModelsTab />);
+
+		await screen.findByTestId(`unpriced-model-name-${MODEL}`);
+
+		// Open the row's dropdown and take the "Create pricing for …" escape hatch
+		// instead of mapping onto an existing billing model.
+		await user.click(screen.getByTestId(`map-to-select-${MODEL}`));
+		await user.click(await screen.findByTestId(`map-to-create-${MODEL}`));
+
+		// The shared add-cost drawer opens with the model name prefilled.
+		const drawerTitle = await screen.findByText('Add model cost');
+		expect(drawerTitle).toBeInTheDocument();
+		expect(screen.getByTestId('drawer-model-id-input')).toHaveValue(MODEL);
 	});
 });
